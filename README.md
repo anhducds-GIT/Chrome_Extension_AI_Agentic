@@ -1,27 +1,59 @@
-# Chrome Extension AI Agentic
+# Extension Observer V0
 
-Personal Chrome extension project for automating ChatGPT Web workflows and later acting as a browser execution layer in a multi-AI orchestration system.
+POC-1 for the Personal Browser Agent Runtime: a minimal Manifest V3 extension that discovers Chrome debug targets and performs temporary, structured, read-only observation. It does not automate any target.
 
-## Current status
+## Safety boundary
 
-- Phase: PRODUCT / ARCHITECTURE DRAFT
-- Implementation: V0 prototype exists outside this repository; not yet promoted into repo
-- No production cutover authorized
-- Clean-room implementation only; do not copy proprietary source from third-party extensions
+The extension uses only the `debugger` permission. It has no host permissions and does not take screenshots, perform OCR/vision, click, type, dispatch events, mutate DOM, change storage, send extension messages, or bypass Chrome security restrictions. Each successful observation attaches temporarily and detaches in a `finally` block.
 
-## Working roles
+## Install unpacked
 
-- Owner: Duc
-- GPT Web: product reasoning + primary implementation
-- Claude: coordinator / architecture review
-- Codex: code audit / security / regression review
+1. In Chrome, open `chrome://extensions`.
+2. Enable **Developer mode**.
+3. Select **Load unpacked**.
+4. Choose this folder: `C:\WORKING ZONE\Chrome_Extension_AI_Agentic`.
+5. Open the **Extension Observer V0** toolbar popup and select **Scan Targets**.
 
-## Initial direction
+Chrome will warn that the extension can use the debugging protocol. This is expected for this deliberately scoped POC; do not proceed if that permission is not acceptable.
 
-1. V0 — sequential text batch automation
-2. V0.5 — reliability, retries, logs, DOM adapter hardening
-3. V1 — templates, files, output capture, chat targeting
-4. V2 — conditional workflows / reusable automation definitions
-5. V3 — browser worker endpoint for multi-AI orchestration
+## Test procedure
 
-Draft architecture work is developed through review branches / draft PRs before implementation is expanded.
+1. Open one normal tab and, if desired, open another installed extension's popup or side panel.
+2. In Observer V0, select **Scan Targets**. Extension URLs are visually highlighted.
+3. Confirm target metadata: ID, type, title, URL, attached state, and conservative classification.
+4. Select **Observe** for one target that is not already attached.
+5. Read the report panel. It displays a readable summary plus copyable JSON.
+6. Confirm the report's `detached: true` after a permitted observation.
+
+The repository also includes a no-browser engine smoke test. From this folder, run:
+
+```powershell
+node tests/observer-engine-smoke.mjs
+```
+
+## Target classifications
+
+`service_worker` is confirmed only when Chrome reports `type=service_worker` with an extension URL. `normal_webpage` is confirmed for a non-extension `page`. A `page` with a `chrome-extension://` URL is reported as `extension_page`: Chrome target metadata alone does not reliably say whether it is a popup or side panel, so V0 will not guess. Other cases are `other` or `unknown` with evidence retained in the report.
+
+## Report levels
+
+- `FULL`: Runtime and DOM commands succeeded.
+- `PARTIAL`: at least one runtime/DOM capability succeeded.
+- `METADATA_ONLY`: target metadata is all that was available without an attach failure.
+- `BLOCKED`: Chrome denied or interrupted attachment/observation.
+
+## Expected limitations
+
+- Chrome and enterprise policy may refuse attaching to extension targets, especially protected browser surfaces.
+- An attached target is intentionally not taken over by V0.
+- Extension pages, popups, and side panels are not always separately identifiable from `getTargets()` metadata.
+- A service worker commonly has runtime metadata but no DOM.
+- The current popup may appear in the target list; that is normal and should not be mistaken for an external extension.
+
+## Architecture
+
+`observer-engine.js` is UI-independent and exposes `scanTargets()` and `observe(target)`. `popup.js` is only the small presentation layer. A future AI/Agent Bridge can call the engine after it has an appropriate, separately reviewed invocation path.
+
+## Explicit non-goals
+
+Control, automation, target messaging, input, workflow triggering, screenshots, and visual interpretation are outside POC-1.

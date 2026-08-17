@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Extension Observer V0",
+  "version": "0.1.0",
+  "description": "Read-only discovery and structured observation of Chrome debug targets.",
+  "permissions": ["debugger"],
+  "action": {
+    "default_title": "Extension Observer V0",
+    "default_popup": "popup.html"
+  }
+}

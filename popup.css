@@ -1,0 +1,52 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  box-sizing: border-box;
+  margin: 0;
+  min-width: 480px;
+  max-width: 680px;
+}
+
+main { padding: 14px; }
+h1 { font-size: 17px; margin: 0; }
+h2 { font-size: 14px; margin: 14px 0 8px; }
+p { margin: 4px 0; }
+header p, #status, .meta, .empty { color: CanvasText; opacity: .72; font-size: 12px; }
+
+button {
+  border: 1px solid color-mix(in srgb, CanvasText 35%, Canvas 65%);
+  border-radius: 5px;
+  background: ButtonFace;
+  color: ButtonText;
+  cursor: pointer;
+  padding: 6px 9px;
+}
+button:disabled { cursor: not-allowed; opacity: .5; }
+
+.target-list { display: grid; gap: 7px; max-height: 255px; overflow-y: auto; }
+.target {
+  border: 1px solid color-mix(in srgb, CanvasText 25%, Canvas 75%);
+  border-radius: 6px;
+  padding: 8px;
+}
+.target.extension { border-left: 4px solid #2673c9; }
+.target-title { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.url, code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; overflow-wrap: anywhere; }
+.target-row { display: flex; align-items: center; gap: 8px; justify-content: space-between; margin-top: 6px; }
+
+.report-heading { display: flex; align-items: center; justify-content: space-between; }
+.report-heading h2 { margin: 14px 0 8px; }
+pre {
+  box-sizing: border-box;
+  background: color-mix(in srgb, CanvasText 7%, Canvas 93%);
+  border-radius: 6px;
+  font: 11px/1.35 ui-monospace, SFMono-Regular, Consolas, monospace;
+  margin: 0;
+  max-height: 340px;
+  overflow: auto;
+  padding: 9px;
+  white-space: pre-wrap;
+}

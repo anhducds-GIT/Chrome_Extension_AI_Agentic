@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Extension Observer V0</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Extension Observer V0</h1>
+        <p>Read-only debug-target discovery.</p>
+      </header>
+
+      <button id="scan" type="button">Scan Targets</button>
+      <p id="status" role="status">Ready.</p>
+
+      <section aria-labelledby="targets-heading">
+        <h2 id="targets-heading">Targets</h2>
+        <div id="target-list" class="target-list" aria-live="polite">
+          <p class="empty">Scan to list Chrome debug targets.</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="report-heading">
+        <div class="report-heading">
+          <h2 id="report-heading">Observation Report</h2>
+          <button id="copy-report" type="button" disabled>Copy JSON</button>
+        </div>
+        <pre id="report" tabindex="0">No observation yet.</pre>
+      </section>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
