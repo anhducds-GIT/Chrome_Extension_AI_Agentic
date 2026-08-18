@@ -19,6 +19,7 @@
       <p id="workbookText" class="hint">Workbook needs a <code>jobs</code> sheet with <code>id</code> and <code>prompt</code>.</p>
       <label for="referencesInput" class="secondary-label">Optional local reference images</label>
       <input id="referencesInput" type="file" accept="image/*" multiple />
+      <p id="referenceText" class="hint">No local references selected.</p>
     </section>
 
     <section class="controls">
@@ -31,6 +32,11 @@
       <div class="row spread"><strong>Progress</strong><span id="progressText" class="muted">0 / 0</span></div>
       <div id="progressDetail" class="hint">Open an XLSX to begin.</div>
     </section>
+
+    <section class="card queue-card">
+      <div class="row spread"><strong>Task queue</strong><span id="queueSummary" class="muted">0 jobs</span></div>
+      <ol id="queueList" class="queue-list"></ol>
+    </section>
     <section class="card">
       <div class="row spread"><strong>Logs</strong><button id="clearLogsBtn" class="link-button">Clear</button></div>
       <ol id="logList" class="queue-list" aria-live="polite"></ol>
@@ -41,6 +47,7 @@
     </footer>
   </main>
   <script src="xlsx-codec.js"></script>
+  <script src="runner-core.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-# Duc Auto ChatGPT MVP
+# Duc Auto ChatGPT V0.2
 
 Personal Chrome extension for **local-only XLSX-driven image generation** on ChatGPT.
 
@@ -30,7 +30,7 @@ Personal Chrome extension for **local-only XLSX-driven image generation** on Cha
 5. Select the extracted `duc-auto-chatgpt-v0` folder.
 6. Open or reload `https://chatgpt.com/` once after installation.
 7. Click the extension icon; the side panel should open.
-8. Press **Test** before the first run.
+8. Select a workbook and optional reference images, then press **Validate** before **Run**.
 
 ## Workbook contract
 
@@ -40,16 +40,21 @@ The workbook must have a worksheet named `jobs` with these header columns:
 | --- | --- | --- |
 | `id` | Yes | Unique stable job identifier. |
 | `prompt` | Yes | Image-generation prompt. |
-| `reference_image` | No | Exact filename of one optional image selected in the Side Panel. |
-| `status`, `result_file`, `result_download_id`, `error` | No | Written or updated by the runner. |
+| `reference_images` | No | One or more references separated by `|`; tokens may be basenames or exact filenames. |
+| `reference_image` | No | Legacy single-reference compatibility column. |
+| `status`, `result_file`, `result_download_id`, `error`, `completed_at` | No | Ledger fields written or updated by the runner. |
 
-An optional `config` worksheet may contain `key` / `value` rows. Supported keys are `timeout_sec` (15–900, default 180) and `delay_sec` (1–120, default 3).
+An optional `config` worksheet may contain `key` / `value` rows. Supported keys: `timeout_sec` (15–900, default 180), legacy `delay_sec`, `delay_min_sec`, `delay_max_sec` (1–120), `continue_on_error` (default true), `output_folder` (default `Duc Auto ChatGPT`), `max_input_images` (default 3), and `rerun_done` (default false).
+
+Basenames ignore the image extension. If multiple selected files share that basename, validation fails rather than guessing. Multiple references are attached as one bounded batch and each must show a ready attachment preview before prompt send.
 
 ## Important behavior
 
 - The current active tab must be a normal ChatGPT conversation.
 - Stop asks the content script to cancel its wait loop; it intentionally does **not** click ChatGPT's Stop-generation button.
-- Browser security prevents overwriting the source path directly. The runner downloads a revised XLSX using the same filename, so replace the source file only after checking it.
+- Browser security prevents overwriting the source path directly. The runner downloads `<original-stem>-result.xlsx`; its result ledger records terminal status, image file, download ID, error, and completion time.
+- Existing `DONE` rows are skipped by default. Set `rerun_done=true` only when deliberate regeneration is desired.
+- Ordinary job failures are recorded and continue when `continue_on_error=true`; Stop, receiver loss, or validation failure prevents later submissions.
 - ChatGPT is a changing web app. If its DOM changes, `content.js` selectors may need a small adapter update.
 
 ## Quick validation
@@ -58,9 +63,9 @@ An optional `config` worksheet may contain `key` / `value` rows. Supported keys 
 2. Select a workbook with two trivial `jobs` rows; optionally select its referenced images.
 3. Press **Validate**; expect a successful idle-composer check.
 4. Press **Run**.
-5. Verify job #2 is not sent until job #1 produces and downloads an image.
-6. Verify the downloaded XLSX records each terminal job state and result filename.
-7. Test Stop during generation; verify no subsequent job begins.
+5. Verify job #2 is not sent until job #1 produces/downloads an attributable image and the visible countdown completes.
+6. Verify the `<original-stem>-result.xlsx` ledger records each terminal job state and result filename.
+7. Test an image-only response, a Retry/error UI with a visible image, references, and Stop during generation; no later job may begin after Stop.
 
 ## Architecture
 

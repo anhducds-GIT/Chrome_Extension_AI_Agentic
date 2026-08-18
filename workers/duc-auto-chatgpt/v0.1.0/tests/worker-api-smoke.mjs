@@ -71,7 +71,7 @@ assert.equal((await call({ operation: "ping" })).result.composerFound, true);
 const imageDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:001", url: "https://chatgpt.com/generated.png" });
 assert.equal(imageDownload.ok, true);
 assert.equal(imageDownload.download_id, 77);
-assert.equal(imageDownload.filename, "Duc Auto ChatGPT/image_001.webp");
+assert.equal(imageDownload.filename, "Duc Auto ChatGPT/image_001.png");
 assert.equal(downloads.length, 1);
 assert.equal((await privateCall({ type: "DAC_DOWNLOAD_IMAGE", url: "file:///not-allowed" })).code, "INVALID_IMAGE_URL");
 const accepted = await call({ operation: "job.submit", job_id: "wp2-test-001", task_type: "text_prompt", prompt: "test", timeout_ms: 180000 });

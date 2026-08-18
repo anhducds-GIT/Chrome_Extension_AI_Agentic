@@ -52,10 +52,30 @@ async function downloadGeneratedImage(message) {
     return failure("INVALID_IMAGE_URL", "Generated image URL was not usable.");
   }
   const safeId = String(message.jobId || "image").replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 100) || "image";
-  const extension = /^data:image\/png/i.test(url) ? "png" : "webp";
-  const filename = `Duc Auto ChatGPT/${safeId}.${extension}`;
+  const extension = imageExtension(url);
+  const folder = safeDownloadFolder(message.outputFolder);
+  const filename = `${folder}/${safeId}.${extension}`;
   const downloadId = await chrome.downloads.download({ url, filename, conflictAction: "uniquify", saveAs: false });
   return { ok: true, download_id: downloadId, filename };
+}
+
+function imageExtension(url) {
+  const dataMime = /^data:image\/(avif|gif|jpe?g|png|webp)/i.exec(url)?.[1];
+  if (dataMime) return dataMime.toLowerCase().replace("jpeg", "jpg");
+  try {
+    const parsed = new URL(url);
+    const fromPath = /\.(avif|gif|jpe?g|png|webp)$/i.exec(parsed.pathname)?.[1];
+    const fromQuery = parsed.searchParams.get("format") || parsed.searchParams.get("fm");
+    const candidate = fromPath || (/^(avif|gif|jpe?g|png|webp)$/i.test(fromQuery || "") ? fromQuery : null);
+    if (candidate) return candidate.toLowerCase().replace("jpeg", "jpg");
+  } catch (_) { /* URL was already validated; retain the safe fallback. */ }
+  return "png";
+}
+
+function safeDownloadFolder(value) {
+  const folder = String(value || "Duc Auto ChatGPT").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  if (!folder || folder.split("/").some((part) => !part || part === "." || part === "..")) return "Duc Auto ChatGPT";
+  return folder.replace(/[^A-Za-z0-9._ -/]/g, "_").slice(0, 160) || "Duc Auto ChatGPT";
 }
 
 async function handleExternalMessage(message, sender) {
