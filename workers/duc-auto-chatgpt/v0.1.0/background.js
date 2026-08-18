@@ -20,10 +20,14 @@ const MIN_TIMEOUT_MS = 15000;
 const DEFAULT_TIMEOUT_MS = 180000;
 const MAX_TIMEOUT_MS = 900000;
 const TERMINAL_STATUSES = new Set(["done", "failed", "aborted"]);
+const ACTIVE_JOB_KEEPALIVE_MS = 25000;
+const TERMINAL_JOBS_STORAGE_KEY = "dac.terminal_jobs.v1";
+const MAX_TERMINAL_JOBS = 10;
 
 // Intentionally in-memory: V0 has no queue and does not recover jobs after a worker restart.
 const jobs = new Map();
 let activeJobId = null;
+let activeJobKeepAlive = null;
 
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   handleExternalMessage(message, sender)
@@ -97,7 +101,20 @@ function submitJob(message) {
   if (activeJobId) return failure("ACTIVE_JOB_EXISTS", "Only one active job is permitted; no queue is available.");
 
   const now = new Date().toISOString();
-  const job = { jobId, taskType, prompt, timeoutMs, status: "accepted", createdAt: now, updatedAt: now, result: null, error: null };
+  const job = {
+    jobId,
+    taskType,
+    prompt,
+    timeoutMs,
+    status: "accepted",
+    createdAt: now,
+    startedAt: null,
+    completedAt: null,
+    updatedAt: now,
+    target: null,
+    result: null,
+    error: null
+  };
   jobs.set(jobId, job);
   activeJobId = jobId;
 
@@ -106,13 +123,23 @@ function submitJob(message) {
   return { ok: true, operation: "job.submit", duplicate: false, job: publicJob(job) };
 }
 
-function statusJob(message) {
+async function statusJob(message) {
   const jobId = validJobId(message.job_id);
   if (!jobId) return failure("INVALID_JOB_ID", "job_id is required and must be a short identifier.");
   const job = jobs.get(jobId);
-  return job
-    ? { ok: true, operation: "job.status", job: publicJob(job) }
-    : failure("JOB_NOT_FOUND", "No job exists for job_id.");
+  if (job) return { ok: true, operation: "job.status", job: publicJob(job) };
+
+  try {
+    const stored = await chrome.storage.session.get(TERMINAL_JOBS_STORAGE_KEY);
+    const terminalJob = Array.isArray(stored[TERMINAL_JOBS_STORAGE_KEY])
+      ? stored[TERMINAL_JOBS_STORAGE_KEY].find((record) => record?.job_id === jobId)
+      : null;
+    return terminalJob
+      ? { ok: true, operation: "job.status", job: terminalJob }
+      : failure("JOB_NOT_FOUND", "No job exists for job_id.");
+  } catch (error) {
+    return failure("TERMINAL_RECORD_UNAVAILABLE", error?.message || String(error));
+  }
 }
 
 async function abortJob(message) {
@@ -125,6 +152,7 @@ async function abortJob(message) {
   }
 
   job.status = "aborted";
+  job.completedAt = new Date().toISOString();
   job.updatedAt = new Date().toISOString();
   try {
     const tab = await resolveChatGptTab();
@@ -132,6 +160,8 @@ async function abortJob(message) {
   } catch (error) {
     job.abortError = error?.message || String(error);
   }
+  await persistTerminalJob(job);
+  stopActiveJobKeepAlive(job.jobId);
   return { ok: true, operation: "job.abort", job: publicJob(job) };
 }
 
@@ -142,9 +172,13 @@ async function runJob(job) {
   }
 
   job.status = "running";
-  job.updatedAt = new Date().toISOString();
+  job.startedAt = new Date().toISOString();
+  job.updatedAt = job.startedAt;
+  let stopKeepAlive = null;
   try {
     const tab = await resolveChatGptTab();
+    job.target = targetFromTab(tab);
+    stopKeepAlive = startActiveJobKeepAlive(job.jobId);
     const response = await sendToChatGpt(tab.id, { type: "DAC_RUN_PROMPT", prompt: job.prompt, timeoutMs: job.timeoutMs });
     if (job.status === "aborted") return;
     if (!response?.ok) throw new Error(response?.error || "DAC_RUN_PROMPT returned no successful result.");
@@ -156,7 +190,10 @@ async function runJob(job) {
       job.error = error?.message || String(error);
     }
   } finally {
-    job.updatedAt = new Date().toISOString();
+    job.completedAt = new Date().toISOString();
+    job.updatedAt = job.completedAt;
+    if (TERMINAL_STATUSES.has(job.status)) await persistTerminalJob(job);
+    stopKeepAlive?.();
     releaseActiveJob(job.jobId);
   }
 }
@@ -239,11 +276,73 @@ function publicJob(job) {
     status: job.status,
     timeout_ms: job.timeoutMs,
     created_at: job.createdAt,
+    started_at: job.startedAt,
+    completed_at: job.completedAt,
     updated_at: job.updatedAt,
+    target: job.target,
+    result_type: job.result?.type || null,
     result: job.result,
     error: job.error,
-    abort_error: job.abortError || null
+    abort_error: job.abortError || null,
+    retention_error: job.retentionError || null
   };
+}
+
+function terminalJobSnapshot(job) {
+  return publicJob(job);
+}
+
+async function persistTerminalJob(job) {
+  const snapshot = terminalJobSnapshot(job);
+  try {
+    const stored = await chrome.storage.session.get(TERMINAL_JOBS_STORAGE_KEY);
+    const existing = Array.isArray(stored[TERMINAL_JOBS_STORAGE_KEY]) ? stored[TERMINAL_JOBS_STORAGE_KEY] : [];
+    const retained = [snapshot, ...existing.filter((record) => record?.job_id !== snapshot.job_id)]
+      .slice(0, MAX_TERMINAL_JOBS);
+    await chrome.storage.session.set({ [TERMINAL_JOBS_STORAGE_KEY]: retained });
+    job.retentionError = null;
+  } catch (error) {
+    job.retentionError = error?.message || String(error);
+  }
+}
+
+function targetFromTab(tab) {
+  return {
+    tab_id: tab.id,
+    tab_url: tab.url || null,
+    window_id: tab.windowId ?? null,
+    conversation_url: tab.url || null
+  };
+}
+
+function startActiveJobKeepAlive(jobId) {
+  stopActiveJobKeepAlive();
+  const touch = () => {
+    try {
+      Promise.resolve(chrome.runtime.getPlatformInfo()).catch((error) => {
+        console.warn("Active job keepalive failed", error);
+      });
+    } catch (error) {
+      console.warn("Active job keepalive failed", error);
+    }
+  };
+
+  touch();
+  const intervalId = setInterval(touch, ACTIVE_JOB_KEEPALIVE_MS);
+  let stopped = false;
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    clearInterval(intervalId);
+    if (activeJobKeepAlive?.jobId === jobId) activeJobKeepAlive = null;
+  };
+  activeJobKeepAlive = { jobId, stop };
+  return stop;
+}
+
+function stopActiveJobKeepAlive(jobId) {
+  if (!activeJobKeepAlive || (jobId && activeJobKeepAlive.jobId !== jobId)) return;
+  activeJobKeepAlive.stop();
 }
 
 function releaseActiveJob(jobId) {

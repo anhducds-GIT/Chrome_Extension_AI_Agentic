@@ -91,6 +91,24 @@ Public message shapes:
 
 Only one job may be active and no queue exists. A repeated `job_id` returns the stored Job Record with `duplicate: true`; it does not resend the prompt. Statuses are `accepted`, `running`, `done`, `failed`, or `aborted`. Job state is in-memory and is lost if Chrome terminates the MV3 worker.
 
+For a completed `text_prompt`, `job.result` is a canonical text result:
+
+```js
+{
+  type: "text",
+  text: "new assistant response",
+  char_count: 22,
+  assistant_message_index: 3,
+  assistant_count_before: 3,
+  assistant_count_after: 4,
+  completion: { generation_seen: true, reason: "stable_text", poll_count: 9 }
+}
+```
+
+`job.target` records the selected `tab_id`, `tab_url`, `window_id`, and `conversation_url`; the Job Record also exposes `created_at`, `started_at`, and `completed_at`. The result is accepted only from the first assistant message after the pre-send assistant-count boundary; the extension does not blindly return the latest assistant message.
+
+Terminal Job Records are also retained in `chrome.storage.session` (newest 10 only), so `job.status` remains available after the MV3 service worker sleeps during the same browser/extension session. This retention stores no original prompt and is cleared by browser restart, extension reload, update, or disable. It does not resume jobs or provide durable idempotency. If retaining a terminal record fails, the completed execution remains `done`/`failed`/`aborted` and exposes `retention_error` while its in-memory record remains available.
+
 For a manual localhost test, run `python -m http.server 8123` from this folder, visit `http://localhost:8123/worker-api-test.html`, enter the unpacked extension ID, and use the four API buttons. The test page has no server-side logic.
 
 ## License

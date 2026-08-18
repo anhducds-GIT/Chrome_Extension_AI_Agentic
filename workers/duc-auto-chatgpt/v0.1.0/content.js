@@ -66,10 +66,13 @@
     return Array.from(document.querySelectorAll('[data-message-author-role="assistant"]'));
   }
 
+  function assistantMessageText(message) {
+    return message ? (message.innerText || message.textContent || "").trim() : "";
+  }
+
   function latestAssistantText() {
     const messages = assistantMessages();
-    const last = messages[messages.length - 1];
-    return last ? (last.innerText || last.textContent || "").trim() : "";
+    return assistantMessageText(messages[messages.length - 1]);
   }
 
   function setTextareaValue(el, text) {
@@ -134,25 +137,29 @@
     throw new Error("Send button did not become ready. ChatGPT DOM may have changed.");
   }
 
-  async function waitForCompletion({ beforeCount, beforeText, timeoutMs }) {
+  async function waitForCompletion({ beforeCount, timeoutMs }) {
     const startedAt = Date.now();
-    let responseStarted = false;
     let generationSeen = false;
     let stableText = "";
     let stableSince = 0;
+    let pollCount = 0;
+    let ambiguousExistingMessageChange = false;
 
     while (Date.now() - startedAt < timeoutMs) {
+      pollCount += 1;
       if (STATE.abortRequested) throw new Error("Automation stopped by user.");
 
       const stopButton = findStopButton();
       if (stopButton) generationSeen = true;
 
       const messages = assistantMessages();
-      const text = latestAssistantText();
-      const changed = messages.length > beforeCount || (text && text !== beforeText);
-      if (changed) responseStarted = true;
+      const resultMessage = messages[beforeCount] || null;
+      const text = assistantMessageText(resultMessage);
+      if (!resultMessage && messages.length && latestAssistantText()) {
+        ambiguousExistingMessageChange = true;
+      }
 
-      if (responseStarted && !stopButton) {
+      if (resultMessage && !stopButton) {
         if (text === stableText) {
           if (!stableSince) stableSince = Date.now();
         } else {
@@ -160,12 +167,20 @@
           stableSince = Date.now();
         }
 
-        // Require 1.5s of stable assistant text after generation UI disappears.
+        // Require 1.5s of stable text from the first assistant message created after the pre-send boundary.
         if (stableText && Date.now() - stableSince >= 1500) {
           return {
-            assistantCount: messages.length,
-            responseChars: stableText.length,
-            generationSeen,
+            type: "text",
+            text: stableText,
+            char_count: stableText.length,
+            assistant_message_index: beforeCount,
+            assistant_count_before: beforeCount,
+            assistant_count_after: messages.length,
+            completion: {
+              generation_seen: generationSeen,
+              reason: "stable_text",
+              poll_count: pollCount,
+            },
           };
         }
       } else {
@@ -175,6 +190,9 @@
       await sleep(300);
     }
 
+    if (ambiguousExistingMessageChange) {
+      throw new Error("Could not isolate a new assistant message after the pre-send boundary.");
+    }
     throw new Error(`Timed out after ${Math.round(timeoutMs / 1000)}s waiting for ChatGPT to finish.`);
   }
 
@@ -194,8 +212,6 @@
       }
 
       const beforeCount = assistantMessages().length;
-      const beforeText = latestAssistantText();
-
       setComposerValue(composer, prompt);
       await sleep(150);
 
@@ -205,7 +221,7 @@
       // Let ChatGPT process the click before completion polling.
       await sleep(500);
 
-      return await waitForCompletion({ beforeCount, beforeText, timeoutMs });
+      return await waitForCompletion({ beforeCount, timeoutMs });
     } finally {
       STATE.busy = false;
       STATE.abortRequested = false;
