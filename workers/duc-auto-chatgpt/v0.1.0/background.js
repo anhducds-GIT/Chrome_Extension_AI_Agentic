@@ -64,12 +64,24 @@ function isAllowedLocalhostOrigin(origin) {
 }
 
 async function pingActiveChatGptTab() {
+  const matchedTabs = await queryChatGptTabs();
   try {
-    const tab = await resolveChatGptTab();
+    const tab = selectChatGptTab(matchedTabs);
     const result = await sendToChatGpt(tab.id, { type: "DAC_PING" });
-    return { ok: true, operation: "ping", tab_id: tab.id, result };
+    return {
+      ok: true,
+      operation: "ping",
+      tab_id: tab.id,
+      tab_url: tab.url,
+      matched_tab_count: matchedTabs.length,
+      matched_tabs: summariseTabs(matchedTabs),
+      result
+    };
   } catch (error) {
-    return failure("CHATGPT_UNAVAILABLE", error?.message || String(error));
+    return failure("CHATGPT_UNAVAILABLE", error?.message || String(error), {
+      matched_tab_count: matchedTabs.length,
+      matched_tabs: summariseTabs(matchedTabs)
+    });
   }
 }
 
@@ -149,18 +161,32 @@ async function runJob(job) {
   }
 }
 
-async function resolveChatGptTab() {
-  const tabs = await chrome.tabs.query({ url: CHATGPT_URL_PATTERNS });
+async function queryChatGptTabs() {
+  return chrome.tabs.query({ url: CHATGPT_URL_PATTERNS });
+}
+
+function selectChatGptTab(tabs) {
+  // Tab-selection algorithm is unchanged (prefer active tab, else first match).
   const tab = tabs.find((candidate) => candidate.active) || tabs[0];
   if (!tab?.id) throw new Error("No ChatGPT tab is available. Open chatgpt.com and reload it once.");
   return tab;
 }
 
+function summariseTabs(tabs) {
+  return tabs.map((tab) => ({ tab_id: tab.id, url: tab.url, active: Boolean(tab.active), window_id: tab.windowId }));
+}
+
+async function resolveChatGptTab() {
+  const tabs = await queryChatGptTabs();
+  return selectChatGptTab(tabs);
+}
+
 async function sendToChatGpt(tabId, message) {
   try {
     return await chrome.tabs.sendMessage(tabId, message);
-  } catch (_) {
-    throw new Error("Cannot reach the ChatGPT page. Reload the ChatGPT tab once, then retry.");
+  } catch (error) {
+    const detail = error?.message || String(error);
+    throw new Error(`Cannot reach the ChatGPT page. Reload the ChatGPT tab once, then retry. (${detail})`);
   }
 }
 
@@ -202,6 +228,6 @@ function releaseActiveJob(jobId) {
   if (activeJobId === jobId) activeJobId = null;
 }
 
-function failure(code, error) {
-  return { ok: false, code, error };
+function failure(code, error, extra) {
+  return { ok: false, code, error, ...(extra || {}) };
 }
