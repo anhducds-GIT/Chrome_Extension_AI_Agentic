@@ -3,7 +3,9 @@ import fs from "node:fs";
 import vm from "node:vm";
 
 const sent = [];
+const downloads = [];
 let externalListener;
+let privateListener;
 let pendingPromptResolve;
 let keepAliveCalls = 0;
 let nextIntervalId = 1;
@@ -30,9 +32,11 @@ const chrome = {
     onInstalled: { addListener: () => {} },
     onStartup: { addListener: () => {} },
     onMessageExternal: { addListener: (listener) => { externalListener = listener; } },
+    onMessage: { addListener: (listener) => { privateListener = listener; } },
     getPlatformInfo: async () => { keepAliveCalls += 1; return {}; }
   },
   storage: { session: sessionStorage },
+  downloads: { download: async (options) => { downloads.push(options); return 77; } },
   tabs: {
     query: async () => [{ id: 42, active: true, url: "https://chatgpt.com/c/test" }],
     sendMessage: async (_tabId, message) => {
@@ -49,15 +53,27 @@ vm.runInNewContext(fs.readFileSync(new URL("../background.js", import.meta.url),
   chrome, URL, Set, Map, Date, setTimeout, setInterval: setIntervalMock, clearInterval: clearIntervalMock, console
 });
 assert.ok(externalListener, "external listener registered");
+assert.ok(privateListener, "private listener registered");
 
 function call(message, origin = "http://localhost:8123") {
   return new Promise((resolve) => {
     assert.equal(externalListener(message, { origin }, resolve), true);
   });
 }
+function privateCall(message) {
+  return new Promise((resolve) => {
+    assert.equal(privateListener(message, {}, resolve), true);
+  });
+}
 const wait = (ms = 10) => new Promise((resolve) => setTimeout(resolve, ms));
 
 assert.equal((await call({ operation: "ping" })).result.composerFound, true);
+const imageDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:001", url: "https://chatgpt.com/generated.png" });
+assert.equal(imageDownload.ok, true);
+assert.equal(imageDownload.download_id, 77);
+assert.equal(imageDownload.filename, "Duc Auto ChatGPT/image_001.webp");
+assert.equal(downloads.length, 1);
+assert.equal((await privateCall({ type: "DAC_DOWNLOAD_IMAGE", url: "file:///not-allowed" })).code, "INVALID_IMAGE_URL");
 const accepted = await call({ operation: "job.submit", job_id: "wp2-test-001", task_type: "text_prompt", prompt: "test", timeout_ms: 180000 });
 assert.equal(accepted.job.status, "accepted");
 await wait();
@@ -155,9 +171,11 @@ const freshChrome = {
     onInstalled: { addListener: () => {} },
     onStartup: { addListener: () => {} },
     onMessageExternal: { addListener: (listener) => { freshExternalListener = listener; } },
+    onMessage: { addListener: () => {} },
     getPlatformInfo: async () => ({})
   },
   storage: { session: sessionStorage },
+  downloads: { download: async () => 1 },
   tabs: { query: async () => [], sendMessage: async () => ({ ok: true }) }
 };
 vm.runInNewContext(fs.readFileSync(new URL("../background.js", import.meta.url), "utf8"), {

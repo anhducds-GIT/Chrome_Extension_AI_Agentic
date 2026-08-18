@@ -1,23 +1,22 @@
-# Duc Auto ChatGPT V0
+# Duc Auto ChatGPT MVP
 
-Personal Chrome extension for **local-only text batch automation** on ChatGPT.
+Personal Chrome extension for **local-only XLSX-driven image generation** on ChatGPT.
 
 ## V0 scope
 
 - Side Panel UI.
-- Multiple text prompts separated by a line containing `---`.
-- Sequential execution: send one prompt, wait for ChatGPT to finish, then continue.
-- Configurable inter-prompt delay and response timeout.
-- Pause between prompts and stop the automation runner.
-- Local draft/progress persistence with `chrome.storage.local`.
-- Connection/DOM health test.
+- Open one local `.xlsx` workbook, validate it, then run its jobs strictly in order.
+- Optional local reference images, resolved by filename from the selected image files.
+- Detect the generated image in the new assistant message and download it automatically.
+- Update the loaded workbook's `jobs` worksheet with status/result data and download that updated XLSX.
+- Configurable delay and timeout using optional workbook `config` values.
 - No separate login, no backend/server, no extension-side quota, no paid API.
 
 ## Explicitly out of scope
 
 - Bypassing ChatGPT limits, paywalls, account restrictions, or third-party extension licensing.
 - Copying proprietary source code from another extension.
-- Image/file automation.
+- Non-XLSX queue formats (TXT/CSV).
 - Multi-tab concurrency.
 - Cloud synchronization.
 - Automatic recovery across a closed side panel while a response is in-flight.
@@ -33,32 +32,35 @@ Personal Chrome extension for **local-only text batch automation** on ChatGPT.
 7. Click the extension icon; the side panel should open.
 8. Press **Test** before the first run.
 
-## Prompt format
+## Workbook contract
 
-```text
-First prompt
----
-Second prompt can be multiline.
-It ends only at the delimiter line.
----
-Third prompt
-```
+The workbook must have a worksheet named `jobs` with these header columns:
+
+| Column | Required | Meaning |
+| --- | --- | --- |
+| `id` | Yes | Unique stable job identifier. |
+| `prompt` | Yes | Image-generation prompt. |
+| `reference_image` | No | Exact filename of one optional image selected in the Side Panel. |
+| `status`, `result_file`, `result_download_id`, `error` | No | Written or updated by the runner. |
+
+An optional `config` worksheet may contain `key` / `value` rows. Supported keys are `timeout_sec` (15–900, default 180) and `delay_sec` (1–120, default 3).
 
 ## Important behavior
 
 - The current active tab must be a normal ChatGPT conversation.
-- Stop cancels this extension's waiting loop; it intentionally does **not** click ChatGPT's Stop-generation button.
+- Stop asks the content script to cancel its wait loop; it intentionally does **not** click ChatGPT's Stop-generation button.
+- Browser security prevents overwriting the source path directly. The runner downloads a revised XLSX using the same filename, so replace the source file only after checking it.
 - ChatGPT is a changing web app. If its DOM changes, `content.js` selectors may need a small adapter update.
 
 ## Quick validation
 
-1. Open a new ChatGPT chat.
-2. Put two trivial prompts in the queue, separated by `---`.
-3. Press **Test**; expect `Connected · ready`.
-4. Press **Start queue**.
-5. Verify prompt #2 is not sent until prompt #1 has finished.
-6. Test Pause (takes effect between prompts).
-7. Test Stop during generation; verify the extension stops advancing but ChatGPT itself may continue its current response.
+1. Open a normal ChatGPT conversation.
+2. Select a workbook with two trivial `jobs` rows; optionally select its referenced images.
+3. Press **Validate**; expect a successful idle-composer check.
+4. Press **Run**.
+5. Verify job #2 is not sent until job #1 produces and downloads an image.
+6. Verify the downloaded XLSX records each terminal job state and result filename.
+7. Test Stop during generation; verify no subsequent job begins.
 
 ## Architecture
 

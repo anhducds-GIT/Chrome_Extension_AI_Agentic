@@ -36,6 +36,28 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
   return true;
 });
 
+// Private message used only by this extension's side panel after a generated
+// image URL has been observed in the current ChatGPT tab.
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type !== "DAC_DOWNLOAD_IMAGE") return false;
+  downloadGeneratedImage(message)
+    .then(sendResponse)
+    .catch((error) => sendResponse(failure("DOWNLOAD_FAILED", error?.message || String(error))));
+  return true;
+});
+
+async function downloadGeneratedImage(message) {
+  const url = typeof message.url === "string" ? message.url : "";
+  if (!/^https:\/\//i.test(url) && !/^data:image\//i.test(url)) {
+    return failure("INVALID_IMAGE_URL", "Generated image URL was not usable.");
+  }
+  const safeId = String(message.jobId || "image").replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 100) || "image";
+  const extension = /^data:image\/png/i.test(url) ? "png" : "webp";
+  const filename = `Duc Auto ChatGPT/${safeId}.${extension}`;
+  const downloadId = await chrome.downloads.download({ url, filename, conflictAction: "uniquify", saveAs: false });
+  return { ok: true, download_id: downloadId, filename };
+}
+
 async function handleExternalMessage(message, sender) {
   if (!isAllowedLocalhostOrigin(sender?.origin)) {
     return failure("UNAUTHORIZED_ORIGIN", "Only http://localhost or http://127.0.0.1 callers are allowed.");

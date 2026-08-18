@@ -2,9 +2,9 @@
   "manifest_version": 3,
   "name": "Duc Auto ChatGPT",
   "version": "0.1.0",
-  "description": "Personal, local-only text batch automation for ChatGPT.",
+  "description": "Personal, local-only XLSX image generation runner for ChatGPT.",
   "minimum_chrome_version": "114",
-  "permissions": ["storage", "sidePanel", "tabs"],
+  "permissions": ["storage", "sidePanel", "tabs", "downloads"],
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://chat.openai.com/*"
