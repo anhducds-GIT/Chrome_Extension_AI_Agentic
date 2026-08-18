@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Duc Auto ChatGPT</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div>
+        <h1>Duc Auto ChatGPT</h1>
+        <p>V0 · local-only text batch</p>
+      </div>
+      <span id="statusChip" class="chip idle">IDLE</span>
+    </header>
+
+    <section class="card connection-card">
+      <div class="row spread">
+        <strong>ChatGPT tab</strong>
+        <button id="testBtn" class="secondary small">Test</button>
+      </div>
+      <div id="connectionText" class="muted">Open chatgpt.com, then press Test.</div>
+    </section>
+
+    <section class="card">
+      <label for="promptInput"><strong>Prompt queue</strong></label>
+      <p class="hint">Separate prompts with a line containing only <code>---</code>.</p>
+      <textarea id="promptInput" spellcheck="false" placeholder="Prompt #1\n---\nPrompt #2\n---\nPrompt #3"></textarea>
+      <div class="meta-row">
+        <span id="promptCount">0 prompts</span>
+        <button id="clearBtn" class="link-button">Clear</button>
+      </div>
+    </section>
+
+    <section class="card settings-grid">
+      <label>
+        Delay between prompts (sec)
+        <input id="delayInput" type="number" min="1" max="120" step="1" value="3" />
+      </label>
+      <label>
+        Response timeout (sec)
+        <input id="timeoutInput" type="number" min="15" max="900" step="15" value="180" />
+      </label>
+    </section>
+
+    <section class="controls">
+      <button id="startBtn" class="primary">Start queue</button>
+      <button id="pauseBtn" class="secondary" disabled>Pause</button>
+      <button id="stopBtn" class="danger" disabled>Stop</button>
+    </section>
+
+    <section class="card queue-card">
+      <div class="row spread">
+        <strong>Run progress</strong>
+        <span id="progressText" class="muted">0 / 0</span>
+      </div>
+      <ol id="queueList" class="queue-list"></ol>
+    </section>
+
+    <footer>
+      No separate login · No server · No extension quota · Uses your current ChatGPT session.
+    </footer>
+  </main>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
