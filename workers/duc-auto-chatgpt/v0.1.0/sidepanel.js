@@ -1,12 +1,13 @@
 (() => {
   "use strict";
-  const els = Object.fromEntries(["workbookInput", "referencesInput", "validateBtn", "runBtn", "stopBtn", "statusChip", "workbookText", "referenceText", "progressText", "progressDetail", "queueSummary", "queueList", "logList", "clearLogsBtn"].map((id) => [id, document.getElementById(id)]));
+  const els = Object.fromEntries(["workbookInput", "referencesInput", "validateBtn", "runBtn", "stopBtn", "statusChip", "workbookText", "referenceText", "progressText", "progressDetail", "nextTaskCard", "nextTaskId", "nextTaskCountdown", "queueSummary", "queueList", "logList", "clearLogsBtn"].map((id) => [id, document.getElementById(id)]));
   const state = { workbook: null, files: [], prepared: null, running: false, stopRequested: false, terminal: 0 };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function setStatus(status, label = status) { els.statusChip.className = `chip ${status.toLowerCase()}`; els.statusChip.textContent = label; }
   function log(text, kind = "") { const li = document.createElement("li"); li.className = kind; li.textContent = `${new Date().toLocaleTimeString()} · ${text}`; els.logList.prepend(li); }
   function progress(detail) { const total = state.prepared?.queue.length || 0; els.progressText.textContent = `${state.terminal} / ${total}`; els.progressDetail.textContent = detail; }
+  function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function controls() { const ready = Boolean(state.workbook && state.prepared); els.validateBtn.disabled = !state.workbook || state.running; els.runBtn.disabled = !ready || state.running; els.stopBtn.disabled = !state.running; els.workbookInput.disabled = state.running; els.referencesInput.disabled = state.running; }
   function renderQueue() {
     const queue = state.prepared?.queue || []; els.queueList.textContent = ""; els.queueSummary.textContent = `${queue.length} job${queue.length === 1 ? "" : "s"}`;
@@ -44,7 +45,7 @@
   function download(url, jobId, outputFolder) { return new Promise((resolve) => chrome.runtime.sendMessage({ type: "DAC_DOWNLOAD_IMAGE", url, jobId, outputFolder }, resolve)); }
   function update(item, values) { window.DacXlsx.updateJob(state.workbook, item.job, values); }
   function saveLedger() { const anchor = document.createElement("a"); anchor.href = URL.createObjectURL(window.DacXlsx.downloadBlob(state.workbook)); anchor.download = window.DacRunnerCore.resultWorkbookName(state.workbook.fileName); anchor.click(); setTimeout(() => URL.revokeObjectURL(anchor.href), 1000); log(`Result ledger downloaded: ${anchor.download}.`, "done"); }
-  async function countdown(seconds) { for (let remaining = seconds; remaining > 0 && !state.stopRequested; remaining -= 1) { progress(`Next job in 00:${String(remaining).padStart(2, "0")}`); await sleep(1000); } }
+  async function countdown(seconds) { const item = state.prepared.queue.find((candidate) => candidate.status === "PENDING"); for (const remaining of window.DacRunnerCore.countdownValues(seconds)) { if (state.stopRequested) break; nextTask(item, `Starts in 00:${String(remaining).padStart(2, "0")}`); await sleep(1000); } }
   async function run() {
     try { await authoritativeValidate(); } catch (error) { setStatus("ERROR"); progress(error.message); log(error.message, "error"); controls(); return; }
     state.running = true; state.stopRequested = false; state.terminal = state.prepared.queue.filter((item) => item.status === "DONE").length; setStatus("RUNNING"); renderQueue(); controls();
@@ -53,10 +54,11 @@
       for (const item of state.prepared.queue) {
         if (state.stopRequested) break;
         if (item.skipped) continue;
-        item.status = "RUNNING"; renderQueue(); progress(`Running ${item.job.id}…`); update(item, { status: "RUNNING", error: "" });
+        item.status = "RUNNING"; renderQueue(); nextTask(null, "Waiting for current job"); progress(`Running ${item.job.id}…`); update(item, { status: "RUNNING", error: "" });
         try {
           const response = await send({ type: "DAC_RUN_IMAGE_JOB", prompt: item.job.prompt, timeoutMs: settings.timeout_sec * 1000, referenceImages: item.references });
           if (!response?.ok || !response.result?.image_url) throw new Error(response?.error || "No attributable generated image was found.");
+          if (item.references.some((reference) => reference.dataUrl === response.result.image_url)) throw new Error("INPUT_IMAGE_FALSE_POSITIVE: output URL matches a selected reference image.");
           const accepted = await download(response.result.image_url, item.job.id, settings.output_folder);
           if (!accepted?.ok) throw new Error(accepted?.message || accepted?.error || "Image download was not accepted.");
           item.status = "DONE"; update(item, { status: "DONE", result_file: accepted.filename, result_download_id: accepted.download_id, error: "", completed_at: new Date().toISOString() }); log(`${item.job.id} done.`, "done");
@@ -68,7 +70,7 @@
         state.terminal += 1; renderQueue();
         if (!state.stopRequested && state.terminal < state.prepared.queue.length) await countdown(window.DacRunnerCore.delaySeconds(settings));
       }
-      setStatus(state.stopRequested ? "IDLE" : halted ? "ERROR" : "DONE", state.stopRequested ? "STOPPED" : halted ? "HALTED" : "DONE"); progress(state.stopRequested ? "Stopped. No later jobs were submitted." : halted ? "Batch halted after terminal failure." : "Queue complete.");
+      nextTask(null, "—"); setStatus(state.stopRequested ? "IDLE" : halted ? "ERROR" : "DONE", state.stopRequested ? "STOPPED" : halted ? "HALTED" : "DONE"); progress(state.stopRequested ? "Stopped. No later jobs were submitted." : halted ? "Batch halted after terminal failure." : "Queue complete.");
     } finally { saveLedger(); state.running = false; state.stopRequested = false; renderQueue(); controls(); }
   }
   async function stop() { state.stopRequested = true; progress("Stopping current operation…"); try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop prevents further jobs */ } }

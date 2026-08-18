@@ -142,16 +142,26 @@
     throw new Error("Send button did not become ready. ChatGPT DOM may have changed.");
   }
 
-  function imageCandidates(root = document) {
+  function imageCandidates(root = document, inputEvidence = { sources: new Set(), names: new Set() }) {
     return Array.from(root.querySelectorAll("img")).map((image) => {
       const source = image.currentSrc || image.src || "";
       const rect = image.getBoundingClientRect();
-      return { source, visible: isVisible(image) && rect.width >= 64 && rect.height >= 64, ready: image.complete && image.naturalWidth > 0 };
+      const role = image.closest('[data-message-author-role="assistant"]') ? "assistant" : image.closest('[data-message-author-role="user"]') ? "user" : "unknown";
+      const label = `${image.alt || ""} ${image.getAttribute("aria-label") || ""}`.toLowerCase();
+      const namedReference = Array.from(inputEvidence.names || []).some((name) => label.includes(name));
+      return { source, role, input: role === "user" || inputEvidence.sources?.has(source) || namedReference, visible: isVisible(image) && rect.width >= 64 && rect.height >= 64, ready: image.complete && image.naturalWidth > 0 };
     }).filter((candidate) => /^(https:|data:image\/|blob:)/i.test(candidate.source));
   }
 
-  function imageDecision(resultMessage, imageBaseline) {
-    return window.DacImageEvidence.selectAttributableImage({ postTurn: resultMessage ? imageCandidates(resultMessage) : [], visible: imageCandidates(), baseline: imageBaseline });
+  function referenceEvidence(referenceImages) {
+    const names = new Set((referenceImages || []).map((image) => image.fileName.toLowerCase()));
+    const sources = new Set((referenceImages || []).map((image) => image.dataUrl).filter(Boolean));
+    for (const candidate of imageCandidates()) if (candidate.role === "user") sources.add(candidate.source);
+    return { names, sources };
+  }
+
+  function imageDecision(resultMessage, imageBaseline, inputEvidence, hasReferences) {
+    return window.DacImageEvidence.selectAttributableImage({ postTurn: resultMessage ? imageCandidates(resultMessage, inputEvidence) : [], visible: imageCandidates(document, inputEvidence), baseline: imageBaseline, hasReferences });
   }
 
   function attachmentPreviewCount() {
@@ -209,7 +219,7 @@
     await waitForReferenceImagesReady(fileInput, images, previousPreviewCount);
   }
 
-  async function waitForCompletion({ beforeCount, timeoutMs, expectImage = false, imageBaseline = [] }) {
+  async function waitForCompletion({ beforeCount, timeoutMs, expectImage = false, imageBaseline = [], inputEvidence, hasReferences = false }) {
     const startedAt = Date.now();
     let generationSeen = false;
     let stableText = "";
@@ -236,7 +246,7 @@
       // Image fallback is intentionally independent of an assistant-message container.
       // With no resultMessage it receives only the global pre-send baseline diff.
       if (expectImage && !stopButton) {
-        const decision = imageDecision(resultMessage, imageBaseline);
+        const decision = imageDecision(resultMessage, imageBaseline, inputEvidence, hasReferences);
         if (decision.ok) {
           return {
             type: "image",
@@ -308,7 +318,8 @@
 
       await attachReferenceImages(referenceImages);
       const beforeCount = assistantMessages().length;
-      const imageBaseline = imageCandidates();
+      const inputEvidence = referenceEvidence(referenceImages);
+      const imageBaseline = imageCandidates(document, inputEvidence);
       setComposerValue(composer, prompt);
       await sleep(150);
 
@@ -318,7 +329,7 @@
       // Let ChatGPT process the click before completion polling.
       await sleep(500);
 
-      return await waitForCompletion({ beforeCount, timeoutMs, expectImage, imageBaseline });
+      return await waitForCompletion({ beforeCount, timeoutMs, expectImage, imageBaseline, inputEvidence, hasReferences: referenceImages.length > 0 });
     } finally {
       STATE.busy = false;
       STATE.abortRequested = false;

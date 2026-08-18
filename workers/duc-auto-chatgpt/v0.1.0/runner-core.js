@@ -46,6 +46,7 @@
   }
   function resultWorkbookName(name) { return `${String(name || "workbook.xlsx").replace(/\.xlsx$/i, "")}-result.xlsx`; }
   function delaySeconds(settings, random = Math.random) { return settings.delay_min_sec + Math.floor(random() * (settings.delay_max_sec - settings.delay_min_sec + 1)); }
+  function countdownValues(seconds) { return Array.from({ length: Math.max(0, Number(seconds) || 0) }, (_unused, index) => seconds - index); }
   function prepare(workbook, selectedFiles) {
     const settings = config(workbook.config);
     const queue = workbook.jobs.map((job, index) => {
@@ -55,6 +56,6 @@
     });
     return { settings, queue };
   }
-  const api = { DEFAULTS, basename, referenceTokens, config, resolveReferences, resultWorkbookName, delaySeconds, prepare };
+  const api = { DEFAULTS, basename, referenceTokens, config, resolveReferences, resultWorkbookName, delaySeconds, countdownValues, prepare };
   (typeof window !== "undefined" ? window : globalThis).DacRunnerCore = api;
 })();

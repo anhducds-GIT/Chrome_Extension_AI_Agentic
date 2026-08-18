@@ -18,6 +18,9 @@ assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate(
 assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old")], baseline: [candidate("https://old")] }).reason, "NO_NEW_IMAGE");
 assert.equal(images.selectAttributableImage({ postTurn: [candidate("https://one"), candidate("https://two")], visible: [], baseline: [] }).reason, "AMBIGUOUS_POST_TURN_IMAGE");
 assert.equal(images.selectAttributableImage({ postTurn: [candidate("https://retry-image")], visible: [], baseline: [] }).ok, true, "Retry UI does not alter image evidence");
+assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old"), candidate("https://reference-rerender", { role: "user", input: true })], baseline: [candidate("https://old")], hasReferences: true }).reason, "INPUT_IMAGE_FALSE_POSITIVE");
+assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old"), candidate("https://reference-rerender", { role: "user", input: true }), candidate("https://generated", { role: "assistant" })], baseline: [candidate("https://old")], hasReferences: true }).candidate.source, "https://generated");
+assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://reference-rerender", { role: "user", input: true })], baseline: [], hasReferences: true }).ok, false, "input alone never completes a reference job");
 
 const files = [{ fileName: "meo.png" }, { fileName: "bo.jpg" }, { fileName: "style.webp" }];
 assert.equal(runner.resolveReferences({ id: "one", reference_images: "meo|bo.jpg" }, files, 3).length, 2);
@@ -29,6 +32,7 @@ const settings = runner.config({ delay_sec: "5", continue_on_error: "true", max_
 assert.deepEqual({ min: settings.delay_min_sec, max: settings.delay_max_sec, continue: settings.continue_on_error }, { min: 5, max: 5, continue: true });
 assert.equal(runner.resultWorkbookName("jobs.xlsx"), "jobs-result.xlsx");
 assert.equal(runner.delaySeconds(runner.config({ delay_min_sec: 4, delay_max_sec: 6 }), () => .99), 6);
+assert.deepEqual(Array.from(runner.countdownValues(5)), [5, 4, 3, 2, 1]);
 const prepared = runner.prepare({ config: { rerun_done: "false" }, jobs: [{ id: "done", prompt: "x", status: "DONE" }, { id: "pending", prompt: "x" }] }, []);
 assert.deepEqual(prepared.queue.map((item) => item.status), ["DONE", "PENDING"]);
 
