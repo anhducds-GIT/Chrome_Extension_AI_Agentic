@@ -76,6 +76,23 @@ Content Script on chatgpt.com (content.js)
         +--> return completion/error
 ```
 
+## WP2 localhost Worker API
+
+The service worker also accepts external messages only from `http://localhost/*` and `http://127.0.0.1/*`. The private `DAC_*` messages remain between `background.js` and `content.js`.
+
+Public message shapes:
+
+```js
+{ operation: "ping" }
+{ operation: "job.submit", job_id: "job-001", task_type: "text_prompt", prompt: "...", timeout_ms: 180000 }
+{ operation: "job.status", job_id: "job-001" }
+{ operation: "job.abort", job_id: "job-001" }
+```
+
+Only one job may be active and no queue exists. A repeated `job_id` returns the stored Job Record with `duplicate: true`; it does not resend the prompt. Statuses are `accepted`, `running`, `done`, `failed`, or `aborted`. Job state is in-memory and is lost if Chrome terminates the MV3 worker.
+
+For a manual localhost test, run `python -m http.server 8123` from this folder, visit `http://localhost:8123/worker-api-test.html`, enter the unpacked extension ID, and use the four API buttons. The test page has no server-side logic.
+
 ## License
 
 This implementation is a clean-room personal prototype created from public Chrome extension APIs and observed product behavior. It does not include source code from ChatGPT Automation - Auto ChatGPT.
