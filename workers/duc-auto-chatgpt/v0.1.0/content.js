@@ -147,11 +147,11 @@
       const source = image.currentSrc || image.src || "";
       const rect = image.getBoundingClientRect();
       return { source, visible: isVisible(image) && rect.width >= 64 && rect.height >= 64, ready: image.complete && image.naturalWidth > 0 };
-    }).filter((candidate) => /^(https:|data:image:|blob:)/i.test(candidate.source));
+    }).filter((candidate) => /^(https:|data:image\/|blob:)/i.test(candidate.source));
   }
 
   function imageDecision(resultMessage, imageBaseline) {
-    return window.DacImageEvidence.selectAttributableImage({ postTurn: imageCandidates(resultMessage), visible: imageCandidates(), baseline: imageBaseline });
+    return window.DacImageEvidence.selectAttributableImage({ postTurn: resultMessage ? imageCandidates(resultMessage) : [], visible: imageCandidates(), baseline: imageBaseline });
   }
 
   function attachmentPreviewCount() {
@@ -220,6 +220,8 @@
     while (Date.now() - startedAt < timeoutMs) {
       pollCount += 1;
       if (STATE.abortRequested) throw new Error("Automation stopped by user.");
+      const blocker = securityBlockerText();
+      if (blocker) throw new Error(`HARD_STOP: ${blocker}`);
 
       const stopButton = findStopButton();
       if (stopButton) generationSeen = true;
@@ -231,28 +233,27 @@
         ambiguousExistingMessageChange = true;
       }
 
-      if (resultMessage && !stopButton) {
-        const imageUrl = imageCandidates(resultMessage).at(-1)?.source || null;
-        const decision = expectImage ? imageDecision(resultMessage, imageBaseline) : null;
-        // Image jobs are complete from the post-send assistant boundary, an image,
-        // and the absence of ChatGPT's generation control. They need no text reply.
-        if (expectImage && decision.ok) {
+      // Image fallback is intentionally independent of an assistant-message container.
+      // With no resultMessage it receives only the global pre-send baseline diff.
+      if (expectImage && !stopButton) {
+        const decision = imageDecision(resultMessage, imageBaseline);
+        if (decision.ok) {
           return {
             type: "image",
             text,
             char_count: text.length,
-            assistant_message_index: beforeCount,
+            assistant_message_index: resultMessage ? beforeCount : null,
             assistant_count_before: beforeCount,
             assistant_count_after: messages.length,
-            completion: {
-              generation_seen: generationSeen,
-              reason: "image_ready",
-              poll_count: pollCount,
-            },
+            completion: { generation_seen: generationSeen, reason: "image_ready", poll_count: pollCount },
             image_url: decision.candidate.source,
             image_attribution: decision.attribution,
           };
         }
+      }
+
+      if (resultMessage && !stopButton) {
+        const imageUrl = imageCandidates(resultMessage).at(-1)?.source || null;
         if (text === stableText) {
           if (!stableSince) stableSince = Date.now();
         } else {

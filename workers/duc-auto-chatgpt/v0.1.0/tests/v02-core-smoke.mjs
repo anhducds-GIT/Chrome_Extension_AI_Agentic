@@ -14,12 +14,14 @@ const candidate = (source, options = {}) => ({ source, ready: true, visible: tru
 
 assert.equal(images.selectAttributableImage({ postTurn: [candidate("https://new")], visible: [], baseline: [] }).attribution, "post_turn");
 assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old"), candidate("https://new")], baseline: [candidate("https://old")] }).attribution, "new_visible_fallback");
+assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old"), candidate("https://pilot01-new")], baseline: [candidate("https://old")] }).ok, true, "Pilot01 fallback does not need an assistant container");
 assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old")], baseline: [candidate("https://old")] }).reason, "NO_NEW_IMAGE");
 assert.equal(images.selectAttributableImage({ postTurn: [candidate("https://one"), candidate("https://two")], visible: [], baseline: [] }).reason, "AMBIGUOUS_POST_TURN_IMAGE");
 assert.equal(images.selectAttributableImage({ postTurn: [candidate("https://retry-image")], visible: [], baseline: [] }).ok, true, "Retry UI does not alter image evidence");
 
 const files = [{ fileName: "meo.png" }, { fileName: "bo.jpg" }, { fileName: "style.webp" }];
 assert.equal(runner.resolveReferences({ id: "one", reference_images: "meo|bo.jpg" }, files, 3).length, 2);
+assert.equal(runner.basename("meo.png"), "meo");
 assert.throws(() => runner.resolveReferences({ id: "one", reference_image: "meo" }, [{ fileName: "meo.png" }, { fileName: "meo.jpg" }], 3), /AMBIGUOUS_REFERENCE/);
 assert.throws(() => runner.resolveReferences({ id: "one", reference_images: "meo|bo|style|extra" }, files, 3), /MAX_INPUT_IMAGES/);
 assert.throws(() => runner.resolveReferences({ id: "one", reference_images: "meo|meo" }, files, 3), /DUPLICATE_REFERENCE/);

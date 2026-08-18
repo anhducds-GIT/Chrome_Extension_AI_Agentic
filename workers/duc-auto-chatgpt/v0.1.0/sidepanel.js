@@ -10,7 +10,7 @@
   function controls() { const ready = Boolean(state.workbook && state.prepared); els.validateBtn.disabled = !state.workbook || state.running; els.runBtn.disabled = !ready || state.running; els.stopBtn.disabled = !state.running; els.workbookInput.disabled = state.running; els.referencesInput.disabled = state.running; }
   function renderQueue() {
     const queue = state.prepared?.queue || []; els.queueList.textContent = ""; els.queueSummary.textContent = `${queue.length} job${queue.length === 1 ? "" : "s"}`;
-    for (const item of queue) { const li = document.createElement("li"); li.className = item.status === "RUNNING" ? "current" : item.status.toLowerCase(); li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · ${item.references.map((file) => file.fileName).join(", ")}` : ""} · ${item.status}`; els.queueList.appendChild(li); }
+    for (const item of queue) { const li = document.createElement("li"); li.className = item.status === "RUNNING" ? "current" : item.status.toLowerCase(); li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · ${item.references.map((file) => window.DacRunnerCore.basename(file.fileName)).join(", ")}` : ""} · ${item.status}`; els.queueList.appendChild(li); }
   }
   async function activeTab() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
