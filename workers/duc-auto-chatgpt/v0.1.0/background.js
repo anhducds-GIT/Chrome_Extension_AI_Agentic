@@ -64,23 +64,23 @@ function isAllowedLocalhostOrigin(origin) {
 }
 
 async function pingActiveChatGptTab() {
-  const matchedTabs = await queryChatGptTabs();
   try {
-    const tab = selectChatGptTab(matchedTabs);
-    const result = await sendToChatGpt(tab.id, { type: "DAC_PING" });
+    const receiver = await resolveChatGptReceiver();
     return {
       ok: true,
       operation: "ping",
-      tab_id: tab.id,
-      tab_url: tab.url,
-      matched_tab_count: matchedTabs.length,
-      matched_tabs: summariseTabs(matchedTabs),
-      result
+      tab_id: receiver.tab.id,
+      tab_url: receiver.tab.url,
+      matched_tab_count: receiver.matchedTabs.length,
+      matched_tabs: summariseTabs(receiver.matchedTabs),
+      probe_attempts: receiver.probeAttempts,
+      result: receiver.result
     };
   } catch (error) {
     return failure("CHATGPT_UNAVAILABLE", error?.message || String(error), {
-      matched_tab_count: matchedTabs.length,
-      matched_tabs: summariseTabs(matchedTabs)
+      matched_tab_count: error?.matchedTabs?.length || 0,
+      matched_tabs: summariseTabs(error?.matchedTabs || []),
+      probe_attempts: error?.probeAttempts || []
     });
   }
 }
@@ -165,20 +165,42 @@ async function queryChatGptTabs() {
   return chrome.tabs.query({ url: CHATGPT_URL_PATTERNS });
 }
 
-function selectChatGptTab(tabs) {
-  // Tab-selection algorithm is unchanged (prefer active tab, else first match).
-  const tab = tabs.find((candidate) => candidate.active) || tabs[0];
-  if (!tab?.id) throw new Error("No ChatGPT tab is available. Open chatgpt.com and reload it once.");
-  return tab;
-}
-
 function summariseTabs(tabs) {
   return tabs.map((tab) => ({ tab_id: tab.id, url: tab.url, active: Boolean(tab.active), window_id: tab.windowId }));
 }
 
 async function resolveChatGptTab() {
-  const tabs = await queryChatGptTabs();
-  return selectChatGptTab(tabs);
+  const receiver = await resolveChatGptReceiver();
+  return receiver.tab;
+}
+
+async function resolveChatGptReceiver() {
+  const matchedTabs = await queryChatGptTabs();
+  const probeAttempts = [];
+  const candidates = [...matchedTabs].sort((left, right) => Number(Boolean(right.active)) - Number(Boolean(left.active)));
+
+  for (const tab of candidates) {
+    try {
+      const result = await sendToChatGpt(tab.id, { type: "DAC_PING" });
+      if (result?.ok) return { tab, result, matchedTabs, probeAttempts };
+      probeAttempts.push(tabProbeAttempt(tab, result?.error || "DAC_PING returned a non-success response."));
+    } catch (error) {
+      probeAttempts.push(tabProbeAttempt(tab, error?.message || String(error)));
+    }
+  }
+
+  const unavailable = new Error(
+    matchedTabs.length
+      ? "No matching ChatGPT tab has a reachable DAC receiver."
+      : "No ChatGPT tab is available. Open chatgpt.com and reload it once."
+  );
+  unavailable.matchedTabs = matchedTabs;
+  unavailable.probeAttempts = probeAttempts;
+  throw unavailable;
+}
+
+function tabProbeAttempt(tab, error) {
+  return { tab_id: tab.id, tab_url: tab.url, active: Boolean(tab.active), window_id: tab.windowId, error };
 }
 
 async function sendToChatGpt(tabId, message) {
