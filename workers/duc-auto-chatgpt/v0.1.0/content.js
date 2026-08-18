@@ -143,18 +143,52 @@
     return candidates[candidates.length - 1] || null;
   }
 
+  function attachmentPreviewCount() {
+    return Array.from(document.querySelectorAll([
+      '[data-testid*="attachment"]',
+      '[data-testid*="file-upload"]',
+      '[data-testid*="upload-preview"]',
+      'button[aria-label*="Remove attachment"]',
+      'button[aria-label*="Remove file"]',
+    ].join(", "))).filter(isVisible).length;
+  }
+
+  function uploadIsPending() {
+    return Array.from(document.querySelectorAll([
+      '[data-testid*="uploading"]',
+      '[aria-busy="true"]',
+      '[role="progressbar"]',
+    ].join(", "))).some(isVisible);
+  }
+
+  function fileInputHasReference(fileInput, fileName) {
+    return Array.from(fileInput?.files || []).some((file) => file.name === fileName);
+  }
+
+  async function waitForReferenceImageReady(fileInput, fileName, previousPreviewCount, timeoutMs = 15000) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (STATE.abortRequested) throw new Error("Automation stopped by user.");
+      const previewCreated = attachmentPreviewCount() > previousPreviewCount;
+      if (fileInputHasReference(fileInput, fileName) && previewCreated && !uploadIsPending()) return;
+      await sleep(100);
+    }
+    throw new Error(`Reference image '${fileName}' did not become ready before the prompt was sent.`);
+  }
+
   async function attachReferenceImage(referenceImage) {
     if (!referenceImage?.dataUrl || !referenceImage?.fileName) return;
     // ChatGPT normally keeps this native input visually hidden behind its attach button.
     const fileInput = document.querySelector('input[type="file"]');
     if (!fileInput) throw new Error("ChatGPT image attachment input was not found.");
+    const previousPreviewCount = attachmentPreviewCount();
     const response = await fetch(referenceImage.dataUrl);
     const blob = await response.blob();
     const data = new DataTransfer();
     data.items.add(new File([blob], referenceImage.fileName, { type: blob.type || "image/png" }));
     fileInput.files = data.files;
     fileInput.dispatchEvent(new Event("change", { bubbles: true }));
-    await sleep(750);
+    await waitForReferenceImageReady(fileInput, referenceImage.fileName, previousPreviewCount);
   }
 
   async function waitForCompletion({ beforeCount, timeoutMs, expectImage = false }) {
@@ -180,6 +214,25 @@
       }
 
       if (resultMessage && !stopButton) {
+        const imageUrl = expectImage ? generatedImageUrl(resultMessage) : null;
+        // Image jobs are complete from the post-send assistant boundary, an image,
+        // and the absence of ChatGPT's generation control. They need no text reply.
+        if (expectImage && imageUrl) {
+          return {
+            type: "image",
+            text,
+            char_count: text.length,
+            assistant_message_index: beforeCount,
+            assistant_count_before: beforeCount,
+            assistant_count_after: messages.length,
+            completion: {
+              generation_seen: generationSeen,
+              reason: "image_ready",
+              poll_count: pollCount,
+            },
+            image_url: imageUrl,
+          };
+        }
         if (text === stableText) {
           if (!stableSince) stableSince = Date.now();
         } else {
@@ -189,12 +242,6 @@
 
         // Require 1.5s of stable text from the first assistant message created after the pre-send boundary.
         if (stableText && Date.now() - stableSince >= 1500) {
-          const imageUrl = generatedImageUrl(resultMessage);
-          if (expectImage && !imageUrl) {
-            stableSince = Date.now();
-            await sleep(300);
-            continue;
-          }
           return {
             type: "text",
             text: stableText,
