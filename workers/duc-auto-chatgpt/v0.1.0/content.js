@@ -9,6 +9,15 @@
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+  function emitRuntimeStage(attempt, stage) {
+    if (!attempt?.job_id || !attempt?.attempt_id) return;
+    try {
+      const pending = chrome.runtime.sendMessage({ type: "DAC_IMAGE_RUN_STAGE", job_id: attempt.job_id, attempt_id: attempt.attempt_id, stage });
+      pending?.catch?.(() => {});
+    }
+    catch (_) { /* Runtime telemetry must never affect the guarded job path. */ }
+  }
+
   const isVisible = (el) => {
     if (!el) return false;
     const style = window.getComputedStyle(el);
@@ -306,7 +315,7 @@
     return Boolean(composer && button && !button.disabled && button.getAttribute("aria-disabled") !== "true");
   }
 
-  async function waitForChatReady({ timeoutMs = 30000, safetyCooldownSec = 0, outputVerified = true, requireSendUsable = true } = {}) {
+  async function waitForChatReady({ timeoutMs = 30000, safetyCooldownSec = 0, outputVerified = true } = {}) {
     const deadline = Date.now() + timeoutMs;
     let observer;
     let wake = null;
@@ -319,16 +328,16 @@
         const composer = findComposer();
         const sendButton = findSendButton(composer);
         const blocker = securityBlockerText();
-        const readiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(composer), sendUsable: sendUsable(composer, sendButton), generating: Boolean(findStopButton()), securityBlocker: blocker, outputVerified }, { requireSendUsable });
+        const readiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(composer), sendUsable: sendUsable(composer, sendButton), generating: Boolean(findStopButton()), securityBlocker: blocker, attachmentPending: uploadIsPending(), outputVerified });
         if (readiness === "HARD_STOP") throw new Error(`HARD_STOP: ${blocker}`);
         if (readiness === "READY") {
           if (safetyCooldownSec > 0) await sleep(safetyCooldownSec * 1000);
           const finalComposer = findComposer();
           const finalSendButton = findSendButton(finalComposer);
           const finalBlocker = securityBlockerText();
-          const finalReadiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(finalComposer), sendUsable: sendUsable(finalComposer, finalSendButton), generating: Boolean(findStopButton()), securityBlocker: finalBlocker, outputVerified }, { requireSendUsable });
+          const finalReadiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(finalComposer), sendUsable: sendUsable(finalComposer, finalSendButton), generating: Boolean(findStopButton()), securityBlocker: finalBlocker, attachmentPending: uploadIsPending(), outputVerified });
           if (finalReadiness === "HARD_STOP") throw new Error(`HARD_STOP: ${finalBlocker}`);
-          if (finalReadiness === "READY") return { ok: true, state: requireSendUsable ? "CHAT_READY" : "PRE_SUBMIT_READY", composerFound: true, sendUsable: sendUsable(finalComposer, finalSendButton) };
+          if (finalReadiness === "READY") return { ok: true, state: "IDLE_READY", composerFound: true, sendUsable: sendUsable(finalComposer, finalSendButton) };
         }
         await Promise.race([new Promise((resolve) => { wake = resolve; }), sleep(300)]);
       }
@@ -336,7 +345,7 @@
       observer?.disconnect();
       wake = null;
     }
-    throw new Error(requireSendUsable ? "Timed out waiting for ChatGPT readiness after verified output." : "Timed out waiting for an idle ChatGPT composer before prompt submission.");
+    throw new Error("Timed out waiting for an idle ChatGPT composer.");
   }
 
   async function runPrompt(prompt, timeoutMs, referenceImages = [], expectImage = false, requestAttempt = null) {
@@ -355,6 +364,7 @@
         throw new Error("ChatGPT composer not found. Open a normal chat page and retry.");
       }
 
+      emitRuntimeStage(requestAttempt, referenceImages.length ? "ATTACHING_REFS" : "SENDING");
       await attachReferenceImages(referenceImages);
       const beforeCount = assistantMessages().length;
       const inputEvidence = referenceEvidence(referenceImages);
@@ -364,14 +374,17 @@
       await sleep(150);
 
       const sendButton = await waitForSendButtonReady(composer);
+      emitRuntimeStage(requestAttempt, "SENDING");
       sendButton.click();
       if (requestAttempt) { requestAttempt.phase = "SUBMITTED"; requestAttempt.submittedAt = new Date().toISOString(); }
+      emitRuntimeStage(requestAttempt, "GENERATING");
 
       // Let ChatGPT process the click before completion polling.
       await sleep(500);
 
       const result = await waitForCompletion({ beforeCount, timeoutMs, expectImage, imageBaseline, inputEvidence, hasReferences: referenceImages.length > 0 });
       if (result?.image_url && requestAttempt) requestAttempt.phase = "OUTPUT_DETECTED";
+      if (result?.image_url) emitRuntimeStage(requestAttempt, "OUTPUT_DETECTED");
       return result;
     } finally {
       STATE.busy = false;
@@ -386,6 +399,7 @@
     if (!window.DacAttemptIdentity.same(attempt, requestAttempt) || !window.DacAttemptIdentity.submitted(attempt) || !attempt.expectImage) throw new Error("ATTEMPT_ID_MISMATCH: no matching submitted image attempt is available for reconciliation.");
     const result = await waitForCompletion({ beforeCount: attempt.beforeCount, timeoutMs, expectImage: true, imageBaseline: attempt.imageBaseline, inputEvidence: attempt.inputEvidence, hasReferences: attempt.hasReferences });
     if (result?.image_url) attempt.phase = "OUTPUT_DETECTED";
+    if (result?.image_url) emitRuntimeStage(attempt, "OUTPUT_DETECTED");
     return result;
   }
 
@@ -432,7 +446,7 @@
     if (message.type === "DAC_WAIT_CHAT_READY") {
       const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 900000));
       const safetyCooldownSec = Math.max(0, Math.min(Number(message.safetyCooldownSec) || 0, 120));
-      waitForChatReady({ timeoutMs, safetyCooldownSec, outputVerified: message.outputVerified !== false, requireSendUsable: message.requireSendUsable !== false })
+      waitForChatReady({ timeoutMs, safetyCooldownSec, outputVerified: message.outputVerified !== false })
         .then((result) => sendResponse(result))
         .catch((error) => sendResponse({ ok: false, error: error?.message || String(error) }));
       return true;

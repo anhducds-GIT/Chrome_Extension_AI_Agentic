@@ -9,13 +9,13 @@ const sidePanelSource = fs.readFileSync(new URL("../sidepanel.js", import.meta.u
 const contentSource = fs.readFileSync(new URL("../content.js", import.meta.url), "utf8");
 
 const idleEmptyComposer = { composerFound: true, sendUsable: false, generating: false, securityBlocker: null, outputVerified: true };
-assert.equal(readiness.evaluate(idleEmptyComposer, { requireSendUsable: false }), "READY", "an idle empty composer is ready before prompt insertion");
-assert.equal(readiness.evaluate({ ...idleEmptyComposer, generating: true }, { requireSendUsable: false }), "GENERATING", "generation blocks pre-submit readiness");
-assert.equal(readiness.evaluate({ ...idleEmptyComposer, securityBlocker: "CAPTCHA" }, { requireSendUsable: false }), "HARD_STOP", "security blockers remain hard stops");
-assert.equal(readiness.evaluate(idleEmptyComposer), "OUTPUT_READY", "post-output CHAT_READY still requires a usable Send button");
-assert.equal(readiness.evaluate({ ...idleEmptyComposer, sendUsable: true }), "READY", "post-output readiness succeeds only once Send is usable");
-assert.match(sidePanelSource, /async function gateNextJob[\s\S]*?waitForChatReady\(item, \{ requireSendUsable: false \}\)/, "only the pre-submit gate opts out of Send usability");
-assert.match(sidePanelSource, /async function finishDetectedOutput[\s\S]*?await waitForChatReady\(item\);/, "post-output CHAT_READY retains the strict default");
-assert.match(contentSource, /requireSendUsable: message\.requireSendUsable !== false/, "content receiver accepts the explicit pre-submit readiness policy");
+assert.equal(readiness.evaluate(idleEmptyComposer), "READY", "an idle empty composer is ready before prompt insertion");
+assert.equal(readiness.evaluate({ ...idleEmptyComposer, generating: true }), "GENERATING", "generation blocks pre-submit readiness");
+assert.equal(readiness.evaluate({ ...idleEmptyComposer, securityBlocker: "CAPTCHA" }), "HARD_STOP", "security blockers remain hard stops");
+assert.equal(readiness.evaluate({ ...idleEmptyComposer, attachmentPending: true }), "WAITING_UPLOAD", "unresolved attachment upload blocks idle readiness");
+assert.equal(readiness.evaluate(idleEmptyComposer), "READY", "post-output idle readiness accepts an empty composer without Send usability");
+assert.match(sidePanelSource, /async function gateNextJob[\s\S]*?await waitForChatReady\(item\);/, "pre-submit gate uses the shared idle-ready policy");
+assert.match(sidePanelSource, /async function finishDetectedOutput[\s\S]*?await waitForChatReady\(item\);/, "post-output finalization uses the same idle-ready policy");
+assert.match(contentSource, /attachmentPending: uploadIsPending\(\)/, "content readiness blocks an unresolved upload");
 
 console.log("chat readiness core smoke tests: PASS");

@@ -153,7 +153,7 @@
     if (signal?.securityBlocker) return "HARD_STOP";
     if (signal?.generating) return "GENERATING";
     if (!signal?.outputVerified) return "OUTPUT_READY";
-    if (!signal?.composerFound || !signal?.sendUsable) return "OUTPUT_READY";
+    if (!signal?.composerFound) return "OUTPUT_READY";
     return "CHAT_READY";
   }
   const api = { DEFAULTS, ATTEMPT_PHASES, FAILURE_TYPES, PRE_SUBMIT_RETRYABLE_FAILURES, basename, referenceTokens, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, retryCooldown, resultWorkbookName, delaySeconds, countdownValues, planSummary, prepare, selectQueue, readinessState };

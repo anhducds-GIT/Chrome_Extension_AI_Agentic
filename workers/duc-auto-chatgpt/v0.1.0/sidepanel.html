@@ -13,6 +13,13 @@
       <span id="statusChip" class="chip idle">IDLE</span>
     </header>
 
+    <section class="card runtime-card" id="runtimeStateCard">
+      <div class="row spread"><strong>CURRENT JOB</strong><span id="currentStage" class="stage">—</span></div>
+      <div id="currentJobId" class="current-job">—</div>
+      <div id="currentTiming" class="hint">No run in progress.</div>
+      <div id="currentSaved" class="saved-output" hidden></div>
+    </section>
+
     <section class="card">
       <label for="workbookInput"><strong>Open XLSX</strong></label>
       <input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
@@ -108,6 +115,7 @@
   </main>
   <script src="xlsx-codec.js"></script>
   <script src="runner-core.js"></script>
+  <script src="run-state-core.js"></script>
   <script src="output-location-core.js"></script>
   <script src="sidepanel.js"></script>
 </body>

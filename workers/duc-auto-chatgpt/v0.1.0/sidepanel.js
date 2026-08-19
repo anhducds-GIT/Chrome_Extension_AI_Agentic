@@ -1,15 +1,16 @@
 (() => {
   "use strict";
-  const ids = ["workbookInput", "referencesInput", "validateBtn", "runBtn", "runPendingBtn", "runFailedBtn", "retrySelectedBtn", "stopBtn", "statusChip", "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText", "nextTaskCard", "nextTaskId", "nextTaskCountdown", "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "outputPermissionText", "imageOutputFolderInput", "resultLocationMode", "resultDownloadsFolderInput", "resultDownloadsFolderLabel", "resultFilenameInput", "chooseImageFolderBtn", "useSourceFolderBtn", "changeImageFolderBtn", "chooseResultFolderBtn", "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput", "continueOnErrorInput", "rerunDoneInput"];
+  const ids = ["workbookInput", "referencesInput", "validateBtn", "runBtn", "runPendingBtn", "runFailedBtn", "retrySelectedBtn", "stopBtn", "statusChip", "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText", "currentJobId", "currentStage", "currentTiming", "currentSaved", "nextTaskCard", "nextTaskId", "nextTaskCountdown", "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "outputPermissionText", "imageOutputFolderInput", "resultLocationMode", "resultDownloadsFolderInput", "resultDownloadsFolderLabel", "resultFilenameInput", "chooseImageFolderBtn", "useSourceFolderBtn", "changeImageFolderBtn", "chooseResultFolderBtn", "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput", "continueOnErrorInput", "rerunDoneInput"];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
-  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, stopRequested: false, terminal: 0, runId: null, attemptSerial: 0, auditEvents: [], auditFile: "" };
+  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, stopRequested: false, terminal: 0, runId: null, attemptSerial: 0, auditEvents: [], auditFile: "", currentItem: null, currentStage: "—", currentReason: "No run in progress.", currentStartedAt: null, runtimeTicker: null };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function setStatus(status, label = status) { els.statusChip.className = `chip ${status.toLowerCase()}`; els.statusChip.textContent = label; }
   function log(text, kind = "") { const li = document.createElement("li"); li.className = kind; li.textContent = `${new Date().toLocaleTimeString()} · ${text}`; els.logList.prepend(li); }
   function progress(detail) {
     const plan = state.prepared ? window.DacRunnerCore.planSummary(state.prepared.queue, state.prepared.settings) : null;
-    els.progressText.textContent = plan ? `Success ${plan.success_jobs}/${plan.total_jobs} · Running ${plan.running_jobs} · Reconciling ${plan.reconciling_jobs} · Pending ${plan.pending_jobs} · Failed ${plan.failed_jobs}${plan.interrupted_jobs ? ` · Interrupted ${plan.interrupted_jobs}` : ""}` : "0 / 0";
+    const finalizing = state.prepared ? state.prepared.queue.filter((item) => item.result_file && !["SUCCESS", "FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)).length : 0;
+    els.progressText.textContent = plan ? `Success ${plan.success_jobs}/${plan.total_jobs} · Saved/finalizing ${finalizing} · Running ${plan.running_jobs} · Pending ${plan.pending_jobs} · Failed ${plan.failed_jobs}${plan.interrupted_jobs ? ` · Interrupted ${plan.interrupted_jobs}` : ""}` : "0 / 0";
     els.progressDetail.textContent = detail;
   }
   function promptFingerprint(prompt) {
@@ -26,6 +27,25 @@
     state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
+  function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
+  function renderRuntime() {
+    const item = state.currentItem;
+    els.currentJobId.textContent = item ? item.job.id : "—";
+    els.currentStage.textContent = item ? state.currentStage || window.DacRunState.stageFor(item) : "—";
+    const elapsed = state.currentStartedAt ? Math.floor((Date.now() - state.currentStartedAt) / 1000) : 0;
+    const budget = item?.settings?.timeout_sec;
+    els.currentTiming.textContent = item ? `Attempt ${item.attempt_count}/${1 + item.settings.max_retries} · Elapsed ${window.DacRunState.formatDuration(elapsed)}${budget ? ` · Stage budget ${window.DacRunState.formatDuration(Math.max(0, budget - elapsed))} remaining` : ""}${state.currentReason ? ` · ${state.currentReason}` : ""}` : state.currentReason;
+    const saved = item?.result_file || "";
+    els.currentSaved.hidden = !saved;
+    els.currentSaved.textContent = saved ? `SAVED ✓ ${saved}` : "";
+  }
+  function setCurrent(item, stage, reason = "") {
+    if (item && state.currentItem !== item) state.currentStartedAt = Date.now();
+    state.currentItem = item || null; state.currentStage = stage || (item ? window.DacRunState.stageFor(item) : "—"); state.currentReason = reason || "";
+    renderRuntime();
+  }
+  function startRuntimeTicker() { clearInterval(state.runtimeTicker); state.runtimeTicker = setInterval(renderRuntime, 1000); }
+  function stopRuntimeTicker() { clearInterval(state.runtimeTicker); state.runtimeTicker = null; renderRuntime(); }
 
   function controls() {
     const ready = Boolean(state.workbook && state.prepared && state.outputSettings);
@@ -47,7 +67,7 @@
     for (const item of queue) {
       const li = document.createElement("li");
       li.className = ["RUNNING", "RECONCILING"].includes(item.status) ? "current" : item.status.toLowerCase();
-      li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · refs: ${item.references.map((file) => file.alias || window.DacRunnerCore.basename(file.fileName)).join(", ")}` : " · refs: none"} · ${item.status} · phase ${item.phase || "PRE_SUBMIT"} · attempt ${item.attempt_count}/${1 + item.settings.max_retries}${item.result_file ? ` · saved: ${item.result_file}` : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
+      li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · refs: ${item.references.map((file) => file.alias || window.DacRunnerCore.basename(file.fileName)).join(", ")}` : " · refs: none"} · ${item.status} · ${window.DacRunState.stageFor(item)} · attempt ${item.attempt_count}/${1 + item.settings.max_retries}${item.result_file ? ` · SAVED ✓ ${item.result_file}` : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
       li.addEventListener("click", () => { state.selectedJobId = item.job.id; renderQueue(); controls(); });
       if (state.selectedJobId === item.job.id) {
         const details = document.createElement("details"); details.open = true;
@@ -150,6 +170,7 @@
     try {
       state.workbook = await window.DacXlsx.open(els.workbookInput.files?.[0]);
       state.outputSettings = window.DacOutputLocation.fromWorkbook(state.workbook.config, state.workbook.fileName);
+      setCurrent(null, "—", "Review the Run Plan before starting.");
       await prepare();
       log(`Opened ${state.workbook.fileName}.`);
     } catch (error) {
@@ -161,7 +182,7 @@
     if (!state.workbook) return;
     try {
       state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
-      state.terminal = state.prepared.queue.filter((item) => item.status === "DONE").length;
+      state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS" || item.status === "DONE").length;
       const settings = state.prepared.settings;
       els.workbookText.textContent = `${state.workbook.fileName} · ${state.prepared.queue.length} jobs · ${settings.delay_min_sec}-${settings.delay_max_sec}s delay`;
       els.timeoutSecInput.value = settings.timeout_sec; els.maxRetriesInput.value = settings.max_retries; els.safetyCooldownInput.value = settings.safety_cooldown_sec; els.maxInputImagesInput.value = settings.max_input_images; els.continueOnErrorInput.value = String(settings.continue_on_error); els.rerunDoneInput.value = String(settings.rerun_done);
@@ -358,17 +379,16 @@
     });
   }
 
-  async function countdown(seconds) {
-    const item = state.prepared.queue.find((candidate) => candidate.status === "PENDING");
+  async function countdown(seconds, item) {
     for (const remaining of window.DacRunnerCore.countdownValues(seconds)) {
       if (state.stopRequested) break;
-      nextTask(item, `Starts in 00:${String(remaining).padStart(2, "0")}`);
+      nextTask(item, `Inter-job delay · starts in ${window.DacRunState.formatDuration(remaining)}`);
       await sleep(1000);
     }
   }
 
-  async function waitForChatReady(item, { requireSendUsable = true } = {}) {
-    const response = await send({ type: "DAC_WAIT_CHAT_READY", timeoutMs: item.settings.timeout_sec * 1000, safetyCooldownSec: item.settings.safety_cooldown_sec, outputVerified: true, requireSendUsable });
+  async function waitForChatReady(item) {
+    const response = await send({ type: "DAC_WAIT_CHAT_READY", timeoutMs: item.settings.timeout_sec * 1000, safetyCooldownSec: item.settings.safety_cooldown_sec, outputVerified: true });
     if (!response?.ok) throw new Error(response?.error || "ChatGPT did not become ready for the next job.");
   }
 
@@ -384,14 +404,17 @@
     update(item, { status: "INTERRUPTED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message, completed_at: now });
     audit("FAILURE", item, { message }); audit("JOB_INTERRUPTED", item, { message });
     log(`${item.job.id} interrupted: ${failureType}: ${message}`, "error");
-    renderQueue();
+    setCurrent(item, "INTERRUPTED", failureType);
+    renderQueue(); progress(`${item.job.id} interrupted after ${item.phase}.`);
   }
 
   async function finishDetectedOutput(item, result, effectiveOutput) {
     item.phase = "OUTPUT_DETECTED";
+    item.runtime_stage = "OUTPUT_DETECTED"; setCurrent(item, item.runtime_stage, "Attributable generated image found.");
     audit("OUTPUT_DETECTED", item);
     update(item, { status: "RUNNING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count });
     try {
+      item.runtime_stage = "SAVING"; setCurrent(item, item.runtime_stage, "Writing generated image to the configured output.");
       if (!result?.image_url) throw new Error("No attributable generated image was found.");
       if (item.references.some((reference) => reference.dataUrl === result.image_url)) throw new Error("INPUT_IMAGE_FALSE_POSITIVE: output URL matches a selected reference image.");
       const accepted = await saveGeneratedImage(result.image_url, item.job.id, imageLocationFor(item, effectiveOutput));
@@ -400,17 +423,20 @@
       const outputSavedAt = new Date().toISOString();
       update(item, { status: "RUNNING", attempt_phase: item.phase, result_file: accepted.filename, result_download_id: accepted.download_id ?? "", output_saved_at: outputSavedAt, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
       audit("OUTPUT_SAVED", item);
-      renderQueue();
+      item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image checkpoint recorded; waiting for ChatGPT to become idle.");
+      renderQueue(); progress(`SAVED ✓ ${accepted.filename}`);
     } catch (error) {
       markInterrupted(item, window.DacRunnerCore.classifyFailure(error, item.phase), messageOf(error));
       return { completed: true, halted: true };
     }
     try {
+      item.runtime_stage = "FINALIZING / WAITING_IDLE"; setCurrent(item, item.runtime_stage, "No new prompt can start until ChatGPT is idle.");
       await waitForChatReady(item);
       item.phase = "CHAT_READY"; audit("CHAT_READY", item);
       item.phase = "SUCCESS";
+      item.runtime_stage = "SUCCESS"; setCurrent(item, item.runtime_stage, "Saved image and idle readiness confirmed.");
       update(item, { status: "SUCCESS", attempt_phase: item.phase, result_file: item.result_file, result_download_id: item.result_download_id, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", completed_at: new Date().toISOString() });
-      audit("JOB_SUCCESS", item); log(`${item.job.id} success after CHAT_READY.`, "done"); renderQueue();
+      audit("JOB_SUCCESS", item); log(`${item.job.id} success after CHAT_READY.`, "done"); renderQueue(); progress(`${item.job.id} complete; saved output is checkpointed.`);
       return { completed: true, halted: false };
     } catch (error) {
       markInterrupted(item, window.DacRunnerCore.classifyFailure(error, "OUTPUT_SAVED"), messageOf(error));
@@ -438,10 +464,11 @@
 
   async function gateNextJob(item) {
     item.status = "RECONCILING"; item.phase = "PRE_SUBMIT";
+    item.runtime_stage = "WAITING_READY"; setCurrent(item, item.runtime_stage, "Checking the idle ChatGPT composer."); nextTask(nextEligible(item.job.id), "Waiting for current job to become ready.");
     update(item, { status: "RECONCILING", attempt_phase: item.phase, failure_type: "", last_error: "", error: "" });
     audit("RECONCILE_START", item, { message: "Pre-submit ChatGPT readiness gate." }); renderQueue();
     try {
-      await waitForChatReady(item, { requireSendUsable: false });
+      await waitForChatReady(item);
       audit("RECONCILE_RESULT", item, { message: "ChatGPT is idle and ready." });
       return true;
     } catch (error) {
@@ -458,23 +485,27 @@
     if (!runQueue.length) { setStatus("ERROR", "NOT READY"); progress(`No ${mode} jobs are eligible.`); controls(); return; }
     state.running = true; state.stopRequested = false; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     state.runId = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`; state.attemptSerial = 0; state.auditEvents = []; state.auditFile = "";
+    els.logList.textContent = "";
+    startRuntimeTicker();
     const target = await activeTab().catch(() => null);
-    audit("RUN_START", null, { target_url: target?.url || null });
+    audit("RUN_START", null, { target_url: target?.url || null }); log("Run started; visible log is scoped to this run.");
     setStatus("RUNNING"); renderQueue(); controls();
     const settings = state.prepared.settings; let halted = false;
     try {
       snapshotOutputSettings();
-      for (const item of runQueue) {
+      for (let runIndex = 0; runIndex < runQueue.length; runIndex += 1) {
+        const item = runQueue[runIndex];
         if (state.stopRequested) break;
         let completed = false;
         while (!completed && !state.stopRequested) {
           if (!(await gateNextJob(item))) { halted = true; completed = true; break; }
           item.status = "RUNNING"; item.phase = "PRE_SUBMIT"; item.attempt_count += 1;
+          item.runtime_stage = item.references.length ? "ATTACHING_REFS" : "SENDING";
           item.attempt_id = nextAttemptId();
           const rerunReset = item.deliberate_rerun ? { result_file: "", result_download_id: "", output_saved_at: "" } : {};
           update(item, { ...rerunReset, status: "RUNNING", attempt_id: item.attempt_id, attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
           item.deliberate_rerun = false;
-          audit("JOB_START", item); renderQueue(); nextTask(item, `Attempt ${item.attempt_count}/${1 + item.settings.max_retries}`); progress(`Running ${item.job.id}…`);
+          audit("JOB_START", item); setCurrent(item, item.runtime_stage, item.references.length ? `Preparing ${item.references.length} reference image(s).` : "Preparing prompt submission."); renderQueue(); nextTask(nextEligible(item.job.id), "Waiting for current job to finish."); progress(`Running ${item.job.id}…`);
           let response;
           try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
           catch (error) { response = { ok: false, error: messageOf(error), attempt: { job_id: item.job.id, attempt_id: item.attempt_id, phase: "PRE_SUBMIT", submittedAt: null } }; }
@@ -511,6 +542,12 @@
         }
         state.terminal += 1; renderQueue();
         if (halted) break;
+        const nextItem = runQueue[runIndex + 1] || null;
+        if (!state.stopRequested && item.status === "SUCCESS" && nextItem) {
+          const delay = window.DacRunnerCore.delaySeconds(settings);
+          nextTask(nextItem, `Inter-job delay · ${delay}s before readiness check.`);
+          await countdown(delay, nextItem);
+        }
       }
       nextTask(null, "—"); setStatus(state.stopRequested ? "IDLE" : halted ? "ERROR" : "DONE", state.stopRequested ? "STOPPED" : halted ? "HALTED" : "DONE"); progress(state.stopRequested ? "Stopped. No later jobs were submitted." : halted ? "Batch halted after a protected terminal state." : "Queue complete.");
     } finally {
@@ -520,8 +557,19 @@
       try { await saveLedger(effectiveOutput.result); }
       catch (error) { setStatus("ERROR", "RESULT NOT SAVED"); progress(`Result XLSX was not written: ${messageOf(error)}`); log(`Result XLSX failed: ${messageOf(error)}`, "error"); }
       state.running = false; state.stopRequested = false; renderQueue(); controls();
+      stopRuntimeTicker();
     }
   }
+
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type !== "DAC_IMAGE_RUN_STAGE") return false;
+    const item = state.currentItem;
+    if (!item || message.job_id !== item.job.id || message.attempt_id !== item.attempt_id) return false;
+    item.runtime_stage = message.stage;
+    setCurrent(item, message.stage, message.stage === "GENERATING" ? "ChatGPT is generating; no next prompt will be sent." : "Live stage update from the ChatGPT receiver.");
+    renderQueue(); progress(`${item.job.id}: ${message.stage}.`);
+    return false;
+  });
 
   async function stop() { state.stopRequested = true; progress("Stopping current operation…"); try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop prevents further jobs */ } }
 
@@ -543,5 +591,5 @@
   els.retrySelectedBtn.addEventListener("click", () => run("selected"));
   els.stopBtn.addEventListener("click", stop);
   els.clearLogsBtn.addEventListener("click", () => { els.logList.textContent = ""; });
-  renderOutput(); controls();
+  renderOutput(); renderRuntime(); controls();
 })();

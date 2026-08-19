@@ -85,5 +85,9 @@ button:disabled { opacity: .45; cursor: default; }
 .queue-list li.done, .queue-list li.success { color: #a7f3d0; }
 .queue-list li.interrupted { color: #fde68a; }
 .queue-list li.error { color: #fca5a5; }
+.runtime-card { border-color: #285e52; }
+.current-job { margin-top: 7px; font-weight: 800; overflow-wrap: anywhere; }
+.stage { color: #a7f3d0; font-size: 11px; font-weight: 800; text-align: right; }
+.saved-output { margin-top: 7px; color: #a7f3d0; font-size: 12px; font-weight: 700; overflow-wrap: anywhere; }
 
 footer { line-height: 1.4; padding: 2px 2px 8px; }
