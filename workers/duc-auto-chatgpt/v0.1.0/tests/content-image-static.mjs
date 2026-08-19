@@ -3,9 +3,16 @@ import fs from "node:fs";
 
 const source = fs.readFileSync(new URL("../content.js", import.meta.url), "utf8");
 
-assert.match(source, /if \(expectImage && !stopButton\) \{/);
+assert.match(source, /if \(expectImage\) \{/);
+assert.match(source, /const evaluated = imageDecision\(boundary, inputEvidence\)/);
+assert.match(source, /if \(!stopButton && decision\.ok\)/);
+assert.match(source, /stop_visible: Boolean\(stopButton\)/);
+assert.match(source, /OUTPUT_DETECTION_TIMEOUT/);
+assert.match(source, /captureBoundary\(inputEvidence\)/);
+assert.match(source, /boundary: attempt\.boundary/);
+assert.match(source, /attemptSnapshot\(STATE\.activeAttempt\)/, "reconciliation returns the owned active attempt telemetry");
 assert.ok(
-  source.indexOf("if (expectImage && !stopButton)") < source.indexOf("if (text === stableText)"),
+  source.indexOf("if (expectImage)") < source.indexOf("if (text === stableText)"),
   "image-only completion must precede the text-stability condition"
 );
 assert.match(source, /reason: "image_ready"/);

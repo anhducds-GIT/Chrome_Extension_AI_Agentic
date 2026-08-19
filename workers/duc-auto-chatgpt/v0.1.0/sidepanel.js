@@ -24,7 +24,8 @@
   }
   function audit(event, item = null, values = {}) {
     if (!state.runId) return;
-    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null });
+    const telemetry = globalThis.DacAttemptTelemetry?.auditFields(item) || {};
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
@@ -304,7 +305,14 @@
     if (Object.hasOwn(values, "result_download_id")) item.result_download_id = values.result_download_id;
     if (Object.hasOwn(values, "failure_type")) item.failure_type = values.failure_type;
     if (Object.hasOwn(values, "last_error")) item.last_error = values.last_error;
+    if (Object.hasOwn(values, "submitted_at")) item.submitted_at = values.submitted_at || "";
+    if (Object.hasOwn(values, "detection_diagnostics")) item.detection_diagnostics = values.detection_diagnostics || "";
     window.DacXlsx.updateJob(state.workbook, item.job, values);
+  }
+
+  function applyAttemptTelemetry(item, attempt) {
+    const fields = globalThis.DacAttemptTelemetry?.fieldsFromAttempt(attempt) || {};
+    if (Object.keys(fields).length) update(item, fields);
   }
 
   function snapshotOutputSettings(actualResultFilename = null, actualAuditFilename = state.auditFile || null) {
@@ -452,6 +460,7 @@
     try { response = await send({ type: "DAC_RECONCILE_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, timeoutMs: Math.min(item.settings.timeout_sec * 1000, 60000) }); }
     catch (error) { markInterrupted(item, "POST_SUBMIT_UNCERTAIN", messageOf(error)); return { completed: true, halted: true }; }
     if (!matchesAttempt(response, item)) { markInterrupted(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch during reconciliation."); return { completed: true, halted: true }; }
+    applyAttemptTelemetry(item, response.attempt);
     if (response?.ok && response.result?.image_url) {
       audit("RECONCILE_RESULT", item, { message: "Late attributable output found." });
       return finishDetectedOutput(item, response.result, effectiveOutput);
@@ -510,6 +519,7 @@
           try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
           catch (error) { response = { ok: false, error: messageOf(error), attempt: { job_id: item.job.id, attempt_id: item.attempt_id, phase: "PRE_SUBMIT", submittedAt: null } }; }
           if (!matchesAttempt(response, item)) { markInterrupted(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch from ChatGPT content receiver."); completed = true; halted = true; break; }
+          applyAttemptTelemetry(item, response.attempt);
           if (response?.attempt?.submittedAt || response?.attempt?.phase === "SUBMITTED" || response?.attempt?.phase === "OUTPUT_DETECTED") {
             item.phase = "SUBMITTED";
             if (item.references.length) audit("ATTACHMENTS_READY", item);

@@ -8,6 +8,19 @@
   };
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const nodeIds = new WeakMap();
+  let nextNodeId = 1;
+
+  function shortHash(value) {
+    let hash = 2166136261;
+    for (const character of String(value || "")) { hash ^= character.charCodeAt(0); hash = Math.imul(hash, 16777619); }
+    return (hash >>> 0).toString(16).padStart(8, "0");
+  }
+  function nodeId(node, prefix) {
+    if (!node) return "";
+    if (!nodeIds.has(node)) nodeIds.set(node, shortHash(`dac-node:${prefix}:${nextNodeId++}`));
+    return nodeIds.get(node);
+  }
 
   function emitRuntimeStage(attempt, stage) {
     if (!attempt?.job_id || !attempt?.attempt_id) return;
@@ -74,6 +87,12 @@
 
   function assistantMessages() {
     return Array.from(document.querySelectorAll('[data-message-author-role="assistant"]'));
+  }
+
+  function assistantFingerprint(message) {
+    const explicitId = message?.getAttribute("data-message-id") || message?.id || "";
+    const images = Array.from(message?.querySelectorAll?.("img") || []).map((image) => image.currentSrc || image.src || "").join("|");
+    return shortHash(`${explicitId}|${assistantMessageText(message).slice(0, 256)}|${images}`);
   }
 
   function securityBlockerText() {
@@ -159,7 +178,8 @@
       const role = image.closest('[data-message-author-role="assistant"]') ? "assistant" : image.closest('[data-message-author-role="user"]') ? "user" : "unknown";
       const label = `${image.alt || ""} ${image.getAttribute("aria-label") || ""}`.toLowerCase();
       const namedReference = Array.from(inputEvidence.names || []).some((name) => label.includes(name));
-      return { source, role, input: role === "user" || inputEvidence.sources?.has(source) || namedReference, visible: isVisible(image) && rect.width >= 64 && rect.height >= 64, ready: image.complete && image.naturalWidth > 0 };
+      const attachmentPreview = Boolean(image.closest('form, [data-testid*="attachment"], [data-testid*="upload-preview"], [data-testid*="file-upload"]'));
+      return { source, source_id: shortHash(source), node_id: nodeId(image, "image"), role, input: role === "user" || attachmentPreview || inputEvidence.sources?.has(source) || namedReference, visible: isVisible(image) && rect.width >= 64 && rect.height >= 64, ready: image.complete && image.naturalWidth > 0 };
     }).filter((candidate) => /^(https:|data:image\/|blob:)/i.test(candidate.source));
   }
 
@@ -170,9 +190,23 @@
     return { names, sources };
   }
 
-  function imageDecision(resultMessage, imageBaseline, inputEvidence, hasReferences) {
-    return window.DacImageEvidence.selectAttributableImage({ postTurn: resultMessage ? imageCandidates(resultMessage, inputEvidence) : [], visible: imageCandidates(document, inputEvidence), baseline: imageBaseline, hasReferences });
+  function captureBoundary(inputEvidence) {
+    const assistants = assistantMessages();
+    const images = imageCandidates(document, inputEvidence);
+    return Object.freeze({ assistant_count: assistants.length, assistant_fingerprints: assistants.map(assistantFingerprint), assistant_node_ids: assistants.map((message) => nodeId(message, "assistant")), images, image_source_ids: images.map((candidate) => candidate.source_id), image_node_ids: images.map((candidate) => candidate.node_id) });
   }
+  function newAssistantMessages(boundary) {
+    const known = new Set(boundary?.assistant_fingerprints || []);
+    return assistantMessages().filter((message) => !known.has(assistantFingerprint(message)));
+  }
+  function imageDecision(boundary, inputEvidence) {
+    const postTurnMessages = newAssistantMessages(boundary);
+    return { decision: window.DacImageEvidence.selectAttributableImage({ postTurn: postTurnMessages.flatMap((message) => imageCandidates(message, inputEvidence)), visible: imageCandidates(document, inputEvidence), baseline: boundary?.images || [] }), assistant_count_after: assistantMessages().length, new_assistant_fingerprints: postTurnMessages.map(assistantFingerprint) };
+  }
+  function boundaryTelemetry(boundary) {
+    return { assistant_count_before: boundary?.assistant_count || 0, assistant_node_ids: boundary?.assistant_node_ids || [], assistant_fingerprints: boundary?.assistant_fingerprints || [], baseline_image_count: boundary?.images?.length || 0, baseline_source_ids: boundary?.image_source_ids || [], baseline_image_node_ids: boundary?.image_node_ids || [] };
+  }
+  function recordDetection(attempt, values) { if (attempt) attempt.detection = values; }
 
   function attachmentPreviewCount() {
     return Array.from(document.querySelectorAll([
@@ -229,13 +263,13 @@
     await waitForReferenceImagesReady(fileInput, images, previousPreviewCount);
   }
 
-  async function waitForCompletion({ beforeCount, timeoutMs, expectImage = false, imageBaseline = [], inputEvidence, hasReferences = false }) {
+  async function waitForCompletion({ boundary, timeoutMs, expectImage = false, inputEvidence, attempt = null }) {
     const startedAt = Date.now();
     let generationSeen = false;
     let stableText = "";
     let stableSince = 0;
     let pollCount = 0;
-    let ambiguousExistingMessageChange = false;
+    let lastDetection = { ...boundaryTelemetry(boundary), stop_visible: false, generating: false, decision_reason: "NOT_EVALUATED" };
 
     while (Date.now() - startedAt < timeoutMs) {
       pollCount += 1;
@@ -247,27 +281,30 @@
       if (stopButton) generationSeen = true;
 
       const messages = assistantMessages();
-      const resultMessage = messages[beforeCount] || null;
+      const newMessages = newAssistantMessages(boundary);
+      const resultMessage = newMessages.at(-1) || null;
       const text = assistantMessageText(resultMessage);
-      if (!resultMessage && messages.length && latestAssistantText()) {
-        ambiguousExistingMessageChange = true;
-      }
 
-      // Image fallback is intentionally independent of an assistant-message container.
-      // With no resultMessage it receives only the global pre-send baseline diff.
-      if (expectImage && !stopButton) {
-        const decision = imageDecision(resultMessage, imageBaseline, inputEvidence, hasReferences);
-        if (decision.ok) {
+      // Evaluate on every poll, including while Stop is visible, so a timeout
+      // can explain whether generation state or attribution rejected the image.
+      if (expectImage) {
+        const evaluated = imageDecision(boundary, inputEvidence);
+        const decision = evaluated.decision;
+        const diagnostics = decision.diagnostics || {};
+        lastDetection = { ...boundaryTelemetry(boundary), assistant_count_after: evaluated.assistant_count_after, new_assistant_fingerprints: evaluated.new_assistant_fingerprints, stop_visible: Boolean(stopButton), generating: Boolean(stopButton), candidate_counts: { post_turn: diagnostics.post_turn || null, fresh: diagnostics.fresh || null }, baseline_vs_fresh: { baseline: diagnostics.baseline_count ?? boundary?.images?.length ?? 0, fresh: diagnostics.fresh?.total ?? 0 }, chosen_attribution: decision.attribution || null, decision_reason: decision.ok ? null : decision.reason || "NO_NEW_IMAGE", decision: diagnostics };
+        recordDetection(attempt, lastDetection);
+        if (!stopButton && decision.ok) {
           return {
             type: "image",
             text,
             char_count: text.length,
-            assistant_message_index: resultMessage ? beforeCount : null,
-            assistant_count_before: beforeCount,
+            assistant_message_index: resultMessage ? messages.indexOf(resultMessage) : null,
+            assistant_count_before: boundary?.assistant_count || 0,
             assistant_count_after: messages.length,
             completion: { generation_seen: generationSeen, reason: "image_ready", poll_count: pollCount },
             image_url: decision.candidate.source,
             image_attribution: decision.attribution,
+            detection: lastDetection,
           };
         }
       }
@@ -287,8 +324,8 @@
             type: "text",
             text: stableText,
             char_count: stableText.length,
-            assistant_message_index: beforeCount,
-            assistant_count_before: beforeCount,
+            assistant_message_index: messages.indexOf(resultMessage),
+            assistant_count_before: boundary?.assistant_count || 0,
             assistant_count_after: messages.length,
             completion: {
               generation_seen: generationSeen,
@@ -305,10 +342,10 @@
       await sleep(300);
     }
 
-    if (ambiguousExistingMessageChange) {
-      throw new Error("Could not isolate a new assistant message after the pre-send boundary.");
-    }
-    throw new Error(`Timed out after ${Math.round(timeoutMs / 1000)}s waiting for ChatGPT to finish.`);
+    recordDetection(attempt, { ...lastDetection, timed_out: true });
+    const error = new Error(`OUTPUT_DETECTION_TIMEOUT: ${lastDetection.decision_reason || "NO_NEW_IMAGE"}; stop_visible=${lastDetection.stop_visible}.`);
+    error.detection = { ...lastDetection, timed_out: true };
+    throw error;
   }
 
   function sendUsable(composer, button) {
@@ -366,10 +403,9 @@
 
       emitRuntimeStage(requestAttempt, referenceImages.length ? "ATTACHING_REFS" : "SENDING");
       await attachReferenceImages(referenceImages);
-      const beforeCount = assistantMessages().length;
       const inputEvidence = referenceEvidence(referenceImages);
-      const imageBaseline = imageCandidates(document, inputEvidence);
-      if (requestAttempt) Object.assign(requestAttempt, { beforeCount, imageBaseline, inputEvidence, hasReferences: referenceImages.length > 0, expectImage });
+      const boundary = captureBoundary(inputEvidence);
+      if (requestAttempt) Object.assign(requestAttempt, { boundary, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, detection: { ...boundaryTelemetry(boundary), decision_reason: "PENDING" } });
       setComposerValue(composer, prompt);
       await sleep(150);
 
@@ -382,7 +418,7 @@
       // Let ChatGPT process the click before completion polling.
       await sleep(500);
 
-      const result = await waitForCompletion({ beforeCount, timeoutMs, expectImage, imageBaseline, inputEvidence, hasReferences: referenceImages.length > 0 });
+      const result = await waitForCompletion({ boundary, timeoutMs, expectImage, inputEvidence, attempt: requestAttempt });
       if (result?.image_url && requestAttempt) requestAttempt.phase = "OUTPUT_DETECTED";
       if (result?.image_url) emitRuntimeStage(requestAttempt, "OUTPUT_DETECTED");
       return result;
@@ -392,12 +428,12 @@
     }
   }
 
-  function attemptSnapshot(attempt) { return window.DacAttemptIdentity.snapshot(attempt); }
+  function attemptSnapshot(attempt) { return { ...window.DacAttemptIdentity.snapshot(attempt), detection: attempt?.detection || null }; }
 
   async function reconcileImageAttempt(timeoutMs, requestAttempt) {
     const attempt = STATE.activeAttempt;
     if (!window.DacAttemptIdentity.same(attempt, requestAttempt) || !window.DacAttemptIdentity.submitted(attempt) || !attempt.expectImage) throw new Error("ATTEMPT_ID_MISMATCH: no matching submitted image attempt is available for reconciliation.");
-    const result = await waitForCompletion({ beforeCount: attempt.beforeCount, timeoutMs, expectImage: true, imageBaseline: attempt.imageBaseline, inputEvidence: attempt.inputEvidence, hasReferences: attempt.hasReferences });
+    const result = await waitForCompletion({ boundary: attempt.boundary, timeoutMs, expectImage: true, inputEvidence: attempt.inputEvidence, attempt });
     if (result?.image_url) attempt.phase = "OUTPUT_DETECTED";
     if (result?.image_url) emitRuntimeStage(attempt, "OUTPUT_DETECTED");
     return result;
@@ -478,8 +514,8 @@
         return false;
       }
       reconcileImageAttempt(timeoutMs, requestAttempt)
-        .then((result) => sendResponse({ ok: true, result, attempt: attemptSnapshot(requestAttempt) }))
-        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), attempt: attemptSnapshot(requestAttempt) }));
+        .then((result) => sendResponse({ ok: true, result, attempt: attemptSnapshot(STATE.activeAttempt) }))
+        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), attempt: attemptSnapshot(STATE.activeAttempt) }));
       return true;
     }
 
