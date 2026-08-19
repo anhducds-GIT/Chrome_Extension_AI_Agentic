@@ -9,7 +9,7 @@
 <body>
   <main class="app">
     <header class="header">
-      <div><h1>Duc Auto ChatGPT</h1><p>MVP · local XLSX image runner</p></div>
+      <div><h1>Duc Auto ChatGPT</h1><p>V0.3 · local XLSX image runner</p></div>
       <span id="statusChip" class="chip idle">IDLE</span>
     </header>
 
@@ -20,6 +20,43 @@
       <label for="referencesInput" class="secondary-label">Optional local reference images</label>
       <input id="referencesInput" type="file" accept="image/*" multiple />
       <p id="referenceText" class="hint">No local references selected.</p>
+    </section>
+
+    <section class="card" id="outputLocationCard">
+      <div class="row spread"><strong>OUTPUT LOCATION</strong><span id="outputPermissionText" class="muted">Open an XLSX to set locations.</span></div>
+      <div class="output-line"><strong>Generated Images:</strong><output id="imageOutputText">—</output></div>
+      <div class="output-line"><strong>Result XLSX:</strong><output id="resultOutputText">—</output></div>
+      <div class="settings-grid">
+        <label>Image Output Folder
+          <input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" />
+          <span class="hint">Used only for the explicit Chrome Downloads location.</span>
+        </label>
+        <label>Result XLSX Location
+          <select id="resultLocationMode">
+            <option value="same_as_image">Same as Image Output Folder</option>
+            <option value="downloads">Chrome Downloads folder</option>
+            <option value="directory">Separate authorized folder</option>
+          </select>
+        </label>
+        <label id="resultDownloadsFolderLabel">Result Downloads Folder
+          <input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" />
+        </label>
+        <label>Result XLSX Filename
+          <input id="resultFilenameInput" type="text" autocomplete="off" />
+        </label>
+      </div>
+      <div class="controls output-controls">
+        <button id="chooseImageFolderBtn" class="secondary" type="button">Choose Image Folder</button>
+        <button id="useSourceFolderBtn" class="secondary" type="button">Use Source Folder</button>
+        <button id="changeImageFolderBtn" class="secondary" type="button">Change Folder</button>
+        <button id="chooseResultFolderBtn" class="secondary" type="button">Choose Result Folder</button>
+      </div>
+      <p class="hint">Custom folders require explicit write authorization. A denied or revoked authorization blocks Run; it never redirects the job to Downloads.</p>
+    </section>
+
+    <section class="card" id="runPlanCard">
+      <div class="row spread"><strong>RUN PLAN</strong><span class="muted">Effective current-run values</span></div>
+      <dl id="runPlanList" class="run-plan"></dl>
     </section>
 
     <section class="controls">
@@ -54,6 +91,7 @@
   </main>
   <script src="xlsx-codec.js"></script>
   <script src="runner-core.js"></script>
+  <script src="output-location-core.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

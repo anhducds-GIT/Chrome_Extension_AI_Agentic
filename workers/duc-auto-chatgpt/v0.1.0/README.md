@@ -1,4 +1,4 @@
-# Duc Auto ChatGPT V0.2
+# Duc Auto ChatGPT V0.3
 
 Personal Chrome extension for **local-only XLSX-driven image generation** on ChatGPT.
 
@@ -10,6 +10,8 @@ Personal Chrome extension for **local-only XLSX-driven image generation** on Cha
 - Detect the generated image in the new assistant message and download it automatically.
 - Update the loaded workbook's `jobs` worksheet with status/result data and download that updated XLSX.
 - Configurable delay and timeout using optional workbook `config` values.
+- Visible, editable current-run output settings for generated images and the result XLSX.
+- Explicit Chrome Downloads destinations or a user-authorized local folder; no hidden Downloads fallback when a selected folder loses permission.
 - No separate login, no backend/server, no extension-side quota, no paid API.
 
 ## Explicitly out of scope
@@ -43,8 +45,21 @@ The workbook must have a worksheet named `jobs` with these header columns:
 | `reference_images` | No | One or more references separated by `|`; tokens may be basenames or exact filenames. |
 | `reference_image` | No | Legacy single-reference compatibility column. |
 | `status`, `result_file`, `result_download_id`, `error`, `completed_at` | No | Ledger fields written or updated by the runner. |
+| `effective_image_output`, `effective_result_xlsx`, `effective_image_naming` | No | Current-run destination/config snapshot written to the ledger. |
 
 An optional `config` worksheet may contain `key` / `value` rows. Supported keys: `timeout_sec` (15–900, default 180), legacy `delay_sec`, `delay_min_sec`, `delay_max_sec` (1–120), `continue_on_error` (default true), `output_folder` (default `Duc Auto ChatGPT`), `max_input_images` (default 3), and `rerun_done` (default false).
+
+## Output locations
+
+After opening an XLSX, the Side Panel shows an **OUTPUT LOCATION** card and a **RUN PLAN** before Run. `output_folder` remains the default and is displayed as `Downloads/<output_folder>`; it is never hidden inside workbook config.
+
+- **Choose Image Folder** / **Change Folder** use Chrome's directory picker and require explicit read-write authorization. Generated images are written there directly.
+- **Use Source Folder** opens that same picker for the user to confirm the directory containing the source workbook. Browser file selection intentionally does not expose a source file's parent path automatically.
+- Result XLSX may use the same image location, a separate explicit Chrome Downloads folder, or a separately authorized folder. Its filename is editable for the current run.
+- Before Validate/Run, the extension checks every selected directory handle for read-write permission. A missing or revoked permission produces `OUTPUT_LOCATION` validation failure; it does not redirect files to Downloads.
+- Images use `<job-id>.<actual-extension>`. If that name exists, the runner writes `<job-id>__attempt-01.<ext>` (then higher deterministic attempts) instead of overwriting. Result XLSX files likewise use a unique attempt suffix when written to an authorized folder.
+
+The effective source workbook, image destination, result-XLSX destination, and naming pattern are written to the result ledger and, when the workbook has a valid `config` sheet, appended there as a config snapshot.
 
 Basenames ignore the image extension. If multiple selected files share that basename, validation fails rather than guessing. Multiple references are attached as one bounded batch and each must show a ready attachment preview before prompt send.
 
@@ -52,7 +67,7 @@ Basenames ignore the image extension. If multiple selected files share that base
 
 - The current active tab must be a normal ChatGPT conversation.
 - Stop asks the content script to cancel its wait loop; it intentionally does **not** click ChatGPT's Stop-generation button.
-- Browser security prevents overwriting the source path directly. The runner downloads `<original-stem>-result.xlsx`; its result ledger records terminal status, image file, download ID, error, and completion time.
+- The runner never overwrites the source workbook. The result XLSX is written to the visible, current-run Result XLSX location with its editable filename.
 - Existing `DONE` rows are skipped by default. Set `rerun_done=true` only when deliberate regeneration is desired.
 - Ordinary job failures are recorded and continue when `continue_on_error=true`; Stop, receiver loss, or validation failure prevents later submissions.
 - ChatGPT is a changing web app. If its DOM changes, `content.js` selectors may need a small adapter update.
@@ -64,8 +79,10 @@ Basenames ignore the image extension. If multiple selected files share that base
 3. Press **Validate**; expect a successful idle-composer check.
 4. Press **Run**.
 5. Verify job #2 is not sent until job #1 produces/downloads an attributable image and the visible countdown completes.
-6. Verify the `<original-stem>-result.xlsx` ledger records each terminal job state and result filename.
-7. Test an image-only response, a Retry/error UI with a visible image, references, and Stop during generation; no later job may begin after Stop.
+6. Verify the Run Plan names the source XLSX, generated-image destination, result-XLSX destination, and naming pattern.
+7. Choose a custom output folder, then revoke/rechoose its permission; Validate must fail rather than use Downloads.
+8. Place a file with the first job's expected name in the image folder; verify the generated image uses `__attempt-01` rather than overwriting it.
+9. Test an image-only response, a Retry/error UI with a visible image, references, and Stop during generation; no later job may begin after Stop.
 
 ## Architecture
 

@@ -162,11 +162,13 @@
     if (jobs.some((job) => !String(job.id).trim() || !String(job.prompt).trim())) throw new Error("Every jobs row needs non-empty id and prompt values.");
     if (new Set(jobs.map((job) => job.id)).size !== jobs.length) throw new Error("jobs.id values must be unique.");
     const config = {};
+    let configSheet = null;
     if (configPath && entries.has(configPath)) {
-      const configRows = worksheetData(entries.get(configPath), shared).rows;
+      configSheet = worksheetData(entries.get(configPath), shared);
+      const configRows = configSheet.rows;
       for (const row of configRows.slice(1)) { const [key, value] = rowValues(row, shared); if (key) config[normaliseHeader(key)] = value; }
     }
-    return { fileName: file.name, entries, sheets, shared, jobsSheet, jobsPath, headers, jobs, config };
+    return { fileName: file.name, entries, sheets, shared, jobsSheet, jobsPath, headers, jobs, config, configSheet, configPath };
   }
 
   function updateJob(workbook, job, values) {
@@ -182,5 +184,31 @@
     workbook.entries.set(workbook.jobsPath, encoder.encode(new XMLSerializer().serializeToString(document)));
   }
 
-  window.DacXlsx = { open, updateJob, downloadBlob: (workbook) => zip(workbook.entries), normaliseHeader, escapeXml };
+  function updateConfigSnapshot(workbook, values) {
+    if (!workbook.configSheet || !workbook.configPath) return false;
+    const { document, rows, sharedStrings } = workbook.configSheet;
+    if (!rows.length) return false;
+    const headers = rowValues(rows[0], sharedStrings).map(normaliseHeader);
+    const keyColumn = headers.indexOf("key");
+    const valueColumn = headers.indexOf("value");
+    if (keyColumn < 0 || valueColumn < 0) return false;
+    const rowByKey = new Map(rows.slice(1).map((row) => [normaliseHeader(rowValues(row, sharedStrings)[keyColumn]), row]));
+    const sheetData = document.getElementsByTagNameNS("*", "sheetData")[0];
+    let nextRow = rows.reduce((largest, row) => Math.max(largest, Number(row.getAttribute("r")) || 0), 0) + 1;
+    for (const [key, value] of Object.entries(values)) {
+      const normalisedKey = normaliseHeader(key);
+      let row = rowByKey.get(normalisedKey);
+      if (!row) {
+        row = addRow(document, sheetData, nextRow++);
+        setCell(document, row, keyColumn, normalisedKey);
+        rowByKey.set(normalisedKey, row);
+      }
+      setCell(document, row, valueColumn, value);
+      workbook.config[normalisedKey] = String(value ?? "");
+    }
+    workbook.entries.set(workbook.configPath, encoder.encode(new XMLSerializer().serializeToString(document)));
+    return true;
+  }
+
+  window.DacXlsx = { open, updateJob, updateConfigSnapshot, downloadBlob: (workbook) => zip(workbook.entries), normaliseHeader, escapeXml };
 })();
