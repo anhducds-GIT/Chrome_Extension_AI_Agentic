@@ -24,5 +24,8 @@ assert.match(source, /activeAttempt/);
 assert.match(source, /phase = "SUBMITTED"/);
 assert.match(source, /DAC_RECONCILE_IMAGE_JOB/);
 assert.match(source, /reconcileImageAttempt/);
+assert.match(source, /DacAttemptIdentity\.create/);
+assert.match(source, /ATTEMPT_ID_MISMATCH/);
+assert.match(source, /attemptSnapshot\(requestAttempt\)/);
 
 console.log("content image static checks: PASS");

@@ -4,7 +4,7 @@
   const DEFAULTS = { timeout_sec: 180, delay_min_sec: 3, delay_max_sec: 3, safety_cooldown_sec: 0, max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false };
   const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
   const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
-  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "USER_STOP", "INTERRUPTED", "OTHER"]);
+  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
   const PRE_SUBMIT_RETRYABLE_FAILURES = new Set(["TIMEOUT_PRE_SUBMIT", "ATTACHMENT_FAILED", "OTHER"]);
   const imageExtension = /\.(avif|gif|jpe?g|png|webp)$/i;
   const normalise = (value) => String(value || "").trim().toLowerCase();

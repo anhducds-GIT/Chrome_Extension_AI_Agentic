@@ -19,7 +19,7 @@
   }
   function audit(event, item = null, values = {}) {
     if (!state.runId) return;
-    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, event, job_id: item?.job?.id || null, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null });
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
 
@@ -373,6 +373,7 @@
   }
 
   function messageOf(error) { return error?.message || String(error); }
+  function matchesAttempt(response, item) { return Boolean(response?.attempt && response.attempt.job_id === item.job.id && response.attempt.attempt_id === item.attempt_id); }
 
   function markInterrupted(item, failureType, message) {
     const now = new Date().toISOString();
@@ -418,8 +419,9 @@
     update(item, { status: "RECONCILING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
     audit("RECONCILE_START", item, { message }); renderQueue(); progress(`Reconciling ${item.job.id}; it will not be resubmitted.`);
     let response;
-    try { response = await send({ type: "DAC_RECONCILE_IMAGE_JOB", timeoutMs: Math.min(item.settings.timeout_sec * 1000, 60000) }); }
+    try { response = await send({ type: "DAC_RECONCILE_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, timeoutMs: Math.min(item.settings.timeout_sec * 1000, 60000) }); }
     catch (error) { markInterrupted(item, "POST_SUBMIT_UNCERTAIN", messageOf(error)); return { completed: true, halted: true }; }
+    if (!matchesAttempt(response, item)) { markInterrupted(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch during reconciliation."); return { completed: true, halted: true }; }
     if (response?.ok && response.result?.image_url) {
       audit("RECONCILE_RESULT", item, { message: "Late attributable output found." });
       return finishDetectedOutput(item, response.result, effectiveOutput);
@@ -464,11 +466,13 @@
         while (!completed && !state.stopRequested) {
           if (!(await gateNextJob(item))) { halted = true; completed = true; break; }
           item.status = "RUNNING"; item.phase = "PRE_SUBMIT"; item.attempt_count += 1;
-          update(item, { status: "RUNNING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+          item.attempt_id = `${state.runId}:${item.job.id}:${item.attempt_count}`;
+          update(item, { status: "RUNNING", attempt_id: item.attempt_id, attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
           audit("JOB_START", item); renderQueue(); nextTask(item, `Attempt ${item.attempt_count}/${1 + item.settings.max_retries}`); progress(`Running ${item.job.id}…`);
           let response;
-          try { response = await send({ type: "DAC_RUN_IMAGE_JOB", prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
-          catch (error) { response = { ok: false, error: messageOf(error), attempt: { phase: "PRE_SUBMIT" } }; }
+          try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
+          catch (error) { response = { ok: false, error: messageOf(error), attempt: { job_id: item.job.id, attempt_id: item.attempt_id, phase: "PRE_SUBMIT", submittedAt: null } }; }
+          if (!matchesAttempt(response, item)) { markInterrupted(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch from ChatGPT content receiver."); completed = true; halted = true; break; }
           if (response?.attempt?.submittedAt || response?.attempt?.phase === "SUBMITTED" || response?.attempt?.phase === "OUTPUT_DETECTED") {
             item.phase = "SUBMITTED";
             if (item.references.length) audit("ATTACHMENTS_READY", item);

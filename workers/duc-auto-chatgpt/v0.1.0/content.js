@@ -336,10 +336,11 @@
     throw new Error("Timed out waiting for ChatGPT readiness after verified output.");
   }
 
-  async function runPrompt(prompt, timeoutMs, referenceImages = [], expectImage = false) {
+  async function runPrompt(prompt, timeoutMs, referenceImages = [], expectImage = false, requestAttempt = null) {
     if (STATE.busy) throw new Error("This ChatGPT tab is already running an automation prompt.");
     STATE.busy = true;
     STATE.abortRequested = false;
+    if (requestAttempt) STATE.activeAttempt = requestAttempt;
 
     try {
       if (findStopButton()) {
@@ -355,20 +356,19 @@
       const beforeCount = assistantMessages().length;
       const inputEvidence = referenceEvidence(referenceImages);
       const imageBaseline = imageCandidates(document, inputEvidence);
-      STATE.activeAttempt = { phase: "PRE_SUBMIT", beforeCount, imageBaseline, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, submittedAt: null };
+      if (requestAttempt) Object.assign(requestAttempt, { beforeCount, imageBaseline, inputEvidence, hasReferences: referenceImages.length > 0, expectImage });
       setComposerValue(composer, prompt);
       await sleep(150);
 
       const sendButton = await waitForSendButtonReady(composer);
       sendButton.click();
-      STATE.activeAttempt.phase = "SUBMITTED";
-      STATE.activeAttempt.submittedAt = new Date().toISOString();
+      if (requestAttempt) { requestAttempt.phase = "SUBMITTED"; requestAttempt.submittedAt = new Date().toISOString(); }
 
       // Let ChatGPT process the click before completion polling.
       await sleep(500);
 
       const result = await waitForCompletion({ beforeCount, timeoutMs, expectImage, imageBaseline, inputEvidence, hasReferences: referenceImages.length > 0 });
-      if (result?.image_url && STATE.activeAttempt) STATE.activeAttempt.phase = "OUTPUT_DETECTED";
+      if (result?.image_url && requestAttempt) requestAttempt.phase = "OUTPUT_DETECTED";
       return result;
     } finally {
       STATE.busy = false;
@@ -376,14 +376,11 @@
     }
   }
 
-  function attemptSnapshot() {
-    const attempt = STATE.activeAttempt;
-    return attempt ? { phase: attempt.phase, beforeCount: attempt.beforeCount, submittedAt: attempt.submittedAt, expectImage: attempt.expectImage } : { phase: "PRE_SUBMIT", submittedAt: null };
-  }
+  function attemptSnapshot(attempt) { return window.DacAttemptIdentity.snapshot(attempt); }
 
-  async function reconcileImageAttempt(timeoutMs) {
+  async function reconcileImageAttempt(timeoutMs, requestAttempt) {
     const attempt = STATE.activeAttempt;
-    if (!attempt?.submittedAt || !attempt.expectImage) throw new Error("No submitted image attempt is available for reconciliation.");
+    if (!window.DacAttemptIdentity.same(attempt, requestAttempt) || !window.DacAttemptIdentity.submitted(attempt) || !attempt.expectImage) throw new Error("ATTEMPT_ID_MISMATCH: no matching submitted image attempt is available for reconciliation.");
     const result = await waitForCompletion({ beforeCount: attempt.beforeCount, timeoutMs, expectImage: true, imageBaseline: attempt.imageBaseline, inputEvidence: attempt.inputEvidence, hasReferences: attempt.hasReferences });
     if (result?.image_url) attempt.phase = "OUTPUT_DETECTED";
     return result;
@@ -439,23 +436,33 @@
     }
 
     if (message.type === "DAC_RUN_IMAGE_JOB") {
+      const requestAttempt = window.DacAttemptIdentity.create(message);
       const prompt = typeof message.prompt === "string" ? message.prompt.trim() : "";
       const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 900000));
-      if (!prompt) {
-        sendResponse({ ok: false, error: "Prompt is empty." });
+      if (!window.DacAttemptIdentity.validContext(requestAttempt)) {
+        sendResponse({ ok: false, error: "INVALID_ATTEMPT_ID: job_id and attempt_id are required.", attempt: attemptSnapshot(requestAttempt) });
         return false;
       }
-      runPrompt(prompt, timeoutMs, message.referenceImages || (message.referenceImage ? [message.referenceImage] : []), true)
-        .then((result) => sendResponse({ ok: true, result, attempt: attemptSnapshot() }))
-        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), attempt: attemptSnapshot() }));
+      if (!prompt) {
+        sendResponse({ ok: false, error: "Prompt is empty.", attempt: attemptSnapshot(requestAttempt) });
+        return false;
+      }
+      runPrompt(prompt, timeoutMs, message.referenceImages || (message.referenceImage ? [message.referenceImage] : []), true, requestAttempt)
+        .then((result) => sendResponse({ ok: true, result, attempt: attemptSnapshot(requestAttempt) }))
+        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), attempt: attemptSnapshot(requestAttempt) }));
       return true;
     }
 
     if (message.type === "DAC_RECONCILE_IMAGE_JOB") {
+      const requestAttempt = window.DacAttemptIdentity.create(message);
       const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 120000));
-      reconcileImageAttempt(timeoutMs)
-        .then((result) => sendResponse({ ok: true, result, attempt: attemptSnapshot() }))
-        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), attempt: attemptSnapshot() }));
+      if (!window.DacAttemptIdentity.validContext(requestAttempt) || !window.DacAttemptIdentity.same(STATE.activeAttempt, requestAttempt) || !window.DacAttemptIdentity.submitted(STATE.activeAttempt)) {
+        sendResponse({ ok: false, error: "ATTEMPT_ID_MISMATCH: reconciliation request does not own the submitted attempt.", attempt: attemptSnapshot(requestAttempt) });
+        return false;
+      }
+      reconcileImageAttempt(timeoutMs, requestAttempt)
+        .then((result) => sendResponse({ ok: true, result, attempt: attemptSnapshot(requestAttempt) }))
+        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), attempt: attemptSnapshot(requestAttempt) }));
       return true;
     }
 

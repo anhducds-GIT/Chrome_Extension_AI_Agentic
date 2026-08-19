@@ -24,7 +24,7 @@
         "https://chatgpt.com/*",
         "https://chat.openai.com/*"
       ],
-      "js": ["image-evidence-core.js", "content.js"],
+      "js": ["image-evidence-core.js", "attempt-identity-core.js", "content.js"],
       "run_at": "document_idle"
     }
   ],
