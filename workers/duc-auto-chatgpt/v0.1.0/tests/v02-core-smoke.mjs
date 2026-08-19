@@ -21,6 +21,7 @@ assert.equal(images.selectAttributableImage({ postTurn: [candidate("https://retr
 assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old"), candidate("https://reference-rerender", { role: "user", input: true })], baseline: [candidate("https://old")], hasReferences: true }).reason, "INPUT_IMAGE_FALSE_POSITIVE");
 assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old"), candidate("https://reference-rerender", { role: "user", input: true }), candidate("https://generated", { role: "assistant" })], baseline: [candidate("https://old")], hasReferences: true }).candidate.source, "https://generated");
 assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://reference-rerender", { role: "user", input: true })], baseline: [], hasReferences: true }).ok, false, "input alone never completes a reference job");
+assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://ref-1", { role: "user", input: true }), candidate("https://ref-2", { role: "user", input: true }), candidate("https://ref-3", { role: "user", input: true }), candidate("https://ref-4", { role: "user", input: true }), candidate("https://ref-5", { role: "user", input: true }), candidate("https://generated-5", { role: "assistant" })], baseline: [], hasReferences: true }).candidate.source, "https://generated-5", "all five input references remain excluded from generated-output evidence");
 
 const files = [{ fileName: "meo.png" }, { fileName: "bo.jpg" }, { fileName: "style.webp" }];
 assert.equal(runner.resolveReferences({ id: "one", reference_images: "meo|bo.jpg" }, files, 3).length, 2);
@@ -35,5 +36,6 @@ assert.equal(runner.delaySeconds(runner.config({ delay_min_sec: 4, delay_max_sec
 assert.deepEqual(Array.from(runner.countdownValues(5)), [5, 4, 3, 2, 1]);
 const prepared = runner.prepare({ config: { rerun_done: "false" }, jobs: [{ id: "done", prompt: "x", status: "DONE" }, { id: "pending", prompt: "x" }] }, []);
 assert.deepEqual(prepared.queue.map((item) => item.status), ["DONE", "PENDING"]);
+assert.equal(runner.DEFAULTS.max_input_images, 5);
 
 console.log("v0.2 core smoke tests: PASS");

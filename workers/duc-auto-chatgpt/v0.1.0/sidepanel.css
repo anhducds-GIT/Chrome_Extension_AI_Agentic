@@ -50,6 +50,12 @@ textarea:focus, input:focus, select:focus { border-color: #6b7280; }
 .run-plan { display: grid; grid-template-columns: max-content 1fr; gap: 7px 10px; margin: 9px 0 0; font-size: 12px; }
 .run-plan dt { color: #9ca3af; }
 .run-plan dd { margin: 0; overflow-wrap: anywhere; }
+.reference-gallery { display: grid; gap: 6px; margin-top: 9px; }
+.reference-item { display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 7px; font-size: 11px; }
+.reference-item img { width: 38px; height: 38px; object-fit: cover; border-radius: 5px; background: #0f1115; }
+.reference-item input { margin: 0; padding: 5px; font-size: 11px; }
+.queue-list details { margin-top: 4px; color: #9ca3af; }
+.queue-list summary { cursor: pointer; }
 
 button {
   border: 0;

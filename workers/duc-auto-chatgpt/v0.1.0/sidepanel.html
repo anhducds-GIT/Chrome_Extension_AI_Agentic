@@ -20,6 +20,19 @@
       <label for="referencesInput" class="secondary-label">Optional local reference images</label>
       <input id="referencesInput" type="file" accept="image/*" multiple />
       <p id="referenceText" class="hint">No local references selected.</p>
+      <div id="referenceGallery" class="reference-gallery" aria-live="polite"></div>
+    </section>
+
+    <section class="card" id="runtimeSettingsCard">
+      <div class="row spread"><strong>RUNTIME SETTINGS</strong><span class="muted">Current-run overrides</span></div>
+      <div class="settings-grid">
+        <label>Timeout (sec)<input id="timeoutSecInput" type="number" min="15" max="900" /></label>
+        <label>Max retries<input id="maxRetriesInput" type="number" min="0" max="5" /></label>
+        <label>Safety cooldown (sec)<input id="safetyCooldownInput" type="number" min="0" max="120" /></label>
+        <label>Max input images<input id="maxInputImagesInput" type="number" min="0" max="10" /></label>
+        <label>Continue on error<select id="continueOnErrorInput"><option value="true">Yes</option><option value="false">No</option></select></label>
+        <label>Rerun DONE<select id="rerunDoneInput"><option value="false">No</option><option value="true">Yes</option></select></label>
+      </div>
     </section>
 
     <section class="card" id="outputLocationCard">
@@ -60,14 +73,18 @@
     </section>
 
     <section class="controls">
-      <button id="validateBtn" class="secondary" disabled>Validate</button>
-      <button id="runBtn" class="primary" disabled>Run</button>
+      <button id="validateBtn" class="secondary" disabled>Check Plan</button>
+      <button id="runBtn" class="primary" disabled>Run All</button>
+      <button id="runPendingBtn" class="secondary" disabled>Run Pending</button>
+      <button id="runFailedBtn" class="secondary" disabled>Run Failed</button>
+      <button id="retrySelectedBtn" class="secondary" disabled>Retry Selected</button>
       <button id="stopBtn" class="danger" disabled>Stop</button>
     </section>
 
     <section class="card">
       <div class="row spread"><strong>Progress</strong><span id="progressText" class="muted">0 / 0</span></div>
       <div id="progressDetail" class="hint">Open an XLSX to begin.</div>
+      <div id="failedJobsText" class="hint">Failed Jobs: 0</div>
     </section>
 
     <section id="nextTaskCard" class="card">

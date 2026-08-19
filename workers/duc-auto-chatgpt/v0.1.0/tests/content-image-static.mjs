@@ -17,5 +17,8 @@ assert.match(source, /async function waitForReferenceImagesReady/);
 assert.match(source, /previewsReady && !uploadIsPending\(\)/);
 assert.doesNotMatch(source, /await sleep\(750\)/);
 assert.match(source, /runPrompt\(prompt, timeoutMs\)/);
+assert.match(source, /DAC_WAIT_CHAT_READY/);
+assert.match(source, /MutationObserver/);
+assert.match(source, /waitForChatReady/);
 
 console.log("content image static checks: PASS");

@@ -154,7 +154,7 @@
   }
 
   function referenceEvidence(referenceImages) {
-    const names = new Set((referenceImages || []).map((image) => image.fileName.toLowerCase()));
+    const names = new Set((referenceImages || []).flatMap((image) => [image.fileName, image.alias]).filter(Boolean).map((name) => name.toLowerCase()));
     const sources = new Set((referenceImages || []).map((image) => image.dataUrl).filter(Boolean));
     for (const candidate of imageCandidates()) if (candidate.role === "user") sources.add(candidate.source);
     return { names, sources };
@@ -301,6 +301,40 @@
     throw new Error(`Timed out after ${Math.round(timeoutMs / 1000)}s waiting for ChatGPT to finish.`);
   }
 
+  function sendUsable(composer, button) {
+    return Boolean(composer && button && !button.disabled && button.getAttribute("aria-disabled") !== "true");
+  }
+
+  async function waitForChatReady({ timeoutMs = 30000, safetyCooldownSec = 0, outputVerified = true } = {}) {
+    const deadline = Date.now() + timeoutMs;
+    let observer;
+    let wake = null;
+    const changed = () => { if (wake) { wake(); wake = null; } };
+    try {
+      observer = new MutationObserver(changed);
+      observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["disabled", "aria-disabled", "aria-busy"] });
+      while (Date.now() < deadline) {
+        if (STATE.abortRequested) throw new Error("Automation stopped by user.");
+        const blocker = securityBlockerText();
+        if (blocker) throw new Error(`HARD_STOP: ${blocker}`);
+        const composer = findComposer();
+        const sendButton = findSendButton(composer);
+        const generating = Boolean(findStopButton());
+        if (!generating && outputVerified && sendUsable(composer, sendButton)) {
+          if (safetyCooldownSec > 0) await sleep(safetyCooldownSec * 1000);
+          const finalBlocker = securityBlockerText();
+          if (finalBlocker) throw new Error(`HARD_STOP: ${finalBlocker}`);
+          if (!findStopButton() && sendUsable(findComposer(), findSendButton())) return { ok: true, state: "CHAT_READY", composerFound: true, sendUsable: true };
+        }
+        await Promise.race([new Promise((resolve) => { wake = resolve; }), sleep(300)]);
+      }
+    } finally {
+      observer?.disconnect();
+      wake = null;
+    }
+    throw new Error("Timed out waiting for ChatGPT readiness after verified output.");
+  }
+
   async function runPrompt(prompt, timeoutMs, referenceImages = [], expectImage = false) {
     if (STATE.busy) throw new Error("This ChatGPT tab is already running an automation prompt.");
     STATE.busy = true;
@@ -372,6 +406,15 @@
 
       runPrompt(prompt, timeoutMs)
         .then((result) => sendResponse({ ok: true, result }))
+        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error) }));
+      return true;
+    }
+
+    if (message.type === "DAC_WAIT_CHAT_READY") {
+      const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 900000));
+      const safetyCooldownSec = Math.max(0, Math.min(Number(message.safetyCooldownSec) || 0, 120));
+      waitForChatReady({ timeoutMs, safetyCooldownSec, outputVerified: message.outputVerified !== false })
+        .then((result) => sendResponse(result))
         .catch((error) => sendResponse({ ok: false, error: error?.message || String(error) }));
       return true;
     }
