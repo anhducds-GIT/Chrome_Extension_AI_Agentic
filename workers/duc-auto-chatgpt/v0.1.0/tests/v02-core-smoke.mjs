@@ -35,7 +35,7 @@ assert.equal(runner.resultWorkbookName("jobs.xlsx"), "jobs-result.xlsx");
 assert.equal(runner.delaySeconds(runner.config({ delay_min_sec: 4, delay_max_sec: 6 }), () => .99), 6);
 assert.deepEqual(Array.from(runner.countdownValues(5)), [5, 4, 3, 2, 1]);
 const prepared = runner.prepare({ config: { rerun_done: "false" }, jobs: [{ id: "done", prompt: "x", status: "DONE" }, { id: "pending", prompt: "x" }] }, []);
-assert.deepEqual(prepared.queue.map((item) => item.status), ["DONE", "PENDING"]);
+assert.deepEqual(prepared.queue.map((item) => item.status), ["SUCCESS", "PENDING"]);
 assert.equal(runner.DEFAULTS.max_input_images, 5);
 
 console.log("v0.2 core smoke tests: PASS");

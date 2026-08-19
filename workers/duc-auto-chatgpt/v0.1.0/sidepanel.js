@@ -2,12 +2,25 @@
   "use strict";
   const ids = ["workbookInput", "referencesInput", "validateBtn", "runBtn", "runPendingBtn", "runFailedBtn", "retrySelectedBtn", "stopBtn", "statusChip", "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText", "nextTaskCard", "nextTaskId", "nextTaskCountdown", "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "outputPermissionText", "imageOutputFolderInput", "resultLocationMode", "resultDownloadsFolderInput", "resultDownloadsFolderLabel", "resultFilenameInput", "chooseImageFolderBtn", "useSourceFolderBtn", "changeImageFolderBtn", "chooseResultFolderBtn", "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput", "continueOnErrorInput", "rerunDoneInput"];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
-  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, stopRequested: false, terminal: 0 };
+  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, stopRequested: false, terminal: 0, runId: null, auditEvents: [], auditFile: "" };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function setStatus(status, label = status) { els.statusChip.className = `chip ${status.toLowerCase()}`; els.statusChip.textContent = label; }
   function log(text, kind = "") { const li = document.createElement("li"); li.className = kind; li.textContent = `${new Date().toLocaleTimeString()} · ${text}`; els.logList.prepend(li); }
-  function progress(detail) { const total = state.prepared?.queue.length || 0; els.progressText.textContent = `${state.terminal} / ${total}`; els.progressDetail.textContent = detail; }
+  function progress(detail) {
+    const plan = state.prepared ? window.DacRunnerCore.planSummary(state.prepared.queue, state.prepared.settings) : null;
+    els.progressText.textContent = plan ? `Success ${plan.success_jobs}/${plan.total_jobs} · Running ${plan.running_jobs} · Reconciling ${plan.reconciling_jobs} · Pending ${plan.pending_jobs} · Failed ${plan.failed_jobs}${plan.interrupted_jobs ? ` · Interrupted ${plan.interrupted_jobs}` : ""}` : "0 / 0";
+    els.progressDetail.textContent = detail;
+  }
+  function promptFingerprint(prompt) {
+    let hash = 2166136261;
+    for (const character of String(prompt || "")) { hash ^= character.charCodeAt(0); hash = Math.imul(hash, 16777619); }
+    return `${(hash >>> 0).toString(16).padStart(8, "0")}:${String(prompt || "").length}`;
+  }
+  function audit(event, item = null, values = {}) {
+    if (!state.runId) return;
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, event, job_id: item?.job?.id || null, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null });
+  }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
 
   function controls() {
@@ -29,8 +42,8 @@
     els.queueSummary.textContent = `${queue.length} job${queue.length === 1 ? "" : "s"}`;
     for (const item of queue) {
       const li = document.createElement("li");
-      li.className = item.status === "RUNNING" ? "current" : item.status.toLowerCase();
-      li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · ${item.references.map((file) => file.alias || window.DacRunnerCore.basename(file.fileName)).join(", ")}` : ""} · ${item.status} · attempts ${item.attempt_count}/${1 + item.settings.max_retries}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
+      li.className = ["RUNNING", "RECONCILING"].includes(item.status) ? "current" : item.status.toLowerCase();
+      li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · refs: ${item.references.map((file) => file.alias || window.DacRunnerCore.basename(file.fileName)).join(", ")}` : " · refs: none"} · ${item.status} · phase ${item.phase || "PRE_SUBMIT"} · attempt ${item.attempt_count}/${1 + item.settings.max_retries}${item.result_file ? ` · saved: ${item.result_file}` : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
       li.addEventListener("click", () => { state.selectedJobId = item.job.id; renderQueue(); controls(); });
       if (state.selectedJobId === item.job.id) {
         const details = document.createElement("details"); details.open = true;
@@ -40,8 +53,8 @@
       }
       els.queueList.appendChild(li);
     }
-    const failures = queue.filter((item) => item.status === "FAILED");
-    els.failedJobsText.textContent = `Failed Jobs: ${failures.length}${failures.length ? ` · ${failures.map((item) => `${item.job.id}: ${item.failure_type || item.last_error || "OTHER"}`).join("; ")}` : ""}`;
+    const failures = queue.filter((item) => ["FAILED", "INTERRUPTED"].includes(item.status));
+    els.failedJobsText.textContent = `Failed / Interrupted: ${failures.length}${failures.length ? ` · ${failures.map((item) => `${item.job.id}: ${item.failure_type || item.last_error || "OTHER"}`).join("; ")}` : ""}`;
   }
 
   function renderReferenceGallery() {
@@ -259,14 +272,22 @@
     return { ok: true, filename: window.DacOutputLocation.fileLabel(location, filename), download_id: null, storage: "directory" };
   }
 
-  function update(item, values) { window.DacXlsx.updateJob(state.workbook, item.job, values); }
+  function update(item, values) {
+    if (Object.hasOwn(values, "status")) item.status = values.status;
+    if (Object.hasOwn(values, "attempt_phase")) item.phase = values.attempt_phase;
+    if (Object.hasOwn(values, "result_file")) item.result_file = values.result_file;
+    if (Object.hasOwn(values, "result_download_id")) item.result_download_id = values.result_download_id;
+    if (Object.hasOwn(values, "failure_type")) item.failure_type = values.failure_type;
+    if (Object.hasOwn(values, "last_error")) item.last_error = values.last_error;
+    window.DacXlsx.updateJob(state.workbook, item.job, values);
+  }
 
-  function snapshotOutputSettings(actualResultFilename = null) {
+  function snapshotOutputSettings(actualResultFilename = null, actualAuditFilename = state.auditFile || null) {
     const plan = outputPlan();
     const settings = state.prepared.settings;
     const effectiveResult = window.DacOutputLocation.effective(state.outputSettings).result;
     const resultDestination = actualResultFilename ? window.DacOutputLocation.fileLabel(effectiveResult, actualResultFilename) : plan.resultDestination;
-    const snapshot = { effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: plan.namingPattern, effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done };
+    const snapshot = { effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: plan.namingPattern, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done };
     window.DacXlsx.updateConfigSnapshot(state.workbook, snapshot);
     for (const item of state.prepared.queue) update(item, snapshot);
   }
@@ -288,6 +309,22 @@
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: `${location.folder}/${filename}`, conflictAction: "uniquify", saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
       log(`Result ledger downloaded: ${item.filename}.`, "done");
+      return item.filename;
+    } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
+  }
+
+  async function saveAuditLog(location) {
+    const payload = state.auditEvents.map((event) => JSON.stringify(event)).join("\n") + (state.auditEvents.length ? "\n" : "");
+    const blob = new Blob([payload], { type: "application/jsonl" });
+    const requested = `run-${state.runId}.jsonl`;
+    if (location.kind === "directory") {
+      const filename = await window.DacOutputLocation.writeUniqueFile(location.handle, window.DacOutputLocation.fileCandidates(requested), blob);
+      return window.DacOutputLocation.fileLabel(location, filename);
+    }
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: `${location.folder}/${requested}`, conflictAction: "uniquify", saveAs: false });
+      const item = await waitForCompletedDownload(downloadId);
       return item.filename;
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
   }
@@ -335,13 +372,88 @@
     return effectiveOutput.image.kind === "downloads" ? window.DacOutputLocation.downloadsLocation(item.settings.output_folder) : effectiveOutput.image;
   }
 
+  function messageOf(error) { return error?.message || String(error); }
+
+  function markInterrupted(item, failureType, message) {
+    const now = new Date().toISOString();
+    update(item, { status: "INTERRUPTED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message, completed_at: now });
+    audit("FAILURE", item, { message }); audit("JOB_INTERRUPTED", item, { message });
+    log(`${item.job.id} interrupted: ${failureType}: ${message}`, "error");
+    renderQueue();
+  }
+
+  async function finishDetectedOutput(item, result, effectiveOutput) {
+    item.phase = "OUTPUT_DETECTED";
+    audit("OUTPUT_DETECTED", item);
+    update(item, { status: "RUNNING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count });
+    try {
+      if (!result?.image_url) throw new Error("No attributable generated image was found.");
+      if (item.references.some((reference) => reference.dataUrl === result.image_url)) throw new Error("INPUT_IMAGE_FALSE_POSITIVE: output URL matches a selected reference image.");
+      const accepted = await saveGeneratedImage(result.image_url, item.job.id, imageLocationFor(item, effectiveOutput));
+      if (!accepted?.ok) throw new Error(accepted?.message || accepted?.error || "Image output was not accepted.");
+      item.phase = "OUTPUT_SAVED";
+      const outputSavedAt = new Date().toISOString();
+      update(item, { status: "RUNNING", attempt_phase: item.phase, result_file: accepted.filename, result_download_id: accepted.download_id ?? "", output_saved_at: outputSavedAt, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+      audit("OUTPUT_SAVED", item);
+      renderQueue();
+    } catch (error) {
+      markInterrupted(item, window.DacRunnerCore.classifyFailure(error, item.phase), messageOf(error));
+      return { completed: true, halted: true };
+    }
+    try {
+      await waitForChatReady(item);
+      item.phase = "CHAT_READY"; audit("CHAT_READY", item);
+      item.phase = "SUCCESS";
+      update(item, { status: "SUCCESS", attempt_phase: item.phase, result_file: item.result_file, result_download_id: item.result_download_id, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", completed_at: new Date().toISOString() });
+      audit("JOB_SUCCESS", item); log(`${item.job.id} success after CHAT_READY.`, "done"); renderQueue();
+      return { completed: true, halted: false };
+    } catch (error) {
+      markInterrupted(item, window.DacRunnerCore.classifyFailure(error, "OUTPUT_SAVED"), messageOf(error));
+      return { completed: true, halted: true };
+    }
+  }
+
+  async function reconcileSubmittedAttempt(item, effectiveOutput, message) {
+    item.status = "RECONCILING"; item.phase = "SUBMITTED";
+    update(item, { status: "RECONCILING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+    audit("RECONCILE_START", item, { message }); renderQueue(); progress(`Reconciling ${item.job.id}; it will not be resubmitted.`);
+    let response;
+    try { response = await send({ type: "DAC_RECONCILE_IMAGE_JOB", timeoutMs: Math.min(item.settings.timeout_sec * 1000, 60000) }); }
+    catch (error) { markInterrupted(item, "POST_SUBMIT_UNCERTAIN", messageOf(error)); return { completed: true, halted: true }; }
+    if (response?.ok && response.result?.image_url) {
+      audit("RECONCILE_RESULT", item, { message: "Late attributable output found." });
+      return finishDetectedOutput(item, response.result, effectiveOutput);
+    }
+    const failureType = window.DacRunnerCore.classifyFailure(response?.error || message || "Post-submit output remained uncertain.", "SUBMITTED");
+    audit("RECONCILE_RESULT", item, { message: response?.error || message || "No attributable output found." });
+    markInterrupted(item, failureType === "TIMEOUT_AFTER_SUBMIT" ? "POST_SUBMIT_UNCERTAIN" : failureType, response?.error || message || "Post-submit output remained uncertain.");
+    return { completed: true, halted: true };
+  }
+
+  async function gateNextJob(item) {
+    item.status = "RECONCILING"; item.phase = "PRE_SUBMIT";
+    update(item, { status: "RECONCILING", attempt_phase: item.phase, failure_type: "", last_error: "", error: "" });
+    audit("RECONCILE_START", item, { message: "Pre-submit ChatGPT readiness gate." }); renderQueue();
+    try {
+      await waitForChatReady(item);
+      audit("RECONCILE_RESULT", item, { message: "ChatGPT is idle and ready." });
+      return true;
+    } catch (error) {
+      markInterrupted(item, window.DacRunnerCore.classifyFailure(error, "PRE_SUBMIT"), messageOf(error));
+      return false;
+    }
+  }
+
   async function run(mode = "all") {
     let effectiveOutput;
     try { effectiveOutput = await authoritativeValidate(); }
-    catch (error) { setStatus("ERROR"); progress(error.message); log(error.message, "error"); controls(); return; }
+    catch (error) { setStatus("ERROR"); progress(messageOf(error)); log(messageOf(error), "error"); controls(); return; }
     const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, state.selectedJobId);
     if (!runQueue.length) { setStatus("ERROR", "NOT READY"); progress(`No ${mode} jobs are eligible.`); controls(); return; }
-    state.running = true; state.stopRequested = false; state.terminal = state.prepared.queue.filter((item) => item.status === "DONE").length;
+    state.running = true; state.stopRequested = false; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    state.runId = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`; state.auditEvents = []; state.auditFile = "";
+    const target = await activeTab().catch(() => null);
+    audit("RUN_START", null, { target_url: target?.url || null });
     setStatus("RUNNING"); renderQueue(); controls();
     const settings = state.prepared.settings; let halted = false;
     try {
@@ -350,39 +462,53 @@
         if (state.stopRequested) break;
         let completed = false;
         while (!completed && !state.stopRequested) {
-          item.status = "RUNNING"; item.attempt_count += 1; renderQueue(); nextTask(null, `Attempt ${item.attempt_count}/${1 + item.settings.max_retries}`); progress(`Running ${item.job.id}…`);
-          update(item, { status: "RUNNING", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
-          try {
-            const response = await send({ type: "DAC_RUN_IMAGE_JOB", prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references });
-            if (!response?.ok || !response.result?.image_url) throw new Error(response?.error || "No attributable generated image was found.");
-            if (item.references.some((reference) => reference.dataUrl === response.result.image_url)) throw new Error("INPUT_IMAGE_FALSE_POSITIVE: output URL matches a selected reference image.");
-            const accepted = await saveGeneratedImage(response.result.image_url, item.job.id, imageLocationFor(item, effectiveOutput));
-            if (!accepted?.ok) throw new Error(accepted?.message || accepted?.error || "Image output was not accepted.");
-            await waitForChatReady(item);
-            item.status = "DONE"; item.failure_type = ""; item.last_error = "";
-            update(item, { status: "DONE", result_file: accepted.filename, result_download_id: accepted.download_id ?? "", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", completed_at: new Date().toISOString() });
-            log(`${item.job.id} done after CHAT_READY.`, "done"); completed = true;
-          } catch (error) {
-            const failureType = state.stopRequested ? "USER_STOP" : window.DacRunnerCore.classifyFailure(error);
-            item.failure_type = failureType; item.last_error = error.message;
-            if (state.stopRequested) { item.status = "STOPPED"; update(item, { status: "STOPPED", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: error.message, error: error.message, completed_at: new Date().toISOString() }); break; }
-            if (window.DacRunnerCore.canRetry(item, failureType)) {
-              item.retry_count += 1; update(item, { status: "RETRYING", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: error.message, error: error.message });
-              log(`${item.job.id} ${failureType}; retry ${item.retry_count}/${item.settings.max_retries}.`, "error");
-              await sleep(window.DacRunnerCore.retryCooldown(item.settings, item.retry_count) * 1000); continue;
-            }
-            item.status = "FAILED"; update(item, { status: "FAILED", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: error.message, error: error.message, completed_at: new Date().toISOString() }); log(`${item.job.id} failed: ${failureType}: ${error.message}`, "error");
-            if (failureType === "SECURITY_HARD_STOP" || failureType === "RECEIVER_LOST" || !settings.continue_on_error) halted = true;
-            completed = true;
+          if (!(await gateNextJob(item))) { halted = true; completed = true; break; }
+          item.status = "RUNNING"; item.phase = "PRE_SUBMIT"; item.attempt_count += 1;
+          update(item, { status: "RUNNING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+          audit("JOB_START", item); renderQueue(); nextTask(item, `Attempt ${item.attempt_count}/${1 + item.settings.max_retries}`); progress(`Running ${item.job.id}…`);
+          let response;
+          try { response = await send({ type: "DAC_RUN_IMAGE_JOB", prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
+          catch (error) { response = { ok: false, error: messageOf(error), attempt: { phase: "PRE_SUBMIT" } }; }
+          if (response?.attempt?.submittedAt || response?.attempt?.phase === "SUBMITTED" || response?.attempt?.phase === "OUTPUT_DETECTED") {
+            item.phase = "SUBMITTED";
+            if (item.references.length) audit("ATTACHMENTS_READY", item);
+            audit("PROMPT_SUBMITTED", item, { target_url: target?.url || null });
           }
+          if (response?.ok && response.result?.image_url) {
+            const outcome = await finishDetectedOutput(item, response.result, effectiveOutput);
+            completed = outcome.completed; halted ||= outcome.halted;
+            continue;
+          }
+          const failureType = state.stopRequested ? "USER_STOP" : window.DacRunnerCore.classifyFailure(response?.error || "No attributable generated image was found.", item.phase);
+          if (state.stopRequested) {
+            update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || "Stopped by user.", error: response?.error || "Stopped by user.", completed_at: new Date().toISOString() });
+            audit("FAILURE", item, { message: response?.error || "Stopped by user." }); completed = true; break;
+          }
+          if (window.DacRunnerCore.needsReconciliation(item.phase)) {
+            const outcome = await reconcileSubmittedAttempt(item, effectiveOutput, response?.error || failureType);
+            completed = outcome.completed; halted ||= outcome.halted;
+            continue;
+          }
+          if (window.DacRunnerCore.canRetry(item, failureType)) {
+            item.retry_count += 1;
+            update(item, { status: "PENDING", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || failureType, error: response?.error || failureType });
+            audit("FAILURE", item, { message: response?.error || failureType }); log(`${item.job.id} ${failureType}; retry ${item.retry_count}/${item.settings.max_retries} before any submission.`, "error"); renderQueue();
+            await sleep(window.DacRunnerCore.retryCooldown(item.settings, item.retry_count) * 1000); continue;
+          }
+          update(item, { status: "FAILED", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || failureType, error: response?.error || failureType, completed_at: new Date().toISOString() });
+          audit("FAILURE", item, { message: response?.error || failureType }); log(`${item.job.id} failed: ${failureType}: ${response?.error || failureType}`, "error"); completed = true;
+          if (failureType === "SECURITY_HARD_STOP" || failureType === "RECEIVER_LOST" || !settings.continue_on_error) halted = true;
         }
         state.terminal += 1; renderQueue();
         if (halted) break;
       }
-      nextTask(null, "—"); setStatus(state.stopRequested ? "IDLE" : halted ? "ERROR" : "DONE", state.stopRequested ? "STOPPED" : halted ? "HALTED" : "DONE"); progress(state.stopRequested ? "Stopped. No later jobs were submitted." : halted ? "Batch halted after terminal failure." : "Queue complete.");
+      nextTask(null, "—"); setStatus(state.stopRequested ? "IDLE" : halted ? "ERROR" : "DONE", state.stopRequested ? "STOPPED" : halted ? "HALTED" : "DONE"); progress(state.stopRequested ? "Stopped. No later jobs were submitted." : halted ? "Batch halted after a protected terminal state." : "Queue complete.");
     } finally {
+      audit("RUN_END", null, { message: state.stopRequested ? "STOPPED" : halted ? "HALTED" : "COMPLETE" });
+      try { state.auditFile = await saveAuditLog(effectiveOutput.result); snapshotOutputSettings(null, state.auditFile); log(`Audit log written: ${state.auditFile}.`, "done"); }
+      catch (error) { log(`Audit log failed: ${messageOf(error)}`, "error"); }
       try { await saveLedger(effectiveOutput.result); }
-      catch (error) { setStatus("ERROR", "RESULT NOT SAVED"); progress(`Result XLSX was not written: ${error.message}`); log(`Result XLSX failed: ${error.message}`, "error"); }
+      catch (error) { setStatus("ERROR", "RESULT NOT SAVED"); progress(`Result XLSX was not written: ${messageOf(error)}`); log(`Result XLSX failed: ${messageOf(error)}`, "error"); }
       state.running = false; state.stopRequested = false; renderQueue(); controls();
     }
   }

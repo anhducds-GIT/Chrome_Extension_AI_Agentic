@@ -82,7 +82,8 @@ button:disabled { opacity: .45; cursor: default; }
 .queue-list li { font-size: 12px; color: #d4d4d8; padding-left: 2px; }
 .queue-list li .state { margin-left: 5px; color: #9ca3af; }
 .queue-list li.current { color: #a7f3d0; }
-.queue-list li.done { color: #9ca3af; }
+.queue-list li.done, .queue-list li.success { color: #a7f3d0; }
+.queue-list li.interrupted { color: #fde68a; }
 .queue-list li.error { color: #fca5a5; }
 
 footer { line-height: 1.4; padding: 2px 2px 8px; }

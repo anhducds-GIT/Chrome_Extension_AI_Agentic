@@ -4,6 +4,7 @@
   const STATE = {
     busy: false,
     abortRequested: false,
+    activeAttempt: null,
   };
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -354,20 +355,38 @@
       const beforeCount = assistantMessages().length;
       const inputEvidence = referenceEvidence(referenceImages);
       const imageBaseline = imageCandidates(document, inputEvidence);
+      STATE.activeAttempt = { phase: "PRE_SUBMIT", beforeCount, imageBaseline, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, submittedAt: null };
       setComposerValue(composer, prompt);
       await sleep(150);
 
       const sendButton = await waitForSendButtonReady(composer);
       sendButton.click();
+      STATE.activeAttempt.phase = "SUBMITTED";
+      STATE.activeAttempt.submittedAt = new Date().toISOString();
 
       // Let ChatGPT process the click before completion polling.
       await sleep(500);
 
-      return await waitForCompletion({ beforeCount, timeoutMs, expectImage, imageBaseline, inputEvidence, hasReferences: referenceImages.length > 0 });
+      const result = await waitForCompletion({ beforeCount, timeoutMs, expectImage, imageBaseline, inputEvidence, hasReferences: referenceImages.length > 0 });
+      if (result?.image_url && STATE.activeAttempt) STATE.activeAttempt.phase = "OUTPUT_DETECTED";
+      return result;
     } finally {
       STATE.busy = false;
       STATE.abortRequested = false;
     }
+  }
+
+  function attemptSnapshot() {
+    const attempt = STATE.activeAttempt;
+    return attempt ? { phase: attempt.phase, beforeCount: attempt.beforeCount, submittedAt: attempt.submittedAt, expectImage: attempt.expectImage } : { phase: "PRE_SUBMIT", submittedAt: null };
+  }
+
+  async function reconcileImageAttempt(timeoutMs) {
+    const attempt = STATE.activeAttempt;
+    if (!attempt?.submittedAt || !attempt.expectImage) throw new Error("No submitted image attempt is available for reconciliation.");
+    const result = await waitForCompletion({ beforeCount: attempt.beforeCount, timeoutMs, expectImage: true, imageBaseline: attempt.imageBaseline, inputEvidence: attempt.inputEvidence, hasReferences: attempt.hasReferences });
+    if (result?.image_url) attempt.phase = "OUTPUT_DETECTED";
+    return result;
   }
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -427,8 +446,16 @@
         return false;
       }
       runPrompt(prompt, timeoutMs, message.referenceImages || (message.referenceImage ? [message.referenceImage] : []), true)
-        .then((result) => sendResponse({ ok: true, result }))
-        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error) }));
+        .then((result) => sendResponse({ ok: true, result, attempt: attemptSnapshot() }))
+        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), attempt: attemptSnapshot() }));
+      return true;
+    }
+
+    if (message.type === "DAC_RECONCILE_IMAGE_JOB") {
+      const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 120000));
+      reconcileImageAttempt(timeoutMs)
+        .then((result) => sendResponse({ ok: true, result, attempt: attemptSnapshot() }))
+        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), attempt: attemptSnapshot() }));
       return true;
     }
 

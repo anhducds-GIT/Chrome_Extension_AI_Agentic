@@ -12,7 +12,7 @@ Personal Chrome extension for **local-only XLSX-driven image generation** on Cha
 - Configurable delay and timeout using optional workbook `config` values.
 - Visible, editable current-run output settings for generated images and the result XLSX.
 - Explicit Chrome Downloads destinations or a user-authorized local folder; no hidden Downloads fallback when a selected folder loses permission.
-- Observable post-output ChatGPT readiness, bounded retry/recovery controls, and XLSX-backed execution provenance.
+- Stage-aware duplicate-submission protection, observable post-output ChatGPT readiness, bounded recovery controls, and XLSX-backed execution provenance.
 - No separate login, no backend/server, no extension-side quota, no paid API.
 
 ## Explicitly out of scope
@@ -45,7 +45,7 @@ The workbook must have a worksheet named `jobs` with these header columns:
 | `prompt` | Yes | Image-generation prompt. |
 | `reference_images` | No | One or more references separated by `|`; tokens may be basenames or exact filenames. |
 | `reference_image` | No | Legacy single-reference compatibility column. |
-| `status`, `result_file`, `result_download_id`, `error`, `completed_at` | No | Ledger fields written or updated by the runner. |
+| `status`, `result_file`, `result_download_id`, `output_saved_at`, `attempt_phase`, `failure_type`, `last_error`, `error`, `completed_at` | No | Ledger fields written or updated by the runner. |
 | `effective_image_output`, `effective_result_xlsx`, `effective_image_naming` | No | Current-run destination/config snapshot written to the ledger. |
 
 An optional `config` worksheet may contain `key` / `value` rows. Supported keys: `timeout_sec` (15–900, default 180), legacy `delay_sec`, `delay_min_sec`, `delay_max_sec` (1–120), `continue_on_error` (default true), `output_folder` (default `Duc Auto ChatGPT`), `max_input_images` (default 5), and `rerun_done` (default false).
@@ -57,8 +57,10 @@ V0.3 also accepts `max_retries` (0–5, default 2) and `safety_cooldown_sec` (0�
 - **Check Plan** validates workbook, aliases/references, effective settings, output destinations, permission, retry budget, and result filename without submitting a ChatGPT prompt. Run validates again authoritatively.
 - The Side Panel exposes current-run overrides for timeout, retries, cooldown, error continuation, maximum references, and rerun-DONE behavior. They are recorded in result provenance; source XLSX is never overwritten.
 - References have a compact gallery with editable aliases and remove controls. Tokens resolve alias first, then exact filename, then extensionless basename; aliases are case-insensitive and duplicates fail validation.
-- After a verified image save, the runner waits for observable ChatGPT readiness (not generating, usable composer/send, no blocker) before another job. `delay_*` stays parse-compatible but is not the completion signal.
-- Ordinary `TIMEOUT`, `NO_OUTPUT`, `DOWNLOAD_FAILED`, and generic failures retry up to `max_retries`; security/interstitial, receiver integrity, validation, attachment, ambiguity, and user Stop never retry automatically. Ledger fields retain `attempt_count`, `retry_count`, `failure_type`, and `last_error`.
+- Every attempt is phase-aware: `PRE_SUBMIT`, `SUBMITTED`, `OUTPUT_DETECTED`, `OUTPUT_SAVED`, `CHAT_READY`, and `SUCCESS`. Automatic retry is allowed only for a confirmed pre-submit failure. A post-submit timeout or ambiguity enters bounded reconciliation against the original conversation boundary; a remaining uncertain result becomes `INTERRUPTED` and halts the queue without another prompt submission.
+- A saved image is checkpointed immediately in the result workbook (`result_file`, `result_download_id`, `output_saved_at`, and `attempt_phase=OUTPUT_SAVED`). A later readiness failure preserves that checkpoint and becomes `INTERRUPTED`; it never resubmits the prompt.
+- Before each new job the runner requires an idle, reachable ChatGPT composer. If a prior generation is still unresolved, it reconciles/waits or halts safely; it does not start the next job.
+- Each run writes append-only `run-<run-id>.jsonl` alongside its result location. Events contain attempt phase/status, reference aliases, output filename, target URL when available, and a prompt hash/length rather than duplicating prompt text.
 - **Run All**, **Run Pending**, **Run Failed**, and **Retry Selected** are side-panel recovery controls only; there is no durable background queue.
 
 ## Output locations

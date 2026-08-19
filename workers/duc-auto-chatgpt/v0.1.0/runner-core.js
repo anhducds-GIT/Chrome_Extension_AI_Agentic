@@ -2,8 +2,10 @@
   "use strict";
 
   const DEFAULTS = { timeout_sec: 180, delay_min_sec: 3, delay_max_sec: 3, safety_cooldown_sec: 0, max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false };
-  const FAILURE_TYPES = new Set(["TIMEOUT", "NO_OUTPUT", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "USER_STOP", "OTHER"]);
-  const RETRYABLE_FAILURES = new Set(["TIMEOUT", "NO_OUTPUT", "DOWNLOAD_FAILED", "OTHER"]);
+  const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
+  const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
+  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "USER_STOP", "INTERRUPTED", "OTHER"]);
+  const PRE_SUBMIT_RETRYABLE_FAILURES = new Set(["TIMEOUT_PRE_SUBMIT", "ATTACHMENT_FAILED", "OTHER"]);
   const imageExtension = /\.(avif|gif|jpe?g|png|webp)$/i;
   const normalise = (value) => String(value || "").trim().toLowerCase();
   const basename = (value) => normalise(value).replace(/^.*[\\/]/, "").replace(imageExtension, "");
@@ -71,21 +73,44 @@
     for (const key of ["timeout_sec", "max_retries", "safety_cooldown_sec", "output_folder"]) if (job[key] !== undefined && job[key] !== "") overrides[key] = job[key];
     return config({ ...settings, ...overrides });
   }
-  function classifyFailure(error) {
+  function classifyFailure(error, phase = "PRE_SUBMIT") {
     const text = String(error?.message || error || "");
     if (/HARD_STOP|captcha|unusual activity|security\/interstitial/i.test(text)) return "SECURITY_HARD_STOP";
     if (/stopped by user|automation stopped/i.test(text)) return "USER_STOP";
-    if (/timed out|timeout/i.test(text)) return "TIMEOUT";
     if (/ambiguous|INPUT_IMAGE_FALSE_POSITIVE/i.test(text)) return "OUTPUT_AMBIGUOUS";
-    if (/no attributable|NO_NEW_IMAGE|no output/i.test(text)) return "NO_OUTPUT";
+    if (/timed out|timeout/i.test(text)) {
+      if (phase === "OUTPUT_SAVED" || phase === "CHAT_READY") return "READINESS_TIMEOUT_AFTER_SAVE";
+      return POST_SUBMIT_PHASES.has(phase) ? "TIMEOUT_AFTER_SUBMIT" : "TIMEOUT_PRE_SUBMIT";
+    }
+    if (/no attributable|NO_NEW_IMAGE|no output|could not isolate/i.test(text)) return POST_SUBMIT_PHASES.has(phase) ? "POST_SUBMIT_UNCERTAIN" : "OTHER";
     if (/reference|attachment|upload/i.test(text)) return "ATTACHMENT_FAILED";
     if (/download|fetch|write|output was not accepted/i.test(text)) return "DOWNLOAD_FAILED";
     if (/validation|missing_reference|ambiguous_reference|duplicate_alias|invalid |output_location/i.test(text)) return "VALIDATION_FAILED";
     if (/receiver|composer|chatgpt tab|session integrity/i.test(text)) return "RECEIVER_LOST";
-    return "OTHER";
+    return POST_SUBMIT_PHASES.has(phase) ? "POST_SUBMIT_UNCERTAIN" : "OTHER";
   }
   function canRetry(item, failureType) {
-    return RETRYABLE_FAILURES.has(failureType) && item.retry_count < item.settings.max_retries && failureType !== "SECURITY_HARD_STOP" && failureType !== "USER_STOP";
+    return item?.phase === "PRE_SUBMIT" && PRE_SUBMIT_RETRYABLE_FAILURES.has(failureType) && item.retry_count < item.settings.max_retries;
+  }
+  function needsReconciliation(phase) { return POST_SUBMIT_PHASES.has(phase) && phase !== "SUCCESS"; }
+  function interruptedStatus(phase, failureType) {
+    return needsReconciliation(phase) && failureType !== "SECURITY_HARD_STOP" && failureType !== "USER_STOP" ? "INTERRUPTED" : "FAILED";
+  }
+  function canStartNextJob(signal, queue = []) {
+    return readinessState(signal) === "CHAT_READY" && !queue.some((item) => ["RUNNING", "RECONCILING"].includes(item.status));
+  }
+  function auditOrderValid(events = []) {
+    const phaseIndex = new Map(ATTEMPT_PHASES.map((phase, index) => [phase, index]));
+    const seen = new Map();
+    for (const event of events) {
+      if (!event?.job_id || !event.phase || !phaseIndex.has(event.phase)) continue;
+      const key = `${event.job_id}:${event.attempt}`;
+      const current = phaseIndex.get(event.phase);
+      const previous = seen.get(key);
+      if (previous !== undefined && current < previous) return false;
+      seen.set(key, current);
+    }
+    return true;
   }
   function retryCooldown(settings, retryCount) { return Math.min(30, Math.max(settings.safety_cooldown_sec, 1) * Math.max(1, retryCount)); }
   function resultWorkbookName(name) { return `${String(name || "workbook.xlsx").replace(/\.xlsx$/i, "")}-result.xlsx`; }
@@ -93,7 +118,7 @@
   function countdownValues(seconds) { return Array.from({ length: Math.max(0, Number(seconds) || 0) }, (_unused, index) => seconds - index); }
   function planSummary(queue, settings) {
     const count = (predicate) => queue.filter(predicate).length;
-    return { total_jobs: queue.length, eligible_jobs: count((item) => !item.skipped), skipped_done: count((item) => item.skipped), failed_jobs: count((item) => item.status === "FAILED"), pending_jobs: count((item) => item.status === "PENDING"), total_max_attempts: queue.filter((item) => !item.skipped).reduce((total, item) => total + 1 + item.settings.max_retries, 0), retry_allowance: settings.max_retries, references_per_job: queue.map((item) => ({ id: item.job.id, references: item.references.map((file) => file.alias || file.fileName || file.name) })) };
+    return { total_jobs: queue.length, eligible_jobs: count((item) => !item.skipped), skipped_done: count((item) => item.skipped), success_jobs: count((item) => item.status === "SUCCESS" || item.status === "DONE"), running_jobs: count((item) => item.status === "RUNNING"), reconciling_jobs: count((item) => item.status === "RECONCILING"), interrupted_jobs: count((item) => item.status === "INTERRUPTED"), failed_jobs: count((item) => item.status === "FAILED"), pending_jobs: count((item) => item.status === "PENDING"), total_max_attempts: queue.filter((item) => !item.skipped).reduce((total, item) => total + 1 + item.settings.max_retries, 0), retry_allowance: settings.max_retries, references_per_job: queue.map((item) => ({ id: item.job.id, references: item.references.map((file) => file.alias || file.fileName || file.name) })) };
   }
   function prepare(workbook, selectedFiles, overrides = {}) {
     const settings = runtimeConfig(workbook.config, overrides);
@@ -103,7 +128,8 @@
       const references = resolveReferences(job, selectedFiles, itemSettings.max_input_images);
       const existingDone = normalise(job.status) === "done";
       const existingFailed = normalise(job.status) === "failed";
-      return { job, number: index + 1, references, settings: itemSettings, status: existingDone && !settings.rerun_done ? "DONE" : existingFailed ? "FAILED" : "PENDING", skipped: existingDone && !settings.rerun_done, attempt_count: Number(job.attempt_count) || 0, retry_count: Number(job.retry_count) || 0, failure_type: job.failure_type || "", last_error: job.last_error || job.error || "" };
+      const savedOutput = String(job.result_file || "").trim();
+      return { job, number: index + 1, references, settings: itemSettings, status: existingDone && !settings.rerun_done ? "SUCCESS" : existingFailed ? "FAILED" : "PENDING", skipped: existingDone && !settings.rerun_done, phase: savedOutput ? "OUTPUT_SAVED" : existingDone ? "SUCCESS" : "PRE_SUBMIT", attempt_count: Number(job.attempt_count) || 0, retry_count: Number(job.retry_count) || 0, failure_type: job.failure_type || "", last_error: job.last_error || job.error || "", result_file: savedOutput, result_download_id: job.result_download_id || "" };
     });
     return { settings, queue, plan: planSummary(queue, settings) };
   }
@@ -111,7 +137,7 @@
     if (mode === "all") return queue.filter((item) => !item.skipped);
     if (mode === "pending") return queue.filter((item) => item.status === "PENDING");
     if (mode === "failed") return queue.filter((item) => item.status === "FAILED");
-    if (mode === "selected") return queue.filter((item) => item.job.id === selectedId && item.status !== "DONE");
+    if (mode === "selected") return queue.filter((item) => item.job.id === selectedId && item.phase === "PRE_SUBMIT" && !["SUCCESS", "DONE", "INTERRUPTED", "STOPPED"].includes(item.status));
     return [];
   }
   function readinessState(signal) {
@@ -121,6 +147,6 @@
     if (!signal?.composerFound || !signal?.sendUsable) return "OUTPUT_READY";
     return "CHAT_READY";
   }
-  const api = { DEFAULTS, FAILURE_TYPES, RETRYABLE_FAILURES, basename, referenceTokens, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, retryCooldown, resultWorkbookName, delaySeconds, countdownValues, planSummary, prepare, selectQueue, readinessState };
+  const api = { DEFAULTS, ATTEMPT_PHASES, FAILURE_TYPES, PRE_SUBMIT_RETRYABLE_FAILURES, basename, referenceTokens, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, retryCooldown, resultWorkbookName, delaySeconds, countdownValues, planSummary, prepare, selectQueue, readinessState };
   (typeof window !== "undefined" ? window : globalThis).DacRunnerCore = api;
 })();
