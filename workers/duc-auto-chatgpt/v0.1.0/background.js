@@ -21,6 +21,7 @@ const DEFAULT_TIMEOUT_MS = 180000;
 const MAX_TIMEOUT_MS = 900000;
 const TERMINAL_STATUSES = new Set(["done", "failed", "aborted"]);
 const ACTIVE_JOB_KEEPALIVE_MS = 25000;
+const DOWNLOAD_COMPLETE_TIMEOUT_MS = 120000;
 const TERMINAL_JOBS_STORAGE_KEY = "dac.terminal_jobs.v1";
 const MAX_TERMINAL_JOBS = 10;
 
@@ -54,9 +55,45 @@ async function downloadGeneratedImage(message) {
   const safeId = String(message.jobId || "image").replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 100) || "image";
   const extension = imageExtension(url);
   const folder = safeDownloadFolder(message.outputFolder);
-  const filename = `${folder}/${safeId}.${extension}`;
-  const downloadId = await chrome.downloads.download({ url, filename, conflictAction: "uniquify", saveAs: false });
-  return { ok: true, download_id: downloadId, filename };
+  const requestedFilename = `${folder}/${safeId}.${extension}`;
+  const downloadId = await chrome.downloads.download({ url, filename: requestedFilename, conflictAction: "uniquify", saveAs: false });
+  const item = await waitForCompletedDownload(downloadId);
+  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename };
+}
+
+async function waitForCompletedDownload(downloadId, timeoutMs = DOWNLOAD_COMPLETE_TIMEOUT_MS) {
+  const lookup = async () => {
+    const items = await chrome.downloads.search({ id: downloadId });
+    return items?.[0] || null;
+  };
+  const current = await lookup();
+  if (current?.state === "complete" && current.filename) return current;
+  if (current?.state === "interrupted") throw new Error(`Generated image download failed: ${current.error || "interrupted"}.`);
+  if (!chrome.downloads.onChanged?.addListener) throw new Error("Could not verify the final generated-image filename.");
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      chrome.downloads.onChanged.removeListener?.(listener);
+      callback(value);
+    };
+    const listener = async (delta) => {
+      if (delta?.id !== downloadId || (!delta.state && !delta.filename)) return;
+      try {
+        const item = await lookup();
+        if (item?.state === "complete" && item.filename) finish(resolve, item);
+        else if (item?.state === "interrupted") finish(reject, new Error(`Generated image download failed: ${item.error || "interrupted"}.`));
+      } catch (error) { finish(reject, error); }
+    };
+    const timer = setTimeout(() => finish(reject, new Error("Timed out waiting for the final generated-image filename.")), timeoutMs);
+    chrome.downloads.onChanged.addListener(listener);
+    lookup().then((item) => {
+      if (item?.state === "complete" && item.filename) finish(resolve, item);
+      else if (item?.state === "interrupted") finish(reject, new Error(`Generated image download failed: ${item.error || "interrupted"}.`));
+    }).catch((error) => finish(reject, error));
+  });
 }
 
 function imageExtension(url) {

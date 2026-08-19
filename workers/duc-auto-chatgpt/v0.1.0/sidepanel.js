@@ -261,29 +261,60 @@
 
   function update(item, values) { window.DacXlsx.updateJob(state.workbook, item.job, values); }
 
-  function snapshotOutputSettings() {
+  function snapshotOutputSettings(actualResultFilename = null) {
     const plan = outputPlan();
     const settings = state.prepared.settings;
-    const snapshot = { effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: plan.resultDestination, effective_image_naming: plan.namingPattern, effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done };
+    const effectiveResult = window.DacOutputLocation.effective(state.outputSettings).result;
+    const resultDestination = actualResultFilename ? window.DacOutputLocation.fileLabel(effectiveResult, actualResultFilename) : plan.resultDestination;
+    const snapshot = { effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: plan.namingPattern, effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done };
     window.DacXlsx.updateConfigSnapshot(state.workbook, snapshot);
     for (const item of state.prepared.queue) update(item, snapshot);
   }
 
   async function saveLedger(location) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
-    const blob = window.DacXlsx.downloadBlob(state.workbook);
     let filename = values.resultFilename;
     if (location.kind === "directory") {
-      filename = await window.DacOutputLocation.writeUniqueFile(location.handle, window.DacOutputLocation.fileCandidates(filename), blob);
+      filename = await window.DacOutputLocation.findAvailableFilename(location.handle, window.DacOutputLocation.fileCandidates(filename));
+      snapshotOutputSettings(filename);
+      const blob = window.DacXlsx.downloadBlob(state.workbook);
+      await window.DacOutputLocation.writeNewFile(location.handle, filename, blob);
       log(`Result ledger written: ${window.DacOutputLocation.fileLabel(location, filename)}.`, "done");
       return filename;
     }
+    const blob = window.DacXlsx.downloadBlob(state.workbook);
     const objectUrl = URL.createObjectURL(blob);
     try {
-      await chrome.downloads.download({ url: objectUrl, filename: `${location.folder}/${filename}`, conflictAction: "uniquify", saveAs: false });
-      log(`Result ledger downloaded: ${window.DacOutputLocation.fileLabel(location, filename)}.`, "done");
-      return filename;
+      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: `${location.folder}/${filename}`, conflictAction: "uniquify", saveAs: false });
+      const item = await waitForCompletedDownload(downloadId);
+      log(`Result ledger downloaded: ${item.filename}.`, "done");
+      return item.filename;
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
+  }
+
+  async function waitForCompletedDownload(downloadId, timeoutMs = 120000) {
+    const lookup = async () => (await chrome.downloads.search({ id: downloadId }))?.[0] || null;
+    const current = await lookup();
+    if (current?.state === "complete" && current.filename) return current;
+    if (current?.state === "interrupted") throw new Error(`Result XLSX download failed: ${current.error || "interrupted"}.`);
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = (callback, value) => { if (!settled) { settled = true; clearTimeout(timer); chrome.downloads.onChanged.removeListener?.(listener); callback(value); } };
+      const listener = async (delta) => {
+        if (delta?.id !== downloadId || (!delta.state && !delta.filename)) return;
+        try {
+          const item = await lookup();
+          if (item?.state === "complete" && item.filename) finish(resolve, item);
+          else if (item?.state === "interrupted") finish(reject, new Error(`Result XLSX download failed: ${item.error || "interrupted"}.`));
+        } catch (error) { finish(reject, error); }
+      };
+      const timer = setTimeout(() => finish(reject, new Error("Timed out waiting for the final result-XLSX filename.")), timeoutMs);
+      chrome.downloads.onChanged.addListener(listener);
+      lookup().then((item) => {
+        if (item?.state === "complete" && item.filename) finish(resolve, item);
+        else if (item?.state === "interrupted") finish(reject, new Error(`Result XLSX download failed: ${item.error || "interrupted"}.`));
+      }).catch((error) => finish(reject, error));
+    });
   }
 
   async function countdown(seconds) {

@@ -55,4 +55,13 @@ const saved = await output.writeUniqueFile(writable, output.imageCandidates("job
 assert.equal(saved, "job_001__attempt-01.webp", "an existing image is never silently overwritten");
 assert.equal(writable.files.get(saved).blob.size, 10, "generated image is written to the selected directory handle");
 
+const resultFolder = directory("Result Folder");
+resultFolder.files.set("brief-result.xlsx", { existing: true });
+const finalResultName = await output.findAvailableFilename(resultFolder, output.fileCandidates("brief-result.xlsx"));
+assert.equal(finalResultName, "brief-result__attempt-01.xlsx", "custom-directory result collision selects the actual final filename before serialization");
+assert.equal(output.fileLabel(output.directoryLocation(resultFolder, resultFolder.name), finalResultName), "Authorized folder: Result Folder/brief-result__attempt-01.xlsx", "result provenance can record the actual selected custom-folder path");
+await output.writeNewFile(resultFolder, finalResultName, { size: 22, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+assert.equal(resultFolder.files.get(finalResultName).blob.size, 22);
+await assert.rejects(() => output.writeNewFile(resultFolder, finalResultName, { size: 23 }), /Refusing to overwrite/, "custom-directory no-overwrite behavior remains enforced");
+
 console.log("output location core smoke tests: PASS");

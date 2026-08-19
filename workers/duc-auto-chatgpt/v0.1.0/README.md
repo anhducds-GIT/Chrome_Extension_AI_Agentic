@@ -69,9 +69,9 @@ After opening an XLSX, the Side Panel shows an **OUTPUT LOCATION** card and a **
 - **Use Source Folder** opens that same picker for the user to confirm the directory containing the source workbook. Browser file selection intentionally does not expose a source file's parent path automatically.
 - Result XLSX may use the same image location, a separate explicit Chrome Downloads folder, or a separately authorized folder. Its filename is editable for the current run.
 - Before Validate/Run, the extension checks every selected directory handle for read-write permission. A missing or revoked permission produces `OUTPUT_LOCATION` validation failure; it does not redirect files to Downloads.
-- Images use `<job-id>.<actual-extension>`. If that name exists, the runner writes `<job-id>__attempt-01.<ext>` (then higher deterministic attempts) instead of overwriting. Result XLSX files likewise use a unique attempt suffix when written to an authorized folder.
+- In an authorized custom folder, images use `<job-id>.<actual-extension>` and deterministic `__attempt-01` suffixes on collision; result XLSX files follow the same non-overwrite rule. In Chrome Downloads, Chrome owns collision naming (`conflictAction="uniquify"`), so the ledger records the completed DownloadItem's actual final filename/path rather than predicting a `__attempt-*` suffix.
 
-The effective source workbook, image destination, result-XLSX destination, and naming pattern are written to the result ledger and, when the workbook has a valid `config` sheet, appended there as a config snapshot.
+The effective source workbook, image destination, result-XLSX destination, and naming pattern are written to the result ledger and, when the workbook has a valid `config` sheet, appended there as a config snapshot. For a custom-folder result XLSX collision, the chosen final filename is inserted into that workbook before it is written. For a Chrome Downloads result XLSX, Chrome only exposes its final collision name after the workbook is created, so the UI/log reports the actual DownloadItem filename while the workbook records its requested destination.
 
 Basenames ignore the image extension. If multiple selected files share that basename, validation fails rather than guessing. Multiple references are attached as one bounded batch and each must show a ready attachment preview before prompt send.
 
@@ -93,7 +93,7 @@ Basenames ignore the image extension. If multiple selected files share that base
 5. Verify job #2 is not sent until job #1 produces/downloads an attributable image and the visible countdown completes.
 6. Verify the Run Plan names the source XLSX, generated-image destination, result-XLSX destination, and naming pattern.
 7. Choose a custom output folder, then revoke/rechoose its permission; Validate must fail rather than use Downloads.
-8. Place a file with the first job's expected name in the image folder; verify the generated image uses `__attempt-01` rather than overwriting it.
+8. In a custom folder, place a file with the first job's expected name; verify `__attempt-01` is used rather than overwriting it. In Chrome Downloads, verify the ledger's `result_file` records Chrome's actual final collision-resolved filename.
 9. Test an image-only response, a Retry/error UI with a visible image, references, and Stop during generation; no later job may begin after Stop.
 
 ## Architecture

@@ -4,6 +4,7 @@ import vm from "node:vm";
 
 const sent = [];
 const downloads = [];
+const downloadItems = new Map();
 let externalListener;
 let privateListener;
 let pendingPromptResolve;
@@ -36,7 +37,17 @@ const chrome = {
     getPlatformInfo: async () => { keepAliveCalls += 1; return {}; }
   },
   storage: { session: sessionStorage },
-  downloads: { download: async (options) => { downloads.push(options); return 77; } },
+  downloads: {
+    download: async (options) => {
+      downloads.push(options);
+      const id = 77 + downloads.length - 1;
+      const finalName = options.filename.includes("image_001.png") ? "C:\\Users\\Duc\\Downloads\\Duc Auto ChatGPT\\image_001 (1).png" : `C:\\Users\\Duc\\Downloads\\${options.filename}`;
+      downloadItems.set(id, { id, state: "complete", filename: finalName });
+      return id;
+    },
+    search: async ({ id }) => downloadItems.has(id) ? [downloadItems.get(id)] : [],
+    onChanged: { addListener: () => {}, removeListener: () => {} }
+  },
   tabs: {
     query: async () => [{ id: 42, active: true, url: "https://chatgpt.com/c/test" }],
     sendMessage: async (_tabId, message) => {
@@ -71,7 +82,8 @@ assert.equal((await call({ operation: "ping" })).result.composerFound, true);
 const imageDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:001", url: "https://chatgpt.com/generated.png" });
 assert.equal(imageDownload.ok, true);
 assert.equal(imageDownload.download_id, 77);
-assert.equal(imageDownload.filename, "Duc Auto ChatGPT/image_001.png");
+assert.equal(imageDownload.requested_filename, "Duc Auto ChatGPT/image_001.png");
+assert.equal(imageDownload.filename, "C:\\Users\\Duc\\Downloads\\Duc Auto ChatGPT\\image_001 (1).png", "Downloads collision ledger uses DownloadItem's actual final filename");
 assert.equal(downloads.length, 1);
 assert.equal((await privateCall({ type: "DAC_DOWNLOAD_IMAGE", url: "file:///not-allowed" })).code, "INVALID_IMAGE_URL");
 const invalidOutputFolder = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:002", url: "https://chatgpt.com/generated.png", outputFolder: "../outside" });

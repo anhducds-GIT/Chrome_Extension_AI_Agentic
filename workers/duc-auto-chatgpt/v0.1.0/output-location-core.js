@@ -41,7 +41,7 @@
       image: downloads,
       result: { kind: "same_as_image" },
       resultFilename: baseResultName(workbookName),
-      namingPattern: "<job-id>.<actual-extension>; existing files use __attempt-01, __attempt-02, ..."
+      namingPattern: "Custom folder: <job-id>.<actual-extension>, then __attempt-01; Chrome Downloads: Chrome uniquifies and the ledger records its final filename."
     };
   }
 
@@ -116,23 +116,38 @@
     return Array.from({ length: maximum }, (_unused, index) => index === 0 ? safe : `${base}__attempt-${String(index).padStart(2, "0")}${extension}`);
   }
 
-  async function writeUniqueFile(directoryHandle, candidates, blob) {
+  async function findAvailableFilename(directoryHandle, candidates) {
     if (!directoryHandle || typeof directoryHandle.getFileHandle !== "function") throw new Error("Selected output folder is unavailable. Choose it again before Run.");
     for (const filename of candidates) {
       try {
         await directoryHandle.getFileHandle(filename, { create: false });
       } catch (error) {
         if (error?.name && error.name !== "NotFoundError") throw error;
-        const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
-        const writable = await fileHandle.createWritable({ keepExistingData: false });
-        await writable.write(blob);
-        await writable.close();
         return filename;
       }
     }
     throw new Error("Could not find a non-overwriting output filename.");
   }
 
-  const api = { safeRelativeFolder, safeFilename, baseResultName, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, runPlan, permission, preflight, actualExtension, imageCandidates, fileCandidates, writeUniqueFile };
+  async function writeNewFile(directoryHandle, filename, blob) {
+    try {
+      await directoryHandle.getFileHandle(filename, { create: false });
+      throw new Error(`Refusing to overwrite existing output file '${filename}'.`);
+    } catch (error) {
+      if (error?.name && error.name !== "NotFoundError") throw error;
+    }
+    const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable({ keepExistingData: false });
+    await writable.write(blob);
+    await writable.close();
+    return filename;
+  }
+
+  async function writeUniqueFile(directoryHandle, candidates, blob) {
+    const filename = await findAvailableFilename(directoryHandle, candidates);
+    return writeNewFile(directoryHandle, filename, blob);
+  }
+
+  const api = { safeRelativeFolder, safeFilename, baseResultName, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, runPlan, permission, preflight, actualExtension, imageCandidates, fileCandidates, findAvailableFilename, writeNewFile, writeUniqueFile };
   (typeof window !== "undefined" ? window : globalThis).DacOutputLocation = api;
 })();
