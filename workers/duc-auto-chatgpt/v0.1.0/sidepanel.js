@@ -367,8 +367,8 @@
     }
   }
 
-  async function waitForChatReady(item) {
-    const response = await send({ type: "DAC_WAIT_CHAT_READY", timeoutMs: item.settings.timeout_sec * 1000, safetyCooldownSec: item.settings.safety_cooldown_sec, outputVerified: true });
+  async function waitForChatReady(item, { requireSendUsable = true } = {}) {
+    const response = await send({ type: "DAC_WAIT_CHAT_READY", timeoutMs: item.settings.timeout_sec * 1000, safetyCooldownSec: item.settings.safety_cooldown_sec, outputVerified: true, requireSendUsable });
     if (!response?.ok) throw new Error(response?.error || "ChatGPT did not become ready for the next job.");
   }
 
@@ -441,7 +441,7 @@
     update(item, { status: "RECONCILING", attempt_phase: item.phase, failure_type: "", last_error: "", error: "" });
     audit("RECONCILE_START", item, { message: "Pre-submit ChatGPT readiness gate." }); renderQueue();
     try {
-      await waitForChatReady(item);
+      await waitForChatReady(item, { requireSendUsable: false });
       audit("RECONCILE_RESULT", item, { message: "ChatGPT is idle and ready." });
       return true;
     } catch (error) {

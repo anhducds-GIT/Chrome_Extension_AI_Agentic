@@ -306,7 +306,7 @@
     return Boolean(composer && button && !button.disabled && button.getAttribute("aria-disabled") !== "true");
   }
 
-  async function waitForChatReady({ timeoutMs = 30000, safetyCooldownSec = 0, outputVerified = true } = {}) {
+  async function waitForChatReady({ timeoutMs = 30000, safetyCooldownSec = 0, outputVerified = true, requireSendUsable = true } = {}) {
     const deadline = Date.now() + timeoutMs;
     let observer;
     let wake = null;
@@ -316,16 +316,19 @@
       observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["disabled", "aria-disabled", "aria-busy"] });
       while (Date.now() < deadline) {
         if (STATE.abortRequested) throw new Error("Automation stopped by user.");
-        const blocker = securityBlockerText();
-        if (blocker) throw new Error(`HARD_STOP: ${blocker}`);
         const composer = findComposer();
         const sendButton = findSendButton(composer);
-        const generating = Boolean(findStopButton());
-        if (!generating && outputVerified && sendUsable(composer, sendButton)) {
+        const blocker = securityBlockerText();
+        const readiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(composer), sendUsable: sendUsable(composer, sendButton), generating: Boolean(findStopButton()), securityBlocker: blocker, outputVerified }, { requireSendUsable });
+        if (readiness === "HARD_STOP") throw new Error(`HARD_STOP: ${blocker}`);
+        if (readiness === "READY") {
           if (safetyCooldownSec > 0) await sleep(safetyCooldownSec * 1000);
+          const finalComposer = findComposer();
+          const finalSendButton = findSendButton(finalComposer);
           const finalBlocker = securityBlockerText();
-          if (finalBlocker) throw new Error(`HARD_STOP: ${finalBlocker}`);
-          if (!findStopButton() && sendUsable(findComposer(), findSendButton())) return { ok: true, state: "CHAT_READY", composerFound: true, sendUsable: true };
+          const finalReadiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(finalComposer), sendUsable: sendUsable(finalComposer, finalSendButton), generating: Boolean(findStopButton()), securityBlocker: finalBlocker, outputVerified }, { requireSendUsable });
+          if (finalReadiness === "HARD_STOP") throw new Error(`HARD_STOP: ${finalBlocker}`);
+          if (finalReadiness === "READY") return { ok: true, state: requireSendUsable ? "CHAT_READY" : "PRE_SUBMIT_READY", composerFound: true, sendUsable: sendUsable(finalComposer, finalSendButton) };
         }
         await Promise.race([new Promise((resolve) => { wake = resolve; }), sleep(300)]);
       }
@@ -333,7 +336,7 @@
       observer?.disconnect();
       wake = null;
     }
-    throw new Error("Timed out waiting for ChatGPT readiness after verified output.");
+    throw new Error(requireSendUsable ? "Timed out waiting for ChatGPT readiness after verified output." : "Timed out waiting for an idle ChatGPT composer before prompt submission.");
   }
 
   async function runPrompt(prompt, timeoutMs, referenceImages = [], expectImage = false, requestAttempt = null) {
@@ -429,7 +432,7 @@
     if (message.type === "DAC_WAIT_CHAT_READY") {
       const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 900000));
       const safetyCooldownSec = Math.max(0, Math.min(Number(message.safetyCooldownSec) || 0, 120));
-      waitForChatReady({ timeoutMs, safetyCooldownSec, outputVerified: message.outputVerified !== false })
+      waitForChatReady({ timeoutMs, safetyCooldownSec, outputVerified: message.outputVerified !== false, requireSendUsable: message.requireSendUsable !== false })
         .then((result) => sendResponse(result))
         .catch((error) => sendResponse({ ok: false, error: error?.message || String(error) }));
       return true;
