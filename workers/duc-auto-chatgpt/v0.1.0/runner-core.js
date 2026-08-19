@@ -126,18 +126,27 @@
     const queue = workbook.jobs.map((job, index) => {
       const itemSettings = perJobSettings(job, settings);
       const references = resolveReferences(job, selectedFiles, itemSettings.max_input_images);
-      const existingDone = normalise(job.status) === "done";
-      const existingFailed = normalise(job.status) === "failed";
+      const persistedStatus = normalise(job.status);
+      const persistedPhase = String(job.attempt_phase || "").trim().toUpperCase();
+      const terminalSuccess = persistedStatus === "done" || persistedStatus === "success";
       const savedOutput = String(job.result_file || "").trim();
-      return { job, number: index + 1, references, settings: itemSettings, status: existingDone && !settings.rerun_done ? "SUCCESS" : existingFailed ? "FAILED" : "PENDING", skipped: existingDone && !settings.rerun_done, phase: savedOutput ? "OUTPUT_SAVED" : existingDone ? "SUCCESS" : "PRE_SUBMIT", attempt_count: Number(job.attempt_count) || 0, retry_count: Number(job.retry_count) || 0, failure_type: job.failure_type || "", last_error: job.last_error || job.error || "", result_file: savedOutput, result_download_id: job.result_download_id || "" };
+      const hasOutputCheckpoint = Boolean(savedOutput) || persistedPhase === "OUTPUT_SAVED";
+      // A deliberate rerun is supported only for completed successful jobs.  It
+      // intentionally starts a fresh PRE_SUBMIT execution; an interrupted saved
+      // output is never treated as eligible merely because rerun_done is true.
+      const deliberateRerun = terminalSuccess && settings.rerun_done;
+      const status = deliberateRerun ? "PENDING" : terminalSuccess ? "SUCCESS" : persistedStatus === "failed" ? "FAILED" : persistedStatus === "interrupted" ? "INTERRUPTED" : persistedStatus === "stopped" ? "STOPPED" : hasOutputCheckpoint ? "INTERRUPTED" : "PENDING";
+      const phase = deliberateRerun ? "PRE_SUBMIT" : ATTEMPT_PHASES.includes(persistedPhase) ? persistedPhase : terminalSuccess ? "SUCCESS" : hasOutputCheckpoint ? "OUTPUT_SAVED" : "PRE_SUBMIT";
+      const protectedCheckpoint = hasOutputCheckpoint && !deliberateRerun;
+      return { job, number: index + 1, references, settings: itemSettings, status, skipped: terminalSuccess && !deliberateRerun || protectedCheckpoint, protected_checkpoint: protectedCheckpoint, deliberate_rerun: deliberateRerun, phase, attempt_count: Number(job.attempt_count) || 0, retry_count: Number(job.retry_count) || 0, failure_type: job.failure_type || "", last_error: job.last_error || job.error || "", result_file: savedOutput, result_download_id: job.result_download_id || "" };
     });
     return { settings, queue, plan: planSummary(queue, settings) };
   }
   function selectQueue(queue, mode, selectedId) {
     if (mode === "all") return queue.filter((item) => !item.skipped);
-    if (mode === "pending") return queue.filter((item) => item.status === "PENDING");
-    if (mode === "failed") return queue.filter((item) => item.status === "FAILED");
-    if (mode === "selected") return queue.filter((item) => item.job.id === selectedId && item.phase === "PRE_SUBMIT" && !["SUCCESS", "DONE", "INTERRUPTED", "STOPPED"].includes(item.status));
+    if (mode === "pending") return queue.filter((item) => item.status === "PENDING" && !item.protected_checkpoint);
+    if (mode === "failed") return queue.filter((item) => item.status === "FAILED" && !item.protected_checkpoint);
+    if (mode === "selected") return queue.filter((item) => item.job.id === selectedId && item.phase === "PRE_SUBMIT" && !item.protected_checkpoint && !["SUCCESS", "DONE", "INTERRUPTED", "STOPPED"].includes(item.status));
     return [];
   }
   function readinessState(signal) {

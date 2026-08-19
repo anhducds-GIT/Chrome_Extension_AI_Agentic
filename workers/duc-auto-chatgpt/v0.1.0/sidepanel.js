@@ -2,7 +2,7 @@
   "use strict";
   const ids = ["workbookInput", "referencesInput", "validateBtn", "runBtn", "runPendingBtn", "runFailedBtn", "retrySelectedBtn", "stopBtn", "statusChip", "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText", "nextTaskCard", "nextTaskId", "nextTaskCountdown", "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "outputPermissionText", "imageOutputFolderInput", "resultLocationMode", "resultDownloadsFolderInput", "resultDownloadsFolderLabel", "resultFilenameInput", "chooseImageFolderBtn", "useSourceFolderBtn", "changeImageFolderBtn", "chooseResultFolderBtn", "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput", "continueOnErrorInput", "rerunDoneInput"];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
-  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, stopRequested: false, terminal: 0, runId: null, auditEvents: [], auditFile: "" };
+  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, stopRequested: false, terminal: 0, runId: null, attemptSerial: 0, auditEvents: [], auditFile: "" };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function setStatus(status, label = status) { els.statusChip.className = `chip ${status.toLowerCase()}`; els.statusChip.textContent = label; }
@@ -16,6 +16,10 @@
     let hash = 2166136261;
     for (const character of String(prompt || "")) { hash ^= character.charCodeAt(0); hash = Math.imul(hash, 16777619); }
     return `${(hash >>> 0).toString(16).padStart(8, "0")}:${String(prompt || "").length}`;
+  }
+  function nextAttemptId() {
+    state.attemptSerial += 1;
+    return `attempt-${Date.now().toString(36)}-${state.attemptSerial.toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   }
   function audit(event, item = null, values = {}) {
     if (!state.runId) return;
@@ -453,7 +457,7 @@
     const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, state.selectedJobId);
     if (!runQueue.length) { setStatus("ERROR", "NOT READY"); progress(`No ${mode} jobs are eligible.`); controls(); return; }
     state.running = true; state.stopRequested = false; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
-    state.runId = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`; state.auditEvents = []; state.auditFile = "";
+    state.runId = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`; state.attemptSerial = 0; state.auditEvents = []; state.auditFile = "";
     const target = await activeTab().catch(() => null);
     audit("RUN_START", null, { target_url: target?.url || null });
     setStatus("RUNNING"); renderQueue(); controls();
@@ -466,8 +470,10 @@
         while (!completed && !state.stopRequested) {
           if (!(await gateNextJob(item))) { halted = true; completed = true; break; }
           item.status = "RUNNING"; item.phase = "PRE_SUBMIT"; item.attempt_count += 1;
-          item.attempt_id = `${state.runId}:${item.job.id}:${item.attempt_count}`;
-          update(item, { status: "RUNNING", attempt_id: item.attempt_id, attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+          item.attempt_id = nextAttemptId();
+          const rerunReset = item.deliberate_rerun ? { result_file: "", result_download_id: "", output_saved_at: "" } : {};
+          update(item, { ...rerunReset, status: "RUNNING", attempt_id: item.attempt_id, attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+          item.deliberate_rerun = false;
           audit("JOB_START", item); renderQueue(); nextTask(item, `Attempt ${item.attempt_count}/${1 + item.settings.max_retries}`); progress(`Running ${item.job.id}…`);
           let response;
           try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }

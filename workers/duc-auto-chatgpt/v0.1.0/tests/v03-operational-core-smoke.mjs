@@ -22,6 +22,28 @@ assert.equal(runner.selectQueue(prepared.queue, "pending").length, 1);
 assert.equal(runner.selectQueue(prepared.queue, "failed").length, 1);
 assert.equal(runner.selectQueue(prepared.queue, "selected", "failed").length, 1);
 
+const recovered = runner.prepare({ config: {}, jobs: [
+  { id: "P03 success", prompt: "x", status: "SUCCESS", attempt_phase: "SUCCESS", result_file: "Duc Auto ChatGPT/P03 success.png", result_download_id: "download-1" },
+  { id: "legacy done", prompt: "x", status: "DONE", result_file: "Duc Auto ChatGPT/legacy.png" },
+  { id: "checkpoint", prompt: "x", status: "INTERRUPTED", attempt_phase: "OUTPUT_SAVED", result_file: "Duc Auto ChatGPT/checkpoint.png", failure_type: "READINESS_TIMEOUT_AFTER_SAVE" }
+] }, [], {});
+assert.deepEqual(Array.from(recovered.queue.map((item) => item.status)), ["SUCCESS", "SUCCESS", "INTERRUPTED"], "SUCCESS and legacy DONE recover as terminal success while an interrupted checkpoint retains its failure state");
+assert.equal(recovered.queue[0].result_download_id, "download-1", "result provenance survives recovery");
+assert.equal(recovered.queue[2].phase, "OUTPUT_SAVED", "saved-output phase survives recovery");
+assert.equal(runner.selectQueue(recovered.queue, "all").length, 0, "Run All cannot re-submit recovered output checkpoints");
+assert.equal(runner.selectQueue(recovered.queue, "pending").length, 0, "Run Pending skips terminal success and output checkpoints");
+assert.equal(runner.selectQueue(recovered.queue, "failed").length, 0, "Run Failed skips output checkpoints");
+assert.equal(runner.selectQueue(recovered.queue, "selected", "checkpoint").length, 0, "Retry Selected skips an interrupted saved output");
+
+const deliberateRerun = runner.prepare({ config: { rerun_done: true }, jobs: [
+  { id: "done rerun", prompt: "x", status: "DONE", attempt_phase: "SUCCESS", result_file: "Duc Auto ChatGPT/done.png" },
+  { id: "saved interrupted", prompt: "x", status: "INTERRUPTED", attempt_phase: "OUTPUT_SAVED", result_file: "Duc Auto ChatGPT/interrupted.png" }
+] }, [], {});
+assert.equal(deliberateRerun.queue[0].deliberate_rerun, true, "rerun_done deliberately enables a terminal success rerun");
+assert.deepEqual({ status: deliberateRerun.queue[0].status, phase: deliberateRerun.queue[0].phase }, { status: "PENDING", phase: "PRE_SUBMIT" }, "deliberate rerun starts fresh before submission");
+assert.equal(runner.selectQueue(deliberateRerun.queue, "all").length, 1, "only completed success is eligible for deliberate rerun");
+assert.equal(deliberateRerun.queue[1].skipped, true, "rerun_done never unlocks interrupted saved output");
+
 assert.equal(runner.classifyFailure("Timed out waiting for ChatGPT", "PRE_SUBMIT"), "TIMEOUT_PRE_SUBMIT");
 assert.equal(runner.classifyFailure("Timed out waiting for ChatGPT", "SUBMITTED"), "TIMEOUT_AFTER_SUBMIT");
 assert.equal(runner.classifyFailure("Timed out waiting for ChatGPT", "OUTPUT_SAVED"), "READINESS_TIMEOUT_AFTER_SAVE");

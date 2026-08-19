@@ -27,4 +27,9 @@ assert.equal(attempts.same(jobA, correctReconcile) && attempts.submitted(jobA), 
 assert.equal(attempts.validContext(correctReconcile), true);
 assert.equal(attempts.validContext(attempts.create({ job_id: "P03-A", attempt_id: "" })), false);
 
+const unicodeJob = attempts.create({ job_id: "Ảnh mẫu 01 / Job C", attempt_id: "attempt-m45f-1-opaque" });
+assert.equal(attempts.validContext(unicodeJob), true, "existing XLSX job IDs may include spaces and Unicode while attempt IDs stay opaque tokens");
+assert.equal(attempts.same(unicodeJob, attempts.create({ job_id: "Ảnh mẫu 01 / Job C", attempt_id: "attempt-m45f-1-opaque" })), true);
+assert.equal(attempts.validContext(attempts.create({ job_id: "Ảnh mẫu 01 / Job C", attempt_id: "raw job id is not a safe attempt token" })), false, "only generated attempt IDs use the token grammar");
+
 console.log("attempt identity core smoke tests: PASS");

@@ -5,6 +5,10 @@ import vm from "node:vm";
 const context = {};
 vm.runInNewContext(fs.readFileSync(new URL("../runner-core.js", import.meta.url), "utf8"), context);
 const runner = context.DacRunnerCore;
+const sidePanelSource = fs.readFileSync(new URL("../sidepanel.js", import.meta.url), "utf8");
+
+assert.match(sidePanelSource, /function nextAttemptId\(\)/, "side panel generates an opaque attempt token");
+assert.doesNotMatch(sidePanelSource, /\$\{state\.runId\}:\$\{item\.job\.id\}/, "attempt IDs never embed arbitrary XLSX job IDs");
 
 const retryablePreSubmit = { phase: "PRE_SUBMIT", retry_count: 0, settings: { max_retries: 2 } };
 assert.equal(runner.canRetry(retryablePreSubmit, "TIMEOUT_PRE_SUBMIT"), true, "a confirmed pre-submit timeout may retry");
