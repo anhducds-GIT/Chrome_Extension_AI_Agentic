@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-// 1. Static HTML and CSS inspections
+// 1. Static HTML, CSS, and JS inspections
 const html = fs.readFileSync(new URL("../sidepanel.html", import.meta.url), "utf8");
 const css = fs.readFileSync(new URL("../sidepanel.css", import.meta.url), "utf8");
 const source = fs.readFileSync(new URL("../sidepanel.js", import.meta.url), "utf8");
@@ -21,25 +21,22 @@ assert.match(css, /\.segmented/);
 assert.match(css, /\.zoom-btn/);
 assert.match(css, /\.zoom-btn\.active/);
 
+// Verify truthful zoom state matching and origin-level semantics in source
+assert.match(source, /matchesZoomLevel/);
+assert.doesNotMatch(source, /nearestZoom/, "nearest-value presentation must not be used");
+assert.match(source, /Chrome default zoom behavior[\s\S]*?may persist across the same ChatGPT origin/i);
+
 // 2. Behavioral logic tests
 function isChatGPTUrl(url) {
   return Boolean(url && /^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(url));
 }
 
 const ZOOM_LEVELS = [0.8, 0.9, 1.0];
+const ZOOM_EPSILON = 0.015;
 
-function nearestZoom(value) {
-  const num = Number.isFinite(Number(value)) ? Number(value) : 1.0;
-  let closest = 1.0;
-  let minDiff = Infinity;
-  for (const z of ZOOM_LEVELS) {
-    const diff = Math.abs(num - z);
-    if (diff < minDiff) {
-      minDiff = diff;
-      closest = z;
-    }
-  }
-  return closest;
+function matchesZoomLevel(actualZoom, targetLevel, epsilon = ZOOM_EPSILON) {
+  if (!Number.isFinite(actualZoom) || !Number.isFinite(targetLevel)) return false;
+  return Math.abs(actualZoom - targetLevel) <= epsilon;
 }
 
 // URL filtering checks
@@ -53,17 +50,18 @@ assert.equal(isChatGPTUrl("http://chatgpt.com/"), false, "Insecure HTTP should n
 assert.equal(isChatGPTUrl(""), false);
 assert.equal(isChatGPTUrl(null), false);
 
-// Nearest zoom calculation checks
-assert.equal(nearestZoom(0.8), 0.8);
-assert.equal(nearestZoom(0.79), 0.8);
-assert.equal(nearestZoom(0.83), 0.8);
-assert.equal(nearestZoom(0.88), 0.9);
-assert.equal(nearestZoom(0.9), 0.9);
-assert.equal(nearestZoom(0.92), 0.9);
-assert.equal(nearestZoom(0.96), 1.0);
-assert.equal(nearestZoom(1.0), 1.0);
-assert.equal(nearestZoom(1.1), 1.0);
-assert.equal(nearestZoom(0), 0.8);
+// Truthful zoom matching checks
+assert.equal(matchesZoomLevel(0.8, 0.8), true, "80% matches 0.8");
+assert.equal(matchesZoomLevel(0.805, 0.8), true, "80.5% matches 0.8 within epsilon");
+assert.equal(matchesZoomLevel(0.9, 0.9), true, "90% matches 0.9");
+assert.equal(matchesZoomLevel(1.0, 1.0), true, "100% matches 1.0");
+
+// Off-target zoom levels must NOT match any supported button
+for (const offTarget of [0.75, 1.10, 1.25, 0.50, 1.50]) {
+  for (const supported of ZOOM_LEVELS) {
+    assert.equal(matchesZoomLevel(offTarget, supported), false, `${offTarget * 100}% must not match ${supported * 100}%`);
+  }
+}
 
 // 3. Tab zoom interaction simulation
 class MockChromeTabs {
@@ -105,10 +103,10 @@ async function simulateZoomSync(mockChrome, buttons) {
     return;
   }
   const currentZoom = await mockChrome.getZoom(tab.id);
-  const nearest = nearestZoom(currentZoom);
   for (const btn of buttons) {
     btn.disabled = false;
-    btn.active = Math.abs(Number(btn.dataset.zoom) - nearest) < 0.04;
+    const targetZoom = Number(btn.dataset.zoom);
+    btn.active = matchesZoomLevel(currentZoom, targetZoom);
   }
 }
 
@@ -128,26 +126,51 @@ const buttonsA = [
 ];
 await simulateZoomSync(mockNonChat, buttonsA);
 assert.equal(buttonsA.every((b) => b.disabled === true), true, "All buttons disabled on non-ChatGPT tabs");
+assert.equal(buttonsA.every((b) => b.active === false), true, "No button active on non-ChatGPT tabs");
 await simulateSetZoom(mockNonChat, buttonsA, 0.8);
 assert.equal(mockNonChat.setZoomCalls.length, 0, "No setZoom calls on non-ChatGPT tabs");
 
-// Case B: ChatGPT active tab with zoom 1.0 -> buttons enabled, 100% active
-const mockChat = new MockChromeTabs("https://chatgpt.com/", 1.0);
-const buttonsB = [
+// Case B: ChatGPT active tab with supported zoom levels (80, 90, 100) -> correct active button
+for (const level of [0.8, 0.9, 1.0]) {
+  const mockChat = new MockChromeTabs("https://chatgpt.com/", level);
+  const buttons = [
+    { dataset: { zoom: "0.8" }, disabled: true, active: false },
+    { dataset: { zoom: "0.9" }, disabled: true, active: false },
+    { dataset: { zoom: "1.0" }, disabled: true, active: false }
+  ];
+  await simulateZoomSync(mockChat, buttons);
+  assert.equal(buttons.every((b) => b.disabled === false), true, `Buttons enabled on ChatGPT tab at ${level * 100}%`);
+  const activeBtn = buttons.find((b) => b.active);
+  assert.ok(activeBtn, `One button must be active for supported level ${level * 100}%`);
+  assert.equal(Number(activeBtn.dataset.zoom), level, `Active button matches ${level * 100}%`);
+}
+
+// Case C: ChatGPT active tab with off-target zoom levels (75, 110, 125) -> NO active button
+for (const offTarget of [0.75, 1.10, 1.25]) {
+  const mockChat = new MockChromeTabs("https://chatgpt.com/", offTarget);
+  const buttons = [
+    { dataset: { zoom: "0.8" }, disabled: true, active: false },
+    { dataset: { zoom: "0.9" }, disabled: true, active: false },
+    { dataset: { zoom: "1.0" }, disabled: true, active: false }
+  ];
+  await simulateZoomSync(mockChat, buttons);
+  assert.equal(buttons.every((b) => b.disabled === false), true, `Buttons enabled on ChatGPT tab at ${offTarget * 100}%`);
+  assert.equal(buttons.every((b) => b.active === false), true, `No button active for off-target zoom ${offTarget * 100}%`);
+}
+
+// Case D: User clicks 80% on ChatGPT tab -> sets zoom to 0.8 and highlights 80%
+const mockChatD = new MockChromeTabs("https://chatgpt.com/", 1.0);
+const buttonsD = [
   { dataset: { zoom: "0.8" }, disabled: true, active: false },
   { dataset: { zoom: "0.9" }, disabled: true, active: false },
   { dataset: { zoom: "1.0" }, disabled: true, active: false }
 ];
-await simulateZoomSync(mockChat, buttonsB);
-assert.equal(buttonsB.every((b) => b.disabled === false), true, "Buttons enabled on ChatGPT tabs");
-assert.equal(buttonsB.find((b) => b.dataset.zoom === "1.0").active, true, "100% active initially");
-assert.equal(buttonsB.find((b) => b.dataset.zoom === "0.8").active, false);
-
-// Case C: User clicks 80% on ChatGPT tab -> sets zoom to 0.8 and highlights 80%
-await simulateSetZoom(mockChat, buttonsB, 0.8);
-assert.equal(mockChat.setZoomCalls.length, 1);
-assert.deepEqual(mockChat.setZoomCalls[0], { tabId: 101, zoomFactor: 0.8 });
-assert.equal(buttonsB.find((b) => b.dataset.zoom === "0.8").active, true, "80% active after setZoom");
-assert.equal(buttonsB.find((b) => b.dataset.zoom === "1.0").active, false);
+await simulateZoomSync(mockChatD, buttonsD);
+assert.equal(buttonsD.find((b) => b.dataset.zoom === "1.0").active, true);
+await simulateSetZoom(mockChatD, buttonsD, 0.8);
+assert.equal(mockChatD.setZoomCalls.length, 1);
+assert.deepEqual(mockChatD.setZoomCalls[0], { tabId: 101, zoomFactor: 0.8 });
+assert.equal(buttonsD.find((b) => b.dataset.zoom === "0.8").active, true, "80% active after setZoom");
+assert.equal(buttonsD.find((b) => b.dataset.zoom === "1.0").active, false);
 
 console.log("ChatGPT zoom control smoke tests: PASS");

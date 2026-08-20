@@ -724,23 +724,15 @@
   els.useSourceFolderBtn.addEventListener("click", () => useSourceFolder().catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   els.chooseResultFolderBtn.addEventListener("click", () => chooseDirectory("Result XLSX folder selected", "result").then(() => { els.resultLocationMode.value = "directory"; renderOutput(); }).catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   const ZOOM_LEVELS = [0.8, 0.9, 1.0];
+  const ZOOM_EPSILON = 0.015;
 
   function isChatGPTUrl(url) {
     return Boolean(url && /^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(url));
   }
 
-  function nearestZoom(value) {
-    const num = Number.isFinite(Number(value)) ? Number(value) : 1.0;
-    let closest = 1.0;
-    let minDiff = Infinity;
-    for (const z of ZOOM_LEVELS) {
-      const diff = Math.abs(num - z);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closest = z;
-      }
-    }
-    return closest;
+  function matchesZoomLevel(actualZoom, targetLevel, epsilon = ZOOM_EPSILON) {
+    if (!Number.isFinite(actualZoom) || !Number.isFinite(targetLevel)) return false;
+    return Math.abs(actualZoom - targetLevel) <= epsilon;
   }
 
   async function getActiveChatGPTTab() {
@@ -752,6 +744,8 @@
     return null;
   }
 
+  // Zoom action is initiated from the active ChatGPT tab; Chrome default zoom behavior
+  // applies and may persist across the same ChatGPT origin.
   async function syncZoomState() {
     const zoomButtons = document.querySelectorAll(".zoom-btn");
     if (!zoomButtons.length) return;
@@ -765,11 +759,10 @@
     }
     try {
       const currentZoom = await chrome.tabs.getZoom(tab.id);
-      const nearest = nearestZoom(currentZoom);
       zoomButtons.forEach((btn) => {
         btn.disabled = false;
         const targetZoom = Number(btn.dataset.zoom);
-        btn.classList.toggle("active", Math.abs(targetZoom - nearest) < 0.04);
+        btn.classList.toggle("active", matchesZoomLevel(currentZoom, targetZoom));
       });
     } catch (_) {
       zoomButtons.forEach((btn) => {
@@ -821,8 +814,9 @@
 
   (typeof window !== "undefined" ? window : globalThis).DacChatZoom = {
     isChatGPTUrl,
-    nearestZoom,
+    matchesZoomLevel,
     ZOOM_LEVELS,
+    ZOOM_EPSILON,
     syncZoomState,
     setChatZoom
   };
