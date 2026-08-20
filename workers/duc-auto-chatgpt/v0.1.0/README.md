@@ -77,6 +77,16 @@ The effective source workbook, image destination, result-XLSX destination, and n
 
 Basenames ignore the image extension. If multiple selected files share that basename, validation fails rather than guessing. Multiple references are attached as one bounded batch and each must show a ready attachment preview before prompt send.
 
+## V1 Closure backlog — output controls (not implemented)
+
+This backlog is intentionally isolated from the proven prompt submission, image-detection, attempt-identity, and ChatGPT-readiness sequencing paths.
+
+- Replace random/UUID artifact filenames with a configured, human-readable image filename pattern. The Side Panel must show a non-writing preview for the selected job before Run; result XLSX and audit JSONL names must likewise be deterministic and visible.
+- Add an explicit collision policy: `overwrite`, `uniquify`, or `fail`. It must apply before each write and the effective policy/final path must be recorded in provenance.
+- Add independent current-run toggles for **Auto download generated images**, **Auto save result XLSX**, and **Auto save audit JSONL**.
+- With image auto-download disabled, attributable output detection still completes and the job may reach `SUCCESS`; no image file write is attempted, and the result ledger records `detected_not_downloaded` together with attribution and detection diagnostics.
+- A later implementation must use deterministic tests for filename preview/pattern validation, each collision policy, every toggle combination, disabled-image-write success, and unchanged exact-once submission/detection/sequencing regressions.
+
 ## Important behavior
 
 - The current active tab must be a normal ChatGPT conversation.
