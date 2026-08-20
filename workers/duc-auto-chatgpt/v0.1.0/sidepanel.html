@@ -90,30 +90,30 @@
         </details>
       </section>
 
-      <!-- 3. OUTPUT & NAMING -->
+      <!-- 3. OUTPUT DESTINATION & NAMING -->
       <section class="card setup-group" id="outputLocationCard">
         <div class="row spread section-title">
-          <strong>3. OUTPUT &amp; NAMING</strong>
+          <strong>3. OUTPUT DESTINATION</strong>
           <span id="outputPermissionText" class="muted">Open an XLSX to set locations.</span>
         </div>
         <div class="settings-grid">
-          <label class="full-width">Output folder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
+          <label>Destination mode<select id="outputDestinationMode"><option value="downloads">Chrome Downloads</option><option value="directory">Authorized Folder</option></select></label>
           <label>Filename pattern<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">{job_id}, {attempt}, {index}</span></label>
           <label>Collision policy<select id="collisionPolicyInput"><option value="overwrite">overwrite</option><option value="uniquify" selected>uniquify</option><option value="fail">fail</option></select></label>
+        </div>
+        <div id="downloadsDestinationControls" class="settings-grid">
+          <label class="full-width">Downloads subfolder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT/Pilot03" autocomplete="off" /><span class="hint">Relative to Chrome Downloads. No folder selection required.</span></label>
+        </div>
+        <div id="authorizedDestinationControls" class="destination-authorized" hidden>
+          <div class="output-line"><strong>Authorized folder:</strong><output id="destinationHandleText">No folder selected</output></div>
+          <button id="destinationFolderBtn" class="secondary small" type="button">Choose Folder</button>
         </div>
         <div class="settings-grid save-toggles">
           <label class="switch-label"><input id="saveImagesInput" type="checkbox" checked /> Download generated images</label>
           <label class="switch-label"><input id="saveResultXlsxInput" type="checkbox" checked /> Save Result XLSX</label>
           <label class="switch-label"><input id="saveAuditJsonlInput" type="checkbox" checked /> Save Audit JSONL (technical log)</label>
         </div>
-        <div class="controls output-controls">
-          <button id="chooseImageFolderBtn" class="secondary small" type="button">Choose Image Folder</button>
-          <button id="useSourceFolderBtn" class="secondary small" type="button">Use Source Folder</button>
-          <button id="changeImageFolderBtn" class="secondary small" type="button">Change Folder</button>
-          <button id="chooseResultFolderBtn" class="secondary small" type="button">Choose Result Folder</button>
-        </div>
-
-        <details class="secondary-details">
+        <details class="secondary-details" id="outputAdvancedDetails">
           <summary>Output details &amp; advanced naming</summary>
           <div class="output-previews">
             <div class="output-line"><strong>Effective image location:</strong><output id="imageOutputText">—</output></div>
@@ -121,26 +121,36 @@
             <div class="output-line"><strong>Audit JSONL (technical log) preview:</strong><output id="auditOutputText">—</output></div>
           </div>
           <div class="settings-grid">
-            <label>Result XLSX Location<select id="resultLocationMode"><option value="same_as_image">Same as Image Output Folder</option><option value="downloads">Chrome Downloads folder</option><option value="directory">Separate authorized folder</option></select></label>
-            <label id="resultDownloadsFolderLabel">Result Downloads Folder<input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
             <label>Result XLSX filename<input id="resultFilenameInput" type="text" autocomplete="off" /></label>
             <label>Audit JSONL filename<input id="auditFilenameInput" type="text" autocomplete="off" /></label>
+          </div>
+          <label class="switch-label advanced-separate"><input id="separateResultDestinationInput" type="checkbox" /> Save result artifacts to a different destination</label>
+          <div id="separateResultDestinationControls" class="settings-grid" hidden>
+            <label>Result destination<select id="resultLocationMode"><option value="downloads">Chrome Downloads</option><option value="directory">Authorized Folder</option></select></label>
+            <label id="resultDownloadsFolderLabel">Result Downloads subfolder<input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
+            <div id="resultAuthorizedControls" class="destination-authorized" hidden>
+              <div class="output-line"><strong>Result folder:</strong><output id="resultHandleText">No folder selected</output></div>
+              <button id="chooseResultFolderBtn" class="secondary small" type="button">Choose Result Folder</button>
+            </div>
           </div>
         </details>
       </section>
 
-      <!-- 4. VALIDATION & ACTION -->
+      <!-- 4. PLAN CHECK & ACTION -->
       <section class="card setup-group" id="validationCard">
         <div class="row spread section-title">
-          <strong>4. VALIDATION</strong>
+          <strong>4. PLAN CHECK</strong>
           <button id="validateBtn" class="secondary small" disabled type="button">Check plan</button>
         </div>
+        <div id="planCheckSummary" class="plan-check-summary">Load an XLSX, then Check Plan.</div>
         <div class="readiness-checklist" id="readinessChecklist">
           <div class="check-item" id="checkWorkbook"><span class="check-icon">○</span><span class="check-label">Workbook</span><span class="check-status" id="statusWorkbook">Not loaded</span></div>
           <div class="check-item" id="checkReferences"><span class="check-icon">○</span><span class="check-label">References</span><span class="check-status" id="statusReferences">0 images</span></div>
           <div class="check-item" id="checkChatGPT"><span class="check-icon">○</span><span class="check-label">ChatGPT connection</span><span class="check-status" id="statusChatGPT">Checking</span></div>
           <div class="check-item" id="checkOutput"><span class="check-icon">○</span><span class="check-label">Output location</span><span class="check-status" id="statusOutput">Ready</span></div>
+          <div class="check-item" id="checkSettings"><span class="check-icon">○</span><span class="check-label">Run settings</span><span class="check-status" id="statusSettings">Checking</span></div>
         </div>
+        <div id="validationGuidance" class="validation-guidance" aria-live="polite"></div>
         <div id="readinessBanner" class="readiness-banner not-ready">CHECK PLAN BEFORE RUN</div>
         <button id="runBtn" class="primary dominant-btn" disabled type="button">▶ START RUN</button>
         <details class="secondary-details">
@@ -322,6 +332,7 @@
   <script src="attempt-telemetry-core.js"></script>
   <script src="run-state-core.js"></script>
   <script src="output-location-core.js"></script>
+  <script src="plan-diagnostics-core.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

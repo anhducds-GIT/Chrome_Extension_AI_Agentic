@@ -5,16 +5,18 @@
     "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText",
     "currentJobId", "currentStage", "currentTiming", "currentSaved", "nextTaskCard", "nextTaskId", "nextTaskCountdown",
     "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText",
-    "outputPermissionText", "imageOutputFolderInput", "resultLocationMode", "resultDownloadsFolderInput",
-    "resultDownloadsFolderLabel", "imagePatternInput", "resultFilenameInput", "auditFilenameInput",
+    "outputPermissionText", "outputDestinationMode", "imageOutputFolderInput", "downloadsDestinationControls",
+    "authorizedDestinationControls", "destinationHandleText", "destinationFolderBtn", "outputAdvancedDetails",
+    "separateResultDestinationInput", "separateResultDestinationControls", "resultLocationMode", "resultDownloadsFolderInput",
+    "resultDownloadsFolderLabel", "resultAuthorizedControls", "resultHandleText", "imagePatternInput", "resultFilenameInput", "auditFilenameInput",
     "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput",
-    "chooseImageFolderBtn", "useSourceFolderBtn", "changeImageFolderBtn", "chooseResultFolderBtn",
+    "chooseResultFolderBtn",
     "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput",
     "continueOnErrorInput", "rerunDoneInput", "outputSummaryText", "outputList", "artifactList",
     "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn",
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
     "checkWorkbook", "statusWorkbook", "checkReferences", "statusReferences",
-    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "readinessBanner",
+    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
     "currentAttemptBadge", "currentPromptPreview", "pipelineStepper", "operatorTimerArea",
@@ -53,7 +55,10 @@
     stageBudgetSec: null,
     runtimeTicker: null,
     queueExpanded: false,
-    outputsExpanded: false
+    outputsExpanded: false,
+    diagnostics: null,
+    destinationMode: "downloads",
+    separateResultDestination: false
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -325,41 +330,43 @@
 
   function updateReadinessChecklist() {
     if (!els.readinessChecklist) return;
-    const hasWorkbook = Boolean(state.workbook && state.prepared);
-    const jobsCount = state.prepared?.queue?.length || 0;
-    if (els.checkWorkbook) {
-      els.checkWorkbook.classList.toggle("ready", hasWorkbook);
-      const icon = els.checkWorkbook.querySelector(".check-icon");
-      if (icon) icon.textContent = hasWorkbook ? "✓" : "○";
-      if (els.statusWorkbook) els.statusWorkbook.textContent = hasWorkbook ? `${jobsCount} job${jobsCount === 1 ? "" : "s"}` : "Not loaded";
-    }
-    if (els.checkReferences) {
-      const refsCount = state.files.length;
-      els.checkReferences.classList.add("ready");
-      const icon = els.checkReferences.querySelector(".check-icon");
-      if (icon) icon.textContent = "✓";
-      if (els.statusReferences) els.statusReferences.textContent = refsCount ? `${refsCount} image${refsCount === 1 ? "" : "s"}` : "0 (optional)";
-    }
-    if (els.checkOutput) {
-      const hasOutput = Boolean(state.outputSettings);
-      els.checkOutput.classList.toggle("ready", hasOutput);
-      const icon = els.checkOutput.querySelector(".check-icon");
-      if (icon) icon.textContent = hasOutput ? "✓" : "○";
-      if (els.statusOutput) els.statusOutput.textContent = hasOutput ? "Ready" : "Not set";
-    }
-    if (els.checkChatGPT) {
-      getActiveChatGPTTab().then((tab) => {
-        const connected = Boolean(tab?.id);
-        els.checkChatGPT.classList.toggle("ready", connected);
-        const icon = els.checkChatGPT.querySelector(".check-icon");
-        if (icon) icon.textContent = connected ? "✓" : "○";
-        if (els.statusChatGPT) els.statusChatGPT.textContent = connected ? "Connected" : "Open tab";
-      }).catch(() => {});
-    }
+    const diagnostics = state.diagnostics;
+    const severityFor = (scope) => {
+      const scoped = diagnostics?.findings?.filter((finding) => finding.scope === scope) || [];
+      return scoped.some((finding) => finding.severity === "BLOCKER") ? "BLOCKER" : scoped.some((finding) => finding.severity === "WARNING") ? "WARNING" : scoped.some((finding) => finding.severity === "OK") ? "OK" : null;
+    };
+    const findingFor = (scope, code) => diagnostics?.findings?.find((finding) => finding.scope === scope && (!code || finding.code === code));
+    const setItem = (element, statusElement, scope, fallback) => {
+      if (!element) return;
+      const severity = severityFor(scope);
+      element.classList.toggle("ready", severity === "OK");
+      element.classList.toggle("warning", severity === "WARNING" || severity === "BLOCKER");
+      const icon = element.querySelector(".check-icon");
+      if (icon) icon.textContent = severity === "OK" ? "✓" : severity ? "⚠" : "○";
+      if (statusElement) statusElement.textContent = fallback(severity, findingFor(scope));
+    };
+    setItem(els.checkWorkbook, els.statusWorkbook, "workbook", (severity, finding) => finding?.message || (state.workbook ? `${state.workbook.jobs?.length || 0} jobs` : "Not loaded"));
+    setItem(els.checkReferences, els.statusReferences, "references", (_severity, finding) => {
+      const references = diagnostics?.references;
+      if (!references) return state.workbook ? "Check plan" : "0 required";
+      if (!references.required) return "0 required";
+      if (references.missing) return `${references.missing} missing`;
+      if (references.ambiguous) return `${references.ambiguous} ambiguous`;
+      return `${references.available} / ${references.required} available`;
+    });
+    setItem(els.checkChatGPT, els.statusChatGPT, "chatgpt", (_severity, finding) => finding?.message || "Check plan");
+    setItem(els.checkOutput, els.statusOutput, "output", (_severity, finding) => finding?.message || (state.outputSettings ? "Check plan" : "Not set"));
+    setItem(els.checkSettings, els.statusSettings, "settings", (_severity, finding) => finding?.message || "Check plan");
     if (els.readinessBanner) {
       if (state.validated) {
         els.readinessBanner.className = "readiness-banner ready";
         els.readinessBanner.textContent = "READY TO RUN";
+      } else if (diagnostics?.summary?.blockers) {
+        els.readinessBanner.className = "readiness-banner not-ready";
+        els.readinessBanner.textContent = "NEEDS INPUT";
+      } else if (diagnostics?.summary?.warnings) {
+        els.readinessBanner.className = "readiness-banner warning";
+        els.readinessBanner.textContent = "WARNING";
       } else {
         els.readinessBanner.className = "readiness-banner not-ready";
         els.readinessBanner.textContent = state.workbook ? "CHECK PLAN BEFORE RUN" : "LOAD WORKBOOK TO BEGIN";
@@ -382,7 +389,7 @@
     els.referencesInput.disabled = state.running;
     if (els.changeWorkbookBtn) els.changeWorkbookBtn.disabled = state.running;
     if (els.addReferencesBtn) els.addReferencesBtn.disabled = state.running;
-    for (const element of [els.imageOutputFolderInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.chooseImageFolderBtn, els.useSourceFolderBtn, els.changeImageFolderBtn, els.chooseResultFolderBtn, els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.disabled = outputLocked;
+    for (const element of [els.outputDestinationMode, els.imageOutputFolderInput, els.destinationFolderBtn, els.separateResultDestinationInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.chooseResultFolderBtn, els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) if (element) element.disabled = outputLocked;
     if (state.outputSettings?.image?.kind === "directory") els.imageOutputFolderInput.disabled = true;
     if (state.outputSettings?.result?.kind !== "downloads") els.resultDownloadsFolderInput.disabled = true;
     document.querySelectorAll(".workflow-tab").forEach((tab) => {
@@ -607,6 +614,7 @@
       removeBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         state.files.splice(index, 1);
+        invalidateValidation("Reference inputs changed; check plan again before Run.");
         await prepare();
         renderReferenceGallery();
         updateReadinessChecklist();
@@ -624,8 +632,10 @@
   function invalidateValidation(reason = "Configuration changed; validate again before Run.") {
     if (!state.workbook || state.running) return;
     state.validated = false;
+    state.diagnostics = null;
     setStatus("IDLE", "NOT VALIDATED");
     progress(reason);
+    renderDiagnosticGuidance();
   }
 
   function renderPlan() {
@@ -659,10 +669,21 @@
       els.imageOutputText.textContent = window.DacOutputLocation.locationLabel(values.image);
       els.resultOutputText.textContent = window.DacOutputLocation.fileLabel(values.result, values.resultFilename);
       els.auditOutputText.textContent = window.DacOutputLocation.fileLabel(values.result, values.auditFilename);
+      state.destinationMode = values.image.kind === "directory" ? "directory" : "downloads";
+      els.outputDestinationMode.value = state.destinationMode;
       els.imageOutputFolderInput.value = values.image.kind === "downloads" ? values.image.folder : "";
-      els.resultLocationMode.value = state.outputSettings.result?.kind || "same_as_image";
+      els.downloadsDestinationControls.hidden = state.destinationMode !== "downloads";
+      els.authorizedDestinationControls.hidden = state.destinationMode !== "directory";
+      els.destinationHandleText.textContent = values.image.kind === "directory" ? window.DacOutputLocation.locationLabel(values.image) : "No folder selected";
+      els.destinationFolderBtn.textContent = values.image.kind === "directory" && values.image.handle ? "Change Folder" : "Choose Folder";
+      state.separateResultDestination = state.outputSettings.result?.kind !== "same_as_image";
+      els.separateResultDestinationInput.checked = state.separateResultDestination;
+      els.separateResultDestinationControls.hidden = !state.separateResultDestination;
+      els.resultLocationMode.value = state.outputSettings.result?.kind === "directory" ? "directory" : "downloads";
       els.resultDownloadsFolderInput.value = values.result.kind === "downloads" ? values.result.folder : "";
-      els.resultDownloadsFolderLabel.hidden = state.outputSettings.result?.kind !== "downloads";
+      els.resultDownloadsFolderLabel.hidden = !state.separateResultDestination || state.outputSettings.result?.kind !== "downloads";
+      els.resultAuthorizedControls.hidden = !state.separateResultDestination || state.outputSettings.result?.kind !== "directory";
+      els.resultHandleText.textContent = values.result.kind === "directory" ? window.DacOutputLocation.locationLabel(values.result) : "No folder selected";
       els.resultFilenameInput.value = values.resultFilename;
       els.imagePatternInput.value = values.imagePattern;
       els.auditFilenameInput.value = values.auditFilename;
@@ -701,6 +722,7 @@
   async function loadFiles() {
     state.files = [];
     for (const file of Array.from(els.referencesInput.files || [])) if (file.type.startsWith("image/")) state.files.push({ ...(await dataUrl(file)), alias: "" });
+    invalidateValidation("Reference inputs changed; check plan again before Run.");
     els.referenceText.textContent = state.files.length ? `${state.files.length} local reference image(s) selected.` : "No local references selected.";
     renderReferenceGallery();
     await prepare();
@@ -711,15 +733,28 @@
     try {
       state.workbook = await window.DacXlsx.open(els.workbookInput.files?.[0]);
       state.outputSettings = window.DacOutputLocation.fromWorkbook(state.workbook.config, state.workbook.fileName);
-      setCurrent(null, "—", "Review the Run Plan before starting.");
-      await prepare();
+      state.destinationMode = state.outputSettings.image.kind === "directory" ? "directory" : "downloads";
+      state.separateResultDestination = false;
+      setCurrent(null, "—", "Workbook loaded. Check Plan to see all input requirements.");
+      await prepare({ diagnostic: true });
+      if (!state.prepared) {
+        let settings = null;
+        try { settings = window.DacRunnerCore.runtimeConfig(state.workbook.config, state.runtimeOverrides); } catch (_) { /* Check Plan reports invalid settings without discarding a parsed workbook. */ }
+        els.workbookText.textContent = `${state.workbook.fileName} · ${state.workbook.jobs?.length || 0} jobs · ${settings ? "references need review" : "run settings need review"}`;
+        if (settings) {
+          els.timeoutSecInput.value = settings.timeout_sec; els.maxRetriesInput.value = settings.max_retries; els.safetyCooldownInput.value = settings.safety_cooldown_sec; els.maxInputImagesInput.value = settings.max_input_images; els.continueOnErrorInput.value = String(settings.continue_on_error); els.rerunDoneInput.value = String(settings.rerun_done);
+        }
+        setStatus("IDLE", "NEEDS INPUT");
+        progress("Workbook loaded. Check Plan collects all missing inputs without starting a run.");
+        renderOutput();
+      }
       log(`Opened ${state.workbook.fileName}.`);
     } catch (error) {
       setStatus("ERROR"); els.workbookText.textContent = error.message; log(error.message, "error"); controls();
     }
   }
 
-  async function prepare() {
+  async function prepare({ diagnostic = false } = {}) {
     if (!state.workbook) return;
     try {
       state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
@@ -729,7 +764,9 @@
       els.timeoutSecInput.value = settings.timeout_sec; els.maxRetriesInput.value = settings.max_retries; els.safetyCooldownInput.value = settings.safety_cooldown_sec; els.maxInputImagesInput.value = settings.max_input_images; els.continueOnErrorInput.value = String(settings.continue_on_error); els.rerunDoneInput.value = String(settings.rerun_done);
       invalidateValidation(); renderQueue(); renderOutput();
     } catch (error) {
-      state.prepared = null; setStatus("ERROR"); progress(error.message); log(error.message, "error"); controls();
+      state.prepared = null;
+      if (!diagnostic) { progress(error.message); log(error.message, "error"); }
+      controls();
     }
   }
 
@@ -743,15 +780,22 @@
     renderOutput();
   }
 
-  async function useSourceFolder() {
-    if (!state.workbook) throw new Error("Open the source XLSX first.");
-    if (typeof window.showDirectoryPicker !== "function") throw new Error("This Chrome build cannot authorize the source folder. Use the explicit Chrome Downloads location or update Chrome.");
-    const handle = await window.showDirectoryPicker({ mode: "readwrite" });
-    const location = window.DacOutputLocation.directoryLocation(handle, handle.name);
-    state.outputSettings.image = location;
-    state.outputSettings.result = { kind: "same_as_image" };
-    invalidateValidation();
-    els.outputPermissionText.textContent = `Selected output handle: ${location.label}. Chrome does not expose the workbook's absolute folder path; choose the intended folder explicitly.`;
+  function setOutputDestinationMode() {
+    try {
+      const mode = els.outputDestinationMode.value;
+      state.destinationMode = mode;
+      if (mode === "downloads") state.outputSettings.image = window.DacOutputLocation.downloadsLocation(els.imageOutputFolderInput.value || "Duc Auto ChatGPT");
+      else state.outputSettings.image = { kind: "directory", handle: null, label: "No authorized folder selected" };
+      if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
+      invalidateValidation();
+      renderOutput();
+    } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
+  }
+
+  async function choosePrimaryDestination() {
+    await chooseDirectory("Output folder selected", "image");
+    state.destinationMode = "directory";
+    if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
     renderOutput();
   }
 
@@ -767,12 +811,19 @@
   function setResultLocation() {
     try {
       const mode = els.resultLocationMode.value;
-      if (mode === "same_as_image") state.outputSettings.result = { kind: "same_as_image" };
-      else if (mode === "downloads") state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value || state.outputSettings.image?.folder || "Duc Auto ChatGPT");
+      if (mode === "downloads") state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value || state.outputSettings.image?.folder || "Duc Auto ChatGPT");
       else state.outputSettings.result = { kind: "directory", handle: null, label: "No authorized result folder selected" };
       invalidateValidation();
       renderOutput();
     } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
+  }
+
+  function setSeparateResultDestination() {
+    state.separateResultDestination = els.separateResultDestinationInput.checked;
+    if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
+    else state.outputSettings.result = window.DacOutputLocation.downloadsLocation(state.outputSettings.image?.folder || "Duc Auto ChatGPT");
+    invalidateValidation();
+    renderOutput();
   }
 
   function setResultDownloadsFolder() {
@@ -824,9 +875,77 @@
     return locationPreflight.effective;
   }
 
+  async function diagnosticChatCheck() {
+    try {
+      const tab = await activeTab();
+      let ping;
+      try { ping = await chrome.tabs.sendMessage(tab.id, { type: "DAC_PING" }); }
+      catch (_) { return { ok: false, code: "CHATGPT_RECEIVER_UNAVAILABLE", message: "ChatGPT receiver is unavailable.", guidance: "Reload the active normal ChatGPT conversation, then retry Check Plan." }; }
+      if (ping?.securityBlocker) return { ok: false, code: "CHATGPT_SECURITY_BLOCKER", message: `Security blocker: ${ping.securityBlocker}`, guidance: "Resolve the security warning in ChatGPT before running." };
+      if (!ping?.composerFound) return { ok: false, code: "CHATGPT_COMPOSER_UNAVAILABLE", message: "ChatGPT composer is not available.", guidance: "Open a normal conversation with a visible composer, then retry Check Plan." };
+      if (ping.generating || ping.busy) return { ok: false, code: "CHATGPT_BUSY", message: "ChatGPT is generating or busy.", guidance: "Wait until ChatGPT is idle, then retry Check Plan." };
+      return { ok: true, tabId: tab.id };
+    } catch (error) {
+      return { ok: false, code: "CHATGPT_NOT_CONNECTED", message: error.message, guidance: "Open or activate a normal ChatGPT conversation, then retry Check Plan." };
+    }
+  }
+
+  async function diagnosticOutputCheck() {
+    if (!state.outputSettings) return null;
+    try {
+      const check = await window.DacOutputLocation.preflight(state.outputSettings);
+      const values = check.effective || window.DacOutputLocation.effective(state.outputSettings);
+      const locations = values.image === values.result ? [values.image] : [values.image, values.result];
+      return { ...check, settings: state.outputSettings, missingDestination: locations.some((location) => location?.kind === "directory" && !location.handle) };
+    } catch (error) {
+      return { ok: false, error: error.message, settings: state.outputSettings };
+    }
+  }
+
+  function renderDiagnosticGuidance() {
+    if (!els.validationGuidance || !els.planCheckSummary) return;
+    els.validationGuidance.textContent = "";
+    const diagnostics = state.diagnostics;
+    if (!diagnostics) {
+      els.planCheckSummary.textContent = state.workbook ? "Workbook loaded. Check Plan to inspect every requirement." : "Load an XLSX, then Check Plan.";
+      return;
+    }
+    const { blockers, warnings } = diagnostics.summary;
+    els.planCheckSummary.textContent = blockers ? `${blockers} blocker${blockers === 1 ? "" : "s"} · ${warnings} warning${warnings === 1 ? "" : "s"}` : warnings ? `No blockers · ${warnings} warning${warnings === 1 ? "" : "s"}` : "No blockers · plan is ready to run.";
+    for (const finding of diagnostics.findings.filter((finding) => finding.severity !== "OK")) {
+      const row = document.createElement("div");
+      row.className = `guidance-row ${finding.severity.toLowerCase()}`;
+      const title = document.createElement("strong"); title.textContent = finding.code.replace(/_/g, " ");
+      const detail = document.createElement("span"); detail.textContent = finding.guidance || finding.message;
+      row.append(title, detail);
+      els.validationGuidance.appendChild(row);
+    }
+  }
+
   async function validate() {
-    try { await authoritativeValidate(); state.validated = true; setStatus("DONE", "READY TO RUN"); progress("Validation passed. Ready to run."); renderQueue(); log("Validation passed, including output write permission.", "done"); }
-    catch (error) { setStatus("ERROR"); progress(error.message); log(error.message, "error"); }
+    const [outputCheck, chatCheck] = await Promise.all([diagnosticOutputCheck(), diagnosticChatCheck()]);
+    state.diagnostics = window.DacPlanDiagnostics.analyze({
+      workbook: state.workbook,
+      files: state.files,
+      overrides: state.runtimeOverrides,
+      outputCheck,
+      chatCheck,
+      runner: window.DacRunnerCore,
+      output: window.DacOutputLocation
+    });
+    state.validated = state.diagnostics.summary.blockers === 0;
+    if (state.validated) {
+      setStatus(state.diagnostics.summary.warnings ? "IDLE" : "DONE", state.diagnostics.summary.warnings ? "WARNING" : "READY TO RUN");
+      progress(state.diagnostics.summary.warnings ? "Check Plan found warnings; run remains enabled." : "Check Plan passed. Ready to run.");
+      log("Check Plan completed with no blockers.", "done");
+    } else {
+      setStatus("IDLE", "NEEDS INPUT");
+      progress(`Check Plan found ${state.diagnostics.summary.blockers} blocker(s).`);
+      log("Check Plan completed; guidance is shown in Setup.", "error");
+    }
+    renderDiagnosticGuidance();
+    renderQueue();
+    renderOutput();
     controls();
   }
 
@@ -1201,15 +1320,15 @@
 
   els.workbookInput.addEventListener("change", openWorkbook);
   els.referencesInput.addEventListener("change", () => loadFiles().catch((error) => log(error.message, "error")));
+  els.outputDestinationMode.addEventListener("change", setOutputDestinationMode);
   els.imageOutputFolderInput.addEventListener("change", setImageDownloadsFolder);
+  els.destinationFolderBtn.addEventListener("click", () => choosePrimaryDestination().catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
+  els.separateResultDestinationInput.addEventListener("change", setSeparateResultDestination);
   els.resultLocationMode.addEventListener("change", setResultLocation);
   els.resultDownloadsFolderInput.addEventListener("change", setResultDownloadsFolder);
   els.resultFilenameInput.addEventListener("change", setResultFilename);
   for (const element of [els.imagePatternInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput]) element.addEventListener("change", setArtifactNaming);
   for (const element of [els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.addEventListener("change", () => updateRuntimeOverrides().catch((error) => log(error.message, "error")));
-  els.chooseImageFolderBtn.addEventListener("click", () => chooseDirectory("Image folder selected", "image").catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
-  els.changeImageFolderBtn.addEventListener("click", () => chooseDirectory("Image folder changed", "image").catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
-  els.useSourceFolderBtn.addEventListener("click", () => useSourceFolder().catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   els.chooseResultFolderBtn.addEventListener("click", () => chooseDirectory("Result XLSX folder selected", "result").then(() => { els.resultLocationMode.value = "directory"; renderOutput(); }).catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   const ZOOM_LEVELS = [0.8, 0.9, 1.0];
   const ZOOM_EPSILON = 0.015;
