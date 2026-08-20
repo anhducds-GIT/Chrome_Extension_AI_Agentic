@@ -400,24 +400,39 @@
     els.queueSummary.textContent = `${queue.length} job${queue.length === 1 ? "" : "s"}`;
     for (const item of (state.queueExpanded ? queue : queue.slice(0, 6))) {
       const li = document.createElement("li");
-      li.className = ["RUNNING", "RECONCILING"].includes(item.status) ? "current" : item.status.toLowerCase();
+      const isCurrent = ["RUNNING", "RECONCILING"].includes(item.status);
+      const isSuccess = item.status === "SUCCESS";
+      const isFailed = ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status);
       const isRetryEligible = item.status === "RUNNING" && item.phase === "PRE_SUBMIT";
       const retryLabel = isRetryEligible
         ? `attempt ${item.attempt_count}/${1 + item.settings.max_retries}`
         : `attempt ${item.attempt_count}${!isRetryEligible && (item.phase !== "PRE_SUBMIT" || ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)) ? " · Auto-retry: No" : ""}`;
       const outputText = item.persistence_verified && item.result_file ? ` · SAVED ✓ ${item.result_file}` : item.result_file ? ` · recorded output (not re-verified): ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : "";
-      li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · refs: ${item.references.map((file) => file.alias || window.DacRunnerCore.basename(file.fileName)).join(", ")}` : " · refs: none"} · ${item.status} · ${window.DacRunState.stageFor(item)} · ${retryLabel}${outputText}${item.protected_checkpoint ? " · Output checkpoint protected" : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
-      li.addEventListener("click", () => { state.selectedJobId = item.job.id; renderQueue(); controls(); });
+
+      li.className = `queue-row ${isCurrent ? "current" : item.status.toLowerCase()}`;
+      const icon = isSuccess ? "✓" : isFailed ? "⛔" : isCurrent ? "●" : "○";
+      const iconClass = isSuccess ? "status-success" : isFailed ? "status-danger" : isCurrent ? "status-active" : "status-pending";
+      const statusLabel = isSuccess ? (item.persistence_verified ? "Saved" : "Detected") : isFailed ? (item.status === "INTERRUPTED" ? "Halted" : "Failed") : isCurrent ? "Running" : "Pending";
+      const timeOrDetail = item.output_saved_at
+        ? new Date(item.output_saved_at).toLocaleTimeString()
+        : item.completed_at
+          ? new Date(item.completed_at).toLocaleTimeString()
+          : isCurrent
+            ? window.DacRunState.stageFor(item)
+            : "—";
+
+      li.innerHTML = `<div class="queue-row-left"><span class="queue-icon ${iconClass}">${icon}</span><span class="queue-job-id">${item.job.id}</span></div><div class="queue-row-status ${statusLabel.toLowerCase()}">${statusLabel}</div><div class="queue-row-right">${timeOrDetail}</div>`;
+      li.addEventListener("click", () => { state.selectedJobId = state.selectedJobId === item.job.id ? null : item.job.id; renderQueue(); controls(); });
       if (state.selectedJobId === item.job.id) {
-        const details = document.createElement("details"); details.open = true;
-        const summary = document.createElement("summary"); summary.textContent = "Prompt / effective settings";
-        const body = document.createElement("div"); body.textContent = `${item.job.prompt}\nReferences: ${item.references.map((file) => file.alias || file.fileName).join(", ") || "none"}\nTimeout: ${item.settings.timeout_sec}s · Retries: ${item.settings.max_retries} · Cooldown: ${item.settings.safety_cooldown_sec}s\nLast error: ${item.last_error || "—"}`;
-        details.append(summary, body); li.appendChild(details);
+        const details = document.createElement("div");
+        details.className = "queue-row-details";
+        details.innerHTML = `<strong>Prompt:</strong> ${item.job.prompt}<br/><strong>References:</strong> ${item.references.map((file) => file.alias || file.fileName).join(", ") || "none"}<br/><strong>Settings:</strong> Timeout: ${item.settings.timeout_sec}s · Retries: ${item.settings.max_retries} · Cooldown: ${item.settings.safety_cooldown_sec}s · ${retryLabel}${outputText}${item.protected_checkpoint ? " · Output checkpoint protected" : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}${item.last_error ? `<br/><strong style="color: #dc2626;">Error:</strong> ${item.last_error}` : ""}`;
+        li.appendChild(details);
       }
       els.queueList.appendChild(li);
     }
     const failures = queue.filter((item) => ["FAILED", "INTERRUPTED"].includes(item.status));
-    els.failedJobsText.textContent = `Failed / Interrupted: ${failures.length}${failures.length ? ` · ${failures.map((item) => `${item.job.id}: ${item.failure_type || item.last_error || "OTHER"}`).join("; ")}` : ""}`;
+    els.failedJobsText.textContent = failures.length ? `${failures.length} failed / interrupted` : "";
     els.viewQueueBtn.textContent = state.queueExpanded ? "Collapse queue" : `View full queue${queue.length > 6 ? ` (${queue.length})` : ""}`;
     renderOutputScreen();
   }
@@ -431,9 +446,34 @@
     const failedCount = count("FAILED") + interrupted;
     const hasCompletedRun = Boolean(state.runId || (queue.length > 0 && (successCount > 0 || failedCount > 0)));
 
-    els.outputSummaryText.textContent = hasCompletedRun
-      ? (queue.length ? `Total ${queue.length} · Success ${successCount} · Failed ${count("FAILED")}${interrupted ? ` · Interrupted ${interrupted}` : ""}` : "No completed run.")
-      : "Complete a run to view results and artifacts.";
+    if (els.completionCard) {
+      if (!hasCompletedRun) {
+        els.completionCard.className = "card completion-card empty-state";
+        if (els.completionIcon) els.completionIcon.textContent = "📊";
+        if (els.completionTitle) els.completionTitle.textContent = "No completed run yet";
+        if (els.outputSummaryText) els.outputSummaryText.textContent = "Complete a run to view results and artifacts.";
+        if (els.failedJobsText) els.failedJobsText.textContent = "";
+      } else if (state.artifactErrors && state.artifactErrors.length > 0) {
+        els.completionCard.className = "card completion-card persistence-failed";
+        if (els.completionIcon) els.completionIcon.textContent = "⚠";
+        if (els.completionTitle) els.completionTitle.textContent = "ARTIFACT PERSISTENCE FAILED";
+        if (els.outputSummaryText) els.outputSummaryText.textContent = `${successCount} / ${queue.length} completed`;
+        if (els.failedJobsText) els.failedJobsText.textContent = "Artifact persistence verification failed.";
+      } else if (failedCount > 0) {
+        els.completionCard.className = "card completion-card has-failures";
+        if (els.completionIcon) els.completionIcon.textContent = "⚠";
+        if (els.completionTitle) els.completionTitle.textContent = "RUN COMPLETE WITH ISSUES";
+        if (els.outputSummaryText) els.outputSummaryText.textContent = `${successCount} / ${queue.length} completed`;
+        if (els.failedJobsText) els.failedJobsText.textContent = `${failedCount} failed / interrupted`;
+      } else {
+        els.completionCard.className = "card completion-card success";
+        if (els.completionIcon) els.completionIcon.textContent = "✓";
+        if (els.completionTitle) els.completionTitle.textContent = "RUN COMPLETE";
+        if (els.outputSummaryText) els.outputSummaryText.textContent = `${successCount} / ${queue.length} completed`;
+        if (els.failedJobsText) els.failedJobsText.textContent = "";
+      }
+    }
+
     els.outputList.textContent = "";
     for (const item of (state.outputsExpanded ? queue : queue.slice(0, 8))) {
       const li = document.createElement("li");
@@ -448,7 +488,7 @@
         : item.detected_not_downloaded
           ? `<span class="output-status-pill warning">Detected</span>`
           : `<span class="output-status-pill ${item.status.toLowerCase()}">${item.status}</span>`;
-      const fileText = item.result_file ? ` · <span class="output-filename">${item.result_file}</span>` : "";
+      const fileText = item.result_file ? ` · <span class="output-filename">${window.DacRunnerCore.basename(item.result_file)}</span>` : "";
       li.innerHTML = `${thumbHtml}<div class="output-item-info"><strong>${item.job.id}</strong>${fileText}</div>${statusBadge}`;
       els.outputList.appendChild(li);
     }
@@ -492,15 +532,15 @@
     if (values?.saveResultXlsx) {
       if (state.resultFile) {
         resultStatus = "Verified";
-        resultDetail = state.resultFile;
+        resultDetail = window.DacRunnerCore.basename(state.resultFile);
         resultStatusClass = "verified";
-      } else if (state.artifactErrors.some((e) => /xlsx/i.test(e))) {
+      } else if (state.artifactErrors.some((e) => /Result XLSX/i.test(e))) {
         resultStatus = "Failed";
-        resultDetail = "XLSX persistence failed";
+        resultDetail = "Result XLSX persistence failed";
         resultStatusClass = "failed";
       } else {
-        resultStatus = "Not saved";
-        resultDetail = "—";
+        resultStatus = "Pending";
+        resultDetail = values.resultFilename || "—";
         resultStatusClass = "muted";
       }
     }
@@ -517,15 +557,15 @@
     if (values?.saveAuditJsonl) {
       if (state.auditFile) {
         auditStatus = "Verified";
-        auditDetail = state.auditFile;
+        auditDetail = window.DacRunnerCore.basename(state.auditFile);
         auditStatusClass = "verified";
-      } else if (state.artifactErrors.some((e) => /audit|jsonl/i.test(e))) {
+      } else if (state.artifactErrors.some((e) => /Audit JSONL/i.test(e))) {
         auditStatus = "Failed";
         auditDetail = "Audit JSONL persistence failed";
         auditStatusClass = "failed";
       } else {
-        auditStatus = "Not saved";
-        auditDetail = "—";
+        auditStatus = "Pending";
+        auditDetail = values.auditFilename || "—";
         auditStatusClass = "muted";
       }
     }
@@ -535,66 +575,47 @@
       els.artifactAuditStatus.className = `artifact-badge ${auditStatusClass}`;
     }
 
-    els.openOutputFolderBtn.disabled = !values || values.image.kind !== "downloads";
-
-    if (els.completionCard) {
+    if (els.artifactStatusPill) {
       if (!hasCompletedRun) {
-        els.completionCard.className = "card completion-card empty-state";
-        if (els.completionIcon) els.completionIcon.textContent = "📊";
-        if (els.completionTitle) els.completionTitle.textContent = "No completed run yet";
-        if (els.outputSummaryText) els.outputSummaryText.textContent = "Complete a run to view results and artifacts.";
-        if (els.failedJobsText) els.failedJobsText.textContent = "";
-        if (els.artifactStatusPill) {
-          els.artifactStatusPill.className = "artifact-status-pill empty";
-          els.artifactStatusPill.textContent = "Pending Run";
-        }
-      } else if (state.artifactErrors.length > 0) {
-        els.completionCard.className = "card completion-card persistence-failed";
-        if (els.completionIcon) els.completionIcon.textContent = "❌";
-        if (els.completionTitle) els.completionTitle.textContent = "ARTIFACT PERSISTENCE FAILED";
-        if (els.artifactStatusPill) {
-          els.artifactStatusPill.className = "artifact-status-pill failed";
-          els.artifactStatusPill.textContent = "Persistence Failed";
-        }
-      } else if (failedCount > 0) {
-        els.completionCard.className = "card completion-card has-failures";
-        if (els.completionIcon) els.completionIcon.textContent = "⚠";
-        if (els.completionTitle) els.completionTitle.textContent = "RUN COMPLETED WITH FAILURES";
-        if (els.artifactStatusPill) {
-          els.artifactStatusPill.className = "artifact-status-pill verified";
-          els.artifactStatusPill.textContent = "Verified";
-        }
-      } else if (queue.length > 0 && successCount === queue.length) {
-        els.completionCard.className = "card completion-card";
-        if (els.completionIcon) els.completionIcon.textContent = "✓";
-        if (els.completionTitle) els.completionTitle.textContent = "RUN COMPLETE";
-        if (els.artifactStatusPill) {
-          els.artifactStatusPill.className = "artifact-status-pill verified";
-          els.artifactStatusPill.textContent = "Verified";
-        }
+        els.artifactStatusPill.className = "artifact-status-pill empty";
+        els.artifactStatusPill.textContent = "Pending Run";
+      } else if (state.artifactErrors && state.artifactErrors.length > 0) {
+        els.artifactStatusPill.className = "artifact-status-pill failed";
+        els.artifactStatusPill.textContent = "Failed";
       } else {
-        els.completionCard.className = "card completion-card";
-        if (els.completionIcon) els.completionIcon.textContent = "✓";
-        if (els.completionTitle) els.completionTitle.textContent = "RUN COMPLETE";
-        if (els.artifactStatusPill) {
-          els.artifactStatusPill.className = "artifact-status-pill verified";
-          els.artifactStatusPill.textContent = "Verified";
-        }
+        els.artifactStatusPill.className = "artifact-status-pill verified";
+        els.artifactStatusPill.textContent = "Verified";
       }
     }
   }
 
   function renderReferenceGallery() {
+    if (!els.referenceGallery) return;
     els.referenceGallery.textContent = "";
     for (const [index, file] of state.files.entries()) {
-      const row = document.createElement("div"); row.className = "reference-item";
-      const image = document.createElement("img"); image.src = file.dataUrl; image.alt = file.fileName;
-      const label = document.createElement("label"); label.textContent = file.fileName;
-      const alias = document.createElement("input"); alias.value = file.alias || ""; alias.placeholder = "Alias (optional)";
-      alias.addEventListener("change", async () => { file.alias = alias.value.trim(); try { await prepare(); } catch (_) { /* prepare renders error */ } });
-      const remove = document.createElement("button"); remove.className = "secondary small"; remove.type = "button"; remove.textContent = "Remove";
-      remove.addEventListener("click", async () => { state.files.splice(index, 1); await prepare(); renderReferenceGallery(); });
-      label.appendChild(alias); row.append(image, label, remove); els.referenceGallery.appendChild(row);
+      const card = document.createElement("div");
+      card.className = "reference-card";
+      card.title = `${file.fileName}${file.alias ? ` (${file.alias})` : ""}`;
+      const image = document.createElement("img");
+      image.src = file.dataUrl;
+      image.alt = file.fileName;
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "remove-ref-btn";
+      removeBtn.type = "button";
+      removeBtn.innerHTML = "×";
+      removeBtn.title = "Remove reference image";
+      removeBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        state.files.splice(index, 1);
+        await prepare();
+        renderReferenceGallery();
+        updateReadinessChecklist();
+      });
+      card.append(image, removeBtn);
+      els.referenceGallery.appendChild(card);
+    }
+    if (els.referenceText) {
+      els.referenceText.textContent = `${state.files.length} image${state.files.length === 1 ? "" : "s"} selected`;
     }
   }
 

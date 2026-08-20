@@ -44,11 +44,11 @@
       <!-- 1. SOURCE: WORKBOOK & REFERENCES -->
       <section class="card setup-group" id="workbookCard">
         <div class="row spread section-title">
-          <strong>1. SOURCE WORKBOOK &amp; REFERENCES</strong>
+          <strong>1. WORKBOOK</strong>
         </div>
         <!-- Loaded Workbook Row -->
         <div class="asset-body">
-          <div class="asset-icon">📊</div>
+          <div class="asset-icon excel-icon">X</div>
           <div class="asset-details">
             <div id="workbookNameDisplay" class="asset-name">No workbook loaded</div>
             <div id="workbookText" class="hint">Open an XLSX to begin.</div>
@@ -60,12 +60,12 @@
         <!-- References Subsection -->
         <div class="sub-section" id="referencesCard">
           <div class="row spread sub-title">
-            <label for="referencesInput" class="secondary-label"><strong>Reference Images</strong> (optional)</label>
+            <label for="referencesInput" class="secondary-label"><strong>References</strong> <span class="muted">(optional)</span></label>
             <button id="addReferencesBtn" class="secondary small" type="button">+ Add</button>
           </div>
           <input id="referencesInput" type="file" accept="image/*" multiple />
-          <p id="referenceText" class="hint">No local references selected.</p>
           <div id="referenceGallery" class="reference-gallery" aria-live="polite"></div>
+          <p id="referenceText" class="hint">0 images selected</p>
         </div>
       </section>
 
@@ -76,12 +76,12 @@
           <span class="muted">Overrides</span>
         </div>
         <div class="settings-grid trio">
-          <label>Timeout (s)<input id="timeoutSecInput" type="number" min="15" max="900" /></label>
-          <label>Max retries<input id="maxRetriesInput" type="number" min="0" max="5" /></label>
-          <label>Cooldown (s)<input id="safetyCooldownInput" type="number" min="0" max="120" /></label>
+          <label>Timeout<input id="timeoutSecInput" type="number" min="15" max="900" placeholder="120 sec" /></label>
+          <label>Retries<input id="maxRetriesInput" type="number" min="0" max="5" placeholder="2" /></label>
+          <label>Cooldown<input id="safetyCooldownInput" type="number" min="0" max="120" placeholder="10 sec" /></label>
         </div>
         <details class="secondary-details">
-          <summary>Advanced execution settings</summary>
+          <summary>Advanced settings</summary>
           <div class="settings-grid">
             <label>Max input references<input id="maxInputImagesInput" type="number" min="0" max="10" /></label>
             <label>Continue on error<select id="continueOnErrorInput"><option value="true">Yes</option><option value="false">No</option></select></label>
@@ -97,20 +97,20 @@
           <span id="outputPermissionText" class="muted">Open an XLSX to set locations.</span>
         </div>
         <div class="settings-grid">
-          <label>Image Output Folder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
-          <label>Image filename pattern<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">{job_id}, {attempt}, {index}</span></label>
+          <label class="full-width">Output folder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
+          <label>Filename pattern<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">{job_id}, {attempt}, {index}</span></label>
           <label>Collision policy<select id="collisionPolicyInput"><option value="overwrite">overwrite</option><option value="uniquify" selected>uniquify</option><option value="fail">fail</option></select></label>
         </div>
         <div class="settings-grid save-toggles">
-          <label><input id="saveImagesInput" type="checkbox" checked /> Download generated images</label>
-          <label><input id="saveResultXlsxInput" type="checkbox" checked /> Save Result XLSX</label>
-          <label><input id="saveAuditJsonlInput" type="checkbox" checked /> Save Audit JSONL (technical log)</label>
+          <label class="switch-label"><input id="saveImagesInput" type="checkbox" checked /> Download generated images</label>
+          <label class="switch-label"><input id="saveResultXlsxInput" type="checkbox" checked /> Save Result XLSX</label>
+          <label class="switch-label"><input id="saveAuditJsonlInput" type="checkbox" checked /> Save Audit JSONL (technical log)</label>
         </div>
         <div class="controls output-controls">
-          <button id="chooseImageFolderBtn" class="secondary" type="button">Choose Image Folder</button>
-          <button id="useSourceFolderBtn" class="secondary" type="button">Use Source Folder</button>
-          <button id="changeImageFolderBtn" class="secondary" type="button">Change Folder</button>
-          <button id="chooseResultFolderBtn" class="secondary" type="button">Choose Result Folder</button>
+          <button id="chooseImageFolderBtn" class="secondary small" type="button">Choose Image Folder</button>
+          <button id="useSourceFolderBtn" class="secondary small" type="button">Use Source Folder</button>
+          <button id="changeImageFolderBtn" class="secondary small" type="button">Change Folder</button>
+          <button id="chooseResultFolderBtn" class="secondary small" type="button">Choose Result Folder</button>
         </div>
 
         <details class="secondary-details">
@@ -132,7 +132,7 @@
       <!-- 4. VALIDATION & ACTION -->
       <section class="card setup-group" id="validationCard">
         <div class="row spread section-title">
-          <strong>4. VALIDATION &amp; RUN</strong>
+          <strong>4. VALIDATION</strong>
           <button id="validateBtn" class="secondary small" disabled type="button">Check plan</button>
         </div>
         <div class="readiness-checklist" id="readinessChecklist">
@@ -159,7 +159,7 @@
         <!-- OVERALL PROGRESS -->
         <section class="card runtime-card" id="overallProgressCard">
           <div class="row spread section-title">
-            <span class="section-badge">OVERALL PROGRESS</span>
+            <span class="section-badge">PROGRESS</span>
             <span id="progressPercent" class="percent-badge">0%</span>
           </div>
           <div class="progress-header row spread">
@@ -188,13 +188,13 @@
           </div>
           <div class="row spread current-job-top">
             <span class="section-badge">CURRENT JOB</span>
-            <span id="currentStage" class="stage">—</span>
-          </div>
-          <div class="row spread current-job-meta">
-            <div id="currentJobId" class="current-job">—</div>
             <div id="currentAttemptBadge" class="attempt-badge">Attempt —</div>
           </div>
           <div id="currentPromptPreview" class="prompt-preview" hidden></div>
+          <div class="row spread current-job-meta">
+            <div id="currentJobId" class="current-job">—</div>
+            <span id="currentStage" class="stage">—</span>
+          </div>
           <div class="pipeline-stepper" id="pipelineStepper">
             <div class="step-item" data-step="prepare"><span class="step-dot"></span><span class="step-label">Prepare</span></div>
             <div class="step-line"></div>
@@ -265,10 +265,10 @@
       <!-- COMPLETION HERO CARD -->
       <section class="card completion-card" id="completionCard">
         <div class="completion-hero">
-          <div class="completion-icon" id="completionIcon">📊</div>
-          <div class="completion-title" id="completionTitle">No completed run yet</div>
-          <div id="outputSummaryText" class="completion-ratio">Complete a run to view results and artifacts.</div>
-          <div id="failedJobsText" class="hint completion-failed"></div>
+          <div class="completion-icon" id="completionIcon">✓</div>
+          <div class="completion-title" id="completionTitle">RUN COMPLETE</div>
+          <div id="outputSummaryText" class="completion-ratio">0 / 0 completed</div>
+          <div id="failedJobsText" class="completion-failed"></div>
         </div>
       </section>
 
@@ -290,7 +290,7 @@
         <div id="artifactLocationNote" class="artifact-location-note hint">Location: Not configured</div>
         <div id="artifactList" class="artifact-list">
           <div class="artifact-row" id="artifactRowImages">
-            <span class="artifact-type">🖼 Images</span>
+            <span class="artifact-type">📁 Images folder</span>
             <span class="artifact-detail" id="artifactImagesDetail">0 verified</span>
             <span class="artifact-badge disabled" id="artifactImagesStatus">Disabled</span>
           </div>
@@ -300,7 +300,7 @@
             <span class="artifact-badge disabled" id="artifactResultStatus">Disabled</span>
           </div>
           <div class="artifact-row" id="artifactRowAudit">
-            <span class="artifact-type">📋 Audit JSONL <span class="muted">(technical log)</span></span>
+            <span class="artifact-type">📄 Audit JSONL <span class="muted">(technical log)</span></span>
             <span class="artifact-detail" id="artifactAuditDetail">—</span>
             <span class="artifact-badge disabled" id="artifactAuditStatus">Disabled</span>
           </div>
@@ -309,9 +309,9 @@
 
       <!-- OUTPUT ACTIONS -->
       <section class="controls output-action-controls">
-        <button id="openOutputFolderBtn" class="primary" type="button" disabled>Open Output Folder</button>
-        <button id="loadNewWorkbookBtn" class="secondary" type="button">Load New Workbook</button>
-        <button id="runFailedBtn" class="secondary" type="button" disabled>Run Failed Jobs</button>
+        <button id="openOutputFolderBtn" class="primary" type="button" disabled>📁 Open Output Folder</button>
+        <button id="loadNewWorkbookBtn" class="secondary" type="button">📄 Load New Workbook</button>
+        <button id="runFailedBtn" class="secondary" type="button" disabled>↻ Run Failed Jobs</button>
       </section>
     </section>
 
