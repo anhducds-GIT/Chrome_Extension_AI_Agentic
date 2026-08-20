@@ -361,6 +361,7 @@
 
   function renderQueue() {
     const queue = state.prepared?.queue || [];
+    renderProgressSegments();
     els.queueList.textContent = "";
     els.queueSummary.textContent = `${queue.length} job${queue.length === 1 ? "" : "s"}`;
     for (const item of (state.queueExpanded ? queue : queue.slice(0, 6))) {
