@@ -3,7 +3,7 @@
   const ids = [
     "workbookInput", "referencesInput", "validateBtn", "runBtn", "runFailedBtn", "stopBtn", "statusChip",
     "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText",
-    "currentJobId", "currentStage", "currentTiming", "currentSaved", "nextTaskCard", "nextTaskId", "nextTaskCountdown",
+    "currentJobId", "currentStage", "currentTiming", "currentSaved", "runtimeJobElapsed", "runtimeCurrentOperation", "runtimeTimeoutRemaining", "runtimeRetryState", "runtimeInterJobDelay", "runtimeNextTransition", "nextTaskCard", "nextTaskId", "nextTaskCountdown",
     "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText",
     "outputPermissionText", "outputDestinationMode", "imageOutputFolderInput", "downloadsDestinationControls",
     "authorizedDestinationControls", "destinationHandleText", "outputProfileText", "outputProfilePermission", "destinationFolderBtn", "outputAdvancedDetails",
@@ -63,7 +63,8 @@
     configFindings: [],
     localOverrides: new Set(),
     outputProfileState: null,
-    selectedInterJobDelay: null
+    selectedInterJobDelay: null,
+    retryResumeAt: null
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -181,39 +182,31 @@
     });
   }
 
-  function updateOperatorTimer() {
+  function currentRuntimeInfo(now = Date.now()) {
+    return window.DacSidepanelUiSemantics.runtimeInfo({
+      currentItem: state.currentItem,
+      currentStage: state.currentStage,
+      currentStartedAt: state.currentStartedAt,
+      stageStartedAt: state.stageStartedAt,
+      stageBudgetSec: state.stageBudgetSec,
+      interJobCountdown: state.interJobCountdown,
+      selectedInterJobDelay: state.selectedInterJobDelay,
+      retryResumeAt: state.retryResumeAt,
+      settings: state.prepared?.settings,
+      running: state.running
+    }, now, window.DacRunState.formatDuration);
+  }
+
+  function updateOperatorTimer(info = currentRuntimeInfo()) {
     if (!els.operatorTimerBadge || !els.operatorTimerText) return;
-    const item = state.currentItem;
-    if (!state.running && !item) {
+    if (info.timerHidden) {
       if (els.operatorTimerArea) els.operatorTimerArea.hidden = true;
       els.operatorTimerText.textContent = "—";
       return;
     }
     if (els.operatorTimerArea) els.operatorTimerArea.hidden = false;
-    const now = Date.now();
-    const stageElapsed = state.stageStartedAt ? Math.floor((now - state.stageStartedAt) / 1000) : 0;
-    const stageBudget = state.stageBudgetSec || item?.settings?.timeout_sec || 0;
-    const stageTimeLeft = stageBudget ? Math.max(0, stageBudget - stageElapsed) : 0;
-    const formattedStageLeft = window.DacRunState.formatDuration(stageTimeLeft);
-
-    if (state.interJobCountdown != null && state.interJobCountdown > 0) {
-      const settings = state.prepared?.settings;
-      const configured = settings ? (settings.delay_min_sec === settings.delay_max_sec ? `Configured delay: fixed ${settings.delay_min_sec}s` : `Configured delay: ${settings.delay_min_sec}–${settings.delay_max_sec}s · selected this transition: ${state.selectedInterJobDelay}s`) : "";
-      els.operatorTimerText.textContent = `Next readiness check in ${window.DacRunState.formatDuration(state.interJobCountdown)}${configured ? ` · ${configured}` : ""}`;
-      els.operatorTimerBadge.className = "timer-badge cooldown";
-    } else if (state.currentStage === "WAITING_READY" || state.currentStage === "FINALIZING / WAITING_IDLE" || item?.runtime_stage === "WAITING_READY") {
-      els.operatorTimerText.textContent = `Waiting for ChatGPT ready · ${formattedStageLeft} max`;
-      els.operatorTimerBadge.className = "timer-badge waiting";
-    } else if (item && state.running) {
-      els.operatorTimerText.textContent = `Timeout left ${formattedStageLeft}`;
-      els.operatorTimerBadge.className = "timer-badge active";
-    } else if (item && ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)) {
-      els.operatorTimerText.textContent = `Halted · ${item.status}`;
-      els.operatorTimerBadge.className = "timer-badge halted";
-    } else {
-      els.operatorTimerText.textContent = "—";
-      els.operatorTimerBadge.className = "timer-badge";
-    }
+    els.operatorTimerText.textContent = info.timerText;
+    els.operatorTimerBadge.className = `timer-badge ${info.timerMode}`;
   }
 
   function updateHaltedBanner(isHalted, item, reason = "") {
@@ -241,6 +234,7 @@
     const stageTimeLeft = stageBudget ? Math.max(0, stageBudget - stageElapsed) : 0;
     const formattedJobElapsed = window.DacRunState.formatDuration(jobElapsed);
     const formattedStageLeft = window.DacRunState.formatDuration(stageTimeLeft);
+    const runtimeInfo = currentRuntimeInfo(now);
 
     let attemptText = "";
     let attemptBadgeText = "Attempt —";
@@ -280,15 +274,22 @@
       }
       els.currentTiming.textContent = timingParts.join(" · ");
     } else {
-      els.currentTiming.textContent = state.currentReason;
+      els.currentTiming.textContent = state.currentReason || "Waiting…";
     }
+
+    if (els.runtimeJobElapsed) els.runtimeJobElapsed.textContent = runtimeInfo.jobElapsed;
+    if (els.runtimeCurrentOperation) els.runtimeCurrentOperation.textContent = runtimeInfo.currentOperation;
+    if (els.runtimeTimeoutRemaining) els.runtimeTimeoutRemaining.textContent = runtimeInfo.operationTimeoutRemaining;
+    if (els.runtimeRetryState) els.runtimeRetryState.textContent = runtimeInfo.retryState;
+    if (els.runtimeInterJobDelay) els.runtimeInterJobDelay.textContent = runtimeInfo.interJobDelay;
+    if (els.runtimeNextTransition) els.runtimeNextTransition.textContent = runtimeInfo.nextTransition;
 
     const saved = item?.persistence_verified ? item.result_file || "" : "";
     els.currentSaved.hidden = !saved && !item?.detected_not_downloaded;
     els.currentSaved.textContent = saved ? `SAVED ✓ ${saved}` : item?.detected_not_downloaded ? "DETECTED · not downloaded" : "";
 
     updatePipelineStepper(item);
-    updateOperatorTimer();
+    updateOperatorTimer(runtimeInfo);
 
     const isHalted = ["INTERRUPTED", "STOPPED"].includes(item?.status) || state.currentStage === "HALTED";
     updateHaltedBanner(isHalted, item, state.currentReason);
@@ -503,6 +504,7 @@
     }
     els.viewOutputsBtn.textContent = state.outputsExpanded ? "Collapse outputs" : `View all outputs${queue.length > 8 ? ` (${queue.length})` : ""}`;
     const values = state.outputSettings ? window.DacOutputLocation.effective(state.outputSettings) : null;
+    updateOpenOutputFolderControl(values?.image || null);
 
     if (els.artifactLocationNote) {
       els.artifactLocationNote.textContent = values ? `Location: ${window.DacOutputLocation.locationLabel(values.image)}` : "Location: Not configured";
@@ -596,6 +598,29 @@
         els.artifactStatusPill.textContent = "Verified";
       }
     }
+  }
+
+  function updateOpenOutputFolderControl(location) {
+    if (!els.openOutputFolderBtn) return;
+    const action = window.DacSidepanelUiSemantics.outputFolderAction(location);
+    els.openOutputFolderBtn.disabled = !action.enabled;
+    els.openOutputFolderBtn.textContent = action.label;
+    els.openOutputFolderBtn.title = action.note;
+  }
+
+  function openOutputFolder() {
+    const values = state.outputSettings ? window.DacOutputLocation.effective(state.outputSettings) : null;
+    const action = window.DacSidepanelUiSemantics.outputFolderAction(values?.image || null);
+    if (!action.enabled) {
+      if (els.artifactLocationNote) els.artifactLocationNote.textContent = action.note;
+      return;
+    }
+    if (typeof chrome === "undefined" || typeof chrome.downloads?.showDefaultFolder !== "function") {
+      if (els.artifactLocationNote) els.artifactLocationNote.textContent = "Chrome does not expose an action to open Downloads in this build.";
+      return;
+    }
+    chrome.downloads.showDefaultFolder();
+    if (els.artifactLocationNote) els.artifactLocationNote.textContent = action.note;
   }
 
   function renderReferenceGallery() {
@@ -1198,10 +1223,8 @@
     for (const remaining of window.DacRunnerCore.countdownValues(seconds)) {
       if (state.stopRequested) break;
       state.interJobCountdown = remaining;
-      const targetTime = new Date(Date.now() + remaining * 1000).toLocaleTimeString();
-      const settings = state.prepared?.settings;
-      const delayMode = settings?.delay_min_sec === settings?.delay_max_sec ? `Configured delay: fixed ${seconds}s` : `Configured delay: ${settings?.delay_min_sec}–${settings?.delay_max_sec}s · selected this transition: ${seconds}s`;
-      nextTask(item, `Inter-job delay · Earliest next readiness check: ${targetTime} · ${delayMode}`);
+      const runtimeInfo = currentRuntimeInfo();
+      nextTask(item, `${runtimeInfo.nextTransition} · ${runtimeInfo.interJobDelay}`);
       renderRuntime();
       await sleep(1000);
     }
@@ -1324,7 +1347,7 @@
     catch (error) { setStatus("ERROR"); progress(messageOf(error)); log(messageOf(error), "error"); controls(); return; }
     const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, state.selectedJobId);
     if (!runQueue.length) { setStatus("ERROR", "NOT READY"); progress(`No ${mode} jobs are eligible.`); controls(); return; }
-    state.running = true; state.stopRequested = false; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    state.running = true; state.stopRequested = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
     state.runId = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`; state.attemptSerial = 0; state.auditEvents = []; state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.artifactErrors = [];
     els.logList.textContent = "";
@@ -1377,7 +1400,13 @@
             item.retry_count += 1;
             update(item, { status: "PENDING", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || failureType, error: response?.error || failureType });
             audit("FAILURE", item, { message: response?.error || failureType }); log(`${item.job.id} ${failureType}; retry ${item.retry_count}/${item.settings.max_retries} before any submission.`, "error"); renderQueue();
-            await sleep(window.DacRunnerCore.retryCooldown(item.settings, item.retry_count) * 1000); continue;
+            const retryCooldownMs = window.DacRunnerCore.retryCooldown(item.settings, item.retry_count) * 1000;
+            state.retryResumeAt = Date.now() + retryCooldownMs;
+            renderRuntime();
+            await sleep(retryCooldownMs);
+            state.retryResumeAt = null;
+            renderRuntime();
+            continue;
           }
           update(item, { status: "FAILED", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || failureType, error: response?.error || failureType, completed_at: new Date().toISOString() });
           audit("FAILURE", item, { message: response?.error || failureType }); log(`${item.job.id} failed: ${failureType}: ${response?.error || failureType}`, "error"); completed = true;
@@ -1537,7 +1566,7 @@
   els.viewQueueBtn.addEventListener("click", () => { state.queueExpanded = !state.queueExpanded; renderQueue(); });
   els.viewOutputsBtn.addEventListener("click", () => { state.outputsExpanded = !state.outputsExpanded; renderOutputScreen(); });
   els.loadNewWorkbookBtn.addEventListener("click", () => { showScreen("setupScreen"); els.workbookInput.click(); });
-  els.openOutputFolderBtn.addEventListener("click", () => chrome.downloads.showDefaultFolder?.());
+  els.openOutputFolderBtn.addEventListener("click", openOutputFolder);
   document.querySelectorAll(".workflow-tab").forEach((tab) => tab.addEventListener("click", () => showScreen(tab.dataset.screen)));
   renderOutput(); renderRuntime(); renderOutputScreen(); controls(); syncZoomState().catch(() => {});
 

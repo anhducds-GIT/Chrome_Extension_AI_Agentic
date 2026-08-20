@@ -4,6 +4,7 @@ import fs from "node:fs";
 const root = new URL("../", import.meta.url);
 const html = fs.readFileSync(new URL("sidepanel.html", root), "utf8");
 const js = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
+const uiSemantics = fs.readFileSync(new URL("sidepanel-ui-semantics.js", root), "utf8");
 
 assert.match(html, /id="outputDestinationMode"/);
 assert.match(html, /Chrome Downloads/);
@@ -39,7 +40,8 @@ assert.match(js, /async function copyReviewPacket\(\)/);
 assert.match(js, /DacOrchestratorReview\.copyPayload\(reviewContext\(\)\)/);
 assert.match(js, /DacXlsxRunPlan\.validate/);
 assert.match(js, /DacOutputProfiles\.bind/);
-assert.match(js, /Earliest next readiness check/);
+assert.match(uiSemantics, /Next readiness check in/);
+assert.doesNotMatch(js, /Earliest next readiness check/);
 assert.match(js, /destinationFolderBtn\.textContent = permission === "permission_required" \? "Re-authorize"/);
 assert.doesNotMatch(js, /chooseImageFolderBtn|useSourceFolderBtn|changeImageFolderBtn/);
 

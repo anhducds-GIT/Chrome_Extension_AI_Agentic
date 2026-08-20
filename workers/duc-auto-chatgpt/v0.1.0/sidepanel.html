@@ -99,8 +99,6 @@
         </div>
         <div class="settings-grid">
           <label>Destination mode<select id="outputDestinationMode"><option value="downloads">Chrome Downloads</option><option value="profile">Output Profile</option></select></label>
-          <label>Filename pattern<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">{job_id}, {attempt}, {index}</span></label>
-          <label>Collision policy<select id="collisionPolicyInput"><option value="overwrite">overwrite</option><option value="uniquify" selected>uniquify</option><option value="fail">fail</option></select></label>
         </div>
         <div id="downloadsDestinationControls" class="settings-grid">
           <label class="full-width">Downloads subfolder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT/Pilot03" autocomplete="off" /><span class="hint">Relative to Chrome Downloads. No folder selection required.</span></label>
@@ -116,16 +114,21 @@
           <label class="switch-label"><input id="saveResultXlsxInput" type="checkbox" checked /> Save Result XLSX</label>
           <label class="switch-label"><input id="saveAuditJsonlInput" type="checkbox" checked /> Save Audit JSONL (technical log)</label>
         </div>
+        <div class="naming-section" id="namingSetupSection">
+          <div class="naming-section-title">NAMING</div>
+          <div class="settings-grid naming-grid">
+            <label>Image filename pattern<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">{job_id}, {attempt}, {index}</span></label>
+            <label>Collision policy<select id="collisionPolicyInput"><option value="overwrite">overwrite</option><option value="uniquify" selected>uniquify</option><option value="fail">fail</option></select></label>
+            <label>Result XLSX filename<input id="resultFilenameInput" type="text" autocomplete="off" /></label>
+            <label>Audit JSONL filename<input id="auditFilenameInput" type="text" autocomplete="off" /></label>
+          </div>
+        </div>
         <details class="secondary-details" id="outputAdvancedDetails">
           <summary>Output details &amp; advanced naming</summary>
           <div class="output-previews">
             <div class="output-line"><strong>Effective image location:</strong><output id="imageOutputText">—</output></div>
             <div class="output-line"><strong>Result XLSX preview:</strong><output id="resultOutputText">—</output></div>
             <div class="output-line"><strong>Audit JSONL (technical log) preview:</strong><output id="auditOutputText">—</output></div>
-          </div>
-          <div class="settings-grid">
-            <label>Result XLSX filename<input id="resultFilenameInput" type="text" autocomplete="off" /></label>
-            <label>Audit JSONL filename<input id="auditFilenameInput" type="text" autocomplete="off" /></label>
           </div>
           <label class="switch-label advanced-separate"><input id="separateResultDestinationInput" type="checkbox" /> Save result artifacts to a different destination</label>
           <div id="separateResultDestinationControls" class="settings-grid" hidden>
@@ -222,6 +225,14 @@
           </div>
           <div id="operatorTimerArea" class="operator-timer-area"><span class="timer-badge" id="operatorTimerBadge">⏱ <span id="operatorTimerText">—</span></span></div>
           <div id="currentTiming" class="hint timing-line">No run in progress.</div>
+          <div class="runtime-information-grid" aria-label="Current runtime information">
+            <div class="runtime-information"><span>⏱ Job elapsed</span><output id="runtimeJobElapsed">—</output></div>
+            <div class="runtime-information"><span>◌ Current operation</span><output id="runtimeCurrentOperation">—</output></div>
+            <div class="runtime-information"><span>⌛ Operation timeout remaining</span><output id="runtimeTimeoutRemaining">Not scheduled</output></div>
+            <div class="runtime-information"><span>↻ Retry state</span><output id="runtimeRetryState">Not scheduled</output></div>
+            <div class="runtime-information"><span>↔ Inter-job delay</span><output id="runtimeInterJobDelay">Not scheduled</output></div>
+            <div class="runtime-information"><span>→ Next transition</span><output id="runtimeNextTransition">Waiting…</output></div>
+          </div>
           <div id="currentSaved" class="saved-output" hidden></div>
         </section>
       </div>
@@ -347,6 +358,7 @@
   <script src="plan-diagnostics-core.js"></script>
   <script src="orchestrator-review-core.js"></script>
   <script src="operator-glossary-core.js"></script>
+  <script src="sidepanel-ui-semantics.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

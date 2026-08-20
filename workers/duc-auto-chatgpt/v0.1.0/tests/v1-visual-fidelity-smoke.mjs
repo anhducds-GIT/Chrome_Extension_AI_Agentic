@@ -136,10 +136,10 @@ function computeOperatorTimer(state) {
     return { text: `Next readiness check in ${formatDuration(state.interJobCountdown)}`, mode: "cooldown", hidden: false };
   }
   if (state.currentStage === "WAITING_READY" || state.currentStage === "FINALIZING / WAITING_IDLE" || item?.runtime_stage === "WAITING_READY") {
-    return { text: `Waiting for ChatGPT ready · ${formattedStageLeft} max`, mode: "waiting", hidden: false };
+    return { text: "Awaiting ChatGPT readiness confirmation", mode: "waiting", hidden: false };
   }
   if (item && state.running) {
-    return { text: `Timeout left ${formattedStageLeft}`, mode: "active", hidden: false };
+    return { text: `Operation timeout remaining ${formattedStageLeft}`, mode: "active", hidden: false };
   }
   if (item && ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)) {
     return { text: `Halted · ${item.status}`, mode: "halted", hidden: false };
@@ -157,7 +157,7 @@ const timerGenerating = computeOperatorTimer({
   now: 1015000, // 15s elapsed -> 105s remaining (01:45)
   interJobCountdown: null
 });
-assert.equal(timerGenerating.text, "Timeout left 01:45");
+assert.equal(timerGenerating.text, "Operation timeout remaining 01:45");
 assert.equal(timerGenerating.mode, "active");
 
 // Cooldown test
@@ -180,7 +180,7 @@ const timerWaiting = computeOperatorTimer({
   now: 1015000, // 15s elapsed -> 45s left (00:45)
   interJobCountdown: null
 });
-assert.equal(timerWaiting.text, "Waiting for ChatGPT ready · 00:45 max");
+assert.equal(timerWaiting.text, "Awaiting ChatGPT readiness confirmation");
 assert.equal(timerWaiting.mode, "waiting");
 
 // Test 3: Run Artifacts row status
