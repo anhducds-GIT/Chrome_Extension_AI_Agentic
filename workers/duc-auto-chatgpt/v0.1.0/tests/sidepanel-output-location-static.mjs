@@ -25,7 +25,11 @@ assert.match(source, /showScreen/);
 assert.match(source, /View full queue/);
 assert.match(source, /View all outputs/);
 assert.match(source, /Auto-retry: No/);
+assert.match(source, /showScreen\("runScreen"\)/);
+assert.match(source, /showScreen\("outputScreen"\)/);
+assert.match(source, /if \(state\.running && id === "outputScreen"\) return;/);
 assert.ok(source.indexOf("needsReconciliation(item.phase)") < source.indexOf("canRetry(item, failureType)"), "post-submit uncertainty is reconciled before retry policy is considered");
 assert.doesNotMatch(source, /location\.kind === "directory"[\s\S]{0,220}download\(/, "custom-folder writes must not fall back to Downloads");
 
 console.log("sidepanel V1 closure static checks: PASS");
+

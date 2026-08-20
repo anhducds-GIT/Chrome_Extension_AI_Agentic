@@ -36,7 +36,25 @@
     els.currentStage.textContent = item ? state.currentStage || window.DacRunState.stageFor(item) : "—";
     const elapsed = state.currentStartedAt ? Math.floor((Date.now() - state.currentStartedAt) / 1000) : 0;
     const budget = item?.settings?.timeout_sec;
-    els.currentTiming.textContent = item ? `Attempt ${item.attempt_count}/${1 + item.settings.max_retries} · Elapsed ${window.DacRunState.formatDuration(elapsed)}${budget ? ` · Stage budget ${window.DacRunState.formatDuration(Math.max(0, budget - elapsed))} remaining` : ""}${state.currentReason ? ` · ${state.currentReason}` : ""}` : state.currentReason;
+    let attemptText = "";
+    if (item) {
+      const isRetryEligible = item.status === "RUNNING" && item.phase === "PRE_SUBMIT";
+      const attemptLabel = isRetryEligible
+        ? `Attempt ${item.attempt_count}/${1 + item.settings.max_retries}`
+        : `Attempt ${item.attempt_count}`;
+      const flags = [];
+      if (!isRetryEligible && (item.phase !== "PRE_SUBMIT" || ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status))) {
+        flags.push("Auto-retry: No");
+      }
+      if (item.protected_checkpoint) {
+        flags.push("Output checkpoint protected");
+      }
+      const flagsText = flags.length ? ` · ${flags.join(" · ")}` : "";
+      attemptText = `${attemptLabel}${flagsText}`;
+    }
+    els.currentTiming.textContent = item
+      ? `${attemptText} · Elapsed ${window.DacRunState.formatDuration(elapsed)}${budget ? ` · Stage budget ${window.DacRunState.formatDuration(Math.max(0, budget - elapsed))} remaining` : ""}${state.currentReason ? ` · ${state.currentReason}` : ""}`
+      : state.currentReason;
     const saved = item?.result_file || "";
     els.currentSaved.hidden = !saved && !item?.detected_not_downloaded;
     els.currentSaved.textContent = saved ? `SAVED ✓ ${saved}` : item?.detected_not_downloaded ? "DETECTED · not downloaded" : "";
@@ -62,6 +80,11 @@
     for (const element of [els.imageOutputFolderInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.chooseImageFolderBtn, els.useSourceFolderBtn, els.changeImageFolderBtn, els.chooseResultFolderBtn, els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.disabled = outputLocked;
     if (state.outputSettings?.image?.kind === "directory") els.imageOutputFolderInput.disabled = true;
     if (state.outputSettings?.result?.kind !== "downloads") els.resultDownloadsFolderInput.disabled = true;
+    document.querySelectorAll(".workflow-tab").forEach((tab) => {
+      if (tab.dataset.screen === "outputScreen") {
+        tab.disabled = state.running;
+      }
+    });
   }
 
   function renderQueue() {
@@ -71,7 +94,10 @@
     for (const item of (state.queueExpanded ? queue : queue.slice(0, 6))) {
       const li = document.createElement("li");
       li.className = ["RUNNING", "RECONCILING"].includes(item.status) ? "current" : item.status.toLowerCase();
-      const retryLabel = item.status === "RUNNING" && item.phase === "PRE_SUBMIT" ? `attempt ${item.attempt_count}/${1 + item.settings.max_retries}` : `attempt ${item.attempt_count}${item.phase !== "PRE_SUBMIT" ? " · Auto-retry: No" : ""}`;
+      const isRetryEligible = item.status === "RUNNING" && item.phase === "PRE_SUBMIT";
+      const retryLabel = isRetryEligible
+        ? `attempt ${item.attempt_count}/${1 + item.settings.max_retries}`
+        : `attempt ${item.attempt_count}${!isRetryEligible && (item.phase !== "PRE_SUBMIT" || ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)) ? " · Auto-retry: No" : ""}`;
       li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · refs: ${item.references.map((file) => file.alias || window.DacRunnerCore.basename(file.fileName)).join(", ")}` : " · refs: none"} · ${item.status} · ${window.DacRunState.stageFor(item)} · ${retryLabel}${item.result_file ? ` · SAVED ✓ ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : ""}${item.protected_checkpoint ? " · Output checkpoint protected" : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
       li.addEventListener("click", () => { state.selectedJobId = item.job.id; renderQueue(); controls(); });
       if (state.selectedJobId === item.job.id) {
@@ -584,6 +610,7 @@
     const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, state.selectedJobId);
     if (!runQueue.length) { setStatus("ERROR", "NOT READY"); progress(`No ${mode} jobs are eligible.`); controls(); return; }
     state.running = true; state.stopRequested = false; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    showScreen("runScreen");
     state.runId = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`; state.attemptSerial = 0; state.auditEvents = []; state.auditFile = "";
     els.logList.textContent = "";
     startRuntimeTicker();
@@ -657,8 +684,12 @@
       catch (error) { log(`Audit log failed: ${messageOf(error)}`, "error"); }
       try { state.resultFile = await saveLedger(effectiveOutput.result); }
       catch (error) { setStatus("ERROR", "RESULT NOT SAVED"); progress(`Result XLSX was not written: ${messageOf(error)}`); log(`Result XLSX failed: ${messageOf(error)}`, "error"); }
+      const completedNaturally = !state.stopRequested && !halted;
       state.running = false; state.stopRequested = false; renderQueue(); renderOutputScreen(); controls();
       stopRuntimeTicker();
+      if (completedNaturally) {
+        showScreen("outputScreen");
+      }
     }
   }
 
@@ -675,6 +706,7 @@
   async function stop() { state.stopRequested = true; progress("Stopping current operation…"); try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop prevents further jobs */ } }
 
   function showScreen(id) {
+    if (state.running && id === "outputScreen") return;
     document.querySelectorAll(".workflow-screen").forEach((screen) => screen.classList.toggle("active", screen.id === id));
     document.querySelectorAll(".workflow-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.screen === id));
   }
@@ -698,7 +730,7 @@
   els.clearLogsBtn.addEventListener("click", () => { els.logList.textContent = ""; });
   els.viewQueueBtn.addEventListener("click", () => { state.queueExpanded = !state.queueExpanded; renderQueue(); });
   els.viewOutputsBtn.addEventListener("click", () => { state.outputsExpanded = !state.outputsExpanded; renderOutputScreen(); });
-  els.loadNewWorkbookBtn.addEventListener("click", () => els.workbookInput.click());
+  els.loadNewWorkbookBtn.addEventListener("click", () => { showScreen("setupScreen"); els.workbookInput.click(); });
   els.openOutputFolderBtn.addEventListener("click", () => chrome.downloads.showDefaultFolder?.());
   document.querySelectorAll(".workflow-tab").forEach((tab) => tab.addEventListener("click", () => showScreen(tab.dataset.screen)));
   renderOutput(); renderRuntime(); renderOutputScreen(); controls();
