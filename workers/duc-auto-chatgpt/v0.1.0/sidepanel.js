@@ -1,17 +1,56 @@
 (() => {
   "use strict";
-  const ids = ["workbookInput", "referencesInput", "validateBtn", "runBtn", "runFailedBtn", "stopBtn", "statusChip", "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText", "currentJobId", "currentStage", "currentTiming", "currentSaved", "nextTaskCard", "nextTaskId", "nextTaskCountdown", "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText", "outputPermissionText", "imageOutputFolderInput", "resultLocationMode", "resultDownloadsFolderInput", "resultDownloadsFolderLabel", "imagePatternInput", "resultFilenameInput", "auditFilenameInput", "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput", "chooseImageFolderBtn", "useSourceFolderBtn", "changeImageFolderBtn", "chooseResultFolderBtn", "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput", "continueOnErrorInput", "rerunDoneInput", "outputSummaryText", "outputList", "artifactList", "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn"];
+  const ids = [
+    "workbookInput", "referencesInput", "validateBtn", "runBtn", "runFailedBtn", "stopBtn", "statusChip",
+    "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText",
+    "currentJobId", "currentStage", "currentTiming", "currentSaved", "nextTaskCard", "nextTaskId", "nextTaskCountdown",
+    "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText",
+    "outputPermissionText", "imageOutputFolderInput", "resultLocationMode", "resultDownloadsFolderInput",
+    "resultDownloadsFolderLabel", "imagePatternInput", "resultFilenameInput", "auditFilenameInput",
+    "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput",
+    "chooseImageFolderBtn", "useSourceFolderBtn", "changeImageFolderBtn", "chooseResultFolderBtn",
+    "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput",
+    "continueOnErrorInput", "rerunDoneInput", "outputSummaryText", "outputList", "artifactList",
+    "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn",
+    "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
+    "checkWorkbook", "statusWorkbook", "checkReferences", "statusReferences",
+    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "readinessBanner",
+    "progressRatio", "progressPercent", "progressBarFill", "statDoneCount", "statActiveCount",
+    "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
+    "currentAttemptBadge", "currentPromptPreview", "pipelineStepper", "latestSavedCard",
+    "latestSavedThumb", "latestSavedName", "latestSavedStatus", "completionCard",
+    "completionIcon", "completionTitle", "artifactStatusPill"
+  ];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
   const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, validated: false, stopRequested: false, terminal: 0, runId: null, attemptSerial: 0, auditEvents: [], auditFile: "", resultFile: "", verifiedImageFiles: [], artifactErrors: [], currentItem: null, currentStage: "—", currentReason: "No run in progress.", currentStartedAt: null, runtimeTicker: null, queueExpanded: false, outputsExpanded: false };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function setStatus(status, label = status) { els.statusChip.className = `chip ${status.toLowerCase()}`; els.statusChip.textContent = label; }
   function log(text, kind = "") { const li = document.createElement("li"); li.className = kind; li.textContent = `${new Date().toLocaleTimeString()} · ${text}`; els.logList.prepend(li); }
+
+  function updateProgressVisuals(plan) {
+    const total = plan ? plan.total_jobs : (state.prepared?.queue?.length || 0);
+    const done = plan ? plan.success_jobs : 0;
+    const failed = plan ? (plan.failed_jobs + (plan.interrupted_jobs || 0)) : 0;
+    const active = plan ? plan.running_jobs : (state.running ? 1 : 0);
+    const pending = plan ? plan.pending_jobs : total;
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    if (els.progressRatio) els.progressRatio.textContent = `${done} / ${total} completed`;
+    if (els.progressPercent) els.progressPercent.textContent = `${pct}%`;
+    if (els.progressBarFill) els.progressBarFill.style.width = `${pct}%`;
+    if (els.statDoneCount) els.statDoneCount.textContent = String(done);
+    if (els.statActiveCount) els.statActiveCount.textContent = String(active);
+    if (els.statNextCount) els.statNextCount.textContent = String(pending);
+    if (els.statFailedCount) els.statFailedCount.textContent = String(failed);
+  }
+
   function progress(detail) {
     const plan = state.prepared ? window.DacRunnerCore.planSummary(state.prepared.queue, state.prepared.settings) : null;
     const finalizing = state.prepared ? state.prepared.queue.filter((item) => item.result_file && !["SUCCESS", "FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)).length : 0;
     els.progressText.textContent = plan ? `Success ${plan.success_jobs}/${plan.total_jobs} · Saved/finalizing ${finalizing} · Running ${plan.running_jobs} · Pending ${plan.pending_jobs} · Failed ${plan.failed_jobs}${plan.interrupted_jobs ? ` · Interrupted ${plan.interrupted_jobs}` : ""}` : "0 / 0";
     els.progressDetail.textContent = detail;
+    updateProgressVisuals(plan);
   }
   function promptFingerprint(prompt) {
     let hash = 2166136261;
@@ -30,6 +69,61 @@
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
+
+  function updatePipelineStepper(item) {
+    if (!els.pipelineStepper) return;
+    const steps = els.pipelineStepper.querySelectorAll(".step-item");
+    const lines = els.pipelineStepper.querySelectorAll(".step-line");
+    if (!item) {
+      steps.forEach((s) => { s.className = "step-item"; });
+      lines.forEach((l) => { l.className = "step-line"; });
+      return;
+    }
+    const isFailed = ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status);
+    const isDone = item.status === "SUCCESS";
+    
+    let currentStepIndex = 0;
+    if (isDone) {
+      currentStepIndex = 3;
+    } else if (item.phase === "OUTPUT_SAVED" || item.phase === "OUTPUT_DETECTED" || ["SAVING", "OUTPUT_DETECTED", "OUTPUT_SAVED"].includes(item.runtime_stage)) {
+      currentStepIndex = 2;
+    } else if (item.phase === "SUBMITTED" || ["SENDING", "GENERATING"].includes(item.runtime_stage)) {
+      currentStepIndex = 1;
+    } else {
+      currentStepIndex = 0;
+    }
+
+    steps.forEach((s, idx) => {
+      s.className = "step-item";
+      if (idx < currentStepIndex || (isDone && idx <= currentStepIndex)) {
+        s.classList.add("completed");
+      } else if (idx === currentStepIndex) {
+        s.classList.add(isFailed ? "danger" : "active");
+      }
+    });
+
+    lines.forEach((l, idx) => {
+      l.className = "step-line";
+      if (idx < currentStepIndex) {
+        l.classList.add("completed");
+      }
+    });
+  }
+
+  function updateHaltedBanner(isHalted, item, reason = "") {
+    if (!els.haltedBanner) return;
+    if (isHalted || ["FAILED", "INTERRUPTED", "STOPPED"].includes(item?.status) || state.currentStage === "HALTED") {
+      els.haltedBanner.hidden = false;
+      if (els.haltedReason) els.haltedReason.textContent = reason || item?.last_error || state.currentReason || "Run halted.";
+      if (els.haltedJob) els.haltedJob.textContent = item ? `Stopped at: ${item.job.id}` : "Stopped";
+      if (els.haltedTime && (!els.haltedTime.textContent || els.haltedTime.textContent === "—")) {
+        els.haltedTime.textContent = new Date().toLocaleTimeString();
+      }
+    } else {
+      els.haltedBanner.hidden = true;
+    }
+  }
+
   function renderRuntime() {
     const item = state.currentItem;
     els.currentJobId.textContent = item ? item.job.id : "—";
@@ -37,6 +131,7 @@
     const elapsed = state.currentStartedAt ? Math.floor((Date.now() - state.currentStartedAt) / 1000) : 0;
     const budget = item?.settings?.timeout_sec;
     let attemptText = "";
+    let attemptBadgeText = "Attempt —";
     if (item) {
       const isRetryEligible = item.status === "RUNNING" && item.phase === "PRE_SUBMIT";
       const attemptLabel = isRetryEligible
@@ -51,6 +146,16 @@
       }
       const flagsText = flags.length ? ` · ${flags.join(" · ")}` : "";
       attemptText = `${attemptLabel}${flagsText}`;
+      attemptBadgeText = attemptText;
+    }
+    if (els.currentAttemptBadge) els.currentAttemptBadge.textContent = attemptBadgeText;
+    if (els.currentPromptPreview) {
+      if (item?.job?.prompt) {
+        els.currentPromptPreview.hidden = false;
+        els.currentPromptPreview.textContent = `“${item.job.prompt.slice(0, 85)}${item.job.prompt.length > 85 ? "…" : ""}”`;
+      } else {
+        els.currentPromptPreview.hidden = true;
+      }
     }
     els.currentTiming.textContent = item
       ? `${attemptText} · Elapsed ${window.DacRunState.formatDuration(elapsed)}${budget ? ` · Stage budget ${window.DacRunState.formatDuration(Math.max(0, budget - elapsed))} remaining` : ""}${state.currentReason ? ` · ${state.currentReason}` : ""}`
@@ -58,6 +163,22 @@
     const saved = item?.persistence_verified ? item.result_file || "" : "";
     els.currentSaved.hidden = !saved && !item?.detected_not_downloaded;
     els.currentSaved.textContent = saved ? `SAVED ✓ ${saved}` : item?.detected_not_downloaded ? "DETECTED · not downloaded" : "";
+
+    updatePipelineStepper(item);
+
+    const isHalted = ["INTERRUPTED", "STOPPED"].includes(item?.status) || state.currentStage === "HALTED";
+    updateHaltedBanner(isHalted, item, state.currentReason);
+
+    const lastSavedItem = (state.prepared?.queue || []).slice().reverse().find((i) => i.persistence_verified && i.result_file) || (state.prepared?.queue || []).slice().reverse().find((i) => i.detected_not_downloaded);
+    if (els.latestSavedName) {
+      if (lastSavedItem) {
+        els.latestSavedName.textContent = lastSavedItem.result_file ? window.DacRunnerCore.basename(lastSavedItem.result_file) : "Detected (no download)";
+        els.latestSavedStatus.textContent = lastSavedItem.persistence_verified ? `Saved ✓ (${lastSavedItem.job.id})` : "Detected · not downloaded";
+      } else {
+        els.latestSavedName.textContent = "None yet";
+        els.latestSavedStatus.textContent = "—";
+      }
+    }
   }
   function setCurrent(item, stage, reason = "") {
     if (item && state.currentItem !== item) state.currentStartedAt = Date.now();
@@ -66,6 +187,53 @@
   }
   function startRuntimeTicker() { clearInterval(state.runtimeTicker); state.runtimeTicker = setInterval(renderRuntime, 1000); }
   function stopRuntimeTicker() { clearInterval(state.runtimeTicker); state.runtimeTicker = null; renderRuntime(); }
+
+  function updateReadinessChecklist() {
+    if (!els.readinessChecklist) return;
+    const hasWorkbook = Boolean(state.workbook && state.prepared);
+    const jobsCount = state.prepared?.queue?.length || 0;
+    if (els.checkWorkbook) {
+      els.checkWorkbook.classList.toggle("ready", hasWorkbook);
+      const icon = els.checkWorkbook.querySelector(".check-icon");
+      if (icon) icon.textContent = hasWorkbook ? "✓" : "○";
+      if (els.statusWorkbook) els.statusWorkbook.textContent = hasWorkbook ? `${jobsCount} job${jobsCount === 1 ? "" : "s"}` : "Not loaded";
+    }
+    if (els.checkReferences) {
+      const refsCount = state.files.length;
+      els.checkReferences.classList.add("ready");
+      const icon = els.checkReferences.querySelector(".check-icon");
+      if (icon) icon.textContent = "✓";
+      if (els.statusReferences) els.statusReferences.textContent = refsCount ? `${refsCount} image${refsCount === 1 ? "" : "s"}` : "0 (optional)";
+    }
+    if (els.checkOutput) {
+      const hasOutput = Boolean(state.outputSettings);
+      els.checkOutput.classList.toggle("ready", hasOutput);
+      const icon = els.checkOutput.querySelector(".check-icon");
+      if (icon) icon.textContent = hasOutput ? "✓" : "○";
+      if (els.statusOutput) els.statusOutput.textContent = hasOutput ? "Ready" : "Not set";
+    }
+    if (els.checkChatGPT) {
+      getActiveChatGPTTab().then((tab) => {
+        const connected = Boolean(tab?.id);
+        els.checkChatGPT.classList.toggle("ready", connected);
+        const icon = els.checkChatGPT.querySelector(".check-icon");
+        if (icon) icon.textContent = connected ? "✓" : "○";
+        if (els.statusChatGPT) els.statusChatGPT.textContent = connected ? "Connected" : "Open tab";
+      }).catch(() => {});
+    }
+    if (els.readinessBanner) {
+      if (state.validated) {
+        els.readinessBanner.className = "readiness-banner ready";
+        els.readinessBanner.textContent = "READY TO RUN";
+      } else {
+        els.readinessBanner.className = "readiness-banner not-ready";
+        els.readinessBanner.textContent = state.workbook ? "CHECK PLAN BEFORE RUN" : "LOAD WORKBOOK TO BEGIN";
+      }
+    }
+    if (els.workbookNameDisplay) {
+      els.workbookNameDisplay.textContent = state.workbook ? state.workbook.fileName : "No workbook loaded";
+    }
+  }
 
   function controls() {
     const ready = Boolean(state.workbook && state.prepared && state.outputSettings && state.validated);
@@ -77,6 +245,8 @@
     els.stopBtn.disabled = !state.running;
     els.workbookInput.disabled = state.running;
     els.referencesInput.disabled = state.running;
+    if (els.changeWorkbookBtn) els.changeWorkbookBtn.disabled = state.running;
+    if (els.addReferencesBtn) els.addReferencesBtn.disabled = state.running;
     for (const element of [els.imageOutputFolderInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.chooseImageFolderBtn, els.useSourceFolderBtn, els.changeImageFolderBtn, els.chooseResultFolderBtn, els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.disabled = outputLocked;
     if (state.outputSettings?.image?.kind === "directory") els.imageOutputFolderInput.disabled = true;
     if (state.outputSettings?.result?.kind !== "downloads") els.resultDownloadsFolderInput.disabled = true;
@@ -85,6 +255,7 @@
         tab.disabled = state.running;
       }
     });
+    updateReadinessChecklist();
   }
 
   function renderQueue() {
@@ -120,7 +291,9 @@
     const queue = state.prepared?.queue || [];
     const count = (status) => queue.filter((item) => item.status === status).length;
     const interrupted = count("INTERRUPTED") + count("STOPPED");
-    els.outputSummaryText.textContent = queue.length ? `Total ${queue.length} · Success ${count("SUCCESS")} · Failed ${count("FAILED")}${interrupted ? ` · Interrupted ${interrupted}` : ""}` : "No completed run.";
+    const successCount = count("SUCCESS");
+    const failedCount = count("FAILED") + interrupted;
+    els.outputSummaryText.textContent = queue.length ? `Total ${queue.length} · Success ${successCount} · Failed ${count("FAILED")}${interrupted ? ` · Interrupted ${interrupted}` : ""}` : "No completed run.";
     els.outputList.textContent = "";
     for (const item of (state.outputsExpanded ? queue : queue.slice(0, 6))) {
       const li = document.createElement("li");
@@ -137,6 +310,42 @@
     for (const error of state.artifactErrors) artifacts.push(`FAILED · ${error}`);
     els.artifactList.textContent = artifacts.length ? artifacts.join("\n") : "No saved run artifacts.";
     els.openOutputFolderBtn.disabled = !values || values.image.kind !== "downloads";
+
+    if (els.completionCard) {
+      if (state.artifactErrors.length > 0) {
+        els.completionCard.className = "card completion-card persistence-failed";
+        if (els.completionIcon) els.completionIcon.textContent = "❌";
+        if (els.completionTitle) els.completionTitle.textContent = "ARTIFACT PERSISTENCE FAILED";
+        if (els.artifactStatusPill) {
+          els.artifactStatusPill.className = "artifact-status-pill failed";
+          els.artifactStatusPill.textContent = "Persistence Failed";
+        }
+      } else if (failedCount > 0) {
+        els.completionCard.className = "card completion-card has-failures";
+        if (els.completionIcon) els.completionIcon.textContent = "⚠";
+        if (els.completionTitle) els.completionTitle.textContent = "RUN COMPLETED WITH FAILURES";
+        if (els.artifactStatusPill) {
+          els.artifactStatusPill.className = "artifact-status-pill verified";
+          els.artifactStatusPill.textContent = "Verified";
+        }
+      } else if (queue.length > 0 && successCount === queue.length) {
+        els.completionCard.className = "card completion-card";
+        if (els.completionIcon) els.completionIcon.textContent = "✓";
+        if (els.completionTitle) els.completionTitle.textContent = "RUN COMPLETE";
+        if (els.artifactStatusPill) {
+          els.artifactStatusPill.className = "artifact-status-pill verified";
+          els.artifactStatusPill.textContent = "Verified";
+        }
+      } else {
+        els.completionCard.className = "card completion-card";
+        if (els.completionIcon) els.completionIcon.textContent = "✓";
+        if (els.completionTitle) els.completionTitle.textContent = "COMPLETION SUMMARY";
+        if (els.artifactStatusPill) {
+          els.artifactStatusPill.className = "artifact-status-pill verified";
+          els.artifactStatusPill.textContent = "Verified";
+        }
+      }
+    }
   }
 
   function renderReferenceGallery() {
@@ -811,6 +1020,8 @@
     });
   }
 
+  els.changeWorkbookBtn?.addEventListener("click", () => els.workbookInput.click());
+  els.addReferencesBtn?.addEventListener("click", () => els.referencesInput.click());
   els.validateBtn.addEventListener("click", validate);
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
@@ -830,5 +1041,11 @@
     ZOOM_EPSILON,
     syncZoomState,
     setChatZoom
+  };
+
+  (typeof window !== "undefined" ? window : globalThis).DacVisualMapping = {
+    updatePipelineStepper,
+    updateProgressVisuals,
+    updateHaltedBanner
   };
 })();
