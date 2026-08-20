@@ -18,6 +18,15 @@ body { margin: 0; background: #0f1115; }
 .workflow-screen.active { display: grid; }
 .header, .row, .meta-row, .controls { display: flex; align-items: center; gap: 6px; }
 .header, .spread, .meta-row { justify-content: space-between; }
+.header-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.zoom-group { display: inline-flex; align-items: center; gap: 4px; }
+.zoom-label { color: #9ca3af; font-weight: 700; font-size: 9px; letter-spacing: 0.3px; white-space: nowrap; }
+.segmented { display: inline-flex; border: 1px solid #343a46; border-radius: 4px; overflow: hidden; background: #0f1115; }
+.zoom-btn { background: transparent; color: #9ca3af; border: 0; border-right: 1px solid #343a46; border-radius: 0; padding: 2px 5px; font-size: 9.5px; font-weight: 700; min-height: 20px; line-height: 1; cursor: pointer; }
+.zoom-btn:last-child { border-right: 0; }
+.zoom-btn:hover:not(:disabled) { background: #27272a; color: #f4f4f5; }
+.zoom-btn.active { background: #1e3a8a; color: #bfdbfe; }
+.zoom-btn:disabled { opacity: 0.35; cursor: default; }
 
 h1 { font-size: 14px; font-weight: 800; margin: 0; line-height: 1.2; }
 .header p { margin: 1px 0 0; font-size: 10.5px; color: #9ca3af; }

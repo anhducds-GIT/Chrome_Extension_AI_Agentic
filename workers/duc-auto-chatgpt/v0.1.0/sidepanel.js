@@ -723,6 +723,90 @@
   els.changeImageFolderBtn.addEventListener("click", () => chooseDirectory("Image folder changed", "image").catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   els.useSourceFolderBtn.addEventListener("click", () => useSourceFolder().catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   els.chooseResultFolderBtn.addEventListener("click", () => chooseDirectory("Result XLSX folder selected", "result").then(() => { els.resultLocationMode.value = "directory"; renderOutput(); }).catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
+  const ZOOM_LEVELS = [0.8, 0.9, 1.0];
+
+  function isChatGPTUrl(url) {
+    return Boolean(url && /^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(url));
+  }
+
+  function nearestZoom(value) {
+    const num = Number.isFinite(Number(value)) ? Number(value) : 1.0;
+    let closest = 1.0;
+    let minDiff = Infinity;
+    for (const z of ZOOM_LEVELS) {
+      const diff = Math.abs(num - z);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = z;
+      }
+    }
+    return closest;
+  }
+
+  async function getActiveChatGPTTab() {
+    if (typeof chrome === "undefined" || !chrome.tabs?.query) return null;
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id && isChatGPTUrl(tab.url)) return tab;
+    } catch (_) {}
+    return null;
+  }
+
+  async function syncZoomState() {
+    const zoomButtons = document.querySelectorAll(".zoom-btn");
+    if (!zoomButtons.length) return;
+    const tab = await getActiveChatGPTTab();
+    if (!tab?.id) {
+      zoomButtons.forEach((btn) => {
+        btn.disabled = true;
+        btn.classList.remove("active");
+      });
+      return;
+    }
+    try {
+      const currentZoom = await chrome.tabs.getZoom(tab.id);
+      const nearest = nearestZoom(currentZoom);
+      zoomButtons.forEach((btn) => {
+        btn.disabled = false;
+        const targetZoom = Number(btn.dataset.zoom);
+        btn.classList.toggle("active", Math.abs(targetZoom - nearest) < 0.04);
+      });
+    } catch (_) {
+      zoomButtons.forEach((btn) => {
+        btn.disabled = true;
+        btn.classList.remove("active");
+      });
+    }
+  }
+
+  async function setChatZoom(targetLevel) {
+    const tab = await getActiveChatGPTTab();
+    if (!tab?.id) return;
+    try {
+      await chrome.tabs.setZoom(tab.id, targetLevel);
+      await syncZoomState();
+    } catch (_) {}
+  }
+
+  document.querySelectorAll(".zoom-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const level = Number(btn.dataset.zoom);
+      if (level) setChatZoom(level).catch(() => {});
+    });
+  });
+
+  if (typeof chrome !== "undefined" && chrome.tabs) {
+    chrome.tabs.onActivated?.addListener(() => { syncZoomState().catch(() => {}); });
+    chrome.tabs.onUpdated?.addListener((_tabId, changeInfo) => {
+      if (changeInfo.url || changeInfo.status === "complete") {
+        syncZoomState().catch(() => {});
+      }
+    });
+    chrome.tabs.onZoomChange?.addListener(() => {
+      syncZoomState().catch(() => {});
+    });
+  }
+
   els.validateBtn.addEventListener("click", validate);
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
@@ -733,5 +817,13 @@
   els.loadNewWorkbookBtn.addEventListener("click", () => { showScreen("setupScreen"); els.workbookInput.click(); });
   els.openOutputFolderBtn.addEventListener("click", () => chrome.downloads.showDefaultFolder?.());
   document.querySelectorAll(".workflow-tab").forEach((tab) => tab.addEventListener("click", () => showScreen(tab.dataset.screen)));
-  renderOutput(); renderRuntime(); renderOutputScreen(); controls();
+  renderOutput(); renderRuntime(); renderOutputScreen(); controls(); syncZoomState().catch(() => {});
+
+  (typeof window !== "undefined" ? window : globalThis).DacChatZoom = {
+    isChatGPTUrl,
+    nearestZoom,
+    ZOOM_LEVELS,
+    syncZoomState,
+    setChatZoom
+  };
 })();

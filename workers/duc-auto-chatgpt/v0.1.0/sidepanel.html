@@ -3,7 +3,20 @@
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Duc Auto ChatGPT</title><link rel="stylesheet" href="sidepanel.css" /></head>
 <body>
   <main class="app">
-    <header class="header"><div><h1>Duc Auto ChatGPT</h1><p>Local XLSX image runner</p></div><span id="statusChip" class="chip idle">IDLE</span></header>
+    <header class="header">
+      <div><h1>Duc Auto ChatGPT</h1><p>Local XLSX image runner</p></div>
+      <div class="header-meta">
+        <span id="statusChip" class="chip idle">IDLE</span>
+        <div class="zoom-group" id="chatZoomControl" title="ChatGPT Zoom">
+          <span class="zoom-label">CHAT ZOOM</span>
+          <div class="segmented" role="group" aria-label="ChatGPT Zoom">
+            <button type="button" class="zoom-btn" data-zoom="0.8" disabled>80%</button>
+            <button type="button" class="zoom-btn" data-zoom="0.9" disabled>90%</button>
+            <button type="button" class="zoom-btn" data-zoom="1.0" disabled>100%</button>
+          </div>
+        </div>
+      </div>
+    </header>
     <nav class="workflow-tabs" aria-label="Workflow"><button class="workflow-tab active" data-screen="setupScreen" type="button">1&nbsp; SETUP</button><button class="workflow-tab" data-screen="runScreen" type="button">2&nbsp; RUN</button><button class="workflow-tab" data-screen="outputScreen" type="button">3&nbsp; OUTPUT</button></nav>
     <section id="setupScreen" class="workflow-screen active">
       <section class="card"><div class="row spread"><strong>1. WORKBOOK</strong><span id="workbookText" class="hint">Open an XLSX to begin.</span></div><input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" /></section>
