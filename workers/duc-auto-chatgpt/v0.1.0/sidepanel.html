@@ -19,6 +19,7 @@
       </div>
       <div class="header-meta">
         <span id="statusChip" class="chip idle">IDLE</span>
+        <button id="helpBtn" class="help-btn" type="button" aria-label="Operator help">?</button>
         <div class="zoom-group" id="chatZoomControl" title="ChatGPT Zoom">
           <span class="zoom-label">CHAT ZOOM</span>
           <div class="segmented" role="group" aria-label="ChatGPT Zoom">
@@ -97,7 +98,7 @@
           <span id="outputPermissionText" class="muted">Open an XLSX to set locations.</span>
         </div>
         <div class="settings-grid">
-          <label>Destination mode<select id="outputDestinationMode"><option value="downloads">Chrome Downloads</option><option value="directory">Authorized Folder</option></select></label>
+          <label>Destination mode<select id="outputDestinationMode"><option value="downloads">Chrome Downloads</option><option value="profile">Output Profile</option></select></label>
           <label>Filename pattern<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">{job_id}, {attempt}, {index}</span></label>
           <label>Collision policy<select id="collisionPolicyInput"><option value="overwrite">overwrite</option><option value="uniquify" selected>uniquify</option><option value="fail">fail</option></select></label>
         </div>
@@ -105,7 +106,9 @@
           <label class="full-width">Downloads subfolder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT/Pilot03" autocomplete="off" /><span class="hint">Relative to Chrome Downloads. No folder selection required.</span></label>
         </div>
         <div id="authorizedDestinationControls" class="destination-authorized" hidden>
-          <div class="output-line"><strong>Authorized folder:</strong><output id="destinationHandleText">No folder selected</output></div>
+          <div class="output-line"><strong>Output profile:</strong><output id="outputProfileText">Not configured</output></div>
+          <div class="output-line"><strong>Folder:</strong><output id="destinationHandleText">Not bound</output></div>
+          <div class="output-line"><strong>Permission:</strong><output id="outputProfilePermission">Not bound</output></div>
           <button id="destinationFolderBtn" class="secondary small" type="button">Choose Folder</button>
         </div>
         <div class="settings-grid save-toggles">
@@ -126,7 +129,7 @@
           </div>
           <label class="switch-label advanced-separate"><input id="separateResultDestinationInput" type="checkbox" /> Save result artifacts to a different destination</label>
           <div id="separateResultDestinationControls" class="settings-grid" hidden>
-            <label>Result destination<select id="resultLocationMode"><option value="downloads">Chrome Downloads</option><option value="directory">Authorized Folder</option></select></label>
+            <label>Result destination<select id="resultLocationMode"><option value="downloads">Chrome Downloads</option><option value="profile">Output Profile</option></select></label>
             <label id="resultDownloadsFolderLabel">Result Downloads subfolder<input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
             <div id="resultAuthorizedControls" class="destination-authorized" hidden>
               <div class="output-line"><strong>Result folder:</strong><output id="resultHandleText">No folder selected</output></div>
@@ -140,7 +143,7 @@
       <section class="card setup-group" id="validationCard">
         <div class="row spread section-title">
           <strong>4. PLAN CHECK</strong>
-          <button id="validateBtn" class="secondary small" disabled type="button">Check plan</button>
+          <span id="configProvenance" class="muted">Configuration: defaults</span><button id="validateBtn" class="secondary small" disabled type="button">Check plan</button>
         </div>
         <div id="planCheckSummary" class="plan-check-summary">Load an XLSX, then Check Plan.</div>
         <div class="readiness-checklist" id="readinessChecklist">
@@ -330,13 +333,20 @@
 
     <footer>Sequential only · Uses your current ChatGPT session · No server or separate login.</footer>
   </main>
+  <aside id="helpDrawer" class="help-drawer" hidden aria-label="Operator help">
+    <div class="row spread"><strong>Operator Help</strong><button id="closeHelpBtn" class="secondary small" type="button">Close</button></div>
+    <div id="helpGlossary" class="help-glossary"></div>
+  </aside>
   <script src="xlsx-codec.js"></script>
   <script src="runner-core.js"></script>
   <script src="attempt-telemetry-core.js"></script>
   <script src="run-state-core.js"></script>
   <script src="output-location-core.js"></script>
+  <script src="xlsx-run-plan-core.js"></script>
+  <script src="output-profile-core.js"></script>
   <script src="plan-diagnostics-core.js"></script>
   <script src="orchestrator-review-core.js"></script>
+  <script src="operator-glossary-core.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

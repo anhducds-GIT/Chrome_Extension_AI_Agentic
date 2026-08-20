@@ -22,8 +22,8 @@
     return aliasMatches.length ? aliasMatches : exactMatches.length ? exactMatches : baseMatches;
   }
 
-  function analyze({ workbook, files = [], overrides = {}, outputCheck, chatCheck, runner, output }) {
-    const findings = [];
+  function analyze({ workbook, files = [], overrides = {}, outputCheck, chatCheck, runner, output, configFindings = [], outputProfileState = null }) {
+    const findings = [...configFindings];
     const validJobs = Array.isArray(workbook?.jobs) ? workbook.jobs.filter(Boolean) : [];
     if (!workbook) {
       findings.push(makeFinding("WORKBOOK_NOT_LOADED", "BLOCKER", "workbook", {
@@ -120,19 +120,28 @@
       message: `${ambiguous.length} reference match${ambiguous.length === 1 ? " is" : "es are"} ambiguous.`,
       guidance: "Use a unique filename or alias for each required reference.", action: "Fix reference aliases"
     }));
-    const requiredCount = requiredKeys.size;
-    const availableCount = Math.max(0, requiredCount - missing.length - ambiguous.length);
-    if (!requiredCount) findings.push(makeFinding("REFERENCES_OPTIONAL", "OK", "references", {
+    const requirementCount = requiredKeys.size;
+    const resolvedRequirements = Math.max(0, requirementCount - missing.length - ambiguous.length);
+    if (!requirementCount) findings.push(makeFinding("REFERENCES_OPTIONAL", "OK", "references", {
       message: "0 required.", guidance: "This workbook does not require reference images."
     }));
     else if (!missing.length && !ambiguous.length && !duplicates.length && !maxViolations.length && !duplicateAliases.length) findings.push(makeFinding("REFERENCES_OK", "OK", "references", {
-      message: `${availableCount} / ${requiredCount} available.`, guidance: "All required reference images resolve uniquely."
+      message: `${resolvedRequirements} / ${requirementCount} requirements resolved · ${files.length} files selected.`, guidance: "All required reference images resolve uniquely."
     }));
     const extras = files.filter((file) => !usedFiles.has(fileName(file))).map(fileName);
     if (extras.length) findings.push(makeFinding("UNUSED_REFERENCES", "WARNING", "references", {
       missing_items: extras, message: `${extras.length} selected reference${extras.length === 1 ? " is" : "s are"} unused.`, guidance: "Unused files will not be attached to any job.", action: "Review references"
     }));
 
+    if (outputProfileState?.state === "unbound") findings.push(makeFinding("OUTPUT_PROFILE_UNBOUND", "BLOCKER", "output", {
+      message: `Output profile '${outputProfileState.profile_id || "(missing)"}' is not bound.`, guidance: `Authorize a folder once for output profile '${outputProfileState.profile_id || "this profile"}'.`, action: "Choose Folder"
+    }));
+    if (outputProfileState?.state === "permission_required") findings.push(makeFinding("OUTPUT_PERMISSION_REQUIRED", "BLOCKER", "output", {
+      message: "Output profile permission is required.", guidance: "Re-authorize the profile folder before Run.", action: "Re-authorize Folder"
+    }));
+    if (outputProfileState?.state === "unavailable") findings.push(makeFinding("OUTPUT_PROFILE_UNAVAILABLE", "BLOCKER", "output", {
+      message: "Output profile is unavailable.", guidance: "Choose and bind the profile folder again.", action: "Choose Folder"
+    }));
     if (!outputCheck) findings.push(makeFinding("OUTPUT_DESTINATION_MISSING", "BLOCKER", "output", {
       message: "No writable output destination selected.", guidance: "Choose Chrome Downloads or authorize an output folder.", action: "Choose output destination"
     }));
@@ -154,7 +163,7 @@
       message: chatCheck?.message || "Open a normal ChatGPT conversation in the active tab.", guidance: chatCheck?.guidance || "Open or activate a normal ChatGPT conversation, then retry Check Plan.", action: "Retry Check Plan"
     }));
     else findings.push(makeFinding("CHATGPT_OK", "OK", "chatgpt", { message: "Connected and idle.", guidance: "Composer receiver is reachable." }));
-    return result(findings, { required: requiredCount, available: availableCount, missing: missing.length, ambiguous: ambiguous.length });
+    return result(findings, { selected_files: files.length, unique_required_references: new Set([...requiredKeys].map((key) => key.split(":").slice(1).join(":"))).size, requirement_count: requirementCount, resolved_requirements: resolvedRequirements, missing_requirements: missing.length, affected_jobs: [...new Set([...missing, ...ambiguous].map(({ job }) => job.id))], required: requirementCount, available: resolvedRequirements, missing: missing.length, ambiguous: ambiguous.length });
   }
 
   function result(findings, references) {

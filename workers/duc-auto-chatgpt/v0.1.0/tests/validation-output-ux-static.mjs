@@ -7,7 +7,7 @@ const js = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 
 assert.match(html, /id="outputDestinationMode"/);
 assert.match(html, /Chrome Downloads/);
-assert.match(html, /Authorized Folder/);
+assert.match(html, /Output Profile/);
 assert.match(html, /id="destinationFolderBtn"/);
 assert.match(html, /Save result artifacts to a different destination/);
 assert.match(html, /id="separateResultDestinationControls"[^>]*hidden/);
@@ -20,6 +20,11 @@ assert.match(html, /id="checkSaveModes"/);
 assert.match(html, /id="checkNaming"/);
 assert.match(html, /id="copyReviewPacketBtn"[^>]*>Copy for AI Review/);
 assert.match(html, /orchestrator-review-core\.js/);
+assert.match(html, /xlsx-run-plan-core\.js/);
+assert.match(html, /output-profile-core\.js/);
+assert.match(html, /operator-glossary-core\.js/);
+assert.match(html, /id="helpBtn"/);
+assert.match(html, /id="configProvenance"/);
 assert.doesNotMatch(html, /id="runPlanList"/);
 
 assert.match(js, /async function diagnosticChatCheck\(\)/);
@@ -32,7 +37,10 @@ assert.match(js, /async function run\(mode = "all"\)[\s\S]*?effectiveOutput = aw
 assert.match(js, /state\.validated = state\.diagnostics\.summary\.blockers === 0/);
 assert.match(js, /async function copyReviewPacket\(\)/);
 assert.match(js, /DacOrchestratorReview\.copyPayload\(reviewContext\(\)\)/);
-assert.match(js, /destinationFolderBtn\.textContent = values\.image\.kind === "directory" && values\.image\.handle \? "Change Folder" : "Choose Folder"/);
+assert.match(js, /DacXlsxRunPlan\.validate/);
+assert.match(js, /DacOutputProfiles\.bind/);
+assert.match(js, /Earliest next readiness check/);
+assert.match(js, /destinationFolderBtn\.textContent = permission === "permission_required" \? "Re-authorize"/);
 assert.doesNotMatch(js, /chooseImageFolderBtn|useSourceFolderBtn|changeImageFolderBtn/);
 
 console.log("validation and output UX static checks: PASS");

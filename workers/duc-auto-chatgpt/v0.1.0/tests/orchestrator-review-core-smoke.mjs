@@ -26,10 +26,11 @@ assert.equal(before.protocol, "DAC_ORCHESTRATOR_REVIEW_V1");
 assert.equal(before.workbook.name, "pilot-03.xlsx");
 assert.equal(before.jobs.total, 2);
 assert.equal(before.jobs.eligible, 2);
-assert.equal(before.references.resolved_count, 1);
+assert.equal(before.references.resolved_requirements, 1);
 assert.equal(before.output.destination, "downloads");
 assert.equal(before.output.label, "Duc Auto ChatGPT/Pilot03");
 assert.equal(before.blockers.length, 0);
+assert.equal(before.timing.inter_job_delay_mode, "fixed");
 
 const changedOutput = { ...outputSettings, image: output.downloadsLocation("Duc Auto ChatGPT/Pilot03-revised"), collisionPolicy: "fail", saveAuditJsonl: false };
 const after = review.packet({ workbook, prepared, diagnostics: ready, outputSettings: changedOutput, output, settings: prepared.settings });
@@ -39,6 +40,11 @@ assert.equal(after.naming.collision, "fail");
 const staleAfterConfigChange = review.packet({ workbook, prepared, diagnostics: null, outputSettings: changedOutput, output, settings: prepared.settings });
 assert.equal(staleAfterConfigChange.output.label, "Duc Auto ChatGPT/Pilot03-revised");
 assert.equal(staleAfterConfigChange.warnings.some((item) => item.code === "PLAN_CHECK_REQUIRED"), true);
+const provenance = review.packet({ workbook, prepared, diagnostics: ready, outputSettings, output, settings: prepared.settings, importedConfig: { effective: { output: { profileId: "pilot-04" } } }, localOverrides: ["timeout_sec"], outputProfileState: { state: "authorized" } });
+assert.equal(provenance.configuration.source, "xlsx_with_local_overrides");
+assert.deepEqual([...provenance.configuration.overrides], ["timeout_sec"]);
+assert.equal(provenance.output.profile_id, "pilot-04");
+assert.equal(provenance.output.permission, "authorized");
 
 const payload = review.copyPayload({ workbook, prepared, diagnostics: ready, outputSettings: changedOutput, output, settings: prepared.settings });
 assert.match(payload, /^DAC Orchestrator review request:/);

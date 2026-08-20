@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import vm from "node:vm";
+const context = vm.createContext({});
+vm.runInContext(fs.readFileSync(new URL("../operator-glossary-core.js", import.meta.url), "utf8"), context);
+const entries = context.DacOperatorGlossary.GLOSSARY;
+for (const term of ["Timeout", "Retries", "Safety cooldown", "Inter-job delay", "Waiting for ChatGPT ready", "Reconciling", "Persistence verified", "Exact-once", "Security hard stop"]) assert.ok(entries.some((entry) => entry.term === term), `${term} is defined`);
+assert.match(entries.find((entry) => entry.term === "Timeout").detail, /not one global job timer/i);
+assert.match(entries.find((entry) => entry.term === "Waiting for ChatGPT ready").detail, /never authorizes/i);
+console.log("operator glossary core smoke: PASS");

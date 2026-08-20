@@ -1,0 +1,1 @@
+Pilot-04 is a controlled XLSX-driven SETUP trial. Load Duc-Auto-ChatGPT-Pilot-04.xlsx, first omit ref-03.png, run Check Plan, then add it and re-check. Do not run generation automatically. The workbook requests Chrome Downloads/Duc Auto ChatGPT/Pilot04 and explicitly sets all V1 declarative run and output values.

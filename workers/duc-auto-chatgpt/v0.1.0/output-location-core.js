@@ -84,18 +84,28 @@
   }
 
   function fromWorkbook(config, workbookName) {
-    const downloads = downloadsLocation(config?.output_folder || "Duc Auto ChatGPT");
+    const mode = String(config?.output_destination_mode || "downloads").trim().toLowerCase();
+    const downloads = downloadsLocation(config?.output_downloads_subfolder || config?.output_folder || "Duc Auto ChatGPT");
+    const profileId = String(config?.output_profile_id || "").trim();
+    const image = mode === "profile"
+      ? { kind: "directory", handle: null, profileId, handleName: "", label: profileId ? `Output profile '${profileId}' (not bound)` : "Output profile not configured" }
+      : downloads;
+    const separate = /^(true|1|yes)$/i.test(String(config?.separate_result_destination || ""));
+    const resultMode = String(config?.result_destination_mode || "downloads").trim().toLowerCase();
+    const result = !separate ? { kind: "same_as_image" } : resultMode === "profile"
+      ? { kind: "directory", handle: null, profileId: String(config?.result_output_profile_id || "").trim(), handleName: "", label: "Result output profile not bound" }
+      : downloadsLocation(config?.result_downloads_subfolder || config?.output_downloads_subfolder || config?.output_folder || "Duc Auto ChatGPT");
     return {
       workbookName: String(workbookName || "workbook.xlsx"),
-      image: downloads,
-      result: { kind: "same_as_image" },
-      resultFilename: baseResultName(workbookName),
-      auditFilename: baseAuditName(workbookName),
-      imagePattern: "{job_id}",
-      collisionPolicy: "uniquify",
-      saveImages: true,
-      saveResultXlsx: true,
-      saveAuditJsonl: true,
+      image,
+      result,
+      resultFilename: config?.result_filename || baseResultName(workbookName),
+      auditFilename: config?.audit_filename || baseAuditName(workbookName),
+      imagePattern: config?.image_filename_pattern || "{job_id}",
+      collisionPolicy: config?.collision_policy || "uniquify",
+      saveImages: config?.save_images === undefined ? true : /^(true|1|yes)$/i.test(String(config.save_images)),
+      saveResultXlsx: config?.save_result_xlsx === undefined ? true : /^(true|1|yes)$/i.test(String(config.save_result_xlsx)),
+      saveAuditJsonl: config?.save_audit_jsonl === undefined ? true : /^(true|1|yes)$/i.test(String(config.save_audit_jsonl)),
       namingPattern: "{job_id} with the detected image extension; allowed tokens: {job_id}, {attempt}, {index}."
     };
   }
@@ -253,6 +263,6 @@
     return { filename: actual, outcome: "overwritten", size: persisted.size };
   }
 
-  const api = { safeRelativeFolder, safeFilename, baseResultName, baseAuditName, workbookBase, validateImagePattern, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
+  const api = { safeRelativeFolder, safeFileLeaf, safeFilename, baseResultName, baseAuditName, workbookBase, validateImagePattern, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
   (typeof window !== "undefined" ? window : globalThis).DacOutputLocation = api;
 })();

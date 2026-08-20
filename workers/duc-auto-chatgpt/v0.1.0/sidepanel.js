@@ -6,7 +6,7 @@
     "currentJobId", "currentStage", "currentTiming", "currentSaved", "nextTaskCard", "nextTaskId", "nextTaskCountdown",
     "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText",
     "outputPermissionText", "outputDestinationMode", "imageOutputFolderInput", "downloadsDestinationControls",
-    "authorizedDestinationControls", "destinationHandleText", "destinationFolderBtn", "outputAdvancedDetails",
+    "authorizedDestinationControls", "destinationHandleText", "outputProfileText", "outputProfilePermission", "destinationFolderBtn", "outputAdvancedDetails",
     "separateResultDestinationInput", "separateResultDestinationControls", "resultLocationMode", "resultDownloadsFolderInput",
     "resultDownloadsFolderLabel", "resultAuthorizedControls", "resultHandleText", "imagePatternInput", "resultFilenameInput", "auditFilenameInput",
     "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput",
@@ -16,7 +16,7 @@
     "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn",
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
     "checkWorkbook", "statusWorkbook", "checkJobs", "statusJobs", "checkReferences", "statusReferences",
-    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance",
+    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
     "currentAttemptBadge", "currentPromptPreview", "pipelineStepper", "operatorTimerArea",
@@ -58,7 +58,12 @@
     outputsExpanded: false,
     diagnostics: null,
     destinationMode: "downloads",
-    separateResultDestination: false
+    separateResultDestination: false,
+    importedConfig: null,
+    configFindings: [],
+    localOverrides: new Set(),
+    outputProfileState: null,
+    selectedInterJobDelay: null
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -192,7 +197,9 @@
     const formattedStageLeft = window.DacRunState.formatDuration(stageTimeLeft);
 
     if (state.interJobCountdown != null && state.interJobCountdown > 0) {
-      els.operatorTimerText.textContent = `Next readiness check in ${window.DacRunState.formatDuration(state.interJobCountdown)}`;
+      const settings = state.prepared?.settings;
+      const configured = settings ? (settings.delay_min_sec === settings.delay_max_sec ? `Configured delay: fixed ${settings.delay_min_sec}s` : `Configured delay: ${settings.delay_min_sec}–${settings.delay_max_sec}s · selected this transition: ${state.selectedInterJobDelay}s`) : "";
+      els.operatorTimerText.textContent = `Next readiness check in ${window.DacRunState.formatDuration(state.interJobCountdown)}${configured ? ` · ${configured}` : ""}`;
       els.operatorTimerBadge.className = "timer-badge cooldown";
     } else if (state.currentStage === "WAITING_READY" || state.currentStage === "FINALIZING / WAITING_IDLE" || item?.runtime_stage === "WAITING_READY") {
       els.operatorTimerText.textContent = `Waiting for ChatGPT ready · ${formattedStageLeft} max`;
@@ -633,12 +640,62 @@
     renderDiagnosticGuidance();
   }
 
+  function markLocalOverride(key, reason = "Configuration changed; validate again before Run.") {
+    if (state.workbook) state.localOverrides.add(key);
+    invalidateValidation(reason);
+  }
+
+  function renderConfigProvenance() {
+    if (!els.configProvenance) return;
+    const source = state.importedConfig ? (state.localOverrides.size ? "XLSX + local overrides" : "From XLSX") : "Configuration: defaults";
+    els.configProvenance.textContent = `${source}${state.localOverrides.size ? ` (${[...state.localOverrides].join(", ")})` : ""}`;
+  }
+
+  async function resolveOutputProfile(profileId) {
+    if (!profileId) { state.outputProfileState = { state: "unbound", profile: null, profile_id: "" }; return state.outputProfileState; }
+    try { state.outputProfileState = await window.DacOutputProfiles.resolve(profileId); }
+    catch (error) { state.outputProfileState = { state: "unavailable", profile: null, error: error.message, profile_id: profileId }; }
+    const resolved = state.outputProfileState;
+    resolved.profile_id = profileId;
+    if (resolved.state === "authorized" && resolved.profile?.directory_handle) {
+      state.outputSettings.image = window.DacOutputLocation.directoryLocation(resolved.profile.directory_handle, resolved.profile.last_known_handle_name);
+      state.outputSettings.image.profileId = profileId;
+    }
+    return resolved;
+  }
+
+  async function resolveResultProfile(profileId) {
+    if (!profileId) return null;
+    try {
+      const resolved = await window.DacOutputProfiles.resolve(profileId);
+      if (resolved.state === "authorized" && resolved.profile?.directory_handle) {
+        state.outputSettings.result = window.DacOutputLocation.directoryLocation(resolved.profile.directory_handle, resolved.profile.last_known_handle_name);
+        state.outputSettings.result.profileId = profileId;
+      }
+      return resolved;
+    } catch (_) { return null; }
+  }
+
+  function applyWorkbookConfig() {
+    const imported = window.DacXlsxRunPlan.validate(state.workbook.config, state.workbook.jobs, window.DacRunnerCore, window.DacOutputLocation);
+    state.importedConfig = imported;
+    state.configFindings = imported.findings;
+    state.runtimeOverrides = {};
+    state.localOverrides.clear();
+    try { state.outputSettings = window.DacOutputLocation.fromWorkbook(state.workbook.config, state.workbook.fileName); }
+    catch (_) { state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName); }
+    state.destinationMode = imported.effective.output.mode;
+    state.separateResultDestination = imported.effective.output.separateResultDestination;
+    renderConfigProvenance();
+    return imported;
+  }
+
   function reviewContext() {
     let settings = state.prepared?.settings || null;
     if (!settings && state.workbook) {
       try { settings = window.DacRunnerCore.runtimeConfig(state.workbook.config, state.runtimeOverrides); } catch (_) { /* Check Plan publishes the invalid-setting finding. */ }
     }
-    return { workbook: state.workbook, prepared: state.prepared, diagnostics: state.diagnostics, outputSettings: state.outputSettings, output: window.DacOutputLocation, settings };
+    return { workbook: state.workbook, prepared: state.prepared, diagnostics: state.diagnostics, outputSettings: state.outputSettings, output: window.DacOutputLocation, settings, importedConfig: state.importedConfig, localOverrides: [...state.localOverrides], outputProfileState: state.destinationMode === "profile" ? state.outputProfileState : null };
   }
 
   function updateReviewPacketControl() {
@@ -658,17 +715,20 @@
       els.imageOutputText.textContent = window.DacOutputLocation.locationLabel(values.image);
       els.resultOutputText.textContent = window.DacOutputLocation.fileLabel(values.result, values.resultFilename);
       els.auditOutputText.textContent = window.DacOutputLocation.fileLabel(values.result, values.auditFilename);
-      state.destinationMode = values.image.kind === "directory" ? "directory" : "downloads";
+      state.destinationMode = values.image.kind === "directory" ? "profile" : "downloads";
       els.outputDestinationMode.value = state.destinationMode;
       els.imageOutputFolderInput.value = values.image.kind === "downloads" ? values.image.folder : "";
       els.downloadsDestinationControls.hidden = state.destinationMode !== "downloads";
-      els.authorizedDestinationControls.hidden = state.destinationMode !== "directory";
+      els.authorizedDestinationControls.hidden = state.destinationMode !== "profile";
+      els.outputProfileText.textContent = values.image.kind === "directory" ? (values.image.profileId || state.importedConfig?.effective.output.profileId || "Not configured") : "Not used";
       els.destinationHandleText.textContent = values.image.kind === "directory" ? window.DacOutputLocation.locationLabel(values.image) : "No folder selected";
-      els.destinationFolderBtn.textContent = values.image.kind === "directory" && values.image.handle ? "Change Folder" : "Choose Folder";
+      const permission = state.outputProfileState?.state;
+      els.outputProfilePermission.textContent = values.image.kind !== "directory" ? "Not required" : permission === "authorized" ? "Authorized" : permission === "permission_required" ? "Permission required" : permission === "unavailable" ? "Unavailable" : "Not bound";
+      els.destinationFolderBtn.textContent = permission === "permission_required" ? "Re-authorize" : values.image.kind === "directory" && values.image.handle ? "Change Folder" : "Choose Folder";
       state.separateResultDestination = state.outputSettings.result?.kind !== "same_as_image";
       els.separateResultDestinationInput.checked = state.separateResultDestination;
       els.separateResultDestinationControls.hidden = !state.separateResultDestination;
-      els.resultLocationMode.value = state.outputSettings.result?.kind === "directory" ? "directory" : "downloads";
+      els.resultLocationMode.value = state.outputSettings.result?.kind === "directory" ? "profile" : "downloads";
       els.resultDownloadsFolderInput.value = values.result.kind === "downloads" ? values.result.folder : "";
       els.resultDownloadsFolderLabel.hidden = !state.separateResultDestination || state.outputSettings.result?.kind !== "downloads";
       els.resultAuthorizedControls.hidden = !state.separateResultDestination || state.outputSettings.result?.kind !== "directory";
@@ -680,11 +740,11 @@
       els.saveImagesInput.checked = values.saveImages;
       els.saveResultXlsxInput.checked = values.saveResultXlsx;
       els.saveAuditJsonlInput.checked = values.saveAuditJsonl;
-      els.outputPermissionText.textContent = values.image.kind === "directory" || values.result.kind === "directory" ? "Custom folder authorization will be checked before Run." : "Explicit Chrome Downloads location.";
+      els.outputPermissionText.textContent = values.image.kind === "directory" || values.result.kind === "directory" ? "Profile folder authorization will be checked before Run." : "Relative to Chrome Downloads · no folder authorization required.";
     } catch (error) {
       els.outputPermissionText.textContent = error.message;
     }
-    updateReviewPacketControl(); controls();
+    renderConfigProvenance(); updateReviewPacketControl(); controls();
   }
 
   async function activeTab() {
@@ -718,12 +778,12 @@
   }
 
   async function openWorkbook() {
-    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; renderOutput();
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; renderOutput();
     try {
       state.workbook = await window.DacXlsx.open(els.workbookInput.files?.[0]);
-      state.outputSettings = window.DacOutputLocation.fromWorkbook(state.workbook.config, state.workbook.fileName);
-      state.destinationMode = state.outputSettings.image.kind === "directory" ? "directory" : "downloads";
-      state.separateResultDestination = false;
+      const imported = applyWorkbookConfig();
+      if (imported.effective.output.mode === "profile") await resolveOutputProfile(imported.effective.output.profileId);
+      if (imported.effective.output.separateResultDestination && imported.effective.output.resultMode === "profile") await resolveResultProfile(imported.effective.output.resultProfileId);
       setCurrent(null, "—", "Workbook loaded. Check Plan to see all input requirements.");
       await prepare({ diagnostic: true });
       if (!state.prepared) {
@@ -773,25 +833,33 @@
     try {
       const mode = els.outputDestinationMode.value;
       state.destinationMode = mode;
-      if (mode === "downloads") state.outputSettings.image = window.DacOutputLocation.downloadsLocation(els.imageOutputFolderInput.value || "Duc Auto ChatGPT");
-      else state.outputSettings.image = { kind: "directory", handle: null, label: "No authorized folder selected" };
+      if (mode === "downloads") { state.outputSettings.image = window.DacOutputLocation.downloadsLocation(els.imageOutputFolderInput.value || "Duc Auto ChatGPT"); state.outputProfileState = null; }
+      else { state.outputSettings.image = { kind: "directory", handle: null, profileId: state.importedConfig?.effective.output.profileId || "", label: "Output profile not bound" }; state.outputProfileState = { state: "unbound", profile: null }; }
       if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
-      invalidateValidation();
+      markLocalOverride("output_destination_mode");
       renderOutput();
     } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
 
   async function choosePrimaryDestination() {
-    await chooseDirectory("Output folder selected", "image");
-    state.destinationMode = "directory";
+    const profileId = state.outputSettings.image?.profileId || state.importedConfig?.effective.output.profileId;
+    if (!profileId) throw new Error("Set a valid output_profile_id in the XLSX before binding a profile folder.");
+    if (typeof window.showDirectoryPicker !== "function") throw new Error("This Chrome build cannot authorize a folder. Use Chrome Downloads or update Chrome.");
+    const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+    const profile = await window.DacOutputProfiles.bind(profileId, handle, profileId);
+    state.outputSettings.image = window.DacOutputLocation.directoryLocation(handle, profile.last_known_handle_name);
+    state.outputSettings.image.profileId = profileId;
+    state.outputProfileState = { state: "authorized", profile, permission: "granted" };
+    state.destinationMode = "profile";
     if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
+    markLocalOverride("output_profile_binding", "Output profile binding changed; check plan again before Run.");
     renderOutput();
   }
 
   function setImageDownloadsFolder() {
     try {
       state.outputSettings.image = window.DacOutputLocation.downloadsLocation(els.imageOutputFolderInput.value);
-      invalidateValidation();
+      markLocalOverride("output_downloads_subfolder");
       els.outputPermissionText.textContent = "Using the explicit Chrome Downloads location.";
       renderOutput();
     } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
@@ -801,8 +869,8 @@
     try {
       const mode = els.resultLocationMode.value;
       if (mode === "downloads") state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value || state.outputSettings.image?.folder || "Duc Auto ChatGPT");
-      else state.outputSettings.result = { kind: "directory", handle: null, label: "No authorized result folder selected" };
-      invalidateValidation();
+      else state.outputSettings.result = { kind: "directory", handle: null, profileId: state.importedConfig?.effective.output.resultProfileId || "", label: "Result output profile not bound" };
+      markLocalOverride("result_destination_mode");
       renderOutput();
     } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
@@ -811,18 +879,18 @@
     state.separateResultDestination = els.separateResultDestinationInput.checked;
     if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
     else state.outputSettings.result = window.DacOutputLocation.downloadsLocation(state.outputSettings.image?.folder || "Duc Auto ChatGPT");
-    invalidateValidation();
+    markLocalOverride("separate_result_destination");
     renderOutput();
   }
 
   function setResultDownloadsFolder() {
     if (state.outputSettings.result?.kind !== "downloads") return;
-    try { state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value); invalidateValidation(); renderOutput(); }
+    try { state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value); markLocalOverride("result_downloads_subfolder"); renderOutput(); }
     catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
 
   function setResultFilename() {
-    try { state.outputSettings.resultFilename = window.DacOutputLocation.safeFilename(els.resultFilenameInput.value, window.DacOutputLocation.baseResultName(state.workbook.fileName)); invalidateValidation(); renderOutput(); }
+    try { state.outputSettings.resultFilename = window.DacOutputLocation.safeFilename(els.resultFilenameInput.value, window.DacOutputLocation.baseResultName(state.workbook.fileName)); markLocalOverride("result_filename"); renderOutput(); }
     catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
 
@@ -835,7 +903,7 @@
       state.outputSettings.saveImages = els.saveImagesInput.checked;
       state.outputSettings.saveResultXlsx = els.saveResultXlsxInput.checked;
       state.outputSettings.saveAuditJsonl = els.saveAuditJsonlInput.checked;
-      invalidateValidation(); renderOutput(); renderOutputScreen();
+      markLocalOverride("output_naming"); renderOutput(); renderOutputScreen();
     } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
 
@@ -849,7 +917,7 @@
       continue_on_error: els.continueOnErrorInput.value,
       rerun_done: els.rerunDoneInput.value
     };
-    invalidateValidation();
+    markLocalOverride("run_settings");
     await prepare();
   }
 
@@ -923,7 +991,9 @@
       outputCheck,
       chatCheck,
       runner: window.DacRunnerCore,
-      output: window.DacOutputLocation
+      output: window.DacOutputLocation,
+      configFindings: state.configFindings,
+      outputProfileState: state.destinationMode === "profile" ? state.outputProfileState : null
     });
     state.validated = state.diagnostics.summary.blockers === 0;
     if (state.validated) {
@@ -961,6 +1031,20 @@
     }
     els.copyReviewPacketStatus.textContent = "Copied review packet. Local blockers remain authoritative.";
     log("Copied DAC_ORCHESTRATOR_REVIEW_V1 packet for AI review.", "done");
+  }
+
+  function renderHelpGlossary() {
+    if (!els.helpGlossary) return;
+    els.helpGlossary.textContent = "";
+    const groups = new Map();
+    for (const entry of window.DacOperatorGlossary.GLOSSARY) groups.set(entry.section, [...(groups.get(entry.section) || []), entry]);
+    for (const [section, entries] of groups) {
+      const block = document.createElement("section");
+      const heading = document.createElement("h3"); heading.textContent = section;
+      const list = document.createElement("dl");
+      for (const entry of entries) { const term = document.createElement("dt"); term.textContent = entry.term; const detail = document.createElement("dd"); detail.textContent = entry.detail; list.append(term, detail); }
+      block.append(heading, list); els.helpGlossary.appendChild(block);
+    }
   }
 
   function imageExtensionFromUrl(url) {
@@ -1098,15 +1182,19 @@
   }
 
   async function countdown(seconds, item) {
+    state.selectedInterJobDelay = seconds;
     for (const remaining of window.DacRunnerCore.countdownValues(seconds)) {
       if (state.stopRequested) break;
       state.interJobCountdown = remaining;
       const targetTime = new Date(Date.now() + remaining * 1000).toLocaleTimeString();
-      nextTask(item, `Inter-job delay · Earliest next prompt: ${targetTime} · readiness check in ${window.DacRunState.formatDuration(remaining)}`);
+      const settings = state.prepared?.settings;
+      const delayMode = settings?.delay_min_sec === settings?.delay_max_sec ? `Configured delay: fixed ${seconds}s` : `Configured delay: ${settings?.delay_min_sec}–${settings?.delay_max_sec}s · selected this transition: ${seconds}s`;
+      nextTask(item, `Inter-job delay · Earliest next readiness check: ${targetTime} · ${delayMode}`);
       renderRuntime();
       await sleep(1000);
     }
     state.interJobCountdown = null;
+    state.selectedInterJobDelay = null;
     renderRuntime();
   }
 
@@ -1343,7 +1431,7 @@
   els.resultFilenameInput.addEventListener("change", setResultFilename);
   for (const element of [els.imagePatternInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput]) element.addEventListener("change", setArtifactNaming);
   for (const element of [els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.addEventListener("change", () => updateRuntimeOverrides().catch((error) => log(error.message, "error")));
-  els.chooseResultFolderBtn.addEventListener("click", () => chooseDirectory("Result XLSX folder selected", "result").then(() => { els.resultLocationMode.value = "directory"; renderOutput(); }).catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
+  els.chooseResultFolderBtn.addEventListener("click", () => chooseDirectory("Result XLSX folder selected", "result").then(() => { els.resultLocationMode.value = "profile"; renderOutput(); }).catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   const ZOOM_LEVELS = [0.8, 0.9, 1.0];
   const ZOOM_EPSILON = 0.015;
 
@@ -1424,6 +1512,8 @@
   els.changeWorkbookBtn?.addEventListener("click", () => els.workbookInput.click());
   els.addReferencesBtn?.addEventListener("click", () => els.referencesInput.click());
   els.validateBtn.addEventListener("click", validate);
+  els.helpBtn.addEventListener("click", () => { renderHelpGlossary(); els.helpDrawer.hidden = false; });
+  els.closeHelpBtn.addEventListener("click", () => { els.helpDrawer.hidden = true; });
   els.copyReviewPacketBtn.addEventListener("click", () => copyReviewPacket().catch((error) => {
     els.copyReviewPacketStatus.textContent = error.message;
     log(error.message, "error");

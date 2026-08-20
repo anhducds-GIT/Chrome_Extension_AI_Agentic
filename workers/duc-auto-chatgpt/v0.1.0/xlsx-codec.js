@@ -159,8 +159,9 @@
       return item;
     }).filter((item) => item.id || item.prompt);
     if (!jobs.length) throw new Error("jobs has no job rows.");
-    if (jobs.some((job) => !String(job.id).trim() || !String(job.prompt).trim())) throw new Error("Every jobs row needs non-empty id and prompt values.");
-    if (new Set(jobs.map((job) => job.id)).size !== jobs.length) throw new Error("jobs.id values must be unique.");
+    // A parsed workbook remains inspectable even if job fields are invalid.
+    // Check Plan reports every malformed/duplicate row together; authoritative
+    // prepare still fails closed immediately before any execution.
     const config = {};
     let configSheet = null;
     if (configPath && entries.has(configPath)) {

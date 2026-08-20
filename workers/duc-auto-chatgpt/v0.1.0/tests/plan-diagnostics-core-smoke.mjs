@@ -51,5 +51,7 @@ const authorizedUnset = run({ outputCheck: { ok: false, missingDestination: true
 assert.equal(authorizedUnset.blockers.some((item) => item.code === "OUTPUT_DESTINATION_MISSING"), true);
 const invalidNaming = run({ outputCheck: { ok: false, namingInvalid: true, error: "Image filename pattern is required." } });
 assert.equal(invalidNaming.blockers.some((item) => item.code === "OUTPUT_NAMING_INVALID"), true);
+const profileUnbound = run({ outputProfileState: { state: "unbound", profile_id: "pilot-04" } });
+assert.equal(profileUnbound.blockers.some((item) => item.code === "OUTPUT_PROFILE_UNBOUND"), true);
 
 console.log("plan-diagnostics-core smoke: PASS");

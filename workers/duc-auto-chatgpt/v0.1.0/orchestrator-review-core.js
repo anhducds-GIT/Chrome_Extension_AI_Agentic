@@ -18,7 +18,7 @@
     add("jobs", "Jobs", malformed, workbook ? (malformed.length ? "BLOCKER" : "OK") : "BLOCKER", workbook ? `${workbook.jobs?.length || 0} total${prepared ? ` · ${prepared.queue.filter((item) => !item.skipped).length} eligible` : " · eligibility pending"}` : "No workbook");
     const referenceFindings = findingsFor(diagnostics, (finding) => finding.scope === "references");
     const references = diagnostics?.references;
-    add("references", "References", referenceFindings.filter((finding) => finding.severity !== "OK"), workbook ? (references?.missing || references?.ambiguous ? "BLOCKER" : diagnostics ? "OK" : "WARNING") : "BLOCKER", references ? (!references.required ? "0 required" : references.missing ? `${references.missing} missing` : references.ambiguous ? `${references.ambiguous} ambiguous` : `${references.available} / ${references.required} available`) : "Check plan");
+    add("references", "References", referenceFindings.filter((finding) => finding.severity !== "OK"), workbook ? (references?.missing || references?.ambiguous ? "BLOCKER" : diagnostics ? "OK" : "WARNING") : "BLOCKER", references ? (!(references.requirement_count ?? references.required) ? "0 required" : references.missing ? `${references.missing} missing · ${references.selected_files || 0} files selected` : references.ambiguous ? `${references.ambiguous} ambiguous` : `${references.resolved_requirements ?? references.available} / ${references.requirement_count ?? references.required} requirements resolved · ${references.selected_files || 0} files selected`) : "Check plan");
     const outputFindings = findingsFor(diagnostics, (finding) => finding.scope === "output");
     const values = safeOutput(outputSettings, output);
     add("output", "Output destination", outputFindings.filter((finding) => finding.severity !== "OK"), outputSettings ? (diagnostics ? "OK" : "WARNING") : "BLOCKER", values ? output.locationLabel(values.image) : "Not selected");
@@ -36,7 +36,7 @@
     try { return outputSettings && output ? output.effective(outputSettings) : null; } catch (_) { return null; }
   }
 
-  function packet({ workbook, prepared, diagnostics, outputSettings, output, settings }) {
+  function packet({ workbook, prepared, diagnostics, outputSettings, output, settings, importedConfig = null, localOverrides = [], outputProfileState = null }) {
     const values = safeOutput(outputSettings, output);
     const references = diagnostics?.references || {};
     const missingReferenceFinding = findingsFor(diagnostics, (finding) => finding.code === "MISSING_REFERENCES")[0];
@@ -58,15 +58,20 @@
         eligible: prepared ? queue.filter((item) => !item.skipped).length : null,
         pending: prepared ? queue.filter((item) => item.status === "PENDING").length : null
       },
+      configuration: { source: importedConfig ? (localOverrides.length ? "xlsx_with_local_overrides" : "xlsx") : "defaults", overrides: [...localOverrides] },
       references: {
-        required_count: Number(references.required || 0),
-        resolved_count: Number(references.available || 0),
+        selected_files: Number(references.selected_files || 0),
+        unique_required_references: Number(references.unique_required_references || 0),
+        requirement_count: Number(references.requirement_count ?? references.required ?? 0),
+        resolved_requirements: Number(references.resolved_requirements ?? references.available ?? 0),
         missing: [...new Set([...(missingReferenceFinding?.missing_items || []), ...(ambiguousReferenceFinding?.missing_items || [])])],
         affected_jobs: [...new Set([...(missingReferenceFinding?.job_ids || []), ...(ambiguousReferenceFinding?.job_ids || [])])]
       },
       output: {
         destination,
         label: values?.image?.kind === "directory" ? (values.image.handleName || null) : (values?.image?.folder || null),
+        profile_id: values?.image?.profileId || importedConfig?.effective?.output?.profileId || null,
+        permission: outputProfileState?.state || (destination === "downloads" ? "not_required" : null),
         save_images: values?.saveImages ?? null,
         save_result_xlsx: values?.saveResultXlsx ?? null,
         save_audit_jsonl: values?.saveAuditJsonl ?? null
@@ -77,6 +82,13 @@
         cooldown_sec: effectiveSettings?.safety_cooldown_sec ?? null,
         max_retries: effectiveSettings?.max_retries ?? null,
         max_refs: effectiveSettings?.max_input_images ?? null
+      },
+      timing: {
+        timeout_sec: effectiveSettings?.timeout_sec ?? null,
+        inter_job_delay_min_sec: effectiveSettings?.delay_min_sec ?? null,
+        inter_job_delay_max_sec: effectiveSettings?.delay_max_sec ?? null,
+        inter_job_delay_mode: effectiveSettings ? (effectiveSettings.delay_min_sec === effectiveSettings.delay_max_sec ? "fixed" : "random_range") : null,
+        safety_cooldown_sec: effectiveSettings?.safety_cooldown_sec ?? null
       },
       chatgpt: { connected: diagnostics ? chatOk : null, ready: diagnostics ? chatOk : null },
       blockers: (diagnostics?.blockers || []).map(compactFinding),

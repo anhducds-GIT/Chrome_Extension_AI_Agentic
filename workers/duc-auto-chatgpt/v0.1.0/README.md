@@ -2,6 +2,10 @@
 
 Personal Chrome extension for **local-only XLSX-driven image generation** on ChatGPT.
 
+## V1 XLSX run-plan protocol
+
+New orchestrator workbooks should follow [DAC_XLSX_RUN_PLAN_V1.md](DAC_XLSX_RUN_PLAN_V1.md). XLSX declaratively imports routine run/output configuration; browser handles, permissions, ChatGPT readiness, security checks, output detection, persistence proof, and exact-once runtime state remain local browser authority. `pilot-04/Duc-Auto-ChatGPT-Pilot-04.xlsx` is the controlled import fixture; do not run it live without the owner trial sequence.
+
 ## V0 scope
 
 - Side Panel UI.
