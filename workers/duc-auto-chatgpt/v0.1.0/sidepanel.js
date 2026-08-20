@@ -2,7 +2,7 @@
   "use strict";
   const ids = ["workbookInput", "referencesInput", "validateBtn", "runBtn", "runFailedBtn", "stopBtn", "statusChip", "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText", "currentJobId", "currentStage", "currentTiming", "currentSaved", "nextTaskCard", "nextTaskId", "nextTaskCountdown", "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText", "outputPermissionText", "imageOutputFolderInput", "resultLocationMode", "resultDownloadsFolderInput", "resultDownloadsFolderLabel", "imagePatternInput", "resultFilenameInput", "auditFilenameInput", "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput", "chooseImageFolderBtn", "useSourceFolderBtn", "changeImageFolderBtn", "chooseResultFolderBtn", "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput", "continueOnErrorInput", "rerunDoneInput", "outputSummaryText", "outputList", "artifactList", "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn"];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
-  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, validated: false, stopRequested: false, terminal: 0, runId: null, attemptSerial: 0, auditEvents: [], auditFile: "", resultFile: "", currentItem: null, currentStage: "—", currentReason: "No run in progress.", currentStartedAt: null, runtimeTicker: null, queueExpanded: false, outputsExpanded: false };
+  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, validated: false, stopRequested: false, terminal: 0, runId: null, attemptSerial: 0, auditEvents: [], auditFile: "", resultFile: "", verifiedImageFiles: [], artifactErrors: [], currentItem: null, currentStage: "—", currentReason: "No run in progress.", currentStartedAt: null, runtimeTicker: null, queueExpanded: false, outputsExpanded: false };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function setStatus(status, label = status) { els.statusChip.className = `chip ${status.toLowerCase()}`; els.statusChip.textContent = label; }
@@ -26,7 +26,7 @@
     if (!state.runId) return;
     const telemetry = globalThis.DacAttemptTelemetry?.auditFields(item) || {};
     const output = state.outputSettings ? window.DacOutputLocation.effective(state.outputSettings) : null;
-    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null });
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
@@ -55,7 +55,7 @@
     els.currentTiming.textContent = item
       ? `${attemptText} · Elapsed ${window.DacRunState.formatDuration(elapsed)}${budget ? ` · Stage budget ${window.DacRunState.formatDuration(Math.max(0, budget - elapsed))} remaining` : ""}${state.currentReason ? ` · ${state.currentReason}` : ""}`
       : state.currentReason;
-    const saved = item?.result_file || "";
+    const saved = item?.persistence_verified ? item.result_file || "" : "";
     els.currentSaved.hidden = !saved && !item?.detected_not_downloaded;
     els.currentSaved.textContent = saved ? `SAVED ✓ ${saved}` : item?.detected_not_downloaded ? "DETECTED · not downloaded" : "";
   }
@@ -98,7 +98,8 @@
       const retryLabel = isRetryEligible
         ? `attempt ${item.attempt_count}/${1 + item.settings.max_retries}`
         : `attempt ${item.attempt_count}${!isRetryEligible && (item.phase !== "PRE_SUBMIT" || ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)) ? " · Auto-retry: No" : ""}`;
-      li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · refs: ${item.references.map((file) => file.alias || window.DacRunnerCore.basename(file.fileName)).join(", ")}` : " · refs: none"} · ${item.status} · ${window.DacRunState.stageFor(item)} · ${retryLabel}${item.result_file ? ` · SAVED ✓ ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : ""}${item.protected_checkpoint ? " · Output checkpoint protected" : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
+      const outputText = item.persistence_verified && item.result_file ? ` · SAVED ✓ ${item.result_file}` : item.result_file ? ` · recorded output (not re-verified): ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : "";
+      li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · refs: ${item.references.map((file) => file.alias || window.DacRunnerCore.basename(file.fileName)).join(", ")}` : " · refs: none"} · ${item.status} · ${window.DacRunState.stageFor(item)} · ${retryLabel}${outputText}${item.protected_checkpoint ? " · Output checkpoint protected" : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
       li.addEventListener("click", () => { state.selectedJobId = item.job.id; renderQueue(); controls(); });
       if (state.selectedJobId === item.job.id) {
         const details = document.createElement("details"); details.open = true;
@@ -124,15 +125,16 @@
     for (const item of (state.outputsExpanded ? queue : queue.slice(0, 6))) {
       const li = document.createElement("li");
       li.className = item.status.toLowerCase();
-      li.textContent = `${item.job.id} · ${item.status}${item.result_file ? ` · ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : ""}`;
+      li.textContent = `${item.job.id} · ${item.status}${item.persistence_verified && item.result_file ? ` · ${item.result_file}` : item.result_file ? ` · recorded output (not re-verified): ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : ""}`;
       els.outputList.appendChild(li);
     }
     els.viewOutputsBtn.textContent = state.outputsExpanded ? "Collapse outputs" : `View all outputs${queue.length > 6 ? ` (${queue.length})` : ""}`;
     const values = state.outputSettings ? window.DacOutputLocation.effective(state.outputSettings) : null;
     const artifacts = [];
-    if (values?.saveImages) artifacts.push(`Images folder: ${window.DacOutputLocation.locationLabel(values.image)}`);
+    if (state.verifiedImageFiles.length) artifacts.push(`Images folder: ${window.DacOutputLocation.locationLabel(values.image)} · ${state.verifiedImageFiles.length} verified file(s)`);
     if (values?.saveResultXlsx && state.resultFile) artifacts.push(`Result XLSX: ${state.resultFile}`);
     if (values?.saveAuditJsonl && state.auditFile) artifacts.push(`Audit JSONL: ${state.auditFile}`);
+    for (const error of state.artifactErrors) artifacts.push(`FAILED · ${error}`);
     els.artifactList.textContent = artifacts.length ? artifacts.join("\n") : "No saved run artifacts.";
     els.openOutputFolderBtn.disabled = !values || values.image.kind !== "downloads";
   }
@@ -283,7 +285,7 @@
     state.outputSettings.image = location;
     state.outputSettings.result = { kind: "same_as_image" };
     invalidateValidation();
-    els.outputPermissionText.textContent = `Source-folder mode: ${location.label}. Confirm that this is the folder containing ${state.workbook.fileName}.`;
+    els.outputPermissionText.textContent = `Selected output handle: ${location.label}. Chrome does not expose the workbook's absolute folder path; choose the intended folder explicitly.`;
     renderOutput();
   }
 
@@ -395,6 +397,7 @@
     if (Object.hasOwn(values, "attempt_phase")) item.phase = values.attempt_phase;
     if (Object.hasOwn(values, "result_file")) item.result_file = values.result_file;
     if (Object.hasOwn(values, "result_download_id")) item.result_download_id = values.result_download_id;
+    if (Object.hasOwn(values, "persistence_verified")) item.persistence_verified = Boolean(values.persistence_verified);
     if (Object.hasOwn(values, "requested_file")) item.requested_file = values.requested_file;
     if (Object.hasOwn(values, "write_outcome")) item.write_outcome = values.write_outcome;
     if (Object.hasOwn(values, "detected_not_downloaded")) item.detected_not_downloaded = Boolean(values.detected_not_downloaded);
@@ -513,6 +516,7 @@
   }
 
   function messageOf(error) { return error?.message || String(error); }
+  function persistenceFailureType(error) { return /^PERSISTENCE_VERIFICATION_FAILED:/.test(messageOf(error)) ? "PERSISTENCE_VERIFICATION_FAILED" : window.DacRunnerCore.classifyFailure(error, state.currentItem?.phase); }
   function matchesAttempt(response, item) { return Boolean(response?.attempt && response.attempt.job_id === item.job.id && response.attempt.attempt_id === item.attempt_id); }
 
   function markInterrupted(item, failureType, message) {
@@ -536,7 +540,7 @@
       if (!effectiveOutput.saveImages) {
         item.phase = "OUTPUT_SAVED";
         item.detected_not_downloaded = true;
-        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), detected_not_downloaded: true, result_file: "", result_download_id: "", write_outcome: "detected_not_downloaded", detection_diagnostics: JSON.stringify(result?.detection || {}) });
+        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), persistence_verified: false, detected_not_downloaded: true, result_file: "", result_download_id: "", write_outcome: "detected_not_downloaded", detection_diagnostics: JSON.stringify(result?.detection || {}) });
         audit("DETECTED_NOT_DOWNLOADED", item, { message: "Attributable image detected; generated-image download is disabled." });
         item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image detected; download disabled.");
         renderQueue(); progress(`${item.job.id} detected; image download disabled.`);
@@ -545,13 +549,14 @@
         if (!accepted?.ok) throw new Error(accepted?.message || accepted?.error || "Image output was not accepted.");
         item.phase = "OUTPUT_SAVED";
         const outputSavedAt = new Date().toISOString();
-        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), detected_not_downloaded: false, result_file: accepted.filename, result_download_id: accepted.download_id ?? "", output_saved_at: outputSavedAt, write_outcome: accepted.write_outcome || "written", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), persistence_verified: true, detected_not_downloaded: false, result_file: accepted.filename, result_download_id: accepted.download_id ?? "", output_saved_at: outputSavedAt, write_outcome: accepted.write_outcome || "written", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+        state.verifiedImageFiles.push(accepted.filename);
         audit("OUTPUT_SAVED", item, { message: `write_outcome=${accepted.write_outcome || "written"}` });
         item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image checkpoint recorded; waiting for ChatGPT to become idle.");
         renderQueue(); progress(`SAVED ✓ ${accepted.filename}`);
       }
     } catch (error) {
-      markInterrupted(item, window.DacRunnerCore.classifyFailure(error, item.phase), messageOf(error));
+      markInterrupted(item, persistenceFailureType(error), messageOf(error));
       return { completed: true, halted: true };
     }
     try {
@@ -611,7 +616,7 @@
     if (!runQueue.length) { setStatus("ERROR", "NOT READY"); progress(`No ${mode} jobs are eligible.`); controls(); return; }
     state.running = true; state.stopRequested = false; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
-    state.runId = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`; state.attemptSerial = 0; state.auditEvents = []; state.auditFile = "";
+    state.runId = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`; state.attemptSerial = 0; state.auditEvents = []; state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.artifactErrors = [];
     els.logList.textContent = "";
     startRuntimeTicker();
     const target = await activeTab().catch(() => null);
@@ -680,10 +685,16 @@
       nextTask(null, "—"); setStatus(state.stopRequested ? "IDLE" : halted ? "ERROR" : "DONE", state.stopRequested ? "STOPPED" : halted ? "HALTED" : "DONE"); progress(state.stopRequested ? "Stopped. No later jobs were submitted." : halted ? "Batch halted after a protected terminal state." : "Queue complete.");
     } finally {
       audit("RUN_END", null, { message: state.stopRequested ? "STOPPED" : halted ? "HALTED" : "COMPLETE" });
-      try { state.auditFile = await saveAuditLog(effectiveOutput.result); snapshotOutputSettings(null, state.auditFile); if (state.auditFile) log(`Audit log written: ${state.auditFile}.`, "done"); }
-      catch (error) { log(`Audit log failed: ${messageOf(error)}`, "error"); }
+      let artifactPersistenceFailed = false;
+      try { state.auditFile = await saveAuditLog(effectiveOutput.result); snapshotOutputSettings(null, state.auditFile); if (state.auditFile) log(`Audit log verified: ${state.auditFile}.`, "done"); }
+      catch (error) { artifactPersistenceFailed = true; state.artifactErrors.push(`Audit JSONL persistence verification failed: ${messageOf(error)}`); log(`Audit log failed: ${messageOf(error)}`, "error"); }
       try { state.resultFile = await saveLedger(effectiveOutput.result); }
-      catch (error) { setStatus("ERROR", "RESULT NOT SAVED"); progress(`Result XLSX was not written: ${messageOf(error)}`); log(`Result XLSX failed: ${messageOf(error)}`, "error"); }
+      catch (error) { artifactPersistenceFailed = true; state.artifactErrors.push(`Result XLSX persistence verification failed: ${messageOf(error)}`); log(`Result XLSX failed: ${messageOf(error)}`, "error"); }
+      if (artifactPersistenceFailed) {
+        setStatus("ERROR", "OUTPUT PERSISTENCE FAILED");
+        progress("Output persistence verification failed; no unverified artifact is reported as saved.");
+        audit("ARTIFACT_PERSISTENCE_FAILED", null, { message: state.artifactErrors.join(" | ") });
+      }
       const completedNaturally = !state.stopRequested && !halted;
       state.running = false; state.stopRequested = false; renderQueue(); renderOutputScreen(); controls();
       stopRuntimeTicker();

@@ -77,7 +77,10 @@
   function directoryLocation(handle, label) {
     if (!handle || typeof handle !== "object") throw new Error("Choose an image folder before using a custom location.");
     const name = String(label || handle.name || "Authorized folder").trim() || "Authorized folder";
-    return { kind: "directory", handle, label: `Authorized folder: ${name}` };
+    // File System Access deliberately exposes a handle and leaf name, not an
+    // absolute local path. Keep the current handle as the only identity we can
+    // prove and never imply that a same-named folder is the owner's intended one.
+    return { kind: "directory", handle, handleName: name, label: `Authorized folder handle: ${name} (absolute path unavailable)` };
   }
 
   function fromWorkbook(config, workbookName) {
@@ -202,7 +205,26 @@
     const writable = await fileHandle.createWritable({ keepExistingData: false });
     await writable.write(blob);
     await writable.close();
+    await verifyPersistedFile(directoryHandle, filename);
     return filename;
+  }
+
+  // FileSystemWritableFileStream.close() resolves when Chrome has accepted the
+  // write, not when this runner has independently proven the selected directory
+  // now exposes a readable non-empty file. Re-open the exact leaf through the
+  // same user-authorized DirectoryHandle before any caller reports "written".
+  async function verifyPersistedFile(directoryHandle, filename) {
+    const actual = safeFileLeaf(filename, "output");
+    try {
+      const fileHandle = await directoryHandle.getFileHandle(actual, { create: false });
+      const file = await fileHandle.getFile();
+      if (!file) throw new Error("the file could not be read");
+      if (Number(file.size) <= 0) throw new Error("the file is zero bytes");
+      return { filename: actual, size: Number(file.size) };
+    } catch (error) {
+      const detail = error?.message || String(error);
+      throw new Error(`PERSISTENCE_VERIFICATION_FAILED: '${actual}' was not readable and non-empty after close (${detail}).`);
+    }
   }
 
   async function writeUniqueFile(directoryHandle, candidates, blob) {
@@ -214,20 +236,23 @@
     const selected = collisionPolicy(policy);
     if (selected === "uniquify") {
       const actual = await writeUniqueFile(directoryHandle, fileCandidates(filename), blob);
-      return { filename: actual, outcome: actual === filename ? "written" : "uniquified" };
+      const persisted = await verifyPersistedFile(directoryHandle, actual);
+      return { filename: actual, outcome: actual === filename ? "written" : "uniquified", size: persisted.size };
     }
     if (selected === "fail") {
       const actual = safeFileLeaf(filename, "output");
       await writeNewFile(directoryHandle, actual, blob);
-      return { filename: actual, outcome: "written" };
+      const persisted = await verifyPersistedFile(directoryHandle, actual);
+      return { filename: actual, outcome: "written", size: persisted.size };
     }
     const actual = safeFileLeaf(filename, "output");
     const fileHandle = await directoryHandle.getFileHandle(actual, { create: true });
     const writable = await fileHandle.createWritable({ keepExistingData: false });
     await writable.write(blob); await writable.close();
-    return { filename: actual, outcome: "overwritten" };
+    const persisted = await verifyPersistedFile(directoryHandle, actual);
+    return { filename: actual, outcome: "overwritten", size: persisted.size };
   }
 
-  const api = { safeRelativeFolder, safeFilename, baseResultName, baseAuditName, workbookBase, validateImagePattern, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, writeNewFile, writeUniqueFile, writeFileWithPolicy };
+  const api = { safeRelativeFolder, safeFilename, baseResultName, baseAuditName, workbookBase, validateImagePattern, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
   (typeof window !== "undefined" ? window : globalThis).DacOutputLocation = api;
 })();

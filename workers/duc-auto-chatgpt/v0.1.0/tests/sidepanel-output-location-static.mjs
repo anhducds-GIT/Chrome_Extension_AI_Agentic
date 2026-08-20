@@ -15,6 +15,12 @@ assert.match(source, /OUTPUT_LOCATION:/);
 assert.match(source, /detected_not_downloaded/);
 assert.match(source, /DETECTED_NOT_DOWNLOADED/);
 assert.match(source, /writeFileWithPolicy/);
+assert.match(source, /PERSISTENCE_VERIFICATION_FAILED/);
+assert.match(source, /persistenceFailureType/);
+assert.match(source, /persistence_verified/);
+assert.match(source, /recorded output \(not re-verified\)/);
+assert.ok(source.indexOf("async function saveGeneratedImage") < source.indexOf("writeFileWithPolicy"), "generated image writer delegates to the verified directory writer");
+assert.ok(source.indexOf("async function saveLedger") < source.indexOf("async function saveAuditLog"), "result and audit artifact writers remain independently routed");
 assert.match(source, /effective_image_output/);
 assert.match(source, /effective_result_xlsx/);
 assert.match(source, /DAC_WAIT_CHAT_READY/);
@@ -32,4 +38,3 @@ assert.ok(source.indexOf("needsReconciliation(item.phase)") < source.indexOf("ca
 assert.doesNotMatch(source, /location\.kind === "directory"[\s\S]{0,220}download\(/, "custom-folder writes must not fall back to Downloads");
 
 console.log("sidepanel V1 closure static checks: PASS");
-

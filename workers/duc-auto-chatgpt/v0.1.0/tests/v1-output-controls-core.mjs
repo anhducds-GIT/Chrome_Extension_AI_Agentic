@@ -11,7 +11,7 @@ function directory(name) {
   return { name, files, async getFileHandle(filename, { create }) {
     if (!create && !files.has(filename)) { const error = new Error("missing"); error.name = "NotFoundError"; throw error; }
     if (!create) return files.get(filename);
-    const file = files.get(filename) || { async createWritable() { return { async write(blob) { file.blob = blob; }, async close() {} }; } };
+    const file = files.get(filename) || { async getFile() { return { name: filename, size: file.blob?.size || 0 }; }, async createWritable() { return { async write(blob) { file.blob = blob; }, async close() {} }; } };
     files.set(filename, file); return file;
   } };
 }
