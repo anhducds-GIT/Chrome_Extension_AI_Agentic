@@ -92,7 +92,7 @@ assert.match(css, /grid-template-columns: repeat\(auto-fit, minmax\(145px, 1fr\)
 assert.match(css, /width: 58px; height: 58px/);
 assert.match(source, /const isSaved = Boolean\(item\.persistence_verified && item\.result_file\)/);
 assert.match(source, /output-filename/);
-assert.match(source, /downloadArtifactRequest\(location, filename, values\.collisionPolicy\)/);
+assert.match(source, /downloadArtifactRequest\(location, filename, state\.resumeMode \? "overwrite" : values\.collisionPolicy\)/);
 assert.match(source, /downloadArtifactRequest\(location, requested, values\.collisionPolicy\)/);
 assert.match(source, /verifyDownloadedFilename\(request, item\.filename\)/);
 

@@ -7,7 +7,7 @@ for (const file of ["runner-core.js", "output-location-core.js", "plan-diagnosti
   vm.runInContext(fs.readFileSync(new URL(`../${file}`, import.meta.url), "utf8"), context, { filename: file });
 }
 const { DacRunnerCore: runner, DacOutputLocation: output, DacPlanDiagnostics: diagnostics, DacOrchestratorReview: review } = context;
-const workbook = { fileName: "pilot-03.xlsx", config: { output_folder: "Duc Auto ChatGPT/Pilot03" }, jobs: [{ id: "P03-A", prompt: "a" }, { id: "P03-B", prompt: "b", reference_images: "ref-01.png" }] };
+const workbook = { fileName: "pilot-03.xlsx", config: { output_folder: "Duc Auto ChatGPT/Pilot03", output_folder_hint: "C:\\Users\\MAYTEST_12\\Downloads\\Duc Auto ChatGPT\\Pilot03" }, jobs: [{ id: "P03-A", prompt: "a" }, { id: "P03-B", prompt: "b", reference_images: "ref-01.png" }] };
 const outputSettings = output.fromWorkbook(workbook.config, workbook.fileName);
 const missing = diagnostics.analyze({ workbook, files: [], outputCheck: { ok: true, settings: outputSettings }, chatCheck: { ok: false, code: "CHATGPT_NOT_CONNECTED", message: "No normal ChatGPT tab." }, runner, output });
 const missingChecklist = review.checklist({ workbook, prepared: null, diagnostics: missing, outputSettings, output, settings: runner.runtimeConfig(workbook.config) });
@@ -29,6 +29,7 @@ assert.equal(before.jobs.eligible, 2);
 assert.equal(before.references.resolved_requirements, 1);
 assert.equal(before.output.destination, "downloads");
 assert.equal(before.output.label, "Duc Auto ChatGPT/Pilot03");
+assert.equal(before.output.folder_hint.endsWith("Pilot03"), true);
 assert.equal(before.blockers.length, 0);
 assert.equal(before.timing.inter_job_delay_mode, "fixed");
 

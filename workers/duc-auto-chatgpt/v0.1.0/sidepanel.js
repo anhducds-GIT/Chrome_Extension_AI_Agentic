@@ -1,12 +1,12 @@
 (() => {
   "use strict";
   const ids = [
-    "workbookInput", "referencesInput", "validateBtn", "runBtn", "runFailedBtn", "stopBtn", "statusChip",
+    "workbookInput", "resumeWorkbookInput", "continueExistingRunBtn", "referencesInput", "validateBtn", "runBtn", "runFailedBtn", "stopBtn", "statusChip",
     "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText",
     "currentJobId", "currentStage", "currentTiming", "currentSaved", "runtimeJobElapsed", "runtimeCurrentOperation", "runtimeTimeoutRemaining", "runtimeRetryState", "runtimeInterJobDelay", "runtimeNextTransition", "nextTaskCard", "nextTaskId", "nextTaskCountdown",
     "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText",
     "outputPermissionText", "outputDestinationMode", "imageOutputFolderInput", "downloadsDestinationControls", "namingProvenance",
-    "authorizedDestinationControls", "destinationHandleText", "outputProfileText", "outputProfilePermission", "destinationFolderBtn", "outputAdvancedDetails",
+    "authorizedDestinationControls", "destinationHandleText", "outputProfileText", "outputProfilePermission", "folderHintText", "copyFolderHintBtn", "destinationFolderBtn", "outputAdvancedDetails",
     "separateResultDestinationInput", "separateResultDestinationControls", "resultLocationMode", "resultDownloadsFolderInput",
     "resultDownloadsFolderLabel", "resultAuthorizedControls", "resultHandleText", "imagePatternInput", "resultFilenameInput", "auditFilenameInput",
     "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput",
@@ -16,10 +16,10 @@
     "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn",
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
     "checkWorkbook", "statusWorkbook", "checkJobs", "statusJobs", "checkReferences", "statusReferences",
-    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary",
+    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
-    "currentAttemptBadge", "currentPromptPreview", "pipelineStepper", "operatorTimerArea",
+    "currentAttemptBadge", "continuedRunLabel", "currentPromptPreview", "pipelineStepper", "operatorTimerArea",
     "operatorTimerBadge", "operatorTimerText", "latestSavedCard", "latestSavedThumb",
     "latestSavedName", "latestSavedStatus", "completionCard", "completionIcon", "completionTitle",
     "artifactStatusPill", "runArtifactsCard", "artifactLocationNote", "artifactRowImages",
@@ -64,7 +64,10 @@
     localOverrides: new Set(),
     outputProfileState: null,
     selectedInterJobDelay: null,
-    retryResumeAt: null
+    retryResumeAt: null,
+    resumeMode: false,
+    resumePlan: null,
+    resumeLedgerFile: ""
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -224,6 +227,7 @@
   }
 
   function renderRuntime() {
+    if (els.continuedRunLabel) els.continuedRunLabel.hidden = !state.resumeMode;
     const item = state.currentItem;
     els.currentJobId.textContent = item ? item.job.id : "—";
     els.currentStage.textContent = item ? state.currentStage || window.DacRunState.stageFor(item) : "—";
@@ -384,10 +388,13 @@
     const outputLocked = !state.workbook || state.running;
     els.validateBtn.disabled = !state.workbook || state.running;
     els.runBtn.disabled = !ready || state.running;
+    els.runBtn.textContent = state.resumeMode ? "▶ CONTINUE RUN" : "▶ START RUN";
     const eligibleFailed = (state.prepared?.queue || []).some((item) => item.status === "FAILED" && !item.protected_checkpoint);
     els.runFailedBtn.disabled = !ready || state.running || !eligibleFailed;
     els.stopBtn.disabled = !state.running;
     els.workbookInput.disabled = state.running;
+    if (els.resumeWorkbookInput) els.resumeWorkbookInput.disabled = state.running;
+    if (els.continueExistingRunBtn) els.continueExistingRunBtn.disabled = state.running;
     els.referencesInput.disabled = state.running;
     if (els.changeWorkbookBtn) els.changeWorkbookBtn.disabled = state.running;
     if (els.addReferencesBtn) els.addReferencesBtn.disabled = state.running;
@@ -762,6 +769,8 @@
       els.destinationHandleText.textContent = values.image.kind === "directory" ? window.DacOutputLocation.locationLabel(values.image) : "No folder selected";
       const permission = state.outputProfileState?.state;
       els.outputProfilePermission.textContent = values.image.kind !== "directory" ? "Not required" : permission === "authorized" ? "Authorized" : permission === "permission_required" ? "Permission required" : permission === "unavailable" ? "Unavailable" : "Not bound";
+      if (els.folderHintText) els.folderHintText.textContent = values.folderHint || "—";
+      if (els.copyFolderHintBtn) els.copyFolderHintBtn.disabled = !values.folderHint || values.image.kind !== "directory";
       els.destinationFolderBtn.textContent = permission === "permission_required" ? "Re-authorize" : values.image.kind === "directory" && values.image.handle ? "Change Folder" : "Choose Folder";
       state.separateResultDestination = state.outputSettings.result?.kind !== "same_as_image";
       els.separateResultDestinationInput.checked = state.separateResultDestination;
@@ -778,7 +787,9 @@
       els.saveImagesInput.checked = values.saveImages;
       els.saveResultXlsxInput.checked = values.saveResultXlsx;
       els.saveAuditJsonlInput.checked = values.saveAuditJsonl;
-      els.outputPermissionText.textContent = values.image.kind === "directory" || values.result.kind === "directory" ? "Profile folder authorization will be checked before Run." : "Relative to Chrome Downloads · no folder authorization required.";
+      els.outputPermissionText.textContent = values.image.kind === "directory" || values.result.kind === "directory"
+        ? (!values.image.handle && values.folderHint ? "Copy the expected folder path, choose that folder, then Check Plan again." : "Profile folder authorization will be checked before Run.")
+        : "Relative to Chrome Downloads · no folder authorization required.";
     } catch (error) {
       els.outputPermissionText.textContent = error.message;
     }
@@ -816,7 +827,7 @@
   }
 
   async function openWorkbook() {
-    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; renderOutput();
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = false; state.resumePlan = null; state.resumeLedgerFile = ""; state.runId = null; renderResumePlan(); renderOutput();
     try {
       state.workbook = await window.DacXlsx.open(els.workbookInput.files?.[0]);
       const imported = applyWorkbookConfig();
@@ -838,6 +849,72 @@
       log(`Opened ${state.workbook.fileName}.`);
     } catch (error) {
       setStatus("ERROR"); els.workbookText.textContent = error.message; log(error.message, "error"); controls();
+    }
+  }
+
+  function addResumeFinding(code, message, guidance) {
+    if (!state.resumePlan) return;
+    if (!state.resumePlan.findings.some((item) => item.code === code)) state.resumePlan.findings.push({ code, severity: "BLOCKER", scope: "resume", message, guidance });
+    state.resumePlan.ready = false;
+  }
+
+  async function verifyResumeDirectoryLedger() {
+    const location = state.outputSettings?.image;
+    if (!state.resumeMode || location?.kind !== "directory" || !location.handle || !state.resumeLedgerFile) return;
+    try {
+      const handle = await location.handle.getFileHandle(state.resumeLedgerFile, { create: false });
+      const file = await handle.getFile();
+      if (!file || Number(file.size) <= 0) throw new Error("ledger file is missing or zero bytes");
+      const folderWorkbook = await window.DacXlsx.open(file);
+      const folderRun = window.DacResumeCore.identity(folderWorkbook).run_id;
+      if (folderRun !== state.runId) throw new Error("run identity does not match the selected ledger");
+    } catch (error) {
+      addResumeFinding("RESUME_OUTPUT_MISMATCH", `Selected folder does not contain the matching Result XLSX '${state.resumeLedgerFile}'.`, `Choose the authorized run folder that contains this ledger, then Check Plan again. (${error.message || String(error)})`);
+    }
+  }
+
+  function renderResumePlan() {
+    if (!els.resumeSourceSummary || !els.resumePlanDiagnostics) return;
+    if (!state.resumeMode || !state.resumePlan) {
+      els.resumeSourceSummary.hidden = true; els.resumePlanDiagnostics.hidden = true; return;
+    }
+    const plan = state.resumePlan;
+    els.resumeSourceSummary.hidden = false;
+    els.resumeSourceSummary.textContent = `Continued run · ${plan.run.run_id}${plan.run.provenance === "legacy" ? " (legacy identity)" : ""} · ${window.DacResumeCore.summaryText(plan.summary)}${plan.next_eligible_job ? ` · Next: ${plan.next_eligible_job}` : ""}`;
+    els.resumePlanDiagnostics.hidden = !plan.findings.length;
+    els.resumePlanDiagnostics.className = `resume-diagnostics${plan.findings.length ? " blocked" : ""}`;
+    els.resumePlanDiagnostics.textContent = plan.findings.map((item) => `${item.code}: ${item.message} ${item.guidance || ""}`).join(" ");
+  }
+
+  async function openExistingRun() {
+    const file = els.resumeWorkbookInput?.files?.[0];
+    if (!file) return;
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = true; state.resumePlan = null; state.resumeLedgerFile = file.name; state.auditEvents = []; state.artifactErrors = []; state.verifiedImageFiles = [];
+    try {
+      state.workbook = await window.DacXlsx.open(file);
+      const imported = applyWorkbookConfig();
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
+      state.runId = state.resumePlan.run.run_id;
+      const recordedResult = window.DacRunnerCore.basename(state.workbook.config.effective_result_xlsx || "");
+      const recordedAudit = window.DacRunnerCore.basename(state.workbook.config.effective_audit_log || "");
+      if (recordedResult) state.outputSettings.resultFilename = window.DacOutputLocation.safeFilename(recordedResult, state.outputSettings.resultFilename);
+      if (recordedAudit) state.outputSettings.auditFilename = window.DacOutputLocation.safeFileLeaf(recordedAudit, state.outputSettings.auditFilename);
+      if (imported.effective.output.mode === "profile") await resolveOutputProfile(imported.effective.output.profileId);
+      if (imported.effective.output.separateResultDestination && imported.effective.output.resultMode === "profile") await resolveResultProfile(imported.effective.output.resultProfileId);
+      const resumeOutput = window.DacOutputLocation.effective(state.outputSettings);
+      if (resumeOutput.saveAuditJsonl && resumeOutput.result.kind === "downloads") addResumeFinding("RESUME_AUDIT_APPEND_UNAVAILABLE", "Chrome Downloads cannot read and append the prior audit log.", "Choose the authorized run folder configured for this run, then Check Plan again.");
+      await prepare({ diagnostic: true });
+      if (state.prepared) window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+      state.resultFile = file.name;
+      state.auditFile = String(state.workbook.config.effective_audit_log || "");
+      await verifyResumeDirectoryLedger();
+      setCurrent(null, "—", "Existing Result XLSX loaded. Check Plan before continuing.");
+      progress(window.DacResumeCore.summaryText(state.resumePlan.summary));
+      renderResumePlan(); renderQueue(); renderOutput(); controls();
+      log(`Opened existing run ledger ${file.name}; run ${state.runId}.`, "done");
+    } catch (error) {
+      state.resumePlan = { findings: [{ code: "RESUME_LEDGER_INVALID", severity: "BLOCKER", message: error.message, guidance: "Select a supported Result XLSX." }], ready: false, run: { run_id: "—", provenance: "invalid" }, summary: { completed: 0, safe_pending: 0, failed_pre_submit: 0, ambiguous_submitted: 0 }, next_eligible_job: null };
+      setStatus("ERROR", "RESUME BLOCKED"); renderResumePlan(); log(error.message, "error"); controls();
     }
   }
 
@@ -974,6 +1051,11 @@
   async function authoritativeValidate() {
     if (!state.workbook) throw new Error("Open an XLSX workbook first.");
     state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
+    if (state.resumeMode && state.resumePlan) {
+      await verifyResumeDirectoryLedger();
+      if (!state.resumePlan.ready || state.resumePlan.findings.some((item) => item.severity === "BLOCKER")) throw new Error("RESUME_BLOCKED: Resolve the Resume Plan diagnostics before continuing.");
+      window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+    }
     const locationPreflight = await window.DacOutputLocation.preflight(state.outputSettings);
     if (!locationPreflight.ok) throw new Error(`OUTPUT_LOCATION: ${locationPreflight.error}`);
     const ping = await send({ type: "DAC_PING" });
@@ -1045,6 +1127,15 @@
       configFindings: state.configFindings,
       outputProfileState: state.destinationMode === "profile" ? state.outputProfileState : null
     });
+    if (state.resumeMode && state.resumePlan) {
+      await verifyResumeDirectoryLedger();
+      state.diagnostics.findings.push(...state.resumePlan.findings);
+      state.diagnostics.blockers = state.diagnostics.findings.filter((finding) => finding.severity === "BLOCKER");
+      state.diagnostics.warnings = state.diagnostics.findings.filter((finding) => finding.severity === "WARNING");
+      state.diagnostics.oks = state.diagnostics.findings.filter((finding) => finding.severity === "OK");
+      state.diagnostics.summary = { blockers: state.diagnostics.blockers.length, warnings: state.diagnostics.warnings.length, ok: state.diagnostics.oks.length };
+      renderResumePlan();
+    }
     state.validated = state.diagnostics.summary.blockers === 0;
     if (state.validated) {
       setStatus(state.diagnostics.summary.warnings ? "IDLE" : "DONE", state.diagnostics.summary.warnings ? "WARNING" : "READY TO RUN");
@@ -1081,6 +1172,13 @@
     }
     els.copyReviewPacketStatus.textContent = "Copied review packet. Local blockers remain authoritative.";
     log("Copied DAC_ORCHESTRATOR_REVIEW_V1 packet for AI review.", "done");
+  }
+
+  async function copyFolderHint() {
+    const hint = String(state.outputSettings?.folderHint || "").trim();
+    if (!hint) return;
+    await navigator.clipboard.writeText(hint);
+    els.outputPermissionText.textContent = "Expected folder path copied. Choose that folder, then Check Plan again.";
   }
 
   function renderHelpGlossary() {
@@ -1153,7 +1251,7 @@
     const actual = String(actualResultFilename || "");
     const resultDestination = actual ? (/^(?:[A-Za-z]:[\\/]|\/)/.test(actual) || actual.startsWith(window.DacOutputLocation.locationLabel(effectiveResult)) ? actual : window.DacOutputLocation.fileLabel(effectiveResult, actual)) : plan.resultDestination;
     const output = window.DacOutputLocation.effective(state.outputSettings);
-    const snapshot = { effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done };
+    const snapshot = { run_id: state.runId || "", effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done };
     window.DacXlsx.updateConfigSnapshot(state.workbook, snapshot);
     for (const item of state.prepared.queue) update(item, snapshot);
   }
@@ -1164,14 +1262,14 @@
     let filename = values.resultFilename;
     if (location.kind === "directory") {
       const blob = window.DacXlsx.downloadBlob(state.workbook);
-      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, filename, blob, values.collisionPolicy);
+      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, filename, blob, state.resumeMode ? "overwrite" : values.collisionPolicy);
       snapshotOutputSettings(written.filename); const actual = window.DacOutputLocation.fileLabel(location, written.filename);
       log(`Result ledger ${written.outcome}: ${actual}.`, "done"); return actual;
     }
     const blob = window.DacXlsx.downloadBlob(state.workbook);
     const objectUrl = URL.createObjectURL(blob);
     try {
-      const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, values.collisionPolicy);
+      const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, state.resumeMode ? "overwrite" : values.collisionPolicy);
       await assertDownloadCollisionPolicy(request);
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
@@ -1185,13 +1283,23 @@
   async function saveAuditLog(location) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
     if (!values.saveAuditJsonl) return "";
-    const payload = state.auditEvents.map((event) => JSON.stringify(event)).join("\n") + (state.auditEvents.length ? "\n" : "");
+    let payload = state.auditEvents.map((event) => JSON.stringify(event)).join("\n") + (state.auditEvents.length ? "\n" : "");
     const blob = new Blob([payload], { type: "application/jsonl" });
     const requested = values.auditFilename;
     if (location.kind === "directory") {
-      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, requested, blob, values.collisionPolicy);
+      if (state.resumeMode) {
+        const previous = window.DacRunnerCore.basename(state.auditFile || requested);
+        const priorHandle = await location.handle.getFileHandle(previous, { create: false });
+        const priorFile = await priorHandle.getFile();
+        if (!priorFile || Number(priorFile.size) <= 0) throw new Error(`RESUME_ARTIFACT_MISSING: prior audit '${previous}' is not readable and non-empty.`);
+        const priorPayload = await priorFile.text();
+        payload = `${priorPayload}${priorPayload.endsWith("\n") ? "" : "\n"}${payload}`;
+      }
+      const mergedBlob = new Blob([payload], { type: "application/jsonl" });
+      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, requested, mergedBlob, state.resumeMode ? "overwrite" : values.collisionPolicy);
       return window.DacOutputLocation.fileLabel(location, written.filename);
     }
+    if (state.resumeMode) throw new Error("RESUME_AUDIT_APPEND_UNAVAILABLE: Chrome Downloads cannot read and append the prior audit log. Continue using the authorized run folder.");
     const objectUrl = URL.createObjectURL(blob);
     try {
       const request = window.DacOutputLocation.downloadArtifactRequest(location, requested, values.collisionPolicy);
@@ -1207,7 +1315,7 @@
     if (request.collisionPolicy !== "fail") return;
     const requested = request.filename.replace(/\//g, "\\").toLowerCase();
     const matches = await chrome.downloads.search({ filename: request.filename });
-    if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw new Error(`COLLISION: Output already exists: ${filename}`);
+    if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw window.DacOutputLocation.collisionError(request);
   }
 
   async function waitForCompletedDownload(downloadId, timeoutMs = 120000) {
@@ -1366,11 +1474,11 @@
     if (!runQueue.length) { setStatus("ERROR", "NOT READY"); progress(`No ${mode} jobs are eligible.`); controls(); return; }
     state.running = true; state.stopRequested = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
-    state.runId = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`; state.attemptSerial = 0; state.auditEvents = []; state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.artifactErrors = [];
+    state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = []; if (!state.resumeMode) { state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; } state.artifactErrors = [];
     els.logList.textContent = "";
     startRuntimeTicker();
     const target = await activeTab().catch(() => null);
-    audit("RUN_START", null, { target_url: target?.url || null }); log("Run started; visible log is scoped to this run.");
+    audit(state.resumeMode ? "RUN_CONTINUED" : "RUN_START", null, { target_url: target?.url || null }); log(state.resumeMode ? "Continued run started; completed jobs remain protected." : "Run started; visible log is scoped to this run.");
     setStatus("RUNNING"); renderQueue(); controls();
     const settings = state.prepared.settings; let halted = false;
     try {
@@ -1479,6 +1587,8 @@
   }
 
   els.workbookInput.addEventListener("change", openWorkbook);
+  els.resumeWorkbookInput?.addEventListener("change", openExistingRun);
+  els.continueExistingRunBtn?.addEventListener("click", () => els.resumeWorkbookInput?.click());
   els.referencesInput.addEventListener("change", () => loadFiles().catch((error) => log(error.message, "error")));
   els.outputDestinationMode.addEventListener("change", setOutputDestinationMode);
   els.imageOutputFolderInput.addEventListener("change", setImageDownloadsFolder);
@@ -1490,6 +1600,7 @@
   for (const element of [els.imagePatternInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput]) element.addEventListener("change", setArtifactNaming);
   for (const element of [els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.addEventListener("change", () => updateRuntimeOverrides().catch((error) => log(error.message, "error")));
   els.chooseResultFolderBtn.addEventListener("click", () => chooseResultDestination().catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
+  els.copyFolderHintBtn?.addEventListener("click", () => copyFolderHint().catch((error) => { els.outputPermissionText.textContent = error.message; }));
   const ZOOM_LEVELS = [0.8, 0.9, 1.0];
   const ZOOM_EPSILON = 0.015;
   const UI_ZOOM_LEVELS = [1, 1.1, 1.2];

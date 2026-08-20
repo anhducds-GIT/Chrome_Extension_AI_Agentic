@@ -71,6 +71,7 @@
         destination,
         label: values?.image?.kind === "directory" ? (values.image.handleName || null) : (values?.image?.folder || null),
         profile_id: values?.image?.profileId || importedConfig?.effective?.output?.profileId || null,
+        folder_hint: values?.folderHint || importedConfig?.effective?.output?.folderHint || null,
         permission: outputProfileState?.state || (destination === "downloads" ? "not_required" : null),
         save_images: values?.saveImages ?? null,
         save_result_xlsx: values?.saveResultXlsx ?? null,

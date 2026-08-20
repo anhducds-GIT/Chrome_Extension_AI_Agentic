@@ -3,7 +3,8 @@
   const SUPPORTED = new Set([
     "timeout_sec", "max_retries", "delay_min_sec", "delay_max_sec", "delay_sec", "safety_cooldown_sec", "max_input_images", "continue_on_error", "rerun_done", "output_folder",
     "output_destination_mode", "output_downloads_subfolder", "output_profile_id", "image_filename_pattern", "collision_policy", "save_images", "save_result_xlsx", "save_audit_jsonl",
-    "separate_result_destination", "result_destination_mode", "result_downloads_subfolder", "result_output_profile_id", "result_filename", "audit_filename"
+    "separate_result_destination", "result_destination_mode", "result_downloads_subfolder", "result_output_profile_id", "result_filename", "audit_filename", "output_folder_hint", "run_id",
+    "effective_source_workbook", "effective_image_output", "effective_result_xlsx", "effective_image_naming", "effective_collision_policy", "effective_save_images", "effective_save_result_xlsx", "effective_save_audit_jsonl", "effective_audit_log", "effective_timeout_sec", "effective_max_retries", "effective_safety_cooldown_sec", "effective_max_input_images", "effective_continue_on_error", "effective_rerun_done"
   ]);
   const slug = /^[a-z0-9][a-z0-9-]{0,63}$/;
   const safeJobId = /^[A-Za-z0-9._-]{1,100}$/;
@@ -48,7 +49,7 @@
         mode: mode === "profile" ? "profile" : "downloads", downloadsSubfolder: String(downloadFolder), profileId,
         imagePattern: raw.image_filename_pattern || "{job_id}", collisionPolicy: collision,
         saveImages: raw.save_images === undefined ? true : asBool(raw.save_images), saveResultXlsx: raw.save_result_xlsx === undefined ? true : asBool(raw.save_result_xlsx), saveAuditJsonl: raw.save_audit_jsonl === undefined ? true : asBool(raw.save_audit_jsonl),
-        separateResultDestination: separate, resultMode: resultMode === "profile" ? "profile" : "downloads", resultDownloadsSubfolder: String(raw.result_downloads_subfolder || downloadFolder), resultProfileId: String(raw.result_output_profile_id || ""), resultFilename: raw.result_filename || "", auditFilename: raw.audit_filename || ""
+        separateResultDestination: separate, resultMode: resultMode === "profile" ? "profile" : "downloads", resultDownloadsSubfolder: String(raw.result_downloads_subfolder || downloadFolder), resultProfileId: String(raw.result_output_profile_id || ""), resultFilename: raw.result_filename || "", auditFilename: raw.audit_filename || "", folderHint: String(raw.output_folder_hint || "").trim(), runId: String(raw.run_id || "").trim()
       }
     };
     return { raw, effective, findings, supported_keys: [...SUPPORTED] };

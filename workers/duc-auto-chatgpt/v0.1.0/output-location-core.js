@@ -97,6 +97,7 @@
       : downloadsLocation(config?.result_downloads_subfolder || config?.output_downloads_subfolder || config?.output_folder || "Duc Auto ChatGPT");
     return {
       workbookName: String(workbookName || "workbook.xlsx"),
+      folderHint: String(config?.output_folder_hint || "").trim(),
       image,
       result,
       resultFilename: config?.result_filename || baseResultName(workbookName),
@@ -116,7 +117,7 @@
     const result = settings.result?.kind === "same_as_image" ? image : settings.result;
     if (!result) throw new Error("Choose a result XLSX location.");
     const names = artifactNames(settings.workbookName, settings);
-    return { image, result, ...names, collisionPolicy: collisionPolicy(settings.collisionPolicy), saveImages: settings.saveImages !== false, saveResultXlsx: settings.saveResultXlsx !== false, saveAuditJsonl: settings.saveAuditJsonl !== false, namingPattern: settings.namingPattern };
+    return { image, result, ...names, collisionPolicy: collisionPolicy(settings.collisionPolicy), saveImages: settings.saveImages !== false, saveResultXlsx: settings.saveResultXlsx !== false, saveAuditJsonl: settings.saveAuditJsonl !== false, folderHint: String(settings.folderHint || "").trim(), namingPattern: settings.namingPattern };
   }
 
   function locationLabel(location) {
@@ -137,6 +138,11 @@
       conflictAction: selectedPolicy === "fail" ? "uniquify" : selectedPolicy,
       collisionPolicy: selectedPolicy
     };
+  }
+
+  function collisionError(request) {
+    const requested = String(request?.filename || request?.requestedFilename || "output");
+    return new Error(`COLLISION: Output already exists: ${requested}`);
   }
 
   function downloadLeaf(filename) {
@@ -300,6 +306,6 @@
     return { filename: actual, outcome: "overwritten", size: persisted.size };
   }
 
-  const api = { safeRelativeFolder, safeFileLeaf, safeFilename, baseResultName, baseAuditName, workbookBase, validateImagePattern, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, verifyDownloadedFilename, isPolicyFilename, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
+  const api = { safeRelativeFolder, safeFileLeaf, safeFilename, baseResultName, baseAuditName, workbookBase, validateImagePattern, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, collisionError, verifyDownloadedFilename, isPolicyFilename, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
   (typeof window !== "undefined" ? window : globalThis).DacOutputLocation = api;
 })();

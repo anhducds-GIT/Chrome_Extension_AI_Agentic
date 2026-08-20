@@ -65,6 +65,11 @@
           <button id="changeWorkbookBtn" class="secondary small" type="button">Change</button>
         </div>
         <input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+        <div class="existing-run-actions">
+          <button id="continueExistingRunBtn" class="secondary small" type="button">Continue Existing Run</button>
+          <input id="resumeWorkbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+        </div>
+        <div id="resumeSourceSummary" class="resume-summary" hidden></div>
 
         <!-- References Subsection -->
         <div class="sub-section" id="referencesCard">
@@ -115,6 +120,7 @@
           <div class="output-line"><strong>Output profile:</strong><output id="outputProfileText">Not configured</output></div>
           <div class="output-line"><strong>Folder:</strong><output id="destinationHandleText">Not bound</output></div>
           <div class="output-line"><strong>Permission:</strong><output id="outputProfilePermission">Not bound</output></div>
+          <div class="output-line output-folder-hint"><strong>Expected folder:</strong><output id="folderHintText">—</output><button id="copyFolderHintBtn" class="secondary small" type="button">Copy</button></div>
           <button id="destinationFolderBtn" class="secondary small" type="button">Choose Folder</button>
         </div>
         <div class="settings-grid save-toggles">
@@ -168,6 +174,7 @@
           <div class="check-item" id="checkSettings"><span class="check-icon">○</span><span class="check-label">Run settings</span><span class="check-status" id="statusSettings">Checking</span></div>
         </div>
         <div id="validationGuidance" class="validation-guidance" aria-live="polite"></div>
+        <div id="resumePlanDiagnostics" class="resume-diagnostics" hidden></div>
         <div id="readinessBanner" class="readiness-banner not-ready">CHECK PLAN BEFORE RUN</div>
         <button id="runBtn" class="primary dominant-btn" disabled type="button">▶ START RUN</button>
         <div class="review-packet-actions">
@@ -215,7 +222,7 @@
           </div>
           <div class="row spread current-job-top">
             <span class="section-badge">CURRENT JOB</span>
-            <div id="currentAttemptBadge" class="attempt-badge">Attempt —</div>
+            <div class="row"><span id="continuedRunLabel" class="continued-run-label" hidden>Continued run</span><div id="currentAttemptBadge" class="attempt-badge">Attempt —</div></div>
           </div>
           <div id="currentPromptPreview" class="prompt-preview" hidden></div>
           <div class="row spread current-job-meta">
@@ -360,6 +367,7 @@
   <script src="runner-core.js"></script>
   <script src="attempt-telemetry-core.js"></script>
   <script src="run-state-core.js"></script>
+  <script src="resume-core.js"></script>
   <script src="output-location-core.js"></script>
   <script src="xlsx-run-plan-core.js"></script>
   <script src="output-profile-core.js"></script>

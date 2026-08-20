@@ -58,13 +58,17 @@ V0.3 also accepts `max_retries` (0â€“5, default 2) and `safety_cooldown_sec` (0â
 
 ## Operational controls
 
+- **Continue Existing Run** opens a prior Result XLSX as the recovery ledger. The panel classifies each row as `SAFE_COMPLETE`, `SAFE_PENDING`, `SAFE_FAILED_PRE_SUBMIT`, or `AMBIGUOUS_SUBMITTED`. Completed verified outputs stay skipped forever; any submitted/unverified outcome blocks the Continue button and requires manual review. The normal ChatGPT readiness gate still runs before every eligible new submission.
+- Result ledgers carry a stable human-readable `run_id`; old ledgers without one load with deterministic legacy provenance. Resume uses recorded result/audit/image names and updates the same canonical Result XLSX. For a profile destination it verifies the selected run folder contains the matching ledger. Chrome Downloads cannot safely append an existing audit JSONL, so audit-enabled continuation requires the authorized run folder.
+- `output_folder_hint` is optional XLSX guidance only. It can be copied in the profile UI, but cannot authorize a directory or satisfy Check Plan by itself.
+
 - **Check Plan** validates workbook, aliases/references, effective settings, output destinations, permission, retry budget, and result filename without submitting a ChatGPT prompt. Run validates again authoritatively.
 - The Side Panel exposes current-run overrides for timeout, retries, cooldown, error continuation, maximum references, and rerun-DONE behavior. They are recorded in result provenance; source XLSX is never overwritten.
 - References have a compact gallery with editable aliases and remove controls. Tokens resolve alias first, then exact filename, then extensionless basename; aliases are case-insensitive and duplicates fail validation.
 - Every attempt is phase-aware and identity-bound: each Side Panel submission carries its own `job_id` + `attempt_id` through `PRE_SUBMIT`, `SUBMITTED`, `OUTPUT_DETECTED`, `OUTPUT_SAVED`, `CHAT_READY`, and `SUCCESS`. Automatic retry is allowed only for a confirmed pre-submit failure. A post-submit timeout or ambiguity enters bounded reconciliation against the original conversation boundary; a remaining uncertain result becomes `INTERRUPTED` and halts the queue without another prompt submission. A stale/mismatched identity fails closed and cannot reconcile or submit another job.
 - A saved image is checkpointed immediately in the result workbook (`result_file`, `result_download_id`, `output_saved_at`, and `attempt_phase=OUTPUT_SAVED`). A later readiness failure preserves that checkpoint and becomes `INTERRUPTED`; it never resubmits the prompt.
 - Before each new job the runner requires an idle, reachable ChatGPT composer. If a prior generation is still unresolved, it reconciles/waits or halts safely; it does not start the next job.
-- Each run writes append-only `run-<run-id>.jsonl` alongside its result location. Events contain attempt phase/status, reference aliases, output filename, target URL when available, and a prompt hash/length rather than duplicating prompt text.
+- Each run writes the configured canonical audit JSONL alongside its result location. Events contain attempt phase/status, reference aliases, output filename, target URL when available, and a prompt hash/length rather than duplicating prompt text. A profile-folder continuation reads and appends that existing audit before replacing it only after persistence verification.
 - **Run All**, **Run Pending**, **Run Failed**, and **Retry Selected** are side-panel recovery controls only; there is no durable background queue.
 
 ## Output locations
