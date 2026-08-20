@@ -82,7 +82,8 @@ body {
   display: grid;
   gap: 6px;
   max-width: 100%;
-  width: calc(100% / var(--dac-ui-zoom));
+  /* CSS zoom scales the rendered contents; keep the layout box at panel width. */
+  width: 100%;
   zoom: var(--dac-ui-zoom);
   container-type: inline-size;
   container-name: sidepanel;

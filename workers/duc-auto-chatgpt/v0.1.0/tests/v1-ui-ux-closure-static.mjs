@@ -110,6 +110,8 @@ assert.match(html, /UI ZOOM/);
 for (const level of ["1", "1.1", "1.2"]) assert.match(html, new RegExp(`data-ui-zoom="${level}"`));
 assert.match(css, /--dac-ui-zoom: 1/);
 assert.match(css, /zoom: var\(--dac-ui-zoom\)/);
+assert.match(css, /width: 100%;/, "the app layout always fills the side-panel width");
+assert.doesNotMatch(css, /width: calc\(100% \/ var\(--dac-ui-zoom\)\)/, "UI zoom must not shrink the app layout box and leave a right gutter");
 assert.match(source, /UI_ZOOM_STORAGE_KEY = "dac_ui_zoom"/);
 assert.match(source, /chrome\.storage\.local\.get\(UI_ZOOM_STORAGE_KEY\)/);
 assert.equal(ui.normalizeUiZoom(1), 1);
