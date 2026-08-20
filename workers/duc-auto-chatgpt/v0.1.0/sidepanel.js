@@ -49,6 +49,8 @@
     currentStage: "—",
     currentReason: "No run in progress.",
     currentStartedAt: null,
+    stageStartedAt: null,
+    stageBudgetSec: null,
     runtimeTicker: null,
     queueExpanded: false,
     outputsExpanded: false
@@ -178,19 +180,20 @@
       return;
     }
     if (els.operatorTimerArea) els.operatorTimerArea.hidden = false;
-    const elapsed = state.currentStartedAt ? Math.floor((Date.now() - state.currentStartedAt) / 1000) : 0;
-    const budget = item?.settings?.timeout_sec;
-    const timeLeft = budget ? Math.max(0, budget - elapsed) : 0;
-    const formattedTime = window.DacRunState.formatDuration(timeLeft);
+    const now = Date.now();
+    const stageElapsed = state.stageStartedAt ? Math.floor((now - state.stageStartedAt) / 1000) : 0;
+    const stageBudget = state.stageBudgetSec || item?.settings?.timeout_sec || 0;
+    const stageTimeLeft = stageBudget ? Math.max(0, stageBudget - stageElapsed) : 0;
+    const formattedStageLeft = window.DacRunState.formatDuration(stageTimeLeft);
 
     if (state.interJobCountdown != null && state.interJobCountdown > 0) {
-      els.operatorTimerText.textContent = `Next prompt in ${window.DacRunState.formatDuration(state.interJobCountdown)}`;
+      els.operatorTimerText.textContent = `Next readiness check in ${window.DacRunState.formatDuration(state.interJobCountdown)}`;
       els.operatorTimerBadge.className = "timer-badge cooldown";
     } else if (state.currentStage === "WAITING_READY" || state.currentStage === "FINALIZING / WAITING_IDLE" || item?.runtime_stage === "WAITING_READY") {
-      els.operatorTimerText.textContent = `Ready check · ${formattedTime} left`;
+      els.operatorTimerText.textContent = `Waiting for ChatGPT ready · ${formattedStageLeft} max`;
       els.operatorTimerBadge.className = "timer-badge waiting";
     } else if (item && state.running) {
-      els.operatorTimerText.textContent = `Timeout left ${formattedTime}`;
+      els.operatorTimerText.textContent = `Timeout left ${formattedStageLeft}`;
       els.operatorTimerBadge.className = "timer-badge active";
     } else if (item && ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)) {
       els.operatorTimerText.textContent = `Halted · ${item.status}`;
@@ -219,8 +222,14 @@
     const item = state.currentItem;
     els.currentJobId.textContent = item ? item.job.id : "—";
     els.currentStage.textContent = item ? state.currentStage || window.DacRunState.stageFor(item) : "—";
-    const elapsed = state.currentStartedAt ? Math.floor((Date.now() - state.currentStartedAt) / 1000) : 0;
-    const budget = item?.settings?.timeout_sec;
+    const now = Date.now();
+    const jobElapsed = state.currentStartedAt ? Math.floor((now - state.currentStartedAt) / 1000) : 0;
+    const stageElapsed = state.stageStartedAt ? Math.floor((now - state.stageStartedAt) / 1000) : 0;
+    const stageBudget = state.stageBudgetSec || item?.settings?.timeout_sec || 0;
+    const stageTimeLeft = stageBudget ? Math.max(0, stageBudget - stageElapsed) : 0;
+    const formattedJobElapsed = window.DacRunState.formatDuration(jobElapsed);
+    const formattedStageLeft = window.DacRunState.formatDuration(stageTimeLeft);
+
     let attemptText = "";
     let attemptBadgeText = "Attempt —";
     if (item) {
@@ -248,9 +257,20 @@
         els.currentPromptPreview.hidden = true;
       }
     }
-    els.currentTiming.textContent = item
-      ? `${attemptText} · Elapsed ${window.DacRunState.formatDuration(elapsed)}${budget ? ` · Stage budget ${window.DacRunState.formatDuration(Math.max(0, budget - elapsed))} remaining` : ""}${state.currentReason ? ` · ${state.currentReason}` : ""}`
-      : state.currentReason;
+
+    if (item) {
+      const timingParts = [attemptText, `Elapsed ${formattedJobElapsed}`];
+      if (stageBudget) {
+        timingParts.push(`Stage budget ${formattedStageLeft} remaining`);
+      }
+      if (state.currentReason) {
+        timingParts.push(state.currentReason);
+      }
+      els.currentTiming.textContent = timingParts.join(" · ");
+    } else {
+      els.currentTiming.textContent = state.currentReason;
+    }
+
     const saved = item?.persistence_verified ? item.result_file || "" : "";
     els.currentSaved.hidden = !saved && !item?.detected_not_downloaded;
     els.currentSaved.textContent = saved ? `SAVED ✓ ${saved}` : item?.detected_not_downloaded ? "DETECTED · not downloaded" : "";
@@ -281,9 +301,23 @@
       }
     }
   }
-  function setCurrent(item, stage, reason = "") {
-    if (item && state.currentItem !== item) state.currentStartedAt = Date.now();
-    state.currentItem = item || null; state.currentStage = stage || (item ? window.DacRunState.stageFor(item) : "—"); state.currentReason = reason || "";
+
+  function setCurrent(item, stage, reason = "", stageBudgetSec = null) {
+    const now = Date.now();
+    if (item && state.currentItem !== item) {
+      state.currentStartedAt = now;
+    }
+    if (!item) {
+      state.currentStartedAt = null;
+      state.stageStartedAt = null;
+      state.stageBudgetSec = null;
+    } else if (state.currentStage !== stage || state.currentItem !== item || stageBudgetSec != null) {
+      state.stageStartedAt = now;
+      state.stageBudgetSec = stageBudgetSec || item.settings?.timeout_sec || null;
+    }
+    state.currentItem = item || null;
+    state.currentStage = stage || (item ? window.DacRunState.stageFor(item) : "—");
+    state.currentReason = reason || "";
     renderRuntime();
   }
   function startRuntimeTicker() { clearInterval(state.runtimeTicker); state.runtimeTicker = setInterval(renderRuntime, 1000); }
@@ -913,7 +947,8 @@
     for (const remaining of window.DacRunnerCore.countdownValues(seconds)) {
       if (state.stopRequested) break;
       state.interJobCountdown = remaining;
-      nextTask(item, `Inter-job delay · starts in ${window.DacRunState.formatDuration(remaining)}`);
+      const targetTime = new Date(Date.now() + remaining * 1000).toLocaleTimeString();
+      nextTask(item, `Inter-job delay · Earliest next prompt: ${targetTime} · readiness check in ${window.DacRunState.formatDuration(remaining)}`);
       renderRuntime();
       await sleep(1000);
     }
@@ -945,7 +980,7 @@
 
   async function finishDetectedOutput(item, result, effectiveOutput) {
     item.phase = "OUTPUT_DETECTED";
-    item.runtime_stage = "OUTPUT_DETECTED"; setCurrent(item, item.runtime_stage, "Attributable generated image found.");
+    item.runtime_stage = "OUTPUT_DETECTED"; setCurrent(item, item.runtime_stage, "Attributable generated image found.", item.settings.timeout_sec);
     audit("OUTPUT_DETECTED", item);
     update(item, { status: "RUNNING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count });
     if (result?.image_url) {
@@ -953,7 +988,7 @@
       state.sessionThumbnails.set(item.job.id, result.image_url);
     }
     try {
-      item.runtime_stage = "SAVING"; setCurrent(item, item.runtime_stage, "Writing generated image to the configured output.");
+      item.runtime_stage = "SAVING"; setCurrent(item, item.runtime_stage, "Writing generated image to the configured output.", item.settings.timeout_sec);
       if (!result?.image_url) throw new Error("No attributable generated image was found.");
       if (item.references.some((reference) => reference.dataUrl === result.image_url)) throw new Error("INPUT_IMAGE_FALSE_POSITIVE: output URL matches a selected reference image.");
       if (!effectiveOutput.saveImages) {
@@ -979,7 +1014,7 @@
       return { completed: true, halted: true };
     }
     try {
-      item.runtime_stage = "FINALIZING / WAITING_IDLE"; setCurrent(item, item.runtime_stage, "No new prompt can start until ChatGPT is idle.");
+      item.runtime_stage = "FINALIZING / WAITING_IDLE"; setCurrent(item, item.runtime_stage, "No new prompt can start until ChatGPT is idle.", item.settings.timeout_sec);
       await waitForChatReady(item);
       item.phase = "CHAT_READY"; audit("CHAT_READY", item);
       item.phase = "SUCCESS";
@@ -1014,7 +1049,9 @@
 
   async function gateNextJob(item) {
     item.status = "RECONCILING"; item.phase = "PRE_SUBMIT";
-    item.runtime_stage = "WAITING_READY"; setCurrent(item, item.runtime_stage, "Checking the idle ChatGPT composer."); nextTask(nextEligible(item.job.id), "Waiting for current job to become ready.");
+    item.runtime_stage = "WAITING_READY";
+    setCurrent(item, item.runtime_stage, "Checking ChatGPT readiness before prompt submission.", item.settings.timeout_sec);
+    nextTask(nextEligible(item.job.id), "Awaiting ChatGPT readiness confirmation.");
     update(item, { status: "RECONCILING", attempt_phase: item.phase, failure_type: "", last_error: "", error: "" });
     audit("RECONCILE_START", item, { message: "Pre-submit ChatGPT readiness gate." }); renderQueue();
     try {
@@ -1128,7 +1165,7 @@
     const item = state.currentItem;
     if (!item || message.job_id !== item.job.id || message.attempt_id !== item.attempt_id) return false;
     item.runtime_stage = message.stage;
-    setCurrent(item, message.stage, message.stage === "GENERATING" ? "ChatGPT is generating; no next prompt will be sent." : "Live stage update from the ChatGPT receiver.");
+    setCurrent(item, message.stage, message.stage === "GENERATING" ? "ChatGPT is generating; no next prompt will be sent." : "Live stage update from the ChatGPT receiver.", item.settings.timeout_sec);
     renderQueue(); progress(`${item.job.id}: ${message.stage}.`);
     return false;
   });

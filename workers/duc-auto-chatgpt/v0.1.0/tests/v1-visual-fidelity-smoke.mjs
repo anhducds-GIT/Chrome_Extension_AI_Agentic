@@ -126,18 +126,20 @@ function computeOperatorTimer(state) {
   if (!state.running && !item) {
     return { text: "—", mode: "idle", hidden: true };
   }
-  const elapsed = state.currentStartedAt ? Math.floor((state.now - state.currentStartedAt) / 1000) : 0;
-  const budget = item?.settings?.timeout_sec || 0;
-  const timeLeft = Math.max(0, budget - elapsed);
+  const now = state.now || Date.now();
+  const stageElapsed = state.stageStartedAt ? Math.floor((now - state.stageStartedAt) / 1000) : (state.currentStartedAt ? Math.floor((now - state.currentStartedAt) / 1000) : 0);
+  const stageBudget = state.stageBudgetSec || item?.settings?.timeout_sec || 0;
+  const stageTimeLeft = stageBudget ? Math.max(0, stageBudget - stageElapsed) : 0;
+  const formattedStageLeft = formatDuration(stageTimeLeft);
 
   if (state.interJobCountdown != null && state.interJobCountdown > 0) {
-    return { text: `Next prompt in ${formatDuration(state.interJobCountdown)}`, mode: "cooldown", hidden: false };
+    return { text: `Next readiness check in ${formatDuration(state.interJobCountdown)}`, mode: "cooldown", hidden: false };
   }
-  if (state.currentStage === "WAITING_READY" || item?.runtime_stage === "WAITING_READY") {
-    return { text: `Ready check · ${formatDuration(timeLeft)} left`, mode: "waiting", hidden: false };
+  if (state.currentStage === "WAITING_READY" || state.currentStage === "FINALIZING / WAITING_IDLE" || item?.runtime_stage === "WAITING_READY") {
+    return { text: `Waiting for ChatGPT ready · ${formattedStageLeft} max`, mode: "waiting", hidden: false };
   }
   if (item && state.running) {
-    return { text: `Timeout left ${formatDuration(timeLeft)}`, mode: "active", hidden: false };
+    return { text: `Timeout left ${formattedStageLeft}`, mode: "active", hidden: false };
   }
   if (item && ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)) {
     return { text: `Halted · ${item.status}`, mode: "halted", hidden: false };
@@ -150,7 +152,8 @@ const timerGenerating = computeOperatorTimer({
   running: true,
   currentItem: { settings: { timeout_sec: 120 }, runtime_stage: "GENERATING" },
   currentStage: "GENERATING",
-  currentStartedAt: 1000000,
+  stageStartedAt: 1000000,
+  stageBudgetSec: 120,
   now: 1015000, // 15s elapsed -> 105s remaining (01:45)
   interJobCountdown: null
 });
@@ -164,7 +167,7 @@ const timerCooldown = computeOperatorTimer({
   currentStage: "INTER_JOB_DELAY",
   interJobCountdown: 10
 });
-assert.equal(timerCooldown.text, "Next prompt in 00:10");
+assert.equal(timerCooldown.text, "Next readiness check in 00:10");
 assert.equal(timerCooldown.mode, "cooldown");
 
 // Readiness wait test
@@ -172,11 +175,12 @@ const timerWaiting = computeOperatorTimer({
   running: true,
   currentItem: { settings: { timeout_sec: 60 }, runtime_stage: "WAITING_READY" },
   currentStage: "WAITING_READY",
-  currentStartedAt: 1000000,
+  stageStartedAt: 1000000,
+  stageBudgetSec: 60,
   now: 1015000, // 15s elapsed -> 45s left (00:45)
   interJobCountdown: null
 });
-assert.equal(timerWaiting.text, "Ready check · 00:45 left");
+assert.equal(timerWaiting.text, "Waiting for ChatGPT ready · 00:45 max");
 assert.equal(timerWaiting.mode, "waiting");
 
 // Test 3: Run Artifacts row status
