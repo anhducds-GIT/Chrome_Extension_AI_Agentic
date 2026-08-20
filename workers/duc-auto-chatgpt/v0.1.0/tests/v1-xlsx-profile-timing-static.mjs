@@ -8,7 +8,7 @@ const diagnostics = fs.readFileSync(new URL("plan-diagnostics-core.js", root), "
 const protocol = fs.readFileSync(new URL("DAC_XLSX_RUN_PLAN_V1.md", root), "utf8");
 const pilot = fs.readFileSync(new URL("pilot-04/Duc-Auto-ChatGPT-Pilot-04.xlsx", root));
 assert.match(output, /if \(location\?\.kind === "downloads"\) return \{ ok: true/);
-assert.match(sidepanel, /authorizedDestinationControls\.hidden = state\.destinationMode !== "profile"/);
+assert.match(sidepanel, /DacSidepanelUiSemantics\.destinationVisibility\(state\.destinationMode\)/);
 assert.match(sidepanel, /async function chooseResultDestination\(\)/);
 assert.match(sidepanel, /result_output_profile_binding/);
 assert.match(diagnostics, /OUTPUT_PROFILE_UNBOUND/);

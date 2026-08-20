@@ -98,6 +98,30 @@
     };
   }
 
-  const api = { delayDescription, runtimeInfo, outputFolderAction };
+  function queueElapsed(item, runtime = {}, now = Date.now(), formatDuration = fallbackDuration) {
+    const toMillis = (value) => {
+      if (typeof value === "number" && Number.isFinite(value)) return value;
+      const parsed = Date.parse(value || "");
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+    const isCurrent = runtime.currentItem === item;
+    const currentStart = isCurrent ? (toMillis(item?.submitted_at) || toMillis(runtime.currentStartedAt)) : null;
+    if (isCurrent && currentStart != null) return formatDuration(Math.max(0, Math.floor((now - currentStart) / 1000)));
+    const submittedAt = toMillis(item?.submitted_at);
+    const completedAt = toMillis(item?.completed_at);
+    if (submittedAt != null && completedAt != null && completedAt >= submittedAt) return formatDuration(Math.floor((completedAt - submittedAt) / 1000));
+    return "—";
+  }
+
+  function normalizeUiZoom(value) {
+    const numeric = Number(value);
+    return [1, 1.1, 1.2].includes(numeric) ? numeric : 1;
+  }
+
+  function destinationVisibility(mode) {
+    return { showDownloads: mode === "downloads", showProfile: mode === "profile" };
+  }
+
+  const api = { delayDescription, runtimeInfo, outputFolderAction, queueElapsed, normalizeUiZoom, destinationVisibility };
   (typeof window !== "undefined" ? window : globalThis).DacSidepanelUiSemantics = api;
 })();

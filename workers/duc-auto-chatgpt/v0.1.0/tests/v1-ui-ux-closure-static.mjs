@@ -10,7 +10,7 @@ const semanticsSource = fs.readFileSync(new URL("sidepanel-ui-semantics.js", bas
 const context = vm.createContext({});
 vm.runInContext(semanticsSource, context);
 const ui = context.DacSidepanelUiSemantics;
-const format = (seconds) => `00:${String(seconds).padStart(2, "0")}`;
+const format = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 
 // SETUP: Naming is visible and no longer hidden inside advanced output details.
 assert.match(html, /id="namingSetupSection"/);
@@ -18,11 +18,22 @@ for (const id of ["imagePatternInput", "resultFilenameInput", "auditFilenameInpu
 assert.ok(html.indexOf('id="namingSetupSection"') < html.indexOf('id="outputAdvancedDetails"'));
 assert.match(source, /markLocalOverride\("output_naming"\)/, "naming changes retain local-override invalidation");
 assert.match(source, /markLocalOverride\("result_filename"\)/, "Result XLSX filename retains local-override invalidation");
+assert.match(html, /id="namingProvenance"/);
+assert.match(source, /XLSX \+ local override/);
+assert.match(source, /renderNamingProvenance\(\)/);
+assert.match(html, /<option value="overwrite">Replace existing file<\/option>/);
+assert.match(html, /<option value="uniquify" selected>Keep both — add number<\/option>/);
+assert.match(html, /<option value="fail">Stop and report conflict<\/option>/);
+assert.match(html, /Controls what happens when a file with the same name already exists\./);
 
 // SETUP: destination controls are mutually exclusive by actual location mode.
-assert.match(source, /downloadsDestinationControls\.hidden = state\.destinationMode !== "downloads"/);
-assert.match(source, /authorizedDestinationControls\.hidden = state\.destinationMode !== "profile"/);
+assert.match(source, /DacSidepanelUiSemantics\.destinationVisibility\(state\.destinationMode\)/);
 assert.match(html, /Relative to Chrome Downloads\. No folder selection required\./);
+assert.match(css, /\.destination-authorized\[hidden\][^{]*\{ display: none !important;/);
+assert.equal(ui.destinationVisibility("downloads").showDownloads, true);
+assert.equal(ui.destinationVisibility("downloads").showProfile, false);
+assert.equal(ui.destinationVisibility("profile").showDownloads, false);
+assert.equal(ui.destinationVisibility("profile").showProfile, true);
 
 // RUN: all six factual runtime fields stay available, including empty states.
 for (const id of ["runtimeJobElapsed", "runtimeCurrentOperation", "runtimeTimeoutRemaining", "runtimeRetryState", "runtimeInterJobDelay", "runtimeNextTransition"]) assert.match(html, new RegExp(`id="${id}"`));
@@ -64,12 +75,22 @@ assert.equal(retry.retryState, "Retry 1/2 · next retry in 00:05");
 assert.equal(retry.nextTransition, "Retry is pending; readiness will be checked before submission");
 assert.match(source, /state\.retryResumeAt = Date\.now\(\) \+ retryCooldownMs/);
 
+const queueRunning = { status: "RUNNING", submitted_at: "2026-08-21T00:00:00.000Z" };
+assert.equal(ui.queueElapsed(queueRunning, { currentItem: queueRunning, currentStartedAt: Date.parse("2026-08-21T00:00:00.000Z") }, Date.parse("2026-08-21T00:00:42.000Z"), format), "00:42");
+assert.equal(ui.queueElapsed({ status: "SUCCESS", submitted_at: "2026-08-21T00:00:00.000Z", completed_at: "2026-08-21T00:01:37.000Z" }, {}, Date.now(), format), "01:37");
+assert.equal(ui.queueElapsed({ status: "PENDING" }, {}, Date.now(), format), "—");
+assert.match(source, /statusWithElapsed/);
+assert.match(css, /\.runtime-information output[^}]*font-size: 11px/);
+
 // OUTPUT: result cards retain job/artifact identity and use persistence as Saved authority.
 assert.match(html, /id="outputList" class="queue-list output-results-list"/);
 assert.match(css, /grid-template-columns: repeat\(auto-fit, minmax\(145px, 1fr\)\)/);
 assert.match(css, /width: 58px; height: 58px/);
 assert.match(source, /const isSaved = Boolean\(item\.persistence_verified && item\.result_file\)/);
 assert.match(source, /output-filename/);
+assert.match(source, /downloadArtifactRequest\(location, filename, values\.collisionPolicy\)/);
+assert.match(source, /downloadArtifactRequest\(location, requested, values\.collisionPolicy\)/);
+assert.match(source, /verifyDownloadedFilename\(request, item\.filename\)/);
 
 // Open-folder behavior is capability truthful: only default Downloads can be opened.
 const downloadsAction = ui.outputFolderAction({ kind: "downloads", folder: "pilot-03" });
@@ -83,6 +104,25 @@ assert.match(profileAction.note, /cannot open its native folder window/i);
 assert.match(source, /function openOutputFolder\(\)/);
 assert.match(source, /chrome\.downloads\.showDefaultFolder\(\)/);
 assert.match(source, /openOutputFolderBtn\.addEventListener\("click", openOutputFolder\)/);
+
+// Extension UI zoom is local CSS scaling and does not call tab zoom APIs.
+assert.match(html, /UI ZOOM/);
+for (const level of ["1", "1.1", "1.2"]) assert.match(html, new RegExp(`data-ui-zoom="${level}"`));
+assert.match(css, /--dac-ui-zoom: 1/);
+assert.match(css, /zoom: var\(--dac-ui-zoom\)/);
+assert.match(source, /UI_ZOOM_STORAGE_KEY = "dac_ui_zoom"/);
+assert.match(source, /chrome\.storage\.local\.get\(UI_ZOOM_STORAGE_KEY\)/);
+assert.equal(ui.normalizeUiZoom(1), 1);
+assert.equal(ui.normalizeUiZoom(1.1), 1.1);
+assert.equal(ui.normalizeUiZoom(1.2), 1.2);
+assert.equal(ui.normalizeUiZoom(0.9), 1);
+
+// Wide layout reacts to the side-panel container, not browser viewport media queries.
+assert.match(css, /container-type: inline-size/);
+assert.match(css, /@container sidepanel \(min-width: 620px\)/);
+assert.match(css, /@container sidepanel \(min-width: 780px\)/);
+assert.match(css, /#outputLocationCard \.naming-grid \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/);
+assert.doesNotMatch(css, /@media \(min-width:/);
 
 // Check Plan stays local-only; no prompt submission appears in its handler path.
 const validateStart = source.indexOf("async function validate(");

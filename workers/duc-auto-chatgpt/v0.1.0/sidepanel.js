@@ -5,7 +5,7 @@
     "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText",
     "currentJobId", "currentStage", "currentTiming", "currentSaved", "runtimeJobElapsed", "runtimeCurrentOperation", "runtimeTimeoutRemaining", "runtimeRetryState", "runtimeInterJobDelay", "runtimeNextTransition", "nextTaskCard", "nextTaskId", "nextTaskCountdown",
     "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText",
-    "outputPermissionText", "outputDestinationMode", "imageOutputFolderInput", "downloadsDestinationControls",
+    "outputPermissionText", "outputDestinationMode", "imageOutputFolderInput", "downloadsDestinationControls", "namingProvenance",
     "authorizedDestinationControls", "destinationHandleText", "outputProfileText", "outputProfilePermission", "destinationFolderBtn", "outputAdvancedDetails",
     "separateResultDestinationInput", "separateResultDestinationControls", "resultLocationMode", "resultDownloadsFolderInput",
     "resultDownloadsFolderLabel", "resultAuthorizedControls", "resultHandleText", "imagePatternInput", "resultFilenameInput", "auditFilenameInput",
@@ -423,6 +423,8 @@
       const icon = isSuccess ? "✓" : isFailed ? "⛔" : isCurrent ? "●" : "○";
       const iconClass = isSuccess ? "status-success" : isFailed ? "status-danger" : isCurrent ? "status-active" : "status-pending";
       const statusLabel = isSuccess ? (item.persistence_verified ? "Saved" : "Detected") : isFailed ? (item.status === "INTERRUPTED" ? "Halted" : "Failed") : isCurrent ? "Running" : "Pending";
+      const elapsed = window.DacSidepanelUiSemantics.queueElapsed(item, { currentItem: state.currentItem, currentStartedAt: state.currentStartedAt }, Date.now(), window.DacRunState.formatDuration);
+      const statusWithElapsed = `${statusLabel} · ${elapsed}`;
       const timeOrDetail = item.output_saved_at
         ? new Date(item.output_saved_at).toLocaleTimeString()
         : item.completed_at
@@ -431,7 +433,7 @@
             ? window.DacRunState.stageFor(item)
             : "—";
 
-      li.innerHTML = `<div class="queue-row-left"><span class="queue-icon ${iconClass}">${icon}</span><span class="queue-job-id">${item.job.id}</span></div><div class="queue-row-status ${statusLabel.toLowerCase()}">${statusLabel}</div><div class="queue-row-right">${timeOrDetail}</div>`;
+      li.innerHTML = `<div class="queue-row-left"><span class="queue-icon ${iconClass}">${icon}</span><span class="queue-job-id">${item.job.id}</span></div><div class="queue-row-status ${statusLabel.toLowerCase()}">${statusWithElapsed}</div><div class="queue-row-right">${timeOrDetail}</div>`;
       li.addEventListener("click", () => { state.selectedJobId = state.selectedJobId === item.job.id ? null : item.job.id; renderQueue(); controls(); });
       if (state.selectedJobId === item.job.id) {
         const details = document.createElement("div");
@@ -668,12 +670,22 @@
   function markLocalOverride(key, reason = "Configuration changed; validate again before Run.") {
     if (state.workbook) state.localOverrides.add(key);
     invalidateValidation(reason);
+    renderConfigProvenance();
+    renderNamingProvenance();
   }
 
   function renderConfigProvenance() {
     if (!els.configProvenance) return;
     const source = state.importedConfig ? (state.localOverrides.size ? "XLSX + local overrides" : "From XLSX") : "Configuration: defaults";
     els.configProvenance.textContent = `${source}${state.localOverrides.size ? ` (${[...state.localOverrides].join(", ")})` : ""}`;
+  }
+
+  function renderNamingProvenance() {
+    if (!els.namingProvenance) return;
+    const namingOverride = ["output_naming", "result_filename"].some((key) => state.localOverrides.has(key));
+    els.namingProvenance.textContent = state.importedConfig
+      ? namingOverride ? "XLSX + local override" : "From XLSX"
+      : "Default values";
   }
 
   async function resolveOutputProfile(profileId) {
@@ -743,8 +755,9 @@
       state.destinationMode = values.image.kind === "directory" ? "profile" : "downloads";
       els.outputDestinationMode.value = state.destinationMode;
       els.imageOutputFolderInput.value = values.image.kind === "downloads" ? values.image.folder : "";
-      els.downloadsDestinationControls.hidden = state.destinationMode !== "downloads";
-      els.authorizedDestinationControls.hidden = state.destinationMode !== "profile";
+      const visibility = window.DacSidepanelUiSemantics.destinationVisibility(state.destinationMode);
+      els.downloadsDestinationControls.hidden = !visibility.showDownloads;
+      els.authorizedDestinationControls.hidden = !visibility.showProfile;
       els.outputProfileText.textContent = values.image.kind === "directory" ? (values.image.profileId || state.importedConfig?.effective.output.profileId || "Not configured") : "Not used";
       els.destinationHandleText.textContent = values.image.kind === "directory" ? window.DacOutputLocation.locationLabel(values.image) : "No folder selected";
       const permission = state.outputProfileState?.state;
@@ -769,7 +782,7 @@
     } catch (error) {
       els.outputPermissionText.textContent = error.message;
     }
-    renderConfigProvenance(); updateReviewPacketControl(); controls();
+    renderConfigProvenance(); renderNamingProvenance(); updateReviewPacketControl(); controls();
   }
 
   async function activeTab() {
@@ -1158,9 +1171,11 @@
     const blob = window.DacXlsx.downloadBlob(state.workbook);
     const objectUrl = URL.createObjectURL(blob);
     try {
-      await assertDownloadCollisionPolicy(location, filename, values.collisionPolicy);
-      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: `${location.folder}/${filename}`, conflictAction: values.collisionPolicy === "fail" ? "uniquify" : values.collisionPolicy, saveAs: false });
+      const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, values.collisionPolicy);
+      await assertDownloadCollisionPolicy(request);
+      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
+      window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
       snapshotOutputSettings(item.filename);
       log(`Result ledger downloaded: ${item.filename}.`, "done");
       return item.filename;
@@ -1179,17 +1194,19 @@
     }
     const objectUrl = URL.createObjectURL(blob);
     try {
-      await assertDownloadCollisionPolicy(location, requested, values.collisionPolicy);
-      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: `${location.folder}/${requested}`, conflictAction: values.collisionPolicy === "fail" ? "uniquify" : values.collisionPolicy, saveAs: false });
+      const request = window.DacOutputLocation.downloadArtifactRequest(location, requested, values.collisionPolicy);
+      await assertDownloadCollisionPolicy(request);
+      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
+      window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
       return item.filename;
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
   }
 
-  async function assertDownloadCollisionPolicy(location, filename, policy) {
-    if (policy !== "fail") return;
-    const requested = `${location.folder}/${filename}`.replace(/\//g, "\\").toLowerCase();
-    const matches = await chrome.downloads.search({ filename: `${location.folder}/${filename}` });
+  async function assertDownloadCollisionPolicy(request) {
+    if (request.collisionPolicy !== "fail") return;
+    const requested = request.filename.replace(/\//g, "\\").toLowerCase();
+    const matches = await chrome.downloads.search({ filename: request.filename });
     if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw new Error(`COLLISION: Output already exists: ${filename}`);
   }
 
@@ -1475,6 +1492,8 @@
   els.chooseResultFolderBtn.addEventListener("click", () => chooseResultDestination().catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   const ZOOM_LEVELS = [0.8, 0.9, 1.0];
   const ZOOM_EPSILON = 0.015;
+  const UI_ZOOM_LEVELS = [1, 1.1, 1.2];
+  const UI_ZOOM_STORAGE_KEY = "dac_ui_zoom";
 
   function isChatGPTUrl(url) {
     return Boolean(url && /^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(url));
@@ -1531,11 +1550,38 @@
     } catch (_) {}
   }
 
+  function applyUiZoom(level) {
+    const selected = window.DacSidepanelUiSemantics.normalizeUiZoom(level);
+    document.documentElement.style.setProperty("--dac-ui-zoom", String(selected));
+    document.body.dataset.uiZoom = String(selected);
+    document.querySelectorAll(".ui-zoom-btn").forEach((button) => {
+      button.classList.toggle("active", Number(button.dataset.uiZoom) === selected);
+    });
+    return selected;
+  }
+
+  async function restoreUiZoom() {
+    let stored = 1;
+    try {
+      const values = await chrome.storage.local.get(UI_ZOOM_STORAGE_KEY);
+      stored = values?.[UI_ZOOM_STORAGE_KEY] ?? 1;
+    } catch (_) { /* The default remains usable if local storage is unavailable. */ }
+    return applyUiZoom(stored);
+  }
+
+  function setUiZoom(level) {
+    const selected = applyUiZoom(level);
+    chrome.storage?.local?.set({ [UI_ZOOM_STORAGE_KEY]: selected }).catch?.(() => {});
+  }
+
   document.querySelectorAll(".zoom-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const level = Number(btn.dataset.zoom);
       if (level) setChatZoom(level).catch(() => {});
     });
+  });
+  document.querySelectorAll(".ui-zoom-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setUiZoom(Number(btn.dataset.uiZoom)));
   });
 
   if (typeof chrome !== "undefined" && chrome.tabs) {
@@ -1568,15 +1614,18 @@
   els.loadNewWorkbookBtn.addEventListener("click", () => { showScreen("setupScreen"); els.workbookInput.click(); });
   els.openOutputFolderBtn.addEventListener("click", openOutputFolder);
   document.querySelectorAll(".workflow-tab").forEach((tab) => tab.addEventListener("click", () => showScreen(tab.dataset.screen)));
-  renderOutput(); renderRuntime(); renderOutputScreen(); controls(); syncZoomState().catch(() => {});
+  renderOutput(); renderRuntime(); renderOutputScreen(); controls(); restoreUiZoom().catch(() => applyUiZoom(1)); syncZoomState().catch(() => {});
 
   (typeof window !== "undefined" ? window : globalThis).DacChatZoom = {
     isChatGPTUrl,
     matchesZoomLevel,
     ZOOM_LEVELS,
     ZOOM_EPSILON,
+    UI_ZOOM_LEVELS,
     syncZoomState,
-    setChatZoom
+    setChatZoom,
+    applyUiZoom,
+    setUiZoom
   };
 
   (typeof window !== "undefined" ? window : globalThis).DacVisualMapping = {

@@ -26,6 +26,17 @@ const settings = output.fromWorkbook({ output_folder: "Workbook Images" }, "brie
 assert.equal(output.locationLabel(settings.image), "Downloads/Workbook Images", "XLSX output_folder is displayed as the initial effective location");
 assert.equal(output.runPlan("brief.xlsx", settings).resultDestination, "Downloads/Workbook Images/brief__results.xlsx");
 
+const configuredResult = "Duc-Auto-ChatGPT-Pilot-04__results.xlsx";
+const configuredAudit = "Duc-Auto-ChatGPT-Pilot-04__audit.jsonl";
+const resultDownload = output.downloadArtifactRequest(settings.image, configuredResult, "uniquify");
+const auditDownload = output.downloadArtifactRequest(settings.image, configuredAudit, "uniquify");
+assert.equal(resultDownload.filename, `Workbook Images/${configuredResult}`, "configured Result XLSX filename is the actual Downloads request leaf");
+assert.equal(auditDownload.filename, `Workbook Images/${configuredAudit}`, "configured Audit JSONL filename is the actual Downloads request leaf");
+assert.equal(output.verifyDownloadedFilename(resultDownload, `C:\\Downloads\\Workbook Images\\${configuredResult}`).leaf, configuredResult, "completed Result XLSX retains configured physical filename");
+assert.equal(output.verifyDownloadedFilename(auditDownload, `C:\\Downloads\\Workbook Images\\${configuredAudit}`).leaf, configuredAudit, "completed Audit JSONL retains configured physical filename");
+assert.throws(() => output.verifyDownloadedFilename(resultDownload, "C:\\Downloads\\2b39dd04-2a56-471f-9bc0-4a2b8d369bbc.xlsx"), /PERSISTENCE_FILENAME_MISMATCH/, "a browser-reported UUID cannot be accepted as the configured Result XLSX");
+assert.equal(output.verifyDownloadedFilename(output.downloadArtifactRequest(settings.image, configuredResult, "uniquify"), `C:\\Downloads\\Workbook Images\\Duc-Auto-ChatGPT-Pilot-04__results (1).xlsx`).leaf, "Duc-Auto-ChatGPT-Pilot-04__results (1).xlsx", "uniquify accepts Chrome's numbered physical filename");
+
 const selected = directory("Selected Images");
 settings.image = output.directoryLocation(selected, selected.name);
 assert.equal(output.locationLabel(output.effective(settings).image), "Authorized folder handle: Selected Images (absolute path unavailable)", "changing image folder updates the effective handle display without inventing a path");

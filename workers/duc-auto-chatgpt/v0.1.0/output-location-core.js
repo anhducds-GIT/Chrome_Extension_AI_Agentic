@@ -127,6 +127,43 @@
     return `${locationLabel(location)}/${filename}`;
   }
 
+  function downloadArtifactRequest(location, filename, policy = "uniquify") {
+    if (location?.kind !== "downloads") throw new Error("A Chrome download request requires a Downloads destination.");
+    const requestedFilename = safeFileLeaf(filename, "output");
+    const selectedPolicy = collisionPolicy(policy);
+    return {
+      filename: `${safeRelativeFolder(location.folder)}/${requestedFilename}`,
+      requestedFilename,
+      conflictAction: selectedPolicy === "fail" ? "uniquify" : selectedPolicy,
+      collisionPolicy: selectedPolicy
+    };
+  }
+
+  function downloadLeaf(filename) {
+    return safeFileLeaf(String(filename || "").split(/[\\/]/).pop(), "output");
+  }
+
+  function isPolicyFilename(requestedFilename, actualFilename, policy) {
+    const requested = safeFileLeaf(requestedFilename, "output");
+    const actual = downloadLeaf(actualFilename);
+    if (actual === requested) return true;
+    if (collisionPolicy(policy) !== "uniquify") return false;
+    const match = /^(.*?)(\.[^.]+)?$/.exec(requested);
+    const stem = match?.[1] || requested;
+    const extension = match?.[2] || "";
+    const escapedStem = stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escapedExtension = extension.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`^${escapedStem}(?:__attempt-\\d+| \\(\\d+\\))${escapedExtension}$`).test(actual);
+  }
+
+  function verifyDownloadedFilename(request, completedFilename) {
+    const actual = downloadLeaf(completedFilename);
+    if (!isPolicyFilename(request?.requestedFilename, actual, request?.collisionPolicy)) {
+      throw new Error(`PERSISTENCE_FILENAME_MISMATCH: requested '${request?.requestedFilename || "output"}' but Chrome reported '${actual}'.`);
+    }
+    return { filename: String(completedFilename), leaf: actual };
+  }
+
   function runPlan(workbookName, settings) {
     const values = effective(settings);
     return {
@@ -263,6 +300,6 @@
     return { filename: actual, outcome: "overwritten", size: persisted.size };
   }
 
-  const api = { safeRelativeFolder, safeFileLeaf, safeFilename, baseResultName, baseAuditName, workbookBase, validateImagePattern, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
+  const api = { safeRelativeFolder, safeFileLeaf, safeFilename, baseResultName, baseAuditName, workbookBase, validateImagePattern, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, verifyDownloadedFilename, isPolicyFilename, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
   (typeof window !== "undefined" ? window : globalThis).DacOutputLocation = api;
 })();
