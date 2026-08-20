@@ -856,6 +856,18 @@
     renderOutput();
   }
 
+  async function chooseResultDestination() {
+    const profileId = state.outputSettings.result?.profileId || state.importedConfig?.effective.output.resultProfileId;
+    if (!profileId) throw new Error("Set a valid result_output_profile_id in the XLSX before binding a result profile folder.");
+    if (typeof window.showDirectoryPicker !== "function") throw new Error("This Chrome build cannot authorize a folder. Use Chrome Downloads or update Chrome.");
+    const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+    const profile = await window.DacOutputProfiles.bind(profileId, handle, profileId);
+    state.outputSettings.result = window.DacOutputLocation.directoryLocation(handle, profile.last_known_handle_name);
+    state.outputSettings.result.profileId = profileId;
+    markLocalOverride("result_output_profile_binding", "Result output profile binding changed; check plan again before Run.");
+    renderOutput();
+  }
+
   function setImageDownloadsFolder() {
     try {
       state.outputSettings.image = window.DacOutputLocation.downloadsLocation(els.imageOutputFolderInput.value);
@@ -1431,7 +1443,7 @@
   els.resultFilenameInput.addEventListener("change", setResultFilename);
   for (const element of [els.imagePatternInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput]) element.addEventListener("change", setArtifactNaming);
   for (const element of [els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.addEventListener("change", () => updateRuntimeOverrides().catch((error) => log(error.message, "error")));
-  els.chooseResultFolderBtn.addEventListener("click", () => chooseDirectory("Result XLSX folder selected", "result").then(() => { els.resultLocationMode.value = "profile"; renderOutput(); }).catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
+  els.chooseResultFolderBtn.addEventListener("click", () => chooseResultDestination().catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   const ZOOM_LEVELS = [0.8, 0.9, 1.0];
   const ZOOM_EPSILON = 0.015;
 
