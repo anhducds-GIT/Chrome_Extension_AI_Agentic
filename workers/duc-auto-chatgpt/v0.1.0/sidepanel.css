@@ -94,7 +94,7 @@ body {
    ========================================================================== */
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
   padding-bottom: 2px;
@@ -136,9 +136,14 @@ h1 {
 
 .header-meta {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  column-gap: 5px;
+  row-gap: 2px;
 }
 
 /* Status Chips */
@@ -765,6 +770,12 @@ footer { line-height: 1.3; padding: 2px 0 2px; font-size: 9.5px; color: #64748b;
   .settings-grid { gap: 6px 9px; }
   .settings-grid.trio { gap: 5px 8px; }
   .split-cards { gap: 8px; }
+}
+
+/* Keep the compact header truthful and readable when the side panel is narrow. */
+@container sidepanel (max-width: 479px) {
+  .header { flex-wrap: wrap; }
+  .header-meta { flex-basis: 100%; }
 }
 
 @container sidepanel (min-width: 620px) {

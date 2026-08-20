@@ -112,6 +112,8 @@ assert.match(css, /--dac-ui-zoom: 1/);
 assert.match(css, /zoom: var\(--dac-ui-zoom\)/);
 assert.match(css, /width: 100%;/, "the app layout always fills the side-panel width");
 assert.doesNotMatch(css, /width: calc\(100% \/ var\(--dac-ui-zoom\)\)/, "UI zoom must not shrink the app layout box and leave a right gutter");
+assert.match(css, /\.header-meta \{[\s\S]*?flex-direction: row;[\s\S]*?flex-wrap: wrap;[\s\S]*?justify-content: flex-end;/, "header controls use horizontal space before adding height");
+assert.match(css, /@container sidepanel \(max-width: 479px\)[\s\S]*?\.header \{ flex-wrap: wrap; \}/, "narrow panels wrap the compact header safely instead of overflowing");
 assert.match(source, /UI_ZOOM_STORAGE_KEY = "dac_ui_zoom"/);
 assert.match(source, /chrome\.storage\.local\.get\(UI_ZOOM_STORAGE_KEY\)/);
 assert.equal(ui.normalizeUiZoom(1), 1);
