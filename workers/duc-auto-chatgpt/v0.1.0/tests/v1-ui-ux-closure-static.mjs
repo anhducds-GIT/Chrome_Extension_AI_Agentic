@@ -38,6 +38,10 @@ assert.equal(ui.destinationVisibility("profile").showProfile, true);
 // RUN: all six factual runtime fields stay available, including empty states.
 for (const id of ["runtimeJobElapsed", "runtimeCurrentOperation", "runtimeTimeoutRemaining", "runtimeRetryState", "runtimeInterJobDelay", "runtimeNextTransition"]) assert.match(html, new RegExp(`id="${id}"`));
 assert.match(css, /\.runtime-information-grid/);
+assert.match(html, /runtime-information--timer[^>]*>\s*<span>⏱ Job elapsed<\/span><output id="runtimeJobElapsed"/, "elapsed time has the prominent timer treatment");
+assert.match(html, /runtime-information--timer[^>]*>\s*<span>⌛ Operation timeout remaining<\/span><output id="runtimeTimeoutRemaining"/, "timeout time has the prominent timer treatment");
+assert.match(css, /\.timer-badge #operatorTimerText \{ font-size: 17px; font-variant-numeric: tabular-nums;/, "the live attempt timer is visually prominent");
+assert.match(css, /\.runtime-information--timer output \{ color: #1e3a8a; font-size: 18px; font-variant-numeric: tabular-nums;/, "timer values are large and scan-friendly");
 
 const inactive = ui.runtimeInfo({ running: false, settings: { delay_min_sec: 3, delay_max_sec: 3 } }, 10, format);
 assert.equal(inactive.jobElapsed, "—");
@@ -80,7 +84,7 @@ assert.equal(ui.queueElapsed(queueRunning, { currentItem: queueRunning, currentS
 assert.equal(ui.queueElapsed({ status: "SUCCESS", submitted_at: "2026-08-21T00:00:00.000Z", completed_at: "2026-08-21T00:01:37.000Z" }, {}, Date.now(), format), "01:37");
 assert.equal(ui.queueElapsed({ status: "PENDING" }, {}, Date.now(), format), "—");
 assert.match(source, /statusWithElapsed/);
-assert.match(css, /\.runtime-information output[^}]*font-size: 11px/);
+assert.match(css, /\.runtime-information output[^}]*font-size: 14px/);
 
 // OUTPUT: result cards retain job/artifact identity and use persistence as Saved authority.
 assert.match(html, /id="outputList" class="queue-list output-results-list"/);

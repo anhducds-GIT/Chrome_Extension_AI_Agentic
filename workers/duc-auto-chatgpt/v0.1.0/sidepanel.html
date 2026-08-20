@@ -234,12 +234,12 @@
           <div id="operatorTimerArea" class="operator-timer-area"><span class="timer-badge" id="operatorTimerBadge">⏱ <span id="operatorTimerText">—</span></span></div>
           <div id="currentTiming" class="hint timing-line">No run in progress.</div>
           <div class="runtime-information-grid" aria-label="Current runtime information">
-            <div class="runtime-information"><span>⏱ Job elapsed</span><output id="runtimeJobElapsed">—</output></div>
+            <div class="runtime-information runtime-information--timer"><span>⏱ Job elapsed</span><output id="runtimeJobElapsed">—</output></div>
             <div class="runtime-information"><span>◌ Current operation</span><output id="runtimeCurrentOperation">—</output></div>
-            <div class="runtime-information"><span>⌛ Operation timeout remaining</span><output id="runtimeTimeoutRemaining">Not scheduled</output></div>
+            <div class="runtime-information runtime-information--timer"><span>⌛ Operation timeout remaining</span><output id="runtimeTimeoutRemaining">Not scheduled</output></div>
             <div class="runtime-information"><span>↻ Retry state</span><output id="runtimeRetryState">Not scheduled</output></div>
-            <div class="runtime-information"><span>↔ Inter-job delay</span><output id="runtimeInterJobDelay">Not scheduled</output></div>
-            <div class="runtime-information"><span>→ Next transition</span><output id="runtimeNextTransition">Waiting…</output></div>
+            <div class="runtime-information runtime-information--timer runtime-information--long"><span>↔ Inter-job delay</span><output id="runtimeInterJobDelay">Not scheduled</output></div>
+            <div class="runtime-information runtime-information--timer runtime-information--long"><span>→ Next transition</span><output id="runtimeNextTransition">Waiting…</output></div>
           </div>
           <div id="currentSaved" class="saved-output" hidden></div>
         </section>

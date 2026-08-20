@@ -651,18 +651,22 @@ button:disabled { opacity: 0.45; cursor: default; }
 .step-item.danger .step-dot { background: #dc2626; box-shadow: 0 0 5px #dc2626; }
 
 /* Operator Timer Area */
-.operator-timer-area { margin: 3px 0 2px; }
-.timer-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: var(--radius-sm); font-size: 10px; font-weight: 800; background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; letter-spacing: 0.2px; }
+.operator-timer-area { margin: 5px 0 3px; }
+.timer-badge { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 34px; padding: 5px 9px; border-radius: var(--radius-md); font-size: 12px; font-weight: 800; background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; letter-spacing: 0.2px; }
+.timer-badge #operatorTimerText { font-size: 17px; font-variant-numeric: tabular-nums; letter-spacing: 0.3px; }
 .timer-badge.active { background: #eff6ff; color: #1e40af; border-color: #93c5fd; }
 .timer-badge.cooldown { background: #ecfdf5; color: #065f46; border-color: #86efac; }
 .timer-badge.waiting { background: #fffbeb; color: #92400e; border-color: #fde68a; }
 .timer-badge.halted { background: #fef2f2; color: #991b1b; border-color: #fca5a5; }
 
 .timing-line { margin-top: 3px; font-size: 10px; }
-.runtime-information-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 7px; margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border-subtle); }
-.runtime-information { min-width: 0; display: grid; gap: 1px; }
-.runtime-information span { color: var(--text-muted); font-size: 9px; font-weight: 700; }
-.runtime-information output { overflow-wrap: anywhere; color: var(--text-primary); font-size: 11px; font-weight: 800; line-height: 1.25; }
+.runtime-information-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; padding-top: 0; border-top: 0; }
+.runtime-information { min-width: 0; min-height: 60px; display: grid; align-content: start; gap: 4px; padding: 7px 8px; background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+.runtime-information span { color: var(--text-muted); font-size: 9px; font-weight: 800; line-height: 1.2; }
+.runtime-information output { overflow-wrap: anywhere; color: var(--text-primary); font-size: 14px; font-weight: 800; line-height: 1.2; }
+.runtime-information--timer { background: #eff6ff; border-color: #93c5fd; }
+.runtime-information--timer output { color: #1e3a8a; font-size: 18px; font-variant-numeric: tabular-nums; letter-spacing: 0.15px; }
+.runtime-information--long output { font-size: 13px; line-height: 1.22; }
 .saved-output { margin-top: 3px; color: #15803d; font-size: 10.5px; font-weight: 700; overflow-wrap: anywhere; }
 
 /* Inline Halted Banner */
