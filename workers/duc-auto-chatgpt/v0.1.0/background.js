@@ -55,10 +55,22 @@ async function downloadGeneratedImage(message) {
   const safeId = String(message.jobId || "image").replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 100) || "image";
   const extension = imageExtension(url);
   const folder = safeDownloadFolder(message.outputFolder);
-  const requestedFilename = `${folder}/${safeId}.${extension}`;
-  const downloadId = await chrome.downloads.download({ url, filename: requestedFilename, conflictAction: "uniquify", saveAs: false });
+  const requestedFilename = safeRequestedFilename(message.filename, folder, `${safeId}.${extension}`);
+  const collisionPolicy = ["overwrite", "uniquify", "fail"].includes(message.collisionPolicy) ? message.collisionPolicy : "uniquify";
+  if (collisionPolicy === "fail") {
+    const existing = await chrome.downloads.search({ filename: requestedFilename });
+    const suffix = requestedFilename.replace(/\//g, "\\").toLowerCase();
+    if (existing.some((item) => String(item.filename || "").toLowerCase().endsWith(suffix) && item.state === "complete")) return failure("COLLISION", `Output already exists: ${requestedFilename}`);
+  }
+  const downloadId = await chrome.downloads.download({ url, filename: requestedFilename, conflictAction: collisionPolicy === "fail" ? "uniquify" : collisionPolicy, saveAs: false });
   const item = await waitForCompletedDownload(downloadId);
-  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename };
+  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename, collision_policy: collisionPolicy, write_outcome: item.filename === requestedFilename ? "written" : collisionPolicy === "overwrite" ? "overwritten" : "uniquified" };
+}
+
+function safeRequestedFilename(value, folder, fallback) {
+  const requested = typeof value === "string" ? value.trim().replace(/\\/g, "/") : "";
+  if (!requested || requested.startsWith("/") || requested.split("/").some((part) => !part || part === "." || part === "..")) return `${folder}/${fallback}`;
+  return requested;
 }
 
 async function waitForCompletedDownload(downloadId, timeoutMs = DOWNLOAD_COMPLETE_TIMEOUT_MS) {

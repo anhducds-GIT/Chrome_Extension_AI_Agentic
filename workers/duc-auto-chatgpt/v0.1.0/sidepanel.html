@@ -1,123 +1,20 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Duc Auto ChatGPT</title>
-  <link rel="stylesheet" href="sidepanel.css" />
-</head>
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Duc Auto ChatGPT</title><link rel="stylesheet" href="sidepanel.css" /></head>
 <body>
   <main class="app">
-    <header class="header">
-      <div><h1>Duc Auto ChatGPT</h1><p>V0.3 · local XLSX image runner</p></div>
-      <span id="statusChip" class="chip idle">IDLE</span>
-    </header>
-
-    <section class="card runtime-card" id="runtimeStateCard">
-      <div class="row spread"><strong>CURRENT JOB</strong><span id="currentStage" class="stage">—</span></div>
-      <div id="currentJobId" class="current-job">—</div>
-      <div id="currentTiming" class="hint">No run in progress.</div>
-      <div id="currentSaved" class="saved-output" hidden></div>
+    <header class="header"><div><h1>Duc Auto ChatGPT</h1><p>Local XLSX image runner</p></div><span id="statusChip" class="chip idle">IDLE</span></header>
+    <nav class="workflow-tabs" aria-label="Workflow"><button class="workflow-tab active" data-screen="setupScreen" type="button">1&nbsp; SETUP</button><button class="workflow-tab" data-screen="runScreen" type="button">2&nbsp; RUN</button><button class="workflow-tab" data-screen="outputScreen" type="button">3&nbsp; OUTPUT</button></nav>
+    <section id="setupScreen" class="workflow-screen active">
+      <section class="card"><div class="row spread"><strong>1. WORKBOOK</strong><span id="workbookText" class="hint">Open an XLSX to begin.</span></div><input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" /></section>
+      <section class="card"><strong>2. OPTIONAL REFERENCES</strong><label for="referencesInput" class="secondary-label">Local reference images (up to your validated limit)</label><input id="referencesInput" type="file" accept="image/*" multiple /><p id="referenceText" class="hint">No local references selected.</p><div id="referenceGallery" class="reference-gallery" aria-live="polite"></div></section>
+      <section class="card" id="runtimeSettingsCard"><div class="row spread"><strong>3. RUN SETTINGS</strong><span class="muted">Current-run overrides</span></div><div class="settings-grid"><label>Timeout (sec)<input id="timeoutSecInput" type="number" min="15" max="900" /></label><label>Max retries<input id="maxRetriesInput" type="number" min="0" max="5" /></label><label>Cooldown (sec)<input id="safetyCooldownInput" type="number" min="0" max="120" /></label></div><details><summary>Advanced settings</summary><div class="settings-grid"><label>Max input references<input id="maxInputImagesInput" type="number" min="0" max="10" /></label><label>Continue on error<select id="continueOnErrorInput"><option value="true">Yes</option><option value="false">No</option></select></label><label>Rerun DONE<select id="rerunDoneInput"><option value="false">No</option><option value="true">Yes</option></select></label></div></details></section>
+      <section class="card" id="outputLocationCard"><div class="row spread"><strong>4. OUTPUT &amp; NAMING</strong><span id="outputPermissionText" class="muted">Open an XLSX to set locations.</span></div><div class="output-line"><strong>Effective image location:</strong><output id="imageOutputText">—</output></div><div class="output-line"><strong>Result XLSX preview:</strong><output id="resultOutputText">—</output></div><div class="output-line"><strong>Audit JSONL preview:</strong><output id="auditOutputText">—</output></div><div class="settings-grid"><label>Image Output Folder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label><label>Result XLSX Location<select id="resultLocationMode"><option value="same_as_image">Same as Image Output Folder</option><option value="downloads">Chrome Downloads folder</option><option value="directory">Separate authorized folder</option></select></label><label id="resultDownloadsFolderLabel">Result Downloads Folder<input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label><label>Image filename pattern<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">Allowed: {job_id}, {attempt}, {index}; extension is preserved.</span></label><label>Result XLSX filename<input id="resultFilenameInput" type="text" autocomplete="off" /></label><label>Audit JSONL filename<input id="auditFilenameInput" type="text" autocomplete="off" /></label><label>Collision policy<select id="collisionPolicyInput"><option value="overwrite">overwrite</option><option value="uniquify" selected>uniquify</option><option value="fail">fail</option></select></label></div><div class="settings-grid save-toggles"><label><input id="saveImagesInput" type="checkbox" checked /> Download generated images</label><label><input id="saveResultXlsxInput" type="checkbox" checked /> Save Result XLSX</label><label><input id="saveAuditJsonlInput" type="checkbox" checked /> Save Audit JSONL</label></div><div class="controls output-controls"><button id="chooseImageFolderBtn" class="secondary" type="button">Choose Image Folder</button><button id="useSourceFolderBtn" class="secondary" type="button">Use Source Folder</button><button id="changeImageFolderBtn" class="secondary" type="button">Change Folder</button><button id="chooseResultFolderBtn" class="secondary" type="button">Choose Result Folder</button></div></section>
+      <section class="card"><div class="row spread"><strong>5. VALIDATION</strong><button id="validateBtn" class="secondary" disabled type="button">Check plan</button></div><dl id="runPlanList" class="run-plan"></dl></section><section class="controls"><button id="runBtn" class="primary" disabled type="button">▶ START RUN</button></section>
     </section>
-
-    <section class="card">
-      <label for="workbookInput"><strong>Open XLSX</strong></label>
-      <input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
-      <p id="workbookText" class="hint">Workbook needs a <code>jobs</code> sheet with <code>id</code> and <code>prompt</code>.</p>
-      <label for="referencesInput" class="secondary-label">Optional local reference images</label>
-      <input id="referencesInput" type="file" accept="image/*" multiple />
-      <p id="referenceText" class="hint">No local references selected.</p>
-      <div id="referenceGallery" class="reference-gallery" aria-live="polite"></div>
-    </section>
-
-    <section class="card" id="runtimeSettingsCard">
-      <div class="row spread"><strong>RUNTIME SETTINGS</strong><span class="muted">Current-run overrides</span></div>
-      <div class="settings-grid">
-        <label>Timeout (sec)<input id="timeoutSecInput" type="number" min="15" max="900" /></label>
-        <label>Max retries<input id="maxRetriesInput" type="number" min="0" max="5" /></label>
-        <label>Safety cooldown (sec)<input id="safetyCooldownInput" type="number" min="0" max="120" /></label>
-        <label>Max input images<input id="maxInputImagesInput" type="number" min="0" max="10" /></label>
-        <label>Continue on error<select id="continueOnErrorInput"><option value="true">Yes</option><option value="false">No</option></select></label>
-        <label>Rerun DONE<select id="rerunDoneInput"><option value="false">No</option><option value="true">Yes</option></select></label>
-      </div>
-    </section>
-
-    <section class="card" id="outputLocationCard">
-      <div class="row spread"><strong>OUTPUT LOCATION</strong><span id="outputPermissionText" class="muted">Open an XLSX to set locations.</span></div>
-      <div class="output-line"><strong>Generated Images:</strong><output id="imageOutputText">—</output></div>
-      <div class="output-line"><strong>Result XLSX:</strong><output id="resultOutputText">—</output></div>
-      <div class="settings-grid">
-        <label>Image Output Folder
-          <input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" />
-          <span class="hint">Used only for the explicit Chrome Downloads location.</span>
-        </label>
-        <label>Result XLSX Location
-          <select id="resultLocationMode">
-            <option value="same_as_image">Same as Image Output Folder</option>
-            <option value="downloads">Chrome Downloads folder</option>
-            <option value="directory">Separate authorized folder</option>
-          </select>
-        </label>
-        <label id="resultDownloadsFolderLabel">Result Downloads Folder
-          <input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" />
-        </label>
-        <label>Result XLSX Filename
-          <input id="resultFilenameInput" type="text" autocomplete="off" />
-        </label>
-      </div>
-      <div class="controls output-controls">
-        <button id="chooseImageFolderBtn" class="secondary" type="button">Choose Image Folder</button>
-        <button id="useSourceFolderBtn" class="secondary" type="button">Use Source Folder</button>
-        <button id="changeImageFolderBtn" class="secondary" type="button">Change Folder</button>
-        <button id="chooseResultFolderBtn" class="secondary" type="button">Choose Result Folder</button>
-      </div>
-      <p class="hint">Custom folders require explicit write authorization. A denied or revoked authorization blocks Run; it never redirects the job to Downloads.</p>
-    </section>
-
-    <section class="card" id="runPlanCard">
-      <div class="row spread"><strong>RUN PLAN</strong><span class="muted">Effective current-run values</span></div>
-      <dl id="runPlanList" class="run-plan"></dl>
-    </section>
-
-    <section class="controls">
-      <button id="validateBtn" class="secondary" disabled>Check Plan</button>
-      <button id="runBtn" class="primary" disabled>Run All</button>
-      <button id="runPendingBtn" class="secondary" disabled>Run Pending</button>
-      <button id="runFailedBtn" class="secondary" disabled>Run Failed</button>
-      <button id="retrySelectedBtn" class="secondary" disabled>Retry Selected</button>
-      <button id="stopBtn" class="danger" disabled>Stop</button>
-    </section>
-
-    <section class="card">
-      <div class="row spread"><strong>Progress</strong><span id="progressText" class="muted">0 / 0</span></div>
-      <div id="progressDetail" class="hint">Open an XLSX to begin.</div>
-      <div id="failedJobsText" class="hint">Failed Jobs: 0</div>
-    </section>
-
-    <section id="nextTaskCard" class="card">
-      <div class="muted"><strong>NEXT TASK</strong></div>
-      <div id="nextTaskId">—</div>
-      <div id="nextTaskCountdown" class="hint">—</div>
-    </section>
-
-    <section class="card queue-card">
-      <div class="row spread"><strong>Task queue</strong><span id="queueSummary" class="muted">0 jobs</span></div>
-      <ol id="queueList" class="queue-list"></ol>
-    </section>
-    <section class="card">
-      <div class="row spread"><strong>Logs</strong><button id="clearLogsBtn" class="link-button">Clear</button></div>
-      <ol id="logList" class="queue-list" aria-live="polite"></ol>
-    </section>
-
-    <footer>
-      Sequential only · Uses your current ChatGPT session · No server or separate login.
-    </footer>
+    <section id="runScreen" class="workflow-screen"><section class="card runtime-card"><div class="row spread"><strong>OVERALL PROGRESS</strong><span id="progressText" class="muted">0 / 0</span></div><div id="progressDetail" class="hint">Open an XLSX to begin.</div></section><section class="card runtime-card"><div class="row spread"><strong>CURRENT JOB</strong><span id="currentStage" class="stage">—</span></div><div id="currentJobId" class="current-job">—</div><div id="currentTiming" class="hint">No run in progress.</div><div id="currentSaved" class="saved-output" hidden></div></section><section id="nextTaskCard" class="card"><div class="muted"><strong>NEXT JOB</strong></div><div id="nextTaskId">—</div><div id="nextTaskCountdown" class="hint">—</div></section><section class="card queue-card"><div class="row spread"><strong>QUEUE</strong><span id="queueSummary" class="muted">0 jobs</span></div><ol id="queueList" class="queue-list"></ol><button id="viewQueueBtn" class="link-button" type="button">View full queue</button></section><section class="card"><details><summary>Technical details</summary><ol id="logList" class="queue-list" aria-live="polite"></ol><button id="clearLogsBtn" class="link-button" type="button">Clear</button></details></section><section class="controls"><button id="stopBtn" class="danger" disabled type="button">Stop Run</button></section></section>
+    <section id="outputScreen" class="workflow-screen"><section class="card"><div class="row spread"><strong>COMPLETION SUMMARY</strong><span id="outputSummaryText" class="muted">No completed run.</span></div><div id="failedJobsText" class="hint">Failed Jobs: 0</div></section><section class="card"><div class="row spread"><strong>RESULTS</strong><button id="viewOutputsBtn" class="link-button" type="button">View all outputs</button></div><ol id="outputList" class="queue-list"></ol></section><section class="card"><strong>RUN ARTIFACTS</strong><div id="artifactList" class="artifact-list">No run artifacts yet.</div></section><section class="controls"><button id="openOutputFolderBtn" class="primary" type="button" disabled>Open Output Folder</button><button id="loadNewWorkbookBtn" class="secondary" type="button">Load New Workbook</button><button id="runFailedBtn" class="secondary" type="button" disabled>Run Failed Jobs</button></section></section>
+    <footer>Sequential only · Uses your current ChatGPT session · No server or separate login.</footer>
   </main>
-  <script src="xlsx-codec.js"></script>
-  <script src="runner-core.js"></script>
-  <script src="attempt-telemetry-core.js"></script>
-  <script src="run-state-core.js"></script>
-  <script src="output-location-core.js"></script>
-  <script src="sidepanel.js"></script>
-</body>
-</html>
+  <script src="xlsx-codec.js"></script><script src="runner-core.js"></script><script src="attempt-telemetry-core.js"></script><script src="run-state-core.js"></script><script src="output-location-core.js"></script><script src="sidepanel.js"></script>
+</body></html>

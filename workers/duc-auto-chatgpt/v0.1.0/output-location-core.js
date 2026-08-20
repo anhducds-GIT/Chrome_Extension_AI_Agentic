@@ -21,7 +21,52 @@
   }
 
   function baseResultName(workbookName) {
-    return `${String(workbookName || "workbook.xlsx").replace(/\.xlsx$/i, "")}-result.xlsx`;
+    return `${workbookBase(workbookName)}__results.xlsx`;
+  }
+
+  function workbookBase(workbookName) {
+    return safeFileLeaf(String(workbookName || "workbook.xlsx").replace(/\.xlsx$/i, ""), "workbook").replace(/\.[^.]+$/, "") || "workbook";
+  }
+
+  function baseAuditName(workbookName) { return `${workbookBase(workbookName)}__audit.jsonl`; }
+
+  // This intentionally accepts only leaf-name tokens.  Paths, unknown tokens,
+  // and a missing job identifier are validation errors rather than values that
+  // are silently rewritten into a surprising output path.
+  function validateImagePattern(value) {
+    const pattern = String(value ?? "{job_id}").trim();
+    if (!pattern) throw new Error("Image filename pattern is required.");
+    if (/[\\/]|\.\./.test(pattern)) throw new Error("Image filename pattern must be a safe filename leaf.");
+    if (/[<>:"|?*\u0000-\u001f]/.test(pattern)) throw new Error("Image filename pattern contains unsafe filename characters.");
+    const tokens = pattern.match(/\{[^}]+\}/g) || [];
+    for (const token of tokens) if (!/^\{(?:job_id|attempt|index)\}$/.test(token)) throw new Error(`Unsupported image filename token '${token}'.`);
+    if (pattern.replace(/\{(?:job_id|attempt|index)\}/g, "").includes("{") || pattern.replace(/\{(?:job_id|attempt|index)\}/g, "").includes("}")) throw new Error("Image filename pattern has an unmatched token delimiter.");
+    return pattern;
+  }
+
+  function renderImageFilename(pattern, values = {}, extension = "png") {
+    const safePattern = validateImagePattern(pattern);
+    const replacements = {
+      job_id: safeJobId(values.job_id),
+      attempt: String(Math.max(1, Number(values.attempt) || 1)).padStart(2, "0"),
+      index: String(Math.max(1, Number(values.index) || 1)).padStart(3, "0")
+    };
+    const stem = safePattern.replace(/\{(job_id|attempt|index)\}/g, (_match, token) => replacements[token]);
+    return `${safeFileLeaf(stem, "image")}.${actualExtension(null, extension)}`;
+  }
+
+  function collisionPolicy(value) {
+    const policy = String(value || "uniquify").toLowerCase();
+    if (!["overwrite", "uniquify", "fail"].includes(policy)) throw new Error("Collision policy must be overwrite, uniquify, or fail.");
+    return policy;
+  }
+
+  function artifactNames(workbookName, settings = {}) {
+    return {
+      resultFilename: safeFilename(settings.resultFilename || baseResultName(workbookName), baseResultName(workbookName)),
+      auditFilename: safeFileLeaf(settings.auditFilename || baseAuditName(workbookName), baseAuditName(workbookName)),
+      imagePattern: validateImagePattern(settings.imagePattern || "{job_id}")
+    };
   }
 
   function downloadsLocation(folder) {
@@ -38,10 +83,17 @@
   function fromWorkbook(config, workbookName) {
     const downloads = downloadsLocation(config?.output_folder || "Duc Auto ChatGPT");
     return {
+      workbookName: String(workbookName || "workbook.xlsx"),
       image: downloads,
       result: { kind: "same_as_image" },
       resultFilename: baseResultName(workbookName),
-      namingPattern: "Custom folder: <job-id>.<actual-extension>, then __attempt-01; Chrome Downloads: Chrome uniquifies and the ledger records its final filename."
+      auditFilename: baseAuditName(workbookName),
+      imagePattern: "{job_id}",
+      collisionPolicy: "uniquify",
+      saveImages: true,
+      saveResultXlsx: true,
+      saveAuditJsonl: true,
+      namingPattern: "{job_id} with the detected image extension; allowed tokens: {job_id}, {attempt}, {index}."
     };
   }
 
@@ -50,7 +102,8 @@
     const image = settings.image;
     const result = settings.result?.kind === "same_as_image" ? image : settings.result;
     if (!result) throw new Error("Choose a result XLSX location.");
-    return { image, result, resultFilename: safeFilename(settings.resultFilename, "workbook-result.xlsx"), namingPattern: settings.namingPattern };
+    const names = artifactNames(settings.workbookName, settings);
+    return { image, result, ...names, collisionPolicy: collisionPolicy(settings.collisionPolicy), saveImages: settings.saveImages !== false, saveResultXlsx: settings.saveResultXlsx !== false, saveAuditJsonl: settings.saveAuditJsonl !== false, namingPattern: settings.namingPattern };
   }
 
   function locationLabel(location) {
@@ -108,6 +161,15 @@
     return fileCandidates(`${safeJobId(jobId)}.${actualExtension(null, extension)}`, maximum);
   }
 
+  function imageCandidatesFor(settings, values, extension, maximum = 1000) {
+    return fileCandidates(renderImageFilename(settings?.imagePattern || "{job_id}", values, extension), maximum);
+  }
+
+  function candidatesForPolicy(filename, policy, maximum = 1000) {
+    const checked = collisionPolicy(policy);
+    return checked === "uniquify" ? fileCandidates(filename, maximum) : [safeFileLeaf(filename, "output")];
+  }
+
   function fileCandidates(filename, maximum = 1000) {
     const safe = safeFileLeaf(filename, "result.xlsx");
     const match = /^(.*?)(\.[^.]+)$/.exec(safe);
@@ -148,6 +210,24 @@
     return writeNewFile(directoryHandle, filename, blob);
   }
 
-  const api = { safeRelativeFolder, safeFilename, baseResultName, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, runPlan, permission, preflight, actualExtension, imageCandidates, fileCandidates, findAvailableFilename, writeNewFile, writeUniqueFile };
+  async function writeFileWithPolicy(directoryHandle, filename, blob, policy = "uniquify") {
+    const selected = collisionPolicy(policy);
+    if (selected === "uniquify") {
+      const actual = await writeUniqueFile(directoryHandle, fileCandidates(filename), blob);
+      return { filename: actual, outcome: actual === filename ? "written" : "uniquified" };
+    }
+    if (selected === "fail") {
+      const actual = safeFileLeaf(filename, "output");
+      await writeNewFile(directoryHandle, actual, blob);
+      return { filename: actual, outcome: "written" };
+    }
+    const actual = safeFileLeaf(filename, "output");
+    const fileHandle = await directoryHandle.getFileHandle(actual, { create: true });
+    const writable = await fileHandle.createWritable({ keepExistingData: false });
+    await writable.write(blob); await writable.close();
+    return { filename: actual, outcome: "overwritten" };
+  }
+
+  const api = { safeRelativeFolder, safeFilename, baseResultName, baseAuditName, workbookBase, validateImagePattern, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, writeNewFile, writeUniqueFile, writeFileWithPolicy };
   (typeof window !== "undefined" ? window : globalThis).DacOutputLocation = api;
 })();

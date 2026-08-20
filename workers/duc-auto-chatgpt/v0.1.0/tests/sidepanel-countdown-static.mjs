@@ -5,7 +5,7 @@ const html = fs.readFileSync(new URL("../sidepanel.html", import.meta.url), "utf
 const source = fs.readFileSync(new URL("../sidepanel.js", import.meta.url), "utf8");
 
 assert.match(html, /id="nextTaskCountdown"/);
-for (const id of ["runtimeStateCard", "currentJobId", "currentStage", "currentTiming", "currentSaved"]) assert.match(html, new RegExp(`id="${id}"`));
+for (const id of ["runScreen", "currentJobId", "currentStage", "currentTiming", "currentSaved"]) assert.match(html, new RegExp(`id="${id}"`));
 assert.match(source, /function nextTask/);
 assert.match(source, /function setCurrent/);
 assert.match(source, /SAVED ✓/);

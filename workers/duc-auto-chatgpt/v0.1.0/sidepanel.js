@@ -1,8 +1,8 @@
 (() => {
   "use strict";
-  const ids = ["workbookInput", "referencesInput", "validateBtn", "runBtn", "runPendingBtn", "runFailedBtn", "retrySelectedBtn", "stopBtn", "statusChip", "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText", "currentJobId", "currentStage", "currentTiming", "currentSaved", "nextTaskCard", "nextTaskId", "nextTaskCountdown", "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "outputPermissionText", "imageOutputFolderInput", "resultLocationMode", "resultDownloadsFolderInput", "resultDownloadsFolderLabel", "resultFilenameInput", "chooseImageFolderBtn", "useSourceFolderBtn", "changeImageFolderBtn", "chooseResultFolderBtn", "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput", "continueOnErrorInput", "rerunDoneInput"];
+  const ids = ["workbookInput", "referencesInput", "validateBtn", "runBtn", "runFailedBtn", "stopBtn", "statusChip", "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText", "currentJobId", "currentStage", "currentTiming", "currentSaved", "nextTaskCard", "nextTaskId", "nextTaskCountdown", "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText", "outputPermissionText", "imageOutputFolderInput", "resultLocationMode", "resultDownloadsFolderInput", "resultDownloadsFolderLabel", "imagePatternInput", "resultFilenameInput", "auditFilenameInput", "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput", "chooseImageFolderBtn", "useSourceFolderBtn", "changeImageFolderBtn", "chooseResultFolderBtn", "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput", "continueOnErrorInput", "rerunDoneInput", "outputSummaryText", "outputList", "artifactList", "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn"];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
-  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, stopRequested: false, terminal: 0, runId: null, attemptSerial: 0, auditEvents: [], auditFile: "", currentItem: null, currentStage: "—", currentReason: "No run in progress.", currentStartedAt: null, runtimeTicker: null };
+  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, validated: false, stopRequested: false, terminal: 0, runId: null, attemptSerial: 0, auditEvents: [], auditFile: "", resultFile: "", currentItem: null, currentStage: "—", currentReason: "No run in progress.", currentStartedAt: null, runtimeTicker: null, queueExpanded: false, outputsExpanded: false };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function setStatus(status, label = status) { els.statusChip.className = `chip ${status.toLowerCase()}`; els.statusChip.textContent = label; }
@@ -25,7 +25,8 @@
   function audit(event, item = null, values = {}) {
     if (!state.runId) return;
     const telemetry = globalThis.DacAttemptTelemetry?.auditFields(item) || {};
-    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null });
+    const output = state.outputSettings ? window.DacOutputLocation.effective(state.outputSettings) : null;
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
@@ -37,8 +38,8 @@
     const budget = item?.settings?.timeout_sec;
     els.currentTiming.textContent = item ? `Attempt ${item.attempt_count}/${1 + item.settings.max_retries} · Elapsed ${window.DacRunState.formatDuration(elapsed)}${budget ? ` · Stage budget ${window.DacRunState.formatDuration(Math.max(0, budget - elapsed))} remaining` : ""}${state.currentReason ? ` · ${state.currentReason}` : ""}` : state.currentReason;
     const saved = item?.result_file || "";
-    els.currentSaved.hidden = !saved;
-    els.currentSaved.textContent = saved ? `SAVED ✓ ${saved}` : "";
+    els.currentSaved.hidden = !saved && !item?.detected_not_downloaded;
+    els.currentSaved.textContent = saved ? `SAVED ✓ ${saved}` : item?.detected_not_downloaded ? "DETECTED · not downloaded" : "";
   }
   function setCurrent(item, stage, reason = "") {
     if (item && state.currentItem !== item) state.currentStartedAt = Date.now();
@@ -49,14 +50,16 @@
   function stopRuntimeTicker() { clearInterval(state.runtimeTicker); state.runtimeTicker = null; renderRuntime(); }
 
   function controls() {
-    const ready = Boolean(state.workbook && state.prepared && state.outputSettings);
+    const ready = Boolean(state.workbook && state.prepared && state.outputSettings && state.validated);
     const outputLocked = !state.workbook || state.running;
     els.validateBtn.disabled = !state.workbook || state.running;
-    for (const element of [els.runBtn, els.runPendingBtn, els.runFailedBtn, els.retrySelectedBtn]) element.disabled = !ready || state.running;
+    els.runBtn.disabled = !ready || state.running;
+    const eligibleFailed = (state.prepared?.queue || []).some((item) => item.status === "FAILED" && !item.protected_checkpoint);
+    els.runFailedBtn.disabled = !ready || state.running || !eligibleFailed;
     els.stopBtn.disabled = !state.running;
     els.workbookInput.disabled = state.running;
     els.referencesInput.disabled = state.running;
-    for (const element of [els.imageOutputFolderInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.resultFilenameInput, els.chooseImageFolderBtn, els.useSourceFolderBtn, els.changeImageFolderBtn, els.chooseResultFolderBtn, els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.disabled = outputLocked;
+    for (const element of [els.imageOutputFolderInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.chooseImageFolderBtn, els.useSourceFolderBtn, els.changeImageFolderBtn, els.chooseResultFolderBtn, els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.disabled = outputLocked;
     if (state.outputSettings?.image?.kind === "directory") els.imageOutputFolderInput.disabled = true;
     if (state.outputSettings?.result?.kind !== "downloads") els.resultDownloadsFolderInput.disabled = true;
   }
@@ -65,10 +68,11 @@
     const queue = state.prepared?.queue || [];
     els.queueList.textContent = "";
     els.queueSummary.textContent = `${queue.length} job${queue.length === 1 ? "" : "s"}`;
-    for (const item of queue) {
+    for (const item of (state.queueExpanded ? queue : queue.slice(0, 6))) {
       const li = document.createElement("li");
       li.className = ["RUNNING", "RECONCILING"].includes(item.status) ? "current" : item.status.toLowerCase();
-      li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · refs: ${item.references.map((file) => file.alias || window.DacRunnerCore.basename(file.fileName)).join(", ")}` : " · refs: none"} · ${item.status} · ${window.DacRunState.stageFor(item)} · attempt ${item.attempt_count}/${1 + item.settings.max_retries}${item.result_file ? ` · SAVED ✓ ${item.result_file}` : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
+      const retryLabel = item.status === "RUNNING" && item.phase === "PRE_SUBMIT" ? `attempt ${item.attempt_count}/${1 + item.settings.max_retries}` : `attempt ${item.attempt_count}${item.phase !== "PRE_SUBMIT" ? " · Auto-retry: No" : ""}`;
+      li.textContent = `#${item.number} ${item.job.id}${item.references.length ? ` · refs: ${item.references.map((file) => file.alias || window.DacRunnerCore.basename(file.fileName)).join(", ")}` : " · refs: none"} · ${item.status} · ${window.DacRunState.stageFor(item)} · ${retryLabel}${item.result_file ? ` · SAVED ✓ ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : ""}${item.protected_checkpoint ? " · Output checkpoint protected" : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
       li.addEventListener("click", () => { state.selectedJobId = item.job.id; renderQueue(); controls(); });
       if (state.selectedJobId === item.job.id) {
         const details = document.createElement("details"); details.open = true;
@@ -80,6 +84,31 @@
     }
     const failures = queue.filter((item) => ["FAILED", "INTERRUPTED"].includes(item.status));
     els.failedJobsText.textContent = `Failed / Interrupted: ${failures.length}${failures.length ? ` · ${failures.map((item) => `${item.job.id}: ${item.failure_type || item.last_error || "OTHER"}`).join("; ")}` : ""}`;
+    els.viewQueueBtn.textContent = state.queueExpanded ? "Collapse queue" : `View full queue${queue.length > 6 ? ` (${queue.length})` : ""}`;
+    renderOutputScreen();
+  }
+
+  function renderOutputScreen() {
+    if (!els.outputList) return;
+    const queue = state.prepared?.queue || [];
+    const count = (status) => queue.filter((item) => item.status === status).length;
+    const interrupted = count("INTERRUPTED") + count("STOPPED");
+    els.outputSummaryText.textContent = queue.length ? `Total ${queue.length} · Success ${count("SUCCESS")} · Failed ${count("FAILED")}${interrupted ? ` · Interrupted ${interrupted}` : ""}` : "No completed run.";
+    els.outputList.textContent = "";
+    for (const item of (state.outputsExpanded ? queue : queue.slice(0, 6))) {
+      const li = document.createElement("li");
+      li.className = item.status.toLowerCase();
+      li.textContent = `${item.job.id} · ${item.status}${item.result_file ? ` · ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : ""}`;
+      els.outputList.appendChild(li);
+    }
+    els.viewOutputsBtn.textContent = state.outputsExpanded ? "Collapse outputs" : `View all outputs${queue.length > 6 ? ` (${queue.length})` : ""}`;
+    const values = state.outputSettings ? window.DacOutputLocation.effective(state.outputSettings) : null;
+    const artifacts = [];
+    if (values?.saveImages) artifacts.push(`Images folder: ${window.DacOutputLocation.locationLabel(values.image)}`);
+    if (values?.saveResultXlsx && state.resultFile) artifacts.push(`Result XLSX: ${state.resultFile}`);
+    if (values?.saveAuditJsonl && state.auditFile) artifacts.push(`Audit JSONL: ${state.auditFile}`);
+    els.artifactList.textContent = artifacts.length ? artifacts.join("\n") : "No saved run artifacts.";
+    els.openOutputFolderBtn.disabled = !values || values.image.kind !== "downloads";
   }
 
   function renderReferenceGallery() {
@@ -98,6 +127,13 @@
 
   function outputPlan() { return window.DacOutputLocation.runPlan(state.workbook?.fileName, state.outputSettings); }
 
+  function invalidateValidation(reason = "Configuration changed; validate again before Run.") {
+    if (!state.workbook || state.running) return;
+    state.validated = false;
+    setStatus("IDLE", "NOT VALIDATED");
+    progress(reason);
+  }
+
   function renderPlan() {
     els.runPlanList.textContent = "";
     if (!state.workbook || !state.outputSettings) {
@@ -106,7 +142,10 @@
     try {
       const plan = outputPlan();
       const execution = state.prepared ? window.DacRunnerCore.planSummary(state.prepared.queue, state.prepared.settings) : null;
-      const rows = [["Source workbook", plan.sourceWorkbook], ["Generated images", plan.imageDestination], ["Result XLSX", plan.resultDestination], ["Naming", plan.namingPattern], ["Jobs", execution ? `${execution.total_jobs} total · ${execution.eligible_jobs} eligible · ${execution.skipped_done} skipped DONE · ${execution.failed_jobs} failed · ${execution.pending_jobs} pending` : "—"], ["Attempts", execution ? `${execution.total_max_attempts} maximum total · retry allowance ${execution.retry_allowance}` : "—"], ["Effective settings", state.prepared ? `timeout ${state.prepared.settings.timeout_sec}s · cooldown ${state.prepared.settings.safety_cooldown_sec}s · max refs ${state.prepared.settings.max_input_images}` : "—"]];
+      const values = window.DacOutputLocation.effective(state.outputSettings);
+      const sample = state.prepared?.queue?.[0];
+      const imagePreview = window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: sample?.job?.id || "JOB_001", attempt: 1, index: sample?.number || 1 }, "png");
+      const rows = [["Source workbook", plan.sourceWorkbook], ["Generated images", `${plan.imageDestination}/${imagePreview}`], ["Result XLSX", plan.resultDestination], ["Audit JSONL", window.DacOutputLocation.fileLabel(values.result, values.auditFilename)], ["Collision", values.collisionPolicy], ["Saves", `images: ${values.saveImages ? "on" : "off"} · XLSX: ${values.saveResultXlsx ? "on" : "off"} · audit: ${values.saveAuditJsonl ? "on" : "off"}`], ["Naming", plan.namingPattern], ["Jobs", execution ? `${execution.total_jobs} total · ${execution.eligible_jobs} eligible · ${execution.skipped_done} skipped DONE · ${execution.failed_jobs} failed · ${execution.pending_jobs} pending` : "—"], ["Attempts", execution ? `${execution.total_max_attempts} maximum total · retry allowance ${execution.retry_allowance}` : "—"], ["Effective settings", state.prepared ? `timeout ${state.prepared.settings.timeout_sec}s · cooldown ${state.prepared.settings.safety_cooldown_sec}s · max refs ${state.prepared.settings.max_input_images}` : "—"]];
       for (const [label, value] of rows) {
         const dt = document.createElement("dt"); dt.textContent = label;
         const dd = document.createElement("dd"); dd.textContent = value;
@@ -119,17 +158,24 @@
 
   function renderOutput() {
     if (!state.outputSettings || !state.workbook) {
-      els.imageOutputText.textContent = "—"; els.resultOutputText.textContent = "—"; els.outputPermissionText.textContent = "Open an XLSX to set locations."; renderPlan(); controls(); return;
+      els.imageOutputText.textContent = "—"; els.resultOutputText.textContent = "—"; els.auditOutputText.textContent = "—"; els.outputPermissionText.textContent = "Open an XLSX to set locations."; renderPlan(); controls(); return;
     }
     try {
       const values = window.DacOutputLocation.effective(state.outputSettings);
       els.imageOutputText.textContent = window.DacOutputLocation.locationLabel(values.image);
       els.resultOutputText.textContent = window.DacOutputLocation.fileLabel(values.result, values.resultFilename);
+      els.auditOutputText.textContent = window.DacOutputLocation.fileLabel(values.result, values.auditFilename);
       els.imageOutputFolderInput.value = values.image.kind === "downloads" ? values.image.folder : "";
       els.resultLocationMode.value = state.outputSettings.result?.kind || "same_as_image";
       els.resultDownloadsFolderInput.value = values.result.kind === "downloads" ? values.result.folder : "";
       els.resultDownloadsFolderLabel.hidden = state.outputSettings.result?.kind !== "downloads";
       els.resultFilenameInput.value = values.resultFilename;
+      els.imagePatternInput.value = values.imagePattern;
+      els.auditFilenameInput.value = values.auditFilename;
+      els.collisionPolicyInput.value = values.collisionPolicy;
+      els.saveImagesInput.checked = values.saveImages;
+      els.saveResultXlsxInput.checked = values.saveResultXlsx;
+      els.saveAuditJsonlInput.checked = values.saveAuditJsonl;
       els.outputPermissionText.textContent = values.image.kind === "directory" || values.result.kind === "directory" ? "Custom folder authorization will be checked before Run." : "Explicit Chrome Downloads location.";
     } catch (error) {
       els.outputPermissionText.textContent = error.message;
@@ -167,7 +213,7 @@
   }
 
   async function openWorkbook() {
-    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.terminal = 0; renderOutput();
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; renderOutput();
     try {
       state.workbook = await window.DacXlsx.open(els.workbookInput.files?.[0]);
       state.outputSettings = window.DacOutputLocation.fromWorkbook(state.workbook.config, state.workbook.fileName);
@@ -187,7 +233,7 @@
       const settings = state.prepared.settings;
       els.workbookText.textContent = `${state.workbook.fileName} · ${state.prepared.queue.length} jobs · ${settings.delay_min_sec}-${settings.delay_max_sec}s delay`;
       els.timeoutSecInput.value = settings.timeout_sec; els.maxRetriesInput.value = settings.max_retries; els.safetyCooldownInput.value = settings.safety_cooldown_sec; els.maxInputImagesInput.value = settings.max_input_images; els.continueOnErrorInput.value = String(settings.continue_on_error); els.rerunDoneInput.value = String(settings.rerun_done);
-      setStatus("IDLE", "READY"); progress("Review the Run Plan, then Validate before Run."); renderQueue(); renderOutput();
+      invalidateValidation(); renderQueue(); renderOutput();
     } catch (error) {
       state.prepared = null; setStatus("ERROR"); progress(error.message); log(error.message, "error"); controls();
     }
@@ -198,6 +244,7 @@
     const handle = await window.showDirectoryPicker({ mode: "readwrite" });
     const location = window.DacOutputLocation.directoryLocation(handle, handle.name);
     state.outputSettings[target] = location;
+    invalidateValidation();
     els.outputPermissionText.textContent = `${prompt}: ${location.label}.`;
     renderOutput();
   }
@@ -209,6 +256,7 @@
     const location = window.DacOutputLocation.directoryLocation(handle, handle.name);
     state.outputSettings.image = location;
     state.outputSettings.result = { kind: "same_as_image" };
+    invalidateValidation();
     els.outputPermissionText.textContent = `Source-folder mode: ${location.label}. Confirm that this is the folder containing ${state.workbook.fileName}.`;
     renderOutput();
   }
@@ -216,6 +264,7 @@
   function setImageDownloadsFolder() {
     try {
       state.outputSettings.image = window.DacOutputLocation.downloadsLocation(els.imageOutputFolderInput.value);
+      invalidateValidation();
       els.outputPermissionText.textContent = "Using the explicit Chrome Downloads location.";
       renderOutput();
     } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
@@ -227,19 +276,33 @@
       if (mode === "same_as_image") state.outputSettings.result = { kind: "same_as_image" };
       else if (mode === "downloads") state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value || state.outputSettings.image?.folder || "Duc Auto ChatGPT");
       else state.outputSettings.result = { kind: "directory", handle: null, label: "No authorized result folder selected" };
+      invalidateValidation();
       renderOutput();
     } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
 
   function setResultDownloadsFolder() {
     if (state.outputSettings.result?.kind !== "downloads") return;
-    try { state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value); renderOutput(); }
+    try { state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value); invalidateValidation(); renderOutput(); }
     catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
 
   function setResultFilename() {
-    try { state.outputSettings.resultFilename = window.DacOutputLocation.safeFilename(els.resultFilenameInput.value, window.DacOutputLocation.baseResultName(state.workbook.fileName)); renderOutput(); }
+    try { state.outputSettings.resultFilename = window.DacOutputLocation.safeFilename(els.resultFilenameInput.value, window.DacOutputLocation.baseResultName(state.workbook.fileName)); invalidateValidation(); renderOutput(); }
     catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
+  }
+
+  function setArtifactNaming() {
+    try {
+      state.outputSettings.imagePattern = window.DacOutputLocation.validateImagePattern(els.imagePatternInput.value);
+      state.outputSettings.resultFilename = window.DacOutputLocation.safeFilename(els.resultFilenameInput.value, window.DacOutputLocation.baseResultName(state.workbook.fileName));
+      state.outputSettings.auditFilename = window.DacOutputLocation.safeFilename(els.auditFilenameInput.value, window.DacOutputLocation.baseAuditName(state.workbook.fileName));
+      state.outputSettings.collisionPolicy = window.DacOutputLocation.collisionPolicy(els.collisionPolicyInput.value);
+      state.outputSettings.saveImages = els.saveImagesInput.checked;
+      state.outputSettings.saveResultXlsx = els.saveResultXlsxInput.checked;
+      state.outputSettings.saveAuditJsonl = els.saveAuditJsonlInput.checked;
+      invalidateValidation(); renderOutput(); renderOutputScreen();
+    } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
 
   async function updateRuntimeOverrides() {
@@ -252,6 +315,7 @@
       continue_on_error: els.continueOnErrorInput.value,
       rerun_done: els.rerunDoneInput.value
     };
+    invalidateValidation();
     await prepare();
   }
 
@@ -267,7 +331,7 @@
   }
 
   async function validate() {
-    try { await authoritativeValidate(); setStatus("DONE", "VALID"); progress("Validation passed. Ready to run."); renderQueue(); log("Validation passed, including output write permission.", "done"); }
+    try { await authoritativeValidate(); state.validated = true; setStatus("DONE", "READY TO RUN"); progress("Validation passed. Ready to run."); renderQueue(); log("Validation passed, including output write permission.", "done"); }
     catch (error) { setStatus("ERROR"); progress(error.message); log(error.message, "error"); }
     controls();
   }
@@ -283,19 +347,21 @@
     } catch (_) { return "png"; }
   }
 
-  function download(url, jobId, outputFolder) {
-    return new Promise((resolve) => chrome.runtime.sendMessage({ type: "DAC_DOWNLOAD_IMAGE", url, jobId, outputFolder }, resolve));
+  function download(url, jobId, outputFolder, filename, collisionPolicy) {
+    return new Promise((resolve) => chrome.runtime.sendMessage({ type: "DAC_DOWNLOAD_IMAGE", url, jobId, outputFolder, filename, collisionPolicy }, resolve));
   }
 
-  async function saveGeneratedImage(url, jobId, location) {
-    if (location.kind === "downloads") return download(url, jobId, location.folder);
+  async function saveGeneratedImage(url, item, location) {
+    const values = window.DacOutputLocation.effective(state.outputSettings);
+    const extension = imageExtensionFromUrl(url);
+    const requested = window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, extension);
+    if (location.kind === "downloads") return download(url, item.job.id, location.folder, `${location.folder}/${requested}`, values.collisionPolicy);
     const response = await fetch(url, { credentials: "include" });
     if (!response.ok) throw new Error(`Could not fetch the generated image for the selected folder (${response.status}).`);
     const blob = await response.blob();
     if (!blob.size) throw new Error("Generated image download was empty.");
-    const extension = window.DacOutputLocation.actualExtension(blob, imageExtensionFromUrl(url));
-    const filename = await window.DacOutputLocation.writeUniqueFile(location.handle, window.DacOutputLocation.imageCandidates(jobId, extension), blob);
-    return { ok: true, filename: window.DacOutputLocation.fileLabel(location, filename), download_id: null, storage: "directory" };
+    const actual = await window.DacOutputLocation.writeFileWithPolicy(location.handle, window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, window.DacOutputLocation.actualExtension(blob, extension)), blob, values.collisionPolicy);
+    return { ok: true, filename: window.DacOutputLocation.fileLabel(location, actual.filename), download_id: null, storage: "directory", write_outcome: actual.outcome };
   }
 
   function update(item, values) {
@@ -303,6 +369,9 @@
     if (Object.hasOwn(values, "attempt_phase")) item.phase = values.attempt_phase;
     if (Object.hasOwn(values, "result_file")) item.result_file = values.result_file;
     if (Object.hasOwn(values, "result_download_id")) item.result_download_id = values.result_download_id;
+    if (Object.hasOwn(values, "requested_file")) item.requested_file = values.requested_file;
+    if (Object.hasOwn(values, "write_outcome")) item.write_outcome = values.write_outcome;
+    if (Object.hasOwn(values, "detected_not_downloaded")) item.detected_not_downloaded = Boolean(values.detected_not_downloaded);
     if (Object.hasOwn(values, "failure_type")) item.failure_type = values.failure_type;
     if (Object.hasOwn(values, "last_error")) item.last_error = values.last_error;
     if (Object.hasOwn(values, "submitted_at")) item.submitted_at = values.submitted_at || "";
@@ -319,47 +388,60 @@
     const plan = outputPlan();
     const settings = state.prepared.settings;
     const effectiveResult = window.DacOutputLocation.effective(state.outputSettings).result;
-    const resultDestination = actualResultFilename ? window.DacOutputLocation.fileLabel(effectiveResult, actualResultFilename) : plan.resultDestination;
-    const snapshot = { effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: plan.namingPattern, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done };
+    const actual = String(actualResultFilename || "");
+    const resultDestination = actual ? (/^(?:[A-Za-z]:[\\/]|\/)/.test(actual) || actual.startsWith(window.DacOutputLocation.locationLabel(effectiveResult)) ? actual : window.DacOutputLocation.fileLabel(effectiveResult, actual)) : plan.resultDestination;
+    const output = window.DacOutputLocation.effective(state.outputSettings);
+    const snapshot = { effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done };
     window.DacXlsx.updateConfigSnapshot(state.workbook, snapshot);
     for (const item of state.prepared.queue) update(item, snapshot);
   }
 
   async function saveLedger(location) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
+    if (!values.saveResultXlsx) return "";
     let filename = values.resultFilename;
     if (location.kind === "directory") {
-      filename = await window.DacOutputLocation.findAvailableFilename(location.handle, window.DacOutputLocation.fileCandidates(filename));
-      snapshotOutputSettings(filename);
       const blob = window.DacXlsx.downloadBlob(state.workbook);
-      await window.DacOutputLocation.writeNewFile(location.handle, filename, blob);
-      log(`Result ledger written: ${window.DacOutputLocation.fileLabel(location, filename)}.`, "done");
-      return filename;
+      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, filename, blob, values.collisionPolicy);
+      snapshotOutputSettings(written.filename); const actual = window.DacOutputLocation.fileLabel(location, written.filename);
+      log(`Result ledger ${written.outcome}: ${actual}.`, "done"); return actual;
     }
     const blob = window.DacXlsx.downloadBlob(state.workbook);
     const objectUrl = URL.createObjectURL(blob);
     try {
-      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: `${location.folder}/${filename}`, conflictAction: "uniquify", saveAs: false });
+      await assertDownloadCollisionPolicy(location, filename, values.collisionPolicy);
+      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: `${location.folder}/${filename}`, conflictAction: values.collisionPolicy === "fail" ? "uniquify" : values.collisionPolicy, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
+      snapshotOutputSettings(item.filename);
       log(`Result ledger downloaded: ${item.filename}.`, "done");
       return item.filename;
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
   }
 
   async function saveAuditLog(location) {
+    const values = window.DacOutputLocation.effective(state.outputSettings);
+    if (!values.saveAuditJsonl) return "";
     const payload = state.auditEvents.map((event) => JSON.stringify(event)).join("\n") + (state.auditEvents.length ? "\n" : "");
     const blob = new Blob([payload], { type: "application/jsonl" });
-    const requested = `run-${state.runId}.jsonl`;
+    const requested = values.auditFilename;
     if (location.kind === "directory") {
-      const filename = await window.DacOutputLocation.writeUniqueFile(location.handle, window.DacOutputLocation.fileCandidates(requested), blob);
-      return window.DacOutputLocation.fileLabel(location, filename);
+      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, requested, blob, values.collisionPolicy);
+      return window.DacOutputLocation.fileLabel(location, written.filename);
     }
     const objectUrl = URL.createObjectURL(blob);
     try {
-      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: `${location.folder}/${requested}`, conflictAction: "uniquify", saveAs: false });
+      await assertDownloadCollisionPolicy(location, requested, values.collisionPolicy);
+      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: `${location.folder}/${requested}`, conflictAction: values.collisionPolicy === "fail" ? "uniquify" : values.collisionPolicy, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
       return item.filename;
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
+  }
+
+  async function assertDownloadCollisionPolicy(location, filename, policy) {
+    if (policy !== "fail") return;
+    const requested = `${location.folder}/${filename}`.replace(/\//g, "\\").toLowerCase();
+    const matches = await chrome.downloads.search({ filename: `${location.folder}/${filename}` });
+    if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw new Error(`COLLISION: Output already exists: ${filename}`);
   }
 
   async function waitForCompletedDownload(downloadId, timeoutMs = 120000) {
@@ -425,14 +507,23 @@
       item.runtime_stage = "SAVING"; setCurrent(item, item.runtime_stage, "Writing generated image to the configured output.");
       if (!result?.image_url) throw new Error("No attributable generated image was found.");
       if (item.references.some((reference) => reference.dataUrl === result.image_url)) throw new Error("INPUT_IMAGE_FALSE_POSITIVE: output URL matches a selected reference image.");
-      const accepted = await saveGeneratedImage(result.image_url, item.job.id, imageLocationFor(item, effectiveOutput));
-      if (!accepted?.ok) throw new Error(accepted?.message || accepted?.error || "Image output was not accepted.");
-      item.phase = "OUTPUT_SAVED";
-      const outputSavedAt = new Date().toISOString();
-      update(item, { status: "RUNNING", attempt_phase: item.phase, result_file: accepted.filename, result_download_id: accepted.download_id ?? "", output_saved_at: outputSavedAt, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
-      audit("OUTPUT_SAVED", item);
-      item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image checkpoint recorded; waiting for ChatGPT to become idle.");
-      renderQueue(); progress(`SAVED ✓ ${accepted.filename}`);
+      if (!effectiveOutput.saveImages) {
+        item.phase = "OUTPUT_SAVED";
+        item.detected_not_downloaded = true;
+        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), detected_not_downloaded: true, result_file: "", result_download_id: "", write_outcome: "detected_not_downloaded", detection_diagnostics: JSON.stringify(result?.detection || {}) });
+        audit("DETECTED_NOT_DOWNLOADED", item, { message: "Attributable image detected; generated-image download is disabled." });
+        item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image detected; download disabled.");
+        renderQueue(); progress(`${item.job.id} detected; image download disabled.`);
+      } else {
+        const accepted = await saveGeneratedImage(result.image_url, item, imageLocationFor(item, effectiveOutput));
+        if (!accepted?.ok) throw new Error(accepted?.message || accepted?.error || "Image output was not accepted.");
+        item.phase = "OUTPUT_SAVED";
+        const outputSavedAt = new Date().toISOString();
+        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), detected_not_downloaded: false, result_file: accepted.filename, result_download_id: accepted.download_id ?? "", output_saved_at: outputSavedAt, write_outcome: accepted.write_outcome || "written", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+        audit("OUTPUT_SAVED", item, { message: `write_outcome=${accepted.write_outcome || "written"}` });
+        item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image checkpoint recorded; waiting for ChatGPT to become idle.");
+        renderQueue(); progress(`SAVED ✓ ${accepted.filename}`);
+      }
     } catch (error) {
       markInterrupted(item, window.DacRunnerCore.classifyFailure(error, item.phase), messageOf(error));
       return { completed: true, halted: true };
@@ -562,11 +653,11 @@
       nextTask(null, "—"); setStatus(state.stopRequested ? "IDLE" : halted ? "ERROR" : "DONE", state.stopRequested ? "STOPPED" : halted ? "HALTED" : "DONE"); progress(state.stopRequested ? "Stopped. No later jobs were submitted." : halted ? "Batch halted after a protected terminal state." : "Queue complete.");
     } finally {
       audit("RUN_END", null, { message: state.stopRequested ? "STOPPED" : halted ? "HALTED" : "COMPLETE" });
-      try { state.auditFile = await saveAuditLog(effectiveOutput.result); snapshotOutputSettings(null, state.auditFile); log(`Audit log written: ${state.auditFile}.`, "done"); }
+      try { state.auditFile = await saveAuditLog(effectiveOutput.result); snapshotOutputSettings(null, state.auditFile); if (state.auditFile) log(`Audit log written: ${state.auditFile}.`, "done"); }
       catch (error) { log(`Audit log failed: ${messageOf(error)}`, "error"); }
-      try { await saveLedger(effectiveOutput.result); }
+      try { state.resultFile = await saveLedger(effectiveOutput.result); }
       catch (error) { setStatus("ERROR", "RESULT NOT SAVED"); progress(`Result XLSX was not written: ${messageOf(error)}`); log(`Result XLSX failed: ${messageOf(error)}`, "error"); }
-      state.running = false; state.stopRequested = false; renderQueue(); controls();
+      state.running = false; state.stopRequested = false; renderQueue(); renderOutputScreen(); controls();
       stopRuntimeTicker();
     }
   }
@@ -583,12 +674,18 @@
 
   async function stop() { state.stopRequested = true; progress("Stopping current operation…"); try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop prevents further jobs */ } }
 
+  function showScreen(id) {
+    document.querySelectorAll(".workflow-screen").forEach((screen) => screen.classList.toggle("active", screen.id === id));
+    document.querySelectorAll(".workflow-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.screen === id));
+  }
+
   els.workbookInput.addEventListener("change", openWorkbook);
   els.referencesInput.addEventListener("change", () => loadFiles().catch((error) => log(error.message, "error")));
   els.imageOutputFolderInput.addEventListener("change", setImageDownloadsFolder);
   els.resultLocationMode.addEventListener("change", setResultLocation);
   els.resultDownloadsFolderInput.addEventListener("change", setResultDownloadsFolder);
   els.resultFilenameInput.addEventListener("change", setResultFilename);
+  for (const element of [els.imagePatternInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput]) element.addEventListener("change", setArtifactNaming);
   for (const element of [els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.addEventListener("change", () => updateRuntimeOverrides().catch((error) => log(error.message, "error")));
   els.chooseImageFolderBtn.addEventListener("click", () => chooseDirectory("Image folder selected", "image").catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   els.changeImageFolderBtn.addEventListener("click", () => chooseDirectory("Image folder changed", "image").catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
@@ -596,10 +693,13 @@
   els.chooseResultFolderBtn.addEventListener("click", () => chooseDirectory("Result XLSX folder selected", "result").then(() => { els.resultLocationMode.value = "directory"; renderOutput(); }).catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
   els.validateBtn.addEventListener("click", validate);
   els.runBtn.addEventListener("click", () => run("all"));
-  els.runPendingBtn.addEventListener("click", () => run("pending"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
-  els.retrySelectedBtn.addEventListener("click", () => run("selected"));
   els.stopBtn.addEventListener("click", stop);
   els.clearLogsBtn.addEventListener("click", () => { els.logList.textContent = ""; });
-  renderOutput(); renderRuntime(); controls();
+  els.viewQueueBtn.addEventListener("click", () => { state.queueExpanded = !state.queueExpanded; renderQueue(); });
+  els.viewOutputsBtn.addEventListener("click", () => { state.outputsExpanded = !state.outputsExpanded; renderOutputScreen(); });
+  els.loadNewWorkbookBtn.addEventListener("click", () => els.workbookInput.click());
+  els.openOutputFolderBtn.addEventListener("click", () => chrome.downloads.showDefaultFolder?.());
+  document.querySelectorAll(".workflow-tab").forEach((tab) => tab.addEventListener("click", () => showScreen(tab.dataset.screen)));
+  renderOutput(); renderRuntime(); renderOutputScreen(); controls();
 })();

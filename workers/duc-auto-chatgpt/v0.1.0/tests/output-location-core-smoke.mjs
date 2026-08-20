@@ -24,7 +24,7 @@ function directory(name, permission = "granted") {
 
 const settings = output.fromWorkbook({ output_folder: "Workbook Images" }, "brief.xlsx");
 assert.equal(output.locationLabel(settings.image), "Downloads/Workbook Images", "XLSX output_folder is displayed as the initial effective location");
-assert.equal(output.runPlan("brief.xlsx", settings).resultDestination, "Downloads/Workbook Images/brief-result.xlsx");
+assert.equal(output.runPlan("brief.xlsx", settings).resultDestination, "Downloads/Workbook Images/brief__results.xlsx");
 
 const selected = directory("Selected Images");
 settings.image = output.directoryLocation(selected, selected.name);
@@ -36,7 +36,7 @@ settings.image = output.directoryLocation(source, source.name);
 settings.result = { kind: "same_as_image" };
 const sourcePlan = output.runPlan("brief.xlsx", settings);
 assert.equal(sourcePlan.imageDestination, "Authorized folder: Source Workbook Folder", "Use Source Folder has the same authorized-folder semantics");
-assert.equal(sourcePlan.resultDestination, "Authorized folder: Source Workbook Folder/brief-result.xlsx");
+assert.equal(sourcePlan.resultDestination, "Authorized folder: Source Workbook Folder/brief__results.xlsx");
 
 const revoked = directory("Revoked", "denied");
 settings.image = output.directoryLocation(revoked, revoked.name);
@@ -56,10 +56,10 @@ assert.equal(saved, "job_001__attempt-01.webp", "an existing image is never sile
 assert.equal(writable.files.get(saved).blob.size, 10, "generated image is written to the selected directory handle");
 
 const resultFolder = directory("Result Folder");
-resultFolder.files.set("brief-result.xlsx", { existing: true });
-const finalResultName = await output.findAvailableFilename(resultFolder, output.fileCandidates("brief-result.xlsx"));
-assert.equal(finalResultName, "brief-result__attempt-01.xlsx", "custom-directory result collision selects the actual final filename before serialization");
-assert.equal(output.fileLabel(output.directoryLocation(resultFolder, resultFolder.name), finalResultName), "Authorized folder: Result Folder/brief-result__attempt-01.xlsx", "result provenance can record the actual selected custom-folder path");
+resultFolder.files.set("brief__results.xlsx", { existing: true });
+const finalResultName = await output.findAvailableFilename(resultFolder, output.fileCandidates("brief__results.xlsx"));
+assert.equal(finalResultName, "brief__results__attempt-01.xlsx", "custom-directory result collision selects the actual final filename before serialization");
+assert.equal(output.fileLabel(output.directoryLocation(resultFolder, resultFolder.name), finalResultName), "Authorized folder: Result Folder/brief__results__attempt-01.xlsx", "result provenance can record the actual selected custom-folder path");
 await output.writeNewFile(resultFolder, finalResultName, { size: 22, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 assert.equal(resultFolder.files.get(finalResultName).blob.size, 22);
 await assert.rejects(() => output.writeNewFile(resultFolder, finalResultName, { size: 23 }), /Refusing to overwrite/, "custom-directory no-overwrite behavior remains enforced");
