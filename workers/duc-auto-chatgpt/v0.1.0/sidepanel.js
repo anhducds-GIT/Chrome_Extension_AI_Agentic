@@ -81,7 +81,7 @@
     }
     const isFailed = ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status);
     const isDone = item.status === "SUCCESS";
-    
+
     let currentStepIndex = 0;
     if (isDone) {
       currentStepIndex = 3;
