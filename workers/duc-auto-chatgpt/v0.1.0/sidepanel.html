@@ -145,18 +145,21 @@
         <div id="planCheckSummary" class="plan-check-summary">Load an XLSX, then Check Plan.</div>
         <div class="readiness-checklist" id="readinessChecklist">
           <div class="check-item" id="checkWorkbook"><span class="check-icon">○</span><span class="check-label">Workbook</span><span class="check-status" id="statusWorkbook">Not loaded</span></div>
+          <div class="check-item" id="checkJobs"><span class="check-icon">○</span><span class="check-label">Jobs</span><span class="check-status" id="statusJobs">Check plan</span></div>
           <div class="check-item" id="checkReferences"><span class="check-icon">○</span><span class="check-label">References</span><span class="check-status" id="statusReferences">0 images</span></div>
           <div class="check-item" id="checkChatGPT"><span class="check-icon">○</span><span class="check-label">ChatGPT connection</span><span class="check-status" id="statusChatGPT">Checking</span></div>
-          <div class="check-item" id="checkOutput"><span class="check-icon">○</span><span class="check-label">Output location</span><span class="check-status" id="statusOutput">Ready</span></div>
+          <div class="check-item" id="checkOutput"><span class="check-icon">○</span><span class="check-label">Output destination</span><span class="check-status" id="statusOutput">Ready</span></div>
+          <div class="check-item" id="checkSaveModes"><span class="check-icon">○</span><span class="check-label">Save modes</span><span class="check-status" id="statusSaveModes">Check plan</span></div>
+          <div class="check-item" id="checkNaming"><span class="check-icon">○</span><span class="check-label">Naming</span><span class="check-status" id="statusNaming">Check plan</span></div>
           <div class="check-item" id="checkSettings"><span class="check-icon">○</span><span class="check-label">Run settings</span><span class="check-status" id="statusSettings">Checking</span></div>
         </div>
         <div id="validationGuidance" class="validation-guidance" aria-live="polite"></div>
         <div id="readinessBanner" class="readiness-banner not-ready">CHECK PLAN BEFORE RUN</div>
         <button id="runBtn" class="primary dominant-btn" disabled type="button">▶ START RUN</button>
-        <details class="secondary-details">
-          <summary>View run plan</summary>
-          <dl id="runPlanList" class="run-plan"></dl>
-        </details>
+        <div class="review-packet-actions">
+          <button id="copyReviewPacketBtn" class="secondary small" disabled type="button">Copy for AI Review</button>
+          <span id="copyReviewPacketStatus" class="muted" aria-live="polite">Check Plan to create a review packet.</span>
+        </div>
       </section>
     </section>
 
@@ -333,6 +336,7 @@
   <script src="run-state-core.js"></script>
   <script src="output-location-core.js"></script>
   <script src="plan-diagnostics-core.js"></script>
+  <script src="orchestrator-review-core.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

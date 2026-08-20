@@ -136,7 +136,7 @@
     if (!outputCheck) findings.push(makeFinding("OUTPUT_DESTINATION_MISSING", "BLOCKER", "output", {
       message: "No writable output destination selected.", guidance: "Choose Chrome Downloads or authorize an output folder.", action: "Choose output destination"
     }));
-    else if (!outputCheck.ok) findings.push(makeFinding(outputCheck.missingDestination ? "OUTPUT_DESTINATION_MISSING" : "OUTPUT_PREFLIGHT_FAILED", "BLOCKER", "output", {
+    else if (!outputCheck.ok) findings.push(makeFinding(outputCheck.missingDestination ? "OUTPUT_DESTINATION_MISSING" : outputCheck.namingInvalid ? "OUTPUT_NAMING_INVALID" : "OUTPUT_PREFLIGHT_FAILED", "BLOCKER", "output", {
       message: outputCheck.error || "Output destination is not writable.", guidance: "Choose or re-authorize the output destination, then check again.", action: "Choose output destination"
     }));
     else {

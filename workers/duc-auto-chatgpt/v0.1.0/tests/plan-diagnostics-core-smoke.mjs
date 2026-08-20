@@ -49,5 +49,7 @@ const outputMissing = run({ outputCheck: null });
 assert.equal(outputMissing.blockers.find((item) => item.code === "OUTPUT_DESTINATION_MISSING").action, "Choose output destination");
 const authorizedUnset = run({ outputCheck: { ok: false, missingDestination: true, error: "No authorized folder selected." } });
 assert.equal(authorizedUnset.blockers.some((item) => item.code === "OUTPUT_DESTINATION_MISSING"), true);
+const invalidNaming = run({ outputCheck: { ok: false, namingInvalid: true, error: "Image filename pattern is required." } });
+assert.equal(invalidNaming.blockers.some((item) => item.code === "OUTPUT_NAMING_INVALID"), true);
 
 console.log("plan-diagnostics-core smoke: PASS");

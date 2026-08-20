@@ -15,12 +15,23 @@ assert.doesNotMatch(html, /Choose Image Folder|Use Source Folder|id="changeImage
 assert.match(html, /id="planCheckSummary"/);
 assert.match(html, /id="validationGuidance"/);
 assert.match(html, /id="checkSettings"/);
+assert.match(html, /id="checkJobs"/);
+assert.match(html, /id="checkSaveModes"/);
+assert.match(html, /id="checkNaming"/);
+assert.match(html, /id="copyReviewPacketBtn"[^>]*>Copy for AI Review/);
+assert.match(html, /orchestrator-review-core\.js/);
+assert.doesNotMatch(html, /id="runPlanList"/);
 
 assert.match(js, /async function diagnosticChatCheck\(\)/);
 assert.match(js, /window\.DacPlanDiagnostics\.analyze/);
+const diagnosticSource = js.slice(js.indexOf("async function diagnosticChatCheck()"), js.indexOf("async function diagnosticOutputCheck()"));
+assert.match(diagnosticSource, /DAC_PING/);
+assert.doesNotMatch(diagnosticSource, /DAC_RUN_IMAGE_JOB/);
 assert.match(js, /state\.prepared = window\.DacRunnerCore\.prepare\(state\.workbook, state\.files, state\.runtimeOverrides\);/);
 assert.match(js, /async function run\(mode = "all"\)[\s\S]*?effectiveOutput = await authoritativeValidate\(\)/);
 assert.match(js, /state\.validated = state\.diagnostics\.summary\.blockers === 0/);
+assert.match(js, /async function copyReviewPacket\(\)/);
+assert.match(js, /DacOrchestratorReview\.copyPayload\(reviewContext\(\)\)/);
 assert.match(js, /destinationFolderBtn\.textContent = values\.image\.kind === "directory" && values\.image\.handle \? "Change Folder" : "Choose Folder"/);
 assert.doesNotMatch(js, /chooseImageFolderBtn|useSourceFolderBtn|changeImageFolderBtn/);
 

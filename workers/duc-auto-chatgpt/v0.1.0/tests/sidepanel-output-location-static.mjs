@@ -4,7 +4,7 @@ import fs from "node:fs";
 const html = fs.readFileSync(new URL("../sidepanel.html", import.meta.url), "utf8");
 const source = fs.readFileSync(new URL("../sidepanel.js", import.meta.url), "utf8");
 
-for (const id of ["setupScreen", "runScreen", "outputScreen", "outputLocationCard", "imageOutputText", "resultOutputText", "auditOutputText", "imagePatternInput", "resultFilenameInput", "auditFilenameInput", "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput", "runPlanList", "runtimeSettingsCard", "referenceGallery", "failedJobsText", "runFailedBtn", "outputList", "artifactList"]) assert.match(html, new RegExp(`id="${id}"`));
+for (const id of ["setupScreen", "runScreen", "outputScreen", "outputLocationCard", "imageOutputText", "resultOutputText", "auditOutputText", "imagePatternInput", "resultFilenameInput", "auditFilenameInput", "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput", "copyReviewPacketBtn", "runtimeSettingsCard", "referenceGallery", "failedJobsText", "runFailedBtn", "outputList", "artifactList"]) assert.match(html, new RegExp(`id="${id}"`));
 assert.match(html, /SETUP/); assert.match(html, /RUN/); assert.match(html, /OUTPUT/);
 assert.match(html, /Download generated images/); assert.match(html, /Save Result XLSX/); assert.match(html, /Save Audit JSONL/);
 assert.match(html, /\{job_id\}, \{attempt\}, \{index\}/);

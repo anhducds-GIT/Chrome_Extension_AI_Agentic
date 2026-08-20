@@ -11,12 +11,12 @@
     "resultDownloadsFolderLabel", "resultAuthorizedControls", "resultHandleText", "imagePatternInput", "resultFilenameInput", "auditFilenameInput",
     "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput",
     "chooseResultFolderBtn",
-    "runPlanList", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput",
+    "copyReviewPacketBtn", "copyReviewPacketStatus", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput",
     "continueOnErrorInput", "rerunDoneInput", "outputSummaryText", "outputList", "artifactList",
     "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn",
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
-    "checkWorkbook", "statusWorkbook", "checkReferences", "statusReferences",
-    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance",
+    "checkWorkbook", "statusWorkbook", "checkJobs", "statusJobs", "checkReferences", "statusReferences",
+    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
     "currentAttemptBadge", "currentPromptPreview", "pipelineStepper", "operatorTimerArea",
@@ -331,32 +331,26 @@
   function updateReadinessChecklist() {
     if (!els.readinessChecklist) return;
     const diagnostics = state.diagnostics;
-    const severityFor = (scope) => {
-      const scoped = diagnostics?.findings?.filter((finding) => finding.scope === scope) || [];
-      return scoped.some((finding) => finding.severity === "BLOCKER") ? "BLOCKER" : scoped.some((finding) => finding.severity === "WARNING") ? "WARNING" : scoped.some((finding) => finding.severity === "OK") ? "OK" : null;
+    let settings = state.prepared?.settings || null;
+    if (!settings && state.workbook) {
+      try { settings = window.DacRunnerCore.runtimeConfig(state.workbook.config, state.runtimeOverrides); } catch (_) { /* The diagnostic row carries the invalid setting finding. */ }
+    }
+    const sections = window.DacOrchestratorReview.checklist({ workbook: state.workbook, prepared: state.prepared, diagnostics, outputSettings: state.outputSettings, output: window.DacOutputLocation, settings });
+    const targets = {
+      workbook: [els.checkWorkbook, els.statusWorkbook], jobs: [els.checkJobs, els.statusJobs], references: [els.checkReferences, els.statusReferences],
+      output: [els.checkOutput, els.statusOutput], save_modes: [els.checkSaveModes, els.statusSaveModes], naming: [els.checkNaming, els.statusNaming],
+      settings: [els.checkSettings, els.statusSettings], chatgpt: [els.checkChatGPT, els.statusChatGPT]
     };
-    const findingFor = (scope, code) => diagnostics?.findings?.find((finding) => finding.scope === scope && (!code || finding.code === code));
-    const setItem = (element, statusElement, scope, fallback) => {
+    const setItem = (element, statusElement, section) => {
       if (!element) return;
-      const severity = severityFor(scope);
+      const severity = section.severity;
       element.classList.toggle("ready", severity === "OK");
       element.classList.toggle("warning", severity === "WARNING" || severity === "BLOCKER");
       const icon = element.querySelector(".check-icon");
       if (icon) icon.textContent = severity === "OK" ? "✓" : severity ? "⚠" : "○";
-      if (statusElement) statusElement.textContent = fallback(severity, findingFor(scope));
+      if (statusElement) statusElement.textContent = section.detail;
     };
-    setItem(els.checkWorkbook, els.statusWorkbook, "workbook", (severity, finding) => finding?.message || (state.workbook ? `${state.workbook.jobs?.length || 0} jobs` : "Not loaded"));
-    setItem(els.checkReferences, els.statusReferences, "references", (_severity, finding) => {
-      const references = diagnostics?.references;
-      if (!references) return state.workbook ? "Check plan" : "0 required";
-      if (!references.required) return "0 required";
-      if (references.missing) return `${references.missing} missing`;
-      if (references.ambiguous) return `${references.ambiguous} ambiguous`;
-      return `${references.available} / ${references.required} available`;
-    });
-    setItem(els.checkChatGPT, els.statusChatGPT, "chatgpt", (_severity, finding) => finding?.message || "Check plan");
-    setItem(els.checkOutput, els.statusOutput, "output", (_severity, finding) => finding?.message || (state.outputSettings ? "Check plan" : "Not set"));
-    setItem(els.checkSettings, els.statusSettings, "settings", (_severity, finding) => finding?.message || "Check plan");
+    for (const section of sections) setItem(...(targets[section.id] || []), section);
     if (els.readinessBanner) {
       if (state.validated) {
         els.readinessBanner.className = "readiness-banner ready";
@@ -398,6 +392,7 @@
       }
     });
     updateReadinessChecklist();
+    updateReviewPacketControl();
   }
 
   function renderQueue() {
@@ -638,31 +633,25 @@
     renderDiagnosticGuidance();
   }
 
-  function renderPlan() {
-    els.runPlanList.textContent = "";
-    if (!state.workbook || !state.outputSettings) {
-      const empty = document.createElement("dd"); empty.textContent = "Open an XLSX to view the run plan."; els.runPlanList.appendChild(empty); return;
+  function reviewContext() {
+    let settings = state.prepared?.settings || null;
+    if (!settings && state.workbook) {
+      try { settings = window.DacRunnerCore.runtimeConfig(state.workbook.config, state.runtimeOverrides); } catch (_) { /* Check Plan publishes the invalid-setting finding. */ }
     }
-    try {
-      const plan = outputPlan();
-      const execution = state.prepared ? window.DacRunnerCore.planSummary(state.prepared.queue, state.prepared.settings) : null;
-      const values = window.DacOutputLocation.effective(state.outputSettings);
-      const sample = state.prepared?.queue?.[0];
-      const imagePreview = window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: sample?.job?.id || "JOB_001", attempt: 1, index: sample?.number || 1 }, "png");
-      const rows = [["Source workbook", plan.sourceWorkbook], ["Generated images", `${plan.imageDestination}/${imagePreview}`], ["Result XLSX", plan.resultDestination], ["Audit JSONL", window.DacOutputLocation.fileLabel(values.result, values.auditFilename)], ["Collision", values.collisionPolicy], ["Saves", `images: ${values.saveImages ? "on" : "off"} · XLSX: ${values.saveResultXlsx ? "on" : "off"} · audit: ${values.saveAuditJsonl ? "on" : "off"}`], ["Naming", plan.namingPattern], ["Jobs", execution ? `${execution.total_jobs} total · ${execution.eligible_jobs} eligible · ${execution.skipped_done} skipped DONE · ${execution.failed_jobs} failed · ${execution.pending_jobs} pending` : "—"], ["Attempts", execution ? `${execution.total_max_attempts} maximum total · retry allowance ${execution.retry_allowance}` : "—"], ["Effective settings", state.prepared ? `timeout ${state.prepared.settings.timeout_sec}s · cooldown ${state.prepared.settings.safety_cooldown_sec}s · max refs ${state.prepared.settings.max_input_images}` : "—"]];
-      for (const [label, value] of rows) {
-        const dt = document.createElement("dt"); dt.textContent = label;
-        const dd = document.createElement("dd"); dd.textContent = value;
-        els.runPlanList.append(dt, dd);
-      }
-    } catch (error) {
-      const empty = document.createElement("dd"); empty.textContent = error.message; els.runPlanList.appendChild(empty);
-    }
+    return { workbook: state.workbook, prepared: state.prepared, diagnostics: state.diagnostics, outputSettings: state.outputSettings, output: window.DacOutputLocation, settings };
+  }
+
+  function updateReviewPacketControl() {
+    if (!els.copyReviewPacketBtn || !els.copyReviewPacketStatus) return;
+    els.copyReviewPacketBtn.disabled = !state.workbook || state.running;
+    els.copyReviewPacketStatus.textContent = state.diagnostics
+      ? "Packet reflects the current local Check Plan; AI review cannot override blockers."
+      : state.workbook ? "Packet reflects current configuration; run Check Plan for local findings." : "Check Plan to create a review packet.";
   }
 
   function renderOutput() {
     if (!state.outputSettings || !state.workbook) {
-      els.imageOutputText.textContent = "—"; els.resultOutputText.textContent = "—"; els.auditOutputText.textContent = "—"; els.outputPermissionText.textContent = "Open an XLSX to set locations."; renderPlan(); controls(); return;
+      els.imageOutputText.textContent = "—"; els.resultOutputText.textContent = "—"; els.auditOutputText.textContent = "—"; els.outputPermissionText.textContent = "Open an XLSX to set locations."; updateReviewPacketControl(); controls(); return;
     }
     try {
       const values = window.DacOutputLocation.effective(state.outputSettings);
@@ -695,7 +684,7 @@
     } catch (error) {
       els.outputPermissionText.textContent = error.message;
     }
-    renderPlan(); controls();
+    updateReviewPacketControl(); controls();
   }
 
   async function activeTab() {
@@ -892,9 +881,12 @@
 
   async function diagnosticOutputCheck() {
     if (!state.outputSettings) return null;
+    let values;
+    try { values = window.DacOutputLocation.effective(state.outputSettings); }
+    catch (error) { return { ok: false, error: error.message, settings: state.outputSettings, namingInvalid: true }; }
     try {
       const check = await window.DacOutputLocation.preflight(state.outputSettings);
-      const values = check.effective || window.DacOutputLocation.effective(state.outputSettings);
+      values = check.effective || values;
       const locations = values.image === values.result ? [values.image] : [values.image, values.result];
       return { ...check, settings: state.outputSettings, missingDestination: locations.some((location) => location?.kind === "directory" && !location.handle) };
     } catch (error) {
@@ -947,6 +939,28 @@
     renderQueue();
     renderOutput();
     controls();
+  }
+
+  async function copyReviewPacket() {
+    if (!state.workbook) return;
+    const payload = window.DacOrchestratorReview.copyPayload(reviewContext());
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
+      await navigator.clipboard.writeText(payload);
+    } catch (_) {
+      const textarea = document.createElement("textarea");
+      textarea.value = payload;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      if (!copied) throw new Error("Could not copy the review packet. Select and copy it manually from DevTools.");
+    }
+    els.copyReviewPacketStatus.textContent = "Copied review packet. Local blockers remain authoritative.";
+    log("Copied DAC_ORCHESTRATOR_REVIEW_V1 packet for AI review.", "done");
   }
 
   function imageExtensionFromUrl(url) {
@@ -1410,6 +1424,10 @@
   els.changeWorkbookBtn?.addEventListener("click", () => els.workbookInput.click());
   els.addReferencesBtn?.addEventListener("click", () => els.referencesInput.click());
   els.validateBtn.addEventListener("click", validate);
+  els.copyReviewPacketBtn.addEventListener("click", () => copyReviewPacket().catch((error) => {
+    els.copyReviewPacketStatus.textContent = error.message;
+    log(error.message, "error");
+  }));
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
   els.stopBtn.addEventListener("click", stop);
