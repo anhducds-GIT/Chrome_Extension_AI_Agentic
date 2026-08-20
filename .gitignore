@@ -1,0 +1,14 @@
+# Local browser and Codex transfer caches.
+.playwright-cli/
+.tmp.driveupload/
+.tmp.drivedownload/
+
+# One-off local exports and legacy ad-hoc Pilot workbooks.
+_to_delete_audit_head_export_tmp/
+pilots/v0-trial/
+
+# Pilot 03 keeps only its reproducible inputs in Git (workbook, references, README).
+workers/duc-auto-chatgpt/v0.1.0/pilot-03/Duc-Auto-ChatGPT-Pilot-03-Fixture.zip
+workers/duc-auto-chatgpt/v0.1.0/pilot-03/Duc-Auto-ChatGPT-Pilot-03-result*.xlsx
+workers/duc-auto-chatgpt/v0.1.0/pilot-03/P03-A*.png
+workers/duc-auto-chatgpt/v0.1.0/pilot-03/run-*.jsonl
