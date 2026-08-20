@@ -15,18 +15,76 @@
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
     "checkWorkbook", "statusWorkbook", "checkReferences", "statusReferences",
     "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "readinessBanner",
-    "progressRatio", "progressPercent", "progressBarFill", "statDoneCount", "statActiveCount",
+    "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
-    "currentAttemptBadge", "currentPromptPreview", "pipelineStepper", "latestSavedCard",
-    "latestSavedThumb", "latestSavedName", "latestSavedStatus", "completionCard",
-    "completionIcon", "completionTitle", "artifactStatusPill"
+    "currentAttemptBadge", "currentPromptPreview", "pipelineStepper", "operatorTimerArea",
+    "operatorTimerBadge", "operatorTimerText", "latestSavedCard", "latestSavedThumb",
+    "latestSavedName", "latestSavedStatus", "completionCard", "completionIcon", "completionTitle",
+    "artifactStatusPill", "runArtifactsCard", "artifactLocationNote", "artifactRowImages",
+    "artifactImagesDetail", "artifactImagesStatus", "artifactRowResult", "artifactResultDetail",
+    "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus"
   ];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
-  const state = { workbook: null, files: [], prepared: null, outputSettings: null, runtimeOverrides: {}, selectedJobId: null, running: false, validated: false, stopRequested: false, terminal: 0, runId: null, attemptSerial: 0, auditEvents: [], auditFile: "", resultFile: "", verifiedImageFiles: [], artifactErrors: [], currentItem: null, currentStage: "—", currentReason: "No run in progress.", currentStartedAt: null, runtimeTicker: null, queueExpanded: false, outputsExpanded: false };
+  const state = {
+    workbook: null,
+    files: [],
+    prepared: null,
+    outputSettings: null,
+    runtimeOverrides: {},
+    selectedJobId: null,
+    running: false,
+    validated: false,
+    stopRequested: false,
+    terminal: 0,
+    runId: null,
+    attemptSerial: 0,
+    auditEvents: [],
+    auditFile: "",
+    resultFile: "",
+    verifiedImageFiles: [],
+    artifactErrors: [],
+    sessionThumbnails: new Map(),
+    interJobCountdown: null,
+    currentItem: null,
+    currentStage: "—",
+    currentReason: "No run in progress.",
+    currentStartedAt: null,
+    runtimeTicker: null,
+    queueExpanded: false,
+    outputsExpanded: false
+  };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function setStatus(status, label = status) { els.statusChip.className = `chip ${status.toLowerCase()}`; els.statusChip.textContent = label; }
   function log(text, kind = "") { const li = document.createElement("li"); li.className = kind; li.textContent = `${new Date().toLocaleTimeString()} · ${text}`; els.logList.prepend(li); }
+
+  function renderProgressSegments() {
+    if (!els.progressSegments) return;
+    const queue = state.prepared?.queue || [];
+    els.progressSegments.textContent = "";
+    if (!queue.length) {
+      const seg = document.createElement("div");
+      seg.className = "progress-segment pending";
+      seg.style.flex = "1";
+      els.progressSegments.appendChild(seg);
+      return;
+    }
+    for (const item of queue) {
+      const seg = document.createElement("div");
+      let statusClass = "pending";
+      if (item.status === "SUCCESS") {
+        statusClass = "success";
+      } else if (["RUNNING", "RECONCILING"].includes(item.status)) {
+        statusClass = "current";
+      } else if (["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)) {
+        statusClass = "failed";
+      }
+      seg.className = `progress-segment ${statusClass}`;
+      seg.style.flex = "1";
+      seg.title = `${item.job.id}: ${item.status}`;
+      els.progressSegments.appendChild(seg);
+    }
+  }
 
   function updateProgressVisuals(plan) {
     const total = plan ? plan.total_jobs : (state.prepared?.queue?.length || 0);
@@ -43,6 +101,7 @@
     if (els.statActiveCount) els.statActiveCount.textContent = String(active);
     if (els.statNextCount) els.statNextCount.textContent = String(pending);
     if (els.statFailedCount) els.statFailedCount.textContent = String(failed);
+    renderProgressSegments();
   }
 
   function progress(detail) {
@@ -110,6 +169,38 @@
     });
   }
 
+  function updateOperatorTimer() {
+    if (!els.operatorTimerBadge || !els.operatorTimerText) return;
+    const item = state.currentItem;
+    if (!state.running && !item) {
+      if (els.operatorTimerArea) els.operatorTimerArea.hidden = true;
+      els.operatorTimerText.textContent = "—";
+      return;
+    }
+    if (els.operatorTimerArea) els.operatorTimerArea.hidden = false;
+    const elapsed = state.currentStartedAt ? Math.floor((Date.now() - state.currentStartedAt) / 1000) : 0;
+    const budget = item?.settings?.timeout_sec;
+    const timeLeft = budget ? Math.max(0, budget - elapsed) : 0;
+    const formattedTime = window.DacRunState.formatDuration(timeLeft);
+
+    if (state.interJobCountdown != null && state.interJobCountdown > 0) {
+      els.operatorTimerText.textContent = `Next prompt in ${window.DacRunState.formatDuration(state.interJobCountdown)}`;
+      els.operatorTimerBadge.className = "timer-badge cooldown";
+    } else if (state.currentStage === "WAITING_READY" || state.currentStage === "FINALIZING / WAITING_IDLE" || item?.runtime_stage === "WAITING_READY") {
+      els.operatorTimerText.textContent = `Ready check · ${formattedTime} left`;
+      els.operatorTimerBadge.className = "timer-badge waiting";
+    } else if (item && state.running) {
+      els.operatorTimerText.textContent = `Timeout left ${formattedTime}`;
+      els.operatorTimerBadge.className = "timer-badge active";
+    } else if (item && ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)) {
+      els.operatorTimerText.textContent = `Halted · ${item.status}`;
+      els.operatorTimerBadge.className = "timer-badge halted";
+    } else {
+      els.operatorTimerText.textContent = "—";
+      els.operatorTimerBadge.className = "timer-badge";
+    }
+  }
+
   function updateHaltedBanner(isHalted, item, reason = "") {
     if (!els.haltedBanner) return;
     if (isHalted || ["FAILED", "INTERRUPTED", "STOPPED"].includes(item?.status) || state.currentStage === "HALTED") {
@@ -165,6 +256,7 @@
     els.currentSaved.textContent = saved ? `SAVED ✓ ${saved}` : item?.detected_not_downloaded ? "DETECTED · not downloaded" : "";
 
     updatePipelineStepper(item);
+    updateOperatorTimer();
 
     const isHalted = ["INTERRUPTED", "STOPPED"].includes(item?.status) || state.currentStage === "HALTED";
     updateHaltedBanner(isHalted, item, state.currentReason);
@@ -174,9 +266,18 @@
       if (lastSavedItem) {
         els.latestSavedName.textContent = lastSavedItem.result_file ? window.DacRunnerCore.basename(lastSavedItem.result_file) : "Detected (no download)";
         els.latestSavedStatus.textContent = lastSavedItem.persistence_verified ? `Saved ✓ (${lastSavedItem.job.id})` : "Detected · not downloaded";
+        if (els.latestSavedThumb) {
+          const thumbUrl = lastSavedItem.thumbnailUrl || state.sessionThumbnails.get(lastSavedItem.job.id);
+          if (thumbUrl) {
+            els.latestSavedThumb.innerHTML = `<img src="${thumbUrl}" alt="${lastSavedItem.job.id}" class="mini-thumb-img" />`;
+          } else {
+            els.latestSavedThumb.textContent = "🖼";
+          }
+        }
       } else {
         els.latestSavedName.textContent = "None yet";
         els.latestSavedStatus.textContent = "—";
+        if (els.latestSavedThumb) els.latestSavedThumb.textContent = "🖼";
       }
     }
   }
@@ -295,20 +396,106 @@
     const failedCount = count("FAILED") + interrupted;
     els.outputSummaryText.textContent = queue.length ? `Total ${queue.length} · Success ${successCount} · Failed ${count("FAILED")}${interrupted ? ` · Interrupted ${interrupted}` : ""}` : "No completed run.";
     els.outputList.textContent = "";
-    for (const item of (state.outputsExpanded ? queue : queue.slice(0, 6))) {
+    for (const item of (state.outputsExpanded ? queue : queue.slice(0, 8))) {
       const li = document.createElement("li");
-      li.className = item.status.toLowerCase();
-      li.textContent = `${item.job.id} · ${item.status}${item.persistence_verified && item.result_file ? ` · ${item.result_file}` : item.result_file ? ` · recorded output (not re-verified): ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : ""}`;
+      li.className = `output-item ${item.status.toLowerCase()}`;
+      const thumbUrl = item.thumbnailUrl || state.sessionThumbnails.get(item.job.id);
+      const thumbHtml = thumbUrl
+        ? `<img src="${thumbUrl}" class="output-thumb-img" alt="${item.job.id}" />`
+        : `<span class="output-thumb-placeholder">🖼</span>`;
+      const isSaved = Boolean(item.persistence_verified && item.result_file);
+      const statusBadge = isSaved
+        ? `<span class="output-status-pill success">✓ Saved</span>`
+        : item.detected_not_downloaded
+          ? `<span class="output-status-pill warning">Detected</span>`
+          : `<span class="output-status-pill ${item.status.toLowerCase()}">${item.status}</span>`;
+      const fileText = item.result_file ? ` · <span class="output-filename">${item.result_file}</span>` : "";
+      li.innerHTML = `${thumbHtml}<div class="output-item-info"><strong>${item.job.id}</strong>${fileText}</div>${statusBadge}`;
       els.outputList.appendChild(li);
     }
-    els.viewOutputsBtn.textContent = state.outputsExpanded ? "Collapse outputs" : `View all outputs${queue.length > 6 ? ` (${queue.length})` : ""}`;
+    els.viewOutputsBtn.textContent = state.outputsExpanded ? "Collapse outputs" : `View all outputs${queue.length > 8 ? ` (${queue.length})` : ""}`;
     const values = state.outputSettings ? window.DacOutputLocation.effective(state.outputSettings) : null;
-    const artifacts = [];
-    if (state.verifiedImageFiles.length) artifacts.push(`Images folder: ${window.DacOutputLocation.locationLabel(values.image)} · ${state.verifiedImageFiles.length} verified file(s)`);
-    if (values?.saveResultXlsx && state.resultFile) artifacts.push(`Result XLSX: ${state.resultFile}`);
-    if (values?.saveAuditJsonl && state.auditFile) artifacts.push(`Audit JSONL: ${state.auditFile}`);
-    for (const error of state.artifactErrors) artifacts.push(`FAILED · ${error}`);
-    els.artifactList.textContent = artifacts.length ? artifacts.join("\n") : "No saved run artifacts.";
+
+    if (els.artifactLocationNote) {
+      els.artifactLocationNote.textContent = values ? `Location: ${window.DacOutputLocation.locationLabel(values.image)}` : "Location: Not configured";
+    }
+
+    // Row 1: Images
+    const imagesSaved = state.verifiedImageFiles.length;
+    let imagesStatus = "Disabled";
+    let imagesDetail = "Disabled in settings";
+    let imagesStatusClass = "disabled";
+    if (values?.saveImages) {
+      if (imagesSaved > 0) {
+        imagesStatus = "Verified";
+        imagesDetail = `${imagesSaved} verified file${imagesSaved > 1 ? "s" : ""}`;
+        imagesStatusClass = "verified";
+      } else if (state.artifactErrors.some((e) => /image/i.test(e))) {
+        imagesStatus = "Failed";
+        imagesDetail = "Image persistence failed";
+        imagesStatusClass = "failed";
+      } else {
+        imagesStatus = "0 verified";
+        imagesDetail = "0 verified";
+        imagesStatusClass = "muted";
+      }
+    }
+    if (els.artifactImagesDetail) els.artifactImagesDetail.textContent = imagesDetail;
+    if (els.artifactImagesStatus) {
+      els.artifactImagesStatus.textContent = imagesStatus;
+      els.artifactImagesStatus.className = `artifact-badge ${imagesStatusClass}`;
+    }
+
+    // Row 2: Result XLSX
+    let resultStatus = "Disabled";
+    let resultDetail = "Disabled in settings";
+    let resultStatusClass = "disabled";
+    if (values?.saveResultXlsx) {
+      if (state.resultFile) {
+        resultStatus = "Verified";
+        resultDetail = state.resultFile;
+        resultStatusClass = "verified";
+      } else if (state.artifactErrors.some((e) => /xlsx/i.test(e))) {
+        resultStatus = "Failed";
+        resultDetail = "XLSX persistence failed";
+        resultStatusClass = "failed";
+      } else {
+        resultStatus = "Not saved";
+        resultDetail = "—";
+        resultStatusClass = "muted";
+      }
+    }
+    if (els.artifactResultDetail) els.artifactResultDetail.textContent = resultDetail;
+    if (els.artifactResultStatus) {
+      els.artifactResultStatus.textContent = resultStatus;
+      els.artifactResultStatus.className = `artifact-badge ${resultStatusClass}`;
+    }
+
+    // Row 3: Audit JSONL (technical log)
+    let auditStatus = "Disabled";
+    let auditDetail = "Disabled in settings";
+    let auditStatusClass = "disabled";
+    if (values?.saveAuditJsonl) {
+      if (state.auditFile) {
+        auditStatus = "Verified";
+        auditDetail = state.auditFile;
+        auditStatusClass = "verified";
+      } else if (state.artifactErrors.some((e) => /audit|jsonl/i.test(e))) {
+        auditStatus = "Failed";
+        auditDetail = "Audit JSONL persistence failed";
+        auditStatusClass = "failed";
+      } else {
+        auditStatus = "Not saved";
+        auditDetail = "—";
+        auditStatusClass = "muted";
+      }
+    }
+    if (els.artifactAuditDetail) els.artifactAuditDetail.textContent = auditDetail;
+    if (els.artifactAuditStatus) {
+      els.artifactAuditStatus.textContent = auditStatus;
+      els.artifactAuditStatus.className = `artifact-badge ${auditStatusClass}`;
+    }
+
     els.openOutputFolderBtn.disabled = !values || values.image.kind !== "downloads";
 
     if (els.completionCard) {
@@ -710,9 +897,13 @@
   async function countdown(seconds, item) {
     for (const remaining of window.DacRunnerCore.countdownValues(seconds)) {
       if (state.stopRequested) break;
+      state.interJobCountdown = remaining;
       nextTask(item, `Inter-job delay · starts in ${window.DacRunState.formatDuration(remaining)}`);
+      renderRuntime();
       await sleep(1000);
     }
+    state.interJobCountdown = null;
+    renderRuntime();
   }
 
   async function waitForChatReady(item) {
@@ -742,6 +933,10 @@
     item.runtime_stage = "OUTPUT_DETECTED"; setCurrent(item, item.runtime_stage, "Attributable generated image found.");
     audit("OUTPUT_DETECTED", item);
     update(item, { status: "RUNNING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count });
+    if (result?.image_url) {
+      item.thumbnailUrl = result.image_url;
+      state.sessionThumbnails.set(item.job.id, result.image_url);
+    }
     try {
       item.runtime_stage = "SAVING"; setCurrent(item, item.runtime_stage, "Writing generated image to the configured output.");
       if (!result?.image_url) throw new Error("No attributable generated image was found.");
@@ -1046,6 +1241,8 @@
   (typeof window !== "undefined" ? window : globalThis).DacVisualMapping = {
     updatePipelineStepper,
     updateProgressVisuals,
-    updateHaltedBanner
+    updateHaltedBanner,
+    updateOperatorTimer,
+    renderProgressSegments
   };
 })();

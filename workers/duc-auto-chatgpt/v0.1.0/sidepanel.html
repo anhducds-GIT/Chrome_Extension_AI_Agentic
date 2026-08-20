@@ -95,7 +95,7 @@
         <div class="output-previews">
           <div class="output-line"><strong>Effective image location:</strong><output id="imageOutputText">—</output></div>
           <div class="output-line"><strong>Result XLSX preview:</strong><output id="resultOutputText">—</output></div>
-          <div class="output-line"><strong>Audit JSONL preview:</strong><output id="auditOutputText">—</output></div>
+          <div class="output-line"><strong>Audit JSONL (technical log) preview:</strong><output id="auditOutputText">—</output></div>
         </div>
         <div class="settings-grid">
           <label>Image Output Folder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
@@ -109,7 +109,7 @@
         <div class="settings-grid save-toggles">
           <label><input id="saveImagesInput" type="checkbox" checked /> Download generated images</label>
           <label><input id="saveResultXlsxInput" type="checkbox" checked /> Save Result XLSX</label>
-          <label><input id="saveAuditJsonlInput" type="checkbox" checked /> Save Audit JSONL</label>
+          <label><input id="saveAuditJsonlInput" type="checkbox" checked /> Save Audit JSONL (technical log)</label>
         </div>
         <div class="controls output-controls">
           <button id="chooseImageFolderBtn" class="secondary" type="button">Choose Image Folder</button>
@@ -152,7 +152,7 @@
           <div id="progressRatio" class="progress-ratio">0 / 0 completed</div>
           <div id="progressText" class="progress-text-legacy muted" hidden>0 / 0</div>
         </div>
-        <div class="progress-track"><div id="progressBarFill" class="progress-fill" style="width: 0%;"></div></div>
+        <div class="progress-track" id="progressSegments"><div id="progressBarFill" class="progress-fill" style="width: 0%;" hidden></div></div>
         <div class="progress-stats">
           <span class="stat-pill done"><span class="bullet">●</span> <span id="statDoneCount">0</span> done</span>
           <span class="stat-pill active"><span class="bullet">●</span> <span id="statActiveCount">0</span> active</span>
@@ -190,6 +190,7 @@
           <div class="step-line"></div>
           <div class="step-item" data-step="done"><span class="step-dot"></span><span class="step-label">Done</span></div>
         </div>
+        <div id="operatorTimerArea" class="operator-timer-area"><span class="timer-badge" id="operatorTimerBadge">⏱ <span id="operatorTimerText">—</span></span></div>
         <div id="currentTiming" class="hint timing-line">No run in progress.</div>
         <div id="currentSaved" class="saved-output" hidden></div>
       </section>
@@ -264,12 +265,29 @@
       </section>
 
       <!-- RUN ARTIFACTS -->
-      <section class="card">
+      <section class="card" id="runArtifactsCard">
         <div class="row spread section-title">
           <strong>RUN ARTIFACTS</strong>
           <span id="artifactStatusPill" class="artifact-status-pill verified">Verified</span>
         </div>
-        <div id="artifactList" class="artifact-list">No run artifacts yet.</div>
+        <div id="artifactLocationNote" class="artifact-location-note hint">—</div>
+        <div id="artifactList" class="artifact-list">
+          <div class="artifact-row" id="artifactRowImages">
+            <span class="artifact-type">🖼 Images</span>
+            <span class="artifact-detail" id="artifactImagesDetail">0 verified</span>
+            <span class="artifact-badge disabled" id="artifactImagesStatus">Disabled</span>
+          </div>
+          <div class="artifact-row" id="artifactRowResult">
+            <span class="artifact-type">📊 Result XLSX</span>
+            <span class="artifact-detail" id="artifactResultDetail">—</span>
+            <span class="artifact-badge disabled" id="artifactResultStatus">Disabled</span>
+          </div>
+          <div class="artifact-row" id="artifactRowAudit">
+            <span class="artifact-type">📋 Audit JSONL <span class="muted">(technical log)</span></span>
+            <span class="artifact-detail" id="artifactAuditDetail">—</span>
+            <span class="artifact-badge disabled" id="artifactAuditStatus">Disabled</span>
+          </div>
+        </div>
       </section>
 
       <!-- ACTIONS -->
