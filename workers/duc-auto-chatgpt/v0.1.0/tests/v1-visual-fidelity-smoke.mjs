@@ -268,7 +268,16 @@ const verifiedWithoutThumb = {
 assert.equal(renderOutputItemBadge(verifiedWithoutThumb), "✓ Saved", "persistence_verified is authoritative even without thumbnail");
 
 // Test 5: Persistence failure overrides RUN COMPLETE even when all jobs succeed
-function evaluateOutputCompletion(queue, artifactErrors) {
+function evaluateOutputCompletion(queue, artifactErrors, hasRun = true) {
+  if (!hasRun) {
+    return {
+      cardClass: "card completion-card empty-state",
+      icon: "📊",
+      title: "No completed run yet",
+      artifactStatus: "Pending Run",
+      isFullSuccess: false
+    };
+  }
   const successCount = queue.filter((i) => i.status === "SUCCESS").length;
   const failedCount = queue.filter((i) => ["FAILED", "INTERRUPTED", "STOPPED"].includes(i.status)).length;
   if (artifactErrors.length > 0) {
@@ -301,26 +310,34 @@ function evaluateOutputCompletion(queue, artifactErrors) {
   return {
     cardClass: "card completion-card",
     icon: "✓",
-    title: "COMPLETION SUMMARY",
+    title: "RUN COMPLETE",
     artifactStatus: "Verified",
-    isFullSuccess: false
+    isFullSuccess: true
   };
 }
 
+// Test 6: Empty state when no run has completed yet
+const emptyOutput = evaluateOutputCompletion([], [], false);
+assert.equal(emptyOutput.title, "No completed run yet");
+assert.equal(emptyOutput.icon, "📊");
+assert.equal(emptyOutput.artifactStatus, "Pending Run");
+assert.notEqual(emptyOutput.icon, "✓", "Empty state MUST NOT show green check mark");
+assert.notEqual(emptyOutput.artifactStatus, "Verified", "Empty state MUST NOT show Verified badge");
+
+// Test 7: Completed run with full success
 const allJobsSuccessful = [
   { job: { id: "JOB_1" }, status: "SUCCESS", persistence_verified: true, result_file: "JOB_1.png" },
   { job: { id: "JOB_2" }, status: "SUCCESS", persistence_verified: true, result_file: "JOB_2.png" }
 ];
 
-// All jobs success + persistence success -> RUN COMPLETE
-const successOutcome = evaluateOutputCompletion(allJobsSuccessful, []);
+const successOutcome = evaluateOutputCompletion(allJobsSuccessful, [], true);
 assert.equal(successOutcome.isFullSuccess, true);
 assert.equal(successOutcome.title, "RUN COMPLETE");
 assert.equal(successOutcome.icon, "✓");
 assert.equal(successOutcome.artifactStatus, "Verified");
 
 // All jobs success + artifact error -> ARTIFACT PERSISTENCE FAILED (overrides RUN COMPLETE)
-const failureOutcome = evaluateOutputCompletion(allJobsSuccessful, ["Result XLSX persistence verification failed: missing file on disk"]);
+const failureOutcome = evaluateOutputCompletion(allJobsSuccessful, ["Result XLSX persistence verification failed: missing file on disk"], true);
 assert.equal(failureOutcome.isFullSuccess, false);
 assert.equal(failureOutcome.title, "ARTIFACT PERSISTENCE FAILED");
 assert.equal(failureOutcome.icon, "❌");

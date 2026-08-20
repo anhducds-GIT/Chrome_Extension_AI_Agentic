@@ -395,7 +395,11 @@
     const interrupted = count("INTERRUPTED") + count("STOPPED");
     const successCount = count("SUCCESS");
     const failedCount = count("FAILED") + interrupted;
-    els.outputSummaryText.textContent = queue.length ? `Total ${queue.length} · Success ${successCount} · Failed ${count("FAILED")}${interrupted ? ` · Interrupted ${interrupted}` : ""}` : "No completed run.";
+    const hasCompletedRun = Boolean(state.runId || (queue.length > 0 && (successCount > 0 || failedCount > 0)));
+
+    els.outputSummaryText.textContent = hasCompletedRun
+      ? (queue.length ? `Total ${queue.length} · Success ${successCount} · Failed ${count("FAILED")}${interrupted ? ` · Interrupted ${interrupted}` : ""}` : "No completed run.")
+      : "Complete a run to view results and artifacts.";
     els.outputList.textContent = "";
     for (const item of (state.outputsExpanded ? queue : queue.slice(0, 8))) {
       const li = document.createElement("li");
@@ -500,7 +504,17 @@
     els.openOutputFolderBtn.disabled = !values || values.image.kind !== "downloads";
 
     if (els.completionCard) {
-      if (state.artifactErrors.length > 0) {
+      if (!hasCompletedRun) {
+        els.completionCard.className = "card completion-card empty-state";
+        if (els.completionIcon) els.completionIcon.textContent = "📊";
+        if (els.completionTitle) els.completionTitle.textContent = "No completed run yet";
+        if (els.outputSummaryText) els.outputSummaryText.textContent = "Complete a run to view results and artifacts.";
+        if (els.failedJobsText) els.failedJobsText.textContent = "";
+        if (els.artifactStatusPill) {
+          els.artifactStatusPill.className = "artifact-status-pill empty";
+          els.artifactStatusPill.textContent = "Pending Run";
+        }
+      } else if (state.artifactErrors.length > 0) {
         els.completionCard.className = "card completion-card persistence-failed";
         if (els.completionIcon) els.completionIcon.textContent = "❌";
         if (els.completionTitle) els.completionTitle.textContent = "ARTIFACT PERSISTENCE FAILED";
@@ -527,7 +541,7 @@
       } else {
         els.completionCard.className = "card completion-card";
         if (els.completionIcon) els.completionIcon.textContent = "✓";
-        if (els.completionTitle) els.completionTitle.textContent = "COMPLETION SUMMARY";
+        if (els.completionTitle) els.completionTitle.textContent = "RUN COMPLETE";
         if (els.artifactStatusPill) {
           els.artifactStatusPill.className = "artifact-status-pill verified";
           els.artifactStatusPill.textContent = "Verified";

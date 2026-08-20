@@ -8,6 +8,7 @@
 </head>
 <body>
   <main class="app">
+    <!-- HEADER -->
     <header class="header">
       <div class="brand">
         <div class="brand-icon">🤖</div>
@@ -29,55 +30,58 @@
       </div>
     </header>
 
+    <!-- WORKFLOW NAVIGATION -->
     <nav class="workflow-tabs" aria-label="Workflow">
       <button class="workflow-tab active" data-screen="setupScreen" type="button"><span class="tab-num">1</span> SETUP</button>
       <button class="workflow-tab" data-screen="runScreen" type="button"><span class="tab-num">2</span> RUN</button>
       <button class="workflow-tab" data-screen="outputScreen" type="button"><span class="tab-num">3</span> OUTPUT</button>
     </nav>
 
-    <!-- 1. SETUP SCREEN -->
+    <!-- =========================================================================
+         1. SETUP SCREEN
+         ========================================================================= -->
     <section id="setupScreen" class="workflow-screen active">
-      <!-- 1. WORKBOOK -->
-      <section class="card asset-card" id="workbookCard">
+      <!-- 1. SOURCE: WORKBOOK & REFERENCES -->
+      <section class="card setup-group" id="workbookCard">
         <div class="row spread section-title">
-          <strong>1. WORKBOOK</strong>
-          <button id="changeWorkbookBtn" class="secondary small" type="button">Change</button>
+          <strong>1. SOURCE WORKBOOK &amp; REFERENCES</strong>
         </div>
+        <!-- Loaded Workbook Row -->
         <div class="asset-body">
           <div class="asset-icon">📊</div>
           <div class="asset-details">
             <div id="workbookNameDisplay" class="asset-name">No workbook loaded</div>
             <div id="workbookText" class="hint">Open an XLSX to begin.</div>
           </div>
+          <button id="changeWorkbookBtn" class="secondary small" type="button">Change</button>
         </div>
         <input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
-      </section>
 
-      <!-- 2. OPTIONAL REFERENCES -->
-      <section class="card" id="referencesCard">
-        <div class="row spread section-title">
-          <strong>2. OPTIONAL REFERENCES</strong>
-          <button id="addReferencesBtn" class="secondary small" type="button">+ Add</button>
+        <!-- References Subsection -->
+        <div class="sub-section" id="referencesCard">
+          <div class="row spread sub-title">
+            <label for="referencesInput" class="secondary-label"><strong>Reference Images</strong> (optional)</label>
+            <button id="addReferencesBtn" class="secondary small" type="button">+ Add</button>
+          </div>
+          <input id="referencesInput" type="file" accept="image/*" multiple />
+          <p id="referenceText" class="hint">No local references selected.</p>
+          <div id="referenceGallery" class="reference-gallery" aria-live="polite"></div>
         </div>
-        <label for="referencesInput" class="secondary-label">Local reference images (up to your validated limit)</label>
-        <input id="referencesInput" type="file" accept="image/*" multiple />
-        <p id="referenceText" class="hint">No local references selected.</p>
-        <div id="referenceGallery" class="reference-gallery" aria-live="polite"></div>
       </section>
 
-      <!-- 3. RUN SETTINGS -->
-      <section class="card" id="runtimeSettingsCard">
+      <!-- 2. RUN CONFIG -->
+      <section class="card setup-group" id="runtimeSettingsCard">
         <div class="row spread section-title">
-          <strong>3. RUN SETTINGS</strong>
-          <span class="muted">Current-run overrides</span>
+          <strong>2. RUN SETTINGS</strong>
+          <span class="muted">Overrides</span>
         </div>
         <div class="settings-grid trio">
-          <label>Timeout (sec)<input id="timeoutSecInput" type="number" min="15" max="900" /></label>
+          <label>Timeout (s)<input id="timeoutSecInput" type="number" min="15" max="900" /></label>
           <label>Max retries<input id="maxRetriesInput" type="number" min="0" max="5" /></label>
-          <label>Cooldown (sec)<input id="safetyCooldownInput" type="number" min="0" max="120" /></label>
+          <label>Cooldown (s)<input id="safetyCooldownInput" type="number" min="0" max="120" /></label>
         </div>
-        <details>
-          <summary>Advanced settings</summary>
+        <details class="secondary-details">
+          <summary>Advanced execution settings</summary>
           <div class="settings-grid">
             <label>Max input references<input id="maxInputImagesInput" type="number" min="0" max="10" /></label>
             <label>Continue on error<select id="continueOnErrorInput"><option value="true">Yes</option><option value="false">No</option></select></label>
@@ -86,24 +90,15 @@
         </details>
       </section>
 
-      <!-- 4. OUTPUT & NAMING -->
-      <section class="card" id="outputLocationCard">
+      <!-- 3. OUTPUT & NAMING -->
+      <section class="card setup-group" id="outputLocationCard">
         <div class="row spread section-title">
-          <strong>4. OUTPUT &amp; NAMING</strong>
+          <strong>3. OUTPUT &amp; NAMING</strong>
           <span id="outputPermissionText" class="muted">Open an XLSX to set locations.</span>
-        </div>
-        <div class="output-previews">
-          <div class="output-line"><strong>Effective image location:</strong><output id="imageOutputText">—</output></div>
-          <div class="output-line"><strong>Result XLSX preview:</strong><output id="resultOutputText">—</output></div>
-          <div class="output-line"><strong>Audit JSONL (technical log) preview:</strong><output id="auditOutputText">—</output></div>
         </div>
         <div class="settings-grid">
           <label>Image Output Folder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
-          <label>Result XLSX Location<select id="resultLocationMode"><option value="same_as_image">Same as Image Output Folder</option><option value="downloads">Chrome Downloads folder</option><option value="directory">Separate authorized folder</option></select></label>
-          <label id="resultDownloadsFolderLabel">Result Downloads Folder<input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
-          <label>Image filename pattern<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">Allowed: {job_id}, {attempt}, {index}; extension is preserved.</span></label>
-          <label>Result XLSX filename<input id="resultFilenameInput" type="text" autocomplete="off" /></label>
-          <label>Audit JSONL filename<input id="auditFilenameInput" type="text" autocomplete="off" /></label>
+          <label>Image filename pattern<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">{job_id}, {attempt}, {index}</span></label>
           <label>Collision policy<select id="collisionPolicyInput"><option value="overwrite">overwrite</option><option value="uniquify" selected>uniquify</option><option value="fail">fail</option></select></label>
         </div>
         <div class="settings-grid save-toggles">
@@ -117,12 +112,27 @@
           <button id="changeImageFolderBtn" class="secondary" type="button">Change Folder</button>
           <button id="chooseResultFolderBtn" class="secondary" type="button">Choose Result Folder</button>
         </div>
+
+        <details class="secondary-details">
+          <summary>Output details &amp; advanced naming</summary>
+          <div class="output-previews">
+            <div class="output-line"><strong>Effective image location:</strong><output id="imageOutputText">—</output></div>
+            <div class="output-line"><strong>Result XLSX preview:</strong><output id="resultOutputText">—</output></div>
+            <div class="output-line"><strong>Audit JSONL (technical log) preview:</strong><output id="auditOutputText">—</output></div>
+          </div>
+          <div class="settings-grid">
+            <label>Result XLSX Location<select id="resultLocationMode"><option value="same_as_image">Same as Image Output Folder</option><option value="downloads">Chrome Downloads folder</option><option value="directory">Separate authorized folder</option></select></label>
+            <label id="resultDownloadsFolderLabel">Result Downloads Folder<input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
+            <label>Result XLSX filename<input id="resultFilenameInput" type="text" autocomplete="off" /></label>
+            <label>Audit JSONL filename<input id="auditFilenameInput" type="text" autocomplete="off" /></label>
+          </div>
+        </details>
       </section>
 
-      <!-- 5. VALIDATION -->
-      <section class="card" id="validationCard">
+      <!-- 4. VALIDATION & ACTION -->
+      <section class="card setup-group" id="validationCard">
         <div class="row spread section-title">
-          <strong>5. VALIDATION</strong>
+          <strong>4. VALIDATION &amp; RUN</strong>
           <button id="validateBtn" class="secondary small" disabled type="button">Check plan</button>
         </div>
         <div class="readiness-checklist" id="readinessChecklist">
@@ -132,70 +142,75 @@
           <div class="check-item" id="checkOutput"><span class="check-icon">○</span><span class="check-label">Output location</span><span class="check-status" id="statusOutput">Ready</span></div>
         </div>
         <div id="readinessBanner" class="readiness-banner not-ready">CHECK PLAN BEFORE RUN</div>
-        <dl id="runPlanList" class="run-plan"></dl>
-      </section>
-
-      <section class="controls action-controls">
         <button id="runBtn" class="primary dominant-btn" disabled type="button">▶ START RUN</button>
+        <details class="secondary-details">
+          <summary>View run plan</summary>
+          <dl id="runPlanList" class="run-plan"></dl>
+        </details>
       </section>
     </section>
 
-    <!-- 2. RUN SCREEN -->
+    <!-- =========================================================================
+         2. RUN SCREEN (OPERATOR HERO DASHBOARD)
+         ========================================================================= -->
     <section id="runScreen" class="workflow-screen">
-      <!-- OVERALL PROGRESS -->
-      <section class="card runtime-card" id="overallProgressCard">
-        <div class="row spread section-title">
-          <span class="section-badge">PROGRESS</span>
-          <span id="progressPercent" class="percent-badge">0%</span>
-        </div>
-        <div class="progress-header row spread">
-          <div id="progressRatio" class="progress-ratio">0 / 0 completed</div>
-          <div id="progressText" class="progress-text-legacy muted" hidden>0 / 0</div>
-        </div>
-        <div class="progress-track" id="progressSegments"><div id="progressBarFill" class="progress-fill" style="width: 0%;" hidden></div></div>
-        <div class="progress-stats">
-          <span class="stat-pill done"><span class="bullet">●</span> <span id="statDoneCount">0</span> done</span>
-          <span class="stat-pill active"><span class="bullet">●</span> <span id="statActiveCount">0</span> active</span>
-          <span class="stat-pill next"><span class="bullet">●</span> <span id="statNextCount">0</span> next</span>
-          <span class="stat-pill failed"><span class="bullet">●</span> <span id="statFailedCount">0</span> failed</span>
-        </div>
-        <div id="progressDetail" class="hint">Open an XLSX to begin.</div>
-      </section>
-
-      <!-- CURRENT JOB -->
-      <section class="card runtime-card current-job-card" id="currentJobCard">
-        <div id="haltedBanner" class="halted-banner" hidden>
-          <div class="halted-header">
-            <span class="halted-badge">⚠ RUN HALTED</span>
-            <span id="haltedTime" class="halted-time">—</span>
+      <!-- HERO BLOCK: PROGRESS & CURRENT JOB -->
+      <div class="hero-block">
+        <!-- OVERALL PROGRESS -->
+        <section class="card runtime-card" id="overallProgressCard">
+          <div class="row spread section-title">
+            <span class="section-badge">OVERALL PROGRESS</span>
+            <span id="progressPercent" class="percent-badge">0%</span>
           </div>
-          <div id="haltedReason" class="halted-reason">Run halted.</div>
-          <div id="haltedJob" class="halted-stopped-at">Stopped at: —</div>
-        </div>
-        <div class="row spread current-job-top">
-          <span class="section-badge">CURRENT JOB</span>
-          <span id="currentStage" class="stage">—</span>
-        </div>
-        <div class="row spread current-job-meta">
-          <div id="currentJobId" class="current-job">—</div>
-          <div id="currentAttemptBadge" class="attempt-badge">Attempt —</div>
-        </div>
-        <div id="currentPromptPreview" class="prompt-preview" hidden></div>
-        <div class="pipeline-stepper" id="pipelineStepper">
-          <div class="step-item" data-step="prepare"><span class="step-dot"></span><span class="step-label">Prepare</span></div>
-          <div class="step-line"></div>
-          <div class="step-item" data-step="generate"><span class="step-dot"></span><span class="step-label">Generate</span></div>
-          <div class="step-line"></div>
-          <div class="step-item" data-step="save"><span class="step-dot"></span><span class="step-label">Save</span></div>
-          <div class="step-line"></div>
-          <div class="step-item" data-step="done"><span class="step-dot"></span><span class="step-label">Done</span></div>
-        </div>
-        <div id="operatorTimerArea" class="operator-timer-area"><span class="timer-badge" id="operatorTimerBadge">⏱ <span id="operatorTimerText">—</span></span></div>
-        <div id="currentTiming" class="hint timing-line">No run in progress.</div>
-        <div id="currentSaved" class="saved-output" hidden></div>
-      </section>
+          <div class="progress-header row spread">
+            <div id="progressRatio" class="progress-ratio">0 / 0 completed</div>
+            <div id="progressText" class="progress-text-legacy muted" hidden>0 / 0</div>
+          </div>
+          <div class="progress-track" id="progressSegments"><div id="progressBarFill" class="progress-fill" style="width: 0%;" hidden></div></div>
+          <div class="progress-stats">
+            <span class="stat-pill done"><span class="bullet">●</span> <span id="statDoneCount">0</span> done</span>
+            <span class="stat-pill active"><span class="bullet">●</span> <span id="statActiveCount">0</span> active</span>
+            <span class="stat-pill next"><span class="bullet">●</span> <span id="statNextCount">0</span> next</span>
+            <span class="stat-pill failed"><span class="bullet">●</span> <span id="statFailedCount">0</span> failed</span>
+          </div>
+          <div id="progressDetail" class="hint">Open an XLSX to begin.</div>
+        </section>
 
-      <!-- LATEST SAVED & NEXT JOB ROW -->
+        <!-- CURRENT JOB (DOMINANT FOCAL CARD) -->
+        <section class="card runtime-card current-job-card" id="currentJobCard">
+          <div id="haltedBanner" class="halted-banner" hidden>
+            <div class="halted-header">
+              <span class="halted-badge">⚠ RUN HALTED</span>
+              <span id="haltedTime" class="halted-time">—</span>
+            </div>
+            <div id="haltedReason" class="halted-reason">Run halted.</div>
+            <div id="haltedJob" class="halted-stopped-at">Stopped at: —</div>
+          </div>
+          <div class="row spread current-job-top">
+            <span class="section-badge">CURRENT JOB</span>
+            <span id="currentStage" class="stage">—</span>
+          </div>
+          <div class="row spread current-job-meta">
+            <div id="currentJobId" class="current-job">—</div>
+            <div id="currentAttemptBadge" class="attempt-badge">Attempt —</div>
+          </div>
+          <div id="currentPromptPreview" class="prompt-preview" hidden></div>
+          <div class="pipeline-stepper" id="pipelineStepper">
+            <div class="step-item" data-step="prepare"><span class="step-dot"></span><span class="step-label">Prepare</span></div>
+            <div class="step-line"></div>
+            <div class="step-item" data-step="generate"><span class="step-dot"></span><span class="step-label">Generate</span></div>
+            <div class="step-line"></div>
+            <div class="step-item" data-step="save"><span class="step-dot"></span><span class="step-label">Save</span></div>
+            <div class="step-line"></div>
+            <div class="step-item" data-step="done"><span class="step-dot"></span><span class="step-label">Done</span></div>
+          </div>
+          <div id="operatorTimerArea" class="operator-timer-area"><span class="timer-badge" id="operatorTimerBadge">⏱ <span id="operatorTimerText">—</span></span></div>
+          <div id="currentTiming" class="hint timing-line">No run in progress.</div>
+          <div id="currentSaved" class="saved-output" hidden></div>
+        </section>
+      </div>
+
+      <!-- SECONDARY ROW: LATEST SAVED & NEXT JOB -->
       <div class="split-cards">
         <section id="latestSavedCard" class="card mini-card">
           <div class="muted card-label"><strong>LATEST SAVED</strong></div>
@@ -230,7 +245,7 @@
 
       <!-- TECHNICAL DETAILS -->
       <section class="card">
-        <details>
+        <details class="secondary-details">
           <summary>Technical details</summary>
           <ol id="logList" class="queue-list" aria-live="polite"></ol>
           <button id="clearLogsBtn" class="link-button" type="button">Clear</button>
@@ -243,19 +258,21 @@
       </section>
     </section>
 
-    <!-- 3. OUTPUT SCREEN -->
+    <!-- =========================================================================
+         3. OUTPUT SCREEN (RESULTS & ARTIFACTS DASHBOARD)
+         ========================================================================= -->
     <section id="outputScreen" class="workflow-screen">
-      <!-- COMPLETION SUMMARY -->
+      <!-- COMPLETION HERO CARD -->
       <section class="card completion-card" id="completionCard">
         <div class="completion-hero">
-          <div class="completion-icon" id="completionIcon">✓</div>
-          <div class="completion-title" id="completionTitle">RUN COMPLETE</div>
-          <div id="outputSummaryText" class="completion-ratio">0 / 0 completed</div>
-          <div id="failedJobsText" class="hint completion-failed">0 failed / interrupted</div>
+          <div class="completion-icon" id="completionIcon">📊</div>
+          <div class="completion-title" id="completionTitle">No completed run yet</div>
+          <div id="outputSummaryText" class="completion-ratio">Complete a run to view results and artifacts.</div>
+          <div id="failedJobsText" class="hint completion-failed"></div>
         </div>
       </section>
 
-      <!-- RESULTS -->
+      <!-- RESULTS LIST -->
       <section class="card">
         <div class="row spread section-title">
           <strong>RESULTS</strong>
@@ -264,13 +281,13 @@
         <ol id="outputList" class="queue-list output-results-list"></ol>
       </section>
 
-      <!-- RUN ARTIFACTS -->
+      <!-- RUN ARTIFACTS TABLE -->
       <section class="card" id="runArtifactsCard">
         <div class="row spread section-title">
           <strong>RUN ARTIFACTS</strong>
-          <span id="artifactStatusPill" class="artifact-status-pill verified">Verified</span>
+          <span id="artifactStatusPill" class="artifact-status-pill empty">Pending Run</span>
         </div>
-        <div id="artifactLocationNote" class="artifact-location-note hint">—</div>
+        <div id="artifactLocationNote" class="artifact-location-note hint">Location: Not configured</div>
         <div id="artifactList" class="artifact-list">
           <div class="artifact-row" id="artifactRowImages">
             <span class="artifact-type">🖼 Images</span>
@@ -290,7 +307,7 @@
         </div>
       </section>
 
-      <!-- ACTIONS -->
+      <!-- OUTPUT ACTIONS -->
       <section class="controls output-action-controls">
         <button id="openOutputFolderBtn" class="primary" type="button" disabled>Open Output Folder</button>
         <button id="loadNewWorkbookBtn" class="secondary" type="button">Load New Workbook</button>
