@@ -1039,22 +1039,41 @@
 
   async function confirmRecreate() {
     const jobId = state.pendingRecreateJobId;
+    const actionName = jobId ? `Recreate ${jobId}` : "Recreate image";
+    progress(`${actionName}: confirmation received; checking approval and persistence prerequisites.`);
+    log(`${actionName}: confirmation received.`, "info");
     closeRecreateDialog();
-    if (!jobId || state.running || state.manualReconciliationRunning || state.recreateRunning || !state.resumePlan || !state.prepared) return;
-    const recovery = state.resumePlan.jobs.find((entry) => entry.job_id === jobId);
-    const item = state.prepared.queue.find((entry) => entry.job.id === jobId);
-    const approval = window.DacRecreateCore.approval({ job: item?.job, recoveryState: recovery?.state });
-    if (!approval.ok) throw new Error(`${approval.code}: ${approval.message}`);
-    const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
-    if (!outputCheck.ok) throw new Error(`OUTPUT_LOCATION: ${outputCheck.error}`);
-    const effectiveOutput = outputCheck.effective;
-    if (!effectiveOutput.saveImages || !effectiveOutput.saveResultXlsx) throw new Error("RECREATE_PERSISTENCE_REQUIRED: generated-image and Result XLSX saving must both be enabled.");
-    state.recreateRunning = true;
     try {
+      if (!jobId) throw new Error("RECREATE_CONFIRM_MISSING_JOB: Select Recreate Image again from the blocked job.");
+      if (state.running || state.manualReconciliationRunning || state.recreateRunning) throw new Error("RECREATE_CONFIRM_BUSY: Another run or operator recovery is active.");
+      if (!state.resumePlan) throw new Error("RECREATE_CONFIRM_RESUME_PLAN_MISSING: Reopen the continued run and review its Resume Plan.");
+      if (!state.prepared) throw new Error("RECREATE_CONFIRM_QUEUE_MISSING: Check Plan again before confirming recreate.");
+      const recovery = state.resumePlan.jobs.find((entry) => entry.job_id === jobId);
+      const item = state.prepared.queue.find((entry) => entry.job.id === jobId);
+      if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED") throw new Error(`RECREATE_CONFIRM_NOT_AMBIGUOUS: ${jobId} is no longer an ambiguous submitted job.`);
+      if (!item) throw new Error(`RECREATE_CONFIRM_JOB_MISSING: ${jobId} is absent from the prepared queue.`);
+      const approval = window.DacRecreateCore.approval({ job: item.job, recoveryState: recovery.state });
+      if (!approval.ok) throw new Error(`${approval.code}: ${approval.message}`);
+      const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
+      if (!outputCheck.ok) throw new Error(`OUTPUT_LOCATION: ${outputCheck.error}`);
+      const effectiveOutput = outputCheck.effective;
+      if (!effectiveOutput.saveImages || !effectiveOutput.saveResultXlsx) throw new Error("RECREATE_PERSISTENCE_REQUIRED: generated-image and Result XLSX saving must both be enabled.");
+      state.recreateRunning = true;
+      setStatus("RUNNING", "RECREATE CHECKPOINTING");
+      progress(`${jobId}: saving the operator-approved recreate checkpoint.`);
       const checkpoint = await persistRecreateApproval(item, approval, effectiveOutput);
-      progress(`${jobId}: recreate approved and checkpointed as ${checkpoint}; starting one deliberate new attempt.`);
+      progress(`${jobId}: recreate approval checkpoint ${checkpoint} verified; starting one deliberate new attempt.`);
+      log(`${jobId}: recreate approval checkpoint verified; starting recreate run.`, "done");
       renderResumePlan(); renderQueue(); renderOutput(); controls();
-      await run("recreate");
+      const outcome = await run("recreate");
+      if (!outcome?.ok) throw new Error(`RECREATE_START_BLOCKED: ${outcome?.reason || "The recreate run did not enter RUNNING state."}`);
+      return outcome;
+    } catch (error) {
+      const reason = messageOf(error);
+      setStatus("ERROR", "RECREATE BLOCKED");
+      progress(`${actionName} blocked: ${reason}`);
+      log(`${actionName} blocked: ${reason}`, "error");
+      throw error;
     } finally {
       state.recreateRunning = false;
       renderResumePlan(); controls();
@@ -1780,13 +1799,13 @@
   async function run(mode = "all") {
     let effectiveOutput;
     try { effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" }); }
-    catch (error) { setStatus("ERROR"); progress(messageOf(error)); log(messageOf(error), "error"); controls(); return; }
+    catch (error) { const reason = messageOf(error); setStatus("ERROR"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
     const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, state.selectedJobId);
-    if (!runQueue.length) { setStatus("ERROR", "NOT READY"); progress(`No ${mode} jobs are eligible.`); controls(); return; }
+    if (!runQueue.length) { const reason = `No ${mode} jobs are eligible.`; setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
     state.running = true; state.stopRequested = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
     state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = []; if (!state.resumeMode) { state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; } state.artifactErrors = []; renderCheckpointMeta();
-    els.logList.textContent = "";
+    if (mode !== "recreate") els.logList.textContent = "";
     startRuntimeTicker();
     const target = await activeTab().catch(() => null);
     audit(state.resumeMode ? "RUN_CONTINUED" : "RUN_START", null, { target_url: target?.url || null }); log(state.resumeMode ? "Continued run started; completed jobs remain protected." : "Run started; visible log is scoped to this run.");
@@ -1878,6 +1897,7 @@
         showScreen("outputScreen");
       }
     }
+    return { ok: true, started: true };
   }
 
   chrome.runtime.onMessage.addListener((message) => {
@@ -2029,7 +2049,7 @@
     log(error.message, "error");
   }));
   els.recreateCancelBtn?.addEventListener("click", cancelRecreate);
-  els.recreateConfirmBtn?.addEventListener("click", () => confirmRecreate().catch((error) => { progress(`Recreate not started: ${messageOf(error)}`); log(messageOf(error), "error"); controls(); }));
+  els.recreateConfirmBtn?.addEventListener("click", () => confirmRecreate().catch(() => controls()));
   els.recreateConfirmDialog?.addEventListener("cancel", (event) => { event.preventDefault(); cancelRecreate(); });
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));

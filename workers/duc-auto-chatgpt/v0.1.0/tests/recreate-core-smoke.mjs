@@ -81,5 +81,14 @@ const openSegment = sidepanel.slice(sidepanel.indexOf("function openRecreateDial
 assert.doesNotMatch(openSegment, /run\(|DAC_RUN_IMAGE_JOB|send\(/, "opening confirmation never silently resubmits");
 const confirmSegment = sidepanel.slice(sidepanel.indexOf("async function confirmRecreate"), sidepanel.indexOf("async function resolveExistingOutput"));
 assert.match(confirmSegment, /await run\("recreate"\)/, "only confirmed recreate starts the deliberate new attempt");
+assert.match(confirmSegment, /confirmation received; checking approval and persistence prerequisites/, "confirm click emits immediate operator-visible progress");
+assert.match(confirmSegment, /RECREATE_CONFIRM_QUEUE_MISSING/, "missing prepared queue surfaces an exact blocked-start reason");
+assert.match(confirmSegment, /RECREATE_START_BLOCKED/, "a rejected recreate start is surfaced rather than ignored");
+assert.match(confirmSegment, /setStatus\("RUNNING", "RECREATE CHECKPOINTING"\)/, "confirmed recreate visibly enters a running transition before checkpoint persistence");
+assert.doesNotMatch(confirmSegment, /\) return;/, "confirm flow has no silent guard return");
+const runSegment = sidepanel.slice(sidepanel.indexOf('async function run(mode = "all")'), sidepanel.indexOf("chrome.runtime.onMessage.addListener"));
+assert.match(runSegment, /return \{ ok: false, reason \}/, "blocked recreate run returns its exact reason to the confirmation flow");
+assert.match(runSegment, /return \{ ok: true, started: true \}/, "successful recreate run reports an explicit started outcome");
+assert.match(sidepanel, /recreateConfirmBtn\?\.addEventListener\("click", \(\) => confirmRecreate\(\)/, "confirm button is wired directly to recreate flow");
 
 console.log("explicit recreate smoke tests: PASS");
