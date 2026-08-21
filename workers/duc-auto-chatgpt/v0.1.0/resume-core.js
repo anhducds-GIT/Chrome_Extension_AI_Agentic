@@ -39,6 +39,7 @@
     const status = lower(job.status);
     const phase = text(job.attempt_phase).toUpperCase() || "PRE_SUBMIT";
     if (["success", "done"].includes(status) && validSavedAttribution(job)) return { state: "SAFE_COMPLETE", code: "", message: "Verified persisted output; skip on continuation." };
+    if (bool(job.recreate_operator_approved)) return { state: "AMBIGUOUS_SUBMITTED", code: "RESUME_RECREATE_INCOMPLETE", message: "Operator-approved recreate has not produced a verified persisted output. Continue remains blocked." };
     const preSubmitFailure = status === "failed" && phase === "PRE_SUBMIT" && !hasSubmittedBoundary(job) && preSubmitFailures.has(text(job.failure_type).toUpperCase() || "OTHER");
     if (preSubmitFailure) return { state: "SAFE_FAILED_PRE_SUBMIT", code: "", message: "Failure is proven pre-submit; existing retry/rerun rules apply." };
     if (!hasSubmittedBoundary(job) && ["", "pending", "eligible"].includes(status)) return { state: "SAFE_PENDING", code: "", message: "No submitted boundary recorded; eligible for normal readiness-gated execution." };
@@ -96,6 +97,7 @@
       if (recoveryItem.state === "SAFE_COMPLETE") { item.status = "SUCCESS"; item.phase = "SUCCESS"; item.skipped = true; item.protected_checkpoint = true; }
       else if (recoveryItem.state === "SAFE_PENDING") { item.status = "PENDING"; item.phase = "PRE_SUBMIT"; item.skipped = false; item.protected_checkpoint = false; }
       else if (recoveryItem.state === "SAFE_FAILED_PRE_SUBMIT") { item.status = "FAILED"; item.phase = "PRE_SUBMIT"; item.skipped = false; item.protected_checkpoint = false; }
+      else if (item.operator_recreate) { item.status = "PENDING"; item.phase = "PRE_SUBMIT"; item.skipped = false; item.protected_checkpoint = false; item.recovery_state = "RECREATE_APPROVED"; }
       else { item.status = "INTERRUPTED"; item.skipped = true; item.protected_checkpoint = true; }
     }
     return queue;

@@ -16,7 +16,7 @@
     "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn",
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
     "checkWorkbook", "statusWorkbook", "checkJobs", "statusJobs", "checkReferences", "statusReferences",
-    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary",
+    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary", "recreateConfirmDialog", "recreateCancelBtn", "recreateConfirmBtn",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
     "currentAttemptBadge", "continuedRunLabel", "currentPromptPreview", "pipelineStepper", "operatorTimerArea",
@@ -72,7 +72,9 @@
     checkpointFilename: "",
     checkpointCreatedAt: "",
     resumeCheckpointFindings: [],
-    manualReconciliationRunning: false
+    manualReconciliationRunning: false,
+    recreateRunning: false,
+    pendingRecreateJobId: null
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -390,19 +392,20 @@
 
   function controls() {
     const ready = Boolean(state.workbook && state.prepared && state.outputSettings && state.validated);
-    const outputLocked = !state.workbook || state.running;
-    els.validateBtn.disabled = !state.workbook || state.running;
-    els.runBtn.disabled = !ready || state.running;
+    const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning;
+    const outputLocked = !state.workbook || operatorLocked;
+    els.validateBtn.disabled = !state.workbook || operatorLocked;
+    els.runBtn.disabled = !ready || operatorLocked;
     els.runBtn.textContent = state.resumeMode ? "▶ CONTINUE RUN" : "▶ START RUN";
     const eligibleFailed = (state.prepared?.queue || []).some((item) => item.status === "FAILED" && !item.protected_checkpoint);
-    els.runFailedBtn.disabled = !ready || state.running || !eligibleFailed;
+    els.runFailedBtn.disabled = !ready || operatorLocked || !eligibleFailed;
     els.stopBtn.disabled = !state.running;
-    els.workbookInput.disabled = state.running;
-    if (els.resumeWorkbookInput) els.resumeWorkbookInput.disabled = state.running;
-    if (els.continueExistingRunBtn) els.continueExistingRunBtn.disabled = state.running;
-    els.referencesInput.disabled = state.running;
-    if (els.changeWorkbookBtn) els.changeWorkbookBtn.disabled = state.running;
-    if (els.addReferencesBtn) els.addReferencesBtn.disabled = state.running;
+    els.workbookInput.disabled = operatorLocked;
+    if (els.resumeWorkbookInput) els.resumeWorkbookInput.disabled = operatorLocked;
+    if (els.continueExistingRunBtn) els.continueExistingRunBtn.disabled = operatorLocked;
+    els.referencesInput.disabled = operatorLocked;
+    if (els.changeWorkbookBtn) els.changeWorkbookBtn.disabled = operatorLocked;
+    if (els.addReferencesBtn) els.addReferencesBtn.disabled = operatorLocked;
     for (const element of [els.outputDestinationMode, els.imageOutputFolderInput, els.destinationFolderBtn, els.separateResultDestinationInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.chooseResultFolderBtn, els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) if (element) element.disabled = outputLocked;
     if (state.outputSettings?.image?.kind === "directory") els.imageOutputFolderInput.disabled = true;
     if (state.outputSettings?.result?.kind !== "downloads") els.resultDownloadsFolderInput.disabled = true;
@@ -951,18 +954,103 @@
     for (const recovery of plan.jobs.filter((item) => item.state === "AMBIGUOUS_SUBMITTED")) {
       const action = document.createElement("div");
       action.className = "resume-reconcile-action";
+      const job = state.workbook?.jobs?.find((entry) => entry.id === recovery.job_id);
+      const approved = window.DacRecreateCore.isApproved(job || {});
       const label = document.createElement("span");
-      label.textContent = `${recovery.job_id}: inspect the existing ChatGPT image against its submitted boundary.`;
-      const button = document.createElement("button");
-      button.type = "button"; button.className = "secondary small"; button.textContent = "Resolve Existing Output"; button.disabled = state.running || state.manualReconciliationRunning;
-      button.addEventListener("click", () => resolveExistingOutput(recovery.job_id).catch((error) => log(messageOf(error), "error")));
-      action.append(label, button);
+      label.textContent = approved
+        ? `${recovery.job_id}: deliberate recreate is approved; Continue remains blocked until it succeeds.`
+        : `${recovery.job_id}: inspect the existing ChatGPT image against its submitted boundary.`;
+      action.appendChild(label);
+      if (!approved) {
+        const button = document.createElement("button");
+        button.type = "button"; button.className = "secondary small"; button.textContent = "Resolve Existing Output"; button.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning;
+        button.addEventListener("click", () => resolveExistingOutput(recovery.job_id).catch((error) => log(messageOf(error), "error")));
+        action.appendChild(button);
+        const recreate = document.createElement("button");
+        recreate.type = "button"; recreate.className = "secondary small warning"; recreate.textContent = "Recreate Image"; recreate.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning;
+        recreate.addEventListener("click", () => openRecreateDialog(recovery.job_id));
+        action.appendChild(recreate);
+      }
       els.resumePlanDiagnostics.appendChild(action);
     }
   }
 
   function reconciliationProof(item) {
     return window.DacReconciliationCore.proofFromRecordedAttempt({ run_id: state.runId, job: item?.job });
+  }
+
+  function openRecreateDialog(jobId) {
+    if (state.running || state.manualReconciliationRunning || state.recreateRunning || !state.resumePlan) return;
+    const recovery = state.resumePlan.jobs.find((entry) => entry.job_id === jobId);
+    const job = state.workbook?.jobs?.find((entry) => entry.id === jobId);
+    if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED" || !job || window.DacRecreateCore.isApproved(job)) return;
+    state.pendingRecreateJobId = jobId;
+    els.recreateConfirmBtn.textContent = `Recreate ${jobId}`;
+    if (typeof els.recreateConfirmDialog.showModal === "function") els.recreateConfirmDialog.showModal();
+    else els.recreateConfirmDialog.setAttribute("open", "");
+  }
+
+  function closeRecreateDialog() {
+    state.pendingRecreateJobId = null;
+    if (typeof els.recreateConfirmDialog.close === "function") els.recreateConfirmDialog.close();
+    else els.recreateConfirmDialog.removeAttribute("open");
+  }
+
+  function cancelRecreate() {
+    window.DacRecreateCore.cancelled();
+    closeRecreateDialog();
+  }
+
+  async function persistRecreateApproval(item, approval, effectiveOutput) {
+    const original = Object.fromEntries(Object.keys(approval.fields).map((key) => [key, item.job[key] || ""]));
+    try {
+      audit("RECREATE_APPROVED", item, { message: `Operator approved a deliberate new attempt; prior attempt ${approval.prior.attempt_id} remains preserved.` });
+      update(item, approval.fields);
+      item.status = "PENDING"; item.phase = "PRE_SUBMIT"; item.operator_recreate = true; item.attempt_id = ""; item.retry_count = 0;
+      if (effectiveOutput.saveAuditJsonl) {
+        state.auditFile = await saveAuditLog(effectiveOutput.result);
+        snapshotOutputSettings(null, state.auditFile);
+      }
+      const checkpoint = await saveLedger(effectiveOutput.result);
+      if (!checkpoint) throw new Error("RECREATE_APPROVAL_CHECKPOINT_FAILED: Result checkpoint was not verified.");
+      state.resultFile = checkpoint;
+      state.resumeLedgerFile = state.checkpointFilename;
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
+      await prepare({ diagnostic: true });
+      window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+      return checkpoint;
+    } catch (error) {
+      update(item, original);
+      item.status = original.status || "INTERRUPTED"; item.phase = original.attempt_phase || "SUBMITTED"; item.operator_recreate = false; item.attempt_id = original.attempt_id || "";
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
+      await prepare({ diagnostic: true });
+      window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+      throw error;
+    }
+  }
+
+  async function confirmRecreate() {
+    const jobId = state.pendingRecreateJobId;
+    closeRecreateDialog();
+    if (!jobId || state.running || state.manualReconciliationRunning || state.recreateRunning || !state.resumePlan || !state.prepared) return;
+    const recovery = state.resumePlan.jobs.find((entry) => entry.job_id === jobId);
+    const item = state.prepared.queue.find((entry) => entry.job.id === jobId);
+    const approval = window.DacRecreateCore.approval({ job: item?.job, recoveryState: recovery?.state });
+    if (!approval.ok) throw new Error(`${approval.code}: ${approval.message}`);
+    const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
+    if (!outputCheck.ok) throw new Error(`OUTPUT_LOCATION: ${outputCheck.error}`);
+    const effectiveOutput = outputCheck.effective;
+    if (!effectiveOutput.saveImages || !effectiveOutput.saveResultXlsx) throw new Error("RECREATE_PERSISTENCE_REQUIRED: generated-image and Result XLSX saving must both be enabled.");
+    state.recreateRunning = true;
+    try {
+      const checkpoint = await persistRecreateApproval(item, approval, effectiveOutput);
+      progress(`${jobId}: recreate approved and checkpointed as ${checkpoint}; starting one deliberate new attempt.`);
+      renderResumePlan(); renderQueue(); renderOutput(); controls();
+      await run("recreate");
+    } finally {
+      state.recreateRunning = false;
+      renderResumePlan(); controls();
+    }
   }
 
   function restoreReconciliationItem(item, values) {
@@ -1227,12 +1315,19 @@
     await prepare();
   }
 
-  async function authoritativeValidate() {
+  function approvedRecreateIsOnlyResumeBlocker() {
+    const plan = state.resumePlan;
+    const blockers = plan?.findings?.filter((finding) => finding.severity === "BLOCKER") || [];
+    const ambiguous = plan?.jobs?.filter((entry) => entry.state === "AMBIGUOUS_SUBMITTED") || [];
+    return Boolean(blockers.length && ambiguous.length && blockers.every((finding) => finding.code === "RESUME_RECREATE_INCOMPLETE") && ambiguous.every((entry) => window.DacRecreateCore.isApproved(state.workbook?.jobs?.find((job) => job.id === entry.job_id) || {})));
+  }
+
+  async function authoritativeValidate({ allowRecreate = false } = {}) {
     if (!state.workbook) throw new Error("Open an XLSX workbook first.");
     state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
     if (state.resumeMode && state.resumePlan) {
       await verifyResumeDirectoryLedger();
-      if (!state.resumePlan.ready || state.resumePlan.findings.some((item) => item.severity === "BLOCKER")) throw new Error("RESUME_BLOCKED: Resolve the Resume Plan diagnostics before continuing.");
+      if ((!state.resumePlan.ready || state.resumePlan.findings.some((item) => item.severity === "BLOCKER")) && !(allowRecreate && approvedRecreateIsOnlyResumeBlocker())) throw new Error("RESUME_BLOCKED: Resolve the Resume Plan diagnostics before continuing.");
       window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
     }
     const locationPreflight = await window.DacOutputLocation.preflight(state.outputSettings);
@@ -1579,8 +1674,9 @@
 
   function markInterrupted(item, failureType, message) {
     const now = new Date().toISOString();
-    update(item, { status: "INTERRUPTED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message, completed_at: now });
+    update(item, { status: "INTERRUPTED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message, completed_at: now, ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
     audit("FAILURE", item, { message }); audit("JOB_INTERRUPTED", item, { message });
+    if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message });
     log(`${item.job.id} interrupted: ${failureType}: ${message}`, "error");
     setCurrent(item, "INTERRUPTED", failureType);
     renderQueue(); progress(`${item.job.id} interrupted after ${item.phase}.`);
@@ -1627,8 +1723,9 @@
       item.phase = "CHAT_READY"; audit("CHAT_READY", item);
       item.phase = "SUCCESS";
       item.runtime_stage = "SUCCESS"; setCurrent(item, item.runtime_stage, "Saved image and idle readiness confirmed.");
-      update(item, { status: "SUCCESS", attempt_phase: item.phase, result_file: item.result_file, result_download_id: item.result_download_id, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", completed_at: new Date().toISOString() });
+      update(item, { status: "SUCCESS", attempt_phase: item.phase, result_file: item.result_file, result_download_id: item.result_download_id, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "SUCCESS", recreate_attempt_id: item.attempt_id } : {}) });
       audit("JOB_SUCCESS", item); log(`${item.job.id} success after CHAT_READY.`, "done"); renderQueue(); progress(`${item.job.id} complete; saved output is checkpointed.`);
+      if (item.operator_recreate) audit("RECREATE_JOB_SUCCESS", item, { message: "Operator-approved recreate completed with verified persisted output." });
       return { completed: true, halted: false };
     } catch (error) {
       markInterrupted(item, window.DacRunnerCore.classifyFailure(error, "OUTPUT_SAVED"), messageOf(error));
@@ -1674,7 +1771,7 @@
 
   async function run(mode = "all") {
     let effectiveOutput;
-    try { effectiveOutput = await authoritativeValidate(); }
+    try { effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" }); }
     catch (error) { setStatus("ERROR"); progress(messageOf(error)); log(messageOf(error), "error"); controls(); return; }
     const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, state.selectedJobId);
     if (!runQueue.length) { setStatus("ERROR", "NOT READY"); progress(`No ${mode} jobs are eligible.`); controls(); return; }
@@ -1699,9 +1796,9 @@
           item.runtime_stage = item.references.length ? "ATTACHING_REFS" : "SENDING";
           item.attempt_id = nextAttemptId();
           const rerunReset = item.deliberate_rerun ? { result_file: "", result_download_id: "", output_saved_at: "" } : {};
-          update(item, { ...rerunReset, status: "RUNNING", attempt_id: item.attempt_id, attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+          update(item, { ...rerunReset, status: "RUNNING", attempt_id: item.attempt_id, attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", ...(item.operator_recreate ? { recreate_attempt_id: item.attempt_id, recreate_status: "RUNNING" } : {}) });
           item.deliberate_rerun = false;
-          audit("JOB_START", item); setCurrent(item, item.runtime_stage, item.references.length ? `Preparing ${item.references.length} reference image(s).` : "Preparing prompt submission."); renderQueue(); nextTask(nextEligible(item.job.id), "Waiting for current job to finish."); progress(`Running ${item.job.id}…`);
+          audit(item.operator_recreate ? "RECREATE_ATTEMPT_STARTED" : "JOB_START", item, item.operator_recreate ? { message: "Starting one operator-approved deliberate recreate attempt." } : {}); setCurrent(item, item.runtime_stage, item.references.length ? `Preparing ${item.references.length} reference image(s).` : "Preparing prompt submission."); renderQueue(); nextTask(nextEligible(item.job.id), "Waiting for current job to finish."); progress(`Running ${item.job.id}…`);
           let response;
           try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
           catch (error) { response = { ok: false, error: messageOf(error), attempt: { job_id: item.job.id, attempt_id: item.attempt_id, phase: "PRE_SUBMIT", submittedAt: null } }; }
@@ -1711,6 +1808,7 @@
             item.phase = "SUBMITTED";
             if (item.references.length) audit("ATTACHMENTS_READY", item);
             audit("PROMPT_SUBMITTED", item, { target_url: target?.url || null });
+            if (item.operator_recreate) { update(item, { recreate_status: "SUBMITTED", recreate_attempt_id: item.attempt_id }); audit("RECREATE_PROMPT_SUBMITTED", item, { message: "Operator-approved recreate prompt submitted." }); }
           }
           if (response?.ok && response.result?.image_url) {
             const outcome = await finishDetectedOutput(item, response.result, effectiveOutput);
@@ -1719,8 +1817,8 @@
           }
           const failureType = state.stopRequested ? "USER_STOP" : window.DacRunnerCore.classifyFailure(response?.error || "No attributable generated image was found.", item.phase);
           if (state.stopRequested) {
-            update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || "Stopped by user.", error: response?.error || "Stopped by user.", completed_at: new Date().toISOString() });
-            audit("FAILURE", item, { message: response?.error || "Stopped by user." }); completed = true; break;
+            update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || "Stopped by user.", error: response?.error || "Stopped by user.", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
+            audit("FAILURE", item, { message: response?.error || "Stopped by user." }); if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message: response?.error || "Stopped by user." }); completed = true; break;
           }
           if (window.DacRunnerCore.needsReconciliation(item.phase)) {
             const outcome = await reconcileSubmittedAttempt(item, effectiveOutput, response?.error || failureType);
@@ -1739,8 +1837,8 @@
             renderRuntime();
             continue;
           }
-          update(item, { status: "FAILED", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || failureType, error: response?.error || failureType, completed_at: new Date().toISOString() });
-          audit("FAILURE", item, { message: response?.error || failureType }); log(`${item.job.id} failed: ${failureType}: ${response?.error || failureType}`, "error"); completed = true;
+          update(item, { status: "FAILED", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || failureType, error: response?.error || failureType, completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
+          audit("FAILURE", item, { message: response?.error || failureType }); if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message: response?.error || failureType }); log(`${item.job.id} failed: ${failureType}: ${response?.error || failureType}`, "error"); completed = true;
           if (failureType === "SECURITY_HARD_STOP" || failureType === "RECEIVER_LOST" || !settings.continue_on_error) halted = true;
         }
         state.terminal += 1; renderQueue();
@@ -1922,6 +2020,9 @@
     els.copyReviewPacketStatus.textContent = error.message;
     log(error.message, "error");
   }));
+  els.recreateCancelBtn?.addEventListener("click", cancelRecreate);
+  els.recreateConfirmBtn?.addEventListener("click", () => confirmRecreate().catch((error) => { progress(`Recreate not started: ${messageOf(error)}`); log(messageOf(error), "error"); controls(); }));
+  els.recreateConfirmDialog?.addEventListener("cancel", (event) => { event.preventDefault(); cancelRecreate(); });
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
   els.stopBtn.addEventListener("click", stop);

@@ -34,7 +34,7 @@ const diagnosticSource = js.slice(js.indexOf("async function diagnosticChatCheck
 assert.match(diagnosticSource, /DAC_PING/);
 assert.doesNotMatch(diagnosticSource, /DAC_RUN_IMAGE_JOB/);
 assert.match(js, /state\.prepared = window\.DacRunnerCore\.prepare\(state\.workbook, state\.files, state\.runtimeOverrides\);/);
-assert.match(js, /async function run\(mode = "all"\)[\s\S]*?effectiveOutput = await authoritativeValidate\(\)/);
+assert.match(js, /async function run\(mode = "all"\)[\s\S]*?effectiveOutput = await authoritativeValidate\(\{ allowRecreate: mode === "recreate" \}\)/);
 assert.match(js, /state\.validated = state\.diagnostics\.summary\.blockers === 0/);
 assert.match(js, /async function copyReviewPacket\(\)/);
 assert.match(js, /DacOrchestratorReview\.copyPayload\(reviewContext\(\)\)/);

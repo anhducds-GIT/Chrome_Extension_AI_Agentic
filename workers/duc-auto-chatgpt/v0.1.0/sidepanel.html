@@ -368,6 +368,14 @@
     <div class="row spread"><strong>Operator Help</strong><button id="closeHelpBtn" class="secondary small" type="button">Close</button></div>
     <div id="helpGlossary" class="help-glossary"></div>
   </aside>
+  <dialog id="recreateConfirmDialog" class="recreate-confirm-dialog" aria-labelledby="recreateConfirmTitle">
+    <h2 id="recreateConfirmTitle">Recreate image?</h2>
+    <p>Prior submitted output could not be safely attributed. Recreating may produce a duplicate image.</p>
+    <div class="row end gap-sm">
+      <button id="recreateCancelBtn" class="secondary" type="button">Cancel</button>
+      <button id="recreateConfirmBtn" class="primary" type="button">Recreate image</button>
+    </div>
+  </dialog>
   <script src="xlsx-codec.js"></script>
   <script src="checkpoint-core.js"></script>
   <script src="runner-core.js"></script>
@@ -375,6 +383,7 @@
   <script src="run-state-core.js"></script>
   <script src="resume-core.js"></script>
   <script src="reconciliation-core.js"></script>
+  <script src="recreate-core.js"></script>
   <script src="output-location-core.js"></script>
   <script src="xlsx-run-plan-core.js"></script>
   <script src="output-profile-core.js"></script>

@@ -138,7 +138,8 @@
       const status = deliberateRerun ? "PENDING" : terminalSuccess ? "SUCCESS" : persistedStatus === "failed" ? "FAILED" : persistedStatus === "interrupted" ? "INTERRUPTED" : persistedStatus === "stopped" ? "STOPPED" : hasOutputCheckpoint ? "INTERRUPTED" : "PENDING";
       const phase = deliberateRerun ? "PRE_SUBMIT" : ATTEMPT_PHASES.includes(persistedPhase) ? persistedPhase : terminalSuccess ? "SUCCESS" : hasOutputCheckpoint ? "OUTPUT_SAVED" : "PRE_SUBMIT";
       const protectedCheckpoint = hasOutputCheckpoint && !deliberateRerun;
-      return { job, number: index + 1, references, settings: itemSettings, status, skipped: terminalSuccess && !deliberateRerun || protectedCheckpoint, protected_checkpoint: protectedCheckpoint, deliberate_rerun: deliberateRerun, phase, attempt_id: String(job.attempt_id || ""), attempt_count: Number(job.attempt_count) || 0, retry_count: Number(job.retry_count) || 0, failure_type: job.failure_type || "", last_error: job.last_error || job.error || "", result_file: savedOutput, result_download_id: job.result_download_id || "" };
+      const operatorRecreate = bool(job.recreate_operator_approved, false) && !terminalSuccess;
+      return { job, number: index + 1, references, settings: itemSettings, status, skipped: terminalSuccess && !deliberateRerun || protectedCheckpoint, protected_checkpoint: protectedCheckpoint, deliberate_rerun: deliberateRerun, operator_recreate: operatorRecreate, phase, attempt_id: String(job.attempt_id || ""), submitted_at: String(job.submitted_at || ""), detection_diagnostics: String(job.detection_diagnostics || ""), attempt_count: Number(job.attempt_count) || 0, retry_count: Number(job.retry_count) || 0, failure_type: job.failure_type || "", last_error: job.last_error || job.error || "", result_file: savedOutput, result_download_id: job.result_download_id || "" };
     });
     return { settings, queue, plan: planSummary(queue, settings) };
   }
@@ -146,6 +147,7 @@
     if (mode === "all") return queue.filter((item) => !item.skipped);
     if (mode === "pending") return queue.filter((item) => item.status === "PENDING" && !item.protected_checkpoint);
     if (mode === "failed") return queue.filter((item) => item.status === "FAILED" && !item.protected_checkpoint);
+    if (mode === "recreate") return queue.filter((item) => item.operator_recreate && item.status === "PENDING" && item.phase === "PRE_SUBMIT" && !item.protected_checkpoint);
     if (mode === "selected") return queue.filter((item) => item.job.id === selectedId && item.phase === "PRE_SUBMIT" && !item.protected_checkpoint && !["SUCCESS", "DONE", "INTERRUPTED", "STOPPED"].includes(item.status));
     return [];
   }
