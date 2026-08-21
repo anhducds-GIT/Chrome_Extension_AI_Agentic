@@ -51,6 +51,8 @@ const authorizedUnset = run({ outputCheck: { ok: false, missingDestination: true
 assert.equal(authorizedUnset.blockers.some((item) => item.code === "OUTPUT_DESTINATION_MISSING"), true);
 const invalidNaming = run({ outputCheck: { ok: false, namingInvalid: true, error: "Image filename pattern is required." } });
 assert.equal(invalidNaming.blockers.some((item) => item.code === "OUTPUT_NAMING_INVALID"), true);
+const missingAuditChain = run({ outputCheck: { ok: true, settings: outputSettings, auditChain: { ok: false, code: "RESUME_AUDIT_CHAIN_MISSING", message: "Previous technical audit is unavailable.", guidance: "Explicitly continue with a new audit segment." } } });
+assert.equal(missingAuditChain.blockers.some((item) => item.code === "RESUME_AUDIT_CHAIN_MISSING"), true, "Check Plan blocks recreate before an unavailable prior audit can reach persistence");
 const profileUnbound = run({ outputProfileState: { state: "unbound", profile_id: "pilot-04" } });
 assert.equal(profileUnbound.blockers.some((item) => item.code === "OUTPUT_PROFILE_UNBOUND"), true);
 

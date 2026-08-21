@@ -376,6 +376,14 @@
       <button id="recreateConfirmBtn" class="primary" type="button">Recreate image</button>
     </div>
   </dialog>
+  <dialog id="auditGapConfirmDialog" class="recreate-confirm-dialog" aria-labelledby="auditGapConfirmTitle">
+    <h2 id="auditGapConfirmTitle">Start a new audit segment?</h2>
+    <p>The previous technical audit file is unavailable. Result XLSX remains authoritative. This creates an explicit continuity gap; historical audit data will not be fabricated.</p>
+    <div class="row end gap-sm">
+      <button id="auditGapCancelBtn" class="secondary" type="button">Cancel</button>
+      <button id="auditGapConfirmBtn" class="primary" type="button">Continue with new audit segment</button>
+    </div>
+  </dialog>
   <script src="xlsx-codec.js"></script>
   <script src="checkpoint-core.js"></script>
   <script src="runner-core.js"></script>
@@ -384,6 +392,7 @@
   <script src="resume-core.js"></script>
   <script src="reconciliation-core.js"></script>
   <script src="recreate-core.js"></script>
+  <script src="audit-chain-core.js"></script>
   <script src="output-location-core.js"></script>
   <script src="xlsx-run-plan-core.js"></script>
   <script src="output-profile-core.js"></script>

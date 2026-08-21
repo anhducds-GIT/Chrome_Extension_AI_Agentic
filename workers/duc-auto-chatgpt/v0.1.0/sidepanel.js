@@ -16,7 +16,7 @@
     "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn",
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
     "checkWorkbook", "statusWorkbook", "checkJobs", "statusJobs", "checkReferences", "statusReferences",
-    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary", "recreateConfirmDialog", "recreateCancelBtn", "recreateConfirmBtn",
+    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary", "recreateConfirmDialog", "recreateCancelBtn", "recreateConfirmBtn", "auditGapConfirmDialog", "auditGapCancelBtn", "auditGapConfirmBtn",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
     "currentAttemptBadge", "continuedRunLabel", "currentPromptPreview", "pipelineStepper", "operatorTimerArea",
@@ -74,7 +74,9 @@
     resumeCheckpointFindings: [],
     manualReconciliationRunning: false,
     recreateRunning: false,
-    pendingRecreateJobId: null
+    pendingRecreateJobId: null,
+    auditGapRunning: false,
+    auditChain: { ok: true, applicable: false, gapAcknowledged: false, segmentStarted: false, previousFilename: "" }
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -392,7 +394,7 @@
 
   function controls() {
     const ready = Boolean(state.workbook && state.prepared && state.outputSettings && state.validated);
-    const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning;
+    const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning;
     const outputLocked = !state.workbook || operatorLocked;
     els.validateBtn.disabled = !state.workbook || operatorLocked;
     els.runBtn.disabled = !ready || operatorLocked;
@@ -673,6 +675,36 @@
 
   function outputPlan() { return window.DacOutputLocation.runPlan(state.workbook?.fileName, state.outputSettings); }
 
+  function recordedPriorAuditFilename(values) {
+    return window.DacRunnerCore.basename(state.workbook?.config?.effective_audit_log || state.workbook?.config?.audit_chain_missing_filename || state.auditFile || values.auditFilename);
+  }
+
+  function auditGapAcknowledged() {
+    return window.DacAuditChainCore.gapAcknowledged(state.workbook?.config || {});
+  }
+
+  async function auditChainPreflight(values) {
+    const previousFilename = recordedPriorAuditFilename(values);
+    const gapAcknowledged = auditGapAcknowledged();
+    if (!state.resumeMode || !values.saveAuditJsonl || values.result?.kind !== "directory") return window.DacAuditChainCore.inspect({ resumeMode: state.resumeMode, saveAuditJsonl: values.saveAuditJsonl, locationKind: values.result?.kind, previousFilename, gapAcknowledged });
+    if (gapAcknowledged) {
+      const segmentFilename = window.DacRunnerCore.basename(state.workbook?.config?.audit_chain_segment_filename || values.auditFilename);
+      try {
+        const segmentHandle = await values.result.handle.getFileHandle(segmentFilename, { create: false });
+        const segmentFile = await segmentHandle.getFile();
+        if (!segmentFile || Number(segmentFile.size) <= 0) throw new Error("empty segment");
+      } catch (_) { return window.DacAuditChainCore.segmentMissing(segmentFilename); }
+      return { ...window.DacAuditChainCore.inspect({ resumeMode: true, saveAuditJsonl: true, locationKind: "directory", previousFilename, gapAcknowledged: true }), segmentStarted: true };
+    }
+    let prior = { exists: false, size: 0 };
+    try {
+      const handle = await values.result.handle.getFileHandle(previousFilename, { create: false });
+      const file = await handle.getFile();
+      prior = { exists: Boolean(file), size: Number(file?.size) || 0 };
+    } catch (_) { /* Missing files are converted to a DAC diagnostic below. */ }
+    return window.DacAuditChainCore.inspect({ resumeMode: true, saveAuditJsonl: true, locationKind: "directory", previousFilename, prior, gapAcknowledged: false });
+  }
+
   function invalidateValidation(reason = "Configuration changed; validate again before Run.") {
     if (!state.workbook || state.running) return;
     state.validated = false;
@@ -945,12 +977,24 @@
     const plan = state.resumePlan;
     els.resumeSourceSummary.hidden = false;
     els.resumeSourceSummary.textContent = `Continued run · ${plan.run.run_id}${plan.run.provenance === "legacy" ? " (legacy identity)" : ""} · ${window.DacResumeCore.summaryText(plan.summary)}${plan.next_eligible_job ? ` · Next: ${plan.next_eligible_job}` : ""}`;
-    els.resumePlanDiagnostics.hidden = !plan.findings.length;
-    els.resumePlanDiagnostics.className = `resume-diagnostics${plan.findings.length ? " blocked" : ""}`;
+    const auditGapBlocked = state.auditChain?.code === "RESUME_AUDIT_CHAIN_MISSING";
+    els.resumePlanDiagnostics.hidden = !plan.findings.length && !auditGapBlocked;
+    els.resumePlanDiagnostics.className = `resume-diagnostics${plan.findings.length || auditGapBlocked ? " blocked" : ""}`;
     els.resumePlanDiagnostics.replaceChildren();
     const detail = document.createElement("span");
     detail.textContent = plan.findings.map((item) => `${item.code}: ${item.message} ${item.guidance || ""}`).join(" ");
     els.resumePlanDiagnostics.appendChild(detail);
+    if (state.auditChain?.code === "RESUME_AUDIT_CHAIN_MISSING") {
+      const action = document.createElement("div");
+      action.className = "resume-reconcile-action";
+      const label = document.createElement("span");
+      label.textContent = `${state.auditChain.previousFilename}: previous technical audit is unavailable. Result XLSX remains authoritative.`;
+      const button = document.createElement("button");
+      button.type = "button"; button.className = "secondary small warning"; button.textContent = "Continue with new audit segment"; button.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning;
+      button.addEventListener("click", openAuditGapDialog);
+      action.append(label, button);
+      els.resumePlanDiagnostics.appendChild(action);
+    }
     for (const recovery of plan.jobs.filter((item) => item.state === "AMBIGUOUS_SUBMITTED")) {
       const action = document.createElement("div");
       action.className = "resume-reconcile-action";
@@ -1009,6 +1053,65 @@
     closeRecreateDialog();
   }
 
+  function openAuditGapDialog() {
+    if (state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning || state.auditChain?.code !== "RESUME_AUDIT_CHAIN_MISSING") return;
+    if (typeof els.auditGapConfirmDialog.showModal === "function") els.auditGapConfirmDialog.showModal();
+    else els.auditGapConfirmDialog.setAttribute("open", "");
+  }
+
+  function closeAuditGapDialog() {
+    if (typeof els.auditGapConfirmDialog.close === "function") els.auditGapConfirmDialog.close();
+    else els.auditGapConfirmDialog.removeAttribute("open");
+  }
+
+  async function confirmAuditGap() {
+    progress("Audit-gap confirmation received; verifying the missing prior audit before creating a new segment.");
+    log("Audit-gap confirmation received.", "info");
+    closeAuditGapDialog();
+    const previousChain = state.auditChain;
+    const originalConfig = { audit_chain_status: state.workbook?.config?.audit_chain_status || "", audit_chain_missing_filename: state.workbook?.config?.audit_chain_missing_filename || "", audit_chain_acknowledged_at: state.workbook?.config?.audit_chain_acknowledged_at || "", audit_chain_segment_filename: state.workbook?.config?.audit_chain_segment_filename || "" };
+    try {
+      if (!state.resumeMode || !state.workbook || !state.prepared) throw new Error("AUDIT_GAP_CONFIRM_CONTEXT_MISSING: Reopen the continued run and Check Plan before creating an audit segment.");
+      const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
+      if (!outputCheck.ok) throw new Error(`OUTPUT_LOCATION: ${outputCheck.error}`);
+      const effectiveOutput = outputCheck.effective;
+      const chain = await auditChainPreflight(effectiveOutput);
+      if (chain.ok) throw new Error("AUDIT_GAP_CONFIRM_NOT_REQUIRED: The recorded prior audit is now available; run Check Plan again to retain normal append behavior.");
+      if (chain.code !== "RESUME_AUDIT_CHAIN_MISSING") throw new Error(`${chain.code || "AUDIT_GAP_CONFIRM_BLOCKED"}: ${chain.message || "Audit continuity cannot be verified."}`);
+      if (!state.runId) throw new Error("AUDIT_GAP_RUN_ID_MISSING: The Result XLSX run identity is required before recording an audit gap.");
+      state.auditGapRunning = true;
+      setStatus("RUNNING", "AUDIT GAP CHECKPOINTING");
+      const approval = window.DacAuditChainCore.approveGap({ previousFilename: chain.previousFilename, auditFilename: effectiveOutput.auditFilename });
+      window.DacXlsx.updateConfigSnapshot(state.workbook, approval.fields);
+      state.auditChain = { ...chain, ...approval.fields, gapAcknowledged: true, segmentStarted: false };
+      state.auditEvents = [];
+      audit(approval.event.event, null, { message: approval.event.message });
+      state.auditFile = await saveAuditLog(effectiveOutput.result);
+      snapshotOutputSettings(null, state.auditFile);
+      const checkpoint = await saveLedger(effectiveOutput.result);
+      if (!checkpoint) throw new Error("AUDIT_GAP_CHECKPOINT_FAILED: Result checkpoint was not verified.");
+      state.resultFile = checkpoint;
+      state.resumeLedgerFile = state.checkpointFilename;
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
+      await prepare({ diagnostic: true });
+      window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+      await validate();
+      progress(`Audit gap acknowledged and checkpointed as ${checkpoint}. Recreate Image can now continue with the new audit segment.`);
+      log(`Audit continuity gap recorded; new segment ${state.auditFile} verified.`, "done");
+    } catch (error) {
+      window.DacXlsx.updateConfigSnapshot(state.workbook, originalConfig);
+      state.auditChain = previousChain;
+      const reason = messageOf(error);
+      setStatus("ERROR", "AUDIT GAP BLOCKED");
+      progress(`New audit segment blocked: ${reason}`);
+      log(`New audit segment blocked: ${reason}`, "error");
+      throw error;
+    } finally {
+      state.auditGapRunning = false;
+      renderResumePlan(); controls();
+    }
+  }
+
   async function persistRecreateApproval(item, approval, effectiveOutput) {
     const original = Object.fromEntries(Object.keys(approval.fields).map((key) => [key, item.job[key] || ""]));
     try {
@@ -1057,6 +1160,9 @@
       const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
       if (!outputCheck.ok) throw new Error(`OUTPUT_LOCATION: ${outputCheck.error}`);
       const effectiveOutput = outputCheck.effective;
+      const auditChain = await auditChainPreflight(effectiveOutput);
+      state.auditChain = auditChain;
+      if (!auditChain.ok) { renderResumePlan(); throw new Error(`${auditChain.code}: ${auditChain.message}`); }
       if (!effectiveOutput.saveImages || !effectiveOutput.saveResultXlsx) throw new Error("RECREATE_PERSISTENCE_REQUIRED: generated-image and Result XLSX saving must both be enabled.");
       state.recreateRunning = true;
       setStatus("RUNNING", "RECREATE CHECKPOINTING");
@@ -1359,6 +1465,9 @@
     }
     const locationPreflight = await window.DacOutputLocation.preflight(state.outputSettings);
     if (!locationPreflight.ok) throw new Error(`OUTPUT_LOCATION: ${locationPreflight.error}`);
+    const auditChain = await auditChainPreflight(locationPreflight.effective);
+    state.auditChain = auditChain;
+    if (!auditChain.ok) throw new Error(`${auditChain.code}: ${auditChain.message}`);
     const ping = await send({ type: "DAC_PING" });
     if (!ping?.composerFound || ping.generating || ping.busy || ping.securityBlocker) throw new Error(ping.securityBlocker ? `HARD_STOP: ${ping.securityBlocker}` : "ChatGPT must be reachable, idle, and show its composer.");
     els.outputPermissionText.textContent = "Output-location preflight passed.";
@@ -1389,7 +1498,9 @@
       const check = await window.DacOutputLocation.preflight(state.outputSettings);
       values = check.effective || values;
       const locations = values.image === values.result ? [values.image] : [values.image, values.result];
-      return { ...check, settings: state.outputSettings, missingDestination: locations.some((location) => location?.kind === "directory" && !location.handle) };
+      const auditChain = await auditChainPreflight(values);
+      state.auditChain = auditChain;
+      return { ...check, settings: state.outputSettings, auditChain, missingDestination: locations.some((location) => location?.kind === "directory" && !location.handle) };
     } catch (error) {
       return { ok: false, error: error.message, settings: state.outputSettings };
     }
@@ -1552,7 +1663,8 @@
     const actual = String(actualResultFilename || "");
     const resultDestination = actual ? (/^(?:[A-Za-z]:[\\/]|\/)/.test(actual) || actual.startsWith(window.DacOutputLocation.locationLabel(effectiveResult)) ? actual : window.DacOutputLocation.fileLabel(effectiveResult, actual)) : plan.resultDestination;
     const output = window.DacOutputLocation.effective(state.outputSettings);
-    const snapshot = { run_id: state.runId || "", result_filename_pattern: output.checkpointFilenamePattern, effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done, ...(checkpoint || {}) };
+    const auditChain = auditGapAcknowledged() ? { audit_chain_status: state.workbook.config.audit_chain_status, audit_chain_missing_filename: state.workbook.config.audit_chain_missing_filename, audit_chain_acknowledged_at: state.workbook.config.audit_chain_acknowledged_at, audit_chain_segment_filename: state.workbook.config.audit_chain_segment_filename } : {};
+    const snapshot = { run_id: state.runId || "", result_filename_pattern: output.checkpointFilenamePattern, effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done, ...auditChain, ...(checkpoint || {}) };
     window.DacXlsx.updateConfigSnapshot(workbook, snapshot);
     if (workbook === state.workbook) for (const item of state.prepared.queue) update(item, snapshot);
   }
@@ -1616,15 +1728,34 @@
     const requested = values.auditFilename;
     if (location.kind === "directory") {
       if (state.resumeMode) {
-        const previous = window.DacRunnerCore.basename(state.auditFile || requested);
-        const priorHandle = await location.handle.getFileHandle(previous, { create: false });
-        const priorFile = await priorHandle.getFile();
-        if (!priorFile || Number(priorFile.size) <= 0) throw new Error(`RESUME_ARTIFACT_MISSING: prior audit '${previous}' is not readable and non-empty.`);
-        const priorPayload = await priorFile.text();
-        payload = `${priorPayload}${priorPayload.endsWith("\n") ? "" : "\n"}${payload}`;
+        if (auditGapAcknowledged()) {
+          if (state.auditChain?.segmentStarted) {
+            try {
+              const segmentHandle = await location.handle.getFileHandle(requested, { create: false });
+              const segmentFile = await segmentHandle.getFile();
+              if (!segmentFile || Number(segmentFile.size) <= 0) throw new Error("empty segment");
+              const segmentPayload = await segmentFile.text();
+              payload = `${segmentPayload}${segmentPayload.endsWith("\n") ? "" : "\n"}${payload}`;
+            } catch (_) { throw new Error(`RESUME_AUDIT_GAP_SEGMENT_MISSING: New audit segment '${requested}' is unavailable; do not recreate until the gap record is restored.`); }
+          }
+        } else {
+          const previous = recordedPriorAuditFilename(values);
+          try {
+            const priorHandle = await location.handle.getFileHandle(previous, { create: false });
+            const priorFile = await priorHandle.getFile();
+            if (!priorFile || Number(priorFile.size) <= 0) throw new Error("empty prior audit");
+            const priorPayload = await priorFile.text();
+            payload = `${priorPayload}${priorPayload.endsWith("\n") ? "" : "\n"}${payload}`;
+          } catch (_) {
+            const diagnostic = window.DacAuditChainCore.missing(previous);
+            throw new Error(`${diagnostic.code}: ${diagnostic.message}`);
+          }
+        }
       }
       const mergedBlob = new Blob([payload], { type: "application/jsonl" });
-      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, requested, mergedBlob, state.resumeMode ? "overwrite" : "fail");
+      const policy = state.resumeMode && (!auditGapAcknowledged() || state.auditChain?.segmentStarted) ? "overwrite" : "fail";
+      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, requested, mergedBlob, policy);
+      if (state.resumeMode && auditGapAcknowledged()) state.auditChain = { ...state.auditChain, segmentStarted: true };
       return window.DacOutputLocation.fileLabel(location, written.filename);
     }
     if (state.resumeMode) throw new Error("RESUME_AUDIT_APPEND_UNAVAILABLE: Chrome Downloads cannot read and append the prior audit log. Continue using the authorized run folder.");
@@ -2051,6 +2182,9 @@
   els.recreateCancelBtn?.addEventListener("click", cancelRecreate);
   els.recreateConfirmBtn?.addEventListener("click", () => confirmRecreate().catch(() => controls()));
   els.recreateConfirmDialog?.addEventListener("cancel", (event) => { event.preventDefault(); cancelRecreate(); });
+  els.auditGapCancelBtn?.addEventListener("click", closeAuditGapDialog);
+  els.auditGapConfirmBtn?.addEventListener("click", () => confirmAuditGap().catch(() => controls()));
+  els.auditGapConfirmDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeAuditGapDialog(); });
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
   els.stopBtn.addEventListener("click", stop);

@@ -158,6 +158,11 @@
         findings.push(makeFinding("OUTPUT_OK", "OK", "output", { message: "Output destination and naming are ready.", guidance: "Output preflight passed." }));
       }
     }
+    if (outputCheck?.auditChain && !outputCheck.auditChain.ok) findings.push(makeFinding(outputCheck.auditChain.code, "BLOCKER", "output", {
+      message: outputCheck.auditChain.message,
+      guidance: outputCheck.auditChain.guidance,
+      action: "Continue with new audit segment"
+    }));
 
     if (!chatCheck?.ok) findings.push(makeFinding(chatCheck?.code || "CHATGPT_NOT_CONNECTED", "BLOCKER", "chatgpt", {
       message: chatCheck?.message || "Open a normal ChatGPT conversation in the active tab.", guidance: chatCheck?.guidance || "Open or activate a normal ChatGPT conversation, then retry Check Plan.", action: "Retry Check Plan"
