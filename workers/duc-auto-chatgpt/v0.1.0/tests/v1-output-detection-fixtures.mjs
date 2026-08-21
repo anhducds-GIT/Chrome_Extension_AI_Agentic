@@ -58,6 +58,14 @@ assert.equal(reordered.decision.candidate.source, "generated", "assistant reorde
 const stillGenerating = detect(boundary([], []), [assistant("a1", [generated])], [generated], true);
 assert.equal(stillGenerating.decision.ok, true, "Stop-visible state does not suppress image diagnostics");
 assert.equal(stillGenerating.detection.stop_visible, true, "Stop-visible state is recorded");
+assert.equal(evidence.completionForImage(stillGenerating.decision, { generationControlVisible: true }).ok, true, "a stale generation control cannot suppress proven image completion");
+
+// Regression: ChatGPT can render a completed image without an assistant text
+// node.  Completion is driven by the immutable post-submit image boundary,
+// not assistant prose or its presence in the DOM.
+const imageOnlyNoAssistantText = detect(boundary([], []), [], [generated], false);
+assert.equal(imageOnlyNoAssistantText.decision.ok, true, "a visible ready generated image is attributable with no assistant text");
+assert.equal(evidence.completionForImage(imageOnlyNoAssistantText.decision, { generationControlVisible: false }).reason, "image_ready", "completed image-only output is detected");
 
 const reconciliationBoundary = boundary([assistant("old-a", [old])], [old]);
 const firstPass = detect(reconciliationBoundary, [assistant("new-a", [generated])], [old, generated]);

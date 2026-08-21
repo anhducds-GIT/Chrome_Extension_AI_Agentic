@@ -293,7 +293,12 @@
         const diagnostics = decision.diagnostics || {};
         lastDetection = { ...boundaryTelemetry(boundary), assistant_count_after: evaluated.assistant_count_after, new_assistant_fingerprints: evaluated.new_assistant_fingerprints, stop_visible: Boolean(stopButton), generating: Boolean(stopButton), candidate_counts: { post_turn: diagnostics.post_turn || null, fresh: diagnostics.fresh || null }, baseline_vs_fresh: { baseline: diagnostics.baseline_count ?? boundary?.images?.length ?? 0, fresh: diagnostics.fresh?.total ?? 0 }, chosen_attribution: decision.attribution || null, decision_reason: decision.ok ? null : decision.reason || "NO_NEW_IMAGE", decision: diagnostics };
         recordDetection(attempt, lastDetection);
-        if (!stopButton && decision.ok) {
+        // A unique, attributable ready image is output evidence even when a
+        // stale generation control remains visible.  Do not send another
+        // prompt here: sidepanel.js persists this image and then independently
+        // waits for DAC_WAIT_CHAT_READY before any next-job transition.
+        const imageCompletion = window.DacImageEvidence.completionForImage(decision, { generationControlVisible: Boolean(stopButton) });
+        if (imageCompletion.ok) {
           return {
             type: "image",
             text,
@@ -301,7 +306,7 @@
             assistant_message_index: resultMessage ? messages.indexOf(resultMessage) : null,
             assistant_count_before: boundary?.assistant_count || 0,
             assistant_count_after: messages.length,
-            completion: { generation_seen: generationSeen, reason: "image_ready", poll_count: pollCount },
+            completion: { generation_seen: generationSeen, reason: imageCompletion.reason, poll_count: pollCount },
             image_url: decision.candidate.source,
             image_attribution: decision.attribution,
             detection: lastDetection,

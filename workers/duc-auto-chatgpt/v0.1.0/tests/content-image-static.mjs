@@ -5,7 +5,8 @@ const source = fs.readFileSync(new URL("../content.js", import.meta.url), "utf8"
 
 assert.match(source, /if \(expectImage\) \{/);
 assert.match(source, /const evaluated = imageDecision\(boundary, inputEvidence\)/);
-assert.match(source, /if \(!stopButton && decision\.ok\)/);
+assert.match(source, /completionForImage\(decision, \{ generationControlVisible: Boolean\(stopButton\) \}\)/);
+assert.match(source, /if \(imageCompletion\.ok\)/);
 assert.match(source, /stop_visible: Boolean\(stopButton\)/);
 assert.match(source, /OUTPUT_DETECTION_TIMEOUT/);
 assert.match(source, /captureBoundary\(inputEvidence\)/);
@@ -15,7 +16,8 @@ assert.ok(
   source.indexOf("if (expectImage)") < source.indexOf("if (text === stableText)"),
   "image-only completion must precede the text-stability condition"
 );
-assert.match(source, /reason: "image_ready"/);
+assert.match(source, /reason: imageCompletion\.reason/);
+assert.match(source, /DAC_WAIT_CHAT_READY/, "next-job readiness remains independent after image persistence");
 assert.match(source, /data:image\\\//);
 assert.match(source, /HARD_STOP: \$\{blocker\}/);
 assert.match(source, /if \(text === stableText\) \{/);

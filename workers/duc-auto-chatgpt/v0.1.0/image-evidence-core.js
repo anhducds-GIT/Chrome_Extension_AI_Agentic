@@ -48,6 +48,18 @@
     return verdict(false, { reason: "NO_NEW_IMAGE", diagnostics: { ...diagnostics, rejection_reason: "NO_NEW_IMAGE", chosen: null } });
   }
 
-  const api = { selectAttributableImage };
+  // Image evidence and readiness are deliberately separate authorities.  Once
+  // one attributable, ready image exists, it may be persisted; the runner
+  // still waits for ChatGPT readiness before it is allowed to submit another
+  // prompt.  A stale Stop control must not turn a proven image into a timeout.
+  function completionForImage(decision, { generationControlVisible = false } = {}) {
+    if (!decision?.ok) return { ok: false, reason: decision?.reason || "NO_NEW_IMAGE" };
+    return {
+      ok: true,
+      reason: generationControlVisible ? "image_ready_while_generation_control_visible" : "image_ready"
+    };
+  }
+
+  const api = { selectAttributableImage, completionForImage };
   (typeof window !== "undefined" ? window : globalThis).DacImageEvidence = api;
 })();
