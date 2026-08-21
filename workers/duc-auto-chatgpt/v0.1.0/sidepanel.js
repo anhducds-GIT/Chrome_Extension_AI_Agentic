@@ -955,13 +955,16 @@
       const action = document.createElement("div");
       action.className = "resume-reconcile-action";
       const job = state.workbook?.jobs?.find((entry) => entry.id === recovery.job_id);
-      const approved = window.DacRecreateCore.isApproved(job || {});
+      const queuedApproval = window.DacRecreateCore.isQueuedApproval(job || {});
+      const recoveryAvailable = !window.DacRecreateCore.isApproved(job || {}) || window.DacRecreateCore.requiresNewApproval(job || {});
       const label = document.createElement("span");
-      label.textContent = approved
+      label.textContent = queuedApproval
         ? `${recovery.job_id}: deliberate recreate is approved; Continue remains blocked until it succeeds.`
+        : window.DacRecreateCore.requiresNewApproval(job || {})
+          ? `${recovery.job_id}: the prior recreate did not safely complete; review it or explicitly confirm another recreate.`
         : `${recovery.job_id}: inspect the existing ChatGPT image against its submitted boundary.`;
       action.appendChild(label);
-      if (!approved) {
+      if (recoveryAvailable) {
         const button = document.createElement("button");
         button.type = "button"; button.className = "secondary small"; button.textContent = "Resolve Existing Output"; button.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning;
         button.addEventListener("click", () => resolveExistingOutput(recovery.job_id).catch((error) => log(messageOf(error), "error")));
@@ -983,7 +986,7 @@
     if (state.running || state.manualReconciliationRunning || state.recreateRunning || !state.resumePlan) return;
     const recovery = state.resumePlan.jobs.find((entry) => entry.job_id === jobId);
     const job = state.workbook?.jobs?.find((entry) => entry.id === jobId);
-    if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED" || !job || window.DacRecreateCore.isApproved(job)) return;
+    if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED" || !job || (!window.DacRecreateCore.requiresNewApproval(job) && window.DacRecreateCore.isApproved(job))) return;
     state.pendingRecreateJobId = jobId;
     els.recreateConfirmBtn.textContent = `Recreate ${jobId}`;
     if (typeof els.recreateConfirmDialog.showModal === "function") els.recreateConfirmDialog.showModal();
@@ -1319,7 +1322,7 @@
     const plan = state.resumePlan;
     const blockers = plan?.findings?.filter((finding) => finding.severity === "BLOCKER") || [];
     const ambiguous = plan?.jobs?.filter((entry) => entry.state === "AMBIGUOUS_SUBMITTED") || [];
-    return Boolean(blockers.length && ambiguous.length && blockers.every((finding) => finding.code === "RESUME_RECREATE_INCOMPLETE") && ambiguous.every((entry) => window.DacRecreateCore.isApproved(state.workbook?.jobs?.find((job) => job.id === entry.job_id) || {})));
+    return Boolean(blockers.length && ambiguous.length && blockers.every((finding) => finding.code === "RESUME_RECREATE_INCOMPLETE") && ambiguous.every((entry) => window.DacRecreateCore.isQueuedApproval(state.workbook?.jobs?.find((job) => job.id === entry.job_id) || {})));
   }
 
   async function authoritativeValidate({ allowRecreate = false } = {}) {
