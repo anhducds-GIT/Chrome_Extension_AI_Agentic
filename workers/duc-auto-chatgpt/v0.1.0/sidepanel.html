@@ -55,31 +55,35 @@
         <div class="row spread section-title">
           <strong>1. WORKBOOK</strong>
         </div>
-        <!-- Loaded Workbook Row -->
-        <div class="asset-body">
-          <div class="asset-icon excel-icon">X</div>
-          <div class="asset-details">
-            <div id="workbookNameDisplay" class="asset-name">No workbook loaded</div>
-            <div id="workbookText" class="hint">Open an XLSX to begin.</div>
+        <div class="workbook-layout">
+          <div class="workbook-asset-block">
+            <!-- Loaded Workbook Row -->
+            <div class="asset-body">
+              <div class="asset-icon excel-icon">X</div>
+              <div class="asset-details">
+                <div id="workbookNameDisplay" class="asset-name">No workbook loaded</div>
+                <div id="workbookText" class="hint">Open an XLSX to begin.</div>
+              </div>
+              <button id="changeWorkbookBtn" class="secondary small" type="button">Change</button>
+            </div>
+            <input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+            <div class="existing-run-actions">
+              <button id="continueExistingRunBtn" class="secondary small" type="button">Continue Existing Run</button>
+              <input id="resumeWorkbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+            </div>
+            <div id="resumeSourceSummary" class="resume-summary" hidden></div>
           </div>
-          <button id="changeWorkbookBtn" class="secondary small" type="button">Change</button>
-        </div>
-        <input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
-        <div class="existing-run-actions">
-          <button id="continueExistingRunBtn" class="secondary small" type="button">Continue Existing Run</button>
-          <input id="resumeWorkbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
-        </div>
-        <div id="resumeSourceSummary" class="resume-summary" hidden></div>
 
-        <!-- References Subsection -->
-        <div class="sub-section" id="referencesCard">
-          <div class="row spread sub-title">
-            <label for="referencesInput" class="secondary-label"><strong>References</strong> <span class="muted">(optional)</span></label>
-            <button id="addReferencesBtn" class="secondary small" type="button">+ Add</button>
+          <!-- References Subsection -->
+          <div class="sub-section" id="referencesCard">
+            <div class="row spread sub-title">
+              <label for="referencesInput" class="secondary-label"><strong>References</strong> <span class="muted">(optional)</span></label>
+              <button id="addReferencesBtn" class="secondary small" type="button">+ Add</button>
+            </div>
+            <input id="referencesInput" type="file" accept="image/*" multiple />
+            <div id="referenceGallery" class="reference-gallery" aria-live="polite"></div>
+            <p id="referenceText" class="hint">0 images selected</p>
           </div>
-          <input id="referencesInput" type="file" accept="image/*" multiple />
-          <div id="referenceGallery" class="reference-gallery" aria-live="polite"></div>
-          <p id="referenceText" class="hint">0 images selected</p>
         </div>
       </section>
 

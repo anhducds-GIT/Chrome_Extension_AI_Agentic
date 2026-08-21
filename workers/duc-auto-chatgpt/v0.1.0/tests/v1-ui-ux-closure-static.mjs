@@ -14,6 +14,9 @@ const format = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, "0")
 
 // SETUP: Naming is visible and no longer hidden inside advanced output details.
 assert.match(html, /id="namingSetupSection"/);
+assert.match(html, /class="workbook-layout"/);
+assert.match(css, /\.workbook-layout \{ display: grid; gap: 8px; \}/);
+assert.match(css, /\.workbook-layout \{ grid-template-columns: minmax\(0, 1fr\) minmax\(220px, 0\.9fr\);/);
 for (const id of ["imagePatternInput", "resultFilenameInput", "auditFilenameInput", "collisionPolicyInput"]) assert.match(html, new RegExp(`id="${id}"`));
 assert.ok(html.indexOf('id="namingSetupSection"') < html.indexOf('id="outputAdvancedDetails"'));
 assert.match(source, /markLocalOverride\("output_naming"\)/, "naming changes retain local-override invalidation");
