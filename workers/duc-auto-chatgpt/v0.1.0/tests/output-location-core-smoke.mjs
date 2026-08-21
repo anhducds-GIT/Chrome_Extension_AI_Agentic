@@ -3,6 +3,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 
 const context = { Promise, Array, String, Object, Error };
+vm.runInNewContext(fs.readFileSync(new URL("../checkpoint-core.js", import.meta.url), "utf8"), context);
 vm.runInNewContext(fs.readFileSync(new URL("../output-location-core.js", import.meta.url), "utf8"), context);
 const output = context.DacOutputLocation;
 
@@ -24,7 +25,7 @@ function directory(name, permission = "granted") {
 
 const settings = output.fromWorkbook({ output_folder: "Workbook Images" }, "brief.xlsx");
 assert.equal(output.locationLabel(settings.image), "Downloads/Workbook Images", "XLSX output_folder is displayed as the initial effective location");
-assert.equal(output.runPlan("brief.xlsx", settings).resultDestination, "Downloads/Workbook Images/brief__results.xlsx");
+assert.equal(output.runPlan("brief.xlsx", settings).resultDestination, "Downloads/Workbook Images/brief__results__v{version}.xlsx");
 
 const configuredResult = "Duc-Auto-ChatGPT-Pilot-04__results.xlsx";
 const configuredAudit = "Duc-Auto-ChatGPT-Pilot-04__audit.jsonl";
@@ -47,7 +48,7 @@ settings.image = output.directoryLocation(source, source.name);
 settings.result = { kind: "same_as_image" };
 const sourcePlan = output.runPlan("brief.xlsx", settings);
 assert.equal(sourcePlan.imageDestination, "Authorized folder handle: Source Workbook Folder (absolute path unavailable)", "Use Source Folder retains the selected-handle semantics");
-assert.equal(sourcePlan.resultDestination, "Authorized folder handle: Source Workbook Folder (absolute path unavailable)/brief__results.xlsx");
+assert.equal(sourcePlan.resultDestination, "Authorized folder handle: Source Workbook Folder (absolute path unavailable)/brief__results__v{version}.xlsx");
 
 const revoked = directory("Revoked", "denied");
 settings.image = output.directoryLocation(revoked, revoked.name);

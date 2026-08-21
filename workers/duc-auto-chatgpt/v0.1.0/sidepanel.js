@@ -9,7 +9,7 @@
     "authorizedDestinationControls", "destinationHandleText", "outputProfileText", "outputProfilePermission", "folderHintText", "copyFolderHintBtn", "destinationFolderBtn", "outputAdvancedDetails",
     "separateResultDestinationInput", "separateResultDestinationControls", "resultLocationMode", "resultDownloadsFolderInput",
     "resultDownloadsFolderLabel", "resultAuthorizedControls", "resultHandleText", "imagePatternInput", "resultFilenameInput", "auditFilenameInput",
-    "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput",
+    "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput", "runIdText", "checkpointVersionText", "checkpointFilenameText",
     "chooseResultFolderBtn",
     "copyReviewPacketBtn", "copyReviewPacketStatus", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput",
     "continueOnErrorInput", "rerunDoneInput", "outputSummaryText", "outputList", "artifactList",
@@ -67,7 +67,11 @@
     retryResumeAt: null,
     resumeMode: false,
     resumePlan: null,
-    resumeLedgerFile: ""
+    resumeLedgerFile: "",
+    checkpointVersion: 0,
+    checkpointFilename: "",
+    checkpointCreatedAt: "",
+    resumeCheckpointFindings: []
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -689,10 +693,19 @@
 
   function renderNamingProvenance() {
     if (!els.namingProvenance) return;
-    const namingOverride = ["output_naming", "result_filename"].some((key) => state.localOverrides.has(key));
+    const namingOverride = ["output_naming", "result_filename", "result_filename_pattern"].some((key) => state.localOverrides.has(key));
     els.namingProvenance.textContent = state.importedConfig
       ? namingOverride ? "XLSX + local override" : "From XLSX"
       : "Default values";
+  }
+
+  function renderCheckpointMeta() {
+    if (els.runIdText) els.runIdText.textContent = state.runId || "—";
+    if (els.checkpointVersionText) els.checkpointVersionText.textContent = state.checkpointVersion ? `v${window.DacCheckpointCore.formatVersion(state.checkpointVersion)}` : "—";
+    if (els.checkpointFilenameText) {
+      els.checkpointFilenameText.textContent = state.checkpointFilename || "—";
+      els.checkpointFilenameText.title = state.checkpointFilename || "";
+    }
   }
 
   async function resolveOutputProfile(profileId) {
@@ -783,7 +796,7 @@
       els.resultDownloadsFolderLabel.hidden = !state.separateResultDestination || state.outputSettings.result?.kind !== "downloads";
       els.resultAuthorizedControls.hidden = !state.separateResultDestination || state.outputSettings.result?.kind !== "directory";
       els.resultHandleText.textContent = values.result.kind === "directory" ? window.DacOutputLocation.locationLabel(values.result) : "No folder selected";
-      els.resultFilenameInput.value = values.resultFilename;
+      els.resultFilenameInput.value = values.checkpointFilenamePattern;
       els.imagePatternInput.value = values.imagePattern;
       els.auditFilenameInput.value = values.auditFilename;
       els.collisionPolicyInput.value = values.collisionPolicy;
@@ -796,7 +809,7 @@
     } catch (error) {
       els.outputPermissionText.textContent = error.message;
     }
-    renderConfigProvenance(); renderNamingProvenance(); updateReviewPacketControl(); controls();
+    renderConfigProvenance(); renderNamingProvenance(); renderCheckpointMeta(); updateReviewPacketControl(); controls();
   }
 
   async function activeTab() {
@@ -830,7 +843,7 @@
   }
 
   async function openWorkbook() {
-    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = false; state.resumePlan = null; state.resumeLedgerFile = ""; state.runId = null; renderResumePlan(); renderOutput();
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = false; state.resumePlan = null; state.resumeLedgerFile = ""; state.runId = null; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = []; renderResumePlan(); renderOutput();
     try {
       state.workbook = await window.DacXlsx.open(els.workbookInput.files?.[0]);
       const imported = applyWorkbookConfig();
@@ -861,16 +874,60 @@
     state.resumePlan.ready = false;
   }
 
-  async function verifyResumeDirectoryLedger() {
-    const location = state.outputSettings?.image;
-    if (!state.resumeMode || location?.kind !== "directory" || !location.handle || !state.resumeLedgerFile) return;
+  function addCheckpointFindings(check) {
+    for (const finding of check.findings || []) {
+      if (!state.resumeCheckpointFindings.some((item) => item.code === finding.code && item.message === finding.message)) state.resumeCheckpointFindings.push(finding);
+      addResumeFinding(finding.code, finding.message, finding.guidance);
+    }
+  }
+
+  async function scanProfileCheckpoints({ loadHighest = false } = {}) {
+    const values = window.DacOutputLocation.effective(state.outputSettings);
+    const location = values.result;
+    if (!state.resumeMode || location?.kind !== "directory" || !location.handle) return null;
+    const candidates = [];
     try {
-      const handle = await location.handle.getFileHandle(state.resumeLedgerFile, { create: false });
+      for await (const [name, handle] of location.handle.entries()) {
+        if (handle?.kind !== "file") continue;
+        const parsed = window.DacCheckpointCore.parse(values.checkpointFilenamePattern, name);
+        if (parsed) candidates.push(parsed);
+      }
+      const latest = window.DacCheckpointCore.highest(candidates);
+      if (!latest) return null;
+      const fileHandle = await location.handle.getFileHandle(latest.filename, { create: false });
+      const file = await fileHandle.getFile();
+      if (!file || Number(file.size) <= 0) throw new Error("latest checkpoint is missing or zero bytes");
+      const workbook = await window.DacXlsx.open(file);
+      const check = window.DacResumeCore.checkpointValidation(workbook, latest.filename, values.checkpointFilenamePattern, state.runId);
+      if (!check.ready) { addCheckpointFindings(check); return { latest, workbook, check }; }
+      if (loadHighest) {
+        state.workbook = workbook;
+        state.resumeLedgerFile = latest.filename;
+        state.checkpointVersion = latest.version;
+        state.checkpointFilename = latest.filename;
+        state.checkpointCreatedAt = String(workbook.config.checkpoint_created_at || "");
+      }
+      return { latest, workbook, check };
+    } catch (error) {
+      const code = /RESUME_RUN_ID_MISMATCH/.test(error?.message || "") ? "RESUME_RUN_ID_MISMATCH" : "RESUME_LATEST_CHECKPOINT_INVALID";
+      addCheckpointFindings({ findings: [{ code, severity: "BLOCKER", scope: "resume", message: "Latest Result checkpoint could not be validated.", guidance: `Do not fall back to an older checkpoint. Repair or restore the latest checkpoint. (${error?.message || String(error)})` }] });
+      return null;
+    }
+  }
+
+  async function verifyResumeDirectoryLedger() {
+    const values = state.outputSettings ? window.DacOutputLocation.effective(state.outputSettings) : null;
+    if (!state.resumeMode || values?.result?.kind !== "directory" || !values.result.handle || !state.resumeLedgerFile) return;
+    const discovered = await scanProfileCheckpoints();
+    if (discovered) return;
+    try {
+      const handle = await values.result.handle.getFileHandle(state.resumeLedgerFile, { create: false });
       const file = await handle.getFile();
       if (!file || Number(file.size) <= 0) throw new Error("ledger file is missing or zero bytes");
       const folderWorkbook = await window.DacXlsx.open(file);
-      const folderRun = window.DacResumeCore.identity(folderWorkbook).run_id;
-      if (folderRun !== state.runId) throw new Error("run identity does not match the selected ledger");
+      const check = window.DacResumeCore.checkpointValidation(folderWorkbook, state.resumeLedgerFile, values.checkpointFilenamePattern, state.runId);
+      addCheckpointFindings(check);
+      if (!check.ready) return;
     } catch (error) {
       addResumeFinding("RESUME_OUTPUT_MISMATCH", `Selected folder does not contain the matching Result XLSX '${state.resumeLedgerFile}'.`, `Choose the authorized run folder that contains this ledger, then Check Plan again. (${error.message || String(error)})`);
     }
@@ -892,7 +949,7 @@
   async function openExistingRun() {
     const file = els.resumeWorkbookInput?.files?.[0];
     if (!file) return;
-    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = true; state.resumePlan = null; state.resumeLedgerFile = file.name; state.auditEvents = []; state.artifactErrors = []; state.verifiedImageFiles = [];
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = true; state.resumePlan = null; state.resumeLedgerFile = file.name; state.auditEvents = []; state.artifactErrors = []; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = [];
     try {
       state.workbook = await window.DacXlsx.open(file);
       const imported = applyWorkbookConfig();
@@ -900,10 +957,19 @@
       state.runId = state.resumePlan.run.run_id;
       const recordedResult = window.DacRunnerCore.basename(state.workbook.config.effective_result_xlsx || "");
       const recordedAudit = window.DacRunnerCore.basename(state.workbook.config.effective_audit_log || "");
-      if (recordedResult) state.outputSettings.resultFilename = window.DacOutputLocation.safeFilename(recordedResult, state.outputSettings.resultFilename);
+      if (recordedResult && !state.workbook.config.result_filename_pattern) state.outputSettings.resultFilename = state.outputSettings.resultFilenamePattern = window.DacOutputLocation.baseResultFilenamePattern(state.workbook.fileName);
       if (recordedAudit) state.outputSettings.auditFilename = window.DacOutputLocation.safeFileLeaf(recordedAudit, state.outputSettings.auditFilename);
       if (imported.effective.output.mode === "profile") await resolveOutputProfile(imported.effective.output.profileId);
       if (imported.effective.output.separateResultDestination && imported.effective.output.resultMode === "profile") await resolveResultProfile(imported.effective.output.resultProfileId);
+      await scanProfileCheckpoints({ loadHighest: true });
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
+      addCheckpointFindings({ findings: state.resumeCheckpointFindings });
+      state.runId = state.resumePlan.run.run_id;
+      if (!state.checkpointVersion) {
+        state.checkpointVersion = Number(state.workbook.config.checkpoint_version) || 0;
+        state.checkpointFilename = window.DacRunnerCore.basename(state.workbook.config.checkpoint_filename || state.resumeLedgerFile);
+        state.checkpointCreatedAt = String(state.workbook.config.checkpoint_created_at || "");
+      }
       const resumeOutput = window.DacOutputLocation.effective(state.outputSettings);
       if (resumeOutput.saveAuditJsonl && resumeOutput.result.kind === "downloads") addResumeFinding("RESUME_AUDIT_APPEND_UNAVAILABLE", "Chrome Downloads cannot read and append the prior audit log.", "Choose the authorized run folder configured for this run, then Check Plan again.");
       await prepare({ diagnostic: true });
@@ -1020,14 +1086,15 @@
   }
 
   function setResultFilename() {
-    try { state.outputSettings.resultFilename = window.DacOutputLocation.safeFilename(els.resultFilenameInput.value, window.DacOutputLocation.baseResultName(state.workbook.fileName)); markLocalOverride("result_filename"); renderOutput(); }
+    try { state.outputSettings.resultFilenamePattern = window.DacOutputLocation.validateResultFilenamePattern(els.resultFilenameInput.value, window.DacOutputLocation.baseResultFilenamePattern(state.workbook.fileName)); state.outputSettings.resultFilename = state.outputSettings.resultFilenamePattern; markLocalOverride("result_filename_pattern"); renderOutput(); }
     catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
 
   function setArtifactNaming() {
     try {
       state.outputSettings.imagePattern = window.DacOutputLocation.validateImagePattern(els.imagePatternInput.value);
-      state.outputSettings.resultFilename = window.DacOutputLocation.safeFilename(els.resultFilenameInput.value, window.DacOutputLocation.baseResultName(state.workbook.fileName));
+      state.outputSettings.resultFilenamePattern = window.DacOutputLocation.validateResultFilenamePattern(els.resultFilenameInput.value, window.DacOutputLocation.baseResultFilenamePattern(state.workbook.fileName));
+      state.outputSettings.resultFilename = state.outputSettings.resultFilenamePattern;
       state.outputSettings.auditFilename = window.DacOutputLocation.safeFilename(els.auditFilenameInput.value, window.DacOutputLocation.baseAuditName(state.workbook.fileName));
       state.outputSettings.collisionPolicy = window.DacOutputLocation.collisionPolicy(els.collisionPolicyInput.value);
       state.outputSettings.saveImages = els.saveImagesInput.checked;
@@ -1247,38 +1314,65 @@
     if (Object.keys(fields).length) update(item, fields);
   }
 
-  function snapshotOutputSettings(actualResultFilename = null, actualAuditFilename = state.auditFile || null) {
+  function snapshotOutputSettings(actualResultFilename = null, actualAuditFilename = state.auditFile || null, workbook = state.workbook, checkpoint = null) {
     const plan = outputPlan();
     const settings = state.prepared.settings;
     const effectiveResult = window.DacOutputLocation.effective(state.outputSettings).result;
     const actual = String(actualResultFilename || "");
     const resultDestination = actual ? (/^(?:[A-Za-z]:[\\/]|\/)/.test(actual) || actual.startsWith(window.DacOutputLocation.locationLabel(effectiveResult)) ? actual : window.DacOutputLocation.fileLabel(effectiveResult, actual)) : plan.resultDestination;
     const output = window.DacOutputLocation.effective(state.outputSettings);
-    const snapshot = { run_id: state.runId || "", effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done };
-    window.DacXlsx.updateConfigSnapshot(state.workbook, snapshot);
-    for (const item of state.prepared.queue) update(item, snapshot);
+    const snapshot = { run_id: state.runId || "", result_filename_pattern: output.checkpointFilenamePattern, effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done, ...(checkpoint || {}) };
+    window.DacXlsx.updateConfigSnapshot(workbook, snapshot);
+    if (workbook === state.workbook) for (const item of state.prepared.queue) update(item, snapshot);
+  }
+
+  async function checkpointWorkbook(filename, version) {
+    const sourceBlob = window.DacXlsx.downloadBlob(state.workbook);
+    const candidate = await window.DacXlsx.open(new File([sourceBlob], filename, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    const previous = state.checkpointFilename || window.DacRunnerCore.basename(state.workbook.config.checkpoint_filename || "");
+    const checkpoint = { checkpoint_version: String(version), checkpoint_filename: filename, checkpoint_created_at: new Date().toISOString() };
+    if (previous) checkpoint.previous_checkpoint_filename = previous;
+    snapshotOutputSettings(filename, state.auditFile, candidate, checkpoint);
+    return { workbook: candidate, blob: window.DacXlsx.downloadBlob(candidate), checkpoint };
+  }
+
+  async function assertCheckpointVersionAvailable(location, filename) {
+    if (location.kind === "directory") {
+      try {
+        await location.handle.getFileHandle(filename, { create: false });
+        throw new Error(`CHECKPOINT_VERSION_CONFLICT: '${filename}' already exists. No Result checkpoint was written.`);
+      } catch (error) {
+        if (error?.name === "NotFoundError") return;
+        throw error;
+      }
+    }
+    const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, "fail");
+    const requested = request.filename.replace(/\//g, "\\").toLowerCase();
+    const matches = await chrome.downloads.search({ filename: request.filename });
+    if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw new Error(`CHECKPOINT_VERSION_CONFLICT: '${filename}' already exists in Chrome Downloads history. No Result checkpoint was written.`);
   }
 
   async function saveLedger(location) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
     if (!values.saveResultXlsx) return "";
-    let filename = values.resultFilename;
+    const version = window.DacCheckpointCore.nextVersion(state.checkpointVersion || state.workbook.config.checkpoint_version);
+    const filename = window.DacOutputLocation.renderCheckpointFilename(state.workbook.fileName, state.outputSettings, version);
+    const candidate = await checkpointWorkbook(filename, version);
+    await assertCheckpointVersionAvailable(location, filename);
     if (location.kind === "directory") {
-      const blob = window.DacXlsx.downloadBlob(state.workbook);
-      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, filename, blob, state.resumeMode ? "overwrite" : values.collisionPolicy);
-      snapshotOutputSettings(written.filename); const actual = window.DacOutputLocation.fileLabel(location, written.filename);
-      log(`Result ledger ${written.outcome}: ${actual}.`, "done"); return actual;
+      await window.DacOutputLocation.writeNewFile(location.handle, filename, candidate.blob);
+      state.workbook = candidate.workbook; state.checkpointVersion = version; state.checkpointFilename = filename; state.checkpointCreatedAt = candidate.checkpoint.checkpoint_created_at;
+      const actual = window.DacOutputLocation.fileLabel(location, filename);
+      renderCheckpointMeta(); log(`Result checkpoint v${window.DacCheckpointCore.formatVersion(version)} verified: ${actual}.`, "done"); return actual;
     }
-    const blob = window.DacXlsx.downloadBlob(state.workbook);
-    const objectUrl = URL.createObjectURL(blob);
+    const objectUrl = URL.createObjectURL(candidate.blob);
     try {
-      const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, state.resumeMode ? "overwrite" : values.collisionPolicy);
-      await assertDownloadCollisionPolicy(request);
+      const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, "fail");
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
       window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
-      snapshotOutputSettings(item.filename);
-      log(`Result ledger downloaded: ${item.filename}.`, "done");
+      state.workbook = candidate.workbook; state.checkpointVersion = version; state.checkpointFilename = filename; state.checkpointCreatedAt = candidate.checkpoint.checkpoint_created_at;
+      renderCheckpointMeta(); log(`Result checkpoint v${window.DacCheckpointCore.formatVersion(version)} downloaded: ${item.filename}.`, "done");
       return item.filename;
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
   }
@@ -1299,13 +1393,13 @@
         payload = `${priorPayload}${priorPayload.endsWith("\n") ? "" : "\n"}${payload}`;
       }
       const mergedBlob = new Blob([payload], { type: "application/jsonl" });
-      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, requested, mergedBlob, state.resumeMode ? "overwrite" : values.collisionPolicy);
+      const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, requested, mergedBlob, state.resumeMode ? "overwrite" : "fail");
       return window.DacOutputLocation.fileLabel(location, written.filename);
     }
     if (state.resumeMode) throw new Error("RESUME_AUDIT_APPEND_UNAVAILABLE: Chrome Downloads cannot read and append the prior audit log. Continue using the authorized run folder.");
     const objectUrl = URL.createObjectURL(blob);
     try {
-      const request = window.DacOutputLocation.downloadArtifactRequest(location, requested, values.collisionPolicy);
+      const request = window.DacOutputLocation.downloadArtifactRequest(location, requested, "fail");
       await assertDownloadCollisionPolicy(request);
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
@@ -1477,7 +1571,7 @@
     if (!runQueue.length) { setStatus("ERROR", "NOT READY"); progress(`No ${mode} jobs are eligible.`); controls(); return; }
     state.running = true; state.stopRequested = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
-    state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = []; if (!state.resumeMode) { state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; } state.artifactErrors = [];
+    state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = []; if (!state.resumeMode) { state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; } state.artifactErrors = []; renderCheckpointMeta();
     els.logList.textContent = "";
     startRuntimeTicker();
     const target = await activeTab().catch(() => null);

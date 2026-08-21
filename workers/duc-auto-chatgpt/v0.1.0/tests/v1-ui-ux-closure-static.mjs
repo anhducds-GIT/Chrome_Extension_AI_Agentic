@@ -17,7 +17,9 @@ assert.match(html, /id="namingSetupSection"/);
 for (const id of ["imagePatternInput", "resultFilenameInput", "auditFilenameInput", "collisionPolicyInput"]) assert.match(html, new RegExp(`id="${id}"`));
 assert.ok(html.indexOf('id="namingSetupSection"') < html.indexOf('id="outputAdvancedDetails"'));
 assert.match(source, /markLocalOverride\("output_naming"\)/, "naming changes retain local-override invalidation");
-assert.match(source, /markLocalOverride\("result_filename"\)/, "Result XLSX filename retains local-override invalidation");
+assert.match(source, /markLocalOverride\("result_filename_pattern"\)/, "Result checkpoint pattern retains local-override invalidation");
+assert.match(html, /Result checkpoint pattern/);
+for (const id of ["runIdText", "checkpointVersionText", "checkpointFilenameText"]) assert.match(html, new RegExp(`id="${id}"`));
 assert.match(html, /id="namingProvenance"/);
 assert.match(source, /XLSX \+ local override/);
 assert.match(source, /renderNamingProvenance\(\)/);
@@ -96,8 +98,8 @@ assert.match(css, /grid-template-columns: repeat\(auto-fit, minmax\(145px, 1fr\)
 assert.match(css, /width: 58px; height: 58px/);
 assert.match(source, /const isSaved = Boolean\(item\.persistence_verified && item\.result_file\)/);
 assert.match(source, /output-filename/);
-assert.match(source, /downloadArtifactRequest\(location, filename, state\.resumeMode \? "overwrite" : values\.collisionPolicy\)/);
-assert.match(source, /downloadArtifactRequest\(location, requested, values\.collisionPolicy\)/);
+assert.match(source, /downloadArtifactRequest\(location, filename, "fail"\)/, "Result checkpoints always require an exact version filename");
+assert.match(source, /downloadArtifactRequest\(location, requested, "fail"\)/, "Audit JSONL retains one stable filename");
 assert.match(source, /verifyDownloadedFilename\(request, item\.filename\)/);
 
 // Open-folder behavior is capability truthful: only default Downloads can be opened.

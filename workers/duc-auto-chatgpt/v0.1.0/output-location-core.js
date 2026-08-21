@@ -24,6 +24,10 @@
     return `${workbookBase(workbookName)}__results.xlsx`;
   }
 
+  function baseResultFilenamePattern(workbookName) {
+    return `${workbookBase(workbookName)}__results__v{version}.xlsx`;
+  }
+
   function workbookBase(workbookName) {
     return safeFileLeaf(String(workbookName || "workbook.xlsx").replace(/\.xlsx$/i, ""), "workbook").replace(/\.[^.]+$/, "") || "workbook";
   }
@@ -62,11 +66,31 @@
   }
 
   function artifactNames(workbookName, settings = {}) {
+    const resultFilenamePattern = validateResultFilenamePattern(settings.resultFilenamePattern || settings.resultFilename || baseResultFilenamePattern(workbookName), baseResultFilenamePattern(workbookName));
     return {
-      resultFilename: safeFilename(settings.resultFilename || baseResultName(workbookName), baseResultName(workbookName)),
+      resultFilenamePattern,
+      // resultFilename remains a compatibility alias for existing UI and plan callers.
+      resultFilename: resultFilenamePattern,
       auditFilename: safeFileLeaf(settings.auditFilename || baseAuditName(workbookName), baseAuditName(workbookName)),
       imagePattern: validateImagePattern(settings.imagePattern || "{job_id}")
     };
+  }
+
+  function validateResultFilenamePattern(value, fallback) {
+    const pattern = safeFilename(value, fallback);
+    const tokens = pattern.match(/\{[^}]+\}/g) || [];
+    for (const token of tokens) if (token !== "{version}") throw new Error(`Unsupported Result XLSX filename token '${token}'.`);
+    if (pattern.replace(/\{version\}/g, "").includes("{") || pattern.replace(/\{version\}/g, "").includes("}")) throw new Error("Result XLSX filename pattern has an unmatched token delimiter.");
+    return pattern;
+  }
+
+  function checkpointFilenamePattern(workbookName, settings = {}) {
+    const configured = validateResultFilenamePattern(settings.resultFilenamePattern || settings.resultFilename || baseResultFilenamePattern(workbookName), baseResultFilenamePattern(workbookName));
+    return globalThis.DacCheckpointCore?.hasVersionToken(configured) ? configured : baseResultFilenamePattern(workbookName);
+  }
+
+  function renderCheckpointFilename(workbookName, settings, version) {
+    return globalThis.DacCheckpointCore.render(checkpointFilenamePattern(workbookName, settings), version);
   }
 
   function downloadsLocation(folder) {
@@ -100,7 +124,8 @@
       folderHint: String(config?.output_folder_hint || "").trim(),
       image,
       result,
-      resultFilename: config?.result_filename || baseResultName(workbookName),
+      resultFilenamePattern: config?.result_filename_pattern || config?.result_filename || baseResultFilenamePattern(workbookName),
+      resultFilename: config?.result_filename_pattern || config?.result_filename || baseResultFilenamePattern(workbookName),
       auditFilename: config?.audit_filename || baseAuditName(workbookName),
       imagePattern: config?.image_filename_pattern || "{job_id}",
       collisionPolicy: config?.collision_policy || "uniquify",
@@ -117,7 +142,7 @@
     const result = settings.result?.kind === "same_as_image" ? image : settings.result;
     if (!result) throw new Error("Choose a result XLSX location.");
     const names = artifactNames(settings.workbookName, settings);
-    return { image, result, ...names, collisionPolicy: collisionPolicy(settings.collisionPolicy), saveImages: settings.saveImages !== false, saveResultXlsx: settings.saveResultXlsx !== false, saveAuditJsonl: settings.saveAuditJsonl !== false, folderHint: String(settings.folderHint || "").trim(), namingPattern: settings.namingPattern };
+    return { image, result, ...names, checkpointFilenamePattern: checkpointFilenamePattern(settings.workbookName, settings), collisionPolicy: collisionPolicy(settings.collisionPolicy), saveImages: settings.saveImages !== false, saveResultXlsx: settings.saveResultXlsx !== false, saveAuditJsonl: settings.saveAuditJsonl !== false, folderHint: String(settings.folderHint || "").trim(), namingPattern: settings.namingPattern };
   }
 
   function locationLabel(location) {
@@ -306,6 +331,6 @@
     return { filename: actual, outcome: "overwritten", size: persisted.size };
   }
 
-  const api = { safeRelativeFolder, safeFileLeaf, safeFilename, baseResultName, baseAuditName, workbookBase, validateImagePattern, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, collisionError, verifyDownloadedFilename, isPolicyFilename, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
+  const api = { safeRelativeFolder, safeFileLeaf, safeFilename, baseResultName, baseResultFilenamePattern, baseAuditName, workbookBase, validateImagePattern, validateResultFilenamePattern, checkpointFilenamePattern, renderCheckpointFilename, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, collisionError, verifyDownloadedFilename, isPolicyFilename, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
   (typeof window !== "undefined" ? window : globalThis).DacOutputLocation = api;
 })();

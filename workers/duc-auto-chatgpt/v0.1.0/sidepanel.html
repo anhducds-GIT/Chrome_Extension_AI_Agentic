@@ -133,9 +133,10 @@
           <div class="settings-grid naming-grid">
             <label>Image filename pattern<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">{job_id}, {attempt}, {index}</span></label>
             <label>When filename already exists<select id="collisionPolicyInput"><option value="overwrite">Replace existing file</option><option value="uniquify" selected>Keep both — add number</option><option value="fail">Stop and report conflict</option></select><span class="hint">Controls what happens when a file with the same name already exists.</span></label>
-            <label>Result XLSX filename<input id="resultFilenameInput" type="text" autocomplete="off" /></label>
+            <label>Result checkpoint pattern<input id="resultFilenameInput" type="text" autocomplete="off" /><span class="hint">Use {version}; each verified checkpoint is immutable.</span></label>
             <label>Audit JSONL filename<input id="auditFilenameInput" type="text" autocomplete="off" /></label>
           </div>
+          <div class="checkpoint-meta" aria-label="Result checkpoint metadata"><span>Run ID <output id="runIdText">—</output></span><span>Latest checkpoint <output id="checkpointVersionText">—</output></span><span>Checkpoint file <output id="checkpointFilenameText">—</output></span></div>
         </div>
         <details class="secondary-details" id="outputAdvancedDetails">
           <summary>Output details &amp; advanced naming</summary>
@@ -364,6 +365,7 @@
     <div id="helpGlossary" class="help-glossary"></div>
   </aside>
   <script src="xlsx-codec.js"></script>
+  <script src="checkpoint-core.js"></script>
   <script src="runner-core.js"></script>
   <script src="attempt-telemetry-core.js"></script>
   <script src="run-state-core.js"></script>

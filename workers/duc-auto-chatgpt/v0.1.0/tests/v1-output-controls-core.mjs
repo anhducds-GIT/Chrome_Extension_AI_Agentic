@@ -3,6 +3,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 
 const context = { Promise, Array, String, Object, Error, Number, Set, RegExp, Math };
+vm.runInNewContext(fs.readFileSync(new URL("../checkpoint-core.js", import.meta.url), "utf8"), context);
 vm.runInNewContext(fs.readFileSync(new URL("../output-location-core.js", import.meta.url), "utf8"), context);
 const output = context.DacOutputLocation;
 
@@ -20,10 +21,11 @@ assert.equal(output.renderImageFilename("{job_id}", { job_id: "JOB:001", attempt
 assert.equal(output.renderImageFilename("{job_id}__a{attempt}__{index}", { job_id: "job", attempt: 2, index: 3 }, "png"), "job__a02__003.png", "all supported tokens render deterministically");
 for (const invalid of ["../escape", "{unknown}", "{job_id", "folder/{job_id}", "bad:name"]) assert.throws(() => output.validateImagePattern(invalid), /pattern|token|unsafe/i, invalid);
 assert.equal(output.baseResultName("pilot.xlsx"), "pilot__results.xlsx");
+assert.equal(output.baseResultFilenamePattern("pilot.xlsx"), "pilot__results__v{version}.xlsx");
 assert.equal(output.baseAuditName("pilot.xlsx"), "pilot__audit.jsonl");
 
 const defaults = output.fromWorkbook({}, "pilot.xlsx");
-assert.deepEqual(JSON.parse(JSON.stringify(output.artifactNames("pilot.xlsx", defaults))), { resultFilename: "pilot__results.xlsx", auditFilename: "pilot__audit.jsonl", imagePattern: "{job_id}" });
+assert.deepEqual(JSON.parse(JSON.stringify(output.artifactNames("pilot.xlsx", defaults))), { resultFilenamePattern: "pilot__results__v{version}.xlsx", resultFilename: "pilot__results__v{version}.xlsx", auditFilename: "pilot__audit.jsonl", imagePattern: "{job_id}" });
 for (const images of [false, true]) for (const xlsx of [false, true]) for (const audit of [false, true]) {
   const values = output.effective({ ...defaults, saveImages: images, saveResultXlsx: xlsx, saveAuditJsonl: audit });
   assert.equal(values.saveImages, images); assert.equal(values.saveResultXlsx, xlsx); assert.equal(values.saveAuditJsonl, audit);

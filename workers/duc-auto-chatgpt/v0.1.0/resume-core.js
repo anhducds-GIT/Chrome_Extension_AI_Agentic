@@ -58,6 +58,24 @@
     if (recordedLedger && recordedLedger !== leaf(workbook?.fileName)) findings.push({ code: "RESUME_RUN_ID_MISMATCH", severity: "BLOCKER", scope: "resume", message: `Selected Result XLSX '${leaf(workbook?.fileName)}' does not match ledger provenance '${recordedLedger}'.`, guidance: "Select the Result XLSX recorded by this run; do not substitute a similarly named workbook." });
     return findings;
   }
+  function checkpointValidation(workbook, filename, pattern, expectedRunId = "") {
+    const fileName = leaf(filename);
+    const parsed = globalThis.DacCheckpointCore?.parse(pattern, fileName) || null;
+    const findings = validateLedger(workbook);
+    const config = workbook?.config || {};
+    const run = identity(workbook);
+    if (expectedRunId && run.run_id !== expectedRunId) findings.push({ code: "RESUME_RUN_ID_MISMATCH", severity: "BLOCKER", scope: "resume", message: `Checkpoint '${fileName}' belongs to run '${run.run_id}', not '${expectedRunId}'.`, guidance: "Choose checkpoints from one run only." });
+    if (parsed) {
+      const version = Number(config.checkpoint_version);
+      const recorded = leaf(config.checkpoint_filename);
+      const createdAt = Date.parse(text(config.checkpoint_created_at));
+      if (!text(config.run_id) || run.provenance !== "persisted" || version !== parsed.version || recorded !== fileName || !Number.isFinite(createdAt)) findings.push({ code: "RESUME_LATEST_CHECKPOINT_INVALID", severity: "BLOCKER", scope: "resume", message: `Checkpoint '${fileName}' is missing or has inconsistent checkpoint metadata.`, guidance: "Restore the valid latest checkpoint; do not fall back automatically." });
+      if (leaf(config.effective_result_xlsx) !== fileName) findings.push({ code: "RESUME_LATEST_CHECKPOINT_INVALID", severity: "BLOCKER", scope: "resume", message: `Checkpoint '${fileName}' does not record itself as the effective Result XLSX.`, guidance: "Use an unmodified verified checkpoint." });
+    } else if (!/__results\.xlsx$/i.test(fileName)) {
+      findings.push({ code: "RESUME_LEDGER_INVALID", severity: "BLOCKER", scope: "resume", message: `Result XLSX '${fileName}' does not match the configured checkpoint pattern.`, guidance: "Choose a matching Result checkpoint." });
+    }
+    return { run, parsed, findings, ready: findings.every((item) => item.severity !== "BLOCKER") };
+  }
   function plan(workbook) {
     const run = identity(workbook);
     const findings = validateLedger(workbook);
@@ -84,5 +102,5 @@
   }
   function summaryText(summary) { return `${summary.completed} completed · ${summary.safe_pending} safe pending · ${summary.failed_pre_submit} failed pre-submit · ${summary.ambiguous_submitted} need review`; }
 
-  (typeof window !== "undefined" ? window : globalThis).DacResumeCore = { createRunId, legacyRunId, identity, validSavedAttribution, classify, validateLedger, plan, applyToQueue, summaryText };
+  (typeof window !== "undefined" ? window : globalThis).DacResumeCore = { createRunId, legacyRunId, identity, validSavedAttribution, classify, validateLedger, checkpointValidation, plan, applyToQueue, summaryText };
 })();

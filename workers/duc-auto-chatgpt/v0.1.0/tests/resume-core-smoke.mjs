@@ -4,7 +4,7 @@ import vm from "node:vm";
 
 const root = new URL("../", import.meta.url);
 const context = vm.createContext({ console });
-for (const file of ["output-location-core.js", "runner-core.js", "xlsx-run-plan-core.js", "resume-core.js"]) vm.runInContext(fs.readFileSync(new URL(file, root), "utf8"), context);
+for (const file of ["checkpoint-core.js", "output-location-core.js", "runner-core.js", "xlsx-run-plan-core.js", "resume-core.js"]) vm.runInContext(fs.readFileSync(new URL(file, root), "utf8"), context);
 const resume = context.DacResumeCore;
 const output = context.DacOutputLocation;
 const planConfig = context.DacXlsxRunPlan;
@@ -58,14 +58,15 @@ assert.equal(duplicate.findings.some((item) => item.code === "RESUME_LEDGER_INVA
 const mismatched = resume.plan({ fileName: "other__results.xlsx", config: { effective_result_xlsx: "Pilot04__results.xlsx" }, jobs: [{ id: "A", prompt: "x" }] });
 assert.equal(mismatched.findings.some((item) => item.code === "RESUME_RUN_ID_MISMATCH"), true, "a different ledger filename blocks recovery");
 const names = output.artifactNames("Pilot04.xlsx");
-assert.equal(names.resultFilename, "Pilot04__results.xlsx");
+assert.equal(names.resultFilename, "Pilot04__results__v{version}.xlsx");
 assert.equal(names.auditFilename, "Pilot04__audit.jsonl");
 assert.equal(names.imagePattern, "{job_id}");
 assert.equal(output.collisionError({ filename: "Duc Auto ChatGPT/Pilot04/Pilot04__results.xlsx" }).message, "COLLISION: Output already exists: Duc Auto ChatGPT/Pilot04/Pilot04__results.xlsx", "collision fail path uses the canonical requested path without ReferenceError");
 
 const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 assert.match(sidepanel, /RESUME_AUDIT_APPEND_UNAVAILABLE/);
-assert.match(sidepanel, /writeFileWithPolicy\(location\.handle, filename, blob, state\.resumeMode \? "overwrite" : values\.collisionPolicy\)/, "continued ledger persistence replaces the same canonical ledger");
+assert.match(sidepanel, /CHECKPOINT_VERSION_CONFLICT/, "Result checkpoint version conflicts fail closed");
+assert.match(sidepanel, /writeNewFile\(location\.handle, filename, candidate\.blob\)/, "checkpoint persistence is an exact new-file write");
 assert.match(sidepanel, /priorHandle = await location\.handle\.getFileHandle\(previous, \{ create: false \}\)/, "continued audit persistence reads the existing authorized audit before append");
 
 console.log("resume core smoke tests: PASS");

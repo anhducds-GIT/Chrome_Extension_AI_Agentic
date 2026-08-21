@@ -559,6 +559,9 @@ button:disabled { opacity: 0.45; cursor: default; }
 .destination-authorized .output-folder-hint { grid-column: 1 / -1; display: grid; gap: 6px; }
 .destination-authorized .output-folder-hint output { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .destination-authorized output { overflow-wrap: anywhere; }
+.checkpoint-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 5px; color: var(--text-secondary); font-size: 9.5px; }
+.checkpoint-meta span { display: inline-flex; gap: 4px; min-width: 0; }
+.checkpoint-meta output { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-weight: 700; }
 .naming-section { margin-top: 6px; padding-top: 5px; border-top: 1px dashed var(--border-subtle); }
 .naming-section-heading { margin-bottom: 4px; }
 .naming-section-title { color: var(--text-secondary); font-size: 9.5px; font-weight: 800; letter-spacing: 0.35px; }
