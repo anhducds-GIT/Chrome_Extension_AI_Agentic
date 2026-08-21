@@ -957,18 +957,23 @@
       const job = state.workbook?.jobs?.find((entry) => entry.id === recovery.job_id);
       const queuedApproval = window.DacRecreateCore.isQueuedApproval(job || {});
       const recoveryAvailable = !window.DacRecreateCore.isApproved(job || {}) || window.DacRecreateCore.requiresNewApproval(job || {});
+      const submittedBoundary = window.DacRecreateCore.hasSubmittedBoundary(job || {});
       const label = document.createElement("span");
       label.textContent = queuedApproval
         ? `${recovery.job_id}: deliberate recreate is approved; Continue remains blocked until it succeeds.`
         : window.DacRecreateCore.requiresNewApproval(job || {})
-          ? `${recovery.job_id}: the prior recreate did not safely complete; review it or explicitly confirm another recreate.`
-        : `${recovery.job_id}: inspect the existing ChatGPT image against its submitted boundary.`;
+          ? submittedBoundary
+            ? `${recovery.job_id}: the prior recreate did not safely complete; review it or explicitly confirm another recreate.`
+            : `${recovery.job_id}: the prior recreate did not submit; explicitly confirm a new recreate attempt.`
+          : `${recovery.job_id}: inspect the existing ChatGPT image against its submitted boundary.`;
       action.appendChild(label);
       if (recoveryAvailable) {
-        const button = document.createElement("button");
-        button.type = "button"; button.className = "secondary small"; button.textContent = "Resolve Existing Output"; button.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning;
-        button.addEventListener("click", () => resolveExistingOutput(recovery.job_id).catch((error) => log(messageOf(error), "error")));
-        action.appendChild(button);
+        if (submittedBoundary) {
+          const button = document.createElement("button");
+          button.type = "button"; button.className = "secondary small"; button.textContent = "Resolve Existing Output"; button.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning;
+          button.addEventListener("click", () => resolveExistingOutput(recovery.job_id).catch((error) => log(messageOf(error), "error")));
+          action.appendChild(button);
+        }
         const recreate = document.createElement("button");
         recreate.type = "button"; recreate.className = "secondary small warning"; recreate.textContent = "Recreate Image"; recreate.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning;
         recreate.addEventListener("click", () => openRecreateDialog(recovery.job_id));

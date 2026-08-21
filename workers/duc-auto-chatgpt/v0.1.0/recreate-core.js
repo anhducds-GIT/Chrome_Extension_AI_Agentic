@@ -18,12 +18,13 @@
     });
   }
   function appendHistory(entries, entry) {
-    return entries.some((known) => text(known.attempt_id) === entry.attempt_id && text(known.submitted_at) === entry.submitted_at) ? entries : [...entries, entry];
+    return entries.some((known) => text(known.attempt_id) === entry.attempt_id && text(known.submitted_at) === entry.submitted_at && text(known.recreate_authorized_at) === entry.recreate_authorized_at && text(known.failure_type) === entry.failure_type && text(known.status) === entry.status) ? entries : [...entries, entry];
   }
 
   function approval({ job = {}, recoveryState = "", now = new Date().toISOString() } = {}) {
     if (recoveryState !== "AMBIGUOUS_SUBMITTED") return fail("RECREATE_NOT_AMBIGUOUS", "Only an ambiguous submitted job may be deliberately recreated.");
-    if (!text(job.id) || !text(job.attempt_id) || !text(job.submitted_at)) return fail("RECREATE_PRIOR_ATTEMPT_MISSING", "The prior submitted attempt identity is required before recreation.");
+    const failedApprovedRecreate = isApproved(job) && text(job.recreate_status).toUpperCase() === "FAILED";
+    if (!text(job.id) || ((!text(job.attempt_id) || !text(job.submitted_at)) && !failedApprovedRecreate)) return fail("RECREATE_PRIOR_ATTEMPT_MISSING", "The prior submitted attempt identity is required before recreation.");
     const prior = snapshot(job);
     const priorHistory = appendHistory(history(job), prior);
     const original = priorHistory[0] || prior;
@@ -43,8 +44,9 @@
   function cancelled() { return { ok: true, cancelled: true, fields: {} }; }
   function isApproved(job = {}) { return /^(true|1|yes)$/i.test(text(job.recreate_operator_approved)); }
   function isQueuedApproval(job = {}) { return isApproved(job) && text(job.recreate_status).toUpperCase() === "APPROVED" && !text(job.attempt_id) && !text(job.submitted_at); }
-  function requiresNewApproval(job = {}) { return isApproved(job) && !isQueuedApproval(job) && Boolean(text(job.attempt_id) && text(job.submitted_at)); }
+  function hasSubmittedBoundary(job = {}) { return Boolean(text(job.attempt_id) && text(job.submitted_at)); }
+  function requiresNewApproval(job = {}) { return isApproved(job) && !isQueuedApproval(job) && (hasSubmittedBoundary(job) || text(job.recreate_status).toUpperCase() === "FAILED"); }
 
-  const api = { approval, cancelled, isApproved, isQueuedApproval, requiresNewApproval };
+  const api = { approval, cancelled, isApproved, isQueuedApproval, hasSubmittedBoundary, requiresNewApproval };
   (typeof window !== "undefined" ? window : globalThis).DacRecreateCore = api;
 })();
