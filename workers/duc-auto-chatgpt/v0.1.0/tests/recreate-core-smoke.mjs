@@ -69,13 +69,18 @@ const completedB = { ...approvedJob, status: "SUCCESS", attempt_phase: "SUCCESS"
 const completedPlan = resume.plan({ fileName: "pilot__results__v003.xlsx", config: { run_id: "pilot-05" }, jobs: [prior, completedB, ...pending] });
 assert.equal(completedPlan.ready, true, "queue unlocks only after successful recreate");
 assert.equal(completedPlan.next_eligible_job, "P05-C", "C/D/E are eligible only after P05-B success");
+const completedPrepared = runner.prepare({ config: {}, jobs: [prior, completedB, ...pending] }, []);
+resume.applyToQueue(completedPrepared.queue, completedPlan.jobs);
+assert.deepEqual(runner.selectQueue(completedPrepared.queue, "all").map((item) => item.job.id), ["P05-C", "P05-D", "P05-E"], "a verified recreate resumes the remaining queue without resubmitting P05-B");
 
 const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 const html = fs.readFileSync(new URL("sidepanel.html", root), "utf8");
-assert.match(sidepanel, /Recreate Image/, "ambiguous blocker renders a recreate action");
+assert.match(sidepanel, /no verified saved image\. Create it again\?/, "ambiguous blocker gives the operator one concise recovery decision");
+assert.match(sidepanel, /Recreate \$\{recovery\.job_id\}/, "recreate action identifies the blocked job");
 assert.match(sidepanel, /requiresNewApproval/, "failed recreate renders explicit recovery again");
-assert.match(sidepanel, /if \(submittedBoundary\)/, "Resolve Existing Output is withheld without a submitted boundary");
-assert.match(html, /Prior submitted output could not be safely attributed\. Recreating may produce a duplicate image\./, "confirmation dialog explains duplicate risk");
+const renderResumeSegment = sidepanel.slice(sidepanel.indexOf("function renderResumePlan"), sidepanel.indexOf("function reconciliationProof"));
+assert.doesNotMatch(renderResumeSegment, /Resolve Existing Output/, "missing-image recovery does not burden the operator with a second action");
+assert.match(html, /has no verified saved image\. Create it again\? This sends one new request and may produce a duplicate image\./, "confirmation explains the one deliberate recreate action");
 assert.match(sidepanel, /Recreate \$\{jobId\}/, "confirmation names the exact job");
 const openSegment = sidepanel.slice(sidepanel.indexOf("function openRecreateDialog"), sidepanel.indexOf("function closeRecreateDialog"));
 assert.doesNotMatch(openSegment, /run\(|DAC_RUN_IMAGE_JOB|send\(/, "opening confirmation never silently resubmits");
@@ -85,10 +90,13 @@ assert.match(confirmSegment, /confirmation received; checking approval and persi
 assert.match(confirmSegment, /RECREATE_CONFIRM_QUEUE_MISSING/, "missing prepared queue surfaces an exact blocked-start reason");
 assert.match(confirmSegment, /RECREATE_START_BLOCKED/, "a rejected recreate start is surfaced rather than ignored");
 assert.match(confirmSegment, /setStatus\("RUNNING", "RECREATE CHECKPOINTING"\)/, "confirmed recreate visibly enters a running transition before checkpoint persistence");
+assert.match(confirmSegment, /image saved and checkpointed\. Continuing with/, "verified recreate continues the remaining queue without another operator step");
+assert.match(confirmSegment, /await run\("all"\)/, "only after verified recreate completion does the normal queue continue");
 assert.doesNotMatch(confirmSegment, /\) return;/, "confirm flow has no silent guard return");
 const runSegment = sidepanel.slice(sidepanel.indexOf('async function run(mode = "all")'), sidepanel.indexOf("chrome.runtime.onMessage.addListener"));
 assert.match(runSegment, /return \{ ok: false, reason \}/, "blocked recreate run returns its exact reason to the confirmation flow");
-assert.match(runSegment, /return \{ ok: true, started: true \}/, "successful recreate run reports an explicit started outcome");
+assert.match(runSegment, /return \{ ok: !artifactPersistenceFailed, started: true/, "run reports persistence failure instead of claiming a recreate is complete");
+assert.match(runSegment, /state\.resumePlan = window\.DacResumeCore\.plan\(state\.workbook\)/, "a verified checkpoint refreshes stale recovery state before later work can run");
 assert.match(sidepanel, /recreateConfirmBtn\?\.addEventListener\("click", \(\) => confirmRecreate\(\)/, "confirm button is wired directly to recreate flow");
 
 console.log("explicit recreate smoke tests: PASS");

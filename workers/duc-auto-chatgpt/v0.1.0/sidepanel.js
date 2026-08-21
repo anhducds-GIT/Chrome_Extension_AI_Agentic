@@ -16,7 +16,7 @@
     "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn",
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
     "checkWorkbook", "statusWorkbook", "checkJobs", "statusJobs", "checkReferences", "statusReferences",
-    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary", "recreateConfirmDialog", "recreateCancelBtn", "recreateConfirmBtn", "auditGapConfirmDialog", "auditGapCancelBtn", "auditGapConfirmBtn",
+    "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary", "recreateConfirmDialog", "recreateConfirmTitle", "recreateConfirmMessage", "recreateCancelBtn", "recreateConfirmBtn", "auditGapConfirmDialog", "auditGapCancelBtn", "auditGapConfirmBtn",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
     "currentAttemptBadge", "continuedRunLabel", "currentPromptPreview", "pipelineStepper", "operatorTimerArea",
@@ -978,12 +978,16 @@
     els.resumeSourceSummary.hidden = false;
     els.resumeSourceSummary.textContent = `Continued run · ${plan.run.run_id}${plan.run.provenance === "legacy" ? " (legacy identity)" : ""} · ${window.DacResumeCore.summaryText(plan.summary)}${plan.next_eligible_job ? ` · Next: ${plan.next_eligible_job}` : ""}`;
     const auditGapBlocked = state.auditChain?.code === "RESUME_AUDIT_CHAIN_MISSING";
-    els.resumePlanDiagnostics.hidden = !plan.findings.length && !auditGapBlocked;
-    els.resumePlanDiagnostics.className = `resume-diagnostics${plan.findings.length || auditGapBlocked ? " blocked" : ""}`;
+    const recoveryFindings = plan.findings.filter((item) => item.code === "RESUME_RECREATE_INCOMPLETE" || item.code === "RESUME_AMBIGUOUS_SUBMISSION");
+    const visibleFindings = plan.findings.filter((item) => !recoveryFindings.includes(item));
+    els.resumePlanDiagnostics.hidden = !visibleFindings.length && !recoveryFindings.length && !auditGapBlocked;
+    els.resumePlanDiagnostics.className = `resume-diagnostics${visibleFindings.length || recoveryFindings.length || auditGapBlocked ? " blocked" : ""}`;
     els.resumePlanDiagnostics.replaceChildren();
-    const detail = document.createElement("span");
-    detail.textContent = plan.findings.map((item) => `${item.code}: ${item.message} ${item.guidance || ""}`).join(" ");
-    els.resumePlanDiagnostics.appendChild(detail);
+    if (visibleFindings.length) {
+      const detail = document.createElement("span");
+      detail.textContent = visibleFindings.map((item) => `${item.code}: ${item.message} ${item.guidance || ""}`).join(" ");
+      els.resumePlanDiagnostics.appendChild(detail);
+    }
     if (state.auditChain?.code === "RESUME_AUDIT_CHAIN_MISSING") {
       const action = document.createElement("div");
       action.className = "resume-reconcile-action";
@@ -1001,25 +1005,16 @@
       const job = state.workbook?.jobs?.find((entry) => entry.id === recovery.job_id);
       const queuedApproval = window.DacRecreateCore.isQueuedApproval(job || {});
       const recoveryAvailable = !window.DacRecreateCore.isApproved(job || {}) || window.DacRecreateCore.requiresNewApproval(job || {});
-      const submittedBoundary = window.DacRecreateCore.hasSubmittedBoundary(job || {});
       const label = document.createElement("span");
       label.textContent = queuedApproval
-        ? `${recovery.job_id}: deliberate recreate is approved; Continue remains blocked until it succeeds.`
+        ? `${recovery.job_id}: creating a replacement image now.`
         : window.DacRecreateCore.requiresNewApproval(job || {})
-          ? submittedBoundary
-            ? `${recovery.job_id}: the prior recreate did not safely complete; review it or explicitly confirm another recreate.`
-            : `${recovery.job_id}: the prior recreate did not submit; explicitly confirm a new recreate attempt.`
-          : `${recovery.job_id}: inspect the existing ChatGPT image against its submitted boundary.`;
+          ? `${recovery.job_id}: no verified saved image. Create it again?`
+          : `${recovery.job_id}: no verified saved image. Create it again?`;
       action.appendChild(label);
       if (recoveryAvailable) {
-        if (submittedBoundary) {
-          const button = document.createElement("button");
-          button.type = "button"; button.className = "secondary small"; button.textContent = "Resolve Existing Output"; button.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning;
-          button.addEventListener("click", () => resolveExistingOutput(recovery.job_id).catch((error) => log(messageOf(error), "error")));
-          action.appendChild(button);
-        }
         const recreate = document.createElement("button");
-        recreate.type = "button"; recreate.className = "secondary small warning"; recreate.textContent = "Recreate Image"; recreate.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning;
+        recreate.type = "button"; recreate.className = "secondary small warning"; recreate.textContent = `Recreate ${recovery.job_id}`; recreate.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning;
         recreate.addEventListener("click", () => openRecreateDialog(recovery.job_id));
         action.appendChild(recreate);
       }
@@ -1037,6 +1032,8 @@
     const job = state.workbook?.jobs?.find((entry) => entry.id === jobId);
     if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED" || !job || (!window.DacRecreateCore.requiresNewApproval(job) && window.DacRecreateCore.isApproved(job))) return;
     state.pendingRecreateJobId = jobId;
+    if (els.recreateConfirmTitle) els.recreateConfirmTitle.textContent = `${jobId} image is not saved`;
+    if (els.recreateConfirmMessage) els.recreateConfirmMessage.textContent = `${jobId} has no verified saved image. Create it again? This sends one new request and may produce a duplicate image.`;
     els.recreateConfirmBtn.textContent = `Recreate ${jobId}`;
     if (typeof els.recreateConfirmDialog.showModal === "function") els.recreateConfirmDialog.showModal();
     else els.recreateConfirmDialog.setAttribute("open", "");
@@ -1173,7 +1170,15 @@
       renderResumePlan(); renderQueue(); renderOutput(); controls();
       const outcome = await run("recreate");
       if (!outcome?.ok) throw new Error(`RECREATE_START_BLOCKED: ${outcome?.reason || "The recreate run did not enter RUNNING state."}`);
-      return outcome;
+      const completed = state.resumePlan?.jobs?.find((entry) => entry.job_id === jobId)?.state === "SAFE_COMPLETE";
+      if (!completed) throw new Error(`RECREATE_COMPLETION_UNVERIFIED: ${jobId} was not checkpointed as a verified saved image.`);
+      const remaining = window.DacRunnerCore.selectQueue(state.prepared?.queue || [], "all");
+      if (!remaining.length) return outcome;
+      progress(`${jobId}: image saved and checkpointed. Continuing with ${remaining[0].job.id}.`);
+      log(`${jobId}: verified recreate complete; continuing the remaining queue.`, "done");
+      const continuation = await run("all");
+      if (!continuation?.ok) throw new Error(`RECREATE_CONTINUATION_BLOCKED: ${continuation?.reason || "The remaining queue did not enter RUNNING state."}`);
+      return continuation;
     } catch (error) {
       const reason = messageOf(error);
       setStatus("ERROR", "RECREATE BLOCKED");
@@ -1929,6 +1934,8 @@
 
   async function run(mode = "all") {
     let effectiveOutput;
+    let artifactPersistenceFailed = false;
+    let completedNaturally = false;
     try { effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" }); }
     catch (error) { const reason = messageOf(error); setStatus("ERROR"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
     const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, state.selectedJobId);
@@ -2011,7 +2018,6 @@
       nextTask(null, "—"); setStatus(state.stopRequested ? "IDLE" : halted ? "ERROR" : "DONE", state.stopRequested ? "STOPPED" : halted ? "HALTED" : "DONE"); progress(state.stopRequested ? "Stopped. No later jobs were submitted." : halted ? "Batch halted after a protected terminal state." : "Queue complete.");
     } finally {
       audit("RUN_END", null, { message: state.stopRequested ? "STOPPED" : halted ? "HALTED" : "COMPLETE" });
-      let artifactPersistenceFailed = false;
       try { state.auditFile = await saveAuditLog(effectiveOutput.result); snapshotOutputSettings(null, state.auditFile); if (state.auditFile) log(`Audit log verified: ${state.auditFile}.`, "done"); }
       catch (error) { artifactPersistenceFailed = true; state.artifactErrors.push(`Audit JSONL persistence verification failed: ${messageOf(error)}`); log(`Audit log failed: ${messageOf(error)}`, "error"); }
       try { state.resultFile = await saveLedger(effectiveOutput.result); }
@@ -2021,14 +2027,18 @@
         progress("Output persistence verification failed; no unverified artifact is reported as saved.");
         audit("ARTIFACT_PERSISTENCE_FAILED", null, { message: state.artifactErrors.join(" | ") });
       }
-      const completedNaturally = !state.stopRequested && !halted;
+      completedNaturally = !state.stopRequested && !halted;
+      if (state.resumeMode && !artifactPersistenceFailed) {
+        state.resumePlan = window.DacResumeCore.plan(state.workbook);
+        renderResumePlan();
+      }
       state.running = false; state.stopRequested = false; renderQueue(); renderOutputScreen(); controls();
       stopRuntimeTicker();
       if (completedNaturally) {
         showScreen("outputScreen");
       }
     }
-    return { ok: true, started: true };
+    return { ok: !artifactPersistenceFailed, started: true, completed: completedNaturally && !artifactPersistenceFailed, reason: artifactPersistenceFailed ? state.artifactErrors.join(" | ") : "" };
   }
 
   chrome.runtime.onMessage.addListener((message) => {

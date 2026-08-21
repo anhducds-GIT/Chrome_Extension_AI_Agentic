@@ -12,7 +12,7 @@ assert.match(html, /id="runScreen"/);
 assert.match(html, /id="outputScreen"/);
 assert.match(sidepanelSource, /showScreen\("runScreen"\)/, "START RUN must automatically activate RUN screen");
 assert.match(sidepanelSource, /showScreen\("outputScreen"\)/, "Successful legitimate run completion must activate OUTPUT screen");
-assert.match(sidepanelSource, /const completedNaturally = !state\.stopRequested && !halted;[\s\S]*?if \(completedNaturally\) \{\s*showScreen\("outputScreen"\);?\s*\}/, "OUTPUT screen is only activated when run completes legitimately without halt");
+assert.match(sidepanelSource, /completedNaturally = !state\.stopRequested && !halted;[\s\S]*?if \(completedNaturally\) \{\s*showScreen\("outputScreen"\);?\s*\}/, "OUTPUT screen is only activated when run completes legitimately without halt");
 assert.match(sidepanelSource, /if \(state\.running && id === "outputScreen"\) return;/, "User cannot switch to OUTPUT screen during an active run");
 
 // 2. Behavioral verification of Attempt Semantics in Current Job (P1-1)
