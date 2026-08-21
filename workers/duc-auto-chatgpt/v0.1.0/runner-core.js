@@ -138,7 +138,7 @@
       const status = deliberateRerun ? "PENDING" : terminalSuccess ? "SUCCESS" : persistedStatus === "failed" ? "FAILED" : persistedStatus === "interrupted" ? "INTERRUPTED" : persistedStatus === "stopped" ? "STOPPED" : hasOutputCheckpoint ? "INTERRUPTED" : "PENDING";
       const phase = deliberateRerun ? "PRE_SUBMIT" : ATTEMPT_PHASES.includes(persistedPhase) ? persistedPhase : terminalSuccess ? "SUCCESS" : hasOutputCheckpoint ? "OUTPUT_SAVED" : "PRE_SUBMIT";
       const protectedCheckpoint = hasOutputCheckpoint && !deliberateRerun;
-      return { job, number: index + 1, references, settings: itemSettings, status, skipped: terminalSuccess && !deliberateRerun || protectedCheckpoint, protected_checkpoint: protectedCheckpoint, deliberate_rerun: deliberateRerun, phase, attempt_count: Number(job.attempt_count) || 0, retry_count: Number(job.retry_count) || 0, failure_type: job.failure_type || "", last_error: job.last_error || job.error || "", result_file: savedOutput, result_download_id: job.result_download_id || "" };
+      return { job, number: index + 1, references, settings: itemSettings, status, skipped: terminalSuccess && !deliberateRerun || protectedCheckpoint, protected_checkpoint: protectedCheckpoint, deliberate_rerun: deliberateRerun, phase, attempt_id: String(job.attempt_id || ""), attempt_count: Number(job.attempt_count) || 0, retry_count: Number(job.retry_count) || 0, failure_type: job.failure_type || "", last_error: job.last_error || job.error || "", result_file: savedOutput, result_download_id: job.result_download_id || "" };
     });
     return { settings, queue, plan: planSummary(queue, settings) };
   }

@@ -757,6 +757,9 @@ button:disabled { opacity: 0.45; cursor: default; }
 .artifact-status-pill.failed { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
 .artifact-status-pill.empty { background: #f1f5f9; color: var(--text-muted); border: 1px solid #cbd5e1; }
 
+.resume-reconcile-action { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; padding-top: 6px; border-top: 1px solid #fecaca; font-size: 10px; }
+.resume-reconcile-action .secondary { white-space: nowrap; }
+
 .artifact-location-note { margin: 2px 0 4px; font-size: 9.5px; color: var(--text-secondary); overflow-wrap: anywhere; }
 .artifact-list { display: grid; gap: 3px; margin-top: 2px; font-size: 10px; }
 .artifact-row { display: grid; grid-template-columns: 110px 1fr auto; align-items: center; min-height: 38px; gap: 6px; padding: 4px 8px; background: #ffffff; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); }

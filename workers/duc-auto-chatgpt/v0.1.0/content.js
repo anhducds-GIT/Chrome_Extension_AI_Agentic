@@ -444,6 +444,20 @@
     return result;
   }
 
+  function inspectPersistedImage(message) {
+    const proof = message?.proof;
+    const identity = window.DacReconciliationCore.matchesRequest(proof, message);
+    if (!identity.ok) throw new Error(`${identity.code}: ${identity.message}`);
+    const verified = window.DacReconciliationCore.verifyExistingOutput({ proof, candidates: imageCandidates(document) });
+    if (!verified.ok) throw new Error(`${verified.code}: ${verified.message}`);
+    return {
+      type: "image",
+      image_url: verified.candidate.source,
+      image_attribution: proof.attribution,
+      reconciliation: { verified: true, run_id: proof.run_id, job_id: proof.job_id, attempt_id: proof.attempt_id, submitted_at: proof.submitted_at, expected_source_id: proof.expected_source_id }
+    };
+  }
+
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!message || typeof message !== "object") return false;
 
@@ -522,6 +536,23 @@
         .then((result) => sendResponse({ ok: true, result, attempt: attemptSnapshot(STATE.activeAttempt) }))
         .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), attempt: attemptSnapshot(STATE.activeAttempt) }));
       return true;
+    }
+
+    // This endpoint is deliberately read-only: it must never attach files,
+    // edit the composer, click Send, or create a new attempt.
+    if (message.type === "DAC_MANUAL_RECONCILE_EXISTING_OUTPUT") {
+      const requestAttempt = window.DacAttemptIdentity.create(message);
+      if (!window.DacAttemptIdentity.validContext(requestAttempt)) {
+        sendResponse({ ok: false, error: "INVALID_ATTEMPT_ID: job_id and attempt_id are required.", attempt: attemptSnapshot(requestAttempt) });
+        return false;
+      }
+      try {
+        const result = inspectPersistedImage(message);
+        sendResponse({ ok: true, result, attempt: { ...attemptSnapshot(requestAttempt), phase: "OUTPUT_DETECTED", submittedAt: message.submitted_at } });
+      } catch (error) {
+        sendResponse({ ok: false, error: error?.message || String(error), attempt: { ...attemptSnapshot(requestAttempt), phase: "SUBMITTED", submittedAt: message.submitted_at } });
+      }
+      return false;
     }
 
     return false;

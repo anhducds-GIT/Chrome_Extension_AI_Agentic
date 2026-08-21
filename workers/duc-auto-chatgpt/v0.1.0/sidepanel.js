@@ -71,7 +71,8 @@
     checkpointVersion: 0,
     checkpointFilename: "",
     checkpointCreatedAt: "",
-    resumeCheckpointFindings: []
+    resumeCheckpointFindings: [],
+    manualReconciliationRunning: false
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -943,7 +944,115 @@
     els.resumeSourceSummary.textContent = `Continued run · ${plan.run.run_id}${plan.run.provenance === "legacy" ? " (legacy identity)" : ""} · ${window.DacResumeCore.summaryText(plan.summary)}${plan.next_eligible_job ? ` · Next: ${plan.next_eligible_job}` : ""}`;
     els.resumePlanDiagnostics.hidden = !plan.findings.length;
     els.resumePlanDiagnostics.className = `resume-diagnostics${plan.findings.length ? " blocked" : ""}`;
-    els.resumePlanDiagnostics.textContent = plan.findings.map((item) => `${item.code}: ${item.message} ${item.guidance || ""}`).join(" ");
+    els.resumePlanDiagnostics.replaceChildren();
+    const detail = document.createElement("span");
+    detail.textContent = plan.findings.map((item) => `${item.code}: ${item.message} ${item.guidance || ""}`).join(" ");
+    els.resumePlanDiagnostics.appendChild(detail);
+    for (const recovery of plan.jobs.filter((item) => item.state === "AMBIGUOUS_SUBMITTED")) {
+      const action = document.createElement("div");
+      action.className = "resume-reconcile-action";
+      const label = document.createElement("span");
+      label.textContent = `${recovery.job_id}: inspect the existing ChatGPT image against its submitted boundary.`;
+      const button = document.createElement("button");
+      button.type = "button"; button.className = "secondary small"; button.textContent = "Resolve Existing Output"; button.disabled = state.running || state.manualReconciliationRunning;
+      button.addEventListener("click", () => resolveExistingOutput(recovery.job_id).catch((error) => log(messageOf(error), "error")));
+      action.append(label, button);
+      els.resumePlanDiagnostics.appendChild(action);
+    }
+  }
+
+  function reconciliationProof(item) {
+    return window.DacReconciliationCore.proofFromRecordedAttempt({ run_id: state.runId, job: item?.job });
+  }
+
+  function restoreReconciliationItem(item, values) {
+    update(item, values);
+    item.status = values.status;
+    item.phase = values.attempt_phase;
+    item.result_file = values.result_file || "";
+    item.result_download_id = values.result_download_id || "";
+    item.persistence_verified = String(values.persistence_verified).toLowerCase() === "true" || values.persistence_verified === true;
+    item.requested_file = values.requested_file || "";
+    item.write_outcome = values.write_outcome || "";
+  }
+
+  async function resolveExistingOutput(jobId) {
+    if (!state.resumeMode || state.running || state.manualReconciliationRunning || !state.resumePlan || !state.prepared) return;
+    const recovery = state.resumePlan.jobs.find((entry) => entry.job_id === jobId);
+    const item = state.prepared.queue.find((entry) => entry.job.id === jobId);
+    if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED" || !item) throw new Error("RESUME_AMBIGUOUS_SUBMISSION: this job is not eligible for manual reconciliation.");
+    const proofResult = reconciliationProof(item);
+    if (!proofResult.ok) throw new Error(`${proofResult.code}: ${proofResult.message}`);
+    const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
+    if (!outputCheck.ok) throw new Error(`OUTPUT_LOCATION: ${outputCheck.error}`);
+    const effectiveOutput = outputCheck.effective;
+    if (!effectiveOutput.saveImages || !effectiveOutput.saveResultXlsx) throw new Error("RECONCILIATION_PERSISTENCE_REQUIRED: generated-image and Result XLSX saving must both be enabled to mark an ambiguous submission safe complete.");
+
+    state.manualReconciliationRunning = true;
+    renderResumePlan(); controls();
+
+    const original = {
+      status: item.job.status || "",
+      attempt_phase: item.job.attempt_phase || "",
+      requested_file: item.job.requested_file || "",
+      result_file: item.job.result_file || "",
+      result_download_id: item.job.result_download_id || "",
+      persistence_verified: item.job.persistence_verified || "",
+      detected_not_downloaded: item.job.detected_not_downloaded || "",
+      write_outcome: item.job.write_outcome || "",
+      output_saved_at: item.job.output_saved_at || "",
+      completed_at: item.job.completed_at || "",
+      failure_type: item.job.failure_type || "",
+      last_error: item.job.last_error || "",
+      error: item.job.error || ""
+    };
+    audit("RECONCILIATION_STARTED", item, { message: "Operator requested read-only verification of existing output." });
+    setCurrent(item, "RECONCILING", "Inspecting the existing ChatGPT image; no prompt will be sent.", item.settings.timeout_sec);
+    renderQueue();
+    let response;
+    try {
+      response = await send({ type: "DAC_MANUAL_RECONCILE_EXISTING_OUTPUT", run_id: state.runId, job_id: item.job.id, attempt_id: proofResult.proof.attempt_id, submitted_at: proofResult.proof.submitted_at, proof: proofResult.proof });
+      if (!response?.ok || !matchesAttempt(response, { ...item, attempt_id: proofResult.proof.attempt_id })) throw new Error(response?.error || "ATTRIBUTION_NOT_PROVEN: existing output did not match the recorded attempt.");
+      audit("RECONCILIATION_ATTRIBUTED", item, { message: "Existing image matches the recorded attempt boundary and selected candidate." });
+      const accepted = await saveGeneratedImage(response.result.image_url, item, imageLocationFor(item, effectiveOutput));
+      if (!accepted?.ok) throw new Error(accepted?.message || accepted?.error || "Existing image was not accepted for persistence.");
+      const requested = window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(response.result.image_url));
+      audit("RECONCILIATION_PERSISTED", item, { message: `Verified existing image persisted as ${accepted.filename}.` });
+      if (effectiveOutput.saveAuditJsonl) {
+        state.auditFile = await saveAuditLog(effectiveOutput.result);
+        snapshotOutputSettings(null, state.auditFile);
+      }
+      const completedAt = new Date().toISOString();
+      update(item, { status: "SUCCESS", attempt_phase: "SUCCESS", requested_file: requested, result_file: accepted.filename, result_download_id: accepted.download_id ?? "", persistence_verified: true, detected_not_downloaded: false, write_outcome: accepted.write_outcome || "written", output_saved_at: completedAt, completed_at: completedAt, failure_type: "", last_error: "", error: "" });
+      item.phase = "SUCCESS"; item.runtime_stage = "SUCCESS"; item.result_file = accepted.filename; item.persistence_verified = true; item.write_outcome = accepted.write_outcome || "written";
+      const checkpoint = await saveLedger(effectiveOutput.result);
+      if (!window.DacReconciliationCore.safeComplete({ attribution: { ok: true }, imagePersisted: true, checkpointPersisted: Boolean(checkpoint) })) throw new Error("RECONCILIATION_CHECKPOINT_FAILED: Result checkpoint was not verified.");
+      state.resultFile = checkpoint;
+      state.verifiedImageFiles.push(accepted.filename);
+      state.sessionThumbnails.set(item.job.id, response.result.image_url);
+      state.resumeLedgerFile = state.checkpointFilename;
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
+      await prepare({ diagnostic: true });
+      window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+      audit("JOB_SUCCESS", item, { message: "Manual reconciliation completed after verified image and Result checkpoint persistence." });
+      setCurrent(item, "SUCCESS", "Verified existing output persisted and checkpointed; this job will not be resubmitted.", item.settings.timeout_sec);
+      progress(`${item.job.id}: VERIFIED EXISTING OUTPUT · checkpoint ${state.checkpointFilename}.`);
+      renderResumePlan(); renderQueue(); renderOutput();
+      await validate();
+    } catch (error) {
+      restoreReconciliationItem(item, original);
+      audit("RECONCILIATION_FAILED", item, { message: messageOf(error) });
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
+      await prepare({ diagnostic: true });
+      window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+      setCurrent(item, "INTERRUPTED", "ATTRIBUTION NOT PROVEN or persistence failed; job remains blocked.", item.settings.timeout_sec);
+      progress(`${item.job.id}: ATTRIBUTION NOT PROVEN — remains blocked.`);
+      renderResumePlan(); renderQueue(); renderOutput(); controls();
+      throw error;
+    } finally {
+      state.manualReconciliationRunning = false;
+      renderResumePlan(); controls();
+    }
   }
 
   async function openExistingRun() {
