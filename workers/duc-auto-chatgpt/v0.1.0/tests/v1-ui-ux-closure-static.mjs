@@ -30,6 +30,10 @@ assert.match(html, /Controls what happens when a file with the same name already
 assert.match(source, /DacSidepanelUiSemantics\.destinationVisibility\(state\.destinationMode\)/);
 assert.match(html, /Relative to Chrome Downloads\. No folder selection required\./);
 assert.match(css, /\.destination-authorized\[hidden\][^{]*\{ display: none !important;/);
+assert.match(css, /\.destination-authorized \{[^}]*display: grid;[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);
+assert.match(css, /\.destination-authorized \.output-folder-hint \{[^}]*grid-column: 1 \/ -1;[^}]*display: grid;/);
+assert.match(css, /\.destination-authorized \.output-folder-hint output \{[^}]*text-overflow: ellipsis;[^}]*white-space: nowrap;/);
+assert.match(source, /els\.folderHintText\.title = values\.folderHint \|\| ""/);
 assert.equal(ui.destinationVisibility("downloads").showDownloads, true);
 assert.equal(ui.destinationVisibility("downloads").showProfile, false);
 assert.equal(ui.destinationVisibility("profile").showDownloads, false);

@@ -769,7 +769,10 @@
       els.destinationHandleText.textContent = values.image.kind === "directory" ? window.DacOutputLocation.locationLabel(values.image) : "No folder selected";
       const permission = state.outputProfileState?.state;
       els.outputProfilePermission.textContent = values.image.kind !== "directory" ? "Not required" : permission === "authorized" ? "Authorized" : permission === "permission_required" ? "Permission required" : permission === "unavailable" ? "Unavailable" : "Not bound";
-      if (els.folderHintText) els.folderHintText.textContent = values.folderHint || "—";
+      if (els.folderHintText) {
+        els.folderHintText.textContent = values.folderHint || "—";
+        els.folderHintText.title = values.folderHint || "";
+      }
       if (els.copyFolderHintBtn) els.copyFolderHintBtn.disabled = !values.folderHint || values.image.kind !== "directory";
       els.destinationFolderBtn.textContent = permission === "permission_required" ? "Re-authorize" : values.image.kind === "directory" && values.image.handle ? "Change Folder" : "Choose Folder";
       state.separateResultDestination = state.outputSettings.result?.kind !== "same_as_image";
