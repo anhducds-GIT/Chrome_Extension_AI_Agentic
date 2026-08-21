@@ -52,6 +52,15 @@ assert.match(html, /runtime-information--timer[^>]*>\s*<span>⌛ Operation timeo
 assert.match(css, /\.timer-badge #operatorTimerText \{ font-size: 17px; font-variant-numeric: tabular-nums;/, "the live attempt timer is visually prominent");
 assert.match(css, /\.runtime-information--timer output \{ color: #1e3a8a; font-size: 18px; font-variant-numeric: tabular-nums;/, "timer values are large and scan-friendly");
 
+// RUN: Current Job keeps the prompt and real attached reference images together.
+for (const id of ["currentJobContent", "currentPromptPreview", "currentReferenceColumn", "currentReferenceGallery"]) assert.match(html, new RegExp(`id="${id}"`));
+assert.match(css, /\.current-job-content \{ display: grid; grid-template-columns: minmax\(0, 1fr\) minmax\(110px, 0\.65fr\);/, "Current Job uses prompt and reference-image columns when width permits");
+assert.match(css, /\.current-reference-gallery \{ display: grid;/, "attached images render as a compact thumbnail gallery");
+assert.match(source, /function renderCurrentJobReferences\(item\)/, "Current Job references are rendered from the live queue item");
+assert.match(source, /reference\?\.dataUrl/, "only real selected reference images are rendered");
+assert.match(source, /image\.src = reference\.dataUrl/, "Current Job thumbnail source is the actual attached image");
+assert.match(source, /renderCurrentJobReferences\(item\);/, "thumbnail state updates with the Current Job state");
+
 const inactive = ui.runtimeInfo({ running: false, settings: { delay_min_sec: 3, delay_max_sec: 3 } }, 10, format);
 assert.equal(inactive.jobElapsed, "—");
 assert.equal(inactive.currentOperation, "—");

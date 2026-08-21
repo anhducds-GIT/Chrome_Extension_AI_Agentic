@@ -650,7 +650,13 @@ button:disabled { opacity: 0.45; cursor: default; }
 .stage { color: #059669; font-size: 10.5px; font-weight: 800; text-align: right; }
 .attempt-badge { font-size: 9.5px; font-weight: 600; color: #334155; background: #f1f5f9; padding: 2px 6px; border-radius: var(--radius-sm); border: 1px solid #cbd5e1; }
 .continued-run-label { font-size: 9px; font-weight: 800; color: #065f46; background: #ecfdf5; border: 1px solid #86efac; border-radius: var(--radius-full); padding: 2px 5px; white-space: nowrap; }
-.prompt-preview { font-style: italic; font-size: 10px; color: #334155; background: #f8fafc; border-left: 3px solid #2563eb; border-top: 1px solid var(--border-subtle); border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); padding: 4px 7px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin: 3px 0; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.current-job-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(110px, 0.65fr); gap: 8px; align-items: start; margin: 3px 0; }
+.current-job-prompt-column, .current-reference-column { min-width: 0; }
+.current-job-content-label { display: block; margin-bottom: 3px; color: #64748b; font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.prompt-preview { font-style: italic; font-size: 10px; color: #334155; background: #f8fafc; border-left: 3px solid #2563eb; border-top: 1px solid var(--border-subtle); border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); padding: 4px 7px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin: 0; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.current-reference-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(36px, 1fr)); gap: 4px; }
+.current-reference-thumb { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid #bfdbfe; border-radius: var(--radius-sm); background: #eff6ff; }
+@media (max-width: 360px) { .current-job-content { grid-template-columns: 1fr; } .current-reference-gallery { grid-template-columns: repeat(auto-fit, minmax(42px, 1fr)); } }
 
 /* Pipeline Stepper */
 .pipeline-stepper { display: flex; align-items: center; justify-content: space-between; margin: 5px 0 3px; padding: 5px 8px; background: #f8fafc; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); }

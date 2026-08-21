@@ -19,7 +19,7 @@
     "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary", "recreateConfirmDialog", "recreateConfirmTitle", "recreateConfirmMessage", "recreateCancelBtn", "recreateConfirmBtn", "auditGapConfirmDialog", "auditGapCancelBtn", "auditGapConfirmBtn",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
-    "currentAttemptBadge", "continuedRunLabel", "currentPromptPreview", "pipelineStepper", "operatorTimerArea",
+    "currentAttemptBadge", "continuedRunLabel", "currentJobContent", "currentPromptPreview", "currentReferenceColumn", "currentReferenceGallery", "pipelineStepper", "operatorTimerArea",
     "operatorTimerBadge", "operatorTimerText", "latestSavedCard", "latestSavedThumb",
     "latestSavedName", "latestSavedStatus", "completionCard", "completionIcon", "completionTitle",
     "artifactStatusPill", "runArtifactsCard", "artifactLocationNote", "artifactRowImages",
@@ -235,6 +235,23 @@
     }
   }
 
+  function renderCurrentJobReferences(item) {
+    if (els.currentJobContent) els.currentJobContent.hidden = !item;
+    if (!els.currentReferenceColumn || !els.currentReferenceGallery) return;
+    const references = (item?.references || []).filter((reference) => reference?.dataUrl);
+    els.currentReferenceColumn.hidden = references.length === 0;
+    els.currentReferenceGallery.replaceChildren();
+    for (const reference of references) {
+      const image = document.createElement("img");
+      const label = reference.alias || reference.fileName || "Attached reference image";
+      image.className = "current-reference-thumb";
+      image.src = reference.dataUrl;
+      image.alt = label;
+      image.title = label;
+      els.currentReferenceGallery.appendChild(image);
+    }
+  }
+
   function renderRuntime() {
     if (els.continuedRunLabel) els.continuedRunLabel.hidden = !state.resumeMode;
     const item = state.currentItem;
@@ -276,6 +293,7 @@
         els.currentPromptPreview.hidden = true;
       }
     }
+    renderCurrentJobReferences(item);
 
     if (item) {
       const timingParts = [attemptText, `Elapsed ${formattedJobElapsed}`];

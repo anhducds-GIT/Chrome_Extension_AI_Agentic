@@ -229,7 +229,16 @@
             <span class="section-badge">CURRENT JOB</span>
             <div class="row"><span id="continuedRunLabel" class="continued-run-label" hidden>Continued run</span><div id="currentAttemptBadge" class="attempt-badge">Attempt —</div></div>
           </div>
-          <div id="currentPromptPreview" class="prompt-preview" hidden></div>
+          <div id="currentJobContent" class="current-job-content" hidden>
+            <div class="current-job-prompt-column">
+              <span class="current-job-content-label">Prompt</span>
+              <div id="currentPromptPreview" class="prompt-preview" hidden></div>
+            </div>
+            <div id="currentReferenceColumn" class="current-reference-column" hidden>
+              <span class="current-job-content-label">Attached images</span>
+              <div id="currentReferenceGallery" class="current-reference-gallery" aria-label="Images attached to the current job"></div>
+            </div>
+          </div>
           <div class="row spread current-job-meta">
             <div id="currentJobId" class="current-job">—</div>
             <span id="currentStage" class="stage">—</span>
