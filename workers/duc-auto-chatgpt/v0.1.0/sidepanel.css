@@ -728,6 +728,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 .queue-row-status.halted, .queue-row-status.failed { color: #dc2626; font-weight: 700; }
 .queue-row-right { font-size: 9.5px; color: var(--text-muted); font-family: ui-monospace, monospace; text-align: right; }
 .queue-row-details { grid-column: 1 / -1; font-size: 9.5px; color: #475569; background: #f8fafc; padding: 4px 6px; border-radius: var(--radius-sm); margin-top: 3px; border-top: 1px dashed var(--border-subtle); line-height: 1.35; }
+.queue-row-error-label { color: #dc2626; }
 
 /* ==========================================================================
    OUTPUT Screen Styles (Results & Artifacts)

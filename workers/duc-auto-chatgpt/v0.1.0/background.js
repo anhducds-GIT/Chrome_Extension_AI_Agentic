@@ -64,7 +64,19 @@ async function downloadGeneratedImage(message) {
   }
   const downloadId = await chrome.downloads.download({ url, filename: requestedFilename, conflictAction: collisionPolicy === "fail" ? "uniquify" : collisionPolicy, saveAs: false });
   const item = await waitForCompletedDownload(downloadId);
-  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename, collision_policy: collisionPolicy, write_outcome: item.filename === requestedFilename ? "written" : collisionPolicy === "overwrite" ? "overwritten" : "uniquified" };
+  // A "complete" DownloadItem is Chrome's claim, not proof the bytes are on
+  // disk. The directory writer reopens and measures its file; give the
+  // Downloads path the closest equivalent before reporting a saved image.
+  // An absent byte count means Chrome did not report one; only a byte count
+  // that is present and zero is proof of an empty file.  Reporting an unknown
+  // count as a failure would invent a failure mode rather than remove one.
+  const reportedBytes = [item.fileSize, item.bytesReceived].map(Number).filter((value) => Number.isFinite(value));
+  const persistedBytes = Math.max(0, ...reportedBytes);
+  // The message keeps the code prefix so sidepanel.js persistenceFailureType()
+  // classifies this identically to a directory-write verification failure.
+  if (item.exists === false) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete but the file no longer exists.`);
+  if (reportedBytes.length && persistedBytes <= 0) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete with zero bytes received.`);
+  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename, collision_policy: collisionPolicy, persisted_bytes: persistedBytes, write_outcome: item.filename === requestedFilename ? "written" : collisionPolicy === "overwrite" ? "overwritten" : "uniquified" };
 }
 
 function safeRequestedFilename(value, folder, fallback) {

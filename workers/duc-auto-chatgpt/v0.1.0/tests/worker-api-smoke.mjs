@@ -4,6 +4,10 @@ import vm from "node:vm";
 
 const sent = [];
 const downloads = [];
+// Persistence fields Chrome reports on a completed DownloadItem. Tests mutate
+// this to prove a "complete" download is not accepted as a saved image when
+// the file is empty or gone.
+let downloadPersistence = { fileSize: 2048, bytesReceived: 2048, exists: true };
 const downloadItems = new Map();
 let externalListener;
 let privateListener;
@@ -42,7 +46,7 @@ const chrome = {
       downloads.push(options);
       const id = 77 + downloads.length - 1;
       const finalName = options.filename.includes("image_001.png") ? "C:\\Users\\Duc\\Downloads\\Duc Auto ChatGPT\\image_001 (1).png" : `C:\\Users\\Duc\\Downloads\\${options.filename}`;
-      downloadItems.set(id, { id, state: "complete", filename: finalName });
+      downloadItems.set(id, { id, state: "complete", filename: finalName, ...downloadPersistence });
       return id;
     },
     search: async ({ id }) => downloadItems.has(id) ? [downloadItems.get(id)] : [],
@@ -90,6 +94,20 @@ const invalidOutputFolder = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobI
 assert.equal(invalidOutputFolder.ok, false);
 assert.equal(invalidOutputFolder.code, "DOWNLOAD_FAILED");
 assert.equal(downloads.length, 1, "unsafe output folder must fail instead of silently falling back to Downloads");
+
+// A "complete" DownloadItem is Chrome's claim, not proof the bytes are on disk.
+downloadPersistence = { fileSize: 0, bytesReceived: 0, exists: true };
+const emptyDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:003", url: "https://chatgpt.com/generated.png" });
+assert.equal(emptyDownload.ok, false, "a zero-byte completed download is never reported as saved");
+assert.equal(emptyDownload.code, "PERSISTENCE_VERIFICATION_FAILED");
+assert.match(emptyDownload.error, /^PERSISTENCE_VERIFICATION_FAILED:/, "message keeps the code prefix so the runner classifies it as a persistence failure");
+
+downloadPersistence = { fileSize: 2048, bytesReceived: 2048, exists: false };
+const vanishedDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:004", url: "https://chatgpt.com/generated.png" });
+assert.equal(vanishedDownload.ok, false, "a completed download whose file no longer exists is never reported as saved");
+assert.equal(vanishedDownload.code, "PERSISTENCE_VERIFICATION_FAILED");
+
+downloadPersistence = { fileSize: 2048, bytesReceived: 2048, exists: true };
 const accepted = await call({ operation: "job.submit", job_id: "wp2-test-001", task_type: "text_prompt", prompt: "test", timeout_ms: 180000 });
 assert.equal(accepted.job.status, "accepted");
 await wait();

@@ -235,6 +235,39 @@
     }
   }
 
+  // Thumbnail URLs are read out of the chatgpt.com DOM, and job IDs/prompts
+  // arrive from an imported workbook.  Both are untrusted here: this panel
+  // holds downloads and tabs permissions, and MV3's default CSP does not
+  // restrict img-src, so an injected element could still reach the network.
+  // Every renderer below builds nodes and assigns text, never markup.
+  function safeImageSource(url) {
+    const value = String(url || "");
+    return /^(https:\/\/|data:image\/)/i.test(value) ? value : "";
+  }
+
+  function thumbnailImage(url, label, className) {
+    const source = safeImageSource(url);
+    if (!source) return null;
+    const image = document.createElement("img");
+    image.className = className;
+    image.alt = String(label || "");
+    image.src = source;
+    return image;
+  }
+
+  function element(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = String(text);
+    return node;
+  }
+
+  function labelledLine(label, value) {
+    const fragment = document.createDocumentFragment();
+    fragment.append(element("strong", "", label), ` ${value}`);
+    return fragment;
+  }
+
   function renderCurrentJobReferences(item) {
     if (els.currentJobContent) els.currentJobContent.hidden = !item;
     if (!els.currentReferenceColumn || !els.currentReferenceGallery) return;
@@ -328,15 +361,12 @@
     const lastSavedItem = (state.prepared?.queue || []).slice().reverse().find((i) => i.persistence_verified && i.result_file) || (state.prepared?.queue || []).slice().reverse().find((i) => i.detected_not_downloaded);
     if (els.latestSavedName) {
       if (lastSavedItem) {
-        els.latestSavedName.textContent = lastSavedItem.result_file ? window.DacRunnerCore.basename(lastSavedItem.result_file) : "Detected (no download)";
+        els.latestSavedName.textContent = lastSavedItem.result_file ? window.DacOutputLocation.artifactLeaf(lastSavedItem.result_file) : "Detected (no download)";
         els.latestSavedStatus.textContent = lastSavedItem.persistence_verified ? `Saved ✓ (${lastSavedItem.job.id})` : "Detected · not downloaded";
         if (els.latestSavedThumb) {
-          const thumbUrl = lastSavedItem.thumbnailUrl || state.sessionThumbnails.get(lastSavedItem.job.id);
-          if (thumbUrl) {
-            els.latestSavedThumb.innerHTML = `<img src="${thumbUrl}" alt="${lastSavedItem.job.id}" class="mini-thumb-img" />`;
-          } else {
-            els.latestSavedThumb.textContent = "🖼";
-          }
+          const thumb = thumbnailImage(lastSavedItem.thumbnailUrl || state.sessionThumbnails.get(lastSavedItem.job.id), lastSavedItem.job.id, "mini-thumb-img");
+          if (thumb) els.latestSavedThumb.replaceChildren(thumb);
+          else els.latestSavedThumb.textContent = "🖼";
         }
       } else {
         els.latestSavedName.textContent = "None yet";
@@ -468,12 +498,24 @@
             ? window.DacRunState.stageFor(item)
             : "—";
 
-      li.innerHTML = `<div class="queue-row-left"><span class="queue-icon ${iconClass}">${icon}</span><span class="queue-job-id">${item.job.id}</span></div><div class="queue-row-status ${statusLabel.toLowerCase()}">${statusWithElapsed}</div><div class="queue-row-right">${timeOrDetail}</div>`;
+      const left = element("div", "queue-row-left");
+      left.append(element("span", `queue-icon ${iconClass}`, icon), element("span", "queue-job-id", item.job.id));
+      li.append(left, element("div", `queue-row-status ${statusLabel.toLowerCase()}`, statusWithElapsed), element("div", "queue-row-right", timeOrDetail));
       li.addEventListener("click", () => { state.selectedJobId = state.selectedJobId === item.job.id ? null : item.job.id; renderQueue(); controls(); });
       if (state.selectedJobId === item.job.id) {
-        const details = document.createElement("div");
-        details.className = "queue-row-details";
-        details.innerHTML = `<strong>Prompt:</strong> ${item.job.prompt}<br/><strong>References:</strong> ${item.references.map((file) => file.alias || file.fileName).join(", ") || "none"}<br/><strong>Settings:</strong> Timeout: ${item.settings.timeout_sec}s · Retries: ${item.settings.max_retries} · Cooldown: ${item.settings.safety_cooldown_sec}s · ${retryLabel}${outputText}${item.protected_checkpoint ? " · Output checkpoint protected" : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}${item.last_error ? `<br/><strong style="color: #dc2626;">Error:</strong> ${item.last_error}` : ""}`;
+        const details = element("div", "queue-row-details");
+        const settingsText = `Timeout: ${item.settings.timeout_sec}s · Retries: ${item.settings.max_retries} · Cooldown: ${item.settings.safety_cooldown_sec}s · ${retryLabel}${outputText}${item.protected_checkpoint ? " · Output checkpoint protected" : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
+        details.append(
+          labelledLine("Prompt:", item.job.prompt),
+          element("br"),
+          labelledLine("References:", item.references.map((file) => file.alias || file.fileName).join(", ") || "none"),
+          element("br"),
+          labelledLine("Settings:", settingsText)
+        );
+        if (item.last_error) {
+          const errorLabel = element("strong", "queue-row-error-label", "Error:");
+          details.append(element("br"), errorLabel, ` ${item.last_error}`);
+        }
         li.appendChild(details);
       }
       els.queueList.appendChild(li);
@@ -523,20 +565,19 @@
 
     els.outputList.textContent = "";
     for (const item of (state.outputsExpanded ? queue : queue.slice(0, 8))) {
-      const li = document.createElement("li");
-      li.className = `output-item ${item.status.toLowerCase()}`;
-      const thumbUrl = item.thumbnailUrl || state.sessionThumbnails.get(item.job.id);
-      const thumbHtml = thumbUrl
-        ? `<img src="${thumbUrl}" class="output-thumb-img" alt="${item.job.id}" />`
-        : `<span class="output-thumb-placeholder">🖼</span>`;
+      const li = element("li", `output-item ${item.status.toLowerCase()}`);
+      const thumb = thumbnailImage(item.thumbnailUrl || state.sessionThumbnails.get(item.job.id), item.job.id, "output-thumb-img");
+      li.appendChild(thumb || element("span", "output-thumb-placeholder", "🖼"));
+      const info = element("div", "output-item-info");
+      info.appendChild(element("strong", "", item.job.id));
+      if (item.result_file) info.append(" · ", element("span", "output-filename", window.DacOutputLocation.artifactLeaf(item.result_file)));
+      li.appendChild(info);
       const isSaved = Boolean(item.persistence_verified && item.result_file);
-      const statusBadge = isSaved
-        ? `<span class="output-status-pill success">✓ Saved</span>`
+      li.appendChild(isSaved
+        ? element("span", "output-status-pill success", "✓ Saved")
         : item.detected_not_downloaded
-          ? `<span class="output-status-pill warning">Detected</span>`
-          : `<span class="output-status-pill ${item.status.toLowerCase()}">${item.status}</span>`;
-      const fileText = item.result_file ? ` · <span class="output-filename">${window.DacRunnerCore.basename(item.result_file)}</span>` : "";
-      li.innerHTML = `${thumbHtml}<div class="output-item-info"><strong>${item.job.id}</strong>${fileText}</div>${statusBadge}`;
+          ? element("span", "output-status-pill warning", "Detected")
+          : element("span", `output-status-pill ${item.status.toLowerCase()}`, item.status));
       els.outputList.appendChild(li);
     }
     els.viewOutputsBtn.textContent = state.outputsExpanded ? "Collapse outputs" : `View all outputs${queue.length > 8 ? ` (${queue.length})` : ""}`;
@@ -580,7 +621,7 @@
     if (values?.saveResultXlsx) {
       if (state.resultFile) {
         resultStatus = "Verified";
-        resultDetail = window.DacRunnerCore.basename(state.resultFile);
+        resultDetail = window.DacOutputLocation.artifactLeaf(state.resultFile);
         resultStatusClass = "verified";
       } else if (state.artifactErrors.some((e) => /Result XLSX/i.test(e))) {
         resultStatus = "Failed";
@@ -605,7 +646,7 @@
     if (values?.saveAuditJsonl) {
       if (state.auditFile) {
         auditStatus = "Verified";
-        auditDetail = window.DacRunnerCore.basename(state.auditFile);
+        auditDetail = window.DacOutputLocation.artifactLeaf(state.auditFile);
         auditStatusClass = "verified";
       } else if (state.artifactErrors.some((e) => /Audit JSONL/i.test(e))) {
         auditStatus = "Failed";
@@ -673,7 +714,7 @@
       const removeBtn = document.createElement("button");
       removeBtn.className = "remove-ref-btn";
       removeBtn.type = "button";
-      removeBtn.innerHTML = "×";
+      removeBtn.textContent = "×";
       removeBtn.title = "Remove reference image";
       removeBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
@@ -694,7 +735,7 @@
   function outputPlan() { return window.DacOutputLocation.runPlan(state.workbook?.fileName, state.outputSettings); }
 
   function recordedPriorAuditFilename(values) {
-    return window.DacRunnerCore.basename(state.workbook?.config?.effective_audit_log || state.workbook?.config?.audit_chain_missing_filename || state.auditFile || values.auditFilename);
+    return window.DacOutputLocation.artifactLeaf(state.workbook?.config?.effective_audit_log || state.workbook?.config?.audit_chain_missing_filename || state.auditFile || values.auditFilename);
   }
 
   function auditGapAcknowledged() {
@@ -706,7 +747,7 @@
     const gapAcknowledged = auditGapAcknowledged();
     if (!state.resumeMode || !values.saveAuditJsonl || values.result?.kind !== "directory") return window.DacAuditChainCore.inspect({ resumeMode: state.resumeMode, saveAuditJsonl: values.saveAuditJsonl, locationKind: values.result?.kind, previousFilename, gapAcknowledged });
     if (gapAcknowledged) {
-      const segmentFilename = window.DacRunnerCore.basename(state.workbook?.config?.audit_chain_segment_filename || values.auditFilename);
+      const segmentFilename = window.DacOutputLocation.artifactLeaf(state.workbook?.config?.audit_chain_segment_filename || values.auditFilename);
       try {
         const segmentHandle = await values.result.handle.getFileHandle(segmentFilename, { create: false });
         const segmentFile = await segmentHandle.getFile();
@@ -1027,7 +1068,7 @@
       label.textContent = queuedApproval
         ? `${recovery.job_id}: creating a replacement image now.`
         : window.DacRecreateCore.requiresNewApproval(job || {})
-          ? `${recovery.job_id}: no verified saved image. Create it again?`
+          ? `${recovery.job_id}: the last recreate did not finish. Still no verified saved image. Create it again?`
           : `${recovery.job_id}: no verified saved image. Create it again?`;
       action.appendChild(label);
       if (recoveryAvailable) {
@@ -1195,7 +1236,17 @@
       progress(`${jobId}: image saved and checkpointed. Continuing with ${remaining[0].job.id}.`);
       log(`${jobId}: verified recreate complete; continuing the remaining queue.`, "done");
       const continuation = await run("all");
-      if (!continuation?.ok) throw new Error(`RECREATE_CONTINUATION_BLOCKED: ${continuation?.reason || "The remaining queue did not enter RUNNING state."}`);
+      if (!continuation?.ok) {
+        // The recreated image is verified and checkpointed by this point.
+        // Reporting "RECREATE BLOCKED" here would invert what actually
+        // happened and invite a needless second recreate confirmation, so the
+        // continuation blocker is surfaced as its own distinct status.
+        const blockedReason = continuation?.reason || "The remaining queue did not enter RUNNING state.";
+        setStatus("IDLE", "RECREATE SAVED · QUEUE BLOCKED");
+        progress(`${jobId}: recreated image is saved and checkpointed. The remaining queue did not start: ${blockedReason}`);
+        log(`${jobId}: recreate verified and checkpointed; remaining queue blocked: ${blockedReason}`, "error");
+        return outcome;
+      }
       return continuation;
     } catch (error) {
       const reason = messageOf(error);
@@ -1308,8 +1359,8 @@
       const imported = applyWorkbookConfig();
       state.resumePlan = window.DacResumeCore.plan(state.workbook);
       state.runId = state.resumePlan.run.run_id;
-      const recordedResult = window.DacRunnerCore.basename(state.workbook.config.effective_result_xlsx || "");
-      const recordedAudit = window.DacRunnerCore.basename(state.workbook.config.effective_audit_log || "");
+      const recordedResult = window.DacOutputLocation.artifactLeaf(state.workbook.config.effective_result_xlsx || "");
+      const recordedAudit = window.DacOutputLocation.artifactLeaf(state.workbook.config.effective_audit_log || "");
       if (recordedResult && !state.workbook.config.result_filename_pattern) state.outputSettings.resultFilename = state.outputSettings.resultFilenamePattern = window.DacOutputLocation.baseResultFilenamePattern(state.workbook.fileName);
       if (recordedAudit) state.outputSettings.auditFilename = window.DacOutputLocation.safeFileLeaf(recordedAudit, state.outputSettings.auditFilename);
       if (imported.effective.output.mode === "profile") await resolveOutputProfile(imported.effective.output.profileId);
@@ -1320,7 +1371,7 @@
       state.runId = state.resumePlan.run.run_id;
       if (!state.checkpointVersion) {
         state.checkpointVersion = Number(state.workbook.config.checkpoint_version) || 0;
-        state.checkpointFilename = window.DacRunnerCore.basename(state.workbook.config.checkpoint_filename || state.resumeLedgerFile);
+        state.checkpointFilename = window.DacOutputLocation.artifactLeaf(state.workbook.config.checkpoint_filename || state.resumeLedgerFile);
         state.checkpointCreatedAt = String(state.workbook.config.checkpoint_created_at || "");
       }
       const resumeOutput = window.DacOutputLocation.effective(state.outputSettings);
@@ -1695,7 +1746,7 @@
   async function checkpointWorkbook(filename, version) {
     const sourceBlob = window.DacXlsx.downloadBlob(state.workbook);
     const candidate = await window.DacXlsx.open(new File([sourceBlob], filename, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
-    const previous = state.checkpointFilename || window.DacRunnerCore.basename(state.workbook.config.checkpoint_filename || "");
+    const previous = state.checkpointFilename || window.DacOutputLocation.artifactLeaf(state.workbook.config.checkpoint_filename || "");
     const checkpoint = { checkpoint_version: String(version), checkpoint_filename: filename, checkpoint_created_at: new Date().toISOString() };
     if (previous) checkpoint.previous_checkpoint_filename = previous;
     snapshotOutputSettings(filename, state.auditFile, candidate, checkpoint);
@@ -1779,6 +1830,12 @@
       const policy = state.resumeMode && (!auditGapAcknowledged() || state.auditChain?.segmentStarted) ? "overwrite" : "fail";
       const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, requested, mergedBlob, policy);
       if (state.resumeMode && auditGapAcknowledged()) state.auditChain = { ...state.auditChain, segmentStarted: true };
+      // Every buffered event is now durably in the file, and each later flush
+      // on this path re-reads that file before appending.  Leaving the buffer
+      // populated made a second flush re-emit already-persisted events -- the
+      // AUDIT_CHAIN_GAP marker was written twice in Pilot-05.  Clear only
+      // after a verified write, and only on this read-then-append path.
+      state.auditEvents = [];
       return window.DacOutputLocation.fileLabel(location, written.filename);
     }
     if (state.resumeMode) throw new Error("RESUME_AUDIT_APPEND_UNAVAILABLE: Chrome Downloads cannot read and append the prior audit log. Continue using the authorized run folder.");

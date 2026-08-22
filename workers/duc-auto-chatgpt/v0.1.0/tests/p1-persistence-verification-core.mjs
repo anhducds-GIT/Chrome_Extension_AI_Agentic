@@ -44,6 +44,38 @@ await assert.rejects(
   "zero-byte persisted XLSX must fail closed"
 );
 
+// A short write is a silent truncation. "Non-empty" is not proof of
+// persistence when the caller knows how many bytes it handed to the stream.
+function truncatingDirectory(writtenSize) {
+  const files = new Map();
+  return {
+    files,
+    async getFileHandle(filename, { create }) {
+      if (!create && !files.has(filename)) { const error = new Error("missing"); error.name = "NotFoundError"; throw error; }
+      let entry = files.get(filename);
+      if (!entry) {
+        entry = {
+          async getFile() { return { name: filename, size: entry.size ?? 0 }; },
+          async createWritable() { return { async write() { entry.size = writtenSize; }, async close() { files.set(filename, entry); } }; }
+        };
+        if (create) files.set(filename, entry);
+      }
+      return entry;
+    }
+  };
+}
+
+await assert.rejects(
+  () => output.writeFileWithPolicy(truncatingDirectory(40), "results.xlsx", { size: 4096 }, "fail"),
+  /PERSISTENCE_VERIFICATION_FAILED.*40 bytes but 4096 bytes were written/,
+  "a truncated write must never be reported as saved"
+);
+await assert.rejects(
+  () => output.writeFileWithPolicy(truncatingDirectory(40), "generated.png", { size: 4096 }, "overwrite"),
+  /PERSISTENCE_VERIFICATION_FAILED.*bytes were written/,
+  "the overwrite policy verifies the persisted byte count too"
+);
+
 const valid = fakeDirectory();
 for (const [filename, blob] of [["generated.png", { size: 12, type: "image/png" }], ["results.xlsx", { size: 44, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }], ["audit.jsonl", { size: 19, type: "application/jsonl" }]]) {
   const written = await output.writeFileWithPolicy(valid, filename, blob, "fail");

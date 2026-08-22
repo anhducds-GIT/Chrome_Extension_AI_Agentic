@@ -25,6 +25,9 @@ assert.match(html, /xlsx-run-plan-core\.js/);
 assert.match(html, /output-profile-core\.js/);
 assert.match(html, /operator-glossary-core\.js/);
 assert.match(html, /id="helpBtn"/);
+assert.match(html, /id="helpBtn"[^>]*aria-label="Hướng dẫn vận hành"/);
+assert.match(html, /<strong>Hướng dẫn vận hành<\/strong>/);
+assert.match(html, /id="closeHelpBtn"[^>]*>Đóng<\/button>/);
 assert.match(html, /id="configProvenance"/);
 assert.doesNotMatch(html, /id="runPlanList"/);
 

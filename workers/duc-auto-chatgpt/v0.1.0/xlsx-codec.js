@@ -203,6 +203,12 @@
         row = addRow(document, sheetData, nextRow++);
         setCell(document, row, keyColumn, normalisedKey);
         rowByKey.set(normalisedKey, row);
+        // `rows` is the array captured at open() and reused by every later
+        // call for both rowByKey and nextRow.  Without this push a second
+        // snapshot cannot see rows added by the first, so it appends a
+        // duplicate set reusing the same @r row numbers -- producing invalid
+        // SpreadsheetML whose first copy keeps a stale value forever.
+        rows.push(row);
       }
       setCell(document, row, valueColumn, value);
       workbook.config[normalisedKey] = String(value ?? "");

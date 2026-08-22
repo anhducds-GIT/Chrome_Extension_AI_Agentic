@@ -73,3 +73,16 @@ TESTS_REQUIRED: concrete manual/static checks
 
 Do not rewrite the extension wholesale. Preserve V0 scope.
 ```
+
+## Log
+
+- 2026-08-22 · Claude · Independent audit of HEAD `54fff5d`. Verdict REVISE. Protected invariants (exact-once, attribution, readiness, retry, security hard-stop) all confirmed intact. Four artifact-truthfulness defects found, all reproduced in the committed Pilot-05 evidence.
+- 2026-08-22 · Claude · Đức assigned implementation. Fixed in one pass, no commit:
+  - `xlsx-codec.js` `updateConfigSnapshot` appended duplicate config rows reusing the same `@r` numbers (Pilot-05 v005: 64 rows / 44 distinct, 40 duplicate cell refs), freezing a stale first copy of every key. Rows are now pushed back into the captured `rows` array.
+  - `DacRunnerCore.basename()` (a lossy image-reference helper) was lower-casing artifact filenames into recorded provenance. New `DacOutputLocation.artifactLeaf()` preserves case; 9 call sites moved over.
+  - `saveAuditLog` never cleared `state.auditEvents` after a verified append, so a second flush re-emitted persisted events (`AUDIT_CHAIN_GAP` written twice). Buffer now cleared after the verified directory write only.
+  - Four `innerHTML` sinks fed chatgpt.com-sourced image URLs and workbook text into the privileged side panel. All renderers now build nodes; image sources are restricted to `https:` / `data:image/`.
+  - Also: persisted byte count is verified against the written blob (directory) and against `fileSize`/`exists` (Downloads); `overwrite` policy no longer reports a first write as `overwritten`; `safeRelativeFolder` no longer admits `*` and `"`; `PERSISTENCE_VERIFICATION_FAILED` added to `FAILURE_TYPES`; a verified recreate whose continuation is blocked no longer displays "RECREATE BLOCKED".
+  - Tests: 33 pass (was 31). New `xlsx-config-snapshot-smoke`, `artifact-integrity-smoke`; `pilot-05-checkpoint-fixture` no longer shells out to `tar`. `npm test` added at repo root.
+  - Pilot-03 / Pilot-05 artifacts deliberately untouched; they remain the operator evidence for these defects.
+- **Next:** Đức runs the live acceptance pass (see README "Running the tests" for the deterministic suite). Live-only items: recreate banner wording, queue/output list rendering after the DOM rewrite, and a fresh continued run producing a v00N checkpoint whose `config` sheet has no duplicate keys.

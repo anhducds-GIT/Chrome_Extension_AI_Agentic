@@ -6,7 +6,21 @@
   function safeRelativeFolder(value, fallback = "Duc Auto ChatGPT") {
     const folder = String(value || fallback).trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     if (!folder || folder.split("/").some((part) => !part || part === "." || part === "..")) throw new Error("Image Output Folder must be a safe relative Downloads folder.");
-    return folder.replace(/[^A-Za-z0-9._ -/]/g, "_").slice(0, 160);
+    // The hyphen is escaped deliberately.  Unescaped it formed the range
+    // " " through "/", which silently admitted '*' and '"' -- characters
+    // chrome.downloads.download rejects, turning a Check Plan problem into a
+    // mid-run download failure.
+    return folder.replace(/[^A-Za-z0-9._ \-/]/g, "_").slice(0, 160);
+  }
+
+  // Filesystem identity is case-sensitive on some platforms and is always
+  // case-significant to a human reading recorded provenance.  Artifact names
+  // must keep their exact case; DacRunnerCore.basename() must never be used
+  // here because it lower-cases and strips image extensions for reference
+  // matching.
+  function artifactLeaf(value, fallback = "") {
+    const leaf = String(value ?? "").trim().replace(/^.*[\\/]/, "");
+    return leaf || String(fallback ?? "").trim().replace(/^.*[\\/]/, "");
   }
 
   function safeFileLeaf(value, fallback) {
@@ -272,65 +286,87 @@
     throw new Error("Could not find a non-overwriting output filename.");
   }
 
-  async function writeNewFile(directoryHandle, filename, blob) {
+  async function fileExists(directoryHandle, filename) {
     try {
       await directoryHandle.getFileHandle(filename, { create: false });
-      throw new Error(`Refusing to overwrite existing output file '${filename}'.`);
+      return true;
     } catch (error) {
-      if (error?.name && error.name !== "NotFoundError") throw error;
+      if (error?.name === "NotFoundError") return false;
+      throw error;
     }
+  }
+
+  async function writeNewFileVerified(directoryHandle, filename, blob) {
+    if (await fileExists(directoryHandle, filename)) throw new Error(`Refusing to overwrite existing output file '${filename}'.`);
     const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
     const writable = await fileHandle.createWritable({ keepExistingData: false });
     await writable.write(blob);
     await writable.close();
-    await verifyPersistedFile(directoryHandle, filename);
-    return filename;
+    return verifyPersistedFile(directoryHandle, filename, blob?.size);
+  }
+
+  // Public writers keep returning the final leaf name; callers that also need
+  // the verified byte count use the *Verified variants so a file is never
+  // reopened and re-measured twice for one write.
+  async function writeNewFile(directoryHandle, filename, blob) {
+    return (await writeNewFileVerified(directoryHandle, filename, blob)).filename;
   }
 
   // FileSystemWritableFileStream.close() resolves when Chrome has accepted the
   // write, not when this runner has independently proven the selected directory
   // now exposes a readable non-empty file. Re-open the exact leaf through the
   // same user-authorized DirectoryHandle before any caller reports "written".
-  async function verifyPersistedFile(directoryHandle, filename) {
+  async function verifyPersistedFile(directoryHandle, filename, expectedSize = null) {
     const actual = safeFileLeaf(filename, "output");
     try {
       const fileHandle = await directoryHandle.getFileHandle(actual, { create: false });
       const file = await fileHandle.getFile();
       if (!file) throw new Error("the file could not be read");
-      if (Number(file.size) <= 0) throw new Error("the file is zero bytes");
-      return { filename: actual, size: Number(file.size) };
+      const size = Number(file.size);
+      if (size <= 0) throw new Error("the file is zero bytes");
+      // A short write is a silent truncation.  When the caller knows how many
+      // bytes it handed to the writable stream, "non-empty" is not proof of
+      // persistence -- only an exact byte count is.
+      const expected = Number(expectedSize);
+      if (Number.isFinite(expected) && expected > 0 && size !== expected) throw new Error(`the file is ${size} bytes but ${expected} bytes were written`);
+      return { filename: actual, size };
     } catch (error) {
       const detail = error?.message || String(error);
       throw new Error(`PERSISTENCE_VERIFICATION_FAILED: '${actual}' was not readable and non-empty after close (${detail}).`);
     }
   }
 
-  async function writeUniqueFile(directoryHandle, candidates, blob) {
+  async function writeUniqueFileVerified(directoryHandle, candidates, blob) {
     const filename = await findAvailableFilename(directoryHandle, candidates);
-    return writeNewFile(directoryHandle, filename, blob);
+    return writeNewFileVerified(directoryHandle, filename, blob);
+  }
+
+  async function writeUniqueFile(directoryHandle, candidates, blob) {
+    return (await writeUniqueFileVerified(directoryHandle, candidates, blob)).filename;
   }
 
   async function writeFileWithPolicy(directoryHandle, filename, blob, policy = "uniquify") {
     const selected = collisionPolicy(policy);
     if (selected === "uniquify") {
-      const actual = await writeUniqueFile(directoryHandle, fileCandidates(filename), blob);
-      const persisted = await verifyPersistedFile(directoryHandle, actual);
-      return { filename: actual, outcome: actual === filename ? "written" : "uniquified", size: persisted.size };
+      const persisted = await writeUniqueFileVerified(directoryHandle, fileCandidates(filename), blob);
+      return { filename: persisted.filename, outcome: persisted.filename === filename ? "written" : "uniquified", size: persisted.size };
     }
     if (selected === "fail") {
-      const actual = safeFileLeaf(filename, "output");
-      await writeNewFile(directoryHandle, actual, blob);
-      const persisted = await verifyPersistedFile(directoryHandle, actual);
-      return { filename: actual, outcome: "written", size: persisted.size };
+      const persisted = await writeNewFileVerified(directoryHandle, safeFileLeaf(filename, "output"), blob);
+      return { filename: persisted.filename, outcome: "written", size: persisted.size };
     }
     const actual = safeFileLeaf(filename, "output");
+    // The overwrite policy previously reported "overwritten" unconditionally,
+    // so a brand-new file was recorded in the ledger and audit as having
+    // destroyed prior operator evidence.  Probe first and report what happened.
+    const replaced = await fileExists(directoryHandle, actual);
     const fileHandle = await directoryHandle.getFileHandle(actual, { create: true });
     const writable = await fileHandle.createWritable({ keepExistingData: false });
     await writable.write(blob); await writable.close();
-    const persisted = await verifyPersistedFile(directoryHandle, actual);
-    return { filename: actual, outcome: "overwritten", size: persisted.size };
+    const persisted = await verifyPersistedFile(directoryHandle, actual, blob?.size);
+    return { filename: actual, outcome: replaced ? "overwritten" : "written", size: persisted.size };
   }
 
-  const api = { safeRelativeFolder, safeFileLeaf, safeFilename, baseResultName, baseResultFilenamePattern, baseAuditName, workbookBase, validateImagePattern, validateResultFilenamePattern, checkpointFilenamePattern, renderCheckpointFilename, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, collisionError, verifyDownloadedFilename, isPolicyFilename, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
+  const api = { safeRelativeFolder, safeFileLeaf, artifactLeaf, fileExists, safeFilename, baseResultName, baseResultFilenamePattern, baseAuditName, workbookBase, validateImagePattern, validateResultFilenamePattern, checkpointFilenamePattern, renderCheckpointFilename, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, collisionError, verifyDownloadedFilename, isPolicyFilename, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
   (typeof window !== "undefined" ? window : globalThis).DacOutputLocation = api;
 })();

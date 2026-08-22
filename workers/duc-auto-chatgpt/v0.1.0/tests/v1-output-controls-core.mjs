@@ -38,6 +38,13 @@ const unique = await output.writeFileWithPolicy(folder, "same.png", { size: 3 },
 assert.equal(unique.filename, "same__attempt-01.png"); assert.equal(unique.outcome, "uniquified");
 const overwrite = await output.writeFileWithPolicy(folder, "same.png", { size: 4 }, "overwrite");
 assert.equal(overwrite.outcome, "overwritten"); assert.equal(folder.files.get("same.png").blob.size, 4);
+// A first write under the overwrite policy destroyed nothing; recording it as
+// "overwritten" told the ledger and audit that prior evidence was replaced.
+const fresh = await output.writeFileWithPolicy(directory("Fresh"), "brand-new.png", { size: 7 }, "overwrite");
+assert.equal(fresh.outcome, "written", "overwrite policy reports a first write as written, not overwritten");
+assert.equal(fresh.size, 7, "the verified persisted byte count is reported");
+const safeFolder = output.safeRelativeFolder('Pilot*"05');
+assert.equal(safeFolder, "Pilot__05", "characters Chrome Downloads rejects are sanitised at validation time");
 assert.deepEqual(Array.from(output.candidatesForPolicy("same.png", "fail")), ["same.png"]);
 assert.equal(output.candidatesForPolicy("same.png", "uniquify")[1], "same__attempt-01.png");
 assert.throws(() => output.collisionPolicy("ask"), /Collision policy/);
