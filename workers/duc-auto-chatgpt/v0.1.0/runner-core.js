@@ -4,8 +4,13 @@
   const DEFAULTS = { timeout_sec: 180, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false };
   const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
   const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
-  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
-  const PRE_SUBMIT_RETRYABLE_FAILURES = new Set(["TIMEOUT_PRE_SUBMIT", "ATTACHMENT_FAILED", "OTHER"]);
+  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
+  // Only these three genuinely block the whole batch: each means no further
+  // job can safely run until a human resolves it (CAPTCHA/verification,
+  // quota reset, or the ChatGPT tab/composer itself being reachable again).
+  // Every other failure type is auto-retried, then skipped so the queue
+  // keeps moving -- see resolveJobFailure() in sidepanel.js.
+  const HARD_STOP_FAILURE_TYPES = new Set(["SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "RECEIVER_LOST"]);
   const imageExtension = /\.(avif|gif|jpe?g|png|webp)$/i;
   const normalise = (value) => String(value || "").trim().toLowerCase();
   const basename = (value) => normalise(value).replace(/^.*[\\/]/, "").replace(imageExtension, "");
@@ -85,6 +90,7 @@
   }
   function classifyFailure(error, phase = "PRE_SUBMIT") {
     const text = String(error?.message || error || "");
+    if (/LIMIT_STOP|image generation limit/i.test(text)) return "GENERATION_LIMIT_REACHED";
     if (/HARD_STOP|captcha|unusual activity|security\/interstitial/i.test(text)) return "SECURITY_HARD_STOP";
     if (/stopped by user|automation stopped/i.test(text)) return "USER_STOP";
     if (/ambiguous|INPUT_IMAGE_FALSE_POSITIVE/i.test(text)) return "OUTPUT_AMBIGUOUS";
@@ -100,11 +106,15 @@
     return POST_SUBMIT_PHASES.has(phase) ? "POST_SUBMIT_UNCERTAIN" : "OTHER";
   }
   function canRetry(item, failureType) {
-    return item?.phase === "PRE_SUBMIT" && PRE_SUBMIT_RETRYABLE_FAILURES.has(failureType) && item.retry_count < item.settings.max_retries;
+    return !HARD_STOP_FAILURE_TYPES.has(failureType) && failureType !== "USER_STOP" && item.retry_count < item.settings.max_retries;
   }
   function needsReconciliation(phase) { return POST_SUBMIT_PHASES.has(phase) && phase !== "SUCCESS"; }
+  // INTERRUPTED means "genuinely unresolved -- a human must look before this
+  // run continues" and is reserved for the three hard stops. Everything else
+  // that exhausts its retries settles as FAILED: safe to skip, safe to leave
+  // behind on continuation, and still available for a deliberate Run Failed.
   function interruptedStatus(phase, failureType) {
-    return needsReconciliation(phase) && failureType !== "SECURITY_HARD_STOP" && failureType !== "USER_STOP" ? "INTERRUPTED" : "FAILED";
+    return needsReconciliation(phase) && HARD_STOP_FAILURE_TYPES.has(failureType) ? "INTERRUPTED" : "FAILED";
   }
   function canStartNextJob(signal, queue = []) {
     return readinessState(signal) === "CHAT_READY" && !queue.some((item) => ["RUNNING", "RECONCILING"].includes(item.status));
@@ -137,7 +147,9 @@
   function prepare(workbook, selectedFiles, overrides = {}) {
     const settings = runtimeConfig(workbook.config, overrides);
     aliases(selectedFiles || []);
-    const queue = workbook.jobs.map((job, index) => {
+    const xlsx = globalThis.DacXlsx || globalThis.window?.DacXlsx;
+    const logicalJobs = xlsx?.activeJobs ? xlsx.activeJobs(workbook) : workbook.jobs;
+    const queue = logicalJobs.map((job, index) => {
       const itemSettings = perJobSettings(job, settings);
       const references = resolveReferences(job, selectedFiles, itemSettings.max_input_images);
       const persistedStatus = normalise(job.status);
@@ -160,7 +172,12 @@
   // selectedId accepts a single job id (legacy single-selection callers) or an
   // array/Set of ids (multi-select "run these jobs" from the SETUP queue).
   function selectQueue(queue, mode, selectedId) {
-    if (mode === "all") return queue.filter((item) => !item.skipped);
+    // INTERRUPTED is reserved for the three hard stops (see interruptedStatus
+    // above) -- it must never be silently re-submitted by a plain "Run All",
+    // in or out of Resume Mode. Reaching one always requires the operator to
+    // resolve the underlying block (CAPTCHA/quota/tab) and go through Resume
+    // Plan / Recreate, the same as the AMBIGUOUS_SUBMITTED gate already does.
+    if (mode === "all") return queue.filter((item) => !item.skipped && item.status !== "INTERRUPTED");
     if (mode === "pending") return queue.filter((item) => item.status === "PENDING" && !item.protected_checkpoint);
     if (mode === "failed") return queue.filter((item) => item.status === "FAILED" && !item.protected_checkpoint);
     if (mode === "recreate") return queue.filter((item) => item.operator_recreate && item.status === "PENDING" && item.phase === "PRE_SUBMIT" && !item.protected_checkpoint);
@@ -180,6 +197,6 @@
     if (!signal?.composerFound) return "OUTPUT_READY";
     return "CHAT_READY";
   }
-  const api = { DEFAULTS, ATTEMPT_PHASES, FAILURE_TYPES, PRE_SUBMIT_RETRYABLE_FAILURES, basename, referenceTokens, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, countdownValues, planSummary, prepare, selectQueue, readinessState };
+  const api = { DEFAULTS, ATTEMPT_PHASES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, basename, referenceTokens, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, countdownValues, planSummary, prepare, selectQueue, readinessState };
   (typeof window !== "undefined" ? window : globalThis).DacRunnerCore = api;
 })();

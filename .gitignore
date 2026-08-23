@@ -12,3 +12,6 @@ workers/duc-auto-chatgpt/v0.1.0/pilot-03/Duc-Auto-ChatGPT-Pilot-03-Fixture.zip
 workers/duc-auto-chatgpt/v0.1.0/pilot-03/Duc-Auto-ChatGPT-Pilot-03-result*.xlsx
 workers/duc-auto-chatgpt/v0.1.0/pilot-03/P03-A*.png
 workers/duc-auto-chatgpt/v0.1.0/pilot-03/run-*.jsonl
+
+# Pilot 08 run packages, rendered evidence, and per-run tool caches are local outputs.
+workers/duc-auto-chatgpt/v0.1.0/Pilot-08/outputs/

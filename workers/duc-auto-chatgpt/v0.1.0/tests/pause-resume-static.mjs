@@ -34,12 +34,18 @@ assert.match(runSegment, /if \(state\.stopRequested\) break;\s*\n\s*await waitWh
 assert.match(runSegment, /state\.terminal \+= 1; renderQueue\(\);\s*\n\s*if \(halted\) break;\s*\n\s*await waitWhilePaused\(\);\s*\n\s*if \(state\.stopRequested\) break;\s*\n\s*const nextItem/, "pause is checked immediately after the current job finishes, before the inter-job delay");
 assert.match(runSegment, /state\.pauseRequested = false; state\.paused = false;/, "starting a run clears any pause state left over from a previous one");
 
-// Truthful control: the button must say which of the three real states it
-// is in, not just toggle a caption between two.
-assert.match(sidepanel, /els\.pauseResumeBtn\.textContent = state\.paused \? "▶ Tiếp tục" : state\.pauseRequested \? "⏸ Đang dừng sau job hiện tại…" : "⏸ Tạm dừng";/, "the control names all three states: running, pausing, and paused");
-assert.match(sidepanel, /els\.pauseResumeBtn\.disabled = !state\.running && !state\.paused;/, "the control stays usable even in the (already running) paused state");
+// The label must flip the instant the operator clicks it (on
+// state.pauseRequested, the intent), not wait for state.paused (the
+// physical hold, which only starts once the in-flight job finishes). A
+// label that waits read as "did my click even register?" and led the
+// operator to press Stop instead of the correctly-working but
+// not-yet-visibly-changed Resume.
+assert.match(sidepanel, /els\.pauseResumeBtn\.textContent = state\.pauseRequested \? "▶ Tiếp tục" : "⏸ Tạm dừng";/, "the label reflects pause intent immediately, not only once the hold has physically taken effect");
+assert.doesNotMatch(sidepanel, /pauseResumeBtn\.textContent = state\.paused \?/, "the label must not gate on state.paused, which can lag behind the click by as long as the current job takes to finish");
+assert.match(sidepanel, /els\.pauseResumeBtn\.disabled = !state\.running;/, "the control stays usable for the entire run, whether actively running or paused");
 assert.match(sidepanel, /els\.pauseResumeBtn\?\.addEventListener\("click", togglePause\);/, "the button is wired to the toggle");
 
 assert.match(html, /id="pauseResumeBtn"/, "the Pause/Resume control exists in the Run screen");
+assert.match(html, /id="pauseResumeBtn"[^>]*title="[^"]*không đóng side panel[^"]*"/i, "the button explains that a pause is a same-session hold, not durable across closing the panel");
 
 console.log("pause/resume static tests: PASS");

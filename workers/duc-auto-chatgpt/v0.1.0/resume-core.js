@@ -7,7 +7,6 @@
   const leaf = (value) => text(value).replace(/^.*[\\/]/, "");
   const base = (value) => leaf(value).replace(/__results\.xlsx$/i, "").replace(/\.xlsx$/i, "") || "workbook";
   const postSubmitPhases = new Set(["SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
-  const preSubmitFailures = new Set(["TIMEOUT_PRE_SUBMIT", "ATTACHMENT_FAILED", "OTHER", "VALIDATION_FAILED", "RECEIVER_LOST"]);
 
   function token(value) { return text(value).replace(/[^a-z0-9-]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase().slice(0, 40) || "run"; }
   function hash(value) { let h = 2166136261; for (const char of String(value)) { h ^= char.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
@@ -37,14 +36,18 @@
   }
   function classify(job = {}) {
     const status = lower(job.status);
-    const phase = text(job.attempt_phase).toUpperCase() || "PRE_SUBMIT";
     if (["success", "done"].includes(status) && validSavedAttribution(job)) return { state: "SAFE_COMPLETE", code: "", message: "Verified persisted output; skip on continuation." };
     if (bool(job.recreate_operator_approved)) return { state: "AMBIGUOUS_SUBMITTED", code: "RESUME_RECREATE_INCOMPLETE", message: "Operator-approved recreate has not produced a verified persisted output. Continue remains blocked." };
-    const preSubmitFailure = status === "failed" && phase === "PRE_SUBMIT" && !hasSubmittedBoundary(job) && preSubmitFailures.has(text(job.failure_type).toUpperCase() || "OTHER");
-    if (preSubmitFailure) return { state: "SAFE_FAILED_PRE_SUBMIT", code: "", message: "Failure is proven pre-submit; existing retry/rerun rules apply." };
+    // FAILED is only ever reached after the runner exhausted every retry on a
+    // non-hard-stop failure (pre- or post-submit alike) and deliberately gave
+    // up -- see resolveJobFailure() in sidepanel.js. That is already a
+    // settled, safe-to-skip outcome, so it never blocks continuation here,
+    // regardless of phase. A job still mid-attempt when a real hard stop hit
+    // (CAPTCHA/quota/receiver lost) is INTERRUPTED, not FAILED, and correctly
+    // falls through to AMBIGUOUS_SUBMITTED below.
+    if (status === "failed") return { state: "SAFE_FAILED", code: "", message: "Failure exhausted its retries and was skipped; safe to leave behind, or retry deliberately via Run Failed." };
     if (!hasSubmittedBoundary(job) && ["", "pending", "eligible"].includes(status)) return { state: "SAFE_PENDING", code: "", message: "No submitted boundary recorded; eligible for normal readiness-gated execution." };
-    if (!hasSubmittedBoundary(job) && status === "failed" && phase === "PRE_SUBMIT") return { state: "SAFE_FAILED_PRE_SUBMIT", code: "", message: "Recorded pre-submit failure; existing retry/rerun rules apply." };
-    return { state: "AMBIGUOUS_SUBMITTED", code: "RESUME_AMBIGUOUS_SUBMISSION", message: "Submitted previously; outcome is not safely attributable. Manual review required." };
+    return { state: "AMBIGUOUS_SUBMITTED", code: "RESUME_AMBIGUOUS_SUBMISSION", message: "Interrupted by a hard stop; outcome is not safely attributable. Manual review required." };
   }
   function validateLedger(workbook) {
     const findings = [];
@@ -58,6 +61,15 @@
     const recordedLedger = leaf(workbook?.config?.effective_result_xlsx);
     if (recordedLedger && recordedLedger !== leaf(workbook?.fileName)) findings.push({ code: "RESUME_RUN_ID_MISMATCH", severity: "BLOCKER", scope: "resume", message: `Selected Result XLSX '${leaf(workbook?.fileName)}' does not match ledger provenance '${recordedLedger}'.`, guidance: "Select the Result XLSX recorded by this run; do not substitute a similarly named workbook." });
     return findings;
+  }
+  function activeJobs(workbook) {
+    const xlsx = globalThis.DacXlsx || globalThis.window?.DacXlsx;
+    if (xlsx?.activeJobs) return xlsx.activeJobs(workbook);
+    return (workbook?.jobs || [])
+      .map((job, physicalIndex) => ({ job, physicalIndex, position: Number(job.queue_position) > 0 ? Number(job.queue_position) : Number.MAX_SAFE_INTEGER }))
+      .filter(({ job }) => !bool(job.queue_removed))
+      .sort((left, right) => left.position - right.position || left.physicalIndex - right.physicalIndex)
+      .map(({ job }) => job);
   }
   function checkpointValidation(workbook, filename, pattern, expectedRunId = "") {
     const fileName = leaf(filename);
@@ -80,12 +92,13 @@
   function plan(workbook) {
     const run = identity(workbook);
     const findings = validateLedger(workbook);
-    const jobs = (workbook?.jobs || []).map((job) => ({ job_id: text(job.id), ...classify(job) }));
+    const active = activeJobs(workbook);
+    const jobs = active.map((job) => ({ job_id: text(job.id), ...classify(job) }));
     const count = (state) => jobs.filter((item) => item.state === state).length;
     const ambiguous = jobs.filter((item) => item.state === "AMBIGUOUS_SUBMITTED");
     for (const item of ambiguous) findings.push({ code: item.code, severity: "BLOCKER", scope: "resume", job_ids: [item.job_id], message: item.message, guidance: "Do not submit this job again. Review the prior ChatGPT outcome and persisted artifact manually." });
-    const summary = { total: jobs.length, completed: count("SAFE_COMPLETE"), safe_pending: count("SAFE_PENDING"), failed_pre_submit: count("SAFE_FAILED_PRE_SUBMIT"), ambiguous_submitted: ambiguous.length, missing_artifacts: jobs.filter((item) => item.state === "AMBIGUOUS_SUBMITTED" && ["success", "done"].includes(lower((workbook.jobs || []).find((job) => text(job.id) === item.job_id)?.status))).length };
-    const next = jobs.find((item) => item.state === "SAFE_PENDING") || jobs.find((item) => item.state === "SAFE_FAILED_PRE_SUBMIT") || null;
+    const summary = { total: jobs.length, completed: count("SAFE_COMPLETE"), safe_pending: count("SAFE_PENDING"), failed: count("SAFE_FAILED"), ambiguous_submitted: ambiguous.length, missing_artifacts: jobs.filter((item) => item.state === "AMBIGUOUS_SUBMITTED" && ["success", "done"].includes(lower(active.find((job) => text(job.id) === item.job_id)?.status))).length };
+    const next = jobs.find((item) => item.state === "SAFE_PENDING") || jobs.find((item) => item.state === "SAFE_FAILED") || null;
     return { run, jobs, findings, summary, next_eligible_job: next?.job_id || null, ready: findings.every((item) => item.severity !== "BLOCKER") };
   }
   function applyToQueue(queue = [], recovery = []) {
@@ -96,13 +109,13 @@
       item.recovery_state = recoveryItem.state;
       if (recoveryItem.state === "SAFE_COMPLETE") { item.status = "SUCCESS"; item.phase = "SUCCESS"; item.skipped = true; item.protected_checkpoint = true; }
       else if (recoveryItem.state === "SAFE_PENDING") { item.status = "PENDING"; item.phase = "PRE_SUBMIT"; item.skipped = false; item.protected_checkpoint = false; }
-      else if (recoveryItem.state === "SAFE_FAILED_PRE_SUBMIT") { item.status = "FAILED"; item.phase = "PRE_SUBMIT"; item.skipped = false; item.protected_checkpoint = false; }
+      else if (recoveryItem.state === "SAFE_FAILED") { item.status = "FAILED"; item.phase = "PRE_SUBMIT"; item.skipped = false; item.protected_checkpoint = false; }
       else if (item.operator_recreate) { item.status = "PENDING"; item.phase = "PRE_SUBMIT"; item.skipped = false; item.protected_checkpoint = false; item.recovery_state = "RECREATE_APPROVED"; }
       else { item.status = "INTERRUPTED"; item.skipped = true; item.protected_checkpoint = true; }
     }
     return queue;
   }
-  function summaryText(summary) { return `${summary.completed} completed · ${summary.safe_pending} safe pending · ${summary.failed_pre_submit} failed pre-submit · ${summary.ambiguous_submitted} need review`; }
+  function summaryText(summary) { return `${summary.completed} completed · ${summary.safe_pending} safe pending · ${summary.failed} failed (skipped) · ${summary.ambiguous_submitted} need review`; }
 
   (typeof window !== "undefined" ? window : globalThis).DacResumeCore = { createRunId, legacyRunId, identity, validSavedAttribution, classify, validateLedger, checkpointValidation, plan, applyToQueue, summaryText };
 })();

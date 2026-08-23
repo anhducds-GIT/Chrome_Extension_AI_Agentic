@@ -46,7 +46,10 @@ assert.match(source, /Auto-retry: No/);
 assert.match(source, /showScreen\("runScreen"\)/);
 assert.match(source, /showScreen\("outputScreen"\)/);
 assert.match(source, /if \(state\.running && id === "outputScreen"\) return;/);
-assert.ok(source.indexOf("needsReconciliation(item.phase)") < source.indexOf("canRetry(item, failureType)"), "post-submit uncertainty is reconciled before retry policy is considered");
+assert.match(source, /if \(window\.DacRunnerCore\.needsReconciliation\(item\.phase\)\) \{\s*const outcome = await reconcileSubmittedAttempt\(/, "a post-submit failure is routed to reconciliation (the DAC_RECONCILE_IMAGE_JOB round trip) before any retry/skip decision");
+assert.match(source, /async function resolveJobFailure\(item, failureType, message, settings\)/, "retry vs. hard-stop vs. skip is decided by one shared function, not duplicated per failure site");
+const reconcileBody = source.slice(source.indexOf("async function reconcileSubmittedAttempt"), source.indexOf("async function gateNextJob"));
+assert.equal((reconcileBody.match(/resolveJobFailure\(/g) || []).length, 3, "every non-success reconciliation outcome (network error, attempt mismatch, still no output) defers to the shared retry/skip policy rather than halting inline");
 assert.doesNotMatch(source, /location\.kind === "directory"[\s\S]{0,220}download\(/, "custom-folder writes must not fall back to Downloads");
 
 console.log("sidepanel V1 closure static checks: PASS");

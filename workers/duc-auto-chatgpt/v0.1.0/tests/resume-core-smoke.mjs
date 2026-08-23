@@ -35,16 +35,24 @@ assert.match(legacy.run_id, /^legacy-pilot04-/);
 // Recovery is exact-once conservative: verified outputs skip; only provably pre-submit work remains eligible.
 assert.equal(resume.classify(jobs[0]).state, "SAFE_COMPLETE");
 assert.equal(resume.classify(jobs[1]).state, "SAFE_PENDING");
-assert.equal(resume.classify(jobs[2]).state, "SAFE_FAILED_PRE_SUBMIT");
+assert.equal(resume.classify(jobs[2]).state, "SAFE_FAILED");
 assert.equal(resume.classify(jobs[3]).state, "AMBIGUOUS_SUBMITTED");
 const recovery = resume.plan({ fileName: "Pilot04__results.xlsx", config: { run_id: "20260821-0307-pilot04" }, jobs });
 assert.equal(recovery.summary.completed, 1);
 assert.equal(recovery.summary.safe_pending, 1);
-assert.equal(recovery.summary.failed_pre_submit, 1);
+assert.equal(recovery.summary.failed, 1);
 assert.equal(recovery.summary.ambiguous_submitted, 1);
 assert.equal(recovery.next_eligible_job, "PENDING");
 assert.equal(recovery.ready, false, "an ambiguous submitted job blocks automatic continuation");
 assert.equal(recovery.findings.some((item) => item.code === "RESUME_AMBIGUOUS_SUBMISSION"), true);
+
+const withRemoved = resume.plan({ fileName: "Pilot04__results.xlsx", config: { run_id: "20260821-0307-pilot04" }, jobs: [
+  { id: "REMOVED", prompt: "old", queue_removed: "true", queue_position: "" },
+  { id: "SECOND", prompt: "second", queue_position: "2" },
+  { id: "FIRST", prompt: "first", queue_position: "1" }
+] });
+assert.equal(withRemoved.summary.total, 2, "Resume counts only active Queue jobs while retaining tombstones in the ledger");
+assert.equal(withRemoved.jobs.map((item) => item.job_id).join(","), "FIRST,SECOND", "Resume honors the persisted logical Queue order");
 
 const queue = jobs.map((job) => ({ job, status: "PENDING", phase: "PRE_SUBMIT", skipped: false, protected_checkpoint: false }));
 resume.applyToQueue(queue, recovery.jobs);

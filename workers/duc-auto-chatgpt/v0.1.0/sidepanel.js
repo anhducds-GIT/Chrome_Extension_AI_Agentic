@@ -1,7 +1,8 @@
 (() => {
   "use strict";
   const ids = [
-    "workbookInput", "resumeWorkbookInput", "continueExistingRunBtn", "referencesInput", "validateBtn", "runBtn", "runFromRunTabBtn", "runFailedBtn", "runSelectedBtn", "runEligibilityHint", "stopBtn", "pauseResumeBtn", "statusChip",
+    "workbookInput", "resumeWorkbookInput", "continueExistingRunBtn", "referencesInput", "validateBtn", "runBtn", "runFromRunTabBtn", "runFailedBtn", "runSelectedBtn", "runEligibilityHint", "stopBtn", "pauseResumeBtn", "statusChip", "statusChipTranslation",
+    "quickPromptInput", "quickPromptCheckBtn", "quickPromptStatus", "quickPromptSessionText",
     "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText",
     "currentJobId", "currentStage", "currentTiming", "currentSaved", "runtimeJobElapsed", "runtimeCurrentOperation", "runtimeTimeoutRemaining", "runtimeRetryState", "runtimeInterJobDelay", "runtimeNextTransition", "nextTaskCard", "nextTaskId", "nextTaskCountdown",
     "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText",
@@ -12,22 +13,32 @@
     "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput", "runIdText", "checkpointVersionText", "checkpointFilenameText",
     "chooseResultFolderBtn", "checkpointCollisionDialog", "checkpointCollisionList", "checkpointCollisionSuffix", "checkpointCollisionStatus", "checkpointCollisionCancelBtn", "checkpointCollisionConfirmBtn", "folderPickDialog", "folderPickTitle", "folderPickPath", "folderPickCopyBtn", "folderPickStatus", "folderPickCancelBtn", "folderPickOpenBtn",
     "copyReviewPacketBtn", "copyReviewPacketStatus", "runtimeSettingsCard", "timeoutSecInput", "maxRetriesInput", "delayMinSecInput", "delayMaxSecInput", "safetyCooldownInput", "maxInputImagesInput",
-    "continueOnErrorInput", "rerunDoneInput", "outputSummaryText", "outputList", "artifactList",
-    "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn",
+    "continueOnErrorInput", "rerunDoneInput", "outputSummaryText", "outputList", "artifactList", "outputGlossary", "completionTranslation", "failedJobsTranslation",
+    "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "selectAllQueueBtn", "clearQueueSelectionBtn", "viewOutputsBtn",
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
     "checkWorkbook", "statusWorkbook", "checkJobs", "statusJobs", "checkReferences", "statusReferences",
     "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary", "recreateConfirmDialog", "recreateConfirmTitle", "recreateConfirmMessage", "recreateCancelBtn", "recreateConfirmBtn", "auditGapConfirmDialog", "auditGapCancelBtn", "auditGapConfirmBtn",
-    "rerunConfirmDialog", "rerunConfirmTitle", "rerunConfirmMessage", "rerunKeepPolicyRadio", "rerunOverwritePolicyRadio", "rerunCancelBtn", "rerunConfirmBtn",
+    "rerunConfirmDialog", "rerunConfirmTitle", "rerunConfirmTitleVi", "rerunConfirmMessage", "rerunConfirmMessageVi", "rerunKeepPolicyRadio", "rerunOverwritePolicyRadio", "rerunCancelBtn", "rerunConfirmBtn", "queueRemoveDialog", "queueRemoveMessage", "queueRemoveMessageVi", "queueRemoveCancelBtn", "queueRemoveConfirmBtn",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
-    "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
+    "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedRetry", "haltedJob", "haltedCause", "haltedDetailRow", "haltedDetail", "haltedAction", "haltInstructionsBtn", "haltInstructionsDialog", "haltInstructionsCount", "haltInstructionsList", "haltSpecialStatus", "haltNonHaltList", "haltInstructionsCloseBtn",
     "currentAttemptBadge", "continuedRunLabel", "currentJobContent", "currentPromptPreview", "currentReferenceColumn", "currentReferenceGallery", "pipelineStepper", "operatorTimerArea",
     "operatorTimerBadge", "operatorTimerText", "latestSavedCard", "latestSavedThumb",
     "latestSavedName", "latestSavedStatus", "completionCard", "completionIcon", "completionTitle",
-    "artifactStatusPill", "runArtifactsCard", "artifactLocationNote", "artifactRowImages",
+    "artifactStatusPill", "runArtifactsCard", "artifactLocationNote", "artifactRowImages", "recreateConfirmTitleVi", "recreateConfirmMessageVi", "folderPickTitleVi", "folderPickStatusVi", "checkpointCollisionStatusVi",
     "artifactImagesDetail", "artifactImagesStatus", "artifactRowResult", "artifactResultDetail",
     "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus", "runDashboardSplit", "runWidthSplitter"
   ];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
+  // Output Profile mode is normally driven by output_profile_id / result_output_profile_id
+  // in the imported XLSX config. A Quick Prompt session (and any workbook opened
+  // without that config key) has no such id, so switching Destination mode to
+  // "Output Profile" and pressing Choose Folder had nothing to bind to and threw
+  // instead of opening the picker -- Chrome Downloads was the only mode that worked.
+  // These are the fallback ids used whenever no configured id exists, so the picker
+  // always opens; they stay distinct so binding a result folder never overwrites the
+  // image profile's saved folder handle.
+  const DEFAULT_IMAGE_PROFILE_ID = "default-output";
+  const DEFAULT_RESULT_PROFILE_ID = "default-result-output";
   const state = {
     workbook: null,
     files: [],
@@ -82,12 +93,28 @@
     pendingRecreateJobId: null,
     pendingRerunJobId: null,
     runSelection: new Set(),
+    quickPromptCounter: 0,
+    queueMutationRunning: false,
+    pendingQueueRemovalId: null,
+    draggedQueueJobId: null,
     auditGapRunning: false,
     auditChain: { ok: true, applicable: false, gapAcknowledged: false, segmentStarted: false, previousFilename: "" }
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  function setStatus(status, label = status) { els.statusChip.className = `chip ${status.toLowerCase()}`; els.statusChip.textContent = label; }
+  const STATUS_TRANSLATIONS = Object.freeze({
+    IDLE: "Đang chờ", ERROR: "Có lỗi", RUNNING: "Đang chạy", DONE: "Hoàn tất", PAUSED: "Đã tạm dừng", STOPPED: "Đã dừng", HALTED: "Dừng bảo vệ",
+    "NOT VALIDATED": "Chưa được kiểm tra", "NEEDS INPUT": "Cần thêm thông tin", WARNING: "Có cảnh báo", "READY TO RUN": "Sẵn sàng chạy", "NOT READY": "Chưa sẵn sàng",
+    "AUDIT GAP CHECKPOINTING": "Đang ghi checkpoint cho khoảng trống audit", "AUDIT GAP BLOCKED": "Khoảng trống audit đang chặn tiến trình",
+    "RECREATE CHECKPOINTING": "Đang ghi checkpoint cho lần tạo lại", "RECREATE SAVED · QUEUE BLOCKED": "Đã lưu ảnh tạo lại · Queue vẫn bị chặn", "RECREATE BLOCKED": "Lần tạo lại đang bị chặn",
+    "RERUN CHECKPOINTING": "Đang ghi checkpoint cho lần chạy lại", "RERUN BLOCKED": "Lần chạy lại đang bị chặn", "RESUME BLOCKED": "Tiếp tục lần chạy đang bị chặn",
+    "OUTPUT PERSISTENCE FAILED": "Lưu hoặc xác minh artifact thất bại"
+  });
+  function setStatus(status, label = status) {
+    els.statusChip.className = `chip ${status.toLowerCase()}`;
+    els.statusChip.textContent = label;
+    if (els.statusChipTranslation) els.statusChipTranslation.textContent = STATUS_TRANSLATIONS[label] || STATUS_TRANSLATIONS[status] || "Xem chi tiết bên dưới";
+  }
   function log(text, kind = "") { const li = document.createElement("li"); li.className = kind; li.textContent = `${new Date().toLocaleTimeString()} · ${text}`; els.logList.prepend(li); }
 
   function renderProgressSegments() {
@@ -231,9 +258,27 @@
   function updateHaltedBanner(isHalted, item, reason = "") {
     if (!els.haltedBanner) return;
     if (isHalted || ["FAILED", "INTERRUPTED", "STOPPED"].includes(item?.status) || state.currentStage === "HALTED") {
+      const explicitCode = item?.failure_type || (item?.status === "STOPPED" ? "USER_STOP" : "");
+      const reasonCode = String(reason || "").trim().toUpperCase();
+      const reasonInstruction = window.DacHaltInstructions?.findInstruction(reasonCode);
+      const code = String(explicitCode || (reasonInstruction && reasonInstruction !== window.DacHaltInstructions?.UNKNOWN_INSTRUCTION ? reasonCode : "HALT_UNKNOWN")).trim().toUpperCase();
+      const instruction = window.DacHaltInstructions?.findInstruction(code) || {
+        code: "HALT_UNKNOWN",
+        retry: "Không xác định",
+        meaning: "Extension đã dừng nhưng chưa xác định được nhóm nguyên nhân.",
+        action: "Giữ nguyên tab ChatGPT, không gửi lại job và mở Technical details để kiểm tra prompt/output trước khi tiếp tục."
+      };
+      const visibleCode = instruction === window.DacHaltInstructions?.UNKNOWN_INSTRUCTION ? (code || instruction.code) : code;
+      const technicalDetail = String(item?.last_error || item?.error || reason || "").trim();
+      const showTechnicalDetail = technicalDetail && technicalDetail.toUpperCase() !== visibleCode;
       els.haltedBanner.hidden = false;
-      if (els.haltedReason) els.haltedReason.textContent = reason || item?.last_error || state.currentReason || "Run halted.";
-      if (els.haltedJob) els.haltedJob.textContent = item ? `Stopped at: ${item.job.id}` : "Stopped";
+      if (els.haltedReason) els.haltedReason.textContent = visibleCode || "HALT_UNKNOWN";
+      if (els.haltedRetry) els.haltedRetry.textContent = `Tự động thử lại: ${instruction.retry || "Không xác định"}`;
+      if (els.haltedCause) els.haltedCause.textContent = instruction.meaning;
+      if (els.haltedDetailRow) els.haltedDetailRow.hidden = !showTechnicalDetail;
+      if (els.haltedDetail) els.haltedDetail.textContent = showTechnicalDetail ? technicalDetail : "—";
+      if (els.haltedAction) els.haltedAction.textContent = instruction.action;
+      if (els.haltedJob) els.haltedJob.textContent = item?.job?.id ? `Dừng tại: ${item.job.id}` : "Run đã dừng";
       if (els.haltedTime && (!els.haltedTime.textContent || els.haltedTime.textContent === "—")) {
         els.haltedTime.textContent = new Date().toLocaleTimeString();
       }
@@ -275,6 +320,13 @@
     return fragment;
   }
 
+  function promptBrief(value, maxLength = 140) {
+    const compact = String(value || "").replace(/\s+/g, " ").trim();
+    if (!compact) return "Không có nội dung prompt.";
+    if (compact.length <= maxLength) return compact;
+    return `${compact.slice(0, Math.max(1, maxLength - 1)).trimEnd()}…`;
+  }
+
   function renderCurrentJobReferences(item) {
     if (els.currentJobContent) els.currentJobContent.hidden = !item;
     if (!els.currentReferenceColumn || !els.currentReferenceGallery) return;
@@ -314,7 +366,7 @@
         ? `Attempt ${item.attempt_count}/${1 + item.settings.max_retries}`
         : `Attempt ${item.attempt_count}`;
       const flags = [];
-      if (!isRetryEligible && (item.phase !== "PRE_SUBMIT" || ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status))) {
+      if (!isRetryEligible && ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status) && retriesExhausted(item)) {
         flags.push("Auto-retry: No");
       }
       if (item.protected_checkpoint) {
@@ -449,9 +501,10 @@
 
   function controls() {
     const ready = Boolean(state.workbook && state.prepared && state.outputSettings && state.validated);
-    const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning;
+    const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning || state.queueMutationRunning;
     const outputLocked = !state.workbook || operatorLocked;
     els.validateBtn.disabled = !state.workbook || operatorLocked;
+    if (els.quickPromptCheckBtn) els.quickPromptCheckBtn.disabled = operatorLocked;
     // A green "ready" chip that cannot act is the exact lie this project
     // rejects: prepared/validated only means the workbook is well-formed, not
     // that any job is actually eligible (every job may already be
@@ -475,10 +528,26 @@
       els.runSelectedBtn.disabled = !ready || operatorLocked || selectedEligible === 0;
       els.runSelectedBtn.textContent = selectedEligible ? `▶ Chạy ${selectedEligible} job đã chọn` : "▶ Chạy job đã chọn";
     }
+    const selectableQueue = (state.prepared?.queue || []).filter(isQueueSelectable);
+    const selectedSelectable = selectableQueue.filter((item) => state.runSelection.has(item.job.id)).length;
+    if (els.selectAllQueueBtn) {
+      els.selectAllQueueBtn.disabled = operatorLocked || !selectableQueue.length || selectedSelectable === selectableQueue.length;
+      els.selectAllQueueBtn.textContent = selectableQueue.length ? `Tick tất cả (${selectableQueue.length})` : "Tick tất cả";
+    }
+    if (els.clearQueueSelectionBtn) els.clearQueueSelectionBtn.disabled = operatorLocked || state.runSelection.size === 0;
     els.stopBtn.disabled = !state.running;
     if (els.pauseResumeBtn) {
-      els.pauseResumeBtn.disabled = !state.running && !state.paused;
-      els.pauseResumeBtn.textContent = state.paused ? "▶ Tiếp tục" : state.pauseRequested ? "⏸ Đang dừng sau job hiện tại…" : "⏸ Tạm dừng";
+      // The button must flip the instant the operator clicks it, not only
+      // once the pause has physically taken hold (after the in-flight job
+      // finishes) -- a delayed flip read as "did my click even register?"
+      // and led the operator to press Stop instead of the (correctly
+      // working, just not yet visible) Resume. state.pauseRequested is the
+      // operator's intent; state.paused is only whether that intent has
+      // physically taken effect yet. The label follows intent; the status
+      // chip ("PAUSED") and the running/paused distinction elsewhere still
+      // say when the hold is actually in effect.
+      els.pauseResumeBtn.disabled = !state.running;
+      els.pauseResumeBtn.textContent = state.pauseRequested ? "▶ Tiếp tục" : "⏸ Tạm dừng";
     }
     els.workbookInput.disabled = operatorLocked;
     if (els.resumeWorkbookInput) els.resumeWorkbookInput.disabled = operatorLocked;
@@ -503,7 +572,8 @@
     renderProgressSegments();
     els.queueList.textContent = "";
     els.queueSummary.textContent = `${queue.length} job${queue.length === 1 ? "" : "s"}`;
-    for (const item of (state.queueExpanded ? queue : queue.slice(0, 6))) {
+    const visibleQueue = state.queueExpanded ? queue : queue.slice(0, 6);
+    for (const [queueIndex, item] of visibleQueue.entries()) {
       const li = document.createElement("li");
       const isCurrent = ["RUNNING", "RECONCILING"].includes(item.status);
       const isSuccess = item.status === "SUCCESS";
@@ -511,7 +581,7 @@
       const isRetryEligible = item.status === "RUNNING" && item.phase === "PRE_SUBMIT";
       const retryLabel = isRetryEligible
         ? `attempt ${item.attempt_count}/${1 + item.settings.max_retries}`
-        : `attempt ${item.attempt_count}${!isRetryEligible && (item.phase !== "PRE_SUBMIT" || ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status)) ? " · Auto-retry: No" : ""}`;
+        : `attempt ${item.attempt_count}${!isRetryEligible && ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status) && retriesExhausted(item) ? " · Auto-retry: No" : ""}`;
       const outputText = item.persistence_verified && item.result_file ? ` · SAVED ✓ ${item.result_file}` : item.result_file ? ` · recorded output (not re-verified): ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : "";
 
       li.className = `queue-row ${isCurrent ? "current" : item.status.toLowerCase()}`;
@@ -528,8 +598,15 @@
             ? window.DacRunState.stageFor(item)
             : "—";
 
-      const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning;
-      const eligibleForSelection = item.phase === "PRE_SUBMIT" && !item.protected_checkpoint && !["SUCCESS", "DONE", "INTERRUPTED", "STOPPED"].includes(item.status);
+      const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning || state.queueMutationRunning;
+      const isExpanded = state.selectedJobId === item.job.id;
+      const promptDetailsId = `queue-prompt-details-${queueIndex}`;
+      const togglePrompt = () => {
+        state.selectedJobId = isExpanded ? null : item.job.id;
+        renderQueue();
+        controls();
+      };
+      const eligibleForSelection = isQueueSelectable(item);
       const selectCheckbox = document.createElement("input");
       selectCheckbox.type = "checkbox"; selectCheckbox.className = "queue-row-select";
       selectCheckbox.setAttribute("aria-label", `Chọn ${item.job.id} để chạy`);
@@ -540,15 +617,81 @@
         if (selectCheckbox.checked) state.runSelection.add(item.job.id); else state.runSelection.delete(item.job.id);
         controls();
       });
+      const dragHandle = element("span", "queue-drag-handle", "⠿");
+      const editableForDrag = isQueueEditable(item) && !operatorLocked;
+      dragHandle.draggable = editableForDrag;
+      dragHandle.tabIndex = editableForDrag ? 0 : -1;
+      dragHandle.setAttribute("aria-label", `Kéo ${item.job.id} để sắp xếp Queue`);
+      dragHandle.setAttribute("aria-disabled", String(!editableForDrag));
+      dragHandle.title = editableForDrag ? `Kéo ${item.job.id}, rồi thả trước hoặc sau job khác.` : "Chỉ job chưa submit mới được kéo.";
+      dragHandle.addEventListener("dragstart", (event) => {
+        if (!editableForDrag || queueMutationLocked()) { event.preventDefault(); return; }
+        state.draggedQueueJobId = item.job.id;
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", item.job.id);
+        }
+        li.classList.add("queue-dragging");
+      });
+      dragHandle.addEventListener("dragend", () => {
+        state.draggedQueueJobId = null;
+        clearQueueDropIndicators();
+      });
+      li.addEventListener("dragover", (event) => {
+        if (!state.draggedQueueJobId || state.draggedQueueJobId === item.job.id || queueMutationLocked()) return;
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+        const bounds = li.getBoundingClientRect();
+        const placement = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
+        clearQueueDropIndicators();
+        li.classList.add(placement === "before" ? "queue-drop-before" : "queue-drop-after");
+        li.dataset.queueDropPlacement = placement;
+      });
+      li.addEventListener("dragleave", (event) => {
+        if (!li.contains(event.relatedTarget)) {
+          li.classList.remove("queue-drop-before", "queue-drop-after");
+          delete li.dataset.queueDropPlacement;
+        }
+      });
+      li.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const sourceId = state.draggedQueueJobId || event.dataTransfer?.getData("text/plain");
+        const placement = li.dataset.queueDropPlacement || "before";
+        state.draggedQueueJobId = null;
+        clearQueueDropIndicators();
+        if (sourceId && sourceId !== item.job.id) placeQueueJob(sourceId, item.job.id, placement).catch(() => controls());
+      });
       const left = element("div", "queue-row-left");
-      left.append(selectCheckbox, element("span", `queue-icon ${iconClass}`, icon), element("span", "queue-job-id", item.job.id));
+      left.append(dragHandle, selectCheckbox, element("span", `queue-icon ${iconClass}`, icon), element("span", "queue-job-id", item.job.id));
       li.append(left, element("div", `queue-row-status ${statusLabel.toLowerCase()}`, statusWithElapsed), element("div", "queue-row-right", timeOrDetail));
-      li.addEventListener("click", () => { state.selectedJobId = state.selectedJobId === item.job.id ? null : item.job.id; renderQueue(); controls(); });
-      if (state.selectedJobId === item.job.id) {
-        const details = element("div", "queue-row-details");
+      const promptPreview = element("div", "queue-prompt-preview");
+      const promptActions = element("span", "queue-prompt-actions");
+      const duplicateBtn = document.createElement("button");
+      duplicateBtn.type = "button";
+      duplicateBtn.className = "secondary queue-duplicate-btn";
+      duplicateBtn.textContent = "⧉ Nhân bản";
+      duplicateBtn.title = `Tạo một job mới từ input của ${item.job.id}; không sao chép kết quả hay lịch sử chạy.`;
+      duplicateBtn.disabled = operatorLocked;
+      duplicateBtn.addEventListener("click", (event) => { event.stopPropagation(); duplicateQueueJob(item.job.id).catch(() => controls()); });
+      const promptToggle = document.createElement("button");
+      promptToggle.type = "button";
+      promptToggle.className = "queue-prompt-toggle";
+      promptToggle.textContent = isExpanded ? "Thu gọn" : "Xem đầy đủ";
+      promptToggle.setAttribute("aria-expanded", String(isExpanded));
+      promptToggle.setAttribute("aria-controls", promptDetailsId);
+      promptToggle.addEventListener("click", (event) => { event.stopPropagation(); togglePrompt(); });
+      promptActions.append(duplicateBtn, promptToggle);
+      promptPreview.append(element("span", "queue-prompt-label", "Prompt:"), element("div", "queue-prompt-brief", promptBrief(item.job.prompt)), promptActions);
+      li.appendChild(promptPreview);
+
+      const details = element("div", "queue-row-details");
+      details.id = promptDetailsId;
+      details.hidden = !isExpanded;
+      const fullPrompt = element("div", "queue-prompt-full");
+      fullPrompt.append(element("strong", "", "Prompt đầy đủ:"), element("div", "queue-prompt-full-text", item.job.prompt || "—"));
         const settingsText = `Timeout: ${item.settings.timeout_sec}s · Retries: ${item.settings.max_retries} · Cooldown: ${item.settings.safety_cooldown_sec}s · ${retryLabel}${outputText}${item.protected_checkpoint ? " · Output checkpoint protected" : ""}${item.failure_type ? ` · ${item.failure_type}` : ""}`;
         details.append(
-          labelledLine("Prompt:", item.job.prompt),
+          fullPrompt,
           element("br"),
           labelledLine("References:", item.references.map((file) => file.alias || file.fileName).join(", ") || "none"),
           element("br"),
@@ -567,8 +710,28 @@
           rerunRow.appendChild(rerunBtn);
           details.append(element("br"), rerunRow);
         }
-        li.appendChild(details);
-      }
+        const editActions = element("div", "queue-edit-actions");
+        const activeIndex = queue.findIndex((entry) => entry.job === item.job);
+        const editable = isQueueEditable(item);
+        const previousEditable = activeIndex > 0 && isQueueEditable(queue[activeIndex - 1]);
+        const nextEditable = activeIndex >= 0 && activeIndex < queue.length - 1 && isQueueEditable(queue[activeIndex + 1]);
+        const moveUpBtn = document.createElement("button");
+        moveUpBtn.type = "button"; moveUpBtn.className = "secondary"; moveUpBtn.textContent = "↑ Lên";
+        moveUpBtn.disabled = operatorLocked || !editable || !previousEditable;
+        moveUpBtn.addEventListener("click", (event) => { event.stopPropagation(); moveQueueJob(item.job.id, -1).catch(() => controls()); });
+        const moveDownBtn = document.createElement("button");
+        moveDownBtn.type = "button"; moveDownBtn.className = "secondary"; moveDownBtn.textContent = "↓ Xuống";
+        moveDownBtn.disabled = operatorLocked || !editable || !nextEditable;
+        moveDownBtn.addEventListener("click", (event) => { event.stopPropagation(); moveQueueJob(item.job.id, 1).catch(() => controls()); });
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button"; removeBtn.className = "secondary queue-remove-btn"; removeBtn.textContent = "Bỏ khỏi Queue";
+        removeBtn.disabled = operatorLocked || !editable;
+        removeBtn.addEventListener("click", (event) => { event.stopPropagation(); openQueueRemoveDialog(item.job.id); });
+        editActions.append(moveUpBtn, moveDownBtn);
+        if (!editable) editActions.appendChild(element("span", "queue-edit-note", "Job đã qua ranh giới gửi được khoá thứ tự/xoá."));
+        editActions.appendChild(removeBtn);
+        details.appendChild(editActions);
+      li.appendChild(details);
       els.queueList.appendChild(li);
     }
     const failures = queue.filter((item) => ["FAILED", "INTERRUPTED"].includes(item.status));
@@ -591,26 +754,34 @@
         els.completionCard.className = "card completion-card empty-state";
         if (els.completionIcon) els.completionIcon.textContent = "📊";
         if (els.completionTitle) els.completionTitle.textContent = "No completed run yet";
+        if (els.completionTranslation) els.completionTranslation.textContent = "Chưa có lần chạy hoàn tất";
         if (els.outputSummaryText) els.outputSummaryText.textContent = "Complete a run to view results and artifacts.";
         if (els.failedJobsText) els.failedJobsText.textContent = "";
+        if (els.failedJobsTranslation) els.failedJobsTranslation.textContent = "Hoàn tất một lần chạy để xem kết quả và các artifact.";
       } else if (state.artifactErrors && state.artifactErrors.length > 0) {
         els.completionCard.className = "card completion-card persistence-failed";
         if (els.completionIcon) els.completionIcon.textContent = "⚠";
         if (els.completionTitle) els.completionTitle.textContent = "ARTIFACT PERSISTENCE FAILED";
+        if (els.completionTranslation) els.completionTranslation.textContent = "LƯU HOẶC XÁC MINH ARTIFACT THẤT BẠI";
         if (els.outputSummaryText) els.outputSummaryText.textContent = `${successCount} / ${queue.length} completed`;
         if (els.failedJobsText) els.failedJobsText.textContent = "Artifact persistence verification failed.";
+        if (els.failedJobsTranslation) els.failedJobsTranslation.textContent = "Các job render đã hoàn tất, nhưng ít nhất một tệp đầu ra không lưu được hoặc không vượt qua bước xác minh sau khi lưu.";
       } else if (failedCount > 0) {
         els.completionCard.className = "card completion-card has-failures";
         if (els.completionIcon) els.completionIcon.textContent = "⚠";
         if (els.completionTitle) els.completionTitle.textContent = "RUN COMPLETE WITH ISSUES";
+        if (els.completionTranslation) els.completionTranslation.textContent = "LẦN CHẠY HOÀN TẤT NHƯNG CÓ SỰ CỐ";
         if (els.outputSummaryText) els.outputSummaryText.textContent = `${successCount} / ${queue.length} completed`;
         if (els.failedJobsText) els.failedJobsText.textContent = `${failedCount} failed / interrupted`;
+        if (els.failedJobsTranslation) els.failedJobsTranslation.textContent = `${failedCount} job bị lỗi hoặc gián đoạn.`;
       } else {
         els.completionCard.className = "card completion-card success";
         if (els.completionIcon) els.completionIcon.textContent = "✓";
         if (els.completionTitle) els.completionTitle.textContent = "RUN COMPLETE";
+        if (els.completionTranslation) els.completionTranslation.textContent = "LẦN CHẠY ĐÃ HOÀN TẤT";
         if (els.outputSummaryText) els.outputSummaryText.textContent = `${successCount} / ${queue.length} completed`;
         if (els.failedJobsText) els.failedJobsText.textContent = "";
+        if (els.failedJobsTranslation) els.failedJobsTranslation.textContent = "Tất cả job và artifact được cấu hình đã hoàn tất kiểm tra.";
       }
     }
 
@@ -996,7 +1167,7 @@
   }
 
   async function openWorkbook() {
-    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = false; state.resumePlan = null; state.resumeLedgerFile = ""; state.runId = null; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = []; state.runSelection.clear(); renderResumePlan(); renderOutput();
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = false; state.resumePlan = null; state.resumeLedgerFile = ""; state.runId = null; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = []; state.runSelection.clear(); state.quickPromptCounter = 0; renderResumePlan(); renderOutput();
     try {
       state.workbook = await window.DacXlsx.open(els.workbookInput.files?.[0]);
       const imported = applyWorkbookConfig();
@@ -1018,6 +1189,236 @@
       log(`Opened ${state.workbook.fileName}.`);
     } catch (error) {
       setStatus("ERROR"); els.workbookText.textContent = error.message; log(error.message, "error"); controls();
+    }
+  }
+
+  function nextQuickPromptId() {
+    const existing = new Set((state.workbook?.jobs || []).map((job) => String(job.id)));
+    let candidate = (state.quickPromptCounter || 0) + 1;
+    while (existing.has(`Q${String(candidate).padStart(3, "0")}`)) candidate += 1;
+    state.quickPromptCounter = candidate;
+    return `Q${String(candidate).padStart(3, "0")}`;
+  }
+
+  function isQueueSelectable(item) {
+    return Boolean(item && item.phase === "PRE_SUBMIT" && !item.protected_checkpoint && !["SUCCESS", "DONE", "INTERRUPTED", "STOPPED"].includes(item.status));
+  }
+
+  function isQueueEditable(item) {
+    return Boolean(isQueueSelectable(item) && !String(item.submitted_at || item.job?.submitted_at || "").trim());
+  }
+
+  function queueMutationLocked() {
+    return state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning || state.queueMutationRunning;
+  }
+
+  function clearQueueDropIndicators() {
+    document.querySelectorAll(".queue-row.queue-dragging, .queue-row.queue-drop-before, .queue-row.queue-drop-after").forEach((row) => {
+      row.classList.remove("queue-dragging", "queue-drop-before", "queue-drop-after");
+      delete row.dataset.queueDropPlacement;
+    });
+  }
+
+  function nextDuplicateJobId(sourceId) {
+    const existing = new Set((state.workbook?.jobs || []).map((job) => String(job.id || "").toLowerCase()));
+    if (/^q\d+$/i.test(String(sourceId || ""))) return nextQuickPromptId();
+    const base = `${String(sourceId || "job").slice(0, 87)}-copy`;
+    for (let number = 1; number <= 999; number += 1) {
+      const candidate = number === 1 ? base : `${base}-${String(number).padStart(2, "0")}`;
+      if (!existing.has(candidate.toLowerCase())) return candidate;
+    }
+    throw new Error(`Không tìm được ID mới để nhân bản ${sourceId}.`);
+  }
+
+  async function refreshQueueAfterMutation(message) {
+    invalidateValidation(message);
+    if (state.resumeMode) state.resumePlan = window.DacResumeCore.plan(state.workbook);
+    await prepare({ diagnostic: true });
+    if (state.resumeMode && state.prepared) window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+    await validate();
+    renderResumePlan(); renderQueue(); renderOutput(); controls();
+  }
+
+  async function duplicateQueueJob(sourceId) {
+    if (!state.workbook || queueMutationLocked()) return;
+    const source = state.workbook.jobs.find((job) => String(job.id) === String(sourceId));
+    if (!source) throw new Error(`Không tìm thấy job ${sourceId}.`);
+    state.queueMutationRunning = true; controls();
+    try {
+      const id = nextDuplicateJobId(sourceId);
+      const copiedInputs = {};
+      for (const key of ["prompt", "reference_images", "reference_image", "timeout_sec", "max_retries", "safety_cooldown_sec", "output_folder"]) {
+        if (source[key] !== undefined && source[key] !== "") copiedInputs[key] = source[key];
+      }
+      const ordered = window.DacXlsx.activeJobs(state.workbook);
+      const sourceIndex = ordered.indexOf(source);
+      const duplicate = window.DacXlsx.addJob(state.workbook, { id, ...copiedInputs, duplicate_of: source.id, queue_removed: "false" });
+      ordered.splice(sourceIndex >= 0 ? sourceIndex + 1 : ordered.length, 0, duplicate);
+      window.DacXlsx.setQueueOrder(state.workbook, ordered);
+      state.runSelection.add(id);
+      state.queueExpanded = true;
+      await refreshQueueAfterMutation(`Đã nhân bản ${sourceId} thành ${id}; Check Plan đã được chạy lại.`);
+      log(`Đã nhân bản ${sourceId} thành ${id}; chỉ sao chép input, không sao chép kết quả/lịch sử.`, "done");
+    } catch (error) {
+      log(`Không thể nhân bản ${sourceId}: ${messageOf(error)}`, "error");
+      throw error;
+    } finally {
+      state.queueMutationRunning = false; renderQueue(); controls();
+    }
+  }
+
+  async function moveQueueJob(jobId, direction) {
+    if (!state.workbook || queueMutationLocked()) return;
+    const queue = state.prepared?.queue || [];
+    const index = queue.findIndex((item) => item.job.id === jobId);
+    const targetIndex = index + direction;
+    if (index < 0 || targetIndex < 0 || targetIndex >= queue.length || !isQueueEditable(queue[index]) || !isQueueEditable(queue[targetIndex])) return;
+    state.queueMutationRunning = true; controls();
+    try {
+      const ordered = window.DacXlsx.activeJobs(state.workbook);
+      [ordered[index], ordered[targetIndex]] = [ordered[targetIndex], ordered[index]];
+      window.DacXlsx.setQueueOrder(state.workbook, ordered);
+      await refreshQueueAfterMutation(`Đã đổi vị trí ${jobId}; Check Plan đã được chạy lại.`);
+      log(`Đã chuyển ${jobId} ${direction < 0 ? "lên" : "xuống"} một vị trí trong Queue.`, "done");
+    } catch (error) {
+      log(`Không thể đổi vị trí ${jobId}: ${messageOf(error)}`, "error");
+      throw error;
+    } finally {
+      state.queueMutationRunning = false; renderQueue(); controls();
+    }
+  }
+
+  async function placeQueueJob(jobId, targetId, placement) {
+    if (!state.workbook || queueMutationLocked()) return;
+    const queue = state.prepared?.queue || [];
+    const sourceItem = queue.find((item) => item.job.id === jobId);
+    const targetItem = queue.find((item) => item.job.id === targetId);
+    if (!isQueueEditable(sourceItem) || !targetItem || sourceItem === targetItem) return;
+    state.queueMutationRunning = true; controls();
+    try {
+      window.DacXlsx.placeQueueJob(state.workbook, sourceItem.job, targetItem.job, placement);
+      await refreshQueueAfterMutation(`Đã kéo ${jobId} ${placement === "after" ? "sau" : "trước"} ${targetId}; Check Plan đã được chạy lại.`);
+      log(`Đã kéo ${jobId} ${placement === "after" ? "sau" : "trước"} ${targetId} trong Queue.`, "done");
+    } catch (error) {
+      log(`Không thể kéo ${jobId}: ${messageOf(error)}`, "error");
+      throw error;
+    } finally {
+      state.queueMutationRunning = false; state.draggedQueueJobId = null; clearQueueDropIndicators(); renderQueue(); controls();
+    }
+  }
+
+  function openQueueRemoveDialog(jobId) {
+    if (queueMutationLocked()) return;
+    const item = state.prepared?.queue?.find((entry) => entry.job.id === jobId);
+    if (!isQueueEditable(item)) return;
+    state.pendingQueueRemovalId = jobId;
+    if (els.queueRemoveMessage) els.queueRemoveMessage.textContent = `${jobId} will no longer run. Its row remains in Result XLSX to preserve history.`;
+    if (els.queueRemoveMessageVi) els.queueRemoveMessageVi.textContent = `${jobId} sẽ không còn được chạy. Dòng dữ liệu vẫn được giữ trong Result XLSX để bảo toàn lịch sử.`;
+    if (typeof els.queueRemoveDialog?.showModal === "function") els.queueRemoveDialog.showModal();
+    else els.queueRemoveDialog?.setAttribute("open", "");
+  }
+
+  function closeQueueRemoveDialog() {
+    state.pendingQueueRemovalId = null;
+    if (typeof els.queueRemoveDialog?.close === "function") els.queueRemoveDialog.close();
+    else els.queueRemoveDialog?.removeAttribute("open");
+  }
+
+  async function confirmQueueRemoval() {
+    const jobId = state.pendingQueueRemovalId;
+    if (!jobId || !state.workbook || queueMutationLocked()) return;
+    const item = state.prepared?.queue?.find((entry) => entry.job.id === jobId);
+    if (!isQueueEditable(item)) { closeQueueRemoveDialog(); return; }
+    state.queueMutationRunning = true; controls();
+    try {
+      window.DacXlsx.removeFromQueue(state.workbook, item.job);
+      state.runSelection.delete(jobId);
+      if (state.selectedJobId === jobId) state.selectedJobId = null;
+      closeQueueRemoveDialog();
+      await refreshQueueAfterMutation(`Đã bỏ ${jobId} khỏi Queue; dữ liệu ledger vẫn được giữ.`);
+      log(`Đã bỏ ${jobId} khỏi Queue; dòng XLSX được giữ với queue_removed=true.`, "done");
+    } catch (error) {
+      log(`Không thể bỏ ${jobId} khỏi Queue: ${messageOf(error)}`, "error");
+      throw error;
+    } finally {
+      state.queueMutationRunning = false; renderQueue(); controls();
+    }
+  }
+
+  function selectAllQueueJobs() {
+    for (const item of state.prepared?.queue || []) if (isQueueSelectable(item)) state.runSelection.add(item.job.id);
+    renderQueue(); controls();
+  }
+
+  function clearQueueSelection() {
+    state.runSelection.clear(); renderQueue(); controls();
+  }
+
+  // Prompts are separated by a BLANK line, same convention as the reference
+  // extension Đức pointed to -- a single prompt may still span several
+  // ordinary lines (a single \n never splits it), only a blank-line gap
+  // starts a new one.
+  function splitQuickPromptText(text) {
+    return String(text || "").split(/\r?\n[ \t]*\r?\n+/).map((block) => block.trim()).filter(Boolean);
+  }
+
+  // "Nhập prompt nhanh": the real workflow this serves is GPT's own
+  // Orchestrator skill generating ideas and concepts, where the operator's
+  // entire manual step per image is typing "OK, render" -- forcing an Excel
+  // workbook for that is the wrong shape of tool. The first prompt builds a
+  // session workbook entirely in memory (DacXlsx.createWorkbook); every
+  // later prompt in the same sitting appends into that SAME session
+  // (DacXlsx.addJob) rather than starting a new file each time. From the
+  // moment it exists, this is an ordinary workbook to every other module --
+  // same Check Plan, same checkpoint protocol, same collision policy, same
+  // audit trail as one opened from disk.
+  //
+  // This deliberately only STAGES jobs -- it never starts a run. Đức could
+  // not tell from the old single "add & run" button whether pressing it
+  // would just preview or immediately submit to ChatGPT; "Kiểm tra" turns
+  // every pasted prompt into a concrete queue row (visible on the RUN tab,
+  // pre-selected) and leaves the actual run to the existing Run controls
+  // (Start Run / "Chạy job đã chọn"), same as any workbook-sourced queue.
+  async function checkQuickPrompt() {
+    const prompts = splitQuickPromptText(els.quickPromptInput?.value);
+    if (!prompts.length) { if (els.quickPromptStatus) els.quickPromptStatus.textContent = "Nhập ít nhất 1 prompt trước khi kiểm tra."; return; }
+    if (state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning) { if (els.quickPromptStatus) els.quickPromptStatus.textContent = "Đợi tiến trình hiện tại xong đã."; return; }
+    if (els.quickPromptCheckBtn) els.quickPromptCheckBtn.disabled = true;
+    try {
+      const addedIds = [];
+      for (const prompt of prompts) {
+        let job;
+        if (!state.workbook) {
+          const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 16);
+          state.quickPromptCounter = 0;
+          state.workbook = window.DacXlsx.createWorkbook(`Quick-${stamp}.xlsx`, [{ id: nextQuickPromptId(), prompt }]);
+          const imported = applyWorkbookConfig();
+          if (imported.effective.output.mode === "profile") await resolveOutputProfile(imported.effective.output.profileId);
+          if (imported.effective.output.separateResultDestination && imported.effective.output.resultMode === "profile") await resolveResultProfile(imported.effective.output.resultProfileId);
+          job = state.workbook.jobs[state.workbook.jobs.length - 1];
+          log(`Bắt đầu phiên nhanh: ${state.workbook.fileName}.`, "done");
+        } else {
+          job = window.DacXlsx.addJob(state.workbook, { id: nextQuickPromptId(), prompt });
+        }
+        addedIds.push(job.id);
+      }
+      els.quickPromptInput.value = "";
+      if (els.quickPromptSessionText) els.quickPromptSessionText.textContent = `Phiên hiện tại: ${state.workbook.jobs.length} job · ${state.workbook.fileName}`;
+      await prepare({ diagnostic: true });
+      await validate();
+      // Replaces, not merges with, any prior selection -- what "Kiểm tra"
+      // just staged is what the operator is looking at right now.
+      state.runSelection = new Set(addedIds);
+      state.queueExpanded = true;
+      renderQueue(); renderOutput(); controls();
+      showScreen("runScreen");
+      if (els.quickPromptStatus) els.quickPromptStatus.textContent = `Đã thêm ${addedIds.length} job (${addedIds.join(", ")}) vào hàng đợi — chưa chạy. Đã tick sẵn ở tab RUN; bấm "Chạy job đã chọn" khi bạn sẵn sàng.`;
+    } catch (error) {
+      const reason = messageOf(error);
+      if (els.quickPromptStatus) els.quickPromptStatus.textContent = reason;
+      log(reason, "error");
+    } finally {
+      controls();
     }
   }
 
@@ -1177,7 +1578,9 @@
     if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED" || !job || (!window.DacRecreateCore.requiresNewApproval(job) && window.DacRecreateCore.isApproved(job))) return;
     state.pendingRecreateJobId = jobId;
     if (els.recreateConfirmTitle) els.recreateConfirmTitle.textContent = `${jobId} image is not saved`;
+    if (els.recreateConfirmTitleVi) els.recreateConfirmTitleVi.textContent = `Ảnh của ${jobId} chưa được lưu và xác minh`;
     if (els.recreateConfirmMessage) els.recreateConfirmMessage.textContent = `${jobId} has no verified saved image. Create it again? This sends one new request and may produce a duplicate image.`;
+    if (els.recreateConfirmMessageVi) els.recreateConfirmMessageVi.textContent = `${jobId} chưa có ảnh đã lưu được xác minh. Tạo lại sẽ gửi một yêu cầu mới và có thể tạo ảnh trùng.`;
     els.recreateConfirmBtn.textContent = `Recreate ${jobId}`;
     if (typeof els.recreateConfirmDialog.showModal === "function") els.recreateConfirmDialog.showModal();
     else els.recreateConfirmDialog.setAttribute("open", "");
@@ -1206,8 +1609,10 @@
     const item = state.prepared?.queue?.find((entry) => entry.job.id === jobId);
     if (!item || item.status !== "SUCCESS" || !item.persistence_verified) return;
     state.pendingRerunJobId = jobId;
-    if (els.rerunConfirmTitle) els.rerunConfirmTitle.textContent = `Chạy lại ${jobId}?`;
-    if (els.rerunConfirmMessage) els.rerunConfirmMessage.textContent = `${jobId} đã có ảnh đã lưu (${item.result_file || "không rõ tên file"}). Chạy lại sẽ gửi một yêu cầu mới tới ChatGPT và tạo một ảnh khác cho job này.`;
+    if (els.rerunConfirmTitle) els.rerunConfirmTitle.textContent = `Run ${jobId} again?`;
+    if (els.rerunConfirmTitleVi) els.rerunConfirmTitleVi.textContent = `Chạy lại ${jobId}?`;
+    if (els.rerunConfirmMessage) els.rerunConfirmMessage.textContent = `${jobId} already has a verified saved image (${item.result_file || "unknown filename"}). Running it again sends a new request to ChatGPT and creates another image for this job.`;
+    if (els.rerunConfirmMessageVi) els.rerunConfirmMessageVi.textContent = `${jobId} đã có ảnh được lưu và xác minh (${item.result_file || "không rõ tên file"}). Chạy lại sẽ gửi một yêu cầu mới tới ChatGPT và tạo một ảnh khác cho job này.`;
     if (els.rerunKeepPolicyRadio) els.rerunKeepPolicyRadio.checked = true;
     els.rerunConfirmBtn.textContent = `Chạy lại ${jobId}`;
     if (typeof els.rerunConfirmDialog.showModal === "function") els.rerunConfirmDialog.showModal();
@@ -1526,7 +1931,7 @@
   async function openExistingRun() {
     const file = els.resumeWorkbookInput?.files?.[0];
     if (!file) return;
-    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = true; state.resumePlan = null; state.resumeLedgerFile = file.name; state.auditEvents = []; state.artifactErrors = []; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = []; state.runSelection.clear();
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = true; state.resumePlan = null; state.resumeLedgerFile = file.name; state.auditEvents = []; state.artifactErrors = []; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = []; state.runSelection.clear(); state.quickPromptCounter = 0;
     try {
       state.workbook = await window.DacXlsx.open(file);
       const imported = applyWorkbookConfig();
@@ -1559,7 +1964,7 @@
       renderResumePlan(); renderQueue(); renderOutput(); controls();
       log(`Opened existing run ledger ${file.name}; run ${state.runId}.`, "done");
     } catch (error) {
-      state.resumePlan = { findings: [{ code: "RESUME_LEDGER_INVALID", severity: "BLOCKER", message: error.message, guidance: "Select a supported Result XLSX." }], ready: false, run: { run_id: "—", provenance: "invalid" }, summary: { completed: 0, safe_pending: 0, failed_pre_submit: 0, ambiguous_submitted: 0 }, next_eligible_job: null };
+      state.resumePlan = { findings: [{ code: "RESUME_LEDGER_INVALID", severity: "BLOCKER", message: error.message, guidance: "Select a supported Result XLSX." }], ready: false, run: { run_id: "—", provenance: "invalid" }, summary: { completed: 0, safe_pending: 0, failed: 0, ambiguous_submitted: 0 }, next_eligible_job: null };
       setStatus("ERROR", "RESUME BLOCKED"); renderResumePlan(); log(error.message, "error"); controls();
     }
   }
@@ -1595,7 +2000,7 @@
       const mode = els.outputDestinationMode.value;
       state.destinationMode = mode;
       if (mode === "downloads") { state.outputSettings.image = window.DacOutputLocation.downloadsLocation(els.imageOutputFolderInput.value || "Duc Auto ChatGPT"); state.outputProfileState = null; }
-      else { state.outputSettings.image = { kind: "directory", handle: null, profileId: state.importedConfig?.effective.output.profileId || "", label: "Output profile not bound" }; state.outputProfileState = { state: "unbound", profile: null }; }
+      else { const profileId = state.importedConfig?.effective.output.profileId || DEFAULT_IMAGE_PROFILE_ID; state.outputSettings.image = { kind: "directory", handle: null, profileId, label: "Output profile not bound" }; state.outputProfileState = { state: "unbound", profile: null }; }
       if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
       markLocalOverride("output_destination_mode");
       renderOutput();
@@ -1603,8 +2008,7 @@
   }
 
   async function choosePrimaryDestination() {
-    const profileId = state.outputSettings.image?.profileId || state.importedConfig?.effective.output.profileId;
-    if (!profileId) throw new Error("Set a valid output_profile_id in the XLSX before binding a profile folder.");
+    const profileId = state.outputSettings.image?.profileId || state.importedConfig?.effective.output.profileId || DEFAULT_IMAGE_PROFILE_ID;
     if (typeof window.showDirectoryPicker !== "function") throw new Error("This Chrome build cannot authorize a folder. Use Chrome Downloads or update Chrome.");
     const handle = await window.showDirectoryPicker({ mode: "readwrite" });
     const profile = await window.DacOutputProfiles.bind(profileId, handle, profileId);
@@ -1650,8 +2054,10 @@
     if (!hint || !els.folderPickDialog) { folderPickRunner(target)(); return; }
     state.pendingFolderPick = target;
     if (els.folderPickTitle) els.folderPickTitle.textContent = target === "result" ? "Choose the Result XLSX folder" : "Choose the generated-image folder";
+    if (els.folderPickTitleVi) els.folderPickTitleVi.textContent = target === "result" ? "Chọn thư mục lưu Result XLSX" : "Chọn thư mục lưu ảnh được tạo";
     if (els.folderPickPath) { els.folderPickPath.textContent = hint; els.folderPickPath.title = hint; }
     if (els.folderPickStatus) els.folderPickStatus.textContent = "";
+    if (els.folderPickStatusVi) els.folderPickStatusVi.textContent = "";
     if (typeof els.folderPickDialog.showModal === "function") els.folderPickDialog.showModal();
     else els.folderPickDialog.setAttribute("open", "");
   }
@@ -1670,8 +2076,10 @@
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
       await navigator.clipboard.writeText(hint);
       els.folderPickStatus.textContent = "Path copied. Paste it into the picker's address bar.";
+      if (els.folderPickStatusVi) els.folderPickStatusVi.textContent = "Đã sao chép đường dẫn. Hãy dán vào thanh địa chỉ của hộp chọn thư mục.";
     } catch (_) {
       els.folderPickStatus.textContent = "Could not copy automatically. Click the path to select it, then press Ctrl+C.";
+      if (els.folderPickStatusVi) els.folderPickStatusVi.textContent = "Không thể tự sao chép. Hãy bấm vào đường dẫn để chọn rồi nhấn Ctrl+C.";
     }
   }
 
@@ -1685,8 +2093,7 @@
   }
 
   async function chooseResultDestination() {
-    const profileId = state.outputSettings.result?.profileId || state.importedConfig?.effective.output.resultProfileId;
-    if (!profileId) throw new Error("Set a valid result_output_profile_id in the XLSX before binding a result profile folder.");
+    const profileId = state.outputSettings.result?.profileId || state.importedConfig?.effective.output.resultProfileId || DEFAULT_RESULT_PROFILE_ID;
     if (typeof window.showDirectoryPicker !== "function") throw new Error("This Chrome build cannot authorize a folder. Use Chrome Downloads or update Chrome.");
     const handle = await window.showDirectoryPicker({ mode: "readwrite" });
     const profile = await window.DacOutputProfiles.bind(profileId, handle, profileId);
@@ -1709,7 +2116,7 @@
     try {
       const mode = els.resultLocationMode.value;
       if (mode === "downloads") state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value || state.outputSettings.image?.folder || "Duc Auto ChatGPT");
-      else state.outputSettings.result = { kind: "directory", handle: null, profileId: state.importedConfig?.effective.output.resultProfileId || "", label: "Result output profile not bound" };
+      else state.outputSettings.result = { kind: "directory", handle: null, profileId: state.importedConfig?.effective.output.resultProfileId || DEFAULT_RESULT_PROFILE_ID, label: "Result output profile not bound" };
       markLocalOverride("result_destination_mode");
       renderOutput();
     } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
@@ -1785,7 +2192,7 @@
     state.auditChain = auditChain;
     if (!auditChain.ok) throw new Error(`${auditChain.code}: ${auditChain.message}`);
     const ping = await send({ type: "DAC_PING" });
-    if (!ping?.composerFound || ping.generating || ping.busy || ping.securityBlocker) throw new Error(ping.securityBlocker ? `HARD_STOP: ${ping.securityBlocker}` : "ChatGPT must be reachable, idle, and show its composer.");
+    if (!ping?.composerFound || ping.generating || ping.busy || ping.securityBlocker || ping.generationLimitBlocker) throw new Error(ping.generationLimitBlocker ? `LIMIT_STOP: ${ping.generationLimitBlocker}` : ping.securityBlocker ? `HARD_STOP: ${ping.securityBlocker}` : "ChatGPT must be reachable, idle, and show its composer.");
     els.outputPermissionText.textContent = "Output-location preflight passed.";
     return locationPreflight.effective;
   }
@@ -1797,6 +2204,7 @@
       try { ping = await chrome.tabs.sendMessage(tab.id, { type: "DAC_PING" }); }
       catch (_) { return { ok: false, code: "CHATGPT_RECEIVER_UNAVAILABLE", message: "ChatGPT receiver is unavailable.", guidance: "Reload the active normal ChatGPT conversation, then retry Check Plan." }; }
       if (ping?.securityBlocker) return { ok: false, code: "CHATGPT_SECURITY_BLOCKER", message: `Security blocker: ${ping.securityBlocker}`, guidance: "Resolve the security warning in ChatGPT before running." };
+      if (ping?.generationLimitBlocker) return { ok: false, code: "CHATGPT_GENERATION_LIMIT", message: `Generation limit: ${ping.generationLimitBlocker}`, guidance: "ChatGPT has stopped generating images for now. Wait for the limit to reset (or upgrade/switch account), then retry Check Plan." };
       if (!ping?.composerFound) return { ok: false, code: "CHATGPT_COMPOSER_UNAVAILABLE", message: "ChatGPT composer is not available.", guidance: "Open a normal conversation with a visible composer, then retry Check Plan." };
       if (ping.generating || ping.busy) return { ok: false, code: "CHATGPT_BUSY", message: "ChatGPT is generating or busy.", guidance: "Wait until ChatGPT is idle, then retry Check Plan." };
       return { ok: true, tabId: tab.id };
@@ -1951,7 +2359,8 @@
     const readable = state.checkpointCollision.entries.filter((entry) => entry.readable && entry.createdAt);
     const suggested = readable.sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0];
     state.checkpointCollision.keep = suggested?.filename || null;
-    if (els.checkpointCollisionStatus) els.checkpointCollisionStatus.textContent = suggested ? "Gợi ý: giữ bản mới nhất (đã chọn sẵn)." : "Không đọc được thời điểm tạo; hãy tự chọn file cần giữ.";
+    if (els.checkpointCollisionStatus) els.checkpointCollisionStatus.textContent = suggested ? "Suggestion: keep the newest checkpoint (preselected)." : "Creation times are unavailable; select the file to keep.";
+    if (els.checkpointCollisionStatusVi) els.checkpointCollisionStatusVi.textContent = suggested ? "Gợi ý: giữ bản mới nhất (đã chọn sẵn)." : "Không đọc được thời điểm tạo; hãy tự chọn file cần giữ.";
     if (els.checkpointCollisionConfirmBtn) els.checkpointCollisionConfirmBtn.disabled = !state.checkpointCollision.keep;
     renderCheckpointCollisionList();
     if (typeof els.checkpointCollisionDialog.showModal === "function") els.checkpointCollisionDialog.showModal();
@@ -2134,6 +2543,62 @@
       for (const entry of entries) { const term = document.createElement("dt"); term.textContent = entry.term; const detail = document.createElement("dd"); detail.textContent = entry.detail; list.append(term, detail); }
       block.append(heading, list); els.helpGlossary.appendChild(block);
     }
+  }
+
+  function renderOutputGlossary() {
+    if (!els.outputGlossary || !window.DacOperatorGlossary) return;
+    els.outputGlossary.replaceChildren();
+    for (const entry of window.DacOperatorGlossary.GLOSSARY.filter((item) => item.section === "OUTPUT")) {
+      const item = element("article", "output-concept-item");
+      item.append(element("strong", "output-concept-term", entry.term), element("p", "output-concept-detail", entry.detail));
+      els.outputGlossary.appendChild(item);
+    }
+  }
+
+  function renderHaltInstructions() {
+    const guide = window.DacHaltInstructions;
+    if (!guide || !els.haltInstructionsList) return;
+    els.haltInstructionsList.replaceChildren();
+    if (els.haltInstructionsCount) els.haltInstructionsCount.textContent = `${guide.HALT_GROUPS.length} nhóm`;
+    for (const group of guide.HALT_GROUPS) {
+      const item = element("article", "halt-instruction-item");
+      const top = element("div", "halt-instruction-top");
+      top.append(element("div", "halt-instruction-title", group.title), element("span", "halt-retry-badge", `Auto-retry: ${group.retry}`));
+      const codes = element("div", "halt-code-list");
+      for (const code of group.codes) codes.appendChild(element("code", "halt-code", code));
+      const meaning = element("p", "halt-meaning", group.meaning);
+      const action = element("p", "halt-action");
+      action.append(element("strong", "", "Nên làm: "), document.createTextNode(group.action));
+      item.append(top, codes, meaning, action);
+      els.haltInstructionsList.appendChild(item);
+    }
+    const special = guide.SPECIAL_STATUS;
+    if (els.haltSpecialStatus) {
+      const code = element("code", "halt-code", special.code);
+      const meaning = element("p", "", special.meaning);
+      const action = element("p", "halt-action");
+      action.append(element("strong", "", "Nên làm: "), document.createTextNode(special.action));
+      els.haltSpecialStatus.replaceChildren(element("div", "halt-instruction-title", special.title), code, meaning, action);
+    }
+    if (els.haltNonHaltList) {
+      const rows = guide.NON_HALT_CODES.map((entry) => {
+        const row = element("p", "");
+        row.append(element("code", "halt-code", entry.code), document.createTextNode(` — ${entry.meaning}`));
+        return row;
+      });
+      els.haltNonHaltList.replaceChildren(...rows);
+    }
+  }
+
+  function openHaltInstructions() {
+    renderHaltInstructions();
+    if (typeof els.haltInstructionsDialog?.showModal === "function") els.haltInstructionsDialog.showModal();
+    else els.haltInstructionsDialog?.setAttribute("open", "");
+  }
+
+  function closeHaltInstructions() {
+    if (typeof els.haltInstructionsDialog?.close === "function") els.haltInstructionsDialog.close();
+    else els.haltInstructionsDialog?.removeAttribute("open");
   }
 
   function imageExtensionFromUrl(url) {
@@ -2402,7 +2867,42 @@
     renderQueue(); progress(`${item.job.id} interrupted after ${item.phase}.`);
   }
 
-  async function finishDetectedOutput(item, result, effectiveOutput) {
+  function retriesExhausted(item) {
+    return item.retry_count >= item.settings.max_retries || window.DacRunnerCore.HARD_STOP_FAILURE_TYPES.has(item.failure_type);
+  }
+
+  // Single funnel for every failure path (pre-submit gate, the submit call
+  // itself, post-submit reconciliation, save/verify) once USER_STOP has
+  // already been ruled out. A hard stop (CAPTCHA, quota, receiver lost)
+  // halts the whole batch -- nothing else can safely run until the operator
+  // resolves it via Resume Plan. Everything else auto-retries up to
+  // max_retries and, once exhausted, settles as FAILED so the queue keeps
+  // moving to the next job instead of stopping the batch.
+  async function resolveJobFailure(item, failureType, message, settings) {
+    const hardStop = window.DacRunnerCore.HARD_STOP_FAILURE_TYPES.has(failureType);
+    if (!hardStop && window.DacRunnerCore.canRetry(item, failureType)) {
+      item.retry_count += 1;
+      update(item, { status: "PENDING", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message });
+      audit("FAILURE", item, { message }); log(`${item.job.id} ${failureType}; retry ${item.retry_count}/${item.settings.max_retries}.`, "error"); renderQueue();
+      const retryCooldownMs = window.DacRunnerCore.retryCooldown(item.settings, item.retry_count) * 1000;
+      state.retryResumeAt = Date.now() + retryCooldownMs; renderRuntime();
+      await sleep(retryCooldownMs);
+      state.retryResumeAt = null; renderRuntime();
+      return { completed: false, halted: false };
+    }
+    if (hardStop) {
+      markInterrupted(item, failureType, message);
+      return { completed: true, halted: true };
+    }
+    update(item, { status: "FAILED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message, completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
+    audit("FAILURE", item, { message }); if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message });
+    log(`${item.job.id} skipped after ${item.retry_count} retr${item.retry_count === 1 ? "y" : "ies"}: ${failureType}: ${message}`, "error");
+    setCurrent(item, "FAILED", failureType);
+    renderQueue(); progress(`${item.job.id} skipped (${failureType}); continuing with the next job.`);
+    return { completed: true, halted: !settings.continue_on_error };
+  }
+
+  async function finishDetectedOutput(item, result, effectiveOutput, settings) {
     item.phase = "OUTPUT_DETECTED";
     item.runtime_stage = "OUTPUT_DETECTED"; setCurrent(item, item.runtime_stage, "Attributable generated image found.", item.settings.timeout_sec);
     audit("OUTPUT_DETECTED", item);
@@ -2434,8 +2934,7 @@
         renderQueue(); progress(`SAVED ✓ ${accepted.filename}`);
       }
     } catch (error) {
-      markInterrupted(item, persistenceFailureType(error), messageOf(error));
-      return { completed: true, halted: true };
+      return resolveJobFailure(item, persistenceFailureType(error), messageOf(error), settings);
     }
     try {
       item.runtime_stage = "FINALIZING / WAITING_IDLE"; setCurrent(item, item.runtime_stage, "No new prompt can start until ChatGPT is idle.", item.settings.timeout_sec);
@@ -2456,28 +2955,26 @@
       }
       return { completed: true, halted: false };
     } catch (error) {
-      markInterrupted(item, window.DacRunnerCore.classifyFailure(error, "OUTPUT_SAVED"), messageOf(error));
-      return { completed: true, halted: true };
+      return resolveJobFailure(item, window.DacRunnerCore.classifyFailure(error, "OUTPUT_SAVED"), messageOf(error), settings);
     }
   }
 
-  async function reconcileSubmittedAttempt(item, effectiveOutput, message) {
+  async function reconcileSubmittedAttempt(item, effectiveOutput, message, settings) {
     item.status = "RECONCILING"; item.phase = "SUBMITTED";
     update(item, { status: "RECONCILING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
-    audit("RECONCILE_START", item, { message }); renderQueue(); progress(`Reconciling ${item.job.id}; it will not be resubmitted.`);
+    audit("RECONCILE_START", item, { message }); renderQueue(); progress(`Reconciling ${item.job.id}; it will not be resubmitted this attempt.`);
     let response;
     try { response = await send({ type: "DAC_RECONCILE_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, timeoutMs: Math.min(item.settings.timeout_sec * 1000, 60000) }); }
-    catch (error) { markInterrupted(item, "POST_SUBMIT_UNCERTAIN", messageOf(error)); return { completed: true, halted: true }; }
-    if (!matchesAttempt(response, item)) { markInterrupted(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch during reconciliation."); return { completed: true, halted: true }; }
+    catch (error) { return resolveJobFailure(item, "POST_SUBMIT_UNCERTAIN", messageOf(error), settings); }
+    if (!matchesAttempt(response, item)) return resolveJobFailure(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch during reconciliation.", settings);
     applyAttemptTelemetry(item, response.attempt);
     if (response?.ok && response.result?.image_url) {
       audit("RECONCILE_RESULT", item, { message: "Late attributable output found." });
-      return finishDetectedOutput(item, response.result, effectiveOutput);
+      return finishDetectedOutput(item, response.result, effectiveOutput, settings);
     }
     const failureType = window.DacRunnerCore.classifyFailure(response?.error || message || "Post-submit output remained uncertain.", "SUBMITTED");
     audit("RECONCILE_RESULT", item, { message: response?.error || message || "No attributable output found." });
-    markInterrupted(item, failureType === "TIMEOUT_AFTER_SUBMIT" ? "POST_SUBMIT_UNCERTAIN" : failureType, response?.error || message || "Post-submit output remained uncertain.");
-    return { completed: true, halted: true };
+    return resolveJobFailure(item, failureType === "TIMEOUT_AFTER_SUBMIT" ? "POST_SUBMIT_UNCERTAIN" : failureType, response?.error || message || "Post-submit output remained uncertain.", settings);
   }
 
   async function gateNextJob(item) {
@@ -2490,10 +2987,9 @@
     try {
       await waitForChatReady(item);
       audit("RECONCILE_RESULT", item, { message: "ChatGPT is idle and ready." });
-      return true;
+      return { ok: true };
     } catch (error) {
-      markInterrupted(item, window.DacRunnerCore.classifyFailure(error, "PRE_SUBMIT"), messageOf(error));
-      return false;
+      return { ok: false, failureType: window.DacRunnerCore.classifyFailure(error, "PRE_SUBMIT"), message: messageOf(error) };
     }
   }
 
@@ -2523,7 +3019,12 @@
         if (state.stopRequested) break;
         let completed = false;
         while (!completed && !state.stopRequested) {
-          if (!(await gateNextJob(item))) { halted = true; completed = true; break; }
+          const gate = await gateNextJob(item);
+          if (!gate.ok) {
+            const outcome = await resolveJobFailure(item, gate.failureType, gate.message, settings);
+            completed = outcome.completed; halted ||= outcome.halted;
+            if (completed) break; else continue;
+          }
           item.status = "RUNNING"; item.phase = "PRE_SUBMIT"; item.attempt_count += 1;
           item.runtime_stage = item.references.length ? "ATTACHING_REFS" : "SENDING";
           item.attempt_id = nextAttemptId();
@@ -2534,7 +3035,11 @@
           let response;
           try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
           catch (error) { response = { ok: false, error: messageOf(error), attempt: { job_id: item.job.id, attempt_id: item.attempt_id, phase: "PRE_SUBMIT", submittedAt: null } }; }
-          if (!matchesAttempt(response, item)) { markInterrupted(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch from ChatGPT content receiver."); completed = true; halted = true; break; }
+          if (!matchesAttempt(response, item)) {
+            const outcome = await resolveJobFailure(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch from ChatGPT content receiver.", settings);
+            completed = outcome.completed; halted ||= outcome.halted;
+            if (completed) break; else continue;
+          }
           applyAttemptTelemetry(item, response.attempt);
           if (response?.attempt?.submittedAt || response?.attempt?.phase === "SUBMITTED" || response?.attempt?.phase === "OUTPUT_DETECTED") {
             item.phase = "SUBMITTED";
@@ -2543,35 +3048,22 @@
             if (item.operator_recreate) { update(item, { recreate_status: "SUBMITTED", recreate_attempt_id: item.attempt_id }); audit("RECREATE_PROMPT_SUBMITTED", item, { message: "Operator-approved recreate prompt submitted." }); }
           }
           if (response?.ok && response.result?.image_url) {
-            const outcome = await finishDetectedOutput(item, response.result, effectiveOutput);
+            const outcome = await finishDetectedOutput(item, response.result, effectiveOutput, settings);
             completed = outcome.completed; halted ||= outcome.halted;
             continue;
           }
-          const failureType = state.stopRequested ? "USER_STOP" : window.DacRunnerCore.classifyFailure(response?.error || "No attributable generated image was found.", item.phase);
           if (state.stopRequested) {
-            update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || "Stopped by user.", error: response?.error || "Stopped by user.", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
+            update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "USER_STOP", last_error: response?.error || "Stopped by user.", error: response?.error || "Stopped by user.", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
             audit("FAILURE", item, { message: response?.error || "Stopped by user." }); if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message: response?.error || "Stopped by user." }); completed = true; break;
           }
           if (window.DacRunnerCore.needsReconciliation(item.phase)) {
-            const outcome = await reconcileSubmittedAttempt(item, effectiveOutput, response?.error || failureType);
+            const outcome = await reconcileSubmittedAttempt(item, effectiveOutput, response?.error || "No attributable generated image was found.", settings);
             completed = outcome.completed; halted ||= outcome.halted;
             continue;
           }
-          if (window.DacRunnerCore.canRetry(item, failureType)) {
-            item.retry_count += 1;
-            update(item, { status: "PENDING", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || failureType, error: response?.error || failureType });
-            audit("FAILURE", item, { message: response?.error || failureType }); log(`${item.job.id} ${failureType}; retry ${item.retry_count}/${item.settings.max_retries} before any submission.`, "error"); renderQueue();
-            const retryCooldownMs = window.DacRunnerCore.retryCooldown(item.settings, item.retry_count) * 1000;
-            state.retryResumeAt = Date.now() + retryCooldownMs;
-            renderRuntime();
-            await sleep(retryCooldownMs);
-            state.retryResumeAt = null;
-            renderRuntime();
-            continue;
-          }
-          update(item, { status: "FAILED", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: response?.error || failureType, error: response?.error || failureType, completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
-          audit("FAILURE", item, { message: response?.error || failureType }); if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message: response?.error || failureType }); log(`${item.job.id} failed: ${failureType}: ${response?.error || failureType}`, "error"); completed = true;
-          if (failureType === "SECURITY_HARD_STOP" || failureType === "RECEIVER_LOST" || !settings.continue_on_error) halted = true;
+          const failureType = window.DacRunnerCore.classifyFailure(response?.error || "No attributable generated image was found.", item.phase);
+          const outcome = await resolveJobFailure(item, failureType, response?.error || failureType, settings);
+          completed = outcome.completed; halted ||= outcome.halted;
         }
         state.terminal += 1; renderQueue();
         if (halted) break;
@@ -2634,10 +3126,10 @@
   function togglePause() {
     state.pauseRequested = !state.pauseRequested;
     if (state.pauseRequested) {
-      progress(state.paused ? "Sẽ tiếp tục ngay." : "Sẽ tạm dừng ngay sau khi job hiện tại hoàn tất.");
+      progress("Sẽ tạm dừng ngay sau khi job hiện tại hoàn tất — job đang chạy sẽ không bị huỷ giữa chừng.");
       log("Pause requested; the current job finishes first.", "info");
     } else {
-      progress(state.paused ? "Đã tiếp tục." : "Đã huỷ yêu cầu tạm dừng.");
+      progress(state.paused ? "Đã tiếp tục — đang chuyển sang job kế tiếp." : "Đã huỷ yêu cầu tạm dừng.");
       log("Pause cancelled or resumed by operator.", "info");
     }
     controls();
@@ -2670,6 +3162,7 @@
   }
 
   els.workbookInput.addEventListener("change", openWorkbook);
+  els.quickPromptCheckBtn?.addEventListener("click", () => checkQuickPrompt());
   els.resumeWorkbookInput?.addEventListener("change", openExistingRun);
   els.continueExistingRunBtn?.addEventListener("click", () => els.resumeWorkbookInput?.click());
   els.referencesInput.addEventListener("change", () => loadFiles().catch((error) => log(error.message, "error")));
@@ -2864,6 +3357,9 @@
   els.validateBtn.addEventListener("click", validate);
   els.helpBtn.addEventListener("click", () => { renderHelpGlossary(); els.helpDrawer.hidden = false; });
   els.closeHelpBtn.addEventListener("click", () => { els.helpDrawer.hidden = true; });
+  els.haltInstructionsBtn?.addEventListener("click", openHaltInstructions);
+  els.haltInstructionsCloseBtn?.addEventListener("click", closeHaltInstructions);
+  els.haltInstructionsDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeHaltInstructions(); });
   els.copyReviewPacketBtn.addEventListener("click", () => copyReviewPacket().catch((error) => {
     els.copyReviewPacketStatus.textContent = error.message;
     log(error.message, "error");
@@ -2877,10 +3373,15 @@
   els.rerunCancelBtn?.addEventListener("click", cancelRerun);
   els.rerunConfirmBtn?.addEventListener("click", () => confirmRerun().catch(() => controls()));
   els.rerunConfirmDialog?.addEventListener("cancel", (event) => { event.preventDefault(); cancelRerun(); });
+  els.queueRemoveCancelBtn?.addEventListener("click", closeQueueRemoveDialog);
+  els.queueRemoveConfirmBtn?.addEventListener("click", () => confirmQueueRemoval().catch(() => controls()));
+  els.queueRemoveDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeQueueRemoveDialog(); });
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFromRunTabBtn?.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
   els.runSelectedBtn?.addEventListener("click", () => run("selected"));
+  els.selectAllQueueBtn?.addEventListener("click", selectAllQueueJobs);
+  els.clearQueueSelectionBtn?.addEventListener("click", clearQueueSelection);
   els.stopBtn.addEventListener("click", stop);
   els.pauseResumeBtn?.addEventListener("click", togglePause);
   els.clearLogsBtn.addEventListener("click", () => { els.logList.textContent = ""; });
@@ -2889,7 +3390,7 @@
   els.loadNewWorkbookBtn.addEventListener("click", () => { showScreen("setupScreen"); els.workbookInput.click(); });
   els.openOutputFolderBtn.addEventListener("click", openOutputFolder);
   document.querySelectorAll(".workflow-tab").forEach((tab) => tab.addEventListener("click", () => showScreen(tab.dataset.screen)));
-  renderOutput(); renderRuntime(); renderOutputScreen(); controls(); restoreUiZoom().catch(() => applyUiZoom(1)); initRunWidthSplitter().catch(() => {}); syncZoomState().catch(() => {});
+  renderOutput(); renderRuntime(); renderOutputGlossary(); renderOutputScreen(); controls(); restoreUiZoom().catch(() => applyUiZoom(1)); initRunWidthSplitter().catch(() => {}); syncZoomState().catch(() => {});
 
   (typeof window !== "undefined" ? window : globalThis).DacChatZoom = {
     isChatGPTUrl,

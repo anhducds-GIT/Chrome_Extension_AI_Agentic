@@ -68,6 +68,59 @@ function createNode(tag, namespaceURI) {
   };
 }
 
+const decodeXmlEntities = (text) => text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+const SELF_CLOSING_TAG = /^<([:\w.-]+)((?:\s+[:\w.-]+="[^"]*")*)\s*\/>/;
+const OPEN_TAG = /^<([:\w.-]+)((?:\s+[:\w.-]+="[^"]*")*)\s*>/;
+const ATTR_PAIR = /([:\w.-]+)="([^"]*)"/g;
+
+function readAttrs(attrText) {
+  const attrs = [];
+  let match;
+  ATTR_PAIR.lastIndex = 0;
+  while ((match = ATTR_PAIR.exec(attrText))) attrs.push([match[1], decodeXmlEntities(match[2])]);
+  return attrs;
+}
+
+// A small, non-general-purpose XML parser: it only has to handle the exact
+// subset xlsx-codec.js produces and consumes (no CDATA, no comments, no
+// nested default-namespace redeclarations), the same scope-limited spirit as
+// the fake DOM above. Node has no built-in DOMParser, and this project
+// deliberately stays dependency-free even in its tests.
+export function parseXmlDocument(text) {
+  let i = (/^\s*<\?xml[^?]*\?>\s*/.exec(text) || [""])[0].length;
+  function parseNode() {
+    const selfClosing = SELF_CLOSING_TAG.exec(text.slice(i));
+    if (selfClosing) {
+      i += selfClosing[0].length;
+      const node = createNode(selfClosing[1], null);
+      for (const [key, value] of readAttrs(selfClosing[2])) node.setAttribute(key, value);
+      return node;
+    }
+    const open = OPEN_TAG.exec(text.slice(i));
+    if (!open) throw new Error(`parseXmlDocument: expected a tag at ${i}: ${text.slice(i, i + 40)}`);
+    i += open[0].length;
+    const [, tagName, attrText] = open;
+    const node = createNode(tagName, null);
+    for (const [key, value] of readAttrs(attrText)) node.setAttribute(key, value);
+    const closeTag = `</${tagName}>`;
+    while (!text.startsWith(closeTag, i)) {
+      if (text[i] === "<") { node.appendChild(parseNode()); continue; }
+      const nextLt = text.indexOf("<", i);
+      const raw = nextLt === -1 ? text.slice(i) : text.slice(i, nextLt);
+      node.ownText += decodeXmlEntities(raw);
+      i = nextLt === -1 ? text.length : nextLt;
+    }
+    i += closeTag.length;
+    return node;
+  }
+  const root = parseNode();
+  return { documentElement: root, getElementsByTagNameNS: (ns, name) => root.getElementsByTagNameNS(ns, name), createElementNS: (ns, tag) => createNode(tag, ns) };
+}
+
+export class FakeDOMParser {
+  parseFromString(text) { return parseXmlDocument(text); }
+}
+
 export function createDocument(rootTag, namespaceURI = "http://schemas.openxmlformats.org/spreadsheetml/2006/main") {
   const root = createNode(rootTag, namespaceURI);
   const document = {

@@ -42,6 +42,7 @@
     CHATGPT_COMPOSER_UNAVAILABLE: { label: "Không thấy ô nhập của ChatGPT", guidance: "Mở một cuộc hội thoại bình thường có ô nhập, rồi kiểm tra lại." },
     CHATGPT_BUSY: { label: "ChatGPT đang bận", guidance: "Đợi ChatGPT sinh xong nội dung hiện tại, rồi kiểm tra lại." },
     CHATGPT_SECURITY_BLOCKER: { label: "ChatGPT đang chặn vì bảo mật", guidance: "Xử lý cảnh báo bảo mật (CAPTCHA, xác minh) ngay trên trang ChatGPT. Hệ thống sẽ không tự vượt qua." },
+    CHATGPT_GENERATION_LIMIT: { label: "ChatGPT đã hết lượt tạo ảnh hôm nay", guidance: "Dừng lại để không gửi thêm prompt vô ích. Đợi giới hạn được reset (thường sau vài giờ) hoặc nâng gói, rồi Check Plan lại." },
 
     // --- Resume / checkpoint ------------------------------------------------
     RESUME_LEDGER_INVALID: { label: "File Result XLSX không dùng được", guidance: "Chọn đúng file Result XLSX gốc của lần chạy đó, không dùng bản chỉnh tay." },

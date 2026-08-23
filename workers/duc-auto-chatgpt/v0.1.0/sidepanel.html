@@ -18,7 +18,10 @@
         </div>
       </div>
       <div class="header-meta">
-        <span id="statusChip" class="chip idle">IDLE</span>
+        <span class="status-notice" role="status" aria-live="polite">
+          <span id="statusChip" class="chip idle">IDLE</span>
+          <span id="statusChipTranslation" class="notice-translation status-translation" lang="vi">Đang chờ</span>
+        </span>
         <button id="helpBtn" class="help-btn" type="button" aria-label="Hướng dẫn vận hành">?</button>
         <div class="zoom-group" id="chatZoomControl" title="ChatGPT Zoom">
           <span class="zoom-label">CHAT ZOOM</span>
@@ -50,6 +53,17 @@
          1. SETUP SCREEN
          ========================================================================= -->
     <section id="setupScreen" class="workflow-screen active">
+      <!-- QUICK PROMPT: one prompt in, one image out, no Excel required -->
+      <section class="card setup-group" id="quickPromptCard">
+        <div class="row spread section-title">
+          <strong>NHẬP PROMPT NHANH <span class="info-icon" tabindex="0" title="Nhập 1 hoặc nhiều prompt — mỗi prompt cách nhau bằng MỘT DÒNG TRỐNG. Bấm &quot;Kiểm tra &amp; thêm vào hàng đợi&quot; để biến mỗi prompt thành 1 job, hiện ra ở tab RUN — bước này CHƯA chạy gì cả. Muốn chạy thật thì sang tab RUN, bấm &quot;Chạy job đã chọn&quot; hoặc &quot;START RUN&quot;.">ⓘ</span></strong>
+          <span id="quickPromptSessionText" class="muted">Chưa có phiên nào</span>
+        </div>
+        <textarea id="quickPromptInput" class="quick-prompt-textarea" rows="3" placeholder="Nhập 1 hoặc nhiều prompt, mỗi prompt cách nhau 1 dòng trống…"></textarea>
+        <button id="quickPromptCheckBtn" class="primary dominant-btn" type="button">✓ Kiểm tra &amp; thêm vào hàng đợi</button>
+        <p id="quickPromptStatus" class="hint" aria-live="polite">Chỉ thêm job vào hàng đợi — chưa chạy. Sang tab RUN để xem từng job và bấm chạy khi bạn sẵn sàng.</p>
+      </section>
+
       <!-- 1. SOURCE: WORKBOOK & REFERENCES -->
       <section class="card setup-group" id="workbookCard">
         <div class="row spread section-title">
@@ -209,7 +223,10 @@
         <section class="card runtime-card" id="overallProgressCard">
           <div class="row spread section-title">
             <span class="section-badge">PROGRESS</span>
-            <span id="progressPercent" class="percent-badge">0%</span>
+            <span class="halt-guide-trigger-group">
+              <button id="haltInstructionsBtn" class="halt-instructions-trigger" type="button" aria-haspopup="dialog">ⓘ Halt</button>
+              <span id="progressPercent" class="percent-badge">0%</span>
+            </span>
           </div>
           <div class="progress-header row spread">
             <div id="progressRatio" class="progress-ratio">0 / 0 completed</div>
@@ -232,8 +249,21 @@
               <span class="halted-badge">⚠ RUN HALTED</span>
               <span id="haltedTime" class="halted-time">—</span>
             </div>
-            <div id="haltedReason" class="halted-reason">Run halted.</div>
-            <div id="haltedJob" class="halted-stopped-at">Stopped at: —</div>
+            <div class="halted-summary-row">
+              <code id="haltedReason" class="halted-reason">HALT_UNKNOWN</code>
+              <span id="haltedRetry" class="halted-retry">Tự động thử lại: —</span>
+            </div>
+            <div id="haltedJob" class="halted-stopped-at">Dừng tại: —</div>
+            <div class="halted-guidance">
+              <div class="halted-guidance-label">Vì sao dừng</div>
+              <p id="haltedCause" class="halted-guidance-text">Extension đã dừng để bảo vệ lần chạy.</p>
+              <div id="haltedDetailRow">
+                <div class="halted-guidance-label">Chi tiết ghi nhận</div>
+                <p id="haltedDetail" class="halted-guidance-text halted-technical-detail">—</p>
+              </div>
+              <div class="halted-guidance-label">Cách xử lý</div>
+              <p id="haltedAction" class="halted-guidance-text halted-action-text">Giữ nguyên tab ChatGPT và kiểm tra trạng thái job trước khi chạy lại.</p>
+            </div>
           </div>
           <div class="row spread current-job-top">
             <span class="section-badge">CURRENT JOB</span>
@@ -312,8 +342,13 @@
           <span id="queueSummary" class="muted">0 jobs</span>
         </div>
         <ol id="queueList" class="queue-list"></ol>
-        <div class="row gap-sm">
+        <div class="queue-footer-actions">
           <button id="viewQueueBtn" class="link-button" type="button">View full queue</button>
+          <span class="queue-bulk-actions" aria-label="Chọn nhanh các job trong Queue">
+            <button id="selectAllQueueBtn" class="link-button" type="button">Tick tất cả</button>
+            <button id="clearQueueSelectionBtn" class="link-button" type="button">Bỏ tick tất cả</button>
+          </span>
+          <span class="queue-drag-help">⠿ Kéo để sắp xếp</span>
           <button id="runSelectedBtn" class="secondary small" disabled type="button">▶ Chạy job đã chọn</button>
         </div>
       </section>
@@ -330,7 +365,7 @@
       <!-- RUN CONTROLS -->
       <section class="controls run-dashboard-controls">
         <button id="runFromRunTabBtn" class="primary dominant-btn" disabled type="button">▶ START RUN</button>
-        <button id="pauseResumeBtn" class="secondary" disabled type="button">⏸ Tạm dừng</button>
+        <button id="pauseResumeBtn" class="secondary" disabled type="button" title="Giữ đúng phiên chạy hiện tại — job đang chạy vẫn hoàn tất bình thường, chỉ job kế tiếp phải chờ. Bấm lại nút này (giờ hiện &quot;Tiếp tục&quot;) để chạy tiếp. Không đóng side panel / tải lại trang khi đang tạm dừng — tiến trình chỉ được lưu file khi cả lượt chạy kết thúc, giống Stop.">⏸ Tạm dừng</button>
         <button id="stopBtn" class="danger" disabled type="button">Stop Run</button>
       </section>
     </section>
@@ -344,10 +379,21 @@
         <div class="completion-hero">
           <div class="completion-icon" id="completionIcon">✓</div>
           <div class="completion-title" id="completionTitle">RUN COMPLETE</div>
+          <div id="completionTranslation" class="notice-translation completion-translation" lang="vi">Lần chạy đã hoàn tất</div>
           <div id="outputSummaryText" class="completion-ratio">0 / 0 completed</div>
           <div id="failedJobsText" class="completion-failed"></div>
+          <div id="failedJobsTranslation" class="notice-translation completion-detail-translation" lang="vi"></div>
         </div>
       </section>
+
+      <!-- Dedicated, contextual definitions for the terms shown on OUTPUT. -->
+      <details class="card output-concepts-card" id="outputConceptsCard">
+        <summary class="row spread section-title">
+          <strong>OUTPUT CONCEPTS</strong>
+          <span class="muted" lang="vi">Khái niệm riêng của tab Output</span>
+        </summary>
+        <div id="outputGlossary" class="output-glossary"></div>
+      </details>
 
       <!-- RESULTS LIST -->
       <section class="card">
@@ -398,9 +444,33 @@
     <div class="row spread"><strong>Hướng dẫn vận hành</strong><button id="closeHelpBtn" class="secondary small" type="button">Đóng</button></div>
     <div id="helpGlossary" class="help-glossary"></div>
   </aside>
-  <dialog id="checkpointCollisionDialog" class="recreate-confirm-dialog" aria-labelledby="checkpointCollisionTitle">
-    <h2 id="checkpointCollisionTitle">Hai file checkpoint trùng số phiên bản</h2>
-    <p>Chọn file cần <strong>GIỮ</strong>. File còn lại được đổi tên thêm đuôi <code>__superseded</code> — không xoá, không mất dữ liệu, đổi lại tên cũ là dùng được ngay.</p>
+  <!-- Bilingual dialog contract: English is primary; every operator dialog
+       includes a smaller Vietnamese notice-translation. The static test
+       enumerates every dialog so future pop-ups cannot silently skip it. -->
+  <dialog id="haltInstructionsDialog" class="recreate-confirm-dialog halt-instructions-dialog bilingual-dialog" aria-labelledby="haltInstructionsTitle">
+    <div class="row spread halt-instructions-heading">
+      <h2 id="haltInstructionsTitle">Halt instructions<span class="notice-translation" lang="vi">Hướng dẫn khi hệ thống dừng bảo vệ</span></h2>
+      <span id="haltInstructionsCount" class="halt-count-badge">10 nhóm</span>
+    </div>
+    <p><strong>Halt</strong> is a protective stop: the extension will not move to the next job when the current state could cause a duplicate submission, lost output, or a safety violation.</p>
+    <p class="notice-translation" lang="vi"><strong>Halt</strong> là dừng bảo vệ: extension không chuyển sang job kế tiếp khi trạng thái hiện tại có thể gây gửi trùng, mất output hoặc vi phạm điều kiện an toàn.</p>
+    <div id="haltInstructionsList" class="halt-instructions-list"></div>
+    <section class="halt-special-status" aria-label="Trạng thái artifact riêng">
+      <h3>Status that may appear with Halt<span class="notice-translation" lang="vi">Trạng thái có thể xuất hiện cùng Halt</span></h3>
+      <div id="haltSpecialStatus"></div>
+    </section>
+    <section class="halt-not-halt" aria-label="Các mã không phải nguyên nhân Halt">
+      <h3>Not a cause of Halt<span class="notice-translation" lang="vi">Không phải nguyên nhân Halt</span></h3>
+      <div id="haltNonHaltList"></div>
+    </section>
+    <div class="row end gap-sm">
+      <button id="haltInstructionsCloseBtn" class="primary" type="button">Đóng</button>
+    </div>
+  </dialog>
+  <dialog id="checkpointCollisionDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="checkpointCollisionTitle">
+    <h2 id="checkpointCollisionTitle">Duplicate checkpoint version<span class="notice-translation" lang="vi">Hai file checkpoint trùng số phiên bản</span></h2>
+    <p>Select the file to <strong>KEEP</strong>. The other file will be renamed with <code>__superseded</code>; it is not deleted and can be restored by changing its name back.</p>
+    <p class="notice-translation" lang="vi">Chọn file cần <strong>GIỮ</strong>. File còn lại được đổi tên thêm đuôi <code>__superseded</code> — không xoá, không mất dữ liệu, đổi lại tên cũ là dùng được ngay.</p>
     <div id="checkpointCollisionList" class="collision-list"></div>
     <label class="collision-suffix">Đặt tên file còn lại
       <select id="checkpointCollisionSuffix">
@@ -409,46 +479,51 @@
       </select>
     </label>
     <p id="checkpointCollisionStatus" class="muted" aria-live="polite"></p>
+    <p id="checkpointCollisionStatusVi" class="notice-translation" lang="vi"></p>
     <div class="row end gap-sm">
       <button id="checkpointCollisionCancelBtn" class="secondary" type="button">Huỷ</button>
       <button id="checkpointCollisionConfirmBtn" class="primary" type="button" disabled>Giữ file đã chọn</button>
     </div>
   </dialog>
 
-  <dialog id="folderPickDialog" class="recreate-confirm-dialog" aria-labelledby="folderPickTitle">
-    <h2 id="folderPickTitle">Choose the output folder</h2>
+  <dialog id="folderPickDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="folderPickTitle">
+    <h2><span id="folderPickTitle">Choose the output folder</span><span id="folderPickTitleVi" class="notice-translation" lang="vi">Chọn thư mục lưu output</span></h2>
     <p>Chrome's folder picker cannot be pre-filled. Copy this path, then paste it into the picker's address bar.</p>
+    <p class="notice-translation" lang="vi">Chrome không thể tự điền sẵn thư mục. Hãy sao chép đường dẫn này rồi dán vào thanh địa chỉ của hộp chọn thư mục.</p>
     <div class="folder-pick-path">
       <output id="folderPickPath">—</output>
       <button id="folderPickCopyBtn" class="secondary setup-action" type="button">Copy path</button>
     </div>
     <p id="folderPickStatus" class="muted" aria-live="polite"></p>
+    <p id="folderPickStatusVi" class="notice-translation" lang="vi"></p>
     <div class="row end gap-sm">
       <button id="folderPickCancelBtn" class="secondary" type="button">Cancel</button>
       <button id="folderPickOpenBtn" class="primary" type="button">Open folder picker</button>
     </div>
   </dialog>
 
-  <dialog id="recreateConfirmDialog" class="recreate-confirm-dialog" aria-labelledby="recreateConfirmTitle">
-    <h2 id="recreateConfirmTitle">Image is not saved</h2>
+  <dialog id="recreateConfirmDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="recreateConfirmTitle">
+    <h2><span id="recreateConfirmTitle">Image is not saved</span><span id="recreateConfirmTitleVi" class="notice-translation" lang="vi">Ảnh chưa được lưu và xác minh</span></h2>
     <p id="recreateConfirmMessage">This job has no verified saved image. Create it again? This sends one new request and may produce a duplicate image.</p>
+    <p id="recreateConfirmMessageVi" class="notice-translation" lang="vi">Job này chưa có ảnh đã lưu được xác minh. Tạo lại sẽ gửi một yêu cầu mới và có thể tạo ảnh trùng.</p>
     <div class="row end gap-sm">
       <button id="recreateCancelBtn" class="secondary" type="button">Cancel</button>
       <button id="recreateConfirmBtn" class="primary" type="button">Recreate image</button>
     </div>
   </dialog>
-  <dialog id="rerunConfirmDialog" class="recreate-confirm-dialog" aria-labelledby="rerunConfirmTitle">
-    <h2 id="rerunConfirmTitle">Chạy lại job?</h2>
-    <p id="rerunConfirmMessage">Job này đã có ảnh đã lưu. Chạy lại sẽ gửi một yêu cầu mới và tạo một ảnh khác.</p>
-    <p class="collision-suffix">Ảnh cũ sẽ như thế nào?</p>
+  <dialog id="rerunConfirmDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="rerunConfirmTitle">
+    <h2><span id="rerunConfirmTitle">Run this job again?</span><span id="rerunConfirmTitleVi" class="notice-translation" lang="vi">Chạy lại job này?</span></h2>
+    <p id="rerunConfirmMessage">This job already has a verified saved image. Running it again sends a new request and creates another image.</p>
+    <p id="rerunConfirmMessageVi" class="notice-translation" lang="vi">Job này đã có ảnh được lưu và xác minh. Chạy lại sẽ gửi một yêu cầu mới và tạo một ảnh khác.</p>
+    <p class="collision-suffix">What happens to the old image?<span class="notice-translation" lang="vi">Ảnh cũ sẽ như thế nào?</span></p>
     <div class="collision-list">
       <label class="collision-option">
         <input type="radio" name="rerunCollisionPolicy" id="rerunKeepPolicyRadio" value="uniquify" checked>
-        <span>Giữ ảnh cũ — ảnh mới lưu thành file riêng (khuyến nghị)</span>
+        <span>Keep the old image — save the new image as a separate file<span class="notice-translation" lang="vi">Giữ ảnh cũ — ảnh mới lưu thành file riêng (khuyến nghị)</span></span>
       </label>
       <label class="collision-option">
         <input type="radio" name="rerunCollisionPolicy" id="rerunOverwritePolicyRadio" value="overwrite">
-        <span>Đè hẳn lên ảnh cũ — ảnh cũ sẽ mất</span>
+        <span>Overwrite the old image — the old image will be lost<span class="notice-translation" lang="vi">Đè hẳn lên ảnh cũ — ảnh cũ sẽ mất</span></span>
       </label>
     </div>
     <div class="row end gap-sm">
@@ -456,9 +531,19 @@
       <button id="rerunConfirmBtn" class="primary" type="button">Chạy lại</button>
     </div>
   </dialog>
-  <dialog id="auditGapConfirmDialog" class="recreate-confirm-dialog" aria-labelledby="auditGapConfirmTitle">
-    <h2 id="auditGapConfirmTitle">Start a new audit segment?</h2>
+  <dialog id="queueRemoveDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="queueRemoveTitle">
+    <h2 id="queueRemoveTitle">Remove job from Queue?<span class="notice-translation" lang="vi">Bỏ job khỏi Queue?</span></h2>
+    <p id="queueRemoveMessage">This job will no longer run. Its row remains in Result XLSX to preserve history.</p>
+    <p id="queueRemoveMessageVi" class="notice-translation" lang="vi">Job này sẽ không còn được chạy. Dòng dữ liệu vẫn được giữ trong Result XLSX để bảo toàn lịch sử.</p>
+    <div class="row end gap-sm">
+      <button id="queueRemoveCancelBtn" class="secondary" type="button">Huỷ</button>
+      <button id="queueRemoveConfirmBtn" class="danger queue-remove-confirm" type="button">Bỏ khỏi Queue</button>
+    </div>
+  </dialog>
+  <dialog id="auditGapConfirmDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="auditGapConfirmTitle">
+    <h2 id="auditGapConfirmTitle">Start a new audit segment?<span class="notice-translation" lang="vi">Bắt đầu một đoạn audit mới?</span></h2>
     <p>The previous technical audit file is unavailable. Result XLSX remains authoritative. This creates an explicit continuity gap; historical audit data will not be fabricated.</p>
+    <p class="notice-translation" lang="vi">Không tìm thấy file audit kỹ thuật trước đó. Result XLSX vẫn là nguồn có thẩm quyền. Thao tác này tạo một khoảng trống liên tục được ghi nhận rõ; dữ liệu audit lịch sử sẽ không bị dựng lại.</p>
     <div class="row end gap-sm">
       <button id="auditGapCancelBtn" class="secondary" type="button">Cancel</button>
       <button id="auditGapConfirmBtn" class="primary" type="button">Continue with new audit segment</button>
@@ -480,6 +565,7 @@
   <script src="orchestrator-review-core.js"></script>
   <script src="operator-glossary-core.js"></script>
   <script src="operator-messages-core.js"></script>
+  <script src="halt-instructions-core.js"></script>
   <script src="sidepanel-ui-semantics.js"></script>
   <script src="sidepanel.js"></script>
 </body>

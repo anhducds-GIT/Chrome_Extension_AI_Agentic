@@ -24,7 +24,9 @@
 
   function analyze({ workbook, files = [], overrides = {}, outputCheck, chatCheck, runner, output, configFindings = [], outputProfileState = null }) {
     const findings = [...configFindings];
-    const validJobs = Array.isArray(workbook?.jobs) ? workbook.jobs.filter(Boolean) : [];
+    const physicalJobs = Array.isArray(workbook?.jobs) ? workbook.jobs.filter(Boolean) : [];
+    const xlsx = globalThis.DacXlsx || globalThis.window?.DacXlsx;
+    const validJobs = xlsx?.activeJobs ? xlsx.activeJobs(physicalJobs) : physicalJobs.filter((job) => !/^(true|1|yes)$/i.test(String(job?.queue_removed || "").trim()));
     if (!workbook) {
       findings.push(makeFinding("WORKBOOK_NOT_LOADED", "BLOCKER", "workbook", {
         message: "No workbook loaded.", guidance: "Load a valid XLSX plan first.", action: "Load workbook"

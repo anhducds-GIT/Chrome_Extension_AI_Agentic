@@ -133,9 +133,13 @@
     const row = document.createElementNS(document.documentElement.namespaceURI, "row"); row.setAttribute("r", String(rowNumber)); sheetData.appendChild(row); return row;
   }
 
-  async function open(file) {
-    if (!file || !/\.xlsx$/i.test(file.name)) throw new Error("Select one .xlsx workbook.");
-    const entries = await unzip(await file.arrayBuffer());
+  // Shared by open() (an uploaded, possibly-compressed file) and
+  // createWorkbook() (freshly generated, always-uncompressed parts): both end
+  // up with a plain entries Map of part name -> raw XML bytes, and from that
+  // point the parsing rules -- sheet/rels resolution, required columns,
+  // shared strings -- must be identical so a quick-prompt session and an
+  // imported workbook behave the same way to every other module.
+  function parseWorkbook(fileName, entries) {
     const workbook = xml(entries.get("xl/workbook.xml"));
     const relations = xml(entries.get("xl/_rels/workbook.xml.rels"));
     const relationshipMap = new Map(Array.from(relations.getElementsByTagNameNS("*", "Relationship")).map((item) => [item.getAttribute("Id"), item.getAttribute("Target")]));
@@ -169,7 +173,65 @@
       const configRows = configSheet.rows;
       for (const row of configRows.slice(1)) { const [key, value] = rowValues(row, shared); if (key) config[normaliseHeader(key)] = value; }
     }
-    return { fileName: file.name, entries, sheets, shared, jobsSheet, jobsPath, headers, jobs, config, configSheet, configPath };
+    return { fileName, entries, sheets, shared, jobsSheet, jobsPath, headers, jobs, config, configSheet, configPath };
+  }
+
+  async function open(file) {
+    if (!file || !/\.xlsx$/i.test(file.name)) throw new Error("Select one .xlsx workbook.");
+    const entries = await unzip(await file.arrayBuffer());
+    return parseWorkbook(file.name, entries);
+  }
+
+  function minimalWorksheetXml(rows) {
+    const body = rows.map((cells, rowIndex) => {
+      const cellsXml = cells.map((value, colIndex) => `<c r="${columnName(colIndex)}${rowIndex + 1}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`).join("");
+      return `<row r="${rowIndex + 1}">${cellsXml}</row>`;
+    }).join("");
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${body}</sheetData></worksheet>`;
+  }
+
+  // Builds a from-scratch, valid XLSX (no uploaded file involved) so a "quick
+  // prompt" session can start without ever asking the operator to author an
+  // Excel workbook. The parts mirror exactly what a real exported file
+  // contains (same two sheets, same inlineStr cell shape) so parseWorkbook(),
+  // updateJob(), updateConfigSnapshot() and downloadBlob() all work on it with
+  // no special-casing -- to every other module this is indistinguishable
+  // from a workbook the operator opened from disk.
+  function createWorkbook(fileName, jobs) {
+    if (!Array.isArray(jobs) || !jobs.length) throw new Error("At least one job is required to start a quick-prompt session.");
+    const jobRows = [["id", "prompt"], ...jobs.map((job) => [String(job.id ?? ""), String(job.prompt ?? "")])];
+    const entries = new Map([
+      ["[Content_Types].xml", encoder.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>')],
+      ["_rels/.rels", encoder.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')],
+      ["xl/workbook.xml", encoder.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="jobs" sheetId="1" r:id="rId1"/><sheet name="config" sheetId="2" r:id="rId2"/></sheets></workbook>')],
+      ["xl/_rels/workbook.xml.rels", encoder.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/></Relationships>')],
+      ["xl/worksheets/sheet1.xml", encoder.encode(minimalWorksheetXml(jobRows))],
+      ["xl/worksheets/sheet2.xml", encoder.encode(minimalWorksheetXml([["key", "value"]]))]
+    ]);
+    return parseWorkbook(fileName, entries);
+  }
+
+  // Appends one new job row to an already-open workbook (used to keep adding
+  // "OK, render" prompts into the same session ledger rather than starting a
+  // new file every time). Mirrors updateJob()'s header-growing behaviour for
+  // any columns beyond id/prompt, and returns the new in-memory job object so
+  // the caller can select and run it immediately.
+  function addJob(workbook, values) {
+    const { document, rows } = workbook.jobsSheet;
+    const sheetData = document.getElementsByTagNameNS("*", "sheetData")[0];
+    const nextRowNumber = rows.reduce((largest, row) => Math.max(largest, Number(row.getAttribute("r")) || 0), 0) + 1;
+    const row = addRow(document, sheetData, nextRowNumber);
+    for (const [key, value] of Object.entries(values)) {
+      let index = workbook.headers.indexOf(key);
+      if (index < 0) { index = workbook.headers.length; workbook.headers.push(key); setCell(document, rows[0], index, key); }
+      setCell(document, row, index, value);
+    }
+    rows.push(row);
+    const job = { _row: row };
+    workbook.headers.forEach((name) => { if (name) job[name] = Object.hasOwn(values, name) ? String(values[name]) : ""; });
+    workbook.jobs.push(job);
+    workbook.entries.set(workbook.jobsPath, encoder.encode(new XMLSerializer().serializeToString(document)));
+    return job;
   }
 
   function updateJob(workbook, job, values) {
@@ -183,6 +245,62 @@
       setCell(document, job._row, index, value);
     }
     workbook.entries.set(workbook.jobsPath, encoder.encode(new XMLSerializer().serializeToString(document)));
+  }
+
+  function queueFlag(value) {
+    return value === true || /^(true|1|yes)$/i.test(String(value ?? "").trim());
+  }
+
+  // Queue editing is deliberately metadata-only. Physical worksheet rows are
+  // never deleted or shuffled: an exported Result XLSX therefore keeps the
+  // complete ledger, while the runner consumes this filtered logical view.
+  function activeJobs(workbookOrJobs) {
+    const jobs = Array.isArray(workbookOrJobs) ? workbookOrJobs : (workbookOrJobs?.jobs || []);
+    return jobs
+      .map((job, physicalIndex) => {
+        const requested = Number(job.queue_position);
+        const position = Number.isInteger(requested) && requested > 0 ? requested : Number.MAX_SAFE_INTEGER;
+        return { job, physicalIndex, position };
+      })
+      .filter(({ job }) => !queueFlag(job.queue_removed))
+      .sort((left, right) => left.position - right.position || left.physicalIndex - right.physicalIndex)
+      .map(({ job }) => job);
+  }
+
+  function writeQueueFields(workbook, job, values) {
+    updateJob(workbook, job, values);
+    for (const [key, value] of Object.entries(values)) job[key] = String(value ?? "");
+    return job;
+  }
+
+  function setQueueOrder(workbook, orderedJobs) {
+    const current = activeJobs(workbook);
+    if (orderedJobs.length !== current.length) throw new Error("Queue order must contain every active job exactly once.");
+    const expected = new Set(current);
+    if (new Set(orderedJobs).size !== orderedJobs.length || orderedJobs.some((job) => !expected.has(job))) {
+      throw new Error("Queue order contains an unknown or duplicate job.");
+    }
+    orderedJobs.forEach((job, index) => writeQueueFields(workbook, job, { queue_position: index + 1, queue_removed: "false" }));
+    return orderedJobs;
+  }
+
+  function placeQueueJob(workbook, sourceJob, targetJob, placement = "before") {
+    if (!new Set(["before", "after"]).has(placement)) throw new Error("Queue placement must be before or after.");
+    const ordered = activeJobs(workbook);
+    if (!ordered.includes(sourceJob) || !ordered.includes(targetJob)) throw new Error("Cannot reorder an unknown Queue job.");
+    if (sourceJob === targetJob) return ordered;
+    ordered.splice(ordered.indexOf(sourceJob), 1);
+    const targetIndex = ordered.indexOf(targetJob);
+    ordered.splice(placement === "after" ? targetIndex + 1 : targetIndex, 0, sourceJob);
+    return setQueueOrder(workbook, ordered);
+  }
+
+  function removeFromQueue(workbook, job, removedAt = new Date().toISOString()) {
+    if (!workbook?.jobs?.includes(job)) throw new Error("Cannot remove an unknown job from Queue.");
+    writeQueueFields(workbook, job, { queue_removed: "true", queue_removed_at: removedAt, queue_position: "" });
+    const remaining = activeJobs(workbook);
+    setQueueOrder(workbook, remaining);
+    return remaining;
   }
 
   function updateConfigSnapshot(workbook, values) {
@@ -217,5 +335,5 @@
     return true;
   }
 
-  window.DacXlsx = { open, updateJob, updateConfigSnapshot, downloadBlob: (workbook) => zip(workbook.entries), normaliseHeader, escapeXml };
+  window.DacXlsx = { open, createWorkbook, addJob, updateJob, activeJobs, setQueueOrder, placeQueueJob, removeFromQueue, updateConfigSnapshot, downloadBlob: (workbook) => zip(workbook.entries), normaliseHeader, escapeXml };
 })();

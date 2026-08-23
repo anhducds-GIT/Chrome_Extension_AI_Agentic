@@ -50,7 +50,7 @@ assert.equal(runner.classifyFailure("Timed out waiting for ChatGPT", "OUTPUT_SAV
 assert.equal(runner.classifyFailure("HARD_STOP: ChatGPT security/interstitial blocker detected."), "SECURITY_HARD_STOP");
 const retryItem = { phase: "PRE_SUBMIT", retry_count: 0, settings: { max_retries: 2, safety_cooldown_sec: 1 } };
 assert.equal(runner.canRetry(retryItem, "TIMEOUT_PRE_SUBMIT"), true);
-assert.equal(runner.canRetry({ ...retryItem, phase: "SUBMITTED" }, "TIMEOUT_AFTER_SUBMIT"), false, "post-submit failure can never trigger automatic resend");
+assert.equal(runner.canRetry({ ...retryItem, phase: "SUBMITTED" }, "TIMEOUT_AFTER_SUBMIT"), true, "post-submit failure auto-retries too -- only the three hard stops (SECURITY_HARD_STOP, GENERATION_LIMIT_REACHED, RECEIVER_LOST) never retry");
 retryItem.retry_count = 2;
 assert.equal(runner.canRetry(retryItem, "TIMEOUT_PRE_SUBMIT"), false, "max two retries means at most three attempts");
 assert.equal(runner.canRetry({ retry_count: 0, settings: { max_retries: 2 } }, "SECURITY_HARD_STOP"), false);

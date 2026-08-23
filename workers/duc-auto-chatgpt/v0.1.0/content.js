@@ -100,6 +100,26 @@
     return /(captcha|unusual activity|verify you are human|suspicious activity)/.test(text) ? "ChatGPT security/interstitial blocker detected." : null;
   }
 
+  // Free/paid image-generation quotas ("you've hit your daily limit") render
+  // as an ordinary assistant message, not an interstitial -- scanning the
+  // whole page like securityBlockerText() would catch the OPERATOR'S OWN
+  // PROMPT if it happened to contain these same common words (draw a picture
+  // about someone waiting for a daily limit to reset, etc). Scoped to only
+  // the specific assistant message under evaluation instead.
+  //
+  // NOTE for whoever validates this live: this phrase list is a best-effort
+  // starting set, not confirmed against a real rate-limited ChatGPT session
+  // -- OpenAI's exact wording is not something that can be verified without
+  // actually hitting the limit. If a real limit is hit and the batch does
+  // NOT halt here, capture the exact text ChatGPT showed and add it below,
+  // the same way the CAPTCHA phrase list above was built from real evidence.
+  function matchesGenerationLimit(text) {
+    return /(reached (?:your|the) (?:daily |monthly )?(?:image generation )?limit|hit (?:your|the) (?:daily |monthly )?(?:image generation )?limit|image generation limit|generate more images (?:after|later|tomorrow)|try again (?:after|tomorrow|in (?:a|\d))|come back (?:after|in|tomorrow) to (?:generate|create) (?:more )?images|daily limit for image generation|you.ve used all your (?:free )?image generations)/i.test(text || "");
+  }
+  function generationLimitText() {
+    return matchesGenerationLimit(latestAssistantText()) ? "ChatGPT image generation limit reached for now." : null;
+  }
+
   function assistantMessageText(message) {
     return message ? (message.innerText || message.textContent || "").trim() : "";
   }
@@ -285,6 +305,12 @@
       const resultMessage = newMessages.at(-1) || null;
       const text = assistantMessageText(resultMessage);
 
+      // Checked only once this attempt's own response has finished
+      // streaming (never mid-generation, where partial text could false-
+      // match) and only against the new message this attempt produced --
+      // not the whole page, so an unrelated older turn can't trigger it.
+      if (resultMessage && !stopButton && matchesGenerationLimit(text)) throw new Error("LIMIT_STOP: ChatGPT image generation limit reached for now.");
+
       // Evaluate on every poll, including while Stop is visible, so a timeout
       // can explain whether generation state or attribution rejected the image.
       if (expectImage) {
@@ -370,15 +396,17 @@
         const composer = findComposer();
         const sendButton = findSendButton(composer);
         const blocker = securityBlockerText();
-        const readiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(composer), sendUsable: sendUsable(composer, sendButton), generating: Boolean(findStopButton()), securityBlocker: blocker, attachmentPending: uploadIsPending(), outputVerified });
-        if (readiness === "HARD_STOP") throw new Error(`HARD_STOP: ${blocker}`);
+        const limitBlocker = generationLimitText();
+        const readiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(composer), sendUsable: sendUsable(composer, sendButton), generating: Boolean(findStopButton()), securityBlocker: blocker, generationLimitBlocker: limitBlocker, attachmentPending: uploadIsPending(), outputVerified });
+        if (readiness === "HARD_STOP") throw new Error(limitBlocker ? `LIMIT_STOP: ${limitBlocker}` : `HARD_STOP: ${blocker}`);
         if (readiness === "READY") {
           if (safetyCooldownSec > 0) await sleep(safetyCooldownSec * 1000);
           const finalComposer = findComposer();
           const finalSendButton = findSendButton(finalComposer);
           const finalBlocker = securityBlockerText();
-          const finalReadiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(finalComposer), sendUsable: sendUsable(finalComposer, finalSendButton), generating: Boolean(findStopButton()), securityBlocker: finalBlocker, attachmentPending: uploadIsPending(), outputVerified });
-          if (finalReadiness === "HARD_STOP") throw new Error(`HARD_STOP: ${finalBlocker}`);
+          const finalLimitBlocker = generationLimitText();
+          const finalReadiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(finalComposer), sendUsable: sendUsable(finalComposer, finalSendButton), generating: Boolean(findStopButton()), securityBlocker: finalBlocker, generationLimitBlocker: finalLimitBlocker, attachmentPending: uploadIsPending(), outputVerified });
+          if (finalReadiness === "HARD_STOP") throw new Error(finalLimitBlocker ? `LIMIT_STOP: ${finalLimitBlocker}` : `HARD_STOP: ${finalBlocker}`);
           if (finalReadiness === "READY") return { ok: true, state: "IDLE_READY", composerFound: true, sendUsable: sendUsable(finalComposer, finalSendButton) };
         }
         await Promise.race([new Promise((resolve) => { wake = resolve; }), sleep(300)]);
@@ -473,6 +501,7 @@
         assistantCount: assistantMessages().length,
         busy: STATE.busy,
         securityBlocker: securityBlockerText(),
+        generationLimitBlocker: generationLimitText(),
       });
       return false;
     }
