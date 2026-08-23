@@ -5,15 +5,15 @@
 - Owner: user
 - Executor: `/root`
 - Auditor: `/root/dag_acceptance_auditor`
-- Current state: `REVISION_LOOP_1_VERIFIED`
-- Current phase: `P7 — revision publication and independent re-audit`
+- Current state: `RE_AUDIT_READY`
+- Current phase: `P7 — independent re-audit on published revision`
 - Completed phases: `P0 contract`, `P1 baseline`, `P2 scaffold`, `P3 adapter/fixtures`, `P4 integration`, `P5 live DOM read-only`, `P6 full verification`
-- Pending phases: `P7 revision publication/re-audit`, `P8 closure handoff`
+- Pending phases: `P7 independent re-audit`, `P8 closure handoff`
 - Open blockers: none for 90%; live runtime remains owner pilot
 - Approved gates: continuous GREEN/YELLOW; direct main; exact-path commit/push
 - Forbidden: ChatGPT modifications, destructive cleanup, force operations, security bypass, store/account changes
-- Acceptance status: `Pass B REVISE; DAG-B-01 through DAG-B-08 addressed in revision loop 1; re-audit pending`
-- Next transition: exact-stage Gemini revision, commit/push, independent remote readback, then Pass B re-audit
+- Acceptance status: `Pass B REVISE; DAG-B-01 through DAG-B-08 addressed; revision implementation published at 723ffd720daf9d55e0f6396a1585d4f897e30d27; re-audit pending`
+- Next transition: publish this evidence closure, independently verify remote SHA, then complete Pass B re-audit
 
 ## Phase results
 
@@ -26,7 +26,7 @@
 | P4 | PASS | XLSX queue, 0/1/multi references, checkpoints, result/audit, collision-safe output |
 | P5 | PASS | live empty Images surface mapped; submit count 0; no file upload |
 | P6 | PASS | Revision verification: Gemini 14/14; repository 60/60 + observer; syntax/JSON/diff/secret scans PASS |
-| P7 | REVISE → LOOP 1 | Exact Images tab binding, response identity, durable attempts, response-container boundary, single-job UI, behavioral tests and least privilege implemented |
+| P7 | REVISE → LOOP 1 | Exact Images tab binding, response identity, durable attempts, response-container boundary, single-job UI, behavioral tests and least privilege implemented/pushed at `723ffd7` |
 
 ## 90% boundary
 
