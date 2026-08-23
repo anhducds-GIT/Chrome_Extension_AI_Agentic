@@ -8,7 +8,7 @@ for (const id of ["setupScreen", "runScreen", "outputScreen", "outputLocationCar
 assert.match(html, /SETUP/); assert.match(html, /RUN/); assert.match(html, /OUTPUT/);
 assert.match(html, /Download generated images/); assert.match(html, /Save Result XLSX/); assert.match(html, /Save Audit JSONL/);
 assert.match(html, /\{job_id\}, \{attempt\}, \{index\}/);
-assert.match(html, /Result checkpoint pattern/);
+assert.match(html, /Mẫu tên checkpoint kết quả/);
 assert.match(source, /scanProfileCheckpoints/);
 assert.match(source, /RESUME_LATEST_CHECKPOINT_INVALID/);
 assert.match(source, /CHECKPOINT_VERSION_CONFLICT/);

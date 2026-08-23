@@ -23,7 +23,14 @@
     const values = safeOutput(outputSettings, output);
     add("output", "Output destination", outputFindings.filter((finding) => finding.severity !== "OK"), outputSettings ? (diagnostics ? "OK" : "WARNING") : "BLOCKER", values ? output.locationLabel(values.image) : "Not selected");
     add("save_modes", "Save modes", [], values ? "OK" : outputSettings ? "WARNING" : "BLOCKER", values ? `images ${values.saveImages ? "on" : "off"} · XLSX ${values.saveResultXlsx ? "on" : "off"} · audit ${values.saveAuditJsonl ? "on" : "off"}` : "Check output configuration");
-    add("naming", "Naming", outputFindings.filter((finding) => /NAMING|FILENAME|PATTERN|OUTPUT_PREFLIGHT_FAILED/.test(finding.code)), values ? "OK" : outputSettings ? "WARNING" : "BLOCKER", values ? `${values.imagePattern} · ${values.collisionPolicy}` : "Check output configuration");
+    // collisionPolicy "overwrite" silently destroys the previous file for any
+    // job that runs again with the same name. That is a legitimate choice,
+    // but it previously read as plain "OK" text next to the pattern -- easy
+    // to miss, especially when it came from a workbook's own saved config
+    // rather than something the operator just picked. Surface it as a
+    // visible WARNING at Check Plan time instead of a quiet detail string.
+    const overwriteActive = values?.collisionPolicy === "overwrite";
+    add("naming", "Naming", outputFindings.filter((finding) => /NAMING|FILENAME|PATTERN|OUTPUT_PREFLIGHT_FAILED/.test(finding.code)), values ? (overwriteActive ? "WARNING" : "OK") : outputSettings ? "WARNING" : "BLOCKER", values ? `${values.imagePattern} · ${values.collisionPolicy}${overwriteActive ? " — sẽ ĐÈ LÊN file ảnh cũ trùng tên" : ""}` : "Check output configuration");
     const settingsFindings = findingsFor(diagnostics, (finding) => finding.scope === "settings");
     const effectiveSettings = prepared?.settings || settings;
     add("settings", "Run settings", settingsFindings.filter((finding) => finding.severity !== "OK"), effectiveSettings ? "OK" : workbook ? "WARNING" : "BLOCKER", effectiveSettings ? `timeout ${effectiveSettings.timeout_sec}s · retries ${effectiveSettings.max_retries} · cooldown ${effectiveSettings.safety_cooldown_sec}s` : "Check plan");

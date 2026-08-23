@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const DEFAULTS = { timeout_sec: 180, delay_min_sec: 3, delay_max_sec: 3, safety_cooldown_sec: 0, max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false };
+  const DEFAULTS = { timeout_sec: 180, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false };
   const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
   const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
   const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
@@ -23,17 +23,27 @@
     if (!Number.isInteger(number) || number < minimum || number > maximum) throw new Error(`Invalid ${key}; expected ${minimum}-${maximum}.`);
     return number;
   }
+  function wholeRange(value, fallback, minimum, maximum, key) {
+    const source = value === undefined || value === null || value === "" ? fallback : value;
+    const match = String(source).trim().match(/^(\d+)(?:\s*[-–]\s*(\d+))?$/);
+    if (!match) throw new Error(`Invalid ${key}; expected one integer or a range such as 6-9.`);
+    const min = Number(match[1]);
+    const max = Number(match[2] ?? match[1]);
+    if (!Number.isInteger(min) || !Number.isInteger(max) || min < minimum || max > maximum || min > max) throw new Error(`Invalid ${key}; expected ${minimum}-${maximum} with minimum not exceeding maximum.`);
+    return { min, max, value: min === max ? min : `${min}-${max}` };
+  }
   function config(raw = {}) {
     const timeout = whole(raw.timeout_sec, DEFAULTS.timeout_sec, 15, 900, "timeout_sec");
     const legacyDelay = raw.delay_sec === undefined || raw.delay_sec === "" ? null : whole(raw.delay_sec, null, 1, 120, "delay_sec");
     const min = whole(raw.delay_min_sec, legacyDelay ?? DEFAULTS.delay_min_sec, 1, 120, "delay_min_sec");
     const max = whole(raw.delay_max_sec, legacyDelay ?? DEFAULTS.delay_max_sec, 1, 120, "delay_max_sec");
     if (min > max) throw new Error("delay_min_sec must not exceed delay_max_sec.");
+    const cooldown = wholeRange(raw.safety_cooldown_sec, DEFAULTS.safety_cooldown_sec, 0, 120, "safety_cooldown_sec");
     const folder = String(raw.output_folder || DEFAULTS.output_folder).trim();
     if (!folder || /(^|[\\/])\.\.([\\/]|$)/.test(folder)) throw new Error("output_folder must be a safe relative folder name.");
     return {
       timeout_sec: timeout, delay_min_sec: min, delay_max_sec: max,
-      safety_cooldown_sec: whole(raw.safety_cooldown_sec, DEFAULTS.safety_cooldown_sec, 0, 120, "safety_cooldown_sec"),
+      safety_cooldown_sec: cooldown.value, safety_cooldown_min_sec: cooldown.min, safety_cooldown_max_sec: cooldown.max,
       max_retries: whole(raw.max_retries, DEFAULTS.max_retries, 0, 5, "max_retries"),
       continue_on_error: bool(raw.continue_on_error, true), output_folder: folder.replace(/[\\/]+/g, "/"),
       max_input_images: whole(raw.max_input_images, DEFAULTS.max_input_images, 0, 10, "max_input_images"),
@@ -112,7 +122,11 @@
     }
     return true;
   }
-  function retryCooldown(settings, retryCount) { return Math.min(30, Math.max(settings.safety_cooldown_sec, 1) * Math.max(1, retryCount)); }
+  function safetyCooldownSeconds(settings, random = Math.random) {
+    const range = wholeRange(settings?.safety_cooldown_sec, DEFAULTS.safety_cooldown_sec, 0, 120, "safety_cooldown_sec");
+    return range.min + Math.floor(random() * (range.max - range.min + 1));
+  }
+  function retryCooldown(settings, retryCount, random = Math.random) { return Math.min(30, Math.max(safetyCooldownSeconds(settings, random), 1) * Math.max(1, retryCount)); }
   function resultWorkbookName(name) { return `${String(name || "workbook.xlsx").replace(/\.xlsx$/i, "")}-result.xlsx`; }
   function delaySeconds(settings, random = Math.random) { return settings.delay_min_sec + Math.floor(random() * (settings.delay_max_sec - settings.delay_min_sec + 1)); }
   function countdownValues(seconds) { return Array.from({ length: Math.max(0, Number(seconds) || 0) }, (_unused, index) => seconds - index); }
@@ -143,12 +157,20 @@
     });
     return { settings, queue, plan: planSummary(queue, settings) };
   }
+  // selectedId accepts a single job id (legacy single-selection callers) or an
+  // array/Set of ids (multi-select "run these jobs" from the SETUP queue).
   function selectQueue(queue, mode, selectedId) {
     if (mode === "all") return queue.filter((item) => !item.skipped);
     if (mode === "pending") return queue.filter((item) => item.status === "PENDING" && !item.protected_checkpoint);
     if (mode === "failed") return queue.filter((item) => item.status === "FAILED" && !item.protected_checkpoint);
     if (mode === "recreate") return queue.filter((item) => item.operator_recreate && item.status === "PENDING" && item.phase === "PRE_SUBMIT" && !item.protected_checkpoint);
-    if (mode === "selected") return queue.filter((item) => item.job.id === selectedId && item.phase === "PRE_SUBMIT" && !item.protected_checkpoint && !["SUCCESS", "DONE", "INTERRUPTED", "STOPPED"].includes(item.status));
+    if (mode === "selected") {
+      // Duck-typed rather than `instanceof Set`: this module can run inside a
+      // different realm/vm context than its caller (as the test suite does),
+      // where a cross-realm Set fails instanceof but still has a working .has.
+      const ids = selectedId && typeof selectedId.has === "function" ? selectedId : new Set(Array.isArray(selectedId) ? selectedId : selectedId ? [selectedId] : []);
+      return queue.filter((item) => ids.has(item.job.id) && item.phase === "PRE_SUBMIT" && !item.protected_checkpoint && !["SUCCESS", "DONE", "INTERRUPTED", "STOPPED"].includes(item.status));
+    }
     return [];
   }
   function readinessState(signal) {
@@ -158,6 +180,6 @@
     if (!signal?.composerFound) return "OUTPUT_READY";
     return "CHAT_READY";
   }
-  const api = { DEFAULTS, ATTEMPT_PHASES, FAILURE_TYPES, PRE_SUBMIT_RETRYABLE_FAILURES, basename, referenceTokens, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, retryCooldown, resultWorkbookName, delaySeconds, countdownValues, planSummary, prepare, selectQueue, readinessState };
+  const api = { DEFAULTS, ATTEMPT_PHASES, FAILURE_TYPES, PRE_SUBMIT_RETRYABLE_FAILURES, basename, referenceTokens, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, countdownValues, planSummary, prepare, selectQueue, readinessState };
   (typeof window !== "undefined" ? window : globalThis).DacRunnerCore = api;
 })();

@@ -154,6 +154,16 @@
         findings.push(makeFinding("OUTPUT_OK", "OK", "output", {
           message: `Destination ready · images ${values.saveImages ? "on" : "off"}, XLSX ${values.saveResultXlsx ? "on" : "off"}, audit ${values.saveAuditJsonl ? "on" : "off"}.`, guidance: "Output naming and write permission are valid."
         }));
+        // "overwrite" silently destroys the previous file for any job that
+        // runs again with the same name -- including a workbook that carries
+        // this setting from its own saved config, not something the operator
+        // just chose. It is a legitimate policy, so it stays a WARNING (Run
+        // is not blocked), but it must be an explicit, visible line in Check
+        // Plan rather than three words inside the Naming detail string.
+        if (values.collisionPolicy === "overwrite") findings.push(makeFinding("OUTPUT_COLLISION_OVERWRITE_ACTIVE", "WARNING", "output", {
+          message: "Collision policy is 'overwrite': a job that runs again will replace its previous saved image.",
+          guidance: "Chọn 'Keep both — add number' trong Naming nếu muốn giữ ảnh cũ, hoặc để nguyên nếu bạn thực sự muốn đè.", action: "Review naming settings"
+        }));
       } catch (_) {
         findings.push(makeFinding("OUTPUT_OK", "OK", "output", { message: "Output destination and naming are ready.", guidance: "Output preflight passed." }));
       }

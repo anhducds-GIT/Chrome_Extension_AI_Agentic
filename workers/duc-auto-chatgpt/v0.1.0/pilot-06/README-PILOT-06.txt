@@ -49,20 +49,43 @@ KIỂM TRA LẦN 1  → đây là phần quan trọng nhất
        → Bấm vào 1 job xem chi tiết: Prompt / References / Settings hiện đủ.
           Đây là phần giao diện đã viết lại, cần nhìn bằng mắt.
 
-CHẠY LẦN 2 — tạo v002 (kiểm tra resume)
+CHẠY LẦN 2 — tạo v02 (kiểm tra resume)  ← ĐÃ CHUẨN BỊ SẴN
+
+Ledger v001 đã được thêm sẵn 2 job mới: P06-D và P06-E.
+(3 job cũ A/B/C vẫn khoá vĩnh viễn, hệ thống sẽ KHÔNG chạy lại chúng.)
+Đã mô phỏng trước bằng đúng core của extension, kết quả phải ra:
+    P06-A/B/C = SAFE_COMPLETE (bỏ qua)
+    P06-D/E   = SAFE_PENDING  (sẽ chạy)
+    0 blocker · next job = P06-D · checkpoint tiếp theo = v02
+
 9.  Bấm "Continue Existing Run".
 10. Chọn file  Duc-Auto-ChatGPT-Pilot-06__results__v001.xlsx
 11. Chọn lại folder pilot-06 khi được hỏi.
-12. Check Plan → phải báo 3 job đã completed, không có blocker.
-13. Trong sheet config của workbook cũ, sửa rerun_done thành true nếu muốn
-    chạy lại; hoặc chỉ cần Check Plan là đủ để sinh checkpoint mới.
+12. Check Plan → phải hiện "3 completed · 2 safe pending · 0 need review",
+    KHÔNG có blocker.
+13. Bấm Run. Chỉ P06-D và P06-E chạy (2 lần sinh ảnh).
 
 KIỂM TRA LẦN 2
-   [ ] F. Có file Duc-Auto-ChatGPT-Pilot-06__results__v002.xlsx
-   [ ] G. Mở v002 → sheet config → dòng previous_checkpoint_filename phải là
+   [ ] F. Có file Duc-Auto-ChatGPT-Pilot-06__results__v02.xlsx
+          → Tên là v02 (2 chữ số), KHÔNG phải v002. Quy ước mới.
+          → File v001 cũ vẫn còn nguyên, không bị ghi đè.
+          → Có thêm P06-D.png và P06-E.png.
+
+   [ ] G. Mở v02 → sheet config → dòng previous_checkpoint_filename phải là
           Duc-Auto-ChatGPT-Pilot-06__results__v001.xlsx
           (VIẾT HOA đúng như tên file thật, không phải duc-auto-chatgpt-...)
           Đây là bằng chứng cuối của lỗi #2.
+
+   [ ] H. Mở v02 → sheet config → mỗi key vẫn chỉ 1 lần (như mục B).
+          Đây là lúc dễ sinh trùng nhất vì snapshot chạy nhiều lần hơn.
+
+   [ ] I. Mở lại file audit → 3 job cũ vẫn còn, 2 job mới nối tiếp phía dưới,
+          không có dòng nào lặp, KHÔNG có dòng AUDIT_CHAIN_GAP.
+
+GHI CHÚ VỀ TÊN FILE
+Từ bản này quy ước là v01, v02, v03... (2 chữ số).
+File v001 sinh ra trước khi đổi quy ước vẫn đọc và resume bình thường —
+nó được hiểu là version 1, và checkpoint kế tiếp ghi thành v02.
 
 NẾU CÓ MỤC NÀO KHÔNG ĐẠT
 Chụp màn hình + gửi file kết quả tương ứng. Không cần chạy lại nhiều lần.
@@ -74,6 +97,7 @@ CẤU HÌNH WORKBOOK (để tham khảo)
                              đọc lại được file audit cũ)
    collision_policy        = overwrite   (cố ý, để kiểm tra mục D)
    result pattern          = Duc-Auto-ChatGPT-Pilot-06__results__v{version}.xlsx
+                             ({version} nay ra 2 chu so: v01, v02, ...)
    audit filename          = Duc-Auto-ChatGPT-Pilot-06__audit.jsonl
 
 Tạo lại workbook (nếu cần):

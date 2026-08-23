@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const ids = [
-    "workbookInput", "resumeWorkbookInput", "continueExistingRunBtn", "referencesInput", "validateBtn", "runBtn", "runFailedBtn", "stopBtn", "statusChip",
+    "workbookInput", "resumeWorkbookInput", "continueExistingRunBtn", "referencesInput", "validateBtn", "runBtn", "runFromRunTabBtn", "runFailedBtn", "runSelectedBtn", "runEligibilityHint", "stopBtn", "pauseResumeBtn", "statusChip",
     "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText",
     "currentJobId", "currentStage", "currentTiming", "currentSaved", "runtimeJobElapsed", "runtimeCurrentOperation", "runtimeTimeoutRemaining", "runtimeRetryState", "runtimeInterJobDelay", "runtimeNextTransition", "nextTaskCard", "nextTaskId", "nextTaskCountdown",
     "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText",
@@ -10,13 +10,14 @@
     "separateResultDestinationInput", "separateResultDestinationControls", "resultLocationMode", "resultDownloadsFolderInput",
     "resultDownloadsFolderLabel", "resultAuthorizedControls", "resultHandleText", "imagePatternInput", "resultFilenameInput", "auditFilenameInput",
     "collisionPolicyInput", "saveImagesInput", "saveResultXlsxInput", "saveAuditJsonlInput", "runIdText", "checkpointVersionText", "checkpointFilenameText",
-    "chooseResultFolderBtn",
-    "copyReviewPacketBtn", "copyReviewPacketStatus", "timeoutSecInput", "maxRetriesInput", "safetyCooldownInput", "maxInputImagesInput",
+    "chooseResultFolderBtn", "checkpointCollisionDialog", "checkpointCollisionList", "checkpointCollisionSuffix", "checkpointCollisionStatus", "checkpointCollisionCancelBtn", "checkpointCollisionConfirmBtn", "folderPickDialog", "folderPickTitle", "folderPickPath", "folderPickCopyBtn", "folderPickStatus", "folderPickCancelBtn", "folderPickOpenBtn",
+    "copyReviewPacketBtn", "copyReviewPacketStatus", "runtimeSettingsCard", "timeoutSecInput", "maxRetriesInput", "delayMinSecInput", "delayMaxSecInput", "safetyCooldownInput", "maxInputImagesInput",
     "continueOnErrorInput", "rerunDoneInput", "outputSummaryText", "outputList", "artifactList",
     "openOutputFolderBtn", "loadNewWorkbookBtn", "viewQueueBtn", "viewOutputsBtn",
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
     "checkWorkbook", "statusWorkbook", "checkJobs", "statusJobs", "checkReferences", "statusReferences",
     "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary", "recreateConfirmDialog", "recreateConfirmTitle", "recreateConfirmMessage", "recreateCancelBtn", "recreateConfirmBtn", "auditGapConfirmDialog", "auditGapCancelBtn", "auditGapConfirmBtn",
+    "rerunConfirmDialog", "rerunConfirmTitle", "rerunConfirmMessage", "rerunKeepPolicyRadio", "rerunOverwritePolicyRadio", "rerunCancelBtn", "rerunConfirmBtn",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedJob",
     "currentAttemptBadge", "continuedRunLabel", "currentJobContent", "currentPromptPreview", "currentReferenceColumn", "currentReferenceGallery", "pipelineStepper", "operatorTimerArea",
@@ -24,7 +25,7 @@
     "latestSavedName", "latestSavedStatus", "completionCard", "completionIcon", "completionTitle",
     "artifactStatusPill", "runArtifactsCard", "artifactLocationNote", "artifactRowImages",
     "artifactImagesDetail", "artifactImagesStatus", "artifactRowResult", "artifactResultDetail",
-    "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus"
+    "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus", "runDashboardSplit", "runWidthSplitter"
   ];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
   const state = {
@@ -37,6 +38,8 @@
     running: false,
     validated: false,
     stopRequested: false,
+    pauseRequested: false,
+    paused: false,
     terminal: 0,
     runId: null,
     attemptSerial: 0,
@@ -73,8 +76,12 @@
     checkpointCreatedAt: "",
     resumeCheckpointFindings: [],
     manualReconciliationRunning: false,
+    pendingFolderPick: null,
+    checkpointCollision: null,
     recreateRunning: false,
     pendingRecreateJobId: null,
+    pendingRerunJobId: null,
+    runSelection: new Set(),
     auditGapRunning: false,
     auditChain: { ok: true, applicable: false, gapAcknowledged: false, segmentStarted: false, previousFilename: "" }
   };
@@ -445,18 +452,41 @@
     const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning;
     const outputLocked = !state.workbook || operatorLocked;
     els.validateBtn.disabled = !state.workbook || operatorLocked;
-    els.runBtn.disabled = !ready || operatorLocked;
+    // A green "ready" chip that cannot act is the exact lie this project
+    // rejects: prepared/validated only means the workbook is well-formed, not
+    // that any job is actually eligible (every job may already be
+    // SAFE_COMPLETE / protected). Run must reflect real eligibility.
+    const eligibleAll = ready ? window.DacRunnerCore.selectQueue(state.prepared.queue, "all").length : 0;
+    els.runBtn.disabled = !ready || operatorLocked || eligibleAll === 0;
     els.runBtn.textContent = state.resumeMode ? "▶ CONTINUE RUN" : "▶ START RUN";
+    if (els.runFromRunTabBtn) {
+      els.runFromRunTabBtn.disabled = !ready || operatorLocked || eligibleAll === 0;
+      els.runFromRunTabBtn.textContent = state.resumeMode ? "▶ CONTINUE RUN" : "▶ START RUN";
+    }
+    if (els.runEligibilityHint) {
+      const showHint = ready && !operatorLocked && eligibleAll === 0;
+      els.runEligibilityHint.hidden = !showHint;
+      if (showHint) els.runEligibilityHint.textContent = "Mọi job trong ledger đã hoàn tất — chọn job muốn chạy lại bên dưới (mục QUEUE), hoặc dùng \"Chạy job đã chọn\".";
+    }
     const eligibleFailed = (state.prepared?.queue || []).some((item) => item.status === "FAILED" && !item.protected_checkpoint);
     els.runFailedBtn.disabled = !ready || operatorLocked || !eligibleFailed;
+    if (els.runSelectedBtn) {
+      const selectedEligible = ready ? window.DacRunnerCore.selectQueue(state.prepared.queue, "selected", state.runSelection).length : 0;
+      els.runSelectedBtn.disabled = !ready || operatorLocked || selectedEligible === 0;
+      els.runSelectedBtn.textContent = selectedEligible ? `▶ Chạy ${selectedEligible} job đã chọn` : "▶ Chạy job đã chọn";
+    }
     els.stopBtn.disabled = !state.running;
+    if (els.pauseResumeBtn) {
+      els.pauseResumeBtn.disabled = !state.running && !state.paused;
+      els.pauseResumeBtn.textContent = state.paused ? "▶ Tiếp tục" : state.pauseRequested ? "⏸ Đang dừng sau job hiện tại…" : "⏸ Tạm dừng";
+    }
     els.workbookInput.disabled = operatorLocked;
     if (els.resumeWorkbookInput) els.resumeWorkbookInput.disabled = operatorLocked;
     if (els.continueExistingRunBtn) els.continueExistingRunBtn.disabled = operatorLocked;
     els.referencesInput.disabled = operatorLocked;
     if (els.changeWorkbookBtn) els.changeWorkbookBtn.disabled = operatorLocked;
     if (els.addReferencesBtn) els.addReferencesBtn.disabled = operatorLocked;
-    for (const element of [els.outputDestinationMode, els.imageOutputFolderInput, els.destinationFolderBtn, els.separateResultDestinationInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.chooseResultFolderBtn, els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) if (element) element.disabled = outputLocked;
+    for (const element of [els.outputDestinationMode, els.imageOutputFolderInput, els.destinationFolderBtn, els.separateResultDestinationInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.chooseResultFolderBtn, els.timeoutSecInput, els.maxRetriesInput, els.delayMinSecInput, els.delayMaxSecInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) if (element) element.disabled = outputLocked;
     if (state.outputSettings?.image?.kind === "directory") els.imageOutputFolderInput.disabled = true;
     if (state.outputSettings?.result?.kind !== "downloads") els.resultDownloadsFolderInput.disabled = true;
     document.querySelectorAll(".workflow-tab").forEach((tab) => {
@@ -498,8 +528,20 @@
             ? window.DacRunState.stageFor(item)
             : "—";
 
+      const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning;
+      const eligibleForSelection = item.phase === "PRE_SUBMIT" && !item.protected_checkpoint && !["SUCCESS", "DONE", "INTERRUPTED", "STOPPED"].includes(item.status);
+      const selectCheckbox = document.createElement("input");
+      selectCheckbox.type = "checkbox"; selectCheckbox.className = "queue-row-select";
+      selectCheckbox.setAttribute("aria-label", `Chọn ${item.job.id} để chạy`);
+      selectCheckbox.checked = state.runSelection.has(item.job.id);
+      selectCheckbox.disabled = !eligibleForSelection || operatorLocked;
+      selectCheckbox.addEventListener("click", (event) => event.stopPropagation());
+      selectCheckbox.addEventListener("change", () => {
+        if (selectCheckbox.checked) state.runSelection.add(item.job.id); else state.runSelection.delete(item.job.id);
+        controls();
+      });
       const left = element("div", "queue-row-left");
-      left.append(element("span", `queue-icon ${iconClass}`, icon), element("span", "queue-job-id", item.job.id));
+      left.append(selectCheckbox, element("span", `queue-icon ${iconClass}`, icon), element("span", "queue-job-id", item.job.id));
       li.append(left, element("div", `queue-row-status ${statusLabel.toLowerCase()}`, statusWithElapsed), element("div", "queue-row-right", timeOrDetail));
       li.addEventListener("click", () => { state.selectedJobId = state.selectedJobId === item.job.id ? null : item.job.id; renderQueue(); controls(); });
       if (state.selectedJobId === item.job.id) {
@@ -515,6 +557,15 @@
         if (item.last_error) {
           const errorLabel = element("strong", "queue-row-error-label", "Error:");
           details.append(element("br"), errorLabel, ` ${item.last_error}`);
+        }
+        if (isSuccess && item.persistence_verified) {
+          const rerunRow = element("div", "queue-row-rerun");
+          const rerunBtn = document.createElement("button");
+          rerunBtn.type = "button"; rerunBtn.className = "secondary small warning"; rerunBtn.textContent = `↻ Chạy lại ${item.job.id}`;
+          rerunBtn.disabled = operatorLocked;
+          rerunBtn.addEventListener("click", (event) => { event.stopPropagation(); openRerunDialog(item.job.id); });
+          rerunRow.appendChild(rerunBtn);
+          details.append(element("br"), rerunRow);
         }
         li.appendChild(details);
       }
@@ -589,7 +640,14 @@
     }
 
     // Row 1: Images
-    const imagesSaved = state.verifiedImageFiles.length;
+    // state.verifiedImageFiles only records writes made during THIS session's
+    // own run. Loading/resuming an existing ledger never repopulates it, so a
+    // ledger whose jobs are already persistence_verified (from an earlier
+    // session) showed "0 verified" here even though the files are on disk and
+    // the ledger already proves it -- read the queue's own recorded proof
+    // instead, which is correct whether it came from this session's writes or
+    // from a loaded ledger.
+    const imagesSaved = queue.filter((item) => item.persistence_verified && item.result_file).length;
     let imagesStatus = "Disabled";
     let imagesDetail = "Disabled in settings";
     let imagesStatusClass = "disabled";
@@ -790,8 +848,8 @@
     if (!els.namingProvenance) return;
     const namingOverride = ["output_naming", "result_filename", "result_filename_pattern"].some((key) => state.localOverrides.has(key));
     els.namingProvenance.textContent = state.importedConfig
-      ? namingOverride ? "XLSX + local override" : "From XLSX"
-      : "Default values";
+      ? namingOverride ? "XLSX + chỉnh tại App" : "Từ XLSX"
+      : "Giá trị mặc định";
   }
 
   function renderCheckpointMeta() {
@@ -938,7 +996,7 @@
   }
 
   async function openWorkbook() {
-    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = false; state.resumePlan = null; state.resumeLedgerFile = ""; state.runId = null; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = []; renderResumePlan(); renderOutput();
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = false; state.resumePlan = null; state.resumeLedgerFile = ""; state.runId = null; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = []; state.runSelection.clear(); renderResumePlan(); renderOutput();
     try {
       state.workbook = await window.DacXlsx.open(els.workbookInput.files?.[0]);
       const imported = applyWorkbookConfig();
@@ -951,7 +1009,7 @@
         try { settings = window.DacRunnerCore.runtimeConfig(state.workbook.config, state.runtimeOverrides); } catch (_) { /* Check Plan reports invalid settings without discarding a parsed workbook. */ }
         els.workbookText.textContent = `${state.workbook.fileName} · ${state.workbook.jobs?.length || 0} jobs · ${settings ? "references need review" : "run settings need review"}`;
         if (settings) {
-          els.timeoutSecInput.value = settings.timeout_sec; els.maxRetriesInput.value = settings.max_retries; els.safetyCooldownInput.value = settings.safety_cooldown_sec; els.maxInputImagesInput.value = settings.max_input_images; els.continueOnErrorInput.value = String(settings.continue_on_error); els.rerunDoneInput.value = String(settings.rerun_done);
+          els.timeoutSecInput.value = settings.timeout_sec; els.maxRetriesInput.value = settings.max_retries; els.delayMinSecInput.value = settings.delay_min_sec; els.delayMaxSecInput.value = settings.delay_max_sec; els.safetyCooldownInput.value = settings.safety_cooldown_sec; els.maxInputImagesInput.value = settings.max_input_images; els.continueOnErrorInput.value = String(settings.continue_on_error); els.rerunDoneInput.value = String(settings.rerun_done);
         }
         setStatus("IDLE", "NEEDS INPUT");
         progress("Workbook loaded. Check Plan collects all missing inputs without starting a run.");
@@ -963,16 +1021,19 @@
     }
   }
 
-  function addResumeFinding(code, message, guidance) {
+  // `extra` carries fields an inline action needs -- for example the colliding
+  // filenames. Dropping them left the row without its resolve button.
+  function addResumeFinding(code, message, guidance, extra = {}) {
     if (!state.resumePlan) return;
-    if (!state.resumePlan.findings.some((item) => item.code === code)) state.resumePlan.findings.push({ code, severity: "BLOCKER", scope: "resume", message, guidance });
+    if (!state.resumePlan.findings.some((item) => item.code === code)) state.resumePlan.findings.push({ code, severity: "BLOCKER", scope: "resume", message, guidance, ...extra });
     state.resumePlan.ready = false;
   }
 
   function addCheckpointFindings(check) {
     for (const finding of check.findings || []) {
       if (!state.resumeCheckpointFindings.some((item) => item.code === finding.code && item.message === finding.message)) state.resumeCheckpointFindings.push(finding);
-      addResumeFinding(finding.code, finding.message, finding.guidance);
+      const { code, message, guidance, severity, scope, ...extra } = finding;
+      addResumeFinding(code, message, guidance, extra);
     }
   }
 
@@ -980,12 +1041,18 @@
     const values = window.DacOutputLocation.effective(state.outputSettings);
     const location = values.result;
     if (!state.resumeMode || location?.kind !== "directory" || !location.handle) return null;
-    const candidates = [];
     try {
-      for await (const [name, handle] of location.handle.entries()) {
-        if (handle?.kind !== "file") continue;
-        const parsed = window.DacCheckpointCore.parse(values.checkpointFilenamePattern, name);
-        if (parsed) candidates.push(parsed);
+      const candidates = await discoverCheckpoints(location.handle, values.checkpointFilenamePattern);
+      // Two files can parse to one version when a folder mixes naming widths.
+      // highest() would break that tie on filename and could hand back the
+      // OLDER checkpoint. Block and name both files rather than choose.
+      const collisions = window.DacCheckpointCore.versionCollisions(candidates);
+      if (collisions.length) {
+        const detail = collisions.map((item) => `v${window.DacCheckpointCore.formatVersion(item.version)}: ${item.filenames.join(" · ")}`).join("; ");
+        // `files` lets the inline action copy the exact names instead of
+        // re-parsing them back out of the message prose.
+        addCheckpointFindings({ findings: [{ code: "RESUME_CHECKPOINT_VERSION_AMBIGUOUS", severity: "BLOCKER", scope: "resume", files: collisions.flatMap((item) => item.filenames), message: detail, guidance: "Keep exactly one file per checkpoint version. Rename or move the superseded file out of this folder, then Check Plan again. Do not delete a checkpoint that may still be the authoritative one." }] });
+        return null;
       }
       const latest = window.DacCheckpointCore.highest(candidates);
       if (!latest) return null;
@@ -1038,14 +1105,32 @@
     els.resumeSourceSummary.textContent = `Continued run · ${plan.run.run_id}${plan.run.provenance === "legacy" ? " (legacy identity)" : ""} · ${window.DacResumeCore.summaryText(plan.summary)}${plan.next_eligible_job ? ` · Next: ${plan.next_eligible_job}` : ""}`;
     const auditGapBlocked = state.auditChain?.code === "RESUME_AUDIT_CHAIN_MISSING";
     const recoveryFindings = plan.findings.filter((item) => item.code === "RESUME_RECREATE_INCOMPLETE" || item.code === "RESUME_AMBIGUOUS_SUBMISSION");
-    const visibleFindings = plan.findings.filter((item) => !recoveryFindings.includes(item));
+    // validate() copies every resume finding into state.diagnostics, and the
+    // Check Plan panel renders those with the same rows. Showing them here too
+    // printed each blocker twice, so once Check Plan has run this panel keeps
+    // only what is unique to it: the summary and the operator recovery actions.
+    const visibleFindings = state.diagnostics ? [] : plan.findings.filter((item) => !recoveryFindings.includes(item));
     els.resumePlanDiagnostics.hidden = !visibleFindings.length && !recoveryFindings.length && !auditGapBlocked;
     els.resumePlanDiagnostics.className = `resume-diagnostics${visibleFindings.length || recoveryFindings.length || auditGapBlocked ? " blocked" : ""}`;
     els.resumePlanDiagnostics.replaceChildren();
-    if (visibleFindings.length) {
-      const detail = document.createElement("span");
-      detail.textContent = visibleFindings.map((item) => `${item.code}: ${item.message} ${item.guidance || ""}`).join(" ");
-      els.resumePlanDiagnostics.appendChild(detail);
+    // One readable row per finding, same Vietnamese presentation as the Check
+    // Plan panel. This used to be a single run-on line of raw English codes,
+    // messages and guidance concatenated together.
+    for (const item of visibleFindings) {
+      const text = window.DacOperatorMessages.present(item);
+      const row = document.createElement("div");
+      row.className = `guidance-row ${String(item.severity || "blocker").toLowerCase()}`;
+      row.append(element("strong", "", text.label), element("span", "", text.guidance));
+      if (text.detail) row.appendChild(element("span", "guidance-technical", text.detail));
+      const action = diagnosticGuidanceAction(item);
+      if (action) {
+        const button = element("button", "secondary setup-action guidance-action", action.label);
+        button.type = "button";
+        button.disabled = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning;
+        button.addEventListener("click", action.handler);
+        row.appendChild(button);
+      }
+      els.resumePlanDiagnostics.appendChild(row);
     }
     if (state.auditChain?.code === "RESUME_AUDIT_CHAIN_MISSING") {
       const action = document.createElement("div");
@@ -1107,6 +1192,36 @@
   function cancelRecreate() {
     window.DacRecreateCore.cancelled();
     closeRecreateDialog();
+  }
+
+  // A deliberate rerun of an already-completed job reuses the same approval
+  // and checkpoint mechanism as Recreate (see DacRecreateCore.approval with
+  // recoveryState "SAFE_COMPLETE"), but it is a distinct operator decision:
+  // the job did not fail or go ambiguous, it just was not the image Đức
+  // wanted. Kept as its own dialog/confirm pair so the copy stays honest
+  // about what is actually happening, and so confirming it never auto-
+  // continues into unrelated jobs the way confirmRecreate deliberately does.
+  function openRerunDialog(jobId) {
+    if (state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning) return;
+    const item = state.prepared?.queue?.find((entry) => entry.job.id === jobId);
+    if (!item || item.status !== "SUCCESS" || !item.persistence_verified) return;
+    state.pendingRerunJobId = jobId;
+    if (els.rerunConfirmTitle) els.rerunConfirmTitle.textContent = `Chạy lại ${jobId}?`;
+    if (els.rerunConfirmMessage) els.rerunConfirmMessage.textContent = `${jobId} đã có ảnh đã lưu (${item.result_file || "không rõ tên file"}). Chạy lại sẽ gửi một yêu cầu mới tới ChatGPT và tạo một ảnh khác cho job này.`;
+    if (els.rerunKeepPolicyRadio) els.rerunKeepPolicyRadio.checked = true;
+    els.rerunConfirmBtn.textContent = `Chạy lại ${jobId}`;
+    if (typeof els.rerunConfirmDialog.showModal === "function") els.rerunConfirmDialog.showModal();
+    else els.rerunConfirmDialog.setAttribute("open", "");
+  }
+
+  function closeRerunDialog() {
+    state.pendingRerunJobId = null;
+    if (typeof els.rerunConfirmDialog.close === "function") els.rerunConfirmDialog.close();
+    else els.rerunConfirmDialog.removeAttribute("open");
+  }
+
+  function cancelRerun() {
+    closeRerunDialog();
   }
 
   function openAuditGapDialog() {
@@ -1260,6 +1375,64 @@
     }
   }
 
+  // Unlike confirmRecreate (which exists to unblock a stuck continuation and
+  // so deliberately continues into the remaining queue once verified), this
+  // does exactly one thing: replace one job's already-saved image. It never
+  // auto-continues into other jobs the operator did not ask to touch.
+  async function confirmRerun() {
+    const jobId = state.pendingRerunJobId;
+    const actionName = jobId ? `Chạy lại ${jobId}` : "Chạy lại job";
+    const overwrite = Boolean(els.rerunOverwritePolicyRadio?.checked);
+    progress(`${actionName}: đã nhận xác nhận, đang kiểm tra điều kiện trước khi tạo ảnh mới.`);
+    log(`${actionName}: đã nhận xác nhận.`, "info");
+    closeRerunDialog();
+    try {
+      if (!jobId) throw new Error("RERUN_CONFIRM_MISSING_JOB: Chọn Chạy lại từ job đã hoàn tất.");
+      if (state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning) throw new Error("RERUN_CONFIRM_BUSY: Một tiến trình khác đang chạy.");
+      if (!state.prepared) throw new Error("RERUN_CONFIRM_QUEUE_MISSING: Check Plan lại trước khi xác nhận chạy lại.");
+      const item = state.prepared.queue.find((entry) => entry.job.id === jobId);
+      if (!item) throw new Error(`RERUN_CONFIRM_JOB_MISSING: ${jobId} không có trong hàng đợi hiện tại.`);
+      if (item.status !== "SUCCESS" || !item.persistence_verified) throw new Error(`RERUN_CONFIRM_NOT_COMPLETE: ${jobId} chưa có ảnh đã xác minh lưu thành công.`);
+      const approval = window.DacRecreateCore.approval({ job: item.job, recoveryState: "SAFE_COMPLETE" });
+      if (!approval.ok) throw new Error(`${approval.code}: ${approval.message}`);
+      const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
+      if (!outputCheck.ok) throw new Error(`OUTPUT_LOCATION: ${outputCheck.error}`);
+      const effectiveOutput = outputCheck.effective;
+      if (state.resumeMode) {
+        const auditChain = await auditChainPreflight(effectiveOutput);
+        state.auditChain = auditChain;
+        if (!auditChain.ok) { renderResumePlan(); throw new Error(`${auditChain.code}: ${auditChain.message}`); }
+      }
+      if (!effectiveOutput.saveImages || !effectiveOutput.saveResultXlsx) throw new Error("RERUN_PERSISTENCE_REQUIRED: phải bật lưu ảnh và lưu Result XLSX.");
+      state.recreateRunning = true;
+      setStatus("RUNNING", "RERUN CHECKPOINTING");
+      progress(`${jobId}: đang lưu checkpoint xác nhận chạy lại.`);
+      // The global collision policy stays whatever the operator configured
+      // for the whole run; this one field overrides it for this one job's
+      // write only, so "giữ ảnh cũ" here can never be defeated by an
+      // unrelated global "overwrite" setting, and vice versa.
+      const approvalWithPolicy = { ...approval, fields: { ...approval.fields, rerun_collision_policy: overwrite ? "overwrite" : "uniquify" } };
+      const checkpoint = await persistRecreateApproval(item, approvalWithPolicy, effectiveOutput);
+      progress(`${jobId}: checkpoint đã xác minh ${checkpoint}; bắt đầu tạo ảnh mới.`);
+      log(`${jobId}: checkpoint xác nhận chạy lại đã xác minh; bắt đầu chạy lại.`, "done");
+      renderResumePlan(); renderQueue(); renderOutput(); controls();
+      const outcome = await run("recreate");
+      if (!outcome?.ok) throw new Error(`RERUN_START_BLOCKED: ${outcome?.reason || "Không vào được trạng thái RUNNING."}`);
+      progress(`${jobId}: đã tạo ảnh mới và lưu xong.`);
+      log(`${jobId}: chạy lại hoàn tất.`, "done");
+      return outcome;
+    } catch (error) {
+      const reason = messageOf(error);
+      setStatus("ERROR", "RERUN BLOCKED");
+      progress(`${actionName} bị chặn: ${reason}`);
+      log(`${actionName} bị chặn: ${reason}`, "error");
+      throw error;
+    } finally {
+      state.recreateRunning = false;
+      renderResumePlan(); renderQueue(); renderOutput(); controls();
+    }
+  }
+
   function restoreReconciliationItem(item, values) {
     update(item, values);
     item.status = values.status;
@@ -1353,7 +1526,7 @@
   async function openExistingRun() {
     const file = els.resumeWorkbookInput?.files?.[0];
     if (!file) return;
-    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = true; state.resumePlan = null; state.resumeLedgerFile = file.name; state.auditEvents = []; state.artifactErrors = []; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = [];
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = true; state.resumePlan = null; state.resumeLedgerFile = file.name; state.auditEvents = []; state.artifactErrors = []; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = []; state.runSelection.clear();
     try {
       state.workbook = await window.DacXlsx.open(file);
       const imported = applyWorkbookConfig();
@@ -1398,7 +1571,7 @@
       state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS" || item.status === "DONE").length;
       const settings = state.prepared.settings;
       els.workbookText.textContent = `${state.workbook.fileName} · ${state.prepared.queue.length} jobs · ${settings.delay_min_sec}-${settings.delay_max_sec}s delay`;
-      els.timeoutSecInput.value = settings.timeout_sec; els.maxRetriesInput.value = settings.max_retries; els.safetyCooldownInput.value = settings.safety_cooldown_sec; els.maxInputImagesInput.value = settings.max_input_images; els.continueOnErrorInput.value = String(settings.continue_on_error); els.rerunDoneInput.value = String(settings.rerun_done);
+      els.timeoutSecInput.value = settings.timeout_sec; els.maxRetriesInput.value = settings.max_retries; els.delayMinSecInput.value = settings.delay_min_sec; els.delayMaxSecInput.value = settings.delay_max_sec; els.safetyCooldownInput.value = settings.safety_cooldown_sec; els.maxInputImagesInput.value = settings.max_input_images; els.continueOnErrorInput.value = String(settings.continue_on_error); els.rerunDoneInput.value = String(settings.rerun_done);
       invalidateValidation(); renderQueue(); renderOutput();
     } catch (error) {
       state.prepared = null;
@@ -1442,6 +1615,73 @@
     if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
     markLocalOverride("output_profile_binding", "Output profile binding changed; check plan again before Run.");
     renderOutput();
+  }
+
+  function choosePrimaryDestinationFromUserGesture() {
+    choosePrimaryDestination().catch((error) => {
+      if (error.name !== "AbortError") {
+        els.outputPermissionText.textContent = error.message;
+        log(error.message, "error");
+      }
+    });
+  }
+
+  function chooseResultDestinationFromUserGesture() {
+    chooseResultDestination().catch((error) => {
+      if (error.name !== "AbortError") {
+        els.outputPermissionText.textContent = error.message;
+        log(error.message, "error");
+      }
+    });
+  }
+
+  // Chrome's directory picker cannot be pre-filled or pre-navigated, and the
+  // expected-folder hint lived in a card the operator had to scroll to find.
+  // Surface the path and its Copy control at the moment the folder is actually
+  // being chosen instead.
+  function folderPickRunner(target) {
+    return target === "result" ? chooseResultDestinationFromUserGesture : choosePrimaryDestinationFromUserGesture;
+  }
+
+  function openFolderPickDialog(target) {
+    const hint = String(state.outputSettings?.folderHint || "").trim();
+    // With no recorded hint the dialog would add a click and offer nothing, so
+    // go straight to the picker.
+    if (!hint || !els.folderPickDialog) { folderPickRunner(target)(); return; }
+    state.pendingFolderPick = target;
+    if (els.folderPickTitle) els.folderPickTitle.textContent = target === "result" ? "Choose the Result XLSX folder" : "Choose the generated-image folder";
+    if (els.folderPickPath) { els.folderPickPath.textContent = hint; els.folderPickPath.title = hint; }
+    if (els.folderPickStatus) els.folderPickStatus.textContent = "";
+    if (typeof els.folderPickDialog.showModal === "function") els.folderPickDialog.showModal();
+    else els.folderPickDialog.setAttribute("open", "");
+  }
+
+  function closeFolderPickDialog() {
+    state.pendingFolderPick = null;
+    if (!els.folderPickDialog) return;
+    if (typeof els.folderPickDialog.close === "function") els.folderPickDialog.close();
+    else els.folderPickDialog.removeAttribute("open");
+  }
+
+  async function copyFolderPickPath() {
+    const hint = String(state.outputSettings?.folderHint || "").trim();
+    if (!hint || !els.folderPickStatus) return;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
+      await navigator.clipboard.writeText(hint);
+      els.folderPickStatus.textContent = "Path copied. Paste it into the picker's address bar.";
+    } catch (_) {
+      els.folderPickStatus.textContent = "Could not copy automatically. Click the path to select it, then press Ctrl+C.";
+    }
+  }
+
+  function confirmFolderPick() {
+    const target = state.pendingFolderPick;
+    closeFolderPickDialog();
+    // showDirectoryPicker() needs the user gesture from this click. Closing the
+    // dialog above is synchronous and nothing is awaited before the picker
+    // call, so the gesture is still live here.
+    folderPickRunner(target)();
   }
 
   async function chooseResultDestination() {
@@ -1513,6 +1753,8 @@
     state.runtimeOverrides = {
       timeout_sec: els.timeoutSecInput.value,
       max_retries: els.maxRetriesInput.value,
+      delay_min_sec: els.delayMinSecInput.value,
+      delay_max_sec: els.delayMaxSecInput.value,
       safety_cooldown_sec: els.safetyCooldownInput.value,
       max_input_images: els.maxInputImagesInput.value,
       continue_on_error: els.continueOnErrorInput.value,
@@ -1590,14 +1832,227 @@
     }
     const { blockers, warnings } = diagnostics.summary;
     els.planCheckSummary.textContent = blockers ? `${blockers} blocker${blockers === 1 ? "" : "s"} · ${warnings} warning${warnings === 1 ? "" : "s"}` : warnings ? `No blockers · ${warnings} warning${warnings === 1 ? "" : "s"}` : "No blockers · plan is ready to run.";
-    for (const finding of diagnostics.findings.filter((finding) => finding.severity !== "OK")) {
+    // Passing checks stay out of the panel. The operator's complaint is that
+    // he has to hunt and scroll; listing everything that is already fine makes
+    // the actionable rows harder to find, not easier. The summary line above
+    // already reports the pass count.
+    const severityOrder = { BLOCKER: 0, WARNING: 1 };
+    const findings = diagnostics.findings
+      .filter((finding) => finding.severity !== "OK")
+      .map((finding, index) => ({ finding, index }))
+      .sort((left, right) => (severityOrder[left.finding.severity] ?? 2) - (severityOrder[right.finding.severity] ?? 2) || left.index - right.index)
+      .map(({ finding }) => finding);
+    for (const finding of findings) {
       const row = document.createElement("div");
       row.className = `guidance-row ${finding.severity.toLowerCase()}`;
-      const title = document.createElement("strong"); title.textContent = finding.code.replace(/_/g, " ");
-      const detail = document.createElement("span"); detail.textContent = finding.guidance || finding.message;
+      // Vietnamese for what the operator reads; the English code still goes to
+      // the log, the audit JSONL and the ledger as the stable identifier.
+      const text = window.DacOperatorMessages.present(finding);
+      const title = document.createElement("strong"); title.textContent = text.label;
+      const detail = document.createElement("span"); detail.textContent = text.guidance;
       row.append(title, detail);
+      // The original message carries filenames and job IDs, so it stays
+      // visible as smaller technical detail rather than being dropped.
+      if (text.detail) {
+        const technical = document.createElement("span");
+        technical.className = "guidance-technical";
+        technical.textContent = text.detail;
+        row.appendChild(technical);
+      }
+      const action = diagnosticGuidanceAction(finding);
+      if (action) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "secondary setup-action guidance-action";
+        button.textContent = action.label;
+        button.addEventListener("click", action.handler);
+        row.appendChild(button);
+      }
       els.validationGuidance.appendChild(row);
     }
+  }
+
+  // Resolving a checkpoint collision is an operator decision, not an automatic
+  // one: the runner cannot know which of two same-version files is the
+  // authoritative record. It can, however, read the truth out of each file --
+  // every checkpoint records its own `checkpoint_created_at` and job states --
+  // and put those facts in front of the operator so the choice is informed.
+  // The losing file is renamed, never deleted, and never overwritten.
+  const COLLISION_SUFFIXES = ["__superseded", " (1)"];
+
+  function selectedCollisionSuffix() {
+    const chosen = String(els.checkpointCollisionSuffix?.value || "");
+    return COLLISION_SUFFIXES.includes(chosen) ? chosen : COLLISION_SUFFIXES[0];
+  }
+
+  async function readCheckpointSummary(directoryHandle, filename) {
+    try {
+      const handle = await directoryHandle.getFileHandle(filename, { create: false });
+      const file = await handle.getFile();
+      const workbook = await window.DacXlsx.open(file);
+      const jobs = workbook.jobs || [];
+      const done = jobs.filter((job) => ["success", "done"].includes(String(job.status || "").trim().toLowerCase())).length;
+      return {
+        filename,
+        createdAt: String(workbook.config?.checkpoint_created_at || ""),
+        version: String(workbook.config?.checkpoint_version || ""),
+        jobs: jobs.length,
+        done,
+        size: Number(file.size) || 0,
+        readable: true
+      };
+    } catch (error) {
+      return { filename, createdAt: "", version: "", jobs: 0, done: 0, size: 0, readable: false, error: messageOf(error) };
+    }
+  }
+
+  function renderCheckpointCollisionList() {
+    if (!els.checkpointCollisionList) return;
+    els.checkpointCollisionList.replaceChildren();
+    const entries = state.checkpointCollision?.entries || [];
+    const newest = entries.filter((entry) => entry.createdAt).map((entry) => Date.parse(entry.createdAt)).filter(Number.isFinite).sort((left, right) => right - left)[0];
+    for (const entry of entries) {
+      const row = element("label", "collision-option");
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "checkpointCollisionKeep";
+      input.value = entry.filename;
+      input.checked = state.checkpointCollision?.keep === entry.filename;
+      input.addEventListener("change", () => {
+        state.checkpointCollision.keep = entry.filename;
+        if (els.checkpointCollisionConfirmBtn) els.checkpointCollisionConfirmBtn.disabled = false;
+      });
+      const body = element("div", "collision-body");
+      body.appendChild(element("strong", "", entry.filename));
+      const isNewest = entry.createdAt && Date.parse(entry.createdAt) === newest;
+      // The pending count is the part that actually decides the choice: two
+      // checkpoints of one version can hold different work, so keeping the
+      // newer file is not automatically the safe answer.
+      const pending = Math.max(0, entry.jobs - entry.done);
+      const facts = entry.readable
+        ? `Tạo lúc ${entry.createdAt ? new Date(entry.createdAt).toLocaleString() : "không rõ"} · ${entry.done}/${entry.jobs} job đã xong${pending ? ` · còn ${pending} job chờ chạy` : ""}${isNewest ? " · MỚI NHẤT" : ""}`
+        : `Không đọc được file này (${entry.error || "lỗi không rõ"})`;
+      body.appendChild(element("span", isNewest ? "collision-facts newest" : "collision-facts", facts));
+      if (entry.readable && pending) body.appendChild(element("span", "collision-warning", `Bỏ file này là mất ${pending} job đang chờ.`));
+      row.append(input, body);
+      els.checkpointCollisionList.appendChild(row);
+    }
+  }
+
+  async function openCheckpointCollisionDialog(finding) {
+    const files = (finding.files || []).map((name) => String(name)).filter(Boolean);
+    if (!files.length || !els.checkpointCollisionDialog) return;
+    const values = state.outputSettings ? window.DacOutputLocation.effective(state.outputSettings) : null;
+    const directoryHandle = values?.result?.kind === "directory" ? values.result.handle : null;
+    if (!directoryHandle) { progress("Chọn lại thư mục đã cấp quyền trước khi xử lý file trùng."); return; }
+    state.checkpointCollision = { entries: [], keep: null, directoryHandle };
+    state.checkpointCollision.entries = await Promise.all(files.map((name) => readCheckpointSummary(directoryHandle, name)));
+    // Preselect the newest readable checkpoint; the operator can still switch.
+    const readable = state.checkpointCollision.entries.filter((entry) => entry.readable && entry.createdAt);
+    const suggested = readable.sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0];
+    state.checkpointCollision.keep = suggested?.filename || null;
+    if (els.checkpointCollisionStatus) els.checkpointCollisionStatus.textContent = suggested ? "Gợi ý: giữ bản mới nhất (đã chọn sẵn)." : "Không đọc được thời điểm tạo; hãy tự chọn file cần giữ.";
+    if (els.checkpointCollisionConfirmBtn) els.checkpointCollisionConfirmBtn.disabled = !state.checkpointCollision.keep;
+    renderCheckpointCollisionList();
+    if (typeof els.checkpointCollisionDialog.showModal === "function") els.checkpointCollisionDialog.showModal();
+    else els.checkpointCollisionDialog.setAttribute("open", "");
+  }
+
+  function closeCheckpointCollisionDialog() {
+    state.checkpointCollision = null;
+    if (!els.checkpointCollisionDialog) return;
+    if (typeof els.checkpointCollisionDialog.close === "function") els.checkpointCollisionDialog.close();
+    else els.checkpointCollisionDialog.removeAttribute("open");
+  }
+
+  async function supersededName(directoryHandle, filename, suffix) {
+    const dot = filename.lastIndexOf(".");
+    const stem = dot > 0 ? filename.slice(0, dot) : filename;
+    const extension = dot > 0 ? filename.slice(dot) : "";
+    // Both suffixes stop the name matching the checkpoint pattern, which is
+    // what clears the ambiguity. The counter keeps a second run from ever
+    // landing on a name that already exists.
+    for (let index = 0; index < 100; index += 1) {
+      const counted = index ? (suffix === " (1)" ? ` (${index + 1})` : `${suffix}-${String(index).padStart(2, "0")}`) : suffix;
+      const candidate = `${stem}${counted}${extension}`;
+      if (!(await window.DacOutputLocation.fileExists(directoryHandle, candidate))) return candidate;
+    }
+    throw new Error("Không tìm được tên thay thế còn trống.");
+  }
+
+  async function confirmCheckpointCollision() {
+    const collision = state.checkpointCollision;
+    if (!collision?.keep) return;
+    const { directoryHandle, keep, entries } = collision;
+    const suffix = selectedCollisionSuffix();
+    const losers = entries.map((entry) => entry.filename).filter((name) => name !== keep);
+    try {
+      if (els.checkpointCollisionConfirmBtn) els.checkpointCollisionConfirmBtn.disabled = true;
+      const renamed = [];
+      for (const filename of losers) {
+        const handle = await directoryHandle.getFileHandle(filename, { create: false });
+        if (typeof handle.move !== "function") throw new Error("Chrome bản này không đổi tên file được. Đổi tên thủ công trong Explorer rồi Check Plan lại.");
+        const target = await supersededName(directoryHandle, filename, suffix);
+        await handle.move(target);
+        renamed.push(`${filename} → ${target}`);
+      }
+      closeCheckpointCollisionDialog();
+      log(`Checkpoint collision resolved; kept ${keep}. Renamed: ${renamed.join("; ")}.`, "done");
+      progress(`Đã giữ ${keep}. Đổi tên: ${renamed.join("; ")}. Đang kiểm tra lại…`);
+      // Re-derive the resume state from disk rather than trusting the in-memory
+      // plan that was built while the folder was still ambiguous.
+      state.resumeCheckpointFindings = [];
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
+      await scanProfileCheckpoints({ loadHighest: true });
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
+      addCheckpointFindings({ findings: state.resumeCheckpointFindings });
+      await prepare({ diagnostic: true });
+      if (state.prepared) window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+      await validate();
+    } catch (error) {
+      const reason = messageOf(error);
+      if (els.checkpointCollisionStatus) els.checkpointCollisionStatus.textContent = `Không xử lý được: ${reason}`;
+      if (els.checkpointCollisionConfirmBtn) els.checkpointCollisionConfirmBtn.disabled = false;
+      log(`Checkpoint collision not resolved: ${reason}`, "error");
+    }
+  }
+
+  // Every actionable finding carries the one control that resolves it, so the
+  // operator never has to scroll back up hunting for a button.
+  function diagnosticGuidanceAction(finding) {
+    if (finding.severity !== "BLOCKER" && finding.severity !== "WARNING") return null;
+    if (["WORKBOOK_NOT_LOADED", "WORKBOOK_NO_JOBS", "MALFORMED_JOBS"].includes(finding.code)) {
+      return { label: "Chọn workbook", handler: () => els.workbookInput.click() };
+    }
+    if (["MISSING_REFERENCES", "AMBIGUOUS_REFERENCES", "DUPLICATE_REFERENCE", "DUPLICATE_ALIASES", "UNUSED_REFERENCES"].includes(finding.code)) {
+      return { label: "Thêm ảnh tham chiếu", handler: () => els.referencesInput.click() };
+    }
+    if (["MAX_INPUT_IMAGES", "RUN_SETTINGS_INVALID"].includes(finding.code)) {
+      return {
+        label: "Mở phần thiết lập",
+        handler: () => {
+          const firstControl = els.runtimeSettingsCard.querySelector("input, select, textarea, button");
+          els.runtimeSettingsCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          firstControl?.focus({ preventScroll: true });
+        }
+      };
+    }
+    if (["OUTPUT_DESTINATION_MISSING", "OUTPUT_PERMISSION_REQUIRED", "OUTPUT_PROFILE_UNAVAILABLE", "OUTPUT_PROFILE_UNBOUND", "RESUME_OUTPUT_MISMATCH"].includes(finding.code)) {
+      return { label: "Chọn thư mục", handler: () => openFolderPickDialog("image") };
+    }
+    if (["CHATGPT_RECEIVER_UNAVAILABLE", "CHATGPT_SECURITY_BLOCKER", "CHATGPT_COMPOSER_UNAVAILABLE", "CHATGPT_BUSY", "CHATGPT_NOT_CONNECTED", "CHECKPOINT_VERSION_CONFLICT"].includes(finding.code)) {
+      return { label: "Kiểm tra lại", handler: validate };
+    }
+    // Renaming a checkpoint is never automated: one of the two files may still
+    // be the authoritative one, and the runner cannot tell which. Hand the
+    // operator the exact names instead.
+    if (finding.code === "RESUME_CHECKPOINT_VERSION_AMBIGUOUS" && (finding.files || []).length) {
+      return { label: "Xử lý file trùng", handler: () => openCheckpointCollisionDialog(finding).catch((error) => log(messageOf(error), "error")) };
+    }
+    if (["RESUME_LEDGER_INVALID", "RESUME_RUN_ID_MISMATCH", "RESUME_LATEST_CHECKPOINT_INVALID"].includes(finding.code)) {
+      return { label: "Chọn Result XLSX khác", handler: () => els.resumeWorkbookInput?.click() };
+    }
+    return null;
   }
 
   async function validate() {
@@ -1700,12 +2155,17 @@
     const values = window.DacOutputLocation.effective(state.outputSettings);
     const extension = imageExtensionFromUrl(url);
     const requested = window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, extension);
-    if (location.kind === "downloads") return download(url, item.job.id, location.folder, `${location.folder}/${requested}`, values.collisionPolicy);
+    // A deliberate rerun of a completed job carries its own collision-policy
+    // choice on the job row (set only for that one job by confirmRerun), so
+    // it can preserve or replace the prior image independently of whatever
+    // the operator configured as the run's default collision policy.
+    const policy = item.job.rerun_collision_policy ? window.DacOutputLocation.collisionPolicy(item.job.rerun_collision_policy) : values.collisionPolicy;
+    if (location.kind === "downloads") return download(url, item.job.id, location.folder, `${location.folder}/${requested}`, policy);
     const response = await fetch(url, { credentials: "include" });
     if (!response.ok) throw new Error(`Could not fetch the generated image for the selected folder (${response.status}).`);
     const blob = await response.blob();
     if (!blob.size) throw new Error("Generated image download was empty.");
-    const actual = await window.DacOutputLocation.writeFileWithPolicy(location.handle, window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, window.DacOutputLocation.actualExtension(blob, extension)), blob, values.collisionPolicy);
+    const actual = await window.DacOutputLocation.writeFileWithPolicy(location.handle, window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, window.DacOutputLocation.actualExtension(blob, extension)), blob, policy);
     return { ok: true, filename: window.DacOutputLocation.fileLabel(location, actual.filename), download_id: null, storage: "directory", write_outcome: actual.outcome };
   }
 
@@ -1753,15 +2213,36 @@
     return { workbook: candidate, blob: window.DacXlsx.downloadBlob(candidate), checkpoint };
   }
 
-  async function assertCheckpointVersionAvailable(location, filename) {
+  // Enumerates every file in a directory that parses as a checkpoint of this run's
+  // pattern. Shared by the resume scan and the pre-write conflict check so both
+  // reason about the same set.
+  async function discoverCheckpoints(directoryHandle, pattern) {
+    const found = [];
+    for await (const [name, handle] of directoryHandle.entries()) {
+      if (handle?.kind !== "file") continue;
+      const parsed = window.DacCheckpointCore.parse(pattern, name);
+      if (parsed) found.push(parsed);
+    }
+    return found;
+  }
+
+  async function assertCheckpointVersionAvailable(location, filename, pattern = "", version = null) {
     if (location.kind === "directory") {
-      try {
-        await location.handle.getFileHandle(filename, { create: false });
+      if (await window.DacOutputLocation.fileExists(location.handle, filename)) {
         throw new Error(`CHECKPOINT_VERSION_CONFLICT: '${filename}' already exists. No Result checkpoint was written.`);
-      } catch (error) {
-        if (error?.name === "NotFoundError") return;
-        throw error;
       }
+      // A free filename is not a free version. Once a folder holds both naming
+      // widths, 'v002' and 'v02' mean the same version, and a later resume
+      // would tie-break on filename and silently prefer the older file. Refuse
+      // to create the second one instead.
+      if (pattern && Number.isInteger(Number(version))) {
+        const discovered = await discoverCheckpoints(location.handle, pattern);
+        if (window.DacCheckpointCore.hasVersionConflict(discovered, version)) {
+          const taken = discovered.filter((item) => Number(item.version) === Number(version)).map((item) => item.filename).join(", ");
+          throw new Error(`CHECKPOINT_VERSION_CONFLICT: checkpoint version ${window.DacCheckpointCore.formatVersion(version)} already exists as ${taken}. No Result checkpoint was written.`);
+        }
+      }
+      return;
     }
     const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, "fail");
     const requested = request.filename.replace(/\//g, "\\").toLowerCase();
@@ -1775,7 +2256,7 @@
     const version = window.DacCheckpointCore.nextVersion(state.checkpointVersion || state.workbook.config.checkpoint_version);
     const filename = window.DacOutputLocation.renderCheckpointFilename(state.workbook.fileName, state.outputSettings, version);
     const candidate = await checkpointWorkbook(filename, version);
-    await assertCheckpointVersionAvailable(location, filename);
+    await assertCheckpointVersionAvailable(location, filename, values.checkpointFilenamePattern, version);
     if (location.kind === "directory") {
       await window.DacOutputLocation.writeNewFile(location.handle, filename, candidate.blob);
       state.workbook = candidate.workbook; state.checkpointVersion = version; state.checkpointFilename = filename; state.checkpointCreatedAt = candidate.checkpoint.checkpoint_created_at;
@@ -1898,7 +2379,8 @@
   }
 
   async function waitForChatReady(item) {
-    const response = await send({ type: "DAC_WAIT_CHAT_READY", timeoutMs: item.settings.timeout_sec * 1000, safetyCooldownSec: item.settings.safety_cooldown_sec, outputVerified: true });
+    const selectedSafetyCooldownSec = window.DacRunnerCore.safetyCooldownSeconds(item.settings);
+    const response = await send({ type: "DAC_WAIT_CHAT_READY", timeoutMs: item.settings.timeout_sec * 1000, safetyCooldownSec: selectedSafetyCooldownSec, outputVerified: true });
     if (!response?.ok) throw new Error(response?.error || "ChatGPT did not become ready for the next job.");
   }
 
@@ -1963,7 +2445,15 @@
       item.runtime_stage = "SUCCESS"; setCurrent(item, item.runtime_stage, "Saved image and idle readiness confirmed.");
       update(item, { status: "SUCCESS", attempt_phase: item.phase, result_file: item.result_file, result_download_id: item.result_download_id, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "SUCCESS", recreate_attempt_id: item.attempt_id } : {}) });
       audit("JOB_SUCCESS", item); log(`${item.job.id} success after CHAT_READY.`, "done"); renderQueue(); progress(`${item.job.id} complete; saved output is checkpointed.`);
-      if (item.operator_recreate) audit("RECREATE_JOB_SUCCESS", item, { message: "Operator-approved recreate completed with verified persisted output." });
+      if (item.operator_recreate) {
+        // recreate_origin_result_file is only set when the deliberately
+        // recreated job actually had a prior verified output (the SAFE_
+        // COMPLETE rerun case) -- record which attempt superseded which
+        // file, and when, so the audit trail matches the folder instead of
+        // silently letting the new result_file erase that history.
+        const priorFile = item.job.recreate_origin_result_file || "";
+        audit("RECREATE_JOB_SUCCESS", item, { message: priorFile ? `Operator-approved recreate completed with verified persisted output; replaced previous output '${priorFile}'.` : "Operator-approved recreate completed with verified persisted output." });
+      }
       return { completed: true, halted: false };
     } catch (error) {
       markInterrupted(item, window.DacRunnerCore.classifyFailure(error, "OUTPUT_SAVED"), messageOf(error));
@@ -2013,9 +2503,9 @@
     let completedNaturally = false;
     try { effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" }); }
     catch (error) { const reason = messageOf(error); setStatus("ERROR"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
-    const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, state.selectedJobId);
+    const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, mode === "selected" ? state.runSelection : state.selectedJobId);
     if (!runQueue.length) { const reason = `No ${mode} jobs are eligible.`; setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
-    state.running = true; state.stopRequested = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    state.running = true; state.stopRequested = false; state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
     state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = []; if (!state.resumeMode) { state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; } state.artifactErrors = []; renderCheckpointMeta();
     if (mode !== "recreate") els.logList.textContent = "";
@@ -2028,6 +2518,8 @@
       snapshotOutputSettings();
       for (let runIndex = 0; runIndex < runQueue.length; runIndex += 1) {
         const item = runQueue[runIndex];
+        if (state.stopRequested) break;
+        await waitWhilePaused();
         if (state.stopRequested) break;
         let completed = false;
         while (!completed && !state.stopRequested) {
@@ -2083,6 +2575,8 @@
         }
         state.terminal += 1; renderQueue();
         if (halted) break;
+        await waitWhilePaused();
+        if (state.stopRequested) break;
         const nextItem = runQueue[runIndex + 1] || null;
         if (!state.stopRequested && item.status === "SUCCESS" && nextItem) {
           const delay = window.DacRunnerCore.delaySeconds(settings);
@@ -2107,6 +2601,7 @@
         state.resumePlan = window.DacResumeCore.plan(state.workbook);
         renderResumePlan();
       }
+      if (mode === "selected") state.runSelection.clear();
       state.running = false; state.stopRequested = false; renderQueue(); renderOutputScreen(); controls();
       stopRuntimeTicker();
       if (completedNaturally) {
@@ -2128,10 +2623,50 @@
 
   async function stop() { state.stopRequested = true; progress("Stopping current operation…"); try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop prevents further jobs */ } }
 
+  // Pause never interrupts an in-flight attempt -- exact-once submission
+  // means a job that has already been sent cannot be safely suspended mid
+  // generation. It only holds the queue at the one boundary that is already
+  // safe: after the current job reaches a terminal state and before the next
+  // one is gated/submitted. This is why it is a distinct control from Stop,
+  // not a rename of it: Stop abandons the run (no auto-resume, the operator
+  // must press Run again); Pause holds the same in-memory run in place so
+  // Resume continues it with no re-checkpoint, no re-gate, nothing lost.
+  function togglePause() {
+    state.pauseRequested = !state.pauseRequested;
+    if (state.pauseRequested) {
+      progress(state.paused ? "Sẽ tiếp tục ngay." : "Sẽ tạm dừng ngay sau khi job hiện tại hoàn tất.");
+      log("Pause requested; the current job finishes first.", "info");
+    } else {
+      progress(state.paused ? "Đã tiếp tục." : "Đã huỷ yêu cầu tạm dừng.");
+      log("Pause cancelled or resumed by operator.", "info");
+    }
+    controls();
+  }
+
+  async function waitWhilePaused() {
+    if (!state.pauseRequested || state.stopRequested) return;
+    state.paused = true;
+    setStatus("IDLE", "PAUSED");
+    progress("Đã tạm dừng sau khi job vừa rồi hoàn tất. Bấm \"Tiếp tục\" để chạy job kế tiếp.");
+    log("Run paused between jobs.", "info");
+    audit("RUN_PAUSED", null, {});
+    renderQueue(); controls();
+    while (state.pauseRequested && !state.stopRequested) await sleep(250);
+    state.paused = false;
+    if (!state.stopRequested) {
+      audit("RUN_RESUMED", null, {});
+      setStatus("RUNNING");
+      progress("Đã tiếp tục — đang chuyển sang job kế tiếp.");
+      log("Run resumed by operator.", "done");
+    }
+    renderQueue(); controls();
+  }
+
   function showScreen(id) {
     if (state.running && id === "outputScreen") return;
     document.querySelectorAll(".workflow-screen").forEach((screen) => screen.classList.toggle("active", screen.id === id));
     document.querySelectorAll(".workflow-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.screen === id));
+    if (id === "runScreen") requestAnimationFrame(() => applyRunSplitRatio(runSplitRatio));
   }
 
   els.workbookInput.addEventListener("change", openWorkbook);
@@ -2140,19 +2675,26 @@
   els.referencesInput.addEventListener("change", () => loadFiles().catch((error) => log(error.message, "error")));
   els.outputDestinationMode.addEventListener("change", setOutputDestinationMode);
   els.imageOutputFolderInput.addEventListener("change", setImageDownloadsFolder);
-  els.destinationFolderBtn.addEventListener("click", () => choosePrimaryDestination().catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
+  els.destinationFolderBtn.addEventListener("click", () => openFolderPickDialog("image"));
   els.separateResultDestinationInput.addEventListener("change", setSeparateResultDestination);
   els.resultLocationMode.addEventListener("change", setResultLocation);
   els.resultDownloadsFolderInput.addEventListener("change", setResultDownloadsFolder);
   els.resultFilenameInput.addEventListener("change", setResultFilename);
   for (const element of [els.imagePatternInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput]) element.addEventListener("change", setArtifactNaming);
-  for (const element of [els.timeoutSecInput, els.maxRetriesInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.addEventListener("change", () => updateRuntimeOverrides().catch((error) => log(error.message, "error")));
-  els.chooseResultFolderBtn.addEventListener("click", () => chooseResultDestination().catch((error) => { if (error.name !== "AbortError") { els.outputPermissionText.textContent = error.message; log(error.message, "error"); } }));
+  for (const element of [els.timeoutSecInput, els.maxRetriesInput, els.delayMinSecInput, els.delayMaxSecInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) element.addEventListener("change", () => updateRuntimeOverrides().catch((error) => log(error.message, "error")));
+  els.chooseResultFolderBtn.addEventListener("click", () => openFolderPickDialog("result"));
+  els.checkpointCollisionCancelBtn?.addEventListener("click", closeCheckpointCollisionDialog);
+  els.checkpointCollisionConfirmBtn?.addEventListener("click", () => confirmCheckpointCollision());
+  els.folderPickCopyBtn?.addEventListener("click", () => copyFolderPickPath());
+  els.folderPickCancelBtn?.addEventListener("click", closeFolderPickDialog);
+  els.folderPickOpenBtn?.addEventListener("click", confirmFolderPick);
   els.copyFolderHintBtn?.addEventListener("click", () => copyFolderHint().catch((error) => { els.outputPermissionText.textContent = error.message; }));
   const ZOOM_LEVELS = [0.8, 0.9, 1.0];
   const ZOOM_EPSILON = 0.015;
   const UI_ZOOM_LEVELS = [1, 1.1, 1.2];
   const UI_ZOOM_STORAGE_KEY = "dac_ui_zoom";
+  const RUN_SPLIT_STORAGE_KEY = "dac_run_split_ratio";
+  let runSplitRatio = 0.5;
 
   function isChatGPTUrl(url) {
     return Boolean(url && /^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(url));
@@ -2233,6 +2775,68 @@
     chrome.storage?.local?.set({ [UI_ZOOM_STORAGE_KEY]: selected }).catch?.(() => {});
   }
 
+  function runSplitBounds() {
+    const width = els.runDashboardSplit?.getBoundingClientRect().width || 0;
+    const usable = Math.max(0, width - 14);
+    if (!usable) return null;
+    const minimumLeft = Math.min(220, usable / 2);
+    const maximumLeft = Math.max(minimumLeft, usable - Math.min(260, usable / 2));
+    return { usable, minimumRatio: minimumLeft / usable, maximumRatio: maximumLeft / usable };
+  }
+
+  function applyRunSplitRatio(value, persist = false) {
+    const bounds = runSplitBounds();
+    const requested = Number(value);
+    runSplitRatio = Number.isFinite(requested) ? Math.max(0.1, Math.min(0.9, requested)) : 0.5;
+    if (!bounds || !els.runDashboardSplit || !els.runWidthSplitter) return runSplitRatio;
+    runSplitRatio = Math.max(bounds.minimumRatio, Math.min(bounds.maximumRatio, runSplitRatio));
+    els.runDashboardSplit.style.setProperty("--run-left-pane-width", `${Math.round(bounds.usable * runSplitRatio)}px`);
+    els.runWidthSplitter.setAttribute("aria-valuemin", String(Math.round(bounds.minimumRatio * 100)));
+    els.runWidthSplitter.setAttribute("aria-valuemax", String(Math.round(bounds.maximumRatio * 100)));
+    els.runWidthSplitter.setAttribute("aria-valuenow", String(Math.round(runSplitRatio * 100)));
+    if (persist) chrome.storage?.local?.set({ [RUN_SPLIT_STORAGE_KEY]: runSplitRatio }).catch?.(() => {});
+    return runSplitRatio;
+  }
+
+  async function initRunWidthSplitter() {
+    if (!els.runDashboardSplit || !els.runWidthSplitter) return;
+    try {
+      const stored = await chrome.storage.local.get(RUN_SPLIT_STORAGE_KEY);
+      runSplitRatio = Number(stored?.[RUN_SPLIT_STORAGE_KEY]) || 0.5;
+    } catch (_) { runSplitRatio = 0.5; }
+    applyRunSplitRatio(runSplitRatio);
+    const resize = (clientX, persist = false) => {
+      const rect = els.runDashboardSplit.getBoundingClientRect();
+      if (!rect.width) return;
+      applyRunSplitRatio((clientX - rect.left) / Math.max(1, rect.width - 14), persist);
+    };
+    els.runWidthSplitter.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      els.runWidthSplitter.focus({ preventScroll: true });
+      els.runWidthSplitter.classList.add("dragging");
+      els.runWidthSplitter.setPointerCapture?.(event.pointerId);
+      const move = (moveEvent) => resize(moveEvent.clientX);
+      const finish = (upEvent) => {
+        resize(upEvent.clientX, true);
+        els.runWidthSplitter.classList.remove("dragging");
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", finish);
+        window.removeEventListener("pointercancel", finish);
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", finish);
+      window.addEventListener("pointercancel", finish);
+    });
+    els.runWidthSplitter.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "Home"].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === "Home" ? 0.5 : runSplitRatio + (event.key === "ArrowLeft" ? -0.03 : 0.03);
+      applyRunSplitRatio(next, true);
+    });
+    els.runWidthSplitter.addEventListener("dblclick", () => applyRunSplitRatio(0.5, true));
+    if (typeof ResizeObserver === "function") new ResizeObserver(() => applyRunSplitRatio(runSplitRatio)).observe(els.runDashboardSplit);
+  }
+
   document.querySelectorAll(".zoom-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const level = Number(btn.dataset.zoom);
@@ -2270,16 +2874,22 @@
   els.auditGapCancelBtn?.addEventListener("click", closeAuditGapDialog);
   els.auditGapConfirmBtn?.addEventListener("click", () => confirmAuditGap().catch(() => controls()));
   els.auditGapConfirmDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeAuditGapDialog(); });
+  els.rerunCancelBtn?.addEventListener("click", cancelRerun);
+  els.rerunConfirmBtn?.addEventListener("click", () => confirmRerun().catch(() => controls()));
+  els.rerunConfirmDialog?.addEventListener("cancel", (event) => { event.preventDefault(); cancelRerun(); });
   els.runBtn.addEventListener("click", () => run("all"));
+  els.runFromRunTabBtn?.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
+  els.runSelectedBtn?.addEventListener("click", () => run("selected"));
   els.stopBtn.addEventListener("click", stop);
+  els.pauseResumeBtn?.addEventListener("click", togglePause);
   els.clearLogsBtn.addEventListener("click", () => { els.logList.textContent = ""; });
   els.viewQueueBtn.addEventListener("click", () => { state.queueExpanded = !state.queueExpanded; renderQueue(); });
   els.viewOutputsBtn.addEventListener("click", () => { state.outputsExpanded = !state.outputsExpanded; renderOutputScreen(); });
   els.loadNewWorkbookBtn.addEventListener("click", () => { showScreen("setupScreen"); els.workbookInput.click(); });
   els.openOutputFolderBtn.addEventListener("click", openOutputFolder);
   document.querySelectorAll(".workflow-tab").forEach((tab) => tab.addEventListener("click", () => showScreen(tab.dataset.screen)));
-  renderOutput(); renderRuntime(); renderOutputScreen(); controls(); restoreUiZoom().catch(() => applyUiZoom(1)); syncZoomState().catch(() => {});
+  renderOutput(); renderRuntime(); renderOutputScreen(); controls(); restoreUiZoom().catch(() => applyUiZoom(1)); initRunWidthSplitter().catch(() => {}); syncZoomState().catch(() => {});
 
   (typeof window !== "undefined" ? window : globalThis).DacChatZoom = {
     isChatGPTUrl,

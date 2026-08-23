@@ -33,6 +33,18 @@ const settings = runner.config({ delay_sec: "5", continue_on_error: "true", max_
 assert.deepEqual({ min: settings.delay_min_sec, max: settings.delay_max_sec, continue: settings.continue_on_error }, { min: 5, max: 5, continue: true });
 assert.equal(runner.resultWorkbookName("jobs.xlsx"), "jobs-result.xlsx");
 assert.equal(runner.delaySeconds(runner.config({ delay_min_sec: 4, delay_max_sec: 6 }), () => .99), 6);
+assert.deepEqual(
+  { min: runner.DEFAULTS.delay_min_sec, max: runner.DEFAULTS.delay_max_sec, cooldown: runner.DEFAULTS.safety_cooldown_sec },
+  { min: 12, max: 24, cooldown: "6-9" },
+  "new workbooks default to the approved randomized timing ranges"
+);
+const rangedCooldown = runner.config({ safety_cooldown_sec: "6-9" });
+assert.equal(rangedCooldown.safety_cooldown_min_sec, 6);
+assert.equal(rangedCooldown.safety_cooldown_max_sec, 9);
+assert.equal(runner.safetyCooldownSeconds(rangedCooldown, () => 0), 6);
+assert.equal(runner.safetyCooldownSeconds(rangedCooldown, () => 0.999), 9);
+assert.equal(runner.safetyCooldownSeconds(runner.config({ safety_cooldown_sec: 8 }), () => 0), 8, "fixed cooldown values remain backward compatible");
+assert.throws(() => runner.config({ safety_cooldown_sec: "9-6" }), /minimum not exceeding maximum/);
 assert.deepEqual(Array.from(runner.countdownValues(5)), [5, 4, 3, 2, 1]);
 const prepared = runner.prepare({ config: { rerun_done: "false" }, jobs: [{ id: "done", prompt: "x", status: "DONE" }, { id: "pending", prompt: "x" }] }, []);
 assert.deepEqual(prepared.queue.map((item) => item.status), ["SUCCESS", "PENDING"]);

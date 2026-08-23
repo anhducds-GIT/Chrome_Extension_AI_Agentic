@@ -60,7 +60,7 @@ assert.match(html, /id="artifactRowAudit"/);
 
 // Audit JSONL technical log UX label
 assert.match(html, /Save Audit JSONL \(technical log\)/);
-assert.match(html, /Audit JSONL \(technical log\) preview:/);
+assert.match(html, /Xem trước Audit JSONL \(nhật ký kỹ thuật\):/);
 
 // Check that HALTED treatment is strictly inside runScreen
 const runScreenSection = html.slice(html.indexOf('id="runScreen"'), html.indexOf('id="outputScreen"'));

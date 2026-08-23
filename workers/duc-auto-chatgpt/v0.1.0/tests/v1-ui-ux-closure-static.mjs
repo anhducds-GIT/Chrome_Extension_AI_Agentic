@@ -17,19 +17,49 @@ assert.match(html, /id="namingSetupSection"/);
 assert.match(html, /class="workbook-layout"/);
 assert.match(css, /\.workbook-layout \{ display: grid; gap: 8px; \}/);
 assert.match(css, /\.workbook-layout \{ grid-template-columns: minmax\(0, 1fr\) minmax\(220px, 0\.9fr\);/);
+assert.match(html, /class="workbook-actions">\s*<button id="changeWorkbookBtn"[\s\S]*?<button id="continueExistingRunBtn"/, "Continue Existing Run sits beside Change in one action group");
+assert.match(css, /\.workbook-actions \{ display: flex; align-items: center; gap: 6px;/, "workbook actions share one compact row");
+assert.doesNotMatch(html, /class="existing-run-actions"/, "Continue Existing Run no longer occupies a separate row");
+assert.match(css, /\.collision-option \{\s*display: grid;\s*grid-template-columns: auto minmax\(0, 1fr\);/, "checkpoint collision choices reserve only the radio width before their content");
+assert.match(css, /\.collision-option input\[type="radio"\] \{ width: auto; height: auto;/, "global full-width input styling cannot stretch collision radios");
+assert.match(css, /\.recreate-confirm-dialog \{[\s\S]*?overflow-x: hidden;/, "dialogs do not expose a horizontal scrollbar for long checkpoint names");
 for (const id of ["imagePatternInput", "resultFilenameInput", "auditFilenameInput", "collisionPolicyInput"]) assert.match(html, new RegExp(`id="${id}"`));
 assert.ok(html.indexOf('id="namingSetupSection"') < html.indexOf('id="outputAdvancedDetails"'));
+const advancedOutputStart = html.indexOf('<details class="secondary-details" id="outputAdvancedDetails">');
+const advancedOutputEnd = html.indexOf("</details>", advancedOutputStart);
+const advancedOutputHtml = html.slice(advancedOutputStart, advancedOutputEnd);
+for (const id of ["resultFilenameInput", "auditFilenameInput", "runIdText", "checkpointVersionText", "checkpointFilenameText"]) {
+  assert.match(advancedOutputHtml, new RegExp(`id="${id}"`), `${id} stays inside the collapsed advanced-output section`);
+}
+for (const id of ["imagePatternInput", "collisionPolicyInput"]) {
+  assert.ok(html.indexOf(`id="${id}"`) < advancedOutputStart, `${id} remains visible in the primary Naming section`);
+}
+assert.match(advancedOutputHtml, /Chỉ để xem trước nơi extension sẽ lưu file/, "destination previews explain that they are informational and automatic");
 assert.match(source, /markLocalOverride\("output_naming"\)/, "naming changes retain local-override invalidation");
 assert.match(source, /markLocalOverride\("result_filename_pattern"\)/, "Result checkpoint pattern retains local-override invalidation");
-assert.match(html, /Result checkpoint pattern/);
+assert.match(html, /Mẫu tên checkpoint kết quả/);
 for (const id of ["runIdText", "checkpointVersionText", "checkpointFilenameText"]) assert.match(html, new RegExp(`id="${id}"`));
 assert.match(html, /id="namingProvenance"/);
 assert.match(source, /XLSX \+ local override/);
 assert.match(source, /renderNamingProvenance\(\)/);
-assert.match(html, /<option value="overwrite">Replace existing file<\/option>/);
-assert.match(html, /<option value="uniquify" selected>Keep both — add number<\/option>/);
-assert.match(html, /<option value="fail">Stop and report conflict<\/option>/);
-assert.match(html, /Controls what happens when a file with the same name already exists\./);
+assert.match(html, /<option value="overwrite">Ghi đè file hiện có<\/option>/);
+assert.match(html, /<option value="uniquify" selected>Giữ cả hai — tự thêm số<\/option>/);
+assert.match(html, /<option value="fail">Dừng và báo trùng tên<\/option>/);
+assert.match(html, /ĐẶT TÊN/);
+assert.match(html, /Mẫu tên file ảnh/);
+assert.match(html, /Khi tên file đã tồn tại/);
+assert.match(css, /\.naming-grid label \{ align-self: start; align-content: start;/, "advanced naming controls align at the top even when only one field has help text");
+assert.match(css, /\.naming-grid input, \.naming-grid select \{ min-height: 38px;[^}]*font-size: 13px;/, "Naming controls are larger and easier to read");
+assert.match(html, /Quy định cách xử lý khi đã có file trùng tên\./);
+for (const id of ["delayMinSecInput", "delayMaxSecInput", "safetyCooldownInput"]) assert.match(html, new RegExp(`id="${id}"`));
+assert.match(html, /id="safetyCooldownInput"[^>]*placeholder="6-9"/, "Safety cooldown accepts a fixed value or an explicit random range");
+for (const unit of ["giây", "lần"]) assert.match(html, new RegExp(`<span class="runtime-unit">${unit}</span>`));
+assert.equal((html.match(/<span class="runtime-unit">giây<\/span>/g) || []).length, 4, "all four time fields show seconds");
+assert.equal((html.match(/<span class="runtime-unit">lần<\/span>/g) || []).length, 1, "Retries shows an attempt-count unit");
+assert.match(css, /\.runtime-settings-grid \{ grid-template-columns: repeat\(auto-fit, minmax\(116px, 120px\)\); justify-content: start;/, "small numeric settings stop stretching to fill the card");
+assert.match(css, /\.runtime-value-input \{[^}]*min-height: 34px;/, "compact fields retain a usable target height");
+assert.match(source, /delay_min_sec: els\.delayMinSecInput\.value/);
+assert.match(source, /delay_max_sec: els\.delayMaxSecInput\.value/);
 
 // SETUP: destination controls are mutually exclusive by actual location mode.
 assert.match(source, /DacSidepanelUiSemantics\.destinationVisibility\(state\.destinationMode\)/);
@@ -51,6 +81,12 @@ assert.match(html, /runtime-information--timer[^>]*>\s*<span>⏱ Job elapsed<\/s
 assert.match(html, /runtime-information--timer[^>]*>\s*<span>⌛ Operation timeout remaining<\/span><output id="runtimeTimeoutRemaining"/, "timeout time has the prominent timer treatment");
 assert.match(css, /\.timer-badge #operatorTimerText \{ font-size: 17px; font-variant-numeric: tabular-nums;/, "the live attempt timer is visually prominent");
 assert.match(css, /\.runtime-information--timer output \{ color: #1e3a8a; font-size: 18px; font-variant-numeric: tabular-nums;/, "timer values are large and scan-friendly");
+assert.match(html, /id="runDashboardSplit"[\s\S]*?id="runWidthSplitter"[^>]*role="separator"/, "Run dashboard exposes a semantic adjustable-width handle");
+assert.match(html, /id="runWidthSplitter"[^>]*>[\s\S]*?↔/, "the handle uses a bidirectional resize cue, not a one-way collapse arrow");
+assert.match(css, /grid-template-columns: minmax\(220px, var\(--run-left-pane-width, 1fr\)\) 14px minmax\(260px, 1fr\)/, "both Run columns are controlled by one persisted split width");
+assert.match(source, /RUN_SPLIT_STORAGE_KEY = "dac_run_split_ratio"/);
+assert.match(source, /pointerdown[\s\S]*?pointermove[\s\S]*?applyRunSplitRatio/, "the separator supports real pointer dragging");
+assert.match(source, /\["ArrowLeft", "ArrowRight", "Home"\]/, "the separator remains keyboard adjustable");
 
 // RUN: Current Job keeps the prompt and real attached reference images together.
 for (const id of ["currentJobContent", "currentPromptPreview", "currentReferenceColumn", "currentReferenceGallery"]) assert.match(html, new RegExp(`id="${id}"`));
@@ -147,7 +183,7 @@ assert.equal(ui.normalizeUiZoom(0.9), 1);
 assert.match(css, /container-type: inline-size/);
 assert.match(css, /@container sidepanel \(min-width: 620px\)/);
 assert.match(css, /@container sidepanel \(min-width: 780px\)/);
-assert.match(css, /#outputLocationCard \.naming-grid \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/);
+assert.match(css, /#outputLocationCard \.naming-grid \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
 assert.doesNotMatch(css, /@media \(min-width:/);
 
 // Check Plan stays local-only; no prompt submission appears in its handler path.

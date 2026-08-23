@@ -31,7 +31,9 @@ assert.equal(before.output.destination, "downloads");
 assert.equal(before.output.label, "Duc Auto ChatGPT/Pilot03");
 assert.equal(before.output.folder_hint.endsWith("Pilot03"), true);
 assert.equal(before.blockers.length, 0);
-assert.equal(before.timing.inter_job_delay_mode, "fixed");
+assert.equal(before.timing.inter_job_delay_mode, "random_range");
+assert.equal(before.timing.inter_job_delay_min_sec, 12);
+assert.equal(before.timing.inter_job_delay_max_sec, 24);
 
 const changedOutput = { ...outputSettings, image: output.downloadsLocation("Duc Auto ChatGPT/Pilot03-revised"), collisionPolicy: "fail", saveAuditJsonl: false };
 const after = review.packet({ workbook, prepared, diagnostics: ready, outputSettings: changedOutput, output, settings: prepared.settings });

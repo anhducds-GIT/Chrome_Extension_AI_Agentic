@@ -10,7 +10,7 @@ assert.match(html, /id="outputDestinationMode"/);
 assert.match(html, /Chrome Downloads/);
 assert.match(html, /Output Profile/);
 assert.match(html, /id="destinationFolderBtn"/);
-assert.match(html, /Save result artifacts to a different destination/);
+assert.match(html, /Lưu các tệp kết quả sang nơi khác/);
 assert.match(html, /id="separateResultDestinationControls"[^>]*hidden/);
 assert.doesNotMatch(html, /Choose Image Folder|Use Source Folder|id="changeImageFolderBtn"/);
 assert.match(html, /id="planCheckSummary"/);

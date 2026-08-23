@@ -1,7 +1,11 @@
-/* Guards three artifact-truthfulness defects found in the Pilot-05 evidence:
+/* Guards the artifact-truthfulness and operator-safety defects found in the
+   Pilot-05 and Pilot-06 evidence:
    1. artifact filenames were lower-cased into recorded provenance,
    2. already-persisted audit events were written a second time,
-   3. chatgpt.com-sourced URLs reached the side panel through innerHTML. */
+   3. chatgpt.com-sourced URLs reached the side panel through innerHTML,
+   4. two checkpoints could claim one version and resume silently took the
+      older one,
+   5. the folder picker must stay inside the click that opens it. */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
@@ -77,5 +81,96 @@ for (const hostile of [
   "",
   null
 ]) assert.equal(safeImageSource(hostile), "", `rejected non-image source: ${String(hostile).slice(0, 40)}`);
+
+/* ---- 4. checkpoint version collisions are refused, not resolved ---------- */
+
+// A free filename is not a free version. Reproduced in pilot-06: v002 and v02
+// both mean version 2, highest() tie-broke on filename and returned the OLDER
+// file. Both the write path and the resume scan must refuse.
+const ledgerSegment = sidepanel.slice(sidepanel.indexOf("async function assertCheckpointVersionAvailable"), sidepanel.indexOf("async function saveAuditLog"));
+assert.match(ledgerSegment, /hasVersionConflict/, "the pre-write check compares versions, not only the exact filename");
+assert.match(ledgerSegment, /CHECKPOINT_VERSION_CONFLICT/, "a taken version is refused with the documented code");
+assert.match(sidepanel, /assertCheckpointVersionAvailable\(location, filename, values\.checkpointFilenamePattern, version\)/, "saveLedger passes the pattern and version so the conflict check can run");
+
+const scanSegment = sidepanel.slice(sidepanel.indexOf("async function scanProfileCheckpoints"), sidepanel.indexOf("async function verifyResumeDirectoryLedger"));
+assert.match(scanSegment, /versionCollisions/, "the resume scan detects two checkpoints claiming one version");
+assert.match(scanSegment, /RESUME_CHECKPOINT_VERSION_AMBIGUOUS/, "an ambiguous checkpoint set blocks rather than picking one");
+assert.ok(scanSegment.indexOf("versionCollisions") < scanSegment.indexOf("DacCheckpointCore.highest"), "collisions are checked before highest() is allowed to choose");
+
+/* ---- 4b. resolving a collision renames, never deletes or overwrites ------ */
+
+// Assert on executable code only; prose in comments must not decide a test.
+const codeOnlyEarly = (text) => text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+
+const collisionSegment = codeOnlyEarly(sidepanel.slice(sidepanel.indexOf("async function confirmCheckpointCollision"), sidepanel.indexOf("function diagnosticGuidanceAction")));
+assert.ok(collisionSegment.length > 0, "confirmCheckpointCollision is present");
+assert.doesNotMatch(collisionSegment, /removeEntry|\bdelete\b/, "a superseded checkpoint is never deleted");
+assert.match(collisionSegment, /handle\.move\(target\)/, "the losing file is renamed");
+assert.match(collisionSegment, /supersededName\(directoryHandle, filename, suffix\)/, "the rename uses the operator-chosen suffix and a checked-free name");
+assert.match(collisionSegment, /await validate\(\)/, "resume state is re-derived from disk after the rename");
+
+const namingSegment = sidepanel.slice(sidepanel.indexOf("async function supersededName"), sidepanel.indexOf("async function confirmCheckpointCollision"));
+assert.match(namingSegment, /fileExists\(directoryHandle, candidate\)/, "the rename never overwrites an existing file");
+
+// The operator picks how the other file is renamed. Both suffixes must stop
+// the name parsing as a checkpoint, otherwise the collision would survive.
+const naming = new Function(`${namingSegment.replace("async function supersededName", "return async function supersededName")}`)();
+const taken = new Set();
+const fakeDir = {};
+globalThis.window = { DacOutputLocation: { fileExists: async (_dir, name) => taken.has(name) } };
+const checkpointSource = fs.readFileSync(new URL("checkpoint-core.js", root), "utf8");
+const checkpointContext = vm.createContext({});
+vm.runInContext(checkpointSource, checkpointContext);
+const pattern = "Run__results__v{version}.xlsx";
+for (const suffix of ["__superseded", " (1)"]) {
+  taken.clear();
+  const first = await naming(fakeDir, "Run__results__v002.xlsx", suffix);
+  taken.add(first);
+  const second = await naming(fakeDir, "Run__results__v002.xlsx", suffix);
+  assert.notEqual(first, second, `${suffix} never reuses a name that already exists`);
+  for (const name of [first, second]) {
+    assert.equal(checkpointContext.DacCheckpointCore.parse(pattern, name), null, `${name} no longer parses as a checkpoint, so the ambiguity is cleared`);
+    assert.match(name, /\.xlsx$/, "the extension is preserved");
+  }
+}
+delete globalThis.window;
+assert.match(sidepanel, /COLLISION_SUFFIXES = \["__superseded", " \(1\)"\]/, "both rename styles are offered");
+
+// The finding must carry the filenames, otherwise the row renders without its
+// resolve button -- the exact defect reported after the first Vietnamese pass.
+assert.match(sidepanel, /files: collisions\.flatMap/, "the collision finding carries the colliding filenames");
+assert.match(sidepanel, /function addResumeFinding\(code, message, guidance, extra = \{\}\)/, "resume findings preserve the fields their action needs");
+assert.match(sidepanel, /addResumeFinding\(code, message, guidance, extra\)/, "addCheckpointFindings forwards those fields");
+
+// Findings are copied into state.diagnostics by validate(); rendering them in
+// both panels printed every blocker twice.
+assert.match(sidepanel, /const visibleFindings = state\.diagnostics \? \[\] : plan\.findings\.filter/, "the resume panel stops duplicating rows once Check Plan renders them");
+
+/* ---- 5. the folder-pick dialog keeps the picker inside a user gesture ---- */
+
+const html = fs.readFileSync(new URL("sidepanel.html", root), "utf8");
+for (const id of ["folderPickDialog", "folderPickTitle", "folderPickPath", "folderPickCopyBtn", "folderPickStatus", "folderPickCancelBtn", "folderPickOpenBtn"]) {
+  assert.match(html, new RegExp(`id="${id}"`), `${id} exists in the markup`);
+}
+
+const codeOnly = codeOnlyEarly;
+const confirmSegment = codeOnly(sidepanel.slice(sidepanel.indexOf("function confirmFolderPick"), sidepanel.indexOf("async function chooseResultDestination")));
+assert.ok(confirmSegment.length > 0, "confirmFolderPick is present");
+// showDirectoryPicker() is only permitted while a user gesture is active, so
+// nothing may suspend between the click and the picker call.
+assert.doesNotMatch(confirmSegment, /\bawait\b|setTimeout|queueMicrotask|requestAnimationFrame|\.then\(/, "the picker is reached synchronously from the click");
+assert.match(confirmSegment, /folderPickRunner\(target\)\(\)/, "the confirm button opens the picker for the chosen target");
+
+const openSegment = codeOnly(sidepanel.slice(sidepanel.indexOf("function openFolderPickDialog"), sidepanel.indexOf("function closeFolderPickDialog")));
+assert.match(openSegment, /if \(!hint \|\| !els\.folderPickDialog\) \{ folderPickRunner\(target\)\(\); return; \}/, "with no recorded hint the dialog is skipped rather than adding a dead click");
+assert.doesNotMatch(openSegment, /showDirectoryPicker/, "opening the dialog must not open the picker");
+
+assert.match(sidepanel, /els\.destinationFolderBtn\.addEventListener\("click", \(\) => openFolderPickDialog\("image"\)\)/, "the setup folder button shows the path first");
+assert.match(sidepanel, /els\.chooseResultFolderBtn\.addEventListener\("click", \(\) => openFolderPickDialog\("result"\)\)/, "the result folder button shows the path first");
+// Assert the wiring, not the button caption: captions are operator-facing text
+// and are translated, so they must not be what a safety test depends on.
+const actionSegment = codeOnly(sidepanel.slice(sidepanel.indexOf("function diagnosticGuidanceAction"), sidepanel.indexOf("async function validate")));
+assert.match(actionSegment, /OUTPUT_PERMISSION_REQUIRED[\s\S]*?handler: \(\) => openFolderPickDialog\("image"\)/, "the Check Plan inline folder action uses the same dialog");
+assert.doesNotMatch(actionSegment, /showDirectoryPicker/, "no inline action opens the picker without the dialog");
 
 console.log("artifact integrity smoke tests: PASS");
