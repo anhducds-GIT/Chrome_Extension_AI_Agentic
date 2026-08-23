@@ -20,7 +20,7 @@ The 90% package is intentionally fail-closed. It does not claim that determinist
 4. Select `workers/duc-auto-gemini/v0.1.0`.
 5. Open or reload `https://gemini.google.com/images`.
 6. Click the Duc Auto Gemini toolbar action to open the Side Panel.
-7. Use **Check Plan** before **Run Pending**.
+7. Use **Check Plan**, select a queue row, then use **Run Selected** for the owner pilot. **Run Pending** runs every currently runnable row sequentially.
 
 ## Workbook contract
 
@@ -35,12 +35,14 @@ The `.xlsx` workbook must contain a `jobs` worksheet with `id` and `prompt` head
 | `delay_min_sec`, `delay_max_sec` | 0–120; defaults 8 and 15 |
 | `output_folder` | default `Duc Auto Gemini` |
 
-The source workbook is never overwritten. Each output-save checkpoint downloads a new `__results__vNN.xlsx` and records a storage checkpoint under `dag.active_checkpoint.v1`.
+The source workbook is never overwritten. A completed/stopped run downloads a new `__results__v01.xlsx`; every critical transition updates `dag.active_checkpoint.v1` and a durable attempt record.
 
 ## Runtime invariants
 
 - One submit-critical job at a time.
+- Every attempt is bound to one exact `/images` tab; later wait/advance/abort messages cannot switch tabs or attempt identity.
 - `PRE_SUBMIT → SUBMITTED` is irreversible.
+- `SUBMITTED` is persisted before the Send click. Reopening the panel converts any unresolved submitted/output stage to non-runnable `OWNER_REVIEW`.
 - A timeout or ambiguity after `SUBMITTED` becomes `OWNER_REVIEW` or `INTERRUPTED`; it is never automatically requeued.
 - Output must be fresh relative to the immutable pre-submit image boundary, inside a model-response container, visible and usable.
 - Template-gallery, input/reference, stale and multiple ambiguous images are rejected.
@@ -54,11 +56,15 @@ The source workbook is never overwritten. Each output-save checkpoint downloads 
 Side Panel
   ├─ xlsx-codec.js       source/result workbook boundary
   ├─ run-core.js         queue, references, checkpoints, audit
-  └─ background.js       receiver probe, routing, download completion
+  └─ runtime-core.js     identity validation and restart recovery
+          │
+          ▼
+background.js            exact-tab binding, durable attempts, downloads
+  └─ binding-core.js     run/job/attempt ↔ tab/window invariant
           │
           ▼
 content.js               live DOM adapter
-  └─ provider-core.js    selectors, blockers, attribution, exact-once state
+  └─ provider-core.js    selectors, blockers, response-bound attribution
 ```
 
 ## Permission rationale
@@ -67,7 +73,6 @@ content.js               live DOM adapter
 | --- | --- |
 | `storage` | Local checkpoint/audit and session terminal attempt retention |
 | `sidePanel` | Operator UI beside Gemini |
-| `tabs` | Find and probe the exact reachable Gemini receiver |
 | `downloads` | Save generated image and record Chrome's actual collision-resolved filename |
 | `https://gemini.google.com/*` | Inject the Gemini content adapter only on the provider origin |
 
@@ -83,7 +88,7 @@ git diff --check
 
 ## Recovery and rollback
 
-- Side Panel close/reopen: reload the source workbook, run **Check Plan**, and compare the visible queue with `dag.active_checkpoint.v1`. Submitted ambiguity must remain non-runnable.
+- Side Panel close/reopen: reload the same source workbook, run **Check Plan**, and compare the visible queue with `dag.active_checkpoint.v1`. Any durable unresolved `SUBMITTED`/output stage becomes `OWNER_REVIEW` and remains non-runnable.
 - Lost receiver or DOM drift: reload the exact Gemini tab once; if readiness remains unknown, stop and update the adapter/fixture rather than clicking generically.
 - Disable/rollback: turn off or remove only **Duc Auto Gemini** at `chrome://extensions`. It is independent from Duc Auto ChatGPT.
 

@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Personal, local-only XLSX image generation runner for Gemini Images.",
   "minimum_chrome_version": "116",
-  "permissions": ["storage", "sidePanel", "tabs", "downloads"],
+  "permissions": ["storage", "sidePanel", "downloads"],
   "host_permissions": ["https://gemini.google.com/*"],
   "background": { "service_worker": "background.js" },
   "action": { "default_title": "Open Duc Auto Gemini" },
@@ -12,7 +12,7 @@
   "content_scripts": [
     {
       "matches": ["https://gemini.google.com/*"],
-      "js": ["provider-core.js", "run-core.js", "content.js"],
+      "js": ["provider-core.js", "runtime-core.js", "run-core.js", "content.js"],
       "run_at": "document_idle"
     }
   ]

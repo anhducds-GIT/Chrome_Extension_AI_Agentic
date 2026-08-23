@@ -14,10 +14,10 @@ Close the final 10% with live evidence. This pilot is not permission to bypass G
 
 ## Controlled pilot sequence
 
-1. Run only `DAG-0`. Confirm exactly one prompt submission, attributable output, completed download and Result XLSX checkpoint.
+1. Select `DAG-0` in Queue and click **Run Selected**. Confirm exactly one prompt submission, attributable output, completed download and Result XLSX checkpoint.
 2. Reopen the Side Panel and verify `DAG-0` remains complete and non-runnable.
-3. Run only `DAG-1`. Confirm the selected reference preview is ready before Send.
-4. Run only `DAG-M` after confirming the current account accepts three references.
+3. Select `DAG-1` and click **Run Selected**. Confirm the selected reference preview is ready before Send.
+4. Select `DAG-M` and click **Run Selected** only after confirming the current account accepts three references.
 5. During a separate disposable job, close/reopen the panel after `SUBMITTED`. Confirm the job becomes owner-review/ambiguous and is not resent.
 6. Test a wrong route such as Library; Check Plan must fail closed.
 7. Revoke output/download permission or interrupt the target tab; verify a visible failure with no next submission.

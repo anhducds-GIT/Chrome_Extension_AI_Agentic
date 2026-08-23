@@ -19,8 +19,8 @@
     PRE_SUBMIT: new Set([PHASE.SUBMITTED, PHASE.FAILED_PRE_SUBMIT]),
     SUBMITTED: new Set([PHASE.OUTPUT_DETECTED, PHASE.OWNER_REVIEW, PHASE.INTERRUPTED]),
     OUTPUT_DETECTED: new Set([PHASE.OUTPUT_SAVED, PHASE.OWNER_REVIEW, PHASE.INTERRUPTED]),
-    OUTPUT_SAVED: new Set([PHASE.CHAT_READY, PHASE.INTERRUPTED]),
-    CHAT_READY: new Set([PHASE.SUCCESS, PHASE.INTERRUPTED]),
+    OUTPUT_SAVED: new Set([PHASE.CHAT_READY, PHASE.OWNER_REVIEW, PHASE.INTERRUPTED]),
+    CHAT_READY: new Set([PHASE.SUCCESS, PHASE.OWNER_REVIEW, PHASE.INTERRUPTED]),
     SUCCESS: new Set(), FAILED_PRE_SUBMIT: new Set(), OWNER_REVIEW: new Set(), INTERRUPTED: new Set()
   });
 
@@ -98,6 +98,7 @@
       captured_at: meta.captured_at || new Date().toISOString(),
       url: meta.url || "",
       model_count: Number(meta.model_count || 0),
+      response_keys: Object.freeze([...new Set(meta.response_keys || candidates.map((item) => item.containerKey).filter(Boolean))]),
       image_keys: Object.freeze([...new Set(keys)]),
       fingerprint: shortHash(`${meta.url || ""}|${Number(meta.model_count || 0)}|${keys.sort().join("|")}`)
     });
@@ -106,7 +107,7 @@
     const baseline = new Set(originalBoundary?.image_keys || []);
     const evaluated = (candidates || []).map((candidate) => ({ ...candidate, key: candidateKey(candidate) }));
     const fresh = evaluated.filter((item) => item.key && !baseline.has(item.key));
-    const attributable = fresh.filter((item) => item.role === "model" && item.visible !== false && item.usable !== false && item.input !== true && item.afterBoundary !== false);
+    const attributable = fresh.filter((item) => item.role === "model" && item.visible !== false && item.usable !== false && item.input !== true && item.afterBoundary === true && item.containerKey && !(originalBoundary?.response_keys || []).includes(item.containerKey));
     if (options.securityBlocker) return { ok: false, reason: options.securityBlocker, fresh_count: fresh.length, attributable_count: attributable.length };
     if (options.generating) return { ok: false, reason: "GENERATION_ACTIVE", fresh_count: fresh.length, attributable_count: attributable.length };
     if (!fresh.length) return { ok: false, reason: "NO_FRESH_OUTPUT", fresh_count: 0, attributable_count: 0 };
@@ -130,7 +131,7 @@
   function readiness(input = {}) {
     if (input.securityBlocker) return { ready: false, reason: input.securityBlocker };
     if (input.quotaBlocker) return { ready: false, reason: input.quotaBlocker };
-    if (input.surface === SURFACE.WRONG) return { ready: false, reason: "WRONG_SURFACE" };
+    if (input.surface !== SURFACE.IMAGES) return { ready: false, reason: "WRONG_SURFACE" };
     if (!input.composerFound) return { ready: false, reason: "COMPOSER_MISSING" };
     if (input.generating) return { ready: false, reason: "GENERATION_ACTIVE" };
     if (input.attachmentPending) return { ready: false, reason: "ATTACHMENT_PENDING" };

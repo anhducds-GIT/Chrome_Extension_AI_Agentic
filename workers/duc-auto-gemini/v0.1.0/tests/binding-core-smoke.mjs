@@ -1,0 +1,12 @@
+import { assert, load, pass } from "./test-helpers.mjs";
+const Binding = await load(new URL("../binding-core.js", import.meta.url), "DagBindingCore");
+const identity = { run_id: "run-1", job_id: "job-a", attempt_id: "run-1:job-a:a001" };
+const binding = Binding.createBinding(identity, { id: 11, windowId: 4, url: "https://gemini.google.com/images" }, "IMAGES");
+assert.equal(Binding.matches(binding, identity), true);
+assert.equal(Binding.matches(binding, { ...identity, attempt_id: "run-1:job-a:a002" }), false, "follow-up cannot switch attempts");
+assert.deepEqual(Binding.validate(binding, identity, { id: 11, windowId: 4 }, { surface: "IMAGES" }), { ok: true, reason: "BOUND_ATTEMPT_TAB" });
+assert.equal(Binding.validate(binding, identity, { id: 12, windowId: 4 }, { surface: "IMAGES" }).reason, "BOUND_TAB_MISSING", "follow-up cannot switch Gemini tabs");
+assert.equal(Binding.validate(binding, identity, { id: 11, windowId: 4 }, { surface: "CONVERSATION" }).reason, "BOUND_TAB_LEFT_IMAGES_SURFACE");
+assert.equal(Binding.validate(binding, { ...identity, job_id: "job-b" }, { id: 11, windowId: 4 }, { surface: "IMAGES" }).reason, "ATTEMPT_ID_MISMATCH", "abort/follow-up must keep job identity");
+assert.throws(() => Binding.createBinding(identity, { id: 11, windowId: 4 }, "CONVERSATION"), /INVALID_ATTEMPT_BINDING/);
+pass("binding core: one attempt remains pinned to one exact Gemini Images tab");

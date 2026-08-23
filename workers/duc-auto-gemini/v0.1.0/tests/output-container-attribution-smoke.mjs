@@ -1,0 +1,10 @@
+import { assert, load, pass } from "./test-helpers.mjs";
+const Core = await load(new URL("../provider-core.js", import.meta.url), "DagProviderCore");
+const boundary = Core.boundary([{ src: "old-src", role: "model", containerKey: "response-1" }], { response_keys: ["response-1"], url: "https://gemini.google.com/images" });
+const mutatedOldNode = Core.outputDecision(boundary, [{ src: "changed-src", role: "model", visible: true, usable: true, input: false, containerKey: "response-1", afterBoundary: false }]);
+assert.equal(mutatedOldNode.ok, false); assert.equal(mutatedOldNode.reason, "FRESH_OUTPUT_NOT_ATTRIBUTABLE", "changed src in an old response container is rejected");
+const newResponseNode = Core.outputDecision(boundary, [{ src: "changed-src", role: "model", visible: true, usable: true, input: false, containerKey: "response-2", afterBoundary: true }]);
+assert.equal(newResponseNode.ok, true); assert.equal(newResponseNode.candidate.containerKey, "response-2");
+const inputPreview = Core.outputDecision(boundary, [{ src: "new-preview", role: "input", visible: true, usable: true, input: true, containerKey: "response-2", afterBoundary: true }]);
+assert.equal(inputPreview.reason, "FRESH_OUTPUT_NOT_ATTRIBUTABLE");
+pass("output attribution: requires a new model response container after the submit boundary");

@@ -1,0 +1,18 @@
+import { assert, load, pass } from "./test-helpers.mjs";
+const Core = await load(new URL("../provider-core.js", import.meta.url), "DagProviderCore");
+const Runtime = await load(new URL("../runtime-core.js", import.meta.url), "DagRuntimeCore");
+const Runner = await load(new URL("../run-core.js", import.meta.url), "DagRunCore");
+const jobA = { run_id: "run", job: { id: "A" }, attempt_id: "run:A:a001", phase: "SUCCESS" };
+const jobB = { run_id: "run", job: { id: "B" }, attempt_id: "run:B:a002", phase: "PRE_SUBMIT" };
+const leaked = Runtime.responseOutcome({ ok: true, attempt: { run_id: "run", job_id: "A", attempt_id: "run:A:a001", phase: "SUCCESS" } }, jobB);
+assert.equal(leaked.ok, false); assert.equal(leaked.phase, "OWNER_REVIEW"); assert.equal(leaked.failure_type, "ATTEMPT_ID_MISMATCH", "job A success never completes job B");
+const targetFailure = Runtime.responseOutcome({ ok: false, error: "No exact Gemini Images receiver. Open /images." }, jobB);
+assert.equal(targetFailure.phase, "FAILED_PRE_SUBMIT"); assert.equal(targetFailure.failure_type, "TARGET_MISSING");
+assert.equal(Core.retryDecision({ phase: targetFailure.phase }, targetFailure.failure_type, 0, 1).allowed, true);
+assert.equal(Core.retryDecision({ phase: targetFailure.phase }, targetFailure.failure_type, 1, 1).allowed, false, "retry budget is consumed exactly once");
+const submitted = Runtime.restoreSubmitted(jobB, { run_id: "run", job_id: "B", attempt_id: "run:B:a009", phase: "SUBMITTED" });
+assert.equal(submitted.phase, "OWNER_REVIEW"); assert.equal(submitted.failure_type, "UNRESOLVED_SUBMITTED_AFTER_RESTART");
+assert.equal(Runner.select([submitted], "pending").length, 0, "unresolved submitted work is never automatically resent");
+assert.equal(Runtime.deriveAttemptSerial({ attempt_serial: 7 }, [jobA, submitted]), 9);
+assert.equal(Runner.nextAttemptId("run", "B", Runtime.deriveAttemptSerial({ attempt_serial: 7 }, [jobA, submitted]) + 1), "run:B:a010");
+pass("runtime behavior: cross-job isolation, durable submitted recovery and bounded monotonic retry");

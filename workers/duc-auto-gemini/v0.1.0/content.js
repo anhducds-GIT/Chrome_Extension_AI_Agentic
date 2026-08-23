@@ -1,7 +1,9 @@
 (() => {
   "use strict";
   const Core = globalThis.DagProviderCore;
+  const Runtime = globalThis.DagRuntimeCore;
   const state = { activeAttempt: null, abortRequested: false };
+  const responseIds = new WeakMap(); let responseSerial = 0;
 
   function visible(element) {
     if (!element) return false;
@@ -30,26 +32,39 @@
     }
     return null;
   }
+  function responseKey(container) {
+    if (!container) return "";
+    const explicit = container.getAttribute("data-message-id") || container.id;
+    if (explicit) return `explicit:${explicit}`;
+    if (!responseIds.has(container)) responseIds.set(container, `response-${++responseSerial}`);
+    return responseIds.get(container);
+  }
+  function modelContainers() {
+    const nodes = []; const seen = new Set();
+    for (const selector of Core.SELECTORS.modelContainer) for (const node of document.querySelectorAll(selector)) if (!seen.has(node)) { seen.add(node); nodes.push(node); }
+    return nodes;
+  }
   function inputContainer(image) {
     return image.closest('rich-textarea, [data-test-id*="attachment" i], [data-test-id*="upload" i], form');
   }
-  function imageCandidates() {
+  function imageCandidates(originalBoundary = null) {
     return Array.from(document.querySelectorAll("main img, [role=main] img")).map((image, index) => {
       const rect = image.getBoundingClientRect(); const model = modelContainer(image); const input = inputContainer(image);
       const src = image.currentSrc || image.src || image.getAttribute("src") || "";
+      const containerKey = responseKey(model);
       return {
         key: Core.shortHash(src),
         src,
         nodeId: image.getAttribute("data-test-id") || image.id || `img-${index}`,
         role: input ? "input" : model ? "model" : "unknown",
-        input: Boolean(input), visible: visible(image), usable: Boolean(src && rect.width >= 96 && rect.height >= 96),
-        afterBoundary: true, alt: image.alt || ""
+        input: Boolean(input), visible: visible(image), usable: Boolean(src && rect.width >= 96 && rect.height >= 96), containerKey,
+        afterBoundary: Boolean(containerKey && originalBoundary && !(originalBoundary.response_keys || []).includes(containerKey)), alt: image.alt || ""
       };
     });
   }
   function captureBoundary() {
-    const modelCount = Core.SELECTORS.modelContainer.reduce((count, selector) => count + document.querySelectorAll(selector).length, 0);
-    return Core.boundary(imageCandidates(), { url: location.href, model_count: modelCount });
+    const responses = modelContainers();
+    return Core.boundary(imageCandidates(), { url: location.href, model_count: responses.length, response_keys: responses.map(responseKey) });
   }
   function snapshot() {
     const blocks = pageBlockers(); const send = sendButton();
@@ -109,7 +124,7 @@
     while (Date.now() < deadline) {
       if (state.abortRequested) throw new Error("ABORTED_BY_OPERATOR");
       const blocks = pageBlockers(); if (blocks.security) throw new Error(blocks.security); if (blocks.quota) throw new Error(blocks.quota);
-      last = Core.outputDecision(attempt.boundary, imageCandidates(), { generating: Boolean(stopButton()), securityBlocker: blocks.security, allowMultiple: false });
+      last = Core.outputDecision(attempt.boundary, imageCandidates(attempt.boundary), { generating: Boolean(stopButton()), securityBlocker: blocks.security, allowMultiple: false });
       if (last.ok) return last; await wait(500);
     }
     const error = new Error(`OUTPUT_AMBIGUOUS:${last?.reason || "TIMEOUT"}`); error.decision = last; throw error;
@@ -126,30 +141,32 @@
       return decision.ready ? { ...decision, snapshot: current } : null;
     }, timeoutMs, "GEMINI_NOT_READY");
   }
+  function persistStage(attempt) {
+    return chrome.runtime.sendMessage({ type: "DAG_ATTEMPT_STAGE", attempt });
+  }
   async function runImageJob(message) {
     if (state.activeAttempt && !Core.TERMINAL.has(state.activeAttempt.phase)) throw new Error("ACTIVE_ATTEMPT_EXISTS");
     state.abortRequested = false;
-    const before = snapshot();
-    const initial = Core.readiness({ ...before, requireSend: false, surface: Core.surface(location.href) });
-    if (!initial.ready) throw new Error(initial.reason);
-    await attachReferences(message.references || []);
-    const target = composer(); if (!target) throw new Error("COMPOSER_MISSING");
-    setComposerText(target, String(message.prompt || ""));
-    const send = await waitUntil(() => { const button = sendButton(); return button && !button.disabled && button.getAttribute("aria-disabled") !== "true" ? button : null; }, 7000, "SEND_NOT_READY");
-    const originalBoundary = captureBoundary();
-    let attempt = Core.createAttempt({ runId: message.run_id, jobId: message.job_id, attemptId: message.attempt_id, boundary: originalBoundary });
-    state.activeAttempt = attempt;
-    send.click();
-    attempt = Core.transition(attempt, Core.PHASE.SUBMITTED, { submitted_at: new Date().toISOString() }); state.activeAttempt = attempt;
+    let attempt = Core.createAttempt({ runId: message.run_id, jobId: message.job_id, attemptId: message.attempt_id, boundary: captureBoundary() }); state.activeAttempt = attempt;
     try {
+      const before = snapshot(); const initial = Core.readiness({ ...before, requireSend: false, surface: Core.surface(location.href) }); if (!initial.ready) throw new Error(initial.reason);
+      await attachReferences(message.references || []);
+      const target = composer(); if (!target) throw new Error("COMPOSER_MISSING"); setComposerText(target, String(message.prompt || ""));
+      const send = await waitUntil(() => { const button = sendButton(); return button && !button.disabled && button.getAttribute("aria-disabled") !== "true" ? button : null; }, 7000, "SEND_NOT_READY");
+      const originalBoundary = captureBoundary();
+      attempt = Core.transition(attempt, Core.PHASE.SUBMITTED, { boundary: originalBoundary, submitted_at: new Date().toISOString() }); state.activeAttempt = attempt;
+      const persisted = await persistStage(attempt); if (!persisted?.ok) throw new Error(persisted?.error || "SUBMITTED_PERSISTENCE_FAILED");
+      send.click();
       const output = await waitForOutput(attempt, Number(message.timeout_ms || 240000));
-      attempt = Core.transition(attempt, Core.PHASE.OUTPUT_DETECTED, { detection: output, output_detected_at: new Date().toISOString() }); state.activeAttempt = attempt;
+      attempt = Core.transition(attempt, Core.PHASE.OUTPUT_DETECTED, { detection: output, output_detected_at: new Date().toISOString() }); state.activeAttempt = attempt; await persistStage(attempt);
       const outputUrl = await downloadableUrl(output.candidate.src);
       return { ok: true, attempt, output: { url: outputUrl, source_id: Core.shortHash(output.candidate.src), diagnostics: output } };
     } catch (error) {
-      if (Core.POST_SUBMIT.has(attempt.phase)) {
+      if (attempt.phase === Core.PHASE.PRE_SUBMIT) {
+        attempt = Core.transition(attempt, Core.PHASE.FAILED_PRE_SUBMIT, { failure_type: error.message, last_error: error.message }); state.activeAttempt = attempt; await persistStage(attempt).catch(() => {});
+      } else if (Core.POST_SUBMIT.has(attempt.phase)) {
         attempt = Core.transition(attempt, state.abortRequested ? Core.PHASE.INTERRUPTED : Core.PHASE.OWNER_REVIEW, { failure_type: error.message.startsWith("OUTPUT_AMBIGUOUS") ? "OUTPUT_AMBIGUOUS" : error.message, last_error: error.message, detection: error.decision || null });
-        state.activeAttempt = attempt;
+        state.activeAttempt = attempt; await persistStage(attempt).catch(() => {});
       }
       return { ok: false, error: error.message, attempt };
     }
@@ -157,19 +174,19 @@
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === "DAG_PING") { sendResponse({ ok: true, receiver: "duc-auto-gemini", snapshot: snapshot(), attempt: state.activeAttempt }); return false; }
-    if (message?.type === "DAG_ABORT") { state.abortRequested = true; sendResponse({ ok: true, attempt: state.activeAttempt }); return false; }
-    if (message?.type === "DAG_WAIT_READY") { waitReady(message.timeout_ms).then((result) => sendResponse({ ok: true, result })).catch((error) => sendResponse({ ok: false, error: error.message })); return true; }
-    if (message?.type === "DAG_RUN_IMAGE_JOB") { runImageJob(message).then(sendResponse).catch((error) => sendResponse({ ok: false, error: error.message, attempt: state.activeAttempt })); return true; }
+    if (message?.type === "DAG_ABORT") { if (!Runtime.matchesAttempt(state.activeAttempt, message)) { sendResponse({ ok: false, error: "ATTEMPT_ID_MISMATCH", attempt: state.activeAttempt }); return false; } state.abortRequested = true; sendResponse({ ok: true, attempt: state.activeAttempt }); return false; }
+    if (message?.type === "DAG_WAIT_READY") { if (!Runtime.matchesAttempt(state.activeAttempt, message)) { sendResponse({ ok: false, error: "ATTEMPT_ID_MISMATCH", attempt: state.activeAttempt }); return false; } waitReady(message.timeout_ms).then((result) => sendResponse({ ok: true, result, attempt: state.activeAttempt })).catch((error) => sendResponse({ ok: false, error: error.message, attempt: state.activeAttempt })); return true; }
+    if (message?.type === "DAG_RUN_IMAGE_JOB") { runImageJob(message).then(sendResponse).catch((error) => sendResponse({ ok: false, error: error.message, attempt: Runtime.matchesAttempt(state.activeAttempt, message) ? state.activeAttempt : null })); return true; }
     if (message?.type === "DAG_RECONCILE") {
       const attempt = state.activeAttempt;
       if (!attempt || attempt.run_id !== message.run_id || attempt.job_id !== message.job_id || attempt.attempt_id !== message.attempt_id) { sendResponse({ ok: false, error: "ATTEMPT_ID_MISMATCH", attempt }); return false; }
-      const decision = Core.outputDecision(attempt.boundary, imageCandidates(), { generating: Boolean(stopButton()), securityBlocker: pageBlockers().security });
+      const decision = Core.outputDecision(attempt.boundary, imageCandidates(attempt.boundary), { generating: Boolean(stopButton()), securityBlocker: pageBlockers().security });
       sendResponse({ ok: decision.ok, decision, attempt }); return false;
     }
     if (message?.type === "DAG_ADVANCE_ATTEMPT") {
       const attempt = state.activeAttempt;
       if (!attempt || attempt.run_id !== message.run_id || attempt.job_id !== message.job_id || attempt.attempt_id !== message.attempt_id) { sendResponse({ ok: false, error: "ATTEMPT_ID_MISMATCH", attempt }); return false; }
-      try { state.activeAttempt = Core.transition(attempt, message.next_phase, message.values || {}); sendResponse({ ok: true, attempt: state.activeAttempt }); }
+      try { state.activeAttempt = Core.transition(attempt, message.next_phase, message.values || {}); persistStage(state.activeAttempt).then((persisted) => sendResponse(persisted?.ok ? { ok: true, attempt: state.activeAttempt } : { ok: false, error: persisted?.error || "ATTEMPT_PERSISTENCE_FAILED", attempt: state.activeAttempt })).catch((error) => sendResponse({ ok: false, error: error.message, attempt: state.activeAttempt })); return true; }
       catch (error) { sendResponse({ ok: false, error: error.message, attempt }); }
       return false;
     }
