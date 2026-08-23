@@ -5,15 +5,15 @@
 - Owner: user
 - Executor: `/root`
 - Auditor: `/root/dag_acceptance_auditor`
-- Current state: `FINAL_RE_AUDIT_READY`
-- Current phase: `P7 — final independent Pass B audit`
+- Current state: `REVIEW_READY_90_PERCENT`
+- Current phase: `P8 — owner pilot handoff`
 - Completed phases: `P0 contract`, `P1 baseline`, `P2 scaffold`, `P3 adapter/fixtures`, `P4 integration`, `P5 live DOM read-only`, `P6 full verification`
-- Pending phases: `P7 independent re-audit`, `P8 closure handoff`
+- Pending phases: owner pilot only; outside the agreed 90% implementation boundary
 - Open blockers: none for 90%; live runtime remains owner pilot
 - Approved gates: continuous GREEN/YELLOW; direct main; exact-path commit/push
 - Forbidden: ChatGPT modifications, destructive cleanup, force operations, security bypass, store/account changes
-- Acceptance status: `Loop 2 re-audit REVISE only on DAG-R2-01; fix published at 5e6d99629bda223dfe009887956ea208c9039189; Gemini 16/16 and repository 63/63 + observer PASS; final re-audit pending`
-- Next transition: publish this evidence-only closure, independently verify remote SHA, then complete final Pass B audit
+- Acceptance status: `PASS — REVIEW-READY 90%` independently audited on `de504d41e15e298dbb88268480a3374d626714ab`; all DAG-B-01..08, DAG-R1-01..03 and DAG-R2-01 PASS
+- Next transition: owner executes `Duc-Auto-Gemini.PILOT-RUNBOOK.md`; live runtime remains unclaimed until that pilot
 
 ## Phase results
 
@@ -29,6 +29,7 @@
 | P7 | REVISE → LOOP 1 | Exact Images tab binding, response identity, durable attempts, response-container boundary, single-job UI, behavioral tests and least privilege implemented/pushed at `723ffd7` |
 | P7 loop 2 | VERIFIED/PUBLISHED | Whole-batch hard-stop core, executable two-job matrix, behavioral content-decision harness, and evidence corrections at `5f590b0` |
 | P7 final | VERIFIED/PUBLISHED | Only `FILE_INPUT_NOT_EXPOSED` is recoverable; blocker/abort/unknown wait errors propagate; pre-click guards and injected-wait click-count matrix PASS at `5e6d996` |
+| P8 | PASS | Independent auditor found no residual acceptance defects on `de504d4`; package accepted as review-ready 90% |
 
 ## 90% boundary
 
