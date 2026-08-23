@@ -47,6 +47,7 @@ The source workbook is never overwritten. A completed/stopped run downloads a ne
 - Output must be fresh relative to the immutable pre-submit image boundary, inside a model-response container, visible and usable.
 - Template-gallery, input/reference, stale and multiple ambiguous images are rejected.
 - CAPTCHA, unusual activity, security, quota and policy signals fail closed.
+- Upload exposure guards run before both trigger/menu clicks; only the specific file-input timeout may advance to the menu branch, while blockers, operator aborts and unknown errors propagate immediately.
 - `OWNER_REVIEW`, `INTERRUPTED`, security/quota/policy, and attempt/tab identity failures hard-stop the active batch even when `continue_on_error=true`; that setting applies only to ordinary exhausted pre-submit failures.
 - References must resolve uniquely and show ready previews before send.
 - Audit stores a prompt hash, not prompt text.

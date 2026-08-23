@@ -97,12 +97,17 @@
   }
   async function ensureFileInput() {
     const queryInput = () => document.querySelector(Core.SELECTORS.fileInput.join(","));
+    const waitInput = () => waitUntil(queryInput, 3000, "FILE_INPUT_NOT_EXPOSED").catch((error) => {
+      if (error.message === "FILE_INPUT_NOT_EXPOSED") return null;
+      throw error;
+    });
     return Decisions.exposeFileInput({
       queryInput,
       findTrigger: uploadButton,
       findMenuItem: () => Array.from(document.querySelectorAll('[role="menuitem"], button')).find((item) => visible(item) && /(upload files|upload from computer|files|tải tệp|từ máy tính)/i.test(item.innerText || item.getAttribute("aria-label") || "")),
       click: (element) => element.click(),
-      waitInput: () => waitUntil(queryInput, 3000, "FILE_INPUT_NOT_EXPOSED").catch(() => null)
+      snapshot: () => ({ ...pageBlockers(), abortRequested: state.abortRequested }),
+      waitInput
     });
   }
   async function attachReferences(references) {
