@@ -2,6 +2,7 @@
   "use strict";
   const Core = globalThis.DagProviderCore;
   const Runtime = globalThis.DagRuntimeCore;
+  const Decisions = globalThis.DagContentDecisionCore;
   const state = { activeAttempt: null, abortRequested: false };
   const responseIds = new WeakMap(); let responseSerial = 0;
 
@@ -80,7 +81,7 @@
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       if (state.abortRequested) throw new Error("ABORTED_BY_OPERATOR");
-      const blocks = pageBlockers(); if (blocks.security) throw new Error(blocks.security); if (blocks.quota) throw new Error(blocks.quota);
+      const blocks = pageBlockers(); const blocker = Decisions.blockingFailure(blocks); if (blocker) throw new Error(blocker);
       const value = await check(); if (value) return value; await wait(interval);
     }
     throw new Error(code);
@@ -95,15 +96,14 @@
     }
   }
   async function ensureFileInput() {
-    let input = document.querySelector(Core.SELECTORS.fileInput.join(",")); if (input) return input;
-    const trigger = uploadButton(); if (!trigger) throw new Error("UPLOAD_TRIGGER_MISSING");
-    trigger.click();
-    input = await waitUntil(() => document.querySelector(Core.SELECTORS.fileInput.join(",")), 3000, "FILE_INPUT_NOT_EXPOSED").catch(() => null);
-    if (input) return input;
-    const menuItem = Array.from(document.querySelectorAll('[role="menuitem"], button')).find((item) => visible(item) && /(upload files|upload from computer|files|tải tệp|từ máy tính)/i.test(item.innerText || item.getAttribute("aria-label") || ""));
-    if (!menuItem) throw new Error("UPLOAD_MENU_ITEM_MISSING");
-    menuItem.click();
-    return waitUntil(() => document.querySelector(Core.SELECTORS.fileInput.join(",")), 3000, "FILE_INPUT_NOT_EXPOSED");
+    const queryInput = () => document.querySelector(Core.SELECTORS.fileInput.join(","));
+    return Decisions.exposeFileInput({
+      queryInput,
+      findTrigger: uploadButton,
+      findMenuItem: () => Array.from(document.querySelectorAll('[role="menuitem"], button')).find((item) => visible(item) && /(upload files|upload from computer|files|tải tệp|từ máy tính)/i.test(item.innerText || item.getAttribute("aria-label") || "")),
+      click: (element) => element.click(),
+      waitInput: () => waitUntil(queryInput, 3000, "FILE_INPUT_NOT_EXPOSED").catch(() => null)
+    });
   }
   async function attachReferences(references) {
     if (!references?.length) return;
@@ -116,14 +116,14 @@
     input.files = transfer.files; input.dispatchEvent(new Event("change", { bubbles: true }));
     await waitUntil(() => {
       const after = Core.SELECTORS.attachmentPreview.reduce((count, selector) => count + document.querySelectorAll(selector).length, 0);
-      return after >= before + references.length && !attachmentPending();
+      return Decisions.attachmentReady(before, references.length, { after, busy: attachmentPending() });
     }, 20000, "ATTACHMENT_NOT_READY");
   }
   async function waitForOutput(attempt, timeoutMs) {
     const deadline = Date.now() + timeoutMs; let last = null;
     while (Date.now() < deadline) {
       if (state.abortRequested) throw new Error("ABORTED_BY_OPERATOR");
-      const blocks = pageBlockers(); if (blocks.security) throw new Error(blocks.security); if (blocks.quota) throw new Error(blocks.quota);
+      const blocks = pageBlockers(); const blocker = Decisions.blockingFailure(blocks); if (blocker) throw new Error(blocker);
       last = Core.outputDecision(attempt.boundary, imageCandidates(attempt.boundary), { generating: Boolean(stopButton()), securityBlocker: blocks.security, allowMultiple: false });
       if (last.ok) return last; await wait(500);
     }
@@ -152,11 +152,11 @@
       const before = snapshot(); const initial = Core.readiness({ ...before, requireSend: false, surface: Core.surface(location.href) }); if (!initial.ready) throw new Error(initial.reason);
       await attachReferences(message.references || []);
       const target = composer(); if (!target) throw new Error("COMPOSER_MISSING"); setComposerText(target, String(message.prompt || ""));
-      const send = await waitUntil(() => { const button = sendButton(); return button && !button.disabled && button.getAttribute("aria-disabled") !== "true" ? button : null; }, 7000, "SEND_NOT_READY");
+      const send = await waitUntil(() => { const button = sendButton(); return Decisions.sendReady({ found: Boolean(button), disabled: button?.disabled, ariaDisabled: button?.getAttribute("aria-disabled"), ...pageBlockers() }) ? button : null; }, 7000, "SEND_NOT_READY");
       const originalBoundary = captureBoundary();
       attempt = Core.transition(attempt, Core.PHASE.SUBMITTED, { boundary: originalBoundary, submitted_at: new Date().toISOString() }); state.activeAttempt = attempt;
       const persisted = await persistStage(attempt); if (!persisted?.ok) throw new Error(persisted?.error || "SUBMITTED_PERSISTENCE_FAILED");
-      send.click();
+      await Decisions.guardedAction(pageBlockers(), () => send.click());
       const output = await waitForOutput(attempt, Number(message.timeout_ms || 240000));
       attempt = Core.transition(attempt, Core.PHASE.OUTPUT_DETECTED, { detection: output, output_detected_at: new Date().toISOString() }); state.activeAttempt = attempt; await persistStage(attempt);
       const outputUrl = await downloadableUrl(output.candidate.src);

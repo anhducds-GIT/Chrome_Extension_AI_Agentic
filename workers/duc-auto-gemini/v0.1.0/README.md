@@ -47,8 +47,9 @@ The source workbook is never overwritten. A completed/stopped run downloads a ne
 - Output must be fresh relative to the immutable pre-submit image boundary, inside a model-response container, visible and usable.
 - Template-gallery, input/reference, stale and multiple ambiguous images are rejected.
 - CAPTCHA, unusual activity, security, quota and policy signals fail closed.
+- `OWNER_REVIEW`, `INTERRUPTED`, security/quota/policy, and attempt/tab identity failures hard-stop the active batch even when `continue_on_error=true`; that setting applies only to ordinary exhausted pre-submit failures.
 - References must resolve uniquely and show ready previews before send.
-- Audit stores prompt hash/length semantics, not prompt text.
+- Audit stores a prompt hash, not prompt text.
 
 ## Architecture
 
@@ -56,6 +57,7 @@ The source workbook is never overwritten. A completed/stopped run downloads a ne
 Side Panel
   ├─ xlsx-codec.js       source/result workbook boundary
   ├─ run-core.js         queue, references, checkpoints, audit
+  ├─ batch-core.js       whole-queue hard-stop policy
   └─ runtime-core.js     identity validation and restart recovery
           │
           ▼
@@ -64,7 +66,8 @@ background.js            exact-tab binding, durable attempts, downloads
           │
           ▼
 content.js               live DOM adapter
-  └─ provider-core.js    selectors, blockers, response-bound attribution
+  ├─ provider-core.js    selectors, blockers, response-bound attribution
+  └─ content-decision-core.js  testable upload/send/wait decisions
 ```
 
 ## Permission rationale

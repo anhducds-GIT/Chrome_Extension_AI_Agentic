@@ -29,6 +29,7 @@ Close the final 10% with live evidence. This pilot is not permission to bypass G
 - Two prompt submissions for one attempt ID.
 - Output selected from templates, input previews or an earlier attempt.
 - Any later job starts while the prior attempt is ambiguous.
+- Any later job starts after a security/quota/policy, interrupted, or attempt/tab identity hard stop, regardless of `continue_on_error`.
 
 ## Pilot evidence to retain
 

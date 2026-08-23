@@ -5,15 +5,15 @@
 - Owner: user
 - Executor: `/root`
 - Auditor: `/root/dag_acceptance_auditor`
-- Current state: `RE_AUDIT_READY`
-- Current phase: `P7 — independent re-audit on published revision`
+- Current state: `REVISION_LOOP_2_VERIFIED`
+- Current phase: `P7 — loop 2 publication/re-audit`
 - Completed phases: `P0 contract`, `P1 baseline`, `P2 scaffold`, `P3 adapter/fixtures`, `P4 integration`, `P5 live DOM read-only`, `P6 full verification`
 - Pending phases: `P7 independent re-audit`, `P8 closure handoff`
 - Open blockers: none for 90%; live runtime remains owner pilot
 - Approved gates: continuous GREEN/YELLOW; direct main; exact-path commit/push
 - Forbidden: ChatGPT modifications, destructive cleanup, force operations, security bypass, store/account changes
-- Acceptance status: `Pass B REVISE; DAG-B-01 through DAG-B-08 addressed; revision implementation published at 723ffd720daf9d55e0f6396a1585d4f897e30d27; re-audit pending`
-- Next transition: publish this evidence closure, independently verify remote SHA, then complete Pass B re-audit
+- Acceptance status: `Loop 1 re-audit REVISE; DAG-R1-01 through DAG-R1-03 implemented; Gemini 16/16 and repository 60/60 + observer PASS; publication/re-audit pending`
+- Next transition: publish exact-scope loop 2 commit/evidence, independently verify remote SHA, then re-audit
 
 ## Phase results
 
@@ -25,8 +25,9 @@
 | P3 | PASS | deterministic adapter/exact-once/security/attribution fixtures |
 | P4 | PASS | XLSX queue, 0/1/multi references, checkpoints, result/audit, collision-safe output |
 | P5 | PASS | live empty Images surface mapped; submit count 0; no file upload |
-| P6 | PASS | Revision verification: Gemini 14/14; repository 60/60 + observer; syntax/JSON/diff/secret scans PASS |
+| P6 | PASS | Loop 2 verification: Gemini 16/16; repository 60/60 + observer; syntax/JSON/diff/secret scans PASS |
 | P7 | REVISE → LOOP 1 | Exact Images tab binding, response identity, durable attempts, response-container boundary, single-job UI, behavioral tests and least privilege implemented/pushed at `723ffd7` |
+| P7 loop 2 | IMPLEMENTED | Whole-batch hard-stop core, executable two-job matrix, behavioral content-decision harness, and evidence corrections |
 
 ## 90% boundary
 

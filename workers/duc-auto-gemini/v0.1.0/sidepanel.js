@@ -4,6 +4,7 @@
   const Provider = globalThis.DagProviderCore;
   const Runtime = globalThis.DagRuntimeCore;
   const Runner = globalThis.DagRunCore;
+  const Batch = globalThis.DagBatchCore;
   const Xlsx = globalThis.DagXlsx;
   const CHECKPOINT_KEY = "dag.active_checkpoint.v1";
   const AUDIT_KEY = "dag.audit_events.v1";
@@ -160,13 +161,15 @@
     const queue = mode === "selected" ? (runnable(selected) ? [selected] : []) : Runner.select(state.plan.queue, "pending"); if (!queue.length) return;
     state.running = true; state.stopping = false; setControls(); await addAudit("RUN_STARTED", null, { mode, selected_job_id: state.selectedJobId });
     try {
-      for (let index = 0; index < queue.length && !state.stopping; index += 1) {
-        const item = queue[index]; let success = false;
-        try { success = await executeItem(item); }
+      await Batch.run(queue, async (item) => {
+        try { await executeItem(item); }
         catch (error) { if (!terminal(item.phase)) await failPostSubmit(item, error); }
-        if (!success && !state.plan.settings.continue_on_error) break;
-        if (index < queue.length - 1 && !state.stopping) await sleep(randomDelay(state.plan.settings));
-      }
+      }, {
+        continueOnError: state.plan.settings.continue_on_error,
+        stopping: () => state.stopping,
+        onHardStop: async (decision, item) => { await addAudit("BATCH_HARD_STOP", item, { hard_stop_reason: decision.reason }); await saveCheckpoint(); },
+        onBetween: () => sleep(randomDelay(state.plan.settings))
+      });
     } finally {
       state.running = false; await saveCheckpoint(); await addAudit(state.stopping ? "RUN_STOPPED" : "RUN_FINISHED", state.currentItem); renderPlan(); setControls();
       downloadBlob(Xlsx.blob(state.workbook), state.workbook.fileName.replace(/\.xlsx$/i, "__results__v01.xlsx"));
