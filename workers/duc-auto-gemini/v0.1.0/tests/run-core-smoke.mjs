@@ -1,0 +1,17 @@
+import { readFile } from "node:fs/promises";
+import { assert, load, pass } from "./test-helpers.mjs";
+await load(new URL("../provider-core.js", import.meta.url),"DagProviderCore");
+const Runner=await load(new URL("../run-core.js", import.meta.url),"DagRunCore");
+const fixture=JSON.parse(await readFile(new URL("../fixtures/synthetic-jobs.json",import.meta.url),"utf8"));
+const refs=["reference-one.png","reference-two.jpg","reference-three.webp"].map(name=>({name,alias:name,dataUrl:`data:image/png;base64,${name}`}));
+const prepared=Runner.prepare(fixture,refs);
+assert.deepEqual(prepared.queue.map(item=>item.references.length),[0,1,3]);
+assert.deepEqual(prepared.queue[2].references.map(item=>item.name),refs.map(item=>item.name),"reference order is stable");
+assert.throws(()=>Runner.prepare({config:fixture.config,jobs:[{id:"x",prompt:"p",reference_images:"missing.png"}]},refs),/not selected/);
+assert.throws(()=>Runner.prepare({config:fixture.config,jobs:[fixture.jobs[0],fixture.jobs[0]]},refs),/Duplicate job id/);
+const checkpoint=Runner.checkpoint("run","source.xlsx",prepared.queue);
+prepared.queue[0].phase="SUCCESS"; const restored=Runner.restore(prepared.queue,checkpoint); assert.equal(restored[0].phase,"PENDING");
+const pre={phase:"PRE_SUBMIT"}; const submitted={phase:"SUBMITTED"};
+assert.equal(globalThis.DagProviderCore.retryDecision(pre,"SEND_NOT_READY",0,1).allowed,true);
+assert.equal(globalThis.DagProviderCore.retryDecision(submitted,"SEND_NOT_READY",0,1).allowed,false);
+pass("run core: 0/1/multi references, validation, checkpoint and retry boundary");

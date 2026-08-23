@@ -1,0 +1,3 @@
+import { readFile } from "node:fs/promises"; import { assert, pass } from "./test-helpers.mjs"; const content=await readFile(new URL("../content.js",import.meta.url),"utf8"); const provider=await readFile(new URL("../provider-core.js",import.meta.url),"utf8");
+for(const token of ["DAG_RUN_IMAGE_JOB","DAG_RECONCILE","DAG_ADVANCE_ATTEMPT","OUTPUT_AMBIGUOUS","ATTEMPT_ID_MISMATCH","SECURITY_BLOCKER","AMBIGUOUS_MULTIPLE_OUTPUTS"]) assert.ok((content+provider).includes(token),token); assert.ok(!/\.click\(\)[\s\S]{0,300}\.click\(\)/.test(content),"no blind double-click retry"); assert.ok(provider.includes('data-message-author-role="assistant"')); assert.ok(!content.includes("captcha.click"));
+pass("content adapter: messages, reconciliation, blockers and no blind resend");

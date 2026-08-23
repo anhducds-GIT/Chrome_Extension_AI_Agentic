@@ -1,0 +1,8 @@
+{
+  "config":{"timeout_sec":"60","max_retries":"1","max_input_images":"5","continue_on_error":"true","delay_min_sec":"0","delay_max_sec":"0","output_folder":"Duc Auto Gemini Pilot"},
+  "jobs":[
+    {"id":"DAG-0","prompt":"Create a simple blue circle on white background.","reference_images":""},
+    {"id":"DAG-1","prompt":"Create a simple layout inspired by the selected reference.","reference_images":"reference-one.png"},
+    {"id":"DAG-M","prompt":"Create one composition using all selected references.","reference_images":"reference-one.png|reference-two.jpg|reference-three.webp"}
+  ]
+}

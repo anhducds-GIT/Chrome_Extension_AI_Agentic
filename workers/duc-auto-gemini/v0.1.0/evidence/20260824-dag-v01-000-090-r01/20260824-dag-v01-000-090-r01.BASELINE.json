@@ -1,0 +1,14 @@
+{
+  "run_id":"20260824-dag-v01-000-090-r01",
+  "captured_at":"2026-08-24T00:41:27.5686657+07:00",
+  "branch":"main",
+  "head":"3b02d2aa0fceb23ed4df7ec153452e0f5a2dbba0",
+  "origin_main":"3b02d2aa0fceb23ed4df7ec153452e0f5a2dbba0",
+  "ahead":0,
+  "behind":0,
+  "staged_paths":[],
+  "gemini_package_present_before_run":false,
+  "baseline_test":{"command":"npm test","exit_code":0,"worker_passed":52,"worker_failed":0,"observer":"PASS"},
+  "protected_concurrent_state":{"scope":"workers/duc-auto-chatgpt/v0.1.0/**","modified_path_count":11,"untracked_entries":7,"locked_file_count":1,"action":"preserved; never staged or modified by this run"},
+  "approval":{"green_yellow":"continuous","red":"forbidden"}
+}

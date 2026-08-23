@@ -1,0 +1,8 @@
+[
+  {"id":"images-empty","url":"https://gemini.google.com/images","composerFound":true,"uploadFound":true,"sendFound":false,"sendUsable":false,"generating":false,"expected":"IMAGES"},
+  {"id":"conversation-ready","url":"https://gemini.google.com/app/abc123","composerFound":true,"uploadFound":true,"sendFound":true,"sendUsable":true,"generating":false,"expected":"CONVERSATION"},
+  {"id":"wrong-surface","url":"https://gemini.google.com/library","composerFound":false,"expected":"WRONG"},
+  {"id":"security","url":"https://gemini.google.com/images","bodyText":"Verify you are human — unusual activity detected","blocker":"SECURITY_BLOCKER"},
+  {"id":"quota","url":"https://gemini.google.com/images","bodyText":"You have reached your image generation limit. Try again later.","blocker":"QUOTA_LIMIT"},
+  {"id":"policy","url":"https://gemini.google.com/images","bodyText":"I cannot generate that image because of policy.","blocker":"POLICY_BLOCK"}
+]

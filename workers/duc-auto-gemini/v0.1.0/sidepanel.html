@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Duc Auto Gemini</title><link rel="stylesheet" href="sidepanel.css"></head>
+<body>
+  <header><div><p class="eyebrow">LOCAL IMAGE RUNNER</p><h1>Duc Auto Gemini</h1></div><span id="receiverBadge" class="badge muted">Chưa kiểm tra Gemini</span></header>
+  <main>
+    <section class="card hero"><h2>Run input</h2><p class="muted">Nguồn luôn read-only. Result XLSX và audit được tải thành file mới.</p><label>Workbook `.xlsx`<input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><label>Reference images<input id="referencesInput" type="file" accept="image/*" multiple></label><div id="referenceGallery" class="gallery"></div><div class="actions"><button id="checkBtn" class="secondary">Check Plan</button><button id="runBtn" disabled>Run Pending</button><button id="stopBtn" class="danger" disabled>Stop</button></div></section>
+    <section class="card"><div class="section-title"><h2>Run plan</h2><span id="planBadge" class="badge muted">EMPTY</span></div><div id="planSummary" class="summary">Chọn workbook để bắt đầu.</div></section>
+    <section class="card current"><div class="section-title"><h2>Current Job</h2><span id="attemptBadge" class="badge muted">—</span></div><div id="currentGrid" class="current-grid no-refs"><div><p class="label">Prompt</p><pre id="currentPrompt">Chưa chạy</pre></div><div id="currentRefs"><p class="label">Attached references</p><div id="currentReferenceGallery" class="gallery"></div></div></div><div id="pipeline" class="pipeline"></div></section>
+    <section class="card"><div class="section-title"><h2>Queue</h2><span id="queueCount" class="badge muted">0</span></div><ol id="queueList" class="queue"></ol></section>
+    <section class="card"><div class="section-title"><h2>Evidence log</h2><button id="downloadAuditBtn" class="text" disabled>Download JSONL</button></div><pre id="log" class="log"></pre></section>
+  </main>
+  <script src="provider-core.js"></script><script src="run-core.js"></script><script src="xlsx-codec.js"></script><script src="sidepanel.js"></script>
+</body>
+</html>
