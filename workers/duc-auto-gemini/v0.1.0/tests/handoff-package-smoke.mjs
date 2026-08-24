@@ -10,7 +10,7 @@ assert.equal(manifest.schema, "duc-auto-gemini.handoff.v1");
 assert.match(manifest.repository.accepted_90_percent_sha, /^[0-9a-f]{40}$/);
 assert.match(manifest.repository.page_only_preflight_sha, /^[0-9a-f]{40}$/);
 assert.match(manifest.repository.handoff_package_sha, /^[0-9a-f]{40}$/);
-assert.equal(manifest.status.implementation, "REVIEW_READY_90_PERCENT");
+assert.equal(manifest.status.implementation, "GPT_REAUDIT_READY");
 assert.equal(manifest.status.live_runtime, "LIVE_RUNTIME_UNVERIFIED");
 assert.deepEqual(manifest.scope.allowed, ["workers/duc-auto-gemini/v0.1.0/**"]);
 assert.equal(manifest.pilot_inputs.reference_images.included, false);

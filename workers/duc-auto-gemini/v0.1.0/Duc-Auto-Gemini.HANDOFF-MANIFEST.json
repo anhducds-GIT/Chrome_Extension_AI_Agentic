@@ -1,6 +1,6 @@
 {
   "schema": "duc-auto-gemini.handoff.v1",
-  "generated_at": "2026-08-24T09:17:49.4979820+07:00",
+  "generated_at": "2026-08-24T09:47:43.1034817+07:00",
   "project": "Duc Auto Gemini",
   "repository": {
     "url": "https://github.com/anhducds-GIT/Chrome_Extension_AI_Agentic.git",
@@ -12,8 +12,8 @@
     "handoff_package_sha": "7d0e787dea1576cbcc2101d79886747e63199b8b"
   },
   "status": {
-    "implementation": "REVIEW_READY_90_PERCENT",
-    "independent_acceptance": "PASS",
+    "implementation": "GPT_REAUDIT_READY",
+    "independent_acceptance": "LOCAL_AUDITOR_PASS_GPT_REAUDIT_PENDING",
     "live_runtime": "LIVE_RUNTIME_UNVERIFIED",
     "next_gate": "OWNER_PILOT_PENDING"
   },
@@ -33,6 +33,7 @@
       "DAG-R1-03",
       "DAG-R2-01"
     ],
+    "open_reaudit_findings": ["GPT-DAG-001", "GPT-DAG-002"],
     "gpt_web_prompt": "Duc-Auto-Gemini.GPT-WEB-AUDIT-PROMPT.md",
     "claude_code_handoff": "Duc-Auto-Gemini.CLAUDE-CODE-HANDOFF.md"
   },
@@ -42,21 +43,23 @@
     "evidence/20260824-dag-v01-000-090-r01/20260824-dag-v01-000-090-r01.TEST-REPORT.md",
     "evidence/20260824-dag-v01-000-090-r01/20260824-dag-v01-000-090-r01.SCOPE-AND-PUSH-EVIDENCE.md",
     "evidence/20260824-dag-v01-000-090-r01/20260824-dag-owner-pilot-preflight-page-r01.LIVE-PAGE-EVIDENCE.md",
+    "evidence/20260824-dag-v01-000-090-r01/20260824-dag-gpt-bounded-fix-r01.EVIDENCE.md",
     "Duc-Auto-Gemini.PILOT-RUNBOOK.md"
   ],
   "runtime_invariants": [
-    "One submit-critical job at a time",
+    "One submit-critical job at a time across all Side Panels, windows, Gemini tabs and MV3 service-worker restarts via a chrome.storage.session lease",
     "SUBMITTED is durably persisted before Send and is never automatically resent",
     "Every attempt is bound to one exact Gemini Images tab and full run/job/attempt identity",
     "Output requires a new attributable model-response container after the submit boundary",
     "OWNER_REVIEW, INTERRUPTED, blocker and identity failures hard-stop the whole active batch",
     "Only FILE_INPUT_NOT_EXPOSED timeout may advance from upload trigger to menu",
-    "Security, quota, policy, abort and unknown errors propagate without another click"
+    "Security, quota, policy, abort and unknown errors propagate without another click",
+    "Send rechecks abortRequested after durable SUBMITTED persistence and immediately before click"
   ],
   "verification": {
     "gemini_command": "node workers/duc-auto-gemini/v0.1.0/tests/run-all.mjs",
     "gemini_baseline_result": "16 passed, 0 failed",
-    "gemini_handoff_package_result": "17 passed, 0 failed",
+    "gemini_bounded_fix_result": "18 passed, 0 failed",
     "repository_command": "npm test",
     "repository_baseline_result": "63 passed, 0 failed; observer PASS",
     "diff_command": "git diff --check -- workers/duc-auto-gemini/v0.1.0",

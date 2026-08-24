@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const HARD_PHASES = new Set(["OWNER_REVIEW", "INTERRUPTED"]);
-  const HARD_FAILURES = new Set(["SECURITY_BLOCKER", "QUOTA_LIMIT", "POLICY_BLOCK", "ATTEMPT_ID_MISMATCH", "BOUND_TAB_MISSING", "BOUND_TAB_RECEIVER_MISSING", "BOUND_TAB_LEFT_IMAGES_SURFACE"]);
+  const HARD_FAILURES = new Set(["SECURITY_BLOCKER", "QUOTA_LIMIT", "POLICY_BLOCK", "ATTEMPT_ID_MISMATCH", "BOUND_TAB_MISSING", "BOUND_TAB_RECEIVER_MISSING", "BOUND_TAB_LEFT_IMAGES_SURFACE", "GLOBAL_ACTIVE_ATTEMPT_EXISTS"]);
   function continuation(item, continueOnError) {
     const phase = String(item?.phase || ""); const failure = String(item?.failure_type || "");
     const hard = HARD_PHASES.has(phase) || HARD_FAILURES.has(failure) || /^BOUND_TAB_|^ATTEMPT_ID_/.test(failure);

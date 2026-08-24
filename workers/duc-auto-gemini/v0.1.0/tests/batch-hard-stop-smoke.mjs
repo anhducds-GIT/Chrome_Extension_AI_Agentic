@@ -7,7 +7,8 @@ const hardCases = [
   { phase: "FAILED_PRE_SUBMIT", failure_type: "POLICY_BLOCK" },
   { phase: "INTERRUPTED", failure_type: "ABORTED_BY_OPERATOR" },
   { phase: "FAILED_PRE_SUBMIT", failure_type: "ATTEMPT_ID_MISMATCH" },
-  { phase: "FAILED_PRE_SUBMIT", failure_type: "BOUND_TAB_LEFT_IMAGES_SURFACE" }
+  { phase: "FAILED_PRE_SUBMIT", failure_type: "BOUND_TAB_LEFT_IMAGES_SURFACE" },
+  { phase: "FAILED_PRE_SUBMIT", failure_type: "GLOBAL_ACTIVE_ATTEMPT_EXISTS" }
 ];
 for (const outcome of hardCases) {
   const jobs = [{ id: "A", phase: "PENDING", failure_type: "" }, { id: "B", phase: "PENDING", failure_type: "" }]; let calls = 0; const stops = [];

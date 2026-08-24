@@ -5,6 +5,11 @@ Copy the complete prompt below into GPT Web. Do not omit the SHA or output contr
 ```text
 You are the independent senior auditor for a Chrome Manifest V3 extension named “Duc Auto Gemini”. Perform a READ-ONLY audit. Do not propose or perform repository writes, browser submissions, prompt entry, uploads, downloads, account changes, CAPTCHA handling, or store publication.
 
+RE-AUDIT CONTEXT
+- Your prior audit of handoff commit 90d837f1fca2b2e048615a213ec8a362fb3cd70e returned GPT-DAG-001 and GPT-DAG-002.
+- The candidate supplied by the operator must be a descendant of that commit and claims only these bounded fixes: abort recheck immediately before Send, plus a background-owned extension-wide submit lease persisted across MV3 service-worker restarts.
+- Verify the fixes from actual candidate code/tests. Do not mark the findings closed because this prompt says they were implemented.
+
 AUTHORITATIVE TARGET
 - Repository: https://github.com/anhducds-GIT/Chrome_Extension_AI_Agentic
 - Branch context: main
@@ -21,7 +26,7 @@ Open and inspect the actual files at the exact SHAs. Do not rely on this prompt�
 
 REQUIRED FILES
 1. manifest.json
-2. provider-core.js, runtime-core.js, binding-core.js, batch-core.js, content-decision-core.js
+2. provider-core.js, runtime-core.js, binding-core.js, lease-core.js, batch-core.js, content-decision-core.js
 3. background.js, content.js, sidepanel.js, run-core.js, xlsx-codec.js
 4. sidepanel.html and sidepanel.css
 5. every file under tests/** and fixtures/**
@@ -39,7 +44,7 @@ PRODUCT BOUNDARY
 - Three pilot reference files are intentionally owner-supplied and are not committed: reference-one.png, reference-two.jpg, reference-three.webp. Treat this as an explicit owner dependency, not as packaged test evidence.
 
 INVARIANTS TO AUDIT SEMANTICALLY
-1. Exactly one submit-critical job can run at a time.
+1. Exactly one submit-critical job can run across all Side Panels, windows and Gemini tabs, including after MV3 service-worker restart; background routing must reconstruct the stored lease and reject a simultaneous second attempt before target selection/content execution. Only the matching attempt identity may release the lease.
 2. `SUBMITTED` is durably persisted before Send and cannot be automatically resent after timeout, restart or ambiguity.
 3. All follow-up operations retain the exact run_id/job_id/attempt_id and the originally bound Images tab/window.
 4. A previous job/attempt response can never complete the current job.
@@ -47,7 +52,7 @@ INVARIANTS TO AUDIT SEMANTICALLY
 6. `OWNER_REVIEW`, `INTERRUPTED`, security/quota/policy, and attempt/tab identity failures hard-stop the whole active batch even with continue_on_error=true.
 7. continue_on_error applies only to ordinary exhausted pre-submit failures.
 8. Only the exact `FILE_INPUT_NOT_EXPOSED` timeout can proceed from upload trigger to menu. CAPTCHA/security/quota/policy, operator abort and unknown errors must propagate without another click.
-9. Blocker detection must prevent Send and any later unsafe click.
+9. Blocker detection and `abortRequested` must be re-read after durable `SUBMITTED` persistence and immediately before Send, preventing the click if Stop arrived in that interval.
 10. Side Panel must support running one explicitly selected job and show actual prompt plus attached reference thumbnails.
 11. Permissions must be least-privilege and Gemini-only; no remote code, backend, API key, externally_connectable or <all_urls>.
 12. Source workbook is never overwritten; output/audit/checkpoint provenance must remain explicit.

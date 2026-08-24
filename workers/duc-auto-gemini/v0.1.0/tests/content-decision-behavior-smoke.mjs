@@ -21,4 +21,9 @@ assert.equal(Core.attachmentReady(2, 3, { after: 5, busy: true }), false, "busy 
 assert.equal(Core.attachmentReady(2, 3, { after: 4, busy: false }), false, "missing preview is not ready");
 assert.equal(Core.sendReady({ found: false }), false); assert.equal(Core.sendReady({ found: true, disabled: true }), false); assert.equal(Core.sendReady({ found: true, ariaDisabled: "true" }), false); assert.equal(Core.sendReady({ found: true }), true);
 for (const blocker of ["SECURITY_BLOCKER", "QUOTA_LIMIT", "POLICY_BLOCK"]) { let clicks = 0; await assert.rejects(Core.guardedAction({ security: blocker === "SECURITY_BLOCKER" ? blocker : null, quota: blocker === "SECURITY_BLOCKER" ? null : blocker }, () => { clicks += 1; }), new RegExp(blocker)); assert.equal(clicks, 0, `${blocker} must prevent Send click`); assert.equal(Core.sendReady({ found: true, security: blocker === "SECURITY_BLOCKER" ? blocker : null, quota: blocker === "SECURITY_BLOCKER" ? null : blocker }), false); }
+let submittedPersisted = false; let stopAfterPersist = false; let sendClicks = 0;
+submittedPersisted = true; stopAfterPersist = true;
+await assert.rejects(Core.clickSend({ snapshot: () => ({ abortRequested: stopAfterPersist }), click: () => { sendClicks += 1; } }), /ABORTED_BY_OPERATOR/, "Stop after durable SUBMITTED persistence must prevent Send");
+assert.equal(submittedPersisted, true); assert.equal(sendClicks, 0);
+stopAfterPersist = false; await Core.clickSend({ snapshot: () => ({ abortRequested: stopAfterPersist }), click: () => { sendClicks += 1; } }); assert.equal(sendClicks, 1);
 pass("content decisions: lazy input, previews, disabled Send and blockers execute fail-closed");

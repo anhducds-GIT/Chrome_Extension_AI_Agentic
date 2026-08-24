@@ -161,7 +161,7 @@
       const originalBoundary = captureBoundary();
       attempt = Core.transition(attempt, Core.PHASE.SUBMITTED, { boundary: originalBoundary, submitted_at: new Date().toISOString() }); state.activeAttempt = attempt;
       const persisted = await persistStage(attempt); if (!persisted?.ok) throw new Error(persisted?.error || "SUBMITTED_PERSISTENCE_FAILED");
-      await Decisions.guardedAction(pageBlockers(), () => send.click());
+      await Decisions.clickSend({ snapshot: () => ({ ...pageBlockers(), abortRequested: state.abortRequested }), click: () => send.click() });
       const output = await waitForOutput(attempt, Number(message.timeout_ms || 240000));
       attempt = Core.transition(attempt, Core.PHASE.OUTPUT_DETECTED, { detection: output, output_detected_at: new Date().toISOString() }); state.activeAttempt = attempt; await persistStage(attempt);
       const outputUrl = await downloadableUrl(output.candidate.src);

@@ -11,5 +11,6 @@
     await guardedAction(ports.snapshot?.() || {}, () => ports.click(menuItem)); input = await ports.waitInput(); if (!input) throw new Error("FILE_INPUT_NOT_EXPOSED"); return input;
   }
   async function guardedAction(snapshot, action) { const blocker = blockingFailure(snapshot); if (blocker) throw new Error(blocker); return action(); }
-  globalThis.DagContentDecisionCore = Object.freeze({ blockingFailure, attachmentReady, sendReady, exposeFileInput, guardedAction });
+  async function clickSend(ports) { return guardedAction(ports.snapshot?.() || {}, ports.click); }
+  globalThis.DagContentDecisionCore = Object.freeze({ blockingFailure, attachmentReady, sendReady, exposeFileInput, guardedAction, clickSend });
 })();

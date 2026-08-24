@@ -16,7 +16,7 @@ Receive the GPT Web audit for Duc Auto Gemini, independently verify repository s
 - Page-only preflight SHA: `8d23bc9d26c70efea9abf991452b3b75944a4b39`
 - Handoff package SHA: `7d0e787dea1576cbcc2101d79886747e63199b8b`
 - Run ID: `20260824-dag-v01-000-090-r01`
-- Current status: `PASS — REVIEW-READY 90%`
+- Current status: GPT-DAG-001/002 bounded fixes implemented; GPT Web re-audit pending
 - Live status: `LIVE_RUNTIME_UNVERIFIED / OWNER_PILOT_PENDING`
 
 The handoff artifacts may be committed after the page-preflight SHA. Resolve the current immutable handoff commit from the operator message and verify its ancestry; do not replace the accepted implementation SHA with an unverified moving `main`.
@@ -52,8 +52,9 @@ Required bootstrap conclusions:
 4. `evidence/20260824-dag-v01-000-090-r01/20260824-dag-v01-000-090-r01.ACCEPTANCE-HANDOFF.md`.
 5. `evidence/20260824-dag-v01-000-090-r01/20260824-dag-v01-000-090-r01.TEST-REPORT.md`.
 6. `evidence/20260824-dag-v01-000-090-r01/20260824-dag-owner-pilot-preflight-page-r01.LIVE-PAGE-EVIDENCE.md`.
-7. `Duc-Auto-Gemini.PILOT-RUNBOOK.md`.
-8. The GPT Web verdict and evidence matrix; findings are inputs to verify, not authority by themselves.
+7. `evidence/20260824-dag-v01-000-090-r01/20260824-dag-gpt-bounded-fix-r01.EVIDENCE.md`.
+8. `Duc-Auto-Gemini.PILOT-RUNBOOK.md`.
+9. The GPT Web verdict and evidence matrix; findings are inputs to verify, not authority by themselves.
 
 If two sources conflict, use exact committed code/test evidence and report the contradiction. Never silently reconcile a mismatch.
 
@@ -65,6 +66,7 @@ If two sources conflict, use exact committed code/test evidence and report the c
 | Provider state/output attribution | `provider-core.js` |
 | Cross-context identity/restart | `runtime-core.js` |
 | Attempt-to-tab binding | `binding-core.js`, `background.js` |
+| Extension-wide submit exclusion | `lease-core.js`, `background.js` |
 | Whole-batch continuation/hard stops | `batch-core.js`, `sidepanel.js` |
 | Upload/send/blocker decisions | `content-decision-core.js`, `content.js` |
 | Queue/settings/audit/checkpoint | `run-core.js`, `sidepanel.js` |
@@ -75,6 +77,7 @@ If two sources conflict, use exact committed code/test evidence and report the c
 ## Non-negotiable invariants
 
 - One submit-critical job at a time.
+- The background global lease is persisted in `chrome.storage.session` and admits only one routed submit-critical attempt across simultaneous Side Panels/tabs and MV3 service-worker restarts.
 - Persist `SUBMITTED` before Send; never auto-resend a submitted/ambiguous/restarted attempt.
 - Bind every attempt to exact `run_id/job_id/attempt_id` plus its original Gemini Images tab/window.
 - Reject cross-job/cross-attempt responses.
@@ -83,6 +86,7 @@ If two sources conflict, use exact committed code/test evidence and report the c
 - Hard-stop the active batch on owner review, interruption, security/quota/policy and identity/binding failure.
 - Restrict continue-on-error to ordinary exhausted pre-submit failures.
 - Recover only from exact `FILE_INPUT_NOT_EXPOSED`; propagate blocker/abort/unknown errors without another click.
+- Re-read `abortRequested` after durable `SUBMITTED` and immediately before Send.
 - Preserve least privilege: `storage`, `sidePanel`, `downloads`, Gemini host only.
 - Never overwrite the source workbook.
 
@@ -98,6 +102,7 @@ Baseline at the accepted snapshot:
 
 - Gemini suite: `16 passed, 0 failed`.
 - Gemini suite after adding the handoff-integrity test: `17 passed, 0 failed`.
+- Gemini suite after GPT-DAG-001/002 regression tests: `18 passed, 0 failed`.
 - Repository suite: `63 passed, 0 failed`; observer PASS.
 - Syntax, JSON and secret scans: PASS.
 

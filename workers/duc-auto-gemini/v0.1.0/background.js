@@ -1,10 +1,17 @@
 "use strict";
-importScripts("binding-core.js");
+importScripts("binding-core.js", "lease-core.js");
 const Binding = globalThis.DagBindingCore;
+const Lease = globalThis.DagLeaseCore;
 const GEMINI_URLS = ["https://gemini.google.com/*"];
 const TERMINAL_KEY = "dag.terminal_attempts.v1";
 const ATTEMPTS_KEY = "dag.durable_attempts.v1";
 const BINDINGS_KEY = "dag.attempt_bindings.v1";
+const GLOBAL_LEASE_KEY = "dag.global_submit_lease.v1";
+const globalSubmitLease = Lease.createDurableController({
+  async load() { const stored = await chrome.storage.session.get(GLOBAL_LEASE_KEY); return stored[GLOBAL_LEASE_KEY] || null; },
+  async save(lease) { await chrome.storage.session.set({ [GLOBAL_LEASE_KEY]: lease }); },
+  async clear(expectedKey) { const stored = await chrome.storage.session.get(GLOBAL_LEASE_KEY); if (stored[GLOBAL_LEASE_KEY]?.key !== expectedKey) return false; await chrome.storage.session.remove(GLOBAL_LEASE_KEY); return true; }
+});
 
 chrome.runtime.onInstalled.addListener(() => { if (chrome.sidePanel?.setPanelBehavior) chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {}); });
 async function mapFromStorage(key) { const stored = await chrome.storage.local.get(key); return stored[key] && typeof stored[key] === "object" ? stored[key] : {}; }
@@ -31,9 +38,11 @@ async function boundReceiver(message) {
   const checked = Binding.validate(binding, message, tab, ping?.snapshot); if (!checked.ok) throw new Error(checked.reason); return { binding, tab, ping };
 }
 async function routeRun(message) {
-  const resolved = await target(); const binding = Binding.createBinding(message, resolved.tab, resolved.ping.snapshot.surface); await persistBinding(binding);
-  const response = await chrome.tabs.sendMessage(resolved.tab.id, { ...message, type: "DAG_RUN_IMAGE_JOB" }); if (response?.attempt && Binding.matches(binding, response.attempt)) await persistAttempt(response.attempt);
-  return { ...response, target: { tab_id: resolved.tab.id, url: resolved.tab.url, window_id: resolved.tab.windowId } };
+  return globalSubmitLease.run(message, async () => {
+    const resolved = await target(); const binding = Binding.createBinding(message, resolved.tab, resolved.ping.snapshot.surface); await persistBinding(binding);
+    const response = await chrome.tabs.sendMessage(resolved.tab.id, { ...message, type: "DAG_RUN_IMAGE_JOB" }); if (response?.attempt && Binding.matches(binding, response.attempt)) await persistAttempt(response.attempt);
+    return { ...response, target: { tab_id: resolved.tab.id, url: resolved.tab.url, window_id: resolved.tab.windowId } };
+  });
 }
 async function routeBound(message, payload) { const resolved = await boundReceiver(message); return chrome.tabs.sendMessage(resolved.tab.id, payload); }
 async function downloadImage(message) {
@@ -44,7 +53,7 @@ async function downloadImage(message) {
 }
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const action = (async () => {
-    if (message?.type === "DAG_ATTEMPT_STAGE") { const binding = await getBinding(message.attempt || {}); if (!binding || sender.tab?.id !== binding.tab_id || sender.tab?.windowId !== binding.window_id || !Binding.matches(binding, message.attempt)) throw new Error("ATTEMPT_ID_MISMATCH"); await persistAttempt(message.attempt); return { ok: true, persisted_phase: message.attempt.phase }; }
+    if (message?.type === "DAG_ATTEMPT_STAGE") { const binding = await getBinding(message.attempt || {}); if (!binding || sender.tab?.id !== binding.tab_id || sender.tab?.windowId !== binding.window_id || !Binding.matches(binding, message.attempt)) throw new Error("ATTEMPT_ID_MISMATCH"); await persistAttempt(message.attempt); if (/^(OUTPUT_DETECTED|FAILED_PRE_SUBMIT|OWNER_REVIEW|INTERRUPTED)$/.test(message.attempt.phase)) await globalSubmitLease.release(message.attempt); return { ok: true, persisted_phase: message.attempt.phase }; }
     if (message?.type === "DAG_GET_ATTEMPTS") { const rows = await mapFromStorage(ATTEMPTS_KEY); return { ok: true, attempts: Object.values(rows).filter((attempt) => !message.run_id || attempt.run_id === message.run_id) }; }
     if (message?.type === "DAG_RESOLVE_TARGET") { const found = await target(); return { ok: true, tab: { id: found.tab.id, url: found.tab.url, title: found.tab.title }, snapshot: found.ping.snapshot }; }
     if (message?.type === "DAG_ROUTE_RUN") return routeRun(message);

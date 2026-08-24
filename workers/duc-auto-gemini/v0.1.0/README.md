@@ -40,6 +40,7 @@ The source workbook is never overwritten. A completed/stopped run downloads a ne
 ## Runtime invariants
 
 - One submit-critical job at a time.
+- A background-owned global lease persisted in `chrome.storage.session` enforces that invariant across simultaneous Side Panels, windows, Gemini Images tabs and MV3 service-worker restarts; a second route fails before target selection.
 - Every attempt is bound to one exact `/images` tab; later wait/advance/abort messages cannot switch tabs or attempt identity.
 - `PRE_SUBMIT → SUBMITTED` is irreversible.
 - `SUBMITTED` is persisted before the Send click. Reopening the panel converts any unresolved submitted/output stage to non-runnable `OWNER_REVIEW`.
@@ -48,6 +49,7 @@ The source workbook is never overwritten. A completed/stopped run downloads a ne
 - Template-gallery, input/reference, stale and multiple ambiguous images are rejected.
 - CAPTCHA, unusual activity, security, quota and policy signals fail closed.
 - Upload exposure guards run before both trigger/menu clicks; only the specific file-input timeout may advance to the menu branch, while blockers, operator aborts and unknown errors propagate immediately.
+- The final Send click re-reads both page blockers and `abortRequested` after durable `SUBMITTED` persistence; an intervening Stop prevents the click.
 - `OWNER_REVIEW`, `INTERRUPTED`, security/quota/policy, and attempt/tab identity failures hard-stop the active batch even when `continue_on_error=true`; that setting applies only to ordinary exhausted pre-submit failures.
 - References must resolve uniquely and show ready previews before send.
 - Audit stores a prompt hash, not prompt text.
@@ -63,7 +65,8 @@ Side Panel
           │
           ▼
 background.js            exact-tab binding, durable attempts, downloads
-  └─ binding-core.js     run/job/attempt ↔ tab/window invariant
+  ├─ binding-core.js     run/job/attempt ↔ tab/window invariant
+  └─ lease-core.js       durable extension-wide submit-critical exclusion
           │
           ▼
 content.js               live DOM adapter
