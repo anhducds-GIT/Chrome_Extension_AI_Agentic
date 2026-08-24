@@ -44,7 +44,9 @@
     return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
   }
   function downloadBlob(blob, name) {
-    const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // Never anchor-click a blob URL from the side panel: Chrome can treat it as a panel navigation and unload the running UI.
+    const url = URL.createObjectURL(blob); const filename = String(name).replace(/[<>:"|?*]/g, "_").replace(/^[/\u005C]+/, "");
+    return chrome.downloads.download({ url, filename, conflictAction: "uniquify", saveAs: false }).catch(() => {}).finally(() => setTimeout(() => URL.revokeObjectURL(url), 60000));
   }
   function referenceFigure(reference) {
     const figure = document.createElement("figure"); const image = document.createElement("img"); const caption = document.createElement("figcaption");
@@ -98,8 +100,9 @@
     Xlsx.updateJob(state.workbook, item.job, { phase: item.phase, retry_count: item.retry_count, attempt_id: item.attempt_id || "", result_file: item.result_file || "", failure_type: item.failure_type || "", last_error: item.last_error || "" });
   }
   async function persistItem(item, event, values = {}) { updateWorkbook(item); await saveCheckpoint(); await addAudit(event, item, values); renderPlan(); renderCurrent(item); }
+  function expectedIdentity(item) { return { run_id: state.runId, job_id: item?.job?.id || item?.job_id || "", attempt_id: item?.attempt_id || "" }; }
   function applyAttempt(item, attempt, fallbackPhase) {
-    if (attempt && !Runtime.matchesAttempt(attempt, item)) throw new Error("ATTEMPT_ID_MISMATCH");
+    if (attempt && !Runtime.matchesAttempt(attempt, expectedIdentity(item))) throw new Error("ATTEMPT_ID_MISMATCH");
     item.phase = attempt?.phase || fallbackPhase || item.phase; item.failure_type = attempt?.failure_type || item.failure_type || ""; item.last_error = attempt?.last_error || item.last_error || ""; item.result_file = attempt?.result_file || item.result_file || "";
   }
   async function checkPlan() {
@@ -115,7 +118,7 @@
     const durable = await message({ type: "DAG_GET_ATTEMPTS", run_id: state.runId });
     if (!durable.ok) throw new Error(durable.error || "DURABLE_ATTEMPT_READ_FAILED");
     const newest = new Map(); for (const attempt of durable.attempts || []) { const prior = newest.get(attempt.job_id); if (!prior || String(attempt.persisted_at || attempt.updated_at || "") > String(prior.persisted_at || prior.updated_at || "")) newest.set(attempt.job_id, attempt); }
-    state.plan.queue = state.plan.queue.map((item) => Runtime.restoreSubmitted(item, newest.get(item.job.id)));
+    state.plan = { ...state.plan, queue: state.plan.queue.map((item) => Runtime.restoreSubmitted(item, newest.get(item.job.id))) };
     state.attemptSerial = Runtime.deriveAttemptSerial(checkpoint || {}, state.plan.queue); state.audit = Array.isArray(stored[AUDIT_KEY]) ? stored[AUDIT_KEY].filter((row) => row.run_id === state.runId) : [];
     for (const item of state.plan.queue) updateWorkbook(item); await saveCheckpoint(); renderPlan(); renderCurrent(state.plan.queue.find((item) => item.job.id === state.selectedJobId));
     await addAudit("PLAN_CHECKED", null, { source_sha256: state.sourceSha256, job_count: state.plan.queue.length });
@@ -124,20 +127,20 @@
   }
   async function advance(item, nextPhase, values = {}) {
     const response = await message({ type: "DAG_ROUTE_ADVANCE", run_id: state.runId, job_id: item.job.id, attempt_id: item.attempt_id, next_phase: nextPhase, values });
-    const outcome = Runtime.responseOutcome(response, item); if (!outcome.ok) throw new Error(outcome.failure_type || outcome.last_error); applyAttempt(item, outcome.attempt, nextPhase); await persistItem(item, `ATTEMPT_${nextPhase}`); return response;
+    const outcome = Runtime.responseOutcome(response, expectedIdentity(item)); if (!outcome.ok) throw new Error(outcome.failure_type || outcome.last_error); applyAttempt(item, outcome.attempt, nextPhase); await persistItem(item, `ATTEMPT_${nextPhase}`); return response;
   }
   async function executeAttempt(item) {
     state.attemptSerial += 1; item.attempt_id = Runner.nextAttemptId(state.runId, item.job.id, state.attemptSerial); item.phase = "PRE_SUBMIT"; item.failure_type = ""; item.last_error = ""; state.currentItem = item;
     await persistItem(item, "ATTEMPT_PREPARED", { retry_count: item.retry_count });
     const response = await message({ type: "DAG_ROUTE_RUN", run_id: state.runId, job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, references: item.references.map(({ name, alias, dataUrl }) => ({ fileName: name, name, alias, dataUrl })), timeout_ms: state.plan.settings.timeout_sec * 1000 });
-    const outcome = Runtime.responseOutcome(response, item);
-    if (!outcome.ok) { applyAttempt(item, outcome.attempt, outcome.phase); item.failure_type = outcome.failure_type; item.last_error = outcome.last_error; await persistItem(item, "ATTEMPT_FAILED", { failure_type: item.failure_type }); return false; }
+    const outcome = Runtime.responseOutcome(response, expectedIdentity(item));
+    if (!outcome.ok) { applyAttempt(item, outcome.attempt, outcome.phase); item.failure_type = outcome.failure_type; item.last_error = outcome.last_error; await persistItem(item, "ATTEMPT_FAILED", { failure_type: item.failure_type, last_error: item.last_error }); return false; }
     applyAttempt(item, outcome.attempt, "OUTPUT_DETECTED"); await persistItem(item, "OUTPUT_DETECTED", { source_id: response.output?.source_id || "" });
     const extension = inferExtension(response.output?.url); const relativeName = `${state.plan.settings.output_folder}/${safeName(item.job.id)}.${extension}`;
     const downloaded = await message({ type: "DAG_DOWNLOAD_IMAGE", url: response.output?.url, filename: relativeName }); if (!downloaded.ok) throw new Error(downloaded.error || "OUTPUT_DOWNLOAD_FAILED");
     item.result_file = downloaded.download?.filename || relativeName; await advance(item, "OUTPUT_SAVED", { result_file: item.result_file });
     const ready = await message({ type: "DAG_ROUTE_READY", run_id: state.runId, job_id: item.job.id, attempt_id: item.attempt_id, timeout_ms: 30000 });
-    const readyOutcome = Runtime.responseOutcome(ready, item); if (!readyOutcome.ok) throw new Error(readyOutcome.failure_type || readyOutcome.last_error || "GEMINI_NOT_READY");
+    const readyOutcome = Runtime.responseOutcome(ready, expectedIdentity(item)); if (!readyOutcome.ok) throw new Error(readyOutcome.failure_type || readyOutcome.last_error || "GEMINI_NOT_READY");
     await advance(item, "CHAT_READY"); await advance(item, "SUCCESS"); return true;
   }
   async function executeItem(item) {
@@ -178,7 +181,7 @@
   async function stop() {
     state.stopping = true; const item = state.currentItem; if (item?.attempt_id && !terminal(item.phase)) {
       const response = await message({ type: "DAG_ROUTE_ABORT", run_id: state.runId, job_id: item.job.id, attempt_id: item.attempt_id });
-      const outcome = Runtime.responseOutcome(response, item); if (!response.ok || (response.attempt && !Runtime.matchesAttempt(response.attempt, item))) await addAudit("STOP_REJECTED", item, { error: outcome.last_error || response.error }); else await addAudit("STOP_REQUESTED", item);
+      const outcome = Runtime.responseOutcome(response, expectedIdentity(item)); if (!response.ok || (response.attempt && !Runtime.matchesAttempt(response.attempt, expectedIdentity(item)))) await addAudit("STOP_REJECTED", item, { error: outcome.last_error || response.error }); else await addAudit("STOP_REQUESTED", item);
     }
     setControls();
   }

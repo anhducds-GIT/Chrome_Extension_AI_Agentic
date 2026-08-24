@@ -26,4 +26,17 @@ submittedPersisted = true; stopAfterPersist = true;
 await assert.rejects(Core.clickSend({ snapshot: () => ({ abortRequested: stopAfterPersist }), click: () => { sendClicks += 1; } }), /ABORTED_BY_OPERATOR/, "Stop after durable SUBMITTED persistence must prevent Send");
 assert.equal(submittedPersisted, true); assert.equal(sendClicks, 0);
 stopAfterPersist = false; await Core.clickSend({ snapshot: () => ({ abortRequested: stopAfterPersist }), click: () => { sendClicks += 1; } }); assert.equal(sendClicks, 1);
+// Codex review finding: summing overlapping selectors across the document is not a count of attachments.
+// These pin the replacement model — unique arrivals, not a rising total.
+const a = { id: "placeholder" }, b = { id: "thumbnail" }, c = { id: "second" };
+assert.equal(Core.addedSince(new Set([a]), new Set([a])), 0, "nothing new means nothing arrived");
+assert.equal(Core.addedSince(new Set(), new Set([a])), 1, "a first preview counts as one arrival");
+assert.equal(Core.addedSince(new Set([a]), new Set([b])), 1, "a placeholder swapped in place for the finished thumbnail is still one arrival");
+assert.equal(Core.addedSince(new Set([a]), new Set([a, b, c])), 2, "only genuinely new nodes count");
+// The old summed model failed exactly here: after(1) >= before(1) + expected(1) is false, so a correct
+// in-place swap timed out at 20s even though the page had rendered the attachment.
+assert.equal(Core.attachmentReady(1, 1, { after: 1, busy: false }), false, "the old summed comparison rejects a valid in-place swap");
+assert.equal(Core.attachmentReady(0, 1, { after: Core.addedSince(new Set([a]), new Set([b])), busy: false }), true, "the replacement model accepts it");
+assert.equal(Core.attachmentReady(0, 1, { after: 1, busy: true }), false, "a busy uploader still blocks readiness");
+
 pass("content decisions: lazy input, previews, disabled Send and blockers execute fail-closed");

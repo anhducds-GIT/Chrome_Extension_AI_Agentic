@@ -24,8 +24,8 @@
     const responseText = Array.from(document.querySelectorAll('[role="alert"], [data-message-author-role="model"], [data-message-author-role="assistant"], model-response, [data-test-id*="response" i], [class*="model-response"]')).map((node) => node.innerText || "").join("\n");
     return { security: Core.securityBlocker(pageText), quota: Core.quotaOrPolicyBlocker(responseText) };
   }
-  function attachmentPending() {
-    return Boolean(document.querySelector('[aria-busy="true"][data-test-id*="upload" i], [data-test-id*="upload" i] [role="progressbar"], [class*="upload"] [role="progressbar"]'));
+  function attachmentPending(scope) {
+    return Boolean((scope || document).querySelector('[aria-busy="true"][data-test-id*="upload" i], [data-test-id*="upload" i] [role="progressbar"], [class*="upload"] [role="progressbar"]'));
   }
   function modelContainer(image) {
     for (const selector of Core.SELECTORS.modelContainer) {
@@ -110,19 +110,53 @@
       waitInput
     });
   }
-  async function attachReferences(references) {
-    if (!references?.length) return;
+  // Summing four overlapping selectors across the whole document is not a count of attachments: previews
+  // can match several selectors at once, and a placeholder replaced in place by the finished thumbnail
+  // produces no increase at all. Observe unique NEW nodes inside the composer instead.
+  function attachmentScope() {
+    const target = composer();
+    return target?.closest("form, [role=\"form\"]") || target?.parentElement?.parentElement || document;
+  }
+  function attachmentNodes(scope = attachmentScope()) {
+    const found = new Set();
+    for (const selector of Core.SELECTORS.attachmentPreview) for (const node of scope.querySelectorAll(selector)) found.add(node);
+    // Brand-agnostic fallback: a small image rendered inside the composer is an attachment preview,
+    // whatever Google happens to call its internals this week.
+    for (const image of scope.querySelectorAll("img")) { const rect = image.getBoundingClientRect(); if (rect.width > 0 && rect.width <= 220 && rect.height > 0 && rect.height <= 220) found.add(image); }
+    return found;
+  }
+  function attachmentFingerprint(before, expected, input) {
+    const scope = attachmentScope();
+    const selectors = Core.SELECTORS.attachmentPreview.map((selector) => `${selector} => doc ${document.querySelectorAll(selector).length} / scope ${scope.querySelectorAll(selector).length}`);
+    const thumbs = Array.from(document.querySelectorAll("img")).filter((image) => { const rect = image.getBoundingClientRect(); return rect.width > 0 && rect.width < 220 && rect.height > 0 && rect.height < 220; }).slice(0, 6)
+      .map((image) => ({ testid: image.closest("[data-test-id]")?.getAttribute("data-test-id") || "", aria: image.closest("[aria-label]")?.getAttribute("aria-label") || "", cls: String(image.parentElement?.className || "").slice(0, 60) }));
+    return { expected, added: Decisions.addedSince(before, attachmentNodes(scope)), scoped: scope !== document, input_files: input?.files?.length ?? -1, busy: attachmentPending(scope), selectors, thumbs };
+  }
+  async function stageReferences(references) {
+    if (!references?.length) return null;
     const input = await ensureFileInput(); const transfer = new DataTransfer();
     for (const reference of references) {
       const response = await fetch(reference.dataUrl); const blob = await response.blob();
       transfer.items.add(new File([blob], reference.fileName || reference.name, { type: blob.type || "image/png" }));
     }
-    const before = Core.SELECTORS.attachmentPreview.reduce((count, selector) => count + document.querySelectorAll(selector).length, 0);
+    const before = attachmentNodes();
     input.files = transfer.files; input.dispatchEvent(new Event("change", { bubbles: true }));
+    return { input, before, expected: references.length };
+  }
+  // Staging and confirmation are separate so the prompt can be typed while the page ingests the upload.
+  // Confirmation still runs before Send, so "never submit without its verified reference" is unchanged.
+  async function confirmReferences(staged) {
+    if (!staged) return;
     await waitUntil(() => {
-      const after = Core.SELECTORS.attachmentPreview.reduce((count, selector) => count + document.querySelectorAll(selector).length, 0);
-      return Decisions.attachmentReady(before, references.length, { after, busy: attachmentPending() });
-    }, 20000, "ATTACHMENT_NOT_READY");
+      const scope = attachmentScope();
+      return Decisions.attachmentReady(0, staged.expected, { after: Decisions.addedSince(staged.before, attachmentNodes(scope)), busy: attachmentPending(scope) });
+    }, 20000, "ATTACHMENT_NOT_READY").catch((error) => {
+      if (error.message !== "ATTACHMENT_NOT_READY") throw error;
+      // The page shows the thumbnail but no selector matched it. Carry the real DOM shape so the
+      // audit trail and the results workbook say which selector to add, without a devtools session.
+      const detail = new Error(`ATTACHMENT_NOT_READY ${JSON.stringify(attachmentFingerprint(staged.before, staged.expected, staged.input))}`);
+      detail.failure_type = "ATTACHMENT_NOT_READY"; throw detail;
+    });
   }
   async function waitForOutput(attempt, timeoutMs) {
     const deadline = Date.now() + timeoutMs; let last = null;
@@ -155,8 +189,9 @@
     let attempt = Core.createAttempt({ runId: message.run_id, jobId: message.job_id, attemptId: message.attempt_id, boundary: captureBoundary() }); state.activeAttempt = attempt;
     try {
       const before = snapshot(); const initial = Core.readiness({ ...before, requireSend: false, surface: Core.surface(location.href) }); if (!initial.ready) throw new Error(initial.reason);
-      await attachReferences(message.references || []);
+      const staged = await stageReferences(message.references || []);
       const target = composer(); if (!target) throw new Error("COMPOSER_MISSING"); setComposerText(target, String(message.prompt || ""));
+      await confirmReferences(staged);
       const send = await waitUntil(() => { const button = sendButton(); return Decisions.sendReady({ found: Boolean(button), disabled: button?.disabled, ariaDisabled: button?.getAttribute("aria-disabled"), ...pageBlockers() }) ? button : null; }, 7000, "SEND_NOT_READY");
       const originalBoundary = captureBoundary();
       attempt = Core.transition(attempt, Core.PHASE.SUBMITTED, { boundary: originalBoundary, submitted_at: new Date().toISOString() }); state.activeAttempt = attempt;
@@ -168,7 +203,7 @@
       return { ok: true, attempt, output: { url: outputUrl, source_id: Core.shortHash(output.candidate.src), diagnostics: output } };
     } catch (error) {
       if (attempt.phase === Core.PHASE.PRE_SUBMIT) {
-        attempt = Core.transition(attempt, Core.PHASE.FAILED_PRE_SUBMIT, { failure_type: error.message, last_error: error.message }); state.activeAttempt = attempt; await persistStage(attempt).catch(() => {});
+        attempt = Core.transition(attempt, Core.PHASE.FAILED_PRE_SUBMIT, { failure_type: error.failure_type || error.message, last_error: error.message }); state.activeAttempt = attempt; await persistStage(attempt).catch(() => {});
       } else if (Core.POST_SUBMIT.has(attempt.phase)) {
         attempt = Core.transition(attempt, state.abortRequested ? Core.PHASE.INTERRUPTED : Core.PHASE.OWNER_REVIEW, { failure_type: error.message.startsWith("OUTPUT_AMBIGUOUS") ? "OUTPUT_AMBIGUOUS" : error.message, last_error: error.message, detection: error.decision || null });
         state.activeAttempt = attempt; await persistStage(attempt).catch(() => {});
