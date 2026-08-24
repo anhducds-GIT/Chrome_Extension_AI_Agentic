@@ -1,0 +1,41 @@
+{
+  "run_id": "20260824-p08-s01-s11-r01",
+  "boundary": "PREPARE_INPUT_ONLY",
+  "internal_verdict": "PASS",
+  "independent_audit": "PENDING",
+  "checks": {
+    "package_count": 11,
+    "package_validators_passed": 11,
+    "total_jobs": 726,
+    "character_concept_prompts_checked": 66,
+    "storyboard_prompts_checked": 660,
+    "source_videos_checked": 220,
+    "frames_per_source": 3,
+    "semantic_sample_prompts_checked": 99,
+    "standard_timing_sources": 218,
+    "alternate_timing_sources": 2,
+    "rendered_sheet_previews_checked": 77,
+    "canonical_references_per_package": 4,
+    "formula_error_findings": 0,
+    "aggregate_findings": 0,
+    "skill_quick_validate": "PASS",
+    "builder_node_check": "PASS",
+    "validator_node_check": "PASS"
+  },
+  "special_cases": {
+    "S01_authoritative_workbook": "Pilot08-S01-R03.IMAGE-QUEUE.xlsx",
+    "S01_old_workbook_status": "SUPERSEDED_BUT_PRESERVED_BECAUSE_LOCKED",
+    "S08_timing": "18_STANDARD_AND_2_ALTERNATE",
+    "S11_style": "ORIGINAL_ANIME_INSPIRED_2D_NO_EXISTING_COPYRIGHTED_CHARACTER",
+    "S11_supporting_character": "PRINCESS_LIORA_ONLY_IN_I011-S1-01A_AND_I011-S1-01B"
+  },
+  "external_actions": {
+    "extension_runs": 0,
+    "chatgpt_image_generations": 0,
+    "google_flow_submissions": 0,
+    "google_sheet_writes": 0,
+    "commits": 0,
+    "pushes": 0,
+    "deletions": 0
+  }
+}

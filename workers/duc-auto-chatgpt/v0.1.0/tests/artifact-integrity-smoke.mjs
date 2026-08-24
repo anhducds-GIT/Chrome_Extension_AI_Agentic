@@ -62,10 +62,12 @@ assert.doesNotMatch(
   /state\.auditEvents = \[\]/,
   "the buffer must never be cleared before the write is verified"
 );
+assert.match(sidepanel, /state\.auditEvents = audit \? \[\] : snapshot\.auditEvents/, "bridge approval rollback does not re-buffer events that a verified audit write already persisted");
+assert.match(sidepanel, /state\.auditEvents = auditPersisted \? \[\] : snapshot\.auditEvents/, "Recreate rollback uses the same no-duplicate audit rule");
 
 /* ---- 3. no markup sinks in the side panel ------------------------------- */
 
-for (const file of ["sidepanel.js", "background.js", "content.js"]) {
+for (const file of ["sidepanel.js", "background.js", "content.js", "bridge-core.js", "bridge-pairing-core.js", "bridge-router-core.js", "bridge-transport-loopback.js", "bridge-proposal-core.js", "approval-persistence-core.js"]) {
   assert.doesNotMatch(fs.readFileSync(new URL(file, root), "utf8"), /\.innerHTML\s*=/, `${file} must not assign innerHTML`);
 }
 assert.doesNotMatch(sidepanel, /insertAdjacentHTML|outerHTML\s*=|document\.write/, "no alternate markup sink is used");

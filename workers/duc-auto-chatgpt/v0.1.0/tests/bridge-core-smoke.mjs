@@ -53,6 +53,8 @@ const canonicalA = { zebra: [3, { y: true, x: "Đức" }], alpha: 1 };
 const canonicalB = { alpha: 1, zebra: [3, { x: "Đức", y: true }] };
 assert.equal(bridge.canonicalJson(canonicalA), bridge.canonicalJson(canonicalB));
 assert.equal(await bridge.hashCanonical({ b: 2, a: 1 }), "sha256:QyWM_3g_5wNtikMDP4MK38YOwDc4JHNUisdCuIgpJ3c", "canonical SHA-256 matches a fixed cross-runtime vector");
+assert.equal(await bridge.hashText("abc"), "sha256:ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0", "prompt hashing covers the exact UTF-8 bytes, without JSON quotes");
+assert.notEqual(await bridge.hashText("abc"), await bridge.hashCanonical("abc"), "raw prompt hashing is deliberately distinct from canonical payload hashing");
 assert.equal(await bridge.hashCanonical(canonicalA), await bridge.hashCanonical(canonicalB), "object insertion order cannot change the payload hash");
 assert.notEqual(await bridge.hashCanonical([1, 2]), await bridge.hashCanonical([2, 1]), "array order remains meaningful");
 assert.throws(() => bridge.canonicalJson({ bad: undefined }), /JSON values only/);
@@ -67,6 +69,37 @@ const deniedResponse = await denied(makeRequest({ method: "run.start" }));
 assert.equal(deniedResponse.ok, false);
 assert.equal(deniedResponse.error.code, "METHOD_NOT_FOUND");
 assert.equal(deniedResponse.error.retryable, false);
+
+const prototypeNames = [
+  "constructor", "toString", "valueOf", "hasOwnProperty", "isPrototypeOf",
+  "propertyIsEnumerable", "toLocaleString", "__proto__"
+];
+for (const method of prototypeNames) {
+  assert.throws(
+    () => bridge.requireMethod(method),
+    (error) => error.code === "METHOD_NOT_FOUND",
+    `${method} cannot resolve through Object.prototype`
+  );
+  const response = await denied(makeRequest({ method }));
+  assert.equal(response.ok, false, `${method} produces a response envelope`);
+  assert.equal(response.error.code, "INVALID_ENVELOPE", `${method} is rejected by full request-envelope validation`);
+  assert.throws(() => new bridge.BridgeProtocolError(method), TypeError, `${method} cannot resolve through the error-definition prototype`);
+}
+
+const internalFailure = bridge.createDispatcher({
+  handlers: { "system.ping": async () => { throw new Error("private stack detail"); } },
+  now: () => new Date("2026-08-23T10:00:01.000Z")
+});
+const internalResponse = await internalFailure(makeRequest());
+assert.equal(internalResponse.ok, false, "unexpected handler failures still receive a response envelope");
+assert.equal(internalResponse.error.code, "INTERNAL_ERROR");
+assert.equal(internalResponse.error.message, "The bridge could not complete the request.");
+assert.deepEqual(internalResponse.error.details, {});
+assert.doesNotMatch(JSON.stringify(internalResponse), /private stack detail/, "internal failures leak no implementation detail");
+
+const missingHandlerResponse = await denied(makeRequest());
+assert.equal(missingHandlerResponse.ok, false, "a missing injected handler does not strand the caller until its deadline");
+assert.equal(missingHandlerResponse.error.code, "INTERNAL_ERROR");
 
 let handlerCalls = 0;
 const replayStore = bridge.createMemoryReplayStore();

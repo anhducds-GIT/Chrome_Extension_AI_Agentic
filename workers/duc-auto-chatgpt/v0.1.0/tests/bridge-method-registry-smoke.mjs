@@ -14,6 +14,9 @@ const expectedMethods = [
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
+assert.equal(Object.getPrototypeOf(bridge.METHOD_REGISTRY), null, "the registry cannot inherit callable Object.prototype names");
+assert.equal(Object.getPrototypeOf(bridge.ERROR_DEFINITIONS), null, "the error registry cannot inherit Object.prototype names either");
+assert.equal(bridge.ERROR_DEFINITIONS.INTERNAL_ERROR.retryable, false, "unexpected RPC failures have a stable non-leaking error policy");
 for (const method of expectedMethods) {
   const entry = bridge.METHOD_REGISTRY[method];
   assert(Object.isFrozen(entry), `${method} metadata is immutable`);

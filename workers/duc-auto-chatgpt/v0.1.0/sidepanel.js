@@ -26,7 +26,9 @@
     "latestSavedName", "latestSavedStatus", "completionCard", "completionIcon", "completionTitle",
     "artifactStatusPill", "runArtifactsCard", "artifactLocationNote", "artifactRowImages", "recreateConfirmTitleVi", "recreateConfirmMessageVi", "folderPickTitleVi", "folderPickStatusVi", "checkpointCollisionStatusVi",
     "artifactImagesDetail", "artifactImagesStatus", "artifactRowResult", "artifactResultDetail",
-    "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus", "runDashboardSplit", "runWidthSplitter"
+    "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus", "runDashboardSplit", "runWidthSplitter",
+    "bridgeProposalCard", "bridgeProposalCount", "bridgeProposalStatus", "bridgeProposalMeta", "bridgeProposalList", "bridgeProposalNotice", "bridgeProposalLockReason", "bridgeProposalFixtureBtn", "bridgeProposalRejectBtn", "bridgeProposalApproveBtn",
+    "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput"
   ];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
   // Output Profile mode is normally driven by output_profile_id / result_output_profile_id
@@ -98,7 +100,11 @@
     pendingQueueRemovalId: null,
     draggedQueueJobId: null,
     auditGapRunning: false,
-    auditChain: { ok: true, applicable: false, gapAcknowledged: false, segmentStarted: false, previousFilename: "" }
+    auditChain: { ok: true, applicable: false, gapAcknowledged: false, segmentStarted: false, previousFilename: "" },
+    bridgeProposals: [],
+    bridgeExecutorEpoch: null,
+    bridgePort: null,
+    bridgeTransportStatus: null
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -183,7 +189,16 @@
     if (!state.runId) return;
     const telemetry = globalThis.DacAttemptTelemetry?.auditFields(item) || {};
     const output = state.outputSettings ? window.DacOutputLocation.effective(state.outputSettings) : null;
-    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null });
+    const bridge = item?.job?.input_origin === "bridge" ? {
+      input_origin: "bridge",
+      bridge_proposal_id: item.job.bridge_proposal_id || null,
+      bridge_request_id: item.job.bridge_request_id || null,
+      bridge_client_id: item.job.bridge_client_id || null,
+      bridge_client_job_id: item.job.bridge_client_job_id || null,
+      bridge_approved_at: item.job.bridge_approved_at || null,
+      bridge_payload_sha256: item.job.bridge_payload_sha256 || null
+    } : {};
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
@@ -325,6 +340,704 @@
     if (!compact) return "Không có nội dung prompt.";
     if (compact.length <= maxLength) return compact;
     return `${compact.slice(0, Math.max(1, maxLength - 1)).trimEnd()}…`;
+  }
+
+  const BRIDGE_PROPOSAL_STORAGE_KEY = "dac.bridge.proposals.v1";
+  const BRIDGE_EXECUTOR_PORT = "dac.bridge.executor.v1";
+  const serializeBridgeProposalStore = window.DacBridgeProposalCore.createSerialExecutor();
+  const BRIDGE_STATUS_LABELS = Object.freeze({
+    AWAITING_OWNER_APPROVAL: "Đang chờ Đức xem xét",
+    NEEDS_REVIEW: "Ledger đã thay đổi — cần xem lại danh sách mới",
+    APPROVING: "Đang ghi audit và checkpoint",
+    APPROVED_CHECKPOINTED: "Đã duyệt và xác minh checkpoint",
+    REJECTED: "Đã từ chối",
+    EXPIRED: "Đề xuất đã hết hạn",
+    APPROVAL_FAILED: "Duyệt thất bại — Queue chưa được checkpoint"
+  });
+
+  const BRIDGE_TRANSPORT_LABELS = Object.freeze({
+    unpaired: "Chưa pairing",
+    connecting: "Đang kết nối host",
+    connected: "Đã kết nối",
+    disconnected: "Mất kết nối host",
+    pairing_invalid: "Tệp pairing không hợp lệ"
+  });
+
+  function renderBridgeTransportStatus(status = state.bridgeTransportStatus) {
+    if (!els.bridgeTransportStatus || !els.bridgeTransportDetail) return;
+    const current = status && typeof status === "object" ? status : { state: "unpaired", paired: false, endpoint: null };
+    state.bridgeTransportStatus = current;
+    const code = BRIDGE_TRANSPORT_LABELS[current.state] ? current.state : "disconnected";
+    els.bridgeTransportStatus.className = `bridge-transport-status ${code}`;
+    els.bridgeTransportStatus.textContent = BRIDGE_TRANSPORT_LABELS[code];
+    const endpoint = current.endpoint?.host && current.endpoint?.port ? `${current.endpoint.host}:${current.endpoint.port}` : null;
+    const executor = current.executor?.available ? "Side panel executor đang sẵn sàng." : "Side panel executor chưa sẵn sàng.";
+    els.bridgeTransportDetail.textContent = endpoint
+      ? `${endpoint} · ${executor} Token không xuất hiện trong log, workbook hoặc audit.`
+      : "Chọn tệp pairing do bộ cài Bridge V1 tạo. Token chỉ được lưu cục bộ trong extension.";
+    els.bridgeUnpairBtn.hidden = !current.paired;
+  }
+
+  async function refreshBridgeTransportStatus() {
+    try {
+      const response = await chrome.runtime.sendMessage({ type: "DAC_BRIDGE_STATUS_GET" });
+      if (response?.ok) renderBridgeTransportStatus(response.status);
+      else renderBridgeTransportStatus({ state: "disconnected", paired: false });
+    } catch (_) { renderBridgeTransportStatus({ state: "disconnected", paired: false }); }
+  }
+
+  async function pairAgentBridgeFile(file) {
+    if (!file) return;
+    let pairing;
+    try { pairing = window.DacBridgePairingCore.parse(await file.text()); }
+    catch (error) {
+      renderBridgeTransportStatus({ state: "pairing_invalid", paired: false });
+      log(messageOf(error), "error");
+      return;
+    }
+    const response = await chrome.runtime.sendMessage({ type: "DAC_BRIDGE_PAIRING_SET", pairing });
+    if (!response?.ok) throw new Error("PAIRING_FILE_INVALID: background router từ chối tệp pairing.");
+    renderBridgeTransportStatus(response.status);
+    log(`Đã lưu pairing Agent Bridge cho 127.0.0.1:${pairing.port}; đang kết nối host.`, "done");
+  }
+
+  async function unpairAgentBridge() {
+    const response = await chrome.runtime.sendMessage({ type: "DAC_BRIDGE_PAIRING_REMOVE" });
+    if (!response?.ok) throw new Error("Không thể xoá pairing Agent Bridge.");
+    renderBridgeTransportStatus(response.status);
+    log("Đã ngắt pairing Agent Bridge; workbook và lượt chạy hiện tại không thay đổi.", "done");
+  }
+
+  async function readBridgeProposalStoreUnlocked() {
+    const stored = await chrome.storage.local.get(BRIDGE_PROPOSAL_STORAGE_KEY);
+    const raw = stored?.[BRIDGE_PROPOSAL_STORAGE_KEY];
+    const store = raw && typeof raw === "object"
+      ? { schema_version: 1, records: Array.isArray(raw.records) ? raw.records : [], replays: raw.replays && typeof raw.replays === "object" ? raw.replays : {} }
+      : { schema_version: 1, records: [], replays: {} };
+    store.records = window.DacBridgeProposalCore.maintainRecords(store.records);
+    for (const record of store.records) {
+      if (window.DacBridgeProposalCore.TERMINAL_STATUSES.has(record.status)) delete store.replays[record.idempotency_key];
+    }
+    await chrome.storage.local.set({ [BRIDGE_PROPOSAL_STORAGE_KEY]: store });
+    state.bridgeProposals = store.records;
+    return store;
+  }
+
+  async function writeBridgeProposalStoreUnlocked(store) {
+    const normalized = {
+      schema_version: 1,
+      records: window.DacBridgeProposalCore.maintainRecords(store.records || []),
+      replays: store.replays && typeof store.replays === "object" ? store.replays : {}
+    };
+    await chrome.storage.local.set({ [BRIDGE_PROPOSAL_STORAGE_KEY]: normalized });
+    state.bridgeProposals = normalized.records;
+    return normalized;
+  }
+
+  function readBridgeProposalStore() {
+    return serializeBridgeProposalStore(() => readBridgeProposalStoreUnlocked());
+  }
+
+  function createBridgeReplayStore() {
+    return Object.freeze({
+      async get(key) {
+        const store = await readBridgeProposalStore();
+        return Object.hasOwn(store.replays, key) ? store.replays[key] : null;
+      },
+      async put(key, record) {
+        await serializeBridgeProposalStore(async () => {
+          const store = await readBridgeProposalStoreUnlocked();
+          store.replays[key] = record;
+          const keys = Object.keys(store.replays);
+          for (const stale of keys.slice(0, Math.max(0, keys.length - 50))) delete store.replays[stale];
+          await writeBridgeProposalStoreUnlocked(store);
+        });
+      }
+    });
+  }
+
+  function bridgeError(error) {
+    if (error instanceof window.DacBridgeCore.BridgeProtocolError) return error;
+    if (error instanceof window.DacBridgeProposalCore.ProposalError && Object.hasOwn(window.DacBridgeCore.ERROR_DEFINITIONS, error.code)) {
+      return new window.DacBridgeCore.BridgeProtocolError(error.code, error.message, error.details);
+    }
+    return error;
+  }
+
+  function requireBridgeWorkbook() {
+    if (!state.workbook) throw new window.DacBridgeCore.BridgeProtocolError("WORKBOOK_NOT_LOADED");
+    return state.workbook;
+  }
+
+  async function currentLedgerEtag(workbook = requireBridgeWorkbook()) {
+    return window.DacBridgeProposalCore.ledgerEtag(workbook, window.DacBridgeCore.hashCanonical);
+  }
+
+  function checkpointSummary() {
+    return {
+      version: Number(state.checkpointVersion || state.workbook?.config?.checkpoint_version) || 0,
+      filename: state.checkpointFilename || window.DacOutputLocation.artifactLeaf(state.workbook?.config?.checkpoint_filename || "") || null
+    };
+  }
+
+  function bridgeRuntimeSettings() {
+    return state.prepared?.settings || window.DacRunnerCore.runtimeConfig(requireBridgeWorkbook().config, state.runtimeOverrides);
+  }
+
+  async function bridgeQueueList(params) {
+    const workbook = requireBridgeWorkbook();
+    const preparedById = new Map(Array.from(state.prepared?.queue || [], (item) => [item.job.id, item]));
+    const queue = window.DacXlsx.activeJobs(workbook).map((job, index) => {
+      const item = preparedById.get(job.id);
+      return {
+        job,
+        number: index + 1,
+        references: item?.references || window.DacRunnerCore.referenceTokens(job).map((token) => ({ alias: token })),
+        status: item?.status || String(job.status || "PENDING").toUpperCase(),
+        phase: item?.phase || String(job.attempt_phase || "PRE_SUBMIT").toUpperCase(),
+        failure_type: item?.failure_type || job.failure_type || ""
+      };
+    });
+    const filtered = params.statuses.length ? queue.filter((item) => params.statuses.includes(item.status)) : queue;
+    const paged = window.DacBridgeProposalCore.page(filtered, params.cursor, params.limit);
+    const jobs = [];
+    for (const item of paged.values) {
+      jobs.push({
+        job_id: item.job.id,
+        queue_position: item.number,
+        status: item.status,
+        attempt_phase: item.phase,
+        failure_type: item.failure_type || "",
+        reference_images: item.references.map((file) => file.alias || file.fileName || file.name),
+        prompt_fingerprint: await window.DacBridgeCore.hashText(item.job.prompt || ""),
+        prompt: params.include_prompt ? item.job.prompt || "" : null,
+        origin: item.job.input_origin || "workbook",
+        bridge_proposal_id: item.job.bridge_proposal_id || null
+      });
+    }
+    return { ledger_etag: await currentLedgerEtag(workbook), run_id: state.runId || workbook.config.run_id || null, checkpoint: checkpointSummary(), jobs, next_cursor: paged.next_cursor };
+  }
+
+  function bridgeRunStatus() {
+    const workbook = requireBridgeWorkbook();
+    const queue = state.prepared?.queue || window.DacXlsx.activeJobs(workbook).map((job) => ({
+      job,
+      status: String(job.status || "PENDING").toUpperCase(),
+      phase: String(job.attempt_phase || "PRE_SUBMIT").toUpperCase(),
+      failure_type: job.failure_type || ""
+    }));
+    const count = (status) => queue.filter((item) => status.includes(item.status)).length;
+    const halted = queue.find((item) => window.DacRunnerCore.HARD_STOP_FAILURE_TYPES.has(item.failure_type));
+    return {
+      state: state.running ? state.paused ? "PAUSED" : "RUNNING" : halted ? "HALTED" : "IDLE",
+      paused: state.paused,
+      pause_requested: state.pauseRequested,
+      current: state.currentItem ? { job_id: state.currentItem.job.id, attempt_id: state.currentItem.attempt_id || null, phase: state.currentItem.phase, runtime_stage: state.currentItem.runtime_stage || null } : null,
+      counts: { total: queue.length, pending: count(["PENDING"]), running: count(["RUNNING", "RECONCILING"]), success: count(["SUCCESS", "DONE"]), failed: count(["FAILED"]), interrupted: count(["INTERRUPTED", "STOPPED"]) },
+      halt: halted ? { failure_type: halted.failure_type, instruction: window.DacHaltInstructions?.findInstruction?.(halted.failure_type) || null } : null,
+      artifact_persistence_failed: state.artifactErrors.length > 0,
+      checkpoint: checkpointSummary()
+    };
+  }
+
+  async function bridgeSystemPing() {
+    const workbook = state.workbook;
+    let chatgpt = { state: "HARD_STOP", failure_type: "RECEIVER_LOST", composer_found: false, generating: false };
+    try {
+      const tab = await activeTab();
+      const ping = await chrome.tabs.sendMessage(tab.id, { type: "DAC_PING" });
+      let failureType = null;
+      if (ping?.securityBlocker) failureType = "SECURITY_HARD_STOP";
+      else if (ping?.generationLimitBlocker) failureType = "GENERATION_LIMIT_REACHED";
+      else if (!ping?.composerFound) failureType = "RECEIVER_LOST";
+      chatgpt = {
+        state: failureType ? "HARD_STOP" : ping.generating || ping.busy ? "BUSY" : "READY",
+        failure_type: failureType,
+        composer_found: Boolean(ping?.composerFound),
+        generating: Boolean(ping?.generating || ping?.busy),
+        halt_instruction: failureType ? window.DacHaltInstructions?.findInstruction?.(failureType) || null : null
+      };
+    } catch (_) {
+      chatgpt.halt_instruction = window.DacHaltInstructions?.findInstruction?.("RECEIVER_LOST") || null;
+    }
+    return {
+      extension: "online",
+      executor: "available",
+      chatgpt,
+      workbook: { loaded: Boolean(workbook), file_name: workbook?.fileName || null, run_id: state.runId || workbook?.config?.run_id || null }
+    };
+  }
+
+  async function bridgeLedgerRead(params) {
+    const workbook = requireBridgeWorkbook();
+    const rows = workbook.jobs.filter((job) => params.include_removed || !/^(true|1|yes)$/i.test(String(job.queue_removed || "")));
+    const paged = window.DacBridgeProposalCore.page(rows, params.cursor, params.limit);
+    const jobs = [];
+    for (const job of paged.values) {
+      const clean = window.DacBridgeProposalCore.sanitizeLedgerJob(job);
+      if (!params.include_prompt) {
+        clean.prompt_fingerprint = await window.DacBridgeCore.hashText(clean.prompt || "");
+        delete clean.prompt;
+      }
+      jobs.push(clean);
+    }
+    return { ledger_etag: await currentLedgerEtag(workbook), run_id: state.runId || workbook.config.run_id || null, checkpoint: checkpointSummary(), jobs, next_cursor: paged.next_cursor };
+  }
+
+  function proposalInputFromRecord(record, ledgerEtag) {
+    return {
+      if_ledger_etag: ledgerEtag,
+      proposal_label: record.proposal_label || "",
+      jobs: record.jobs.map((job) => ({
+        client_job_id: job.client_job_id,
+        requested_job_id: job.requested_job_id,
+        prompt: job.prompt,
+        reference_images: job.reference_images,
+        settings: job.settings
+      }))
+    };
+  }
+
+  function buildBridgeProposalPreview(params, ledgerEtag) {
+    try {
+      const settings = bridgeRuntimeSettings();
+      return window.DacBridgeProposalCore.buildPreview({
+        params,
+        ledger_etag: ledgerEtag,
+        existing_jobs: requireBridgeWorkbook().jobs,
+        available_references: state.files,
+        default_settings: settings,
+        max_input_images: settings.max_input_images
+      });
+    } catch (error) {
+      if (error instanceof window.DacBridgeProposalCore.ProposalError) throw error;
+      throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", messageOf(error));
+    }
+  }
+
+  async function bridgeQueuePropose(params, call) {
+    requireBridgeWorkbook();
+    return serializeBridgeProposalStore(async () => {
+      const store = await readBridgeProposalStoreUnlocked();
+      const existing = window.DacBridgeProposalCore.findByIdempotency(store.records, call.request.client.client_id, call.request.request_id);
+      const payloadHash = await window.DacBridgeCore.hashCanonical({ method: call.request.method, params });
+      if (existing) {
+        if (existing.payload_hash !== payloadHash) throw new window.DacBridgeCore.BridgeProtocolError("REQUEST_ID_REUSED", undefined, { method: call.request.method });
+        return window.DacBridgeProposalCore.publicRecord(existing);
+      }
+      window.DacBridgeProposalCore.assertCapacity(store.records, params.jobs.length);
+      const ledgerEtag = await currentLedgerEtag();
+      const preview = buildBridgeProposalPreview(params, ledgerEtag);
+      const record = await window.DacBridgeProposalCore.createRecord({
+        params, preview, request: call.request, ledger_etag: ledgerEtag,
+        hash_canonical: window.DacBridgeCore.hashCanonical,
+        hash_text: window.DacBridgeCore.hashText
+      });
+      store.records.push(record);
+      await writeBridgeProposalStoreUnlocked(store);
+      renderBridgeProposals();
+      log(`Agent Bridge staged ${record.proposal_id} with ${record.jobs.length} job(s); owner review required.`, "info");
+      return window.DacBridgeProposalCore.publicRecord(record);
+    });
+  }
+
+  async function bridgeProposalGet(params) {
+    const store = await readBridgeProposalStore();
+    const record = store.records.find((item) => item.proposal_id === params.proposal_id);
+    if (!record) throw new window.DacBridgeCore.BridgeProtocolError("PROPOSAL_NOT_FOUND", undefined, { proposal_id: params.proposal_id });
+    return window.DacBridgeProposalCore.publicRecord(record);
+  }
+
+  function withBridgeErrors(handler) {
+    return async (...args) => {
+      try { return await handler(...args); }
+      catch (error) { throw bridgeError(error); }
+    };
+  }
+
+  const bridgeExecutorDispatch = window.DacBridgeCore.createDispatcher({
+    replay_store: createBridgeReplayStore(),
+    handlers: {
+      "system.ping": withBridgeErrors(bridgeSystemPing),
+      "queue.list": withBridgeErrors(bridgeQueueList),
+      "run.status": withBridgeErrors(async () => bridgeRunStatus()),
+      "ledger.read": withBridgeErrors(bridgeLedgerRead),
+      "queue.propose": withBridgeErrors(bridgeQueuePropose),
+      "queue.proposal.get": withBridgeErrors(bridgeProposalGet)
+    }
+  });
+
+  function connectBridgeExecutor() {
+    if (!chrome.runtime?.connect || state.bridgePort) return;
+    state.bridgeExecutorEpoch ||= crypto.randomUUID();
+    const port = chrome.runtime.connect({ name: BRIDGE_EXECUTOR_PORT });
+    state.bridgePort = port;
+    port.postMessage({ type: "DAC_BRIDGE_EXECUTOR_READY", protocol: window.DacBridgeCore.PROTOCOL, version: 1, executor_epoch: state.bridgeExecutorEpoch });
+    port.onMessage.addListener((message) => {
+      const wrapped = message?.type === "DAC_BRIDGE_RPC" && typeof message.route_id === "string";
+      const envelope = wrapped ? message.envelope : message;
+      bridgeExecutorDispatch(envelope, { executor_epoch: state.bridgeExecutorEpoch })
+        .then((response) => port.postMessage(wrapped ? { type: "DAC_BRIDGE_RPC_RESPONSE", route_id: message.route_id, envelope: response } : response))
+        .catch(() => {
+          const response = window.DacBridgeCore.failureResponse(envelope?.request_id, "INTERNAL_ERROR");
+          port.postMessage(wrapped ? { type: "DAC_BRIDGE_RPC_RESPONSE", route_id: message.route_id, envelope: response } : response);
+        });
+    });
+    port.onDisconnect.addListener(() => {
+      if (state.bridgePort === port) {
+        state.bridgePort = null;
+        setTimeout(() => connectBridgeExecutor(), 1000);
+      }
+    });
+  }
+
+  function selectedBridgeProposal() {
+    const visible = state.bridgeProposals
+      .filter((record) => window.DacBridgeProposalCore.PENDING_STATUSES.has(record.status))
+      .sort((left, right) => String(left.received_at).localeCompare(String(right.received_at)));
+    return visible[0] || null;
+  }
+
+  function bridgeApprovalLockReason() {
+    let persistenceMissing = !state.outputSettings;
+    if (state.outputSettings) {
+      try {
+        const output = window.DacOutputLocation.effective(state.outputSettings);
+        persistenceMissing = !output.saveAuditJsonl || !output.saveResultXlsx;
+      } catch (_) { persistenceMissing = true; }
+    }
+    return window.DacBridgeProposalCore.approvalLockReason({
+      running: state.running,
+      reconciliation: state.manualReconciliationRunning,
+      recreate: state.recreateRunning || Boolean(state.pendingRecreateJobId) || Boolean(state.pendingRerunJobId),
+      audit_gap: state.auditGapRunning || state.auditChain?.code === "RESUME_AUDIT_CHAIN_MISSING",
+      queue_mutation: state.queueMutationRunning,
+      workbook_missing: !state.workbook,
+      persistence_missing: persistenceMissing
+    });
+  }
+
+  function appendBridgeMeta(label, value) {
+    els.bridgeProposalMeta.append(element("dt", "", label), element("dd", "", value || "—"));
+  }
+
+  function renderBridgeProposals() {
+    if (!els.bridgeProposalCard) return;
+    const record = selectedBridgeProposal();
+    els.bridgeProposalCard.hidden = false;
+    els.bridgeProposalMeta.replaceChildren();
+    els.bridgeProposalList.replaceChildren();
+    if (!record) {
+      els.bridgeProposalCount.textContent = "0 job";
+      els.bridgeProposalStatus.textContent = "Chưa có đề xuất đang chờ";
+      els.bridgeProposalLockReason.textContent = state.workbook ? "Có thể nạp một fixture 1 job để kiểm tra giao diện; fixture chỉ vào vùng cách ly." : "Mở workbook trước khi nạp fixture kiểm tra.";
+      els.bridgeProposalFixtureBtn.hidden = false;
+      els.bridgeProposalFixtureBtn.disabled = !state.workbook;
+      els.bridgeProposalRejectBtn.hidden = true;
+      els.bridgeProposalApproveBtn.hidden = true;
+      return;
+    }
+    els.bridgeProposalFixtureBtn.hidden = true;
+    els.bridgeProposalRejectBtn.hidden = false;
+    els.bridgeProposalApproveBtn.hidden = false;
+    els.bridgeProposalCount.textContent = `${record.jobs.length} job`;
+    els.bridgeProposalStatus.textContent = BRIDGE_STATUS_LABELS[record.status] || record.status;
+    appendBridgeMeta("Agent", `${record.client?.name || "—"} (${record.client?.client_id || "—"})`);
+    appendBridgeMeta("Nhãn", record.proposal_label || "Không có nhãn");
+    appendBridgeMeta("Nhận lúc", new Date(record.received_at).toLocaleString());
+    appendBridgeMeta("Proposal ID", record.proposal_id);
+    for (const job of record.jobs) {
+      const item = element("li", "bridge-proposal-job");
+      item.appendChild(element("div", "bridge-proposal-job-title", `${job.job_id} · ${job.client_job_id}`));
+      const prompt = element("div", "bridge-proposal-field");
+      prompt.append(element("strong", "", "Prompt đầy đủ"), element("div", "bridge-proposal-prompt", job.prompt || "Prompt đã được xoá khỏi vùng cách ly."));
+      const references = element("div", "bridge-proposal-field");
+      references.append(element("strong", "", "Reference aliases / filenames"), element("div", "bridge-proposal-values", job.reference_images?.join(", ") || "Không có"));
+      const settings = element("div", "bridge-proposal-field");
+      settings.append(
+        element("strong", "", "Thiết lập hiệu lực"),
+        element("div", "bridge-proposal-values", `Timeout ${job.settings.timeout_sec}s · Retry ${job.settings.max_retries} · Cooldown ${job.settings.safety_cooldown_sec}s · Output ${job.settings.output_folder}`)
+      );
+      item.append(prompt, references, settings);
+      els.bridgeProposalList.appendChild(item);
+    }
+    const lockReason = bridgeApprovalLockReason();
+    els.bridgeProposalLockReason.textContent = lockReason || (record.failure?.message ? `Lý do: ${record.failure.message}` : "");
+    const deciding = record.status === "APPROVING";
+    els.bridgeProposalApproveBtn.disabled = Boolean(lockReason) || deciding;
+    els.bridgeProposalRejectBtn.disabled = deciding || state.queueMutationRunning;
+  }
+
+  async function stageBridgeFixture() {
+    if (!state.workbook) { renderBridgeProposals(); return; }
+    const ledgerEtag = await currentLedgerEtag();
+    const response = await bridgeExecutorDispatch({
+      protocol: window.DacBridgeCore.PROTOCOL,
+      version: 1,
+      kind: "request",
+      request_id: `fixture-${crypto.randomUUID()}`,
+      method: "queue.propose",
+      sent_at: new Date().toISOString(),
+      client: { client_id: "duc-sidepanel-fixture", name: "Fixture kiểm tra", version: "1.0.0" },
+      params: {
+        if_ledger_etag: ledgerEtag,
+        proposal_label: "Kiểm tra giao diện WP-2",
+        jobs: [{ client_job_id: "fixture-001", requested_job_id: null, prompt: "Fixture kiểm tra: tạo một ảnh minh hoạ đơn giản. Đây chỉ là đề xuất; không tự chạy.", reference_images: [], settings: {} }]
+      }
+    }, { executor_epoch: state.bridgeExecutorEpoch, source: "built_in_fixture" });
+    if (!response.ok) throw new Error(`${response.error.code}: ${response.error.message}`);
+    await readBridgeProposalStore();
+    renderBridgeProposals();
+    log(`Đã nạp fixture ${response.result.proposal_id}; chưa thay đổi Queue và chưa chạy.`, "info");
+  }
+
+  async function replaceBridgeRecord(next, { clearReplay = false } = {}) {
+    await serializeBridgeProposalStore(async () => {
+      const store = await readBridgeProposalStoreUnlocked();
+      const index = store.records.findIndex((record) => record.proposal_id === next.proposal_id);
+      if (index < 0) throw new window.DacBridgeCore.BridgeProtocolError("PROPOSAL_NOT_FOUND");
+      store.records[index] = next;
+      if (clearReplay) delete store.replays[next.idempotency_key];
+      await writeBridgeProposalStoreUnlocked(store);
+    });
+    renderBridgeProposals();
+    return next;
+  }
+
+  async function rejectBridgeProposal() {
+    const record = selectedBridgeProposal();
+    if (!record || record.status === "APPROVING") return;
+    const rejected = window.DacBridgeProposalCore.transition(record, "REJECTED", { rejected_at: new Date().toISOString() });
+    await replaceBridgeRecord(rejected, { clearReplay: true });
+    log(`Đã từ chối đề xuất Agent ${record.proposal_id}; workbook và Queue không thay đổi.`, "done");
+  }
+
+  async function revalidatedBridgeRecord(record, ledgerEtag) {
+    const params = proposalInputFromRecord(record, ledgerEtag);
+    const preview = buildBridgeProposalPreview(params, ledgerEtag);
+    const jobs = [];
+    for (const job of preview) {
+      jobs.push({
+        ...job,
+        bridge_prompt_sha256: await window.DacBridgeCore.hashText(job.prompt),
+        bridge_payload_sha256: await window.DacBridgeCore.hashCanonical({ job_id: job.job_id, client_job_id: job.client_job_id, prompt: job.prompt, reference_images: job.reference_images, settings: job.settings })
+      });
+    }
+    return { ...record, base_ledger_etag: ledgerEtag, jobs };
+  }
+
+  function bridgeAuditEvent(event, record, job, approvedAt, message) {
+    return {
+      timestamp: new Date().toISOString(), run_id: state.runId, job_id: job?.job_id || null, attempt_id: null,
+      event, attempt: null, phase: "PRE_SUBMIT", status: "PENDING", failure_type: null, message,
+      elapsed_ms: null, references: job?.reference_images || [], requested_filename: null, result_file: null,
+      result_download_id: null, persistence_verified: false, write_outcome: null, detected_not_downloaded: false,
+      collision_policy: window.DacOutputLocation.effective(state.outputSettings).collisionPolicy,
+      prompt_fingerprint: job?.bridge_prompt_sha256 || null, target_url: null, submitted_at: null, detection: null,
+      input_origin: "bridge", bridge_proposal_id: record.proposal_id, bridge_request_id: record.request_id,
+      bridge_client_id: record.client.client_id, bridge_client_job_id: job?.client_job_id || null,
+      bridge_approved_at: approvedAt, bridge_payload_sha256: job?.bridge_payload_sha256 || null,
+      checkpoint_verified: false
+    };
+  }
+
+  function adoptBridgeCheckpoint(applied, auditFile, checkpoint) {
+    state.workbook = checkpoint.workbook;
+    state.prepared = null;
+    state.auditFile = auditFile;
+    state.resultFile = checkpoint.actual;
+    state.checkpointVersion = checkpoint.version;
+    state.checkpointFilename = checkpoint.filename;
+    state.checkpointCreatedAt = checkpoint.checkpoint.checkpoint_created_at;
+    state.resumeLedgerFile = checkpoint.filename;
+    state.runSelection = new Set(applied.added_ids);
+    state.queueExpanded = true;
+    state.validated = false;
+  }
+
+  function replaceBridgeRecordInMemory(next) {
+    const index = state.bridgeProposals.findIndex((item) => item.proposal_id === next.proposal_id);
+    if (index >= 0) {
+      const records = [...state.bridgeProposals];
+      records[index] = next;
+      state.bridgeProposals = records;
+    }
+  }
+
+  async function markBridgeApprovalFailed(record, error, values = {}) {
+    const failed = window.DacBridgeProposalCore.transition(record, "APPROVAL_FAILED", {
+      failure: { code: "APPROVAL_FAILED", message: messageOf(error), original_code: error?.code || null, ...values }
+    });
+    await replaceBridgeRecord(failed, { clearReplay: true });
+    setStatus("ERROR");
+    progress(`Duyệt đề xuất Agent thất bại; Queue chưa được checkpoint: ${messageOf(error)}`);
+    log(`Bridge proposal ${record.proposal_id} approval failed: ${messageOf(error)}`, "error");
+    return failed;
+  }
+
+  async function approveBridgeProposal() {
+    let record = selectedBridgeProposal();
+    if (!record || record.status === "APPROVING") return;
+    const initialLock = bridgeApprovalLockReason();
+    if (initialLock) { renderBridgeProposals(); return; }
+    let ledgerEtag;
+    let revalidated;
+    try {
+      ledgerEtag = await currentLedgerEtag();
+      revalidated = await revalidatedBridgeRecord(record, ledgerEtag);
+    } catch (error) {
+      await markBridgeApprovalFailed(record, error);
+      return;
+    }
+    const exactChanged = record.base_ledger_etag !== ledgerEtag || window.DacBridgeCore.canonicalJson(record.jobs) !== window.DacBridgeCore.canonicalJson(revalidated.jobs);
+    if (exactChanged) {
+      record = window.DacBridgeProposalCore.transition(revalidated, "NEEDS_REVIEW", { failure: { code: "PROPOSAL_CONFLICT", message: "Ledger hoặc ID đã đổi. Kiểm tra lại danh sách chính xác rồi bấm duyệt thêm một lần." } });
+      await replaceBridgeRecord(record, { clearReplay: true });
+      return;
+    }
+
+    let effectiveOutput;
+    try {
+      const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
+      if (!outputCheck.ok) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", outputCheck.error);
+      effectiveOutput = outputCheck.effective;
+      if (!effectiveOutput.saveAuditJsonl || !effectiveOutput.saveResultXlsx) {
+        throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", "Bridge approval requires both audit JSONL and Result XLSX persistence.");
+      }
+    } catch (error) {
+      await markBridgeApprovalFailed(record, error);
+      return;
+    }
+    const approvedAt = new Date().toISOString();
+    record = window.DacBridgeProposalCore.transition(record, "APPROVING", { approved_at: approvedAt, failure: null });
+    await replaceBridgeRecord(record, { clearReplay: true });
+    state.queueMutationRunning = true; controls(); renderBridgeProposals();
+    let approvalFailureRecorded = false;
+    let postCheckpointRecovery = null;
+    try {
+      await window.DacApprovalPersistence.execute({
+        snapshot: async () => ({
+          workbook: state.workbook, prepared: state.prepared, runId: state.runId, auditEvents: [...state.auditEvents],
+          auditFile: state.auditFile, resultFile: state.resultFile, resumeLedgerFile: state.resumeLedgerFile,
+          checkpointVersion: state.checkpointVersion, checkpointFilename: state.checkpointFilename, checkpointCreatedAt: state.checkpointCreatedAt,
+          runSelection: new Set(state.runSelection), validated: state.validated
+        }),
+        apply: async () => {
+          state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName);
+          const candidate = await window.DacXlsx.cloneWorkbook(state.workbook);
+          const activeCount = window.DacXlsx.activeJobs(candidate).length;
+          const rows = record.jobs.map((job, index) => ({
+            id: job.job_id,
+            prompt: job.prompt,
+            reference_images: job.reference_images.join("|"),
+            timeout_sec: job.settings.timeout_sec,
+            max_retries: job.settings.max_retries,
+            safety_cooldown_sec: job.settings.safety_cooldown_sec,
+            output_folder: job.settings.output_folder,
+            queue_position: activeCount + index + 1,
+            queue_removed: "false",
+            ...window.DacBridgeProposalCore.bridgeFields(record, job, approvedAt)
+          }));
+          const added = window.DacXlsx.addJobsBatch(candidate, rows);
+          state.auditEvents.push(bridgeAuditEvent("BRIDGE_PROPOSAL_APPROVED", record, null, approvedAt, "Owner approved the exact proposal; checkpoint verification is pending."));
+          for (const job of record.jobs) state.auditEvents.push(bridgeAuditEvent("BRIDGE_JOB_ADDED", record, job, approvedAt, "Candidate row added; it is not eligible until the Result checkpoint is verified."));
+          return { candidate, added_ids: added.map((job) => job.id) };
+        },
+        persist_audit: async () => {
+          state.auditFile = await saveAuditLog(effectiveOutput.result, { appendExisting: true });
+          if (!state.auditFile) throw new Error("BRIDGE_AUDIT_PERSISTENCE_FAILED: Audit JSONL was not verified.");
+          return state.auditFile;
+        },
+        persist_checkpoint: async (applied, auditFile) => {
+          const persisted = await persistLedgerCandidate(applied.candidate, effectiveOutput.result, auditFile);
+          if (!persisted) throw new Error("BRIDGE_APPROVAL_CHECKPOINT_FAILED: Result checkpoint was not verified.");
+          return persisted;
+        },
+        commit: async (applied, auditFile, checkpoint) => {
+          // The verified immutable checkpoint is now authoritative.  Adopt it
+          // before any fallible derived-view or proposal-store work so a later
+          // error can never roll memory back behind disk truth.
+          adoptBridgeCheckpoint(applied, auditFile, checkpoint);
+          if (state.resumeMode) state.resumePlan = window.DacResumeCore.plan(state.workbook);
+          const newEtag = await currentLedgerEtag();
+          const approved = window.DacBridgeProposalCore.transition(record, "APPROVED_CHECKPOINTED", {
+            approved_at: approvedAt,
+            checkpoint: { version: checkpoint.version, filename: checkpoint.filename, verified: true },
+            ledger_etag: newEtag,
+            final_job_ids: applied.added_ids,
+            failure: null
+          });
+          await replaceBridgeRecord(approved, { clearReplay: true });
+          await prepare({ diagnostic: true });
+          if (state.resumeMode && state.prepared) window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+          renderCheckpointMeta(); renderQueue(); renderOutput(); controls();
+          showScreen("runScreen");
+          progress(`Đã thêm ${applied.added_ids.length} job (${applied.added_ids.join(", ")}) vào Queue và xác minh checkpoint ${checkpoint.filename} — chưa chạy.`);
+          log(`Bridge proposal ${record.proposal_id} checkpointed as ${checkpoint.filename}; no run was started.`, "done");
+          return approved;
+        },
+        rollback: async ({ snapshot, applied, audit, checkpoint, error }) => {
+          const persistedRunId = state.runId;
+          const persistedAuditFile = state.auditFile;
+          if (checkpoint) {
+            // A verified Result XLSX cannot be rolled back.  Recover forward:
+            // keep it authoritative, persist terminal proposal state when
+            // possible, and record a checkpoint-verified recovery event.
+            adoptBridgeCheckpoint(applied, audit, checkpoint);
+            let newEtag = null;
+            try { newEtag = await currentLedgerEtag(checkpoint.workbook); } catch (_) { /* The checkpoint remains the source of truth. */ }
+            const approved = window.DacBridgeProposalCore.transition(record, "APPROVED_CHECKPOINTED", {
+              approved_at: approvedAt,
+              checkpoint: { version: checkpoint.version, filename: checkpoint.filename, verified: true },
+              ledger_etag: newEtag,
+              final_job_ids: applied.added_ids,
+              failure: null
+            });
+            replaceBridgeRecordInMemory(approved);
+            let proposalRecorded = false;
+            try { await replaceBridgeRecord(approved, { clearReplay: true }); proposalRecorded = true; } catch (_) { /* In-memory terminal state prevents a second click in this document. */ }
+            try {
+              const recoveryEvent = bridgeAuditEvent("BRIDGE_PROPOSAL_POST_CHECKPOINT_RECOVERED", record, null, approvedAt, `Verified checkpoint ${checkpoint.filename} remains authoritative after post-checkpoint failure.`);
+              recoveryEvent.checkpoint_verified = true;
+              recoveryEvent.result_file = checkpoint.filename;
+              recoveryEvent.write_outcome = "RECOVERED_FORWARD";
+              state.auditEvents = [recoveryEvent];
+              await saveAuditLog(effectiveOutput.result, { appendExisting: true });
+              approvalFailureRecorded = true;
+            } catch (_) { state.auditEvents = []; }
+            try {
+              if (state.resumeMode) state.resumePlan = window.DacResumeCore.plan(state.workbook);
+              await prepare({ diagnostic: true });
+              if (state.resumeMode && state.prepared) window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+            } catch (_) { state.prepared = null; }
+            postCheckpointRecovery = { checkpoint, approved, proposalRecorded, error };
+            return;
+          }
+          if (audit) {
+            try {
+              state.auditEvents = [bridgeAuditEvent("BRIDGE_PROPOSAL_APPROVAL_FAILED", record, null, approvedAt, "Approval failed before a verified Result checkpoint; no proposed row became eligible.")];
+              await saveAuditLog(effectiveOutput.result, { appendExisting: true });
+              approvalFailureRecorded = true;
+            } catch (_) { /* Failure evidence remains visible in proposal storage. */ }
+          }
+          state.workbook = snapshot.workbook; state.prepared = snapshot.prepared; state.runId = audit ? persistedRunId : snapshot.runId;
+          state.auditEvents = audit ? [] : snapshot.auditEvents; state.auditFile = audit ? persistedAuditFile : snapshot.auditFile; state.resultFile = snapshot.resultFile;
+          state.resumeLedgerFile = snapshot.resumeLedgerFile; state.checkpointVersion = snapshot.checkpointVersion;
+          state.checkpointFilename = snapshot.checkpointFilename; state.checkpointCreatedAt = snapshot.checkpointCreatedAt;
+          state.runSelection = snapshot.runSelection; state.validated = snapshot.validated;
+        }
+      });
+    } catch (error) {
+      if (postCheckpointRecovery) {
+        setStatus("READY");
+        progress(`Checkpoint ${postCheckpointRecovery.checkpoint.filename} đã được xác minh và vẫn là nguồn chuẩn; lỗi hậu xử lý đã được phục hồi tiến, không chạy job.`);
+        log(`Bridge proposal ${record.proposal_id} recovered forward after checkpoint: ${messageOf(error)}`, "warn");
+      } else {
+        await markBridgeApprovalFailed(record, error, { audit_recorded: approvalFailureRecorded });
+      }
+    } finally {
+      state.queueMutationRunning = false; renderBridgeProposals(); renderQueue(); controls();
+    }
   }
 
   function renderCurrentJobReferences(item) {
@@ -565,6 +1278,7 @@
     });
     updateReadinessChecklist();
     updateReviewPacketControl();
+    renderBridgeProposals();
   }
 
   function renderQueue() {
@@ -1250,6 +1964,10 @@
       for (const key of ["prompt", "reference_images", "reference_image", "timeout_sec", "max_retries", "safety_cooldown_sec", "output_folder"]) {
         if (source[key] !== undefined && source[key] !== "") copiedInputs[key] = source[key];
       }
+      if (source.input_origin === "bridge") {
+        copiedInputs.input_origin = "operator_duplicate";
+        copiedInputs.source_bridge_proposal_id = source.bridge_proposal_id || "";
+      }
       const ordered = window.DacXlsx.activeJobs(state.workbook);
       const sourceIndex = ordered.indexOf(source);
       const duplicate = window.DacXlsx.addJob(state.workbook, { id, ...copiedInputs, duplicate_of: source.id, queue_removed: "false" });
@@ -1584,12 +2302,14 @@
     els.recreateConfirmBtn.textContent = `Recreate ${jobId}`;
     if (typeof els.recreateConfirmDialog.showModal === "function") els.recreateConfirmDialog.showModal();
     else els.recreateConfirmDialog.setAttribute("open", "");
+    renderBridgeProposals();
   }
 
   function closeRecreateDialog() {
     state.pendingRecreateJobId = null;
     if (typeof els.recreateConfirmDialog.close === "function") els.recreateConfirmDialog.close();
     else els.recreateConfirmDialog.removeAttribute("open");
+    renderBridgeProposals();
   }
 
   function cancelRecreate() {
@@ -1617,12 +2337,14 @@
     els.rerunConfirmBtn.textContent = `Chạy lại ${jobId}`;
     if (typeof els.rerunConfirmDialog.showModal === "function") els.rerunConfirmDialog.showModal();
     else els.rerunConfirmDialog.setAttribute("open", "");
+    renderBridgeProposals();
   }
 
   function closeRerunDialog() {
     state.pendingRerunJobId = null;
     if (typeof els.rerunConfirmDialog.close === "function") els.rerunConfirmDialog.close();
     else els.rerunConfirmDialog.removeAttribute("open");
+    renderBridgeProposals();
   }
 
   function cancelRerun() {
@@ -1633,11 +2355,13 @@
     if (state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning || state.auditChain?.code !== "RESUME_AUDIT_CHAIN_MISSING") return;
     if (typeof els.auditGapConfirmDialog.showModal === "function") els.auditGapConfirmDialog.showModal();
     else els.auditGapConfirmDialog.setAttribute("open", "");
+    renderBridgeProposals();
   }
 
   function closeAuditGapDialog() {
     if (typeof els.auditGapConfirmDialog.close === "function") els.auditGapConfirmDialog.close();
     else els.auditGapConfirmDialog.removeAttribute("open");
+    renderBridgeProposals();
   }
 
   async function confirmAuditGap() {
@@ -1690,30 +2414,54 @@
 
   async function persistRecreateApproval(item, approval, effectiveOutput) {
     const original = Object.fromEntries(Object.keys(approval.fields).map((key) => [key, item.job[key] || ""]));
-    try {
-      audit("RECREATE_APPROVED", item, { message: `Operator approved a deliberate new attempt; prior attempt ${approval.prior.attempt_id} remains preserved.` });
-      update(item, approval.fields);
-      item.status = "PENDING"; item.phase = "PRE_SUBMIT"; item.operator_recreate = true; item.attempt_id = ""; item.retry_count = 0;
-      if (effectiveOutput.saveAuditJsonl) {
-        state.auditFile = await saveAuditLog(effectiveOutput.result);
-        snapshotOutputSettings(null, state.auditFile);
+    const outcome = await window.DacApprovalPersistence.execute({
+      snapshot: async () => ({
+        workbook: state.workbook, auditEvents: [...state.auditEvents], auditFile: state.auditFile,
+        resultFile: state.resultFile, resumeLedgerFile: state.resumeLedgerFile,
+        checkpointVersion: state.checkpointVersion, checkpointFilename: state.checkpointFilename,
+        checkpointCreatedAt: state.checkpointCreatedAt
+      }),
+      apply: async () => {
+        audit("RECREATE_APPROVED", item, { message: `Operator approved a deliberate new attempt; prior attempt ${approval.prior.attempt_id} remains preserved.` });
+        update(item, approval.fields);
+        item.status = "PENDING"; item.phase = "PRE_SUBMIT"; item.operator_recreate = true; item.attempt_id = ""; item.retry_count = 0;
+        return item;
+      },
+      persist_audit: async () => {
+        if (effectiveOutput.saveAuditJsonl) {
+          state.auditFile = await saveAuditLog(effectiveOutput.result);
+          snapshotOutputSettings(null, state.auditFile);
+        }
+        return state.auditFile;
+      },
+      persist_checkpoint: async () => {
+        const checkpoint = await saveLedger(effectiveOutput.result);
+        if (!checkpoint) throw new Error("RECREATE_APPROVAL_CHECKPOINT_FAILED: Result checkpoint was not verified.");
+        return checkpoint;
+      },
+      commit: async (_applied, _auditFile, checkpoint) => {
+        state.resultFile = checkpoint;
+        state.resumeLedgerFile = state.checkpointFilename;
+        state.resumePlan = window.DacResumeCore.plan(state.workbook);
+        await prepare({ diagnostic: true });
+        window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+        return checkpoint;
+      },
+      rollback: async ({ snapshot, audit }) => {
+        const auditPersisted = Boolean(effectiveOutput.saveAuditJsonl && audit);
+        const persistedAuditFile = state.auditFile;
+        state.workbook = snapshot.workbook; state.auditEvents = auditPersisted ? [] : snapshot.auditEvents; state.auditFile = auditPersisted ? persistedAuditFile : snapshot.auditFile;
+        state.resultFile = snapshot.resultFile; state.resumeLedgerFile = snapshot.resumeLedgerFile;
+        state.checkpointVersion = snapshot.checkpointVersion; state.checkpointFilename = snapshot.checkpointFilename;
+        state.checkpointCreatedAt = snapshot.checkpointCreatedAt;
+        update(item, original);
+        item.status = original.status || "INTERRUPTED"; item.phase = original.attempt_phase || "SUBMITTED"; item.operator_recreate = false; item.attempt_id = original.attempt_id || "";
+        state.resumePlan = window.DacResumeCore.plan(state.workbook);
+        await prepare({ diagnostic: true });
+        window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
       }
-      const checkpoint = await saveLedger(effectiveOutput.result);
-      if (!checkpoint) throw new Error("RECREATE_APPROVAL_CHECKPOINT_FAILED: Result checkpoint was not verified.");
-      state.resultFile = checkpoint;
-      state.resumeLedgerFile = state.checkpointFilename;
-      state.resumePlan = window.DacResumeCore.plan(state.workbook);
-      await prepare({ diagnostic: true });
-      window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
-      return checkpoint;
-    } catch (error) {
-      update(item, original);
-      item.status = original.status || "INTERRUPTED"; item.phase = original.attempt_phase || "SUBMITTED"; item.operator_recreate = false; item.attempt_id = original.attempt_id || "";
-      state.resumePlan = window.DacResumeCore.plan(state.workbook);
-      await prepare({ diagnostic: true });
-      window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
-      throw error;
-    }
+    });
+    return outcome.checkpoint;
   }
 
   async function confirmRecreate() {
@@ -2657,7 +3405,7 @@
 
   function snapshotOutputSettings(actualResultFilename = null, actualAuditFilename = state.auditFile || null, workbook = state.workbook, checkpoint = null) {
     const plan = outputPlan();
-    const settings = state.prepared.settings;
+    const settings = state.prepared?.settings || window.DacRunnerCore.runtimeConfig(workbook?.config || {}, state.runtimeOverrides);
     const effectiveResult = window.DacOutputLocation.effective(state.outputSettings).result;
     const actual = String(actualResultFilename || "");
     const resultDestination = actual ? (/^(?:[A-Za-z]:[\\/]|\/)/.test(actual) || actual.startsWith(window.DacOutputLocation.locationLabel(effectiveResult)) ? actual : window.DacOutputLocation.fileLabel(effectiveResult, actual)) : plan.resultDestination;
@@ -2665,16 +3413,16 @@
     const auditChain = auditGapAcknowledged() ? { audit_chain_status: state.workbook.config.audit_chain_status, audit_chain_missing_filename: state.workbook.config.audit_chain_missing_filename, audit_chain_acknowledged_at: state.workbook.config.audit_chain_acknowledged_at, audit_chain_segment_filename: state.workbook.config.audit_chain_segment_filename } : {};
     const snapshot = { run_id: state.runId || "", result_filename_pattern: output.checkpointFilenamePattern, effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done, ...auditChain, ...(checkpoint || {}) };
     window.DacXlsx.updateConfigSnapshot(workbook, snapshot);
-    if (workbook === state.workbook) for (const item of state.prepared.queue) update(item, snapshot);
+    if (workbook === state.workbook && state.prepared) for (const item of state.prepared.queue) update(item, snapshot);
   }
 
-  async function checkpointWorkbook(filename, version) {
-    const sourceBlob = window.DacXlsx.downloadBlob(state.workbook);
+  async function checkpointWorkbook(filename, version, sourceWorkbook = state.workbook, auditFilename = state.auditFile) {
+    const sourceBlob = window.DacXlsx.downloadBlob(sourceWorkbook);
     const candidate = await window.DacXlsx.open(new File([sourceBlob], filename, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
-    const previous = state.checkpointFilename || window.DacOutputLocation.artifactLeaf(state.workbook.config.checkpoint_filename || "");
+    const previous = state.checkpointFilename || window.DacOutputLocation.artifactLeaf(sourceWorkbook.config.checkpoint_filename || "");
     const checkpoint = { checkpoint_version: String(version), checkpoint_filename: filename, checkpoint_created_at: new Date().toISOString() };
     if (previous) checkpoint.previous_checkpoint_filename = previous;
-    snapshotOutputSettings(filename, state.auditFile, candidate, checkpoint);
+    snapshotOutputSettings(filename, auditFilename, candidate, checkpoint);
     return { workbook: candidate, blob: window.DacXlsx.downloadBlob(candidate), checkpoint };
   }
 
@@ -2715,18 +3463,17 @@
     if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw new Error(`CHECKPOINT_VERSION_CONFLICT: '${filename}' already exists in Chrome Downloads history. No Result checkpoint was written.`);
   }
 
-  async function saveLedger(location) {
+  async function persistLedgerCandidate(sourceWorkbook, location, auditFilename = state.auditFile) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
-    if (!values.saveResultXlsx) return "";
-    const version = window.DacCheckpointCore.nextVersion(state.checkpointVersion || state.workbook.config.checkpoint_version);
-    const filename = window.DacOutputLocation.renderCheckpointFilename(state.workbook.fileName, state.outputSettings, version);
-    const candidate = await checkpointWorkbook(filename, version);
+    if (!values.saveResultXlsx) return null;
+    const version = window.DacCheckpointCore.nextVersion(state.checkpointVersion || sourceWorkbook.config.checkpoint_version);
+    const filename = window.DacOutputLocation.renderCheckpointFilename(sourceWorkbook.fileName, state.outputSettings, version);
+    const candidate = await checkpointWorkbook(filename, version, sourceWorkbook, auditFilename);
     await assertCheckpointVersionAvailable(location, filename, values.checkpointFilenamePattern, version);
     if (location.kind === "directory") {
       await window.DacOutputLocation.writeNewFile(location.handle, filename, candidate.blob);
-      state.workbook = candidate.workbook; state.checkpointVersion = version; state.checkpointFilename = filename; state.checkpointCreatedAt = candidate.checkpoint.checkpoint_created_at;
       const actual = window.DacOutputLocation.fileLabel(location, filename);
-      renderCheckpointMeta(); log(`Result checkpoint v${window.DacCheckpointCore.formatVersion(version)} verified: ${actual}.`, "done"); return actual;
+      return { ...candidate, actual, version, filename, storage: "directory" };
     }
     const objectUrl = URL.createObjectURL(candidate.blob);
     try {
@@ -2734,20 +3481,42 @@
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
       window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
-      state.workbook = candidate.workbook; state.checkpointVersion = version; state.checkpointFilename = filename; state.checkpointCreatedAt = candidate.checkpoint.checkpoint_created_at;
-      renderCheckpointMeta(); log(`Result checkpoint v${window.DacCheckpointCore.formatVersion(version)} downloaded: ${item.filename}.`, "done");
-      return item.filename;
+      return { ...candidate, actual: item.filename, version, filename, storage: "downloads" };
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
   }
 
-  async function saveAuditLog(location) {
+  async function saveLedger(location) {
+    const persisted = await persistLedgerCandidate(state.workbook, location, state.auditFile);
+    if (!persisted) return "";
+    state.workbook = persisted.workbook;
+    state.checkpointVersion = persisted.version;
+    state.checkpointFilename = persisted.filename;
+    state.checkpointCreatedAt = persisted.checkpoint.checkpoint_created_at;
+    renderCheckpointMeta();
+    log(`Result checkpoint v${window.DacCheckpointCore.formatVersion(persisted.version)} ${persisted.storage === "directory" ? "verified" : "downloaded"}: ${persisted.actual}.`, "done");
+    return persisted.actual;
+  }
+
+  async function saveAuditLog(location, { appendExisting = false } = {}) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
     if (!values.saveAuditJsonl) return "";
     let payload = state.auditEvents.map((event) => JSON.stringify(event)).join("\n") + (state.auditEvents.length ? "\n" : "");
     const blob = new Blob([payload], { type: "application/jsonl" });
     const requested = values.auditFilename;
     if (location.kind === "directory") {
-      if (state.resumeMode) {
+      let appendedExisting = false;
+      if (appendExisting) {
+        try {
+          const existingHandle = await location.handle.getFileHandle(requested, { create: false });
+          const existingFile = await existingHandle.getFile();
+          if (!existingFile || Number(existingFile.size) <= 0) throw new Error("empty audit");
+          const existingPayload = await existingFile.text();
+          payload = `${existingPayload}${existingPayload.endsWith("\n") ? "" : "\n"}${payload}`;
+          appendedExisting = true;
+        } catch (error) {
+          if (error?.name !== "NotFoundError") throw error;
+        }
+      } else if (state.resumeMode) {
         if (auditGapAcknowledged()) {
           if (state.auditChain?.segmentStarted) {
             try {
@@ -2773,7 +3542,7 @@
         }
       }
       const mergedBlob = new Blob([payload], { type: "application/jsonl" });
-      const policy = state.resumeMode && (!auditGapAcknowledged() || state.auditChain?.segmentStarted) ? "overwrite" : "fail";
+      const policy = appendedExisting || state.resumeMode && (!auditGapAcknowledged() || state.auditChain?.segmentStarted) ? "overwrite" : "fail";
       const written = await window.DacOutputLocation.writeFileWithPolicy(location.handle, requested, mergedBlob, policy);
       if (state.resumeMode && auditGapAcknowledged()) state.auditChain = { ...state.auditChain, segmentStarted: true };
       // Every buffered event is now durably in the file, and each later flush
@@ -3376,6 +4145,15 @@
   els.queueRemoveCancelBtn?.addEventListener("click", closeQueueRemoveDialog);
   els.queueRemoveConfirmBtn?.addEventListener("click", () => confirmQueueRemoval().catch(() => controls()));
   els.queueRemoveDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeQueueRemoveDialog(); });
+  els.bridgeProposalFixtureBtn?.addEventListener("click", () => stageBridgeFixture().catch((error) => log(messageOf(error), "error")));
+  els.bridgeProposalRejectBtn?.addEventListener("click", () => rejectBridgeProposal().catch((error) => log(messageOf(error), "error")));
+  els.bridgeProposalApproveBtn?.addEventListener("click", () => approveBridgeProposal().catch((error) => log(messageOf(error), "error")));
+  els.bridgePairingBtn?.addEventListener("click", () => els.bridgePairingInput.click());
+  els.bridgePairingInput?.addEventListener("change", () => {
+    const file = els.bridgePairingInput.files?.[0] || null;
+    pairAgentBridgeFile(file).catch((error) => log(messageOf(error), "error")).finally(() => { els.bridgePairingInput.value = ""; });
+  });
+  els.bridgeUnpairBtn?.addEventListener("click", () => unpairAgentBridge().catch((error) => log(messageOf(error), "error")));
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFromRunTabBtn?.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
@@ -3391,6 +4169,15 @@
   els.openOutputFolderBtn.addEventListener("click", openOutputFolder);
   document.querySelectorAll(".workflow-tab").forEach((tab) => tab.addEventListener("click", () => showScreen(tab.dataset.screen)));
   renderOutput(); renderRuntime(); renderOutputGlossary(); renderOutputScreen(); controls(); restoreUiZoom().catch(() => applyUiZoom(1)); initRunWidthSplitter().catch(() => {}); syncZoomState().catch(() => {});
+  renderBridgeTransportStatus();
+  refreshBridgeTransportStatus();
+  chrome.storage?.onChanged?.addListener((changes, areaName) => {
+    if (areaName === "local" && changes[window.DacBridgePairingCore.STATUS_STORAGE_KEY]?.newValue) {
+      renderBridgeTransportStatus(changes[window.DacBridgePairingCore.STATUS_STORAGE_KEY].newValue);
+    }
+  });
+  readBridgeProposalStore().then(() => renderBridgeProposals()).catch((error) => log(`Không thể đọc hộp đề xuất Agent: ${messageOf(error)}`, "error"));
+  connectBridgeExecutor();
 
   (typeof window !== "undefined" ? window : globalThis).DacChatZoom = {
     isChatGPTUrl,
@@ -3411,4 +4198,16 @@
     updateOperatorTimer,
     renderProgressSegments
   };
+
+  (typeof window !== "undefined" ? window : globalThis).DacBridgeExecutorTestHooks = Object.freeze({
+    dispatch: bridgeExecutorDispatch,
+    handlers: Object.freeze({
+      "queue.list": bridgeQueueList,
+      "run.status": bridgeRunStatus,
+      "ledger.read": bridgeLedgerRead,
+      "queue.propose": bridgeQueuePropose,
+      "queue.proposal.get": bridgeProposalGet
+    }),
+    port_name: BRIDGE_EXECUTOR_PORT
+  });
 })();

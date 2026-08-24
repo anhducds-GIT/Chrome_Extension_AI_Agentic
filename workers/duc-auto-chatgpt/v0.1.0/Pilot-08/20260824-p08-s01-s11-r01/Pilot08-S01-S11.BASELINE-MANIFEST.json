@@ -1,0 +1,41 @@
+{
+  "run_id": "20260824-p08-s01-s11-r01",
+  "captured_at_local": "2026-08-24T00:00:00+07:00",
+  "boundary": "PREPARE_INPUT_ONLY",
+  "repository": {
+    "branch": "main",
+    "head": "3b02d2aa0fceb23ed4df7ec153452e0f5a2dbba0",
+    "working_tree": "dirty; preserved",
+    "runner_files_edited_by_this_run": false,
+    "template_sha256": "CC5386A7124896115C5D4E37E0294C31D16F8CDC7667EC690049D01E2B456B2F",
+    "xlsx_codec_sha256": "53F10EAB40FE606F898CB845F6DEF6979D6E386924E5F5824B7AC4ECBC66BB93",
+    "sidepanel_sha256": "8FE2F5C629D15EBEA54CBF96568D2E4B83319470D6821DE3B6E6B879409ABDCA"
+  },
+  "source": {
+    "spreadsheet_id": "12YwXGi3zeTt-tyVJtIhtEQQRoVD1vKoGvLOBBlmYOS0",
+    "spreadsheet_title": "Growing_with_Meo_V2_260817",
+    "modified_time": "2026-08-23T17:01:38.367Z",
+    "s01_tab": "S1_01 Tiny World",
+    "s01_sheet_id": 26081721,
+    "s01_csv_sha256": "94FF7B20A8BA1DD209872E9CF2127793FBD5561F2017D00151DD9124BB7848EB"
+  },
+  "references": [
+    {"source_name":"Meo2.png","role":"Meo primary identity","sha256":"490EE15F72FF06D97BC0DA09DA50C9AB9390EF2F2AA97221F62F36DAE16C5026"},
+    {"source_name":"Meo1.png","role":"Meo secondary identity","sha256":"FC0E0E4FD7D6924DDDDDE03D82CF19DC68DAEF1C14DC18972F9DE781C6CCC77D"},
+    {"source_name":"Duc1.jpg","role":"Bố front identity","sha256":"55DC3A0675770C35466B42B8D2D2C6F2D65259E60CDA1762A8BD3312BBBF0624"},
+    {"source_name":"Duc2.jpg","role":"Bố side identity","sha256":"708022A6BF3078F2B53742C5840C693837C1705AE41606BF41FA5BE0F941F67A"}
+  ],
+  "s01_existing_package": {
+    "package_spec_sha256": "F0F45ABC7E938113F62AE7C6E72A3C10B33F6BB3A361C3B2A6EA6EECDA032872",
+    "runbook_sha256": "4C96C0E2F68F0FE6D161E94A68078F433DA4A079530F3052D624ADD79667C777",
+    "workbook_sha256": null,
+    "workbook_hash_note": "File was locked by another process at baseline capture; content was already parsed, rendered, and validated in the preceding read-only audit."
+  },
+  "skill_before": {
+    "skill_md_sha256": "98A0BE54D55233079B26482988A4EC9766C37F1A055BEC31232F90682F4AD4D9",
+    "prompt_contract_sha256": "FCD7A1B4BEE414E12CC8E71F052DAFA66B8BA1A8138E037EAD6225680B06462A",
+    "package_schema_sha256": "48516ED2D0D65314FC703834672F331FF34F390348FBDAA3D17D129B558E3575",
+    "acceptance_checklist_sha256": "0E2659E7DF430294291028C586F16071770A777832E5B33E572429CA9A85F517",
+    "validator_sha256": "5E006DD0C5DCCCE95FD70714FA7ACB8FABDFF5AF4335CD13D862672B14DA7599"
+  }
+}

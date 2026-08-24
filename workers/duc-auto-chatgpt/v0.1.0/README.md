@@ -2,6 +2,8 @@
 
 Personal Chrome extension for **local-only XLSX-driven image generation** on ChatGPT.
 
+Before touching this project, read [AGENTS.md](AGENTS.md) (roles, golden rules, file map) and [HANDOFF.md](HANDOFF.md) (current state, Log).
+
 ## V1 XLSX run-plan protocol
 
 New orchestrator workbooks should follow [DAC_XLSX_RUN_PLAN_V1.md](DAC_XLSX_RUN_PLAN_V1.md). XLSX declaratively imports routine run/output configuration; browser handles, permissions, ChatGPT readiness, security checks, output detection, persistence proof, and exact-once runtime state remain local browser authority. `pilot-04/Duc-Auto-ChatGPT-Pilot-04.xlsx` is the controlled import fixture; do not run it live without the owner trial sequence.
@@ -147,40 +149,62 @@ Content Script on chatgpt.com (content.js)
         +--> return completion/error
 ```
 
-## WP2 localhost Worker API
+## Agent Bridge V1
 
-The service worker also accepts external messages only from `http://localhost/*` and `http://127.0.0.1/*`. The private `DAC_*` messages remain between `background.js` and `content.js`.
+Agent Bridge V1 thay thế hoàn toàn Worker API localhost cũ. Một Node host không phụ thuộc npm chỉ lắng nghe tại `127.0.0.1`, từ chối browser `Origin`, và yêu cầu token 32-byte trong pairing file có ACL dành cho Windows user hiện tại. Extension không còn `externally_connectable` hay `onMessageExternal`; đường riêng `DAC_DOWNLOAD_IMAGE` vẫn được giữ cho sản phẩm.
 
-Public message shapes:
+### Cài host và pair extension
 
-```js
-{ operation: "ping" }
-{ operation: "job.submit", job_id: "job-001", task_type: "text_prompt", prompt: "...", timeout_ms: 180000 }
-{ operation: "job.status", job_id: "job-001" }
-{ operation: "job.abort", job_id: "job-001" }
+Từ thư mục này, chạy PowerShell bằng user hiện tại (không cần Admin, không ghi Registry):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-DucAutoChatGPTLoopbackBridgeV1.ps1
 ```
 
-Only one job may be active and no queue exists. A repeated `job_id` returns the stored Job Record with `duplicate: true`; it does not resend the prompt. Statuses are `accepted`, `running`, `done`, `failed`, or `aborted`. Job state is in-memory and is lost if Chrome terminates the MV3 worker.
+Sau khi cài, vào `chrome://extensions`, reload **Duc Auto ChatGPT**, mở side panel, bấm **Kết nối Agent Bridge**, rồi chọn file được script in ra:
 
-For a completed `text_prompt`, `job.result` is a canonical text result:
-
-```js
-{
-  type: "text",
-  text: "new assistant response",
-  char_count: 22,
-  assistant_message_index: 3,
-  assistant_count_before: 3,
-  assistant_count_after: 4,
-  completion: { generation_seen: true, reason: "stable_text", poll_count: 9 }
-}
+```text
+%LOCALAPPDATA%\DucAutoChatGPT\BridgeV1\duc-auto-chatgpt-bridge-pairing-v1.json
 ```
 
-`job.target` records the selected `tab_id`, `tab_url`, `window_id`, and `conversation_url`; the Job Record also exposes `created_at`, `started_at`, and `completed_at`. The result is accepted only from the first assistant message after the pre-send assistant-count boundary; the extension does not blindly return the latest assistant message.
+Pairing chỉ làm một lần cho token hiện tại. Token không được đưa vào XLSX, audit JSONL, URL, console hay bridge response.
 
-Terminal Job Records are also retained in `chrome.storage.session` (newest 10 only), so `job.status` remains available after the MV3 service worker sleeps during the same browser/extension session. This retention stores no original prompt and is cleared by browser restart, extension reload, update, or disable. It does not resume jobs or provide durable idempotency. If retaining a terminal record fails, the completed execution remains `done`/`failed`/`aborted` and exposes `retention_error` while its in-memory record remains available.
+### Trạng thái khi side panel đóng
 
-For a manual localhost test, run `python -m http.server 8123` from this folder, visit `http://localhost:8123/worker-api-test.html`, enter the unpacked extension ID, and use the four API buttons. The test page has no server-side logic.
+Host và MV3 router có thể vẫn online, nên `ping`/`capabilities` ở lớp router còn trả lời. Nhưng side panel là executor duy nhất: khi panel đóng, `queue-list`, `run-status`, `ledger-read`, `proposal-get` và `propose` dừng fail-closed với `EXECUTOR_UNAVAILABLE`. Bridge không tự chạy nền và không biến lỗi transport thành lỗi của một job. Nếu đang Run mà đóng panel, áp dụng cùng quy tắc an toàn hiện có của app; mở lại panel, kiểm tra workbook/checkpoint rồi mới tiếp tục.
+
+### CLI
+
+Installer chép CLI tới cùng thư mục host. Ví dụ:
+
+```powershell
+$bridgeRoot = Join-Path $env:LOCALAPPDATA 'DucAutoChatGPT\BridgeV1'
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') ping
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') capabilities
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') queue-list --limit 25
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') ledger-read --limit 25 --include-removed
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') proposal-get --proposal-id proposal-id-from-response
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') propose --params-file .\proposal-params.json
+```
+
+`proposal-params.json` chứa đúng object `params` của `queue.propose`: `if_ledger_etag`, nhãn tùy chọn, và 1–100 job. Dùng `--include-prompt` chỉ khi thật sự cần vì mặc định các lệnh đọc trả fingerprint thay cho prompt đầy đủ.
+
+`propose` chỉ đưa đề xuất vào vùng cách ly. Đức phải xem đúng prompt/tham chiếu trong thẻ **ĐỀ XUẤT TỪ AGENT** và bấm **Duyệt & ghi checkpoint**. Duyệt chỉ thêm vào Queue và ghi checkpoint; **không bắt đầu Run, không gửi prompt tới ChatGPT**. V1 cố ý không có `run.start`, `run.pause`, hay `run.resume`.
+
+### Xoay token, gỡ và cài lại
+
+Xoay token khi nghi ngờ pairing bị lộ; host cũ bị dừng và token cũ mất hiệu lực ngay:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-DucAutoChatGPTLoopbackBridgeV1.ps1 -RotateToken
+```
+
+Sau đó reload extension và pair lại bằng file mới. Cài lại không có `-RotateToken` sẽ giữ token hợp lệ hiện có. Gỡ mặc định xóa cả pairing; thêm `-KeepPairing` nếu cần giữ pairing an toàn để cài lại:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Uninstall-DucAutoChatGPTLoopbackBridgeV1.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\Uninstall-DucAutoChatGPTLoopbackBridgeV1.ps1 -KeepPairing
+```
 
 ## License
 

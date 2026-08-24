@@ -15,18 +15,19 @@ this same folder. Read it before writing any code.
 | --- | --- |
 | WP-0 design study | **Done.** `drafts/AGENT-BRIDGE-DESIGN-V1.md`, 761 lines. |
 | WP-1 protocol core | **Done.** `bridge-core.js` (605 lines) + 2 tests. |
-| WP-2 executor + approval UI | **Not started.** Brief in §2 below. |
-| WP-3 loopback host + router | **Not started.** Brief in §3. |
-| WP-4 migration closure | **Not started.** Brief in §4. |
-| `npm test` | **48 passed, 0 failed** + observer smoke PASS. |
-| Git | **Nothing committed.** Đức approves every commit himself. |
+| WP-2 executor + approval UI | **Done; independent PASS.** Brief/history in §2. |
+| WP-3 loopback host + router | **Done; independent PASS.** Brief/history in §3. |
+| WP-4 migration closure | **Done; final independent PASS.** Closure in §4 and §8. |
+| `npm test` | **63 passed, 0 failed** + observer smoke PASS. |
+| Git | **WP-2/WP-3/WP-4 Agent Bridge changes are uncommitted.** Đức approves the commit. |
 
 `bridge-core.js` is verified pure — no `chrome.`, DOM, network, file, or
 `node:` references. It loads unchanged in the service worker
 (`importScripts`), the side panel (`<script>`), and Node tests.
 
-Nothing is wired into `background.js`, `sidepanel.html`, `sidepanel.js` or
-`manifest.json` yet. WP-1 only added files.
+Agent Bridge is now wired into `background.js`, `sidepanel.html`,
+`sidepanel.js`, and `manifest.json`. The legacy unauthenticated Worker API has
+been removed; the private `DAC_DOWNLOAD_IMAGE` path remains.
 
 ---
 
@@ -129,8 +130,11 @@ Per the design document's WP-2 section:
   provenance fields + `BRIDGE_PROPOSAL_APPROVED` / `BRIDGE_JOB_ADDED` audit
   events → persist audit → create and independently verify the next immutable
   Result checkpoint → only then swap in the new workbook and re-run
-  `prepare()`. Never call `run()`. On any failure roll back in-memory state and
-  surface `APPROVAL_FAILED` without claiming the queue was checkpointed.
+  `prepare()`. Never call `run()`. Before checkpoint verification, a failure
+  rolls back in-memory state and surfaces `APPROVAL_FAILED`. After a checkpoint
+  is verified, it is immutable authoritative disk truth: recover forward to
+  that workbook/version, retain `APPROVED_CHECKPOINTED`, and append
+  `BRIDGE_PROPOSAL_POST_CHECKPOINT_RECOVERED`; never restore the older workbook.
 - New `bridge-proposal-core.js` — pure proposal state/validation/etag rules,
   same module convention as the other cores.
 - Share the "audit → immutable checkpoint → re-derive queue" sequence with the
@@ -207,7 +211,7 @@ Follow the design document's WP-4 section:
   `tests/artifact-integrity-smoke.mjs` enforces it; extend it for new UI.
 - Operator-facing text is Vietnamese; finding CODES stay English identifiers.
   Never let a safety test assert on a caption.
-- `npm test` must end green. Floor is 48 worker tests + observer smoke.
+- `npm test` must end green. Current floor is 63 worker tests + observer smoke.
 - Run `git diff --check` before finishing.
 - Any `.js` change means Đức must reload the extension at `chrome://extensions`
   before testing. Say so in every handover.
@@ -216,40 +220,53 @@ Follow the design document's WP-4 section:
 
 ---
 
-## 6. How Đức runs the next round
+## 6. How Đức runs the live acceptance round
 
-Prompt bodies for WP-2 are in §2 of this file — Codex can be pointed straight
-at it. From the repository root:
-
-```bash
-codex exec -s workspace-write "Read workers/duc-auto-chatgpt/v0.1.0/drafts/AGENT-BRIDGE-HANDOFF.md and implement WP-2 (section 2), including the bridge-core.js defect fix in 2a. Follow section 5 hard rules. Do not commit."
-```
-
-Or just open Codex interactively and say: *"đọc
-`drafts/AGENT-BRIDGE-HANDOFF.md`, làm WP-2"*.
-
-Each work package should end with the `npm test` result line, the list of files
-touched, anything in the design document that turned out wrong, and a short
-`## Đức đọc phần này` section in plain Vietnamese.
+Implementation is complete. Follow the Agent Bridge V1 section in `README.md`:
+install the current-user host, reload the unpacked extension, pair once, then
+exercise CLI ping/list/propose/poll and approve the exact proposal in the side
+panel. Confirm approval writes provenance/audit/checkpoint but leaves Run
+manual. Finish with closed/reopened-panel, no-ChatGPT-tab, host-death, token
+rotation, uninstall/reinstall, and `-KeepPairing` checks. Do not authorize a
+commit until that owner-profile sequence passes.
 
 ---
 
 ## 7. Đức đọc phần này
 
-- Đã xong 2 phần: **bản thiết kế** (đã chốt kiến trúc) và **lõi giao thức**
-  `bridge-core.js`. Test 48/48 xanh. Chưa commit gì cả — anh tự duyệt.
-- Còn 3 phần: WP-2 (giao diện duyệt đề xuất trong side panel), WP-3 (chương
-  trình host + kết nối thật), WP-4 (gỡ cổng localhost cũ không an toàn).
+- Đã xong toàn bộ WP-0 đến WP-4. Test 63/63 cộng observer smoke xanh; auditor
+  độc lập cuối trả PASS. Phần WP-2/WP-3/WP-4 vẫn chưa commit — anh tự duyệt.
 - Nguyên tắc đã chốt: code bên ngoài chỉ được **đề xuất**, anh bấm duyệt thì
   mới vào hàng đợi — và **duyệt xong vẫn chưa chạy**, anh phải tự bấm Run vì nó
   tốn quota ảnh thật.
 - Đóng side panel là bridge ngừng phục vụ, chứ không âm thầm chạy nền. Cố ý như
   vậy để không bao giờ có hai "sự thật" khác nhau giữa sổ ghi và thư mục ảnh.
-- Cổng localhost hiện tại **chưa có mật khẩu** — trang web nào chạy trên
-  localhost trong Chrome cũng sai khiến được phiên ChatGPT của anh. WP-4 sẽ gỡ
-  hẳn nó sau khi đường mới chạy được.
-- Việc anh phải tự làm: duyệt commit, và từ WP-3 trở đi thì chạy script cài
-  host + bấm **Kết nối Agent Bridge** một lần. Không phải sửa registry, không
-  cần quyền admin.
+- Cổng Worker API localhost cũ không mật khẩu đã được gỡ. Đường mới chỉ bind
+  `127.0.0.1`, dùng token pairing và từ chối browser `Origin`.
+- Việc anh phải tự làm: chạy live acceptance ở §6, gồm script cài host + bấm
+  **Kết nối Agent Bridge** một lần. Không sửa registry, không cần quyền admin.
 - Sau mỗi lần Codex sửa file `.js`, anh phải vào `chrome://extensions` bấm
   reload thì mới có hiệu lực.
+
+---
+
+## 8. Codex Orchestrator closure — 2026-08-24
+
+- WP-2 hoàn tất và đã qua auditor độc lập: proposal cách ly, duyệt bằng click,
+  audit trước checkpoint, rollback trước checkpoint và recover-forward sau
+  checkpoint; duyệt không chạy job.
+- WP-3 hoàn tất và đã qua auditor độc lập: Node loopback host, pairing/token,
+  MV3 router/Port, reconnect, installer/uninstaller và kiểm tra bảo mật đối
+  kháng đều đạt.
+- WP-4 đã gỡ đường Worker API cũ sau khi Option B đạt gate, giữ nguyên
+  `DAC_DOWNLOAD_IMAGE`, thêm CLI và tài liệu vận hành. Auditor độc lập cuối trả
+  **PASS** sau khi phát hiện và buộc sửa một lỗi uninstall `-KeepPairing` còn
+  sót CLI. Regression cuối: **63/63** cộng observer smoke; parse JS/MJS,
+  PowerShell, manifest và `git diff --check` đều đạt.
+- Toàn bộ thay đổi vẫn **uncommitted** theo hard rule. Không file nào dưới
+  `pilot-03/`, `pilot-05/`, `pilot-06/`, `Pilot-07/`, `Pilot-08/` được sửa/xóa.
+- Trạng thái live vẫn là **LIVE OWNER-PROFILE UNVERIFIED**. Đức cần reload tại
+  `chrome://extensions`, cài/pair host, rồi chạy đúng một vòng: CLI
+  ping/list/propose/poll; duyệt tạo đúng một bộ provenance/audit/checkpoint mà
+  Run vẫn chưa tự chạy; đóng/mở panel không replay; không có tab ChatGPT; host
+  chết giữa Run; xoay token và uninstall/reinstall/`-KeepPairing` thật.

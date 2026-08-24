@@ -827,6 +827,22 @@ button:focus-visible {
 
 /* Queue & Logs */
 .queue-card { padding-bottom: 5px; }
+.bridge-proposal-card { border-left: 4px solid #2563eb; background: #eff6ff; }
+.bridge-proposal-count { color: #1d4ed8; font-size: 10px; font-weight: 800; }
+.bridge-proposal-status { margin: 4px 0 7px; color: #1e3a8a; font-size: 11px; font-weight: 800; }
+.bridge-proposal-meta { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 8px; margin: 0 0 8px; font-size: 10px; }
+.bridge-proposal-meta dt { color: var(--text-secondary); font-weight: 700; }
+.bridge-proposal-meta dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.bridge-proposal-list { display: grid; gap: 8px; margin: 0; padding-left: 22px; }
+.bridge-proposal-job { padding: 8px; border: 1px solid #bfdbfe; border-radius: var(--radius-sm); background: var(--bg-card); }
+.bridge-proposal-job-title { margin-bottom: 5px; color: #1e3a8a; font-size: 11px; font-weight: 800; }
+.bridge-proposal-field { margin-top: 5px; }
+.bridge-proposal-field strong { display: block; margin-bottom: 2px; color: var(--text-secondary); font-size: 9px; text-transform: uppercase; }
+.bridge-proposal-prompt { max-height: none; overflow: visible; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; line-height: 1.45; }
+.bridge-proposal-values { white-space: normal; overflow-wrap: anywhere; font-size: 10px; }
+.bridge-proposal-notice { margin: 9px 0 4px; padding: 7px; border-radius: var(--radius-sm); background: #dbeafe; color: #1e3a8a; font-size: 10px; font-weight: 700; line-height: 1.45; }
+.bridge-proposal-lock-reason { min-height: 15px; margin: 4px 0; color: var(--text-danger); font-size: 10px; font-weight: 700; }
+.bridge-proposal-actions { margin-top: 6px; }
 .queue-footer-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 9px; margin-top: 5px; }
 .queue-bulk-actions { display: inline-flex; align-items: center; gap: 8px; }
 .queue-footer-actions #runSelectedBtn { margin-left: auto; }
@@ -1080,3 +1096,11 @@ footer { line-height: 1.3; padding: 2px 0 2px; font-size: 9.5px; color: #64748b;
   #outputLocationCard, #validationCard { grid-column: 1 / -1; }
   #outputScreen .output-results-list { grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); }
 }
+.bridge-pairing-card { border-color: color-mix(in srgb, var(--accent, #2563eb) 35%, transparent); }
+.bridge-pairing-actions { flex-wrap: wrap; }
+.bridge-transport-status { font-weight: 700; color: var(--muted, #667085); }
+.bridge-transport-status.connected { color: #067647; }
+.bridge-transport-status.connecting { color: #b54708; }
+.bridge-transport-status.disconnected,
+.bridge-transport-status.pairing_invalid { color: #b42318; }
+#bridgePairingInput { display: none; }

@@ -234,6 +234,30 @@
     return job;
   }
 
+  async function cloneWorkbook(workbook, fileName = workbook?.fileName) {
+    if (!workbook?.entries || !(workbook.entries instanceof Map)) throw new Error("Cannot clone an invalid workbook.");
+    const name = String(fileName || workbook.fileName || "Workbook.xlsx");
+    return open(new File([zip(workbook.entries)], name, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  }
+
+  // Batch insertion is deliberately performed only on a disposable candidate
+  // workbook. Validate the complete set before touching its XML so a duplicate
+  // or malformed row cannot leave a half-appended approval candidate.
+  function addJobsBatch(workbook, rows) {
+    if (!Array.isArray(rows) || !rows.length) throw new Error("At least one job is required for a batch add.");
+    const existing = new Set((workbook?.jobs || []).map((job) => String(job.id || "").trim().toLowerCase()).filter(Boolean));
+    const incoming = new Set();
+    for (const values of rows) {
+      const id = String(values?.id || "").trim();
+      const prompt = String(values?.prompt || "");
+      if (!id || !prompt.trim()) throw new Error("Every batch job requires a non-empty id and prompt.");
+      const key = id.toLowerCase();
+      if (existing.has(key) || incoming.has(key)) throw new Error(`Duplicate job id '${id}' in batch add.`);
+      incoming.add(key);
+    }
+    return rows.map((values) => addJob(workbook, values));
+  }
+
   function updateJob(workbook, job, values) {
     const { document, rows } = workbook.jobsSheet;
     const sheetData = document.getElementsByTagNameNS("*", "sheetData")[0];
@@ -335,5 +359,5 @@
     return true;
   }
 
-  window.DacXlsx = { open, createWorkbook, addJob, updateJob, activeJobs, setQueueOrder, placeQueueJob, removeFromQueue, updateConfigSnapshot, downloadBlob: (workbook) => zip(workbook.entries), normaliseHeader, escapeXml };
+  window.DacXlsx = { open, createWorkbook, addJob, cloneWorkbook, addJobsBatch, updateJob, activeJobs, setQueueOrder, placeQueueJob, removeFromQueue, updateConfigSnapshot, downloadBlob: (workbook) => zip(workbook.entries), normaliseHeader, escapeXml };
 })();

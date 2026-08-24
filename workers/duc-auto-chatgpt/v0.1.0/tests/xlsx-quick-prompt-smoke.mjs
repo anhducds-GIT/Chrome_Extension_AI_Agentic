@@ -39,6 +39,21 @@ assert.equal(job2.id, "Q002");
 assert.equal(workbook.jobs.length, 2, "the new job is appended, not replacing the session");
 assert.equal(workbook.jobs[0].id, "Q001", "the first job is untouched by the append");
 
+const batchCandidate = xlsx.createWorkbook("Bridge-candidate.xlsx", [{ id: "Q001", prompt: "existing" }]);
+const batch = xlsx.addJobsBatch(batchCandidate, [
+  { id: "Q002", prompt: "bridge two", input_origin: "bridge" },
+  { id: "Agent-3", prompt: "bridge three", input_origin: "bridge" }
+]);
+assert.deepEqual(batch.map((job) => job.id), ["Q002", "Agent-3"]);
+assert.equal(batchCandidate.jobs.length, 3, "a validated approval batch appends every row");
+assert.equal(batchCandidate.jobs[1].input_origin, "bridge", "additive provenance columns are grown and persisted");
+const rejectedBatchCandidate = xlsx.createWorkbook("Bridge-rejected-candidate.xlsx", [{ id: "Q001", prompt: "existing" }]);
+assert.throws(() => xlsx.addJobsBatch(rejectedBatchCandidate, [
+  { id: "Q002", prompt: "would be valid" },
+  { id: "Q001", prompt: "collides late" }
+]), /Duplicate job id/);
+assert.equal(rejectedBatchCandidate.jobs.length, 1, "the entire batch is validated before the first XML row is appended");
+
 // A quick-prompt job goes through the exact same runner/checkpoint machinery
 // as any workbook job: prepare a real job onto it, run it through the
 // existing update() write path, and the config snapshot path used at the end

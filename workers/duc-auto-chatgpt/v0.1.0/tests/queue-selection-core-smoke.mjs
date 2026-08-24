@@ -42,7 +42,7 @@ assert.match(sidepanel, /window\.DacRunnerCore\.selectQueue\(state\.prepared\.qu
 assert.match(sidepanel, /if \(mode === "selected"\) state\.runSelection\.clear\(\);/, "the selection is cleared once its run finishes, so stale checked rows do not linger");
 
 const briefContext = vm.createContext({});
-const briefSource = sidepanel.slice(sidepanel.indexOf("function promptBrief"), sidepanel.indexOf("function renderCurrentJobReferences"));
+const briefSource = sidepanel.slice(sidepanel.indexOf("function promptBrief"), sidepanel.indexOf("const BRIDGE_PROPOSAL_STORAGE_KEY"));
 vm.runInContext(`${briefSource}\nthis.promptBrief = promptBrief;`, briefContext);
 assert.equal(briefContext.promptBrief("  first line\nsecond line  "), "first line second line", "queue prompt previews collapse whitespace into one stable line");
 assert.equal(briefContext.promptBrief("x".repeat(200)).length, 140, "queue prompt previews are bounded to a short excerpt");

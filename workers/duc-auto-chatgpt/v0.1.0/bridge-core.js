@@ -24,8 +24,9 @@
   const FEATURES = Object.freeze([
     "proposal_inbox", "immutable_result_checkpoints", "audit_chain", "verified_persistence"
   ]);
-  const ERROR_DEFINITIONS = deepFreeze({
+  const ERROR_DEFINITIONS = deepFreeze(Object.assign(Object.create(null), {
     INVALID_ENVELOPE: { retryable: false, message: "The RPC envelope is invalid." },
+    INTERNAL_ERROR: { retryable: false, message: "The bridge could not complete the request." },
     UNSUPPORTED_VERSION: { retryable: false, message: "No supported major protocol version was offered.", details: { supported_versions: [1] } },
     METHOD_NOT_FOUND: { retryable: false, message: "The requested method is not registered." },
     INVALID_PARAMS: { retryable: false, message: "The method parameters are invalid." },
@@ -44,12 +45,12 @@
     VALIDATION_FAILED: { retryable: false, message: "Existing workbook, reference, or settings validation rejected the proposal." },
     APPROVAL_REQUIRED: { retryable: false, message: "This product mutation requires an owner click in the side panel." },
     PERSISTENCE_VERIFICATION_FAILED: { retryable: true, message: "The immutable Result checkpoint could not be verified.", details: { failure_type: "PERSISTENCE_VERIFICATION_FAILED" } }
-  });
+  }));
 
   class BridgeProtocolError extends Error {
     constructor(code, message, details) {
+      if (!Object.hasOwn(ERROR_DEFINITIONS, code)) throw new TypeError(`Unknown bridge error code '${code}'.`);
       const definition = ERROR_DEFINITIONS[code];
-      if (!definition) throw new TypeError(`Unknown bridge error code '${code}'.`);
       super(message || definition.message);
       this.name = "BridgeProtocolError";
       this.code = code;
@@ -124,6 +125,14 @@
     const subtle = globalThis.crypto.subtle;
     if (!subtle) throw new Error("WebCrypto SubtleCrypto is required for canonical SHA-256 hashing.");
     const digest = await subtle.digest("SHA-256", utf8Bytes(canonicalJson(value)));
+    return `sha256:${base64Url(new Uint8Array(digest))}`;
+  }
+
+  async function hashText(value) {
+    if (typeof value !== "string") throw new TypeError("Text hashing accepts a string only.");
+    const subtle = globalThis.crypto.subtle;
+    if (!subtle) throw new Error("WebCrypto SubtleCrypto is required for UTF-8 SHA-256 hashing.");
+    const digest = await subtle.digest("SHA-256", utf8Bytes(value));
     return `sha256:${base64Url(new Uint8Array(digest))}`;
   }
 
@@ -343,7 +352,7 @@
     });
   }
 
-  const METHOD_REGISTRY = Object.freeze(Object.fromEntries([
+  const METHOD_ENTRIES = [
     registryEntry({ name: "session.hello", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Negotiate protocol version and report current layer availability.", params_schema: { supported_versions: "positive_integer[]" }, params_validator: validateSessionHello }),
     registryEntry({ name: "system.ping", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Report fresh extension, executor, ChatGPT, and workbook availability.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "system.capabilities", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Describe the immutable v1 method and policy surface.", params_schema: {}, params_validator: validateEmptyParams }),
@@ -352,7 +361,12 @@
     registryEntry({ name: "ledger.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a sanitized page of physical XLSX ledger rows.", params_schema: { cursor: "string|null", limit: "integer:1..100", include_prompt: "boolean", include_removed: "boolean" }, params_validator: validateLedgerRead }),
     registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage a quarantined queue proposal; never execute it automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100]" }, params_validator: validateQueuePropose }),
     registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet })
-  ].map((entry) => [entry.name, entry])));
+  ];
+  const METHOD_REGISTRY = (() => {
+    const registry = Object.create(null);
+    for (const entry of METHOD_ENTRIES) registry[entry.name] = entry;
+    return Object.freeze(registry);
+  })();
 
   function capabilities() {
     return deepFreeze({
@@ -422,7 +436,7 @@
     }
     if (!isPlainObject(envelope.error) || Object.prototype.hasOwnProperty.call(envelope, "result")) invalidEnvelope("A failed response must contain error and no result.");
     const error = envelope.error;
-    if (!ERROR_DEFINITIONS[error.code]) invalidEnvelope("response error.code is not a v1 bridge error code.", { field: "error.code" });
+    if (!Object.hasOwn(ERROR_DEFINITIONS, error.code)) invalidEnvelope("response error.code is not a v1 bridge error code.", { field: "error.code" });
     if (typeof error.message !== "string" || !error.message.trim()) invalidEnvelope("response error.message must be non-empty text.", { field: "error.message" });
     if (error.retryable !== ERROR_DEFINITIONS[error.code].retryable) invalidEnvelope("response error.retryable does not match the registered error policy.", { field: "error.retryable" });
     if (!isPlainObject(error.details)) invalidEnvelope("response error.details must be an object.", { field: "error.details" });
@@ -461,9 +475,10 @@
   }
 
   function requireMethod(method) {
-    const entry = METHOD_REGISTRY[method];
-    if (!entry) throw new BridgeProtocolError("METHOD_NOT_FOUND", undefined, { method });
-    return entry;
+    if (!Object.hasOwn(METHOD_REGISTRY, method)) {
+      throw new BridgeProtocolError("METHOD_NOT_FOUND", undefined, { method });
+    }
+    return METHOD_REGISTRY[method];
   }
 
   function validateParams(method, params) {
@@ -544,7 +559,7 @@
         request = parseRequest(input);
         const entry = requireMethod(request.method);
         const params = entry.params_validator(request.params);
-        const handler = handlers[request.method];
+        const handler = Object.hasOwn(handlers, request.method) ? handlers[request.method] : null;
         if (typeof handler !== "function") throw new TypeError(`No injected handler for registered method '${request.method}'.`);
         let key = null;
         let payloadHash = null;
@@ -568,7 +583,7 @@
         return response;
       } catch (error) {
         if (error instanceof BridgeProtocolError) return failureResponse(request?.request_id, error, now);
-        throw error;
+        return failureResponse(request?.request_id, "INTERNAL_ERROR", now);
       }
     };
   }
@@ -585,6 +600,7 @@
     BridgeProtocolError,
     canonicalJson,
     hashCanonical,
+    hashText,
     negotiateVersion,
     parseEnvelope,
     parseRequest,

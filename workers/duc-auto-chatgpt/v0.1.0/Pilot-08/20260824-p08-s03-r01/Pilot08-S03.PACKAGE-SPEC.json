@@ -1,0 +1,154 @@
+{
+  "workflow_id": "pilot08-chatgpt-visual-preproduction-v2",
+  "run_id": "20260824-p08-s03-r01",
+  "package_revision": 1,
+  "revision_date": "2026-08-24",
+  "phase_boundary": "PREPARE_INPUT_ONLY",
+  "series_code": "S03",
+  "series_number": 3,
+  "source": {
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/12YwXGi3zeTt-tyVJtIhtEQQRoVD1vKoGvLOBBlmYOS0/edit",
+    "spreadsheet_id": "12YwXGi3zeTt-tyVJtIhtEQQRoVD1vKoGvLOBBlmYOS0",
+    "spreadsheet_title": "Growing_with_Meo_V2_260817",
+    "sheet_name": "S1_03 Living Storybook",
+    "sheet_id": 26081723,
+    "sheet_modified_time": "2026-08-23T17:01:38.367Z",
+    "snapshot_date": "2026-08-24",
+    "source_snapshot": "Pilot08-S03.SOURCE.csv",
+    "sha256": "A50FC661C9971C66DF2550CC2F4770A64147CAD5D71BE01F0B015175EA447F1E",
+    "video_prompt_count": 20,
+    "story_count": 10,
+    "frames_per_video": 3,
+    "expected_video_ids": [
+      "I003-S1-01A",
+      "I003-S1-01B",
+      "I003-S1-02A",
+      "I003-S1-02B",
+      "I003-S1-03A",
+      "I003-S1-03B",
+      "I003-S1-04A",
+      "I003-S1-04B",
+      "I003-S1-05A",
+      "I003-S1-05B",
+      "I003-S1-06A",
+      "I003-S1-06B",
+      "I003-S1-07A",
+      "I003-S1-07B",
+      "I003-S1-08A",
+      "I003-S1-08B",
+      "I003-S1-09A",
+      "I003-S1-09B",
+      "I003-S1-10A",
+      "I003-S1-10B"
+    ]
+  },
+  "owner_overrides": [
+    {
+      "priority": 1,
+      "decision": "Create a completely new story-fit Meo/Bố wardrobe for each exact series tab; identity reference clothing and old source clothing lines are not clothing authority."
+    },
+    {
+      "priority": 2,
+      "decision": "Create exactly three separate single-image storyboard prompts per source video, overriding older four-frame or nine-panel learning notes."
+    }
+  ],
+  "character_lock": {
+    "visual_style": "Cinematic child-friendly 3D storybook fantasy blending rounded animated characters with tactile paper, ink and bound-page environments, gentle volumetric light, warm expressive faces, and no photorealism.",
+    "wardrobe_theme": "Living Storybook page-explorers: soft bookbinding-inspired panels, bound edges and close-fitting layers that read clearly against paper worlds; no long coat tails, loose bookmarks, bags or dangling ribbons.",
+    "wardrobe_palette": "Meo sky blue, plum, parchment, teal and cream; Bố forest green, warm ivory, burgundy, teal and parchment.",
+    "meo": "Five-year-old Vietnamese girl; identity-reference-faithful face; twin low pigtails with matte plum bands; sky-blue short-sleeve knit top under parchment-beige bib shorts with teal bound-edge piping, rounded bib, flat page-corner pockets and cuffed mid-thigh legs; plum ankle socks; cream-and-burgundy Velcro sneakers with teal soles. No copied reference/source clothing, skirt, loose ribbon or dangling bookmark.",
+    "bo": "Vietnamese father; identity-reference-faithful face; short black side-parted hair and small black-rimmed rectangular glasses; forest-green short-sleeve collarless page-explorer jacket with parchment edge binding over a warm-ivory crew T-shirt; burgundy straight trousers with flat teal side panels; cream-and-forest low-top sneakers. No copied reference/source clothing, long coat tail, scarf, bag or loose book accessory.",
+    "reference_precedence": "All four attached images control identity only: face, age, body proportions, Meo twin-low-pigtail placement, and Bố hair and glasses. Ignore every garment, shoe, clothing color and accessory in the references and old source clothing lines. The new written tab wardrobe is the sole clothing authority.",
+    "wardrobe_owner_directive": "Owner instruction applied: redesign clothing completely from scratch to fit this series; keep the approved new outfit unchanged across all 66 prompts."
+  },
+  "supporting_character_policy": "Preserve only named supporting characters explicitly authorized by the exact source video prompt, repeat their full source description in affected storyboard prompts, and prohibit unapproved extra characters. Lead character concepts remain the six Meo/Bố jobs.",
+  "supporting_characters": {},
+  "timing_policy": {
+    "recognized_schemas": [
+      "STANDARD_0-2_2-7_7-9_9-10",
+      "ALTERNATE_0-2_2-5_5-8_8-10"
+    ],
+    "standard_frame_mapping": {
+      "F01": "0-2s opening",
+      "F02": "2-7s causal action",
+      "F03": "7-10s combines 7-9s and 9-10s"
+    },
+    "alternate_frame_mapping": {
+      "F01": "0-2s opening",
+      "F02": "2-8s combines 2-5s and 5-8s",
+      "F03": "8-10s closing state"
+    },
+    "fail_closed": true
+  },
+  "references": [
+    {
+      "file_name": "P08-S03-MEO-PRIMARY.REFERENCE.png",
+      "person": "Meo",
+      "role": "primary_face_hair_identity_only",
+      "source_original": "Input content/Meo2.png",
+      "width": 1122,
+      "height": 1402,
+      "priority": 1,
+      "sha256": "490EE15F72FF06D97BC0DA09DA50C9AB9390EF2F2AA97221F62F36DAE16C5026"
+    },
+    {
+      "file_name": "P08-S03-MEO-SECONDARY.REFERENCE.png",
+      "person": "Meo",
+      "role": "secondary_face_identity_only",
+      "source_original": "Input content/Meo1.png",
+      "width": 1024,
+      "height": 1536,
+      "priority": 2,
+      "sha256": "FC0E0E4FD7D6924DDDDDE03D82CF19DC68DAEF1C14DC18972F9DE781C6CCC77D"
+    },
+    {
+      "file_name": "P08-S03-BO-FRONT.REFERENCE.jpg",
+      "person": "Bố",
+      "role": "primary_front_face_glasses_identity_only",
+      "source_original": "Input content/Duc1.jpg",
+      "width": 556,
+      "height": 989,
+      "priority": 1,
+      "sha256": "55DC3A0675770C35466B42B8D2D2C6F2D65259E60CDA1762A8BD3312BBBF0624"
+    },
+    {
+      "file_name": "P08-S03-BO-SIDE.REFERENCE.jpg",
+      "person": "Bố",
+      "role": "side_face_hair_glasses_identity_only",
+      "source_original": "Input content/Duc2.jpg",
+      "width": 556,
+      "height": 989,
+      "priority": 2,
+      "sha256": "708022A6BF3078F2B53742C5840C693837C1705AE41606BF41FA5BE0F941F67A"
+    }
+  ],
+  "queue": {
+    "character_concept_jobs": 6,
+    "storyboard_jobs": 60,
+    "total_jobs": 66,
+    "storyboard_frame_codes": [
+      "F01",
+      "F02",
+      "F03"
+    ]
+  },
+  "runner_config": {
+    "timeout_sec": 900,
+    "max_retries": 2,
+    "delay_min_sec": 18,
+    "delay_max_sec": 32,
+    "safety_cooldown_sec": "8-12",
+    "max_input_images": 5,
+    "continue_on_error": false,
+    "rerun_done": false,
+    "output_destination_mode": "downloads",
+    "output_downloads_subfolder": "Duc Auto ChatGPT/Pilot-08/S1-03",
+    "image_filename_pattern": "{job_id}",
+    "collision_policy": "uniquify",
+    "save_images": true,
+    "save_result_xlsx": true,
+    "save_audit_jsonl": true,
+    "result_filename_pattern": "Pilot08-S03.IMAGE-QUEUE__results__v{version}.xlsx",
+    "audit_filename": "Pilot08-S03.IMAGE-QUEUE__audit.jsonl"
+  }
+}

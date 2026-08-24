@@ -486,6 +486,7 @@ Bridge/RPC errors are transport and policy facts, not new job Failure Types:
 | Code | Retryable | Meaning |
 | --- | --- | --- |
 | `INVALID_ENVELOPE` | no | Required envelope field/type/size is invalid. |
+| `INTERNAL_ERROR` | no | A registered handler or injected adapter failed unexpectedly. The response contains no exception message, stack, or implementation detail. |
 | `UNSUPPORTED_VERSION` | no | No supported major protocol version. |
 | `METHOD_NOT_FOUND` | no | Default-denied method. |
 | `INVALID_PARAMS` | no | Method parameters failed the registered schema. |
@@ -534,7 +535,7 @@ The transaction deliberately reuses the existing Recreate safety sequence. `recr
 4. Add bridge provenance fields to each row and buffer `BRIDGE_PROPOSAL_APPROVED` plus one `BRIDGE_JOB_ADDED` audit event per job.
 5. Persist the audit according to the existing audit-chain rules, then create and independently verify the next immutable Result XLSX checkpoint using the same version-conflict checks as `saveLedger()` (`sidepanel.js:2681-2739`).
 6. Only after checkpoint verification replace `state.workbook`, re-run `prepare({diagnostic:true})`, select the new jobs for visibility, and mark the proposal `APPROVED_CHECKPOINTED`. Do not call `run()`.
-7. If any step fails, restore the pre-approval in-memory workbook/queue, keep the proposal visible as `APPROVAL_FAILED`, expose the existing failure detail, and do not make any proposed row eligible. A successfully appended audit entry may record the failed approval attempt; it must not claim the queue was checkpointed.
+7. Failure handling follows the persistence boundary. Before a Result checkpoint is independently verified, restore the pre-approval in-memory workbook/queue, keep the proposal visible as `APPROVAL_FAILED`, expose the existing failure detail, and do not make any proposed row eligible. After a Result checkpoint is verified, that immutable file is authoritative and cannot be rolled back: recover forward by adopting its workbook/version in memory, retain `APPROVED_CHECKPOINTED`, and append `BRIDGE_PROPOSAL_POST_CHECKPOINT_RECOVERED` with `checkpoint_verified: true`. Never restore an older workbook or claim `APPROVAL_FAILED` after verified disk truth contains the approved rows. Events already persisted before either failure path are cleared from the in-memory buffer so a later flush cannot duplicate them.
 
 Pending/idempotency proposal records live in `chrome.storage.local` with prompt content, expire after 24 hours, and are capped at 20 records/100 jobs total. Approved/rejected/expired records retain only IDs, hashes, timestamps, decision, and checkpoint evidence for 30 days; full prompt text is removed from bridge storage because the ledger becomes authoritative after approval. Token material is stored under a separate key and never included in proposal exports.
 
@@ -685,7 +686,7 @@ Proof:
 - Etag change forces a new review/click.
 - Reject leaves workbook bytes/queue unchanged.
 - Approve adds all rows or none, writes provenance, verifies the next checkpoint, then exposes rows as selected but not running.
-- Forced audit/checkpoint failure rolls back eligibility and returns `APPROVAL_FAILED`.
+- Forced audit/checkpoint failure before verification rolls back eligibility and returns `APPROVAL_FAILED`; a forced post-checkpoint commit failure recovers forward to verified disk truth, retains `APPROVED_CHECKPOINTED`, and records `BRIDGE_PROPOSAL_POST_CHECKPOINT_RECOVERED`.
 - Response-loss replay returns the same proposal, not duplicate rows.
 - Recreate, Resume, queue edit, exact-once, audit-chain, and artifact-integrity suites remain green.
 
@@ -749,6 +750,28 @@ Proof:
 Đức’s manual step: reload the extension after final JavaScript/manifest changes; start the installed host; pair if the token was rotated; run the acceptance CLI; inspect and approve the exact proposal; then manually click the existing selected-job Run control if he chooses to spend quota. He also performs any live ChatGPT/CAPTCHA/quota checks. No commit, push, merge, registry edit, or native-host install is part of these steps unless he separately authorizes a future transport change.
 
 ## Decision revisions
+
+### 2026-08-24 — unexpected dispatcher failures return a stable envelope
+
+`createDispatcher()` converts every non-`BridgeProtocolError` into a non-retryable
+`INTERNAL_ERROR` response with empty details. The alternative — rethrowing to the
+Port/transport adapter — left a valid request with no response and forced the caller
+to wait for its deadline. The dispatcher is the single policy boundary shared by
+in-memory tests and the side-panel Port, so the fail-closed envelope belongs there.
+Both the method registry and error-definition registry are null-prototype objects,
+and injected handler lookup requires an own property; no protocol dispatch or error
+lookup may resolve through `Object.prototype`.
+
+### 2026-08-24 — approval failures split at the immutable-checkpoint boundary
+
+The earlier blanket rule “any approval-step failure restores the old workbook and
+becomes `APPROVAL_FAILED`” is unsafe after a Result XLSX has already been created and
+independently verified. Before that boundary, rollback remains mandatory. After that
+boundary, the verified checkpoint is authoritative: the side panel recovers forward,
+adopts its workbook/version, keeps the proposal `APPROVED_CHECKPOINTED`, and appends
+`BRIDGE_PROPOSAL_POST_CHECKPOINT_RECOVERED` with checkpoint evidence. Proposal-store
+read-modify-write operations are serialized across distinct request IDs so concurrent
+accepted proposals cannot overwrite one another.
 
 ### 2026-08-23 — WP-3 host runtime changed from .NET to Node ESM
 

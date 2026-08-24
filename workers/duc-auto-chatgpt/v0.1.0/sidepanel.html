@@ -53,6 +53,19 @@
          1. SETUP SCREEN
          ========================================================================= -->
     <section id="setupScreen" class="workflow-screen active">
+      <section class="card setup-group bridge-pairing-card" id="bridgePairingCard">
+        <div class="row spread section-title">
+          <strong>AGENT BRIDGE</strong>
+          <span id="bridgeTransportStatus" class="bridge-transport-status" role="status" aria-live="polite">Chưa kết nối</span>
+        </div>
+        <p id="bridgeTransportDetail" class="hint">Chọn tệp pairing do bộ cài Bridge V1 tạo. Token chỉ được lưu cục bộ trong extension.</p>
+        <div class="row gap-sm bridge-pairing-actions">
+          <button id="bridgePairingBtn" class="secondary setup-action" type="button">Kết nối Agent Bridge</button>
+          <button id="bridgeUnpairBtn" class="secondary small" type="button" hidden>Ngắt pairing</button>
+        </div>
+        <input id="bridgePairingInput" type="file" accept=".json,application/json" />
+      </section>
+
       <!-- QUICK PROMPT: one prompt in, one image out, no Excel required -->
       <section class="card setup-group" id="quickPromptCard">
         <div class="row spread section-title">
@@ -335,6 +348,23 @@
       </div>
       </div>
 
+      <section id="bridgeProposalCard" class="card bridge-proposal-card" hidden aria-labelledby="bridgeProposalTitle">
+        <div class="row spread section-title">
+          <strong id="bridgeProposalTitle">ĐỀ XUẤT TỪ AGENT</strong>
+          <span id="bridgeProposalCount" class="bridge-proposal-count">0 job</span>
+        </div>
+        <div id="bridgeProposalStatus" class="bridge-proposal-status" role="status" aria-live="polite">Đang chờ Đức xem xét</div>
+        <dl id="bridgeProposalMeta" class="bridge-proposal-meta"></dl>
+        <ol id="bridgeProposalList" class="bridge-proposal-list"></ol>
+        <p id="bridgeProposalNotice" class="bridge-proposal-notice">Duyệt chỉ thêm các job này vào Queue và ghi checkpoint. Thao tác này không bắt đầu chạy và không gửi prompt tới ChatGPT.</p>
+        <p id="bridgeProposalLockReason" class="bridge-proposal-lock-reason" aria-live="polite"></p>
+        <div class="row end gap-sm bridge-proposal-actions">
+          <button id="bridgeProposalFixtureBtn" class="secondary" type="button">Nạp đề xuất thử</button>
+          <button id="bridgeProposalRejectBtn" class="secondary" type="button">Từ chối</button>
+          <button id="bridgeProposalApproveBtn" class="primary" type="button">Duyệt &amp; ghi checkpoint</button>
+        </div>
+      </section>
+
       <!-- QUEUE -->
       <section class="card queue-card">
         <div class="row spread section-title">
@@ -566,6 +596,10 @@
   <script src="operator-glossary-core.js"></script>
   <script src="operator-messages-core.js"></script>
   <script src="halt-instructions-core.js"></script>
+  <script src="bridge-core.js"></script>
+  <script src="bridge-pairing-core.js"></script>
+  <script src="bridge-proposal-core.js"></script>
+  <script src="approval-persistence-core.js"></script>
   <script src="sidepanel-ui-semantics.js"></script>
   <script src="sidepanel.js"></script>
 </body>

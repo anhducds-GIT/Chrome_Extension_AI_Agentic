@@ -1,6 +1,6 @@
 # DAC_XLSX_RUN_PLAN_V1
 
-`jobs` is required. Its required columns are `id` and `prompt`; optional `reference_images` holds `|`-separated aliases or filenames. Job IDs must be unique filename-safe tokens (`A-Z`, `a-z`, `0-9`, `.`, `_`, `-`) and must not contain path traversal.
+`jobs` is required. Its required columns are `id` and `prompt`; optional `reference_images` holds `|`-separated aliases or filenames. Job IDs must be unique filename-safe tokens (`A-Z`, `a-z`, `0-9`, `.`, `_`, `-`) and must not contain path traversal. Naming convention (not schema-enforced): Pilot-04 through Pilot-06 used letter suffixes (`P06-A`, `P06-B`, ...); Pilot-07 onward use sequential numeric suffixes instead (`P08-...-01`, `-02`, ...). New pilots should follow the numeric convention.
 
 `config` is optional and must have `key` / `value` columns. Supported declarative keys are:
 

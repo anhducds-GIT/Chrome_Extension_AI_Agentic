@@ -3,11 +3,12 @@
   "name": "Duc Auto ChatGPT",
   "version": "0.3.0",
   "description": "Personal, local-only XLSX image generation runner for ChatGPT.",
-  "minimum_chrome_version": "114",
-  "permissions": ["storage", "sidePanel", "tabs", "downloads"],
+  "minimum_chrome_version": "120",
+  "permissions": ["storage", "sidePanel", "tabs", "downloads", "alarms"],
   "host_permissions": [
     "https://chatgpt.com/*",
-    "https://chat.openai.com/*"
+    "https://chat.openai.com/*",
+    "http://127.0.0.1/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -27,11 +28,5 @@
       "js": ["image-evidence-core.js", "attempt-identity-core.js", "reconciliation-core.js", "chat-readiness-core.js", "content.js"],
       "run_at": "document_idle"
     }
-  ],
-  "externally_connectable": {
-    "matches": [
-      "http://localhost/*",
-      "http://127.0.0.1/*"
-    ]
-  }
+  ]
 }

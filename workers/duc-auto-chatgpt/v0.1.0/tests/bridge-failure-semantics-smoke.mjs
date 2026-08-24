@@ -1,0 +1,53 @@
+import assert from "node:assert/strict";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+await import(pathToFileURL(path.join(here, "..", "bridge-core.js")));
+await import(pathToFileURL(path.join(here, "..", "bridge-router-core.js")));
+const core = globalThis.DacBridgeCore;
+const routerCore = globalThis.DacBridgeRouterCore;
+const base = {
+  protocol: core.PROTOCOL,
+  version: 1,
+  kind: "request",
+  request_id: "failure-request-0001",
+  sent_at: "2026-08-24T10:00:00.000Z",
+  client: { client_id: "failure-test", name: "Failure Test", version: "1" }
+};
+
+let available = false;
+const router = routerCore.createRouter({
+  core,
+  executor_state: () => ({ available, executor_epoch: available ? "epoch-1" : null }),
+  send_executor: async () => { throw new Error("panel Port disappeared"); },
+  now: () => new Date("2026-08-24T10:00:01.000Z")
+});
+
+const offlinePing = await router.route({ ...base, method: "system.ping", params: {} });
+assert.equal(offlinePing.ok, true, "panel-closed ping is an availability report, not a fabricated run failure");
+assert.equal(offlinePing.result.extension, "online");
+assert.equal(offlinePing.result.executor, "unavailable");
+assert.equal(offlinePing.result.chatgpt.state, "UNKNOWN");
+
+for (const [index, method] of ["queue.list", "run.status", "ledger.read", "queue.propose", "queue.proposal.get"].entries()) {
+  const params = method === "queue.propose"
+    ? { if_ledger_etag: "etag", jobs: [{ client_job_id: "a", prompt: "x" }] }
+    : method === "queue.proposal.get" ? { proposal_id: "proposal-1" } : {};
+  const response = await router.route({ ...base, request_id: `failure-request-000${index + 2}`, method, params });
+  assert.equal(response.error.code, "EXECUTOR_UNAVAILABLE", `${method} fails closed while the side panel executor is absent`);
+  assert.equal(response.error.retryable, true);
+}
+
+available = true;
+const disconnected = await router.route({ ...base, request_id: "failure-request-0008", method: "queue.list", params: {} });
+assert.equal(disconnected.error.code, "INTERNAL_ERROR", "an unexpected Port failure never becomes a job failure or partial result");
+assert.equal(disconnected.error.retryable, false);
+
+for (const code of ["EXECUTOR_UNAVAILABLE", "TRANSPORT_DISCONNECTED", "REQUEST_TIMEOUT"]) {
+  assert.equal(core.failureResponse("failure-request-0009", code).error.retryable, true, `${code} remains a retryable bridge-layer failure`);
+}
+assert.equal(core.capabilities().auto_execute, false);
+assert.deepEqual(core.capabilities().prohibited_methods, ["run.start", "run.pause", "run.resume"]);
+
+console.log("bridge failure semantics smoke tests: PASS");
