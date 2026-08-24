@@ -8,7 +8,8 @@
     "workspace": "C:\\WORKING ZONE\\Chrome_Extension_AI_Agentic",
     "package_path": "workers/duc-auto-gemini/v0.1.0",
     "accepted_90_percent_sha": "e6408451d4105ed56c60934269fefbebdc8d2712",
-    "page_only_preflight_sha": "8d23bc9d26c70efea9abf991452b3b75944a4b39"
+    "page_only_preflight_sha": "8d23bc9d26c70efea9abf991452b3b75944a4b39",
+    "handoff_package_sha": "7d0e787dea1576cbcc2101d79886747e63199b8b"
   },
   "status": {
     "implementation": "REVIEW_READY_90_PERCENT",

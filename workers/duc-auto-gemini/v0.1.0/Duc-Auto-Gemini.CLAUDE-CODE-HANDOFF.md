@@ -14,6 +14,7 @@ Receive the GPT Web audit for Duc Auto Gemini, independently verify repository s
 - Package: `workers/duc-auto-gemini/v0.1.0/**`
 - Accepted 90% SHA: `e6408451d4105ed56c60934269fefbebdc8d2712`
 - Page-only preflight SHA: `8d23bc9d26c70efea9abf991452b3b75944a4b39`
+- Handoff package SHA: `7d0e787dea1576cbcc2101d79886747e63199b8b`
 - Run ID: `20260824-dag-v01-000-090-r01`
 - Current status: `PASS — REVIEW-READY 90%`
 - Live status: `LIVE_RUNTIME_UNVERIFIED / OWNER_PILOT_PENDING`
