@@ -1,0 +1,94 @@
+{
+  "schema": "duc-auto-gemini.handoff.v1",
+  "generated_at": "2026-08-24T09:17:49.4979820+07:00",
+  "project": "Duc Auto Gemini",
+  "repository": {
+    "url": "https://github.com/anhducds-GIT/Chrome_Extension_AI_Agentic.git",
+    "branch": "main",
+    "workspace": "C:\\WORKING ZONE\\Chrome_Extension_AI_Agentic",
+    "package_path": "workers/duc-auto-gemini/v0.1.0",
+    "accepted_90_percent_sha": "e6408451d4105ed56c60934269fefbebdc8d2712",
+    "page_only_preflight_sha": "8d23bc9d26c70efea9abf991452b3b75944a4b39"
+  },
+  "status": {
+    "implementation": "REVIEW_READY_90_PERCENT",
+    "independent_acceptance": "PASS",
+    "live_runtime": "LIVE_RUNTIME_UNVERIFIED",
+    "next_gate": "OWNER_PILOT_PENDING"
+  },
+  "audit": {
+    "run_id": "20260824-dag-v01-000-090-r01",
+    "closed_findings": [
+      "DAG-B-01",
+      "DAG-B-02",
+      "DAG-B-03",
+      "DAG-B-04",
+      "DAG-B-05",
+      "DAG-B-06",
+      "DAG-B-07",
+      "DAG-B-08",
+      "DAG-R1-01",
+      "DAG-R1-02",
+      "DAG-R1-03",
+      "DAG-R2-01"
+    ],
+    "gpt_web_prompt": "Duc-Auto-Gemini.GPT-WEB-AUDIT-PROMPT.md",
+    "claude_code_handoff": "Duc-Auto-Gemini.CLAUDE-CODE-HANDOFF.md"
+  },
+  "source_of_truth": [
+    "Duc-Auto-Gemini.RUN-LEDGER.md",
+    "evidence/20260824-dag-v01-000-090-r01/20260824-dag-v01-000-090-r01.ACCEPTANCE-HANDOFF.md",
+    "evidence/20260824-dag-v01-000-090-r01/20260824-dag-v01-000-090-r01.TEST-REPORT.md",
+    "evidence/20260824-dag-v01-000-090-r01/20260824-dag-v01-000-090-r01.SCOPE-AND-PUSH-EVIDENCE.md",
+    "evidence/20260824-dag-v01-000-090-r01/20260824-dag-owner-pilot-preflight-page-r01.LIVE-PAGE-EVIDENCE.md",
+    "Duc-Auto-Gemini.PILOT-RUNBOOK.md"
+  ],
+  "runtime_invariants": [
+    "One submit-critical job at a time",
+    "SUBMITTED is durably persisted before Send and is never automatically resent",
+    "Every attempt is bound to one exact Gemini Images tab and full run/job/attempt identity",
+    "Output requires a new attributable model-response container after the submit boundary",
+    "OWNER_REVIEW, INTERRUPTED, blocker and identity failures hard-stop the whole active batch",
+    "Only FILE_INPUT_NOT_EXPOSED timeout may advance from upload trigger to menu",
+    "Security, quota, policy, abort and unknown errors propagate without another click"
+  ],
+  "verification": {
+    "gemini_command": "node workers/duc-auto-gemini/v0.1.0/tests/run-all.mjs",
+    "gemini_baseline_result": "16 passed, 0 failed",
+    "gemini_handoff_package_result": "17 passed, 0 failed",
+    "repository_command": "npm test",
+    "repository_baseline_result": "63 passed, 0 failed; observer PASS",
+    "diff_command": "git diff --check -- workers/duc-auto-gemini/v0.1.0",
+    "syntax_scope": "all .js and .mjs under the Gemini package",
+    "json_scope": "all .json under the Gemini package"
+  },
+  "pilot_inputs": {
+    "workbook": {
+      "path": "fixtures/Duc-Auto-Gemini.SYNTHETIC-QUEUE.xlsx",
+      "included": true,
+      "jobs": ["DAG-0", "DAG-1", "DAG-M"]
+    },
+    "reference_images": {
+      "included": false,
+      "status": "OWNER_SUPPLIED_BY_DESIGN",
+      "required_names": [
+        "reference-one.png",
+        "reference-two.jpg",
+        "reference-three.webp"
+      ],
+      "requirements": "Use benign non-sensitive images and select all three in the Side Panel. Do not add personal or confidential images."
+    }
+  },
+  "scope": {
+    "allowed": ["workers/duc-auto-gemini/v0.1.0/**"],
+    "protected": ["workers/duc-auto-chatgpt/v0.1.0/**", "all unrelated dirty or untracked paths"],
+    "forbidden_operations": ["git add -A", "git add .", "git stash", "git reset", "git clean", "force push", "CAPTCHA or security bypass"]
+  },
+  "handoff_rules": {
+    "claude_first_mode": "READ_ONLY_AUDIT",
+    "writes_require": "A concrete GPT finding or explicit owner implementation instruction",
+    "before_writes": "git pull --ff-only origin main",
+    "publication": "exact-path stage, bounded commit on main, push, then independent ls-remote readback",
+    "uncertainty": "NEED_OWNER_INPUT; do not guess"
+  }
+}
