@@ -30,10 +30,19 @@ assert.equal(offlinePing.result.extension, "online");
 assert.equal(offlinePing.result.executor, "unavailable");
 assert.equal(offlinePing.result.chatgpt.state, "UNKNOWN");
 
-for (const [index, method] of ["queue.list", "run.status", "ledger.read", "queue.propose", "queue.proposal.get"].entries()) {
-  const params = method === "queue.propose"
-    ? { if_ledger_etag: "etag", jobs: [{ client_job_id: "a", prompt: "x" }] }
-    : method === "queue.proposal.get" ? { proposal_id: "proposal-1" } : {};
+const executorMethods = ["queue.list", "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove", "jobs.reorder", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get"];
+const paramsByMethod = {
+  "jobs.add": { jobs: [{ prompt: "x" }] },
+  "jobs.update": { job_id: "Q001", prompt: "x" },
+  "jobs.remove": { job_id: "Q001" },
+  "jobs.reorder": { job_id: "Q001", position: 1 },
+  "output.configure": { image_pattern: "{job_id}" },
+  "run_settings.configure": { timeout_sec: 180 },
+  "queue.propose": { if_ledger_etag: "etag", jobs: [{ client_job_id: "a", prompt: "x" }] },
+  "queue.proposal.get": { proposal_id: "proposal-1" }
+};
+for (const [index, method] of executorMethods.entries()) {
+  const params = paramsByMethod[method] || {};
   const response = await router.route({ ...base, request_id: `failure-request-000${index + 2}`, method, params });
   assert.equal(response.error.code, "EXECUTOR_UNAVAILABLE", `${method} fails closed while the side panel executor is absent`);
   assert.equal(response.error.retryable, true);

@@ -322,6 +322,112 @@
     return { if_ledger_etag: etag, proposal_label: label, jobs };
   }
 
+  function jobIdValue(value, path = "params.job_id") {
+    const id = stringValue(value, path, {
+      min: 1, max: 100, pattern: /^[A-Za-z0-9._-]+$/, patternMessage: "use letters, numbers, dot, underscore, or hyphen"
+    });
+    if (id.includes("..")) invalidParams(path, "two consecutive dots are not filename-safe");
+    return id;
+  }
+
+  function validateDirectJob(raw, index) {
+    const path = `params.jobs[${index}]`;
+    const job = assertPlainObject(raw, path);
+    rejectUnknown(job, ["prompt", "reference_images", "settings"], path);
+    const prompt = stringValue(job.prompt, `${path}.prompt`, { min: 1, max: LIMITS.max_envelope_bytes, trim: false });
+    if (!prompt.trim()) invalidParams(`${path}.prompt`, "expected non-whitespace text");
+    const references = job.reference_images === undefined ? [] : job.reference_images;
+    if (!Array.isArray(references) || references.length > LIMITS.max_references_per_job) {
+      invalidParams(`${path}.reference_images`, `expected at most ${LIMITS.max_references_per_job} selected filename or alias tokens`);
+    }
+    const referenceImages = references.map((reference, referenceIndex) => validateReferenceToken(reference, `${path}.reference_images[${referenceIndex}]`));
+    if (new Set(referenceImages.map((reference) => reference.toLowerCase())).size !== referenceImages.length) invalidParams(`${path}.reference_images`, "duplicate reference token");
+    return { prompt, reference_images: referenceImages, settings: validateSettings(job.settings, `${path}.settings`) };
+  }
+
+  function validateJobsAdd(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["jobs"], "params");
+    if (!Array.isArray(params.jobs) || params.jobs.length < 1 || params.jobs.length > LIMITS.max_jobs_per_proposal) {
+      invalidParams("params.jobs", `expected 1-${LIMITS.max_jobs_per_proposal} jobs`);
+    }
+    return { jobs: params.jobs.map(validateDirectJob) };
+  }
+
+  function validateJobsUpdate(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["job_id", "prompt", "reference_images", "settings"], "params");
+    const normalized = { job_id: jobIdValue(params.job_id) };
+    if (params.prompt !== undefined) {
+      normalized.prompt = stringValue(params.prompt, "params.prompt", { min: 1, max: LIMITS.max_envelope_bytes, trim: false });
+      if (!normalized.prompt.trim()) invalidParams("params.prompt", "expected non-whitespace text");
+    }
+    if (params.reference_images !== undefined) {
+      if (!Array.isArray(params.reference_images) || params.reference_images.length > LIMITS.max_references_per_job) {
+        invalidParams("params.reference_images", `expected at most ${LIMITS.max_references_per_job} selected filename or alias tokens`);
+      }
+      normalized.reference_images = params.reference_images.map((reference, index) => validateReferenceToken(reference, `params.reference_images[${index}]`));
+      if (new Set(normalized.reference_images.map((reference) => reference.toLowerCase())).size !== normalized.reference_images.length) invalidParams("params.reference_images", "duplicate reference token");
+    }
+    if (params.settings !== undefined) normalized.settings = validateSettings(params.settings, "params.settings");
+    if (!Object.hasOwn(normalized, "prompt") && !Object.hasOwn(normalized, "reference_images") && !Object.hasOwn(normalized, "settings")) {
+      invalidParams("params", "expected at least one mutable job field");
+    }
+    return normalized;
+  }
+
+  function validateJobIdOnly(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["job_id"], "params");
+    return { job_id: jobIdValue(params.job_id) };
+  }
+
+  function validateJobsReorder(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["job_id", "position"], "params");
+    return { job_id: jobIdValue(params.job_id), position: integerValue(params.position, "params.position", 1, 1000000) };
+  }
+
+  function validateOutputConfigure(raw) {
+    const params = assertPlainObject(raw, "params");
+    const allowed = ["image_pattern", "result_filename_pattern", "audit_filename", "collision_policy", "save_images", "save_result_xlsx", "save_audit_jsonl"];
+    rejectUnknown(params, allowed, "params");
+    if (!Object.keys(params).length) invalidParams("params", "expected at least one output field");
+    const normalized = {};
+    for (const key of ["image_pattern", "result_filename_pattern", "audit_filename"]) {
+      if (params[key] !== undefined) normalized[key] = stringValue(params[key], `params.${key}`, { min: 1, max: 255, trim: false });
+    }
+    if (params.collision_policy !== undefined) {
+      const policy = stringValue(params.collision_policy, "params.collision_policy", { min: 1, max: 32 });
+      if (!["overwrite", "uniquify", "fail"].includes(policy)) invalidParams("params.collision_policy", "expected overwrite, uniquify, or fail");
+      normalized.collision_policy = policy;
+    }
+    for (const key of ["save_images", "save_result_xlsx", "save_audit_jsonl"]) {
+      if (params[key] !== undefined) normalized[key] = booleanValue(params[key], `params.${key}`);
+    }
+    return normalized;
+  }
+
+  function validateRunSettingsConfigure(raw) {
+    const params = assertPlainObject(raw, "params");
+    const allowed = ["timeout_sec", "max_retries", "delay_min_sec", "delay_max_sec", "safety_cooldown_sec", "max_input_images", "continue_on_error", "rerun_done"];
+    rejectUnknown(params, allowed, "params");
+    if (!Object.keys(params).length) invalidParams("params", "expected at least one run setting");
+    const normalized = {};
+    if (params.timeout_sec !== undefined) normalized.timeout_sec = integerValue(params.timeout_sec, "params.timeout_sec", 15, 900);
+    if (params.max_retries !== undefined) normalized.max_retries = integerValue(params.max_retries, "params.max_retries", 0, 5);
+    if (params.delay_min_sec !== undefined) normalized.delay_min_sec = integerValue(params.delay_min_sec, "params.delay_min_sec", 1, 120);
+    if (params.delay_max_sec !== undefined) normalized.delay_max_sec = integerValue(params.delay_max_sec, "params.delay_max_sec", 1, 120);
+    if (params.safety_cooldown_sec !== undefined) normalized.safety_cooldown_sec = validateSettings({ safety_cooldown_sec: params.safety_cooldown_sec }, "params").safety_cooldown_sec;
+    if (params.max_input_images !== undefined) normalized.max_input_images = integerValue(params.max_input_images, "params.max_input_images", 0, 10);
+    if (params.continue_on_error !== undefined) normalized.continue_on_error = booleanValue(params.continue_on_error, "params.continue_on_error");
+    if (params.rerun_done !== undefined) normalized.rerun_done = booleanValue(params.rerun_done, "params.rerun_done");
+    if (normalized.delay_min_sec !== undefined && normalized.delay_max_sec !== undefined && normalized.delay_min_sec > normalized.delay_max_sec) {
+      invalidParams("params.delay_min_sec", "must not exceed params.delay_max_sec");
+    }
+    return normalized;
+  }
+
   function validateProposalGet(raw) {
     const params = assertPlainObject(raw, "params");
     rejectUnknown(params, ["proposal_id"], "params");
@@ -359,6 +465,12 @@
     registryEntry({ name: "queue.list", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a page of active logical queue jobs.", params_schema: { cursor: "string|null", limit: "integer:1..100", statuses: "code[]", include_prompt: "boolean" }, params_validator: validateQueueList }),
     registryEntry({ name: "run.status", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read current run state without changing it.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "ledger.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a sanitized page of physical XLSX ledger rows.", params_schema: { cursor: "string|null", limit: "integer:1..100", include_prompt: "boolean", include_removed: "boolean" }, params_validator: validateLedgerRead }),
+    registryEntry({ name: "jobs.add", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Add jobs directly to the current Setup session, or create an in-memory session.", params_schema: { jobs: "direct_job[1..100]" }, params_validator: validateJobsAdd }),
+    registryEntry({ name: "jobs.update", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Update mutable input fields on one PRE_SUBMIT job.", params_schema: { job_id: "string", prompt: "string?", reference_images: "string[]?", settings: "job_settings?" }, params_validator: validateJobsUpdate }),
+    registryEntry({ name: "jobs.remove", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Tombstone one PRE_SUBMIT Queue job without deleting its ledger row.", params_schema: { job_id: "string" }, params_validator: validateJobIdOnly }),
+    registryEntry({ name: "jobs.reorder", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Move one PRE_SUBMIT Queue job to a persisted logical position.", params_schema: { job_id: "string", position: "integer:1..1000000" }, params_validator: validateJobsReorder }),
+    registryEntry({ name: "output.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure naming, collision, and save controls for an already-bound output location.", params_schema: { image_pattern: "string?", result_filename_pattern: "string?", audit_filename: "string?", collision_policy: "overwrite|uniquify|fail?", save_images: "boolean?", save_result_xlsx: "boolean?", save_audit_jsonl: "boolean?" }, params_validator: validateOutputConfigure }),
+    registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?" }, params_validator: validateRunSettingsConfigure }),
     registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage a quarantined queue proposal; never execute it automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100]" }, params_validator: validateQueuePropose }),
     registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet })
   ];
@@ -416,7 +528,7 @@
 
   function validateRequestEnvelope(envelope) {
     if (!validRequestId(envelope.request_id)) invalidEnvelope("request_id must be 8-128 visible ASCII characters.", { field: "request_id" });
-    if (typeof envelope.method !== "string" || !/^[a-z][a-z0-9]*(?:\.[a-z][a-z0-9]*)+$/.test(envelope.method)) invalidEnvelope("method must be a dotted lowercase identifier.", { field: "method" });
+    if (typeof envelope.method !== "string" || !/^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$/.test(envelope.method)) invalidEnvelope("method must be a dotted lowercase identifier.", { field: "method" });
     if (!validTimestamp(envelope.sent_at)) invalidEnvelope("sent_at must be an ISO-8601 UTC timestamp.", { field: "sent_at" });
     if (!isPlainObject(envelope.client)) invalidEnvelope("client must be an object.", { field: "client" });
     const client = envelope.client;

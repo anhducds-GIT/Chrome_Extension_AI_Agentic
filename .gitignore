@@ -3,6 +3,10 @@
 .tmp.driveupload/
 .tmp.drivedownload/
 
+# Excel lock/temp files created while a workbook is open — never real data.
+~$*.xlsx
+~$*.xls
+
 # One-off local exports and legacy ad-hoc Pilot workbooks.
 _to_delete_audit_head_export_tmp/
 pilots/v0-trial/

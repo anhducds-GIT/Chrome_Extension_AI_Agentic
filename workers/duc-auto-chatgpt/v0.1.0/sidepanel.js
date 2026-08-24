@@ -28,7 +28,8 @@
     "artifactImagesDetail", "artifactImagesStatus", "artifactRowResult", "artifactResultDetail",
     "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus", "runDashboardSplit", "runWidthSplitter",
     "bridgeProposalCard", "bridgeProposalCount", "bridgeProposalStatus", "bridgeProposalMeta", "bridgeProposalList", "bridgeProposalNotice", "bridgeProposalLockReason", "bridgeProposalFixtureBtn", "bridgeProposalRejectBtn", "bridgeProposalApproveBtn",
-    "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput"
+    "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput",
+    "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeActivityEmpty"
   ];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
   // Output Profile mode is normally driven by output_profile_id / result_output_profile_id
@@ -104,7 +105,9 @@
     bridgeProposals: [],
     bridgeExecutorEpoch: null,
     bridgePort: null,
-    bridgeTransportStatus: null
+    bridgeTransportStatus: null,
+    bridgeLastActivityAt: null,
+    bridgeActivity: []
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -363,6 +366,15 @@
     pairing_invalid: "Tệp pairing không hợp lệ"
   });
 
+  const BRIDGE_DIRECT_EVENT_TYPES = Object.freeze(new Set([
+    "BRIDGE_JOB_ADDED_DIRECT",
+    "BRIDGE_JOB_UPDATED",
+    "BRIDGE_JOB_REMOVED",
+    "BRIDGE_JOB_REORDERED",
+    "BRIDGE_OUTPUT_CONFIGURED",
+    "BRIDGE_RUN_SETTINGS_CONFIGURED"
+  ]));
+
   function renderBridgeTransportStatus(status = state.bridgeTransportStatus) {
     if (!els.bridgeTransportStatus || !els.bridgeTransportDetail) return;
     const current = status && typeof status === "object" ? status : { state: "unpaired", paired: false, endpoint: null };
@@ -376,6 +388,8 @@
       ? `${endpoint} · ${executor} Token không xuất hiện trong log, workbook hoặc audit.`
       : "Chọn tệp pairing do bộ cài Bridge V1 tạo. Token chỉ được lưu cục bộ trong extension.";
     els.bridgeUnpairBtn.hidden = !current.paired;
+    if (els.bridgeHostReachable) els.bridgeHostReachable.textContent = current.state === "connected" ? "C\u00f3" : "Kh\u00f4ng";
+    if (els.bridgePairingState) els.bridgePairingState.textContent = current.paired ? "\u0110\u00e3 pairing" : "Ch\u01b0a pairing";
   }
 
   async function refreshBridgeTransportStatus() {
@@ -563,9 +577,46 @@
     return {
       extension: "online",
       executor: "available",
+      bridge: {
+        host_reachable: state.bridgeTransportStatus?.state === "connected",
+        extension_paired: Boolean(state.bridgeTransportStatus?.paired),
+        last_activity_at: state.bridgeLastActivityAt
+      },
       chatgpt,
       workbook: { loaded: Boolean(workbook), file_name: workbook?.fileName || null, run_id: state.runId || workbook?.config?.run_id || null }
     };
+  }
+
+  function renderBridgeActivityFeed() {
+    if (!els.bridgeActivityList) return;
+    els.bridgeActivityList.replaceChildren();
+    const events = state.bridgeActivity.filter((event) => BRIDGE_DIRECT_EVENT_TYPES.has(event.event)).slice().reverse();
+    if (els.bridgeActivityEmpty) els.bridgeActivityEmpty.hidden = events.length > 0;
+    for (const event of events) {
+      const item = element("li", "bridge-activity-item");
+      item.append(
+        element("strong", "bridge-activity-event", event.event),
+        element("span", "bridge-activity-time", new Date(event.timestamp).toLocaleString()),
+        element("span", "bridge-activity-detail", event.message || "Bridge Setup mutation checkpointed.")
+      );
+      els.bridgeActivityList.appendChild(item);
+    }
+  }
+
+  function recordBridgeActivity(event) {
+    if (!event || !BRIDGE_DIRECT_EVENT_TYPES.has(event.event)) return;
+    state.bridgeActivity.push({ event: event.event, timestamp: event.timestamp, message: event.message || "" });
+    if (state.bridgeActivity.length > 100) state.bridgeActivity.splice(0, state.bridgeActivity.length - 100);
+    renderBridgeActivityFeed();
+  }
+
+  async function refreshBridgeScreen() {
+    const ping = await bridgeSystemPing();
+    if (els.bridgeHostReachable) els.bridgeHostReachable.textContent = ping.bridge.host_reachable ? "C\u00f3" : "Kh\u00f4ng";
+    if (els.bridgePairingState) els.bridgePairingState.textContent = ping.bridge.extension_paired ? "\u0110\u00e3 pairing" : "Ch\u01b0a pairing";
+    if (els.bridgeLastActivity) els.bridgeLastActivity.textContent = ping.bridge.last_activity_at ? new Date(ping.bridge.last_activity_at).toLocaleString() : "Ch\u01b0a c\u00f3";
+    renderBridgeActivityFeed();
+    return ping;
   }
 
   async function bridgeLedgerRead(params) {
@@ -650,6 +701,8 @@
 
   function withBridgeErrors(handler) {
     return async (...args) => {
+      state.bridgeLastActivityAt = new Date().toISOString();
+      if (els.bridgeLastActivity) els.bridgeLastActivity.textContent = new Date(state.bridgeLastActivityAt).toLocaleString();
       try { return await handler(...args); }
       catch (error) { throw bridgeError(error); }
     };
@@ -662,6 +715,12 @@
       "queue.list": withBridgeErrors(bridgeQueueList),
       "run.status": withBridgeErrors(async () => bridgeRunStatus()),
       "ledger.read": withBridgeErrors(bridgeLedgerRead),
+      "jobs.add": withBridgeErrors(bridgeJobsAdd),
+      "jobs.update": withBridgeErrors(bridgeJobsUpdate),
+      "jobs.remove": withBridgeErrors(bridgeJobsRemove),
+      "jobs.reorder": withBridgeErrors(bridgeJobsReorder),
+      "output.configure": withBridgeErrors(bridgeOutputConfigure),
+      "run_settings.configure": withBridgeErrors(bridgeRunSettingsConfigure),
       "queue.propose": withBridgeErrors(bridgeQueuePropose),
       "queue.proposal.get": withBridgeErrors(bridgeProposalGet)
     }
@@ -698,7 +757,7 @@
     return visible[0] || null;
   }
 
-  function bridgeApprovalLockReason() {
+  function bridgeApprovalLockReason({ workbookRequired = true, persistenceRequired = true } = {}) {
     let persistenceMissing = !state.outputSettings;
     if (state.outputSettings) {
       try {
@@ -712,8 +771,230 @@
       recreate: state.recreateRunning || Boolean(state.pendingRecreateJobId) || Boolean(state.pendingRerunJobId),
       audit_gap: state.auditGapRunning || state.auditChain?.code === "RESUME_AUDIT_CHAIN_MISSING",
       queue_mutation: state.queueMutationRunning,
-      workbook_missing: !state.workbook,
-      persistence_missing: persistenceMissing
+      workbook_missing: workbookRequired && !state.workbook,
+      persistence_missing: persistenceRequired && persistenceMissing
+    });
+  }
+
+  function cloneBridgeOutputSettings(settings) {
+    if (!settings) return null;
+    return {
+      ...settings,
+      image: settings.image && typeof settings.image === "object" ? { ...settings.image } : settings.image,
+      result: settings.result && typeof settings.result === "object" ? { ...settings.result } : settings.result
+    };
+  }
+
+  function bridgeDirectSnapshot() {
+    return {
+      workbook: state.workbook,
+      prepared: state.prepared,
+      outputSettings: cloneBridgeOutputSettings(state.outputSettings),
+      runtimeOverrides: { ...state.runtimeOverrides },
+      importedConfig: state.importedConfig,
+      configFindings: [...state.configFindings],
+      localOverrides: new Set(state.localOverrides),
+      outputProfileState: state.outputProfileState,
+      destinationMode: state.destinationMode,
+      separateResultDestination: state.separateResultDestination,
+      runId: state.runId,
+      auditEvents: [...state.auditEvents],
+      auditFile: state.auditFile,
+      resultFile: state.resultFile,
+      resumeLedgerFile: state.resumeLedgerFile,
+      checkpointVersion: state.checkpointVersion,
+      checkpointFilename: state.checkpointFilename,
+      checkpointCreatedAt: state.checkpointCreatedAt,
+      runSelection: new Set(state.runSelection),
+      selectedJobId: state.selectedJobId,
+      quickPromptCounter: state.quickPromptCounter,
+      validated: state.validated
+    };
+  }
+
+  function restoreBridgeDirectSnapshot(snapshot, auditPersisted = false) {
+    const persistedAuditFile = state.auditFile;
+    state.workbook = snapshot.workbook;
+    state.prepared = snapshot.prepared;
+    state.outputSettings = snapshot.outputSettings;
+    state.runtimeOverrides = snapshot.runtimeOverrides;
+    state.importedConfig = snapshot.importedConfig;
+    state.configFindings = snapshot.configFindings;
+    state.localOverrides = snapshot.localOverrides;
+    state.outputProfileState = snapshot.outputProfileState;
+    state.destinationMode = snapshot.destinationMode;
+    state.separateResultDestination = snapshot.separateResultDestination;
+    state.runId = snapshot.runId;
+    state.auditEvents = auditPersisted ? [] : snapshot.auditEvents;
+    state.auditFile = auditPersisted ? persistedAuditFile : snapshot.auditFile;
+    state.resultFile = snapshot.resultFile;
+    state.resumeLedgerFile = snapshot.resumeLedgerFile;
+    state.checkpointVersion = snapshot.checkpointVersion;
+    state.checkpointFilename = snapshot.checkpointFilename;
+    state.checkpointCreatedAt = snapshot.checkpointCreatedAt;
+    state.runSelection = snapshot.runSelection;
+    state.selectedJobId = snapshot.selectedJobId;
+    state.quickPromptCounter = snapshot.quickPromptCounter;
+    state.validated = snapshot.validated;
+  }
+
+  function bridgeDirectAuditEvent(event, method, mutation) {
+    const output = window.DacOutputLocation.effective(state.outputSettings);
+    return {
+      timestamp: new Date().toISOString(), run_id: state.runId, job_id: mutation.job_id || null, attempt_id: null,
+      event, attempt: null, phase: "PRE_SUBMIT", status: "PENDING", failure_type: null,
+      message: mutation.message || `${method} changed Setup state; immutable checkpoint verification is pending.`,
+      elapsed_ms: null, references: [], requested_filename: null, result_file: null, result_download_id: null,
+      persistence_verified: false, write_outcome: null, detected_not_downloaded: false,
+      collision_policy: output.collisionPolicy, prompt_fingerprint: null, target_url: null, submitted_at: null, detection: null,
+      input_origin: "bridge_direct", bridge_method: method,
+      bridge_job_ids: mutation.job_ids || (mutation.job_id ? [mutation.job_id] : []),
+      bridge_changed_fields: mutation.changed_fields || [], checkpoint_verified: false
+    };
+  }
+
+  function bridgeDirectLock({ workbookRequired = true, persistenceRequired = true } = {}) {
+    const reason = bridgeApprovalLockReason({ workbookRequired, persistenceRequired });
+    if (reason) throw new window.DacBridgeCore.BridgeProtocolError("RUN_ACTIVE", reason, { lock_reason: reason });
+  }
+
+  async function assertBridgeOutputBound() {
+    const settings = state.outputSettings;
+    if (!settings) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", "OUTPUT_PROFILE_UNBOUND: Ch\u01b0a c\u00f3 Output Profile trong phi\u00ean hi\u1ec7n t\u1ea1i.");
+    let output;
+    try { output = window.DacOutputLocation.effective(settings); }
+    catch (error) { throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", messageOf(error)); }
+    if (output.image?.kind !== "directory" || !output.image.handle || output.result?.kind !== "directory" || !output.result.handle) {
+      throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", "OUTPUT_PROFILE_UNBOUND: output.configure ch\u1ec9 \u0111\u01b0\u1ee3c thay \u0111\u1ed5i profile/folder \u0111\u00e3 do \u0110\u1ee9c bind tr\u01b0\u1edbc \u0111\u00f3.");
+    }
+    const preflight = await window.DacOutputLocation.preflight(settings);
+    if (!preflight.ok) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", preflight.error);
+    return preflight.effective;
+  }
+
+  async function executeBridgeDirectMutation({ method, event, workbookRequired = true, persistenceRequired = true, mutate }) {
+    if (workbookRequired) requireBridgeWorkbook();
+    bridgeDirectLock({ workbookRequired: false, persistenceRequired });
+    state.queueMutationRunning = true;
+    controls();
+    let recoveredForward = null;
+    try {
+      const outcome = await window.DacApprovalPersistence.execute({
+        snapshot: async () => bridgeDirectSnapshot(),
+        apply: async () => {
+          if (state.workbook) state.workbook = await window.DacXlsx.cloneWorkbook(state.workbook);
+          const mutation = await mutate();
+          if (!state.workbook) throw new window.DacBridgeCore.BridgeProtocolError("WORKBOOK_NOT_LOADED");
+          state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName);
+          state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
+          const preflight = await window.DacOutputLocation.preflight(state.outputSettings);
+          if (!preflight.ok) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", preflight.error);
+          const auditEvent = bridgeDirectAuditEvent(event, method, mutation);
+          state.auditEvents.push(auditEvent);
+          return { mutation, candidate: state.workbook, auditEvent, output: preflight.effective };
+        },
+        persist_audit: async (applied) => {
+          state.auditFile = await saveAuditLog(applied.output.result, { appendExisting: true, force: true });
+          if (!state.auditFile) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", "BRIDGE_DIRECT_AUDIT_PERSISTENCE_FAILED: Audit JSONL was not verified.");
+          return state.auditFile;
+        },
+        persist_checkpoint: async (applied, auditFile) => {
+          const checkpoint = await persistLedgerCandidate(applied.candidate, applied.output.result, auditFile, { force: true });
+          if (!checkpoint) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", "BRIDGE_DIRECT_CHECKPOINT_FAILED: Result checkpoint was not verified.");
+          return checkpoint;
+        },
+        commit: async (applied, auditFile, checkpoint) => {
+          state.workbook = checkpoint.workbook;
+          state.auditFile = auditFile;
+          state.resultFile = checkpoint.actual;
+          state.resumeLedgerFile = checkpoint.filename;
+          state.checkpointVersion = checkpoint.version;
+          state.checkpointFilename = checkpoint.filename;
+          state.checkpointCreatedAt = checkpoint.checkpoint.checkpoint_created_at;
+          if (state.resumeMode) state.resumePlan = window.DacResumeCore.plan(state.workbook);
+          await refreshQueueAfterMutation(applied.mutation.message);
+          if (state.resumeMode && state.prepared) window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
+          renderCheckpointMeta();
+          recordBridgeActivity(applied.auditEvent);
+          refreshBridgeScreen().catch(() => {});
+          return { ...applied.mutation, audit_event: event, checkpoint: { version: checkpoint.version, filename: checkpoint.filename, verified: true } };
+        },
+        rollback: async ({ snapshot, applied, audit, checkpoint, error }) => {
+          if (checkpoint) {
+            state.workbook = checkpoint.workbook;
+            state.auditFile = audit || state.auditFile;
+            state.resultFile = checkpoint.actual;
+            state.resumeLedgerFile = checkpoint.filename;
+            state.checkpointVersion = checkpoint.version;
+            state.checkpointFilename = checkpoint.filename;
+            state.checkpointCreatedAt = checkpoint.checkpoint.checkpoint_created_at;
+            try { await prepare({ diagnostic: true }); } catch (_) { state.prepared = null; }
+            recoveredForward = { applied, checkpoint, error };
+            return;
+          }
+          restoreBridgeDirectSnapshot(snapshot, Boolean(audit));
+        }
+      });
+      return outcome.result;
+    } catch (error) {
+      if (recoveredForward) {
+        recordBridgeActivity(recoveredForward.applied.auditEvent);
+        return {
+          ...recoveredForward.applied.mutation,
+          audit_event: event,
+          checkpoint: { version: recoveredForward.checkpoint.version, filename: recoveredForward.checkpoint.filename, verified: true },
+          recovered_forward: true
+        };
+      }
+      throw error;
+    } finally {
+      state.queueMutationRunning = false;
+      renderBridgeProposals(); renderQueue(); renderOutput(); controls();
+    }
+  }
+
+  async function bridgeJobsAdd(params) {
+    const bootstrap = !state.workbook;
+    return executeBridgeDirectMutation({
+      method: "jobs.add", event: "BRIDGE_JOB_ADDED_DIRECT", workbookRequired: false, persistenceRequired: !bootstrap,
+      mutate: async () => applyBridgeJobsAdd(params.jobs)
+    });
+  }
+
+  async function bridgeJobsUpdate(params) {
+    return executeBridgeDirectMutation({
+      method: "jobs.update", event: "BRIDGE_JOB_UPDATED",
+      mutate: async () => applyQueueJobUpdate(params.job_id, params)
+    });
+  }
+
+  async function bridgeJobsRemove(params) {
+    return executeBridgeDirectMutation({
+      method: "jobs.remove", event: "BRIDGE_JOB_REMOVED",
+      mutate: async () => applyQueueJobRemoval(params.job_id)
+    });
+  }
+
+  async function bridgeJobsReorder(params) {
+    return executeBridgeDirectMutation({
+      method: "jobs.reorder", event: "BRIDGE_JOB_REORDERED",
+      mutate: async () => applyQueueJobPosition(params.job_id, params.position)
+    });
+  }
+
+  async function bridgeOutputConfigure(params) {
+    requireBridgeWorkbook();
+    await assertBridgeOutputBound();
+    return executeBridgeDirectMutation({
+      method: "output.configure", event: "BRIDGE_OUTPUT_CONFIGURED", persistenceRequired: false,
+      mutate: async () => applyArtifactNamingValues(params)
+    });
+  }
+
+  async function bridgeRunSettingsConfigure(params) {
+    return executeBridgeDirectMutation({
+      method: "run_settings.configure", event: "BRIDGE_RUN_SETTINGS_CONFIGURED",
+      mutate: async () => applyRuntimeOverrideValues(params)
     });
   }
 
@@ -1944,6 +2225,102 @@
     throw new Error(`Không tìm được ID mới để nhân bản ${sourceId}.`);
   }
 
+  function bridgeMutationValidation(message, details = {}) {
+    throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", message, details);
+  }
+
+  function mutationQueueItem(jobId) {
+    if (!state.workbook) throw new window.DacBridgeCore.BridgeProtocolError("WORKBOOK_NOT_LOADED");
+    const prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
+    state.prepared = prepared;
+    const item = prepared.queue.find((entry) => String(entry.job.id) === String(jobId));
+    if (!item) bridgeMutationValidation(`JOB_NOT_FOUND: Kh\u00f4ng t\u00ecm th\u1ea5y job ${jobId}.`, { job_id: jobId });
+    if (!isQueueEditable(item)) bridgeMutationValidation(`JOB_NOT_PRE_SUBMIT: Job ${jobId} \u0111\u00e3 qua ranh gi\u1edbi PRE_SUBMIT v\u00e0 kh\u00f4ng th\u1ec3 thay \u0111\u1ed5i.`, { job_id: jobId, status: item.status, phase: item.phase });
+    return item;
+  }
+
+  function directJobValues(job) {
+    const values = { prompt: job.prompt, reference_images: (job.reference_images || []).join("|") };
+    for (const [key, value] of Object.entries(job.settings || {})) values[key] = value;
+    return values;
+  }
+
+  async function applyBridgeJobsAdd(jobs) {
+    const assigned = [];
+    if (!state.workbook) {
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 16);
+      state.quickPromptCounter = 0;
+      const rows = jobs.map((job, index) => ({ id: `Q${String(index + 1).padStart(3, "0")}`, prompt: job.prompt }));
+      state.quickPromptCounter = rows.length;
+      state.workbook = window.DacXlsx.createWorkbook(`Bridge-${stamp}.xlsx`, rows);
+      applyWorkbookConfig();
+      rows.forEach((row, index) => {
+        const workbookJob = state.workbook.jobs[index];
+        const values = directJobValues(jobs[index]);
+        window.DacXlsx.updateJob(state.workbook, workbookJob, values);
+        Object.assign(workbookJob, Object.fromEntries(Object.entries(values).map(([key, value]) => [key, String(value ?? "")])));
+        assigned.push(row.id);
+      });
+    } else {
+      const rows = [];
+      for (const job of jobs) rows.push({ id: nextQuickPromptId(), ...directJobValues(job), queue_removed: "false" });
+      const added = window.DacXlsx.addJobsBatch(state.workbook, rows);
+      assigned.push(...added.map((job) => job.id));
+    }
+    state.runSelection = new Set(assigned);
+    state.queueExpanded = true;
+    return {
+      job_ids: assigned,
+      changed_fields: ["prompt", "reference_images", "settings"],
+      message: `Agent Bridge \u0111\u00e3 th\u00eam ${assigned.length} job (${assigned.join(", ")}) v\u00e0o Setup; ch\u01b0a ch\u1ea1y.`
+    };
+  }
+
+  function applyQueueJobUpdate(jobId, params) {
+    const item = mutationQueueItem(jobId);
+    const values = {};
+    if (Object.hasOwn(params, "prompt")) values.prompt = params.prompt;
+    if (Object.hasOwn(params, "reference_images")) values.reference_images = params.reference_images.join("|");
+    for (const [key, value] of Object.entries(params.settings || {})) values[key] = value;
+    window.DacXlsx.updateJob(state.workbook, item.job, values);
+    Object.assign(item.job, Object.fromEntries(Object.entries(values).map(([key, value]) => [key, String(value ?? "")])));
+    return {
+      job_id: jobId,
+      changed_fields: Object.keys(values),
+      message: `Agent Bridge \u0111\u00e3 c\u1eadp nh\u1eadt job ${jobId}; job v\u1eabn \u1edf PRE_SUBMIT v\u00e0 ch\u01b0a ch\u1ea1y.`
+    };
+  }
+
+  function applyQueueJobRemoval(jobId) {
+    const item = mutationQueueItem(jobId);
+    window.DacXlsx.removeFromQueue(state.workbook, item.job);
+    state.runSelection.delete(jobId);
+    if (state.selectedJobId === jobId) state.selectedJobId = null;
+    return {
+      job_id: jobId,
+      changed_fields: ["queue_removed", "queue_removed_at", "queue_position"],
+      message: `Agent Bridge \u0111\u00e3 b\u1ecf ${jobId} kh\u1ecfi Queue b\u1eb1ng tombstone; d\u00f2ng ledger v\u1eabn \u0111\u01b0\u1ee3c gi\u1eef.`
+    };
+  }
+
+  function applyQueueJobPosition(jobId, position) {
+    const item = mutationQueueItem(jobId);
+    const ordered = window.DacXlsx.activeJobs(state.workbook);
+    const currentIndex = ordered.indexOf(item.job);
+    if (!Number.isInteger(position) || position < 1 || position > ordered.length) {
+      bridgeMutationValidation(`QUEUE_POSITION_INVALID: position ph\u1ea3i n\u1eb1m trong kho\u1ea3ng 1-${ordered.length}.`, { job_id: jobId, position });
+    }
+    ordered.splice(currentIndex, 1);
+    ordered.splice(position - 1, 0, item.job);
+    window.DacXlsx.setQueueOrder(state.workbook, ordered);
+    return {
+      job_id: jobId,
+      position,
+      changed_fields: ["queue_position"],
+      message: `Agent Bridge \u0111\u00e3 chuy\u1ec3n ${jobId} t\u1edbi v\u1ecb tr\u00ed ${position} trong Queue.`
+    };
+  }
+
   async function refreshQueueAfterMutation(message) {
     invalidateValidation(message);
     if (state.resumeMode) state.resumePlan = window.DacResumeCore.plan(state.workbook);
@@ -1993,9 +2370,7 @@
     if (index < 0 || targetIndex < 0 || targetIndex >= queue.length || !isQueueEditable(queue[index]) || !isQueueEditable(queue[targetIndex])) return;
     state.queueMutationRunning = true; controls();
     try {
-      const ordered = window.DacXlsx.activeJobs(state.workbook);
-      [ordered[index], ordered[targetIndex]] = [ordered[targetIndex], ordered[index]];
-      window.DacXlsx.setQueueOrder(state.workbook, ordered);
+      applyQueueJobPosition(jobId, targetIndex + 1);
       await refreshQueueAfterMutation(`Đã đổi vị trí ${jobId}; Check Plan đã được chạy lại.`);
       log(`Đã chuyển ${jobId} ${direction < 0 ? "lên" : "xuống"} một vị trí trong Queue.`, "done");
     } catch (error) {
@@ -2049,9 +2424,7 @@
     if (!isQueueEditable(item)) { closeQueueRemoveDialog(); return; }
     state.queueMutationRunning = true; controls();
     try {
-      window.DacXlsx.removeFromQueue(state.workbook, item.job);
-      state.runSelection.delete(jobId);
-      if (state.selectedJobId === jobId) state.selectedJobId = null;
+      applyQueueJobRemoval(jobId);
       closeQueueRemoveDialog();
       await refreshQueueAfterMutation(`Đã bỏ ${jobId} khỏi Queue; dữ liệu ledger vẫn được giữ.`);
       log(`Đã bỏ ${jobId} khỏi Queue; dòng XLSX được giữ với queue_removed=true.`, "done");
@@ -2889,23 +3262,53 @@
     catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
 
-  function setArtifactNaming() {
-    try {
-      state.outputSettings.imagePattern = window.DacOutputLocation.validateImagePattern(els.imagePatternInput.value);
-      state.outputSettings.resultFilenamePattern = window.DacOutputLocation.validateResultFilenamePattern(els.resultFilenameInput.value, window.DacOutputLocation.baseResultFilenamePattern(state.workbook.fileName));
+  function applyArtifactNamingValues(values = null) {
+    const current = window.DacOutputLocation.effective(state.outputSettings);
+    const source = values || {
+      image_pattern: els.imagePatternInput.value,
+      result_filename_pattern: els.resultFilenameInput.value,
+      audit_filename: els.auditFilenameInput.value,
+      collision_policy: els.collisionPolicyInput.value,
+      save_images: els.saveImagesInput.checked,
+      save_result_xlsx: els.saveResultXlsxInput.checked,
+      save_audit_jsonl: els.saveAuditJsonlInput.checked
+    };
+    const imagePattern = Object.hasOwn(source, "image_pattern") ? source.image_pattern : current.imagePattern;
+    const resultPattern = Object.hasOwn(source, "result_filename_pattern") ? source.result_filename_pattern : current.checkpointFilenamePattern;
+    const auditFilename = Object.hasOwn(source, "audit_filename") ? source.audit_filename : current.auditFilename;
+    const collisionPolicy = Object.hasOwn(source, "collision_policy") ? source.collision_policy : current.collisionPolicy;
+    state.outputSettings.imagePattern = window.DacOutputLocation.validateImagePattern(imagePattern);
+    state.outputSettings.resultFilenamePattern = window.DacOutputLocation.validateResultFilenamePattern(resultPattern, window.DacOutputLocation.baseResultFilenamePattern(state.workbook.fileName));
       state.outputSettings.resultFilename = state.outputSettings.resultFilenamePattern;
-      state.outputSettings.auditFilename = window.DacOutputLocation.safeFilename(els.auditFilenameInput.value, window.DacOutputLocation.baseAuditName(state.workbook.fileName));
-      state.outputSettings.collisionPolicy = window.DacOutputLocation.collisionPolicy(els.collisionPolicyInput.value);
-      state.outputSettings.saveImages = els.saveImagesInput.checked;
-      state.outputSettings.saveResultXlsx = els.saveResultXlsxInput.checked;
-      state.outputSettings.saveAuditJsonl = els.saveAuditJsonlInput.checked;
-      markLocalOverride("output_naming"); renderOutput(); renderOutputScreen();
-    } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
+    state.outputSettings.auditFilename = window.DacOutputLocation.safeFileLeaf(auditFilename, window.DacOutputLocation.baseAuditName(state.workbook.fileName));
+    state.outputSettings.collisionPolicy = window.DacOutputLocation.collisionPolicy(collisionPolicy);
+    state.outputSettings.saveImages = Object.hasOwn(source, "save_images") ? source.save_images : current.saveImages;
+    state.outputSettings.saveResultXlsx = Object.hasOwn(source, "save_result_xlsx") ? source.save_result_xlsx : current.saveResultXlsx;
+    state.outputSettings.saveAuditJsonl = Object.hasOwn(source, "save_audit_jsonl") ? source.save_audit_jsonl : current.saveAuditJsonl;
+    markLocalOverride("output_naming"); renderOutput(); renderOutputScreen();
+    const changedFields = Object.keys(source);
+    return { changed_fields: changedFields, message: `Agent Bridge \u0111\u00e3 c\u1ea5u h\u00ecnh Output (${changedFields.join(", ")}); ch\u01b0a ch\u1ea1y.` };
+  }
+
+  function setArtifactNaming() {
+    try { return applyArtifactNamingValues(); }
+    catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); return null; }
+  }
+
+  async function applyRuntimeOverrideValues(values) {
+    if (!state.workbook) return;
+    const next = { ...state.runtimeOverrides, ...values };
+    window.DacRunnerCore.runtimeConfig(state.workbook.config, next);
+    state.runtimeOverrides = next;
+    markLocalOverride("run_settings");
+    await prepare();
+    const changedFields = Object.keys(values);
+    return { changed_fields: changedFields, message: `Agent Bridge \u0111\u00e3 c\u1ea5u h\u00ecnh Run Settings (${changedFields.join(", ")}); ch\u01b0a ch\u1ea1y.` };
   }
 
   async function updateRuntimeOverrides() {
     if (!state.workbook) return;
-    state.runtimeOverrides = {
+    return applyRuntimeOverrideValues({
       timeout_sec: els.timeoutSecInput.value,
       max_retries: els.maxRetriesInput.value,
       delay_min_sec: els.delayMinSecInput.value,
@@ -2914,9 +3317,7 @@
       max_input_images: els.maxInputImagesInput.value,
       continue_on_error: els.continueOnErrorInput.value,
       rerun_done: els.rerunDoneInput.value
-    };
-    markLocalOverride("run_settings");
-    await prepare();
+    });
   }
 
   function approvedRecreateIsOnlyResumeBlocker() {
@@ -3463,9 +3864,9 @@
     if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw new Error(`CHECKPOINT_VERSION_CONFLICT: '${filename}' already exists in Chrome Downloads history. No Result checkpoint was written.`);
   }
 
-  async function persistLedgerCandidate(sourceWorkbook, location, auditFilename = state.auditFile) {
+  async function persistLedgerCandidate(sourceWorkbook, location, auditFilename = state.auditFile, { force = false } = {}) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
-    if (!values.saveResultXlsx) return null;
+    if (!values.saveResultXlsx && !force) return null;
     const version = window.DacCheckpointCore.nextVersion(state.checkpointVersion || sourceWorkbook.config.checkpoint_version);
     const filename = window.DacOutputLocation.renderCheckpointFilename(sourceWorkbook.fileName, state.outputSettings, version);
     const candidate = await checkpointWorkbook(filename, version, sourceWorkbook, auditFilename);
@@ -3497,9 +3898,9 @@
     return persisted.actual;
   }
 
-  async function saveAuditLog(location, { appendExisting = false } = {}) {
+  async function saveAuditLog(location, { appendExisting = false, force = false } = {}) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
-    if (!values.saveAuditJsonl) return "";
+    if (!values.saveAuditJsonl && !force) return "";
     let payload = state.auditEvents.map((event) => JSON.stringify(event)).join("\n") + (state.auditEvents.length ? "\n" : "");
     const blob = new Blob([payload], { type: "application/jsonl" });
     const requested = values.auditFilename;
@@ -3556,8 +3957,10 @@
     if (state.resumeMode) throw new Error("RESUME_AUDIT_APPEND_UNAVAILABLE: Chrome Downloads cannot read and append the prior audit log. Continue using the authorized run folder.");
     const objectUrl = URL.createObjectURL(blob);
     try {
-      const request = window.DacOutputLocation.downloadArtifactRequest(location, requested, "fail");
-      await assertDownloadCollisionPolicy(request);
+      const request = force
+        ? window.DacOutputLocation.downloadArtifactRequest(location, requested, "uniquify")
+        : window.DacOutputLocation.downloadArtifactRequest(location, requested, "fail");
+      if (!force) await assertDownloadCollisionPolicy(request);
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
       window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
@@ -3928,6 +4331,7 @@
     document.querySelectorAll(".workflow-screen").forEach((screen) => screen.classList.toggle("active", screen.id === id));
     document.querySelectorAll(".workflow-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.screen === id));
     if (id === "runScreen") requestAnimationFrame(() => applyRunSplitRatio(runSplitRatio));
+    if (id === "bridgeScreen") refreshBridgeScreen().catch(() => renderBridgeActivityFeed());
   }
 
   els.workbookInput.addEventListener("change", openWorkbook);
@@ -4169,11 +4573,12 @@
   els.openOutputFolderBtn.addEventListener("click", openOutputFolder);
   document.querySelectorAll(".workflow-tab").forEach((tab) => tab.addEventListener("click", () => showScreen(tab.dataset.screen)));
   renderOutput(); renderRuntime(); renderOutputGlossary(); renderOutputScreen(); controls(); restoreUiZoom().catch(() => applyUiZoom(1)); initRunWidthSplitter().catch(() => {}); syncZoomState().catch(() => {});
-  renderBridgeTransportStatus();
+  renderBridgeTransportStatus(); renderBridgeActivityFeed();
   refreshBridgeTransportStatus();
   chrome.storage?.onChanged?.addListener((changes, areaName) => {
     if (areaName === "local" && changes[window.DacBridgePairingCore.STATUS_STORAGE_KEY]?.newValue) {
       renderBridgeTransportStatus(changes[window.DacBridgePairingCore.STATUS_STORAGE_KEY].newValue);
+      refreshBridgeScreen().catch(() => {});
     }
   });
   readBridgeProposalStore().then(() => renderBridgeProposals()).catch((error) => log(`Không thể đọc hộp đề xuất Agent: ${messageOf(error)}`, "error"));
@@ -4205,6 +4610,12 @@
       "queue.list": bridgeQueueList,
       "run.status": bridgeRunStatus,
       "ledger.read": bridgeLedgerRead,
+      "jobs.add": bridgeJobsAdd,
+      "jobs.update": bridgeJobsUpdate,
+      "jobs.remove": bridgeJobsRemove,
+      "jobs.reorder": bridgeJobsReorder,
+      "output.configure": bridgeOutputConfigure,
+      "run_settings.configure": bridgeRunSettingsConfigure,
       "queue.propose": bridgeQueuePropose,
       "queue.proposal.get": bridgeProposalGet
     }),

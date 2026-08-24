@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+await import(pathToFileURL(path.join(here, "..", "bridge-core.js")));
+await import(pathToFileURL(path.join(here, "..", "bridge-proposal-core.js")));
+await import(pathToFileURL(path.join(here, "..", "approval-persistence-core.js")));
+const bridge = globalThis.DacBridgeCore;
+const sidepanel = fs.readFileSync(path.join(here, "..", "sidepanel.js"), "utf8");
+assert.equal(bridge.METHOD_REGISTRY["jobs.reorder"].approval, "none");
+assert.doesNotThrow(() => bridge.validateParams("jobs.reorder", { job_id: "Q001", position: 2 }));
+assert(globalThis.DacBridgeProposalCore.approvalLockReason({ audit_gap: true }).length > 0);
+const handler = sidepanel.slice(sidepanel.indexOf("async function bridgeJobsReorder"), sidepanel.indexOf("async function bridgeOutputConfigure"));
+assert.match(handler, /executeBridgeDirectMutation/);
+assert.match(handler, /event: "BRIDGE_JOB_REORDERED"/);
+assert.match(handler, /applyQueueJobPosition/);
+const mutation = sidepanel.slice(sidepanel.indexOf("function applyQueueJobPosition"), sidepanel.indexOf("async function refreshQueueAfterMutation"));
+assert.match(mutation, /mutationQueueItem\(jobId\)/);
+assert.match(mutation, /DacXlsx\.setQueueOrder/);
+assert.match(mutation, /position - 1/);
+assert.match(sidepanel, /if \(workbookRequired\) requireBridgeWorkbook\(\)/);
+const transaction = sidepanel.slice(sidepanel.indexOf("async function executeBridgeDirectMutation"), sidepanel.indexOf("async function bridgeJobsAdd"));
+assert.equal((transaction.match(/state\.auditEvents\.push\(auditEvent\)/g) || []).length, 1);
+assert.equal((transaction.match(/persistLedgerCandidate\(/g) || []).length, 1);
+let audits = 0; let checkpoints = 0;
+await globalThis.DacApprovalPersistence.execute({ snapshot: async () => ({}), apply: async () => { audits += 1; return {}; }, persist_audit: async () => "audit", persist_checkpoint: async () => { checkpoints += 1; return "v01"; }, commit: async () => true, rollback: async () => {} });
+assert.equal(audits, 1); assert.equal(checkpoints, 1);
+console.log("bridge jobs.reorder smoke tests: PASS");
+

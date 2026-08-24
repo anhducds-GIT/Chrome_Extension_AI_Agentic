@@ -10,7 +10,8 @@ const bridge = globalThis.DacBridgeCore;
 
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
-  "run.status", "ledger.read", "queue.propose", "queue.proposal.get"
+  "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
+  "jobs.reorder", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
@@ -60,6 +61,12 @@ const validByMethod = {
   "queue.list": { cursor: null, limit: 50, statuses: [], include_prompt: false },
   "run.status": {},
   "ledger.read": { cursor: null, limit: 50, include_prompt: false, include_removed: true },
+  "jobs.add": { jobs: [{ prompt: "Create ...", reference_images: ["Duc1.jpg"], settings: { timeout_sec: 180 } }] },
+  "jobs.update": { job_id: "Q001", prompt: "Updated", reference_images: [], settings: { max_retries: 3 } },
+  "jobs.remove": { job_id: "Q001" },
+  "jobs.reorder": { job_id: "Q001", position: 2 },
+  "output.configure": { image_pattern: "{job_id}", collision_policy: "uniquify", save_images: true },
+  "run_settings.configure": { timeout_sec: 240, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", continue_on_error: true },
   "queue.propose": {
     if_ledger_etag: "sha256:ledger-etag",
     proposal_label: "Character batch 2026-08-23",
@@ -84,6 +91,12 @@ const invalidByMethod = {
   "queue.list": { limit: 101 },
   "run.status": { pause: true },
   "ledger.read": { include_removed: "yes" },
+  "jobs.add": { jobs: [] },
+  "jobs.update": { job_id: "Q001" },
+  "jobs.remove": { job_id: "" },
+  "jobs.reorder": { job_id: "Q001", position: 0 },
+  "output.configure": { collision_policy: "replace" },
+  "run_settings.configure": { delay_min_sec: 25, delay_max_sec: 12 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [] },
   "queue.proposal.get": { proposal_id: "" }
 };

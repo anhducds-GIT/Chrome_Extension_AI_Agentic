@@ -47,25 +47,13 @@
       <button class="workflow-tab active" data-screen="setupScreen" type="button"><span class="tab-num">1</span> SETUP</button>
       <button class="workflow-tab" data-screen="runScreen" type="button"><span class="tab-num">2</span> RUN</button>
       <button class="workflow-tab" data-screen="outputScreen" type="button"><span class="tab-num">3</span> OUTPUT</button>
+      <button class="workflow-tab" data-screen="bridgeScreen" type="button"><span class="tab-num">4</span> BRIDGE</button>
     </nav>
 
     <!-- =========================================================================
          1. SETUP SCREEN
          ========================================================================= -->
     <section id="setupScreen" class="workflow-screen active">
-      <section class="card setup-group bridge-pairing-card" id="bridgePairingCard">
-        <div class="row spread section-title">
-          <strong>AGENT BRIDGE</strong>
-          <span id="bridgeTransportStatus" class="bridge-transport-status" role="status" aria-live="polite">Chưa kết nối</span>
-        </div>
-        <p id="bridgeTransportDetail" class="hint">Chọn tệp pairing do bộ cài Bridge V1 tạo. Token chỉ được lưu cục bộ trong extension.</p>
-        <div class="row gap-sm bridge-pairing-actions">
-          <button id="bridgePairingBtn" class="secondary setup-action" type="button">Kết nối Agent Bridge</button>
-          <button id="bridgeUnpairBtn" class="secondary small" type="button" hidden>Ngắt pairing</button>
-        </div>
-        <input id="bridgePairingInput" type="file" accept=".json,application/json" />
-      </section>
-
       <!-- QUICK PROMPT: one prompt in, one image out, no Excel required -->
       <section class="card setup-group" id="quickPromptCard">
         <div class="row spread section-title">
@@ -348,23 +336,6 @@
       </div>
       </div>
 
-      <section id="bridgeProposalCard" class="card bridge-proposal-card" hidden aria-labelledby="bridgeProposalTitle">
-        <div class="row spread section-title">
-          <strong id="bridgeProposalTitle">ĐỀ XUẤT TỪ AGENT</strong>
-          <span id="bridgeProposalCount" class="bridge-proposal-count">0 job</span>
-        </div>
-        <div id="bridgeProposalStatus" class="bridge-proposal-status" role="status" aria-live="polite">Đang chờ Đức xem xét</div>
-        <dl id="bridgeProposalMeta" class="bridge-proposal-meta"></dl>
-        <ol id="bridgeProposalList" class="bridge-proposal-list"></ol>
-        <p id="bridgeProposalNotice" class="bridge-proposal-notice">Duyệt chỉ thêm các job này vào Queue và ghi checkpoint. Thao tác này không bắt đầu chạy và không gửi prompt tới ChatGPT.</p>
-        <p id="bridgeProposalLockReason" class="bridge-proposal-lock-reason" aria-live="polite"></p>
-        <div class="row end gap-sm bridge-proposal-actions">
-          <button id="bridgeProposalFixtureBtn" class="secondary" type="button">Nạp đề xuất thử</button>
-          <button id="bridgeProposalRejectBtn" class="secondary" type="button">Từ chối</button>
-          <button id="bridgeProposalApproveBtn" class="primary" type="button">Duyệt &amp; ghi checkpoint</button>
-        </div>
-      </section>
-
       <!-- QUEUE -->
       <section class="card queue-card">
         <div class="row spread section-title">
@@ -465,6 +436,55 @@
         <button id="openOutputFolderBtn" class="primary" type="button" disabled>📁 Open Output Folder</button>
         <button id="loadNewWorkbookBtn" class="secondary" type="button">📄 Load New Workbook</button>
         <button id="runFailedBtn" class="secondary" type="button" disabled>↻ Run Failed Jobs</button>
+      </section>
+    </section>
+
+    <!-- =========================================================================
+         4. BRIDGE SCREEN (CONNECTION, ACTIVITY, LEGACY PROPOSAL APPROVAL)
+         ========================================================================= -->
+    <section id="bridgeScreen" class="workflow-screen">
+      <section class="card bridge-pairing-card" id="bridgePairingCard">
+        <div class="row spread section-title">
+          <strong>AGENT BRIDGE</strong>
+          <span id="bridgeTransportStatus" class="bridge-transport-status" role="status" aria-live="polite">Chưa kết nối</span>
+        </div>
+        <dl class="bridge-connection-grid" aria-label="Trạng thái Agent Bridge">
+          <div><dt>Host reachable</dt><dd id="bridgeHostReachable">Không</dd></div>
+          <div><dt>Extension</dt><dd id="bridgePairingState">Chưa pairing</dd></div>
+          <div><dt>Hoạt động gần nhất</dt><dd id="bridgeLastActivity">Chưa có</dd></div>
+        </dl>
+        <p id="bridgeTransportDetail" class="hint">Chọn tệp pairing do bộ cài Bridge V1 tạo. Token chỉ được lưu cục bộ trong extension.</p>
+        <div class="row gap-sm bridge-pairing-actions">
+          <button id="bridgePairingBtn" class="secondary setup-action" type="button">Kết nối Agent Bridge</button>
+          <button id="bridgeUnpairBtn" class="secondary small" type="button" hidden>Ngắt pairing</button>
+        </div>
+        <input id="bridgePairingInput" type="file" accept=".json,application/json" />
+      </section>
+
+      <section class="card bridge-activity-card" aria-labelledby="bridgeActivityTitle">
+        <div class="row spread section-title">
+          <strong id="bridgeActivityTitle">HOẠT ĐỘNG BRIDGE</strong>
+          <span class="muted">Mới nhất trước</span>
+        </div>
+        <p id="bridgeActivityEmpty" class="hint">Chưa có thay đổi Setup trực tiếp nào từ Bridge trong phiên side panel này.</p>
+        <ol id="bridgeActivityList" class="bridge-activity-list" aria-live="polite"></ol>
+      </section>
+
+      <section id="bridgeProposalCard" class="card bridge-proposal-card" hidden aria-labelledby="bridgeProposalTitle">
+        <div class="row spread section-title">
+          <strong id="bridgeProposalTitle">ĐỀ XUẤT TỪ AGENT</strong>
+          <span id="bridgeProposalCount" class="bridge-proposal-count">0 job</span>
+        </div>
+        <div id="bridgeProposalStatus" class="bridge-proposal-status" role="status" aria-live="polite">Đang chờ Đức xem xét</div>
+        <dl id="bridgeProposalMeta" class="bridge-proposal-meta"></dl>
+        <ol id="bridgeProposalList" class="bridge-proposal-list"></ol>
+        <p id="bridgeProposalNotice" class="bridge-proposal-notice">Duyệt chỉ thêm các job này vào Queue và ghi checkpoint. Thao tác này không bắt đầu chạy và không gửi prompt tới ChatGPT.</p>
+        <p id="bridgeProposalLockReason" class="bridge-proposal-lock-reason" aria-live="polite"></p>
+        <div class="row end gap-sm bridge-proposal-actions">
+          <button id="bridgeProposalFixtureBtn" class="secondary" type="button">Nạp đề xuất thử</button>
+          <button id="bridgeProposalRejectBtn" class="secondary" type="button">Từ chối</button>
+          <button id="bridgeProposalApproveBtn" class="primary" type="button">Duyệt &amp; ghi checkpoint</button>
+        </div>
       </section>
     </section>
 

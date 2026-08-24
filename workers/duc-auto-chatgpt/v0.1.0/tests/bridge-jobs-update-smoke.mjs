@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+await import(pathToFileURL(path.join(here, "..", "bridge-core.js")));
+await import(pathToFileURL(path.join(here, "..", "bridge-proposal-core.js")));
+await import(pathToFileURL(path.join(here, "..", "approval-persistence-core.js")));
+const bridge = globalThis.DacBridgeCore;
+const sidepanel = fs.readFileSync(path.join(here, "..", "sidepanel.js"), "utf8");
+assert.equal(bridge.METHOD_REGISTRY["jobs.update"].approval, "none");
+assert.doesNotThrow(() => bridge.validateParams("jobs.update", { job_id: "Q001", prompt: "Updated" }));
+assert.throws(() => bridge.validateParams("jobs.update", { job_id: "Q001" }), (error) => error.code === "INVALID_PARAMS");
+assert(globalThis.DacBridgeProposalCore.approvalLockReason({ reconciliation: true }).length > 0);
+const handler = sidepanel.slice(sidepanel.indexOf("async function bridgeJobsUpdate"), sidepanel.indexOf("async function bridgeJobsRemove"));
+assert.match(handler, /executeBridgeDirectMutation/);
+assert.match(handler, /event: "BRIDGE_JOB_UPDATED"/);
+assert.match(handler, /applyQueueJobUpdate/);
+const mutation = sidepanel.slice(sidepanel.indexOf("function applyQueueJobUpdate"), sidepanel.indexOf("function applyQueueJobRemoval"));
+assert.match(mutation, /mutationQueueItem\(jobId\)/);
+assert.match(mutation, /DacXlsx\.updateJob/);
+assert.match(sidepanel, /if \(workbookRequired\) requireBridgeWorkbook\(\)/, "missing sessions fail WORKBOOK_NOT_LOADED before lock evaluation");
+const transaction = sidepanel.slice(sidepanel.indexOf("async function executeBridgeDirectMutation"), sidepanel.indexOf("async function bridgeJobsAdd"));
+assert.equal((transaction.match(/state\.auditEvents\.push\(auditEvent\)/g) || []).length, 1);
+assert.equal((transaction.match(/persistLedgerCandidate\(/g) || []).length, 1);
+let audits = 0; let checkpoints = 0;
+await globalThis.DacApprovalPersistence.execute({ snapshot: async () => ({}), apply: async () => { audits += 1; return {}; }, persist_audit: async () => "audit", persist_checkpoint: async () => { checkpoints += 1; return "v01"; }, commit: async () => true, rollback: async () => {} });
+assert.equal(audits, 1); assert.equal(checkpoints, 1);
+console.log("bridge jobs.update smoke tests: PASS");
+

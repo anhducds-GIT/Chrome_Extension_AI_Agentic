@@ -19,7 +19,9 @@ assert.match(html, /id="bridgeProposalRejectBtn"[^>]*>Từ chối</);
 assert.match(html, /id="bridgeProposalApproveBtn"[^>]*>Duyệt &amp; ghi checkpoint</);
 assert.match(html, /id="bridgeProposalFixtureBtn"[^>]*>Nạp đề xuất thử</);
 assert.match(html, /Duyệt chỉ thêm[^<]*Queue[^<]*không bắt đầu chạy[^<]*không gửi prompt tới ChatGPT/);
-assert.ok(html.indexOf('id="bridgeProposalCard"') < html.indexOf('id="queueList"'), "proposal review appears before the Queue it would mutate");
+const bridgeScreen = html.slice(html.indexOf('id="bridgeScreen"'), html.indexOf("<footer>"));
+assert.match(bridgeScreen, /id="bridgeProposalCard"/, "proposal review moved into the dedicated BRIDGE screen");
+assert.doesNotMatch(html.slice(html.indexOf('id="runScreen"'), html.indexOf('id="outputScreen"')), /id="bridgeProposalCard"/, "proposal review no longer occupies the RUN screen");
 
 const scriptOrder = ["bridge-core.js", "bridge-proposal-core.js", "approval-persistence-core.js", "sidepanel.js"]
   .map((name) => html.indexOf(`src="${name}"`));

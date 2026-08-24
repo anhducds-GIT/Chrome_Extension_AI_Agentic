@@ -12,11 +12,10 @@ $pairingPath = Join-Path $installRoot 'duc-auto-chatgpt-bridge-pairing-v1.json'
 
 function Set-BridgeCurrentUserAcl([string]$Path) {
   $identity = [Security.Principal.WindowsIdentity]::GetCurrent().Name
-  $security = New-Object Security.AccessControl.DirectorySecurity
-  $security.SetAccessRuleProtection($true, $false)
-  $rule = New-Object Security.AccessControl.FileSystemAccessRule($identity, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
-  $security.AddAccessRule($rule)
-  Set-Acl -LiteralPath $Path -AclObject $security
+  $output = icacls $Path /inheritance:r /grant:r "${identity}:(OI)(CI)F" 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    throw "icacls failed to lock down '$Path' to '$identity': $output"
+  }
 }
 
 if (-not $installRoot.StartsWith($allowedRoot, [StringComparison]::OrdinalIgnoreCase)) {
