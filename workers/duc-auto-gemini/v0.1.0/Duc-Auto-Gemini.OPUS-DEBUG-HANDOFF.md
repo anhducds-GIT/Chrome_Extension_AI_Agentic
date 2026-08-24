@@ -394,3 +394,11 @@ systemic weakness is unverified Gemini DOM selectors (open Bug #3); recommendati
 (freeze/commit → live DOM evidence → platform unification → pilot → autonomous improve loop). Waiting on
 the owner's direction choice (A: unified platform from ChatGPT worker — recommended; B: keep patching the
 standalone Gemini worker).
+
+## DECISION — 2026-08-25: owner chose Direction A
+
+Đức chose Direction A (unified platform extracted from the ChatGPT worker; each provider becomes a thin
+adapter). G0 executed: full working tree committed as `e73e220` (gemini fixes) + `0a3498c` (chatgpt WIP
+checkpoint); tree clean, 70/70 green at freeze point. Not pushed — push requires separate owner approval.
+Execution plan: `drafts/PLATFORM-ADAPTER-PLAN.md` (new file, declared here). G1 (live Gemini DOM capture)
+is the current critical path and needs the owner.

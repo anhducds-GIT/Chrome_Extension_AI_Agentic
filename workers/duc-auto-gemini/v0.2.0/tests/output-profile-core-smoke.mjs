@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import vm from "node:vm";
+const context = vm.createContext({});
+vm.runInContext(fs.readFileSync(new URL("../output-profile-core.js", import.meta.url), "utf8"), context);
+const profiles = context.DacOutputProfiles;
+assert.equal(profiles.profileId("pilot-04"), "pilot-04");
+assert.throws(() => profiles.profileId("C:\\pilot-04"), /lowercase slug/);
+assert.throws(() => profiles.profileId("../pilot-04"), /lowercase slug/);
+console.log("output profile core smoke: PASS (IndexedDB handle persistence requires browser-side feature probe)");
