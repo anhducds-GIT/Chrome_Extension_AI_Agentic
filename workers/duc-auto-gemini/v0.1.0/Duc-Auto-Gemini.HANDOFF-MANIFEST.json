@@ -14,7 +14,7 @@
   },
   "status": {
     "implementation": "GPT_BOUNDED_FIX_PUBLISHED",
-    "independent_acceptance": "LOCAL_AUDITOR_PASS_GPT_REAUDIT_PENDING",
+    "independent_acceptance": "CLAUDE_CODE_FINAL_AUDIT_PASS",
     "live_runtime": "LIVE_RUNTIME_UNVERIFIED",
     "next_gate": "OWNER_PILOT_PENDING"
   },
@@ -32,9 +32,12 @@
       "DAG-R1-01",
       "DAG-R1-02",
       "DAG-R1-03",
-      "DAG-R2-01"
+      "DAG-R2-01",
+      "GPT-DAG-001",
+      "GPT-DAG-002"
     ],
-    "open_reaudit_findings": ["GPT-DAG-001", "GPT-DAG-002"],
+    "open_reaudit_findings": [],
+    "closure_note": "Owner (2026-08-24) designated Claude Code as final auditor and waived the separate GPT Web re-audit pass for GPT-DAG-001/002; verdict ALIGN, NO CODE CHANGE, based on independent code read plus a fresh full test rerun.",
     "gpt_web_prompt": "Duc-Auto-Gemini.GPT-WEB-AUDIT-PROMPT.md",
     "claude_code_handoff": "Duc-Auto-Gemini.CLAUDE-CODE-HANDOFF.md"
   },
