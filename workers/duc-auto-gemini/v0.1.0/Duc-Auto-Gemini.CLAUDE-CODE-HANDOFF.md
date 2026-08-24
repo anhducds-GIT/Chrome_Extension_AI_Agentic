@@ -15,8 +15,9 @@ Receive the GPT Web audit for Duc Auto Gemini, independently verify repository s
 - Accepted 90% SHA: `e6408451d4105ed56c60934269fefbebdc8d2712`
 - Page-only preflight SHA: `8d23bc9d26c70efea9abf991452b3b75944a4b39`
 - Handoff package SHA: `7d0e787dea1576cbcc2101d79886747e63199b8b`
+- GPT bounded-fix implementation SHA: `bc28e792a7650d3a375e8e924589fb4f8f442220`
 - Run ID: `20260824-dag-v01-000-090-r01`
-- Current status: GPT-DAG-001/002 bounded fixes implemented; GPT Web re-audit pending
+- Current status: GPT-DAG-001/002 bounded fixes published; local revision audit PASS; GPT Web re-audit pending
 - Live status: `LIVE_RUNTIME_UNVERIFIED / OWNER_PILOT_PENDING`
 
 The handoff artifacts may be committed after the page-preflight SHA. Resolve the current immutable handoff commit from the operator message and verify its ancestry; do not replace the accepted implementation SHA with an unverified moving `main`.
@@ -32,6 +33,7 @@ git fetch origin
 git rev-parse HEAD
 git rev-parse origin/main
 git merge-base --is-ancestor 8d23bc9d26c70efea9abf991452b3b75944a4b39 origin/main
+git merge-base --is-ancestor bc28e792a7650d3a375e8e924589fb4f8f442220 origin/main
 git diff --name-only --cached
 git log --oneline --decorate -12
 ```

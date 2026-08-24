@@ -30,4 +30,6 @@
 - Syntax, JSON parse, diff-check and secret-candidate scans: PASS.
 - Independent local revision audit: `PASS` for GPT-DAG-001 and GPT-DAG-002-R1, including durable service-worker restart semantics.
 - Exact-path staging must contain Gemini files only.
-- The publication closure records the immutable implementation SHA and remote readback for GPT re-audit.
+- Immutable implementation SHA: `bc28e792a7650d3a375e8e924589fb4f8f442220`.
+- Push range: `90d837f1fca2b2e048615a213ec8a362fb3cd70e..bc28e792a7650d3a375e8e924589fb4f8f442220` on `main`.
+- Independent `git ls-remote origin refs/heads/main` readback after implementation push: `bc28e792a7650d3a375e8e924589fb4f8f442220`.

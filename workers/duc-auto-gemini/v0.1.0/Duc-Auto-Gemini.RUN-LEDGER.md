@@ -5,14 +5,14 @@
 - Owner: user
 - Executor: `/root`
 - Auditor: `/root/dag_acceptance_auditor`
-- Current state: `GPT_REAUDIT_READY`
+- Current state: `GPT_BOUNDED_FIX_PUBLISHED / GPT_REAUDIT_READY`
 - Current phase: `P9 — GPT-DAG-001/002 verification and publication`
 - Completed phases: `P0 contract`, `P1 baseline`, `P2 scaffold`, `P3 adapter/fixtures`, `P4 integration`, `P5 live DOM read-only`, `P6 full verification`
 - Pending phases: GPT Web re-audit, then owner pilot
 - Open blockers: none for 90%; live runtime remains owner pilot
 - Approved gates: continuous GREEN/YELLOW; direct main; exact-path commit/push
 - Forbidden: ChatGPT modifications, destructive cleanup, force operations, security bypass, store/account changes
-- Acceptance status: prior local auditor PASS was superseded by GPT Web `REVISE — BOUNDED FIX REQUIRED` on handoff commit `90d837f1fca2b2e048615a213ec8a362fb3cd70e`; GPT-DAG-001 and GPT-DAG-002 bounded fixes now pass the independent local revision audit, with publication and GPT Web re-audit pending
+- Acceptance status: prior local auditor PASS was superseded by GPT Web `REVISE — BOUNDED FIX REQUIRED` on handoff commit `90d837f1fca2b2e048615a213ec8a362fb3cd70e`; GPT-DAG-001 and GPT-DAG-002 bounded fixes pass the independent local revision audit and were published at `bc28e792a7650d3a375e8e924589fb4f8f442220`; GPT Web re-audit remains pending
 - Next transition: publish the exact-scope fix, return immutable SHA to GPT, then route PASS to owner pilot or verified findings to Claude Code
 
 ## Phase results
@@ -30,7 +30,7 @@
 | P7 loop 2 | VERIFIED/PUBLISHED | Whole-batch hard-stop core, executable two-job matrix, behavioral content-decision harness, and evidence corrections at `5f590b0` |
 | P7 final | VERIFIED/PUBLISHED | Only `FILE_INPUT_NOT_EXPOSED` is recoverable; blocker/abort/unknown wait errors propagate; pre-click guards and injected-wait click-count matrix PASS at `5e6d996` |
 | P8 | PASS | Independent auditor found no residual acceptance defects on `de504d4`; package accepted as review-ready 90% |
-| P9 | LOCAL AUDIT PASS / PUBLICATION PENDING | GPT-DAG-001 abort-before-Send guard and durable GPT-DAG-002 extension-wide submit lease; restart-concurrency regression added; Gemini 18/18 and repository 63/63 + observer PASS |
+| P9 | PUBLISHED / GPT RE-AUDIT PENDING | GPT-DAG-001 abort-before-Send guard and durable GPT-DAG-002 extension-wide submit lease published at `bc28e79`; restart-concurrency regression added; Gemini 18/18 and repository 63/63 + observer PASS |
 
 ## 90% boundary
 

@@ -9,10 +9,11 @@
     "package_path": "workers/duc-auto-gemini/v0.1.0",
     "accepted_90_percent_sha": "e6408451d4105ed56c60934269fefbebdc8d2712",
     "page_only_preflight_sha": "8d23bc9d26c70efea9abf991452b3b75944a4b39",
-    "handoff_package_sha": "7d0e787dea1576cbcc2101d79886747e63199b8b"
+    "handoff_package_sha": "7d0e787dea1576cbcc2101d79886747e63199b8b",
+    "gpt_bounded_fix_sha": "bc28e792a7650d3a375e8e924589fb4f8f442220"
   },
   "status": {
-    "implementation": "GPT_REAUDIT_READY",
+    "implementation": "GPT_BOUNDED_FIX_PUBLISHED",
     "independent_acceptance": "LOCAL_AUDITOR_PASS_GPT_REAUDIT_PENDING",
     "live_runtime": "LIVE_RUNTIME_UNVERIFIED",
     "next_gate": "OWNER_PILOT_PENDING"
