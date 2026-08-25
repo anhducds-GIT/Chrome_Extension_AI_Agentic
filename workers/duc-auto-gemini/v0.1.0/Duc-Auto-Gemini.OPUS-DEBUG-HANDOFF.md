@@ -402,3 +402,22 @@ adapter). G0 executed: full working tree committed as `e73e220` (gemini fixes) +
 checkpoint); tree clean, 70/70 green at freeze point. Not pushed — push requires separate owner approval.
 Execution plan: `drafts/PLATFORM-ADAPTER-PLAN.md` (new file, declared here). G1 (live Gemini DOM capture)
 is the current critical path and needs the owner.
+
+## MILESTONE — 2026-08-25 12:02 (+07): first full pilot PASSED on the unified platform
+
+Pilot-G2-01 on v0.2.0, owner-clicked Run, AI-monitored live end-to-end via the Agent Bridge:
+- G2-0 (no reference): SUCCESS — type -> send -> generate -> detect -> download -> chat-ready.
+- G2-1 (one reference image): SUCCESS — the attach path (review finding F2, the biggest unknown)
+  worked on the first live attempt: menu -> transient input -> confirm (addedSince) -> send -> output.
+- Zero halts, zero retries, both images verified by the content-side attribution before download.
+- The quota false-positive fix (ed5d589) held; the /images->/app navigation rule held.
+
+Known issue remaining (non-blocking, next up): every chrome.downloads artifact lands with a UUID
+name in the owner's default download dir ("Phai sinh") — the filename parameter is being discarded
+system-wide (affects images, results workbook, audit JSONL; also seen on v0.1.0 yesterday).
+Suspected cause: a third-party download-manager extension intercepting onDeterminingFilename, or a
+Chrome download setting. Needs one question to the owner before coding around it.
+
+Historic note: the Gemini worker went from "never survived a single live run" (Pilot-01, 4 bugs) to
+"2/2 SUCCESS" in one day, on the strategy decided in drafts/AUDIT-DOC-LAP-2026-08-24.md: platform
+port + live-DOM evidence + bridge-first self-develop loop.
