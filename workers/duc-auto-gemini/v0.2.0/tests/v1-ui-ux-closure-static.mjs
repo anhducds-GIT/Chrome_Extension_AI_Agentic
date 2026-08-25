@@ -193,3 +193,11 @@ assert.ok(validateStart >= 0 && validateEnd > validateStart);
 assert.doesNotMatch(source.slice(validateStart, validateEnd), /DAC_RUN_IMAGE_JOB|PROMPT_SUBMITTED/);
 
 console.log("V1 UI/UX closure static tests: PASS");
+
+// 2026-08-25 pilot regression: browser-side download renaming must degrade to a
+// warning with the real name recorded — never an artifact failure — but ONLY
+// when Chrome confirms the download completed and exists.
+assert.match(source, /function verifyArtifactDownload\(request, item\)/);
+assert.match(source, /item\?\.state !== "complete" \|\| item\?\.exists === false/, "rename tolerance still fails closed when the file is missing or incomplete");
+assert.match(source, /renamed: true/, "the accepted rename is recorded, not hidden");
+console.log("artifact rename-tolerance pins: PASS");

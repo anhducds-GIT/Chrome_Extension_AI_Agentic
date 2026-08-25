@@ -3948,9 +3948,29 @@
       const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, "fail");
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
-      window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
+      verifyArtifactDownload(request, item);
       return { ...candidate, actual: item.filename, version, filename, storage: "downloads" };
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
+  }
+
+  // Owner's live pilot (2026-08-25) showed something in this browser renames
+  // every chrome.downloads artifact (blob downloads land as UUIDs, https
+  // downloads keep the server name) even though the extension supplies a
+  // filename — no interceptor exists in this repo, so the cause is another
+  // installed extension or a browser-level policy. The safety property that
+  // matters is "the artifact exists and completed"; the name is advisory.
+  // Verify strictly first; on a pure filename mismatch, accept the download
+  // when Chrome confirms it exists, record the real name, and warn — never
+  // fail the whole run's artifact status over a rename.
+  function verifyArtifactDownload(request, item) {
+    try { return window.DacOutputLocation.verifyDownloadedFilename(request, item.filename); }
+    catch (error) {
+      if (!String(error?.message || "").startsWith("PERSISTENCE_FILENAME_MISMATCH")) throw error;
+      if (item?.state !== "complete" || item?.exists === false) throw error;
+      const leaf = String(item.filename || "").split(/[\\/]/).pop() || "output";
+      log(`Artifact bị trình duyệt đổi tên: yêu cầu '${request?.requestedFilename || "output"}' nhưng đã lưu thành '${leaf}'. File tồn tại và tải trọn vẹn nên được chấp nhận; kiểm tra extension khác đang can thiệp đặt tên download.`, "info");
+      return { filename: String(item.filename), leaf, renamed: true };
+    }
   }
 
   async function saveLedger(location) {
@@ -4030,7 +4050,7 @@
       if (!force) await assertDownloadCollisionPolicy(request);
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
-      window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
+      verifyArtifactDownload(request, item);
       return item.filename;
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
   }

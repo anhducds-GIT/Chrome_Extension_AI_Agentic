@@ -83,6 +83,24 @@ $shortcut.WindowStyle = 7
 $shortcut.Description = 'Duc Auto Gemini Loopback Bridge V1'
 $shortcut.Save()
 
+# One-click restart for the owner: double-clicking this file in the visible
+# install folder brings a dead host back without hunting for commands.
+$startCmd = @"
+@echo off
+title Duc Auto Gemini Bridge V1
+echo ============================================
+echo   DUC AUTO GEMINI - BRIDGE V1
+echo   Cua so nay phai MO trong luc lam viec.
+echo   Dong cua so = tat cau noi AI - extension.
+echo ============================================
+cd /d "%~dp0"
+node bridge-host.mjs --pairing "%~dp0duc-auto-gemini-bridge-pairing-v1.json"
+echo.
+echo Bridge da dung. Nhan phim bat ky de dong.
+pause >nul
+"@
+[IO.File]::WriteAllText((Join-Path $installRoot 'START-BRIDGE.cmd'), $startCmd, (New-Object Text.UTF8Encoding($false)))
+
 if (-not $NoStart) {
   $hostArguments = "`"$hostPath`" --pairing `"$pairingPath`""
   Start-Process -FilePath $nodeCommand.Source -ArgumentList $hostArguments -WorkingDirectory $installRoot -WindowStyle Hidden
