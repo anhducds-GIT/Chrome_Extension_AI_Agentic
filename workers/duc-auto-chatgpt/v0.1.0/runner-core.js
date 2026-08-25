@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const DEFAULTS = { timeout_sec: 180, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false };
+  const DEFAULTS = { timeout_sec: 180, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false, checkpoint_interval_jobs: 1 };
   const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
   const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
   const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
@@ -52,7 +52,8 @@
       max_retries: whole(raw.max_retries, DEFAULTS.max_retries, 0, 5, "max_retries"),
       continue_on_error: bool(raw.continue_on_error, true), output_folder: folder.replace(/[\\/]+/g, "/"),
       max_input_images: whole(raw.max_input_images, DEFAULTS.max_input_images, 0, 10, "max_input_images"),
-      rerun_done: bool(raw.rerun_done, false)
+      rerun_done: bool(raw.rerun_done, false),
+      checkpoint_interval_jobs: whole(raw.checkpoint_interval_jobs, DEFAULTS.checkpoint_interval_jobs, 1, 1000, "checkpoint_interval_jobs")
     };
   }
   function runtimeConfig(workbookConfig, overrides = {}) { return config({ ...(workbookConfig || {}), ...(overrides || {}) }); }
@@ -90,6 +91,7 @@
   }
   function classifyFailure(error, phase = "PRE_SUBMIT") {
     const text = String(error?.message || error || "");
+    if (/^RECEIVER_LOST:/i.test(text)) return "RECEIVER_LOST";
     if (/LIMIT_STOP|image generation limit/i.test(text)) return "GENERATION_LIMIT_REACHED";
     if (/HARD_STOP|captcha|unusual activity|security\/interstitial/i.test(text)) return "SECURITY_HARD_STOP";
     if (/stopped by user|automation stopped/i.test(text)) return "USER_STOP";
@@ -139,6 +141,36 @@
   function retryCooldown(settings, retryCount, random = Math.random) { return Math.min(30, Math.max(safetyCooldownSeconds(settings, random), 1) * Math.max(1, retryCount)); }
   function resultWorkbookName(name) { return `${String(name || "workbook.xlsx").replace(/\.xlsx$/i, "")}-result.xlsx`; }
   function delaySeconds(settings, random = Math.random) { return settings.delay_min_sec + Math.floor(random() * (settings.delay_max_sec - settings.delay_min_sec + 1)); }
+  function submissionReservation(item, now = new Date()) {
+    const timestamp = (now instanceof Date ? now : new Date(now)).toISOString();
+    if (!item?.attempt_id) throw new Error("Submission reservation requires an attempt identity.");
+    return { status: "RUNNING", attempt_phase: "SUBMITTED", submitted_at: timestamp };
+  }
+  function shouldCheckpoint(completedJobs, interval = DEFAULTS.checkpoint_interval_jobs) {
+    const count = Number(completedJobs);
+    const every = whole(interval, DEFAULTS.checkpoint_interval_jobs, 1, 1000, "checkpoint_interval_jobs");
+    return Number.isInteger(count) && count > 0 && count % every === 0;
+  }
+  function rebindQueueRows(queue = [], workbook, activeJobs) {
+    if (typeof activeJobs !== "function") throw new Error("Queue row rebind requires the XLSX activeJobs reader.");
+    const rows = new Map(activeJobs(workbook).map((job) => [String(job.id || ""), job]));
+    for (const item of queue) {
+      const rebound = rows.get(String(item?.job?.id || ""));
+      if (!rebound) throw new Error(`RUN_CHECKPOINT_REBIND_FAILED: Job '${item?.job?.id || "(missing)"}' is absent from the verified checkpoint.`);
+      item.job = rebound;
+    }
+    return queue;
+  }
+
+  async function verifiedRunCheckpoint({ persistAudit, persistLedger, onAuditPersisted = async () => {} } = {}) {
+    if (typeof persistAudit !== "function" || typeof persistLedger !== "function") throw new TypeError("Run checkpoint persistence callbacks are required.");
+    const auditFile = await persistAudit();
+    if (!auditFile) throw new Error("PERSISTENCE_VERIFICATION_FAILED: Run requires a verified audit JSONL before prompt submission.");
+    await onAuditPersisted(auditFile);
+    const resultFile = await persistLedger();
+    if (!resultFile) throw new Error("PERSISTENCE_VERIFICATION_FAILED: Run requires a verified Result XLSX checkpoint before prompt submission.");
+    return { auditFile, resultFile };
+  }
   function countdownValues(seconds) { return Array.from({ length: Math.max(0, Number(seconds) || 0) }, (_unused, index) => seconds - index); }
   function planSummary(queue, settings) {
     const count = (predicate) => queue.filter(predicate).length;
@@ -197,6 +229,6 @@
     if (!signal?.composerFound) return "OUTPUT_READY";
     return "CHAT_READY";
   }
-  const api = { DEFAULTS, ATTEMPT_PHASES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, basename, referenceTokens, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, countdownValues, planSummary, prepare, selectQueue, readinessState };
+  const api = { DEFAULTS, ATTEMPT_PHASES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, basename, referenceTokens, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
   (typeof window !== "undefined" ? window : globalThis).DacRunnerCore = api;
 })();

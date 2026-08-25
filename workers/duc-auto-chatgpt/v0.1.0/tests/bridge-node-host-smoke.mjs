@@ -84,10 +84,14 @@ assert.equal((await offline.json()).error.code, "EXTENSION_OFFLINE");
 await assert.rejects(() => rawExtension(port, "http://localhost"), (error) => error.statusCode === 403);
 
 const rejected = await rawExtension(port);
+rejected.send({ type: "auth_challenge", role: "extension", nonce: crypto.randomBytes(32).toString("base64url") });
+assert.equal((await rejected.next()).type, "auth_proof");
 rejected.send({ type: "auth", role: "extension", token: crypto.randomBytes(32).toString("base64url") });
 await Promise.race([rejected.closed, new Promise((_, reject) => setTimeout(() => reject(new Error("wrong WebSocket token was not closed")), 1500))]);
 
 const extension = await rawExtension(port);
+extension.send({ type: "auth_challenge", role: "extension", nonce: crypto.randomBytes(32).toString("base64url") });
+assert.equal((await extension.next()).type, "auth_proof");
 extension.send({ type: "auth", role: "extension", token });
 assert.equal((await extension.next()).type, "auth_ok");
 assert.equal(host.extensionConnected(), true);

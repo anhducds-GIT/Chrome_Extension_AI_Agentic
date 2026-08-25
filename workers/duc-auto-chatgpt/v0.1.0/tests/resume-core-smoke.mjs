@@ -74,7 +74,7 @@ assert.equal(output.collisionError({ filename: "Duc Auto ChatGPT/Pilot04/Pilot04
 const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 assert.match(sidepanel, /RESUME_AUDIT_APPEND_UNAVAILABLE/);
 assert.match(sidepanel, /CHECKPOINT_VERSION_CONFLICT/, "Result checkpoint version conflicts fail closed");
-assert.match(sidepanel, /writeNewFile\(location\.handle, filename, candidate\.blob\)/, "checkpoint persistence is an exact new-file write");
+assert.match(sidepanel, /DacCheckpointCore\.persistDirectoryCheckpoint\(\{[\s\S]*?writeNewFile: window\.DacOutputLocation\.writeNewFile/, "checkpoint persistence keeps the exact new-file writer while adding failed-write quarantine");
 assert.match(sidepanel, /priorHandle = await location\.handle\.getFileHandle\(previous, \{ create: false \}\)/, "continued audit persistence reads the existing authorized audit before append");
 
 console.log("resume core smoke tests: PASS");

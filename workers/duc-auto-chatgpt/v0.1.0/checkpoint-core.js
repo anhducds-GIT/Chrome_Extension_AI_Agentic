@@ -44,6 +44,38 @@
   function nextVersion(currentVersion) { return Math.max(0, Number(currentVersion) || 0) + 1; }
   function hasVersionConflict(candidates = [], version) { return (candidates || []).some((item) => Number(item?.version) === Number(version)); }
 
+  function partialFilename(filename, version, ordinal = 0) {
+    const suffix = ordinal > 0 ? `-${String(ordinal).padStart(2, "0")}` : "";
+    return `${leaf(filename)}.partial-v${formatVersion(version)}${suffix}`;
+  }
+
+  async function quarantinePartial(directoryHandle, filename, version, fileExists) {
+    if (!directoryHandle || typeof directoryHandle.getFileHandle !== "function" || typeof fileExists !== "function") {
+      throw new Error("Checkpoint quarantine requires a writable directory handle.");
+    }
+    const source = await directoryHandle.getFileHandle(leaf(filename), { create: false });
+    if (typeof source.move !== "function") throw new Error("Checkpoint quarantine requires FileSystemFileHandle.move().");
+    for (let ordinal = 0; ordinal < 100; ordinal += 1) {
+      const candidate = partialFilename(filename, version, ordinal);
+      if (await fileExists(directoryHandle, candidate)) continue;
+      await source.move(candidate);
+      return candidate;
+    }
+    throw new Error("Could not find a non-overwriting partial checkpoint filename.");
+  }
+
+  async function persistDirectoryCheckpoint({ directoryHandle, filename, version, blob, writeNewFile, fileExists, onAbandoned = async () => {} }) {
+    try {
+      return await writeNewFile(directoryHandle, filename, blob);
+    } catch (error) {
+      if (!/^PERSISTENCE_VERIFICATION_FAILED:/i.test(String(error?.message || error))) throw error;
+      if (!(await fileExists(directoryHandle, filename))) throw error;
+      const abandonedFilename = await quarantinePartial(directoryHandle, filename, version, fileExists);
+      await onAbandoned({ filename, abandoned_filename: abandonedFilename, version, error: String(error?.message || error) });
+      throw error;
+    }
+  }
+
   // Two files can parse to the same version once a folder mixes naming widths
   // (v002 and v02 both mean 2).  highest() would then break the tie on
   // filename and silently prefer one, which is exactly the "never fall back
@@ -64,5 +96,5 @@
       .sort((left, right) => right.version - left.version);
   }
 
-  (typeof window !== "undefined" ? window : globalThis).DacCheckpointCore = { formatVersion, hasVersionToken, render, parse, highest, nextVersion, hasVersionConflict, versionCollisions };
+  (typeof window !== "undefined" ? window : globalThis).DacCheckpointCore = { formatVersion, hasVersionToken, render, parse, highest, nextVersion, hasVersionConflict, partialFilename, quarantinePartial, persistDirectoryCheckpoint, versionCollisions };
 })();

@@ -33,7 +33,8 @@
     const postTurnFresh = postTurn.filter((candidate) => !priorSources.has(candidate?.source));
     const newlyVisible = visible.filter((candidate) => !priorSources.has(candidate.source));
     const fresh = [...postTurnFresh, ...newlyVisible];
-    const newCandidates = uniqueBySource(fresh);
+    const fallbackEligible = newlyVisible.filter((candidate) => candidate?.role === "assistant");
+    const newCandidates = uniqueBySource([...postTurnFresh, ...fallbackEligible]);
     const postTurnSources = new Set(postTurnFresh.map((candidate) => candidate.source));
     const diagnostics = { post_turn: summary(postTurn), post_turn_ids: identifiers(postTurn), baseline_count: baseline.length, fresh: summary(fresh), fresh_ids: identifiers(fresh) };
     if (newCandidates.length === 1) {

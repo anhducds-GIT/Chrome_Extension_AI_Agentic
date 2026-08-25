@@ -1,11 +1,11 @@
 (() => {
   "use strict";
   const SUPPORTED = new Set([
-    "timeout_sec", "max_retries", "delay_min_sec", "delay_max_sec", "delay_sec", "safety_cooldown_sec", "max_input_images", "continue_on_error", "rerun_done", "output_folder",
+    "timeout_sec", "max_retries", "delay_min_sec", "delay_max_sec", "delay_sec", "safety_cooldown_sec", "max_input_images", "continue_on_error", "rerun_done", "checkpoint_interval_jobs", "output_folder",
     "output_destination_mode", "output_downloads_subfolder", "output_profile_id", "image_filename_pattern", "collision_policy", "save_images", "save_result_xlsx", "save_audit_jsonl",
     "separate_result_destination", "result_destination_mode", "result_downloads_subfolder", "result_output_profile_id", "result_filename", "result_filename_pattern", "audit_filename", "output_folder_hint", "run_id",
     "checkpoint_version", "checkpoint_filename", "checkpoint_created_at", "previous_checkpoint_filename",
-    "effective_source_workbook", "effective_image_output", "effective_result_xlsx", "effective_image_naming", "effective_collision_policy", "effective_save_images", "effective_save_result_xlsx", "effective_save_audit_jsonl", "effective_audit_log", "effective_timeout_sec", "effective_max_retries", "effective_safety_cooldown_sec", "effective_max_input_images", "effective_continue_on_error", "effective_rerun_done", "audit_chain_status", "audit_chain_missing_filename", "audit_chain_acknowledged_at", "audit_chain_segment_filename"
+    "effective_source_workbook", "effective_image_output", "effective_result_xlsx", "effective_image_naming", "effective_collision_policy", "effective_save_images", "effective_save_result_xlsx", "effective_save_audit_jsonl", "effective_audit_log", "effective_timeout_sec", "effective_max_retries", "effective_safety_cooldown_sec", "effective_max_input_images", "effective_continue_on_error", "effective_rerun_done", "effective_checkpoint_interval_jobs", "audit_chain_status", "audit_chain_missing_filename", "audit_chain_acknowledged_at", "audit_chain_segment_filename"
   ]);
   const slug = /^[a-z0-9][a-z0-9-]{0,63}$/;
   const safeJobId = /^[A-Za-z0-9._-]{1,100}$/;
@@ -17,7 +17,7 @@
     const findings = [];
     const raw = { ...config };
     for (const key of Object.keys(raw)) if (!SUPPORTED.has(key)) findings.push(finding("UNKNOWN_CONFIG_KEY", "WARNING", "settings", `Unknown XLSX config key '${key}'.`, "Remove it or use a DAC_XLSX_RUN_PLAN_V1 key."));
-    const runtimeRaw = Object.fromEntries([...SUPPORTED].filter((key) => key in raw && ["timeout_sec", "max_retries", "delay_min_sec", "delay_max_sec", "delay_sec", "safety_cooldown_sec", "max_input_images", "continue_on_error", "rerun_done", "output_folder"].includes(key)).map((key) => [key, raw[key]]));
+    const runtimeRaw = Object.fromEntries([...SUPPORTED].filter((key) => key in raw && ["timeout_sec", "max_retries", "delay_min_sec", "delay_max_sec", "delay_sec", "safety_cooldown_sec", "max_input_images", "continue_on_error", "rerun_done", "checkpoint_interval_jobs", "output_folder"].includes(key)).map((key) => [key, raw[key]]));
     let runtime = null;
     try { runtime = runner.runtimeConfig(runtimeRaw, {}); } catch (error) { findings.push(finding("INVALID_RUN_CONFIG", "BLOCKER", "settings", error.message, "Correct the named XLSX config value.")); }
     const mode = String(raw.output_destination_mode || "downloads").trim().toLowerCase();

@@ -6,12 +6,14 @@
 
 | Group | Keys |
 | --- | --- |
-| Run | `timeout_sec`, `max_retries`, `delay_min_sec`, `delay_max_sec`, `safety_cooldown_sec`, `max_input_images`, `continue_on_error`, `rerun_done` |
+| Run | `timeout_sec`, `max_retries`, `delay_min_sec`, `delay_max_sec`, `safety_cooldown_sec`, `max_input_images`, `continue_on_error`, `rerun_done`, `checkpoint_interval_jobs` |
 | Output | `output_destination_mode` (`downloads` or `profile`), `output_downloads_subfolder`, `output_profile_id`, `output_folder_hint`, `image_filename_pattern`, `collision_policy`, `save_images`, `save_result_xlsx`, `save_audit_jsonl` |
 | Advanced output | `separate_result_destination`, `result_destination_mode`, `result_downloads_subfolder`, `result_output_profile_id`, `result_filename_pattern`, legacy `result_filename`, `audit_filename`, `run_id` (runner-persisted) |
 | Checkpoint metadata | `checkpoint_version`, `checkpoint_filename`, `checkpoint_created_at`, `previous_checkpoint_filename` (runner-persisted; do not prefill) |
 
 `output_downloads_subfolder` is a safe relative path below Chrome Downloads. `output_profile_id` is only a lowercase logical slug (for example `pilot-04`): it never grants filesystem access or encodes an absolute path. A profile is usable only after the user binds a Directory Handle locally and Chrome grants read/write permission.
+
+`checkpoint_interval_jobs` is optional, accepts an integer from 1 to 1000, and defaults to `1`. It controls the completion checkpoint cadence inside a run. Independently of that cadence, every attempt persists a submission reservation (`submitted_at`, attempt identity, audit, and Result checkpoint) before the prompt-send boundary; after every checkpoint the runner rebinds remaining Queue rows to the newly parsed workbook before any later update.
 
 `output_folder_hint` is optional operator guidance such as `C:\Users\MAYTEST_12\Downloads\Duc Auto ChatGPT\Pilot04`. It is displayed only for profile destination mode and can be copied. It never grants permission, is never treated as an authorized directory, never stores a `FileSystemDirectoryHandle`, and cannot make Check Plan ready. When the profile is unbound, copy the hint, choose that folder through Chrome's picker, then Check Plan again.
 

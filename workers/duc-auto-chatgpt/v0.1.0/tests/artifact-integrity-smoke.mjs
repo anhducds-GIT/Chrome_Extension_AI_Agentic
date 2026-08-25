@@ -54,13 +54,13 @@ assert.doesNotMatch(
 const saveAuditSegment = sidepanel.slice(sidepanel.indexOf("async function saveAuditLog"), sidepanel.indexOf("async function assertDownloadCollisionPolicy"));
 assert.ok(saveAuditSegment.length > 0, "saveAuditLog is present");
 const writeIndex = saveAuditSegment.indexOf("writeFileWithPolicy(location.handle, requested, mergedBlob, policy)");
-const clearIndex = saveAuditSegment.indexOf("state.auditEvents = []");
+const selectiveClearIndex = saveAuditSegment.indexOf("state.auditEvents = state.auditEvents.filter((event) => !flushed.has(event))");
 assert.ok(writeIndex > -1, "the directory append path performs a verified write");
-assert.ok(clearIndex > writeIndex, "the audit buffer is cleared only after the verified write, so no event is re-emitted on the next flush");
+assert.ok(selectiveClearIndex > writeIndex, "only the flushed audit snapshot is removed after the verified write");
 assert.doesNotMatch(
   saveAuditSegment.slice(0, writeIndex),
-  /state\.auditEvents = \[\]/,
-  "the buffer must never be cleared before the write is verified"
+  /state\.auditEvents\s*=\s*(?:\[\]|state\.auditEvents\.filter)/,
+  "the buffer must never be cleared or filtered before the write is verified"
 );
 assert.match(sidepanel, /state\.auditEvents = audit \? \[\] : snapshot\.auditEvents/, "bridge approval rollback does not re-buffer events that a verified audit write already persisted");
 assert.match(sidepanel, /state\.auditEvents = auditPersisted \? \[\] : snapshot\.auditEvents/, "Recreate rollback uses the same no-duplicate audit rule");

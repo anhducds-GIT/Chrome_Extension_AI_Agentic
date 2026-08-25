@@ -59,6 +59,7 @@
     runId: null,
     attemptSerial: 0,
     auditEvents: [],
+    auditPersistedPayload: "",
     auditFile: "",
     resultFile: "",
     verifiedImageFiles: [],
@@ -99,6 +100,7 @@
     runSelection: new Set(),
     quickPromptCounter: 0,
     queueMutationRunning: false,
+    runStarting: false,
     pendingQueueRemovalId: null,
     draggedQueueJobId: null,
     auditGapRunning: false,
@@ -111,6 +113,7 @@
     bridgeActivity: [],
     bridgeAttention: []
   };
+  const queueRunLock = window.DacApprovalPersistence.createQueueRunLock(state);
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const STATUS_TRANSLATIONS = Object.freeze({
@@ -465,7 +468,7 @@
           const store = await readBridgeProposalStoreUnlocked();
           store.replays[key] = record;
           const keys = Object.keys(store.replays);
-          for (const stale of keys.slice(0, Math.max(0, keys.length - 50))) delete store.replays[stale];
+          for (const stale of keys.slice(0, Math.max(0, keys.length - 500))) delete store.replays[stale];
           await writeBridgeProposalStoreUnlocked(store);
         });
       }
@@ -989,7 +992,7 @@
       } catch (_) { persistenceMissing = true; }
     }
     return window.DacBridgeProposalCore.approvalLockReason({
-      running: state.running,
+      running: state.running || state.runStarting,
       reconciliation: state.manualReconciliationRunning,
       recreate: state.recreateRunning || Boolean(state.pendingRecreateJobId) || Boolean(state.pendingRerunJobId),
       audit_gap: state.auditGapRunning || state.auditChain?.code === "RESUME_AUDIT_CHAIN_MISSING",
@@ -1098,7 +1101,7 @@
   async function executeBridgeDirectMutation({ method, event, workbookRequired = true, persistenceRequired = true, mutate }) {
     if (workbookRequired) requireBridgeWorkbook();
     bridgeDirectLock({ workbookRequired: false, persistenceRequired });
-    state.queueMutationRunning = true;
+    if (!queueRunLock.tryBeginMutation()) throw new window.DacBridgeCore.BridgeProtocolError("RUN_ACTIVE");
     controls();
     let recoveredForward = null;
     try {
@@ -1182,7 +1185,7 @@
       }
       throw error;
     } finally {
-      state.queueMutationRunning = false;
+      queueRunLock.endMutation();
       renderBridgeProposals(); renderQueue(); renderOutput(); controls();
     }
   }
@@ -1432,6 +1435,9 @@
     if (!record || record.status === "APPROVING") return;
     const initialLock = bridgeApprovalLockReason();
     if (initialLock) { renderBridgeProposals(); return; }
+    if (!queueRunLock.tryBeginMutation()) { renderBridgeProposals(); return; }
+    controls(); renderBridgeProposals();
+    try {
     let ledgerEtag;
     let revalidated;
     try {
@@ -1463,7 +1469,6 @@
     const approvedAt = new Date().toISOString();
     record = window.DacBridgeProposalCore.transition(record, "APPROVING", { approved_at: approvedAt, failure: null });
     await replaceBridgeRecord(record, { clearReplay: true });
-    state.queueMutationRunning = true; controls(); renderBridgeProposals();
     let approvalFailureRecorded = false;
     let postCheckpointRecovery = null;
     try {
@@ -1587,8 +1592,9 @@
       } else {
         await markBridgeApprovalFailed(record, error, { audit_recorded: approvalFailureRecorded });
       }
+    }
     } finally {
-      state.queueMutationRunning = false; renderBridgeProposals(); renderQueue(); controls();
+      queueRunLock.endMutation(); renderBridgeProposals(); renderQueue(); controls();
     }
   }
 
@@ -2420,7 +2426,7 @@
   async function send(message) {
     const tab = await activeTab();
     try { return await chrome.tabs.sendMessage(tab.id, message); }
-    catch (_) { throw new Error("HARD_STOP: ChatGPT receiver unavailable. Reload the ChatGPT tab once."); }
+    catch (_) { throw new Error("RECEIVER_LOST: ChatGPT receiver unavailable. Reload the ChatGPT tab once."); }
   }
 
   function dataUrl(file) {
@@ -4112,7 +4118,7 @@
     const resultDestination = actual ? (/^(?:[A-Za-z]:[\\/]|\/)/.test(actual) || actual.startsWith(window.DacOutputLocation.locationLabel(effectiveResult)) ? actual : window.DacOutputLocation.fileLabel(effectiveResult, actual)) : plan.resultDestination;
     const output = window.DacOutputLocation.effective(state.outputSettings);
     const auditChain = auditGapAcknowledged() ? { audit_chain_status: state.workbook.config.audit_chain_status, audit_chain_missing_filename: state.workbook.config.audit_chain_missing_filename, audit_chain_acknowledged_at: state.workbook.config.audit_chain_acknowledged_at, audit_chain_segment_filename: state.workbook.config.audit_chain_segment_filename } : {};
-    const snapshot = { run_id: state.runId || "", result_filename_pattern: output.checkpointFilenamePattern, effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done, ...auditChain, ...(checkpoint || {}) };
+    const snapshot = { run_id: state.runId || "", result_filename_pattern: output.checkpointFilenamePattern, effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done, effective_checkpoint_interval_jobs: settings.checkpoint_interval_jobs, ...auditChain, ...(checkpoint || {}) };
     window.DacXlsx.updateConfigSnapshot(workbook, snapshot);
     if (workbook === state.workbook && state.prepared) for (const item of state.prepared.queue) update(item, snapshot);
   }
@@ -4172,7 +4178,17 @@
     const candidate = await checkpointWorkbook(filename, version, sourceWorkbook, auditFilename);
     await assertCheckpointVersionAvailable(location, filename, values.checkpointFilenamePattern, version);
     if (location.kind === "directory") {
-      await window.DacOutputLocation.writeNewFile(location.handle, filename, candidate.blob);
+      await window.DacCheckpointCore.persistDirectoryCheckpoint({
+        directoryHandle: location.handle,
+        filename,
+        version,
+        blob: candidate.blob,
+        writeNewFile: window.DacOutputLocation.writeNewFile,
+        fileExists: window.DacOutputLocation.fileExists,
+        onAbandoned: async (failure) => audit("CHECKPOINT_PARTIAL_ABANDONED", null, {
+          message: `Checkpoint '${failure.filename}' failed verification and was quarantined as '${failure.abandoned_filename}' at version ${window.DacCheckpointCore.formatVersion(failure.version)}.`
+        })
+      });
       const actual = window.DacOutputLocation.fileLabel(location, filename);
       return { ...candidate, actual, version, filename, storage: "directory" };
     }
@@ -4193,6 +4209,7 @@
     state.checkpointVersion = persisted.version;
     state.checkpointFilename = persisted.filename;
     state.checkpointCreatedAt = persisted.checkpoint.checkpoint_created_at;
+    if (state.prepared?.queue) window.DacRunnerCore.rebindQueueRows(state.prepared.queue, state.workbook, window.DacXlsx.activeJobs);
     renderCheckpointMeta();
     log(`Result checkpoint v${window.DacCheckpointCore.formatVersion(persisted.version)} ${persisted.storage === "directory" ? "verified" : "downloaded"}: ${persisted.actual}.`, "done");
     return persisted.actual;
@@ -4201,7 +4218,9 @@
   async function saveAuditLog(location, { appendExisting = false, force = false } = {}) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
     if (!values.saveAuditJsonl && !force) return "";
-    let payload = state.auditEvents.map((event) => JSON.stringify(event)).join("\n") + (state.auditEvents.length ? "\n" : "");
+    const pendingEvents = state.auditEvents.slice();
+    const pendingPayload = pendingEvents.map((event) => JSON.stringify(event)).join("\n") + (pendingEvents.length ? "\n" : "");
+    let payload = pendingPayload;
     const blob = new Blob([payload], { type: "application/jsonl" });
     const requested = values.auditFilename;
     if (location.kind === "directory") {
@@ -4251,21 +4270,41 @@
       // populated made a second flush re-emit already-persisted events -- the
       // AUDIT_CHAIN_GAP marker was written twice in Pilot-05.  Clear only
       // after a verified write, and only on this read-then-append path.
-      state.auditEvents = [];
+      const flushed = new Set(pendingEvents);
+      state.auditEvents = state.auditEvents.filter((event) => !flushed.has(event));
       return window.DacOutputLocation.fileLabel(location, written.filename);
     }
     if (state.resumeMode) throw new Error("RESUME_AUDIT_APPEND_UNAVAILABLE: Chrome Downloads cannot read and append the prior audit log. Continue using the authorized run folder.");
-    const objectUrl = URL.createObjectURL(blob);
+    payload = `${state.auditPersistedPayload || ""}${pendingPayload}`;
+    const downloadBlob = new Blob([payload], { type: "application/jsonl" });
+    const objectUrl = URL.createObjectURL(downloadBlob);
     try {
-      const request = force
+      const request = state.auditPersistedPayload
+        ? window.DacOutputLocation.downloadArtifactRequest(location, requested, "overwrite")
+        : force
         ? window.DacOutputLocation.downloadArtifactRequest(location, requested, "uniquify")
         : window.DacOutputLocation.downloadArtifactRequest(location, requested, "fail");
       if (!force) await assertDownloadCollisionPolicy(request);
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
       window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
+      state.auditPersistedPayload = payload;
+      const flushed = new Set(pendingEvents);
+      state.auditEvents = state.auditEvents.filter((event) => !flushed.has(event));
       return item.filename;
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
+  }
+
+  async function flushRunCheckpoint(resultLocation, reason) {
+    const verified = await window.DacRunnerCore.verifiedRunCheckpoint({
+      persistAudit: () => saveAuditLog(resultLocation, { appendExisting: Boolean(state.auditFile) }),
+      onAuditPersisted: async (auditFile) => { state.auditFile = auditFile; snapshotOutputSettings(null, auditFile); },
+      persistLedger: () => saveLedger(resultLocation)
+    });
+    state.auditFile = verified.auditFile;
+    state.resultFile = verified.resultFile;
+    audit("RUN_CHECKPOINT_VERIFIED", null, { message: `${reason}; ${state.checkpointFilename} is authoritative.` });
+    return state.resultFile;
   }
 
   async function assertDownloadCollisionPolicy(request) {
@@ -4466,16 +4505,33 @@
   }
 
   async function run(mode = "all") {
+    if (!queueRunLock.tryBeginRun()) {
+      const reason = "RUN_ACTIVE: Setup mutation, run validation, or another run is already active.";
+      setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error"); controls();
+      return { ok: false, reason };
+    }
     let effectiveOutput;
     let artifactPersistenceFailed = false;
     let completedNaturally = false;
-    try { effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" }); }
-    catch (error) { const reason = messageOf(error); setStatus("ERROR"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
-    const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, mode === "selected" ? state.runSelection : state.selectedJobId);
-    if (!runQueue.length) { const reason = `No ${mode} jobs are eligible.`; setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
-    state.running = true; state.stopRequested = false; state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    let runQueue;
+    try {
+      effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" });
+      runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, mode === "selected" ? state.runSelection : state.selectedJobId);
+      if (!runQueue.length) {
+        const reason = `No ${mode} jobs are eligible.`;
+        setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error");
+        return { ok: false, reason };
+      }
+      queueRunLock.promoteRun();
+    } catch (error) {
+      const reason = messageOf(error); setStatus("ERROR"); progress(reason); log(reason, "error");
+      return { ok: false, reason };
+    } finally {
+      queueRunLock.endRunStart(); controls();
+    }
+    state.stopRequested = false; state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
-    state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = []; if (!state.resumeMode) { state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; } state.artifactErrors = []; renderCheckpointMeta();
+    state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = []; state.auditPersistedPayload = ""; if (!state.resumeMode) { state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; } state.artifactErrors = []; renderCheckpointMeta();
     if (mode !== "recreate") els.logList.textContent = "";
     startRuntimeTicker();
     const target = await activeTab().catch(() => null);
@@ -4501,9 +4557,20 @@
           item.runtime_stage = item.references.length ? "ATTACHING_REFS" : "SENDING";
           item.attempt_id = nextAttemptId();
           const rerunReset = item.deliberate_rerun ? { result_file: "", result_download_id: "", output_saved_at: "" } : {};
-          update(item, { ...rerunReset, status: "RUNNING", attempt_id: item.attempt_id, attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", ...(item.operator_recreate ? { recreate_attempt_id: item.attempt_id, recreate_status: "RUNNING" } : {}) });
+          const reservation = window.DacRunnerCore.submissionReservation(item);
+          update(item, { ...rerunReset, ...reservation, attempt_id: item.attempt_id, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", ...(item.operator_recreate ? { recreate_attempt_id: item.attempt_id, recreate_status: "RUNNING" } : {}) });
           item.deliberate_rerun = false;
           audit(item.operator_recreate ? "RECREATE_ATTEMPT_STARTED" : "JOB_START", item, item.operator_recreate ? { message: "Starting one operator-approved deliberate recreate attempt." } : {}); setCurrent(item, item.runtime_stage, item.references.length ? `Preparing ${item.references.length} reference image(s).` : "Preparing prompt submission."); renderQueue(); nextTask(nextEligible(item.job.id), "Waiting for current job to finish."); progress(`Running ${item.job.id}…`);
+          audit("PROMPT_SUBMISSION_RESERVED", item, { message: "Submission risk marker persisted before the content receiver may send the prompt." });
+          try {
+            await flushRunCheckpoint(effectiveOutput.result, `Pre-send reservation for ${item.job.id}`);
+          } catch (error) {
+            const reason = `Pre-send checkpoint failed; prompt was not sent: ${messageOf(error)}`;
+            artifactPersistenceFailed = true;
+            state.artifactErrors.push(reason);
+            markInterrupted(item, "PERSISTENCE_VERIFICATION_FAILED", reason);
+            completed = true; halted = true; break;
+          }
           let response;
           try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
           catch (error) { response = { ok: false, error: messageOf(error), attempt: { job_id: item.job.id, attempt_id: item.attempt_id, phase: "PRE_SUBMIT", submittedAt: null } }; }
@@ -4538,6 +4605,14 @@
           completed = outcome.completed; halted ||= outcome.halted;
         }
         state.terminal += 1; renderQueue();
+        if (window.DacRunnerCore.shouldCheckpoint(runIndex + 1, settings.checkpoint_interval_jobs)) {
+          try { await flushRunCheckpoint(effectiveOutput.result, `Completion interval reached after ${item.job.id}`); }
+          catch (error) {
+            artifactPersistenceFailed = true;
+            state.artifactErrors.push(`Mid-run checkpoint failed after ${item.job.id}: ${messageOf(error)}`);
+            halted = true;
+          }
+        }
         if (halted) break;
         await waitWhilePaused();
         if (state.stopRequested) break;
@@ -4551,7 +4626,7 @@
       nextTask(null, "—"); setStatus(state.stopRequested ? "IDLE" : halted ? "ERROR" : "DONE", state.stopRequested ? "STOPPED" : halted ? "HALTED" : "DONE"); progress(state.stopRequested ? "Stopped. No later jobs were submitted." : halted ? "Batch halted after a protected terminal state." : "Queue complete.");
     } finally {
       audit("RUN_END", null, { message: state.stopRequested ? "STOPPED" : halted ? "HALTED" : "COMPLETE" });
-      try { state.auditFile = await saveAuditLog(effectiveOutput.result); snapshotOutputSettings(null, state.auditFile); if (state.auditFile) log(`Audit log verified: ${state.auditFile}.`, "done"); }
+      try { state.auditFile = await saveAuditLog(effectiveOutput.result, { appendExisting: Boolean(state.auditFile) }); snapshotOutputSettings(null, state.auditFile); if (state.auditFile) log(`Audit log verified: ${state.auditFile}.`, "done"); }
       catch (error) { artifactPersistenceFailed = true; state.artifactErrors.push(`Audit JSONL persistence verification failed: ${messageOf(error)}`); log(`Audit log failed: ${messageOf(error)}`, "error"); }
       try { state.resultFile = await saveLedger(effectiveOutput.result); }
       catch (error) { artifactPersistenceFailed = true; state.artifactErrors.push(`Result XLSX persistence verification failed: ${messageOf(error)}`); log(`Result XLSX failed: ${messageOf(error)}`, "error"); }

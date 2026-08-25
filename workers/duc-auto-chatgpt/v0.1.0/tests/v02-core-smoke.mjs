@@ -13,8 +13,8 @@ const runner = load("runner-core.js", "DacRunnerCore");
 const candidate = (source, options = {}) => ({ source, ready: true, visible: true, ...options });
 
 assert.equal(images.selectAttributableImage({ postTurn: [candidate("https://new")], visible: [], baseline: [] }).attribution, "post_turn");
-assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old"), candidate("https://new")], baseline: [candidate("https://old")] }).attribution, "new_visible_fallback");
-assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old"), candidate("https://pilot01-new")], baseline: [candidate("https://old")] }).ok, true, "Pilot01 fallback does not need an assistant container");
+assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old"), candidate("https://new", { role: "assistant" })], baseline: [candidate("https://old")] }).attribution, "new_visible_fallback");
+assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old"), candidate("https://pilot01-new", { role: "unknown" })], baseline: [candidate("https://old")] }).ok, false, "unknown-role page images are not fallback evidence");
 assert.equal(images.selectAttributableImage({ postTurn: [], visible: [candidate("https://old")], baseline: [candidate("https://old")] }).reason, "NO_NEW_IMAGE");
 assert.equal(images.selectAttributableImage({ postTurn: [candidate("https://one"), candidate("https://two")], visible: [], baseline: [] }).reason, "AMBIGUOUS_POST_TURN_IMAGE");
 assert.equal(images.selectAttributableImage({ postTurn: [candidate("https://retry-image")], visible: [], baseline: [] }).ok, true, "Retry UI does not alter image evidence");

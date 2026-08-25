@@ -20,5 +20,28 @@
     }
   }
 
-  (typeof window !== "undefined" ? window : globalThis).DacApprovalPersistence = Object.freeze({ execute });
+  function createQueueRunLock(state) {
+    if (!state || typeof state !== "object") throw new TypeError("Queue/run lock requires shared state.");
+    return Object.freeze({
+      tryBeginMutation() {
+        if (state.queueMutationRunning || state.running || state.runStarting) return false;
+        state.queueMutationRunning = true;
+        return true;
+      },
+      endMutation() { state.queueMutationRunning = false; },
+      tryBeginRun() {
+        if (state.queueMutationRunning || state.running || state.runStarting) return false;
+        state.runStarting = true;
+        return true;
+      },
+      promoteRun() {
+        if (!state.runStarting) throw new Error("Run-start latch is not held.");
+        state.runStarting = false;
+        state.running = true;
+      },
+      endRunStart() { state.runStarting = false; }
+    });
+  }
+
+  (typeof window !== "undefined" ? window : globalThis).DacApprovalPersistence = Object.freeze({ execute, createQueueRunLock });
 })();

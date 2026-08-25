@@ -73,4 +73,56 @@ assert.equal(authoritativeVersion, 3, "failed persistence does not advance autho
 authoritativeVersion = checkpoint.nextVersion(authoritativeVersion);
 assert.equal(authoritativeVersion, 4);
 
+const files = new Map([["Pilot__results__v04.xlsx.partial-v04", { size: 10 }]]);
+const fakeDirectory = {
+  async getFileHandle(filename, { create }) {
+    if (!files.has(filename)) {
+      if (!create) { const error = new Error("missing"); error.name = "NotFoundError"; throw error; }
+      files.set(filename, { size: 0 });
+    }
+    return {
+      async move(target) {
+        const value = files.get(filename);
+        files.delete(filename);
+        files.set(target, value);
+      }
+    };
+  }
+};
+const fakeExists = async (_directory, filename) => files.has(filename);
+const abandoned = [];
+let persistenceAttempts = 0;
+const writeCheckpoint = async (_directory, filename) => {
+  persistenceAttempts += 1;
+  files.set(filename, { size: persistenceAttempts === 1 ? 0 : 10 });
+  if (persistenceAttempts === 1) throw new Error(`PERSISTENCE_VERIFICATION_FAILED: '${filename}' was zero bytes.`);
+  return filename;
+};
+await assert.rejects(() => checkpoint.persistDirectoryCheckpoint({
+  directoryHandle: fakeDirectory,
+  filename: "Pilot__results__v04.xlsx",
+  version: 4,
+  blob: { size: 10 },
+  writeNewFile: writeCheckpoint,
+  fileExists: fakeExists,
+  onAbandoned: async (record) => abandoned.push(record)
+}), /PERSISTENCE_VERIFICATION_FAILED/);
+assert.equal(files.has("Pilot__results__v04.xlsx"), false, "failed checkpoint name is freed for a same-version retry");
+assert.equal(files.has("Pilot__results__v04.xlsx.partial-v04-01"), true, "partial collision is probed without overwrite");
+assert.equal(files.get("Pilot__results__v04.xlsx.partial-v04").size, 10, "pre-existing partial evidence is untouched");
+assert.equal(abandoned[0].abandoned_filename, "Pilot__results__v04.xlsx.partial-v04-01");
+assert.equal(abandoned[0].version, 4, "audit callback receives the abandoned version");
+assert.equal(checkpoint.parse(pattern, abandoned[0].abandoned_filename), null, "partial filename is never recognized as a checkpoint");
+const retried = await checkpoint.persistDirectoryCheckpoint({
+  directoryHandle: fakeDirectory,
+  filename: "Pilot__results__v04.xlsx",
+  version: 4,
+  blob: { size: 10 },
+  writeNewFile: writeCheckpoint,
+  fileExists: fakeExists
+});
+assert.equal(retried, "Pilot__results__v04.xlsx", "retry succeeds at the same checkpoint version");
+const resumeCandidates = [...files.keys()].map((name) => checkpoint.parse(pattern, name)).filter(Boolean);
+assert.deepEqual(plain(resumeCandidates.map((item) => item.filename)), ["Pilot__results__v04.xlsx"], "resume scan ignores quarantined partial files");
+
 console.log("checkpoint protocol smoke tests: PASS");

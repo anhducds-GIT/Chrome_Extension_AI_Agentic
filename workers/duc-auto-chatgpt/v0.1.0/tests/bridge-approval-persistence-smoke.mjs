@@ -58,6 +58,31 @@ assert.deepEqual(recovered, {
   recoveryEvents: [{ event: "POST_CHECKPOINT_RECOVERED", job_ids: ["Q001"] }]
 }, "post-checkpoint commit failure recovers forward to disk truth and records terminal approval");
 
+const lockState = { queueMutationRunning: false, runStarting: false, running: false };
+const lock = persistence.createQueueRunLock(lockState);
+let releaseApproval;
+const approvalHeld = new Promise((resolve) => { releaseApproval = resolve; });
+let approvalApplied = 0;
+const approval = (async () => {
+  assert.equal(lock.tryBeginMutation(), true, "approval acquires the mutation lock synchronously before its first await");
+  try { await approvalHeld; approvalApplied += 1; } finally { lock.endMutation(); }
+})();
+await Promise.resolve();
+let directMutationApplied = 0;
+if (lock.tryBeginMutation()) { directMutationApplied += 1; lock.endMutation(); }
+assert.equal(directMutationApplied, 0, "a direct mutation interleaved while approval awaits is refused");
+releaseApproval();
+await approval;
+assert.equal(approvalApplied, 1);
+
+assert.equal(lock.tryBeginRun(), true, "run-start latch is acquired before validation awaits");
+if (lock.tryBeginMutation()) { directMutationApplied += 1; lock.endMutation(); }
+assert.equal(directMutationApplied, 0, "a direct mutation interleaved during run validation is refused");
+lock.endRunStart();
+assert.equal(lock.tryBeginMutation(), true);
+assert.equal(lock.tryBeginRun(), false, "run entry is refused while a mutation owns the lock");
+lock.endMutation();
+
 for (const missing of ["snapshot", "apply", "persist_audit", "persist_checkpoint", "commit", "rollback"]) {
   const steps = Object.fromEntries(["snapshot", "apply", "persist_audit", "persist_checkpoint", "commit", "rollback"].map((name) => [name, async () => {}]));
   delete steps[missing];

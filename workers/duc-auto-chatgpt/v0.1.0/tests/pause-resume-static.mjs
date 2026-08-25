@@ -31,7 +31,7 @@ const runSegment = sidepanel.slice(sidepanel.indexOf('async function run(mode = 
 const pauseCheckCount = [...runSegment.matchAll(/await waitWhilePaused\(\);/g)].length;
 assert.equal(pauseCheckCount, 2, "pause is checked exactly at the pre-job and post-job boundaries, not mid-attempt");
 assert.match(runSegment, /if \(state\.stopRequested\) break;\s*\n\s*await waitWhilePaused\(\);\s*\n\s*if \(state\.stopRequested\) break;\s*\n\s*let completed = false;/, "pause is checked before a job starts, and Stop still wins if requested while paused");
-assert.match(runSegment, /state\.terminal \+= 1; renderQueue\(\);\s*\n\s*if \(halted\) break;\s*\n\s*await waitWhilePaused\(\);\s*\n\s*if \(state\.stopRequested\) break;\s*\n\s*const nextItem/, "pause is checked immediately after the current job finishes, before the inter-job delay");
+assert.match(runSegment, /state\.terminal \+= 1; renderQueue\(\);[\s\S]*?if \(halted\) break;\s*\n\s*await waitWhilePaused\(\);\s*\n\s*if \(state\.stopRequested\) break;\s*\n\s*const nextItem/, "pause is checked after terminal persistence and immediately before the inter-job delay");
 assert.match(runSegment, /state\.pauseRequested = false; state\.paused = false;/, "starting a run clears any pause state left over from a previous one");
 
 // The label must flip the instant the operator clicks it (on

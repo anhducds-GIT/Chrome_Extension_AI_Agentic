@@ -95,14 +95,21 @@
     return shortHash(`${explicitId}|${assistantMessageText(message).slice(0, 256)}|${images}`);
   }
 
+  function securityTextWithoutUserMessages(root = document.body) {
+    if (!root) return "";
+    const scope = root.cloneNode(true);
+    for (const userMessage of scope.querySelectorAll('[data-message-author-role="user"]')) userMessage.remove();
+    return scope.innerText || scope.textContent || "";
+  }
+
   function securityBlockerText() {
-    const text = (document.body?.innerText || "").toLowerCase();
+    const text = securityTextWithoutUserMessages().toLowerCase();
     return /(captcha|unusual activity|verify you are human|suspicious activity)/.test(text) ? "ChatGPT security/interstitial blocker detected." : null;
   }
 
   // Free/paid image-generation quotas ("you've hit your daily limit") render
   // as an ordinary assistant message, not an interstitial -- scanning the
-  // whole page like securityBlockerText() would catch the OPERATOR'S OWN
+  // whole assistant history would catch the OPERATOR'S OWN
   // PROMPT if it happened to contain these same common words (draw a picture
   // about someone waiting for a daily limit to reset, etc). Scoped to only
   // the specific assistant message under evaluation instead.
@@ -191,7 +198,13 @@
     throw new Error("Send button did not become ready. ChatGPT DOM may have changed.");
   }
 
-  function imageCandidates(root = document, inputEvidence = { sources: new Set(), names: new Set() }) {
+  function conversationRoot() {
+    const message = document.querySelector('[data-message-author-role="assistant"], [data-message-author-role="user"]');
+    const rooted = message?.closest('[data-testid="conversation-turns"], [data-testid*="conversation"], main, [role="main"]');
+    return rooted || document.querySelector('[data-testid="conversation-turns"], [data-testid*="conversation"], main, [role="main"]') || document.body;
+  }
+
+  function imageCandidates(root = conversationRoot(), inputEvidence = { sources: new Set(), names: new Set() }) {
     return Array.from(root.querySelectorAll("img")).map((image) => {
       const source = image.currentSrc || image.src || "";
       const rect = image.getBoundingClientRect();
@@ -212,7 +225,7 @@
 
   function captureBoundary(inputEvidence) {
     const assistants = assistantMessages();
-    const images = imageCandidates(document, inputEvidence);
+    const images = imageCandidates(conversationRoot(), inputEvidence);
     return Object.freeze({ assistant_count: assistants.length, assistant_fingerprints: assistants.map(assistantFingerprint), assistant_node_ids: assistants.map((message) => nodeId(message, "assistant")), images, image_source_ids: images.map((candidate) => candidate.source_id), image_node_ids: images.map((candidate) => candidate.node_id) });
   }
   function newAssistantMessages(boundary) {
@@ -221,7 +234,7 @@
   }
   function imageDecision(boundary, inputEvidence) {
     const postTurnMessages = newAssistantMessages(boundary);
-    return { decision: window.DacImageEvidence.selectAttributableImage({ postTurn: postTurnMessages.flatMap((message) => imageCandidates(message, inputEvidence)), visible: imageCandidates(document, inputEvidence), baseline: boundary?.images || [] }), assistant_count_after: assistantMessages().length, new_assistant_fingerprints: postTurnMessages.map(assistantFingerprint) };
+    return { decision: window.DacImageEvidence.selectAttributableImage({ postTurn: postTurnMessages.flatMap((message) => imageCandidates(message, inputEvidence)), visible: imageCandidates(conversationRoot(), inputEvidence), baseline: boundary?.images || [] }), assistant_count_after: assistantMessages().length, new_assistant_fingerprints: postTurnMessages.map(assistantFingerprint) };
   }
   function boundaryTelemetry(boundary) {
     return { assistant_count_before: boundary?.assistant_count || 0, assistant_node_ids: boundary?.assistant_node_ids || [], assistant_fingerprints: boundary?.assistant_fingerprints || [], baseline_image_count: boundary?.images?.length || 0, baseline_source_ids: boundary?.image_source_ids || [], baseline_image_node_ids: boundary?.image_node_ids || [] };
@@ -476,7 +489,7 @@
     const proof = message?.proof;
     const identity = window.DacReconciliationCore.matchesRequest(proof, message);
     if (!identity.ok) throw new Error(`${identity.code}: ${identity.message}`);
-    const verified = window.DacReconciliationCore.verifyExistingOutput({ proof, candidates: imageCandidates(document) });
+    const verified = window.DacReconciliationCore.verifyExistingOutput({ proof, candidates: imageCandidates(conversationRoot()) });
     if (!verified.ok) throw new Error(`${verified.code}: ${verified.message}`);
     return {
       type: "image",

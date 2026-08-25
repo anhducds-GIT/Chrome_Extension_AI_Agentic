@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -55,7 +56,13 @@ const firstSocket = FakeWebSocket.instances[0];
 assert.equal(firstSocket.url, pairing.websocket_url);
 assert.equal(firstSocket.url.includes(token), false, "token is not placed in the WebSocket URL");
 firstSocket.emit("open");
-assert.deepEqual(firstSocket.sent[0], { type: "auth", role: "extension", token });
+assert.equal(firstSocket.sent[0].type, "auth_challenge");
+assert.equal(firstSocket.sent.some((message) => JSON.stringify(message).includes(token)), false, "the token is withheld until host proof verifies");
+const staleProof = crypto.createHmac("sha256", Buffer.from(token, "base64url")).update("nonce-from-an-older-socket", "utf8").digest("base64url");
+firstSocket.emit("message", { data: JSON.stringify({ type: "auth_proof", proof: staleProof }) });
+await new Promise((resolve) => setTimeout(resolve, 25));
+assert.equal(firstSocket.readyState, FakeWebSocket.CLOSED, "a valid but stale proof for another nonce closes the socket");
+assert.equal(firstSocket.sent.some((message) => JSON.stringify(message).includes(token)), false, "a hostile host never receives the token");
 const portMessage = eventSource();
 const portDisconnect = eventSource();
 const posted = [];
@@ -67,15 +74,17 @@ const preAuthProposal = {
   sent_at: "2026-08-24T10:00:00.000Z", client: { client_id: "test", name: "Test", version: "1" },
   params: { if_ledger_etag: "sha256:test", jobs: [{ client_job_id: "a", requested_job_id: null, prompt: "must not stage", reference_images: [], settings: {} }] }
 };
-firstSocket.emit("message", { data: JSON.stringify({ type: "rpc", relay_id: "preauth-relay", envelope: preAuthProposal }) });
-await new Promise((resolve) => setTimeout(resolve, 0));
-assert.equal(firstSocket.readyState, FakeWebSocket.CLOSED, "pre-auth RPC closes the socket fail-closed");
 assert.equal(posted.length, 0, "pre-auth proposal never reaches the executor");
 
 alarms.emit({ name: "dac.bridge.loopback.reconnect.v1" });
 await new Promise((resolve) => setTimeout(resolve, 0));
 const secondSocket = FakeWebSocket.instances[1];
 secondSocket.emit("open");
+const secondChallenge = secondSocket.sent[0];
+const validProof = crypto.createHmac("sha256", Buffer.from(token, "base64url")).update(secondChallenge.nonce, "utf8").digest("base64url");
+secondSocket.emit("message", { data: JSON.stringify({ type: "auth_proof", proof: validProof }) });
+await new Promise((resolve) => setTimeout(resolve, 25));
+assert.deepEqual(secondSocket.sent[1], { type: "auth", role: "extension", token }, "token is sent only after valid HMAC proof");
 secondSocket.emit("message", { data: JSON.stringify({ type: "auth_ok", session_id: "host-session", server_time: new Date().toISOString() }) });
 await new Promise((resolve) => setTimeout(resolve, 0));
 assert.equal(values[globalThis.DacBridgePairingCore.STATUS_STORAGE_KEY].state, "connected");

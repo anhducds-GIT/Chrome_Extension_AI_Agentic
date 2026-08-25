@@ -34,7 +34,12 @@ for (const method of expectedMethods) {
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].read_only, false);
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].approval, "owner_click");
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].idempotent, true);
-assert(expectedMethods.filter((name) => name !== "queue.propose").every((name) => bridge.METHOD_REGISTRY[name].idempotent === false));
+const idempotentMutations = [
+  "jobs.add", "jobs.update", "jobs.remove", "jobs.reorder",
+  "output.configure", "output.set_folder_hint", "run_settings.configure", "queue.propose"
+];
+assert(idempotentMutations.every((name) => bridge.METHOD_REGISTRY[name].idempotent === true));
+assert(expectedMethods.filter((name) => !idempotentMutations.includes(name)).every((name) => bridge.METHOD_REGISTRY[name].idempotent === false));
 
 const capabilities = bridge.capabilities();
 assert(Object.isFrozen(capabilities));
@@ -85,6 +90,45 @@ for (const [method, params] of Object.entries(validByMethod)) {
   assert.doesNotThrow(() => bridge.validateParams(method, params), `${method} accepts its v1 fixture`);
 }
 
+const tier1MutationMethods = [
+  "jobs.add", "jobs.update", "jobs.remove", "jobs.reorder",
+  "output.configure", "output.set_folder_hint", "run_settings.configure"
+];
+const mutationCalls = Object.fromEntries(tier1MutationMethods.map((method) => [method, 0]));
+const mutationDispatch = bridge.createDispatcher({
+  replay_store: bridge.createMemoryReplayStore(),
+  now: () => new Date("2026-08-25T08:00:00.000Z"),
+  handlers: Object.fromEntries(tier1MutationMethods.map((method) => [method, async () => ({ mutation_number: ++mutationCalls[method] })]))
+});
+for (const [index, method] of tier1MutationMethods.entries()) {
+  const request = {
+    protocol: bridge.PROTOCOL,
+    version: 1,
+    kind: "request",
+    request_id: `tier1-idempotency-${String(index + 1).padStart(4, "0")}`,
+    method,
+    sent_at: "2026-08-25T08:00:00.000Z",
+    client: { client_id: "codex-phase1", name: "Codex", version: "1.0.0" },
+    params: validByMethod[method]
+  };
+  const first = await mutationDispatch(request);
+  const replayed = await mutationDispatch({ ...request, sent_at: "2026-08-25T08:00:05.000Z" });
+  assert.deepEqual(replayed, first, `${method} identical retry returns the cached response`);
+  assert.equal(mutationCalls[method], 1, `${method} identical retry cannot apply a second mutation`);
+}
+const mutationRequest = {
+  protocol: bridge.PROTOCOL, version: 1, kind: "request", request_id: "tier1-idempotency-0001",
+  method: "jobs.add", sent_at: "2026-08-25T08:00:10.000Z",
+  client: { client_id: "codex-phase1", name: "Codex", version: "1.0.0" }, params: validByMethod["jobs.add"]
+};
+const reusedMutation = await mutationDispatch({
+  ...mutationRequest,
+  params: { jobs: [{ prompt: "Different payload", reference_images: [], settings: {} }] }
+});
+assert.equal(reusedMutation.ok, false);
+assert.equal(reusedMutation.error.code, "REQUEST_ID_REUSED");
+assert.equal(mutationCalls["jobs.add"], 1, "request-id reuse with different payload cannot mutate");
+
 const invalidByMethod = {
   "session.hello": { supported_versions: [] },
   "system.ping": { wake_run: true },
@@ -122,6 +166,8 @@ assert.throws(() => bridge.validateParams("queue.propose", {
 }), (error) => error.code === "INVALID_PARAMS");
 
 const source = fs.readFileSync(sourcePath, "utf8");
+const sidepanelSource = fs.readFileSync(path.join(here, "..", "sidepanel.js"), "utf8");
+assert.match(sidepanelSource, /keys\.length - 500/, "persistent replay store retains at least 500 agent-edit records");
 const exportConvention = /\(typeof window !== "undefined" \? window : globalThis\)\.DacBridgeCore = \{/;
 assert.match(source, exportConvention, "classic worker/script-tag/Node global export convention is preserved");
 const sourceWithoutRequiredExport = source.replace(exportConvention, "DacBridgeCore = {");

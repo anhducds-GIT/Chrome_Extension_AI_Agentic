@@ -46,9 +46,14 @@ assert.equal(detect(boundary([], [old]), [], [old, rerender]).decision.ok, false
 const altEcho = image("echoed-filename-alt", { input: true, role: "unknown" });
 assert.equal(detect(boundary([], [old]), [], [old, altEcho]).decision.reason, "INPUT_IMAGE_FALSE_POSITIVE", "attachment preview/filename echo is excluded by input evidence");
 
+const sidebarThumbnail = image("sidebar-fresh", { role: "unknown" });
+assert.equal(detect(boundary([], []), [], [sidebarThumbnail]).decision.ok, false, "fresh unknown-role image outside the conversation is not fallback-selectable");
+const assistantFallback = image("assistant-fresh", { role: "assistant" });
+assert.equal(detect(boundary([], []), [], [assistantFallback]).decision.candidate.source, "assistant-fresh", "fresh assistant-message image remains fallback-selectable");
+
 const two = detect(boundary([], []), [assistant("a1", [image("one"), image("two")])], [image("one"), image("two")]);
 assert.equal(two.decision.reason, "AMBIGUOUS_POST_TURN_IMAGE", "multiple fresh candidates fail closed");
-const postTurnPlusFresh = detect(boundary([], []), [assistant("a1", [image("one")])], [image("one"), image("unrelated-fresh")]);
+const postTurnPlusFresh = detect(boundary([], []), [assistant("a1", [image("one")])], [image("one"), image("unrelated-fresh", { role: "assistant" })]);
 assert.equal(postTurnPlusFresh.decision.reason, "AMBIGUOUS_NEW_IMAGE", "a post-turn image cannot hide a second qualifying fresh candidate");
 
 const reorderedBoundary = boundary([assistant("old-a", [old])], [old]);
@@ -63,7 +68,7 @@ assert.equal(evidence.completionForImage(stillGenerating.decision, { generationC
 // Regression: ChatGPT can render a completed image without an assistant text
 // node.  Completion is driven by the immutable post-submit image boundary,
 // not assistant prose or its presence in the DOM.
-const imageOnlyNoAssistantText = detect(boundary([], []), [], [generated], false);
+const imageOnlyNoAssistantText = detect(boundary([], []), [], [image("generated", { role: "assistant" })], false);
 assert.equal(imageOnlyNoAssistantText.decision.ok, true, "a visible ready generated image is attributable with no assistant text");
 assert.equal(evidence.completionForImage(imageOnlyNoAssistantText.decision, { generationControlVisible: false }).reason, "image_ready", "completed image-only output is detected");
 

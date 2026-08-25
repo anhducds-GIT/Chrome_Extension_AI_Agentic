@@ -5,6 +5,32 @@
   const RECONNECT_ALARM = "dac.bridge.loopback.reconnect.v1";
   const KEEPALIVE_MS = 20000;
 
+  function base64Url(bytes) {
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  }
+
+  function base64UrlBytes(value) {
+    const normalized = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
+    return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  }
+
+  function freshNonce() {
+    const bytes = new Uint8Array(32);
+    globalThis.crypto.getRandomValues(bytes);
+    return base64Url(bytes);
+  }
+
+  async function verifyHostProof(token, nonce, proof) {
+    if (!/^[A-Za-z0-9_-]{43}$/.test(String(proof || ""))) return false;
+    try {
+      const key = await globalThis.crypto.subtle.importKey("raw", base64UrlBytes(token), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+      return globalThis.crypto.subtle.verify("HMAC", key, base64UrlBytes(proof), new TextEncoder().encode(nonce));
+    } catch (_) { return false; }
+  }
+
   function create(options = {}) {
     const chromeApi = options.chrome || globalThis.chrome;
     const WebSocketApi = options.WebSocket || globalThis.WebSocket;
@@ -16,6 +42,9 @@
     let pairing = null;
     let socket = null;
     let authenticated = false;
+    let handshakeNonce = null;
+    let hostProofVerified = false;
+    let tokenSent = false;
     let keepaliveTimer = null;
     let executorPort = null;
     let executorEpoch = null;
@@ -48,6 +77,9 @@
     function closeSocket() {
       clearKeepalive();
       authenticated = false;
+      handshakeNonce = null;
+      hostProofVerified = false;
+      tokenSent = false;
       const current = socket;
       socket = null;
       try { current?.close?.(1000, "Reconnect requested."); } catch (_) { /* Best effort. */ }
@@ -98,7 +130,18 @@
         return;
       }
       if (socket !== targetSocket) return;
-      if (message?.type === "auth_ok" && typeof message.session_id === "string") {
+      if (!authenticated && message?.type === "auth_proof" && typeof message.proof === "string" && handshakeNonce && !hostProofVerified && !tokenSent) {
+        const verified = await verifyHostProof(pairing.token, handshakeNonce, message.proof);
+        if (socket !== targetSocket || !verified) {
+          targetSocket.close(1008, "Host authentication failed.");
+          return;
+        }
+        hostProofVerified = true;
+        tokenSent = true;
+        targetSocket.send(JSON.stringify({ type: "auth", role: "extension", token: pairing.token }));
+        return;
+      }
+      if (message?.type === "auth_ok" && typeof message.session_id === "string" && hostProofVerified && tokenSent) {
         authenticated = true;
         await publishStatus("connected");
         clearKeepalive();
@@ -131,7 +174,10 @@
       socket = candidate;
       candidate.addEventListener("open", () => {
         if (socket !== candidate) return;
-        candidate.send(JSON.stringify({ type: "auth", role: "extension", token: pairing.token }));
+        handshakeNonce = freshNonce();
+        hostProofVerified = false;
+        tokenSent = false;
+        candidate.send(JSON.stringify({ type: "auth_challenge", role: "extension", nonce: handshakeNonce }));
       });
       candidate.addEventListener("message", (event) => {
         handleSocketMessage(event, candidate).catch(() => candidate.close(1011, "Router failure."));
@@ -235,6 +281,6 @@
   }
 
   (typeof window !== "undefined" ? window : globalThis).DacBridgeLoopbackTransport = Object.freeze({
-    EXECUTOR_PORT_NAME, RECONNECT_ALARM, KEEPALIVE_MS, create
+    EXECUTOR_PORT_NAME, RECONNECT_ALARM, KEEPALIVE_MS, verifyHostProof, create
   });
 })();

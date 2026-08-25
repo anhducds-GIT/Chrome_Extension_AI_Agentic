@@ -60,6 +60,10 @@ function sameToken(expected, supplied) {
   }
 }
 
+function hostProof(token, nonce) {
+  return crypto.createHmac("sha256", tokenBytes(token)).update(String(nonce), "utf8").digest("base64url");
+}
+
 export function validatePairing(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Pairing file must be a JSON object.");
   if (input.schema_version !== 1) throw new Error("Pairing schema_version must equal 1.");
@@ -168,6 +172,7 @@ export function createBridgeHost(options = {}) {
     ].join("\r\n"));
     const decoder = createFrameDecoder({ maxPayloadBytes: MAX_ENVELOPE_BYTES + 8192, requireMasked: true });
     let authenticated = false;
+    let challengeAccepted = false;
     const authTimer = setTimeout(() => closeSocket(socket, 1008, "Authentication required."), authTimeoutMs);
 
     function onMessage(frame) {
@@ -178,7 +183,12 @@ export function createBridgeHost(options = {}) {
       try { message = JSON.parse(frame.text); }
       catch (_) { closeSocket(socket, 1007, "Text JSON required."); return; }
       if (!authenticated) {
-        if (message?.type !== "auth" || message?.role !== "extension" || !sameToken(pairing.token, message?.token)) {
+        if (!challengeAccepted && message?.type === "auth_challenge" && message?.role === "extension" && /^[A-Za-z0-9_-]{43}$/.test(String(message?.nonce || ""))) {
+          challengeAccepted = true;
+          send(socket, { type: "auth_proof", proof: hostProof(pairing.token, message.nonce) });
+          return;
+        }
+        if (!challengeAccepted || message?.type !== "auth" || message?.role !== "extension" || !sameToken(pairing.token, message?.token)) {
           closeSocket(socket, 1008, "Authentication failed.");
           return;
         }

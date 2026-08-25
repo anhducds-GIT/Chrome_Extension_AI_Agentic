@@ -19,7 +19,7 @@ async function freePort() {
   return port;
 }
 
-function connectWorker(port, onRpc) {
+function connectWorker(port, token, onRpc) {
   return new Promise((resolve, reject) => {
     const request = http.request({
       host: "127.0.0.1", port, path: "/v1/extension",
@@ -32,11 +32,13 @@ function connectWorker(port, onRpc) {
         for (const frame of decoder.push(chunk)) {
           if (frame.opcode !== 0x1) continue;
           const message = JSON.parse(frame.text);
+          if (message.type === "auth_proof") send({ type: "auth", role: "extension", token });
           if (message.type === "rpc") Promise.resolve(onRpc(message.envelope)).then((envelope) => send({ type: "rpc_response", relay_id: message.relay_id, envelope }));
         }
       };
       socket.on("data", consume);
       if (head.length) consume(head);
+      send({ type: "auth_challenge", role: "extension", nonce: crypto.randomBytes(32).toString("base64url") });
       resolve({ send, close: () => socket.end() });
     });
     request.on("error", reject);
@@ -68,8 +70,7 @@ const router = globalThis.DacBridgeRouterCore.createRouter({
   executor_state: () => ({ available: executorAvailable, executor_epoch: executorAvailable ? "epoch-integration" : null }),
   send_executor: (request) => executor(request)
 });
-const worker = await connectWorker(port, (envelope) => router.route(envelope));
-worker.send({ type: "auth", role: "extension", token });
+const worker = await connectWorker(port, token, (envelope) => router.route(envelope));
 await new Promise((resolve) => setTimeout(resolve, 20));
 
 async function rpc(envelope) {

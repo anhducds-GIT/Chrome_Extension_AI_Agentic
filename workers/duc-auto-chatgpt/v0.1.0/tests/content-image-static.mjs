@@ -10,6 +10,8 @@ assert.match(source, /if \(imageCompletion\.ok\)/);
 assert.match(source, /stop_visible: Boolean\(stopButton\)/);
 assert.match(source, /OUTPUT_DETECTION_TIMEOUT/);
 assert.match(source, /captureBoundary\(inputEvidence\)/);
+assert.match(source, /function conversationRoot\(\)/, "page-wide image scans are rooted at the conversation subtree");
+assert.doesNotMatch(source, /imageCandidates\(document/, "attribution never scans arbitrary document images");
 assert.match(source, /boundary: attempt\.boundary/);
 assert.match(source, /attemptSnapshot\(STATE\.activeAttempt\)/, "reconciliation returns the owned active attempt telemetry");
 assert.ok(

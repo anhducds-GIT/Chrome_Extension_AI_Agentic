@@ -7,8 +7,7 @@
    mechanism, but kept as its own distinct classification throughout (never
    folded into "security") so the operator can tell the two apart, and
    scoped to the specific new assistant message under evaluation rather than
-   the whole page -- securityBlockerText() scans the whole page because a
-   CAPTCHA interstitial isn't tied to a particular chat turn, but a quota
+   the whole page -- a CAPTCHA interstitial isn't tied to a particular chat turn, but a quota
    message IS one specific assistant response; matching page-wide would risk
    false-firing on the operator's own prompt text if it happened to contain
    the same common words ("draw someone waiting for their daily limit to
@@ -34,6 +33,31 @@ const matchesFnSource = content.slice(content.indexOf("function matchesGeneratio
 const matchesContext = vm.createContext({});
 vm.runInContext(`${matchesFnSource}\nthis.matchesGenerationLimit = matchesGenerationLimit;`, matchesContext);
 const matches = matchesContext.matchesGenerationLimit;
+
+const securityFnSource = content.slice(content.indexOf("function securityTextWithoutUserMessages"), content.indexOf("function matchesGenerationLimit"));
+const securityScope = (bodyText, userTexts = []) => ({
+  innerText: bodyText,
+  textContent: bodyText,
+  querySelectorAll() {
+    return userTexts.map((userText) => ({
+      remove: () => {
+        this.innerText = this.innerText.replace(userText, "");
+        this.textContent = this.textContent.replace(userText, "");
+      }
+    }));
+  }
+});
+const securityContext = vm.createContext({
+  document: {
+    body: {
+      cloneNode() { return securityScope("draw a robot solving a captcha", ["draw a robot solving a captcha"]); }
+    }
+  }
+});
+vm.runInContext(`${securityFnSource}\nthis.securityBlockerText = securityBlockerText;`, securityContext);
+assert.equal(securityContext.securityBlockerText(), null, "a user prompt containing captcha cannot trigger the security hard-stop");
+securityContext.document.body.cloneNode = () => securityScope("draw a captcha robot Verify you are human", ["draw a captcha robot"]);
+assert.equal(securityContext.securityBlockerText(), "ChatGPT security/interstitial blocker detected.", "a page-level verification interstitial still triggers after user text is excluded");
 
 for (const text of [
   "You've reached your image generation limit for today.",
