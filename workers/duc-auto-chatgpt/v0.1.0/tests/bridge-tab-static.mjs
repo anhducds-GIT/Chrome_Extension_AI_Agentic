@@ -8,7 +8,10 @@ const css = fs.readFileSync(new URL("sidepanel.css", root), "utf8");
 
 const tabs = [...html.matchAll(/class="workflow-tab(?: active)?" data-screen="([^"]+)"/g)].map((match) => match[1]);
 assert.deepEqual(tabs, ["setupScreen", "runScreen", "outputScreen", "bridgeScreen"]);
-assert.match(html, /data-screen="bridgeScreen"[^>]*>[\s\S]*?<span class="tab-num">4<\/span> BRIDGE<\/button>/);
+// The tab button may carry trailing children after the caption (e.g. the
+// attention badge added 2026-08-24) — assert the number+caption, not an exact
+// end-of-button, so legitimate additions don't fail this line.
+assert.match(html, /data-screen="bridgeScreen"[^>]*>[\s\S]*?<span class="tab-num">4<\/span> BRIDGE[\s\S]*?<\/button>/);
 const bridgeScreen = html.slice(html.indexOf('<section id="bridgeScreen"'), html.indexOf("<footer>"));
 for (const id of ["bridgePairingCard", "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeProposalCard"]) {
   assert.match(bridgeScreen, new RegExp(`id="${id}"`), `${id} lives under bridgeScreen`);

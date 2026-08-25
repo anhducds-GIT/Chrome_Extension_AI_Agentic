@@ -29,7 +29,8 @@
     "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus", "runDashboardSplit", "runWidthSplitter",
     "bridgeProposalCard", "bridgeProposalCount", "bridgeProposalStatus", "bridgeProposalMeta", "bridgeProposalList", "bridgeProposalNotice", "bridgeProposalLockReason", "bridgeProposalFixtureBtn", "bridgeProposalRejectBtn", "bridgeProposalApproveBtn",
     "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput",
-    "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeActivityEmpty"
+    "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeActivityEmpty",
+    "bridgeAttentionCard", "bridgeAttentionList", "bridgeAttentionCount", "bridgeTabAttentionBadge", "bridgeAttentionRestoreBtn"
   ];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
   // Output Profile mode is normally driven by output_profile_id / result_output_profile_id
@@ -107,7 +108,8 @@
     bridgePort: null,
     bridgeTransportStatus: null,
     bridgeLastActivityAt: null,
-    bridgeActivity: []
+    bridgeActivity: [],
+    bridgeAttention: []
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -480,6 +482,7 @@
 
   function requireBridgeWorkbook() {
     if (!state.workbook) throw new window.DacBridgeCore.BridgeProtocolError("WORKBOOK_NOT_LOADED");
+    clearBridgeAttention(["WORKBOOK_NEEDED"]);
     return state.workbook;
   }
 
@@ -587,6 +590,211 @@
     };
   }
 
+  // BRIDGE tab is the single home for AI↔owner interaction (Đức's request,
+  // 2026-08-24): whenever a Bridge call fails because only a human gesture can
+  // unblock it, the block surfaces here as an actionable row instead of the
+  // operator hunting through SETUP/RUN. Rows clear automatically when a later
+  // Bridge call proves the block is gone.
+  const BRIDGE_ATTENTION_DEFS = Object.freeze({
+    FOLDER_REAUTH_NEEDED: {
+      title: "Chọn lại folder output — Chrome đã thu hồi quyền",
+      guidance: "Sau mỗi lần reload extension, Chrome bắt cấp lại quyền thư mục. Bấm nút bên dưới và chọn đúng folder cũ (đường dẫn gợi ý sẽ hiện kèm nút Copy).",
+      action: "folder", actionLabel: "Chọn lại folder output"
+    },
+    FOLDER_BIND_NEEDED: {
+      title: "Cần bind folder output lần đầu",
+      guidance: "AI không thể tự mở hộp chọn thư mục — giới hạn bảo mật của Chrome, không phải lỗi. Chọn folder một lần là AI dùng lại được.",
+      action: "folder", actionLabel: "Chọn folder output"
+    },
+    WORKBOOK_NEEDED: {
+      title: "Cần nạp workbook / bắt đầu phiên",
+      guidance: "Bấm một nút bên dưới để chọn file ngay tại đây (không cần mở SETUP). Nếu AI sẽ tự tạo phiên mới bằng jobs.add thì anh không cần làm gì.",
+      action: "workbook", actionLabel: "Tiếp tục run có sẵn (Result XLSX)"
+    },
+    PERSISTENCE_TOGGLES_OFF: {
+      title: "Cần bật lưu Audit JSONL + Result XLSX",
+      guidance: "Mọi thay đổi từ AI đều phải ghi được bằng chứng trước khi có hiệu lực. Mở SETUP và bật 2 công tắc lưu.",
+      action: "setup", actionLabel: "Mở SETUP"
+    }
+  });
+
+  function renderBridgeAttention() {
+    if (!els.bridgeAttentionList) return;
+    const items = state.bridgeAttention;
+    // "Ẩn" only hides a row (dismissed flag) — it never deletes, and the
+    // restore button below the list brings hidden rows back. A row is truly
+    // removed only by clearBridgeAttention(), i.e. when the block is resolved.
+    const visible = items.filter((item) => !item.dismissed);
+    const dismissedCount = items.length - visible.length;
+    if (els.bridgeAttentionCard) els.bridgeAttentionCard.hidden = items.length === 0;
+    if (els.bridgeAttentionCount) els.bridgeAttentionCount.textContent = `${visible.length} việc`;
+    if (els.bridgeTabAttentionBadge) {
+      els.bridgeTabAttentionBadge.hidden = visible.length === 0;
+      els.bridgeTabAttentionBadge.textContent = String(visible.length);
+    }
+    if (els.bridgeAttentionRestoreBtn) {
+      els.bridgeAttentionRestoreBtn.hidden = dismissedCount === 0;
+      els.bridgeAttentionRestoreBtn.textContent = `Hiện lại ${dismissedCount} việc đã ẩn`;
+    }
+    els.bridgeAttentionList.replaceChildren();
+    for (const item of visible) {
+      const def = BRIDGE_ATTENTION_DEFS[item.code];
+      const row = element("li", "bridge-attention-item");
+      row.append(
+        element("div", "bridge-attention-item-title", def ? def.title : item.code),
+        element("div", "bridge-attention-item-guidance", def ? def.guidance : "")
+      );
+      if (item.detail) row.append(element("div", "bridge-attention-item-detail", item.detail));
+      // The AI names the exact target path(s) it is working against — Đức
+      // copies with one click and pastes into the picker, no thinking needed.
+      // One row + one Copy button PER path: a multi-path blob behind a single
+      // button would paste as garbage into a folder picker (Codex finding).
+      if (item.suggestion) {
+        for (const line of String(item.suggestion).split("\n").map((value) => value.trim()).filter(Boolean)) {
+          const suggestion = element("div", "bridge-attention-suggestion");
+          const pathNode = element("code", "bridge-attention-suggestion-path", line);
+          pathNode.title = line;
+          const copied = element("span", "bridge-attention-suggestion-status", "");
+          const copyBtn = element("button", "secondary small", "Copy đường dẫn");
+          copyBtn.type = "button";
+          copyBtn.addEventListener("click", async () => {
+            try {
+              if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
+              await navigator.clipboard.writeText(line);
+              copied.textContent = "Đã copy — dán vào thanh địa chỉ của hộp chọn.";
+            } catch (_) {
+              copied.textContent = "Không tự copy được — bấm vào đường dẫn rồi nhấn Ctrl+C.";
+            }
+          });
+          suggestion.append(pathNode, copyBtn, copied);
+          row.append(suggestion);
+        }
+      }
+      const actions = element("div", "bridge-attention-item-actions");
+      // "AI là bộ não, người là cánh tay" (Đức, 2026-08-24): every row carries
+      // the exact one-click action pre-wired — the operator never navigates or
+      // decides. Pickers launched here keep their user gesture (this click).
+      if (def?.action === "folder") {
+        const btn = element("button", "secondary small", def.actionLabel);
+        btn.type = "button";
+        btn.addEventListener("click", () => openFolderPickDialog());
+        actions.append(btn);
+      } else if (def?.action === "workbook") {
+        const resumeBtn = element("button", "secondary small", def.actionLabel);
+        resumeBtn.type = "button";
+        resumeBtn.addEventListener("click", () => els.resumeWorkbookInput?.click());
+        const freshBtn = element("button", "secondary small", "Mở workbook mới (.xlsx)");
+        freshBtn.type = "button";
+        freshBtn.addEventListener("click", () => els.workbookInput?.click());
+        actions.append(resumeBtn, freshBtn);
+      } else if (def?.action === "setup") {
+        const btn = element("button", "secondary small", def.actionLabel);
+        btn.type = "button";
+        btn.addEventListener("click", () => showScreen("setupScreen"));
+        actions.append(btn);
+      }
+      const dismiss = element("button", "secondary small", "Ẩn");
+      dismiss.type = "button";
+      dismiss.addEventListener("click", () => { item.dismissed = true; renderBridgeAttention(); });
+      actions.append(dismiss);
+      row.append(actions);
+      els.bridgeAttentionList.appendChild(row);
+    }
+  }
+
+  function raiseBridgeAttention(code, detail, suggestion) {
+    if (!BRIDGE_ATTENTION_DEFS[code]) return;
+    const existing = state.bridgeAttention.find((item) => item.code === code);
+    if (existing) {
+      // A re-raise of the same code must not undo the operator's "Ẩn" — the
+      // proposal renderer re-raises on every paint, and fighting the user's
+      // dismissal would make the button meaningless. Restore is explicit only.
+      existing.detail = detail || existing.detail;
+      existing.suggestion = suggestion || existing.suggestion;
+    } else {
+      state.bridgeAttention.push({ code, detail: detail || "", suggestion: suggestion || "", raised_at: new Date().toISOString() });
+    }
+    renderBridgeAttention();
+  }
+
+  function clearBridgeAttention(codes) {
+    const before = state.bridgeAttention.length;
+    state.bridgeAttention = codes
+      ? state.bridgeAttention.filter((item) => !codes.includes(item.code))
+      : [];
+    if (state.bridgeAttention.length !== before) renderBridgeAttention();
+  }
+
+  // Best available description of the folder the AI is targeting. The full
+  // path only exists when a workbook carried output_folder_hint; the File
+  // System Access API never exposes absolute paths, so after a fresh reload
+  // the bound profile's folder NAME is the strongest identity we can show.
+  function bridgeTargetFolderSuggestion() {
+    const hint = String(state.outputSettings?.folderHint || "").trim();
+    if (hint) return hint;
+    const name = String(state.outputSettings?.image?.handleName || "").trim();
+    return name ? `Tên folder đã bind: ${name}` : "";
+  }
+
+  // Proactive probe: after an extension reload Chrome silently revokes the
+  // bound folder's write permission, but no attention row would appear until
+  // an agent call fails. Opening the BRIDGE tab (and finishing a folder pick)
+  // re-checks the real permission state via queryPermission — no prompt, no
+  // gesture needed — so the "Chọn lại folder output" row shows up by itself.
+  async function probeBridgePersistence() {
+    const settings = state.outputSettings;
+    let hasDirectory = false;
+    if (settings) {
+      try {
+        const output = window.DacOutputLocation.effective(settings);
+        hasDirectory = output.image?.kind === "directory" || output.result?.kind === "directory";
+      } catch (_) { hasDirectory = false; }
+    }
+    if (hasDirectory) {
+      try {
+        const preflight = await window.DacOutputLocation.preflight(settings);
+        if (preflight.ok) clearBridgeAttention(["FOLDER_REAUTH_NEEDED"]);
+        else raiseBridgeAttention("FOLDER_REAUTH_NEEDED", preflight.error, bridgeTargetFolderSuggestion());
+      } catch (error) {
+        raiseBridgeAttention("FOLDER_REAUTH_NEEDED", messageOf(error), bridgeTargetFolderSuggestion());
+      }
+      return;
+    }
+    // Fresh reload with no workbook: state.outputSettings does not exist yet
+    // (it is only built on workbook load — the root cause of the "row never
+    // appears" bug Đức hit live). The bound profiles persisted in IndexedDB
+    // are still the AI's write targets, so probe THEM directly.
+    try {
+      const profiles = await window.DacOutputProfiles.list();
+      if (!profiles?.length) return;
+      // Every revoked profile is reported — one authorized profile must not
+      // silence another profile's revocation (Codex cross-audit finding #1:
+      // that suppression reproduces the owner-visible "no change" symptom).
+      const blocked = [];
+      for (const profile of profiles) {
+        const resolved = await window.DacOutputProfiles.resolve(profile.profile_id);
+        if (resolved.state !== "authorized") blocked.push(resolved.profile || profile);
+      }
+      if (blocked.length) {
+        // Prefer the persisted real path (copy-paste straight into the picker);
+        // fall back to the folder name only when no workbook ever recorded one.
+        const lines = blocked.map((profile) => profile.last_known_folder_hint
+          || `${profile.last_known_handle_name || profile.profile_id} — chưa có đường dẫn ghi nhận (sẽ có sau lần nạp workbook của pilot đó)`);
+        raiseBridgeAttention("FOLDER_REAUTH_NEEDED", "Chrome đã thu hồi quyền folder sau khi reload extension.", lines.join("\n"));
+      } else clearBridgeAttention(["FOLDER_REAUTH_NEEDED"]);
+    } catch (_) {}
+  }
+
+  function bridgeAttentionFromError(error) {
+    const code = error?.code;
+    const message = messageOf(error);
+    const folderHint = bridgeTargetFolderSuggestion();
+    if (code === "PERSISTENCE_VERIFICATION_FAILED") raiseBridgeAttention("FOLDER_REAUTH_NEEDED", message, folderHint);
+    else if (code === "WORKBOOK_NOT_LOADED") raiseBridgeAttention("WORKBOOK_NEEDED", message, folderHint);
+    else if (code === "VALIDATION_FAILED" && /OUTPUT_PROFILE_UNBOUND/.test(message)) raiseBridgeAttention("FOLDER_BIND_NEEDED", message, folderHint);
+    else if (code === "RUN_ACTIVE" && /bật lưu audit/i.test(message)) raiseBridgeAttention("PERSISTENCE_TOGGLES_OFF", message);
+  }
+
   function renderBridgeActivityFeed() {
     if (!els.bridgeActivityList) return;
     els.bridgeActivityList.replaceChildren();
@@ -611,6 +819,10 @@
   }
 
   async function refreshBridgeScreen() {
+    // Attention first: it must render even when the status ping below throws
+    // (Codex cross-audit finding #2 — a rejected ping used to skip the probe).
+    await probeBridgePersistence().catch(() => {});
+    renderBridgeAttention();
     const ping = await bridgeSystemPing();
     if (els.bridgeHostReachable) els.bridgeHostReachable.textContent = ping.bridge.host_reachable ? "C\u00f3" : "Kh\u00f4ng";
     if (els.bridgePairingState) els.bridgePairingState.textContent = ping.bridge.extension_paired ? "\u0110\u00e3 pairing" : "Ch\u01b0a pairing";
@@ -704,7 +916,11 @@
       state.bridgeLastActivityAt = new Date().toISOString();
       if (els.bridgeLastActivity) els.bridgeLastActivity.textContent = new Date(state.bridgeLastActivityAt).toLocaleString();
       try { return await handler(...args); }
-      catch (error) { throw bridgeError(error); }
+      catch (error) {
+        const wrapped = bridgeError(error);
+        bridgeAttentionFromError(wrapped);
+        throw wrapped;
+      }
     };
   }
 
@@ -916,6 +1132,9 @@
           if (state.resumeMode && state.prepared) window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
           renderCheckpointMeta();
           recordBridgeActivity(applied.auditEvent);
+          // A verified direct mutation proves workbook, persistence, and folder
+          // authorization are all unblocked — retire every attention row.
+          clearBridgeAttention();
           refreshBridgeScreen().catch(() => {});
           return { ...applied.mutation, audit_event: event, checkpoint: { version: checkpoint.version, filename: checkpoint.filename, verified: true } };
         },
@@ -1044,6 +1263,13 @@
     }
     const lockReason = bridgeApprovalLockReason();
     els.bridgeProposalLockReason.textContent = lockReason || (record.failure?.message ? `Lý do: ${record.failure.message}` : "");
+    // A pending proposal blocked on a human-only precondition must surface in
+    // the attention hub on its own — the agent may never retry, so waiting for
+    // a failed call would leave the hub silent exactly when Đức is needed.
+    if (lockReason) {
+      if (!state.workbook) raiseBridgeAttention("WORKBOOK_NEEDED", "Đề xuất từ Agent đang chờ duyệt nhưng chưa có workbook/ledger đang mở.", bridgeTargetFolderSuggestion());
+      else if (/bật lưu audit/i.test(lockReason)) raiseBridgeAttention("PERSISTENCE_TOGGLES_OFF", lockReason);
+    }
     const deciding = record.status === "APPROVING";
     els.bridgeProposalApproveBtn.disabled = Boolean(lockReason) || deciding;
     els.bridgeProposalRejectBtn.disabled = deciding || state.queueMutationRunning;
@@ -2029,10 +2255,19 @@
 
   async function resolveOutputProfile(profileId) {
     if (!profileId) { state.outputProfileState = { state: "unbound", profile: null, profile_id: "" }; return state.outputProfileState; }
+    // Snapshot the hint BEFORE any await: profileId and folderHint both come
+    // from the same just-applied workbook config, and reading global state
+    // after the await could stamp another workbook's hint onto this profile
+    // (Codex cross-audit finding).
+    const folderHint = String(state.outputSettings?.folderHint || "").trim();
     try { state.outputProfileState = await window.DacOutputProfiles.resolve(profileId); }
     catch (error) { state.outputProfileState = { state: "unavailable", profile: null, error: error.message, profile_id: profileId }; }
     const resolved = state.outputProfileState;
     resolved.profile_id = profileId;
+    // Remember the workbook's authored full path on the profile so post-reload
+    // attention rows can offer a copyable real path, not just a folder name.
+    // Best-effort by design: a hint failure must never block workbook load.
+    if (folderHint && resolved.profile) window.DacOutputProfiles.setHint(profileId, folderHint).catch(() => {});
     if (resolved.state === "authorized" && resolved.profile?.directory_handle) {
       state.outputSettings.image = window.DacOutputLocation.directoryLocation(resolved.profile.directory_handle, resolved.profile.last_known_handle_name);
       state.outputSettings.image.profileId = profileId;
@@ -3129,10 +3364,30 @@
   }
 
   async function choosePrimaryDestination() {
-    const profileId = state.outputSettings.image?.profileId || state.importedConfig?.effective.output.profileId || DEFAULT_IMAGE_PROFILE_ID;
     if (typeof window.showDirectoryPicker !== "function") throw new Error("This Chrome build cannot authorize a folder. Use Chrome Downloads or update Chrome.");
+    // The picker must run first: it needs the click's user gesture, and every
+    // await below it (IndexedDB lookups) would risk expiring that activation.
     const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+    let profileId = state.outputSettings?.image?.profileId || state.importedConfig?.effective?.output?.profileId || "";
+    if (!profileId) {
+      // No session context (fresh reload, no workbook): rebinding onto the sole
+      // stored profile keeps the id the next workbook's config will ask for.
+      try {
+        const stored = await window.DacOutputProfiles.list();
+        if (stored?.length === 1) profileId = stored[0].profile_id;
+      } catch (_) {}
+    }
+    if (!profileId) profileId = DEFAULT_IMAGE_PROFILE_ID;
     const profile = await window.DacOutputProfiles.bind(profileId, handle, profileId);
+    // Deliberately NO setHint here: the picker cannot prove the user chose the
+    // hinted folder, and stamping the workbook's path onto a different picked
+    // folder would persist a FALSE path (Codex cross-audit finding). Hints are
+    // written only on workbook resolution, where path and profile share one
+    // config source.
+    // Re-authorizing from the BRIDGE tab can happen before any workbook is
+    // open — outputSettings may not exist yet. Build a default (Downloads)
+    // settings object first; the workbook load rebuilds it from config later.
+    if (!state.outputSettings) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, "phien-chua-mo-workbook.xlsx");
     state.outputSettings.image = window.DacOutputLocation.directoryLocation(handle, profile.last_known_handle_name);
     state.outputSettings.image.profileId = profileId;
     state.outputProfileState = { state: "authorized", profile, permission: "granted" };
@@ -3143,7 +3398,7 @@
   }
 
   function choosePrimaryDestinationFromUserGesture() {
-    choosePrimaryDestination().catch((error) => {
+    choosePrimaryDestination().then(() => probeBridgePersistence()).catch((error) => {
       if (error.name !== "AbortError") {
         els.outputPermissionText.textContent = error.message;
         log(error.message, "error");
@@ -3152,7 +3407,7 @@
   }
 
   function chooseResultDestinationFromUserGesture() {
-    chooseResultDestination().catch((error) => {
+    chooseResultDestination().then(() => probeBridgePersistence()).catch((error) => {
       if (error.name !== "AbortError") {
         els.outputPermissionText.textContent = error.message;
         log(error.message, "error");
@@ -4354,6 +4609,10 @@
   els.folderPickCopyBtn?.addEventListener("click", () => copyFolderPickPath());
   els.folderPickCancelBtn?.addEventListener("click", closeFolderPickDialog);
   els.folderPickOpenBtn?.addEventListener("click", confirmFolderPick);
+  els.bridgeAttentionRestoreBtn?.addEventListener("click", () => {
+    state.bridgeAttention.forEach((item) => { item.dismissed = false; });
+    renderBridgeAttention();
+  });
   els.copyFolderHintBtn?.addEventListener("click", () => copyFolderHint().catch((error) => { els.outputPermissionText.textContent = error.message; }));
   const ZOOM_LEVELS = [0.8, 0.9, 1.0];
   const ZOOM_EPSILON = 0.015;
@@ -4574,6 +4833,11 @@
   document.querySelectorAll(".workflow-tab").forEach((tab) => tab.addEventListener("click", () => showScreen(tab.dataset.screen)));
   renderOutput(); renderRuntime(); renderOutputGlossary(); renderOutputScreen(); controls(); restoreUiZoom().catch(() => applyUiZoom(1)); initRunWidthSplitter().catch(() => {}); syncZoomState().catch(() => {});
   renderBridgeTransportStatus(); renderBridgeActivityFeed();
+  // Startup must also probe + render attention, or the tab badge stays hidden
+  // until the operator happens to visit the BRIDGE tab — the exact "vẫn bị ẩn"
+  // failure Đức reported live on 2026-08-24.
+  renderBridgeAttention();
+  probeBridgePersistence().catch(() => {});
   refreshBridgeTransportStatus();
   chrome.storage?.onChanged?.addListener((changes, areaName) => {
     if (areaName === "local" && changes[window.DacBridgePairingCore.STATUS_STORAGE_KEY]?.newValue) {

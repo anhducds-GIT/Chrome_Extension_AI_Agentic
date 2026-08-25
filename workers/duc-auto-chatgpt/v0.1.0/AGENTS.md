@@ -40,19 +40,23 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
 5. **Sửa bất kỳ file `.js` nào → phải nói Đức reload extension ở
    `chrome://extensions` trước khi test.** Không giả định thay đổi đã có hiệu
    lực.
-6. **Không tự ý `git commit`/`push`/`merge`.** Luôn hỏi Đức trước, kể cả khi
-   tests pass 100%. Xem `decisions.md` và Log `HANDOFF.md` để biết trạng thái
-   uncommitted hiện tại trước khi đề xuất commit.
+6. **Commit: AI được tự commit (kể cả main) từ 2026-08-24** — quyết định của
+   Đức, ghi trong `decisions.md`. Bốn điều kiện bắt buộc: test xanh trước khi
+   commit; không bao giờ `push --force`/rewrite history; mỗi commit có 1 dòng
+   Log trong `HANDOFF.md`; xoá file / sửa pilot evidence / thay đổi ranh giới
+   Run vẫn phải hỏi Đức.
 7. **Agent Bridge: `run.start` / `run.pause` / `run.resume` không tồn tại và
    sẽ không bao giờ được thêm vào mà không có quyết định mới, ghi lại trong
    `decisions.md`.** Bridge là ingress + observability, không phải remote
    execution. Side panel luôn là executor duy nhất; đóng panel → mọi lệnh
    Bridge liên quan Queue/workbook trả `EXECUTOR_UNAVAILABLE`, không có runner
    nền nào thay thế.
-8. **Không build preview/harness để tự "xem" UI.** In-app Browser pane không
-   verify được UI thật của extension này (chặn script, bỏ stylesheet) — xem
-   `README.md`/`NEXT-SESSION-BRIEF.md`. Suy luận từ source, viết static test,
-   giao việc xem bằng mắt cho Đức.
+8. **In-app preview pane vẫn cấm dùng để "xem" UI** (chặn script, bỏ
+   stylesheet — xem `README.md`/`NEXT-SESSION-BRIEF.md`). **Nhưng từ
+   2026-08-24, harness bằng Chrome THẬT được phép** (quyết định của Đức trong
+   `decisions.md`): Playwright/CDP chạy extension thật với trang chatgpt.com
+   giả lập là công cụ verify hợp lệ. Việc xem bằng mắt của Đức chỉ còn cần
+   cho những gì harness không chạm được (OS folder picker, chatgpt.com thật).
 9. **Một việc một lúc, không overbuild.** Không thêm tính năng/abstraction
    ngoài phạm vi được giao trong cùng 1 lượt sửa.
 

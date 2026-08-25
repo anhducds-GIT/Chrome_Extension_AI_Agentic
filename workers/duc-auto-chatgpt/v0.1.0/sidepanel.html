@@ -47,7 +47,7 @@
       <button class="workflow-tab active" data-screen="setupScreen" type="button"><span class="tab-num">1</span> SETUP</button>
       <button class="workflow-tab" data-screen="runScreen" type="button"><span class="tab-num">2</span> RUN</button>
       <button class="workflow-tab" data-screen="outputScreen" type="button"><span class="tab-num">3</span> OUTPUT</button>
-      <button class="workflow-tab" data-screen="bridgeScreen" type="button"><span class="tab-num">4</span> BRIDGE</button>
+      <button class="workflow-tab" data-screen="bridgeScreen" type="button"><span class="tab-num">4</span> BRIDGE<span id="bridgeTabAttentionBadge" class="bridge-tab-attention-badge" hidden>0</span></button>
     </nav>
 
     <!-- =========================================================================
@@ -459,6 +459,16 @@
           <button id="bridgeUnpairBtn" class="secondary small" type="button" hidden>Ngắt pairing</button>
         </div>
         <input id="bridgePairingInput" type="file" accept=".json,application/json" />
+      </section>
+
+      <section id="bridgeAttentionCard" class="card bridge-attention-card" hidden aria-labelledby="bridgeAttentionTitle">
+        <div class="row spread section-title">
+          <strong id="bridgeAttentionTitle">CẦN THAO TÁC CỦA ĐỨC</strong>
+          <span id="bridgeAttentionCount" class="bridge-attention-count">0 việc</span>
+        </div>
+        <p class="hint">AI đang bị chặn ở những việc dưới đây vì Chrome bắt buộc thao tác thật của người. Xử lý xong, mục sẽ tự biến mất khi AI thử lại thành công.</p>
+        <ol id="bridgeAttentionList" class="bridge-attention-list" aria-live="polite"></ol>
+        <button id="bridgeAttentionRestoreBtn" class="secondary small" type="button" hidden>Hiện lại việc đã ẩn</button>
       </section>
 
       <section class="card bridge-activity-card" aria-labelledby="bridgeActivityTitle">
