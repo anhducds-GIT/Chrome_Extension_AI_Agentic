@@ -82,3 +82,9 @@ Nguồn: `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md`. Đức chốt cả 5
 | Quyết định | Vì sao | Ai chốt |
 |---|---|---|
 | Bỏ trần "≤2 job/trial"; một trial chạy LIÊN TỤC cả chuỗi ảnh (trần cứng mới: 10 job/trial). Giãn cách ≥5 phút chỉ áp dụng giữa hai trial khác nhau. Batch >10 job vẫn là nút Run của owner. | Mục đích của trial là kiểm chứng cả flow chạy chuỗi — xé lẻ 2 job/lần vừa chậm (chờ 5 phút giữa các lát) vừa không phản ánh hành vi chuỗi thật. | Đức |
+
+## 2026-08-25 (chiều) — Nâng trần chuỗi trial lên 30 job + AI chạy batch sản xuất thay owner (owner: Đức)
+
+| Quyết định | Vì sao | Ai chốt |
+|---|---|---|
+| Trần chuỗi trial 10 → 30 job ("10 job vẫn là ít"); owner ủy quyền cho AI tự triển khai batch sản xuất kiểm chứng (>10 job) thay vì owner bấm Run; đồng thời duyệt: port kỹ thuật đặt-tên-download từ worker ChatGPT, xây lệnh chẩn đoán DOM qua Bridge, và PUSH repo lên remote. | Workload thật của owner là 20–30 ảnh/lượt; quota dồi dào; các hàng rào còn lại giữ nguyên (Dev Mode toggle, ≥5 phút giữa trial, timeout/delay, audit bridge_dev). | Đức |

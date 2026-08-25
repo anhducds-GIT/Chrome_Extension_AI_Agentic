@@ -12,7 +12,7 @@
   // Owner amendment 2026-08-25 (Pilot-04): one trial runs a CONTINUOUS chain,
   // never split into 2-job slices; the hard cap is 10 jobs per trial. Batches
   // beyond that stay owner-clicked production runs.
-  const MAX_TRIAL_JOBS = 10;
+  const MAX_TRIAL_JOBS = 30;
   const MIN_TRIAL_INTERVAL_SEC = 300;
   const TIMEOUT_BOUNDS = Object.freeze({ min: 15, max: 90, default: 90 });
   const DELAY_BOUNDS = Object.freeze({ min: 20, max: 30, default: 25 });

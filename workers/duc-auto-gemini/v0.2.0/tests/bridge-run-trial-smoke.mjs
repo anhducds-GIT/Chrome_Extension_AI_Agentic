@@ -49,9 +49,10 @@ assert.deepEqual(
   bridge.validateParams("run.trial", { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: 20 }),
   { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: 20 }
 );
-// Owner amendment 2026-08-25: a trial runs ONE CONTINUOUS chain of up to 10
-// jobs (never sliced into 2-job runs); larger batches stay owner-clicked.
-assert.equal(devTrial.MAX_TRIAL_JOBS, 10, "trial chain cap is 10 jobs");
+// Owner amendments 2026-08-25: a trial runs ONE CONTINUOUS chain (never sliced
+// into 2-job runs); cap raised to 30 jobs same day to cover the owner's real
+// 20-30 image workload. Beyond 30 stays owner-clicked.
+assert.equal(devTrial.MAX_TRIAL_JOBS, 30, "trial chain cap is 30 jobs (owner raise, 2026-08-25 PM)");
 assert.deepEqual(
   bridge.validateParams("run.trial", { job_ids: ["a", "b", "c", "d", "e", "f"] }).job_ids,
   ["a", "b", "c", "d", "e", "f"],
@@ -59,7 +60,7 @@ assert.deepEqual(
 );
 const invalidTrialParams = [
   { job_ids: [] },
-  { job_ids: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"] },
+  { job_ids: Array.from({length: 31}, (_, i) => "J" + (i + 1)) },
   { job_ids: ["P09-01"], timeout_sec: 120 },
   { job_ids: ["P09-01"], timeout_sec: 14 },
   { job_ids: ["P09-01"], delay_sec: 10 },
