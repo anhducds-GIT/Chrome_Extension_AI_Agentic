@@ -1232,6 +1232,11 @@
           if (!state.workbook) throw new window.DacBridgeCore.BridgeProtocolError("WORKBOOK_NOT_LOADED");
           state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName);
           state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
+          // A bootstrap session with no output binding used to reach
+          // preflight(null), whose plain throw laundered to INTERNAL_ERROR
+          // (hit live 2026-08-25). Fail with the typed code the attention hub
+          // maps to the folder-bind row.
+          if (!state.outputSettings) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", "OUTPUT_PROFILE_UNBOUND: Chưa có Output Profile trong phiên — cần Đức chọn folder output một lần (tab BRIDGE có sẵn nút và đường dẫn).");
           const preflight = await window.DacOutputLocation.preflight(state.outputSettings);
           if (!preflight.ok) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", preflight.error);
           const auditEvent = bridgeDirectAuditEvent(event, method, mutation);

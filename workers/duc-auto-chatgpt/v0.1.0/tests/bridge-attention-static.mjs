@@ -49,6 +49,10 @@ assert.match(mapper, /PERSISTENCE_VERIFICATION_FAILED/);
 // instead of laundering to INTERNAL_ERROR (hit live 2026-08-25).
 assert.match(mapper, /CHECKPOINT_VERSION_CONFLICT/);
 assert.match(js, /BRIDGE_ATTENTION_DEFS[\s\S]*?CHECKPOINT_CONFLICT/, "CHECKPOINT_CONFLICT definition must exist");
+// Bootstrap mutations with no output binding must fail typed (mapped to the
+// folder-bind attention row), never launder preflight(null) to INTERNAL_ERROR.
+const applyRegion = segment(js, "state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);", "persist_audit", "mutation apply");
+assert.match(applyRegion, /if \(!state\.outputSettings\) throw new window\.DacBridgeCore\.BridgeProtocolError\("VALIDATION_FAILED", "OUTPUT_PROFILE_UNBOUND/, "null outputSettings must fail typed before preflight");
 const mutationCatch = segment(js, "if (recoveredForward) {", "state.queueMutationRunning = false", "mutation catch");
 assert.match(mutationCatch, /CHECKPOINT_VERSION_CONFLICT/, "version conflict must be mapped to a typed error");
 assert.match(mutationCatch, /PERSISTENCE_VERIFICATION_FAILED/, "mapped code must be PERSISTENCE_VERIFICATION_FAILED");
