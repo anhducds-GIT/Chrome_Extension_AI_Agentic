@@ -50,7 +50,10 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
    `decisions.md`.** Bridge là ingress + observability, không phải remote
    execution. Side panel luôn là executor duy nhất; đóng panel → mọi lệnh
    Bridge liên quan Queue/workbook trả `EXECUTOR_UNAVAILABLE`, không có runner
-   nền nào thay thế.
+   nền nào thay thế. *Exception duy nhất (Đức chốt 2026-08-25, xem
+   `decisions.md`): một method **trial run** riêng, có nắp cứng (dev-toggle
+   BẬT, ≤2 job, cách nhau ≥5–6 phút, nhãn audit `bridge_dev`) — chưa
+   implement trong package này; `run.start` thật vẫn cấm vĩnh viễn.*
 8. **In-app preview pane vẫn cấm dùng để "xem" UI** (chặn script, bỏ
    stylesheet — xem `README.md`/`NEXT-SESSION-BRIEF.md`). **Nhưng từ
    2026-08-24, harness bằng Chrome THẬT được phép** (quyết định của Đức trong
