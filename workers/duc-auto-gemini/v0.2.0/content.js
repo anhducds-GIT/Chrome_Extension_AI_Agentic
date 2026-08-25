@@ -1,6 +1,11 @@
 (() => {
   "use strict";
 
+  // All provider-specific DOM selectors, blocker patterns, timing values and
+  // origin rules live in provider-adapter.js (loaded before this file per
+  // manifest.json content_scripts order).
+  const ADAPTER = window.DacProviderAdapter;
+
   const STATE = {
     busy: false,
     abortRequested: false,
@@ -48,45 +53,25 @@
   }
 
   function findComposer() {
-    return firstVisible([
-      "#prompt-textarea",
-      'textarea[data-testid="prompt-textarea"]',
-      'div[data-testid="composer-text-input"][contenteditable="true"]',
-      'form div.ProseMirror[contenteditable="true"]',
-      'form [contenteditable="true"][role="textbox"]',
-      "form textarea",
-    ]);
+    return firstVisible(ADAPTER.SELECTORS.composer);
   }
 
   function findSendButton(composer = findComposer()) {
-    const direct = firstVisible([
-      'button[data-testid="send-button"]',
-      'button[aria-label="Send prompt"]',
-      'button[aria-label^="Send"]',
-      'button[aria-label^="Gửi"]',
-    ]);
+    const direct = firstVisible(ADAPTER.SELECTORS.sendButtonDirect);
     if (direct) return direct;
 
     const form = composer?.closest("form");
     if (!form) return null;
 
-    return firstVisible([
-      'button[type="submit"]',
-      'button[data-testid*="send"]',
-    ], form);
+    return firstVisible(ADAPTER.SELECTORS.sendButtonWithinForm, form);
   }
 
   function findStopButton() {
-    return firstVisible([
-      'button[data-testid="stop-button"]',
-      'button[aria-label="Stop generating"]',
-      'button[aria-label^="Stop"]',
-      'button[aria-label^="Dừng"]',
-    ]);
+    return firstVisible(ADAPTER.SELECTORS.stopButton);
   }
 
   function assistantMessages() {
-    return Array.from(document.querySelectorAll('[data-message-author-role="assistant"]'));
+    return Array.from(document.querySelectorAll(ADAPTER.SELECTORS.assistantMessage));
   }
 
   function assistantFingerprint(message) {
@@ -97,7 +82,7 @@
 
   function securityBlockerText() {
     const text = (document.body?.innerText || "").toLowerCase();
-    return /(captcha|unusual activity|verify you are human|suspicious activity)/.test(text) ? "ChatGPT security/interstitial blocker detected." : null;
+    return ADAPTER.securityBlockerPattern.test(text) ? "ChatGPT security/interstitial blocker detected." : null;
   }
 
   // Free/paid image-generation quotas ("you've hit your daily limit") render
@@ -107,14 +92,10 @@
   // about someone waiting for a daily limit to reset, etc). Scoped to only
   // the specific assistant message under evaluation instead.
   //
-  // NOTE for whoever validates this live: this phrase list is a best-effort
-  // starting set, not confirmed against a real rate-limited ChatGPT session
-  // -- OpenAI's exact wording is not something that can be verified without
-  // actually hitting the limit. If a real limit is hit and the batch does
-  // NOT halt here, capture the exact text ChatGPT showed and add it below,
-  // the same way the CAPTCHA phrase list above was built from real evidence.
+  // The phrase list itself lives in provider-adapter.js (it is provider
+  // wording); the scoping policy above stays here.
   function matchesGenerationLimit(text) {
-    return /(reached (?:your|the) (?:daily |monthly )?(?:image generation )?limit|hit (?:your|the) (?:daily |monthly )?(?:image generation )?limit|image generation limit|generate more images (?:after|later|tomorrow)|try again (?:after|tomorrow|in (?:a|\d))|come back (?:after|in|tomorrow) to (?:generate|create) (?:more )?images|daily limit for image generation|you.ve used all your (?:free )?image generations)/i.test(text || "");
+    return ADAPTER.matchesGenerationLimit(text);
   }
   function generationLimitText() {
     return matchesGenerationLimit(latestAssistantText()) ? "ChatGPT image generation limit reached for now." : null;
@@ -180,7 +161,7 @@
     throw new Error("Unsupported ChatGPT composer type.");
   }
 
-  async function waitForSendButtonReady(composer, timeoutMs = 5000) {
+  async function waitForSendButtonReady(composer, timeoutMs = ADAPTER.TIMING.sendReadyTimeoutMs) {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       if (STATE.abortRequested) throw new Error("Automation stopped by user.");
@@ -195,10 +176,10 @@
     return Array.from(root.querySelectorAll("img")).map((image) => {
       const source = image.currentSrc || image.src || "";
       const rect = image.getBoundingClientRect();
-      const role = image.closest('[data-message-author-role="assistant"]') ? "assistant" : image.closest('[data-message-author-role="user"]') ? "user" : "unknown";
+      const role = image.closest(ADAPTER.SELECTORS.assistantMessage) ? "assistant" : image.closest(ADAPTER.SELECTORS.userMessage) ? "user" : "unknown";
       const label = `${image.alt || ""} ${image.getAttribute("aria-label") || ""}`.toLowerCase();
       const namedReference = Array.from(inputEvidence.names || []).some((name) => label.includes(name));
-      const attachmentPreview = Boolean(image.closest('form, [data-testid*="attachment"], [data-testid*="upload-preview"], [data-testid*="file-upload"]'));
+      const attachmentPreview = Boolean(image.closest(ADAPTER.SELECTORS.attachmentPreviewAncestor));
       return { source, source_id: shortHash(source), node_id: nodeId(image, "image"), role, input: role === "user" || attachmentPreview || inputEvidence.sources?.has(source) || namedReference, visible: isVisible(image) && rect.width >= 64 && rect.height >= 64, ready: image.complete && image.naturalWidth > 0 };
     }).filter((candidate) => /^(https:|data:image\/|blob:)/i.test(candidate.source));
   }
@@ -229,28 +210,18 @@
   function recordDetection(attempt, values) { if (attempt) attempt.detection = values; }
 
   function attachmentPreviewCount() {
-    return Array.from(document.querySelectorAll([
-      '[data-testid*="attachment"]',
-      '[data-testid*="file-upload"]',
-      '[data-testid*="upload-preview"]',
-      'button[aria-label*="Remove attachment"]',
-      'button[aria-label*="Remove file"]',
-    ].join(", "))).filter(isVisible).length;
+    return Array.from(document.querySelectorAll(ADAPTER.SELECTORS.attachmentPreview.join(", "))).filter(isVisible).length;
   }
 
   function uploadIsPending() {
-    return Array.from(document.querySelectorAll([
-      '[data-testid*="uploading"]',
-      '[aria-busy="true"]',
-      '[role="progressbar"]',
-    ].join(", "))).some(isVisible);
+    return Array.from(document.querySelectorAll(ADAPTER.SELECTORS.uploadPending.join(", "))).some(isVisible);
   }
 
   function fileInputHasReference(fileInput, fileName) {
     return Array.from(fileInput?.files || []).some((file) => file.name === fileName);
   }
 
-  async function waitForReferenceImagesReady(fileInput, referenceImages, previousPreviewCount, timeoutMs = 15000) {
+  async function waitForReferenceImagesReady(fileInput, referenceImages, previousPreviewCount, timeoutMs = ADAPTER.TIMING.referenceReadyTimeoutMs) {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       if (STATE.abortRequested) throw new Error("Automation stopped by user.");
@@ -269,7 +240,7 @@
     if (!images.length) return;
     // ChatGPT normally keeps this native input visually hidden behind its attach button.
     const composer = findComposer();
-    const fileInput = composer?.closest("form")?.querySelector('input[type="file"]') || document.querySelector('form input[type="file"]');
+    const fileInput = composer?.closest("form")?.querySelector(ADAPTER.SELECTORS.fileInput) || document.querySelector(ADAPTER.SELECTORS.fileInputFallback);
     if (!fileInput) throw new Error("ChatGPT image attachment input was not found.");
     const previousPreviewCount = attachmentPreviewCount();
     const data = new DataTransfer();
@@ -350,7 +321,7 @@
         }
 
         // Require 1.5s of stable text from the first assistant message created after the pre-send boundary.
-        if (stableText && Date.now() - stableSince >= 1500) {
+        if (stableText && Date.now() - stableSince >= ADAPTER.TIMING.stableTextDwellMs) {
           return {
             type: "text",
             text: stableText,
@@ -370,7 +341,7 @@
         stableSince = 0;
       }
 
-      await sleep(300);
+      await sleep(ADAPTER.TIMING.completionPollMs);
     }
 
     recordDetection(attempt, { ...lastDetection, timed_out: true });
@@ -409,7 +380,7 @@
           if (finalReadiness === "HARD_STOP") throw new Error(finalLimitBlocker ? `LIMIT_STOP: ${finalLimitBlocker}` : `HARD_STOP: ${finalBlocker}`);
           if (finalReadiness === "READY") return { ok: true, state: "IDLE_READY", composerFound: true, sendUsable: sendUsable(finalComposer, finalSendButton) };
         }
-        await Promise.race([new Promise((resolve) => { wake = resolve; }), sleep(300)]);
+        await Promise.race([new Promise((resolve) => { wake = resolve; }), sleep(ADAPTER.TIMING.completionPollMs)]);
       }
     } finally {
       observer?.disconnect();
@@ -440,7 +411,7 @@
       const boundary = captureBoundary(inputEvidence);
       if (requestAttempt) Object.assign(requestAttempt, { boundary, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, detection: { ...boundaryTelemetry(boundary), decision_reason: "PENDING" } });
       setComposerValue(composer, prompt);
-      await sleep(150);
+      await sleep(ADAPTER.TIMING.postTypeSettleMs);
 
       const sendButton = await waitForSendButtonReady(composer);
       emitRuntimeStage(requestAttempt, "SENDING");
@@ -449,7 +420,7 @@
       emitRuntimeStage(requestAttempt, "GENERATING");
 
       // Let ChatGPT process the click before completion polling.
-      await sleep(500);
+      await sleep(ADAPTER.TIMING.postSendSettleMs);
 
       const result = await waitForCompletion({ boundary, timeoutMs, expectImage, inputEvidence, attempt: requestAttempt });
       if (result?.image_url && requestAttempt) requestAttempt.phase = "OUTPUT_DETECTED";

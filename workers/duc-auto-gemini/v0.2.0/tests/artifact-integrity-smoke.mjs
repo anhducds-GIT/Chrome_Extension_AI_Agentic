@@ -67,7 +67,7 @@ assert.match(sidepanel, /state\.auditEvents = auditPersisted \? \[\] : snapshot\
 
 /* ---- 3. no markup sinks in the side panel ------------------------------- */
 
-for (const file of ["sidepanel.js", "background.js", "content.js", "bridge-core.js", "bridge-pairing-core.js", "bridge-router-core.js", "bridge-transport-loopback.js", "bridge-proposal-core.js", "approval-persistence-core.js"]) {
+for (const file of ["sidepanel.js", "background.js", "content.js", "provider-adapter.js", "bridge-core.js", "bridge-pairing-core.js", "bridge-router-core.js", "bridge-transport-loopback.js", "bridge-proposal-core.js", "approval-persistence-core.js"]) {
   assert.doesNotMatch(fs.readFileSync(new URL(file, root), "utf8"), /\.innerHTML\s*=/, `${file} must not assign innerHTML`);
 }
 assert.doesNotMatch(sidepanel, /insertAdjacentHTML|outerHTML\s*=|document\.write/, "no alternate markup sink is used");

@@ -15,9 +15,9 @@
    reset", etc). This is the same false-positive class of bug the security
    blocker had before it was scoped down.
 
-   IMPORTANT: the phrase list in content.js is a best-effort starting set,
-   not verified against a real rate-limited ChatGPT session -- that can only
-   be confirmed live, by actually hitting the limit. */
+   IMPORTANT: the phrase list in provider-adapter.js is a best-effort
+   starting set, not verified against a real rate-limited ChatGPT session --
+   that can only be confirmed live, by actually hitting the limit. */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
@@ -30,10 +30,23 @@ const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 
 /* ---- content.js: detection is scoped, not page-wide ---------------------- */
 
+// The phrase list moved into provider-adapter.js; content.js keeps a local
+// matchesGenerationLimit that delegates to the adapter. Exercise the REAL
+// delegation path: run the adapter, alias it the way content.js sees it
+// (const ADAPTER = window.DacProviderAdapter), then run the content.js slice.
+const adapterSource = fs.readFileSync(new URL("provider-adapter.js", root), "utf8");
 const matchesFnSource = content.slice(content.indexOf("function matchesGenerationLimit"), content.indexOf("function generationLimitText"));
 const matchesContext = vm.createContext({});
+vm.runInContext(adapterSource, matchesContext);
+vm.runInContext("this.ADAPTER = this.DacProviderAdapter;", matchesContext);
 vm.runInContext(`${matchesFnSource}\nthis.matchesGenerationLimit = matchesGenerationLimit;`, matchesContext);
 const matches = matchesContext.matchesGenerationLimit;
+
+// The provider wording lives in the adapter; content.js only delegates and
+// must no longer carry its own copy of the phrase regex.
+assert.match(adapterSource, /daily limit for image generation/, "the quota phrase list lives in provider-adapter.js");
+assert.match(matchesFnSource, /ADAPTER\.matchesGenerationLimit\(text\)/, "content.js delegates limit matching to the provider adapter");
+assert.doesNotMatch(content, /daily limit for image generation/, "content.js no longer carries a duplicate phrase list");
 
 for (const text of [
   "You've reached your image generation limit for today.",

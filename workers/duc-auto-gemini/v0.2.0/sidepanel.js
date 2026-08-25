@@ -2133,7 +2133,7 @@
 
   async function activeTab() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id || !/^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(tab.url || "")) throw new Error("Open a normal ChatGPT conversation in the active tab.");
+    if (!tab?.id || !window.DacProviderAdapter.isProviderUrl(tab.url || "")) throw new Error("Open a normal ChatGPT conversation in the active tab.");
     return tab;
   }
 
@@ -4363,7 +4363,7 @@
   let runSplitRatio = 0.5;
 
   function isChatGPTUrl(url) {
-    return Boolean(url && /^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(url));
+    return window.DacProviderAdapter.isProviderUrl(url);
   }
 
   function matchesZoomLevel(actualZoom, targetLevel, epsilon = ZOOM_EPSILON) {
