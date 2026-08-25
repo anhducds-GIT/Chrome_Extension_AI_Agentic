@@ -1255,6 +1255,11 @@
     if (!record) {
       els.bridgeProposalCount.textContent = "0 job";
       els.bridgeProposalStatus.textContent = "Chưa có đề xuất đang chờ";
+      // The approval-explainer paragraph only makes sense while a proposal is
+      // showing — leaving it visible in the empty state reads as "the top says
+      // 0 job but the bottom still talks about approving these jobs" (Đức's
+      // live report, 2026-08-25).
+      if (els.bridgeProposalNotice) els.bridgeProposalNotice.hidden = true;
       els.bridgeProposalLockReason.textContent = state.workbook ? "Có thể nạp một fixture 1 job để kiểm tra giao diện; fixture chỉ vào vùng cách ly." : "Mở workbook trước khi nạp fixture kiểm tra.";
       els.bridgeProposalFixtureBtn.hidden = false;
       els.bridgeProposalFixtureBtn.disabled = !state.workbook;
@@ -1262,6 +1267,7 @@
       els.bridgeProposalApproveBtn.hidden = true;
       return;
     }
+    if (els.bridgeProposalNotice) els.bridgeProposalNotice.hidden = false;
     els.bridgeProposalFixtureBtn.hidden = true;
     els.bridgeProposalRejectBtn.hidden = false;
     els.bridgeProposalApproveBtn.hidden = false;

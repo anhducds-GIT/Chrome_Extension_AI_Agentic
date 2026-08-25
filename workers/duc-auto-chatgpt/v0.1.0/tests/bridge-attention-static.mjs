@@ -143,4 +143,17 @@ for (const code of ["FOLDER_REAUTH_NEEDED", "FOLDER_BIND_NEEDED", "WORKBOOK_NEED
   assert.match(defs, new RegExp(code), `definition missing for ${code}`);
 }
 
+// --- The hidden attribute must be authoritative: author display rules (the
+// global button { display: inline-flex }) used to override UA [hidden],
+// leaving JS-hidden buttons visible (Đức saw Reject/Approve on an empty
+// proposal card). A global [hidden] rule with !important closes the class.
+const css = fs.readFileSync(path.join(root, "sidepanel.css"), "utf8");
+assert.match(css, /^\[hidden\] \{ display: none !important; \}/m, "global [hidden] rule must exist");
+
+// --- The proposal card's approval-explainer paragraph only renders alongside
+// an actual proposal: hidden in the empty state, shown with a record.
+const proposals = segment(js, "function renderBridgeProposals", "async function stageBridgeFixture", "renderBridgeProposals");
+assert.match(proposals, /bridgeProposalNotice\.hidden = true/, "empty state must hide the approval explainer");
+assert.match(proposals, /bridgeProposalNotice\.hidden = false/, "a live proposal must show the approval explainer");
+
 console.log("bridge-attention-static: all assertions passed");

@@ -394,6 +394,15 @@ textarea:focus, input:focus, select:focus {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+/* Author display rules (e.g. the global button { display: inline-flex } just
+   below) override the UA's [hidden] { display: none }, so JS `el.hidden = true`
+   silently failed on any element carrying an explicit display — Đức saw the
+   Reject/Approve buttons on an EMPTY proposal card because of exactly this.
+   Make the hidden attribute authoritative everywhere; the two older local
+   [hidden] fixes (destination-authorized, queue-row-details) stay as harmless
+   duplicates. */
+[hidden] { display: none !important; }
+
 button {
   border: 0;
   border-radius: var(--radius-md);
