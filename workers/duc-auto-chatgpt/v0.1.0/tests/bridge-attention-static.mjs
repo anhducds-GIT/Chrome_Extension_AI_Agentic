@@ -49,10 +49,19 @@ assert.match(mapper, /PERSISTENCE_VERIFICATION_FAILED/);
 // instead of laundering to INTERNAL_ERROR (hit live 2026-08-25).
 assert.match(mapper, /CHECKPOINT_VERSION_CONFLICT/);
 assert.match(js, /BRIDGE_ATTENTION_DEFS[\s\S]*?CHECKPOINT_CONFLICT/, "CHECKPOINT_CONFLICT definition must exist");
-// Bootstrap mutations with no output binding must fail typed (mapped to the
-// folder-bind attention row), never launder preflight(null) to INTERNAL_ERROR.
-const applyRegion = segment(js, "state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);", "persist_audit", "mutation apply");
-assert.match(applyRegion, /if \(!state\.outputSettings\) throw new window\.DacBridgeCore\.BridgeProtocolError\("VALIDATION_FAILED", "OUTPUT_PROFILE_UNBOUND/, "null outputSettings must fail typed before preflight");
+// Bootstrap mutations with no output binding default to Downloads mode (the
+// Quick Prompt shape) so agents can retarget the subfolder via
+// output.configure — never reaching preflight(null)/INTERNAL_ERROR (owner
+// decision 2026-08-25, Gemini-session discovery).
+const applyRegion = segment(js, "apply: async () => {", "persist_audit", "mutation apply");
+assert.match(applyRegion, /if \(!state\.outputSettings( && state\.workbook)?\) state\.outputSettings = window\.DacOutputLocation\.fromWorkbook\(\{\}, state\.workbook\.fileName\)/, "null outputSettings must initialize Downloads defaults");
+// The agent-settable output location is Downloads-relative ONLY: the handler
+// routes output_downloads_subfolder through downloadsLocation (safeRelativeFolder
+// rejects traversal/absolute), and only skips the bound-profile assert when
+// that subfolder is supplied.
+const outputConfigure = segment(js, "async function bridgeOutputConfigure", "async function bridgeRunSettingsConfigure", "bridgeOutputConfigure");
+assert.match(outputConfigure, /if \(downloadsSubfolder === undefined\) await assertBridgeOutputBound\(\)/, "unbound profile must still fail closed without a subfolder");
+assert.match(outputConfigure, /downloadsLocation\(downloadsSubfolder\)/, "subfolder must route through downloadsLocation validation");
 const mutationCatch = segment(js, "if (recoveredForward) {", "state.queueMutationRunning = false", "mutation catch");
 assert.match(mutationCatch, /CHECKPOINT_VERSION_CONFLICT/, "version conflict must be mapped to a typed error");
 assert.match(mutationCatch, /PERSISTENCE_VERIFICATION_FAILED/, "mapped code must be PERSISTENCE_VERIFICATION_FAILED");

@@ -1228,15 +1228,17 @@
         snapshot: async () => bridgeDirectSnapshot(),
         apply: async () => {
           if (state.workbook) state.workbook = await window.DacXlsx.cloneWorkbook(state.workbook);
+          // A bootstrap session starts with no output binding. Default it to
+          // Downloads mode — the exact shape Quick Prompt gives a no-config
+          // workbook — so the agent can immediately retarget the subfolder via
+          // output.configure (owner decision 2026-08-25). Before this, mutate
+          // reached preflight(null) and laundered to INTERNAL_ERROR.
+          if (!state.outputSettings && state.workbook) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
           const mutation = await mutate();
           if (!state.workbook) throw new window.DacBridgeCore.BridgeProtocolError("WORKBOOK_NOT_LOADED");
+          if (!state.outputSettings) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
           state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName);
           state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
-          // A bootstrap session with no output binding used to reach
-          // preflight(null), whose plain throw laundered to INTERNAL_ERROR
-          // (hit live 2026-08-25). Fail with the typed code the attention hub
-          // maps to the folder-bind row.
-          if (!state.outputSettings) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", "OUTPUT_PROFILE_UNBOUND: Chưa có Output Profile trong phiên — cần Đức chọn folder output một lần (tab BRIDGE có sẵn nút và đường dẫn).");
           const preflight = await window.DacOutputLocation.preflight(state.outputSettings);
           if (!preflight.ok) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", preflight.error);
           const auditEvent = bridgeDirectAuditEvent(event, method, mutation);
@@ -1345,12 +1347,33 @@
 
   async function bridgeOutputConfigure(params) {
     requireBridgeWorkbook();
-    await assertBridgeOutputBound();
     const values = { ...params };
     delete values.if_ledger_etag;
+    const downloadsSubfolder = values.output_downloads_subfolder;
+    delete values.output_downloads_subfolder;
+    // Owner decision 2026-08-25 (discovered in the Gemini session): the AI
+    // supplies the output location itself over the Bridge. Chrome physics
+    // still splits this in two: a Downloads-RELATIVE subfolder needs no human
+    // gesture, so the agent may set it here; binding an absolute directory
+    // still requires Đức's picker, so without a subfolder this method keeps
+    // failing closed on an unbound profile.
+    if (downloadsSubfolder === undefined) await assertBridgeOutputBound();
     return executeBridgeDirectMutation({
       method: "output.configure", event: "BRIDGE_OUTPUT_CONFIGURED", persistenceRequired: false, ifLedgerEtag: params.if_ledger_etag,
-      mutate: async () => applyArtifactNamingValues(values)
+      mutate: async () => {
+        const changed = [];
+        if (downloadsSubfolder !== undefined) {
+          state.outputSettings.image = window.DacOutputLocation.downloadsLocation(downloadsSubfolder);
+          if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
+          state.destinationMode = "downloads";
+          state.outputProfileState = null;
+          markLocalOverride("output_downloads_subfolder");
+          changed.push("output_downloads_subfolder");
+        }
+        const naming = Object.keys(values).length ? applyArtifactNamingValues(values) : null;
+        const changedFields = [...changed, ...(naming?.changed_fields || [])];
+        return { changed_fields: changedFields, message: `Agent Bridge đã cấu hình Output (${changedFields.join(", ")}); chưa chạy.` };
+      }
     });
   }
 

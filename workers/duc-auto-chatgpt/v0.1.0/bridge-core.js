@@ -434,11 +434,18 @@
 
   function validateOutputConfigure(raw) {
     const params = assertPlainObject(raw, "params");
-    const allowed = ["image_pattern", "result_filename_pattern", "audit_filename", "collision_policy", "save_images", "save_result_xlsx", "save_audit_jsonl", "if_ledger_etag"];
+    const allowed = ["image_pattern", "result_filename_pattern", "audit_filename", "collision_policy", "save_images", "save_result_xlsx", "save_audit_jsonl", "output_downloads_subfolder", "if_ledger_etag"];
     rejectUnknown(params, allowed, "params");
     if (!Object.keys(params).some((key) => key !== "if_ledger_etag")) invalidParams("params", "expected at least one output field");
     const normalized = {};
     if (params.if_ledger_etag !== undefined) normalized.if_ledger_etag = optionalLedgerEtag(params.if_ledger_etag);
+    if (params.output_downloads_subfolder !== undefined) {
+      // A Downloads-RELATIVE subfolder is the one output location an agent may
+      // set without a human gesture (owner decision 2026-08-25, discovered in
+      // the Gemini session). The executor re-validates through
+      // safeRelativeFolder (rejects traversal/absolute/unsafe characters).
+      normalized.output_downloads_subfolder = stringValue(params.output_downloads_subfolder, "params.output_downloads_subfolder", { min: 1, max: 160 });
+    }
     for (const key of ["image_pattern", "result_filename_pattern", "audit_filename"]) {
       if (params[key] !== undefined) normalized[key] = stringValue(params[key], `params.${key}`, { min: 1, max: 255, trim: false });
     }
@@ -589,7 +596,7 @@
     registryEntry({ name: "jobs.update", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Update mutable input fields on one PRE_SUBMIT job or a batch of 1-20 jobs.", params_schema: { job_id: "string?", prompt: "string?", reference_images: "string[]?", settings: "job_settings?", jobs: "job_update[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobsUpdate }),
     registryEntry({ name: "jobs.remove", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Tombstone one or 1-20 PRE_SUBMIT Queue jobs without deleting ledger rows.", params_schema: { job_id: "string?", job_ids: "string[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobIdOnly }),
     registryEntry({ name: "jobs.reorder", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Move one PRE_SUBMIT Queue job or persist a full active-queue permutation.", params_schema: { job_id: "string?", position: "integer:1..1000000?", order: "string[]?", if_ledger_etag: "string?" }, params_validator: validateJobsReorder }),
-    registryEntry({ name: "output.configure", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Configure naming, collision, and save controls for an already-bound output location.", params_schema: { image_pattern: "string?", result_filename_pattern: "string?", audit_filename: "string?", collision_policy: "overwrite|uniquify|fail?", save_images: "boolean?", save_result_xlsx: "boolean?", save_audit_jsonl: "boolean?", if_ledger_etag: "string?" }, params_validator: validateOutputConfigure }),
+    registryEntry({ name: "output.configure", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Configure naming, collision, and save controls for an already-bound output location — or point output at a Downloads-relative subfolder (the one location an agent may set without a human gesture; absolute directories still require the owner's picker).", params_schema: { image_pattern: "string?", result_filename_pattern: "string?", audit_filename: "string?", collision_policy: "overwrite|uniquify|fail?", save_images: "boolean?", save_result_xlsx: "boolean?", save_audit_jsonl: "boolean?", output_downloads_subfolder: "string?", if_ledger_etag: "string?" }, params_validator: validateOutputConfigure }),
     registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?", if_ledger_etag: "string?" }, params_validator: validateRunSettingsConfigure }),
     registryEntry({ name: "output.set_folder_hint", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Record the absolute folder path the agent is targeting, as operator-copyable display metadata on a stored output profile. Metadata only: writes no workbook data, no checkpoint, and never opens or binds a folder.", params_schema: { folder_hint: "string:1..500", profile_id: "slug?" }, params_validator: validateSetFolderHint }),
     registryEntry({ name: "profiles.remove", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Remove one stale extension-local output-profile metadata record. Never deletes a file or folder on disk.", params_schema: { profile_id: "slug" }, params_validator: validateProfilesRemove }),

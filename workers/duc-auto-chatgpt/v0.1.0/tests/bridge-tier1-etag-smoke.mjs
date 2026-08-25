@@ -39,8 +39,17 @@ for (const handlerName of ["bridgeOutputConfigure", "bridgeRunSettingsConfigure"
   const end = source.indexOf("\n  async function", start + 20);
   const handler = source.slice(start, end);
   assert.match(handler, /delete values\.if_ledger_etag/);
-  assert.match(handler, /mutate: async \(\) => .*\(values\)/);
-  assert.doesNotMatch(handler, /mutate: async \(\) => .*\(params\)/, `${handlerName} must not persist or audit the etag precondition`);
+  // The invariant: what gets applied is `values` (etag stripped) — never raw
+  // `params`. bridgeOutputConfigure's mutate became block-bodied when the
+  // Downloads-subfolder channel landed (2026-08-25), so match the apply call
+  // rather than a one-liner arrow shape.
+  if (handlerName === "bridgeOutputConfigure") {
+    assert.match(handler, /applyArtifactNamingValues\(values\)/);
+    assert.doesNotMatch(handler, /applyArtifactNamingValues\(params\)/, `${handlerName} must not persist or audit the etag precondition`);
+  } else {
+    assert.match(handler, /mutate: async \(\) => .*\(values\)/);
+    assert.doesNotMatch(handler, /mutate: async \(\) => .*\(params\)/, `${handlerName} must not persist or audit the etag precondition`);
+  }
 }
 
 console.log("bridge Tier-1 etag smoke tests: PASS");
