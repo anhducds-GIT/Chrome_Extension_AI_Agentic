@@ -48,12 +48,21 @@ assert.match(adapterSource, /daily limit for image generation/, "the quota phras
 assert.match(matchesFnSource, /ADAPTER\.matchesGenerationLimit\(text\)/, "content.js delegates limit matching to the provider adapter");
 assert.doesNotMatch(content, /daily limit for image generation/, "content.js no longer carries a duplicate phrase list");
 
+// On Gemini the PRIMARY quota signal is the freemium DOM anchor; the phrase
+// list is the fallback, still scoped to model-response text only. Both the
+// v0.1.0 Gemini regex (EN + VN) and the ChatGPT-era phrasing must keep firing.
+assert.match(adapterSource, /freemium-file-upload-quota-exceeded-disclaimer/, "the quota DOM anchor lives in provider-adapter.js");
+assert.match(content, /quotaAnchorPresent/, "content.js checks the quota DOM anchor before any phrase matching");
+
 for (const text of [
   "You've reached your image generation limit for today.",
   "You've hit your daily limit for image generation.",
   "you can generate more images tomorrow",
   "Try again in a few hours to create more images.",
   "You've used all your free image generations for today.",
+  "You have reached your quota for image creation.",
+  "Bạn đã đạt giới hạn tạo ảnh hôm nay.",
+  "Đã hết hạn mức, vui lòng thử lại sau.",
 ]) assert.equal(matches(text), true, `recognizes a real limit message: "${text}"`);
 
 for (const text of [
@@ -67,7 +76,8 @@ for (const text of [
 // mid-generation (partial text could false-match) and never against the
 // whole page (an unrelated older turn could false-match).
 const waitForCompletionSegment = content.slice(content.indexOf("async function waitForCompletion("), content.indexOf("function sendUsable"));
-assert.match(waitForCompletionSegment, /if \(resultMessage && !stopButton && matchesGenerationLimit\(text\)\) throw new Error\("LIMIT_STOP: ChatGPT image generation limit reached for now\."\);/, "the mid-generation check only fires once this attempt's own response has finished, against that response's own text");
+assert.match(waitForCompletionSegment, /if \(resultMessage && !generating && matchesGenerationLimit\(text\)\) throw new Error\("LIMIT_STOP: Gemini image generation limit reached for now\."\);/, "the mid-generation check only fires once this attempt's own response has finished, against that response's own text");
+assert.match(waitForCompletionSegment, /if \(!generating && quotaAnchorPresent\(\)\) throw new Error\("LIMIT_STOP: Gemini image generation quota reached \(freemium quota disclaimer present\)\."\);/, "the DOM-anchor quota check also never fires mid-generation");
 assert.ok(waitForCompletionSegment.indexOf("matchesGenerationLimit(text)") < waitForCompletionSegment.indexOf("if (expectImage)"), "generation-limit detection takes priority over image-decision handling for the same poll");
 
 // The pre-submit readiness gate (before the NEXT job is ever sent) must also
@@ -96,8 +106,9 @@ assert.equal(readiness.evaluate({ composerFound: true, sendUsable: true, generat
 const runnerContext = {};
 vm.runInNewContext(runnerSource, runnerContext);
 const runner = runnerContext.DacRunnerCore;
-assert.equal(runner.classifyFailure("LIMIT_STOP: ChatGPT image generation limit reached for now."), "GENERATION_LIMIT_REACHED", "the LIMIT_STOP prefix classifies distinctly from SECURITY_HARD_STOP");
-assert.equal(runner.classifyFailure("HARD_STOP: ChatGPT security/interstitial blocker detected."), "SECURITY_HARD_STOP", "a real security block still classifies as security, not folded into the new type");
+assert.equal(runner.classifyFailure("LIMIT_STOP: Gemini image generation limit reached for now."), "GENERATION_LIMIT_REACHED", "the LIMIT_STOP prefix classifies distinctly from SECURITY_HARD_STOP");
+assert.equal(runner.classifyFailure("LIMIT_STOP: Gemini image generation quota reached (freemium quota disclaimer present)."), "GENERATION_LIMIT_REACHED", "the DOM-anchor quota message classifies the same way");
+assert.equal(runner.classifyFailure("HARD_STOP: Gemini security/interstitial blocker detected."), "SECURITY_HARD_STOP", "a real security block still classifies as security, not folded into the new type");
 assert.ok(runner.FAILURE_TYPES.has("GENERATION_LIMIT_REACHED"), "the new classification is a recognized failure type");
 assert.equal(runner.HARD_STOP_FAILURE_TYPES.has("GENERATION_LIMIT_REACHED"), true, "a reached quota is one of the three genuine hard stops -- retrying would just resubmit into the same wall");
 assert.equal(runner.canRetry({ phase: "PRE_SUBMIT", retry_count: 0, settings: { max_retries: 2 } }, "GENERATION_LIMIT_REACHED"), false, "canRetry refuses a generation-limit failure even with retries remaining");
