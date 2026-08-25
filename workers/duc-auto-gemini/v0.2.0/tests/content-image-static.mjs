@@ -115,3 +115,10 @@ assert.match(quotaFn, /text\.length > 0/, "quota anchor requires non-empty text 
 assert.match(quotaFn, /isVisible\(anchor\)/, "quota anchor requires visibility (placeholder-proof)");
 assert.ok(!/return Boolean\(document\.querySelector\(ADAPTER\.SELECTORS\.quotaExceededAnchor\)\);/.test(source), "the bare-existence quota check must not return");
 console.log("quota placeholder pins: PASS");
+
+// Pilot-04 regression (Q001/Q005): an unrendered inline preview must not hide
+// a real generated image — a verified generated candidate with a remote lh3
+// result URL counts as present; rendering is cosmetic.
+assert.match(source, /const remoteVerifiedResult = generated && \/\^https:\/i\.test\(source\) && ADAPTER\.SELECTORS\.generatedImageHostPattern\.test\(source\)/, "render-glitch tolerance is derived from the generated marker plus the verified result host");
+assert.match(source, /\|\| remoteVerifiedResult,\n\s+ready: \(image\.complete && image\.naturalWidth > 0\) \|\| remoteVerifiedResult/, "visible and ready both accept the remote-verified generated candidate");
+console.log("render-glitch tolerance pins: PASS");

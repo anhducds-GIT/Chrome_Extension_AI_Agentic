@@ -226,15 +226,25 @@
       const role = inUserQuery ? "user" : inModelResponse ? "assistant" : "unknown";
       const label = `${image.alt || ""} ${image.getAttribute("aria-label") || ""}`.toLowerCase();
       const namedReference = Array.from(inputEvidence.names || []).some((name) => label.includes(name));
+      const generated = isGeneratedImage(image, source);
+      // Pilot-04 (Q001, Q005): Gemini sometimes fails to RENDER the inline
+      // preview even though the image exists (owner saw it on click; the img
+      // carries a real https lh3 result URL). That URL only exists once the
+      // model actually produced the image, so a verified generated candidate
+      // with a remote result source counts as present even when unrendered —
+      // rendering is cosmetic. Attribution still requires a fresh
+      // model-response container after the boundary, and completion still
+      // requires the generating signals to clear.
+      const remoteVerifiedResult = generated && /^https:/i.test(source) && ADAPTER.SELECTORS.generatedImageHostPattern.test(source);
       return {
         source,
         source_id: shortHash(source),
         node_id: nodeId(image, "image"),
         role,
         input: role === "user" || isExcludedInput(image, source) || inputEvidence.sources?.has(source) || namedReference,
-        visible: isVisible(image) && rect.width >= minSize && rect.height >= minSize,
-        ready: image.complete && image.naturalWidth > 0,
-        generated: isGeneratedImage(image, source),
+        visible: (isVisible(image) && rect.width >= minSize && rect.height >= minSize) || remoteVerifiedResult,
+        ready: (image.complete && image.naturalWidth > 0) || remoteVerifiedResult,
+        generated,
       };
     }).filter((candidate) => /^(https:|data:image\/|blob:)/i.test(candidate.source));
   }
