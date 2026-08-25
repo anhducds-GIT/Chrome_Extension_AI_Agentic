@@ -7,7 +7,8 @@
   const MAX_PENDING_RECORDS = 20;
   const MAX_PENDING_JOBS = 100;
   const PENDING_STATUSES = new Set(["AWAITING_OWNER_APPROVAL", "NEEDS_REVIEW", "APPROVING", "APPROVAL_FAILED"]);
-  const TERMINAL_STATUSES = new Set(["APPROVED_CHECKPOINTED", "REJECTED", "EXPIRED"]);
+  const TERMINAL_STATUSES = new Set(["APPROVED_CHECKPOINTED", "REJECTED", "EXPIRED", "WITHDRAWN"]);
+  const WITHDRAWABLE_STATUSES = new Set(["AWAITING_OWNER_APPROVAL", "NEEDS_REVIEW", "APPROVAL_FAILED"]);
   const PROVENANCE_FIELDS = Object.freeze([
     "input_origin", "bridge_protocol_version", "bridge_transport", "bridge_proposal_id",
     "bridge_request_id", "bridge_client_id", "bridge_client_job_id", "bridge_received_at",
@@ -250,6 +251,7 @@
       preview: jobs,
       approved_at: record.approved_at || null,
       rejected_at: record.rejected_at || null,
+      withdrawn_at: record.withdrawn_at || null,
       failure: record.failure ? clone(record.failure) : null,
       checkpoint: record.checkpoint ? clone(record.checkpoint) : null,
       ledger_etag: record.ledger_etag || null,
@@ -278,7 +280,8 @@
     const updatedAt = iso(now);
     const eventByStatus = {
       REJECTED: "BRIDGE_PROPOSAL_REJECTED",
-      EXPIRED: "BRIDGE_PROPOSAL_EXPIRED"
+      EXPIRED: "BRIDGE_PROPOSAL_EXPIRED",
+      WITHDRAWN: "BRIDGE_PROPOSAL_WITHDRAWN"
     };
     const updated = { ...clone(record), ...clone(values), status, updated_at: updatedAt };
     if (eventByStatus[status]) {
@@ -364,7 +367,7 @@
 
   const api = {
     STORAGE_SCHEMA_VERSION, PENDING_TTL_MS, HISTORY_TTL_MS, MAX_PENDING_RECORDS, MAX_PENDING_JOBS,
-    PENDING_STATUSES, TERMINAL_STATUSES, PROVENANCE_FIELDS, ProposalError, ledgerMaterial, ledgerEtag,
+    PENDING_STATUSES, TERMINAL_STATUSES, WITHDRAWABLE_STATUSES, PROVENANCE_FIELDS, ProposalError, ledgerMaterial, ledgerEtag,
     sanitizeLedgerJob, assignFinalIds, buildPreview, createRecord, publicRecord, redact, transition,
     maintainRecords, assertCapacity, findByIdempotency, idempotencyKey, bridgeFields, approvalLockReason, page,
     createSerialExecutor

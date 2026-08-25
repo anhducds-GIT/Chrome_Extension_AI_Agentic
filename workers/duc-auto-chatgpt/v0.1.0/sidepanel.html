@@ -448,6 +448,14 @@
           <strong>AGENT BRIDGE</strong>
           <span id="bridgeTransportStatus" class="bridge-transport-status" role="status" aria-live="polite">Chưa kết nối</span>
         </div>
+        <div class="bridge-dev-mode-control">
+          <label for="bridgeDevModeToggle">
+            <input id="bridgeDevModeToggle" type="checkbox" />
+            <span>Chế độ phát triển</span>
+          </label>
+          <span id="bridgeDevModeBadge" class="bridge-dev-mode-badge" role="status" aria-live="polite">DEV MODE · TẮT</span>
+        </div>
+        <p class="hint">Chỉ Đức bật công tắc này. Khi bật, Agent Bridge chỉ được phép giữ chỗ trial tối đa 2 job với timeout tối đa 90 giây và cách trial trước ít nhất 5 phút.</p>
         <dl class="bridge-connection-grid" aria-label="Trạng thái Agent Bridge">
           <div><dt>Host reachable</dt><dd id="bridgeHostReachable">Không</dd></div>
           <div><dt>Extension</dt><dd id="bridgePairingState">Chưa pairing</dd></div>

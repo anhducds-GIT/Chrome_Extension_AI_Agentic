@@ -30,7 +30,7 @@
     "bridgeProposalCard", "bridgeProposalCount", "bridgeProposalStatus", "bridgeProposalMeta", "bridgeProposalList", "bridgeProposalNotice", "bridgeProposalLockReason", "bridgeProposalFixtureBtn", "bridgeProposalRejectBtn", "bridgeProposalApproveBtn",
     "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput",
     "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeActivityEmpty",
-    "bridgeAttentionCard", "bridgeAttentionList", "bridgeAttentionCount", "bridgeTabAttentionBadge", "bridgeAttentionRestoreBtn"
+    "bridgeAttentionCard", "bridgeAttentionList", "bridgeAttentionCount", "bridgeTabAttentionBadge", "bridgeAttentionRestoreBtn", "bridgeDevModeToggle", "bridgeDevModeBadge"
   ];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
   // Output Profile mode is normally driven by output_profile_id / result_output_profile_id
@@ -111,10 +111,17 @@
     bridgeTransportStatus: null,
     bridgeLastActivityAt: null,
     bridgeActivity: [],
-    bridgeAttention: []
+    bridgeAttention: [],
+    bridgeDevMode: false,
+    bridgeTrialId: null,
+    bridgeRunOrigin: null,
+    pendingRunOptions: null
   };
   const queueRunLock = window.DacApprovalPersistence.createQueueRunLock(state);
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const BRIDGE_DEV_MODE_STORAGE_KEY = "dac.bridge.dev_mode.v1";
+  const BRIDGE_LAST_TRIAL_STORAGE_KEY = "dac.bridge.last_trial_at.v1";
+  const BRIDGE_TRIAL_MIN_INTERVAL_MS = 5 * 60 * 1000;
 
   const STATUS_TRANSLATIONS = Object.freeze({
     IDLE: "Đang chờ", ERROR: "Có lỗi", RUNNING: "Đang chạy", DONE: "Hoàn tất", PAUSED: "Đã tạm dừng", STOPPED: "Đã dừng", HALTED: "Dừng bảo vệ",
@@ -206,7 +213,8 @@
       bridge_approved_at: item.job.bridge_approved_at || null,
       bridge_payload_sha256: item.job.bridge_payload_sha256 || null
     } : {};
-    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge });
+    const trial = state.bridgeRunOrigin === "bridge_dev" ? { input_origin: "bridge_dev", bridge_trial_id: state.bridgeTrialId, bridge_trial_timeout_cap_sec: 90 } : {};
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge, ...trial });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
@@ -359,6 +367,7 @@
     APPROVING: "Đang ghi audit và checkpoint",
     APPROVED_CHECKPOINTED: "Đã duyệt và xác minh checkpoint",
     REJECTED: "Đã từ chối",
+    WITHDRAWN: "Agent đã rút đề xuất",
     EXPIRED: "Đề xuất đã hết hạn",
     APPROVAL_FAILED: "Duyệt thất bại — Queue chưa được checkpoint"
   });
@@ -556,8 +565,78 @@
       counts: { total: queue.length, pending: count(["PENDING"]), running: count(["RUNNING", "RECONCILING"]), success: count(["SUCCESS", "DONE"]), failed: count(["FAILED"]), interrupted: count(["INTERRUPTED", "STOPPED"]) },
       halt: halted ? { failure_type: halted.failure_type, instruction: window.DacHaltInstructions?.findInstruction?.(halted.failure_type) || null } : null,
       artifact_persistence_failed: state.artifactErrors.length > 0,
+      trial: state.bridgeTrialId ? { trial_id: state.bridgeTrialId, input_origin: state.bridgeRunOrigin } : null,
       checkpoint: checkpointSummary()
     };
+  }
+
+  function renderBridgeDevMode() {
+    if (els.bridgeDevModeToggle) els.bridgeDevModeToggle.checked = state.bridgeDevMode;
+    if (els.bridgeDevModeBadge) {
+      els.bridgeDevModeBadge.textContent = state.bridgeDevMode ? "DEV MODE · BẬT" : "DEV MODE · TẮT";
+      els.bridgeDevModeBadge.classList.toggle("enabled", state.bridgeDevMode);
+    }
+  }
+
+  async function restoreBridgeDevMode() {
+    const stored = await chrome.storage.local.get(BRIDGE_DEV_MODE_STORAGE_KEY);
+    state.bridgeDevMode = stored?.[BRIDGE_DEV_MODE_STORAGE_KEY] === true;
+    renderBridgeDevMode();
+  }
+
+  async function setBridgeDevModeFromPanel(enabled) {
+    state.bridgeDevMode = enabled === true;
+    await chrome.storage.local.set({ [BRIDGE_DEV_MODE_STORAGE_KEY]: state.bridgeDevMode });
+    renderBridgeDevMode();
+  }
+
+  async function bridgeRunTrial(params) {
+    window.DacBridgeCore.assertTrialDevMode(state.bridgeDevMode);
+    if (!queueRunLock.tryBeginRun()) throw new window.DacBridgeCore.BridgeProtocolError("RUN_ACTIVE");
+    const previousSelection = new Set(state.runSelection);
+    let accepted = false;
+    try {
+      const stored = await chrome.storage.local.get(BRIDGE_LAST_TRIAL_STORAGE_KEY);
+      const lastTrialAt = Number(stored?.[BRIDGE_LAST_TRIAL_STORAGE_KEY]) || 0;
+      const remainingMs = BRIDGE_TRIAL_MIN_INTERVAL_MS - (Date.now() - lastTrialAt);
+      if (remainingMs > 0) {
+        const remainingSeconds = Math.ceil(remainingMs / 1000);
+        throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `TRIAL_COOLDOWN_ACTIVE: Chờ thêm ${remainingSeconds} giây trước trial tiếp theo.`);
+      }
+      const effectiveOutput = await authoritativeValidate();
+      state.runSelection = new Set(params.job_ids);
+      const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, "selected", state.runSelection);
+      const eligibleIds = runQueue.map((item) => item.job.id);
+      if (eligibleIds.length !== params.job_ids.length || params.job_ids.some((id) => !eligibleIds.includes(id))) {
+        throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", "TRIAL_JOB_INELIGIBLE: Mọi job đã chọn phải vượt qua cùng gate Chạy job đã chọn trên Side Panel.");
+      }
+      const trialId = `trial-${crypto.randomUUID()}`;
+      const acceptedAt = Date.now();
+      await chrome.storage.local.set({ [BRIDGE_LAST_TRIAL_STORAGE_KEY]: acceptedAt });
+      // Do not mutate effective settings until the acceptance timestamp is
+      // durably stored. A storage failure must reject without leaving the
+      // owner's settings capped in memory.
+      const trialTimeoutPlan = window.DacBridgeCore.capTrialTimeouts(state.prepared.settings, runQueue, 90);
+      state.prepared.settings = trialTimeoutPlan.prepared_settings;
+      state.bridgeTrialId = trialId;
+      state.bridgeRunOrigin = "bridge_dev";
+      accepted = true;
+      state.pendingRunOptions = { prelocked: true, effectiveOutput, runQueue, trialTimeoutPlan, trialId };
+      void run("selected").catch((error) => {
+        log(`Trial ${trialId} dừng do lỗi nội bộ: ${messageOf(error)}`, "error");
+      });
+      return {
+        accepted: true,
+        trial_id: trialId,
+        reservation: { job_ids: [...params.job_ids], accepted_at: new Date(acceptedAt).toISOString(), timeout_cap_sec: 90, poll_method: "run.status" }
+      };
+    } finally {
+      if (!accepted) {
+        state.runSelection = previousSelection;
+        queueRunLock.endRunStart();
+        controls();
+      }
+    }
   }
 
   async function bridgeSystemPing() {
@@ -801,7 +880,7 @@
     else if (code === "PERSISTENCE_VERIFICATION_FAILED") raiseBridgeAttention("FOLDER_REAUTH_NEEDED", message, folderHint);
     else if (code === "WORKBOOK_NOT_LOADED") raiseBridgeAttention("WORKBOOK_NEEDED", message, folderHint);
     else if (code === "VALIDATION_FAILED" && /OUTPUT_PROFILE_UNBOUND/.test(message)) raiseBridgeAttention("FOLDER_BIND_NEEDED", message, folderHint);
-    else if (code === "RUN_ACTIVE" && /bật lưu audit/i.test(message)) raiseBridgeAttention("PERSISTENCE_TOGGLES_OFF", message);
+    else if (code === "VALIDATION_FAILED" && /bật lưu audit/i.test(message)) raiseBridgeAttention("PERSISTENCE_TOGGLES_OFF", message);
   }
 
   function renderBridgeActivityFeed() {
@@ -920,6 +999,29 @@
     return window.DacBridgeProposalCore.publicRecord(record);
   }
 
+  async function bridgeProposalWithdraw(params, call) {
+    return serializeBridgeProposalStore(async () => {
+      const store = await readBridgeProposalStoreUnlocked();
+      const index = store.records.findIndex((item) => item.proposal_id === params.proposal_id);
+      if (index < 0) throw new window.DacBridgeCore.BridgeProtocolError("PROPOSAL_NOT_FOUND", undefined, { proposal_id: params.proposal_id });
+      const record = store.records[index];
+      if (record.client?.client_id !== call.request.client.client_id) {
+        throw new window.DacBridgeCore.BridgeProtocolError("FORBIDDEN", "PROPOSAL_OWNER_MISMATCH: Agent chỉ được rút đề xuất do chính client_id của mình tạo.");
+      }
+      if (!window.DacBridgeProposalCore.WITHDRAWABLE_STATUSES.has(record.status)) {
+        throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `PROPOSAL_NOT_PENDING: Không thể rút proposal ở trạng thái ${record.status}.`);
+      }
+      const withdrawnAt = new Date().toISOString();
+      const withdrawn = window.DacBridgeProposalCore.transition(record, "WITHDRAWN", { withdrawn_at: withdrawnAt, withdrawn_by_client_id: call.request.client.client_id }, withdrawnAt);
+      store.records[index] = withdrawn;
+      delete store.replays[record.idempotency_key];
+      await writeBridgeProposalStoreUnlocked(store);
+      renderBridgeProposals();
+      log(`Agent đã rút đề xuất ${record.proposal_id}; workbook và Queue không thay đổi.`, "info");
+      return window.DacBridgeProposalCore.publicRecord(withdrawn);
+    });
+  }
+
   function withBridgeErrors(handler) {
     return async (...args) => {
       state.bridgeLastActivityAt = new Date().toISOString();
@@ -939,6 +1041,7 @@
       "system.ping": withBridgeErrors(bridgeSystemPing),
       "queue.list": withBridgeErrors(bridgeQueueList),
       "run.status": withBridgeErrors(async () => bridgeRunStatus()),
+      "run.trial": withBridgeErrors(bridgeRunTrial),
       "ledger.read": withBridgeErrors(bridgeLedgerRead),
       "jobs.add": withBridgeErrors(bridgeJobsAdd),
       "jobs.update": withBridgeErrors(bridgeJobsUpdate),
@@ -946,9 +1049,11 @@
       "jobs.reorder": withBridgeErrors(bridgeJobsReorder),
       "output.configure": withBridgeErrors(bridgeOutputConfigure),
       "output.set_folder_hint": withBridgeErrors(bridgeOutputSetFolderHint),
+      "profiles.remove": withBridgeErrors(bridgeProfilesRemove),
       "run_settings.configure": withBridgeErrors(bridgeRunSettingsConfigure),
       "queue.propose": withBridgeErrors(bridgeQueuePropose),
-      "queue.proposal.get": withBridgeErrors(bridgeProposalGet)
+      "queue.proposal.get": withBridgeErrors(bridgeProposalGet),
+      "queue.proposal.withdraw": withBridgeErrors(bridgeProposalWithdraw)
     }
   });
 
@@ -983,7 +1088,7 @@
     return visible[0] || null;
   }
 
-  function bridgeApprovalLockReason({ workbookRequired = true, persistenceRequired = true } = {}) {
+  function bridgeApprovalLockState({ workbookRequired = true, persistenceRequired = true } = {}) {
     let persistenceMissing = !state.outputSettings;
     if (state.outputSettings) {
       try {
@@ -991,7 +1096,7 @@
         persistenceMissing = !output.saveAuditJsonl || !output.saveResultXlsx;
       } catch (_) { persistenceMissing = true; }
     }
-    return window.DacBridgeProposalCore.approvalLockReason({
+    return {
       running: state.running || state.runStarting,
       reconciliation: state.manualReconciliationRunning,
       recreate: state.recreateRunning || Boolean(state.pendingRecreateJobId) || Boolean(state.pendingRerunJobId),
@@ -999,7 +1104,11 @@
       queue_mutation: state.queueMutationRunning,
       workbook_missing: workbookRequired && !state.workbook,
       persistence_missing: persistenceRequired && persistenceMissing
-    });
+    };
+  }
+
+  function bridgeApprovalLockReason(options = {}) {
+    return window.DacBridgeProposalCore.approvalLockReason(bridgeApprovalLockState(options));
   }
 
   function cloneBridgeOutputSettings(settings) {
@@ -1080,8 +1189,12 @@
   }
 
   function bridgeDirectLock({ workbookRequired = true, persistenceRequired = true } = {}) {
-    const reason = bridgeApprovalLockReason({ workbookRequired, persistenceRequired });
-    if (reason) throw new window.DacBridgeCore.BridgeProtocolError("RUN_ACTIVE", reason, { lock_reason: reason });
+    const flags = bridgeApprovalLockState({ workbookRequired, persistenceRequired });
+    const reason = window.DacBridgeProposalCore.approvalLockReason(flags);
+    if (!reason) return;
+    const transient = flags.running || flags.reconciliation || flags.recreate || flags.audit_gap || flags.queue_mutation;
+    const code = flags.persistence_missing && !transient && !flags.workbook_missing ? "VALIDATION_FAILED" : "RUN_ACTIVE";
+    throw new window.DacBridgeCore.BridgeProtocolError(code, reason, { lock_reason: reason });
   }
 
   async function assertBridgeOutputBound() {
@@ -1098,13 +1211,19 @@
     return preflight.effective;
   }
 
-  async function executeBridgeDirectMutation({ method, event, workbookRequired = true, persistenceRequired = true, mutate }) {
+  async function executeBridgeDirectMutation({ method, event, workbookRequired = true, persistenceRequired = true, ifLedgerEtag = null, mutate }) {
     if (workbookRequired) requireBridgeWorkbook();
     bridgeDirectLock({ workbookRequired: false, persistenceRequired });
     if (!queueRunLock.tryBeginMutation()) throw new window.DacBridgeCore.BridgeProtocolError("RUN_ACTIVE");
     controls();
     let recoveredForward = null;
     try {
+      if (ifLedgerEtag !== null) {
+        const actualEtag = await currentLedgerEtag();
+        if (actualEtag !== ifLedgerEtag) {
+          throw new window.DacBridgeCore.BridgeProtocolError("PROPOSAL_CONFLICT", undefined, { expected_ledger_etag: ifLedgerEtag, actual_ledger_etag: actualEtag });
+        }
+      }
       const outcome = await window.DacApprovalPersistence.execute({
         snapshot: async () => bridgeDirectSnapshot(),
         apply: async () => {
@@ -1200,38 +1319,42 @@
 
   async function bridgeJobsUpdate(params) {
     return executeBridgeDirectMutation({
-      method: "jobs.update", event: "BRIDGE_JOB_UPDATED",
-      mutate: async () => applyQueueJobUpdate(params.job_id, params)
+      method: "jobs.update", event: "BRIDGE_JOB_UPDATED", ifLedgerEtag: params.if_ledger_etag,
+      mutate: async () => params.jobs ? applyQueueJobsUpdateBatch(params.jobs) : applyQueueJobUpdate(params.job_id, params)
     });
   }
 
   async function bridgeJobsRemove(params) {
     return executeBridgeDirectMutation({
-      method: "jobs.remove", event: "BRIDGE_JOB_REMOVED",
-      mutate: async () => applyQueueJobRemoval(params.job_id)
+      method: "jobs.remove", event: "BRIDGE_JOB_REMOVED", ifLedgerEtag: params.if_ledger_etag,
+      mutate: async () => params.job_ids ? applyQueueJobsRemovalBatch(params.job_ids) : applyQueueJobRemoval(params.job_id)
     });
   }
 
   async function bridgeJobsReorder(params) {
     return executeBridgeDirectMutation({
-      method: "jobs.reorder", event: "BRIDGE_JOB_REORDERED",
-      mutate: async () => applyQueueJobPosition(params.job_id, params.position)
+      method: "jobs.reorder", event: "BRIDGE_JOB_REORDERED", ifLedgerEtag: params.if_ledger_etag,
+      mutate: async () => params.order ? applyQueueFullOrder(params.order) : applyQueueJobPosition(params.job_id, params.position)
     });
   }
 
   async function bridgeOutputConfigure(params) {
     requireBridgeWorkbook();
     await assertBridgeOutputBound();
+    const values = { ...params };
+    delete values.if_ledger_etag;
     return executeBridgeDirectMutation({
-      method: "output.configure", event: "BRIDGE_OUTPUT_CONFIGURED", persistenceRequired: false,
-      mutate: async () => applyArtifactNamingValues(params)
+      method: "output.configure", event: "BRIDGE_OUTPUT_CONFIGURED", persistenceRequired: false, ifLedgerEtag: params.if_ledger_etag,
+      mutate: async () => applyArtifactNamingValues(values)
     });
   }
 
   async function bridgeRunSettingsConfigure(params) {
+    const values = { ...params };
+    delete values.if_ledger_etag;
     return executeBridgeDirectMutation({
-      method: "run_settings.configure", event: "BRIDGE_RUN_SETTINGS_CONFIGURED",
-      mutate: async () => applyRuntimeOverrideValues(params)
+      method: "run_settings.configure", event: "BRIDGE_RUN_SETTINGS_CONFIGURED", ifLedgerEtag: params.if_ledger_etag,
+      mutate: async () => applyRuntimeOverrideValues(values)
     });
   }
 
@@ -1257,6 +1380,19 @@
     await probeBridgePersistence().catch(() => {});
     renderBridgeAttention();
     return { profile_id: profileId, folder_hint: params.folder_hint };
+  }
+
+  async function bridgeProfilesRemove(params) {
+    const imageProfileId = String(state.outputSettings?.image?.profileId || "");
+    const resultProfileId = String(state.outputSettings?.result?.profileId || "");
+    if (params.profile_id === imageProfileId || params.profile_id === resultProfileId) {
+      throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `PROFILE_IN_USE: Profile '${params.profile_id}' đang được bind cho image/result trong phiên hiện tại.`);
+    }
+    const removed = await window.DacOutputProfiles.remove(params.profile_id);
+    if (!removed) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `PROFILE_NOT_FOUND: Không có profile '${params.profile_id}'.`);
+    await probeBridgePersistence().catch(() => {});
+    renderBridgeAttention();
+    return { profile_id: params.profile_id, removed: true, scope: "extension_local_metadata_only", disk_files_deleted: false };
   }
 
   function appendBridgeMeta(label, value) {
@@ -2577,6 +2713,16 @@
     };
   }
 
+  function applyQueueJobsUpdateBatch(jobs) {
+    for (const job of jobs) mutationQueueItem(job.job_id);
+    const mutations = jobs.map((job) => applyQueueJobUpdate(job.job_id, job));
+    return {
+      job_ids: jobs.map((job) => job.job_id),
+      changed_fields: [...new Set(mutations.flatMap((mutation) => mutation.changed_fields))],
+      message: `Agent Bridge đã cập nhật ${jobs.length} job PRE_SUBMIT trong một checkpoint: ${jobs.map((job) => job.job_id).join(", ")}.`
+    };
+  }
+
   function applyQueueJobRemoval(jobId) {
     const item = mutationQueueItem(jobId);
     window.DacXlsx.removeFromQueue(state.workbook, item.job);
@@ -2586,6 +2732,16 @@
       job_id: jobId,
       changed_fields: ["queue_removed", "queue_removed_at", "queue_position"],
       message: `Agent Bridge \u0111\u00e3 b\u1ecf ${jobId} kh\u1ecfi Queue b\u1eb1ng tombstone; d\u00f2ng ledger v\u1eabn \u0111\u01b0\u1ee3c gi\u1eef.`
+    };
+  }
+
+  function applyQueueJobsRemovalBatch(jobIds) {
+    for (const jobId of jobIds) mutationQueueItem(jobId);
+    for (const jobId of jobIds) applyQueueJobRemoval(jobId);
+    return {
+      job_ids: [...jobIds],
+      changed_fields: ["queue_removed", "queue_removed_at", "queue_position"],
+      message: `Agent Bridge đã tombstone ${jobIds.length} job trong một checkpoint: ${jobIds.join(", ")}.`
     };
   }
 
@@ -2604,6 +2760,27 @@
       position,
       changed_fields: ["queue_position"],
       message: `Agent Bridge \u0111\u00e3 chuy\u1ec3n ${jobId} t\u1edbi v\u1ecb tr\u00ed ${position} trong Queue.`
+    };
+  }
+
+  function applyQueueFullOrder(order) {
+    const active = window.DacXlsx.activeJobs(state.workbook);
+    const activeIds = active.map((job) => String(job.id));
+    if (order.length !== activeIds.length || activeIds.some((id) => !order.includes(id))) {
+      bridgeMutationValidation("QUEUE_ORDER_INVALID: order phải là hoán vị đầy đủ của toàn bộ active Queue.", { expected_job_ids: activeIds, supplied_job_ids: order });
+    }
+    const prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
+    const byId = new Map(prepared.queue.map((item) => [String(item.job.id), item]));
+    for (const id of order) {
+      const item = byId.get(id);
+      if (!item || !isQueueEditable(item)) bridgeMutationValidation(`JOB_NOT_PRE_SUBMIT: Job ${id} không thể đổi vị trí sau ranh giới PRE_SUBMIT.`, { job_id: id });
+    }
+    const byActiveId = new Map(active.map((job) => [String(job.id), job]));
+    window.DacXlsx.setQueueOrder(state.workbook, order.map((id) => byActiveId.get(id)));
+    return {
+      job_ids: [...order],
+      changed_fields: ["queue_position"],
+      message: `Agent Bridge đã lưu thứ tự đầy đủ của ${order.length} job trong một checkpoint.`
     };
   }
 
@@ -4504,8 +4681,18 @@
     }
   }
 
+  function restoreRunOptions(options) {
+    if (options.trialTimeoutPlan) window.DacBridgeCore.restoreTrialTimeouts(state.prepared, options.trialTimeoutPlan);
+    if (options.trialId && state.bridgeTrialId === options.trialId) {
+      state.bridgeTrialId = null;
+      state.bridgeRunOrigin = null;
+    }
+  }
+
   async function run(mode = "all") {
-    if (!queueRunLock.tryBeginRun()) {
+    const options = state.pendingRunOptions || {};
+    state.pendingRunOptions = null;
+    if (!options.prelocked && !queueRunLock.tryBeginRun()) {
       const reason = "RUN_ACTIVE: Setup mutation, run validation, or another run is already active.";
       setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error"); controls();
       return { ok: false, reason };
@@ -4515,8 +4702,9 @@
     let completedNaturally = false;
     let runQueue;
     try {
-      effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" });
-      runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, mode === "selected" ? state.runSelection : state.selectedJobId);
+      if (options.effectiveOutput) effectiveOutput = options.effectiveOutput;
+      else effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" });
+      runQueue = options.runQueue || window.DacRunnerCore.selectQueue(state.prepared.queue, mode, mode === "selected" ? state.runSelection : state.selectedJobId);
       if (!runQueue.length) {
         const reason = `No ${mode} jobs are eligible.`;
         setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error");
@@ -4525,6 +4713,7 @@
       queueRunLock.promoteRun();
     } catch (error) {
       const reason = messageOf(error); setStatus("ERROR"); progress(reason); log(reason, "error");
+      restoreRunOptions(options);
       return { ok: false, reason };
     } finally {
       queueRunLock.endRunStart(); controls();
@@ -4643,6 +4832,7 @@
       if (mode === "selected") state.runSelection.clear();
       state.running = false; state.stopRequested = false; renderQueue(); renderOutputScreen(); controls();
       stopRuntimeTicker();
+      restoreRunOptions(options);
       if (completedNaturally) {
         showScreen("outputScreen");
       }
@@ -4931,6 +5121,12 @@
   els.bridgeProposalFixtureBtn?.addEventListener("click", () => stageBridgeFixture().catch((error) => log(messageOf(error), "error")));
   els.bridgeProposalRejectBtn?.addEventListener("click", () => rejectBridgeProposal().catch((error) => log(messageOf(error), "error")));
   els.bridgeProposalApproveBtn?.addEventListener("click", () => approveBridgeProposal().catch((error) => log(messageOf(error), "error")));
+  els.bridgeDevModeToggle?.addEventListener("change", () => {
+    setBridgeDevModeFromPanel(Boolean(els.bridgeDevModeToggle.checked)).catch((error) => {
+      els.bridgeDevModeToggle.checked = state.bridgeDevMode;
+      log(`Không thể lưu Chế độ phát triển: ${messageOf(error)}`, "error");
+    });
+  });
   els.bridgePairingBtn?.addEventListener("click", () => els.bridgePairingInput.click());
   els.bridgePairingInput?.addEventListener("change", () => {
     const file = els.bridgePairingInput.files?.[0] || null;
@@ -4957,9 +5153,14 @@
   // until the operator happens to visit the BRIDGE tab — the exact "vẫn bị ẩn"
   // failure Đức reported live on 2026-08-24.
   renderBridgeAttention();
+  restoreBridgeDevMode().catch((error) => log(`Không thể đọc Chế độ phát triển: ${messageOf(error)}`, "error"));
   probeBridgePersistence().catch(() => {});
   refreshBridgeTransportStatus();
   chrome.storage?.onChanged?.addListener((changes, areaName) => {
+    if (areaName === "local" && changes[BRIDGE_DEV_MODE_STORAGE_KEY]) {
+      state.bridgeDevMode = changes[BRIDGE_DEV_MODE_STORAGE_KEY].newValue === true;
+      renderBridgeDevMode();
+    }
     if (areaName === "local" && changes[window.DacBridgePairingCore.STATUS_STORAGE_KEY]?.newValue) {
       renderBridgeTransportStatus(changes[window.DacBridgePairingCore.STATUS_STORAGE_KEY].newValue);
       refreshBridgeScreen().catch(() => {});
@@ -4993,6 +5194,7 @@
     handlers: Object.freeze({
       "queue.list": bridgeQueueList,
       "run.status": bridgeRunStatus,
+      "run.trial": bridgeRunTrial,
       "ledger.read": bridgeLedgerRead,
       "jobs.add": bridgeJobsAdd,
       "jobs.update": bridgeJobsUpdate,
@@ -5000,9 +5202,11 @@
       "jobs.reorder": bridgeJobsReorder,
       "output.configure": bridgeOutputConfigure,
       "output.set_folder_hint": bridgeOutputSetFolderHint,
+      "profiles.remove": bridgeProfilesRemove,
       "run_settings.configure": bridgeRunSettingsConfigure,
       "queue.propose": bridgeQueuePropose,
-      "queue.proposal.get": bridgeProposalGet
+      "queue.proposal.get": bridgeProposalGet,
+      "queue.proposal.withdraw": bridgeProposalWithdraw
     }),
     port_name: BRIDGE_EXECUTOR_PORT
   });

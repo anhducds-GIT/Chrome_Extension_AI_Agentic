@@ -10,8 +10,8 @@ const bridge = globalThis.DacBridgeCore;
 
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
-  "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
-  "jobs.reorder", "output.configure", "run_settings.configure", "output.set_folder_hint", "queue.propose", "queue.proposal.get"
+  "run.status", "run.trial", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
+  "jobs.reorder", "output.configure", "run_settings.configure", "output.set_folder_hint", "profiles.remove", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
@@ -36,7 +36,7 @@ assert.equal(bridge.METHOD_REGISTRY["queue.propose"].approval, "owner_click");
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].idempotent, true);
 const idempotentMutations = [
   "jobs.add", "jobs.update", "jobs.remove", "jobs.reorder",
-  "output.configure", "output.set_folder_hint", "run_settings.configure", "queue.propose"
+  "output.configure", "output.set_folder_hint", "profiles.remove", "run_settings.configure", "queue.propose", "run.trial", "queue.proposal.withdraw"
 ];
 assert(idempotentMutations.every((name) => bridge.METHOD_REGISTRY[name].idempotent === true));
 assert(expectedMethods.filter((name) => !idempotentMutations.includes(name)).every((name) => bridge.METHOD_REGISTRY[name].idempotent === false));
@@ -65,6 +65,7 @@ const validByMethod = {
   "system.capabilities": {},
   "queue.list": { cursor: null, limit: 50, statuses: [], include_prompt: false },
   "run.status": {},
+  "run.trial": { job_ids: ["Q001", "Q002"] },
   "ledger.read": { cursor: null, limit: 50, include_prompt: false, include_removed: true },
   "jobs.add": { jobs: [{ prompt: "Create ...", reference_images: ["Duc1.jpg"], settings: { timeout_sec: 180 } }] },
   "jobs.update": { job_id: "Q001", prompt: "Updated", reference_images: [], settings: { max_retries: 3 } },
@@ -72,6 +73,7 @@ const validByMethod = {
   "jobs.reorder": { job_id: "Q001", position: 2 },
   "output.configure": { image_pattern: "{job_id}", collision_policy: "uniquify", save_images: true },
   "output.set_folder_hint": { folder_hint: "C:\\WORKING ZONE\\Chrome_Extension_AI_Agentic\\workers\\duc-auto-chatgpt\\v0.1.0\\Pilot-09_Test-Codex-Bridge-to-Extension", profile_id: "pilot-09" },
+  "profiles.remove": { profile_id: "pilot-09" },
   "run_settings.configure": { timeout_sec: 240, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", continue_on_error: true },
   "queue.propose": {
     if_ledger_etag: "sha256:ledger-etag",
@@ -84,7 +86,8 @@ const validByMethod = {
       settings: { timeout_sec: 180, max_retries: 2, safety_cooldown_sec: "6-9", output_folder: "Duc Auto ChatGPT" }
     }]
   },
-  "queue.proposal.get": { proposal_id: "proposal-uuid" }
+  "queue.proposal.get": { proposal_id: "proposal-uuid" },
+  "queue.proposal.withdraw": { proposal_id: "proposal-uuid" }
 };
 for (const [method, params] of Object.entries(validByMethod)) {
   assert.doesNotThrow(() => bridge.validateParams(method, params), `${method} accepts its v1 fixture`);
@@ -144,7 +147,8 @@ const invalidByMethod = {
   "output.set_folder_hint": { folder_hint: "line1\nline2" },
   "run_settings.configure": { delay_min_sec: 25, delay_max_sec: 12 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [] },
-  "queue.proposal.get": { proposal_id: "" }
+  "queue.proposal.get": { proposal_id: "" },
+  "queue.proposal.withdraw": { proposal_id: "" }
 };
 for (const [method, params] of Object.entries(invalidByMethod)) {
   assert.throws(() => bridge.validateParams(method, params), (error) => error.code === "INVALID_PARAMS", `${method} rejects invalid schema input`);

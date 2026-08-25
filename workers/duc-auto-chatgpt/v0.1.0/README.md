@@ -171,7 +171,7 @@ Pairing chỉ làm một lần cho token hiện tại. Token không được đ�
 
 ### Trạng thái khi side panel đóng
 
-Host và MV3 router có thể vẫn online, nên `ping`/`capabilities` ở lớp router còn trả lời. Nhưng side panel là executor duy nhất: khi panel đóng, `queue-list`, `run-status`, `ledger-read`, `proposal-get` và `propose` dừng fail-closed với `EXECUTOR_UNAVAILABLE`. Bridge không tự chạy nền và không biến lỗi transport thành lỗi của một job. Nếu đang Run mà đóng panel, áp dụng cùng quy tắc an toàn hiện có của app; mở lại panel, kiểm tra workbook/checkpoint rồi mới tiếp tục.
+Host và MV3 router có thể vẫn online, nên `ping`/`capabilities` ở lớp router còn trả lời. Nhưng side panel là executor duy nhất: khi panel đóng, mọi lệnh ngoài `ping`/`capabilities` dừng fail-closed với `EXECUTOR_UNAVAILABLE`, gồm `queue-list`, `run-status`, `ledger-read`, các mutation, proposal và trial. Bridge không tự chạy nền và không biến lỗi transport thành lỗi của một job. Nếu đang Run mà đóng panel, áp dụng cùng quy tắc an toàn hiện có của app; mở lại panel, kiểm tra workbook/checkpoint rồi mới tiếp tục.
 
 ### CLI
 
@@ -182,14 +182,25 @@ $bridgeRoot = Join-Path $env:LOCALAPPDATA 'DucAutoChatGPT\BridgeV1'
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') ping
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') capabilities
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') queue-list --limit 25
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') run-status
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') ledger-read --limit 25 --include-removed
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') proposal-get --proposal-id proposal-id-from-response
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') propose --params-file .\proposal-params.json
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') jobs-add --params-file .\jobs-add.json --request-id stable-request-001 --client-id my-agent
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') jobs-update --params-file .\jobs-update.json
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') jobs-remove --params-file .\jobs-remove.json
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') jobs-reorder --params-file .\jobs-reorder.json
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') output-configure --params-file .\output-configure.json
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') run-settings-configure --params-file .\run-settings.json
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') output-set-folder-hint --params-file .\folder-hint.json
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') run-trial --params-file .\run-trial.json
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') proposal-withdraw --params-file .\proposal-withdraw.json
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') profiles-remove --params-file .\profiles-remove.json
 ```
 
-`proposal-params.json` chứa đúng object `params` của `queue.propose`: `if_ledger_etag`, nhãn tùy chọn, và 1–100 job. Dùng `--include-prompt` chỉ khi thật sự cần vì mặc định các lệnh đọc trả fingerprint thay cho prompt đầy đủ.
+Mọi file truyền qua `--params-file` chứa đúng object `params` của method tương ứng; CLI không tự diễn giải từng field. `proposal-params.json` chứa `if_ledger_etag`, nhãn tùy chọn, và 1–100 job. Dùng `--include-prompt` chỉ khi thật sự cần vì mặc định các lệnh đọc trả fingerprint thay cho prompt đầy đủ. `--request-id` và `--client-id` cho phép script giữ nguyên idempotency identity khi retry; fetch tự hủy sau 40 giây. Exit code: `0` thành công, `3` khi Bridge trả lỗi `retryable: true`, `2` cho lỗi protocol không retry (lỗi parse/file cục bộ dùng `1`). Khi nhận code `3`, retry với cùng `--request-id`.
 
-`propose` chỉ đưa đề xuất vào vùng cách ly. Đức phải xem đúng prompt/tham chiếu trong thẻ **ĐỀ XUẤT TỪ AGENT** và bấm **Duyệt & ghi checkpoint**. Duyệt chỉ thêm vào Queue và ghi checkpoint; **không bắt đầu Run, không gửi prompt tới ChatGPT**. V1 cố ý không có `run.start`, `run.pause`, hay `run.resume`.
+`propose` chỉ đưa đề xuất vào vùng cách ly. Đức phải xem đúng prompt/tham chiếu trong thẻ **ĐỀ XUẤT TỪ AGENT** và bấm **Duyệt & ghi checkpoint**. Duyệt chỉ thêm vào Queue và ghi checkpoint; **không bắt đầu Run, không gửi prompt tới ChatGPT**. `run-trial` là ngoại lệ dev có nắp riêng: Đức phải bật **Chế độ phát triển**, chỉ 1–2 job, timeout tối đa 90 giây và cách trial trước ít nhất 5 phút; lệnh trả reservation ngay và agent theo dõi bằng `run-status`. V1 vẫn cố ý không có `run.start`, `run.pause`, hay `run.resume`.
 
 ### Xoay token, gỡ và cài lại
 

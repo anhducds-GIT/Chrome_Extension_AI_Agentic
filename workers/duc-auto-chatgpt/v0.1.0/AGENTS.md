@@ -99,6 +99,7 @@ COMPANION (đọc khi cần):
 | `drafts/AGENT-BRIDGE-TIER1-HANDOFF.md` | Brief Tầng 1 (6 method ghi trực tiếp + tab BRIDGE) giao cho Codex |
 | `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md` | Audit độc lập toàn hệ thống + roadmap 5 giai đoạn tiến tới tự hành (Đức đã chốt cả 5 điểm 2026-08-24) |
 | `drafts/GIAI-DOAN-1-SAFETY-HANDOFF.md` | Brief Giai đoạn 1 (8 fix an toàn nhóm A) giao Codex, kèm bằng chứng sống cho fix A1 |
+| `drafts/GIAI-DOAN-2A-AGENT-BRIDGE-HANDOFF.md` | Brief Giai đoạn 2A (run.trial + 6 nâng cấp Bridge chuẩn agent) giao Codex |
 | `templates/Duc-Auto-ChatGPT-Template.xlsx` | Workbook trống chuẩn để bắt đầu pilot mới |
 | `scripts/create-pilot-NN.mjs` | Script tạo workbook cho từng pilot |
 | `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |

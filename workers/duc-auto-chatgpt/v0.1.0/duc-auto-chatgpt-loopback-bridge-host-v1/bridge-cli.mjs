@@ -11,8 +11,24 @@ const COMMANDS = Object.freeze({
   "run-status": "run.status",
   "ledger-read": "ledger.read",
   "proposal-get": "queue.proposal.get",
-  propose: "queue.propose"
+  propose: "queue.propose",
+  "jobs-add": "jobs.add",
+  "jobs-update": "jobs.update",
+  "jobs-remove": "jobs.remove",
+  "jobs-reorder": "jobs.reorder",
+  "output-configure": "output.configure",
+  "run-settings-configure": "run_settings.configure",
+  "output-set-folder-hint": "output.set_folder_hint",
+  "run-trial": "run.trial",
+  "proposal-withdraw": "queue.proposal.withdraw",
+  "profiles-remove": "profiles.remove"
 });
+
+const PARAMS_FILE_COMMANDS = new Set([
+  "propose", "jobs-add", "jobs-update", "jobs-remove", "jobs-reorder",
+  "output-configure", "run-settings-configure", "output-set-folder-hint",
+  "run-trial", "proposal-withdraw", "profiles-remove"
+]);
 
 const DEFAULT_PAIRING_NAME = "duc-auto-chatgpt-bridge-pairing-v1.json";
 
@@ -67,14 +83,14 @@ export function commandRequest(command, flags = {}) {
   } else if (command === "proposal-get") {
     if (!flags["proposal-id"]) throw new Error("proposal-get requires --proposal-id <id>.");
     params = { proposal_id: flags["proposal-id"] };
-  } else if (command === "propose") {
-    if (!flags["params-file"]) throw new Error("propose requires --params-file <json>.");
+  } else if (PARAMS_FILE_COMMANDS.has(command)) {
+    if (!flags["params-file"]) throw new Error(`${command} requires --params-file <json>.`);
     params = JSON.parse(fs.readFileSync(path.resolve(flags["params-file"]), "utf8"));
   }
   return { method, params };
 }
 
-export function buildEnvelope(method, params, now = new Date(), requestId = `cli-${crypto.randomUUID()}`) {
+export function buildEnvelope(method, params, now = new Date(), requestId = `cli-${crypto.randomUUID()}`, clientId = "duc-auto-chatgpt-bridge-cli-v1") {
   return {
     protocol: "duc-auto-chatgpt.bridge",
     version: 1,
@@ -82,7 +98,7 @@ export function buildEnvelope(method, params, now = new Date(), requestId = `cli
     request_id: requestId,
     method,
     sent_at: now.toISOString(),
-    client: { client_id: "duc-auto-chatgpt-bridge-cli-v1", name: "Duc Auto ChatGPT Bridge CLI", version: "1.0.0" },
+    client: { client_id: clientId, name: "Duc Auto ChatGPT Bridge CLI", version: "1.0.0" },
     params
   };
 }
@@ -90,22 +106,24 @@ export function buildEnvelope(method, params, now = new Date(), requestId = `cli
 export async function main(argv = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr, fetch: globalThis.fetch }) {
   const [command, ...rest] = argv;
   if (!command || command === "help" || command === "--help") {
-    io.stdout.write("Usage: node bridge-cli.mjs <ping|capabilities|queue-list|run-status|ledger-read|proposal-get|propose> [options]\n");
+    io.stdout.write(`Usage: node bridge-cli.mjs <${Object.keys(COMMANDS).join("|")}> [options]\nMutations use --params-file <json>. Optional identity flags: --request-id <id> --client-id <id>.\n`);
     return 0;
   }
   const flags = parseFlags(rest);
   const pairingPath = path.resolve(flags.pairing || defaultPairingPath());
   const pairing = validatePairing(JSON.parse(fs.readFileSync(pairingPath, "utf8")));
   const { method, params } = commandRequest(command, flags);
-  const envelope = buildEnvelope(method, params);
+  const envelope = buildEnvelope(method, params, new Date(), flags["request-id"] || undefined, flags["client-id"] || undefined);
   const response = await io.fetch(pairing.http_url, {
     method: "POST",
     headers: { Authorization: `Bearer ${pairing.token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(envelope)
+    body: JSON.stringify(envelope),
+    signal: AbortSignal.timeout(40000)
   });
   const body = await response.json();
   io.stdout.write(`${JSON.stringify(body, null, 2)}\n`);
-  return response.ok && body?.ok ? 0 : 2;
+  if (response.ok && body?.ok) return 0;
+  return body?.error?.retryable === true ? 3 : 2;
 }
 
 const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : null;

@@ -62,6 +62,25 @@
       });
     } finally { database.close(); }
   }
+  async function remove(id) {
+    const key = profileId(id);
+    const database = await open();
+    try {
+      return await new Promise((resolve, reject) => {
+        const txn = database.transaction(STORE, "readwrite");
+        const store = txn.objectStore(STORE);
+        const read = store.get(key);
+        let existed = false;
+        read.onsuccess = () => {
+          existed = Boolean(read.result);
+          if (existed) store.delete(key);
+        };
+        txn.oncomplete = () => resolve(existed);
+        txn.onerror = () => reject(txn.error || new Error("Output-profile storage failed."));
+        txn.onabort = () => reject(txn.error || new Error("Output-profile storage aborted."));
+      });
+    } finally { database.close(); }
+  }
   async function resolve(id) {
     const profile = await get(id);
     if (!profile?.directory_handle) return { state: "unbound", profile: null };
@@ -72,5 +91,5 @@
       return { state: "unavailable", profile, permission };
     } catch (error) { return { state: "unavailable", profile, permission: "error", error: error?.message || String(error) }; }
   }
-  (typeof window !== "undefined" ? window : globalThis).DacOutputProfiles = { DB_NAME, STORE, profileId, get, list, bind, setHint, resolve };
+  (typeof window !== "undefined" ? window : globalThis).DacOutputProfiles = { DB_NAME, STORE, profileId, get, list, bind, setHint, remove, resolve };
 })();

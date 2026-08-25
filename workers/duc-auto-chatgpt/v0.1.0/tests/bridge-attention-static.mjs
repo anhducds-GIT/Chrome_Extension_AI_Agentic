@@ -54,7 +54,7 @@ assert.match(mutationCatch, /CHECKPOINT_VERSION_CONFLICT/, "version conflict mus
 assert.match(mutationCatch, /PERSISTENCE_VERIFICATION_FAILED/, "mapped code must be PERSISTENCE_VERIFICATION_FAILED");
 assert.match(mapper, /WORKBOOK_NOT_LOADED/);
 assert.match(mapper, /OUTPUT_PROFILE_UNBOUND/);
-assert.match(mapper, /RUN_ACTIVE/);
+assert.match(mapper, /VALIDATION_FAILED/);
 
 // --- JS: a verified direct mutation clears all attention rows (commit path),
 // and a satisfied workbook requirement clears the workbook row (read path).
@@ -102,7 +102,7 @@ assert.match(chooser, /if \(!state\.outputSettings\) state\.outputSettings = win
 const profileCore = fs.readFileSync(path.join(root, "output-profile-core.js"), "utf8");
 assert.match(profileCore, /async function list\(\)/, "profile store must expose list()");
 assert.match(profileCore, /async function setHint\(/, "profile store must persist the authored folder path");
-assert.match(profileCore, /\{ DB_NAME, STORE, profileId, get, list, bind, setHint, resolve \}/, "list()/setHint() must be exported");
+assert.match(profileCore, /\{ DB_NAME, STORE, profileId, get, list, bind, setHint, remove, resolve \}/, "list()/setHint()/remove() must be exported");
 // One-click copy must yield the REAL path when a workbook ever recorded one:
 // hints are persisted on workbook profile resolution and on folder pick, and
 // the probe prefers last_known_folder_hint over the bare folder name.

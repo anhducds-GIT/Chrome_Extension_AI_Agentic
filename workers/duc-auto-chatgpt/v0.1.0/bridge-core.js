@@ -322,6 +322,13 @@
     return { if_ledger_etag: etag, proposal_label: label, jobs };
   }
 
+  function optionalLedgerEtag(value, path = "params.if_ledger_etag") {
+    if (value === undefined) return null;
+    return stringValue(value, path, {
+      min: 1, max: 128, pattern: /^[\x21-\x7e]+$/, patternMessage: "expected a visible-ASCII ledger etag"
+    });
+  }
+
   function jobIdValue(value, path = "params.job_id") {
     const id = stringValue(value, path, {
       min: 1, max: 100, pattern: /^[A-Za-z0-9._-]+$/, patternMessage: "use letters, numbers, dot, underscore, or hyphen"
@@ -354,46 +361,84 @@
     return { jobs: params.jobs.map(validateDirectJob) };
   }
 
+  function validateJobUpdateItem(raw, path) {
+    const item = assertPlainObject(raw, path);
+    rejectUnknown(item, ["job_id", "prompt", "reference_images", "settings"], path);
+    const normalized = { job_id: jobIdValue(item.job_id, `${path}.job_id`) };
+    if (item.prompt !== undefined) {
+      normalized.prompt = stringValue(item.prompt, `${path}.prompt`, { min: 1, max: LIMITS.max_envelope_bytes, trim: false });
+      if (!normalized.prompt.trim()) invalidParams(`${path}.prompt`, "expected non-whitespace text");
+    }
+    if (item.reference_images !== undefined) {
+      if (!Array.isArray(item.reference_images) || item.reference_images.length > LIMITS.max_references_per_job) {
+        invalidParams(`${path}.reference_images`, `expected at most ${LIMITS.max_references_per_job} selected filename or alias tokens`);
+      }
+      normalized.reference_images = item.reference_images.map((reference, index) => validateReferenceToken(reference, `${path}.reference_images[${index}]`));
+      if (new Set(normalized.reference_images.map((reference) => reference.toLowerCase())).size !== normalized.reference_images.length) invalidParams(`${path}.reference_images`, "duplicate reference token");
+    }
+    if (item.settings !== undefined) normalized.settings = validateSettings(item.settings, `${path}.settings`);
+    if (!Object.hasOwn(normalized, "prompt") && !Object.hasOwn(normalized, "reference_images") && !Object.hasOwn(normalized, "settings")) invalidParams(path, "expected at least one mutable job field");
+    return normalized;
+  }
+
   function validateJobsUpdate(raw) {
     const params = assertPlainObject(raw, "params");
-    rejectUnknown(params, ["job_id", "prompt", "reference_images", "settings"], "params");
-    const normalized = { job_id: jobIdValue(params.job_id) };
-    if (params.prompt !== undefined) {
-      normalized.prompt = stringValue(params.prompt, "params.prompt", { min: 1, max: LIMITS.max_envelope_bytes, trim: false });
-      if (!normalized.prompt.trim()) invalidParams("params.prompt", "expected non-whitespace text");
+    rejectUnknown(params, ["job_id", "prompt", "reference_images", "settings", "jobs", "if_ledger_etag"], "params");
+    const batch = params.jobs !== undefined;
+    if (batch && ["job_id", "prompt", "reference_images", "settings"].some((key) => params[key] !== undefined)) invalidParams("params", "choose either jobs batch or single-job fields");
+    let normalized;
+    if (batch) {
+      if (!Array.isArray(params.jobs) || params.jobs.length < 1 || params.jobs.length > 20) invalidParams("params.jobs", "expected 1-20 job updates");
+      const jobs = params.jobs.map((item, index) => validateJobUpdateItem(item, `params.jobs[${index}]`));
+      if (new Set(jobs.map((item) => item.job_id)).size !== jobs.length) invalidParams("params.jobs", "duplicate job ID");
+      normalized = { jobs };
+    } else {
+      const single = { ...params };
+      delete single.if_ledger_etag;
+      normalized = validateJobUpdateItem(single, "params");
     }
-    if (params.reference_images !== undefined) {
-      if (!Array.isArray(params.reference_images) || params.reference_images.length > LIMITS.max_references_per_job) {
-        invalidParams("params.reference_images", `expected at most ${LIMITS.max_references_per_job} selected filename or alias tokens`);
-      }
-      normalized.reference_images = params.reference_images.map((reference, index) => validateReferenceToken(reference, `params.reference_images[${index}]`));
-      if (new Set(normalized.reference_images.map((reference) => reference.toLowerCase())).size !== normalized.reference_images.length) invalidParams("params.reference_images", "duplicate reference token");
-    }
-    if (params.settings !== undefined) normalized.settings = validateSettings(params.settings, "params.settings");
-    if (!Object.hasOwn(normalized, "prompt") && !Object.hasOwn(normalized, "reference_images") && !Object.hasOwn(normalized, "settings")) {
-      invalidParams("params", "expected at least one mutable job field");
-    }
+    if (params.if_ledger_etag !== undefined) normalized.if_ledger_etag = optionalLedgerEtag(params.if_ledger_etag);
     return normalized;
   }
 
   function validateJobIdOnly(raw) {
     const params = assertPlainObject(raw, "params");
-    rejectUnknown(params, ["job_id"], "params");
-    return { job_id: jobIdValue(params.job_id) };
+    rejectUnknown(params, ["job_id", "job_ids", "if_ledger_etag"], "params");
+    if ((params.job_id === undefined) === (params.job_ids === undefined)) invalidParams("params", "choose exactly one of job_id or job_ids");
+    let normalized;
+    if (params.job_ids !== undefined) {
+      if (!Array.isArray(params.job_ids) || params.job_ids.length < 1 || params.job_ids.length > 20) invalidParams("params.job_ids", "expected 1-20 job IDs");
+      const jobIds = params.job_ids.map((value, index) => jobIdValue(value, `params.job_ids[${index}]`));
+      if (new Set(jobIds).size !== jobIds.length) invalidParams("params.job_ids", "duplicate job ID");
+      normalized = { job_ids: jobIds };
+    } else normalized = { job_id: jobIdValue(params.job_id) };
+    if (params.if_ledger_etag !== undefined) normalized.if_ledger_etag = optionalLedgerEtag(params.if_ledger_etag);
+    return normalized;
   }
 
   function validateJobsReorder(raw) {
     const params = assertPlainObject(raw, "params");
-    rejectUnknown(params, ["job_id", "position"], "params");
-    return { job_id: jobIdValue(params.job_id), position: integerValue(params.position, "params.position", 1, 1000000) };
+    rejectUnknown(params, ["job_id", "position", "order", "if_ledger_etag"], "params");
+    const batch = params.order !== undefined;
+    if (batch && (params.job_id !== undefined || params.position !== undefined)) invalidParams("params", "choose either order or job_id with position");
+    let normalized;
+    if (batch) {
+      if (!Array.isArray(params.order) || params.order.length < 1 || params.order.length > 1000000) invalidParams("params.order", "expected a non-empty full active-queue order");
+      const order = params.order.map((value, index) => jobIdValue(value, `params.order[${index}]`));
+      if (new Set(order).size !== order.length) invalidParams("params.order", "duplicate job ID");
+      normalized = { order };
+    } else normalized = { job_id: jobIdValue(params.job_id), position: integerValue(params.position, "params.position", 1, 1000000) };
+    if (params.if_ledger_etag !== undefined) normalized.if_ledger_etag = optionalLedgerEtag(params.if_ledger_etag);
+    return normalized;
   }
 
   function validateOutputConfigure(raw) {
     const params = assertPlainObject(raw, "params");
-    const allowed = ["image_pattern", "result_filename_pattern", "audit_filename", "collision_policy", "save_images", "save_result_xlsx", "save_audit_jsonl"];
+    const allowed = ["image_pattern", "result_filename_pattern", "audit_filename", "collision_policy", "save_images", "save_result_xlsx", "save_audit_jsonl", "if_ledger_etag"];
     rejectUnknown(params, allowed, "params");
-    if (!Object.keys(params).length) invalidParams("params", "expected at least one output field");
+    if (!Object.keys(params).some((key) => key !== "if_ledger_etag")) invalidParams("params", "expected at least one output field");
     const normalized = {};
+    if (params.if_ledger_etag !== undefined) normalized.if_ledger_etag = optionalLedgerEtag(params.if_ledger_etag);
     for (const key of ["image_pattern", "result_filename_pattern", "audit_filename"]) {
       if (params[key] !== undefined) normalized[key] = stringValue(params[key], `params.${key}`, { min: 1, max: 255, trim: false });
     }
@@ -434,10 +479,11 @@
 
   function validateRunSettingsConfigure(raw) {
     const params = assertPlainObject(raw, "params");
-    const allowed = ["timeout_sec", "max_retries", "delay_min_sec", "delay_max_sec", "safety_cooldown_sec", "max_input_images", "continue_on_error", "rerun_done"];
+    const allowed = ["timeout_sec", "max_retries", "delay_min_sec", "delay_max_sec", "safety_cooldown_sec", "max_input_images", "continue_on_error", "rerun_done", "if_ledger_etag"];
     rejectUnknown(params, allowed, "params");
-    if (!Object.keys(params).length) invalidParams("params", "expected at least one run setting");
+    if (!Object.keys(params).some((key) => key !== "if_ledger_etag")) invalidParams("params", "expected at least one run setting");
     const normalized = {};
+    if (params.if_ledger_etag !== undefined) normalized.if_ledger_etag = optionalLedgerEtag(params.if_ledger_etag);
     if (params.timeout_sec !== undefined) normalized.timeout_sec = integerValue(params.timeout_sec, "params.timeout_sec", 15, 900);
     if (params.max_retries !== undefined) normalized.max_retries = integerValue(params.max_retries, "params.max_retries", 0, 5);
     if (params.delay_min_sec !== undefined) normalized.delay_min_sec = integerValue(params.delay_min_sec, "params.delay_min_sec", 1, 120);
@@ -460,6 +506,55 @@
         min: 1, max: 128, pattern: /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/, patternMessage: "expected a stable proposal identifier"
       })
     };
+  }
+
+  function validateProposalWithdraw(raw) {
+    return validateProposalGet(raw);
+  }
+
+  function validateProfilesRemove(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["profile_id"], "params");
+    const profileId = stringValue(params.profile_id, "params.profile_id", { min: 1, max: 64 });
+    if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(profileId)) invalidParams("params.profile_id", "expected a lowercase slug such as pilot-09");
+    return { profile_id: profileId };
+  }
+
+  function validateRunTrial(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["job_ids"], "params");
+    if (!Array.isArray(params.job_ids) || params.job_ids.length < 1 || params.job_ids.length > 2) {
+      invalidParams("params.job_ids", "expected 1-2 explicit job IDs");
+    }
+    const jobIds = params.job_ids.map((value, index) => jobIdValue(value, `params.job_ids[${index}]`));
+    if (new Set(jobIds).size !== jobIds.length) invalidParams("params.job_ids", "duplicate job ID");
+    return { job_ids: jobIds };
+  }
+
+  function assertTrialDevMode(enabled) {
+    if (enabled !== true) {
+      throw new BridgeProtocolError("VALIDATION_FAILED", "DEV_MODE_OFF: Chế độ phát triển đang TẮT. Chỉ Đức có thể bật công tắc này trên Side Panel.");
+    }
+    return true;
+  }
+
+  function capTrialTimeouts(preparedSettings, runQueue, capSec = 90) {
+    if (!isPlainObject(preparedSettings) || !Array.isArray(runQueue) || !Number.isInteger(capSec) || capSec < 15 || capSec > 90) {
+      throw new TypeError("Trial timeout capping requires prepared settings, a run queue, and a 15-90 second cap.");
+    }
+    const timeoutOriginals = runQueue.map((item) => ({ item, timeout_sec: item?.settings?.timeout_sec }));
+    for (const { item } of timeoutOriginals) item.settings.timeout_sec = Math.min(Number(item.settings.timeout_sec) || capSec, capSec);
+    return {
+      cap_sec: capSec,
+      prepared_settings_original: preparedSettings,
+      prepared_settings: { ...preparedSettings, timeout_sec: Math.min(Number(preparedSettings.timeout_sec) || capSec, capSec) },
+      timeout_originals: timeoutOriginals
+    };
+  }
+
+  function restoreTrialTimeouts(prepared, plan) {
+    for (const original of plan?.timeout_originals || []) original.item.settings.timeout_sec = original.timeout_sec;
+    if (prepared && plan?.prepared_settings_original) prepared.settings = plan.prepared_settings_original;
   }
 
   function serializeResult(result) {
@@ -488,16 +583,19 @@
     registryEntry({ name: "system.capabilities", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Describe the immutable v1 method and policy surface.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "queue.list", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a page of active logical queue jobs.", params_schema: { cursor: "string|null", limit: "integer:1..100", statuses: "code[]", include_prompt: "boolean" }, params_validator: validateQueueList }),
     registryEntry({ name: "run.status", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read current run state without changing it.", params_schema: {}, params_validator: validateEmptyParams }),
+    registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reserve one capped development trial for 1-2 explicit eligible jobs; returns immediately for run.status polling.", params_schema: { job_ids: "string[1..2]" }, params_validator: validateRunTrial }),
     registryEntry({ name: "ledger.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a sanitized page of physical XLSX ledger rows.", params_schema: { cursor: "string|null", limit: "integer:1..100", include_prompt: "boolean", include_removed: "boolean" }, params_validator: validateLedgerRead }),
     registryEntry({ name: "jobs.add", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Add jobs directly to the current Setup session, or create an in-memory session.", params_schema: { jobs: "direct_job[1..100]" }, params_validator: validateJobsAdd }),
-    registryEntry({ name: "jobs.update", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Update mutable input fields on one PRE_SUBMIT job.", params_schema: { job_id: "string", prompt: "string?", reference_images: "string[]?", settings: "job_settings?" }, params_validator: validateJobsUpdate }),
-    registryEntry({ name: "jobs.remove", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Tombstone one PRE_SUBMIT Queue job without deleting its ledger row.", params_schema: { job_id: "string" }, params_validator: validateJobIdOnly }),
-    registryEntry({ name: "jobs.reorder", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Move one PRE_SUBMIT Queue job to a persisted logical position.", params_schema: { job_id: "string", position: "integer:1..1000000" }, params_validator: validateJobsReorder }),
-    registryEntry({ name: "output.configure", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Configure naming, collision, and save controls for an already-bound output location.", params_schema: { image_pattern: "string?", result_filename_pattern: "string?", audit_filename: "string?", collision_policy: "overwrite|uniquify|fail?", save_images: "boolean?", save_result_xlsx: "boolean?", save_audit_jsonl: "boolean?" }, params_validator: validateOutputConfigure }),
-    registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?" }, params_validator: validateRunSettingsConfigure }),
+    registryEntry({ name: "jobs.update", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Update mutable input fields on one PRE_SUBMIT job or a batch of 1-20 jobs.", params_schema: { job_id: "string?", prompt: "string?", reference_images: "string[]?", settings: "job_settings?", jobs: "job_update[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobsUpdate }),
+    registryEntry({ name: "jobs.remove", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Tombstone one or 1-20 PRE_SUBMIT Queue jobs without deleting ledger rows.", params_schema: { job_id: "string?", job_ids: "string[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobIdOnly }),
+    registryEntry({ name: "jobs.reorder", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Move one PRE_SUBMIT Queue job or persist a full active-queue permutation.", params_schema: { job_id: "string?", position: "integer:1..1000000?", order: "string[]?", if_ledger_etag: "string?" }, params_validator: validateJobsReorder }),
+    registryEntry({ name: "output.configure", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Configure naming, collision, and save controls for an already-bound output location.", params_schema: { image_pattern: "string?", result_filename_pattern: "string?", audit_filename: "string?", collision_policy: "overwrite|uniquify|fail?", save_images: "boolean?", save_result_xlsx: "boolean?", save_audit_jsonl: "boolean?", if_ledger_etag: "string?" }, params_validator: validateOutputConfigure }),
+    registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?", if_ledger_etag: "string?" }, params_validator: validateRunSettingsConfigure }),
     registryEntry({ name: "output.set_folder_hint", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Record the absolute folder path the agent is targeting, as operator-copyable display metadata on a stored output profile. Metadata only: writes no workbook data, no checkpoint, and never opens or binds a folder.", params_schema: { folder_hint: "string:1..500", profile_id: "slug?" }, params_validator: validateSetFolderHint }),
+    registryEntry({ name: "profiles.remove", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Remove one stale extension-local output-profile metadata record. Never deletes a file or folder on disk.", params_schema: { profile_id: "slug" }, params_validator: validateProfilesRemove }),
     registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage a quarantined queue proposal; never execute it automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100]" }, params_validator: validateQueuePropose }),
-    registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet })
+    registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet }),
+    registryEntry({ name: "queue.proposal.withdraw", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Withdraw the caller's own pending quarantined proposal.", params_schema: { proposal_id: "string" }, params_validator: validateProposalWithdraw })
   ];
   const METHOD_REGISTRY = (() => {
     const registry = Object.create(null);
@@ -744,7 +842,7 @@
     parseResponse,
     serializeEnvelope,
     requireMethod,
-    validateParams,
+    validateParams, assertTrialDevMode, capTrialTimeouts, restoreTrialTimeouts,
     capabilities,
     errorObject,
     successResponse,
