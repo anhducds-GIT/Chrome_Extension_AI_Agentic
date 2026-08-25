@@ -1,0 +1,90 @@
+{
+ "url": "https://gemini.google.com/images",
+ "when": "2026-08-24T23:52:05.052Z",
+ "note": "Owner-run read-only probe. Account label redacted.",
+ "counts": {
+  "composer": [
+   "div[role=\"textbox\"][contenteditable=\"true\"][aria-label*=\"prompt\" i] => 1",
+   "[data-test-id=\"textarea-wrapper\"] [role=\"textbox\"][contenteditable=\"true\"] => 1",
+   "rich-textarea [contenteditable=\"true\"][role=\"textbox\"] => 1",
+   "[contenteditable=\"true\"][role=\"textbox\"] => 1"
+  ],
+  "upload": [
+   "button[aria-label=\"Upload & tools\"] => 1",
+   "button[aria-label*=\"Upload\" i][aria-haspopup=\"menu\"] => 1",
+   "button[aria-label*=\"Tải\" i][aria-haspopup=\"menu\"] => 0",
+   "button[aria-haspopup=\"menu\"] => 2"
+  ],
+  "fileInput": [
+   "input[type=\"file\"][accept*=\"image\"] => 0",
+   "input[type=\"file\"] => 0"
+  ],
+  "send": [
+   "button[aria-label=\"Send message\"] => 1",
+   "button[aria-label*=\"Send\" i] => 1",
+   "button[aria-label*=\"Gửi\" i] => 0",
+   "button[data-test-id*=\"send\" i] => 0"
+  ],
+  "stop": [
+   "button[aria-label*=\"Stop\" i] => 0",
+   "button[aria-label*=\"Dừng\" i] => 0",
+   "button[data-test-id*=\"stop\" i] => 0"
+  ],
+  "attachmentPreview": [
+   "[data-test-id*=\"attachment\" i] => 0",
+   "[data-test-id*=\"upload\" i] img => 0",
+   "button[aria-label*=\"Remove\" i] img => 0",
+   "button[aria-label*=\"Xóa\" i] img => 0"
+  ],
+  "modelContainer": [
+   "[data-message-author-role=\"model\"] => 0",
+   "[data-message-author-role=\"assistant\"] => 0",
+   "model-response => 0",
+   "[data-test-id*=\"response\" i] => 0",
+   "[class*=\"model-response\"] => 0"
+  ],
+  "busy": [
+   "[aria-busy=\"true\"] => 0",
+   "[role=\"progressbar\"] => 1",
+   "mat-spinner => 0",
+   "[class*=\"loading\" i] => 2"
+  ]
+ },
+ "editors": [
+  {
+   "tag": "div",
+   "testid": "",
+   "aria": "Enter a prompt for Gemini",
+   "role": "textbox",
+   "cls": "ql-editor textarea new-input-ui",
+   "rect": { "w": 580, "h": 24 },
+   "ancestors": "rich-textarea > div[textarea-wrapper] > div[textarea-inner] > div > div > div"
+  }
+ ],
+ "fileInputs": [],
+ "thumbs": [
+  { "tag": "img", "cls": "sparkle-image ng-star-inserted", "rect": { "w": 22, "h": 22 }, "ancestors": "div > div > button[side-nav-sparkle-button]{Open sidebar} > side-nav-sparkle-button > chat-app-side-nav-menu-button > div[chat-app]" },
+  { "tag": "img", "cls": "mavatar-image ng-star-inserted", "rect": { "w": 30, "h": 30 }, "ancestors": "div > a{Google Account: [redacted]} > div > sidenav-mavatar-footer > mat-action-list > div[overflow-container]" },
+  { "tag": "img", "cls": "lm-icon-xl ng-star-inserted", "rect": { "w": 28, "h": 28 }, "ancestors": "gem-icon > page-header > div[images-page-container] > discovery-images-page > div > div" },
+  { "tag": "img", "cls": "gem-attachment-style-img ng-star-inserted", "rect": { "w": 112, "h": 112 }, "ancestors": "span > span > span > mat-basic-chip > gem-media-attachment > div" },
+  { "tag": "img", "testid": "image-card-image", "cls": "ng-star-inserted", "rect": { "w": 117, "h": 156 }, "ancestors": "div[image-card]{Origami} > image-card[image-card] > card-item > div[carousel-column] > div > carousel-image-layout[carousel-layout]" },
+  { "tag": "img", "testid": "image-card-image", "cls": "ng-star-inserted", "rect": { "w": 117, "h": 156 }, "ancestors": "div[image-card]{Slide} > image-card[image-card] > card-item > div[carousel-column] > div > carousel-image-layout[carousel-layout]" },
+  { "tag": "img", "testid": "image-card-image", "cls": "ng-star-inserted", "rect": { "w": 117, "h": 156 }, "ancestors": "div[image-card]{Dappled} > image-card[image-card] > card-item > div[carousel-column] > div > carousel-image-layout[carousel-layout]" },
+  { "tag": "img", "testid": "image-card-image", "cls": "ng-star-inserted", "rect": { "w": 117, "h": 156 }, "ancestors": "div[image-card]{Pin} > image-card[image-card] > card-item > div[carousel-column] > div > carousel-image-layout[carousel-layout]" },
+  { "tag": "img", "testid": "image-card-image", "cls": "ng-star-inserted", "rect": { "w": 117, "h": 156 }, "ancestors": "div[image-card]{Sommelier} > image-card[image-card] > card-item > div[carousel-column] > div > carousel-image-layout[carousel-layout]" },
+  { "tag": "img", "testid": "image-card-image", "cls": "ng-star-inserted", "rect": { "w": 49, "h": 68 }, "ancestors": "div[image-card]{Theme park} > image-card > div > div > div[see-more-card]{See more images} > see-more-image-card[see-more-card]" }
+ ],
+ "buttons": [
+  { "aria": "Open sidebar", "testid": "side-nav-sparkle-button" },
+  { "aria": "Switch to Spark (Ctrl+Shift+S)" },
+  { "aria": "Settings" },
+  { "aria": "Upload & tools" },
+  { "aria": "Deselect Images", "txt": "Images" },
+  { "aria": "Open mode picker, currently Flash", "testid": "bard-mode-menu-button", "txt": "Flash" },
+  { "aria": "Dictate (^⇧D)" },
+  { "aria": "Send message" }
+ ],
+ "customTags": [
+  "chat-app-orchestrator", "chat-app", "chat-app-side-nav-menu-button", "side-nav-sparkle-button", "gem-icon", "mat-icon", "top-bar-actions", "tts-control-v2", "side-navigation-v2", "chat-notifications", "bard-sidenav-container", "bard-sidenav", "side-navigation-content", "mode-switcher-toggle", "gem-icon-button", "mat-nav-list", "gem-nav-list-item", "infinite-scroller", "mat-progress-spinner", "expandable-section", "project-sidenav-list", "project-sidenav-list-item", "conversations-list", "mat-menu", "mat-action-list", "sidenav-mavatar-footer", "bard-sidenav-content", "chat-loading-animation", "chat-app-banners", "chat-app-announcement-banners", "bot-banner", "router-outlet", "discovery-images-page", "page-header", "chat-window", "chat-window-content", "zero-state-banners", "image-generation-zero-state", "media-gen-zero-state-shell", "media-gen-zero-state-shell-greeting", "media-gen-zero-state-subtitle", "media-gen-template-card", "user-profile-picture", "gxu-usage-warning-disclaimer", "input-container", "condensed-tos-disclaimer", "file-drop-indicator", "input-area-v2", "auto-suggest", "uploader-file-preview-container", "uploader-file-preview", "gem-media-attachment", "mat-basic-chip", "rich-textarea", "at-mentions-menu", "simplified-input-menu", "toolbox-drawer", "gem-button", "bard-mode-switcher", "gem-popover", "speech-dictation-mic-button", "hallucination-disclaimer", "images-section", "carousel-image-layout", "card-item", "image-card", "see-more-image-card"
+ ]
+}
