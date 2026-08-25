@@ -7,7 +7,9 @@
     max_envelope_bytes: 1024 * 1024,
     max_jobs_per_proposal: 100,
     max_page_size: 100,
-    max_references_per_job: 10
+    max_references_per_job: 10,
+    max_references_per_add: 5,
+    max_reference_data_url_bytes: 700 * 1024
   });
   const POLICY = deepFreeze({
     executor_model: "side_panel_only",
@@ -348,6 +350,36 @@
     return { prompt, reference_images: referenceImages, settings: validateSettings(job.settings, `${path}.settings`) };
   }
 
+  function validateReferenceUpload(raw, index) {
+    const path = `params.references[${index}]`;
+    const reference = assertPlainObject(raw, path);
+    rejectUnknown(reference, ["name", "data_url"], path);
+    const name = validateReferenceToken(reference.name, `${path}.name`);
+    if (!/\.(png|jpe?g|webp)$/i.test(name)) invalidParams(`${path}.name`, "expected a filename ending in .png, .jpg, .jpeg, or .webp");
+    if (typeof reference.data_url !== "string") invalidParams(`${path}.data_url`, "expected a string");
+    const prefix = reference.data_url.match(/^data:image\/(png|jpeg|webp);base64,/);
+    if (!prefix) invalidParams(`${path}.data_url`, "expected a data:image/(png|jpeg|webp);base64, prefix");
+    const payload = reference.data_url.slice(prefix[0].length);
+    if (!payload || !/^[A-Za-z0-9+/]+={0,2}$/.test(payload)) invalidParams(`${path}.data_url`, "expected standard base64 image data after the prefix");
+    if (byteLength(reference.data_url) > LIMITS.max_reference_data_url_bytes) {
+      invalidParams(`${path}.data_url`, `expected at most ${LIMITS.max_reference_data_url_bytes} bytes per reference data_url`);
+    }
+    return { name, data_url: reference.data_url };
+  }
+
+  function validateReferencesAdd(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["references"], "params");
+    if (!Array.isArray(params.references) || params.references.length < 1 || params.references.length > LIMITS.max_references_per_add) {
+      invalidParams("params.references", `expected 1-${LIMITS.max_references_per_add} reference images`);
+    }
+    const references = params.references.map(validateReferenceUpload);
+    if (new Set(references.map((reference) => reference.name.toLowerCase())).size !== references.length) {
+      invalidParams("params.references", "duplicate reference name");
+    }
+    return { references };
+  }
+
   function validateJobsAdd(raw) {
     const params = assertPlainObject(raw, "params");
     rejectUnknown(params, ["jobs"], "params");
@@ -487,6 +519,7 @@
     registryEntry({ name: "jobs.update", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Update mutable input fields on one PRE_SUBMIT job.", params_schema: { job_id: "string", prompt: "string?", reference_images: "string[]?", settings: "job_settings?" }, params_validator: validateJobsUpdate }),
     registryEntry({ name: "jobs.remove", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Tombstone one PRE_SUBMIT Queue job without deleting its ledger row.", params_schema: { job_id: "string" }, params_validator: validateJobIdOnly }),
     registryEntry({ name: "jobs.reorder", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Move one PRE_SUBMIT Queue job to a persisted logical position.", params_schema: { job_id: "string", position: "integer:1..1000000" }, params_validator: validateJobsReorder }),
+    registryEntry({ name: "references.add", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Add or replace in-memory reference images for the current Setup session from base64 data URLs; jobs pick them up by filename token.", params_schema: { references: "reference_image[1..5]" }, params_validator: validateReferencesAdd }),
     registryEntry({ name: "output.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure naming, collision, and save controls for an already-bound output location.", params_schema: { image_pattern: "string?", result_filename_pattern: "string?", audit_filename: "string?", collision_policy: "overwrite|uniquify|fail?", save_images: "boolean?", save_result_xlsx: "boolean?", save_audit_jsonl: "boolean?" }, params_validator: validateOutputConfigure }),
     registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?" }, params_validator: validateRunSettingsConfigure }),
     registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage a quarantined queue proposal; never execute it automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100]" }, params_validator: validateQueuePropose }),

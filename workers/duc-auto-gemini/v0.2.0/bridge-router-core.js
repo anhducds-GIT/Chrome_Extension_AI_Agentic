@@ -56,7 +56,9 @@
         throw new core.BridgeProtocolError("METHOD_NOT_FOUND", undefined, { method: request.method });
       } catch (error) {
         if (error instanceof core.BridgeProtocolError) return core.failureResponse(request?.request_id, error, now);
-        return core.failureResponse(request?.request_id, "INTERNAL_ERROR", now);
+        // Keep the INTERNAL_ERROR taxonomy but carry a bounded message so the
+        // remote agent can diagnose the failure without extension logs.
+        return core.failureResponse(request?.request_id, "INTERNAL_ERROR", now, undefined, { message: String(error?.message ?? error).slice(0, 300) });
       }
     }
 

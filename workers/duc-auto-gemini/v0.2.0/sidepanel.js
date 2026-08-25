@@ -375,7 +375,8 @@
     "BRIDGE_JOB_REMOVED",
     "BRIDGE_JOB_REORDERED",
     "BRIDGE_OUTPUT_CONFIGURED",
-    "BRIDGE_RUN_SETTINGS_CONFIGURED"
+    "BRIDGE_RUN_SETTINGS_CONFIGURED",
+    "BRIDGE_REFERENCES_ADDED"
   ]));
 
   function renderBridgeTransportStatus(status = state.bridgeTransportStatus) {
@@ -478,7 +479,10 @@
     if (error instanceof window.DacBridgeProposalCore.ProposalError && Object.hasOwn(window.DacBridgeCore.ERROR_DEFINITIONS, error.code)) {
       return new window.DacBridgeCore.BridgeProtocolError(error.code, error.message, error.details);
     }
-    return error;
+    // Executor error transparency: unexpected handler failures keep the
+    // INTERNAL_ERROR taxonomy and its stable message, but carry a bounded
+    // details.message so the remote agent can diagnose without panel logs.
+    return new window.DacBridgeCore.BridgeProtocolError("INTERNAL_ERROR", undefined, { message: String(error?.message ?? error).slice(0, 300) });
   }
 
   function requireBridgeWorkbook() {
@@ -722,6 +726,7 @@
       "jobs.update": withBridgeErrors(bridgeJobsUpdate),
       "jobs.remove": withBridgeErrors(bridgeJobsRemove),
       "jobs.reorder": withBridgeErrors(bridgeJobsReorder),
+      "references.add": withBridgeErrors(bridgeReferencesAdd),
       "output.configure": withBridgeErrors(bridgeOutputConfigure),
       "run_settings.configure": withBridgeErrors(bridgeRunSettingsConfigure),
       "queue.propose": withBridgeErrors(bridgeQueuePropose),
@@ -741,8 +746,8 @@
       const envelope = wrapped ? message.envelope : message;
       bridgeExecutorDispatch(envelope, { executor_epoch: state.bridgeExecutorEpoch })
         .then((response) => port.postMessage(wrapped ? { type: "DAC_BRIDGE_RPC_RESPONSE", route_id: message.route_id, envelope: response } : response))
-        .catch(() => {
-          const response = window.DacBridgeCore.failureResponse(envelope?.request_id, "INTERNAL_ERROR");
+        .catch((error) => {
+          const response = window.DacBridgeCore.failureResponse(envelope?.request_id, "INTERNAL_ERROR", undefined, undefined, { message: String(error?.message ?? error).slice(0, 300) });
           port.postMessage(wrapped ? { type: "DAC_BRIDGE_RPC_RESPONSE", route_id: message.route_id, envelope: response } : response);
         });
     });
@@ -984,6 +989,58 @@
       method: "jobs.reorder", event: "BRIDGE_JOB_REORDERED",
       mutate: async () => applyQueueJobPosition(params.job_id, params.position)
     });
+  }
+
+  function referenceDataUrlBytes(dataUrl) {
+    const text = String(dataUrl || "");
+    const payload = text.slice(text.indexOf(",") + 1);
+    const padding = payload.endsWith("==") ? 2 : payload.endsWith("=") ? 1 : 0;
+    return Math.max(0, Math.floor((payload.length * 3) / 4) - padding);
+  }
+
+  async function bridgeReferencesAdd(params) {
+    bridgeDirectLock({ workbookRequired: false, persistenceRequired: false });
+    const added = [];
+    const replaced = [];
+    const sizes = [];
+    for (const reference of params.references) {
+      // EXACTLY the in-memory shape loadFiles() builds from the file picker:
+      // resolveReferences matches fileName/alias and the run path attaches
+      // reference.dataUrl, so nothing downstream can tell the origins apart.
+      const file = { fileName: reference.name, dataUrl: reference.data_url, alias: "" };
+      const key = reference.name.toLowerCase();
+      const index = state.files.findIndex((existing) => String(existing.fileName || existing.name || "").toLowerCase() === key);
+      if (index >= 0) { state.files.splice(index, 1, file); replaced.push(reference.name); }
+      else { state.files.push(file); added.push(reference.name); }
+      sizes.push({ name: reference.name, bytes: referenceDataUrlBytes(reference.data_url) });
+    }
+    let output = null;
+    if (state.outputSettings) {
+      try { output = window.DacOutputLocation.effective(state.outputSettings); } catch (_) { output = null; }
+    }
+    // Audit carries names and byte sizes only -- never the image data.
+    const auditEvent = {
+      timestamp: new Date().toISOString(), run_id: state.runId || null, job_id: null, attempt_id: null,
+      event: "BRIDGE_REFERENCES_ADDED", attempt: null, phase: "PRE_SUBMIT", status: "PENDING", failure_type: null,
+      message: `Agent Bridge đã nạp ${sizes.length} ảnh tham chiếu (${sizes.map((entry) => entry.name).join(", ")}); ${replaced.length ? `thay thế ${replaced.length} ảnh trùng tên; ` : ""}chưa chạy.`,
+      elapsed_ms: null, references: sizes.map((entry) => entry.name), reference_bytes: sizes,
+      requested_filename: null, result_file: null, result_download_id: null,
+      persistence_verified: false, write_outcome: null, detected_not_downloaded: false,
+      collision_policy: output?.collisionPolicy || null, prompt_fingerprint: null, target_url: null, submitted_at: null, detection: null,
+      input_origin: "bridge", bridge_method: "references.add",
+      bridge_reference_names: sizes.map((entry) => entry.name), bridge_replaced_names: replaced
+    };
+    state.auditEvents.push(auditEvent);
+    recordBridgeActivity(auditEvent);
+    log(auditEvent.message, "info");
+    // Same plan-refresh path the file picker triggers in loadFiles(), so
+    // Check Plan reference resolution sees the bridge-added images.
+    invalidateValidation("Reference inputs changed; check plan again before Run.");
+    if (els.referenceText) els.referenceText.textContent = `${state.files.length} local reference image(s) selected.`;
+    renderReferenceGallery();
+    await prepare();
+    refreshBridgeScreen().catch(() => {});
+    return { added, replaced, references: sizes, reference_count: state.files.length };
   }
 
   async function bridgeOutputConfigure(params) {
@@ -4720,6 +4777,7 @@
       "jobs.update": bridgeJobsUpdate,
       "jobs.remove": bridgeJobsRemove,
       "jobs.reorder": bridgeJobsReorder,
+      "references.add": bridgeReferencesAdd,
       "output.configure": bridgeOutputConfigure,
       "run_settings.configure": bridgeRunSettingsConfigure,
       "queue.propose": bridgeQueuePropose,

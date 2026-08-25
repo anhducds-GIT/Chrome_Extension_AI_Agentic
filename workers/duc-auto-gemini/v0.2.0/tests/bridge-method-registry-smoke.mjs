@@ -11,7 +11,7 @@ const bridge = globalThis.DacBridgeCore;
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
   "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
-  "jobs.reorder", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial"
+  "jobs.reorder", "references.add", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
@@ -46,6 +46,8 @@ assert.deepEqual(capabilities.methods.map((entry) => entry.name), expectedMethod
 assert.equal(capabilities.limits.max_envelope_bytes, 1048576);
 assert.equal(capabilities.limits.max_jobs_per_proposal, 100);
 assert.equal(capabilities.limits.max_page_size, 100);
+assert.equal(capabilities.limits.max_references_per_add, 5);
+assert.equal(capabilities.limits.max_reference_data_url_bytes, 716800);
 assert.deepEqual(capabilities.failure_types, bridge.FAILURE_TYPES);
 assert.deepEqual(capabilities.features, ["proposal_inbox", "immutable_result_checkpoints", "audit_chain", "verified_persistence"]);
 for (const prohibited of bridge.POLICY.prohibited_methods) {
@@ -65,6 +67,7 @@ const validByMethod = {
   "jobs.update": { job_id: "Q001", prompt: "Updated", reference_images: [], settings: { max_retries: 3 } },
   "jobs.remove": { job_id: "Q001" },
   "jobs.reorder": { job_id: "Q001", position: 2 },
+  "references.add": { references: [{ name: "Duc1.png", data_url: "data:image/png;base64,aGVsbG8=" }] },
   "output.configure": { image_pattern: "{job_id}", collision_policy: "uniquify", save_images: true },
   "run_settings.configure": { timeout_sec: 240, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", continue_on_error: true },
   "queue.propose": {
@@ -96,6 +99,7 @@ const invalidByMethod = {
   "jobs.update": { job_id: "Q001" },
   "jobs.remove": { job_id: "" },
   "jobs.reorder": { job_id: "Q001", position: 0 },
+  "references.add": { references: [] },
   "output.configure": { collision_policy: "replace" },
   "run_settings.configure": { delay_min_sec: 25, delay_max_sec: 12 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [] },
