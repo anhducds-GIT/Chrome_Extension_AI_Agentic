@@ -22,7 +22,7 @@
     try { runtime = runner.runtimeConfig(runtimeRaw, {}); } catch (error) { findings.push(finding("INVALID_RUN_CONFIG", "BLOCKER", "settings", error.message, "Correct the named XLSX config value.")); }
     const mode = String(raw.output_destination_mode || "downloads").trim().toLowerCase();
     if (!['downloads', 'profile'].includes(mode)) findings.push(finding("INVALID_OUTPUT_DESTINATION_MODE", "BLOCKER", "output", `output_destination_mode '${raw.output_destination_mode}' is invalid.`, "Use downloads or profile."));
-    const downloadFolder = raw.output_downloads_subfolder ?? raw.output_folder ?? "Duc Auto ChatGPT";
+    const downloadFolder = raw.output_downloads_subfolder ?? raw.output_folder ?? "Duc Auto Gemini";
     if (mode === "downloads") try { output.safeRelativeFolder(downloadFolder); } catch (error) { findings.push(finding("INVALID_OUTPUT_SUBFOLDER", "BLOCKER", "output", error.message, "Use a safe relative Downloads subfolder without '..' or an absolute path.")); }
     const profileId = String(raw.output_profile_id || "").trim();
     if (mode === "profile" && !slug.test(profileId)) findings.push(finding("INVALID_OUTPUT_PROFILE_ID", "BLOCKER", "output", "output_profile_id must be a stable lowercase slug.", "Use a value such as pilot-04; it is a logical ID, not a filesystem path."));

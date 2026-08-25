@@ -35,7 +35,7 @@
     const effectiveSettings = prepared?.settings || settings;
     add("settings", "Run settings", settingsFindings.filter((finding) => finding.severity !== "OK"), effectiveSettings ? "OK" : workbook ? "WARNING" : "BLOCKER", effectiveSettings ? `timeout ${effectiveSettings.timeout_sec}s · retries ${effectiveSettings.max_retries} · cooldown ${effectiveSettings.safety_cooldown_sec}s` : "Check plan");
     const chatFindings = findingsFor(diagnostics, (finding) => finding.scope === "chatgpt");
-    add("chatgpt", "ChatGPT connection", chatFindings.filter((finding) => finding.severity !== "OK"), diagnostics ? (chatFindings.some((finding) => finding.code === "CHATGPT_OK") ? "OK" : "BLOCKER") : "WARNING", chatFindings.find((finding) => finding.code === "CHATGPT_OK")?.message || chatFindings[0]?.message || "Check plan");
+    add("chatgpt", "Gemini connection", chatFindings.filter((finding) => finding.severity !== "OK"), diagnostics ? (chatFindings.some((finding) => finding.code === "CHATGPT_OK") ? "OK" : "BLOCKER") : "WARNING", chatFindings.find((finding) => finding.code === "CHATGPT_OK")?.message || chatFindings[0]?.message || "Check plan");
     return sections;
   }
 

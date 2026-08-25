@@ -96,7 +96,7 @@
     const jobs = active.map((job) => ({ job_id: text(job.id), ...classify(job) }));
     const count = (state) => jobs.filter((item) => item.state === state).length;
     const ambiguous = jobs.filter((item) => item.state === "AMBIGUOUS_SUBMITTED");
-    for (const item of ambiguous) findings.push({ code: item.code, severity: "BLOCKER", scope: "resume", job_ids: [item.job_id], message: item.message, guidance: "Do not submit this job again. Review the prior ChatGPT outcome and persisted artifact manually." });
+    for (const item of ambiguous) findings.push({ code: item.code, severity: "BLOCKER", scope: "resume", job_ids: [item.job_id], message: item.message, guidance: "Do not submit this job again. Review the prior Gemini outcome and persisted artifact manually." });
     const summary = { total: jobs.length, completed: count("SAFE_COMPLETE"), safe_pending: count("SAFE_PENDING"), failed: count("SAFE_FAILED"), ambiguous_submitted: ambiguous.length, missing_artifacts: jobs.filter((item) => item.state === "AMBIGUOUS_SUBMITTED" && ["success", "done"].includes(lower(active.find((job) => text(job.id) === item.job_id)?.status))).length };
     const next = jobs.find((item) => item.state === "SAFE_PENDING") || jobs.find((item) => item.state === "SAFE_FAILED") || null;
     return { run, jobs, findings, summary, next_eligible_job: next?.job_id || null, ready: findings.every((item) => item.severity !== "BLOCKER") };

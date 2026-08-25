@@ -23,7 +23,7 @@ chrome.runtime.onStartup.addListener(async () => {
 const DOWNLOAD_COMPLETE_TIMEOUT_MS = 120000;
 
 // Private message used only by this extension's side panel after a generated
-// image URL has been observed in the current ChatGPT tab.
+// image URL has been observed in the current Gemini tab.
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type !== "DAC_DOWNLOAD_IMAGE") return false;
   downloadGeneratedImage(message)
@@ -119,7 +119,7 @@ function imageExtension(url) {
 }
 
 function safeDownloadFolder(value) {
-  const folder = String(value || "Duc Auto ChatGPT").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  const folder = String(value || "Duc Auto Gemini").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
   if (!folder || folder.split("/").some((part) => !part || part === "." || part === "..")) throw new Error("Image output folder must be a safe relative Downloads folder.");
   const safeFolder = folder.replace(/[^A-Za-z0-9._ -/]/g, "_").slice(0, 160);
   if (!safeFolder) throw new Error("Image output folder must not be empty.");

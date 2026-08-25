@@ -36,20 +36,20 @@
     OUTPUT_PROFILE_UNBOUND: { label: "Profile thư mục chưa gắn", guidance: "Chọn đúng thư mục mà workbook mong đợi, rồi Check Plan lại." },
     OUTPUT_COLLISION_OVERWRITE_ACTIVE: { label: "Đang bật chế độ ĐÈ LÊN ảnh cũ", guidance: "Job nào chạy lại với cùng tên file sẽ xoá mất ảnh cũ. Vào Naming, đổi Collision policy sang 'Keep both — add number' nếu muốn giữ ảnh cũ." },
 
-    // --- ChatGPT tab --------------------------------------------------------
-    CHATGPT_NOT_CONNECTED: { label: "Chưa kết nối được ChatGPT", guidance: "Mở một tab ChatGPT bình thường và để tab đó ở trạng thái hoạt động." },
-    CHATGPT_RECEIVER_UNAVAILABLE: { label: "Tab ChatGPT chưa sẵn sàng nhận lệnh", guidance: "Tải lại trang ChatGPT, rồi bấm kiểm tra lại." },
-    CHATGPT_COMPOSER_UNAVAILABLE: { label: "Không thấy ô nhập của ChatGPT", guidance: "Mở một cuộc hội thoại bình thường có ô nhập, rồi kiểm tra lại." },
-    CHATGPT_BUSY: { label: "ChatGPT đang bận", guidance: "Đợi ChatGPT sinh xong nội dung hiện tại, rồi kiểm tra lại." },
-    CHATGPT_SECURITY_BLOCKER: { label: "ChatGPT đang chặn vì bảo mật", guidance: "Xử lý cảnh báo bảo mật (CAPTCHA, xác minh) ngay trên trang ChatGPT. Hệ thống sẽ không tự vượt qua." },
-    CHATGPT_GENERATION_LIMIT: { label: "ChatGPT đã hết lượt tạo ảnh hôm nay", guidance: "Dừng lại để không gửi thêm prompt vô ích. Đợi giới hạn được reset (thường sau vài giờ) hoặc nâng gói, rồi Check Plan lại." },
+    // --- Gemini tab --------------------------------------------------------
+    CHATGPT_NOT_CONNECTED: { label: "Chưa kết nối được Gemini", guidance: "Mở một tab Gemini bình thường và để tab đó ở trạng thái hoạt động." },
+    CHATGPT_RECEIVER_UNAVAILABLE: { label: "Tab Gemini chưa sẵn sàng nhận lệnh", guidance: "Tải lại trang Gemini, rồi bấm kiểm tra lại." },
+    CHATGPT_COMPOSER_UNAVAILABLE: { label: "Không thấy ô nhập của Gemini", guidance: "Mở một cuộc hội thoại bình thường có ô nhập, rồi kiểm tra lại." },
+    CHATGPT_BUSY: { label: "Gemini đang bận", guidance: "Đợi Gemini sinh xong nội dung hiện tại, rồi kiểm tra lại." },
+    CHATGPT_SECURITY_BLOCKER: { label: "Gemini đang chặn vì bảo mật", guidance: "Xử lý cảnh báo bảo mật (CAPTCHA, xác minh) ngay trên trang Gemini. Hệ thống sẽ không tự vượt qua." },
+    CHATGPT_GENERATION_LIMIT: { label: "Gemini đã hết lượt tạo ảnh hôm nay", guidance: "Dừng lại để không gửi thêm prompt vô ích. Đợi giới hạn được reset (thường sau vài giờ) hoặc nâng gói, rồi Check Plan lại." },
 
     // --- Resume / checkpoint ------------------------------------------------
     RESUME_LEDGER_INVALID: { label: "File Result XLSX không dùng được", guidance: "Chọn đúng file Result XLSX gốc của lần chạy đó, không dùng bản chỉnh tay." },
     RESUME_RUN_ID_MISMATCH: { label: "File thuộc lần chạy khác", guidance: "Chỉ dùng các checkpoint của cùng một lần chạy. Chọn lại file cho đúng." },
     RESUME_LATEST_CHECKPOINT_INVALID: { label: "Checkpoint mới nhất bị lỗi", guidance: "Khôi phục lại checkpoint mới nhất. Hệ thống cố ý không tự lùi về bản cũ hơn." },
     RESUME_OUTPUT_MISMATCH: { label: "Thư mục không chứa file Result cần tìm", guidance: "Chọn đúng thư mục có chứa file Result của lần chạy này." },
-    RESUME_AMBIGUOUS_SUBMISSION: { label: "Job đã gửi nhưng không rõ kết quả", guidance: "Không được gửi lại job này tự động. Xem kết quả cũ trên ChatGPT, rồi dùng nút Recreate nếu thật sự cần tạo lại." },
+    RESUME_AMBIGUOUS_SUBMISSION: { label: "Job đã gửi nhưng không rõ kết quả", guidance: "Không được gửi lại job này tự động. Xem kết quả cũ trên Gemini, rồi dùng nút Recreate nếu thật sự cần tạo lại." },
     RESUME_RECREATE_INCOMPLETE: { label: "Lần tạo lại chưa hoàn tất", guidance: "Job này chưa có ảnh nào được lưu và xác minh. Bấm Recreate để tạo lại một lần nữa." },
     RESUME_AUDIT_CHAIN_MISSING: { label: "Không tìm thấy file audit cũ", guidance: "File Result XLSX vẫn là bản gốc đáng tin. Chọn 'Continue with new audit segment' nếu muốn ghi tiếp vào một file audit mới." },
     RESUME_AUDIT_GAP_SEGMENT_MISSING: { label: "Thiếu file audit mới đã tạo", guidance: "Khôi phục lại file audit mới trước khi chạy tiếp." },

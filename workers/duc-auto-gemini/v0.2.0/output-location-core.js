@@ -3,7 +3,7 @@
 
   const IMAGE_EXTENSIONS = new Set(["avif", "gif", "jpg", "jpeg", "png", "webp"]);
 
-  function safeRelativeFolder(value, fallback = "Duc Auto ChatGPT") {
+  function safeRelativeFolder(value, fallback = "Duc Auto Gemini") {
     const folder = String(value || fallback).trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     if (!folder || folder.split("/").some((part) => !part || part === "." || part === "..")) throw new Error("Image Output Folder must be a safe relative Downloads folder.");
     // The hyphen is escaped deliberately.  Unescaped it formed the range
@@ -123,7 +123,7 @@
 
   function fromWorkbook(config, workbookName) {
     const mode = String(config?.output_destination_mode || "downloads").trim().toLowerCase();
-    const downloads = downloadsLocation(config?.output_downloads_subfolder || config?.output_folder || "Duc Auto ChatGPT");
+    const downloads = downloadsLocation(config?.output_downloads_subfolder || config?.output_folder || "Duc Auto Gemini");
     const profileId = String(config?.output_profile_id || "").trim();
     const image = mode === "profile"
       ? { kind: "directory", handle: null, profileId, handleName: "", label: profileId ? `Output profile '${profileId}' (not bound)` : "Output profile not configured" }
@@ -132,7 +132,7 @@
     const resultMode = String(config?.result_destination_mode || "downloads").trim().toLowerCase();
     const result = !separate ? { kind: "same_as_image" } : resultMode === "profile"
       ? { kind: "directory", handle: null, profileId: String(config?.result_output_profile_id || "").trim(), handleName: "", label: "Result output profile not bound" }
-      : downloadsLocation(config?.result_downloads_subfolder || config?.output_downloads_subfolder || config?.output_folder || "Duc Auto ChatGPT");
+      : downloadsLocation(config?.result_downloads_subfolder || config?.output_downloads_subfolder || config?.output_folder || "Duc Auto Gemini");
     return {
       workbookName: String(workbookName || "workbook.xlsx"),
       folderHint: String(config?.output_folder_hint || "").trim(),

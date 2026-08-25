@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Duc Auto ChatGPT</title>
+  <title>Duc Auto Gemini</title>
   <link rel="stylesheet" href="sidepanel.css" />
 </head>
 <body>
@@ -13,7 +13,7 @@
       <div class="brand">
         <div class="brand-icon">🤖</div>
         <div>
-          <h1>Duc Auto ChatGPT</h1>
+          <h1>Duc Auto Gemini</h1>
           <p>Local XLSX image runner</p>
         </div>
       </div>
@@ -23,9 +23,9 @@
           <span id="statusChipTranslation" class="notice-translation status-translation" lang="vi">Đang chờ</span>
         </span>
         <button id="helpBtn" class="help-btn" type="button" aria-label="Hướng dẫn vận hành">?</button>
-        <div class="zoom-group" id="chatZoomControl" title="ChatGPT Zoom">
+        <div class="zoom-group" id="chatZoomControl" title="Gemini Zoom">
           <span class="zoom-label">CHAT ZOOM</span>
-          <div class="segmented" role="group" aria-label="ChatGPT Zoom">
+          <div class="segmented" role="group" aria-label="Gemini Zoom">
             <button type="button" class="zoom-btn" data-zoom="0.8" disabled>80%</button>
             <button type="button" class="zoom-btn" data-zoom="0.9" disabled>90%</button>
             <button type="button" class="zoom-btn" data-zoom="1.0" disabled>100%</button>
@@ -135,7 +135,7 @@
           <label>Destination mode<select id="outputDestinationMode"><option value="downloads">Chrome Downloads</option><option value="profile">Output Profile</option></select></label>
         </div>
         <div id="downloadsDestinationControls" class="settings-grid">
-          <label class="full-width">Downloads subfolder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto ChatGPT/Pilot03" autocomplete="off" /><span class="hint">Relative to Chrome Downloads. No folder selection required.</span></label>
+          <label class="full-width">Downloads subfolder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto Gemini/Pilot03" autocomplete="off" /><span class="hint">Relative to Chrome Downloads. No folder selection required.</span></label>
         </div>
         <div id="authorizedDestinationControls" class="destination-authorized" hidden>
           <div class="output-line"><strong>Output profile:</strong><output id="outputProfileText">Not configured</output></div>
@@ -172,7 +172,7 @@
           <label class="switch-label advanced-separate"><input id="separateResultDestinationInput" type="checkbox" /> Lưu các tệp kết quả sang nơi khác</label>
           <div id="separateResultDestinationControls" class="settings-grid" hidden>
             <label>Result destination<select id="resultLocationMode"><option value="downloads">Chrome Downloads</option><option value="profile">Output Profile</option></select></label>
-            <label id="resultDownloadsFolderLabel">Result Downloads subfolder<input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto ChatGPT" autocomplete="off" /></label>
+            <label id="resultDownloadsFolderLabel">Result Downloads subfolder<input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto Gemini" autocomplete="off" /></label>
             <div id="resultAuthorizedControls" class="destination-authorized" hidden>
               <div class="output-line"><strong>Result folder:</strong><output id="resultHandleText">No folder selected</output></div>
               <button id="chooseResultFolderBtn" class="secondary setup-action" type="button">Choose Result Folder</button>
@@ -192,7 +192,7 @@
           <div class="check-item" id="checkWorkbook"><span class="check-icon">○</span><span class="check-label">Workbook</span><span class="check-status" id="statusWorkbook">Not loaded</span></div>
           <div class="check-item" id="checkJobs"><span class="check-icon">○</span><span class="check-label">Jobs</span><span class="check-status" id="statusJobs">Check plan</span></div>
           <div class="check-item" id="checkReferences"><span class="check-icon">○</span><span class="check-label">References</span><span class="check-status" id="statusReferences">0 images</span></div>
-          <div class="check-item" id="checkChatGPT"><span class="check-icon">○</span><span class="check-label">ChatGPT connection</span><span class="check-status" id="statusChatGPT">Checking</span></div>
+          <div class="check-item" id="checkChatGPT"><span class="check-icon">○</span><span class="check-label">Gemini connection</span><span class="check-status" id="statusChatGPT">Checking</span></div>
           <div class="check-item" id="checkOutput"><span class="check-icon">○</span><span class="check-label">Output destination</span><span class="check-status" id="statusOutput">Ready</span></div>
           <div class="check-item" id="checkSaveModes"><span class="check-icon">○</span><span class="check-label">Save modes</span><span class="check-status" id="statusSaveModes">Check plan</span></div>
           <div class="check-item" id="checkNaming"><span class="check-icon">○</span><span class="check-label">Naming</span><span class="check-status" id="statusNaming">Check plan</span></div>
@@ -263,7 +263,7 @@
                 <p id="haltedDetail" class="halted-guidance-text halted-technical-detail">—</p>
               </div>
               <div class="halted-guidance-label">Cách xử lý</div>
-              <p id="haltedAction" class="halted-guidance-text halted-action-text">Giữ nguyên tab ChatGPT và kiểm tra trạng thái job trước khi chạy lại.</p>
+              <p id="haltedAction" class="halted-guidance-text halted-action-text">Giữ nguyên tab Gemini và kiểm tra trạng thái job trước khi chạy lại.</p>
             </div>
           </div>
           <div class="row spread current-job-top">
@@ -478,7 +478,7 @@
         <div id="bridgeProposalStatus" class="bridge-proposal-status" role="status" aria-live="polite">Đang chờ Đức xem xét</div>
         <dl id="bridgeProposalMeta" class="bridge-proposal-meta"></dl>
         <ol id="bridgeProposalList" class="bridge-proposal-list"></ol>
-        <p id="bridgeProposalNotice" class="bridge-proposal-notice">Duyệt chỉ thêm các job này vào Queue và ghi checkpoint. Thao tác này không bắt đầu chạy và không gửi prompt tới ChatGPT.</p>
+        <p id="bridgeProposalNotice" class="bridge-proposal-notice">Duyệt chỉ thêm các job này vào Queue và ghi checkpoint. Thao tác này không bắt đầu chạy và không gửi prompt tới Gemini.</p>
         <p id="bridgeProposalLockReason" class="bridge-proposal-lock-reason" aria-live="polite"></p>
         <div class="row end gap-sm bridge-proposal-actions">
           <button id="bridgeProposalFixtureBtn" class="secondary" type="button">Nạp đề xuất thử</button>
@@ -488,7 +488,7 @@
       </section>
     </section>
 
-    <footer>Sequential only · Uses your current ChatGPT session · No server or separate login.</footer>
+    <footer>Sequential only · Uses your current Gemini session · No server or separate login.</footer>
   </main>
   <aside id="helpDrawer" class="help-drawer" hidden aria-label="Hướng dẫn vận hành">
     <div class="row spread"><strong>Hướng dẫn vận hành</strong><button id="closeHelpBtn" class="secondary small" type="button">Đóng</button></div>

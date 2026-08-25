@@ -39,7 +39,7 @@
 
     let nextTransition = "Waiting…";
     if (inDelay) nextTransition = `Next readiness check in ${formatDuration(runtime.interJobCountdown)}`;
-    else if (waitingForReadiness) nextTransition = "Awaiting ChatGPT readiness confirmation";
+    else if (waitingForReadiness) nextTransition = "Awaiting Gemini readiness confirmation";
     else if (retryRemaining != null) nextTransition = "Retry is pending; readiness will be checked before submission";
     else if (item && runtime.running) nextTransition = "Waiting…";
 
@@ -49,7 +49,7 @@
       timerText = `${nextTransition} · ${interJobDelay}`;
       timerMode = "cooldown";
     } else if (waitingForReadiness) {
-      timerText = "Awaiting ChatGPT readiness confirmation";
+      timerText = "Awaiting Gemini readiness confirmation";
       timerMode = "waiting";
     } else if (retryRemaining != null) {
       timerText = `Retry in ${formatDuration(retryRemaining)}`;

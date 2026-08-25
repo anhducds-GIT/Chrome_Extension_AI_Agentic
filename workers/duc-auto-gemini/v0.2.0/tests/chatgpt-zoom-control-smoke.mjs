@@ -24,7 +24,7 @@ assert.match(css, /\.zoom-btn\.active/);
 // Verify truthful zoom state matching and origin-level semantics in source
 assert.match(source, /matchesZoomLevel/);
 assert.doesNotMatch(source, /nearestZoom/, "nearest-value presentation must not be used");
-assert.match(source, /Chrome default zoom behavior[\s\S]*?may persist across the same ChatGPT origin/i);
+assert.match(source, /Chrome default zoom behavior[\s\S]*?may persist across the same Gemini origin/i);
 
 // 2. Behavioral logic tests
 function isChatGPTUrl(url) {

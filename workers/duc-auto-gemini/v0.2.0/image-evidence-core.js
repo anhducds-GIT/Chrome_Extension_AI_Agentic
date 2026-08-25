@@ -50,7 +50,7 @@
 
   // Image evidence and readiness are deliberately separate authorities.  Once
   // one attributable, ready image exists, it may be persisted; the runner
-  // still waits for ChatGPT readiness before it is allowed to submit another
+  // still waits for Gemini readiness before it is allowed to submit another
   // prompt.  A stale Stop control must not turn a proven image into a timeout.
   function completionForImage(decision, { generationControlVisible = false } = {}) {
     if (!decision?.ok) return { ok: false, reason: decision?.reason || "NO_NEW_IMAGE" };

@@ -152,7 +152,7 @@ const unavailable = bridge.failureResponse("request-0002", "EXECUTOR_UNAVAILABLE
 assert.deepEqual(unavailable.error, {
   code: "EXECUTOR_UNAVAILABLE",
   details: { failure_type: null, halt_instruction: null },
-  message: "Open the Duc Auto ChatGPT side panel and retry the same request_id.",
+  message: "Open the Duc Auto Gemini side panel and retry the same request_id.",
   retryable: true
 });
 assert.deepEqual(bridge.parseEnvelope(bridge.serializeEnvelope(unavailable)), unavailable);

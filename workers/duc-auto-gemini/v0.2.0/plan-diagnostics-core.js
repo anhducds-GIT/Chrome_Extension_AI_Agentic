@@ -177,7 +177,7 @@
     }));
 
     if (!chatCheck?.ok) findings.push(makeFinding(chatCheck?.code || "CHATGPT_NOT_CONNECTED", "BLOCKER", "chatgpt", {
-      message: chatCheck?.message || "Open a normal ChatGPT conversation in the active tab.", guidance: chatCheck?.guidance || "Open or activate a normal ChatGPT conversation, then retry Check Plan.", action: "Retry Check Plan"
+      message: chatCheck?.message || "Open a normal Gemini conversation in the active tab.", guidance: chatCheck?.guidance || "Open or activate a normal Gemini conversation, then retry Check Plan.", action: "Retry Check Plan"
     }));
     else findings.push(makeFinding("CHATGPT_OK", "OK", "chatgpt", { message: "Connected and idle.", guidance: "Composer receiver is reachable." }));
     return result(findings, { selected_files: files.length, unique_required_references: new Set([...requiredKeys].map((key) => key.split(":").slice(1).join(":"))).size, requirement_count: requirementCount, resolved_requirements: resolvedRequirements, missing_requirements: missing.length, affected_jobs: [...new Set([...missing, ...ambiguous].map(({ job }) => job.id))], required: requirementCount, available: resolvedRequirements, missing: missing.length, ambiguous: ambiguous.length });

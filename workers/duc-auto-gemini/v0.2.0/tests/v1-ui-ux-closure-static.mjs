@@ -121,8 +121,8 @@ const awaiting = ui.runtimeInfo({
   currentItem: { status: "RECONCILING", runtime_stage: "WAITING_READY", settings: { delay_min_sec: 3, delay_max_sec: 3, timeout_sec: 120, max_retries: 2 } },
   currentStage: "WAITING_READY"
 }, 1000, format);
-assert.equal(awaiting.nextTransition, "Awaiting ChatGPT readiness confirmation");
-assert.equal(awaiting.timerText, "Awaiting ChatGPT readiness confirmation");
+assert.equal(awaiting.nextTransition, "Awaiting Gemini readiness confirmation");
+assert.equal(awaiting.timerText, "Awaiting Gemini readiness confirmation");
 
 const retry = ui.runtimeInfo({
   running: true,

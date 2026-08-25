@@ -31,7 +31,7 @@ const chrome = {
       downloads.push(options);
       const id = 77 + downloads.length - 1;
       const finalName = options.filename.includes("image_001.png")
-        ? "C:\\Users\\Duc\\Downloads\\Duc Auto ChatGPT\\image_001 (1).png"
+        ? "C:\\Users\\Duc\\Downloads\\Duc Auto Gemini\\image_001 (1).png"
         : `C:\\Users\\Duc\\Downloads\\${options.filename.replace(/\//g, "\\")}`;
       downloadItems.set(id, { id, state: "complete", filename: finalName, ...downloadPersistence });
       return id;
@@ -68,8 +68,8 @@ assert.equal(privateListener({ type: "UNRELATED" }, {}, () => {}), false);
 const imageDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:001", url: "https://chatgpt.com/generated.png" });
 assert.equal(imageDownload.ok, true);
 assert.equal(imageDownload.download_id, 77);
-assert.equal(imageDownload.requested_filename, "Duc Auto ChatGPT/image_001.png");
-assert.equal(imageDownload.filename, "C:\\Users\\Duc\\Downloads\\Duc Auto ChatGPT\\image_001 (1).png");
+assert.equal(imageDownload.requested_filename, "Duc Auto Gemini/image_001.png");
+assert.equal(imageDownload.filename, "C:\\Users\\Duc\\Downloads\\Duc Auto Gemini\\image_001 (1).png");
 assert.equal(downloads.length, 1);
 
 assert.equal((await privateCall({ type: "DAC_DOWNLOAD_IMAGE", url: "file:///not-allowed" })).code, "INVALID_IMAGE_URL");

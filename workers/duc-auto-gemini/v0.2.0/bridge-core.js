@@ -34,7 +34,7 @@
     UNAUTHENTICATED: { retryable: false, message: "Bridge authentication failed." },
     FORBIDDEN: { retryable: false, message: "The transport role is not allowed to perform this action." },
     EXTENSION_OFFLINE: { retryable: true, message: "No authenticated extension connection is available." },
-    EXECUTOR_UNAVAILABLE: { retryable: true, message: "Open the Duc Auto ChatGPT side panel and retry the same request_id.", details: { failure_type: null, halt_instruction: null } },
+    EXECUTOR_UNAVAILABLE: { retryable: true, message: "Open the Duc Auto Gemini side panel and retry the same request_id.", details: { failure_type: null, halt_instruction: null } },
     REQUEST_TIMEOUT: { retryable: true, message: "The request timed out; retry the identical idempotency key." },
     TRANSPORT_DISCONNECTED: { retryable: true, message: "The transport disconnected; retry the identical idempotency key." },
     WORKBOOK_NOT_LOADED: { retryable: true, message: "The side panel has no current workbook session." },
@@ -460,7 +460,7 @@
 
   const METHOD_ENTRIES = [
     registryEntry({ name: "session.hello", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Negotiate protocol version and report current layer availability.", params_schema: { supported_versions: "positive_integer[]" }, params_validator: validateSessionHello }),
-    registryEntry({ name: "system.ping", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Report fresh extension, executor, ChatGPT, and workbook availability.", params_schema: {}, params_validator: validateEmptyParams }),
+    registryEntry({ name: "system.ping", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Report fresh extension, executor, Gemini, and workbook availability.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "system.capabilities", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Describe the immutable v1 method and policy surface.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "queue.list", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a page of active logical queue jobs.", params_schema: { cursor: "string|null", limit: "integer:1..100", statuses: "code[]", include_prompt: "boolean" }, params_validator: validateQueueList }),
     registryEntry({ name: "run.status", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read current run state without changing it.", params_schema: {}, params_validator: validateEmptyParams }),
