@@ -1,160 +1,64 @@
-# Next session brief — selective run & deliberate override
+# NEXT SESSION BRIEF — Duc Auto Gemini Platform (viết 2026-08-25, cuối phiên "Pilot 04")
 
-Written 2026-08-22 at the end of a long session. Read this plus `HANDOFF.md`
-(the Log at the bottom) before touching anything.
+> Dành cho phiên AI mới tiếp quản. ĐỌC THEO THỨ TỰ: file này → `AI-OPERATOR-GUIDE.md` (bảng lệnh
+> Bridge + ranh giới quyền + bảng 9 lỗi thật) → `decisions.md` (mọi quyết định owner, mới nhất ở cuối).
+> Memory dùng chung tự nạp đầu phiên đã tóm các quyết định lớn. Owner là Đức — non-tech, giao tiếp
+> tiếng Việt, câu ngắn, báo cáo kiểu bảng + "1 việc tiếp theo".
 
----
+## 1. Trạng thái khi bàn giao
 
-## 0. State of the tree
+- Package này (`workers/duc-auto-gemini/v0.2.0`) là **nền tảng hợp nhất**: thân máy ChatGPT đã thực chiến
+  + GeminiAdapter từ bằng chứng DOM thật (`../v0.1.0/evidence/G1-live-dom-20260825/`). Bản
+  `duc-auto-chatgpt/v0.1.0` là của MỘT PHIÊN AI KHÁC đang làm song song — KHÔNG đụng vào.
+- Test: `node workers/duc-auto-gemini/v0.2.0/tests/run-all.mjs` → **74/74** tại thời điểm bàn giao.
+- Đã push lên GitHub (origin/main) đến commit "trial chain cap raised to 30". Owner đã duyệt push.
+- **Pilot 04 ĐẠT**: vòng tự hành khép kín chứng minh trên trang thật — chuỗi chung kết 4/4 SUCCESS,
+  AI tự jobs.add + run.trial + theo dõi, không chạm giao diện. Chi tiết: `pilot-04/PILOT-04-KET-LUAN.md`.
+- Bridge: host tại `C:\WORKING ZONE\Duc-Auto-Gemini-Bridge\` (cổng 32148; chết thì bảo Đức đúp
+  `START-BRIDGE.cmd`). Extension pairing sẵn; Dev Mode toggle ở tab ④ BRIDGE (đang ON lúc bàn giao).
 
-- **Tests: 34 passed, 0 failed.** Run everything with one command from the repo root:
-  ```bash
-  npm test
-  ```
-- **Nothing is committed.** 9 modified files + 3 new files sit in the working
-  tree on `main`. Đức has not approved a commit yet. Ask before committing;
-  never push or merge without him (his rule).
-- Last commit `4e4a9f5` ("1") is Đức's own, made mid-session.
-- Other agents edit these files too. Codex made a SETUP overlap fix, and at
-  least one change (`workbook-actions`) came from outside this session. **Check
-  `git status` and re-read a file before editing it.**
+## 2. VIỆC ĐANG LƠ LỬNG — kiểm tra ĐẦU TIÊN
 
-## 1. Hard constraints — do not break these
+Cuối phiên trước, một agent nền đang thi công 2 nâng cấp trong v0.2.0 (có thể xong hoặc không khi
+phiên đó đóng). **Chạy `git status` ngay:**
+- CÓ thay đổi chưa commit trong v0.2.0 (background.js / bridge-core.js / content.js / sidepanel.js /
+  tests) → agent đã xong: tự chạy suite, tự review các điểm sống còn (xem mục 3), rồi commit.
+- KHÔNG có thay đổi → 2 nâng cấp chưa thành hình, tự làm lại theo spec rút gọn ở mục 3.
 
-- Never assign `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.
-  `tests/artifact-integrity-smoke.mjs` fails the build if any appears. This is
-  a security requirement: thumbnail URLs come from the chatgpt.com DOM.
-- Never weaken exact-once submission, attribution, readiness gating, retry
-  semantics, persistence verification, the checkpoint protocol, or the security
-  hard-stop.
-- Never edit, regenerate or delete anything under `pilot-03/`, `pilot-05/`,
-  `pilot-06/`. They are operator evidence.
-- Operator-facing text is **Vietnamese** (`operator-messages-core.js`); finding
-  CODES stay English because they are identifiers in the audit JSONL, the
-  Result ledger and the tests. Never let a safety test assert on a caption.
-- Any `.js` change requires Đức to reload the extension at `chrome://extensions`
-  before testing. Say so in every handover.
-- The in-app Browser pane **cannot** verify this UI — it strips stylesheets and
-  blocks scripts. Do not build preview harnesses. Reason from source, write
-  static tests, and hand visual acceptance to Đức.
+## 3. Spec 2 nâng cấp (đã được owner duyệt)
 
----
+1. **Own-download filename determiner** — port từ worker ChatGPT (xem `git show b587246`):
+   listener `chrome.downloads.onDeterminingFilename` trong service worker, CHỈ áp cho download do
+   chính extension khởi tạo, tái khẳng định tên file mong muốn (folder "Duc Auto Gemini") để thắng
+   "kẻ đổi tên UUID" trong Chrome của owner. GIỮ lớp khoan-dung-đổi-tên hiện có trong sidepanel
+   (verifyArtifactDownload) làm lưới dự phòng. Không thêm permission.
+2. **`diagnostics.dom_probe`** — method Bridge read-only: sidepanel chuyển DAC_DOM_PROBE tới content
+   script, trả snapshot DOM (selector counts theo ADAPTER.SELECTORS, buttons, images kèm scheme,
+   custom tags, file inputs; cap ~64KB; tuyệt đối không click/type/focus). Mục đích: hết cảnh mượn
+   mắt owner khi debug.
+   Cả hai: test ghim đầy đủ, suite xanh, rồi nhờ Đức reload extension (⟳) một lần.
 
-## 2. Issue A — Run button says READY but nothing runs (BUG)
+## 4. Sau đó: Batch Sản Xuất 01 (owner đã ủy quyền AI tự chạy)
 
-**Reproduced, root cause known.** Not a mystery; do not re-investigate from scratch.
+Kế hoạch + 12 prompt sẵn tại `Batch-SX-01/BATCH-SX-01-PLAN.md`. Quy trình: jobs.add 12 job →
+`run-trial` MỘT chuỗi 12 job (trần hiện tại 30; cần Dev Mode ON; cách trial trước ≥300s) → theo dõi
+run-status nền (LƯU Ý: counts tích luỹ cả phiên — đặt điều kiện dừng theo DELTA) → đối chiếu 12 ảnh
+(kiểm luôn tên file đã đẹp nhờ nâng cấp 1) → ghi `BATCH-SX-01-KET-QUA.md` → commit + push.
 
-With `pilot-06/Duc-Auto-ChatGPT-Pilot-06__results__v02.xlsx` as the ledger:
+## 5. Việc mở còn lại sau batch
 
-```
-P06-A..P06-E  = SAFE_COMPLETE      plan.ready = true, 0 blockers
-selectQueue(queue, "all")  ->  EMPTY
-```
+- Gộp về một extension chung 2 provider ("Duc Auto Studio") — bước 2 của Hướng A.
+- Trả seam adapter ngược về worker ChatGPT (phối hợp với phiên AI bên đó qua handoff của họ).
+- Thủ phạm đổi tên download trong Chrome của owner vẫn chưa xác định danh tính (đã miễn nhiễm).
+- Danh sách câu quota EN/VN chưa kiểm chứng với quota wall thật.
 
-`controls()` enables Run from `workbook && prepared && outputSettings && validated`.
-It never asks whether any job is actually eligible. So the chip reads
-"READY TO RUN", the button is green, and `run("all")` immediately returns
-`{ ok: false, reason: "No all jobs are eligible." }`.
+## 6. Kỷ luật làm việc (tóm từ guide — vi phạm là hỏng nếp đã xây)
 
-The status does flip to `NOT READY` with that message, but after a green
-"ready" button that reads as "nothing happened".
+Không đoán selector (chỉ dùng bằng chứng). Kiểm chứng độc lập mọi báo cáo agent phụ. Mỗi fix một
+test ghim. Mỗi quyết định owner → `decisions.md` + memory. Commit thường xuyên, push khi owner duyệt
+(đã có tiền lệ duyệt). 4 điểm chốt với owner: push/merge (đã duyệt dạng tiền lệ), pilot live mới,
+thêm permission extension, đổi luật an toàn.
 
-**Fix direction:** make the control reflect real eligibility. Compute the
-selected-mode queue length in `controls()` and disable Run when it is zero,
-with a Vietnamese reason next to it (e.g. "Mọi job trong ledger đã hoàn tất —
-chọn job muốn chạy lại bên dưới"). Do not make Run *do* something when there is
-nothing to do.
+## 7. Câu mở màn gợi ý cho Đức dán vào chat mới
 
-This bug disappears in practice once Issue B and C exist, but fix it anyway:
-a green button that cannot act is the exact class of lie this project rejects.
-
----
-
-## 3. Issue B — deliberate re-run / override of a completed job (FEATURE)
-
-Đức wants to regenerate an image he is unhappy with, and let the new image
-replace the old one.
-
-**Current behaviour, verified:**
-
-- `runner-core.prepare()` honours `rerun_done=true` and marks completed jobs
-  `PENDING` / `PRE_SUBMIT`.
-- `resume-core.applyToQueue()` then **overrides that**: any `SAFE_COMPLETE` job
-  becomes `skipped: true, protected_checkpoint: true`.
-- Result: **there is no path to re-run a completed job while resuming.**
-  `rerun_done` only works on a fresh (non-resume) run.
-
-That override is deliberate — README: "Completed verified outputs stay skipped
-forever". It is the guarantee that a finished job is never silently redone.
-
-**Recommended shape** (Đức asked whether full replace is reasonable — this is
-the answer to give him):
-
-1. **Per-job, explicit.** Re-run must be chosen for named jobs, the way
-   Recreate already is. Never a blanket toggle that quietly unlocks everything.
-2. **Confirmation naming the jobs**, in the same style as the Recreate dialog.
-3. **Preserve the old image by default.** `collision_policy` already supports
-   `overwrite` / `uniquify` / `fail`. Default the re-run to keep the previous
-   file (`uniquify` → `__attempt-01`) and offer "đè hẳn lên ảnh cũ" as an
-   explicit choice in the confirmation. Destroying the only copy of a verified
-   artifact should be a decision, not a default.
-4. **Record the supersession.** The ledger and audit must say a replacement
-   happened: which attempt replaced which file, and when. Otherwise the audit
-   claims a history that no longer matches the folder.
-5. Everything else stays: readiness gate before submit, verified persistence
-   before SAVED, a new checkpoint version after.
-
-Reuse the `recreate_*` ledger fields and the approval/checkpoint sequence in
-`persistRecreateApproval()` rather than inventing a parallel mechanism.
-
----
-
-## 4. Issue C — choose which tasks to run (FEATURE)
-
-Today SETUP always runs everything. Đức wants to pick jobs from the loaded list.
-
-**Most of this already exists:**
-
-- `runner-core.selectQueue(queue, mode, selectedId)` already implements
-  `all`, `pending`, `failed`, `recreate`, `selected`.
-- `sidepanel.js` only wires **two** buttons: `run("all")` and `run("failed")`.
-  `pending` and `selected` have no UI at all.
-- `renderQueue()` already tracks `state.selectedJobId` on row click and renders
-  an expanded detail panel — a single-selection affordance is already there.
-
-**Fix direction:** extend `state.selectedJobId` to a selection *set*, add a
-checkbox per queue row, and wire a "Chạy job đã chọn" control. `selectQueue`
-likely needs a `selectedIds` array rather than one `selectedId`; keep the
-existing single-id behaviour working or update its callers and tests together.
-
-Note `selectQueue("selected")` currently refuses anything not in `PRE_SUBMIT`
-and excludes `SUCCESS`/`INTERRUPTED`/`STOPPED` — which is what makes Issue B
-and Issue C the same piece of work. Design them together.
-
----
-
-## 5. Suggested order
-
-1. Issue C (selection UI + `selectQueue` set support) — it is the surface both
-   other items need.
-2. Issue A (Run reflects real eligibility) — trivial once selection exists.
-3. Issue B (override, on top of the selection surface) — the risky one; do it
-   last, with the confirmation and provenance rules above.
-
-Write regression tests for each before handing back. Then ask Đức to reload the
-extension and accept the UI visually.
-
----
-
-## 6. Useful commands
-
-```bash
-npm test
-```
-
-```bash
-node workers/duc-auto-chatgpt/v0.1.0/scripts/add-jobs-to-ledger.mjs <ledger.xlsx> "ID=prompt"
-```
-
-Adds PENDING jobs to a Result ledger so a continuation has real work. Editing a
-verified checkpoint by hand is acceptable for test fixtures only.
+"Bạn đọc workers/duc-auto-gemini/v0.2.0/NEXT-SESSION-BRIEF.md rồi tiếp tục công việc theo đúng brief nhé."
