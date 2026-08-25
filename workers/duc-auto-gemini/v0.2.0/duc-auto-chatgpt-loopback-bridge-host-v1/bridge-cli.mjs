@@ -11,7 +11,8 @@ const COMMANDS = Object.freeze({
   "run-status": "run.status",
   "ledger-read": "ledger.read",
   "proposal-get": "queue.proposal.get",
-  propose: "queue.propose"
+  propose: "queue.propose",
+  "run-trial": "run.trial"
 });
 
 const DEFAULT_PAIRING_NAME = "duc-auto-chatgpt-bridge-pairing-v1.json";
@@ -70,6 +71,14 @@ export function commandRequest(command, flags = {}) {
   } else if (command === "propose") {
     if (!flags["params-file"]) throw new Error("propose requires --params-file <json>.");
     params = JSON.parse(fs.readFileSync(path.resolve(flags["params-file"]), "utf8"));
+  } else if (command === "run-trial") {
+    // Development trial run (owner decision 2026-08-25): <=2 jobs, capped
+    // timing; refused by the extension unless its dev-mode toggle is ON.
+    if (!flags.jobs) throw new Error("run-trial requires --jobs <id[,id]>.");
+    const jobIds = String(flags.jobs).split(",").map((item) => item.trim()).filter(Boolean);
+    params = { job_ids: jobIds };
+    if (flags.timeout !== undefined) params.timeout_sec = Number(flags.timeout);
+    if (flags.delay !== undefined) params.delay_sec = Number(flags.delay);
   }
   return { method, params };
 }
