@@ -31,6 +31,8 @@ sửa dòng cũ.
 | `id`/`prompt` là 2 cột bắt buộc duy nhất trên sheet `jobs`; `config` luôn optional với default hợp lý | Giữ workbook mới đơn giản nhất có thể cho Đức — chỉ cần dán `id + prompt` | Claude, sau khi Đức phản hồi workbook cũ "đòi hỏi quá nhiều field" | `HANDOFF.md` dòng 145-150, `DAC_XLSX_RUN_PLAN_V1.md` |
 | Completed job (`SAFE_COMPLETE`) không bao giờ tự chạy lại khi Resume, kể cả khi `rerun_done=true` trong config | Bảo vệ output đã xác minh khỏi bị ghi đè âm thầm; re-run chỉ được làm qua cơ chế duyệt thủ công per-job | Claude, xác nhận là chủ đích thiết kế, không phải bug | `HANDOFF.md` dòng 113 |
 
+| **2026-08-25 — Xử lý poll A/B của ChatGPT ("Which image do you like more?"):** khi 1 lượt sinh 2 ảnh + poll bắt chọn, extension **tự CLICK** trả lời — mặc định random ảnh 1/2 (config: `click_1`/`click_2`/`skip` — link Skip có thật, chữ nhỏ góc phải khối poll). Phương án trả lời bằng cách GÕ vào composer đã bị **bác bằng thử nghiệm sống**: composer khoá Enter khi poll treo. Poll chưa trả lời = blocker readiness (job kế sẽ treo WAITING_READY). Cả 2 ảnh của lượt đó đều được lưu (`__variant-01/02`) theo khái niệm "1 job có thể nhiều ảnh" | Poll ép tương tác, chặn vòng tự hành; Đức thử gõ "1"+Enter trực tiếp và không gửi được | Đức (chính sách random 1/2) + bằng chứng sống 2026-08-25 | Screenshot + thử nghiệm của Đức trong phiên chatgpt-package; sẽ implement ở wave kế |
+
 ## Vận hành / UI
 
 | Quyết định | Vì sao | Ai chốt | Nguồn |
