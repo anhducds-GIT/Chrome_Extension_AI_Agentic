@@ -408,6 +408,30 @@
     return normalized;
   }
 
+  function validateSetFolderHint(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["folder_hint", "profile_id"], "params");
+    // folder_hint is DISPLAY metadata only (a copyable absolute path for the
+    // operator); it is never used to open or write anything, so absolute
+    // Windows paths are exactly what it carries. Control characters are still
+    // rejected.
+    const hint = stringValue(params.folder_hint, "params.folder_hint", { min: 1, max: 500 });
+    if (/[\u0000-\u001f\u007f-\u009f]/.test(hint)) invalidParams("params.folder_hint", "must not contain control characters");
+    // Bidi/zero-width formatting characters can make a displayed path read as
+    // a different path than what gets copied - a social-engineering vector on
+    // a field whose whole job is being copy-pasted by the owner.
+    if (/[\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\u206a-\u206f\ufeff]/.test(hint)) invalidParams("params.folder_hint", "must not contain invisible or directional formatting characters");
+    // The contract says absolute path: drive-rooted (C:\...) or UNC (\\srv\...).
+    if (!/^(?:[A-Za-z]:\\|\\\\[^\\]+\\[^\\]+(?:\\|$))/.test(hint)) invalidParams("params.folder_hint", "expected an absolute Windows path (drive-rooted or UNC)");
+    const normalized = { folder_hint: hint };
+    if (params.profile_id !== undefined) {
+      const profileId = stringValue(params.profile_id, "params.profile_id", { min: 1, max: 64 });
+      if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(profileId)) invalidParams("params.profile_id", "expected a lowercase slug such as pilot-09");
+      normalized.profile_id = profileId;
+    }
+    return normalized;
+  }
+
   function validateRunSettingsConfigure(raw) {
     const params = assertPlainObject(raw, "params");
     const allowed = ["timeout_sec", "max_retries", "delay_min_sec", "delay_max_sec", "safety_cooldown_sec", "max_input_images", "continue_on_error", "rerun_done"];
@@ -471,6 +495,7 @@
     registryEntry({ name: "jobs.reorder", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Move one PRE_SUBMIT Queue job to a persisted logical position.", params_schema: { job_id: "string", position: "integer:1..1000000" }, params_validator: validateJobsReorder }),
     registryEntry({ name: "output.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure naming, collision, and save controls for an already-bound output location.", params_schema: { image_pattern: "string?", result_filename_pattern: "string?", audit_filename: "string?", collision_policy: "overwrite|uniquify|fail?", save_images: "boolean?", save_result_xlsx: "boolean?", save_audit_jsonl: "boolean?" }, params_validator: validateOutputConfigure }),
     registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?" }, params_validator: validateRunSettingsConfigure }),
+    registryEntry({ name: "output.set_folder_hint", context: "executor", read_only: false, approval: "none", deadline_ms: 10000, description: "Record the absolute folder path the agent is targeting, as operator-copyable display metadata on a stored output profile. Metadata only: writes no workbook data, no checkpoint, and never opens or binds a folder.", params_schema: { folder_hint: "string:1..500", profile_id: "slug?" }, params_validator: validateSetFolderHint }),
     registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage a quarantined queue proposal; never execute it automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100]" }, params_validator: validateQueuePropose }),
     registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet })
   ];

@@ -936,6 +936,7 @@
       "jobs.remove": withBridgeErrors(bridgeJobsRemove),
       "jobs.reorder": withBridgeErrors(bridgeJobsReorder),
       "output.configure": withBridgeErrors(bridgeOutputConfigure),
+      "output.set_folder_hint": withBridgeErrors(bridgeOutputSetFolderHint),
       "run_settings.configure": withBridgeErrors(bridgeRunSettingsConfigure),
       "queue.propose": withBridgeErrors(bridgeQueuePropose),
       "queue.proposal.get": withBridgeErrors(bridgeProposalGet)
@@ -1215,6 +1216,30 @@
       method: "run_settings.configure", event: "BRIDGE_RUN_SETTINGS_CONFIGURED",
       mutate: async () => applyRuntimeOverrideValues(params)
     });
+  }
+
+  // "AI là bộ não, người là cánh tay": the agent that prepared a task package
+  // already knows every folder path it created, so it records the path here
+  // and the attention rows / pick dialog serve it back to Đức one-click-copy.
+  // DISPLAY METADATA ONLY — deliberately not routed through
+  // executeBridgeDirectMutation: it writes no workbook data and no checkpoint,
+  // and it must keep working precisely when persistence is unavailable
+  // (revoked folder after a reload is its main use case).
+  async function bridgeOutputSetFolderHint(params) {
+    let profileId = params.profile_id || "";
+    const stored = await window.DacOutputProfiles.list();
+    if (!profileId) {
+      if (!stored.length) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", "NO_OUTPUT_PROFILE: Chưa có output profile nào được bind — Đức phải chọn folder một lần trước.");
+      if (stored.length > 1) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `PROFILE_AMBIGUOUS: Nhiều profile đang tồn tại (${stored.map((profile) => profile.profile_id).join(", ")}) — truyền profile_id.`);
+      profileId = stored[0].profile_id;
+    }
+    const updated = await window.DacOutputProfiles.setHint(profileId, params.folder_hint);
+    if (!updated) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `PROFILE_NOT_FOUND: Không có profile '${profileId}'.`);
+    if (!state.outputSettings) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, "phien-chua-mo-workbook.xlsx");
+    state.outputSettings.folderHint = params.folder_hint;
+    await probeBridgePersistence().catch(() => {});
+    renderBridgeAttention();
+    return { profile_id: profileId, folder_hint: params.folder_hint };
   }
 
   function appendBridgeMeta(label, value) {
@@ -4879,6 +4904,7 @@
       "jobs.remove": bridgeJobsRemove,
       "jobs.reorder": bridgeJobsReorder,
       "output.configure": bridgeOutputConfigure,
+      "output.set_folder_hint": bridgeOutputSetFolderHint,
       "run_settings.configure": bridgeRunSettingsConfigure,
       "queue.propose": bridgeQueuePropose,
       "queue.proposal.get": bridgeProposalGet

@@ -11,7 +11,7 @@ const bridge = globalThis.DacBridgeCore;
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
   "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
-  "jobs.reorder", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get"
+  "jobs.reorder", "output.configure", "run_settings.configure", "output.set_folder_hint", "queue.propose", "queue.proposal.get"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
@@ -66,6 +66,7 @@ const validByMethod = {
   "jobs.remove": { job_id: "Q001" },
   "jobs.reorder": { job_id: "Q001", position: 2 },
   "output.configure": { image_pattern: "{job_id}", collision_policy: "uniquify", save_images: true },
+  "output.set_folder_hint": { folder_hint: "C:\\WORKING ZONE\\Chrome_Extension_AI_Agentic\\workers\\duc-auto-chatgpt\\v0.1.0\\Pilot-09_Test-Codex-Bridge-to-Extension", profile_id: "pilot-09" },
   "run_settings.configure": { timeout_sec: 240, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", continue_on_error: true },
   "queue.propose": {
     if_ledger_etag: "sha256:ledger-etag",
@@ -96,6 +97,7 @@ const invalidByMethod = {
   "jobs.remove": { job_id: "" },
   "jobs.reorder": { job_id: "Q001", position: 0 },
   "output.configure": { collision_policy: "replace" },
+  "output.set_folder_hint": { folder_hint: "line1\nline2" },
   "run_settings.configure": { delay_min_sec: 25, delay_max_sec: 12 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [] },
   "queue.proposal.get": { proposal_id: "" }
