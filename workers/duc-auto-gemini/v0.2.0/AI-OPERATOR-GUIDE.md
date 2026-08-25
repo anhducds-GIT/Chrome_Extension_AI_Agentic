@@ -11,7 +11,7 @@
   `C:\WORKING ZONE\Duc-Auto-Gemini-Bridge\` (cổng 32148, loopback, token trong
   `duc-auto-gemini-bridge-pairing-v1.json` cùng thư mục — KHÔNG commit file này).
 - Workflow chuẩn (owner đã chốt): Đức đưa đường dẫn thư mục trong chat → AI đọc workbook/ảnh →
-  AI bơm mọi thứ qua Bridge → Đức bấm Run (batch sản xuất) hoặc AI tự `run.trial` (dev, chuỗi liên tục ≤10 job).
+  AI bơm mọi thứ qua Bridge → Đức bấm Run (batch sản xuất) hoặc AI tự `run.trial` (dev, chuỗi liên tục ≤30 job).
 
 ## 2. Lệnh Bridge bạn được dùng
 
@@ -23,7 +23,7 @@ CLI có sẵn: `cd "C:\WORKING ZONE\Duc-Auto-Gemini-Bridge" && node bridge-cli.m
 | `run-status` | run.status | Camera trực: counts/phase/stage/halt |
 | `queue-list` | queue.list | Trạng thái + failure_type từng job |
 | `ledger-read` | ledger.read | Sổ cái attempt |
-| `run-trial --jobs A,B,... [--timeout 90] [--delay 25]` | run.trial | TỰ chạy một chuỗi liên tục ≤10 job (cần Dev Mode BẬT trong panel) |
+| `run-trial --jobs A,B,... [--timeout 90] [--delay 25]` | run.trial | TỰ chạy một chuỗi liên tục ≤30 job (cần Dev Mode BẬT trong panel) |
 | (raw POST) | jobs.add / jobs.update / jobs.remove / jobs.reorder | Dựng/sửa hàng đợi — jobs.add TỰ TẠO phiên nếu panel chưa có workbook |
 | (raw POST) | references.add | Đẩy ảnh tham chiếu (data URL, ≤5/lần, ≤700KB/ảnh) |
 | (raw POST) | run_settings.configure / output.configure | Cấu hình phiên |
@@ -34,9 +34,8 @@ gửi tới `http://127.0.0.1:32148/v1/rpc` với header `Authorization: Bearer 
 
 ## 3. Ranh giới quyền — KHÔNG thương lượng
 
-- `run.start/pause/resume` KHÔNG tồn tại trong giao thức. Batch sản xuất (>10 job) = Đức bấm.
-- `run.trial`: chỉ khi công tắc "Chế độ phát triển" BẬT; MỘT CHUỖI LIÊN TỤC ≤10 job (không xé lẻ
-  2 job/lần — owner đã chỉnh ngày 25/08); timeout 15–90s/job; delay 20–30s giữa job;
+- `run.start/pause/resume` KHÔNG tồn tại trong giao thức. Batch sản xuất (>30 job) = Đức bấm.
+- `run.trial`: chỉ khi công tắc "Chế độ phát triển" BẬT; MỘT CHUỖI LIÊN TỤC ≤30 job (không xé lẻ — owner chỉnh 2 lần ngày 25/08: 2→10→30, khớp workload thật 20–30 ảnh); timeout 15–90s/job; delay 20–30s giữa job;
   hai trial cách nhau ≥300s (bị từ chối sẽ báo còn phải chờ bao nhiêu giây).
 - git push / thêm quyền extension / đổi luật an toàn / pilot live mới → hỏi Đức.
 
@@ -45,7 +44,7 @@ gửi tới `http://127.0.0.1:32148/v1/rpc` với header `Authorization: Bearer 
 ### Dựng phiên từ thư mục Đức đưa
 1. Đọc thư mục: workbook xlsx (cột `id`,`prompt`,`reference_images`) hoặc mô tả prompt.
 2. `jobs.add` (id tự cấp Q001…), `references.add` nếu có ảnh, `run_settings/output.configure` nếu cần.
-3. `queue-list` xác nhận → báo Đức "sẵn sàng" → Đức bấm Run, hoặc bạn `run-trial` cả chuỗi ≤10 job (dev).
+3. `queue-list` xác nhận → báo Đức "sẵn sàng" → Đức bấm Run, hoặc bạn `run-trial` cả chuỗi ≤30 job (dev).
 
 ### Theo dõi một lần chạy
 Vòng poll `run-status` mỗi 10s (chạy nền). LƯU Ý baseline: counts là TÍCH LŨY cả phiên —
@@ -77,8 +76,7 @@ Vòng poll `run-status` mỗi 10s (chạy nền). LƯU Ý baseline: counts là T
 ## 6. Nguyên tắc làm việc (đúc từ các phiên trước)
 
 1. **Không đoán selector.** Mọi selector phải có bằng chứng DOM thật (xem
-   `../v0.1.0/evidence/G1-live-dom-20260825/`). Cần bằng chứng mới → probe chỉ-đọc qua Console
-   của Đức hoặc (tương lai) lệnh chẩn đoán Bridge.
+   `../v0.1.0/evidence/G1-live-dom-20260825/`). Cần bằng chứng mới → gọi `diagnostics.dom_probe` qua Bridge (mắt từ xa, đã có); Console của Đức chỉ là đường dự phòng.
 2. **Kiểm chứng độc lập mọi báo cáo của agent phụ** — tự chạy lại test, tự grep điểm sống còn.
 3. **Mỗi fix một test ghim.** Suite không chạm DOM thật, nên fixture bằng chứng là vàng.
 4. **Prompt trên chat thường phải nói rõ "Generate an image:"** — nếu không Gemini có thể trả lời text.
