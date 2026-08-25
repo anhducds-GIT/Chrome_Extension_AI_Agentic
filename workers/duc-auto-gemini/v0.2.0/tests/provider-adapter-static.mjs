@@ -77,7 +77,7 @@ assert.equal(adapter.surface("https://chatgpt.com/"), "WRONG");
 // legitimate AFTER a submit in the same tab, and only then.
 assert.equal(adapter.surfaceAllowed("https://gemini.google.com/images", { submittedInThisTab: false }), true, "IMAGES is always an allowed pre-submit surface");
 assert.equal(adapter.surfaceAllowed("https://gemini.google.com/app/753d3063c42ee9a3", { submittedInThisTab: true }), true, "the post-submit /images -> /app navigation is never treated as receiver loss");
-assert.equal(adapter.surfaceAllowed("https://gemini.google.com/app/753d3063c42ee9a3", { submittedInThisTab: false }), false, "a conversation this tab never submitted to is not a valid starting surface");
+assert.equal(adapter.surfaceAllowed("https://gemini.google.com/app/753d3063c42ee9a3", { submittedInThisTab: false }), true, "owner decision 2026-08-25: runs may START from an /app conversation (G1 snapshots 2-4 verified the full flow there)");
 assert.equal(adapter.surfaceAllowed("https://example.com/", { submittedInThisTab: true }), false);
 
 // The two formerly-duplicated origin regexes in sidepanel.js (activeTab and

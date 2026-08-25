@@ -64,3 +64,9 @@ Nguồn: `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md`. Đức chốt cả 5
 | Quyết định | Vì sao | Ai chốt |
 |---|---|---|
 | Bỏ trần "≤6 trial/giờ"; thay bằng: hai trial liên tiếp phải cách nhau tối thiểu 5 phút. | Quota tạo ảnh của owner rất dồi dào — cái cần kiểm soát là nhịp độ (tránh hành vi máy móc dồn dập), không phải tổng số lượng. | Đức |
+
+## 2026-08-25 — Cho phép bắt đầu run từ trang hội thoại /app (owner: Đức)
+
+| Quyết định | Vì sao | Ai chốt |
+|---|---|---|
+| Run được phép BẮT ĐẦU từ cả gemini.google.com/images lẫn gemini.google.com/app/<id> (trước đó /app chỉ hợp lệ sau khi chính tab đó đã gửi). | Bằng chứng G1 (bản chụp 2–4) xác minh đầy đủ ô soạn thảo, menu upload, nút Gửi, khung trả lời và ảnh kết quả ngay trên /app; owner cũng thao tác thường xuyên ở đó. Lưu ý vận hành: chạy từ /app thì prompt gõ vào đúng hội thoại đang mở — owner chịu trách nhiệm trỏ tab đúng chỗ; audit ghi lại URL. | Đức |

@@ -129,17 +129,18 @@
     }
   }
 
-  // Surface rule (snapshot 3, finding 1): submitting from /images NAVIGATES
-  // the tab to /app/<conversation-id>. Pre-submit readiness requires IMAGES,
-  // or CONVERSATION reached from a prior submit in the same tab; the
-  // /images -> /app navigation after a submit is legitimate and must never be
-  // treated as receiver loss (fixes the v0.1.0 BOUND_TAB_LEFT_IMAGES_SURFACE
-  // design bug).
-  function surfaceAllowed(url, { submittedInThisTab = false } = {}) {
+  // Surface rule. Snapshot 3, finding 1: submitting from /images NAVIGATES the
+  // tab to /app/<conversation-id>, so /app must never be treated as receiver
+  // loss (the v0.1.0 BOUND_TAB_LEFT_IMAGES_SURFACE design bug). Owner decision
+  // 2026-08-25: runs may also START from an /app conversation — the G1
+  // evidence (snapshots 2-4) verified the composer, upload menu, send button
+  // and generated-image containers on /app itself, and the owner generates
+  // there routinely. Operational note: on /app the prompt lands in whichever
+  // conversation the tab shows; pointing the tab at the right one is the
+  // operator's responsibility (the audit records the URL).
+  function surfaceAllowed(url, _context = {}) {
     const value = surface(url);
-    if (value === SURFACE.IMAGES) return true;
-    if (value === SURFACE.CONVERSATION) return Boolean(submittedInThisTab);
-    return false;
+    return value === SURFACE.IMAGES || value === SURFACE.CONVERSATION;
   }
 
   // Page-wide interstitial blockers (CAPTCHA and similar), EN + VN, carried
