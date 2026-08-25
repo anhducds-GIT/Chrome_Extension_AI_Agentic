@@ -59,6 +59,13 @@ assert.match(applyRegion, /if \(!state\.outputSettings( && state\.workbook)?\) s
 // routes output_downloads_subfolder through downloadsLocation (safeRelativeFolder
 // rejects traversal/absolute), and only skips the bound-profile assert when
 // that subfolder is supplied.
+// Bootstrap jobs.add must not clobber a directory binding the owner made
+// moments earlier — applyWorkbookConfig rebuilds outputSettings from the
+// empty bootstrap config, so the bound handle is captured and restored.
+const bootstrapAdd = segment(js, "async function applyBridgeJobsAdd", "function applyQueueJobUpdate", "applyBridgeJobsAdd");
+assert.match(bootstrapAdd, /const previouslyBound = state\.outputSettings/, "bootstrap must capture the pre-existing binding");
+assert.ok(bootstrapAdd.indexOf("const previouslyBound") < bootstrapAdd.indexOf("applyWorkbookConfig()"), "capture must precede the config rebuild");
+assert.match(bootstrapAdd, /previouslyBound\?\.image\?\.kind === "directory" && previouslyBound\.image\.handle/, "restore only a real bound directory");
 const outputConfigure = segment(js, "async function bridgeOutputConfigure", "async function bridgeRunSettingsConfigure", "bridgeOutputConfigure");
 assert.match(outputConfigure, /if \(downloadsSubfolder === undefined\) await assertBridgeOutputBound\(\)/, "unbound profile must still fail closed without a subfolder");
 assert.match(outputConfigure, /downloadsLocation\(downloadsSubfolder\)/, "subfolder must route through downloadsLocation validation");

@@ -2712,7 +2712,18 @@
       const rows = jobs.map((job, index) => ({ id: `Q${String(index + 1).padStart(3, "0")}`, prompt: job.prompt }));
       state.quickPromptCounter = rows.length;
       state.workbook = window.DacXlsx.createWorkbook(`Bridge-${stamp}.xlsx`, rows);
+      // applyWorkbookConfig() rebuilds outputSettings from the (empty)
+      // bootstrap config — without this, a folder Đức bound moments earlier
+      // would be silently clobbered back to Downloads defaults, and the
+      // picker gesture is the most expensive thing in the whole loop.
+      const previouslyBound = state.outputSettings;
       applyWorkbookConfig();
+      if (previouslyBound?.image?.kind === "directory" && previouslyBound.image.handle) {
+        state.outputSettings.image = previouslyBound.image;
+        state.outputSettings.result = previouslyBound.result;
+        state.outputSettings.folderHint = previouslyBound.folderHint || state.outputSettings.folderHint;
+        state.destinationMode = "profile";
+      }
       rows.forEach((row, index) => {
         const workbookJob = state.workbook.jobs[index];
         const values = directJobValues(jobs[index]);
