@@ -13,7 +13,11 @@ assert.deepEqual(JSON.parse(JSON.stringify({ context: entry.context, approval: e
   context: "executor", approval: "none", read_only: false, idempotent: true, deadline_ms: 30000
 });
 assert.deepEqual(JSON.parse(JSON.stringify(core.validateParams("run.trial", { job_ids: ["J-1", "J-2"] }))), { job_ids: ["J-1", "J-2"] });
-assert.throws(() => core.validateParams("run.trial", { job_ids: ["J-1", "J-2", "J-3"] }), /expected 1-2/);
+// Owner amendment 2026-08-25: one trial is a chain of up to 30 jobs.
+const thirty = Array.from({ length: 30 }, (_unused, index) => `J-${index + 1}`);
+assert.deepEqual(JSON.parse(JSON.stringify(core.validateParams("run.trial", { job_ids: thirty }))), { job_ids: thirty });
+assert.throws(() => core.validateParams("run.trial", { job_ids: [...thirty, "J-31"] }), /expected 1-30/);
+assert.throws(() => core.validateParams("run.trial", { job_ids: [] }), /expected 1-30/);
 assert.throws(() => core.validateParams("run.trial", { job_ids: ["J-1", "J-1"] }), /duplicate/);
 
 const dispatcher = core.createDispatcher({

@@ -87,7 +87,7 @@ assert.ok(waitForCompletionSegment.indexOf("matchesGenerationLimit(text)") < wai
 const waitForChatReadySegment = content.slice(content.indexOf("async function waitForChatReady("), content.indexOf("async function runPrompt("));
 const limitCheckCount = [...waitForChatReadySegment.matchAll(/generationLimitText\(\)/g)].length;
 assert.equal(limitCheckCount, 2, "the readiness gate checks the limit on the initial read and the final re-check before trusting READY");
-assert.match(waitForChatReadySegment, /if \(readiness === "HARD_STOP"\) throw new Error\(limitBlocker \? `LIMIT_STOP: \$\{limitBlocker\}` : `HARD_STOP: \$\{blocker\}`\);/, "a limit block is reported distinctly from a security block, not folded into the same message");
+assert.match(waitForChatReadySegment, /if \(readiness === "HARD_STOP"\) throw hardStopError\(limitBlocker \? `LIMIT_STOP: \$\{limitBlocker\}` : `HARD_STOP: \$\{blocker\}`, abPoll\);/, "a limit block is reported distinctly from a security block, not folded into the same message");
 
 // DAC_PING (used by Check Plan and by authoritativeValidate before every run)
 // surfaces the same signal so a limit already in effect is caught before a

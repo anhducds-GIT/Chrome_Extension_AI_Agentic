@@ -4,9 +4,9 @@ import fs from "node:fs";
 const source = fs.readFileSync(new URL("../content.js", import.meta.url), "utf8");
 
 assert.match(source, /if \(expectImage\) \{/);
-assert.match(source, /const evaluated = imageDecision\(boundary, inputEvidence\)/);
+assert.match(source, /const evaluated = imageDecision\(boundary, inputEvidence, maxImages\)/);
 assert.match(source, /completionForImage\(decision, \{ generationControlVisible: Boolean\(stopButton\) \}\)/);
-assert.match(source, /if \(imageCompletion\.ok\)/);
+assert.match(source, /if \(imageCompletion\.ok && settle\.settled\)/, "a multi-image turn is only complete once its image count has settled");
 assert.match(source, /stop_visible: Boolean\(stopButton\)/);
 assert.match(source, /OUTPUT_DETECTION_TIMEOUT/);
 assert.match(source, /captureBoundary\(inputEvidence\)/);

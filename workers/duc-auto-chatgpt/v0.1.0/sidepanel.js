@@ -214,7 +214,7 @@
       bridge_payload_sha256: item.job.bridge_payload_sha256 || null
     } : {};
     const trial = state.bridgeRunOrigin === "bridge_dev" ? { input_origin: "bridge_dev", bridge_trial_id: state.bridgeTrialId, bridge_trial_timeout_cap_sec: 90 } : {};
-    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge, ...trial });
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_files: item?.result_files || null, image_count: item?.image_count ? Number(item.image_count) : null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge, ...trial });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
@@ -4296,10 +4296,10 @@
     return new Promise((resolve) => chrome.runtime.sendMessage({ type: "DAC_DOWNLOAD_IMAGE", url, jobId, outputFolder, filename, collisionPolicy }, resolve));
   }
 
-  async function saveGeneratedImage(url, item, location) {
+  async function saveGeneratedImage(url, item, location, variant = { number: 1, total: 1 }) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
     const extension = imageExtensionFromUrl(url);
-    const requested = window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, extension);
+    const requested = window.DacOutputLocation.variantFilename(window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, extension), variant.number, variant.total);
     // A deliberate rerun of a completed job carries its own collision-policy
     // choice on the job row (set only for that one job by confirmRerun), so
     // it can preserve or replace the prior image independently of whatever
@@ -4310,7 +4310,7 @@
     if (!response.ok) throw new Error(`Could not fetch the generated image for the selected folder (${response.status}).`);
     const blob = await response.blob();
     if (!blob.size) throw new Error("Generated image download was empty.");
-    const actual = await window.DacOutputLocation.writeFileWithPolicy(location.handle, window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, window.DacOutputLocation.actualExtension(blob, extension)), blob, policy);
+    const actual = await window.DacOutputLocation.writeFileWithPolicy(location.handle, window.DacOutputLocation.variantFilename(window.DacOutputLocation.renderImageFilename(values.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, window.DacOutputLocation.actualExtension(blob, extension)), variant.number, variant.total), blob, policy);
     return { ok: true, filename: window.DacOutputLocation.fileLabel(location, actual.filename), download_id: null, storage: "directory", write_outcome: actual.outcome };
   }
 
@@ -4327,6 +4327,8 @@
     if (Object.hasOwn(values, "last_error")) item.last_error = values.last_error;
     if (Object.hasOwn(values, "submitted_at")) item.submitted_at = values.submitted_at || "";
     if (Object.hasOwn(values, "detection_diagnostics")) item.detection_diagnostics = values.detection_diagnostics || "";
+    if (Object.hasOwn(values, "result_files")) item.result_files = values.result_files || "";
+    if (Object.hasOwn(values, "image_count")) item.image_count = values.image_count || "";
     window.DacXlsx.updateJob(state.workbook, item.job, values);
   }
 
@@ -4343,7 +4345,7 @@
     const resultDestination = actual ? (/^(?:[A-Za-z]:[\\/]|\/)/.test(actual) || actual.startsWith(window.DacOutputLocation.locationLabel(effectiveResult)) ? actual : window.DacOutputLocation.fileLabel(effectiveResult, actual)) : plan.resultDestination;
     const output = window.DacOutputLocation.effective(state.outputSettings);
     const auditChain = auditGapAcknowledged() ? { audit_chain_status: state.workbook.config.audit_chain_status, audit_chain_missing_filename: state.workbook.config.audit_chain_missing_filename, audit_chain_acknowledged_at: state.workbook.config.audit_chain_acknowledged_at, audit_chain_segment_filename: state.workbook.config.audit_chain_segment_filename } : {};
-    const snapshot = { run_id: state.runId || "", result_filename_pattern: output.checkpointFilenamePattern, effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done, effective_checkpoint_interval_jobs: settings.checkpoint_interval_jobs, ...auditChain, ...(checkpoint || {}) };
+    const snapshot = { run_id: state.runId || "", result_filename_pattern: output.checkpointFilenamePattern, effective_source_workbook: plan.sourceWorkbook, effective_image_output: plan.imageDestination, effective_result_xlsx: resultDestination, effective_image_naming: output.imagePattern, effective_collision_policy: output.collisionPolicy, effective_save_images: output.saveImages, effective_save_result_xlsx: output.saveResultXlsx, effective_save_audit_jsonl: output.saveAuditJsonl, effective_audit_log: actualAuditFilename || "", effective_timeout_sec: settings.timeout_sec, effective_max_retries: settings.max_retries, effective_safety_cooldown_sec: settings.safety_cooldown_sec, effective_max_input_images: settings.max_input_images, effective_continue_on_error: settings.continue_on_error, effective_rerun_done: settings.rerun_done, effective_checkpoint_interval_jobs: settings.checkpoint_interval_jobs, effective_ab_poll_action: settings.ab_poll_action, effective_max_images_per_job: settings.max_images_per_job, ...auditChain, ...(checkpoint || {}) };
     window.DacXlsx.updateConfigSnapshot(workbook, snapshot);
     if (workbook === state.workbook && state.prepared) for (const item of state.prepared.queue) update(item, snapshot);
   }
@@ -4592,8 +4594,29 @@
 
   async function waitForChatReady(item) {
     const selectedSafetyCooldownSec = window.DacRunnerCore.safetyCooldownSeconds(item.settings);
-    const response = await send({ type: "DAC_WAIT_CHAT_READY", timeoutMs: item.settings.timeout_sec * 1000, safetyCooldownSec: selectedSafetyCooldownSec, outputVerified: true });
+    const response = await send({ type: "DAC_WAIT_CHAT_READY", timeoutMs: item.settings.timeout_sec * 1000, safetyCooldownSec: selectedSafetyCooldownSec, outputVerified: true, abPollAction: item.settings.ab_poll_action });
+    // The runner ANSWERED something in the operator's live chat. That is an
+    // interaction with ChatGPT, not an internal detail, so it is audited
+    // whether the gate went on to succeed or to time out.
+    recordAbPollOutcome(item, response?.ab_poll);
     if (!response?.ok) throw new Error(response?.error || "ChatGPT did not become ready for the next job.");
+  }
+
+  function recordAbPollOutcome(item, outcome) {
+    if (!outcome?.detected) return;
+    const diagnostics = JSON.stringify(outcome.diagnostics || {});
+    if (outcome.clicked) {
+      const choice = outcome.kind === "skip" ? "skip" : `image_${outcome.choice_number}`;
+      // ChatGPT accepting the click is what makes it an ANSWER. A click the
+      // page never acted on gets its own event rather than being filed as a
+      // successful answer the audit cannot back up.
+      const event = outcome.cleared ? "AB_POLL_ANSWERED" : "AB_POLL_CLICK_UNCONFIRMED";
+      audit(event, item, { message: `action=${outcome.action}; clicked=${choice}; randomized=${Boolean(outcome.randomized)}; cleared=${Boolean(outcome.cleared)}; diagnostics=${diagnostics}` });
+      log(outcome.cleared ? `${item.job.id}: poll A/B đã trả lời tự động (${choice}).` : `${item.job.id}: đã bấm poll A/B (${choice}) nhưng ChatGPT chưa gỡ khối poll — kiểm tra tab.`, outcome.cleared ? "info" : "error");
+      return;
+    }
+    audit("AB_POLL_UNANSWERED", item, { message: `action=${outcome.action}; reason=${outcome.reason || "UNKNOWN"}; diagnostics=${diagnostics}` });
+    log(`${item.job.id}: ${outcome.message || "Poll A/B chưa trả lời được."}`, "error");
   }
 
   function imageLocationFor(item, effectiveOutput) {
@@ -4662,23 +4685,50 @@
       item.runtime_stage = "SAVING"; setCurrent(item, item.runtime_stage, "Writing generated image to the configured output.", item.settings.timeout_sec);
       if (!result?.image_url) throw new Error("No attributable generated image was found.");
       if (item.references.some((reference) => reference.dataUrl === result.image_url)) throw new Error("INPUT_IMAGE_FALSE_POSITIVE: output URL matches a selected reference image.");
+      // One turn may legitimately carry several images (the A/B poll renders
+      // two). Every one of them is this job's output, so every one is saved
+      // and recorded; result_file stays the FIRST variant so existing readers
+      // keep working, and result_files carries the whole verified set.
+      const imageUrls = Array.isArray(result.image_urls) && result.image_urls.length ? result.image_urls : [result.image_url];
+      const totalVariants = imageUrls.length;
+      const requestedFirst = window.DacOutputLocation.variantFilename(window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(imageUrls[0])), 1, totalVariants);
       if (!effectiveOutput.saveImages) {
         item.phase = "OUTPUT_SAVED";
         item.detected_not_downloaded = true;
-        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), persistence_verified: false, detected_not_downloaded: true, result_file: "", result_download_id: "", write_outcome: "detected_not_downloaded", detection_diagnostics: JSON.stringify(result?.detection || {}) });
-        audit("DETECTED_NOT_DOWNLOADED", item, { message: "Attributable image detected; generated-image download is disabled." });
+        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: requestedFirst, persistence_verified: false, detected_not_downloaded: true, result_file: "", result_files: "", image_count: String(totalVariants), result_download_id: "", write_outcome: "detected_not_downloaded", detection_diagnostics: JSON.stringify(result?.detection || {}) });
+        audit("DETECTED_NOT_DOWNLOADED", item, { message: `Attributable image detected (${totalVariants}); generated-image download is disabled.` });
         item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image detected; download disabled.");
         renderQueue(); progress(`${item.job.id} detected; image download disabled.`);
       } else {
-        const accepted = await saveGeneratedImage(result.image_url, item, imageLocationFor(item, effectiveOutput));
-        if (!accepted?.ok) throw new Error(accepted?.message || accepted?.error || "Image output was not accepted.");
+        const savedFiles = [];
+        const writeOutcomes = [];
+        let firstAccepted = null;
+        try {
+          for (const [offset, imageUrl] of imageUrls.entries()) {
+            const variant = { number: offset + 1, total: totalVariants };
+            const accepted = await saveGeneratedImage(imageUrl, item, imageLocationFor(item, effectiveOutput), variant);
+            if (!accepted?.ok) throw new Error(accepted?.message || accepted?.error || "Image output was not accepted.");
+            if (!firstAccepted) firstAccepted = accepted;
+            savedFiles.push(accepted.filename);
+            writeOutcomes.push(accepted.write_outcome || "written");
+            state.verifiedImageFiles.push(accepted.filename);
+          }
+        } catch (error) {
+          // Variants saved before the failure are real files on disk. Record
+          // them before the failure propagates, or the ledger would claim the
+          // job wrote nothing while orphans sit in the output folder.
+          if (savedFiles.length) {
+            update(item, { result_files: savedFiles.join(" | "), image_count: `${savedFiles.length}/${totalVariants}`, write_outcome: `partial:${writeOutcomes.join(",")}` });
+            audit("OUTPUT_PARTIAL", item, { message: `${savedFiles.length}/${totalVariants} ảnh đã ghi trước khi lỗi: ${savedFiles.map((file) => window.DacOutputLocation.artifactLeaf(file)).join(" | ")}` });
+          }
+          throw error;
+        }
         item.phase = "OUTPUT_SAVED";
         const outputSavedAt = new Date().toISOString();
-        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), persistence_verified: true, detected_not_downloaded: false, result_file: accepted.filename, result_download_id: accepted.download_id ?? "", output_saved_at: outputSavedAt, write_outcome: accepted.write_outcome || "written", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
-        state.verifiedImageFiles.push(accepted.filename);
-        audit("OUTPUT_SAVED", item, { message: `write_outcome=${accepted.write_outcome || "written"}` });
+        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: requestedFirst, persistence_verified: true, detected_not_downloaded: false, result_file: firstAccepted.filename, result_files: savedFiles.join(" | "), image_count: String(totalVariants), result_download_id: firstAccepted.download_id ?? "", output_saved_at: outputSavedAt, write_outcome: writeOutcomes.join(" | "), attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+        audit("OUTPUT_SAVED", item, { message: `write_outcome=${writeOutcomes.join(" | ")}; images=${totalVariants}${totalVariants > 1 ? `; variants=${savedFiles.map((file) => window.DacOutputLocation.artifactLeaf(file)).join(" | ")}` : ""}` });
         item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image checkpoint recorded; waiting for ChatGPT to become idle.");
-        renderQueue(); progress(`SAVED ✓ ${accepted.filename}`);
+        renderQueue(); progress(totalVariants > 1 ? `SAVED ✓ ${totalVariants} ảnh: ${savedFiles.map((file) => window.DacOutputLocation.artifactLeaf(file)).join(", ")}` : `SAVED ✓ ${firstAccepted.filename}`);
       }
     } catch (error) {
       return resolveJobFailure(item, persistenceFailureType(error), messageOf(error), settings);
@@ -4829,7 +4879,7 @@
             completed = true; halted = true; break;
           }
           let response;
-          try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
+          try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references, maxImages: item.settings.max_images_per_job }); }
           catch (error) { response = { ok: false, error: messageOf(error), attempt: { job_id: item.job.id, attempt_id: item.attempt_id, phase: "PRE_SUBMIT", submittedAt: null } }; }
           if (!matchesAttempt(response, item)) {
             const outcome = await resolveJobFailure(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch from ChatGPT content receiver.", settings);

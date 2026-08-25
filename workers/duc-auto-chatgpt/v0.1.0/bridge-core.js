@@ -530,8 +530,11 @@
   function validateRunTrial(raw) {
     const params = assertPlainObject(raw, "params");
     rejectUnknown(params, ["job_ids"], "params");
-    if (!Array.isArray(params.job_ids) || params.job_ids.length < 1 || params.job_ids.length > 2) {
-      invalidParams("params.job_ids", "expected 1-2 explicit job IDs");
+    // Owner amendment 2026-08-25: a development trial is ONE continuous chain
+    // of up to 30 jobs, because the real workload is 20-30 images. The pacing
+    // rule (>= 5 min between trials) and the dev-mode gate are unchanged.
+    if (!Array.isArray(params.job_ids) || params.job_ids.length < 1 || params.job_ids.length > 30) {
+      invalidParams("params.job_ids", "expected 1-30 explicit job IDs");
     }
     const jobIds = params.job_ids.map((value, index) => jobIdValue(value, `params.job_ids[${index}]`));
     if (new Set(jobIds).size !== jobIds.length) invalidParams("params.job_ids", "duplicate job ID");
@@ -590,7 +593,7 @@
     registryEntry({ name: "system.capabilities", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Describe the immutable v1 method and policy surface.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "queue.list", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a page of active logical queue jobs.", params_schema: { cursor: "string|null", limit: "integer:1..100", statuses: "code[]", include_prompt: "boolean" }, params_validator: validateQueueList }),
     registryEntry({ name: "run.status", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read current run state without changing it.", params_schema: {}, params_validator: validateEmptyParams }),
-    registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reserve one capped development trial for 1-2 explicit eligible jobs; returns immediately for run.status polling.", params_schema: { job_ids: "string[1..2]" }, params_validator: validateRunTrial }),
+    registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reserve one capped development trial chain for 1-30 explicit eligible jobs; returns immediately for run.status polling.", params_schema: { job_ids: "string[1..30]" }, params_validator: validateRunTrial }),
     registryEntry({ name: "ledger.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a sanitized page of physical XLSX ledger rows.", params_schema: { cursor: "string|null", limit: "integer:1..100", include_prompt: "boolean", include_removed: "boolean" }, params_validator: validateLedgerRead }),
     registryEntry({ name: "jobs.add", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Add jobs directly to the current Setup session, or create an in-memory session.", params_schema: { jobs: "direct_job[1..100]" }, params_validator: validateJobsAdd }),
     registryEntry({ name: "jobs.update", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Update mutable input fields on one PRE_SUBMIT job or a batch of 1-20 jobs.", params_schema: { job_id: "string?", prompt: "string?", reference_images: "string[]?", settings: "job_settings?", jobs: "job_update[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobsUpdate }),

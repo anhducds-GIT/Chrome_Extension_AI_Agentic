@@ -73,6 +73,22 @@
     return `${safeFileLeaf(stem, "image")}.${actualExtension(null, extension)}`;
   }
 
+  // One ChatGPT turn can carry several generated images (the A/B poll renders
+  // two). A single-image job keeps its existing filename exactly, so nothing
+  // already on disk changes shape; only a genuinely multi-image job gets the
+  // __variant-NN suffix, and then EVERY image of that job gets one so the set
+  // reads as a set rather than "the real one plus some extras".
+  function variantFilename(filename, variantNumber, totalVariants = 1) {
+    const safe = safeFileLeaf(filename, "output");
+    const total = Math.max(1, Number(totalVariants) || 1);
+    if (total <= 1) return safe;
+    const number = Math.max(1, Math.min(Number(variantNumber) || 1, 99));
+    const match = /^(.*?)(\.[^.]+)$/.exec(safe);
+    const stem = match ? match[1] : safe;
+    const extension = match ? match[2] : "";
+    return `${stem}__variant-${String(number).padStart(2, "0")}${extension}`;
+  }
+
   function collisionPolicy(value) {
     const policy = String(value || "uniquify").toLowerCase();
     if (!["overwrite", "uniquify", "fail"].includes(policy)) throw new Error("Collision policy must be overwrite, uniquify, or fail.");
@@ -367,6 +383,6 @@
     return { filename: actual, outcome: replaced ? "overwritten" : "written", size: persisted.size };
   }
 
-  const api = { safeRelativeFolder, safeFileLeaf, artifactLeaf, fileExists, safeFilename, baseResultName, baseResultFilenamePattern, baseAuditName, workbookBase, validateImagePattern, validateResultFilenamePattern, checkpointFilenamePattern, renderCheckpointFilename, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, collisionError, verifyDownloadedFilename, isPolicyFilename, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
+  const api = { safeRelativeFolder, safeFileLeaf, artifactLeaf, fileExists, safeFilename, baseResultName, baseResultFilenamePattern, baseAuditName, workbookBase, validateImagePattern, variantFilename, validateResultFilenamePattern, checkpointFilenamePattern, renderCheckpointFilename, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, collisionError, verifyDownloadedFilename, isPolicyFilename, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
   (typeof window !== "undefined" ? window : globalThis).DacOutputLocation = api;
 })();
