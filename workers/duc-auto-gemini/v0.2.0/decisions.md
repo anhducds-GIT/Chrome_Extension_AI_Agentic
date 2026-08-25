@@ -70,3 +70,9 @@ Nguồn: `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md`. Đức chốt cả 5
 | Quyết định | Vì sao | Ai chốt |
 |---|---|---|
 | Run được phép BẮT ĐẦU từ cả gemini.google.com/images lẫn gemini.google.com/app/<id> (trước đó /app chỉ hợp lệ sau khi chính tab đó đã gửi). | Bằng chứng G1 (bản chụp 2–4) xác minh đầy đủ ô soạn thảo, menu upload, nút Gửi, khung trả lời và ảnh kết quả ngay trên /app; owner cũng thao tác thường xuyên ở đó. Lưu ý vận hành: chạy từ /app thì prompt gõ vào đúng hội thoại đang mở — owner chịu trách nhiệm trỏ tab đúng chỗ; audit ghi lại URL. | Đức |
+
+## 2026-08-25 — Workflow điều khiển từ chat: owner chỉ còn "tạo thư mục" và "bấm Run" (owner: Đức)
+
+| Quyết định | Vì sao | Ai chốt |
+|---|---|---|
+| Toàn bộ khâu chuẩn bị phiên chạy chuyển sang chat: Đức tạo thư mục và gửi đường dẫn; AI tự đọc workbook + ảnh, tự bơm qua Bridge (jobs.add + references.add mới + run_settings.configure + output.configure). Giao diện extension không còn là nơi làm việc chính. Hai thao tác còn lại của owner: đưa đường dẫn thư mục, và bấm Run cho batch sản xuất (trial ≤2 job theo exception dev đã chốt). | Extension không đọc được thư mục máy (giới hạn Chrome) nhưng AI đọc được — nên khâu "chọn file" qua giao diện là thừa. Giảm thao tác thủ công của owner xuống tối thiểu đúng theo nguyên tắc "AI là bộ não, người là cánh tay". | Đức |
