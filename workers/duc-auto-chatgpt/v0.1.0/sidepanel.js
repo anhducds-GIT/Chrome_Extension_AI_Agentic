@@ -4420,6 +4420,7 @@
     const objectUrl = URL.createObjectURL(candidate.blob);
     try {
       const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, "fail");
+      await expectDownloadName(objectUrl, request);
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
       window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
@@ -4510,6 +4511,7 @@
         ? window.DacOutputLocation.downloadArtifactRequest(location, requested, "uniquify")
         : window.DacOutputLocation.downloadArtifactRequest(location, requested, "fail");
       if (!force) await assertDownloadCollisionPolicy(request);
+      await expectDownloadName(objectUrl, request);
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
       window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
@@ -4537,6 +4539,15 @@
     const requested = request.filename.replace(/\//g, "\\").toLowerCase();
     const matches = await chrome.downloads.search({ filename: request.filename });
     if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw window.DacOutputLocation.collisionError(request);
+  }
+
+  // Chrome ignores blob-download filename suggestions on this machine (GUID
+  // names — live evidence 2026-08-25), so the background registers a
+  // filename determiner for this extension's own downloads and the panel
+  // announces each expected name first. Best effort: a missed registration
+  // surfaces at verifyDownloadedFilename, never as a silent wrong name.
+  async function expectDownloadName(url, request) {
+    try { await chrome.runtime.sendMessage({ type: "DAC_EXPECT_DOWNLOAD_NAME", url, filename: request.filename, conflictAction: request.conflictAction }); } catch (_) { /* verify catches it */ }
   }
 
   async function waitForCompletedDownload(downloadId, timeoutMs = 120000) {
