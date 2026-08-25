@@ -421,3 +421,14 @@ Chrome download setting. Needs one question to the owner before coding around it
 Historic note: the Gemini worker went from "never survived a single live run" (Pilot-01, 4 bugs) to
 "2/2 SUCCESS" in one day, on the strategy decided in drafts/AUDIT-DOC-LAP-2026-08-24.md: platform
 port + live-DOM evidence + bridge-first self-develop loop.
+
+## MILESTONE — 2026-08-25 (chiều): Pilot 04 PASSED — closed self-develop loop proven live
+
+Full chat-driven autonomy demonstrated on v0.2.0: AI pushed 6 jobs via jobs.add, self-triggered
+run.trial chains, watched run.status, diagnosed two real defects from live failures (unrendered
+inline previews defeating detection; 2-job trial slicing), shipped fixes (44bb09b, 95d8d78), and
+the 4-job continuous finale chain finished 4/4 SUCCESS with zero UI interaction. Owner decisions
+recorded same-day: trial = one continuous chain <=10 jobs; chat is the primary workspace
+(jobs.add + references.add + configure methods replace the file pickers). Full narrative:
+v0.2.0/pilot-04/PILOT-04-KET-LUAN.md. Operator knowledge codified in v0.2.0/AI-OPERATOR-GUIDE.md.
+Still local-only: repo has ~25 unpushed commits (push awaits owner approval).

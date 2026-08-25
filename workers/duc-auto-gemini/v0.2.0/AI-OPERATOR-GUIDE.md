@@ -67,7 +67,7 @@ Vòng poll `run-status` mỗi 10s (chạy nền). LƯU Ý baseline: counts là T
 | Panel tự đóng khi chạy xong | Tải file bằng thẻ <a> trong panel | ĐÃ VÁ (chrome.downloads) |
 | ARTIFACT PERSISTENCE FAILED nhưng file có tải về | Môi trường Chrome của Đức đổi tên mọi download (UUID/tên server) | ĐÃ VÁ (khoan dung đổi tên, ghi tên thật). Thủ phạm gốc chưa xác định |
 | INTERNAL_ERROR trống | Executor nuốt thông điệp lỗi | ĐÃ VÁ (details.message) |
-| Job SUBMITTED, ảnh CÓ trên trang nhưng detection timeout → job sau bị khoá RECONCILING → halt "Timed out waiting for an idle Gemini composer" | Trang Gemini lỗi render preview (ảnh tồn tại nhưng không vẽ inline) — detection đòi ảnh hiển thị ≥200px | Pilot-04 Trial 1. MỞ: nới điều kiện nhận diện cho ảnh có URL hợp lệ trong generated-image dù chưa render; cân nhắc lệnh chẩn đoán DOM qua Bridge |
+| Job SUBMITTED, ảnh CÓ trên trang nhưng detection timeout → job sau bị khoá RECONCILING → halt "Timed out waiting for an idle Gemini composer" | Gemini có lúc tạo ảnh nhưng KHÔNG render preview inline — detection cũ đòi ảnh hiển thị ≥200px | ĐÃ VÁ (`remoteVerifiedResult` trong content.js — ảnh trong generated-image với URL lh3 thật = tồn tại; xác nhận bằng chuỗi chung kết Pilot-04 4/4) |
 | TIMEOUT_PRE_SUBMIT "waiting for idle composer" hàng loạt sau 1 job kẹt | Hệ quả dây chuyền của dòng trên (outputVerified=false chặn readiness) | Xử lý gốc ở dòng trên |
 | Chạy trên /images: sau khi gửi tab nhảy sang /app/<id> | Hành vi chuẩn của Gemini | ĐÃ THIẾT KẾ ĐÚNG (surfaceAllowed). Chat thường /app với prompt "Generate an image: …" chạy ổn (Trial 2 Pilot-04: 2/2) |
 | Host không phản hồi (ECONNREFUSED) | Host Node chết | Bảo Đức đúp chuột `START-BRIDGE.cmd` trong thư mục Bridge; extension tự nối lại ≤30s |
