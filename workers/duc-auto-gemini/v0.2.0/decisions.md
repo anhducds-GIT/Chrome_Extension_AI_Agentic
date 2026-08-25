@@ -58,3 +58,9 @@ Nguồn: `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md`. Đức chốt cả 5
 | Quyết định | Vì sao | Ai chốt |
 |---|---|---|
 | AI được TỰ khởi động "trial run" qua Bridge trong giai đoạn phát triển, qua một phương thức riêng (không phải run.start), với trần cứng trong code: công tắc "Chế độ phát triển" trong panel phải BẬT; ≤2 job/trial; timeout ≤90s; delay 20–30s giữa job; ≤6 trial/giờ; audit gắn nhãn nguồn bridge_dev; hard-stop security/quota giữ nguyên. Run sản xuất (batch dài, >2 job, hoặc công tắc TẮT) vĩnh viễn chỉ do người bấm; `run.start` vẫn bị cấm trong giao thức. | Bridge đã cho AI đọc toàn bộ trạng thái; mảnh thiếu duy nhất của vòng self-develop là quyền chạy thử nhỏ. Vòng debug thực tế (lỗi quota giả 25/08) mất ~1 giờ chờ phối hợp cho 5 phút chẩn đoán. Trial 1–2 ảnh nhịp chậm: rủi ro thực tế không đáng kể; rủi ro thật là vòng lặp mất kiểm soát nên chặn bằng trần cứng + công tắc trong tay owner. | Đức (đề xuất) + Claude (phân tích, đồng thuận với 4 hàng rào) |
+
+## 2026-08-25 — Điều chỉnh trần tần suất trial (owner: Đức)
+
+| Quyết định | Vì sao | Ai chốt |
+|---|---|---|
+| Bỏ trần "≤6 trial/giờ"; thay bằng: hai trial liên tiếp phải cách nhau tối thiểu 5 phút. | Quota tạo ảnh của owner rất dồi dào — cái cần kiểm soát là nhịp độ (tránh hành vi máy móc dồn dập), không phải tổng số lượng. | Đức |
