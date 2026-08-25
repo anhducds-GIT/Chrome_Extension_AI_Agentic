@@ -44,6 +44,9 @@
     PROPOSAL_CONFLICT: { retryable: true, message: "The ledger changed; refresh and submit a new proposal for owner review." },
     VALIDATION_FAILED: { retryable: false, message: "Existing workbook, reference, or settings validation rejected the proposal." },
     APPROVAL_REQUIRED: { retryable: false, message: "This product mutation requires an owner click in the side panel." },
+    DEV_MODE_OFF: { retryable: false, message: "The owner's development-mode toggle is OFF; run.trial is refused." },
+    JOB_NOT_RUNNABLE: { retryable: false, message: "A requested job is missing from the loaded plan or is not currently runnable (PENDING, PRE_SUBMIT, unprotected)." },
+    TRIAL_RATE_LIMIT: { retryable: false, message: "The previous development trial started less than 300 seconds ago." },
     PERSISTENCE_VERIFICATION_FAILED: { retryable: true, message: "The immutable Result checkpoint could not be verified.", details: { failure_type: "PERSISTENCE_VERIFICATION_FAILED" } }
   }));
 
@@ -428,6 +431,21 @@
     return normalized;
   }
 
+  function validateRunTrial(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["job_ids", "timeout_sec", "delay_sec"], "params");
+    if (!Array.isArray(params.job_ids) || params.job_ids.length < 1 || params.job_ids.length > 2) {
+      invalidParams("params.job_ids", "expected 1-2 job ids (development trials never exceed 2 jobs)");
+    }
+    const jobIds = params.job_ids.map((value, index) => jobIdValue(value, `params.job_ids[${index}]`));
+    if (new Set(jobIds.map((id) => id.toLowerCase())).size !== jobIds.length) invalidParams("params.job_ids", "duplicate job id");
+    return {
+      job_ids: jobIds,
+      timeout_sec: params.timeout_sec === undefined ? 90 : integerValue(params.timeout_sec, "params.timeout_sec", 15, 90),
+      delay_sec: params.delay_sec === undefined ? 25 : integerValue(params.delay_sec, "params.delay_sec", 20, 30)
+    };
+  }
+
   function validateProposalGet(raw) {
     const params = assertPlainObject(raw, "params");
     rejectUnknown(params, ["proposal_id"], "params");
@@ -472,7 +490,8 @@
     registryEntry({ name: "output.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure naming, collision, and save controls for an already-bound output location.", params_schema: { image_pattern: "string?", result_filename_pattern: "string?", audit_filename: "string?", collision_policy: "overwrite|uniquify|fail?", save_images: "boolean?", save_result_xlsx: "boolean?", save_audit_jsonl: "boolean?" }, params_validator: validateOutputConfigure }),
     registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?" }, params_validator: validateRunSettingsConfigure }),
     registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage a quarantined queue proposal; never execute it automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100]" }, params_validator: validateQueuePropose }),
-    registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet })
+    registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet }),
+    registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Start one owner-gated development trial run of at most 2 runnable jobs; refused unless the side-panel development-mode toggle is ON, no run is active, and 300 seconds have passed since the previous trial. Production runs stay owner-only.", params_schema: { job_ids: "job_id[1..2]", timeout_sec: "integer:15..90?", delay_sec: "integer:20..30?" }, params_validator: validateRunTrial })
   ];
   const METHOD_REGISTRY = (() => {
     const registry = Object.create(null);

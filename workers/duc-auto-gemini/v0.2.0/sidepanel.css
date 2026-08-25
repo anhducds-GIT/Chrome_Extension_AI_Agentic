@@ -1113,3 +1113,32 @@ footer { line-height: 1.3; padding: 2px 0 2px; font-size: 9.5px; color: #64748b;
 .bridge-transport-status.disconnected,
 .bridge-transport-status.pairing_invalid { color: #b42318; }
 #bridgePairingInput { display: none; }
+
+/* Development mode (owner decision 2026-08-25): the toggle lives on the
+   BRIDGE card; while ON an amber banner plus a small RUN-screen badge keep
+   the state clearly visible so a bridge_dev trial can never run unnoticed. */
+.dev-mode-block { margin-top: 10px; padding-top: 10px; border-top: 1px dashed color-mix(in srgb, var(--color-warning, #d97706) 45%, transparent); }
+.dev-mode-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.dev-mode-toggle input { accent-color: var(--color-warning, #d97706); }
+.dev-mode-banner {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-warning, #d97706);
+  background: color-mix(in srgb, var(--color-warning, #d97706) 14%, transparent);
+  color: var(--color-warning, #d97706);
+  font-weight: 700;
+}
+.dev-mode-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--color-warning, #d97706);
+  background: color-mix(in srgb, var(--color-warning, #d97706) 14%, transparent);
+  color: var(--color-warning, #d97706);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  vertical-align: middle;
+}

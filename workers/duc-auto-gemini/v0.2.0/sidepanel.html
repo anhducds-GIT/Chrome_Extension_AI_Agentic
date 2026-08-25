@@ -223,7 +223,7 @@
         <!-- OVERALL PROGRESS -->
         <section class="card runtime-card" id="overallProgressCard">
           <div class="row spread section-title">
-            <span class="section-badge">PROGRESS</span>
+            <span class="section-badge">PROGRESS <span id="runDevModeBadge" class="dev-mode-badge" hidden>DEV MODE</span></span>
             <span class="halt-guide-trigger-group">
               <button id="haltInstructionsBtn" class="halt-instructions-trigger" type="button" aria-haspopup="dialog">ⓘ Halt</button>
               <span id="progressPercent" class="percent-badge">0%</span>
@@ -459,6 +459,14 @@
           <button id="bridgeUnpairBtn" class="secondary small" type="button" hidden>Ngắt pairing</button>
         </div>
         <input id="bridgePairingInput" type="file" accept=".json,application/json" />
+        <div class="dev-mode-block">
+          <label class="dev-mode-toggle">
+            <input id="devModeToggle" type="checkbox" />
+            <strong>Chế độ phát triển</strong>
+          </label>
+          <p class="hint">Khi BẬT, AI được phép tự khởi động trial run qua Bridge (method <code>run.trial</code>): tối đa 2 job, timeout ≤90s, delay 20–30s giữa job, tối thiểu 5 phút giữa 2 trial. Run sản xuất vẫn chỉ do người bấm; <code>run.start</code> vẫn bị cấm.</p>
+          <p id="devModeBanner" class="dev-mode-banner" role="status" aria-live="polite" hidden>DEV MODE — AI được phép chạy trial ≤2 job</p>
+        </div>
       </section>
 
       <section class="card bridge-activity-card" aria-labelledby="bridgeActivityTitle">
@@ -603,6 +611,7 @@
   <script src="xlsx-codec.js"></script>
   <script src="checkpoint-core.js"></script>
   <script src="runner-core.js"></script>
+  <script src="dev-trial-core.js"></script>
   <script src="attempt-telemetry-core.js"></script>
   <script src="run-state-core.js"></script>
   <script src="resume-core.js"></script>

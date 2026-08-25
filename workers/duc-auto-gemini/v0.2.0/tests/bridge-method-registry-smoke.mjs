@@ -11,7 +11,7 @@ const bridge = globalThis.DacBridgeCore;
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
   "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
-  "jobs.reorder", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get"
+  "jobs.reorder", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
@@ -78,7 +78,8 @@ const validByMethod = {
       settings: { timeout_sec: 180, max_retries: 2, safety_cooldown_sec: "6-9", output_folder: "Duc Auto ChatGPT" }
     }]
   },
-  "queue.proposal.get": { proposal_id: "proposal-uuid" }
+  "queue.proposal.get": { proposal_id: "proposal-uuid" },
+  "run.trial": { job_ids: ["P09-01", "P09-02"], timeout_sec: 90, delay_sec: 25 }
 };
 for (const [method, params] of Object.entries(validByMethod)) {
   assert.doesNotThrow(() => bridge.validateParams(method, params), `${method} accepts its v1 fixture`);
@@ -98,7 +99,8 @@ const invalidByMethod = {
   "output.configure": { collision_policy: "replace" },
   "run_settings.configure": { delay_min_sec: 25, delay_max_sec: 12 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [] },
-  "queue.proposal.get": { proposal_id: "" }
+  "queue.proposal.get": { proposal_id: "" },
+  "run.trial": { job_ids: [] }
 };
 for (const [method, params] of Object.entries(invalidByMethod)) {
   assert.throws(() => bridge.validateParams(method, params), (error) => error.code === "INVALID_PARAMS", `${method} rejects invalid schema input`);

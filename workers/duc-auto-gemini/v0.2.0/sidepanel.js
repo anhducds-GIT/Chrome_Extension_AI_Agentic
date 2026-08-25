@@ -29,7 +29,8 @@
     "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus", "runDashboardSplit", "runWidthSplitter",
     "bridgeProposalCard", "bridgeProposalCount", "bridgeProposalStatus", "bridgeProposalMeta", "bridgeProposalList", "bridgeProposalNotice", "bridgeProposalLockReason", "bridgeProposalFixtureBtn", "bridgeProposalRejectBtn", "bridgeProposalApproveBtn",
     "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput",
-    "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeActivityEmpty"
+    "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeActivityEmpty",
+    "devModeToggle", "devModeBanner", "runDevModeBadge"
   ];
   const els = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
   // Output Profile mode is normally driven by output_profile_id / result_output_profile_id
@@ -107,7 +108,9 @@
     bridgePort: null,
     bridgeTransportStatus: null,
     bridgeLastActivityAt: null,
-    bridgeActivity: []
+    bridgeActivity: [],
+    devMode: false,
+    devTrialContext: null
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -722,7 +725,8 @@
       "output.configure": withBridgeErrors(bridgeOutputConfigure),
       "run_settings.configure": withBridgeErrors(bridgeRunSettingsConfigure),
       "queue.propose": withBridgeErrors(bridgeQueuePropose),
-      "queue.proposal.get": withBridgeErrors(bridgeProposalGet)
+      "queue.proposal.get": withBridgeErrors(bridgeProposalGet),
+      "run.trial": withBridgeErrors(bridgeRunTrial)
     }
   });
 
@@ -996,6 +1000,69 @@
       method: "run_settings.configure", event: "BRIDGE_RUN_SETTINGS_CONFIGURED",
       mutate: async () => applyRuntimeOverrideValues(params)
     });
+  }
+
+  // ---------------------------------------------------------------------
+  // Development mode + run.trial (owner decision 2026-08-25, decisions.md).
+  // The toggle lives only in the owner's hands; while it is ON the AI may
+  // start one small trial run (<=2 jobs, timeout <=90s, delay 20-30s, >=300s
+  // between trials) through the SAME selected-jobs runner the human uses.
+  // ---------------------------------------------------------------------
+  function renderDevMode() {
+    if (els.devModeToggle) els.devModeToggle.checked = state.devMode;
+    if (els.devModeBanner) els.devModeBanner.hidden = !state.devMode;
+    if (els.runDevModeBadge) els.runDevModeBadge.hidden = !state.devMode;
+  }
+
+  async function restoreDevMode() {
+    try {
+      const stored = await chrome.storage.local.get(window.DacDevTrialCore.DEV_MODE_STORAGE_KEY);
+      state.devMode = stored?.[window.DacDevTrialCore.DEV_MODE_STORAGE_KEY] === true;
+    } catch (_) { state.devMode = false; }
+    renderDevMode();
+  }
+
+  async function setDevMode(enabled) {
+    state.devMode = enabled === true;
+    renderDevMode();
+    await chrome.storage.local.set({ [window.DacDevTrialCore.DEV_MODE_STORAGE_KEY]: state.devMode });
+    log(state.devMode
+      ? "Chế độ phát triển BẬT — AI được phép chạy trial ≤2 job qua Bridge (run.trial)."
+      : "Chế độ phát triển TẮT — mọi run.trial sẽ bị từ chối (DEV_MODE_OFF).", state.devMode ? "info" : "done");
+  }
+
+  async function bridgeRunTrial(params) {
+    const workbook = requireBridgeWorkbook();
+    const prepared = state.prepared || window.DacRunnerCore.prepare(workbook, state.files, state.runtimeOverrides);
+    const nowMs = Date.now();
+    // Storage errors bubble to INTERNAL_ERROR: the rate limit fails closed.
+    const stored = await chrome.storage.local.get(window.DacDevTrialCore.TRIAL_HISTORY_STORAGE_KEY);
+    const refusal = window.DacDevTrialCore.trialRefusal({
+      dev_mode: state.devMode,
+      running: state.running,
+      paused: state.paused || state.pauseRequested,
+      queue: prepared.queue,
+      job_ids: params.job_ids,
+      last_started_at_ms: window.DacDevTrialCore.lastStartedAtMs(stored?.[window.DacDevTrialCore.TRIAL_HISTORY_STORAGE_KEY]),
+      now_ms: nowMs
+    });
+    if (refusal) throw new window.DacBridgeCore.BridgeProtocolError(refusal.code, refusal.message, refusal.details);
+    // Record the trial start BEFORE launching so a second run.trial can never
+    // slip in during the async validation window of the first.
+    await chrome.storage.local.set({ [window.DacDevTrialCore.TRIAL_HISTORY_STORAGE_KEY]: window.DacDevTrialCore.historyRecord(nowMs) });
+    state.runId = state.runId || window.DacResumeCore.createRunId(workbook.fileName);
+    const runId = state.runId;
+    state.runSelection = new Set(params.job_ids);
+    const previousOverrides = { ...state.runtimeOverrides };
+    // Trial timeout/delay apply to this run only; restored when the run ends.
+    state.runtimeOverrides = { ...previousOverrides, timeout_sec: params.timeout_sec, delay_min_sec: params.delay_sec, delay_max_sec: params.delay_sec };
+    state.devTrialContext = { job_ids: [...params.job_ids], timeout_sec: params.timeout_sec, delay_sec: params.delay_sec, requested_at: new Date(nowMs).toISOString() };
+    log(`Bridge dev trial accepted: ${params.job_ids.join(", ")} (timeout ${params.timeout_sec}s, delay ${params.delay_sec}s). Chạy qua đúng đường Run Selected của người vận hành.`, "info");
+    // Same code path as the human "Chạy job đã chọn" button -- no second runner.
+    run("selected")
+      .catch((error) => log(`Bridge dev trial run error: ${messageOf(error)}`, "error"))
+      .finally(() => { state.runtimeOverrides = previousOverrides; state.devTrialContext = null; });
+    return { accepted: true, job_ids: [...params.job_ids], run_id: runId, timeout_sec: params.timeout_sec, delay_sec: params.delay_sec, input_origin: "bridge_dev" };
   }
 
   function appendBridgeMeta(label, value) {
@@ -4180,6 +4247,23 @@
     startRuntimeTicker();
     const target = await activeTab().catch(() => null);
     audit(state.resumeMode ? "RUN_CONTINUED" : "RUN_START", null, { target_url: target?.url || null }); log(state.resumeMode ? "Continued run started; completed jobs remain protected." : "Run started; visible log is scoped to this run.");
+    if (state.devTrialContext) {
+      // Owner-approved development trial: label the run start as bridge_dev
+      // with the exact trial parameters, in the same audit stream.
+      state.auditEvents.push({
+        timestamp: new Date().toISOString(), run_id: state.runId, job_id: null, attempt_id: null,
+        event: "BRIDGE_DEV_TRIAL_RUN_START", attempt: null, phase: null, status: null, failure_type: null,
+        message: `run.trial started jobs ${state.devTrialContext.job_ids.join(", ")} with timeout_sec=${state.devTrialContext.timeout_sec}, delay_sec=${state.devTrialContext.delay_sec}.`,
+        elapsed_ms: null, references: [], requested_filename: null, result_file: null, result_download_id: null,
+        persistence_verified: false, write_outcome: null, detected_not_downloaded: false, collision_policy: null,
+        prompt_fingerprint: null, target_url: target?.url || null, submitted_at: null, detection: null,
+        input_origin: "bridge_dev",
+        trial_job_ids: [...state.devTrialContext.job_ids],
+        trial_timeout_sec: state.devTrialContext.timeout_sec,
+        trial_delay_sec: state.devTrialContext.delay_sec,
+        trial_requested_at: state.devTrialContext.requested_at
+      });
+    }
     setStatus("RUNNING"); renderQueue(); controls();
     const settings = state.prepared.settings; let halted = false;
     try {
@@ -4558,6 +4642,7 @@
     pairAgentBridgeFile(file).catch((error) => log(messageOf(error), "error")).finally(() => { els.bridgePairingInput.value = ""; });
   });
   els.bridgeUnpairBtn?.addEventListener("click", () => unpairAgentBridge().catch((error) => log(messageOf(error), "error")));
+  els.devModeToggle?.addEventListener("change", () => setDevMode(els.devModeToggle.checked).catch((error) => { renderDevMode(); log(messageOf(error), "error"); }));
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFromRunTabBtn?.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
@@ -4575,6 +4660,7 @@
   renderOutput(); renderRuntime(); renderOutputGlossary(); renderOutputScreen(); controls(); restoreUiZoom().catch(() => applyUiZoom(1)); initRunWidthSplitter().catch(() => {}); syncZoomState().catch(() => {});
   renderBridgeTransportStatus(); renderBridgeActivityFeed();
   refreshBridgeTransportStatus();
+  restoreDevMode().catch(() => renderDevMode());
   chrome.storage?.onChanged?.addListener((changes, areaName) => {
     if (areaName === "local" && changes[window.DacBridgePairingCore.STATUS_STORAGE_KEY]?.newValue) {
       renderBridgeTransportStatus(changes[window.DacBridgePairingCore.STATUS_STORAGE_KEY].newValue);
@@ -4617,7 +4703,8 @@
       "output.configure": bridgeOutputConfigure,
       "run_settings.configure": bridgeRunSettingsConfigure,
       "queue.propose": bridgeQueuePropose,
-      "queue.proposal.get": bridgeProposalGet
+      "queue.proposal.get": bridgeProposalGet,
+      "run.trial": bridgeRunTrial
     }),
     port_name: BRIDGE_EXECUTOR_PORT
   });

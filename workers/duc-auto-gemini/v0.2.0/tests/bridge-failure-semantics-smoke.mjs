@@ -30,7 +30,7 @@ assert.equal(offlinePing.result.extension, "online");
 assert.equal(offlinePing.result.executor, "unavailable");
 assert.equal(offlinePing.result.chatgpt.state, "UNKNOWN");
 
-const executorMethods = ["queue.list", "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove", "jobs.reorder", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get"];
+const executorMethods = ["queue.list", "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove", "jobs.reorder", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial"];
 const paramsByMethod = {
   "jobs.add": { jobs: [{ prompt: "x" }] },
   "jobs.update": { job_id: "Q001", prompt: "x" },
@@ -39,7 +39,8 @@ const paramsByMethod = {
   "output.configure": { image_pattern: "{job_id}" },
   "run_settings.configure": { timeout_sec: 180 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [{ client_job_id: "a", prompt: "x" }] },
-  "queue.proposal.get": { proposal_id: "proposal-1" }
+  "queue.proposal.get": { proposal_id: "proposal-1" },
+  "run.trial": { job_ids: ["Q001"] }
 };
 for (const [index, method] of executorMethods.entries()) {
   const params = paramsByMethod[method] || {};
