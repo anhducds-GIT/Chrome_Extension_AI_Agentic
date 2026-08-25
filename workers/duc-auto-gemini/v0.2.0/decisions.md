@@ -52,3 +52,9 @@ Nguồn: `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md`. Đức chốt cả 5
 | Chính sách dọn checkpoint: giữ `v01` + 5 bản cuối; phần còn lại CHUYỂN vào thư mục `superseded/`, không bao giờ xoá | Chống phình thư mục vô hạn mà không mất bằng chứng | Đức | Audit 2026-08-24, điểm chốt #4 |
 | AI được commit kể cả main (chi tiết + 4 điều kiện: xem dòng SUPERSEDES ở bảng Vận hành/UI phía trên) | — | Đức | Audit 2026-08-24, điểm chốt #5 (Đức nới rộng) |
 | **Không đổi, nhắc lại:** Run là của Đức; AI không tự gửi prompt tới ChatGPT; không làm yếu exact-once / attribution / persistence verification; pilot evidence bất khả xâm phạm | Ranh giới an toàn gốc của toàn hệ thống | Đức (tái xác nhận) | Audit 2026-08-24 §5 |
+
+## 2026-08-25 — Development trial-run exception (owner: Đức)
+
+| Quyết định | Vì sao | Ai chốt |
+|---|---|---|
+| AI được TỰ khởi động "trial run" qua Bridge trong giai đoạn phát triển, qua một phương thức riêng (không phải run.start), với trần cứng trong code: công tắc "Chế độ phát triển" trong panel phải BẬT; ≤2 job/trial; timeout ≤90s; delay 20–30s giữa job; ≤6 trial/giờ; audit gắn nhãn nguồn bridge_dev; hard-stop security/quota giữ nguyên. Run sản xuất (batch dài, >2 job, hoặc công tắc TẮT) vĩnh viễn chỉ do người bấm; `run.start` vẫn bị cấm trong giao thức. | Bridge đã cho AI đọc toàn bộ trạng thái; mảnh thiếu duy nhất của vòng self-develop là quyền chạy thử nhỏ. Vòng debug thực tế (lỗi quota giả 25/08) mất ~1 giờ chờ phối hợp cho 5 phút chẩn đoán. Trial 1–2 ảnh nhịp chậm: rủi ro thực tế không đáng kể; rủi ro thật là vòng lặp mất kiểm soát nên chặn bằng trần cứng + công tắc trong tay owner. | Đức (đề xuất) + Claude (phân tích, đồng thuận với 4 hàng rào) |
