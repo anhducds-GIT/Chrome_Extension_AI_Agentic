@@ -49,9 +49,17 @@ assert.deepEqual(
   bridge.validateParams("run.trial", { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: 20 }),
   { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: 20 }
 );
+// Owner amendment 2026-08-25: a trial runs ONE CONTINUOUS chain of up to 10
+// jobs (never sliced into 2-job runs); larger batches stay owner-clicked.
+assert.equal(devTrial.MAX_TRIAL_JOBS, 10, "trial chain cap is 10 jobs");
+assert.deepEqual(
+  bridge.validateParams("run.trial", { job_ids: ["a", "b", "c", "d", "e", "f"] }).job_ids,
+  ["a", "b", "c", "d", "e", "f"],
+  "a 6-job continuous chain is a valid single trial"
+);
 const invalidTrialParams = [
   { job_ids: [] },
-  { job_ids: ["a", "b", "c"] },
+  { job_ids: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"] },
   { job_ids: ["P09-01"], timeout_sec: 120 },
   { job_ids: ["P09-01"], timeout_sec: 14 },
   { job_ids: ["P09-01"], delay_sec: 10 },

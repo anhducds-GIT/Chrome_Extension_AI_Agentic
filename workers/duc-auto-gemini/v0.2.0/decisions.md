@@ -76,3 +76,9 @@ Nguồn: `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md`. Đức chốt cả 5
 | Quyết định | Vì sao | Ai chốt |
 |---|---|---|
 | Toàn bộ khâu chuẩn bị phiên chạy chuyển sang chat: Đức tạo thư mục và gửi đường dẫn; AI tự đọc workbook + ảnh, tự bơm qua Bridge (jobs.add + references.add mới + run_settings.configure + output.configure). Giao diện extension không còn là nơi làm việc chính. Hai thao tác còn lại của owner: đưa đường dẫn thư mục, và bấm Run cho batch sản xuất (trial ≤2 job theo exception dev đã chốt). | Extension không đọc được thư mục máy (giới hạn Chrome) nhưng AI đọc được — nên khâu "chọn file" qua giao diện là thừa. Giảm thao tác thủ công của owner xuống tối thiểu đúng theo nguyên tắc "AI là bộ não, người là cánh tay". | Đức |
+
+## 2026-08-25 — Điều chỉnh trần trial: một trial = một chuỗi liên tục ≤10 job (owner: Đức)
+
+| Quyết định | Vì sao | Ai chốt |
+|---|---|---|
+| Bỏ trần "≤2 job/trial"; một trial chạy LIÊN TỤC cả chuỗi ảnh (trần cứng mới: 10 job/trial). Giãn cách ≥5 phút chỉ áp dụng giữa hai trial khác nhau. Batch >10 job vẫn là nút Run của owner. | Mục đích của trial là kiểm chứng cả flow chạy chuỗi — xé lẻ 2 job/lần vừa chậm (chờ 5 phút giữa các lát) vừa không phản ánh hành vi chuỗi thật. | Đức |
