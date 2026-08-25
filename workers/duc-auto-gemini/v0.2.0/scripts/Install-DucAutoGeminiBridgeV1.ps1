@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
   [ValidateRange(1024, 65535)][int]$Port = 32148,
+  [string]$InstallRoot = 'C:\WORKING ZONE\Duc-Auto-Gemini-Bridge',
   [switch]$RotateToken,
   [switch]$NoStart
 )
@@ -8,11 +9,15 @@ param(
 # Gemini variant of the proven Bridge V1 installer. Separate install root,
 # pairing filename, startup shortcut and default port (32148) so it can never
 # collide with a Duc Auto ChatGPT bridge host on the same machine (32147).
+# Owner decision 2026-08-25: the install root is a VISIBLE folder next to the
+# project (not AppData) — this is a single-user local machine and the owner
+# prefers discoverability. Kept OUTSIDE the git worktree so the pairing token
+# can never be committed.
 
 $ErrorActionPreference = 'Stop'
 $sourceRoot = Split-Path -Parent $PSScriptRoot
 $hostSource = Join-Path $sourceRoot 'duc-auto-chatgpt-loopback-bridge-host-v1'
-$installRoot = Join-Path $env:LOCALAPPDATA 'DucAutoGemini\BridgeV1'
+$installRoot = $InstallRoot
 $pairingPath = Join-Path $installRoot 'duc-auto-gemini-bridge-pairing-v1.json'
 $hostPath = Join-Path $installRoot 'bridge-host.mjs'
 $startupPath = Join-Path ([Environment]::GetFolderPath('Startup')) 'Duc Auto Gemini Bridge V1.lnk'
