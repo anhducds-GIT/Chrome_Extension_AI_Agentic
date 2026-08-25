@@ -43,6 +43,15 @@ assert.match(withBridgeErrors, /bridgeAttentionFromError\(/, "withBridgeErrors c
 // (codes are identifiers, stable; captions are not asserted).
 const mapper = segment(js, "function bridgeAttentionFromError", "function renderBridgeActivityFeed", "bridgeAttentionFromError");
 assert.match(mapper, /PERSISTENCE_VERIFICATION_FAILED/);
+// A checkpoint version conflict must map to its own actionable row (load the
+// latest Result checkpoint), not to the folder-reauth row — and the plain
+// Error from the checkpoint writer must be rethrown as a typed bridge error
+// instead of laundering to INTERNAL_ERROR (hit live 2026-08-25).
+assert.match(mapper, /CHECKPOINT_VERSION_CONFLICT/);
+assert.match(js, /BRIDGE_ATTENTION_DEFS[\s\S]*?CHECKPOINT_CONFLICT/, "CHECKPOINT_CONFLICT definition must exist");
+const mutationCatch = segment(js, "if (recoveredForward) {", "state.queueMutationRunning = false", "mutation catch");
+assert.match(mutationCatch, /CHECKPOINT_VERSION_CONFLICT/, "version conflict must be mapped to a typed error");
+assert.match(mutationCatch, /PERSISTENCE_VERIFICATION_FAILED/, "mapped code must be PERSISTENCE_VERIFICATION_FAILED");
 assert.match(mapper, /WORKBOOK_NOT_LOADED/);
 assert.match(mapper, /OUTPUT_PROFILE_UNBOUND/);
 assert.match(mapper, /RUN_ACTIVE/);

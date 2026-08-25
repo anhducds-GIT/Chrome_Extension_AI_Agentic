@@ -615,6 +615,11 @@
       title: "Cần bật lưu Audit JSONL + Result XLSX",
       guidance: "Mọi thay đổi từ AI đều phải ghi được bằng chứng trước khi có hiệu lực. Mở SETUP và bật 2 công tắc lưu.",
       action: "setup", actionLabel: "Mở SETUP"
+    },
+    CHECKPOINT_CONFLICT: {
+      title: "Nạp Result checkpoint mới nhất — phiên đang mở từ file gốc",
+      guidance: "Folder output đã có checkpoint mà phiên hiện tại không biết (mở từ workbook gốc thay vì Result XLSX), nên hệ thống từ chối ghi đè — đúng thiết kế bảo vệ bằng chứng. Bấm nút và chọn file __results__ có số v cao nhất trong folder.",
+      action: "workbook", actionLabel: "Tiếp tục run có sẵn (Result XLSX)"
     }
   });
 
@@ -789,7 +794,8 @@
     const code = error?.code;
     const message = messageOf(error);
     const folderHint = bridgeTargetFolderSuggestion();
-    if (code === "PERSISTENCE_VERIFICATION_FAILED") raiseBridgeAttention("FOLDER_REAUTH_NEEDED", message, folderHint);
+    if (code === "PERSISTENCE_VERIFICATION_FAILED" && /CHECKPOINT_VERSION_CONFLICT/.test(message)) raiseBridgeAttention("CHECKPOINT_CONFLICT", message, folderHint);
+    else if (code === "PERSISTENCE_VERIFICATION_FAILED") raiseBridgeAttention("FOLDER_REAUTH_NEEDED", message, folderHint);
     else if (code === "WORKBOOK_NOT_LOADED") raiseBridgeAttention("WORKBOOK_NEEDED", message, folderHint);
     else if (code === "VALIDATION_FAILED" && /OUTPUT_PROFILE_UNBOUND/.test(message)) raiseBridgeAttention("FOLDER_BIND_NEEDED", message, folderHint);
     else if (code === "RUN_ACTIVE" && /bật lưu audit/i.test(message)) raiseBridgeAttention("PERSISTENCE_TOGGLES_OFF", message);
@@ -1165,6 +1171,14 @@
           checkpoint: { version: recoveredForward.checkpoint.version, filename: recoveredForward.checkpoint.filename, verified: true },
           recovered_forward: true
         };
+      }
+      // A version conflict is a plain Error from the checkpoint writer; left
+      // unmapped it launders to a meaningless INTERNAL_ERROR (hit live
+      // 2026-08-25: session opened from the SOURCE workbook while the folder
+      // already held v01). Map it so the agent gets a clear retryable code and
+      // the attention hub can point Đức at "load the latest Result checkpoint".
+      if (!(error instanceof window.DacBridgeCore.BridgeProtocolError) && /CHECKPOINT_VERSION_CONFLICT/.test(messageOf(error))) {
+        throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", `${messageOf(error)} Phiên đang mở từ workbook gốc — nạp Result checkpoint mới nhất (Tiếp tục run có sẵn) rồi gọi lại.`);
       }
       throw error;
     } finally {
