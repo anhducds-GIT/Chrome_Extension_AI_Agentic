@@ -44,7 +44,7 @@ gửi tới `http://127.0.0.1:32148/v1/rpc` với header `Authorization: Bearer 
 ### Dựng phiên từ thư mục Đức đưa
 1. Đọc thư mục: workbook xlsx (cột `id`,`prompt`,`reference_images`) hoặc mô tả prompt.
 2. `jobs.add` (id tự cấp Q001…), `references.add` nếu có ảnh, `run_settings/output.configure` nếu cần.
-3. `queue-list` xác nhận → báo Đức "sẵn sàng" → Đức bấm Run, hoặc bạn `run-trial` từng cặp (dev).
+3. `queue-list` xác nhận → báo Đức "sẵn sàng" → Đức bấm Run, hoặc bạn `run-trial` cả chuỗi ≤10 job (dev).
 
 ### Theo dõi một lần chạy
 Vòng poll `run-status` mỗi 10s (chạy nền). LƯU Ý baseline: counts là TÍCH LŨY cả phiên —
