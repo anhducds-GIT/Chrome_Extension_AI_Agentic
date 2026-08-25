@@ -137,3 +137,10 @@ for (const list of [adapter.SELECTORS.composer, adapter.SELECTORS.send, adapter.
 }
 
 console.log("provider adapter static tests: PASS");
+
+// Review F1/F3/F6/F7 pins (adversarial pre-pilot review, 2026-08-25).
+assert.ok(adapter.isProviderUrl("https://gemini.google.com/app"), "bare /app (no trailing slash) is a provider URL (F7)");
+assert.ok(adapter.isProviderUrl("https://gemini.google.com/images?hl=vi"), "/images with a query string is a provider URL (F7)");
+assert.ok(adapter.isProviderUrl("https://gemini.google.com/u/1/app/abc123"), "/u/N/app/<id> is a provider URL (F7)");
+assert.ok(!adapter.isProviderUrl("https://gemini.google.com/imagesearch"), "path-prefix lookalikes are rejected (F7)");
+console.log("provider adapter F-fix pins: PASS");

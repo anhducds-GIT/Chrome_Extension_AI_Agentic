@@ -109,7 +109,7 @@
 
   const ORIGIN = Object.freeze({
     hosts: Object.freeze(["gemini.google.com"]),
-    urlPattern: /^https:\/\/gemini\.google\.com\/(images\/?$|app\/|u\/\d+\/)/i,
+    urlPattern: /^https:\/\/gemini\.google\.com\/(?:u\/\d+\/)?(?:images|app)(?:\/|[?#]|$)/i,
   });
 
   function isProviderUrl(url) {

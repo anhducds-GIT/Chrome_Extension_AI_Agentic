@@ -364,7 +364,12 @@
     return DECISIONS.exposeFileInput({
       queryInput: queryTransientFileInput,
       findTrigger: findUploadMenuButton,
-      findMenuItem: () => Array.from(document.querySelectorAll('[role="menuitem"], button')).find((item) => isVisible(item) && /(upload files|upload from computer|files|tải tệp|từ máy tính)/i.test(item.innerText || item.getAttribute("aria-label") || "")),
+      // Evidence (snapshot 4): the transient input exists the instant the menu
+      // opens, and clicking the "Files" row fires input.click() -> a native OS
+      // file dialog that automation cannot dismiss. The menu-item step is pure
+      // downside on Gemini; a missed input budget goes straight to the
+      // synthetic-drop fallback instead.
+      findMenuItem: () => null,
       click: (element) => element.click(),
       snapshot: blockerSnapshot,
       waitInput,
@@ -374,8 +379,12 @@
   // Close the CDK overlay menu so it never intercepts the later Send click.
   function closeUploadMenu() {
     const init = { key: "Escape", code: "Escape", keyCode: 27, which: 27, bubbles: true, cancelable: true };
-    document.dispatchEvent(new KeyboardEvent("keydown", init));
-    document.dispatchEvent(new KeyboardEvent("keyup", init));
+    // Angular CDK's OverlayKeyboardDispatcher listens on document.body; an
+    // event whose target is `document` never reaches it (body is a
+    // descendant, not an ancestor). Dispatch on body so the overlay hears it.
+    const target = document.body || document.documentElement;
+    target.dispatchEvent(new KeyboardEvent("keydown", init));
+    target.dispatchEvent(new KeyboardEvent("keyup", init));
   }
 
   async function buildTransfer(referenceImages) {
@@ -722,7 +731,11 @@
       sendResponse({
         ok: true,
         url: location.href,
-        composerFound: Boolean(composer),
+        // Gated on the surface rule: a composer on an unsubmitted /app
+        // conversation must NOT green-light Check Plan, or the first run
+        // halts as RECEIVER_LOST behind a passing plan (review finding F1).
+        composerFound: Boolean(composer) && surfaceAllowedNow(),
+        surface: ADAPTER.surface(location.href),
         sendButtonFound: Boolean(sendButton),
         generating: generatingSignal(),
         assistantCount: assistantMessages().length,

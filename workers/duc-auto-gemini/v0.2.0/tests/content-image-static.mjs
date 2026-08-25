@@ -98,3 +98,11 @@ assert.match(source, /WRONG_SURFACE/, "a wrong surface fails closed before any D
 assert.equal([...source.matchAll(/surfaceAllowedNow\(\)/g)].length >= 3, true, "runPrompt and both waitForChatReady readiness reads check the surface rule");
 
 console.log("content image static checks: PASS");
+
+// Review F1/F3/F6 pins (adversarial pre-pilot review, 2026-08-25).
+assert.match(source, /composerFound: Boolean\(composer\) && surfaceAllowedNow\(\)/, "F1: DAC_PING composerFound is gated on the surface rule so Check Plan cannot pass on an unsubmitted /app tab");
+const closeMenuBody = source.slice(source.indexOf("function closeUploadMenu()"), source.indexOf("async function buildTransfer"));
+assert.match(closeMenuBody, /document\.body \|\| document\.documentElement/, "F3: Escape is dispatched on document.body where the CDK OverlayKeyboardDispatcher listens");
+assert.ok(!/target\s*=\s*document\s*;/.test(closeMenuBody) && closeMenuBody.includes("target.dispatchEvent"), "F3: the dispatch target is body, not document");
+assert.match(source, /findMenuItem: \(\) => null/, "F6: the menu-item click step is disabled — clicking the Files row opens a native OS picker automation cannot dismiss");
+console.log("content F-fix pins: PASS");
