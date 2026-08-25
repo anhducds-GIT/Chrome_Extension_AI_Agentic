@@ -489,6 +489,15 @@
     if (error instanceof window.DacBridgeProposalCore.ProposalError && Object.hasOwn(window.DacBridgeCore.ERROR_DEFINITIONS, error.code)) {
       return new window.DacBridgeCore.BridgeProtocolError(error.code, error.message, error.details);
     }
+    // Always visible in the panel's DevTools console; never on the wire.
+    console.error("[bridge] unexpected handler failure", error);
+    // Dev-mode diagnostics (owner toggle ON): surface the real failure to the
+    // trusted local agent in details.debug instead of a blind INTERNAL_ERROR —
+    // guess-debugging laundered errors burned hours on 2026-08-25. Toggle OFF
+    // (production) keeps the fully laundered response.
+    if (state.bridgeDevMode) {
+      return new window.DacBridgeCore.BridgeProtocolError("INTERNAL_ERROR", undefined, { debug: String(error?.stack || error?.message || error).slice(0, 600) });
+    }
     return error;
   }
 
