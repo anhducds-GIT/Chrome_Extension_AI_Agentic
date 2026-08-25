@@ -4779,7 +4779,16 @@
     }
     state.stopRequested = false; state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
-    state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = []; state.auditPersistedPayload = ""; if (!state.resumeMode) { state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; } state.artifactErrors = []; renderCheckpointMeta();
+    state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = [];
+    // Bridge Setup mutations may already have written this session's audit
+    // file and checkpoints (v01, v02, …) before Run starts. Resetting the
+    // artifact chain here made the run's first flush collide with its own
+    // session's files (Chrome uniquified to " (1)" → verify failed → halt,
+    // hit live in the first run.trial, 2026-08-25). A session with existing
+    // artifacts CONTINUES its chain; only a genuinely fresh session resets.
+    const continuingSessionArtifacts = Boolean(state.auditFile || state.checkpointVersion);
+    if (!state.resumeMode && !continuingSessionArtifacts) { state.auditPersistedPayload = ""; state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; }
+    state.artifactErrors = []; renderCheckpointMeta();
     if (mode !== "recreate") els.logList.textContent = "";
     startRuntimeTicker();
     const target = await activeTab().catch(() => null);

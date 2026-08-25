@@ -1,5 +1,20 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// A session whose Setup mutations already wrote artifacts (audit file /
+// checkpoints) must CONTINUE that chain when Run starts — resetting collided
+// with the session's own files (live halt, first run.trial 2026-08-25).
+{
+  const panelSource = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "sidepanel.js"), "utf8");
+  const anchor = panelSource.indexOf("const continuingSessionArtifacts");
+  assert.ok(anchor > 0, "run() must detect an existing session artifact chain");
+  const region = panelSource.slice(anchor, anchor + 400);
+  assert.match(region, /state\.auditFile \|\| state\.checkpointVersion/, "continuation must key on existing audit file or checkpoint version");
+  assert.match(region, /!state\.resumeMode && !continuingSessionArtifacts/, "only a genuinely fresh session may reset the artifact chain");
+  assert.match(region, /state\.auditPersistedPayload = ""/, "the Downloads append-emulation payload resets only with the chain");
+}
 import vm from "node:vm";
 import { File } from "node:buffer";
 import { FakeDOMParser, FakeXMLSerializer } from "./xlsx-test-utils.mjs";
