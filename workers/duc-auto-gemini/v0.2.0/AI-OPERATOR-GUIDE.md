@@ -27,6 +27,7 @@ CLI có sẵn: `cd "C:\WORKING ZONE\Duc-Auto-Gemini-Bridge" && node bridge-cli.m
 | (raw POST) | jobs.add / jobs.update / jobs.remove / jobs.reorder | Dựng/sửa hàng đợi — jobs.add TỰ TẠO phiên nếu panel chưa có workbook |
 | (raw POST) | references.add | Đẩy ảnh tham chiếu (data URL, ≤5/lần, ≤700KB/ảnh) |
 | (raw POST) | run_settings.configure / output.configure | Cấu hình phiên |
+| (raw POST) | diagnostics.dom_probe | MẮT TỪ XA: snapshot DOM chỉ-đọc của tab Gemini (selector counts, buttons, images, custom tags, file inputs) — hết cảnh mượn mắt owner |
 
 Raw POST mẫu (Node): envelope `{protocol:"duc-auto-chatgpt.bridge",version:1,kind:"request",request_id,method,sent_at,client,params}`
 gửi tới `http://127.0.0.1:32148/v1/rpc` với header `Authorization: Bearer <token>`.
@@ -65,7 +66,7 @@ Vòng poll `run-status` mỗi 10s (chạy nền). LƯU Ý baseline: counts là T
 | GENERATION_LIMIT_REACHED ngay sau khi gửi, quota còn nhiều | Thẻ quota của Google tồn tại dạng khuôn rỗng vô hình trong /app | ĐÃ VÁ (kiểm tra visible+text). Nếu tái phát: xem quotaAnchorPresent |
 | ATTEMPT_ID_MISMATCH mọi response | So danh tính thiếu run_id (bug lịch sử v0.1.0) | ĐÃ VÁ (expectedIdentity) |
 | Panel tự đóng khi chạy xong | Tải file bằng thẻ <a> trong panel | ĐÃ VÁ (chrome.downloads) |
-| ARTIFACT PERSISTENCE FAILED nhưng file có tải về | Môi trường Chrome của Đức đổi tên mọi download (UUID/tên server) | ĐÃ VÁ (khoan dung đổi tên, ghi tên thật). Thủ phạm gốc chưa xác định |
+| ARTIFACT PERSISTENCE FAILED nhưng file có tải về | Chrome máy owner bỏ qua filename cho blob download (GUID/tên server) | ĐÃ VÁ KÉP: filename determiner trong background giành lại quyền đặt tên cho download CỦA MÌNH (port từ chatgpt b587246) + lớp khoan dung ghi tên thật làm lưới dự phòng |
 | INTERNAL_ERROR trống | Executor nuốt thông điệp lỗi | ĐÃ VÁ (details.message) |
 | Job SUBMITTED, ảnh CÓ trên trang nhưng detection timeout → job sau bị khoá RECONCILING → halt "Timed out waiting for an idle Gemini composer" | Gemini có lúc tạo ảnh nhưng KHÔNG render preview inline — detection cũ đòi ảnh hiển thị ≥200px | ĐÃ VÁ (`remoteVerifiedResult` trong content.js — ảnh trong generated-image với URL lh3 thật = tồn tại; xác nhận bằng chuỗi chung kết Pilot-04 4/4) |
 | TIMEOUT_PRE_SUBMIT "waiting for idle composer" hàng loạt sau 1 job kẹt | Hệ quả dây chuyền của dòng trên (outputVerified=false chặn readiness) | Xử lý gốc ở dòng trên |

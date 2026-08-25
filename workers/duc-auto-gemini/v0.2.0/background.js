@@ -21,10 +21,39 @@ chrome.runtime.onStartup.addListener(async () => {
 });
 
 const DOWNLOAD_COMPLETE_TIMEOUT_MS = 120000;
+const EXPECTED_DOWNLOAD_NAME_TTL_MS = 120000;
 
-// Private message used only by this extension's side panel after a generated
-// image URL has been observed in the current Gemini tab.
+// Chrome on this machine ignores the `filename` suggestion for blob: URL
+// downloads (URL-derived GUID names, flat in the download directory — hit
+// live 2026-08-25 on BOTH the GPT and Gemini extensions; ported from the
+// duc-auto-chatgpt fix b587246). A filename determiner has final say, so
+// this extension names its OWN downloads here and defers on everything else.
+// Registered synchronously (MV3 rule).
+const expectedDownloadNames = new Map();
+
+function rememberExpectedDownloadName(url, filename, conflictAction) {
+  const now = Date.now();
+  for (const [key, value] of expectedDownloadNames) if (value.expires < now) expectedDownloadNames.delete(key);
+  if (typeof url !== "string" || !url || typeof filename !== "string" || !filename) return false;
+  const action = ["uniquify", "overwrite", "prompt"].includes(conflictAction) ? conflictAction : "uniquify";
+  expectedDownloadNames.set(url, { filename, conflictAction: action, expires: now + EXPECTED_DOWNLOAD_NAME_TTL_MS });
+  return true;
+}
+
+chrome.downloads.onDeterminingFilename?.addListener((item, suggest) => {
+  if (item.byExtensionId !== chrome.runtime.id) { suggest(); return; }
+  const expected = expectedDownloadNames.get(item.url);
+  expectedDownloadNames.delete(item.url);
+  if (!expected || expected.expires < Date.now()) { suggest(); return; }
+  suggest({ filename: expected.filename, conflictAction: expected.conflictAction });
+});
+
+// Private messages used only by this extension's side panel.
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === "DAC_EXPECT_DOWNLOAD_NAME") {
+    sendResponse({ ok: rememberExpectedDownloadName(message.url, message.filename, message.conflictAction) });
+    return false;
+  }
   if (message?.type !== "DAC_DOWNLOAD_IMAGE") return false;
   downloadGeneratedImage(message)
     .then(sendResponse)
@@ -47,7 +76,9 @@ async function downloadGeneratedImage(message) {
     const suffix = requestedFilename.replace(/\//g, "\\").toLowerCase();
     if (existing.some((item) => String(item.filename || "").toLowerCase().endsWith(suffix) && item.state === "complete")) return failure("COLLISION", `Output already exists: ${requestedFilename}`);
   }
-  const downloadId = await chrome.downloads.download({ url, filename: requestedFilename, conflictAction: collisionPolicy === "fail" ? "uniquify" : collisionPolicy, saveAs: false });
+  const conflictAction = collisionPolicy === "fail" ? "uniquify" : collisionPolicy;
+  rememberExpectedDownloadName(url, requestedFilename, conflictAction);
+  const downloadId = await chrome.downloads.download({ url, filename: requestedFilename, conflictAction, saveAs: false });
   const item = await waitForCompletedDownload(downloadId);
   // A "complete" DownloadItem is Chrome's claim, not proof the bytes are on
   // disk. The directory writer reopens and measures its file; give the

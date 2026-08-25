@@ -11,7 +11,7 @@ const bridge = globalThis.DacBridgeCore;
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
   "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
-  "jobs.reorder", "references.add", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial"
+  "jobs.reorder", "references.add", "diagnostics.dom_probe", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
@@ -82,7 +82,8 @@ const validByMethod = {
     }]
   },
   "queue.proposal.get": { proposal_id: "proposal-uuid" },
-  "run.trial": { job_ids: ["P09-01", "P09-02"], timeout_sec: 90, delay_sec: 25 }
+  "run.trial": { job_ids: ["P09-01", "P09-02"], timeout_sec: 90, delay_sec: 25 },
+  "diagnostics.dom_probe": {}
 };
 for (const [method, params] of Object.entries(validByMethod)) {
   assert.doesNotThrow(() => bridge.validateParams(method, params), `${method} accepts its v1 fixture`);
@@ -104,7 +105,8 @@ const invalidByMethod = {
   "run_settings.configure": { delay_min_sec: 25, delay_max_sec: 12 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [] },
   "queue.proposal.get": { proposal_id: "" },
-  "run.trial": { job_ids: [] }
+  "run.trial": { job_ids: [] },
+  "diagnostics.dom_probe": { click: true }
 };
 for (const [method, params] of Object.entries(invalidByMethod)) {
   assert.throws(() => bridge.validateParams(method, params), (error) => error.code === "INVALID_PARAMS", `${method} rejects invalid schema input`);

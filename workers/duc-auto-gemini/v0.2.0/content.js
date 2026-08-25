@@ -764,6 +764,68 @@
       return false;
     }
 
+    if (message.type === "DAC_DOM_PROBE") {
+      // STRICTLY READ-ONLY diagnostics for the AI operator (bridge method
+      // diagnostics.dom_probe): observes the page and returns a snapshot.
+      // This path must never click, type, or change focus.
+      try {
+        const chainOf = (element, depth = 5) => {
+          const out = []; let parent = element?.parentElement, hops = 0;
+          while (parent && hops < depth) {
+            const testid = parent.getAttribute?.("data-test-id");
+            out.push(parent.tagName.toLowerCase() + (testid ? `[${testid}]` : ""));
+            parent = parent.parentElement; hops += 1;
+          }
+          return out.join(" > ");
+        };
+        const selectorCounts = {};
+        for (const [group, value] of Object.entries(ADAPTER.SELECTORS)) {
+          if (Array.isArray(value)) {
+            selectorCounts[group] = value.map((selector) => { try { return `${selector} => ${document.querySelectorAll(selector).length}`; } catch (_) { return `${selector} => ERR`; } });
+          } else if (typeof value === "string") {
+            try { selectorCounts[group] = `${value} => ${document.querySelectorAll(value).length}`; } catch (_) { selectorCounts[group] = `${value} => (not a selector)`; }
+          }
+        }
+        const buttons = Array.from(document.querySelectorAll("button")).filter(isVisible)
+          .map((button) => ({ aria: (button.getAttribute("aria-label") || "").slice(0, 60), testid: button.getAttribute("data-test-id") || "", txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40), disabled: button.disabled || button.getAttribute("aria-disabled") === "true" }))
+          .filter((button) => button.aria || button.testid || button.txt).slice(0, 40);
+        const images = Array.from(document.querySelectorAll("img")).slice(0, 15).map((image) => {
+          const rect = image.getBoundingClientRect();
+          const src = image.currentSrc || image.src || "";
+          return { rect: { w: Math.round(rect.width), h: Math.round(rect.height) }, scheme: (src.match(/^(blob:|data:|https:|http:)/) || ["none"])[0], srcHead: src.slice(0, 70), alt: (image.alt || "").slice(0, 40), generated: isGeneratedImage(image, src), chain: chainOf(image) };
+        });
+        const customTags = [...new Set(Array.from(document.querySelectorAll("*")).map((element) => element.tagName.toLowerCase()).filter((tag) => tag.includes("-")))].slice(0, 100);
+        const fileInputs = Array.from(document.querySelectorAll('input[type="file"]')).map((input) => ({ accept: (input.getAttribute("accept") || "").slice(0, 120), multiple: input.multiple, connected: input.isConnected, chain: chainOf(input) }));
+        const probe = {
+          captured_at: new Date().toISOString(),
+          url: location.href,
+          surface: ADAPTER.surface(location.href),
+          surface_allowed: surfaceAllowedNow(),
+          composerFound: Boolean(findComposer()),
+          sendFound: Boolean(findSendButton()),
+          stopFound: Boolean(findStopButton()),
+          generating: generatingSignal(),
+          attachmentPending: uploadIsPending(),
+          securityBlocker: securityBlockerText(),
+          generationLimitBlocker: generationLimitText(),
+          busy: STATE.busy,
+          selectorCounts, buttons, images, customTags, fileInputs,
+          truncated: false,
+        };
+        // Payload cap ~64KB: shrink the bulky arrays first rather than fail.
+        if (JSON.stringify(probe).length > 64 * 1024) {
+          probe.images = probe.images.slice(0, 5);
+          probe.buttons = probe.buttons.slice(0, 10);
+          probe.customTags = probe.customTags.slice(0, 40);
+          probe.truncated = true;
+        }
+        sendResponse({ ok: true, probe });
+      } catch (error) {
+        sendResponse({ ok: false, error: error?.message || String(error) });
+      }
+      return false;
+    }
+
     if (message.type === "DAC_ABORT") {
       STATE.abortRequested = true;
       sendResponse({ ok: true });

@@ -731,9 +731,19 @@
       "run_settings.configure": withBridgeErrors(bridgeRunSettingsConfigure),
       "queue.propose": withBridgeErrors(bridgeQueuePropose),
       "queue.proposal.get": withBridgeErrors(bridgeProposalGet),
-      "run.trial": withBridgeErrors(bridgeRunTrial)
+      "run.trial": withBridgeErrors(bridgeRunTrial),
+      "diagnostics.dom_probe": withBridgeErrors(bridgeDomProbe)
     }
   });
+
+  // Read-only remote eyes for the AI operator: forwards DAC_DOM_PROBE to the
+  // provider tab's content script and returns its snapshot verbatim. Never
+  // clicks, types, or changes focus — the content side enforces that too.
+  async function bridgeDomProbe() {
+    const response = await send({ type: "DAC_DOM_PROBE" });
+    if (!response?.ok) throw new Error(response?.error || "DOM probe failed in the content script.");
+    return response.probe;
+  }
 
   function connectBridgeExecutor() {
     if (!chrome.runtime?.connect || state.bridgePort) return;
@@ -4003,6 +4013,7 @@
     const objectUrl = URL.createObjectURL(candidate.blob);
     try {
       const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, "fail");
+      await expectDownloadName(objectUrl, request);
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
       verifyArtifactDownload(request, item);
@@ -4019,6 +4030,15 @@
   // Verify strictly first; on a pure filename mismatch, accept the download
   // when Chrome confirms it exists, record the real name, and warn — never
   // fail the whole run's artifact status over a rename.
+  // Chrome ignores blob-download filename suggestions on this machine (GUID
+  // names — live evidence 2026-08-25), so the background registers a
+  // filename determiner for this extension's own downloads and the panel
+  // announces each expected name first. Best effort: a missed registration
+  // surfaces at verifyArtifactDownload, never as a silent wrong name.
+  async function expectDownloadName(url, request) {
+    try { await chrome.runtime.sendMessage({ type: "DAC_EXPECT_DOWNLOAD_NAME", url, filename: request.filename, conflictAction: request.conflictAction }); } catch (_) { /* verify catches it */ }
+  }
+
   function verifyArtifactDownload(request, item) {
     try { return window.DacOutputLocation.verifyDownloadedFilename(request, item.filename); }
     catch (error) {
@@ -4105,6 +4125,7 @@
         ? window.DacOutputLocation.downloadArtifactRequest(location, requested, "uniquify")
         : window.DacOutputLocation.downloadArtifactRequest(location, requested, "fail");
       if (!force) await assertDownloadCollisionPolicy(request);
+      await expectDownloadName(objectUrl, request);
       const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
       const item = await waitForCompletedDownload(downloadId);
       verifyArtifactDownload(request, item);
@@ -4782,6 +4803,7 @@
       "run_settings.configure": bridgeRunSettingsConfigure,
       "queue.propose": bridgeQueuePropose,
       "queue.proposal.get": bridgeProposalGet,
+      "diagnostics.dom_probe": bridgeDomProbe,
       "run.trial": bridgeRunTrial
     }),
     port_name: BRIDGE_EXECUTOR_PORT
