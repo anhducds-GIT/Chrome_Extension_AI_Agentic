@@ -106,3 +106,12 @@ assert.match(closeMenuBody, /document\.body \|\| document\.documentElement/, "F3
 assert.ok(!/target\s*=\s*document\s*;/.test(closeMenuBody) && closeMenuBody.includes("target.dispatchEvent"), "F3: the dispatch target is body, not document");
 assert.match(source, /findMenuItem: \(\) => null/, "F6: the menu-item click step is disabled — clicking the Files row opens a native OS picker automation cannot dismiss");
 console.log("content F-fix pins: PASS");
+
+// Pilot G2-0 regression (2026-08-25): the freemium quota disclaimer exists as
+// an empty hidden placeholder in the /app DOM after any generation — mere
+// existence must never be treated as a quota wall.
+const quotaFn = source.slice(source.indexOf("function quotaAnchorPresent()"), source.indexOf("function generationLimitText()"));
+assert.match(quotaFn, /text\.length > 0/, "quota anchor requires non-empty text (placeholder-proof)");
+assert.match(quotaFn, /isVisible\(anchor\)/, "quota anchor requires visibility (placeholder-proof)");
+assert.ok(!/return Boolean\(document\.querySelector\(ADAPTER\.SELECTORS\.quotaExceededAnchor\)\);/.test(source), "the bare-existence quota check must not return");
+console.log("quota placeholder pins: PASS");

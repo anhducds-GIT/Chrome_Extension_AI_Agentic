@@ -140,7 +140,15 @@
     return ADAPTER.matchesGenerationLimit(text);
   }
   function quotaAnchorPresent() {
-    return Boolean(document.querySelector(ADAPTER.SELECTORS.quotaExceededAnchor));
+    // Pilot G2-0 (2026-08-25) proved mere existence is a FALSE POSITIVE:
+    // Gemini keeps this disclaimer element in the /app conversation DOM as an
+    // empty hidden placeholder after any generation (G1 snapshots 3-4), which
+    // hard-stopped a healthy run as GENERATION_LIMIT_REACHED. The wall is
+    // real only when the element is visible and actually says something.
+    const anchor = document.querySelector(ADAPTER.SELECTORS.quotaExceededAnchor);
+    if (!anchor) return false;
+    const text = (anchor.innerText || "").trim();
+    return text.length > 0 && isVisible(anchor);
   }
   function generationLimitText() {
     if (quotaAnchorPresent()) return "Gemini image generation quota reached (freemium quota disclaimer present).";
