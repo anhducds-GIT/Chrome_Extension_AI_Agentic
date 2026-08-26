@@ -49,9 +49,17 @@ Ba nhóm `assistantMessage` / `userMessage` / `conversationRoot` coi như xong.
   trial gửi prompt thành công**, tức `findSendButton()` đã trả về nút thật. Dấu hiệu nhóm
   này chết là **submit thất bại**, KHÔNG phải probe đếm ra 0.
 
-Còn lại: `attachmentPreview` / `uploadPending` — cần một run **có ảnh tham chiếu** mới đo được.
-Lưu ảnh chụp bằng chứng vào `evidence/` giống cách worker Gemini đã làm
-(`duc-auto-gemini/v0.1.0/evidence/G1-live-dom-20260825/`).
+**ĐÃ ĐO 2026-08-26 (Pilot-14, 3/3 SUCCESS) — nhóm cuối cùng đã có bằng chứng, một phần:**
+- `attachmentPreview` — **CÒN SỐNG, nhưng chỉ 1 trong 5 mục bắt được.**
+  `button[aria-label*="Remove file"]` khớp `=> 2` ở job 2 ảnh và `=> 4` ở job 4 ảnh — số khớp
+  **đúng bằng** số ảnh, nên là tín hiệu thật chứ không phải khớp bừa. Bốn mục còn lại
+  (`[data-testid*="attachment"]`, `[data-testid*="file-upload"]`, `[data-testid*="upload-preview"]`,
+  `button[aria-label*="Remove attachment"]`) **không khớp lần nào** → xem B-14.
+- `uploadPending` — **KHÔNG bắt được lần nào**, cả 3 mục, qua 52 lần dò có ảnh đính kèm đang
+  hiện trên trang. **Vẫn là mảng chưa đo** → xem B-15.
+- `ATTACHING_REFS` — runtime stage lần đầu quan sát được.
+- Bằng chứng: `Pilot-14_RefFeatureTest/evidence/watch-run-20260826-1411.jsonl` (976 lần dò)
+  và `RESULT-PILOT-14.md`.
 
 ### ~~B-03 · Cảnh báo sớm khi selector chết~~ — ĐÃ ĐÓNG `55b47e3`
 Vòng 2026-08-26 đốt 6 lượt quota vì retry mù: gửi prompt → không thấy gì → retry
@@ -104,6 +112,69 @@ không phải lỗi "báo cáo sai chỗ" — nhẹ hơn một bậc, nhưng v�
 - Audit Codex 3 vòng, PASS. Hai vòng đầu ép tách `overwritten` và tách hai sự thật ra hai trường.
 
 
+### B-14 · `attachmentPreview` đang đứng trên MỘT mục, và mục đó là nhãn tiếng Anh
+Đo live 2026-08-26 (Pilot-14): trong 5 mục của nhóm, chỉ `button[aria-label*="Remove file"]`
+khớp. Bốn mục `data-testid` **không khớp lần nào** — chúng là di sản kế thừa, không phải
+bằng chứng. Nên nhóm này thực chất là một selector, và nó dựa vào `aria-label` **tiếng Anh**:
+ChatGPT đổi nhãn, hoặc Đức đổi ngôn ngữ giao diện, là mù.
+
+Đã có tiền lệ y hệt trong repo này: `button[aria-label="Stop generating"]` từng chết và phải
+đổi sang `data-testid="stop-button"`.
+
+Cần: đo lại bằng `dom_probe` **giữa lúc gắn ảnh** để tìm một mục neo theo cấu trúc (không theo
+chữ), rồi thêm vào nhóm. Đừng xoá mục đang chạy được. Bốn mục chết thì giữ làm dự phòng cũng
+vô hại, nhưng phải ghi rõ trong `provider-adapter.js` là chúng **chưa từng khớp trên trang thật**,
+để phiên sau không tưởng nhóm này có 5 lớp bảo vệ trong khi thật ra có 1.
+
+Lưu ý giảm nhẹ: lớp chặn "ảnh tham chiếu bị nhận nhầm thành ảnh sinh" **không** phụ thuộc riêng
+mục này — `content.js:237` còn hai tín hiệu độc lập (`role === "user"`, khớp theo tên file), và
+`attachmentContainer` dùng `form` trần nên miễn nhiễm với đổi nhãn. Nên đây là rủi ro *chẩn đoán*,
+không phải rủi ro *an toàn*.
+
+### B-15 · `uploadPending` chưa từng khớp — có thể nó không tồn tại
+Đo live 2026-08-26 (Pilot-14): cả 3 mục (`[data-testid*="uploading"]`, `[aria-busy="true"]`,
+`[role="progressbar"]`) **không khớp lần nào** qua 52 lần dò có ảnh đính kèm đang hiện.
+
+Chưa kết luận được là "selector chết" hay "ChatGPT không có dấu hiệu upload-đang-chạy".
+Hai khả năng cần phân biệt vì cách xử lý khác nhau:
+1. Ảnh nhỏ (11–28KB) upload xong quá nhanh để dò kịp → thử lại với ảnh 2MB (như ảnh thật của
+   Pilot-08) sẽ có cửa sổ dài hơn.
+2. DOM không có dấu hiệu nào như vậy → nhóm này nên bị bỏ, và chỗ nào dựa vào nó phải đổi sang
+   chờ `attachmentPreview` đủ số ảnh.
+
+**Đừng viết code dựa trên nhóm này** cho tới khi phân biệt được. Hiện nó là niềm tin, không phải
+bằng chứng.
+
+### B-16 · `MISSING_REFERENCE` bị bọc thành `INTERNAL_ERROR`
+Bắt được live 2026-08-26: gọi `jobs.add` với token ảnh chưa có file trả về
+`INTERNAL_ERROR` / `retryable: false`, còn nguyên nhân thật
+(`MISSING_REFERENCE: Q001 requires 'REF-A-RED-CIRCLE.png'`) chỉ hiện trong `details.debug` —
+mà debug chỉ bật khi Chế độ phát triển đang BẬT.
+
+"Chưa nạp ảnh tham chiếu" là **điều kiện người sửa được**, đúng ra phải là `VALIDATION_FAILED`
+kèm câu chỉ đường tới `references.add`. Cùng họ với **B-11** (`run.trial` không có workbook).
+Sửa chung một lượt thì hợp lý: cả hai đều là `prepare()` nổ bên trong mutation rồi bị bọc.
+
+### B-17 · Trần 90 giây của `run.trial` KHÔNG đủ cho việc thật
+Đo live 2026-08-26 (Pilot-14): thời gian gửi → phát hiện ảnh tăng theo số ảnh tham chiếu —
+**40 giây** (1 ảnh), **61 giây** (2 ảnh), **68 giây** (4 ảnh), với prompt *ngắn* (~200–300 ký tự).
+
+Job thật của Pilot-08 là **4 ảnh + prompt 3.825 ký tự**. 68 giây đã chỉ còn dư 22 giây.
+Khả năng cao vượt 90.
+
+Hệ quả vận hành, không phải bug: **việc thật không chạy được qua `run.trial`**, vì
+`capTrialTimeouts` từ chối mọi giá trị trên 90 (`bridge-core.js`, `capSec > 90` throw). Việc
+thật phải do Đức bấm Run với `timeout` của workbook (Pilot-08 đặt 900).
+
+Cần cho AI Control trọn vẹn: một đường để AI mở run **không bị cap 90 giây**. Đây là
+**đổi luật an toàn** (`run.start` đang nằm trong `POLICY.prohibited_methods`) → **phải hỏi Đức**,
+không tự làm. Ghi ở đây để không trôi.
+
+Trong lúc chưa có: khi báo cáo một job chết ở mốc ~90 giây qua `run.trial`, phải nói rõ đó là
+**giới hạn đường trial**, đừng để nó bị đọc thành lỗi tính năng.
+
+---
+
 ## P2 — Vận hành & đồng bộ
 
 ### B-06 · Cơ chế đồng bộ & cross-check GPT ↔ Gemini
@@ -134,7 +205,11 @@ Ghi ngày để không trôi:
   có chủ là phiên `claude-gemini`; phiên này chỉ đọc, không sửa.)
 - **2026-08-26** khoá tab B-01 — Gemini dính y hệt (`activeTab()` giải lại mỗi lần gửi).
   Kèm cả hai lỗ audit tìm thêm: khoá hội thoại, và `pendingUrl` lúc đang chuyển trang.
-- Chiều ngược lại: GPT còn thiếu `references.add` của Gemini.
+- ~~Chiều ngược lại: GPT còn thiếu `references.add` của Gemini.~~ — **ĐÃ ĐÓNG 2026-08-26**,
+  port sang GPT và **xác minh live** (Pilot-14, 3/3 SUCCESS). Không dán y nguyên: GPT giữ
+  `workbookRequired: true` (máy `executeBridgeDirectMutation` của GPT đòi có session) và khai
+  **không idempotent** (gọi lại cùng tên là *thay thế* ảnh). Trần và tên trường audit copy
+  đúng Gemini để bước 1 của B-06 không phải hoà giải gì.
 
 ---
 
