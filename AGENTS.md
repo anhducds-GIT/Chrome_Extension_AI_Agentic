@@ -26,7 +26,7 @@ node scripts/safe-push.mjs --as <tên-phiên-của-bạn>
 Lý do: nhiều phiên AI dùng chung một thư mục git, nên `git push` của bạn **cuốn theo commit của
 mọi phiên khác**. Ngày 26/08 chuyện này đã xảy ra thật — một phiên push và kéo theo 2 commit chưa
 được Đức duyệt của phiên khác. `safe-push` liệt kê rõ sắp đẩy gì của ai, và từ chối nếu bạn đang
-cuốn theo việc người khác. Vẫn phải hỏi Đức trước khi push (mục 2).
+cuốn theo việc người khác. Push được tự làm khi đủ điều kiện ở mục 2 — không cần hỏi từng lần.
 
 ## 1. Ai giữ package nào — chống hai AI giẫm chân
 
@@ -38,17 +38,28 @@ Bảng chủ sở hữu là `.agents/claims.json`. **Một package chỉ có M�
 
 Đây không phải hình thức. Ngày 25–26/08 đã suýt hỏng vì hai phiên AI cùng làm trên một repo.
 
-## 2. Bốn việc PHẢI hỏi Đức trước
+## 2. Ba việc PHẢI hỏi Đức trước
 
-1. `git push` / merge vào `main`
-2. Thêm quyền (permission) mới cho extension
-3. Chạy pilot live mới trên trang thật
-4. Đổi luật an toàn (retry, halt, attribution, persistence, exact-once)
+1. Thêm quyền (permission) mới cho extension
+2. Chạy pilot live mới trên trang thật
+3. Đổi luật an toàn (retry, halt, attribution, persistence, exact-once)
 
 Ngoài ra, luật gốc của Đức: không gửi gì ra ngoài, không xoá file, không sửa dữ liệu gốc,
 không tạo automation tự chạy — nếu chưa hỏi.
 
-Commit thì được tự làm (đã có tiền lệ Đức duyệt). Push thì không.
+**Commit và push được tự làm** — Đức chốt 2026-08-26, áp cho MỌI AI — nhưng chỉ khi đủ
+cả ba điều kiện:
+
+1. việc đã hoàn tất trọn vẹn (việc dở dang thì KHÔNG push);
+2. cổng kiểm `session-check.mjs` XANH TOÀN BỘ (và với code: đã qua audit độc lập);
+3. đẩy bằng `safe-push.mjs`, không bao giờ `git push` trần.
+
+Lý do Đức đổi luật: Đức không đọc được code local; GPT audit qua GitHub connector, nên
+commit chưa push là **vô hình** với vòng kiểm tra chéo. Push sớm = được audit sớm.
+
+Hai ngoại lệ vẫn phải hỏi: (a) safe-push từ chối vì sắp cuốn theo commit của phiên khác —
+đẩy hộ việc người khác không nằm trong luật này; (b) force-push, sửa lịch sử, merge nhánh
+vào `main`.
 
 ## 3. Năm luật vàng
 
@@ -73,7 +84,7 @@ Commit thì được tự làm (đã có tiền lệ Đức duyệt). Push thì 
 | AI | Việc chính | Không được |
 |---|---|---|
 | **Đức** | Chốt mọi thứ | — |
-| **Claude** | Kiến trúc, phản biện, audit độc lập, điều phối, vận hành Bridge | Push khi chưa hỏi |
+| **Claude** | Kiến trúc, phản biện, audit độc lập, điều phối, vận hành Bridge | Push khi cổng kiểm chưa xanh |
 | **Codex** | Code theo brief, audit độc lập | Tự mở rộng phạm vi ngoài brief |
 | **Antigravity** | Dựng UI, tạo giao diện | Sửa lớp an toàn / runner / bridge |
 

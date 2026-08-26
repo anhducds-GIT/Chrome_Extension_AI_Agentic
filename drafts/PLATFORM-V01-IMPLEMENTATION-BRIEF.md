@@ -179,7 +179,10 @@ Chạy toàn bộ qua `node tests/build-dashboard-smoke.mjs`, nối vào chuỗi
 4. Ghi 1 dòng Log vào HANDOFF.md của mỗi package đã đụng.
 5. `node scripts/build-dashboard.mjs` → commit DASHBOARD.md sinh ra.
 6. `node scripts/session-check.mjs --as <nhãn-của-bạn>` → phải XANH TOÀN BỘ.
-7. Commit được tự làm. **PUSH thì KHÔNG** — hỏi Đức, và dùng `node scripts/safe-push.mjs`.
+7. Commit và push được tự làm khi việc xong trọn vẹn + cổng kiểm xanh + audit độc lập PASS
+   (luật mới, Đức chốt 2026-08-26 — xem AGENTS.md mục 2). Luôn dùng
+   `node scripts/safe-push.mjs --as <nhãn>`; safe-push từ chối vì cuốn commit phiên khác
+   → dừng, hỏi Đức.
 
 ## 9. Definition of Done V0.1
 

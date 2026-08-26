@@ -49,8 +49,11 @@ implement → test → independent AI audit → fix → re-audit until PASS → 
   AGENTS.md table; write one Log line into each touched package's HANDOFF.md (in Vietnamese).
 - `node scripts/session-check.mjs --as opus-platform-2` must be fully green before you
   report done. Never weaken a check to make it pass.
-- Commits are allowed. **Pushing is not**: ask Đức first, and when he approves use
-  `node scripts/safe-push.mjs --as opus-platform-2`, never raw `git push`.
+- Commits are allowed, and — per Đức's standing rule of 2026-08-26 (AGENTS.md §2) — so is
+  pushing, but ONLY once the work is fully complete, the gate is fully green, and the
+  independent audit has PASSED. Always `node scripts/safe-push.mjs --as opus-platform-2`,
+  never raw `git push`. If safe-push refuses because it would sweep another session's
+  commits, stop and ask Đức.
 - Do not modify any extension `.js`, `session-check.mjs`, `safe-push.mjs`, or anything in
   evidence zones (`pilot-*/`, `Pilot-*/`, `Batch-*/`, `evidence*/` — add-only).
 - No new dependencies. No `innerHTML`/`outerHTML`/`insertAdjacentHTML`. No secrets in files.
