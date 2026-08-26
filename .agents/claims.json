@@ -1,0 +1,24 @@
+{
+  "_doc": "Bảng chủ sở hữu package. MỘT package chỉ MỘT phiên AI được ghi tại một thời điểm. Chủ không phải bạn = chỉ đọc. Muốn giành = hỏi Đức. Xong việc thì đặt owner về null.",
+  "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
+  "claims": {
+    "workers/duc-auto-gemini": {
+      "owner": "claude-gemini",
+      "ai": "Claude",
+      "claimed_at": "2026-08-26",
+      "task": "Batch-SX-01 + bộ luật đa-AI + pilot use case mới + UI/UX"
+    },
+    "workers/duc-auto-chatgpt": {
+      "owner": "claude-chatgpt",
+      "ai": "Claude",
+      "claimed_at": "2026-08-25",
+      "task": "Provider-adapter seam, dom_probe, DETECTION_BLIND — phiên song song"
+    },
+    "_root": {
+      "owner": "claude-gemini",
+      "ai": "Claude",
+      "claimed_at": "2026-08-26",
+      "task": "Dựng bộ luật đa-AI (AGENTS.md gốc, CLAUDE.md gốc, scripts/session-check.mjs) — Đức duyệt 26/08. XONG VIỆC THÌ TRẢ VỀ null."
+    }
+  }
+}
