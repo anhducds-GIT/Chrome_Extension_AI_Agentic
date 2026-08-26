@@ -3,10 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gemini": {
-      "owner": "claude-gemini-4",
-      "ai": "Claude",
-      "claimed_at": "2026-08-26",
-      "task": "Tiep theo NEXT-SESSION-BRIEF: viec mo so 2 (anh ve sau khi chu on dinh) + Batch San Xuat 02 co anh tham chieu."
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "released_at": "2026-08-26",
+      "task": "Da xong va DA PUSH: Pilot-07 18/18 tranh net cho tre to mau · port run.stop + chat.reload tu worker ChatGPT (da kiem chung live 9/9) · va loi nhan run.stop noi sai. Viec mo goi san o cuoi HANDOFF.md."
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-chatgpt-3",
@@ -15,12 +16,12 @@
       "task": "Pilot that dau tien (muc 1 trong Next). max_retries=0 cho lan do dau."
     },
     "_root": {
-      "owner": "claude-gemini-4",
-      "ai": "Claude",
-      "claimed_at": "2026-08-26",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
       "released_at": "2026-08-26",
       "task": "Duc duyet 26/08: va loi cong kiem doc sai duong dan tieng Viet (git quotepath) trong scripts/session-check.mjs va scripts/safe-push.mjs.",
-      "last_work": "Bộ luật đa-AI: AGENTS.md gốc + CLAUDE.md gốc + scripts/session-check.mjs + scripts/safe-push.mjs (Đức duyệt 26/08). Đã push."
+      "last_work": "Va loi cong kiem doc sai duong dan tieng Viet (git core.quotepath) trong session-check.mjs + safe-push.mjs, ghim bang tests/session-check-utf8-paths.mjs trong npm test (Duc duyet 26/08). Da push."
     }
   }
 }
