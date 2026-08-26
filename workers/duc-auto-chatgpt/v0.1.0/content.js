@@ -198,10 +198,27 @@
     throw new Error("Send button did not become ready. ChatGPT DOM may have changed.");
   }
 
+  // The conversation container, derived from the turns themselves rather than
+  // from a name the provider can rename. Walk up from the first turn until the
+  // node also holds the LAST turn: by construction a per-turn wrapper cannot
+  // satisfy that, so the scan root can never collapse onto one turn.
+  //
+  // It did exactly that before 2026-08-26: `.closest()` was given a selector
+  // list containing `[data-testid*="conversation"]`, ChatGPT names each turn
+  // container with that word, and the root became a single turn -- the runner
+  // saw 3 of the page's 14 images. An incomplete root is not merely a missed
+  // image: the pre-submit baseline is built from it, so an image that was
+  // already on screen can read as brand new and be attributed to this job.
   function conversationRoot() {
-    const message = document.querySelector(`${assistantSelector()}, ${userSelector()}`);
-    const rooted = message?.closest(SEL.conversationRoot);
-    return rooted || document.querySelector(SEL.conversationRoot) || document.body;
+    const turns = document.querySelectorAll(`${assistantSelector()}, ${userSelector()}`);
+    const first = turns[0];
+    const last = turns[turns.length - 1];
+    if (first && last) {
+      let node = first.parentElement;
+      while (node && node !== document.body && !node.contains(last)) node = node.parentElement;
+      if (node && node !== document.body) return node;
+    }
+    return document.querySelector(SEL.conversationRoot) || document.body;
   }
 
   function imageCandidates(root = conversationRoot(), inputEvidence = { sources: new Set(), names: new Set() }) {

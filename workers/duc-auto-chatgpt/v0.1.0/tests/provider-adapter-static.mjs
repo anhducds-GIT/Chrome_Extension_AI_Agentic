@@ -106,6 +106,17 @@ assert.equal(adapter.SELECTORS.assistantMessage[0], '[data-turn="assistant"]', "
 assert.equal(adapter.SELECTORS.userMessage[0], '[data-turn="user"]');
 assert.ok(adapter.SELECTORS.assistantMessage.includes('[data-message-author-role="assistant"]'), "the previous marker still works on an older page");
 assert.match(content, /function resolveSelector\(candidates\)/);
+
+// --- the scan root is derived from the turns, not from a name ----------
+// ChatGPT names each TURN container with a data-testid containing the word
+// "conversation", so a wildcard over that word collapsed the scan root onto
+// one turn: the probe measured 3 of the page's 14 images. An incomplete root
+// is not just a missed image -- the pre-submit baseline is built from it, so
+// an image already on screen can read as brand new and be attributed to this
+// job.
+assert.ok(!adapter.SELECTORS.conversationRoot.includes('[data-testid*="conversation"]'), "no wildcard over a name the provider also uses per turn");
+assert.match(content, /while \(node && node !== document\.body && !node\.contains\(last\)\) node = node\.parentElement;/, "the root is the common ancestor of the first and last turn");
+assert.match(content, /let node = first\.parentElement;/, "the walk starts ABOVE the first turn so a single-turn page cannot return that turn as the whole conversation");
 assert.match(content, /return list\[0\];/, "an unmatched list still yields a usable selector rather than undefined");
 assert.doesNotMatch(content, /\$\{SEL\.assistantMessage\}, \$\{SEL\.userMessage\}/, "the two role lists are never concatenated raw");
 assert.match(content, /ADAPTER\.securityBlockerPattern\.test/);

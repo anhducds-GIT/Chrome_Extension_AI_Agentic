@@ -71,9 +71,17 @@
       '[data-turn="user"]',
       '[data-message-author-role="user"]',
     ]),
-    // UNVERIFIED (inherited). Root that image scans are confined to, so an
-    // attribution scan never sweeps the whole document.
-    conversationRoot: '[data-testid="conversation-turns"], [data-testid*="conversation"], main, [role="main"]',
+    // Fallback root for a page that has no turns yet. content.js normally
+    // computes the root as the common ancestor of the turns themselves, which
+    // depends on no name at all.
+    //
+    // The wildcard `[data-testid*="conversation"]` was REMOVED here on
+    // 2026-08-26: ChatGPT names each turn container with a data-testid that
+    // contains the word "conversation", so `.closest()` from a turn matched
+    // THAT TURN and the scan root collapsed to a single turn -- the probe
+    // measured 3 visible images instead of 14. A wildcard over a name the
+    // provider also uses per-item is not a container selector.
+    conversationRoot: '[data-testid="conversation-turns"], main, [role="main"]',
     // UNVERIFIED (inherited). Containers that mark an image as INPUT rather
     // than output; a false negative here can attribute a reference image to a
     // job as if the model had produced it.
