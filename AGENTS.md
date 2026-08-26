@@ -17,6 +17,17 @@ node scripts/session-check.mjs --as <tên-phiên-của-bạn>
 
 Không được báo "xong" khi cổng kiểm chưa xanh. Không được tự sửa cổng kiểm cho nó xanh.
 
+**Push thì KHÔNG dùng `git push`** — dùng:
+
+```bash
+node scripts/safe-push.mjs --as <tên-phiên-của-bạn>
+```
+
+Lý do: nhiều phiên AI dùng chung một thư mục git, nên `git push` của bạn **cuốn theo commit của
+mọi phiên khác**. Ngày 26/08 chuyện này đã xảy ra thật — một phiên push và kéo theo 2 commit chưa
+được Đức duyệt của phiên khác. `safe-push` liệt kê rõ sắp đẩy gì của ai, và từ chối nếu bạn đang
+cuốn theo việc người khác. Vẫn phải hỏi Đức trước khi push (mục 2).
+
 ## 1. Ai giữ package nào — chống hai AI giẫm chân
 
 Bảng chủ sở hữu là `.agents/claims.json`. **Một package chỉ có MỘT phiên AI được ghi tại một thời điểm.**
