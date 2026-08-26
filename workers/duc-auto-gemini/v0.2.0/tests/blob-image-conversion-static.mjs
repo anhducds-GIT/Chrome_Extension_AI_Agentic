@@ -89,34 +89,25 @@ assert.match(content, /carryDiagnostic\(attempt, "image_url_dropped"/, "lý do b
 // trong ngày: một phép ghim quá chặt sẽ vỡ khi thêm trường mới, vì lý do
 // chẳng liên quan gì tới điều nó đang bảo vệ.
 const carried = content.slice(content.indexOf("const CARRIED_DIAGNOSTICS"), content.indexOf("function recordDetection"));
-for (const field of ['"attach"', '"blob_conversion"', '"image_url_dropped"', '"scroll_probe"']) {
+for (const field of ['"attach"', '"blob_conversion"', '"image_url_dropped"']) {
   assert.ok(carried.includes(field), `danh sách mang theo phải gồm ${field}`);
 }
 
-// 10. Quyết định Đức 26/08, VÒNG 2 — sau khi số liệu bác bỏ vòng 1.
-//     Vòng 1 ("chờ Gemini đổi địa chỉ blob sang lh3") đã ĐO và THẤT BẠI: chờ
-//     31 giây / 68 lần dò, không đổi; dom_probe xác nhận 6/6 ảnh sinh ra vẫn
-//     giữ blob sau nhiều phút. Phép chờ đó đã tháo — giữ lại chỉ đốt thêm 30
-//     giây mỗi lần trượt mà kết quả không khác.
-assert.ok(!/blobSwapWaitMs|blobWaitStartedAt|blobSwapped/.test(content), "phép chờ blob đã tháo, đừng dựng lại — số liệu đã bác bỏ (xem HANDOFF 26/08)");
+// 10. Hai phương án đã thử và đã bị bằng chứng bác bỏ ngày 26/08. Ghim để
+//     phiên sau không đi lại đường cụt — cả hai đều nghe rất hợp lý.
+//     (1) Chờ blob đổi sang lh3: đo thật 31 giây / 68 lần dò, không đổi;
+//         dom_probe xác nhận 6/6 ảnh vẫn giữ blob sau nhiều phút.
+assert.ok(!/blobSwapWaitMs|blobWaitStartedAt|blobSwapped/.test(content), "phép chờ blob đã bỏ — số liệu bác bỏ, đừng dựng lại (HANDOFF 26/08)");
+//     (2) Cuộn ảnh vào tầm mắt rồi đo: sai từ tiền đề.
+//         getBoundingClientRect() trả kích thước LAYOUT, không phụ thuộc vị trí
+//         cuộn — ảnh ngoài viewport vẫn đo đúng 330x180. Cuộn không đổi con số.
+assert.ok(!/nudgeCandidateIntoView|scrollIntoView/.test(content), "phép cuộn đã bỏ — tiền đề sai, đừng dựng lại (HANDOFF 26/08)");
 
-//     Nguyên nhân thật: ảnh của lượt mới nằm dưới đáy hội thoại, ngoài
-//     viewport, nên đo ra 0px và bị chấm là "không hiện ra". Cách trị: đưa nó
-//     vào tầm mắt rồi mới đo. Phép kiểm GIỮ NGUYÊN — ảnh rỗng/giả thì cuộn tới
-//     cũng vẫn rỗng, nên đây không phải nới lỏng bảo vệ.
-assert.match(content, /function nudgeCandidateIntoView\(message\)/, "phải có phép đưa ảnh vào tầm mắt");
-const nudge = content.slice(content.indexOf("function nudgeCandidateIntoView"), content.indexOf("// Output attribution only ever considers"));
-assert.match(nudge, /if \(isVisible\(target\) && before\.width > 0 && before\.height > 0\) return;/, "đang hiện ra rồi thì KHÔNG cuộn — hạn chế can thiệp trang tới mức tối thiểu");
-assert.match(nudge, /scrollIntoView\(\{ block: "nearest", inline: "nearest" \}\)/, "cuộn tịnh tiến tối thiểu, không nhảy trang");
-assert.match(nudge, /became_visible/, "phải ghi lại cuộn xong có hiện ra hay không — bằng chứng để biết cách này có ăn");
-for (const forbidden of [".click(", "execCommand", "dispatchEvent", "input.files"]) {
-  assert.ok(!nudge.includes(forbidden), `phép cuộn KHÔNG được chứa '${forbidden}' — nó chỉ được cuộn, không được tương tác`);
-}
-
-//     Chỉ cuộn khi KHÔNG còn đang sinh ảnh, để không can thiệp lúc Gemini làm việc.
-const guardIndex = content.indexOf("if (resultMessage && !generating) {");
-assert.ok(guardIndex > -1, "phải có chốt: chỉ cuộn khi đã hết trạng thái đang sinh ảnh");
-assert.ok(content.slice(guardIndex, guardIndex + 200).includes("nudgeCandidateIntoView(resultMessage)"), "phép cuộn phải nằm TRONG chốt đó, không được chạy lúc còn đang sinh ảnh");
-assert.match(content, /carryDiagnostic\(attempt, "scroll_probe", lastScrollProbe\)/, "kết quả cuộn phải tới được sổ cái");
+//     Nguyên nhân thật đã xác định bằng số học: generatedImageMinSize = 200 đòi
+//     CẢ hai chiều >= 200, mà Gemini render preview 330x180. Ảnh lh3 lọt được
+//     chỉ nhờ remoteVerifiedResult bỏ qua hẳn phép kiểm kích thước — nên bug
+//     này đã nằm đó từ lâu, bị che mất, và lộ ra khi Gemini chuyển sang blob.
+//     Sửa ngưỡng là đổi luật an toàn -> phải Đức chốt (AGENTS.md 2.4).
+assert.match(content, /rect\.width >= minSize && rect\.height >= minSize/, "phép kiểm kích thước vẫn nguyên — chưa ai được tự sửa ngưỡng");
 
 console.log("blob image conversion: PASS");

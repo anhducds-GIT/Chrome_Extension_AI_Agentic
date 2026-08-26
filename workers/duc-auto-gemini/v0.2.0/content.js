@@ -249,37 +249,6 @@
     }).filter((candidate) => /^(https:|data:image\/|blob:)/i.test(candidate.source));
   }
 
-  // Quyết định Đức 26/08 (sau khi số liệu bác bỏ phương án "chờ đổi địa chỉ"):
-  // phép kiểm "ảnh phải hiện ra thật" GIỮ NGUYÊN — ta chỉ đưa ảnh vào tầm mắt
-  // để phép đo đúng, giống như người dùng cuộn chuột xuống xem.
-  //
-  // Bằng chứng: ảnh của lượt trả lời mới nằm dưới đáy hội thoại dài, ngoài
-  // viewport, nên getBoundingClientRect() đo ra 0 -> candidate.visible = false
-  // -> NO_NEW_IMAGE, dù ảnh có thật. Cùng lúc đó dom_probe (chạy sau khi trang
-  // đã cuộn) đo được 330x180. Lớp khoan dung của Pilot-04 chỉ cứu ảnh
-  // https://lh3, mà Gemini nay trả 6/6 ảnh dạng blob: nên nó không còn áp được.
-  //
-  // Đây KHÔNG phải nới lỏng: ảnh rỗng, ảnh giả hay phần tử 0px thì cuộn tới
-  // cũng vẫn 0px. Ta chỉ loại bỏ một phép đo sai do vị trí cuộn trang.
-  let lastScrollProbe = null;
-  function nudgeCandidateIntoView(message) {
-    if (!message) return;
-    const images = Array.from(message.querySelectorAll("img"));
-    if (!images.length) return;
-    const target = images[images.length - 1];
-    const before = target.getBoundingClientRect();
-    if (isVisible(target) && before.width > 0 && before.height > 0) return;
-    try { target.scrollIntoView({ block: "nearest", inline: "nearest" }); }
-    catch (_) { return; }
-    const after = target.getBoundingClientRect();
-    lastScrollProbe = {
-      scrolled: true,
-      before: { w: Math.round(before.width), h: Math.round(before.height) },
-      after: { w: Math.round(after.width), h: Math.round(after.height) },
-      became_visible: isVisible(target) && after.width > 0 && after.height > 0,
-    };
-  }
-
   // Output attribution only ever considers verified generated-image candidates;
   // the full candidate list still forms the baseline so nothing pre-existing
   // can be claimed as fresh output.
@@ -330,7 +299,7 @@
   // detected-not-downloaded write -- so anything not in here is erased before
   // it reaches the ledger. Live proof 2026-08-26: a first attempt parked these
   // on `result` instead, the job passed, and both fields came back undefined.
-  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped", "scroll_probe"]);
+  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped"]);
   function recordDetection(attempt, values) {
     if (!attempt) return;
     const carried = {};
@@ -654,12 +623,6 @@
       // Evaluate on every poll, including while generating, so a timeout can
       // explain whether generation state or attribution rejected the image.
       if (expectImage) {
-        // Đưa ảnh của lượt này vào tầm mắt TRƯỚC khi đo, chỉ khi nó đang không
-        // hiện ra. Không cuộn trong lúc còn đang sinh ảnh, để không can thiệp.
-        if (resultMessage && !generating) {
-          nudgeCandidateIntoView(resultMessage);
-          if (lastScrollProbe) carryDiagnostic(attempt, "scroll_probe", lastScrollProbe);
-        }
         const evaluated = imageDecision(boundary, inputEvidence);
         const decision = evaluated.decision;
         const diagnostics = decision.diagnostics || {};
@@ -698,12 +661,18 @@
           stableSince = Date.now();
         }
 
-        // Phép chờ "blob đổi sang lh3" ĐÃ THÁO ngày 26/08: đo thật cho thấy
-        // chờ 31 giây / 68 lần dò mà không đổi, và dom_probe xác nhận 6/6 ảnh
-        // sinh ra vẫn giữ địa chỉ blob sau nhiều phút. Gemini không đổi. Giữ
-        // phép chờ đó chỉ đốt thêm 30 giây mỗi lần trượt mà kết quả không khác.
-        // Thay bằng nudgeCandidateIntoView() ở trên — trị đúng nguyên nhân
-        // (phép đo sai do vị trí cuộn), không phải trị triệu chứng.
+        // Hai phương án ĐÃ THỬ VÀ ĐÃ BỎ ngày 26/08, ghi lại để không ai đi lại:
+        //  1. "Chờ blob đổi sang lh3" — đo thật: chờ 31 giây / 68 lần dò không
+        //     đổi; dom_probe xác nhận 6/6 ảnh vẫn giữ blob sau nhiều phút.
+        //  2. "Cuộn ảnh vào tầm mắt rồi đo" — sai từ tiền đề:
+        //     getBoundingClientRect() trả kích thước LAYOUT, không phụ thuộc vị
+        //     trí cuộn, nên ảnh ngoài viewport vẫn đo đúng 330x180. Cuộn không
+        //     đổi được con số nào.
+        // Nguyên nhân thật là NGƯỠNG KÍCH THƯỚC: generatedImageMinSize = 200
+        // đòi CẢ rộng lẫn cao >= 200, mà Gemini render preview 330x180 -> 180 <
+        // 200 -> luôn bị chấm "không hiện ra". Ảnh lh3 lọt được chỉ vì
+        // remoteVerifiedResult bỏ qua hẳn phép kiểm kích thước. Sửa ngưỡng là
+        // đổi luật an toàn -> chờ Đức chốt.
 
         // Require 1.5s of stable text from the first model-response created after the pre-send boundary.
         if (stableText && Date.now() - stableSince >= ADAPTER.TIMING.stableTextDwellMs) {
