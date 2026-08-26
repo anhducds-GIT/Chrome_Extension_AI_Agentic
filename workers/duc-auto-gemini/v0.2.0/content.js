@@ -291,7 +291,25 @@
   function boundaryTelemetry(boundary) {
     return { assistant_count_before: boundary?.assistant_count || 0, assistant_node_ids: boundary?.assistant_node_ids || [], assistant_fingerprints: boundary?.assistant_fingerprints || [], baseline_image_count: boundary?.images?.length || 0, baseline_source_ids: boundary?.image_source_ids || [], baseline_image_node_ids: boundary?.image_node_ids || [] };
   }
-  function recordDetection(attempt, values) { if (attempt) attempt.detection = values; }
+  // CARRIED_DIAGNOSTICS are attempt-level facts established BEFORE completion
+  // polling settles (which reference-attach path won; what a blob: image
+  // really was). They must survive recordDetection's wholesale replacement:
+  // the panel's authoritative ledger writer is applyAttemptTelemetry, which
+  // serialises exactly `attempt.detection` and runs AFTER the earlier
+  // detected-not-downloaded write -- so anything not in here is erased before
+  // it reaches the ledger. Live proof 2026-08-26: a first attempt parked these
+  // on `result` instead, the job passed, and both fields came back undefined.
+  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion"]);
+  function recordDetection(attempt, values) {
+    if (!attempt) return;
+    const carried = {};
+    for (const key of CARRIED_DIAGNOSTICS) carried[key] = attempt.detection?.[key] ?? null;
+    attempt.detection = { ...values, ...carried };
+  }
+  function carryDiagnostic(attempt, key, value) {
+    if (!attempt || value === undefined || value === null) return;
+    attempt.detection = { ...(attempt.detection || {}), [key]: value };
+  }
 
   /* ---- attachments (stage -> confirm split) --------------------------------- */
 
@@ -551,7 +569,7 @@
   // devtools session on the owner's machine.
   let lastBlobConversion = null;
 
-  async function downloadableUrl(url) {
+  async function downloadableUrl(url, attempt = null) {
     // Result images are https://lh3.googleusercontent.com per evidence
     // snapshot 3, but the guard stays: composer previews ARE blob:, and the
     // background chrome.downloads path rejects blob: outright.
@@ -564,6 +582,9 @@
     // extension. Fall back to the label only when the bytes say nothing.
     const type = sniffed || (raw.type.startsWith("image/") ? raw.type : null);
     lastBlobConversion = { blob_type: raw.type || "(rỗng)", sniffed, used: type, bytes: raw.size };
+    // Ghi vào attempt.detection ngay, vì đó là nơi panel thật sự đọc để ghi sổ
+    // cái. Chuyển đổi xảy ra SAU lần recordDetection cuối nên không bị xoá.
+    carryDiagnostic(attempt, "blob_conversion", lastBlobConversion);
     if (!type) throw new Error(`BLOB_NOT_AN_IMAGE: blob type "${raw.type || "(rỗng)"}", ${raw.size} byte, 4 byte đầu ${Array.from(head.slice(0, 4)).map((b) => b.toString(16).padStart(2, "0")).join(" ")}`);
     const blob = raw.type === type ? raw : new Blob([raw], { type });
     return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(reader.error); reader.readAsDataURL(blob); });
@@ -622,7 +643,7 @@
             assistant_count_before: boundary?.assistant_count || 0,
             assistant_count_after: messages.length,
             completion: { generation_seen: generationSeen, reason: imageCompletion.reason, poll_count: pollCount },
-            image_url: await downloadableUrl(decision.candidate.source),
+            image_url: await downloadableUrl(decision.candidate.source, attempt),
             image_attribution: decision.attribution,
             detection: lastDetection,
           };
@@ -744,11 +765,14 @@
       const staged = await stageReferences(referenceImages);
       setComposerText(composer, prompt);
       await sleep(ADAPTER.TIMING.postTypeSettleMs);
+      // Đặt lại trước mỗi lần thử: biến này ở phạm vi module, để nguyên thì
+      // một job không có blob nào sẽ thừa hưởng nhãn của job trước.
+      lastBlobConversion = null;
       const attach = await confirmReferences(staged);
 
       const inputEvidence = referenceEvidence(referenceImages);
       const boundary = captureBoundary(inputEvidence);
-      if (requestAttempt) Object.assign(requestAttempt, { boundary, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, detection: { ...boundaryTelemetry(boundary), decision_reason: "PENDING" } });
+      if (requestAttempt) Object.assign(requestAttempt, { boundary, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, detection: { ...boundaryTelemetry(boundary), decision_reason: "PENDING", attach: attach ?? null } });
 
       const sendButton = await waitForSendButtonReady();
       emitRuntimeStage(requestAttempt, "SENDING");

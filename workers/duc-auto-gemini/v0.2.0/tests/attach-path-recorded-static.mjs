@@ -42,10 +42,22 @@ assert.ok(!/getBoundingClientRect/.test(selectorBlock), "phép đếm chỉ-theo
 //    dò kết quả xong.
 assert.match(content, /const attach = await confirmReferences\(staged\);/, "phải giữ lại giá trị trả về");
 assert.match(content, /if \(result && attach\) result\.attach = attach;/, "phải gắn bản tóm tắt vào result");
-const recordDetection = content.slice(content.indexOf("function recordDetection"), content.indexOf("function recordDetection") + 120);
-assert.match(recordDetection, /attempt\.detection = values/, "recordDetection vẫn ghi đè — đây chính là lý do bản tóm tắt phải đi kèm result");
+// `result` chỉ là bản sao phòng bị cho lần ghi detected-not-downloaded. Đường
+// quyết định là attempt.detection — xem mục 5. Assertion ở đây từng ghim đúng
+// KẾT LUẬN SAI ("recordDetection ghi đè nên phải đi kèm result"): suy luận đó
+// đúng về chuyện ghi đè nhưng sai về chỗ nào thắng cuối cùng, và chỉ một lần
+// chạy thật mới chỉ ra. Ghi lại để đừng ai quay về lối cũ.
 
 // 4. Panel phải ghi nó xuống sổ cái, không được nuốt.
 assert.match(panel, /attach: result\?\.attach \?\? null/, "detection_diagnostics phải kèm bản tóm tắt đường gắn ảnh");
+
+// 5. ĐƯỜNG THẬT SỰ TỚI SỔ CÁI. Bản đầu chỉ gắn vào `result` và job chạy ĐẠT
+//    nhưng sổ cái trả về `undefined` — vì `applyAttemptTelemetry` (chỗ ghi
+//    quyết định của panel) chỉ tuần tự hoá `attempt.detection`, và nó chạy SAU
+//    lần ghi detected-not-downloaded. Chỉ chạy thật mới lộ ra chuyện này.
+assert.match(content, /decision_reason: "PENDING", attach: attach \?\? null/, "attach phải nằm trong attempt.detection lúc khởi tạo, không chỉ trên result");
+const record = content.slice(content.indexOf("const CARRIED_DIAGNOSTICS"), content.indexOf("function carryDiagnostic"));
+assert.match(record, /\["attach", "blob_conversion"\]/, "danh sách giữ lại phải gồm attach và blob_conversion");
+assert.match(record, /attempt\.detection = \{ \.\.\.values, \.\.\.carried \}/, "recordDetection phải giữ lại các trường mang theo khi ghi đè");
 
 console.log("attach path recorded on success: PASS");

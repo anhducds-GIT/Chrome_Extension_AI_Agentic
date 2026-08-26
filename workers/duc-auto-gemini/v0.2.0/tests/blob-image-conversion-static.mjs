@@ -31,7 +31,9 @@ assert.match(sniff, /return null;/, "không nhận ra thì phải trả null, kh
 
 // 2. Byte thắng nhãn. Nếu nhãn thắng thì một blob dán nhãn png nhưng chứa byte
 //    jpeg sẽ được lưu dưới đuôi file nói dối.
-const convert = content.slice(content.indexOf("async function downloadableUrl(url)"), content.indexOf("async function waitForCompletion"));
+const convertStart = content.indexOf("async function downloadableUrl(");
+assert.ok(convertStart > -1, "phải tìm được downloadableUrl — nếu đổi chữ ký thì sửa mốc cắt ở đây, đừng bỏ phép kiểm");
+const convert = content.slice(convertStart, content.indexOf("async function waitForCompletion"));
 assert.match(convert, /const sniffed = sniffImageType\(head\)/, "phải nhận dạng byte trước");
 assert.match(convert, /const type = sniffed \|\| \(raw\.type\.startsWith\("image\/"\) \? raw\.type : null\)/, "byte phải được ưu tiên hơn nhãn, nhãn chỉ là phương án cuối");
 assert.match(convert, /BLOB_NOT_AN_IMAGE/, "không xác định được thì phải báo lỗi rõ, không được đẩy rác xuống background");
@@ -63,5 +65,14 @@ assert.match(panel, /blob_conversion: result\?\.blob_conversion \?\? null/, "pan
 const reconcile = content.slice(content.indexOf("function inspectPersistedImage(message)"), content.indexOf("chrome.runtime.onMessage.addListener"));
 assert.match(reconcile, /startsWith\("blob:"\)/, "đường đối chiếu phải tự nhận ra blob:");
 assert.match(reconcile, /RECONCILE_BLOB_UNSUPPORTED/, "và phải báo mã lỗi riêng, đọc là hiểu");
+
+// 7. Cùng bài học như attach: phải vào `attempt.detection` mới tới được sổ cái.
+assert.match(content, /carryDiagnostic\(attempt, "blob_conversion", lastBlobConversion\)/, "kết quả chuyển đổi phải ghi vào attempt.detection");
+assert.match(content, /image_url: await downloadableUrl\(decision\.candidate\.source, attempt\)/, "downloadableUrl phải nhận attempt để ghi được");
+
+// 8. Biến ghi nhận ở phạm vi module PHẢI đặt lại mỗi lần thử, không thì một job
+//    không có blob nào sẽ thừa hưởng nhãn của job trước — sổ cái nói dối.
+const submit = content.slice(content.indexOf("const staged = await stageReferences(referenceImages)") - 400, content.indexOf("const sendButton = await waitForSendButtonReady()"));
+assert.match(submit, /lastBlobConversion = null;/, "phải đặt lại lastBlobConversion trước mỗi lần thử");
 
 console.log("blob image conversion: PASS");

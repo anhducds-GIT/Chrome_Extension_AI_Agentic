@@ -73,7 +73,11 @@ assert.doesNotMatch(source, /await sleep\(750\)/);
 assert.match(source, /async function downloadableUrl/);
 assert.match(source, /startsWith\("blob:"\)/, "blob: results are converted before background download (input previews ARE blob:)");
 assert.match(source, /readAsDataURL\(blob\)/);
-assert.match(source, /image_url: await downloadableUrl\(decision\.candidate\.source\)/);
+// Ý nghĩa của phép ghim: đường trả ảnh PHẢI đi qua downloadableUrl, không
+// được đưa URL thô xuống background. Không ghim cứng danh sách tham số — bản
+// vá 26/08 thêm `attempt` để ghi được chẩn đoán blob vào sổ cái, và một phép
+// ghim quá chặt sẽ vỡ vì lý do không liên quan gì tới điều nó đang bảo vệ.
+assert.match(source, /image_url: await downloadableUrl\(decision\.candidate\.source\b/);
 
 /* ---- DAC contract endpoints stay byte-compatible --------------------------- */
 assert.match(source, /runPrompt\(prompt, timeoutMs\)/);
