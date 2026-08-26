@@ -584,8 +584,19 @@
     }
 
     recordDetection(attempt, { ...lastDetection, timed_out: true });
-    const error = new Error(`OUTPUT_DETECTION_TIMEOUT: ${lastDetection.decision_reason || "NO_NEW_IMAGE"}; stop_visible=${lastDetection.stop_visible}.`);
-    error.detection = { ...lastDetection, timed_out: true };
+    // A whole timeout elapsed and the page never held a SINGLE assistant
+    // message -- not an empty one, not a streaming one. ChatGPT always renders
+    // an assistant turn once a prompt is accepted, so this is not "the image
+    // is slow": either the message selector has rotted, or this tab is not on
+    // a conversation at all. Both are invisible to the runner and identical to
+    // a normal timeout from the outside, which is how the 2026-08-26 run
+    // retried into six real image generations before giving up. Say which one
+    // it is, and let the runner halt instead of paying for another attempt.
+    const blind = expectImage && assistantMessages().length === 0;
+    const error = blind
+      ? new Error(`DETECTION_BLIND: no assistant message exists on ${location.href} after the full timeout — either the page structure changed or this tab is not on a ChatGPT conversation. Nothing was detected, so retrying would only spend more quota. Run diagnostics.dom_probe against this tab.`)
+      : new Error(`OUTPUT_DETECTION_TIMEOUT: ${lastDetection.decision_reason || "NO_NEW_IMAGE"}; stop_visible=${lastDetection.stop_visible}.`);
+    error.detection = { ...lastDetection, timed_out: true, detection_blind: blind };
     throw error;
   }
 

@@ -3,8 +3,8 @@
    after -- by request, so the operator learns the English terms while
    using the tool rather than reading a fully localized guide.
 
-   Only three codes are true Hard Stops: SECURITY_HARD_STOP,
-   GENERATION_LIMIT_REACHED, RECEIVER_LOST. Each means no further job can
+   Only four codes are true Hard Stops: SECURITY_HARD_STOP,
+   GENERATION_LIMIT_REACHED, RECEIVER_LOST, DETECTION_BLIND. Each means no further job can
    safely run at all -- the whole batch stops and needs a human to resolve
    the underlying block. Every other code here is Recoverable: the job is
    retried automatically (a fresh prompt submission, up to the configured
@@ -36,6 +36,13 @@
       retry: "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",
       meaning: "The extension lost its connection to the ChatGPT tab, composer, or content receiver. (Extension mất kết nối với tab ChatGPT, composer, hoặc content receiver.)",
       action: "Reload the correct ChatGPT tab, wait for the composer to become available, then Check Plan and Continue Run. This stays a hard stop on purpose: if the tab is genuinely gone, auto-retrying would just fail every remaining job in the queue back-to-back without producing anything. (Tải lại đúng tab ChatGPT, chờ composer sẵn sàng, rồi Check Plan và Continue Run. Đây vẫn là hard stop có chủ đích: nếu tab thật sự mất, tự động retry sẽ chỉ khiến mọi job còn lại trong queue fail liên tục mà không tạo được ảnh nào.)"
+    }),
+    Object.freeze({
+      title: "Detection blind",
+      codes: Object.freeze(["DETECTION_BLIND"]),
+      retry: "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",
+      meaning: "The prompt went out, but the page never showed a single ChatGPT reply for the extension to read -- so it cannot tell whether an image was made. Either ChatGPT changed its page structure, or the tab is not on a conversation. (Prompt đã gửi đi, nhưng trang không hề hiện lấy một câu trả lời nào để extension đọc -- nên nó không biết được ảnh đã tạo hay chưa. Hoặc ChatGPT đã đổi cấu trúc trang, hoặc tab đang không ở trong một cuộc hội thoại.)",
+      action: "Stop and check the tab yourself: it must be an open ChatGPT conversation (the address bar shows chatgpt.com/c/...), not the new-chat page. If it already is a conversation and replies are clearly visible on screen, then ChatGPT has changed its page structure and the extension needs its selectors updated -- report it instead of rerunning. This is a hard stop on purpose: every retry sends the prompt again and spends real image quota while proving nothing. On 2026-08-26 this exact situation burned six generations before anyone noticed. (Dừng lại và tự kiểm tra tab: phải là một cuộc hội thoại ChatGPT đang mở -- thanh địa chỉ hiện chatgpt.com/c/... -- chứ không phải trang chat mới. Nếu đúng là hội thoại và câu trả lời hiện rõ trên màn hình, thì ChatGPT đã đổi cấu trúc trang và extension cần cập nhật selector -- hãy báo lại thay vì chạy lại. Đây là hard stop có chủ đích: mỗi lần retry là gửi lại prompt và tốn quota ảnh thật mà không chứng minh được gì. Ngày 2026-08-26 đúng tình huống này đã đốt sáu lượt tạo ảnh trước khi có người phát hiện.)"
     }),
     Object.freeze({
       title: "Attempt ID mismatch",
@@ -97,7 +104,7 @@
 
   const NON_HALT_CODES = Object.freeze([
     Object.freeze({ title: "User stop", code: "USER_STOP", retry: "No -- this is an operator action, not an automatic Halt (Không -- đây là thao tác của người dùng, không phải Halt tự động)", meaning: "You pressed Stop yourself. (Bạn đã chủ động bấm Stop.)", action: "Check whether the current job had already been submitted and whether an output is mid-generation before starting a new Run. (Kiểm tra job hiện tại đã submit hay chưa và output có đang được tạo hay không, trước khi bắt đầu Run mới.)" }),
-    Object.freeze({ title: "Interrupted", code: "INTERRUPTED", retry: "No -- this is a resulting status, not a Halt cause; see the underlying failure_type above (Không -- đây là trạng thái kết quả, không phải nguyên nhân Halt; xem failure_type gốc ở trên)", meaning: "The result status shows a job was interrupted by one of the three hard stops; the real cause is that failure_type. (Trạng thái kết quả cho biết job bị gián đoạn bởi một trong ba hard stop; nguyên nhân thật nằm ở failure_type đó.)", action: "Read the failure_type code and Technical details in the banner, then follow that root cause's guidance above. (Đọc mã failure_type và Chi tiết ghi nhận trong banner/Technical details, rồi làm theo hướng xử lý của mã nguyên nhân gốc đó ở trên.)" })
+    Object.freeze({ title: "Interrupted", code: "INTERRUPTED", retry: "No -- this is a resulting status, not a Halt cause; see the underlying failure_type above (Không -- đây là trạng thái kết quả, không phải nguyên nhân Halt; xem failure_type gốc ở trên)", meaning: "The result status shows a job was interrupted by one of the four hard stops; the real cause is that failure_type. (Trạng thái kết quả cho biết job bị gián đoạn bởi một trong bốn hard stop; nguyên nhân thật nằm ở failure_type đó.)", action: "Read the failure_type code and Technical details in the banner, then follow that root cause's guidance above. (Đọc mã failure_type và Chi tiết ghi nhận trong banner/Technical details, rồi làm theo hướng xử lý của mã nguyên nhân gốc đó ở trên.)" })
   ]);
 
   const UNKNOWN_INSTRUCTION = Object.freeze({

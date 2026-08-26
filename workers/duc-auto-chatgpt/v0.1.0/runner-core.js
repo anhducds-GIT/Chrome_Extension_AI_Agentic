@@ -4,13 +4,19 @@
   const DEFAULTS = { timeout_sec: 180, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false, checkpoint_interval_jobs: 1, ab_poll_action: "random", max_images_per_job: 4 };
   const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
   const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
-  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
+  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "DETECTION_BLIND", "SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
   // Only these three genuinely block the whole batch: each means no further
   // job can safely run until a human resolves it (CAPTCHA/verification,
   // quota reset, or the ChatGPT tab/composer itself being reachable again).
   // Every other failure type is auto-retried, then skipped so the queue
   // keeps moving -- see resolveJobFailure() in sidepanel.js.
-  const HARD_STOP_FAILURE_TYPES = new Set(["SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "RECEIVER_LOST"]);
+  // DETECTION_BLIND joined this set on 2026-08-26 after a live run sent SIX
+  // prompts and burned six real image generations while reporting
+  // NO_NEW_IMAGE every time. The page had no assistant message AT ALL --
+  // either the message selector had rotted or the tab was not on a
+  // conversation. Neither is a condition a retry can improve, and retrying
+  // costs the owner quota per attempt, so it halts the batch instead.
+  const HARD_STOP_FAILURE_TYPES = new Set(["SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "RECEIVER_LOST", "DETECTION_BLIND"]);
   const imageExtension = /\.(avif|gif|jpe?g|png|webp)$/i;
   const normalise = (value) => String(value || "").trim().toLowerCase();
   const basename = (value) => normalise(value).replace(/^.*[\\/]/, "").replace(imageExtension, "");
@@ -106,6 +112,10 @@
   function classifyFailure(error, phase = "PRE_SUBMIT") {
     const text = String(error?.message || error || "");
     if (/^RECEIVER_LOST:/i.test(text)) return "RECEIVER_LOST";
+    // Checked before the generic timeout rule below: a blind detector always
+    // ALSO looks like a timeout, and classifying it as one would send it back
+    // through the retry path this exists to stop.
+    if (/^DETECTION_BLIND:/i.test(text)) return "DETECTION_BLIND";
     if (/LIMIT_STOP|image generation limit/i.test(text)) return "GENERATION_LIMIT_REACHED";
     if (/HARD_STOP|captcha|unusual activity|security\/interstitial/i.test(text)) return "SECURITY_HARD_STOP";
     if (/stopped by user|automation stopped/i.test(text)) return "USER_STOP";

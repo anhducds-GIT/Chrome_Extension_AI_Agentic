@@ -10,8 +10,15 @@ for (const file of ["runner-core.js", "halt-instructions-core.js"]) {
 
 const guide = context.DacHaltInstructions;
 const runner = context.DacRunnerCore;
-assert.equal(guide.HALT_GROUPS.length, 10, "the operator guide exposes ten distinct Halt groups");
-assert.equal(new Set(guide.HALT_GROUPS.map((group) => group.title)).size, 10, "Halt group titles are unique");
+assert.equal(guide.HALT_GROUPS.length, 11, "the operator guide exposes eleven distinct Halt groups");
+// DETECTION_BLIND must stay a HARD STOP and must never be described as
+// retryable: retrying it resends the prompt and spends real image quota while
+// proving nothing (2026-08-26 -- six generations burned exactly this way).
+const blind = guide.HALT_GROUPS.find((group) => group.codes.includes("DETECTION_BLIND"));
+assert.ok(blind, "the guide covers DETECTION_BLIND");
+assert.match(blind.retry, /^No -- hard stop/, "DETECTION_BLIND is never presented as retryable");
+assert.match(blind.action, /chatgpt\.com\/c\//, "the operator is told exactly what a correct tab looks like");
+assert.equal(new Set(guide.HALT_GROUPS.map((group) => group.title)).size, 11, "Halt group titles are unique");
 
 const covered = [...guide.coveredFailureCodes()].sort();
 const declared = [...runner.FAILURE_TYPES].sort();
