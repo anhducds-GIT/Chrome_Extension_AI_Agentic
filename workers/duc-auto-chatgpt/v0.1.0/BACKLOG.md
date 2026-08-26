@@ -63,7 +63,7 @@ chứng là trang vẫn đang hoạt động bình thường.
 
 ---
 
-### B-13 · Ảnh KHÔNG theo `output_downloads_subfolder` — artifact thì có, ảnh thì không
+### ~~B-13 · Ảnh KHÔNG theo `output_downloads_subfolder`~~ — ĐÃ ĐÓNG 2026-08-26, xác minh live
 **Bắt được live 2026-08-26** trong trial `trial-6e73dad2` (2/2 SUCCESS). Đã gọi
 `output.configure {output_downloads_subfolder: "DucAuto_GPT-Output/Pilot-11_BoundTab"}`:
 - Checkpoint XLSX + audit JSONL → **đúng** thư mục đã cấu hình.
@@ -87,9 +87,22 @@ thư mục dùng chung thay vì thư mục riêng của pilot đó.
 **Ledger KHÔNG nói dối:** nó ghi đúng đường dẫn thật nơi ảnh nằm. Đây là lỗi "đi sai chỗ",
 không phải lỗi "báo cáo sai chỗ" — nhẹ hơn một bậc, nhưng vẫn phá ý đồ.
 
-**Ghi chú phụ, đừng để lẫn:** `write_outcome` báo `uniquified` trong khi tên file thật là
-`Q001.png` nguyên vẹn (không hề bị đổi tên). Nhỏ, nhưng nghĩa là trường này đang báo TÊN
-CHÍNH SÁCH chứ không phải KẾT QUẢ thật ở đường Downloads. Kiểm luôn khi sửa B-13.
+**ĐÃ SỬA + XÁC MINH LIVE (`trial-5d8abec0`, Pilot-12, 2/2 SUCCESS):**
+- **B-13a** `imageLocationFor()` chỉ ghi đè khi **job tự khai** `output_folder` (đọc từ dòng
+  XLSX gốc — chỉ dòng đó phân biệt được "job yêu cầu" với "job thừa hưởng mặc định"). Điều kiện
+  kiểm khớp **nguyên văn** `runner-core.perJobSettings()` để hai chỗ không trôi khác nhau.
+- **B-13b** `write_outcome` giờ so **tên file**, chính xác từng ký tự — đúng vì `conflictAction`
+  của Chrome chỉ đổi được tên file, không đổi được thư mục. Thêm trường **mới** `landed_as_requested`
+  trả lời riêng câu "có vào đúng chỗ không", khai rõ trong code là **phép so đuôi đường dẫn**
+  chứ không phải bằng chứng đường dẫn đã phân giải (Chrome không cho biết thư mục Downloads gốc).
+- **`overwritten` không còn tồn tại ở đường Downloads.** Tải xong với chính sách ghi đè chỉ chứng
+  minh Chrome *được phép* ghi đè, không chứng minh có file nào bị thay — khai một lần ghi đầu tiên
+  thành "đã phá bằng chứng cũ" là cùng loại nói dối. Đường ghi thư mục dò trước được nên vẫn giữ
+  `overwritten`; đường này không dò được nên không nói. Bất đối xứng có chủ đích.
+- Đo được sau khi sửa: ảnh nằm đúng `Pilot-12_OutputRouting`, audit ghi
+  `write_outcome=written; landed_as_requested=true` (trước đó luôn là `uniquified` sai).
+- Audit Codex 3 vòng, PASS. Hai vòng đầu ép tách `overwritten` và tách hai sự thật ra hai trường.
+
 
 ## P2 — Vận hành & đồng bộ
 
@@ -194,12 +207,13 @@ Xoá là quyền của Đức — **AI không tự xoá file**.
 
 ## Phiên kế tiếp
 
-1. **B-13 — ảnh không theo thư mục đã cấu hình** (mới, bắt được live 26/08). Một dòng ở
-   `sidepanel.js:4858`, nhưng phải chạy một trial để xác minh — gộp luôn với pilot dưới đây.
-2. **Chạy lại pilot trên bộ code sạch** — bước 4 trong thứ tự Đức đã chốt, và giờ mới
+1. **Chạy pilot thật đầu tiên** (không phải trial 2 job nữa). Toàn bộ nền đã xác minh live:
+   selector đúng, tab+hội thoại khoá, ảnh vào đúng thư mục, ledger không nói dối,
+   `DETECTION_BLIND` chặn retry mù, `run.stop`/`chat.reload` để cứu. Giữ `max_retries: 0`
+   cho lần đo đầu, rồi mới nới. — bước 4 trong thứ tự Đức đã chốt, và giờ mới
    thật sự an toàn để chạy: selector đã đo đúng, `DETECTION_BLIND` chặn retry mù,
    `run.stop`/`chat.reload` có sẵn để cứu, và tab đã bị khoá nên không gõ nhầm chat.
-   **Cần một lần reload extension trước** (B-01 sửa `sidepanel.js`).
+   **Cần một lần reload extension trước.**
 3. **B-06 — đồng bộ GPT ↔ Gemini** (bước 2 của Đức, bị hoãn hai lần). **Lưu ý về quyền:**
    việc này đụng file ở GỐC REPO và cả package Gemini — cả hai đang do phiên
    `claude-gemini` giữ. Phải hỏi Đức điều phối hai phiên, hoặc chờ phiên kia trả package.
@@ -223,6 +237,8 @@ Gộp vào B-09 khi Đức muốn dọn.
 - **2026-08-26 · `f418bc1`** (B-02, một phần) — gốc quét là tổ tiên chung của các lượt,
   không khớp theo tên nữa.
 - **2026-08-26** (B-01) — khoá tab + khoá hội thoại. Audit Antigravity PASS sau 2 vòng.
+- **2026-08-26** (B-13) — ảnh theo đúng thư mục đã cấu hình; `write_outcome` thôi nói dối;
+  thêm `landed_as_requested`. Audit Codex PASS sau 3 vòng. Xác minh live `trial-5d8abec0` 2/2.
 - **2026-08-26** (B-04) — `run.stop`: dừng run qua bridge, **đi vòng qua khoá
   `RUN_ACTIVE`** (dừng là giảm rủi ro), idempotent, trả về phase để bên gọi biết
   prompt đã bay hay chưa. Kèm một lỗi ngoài gói việc, tìm ra nhờ test cái bẫy mà

@@ -60,6 +60,40 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true;
 });
 
+// Two DIFFERENT questions about a finished download, kept apart on purpose.
+//
+// item.filename is Chrome's ABSOLUTE path; requestedFilename is
+// Downloads-RELATIVE ("folder/leaf"). Comparing those two directly can never
+// be true, which is how every Downloads image came to be recorded as
+// "uniquified" -- telling the operator a file of that name already existed
+// and theirs had been renamed around it. Caught live on Pilot-11, where
+// Q001.png sat on disk under exactly the requested name (BACKLOG B-13).
+
+// 1. Was the file RENAMED to dodge a collision? chrome.downloads'
+//    conflictAction only ever alters the LEAF, never the folder, so the leaf
+//    is the whole signal. Compared exactly: any difference at all, including
+//    case, means something other than a clean write happened, and reporting
+//    the conservative answer is better than claiming a clean write we did not
+//    observe.
+function downloadLeaf(value) {
+  return String(value || "").split(/[\\/]/).pop() || "";
+}
+
+// 2. Did it land under the path we asked for? This is a TEXTUAL TAIL CHECK,
+//    not a resolved-path proof: chrome.downloads gives no Downloads-root
+//    oracle, so it can only say "the absolute path ends with the relative
+//    path we asked for". Case-folded because this extension runs on Windows,
+//    where the filesystem is case-insensitive. Reported as its own field
+//    rather than folded into write_outcome, so neither fact has to pretend to
+//    be the other.
+function pathTailMatches(absolutePath, requestedRelative) {
+  const normalise = (value) => String(value || "").replace(/\\/g, "/").toLowerCase();
+  const actual = normalise(absolutePath);
+  const requested = normalise(requestedRelative).replace(/^\/+/, "");
+  if (!actual || !requested) return false;
+  return actual === requested || actual.endsWith(`/${requested}`);
+}
+
 async function downloadGeneratedImage(message) {
   const url = typeof message.url === "string" ? message.url : "";
   if (!/^https:\/\//i.test(url) && !/^data:image\//i.test(url)) {
@@ -91,7 +125,19 @@ async function downloadGeneratedImage(message) {
   // classifies this identically to a directory-write verification failure.
   if (item.exists === false) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete but the file no longer exists.`);
   if (reportedBytes.length && persistedBytes <= 0) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete with zero bytes received.`);
-  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename, collision_policy: collisionPolicy, persisted_bytes: persistedBytes, write_outcome: item.filename === requestedFilename ? "written" : collisionPolicy === "overwrite" ? "overwritten" : "uniquified" };
+  // Under the default uniquify policy this distinction is the whole answer to
+  // "did anything of mine get shadowed?", so it has to be true.
+  //
+  // "overwritten" is deliberately NOT reachable here. A completed download
+  // under conflictAction:"overwrite" proves Chrome was ALLOWED to replace a
+  // file -- not that one existed to replace. Reporting a first-ever write as
+  // having destroyed prior operator evidence is the same lie, pointed the
+  // other way. The directory writer can probe before writing and does; this
+  // path cannot, so it states only what it observed. collision_policy is
+  // reported alongside, so what was ASKED FOR stays visible without the
+  // ledger pretending to know what HAPPENED.
+  const writeOutcome = downloadLeaf(item.filename) === downloadLeaf(requestedFilename) ? "written" : "uniquified";
+  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename, collision_policy: collisionPolicy, persisted_bytes: persistedBytes, write_outcome: writeOutcome, landed_as_requested: pathTailMatches(item.filename, requestedFilename) };
 }
 
 function safeRequestedFilename(value, folder, fallback) {

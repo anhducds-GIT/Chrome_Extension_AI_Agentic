@@ -12,7 +12,7 @@
       "owner": null,
       "ai": null,
       "claimed_at": "2026-08-26",
-      "task": "Da xong B-01: khoa tab + khoa hoi thoai, audit Antigravity PASS. Viec ke tiep: chay lai pilot tren code sach (can reload extension truoc). Xem BACKLOG.md.",
+      "task": "Da xong + xac minh live: B-01 khoa tab/hoi thoai, B-13 anh dung thu muc + ledger thoi noi doi. Trial 2/2 SUCCESS hai lan. Viec ke tiep: pilot that dau tien — xem drafts/NEXT-CHAT-PROMPT.md.",
       "released_at": "2026-08-26"
     },
     "_root": {

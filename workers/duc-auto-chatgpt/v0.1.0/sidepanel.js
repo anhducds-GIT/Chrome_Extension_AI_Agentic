@@ -4854,8 +4854,34 @@
     log(`${item.job.id}: ${outcome.message || "Poll A/B chưa trả lời được."}`, "error");
   }
 
+  // Where THIS job's images go.
+  //
+  // A job row may name its own Downloads folder (runner-core perJobSettings
+  // treats output_folder as a per-job override), and that must keep working.
+  // But item.settings.output_folder also carries the runner DEFAULT when no
+  // one asked for anything -- and using that unconditionally is how Pilot-11
+  // put its images in "Duc Auto ChatGPT" while its checkpoints and audit went
+  // exactly where output.configure had pointed them (B-13, found live
+  // 2026-08-26). It silently defeated the agent-settable output location,
+  // which exists precisely so the autonomous loop needs no folder click.
+  //
+  // So: an EXPLICIT per-job folder wins; otherwise the run's configured image
+  // location wins. Read from item.job (the raw row) rather than from the
+  // resolved settings, because only the row can tell "asked for" apart from
+  // "inherited".
+  // The "did this job ask?" test mirrors runner-core perJobSettings() exactly
+  // -- `!== undefined && !== ""` -- so the two cannot drift into disagreeing
+  // about what counts as an override. A whitespace-only value never reaches
+  // here: runner-core's config() trims it to empty and throws during prepare.
+  function jobSetItsOwnFolder(item) {
+    const value = item.job?.output_folder;
+    return value !== undefined && value !== "";
+  }
+
   function imageLocationFor(item, effectiveOutput) {
-    return effectiveOutput.image.kind === "downloads" ? window.DacOutputLocation.downloadsLocation(item.settings.output_folder) : effectiveOutput.image;
+    if (effectiveOutput.image.kind !== "downloads") return effectiveOutput.image;
+    if (!jobSetItsOwnFolder(item)) return effectiveOutput.image;
+    return window.DacOutputLocation.downloadsLocation(item.settings.output_folder);
   }
 
   function messageOf(error) { return error?.message || String(error); }
@@ -4937,6 +4963,11 @@
       } else {
         const savedFiles = [];
         const writeOutcomes = [];
+        // Whether each file landed under the path that was asked for. Kept
+        // apart from write_outcome on purpose: "renamed to dodge a collision"
+        // and "went to the configured folder" are different facts, and
+        // Pilot-11 failed the second while looking fine on the first.
+        const landedAsRequested = [];
         let firstAccepted = null;
         try {
           for (const [offset, imageUrl] of imageUrls.entries()) {
@@ -4946,6 +4977,7 @@
             if (!firstAccepted) firstAccepted = accepted;
             savedFiles.push(accepted.filename);
             writeOutcomes.push(accepted.write_outcome || "written");
+            landedAsRequested.push(accepted.landed_as_requested === undefined ? "unknown" : String(Boolean(accepted.landed_as_requested)));
             state.verifiedImageFiles.push(accepted.filename);
           }
         } catch (error) {
@@ -4961,7 +4993,7 @@
         item.phase = "OUTPUT_SAVED";
         const outputSavedAt = new Date().toISOString();
         update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: requestedFirst, persistence_verified: true, detected_not_downloaded: false, result_file: firstAccepted.filename, result_files: savedFiles.join(" | "), image_count: String(totalVariants), result_download_id: firstAccepted.download_id ?? "", output_saved_at: outputSavedAt, write_outcome: writeOutcomes.join(" | "), attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
-        audit("OUTPUT_SAVED", item, { message: `write_outcome=${writeOutcomes.join(" | ")}; images=${totalVariants}${totalVariants > 1 ? `; variants=${savedFiles.map((file) => window.DacOutputLocation.artifactLeaf(file)).join(" | ")}` : ""}` });
+        audit("OUTPUT_SAVED", item, { message: `write_outcome=${writeOutcomes.join(" | ")}; landed_as_requested=${landedAsRequested.join(" | ")}; images=${totalVariants}${totalVariants > 1 ? `; variants=${savedFiles.map((file) => window.DacOutputLocation.artifactLeaf(file)).join(" | ")}` : ""}` });
         item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image checkpoint recorded; waiting for ChatGPT to become idle.");
         renderQueue(); progress(totalVariants > 1 ? `SAVED ✓ ${totalVariants} ảnh: ${savedFiles.map((file) => window.DacOutputLocation.artifactLeaf(file)).join(", ")}` : `SAVED ✓ ${firstAccepted.filename}`);
       }
