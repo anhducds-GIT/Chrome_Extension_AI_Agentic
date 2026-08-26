@@ -11,7 +11,10 @@ const bridge = globalThis.DacBridgeCore;
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
   "run.status", "run.trial", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
-  "jobs.reorder", "output.configure", "run_settings.configure", "output.set_folder_hint", "profiles.remove", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw"
+  "jobs.reorder", "output.configure", "run_settings.configure", "output.set_folder_hint", "profiles.remove", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw",
+  // Ported from the Gemini worker 2026-08-26 so an AI operator can diagnose
+  // the live page without the owner describing their screen.
+  "diagnostics.dom_probe"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));

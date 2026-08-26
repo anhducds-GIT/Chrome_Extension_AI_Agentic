@@ -29,8 +29,21 @@ const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 
 /* ---- content.js: detection is scoped, not page-wide ---------------------- */
 
+// Provider-specific selectors and patterns now live in provider-adapter.js;
+// content.js reads them through ADAPTER/SEL. Load the REAL adapter into each
+// sandbox so these tests keep proving what the extension actually runs
+// rather than a copy that could drift from it.
+const adapterSource = fs.readFileSync(new URL("provider-adapter.js", root), "utf8");
+function adapterContext(extra = {}) {
+  const context = vm.createContext({ ...extra });
+  context.window = context;
+  vm.runInContext(adapterSource, context);
+  vm.runInContext("this.ADAPTER = this.DacProviderAdapter; this.SEL = this.ADAPTER.SELECTORS; this.TIMING = this.ADAPTER.TIMING;", context);
+  return context;
+}
+
 const matchesFnSource = content.slice(content.indexOf("function matchesGenerationLimit"), content.indexOf("function generationLimitText"));
-const matchesContext = vm.createContext({});
+const matchesContext = adapterContext();
 vm.runInContext(`${matchesFnSource}\nthis.matchesGenerationLimit = matchesGenerationLimit;`, matchesContext);
 const matches = matchesContext.matchesGenerationLimit;
 
@@ -47,7 +60,7 @@ const securityScope = (bodyText, userTexts = []) => ({
     }));
   }
 });
-const securityContext = vm.createContext({
+const securityContext = adapterContext({
   document: {
     body: {
       cloneNode() { return securityScope("draw a robot solving a captcha", ["draw a robot solving a captcha"]); }

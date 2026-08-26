@@ -599,6 +599,12 @@
     renderBridgeDevMode();
   }
 
+  async function bridgeDomProbe() {
+    const response = await send({ type: "DAC_DOM_PROBE" });
+    if (!response?.ok) throw new Error(response?.error || "DOM probe failed in the content script.");
+    return response.probe;
+  }
+
   async function bridgeRunTrial(params) {
     window.DacBridgeCore.assertTrialDevMode(state.bridgeDevMode);
     if (!queueRunLock.tryBeginRun()) throw new window.DacBridgeCore.BridgeProtocolError("RUN_ACTIVE");
@@ -1051,6 +1057,7 @@
       "queue.list": withBridgeErrors(bridgeQueueList),
       "run.status": withBridgeErrors(async () => bridgeRunStatus()),
       "run.trial": withBridgeErrors(bridgeRunTrial),
+      "diagnostics.dom_probe": withBridgeErrors(bridgeDomProbe),
       "ledger.read": withBridgeErrors(bridgeLedgerRead),
       "jobs.add": withBridgeErrors(bridgeJobsAdd),
       "jobs.update": withBridgeErrors(bridgeJobsUpdate),
@@ -5313,6 +5320,7 @@
       "queue.list": bridgeQueueList,
       "run.status": bridgeRunStatus,
       "run.trial": bridgeRunTrial,
+      "diagnostics.dom_probe": bridgeDomProbe,
       "ledger.read": bridgeLedgerRead,
       "jobs.add": bridgeJobsAdd,
       "jobs.update": bridgeJobsUpdate,

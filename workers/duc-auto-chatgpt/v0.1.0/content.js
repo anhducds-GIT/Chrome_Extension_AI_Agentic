@@ -1,6 +1,14 @@
 (() => {
   "use strict";
 
+  // Every provider-specific selector, timing constant and blocker pattern
+  // lives in provider-adapter.js. This file reads them from here and stays
+  // provider-neutral, mirroring the Gemini worker's structure so the two
+  // converge instead of drifting.
+  const ADAPTER = window.DacProviderAdapter;
+  const SEL = ADAPTER.SELECTORS;
+  const TIMING = ADAPTER.TIMING;
+
   const STATE = {
     busy: false,
     abortRequested: false,
@@ -51,45 +59,25 @@
   }
 
   function findComposer() {
-    return firstVisible([
-      "#prompt-textarea",
-      'textarea[data-testid="prompt-textarea"]',
-      'div[data-testid="composer-text-input"][contenteditable="true"]',
-      'form div.ProseMirror[contenteditable="true"]',
-      'form [contenteditable="true"][role="textbox"]',
-      "form textarea",
-    ]);
+    return firstVisible(SEL.composer);
   }
 
   function findSendButton(composer = findComposer()) {
-    const direct = firstVisible([
-      'button[data-testid="send-button"]',
-      'button[aria-label="Send prompt"]',
-      'button[aria-label^="Send"]',
-      'button[aria-label^="Gửi"]',
-    ]);
+    const direct = firstVisible(SEL.send);
     if (direct) return direct;
 
     const form = composer?.closest("form");
     if (!form) return null;
 
-    return firstVisible([
-      'button[type="submit"]',
-      'button[data-testid*="send"]',
-    ], form);
+    return firstVisible(SEL.sendInForm, form);
   }
 
   function findStopButton() {
-    return firstVisible([
-      'button[data-testid="stop-button"]',
-      'button[aria-label="Stop generating"]',
-      'button[aria-label^="Stop"]',
-      'button[aria-label^="Dừng"]',
-    ]);
+    return firstVisible(SEL.stop);
   }
 
   function assistantMessages() {
-    return Array.from(document.querySelectorAll('[data-message-author-role="assistant"]'));
+    return Array.from(document.querySelectorAll(SEL.assistantMessage));
   }
 
   function assistantFingerprint(message) {
@@ -101,30 +89,22 @@
   function securityTextWithoutUserMessages(root = document.body) {
     if (!root) return "";
     const scope = root.cloneNode(true);
-    for (const userMessage of scope.querySelectorAll('[data-message-author-role="user"]')) userMessage.remove();
+    for (const userMessage of scope.querySelectorAll(SEL.userMessage)) userMessage.remove();
     return scope.innerText || scope.textContent || "";
   }
 
   function securityBlockerText() {
     const text = securityTextWithoutUserMessages().toLowerCase();
-    return /(captcha|unusual activity|verify you are human|suspicious activity)/.test(text) ? "ChatGPT security/interstitial blocker detected." : null;
+    return ADAPTER.securityBlockerPattern.test(text) ? "ChatGPT security/interstitial blocker detected." : null;
   }
 
-  // Free/paid image-generation quotas ("you've hit your daily limit") render
-  // as an ordinary assistant message, not an interstitial -- scanning the
-  // whole assistant history would catch the OPERATOR'S OWN
-  // PROMPT if it happened to contain these same common words (draw a picture
-  // about someone waiting for a daily limit to reset, etc). Scoped to only
-  // the specific assistant message under evaluation instead.
-  //
-  // NOTE for whoever validates this live: this phrase list is a best-effort
-  // starting set, not confirmed against a real rate-limited ChatGPT session
-  // -- OpenAI's exact wording is not something that can be verified without
-  // actually hitting the limit. If a real limit is hit and the batch does
-  // NOT halt here, capture the exact text ChatGPT showed and add it below,
-  // the same way the CAPTCHA phrase list above was built from real evidence.
+  // Quota detection is scoped by the caller to the ONE model response under
+  // evaluation, never the whole page: scanning everything would catch the
+  // OPERATOR'S OWN PROMPT if it happened to contain the same common words
+  // ("draw someone waiting for their daily limit to reset"). The phrase list
+  // itself lives in the adapter, with the rest of the provider knowledge.
   function matchesGenerationLimit(text) {
-    return /(reached (?:your|the) (?:daily |monthly )?(?:image generation )?limit|hit (?:your|the) (?:daily |monthly )?(?:image generation )?limit|image generation limit|generate more images (?:after|later|tomorrow)|try again (?:after|tomorrow|in (?:a|\d))|come back (?:after|in|tomorrow) to (?:generate|create) (?:more )?images|daily limit for image generation|you.ve used all your (?:free )?image generations)/i.test(text || "");
+    return ADAPTER.matchesGenerationLimit(text);
   }
   function generationLimitText() {
     return matchesGenerationLimit(latestAssistantText()) ? "ChatGPT image generation limit reached for now." : null;
@@ -202,24 +182,24 @@
   }
 
   function conversationRoot() {
-    const message = document.querySelector('[data-message-author-role="assistant"], [data-message-author-role="user"]');
-    const rooted = message?.closest('[data-testid="conversation-turns"], [data-testid*="conversation"], main, [role="main"]');
-    return rooted || document.querySelector('[data-testid="conversation-turns"], [data-testid*="conversation"], main, [role="main"]') || document.body;
+    const message = document.querySelector(`${SEL.assistantMessage}, ${SEL.userMessage}`);
+    const rooted = message?.closest(SEL.conversationRoot);
+    return rooted || document.querySelector(SEL.conversationRoot) || document.body;
   }
 
   function imageCandidates(root = conversationRoot(), inputEvidence = { sources: new Set(), names: new Set() }) {
     return Array.from(root.querySelectorAll("img")).map((image) => {
       const source = image.currentSrc || image.src || "";
       const rect = image.getBoundingClientRect();
-      const role = image.closest('[data-message-author-role="assistant"]') ? "assistant" : image.closest('[data-message-author-role="user"]') ? "user" : "unknown";
+      const role = image.closest(SEL.assistantMessage) ? "assistant" : image.closest(SEL.userMessage) ? "user" : "unknown";
       const label = `${image.alt || ""} ${image.getAttribute("aria-label") || ""}`.toLowerCase();
       const namedReference = Array.from(inputEvidence.names || []).some((name) => label.includes(name));
-      const attachmentPreview = Boolean(image.closest('form, [data-testid*="attachment"], [data-testid*="upload-preview"], [data-testid*="file-upload"]'));
+      const attachmentPreview = Boolean(image.closest(SEL.attachmentContainer));
       // turn_id is the identity of the assistant message this image lives in.
       // Multi-image attribution only accepts several images when they all
       // belong to the SAME assistant turn; "" (no assistant ancestor) can
       // never satisfy that, which keeps stray page images failing closed.
-      const turnId = nodeId(image.closest('[data-message-author-role="assistant"]'), "assistant");
+      const turnId = nodeId(image.closest(SEL.assistantMessage), "assistant");
       return { source, source_id: shortHash(source), node_id: nodeId(image, "image"), turn_id: turnId, role, input: role === "user" || attachmentPreview || inputEvidence.sources?.has(source) || namedReference, visible: isVisible(image) && rect.width >= 64 && rect.height >= 64, ready: image.complete && image.naturalWidth > 0 };
     }).filter((candidate) => /^(https:|data:image\/|blob:)/i.test(candidate.source));
   }
@@ -254,7 +234,7 @@
   // the next revision can be anchored on something durable.
   // ---------------------------------------------------------------------
 
-  const CLICKABLE_SELECTOR = 'button, [role="button"], a[href], [tabindex]:not([tabindex="-1"])';
+  const CLICKABLE_SELECTOR = SEL.pollControl;
 
   function clickableAncestor(node) {
     return node?.closest?.(CLICKABLE_SELECTOR) || null;
@@ -448,21 +428,11 @@
   function recordDetection(attempt, values) { if (attempt) attempt.detection = values; }
 
   function attachmentPreviewCount() {
-    return Array.from(document.querySelectorAll([
-      '[data-testid*="attachment"]',
-      '[data-testid*="file-upload"]',
-      '[data-testid*="upload-preview"]',
-      'button[aria-label*="Remove attachment"]',
-      'button[aria-label*="Remove file"]',
-    ].join(", "))).filter(isVisible).length;
+    return Array.from(document.querySelectorAll(SEL.attachmentPreview.join(", "))).filter(isVisible).length;
   }
 
   function uploadIsPending() {
-    return Array.from(document.querySelectorAll([
-      '[data-testid*="uploading"]',
-      '[aria-busy="true"]',
-      '[role="progressbar"]',
-    ].join(", "))).some(isVisible);
+    return Array.from(document.querySelectorAll(SEL.uploadPending.join(", "))).some(isVisible);
   }
 
   function fileInputHasReference(fileInput, fileName) {
@@ -488,7 +458,7 @@
     if (!images.length) return;
     // ChatGPT normally keeps this native input visually hidden behind its attach button.
     const composer = findComposer();
-    const fileInput = composer?.closest("form")?.querySelector('input[type="file"]') || document.querySelector('form input[type="file"]');
+    const fileInput = composer?.closest("form")?.querySelector('input[type="file"]') || document.querySelector(SEL.fileInput);
     if (!fileInput) throw new Error("ChatGPT image attachment input was not found.");
     const previousPreviewCount = attachmentPreviewCount();
     const data = new DataTransfer();
@@ -768,6 +738,87 @@
         generationLimitBlocker: generationLimitText(),
         abPollPending: abPollPending(),
       });
+      return false;
+    }
+
+    if (message.type === "DAC_DOM_PROBE") {
+      // STRICTLY READ-ONLY diagnostics for the AI operator (bridge method
+      // diagnostics.dom_probe): observes the page and returns a snapshot.
+      // This path must never click, type, or change focus.
+      //
+      // Ported from the Gemini worker after the 2026-08-26 trial, where the
+      // runner reported NO_NEW_IMAGE six times while the operator could see
+      // the prompts and the generated images on screen. Without this, that
+      // gap can only be closed by asking the owner to describe their screen.
+      try {
+        const chainOf = (element, depth = 5) => {
+          const out = []; let parent = element?.parentElement, hops = 0;
+          while (parent && hops < depth) {
+            const testid = parent.getAttribute?.("data-testid") || parent.getAttribute?.("data-test-id");
+            out.push(parent.tagName.toLowerCase() + (testid ? `[${testid}]` : ""));
+            parent = parent.parentElement; hops += 1;
+          }
+          return out.join(" > ");
+        };
+        const countFor = (selector) => { try { return `${selector} => ${document.querySelectorAll(selector).length}`; } catch (_) { return `${selector} => ERR`; } };
+        const selectorCounts = {};
+        for (const [group, value] of Object.entries(SEL)) {
+          if (Array.isArray(value)) selectorCounts[group] = value.map(countFor);
+          else if (typeof value === "string") selectorCounts[group] = countFor(value);
+        }
+        const buttons = Array.from(document.querySelectorAll("button")).filter(isVisible)
+          .map((button) => ({ aria: (button.getAttribute("aria-label") || "").slice(0, 60), testid: button.getAttribute("data-testid") || "", txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40), disabled: button.disabled || button.getAttribute("aria-disabled") === "true" }))
+          .filter((button) => button.aria || button.testid || button.txt).slice(0, 40);
+        const images = Array.from(document.querySelectorAll("img")).slice(0, 15).map((image) => {
+          const rect = image.getBoundingClientRect();
+          const src = image.currentSrc || image.src || "";
+          return { rect: { w: Math.round(rect.width), h: Math.round(rect.height) }, scheme: (src.match(/^(blob:|data:|https:|http:)/) || ["none"])[0], srcHead: src.slice(0, 70), alt: (image.alt || "").slice(0, 40), complete: image.complete, naturalW: image.naturalWidth, visible: isVisible(image), chain: chainOf(image) };
+        });
+        // What the page uses INSTEAD of the inherited message selectors is the
+        // whole question when attribution goes blind, so sample the attribute
+        // names actually present on likely message containers.
+        const messageAttributes = [...new Set(Array.from(document.querySelectorAll("article, [data-message-id], [data-testid], [data-turn], [data-turn-id]")).slice(0, 60)
+          .flatMap((element) => Array.from(element.attributes).map((attribute) => attribute.name).filter((name) => /^data-/.test(name))))].slice(0, 40);
+        const articleSample = Array.from(document.querySelectorAll("article")).slice(0, 4).map((element) => ({
+          testid: element.getAttribute("data-testid") || "",
+          attrs: Array.from(element.attributes).map((attribute) => `${attribute.name}=${String(attribute.value).slice(0, 30)}`).slice(0, 8),
+          imgs: element.querySelectorAll("img").length,
+          txtHead: (element.innerText || "").replace(/\s+/g, " ").trim().slice(0, 60)
+        }));
+        const customTags = [...new Set(Array.from(document.querySelectorAll("*")).map((element) => element.tagName.toLowerCase()).filter((tag) => tag.includes("-")))].slice(0, 100);
+        const fileInputs = Array.from(document.querySelectorAll('input[type="file"]')).map((input) => ({ accept: (input.getAttribute("accept") || "").slice(0, 120), multiple: input.multiple, connected: input.isConnected, chain: chainOf(input) }));
+        const poll = findAbPoll();
+        const probe = {
+          captured_at: new Date().toISOString(),
+          provider: ADAPTER.provider,
+          url: location.href,
+          surface: ADAPTER.surface(location.href),
+          surface_allowed: ADAPTER.surfaceAllowed(location.href),
+          composerFound: Boolean(findComposer()),
+          sendFound: Boolean(findSendButton()),
+          stopFound: Boolean(findStopButton()),
+          assistantCount: assistantMessages().length,
+          imageCandidateCount: imageCandidates().length,
+          attachmentPending: uploadIsPending(),
+          securityBlocker: securityBlockerText(),
+          generationLimitBlocker: generationLimitText(),
+          abPollPending: abPollPending(),
+          abPoll: poll ? poll.diagnostics : null,
+          busy: STATE.busy,
+          selectorCounts, buttons, images, messageAttributes, articleSample, customTags, fileInputs,
+          truncated: false,
+        };
+        // Payload cap ~64KB: shrink the bulky arrays first rather than fail.
+        if (JSON.stringify(probe).length > 64 * 1024) {
+          probe.images = probe.images.slice(0, 5);
+          probe.buttons = probe.buttons.slice(0, 10);
+          probe.customTags = probe.customTags.slice(0, 40);
+          probe.truncated = true;
+        }
+        sendResponse({ ok: true, probe });
+      } catch (error) {
+        sendResponse({ ok: false, error: error?.message || String(error) });
+      }
       return false;
     }
 
