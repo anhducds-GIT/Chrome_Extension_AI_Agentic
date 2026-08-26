@@ -68,6 +68,19 @@ Commit thì được tự làm (đã có tiền lệ Đức duyệt). Push thì 
 
 Ba AI có thể cùng lúc trong repo, nhưng **khác package** (mục 1).
 
+**Cửa vào của từng AI** — cách file này đến được tay bạn:
+
+| AI | Cách nạp | Đức phải làm gì |
+|---|---|---|
+| Claude | Tự đọc `CLAUDE.md` gốc → trỏ sang file này | Không phải làm gì |
+| Codex | Tự đọc `AGENTS.md` gốc | Không phải làm gì |
+| Antigravity | Dán **một câu mở màn**: *"Đọc AGENTS.md ở gốc repo trước khi làm gì."* | Dán 1 dòng mỗi phiên |
+
+Antigravity đã được thử live 26/08: nó đọc file này, tự lần ra `.agents/claims.json`, và tự
+kết luận "package có chủ rồi nên tôi chỉ được đọc" — dù không ai hỏi câu đó. Luật dùng được.
+Nhưng chưa chứng minh được nó **tự** nạp lúc mở phiên, nên câu mở màn là bắt buộc: 3 giây,
+miễn nhiễm với mọi thay đổi phiên bản, và nếu nó vốn tự nạp thì câu đó chỉ thừa vô hại.
+
 ## 6. Sổ tay mở khi cần — Tầng 2
 
 Không đọc trước. Tới việc nào thì mở sổ tay đó.
