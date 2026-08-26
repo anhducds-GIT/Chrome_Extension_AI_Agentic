@@ -21,6 +21,11 @@ máy sinh ra từ repo, không ai gõ tay**.
 2. **Verified phải có bằng chứng, và commit mới ≠ verified.** Generator KHÔNG suy diễn
    `last_verified` từ git log. Nó chỉ đọc lời khai trong STATUS, và **báo đỏ (exit 1) nếu
    `evidence_ref` không tồn tại trên đĩa**. Không bằng chứng = không sinh được dashboard.
+   Thêm hai luật GPT chốt 2026-08-26: (a) `last_verified_commit` phải là **full SHA 40 ký tự**
+   và generator phải **resolve được** nó trong repo (`git rev-parse --verify <sha>^{commit}`),
+   không resolve được → exit 1; (b) generator **máy đo** cờ `changed_since_verified` — code của
+   package có bị sửa SAU mốc verify không — để operator không nhìn "Verified 26/08" mà tưởng
+   bản hiện tại đã được kiểm.
 3. **STATUS là SSOT của *trạng thái vận hành*, không phải của toàn bộ kiến thức.**
    Frontmatter = danh tính + lifecycle + lời khai verified + con trỏ. Kiến trúc chi tiết,
    capabilities dài, troubleshooting → chỉ LINK sang README/HANDOFF/AI-OPERATOR-GUIDE.
@@ -61,7 +66,10 @@ name: Duc Auto ChatGPT             # bắt buộc
 lifecycle: active                  # bắt buộc, enum: idea|building|active|paused|archived|experimental|unclassified
 version_source: workers/duc-auto-chatgpt/v0.1.0/manifest.json   # bắt buộc — generator ĐỌC version từ đây, cấm gõ tay
 last_verified: 2026-08-26          # bắt buộc nếu lifecycle=active — ngày kiểm chứng gần nhất
-last_verified_commit: 00d1f99      # commit tại thời điểm kiểm chứng (người khai)
+last_verified_commit: 00d1f99b44bd490cac079da5e803917346571a26
+                                   # FULL SHA 40 ký tự (người khai). Generator resolve bằng
+                                   # `git rev-parse --verify <sha>^{commit}` — không tồn tại → exit 1.
+                                   # Dashboard hiển thị rút gọn 7 ký tự.
 last_verified_how: "Pilot-14 live 3/3 + idempotency 5/5 phép đo"   # một dòng, cách kiểm chứng
 evidence_ref: workers/duc-auto-chatgpt/v0.1.0/Pilot-14_RefFeatureTest/evidence/idempotency-fix-live-proof.md
                                    # bắt buộc nếu có last_verified — generator kiểm file TỒN TẠI, không có → exit 1
@@ -83,14 +91,16 @@ Các con số dưới đây do Claude đối chiếu từ HANDOFF/evidence ngày
 dùng; nghi ngờ thì kiểm lại theo đường dẫn, không được thay bằng suy đoán.
 
 **duc-auto-chatgpt** (v0.1.0, manifest version thật là `0.3.0` — vì thế mới có luật
-`version_source`): lifecycle `active` · last_verified `2026-08-26` @ `00d1f99`, how =
+`version_source`): lifecycle `active` · last_verified `2026-08-26` @
+`00d1f99b44bd490cac079da5e803917346571a26`, how =
 "Pilot-14 live 3/3 job ảnh tham chiếu đầu-cuối + xác minh live idempotency 5/5 phép đo",
 evidence = `Pilot-14_RefFeatureTest/evidence/idempotency-fix-live-proof.md` · current_focus =
 "B-14…B-18 đang mở; việc thật không chạy qua trần 90s của run.trial (B-17)" ·
 ref_backlog = `BACKLOG.md` của package.
 
 **duc-auto-gemini** (v0.2.0, manifest version `0.2.0`): lifecycle `active` · last_verified
-`2026-08-26` @ `dd3c736`, how = "Trial live cặp run.stop/chat.reload 9/9 bước, khoá RUN_ACTIVE
+`2026-08-26` @ `dd3c736b64206a357e6aa83f85c6e62a9fde43f7`, how =
+"Trial live cặp run.stop/chat.reload 9/9 bước, khoá RUN_ACTIVE
 chứng minh thật", evidence = `evidence-stop-reload-20260826/README.md` · current_focus =
 "Reload extension để nạp bản vá lời nhắn; chưa có BACKLOG.md riêng; nợ GPT 6 tính năng +
 3 method (xem FEATURE-PARITY.md)". Không có ref_backlog — đúng sự thật, đừng bịa.
@@ -115,6 +125,18 @@ STATUS — việc mở". Tài sản trong repo không được biến mất kh�
 - `evidence_ref` hoặc bất kỳ `ref_*` nào trỏ tới file không tồn tại.
 - `version_source` không tồn tại hoặc không parse được JSON.
 - Có `last_verified` mà thiếu `evidence_ref` (lời khai không bằng chứng).
+- `last_verified_commit` không đúng dạng 40 ký tự hex, HOẶC không resolve được trong repo
+  (`git rev-parse --verify <sha>^{commit}`). Lời khai trỏ vào commit ma = fail.
+
+**Máy đo `changed_since_verified` — cờ chống "verified giả tươi":**
+- Với mỗi STATUS có `last_verified_commit`: chạy
+  `git log <sha>..HEAD --name-only -- <thư-mục-package>` và đếm các commit chạm **file ảnh
+  hưởng hành vi**: đuôi `.js .mjs .json .html .css` trong package.
+- **Loại khỏi phép đếm:** mọi file `.md`, và mọi đường dẫn khớp vùng bằng chứng
+  (`evidence*/`, `Pilot-*/`, `pilot-*/`, `Batch-*/` — cùng regex với session-check). Không lọc
+  thì cờ kêu oan ngay ngày đầu: chính commit thêm STATUS.md/HANDOFF đã "chạm package".
+- Kết quả lên dashboard: cột "Code đổi sau kiểm chứng?" = `KHÔNG` hoặc `CÓ (N commit)` [ĐO].
+  `CÓ` không chặn build — nó là tín hiệu cho Đức biết lời khai verified đã cũ so với code.
 - Thư mục version có `manifest.json` nhưng KHÔNG có STATUS.md → **không im lặng**: vẫn hiện
   dòng registry với nhãn "CHƯA KHAI STATUS" (Observer thuộc diện này; các bản cũ như
   `duc-auto-gemini/v0.1.0` cũng vậy — hiện diện, gắn nhãn, không chặn build).
@@ -122,14 +144,16 @@ STATUS — việc mở". Tài sản trong repo không được biến mất kh�
 **Output `DASHBOARD.md`:** banner đừng-sửa-tay + lệnh sinh lại · dòng "Sinh tại commit
 `<sha>` (<ngày commit>)" và ghi CHÚ RÕ: *đây là lúc sinh trang, KHÔNG phải lúc kiểm chứng* ·
 bảng registry: Extension | Version [ĐO] | Lifecycle [KHAI] | Method Bridge [ĐO] | File test
-[ĐO] | Kiểm chứng cuối (ngày @ commit, cách kiểm) [KHAI+bằng chứng, link] | Đang giữ (claims)
-| Việc đang mở | Đọc sâu (link STATUS) · cuối trang: chú giải [ĐO]/[KHAI] (kế thừa quy ước
-FEATURE-PARITY.md). Xuống dòng `\n` (LF), tự đảm bảo byte-stable.
+[ĐO] | Kiểm chứng cuối (ngày @ commit 7 ký tự, cách kiểm) [KHAI+bằng chứng, link] |
+**Code đổi sau kiểm chứng?** [ĐO] | Đang giữ (claims) | Việc đang mở | Đọc sâu (link STATUS)
+· cuối trang: chú giải [ĐO]/[KHAI] (kế thừa quy ước FEATURE-PARITY.md). Xuống dòng `\n` (LF),
+tự đảm bảo byte-stable.
 
-## 7. Test ghim `tests/build-dashboard-smoke.mjs` — tối thiểu 4 ca
+## 7. Test ghim `tests/build-dashboard-smoke.mjs` — tối thiểu 6 ca
 
 Generator phải export các hàm lõi (`parseStatus`, `validateStatus`, `buildDashboard`) để test
-gọi được với fixture trong bộ nhớ/thư mục tạm, không phá repo thật.
+gọi được với fixture trong bộ nhớ/thư mục tạm, không phá repo thật. Các lệnh git bọc sau
+hàm tiêm được (inject) để test không phụ thuộc lịch sử repo thật.
 
 1. **Parse:** frontmatter mẫu (đúng schema) parse ra đủ trường, đúng giá trị.
 2. **Bằng chứng thiếu → đỏ:** STATUS có `last_verified` + `evidence_ref` trỏ file không tồn
@@ -138,6 +162,10 @@ gọi được với fixture trong bộ nhớ/thư mục tạm, không phá repo
 3. **Deterministic:** chạy build 2 lần trên cùng input → output giống hệt từng byte.
 4. **STATUS thiếu → rõ ràng:** thư mục có manifest mà không có STATUS → output chứa nhãn
    "CHƯA KHAI STATUS", không crash, không im lặng.
+5. **Commit ma → đỏ:** `last_verified_commit` sai dạng (không phải 40 hex) hoặc không resolve
+   được → validate fail, thông báo nêu SHA.
+6. **Lọc của `changed_since_verified` đúng chiều:** thay đổi chỉ gồm `.md`/vùng bằng chứng
+   → `KHÔNG`; thay đổi có `.js` trong package → `CÓ (N)`. Cả hai chiều đều phải có assert.
 
 Chạy toàn bộ qua `node tests/build-dashboard-smoke.mjs`, nối vào chuỗi `npm test`.
 
