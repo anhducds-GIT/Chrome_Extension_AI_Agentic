@@ -99,6 +99,23 @@ sai), nên chưa sửa trong wave này. Hai cách: gộp theo `state.running` ng
 (sạch hơn nhưng **phải kiểm UI trước** — `queueElapsed` và `renderRuntime` đang đọc
 nó để hiển thị job vừa xong).
 
+### B-12 · Cổng kiểm KHÔNG chặn commit lẫn file của phiên khác — (việc ở GỐC REPO)
+**Không sửa được từ package này** (`_root` đang do phiên `claude-gemini` giữ) → ghi ở đây
+để Đức và phiên giữ gốc thấy.
+
+Xảy ra thật 2026-08-26: Claude chạy `git add -A` và cuốn 3 file đang sửa dở của
+`workers/duc-auto-gemini` vào commit của mình. `session-check.mjs` vẫn báo **XANH TOÀN BỘ**,
+vì nó chỉ *loại* package của phiên khác khỏi phần đánh giá ("KHÔNG tính cho bạn") mà **không
+kiểm nội dung commit**. Đã tự phát hiện và sửa (`reset --soft` + `restore --staged`, chưa
+push nên không ảnh hưởng ai; hash file của Gemini xác minh nguyên vẹn).
+
+`safe-push` bắt đúng chuyện này ở tầng push — nhưng đó là **chốt cuối**. Nếu Đức đồng ý
+`--carry` cho một lý do khác thì file lẫn kia sẽ đi luôn mà không ai thấy.
+Đề xuất thêm 1 phép kiểm vào cổng: **commit của phiên này không được chứa đường dẫn thuộc
+package có chủ khác** (đọc `.agents/claims.json`, so với `git show --name-only` các commit
+chưa push của mình). Rẻ, và đúng loại "luật nào không kiểm được bằng máy thì sớm muộn cũng bị
+bỏ qua".
+
 ### B-11 · `run.trial` không có workbook bị bọc thành `INTERNAL_ERROR`
 Đo 2026-08-26: gọi `run.trial` khi chưa nạp workbook trả về `INTERNAL_ERROR` /
 `retryable: false`, còn nguyên nhân thật ("Open an XLSX workbook first" từ
