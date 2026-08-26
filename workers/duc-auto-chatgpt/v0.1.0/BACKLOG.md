@@ -63,6 +63,34 @@ chứng là trang vẫn đang hoạt động bình thường.
 
 ---
 
+### B-13 · Ảnh KHÔNG theo `output_downloads_subfolder` — artifact thì có, ảnh thì không
+**Bắt được live 2026-08-26** trong trial `trial-6e73dad2` (2/2 SUCCESS). Đã gọi
+`output.configure {output_downloads_subfolder: "DucAuto_GPT-Output/Pilot-11_BoundTab"}`:
+- Checkpoint XLSX + audit JSONL → **đúng** thư mục đã cấu hình.
+- Ảnh `Q001.png` / `Q002.png` → **sai**, rơi vào `Downloads\Duc Auto ChatGPT\` (mặc định cũ).
+
+**Nguyên nhân, đã truy ra dòng:** `sidepanel.js:4858`
+```js
+return effectiveOutput.image.kind === "downloads"
+  ? window.DacOutputLocation.downloadsLocation(item.settings.output_folder)   // <-- config CŨ
+  : effectiveOutput.image;
+```
+`effectiveOutput.image` đã mang đúng subfolder (do `fromWorkbook` dựng từ
+`output_downloads_subfolder`), nhưng dòng này **ghi đè** bằng `item.settings.output_folder` —
+khoá `output_folder` đời cũ trong runner config, mặc định `"Duc Auto ChatGPT"`.
+
+**Vì sao đáng sửa sớm:** đây chính là tính năng "AI tự đặt nơi lưu ảnh" của `da3ae83` —
+thứ đã bỏ được cú click chọn thư mục ra khỏi vòng tự hành. Nó đang chỉ hoạt động cho
+artifact, còn ảnh — thứ Đức thật sự cần — thì không. Mỗi pilot sẽ trộn ảnh vào một
+thư mục dùng chung thay vì thư mục riêng của pilot đó.
+
+**Ledger KHÔNG nói dối:** nó ghi đúng đường dẫn thật nơi ảnh nằm. Đây là lỗi "đi sai chỗ",
+không phải lỗi "báo cáo sai chỗ" — nhẹ hơn một bậc, nhưng vẫn phá ý đồ.
+
+**Ghi chú phụ, đừng để lẫn:** `write_outcome` báo `uniquified` trong khi tên file thật là
+`Q001.png` nguyên vẹn (không hề bị đổi tên). Nhỏ, nhưng nghĩa là trường này đang báo TÊN
+CHÍNH SÁCH chứ không phải KẾT QUẢ thật ở đường Downloads. Kiểm luôn khi sửa B-13.
+
 ## P2 — Vận hành & đồng bộ
 
 ### B-06 · Cơ chế đồng bộ & cross-check GPT ↔ Gemini
@@ -166,15 +194,17 @@ Xoá là quyền của Đức — **AI không tự xoá file**.
 
 ## Phiên kế tiếp
 
-1. **Chạy lại pilot trên bộ code sạch** — bước 4 trong thứ tự Đức đã chốt, và giờ mới
+1. **B-13 — ảnh không theo thư mục đã cấu hình** (mới, bắt được live 26/08). Một dòng ở
+   `sidepanel.js:4858`, nhưng phải chạy một trial để xác minh — gộp luôn với pilot dưới đây.
+2. **Chạy lại pilot trên bộ code sạch** — bước 4 trong thứ tự Đức đã chốt, và giờ mới
    thật sự an toàn để chạy: selector đã đo đúng, `DETECTION_BLIND` chặn retry mù,
    `run.stop`/`chat.reload` có sẵn để cứu, và tab đã bị khoá nên không gõ nhầm chat.
    **Cần một lần reload extension trước** (B-01 sửa `sidepanel.js`).
-2. **B-06 — đồng bộ GPT ↔ Gemini** (bước 2 của Đức, bị hoãn hai lần). **Lưu ý về quyền:**
+3. **B-06 — đồng bộ GPT ↔ Gemini** (bước 2 của Đức, bị hoãn hai lần). **Lưu ý về quyền:**
    việc này đụng file ở GỐC REPO và cả package Gemini — cả hai đang do phiên
    `claude-gemini` giữ. Phải hỏi Đức điều phối hai phiên, hoặc chờ phiên kia trả package.
    Đây chính là lý do phiên 26/08 (tối) làm B-01 trước thay vì B-06.
-3. Dọn: B-09 (rác test — quyền xoá của Đức), B-11, B-10, B-08.
+4. Dọn: B-09 (rác test — quyền xoá của Đức), B-11, B-10, B-08.
 
 **Rác của phiên 2026-08-26 (chiều)** — ở `Downloads\Phai sinh\DucAuto_GPT-Output\Trial-RunStop-20260826`:
 checkpoint `Bridge-2026-08-26T06-32__results__v01..` + audit của `trial-09c93cd4`. Job Q001
