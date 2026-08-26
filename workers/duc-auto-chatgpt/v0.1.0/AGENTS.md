@@ -90,6 +90,7 @@ COMPANION (đọc khi cần):
 | `HANDOFF.md` | Trạng thái + Log lịch sử đầy đủ |
 | `decisions.md` | Quyết định lớn đã chốt, có nguồn dẫn |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX |
+| `BACKLOG.md` | Việc phát sinh ngoài checkpoint của phiên đang chạy — P1/P2/P3 + câu hỏi còn treo. Mọi ý tưởng làm phình phạm vi đều ghi vào đây thay vì mở rộng phiên |
 | `NEXT-SESSION-BRIEF.md` | Brief phiên làm việc tiếp theo (khi còn hiệu lực) |
 | `AUDIT.md` | Kết quả audit kiến trúc |
 | `TEST_REPORT.md` | Kết quả test |

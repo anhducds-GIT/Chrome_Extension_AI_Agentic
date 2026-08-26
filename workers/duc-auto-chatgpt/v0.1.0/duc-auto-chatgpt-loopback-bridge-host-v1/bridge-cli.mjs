@@ -21,7 +21,10 @@ const COMMANDS = Object.freeze({
   "output-set-folder-hint": "output.set_folder_hint",
   "run-trial": "run.trial",
   "proposal-withdraw": "queue.proposal.withdraw",
-  "profiles-remove": "profiles.remove"
+  "profiles-remove": "profiles.remove",
+  // Read-only live-page diagnostics. Needed by an AI operator whenever
+  // detection disagrees with what the owner can see on screen.
+  "dom-probe": "diagnostics.dom_probe"
 });
 
 const PARAMS_FILE_COMMANDS = new Set([
