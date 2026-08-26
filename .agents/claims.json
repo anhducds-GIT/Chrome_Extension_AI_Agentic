@@ -15,11 +15,10 @@
       "task": "Extension Operation Platform V0.1 — chi THEM STATUS.md + 1 dong Log HANDOFF + khai Ban do file. KHONG dung vao code worker. Tiep quan tu claude-chatgpt-3, Duc duyet trong prompt mo phien. LUU Y: phien do con 1 commit CHUA PUSH (6d852d9) — safe-push se tu choi, phai hoi Duc."
     },
     "_root": {
-      "owner": "claude-gemini-4",
+      "owner": "opus-platform-2",
       "ai": "Claude",
       "claimed_at": "2026-08-26",
-      "task": "MUON NGAN, Duc duyet trong chat: chi sua FEATURE-PARITY.md (2 dong da kiem bang cach doc than ham). KHONG dung vao scripts/, AGENTS.md, package.json — opus-platform-2 dang lam do o do. Tra lai cho opus-platform-2 ngay sau khi commit.",
-      "borrowed_from": "opus-platform-2"
+      "task": "Extension Operation Platform V0.1. (claude-gemini-4 muon ngan 26/08 de sua FEATURE-PARITY.md, Duc duyet, da tra lai ngay — chi dung 1 file, khong dung scripts/AGENTS.md/package.json.)"
     }
   }
 }
