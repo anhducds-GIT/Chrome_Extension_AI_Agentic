@@ -3,24 +3,24 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gemini": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "V0.1.1 patch (GPT chot): bo moi so dynamic khoi STATUS + sua mau thuan FEATURE-PARITY muc 2 vs muc 4.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "V0.1.1 DA XONG va DA PUSH (b7305a2): bo so dong khoi STATUS, sua mau thuan FEATURE-PARITY muc 2 vs muc 4, them Luat so 0 vao STATUS.template. San sang cho V0.2.",
       "released_at": "2026-08-27"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "V0.1.1 patch (GPT chot): bo moi so dynamic khoi STATUS + sua mau thuan FEATURE-PARITY muc 2 vs muc 4.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "V0.1.1 DA XONG va DA PUSH (b7305a2): bo so dong khoi STATUS, sua mau thuan FEATURE-PARITY muc 2 vs muc 4, them Luat so 0 vao STATUS.template. San sang cho V0.2.",
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "V0.1.1 patch (GPT chot): bo moi so dynamic khoi STATUS + sua mau thuan FEATURE-PARITY muc 2 vs muc 4.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "V0.1.1 DA XONG va DA PUSH (b7305a2): bo so dong khoi STATUS, sua mau thuan FEATURE-PARITY muc 2 vs muc 4, them Luat so 0 vao STATUS.template. San sang cho V0.2.",
       "released_at": "2026-08-27"
     }
   }
