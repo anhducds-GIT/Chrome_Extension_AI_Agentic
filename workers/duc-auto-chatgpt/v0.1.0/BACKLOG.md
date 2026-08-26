@@ -41,21 +41,6 @@ chứng là trang vẫn đang hoạt động bình thường.
 
 ## P2 — Vận hành & đồng bộ
 
-### B-04 · `run.stop` cho bridge — **ĐANG GIAO** (`drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md`)
-Panel đã có `stop()` (`sidepanel.js`, bật cờ `stopRequested` + gửi `DAC_ABORT`) —
-đúng đường nút Stop của Đức, đã được chứng minh an toàn. Đưa lên bridge.
-**Bắt buộc: đi vòng qua khoá `RUN_ACTIVE`**, nếu không thì vô dụng đúng lúc cần nhất.
-Không làm `run.pause`/`run.resume` cùng lúc — một việc một lúc.
-
-### B-05 · `chat.reload` cho bridge (F5 tab) — **ĐANG GIAO** (`drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md`)
-`chrome.tabs.reload(tabId)` — quyền đã đủ trong manifest, hiện chưa chỗ nào dùng.
-Đóng được vòng đang hở: mất content script thì hệ thống hiện chỉ *bảo Đức* F5 rồi
-đứng chờ. **Đã tự dính đúng lỗi này 2026-08-26**: reload extension xong, `dom_probe`
-trả `RECEIVER_LOST` vì tab chưa F5, phải nhờ tay Đức.
-**Bắt buộc: từ chối khi có job nào ở trạng thái post-submit** — F5 giết content
-script và mọi attempt đang bay, mất dấu một lượt sinh ảnh đã tốn quota và lần
-retry sau có nguy cơ gửi lại, phá đảm bảo "gửi đúng một lần".
-
 ### B-06 · Cơ chế đồng bộ & cross-check GPT ↔ Gemini
 Đo 2026-08-26: **86% code chung**, nhưng lệch sai chỗ ở `bridge-core.js` (84%),
 `image-evidence-core.js` (52%), `checkpoint-core.js` (79%), `output-profile-core.js` (62%).
@@ -75,12 +60,29 @@ Ghi ngày để không trôi:
 - **2026-08-25** wave A/B-poll + multi-image (`image-evidence-core.js` hai bên đang
   52% giống nhau vì wave đó chỉ làm bên GPT). Gemini sớm muộn cũng gặp nhiều ảnh một lượt.
 - **2026-08-26** `DETECTION_BLIND` — Gemini cũng retry mù được y hệt.
-- **2026-08-26** `run.stop` + `chat.reload` khi wave đang giao hoàn tất.
+- **2026-08-26** `run.stop` + `chat.reload` — **wave đã xong bên GPT, sẵn sàng port.**
+  Kèm cảnh báo về lỗi nuốt lệnh dừng (xem `decisions.md`). **Đã kiểm, KHÔNG phải
+  copy y nguyên:** `approval-persistence-core.js` của Gemini chưa có `tryBeginRun`
+  (chưa có lớp latch A6), và `sidepanel.js:4341` của nó xoá `stopRequested` ngay
+  cùng dòng đặt `running = true`. Tức là bản vá của GPT không dán thẳng sang được
+  — phiên nào port phải tự phân tích cửa sổ await của Gemini trước. (Gemini đang
+  có chủ là phiên `claude-gemini`; phiên này chỉ đọc, không sửa.)
 - Chiều ngược lại: GPT còn thiếu `references.add` của Gemini.
 
 ---
 
 ## P3 — Dọn dẹp
+
+### B-10 · `run.status` cũng đang trả `current` cũ khi rảnh
+Phát hiện 2026-08-26 khi sửa `run.stop` (cùng gốc, lỗi có sẵn từ trước, **không phải
+do wave này gây ra**). `state.currentItem` chỉ bị xoá lúc nạp workbook và lúc nạp
+resume — **không bao giờ xoá khi run kết thúc**. Nên `bridgeRunStatus` trả
+`state: "IDLE"` nhưng vẫn kèm `current: {job_id, phase…}` của run trước.
+Đỡ nguy hiểm hơn `run.stop` (trường `state` vẫn nói đúng, bên gọi đọc kỹ thì không
+sai), nên chưa sửa trong wave này. Hai cách: gộp theo `state.running` ngay trong
+`bridgeRunStatus` (1 dòng, an toàn), hoặc xoá `state.currentItem` lúc run kết thúc
+(sạch hơn nhưng **phải kiểm UI trước** — `queueElapsed` và `renderRuntime` đang đọc
+nó để hiển thị job vừa xong).
 
 ### B-08 · Chuyển text anchor của poll A/B vào adapter
 `ab-poll-core.js` đang giữ cả *chính sách* (random/click_1/... — trung tính) lẫn
@@ -108,8 +110,13 @@ Xoá là quyền của Đức — **AI không tự xoá file**.
 
 ## Phiên kế tiếp
 
-Gói việc đã soạn sẵn: **`drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md`** (B-04 + B-05,
-kèm bước 0 xác minh selector còn treo).
+1. **Còn treo từ phiên 2026-08-26 (chiều):** bước 0 của
+   `drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md` vẫn CHƯA đạt — `imageCandidateCount`
+   đo được **3** trên trang có **14** ảnh hội thoại. Code trên đĩa đã có `f418bc1`
+   nhưng extension đang chạy chưa nạp. Cần Đức reload + F5 rồi đo lại; kỳ vọng
+   3 → ~14. **Chưa đạt thì chưa chạy pilot** (mỗi lượt là quota thật).
+2. Sau đó: nghiệm thu sống `run.stop` + `chat.reload` (xem Log `HANDOFF.md`).
+3. Rồi mới tới B-06 (đồng bộ GPT ↔ Gemini) theo thứ tự Đức đã chốt.
 
 ## Đã đóng
 
@@ -122,3 +129,12 @@ kèm bước 0 xác minh selector còn treo).
   còn `data-message-author-role`.
 - **2026-08-26 · `f418bc1`** (B-02, một phần) — gốc quét là tổ tiên chung của các lượt,
   không khớp theo tên nữa.
+- **2026-08-26** (B-04) — `run.stop`: dừng run qua bridge, **đi vòng qua khoá
+  `RUN_ACTIVE`** (dừng là giảm rủi ro), idempotent, trả về phase để bên gọi biết
+  prompt đã bay hay chưa. Kèm một lỗi ngoài gói việc, tìm ra nhờ test cái bẫy mà
+  gói việc dặn phải kiểm chứng: cờ `stopRequested` bị xoá sau lần await đầu của
+  `run()` nên lệnh dừng rơi vào cửa sổ khởi động sẽ bị nuốt âm thầm — đã chuyển
+  chỗ xoá lên khoá `tryBeginRun`. Xem `decisions.md`.
+- **2026-08-26** (B-05) — `chat.reload`: F5 tab qua bridge, **bị `RUN_ACTIVE`
+  chặn** khi đang có run (bảo vệ "gửi đúng một lần"), đợi trang trả lời rồi mới
+  báo `ready`, và nói rõ đã reload tab nào.

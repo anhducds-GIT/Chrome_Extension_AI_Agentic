@@ -24,7 +24,12 @@ const COMMANDS = Object.freeze({
   "profiles-remove": "profiles.remove",
   // Read-only live-page diagnostics. Needed by an AI operator whenever
   // detection disagrees with what the owner can see on screen.
-  "dom-probe": "diagnostics.dom_probe"
+  "dom-probe": "diagnostics.dom_probe",
+  // Takes no --params-file: a stop has no arguments, so it stays usable in the
+  // one situation it exists for -- a run going wrong and needing to end now.
+  "run-stop": "run.stop",
+  // Also argument-free: which tab it reloads is reported back, not chosen here.
+  "chat-reload": "chat.reload"
 });
 
 const PARAMS_FILE_COMMANDS = new Set([

@@ -214,7 +214,7 @@
       bridge_payload_sha256: item.job.bridge_payload_sha256 || null
     } : {};
     const trial = state.bridgeRunOrigin === "bridge_dev" ? { input_origin: "bridge_dev", bridge_trial_id: state.bridgeTrialId, bridge_trial_timeout_cap_sec: 90 } : {};
-    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_files: item?.result_files || null, image_count: item?.image_count ? Number(item.image_count) : null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge, ...trial });
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_files: item?.result_files || null, image_count: item?.image_count ? Number(item.image_count) : null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge, ...trial, ...(values.input_origin ? { input_origin: values.input_origin } : {}) });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
@@ -654,6 +654,150 @@
     }
   }
 
+  // Deliberately does NOT take queueRunLock.tryBeginMutation(). Every other
+  // bridge write is refused while a run is live because it could change what
+  // the run is about to do next; a stop can only ever shrink what it does.
+  // A stop refused with RUN_ACTIVE is useless at the exact moment it is needed.
+  // This exception is the reason the method exists -- do not "make it
+  // consistent" with the other handlers in a later cleanup pass.
+  async function bridgeRunStop() {
+    // Only trust state.currentItem while a run is genuinely executing.
+    // setCurrent(null, ...) is called on workbook load and on resume load, but
+    // never when a run ends, so between runs it still points at the LAST job of
+    // the previous one. Reading it unconditionally made an idle stop answer
+    // "no run is active" while also reporting that job's id and
+    // prompt_already_sent: true -- and write that claim into the audit trail.
+    // A run that is merely starting has no current job yet, which is exactly
+    // what null says here.
+    const current = state.running ? state.currentItem : null;
+    const wasRunning = Boolean(state.running || state.runStarting);
+    const phase = current?.phase || null;
+    // Past PRE_SUBMIT the prompt has already left the panel. Stopping prevents
+    // LATER jobs; it cannot recall a prompt ChatGPT has already received, and
+    // the answer must say so rather than implying the work was undone.
+    const promptAlreadySent = Boolean(phase) && phase !== "PRE_SUBMIT";
+    if (wasRunning) {
+      state.stopRequested = true;
+      progress("Stopping current operation…");
+      // The same best-effort abort the owner's Stop button sends. A dead
+      // content script must not turn a stop into a failure: the local flag
+      // alone already prevents every later job from being submitted.
+      try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop still holds */ }
+      log("Bridge đã yêu cầu dừng run.", "error");
+    }
+    // audit() no-ops without a run_id, so an idle stop records nothing rather
+    // than inventing an event with no run to attach it to.
+    audit("BRIDGE_RUN_STOPPED", current, {
+      message: wasRunning ? (promptAlreadySent ? "STOP_REQUESTED_AFTER_SUBMIT" : "STOP_REQUESTED_BEFORE_SUBMIT") : "STOP_NOOP_NOT_RUNNING",
+      input_origin: "bridge"
+    });
+    controls();
+    return {
+      was_running: wasRunning,
+      stopped_at: new Date().toISOString(),
+      job_id: current?.job?.id || null,
+      attempt_id: current?.attempt_id || null,
+      phase,
+      runtime_stage: current?.runtime_stage || null,
+      prompt_already_sent: promptAlreadySent,
+      note: !wasRunning
+        ? "Không có run nào đang chạy. Không có gì để dừng."
+        : promptAlreadySent
+          ? "Đã yêu cầu dừng. Prompt của job này ĐÃ gửi đi rồi, không thu hồi được — chỉ các job sau mới không được gửi."
+          : "Đã yêu cầu dừng trước khi prompt kịp gửi. Không job nào bị gửi thêm."
+    };
+  }
+
+  const CHAT_RELOAD_READY_TIMEOUT_MS = 20000;
+  const CHAT_RELOAD_POLL_MS = 500;
+
+  // The mirror image of run.stop: that one bypasses the run lock, this one is
+  // GATED by it. F5 destroys the content script and every attempt in flight
+  // with it, so a job that has already spent real quota loses the evidence of
+  // what it produced, and the retry that follows can submit the same prompt a
+  // second time. Exact-once is not a guarantee this method may weaken to be
+  // convenient. The supported sequence is run.stop, then chat.reload, then run
+  // again -- never a reload laid on top of a living run.
+  //
+  // BACKLOG B-05 framed the rule as "refuse while any job is post-submit".
+  // Refusing on any active run is both stricter and simpler to verify: with no
+  // run active there is no in-flight attempt left to lose.
+  async function bridgeChatReload() {
+    // TAKE the mutation latch; do not merely read the flags. This handler
+    // awaits twice over -- activeTab(), then a readiness poll of up to 20s --
+    // and a naked check would leave that entire window open for a run to start
+    // against the tab that is about to be, or is already being, reloaded. That
+    // is the exact-once hole this guard exists to close, so the guard has to
+    // hold for as long as the reload does. createQueueRunLock is built for
+    // this: the latch is claimed before the first await and released in
+    // finally. It refuses on the same conditions the naked check tested, and
+    // additionally stops a run from beginning while we wait.
+    if (!queueRunLock.tryBeginMutation()) {
+      throw new window.DacBridgeCore.BridgeProtocolError(
+        "RUN_ACTIVE",
+        "RUN_ACTIVE: Đang có run chạy nên không F5 được. Gọi run.stop trước, đợi run dừng hẳn, rồi mới chat.reload — F5 lúc đang chạy sẽ giết attempt đang bay và có thể làm prompt bị gửi lại lần hai."
+      );
+    }
+    try {
+      return await performChatReload();
+    } finally {
+      queueRunLock.endMutation();
+      controls();
+    }
+  }
+
+  async function performChatReload() {
+    // activeTab() resolves the ACTIVE tab and re-resolves it on every single
+    // call (BACKLOG B-01, still unfixed, present in both workers). That is
+    // precisely why the answer and the audit row below name the tab explicitly
+    // instead of letting the caller assume which one was reloaded.
+    const before = await activeTab();
+    const tabId = before.id;
+    const urlBefore = before.url || null;
+    const startedAt = Date.now();
+    await chrome.tabs.reload(tabId);
+    // Reporting ok before the page can answer would be a small lie that makes
+    // the caller act too early, so poll the tab we just reloaded -- by id, not
+    // through send(), which would re-resolve the active tab and could end up
+    // pinging a different one.
+    let ready = false;
+    let composerFound = false;
+    while (Date.now() - startedAt < CHAT_RELOAD_READY_TIMEOUT_MS) {
+      await sleep(CHAT_RELOAD_POLL_MS);
+      try {
+        const ping = await chrome.tabs.sendMessage(tabId, { type: "DAC_PING" });
+        composerFound = Boolean(ping?.composerFound);
+        // Alive is not the same as usable: wait for the composer to exist, the
+        // same signal system.ping treats as ChatGPT being reachable.
+        if (composerFound) { ready = true; break; }
+      } catch (_) { /* content script has not been re-injected yet */ }
+    }
+    const waitedMs = Date.now() - startedAt;
+    const after = await chrome.tabs.get(tabId).catch(() => null);
+    const urlAfter = after?.url || null;
+    // audit() no-ops without a run_id, so a reload before this session's first
+    // run records nothing rather than inventing an event with no run to hang it
+    // on. tab_id travels in the message because the audit row has no field for
+    // it and one control method does not justify widening the evidence schema.
+    audit("BRIDGE_CHAT_RELOADED", null, {
+      message: `${ready ? "CHAT_RELOAD_READY" : "CHAT_RELOAD_NOT_READY"} tab_id=${tabId} waited_ms=${waitedMs}`,
+      target_url: urlAfter || urlBefore,
+      input_origin: "bridge"
+    });
+    log(`Bridge đã F5 tab ChatGPT (tab ${tabId}).`, ready ? "" : "error");
+    return {
+      ready,
+      tab_id: tabId,
+      url_before: urlBefore,
+      url_after: urlAfter,
+      waited_ms: waitedMs,
+      composer_found: composerFound,
+      note: ready
+        ? `Đã F5 tab ${tabId} và trang đã trả lời lại. Dùng tiếp được.`
+        : `Đã F5 tab ${tabId} nhưng sau ${Math.round(waitedMs / 1000)} giây trang vẫn chưa trả lời. Chưa dùng được — kiểm tra tab đó còn mở và đang ở một hội thoại ChatGPT không.`
+    };
+  }
+
   async function bridgeSystemPing() {
     const workbook = state.workbook;
     let chatgpt = { state: "HARD_STOP", failure_type: "RECEIVER_LOST", composer_found: false, generating: false };
@@ -1057,6 +1201,8 @@
       "queue.list": withBridgeErrors(bridgeQueueList),
       "run.status": withBridgeErrors(async () => bridgeRunStatus()),
       "run.trial": withBridgeErrors(bridgeRunTrial),
+      "run.stop": withBridgeErrors(bridgeRunStop),
+      "chat.reload": withBridgeErrors(bridgeChatReload),
       "diagnostics.dom_probe": withBridgeErrors(bridgeDomProbe),
       "ledger.read": withBridgeErrors(bridgeLedgerRead),
       "jobs.add": withBridgeErrors(bridgeJobsAdd),
@@ -4834,7 +4980,11 @@
     } finally {
       queueRunLock.endRunStart(); controls();
     }
-    state.stopRequested = false; state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    // state.stopRequested is NOT reset here. It is cleared by the run-start
+    // latch (queueRunLock.tryBeginRun) instead, which runs before this
+    // function's first await -- see the comment there. Resetting it at this
+    // point would discard a run.stop that arrived during startup.
+    state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
     state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = [];
     // Bridge Setup mutations may already have written this session's audit
@@ -5320,6 +5470,8 @@
       "queue.list": bridgeQueueList,
       "run.status": bridgeRunStatus,
       "run.trial": bridgeRunTrial,
+      "run.stop": bridgeRunStop,
+      "chat.reload": bridgeChatReload,
       "diagnostics.dom_probe": bridgeDomProbe,
       "ledger.read": bridgeLedgerRead,
       "jobs.add": bridgeJobsAdd,

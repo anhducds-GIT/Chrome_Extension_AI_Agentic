@@ -32,6 +32,19 @@
       tryBeginRun() {
         if (state.queueMutationRunning || state.running || state.runStarting) return false;
         state.runStarting = true;
+        // A stop belongs to the run that was live when it was asked for. This
+        // latch is the ONE synchronous instant at which a new run begins, so it
+        // is the only safe place to drop a stale stop flag.
+        //
+        // The reset used to live further down inside run(), AFTER the run had
+        // already awaited its validation -- which meant a stop arriving during
+        // that await (run.stop bypasses this lock, so it can) was silently
+        // wiped, and the run submitted prompts anyway while the caller had been
+        // told it was stopping. Clearing it here keeps the property that made
+        // the old placement correct (a stop requested while idle can never kill
+        // the NEXT run) and adds the one it lacked (a stop requested after a run
+        // has begun always survives to be honoured).
+        state.stopRequested = false;
         return true;
       },
       promoteRun() {

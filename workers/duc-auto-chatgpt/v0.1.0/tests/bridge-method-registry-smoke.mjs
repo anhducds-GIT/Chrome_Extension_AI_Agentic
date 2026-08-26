@@ -14,7 +14,12 @@ const expectedMethods = [
   "jobs.reorder", "output.configure", "run_settings.configure", "output.set_folder_hint", "profiles.remove", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw",
   // Ported from the Gemini worker 2026-08-26 so an AI operator can diagnose
   // the live page without the owner describing their screen.
-  "diagnostics.dom_probe"
+  "diagnostics.dom_probe",
+  // 2026-08-26: the only write that bypasses the RUN_ACTIVE lock, because a
+  // stop reduces risk. See tests/bridge-run-stop-smoke.mjs.
+  "run.stop",
+  // 2026-08-26: the mirror image -- gated BY the same lock run.stop bypasses.
+  "chat.reload"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
@@ -39,7 +44,7 @@ assert.equal(bridge.METHOD_REGISTRY["queue.propose"].approval, "owner_click");
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].idempotent, true);
 const idempotentMutations = [
   "jobs.add", "jobs.update", "jobs.remove", "jobs.reorder",
-  "output.configure", "output.set_folder_hint", "profiles.remove", "run_settings.configure", "queue.propose", "run.trial", "queue.proposal.withdraw"
+  "output.configure", "output.set_folder_hint", "profiles.remove", "run_settings.configure", "queue.propose", "run.trial", "queue.proposal.withdraw", "run.stop", "chat.reload"
 ];
 assert(idempotentMutations.every((name) => bridge.METHOD_REGISTRY[name].idempotent === true));
 assert(expectedMethods.filter((name) => !idempotentMutations.includes(name)).every((name) => bridge.METHOD_REGISTRY[name].idempotent === false));
@@ -90,7 +95,9 @@ const validByMethod = {
     }]
   },
   "queue.proposal.get": { proposal_id: "proposal-uuid" },
-  "queue.proposal.withdraw": { proposal_id: "proposal-uuid" }
+  "queue.proposal.withdraw": { proposal_id: "proposal-uuid" },
+  "run.stop": {},
+  "chat.reload": {}
 };
 for (const [method, params] of Object.entries(validByMethod)) {
   assert.doesNotThrow(() => bridge.validateParams(method, params), `${method} accepts its v1 fixture`);
@@ -151,7 +158,11 @@ const invalidByMethod = {
   "run_settings.configure": { delay_min_sec: 25, delay_max_sec: 12 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [] },
   "queue.proposal.get": { proposal_id: "" },
-  "queue.proposal.withdraw": { proposal_id: "" }
+  "queue.proposal.withdraw": { proposal_id: "" },
+  // A stop takes no arguments at all: there is no "stop job X" that could be
+  // mistaken for "stop everything" on a live run.
+  "run.stop": { job_id: "Q001" },
+  "chat.reload": { tab_id: 7 }
 };
 for (const [method, params] of Object.entries(invalidByMethod)) {
   assert.throws(() => bridge.validateParams(method, params), (error) => error.code === "INVALID_PARAMS", `${method} rejects invalid schema input`);
