@@ -4255,7 +4255,7 @@
       if (!effectiveOutput.saveImages) {
         item.phase = "OUTPUT_SAVED";
         item.detected_not_downloaded = true;
-        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), persistence_verified: false, detected_not_downloaded: true, result_file: "", result_download_id: "", write_outcome: "detected_not_downloaded", detection_diagnostics: JSON.stringify({ ...(result?.detection || {}), attach: result?.attach ?? null, blob_conversion: result?.blob_conversion ?? null }) });
+        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), persistence_verified: false, detected_not_downloaded: true, result_file: "", result_download_id: "", write_outcome: "detected_not_downloaded", detection_diagnostics: JSON.stringify({ ...(result?.detection || {}), attach: result?.attach ?? null, blob_conversion: result?.blob_conversion ?? null, image_url_dropped: result?.image_url_dropped ?? null }) });
         audit("DETECTED_NOT_DOWNLOADED", item, { message: "Attributable image detected; generated-image download is disabled." });
         item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image detected; download disabled.");
         renderQueue(); progress(`${item.job.id} detected; image download disabled.`);

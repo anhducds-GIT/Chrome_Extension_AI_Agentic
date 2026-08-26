@@ -75,4 +75,16 @@ assert.match(content, /image_url: await downloadableUrl\(decision\.candidate\.so
 const submit = content.slice(content.indexOf("const staged = await stageReferences(referenceImages)") - 400, content.indexOf("const sendButton = await waitForSendButtonReady()"));
 assert.match(submit, /lastBlobConversion = null;/, "phải đặt lại lastBlobConversion trước mỗi lần thử");
 
+// 9. Nhánh "kết quả là chữ" từng rò URL blob thô ra ngoài, khiến lỗi hiện ra
+//    dưới dạng gây hiểu nhầm "URL không dùng được" trong khi nguyên nhân thật
+//    là ảnh không được chấm là output gán được. Nay phải thất bại TRUNG THỰC,
+//    và tuyệt đối KHÔNG được tự chuyển đổi ở đây — làm vậy là biến FAIL thành
+//    SUCCESS, tức đổi luật attribution, phải hỏi Đức (AGENTS.md 2.4).
+assert.match(content, /const imageDownloadable = imageUrl && \/\^\(https:\|data:\)\/i\.test\(String\(imageUrl\)\) \? imageUrl : null;/, "nhánh chữ phải lọc URL không tải được");
+assert.match(content, /image_url: imageDownloadable,/, "nhánh chữ phải trả URL đã lọc, không phải URL thô");
+const textBranch = content.slice(content.indexOf("const imageDownloadable"), content.indexOf("stableSince = 0;"));
+assert.ok(!/downloadableUrl/.test(textBranch), "nhánh chữ KHÔNG được tự chuyển đổi blob — đó là đổi luật attribution, phải hỏi Đức");
+assert.match(content, /carryDiagnostic\(attempt, "image_url_dropped"/, "lý do bỏ URL phải tới được sổ cái qua attempt.detection");
+assert.match(content, /\["attach", "blob_conversion", "image_url_dropped"\]/, "image_url_dropped phải nằm trong danh sách mang theo");
+
 console.log("blob image conversion: PASS");

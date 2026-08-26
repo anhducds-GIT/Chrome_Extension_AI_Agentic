@@ -57,7 +57,13 @@ assert.match(panel, /attach: result\?\.attach \?\? null/, "detection_diagnostics
 //    lần ghi detected-not-downloaded. Chỉ chạy thật mới lộ ra chuyện này.
 assert.match(content, /decision_reason: "PENDING", attach: attach \?\? null/, "attach phải nằm trong attempt.detection lúc khởi tạo, không chỉ trên result");
 const record = content.slice(content.indexOf("const CARRIED_DIAGNOSTICS"), content.indexOf("function carryDiagnostic"));
-assert.match(record, /\["attach", "blob_conversion"\]/, "danh sách giữ lại phải gồm attach và blob_conversion");
+// Kiểm THÀNH VIÊN, không ghim cứng cả mảng: ý định là "hai trường này phải
+// được giữ lại", và danh sách còn mọc thêm khi tìm ra chẩn đoán mới cần mang
+// theo. Ghim cứng cả mảng thì thêm trường thứ ba là vỡ, vì một lý do chẳng
+// liên quan gì tới điều nó đang bảo vệ.
+for (const field of ['"attach"', '"blob_conversion"']) {
+  assert.ok(record.includes(field), `danh sách giữ lại phải gồm ${field}`);
+}
 assert.match(record, /attempt\.detection = \{ \.\.\.values, \.\.\.carried \}/, "recordDetection phải giữ lại các trường mang theo khi ghi đè");
 
 console.log("attach path recorded on success: PASS");

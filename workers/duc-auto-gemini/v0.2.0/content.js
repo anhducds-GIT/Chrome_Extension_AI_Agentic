@@ -299,7 +299,7 @@
   // detected-not-downloaded write -- so anything not in here is erased before
   // it reaches the ledger. Live proof 2026-08-26: a first attempt parked these
   // on `result` instead, the job passed, and both fields came back undefined.
-  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion"]);
+  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped"]);
   function recordDetection(attempt, values) {
     if (!attempt) return;
     const carried = {};
@@ -652,6 +652,8 @@
 
       if (resultMessage && !generating) {
         const imageUrl = outputCandidates(resultMessage, inputEvidence).at(-1)?.source || null;
+        // Chỉ https: và data: là tải được (background.js). blob: thì không.
+        const imageDownloadable = imageUrl && /^(https:|data:)/i.test(String(imageUrl)) ? imageUrl : null;
         if (text === stableText) {
           if (!stableSince) stableSince = Date.now();
         } else {
@@ -661,6 +663,12 @@
 
         // Require 1.5s of stable text from the first model-response created after the pre-send boundary.
         if (stableText && Date.now() - stableSince >= ADAPTER.TIMING.stableTextDwellMs) {
+          // Phải đi qua attempt.detection: lần ghi sổ cái ở nhánh
+          // detected-not-downloaded chỉ chạy khi CÓ image_url, mà ở đây ta vừa
+          // bỏ nó đi — nên bản sao trên result không bao giờ tới được sổ cái.
+          if (imageUrl && !imageDownloadable) {
+            carryDiagnostic(attempt, "image_url_dropped", { scheme: String(imageUrl).split(":")[0] + ":", reason: "NOT_DOWNLOADABLE_FROM_TEXT_BRANCH" });
+          }
           return {
             type: "text",
             text: stableText,
@@ -673,7 +681,21 @@
               reason: "stable_text",
               poll_count: pollCount,
             },
-            image_url: imageUrl,
+            // Nhánh "kết quả là chữ" này từng trả URL THÔ. Ảnh Gemini sinh
+            // ra có lúc là blob:, và background từ chối blob: thẳng — nên nó
+            // rò ra ngoài dưới dạng thông điệp gây hiểu nhầm "Generated image
+            // URL was not usable", trong khi nguyên nhân thật là ảnh không
+            // được chấm là output gán được (decision_reason NO_NEW_IMAGE, do
+            // ảnh không "visible"). Bằng chứng live 26/08 job Q001 Huế.
+            //
+            // KHÔNG chuyển đổi blob ở đây: làm vậy sẽ biến một job đang FAIL
+            // thành SUCCESS, tức là đổi luật attribution — việc đó phải hỏi
+            // Đức (AGENTS.md mục 2.4), không phải việc AI tự quyết.
+            // Ở đây chỉ làm cho nó thất bại TRUNG THỰC: panel không có
+            // image_url thì báo "không tìm thấy ảnh gán được" — đúng nguyên
+            // nhân, thay vì đổ cho URL.
+            image_url: imageDownloadable,
+            image_url_dropped: imageUrl && !imageDownloadable ? { scheme: String(imageUrl).split(":")[0] + ":", reason: "NOT_DOWNLOADABLE_FROM_TEXT_BRANCH" } : null,
           };
         }
       } else {
