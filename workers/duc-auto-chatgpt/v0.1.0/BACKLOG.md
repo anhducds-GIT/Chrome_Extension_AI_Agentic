@@ -191,6 +191,55 @@ không tự làm. Ghi ở đây để không trôi.
 Trong lúc chưa có: khi báo cáo một job chết ở mốc ~90 giây qua `run.trial`, phải nói rõ đó là
 **giới hạn đường trial**, đừng để nó bị đọc thành lỗi tính năng.
 
+### B-19 · "Thử lại" KHÔNG chỉ giới hạn ở lỗi trước lúc gửi — cần Đức chốt luật
+Phát hiện 2026-08-26 khi đối chiếu bảng tính năng trên dashboard với code.
+
+Dashboard (và cả cảm nhận chung) ghi: *"sau khi gửi thì không bao giờ tự gửi lại"*.
+Đọc code thì **không đúng**. `canRetry` (`runner-core.js:134`) chỉ loại
+`HARD_STOP_FAILURE_TYPES` (4 loại) + `USER_STOP`. Nên `TIMEOUT_AFTER_SUBMIT`,
+`POST_SUBMIT_UNCERTAIN`, `OUTPUT_AMBIGUOUS` **đều retry được**, và `resolveJobFailure`
+khi retry đặt lại `attempt_phase: "PRE_SUBMIT"` + `status: "PENDING"` → **prompt bay lần nữa**.
+
+**Bằng chứng mạnh nhất nằm trong chính comment của code** (`runner-core.js:115`):
+`DETECTION_BLIND` phải tách thành hard stop riêng vì bộ dò mù *"luôn CŨNG trông như timeout,
+và xếp nó thành timeout sẽ đẩy nó trở lại đúng đường retry mà nó tồn tại để chặn"*. Tức đường
+retry-sau-khi-gửi là **có thật**, và B-03 chỉ bịt đúng một cửa của nó.
+
+**Chưa truy hết, nói rõ:** chưa lần đủ để biết reconciliation có chặn phần lớn ca post-submit
+trước khi tới retry hay không. Nên **không gọi đây là bug**. Có thể "gửi lại một job mất trắng"
+là đánh đổi có chủ đích và `max_retries` là dây cương.
+
+Việc cần làm: **Đức chốt**, vì đây là *đổi luật an toàn* (mục 2.4 của `AGENTS.md`). Hai đường:
+giữ nguyên và ghi rõ thành luật, hay chặn hẳn retry sau khi đã gửi. Không tự làm.
+
+### B-20 · Tính năng "tên gọi ngắn cho ảnh mẫu" (alias) là CODE CHẾT ở cả hai worker
+Đo 2026-08-26. `alias` được gán ở **đúng hai chỗ** trong toàn bộ worker GPT, và **cả hai đều
+gán chuỗi rỗng**: `sidepanel.js:2888` (đường picker) và `sidepanel.js:2998` (`references.add`).
+
+- `renderReferenceGallery` chỉ dựng `<img>` + nút xoá — **không có ô nhập alias**;
+  `file.alias` chỉ được *đọc* làm tooltip.
+- **Không có cột alias** trong schema XLSX.
+- Nhánh khớp theo alias trong `resolveReferences` đòi `key &&` khác rỗng → **không bao giờ chạy**.
+- Gemini cũng không có UI đặt alias.
+
+**`README.md:74` khai sai:** "gallery with **editable aliases** and remove controls".
+
+Hai đường: **bỏ** (xoá nhánh alias khỏi `resolveReferences` + sửa README + sửa schema doc), hay
+**nối** (thêm ô nhập vào gallery). Bỏ thì rẻ và làm code nói thật; nối thì thêm tính năng thật.
+Dashboard đã sửa ô này thành "chưa có" ở cả hai bên.
+
+### B-21 · `DAC_XLSX_RUN_PLAN_V1.md` còn tả HAI đường cứu, thực tế chỉ nối MỘT
+Đo 2026-08-26. Dòng 34 của file đó mô tả `AMBIGUOUS_SUBMITTED` có hai đường thoát:
+**Resolve Existing Output** hoặc **Recreate Image**.
+
+Thực tế: `resolveExistingOutput` khai một lần ở `sidepanel.js:3797`, **không ai gọi**, và
+`sidepanel.html` có **0** nút cho nó. `README.md:66` đã ghi rõ nó là code chết từ thiết kế
+hai-nút cũ và dặn "đừng tài liệu hoá hay dựa vào nó cho tới khi được nối lại có chủ đích".
+
+Nên `DAC_XLSX_RUN_PLAN_V1.md` là **hợp đồng schema đang nói sai** — nguy hơn README nói sai, vì
+nó là file mà `AGENTS.md` chỉ AI đọc để hiểu schema. Sửa: hoặc ghi rõ đường thứ hai chưa nối,
+hoặc bỏ khỏi hợp đồng.
+
 ---
 
 ## P2 — Vận hành & đồng bộ
