@@ -299,7 +299,7 @@
   // detected-not-downloaded write -- so anything not in here is erased before
   // it reaches the ledger. Live proof 2026-08-26: a first attempt parked these
   // on `result` instead, the job passed, and both fields came back undefined.
-  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped"]);
+  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped", "blob_wait"]);
   function recordDetection(attempt, values) {
     if (!attempt) return;
     const carried = {};
@@ -597,6 +597,14 @@
     let stableSince = 0;
     let pollCount = 0;
     let lastDetection = { ...boundaryTelemetry(boundary), stop_visible: false, generating: false, decision_reason: "NOT_EVALUATED" };
+    // Quyết định của Đức 26/08: ảnh mang "địa chỉ tạm" (blob:) thì CHỜ xem
+    // Gemini có tự đổi sang link lh3 thật không, thay vì nới lớp chấm
+    // attribution. Đây thuần là hoãn kết luận — không có ứng viên nào được
+    // chấp nhận thêm, và trần timeout của job vẫn chặn trên. Hết giờ mà chưa
+    // đổi thì vẫn trượt trung thực như trước.
+    let blobWaitStartedAt = 0;
+    let blobWaitPolls = 0;
+    let blobSwapped = false;
 
     while (Date.now() - startedAt < timeoutMs) {
       pollCount += 1;
@@ -659,6 +667,29 @@
         } else {
           stableText = text;
           stableSince = Date.now();
+        }
+
+        // Ứng viên đang là địa chỉ tạm: chưa kết luận. Vòng lặp cứ chạy tới
+        // khi Gemini đổi sang link thật (lúc đó nhánh ảnh ở trên bắt được và
+        // job ĐẠT) hoặc hết timeout (trượt trung thực). Ghi lại đã chờ bao lâu
+        // và có đổi hay không — chính là bằng chứng để biết cách chờ này có ăn.
+        if (imageUrl && !imageDownloadable) {
+          if (!blobWaitStartedAt) blobWaitStartedAt = Date.now();
+          blobWaitPolls += 1;
+          const waited = Date.now() - blobWaitStartedAt;
+          const gaveUp = waited >= ADAPTER.TIMING.blobSwapWaitMs;
+          carryDiagnostic(attempt, "blob_wait", { waited_ms: waited, polls: blobWaitPolls, swapped: false, gave_up: gaveUp, scheme: String(imageUrl).split(":")[0] + ":" });
+          if (!gaveUp) {
+            await sleep(ADAPTER.TIMING.completionPollMs);
+            continue;
+          }
+          // Hết hạn chờ: thôi không chờ nữa, để nhánh dưới kết luận trung thực
+          // ("không tìm thấy ảnh gán được"). Chờ tiếp là đốt hết trần timeout
+          // của job mà kết quả vẫn thế, chỉ chậm gấp 3.
+        }
+        if (blobWaitStartedAt && imageDownloadable && !blobSwapped) {
+          blobSwapped = true;
+          carryDiagnostic(attempt, "blob_wait", { waited_ms: Date.now() - blobWaitStartedAt, polls: blobWaitPolls, swapped: true, gave_up: false, scheme: "https:" });
         }
 
         // Require 1.5s of stable text from the first model-response created after the pre-send boundary.

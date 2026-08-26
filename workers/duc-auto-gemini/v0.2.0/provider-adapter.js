@@ -101,6 +101,10 @@
     completionPollMs: 300, // poll interval for completion and chat-readiness loops
     stableTextDwellMs: 1500, // text response must hold unchanged this long to count as complete
     referenceReadyTimeoutMs: 15000, // reference-image attach must settle within this window
+    // Quyết định Đức 26/08: ảnh mang địa chỉ tạm (blob:) thì CHỜ Gemini đổi
+    // sang link lh3 thật, thay vì nới lớp chấm attribution. Có hạn mức để một
+    // lần trượt không phải đốt hết trần timeout của job (90s x 3 lần thử).
+    blobSwapWaitMs: 30000,
     sendReadyTimeoutMs: 5000, // Send button must become enabled within this window
     menuSettleMs: 400, // after the upload menu closes, before the next composer interaction
   });

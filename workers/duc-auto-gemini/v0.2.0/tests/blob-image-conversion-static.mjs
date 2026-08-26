@@ -85,6 +85,24 @@ assert.match(content, /image_url: imageDownloadable,/, "nhánh chữ phải tr�
 const textBranch = content.slice(content.indexOf("const imageDownloadable"), content.indexOf("stableSince = 0;"));
 assert.ok(!/downloadableUrl/.test(textBranch), "nhánh chữ KHÔNG được tự chuyển đổi blob — đó là đổi luật attribution, phải hỏi Đức");
 assert.match(content, /carryDiagnostic\(attempt, "image_url_dropped"/, "lý do bỏ URL phải tới được sổ cái qua attempt.detection");
-assert.match(content, /\["attach", "blob_conversion", "image_url_dropped"\]/, "image_url_dropped phải nằm trong danh sách mang theo");
+// Kiểm thành viên, không ghim cứng cả mảng — cùng bài học đã vấp hai lần
+// trong ngày: một phép ghim quá chặt sẽ vỡ khi thêm trường mới, vì lý do
+// chẳng liên quan gì tới điều nó đang bảo vệ.
+const carried = content.slice(content.indexOf("const CARRIED_DIAGNOSTICS"), content.indexOf("function recordDetection"));
+for (const field of ['"attach"', '"blob_conversion"', '"image_url_dropped"', '"blob_wait"']) {
+  assert.ok(carried.includes(field), `danh sách mang theo phải gồm ${field}`);
+}
+
+// 10. Quyết định của Đức 26/08: gặp địa chỉ tạm thì CHỜ Gemini đổi sang link
+//     thật, KHÔNG nới lớp chấm attribution. Phép chờ này phải thuần là hoãn
+//     kết luận: không chấp nhận thêm ứng viên nào, và trần timeout vẫn chặn.
+assert.match(content, /if \(!blobWaitStartedAt\) blobWaitStartedAt = Date\.now\(\);/, "phải ghi mốc bắt đầu chờ");
+assert.match(content, /carryDiagnostic\(attempt, "blob_wait"/, "phải ghi lại quá trình chờ vào sổ cái — đó là bằng chứng để biết cách chờ có ăn");
+assert.match(content, /swapped: true/, "phải ghi được cả trường hợp ĐÃ đổi sang link thật");
+assert.match(content, /gave_up: gaveUp/, "phải ghi được cả trường hợp hết hạn chờ");
+assert.match(content, /ADAPTER\.TIMING\.blobSwapWaitMs/, "phép chờ PHẢI có hạn mức — chờ vô hạn thì mỗi lần trượt đốt hết trần timeout, chậm gấp 3 mà kết quả vẫn thế");
+const waitBlock = content.slice(content.indexOf("if (!blobWaitStartedAt)"), content.indexOf("// Require 1.5s of stable text"));
+assert.match(waitBlock, /continue;/, "chờ = quay lại vòng lặp, không phải kết luận sớm");
+assert.ok(!/downloadableUrl|remoteVerified|eligible/.test(waitBlock), "phép chờ KHÔNG được chạm vào lớp chấm attribution — Đức chọn phương án không nới bảo vệ");
 
 console.log("blob image conversion: PASS");

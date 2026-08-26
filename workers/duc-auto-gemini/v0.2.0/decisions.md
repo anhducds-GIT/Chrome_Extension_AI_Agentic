@@ -98,3 +98,11 @@ Nguồn: `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md`. Đức chốt cả 5
 | Luật nào không kiểm được bằng máy thì coi như không có: mỗi lỗi thật mới gặp → thêm 1 dòng vào bảng lỗi **và** cân nhắc 1 phép kiểm vào cổng. | Tài liệu không điều khiển được AI; một script chạy đỏ thì có. Cổng hiện có 6 phép kiểm, mỗi phép ứng với một lỗi ĐÃ thật sự xảy ra trong project, không phép nào tưởng tượng. | Đức |
 | **Antigravity: luôn dán câu mở màn một dòng** — *"Đọc AGENTS.md ở gốc repo trước khi làm gì."* — bất kể nó có tự nạp hay không. | Thử live 26/08: Antigravity đọc `AGENTS.md`, tự lần ra `.agents/claims.json`, trả lời đúng chủ sở hữu, và **tự suy ra hệ quả không ai hỏi**: "package này đang có chủ nên tôi chỉ có quyền đọc". Luật không chỉ đọc được mà dùng được. Nhưng câu hỏi thử có nhắc tên file, nên **chưa chứng minh được nó TỰ nạp lúc mở phiên**. Không xây hệ thống mà tính đúng đắn phụ thuộc vào một hành vi chưa kiểm chứng của công cụ bên thứ ba — hành vi đó còn có thể đổi giữa các bản. Câu mở màn tốn 3 giây, miễn nhiễm với mọi thay đổi phiên bản, và nếu nó vốn đã tự nạp thì câu đó chỉ là thừa vô hại. | Đức + Claude đề xuất |
 | Codex: không cần câu mở màn (đọc `AGENTS.md` tự động là chắc chắn). Claude: đọc qua `CLAUDE.md` gốc. | — | Claude |
+
+## 2026-08-26 — Ảnh mang "địa chỉ tạm" (blob): CHỜ đổi sang link thật, không nới lớp chấm attribution (owner: Đức)
+
+| Quyết định | Vì sao | Ai chốt |
+|---|---|---|
+| Gặp ảnh mang địa chỉ tạm (`blob:`) thì **chờ** Gemini tự đổi sang link thật (`https://lh3...`), rồi mới kết luận. **Không** nới lớp chấm attribution để chấp nhận ảnh tạm. | Đức hỏi "blob tạm là gì?" trước khi chọn — sau khi hiểu, chọn phương án **không bỏ lớp bảo vệ nào**. Lớp đó tồn tại để chống job này lấy ảnh của job khác. Đánh đổi: có thể vẫn trượt (chưa có bằng chứng Gemini LUÔN đổi — probe thấy ảnh blob nằm rải rác giữa các ảnh https, không chỉ tấm mới nhất). | Đức |
+| Phép chờ có **hạn mức 30 giây** (`blobSwapWaitMs`), hết hạn thì kết luận trung thực. | Chờ vô hạn trong trần 90s nghĩa là mỗi lần trượt đốt hết 90s × 3 lần thử = chậm gấp 3, mà kết quả vẫn thế. | Claude đề xuất, trong phạm vi quyết định trên |
+| Mọi lần chờ đều ghi vào sổ cái: chờ bao lâu, có đổi được không, có hết hạn không. | Chính là bằng chứng để biết cách chờ này có ăn thật hay không — Đức chọn "chờ xem" thì phải đo được. | Claude |
