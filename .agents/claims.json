@@ -3,11 +3,10 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "released_at": "2026-08-26",
-      "task": "Đã xong và ĐÃ PUSH: Batch-SX-01 12/12 · bộ luật đa-AI (AGENTS.md gốc + cổng kiểm + safe-push) · pilot ảnh tham chiếu · vá ngưỡng kích thước ảnh 200->150. Việc kế tiếp gói sẵn ở workers/duc-auto-gemini/v0.2.0/NEXT-SESSION-BRIEF.md — phiên sau tự đặt nhãn mới rồi ghi vào đây."
+      "owner": "claude-gemini-4",
+      "ai": "Claude",
+      "claimed_at": "2026-08-26",
+      "task": "Tiep theo NEXT-SESSION-BRIEF: viec mo so 2 (anh ve sau khi chu on dinh) + Batch San Xuat 02 co anh tham chieu."
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-chatgpt-3",

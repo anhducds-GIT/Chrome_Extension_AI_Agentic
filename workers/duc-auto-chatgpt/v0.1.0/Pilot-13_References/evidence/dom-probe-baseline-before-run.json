@@ -1,0 +1,598 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "cli-a6af0bf7-bc5d-4a71-bd84-ef4cde6b6754",
+  "ok": true,
+  "result": {
+    "abPoll": null,
+    "abPollPending": false,
+    "articleSample": [],
+    "assistantCount": 7,
+    "attachmentPending": false,
+    "attributeValues": {
+      "data-message-author-role": [
+        "user x2"
+      ],
+      "data-testid": [
+        "copy-turn-action-button x9",
+        "image-gen-overlay-actions x7",
+        "image-gen-overlay-left-actions x7",
+        "image-gen-overlay-right-actions x7",
+        "good-image-turn-action-button x7",
+        "bad-image-turn-action-button x7",
+        "share-prompt-link-turn-action-button x2",
+        "blocking-initial-modals-done x1",
+        "open-sidebar-button x1",
+        "thread-header-right-actions-container x1",
+        "thread-header-right-actions x1",
+        "share-chat-button x1"
+      ],
+      "data-turn": [
+        "assistant x7",
+        "user x2"
+      ],
+      "data-turn-id-container": [
+        "5e6f4a47-ec65-4c10-b930-a4c8edb61b7a x2",
+        "ea272535-404b-4726-8c8b-a5a82fd52aa4 x2",
+        "5a9c15d9-5752-4141-8b5f-6bc4a5b8bfc4 x2",
+        "e0589984-1d33-4697-8262-ae8db213d920 x2",
+        "6fd846e8-89e1-4cef-9a9d-382cb45eb18e x2",
+        "62c1fc19-3073-4a2b-a044-d5417c4813e3 x2",
+        "request-6a8e47cd-03f4-83ec-a56a-a83ff6557b4b-0 x2",
+        "a52f279b-45bb-49e1-9299-e63668b2d65b x2",
+        "request-6a8e47cd-03f4-83ec-a56a-a83ff6557b4b-1 x2",
+        "client-created-root x1",
+        "88494d1a-50ca-4814-a53b-40fd9d94d186 x1",
+        "e6aa0aa0-4e38-49c6-8dcf-3f9d8e266a21 x1"
+      ]
+    },
+    "busy": false,
+    "buttons": [
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "open-sidebar-button",
+        "txt": ""
+      },
+      {
+        "aria": "More",
+        "disabled": false,
+        "testid": "conversation-options-button",
+        "txt": ""
+      },
+      {
+        "aria": "Share this image",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Copy response",
+        "disabled": false,
+        "testid": "copy-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Like this image",
+        "disabled": false,
+        "testid": "good-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Dislike this image",
+        "disabled": false,
+        "testid": "bad-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Share",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "More actions",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Share this image",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Copy response",
+        "disabled": false,
+        "testid": "copy-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Like this image",
+        "disabled": false,
+        "testid": "good-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Dislike this image",
+        "disabled": false,
+        "testid": "bad-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Share",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "More actions",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Share this image",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Copy response",
+        "disabled": false,
+        "testid": "copy-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Like this image",
+        "disabled": false,
+        "testid": "good-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Dislike this image",
+        "disabled": false,
+        "testid": "bad-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Share",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "More actions",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Share this image",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Copy response",
+        "disabled": false,
+        "testid": "copy-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Like this image",
+        "disabled": false,
+        "testid": "good-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Dislike this image",
+        "disabled": false,
+        "testid": "bad-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Share",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "More actions",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Share this image",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Copy response",
+        "disabled": false,
+        "testid": "copy-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Like this image",
+        "disabled": false,
+        "testid": "good-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Dislike this image",
+        "disabled": false,
+        "testid": "bad-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Share",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "More actions",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Copy message",
+        "disabled": false,
+        "testid": "copy-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Share prompt",
+        "disabled": false,
+        "testid": "share-prompt-link-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Edit message",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Share this image",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Copy response",
+        "disabled": false,
+        "testid": "copy-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Like this image",
+        "disabled": false,
+        "testid": "good-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Dislike this image",
+        "disabled": false,
+        "testid": "bad-image-turn-action-button",
+        "txt": ""
+      },
+      {
+        "aria": "Share",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      }
+    ],
+    "captured_at": "2026-08-26T08:13:05.652Z",
+    "composerFound": true,
+    "customTags": [],
+    "fileInputs": [
+      {
+        "accept": "",
+        "chain": "div > form > div > div > div",
+        "connected": true,
+        "multiple": true
+      },
+      {
+        "accept": "image/*",
+        "chain": "div > div > div > div > div",
+        "connected": true,
+        "multiple": true
+      },
+      {
+        "accept": "image/*",
+        "chain": "div > div > div > div > div",
+        "connected": true,
+        "multiple": true
+      }
+    ],
+    "generatedChains": [
+      {
+        "alt": "Generated image: Classic Yellow Rubber Duck on Whi",
+        "chain": "img < div < div < div < div < div < div < div < div < div < div[data-conversation-screenshot-content=\"\"] < div"
+      },
+      {
+        "alt": "Generated image: Cheerful Yellow Rubber Duck",
+        "chain": "img < div < div < div < div < div < div < div < div < div < div[data-conversation-screenshot-content=\"\"] < div"
+      },
+      {
+        "alt": "Generated image: Glossy Blue Ceramic Teapot",
+        "chain": "img < div < div < div < div < div < div < div < div < div < div[data-conversation-screenshot-content=\"\"] < div"
+      }
+    ],
+    "generationLimitBlocker": null,
+    "imageCandidateCount": 21,
+    "images": [
+      {
+        "alt": "Generated image: Classic Yellow Rubber D",
+        "chain": "div > div > div > div > div",
+        "complete": false,
+        "naturalW": 0,
+        "rect": {
+          "h": 377,
+          "w": 377
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000fea882",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "div > div > div > div > div",
+        "complete": false,
+        "naturalW": 0,
+        "rect": {
+          "h": 377,
+          "w": 377
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000fea882",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "div > div > div > div > div",
+        "complete": false,
+        "naturalW": 0,
+        "rect": {
+          "h": 0,
+          "w": 415
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000fea882",
+        "visible": false
+      },
+      {
+        "alt": "Generated image: Cheerful Yellow Rubber ",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1254,
+        "rect": {
+          "h": 377,
+          "w": 377
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000d27882",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1254,
+        "rect": {
+          "h": 377,
+          "w": 377
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000d27882",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1254,
+        "rect": {
+          "h": 415,
+          "w": 415
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000d27882",
+        "visible": true
+      },
+      {
+        "alt": "Generated image: Glossy Blue Ceramic Tea",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1536,
+        "rect": {
+          "h": 251,
+          "w": 377
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000f98481",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1536,
+        "rect": {
+          "h": 251,
+          "w": 377
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000f98481",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1536,
+        "rect": {
+          "h": 276,
+          "w": 415
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000f98481",
+        "visible": true
+      },
+      {
+        "alt": "Generated image: Green Pear on White Bac",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1254,
+        "rect": {
+          "h": 377,
+          "w": 377
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000552882",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1254,
+        "rect": {
+          "h": 377,
+          "w": 377
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000552882",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1254,
+        "rect": {
+          "h": 415,
+          "w": 415
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000552882",
+        "visible": true
+      },
+      {
+        "alt": "Generated image: Glossy Blue Ceramic Mug",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1254,
+        "rect": {
+          "h": 377,
+          "w": 377
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000761482",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1254,
+        "rect": {
+          "h": 377,
+          "w": 377
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000761482",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "div > div > div > div > div",
+        "complete": true,
+        "naturalW": 1254,
+        "rect": {
+          "h": 415,
+          "w": 415
+        },
+        "scheme": "https:",
+        "srcHead": "https://chatgpt.com/backend-api/estuary/content?id=file_00000000761482",
+        "visible": true
+      }
+    ],
+    "messageAttributes": [
+      "data-testid",
+      "data-turn-id",
+      "data-turn-id-container",
+      "data-turn",
+      "data-state",
+      "data-message-author-role",
+      "data-message-id"
+    ],
+    "provider": "chatgpt",
+    "securityBlocker": null,
+    "selectorCounts": {
+      "assistantMessage": [
+        "[data-turn=\"assistant\"] => 7",
+        "[data-message-author-role=\"assistant\"] => 0"
+      ],
+      "attachmentContainer": "form, [data-testid*=\"attachment\"], [data-testid*=\"upload-preview\"], [data-testid*=\"file-upload\"] => 1",
+      "attachmentPreview": [
+        "[data-testid*=\"attachment\"] => 0",
+        "[data-testid*=\"file-upload\"] => 0",
+        "[data-testid*=\"upload-preview\"] => 0",
+        "button[aria-label*=\"Remove attachment\"] => 0",
+        "button[aria-label*=\"Remove file\"] => 0"
+      ],
+      "composer": [
+        "#prompt-textarea => 1",
+        "textarea[data-testid=\"prompt-textarea\"] => 0",
+        "div[data-testid=\"composer-text-input\"][contenteditable=\"true\"] => 0",
+        "form div.ProseMirror[contenteditable=\"true\"] => 1",
+        "form [contenteditable=\"true\"][role=\"textbox\"] => 1",
+        "form textarea => 1"
+      ],
+      "conversationRoot": "[data-testid=\"conversation-turns\"], main, [role=\"main\"] => 1",
+      "fileInput": "form input[type=\"file\"] => 1",
+      "pollControl": "button, [role=\"button\"], a[href], [tabindex]:not([tabindex=\"-1\"]) => 65",
+      "send": [
+        "button[data-testid=\"send-button\"] => 0",
+        "button[aria-label=\"Send prompt\"] => 0",
+        "button[aria-label^=\"Send\"] => 0",
+        "button[aria-label^=\"Gửi\"] => 0"
+      ],
+      "sendInForm": [
+        "button[type=\"submit\"] => 0",
+        "button[data-testid*=\"send\"] => 0"
+      ],
+      "stop": [
+        "button[data-testid=\"stop-button\"] => 0",
+        "button[aria-label=\"Stop generating\"] => 0",
+        "button[aria-label^=\"Stop\"] => 0",
+        "button[aria-label^=\"Dừng\"] => 0"
+      ],
+      "uploadPending": [
+        "[data-testid*=\"uploading\"] => 0",
+        "[aria-busy=\"true\"] => 0",
+        "[role=\"progressbar\"] => 0"
+      ],
+      "userMessage": [
+        "[data-turn=\"user\"] => 2",
+        "[data-message-author-role=\"user\"] => 2"
+      ]
+    },
+    "sendFound": false,
+    "stopFound": false,
+    "surface": "CONVERSATION",
+    "surface_allowed": true,
+    "truncated": false,
+    "url": "https://chatgpt.com/c/6a8e47cd-03f4-83ec-a56a-a83ff6557b4b"
+  },
+  "responded_at": "2026-08-26T08:13:05.659Z"
+}
