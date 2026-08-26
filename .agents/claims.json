@@ -18,7 +18,8 @@
       "owner": "claude-gemini",
       "ai": "Claude",
       "claimed_at": "2026-08-26",
-      "task": "Dựng bộ luật đa-AI (AGENTS.md gốc, CLAUDE.md gốc, scripts/session-check.mjs) — Đức duyệt 26/08. XONG VIỆC THÌ TRẢ VỀ null."
+      "task": "Bộ luật đa-AI (AGENTS.md gốc, CLAUDE.md gốc, scripts/session-check.mjs) — Đức duyệt 26/08.",
+      "release_when": "Sau khi đã PUSH xong thì đặt owner về null. Còn thay đổi chưa push = vẫn đang giữ."
     }
   }
 }

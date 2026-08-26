@@ -47,7 +47,10 @@ const touched = [...new Set([...workingChanges.map((c) => c.file), ...unpushed])
 
 // Package = workers/<tên>. Đây là đơn vị sở hữu.
 const packagesTouched = [...new Set(touched.map((f) => (f.match(/^(workers\/[^/]+)\//) || [])[1]).filter(Boolean))];
-const rootTouched = touched.some((f) => !f.startsWith("workers/"));
+// claims.json không tính là "sửa file gốc": nhận và TRẢ quyền là thao tác
+// hành chính, không phải đổi luật. Không miễn trừ nó thì không ai trả lại
+// được quyền gốc — vì chính thao tác trả cũng bị coi là sửa file gốc.
+const rootTouched = touched.some((f) => !f.startsWith("workers/") && f !== ".agents/claims.json");
 
 /* ---- 1. Chủ sở hữu ------------------------------------------------------ */
 check("Chủ sở hữu package", () => {
