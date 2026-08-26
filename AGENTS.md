@@ -105,6 +105,15 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Hiểu schema workbook XLSX | `DAC_XLSX_RUN_PLAN_V1.md` của package |
 | Biết Đức đã chốt gì | `decisions.md` của package (mới nhất ở cuối) |
 | Biết phiên trước làm tới đâu | `HANDOFF.md` của package (cuối file) |
+| **Biết nhánh mình đang thiếu tính năng gì so với nhánh kia** | `FEATURE-PARITY.md` ở gốc repo |
+
+**Về `FEATURE-PARITY.md`:** bảng tính năng GPT ↔ Gemini, đo bằng máy 2026-08-26. Nó ở **gốc
+repo** vì nói về cả hai nhánh — sửa nó thì phải đang giữ `_root`. Mỗi dòng ghi rõ được xác lập
+bằng cách nào (**[ĐO]** máy đếm · **[ĐỌC]** đọc thẳng code · **[DÒ]** tìm theo tên), vì ba loại
+đó tin được khác nhau: dò theo tên đã cho hai kết quả sai trong một buổi. **Dòng [DÒ] phải kiểm
+lại trước khi hành động.** Port tính năng sang nhánh kia thì đọc file này trước, đừng đọc
+`BACKLOG.md` — danh sách port trong backlog đã lạc hậu một lần (ghi Gemini thiếu `run.stop`
+trong khi nó đã có).
 
 ## 7. Đóng phiên — ghi lại 3 thứ
 

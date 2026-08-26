@@ -3,9 +3,8 @@
 > Đo ngày **2026-08-26** bởi phiên `claude-chatgpt-3`. Đức yêu cầu một bảng để hai nhánh
 > biết mình có gì / thiếu gì.
 >
-> **Nhà của file này ĐÚNG RA là gốc repo**, không phải trong package GPT. Nó đang nằm đây vì
-> gốc repo hiện do phiên `claude-gemini-4` giữ, và luật mục 1 của `AGENTS.md` là package có chủ
-> khác thì chỉ được đọc. **Đức quyết chuyện dời** — xem mục cuối.
+> **Ở gốc repo có chủ đích** (Đức chốt 2026-08-26): nó nói về CẢ HAI nhánh, nên không thuộc
+> package nào. Phiên nào sửa file này thì phải đang giữ `_root` trong `.agents/claims.json`.
 
 ## Đọc bảng này thế nào
 
@@ -129,9 +128,8 @@ là dòng chưa đáng tin.
 
 ## 6. Việc cần Đức quyết
 
-1. **Dời file này về gốc repo** (`FEATURE-PARITY.md`). Nó nói về cả hai nhánh nên không nên
-   nằm trong package của một nhánh. Gốc repo đang do phiên `claude-gemini-4` giữ → cần Đức
-   điều phối, tôi không tự lấy.
+1. ~~Dời file này về gốc repo~~ — **XONG 2026-08-26**, Đức chốt.
 2. **Gemini chưa có `BACKLOG.md`.** Nên B-06/B-07 chỉ tồn tại ở phía GPT — một chiều, đúng
-   vấn đề Đức đang muốn giải.
-3. **Có xây `scripts/feature-parity.mjs` không** (mục 5). Việc ở gốc repo.
+   vấn đề Đức đang muốn giải. Cần phiên nào giữ package Gemini dựng sổ riêng cho nó.
+3. **Có xây `scripts/feature-parity.mjs` không** (mục 5) — biến mục 1 và 3 thành số máy tự
+   đếm, gắn vào cổng kiểm. Đây là bước 1–2 của B-06, nay đã có số thật để làm.

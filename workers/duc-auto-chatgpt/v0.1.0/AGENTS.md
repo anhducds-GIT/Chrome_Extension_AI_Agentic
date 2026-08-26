@@ -107,7 +107,7 @@ COMPANION (đọc khi cần):
 | `drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md` | Gói việc `run.stop` + `chat.reload` giao cho phiên kế tiếp |
 | `templates/Duc-Auto-ChatGPT-Template.xlsx` | Workbook trống chuẩn để bắt đầu pilot mới |
 | `scripts/create-pilot-NN.mjs` | Script tạo workbook cho từng pilot |
-| `FEATURE-PARITY.md` | Bảng tính năng GPT ↔ Gemini, **đo bằng máy** ngày 2026-08-26. Mỗi dòng ghi rõ được xác lập bằng cách nào ([ĐO]/[ĐỌC]/[DÒ]) vì ba loại đó tin được khác nhau. **Nhà đúng của nó là gốc repo** — đang đỗ ở đây vì gốc repo có chủ khác (xem mục 6 trong file) |
+| ~~`FEATURE-PARITY.md`~~ | **Đã dời về gốc repo** 2026-08-26 theo Đức chốt — xem `FEATURE-PARITY.md` ở gốc. Nó nói về cả hai nhánh nên không thuộc package nào |
 | `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
 | `Pilot-07/`, `Pilot-08/`, `Pilot-09.../` | Pilot đang hoạt động, có thể có dữ liệu mới |
 | `Pilot-13_References/` | **TẠM HOÃN, không chạy** — pilot ảnh tham chiếu dựng từ 3 job thật của Pilot-08. Giữ lại vì phần kiểm offline "cả 66 job đều giải được ảnh" vẫn dùng được khi nào chạy Pilot-08 thật |

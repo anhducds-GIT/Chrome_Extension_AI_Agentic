@@ -10,19 +10,16 @@
       "task": "Da xong va DA PUSH: Pilot-07 18/18 tranh net cho tre to mau · port run.stop + chat.reload tu worker ChatGPT (da kiem chung live 9/9) · va loi nhan run.stop noi sai. Viec mo goi san o cuoi HANDOFF.md."
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-chatgpt-3",
+      "ai": "Claude",
       "claimed_at": "2026-08-26",
-      "task": "Da xong: references.add (port tu Gemini, audit Antigravity PASS 2 vong) + Pilot-14 anh tham chieu 3/3 SUCCESS + FEATURE-PARITY.md do bang may. Da push. Viec ke tiep: xem BACKLOG B-14..B-18.",
-      "released_at": "2026-08-26"
+      "task": "Doi FEATURE-PARITY.md ve goc repo + audit artifact dashboard cua Duc."
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "released_at": "2026-08-26",
-      "task": "Duc duyet 26/08: va loi cong kiem doc sai duong dan tieng Viet (git quotepath) trong scripts/session-check.mjs va scripts/safe-push.mjs.",
-      "last_work": "Va loi cong kiem doc sai duong dan tieng Viet (git core.quotepath) trong session-check.mjs + safe-push.mjs, ghim bang tests/session-check-utf8-paths.mjs trong npm test (Duc duyet 26/08). Da push."
+      "owner": "claude-chatgpt-3",
+      "ai": "Claude",
+      "claimed_at": "2026-08-26",
+      "task": "Nhan FEATURE-PARITY.md tu package GPT ve goc repo."
     }
   }
 }
