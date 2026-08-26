@@ -343,3 +343,13 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - **Lỗi lời nhắn này có ở CẢ worker ChatGPT** — tôi port nguyên văn từ đó sang. Trial của họ chỉ thử nhánh "dừng sau khi đã gửi" nên nhánh này chưa từng bị soi. Package đó có chủ là phiên khác nên tôi chỉ đọc, không sửa. Cần Đức chuyển lời.
   - Bài học: suite tĩnh 79/79 xanh **không** bắt được lỗi này. Chỉ có sổ cái của một lần chạy thật mới bắt được. Đề xuất "chạy trial để debug" của Đức là đúng.
 - **Next:** bản vá lời nhắn chưa live (extension đang chạy bản trước đó) — lần reload tới sẽ nạp. Không cần reload gấp: chỉ là chữ, không phải hành vi.
+
+- 2026-08-26 · Claude (`opus-platform-2`) điều phối · **Extension Operation Platform V0.1 — package này nhận `STATUS.md`.** Không đụng một dòng code nào của worker; chỉ thêm file khai trạng thái + khai vào Bản đồ file.
+  - `STATUS.md` khai: lifecycle `active` · kiểm chứng cuối 2026-08-26 @ `dd3c736` (trial live cặp `run.stop`/`chat.reload` 9/9 bước, khoá `RUN_ACTIVE` chứng minh thật) · bằng chứng trỏ `evidence-stop-reload-20260826/README.md`.
+  - Số trên `DASHBOARD.md` ở gốc repo là **máy đo, không gõ tay**: version `0.2.0`, 19 method Bridge, 81 file test. Tôi đã đo lại độc lập trước khi giao việc — khớp cả ba.
+  - **`current_focus` khai đúng ba món còn nợ**, không giấu: bản vá lời nhắn chưa live · **chưa có `BACKLOG.md` riêng** · nợ nhánh ChatGPT 6 tính năng + 3 method. Generator **không cho** khai `ref_backlog` trỏ vào file không tồn tại, nên chỗ thiếu này lộ ra chứ không im lặng.
+  - **Bản cũ `v0.1.0` vẫn hiện trên dashboard** với nhãn "CHƯA KHAI STATUS" (0 method Bridge, 21 file test). Cố ý: tài sản trong repo không được biến mất khỏi registry chỉ vì chưa ai khai.
+  - **Một phát hiện mới về package này, ghi lại vì chưa có sổ để ghi:** `README.md` của nhánh Gemini đang là **bản chép từ nhánh ChatGPT** — dòng tiêu đề vẫn ghi "Duc Auto ChatGPT V0.3", và nội dung chỉ khác ở đúng một mục (`references.add`). Ai đọc README để hiểu nhánh này sẽ bị dẫn sai tên ngay dòng đầu. Đã ghi vào mục "Giới hạn đã biết" của `STATUS.md`. Đây là lý do cụ thể để dựng `BACKLOG.md` cho nhánh này.
+  - **Audit độc lập bởi Codex: FAIL vòng 1, 7 phát hiện — đã sửa 5, chuyển 2 sang câu hỏi treo.** Với package này, phát hiện đáng tiền nhất là `STATUS.md` của tôi **chép** chi tiết sổ cái (mốc 14:20:36 → 14:20:37) từ `HANDOFF.md` thay vì chỉ trỏ → đã cắt gọn. Ranh giới schema là điểm GPT yêu cầu audit riêng, và nó đúng là chỗ tôi sai.
+  - Suite dashboard 14/14, `npm test` xanh toàn bộ. 10 phép mutation trên luật validate, đỏ đúng cả 10.
+- **Next:** dựng `BACKLOG.md` cho nhánh này (đã có 2 việc thật để mở sổ: README chép nhầm, và 6 tính năng nợ port). Sau đó Đức quyết 3 câu hỏi treo ở `PLATFORM.md` mục 8.
