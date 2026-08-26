@@ -13,12 +13,25 @@ Mục nào xong thì chuyển xuống mục **Đã đóng** kèm số commit.
 
 ## P1 — Chặn vòng tự hành
 
-### B-01 · Khoá tab lúc Run, không giải lại mỗi lần gửi
+### ~~B-01 · Khoá tab lúc Run, không giải lại mỗi lần gửi~~ — ĐÃ ĐÓNG 2026-08-26
 `sidepanel.js` `activeTab()` gọi `chrome.tabs.query({active: true, currentWindow: true})`
 **mỗi lần gửi message**. Đổi tab giữa chừng là runner âm thầm gõ sang tab khác.
 **Có ở CẢ HAI extension** (Gemini `sidepanel.js:2268` giống hệt) → sửa như lỗi lõi chung.
 Cần: bind đúng 1 tab id lúc bấm Run, mọi message sau đó chỉ gửi tới tab đó, tab
 biến mất thì báo `RECEIVER_LOST` rõ ràng thay vì lặng lẽ đổi mục tiêu.
+
+**Đã làm bên GPT:** `state.boundTabId` + `bindRunTab()` (idempotent, chọn tab MỘT lần,
+gọi TRƯỚC `authoritativeValidate()` ở cả `run()` lẫn `bridgeRunTrial()`) + `releaseRunTab()`
+trên mọi đường thoát. Audit Antigravity moi thêm **hai lỗ nữa, đều đã vá**:
+- **Trôi hội thoại:** cùng tab id nhưng đổi sang `/c/<id>` khác thì chỉ kiểm origin sẽ
+  cho qua → gõ prompt vào chat người khác. Nay khoá luôn `boundConversationId`; id chưa
+  đặt thì *nhận* hội thoại do chính run tạo ra (`chatgpt.com/` → `/c/<id>` là hợp lệ),
+  đặt rồi mà đổi — kể cả quay về trang chat mới — là `RECEIVER_LOST`.
+- **Báo động giả lúc đang chuyển trang:** giữa lúc commit, Chrome trả `tab.url` rỗng và
+  để đích ở `pendingUrl`. Kiểm origin trên chuỗi rỗng sẽ dừng cứng đúng lúc trang điều
+  hướng — mà đó chính là lúc gửi prompt đầu tiên. Nay đọc `tab.url || tab.pendingUrl`,
+  và chưa biết địa chỉ thì hoãn phán xét cho ping của content script.
+**Bên Gemini vẫn nguyên lỗi** (`sidepanel.js:2268`) → đã ghi vào B-07.
 
 ### B-02 · Selector ChatGPT phải có bằng chứng, không kế thừa
 **Đã làm một phần** (`c1e7d04`, `f418bc1`): `assistantMessage`/`userMessage` đã
@@ -78,6 +91,8 @@ Ghi ngày để không trôi:
   cùng dòng đặt `running = true`. Tức là bản vá của GPT không dán thẳng sang được
   — phiên nào port phải tự phân tích cửa sổ await của Gemini trước. (Gemini đang
   có chủ là phiên `claude-gemini`; phiên này chỉ đọc, không sửa.)
+- **2026-08-26** khoá tab B-01 — Gemini dính y hệt (`activeTab()` giải lại mỗi lần gửi).
+  Kèm cả hai lỗ audit tìm thêm: khoá hội thoại, và `pendingUrl` lúc đang chuyển trang.
 - Chiều ngược lại: GPT còn thiếu `references.add` của Gemini.
 
 ---
@@ -151,9 +166,14 @@ Xoá là quyền của Đức — **AI không tự xoá file**.
 
 ## Phiên kế tiếp
 
-1. **B-06 — đồng bộ GPT ↔ Gemini** (thứ tự Đức đã chốt). Kèm B-07: `run.stop` +
-   `chat.reload` đã sẵn sàng port, nhưng bản vá khoá **không dán thẳng sang được** (xem B-07).
-2. **B-01 khoá tab lúc Run** — lỗi thật, có ở cả hai extension, đã bị nó cắn 2 lần.
+1. **Chạy lại pilot trên bộ code sạch** — bước 4 trong thứ tự Đức đã chốt, và giờ mới
+   thật sự an toàn để chạy: selector đã đo đúng, `DETECTION_BLIND` chặn retry mù,
+   `run.stop`/`chat.reload` có sẵn để cứu, và tab đã bị khoá nên không gõ nhầm chat.
+   **Cần một lần reload extension trước** (B-01 sửa `sidepanel.js`).
+2. **B-06 — đồng bộ GPT ↔ Gemini** (bước 2 của Đức, bị hoãn hai lần). **Lưu ý về quyền:**
+   việc này đụng file ở GỐC REPO và cả package Gemini — cả hai đang do phiên
+   `claude-gemini` giữ. Phải hỏi Đức điều phối hai phiên, hoặc chờ phiên kia trả package.
+   Đây chính là lý do phiên 26/08 (tối) làm B-01 trước thay vì B-06.
 3. Dọn: B-09 (rác test — quyền xoá của Đức), B-11, B-10, B-08.
 
 **Rác của phiên 2026-08-26 (chiều)** — ở `Downloads\Phai sinh\DucAuto_GPT-Output\Trial-RunStop-20260826`:
@@ -172,6 +192,7 @@ Gộp vào B-09 khi Đức muốn dọn.
   còn `data-message-author-role`.
 - **2026-08-26 · `f418bc1`** (B-02, một phần) — gốc quét là tổ tiên chung của các lượt,
   không khớp theo tên nữa.
+- **2026-08-26** (B-01) — khoá tab + khoá hội thoại. Audit Antigravity PASS sau 2 vòng.
 - **2026-08-26** (B-04) — `run.stop`: dừng run qua bridge, **đi vòng qua khoá
   `RUN_ACTIVE`** (dừng là giảm rủi ro), idempotent, trả về phase để bên gọi biết
   prompt đã bay hay chưa. Kèm một lỗi ngoài gói việc, tìm ra nhờ test cái bẫy mà

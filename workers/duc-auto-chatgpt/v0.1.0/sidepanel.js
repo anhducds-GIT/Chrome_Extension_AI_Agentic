@@ -51,6 +51,11 @@
     runtimeOverrides: {},
     selectedJobId: null,
     running: false,
+    // The ONE ChatGPT tab this run is allowed to drive. Bound when a run
+    // starts, cleared when it ends. See bindRunTab().
+    boundTabId: null,
+    boundTabUrl: "",
+    boundConversationId: null,
     validated: false,
     stopRequested: false,
     pauseRequested: false,
@@ -618,6 +623,11 @@
         const remainingSeconds = Math.ceil(remainingMs / 1000);
         throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `TRIAL_COOLDOWN_ACTIVE: Chờ thêm ${remainingSeconds} giây trước trial tiếp theo.`);
       }
+      // Bound here, not inside run(): this handler validates against the page
+      // before run() is ever called, so binding later would let the trial be
+      // validated on one tab and executed on another. bindRunTab() is
+      // idempotent, so run() keeps this same tab.
+      await bindRunTab();
       const effectiveOutput = await authoritativeValidate();
       state.runSelection = new Set(params.job_ids);
       const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, "selected", state.runSelection);
@@ -648,6 +658,7 @@
     } finally {
       if (!accepted) {
         state.runSelection = previousSelection;
+        releaseRunTab();
         queueRunLock.endRunStart();
         controls();
       }
@@ -747,10 +758,12 @@
   }
 
   async function performChatReload() {
-    // activeTab() resolves the ACTIVE tab and re-resolves it on every single
-    // call (BACKLOG B-01, still unfixed, present in both workers). That is
-    // precisely why the answer and the audit row below name the tab explicitly
-    // instead of letting the caller assume which one was reloaded.
+    // B-01 is fixed now: a RUN binds one tab and activeTab() resolves that
+    // bound tab by id. This handler, though, only ever runs when NO run is
+    // active (the latch above refuses otherwise), so there is no binding and
+    // it deliberately targets the active tab -- reload is a recovery tool the
+    // operator points by hand. The answer and the audit row still name the
+    // tab explicitly rather than letting the caller assume which one it was.
     const before = await activeTab();
     const tabId = before.id;
     const urlBefore = before.url || null;
@@ -2743,9 +2756,78 @@
     renderConfigProvenance(); renderNamingProvenance(); renderCheckpointMeta(); updateReviewPacketControl(); controls();
   }
 
-  async function activeTab() {
+  const isChatGPTTabUrl = (url) => /^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(url || "");
+
+  // The conversation this URL points at, or null on the new-chat page.
+  function conversationIdOf(url) {
+    try { return (new URL(url).pathname.match(/^\/c\/([^/?#]+)/) || [])[1] || null; }
+    catch (_) { return null; }
+  }
+
+  async function pickActiveChatGPTTab() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id || !/^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(tab.url || "")) throw new Error("Open a normal ChatGPT conversation in the active tab.");
+    if (!tab?.id || !isChatGPTTabUrl(tab.url)) throw new Error("Open a normal ChatGPT conversation in the active tab.");
+    return tab;
+  }
+
+  // A run drives ONE tab, chosen once, at the moment it starts.
+  //
+  // Before 2026-08-26 every single message re-resolved "the active tab in the
+  // current window", so switching tabs mid-run silently redirected the runner
+  // into whatever ChatGPT tab happened to be in front -- typing a job's prompt
+  // into the wrong conversation, and reading another chat's images back as
+  // this job's output. It bit twice in one session: a trial ran against the
+  // empty new-chat page, and a diagnostic probe reported on a different tab
+  // than the one being debugged.
+  async function bindRunTab() {
+    if (state.boundTabId !== null) return state.boundTabId;
+    const tab = await pickActiveChatGPTTab();
+    state.boundTabId = tab.id;
+    state.boundTabUrl = tab.url || "";
+    state.boundConversationId = conversationIdOf(tab.url || "");
+    return tab.id;
+  }
+
+  function releaseRunTab() {
+    state.boundTabId = null;
+    state.boundTabUrl = "";
+    state.boundConversationId = null;
+  }
+
+  // Once bound, the tab is resolved by ID and never re-picked. The URL may
+  // legitimately change during a run -- sending the first prompt from
+  // chatgpt.com/ navigates to /c/<id> -- so only the ORIGIN is enforced, not
+  // the exact address. A bound tab that is gone or has left ChatGPT is
+  // RECEIVER_LOST, which is a hard stop: continuing would mean guessing.
+  async function activeTab() {
+    if (state.boundTabId === null) return pickActiveChatGPTTab();
+    let tab;
+    try { tab = await chrome.tabs.get(state.boundTabId); }
+    catch (_) { throw new Error(`RECEIVER_LOST: the ChatGPT tab this run started on (id ${state.boundTabId}) is gone. Reopen the conversation and start a new run.`); }
+    if (!tab?.id) throw new Error(`RECEIVER_LOST: the ChatGPT tab this run started on (id ${state.boundTabId}) is gone. Reopen the conversation and start a new run.`);
+    // Mid-commit, Chrome reports an empty url with the destination in
+    // pendingUrl -- and briefly neither. Judging origin on "" would hard-stop
+    // a perfectly healthy run every time the page navigates, which it does on
+    // the very first prompt. When the address is not knowable yet, defer: the
+    // content-script ping decides whether the page is usable.
+    const url = tab.url || tab.pendingUrl || "";
+    if (!url) return tab;
+    if (!isChatGPTTabUrl(url)) {
+      throw new Error(`RECEIVER_LOST: the ChatGPT tab this run started on (id ${state.boundTabId}) is no longer on ChatGPT. It is now '${String(url).slice(0, 80)}'.`);
+    }
+    // Same tab is not the same CONVERSATION. Sending the first prompt from
+    // chatgpt.com/ legitimately navigates to /c/<id>, so an unset id adopts
+    // whatever the run's own submission created. After that the conversation
+    // is fixed: drifting to another chat -- by an operator click, a sidebar
+    // link, or a back button -- would type this job's prompt into someone
+    // else's thread and read that thread's images back as this job's output.
+    // That is the same defect as the unbound tab, one level down.
+    const current = conversationIdOf(url);
+    if (state.boundConversationId === null) {
+      if (current) { state.boundConversationId = current; state.boundTabUrl = url; }
+    } else if (current !== state.boundConversationId) {
+      throw new Error(`RECEIVER_LOST: the ChatGPT tab this run started on (id ${state.boundTabId}) has moved to a different conversation (was '${state.boundConversationId}', now '${current || "the new-chat page"}'). Nothing was sent there.`);
+    }
     return tab;
   }
 
@@ -4956,6 +5038,10 @@
     state.pendingRunOptions = null;
     if (!options.prelocked && !queueRunLock.tryBeginRun()) {
       const reason = "RUN_ACTIVE: Setup mutation, run validation, or another run is already active.";
+      // A binding can only exist here if an accepted trial bound one and then
+      // failed to reach its run. Releasing it keeps a stale tab from pinning
+      // the next run.
+      releaseRunTab();
       setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error"); controls();
       return { ok: false, reason };
     }
@@ -4964,17 +5050,23 @@
     let completedNaturally = false;
     let runQueue;
     try {
+      // Bound before validation, not after: authoritativeValidate() talks to
+      // the page itself, so binding later would let a run be validated
+      // against one tab and then executed against another.
+      await bindRunTab();
       if (options.effectiveOutput) effectiveOutput = options.effectiveOutput;
       else effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" });
       runQueue = options.runQueue || window.DacRunnerCore.selectQueue(state.prepared.queue, mode, mode === "selected" ? state.runSelection : state.selectedJobId);
       if (!runQueue.length) {
         const reason = `No ${mode} jobs are eligible.`;
         setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error");
+        releaseRunTab();
         return { ok: false, reason };
       }
       queueRunLock.promoteRun();
     } catch (error) {
       const reason = messageOf(error); setStatus("ERROR"); progress(reason); log(reason, "error");
+      releaseRunTab();
       restoreRunOptions(options);
       return { ok: false, reason };
     } finally {
@@ -5105,7 +5197,7 @@
         renderResumePlan();
       }
       if (mode === "selected") state.runSelection.clear();
-      state.running = false; state.stopRequested = false; renderQueue(); renderOutputScreen(); controls();
+      state.running = false; state.stopRequested = false; releaseRunTab(); renderQueue(); renderOutputScreen(); controls();
       stopRuntimeTicker();
       restoreRunOptions(options);
       if (completedNaturally) {
