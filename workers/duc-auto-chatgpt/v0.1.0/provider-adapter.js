@@ -19,7 +19,11 @@
   "use strict";
 
   const SELECTORS = Object.freeze({
-    // UNVERIFIED (inherited). Prompt composer, in preference order.
+    // VERIFIED 2026-08-26 by diagnostics.dom_probe on a live conversation,
+    // and functionally by a real submission in trial-09c93cd4: the probe
+    // measured "#prompt-textarea => 1" (first entry matches, so the rest are
+    // untried fallbacks) and the trial's prompt reached ChatGPT.
+    // Prompt composer, in preference order.
     composer: Object.freeze([
       "#prompt-textarea",
       'textarea[data-testid="prompt-textarea"]',
@@ -28,19 +32,37 @@
       'form [contenteditable="true"][role="textbox"]',
       "form textarea",
     ]),
-    // UNVERIFIED (inherited). Send button, searched page-wide first.
+    // FUNCTIONALLY VERIFIED 2026-08-26, but NOT snapshot-verified, and the
+    // difference matters. Every entry here measures 0 on a probe -- both while
+    // idle AND mid-generation -- because ChatGPT only renders a send button
+    // while the composer holds text, and swaps it for the stop button the
+    // moment generation starts. A read-only probe cannot type, so it can never
+    // catch that window. What DOES prove these selectors: trial-09c93cd4
+    // submitted successfully, which requires findSendButton() to have returned
+    // a real enabled button. Treat a future submission failure, not a probe
+    // count of 0, as the signal that this group has rotted.
+    // Send button, searched page-wide first.
     send: Object.freeze([
       'button[data-testid="send-button"]',
       'button[aria-label="Send prompt"]',
       'button[aria-label^="Send"]',
       'button[aria-label^="Gửi"]',
     ]),
-    // UNVERIFIED (inherited). Send fallback, scoped to the composer's form.
+    // Same status as `send` above: never observable in a probe snapshot, and
+    // in trial-09c93cd4 it was not needed because `send` resolved first.
+    // Send fallback, scoped to the composer's form.
     sendInForm: Object.freeze([
       'button[type="submit"]',
       'button[data-testid*="send"]',
     ]),
-    // UNVERIFIED (inherited). Stop button, present only during generation.
+    // VERIFIED 2026-08-26 by probing DURING generation (trial-09c93cd4), the
+    // only state in which this button exists at all:
+    //     button[data-testid="stop-button"] => 1
+    //     button[aria-label^="Stop"]        => 1
+    //     button[aria-label="Stop generating"] => 0   (exact label has changed)
+    // The first entry matches, so the exact-label entry below is dead weight
+    // rather than a live dependency -- kept only as a fallback.
+    // Stop button, present only during generation.
     stop: Object.freeze([
       'button[data-testid="stop-button"]',
       'button[aria-label="Stop generating"]',

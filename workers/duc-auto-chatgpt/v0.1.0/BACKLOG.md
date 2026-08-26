@@ -26,10 +26,19 @@ sửa theo bằng chứng đo được, `conversationRoot` đã bỏ phụ thu�
 **ĐÃ ĐO LẠI TRÊN TRANG THẬT 2026-08-26 — ĐẠT:** `assistantCount` 5,
 `imageCandidateCount` **3 → 15** trên trang có đúng 15 ảnh hội thoại (5 ảnh sinh).
 Ba nhóm `assistantMessage` / `userMessage` / `conversationRoot` coi như xong.
-Các nhóm còn lại (`composer`, `send`, `stop`, `attachmentPreview`, `uploadPending`)
-vẫn mang dấu `UNVERIFIED`. Chạy `diagnostics.dom_probe` trên tab thật, thay từng
-nhóm bằng selector khớp thật, xoá dấu `UNVERIFIED` theo từng nhóm đã xác minh. Lưu ảnh chụp bằng chứng vào `evidence/` giống cách worker
-Gemini đã làm (`duc-auto-gemini/v0.1.0/evidence/G1-live-dom-20260825/`).
+**Đo tiếp 2026-08-26 GIỮA LÚC một trial đang chạy** (`trial-09c93cd4`) — xác minh thêm:
+- `composer` — `#prompt-textarea` => 1, và prompt gửi được thật. **Xong.**
+- `stop` — đo đúng lúc đang sinh ảnh: `button[data-testid="stop-button"]` => 1. **Xong.**
+  (`button[aria-label="Stop generating"]` => 0 — ChatGPT đã đổi label, entry đó giờ chỉ là dự phòng.)
+- `send` / `sendInForm` — **không bao giờ chụp được bằng probe**, kể cả giữa lúc chạy:
+  ChatGPT chỉ hiện nút gửi khi ô nhập có chữ, rồi đổi ngay sang nút dừng khi bắt đầu sinh.
+  Probe read-only không gõ được nên không bắt được khoảnh khắc đó. **Bằng chứng thay thế:
+  trial gửi prompt thành công**, tức `findSendButton()` đã trả về nút thật. Dấu hiệu nhóm
+  này chết là **submit thất bại**, KHÔNG phải probe đếm ra 0.
+
+Còn lại: `attachmentPreview` / `uploadPending` — cần một run **có ảnh tham chiếu** mới đo được.
+Lưu ảnh chụp bằng chứng vào `evidence/` giống cách worker Gemini đã làm
+(`duc-auto-gemini/v0.1.0/evidence/G1-live-dom-20260825/`).
 
 ### ~~B-03 · Cảnh báo sớm khi selector chết~~ — ĐÃ ĐÓNG `55b47e3`
 Vòng 2026-08-26 đốt 6 lượt quota vì retry mù: gửi prompt → không thấy gì → retry
@@ -80,11 +89,24 @@ Phát hiện 2026-08-26 khi sửa `run.stop` (cùng gốc, lỗi có sẵn từ 
 do wave này gây ra**). `state.currentItem` chỉ bị xoá lúc nạp workbook và lúc nạp
 resume — **không bao giờ xoá khi run kết thúc**. Nên `bridgeRunStatus` trả
 `state: "IDLE"` nhưng vẫn kèm `current: {job_id, phase…}` của run trước.
+**BẮT ĐƯỢC TẬN TAY 2026-08-26** sau khi `run.stop` dừng `trial-09c93cd4`: cùng một thời
+điểm, `run.status` trả `state: "IDLE"` nhưng vẫn kèm
+`current: {job_id: "Q001", phase: "SUBMITTED", runtime_stage: "GENERATING"}`, còn `run.stop`
+(đã vá) trả sạch `null`. Hai method đọc cùng một biến, một cái nói sai một cái nói đúng.
 Đỡ nguy hiểm hơn `run.stop` (trường `state` vẫn nói đúng, bên gọi đọc kỹ thì không
 sai), nên chưa sửa trong wave này. Hai cách: gộp theo `state.running` ngay trong
 `bridgeRunStatus` (1 dòng, an toàn), hoặc xoá `state.currentItem` lúc run kết thúc
 (sạch hơn nhưng **phải kiểm UI trước** — `queueElapsed` và `renderRuntime` đang đọc
 nó để hiển thị job vừa xong).
+
+### B-11 · `run.trial` không có workbook bị bọc thành `INTERNAL_ERROR`
+Đo 2026-08-26: gọi `run.trial` khi chưa nạp workbook trả về `INTERNAL_ERROR` /
+`retryable: false`, còn nguyên nhân thật ("Open an XLSX workbook first" từ
+`authoritativeValidate`) chỉ hiện trong `details.debug` — mà debug chỉ bật khi Chế độ phát
+triển đang BẬT. Đây là **điều kiện người sửa được**, đúng ra phải là `WORKBOOK_NOT_LOADED` /
+retryable như `run.status` đang làm. Cùng hạng với phát hiện cũ "RUN_ACTIVE bị gắn retryable
+cho trạng thái chỉ người sửa được". `jobs.add` đã có đường bootstrap nên không dính;
+`run.trial` thì chưa.
 
 ### B-08 · Chuyển text anchor của poll A/B vào adapter
 `ab-poll-core.js` đang giữ cả *chính sách* (random/click_1/... — trung tính) lẫn
@@ -112,16 +134,15 @@ Xoá là quyền của Đức — **AI không tự xoá file**.
 
 ## Phiên kế tiếp
 
-1. **Nghiệm thu sống nốt 2 điểm cần một run thật** (chưa làm được vì chưa chạy run
-   nào): `chat.reload` phải bị `RUN_ACTIVE` từ chối khi đang chạy, và `run.stop`
-   phải dừng được một run thật kèm báo đúng `phase`. Cần Đức bật "Chế độ phát
-   triển" rồi cho phép một trial run.
-2. Còn lại của **B-02**: các nhóm `composer` / `send` / `stop` vẫn `UNVERIFIED`.
-   Đo 2026-08-26 lúc trang rảnh: composer khớp (`#prompt-textarea` => 1) nhưng
-   `send` và `stop` đều => 0 — **đúng như kỳ vọng** vì nút gửi chỉ hiện khi ô nhập
-   có chữ và nút dừng chỉ hiện lúc đang sinh ảnh. Muốn xác minh hai nhóm này thì
-   phải đo **trong lúc một run đang chạy**, gộp luôn vào mục 1.
-3. Rồi mới tới B-06 (đồng bộ GPT ↔ Gemini) theo thứ tự Đức đã chốt.
+1. **B-06 — đồng bộ GPT ↔ Gemini** (thứ tự Đức đã chốt). Kèm B-07: `run.stop` +
+   `chat.reload` đã sẵn sàng port, nhưng bản vá khoá **không dán thẳng sang được** (xem B-07).
+2. **B-01 khoá tab lúc Run** — lỗi thật, có ở cả hai extension, đã bị nó cắn 2 lần.
+3. Dọn: B-09 (rác test — quyền xoá của Đức), B-11, B-10, B-08.
+
+**Rác của phiên 2026-08-26 (chiều)** — ở `Downloads\Phai sinh\DucAuto_GPT-Output\Trial-RunStop-20260826`:
+checkpoint `Bridge-2026-08-26T06-32__results__v01..` + audit của `trial-09c93cd4`. Job Q001
+mang trạng thái `INTERRUPTED` là **đúng thiết kế** (prompt đã gửi rồi mới dừng), không phải lỗi.
+Gộp vào B-09 khi Đức muốn dọn.
 
 ## Đã đóng
 
