@@ -3,24 +3,23 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "released_at": "2026-08-26",
-      "task": "Da xong va DA PUSH: Pilot-07 18/18 tranh net cho tre to mau · port run.stop + chat.reload tu worker ChatGPT (da kiem chung live 9/9) · va loi nhan run.stop noi sai. Viec mo goi san o cuoi HANDOFF.md."
-    },
-    "workers/duc-auto-chatgpt": {
-      "owner": "claude-chatgpt-3",
+      "owner": "opus-platform-2",
       "ai": "Claude",
       "claimed_at": "2026-08-26",
-      "task": "Doi FEATURE-PARITY.md ve goc repo + audit artifact dashboard cua Duc."
+      "task": "Extension Operation Platform V0.1 — chi THEM STATUS.md + 1 dong Log HANDOFF + khai Ban do file. KHONG dung vao code worker."
+    },
+    "workers/duc-auto-chatgpt": {
+      "owner": "opus-platform-2",
+      "ai": "Claude",
+      "claimed_at": "2026-08-26",
+      "task": "Extension Operation Platform V0.1 — chi THEM STATUS.md + 1 dong Log HANDOFF + khai Ban do file. KHONG dung vao code worker. Tiep quan tu claude-chatgpt-3, Duc duyet trong prompt mo phien. LUU Y: phien do con 1 commit CHUA PUSH (6d852d9) — safe-push se tu choi, phai hoi Duc."
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "released_at": "2026-08-26",
-      "task": "Da xong va DA PUSH (d9c519b): brief V0.1 + prompt onboarding Opus o drafts/, va luat push moi trong AGENTS.md muc 2 (Duc chot: xong viec + cong kiem xanh thi tu push qua safe-push, ap moi AI). Phien Opus trien khai V0.1 cu claim _root nay theo prompt."
+      "owner": "claude-gemini-4",
+      "ai": "Claude",
+      "claimed_at": "2026-08-26",
+      "task": "MUON NGAN, Duc duyet trong chat: chi sua FEATURE-PARITY.md (2 dong da kiem bang cach doc than ham). KHONG dung vao scripts/, AGENTS.md, package.json — opus-platform-2 dang lam do o do. Tra lai cho opus-platform-2 ngay sau khi commit.",
+      "borrowed_from": "opus-platform-2"
     }
   }
 }

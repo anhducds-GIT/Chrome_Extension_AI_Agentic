@@ -5,6 +5,11 @@
 >
 > **Ở gốc repo có chủ đích** (Đức chốt 2026-08-26): nó nói về CẢ HAI nhánh, nên không thuộc
 > package nào. Phiên nào sửa file này thì phải đang giữ `_root` trong `.agents/claims.json`.
+>
+> **Sửa lần 2 — 2026-08-26, phiên `claude-gemini-4`** (Đức duyệt mượn `_root` trong chat):
+> hạ hai dòng `[DÒ]` xuống bằng cách **đọc thẳng thân hàm**, đúng như mục cảnh báo bên dưới dặn.
+> Một dòng sai (`tryBeginRun`), một dòng thiếu hẳn (nhận dạng ảnh theo byte).
+> Cả hai đều là **bẫy [DÒ] lần thứ ba và thứ tư** trong cùng một ngày.
 
 ## Đọc bảng này thế nào
 
@@ -22,13 +27,23 @@ Ba loại dòng, độ tin cậy KHÁC NHAU. Đừng đọc lẫn:
 `assertTrialDevMode` báo "Gemini thiếu" (thật ra Gemini có, tên khác, nằm ở
 `dev-trial-core.js` với mã `DEV_MODE_OFF`). **Dòng [DÒ] phải kiểm lại trước khi hành động.**
 
+**Cập nhật cùng ngày — dính thêm hai lần nữa, tổng cộng bốn:** `tryBeginRun` báo "Gemini thiếu"
+(thật ra Gemini **có**, dựng thẳng trong `run()` chứ không tách thành hàm riêng), và **nhận dạng
+ảnh theo byte** không có dòng nào cả vì không ai nghĩ ra để dò. Bốn lần trong một ngày, cùng một
+nguyên nhân: **dò theo tên chỉ tìm được thứ mình đã biết tên.** Đó là lý do mục 5 đề xuất sinh
+bảng này bằng máy thay vì gõ tay.
+
 ---
 
 ## 1. Method của Bridge — **[ĐO]**
 
 Đếm trực tiếp từ `registryEntry({ name: ... })` trong `bridge-core.js` hai bên.
 
-**GPT 22 · Gemini 19.** Sau hôm nay **GPT đi trước**, và "Gemini có mà GPT thiếu" đã rỗng.
+**GPT 22 · Gemini 19.** Sau hôm nay **GPT đi trước** ở method Bridge.
+
+> **Đính chính 26/08 (phiên `claude-gemini-4`):** câu "Gemini có mà GPT thiếu đã rỗng" chỉ đúng cho
+> *method Bridge*. Ở bảng **hành vi** (mục 2) thì không rỗng — Gemini có **nhận dạng ảnh theo byte**
+> mà GPT chưa có.
 
 | Method | GPT | Gemini |
 |---|---|---|
@@ -60,12 +75,13 @@ Ba loại dòng, độ tin cậy KHÁC NHAU. Đừng đọc lẫn:
 | Đọc `tab.url \|\| tab.pendingUrl` | ✅ | ❌ | [DÒ] | `pendingUrl` GPT 1 file, Gemini 0 |
 | `DETECTION_BLIND` — mù thì dừng, không retry | ✅ | ❌ | [DÒ] | hằng số riêng, GPT 3 file, Gemini 0 |
 | Ledger khai thật `landed_as_requested` (B-13b) | ✅ | ❌ | [DÒ] | GPT 2 file, Gemini 0 |
-| Latch `tryBeginRun` (không nuốt lệnh dừng) | ✅ | ❌ | [DÒ] | GPT 2 file, Gemini 0 |
+| Chốt khởi động run (không nuốt lệnh dừng) | ✅ | ✅ | **[ĐỌC]** | **cách làm khác nhau**: GPT `tryBeginRun` trong `approval-persistence-core.js`; Gemini dựng thẳng trong `run()` — dòng 9 là `if (state.running \|\| state.runStarting \|\| state.queueMutationRunning)`, và `stopRequested` được xoá TRƯỚC `await` đầu tiên. Ghim bởi `tests/bridge-run-stop-chat-reload-smoke.mjs` |
 | Nhiều ảnh một job | ✅ | ❌ | [DÒ] | `maxImages` GPT 3 file, Gemini 0 |
 | Cổng Chế độ phát triển cho `run.trial` | ✅ | ✅ | **[ĐỌC]** | **cách làm khác nhau**: GPT `assertTrialDevMode`, Gemini `dev-trial-core.js` + `DEV_MODE_OFF` |
 | Trần 90 giây của `run.trial` | ✅ | ✅ | [ĐO] | cả hai khai trong registry |
 | AI tự đặt thư mục Downloads | ✅ | ✅ | [ĐO] | `output_downloads_subfolder` GPT 4 file, Gemini 3 |
 | Poll A/B "thích ảnh nào hơn" | ✅ | ❌ | [ĐO] | `ab-poll-core.js` chỉ có ở GPT |
+| Nhận dạng ảnh theo BYTE, không tin nhãn MIME | ❌ | ✅ | **[ĐỌC]** | Gemini `content.js` có `sniffImageType` đọc byte đầu file thật (PNG `89 50 4E 47`, JPEG `FF D8 FF`, GIF, WebP, AVIF). GPT: quét `content.js` + `background.js` tìm mọi dấu hiệu đọc byte (`0x89`, `ffd8`, `Uint8Array`, `sniff`, `magic`) → **0 kết quả**. Đây là món **Gemini có mà GPT thiếu** |
 
 ## 3. Module — **[ĐO]**
 
