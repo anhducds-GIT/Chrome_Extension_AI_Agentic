@@ -30,7 +30,13 @@ if (!args.includes("--as") || !asLabel || asLabel.startsWith("--")) {
   process.exit(2);
 }
 
-const git = (...a) => { try { return execFileSync("git", a, { cwd: ROOT, encoding: "utf8" }); } catch { return ""; } };
+// core.quotepath=false: mặc định git mã hoá tên file không phải ASCII thành
+// octal ("Pilot-07-Táº¡o" thay vì "Pilot-07-Tạo"). Cổng đem chuỗi mã
+// hoá đó so với tên thật trong Bản đồ file nên KHÔNG BAO GIỜ khớp -> mọi thư
+// mục đặt tên tiếng Việt đều bị báo đỏ oan. Gặp thật 26/08 với
+// "Pilot-07-Tạo Ảnh tô màu". Đức là người Việt và đặt tên thư mục bằng tiếng
+// Việt, nên đây không phải trường hợp hiếm.
+const git = (...a) => { try { return execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: ROOT, encoding: "utf8" }); } catch { return ""; } };
 
 const results = [];
 const check = (name, fn) => {

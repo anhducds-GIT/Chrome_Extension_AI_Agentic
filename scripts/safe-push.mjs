@@ -29,7 +29,11 @@ if (!args.includes("--as") || !asLabel || asLabel.startsWith("--")) {
   process.exit(2);
 }
 
-const git = (...a) => execFileSync("git", a, { cwd: ROOT, encoding: "utf8" });
+// core.quotepath=false + bo dau nhay bao ngoai: neu khong, duong dan tieng
+// Viet ve dang "áº¡..." va regex ^workers/ truot -> commit bi quy
+// nham cho "_root" thay vi dung package. Cung goc loi voi session-check 26/08.
+const git = (...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: ROOT, encoding: "utf8" });
+const unquote = (line) => line.replace(/^"|"$/g, "");
 const gitQuiet = (...a) => { try { return git(...a); } catch { return ""; } };
 
 // Đối chiếu với remote thật, không tin con trỏ cũ trên máy.
@@ -49,7 +53,7 @@ const claims = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.jso
 // .agents/claims.json là thao tác hành chính (nhận/trả quyền) — ai cũng được
 // đẩy kèm, nếu không thì một phiên trả quyền xong sẽ chặn mọi phiên khác.
 function ownersOf(sha) {
-  const files = gitQuiet("show", "--name-only", "--format=", sha).split("\n").filter(Boolean);
+  const files = gitQuiet("show", "--name-only", "--format=", sha).split("\n").filter(Boolean).map(unquote);
   const areas = new Set();
   for (const file of files) {
     if (file === ".agents/claims.json") continue;

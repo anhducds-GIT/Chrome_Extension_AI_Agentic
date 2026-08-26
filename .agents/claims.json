@@ -15,11 +15,11 @@
       "task": "Pilot that dau tien (muc 1 trong Next). max_retries=0 cho lan do dau."
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
+      "owner": "claude-gemini-4",
+      "ai": "Claude",
+      "claimed_at": "2026-08-26",
       "released_at": "2026-08-26",
-      "task": "File gốc repo (AGENTS.md, CLAUDE.md, scripts/, package.json). Đụng vào phải hỏi Đức; được duyệt rồi thì ghi nhãn phiên vào đây, PUSH xong thì trả về null.",
+      "task": "Duc duyet 26/08: va loi cong kiem doc sai duong dan tieng Viet (git quotepath) trong scripts/session-check.mjs va scripts/safe-push.mjs.",
       "last_work": "Bộ luật đa-AI: AGENTS.md gốc + CLAUDE.md gốc + scripts/session-check.mjs + scripts/safe-push.mjs (Đức duyệt 26/08). Đã push."
     }
   }

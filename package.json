@@ -5,8 +5,9 @@
   "type": "module",
   "description": "Local-only Chrome extension workers. Tests are dependency-free Node scripts.",
   "scripts": {
-    "test": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs && node tests/observer-engine-smoke.mjs",
+    "test": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs && node tests/observer-engine-smoke.mjs && node tests/session-check-utf8-paths.mjs",
     "test:worker": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs",
-    "test:observer": "node tests/observer-engine-smoke.mjs"
+    "test:observer": "node tests/observer-engine-smoke.mjs",
+    "test:gate-paths": "node tests/session-check-utf8-paths.mjs"
   }
 }
