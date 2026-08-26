@@ -467,13 +467,41 @@
     return { input, before, expected: images.length, path };
   }
 
+  // Same set as attachmentNodes() but WITHOUT the size-based fallback, so a
+  // success can still say whether the named selectors matched or whether only
+  // the brand-agnostic heuristic carried it. That difference is the early
+  // warning that Google renamed its internals -- see attachSummary().
+  function selectorAttachmentCount(scope) {
+    const found = new Set();
+    for (const selector of ADAPTER.SELECTORS.attachmentPreview) {
+      for (const node of scope.querySelectorAll(selector)) found.add(node);
+    }
+    return found.size;
+  }
+
+  // Recorded on SUCCESS, not only on failure. Without it the run says "the
+  // reference attached" but never which of the two paths Gemini honored, so a
+  // broken primary path degrades silently to the synthetic-drop fallback and
+  // nobody learns until the fallback breaks too.
+  function attachSummary(staged) {
+    const scope = composerScope();
+    return {
+      path: staged.path,
+      expected: staged.expected,
+      added: DECISIONS.addedSince(staged.before, attachmentNodes(scope)),
+      by_selector: selectorAttachmentCount(scope),
+      scoped: scope !== document,
+    };
+  }
+
   async function confirmReferences(staged) {
-    if (!staged) return;
+    if (!staged) return null;
     try {
       await waitUntil(() => {
         const scope = composerScope();
         return DECISIONS.attachmentReady(0, staged.expected, { after: DECISIONS.addedSince(staged.before, attachmentNodes(scope)), busy: uploadIsPending() });
       }, ADAPTER.TIMING.referenceReadyTimeoutMs, "ATTACHMENT_NOT_READY", 250);
+      return attachSummary(staged);
     } catch (error) {
       if (error.message !== "ATTACHMENT_NOT_READY") throw error;
       // The page may show the thumbnail even when no selector matched it.
@@ -682,7 +710,7 @@
       const staged = await stageReferences(referenceImages);
       setComposerText(composer, prompt);
       await sleep(ADAPTER.TIMING.postTypeSettleMs);
-      await confirmReferences(staged);
+      const attach = await confirmReferences(staged);
 
       const inputEvidence = referenceEvidence(referenceImages);
       const boundary = captureBoundary(inputEvidence);
@@ -703,6 +731,11 @@
       await sleep(ADAPTER.TIMING.postSendSettleMs);
 
       const result = await waitForCompletion({ boundary, timeoutMs, expectImage, inputEvidence, attempt: requestAttempt });
+      // Carried on the result, not on attempt.detection: recordDetection()
+      // replaces attempt.detection wholesale when completion polling settles,
+      // so anything parked there before Send is wiped by the time the panel
+      // writes the ledger row.
+      if (result && attach) result.attach = attach;
       if (result?.image_url && requestAttempt) requestAttempt.phase = "OUTPUT_DETECTED";
       if (result?.image_url) emitRuntimeStage(requestAttempt, "OUTPUT_DETECTED");
       return result;

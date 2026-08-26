@@ -1,0 +1,51 @@
+// Đường gắn ảnh tham chiếu phải được ghi lại KỂ CẢ KHI THÀNH CÔNG.
+//
+// Vì sao ghim: Pilot-REF-01 (26/08) chạy đạt 2/2 nhưng không để lại dấu vết
+// nào cho biết Gemini đã chấp nhận đường chính (ô nhập file tạm) hay đường dự
+// phòng (giả lập kéo-thả) — `attachmentFingerprint` chỉ được ghi khi THẤT BẠI.
+// Hệ quả: Google đổi giao diện làm hỏng đường chính thì hệ thống âm thầm rơi
+// sang đường dự phòng và vẫn chạy, tới khi đường dự phòng cũng hỏng mới sập,
+// và không có lịch sử nào cho biết nó đã chống đỡ âm thầm bao lâu.
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const content = fs.readFileSync(path.join(HERE, "..", "content.js"), "utf8");
+const panel = fs.readFileSync(path.join(HERE, "..", "sidepanel.js"), "utf8");
+
+// 1. Có hàm tóm tắt riêng, và nó chạy trên đường THÀNH CÔNG của confirmReferences.
+assert.match(content, /function attachSummary\(staged\)/, "attachSummary phải tồn tại");
+const confirmStart = content.indexOf("async function confirmReferences(staged)");
+assert.ok(confirmStart > -1, "confirmReferences phải tồn tại");
+const confirmBlock = content.slice(confirmStart, content.indexOf("/* ---- send + completion", confirmStart));
+assert.match(confirmBlock, /return attachSummary\(staged\);/, "đường thành công phải trả về bản tóm tắt");
+const returnIndex = confirmBlock.indexOf("return attachSummary(staged);");
+const catchIndex = confirmBlock.indexOf("} catch (error) {");
+assert.ok(returnIndex > -1 && catchIndex > -1 && returnIndex < catchIndex, "bản tóm tắt phải nằm trong nhánh try (thành công), không phải nhánh catch");
+
+// 2. Bản tóm tắt phải nói rõ ĐƯỜNG NÀO, và phải tách được "selector có tên
+//    khớp" với "chỉ heuristic theo kích thước đỡ" — đó mới là cảnh báo sớm.
+const summaryStart = content.indexOf("function attachSummary(staged)");
+const summaryBlock = content.slice(summaryStart, content.indexOf("async function confirmReferences", summaryStart));
+for (const field of ["path:", "expected:", "added:", "by_selector:"]) {
+  assert.ok(summaryBlock.includes(field), `bản tóm tắt thiếu trường ${field}`);
+}
+assert.match(content, /function selectorAttachmentCount\(scope\)/, "phải có phép đếm chỉ-theo-selector");
+const selectorStart = content.indexOf("function selectorAttachmentCount(scope)");
+const selectorBlock = content.slice(selectorStart, content.indexOf("function attachSummary", selectorStart));
+assert.ok(!/getBoundingClientRect/.test(selectorBlock), "phép đếm chỉ-theo-selector KHÔNG được dùng heuristic kích thước — nếu dùng thì nó không còn phân biệt được gì");
+
+// 3. Bản tóm tắt phải đi được tới panel. Không gửi kèm result thì nó chết ở
+//    content script: recordDetection() ghi đè sạch attempt.detection khi vòng
+//    dò kết quả xong.
+assert.match(content, /const attach = await confirmReferences\(staged\);/, "phải giữ lại giá trị trả về");
+assert.match(content, /if \(result && attach\) result\.attach = attach;/, "phải gắn bản tóm tắt vào result");
+const recordDetection = content.slice(content.indexOf("function recordDetection"), content.indexOf("function recordDetection") + 120);
+assert.match(recordDetection, /attempt\.detection = values/, "recordDetection vẫn ghi đè — đây chính là lý do bản tóm tắt phải đi kèm result");
+
+// 4. Panel phải ghi nó xuống sổ cái, không được nuốt.
+assert.match(panel, /attach: result\?\.attach \?\? null/, "detection_diagnostics phải kèm bản tóm tắt đường gắn ảnh");
+
+console.log("attach path recorded on success: PASS");
