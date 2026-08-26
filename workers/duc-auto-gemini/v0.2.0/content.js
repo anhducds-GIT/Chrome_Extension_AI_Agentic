@@ -526,12 +526,46 @@
     throw new Error("Send button did not become ready. Gemini DOM may have changed.");
   }
 
+  // Magic-byte sniff. Needed because a Blob's `type` is whatever the page set
+  // when it constructed it, and Gemini's generated-image blobs can arrive with
+  // an empty or non-image type -- FileReader then produces
+  // "data:application/octet-stream;base64,..." which background.js correctly
+  // refuses (it only accepts https: or data:image/). The bytes are the truth,
+  // so read them instead of trusting (or guessing) the label.
+  // Live evidence 2026-08-26 (Pilot-REF-01 follow-up, job Q001 Hue): three
+  // attempts each attached, submitted and DETECTED the image, then all three
+  // died on "Generated image URL was not usable."
+  function sniffImageType(bytes) {
+    const at = (i) => bytes[i];
+    if (at(0) === 0x89 && at(1) === 0x50 && at(2) === 0x4e && at(3) === 0x47) return "image/png";
+    if (at(0) === 0xff && at(1) === 0xd8 && at(2) === 0xff) return "image/jpeg";
+    if (at(0) === 0x47 && at(1) === 0x49 && at(2) === 0x46) return "image/gif";
+    if (at(0) === 0x52 && at(1) === 0x49 && at(2) === 0x46 && at(3) === 0x46 && at(8) === 0x57 && at(9) === 0x45 && at(10) === 0x42 && at(11) === 0x50) return "image/webp";
+    // ISO-BMFF 'ftyp' box: AVIF and HEIC share it; only AVIF is in the
+    // background extension list, so anything else here stays unknown.
+    if (at(4) === 0x66 && at(5) === 0x74 && at(6) === 0x79 && at(7) === 0x70 && at(8) === 0x61 && at(9) === 0x76 && at(10) === 0x69 && at(11) === 0x66) return "image/avif";
+    return null;
+  }
+
+  // Recorded so a rejection is diagnosable from the ledger alone, without a
+  // devtools session on the owner's machine.
+  let lastBlobConversion = null;
+
   async function downloadableUrl(url) {
     // Result images are https://lh3.googleusercontent.com per evidence
     // snapshot 3, but the guard stays: composer previews ARE blob:, and the
     // background chrome.downloads path rejects blob: outright.
     if (!String(url || "").startsWith("blob:")) return url;
-    const blob = await (await fetch(url)).blob();
+    const raw = await (await fetch(url)).blob();
+    const head = new Uint8Array(await raw.slice(0, 16).arrayBuffer());
+    const sniffed = sniffImageType(head);
+    // Prefer the sniffed bytes over the label: a blob labelled image/png that
+    // actually holds JPEG bytes would otherwise be saved under a lying
+    // extension. Fall back to the label only when the bytes say nothing.
+    const type = sniffed || (raw.type.startsWith("image/") ? raw.type : null);
+    lastBlobConversion = { blob_type: raw.type || "(rỗng)", sniffed, used: type, bytes: raw.size };
+    if (!type) throw new Error(`BLOB_NOT_AN_IMAGE: blob type "${raw.type || "(rỗng)"}", ${raw.size} byte, 4 byte đầu ${Array.from(head.slice(0, 4)).map((b) => b.toString(16).padStart(2, "0")).join(" ")}`);
+    const blob = raw.type === type ? raw : new Blob([raw], { type });
     return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(reader.error); reader.readAsDataURL(blob); });
   }
 
@@ -736,6 +770,9 @@
       // so anything parked there before Send is wiped by the time the panel
       // writes the ledger row.
       if (result && attach) result.attach = attach;
+      // Cùng lý do như attach: đi kèm result, vì attempt.detection bị
+      // recordDetection() ghi đè khi vòng dò kết quả xong.
+      if (result && lastBlobConversion) result.blob_conversion = lastBlobConversion;
       if (result?.image_url && requestAttempt) requestAttempt.phase = "OUTPUT_DETECTED";
       if (result?.image_url) emitRuntimeStage(requestAttempt, "OUTPUT_DETECTED");
       return result;
@@ -762,6 +799,15 @@
     if (!identity.ok) throw new Error(`${identity.code}: ${identity.message}`);
     const verified = window.DacReconciliationCore.verifyExistingOutput({ proof, candidates: imageCandidates(document) });
     if (!verified.ok) throw new Error(`${verified.code}: ${verified.message}`);
+    // Cùng họ lỗi với downloadableUrl(): ảnh Gemini sinh ra có lúc là blob:,
+    // và background từ chối blob: thẳng. Đường này KHÔNG chuyển đổi được vì
+    // handler đang đồng bộ (chuyển sang async là đổi hợp đồng của message
+    // handler — việc riêng, đã ghi vào HANDOFF). Nên ít nhất đừng đẩy một URL
+    // vô dụng xuống dưới rồi để nó chết với thông điệp khó hiểu: dừng ngay ở
+    // đây, nói rõ vì sao.
+    if (String(verified.candidate.source || "").startsWith("blob:")) {
+      throw new Error("RECONCILE_BLOB_UNSUPPORTED: ảnh trên trang đang là blob: nên đường đối chiếu thủ công chưa tải được. Chờ Gemini đổi sang link lh3 rồi thử lại, hoặc dùng Recreate.");
+    }
     return {
       type: "image",
       image_url: verified.candidate.source,

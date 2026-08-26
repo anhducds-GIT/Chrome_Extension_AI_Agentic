@@ -64,7 +64,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 async function downloadGeneratedImage(message) {
   const url = typeof message.url === "string" ? message.url : "";
   if (!/^https:\/\//i.test(url) && !/^data:image\//i.test(url)) {
-    return failure("INVALID_IMAGE_URL", "Generated image URL was not usable.");
+    // Kèm phần ĐẦU của URL (không kèm phần dữ liệu) — bí ẩn "URL không dùng
+    // được" ngày 26/08 mất 3 lần thử mới lần ra, chỉ vì thông điệp không nói
+    // nó đã nhận được cái gì. Cắt 40 ký tự là đủ thấy scheme và MIME.
+    const head = url ? url.slice(0, 40) : "(rỗng)";
+    return failure("INVALID_IMAGE_URL", `Generated image URL was not usable (nhận được: ${head}).`);
   }
   const safeId = String(message.jobId || "image").replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 100) || "image";
   const extension = imageExtension(url);

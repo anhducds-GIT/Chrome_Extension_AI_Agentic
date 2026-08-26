@@ -74,6 +74,7 @@ Vòng poll `run-status` mỗi 10s (chạy nền). LƯU Ý baseline: counts là T
 | Host không phản hồi (ECONNREFUSED) | Host Node chết | Bảo Đức đúp chuột `START-BRIDGE.cmd` trong thư mục Bridge; extension tự nối lại ≤30s |
 | METHOD_NOT_FOUND cho method mới | Extension chưa reload sau khi code đổi | Nhờ Đức bấm ⟳ |
 | RECEIVER_LOST ngay sau khi reload extension | Tab Gemini đang mở vẫn ôm content script cũ đã bị vô hiệu | Nhờ Đức F5 tab Gemini. **Reload extension thì LUÔN phải F5 tab kèm theo** (Batch-SX-01, 26/08) |
+| `POST_SUBMIT_UNCERTAIN` + "Generated image URL was not usable", ảnh CÓ trên trang | Gemini render ảnh sinh ra có lúc là `blob:` (không phải `lh3`). Blob đó mang nhãn MIME không phải ảnh, nên data URL tạo ra thành `application/octet-stream` và background từ chối đúng luật | ĐÃ VÁ 26/08: nhận dạng theo BYTE rồi mới đóng nhãn (`sniffImageType`). Thông điệp từ chối giờ in 40 ký tự đầu của URL, và sổ cái ghi `blob_conversion` |
 | Gắn ảnh tham chiếu: chạy thành công nhưng không biết đường nào đã dùng | Dấu vết `attachmentFingerprint` chỉ ghi khi THẤT BẠI | Đã biết, chưa sửa. Rủi ro: đường chính hỏng thì hệ thống âm thầm rơi sang đường dự phòng, không ai hay (Pilot-REF-01, 26/08) |
 | Ảnh lưu ra `.jpg` dù mẫu tên ghi `.png` | Gemini trả JPEG; Chrome sửa đuôi cho khớp nội dung thật | Không phải lỗi — đuôi mới đúng hơn. Lớp khoan dung ghi tên thật vào sổ cái |
 
