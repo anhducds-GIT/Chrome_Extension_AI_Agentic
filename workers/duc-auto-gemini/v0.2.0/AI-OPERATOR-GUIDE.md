@@ -27,9 +27,10 @@ CLI có sẵn: `cd "C:\WORKING ZONE\Duc-Auto-Gemini-Bridge" && node bridge-cli.m
 | (raw POST) | jobs.add / jobs.update / jobs.remove / jobs.reorder | Dựng/sửa hàng đợi — jobs.add TỰ TẠO phiên nếu panel chưa có workbook |
 | (raw POST) | references.add | Đẩy ảnh tham chiếu (data URL, ≤5/lần, ≤700KB/ảnh) |
 | (raw POST) | run_settings.configure / output.configure | Cấu hình phiên |
-| (raw POST) | diagnostics.dom_probe | MẮT TỪ XA: snapshot DOM chỉ-đọc của tab Gemini (selector counts, buttons, images, custom tags, file inputs) — hết cảnh mượn mắt owner |
+| `bridge-rpc.mjs diagnostics.dom_probe` | diagnostics.dom_probe | MẮT TỪ XA: snapshot DOM chỉ-đọc của tab Gemini (selector counts, buttons, images, custom tags, file inputs) — hết cảnh mượn mắt owner |
 
-Raw POST mẫu (Node): envelope `{protocol:"duc-auto-chatgpt.bridge",version:1,kind:"request",request_id,method,sent_at,client,params}`
+Raw POST: dùng `node workers/duc-auto-gemini/v0.2.0/scripts/bridge-rpc.mjs <method> [--params-file x.json]`
+(đã kiểm chứng thực chiến Batch-SX-01). Envelope thủ công nếu cần: `{protocol:"duc-auto-chatgpt.bridge",version:1,kind:"request",request_id,method,sent_at,client,params}`
 gửi tới `http://127.0.0.1:32148/v1/rpc` với header `Authorization: Bearer <token>`.
 
 ## 3. Ranh giới quyền — KHÔNG thương lượng
@@ -65,13 +66,15 @@ Vòng poll `run-status` mỗi 10s (chạy nền). LƯU Ý baseline: counts là T
 | GENERATION_LIMIT_REACHED ngay sau khi gửi, quota còn nhiều | Thẻ quota của Google tồn tại dạng khuôn rỗng vô hình trong /app | ĐÃ VÁ (kiểm tra visible+text). Nếu tái phát: xem quotaAnchorPresent |
 | ATTEMPT_ID_MISMATCH mọi response | So danh tính thiếu run_id (bug lịch sử v0.1.0) | ĐÃ VÁ (expectedIdentity) |
 | Panel tự đóng khi chạy xong | Tải file bằng thẻ <a> trong panel | ĐÃ VÁ (chrome.downloads) |
-| ARTIFACT PERSISTENCE FAILED nhưng file có tải về | Chrome máy owner bỏ qua filename cho blob download (GUID/tên server) | ĐÃ VÁ KÉP: filename determiner trong background giành lại quyền đặt tên cho download CỦA MÌNH (port từ chatgpt b587246) + lớp khoan dung ghi tên thật làm lưới dự phòng |
+| ARTIFACT PERSISTENCE FAILED nhưng file có tải về | Chrome máy owner bỏ qua filename cho blob download (GUID/tên server) | ĐÃ VÁ KÉP: filename determiner trong background giành lại quyền đặt tên cho download CỦA MÌNH (port từ chatgpt b587246) + lớp khoan dung ghi tên thật làm lưới dự phòng. **Kiểm chứng thực chiến Batch-SX-01 (26/08): 12/12 file ra đúng Q001…Q012, không còn UUID nào** |
 | INTERNAL_ERROR trống | Executor nuốt thông điệp lỗi | ĐÃ VÁ (details.message) |
 | Job SUBMITTED, ảnh CÓ trên trang nhưng detection timeout → job sau bị khoá RECONCILING → halt "Timed out waiting for an idle Gemini composer" | Gemini có lúc tạo ảnh nhưng KHÔNG render preview inline — detection cũ đòi ảnh hiển thị ≥200px | ĐÃ VÁ (`remoteVerifiedResult` trong content.js — ảnh trong generated-image với URL lh3 thật = tồn tại; xác nhận bằng chuỗi chung kết Pilot-04 4/4) |
 | TIMEOUT_PRE_SUBMIT "waiting for idle composer" hàng loạt sau 1 job kẹt | Hệ quả dây chuyền của dòng trên (outputVerified=false chặn readiness) | Xử lý gốc ở dòng trên |
 | Chạy trên /images: sau khi gửi tab nhảy sang /app/<id> | Hành vi chuẩn của Gemini | ĐÃ THIẾT KẾ ĐÚNG (surfaceAllowed). Chat thường /app với prompt "Generate an image: …" chạy ổn (Trial 2 Pilot-04: 2/2) |
 | Host không phản hồi (ECONNREFUSED) | Host Node chết | Bảo Đức đúp chuột `START-BRIDGE.cmd` trong thư mục Bridge; extension tự nối lại ≤30s |
 | METHOD_NOT_FOUND cho method mới | Extension chưa reload sau khi code đổi | Nhờ Đức bấm ⟳ |
+| RECEIVER_LOST ngay sau khi reload extension | Tab Gemini đang mở vẫn ôm content script cũ đã bị vô hiệu | Nhờ Đức F5 tab Gemini. **Reload extension thì LUÔN phải F5 tab kèm theo** (Batch-SX-01, 26/08) |
+| Ảnh lưu ra `.jpg` dù mẫu tên ghi `.png` | Gemini trả JPEG; Chrome sửa đuôi cho khớp nội dung thật | Không phải lỗi — đuôi mới đúng hơn. Lớp khoan dung ghi tên thật vào sổ cái |
 
 ## 6. Nguyên tắc làm việc (đúc từ các phiên trước)
 
