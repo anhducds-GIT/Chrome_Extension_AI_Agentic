@@ -27,6 +27,8 @@ CLI có sẵn: `cd "C:\WORKING ZONE\Duc-Auto-Gemini-Bridge" && node bridge-cli.m
 | (raw POST) | jobs.add / jobs.update / jobs.remove / jobs.reorder | Dựng/sửa hàng đợi — jobs.add TỰ TẠO phiên nếu panel chưa có workbook |
 | (raw POST) | references.add | Đẩy ảnh tham chiếu (data URL, ≤700KB/ảnh **và tổng gói ≤1 MB/lệnh** — xem bảng lỗi) |
 | (raw POST) | run_settings.configure / output.configure | Cấu hình phiên |
+| `run-stop` | run.stop | **Dừng** run đang chạy, đúng đường nút Stop của Đức. Đi VÒNG QUA khoá RUN_ACTIVE (dừng chỉ bớt việc). Gọi lại lần hai vô hại. Trả về `prompt_already_sent` — prompt đã gửi thì không thu hồi được, chỉ chặn được job sau |
+| `chat-reload` | chat.reload | **F5** tab Gemini rồi đợi trang trả lời mới báo xong. BỊ khoá RUN_ACTIVE chặn — đang chạy thì phải `run-stop` trước. Thay cho việc nhờ Đức bấm F5 tay khi gặp `RECEIVER_LOST` |
 | `bridge-rpc.mjs diagnostics.dom_probe` | diagnostics.dom_probe | MẮT TỪ XA: snapshot DOM chỉ-đọc của tab Gemini (selector counts, buttons, images, custom tags, file inputs) — hết cảnh mượn mắt owner |
 
 Raw POST: dùng `node workers/duc-auto-gemini/v0.2.0/scripts/bridge-rpc.mjs <method> [--params-file x.json]`
@@ -78,7 +80,7 @@ Vòng poll `run-status` mỗi 10s (chạy nền). LƯU Ý baseline: counts là T
 | Chạy trên /images: sau khi gửi tab nhảy sang /app/<id> | Hành vi chuẩn của Gemini | ĐÃ THIẾT KẾ ĐÚNG (surfaceAllowed). Chat thường /app với prompt "Generate an image: …" chạy ổn (Trial 2 Pilot-04: 2/2) |
 | Host không phản hồi (ECONNREFUSED) | Host Node chết | Bảo Đức đúp chuột `START-BRIDGE.cmd` trong thư mục Bridge; extension tự nối lại ≤30s |
 | METHOD_NOT_FOUND cho method mới | Extension chưa reload sau khi code đổi | Nhờ Đức bấm ⟳ |
-| RECEIVER_LOST ngay sau khi reload extension | Tab Gemini đang mở vẫn ôm content script cũ đã bị vô hiệu | Nhờ Đức F5 tab Gemini. **Reload extension thì LUÔN phải F5 tab kèm theo** (Batch-SX-01, 26/08) |
+| RECEIVER_LOST ngay sau khi reload extension | Tab Gemini đang mở vẫn ôm content script cũ đã bị vô hiệu | **Tự F5 được rồi**: gọi `chat-reload` (thêm 26/08). Đang chạy thì `run-stop` trước. Chỉ nhờ Đức khi Bridge cũng chết. **Reload extension thì LUÔN phải F5 tab kèm theo** (Batch-SX-01, 26/08) |
 | `POST_SUBMIT_UNCERTAIN` + "Generated image URL was not usable", ảnh CÓ trên trang | Gemini render ảnh sinh ra có lúc là `blob:` (không phải `lh3`). Blob đó mang nhãn MIME không phải ảnh, nên data URL tạo ra thành `application/octet-stream` và background từ chối đúng luật | ĐÃ VÁ 26/08: nhận dạng theo BYTE rồi mới đóng nhãn (`sniffImageType`). Thông điệp từ chối giờ in 40 ký tự đầu của URL, và sổ cái ghi `blob_conversion` |
 | Gắn ảnh tham chiếu: chạy thành công nhưng không biết đường nào đã dùng | Dấu vết `attachmentFingerprint` chỉ ghi khi THẤT BẠI | Đã biết, chưa sửa. Rủi ro: đường chính hỏng thì hệ thống âm thầm rơi sang đường dự phòng, không ai hay (Pilot-REF-01, 26/08) |
 | Ảnh lưu ra `.jpg` dù mẫu tên ghi `.png` | Gemini trả JPEG; Chrome sửa đuôi cho khớp nội dung thật | Không phải lỗi — đuôi mới đúng hơn. Lớp khoan dung ghi tên thật vào sổ cái |

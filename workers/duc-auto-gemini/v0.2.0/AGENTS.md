@@ -96,6 +96,7 @@ COMPANION (đọc khi cần):
 | `dev-trial-core.js` | Gate thuần cho `run.trial` (Chế độ phát triển): toggle owner, **≤30 job một chuỗi** (`MAX_TRIAL_JOBS`), khoảng cách ≥300s giữa 2 trial — quyết định 2026-08-25 (trần nâng 2→10→30 trong cùng ngày) |
 | `tests/blob-image-conversion-static.mjs` | Ghim: ảnh `blob:` phải nhận dạng theo BYTE rồi chuyển thành data URL background chấp nhận (lỗi live 26/08) |
 | `tests/attach-path-recorded-static.mjs` | Ghim: đường gắn ảnh tham chiếu phải được ghi lại kể cả khi THÀNH CÔNG (Pilot-REF-01) |
+| `tests/bridge-run-stop-chat-reload-smoke.mjs` | Ghim cặp `run.stop` / `chat.reload` (port từ worker ChatGPT 26/08): hợp đồng registry, params rỗng nghiêm ngặt, và **thứ tự** — cờ dừng phải xoá TRƯỚC await đầu tiên của `run()`, `chat.reload` phải giành khoá TRƯỚC await đầu tiên |
 | `tests/bridge-run-trial-smoke.mjs` | Test cho `run.trial`: registry, validation, ma trận từ chối, audit `bridge_dev`, UI toggle/badge |
 | `templates/Duc-Auto-ChatGPT-Template.xlsx` | Workbook trống chuẩn để bắt đầu pilot mới |
 | `scripts/create-pilot-NN.mjs` | Script tạo workbook cho từng pilot |

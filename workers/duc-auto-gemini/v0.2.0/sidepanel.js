@@ -53,6 +53,11 @@
     running: false,
     validated: false,
     stopRequested: false,
+    // Cửa sổ "run đang khởi động": từ lúc run() được gọi tới lúc state.running
+    // thành true có một khoảng await (authoritativeValidate). Không có cờ này
+    // thì run.stop rơi vào khoảng đó sẽ trả lời "không có gì để dừng" trong khi
+    // một run sắp bắt đầu ngay sau đó.
+    runStarting: false,
     pauseRequested: false,
     paused: false,
     terminal: 0,
@@ -204,7 +209,7 @@
       bridge_approved_at: item.job.bridge_approved_at || null,
       bridge_payload_sha256: item.job.bridge_payload_sha256 || null
     } : {};
-    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge });
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge, ...(values.input_origin ? { input_origin: values.input_origin } : {}) });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
@@ -561,6 +566,135 @@
     };
   }
 
+  // ---------------------------------------------------------------------
+  // run.stop / chat.reload — cặp lệnh điều khiển, CỐ Ý ngược nhau về khoá.
+  // Port từ worker ChatGPT (commit 559c653, đã kiểm chứng live 537f84a).
+  // ---------------------------------------------------------------------
+
+  // KHÔNG đi qua bridgeDirectLock. Mọi lệnh ghi khác bị từ chối khi đang chạy
+  // vì chúng có thể đổi thứ run sắp làm; dừng thì chỉ BỚT việc đi, không thêm.
+  // Một lệnh dừng bị từ chối vì "đang chạy" là lệnh dừng vô dụng đúng lúc cần
+  // nó nhất. Ngoại lệ này chính là lý do method tồn tại — đừng "dọn cho nhất
+  // quán" với các handler khác ở một lần refactor sau.
+  async function bridgeRunStop() {
+    // Chỉ tin state.currentItem khi run đang THẬT SỰ chạy. setCurrent(null, …)
+    // được gọi lúc nạp workbook và lúc resume, nhưng KHÔNG gọi khi run kết
+    // thúc — nên giữa hai run nó vẫn trỏ vào job cuối của run trước. Đọc vô
+    // điều kiện thì một lệnh dừng lúc rảnh sẽ vừa nói "không có run nào" vừa
+    // khai ra id job cũ kèm prompt_already_sent: true, và ghi luôn lời khai sai
+    // đó vào sổ cái. Run mới đang khởi động thì chưa có job nào — đúng bằng null.
+    const current = state.running ? state.currentItem : null;
+    const wasRunning = Boolean(state.running || state.runStarting);
+    const phase = current?.phase || null;
+    // Qua khỏi PRE_SUBMIT là prompt đã rời khỏi panel. Dừng chỉ chặn được các
+    // job SAU; nó không thu hồi được prompt Gemini đã nhận, và câu trả lời phải
+    // nói thẳng chuyện đó thay vì ngụ ý là đã undo được.
+    const promptAlreadySent = Boolean(phase) && phase !== "PRE_SUBMIT";
+    // Đi đúng đường nút Stop của người vận hành, không dựng runner thứ hai.
+    if (wasRunning) { await stop(); log("Bridge đã yêu cầu dừng run.", "error"); }
+    // audit() tự bỏ qua khi chưa có run_id, nên một lệnh dừng lúc rảnh không
+    // ghi gì cả thay vì bịa ra sự kiện không gắn vào run nào.
+    audit("BRIDGE_RUN_STOPPED", current, {
+      message: wasRunning ? (promptAlreadySent ? "STOP_REQUESTED_AFTER_SUBMIT" : "STOP_REQUESTED_BEFORE_SUBMIT") : "STOP_NOOP_NOT_RUNNING",
+      input_origin: "bridge"
+    });
+    controls();
+    return {
+      was_running: wasRunning,
+      stopped_at: new Date().toISOString(),
+      job_id: current?.job?.id || null,
+      attempt_id: current?.attempt_id || null,
+      phase,
+      prompt_already_sent: promptAlreadySent,
+      note: !wasRunning
+        ? "Không có run nào đang chạy. Không có gì để dừng."
+        : promptAlreadySent
+          ? "Đã yêu cầu dừng. Prompt của job này ĐÃ gửi đi rồi, không thu hồi được — chỉ các job sau mới không được gửi."
+          : "Đã yêu cầu dừng trước khi prompt kịp gửi. Không job nào bị gửi thêm."
+    };
+  }
+
+  const CHAT_RELOAD_READY_TIMEOUT_MS = 20000;
+  const CHAT_RELOAD_POLL_MS = 500;
+
+  // Ảnh phản chiếu của run.stop: cái kia đi vòng qua khoá, cái này BỊ khoá.
+  // F5 giết content script và mọi attempt đang bay theo nó, nên một job đã tiêu
+  // quota thật sẽ mất bằng chứng nó tạo ra cái gì, và lần thử lại sau đó có thể
+  // gửi lại đúng prompt đó lần thứ hai. Exact-once không phải thứ method này
+  // được phép nới cho tiện. Trình tự đúng: run.stop → chat.reload → chạy lại.
+  async function bridgeChatReload() {
+    // GIÀNH khoá, không chỉ ĐỌC cờ. Handler này await hai lần — activeTab(),
+    // rồi vòng dò tối đa 20 giây — nên một phép kiểm trần trụi sẽ để hở nguyên
+    // cửa sổ đó cho một run khởi động lên đúng cái tab sắp bị (hoặc đang bị)
+    // F5. Đó chính là lỗ exact-once mà cái khoá này sinh ra để bịt, nên khoá
+    // phải giữ suốt thời gian F5. Kiểm rồi gán đều đồng bộ, không await xen
+    // giữa, nên không có khe hở.
+    const reason = bridgeApprovalLockReason({ workbookRequired: false, persistenceRequired: false });
+    if (reason) {
+      throw new window.DacBridgeCore.BridgeProtocolError(
+        "RUN_ACTIVE",
+        "RUN_ACTIVE: Đang có run chạy nên không F5 được. Gọi run.stop trước, đợi run dừng hẳn, rồi mới chat.reload — F5 lúc đang chạy sẽ giết attempt đang bay và có thể làm prompt bị gửi lại lần hai.",
+        { lock_reason: reason }
+      );
+    }
+    state.queueMutationRunning = true;
+    controls();
+    try {
+      return await performChatReload();
+    } finally {
+      state.queueMutationRunning = false;
+      controls();
+    }
+  }
+
+  async function performChatReload() {
+    // activeTab() giải ra tab ĐANG hoạt động và giải lại ở mỗi lần gọi. Chính
+    // vì thế câu trả lời và dòng sổ cái bên dưới nêu đích danh tab id, thay vì
+    // để người gọi tự đoán tab nào vừa bị F5.
+    const before = await activeTab();
+    const tabId = before.id;
+    const urlBefore = before.url || null;
+    const startedAt = Date.now();
+    await chrome.tabs.reload(tabId);
+    // Báo ok trước khi trang kịp trả lời là một lời nói dối nhỏ khiến người gọi
+    // hành động quá sớm. Dò đúng tab vừa F5 THEO ID — không dùng send(), vì
+    // send() giải lại tab đang hoạt động và có thể ping nhầm sang tab khác.
+    let ready = false;
+    let composerFound = false;
+    while (Date.now() - startedAt < CHAT_RELOAD_READY_TIMEOUT_MS) {
+      await sleep(CHAT_RELOAD_POLL_MS);
+      try {
+        const ping = await chrome.tabs.sendMessage(tabId, { type: "DAC_PING" });
+        composerFound = Boolean(ping?.composerFound);
+        // Sống chưa chắc đã dùng được: đợi ô soạn thảo xuất hiện, đúng tín hiệu
+        // mà system.ping coi là Gemini đã với tới được.
+        if (composerFound) { ready = true; break; }
+      } catch (_) { /* content script chưa được tiêm lại */ }
+    }
+    const waitedMs = Date.now() - startedAt;
+    const after = await chrome.tabs.get(tabId).catch(() => null);
+    const urlAfter = after?.url || null;
+    // tab_id đi trong message vì dòng sổ cái không có ô riêng cho nó, và một
+    // method điều khiển thì chưa đáng để nới rộng schema bằng chứng.
+    audit("BRIDGE_CHAT_RELOADED", null, {
+      message: `${ready ? "CHAT_RELOAD_READY" : "CHAT_RELOAD_NOT_READY"} tab_id=${tabId} waited_ms=${waitedMs}`,
+      target_url: urlAfter || urlBefore,
+      input_origin: "bridge"
+    });
+    log(`Bridge đã F5 tab Gemini (tab ${tabId}).`, ready ? "info" : "error");
+    return {
+      ready,
+      tab_id: tabId,
+      url_before: urlBefore,
+      url_after: urlAfter,
+      waited_ms: waitedMs,
+      composer_found: composerFound,
+      note: ready
+        ? `Đã F5 tab ${tabId} và trang đã trả lời lại. Dùng tiếp được.`
+        : `Đã F5 tab ${tabId} nhưng sau ${Math.round(waitedMs / 1000)} giây trang vẫn chưa trả lời. Chưa dùng được — kiểm tra tab đó còn mở và đang ở gemini.google.com không.`
+    };
+  }
+
   async function bridgeSystemPing() {
     const workbook = state.workbook;
     let chatgpt = { state: "HARD_STOP", failure_type: "RECEIVER_LOST", composer_found: false, generating: false };
@@ -732,6 +866,8 @@
       "queue.propose": withBridgeErrors(bridgeQueuePropose),
       "queue.proposal.get": withBridgeErrors(bridgeProposalGet),
       "run.trial": withBridgeErrors(bridgeRunTrial),
+      "run.stop": withBridgeErrors(bridgeRunStop),
+      "chat.reload": withBridgeErrors(bridgeChatReload),
       "diagnostics.dom_probe": withBridgeErrors(bridgeDomProbe)
     }
   });
@@ -785,7 +921,9 @@
       } catch (_) { persistenceMissing = true; }
     }
     return window.DacBridgeProposalCore.approvalLockReason({
-      running: state.running,
+      // runStarting tính như đang chạy: nếu không, một lệnh ghi qua Bridge lọt
+      // vào khoảng khởi động sẽ đổi được thứ mà run sắp thực thi.
+      running: state.running || state.runStarting,
       reconciliation: state.manualReconciliationRunning,
       recreate: state.recreateRunning || Boolean(state.pendingRecreateJobId) || Boolean(state.pendingRerunJobId),
       audit_gap: state.auditGapRunning || state.auditChain?.code === "RESUME_AUDIT_CHAIN_MISSING",
@@ -1094,7 +1232,7 @@
     renderDevMode();
     await chrome.storage.local.set({ [window.DacDevTrialCore.DEV_MODE_STORAGE_KEY]: state.devMode });
     log(state.devMode
-      ? "Chế độ phát triển BẬT — AI được phép chạy trial ≤2 job qua Bridge (run.trial)."
+      ? "Chế độ phát triển BẬT — AI được phép chạy trial một chuỗi ≤30 job qua Bridge (run.trial)."
       : "Chế độ phát triển TẮT — mọi run.trial sẽ bị từ chối (DEV_MODE_OFF).", state.devMode ? "info" : "done");
   }
 
@@ -1629,7 +1767,7 @@
 
   function controls() {
     const ready = Boolean(state.workbook && state.prepared && state.outputSettings && state.validated);
-    const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning || state.queueMutationRunning;
+    const operatorLocked = state.running || state.runStarting || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning || state.queueMutationRunning;
     const outputLocked = !state.workbook || operatorLocked;
     els.validateBtn.disabled = !state.workbook || operatorLocked;
     if (els.quickPromptCheckBtn) els.quickPromptCheckBtn.disabled = operatorLocked;
@@ -1727,7 +1865,7 @@
             ? window.DacRunState.stageFor(item)
             : "—";
 
-      const operatorLocked = state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning || state.queueMutationRunning;
+      const operatorLocked = state.running || state.runStarting || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning || state.queueMutationRunning;
       const isExpanded = state.selectedJobId === item.job.id;
       const promptDetailsId = `queue-prompt-details-${queueIndex}`;
       const togglePrompt = () => {
@@ -4331,14 +4469,41 @@
   }
 
   async function run(mode = "all") {
+    // CHỐT KHỞI ĐỘNG RUN — khối đồng bộ, không được chèn await vào giữa.
+    //
+    // Trước đây run() không có chốt nào: nút Run bị controls() làm mờ, nhưng
+    // run.trial qua Bridge gọi thẳng run() và chỉ kiểm state.running. Nghĩa là
+    // trong lúc chat.reload đang F5 trang, một trial vẫn khởi động được — đúng
+    // cái lỗ mà chat.reload sinh ra để bịt. Chốt đặt ở đây vì đây là chỗ duy
+    // nhất cả nút của người lẫn Bridge đều phải đi qua.
+    if (state.running || state.runStarting || state.queueMutationRunning) {
+      const reason = state.queueMutationRunning
+        ? "RUN_BLOCKED: Đang có thao tác ghi qua Bridge (ví dụ chat.reload) chưa xong. Đợi nó xong rồi chạy lại."
+        : "RUN_BLOCKED: Đã có một run đang chạy hoặc đang khởi động.";
+      progress(reason); log(reason, "error"); controls();
+      return { ok: false, reason };
+    }
+    state.runStarting = true;
+    // Cờ dừng thuộc về run ĐANG sống lúc nó được yêu cầu. Đây là khoảnh khắc
+    // đồng bộ duy nhất một run bắt đầu, nên là chỗ duy nhất an toàn để xoá một
+    // cờ dừng cũ. KHÔNG chuyển xuống dưới: chỗ cũ nằm SAU await
+    // authoritativeValidate, mà run.stop cố ý đi vòng qua khoá RUN_ACTIVE nên
+    // nó gọi được đúng vào khoảng await đó — cờ dừng bị xoá âm thầm, run vẫn
+    // gửi prompt, trong khi người gọi đã được báo là "đã dừng". Đặt ở đây giữ
+    // nguyên tính chất cũ (dừng lúc rảnh không giết được run KẾ TIẾP) và thêm
+    // tính chất còn thiếu (dừng sau khi run đã bắt đầu thì luôn được tôn trọng).
+    state.stopRequested = false;
+    controls();
     let effectiveOutput;
     let artifactPersistenceFailed = false;
     let completedNaturally = false;
     try { effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" }); }
-    catch (error) { const reason = messageOf(error); setStatus("ERROR"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
+    catch (error) { const reason = messageOf(error); state.runStarting = false; setStatus("ERROR"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
     const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, mode === "selected" ? state.runSelection : state.selectedJobId);
-    if (!runQueue.length) { const reason = `No ${mode} jobs are eligible.`; setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
-    state.running = true; state.stopRequested = false; state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    if (!runQueue.length) { const reason = `No ${mode} jobs are eligible.`; state.runStarting = false; setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
+    // Một run.stop rơi vào khoảng await ở trên đã đặt stopRequested=true và
+    // KHÔNG bị xoá ở đây — vòng lặp job bên dưới sẽ thấy và dừng ngay.
+    state.running = true; state.runStarting = false; state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
     state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = []; if (!state.resumeMode) { state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; } state.artifactErrors = []; renderCheckpointMeta();
     if (mode !== "recreate") els.logList.textContent = "";
@@ -4804,7 +4969,9 @@
       "queue.propose": bridgeQueuePropose,
       "queue.proposal.get": bridgeProposalGet,
       "diagnostics.dom_probe": bridgeDomProbe,
-      "run.trial": bridgeRunTrial
+      "run.trial": bridgeRunTrial,
+      "run.stop": bridgeRunStop,
+      "chat.reload": bridgeChatReload
     }),
     port_name: BRIDGE_EXECUTOR_PORT
   });

@@ -12,7 +12,12 @@ const COMMANDS = Object.freeze({
   "ledger-read": "ledger.read",
   "proposal-get": "queue.proposal.get",
   propose: "queue.propose",
-  "run-trial": "run.trial"
+  "run-trial": "run.trial",
+  // Cặp lệnh điều khiển. run-stop đi vòng qua khoá RUN_ACTIVE (dừng chỉ bớt
+  // việc), chat-reload thì bị khoá đó chặn (F5 giữa chừng giết attempt đang
+  // bay). Dùng nối tiếp: run-stop -> chat-reload -> chạy lại.
+  "run-stop": "run.stop",
+  "chat-reload": "chat.reload"
 });
 
 const DEFAULT_PAIRING_NAME = "duc-auto-chatgpt-bridge-pairing-v1.json";
@@ -99,7 +104,7 @@ export function buildEnvelope(method, params, now = new Date(), requestId = `cli
 export async function main(argv = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr, fetch: globalThis.fetch }) {
   const [command, ...rest] = argv;
   if (!command || command === "help" || command === "--help") {
-    io.stdout.write("Usage: node bridge-cli.mjs <ping|capabilities|queue-list|run-status|ledger-read|proposal-get|propose> [options]\n");
+    io.stdout.write("Usage: node bridge-cli.mjs <ping|capabilities|queue-list|run-status|ledger-read|proposal-get|propose|run-trial|run-stop|chat-reload> [options]\n");
     return 0;
   }
   const flags = parseFlags(rest);

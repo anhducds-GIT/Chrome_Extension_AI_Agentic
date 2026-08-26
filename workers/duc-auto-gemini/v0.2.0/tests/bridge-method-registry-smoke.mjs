@@ -11,7 +11,7 @@ const bridge = globalThis.DacBridgeCore;
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
   "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
-  "jobs.reorder", "references.add", "diagnostics.dom_probe", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial"
+  "jobs.reorder", "references.add", "diagnostics.dom_probe", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial", "run.stop", "chat.reload"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
@@ -34,7 +34,15 @@ for (const method of expectedMethods) {
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].read_only, false);
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].approval, "owner_click");
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].idempotent, true);
-assert(expectedMethods.filter((name) => name !== "queue.propose").every((name) => bridge.METHOD_REGISTRY[name].idempotent === false));
+// Gọi lại ba lệnh này lần thứ hai phải vô hại: dừng một run đã dừng, hoặc F5
+// một tab vừa F5, đều không tạo thêm việc. Mọi lệnh còn lại thì không.
+const idempotentMutations = ["queue.propose", "run.stop", "chat.reload"];
+assert(idempotentMutations.every((name) => bridge.METHOD_REGISTRY[name].idempotent === true));
+assert(expectedMethods.filter((name) => !idempotentMutations.includes(name)).every((name) => bridge.METHOD_REGISTRY[name].idempotent === false));
+// run.stop cố ý KHÔNG nằm trong danh sách cấm: nó chỉ kết thúc được việc, không
+// bao giờ bắt đầu được việc. Nếu ai đó thêm run.start vào registry thì đỏ ở đây.
+assert.deepEqual(bridge.POLICY.prohibited_methods, ["run.start", "run.pause", "run.resume"]);
+assert(!bridge.POLICY.prohibited_methods.includes("run.stop"));
 
 const capabilities = bridge.capabilities();
 assert(Object.isFrozen(capabilities));
@@ -82,6 +90,8 @@ const validByMethod = {
     }]
   },
   "queue.proposal.get": { proposal_id: "proposal-uuid" },
+  "run.stop": {},
+  "chat.reload": {},
   "run.trial": { job_ids: ["P09-01", "P09-02"], timeout_sec: 90, delay_sec: 25 },
   "diagnostics.dom_probe": {}
 };
@@ -105,6 +115,10 @@ const invalidByMethod = {
   "run_settings.configure": { delay_min_sec: 25, delay_max_sec: 12 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [] },
   "queue.proposal.get": { proposal_id: "" },
+  // Lệnh dừng không nhận tham số nào cả: không có "dừng job X" để có thể bị
+  // hiểu nhầm thành "dừng tất cả" trên một run đang sống.
+  "run.stop": { job_id: "Q001" },
+  "chat.reload": { tab_id: 7 },
   "run.trial": { job_ids: [] },
   "diagnostics.dom_probe": { click: true }
 };
