@@ -114,6 +114,20 @@ assert.ok(/await stop\(\)/.test(stopBody),
   "run.stop phải đi đúng đường nút Stop của người vận hành, không dựng runner thứ hai");
 ok("run.stop dùng lại đúng đường dừng của người vận hành");
 
+/* ---- 5b. Lời nhắn lúc PRE_SUBMIT không được trấn ăn quá tay ------------- */
+// Bằng chứng live 26/08: BRIDGE_RUN_STOPPED lúc 14:20:36 ghi
+// STOP_REQUESTED_BEFORE_SUBMIT, rồi PROMPT_SUBMITTED lúc 14:20:37 — đúng 1
+// giây sau. Bản đầu của lời nhắn nói "Không job nào bị gửi thêm", và câu đó
+// SAI: cờ dừng chỉ được đọc ở các mốc ngắt, nên job đang chạy vẫn gửi nốt.
+// prompt_already_sent: false mô tả KHOẢNH KHẮC gọi, không phải lời hứa tương lai.
+assert.ok(!/Không job nào bị gửi thêm/.test(stopBody),
+  "lời nhắn lúc PRE_SUBMIT không được hứa rằng không prompt nào sẽ được gửi — đo thật cho thấy job đang chạy vẫn gửi sau 1 giây");
+assert.ok(/VẪN CÓ THỂ kịp gửi/.test(stopBody),
+  "lời nhắn lúc PRE_SUBMIT phải nói rõ job đang chạy vẫn có thể kịp gửi prompt");
+assert.ok(/job SAU/.test(stopBody),
+  "lời nhắn phải nêu thứ DUY NHẤT được bảo đảm: các job sau sẽ không chạy");
+ok("lời nhắn lúc PRE_SUBMIT nói đúng sự thật, không trấn an quá tay");
+
 /* ---- 6. chat.reload PHẢI giành khoá và giữ suốt thời gian F5 ------------ */
 const reloadBody = body("bridgeChatReload");
 assert.ok(/bridgeApprovalLockReason\(/.test(reloadBody) && /RUN_ACTIVE/.test(reloadBody),

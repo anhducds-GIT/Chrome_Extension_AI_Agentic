@@ -141,3 +141,12 @@ Nguồn: `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md`. Đức chốt cả 5
 | Vá thêm một lỗ Gemini có mà ChatGPT không có: **`run()` trước đây không có chốt nào.** Nút Run bị `controls()` làm mờ, nhưng `run.trial` qua Bridge gọi thẳng `run()` và chỉ kiểm `state.running` — nên một trial vẫn khởi động được ngay giữa lúc `chat.reload` đang F5 trang. | Đúng cái lỗ mà `chat.reload` sinh ra để bịt. Chốt đặt trong `run()` vì đó là chỗ duy nhất cả nút của người lẫn Bridge đều đi qua. | Claude |
 | Gemini có sẵn **đúng cái bẫy** phiên ChatGPT đã sập: `state.stopRequested = false` nằm SAU `await authoritativeValidate`. Đã chuyển lên khoảnh khắc đồng bộ lúc run bắt đầu. | `run.stop` cố ý đi vòng qua khoá nên nó gọi được đúng vào khoảng await đó → cờ dừng bị xoá âm thầm, run vẫn gửi prompt, trong khi người gọi đã được báo "đã dừng". | Claude |
 | Ghim bằng `tests/bridge-run-stop-chat-reload-smoke.mjs` (16 phép kiểm), đã phá thử 4 chiều. | Luật vàng số 2. Ba phép kiểm quan trọng nhất là về **thứ tự**, thứ mà đọc code bằng mắt rất dễ bỏ qua. | Claude |
+
+## 2026-08-26 (tối) — Trial live cặp stop/reload: bắt được một lời nhắn nói dối (owner: Đức yêu cầu chạy trial)
+
+| Quyết định | Vì sao | Ai chốt |
+|---|---|---|
+| Chạy trial live ngay sau khi code xong, thay vì tin suite xanh là đủ. | Đức đề xuất. Đúng: suite 79/79 xanh mà trial vẫn lòi ra một lỗi mà không test tĩnh nào bắt được. | Đức |
+| Sửa lời nhắn của `run.stop` lúc PRE_SUBMIT: bỏ câu *"Không job nào bị gửi thêm"*, thay bằng câu nói rõ job đang chạy VẪN có thể kịp gửi. | Sổ cái live: `BRIDGE_RUN_STOPPED` 14:20:36 (`STOP_REQUESTED_BEFORE_SUBMIT`) → `PROMPT_SUBMITTED` 14:20:37. Câu trấn an kia sai đúng 1 giây sau khi được nói ra. Đây là loại nói dối dự án này từ chối: hệ thống nói với người vận hành một điều dễ chịu mà không đúng. | Claude |
+| KHÔNG đổi thời điểm cờ dừng ăn (để job đang chạy không kịp gửi). | Đó là đổi luật an toàn (`AGENTS.md` mục 2.4) và cần đo trước. Bản vá lời nhắn là bản vá TRUNG THỰC với chi phí bằng không; đổi hành vi dừng là việc khác, phải hỏi Đức riêng. | Claude |
+| Lỗi này có ở CẢ worker ChatGPT (tôi port nguyên văn lời nhắn từ đó sang). Trial của họ chỉ tình cờ thử nhánh "dừng sau khi đã gửi" nên nhánh này chưa từng bị soi. | Package đó có chủ là phiên khác, tôi chỉ được đọc — báo Đức để chuyển lời. | Claude |

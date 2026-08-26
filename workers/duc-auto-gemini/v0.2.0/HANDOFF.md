@@ -334,3 +334,12 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - Suite **79/79** (thêm 1 file test). `npm test` xanh.
   - **CHƯA KIỂM CHỨNG LIVE.** Gọi thử `run-stop` bây giờ trả `METHOD_NOT_FOUND` — đúng, vì extension đang chạy code cũ. Cần Đức bấm ⟳ reload extension VÀ F5 tab Gemini, rồi tôi thử thật.
 - **Next:** Đức reload extension (⟳) + F5 tab Gemini → tôi kiểm chứng live cặp lệnh (đợi `capabilities` thấy method mới, thử `chat.reload` lúc rảnh, và thử `chat.reload` bị từ chối khi đang chạy).
+- 2026-08-26 · Claude (claude-gemini-4) · **TRIAL LIVE cặp `run.stop` / `chat.reload` — ĐẠT 9/9 bước, và bắt được một lỗi thật.** Đức reload extension rồi yêu cầu chạy trial để debug; đúng đề xuất đó đã ăn tiền.
+  - `capabilities` 19 method. `run-stop` lúc rảnh: `was_running:false`, mọi ô job null. `chat-reload` lúc rảnh: `ready:true`, 1054 ms, `composer_found:true`.
+  - **`chat-reload` GIỮA lúc đang chạy: BỊ TỪ CHỐI `RUN_ACTIVE`**, thông báo chỉ đúng sang `run.stop`. Đây là bước đáng tiền nhất — nó chứng minh khoá có thật chứ không phải chỉ có trong lời kể.
+  - `run-stop` giữa chừng: `was_running:true`, job Q001, phase PRE_SUBMIT; run dừng sau ~2 giây; `queue-list` → `Q001 STOPPED USER_STOP`. Gọi lần hai: mọi ô null — **đây mới là bản mạnh của phép kiểm "không khai nhầm job của run trước"**, vì lúc này vừa có một run chạy xong thật; bản chưa vá sẽ khai ra Q001. `chat-reload` sau khi dừng: được phép lại.
+  - **LỖI TRIAL BẮT ĐƯỢC:** sổ cái ghi `BRIDGE_RUN_STOPPED` 14:20:36 với `STOP_REQUESTED_BEFORE_SUBMIT`, rồi **`PROMPT_SUBMITTED` 14:20:37** — prompt vẫn gửi, đúng 1 giây sau. Lời nhắn trả về trấn an "Không job nào bị gửi thêm", và câu đó SAI. Cờ dừng chỉ được đọc ở các mốc ngắt nên job đang chạy đi nốt tới chỗ gửi. Đã vá LỜI NHẮN cho nói đúng sự thật; **không** đụng vào thời điểm cờ dừng ăn (đó là đổi luật an toàn, phải hỏi Đức riêng và phải đo trước). Ghim thêm 1 phép kiểm, phá thử đỏ đúng.
+  - Suite **79/79**, file test cặp lệnh 17 phép kiểm.
+  - **Lỗi lời nhắn này có ở CẢ worker ChatGPT** — tôi port nguyên văn từ đó sang. Trial của họ chỉ thử nhánh "dừng sau khi đã gửi" nên nhánh này chưa từng bị soi. Package đó có chủ là phiên khác nên tôi chỉ đọc, không sửa. Cần Đức chuyển lời.
+  - Bài học: suite tĩnh 79/79 xanh **không** bắt được lỗi này. Chỉ có sổ cái của một lần chạy thật mới bắt được. Đề xuất "chạy trial để debug" của Đức là đúng.
+- **Next:** bản vá lời nhắn chưa live (extension đang chạy bản trước đó) — lần reload tới sẽ nạp. Không cần reload gấp: chỉ là chữ, không phải hành vi.

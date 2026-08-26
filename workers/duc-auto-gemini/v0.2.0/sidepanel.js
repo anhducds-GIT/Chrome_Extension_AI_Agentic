@@ -589,6 +589,14 @@
     // Qua khỏi PRE_SUBMIT là prompt đã rời khỏi panel. Dừng chỉ chặn được các
     // job SAU; nó không thu hồi được prompt Gemini đã nhận, và câu trả lời phải
     // nói thẳng chuyện đó thay vì ngụ ý là đã undo được.
+    //
+    // VÀ false ở đây KHÔNG có nghĩa "prompt sẽ không bao giờ được gửi". Nó chỉ
+    // mô tả đúng khoảnh khắc lệnh dừng được gọi. Cờ dừng chỉ được đọc ở các mốc
+    // ngắt của runner, nên một job đã bắt đầu gửi vẫn đi nốt. Đo thật trên trang
+    // 26/08: BRIDGE_RUN_STOPPED lúc 14:20:36 với STOP_REQUESTED_BEFORE_SUBMIT,
+    // rồi PROMPT_SUBMITTED lúc 14:20:37 — đúng 1 giây sau. Lời nhắn bên dưới
+    // phải nói ra chuyện đó; bản đầu trấn an "không job nào bị gửi thêm" và đó
+    // là một câu sai.
     const promptAlreadySent = Boolean(phase) && phase !== "PRE_SUBMIT";
     // Đi đúng đường nút Stop của người vận hành, không dựng runner thứ hai.
     if (wasRunning) { await stop(); log("Bridge đã yêu cầu dừng run.", "error"); }
@@ -610,7 +618,7 @@
         ? "Không có run nào đang chạy. Không có gì để dừng."
         : promptAlreadySent
           ? "Đã yêu cầu dừng. Prompt của job này ĐÃ gửi đi rồi, không thu hồi được — chỉ các job sau mới không được gửi."
-          : "Đã yêu cầu dừng trước khi prompt kịp gửi. Không job nào bị gửi thêm."
+          : "Đã yêu cầu dừng khi prompt của job này CHƯA gửi. Nhưng job đang chạy VẪN CÓ THỂ kịp gửi prompt ngay sau đó — đo thật 26/08: gửi sau đúng 1 giây. Thứ chắc chắn không chạy là các job SAU."
     };
   }
 
