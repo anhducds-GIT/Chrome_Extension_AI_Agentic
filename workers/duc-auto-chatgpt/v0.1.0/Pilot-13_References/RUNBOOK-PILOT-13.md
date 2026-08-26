@@ -1,5 +1,13 @@
 # Pilot-13 · Ảnh tham chiếu — Runbook cho Đức
 
+> **TẠM HOÃN — KHÔNG CHẠY. Đức chốt 2026-08-26:** không chạy Pilot-08, thay bằng một
+> pilot nhỏ tự tạo chỉ để kiểm tính năng → xem `Pilot-14_RefFeatureTest/`.
+>
+> Giữ lại vì phần chuẩn bị vẫn còn giá trị cho lần chạy Pilot-08 thật sau này:
+> **cả 66 job đã được kiểm offline, không job nào sai tên ảnh tham chiếu**, và
+> cấu hình thật đã được đọc ra khỏi sheet `config`. Khi nào Đức muốn chạy 66 job
+> thì bắt đầu từ đây.
+
 > Pilot thật đầu tiên **có ảnh tham chiếu**. 3 job, lấy nguyên văn từ Pilot-08 (66 job)
 > mà Đức đã chuẩn bị nhưng chưa từng chạy live. Tốn **3 lượt quota**.
 > Chuẩn bị bởi phiên `claude-chatgpt-3`, 2026-08-26.
