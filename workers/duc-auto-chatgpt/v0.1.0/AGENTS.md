@@ -102,6 +102,8 @@ COMPANION (đọc khi cần):
 | `drafts/GIAI-DOAN-1-SAFETY-HANDOFF.md` | Brief Giai đoạn 1 (8 fix an toàn nhóm A) giao Codex, kèm bằng chứng sống cho fix A1 |
 | `drafts/GIAI-DOAN-2A-AGENT-BRIDGE-HANDOFF.md` | Brief Giai đoạn 2A (run.trial + 6 nâng cấp Bridge chuẩn agent) giao Codex |
 | `ab-poll-core.js` | Chính sách trả lời poll A/B của ChatGPT (`ab_poll_action`) — module lõi thuần, dùng chung cho content script và side panel |
+| `provider-adapter.js` | Mọi thứ riêng của ChatGPT: selector DOM, hằng số thời gian, luật origin, mẫu chặn bảo mật. `content.js` đọc từ đây và không biết nó đang lái sản phẩm nào |
+| `drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md` | Gói việc `run.stop` + `chat.reload` giao cho phiên kế tiếp |
 | `templates/Duc-Auto-ChatGPT-Template.xlsx` | Workbook trống chuẩn để bắt đầu pilot mới |
 | `scripts/create-pilot-NN.mjs` | Script tạo workbook cho từng pilot |
 | `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
