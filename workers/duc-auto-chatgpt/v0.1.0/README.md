@@ -92,6 +92,39 @@ The effective source workbook, image destination, result-XLSX destination, and n
 
 Basenames ignore the image extension. If multiple selected files share that basename, validation fails rather than guessing. Multiple references are attached as one bounded batch and each must show a ready attachment preview before prompt send.
 
+### Reference images without the file picker (`references.add`)
+
+`reference_images` on a job is only ever a filename **token**; it has to resolve against the
+images held in the session. Those normally come from the owner's file picker, which means an AI
+operator driving the Bridge cannot run a job with reference images at all — `jobs.add` fails with
+`MISSING_REFERENCE: <job> requires '<name>'`.
+
+`references.add` is the one method that accepts image **bytes**, as base64 data URLs, so an agent
+can fill that pool itself:
+
+```powershell
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') references-add --params-file .\references-add.json
+```
+
+```json
+{ "references": [ { "name": "REF-A-RED-CIRCLE.png", "data_url": "data:image/png;base64,iVBORw0KGgo..." } ] }
+```
+
+The image it stores is byte-for-byte the shape the picker stores, so attachment behaves
+identically whichever way the image arrived.
+
+Order matters, because every direct mutation re-runs plan preparation: **`jobs.add` →
+`references.add` → `jobs.update`**. Adding jobs that already name a reference token, before the
+image exists, fails on `MISSING_REFERENCE`. `references.add` needs an existing session to attach
+to, and `jobs.add` is what bootstraps one.
+
+Limits: 1–5 images per call, 700KB per `data_url`, `.png`/`.jpg`/`.jpeg`/`.webp` only, filename
+tokens with no path separators, and no duplicate names. Re-sending a name **replaces** that image
+rather than adding a second copy, which is why this method is not idempotent. The audit records
+reference names and byte sizes only — never the image data.
+
+Proven live in `Pilot-14_RefFeatureTest/` (3/3 SUCCESS, 1 / 2 / 4 references per job).
+
 ## V1 Closure backlog — output controls (not implemented)
 
 This backlog is intentionally isolated from the proven prompt submission, image-detection, attempt-identity, and ChatGPT-readiness sequencing paths.
