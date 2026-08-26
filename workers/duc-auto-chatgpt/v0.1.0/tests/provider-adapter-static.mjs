@@ -90,7 +90,24 @@ assert.match(content, /const SEL = ADAPTER\.SELECTORS;/);
 assert.match(content, /firstVisible\(SEL\.composer\)/);
 assert.match(content, /firstVisible\(SEL\.send\)/);
 assert.match(content, /firstVisible\(SEL\.stop\)/);
-assert.match(content, /document\.querySelectorAll\(SEL\.assistantMessage\)/);
+assert.match(content, /document\.querySelectorAll\(assistantSelector\(\)\)/);
+
+// --- turn markers are resolved to ONE selector at a time ----------------
+// ChatGPT kept data-message-author-role on user turns and dropped it from
+// assistant turns (measured live 2026-08-26), so the adapter carries an
+// ordered list per role. Matching both at once would count one turn twice if
+// a page ever carried both markers on nested nodes, and attribution reads two
+// matches as two separate turns.
+for (const role of ["assistantMessage", "userMessage"]) {
+  assert.ok(Array.isArray(adapter.SELECTORS[role]), `${role} is an ordered preference list`);
+  assert.ok(adapter.SELECTORS[role].length >= 2, `${role} keeps a legacy fallback`);
+}
+assert.equal(adapter.SELECTORS.assistantMessage[0], '[data-turn="assistant"]', "the marker measured on the live page comes first");
+assert.equal(adapter.SELECTORS.userMessage[0], '[data-turn="user"]');
+assert.ok(adapter.SELECTORS.assistantMessage.includes('[data-message-author-role="assistant"]'), "the previous marker still works on an older page");
+assert.match(content, /function resolveSelector\(candidates\)/);
+assert.match(content, /return list\[0\];/, "an unmatched list still yields a usable selector rather than undefined");
+assert.doesNotMatch(content, /\$\{SEL\.assistantMessage\}, \$\{SEL\.userMessage\}/, "the two role lists are never concatenated raw");
 assert.match(content, /ADAPTER\.securityBlockerPattern\.test/);
 assert.match(content, /ADAPTER\.matchesGenerationLimit\(text\)/);
 

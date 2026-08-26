@@ -47,7 +47,11 @@ const matchesContext = adapterContext();
 vm.runInContext(`${matchesFnSource}\nthis.matchesGenerationLimit = matchesGenerationLimit;`, matchesContext);
 const matches = matchesContext.matchesGenerationLimit;
 
-const securityFnSource = content.slice(content.indexOf("function securityTextWithoutUserMessages"), content.indexOf("function matchesGenerationLimit"));
+// securityTextWithoutUserMessages now resolves the user-turn marker through
+// resolveSelector (ChatGPT kept the old marker on user turns and dropped it
+// from assistant turns, 2026-08-26), so the sandbox needs that resolver too.
+const resolverSource = content.slice(content.indexOf("function resolveSelector(candidates)"), content.indexOf("function findComposer()"));
+const securityFnSource = resolverSource + content.slice(content.indexOf("function securityTextWithoutUserMessages"), content.indexOf("function matchesGenerationLimit"));
 const securityScope = (bodyText, userTexts = []) => ({
   innerText: bodyText,
   textContent: bodyText,
@@ -62,6 +66,10 @@ const securityScope = (bodyText, userTexts = []) => ({
 });
 const securityContext = adapterContext({
   document: {
+    // resolveSelector probes the page to pick the live marker; in the sandbox
+    // nothing matches, so it falls back to the first entry -- which is exactly
+    // the behaviour a page with no turns yet must have.
+    querySelector: () => null,
     body: {
       cloneNode() { return securityScope("draw a robot solving a captcha", ["draw a robot solving a captcha"]); }
     }

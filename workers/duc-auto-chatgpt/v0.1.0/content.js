@@ -58,6 +58,23 @@
     return null;
   }
 
+  // ChatGPT renamed its turn marker between releases and kept the OLD name on
+  // user turns while dropping it from assistant turns (measured live
+  // 2026-08-26). The adapter therefore carries an ordered list per role, and
+  // exactly one of them is used at a time: resolve to the first that matches
+  // something on this page. Using both at once would count one turn twice if
+  // a page ever carried both markers on nested nodes, and attribution reads
+  // two matches as two separate turns -- which fails closed as AMBIGUOUS.
+  function resolveSelector(candidates) {
+    const list = Array.isArray(candidates) ? candidates : [candidates];
+    for (const selector of list) {
+      try { if (document.querySelector(selector)) return selector; } catch (_) { /* a rotted selector must not throw the run */ }
+    }
+    return list[0];
+  }
+  function assistantSelector() { return resolveSelector(SEL.assistantMessage); }
+  function userSelector() { return resolveSelector(SEL.userMessage); }
+
   function findComposer() {
     return firstVisible(SEL.composer);
   }
@@ -77,7 +94,7 @@
   }
 
   function assistantMessages() {
-    return Array.from(document.querySelectorAll(SEL.assistantMessage));
+    return Array.from(document.querySelectorAll(assistantSelector()));
   }
 
   function assistantFingerprint(message) {
@@ -89,7 +106,7 @@
   function securityTextWithoutUserMessages(root = document.body) {
     if (!root) return "";
     const scope = root.cloneNode(true);
-    for (const userMessage of scope.querySelectorAll(SEL.userMessage)) userMessage.remove();
+    for (const userMessage of scope.querySelectorAll(userSelector())) userMessage.remove();
     return scope.innerText || scope.textContent || "";
   }
 
@@ -182,7 +199,7 @@
   }
 
   function conversationRoot() {
-    const message = document.querySelector(`${SEL.assistantMessage}, ${SEL.userMessage}`);
+    const message = document.querySelector(`${assistantSelector()}, ${userSelector()}`);
     const rooted = message?.closest(SEL.conversationRoot);
     return rooted || document.querySelector(SEL.conversationRoot) || document.body;
   }
@@ -191,7 +208,7 @@
     return Array.from(root.querySelectorAll("img")).map((image) => {
       const source = image.currentSrc || image.src || "";
       const rect = image.getBoundingClientRect();
-      const role = image.closest(SEL.assistantMessage) ? "assistant" : image.closest(SEL.userMessage) ? "user" : "unknown";
+      const role = image.closest(assistantSelector()) ? "assistant" : image.closest(userSelector()) ? "user" : "unknown";
       const label = `${image.alt || ""} ${image.getAttribute("aria-label") || ""}`.toLowerCase();
       const namedReference = Array.from(inputEvidence.names || []).some((name) => label.includes(name));
       const attachmentPreview = Boolean(image.closest(SEL.attachmentContainer));
@@ -199,7 +216,7 @@
       // Multi-image attribution only accepts several images when they all
       // belong to the SAME assistant turn; "" (no assistant ancestor) can
       // never satisfy that, which keeps stray page images failing closed.
-      const turnId = nodeId(image.closest(SEL.assistantMessage), "assistant");
+      const turnId = nodeId(image.closest(assistantSelector()), "assistant");
       return { source, source_id: shortHash(source), node_id: nodeId(image, "image"), turn_id: turnId, role, input: role === "user" || attachmentPreview || inputEvidence.sources?.has(source) || namedReference, visible: isVisible(image) && rect.width >= 64 && rect.height >= 64, ready: image.complete && image.naturalWidth > 0 };
     }).filter((candidate) => /^(https:|data:image\/|blob:)/i.test(candidate.source));
   }

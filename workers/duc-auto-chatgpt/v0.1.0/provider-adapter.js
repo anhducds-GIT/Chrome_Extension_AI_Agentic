@@ -47,12 +47,30 @@
       'button[aria-label^="Stop"]',
       'button[aria-label^="Dừng"]',
     ]),
-    // UNVERIFIED (inherited) and CRITICAL: attribution, the submission
-    // boundary and the security scan all depend on these two. If the live
-    // page stops matching them, every job fails NO_NEW_IMAGE while the chat
-    // visibly contains answers -- exactly the 2026-08-26 signature.
-    assistantMessage: '[data-message-author-role="assistant"]',
-    userMessage: '[data-message-author-role="user"]',
+    // VERIFIED 2026-08-26 by diagnostics.dom_probe against a live conversation
+    // (chatgpt.com/c/6a8e47cd...). CRITICAL: attribution, the submission
+    // boundary and the security scan all depend on these two.
+    //
+    // The probe measured, on one real page:
+    //     data-turn                 => assistant x5, user x4
+    //     data-message-author-role  => user x4        (assistant: ZERO)
+    // ChatGPT moved the turn marker to data-turn and dropped the old
+    // attribute from the ASSISTANT turn only, which is why detection went
+    // blind for exactly one half of the conversation while looking healthy.
+    //
+    // Ordered lists, newest first. content.js resolves each to the FIRST
+    // entry that actually matches something on the page and uses only that
+    // one -- matching both at once would count a turn twice if a future
+    // markup carries both markers on nested nodes, and attribution reads two
+    // matches as two separate turns.
+    assistantMessage: Object.freeze([
+      '[data-turn="assistant"]',
+      '[data-message-author-role="assistant"]',
+    ]),
+    userMessage: Object.freeze([
+      '[data-turn="user"]',
+      '[data-message-author-role="user"]',
+    ]),
     // UNVERIFIED (inherited). Root that image scans are confined to, so an
     // attribution scan never sweeps the whole document.
     conversationRoot: '[data-testid="conversation-turns"], [data-testid*="conversation"], main, [role="main"]',
