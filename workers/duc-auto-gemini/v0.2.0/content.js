@@ -249,6 +249,37 @@
     }).filter((candidate) => /^(https:|data:image\/|blob:)/i.test(candidate.source));
   }
 
+  // Quyết định Đức 26/08 (sau khi số liệu bác bỏ phương án "chờ đổi địa chỉ"):
+  // phép kiểm "ảnh phải hiện ra thật" GIỮ NGUYÊN — ta chỉ đưa ảnh vào tầm mắt
+  // để phép đo đúng, giống như người dùng cuộn chuột xuống xem.
+  //
+  // Bằng chứng: ảnh của lượt trả lời mới nằm dưới đáy hội thoại dài, ngoài
+  // viewport, nên getBoundingClientRect() đo ra 0 -> candidate.visible = false
+  // -> NO_NEW_IMAGE, dù ảnh có thật. Cùng lúc đó dom_probe (chạy sau khi trang
+  // đã cuộn) đo được 330x180. Lớp khoan dung của Pilot-04 chỉ cứu ảnh
+  // https://lh3, mà Gemini nay trả 6/6 ảnh dạng blob: nên nó không còn áp được.
+  //
+  // Đây KHÔNG phải nới lỏng: ảnh rỗng, ảnh giả hay phần tử 0px thì cuộn tới
+  // cũng vẫn 0px. Ta chỉ loại bỏ một phép đo sai do vị trí cuộn trang.
+  let lastScrollProbe = null;
+  function nudgeCandidateIntoView(message) {
+    if (!message) return;
+    const images = Array.from(message.querySelectorAll("img"));
+    if (!images.length) return;
+    const target = images[images.length - 1];
+    const before = target.getBoundingClientRect();
+    if (isVisible(target) && before.width > 0 && before.height > 0) return;
+    try { target.scrollIntoView({ block: "nearest", inline: "nearest" }); }
+    catch (_) { return; }
+    const after = target.getBoundingClientRect();
+    lastScrollProbe = {
+      scrolled: true,
+      before: { w: Math.round(before.width), h: Math.round(before.height) },
+      after: { w: Math.round(after.width), h: Math.round(after.height) },
+      became_visible: isVisible(target) && after.width > 0 && after.height > 0,
+    };
+  }
+
   // Output attribution only ever considers verified generated-image candidates;
   // the full candidate list still forms the baseline so nothing pre-existing
   // can be claimed as fresh output.
@@ -299,7 +330,7 @@
   // detected-not-downloaded write -- so anything not in here is erased before
   // it reaches the ledger. Live proof 2026-08-26: a first attempt parked these
   // on `result` instead, the job passed, and both fields came back undefined.
-  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped", "blob_wait"]);
+  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped", "scroll_probe"]);
   function recordDetection(attempt, values) {
     if (!attempt) return;
     const carried = {};
@@ -597,14 +628,6 @@
     let stableSince = 0;
     let pollCount = 0;
     let lastDetection = { ...boundaryTelemetry(boundary), stop_visible: false, generating: false, decision_reason: "NOT_EVALUATED" };
-    // Quyết định của Đức 26/08: ảnh mang "địa chỉ tạm" (blob:) thì CHỜ xem
-    // Gemini có tự đổi sang link lh3 thật không, thay vì nới lớp chấm
-    // attribution. Đây thuần là hoãn kết luận — không có ứng viên nào được
-    // chấp nhận thêm, và trần timeout của job vẫn chặn trên. Hết giờ mà chưa
-    // đổi thì vẫn trượt trung thực như trước.
-    let blobWaitStartedAt = 0;
-    let blobWaitPolls = 0;
-    let blobSwapped = false;
 
     while (Date.now() - startedAt < timeoutMs) {
       pollCount += 1;
@@ -631,6 +654,12 @@
       // Evaluate on every poll, including while generating, so a timeout can
       // explain whether generation state or attribution rejected the image.
       if (expectImage) {
+        // Đưa ảnh của lượt này vào tầm mắt TRƯỚC khi đo, chỉ khi nó đang không
+        // hiện ra. Không cuộn trong lúc còn đang sinh ảnh, để không can thiệp.
+        if (resultMessage && !generating) {
+          nudgeCandidateIntoView(resultMessage);
+          if (lastScrollProbe) carryDiagnostic(attempt, "scroll_probe", lastScrollProbe);
+        }
         const evaluated = imageDecision(boundary, inputEvidence);
         const decision = evaluated.decision;
         const diagnostics = decision.diagnostics || {};
@@ -669,28 +698,12 @@
           stableSince = Date.now();
         }
 
-        // Ứng viên đang là địa chỉ tạm: chưa kết luận. Vòng lặp cứ chạy tới
-        // khi Gemini đổi sang link thật (lúc đó nhánh ảnh ở trên bắt được và
-        // job ĐẠT) hoặc hết timeout (trượt trung thực). Ghi lại đã chờ bao lâu
-        // và có đổi hay không — chính là bằng chứng để biết cách chờ này có ăn.
-        if (imageUrl && !imageDownloadable) {
-          if (!blobWaitStartedAt) blobWaitStartedAt = Date.now();
-          blobWaitPolls += 1;
-          const waited = Date.now() - blobWaitStartedAt;
-          const gaveUp = waited >= ADAPTER.TIMING.blobSwapWaitMs;
-          carryDiagnostic(attempt, "blob_wait", { waited_ms: waited, polls: blobWaitPolls, swapped: false, gave_up: gaveUp, scheme: String(imageUrl).split(":")[0] + ":" });
-          if (!gaveUp) {
-            await sleep(ADAPTER.TIMING.completionPollMs);
-            continue;
-          }
-          // Hết hạn chờ: thôi không chờ nữa, để nhánh dưới kết luận trung thực
-          // ("không tìm thấy ảnh gán được"). Chờ tiếp là đốt hết trần timeout
-          // của job mà kết quả vẫn thế, chỉ chậm gấp 3.
-        }
-        if (blobWaitStartedAt && imageDownloadable && !blobSwapped) {
-          blobSwapped = true;
-          carryDiagnostic(attempt, "blob_wait", { waited_ms: Date.now() - blobWaitStartedAt, polls: blobWaitPolls, swapped: true, gave_up: false, scheme: "https:" });
-        }
+        // Phép chờ "blob đổi sang lh3" ĐÃ THÁO ngày 26/08: đo thật cho thấy
+        // chờ 31 giây / 68 lần dò mà không đổi, và dom_probe xác nhận 6/6 ảnh
+        // sinh ra vẫn giữ địa chỉ blob sau nhiều phút. Gemini không đổi. Giữ
+        // phép chờ đó chỉ đốt thêm 30 giây mỗi lần trượt mà kết quả không khác.
+        // Thay bằng nudgeCandidateIntoView() ở trên — trị đúng nguyên nhân
+        // (phép đo sai do vị trí cuộn), không phải trị triệu chứng.
 
         // Require 1.5s of stable text from the first model-response created after the pre-send boundary.
         if (stableText && Date.now() - stableSince >= ADAPTER.TIMING.stableTextDwellMs) {

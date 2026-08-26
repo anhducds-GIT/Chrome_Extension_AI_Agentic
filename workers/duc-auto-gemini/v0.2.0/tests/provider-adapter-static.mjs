@@ -129,8 +129,8 @@ assert.ok(adapter.securityBlockerPattern.test("hoạt động bất thường"))
 assert.ok(!adapter.securityBlockerPattern.test("an ordinary assistant reply"));
 assert.deepEqual(
   { ...adapter.TIMING },
-  { postTypeSettleMs: 150, postSendSettleMs: 500, completionPollMs: 300, stableTextDwellMs: 1500, referenceReadyTimeoutMs: 15000, sendReadyTimeoutMs: 5000, menuSettleMs: 400, blobSwapWaitMs: 30000 },
-  "ChatGPT-proven base timings survive; referenceReadyTimeoutMs stays 15000; menuSettleMs added for the transient upload menu; blobSwapWaitMs 30000 is the bounded wait for Gemini to swap a blob: preview for its real lh3 link (Đức 26/08)"
+  { postTypeSettleMs: 150, postSendSettleMs: 500, completionPollMs: 300, stableTextDwellMs: 1500, referenceReadyTimeoutMs: 15000, sendReadyTimeoutMs: 5000, menuSettleMs: 400 },
+  "ChatGPT-proven base timings survive; referenceReadyTimeoutMs stays 15000; menuSettleMs added for the transient upload menu"
 );
 for (const list of [adapter.SELECTORS.composer, adapter.SELECTORS.send, adapter.SELECTORS.stop, adapter.SELECTORS.uploadMenuButton, adapter.SELECTORS.fileInput, adapter.SELECTORS.attachmentPreview, adapter.SELECTORS.uploadPending]) {
   assert.ok(Object.isFrozen(list), "selector arrays are frozen");

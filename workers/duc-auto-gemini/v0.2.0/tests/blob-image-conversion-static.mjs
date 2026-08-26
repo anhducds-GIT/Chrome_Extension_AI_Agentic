@@ -89,20 +89,34 @@ assert.match(content, /carryDiagnostic\(attempt, "image_url_dropped"/, "lý do b
 // trong ngày: một phép ghim quá chặt sẽ vỡ khi thêm trường mới, vì lý do
 // chẳng liên quan gì tới điều nó đang bảo vệ.
 const carried = content.slice(content.indexOf("const CARRIED_DIAGNOSTICS"), content.indexOf("function recordDetection"));
-for (const field of ['"attach"', '"blob_conversion"', '"image_url_dropped"', '"blob_wait"']) {
+for (const field of ['"attach"', '"blob_conversion"', '"image_url_dropped"', '"scroll_probe"']) {
   assert.ok(carried.includes(field), `danh sách mang theo phải gồm ${field}`);
 }
 
-// 10. Quyết định của Đức 26/08: gặp địa chỉ tạm thì CHỜ Gemini đổi sang link
-//     thật, KHÔNG nới lớp chấm attribution. Phép chờ này phải thuần là hoãn
-//     kết luận: không chấp nhận thêm ứng viên nào, và trần timeout vẫn chặn.
-assert.match(content, /if \(!blobWaitStartedAt\) blobWaitStartedAt = Date\.now\(\);/, "phải ghi mốc bắt đầu chờ");
-assert.match(content, /carryDiagnostic\(attempt, "blob_wait"/, "phải ghi lại quá trình chờ vào sổ cái — đó là bằng chứng để biết cách chờ có ăn");
-assert.match(content, /swapped: true/, "phải ghi được cả trường hợp ĐÃ đổi sang link thật");
-assert.match(content, /gave_up: gaveUp/, "phải ghi được cả trường hợp hết hạn chờ");
-assert.match(content, /ADAPTER\.TIMING\.blobSwapWaitMs/, "phép chờ PHẢI có hạn mức — chờ vô hạn thì mỗi lần trượt đốt hết trần timeout, chậm gấp 3 mà kết quả vẫn thế");
-const waitBlock = content.slice(content.indexOf("if (!blobWaitStartedAt)"), content.indexOf("// Require 1.5s of stable text"));
-assert.match(waitBlock, /continue;/, "chờ = quay lại vòng lặp, không phải kết luận sớm");
-assert.ok(!/downloadableUrl|remoteVerified|eligible/.test(waitBlock), "phép chờ KHÔNG được chạm vào lớp chấm attribution — Đức chọn phương án không nới bảo vệ");
+// 10. Quyết định Đức 26/08, VÒNG 2 — sau khi số liệu bác bỏ vòng 1.
+//     Vòng 1 ("chờ Gemini đổi địa chỉ blob sang lh3") đã ĐO và THẤT BẠI: chờ
+//     31 giây / 68 lần dò, không đổi; dom_probe xác nhận 6/6 ảnh sinh ra vẫn
+//     giữ blob sau nhiều phút. Phép chờ đó đã tháo — giữ lại chỉ đốt thêm 30
+//     giây mỗi lần trượt mà kết quả không khác.
+assert.ok(!/blobSwapWaitMs|blobWaitStartedAt|blobSwapped/.test(content), "phép chờ blob đã tháo, đừng dựng lại — số liệu đã bác bỏ (xem HANDOFF 26/08)");
+
+//     Nguyên nhân thật: ảnh của lượt mới nằm dưới đáy hội thoại, ngoài
+//     viewport, nên đo ra 0px và bị chấm là "không hiện ra". Cách trị: đưa nó
+//     vào tầm mắt rồi mới đo. Phép kiểm GIỮ NGUYÊN — ảnh rỗng/giả thì cuộn tới
+//     cũng vẫn rỗng, nên đây không phải nới lỏng bảo vệ.
+assert.match(content, /function nudgeCandidateIntoView\(message\)/, "phải có phép đưa ảnh vào tầm mắt");
+const nudge = content.slice(content.indexOf("function nudgeCandidateIntoView"), content.indexOf("// Output attribution only ever considers"));
+assert.match(nudge, /if \(isVisible\(target\) && before\.width > 0 && before\.height > 0\) return;/, "đang hiện ra rồi thì KHÔNG cuộn — hạn chế can thiệp trang tới mức tối thiểu");
+assert.match(nudge, /scrollIntoView\(\{ block: "nearest", inline: "nearest" \}\)/, "cuộn tịnh tiến tối thiểu, không nhảy trang");
+assert.match(nudge, /became_visible/, "phải ghi lại cuộn xong có hiện ra hay không — bằng chứng để biết cách này có ăn");
+for (const forbidden of [".click(", "execCommand", "dispatchEvent", "input.files"]) {
+  assert.ok(!nudge.includes(forbidden), `phép cuộn KHÔNG được chứa '${forbidden}' — nó chỉ được cuộn, không được tương tác`);
+}
+
+//     Chỉ cuộn khi KHÔNG còn đang sinh ảnh, để không can thiệp lúc Gemini làm việc.
+const guardIndex = content.indexOf("if (resultMessage && !generating) {");
+assert.ok(guardIndex > -1, "phải có chốt: chỉ cuộn khi đã hết trạng thái đang sinh ảnh");
+assert.ok(content.slice(guardIndex, guardIndex + 200).includes("nudgeCandidateIntoView(resultMessage)"), "phép cuộn phải nằm TRONG chốt đó, không được chạy lúc còn đang sinh ảnh");
+assert.match(content, /carryDiagnostic\(attempt, "scroll_probe", lastScrollProbe\)/, "kết quả cuộn phải tới được sổ cái");
 
 console.log("blob image conversion: PASS");

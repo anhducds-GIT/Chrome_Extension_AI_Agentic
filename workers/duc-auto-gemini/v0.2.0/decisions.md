@@ -106,3 +106,11 @@ Nguồn: `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md`. Đức chốt cả 5
 | Gặp ảnh mang địa chỉ tạm (`blob:`) thì **chờ** Gemini tự đổi sang link thật (`https://lh3...`), rồi mới kết luận. **Không** nới lớp chấm attribution để chấp nhận ảnh tạm. | Đức hỏi "blob tạm là gì?" trước khi chọn — sau khi hiểu, chọn phương án **không bỏ lớp bảo vệ nào**. Lớp đó tồn tại để chống job này lấy ảnh của job khác. Đánh đổi: có thể vẫn trượt (chưa có bằng chứng Gemini LUÔN đổi — probe thấy ảnh blob nằm rải rác giữa các ảnh https, không chỉ tấm mới nhất). | Đức |
 | Phép chờ có **hạn mức 30 giây** (`blobSwapWaitMs`), hết hạn thì kết luận trung thực. | Chờ vô hạn trong trần 90s nghĩa là mỗi lần trượt đốt hết 90s × 3 lần thử = chậm gấp 3, mà kết quả vẫn thế. | Claude đề xuất, trong phạm vi quyết định trên |
 | Mọi lần chờ đều ghi vào sổ cái: chờ bao lâu, có đổi được không, có hết hạn không. | Chính là bằng chứng để biết cách chờ này có ăn thật hay không — Đức chọn "chờ xem" thì phải đo được. | Claude |
+
+## 2026-08-26 (vòng 2) — Đưa ảnh vào tầm mắt rồi mới đo, KHÔNG nới lớp kiểm (owner: Đức)
+
+| Quyết định | Vì sao | Ai chốt |
+|---|---|---|
+| **Tháo** phép chờ "blob đổi sang lh3" đã chốt ở vòng 1 cùng ngày. | Đã ĐO và bác bỏ: chờ 31 giây / 68 lần dò, không đổi; `dom_probe` xác nhận **6/6 ảnh sinh ra vẫn giữ địa chỉ blob sau nhiều phút**. Gemini không đổi. Giữ lại chỉ đốt thêm 30 giây mỗi lần trượt mà kết quả không khác. Đây là ví dụ vì sao mọi phương án phải đo được: vòng 1 nghe rất hợp lý và sai. | Đức (vòng 1) → số liệu bác bỏ → Đức (vòng 2) |
+| Nguyên nhân thật: ảnh của lượt trả lời mới nằm **dưới đáy hội thoại dài, ngoài viewport**, nên `getBoundingClientRect()` đo ra 0 → bị chấm "không hiện ra" → `NO_NEW_IMAGE`. Cách trị: **cuộn tịnh tiến tới đúng tấm ảnh đó rồi mới đo**. | Phép kiểm "ảnh phải hiện ra thật" **giữ nguyên**, không bỏ gì. Ảnh rỗng / ảnh giả / phần tử 0px thì cuộn tới cũng vẫn 0px — nên đây là **loại bỏ một phép đo sai**, không phải nới lỏng bảo vệ. Lớp khoan dung của Pilot-04 chỉ cứu ảnh `https://lh3`, mà Gemini nay trả toàn `blob:` nên nó không còn áp được lần nào. | Đức |
+| Chỉ cuộn khi ảnh đang KHÔNG hiện ra, và chỉ khi đã hết trạng thái đang-sinh-ảnh. | Can thiệp trang ở mức tối thiểu. Test ghim: khối cuộn không được chứa click/gõ/dispatchEvent. | Claude |
