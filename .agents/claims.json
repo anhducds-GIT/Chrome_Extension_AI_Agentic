@@ -9,10 +9,11 @@
       "task": "Batch-SX-01 + bộ luật đa-AI + pilot use case mới + UI/UX"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-chatgpt",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-08-25",
-      "task": "Provider-adapter seam, dom_probe, DETECTION_BLIND — phiên song song"
+      "task": "Đã xong: provider-adapter seam, dom_probe, DETECTION_BLIND, sửa selector data-turn + gốc quét. Việc kế tiếp đã gói sẵn ở workers/duc-auto-chatgpt/v0.1.0/drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md — phiên sau tự đặt nhãn mới rồi ghi vào đây.",
+      "released_at": "2026-08-26"
     },
     "_root": {
       "owner": "claude-gemini",
