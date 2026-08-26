@@ -353,3 +353,22 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - **Audit độc lập bởi Codex: FAIL vòng 1, 7 phát hiện — đã sửa 5, chuyển 2 sang câu hỏi treo.** Với package này, phát hiện đáng tiền nhất là `STATUS.md` của tôi **chép** chi tiết sổ cái (mốc 14:20:36 → 14:20:37) từ `HANDOFF.md` thay vì chỉ trỏ → đã cắt gọn. Ranh giới schema là điểm GPT yêu cầu audit riêng, và nó đúng là chỗ tôi sai.
   - Suite dashboard 14/14, `npm test` xanh toàn bộ. 10 phép mutation trên luật validate, đỏ đúng cả 10.
 - **Next:** dựng `BACKLOG.md` cho nhánh này (đã có 2 việc thật để mở sổ: README chép nhầm, và 6 tính năng nợ port). Sau đó Đức quyết 3 câu hỏi treo ở `PLATFORM.md` mục 8.
+
+- **2026-08-27** · Claude (`opus-platform-2`) · **V0.1.1 — GPT audit bắt được drift đúng vào
+  chỗ platform này sinh ra để chống: số máy đo được vẫn bị chép tay trong STATUS.**
+  - Vi phạm cụ thể: `STATUS.md` ChatGPT ghi "Bridge (22 lệnh)"; Gemini ghi "Bridge (19 lệnh)"
+    và `current_focus` ghi "nợ GPT 6 tính năng + 3 method". Cả ba đều **đúng lúc viết** và sẽ
+    **sai đúng vào lần port tiếp theo**. Đã thay bằng con trỏ sang `DASHBOARD.md` /
+    `FEATURE-PARITY.md`.
+  - **`FEATURE-PARITY.md` đã tự mâu thuẫn và đó là bằng chứng mạnh nhất cho luật này:** mục 2
+    ghi nhận dạng ảnh theo byte là món **Gemini có mà GPT thiếu** (dòng [ĐỌC], có bằng chứng
+    code), trong khi mục 4 vẫn viết "GPT nợ Gemini: không còn gì" và "Gemini tụt lại một
+    chiều". Mục 1 đã có đính chính từ 26/08 — nhưng **không ai sửa mục 4**, mà mục 4 mới là
+    mục tên "Tóm cho Đức". Đính chính đặt lệch chỗ nói sai thì coi như chưa đính chính.
+  - Thêm **Luật số 0** vào `STATUS.template.md`: tuyệt đối không gõ số động vào STATUS, kèm
+    phép thử nhanh (thấy chữ số nào máy đếm được thì xoá; ngày tháng và mã B-xx thì giữ).
+  - **Luật này hiện chỉ là chữ, chưa máy nào kiểm** — và nó đã bị vi phạm bởi đúng phiên viết
+    ra nó. Đã ghi thành một việc V0.2 ở `PLATFORM.md` mục 7.
+  - GPT chốt 3 quyết định V0.2 (artifact cũ cho nghỉ · `--check` bỏ qua dòng dấu HEAD ·
+    thêm `.gitattributes`), và chốt **không viết lại lịch sử** để sửa commit message `1`:
+    force-push trong repo nhiều phiên AI nguy hơn cái lợi thẩm mỹ. Ghi ở `PLATFORM.md` mục 8.

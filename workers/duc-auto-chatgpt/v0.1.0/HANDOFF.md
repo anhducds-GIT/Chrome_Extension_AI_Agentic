@@ -363,3 +363,22 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - Suite: 14/14 file test mới, `npm test` xanh toàn bộ. 10 phép mutation trên luật validate, đỏ đúng cả 10.
   - **Lưu ý cho phiên sau:** package này lúc đó do phiên `claude-chatgpt-3` giữ và phiên đó **vẫn đang chạy**, còn 2 commit chưa push (`6d852d9`, `610d224`). Đức duyệt bàn giao trong prompt mở phiên, nhưng `safe-push` sẽ từ chối vì cuốn theo commit của họ — đã hỏi Đức, không tự đẩy.
 - **Next:** Đức quyết 3 câu hỏi treo ở `PLATFORM.md` mục 8 (artifact dashboard cũ · `.gitattributes` cho LF · dấu HEAD tự tham chiếu trước khi V0.2 bật `--check`).
+
+- **2026-08-27** · Claude (`opus-platform-2`) · **V0.1.1 — GPT audit bắt được drift đúng vào
+  chỗ platform này sinh ra để chống: số máy đo được vẫn bị chép tay trong STATUS.**
+  - Vi phạm cụ thể: `STATUS.md` ChatGPT ghi "Bridge (22 lệnh)"; Gemini ghi "Bridge (19 lệnh)"
+    và `current_focus` ghi "nợ GPT 6 tính năng + 3 method". Cả ba đều **đúng lúc viết** và sẽ
+    **sai đúng vào lần port tiếp theo**. Đã thay bằng con trỏ sang `DASHBOARD.md` /
+    `FEATURE-PARITY.md`.
+  - **`FEATURE-PARITY.md` đã tự mâu thuẫn và đó là bằng chứng mạnh nhất cho luật này:** mục 2
+    ghi nhận dạng ảnh theo byte là món **Gemini có mà GPT thiếu** (dòng [ĐỌC], có bằng chứng
+    code), trong khi mục 4 vẫn viết "GPT nợ Gemini: không còn gì" và "Gemini tụt lại một
+    chiều". Mục 1 đã có đính chính từ 26/08 — nhưng **không ai sửa mục 4**, mà mục 4 mới là
+    mục tên "Tóm cho Đức". Đính chính đặt lệch chỗ nói sai thì coi như chưa đính chính.
+  - Thêm **Luật số 0** vào `STATUS.template.md`: tuyệt đối không gõ số động vào STATUS, kèm
+    phép thử nhanh (thấy chữ số nào máy đếm được thì xoá; ngày tháng và mã B-xx thì giữ).
+  - **Luật này hiện chỉ là chữ, chưa máy nào kiểm** — và nó đã bị vi phạm bởi đúng phiên viết
+    ra nó. Đã ghi thành một việc V0.2 ở `PLATFORM.md` mục 7.
+  - GPT chốt 3 quyết định V0.2 (artifact cũ cho nghỉ · `--check` bỏ qua dòng dấu HEAD ·
+    thêm `.gitattributes`), và chốt **không viết lại lịch sử** để sửa commit message `1`:
+    force-push trong repo nhiều phiên AI nguy hơn cái lợi thẩm mỹ. Ghi ở `PLATFORM.md` mục 8.

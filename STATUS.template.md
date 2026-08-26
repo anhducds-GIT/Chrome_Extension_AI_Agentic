@@ -69,6 +69,20 @@ ref_handoff: workers/ten-thu-muc-package/vX.Y.Z/HANDOFF.md
 | `experimental` | thử nghiệm, đừng tin vào nó |
 | `unclassified` | chưa xếp loại |
 
+### Luật số 0 — TUYỆT ĐỐI không gõ số động vào STATUS
+
+Số lệnh Bridge · số file test · số version · số món còn nợ nhánh kia — **không viết vào đây**,
+kể cả trong phần thân cho Đức đọc. Trỏ sang [`DASHBOARD.md`](DASHBOARD.md) (máy đếm) hoặc
+[`FEATURE-PARITY.md`](FEATURE-PARITY.md).
+
+Lý do không phải lý thuyết: **bản V0.1 đầu tiên của chính hai STATUS pilot đã vi phạm** —
+chúng ghi tay "Bridge (22 lệnh)", "Bridge (19 lệnh)", "nợ 6 tính năng + 3 method". GPT audit
+27/08 bắt được. Số đó đúng lúc viết, và sẽ sai đúng vào lần port tiếp theo. Đây chính xác là
+căn bệnh platform này sinh ra để chữa, và nó tái phát ngay trong file dựng ra để chữa nó.
+
+**Cách thử nhanh:** đọc lại STATUS, thấy chữ số nào mà *máy đếm được* thì xoá. Ngày tháng và
+mã B-xx thì giữ — đó là lời khai, không phải phép đo.
+
 ### Ba luật máy ép, đừng tìm cách lách
 
 1. **Không gõ tay số version.** Máy đọc từ `version_source`. Lý do có luật này:

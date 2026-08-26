@@ -120,10 +120,18 @@ Chênh lệch ở đây đáng lo hơn chênh lệch ở UI.
 **Gemini nợ GPT** (nhiều): khoá tab + khoá hội thoại, `DETECTION_BLIND`, ledger khai thật,
 latch dừng, nhiều ảnh một job, poll A/B, và 3 method bridge.
 
-**GPT nợ Gemini:** hiện tại **không còn gì đã biết**. `references.add` là món cuối, trả hôm nay.
+**GPT nợ Gemini:** ở *method Bridge* thì không còn gì (`references.add` là món cuối, trả
+26/08). Nhưng ở *hành vi* thì **vẫn còn một món**: **nhận dạng ảnh theo BYTE** — Gemini có
+`sniffImageType` đọc byte đầu file thật, GPT quét ra 0 kết quả (mục 2, dòng **[ĐỌC]**).
 
-Nói cách khác: **hai nhánh KHÔNG lệch hai chiều nữa — Gemini đang tụt lại một chiều.**
-Điều này làm việc đồng bộ dễ hơn nhiều so với những gì backlog đang mô tả.
+Nói cách khác: **hai nhánh vẫn lệch hai chiều**, chỉ là rất không cân — Gemini nợ nhiều,
+GPT nợ đúng một món đã biết.
+
+> **Sửa 27/08 (`opus-platform-2`, GPT audit chỉ ra).** Mục này trước đây viết "GPT nợ Gemini:
+> không còn gì" và "Gemini đang tụt lại một chiều", **mâu thuẫn thẳng với mục 2** vốn ghi rõ
+> nhận dạng ảnh theo byte là món Gemini có mà GPT thiếu. Đính chính đã có ở mục 1 nhưng
+> **không ai sửa mục 4** — mà mục 4 mới là mục tên "Tóm cho Đức", tức là mục Đức thật sự đọc.
+> Bài học: đính chính đặt ở chỗ khác với chỗ nói sai thì coi như chưa đính chính.
 
 ## 5. Vì sao bảng gõ tay này sẽ mục, và cách chữa
 

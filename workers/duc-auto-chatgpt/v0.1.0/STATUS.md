@@ -31,8 +31,9 @@ trên trình duyệt của Đức, không gửi gì ra máy chủ lạ.
 
 Chạy một **kế hoạch bằng XLSX** trên ChatGPT: đọc danh sách job từ workbook, gửi prompt,
 chờ ảnh, lưu ảnh về đúng thư mục, và ghi lại nhật ký đủ để chứng minh việc nào đã chạy,
-chạy mấy lần, kết quả nằm ở đâu. Một AI khác có thể điều khiển nó từ xa qua **Bridge**
-(22 lệnh) mà không cần Đức ngồi bấm.
+chạy mấy lần, kết quả nằm ở đâu. Một AI khác có thể điều khiển nó từ xa qua **Bridge**,
+không cần Đức ngồi bấm. Số lệnh Bridge hiện có: xem cột **Method Bridge [ĐO]** trên
+[`DASHBOARD.md`](../../../DASHBOARD.md) — máy đếm, luôn tươi.
 
 ## Đã kiểm chứng tới đâu
 

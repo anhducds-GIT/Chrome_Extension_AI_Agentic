@@ -3,24 +3,24 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "Extension Operation Platform V0.1 DA XONG va DA PUSH (6b0d48c + a00cbb2): STATUS.md cho package nay + khai Ban do file + 1 dong Log HANDOFF. Khong dung code worker. Audit doc lap (Codex) PASS sau 4 vong.",
+      "owner": "opus-platform-2",
+      "ai": "Claude",
+      "claimed_at": "2026-08-27",
+      "task": "V0.1.1 patch (GPT chot): bo moi so dynamic khoi STATUS + sua mau thuan FEATURE-PARITY muc 2 vs muc 4.",
       "released_at": "2026-08-27"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "Extension Operation Platform V0.1 DA XONG va DA PUSH (6b0d48c + a00cbb2): STATUS.md cho package nay + khai Ban do file + 1 dong Log HANDOFF. Khong dung code worker. Audit doc lap (Codex) PASS sau 4 vong.",
+      "owner": "opus-platform-2",
+      "ai": "Claude",
+      "claimed_at": "2026-08-27",
+      "task": "V0.1.1 patch (GPT chot): bo moi so dynamic khoi STATUS + sua mau thuan FEATURE-PARITY muc 2 vs muc 4.",
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "Platform V0.1 DA XONG va DA PUSH: PLATFORM.md, STATUS.template.md, DASHBOARD.md (sinh tu dong), scripts/build-dashboard.mjs, tests/build-dashboard-smoke.mjs (19 ca). Audit doc lap PASS. Con 3 cau hoi cho Duc chot o PLATFORM.md muc 8, va roadmap V0.2 o muc 7.",
+      "owner": "opus-platform-2",
+      "ai": "Claude",
+      "claimed_at": "2026-08-27",
+      "task": "V0.1.1 patch (GPT chot): bo moi so dynamic khoi STATUS + sua mau thuan FEATURE-PARITY muc 2 vs muc 4.",
       "released_at": "2026-08-27"
     }
   }

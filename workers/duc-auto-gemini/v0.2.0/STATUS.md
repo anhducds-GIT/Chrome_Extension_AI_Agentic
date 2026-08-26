@@ -8,7 +8,7 @@ last_verified: 2026-08-26
 last_verified_commit: dd3c736b64206a357e6aa83f85c6e62a9fde43f7
 last_verified_how: "Trial live cặp run.stop/chat.reload 9/9 bước, khoá RUN_ACTIVE chứng minh thật"
 evidence_ref: workers/duc-auto-gemini/v0.2.0/evidence-stop-reload-20260826/README.md
-current_focus: "Reload extension để nạp bản vá lời nhắn; chưa có BACKLOG.md riêng; nợ GPT 6 tính năng + 3 method (xem FEATURE-PARITY.md)"
+current_focus: "Reload extension để nạp bản vá lời nhắn; chưa có BACKLOG.md riêng; còn nợ nhánh ChatGPT một số tính năng và method — số hiện tại xem FEATURE-PARITY.md"
 ref_readme: workers/duc-auto-gemini/v0.2.0/README.md
 ref_handoff: workers/duc-auto-gemini/v0.2.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md
@@ -30,7 +30,8 @@ nên phải có hai bản, không dùng chung một bản được.
 ## Mục đích
 
 Chạy kế hoạch XLSX trên Gemini, ngay trong trình duyệt của Đức, không gửi gì ra máy chủ lạ.
-Điều khiển từ xa được bằng **Bridge** (19 lệnh), để một AI khác vận hành hộ.
+Điều khiển từ xa được bằng **Bridge**, để một AI khác vận hành hộ. Số lệnh Bridge hiện có:
+xem cột **Method Bridge [ĐO]** trên [`DASHBOARD.md`](../../../DASHBOARD.md) — máy đếm, luôn tươi.
 
 ## Đã kiểm chứng tới đâu
 
@@ -46,7 +47,8 @@ diễn biến phiên ở cuối [`HANDOFF.md`](HANDOFF.md), bảng lỗi thật 
    hành vi, nên không gấp.
 2. **Chưa có `BACKLOG.md` riêng** — việc còn mở của nhánh này không có sổ. Ghi ở mục 6 của
    [`FEATURE-PARITY.md`](../../../FEATURE-PARITY.md).
-3. **Nợ nhánh ChatGPT 6 tính năng + 3 method** — số đo 26/08, xem
+3. **Còn nợ nhánh ChatGPT một số tính năng và method.** Con số cụ thể **không ghi ở đây** —
+   nó đổi mỗi lần port xong một món, và số gõ tay thì mục ngay. Xem
    [`FEATURE-PARITY.md`](../../../FEATURE-PARITY.md). **Đọc file đó, đừng đọc backlog** —
    danh sách port trong backlog đã lạc hậu một lần.
 4. **`README.md` của package này là bản chép từ nhánh ChatGPT** — tiêu đề vẫn ghi "Duc Auto

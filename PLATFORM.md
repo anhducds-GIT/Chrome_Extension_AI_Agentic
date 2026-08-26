@@ -128,33 +128,37 @@ generator deterministic · `DASHBOARD.md` sinh tự động · test ghim.
 | `BACKLOG.md` cho nhánh Gemini | Nhánh đó chưa có sổ; cần phiên giữ package đó dựng |
 | `STATUS.md` cho Observer V0 | Chưa ai giữ package đó |
 | Cho `version_source` chấp nhận khác hoa/thường trên Windows | Hiện khác hoa/thường bị từ chối dù đường dẫn trỏ đúng chỗ. **Fail-closed** nên không sinh ra số sai, chỉ phiền. Auditor xếp LOW |
+| **Máy bắt số động gõ tay trong STATUS** | Luật đã có ở `STATUS.template.md` nhưng chỉ là chữ — và đã bị vi phạm ngay bởi phiên viết ra nó (xem V0.1.1 trong Log) |
 | Đóng protocol lặp lại (tạo extension / đóng phiên) thành skill | Chưa đủ lần lặp để biết hình dạng đúng |
 
 **Ngoài phạm vi, đã chốt là KHÔNG làm:** agent daemon, automation engine tự chạy.
 Luật gốc của Đức: không tạo automation tự chạy nếu chưa hỏi.
 
-## 8. Câu hỏi còn treo — chờ Đức
+## 8. Đã chốt cho V0.2 — GPT quyết 2026-08-27
 
-1. **Artifact dashboard cũ** (bản `claude-gemini-4`, đang kẹt force-publish): nay đã có
-   `DASHBOARD.md` sinh tự động — trang artifact nên **sinh lại từ nó**, hay **cho nghỉ**?
-2. **`core.autocrlf=true` và không có `.gitattributes`.** Generator ghi LF; git lưu LF; máy
-   khác checkout ra CRLF; chạy lại sinh LF → **diff giả**. Chưa cắn ở V0.1 (chưa có `--check`),
-   sẽ cắn đúng lúc V0.2 bật `--check`. Chữa bằng đúng một dòng `.gitattributes`
-   (`DASHBOARD.md text eol=lf`) — nằm ngoài 7 deliverables của V0.1 nên **chưa tự thêm**.
+Ba câu hỏi treo của V0.1 nay đã có câu trả lời, ghi lại để V0.2 không hỏi lại:
 
-3. **Dấu commit trên dashboard tự tham chiếu — phải giải trước khi V0.2 bật `--check`.**
-   Trang ghi "sinh tại commit X". Nhưng commit chính `DASHBOARD.md` sinh ra sẽ tạo commit Y,
-   nên file nằm trong repo **luôn** trỏ về commit ngay trước nó. Hệ quả: `--check` (so bản
-   sinh với bản commit) sẽ **luôn báo lệch**, kể cả khi không ai đụng gì.
+1. **Artifact dashboard cũ: cho nghỉ.** Sau này cần bản HTML thì **sinh từ cùng một model**
+   với `DASHBOARD.md`, không dựng tay lần nữa.
+2. **`--check` bỏ qua dòng dấu HEAD**, chỉ so phần bảng deterministic. Đây cũng là phương án
+   tôi nghiêng về — nó không đụng vào nguyên tắc 4 đã chốt của brief.
+3. **Thêm `.gitattributes`:** `DASHBOARD.md text eol=lf`.
 
-   Đây **không phải bug của người code** — brief V0.1 mục 2 nguyên tắc 4 chốt đúng thiết kế
-   này ("dấu thời gian duy nhất = SHA của HEAD"), và tính chất nó hứa vẫn đúng: *chạy hai
-   lần trên cùng một cây thì ra hai file giống hệt*. Nhưng nó **không** đủ mạnh cho `--check`.
-   Auditor độc lập (Codex) dựng lại được ca này trong repo thật.
+**Không viết lại lịch sử** để sửa commit message `1`. Lý do GPT đưa ra và tôi đồng ý:
+force-push trong một repo nhiều phiên AI dùng chung nguy hiểm hơn cái lợi thẩm mỹ.
 
-   Ba đường đi, Đức chọn: (a) bỏ dấu commit khỏi trang, chỉ giữ dấu bên trong git; (b) `--check`
-   chỉ so **phần bảng**, bỏ qua dòng dấu; (c) sinh dashboard trong hook trước commit. Ý kiến
-   của tôi: **(b) rẻ nhất và không đổi thiết kế đã chốt.**
+**Việc V0.2 mới, sinh ra từ chính lỗi V0.1.1 dưới đây:** cho máy **bắt số động trong STATUS**.
+Luật "không gõ số máy đếm được" hiện chỉ nằm trong `STATUS.template.md` — tức là chỉ là chữ.
+Mà luật nào không kiểm được bằng máy thì sớm muộn cũng bị bỏ qua; lần này nó bị bỏ qua bởi
+đúng phiên viết ra nó.
+
+## 9. Câu hỏi còn treo — chờ Đức
+
+Ba câu hỏi V0.1 đã được GPT chốt ở mục 8. Còn lại một việc kỹ thuật, mức LOW:
+
+- **Khác hoa/thường trong `version_source` trên Windows** đang bị từ chối dù đường dẫn trỏ
+  đúng chỗ. **Fail-closed** nên không bao giờ sinh ra số sai — chỉ phiền người khai. Auditor
+  xếp LOW, đã ghi ở roadmap mục 7.
 
 ## Log
 
