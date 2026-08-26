@@ -127,6 +127,7 @@ generator deterministic · `DASHBOARD.md` sinh tự động · test ghim.
 | `scripts/feature-parity.mjs` — biến `FEATURE-PARITY.md` mục 1 + 3 thành số máy đếm | Là B-06 bước 1–2, việc riêng |
 | `BACKLOG.md` cho nhánh Gemini | Nhánh đó chưa có sổ; cần phiên giữ package đó dựng |
 | `STATUS.md` cho Observer V0 | Chưa ai giữ package đó |
+| Cho `version_source` chấp nhận khác hoa/thường trên Windows | Hiện khác hoa/thường bị từ chối dù đường dẫn trỏ đúng chỗ. **Fail-closed** nên không sinh ra số sai, chỉ phiền. Auditor xếp LOW |
 | Đóng protocol lặp lại (tạo extension / đóng phiên) thành skill | Chưa đủ lần lặp để biết hình dạng đúng |
 
 **Ngoài phạm vi, đã chốt là KHÔNG làm:** agent daemon, automation engine tự chạy.
@@ -159,9 +160,36 @@ Luật gốc của Đức: không tạo automation tự chạy nếu chưa hỏi
 
 > Chỉ thêm dòng, không sửa dòng cũ. Mới nhất ở cuối.
 
-- **2026-08-26** · Claude (`claude-platform-2`) điều phối · **V0.1 dựng xong.** Phân vai:
-  Claude viết `PLATFORM.md` + `STATUS.template.md` + 2 `STATUS.md`; Codex viết
-  `scripts/build-dashboard.mjs` + `tests/build-dashboard-smoke.mjs`; Antigravity review độc
-  lập generator (V0.1 không có UI nên AGY không có việc dựng). Số liệu 2 STATUS pilot đã đối
-  chiếu lại với repo trước khi dùng: 2 SHA resolve được, 2 file bằng chứng tồn tại, method
-  Bridge 22/19, file test 94/81 — khớp brief.
+- **2026-08-26/27** · Claude (`opus-platform-2`) điều phối · **V0.1 dựng xong, audit độc lập PASS.**
+  - **Phân vai:** Claude viết `PLATFORM.md` + `STATUS.template.md` + 2 `STATUS.md` (chữ cho
+    mắt Đức); Codex viết `scripts/build-dashboard.mjs` + `tests/build-dashboard-smoke.mjs`;
+    Codex (phiên riêng, không nhớ phiên dựng) làm auditor. **Antigravity không có việc dựng
+    ở V0.1 vì V0.1 không có UI nào** — `DASHBOARD.md` là markdown do script sinh.
+  - **Số liệu 2 STATUS pilot đã đo lại độc lập trước khi giao việc:** 2 SHA resolve được,
+    2 file bằng chứng tồn tại thật, method Bridge 22/19, file test 94/81 — khớp brief.
+  - **Audit chạy 4 vòng, FAIL 3 vòng đầu.** Tổng 12 phát hiện, sửa 10, hoãn 2 (mục 8).
+    Đáng tiền nhất, và không vòng nào tự tìm ra một mình:
+    1. **Test giả (tôi tự bắt).** Gỡ *đường nối* `validateStatus` khỏi `collectModel` thì
+       9/9 test vẫn xanh — mọi test đều gọi hàm đó trực tiếp, không test nào chứng minh
+       generator thật sự dùng nó. Luật lõi "không bằng chứng thì không sinh dashboard" khi
+       đó chỉ là hình thức. Mutation test của Codex bỏ sót vì cả 8 phép đều phá *bên trong*
+       hàm, không phá đường nối.
+    2. **STATUS chép nội dung HANDOFF** thay vì chỉ trỏ (auditor bắt, đúng cái GPT yêu cầu
+       audit riêng). Đã cắt gọn hai lần mới sạch.
+    3. **Cột "Code đổi sau kiểm chứng?" mù ba kiểu:** mù với việc chưa commit; mù với đổi
+       tên `.js` → `.md` (git gộp đổi tên, vế `.js` biến mất, code rời khỏi package mà cột
+       vẫn khai `KHÔNG`); và `version_source` lách được ra ngoài package bằng `..` rồi bằng
+       junction thư mục. Cả ba đều là "trấn an sai" — đúng thứ cột này sinh ra để chặn.
+    4. **BOM UTF-8** (tự bắt lúc dựng repo thử bằng PowerShell): file `STATUS.md` có BOM thì
+       parser coi như không có frontmatter rồi báo "thiếu 8 trường bắt buộc" trong khi 8
+       trường đó nằm ngay trên màn hình. Fail-closed nên không nói dối, nhưng dẫn sai hướng.
+  - **Suite 19 ca, 20 phép mutation đỏ đúng cả 20.** Bản vá junction được kiểm trên junction
+    Windows **thật**, cả hai chiều: junction → đỏ, đường dẫn thẳng → xanh.
+  - **Antigravity không chạy được:** hook `googlecloudtools.datacloud_telemetry` trong config
+    Gemini của máy truyền đường dẫn có dấu nháy lồng nhau, Node không nạp được module, và
+    hook đó chặn *mọi* tool call của AGY. Lỗi config cá nhân, không phải lỗi repo — chưa sửa
+    vì nằm ngoài repo.
+  - **Sự cố quy trình, ghi lại để không lặp:** giữa lúc audit, một phiên khác đã commit toàn
+    bộ 13 file này với message `1` **và push**, cuốn theo 3 commit của phiên `claude-chatgpt-3`
+    — đúng thứ `safe-push.mjs` sinh ra để chặn. Nội dung đã kiểm lại: đúng 13 file được phép,
+    không lẫn file cấm. Nhưng message `1` thì vô nghĩa với người đọc lịch sử sau này.
