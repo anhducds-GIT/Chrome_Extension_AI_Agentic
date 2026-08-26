@@ -7,7 +7,15 @@
     max_envelope_bytes: 1024 * 1024,
     max_jobs_per_proposal: 100,
     max_page_size: 100,
-    max_references_per_job: 10
+    max_references_per_job: 10,
+    // references.add carries image BYTES, unlike every other method here, so
+    // it gets its own two ceilings. Matches the Gemini worker exactly so the
+    // eventual bridge-contract conformance test (B-06) has nothing to
+    // reconcile. 700KB per image sits under max_envelope_bytes with room for
+    // the JSON framing; a larger source image must be downscaled by the
+    // caller rather than silently truncated here.
+    max_references_per_add: 5,
+    max_reference_data_url_bytes: 700 * 1024
   });
   const POLICY = deepFreeze({
     executor_model: "side_panel_only",
@@ -246,6 +254,47 @@
       invalidParams(path, "expected a selected filename or alias token, not a path, URL, or binary value");
     }
     return token;
+  }
+
+  // The ONE place an agent may introduce reference image BYTES. Everywhere else
+  // reference_images carries a bare filename token that must already resolve
+  // against the owner's picker pool -- which is why, before this method
+  // existed, an AI could not run a job with reference images at all on this
+  // worker (proven live 2026-08-26: jobs.add returned
+  // "MISSING_REFERENCE: Q001 requires 'REF-A-RED-CIRCLE.png'").
+  //
+  // Validation is deliberately strict about the data_url shape: the name must
+  // look like an image filename, the prefix must declare an image MIME type,
+  // and the payload must be standard base64. An agent cannot smuggle an SVG
+  // (scriptable), a path, or an arbitrary blob through this door.
+  function validateReferenceUpload(raw, index) {
+    const path = `params.references[${index}]`;
+    const reference = assertPlainObject(raw, path);
+    rejectUnknown(reference, ["name", "data_url"], path);
+    const name = validateReferenceToken(reference.name, `${path}.name`);
+    if (!/\.(png|jpe?g|webp)$/i.test(name)) invalidParams(`${path}.name`, "expected a filename ending in .png, .jpg, .jpeg, or .webp");
+    if (typeof reference.data_url !== "string") invalidParams(`${path}.data_url`, "expected a string");
+    const prefix = reference.data_url.match(/^data:image\/(png|jpeg|webp);base64,/);
+    if (!prefix) invalidParams(`${path}.data_url`, "expected a data:image/(png|jpeg|webp);base64, prefix");
+    const payload = reference.data_url.slice(prefix[0].length);
+    if (!payload || !/^[A-Za-z0-9+/]+={0,2}$/.test(payload)) invalidParams(`${path}.data_url`, "expected standard base64 image data after the prefix");
+    if (byteLength(reference.data_url) > LIMITS.max_reference_data_url_bytes) {
+      invalidParams(`${path}.data_url`, `expected at most ${LIMITS.max_reference_data_url_bytes} bytes per reference data_url`);
+    }
+    return { name, data_url: reference.data_url };
+  }
+
+  function validateReferencesAdd(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["references"], "params");
+    if (!Array.isArray(params.references) || params.references.length < 1 || params.references.length > LIMITS.max_references_per_add) {
+      invalidParams("params.references", `expected 1-${LIMITS.max_references_per_add} reference images`);
+    }
+    const references = params.references.map(validateReferenceUpload);
+    if (new Set(references.map((reference) => reference.name.toLowerCase())).size !== references.length) {
+      invalidParams("params.references", "duplicate reference name");
+    }
+    return { references };
   }
 
   function validateSettings(raw, path) {
@@ -596,6 +645,10 @@
     registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reserve one capped development trial chain for 1-30 explicit eligible jobs; returns immediately for run.status polling.", params_schema: { job_ids: "string[1..30]" }, params_validator: validateRunTrial }),
     registryEntry({ name: "ledger.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a sanitized page of physical XLSX ledger rows.", params_schema: { cursor: "string|null", limit: "integer:1..100", include_prompt: "boolean", include_removed: "boolean" }, params_validator: validateLedgerRead }),
     registryEntry({ name: "jobs.add", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Add jobs directly to the current Setup session, or create an in-memory session.", params_schema: { jobs: "direct_job[1..100]" }, params_validator: validateJobsAdd }),
+    // NOT idempotent by name: a second call with the same name REPLACES the
+    // stored image rather than being a no-op, which is a different outcome, so
+    // claiming idempotency here would be a lie the replay store acts on.
+    registryEntry({ name: "references.add", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Add or replace in-memory reference images for the current Setup session from base64 data URLs; jobs pick them up by filename token. The only method that accepts image bytes -- reference_images elsewhere takes a filename token that must already resolve. Requires a session to attach to (jobs.add bootstraps one).", params_schema: { references: "reference_image[1..5]" }, params_validator: validateReferencesAdd }),
     registryEntry({ name: "jobs.update", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Update mutable input fields on one PRE_SUBMIT job or a batch of 1-20 jobs.", params_schema: { job_id: "string?", prompt: "string?", reference_images: "string[]?", settings: "job_settings?", jobs: "job_update[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobsUpdate }),
     registryEntry({ name: "jobs.remove", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Tombstone one or 1-20 PRE_SUBMIT Queue jobs without deleting ledger rows.", params_schema: { job_id: "string?", job_ids: "string[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobIdOnly }),
     registryEntry({ name: "jobs.reorder", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Move one PRE_SUBMIT Queue job or persist a full active-queue permutation.", params_schema: { job_id: "string?", position: "integer:1..1000000?", order: "string[]?", if_ledger_etag: "string?" }, params_validator: validateJobsReorder }),

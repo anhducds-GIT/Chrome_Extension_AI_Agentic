@@ -13,6 +13,9 @@ const COMMANDS = Object.freeze({
   "proposal-get": "queue.proposal.get",
   propose: "queue.propose",
   "jobs-add": "jobs.add",
+  // The only command that ships image bytes. Params file holds base64 data
+  // URLs, so it can be large -- keep it out of shell arguments entirely.
+  "references-add": "references.add",
   "jobs-update": "jobs.update",
   "jobs-remove": "jobs.remove",
   "jobs-reorder": "jobs.reorder",
@@ -33,7 +36,7 @@ const COMMANDS = Object.freeze({
 });
 
 const PARAMS_FILE_COMMANDS = new Set([
-  "propose", "jobs-add", "jobs-update", "jobs-remove", "jobs-reorder",
+  "propose", "jobs-add", "references-add", "jobs-update", "jobs-remove", "jobs-reorder",
   "output-configure", "run-settings-configure", "output-set-folder-hint",
   "run-trial", "proposal-withdraw", "profiles-remove"
 ]);

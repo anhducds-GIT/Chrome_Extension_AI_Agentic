@@ -10,7 +10,14 @@ const bridge = globalThis.DacBridgeCore;
 
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
-  "run.status", "run.trial", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
+  "run.status", "run.trial", "ledger.read", "jobs.add",
+  // 2026-08-26: the ONE method that accepts image bytes. Ported from the
+  // Gemini worker after a live jobs.add proved an AI could not run a job with
+  // reference images at all -- reference_images elsewhere only takes a
+  // filename token that must already resolve against the owner picker pool.
+  // Deliberately NOT idempotent: a repeat call REPLACES the stored image.
+  "references.add",
+  "jobs.update", "jobs.remove",
   "jobs.reorder", "output.configure", "run_settings.configure", "output.set_folder_hint", "profiles.remove", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw",
   // Ported from the Gemini worker 2026-08-26 so an AI operator can diagnose
   // the live page without the owner describing their screen.
@@ -76,6 +83,7 @@ const validByMethod = {
   "run.trial": { job_ids: ["Q001", "Q002"] },
   "ledger.read": { cursor: null, limit: 50, include_prompt: false, include_removed: true },
   "jobs.add": { jobs: [{ prompt: "Create ...", reference_images: ["Duc1.jpg"], settings: { timeout_sec: 180 } }] },
+  "references.add": { references: [{ name: "Duc1.png", data_url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==" }] },
   "jobs.update": { job_id: "Q001", prompt: "Updated", reference_images: [], settings: { max_retries: 3 } },
   "jobs.remove": { job_id: "Q001" },
   "jobs.reorder": { job_id: "Q001", position: 2 },
@@ -150,6 +158,8 @@ const invalidByMethod = {
   "run.status": { pause: true },
   "ledger.read": { include_removed: "yes" },
   "jobs.add": { jobs: [] },
+  // A path, not a filename token: the door must not accept traversal.
+  "references.add": { references: [{ name: "../Duc1.jpg", data_url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==" }] },
   "jobs.update": { job_id: "Q001" },
   "jobs.remove": { job_id: "" },
   "jobs.reorder": { job_id: "Q001", position: 0 },

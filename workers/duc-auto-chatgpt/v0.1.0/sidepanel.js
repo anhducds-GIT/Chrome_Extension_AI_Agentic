@@ -1219,6 +1219,7 @@
       "diagnostics.dom_probe": withBridgeErrors(bridgeDomProbe),
       "ledger.read": withBridgeErrors(bridgeLedgerRead),
       "jobs.add": withBridgeErrors(bridgeJobsAdd),
+      "references.add": withBridgeErrors(bridgeReferencesAdd),
       "jobs.update": withBridgeErrors(bridgeJobsUpdate),
       "jobs.remove": withBridgeErrors(bridgeJobsRemove),
       "jobs.reorder": withBridgeErrors(bridgeJobsReorder),
@@ -1354,12 +1355,19 @@
       timestamp: new Date().toISOString(), run_id: state.runId, job_id: mutation.job_id || null, attempt_id: null,
       event, attempt: null, phase: "PRE_SUBMIT", status: "PENDING", failure_type: null,
       message: mutation.message || `${method} changed Setup state; immutable checkpoint verification is pending.`,
-      elapsed_ms: null, references: [], requested_filename: null, result_file: null, result_download_id: null,
+      // Names and byte sizes only -- NEVER the image data. An audit trail that
+      // carried base64 payloads would balloon the JSONL and copy the owner's
+      // input images into a file that gets committed as evidence.
+      elapsed_ms: null, references: mutation.reference_names || [], requested_filename: null, result_file: null, result_download_id: null,
       persistence_verified: false, write_outcome: null, detected_not_downloaded: false,
       collision_policy: output.collisionPolicy, prompt_fingerprint: null, target_url: null, submitted_at: null, detection: null,
       input_origin: "bridge_direct", bridge_method: method,
       bridge_job_ids: mutation.job_ids || (mutation.job_id ? [mutation.job_id] : []),
-      bridge_changed_fields: mutation.changed_fields || [], checkpoint_verified: false
+      bridge_changed_fields: mutation.changed_fields || [], checkpoint_verified: false,
+      // Same field names the Gemini worker writes, so one audit reader serves
+      // both extensions (B-06). Omitted entirely for methods that touch no
+      // references rather than written as empty noise on every mutation.
+      ...(mutation.reference_bytes ? { reference_bytes: mutation.reference_bytes, bridge_reference_names: mutation.reference_names || [], bridge_replaced_names: mutation.replaced || [] } : {})
     };
   }
 
@@ -1496,6 +1504,19 @@
     return executeBridgeDirectMutation({
       method: "jobs.add", event: "BRIDGE_JOB_ADDED_DIRECT", workbookRequired: false, persistenceRequired: !bootstrap,
       mutate: async () => applyBridgeJobsAdd(params.jobs)
+    });
+  }
+
+  // workbookRequired stays TRUE, unlike Gemini's equivalent: this worker's
+  // executeBridgeDirectMutation throws WORKBOOK_NOT_LOADED after mutate() if no
+  // session exists, and it checkpoints every direct mutation. References with
+  // no session to attach to would fail there anyway, with a worse message.
+  // jobs.add is the bootstrap door, so the honest sequence is jobs.add ->
+  // references.add -> jobs.update.
+  async function bridgeReferencesAdd(params) {
+    return executeBridgeDirectMutation({
+      method: "references.add", event: "BRIDGE_REFERENCES_ADDED", persistenceRequired: false,
+      mutate: async () => applyBridgeReferencesAdd(params.references)
     });
   }
 
@@ -2937,6 +2958,47 @@
     const values = { prompt: job.prompt, reference_images: (job.reference_images || []).join("|") };
     for (const [key, value] of Object.entries(job.settings || {})) values[key] = value;
     return values;
+  }
+
+  function referenceDataUrlBytes(dataUrl) {
+    const text = String(dataUrl || "");
+    const payload = text.slice(text.indexOf(",") + 1);
+    const padding = payload.endsWith("==") ? 2 : payload.endsWith("=") ? 1 : 0;
+    return Math.max(0, Math.floor((payload.length * 3) / 4) - padding);
+  }
+
+  // Ported from the Gemini worker (2026-08-26). Builds EXACTLY the in-memory
+  // shape loadFiles() builds from the owner's file picker -- fileName, dataUrl,
+  // alias -- because resolveReferences() matches on fileName/alias and the run
+  // path attaches reference.dataUrl. Nothing downstream may be able to tell a
+  // bridge-supplied reference from a picker-supplied one; if it could, this
+  // method would be testing a second, parallel attachment path instead of the
+  // one Đức's own runs use.
+  function applyBridgeReferencesAdd(references) {
+    const added = [];
+    const replaced = [];
+    const sizes = [];
+    for (const reference of references) {
+      const file = { fileName: reference.name, dataUrl: reference.data_url, alias: "" };
+      const key = reference.name.toLowerCase();
+      const index = state.files.findIndex((existing) => String(existing.fileName || existing.name || "").toLowerCase() === key);
+      if (index >= 0) { state.files.splice(index, 1, file); replaced.push(reference.name); }
+      else { state.files.push(file); added.push(reference.name); }
+      sizes.push({ name: reference.name, bytes: referenceDataUrlBytes(reference.data_url) });
+    }
+    // The picker path calls these two after changing state.files; skipping them
+    // would leave Check Plan and the gallery describing the previous set.
+    invalidateValidation("Reference inputs changed; check plan again before Run.");
+    if (els.referenceText) els.referenceText.textContent = `${state.files.length} local reference image(s) selected.`;
+    renderReferenceGallery();
+    return {
+      message: `Agent Bridge đã nạp ${sizes.length} ảnh tham chiếu (${sizes.map((entry) => entry.name).join(", ")})${replaced.length ? `; thay thế ${replaced.length} ảnh trùng tên` : ""}; chưa chạy.`,
+      changed_fields: ["reference_images"],
+      reference_names: sizes.map((entry) => entry.name),
+      reference_bytes: sizes,
+      added, replaced,
+      reference_count: state.files.length
+    };
   }
 
   async function applyBridgeJobsAdd(jobs) {
@@ -5599,6 +5661,7 @@
       "diagnostics.dom_probe": bridgeDomProbe,
       "ledger.read": bridgeLedgerRead,
       "jobs.add": bridgeJobsAdd,
+      "references.add": bridgeReferencesAdd,
       "jobs.update": bridgeJobsUpdate,
       "jobs.remove": bridgeJobsRemove,
       "jobs.reorder": bridgeJobsReorder,
