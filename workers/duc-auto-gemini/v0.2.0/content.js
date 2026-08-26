@@ -544,15 +544,20 @@
     throw new Error("Send button did not become ready. Gemini DOM may have changed.");
   }
 
-  // Magic-byte sniff. Needed because a Blob's `type` is whatever the page set
-  // when it constructed it, and Gemini's generated-image blobs can arrive with
-  // an empty or non-image type -- FileReader then produces
-  // "data:application/octet-stream;base64,..." which background.js correctly
-  // refuses (it only accepts https: or data:image/). The bytes are the truth,
-  // so read them instead of trusting (or guessing) the label.
-  // Live evidence 2026-08-26 (Pilot-REF-01 follow-up, job Q001 Hue): three
-  // attempts each attached, submitted and DETECTED the image, then all three
-  // died on "Generated image URL was not usable."
+  // Magic-byte sniff: đọc BYTE để biết ảnh gì, không tin NHÃN mà trang tự đặt
+  // trên Blob. Bytes thắng nhãn — một blob dán nhãn png mà chứa byte jpeg sẽ
+  // bị lưu dưới đuôi file nói dối.
+  //
+  // ĐÍNH CHÍNH (26/08, sau khi có số liệu): phép này được thêm vào dựa trên
+  // giả thuyết "nhãn của Gemini rỗng hoặc không phải ảnh, nên FileReader sinh
+  // ra data:application/octet-stream và background từ chối". Giả thuyết đó
+  // **SAI** — sổ cái lần chạy thành công ghi
+  // blob_conversion = {blob_type: "image/jpeg", sniffed: "image/jpeg"}: nhãn
+  // ĐÚNG ngay từ đầu. Thủ phạm thật của "Generated image URL was not usable"
+  // là nhánh "kết quả là chữ" trả URL blob THÔ (không qua hàm này), và nguyên
+  // nhân gốc là ngưỡng generatedImageMinSize = 200 loại mọi ảnh 330x180.
+  // Giữ phép nhận dạng byte lại vì nó vẫn là lớp phòng vệ đúng đắn cho trường
+  // hợp nhãn sai — nhưng nó KHÔNG phải bản vá đã trị được lỗi hôm đó.
   function sniffImageType(bytes) {
     const at = (i) => bytes[i];
     if (at(0) === 0x89 && at(1) === 0x50 && at(2) === 0x4e && at(3) === 0x47) return "image/png";

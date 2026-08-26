@@ -1,15 +1,15 @@
 // Ảnh sinh ra dạng blob: phải thành data URL mà background CHẤP NHẬN được.
 //
-// Bằng chứng live 2026-08-26 (job Q001 "Huế", tiếp sau Pilot-REF-01): cả 3 lần
-// thử đều gắn ảnh xong, gửi xong, PHÁT HIỆN được ảnh, rồi cùng chết ở
-// "Generated image URL was not usable." DOM probe cho thấy ảnh Gemini sinh ra
-// có lúc là https://lh3... có lúc là blob: — tấm của lần chạy đó là blob:.
-// `downloadableUrl` có chuyển blob sang data URL, nhưng `FileReader` lấy MIME
-// từ NHÃN của Blob, và nhãn đó do trang tự đặt. Nhãn rỗng hoặc không phải ảnh
-// → "data:application/octet-stream;base64,..." → background từ chối đúng luật
-// (nó chỉ nhận https: hoặc data:image/).
+// Luật ghim: đọc BYTE để biết đó là ảnh gì, đừng tin NHÃN, và đừng đoán.
 //
-// Luật ghim: đọc BYTE để biết đó là ảnh gì, đừng tin nhãn, và đừng đoán.
+// ĐÍNH CHÍNH quan trọng (26/08): phép nhận dạng byte này ban đầu được thêm dựa
+// trên giả thuyết "nhãn Blob của Gemini rỗng nên data URL thành
+// application/octet-stream". Giả thuyết đó **SAI** — lần chạy thành công ghi
+// blob_type = "image/jpeg", nhãn đúng ngay từ đầu. Thủ phạm thật là nhánh "kết
+// quả là chữ" trả URL blob THÔ, và nguyên nhân gốc là ngưỡng
+// generatedImageMinSize = 200 loại mọi ảnh Gemini render 330x180.
+// Giữ phép này vì "byte thắng nhãn" vẫn là nguyên tắc đúng — nhưng đừng ghi nó
+// vào lịch sử như bản vá đã trị lỗi hôm đó, vì không phải.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
