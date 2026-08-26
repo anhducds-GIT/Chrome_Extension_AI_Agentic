@@ -10,10 +10,11 @@
       "task": "Da xong va DA PUSH: Pilot-07 18/18 tranh net cho tre to mau · port run.stop + chat.reload tu worker ChatGPT (da kiem chung live 9/9) · va loi nhan run.stop noi sai. Viec mo goi san o cuoi HANDOFF.md."
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-chatgpt-3",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-08-26",
-      "task": "Pilot that dau tien (muc 1 trong Next). max_retries=0 cho lan do dau."
+      "task": "Da xong: references.add (port tu Gemini, audit Antigravity PASS 2 vong) + Pilot-14 anh tham chieu 3/3 SUCCESS + FEATURE-PARITY.md do bang may. Da push. Viec ke tiep: xem BACKLOG B-14..B-18.",
+      "released_at": "2026-08-26"
     },
     "_root": {
       "owner": null,
