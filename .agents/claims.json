@@ -9,10 +9,11 @@
       "task": "Batch-SX-01 + bộ luật đa-AI + pilot use case mới + UI/UX"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-chatgpt-2",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-08-26",
-      "task": "Gói RUN-STOP-CHAT-RELOAD: bước 0 xác minh selector, run.stop, chat.reload."
+      "task": "Đã xong + đã push: bước 0 xác minh selector (imageCandidateCount 3 -> 15), run.stop (đi vòng qua khoá RUN_ACTIVE), chat.reload (bị khoá chặn), + lỗi nuốt lệnh dừng ở tryBeginRun. Cả hai method đã nghiệm thu sống qua trial-09c93cd4. Việc kế tiếp: BACKLOG.md mục 'Phiên kế tiếp' (B-06 đồng bộ GPT/Gemini, rồi B-01 khoá tab).",
+      "released_at": "2026-08-26"
     },
     "_root": {
       "owner": "claude-gemini",
