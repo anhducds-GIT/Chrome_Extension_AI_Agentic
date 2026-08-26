@@ -64,7 +64,13 @@ assert.equal(adapter.matchesGenerationLimit("a duck on a white background"), fal
 assert.equal(adapter.matchesGenerationLimit(""), false);
 
 // --- content.js no longer hardcodes provider knowledge -----------------
-const body = content.slice(content.indexOf('"use strict"'));
+// The DOM probe is exempt: it is diagnostics, and naming an attribute in
+// order to REPORT its values is the opposite of depending on it. Everything
+// outside the probe must go through the adapter.
+const probeStart = content.indexOf('if (message.type === "DAC_DOM_PROBE")');
+const probeEnd = content.indexOf('if (message.type === "DAC_ABORT")');
+assert.ok(probeStart > 0 && probeEnd > probeStart, "the probe block is where this test thinks it is");
+const body = content.slice(content.indexOf('"use strict"'), probeStart) + content.slice(probeEnd);
 const forbidden = [
   ["data-message-author-role", "message-role selectors belong to the adapter"],
   ["prompt-textarea", "composer selectors belong to the adapter"],

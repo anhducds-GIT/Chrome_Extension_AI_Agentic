@@ -796,6 +796,36 @@
           imgs: element.querySelectorAll("img").length,
           txtHead: (element.innerText || "").replace(/\s+/g, " ").trim().slice(0, 60)
         }));
+        // Attribute NAMES alone were not enough on 2026-08-26: the page still
+        // used data-message-author-role, but only for user turns, and the
+        // assistant turn had moved to some other marker. What a selector
+        // actually needs is the VALUES, and the real ancestor chain of a
+        // generated image.
+        const attributeValues = {};
+        for (const name of ["data-turn", "data-message-author-role", "data-testid", "data-turn-id-container"]) {
+          const counts = {};
+          for (const element of document.querySelectorAll(`[${name}]`)) {
+            const value = element.getAttribute(name) || "";
+            counts[value] = (counts[value] || 0) + 1;
+          }
+          const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 12);
+          if (top.length) attributeValues[name] = top.map(([value, count]) => `${value} x${count}`);
+        }
+        const dataChain = (element, depth = 12) => {
+          const out = []; let node = element, hops = 0;
+          while (node && hops < depth) {
+            const data = Array.from(node.attributes || []).filter((attribute) => /^data-/.test(attribute.name)).map((attribute) => `${attribute.name}="${String(attribute.value).slice(0, 24)}"`);
+            out.push(node.tagName.toLowerCase() + (data.length ? `[${data.join(" ")}]` : ""));
+            node = node.parentElement; hops += 1;
+          }
+          return out.join(" < ");
+        };
+        // The generated images are the thing attribution must find, so walk UP
+        // from one of them and record every data-* marker on the way.
+        const generatedChains = Array.from(document.querySelectorAll("img"))
+          .filter((image) => /^Generated image:/i.test(image.alt || ""))
+          .slice(0, 3)
+          .map((image) => ({ alt: (image.alt || "").slice(0, 50), chain: dataChain(image) }));
         const customTags = [...new Set(Array.from(document.querySelectorAll("*")).map((element) => element.tagName.toLowerCase()).filter((tag) => tag.includes("-")))].slice(0, 100);
         const fileInputs = Array.from(document.querySelectorAll('input[type="file"]')).map((input) => ({ accept: (input.getAttribute("accept") || "").slice(0, 120), multiple: input.multiple, connected: input.isConnected, chain: chainOf(input) }));
         const poll = findAbPoll();
@@ -816,7 +846,7 @@
           abPollPending: abPollPending(),
           abPoll: poll ? poll.diagnostics : null,
           busy: STATE.busy,
-          selectorCounts, buttons, images, messageAttributes, articleSample, customTags, fileInputs,
+          selectorCounts, buttons, images, messageAttributes, attributeValues, generatedChains, articleSample, customTags, fileInputs,
           truncated: false,
         };
         // Payload cap ~64KB: shrink the bulky arrays first rather than fail.
@@ -824,6 +854,7 @@
           probe.images = probe.images.slice(0, 5);
           probe.buttons = probe.buttons.slice(0, 10);
           probe.customTags = probe.customTags.slice(0, 40);
+          probe.articleSample = [];
           probe.truncated = true;
         }
         sendResponse({ ok: true, probe });
