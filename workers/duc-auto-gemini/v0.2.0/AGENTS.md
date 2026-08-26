@@ -99,6 +99,7 @@ COMPANION (đọc khi cần):
 | `scripts/create-pilot-NN.mjs` | Script tạo workbook cho từng pilot |
 | `scripts/bridge-rpc.mjs` | Gọi RPC thô tới Agent Bridge (jobs.add, references.add, dom_probe… — những method CLI không có) |
 | `Batch-SX-01/` | Batch sản xuất 01: kế hoạch + kết quả chuỗi 12 job chạy liên tục (26/08) — bằng chứng, không sửa |
+| `Pilot-REF-01/` | Pilot ảnh tham chiếu, lần đầu chạy live (26/08) — bằng chứng, không sửa |
 | `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
 | `Pilot-07/`, `Pilot-08/`, `Pilot-09.../` | Pilot đang hoạt động, có thể có dữ liệu mới |
 

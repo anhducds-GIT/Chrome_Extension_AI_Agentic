@@ -15,12 +15,11 @@
       "task": "Gói RUN-STOP-CHAT-RELOAD: bước 0 xác minh selector, run.stop, chat.reload."
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "released_at": "2026-08-26",
-      "task": "File gốc repo (AGENTS.md, CLAUDE.md, scripts/, package.json). Đụng vào phải hỏi Đức; được duyệt rồi thì ghi nhãn phiên vào đây, PUSH xong thì trả về null.",
-      "last_work": "Bộ luật đa-AI + cổng kiểm + safe-push (Đức duyệt 26/08) — đã push, đã trả quyền."
+      "owner": "claude-gemini",
+      "ai": "Claude",
+      "claimed_at": "2026-08-26",
+      "task": "Vá cổng kiểm: chia trách nhiệm theo bảng chủ sở hữu.",
+      "release_when": "Sau khi đã PUSH xong thì đặt owner về null."
     }
   }
 }

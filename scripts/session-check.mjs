@@ -47,38 +47,58 @@ const touched = [...new Set([...workingChanges.map((c) => c.file), ...unpushed])
 
 // Package = workers/<tên>. Đây là đơn vị sở hữu.
 const packagesTouched = [...new Set(touched.map((f) => (f.match(/^(workers\/[^/]+)\//) || [])[1]).filter(Boolean))];
+
+// Nhiều phiên AI dùng CHUNG một thư mục làm việc, nên `git status` cho thấy cả
+// việc đang làm dở của phiên khác. Không tách ra thì cổng đổ việc của họ lên
+// đầu bạn — bắt bạn ghi HANDOFF hộ họ, và bắt bạn chịu test đỏ do họ đang viết
+// dở. Trách nhiệm chia theo bảng chủ sở hữu: bạn chịu đúng phần bạn đang giữ.
+const CLAIMS = (() => {
+  try { return JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.json"), "utf8")).claims || {}; }
+  catch { return null; }
+})();
+const ownedBy = (area) => CLAIMS?.[area]?.owner ?? null;
+const myPackages = packagesTouched.filter((pkg) => ownedBy(pkg) === asLabel);
+const foreignPackages = packagesTouched.filter((pkg) => ownedBy(pkg) && ownedBy(pkg) !== asLabel);
+const orphanPackages = packagesTouched.filter((pkg) => !CLAIMS?.[pkg]);
+const mine = (file) => myPackages.some((pkg) => file.startsWith(`${pkg}/`));
 // claims.json không tính là "sửa file gốc": nhận và TRẢ quyền là thao tác
 // hành chính, không phải đổi luật. Không miễn trừ nó thì không ai trả lại
 // được quyền gốc — vì chính thao tác trả cũng bị coi là sửa file gốc.
 const rootTouched = touched.some((f) => !f.startsWith("workers/") && f !== ".agents/claims.json");
 
 /* ---- 1. Chủ sở hữu ------------------------------------------------------ */
-check("Chủ sở hữu package", () => {
-  const file = path.join(ROOT, ".agents", "claims.json");
-  if (!fs.existsSync(file)) return { ok: false, msg: "Thiếu .agents/claims.json — xem AGENTS.md mục 1." };
-  const claims = JSON.parse(fs.readFileSync(file, "utf8")).claims || {};
-  const stolen = packagesTouched.filter((pkg) => claims[pkg]?.owner && claims[pkg].owner !== asLabel);
-  if (stolen.length) {
-    const who = stolen.map((pkg) => `${pkg} (đang do "${claims[pkg].owner}" giữ)`).join(", ");
-    return { ok: false, msg: `Bạn (${asLabel}) đang sửa package của phiên khác: ${who}. Chỉ được đọc. Muốn giành thì hỏi Đức.` };
+check("Phạm vi trách nhiệm", () => {
+  if (!CLAIMS) return { ok: false, msg: "Thiếu (hoặc hỏng) .agents/claims.json — xem AGENTS.md mục 1." };
+  // Package chưa khai chủ mà có thay đổi = việc mồ côi, không ai chịu trách
+  // nhiệm. Đây mới là thứ cổng chặn được thật.
+  if (orphanPackages.length) {
+    return { ok: false, msg: `Package có thay đổi nhưng chưa khai chủ: ${orphanPackages.join(", ")}. Ghi tên mình vào .agents/claims.json, hoặc hỏi xem của ai.` };
   }
-  const unclaimed = packagesTouched.filter((pkg) => !claims[pkg]);
-  if (unclaimed.length) return { ok: false, msg: `Package chưa khai chủ: ${unclaimed.join(", ")}. Ghi tên mình vào .agents/claims.json trước.` };
-  // File gốc repo (AGENTS.md, CLAUDE.md, scripts/, package.json) là luật chung
-  // của cả ba AI — đổi nó phải được Đức duyệt. Mặc định owner=null nghĩa là
-  // "chưa ai được phép"; duyệt rồi thì ghi tên phiên vào, xong việc trả về null.
-  if (rootTouched && claims._root?.owner !== asLabel) {
-    const holder = claims._root?.owner ? `đang do "${claims._root.owner}" giữ` : "chưa được Đức duyệt cho ai";
-    return { ok: false, msg: `Bạn đang sửa file gốc repo nhưng gốc ${holder}. Hỏi Đức; được duyệt rồi thì ghi "${asLabel}" vào _root.owner trong .agents/claims.json.` };
+  // File gốc repo (AGENTS.md, CLAUDE.md, scripts/) là luật chung của cả ba AI
+  // — đổi nó phải được Đức duyệt, tức phải có người ghi tên vào _root.
+  // Không ai đứng tên mà gốc bị sửa = vi phạm, chặn.
+  // Có người đứng tên nhưng không phải bạn = việc của họ, xử như package của
+  // phiên khác. Chặn ở đây thì mỗi lần một phiên sửa luật là mọi phiên còn lại
+  // tắc cổng — đúng kiểu đổ oan mà phần trên vừa bỏ.
+  if (rootTouched && !ownedBy("_root")) {
+    return { ok: false, msg: `File gốc repo bị sửa nhưng không ai đứng tên. Hỏi Đức; được duyệt rồi thì ghi "${asLabel}" vào _root.owner trong .agents/claims.json.` };
   }
-  return { ok: true, msg: packagesTouched.length ? `${asLabel} giữ đúng: ${packagesTouched.join(", ")}` : "Không đụng package nào." };
+  const rootIsMine = ownedBy("_root") === asLabel;
+  // Việc của phiên khác trong cùng thư mục KHÔNG phải lỗi của bạn — báo cho
+  // biết rồi loại khỏi mọi phép kiểm sau. Cổng không thể biết ai gõ phím nào;
+  // giả vờ biết chỉ tạo ra lời buộc tội sai.
+  const foreign = foreignPackages.map((pkg) => `${pkg} [${ownedBy(pkg)}]`);
+  if (rootTouched && !rootIsMine) foreign.push(`file gốc repo [${ownedBy("_root")}]`);
+  const note = foreign.length ? ` · bỏ qua (của phiên khác): ${foreign.join(", ")}` : "";
+  const yours = myPackages.length ? myPackages.join(", ") : "(không đụng package nào)";
+  return { ok: true, msg: `Phần của bạn: ${yours}${rootTouched && rootIsMine ? " + file gốc repo" : ""}${note}` };
 });
 
 /* ---- 2. Vùng bằng chứng ------------------------------------------------- */
 check("Vùng bằng chứng không bị sửa", () => {
   const protectedRe = /(^|\/)(pilot-[^/]*|Pilot-[^/]*|Batch-[^/]*|evidence)\//i;
   // Thêm mới (A/??) thì được; Sửa (M) hoặc Xoá (D) thì không.
-  const violations = workingChanges.filter((c) => protectedRe.test(c.file) && /[MDR]/.test(c.code));
+  const violations = workingChanges.filter((c) => mine(c.file) && protectedRe.test(c.file) && /[MDR]/.test(c.code));
   if (violations.length) return { ok: false, msg: `Sửa/xoá bằng chứng vận hành: ${violations.map((v) => v.file).join(", ")}. Chỉ được THÊM mới.` };
   return { ok: true, msg: "Bằng chứng cũ nguyên vẹn." };
 });
@@ -103,7 +123,7 @@ check("Không có secret lọt vào repo", () => {
 
 /* ---- 4. File mới phải khai vào Bản đồ file ------------------------------ */
 check("File mới đã khai vào Bản đồ file", () => {
-  const added = workingChanges.filter((c) => /^(A|\?\?)/.test(c.code)).map((c) => c.file);
+  const added = workingChanges.filter((c) => /^(A|\?\?)/.test(c.code)).map((c) => c.file).filter(mine);
   const undeclared = [];
   for (const file of added) {
     const m = file.match(/^(workers\/[^/]+\/[^/]+)\/(.+)$/);
@@ -122,22 +142,22 @@ check("File mới đã khai vào Bản đồ file", () => {
 
 /* ---- 5. HANDOFF phải được ghi ------------------------------------------- */
 check("HANDOFF đã ghi Log phiên này", () => {
-  const missing = packagesTouched.filter((pkg) => {
+  const missing = myPackages.filter((pkg) => {
     const codeChanged = touched.some((f) => f.startsWith(`${pkg}/`) && !/HANDOFF\.md$/.test(f));
     if (!codeChanged) return false;
     return !touched.some((f) => f.startsWith(`${pkg}/`) && /HANDOFF\.md$/.test(f));
   });
   if (missing.length) return { ok: false, msg: `Đã sửa nhưng chưa ghi Log vào HANDOFF.md: ${missing.join(", ")}. Phiên sau sẽ mù.` };
-  return { ok: true, msg: packagesTouched.length ? "Đã ghi Log." : "Không có gì phải ghi." };
+  return { ok: true, msg: myPackages.length ? "Đã ghi Log." : "Không có gì phải ghi." };
 });
 
 /* ---- 6. Test ------------------------------------------------------------ */
 check("Test xanh", () => {
   if (quick) return { ok: true, skipped: true, msg: "ĐÃ BỎ QUA (--quick). Chưa được báo 'xong' khi chưa chạy thật." };
-  const suites = packagesTouched
+  const suites = myPackages
     .flatMap((pkg) => fs.readdirSync(path.join(ROOT, pkg)).map((v) => path.join(pkg, v, "tests", "run-all.mjs")))
     .filter((p) => fs.existsSync(path.join(ROOT, p)));
-  if (!suites.length) return { ok: true, msg: "Không package nào có suite bị ảnh hưởng." };
+  if (!suites.length) return { ok: true, msg: "Không package nào của bạn có suite bị ảnh hưởng." };
   const lines = [];
   for (const suite of suites) {
     try {
@@ -164,7 +184,11 @@ if (results.length !== EXPECTED_CHECKS) {
 
 /* ---- báo cáo ------------------------------------------------------------ */
 console.log(`\nCỔNG KIỂM ĐÓNG PHIÊN — phiên "${asLabel}"`);
-console.log(`Package đụng tới: ${packagesTouched.join(", ") || "(không)"}${rootTouched ? " + file gốc repo" : ""}\n`);
+const rootMine = (CLAIMS?._root?.owner ?? null) === asLabel;
+console.log(`Bạn chịu trách nhiệm: ${myPackages.join(", ") || "(không package nào)"}${rootTouched && rootMine ? " + file gốc repo" : ""}`);
+const others = [...foreignPackages.map((pkg) => `${pkg} [${ownedBy(pkg)}]`), ...(rootTouched && !rootMine ? [`file gốc repo [${CLAIMS?._root?.owner}]`] : [])];
+if (others.length) console.log(`Phiên khác đang làm dở, KHÔNG tính cho bạn: ${others.join(", ")}`);
+console.log("");
 for (const r of results) {
   const mark = r.ok ? (r.skipped ? "BỎ  " : "XANH") : "ĐỎ  ";
   console.log(`  [${mark}] ${r.name}`);
