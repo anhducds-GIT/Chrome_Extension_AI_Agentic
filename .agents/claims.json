@@ -16,10 +16,11 @@
       "task": "Doi FEATURE-PARITY.md ve goc repo + audit artifact dashboard cua Duc."
     },
     "_root": {
-      "owner": "claude-platform-1",
-      "ai": "Claude",
-      "claimed_at": "2026-08-26",
-      "task": "Viet implementation brief cho Extension Operation Platform V0.1 vao drafts/ (Duc + GPT chot scope 2026-08-26). CHUA trien khai code — code se do doi khac lam theo brief. Tiep quan _root tu claude-chatgpt-3: viec cua phien do da xong va da push (c390fbf, 73e6500)."
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "released_at": "2026-08-26",
+      "task": "Da xong va DA PUSH (d9c519b): brief V0.1 + prompt onboarding Opus o drafts/, va luat push moi trong AGENTS.md muc 2 (Duc chot: xong viec + cong kiem xanh thi tu push qua safe-push, ap moi AI). Phien Opus trien khai V0.1 cu claim _root nay theo prompt."
     }
   }
 }
