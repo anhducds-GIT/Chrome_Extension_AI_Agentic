@@ -81,6 +81,14 @@
     // THAT TURN and the scan root collapsed to a single turn -- the probe
     // measured 3 visible images instead of 14. A wildcard over a name the
     // provider also uses per-item is not a container selector.
+    //
+    // CONFIRMED FIXED 2026-08-26 on the same conversation, after the reload
+    // that finally loaded f418bc1: imageCandidateCount went 3 -> 15 against a
+    // page holding 15 conversation images (5 distinct generated images), and
+    // this fallback list now matches 1 node instead of 12. The scan root
+    // covers the whole conversation again, so the pre-submit baseline is built
+    // from every image already on screen -- which is what stops an old image
+    // being attributed to a running job.
     conversationRoot: '[data-testid="conversation-turns"], main, [role="main"]',
     // UNVERIFIED (inherited). Containers that mark an image as INPUT rather
     // than output; a false negative here can attribute a reference image to a

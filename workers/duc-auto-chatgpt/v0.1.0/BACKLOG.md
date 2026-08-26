@@ -22,8 +22,10 @@ biến mất thì báo `RECEIVER_LOST` rõ ràng thay vì lặng lẽ đổi m�
 
 ### B-02 · Selector ChatGPT phải có bằng chứng, không kế thừa
 **Đã làm một phần** (`c1e7d04`, `f418bc1`): `assistantMessage`/`userMessage` đã
-sửa theo bằng chứng đo được, `conversationRoot` đã bỏ phụ thuộc tên. **CHƯA đo
-lại trên trang thật** — xem bước 0 của `drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md`.
+sửa theo bằng chứng đo được, `conversationRoot` đã bỏ phụ thuộc tên.
+**ĐÃ ĐO LẠI TRÊN TRANG THẬT 2026-08-26 — ĐẠT:** `assistantCount` 5,
+`imageCandidateCount` **3 → 15** trên trang có đúng 15 ảnh hội thoại (5 ảnh sinh).
+Ba nhóm `assistantMessage` / `userMessage` / `conversationRoot` coi như xong.
 Các nhóm còn lại (`composer`, `send`, `stop`, `attachmentPreview`, `uploadPending`)
 vẫn mang dấu `UNVERIFIED`. Chạy `diagnostics.dom_probe` trên tab thật, thay từng
 nhóm bằng selector khớp thật, xoá dấu `UNVERIFIED` theo từng nhóm đã xác minh. Lưu ảnh chụp bằng chứng vào `evidence/` giống cách worker
@@ -110,12 +112,15 @@ Xoá là quyền của Đức — **AI không tự xoá file**.
 
 ## Phiên kế tiếp
 
-1. **Còn treo từ phiên 2026-08-26 (chiều):** bước 0 của
-   `drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md` vẫn CHƯA đạt — `imageCandidateCount`
-   đo được **3** trên trang có **14** ảnh hội thoại. Code trên đĩa đã có `f418bc1`
-   nhưng extension đang chạy chưa nạp. Cần Đức reload + F5 rồi đo lại; kỳ vọng
-   3 → ~14. **Chưa đạt thì chưa chạy pilot** (mỗi lượt là quota thật).
-2. Sau đó: nghiệm thu sống `run.stop` + `chat.reload` (xem Log `HANDOFF.md`).
+1. **Nghiệm thu sống nốt 2 điểm cần một run thật** (chưa làm được vì chưa chạy run
+   nào): `chat.reload` phải bị `RUN_ACTIVE` từ chối khi đang chạy, và `run.stop`
+   phải dừng được một run thật kèm báo đúng `phase`. Cần Đức bật "Chế độ phát
+   triển" rồi cho phép một trial run.
+2. Còn lại của **B-02**: các nhóm `composer` / `send` / `stop` vẫn `UNVERIFIED`.
+   Đo 2026-08-26 lúc trang rảnh: composer khớp (`#prompt-textarea` => 1) nhưng
+   `send` và `stop` đều => 0 — **đúng như kỳ vọng** vì nút gửi chỉ hiện khi ô nhập
+   có chữ và nút dừng chỉ hiện lúc đang sinh ảnh. Muốn xác minh hai nhóm này thì
+   phải đo **trong lúc một run đang chạy**, gộp luôn vào mục 1.
 3. Rồi mới tới B-06 (đồng bộ GPT ↔ Gemini) theo thứ tự Đức đã chốt.
 
 ## Đã đóng
