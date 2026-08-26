@@ -59,7 +59,13 @@ const CLAIMS = (() => {
 const ownedBy = (area) => CLAIMS?.[area]?.owner ?? null;
 const myPackages = packagesTouched.filter((pkg) => ownedBy(pkg) === asLabel);
 const foreignPackages = packagesTouched.filter((pkg) => ownedBy(pkg) && ownedBy(pkg) !== asLabel);
-const orphanPackages = packagesTouched.filter((pkg) => !CLAIMS?.[pkg]);
+// Mồ côi = KHÔNG có mục trong bảng, HOẶC có mục nhưng owner = null (vừa được
+// trả quyền). Bản đầu chỉ xét trường hợp thứ nhất, nên một package đã trả
+// quyền mà còn thay đổi chưa commit sẽ rơi qua cả ba rổ (không phải của
+// bạn, không phải của phiên khác, không phải mồ côi) và **bị bỏ qua im
+// lặng** — suite của nó cũng không chạy. Lỗ này lộ ra ngày 26/08 lúc đóng
+// phiên: trả quyền trước khi commit thì cổng báo xanh mà không kiểm gì.
+const orphanPackages = packagesTouched.filter((pkg) => !CLAIMS?.[pkg] || !CLAIMS[pkg].owner);
 const mine = (file) => myPackages.some((pkg) => file.startsWith(`${pkg}/`));
 // claims.json không tính là "sửa file gốc": nhận và TRẢ quyền là thao tác
 // hành chính, không phải đổi luật. Không miễn trừ nó thì không ai trả lại
