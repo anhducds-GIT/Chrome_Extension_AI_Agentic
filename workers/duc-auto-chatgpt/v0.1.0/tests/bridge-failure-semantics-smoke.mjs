@@ -30,9 +30,13 @@ assert.equal(offlinePing.result.extension, "online");
 assert.equal(offlinePing.result.executor, "unavailable");
 assert.equal(offlinePing.result.chatgpt.state, "UNKNOWN");
 
-const executorMethods = ["queue.list", "run.status", "run.trial", "ledger.read", "jobs.add", "jobs.update", "jobs.remove", "jobs.reorder", "output.configure", "run_settings.configure", "profiles.remove", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw"];
+const executorMethods = ["queue.list", "run.status", "run.trial", "ledger.read", "jobs.add", "references.add", "jobs.update", "jobs.remove", "jobs.reorder", "output.configure", "run_settings.configure", "profiles.remove", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw"];
 const paramsByMethod = {
   "jobs.add": { jobs: [{ prompt: "x" }] },
+  // Carries image bytes, so its fail-closed behaviour with the panel shut is
+  // worth pinning like any other executor write. Added after the Antigravity
+  // audit noted the sibling Gemini worker covers it and this one did not.
+  "references.add": { references: [{ name: "r.png", data_url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==" }] },
   "jobs.update": { job_id: "Q001", prompt: "x" },
   "jobs.remove": { job_id: "Q001" },
   "jobs.reorder": { job_id: "Q001", position: 1 },

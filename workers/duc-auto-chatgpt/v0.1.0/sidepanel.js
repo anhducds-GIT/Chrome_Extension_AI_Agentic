@@ -1300,6 +1300,14 @@
     return {
       workbook: state.workbook,
       prepared: state.prepared,
+      // references.add mutates state.files inside apply(). Without it here, a
+      // persistence failure rolled the workbook and audit back but LEFT the
+      // images -- and the sharp case is replacement, not addition: a
+      // bridge-supplied name that overwrote an image Đức had picked could not
+      // be recovered by the rollback. Found by the Antigravity audit,
+      // 2026-08-26. A shallow copy is enough because entries are replaced
+      // wholesale via splice(), never mutated in place.
+      files: [...state.files],
       outputSettings: cloneBridgeOutputSettings(state.outputSettings),
       runtimeOverrides: { ...state.runtimeOverrides },
       importedConfig: state.importedConfig,
@@ -1327,6 +1335,14 @@
     const persistedAuditFile = state.auditFile;
     state.workbook = snapshot.workbook;
     state.prepared = snapshot.prepared;
+    if (snapshot.files) {
+      state.files = snapshot.files;
+      // The picker path repaints these after changing state.files; a rollback
+      // has to do the same or the gallery keeps showing images the session no
+      // longer holds.
+      if (els.referenceText) els.referenceText.textContent = `${state.files.length} local reference image(s) selected.`;
+      renderReferenceGallery();
+    }
     state.outputSettings = snapshot.outputSettings;
     state.runtimeOverrides = snapshot.runtimeOverrides;
     state.importedConfig = snapshot.importedConfig;

@@ -645,10 +645,20 @@
     registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reserve one capped development trial chain for 1-30 explicit eligible jobs; returns immediately for run.status polling.", params_schema: { job_ids: "string[1..30]" }, params_validator: validateRunTrial }),
     registryEntry({ name: "ledger.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a sanitized page of physical XLSX ledger rows.", params_schema: { cursor: "string|null", limit: "integer:1..100", include_prompt: "boolean", include_removed: "boolean" }, params_validator: validateLedgerRead }),
     registryEntry({ name: "jobs.add", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Add jobs directly to the current Setup session, or create an in-memory session.", params_schema: { jobs: "direct_job[1..100]" }, params_validator: validateJobsAdd }),
-    // NOT idempotent by name: a second call with the same name REPLACES the
-    // stored image rather than being a no-op, which is a different outcome, so
-    // claiming idempotency here would be a lie the replay store acts on.
-    registryEntry({ name: "references.add", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Add or replace in-memory reference images for the current Setup session from base64 data URLs; jobs pick them up by filename token. The only method that accepts image bytes -- reference_images elsewhere takes a filename token that must already resolve. Requires a session to attach to (jobs.add bootstraps one).", params_schema: { references: "reference_image[1..5]" }, params_validator: validateReferencesAdd }),
+    // idempotent: true, like every other mutation here. An earlier version of
+    // this entry said false, reasoning that a second call with the same
+    // filename REPLACES the image rather than being a no-op. That confused two
+    // different things, and the Antigravity audit of 2026-08-26 caught it:
+    // this flag does not describe business semantics, it gates TRANSPORT replay
+    // in createDispatcher. With it false, a client that retransmits after a
+    // transport reconnect -- same client_id, same request_id -- re-executes the
+    // handler, so one logical upload lands twice: a duplicate
+    // BRIDGE_REFERENCES_ADDED audit event, an extra checkpoint version, and a
+    // response saying "replaced" for an image that was really just added. It
+    // also disabled REQUEST_ID_REUSED detection entirely.
+    // Replacement still works with it true: a deliberate second upload carries
+    // a NEW request_id, so the replay store never matches it.
+    registryEntry({ name: "references.add", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Add or replace in-memory reference images for the current Setup session from base64 data URLs; jobs pick them up by filename token. The only method that accepts image bytes -- reference_images elsewhere takes a filename token that must already resolve. Requires a session to attach to (jobs.add bootstraps one).", params_schema: { references: "reference_image[1..5]" }, params_validator: validateReferencesAdd }),
     registryEntry({ name: "jobs.update", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Update mutable input fields on one PRE_SUBMIT job or a batch of 1-20 jobs.", params_schema: { job_id: "string?", prompt: "string?", reference_images: "string[]?", settings: "job_settings?", jobs: "job_update[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobsUpdate }),
     registryEntry({ name: "jobs.remove", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Tombstone one or 1-20 PRE_SUBMIT Queue jobs without deleting ledger rows.", params_schema: { job_id: "string?", job_ids: "string[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobIdOnly }),
     registryEntry({ name: "jobs.reorder", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Move one PRE_SUBMIT Queue job or persist a full active-queue permutation.", params_schema: { job_id: "string?", position: "integer:1..1000000?", order: "string[]?", if_ledger_etag: "string?" }, params_validator: validateJobsReorder }),

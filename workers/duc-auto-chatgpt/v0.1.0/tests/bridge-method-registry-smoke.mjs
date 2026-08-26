@@ -15,7 +15,8 @@ const expectedMethods = [
   // Gemini worker after a live jobs.add proved an AI could not run a job with
   // reference images at all -- reference_images elsewhere only takes a
   // filename token that must already resolve against the owner picker pool.
-  // Deliberately NOT idempotent: a repeat call REPLACES the stored image.
+  // Idempotent like the other mutations: the flag gates transport replay, not
+  // business semantics (Antigravity audit 2026-08-26).
   "references.add",
   "jobs.update", "jobs.remove",
   "jobs.reorder", "output.configure", "run_settings.configure", "output.set_folder_hint", "profiles.remove", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw",
@@ -50,7 +51,7 @@ assert.equal(bridge.METHOD_REGISTRY["queue.propose"].read_only, false);
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].approval, "owner_click");
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].idempotent, true);
 const idempotentMutations = [
-  "jobs.add", "jobs.update", "jobs.remove", "jobs.reorder",
+  "jobs.add", "references.add", "jobs.update", "jobs.remove", "jobs.reorder",
   "output.configure", "output.set_folder_hint", "profiles.remove", "run_settings.configure", "queue.propose", "run.trial", "queue.proposal.withdraw", "run.stop", "chat.reload"
 ];
 assert(idempotentMutations.every((name) => bridge.METHOD_REGISTRY[name].idempotent === true));

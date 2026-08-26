@@ -98,6 +98,17 @@ assert.match(handler, /persistenceRequired: false/, "references are pre-submit i
 assert.ok(!/workbookRequired: false/.test(handler),
   "workbookRequired stays default TRUE: executeBridgeDirectMutation throws WORKBOOK_NOT_LOADED after mutate() anyway, and jobs.add is the bootstrap door");
 
+// state.files must be inside the mutation transaction. This handler is the only
+// direct mutation that touches it, and before the Antigravity audit of
+// 2026-08-26 the snapshot omitted it: a persistence failure rolled the workbook
+// and audit back but left the images. The sharp case is REPLACEMENT -- a
+// bridge-supplied name overwriting an image Đức had picked, with no way back.
+const snapshot = between(sidepanel, "function bridgeDirectSnapshot", "\n  function ");
+assert.match(snapshot, /files: \[\.\.\.state\.files\]/, "the snapshot must capture state.files, or references.add is outside the transaction");
+const restore = between(sidepanel, "function restoreBridgeDirectSnapshot", "\n  function ");
+assert.match(restore, /state\.files = snapshot\.files/, "rollback must restore state.files");
+assert.match(restore, /renderReferenceGallery\(\)/, "rollback must repaint the gallery, or it shows images the session no longer holds");
+
 // The run lock. A reference swapped mid-run would change what an in-flight
 // attempt attaches, so this must never be exempted the way run.stop is.
 const directMutation = between(sidepanel, "async function executeBridgeDirectMutation", "\n  async function bridgeJobsAdd");

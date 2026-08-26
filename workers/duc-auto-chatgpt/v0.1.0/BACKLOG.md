@@ -155,6 +155,24 @@ mà debug chỉ bật khi Chế độ phát triển đang BẬT.
 kèm câu chỉ đường tới `references.add`. Cùng họ với **B-11** (`run.trial` không có workbook).
 Sửa chung một lượt thì hợp lý: cả hai đều là `prepare()` nổ bên trong mutation rồi bị bọc.
 
+### B-18 · `references.add` buộc gọi 3 bước — đã cân nhắc, CHỌN giữ nguyên
+Audit Antigravity 2026-08-26 nêu: trên GPT phải gọi `jobs.add` → `references.add` → `jobs.update`,
+trong khi Gemini cho `references.add` → `jobs.add`. Đã phân tích và **quyết định giữ nguyên**;
+audit vòng 2 đồng ý.
+
+Vì sao không sửa: `executeBridgeDirectMutation` của GPT **checkpoint mọi direct mutation**, còn
+`DacXlsx.createWorkbook` đòi tối thiểu 1 job — nên `references.add` không thể tự dựng session mà
+không bịa ra một job giả. Gemini làm được chỉ vì handler của nó **không** nằm trong transaction
+checkpoint.
+
+Lý do mạnh nhất để KHÔNG bắt chước Gemini (của auditor, mạnh hơn lập luận ban đầu của tôi):
+miễn checkpoint thì agent nạp được tới 5 ảnh (~3,5MB), nhận `ok: true`, mà **không có dòng audit
+nào** — panel reload là ảnh bay mất, không dấu vết. Đổi một lần gọi RPC bằng việc phá tính đồng
+nhất của lớp bảo vệ là lỗ.
+
+Đã ghi thứ tự gọi vào `README.md`. Nếu sau này 3 bước gây khó thật, hướng đúng là **làm cho
+session chưa có job vẫn checkpoint được**, KHÔNG phải miễn checkpoint cho method này.
+
 ### B-17 · Trần 90 giây của `run.trial` KHÔNG đủ cho việc thật
 Đo live 2026-08-26 (Pilot-14): thời gian gửi → phát hiện ảnh tăng theo số ảnh tham chiếu —
 **40 giây** (1 ảnh), **61 giây** (2 ảnh), **68 giây** (4 ảnh), với prompt *ngắn* (~200–300 ký tự).

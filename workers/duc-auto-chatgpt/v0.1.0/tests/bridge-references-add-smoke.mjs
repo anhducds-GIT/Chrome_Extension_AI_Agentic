@@ -33,9 +33,16 @@ assert(entry, "references.add must be in the registry, or the CLI cannot reach i
 assert.equal(entry.read_only, false, "it mutates the Setup session");
 assert.equal(entry.approval, "none", "reference bytes are pre-submit input, not an owner-gated action");
 assert.equal(entry.context, "executor");
-// A repeat call REPLACES the stored image rather than being a no-op, so the
-// replay store must not be told it can dedupe two calls into one.
-assert.equal(entry.idempotent, false, "replace-by-name is not idempotent and must not claim to be");
+// This flag gates TRANSPORT replay in createDispatcher -- dedupe by
+// (client_id, request_id) plus REQUEST_ID_REUSED detection -- NOT business
+// semantics. An earlier version declared false, reasoning that replace-by-name
+// is not a no-op; the Antigravity audit of 2026-08-26 showed that reasoning
+// applied the flag to the wrong layer. With false, a reconnect that
+// retransmits the same request_id re-runs the upload: duplicate audit event,
+// extra checkpoint version, and a response claiming "replaced" for an image
+// that was only added. A deliberate replacement carries a NEW request_id, so
+// true costs nothing.
+assert.equal(entry.idempotent, true, "transport replay must dedupe a retransmitted upload");
 assert(bridge.capabilities().methods.some((method) => method.name === "references.add"),
   "an AI operator discovers this method through system.capabilities");
 
