@@ -10,6 +10,7 @@ const LIFECYCLES = new Set(["idea", "building", "active", "paused", "archived", 
 const REQUIRED = ["schema", "id", "name", "lifecycle", "version_source", "current_focus", "ref_readme", "ref_handoff"];
 const BEHAVIOUR_EXTENSIONS = new Set([".js", ".mjs", ".json", ".html", ".css"]);
 const EVIDENCE_ZONE = /(^|\/)(evidence[^/]*|pilot-[^/]*|batch-[^/]*)\//i;
+export const STAMP_PREFIX = "Trang được sinh tại commit";
 const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
 
 export function parseStatus(text) {
@@ -288,7 +289,7 @@ export function buildDashboard(model) {
     "",
     "> **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.",
     "",
-    `Trang được sinh tại commit \`${model.shortHead}\` (${model.headDate}). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.`,
+    `${STAMP_PREFIX} \`${model.shortHead}\` (${model.headDate}). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.`,
     "",
     "| Extension | Version [ĐO] | Lifecycle [KHAI] | Method Bridge [ĐO] | File test [ĐO] | Kiểm chứng cuối (ngày @ commit 7 ký tự, cách kiểm) [KHAI + bằng chứng] | Code đổi sau kiểm chứng? [ĐO] | Đang giữ (claims) | Việc đang mở | Đọc sâu (link STATUS) |",
     "|---|---:|---|---:|---:|---|---|---|---|---|"
@@ -316,6 +317,75 @@ export function buildDashboard(model) {
   return lines.join("\n");
 }
 
+// Giữ SỐ DÒNG THẬT trong file, không phải số thứ tự sau khi lọc. Dòng dấu commit bị lọc ra,
+// nên nếu đếm theo danh sách đã lọc thì mọi dòng phía sau bị lùi một — và `--check` sẽ bảo
+// Đức "lệch tại dòng 8" trong khi mở file ra thì nó nằm ở dòng 9. Lời nhắn dẫn sai chỗ cũng
+// là bug, đúng luật vàng số 5.
+// `\r\n?` chứ không phải `\r\n`: bắt cả CR đơn lẻ, cùng cách `parseStatus` đang làm.
+function comparableLines(text) {
+  return String(text).replace(/\r\n?/g, "\n").split("\n")
+    .map((text, index) => ({ text, lineNumber: index + 1 }))
+    .filter((entry) => !entry.text.startsWith(STAMP_PREFIX));
+}
+
+export function compareDashboard(expected, actual) {
+  const expectedLines = comparableLines(expected);
+  const actualLines = comparableLines(actual);
+  const length = Math.max(expectedLines.length, actualLines.length);
+  for (let index = 0; index < length; index += 1) {
+    if (expectedLines[index]?.text !== actualLines[index]?.text) {
+      return {
+        matches: false,
+        // Số dòng lấy theo FILE TRÊN ĐĨA (bản `actual`) — đó là file Đức sẽ mở ra xem.
+        line: actualLines[index]?.lineNumber ?? expectedLines[index]?.lineNumber ?? 1,
+        expected: expectedLines[index]?.text ?? "<thiếu dòng>",
+        actual: actualLines[index]?.text ?? "<thiếu dòng>"
+      };
+    }
+  }
+  return { matches: true };
+}
+
+export function runDashboard({ check = false, deps = createDefaultDeps(), output = console } = {}) {
+  try {
+    const generated = buildDashboard(collectModel(deps));
+    if (!check) {
+      deps.writeFile("DASHBOARD.md", generated);
+      output.log("Đã sinh DASHBOARD.md thành công.");
+      return 0;
+    }
+
+    if (!deps.fileExists("DASHBOARD.md")) {
+      output.error("DASHBOARD.md đang thiếu nên không khớp với repo.");
+      output.error("Hãy sửa bằng lệnh: node scripts/build-dashboard.mjs");
+      return 1;
+    }
+
+    const comparison = compareDashboard(generated, deps.readFile("DASHBOARD.md"));
+    if (comparison.matches) {
+      output.log("DASHBOARD.md đang khớp với repo.");
+      return 0;
+    }
+
+    output.error(`DASHBOARD.md lệch tại dòng ${comparison.line}.`);
+    output.error(`- Đang có: ${comparison.actual}`);
+    output.error(`- Cần có: ${comparison.expected}`);
+    output.error("Hãy sửa bằng lệnh: node scripts/build-dashboard.mjs");
+    return 1;
+  } catch (error) {
+    // Lỗi không phải validate (thiếu git, thiếu file, JSON hỏng...) phải in NGUYÊN VĂN
+    // thông báo gốc. Nuốt nó rồi thay bằng một câu chung chung thì người đọc không biết
+    // sửa gì — đúng thứ luật vàng số 5 cấm.
+    const messages = error.validationErrors ?? [
+      "DASHBOARD_READ_FAILED: không đọc được đủ dữ liệu từ repo. Thường là do thiếu một file đầu vào, JSON hỏng, hoặc git không chạy được ở thư mục này.",
+      `Nguyên văn lỗi (tiếng Anh, để tra cứu): ${error.message}`
+    ];
+    output.error("Không thể sinh DASHBOARD.md:");
+    for (const message of messages) output.error(`- ${message}`);
+    return 1;
+  }
+}
+
 export function createDefaultDeps(root = ROOT) {
   const absolute = (relPath) => path.join(root, ...relPath.replaceAll("\\", "/").split("/"));
   const git = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: root, encoding: "utf8" });
@@ -325,6 +395,7 @@ export function createDefaultDeps(root = ROOT) {
     isFile: (relPath) => { try { return fs.statSync(absolute(relPath)).isFile(); } catch { return false; } },
     realPath: (relPath) => { try { return fs.realpathSync(absolute(relPath)); } catch { return null; } },
     readFile: (relPath) => fs.readFileSync(absolute(relPath), "utf8"),
+    writeFile: (relPath, text) => fs.writeFileSync(absolute(relPath), text, "utf8"),
     listDirs: (relPath) => fs.readdirSync(absolute(relPath), { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort(compareText),
     listFiles: (relPath) => fs.readdirSync(absolute(relPath), { withFileTypes: true }).filter((entry) => entry.isFile()).map((entry) => entry.name).sort(compareText),
     git: {
@@ -355,22 +426,7 @@ export function createDefaultDeps(root = ROOT) {
 }
 
 function main() {
-  try {
-    const model = collectModel();
-    fs.writeFileSync(path.join(ROOT, "DASHBOARD.md"), buildDashboard(model), "utf8");
-    console.log("Đã sinh DASHBOARD.md thành công.");
-  } catch (error) {
-    // Lỗi không phải validate (thiếu git, thiếu file, JSON hỏng...) phải in NGUYÊN VĂN
-    // thông báo gốc. Nuốt nó rồi thay bằng một câu chung chung thì người đọc không biết
-    // sửa gì — đúng thứ luật vàng số 5 cấm.
-    const messages = error.validationErrors ?? [
-      "DASHBOARD_READ_FAILED: không đọc được đủ dữ liệu từ repo. Thường là do thiếu một file đầu vào, JSON hỏng, hoặc git không chạy được ở thư mục này.",
-      `Nguyên văn lỗi (tiếng Anh, để tra cứu): ${error.message}`
-    ];
-    console.error("Không thể sinh DASHBOARD.md:");
-    for (const message of messages) console.error(`- ${message}`);
-    process.exitCode = 1;
-  }
+  process.exitCode = runDashboard({ check: process.argv.slice(2).includes("--check") });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === MODULE_FILE) main();

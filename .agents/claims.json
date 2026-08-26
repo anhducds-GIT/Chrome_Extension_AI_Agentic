@@ -20,7 +20,7 @@
       "owner": null,
       "ai": null,
       "claimed_at": null,
-      "task": "V0.1.1 DA XONG va DA PUSH (b7305a2): bo so dong khoi STATUS, sua mau thuan FEATURE-PARITY muc 2 vs muc 4, them Luat so 0 vao STATUS.template. San sang cho V0.2.",
+      "task": "V0.2-A DA XONG va DA PUSH: .gitattributes + `build-dashboard.mjs --check` + 7 ca test moi (suite 26). CHUA noi vao session-check.mjs — nang cong 6->7 la doi governance, audit rieng.",
       "released_at": "2026-08-27"
     }
   }

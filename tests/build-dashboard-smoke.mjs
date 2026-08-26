@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { sep } from "node:path";
 
-import { buildDashboard, collectModel, parsePorcelain, parseStatus, validateStatus } from "../scripts/build-dashboard.mjs";
+import { buildDashboard, collectModel, parsePorcelain, parseStatus, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -83,6 +83,24 @@ function fakeRepo({ includeStatus = true, changedCommits = [], statusOverrides =
       dirtyFiles: () => dirty
     }
   };
+}
+
+function checkHarness({ dashboard, exists = true } = {}) {
+  const base = fakeRepo();
+  const writes = [];
+  const logs = [];
+  const errors = [];
+  const deps = {
+    ...base,
+    fileExists: (relPath) => relPath === "DASHBOARD.md" ? exists : base.fileExists(relPath),
+    readFile: (relPath) => relPath === "DASHBOARD.md" ? dashboard : base.readFile(relPath),
+    writeFile: (relPath, text) => writes.push({ relPath, text })
+  };
+  const output = {
+    log: (message) => logs.push(message),
+    error: (message) => errors.push(message)
+  };
+  return { deps, output, writes, logs, errors };
 }
 
 /* 1. Parser phẳng, có comment, dấu hai chấm và dấu nháy. */
@@ -387,6 +405,94 @@ function fakeRepo({ includeStatus = true, changedCommits = [], statusOverrides =
   model.rows[0].currentFocus = "A | B";
   assert.match(buildDashboard(model), /A \\\| B/);
   ok("ký tự gạch đứng trong ô được escape");
+}
+
+/* 16. --check PASS khi dashboard khớp, trả exit 0 và xác nhận bằng tiếng Việt. */
+{
+  const expected = buildDashboard(collectModel(fakeRepo()));
+  const harness = checkHarness({ dashboard: expected });
+  assert.equal(runDashboard({ check: true, deps: harness.deps, output: harness.output }), 0);
+  assert.ok(harness.logs.some((message) => message.includes("đang khớp")));
+  ok("--check trả exit 0 khi dashboard khớp");
+}
+
+/* 17. --check FAIL khi một ô lệch, nêu dòng lệch và lệnh sửa. */
+{
+  const expected = buildDashboard(collectModel(fakeRepo()));
+  const stale = expected.replace("Kiểm tra dashboard", "Nội dung đã cũ");
+  const harness = checkHarness({ dashboard: stale });
+  assert.equal(runDashboard({ check: true, deps: harness.deps, output: harness.output }), 1);
+  assert.ok(harness.errors.some((message) => /lệch tại dòng \d+/.test(message)), "phải nêu dòng lệch");
+  assert.ok(harness.errors.some((message) => message.includes("node scripts/build-dashboard.mjs")), "phải nêu lệnh sửa");
+  ok("--check trả exit khác 0, nêu dòng lệch và lệnh sửa khi một ô bị cũ");
+}
+
+/* 17b. Số dòng báo ra phải là SỐ DÒNG THẬT trong file Đức sẽ mở, không phải số thứ tự sau
+   khi lọc. Dòng dấu commit bị lọc ra, nên đếm theo danh sách đã lọc thì mọi dòng phía sau
+   bị lùi một — `--check` sẽ chỉ Đức tới đúng một dòng nằm cạnh dòng sai. Lời nhắn dẫn sai
+   chỗ cũng là bug. Bắt được 2026-08-27 khi chạy `--check` thật trên repo: nó báo dòng 8,
+   dòng thật là 9. Suite lúc đó 25/25 xanh — không ca nào ghim con số này. */
+{
+  const expected = buildDashboard(collectModel(fakeRepo()));
+  const marker = "Kiểm tra dashboard";
+  const stale = expected.replace(marker, "Nội dung đã cũ");
+
+  // Số dòng thật, đếm trên chính chuỗi sẽ được ghi ra đĩa (dòng dấu commit VẪN nằm trong đó).
+  const realLine = stale.split("\n").findIndex((line) => line.includes("Nội dung đã cũ")) + 1;
+  assert.ok(realLine > 0, "fixture phải thật sự có dòng bị làm cũ");
+
+  const harness = checkHarness({ dashboard: stale });
+  runDashboard({ check: true, deps: harness.deps, output: harness.output });
+  assert.ok(
+    harness.errors.some((message) => message.includes(`lệch tại dòng ${realLine}.`)),
+    `phải báo đúng dòng ${realLine} của file trên đĩa, không phải số thứ tự sau khi lọc`
+  );
+  // Chốt chặn: fixture phải thật sự có dòng dấu commit phía trên, nếu không ca này vô nghĩa
+  // (không lọc gì thì hai cách đếm trùng nhau và mutation sẽ không đỏ).
+  const stampLine = stale.split("\n").findIndex((line) => line.startsWith(STAMP_PREFIX)) + 1;
+  assert.ok(stampLine > 0 && stampLine < realLine,
+    "dòng dấu commit phải nằm TRƯỚC dòng lệch, nếu không ca này không chứng minh được gì");
+  ok("--check báo đúng số dòng thật trong file, không phải số sau khi lọc dấu commit");
+}
+
+/* 18. Chỉ khác dòng dấu commit vẫn PASS; bộ lọc dùng chung mốc STAMP_PREFIX. */
+{
+  const expected = buildDashboard(collectModel(fakeRepo()));
+  const differentStamp = expected.replace(
+    new RegExp(`^${STAMP_PREFIX}.*$`, "m"),
+    `${STAMP_PREFIX} \`fffffff\` (1999-01-01). Dấu commit khác hoàn toàn.`
+  );
+  const harness = checkHarness({ dashboard: differentStamp });
+  assert.equal(runDashboard({ check: true, deps: harness.deps, output: harness.output }), 0);
+  ok("--check bỏ qua đúng dòng dấu commit qua mốc STAMP_PREFIX");
+}
+
+/* 19. CRLF trên đĩa và LF sinh trong bộ nhớ là cùng nội dung. */
+{
+  const expected = buildDashboard(collectModel(fakeRepo()));
+  const harness = checkHarness({ dashboard: expected.replaceAll("\n", "\r\n") });
+  assert.equal(runDashboard({ check: true, deps: harness.deps, output: harness.output }), 0);
+  ok("--check chuẩn hóa CRLF về LF trước khi so");
+}
+
+/* 20. --check tuyệt đối không ghi file ở cả PASS lẫn FAIL. */
+{
+  const expected = buildDashboard(collectModel(fakeRepo()));
+  for (const dashboard of [expected, expected.replace("Kiểm tra dashboard", "Đã cũ")]) {
+    const harness = checkHarness({ dashboard });
+    runDashboard({ check: true, deps: harness.deps, output: harness.output });
+    assert.deepEqual(harness.writes, [], "--check không được gọi writeFile ở bất kỳ kết cục nào");
+  }
+  ok("--check không ghi DASHBOARD.md ở cả kết cục PASS và FAIL");
+}
+
+/* 21. Thiếu DASHBOARD.md là lệch có hướng dẫn, không crash. */
+{
+  const harness = checkHarness({ exists: false });
+  assert.equal(runDashboard({ check: true, deps: harness.deps, output: harness.output }), 1);
+  assert.ok(harness.errors.some((message) => message.includes("đang thiếu")));
+  assert.ok(harness.errors.some((message) => message.includes("node scripts/build-dashboard.mjs")));
+  ok("--check coi DASHBOARD.md bị thiếu là lệch và không crash");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
