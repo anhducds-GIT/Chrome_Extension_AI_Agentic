@@ -111,7 +111,13 @@ assert.equal(adapter.SELECTORS.fileDropTarget, "file-drop-indicator");
 assert.deepEqual([...adapter.SELECTORS.responseContainer], ["model-response"], "assistant turns are model-response containers");
 assert.equal(adapter.SELECTORS.userQueryContainer, "user-query");
 assert.equal(adapter.SELECTORS.generatedImage, "generated-image single-image img");
-assert.equal(adapter.SELECTORS.generatedImageMinSize, 200, "generated output must render at >= 200x200");
+// NGƯỠNG NÀY LÀ LỚP BẢO VỆ, không phải con số tuỳ chỉnh: nó chặn việc nhận
+// nhầm ảnh nhỏ/biểu tượng làm output. Đổi nó phải Đức chốt (AGENTS.md 2.4).
+// 150 do Đức chốt 26/08 trên số đo thật: Gemini render 330x180, ảnh đính kèm
+// 112x112. Ngưỡng 200 cũ đòi cả hai chiều >= 200 nên 180 < 200 loại sạch mọi
+// ảnh sinh ra; bug ẩn lâu vì ảnh lh3 lọt nhờ remoteVerifiedResult bỏ hẳn
+// phép kiểm kích thước.
+assert.equal(adapter.SELECTORS.generatedImageMinSize, 150, "ngưỡng kích thước ảnh sinh ra = 150 (Đức chốt 26/08 trên số đo 330x180 vs 112x112) — đổi phải hỏi Đức");
 // Output exclusion (snapshot 1/1b/3): user uploads, template gallery cards
 // and composer previews are never output candidates.
 for (const excluded of ["user-query", "image-card", "input-container"]) {

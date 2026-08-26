@@ -103,11 +103,12 @@ assert.ok(!/blobSwapWaitMs|blobWaitStartedAt|blobSwapped/.test(content), "phép 
 //         cuộn — ảnh ngoài viewport vẫn đo đúng 330x180. Cuộn không đổi con số.
 assert.ok(!/nudgeCandidateIntoView|scrollIntoView/.test(content), "phép cuộn đã bỏ — tiền đề sai, đừng dựng lại (HANDOFF 26/08)");
 
-//     Nguyên nhân thật đã xác định bằng số học: generatedImageMinSize = 200 đòi
-//     CẢ hai chiều >= 200, mà Gemini render preview 330x180. Ảnh lh3 lọt được
-//     chỉ nhờ remoteVerifiedResult bỏ qua hẳn phép kiểm kích thước — nên bug
-//     này đã nằm đó từ lâu, bị che mất, và lộ ra khi Gemini chuyển sang blob.
-//     Sửa ngưỡng là đổi luật an toàn -> phải Đức chốt (AGENTS.md 2.4).
-assert.match(content, /rect\.width >= minSize && rect\.height >= minSize/, "phép kiểm kích thước vẫn nguyên — chưa ai được tự sửa ngưỡng");
+//     Nguyên nhân thật, xác định bằng số học: ngưỡng đòi CẢ hai chiều >= 200
+//     mà Gemini render preview 330x180. Ảnh lh3 lọt được chỉ nhờ
+//     remoteVerifiedResult bỏ qua hẳn phép kiểm kích thước — nên bug đã nằm đó
+//     từ lâu, bị che, và lộ ra khi Gemini chuyển sang blob.
+//     Đức chốt 26/08: hạ ngưỡng 200 -> 150 (giữa 112 và 180, cách rộng cả hai
+//     bên). Phép kiểm GIỮ NGUYÊN hình dạng — chỉ con số đổi, và chỉ Đức đổi.
+assert.match(content, /rect\.width >= minSize && rect\.height >= minSize/, "phép kiểm kích thước vẫn nguyên hình dạng — chỉ con số ngưỡng được đổi, và chỉ Đức đổi");
 
 console.log("blob image conversion: PASS");

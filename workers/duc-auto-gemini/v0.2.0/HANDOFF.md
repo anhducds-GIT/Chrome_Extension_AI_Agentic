@@ -292,3 +292,9 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - Ghim cả hai đường cụt vào test (`!/blobSwapWaitMs|blobWaitStartedAt|blobSwapped/` và `!/nudgeCandidateIntoView|scrollIntoView/`) kèm lý do — cả hai đều nghe rất hợp lý nên phiên sau rất dễ dựng lại. Ghim thêm: phép kiểm kích thước phải còn nguyên, chưa ai được tự sửa ngưỡng. Suite **78/78**.
   - **Số liệu để Đức quyết ngưỡng:** ảnh Gemini sinh ra **330 × 180**; ảnh đính kèm do người dùng tải lên **112 × 112**; ngưỡng hiện tại **200 cả hai chiều**. Khoảng trống giữa 112 và 180 là chỗ đặt ngưỡng mới an toàn.
 - **Next:** Đức chốt ngưỡng kích thước. Đây là đổi luật an toàn (AGENTS.md 2.4) nên tôi không tự sửa — dù chỉ là đổi một con số.
+- 2026-08-26 · Claude · **Đức chốt hạ ngưỡng 200 → 150. Đã sửa, chờ nạp lại để kiểm chứng.** Một con số, nhưng là con số của lớp bảo vệ nên phải Đức chốt — và nó chốt trên **số đo thật** (330×180 vs 112×112), không trên cảm giác. Ghi vào `decisions.md`.
+  - `provider-adapter.js`: `generatedImageMinSize: 150`, kèm nguyên vẹn lý lẽ tại chỗ (số đo hai loại ảnh, vì sao 200 sai, vì sao 150 an toàn cả hai bên).
+  - `provider-adapter-static.mjs`: phép ghim `assert.equal(..., 200)` đổi thành `150` **và giữ nguyên độ chặt** — nó vẫn khoá cứng một con số duy nhất, kèm ghi chú "đổi phải hỏi Đức". Không nới thành `>=` hay khoảng, vì cái ghim này chính là thứ chặn ai đó lặng lẽ chỉnh ngưỡng bảo vệ.
+  - Phép kiểm `rect.width >= minSize && rect.height >= minSize` **giữ nguyên hình dạng**, có test ghim. Chỉ con số đổi.
+  - Suite **78/78**.
+- **Next:** Đức reload extension (⟳) + F5 tab Gemini, rồi tôi chạy 2 job. Kỳ vọng: ĐẠT — vì đây là lần đầu trị đúng nguyên nhân đã xác định bằng số học, không phải bằng suy luận.

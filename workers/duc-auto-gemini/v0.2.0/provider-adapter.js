@@ -74,7 +74,17 @@
     generatedImageContainer: "generated-image",
     generatedImageAltMarker: "ai generated",
     generatedImageHostPattern: /^https:\/\/lh3\.googleusercontent\.com\//i,
-    generatedImageMinSize: 200,
+    // 150, không phải 200 — Đức chốt 26/08 sau khi ĐO thật:
+    //   ảnh Gemini sinh ra:            330 x 180
+    //   ảnh người dùng đính kèm:       112 x 112
+    // Ngưỡng 200 cũ đòi CẢ hai chiều >= 200, nên 180 < 200 khiến MỌI ảnh sinh
+    // ra bị chấm "không hiện ra" vĩnh viễn. Bug đó ẩn được lâu vì ảnh
+    // https://lh3 lọt qua nhờ remoteVerifiedResult bỏ hẳn phép kiểm kích
+    // thước, không phải nhờ kích thước đạt; Gemini chuyển sang render blob:
+    // thì lớp che biến mất và bug lộ ra.
+    // 150 nằm giữa 112 và 180, cách cả hai một khoảng rộng — vẫn loại được
+    // ảnh nhỏ/biểu tượng, mà không sát mép bên nào.
+    generatedImageMinSize: 150,
     // An <img> inside any of these ancestors is INPUT/template evidence and is
     // excluded from output candidates (zero-state gallery cards, the
     // operator's uploads, composer previews -- snapshots 1/1b/3).
