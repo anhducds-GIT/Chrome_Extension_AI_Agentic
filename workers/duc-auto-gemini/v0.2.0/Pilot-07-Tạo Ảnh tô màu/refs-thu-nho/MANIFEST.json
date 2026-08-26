@@ -1,0 +1,128 @@
+[
+  {
+    "stt": 1,
+    "ref": "ref-01.jpg",
+    "anh_goc": "0a7e8271-7a8d-4f02-ab9c-5d8a05a401d1.png",
+    "kich_thuoc": "1024x683",
+    "bytes": 192541
+  },
+  {
+    "stt": 2,
+    "ref": "ref-02.jpg",
+    "anh_goc": "0c634a06-88f7-4cfb-8c9b-aedf76fbddec.png",
+    "kich_thuoc": "1024x768",
+    "bytes": 207943
+  },
+  {
+    "stt": 3,
+    "ref": "ref-03.jpg",
+    "anh_goc": "133b2fda-b62b-4d6e-885a-412dc88deb58.png",
+    "kich_thuoc": "1024x683",
+    "bytes": 275839
+  },
+  {
+    "stt": 4,
+    "ref": "ref-04.jpg",
+    "anh_goc": "178e4781-50f3-42b7-a39e-24cf0fed6865.png",
+    "kich_thuoc": "1024x683",
+    "bytes": 220193
+  },
+  {
+    "stt": 5,
+    "ref": "ref-05.jpg",
+    "anh_goc": "22e01a34-03cc-476d-bdd0-7d02aeb6a392.png",
+    "kich_thuoc": "1024x683",
+    "bytes": 207619
+  },
+  {
+    "stt": 6,
+    "ref": "ref-06.jpg",
+    "anh_goc": "3efe09f7-5801-4ffb-8620-2a235a06be0b.png",
+    "kich_thuoc": "1024x683",
+    "bytes": 163511
+  },
+  {
+    "stt": 7,
+    "ref": "ref-07.jpg",
+    "anh_goc": "3fec2720-fda7-4f59-a1c0-0d91e3388b47.png",
+    "kich_thuoc": "1024x768",
+    "bytes": 165944
+  },
+  {
+    "stt": 8,
+    "ref": "ref-08.jpg",
+    "anh_goc": "51d087de-60ce-4a55-bd3a-fa314ed5cc65.png",
+    "kich_thuoc": "1024x768",
+    "bytes": 215401
+  },
+  {
+    "stt": 9,
+    "ref": "ref-09.jpg",
+    "anh_goc": "59b1c4d7-f174-4619-88e5-01c190b4c791.png",
+    "kich_thuoc": "1024x683",
+    "bytes": 148693
+  },
+  {
+    "stt": 10,
+    "ref": "ref-10.jpg",
+    "anh_goc": "66816baa-6eb9-48c0-82ae-0d0f27256486.png",
+    "kich_thuoc": "1024x768",
+    "bytes": 272277
+  },
+  {
+    "stt": 11,
+    "ref": "ref-11.jpg",
+    "anh_goc": "71ec18a5-4f6e-49fe-afbf-120e725c5d6c.png",
+    "kich_thuoc": "1024x768",
+    "bytes": 187821
+  },
+  {
+    "stt": 12,
+    "ref": "ref-12.jpg",
+    "anh_goc": "7d5d2b28-d786-40cb-907f-7b2d13cda779.png",
+    "kich_thuoc": "1024x768",
+    "bytes": 294212
+  },
+  {
+    "stt": 13,
+    "ref": "ref-13.jpg",
+    "anh_goc": "83f883c7-21c5-43e3-a363-e29c2a783a7e.png",
+    "kich_thuoc": "1024x683",
+    "bytes": 227613
+  },
+  {
+    "stt": 14,
+    "ref": "ref-14.jpg",
+    "anh_goc": "994716c8-8f99-4b2a-b00d-36fd55fcaaec.png",
+    "kich_thuoc": "1024x683",
+    "bytes": 205385
+  },
+  {
+    "stt": 15,
+    "ref": "ref-15.jpg",
+    "anh_goc": "a5c45b18-c997-45ff-88a5-845b741dbea1.png",
+    "kich_thuoc": "1024x768",
+    "bytes": 152719
+  },
+  {
+    "stt": 16,
+    "ref": "ref-16.jpg",
+    "anh_goc": "e6b753d4-2ec6-4672-9000-f85f7f8846cc.png",
+    "kich_thuoc": "1024x768",
+    "bytes": 186210
+  },
+  {
+    "stt": 17,
+    "ref": "ref-17.jpg",
+    "anh_goc": "e9d4c9db-d958-4d4e-90cc-fb2140a51960.png",
+    "kich_thuoc": "1024x683",
+    "bytes": 222798
+  },
+  {
+    "stt": 18,
+    "ref": "ref-18.jpg",
+    "anh_goc": "fd8cf98b-36b7-410a-8c26-9bd049483c1f.png",
+    "kich_thuoc": "1024x683",
+    "bytes": 130448
+  }
+]

@@ -93,7 +93,7 @@ COMPANION (đọc khi cần):
 | `drafts/AGENT-BRIDGE-ROADMAP-AND-GUIDE-V1.md` | Roadmap + use case Bridge cho Đức (không kỹ thuật) — **một phần đã lỗi thời sau Tầng 1, xem audit 2026-08-24** |
 | `drafts/AGENT-BRIDGE-TIER1-HANDOFF.md` | Brief Tầng 1 (6 method ghi trực tiếp + tab BRIDGE) giao cho Codex |
 | `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md` | Audit độc lập toàn hệ thống + roadmap 5 giai đoạn tiến tới tự hành (chờ Đức chốt 5 điểm) |
-| `dev-trial-core.js` | Gate thuần cho `run.trial` (Chế độ phát triển): toggle owner, ≤2 job, khoảng cách ≥300s giữa 2 trial — quyết định 2026-08-25 |
+| `dev-trial-core.js` | Gate thuần cho `run.trial` (Chế độ phát triển): toggle owner, **≤30 job một chuỗi** (`MAX_TRIAL_JOBS`), khoảng cách ≥300s giữa 2 trial — quyết định 2026-08-25 (trần nâng 2→10→30 trong cùng ngày) |
 | `tests/blob-image-conversion-static.mjs` | Ghim: ảnh `blob:` phải nhận dạng theo BYTE rồi chuyển thành data URL background chấp nhận (lỗi live 26/08) |
 | `tests/attach-path-recorded-static.mjs` | Ghim: đường gắn ảnh tham chiếu phải được ghi lại kể cả khi THÀNH CÔNG (Pilot-REF-01) |
 | `tests/bridge-run-trial-smoke.mjs` | Test cho `run.trial`: registry, validation, ma trận từ chối, audit `bridge_dev`, UI toggle/badge |
@@ -104,6 +104,9 @@ COMPANION (đọc khi cần):
 | `Pilot-REF-01/` | Pilot ảnh tham chiếu, lần đầu chạy live (26/08) — bằng chứng, không sửa |
 | `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
 | `Pilot-07/`, `Pilot-08/`, `Pilot-09.../` | Pilot đang hoạt động, có thể có dữ liệu mới |
+| `Pilot-07-Tạo Ảnh tô màu/` | Pilot 07 (26/08): 18 ảnh màu gốc của Đức → 18 tranh nét cho trẻ 5 tuổi tô. Kế hoạch `PILOT-07-PLAN.md`, kết quả `PILOT-07-KET-QUA.md`. **Ảnh gốc `*.png` (44 MB) KHÔNG vào git** — xem `.gitignore` trong thư mục |
+| `Pilot-07-Tạo Ảnh tô màu/ket-qua/` | 18 tranh nét thành phẩm `to-mau-01..18.jpg` + `BANG-DOI-CHIEU-KET-QUA.md` (tranh ↔ ảnh gốc ↔ job) — bằng chứng, không sửa |
+| `Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/` | Bản thu nhỏ JPEG 1024px của 18 ảnh gốc (127–294 KB) để lọt trần 700 KB của `references.add`. Ảnh gốc không bị đụng. Bảng đối chiếu: `BANG-DOI-CHIEU.md` |
 
 Thêm file/thư mục mới cấp cao → phải thêm 1 dòng vào bảng này. Không khai báo
 = không tồn tại (luật CLAUDE.md gốc).

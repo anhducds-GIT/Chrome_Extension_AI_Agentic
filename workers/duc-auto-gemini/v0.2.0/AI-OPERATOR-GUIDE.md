@@ -25,7 +25,7 @@ CLI có sẵn: `cd "C:\WORKING ZONE\Duc-Auto-Gemini-Bridge" && node bridge-cli.m
 | `ledger-read` | ledger.read | Sổ cái attempt |
 | `run-trial --jobs A,B,... [--timeout 90] [--delay 25]` | run.trial | TỰ chạy một chuỗi liên tục ≤30 job (cần Dev Mode BẬT trong panel) |
 | (raw POST) | jobs.add / jobs.update / jobs.remove / jobs.reorder | Dựng/sửa hàng đợi — jobs.add TỰ TẠO phiên nếu panel chưa có workbook |
-| (raw POST) | references.add | Đẩy ảnh tham chiếu (data URL, ≤5/lần, ≤700KB/ảnh) |
+| (raw POST) | references.add | Đẩy ảnh tham chiếu (data URL, ≤700KB/ảnh **và tổng gói ≤1 MB/lệnh** — xem bảng lỗi) |
 | (raw POST) | run_settings.configure / output.configure | Cấu hình phiên |
 | `bridge-rpc.mjs diagnostics.dom_probe` | diagnostics.dom_probe | MẮT TỪ XA: snapshot DOM chỉ-đọc của tab Gemini (selector counts, buttons, images, custom tags, file inputs) — hết cảnh mượn mắt owner |
 
@@ -45,6 +45,11 @@ gửi tới `http://127.0.0.1:32148/v1/rpc` với header `Authorization: Bearer 
 ### Dựng phiên từ thư mục Đức đưa
 1. Đọc thư mục: workbook xlsx (cột `id`,`prompt`,`reference_images`) hoặc mô tả prompt.
 2. `jobs.add` (id tự cấp Q001…), `references.add` nếu có ảnh, `run_settings/output.configure` nếu cần.
+   **LUÔN đặt `output_downloads_subfolder` riêng cho từng pilot** (ví dụ `Duc Auto Gemini/Pilot-07`).
+   Lý do đã gặp thật 26/08: id job luôn bắt đầu lại từ Q001, nên Pilot-07 đổ vào cùng thư mục với
+   Batch-SX-01 và Chrome phải tự đổi tên thành `Q001 (3).jpg`. Nhìn tên file KHÔNG còn biết ảnh
+   thuộc pilot nào — suýt nữa tôi đọc nhầm poster Bali cũ thành kết quả của Pilot-07. Đối chiếu
+   kết quả thì tin **thời gian sửa file**, đừng tin tên file.
 3. `queue-list` xác nhận → báo Đức "sẵn sàng" → Đức bấm Run, hoặc bạn `run-trial` cả chuỗi ≤30 job (dev).
 
 ### Theo dõi một lần chạy
@@ -77,6 +82,9 @@ Vòng poll `run-status` mỗi 10s (chạy nền). LƯU Ý baseline: counts là T
 | `POST_SUBMIT_UNCERTAIN` + "Generated image URL was not usable", ảnh CÓ trên trang | Gemini render ảnh sinh ra có lúc là `blob:` (không phải `lh3`). Blob đó mang nhãn MIME không phải ảnh, nên data URL tạo ra thành `application/octet-stream` và background từ chối đúng luật | ĐÃ VÁ 26/08: nhận dạng theo BYTE rồi mới đóng nhãn (`sniffImageType`). Thông điệp từ chối giờ in 40 ký tự đầu của URL, và sổ cái ghi `blob_conversion` |
 | Gắn ảnh tham chiếu: chạy thành công nhưng không biết đường nào đã dùng | Dấu vết `attachmentFingerprint` chỉ ghi khi THẤT BẠI | Đã biết, chưa sửa. Rủi ro: đường chính hỏng thì hệ thống âm thầm rơi sang đường dự phòng, không ai hay (Pilot-REF-01, 26/08) |
 | Ảnh lưu ra `.jpg` dù mẫu tên ghi `.png` | Gemini trả JPEG; Chrome sửa đuôi cho khớp nội dung thật | Không phải lỗi — đuôi mới đúng hơn. Lớp khoan dung ghi tên thật vào sổ cái |
+| Cổng kiểm báo **"chưa khai vào Bản đồ file"** cho một thư mục mà bạn ĐÃ khai, tên thư mục in ra trông như `Táº¡o áº¢nh` | Git mặc định mã hoá ký tự không phải ASCII thành octal. Cổng đem chuỗi mã hoá đó so với tên thật trong `AGENTS.md` nên không bao giờ khớp — **mọi thư mục đặt tên tiếng Việt đều đỏ oan** | ĐÃ VÁ 26/08 (Đức duyệt): `scripts/session-check.mjs` và `scripts/safe-push.mjs` gọi git kèm `-c core.quotepath=false`; safe-push bỏ thêm dấu nháy bao ngoài trước khi quy chủ sở hữu commit. Ghim bằng `tests/session-check-utf8-paths.mjs` (nằm trong `npm test`). **Thấy đỏ oan thì đừng sửa cổng cho nó xanh — tìm xem cổng đọc sai cái gì** |
+| `INVALID_ENVELOPE` khi `references.add` nhiều ảnh cùng lúc | **Trần thân gói RPC là 1 MB** (`MAX_ENVELOPE_BYTES` trong `bridge-host.mjs`), không phải trần theo SỐ ảnh. 5 ảnh × ~390 KB data URL = vượt ngay | Chia lô theo BYTE, không theo số lượng: cộng dồn độ dài data URL, cắt lô ở ~800 KB. Đo thật Pilot-07 (26/08): 15 ảnh 127–294 KB → 6 lô, 2–3 ảnh/lô |
+| Job trượt `POST_SUBMIT_UNCERTAIN`, sổ cái ghi `decision_reason: AMBIGUOUS_NEW_IMAGE`, thử lại thì đạt | Lúc chấm có **HAI** ảnh mới cùng lúc: một ảnh gán được cho lượt này, một ảnh nữa "mới hiện" không thuộc lượt này. Luật từ chối đoán bừa → trượt. Đo thật Pilot-07 Q001 lần 1: `post_turn` 1 ảnh (`6c89e72a`), `fresh` 2 ảnh (thêm `2bcc3eb9`, vai assistant, KHÔNG phải ảnh đính kèm) | Chưa rõ ảnh thứ hai là gì — sổ cái chỉ ghi mã băm, không ghi URL. **Đừng nới luật attribution** (đó là lớp chống job này lấy ảnh job khác). Việc cần làm trước: thêm URL rút gọn vào `fresh_ids` để lần sau nhận mặt được nó |
 
 ## 6. Nguyên tắc làm việc (đúc từ các phiên trước)
 
