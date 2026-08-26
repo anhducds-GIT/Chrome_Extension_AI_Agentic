@@ -16,10 +16,10 @@
       "task": "Doi FEATURE-PARITY.md ve goc repo + audit artifact dashboard cua Duc."
     },
     "_root": {
-      "owner": "claude-chatgpt-3",
+      "owner": "claude-platform-1",
       "ai": "Claude",
       "claimed_at": "2026-08-26",
-      "task": "Nhan FEATURE-PARITY.md tu package GPT ve goc repo."
+      "task": "Viet implementation brief cho Extension Operation Platform V0.1 vao drafts/ (Duc + GPT chot scope 2026-08-26). CHUA trien khai code — code se do doi khac lam theo brief. Tiep quan _root tu claude-chatgpt-3: viec cua phien do da xong va da push (c390fbf, 73e6500)."
     }
   }
 }

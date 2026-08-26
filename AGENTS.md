@@ -106,6 +106,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Biết Đức đã chốt gì | `decisions.md` của package (mới nhất ở cuối) |
 | Biết phiên trước làm tới đâu | `HANDOFF.md` của package (cuối file) |
 | **Biết nhánh mình đang thiếu tính năng gì so với nhánh kia** | `FEATURE-PARITY.md` ở gốc repo |
+| Sắp code Extension Operation Platform V0.1 (STATUS/DASHBOARD) | `drafts/PLATFORM-V01-IMPLEMENTATION-BRIEF.md` — đề bài đã chốt, không tự mở rộng |
 
 **Về `FEATURE-PARITY.md`:** bảng tính năng GPT ↔ Gemini, đo bằng máy 2026-08-26. Nó ở **gốc
 repo** vì nói về cả hai nhánh — sửa nó thì phải đang giữ `_root`. Mỗi dòng ghi rõ được xác lập
