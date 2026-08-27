@@ -183,11 +183,40 @@ check("Test xanh", () => {
   return { ok: true, msg: lines.join(" · ") };
 });
 
+/* ---- 7. Sự thật máy sinh còn tươi ------------------------------------ */
+// Phép kiểm này dựng và so hoàn toàn từ HEAD: chạy SAU commit, trước safe-push.
+// Nó không đọc hay ghi working tree, vì việc đang làm dở của bất kỳ phiên nào
+// cũng không được làm đỏ sự thật đã commit. --quick chỉ bỏ test, không bỏ phép này.
+check("Sự thật máy sinh còn tươi", () => {
+  const scripts = ["build-dashboard.mjs", "feature-parity.mjs"];
+  const failures = [];
+  for (const script of scripts) {
+    try {
+      execFileSync(process.execPath, [path.join(ROOT, "scripts", script), "--check-head"], {
+        cwd: ROOT,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 120000
+      });
+    } catch (error) {
+      const detail = String(error.stderr || error.stdout || error.message).trim().split("\n").slice(-4).join(" | ");
+      failures.push(`${script} không khớp với HEAD${detail ? ` → ${detail}` : ""}`);
+    }
+  }
+  if (failures.length) {
+    return {
+      ok: false,
+      msg: `${failures.join(" · ")}. Hãy sửa bằng: node scripts/build-dashboard.mjs && node scripts/feature-parity.mjs, rồi commit --amend hoặc tạo commit mới.`
+    };
+  }
+  return { ok: true, msg: "DASHBOARD.md và FEATURE-PARITY.md đã commit đều khớp với HEAD." };
+});
+
 /* ---- chống tự tháo cổng ------------------------------------------------- */
 // Cách dễ nhất để "làm cho cổng xanh" là lặng lẽ xoá bớt một phép kiểm.
 // Con số này chặn đúng việc đó: thêm phép kiểm thật thì tăng nó lên và ghi
 // một dòng vào HANDOFF nói vì sao.
-const EXPECTED_CHECKS = 6;
+const EXPECTED_CHECKS = 7;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

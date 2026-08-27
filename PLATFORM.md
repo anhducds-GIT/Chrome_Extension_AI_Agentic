@@ -70,7 +70,22 @@ Ba bước của [`AGENTS.md`](AGENTS.md) mục 0, thêm đúng một bước ch
    a. cập nhật `STATUS.md` nếu trạng thái đổi (kiểm chứng mới → sửa `last_verified` +
       `last_verified_commit` + `evidence_ref`; việc mở đổi → sửa `current_focus`);
    b. `node scripts/build-dashboard.mjs` → commit `DASHBOARD.md` sinh ra;
-   c. `node scripts/session-check.mjs --as <nhãn-của-bạn>` → **xanh toàn bộ** mới được nói xong.
+   c. **commit**, rồi `node scripts/session-check.mjs --as <nhãn-của-bạn>` → **xanh toàn bộ**
+      mới được nói xong, rồi mới `safe-push`.
+
+> **Thứ tự ở bước 3c không tuỳ tiện.** Phép kiểm #7 ("Sự thật máy sinh còn tươi") so **HEAD
+> với HEAD** — nó hỏi *"bản đã commit có khớp với repo đã commit không?"*. Chạy nó **trước**
+> khi commit thì HEAD chưa có việc mới, cổng vô nghĩa. Chạy **sau** commit, **trước** push.
+>
+> Đổi lại, nó **miễn nhiễm với việc đang làm dở** — của bạn lẫn của phiên khác. Đó là chủ đích:
+> ngày 27/08 đo được rằng một file `.js` chưa commit trong Gemini làm cả hai cổng đỏ, tức là
+> phiên đang làm ChatGPT bị chặn vì việc của người khác. Cổng #7 đọc HEAD nên chuyện đó không
+> xảy ra được.
+>
+> **Muốn biết "ai đang giữ package nào" thì đọc `.agents/claims.json`, hoặc dòng đầu output của
+> `session-check.mjs`** — KHÔNG phải `DASHBOARD.md`. Claims là trạng thái phiên, đổi nhiều lần
+> trong một buổi; để nó trong artifact được commit thì mỗi lần claim/release lại làm trang cũ
+> đi. GPT chốt bỏ cột đó ngày 27/08.
 
 ## 5. Hai vai — checklist, không phải chức danh
 

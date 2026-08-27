@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
@@ -7,6 +8,7 @@ import {
   collectParityModel,
   compareParity,
   countLines,
+  createHeadDeps,
   extractRegistryMethods,
   normalizedHash,
   renderAutoBlocks,
@@ -286,6 +288,19 @@ function outsideMarkerBytes(text) {
   assert.deepEqual(compareParity("a\nb\nc", "a\nX\nc"), { matches: false, line: 2, expected: "b", actual: "X" });
   assert.deepEqual(compareParity("a\r\nb\r\n", "a\nb\n"), { matches: true });
   ok("so sánh báo dòng đầu tiên và coi CRLF/LF là tương đương");
+}
+
+/* 11. HEAD deps đọc blob/listing đã commit, không đọc file working tree. */
+{
+  const deps = createHeadDeps();
+  const committed = execFileSync("git", ["-c", "core.quotepath=false", "show", "HEAD:FEATURE-PARITY.md"], {
+    cwd: new URL("..", import.meta.url),
+    encoding: "utf8"
+  });
+  assert.equal(deps.readFile("FEATURE-PARITY.md"), committed);
+  assert.ok(deps.listFiles(GPT_DIR).includes("bridge-core.js"));
+  assert.throws(() => deps.writeFile("FEATURE-PARITY.md", "không được ghi"), /HEAD_READ_ONLY/);
+  ok("HEAD deps đọc git blob/listing và từ chối ghi");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

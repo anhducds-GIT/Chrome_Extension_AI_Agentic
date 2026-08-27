@@ -308,7 +308,6 @@ function measuredRow(deps, dirRelPath, manifestRelPath) {
 }
 
 export function collectModel(deps = createDefaultDeps()) {
-  const claims = readJson(deps, ".agents/claims.json").claims ?? {};
   const descriptors = [];
   for (const packageName of [...deps.listDirs("workers")].sort(compareText)) {
     const packagePath = `workers/${packageName}`;
@@ -361,12 +360,6 @@ export function collectModel(deps = createDefaultDeps()) {
     const changedCount = item.fm?.last_verified_commit
       ? changedCommitCount(deps.git.changedFilesSince(item.fm.last_verified_commit, item.dirRelPath))
       : 0;
-    // Lịch sử commit KHÔNG thấy việc đang sửa dở. Chỉ đếm commit thì dashboard có thể
-    // khai "KHÔNG đổi" trong khi trên đĩa đang có một `.js` sửa dở chưa commit — đúng cái
-    // trấn an sai mà cột này sinh ra để chặn. Auditor Codex bắt được 2026-08-26.
-    const dirtyCount = item.fm?.last_verified_commit
-      ? (deps.git.dirtyFiles?.(item.dirRelPath) ?? []).filter(isBehaviourFile).length
-      : 0;
     return {
       key: item.dirRelPath,
       id: item.fm?.id ?? `${item.packageName}-${item.versionName}`,
@@ -378,8 +371,6 @@ export function collectModel(deps = createDefaultDeps()) {
       lastVerifiedHow: item.fm?.last_verified_how ?? "",
       evidenceRef: item.fm?.evidence_ref ?? "",
       changedCount,
-      dirtyCount,
-      claim: claims[item.packagePath]?.owner ?? "không có",
       currentFocus: item.fm?.current_focus ?? "CHƯA KHAI STATUS — cần khai trạng thái và việc đang mở.",
       statusPath: item.fm ? item.statusPath : ""
     };
@@ -397,8 +388,6 @@ export function collectModel(deps = createDefaultDeps()) {
     lastVerifiedHow: "",
     evidenceRef: "",
     changedCount: 0,
-    dirtyCount: 0,
-    claim: claims._root?.owner ?? "không có",
     currentFocus: "Chưa khai STATUS; đây là một việc đang mở.",
     statusPath: ""
   });
@@ -421,10 +410,7 @@ function link(label, relPath) {
 
 function renderChanged(row) {
   if (!row.lastVerifiedCommit) return "KHÔNG ÁP DỤNG (chưa khai mốc commit)";
-  const parts = [];
-  if (row.changedCount > 0) parts.push(`${row.changedCount} commit`);
-  if (row.dirtyCount > 0) parts.push(`${row.dirtyCount} file đang sửa dở, CHƯA commit`);
-  return parts.length ? `CÓ (${parts.join(" + ")})` : "KHÔNG";
+  return row.changedCount > 0 ? `CÓ (${row.changedCount} commit)` : "KHÔNG";
 }
 
 export function buildDashboard(model) {
@@ -435,8 +421,8 @@ export function buildDashboard(model) {
     "",
     `${STAMP_PREFIX} \`${model.shortHead}\` (${model.headDate}). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.`,
     "",
-    "| Extension | Version [ĐO] | Lifecycle [KHAI] | Method Bridge [ĐO] | File test [ĐO] | Kiểm chứng cuối (ngày @ commit 7 ký tự, cách kiểm) [KHAI + bằng chứng] | Code đổi sau kiểm chứng? [ĐO] | Đang giữ (claims) | Việc đang mở | Đọc sâu (link STATUS) |",
-    "|---|---:|---|---:|---:|---|---|---|---|---|"
+    "| Extension | Version [ĐO] | Lifecycle [KHAI] | Method Bridge [ĐO] | File test [ĐO] | Kiểm chứng cuối (ngày @ commit 7 ký tự, cách kiểm) [KHAI + bằng chứng] | Code đã commit đổi sau kiểm chứng? [ĐO] | Việc đang mở | Đọc sâu (link STATUS) |",
+    "|---|---:|---|---:|---:|---|---|---|---|"
   ];
 
   for (const row of [...model.rows].sort((a, b) => compareText(String(a.key ?? a.id), String(b.key ?? b.id)))) {
@@ -446,7 +432,7 @@ export function buildDashboard(model) {
       : "CHƯA KHAI KIỂM CHỨNG";
     const changed = renderChanged(row);
     const deep = row.statusPath ? link("STATUS", row.statusPath) : "CHƯA KHAI STATUS";
-    const values = [row.name, row.version, lifecycle, row.bridgeMethods, row.testFiles, verified, changed, row.claim, row.currentFocus, deep];
+    const values = [row.name, row.version, lifecycle, row.bridgeMethods, row.testFiles, verified, changed, row.currentFocus, deep];
     lines.push(`| ${values.map(cell).join(" | ")} |`);
   }
 
@@ -492,10 +478,17 @@ export function compareDashboard(expected, actual) {
 
 export function runDashboard({ check = false, deps = createDefaultDeps(), output = console } = {}) {
   try {
-    const generated = buildDashboard(collectModel(deps));
+    const model = collectModel(deps);
+    const generated = buildDashboard(model);
     if (!check) {
       deps.writeFile("DASHBOARD.md", generated);
       output.log("Đã sinh DASHBOARD.md thành công.");
+      for (const row of model.rows.filter((item) => item.key !== "_root")) {
+        const dirtyCount = (deps.git.dirtyFiles?.(row.key) ?? []).filter(isBehaviourFile).length;
+        if (dirtyCount > 0) {
+          output.log(`CẢNH BÁO: ${row.key} đang có ${dirtyCount} file .js sửa dở chưa commit — số trên trang là số ĐÃ COMMIT, chưa tính phần đang sửa.`);
+        }
+      }
       return 0;
     }
 
@@ -569,8 +562,49 @@ export function createDefaultDeps(root = ROOT) {
   };
 }
 
+export function createHeadDeps(root = ROOT) {
+  const git = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  const treeEntries = (relPath) => git("ls-tree", "-z", "--name-only", `HEAD:${relPath}`)
+    .split("\0").filter(Boolean).sort(compareText);
+  const objectType = (relPath) => {
+    try { return git("cat-file", "-t", `HEAD:${relPath}`).trim(); }
+    catch { return null; }
+  };
+  return {
+    root,
+    fileExists: (relPath) => objectType(relPath) !== null,
+    isFile: (relPath) => objectType(relPath) === "blob",
+    readFile: (relPath) => git("show", `HEAD:${relPath}`),
+    writeFile: () => { throw new Error("HEAD_READ_ONLY: --check-head không được ghi file."); },
+    listDirs: (relPath) => treeEntries(relPath).filter((name) => objectType(`${relPath}/${name}`) === "tree"),
+    listFiles: (relPath) => treeEntries(relPath).filter((name) => objectType(`${relPath}/${name}`) === "blob"),
+    git: {
+      shortHead: () => git("rev-parse", "--short", "HEAD").trim(),
+      headDate: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d").trim(),
+      verifyCommit: (sha) => {
+        try {
+          git("rev-parse", "--verify", `${sha}^{commit}`);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      changedFilesSince: (sha, dirRelPath) => parseChangedCommits(git("log", `${sha}..HEAD`, "--name-only", "--no-renames", "--pretty=format:%H", "--", dirRelPath))
+    }
+  };
+}
+
 function main() {
-  process.exitCode = runDashboard({ check: process.argv.slice(2).includes("--check") });
+  const args = process.argv.slice(2);
+  const checkHead = args.includes("--check-head");
+  process.exitCode = runDashboard({
+    check: checkHead || args.includes("--check"),
+    deps: checkHead ? createHeadDeps() : createDefaultDeps()
+  });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === MODULE_FILE) main();

@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { sep } from "node:path";
+import { execFileSync, spawnSync } from "node:child_process";
+import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, sep } from "node:path";
 
-import { buildDashboard, collectModel, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
+import { buildDashboard, collectModel, createHeadDeps, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -285,7 +287,7 @@ function antiDrift(text, measurements = {}) {
     { sha: "2".repeat(40), files: ["workers/demo/v1/Pilot-07-Tạo Ảnh tô màu/result.json", "workers/demo/v1/Batch-01/data.json"] }
   ];
   const harmlessOutput = buildDashboard(collectModel(fakeRepo({ changedCommits: harmless })));
-  assert.match(harmlessOutput, /\| KHÔNG \| codex-dashboard \|/);
+  assert.match(harmlessOutput, /\| KHÔNG \| Kiểm tra dashboard \|/);
 
   const behavioural = [
     ...harmless,
@@ -365,26 +367,24 @@ function antiDrift(text, measurements = {}) {
   ok("id và version_source bị buộc thuộc đúng package đang khai");
 }
 
-/* 11. Cột "Code đổi sau kiểm chứng?" phải thấy cả việc ĐANG SỬA DỞ, chưa commit.
-   Lịch sử commit mù với working tree. Chỉ đếm commit thì dashboard khai "KHÔNG đổi" trong
-   khi trên đĩa đang có một `.js` sửa dở — đúng cái trấn an sai mà cột này sinh ra để chặn. */
+/* 11. Artifact chỉ chứa sự thật đã commit; dirty state chỉ được in ra stdout. */
 {
   const clean = buildDashboard(collectModel(fakeRepo({ dirty: [] })));
-  assert.match(clean, /\| KHÔNG \| codex-dashboard \|/, "cây sạch phải là KHÔNG");
+  const dirtyRepo = fakeRepo({ dirty: ["workers/demo/v1/content.js", "workers/demo/v1/HANDOFF.md"] });
+  const dirty = buildDashboard(collectModel(dirtyRepo));
+  assert.equal(dirty, clean, "dirty working tree không được đổi artifact");
+  assert.doesNotMatch(dirty, /CHƯA commit|file đang sửa dở|claims/);
+  assert.match(dirty, /Code đã commit đổi sau kiểm chứng\? \[ĐO\]/);
 
-  // Chỉ sửa tài liệu / vùng bằng chứng thì vẫn phải là KHÔNG.
-  const docsOnly = buildDashboard(collectModel(fakeRepo({
-    dirty: ["workers/demo/v1/HANDOFF.md", "workers/demo/v1/evidence/them.json"]
-  })));
-  assert.match(docsOnly, /\| KHÔNG \| codex-dashboard \|/, "sửa dở chỉ tài liệu/bằng chứng vẫn là KHÔNG");
-
-  // Một `.js` sửa dở chưa commit thì PHẢI hiện ra.
-  const dirtyCode = buildDashboard(collectModel(fakeRepo({
-    dirty: ["workers/demo/v1/content.js", "workers/demo/v1/HANDOFF.md"]
-  })));
-  assert.match(dirtyCode, /CÓ \(1 file đang sửa dở, CHƯA commit\)/,
-    "một .js sửa dở chưa commit phải hiện lên cột thay đổi");
-  ok("cột thay đổi thấy cả việc đang sửa dở, và không kêu oan vì tài liệu");
+  const logs = [];
+  const writes = [];
+  assert.equal(runDashboard({
+    deps: { ...dirtyRepo, writeFile: (relPath, text) => writes.push({ relPath, text }) },
+    output: { log: (message) => logs.push(message), error: () => {} }
+  }), 0);
+  assert.ok(logs.some((message) => message.includes("CẢNH BÁO:") && message.includes("1 file .js")));
+  assert.ok(!writes[0].text.includes("CẢNH BÁO") && !writes[0].text.includes("CHƯA commit"));
+  ok("dirty state chỉ in cảnh báo stdout, không đi vào artifact");
 }
 
 /* 12. `version_source` không được lách ra ngoài package bằng `..`.
@@ -415,13 +415,11 @@ function antiDrift(text, measurements = {}) {
     "đổi tên .js -> .md đã commit phải bị đếm là đổi code"
   );
 
-  // Đang sửa dở: cùng lý do, cả hai vế phải tới được bộ lọc.
-  assert.match(
-    buildDashboard(collectModel(fakeRepo({ dirty: ["workers/demo/v1/bridge-core.js", "workers/demo/v1/bridge-core.md"] }))),
-    /CÓ \(1 file đang sửa dở, CHƯA commit\)/,
-    "đổi tên .js -> .md chưa commit phải bị đếm là đổi code"
+  assert.deepEqual(
+    parsePorcelain("R  workers/demo/v1/bridge-core.js -> workers/demo/v1/bridge-core.md\n"),
+    ["workers/demo/v1/bridge-core.js", "workers/demo/v1/bridge-core.md"]
   );
-  ok("đổi tên .js sang .md bị đếm là đổi code, cả đã commit lẫn đang sửa dở");
+  ok("đổi tên .js sang .md đã commit bị đếm; parser dirty vẫn giữ cả hai vế cho cảnh báo");
 }
 
 /* 14. Lệnh git thật phải mang đúng cờ — đây là thứ fixture KHÔNG kiểm được.
@@ -584,6 +582,112 @@ function antiDrift(text, measurements = {}) {
   assert.ok(harness.errors.some((message) => message.includes("đang thiếu")));
   assert.ok(harness.errors.some((message) => message.includes("node scripts/build-dashboard.mjs")));
   ok("--check coi DASHBOARD.md bị thiếu là lệch và không crash");
+}
+
+/* 22. claims.json là trạng thái sống: đổi claim không được đổi artifact. */
+{
+  const first = fakeRepo();
+  const second = fakeRepo();
+  second.readFile = (relPath) => relPath === ".agents/claims.json"
+    ? JSON.stringify({ claims: { "workers/demo": { owner: "nguoi-khac" } } })
+    : first.readFile(relPath);
+  assert.equal(buildDashboard(collectModel(first)), buildDashboard(collectModel(second)));
+  ok("đổi claims.json không làm dashboard thay đổi");
+}
+
+/* 23. Gate 7 integration: HEAD-only, read-only, không bị --quick bỏ, và bắt artifact stale. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "gate7-committed-truth-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  const runSession = () => spawnSync(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "gate-owner", "--quick"], {
+    cwd: tempRoot,
+    encoding: "utf8"
+  });
+  const assertGateGreen = (run, label) => {
+    assert.match(run.stdout, /\[XANH\] Sự thật máy sinh còn tươi/, `${label}: Gate 7 phải XANH`);
+    assert.doesNotMatch(run.stdout, /\[BỎ  \] Sự thật máy sinh còn tươi/, `${label}: --quick không được bỏ Gate 7`);
+    assert.doesNotMatch(run.stderr, /CỔNG BỊ SỬA/, `${label}: số phép kiểm phải khớp EXPECTED_CHECKS`);
+  };
+
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "Gate 7 Test");
+    gitAt("config", "user.email", "gate7@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["build-dashboard.mjs", "feature-parity.mjs", "session-check.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    put(".agents/claims.json", JSON.stringify({ claims: {
+      _root: { owner: "gate-owner" },
+      "workers/duc-auto-chatgpt": { owner: "gate-owner" },
+      "workers/duc-auto-gemini": { owner: "foreign-owner" }
+    } }, null, 2));
+    put("manifest.json", JSON.stringify({ name: "Root", version: "0.0.1" }));
+    for (const [dir, method] of [
+      ["workers/duc-auto-chatgpt/v0.1.0", "gpt.method"],
+      ["workers/duc-auto-gemini/v0.2.0", "gemini.method"]
+    ]) {
+      put(`${dir}/manifest.json`, JSON.stringify({ name: dir, version: "0.0.1" }));
+      put(`${dir}/bridge-core.js`, `registryEntry({ name: "${method}" });\n`);
+      put(`${dir}/HANDOFF.md`, "# Log\n");
+    }
+    put("FEATURE-PARITY.md", [
+      "# Parity", "<!-- AUTO:BRIDGE START -->", "old", "<!-- AUTO:BRIDGE END -->",
+      "Human section", "<!-- AUTO:MODULES START -->", "old", "<!-- AUTO:MODULES END -->",
+      "<!-- AUTO:DEBT-METHODS START -->", "old", "<!-- AUTO:DEBT-METHODS END -->"
+    ].join("\n"));
+    put("DASHBOARD.md", "seed\n");
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed gate fixture");
+    execFileSync(process.execPath, [join(tempRoot, "scripts", "build-dashboard.mjs")], { cwd: tempRoot, encoding: "utf8" });
+    execFileSync(process.execPath, [join(tempRoot, "scripts", "feature-parity.mjs")], { cwd: tempRoot, encoding: "utf8" });
+    gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md");
+    gitAt("commit", "-m", "commit generated truth");
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+
+    const headDeps = createHeadDeps(tempRoot);
+    assert.equal(headDeps.readFile("DASHBOARD.md"), gitAt("show", "HEAD:DASHBOARD.md"));
+
+    // Foreign dirty file: Gate 7 sees only HEAD and stays green.
+    put("workers/duc-auto-gemini/v0.2.0/foreign-dirty.js", "foreign\n");
+    assertGateGreen(runSession(), "foreign dirty");
+
+    // Own dirty code plus its required HANDOFF log: Gate 7 still sees only HEAD.
+    put("workers/duc-auto-chatgpt/v0.1.0/own-dirty.js", "own\n");
+    put("workers/duc-auto-chatgpt/v0.1.0/HANDOFF.md", "# Log\nown dirty fixture\n");
+    const beforeHead = gitAt("rev-parse", "HEAD").trim();
+    const beforeStatus = gitAt("status", "--porcelain");
+    assertGateGreen(runSession(), "own dirty first run");
+    assertGateGreen(runSession(), "own dirty second run");
+    assert.equal(gitAt("rev-parse", "HEAD").trim(), beforeHead, "Gate 7 không được đổi HEAD");
+    assert.equal(gitAt("status", "--porcelain"), beforeStatus, "Gate 7 không được đổi working tree");
+
+    // Commit a stale artifact without regenerating: Gate 7 must turn red with repair command.
+    rmSync(join(tempRoot, "workers", "duc-auto-gemini", "v0.2.0", "foreign-dirty.js"));
+    rmSync(join(tempRoot, "workers", "duc-auto-chatgpt", "v0.1.0", "own-dirty.js"));
+    gitAt("restore", "workers/duc-auto-chatgpt/v0.1.0/HANDOFF.md");
+    put("DASHBOARD.md", `${readFileSync(join(tempRoot, "DASHBOARD.md"), "utf8")}\nSTALE COMMITTED LINE\n`);
+    const parityBefore = readFileSync(join(tempRoot, "FEATURE-PARITY.md"), "utf8");
+    assert.ok(parityBefore.includes("**GPT 1 · Gemini 1.**"), "fixture parity phải có dòng sắp làm cũ");
+    put("FEATURE-PARITY.md", parityBefore.replace("**GPT 1 · Gemini 1.**", "**GPT 999 · Gemini 1.**"));
+    gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md");
+    gitAt("commit", "-m", "make committed artifacts stale");
+    const stale = runSession();
+    assert.notEqual(stale.status, 0, "artifact stale đã commit phải làm cổng đỏ");
+    assert.match(stale.stdout, /\[ĐỎ  \] Sự thật máy sinh còn tươi/);
+    assert.match(stale.stdout, /build-dashboard\.mjs không khớp với HEAD/);
+    assert.match(stale.stdout, /feature-parity\.mjs không khớp với HEAD/);
+    assert.match(stale.stdout, /node scripts\/build-dashboard\.mjs && node scripts\/feature-parity\.mjs/);
+    ok("Gate 7 dùng HEAD, chỉ đọc, không bị --quick bỏ, và bắt artifact stale");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "gate7-committed-truth-")), "chỉ dọn đúng temp fixture Gate 7");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

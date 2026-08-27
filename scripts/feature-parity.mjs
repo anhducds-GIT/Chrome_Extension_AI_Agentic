@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -218,8 +219,27 @@ export function createDefaultDeps(root = ROOT) {
   };
 }
 
+export function createHeadDeps(root = ROOT) {
+  const git = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  return {
+    readFile: (relPath) => git("show", `HEAD:${relPath}`),
+    writeFile: () => { throw new Error("HEAD_READ_ONLY: --check-head không được ghi file."); },
+    listFiles: (relPath) => git("ls-tree", "-z", "--name-only", `HEAD:${relPath}`)
+      .split("\0").filter(Boolean).sort(compareText)
+  };
+}
+
 function main() {
-  process.exitCode = runFeatureParity({ check: process.argv.slice(2).includes("--check") });
+  const args = process.argv.slice(2);
+  const checkHead = args.includes("--check-head");
+  process.exitCode = runFeatureParity({
+    check: checkHead || args.includes("--check"),
+    deps: checkHead ? createHeadDeps() : createDefaultDeps()
+  });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === MODULE_FILE) main();
