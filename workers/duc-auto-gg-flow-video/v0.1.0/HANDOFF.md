@@ -33,3 +33,9 @@
   probe không-tool xanh là bẫy), auditor là Codex. Host Bridge riêng đã dựng và đang nghe
   cổng 32149 (`C:\WORKING ZONE\Duc-Auto-GG-Flow-Video-Bridge\`). Còn mở: Đức load unpacked
   + mở tab Flow + dán pairing → F-01 chụp bằng chứng DOM.
+- 2026-08-27 · `claude-flow-1` · Đức đã nối Bridge (ping OK, extension paired) + yêu cầu 2
+  đổi: tên hiển thị → "Duc Auto GG Flow", icon → F nền teal. Đã làm cả hai + thêm
+  `chat.reload` vào allowlist (method thứ 5) vì gặp thật RECEIVER_LOST — tab mở trước khi
+  load extension, và mọi lần reload extension sau này đều cần F5 tab. 2 test đổi pin theo
+  rebrand, bootstrap-gate đổi kỳ vọng chat.reload. Suite 80/80 xanh. Còn mở: Đức bấm ⟳
+  extension (nạp icon + allowlist mới) → chat.reload → dom_probe chụp bằng chứng.

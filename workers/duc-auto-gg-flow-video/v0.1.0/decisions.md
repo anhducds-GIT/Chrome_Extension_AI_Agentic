@@ -23,6 +23,15 @@ Nguồn: `drafts/FLOW-EXT-COORDINATION-PLAN.md` mục 6.
   phục vụ `session.hello`, `system.ping`, `system.capabilities`,
   `diagnostics.dom_probe`. Gỡ khoá phải ghi thêm một mục vào file này.
 
+## 2026-08-27 — `chat.reload` vào allowlist bootstrap (thứ 5)
+
+Gặp thật ngay lần nối đầu: tab Flow mở trước khi load extension → content script chưa
+tiêm → `RECEIVER_LOST`, và mỗi lần reload extension sau này cũng sẽ cần F5 tab.
+`chat.reload` chỉ F5 tab đã bind — không gửi prompt, không tốn credits — nên cho vào
+allowlist để vòng debug tự chạy, khỏi mượn tay Đức mỗi lần. Test ghim đã đổi theo.
+(Cùng ngày, cùng phiên: Đức yêu cầu đổi tên hiển thị "Duc Auto Gemini" → "Duc Auto GG
+Flow" và icon G xanh-tím → F teal, đã làm.)
+
 ## 2026-08-27 — Đức giao phiên `claude-flow-1` tự triển khai đến khi hoàn thiện
 
 Đức chốt trong chat: phiên Claude này tự gọi Codex CLI / Antigravity để code, trial,

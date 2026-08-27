@@ -36,7 +36,7 @@
     UNAUTHENTICATED: { retryable: false, message: "Bridge authentication failed." },
     FORBIDDEN: { retryable: false, message: "The transport role is not allowed to perform this action." },
     EXTENSION_OFFLINE: { retryable: true, message: "No authenticated extension connection is available." },
-    EXECUTOR_UNAVAILABLE: { retryable: true, message: "Open the Duc Auto Gemini side panel and retry the same request_id.", details: { failure_type: null, halt_instruction: null } },
+    EXECUTOR_UNAVAILABLE: { retryable: true, message: "Open the Duc Auto GG Flow side panel and retry the same request_id.", details: { failure_type: null, halt_instruction: null } },
     REQUEST_TIMEOUT: { retryable: true, message: "The request timed out; retry the identical idempotency key." },
     TRANSPORT_DISCONNECTED: { retryable: true, message: "The transport disconnected; retry the identical idempotency key." },
     WORKBOOK_NOT_LOADED: { retryable: true, message: "The side panel has no current workbook session." },

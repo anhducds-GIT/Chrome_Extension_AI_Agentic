@@ -10,7 +10,12 @@
     "session.hello",
     "system.ping",
     "system.capabilities",
-    "diagnostics.dom_probe"
+    "diagnostics.dom_probe",
+    // chat.reload joined the allowlist 2026-08-27 (decisions.md): it only
+    // F5s the bound tab — no prompt, no credits — and without it every
+    // extension reload during bootstrap needs the owner's hands for the
+    // mandatory tab refresh (RECEIVER_LOST loop).
+    "chat.reload"
   ]);
   const BOOTSTRAP_ALLOWED_SET = new Set(BOOTSTRAP_ALLOWED_METHODS);
 

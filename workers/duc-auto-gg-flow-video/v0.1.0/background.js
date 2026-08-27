@@ -154,7 +154,7 @@ function imageExtension(url) {
 }
 
 function safeDownloadFolder(value) {
-  const folder = String(value || "Duc Auto Gemini").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  const folder = String(value || "Duc Auto GG Flow").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
   if (!folder || folder.split("/").some((part) => !part || part === "." || part === "..")) throw new Error("Image output folder must be a safe relative Downloads folder.");
   const safeFolder = folder.replace(/[^A-Za-z0-9._ -/]/g, "_").slice(0, 160);
   if (!safeFolder) throw new Error("Image output folder must not be empty.");

@@ -13,8 +13,9 @@
   **SELECTORS và TIMING vẫn là của Gemini** — cố tình giữ nguyên, KHÔNG dùng được trên
   Flow, và sẽ chỉ được thay bằng selector có bằng chứng `dom_probe` (luật vàng: không
   đoán selector).
-- Bridge đang bị **khoá bootstrap**: chỉ 4 method đọc/chẩn đoán hoạt động
-  (`session.hello`, `system.ping`, `system.capabilities`, `diagnostics.dom_probe`).
+- Bridge đang bị **khoá bootstrap**: chỉ 5 method hoạt động — 4 method đọc/chẩn đoán
+  (`session.hello`, `system.ping`, `system.capabilities`, `diagnostics.dom_probe`)
+  cộng `chat.reload` (F5 tab, không gửi prompt, không tốn credits — cần cho vòng debug).
   Mọi method chạy/ghi khác bị từ chối cho tới khi adapter có bằng chứng thật.
 - Khác biệt sống còn so với nhánh ảnh: **mỗi lần sinh video trừ credits thật**. Trần
   trial dev cho nhánh này là **≤2 job** (chốt trong kế hoạch FLOW đã duyệt 27/08),

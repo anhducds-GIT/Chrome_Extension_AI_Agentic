@@ -20,8 +20,8 @@ assert.ok(Object.isFrozen(routerCore.BOOTSTRAP_ALLOWED_METHODS), "the exported b
 assert.ok(Array.isArray(routerCore.BOOTSTRAP_ALLOWED_METHODS), "the export is a frozen ARRAY, not a Set — Object.freeze does not freeze Set contents (audit 2026-08-27)");
 assert.deepEqual(
   [...routerCore.BOOTSTRAP_ALLOWED_METHODS],
-  ["session.hello", "system.ping", "system.capabilities", "diagnostics.dom_probe"],
-  "only the four bootstrap methods are exposed"
+  ["session.hello", "system.ping", "system.capabilities", "diagnostics.dom_probe", "chat.reload"],
+  "only the five bootstrap methods are exposed"
 );
 // Bypass regression (audit blocker 2026-08-27): mutating the exported value
 // must be impossible, and even a swallowed attempt must not open the gate.
@@ -61,11 +61,17 @@ const probe = await router.route(request("bootstrap-request-0004", "diagnostics.
 assert.equal(probe.ok, false, "dom_probe reaches executor dispatch while offline");
 assert.equal(probe.error.code, "EXECUTOR_UNAVAILABLE");
 
+// chat.reload is allowlisted (decisions.md 2026-08-27): tab F5 only — no
+// prompt, no credits — and the bootstrap debug loop is dead without it.
+const reload = await router.route(request("bootstrap-request-0004b", "chat.reload", {}));
+assert.equal(reload.ok, false, "chat.reload reaches executor dispatch while offline");
+assert.equal(reload.error.code, "EXECUTOR_UNAVAILABLE", "chat.reload passes the gate (not FORBIDDEN)");
+
 const lockedCases = [
   ["run.trial", { job_ids: ["FLOW-01"] }],
   ["run.status", {}],
   ["queue.list", {}],
-  ["chat.reload", {}],
+  ["run.stop", {}],
   ["jobs.add", { jobs: [{ prompt: "bootstrap gate test" }] }]
 ];
 for (const [index, [method, params]] of lockedCases.entries()) {

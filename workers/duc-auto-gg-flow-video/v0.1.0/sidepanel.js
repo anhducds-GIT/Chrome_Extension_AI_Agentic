@@ -2413,7 +2413,7 @@
 
   async function activeTab() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id || !window.DacProviderAdapter.isProviderUrl(tab.url || "")) throw new Error("Open a normal Gemini conversation in the active tab.");
+    if (!tab?.id || !window.DacProviderAdapter.isProviderUrl(tab.url || "")) throw new Error("Open the Google Flow project tab as the active tab.");
     return tab;
   }
 
@@ -3400,7 +3400,7 @@
     try {
       const mode = els.outputDestinationMode.value;
       state.destinationMode = mode;
-      if (mode === "downloads") { state.outputSettings.image = window.DacOutputLocation.downloadsLocation(els.imageOutputFolderInput.value || "Duc Auto Gemini"); state.outputProfileState = null; }
+      if (mode === "downloads") { state.outputSettings.image = window.DacOutputLocation.downloadsLocation(els.imageOutputFolderInput.value || "Duc Auto GG Flow"); state.outputProfileState = null; }
       else { const profileId = state.importedConfig?.effective.output.profileId || DEFAULT_IMAGE_PROFILE_ID; state.outputSettings.image = { kind: "directory", handle: null, profileId, label: "Output profile not bound" }; state.outputProfileState = { state: "unbound", profile: null }; }
       if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
       markLocalOverride("output_destination_mode");
@@ -3516,7 +3516,7 @@
   function setResultLocation() {
     try {
       const mode = els.resultLocationMode.value;
-      if (mode === "downloads") state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value || state.outputSettings.image?.folder || "Duc Auto Gemini");
+      if (mode === "downloads") state.outputSettings.result = window.DacOutputLocation.downloadsLocation(els.resultDownloadsFolderInput.value || state.outputSettings.image?.folder || "Duc Auto GG Flow");
       else state.outputSettings.result = { kind: "directory", handle: null, profileId: state.importedConfig?.effective.output.resultProfileId || DEFAULT_RESULT_PROFILE_ID, label: "Result output profile not bound" };
       markLocalOverride("result_destination_mode");
       renderOutput();
@@ -3526,7 +3526,7 @@
   function setSeparateResultDestination() {
     state.separateResultDestination = els.separateResultDestinationInput.checked;
     if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
-    else state.outputSettings.result = window.DacOutputLocation.downloadsLocation(state.outputSettings.image?.folder || "Duc Auto Gemini");
+    else state.outputSettings.result = window.DacOutputLocation.downloadsLocation(state.outputSettings.image?.folder || "Duc Auto GG Flow");
     markLocalOverride("separate_result_destination");
     renderOutput();
   }
