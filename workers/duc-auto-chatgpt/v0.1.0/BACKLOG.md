@@ -33,6 +33,23 @@ trên mọi đường thoát. Audit Antigravity moi thêm **hai lỗ nữa, đ�
   và chưa biết địa chỉ thì hoãn phán xét cho ping của content script.
 **Bên Gemini vẫn nguyên lỗi** (`sidepanel.js:2268`) → đã ghi vào B-07.
 
+### B-22 · Cùng race G-01 của Gemini: huỷ tới trước job bị `runPrompt()` xoá trắng — **[ĐỌC]**
+
+`content.js:703` mở đầu `runPrompt()` bằng `STATE.abortRequested = false` — **nguyên văn cái
+dòng đã gây ra vụ 26/08 bên Gemini** (sổ cái: `STOP_REQUESTED_BEFORE_SUBMIT` 14:20:36 →
+`PROMPT_SUBMITTED` 14:20:37). Một `DAC_ABORT` tới TRƯỚC `DAC_RUN_IMAGE_JOB` sẽ bị xoá và
+prompt vẫn bay. Đã đọc thẳng dòng code 2026-08-27, không phải dò theo tên.
+
+Gemini đã vá 27/08 (hướng B-refined, Đức duyệt): huỷ theo attempt — `DAC_ABORT` mang
+`job_id`+`attempt_id`, `runPrompt()` chỉ giữ cờ cho đúng attempt bị huỷ; kèm recheck
+`stopRequested` sau `await gateNextJob` trong runner. Test mẫu:
+`workers/duc-auto-gemini/v0.2.0/tests/content-abort-race-behavior.mjs` (nạp content.js thật,
+đếm click) và `tests/sidepanel-stop-before-submit-static.mjs`.
+
+**Đừng chép nguyên xi:** nhánh này có `createQueueRunLock`/`tryBeginRun` mà Gemini không có
+— chốt khởi động run khác nhau (xem bài học port B-04). Viết lại test race cho DOM ChatGPT
+trước, thấy đỏ rồi mới vá.
+
 ### B-02 · Selector ChatGPT phải có bằng chứng, không kế thừa
 **Đã làm một phần** (`c1e7d04`, `f418bc1`): `assistantMessage`/`userMessage` đã
 sửa theo bằng chứng đo được, `conversationRoot` đã bỏ phụ thuộc tên.

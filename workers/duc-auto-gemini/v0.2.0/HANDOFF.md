@@ -380,3 +380,44 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - **`G-04` cố ý KHÔNG ghi con số** — chỉ ghi "có nợ", số thật lấy ở khối máy sinh trong `FEATURE-PARITY.md`. Đây là luật số 0 của `STATUS.template.md` áp cho cả backlog: sổ giữ *món nào*, máy giữ *bao nhiêu*.
   - `STATUS.md` cập nhật theo: thêm `ref_backlog`, đổi `current_focus` sang `G-01`, và **gỡ câu "chưa có BACKLOG.md riêng"** — để nguyên thì nó thành nói dối ngay khi file này ra đời.
 - **Next:** Đức chốt `G-01` (đổi luật an toàn). Kiến trúc Observer V0 (giữ là tài sản gốc repo hay chuẩn hoá thành package) là quyết định riêng, GPT đã tách ra khỏi việc này.
+
+- 2026-08-27 · Claude (`opus-platform-3`) · **G-01 VÁ XONG PHẦN TĨNH — Đức Go trong chat, root cause chứng minh bằng test đỏ→xanh, CHỜ trial live.**
+  - **Root cause có bằng chứng, không còn là giả thuyết:** viết test TRƯỚC khi sửa —
+    `tests/content-abort-race-behavior.mjs` nạp `content.js` THẬT vào vm với DOM giả, bắn
+    `DAC_ABORT` rồi mới `DAC_RUN_IMAGE_JOB` đúng thứ tự sổ cái 26/08 → trên code cũ
+    **click vẫn bắn** (đỏ), sau vá **zero click** (xanh). Ca đối chứng chạy trước để chứng
+    minh harness đi được tới cú click — không có nó thì ca race có thể xanh oan.
+  - **Bản vá (B-refined, huỷ theo attempt):** `stop()` gửi `DAC_ABORT` kèm
+    `job_id`+`attempt_id` của attempt đang bay (guard `state.running` như bridgeRunStop);
+    `content.js` nhớ `abortedAttempt` và dòng mở-đầu-runPrompt chỉ giữ cờ cho ĐÚNG attempt
+    bị huỷ (attempt khác không bị lây, huỷ trần giữ nguyên nghĩa cũ); attempt bị huỷ-trước
+    thì throw ngay, không đụng composer. Kèm nửa phía runner: `run()` kiểm lại
+    `state.stopRequested` ngay sau `await gateNextJob` — trước đó từ gate tới send không có
+    phép kiểm nào, đúng khe hở khớp mốc 1 giây trong sổ cái.
+  - **Phá thử 6 chiều, đỏ đúng cả 6** — nhưng phải qua hai bài học: (1) mutation "ghim cờ
+    vĩnh viễn" bị `finally` cứu nên phải thêm ca 5 (huỷ mồ côi lúc rảnh không được giết run
+    mới) mới bắt được bản vá-ẩu-xoá-hẳn-dòng-reset; (2) mutation "dựng danh tính mà không
+    gửi" LỌT bản đầu của test tĩnh vì phép ghim khớp chỗ dựng `scoped` thay vì câu lệnh
+    send — đã siết, ghi thành bài học trong `decisions.md`.
+  - Suite **81/81** (79 cũ + 2 file ghim mới). Điều khoản 2 của hợp đồng (đã gửi thì khai
+    thật) ghim ở cả hai ranh giới: content (`submittedAt` khác null) và panel (test 26/08 cũ).
+  - Cùng lỗi bên nhánh ChatGPT: ghi **B-22** vào backlog bên đó ([ĐỌC] `content.js:703`,
+    không sửa hộ — khác chốt khởi động run, phải viết lại test cho DOM ChatGPT trước).
+  - **Audit Codex độc lập vòng 1: FAIL, 3 phát hiện — 1 sửa thật, 1 ghim làm chủ đích, 1
+    thêm test.** Phát hiện đáng tiền nhất (MED, đã kiểm lại code xác nhận THẬT): nhánh
+    dừng-sau-gate của tôi break trần trong khi `gateNextJob` đã ghi `RECONCILING` vào sổ
+    → dòng sổ bị bỏ rơi ở trạng thái đó mà vẫn đếm terminal. Đã sửa: settle thành
+    `STOPPED/USER_STOP` ("Stopped by user before submission.") rồi mới break. Phát hiện
+    HIGH ("huỷ lệch danh tính giết attempt đang bay") bác có lý do — đó là hành vi CŨ và
+    là chiều fail-closed đúng; ghim làm chủ đích bằng ca 6. Suite sau vòng 1: **81/81**,
+    test race 6 ca, tổng 7 phép phá thử đều bị bắt.
+  - **Re-audit Codex vòng 2: PASS.** Cả ba phát hiện chốt xong (1 ACCEPTED-BY-DESIGN —
+    auditor tự xác nhận "không có nguồn thực tế nào sinh được abort lệch danh tính" vì
+    `stop()` chụp attempt đồng bộ sau khi giương cờ; 2 ACCEPTED-FIXED). Không phát hiện
+    mới. Auditor tự chạy lại: 6/6 ca behavioral, 2/2 nhóm static, suite 81/81, cổng xanh.
+  - Phối hợp đa phiên: `claude-flow-1` đang giữ `_root` (khai extension #003) — đã thoả
+    thuận qua message: bên đó push trước, bên này regen `DASHBOARD.md` sau để gộp đủ cả hai.
+- **Next:** Đức bấm ⟳ reload extension + F5 tab Gemini → trial live G-01 (đã duyệt): bấm
+  Stop đúng khoảng PRE_SUBMIT, đọc sổ cái chứng minh hết chuỗi
+  `STOP_REQUESTED_BEFORE_SUBMIT → PROMPT_SUBMITTED`, ghi bằng chứng `evidence-stop-*/`,
+  cập nhật `last_verified*` trong `STATUS.md`, rồi mới đóng G-01 trong `BACKLOG.md`.

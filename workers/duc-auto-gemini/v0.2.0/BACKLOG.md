@@ -38,11 +38,18 @@ Trial live 2026-08-26 ghi sổ cái: `BRIDGE_RUN_STOPPED` lúc 14:20:36 với
 Cờ dừng chỉ được đọc ở các mốc ngắt, nên job đang chạy đi nốt tới chỗ gửi.
 
 Đã vá **lời nhắn** (trước đó nó trấn an "Không job nào bị gửi thêm", và câu đó sai).
-**Chưa đụng vào thời điểm cờ dừng ăn** — đó là **đổi luật an toàn**, theo `AGENTS.md` mục 2
-phải hỏi Đức trước, và phải đo trước khi sửa.
-
 Bằng chứng: `evidence-stop-reload-20260826/README.md`.
-**Cần Đức chốt** trước khi ai đó động vào.
+
+**CẬP NHẬT 27/08 — Đức Go trong chat, HÀNH VI ĐÃ VÁ TĨNH:** root cause chứng minh bằng test
+tái hiện đúng thứ tự message (`tests/content-abort-race-behavior.mjs` đỏ trên code cũ, xanh
+sau vá) — `content.js` mở đầu `runPrompt()` bằng xoá cờ huỷ nên `DAC_ABORT` tới trước job bị
+nuốt. Vá theo hướng B-refined: `DAC_ABORT` mang `job_id`+`attempt_id`, cờ chỉ giữ cho đúng
+attempt bị huỷ; kèm recheck cờ dừng sau `await gateNextJob` trong runner
+(`tests/sidepanel-stop-before-submit-static.mjs`). 6 phép phá thử đều bị bắt.
+
+**Còn mở — chưa được đóng mục này:** trial live sau khi Đức reload extension, đọc sổ cái
+chứng minh không còn chuỗi `STOP_REQUESTED_BEFORE_SUBMIT → PROMPT_SUBMITTED`, ghi bằng chứng
+vào `evidence-stop-*/` rồi cập nhật `STATUS.md`. Cùng lỗi bên nhánh ChatGPT: **B-22**.
 
 ### G-02 · Khoá tab và khoá hội thoại — Gemini chưa có — **[ĐỌC]**
 

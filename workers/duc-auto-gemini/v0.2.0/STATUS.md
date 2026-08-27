@@ -8,7 +8,7 @@ last_verified: 2026-08-26
 last_verified_commit: dd3c736b64206a357e6aa83f85c6e62a9fde43f7
 last_verified_how: "Trial live cặp run.stop/chat.reload 9/9 bước, khoá RUN_ACTIVE chứng minh thật"
 evidence_ref: workers/duc-auto-gemini/v0.2.0/evidence-stop-reload-20260826/README.md
-current_focus: "G-01 lệnh dừng chưa ăn ngay (chờ Đức chốt vì là luật an toàn); reload extension để nạp bản vá lời nhắn; còn nợ nhánh ChatGPT một số tính năng và method — xem BACKLOG.md và FEATURE-PARITY.md"
+current_focus: "G-01 đã vá hành vi (Đức Go 27/08, hướng huỷ-theo-attempt) — test race đỏ→xanh, CHỜ trial live sau khi Đức reload extension; lời khai kiểm chứng bên dưới là của bản TRƯỚC bản vá; còn nợ nhánh ChatGPT một số tính năng và method — xem BACKLOG.md và FEATURE-PARITY.md"
 ref_readme: workers/duc-auto-gemini/v0.2.0/README.md
 ref_handoff: workers/duc-auto-gemini/v0.2.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md
@@ -44,11 +44,13 @@ diễn biến phiên ở cuối [`HANDOFF.md`](HANDOFF.md), bảng lỗi thật 
 
 ## Giới hạn đã biết
 
-1. **Bản vá lời nhắn chưa live** — lần reload extension tới sẽ nạp. Chỉ là chữ, không phải
-   hành vi, nên không gấp.
-2. **Lệnh dừng chưa ăn ngay** — cờ dừng chỉ đọc ở mốc ngắt, nên một prompt vẫn có thể bay
-   sau khi đã báo dừng. Lời nhắn đã vá cho nói đúng sự thật; **hành vi thì chưa**, vì đổi nó
-   là *đổi luật an toàn* → chờ Đức chốt (**G-01**).
+1. **Hai bản vá chưa live** — lời nhắn (26/08) và hành vi G-01 (27/08) đều nằm trong code
+   nhưng extension đang chạy bản cũ. Lần reload (⟳) + F5 tab Gemini tới sẽ nạp cả hai.
+2. **G-01 đã vá TĨNH, chưa kiểm chứng LIVE** — race "dừng nhận trước lúc gửi mà prompt vẫn
+   bay" (đo thật 26/08) đã tái hiện được bằng test, vá theo hướng huỷ-theo-attempt (Đức Go
+   27/08), test đỏ→xanh + 6 phép phá thử đều bị bắt. Nhưng chính lỗi này suite tĩnh từng
+   bỏ lọt, nên **chỉ được coi là XONG sau trial live** đọc sổ cái không còn chuỗi
+   `STOP_REQUESTED_BEFORE_SUBMIT → PROMPT_SUBMITTED` (Đức đã duyệt trial, chạy sau reload).
 3. **Còn nợ nhánh ChatGPT một số tính năng và method.** Con số cụ thể **không ghi ở đây** —
    nó đổi mỗi lần port xong một món, và số gõ tay thì mục ngay. **Số hiện tại lấy ở khối máy
    sinh trong** [`FEATURE-PARITY.md`](../../../FEATURE-PARITY.md); [`BACKLOG.md`](BACKLOG.md)

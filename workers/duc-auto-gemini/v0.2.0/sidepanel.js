@@ -4547,6 +4547,19 @@
         let completed = false;
         while (!completed && !state.stopRequested) {
           const gate = await gateNextJob(item);
+          // G-01: a stop may land while gateNextJob is awaiting; from here down
+          // to send() there is no other stop check, so without this recheck the
+          // attempt is dispatched anyway and only the receiver can save it.
+          // gateNextJob already wrote RECONCILING into the ledger, so a bare
+          // break here would abandon the row in that state (audit finding,
+          // 27/08) — settle it truthfully as USER_STOP first: nothing was
+          // submitted for this attempt.
+          if (state.stopRequested) {
+            update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "USER_STOP", last_error: "Stopped by user before submission.", error: "Stopped by user before submission.", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
+            audit("FAILURE", item, { message: "Stopped by user before submission." });
+            completed = true;
+            break;
+          }
           if (!gate.ok) {
             const outcome = await resolveJobFailure(item, gate.failureType, gate.message, settings);
             completed = outcome.completed; halted ||= outcome.halted;
@@ -4640,7 +4653,19 @@
     return false;
   });
 
-  async function stop() { state.stopRequested = true; progress("Stopping current operation…"); try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop prevents further jobs */ } }
+  // G-01: the abort names the attempt it is stopping. Without the identity the
+  // receiver cannot tell "stop THIS attempt" from a stale flag, and an abort
+  // that arrives before its job did gets wiped by runPrompt()'s reset — the
+  // measured 26/08 race (stop accepted 14:20:36, prompt still sent 14:20:37).
+  // Same trap as bridgeRunStop: between runs state.currentItem still points at
+  // the last job of the PREVIOUS run, so only trust it while a run is live.
+  async function stop() {
+    state.stopRequested = true;
+    progress("Stopping current operation…");
+    const current = state.running ? state.currentItem : null;
+    const scoped = current?.attempt_id ? { job_id: current.job.id, attempt_id: current.attempt_id } : {};
+    try { await send({ type: "DAC_ABORT", ...scoped }); } catch (_) { /* local stop prevents further jobs */ }
+  }
 
   // Pause never interrupts an in-flight attempt -- exact-once submission
   // means a job that has already been sent cannot be safely suspended mid

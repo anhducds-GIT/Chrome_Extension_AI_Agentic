@@ -13,6 +13,10 @@
   const STATE = {
     busy: false,
     abortRequested: false,
+    // G-01: the attempt a DAC_ABORT targeted. An abort that arrives BEFORE its
+    // job did (the 26/08 one-second race) must survive runPrompt()'s reset for
+    // that attempt only — a later attempt must not inherit the stop.
+    abortedAttempt: null,
     activeAttempt: null,
     // Surface rule (evidence snapshot 3): submitting from /images navigates
     // this tab to /app/<conversation-id>. The CONVERSATION surface is only
@@ -781,10 +785,15 @@
   async function runPrompt(prompt, timeoutMs, referenceImages = [], expectImage = false, requestAttempt = null) {
     if (STATE.busy) throw new Error("Gemini receiver busy: this tab is already running an automation prompt.");
     STATE.busy = true;
-    STATE.abortRequested = false;
+    // Attempt-scoped cancellation (G-01, proven by the race test): a stop that
+    // targeted THIS attempt keeps the flag raised through the reset; anything
+    // else (a consumed stop from an earlier attempt) is cleared as before, so
+    // the next run is not killed by a stale abort.
+    STATE.abortRequested = window.DacAttemptIdentity.same(STATE.abortedAttempt, requestAttempt);
     if (requestAttempt) STATE.activeAttempt = requestAttempt;
 
     try {
+      if (STATE.abortRequested) throw new Error("Automation stopped by user.");
       if (!surfaceAllowedNow()) {
         throw new Error("WRONG_SURFACE: the Gemini receiver tab must be on https://gemini.google.com/images (or a conversation this tab already submitted to).");
       }
@@ -843,6 +852,10 @@
     } finally {
       STATE.busy = false;
       STATE.abortRequested = false;
+      // The abort is consumed by the attempt it targeted; attempt ids are
+      // never reused, so an unconsumed entry can only ever match its own
+      // (never-run) attempt — but clear it anyway once it has done its job.
+      if (window.DacAttemptIdentity.same(STATE.abortedAttempt, requestAttempt)) STATE.abortedAttempt = null;
     }
   }
 
@@ -971,6 +984,19 @@
 
     if (message.type === "DAC_ABORT") {
       STATE.abortRequested = true;
+      // G-01: remember WHICH attempt was stopped. With an explicit identity the
+      // abort binds to that attempt even when it arrives before the job does;
+      // a bare abort (legacy senders) binds to whatever is in flight now, which
+      // preserves the old semantics exactly.
+      // Deliberate (audit 27/08 raised it): abortRequested is still raised
+      // GLOBALLY, so an abort whose identity does NOT match the attempt in
+      // flight still stops that attempt at its next checkpoint. An operator
+      // stop must never be silently ignored — the identity exists only so the
+      // reset at the top of runPrompt() cannot wipe an abort that arrived
+      // before its job (the 26/08 race), never to let an attempt outlive a
+      // stop. Fail closed.
+      const scoped = window.DacAttemptIdentity.create(message);
+      STATE.abortedAttempt = window.DacAttemptIdentity.validContext(scoped) ? scoped : STATE.activeAttempt;
       sendResponse({ ok: true });
       return false;
     }

@@ -100,6 +100,8 @@ COMPANION (đọc khi cần):
 | `tests/attach-path-recorded-static.mjs` | Ghim: đường gắn ảnh tham chiếu phải được ghi lại kể cả khi THÀNH CÔNG (Pilot-REF-01) |
 | `tests/bridge-run-stop-chat-reload-smoke.mjs` | Ghim cặp `run.stop` / `chat.reload` (port từ worker ChatGPT 26/08): hợp đồng registry, params rỗng nghiêm ngặt, và **thứ tự** — cờ dừng phải xoá TRƯỚC await đầu tiên của `run()`, `chat.reload` phải giành khoá TRƯỚC await đầu tiên |
 | `tests/bridge-run-trial-smoke.mjs` | Test cho `run.trial`: registry, validation, ma trận từ chối, audit `bridge_dev`, UI toggle/badge |
+| `tests/content-abort-race-behavior.mjs` | Ghim G-01 (27/08), phía content: nạp `content.js` THẬT vào vm với DOM giả, bắn message đúng thứ tự race 26/08 và ĐẾM click. 6 ca: đối chứng · huỷ-trước-job = zero click · huỷ X không giết Y · huỷ trần vẫn dừng run đang bay · huỷ mồ côi không giết run mới · huỷ lệch danh tính vẫn dừng (fail-closed, chủ đích). Đỏ trên code trước bản vá — root cause có bằng chứng, không phải suy đoán |
+| `tests/sidepanel-stop-before-submit-static.mjs` | Ghim G-01, phía side panel (wiring): `stop()` gửi `DAC_ABORT` kèm `job_id`+`attempt_id` NGAY TRONG câu lệnh send (mutation "dựng danh tính mà không gửi" đã từng lọt bản đầu); `run()` kiểm lại cờ dừng ngay sau `await gateNextJob` và nhánh dừng phải SETTLE job thành `USER_STOP` (audit 27/08: break trần bỏ rơi dòng sổ ở RECONCILING); từ mốc RUNNING tới send không còn khe await nào |
 | `templates/Duc-Auto-ChatGPT-Template.xlsx` | Workbook trống chuẩn để bắt đầu pilot mới |
 | `scripts/create-pilot-NN.mjs` | Script tạo workbook cho từng pilot |
 | `scripts/bridge-rpc.mjs` | Gọi RPC thô tới Agent Bridge (jobs.add, references.add, dom_probe… — những method CLI không có) |
