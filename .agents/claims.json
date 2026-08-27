@@ -24,11 +24,11 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "DASHBOARD + FEATURE-PARITY da regen sau G-01 va da push (63dde20). Root ranh.",
-      "released_at": "2026-08-27"
+      "owner": "claude-flow-1",
+      "ai": "claude",
+      "claimed_at": "2026-08-27",
+      "task": "Giu de regen DASHBOARD theo nhip commit cua nhanh gg-flow-video (moi commit code doi so [DO] -> phai regen tu HEAD). Tra khi dong dot FLOW-01/02.",
+      "released_at": null
     }
   }
 }
