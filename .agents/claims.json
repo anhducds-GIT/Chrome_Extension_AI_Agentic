@@ -17,10 +17,10 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "V0.2-A DA XONG va DA PUSH: .gitattributes + `build-dashboard.mjs --check` + 7 ca test moi (suite 26). CHUA noi vao session-check.mjs — nang cong 6->7 la doi governance, audit rieng.",
+      "owner": "opus-platform-2",
+      "ai": "Claude",
+      "claimed_at": "2026-08-27",
+      "task": "V0.2-B: STATUS anti-drift — detector machine-owned facts (4 nhom), hep theo danh tu, co ca hoi quy tren 2 STATUS that.",
       "released_at": "2026-08-27"
     }
   }

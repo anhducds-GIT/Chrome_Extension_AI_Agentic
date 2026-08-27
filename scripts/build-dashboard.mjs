@@ -37,6 +37,138 @@ export function parseStatus(text) {
   return { frontmatter, body: lines.slice(end + 1).join("\n") };
 }
 
+function redactMarkdown(lines) {
+  let inFence = false;
+  return lines.map((entry) => {
+    const fence = entry.text.match(/^\s*(```|~~~)/);
+    if (fence) {
+      inFence = !inFence;
+      return { ...entry, text: "" };
+    }
+    if (inFence) return { ...entry, text: "" };
+    return {
+      ...entry,
+      text: entry.text
+        .replace(/(`+)([^\n]*?)\1/g, (match) => " ".repeat(match.length))
+        .replace(/\]\((?:\\.|[^)])*\)/g, (match) => `]${" ".repeat(match.length - 1)}`)
+    };
+  });
+}
+
+function statusScanLines(text) {
+  const lines = String(text).replace(/^﻿/, "").replace(/\r\n?/g, "\n").split("\n");
+  const selected = [];
+  if (lines[0] === "---") {
+    const end = lines.indexOf("---", 1);
+    if (end >= 0) {
+      for (let index = 1; index < end; index += 1) {
+        const match = lines[index].match(/^\s*(current_focus|last_verified_how)\s*:\s*(.*)$/);
+        if (match) selected.push({ text: match[2], lineNumber: index + 1 });
+      }
+      for (let index = end + 1; index < lines.length; index += 1) {
+        selected.push({ text: lines[index], lineNumber: index + 1 });
+      }
+      const frontmatterLines = selected.filter((entry) => entry.lineNumber < end + 1);
+      const bodyLines = selected.filter((entry) => entry.lineNumber > end + 1);
+      // Mỗi field frontmatter là một dòng độc lập; dấu fence gõ trong field đó không được
+      // phép nuốt toàn bộ body. Trạng thái fence chỉ có nghĩa bên trong chính phần body.
+      return [
+        ...frontmatterLines.flatMap((entry) => redactMarkdown([entry])),
+        ...redactMarkdown(bodyLines)
+      ];
+    }
+  }
+  return redactMarkdown(lines.map((line, index) => ({ text: line, lineNumber: index + 1 })));
+}
+
+const STATUS_NUMBER_RULES = [
+  {
+    kind: "parity",
+    pattern: /\b(?:nợ\s+)?\d+\s+tính năng(?:\s*\+\s*\d+\s+methods?)?(?:\s+còn thiếu)?\b/giu
+  },
+  {
+    kind: "parity",
+    pattern: /\b(?:nợ\s+\d+\s+methods?|\d+\s+methods?\s+còn thiếu)\b/giu
+  },
+  {
+    kind: "bridge",
+    pattern: /\b(?:Bridge\s*\(\s*)?\d+\s+(?:lệnh|methods?)(?:\s+Bridge)?(?:\s*\))?/giu
+  },
+  {
+    kind: "tests",
+    pattern: /\b(?:\d+\s+file test|\d+(?:\/\d+)?\s+test)\b/giu
+  },
+  {
+    kind: "version",
+    pattern: /\b(?:version|bản)\s+v?\d+(?:\.\d+){2,}\b/giu
+  }
+];
+
+function machineFactMessage({ kind, caught, source, lineNumber, bridgeMethods, testFiles, version }) {
+  const prefix = `${source}:${lineNumber}: "${caught}"`;
+  if (kind === "parity") {
+    return `${prefix} là số món nợ parity do máy quản lý. Đừng ghi tay — trỏ sang FEATURE-PARITY.md.`;
+  }
+  const facts = {
+    bridge: {
+      label: "số lệnh Bridge do máy đo",
+      measured: bridgeMethods,
+      target: 'cột "Method Bridge [ĐO]" trên DASHBOARD.md'
+    },
+    tests: {
+      label: "số file test do máy đo",
+      measured: testFiles,
+      target: 'cột "File test [ĐO]" trên DASHBOARD.md'
+    },
+    version: {
+      label: "version do máy đọc từ version_source",
+      measured: version,
+      target: 'cột "Version [ĐO]" trên DASHBOARD.md'
+    }
+  };
+  const fact = facts[kind];
+  const written = caught.match(/\d+(?:\.\d+)*/u)?.[0];
+  const measured = fact.measured === undefined || fact.measured === null ? "" : String(fact.measured);
+  const freshness = measured && written !== measured
+    ? `; số này đã mục rồi, máy hiện đo được ${measured}`
+    : measured ? ` (hiện máy đo được ${measured})` : "";
+  return `${prefix} là ${fact.label}${freshness}. Đừng ghi tay — trỏ sang ${fact.target}.`;
+}
+
+// Hàm thuần: chỉ nhận nội dung STATUS và các số generator vừa đo, không đọc file hay git.
+// Mẫu neo vào danh từ machine-owned. Các số kiểm chứng, giới hạn an toàn và mã việc không
+// có những danh từ này nên không bị bắt chỉ vì chúng chứa chữ số.
+export function detectStatusMachineOwnedFacts(text, {
+  statusPath = "STATUS.md",
+  bridgeMethods,
+  testFiles,
+  version
+} = {}) {
+  const errors = [];
+  for (const line of statusScanLines(text)) {
+    const occupied = [];
+    for (const rule of STATUS_NUMBER_RULES) {
+      rule.pattern.lastIndex = 0;
+      for (const match of line.text.matchAll(rule.pattern)) {
+        const start = match.index;
+        const end = start + match[0].length;
+        if (occupied.some(([left, right]) => start < right && end > left)) continue;
+        occupied.push([start, end]);
+        errors.push(machineFactMessage({
+          kind: rule.kind,
+          caught: match[0],
+          source: statusPath,
+          lineNumber: line.lineNumber,
+          bridgeMethods,
+          testFiles,
+          version
+        }));
+      }
+    }
+  }
+  return errors;
+}
+
 export function validateStatus(fm, deps) {
   const errors = [];
   const source = deps.statusPath ?? "STATUS.md";
@@ -195,14 +327,26 @@ export function collectModel(deps = createDefaultDeps()) {
       parsed.push({ ...descriptor, statusPath, fm: null });
       continue;
     }
-    const fm = parseStatus(deps.readFile(statusPath)).frontmatter;
-    errors.push(...validateStatus(fm, {
+    const statusText = deps.readFile(statusPath);
+    const fm = parseStatus(statusText).frontmatter;
+    const statusErrors = validateStatus(fm, {
       ...deps,
       statusPath,
       packageDir: descriptor.dirRelPath,
       packageId: descriptor.packageName
+    });
+    errors.push(...statusErrors);
+    // `version_source` hợp lệ vẫn là SSOT của version. Nếu STATUS sai ở bất kỳ luật nền nào,
+    // đo từ manifest discovery để detector tiếp tục gom lỗi thay vì crash trước khi báo.
+    const measuredPath = statusErrors.length === 0 ? fm.version_source : descriptor.manifestPath;
+    const measured = measuredRow(deps, descriptor.dirRelPath, measuredPath);
+    errors.push(...detectStatusMachineOwnedFacts(statusText, {
+      statusPath,
+      bridgeMethods: measured.bridgeMethods,
+      testFiles: measured.testFiles,
+      version: measured.version
     }));
-    parsed.push({ ...descriptor, statusPath, fm });
+    parsed.push({ ...descriptor, statusPath, fm, measured });
   }
   if (errors.length) {
     const error = new Error(errors.join("\n"));
@@ -213,7 +357,7 @@ export function collectModel(deps = createDefaultDeps()) {
 
   const rows = parsed.map((item) => {
     const manifestPath = item.fm?.version_source ?? item.manifestPath;
-    const measured = measuredRow(deps, item.dirRelPath, manifestPath);
+    const measured = item.measured ?? measuredRow(deps, item.dirRelPath, manifestPath);
     const changedCount = item.fm?.last_verified_commit
       ? changedCommitCount(deps.git.changedFilesSince(item.fm.last_verified_commit, item.dirRelPath))
       : 0;

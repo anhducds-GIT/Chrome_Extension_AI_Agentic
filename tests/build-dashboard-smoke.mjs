@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { sep } from "node:path";
 
-import { buildDashboard, collectModel, parsePorcelain, parseStatus, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
+import { buildDashboard, collectModel, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -103,6 +103,16 @@ function checkHarness({ dashboard, exists = true } = {}) {
   return { deps, output, writes, logs, errors };
 }
 
+function antiDrift(text, measurements = {}) {
+  return detectStatusMachineOwnedFacts(text, {
+    statusPath: "workers/demo/v1/STATUS.md",
+    bridgeMethods: 22,
+    testFiles: 94,
+    version: "0.3.0",
+    ...measurements
+  });
+}
+
 /* 1. Parser phẳng, có comment, dấu hai chấm và dấu nháy. */
 {
   const parsed = parseStatus('---\n# bỏ qua\nschema: extension-status/v1\nid: demo\nname: "Tên: có dấu hai chấm"\nlifecycle: active\n---\nThân file.\n');
@@ -166,6 +176,87 @@ function checkHarness({ dashboard, exists = true } = {}) {
   const model = collectModel(fakeRepo());
   assert.equal(buildDashboard(model), buildDashboard(model));
   ok("buildDashboard trả byte giống hệt với cùng model");
+}
+
+/* 2b. Bốn nhóm số machine-owned phải bị bắt, kể cả frontmatter tự do. */
+{
+  const cases = [
+    ["Bridge (22 lệnh)", "Method Bridge [ĐO]"],
+    ["19 method", "Method Bridge [ĐO]"],
+    ["81 file test", "File test [ĐO]"],
+    ["version 0.3.0", "Version [ĐO]"]
+  ];
+  for (const [violation, target] of cases) {
+    const errors = antiDrift(statusText(validFm()) + violation + "\n");
+    assert.ok(errors.some((message) => message.includes(`\"${violation}\"`) && message.includes(target)),
+      `lỗi phải nêu chuỗi bị bắt và chỗ thay thế cho ${violation}`);
+  }
+  const parity = antiDrift(statusText(validFm({ current_focus: "nợ 6 tính năng + 3 method" })));
+  assert.ok(parity.some((message) => message.includes('"nợ 6 tính năng + 3 method"') && message.includes("FEATURE-PARITY.md")));
+  const missingMethods = antiDrift(statusText(validFm({ current_focus: "3 method còn thiếu" })));
+  assert.ok(missingMethods.some((message) => message.includes('"3 method còn thiếu"') && message.includes("FEATURE-PARITY.md")));
+  ok("bốn nhóm số machine-owned bị bắt và lỗi trỏ đúng nguồn thay thế");
+}
+
+/* 2c. Số lời khai, giới hạn an toàn, mã việc và tên riêng hợp lệ tuyệt đối không bị bắt. */
+{
+  const sha40 = "0123456789abcdef0123456789abcdef01234567";
+  const allowed = [
+    "2026-08-26 3/3 5/5 9/9 18/18 90 giây 1054 ms 3,5MB",
+    `B-14 B-15 B-17 B-19 B-21 B-14…B-21 v0.1.0 v0.2.0 V0.3 00d1f99 dd3c736 ${sha40}`,
+    'mục 6 V0.1 vòng 3 "Duc Auto ChatGPT V0.3"'
+  ].join("\n");
+  assert.deepEqual(antiDrift(statusText(validFm({
+    current_focus: "B-14…B-21; việc thật không chạy qua trần 90 giây",
+    last_verified_how: "Pilot live 3/3 và 5/5 phép kiểm"
+  })) + allowed), []);
+  ok("toàn bộ số lời khai, giới hạn, mã việc và tên riêng hợp lệ không bị báo oan");
+}
+
+/* 2d. Code và đường dẫn bị loại trước khi quét. */
+{
+  const hidden = statusText(validFm({
+    version_source: "workers/demo/v0.1.0/manifest.json",
+    ref_readme: "workers/demo/v0.2.0/README.md",
+    current_focus: "xem `Bridge (22 lệnh)`"
+  })) + [
+    "[đọc README](workers/demo/v0.1.0/README.md)",
+    "```text",
+    "81 file test",
+    "```"
+  ].join("\n");
+  assert.deepEqual(antiDrift(hidden), []);
+  ok("code span, code fence, link target và frontmatter đường dẫn bị loại trước khi quét");
+}
+
+/* 2e. Detector phải nối thật vào collectModel và gom mọi lỗi thay vì dừng ở lỗi đầu. */
+{
+  const violating = fakeRepo({ statusOverrides: {
+    current_focus: "nợ 6 tính năng + 3 method",
+    last_verified_how: "đã chạy 81 file test"
+  } });
+  assert.throws(
+    () => collectModel(violating),
+    (error) => error.name === "StatusValidationError"
+      && error.validationErrors.length === 2
+      && error.message.includes("FEATURE-PARITY.md")
+      && error.message.includes("File test [ĐO]"),
+    "collectModel phải gom cả hai lỗi anti-drift"
+  );
+  ok("anti-drift nối thật vào collectModel và gom hết lỗi");
+}
+
+/* 2f. Hai STATUS thật trong repo là ca hồi quy chống báo oan. */
+{
+  for (const relPath of [
+    "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
+    "workers/duc-auto-gemini/v0.2.0/STATUS.md"
+  ]) {
+    const text = readFileSync(new URL(`../${relPath}`, import.meta.url), "utf8");
+    assert.deepEqual(detectStatusMachineOwnedFacts(text, { statusPath: relPath }), [],
+      `${relPath} đang sạch và không được bị detector báo oan`);
+  }
+  ok("detector trả 0 cảnh báo trên cả hai STATUS thật");
 }
 
 /* 4. Manifest không có STATUS vẫn phải thành một hàng rõ ràng. */

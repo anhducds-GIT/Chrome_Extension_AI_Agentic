@@ -69,19 +69,26 @@ ref_handoff: workers/ten-thu-muc-package/vX.Y.Z/HANDOFF.md
 | `experimental` | thử nghiệm, đừng tin vào nó |
 | `unclassified` | chưa xếp loại |
 
-### Luật số 0 — TUYỆT ĐỐI không gõ số động vào STATUS
+### Luật số 0 — phân biệt số máy giữ và số lời khai
 
-Số lệnh Bridge · số file test · số version · số món còn nợ nhánh kia — **không viết vào đây**,
-kể cả trong phần thân cho Đức đọc. Trỏ sang [`DASHBOARD.md`](DASHBOARD.md) (máy đếm) hoặc
-[`FEATURE-PARITY.md`](FEATURE-PARITY.md).
+Máy chỉ cấm bốn nhóm **machine-owned**: số lệnh Bridge · số file test · version viết tay ·
+số món còn nợ parity. Không viết các số đó vào STATUS, kể cả trong phần thân cho Đức đọc.
+Trỏ sang [`DASHBOARD.md`](DASHBOARD.md) cho số Bridge, file test và version; trỏ sang
+[`FEATURE-PARITY.md`](FEATURE-PARITY.md) cho số món nợ giữa hai nhánh.
+
+Các số là **lời khai hoặc thông tin operator cần** vẫn được phép và nên giữ: ngày kiểm chứng;
+SHA 7 hoặc 40 ký tự; mã việc như `B-17`; kết quả kiểm như `3/3`, `18/18`; giới hạn vận hành
+như `90 giây`, `1054 ms`, `3,5MB`; version nằm trong đường dẫn hoặc tên riêng; số mục và số
+vòng. Phần 2 vẫn phải nói rõ kiểm bằng cách nào và con số bao nhiêu. Detector chỉ bắt bốn
+nhóm machine-owned ở trên, không bắt mọi chữ số.
 
 Lý do không phải lý thuyết: **bản V0.1 đầu tiên của chính hai STATUS pilot đã vi phạm** —
 chúng ghi tay "Bridge (22 lệnh)", "Bridge (19 lệnh)", "nợ 6 tính năng + 3 method". GPT audit
 27/08 bắt được. Số đó đúng lúc viết, và sẽ sai đúng vào lần port tiếp theo. Đây chính xác là
 căn bệnh platform này sinh ra để chữa, và nó tái phát ngay trong file dựng ra để chữa nó.
 
-**Cách thử nhanh:** đọc lại STATUS, thấy chữ số nào mà *máy đếm được* thì xoá. Ngày tháng và
-mã B-xx thì giữ — đó là lời khai, không phải phép đo.
+**Cách thử nhanh:** đọc lại STATUS, nếu số đang lặp lại một trong bốn phép đo machine-owned
+thì xoá và trỏ sang nguồn máy. Không xoá số kiểm chứng, giới hạn an toàn hay mã việc.
 
 ### Ba luật máy ép, đừng tìm cách lách
 

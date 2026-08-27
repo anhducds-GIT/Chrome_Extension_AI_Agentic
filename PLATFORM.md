@@ -128,7 +128,7 @@ generator deterministic · `DASHBOARD.md` sinh tự động · test ghim.
 | `BACKLOG.md` cho nhánh Gemini | Nhánh đó chưa có sổ; cần phiên giữ package đó dựng |
 | `STATUS.md` cho Observer V0 | Chưa ai giữ package đó |
 | Cho `version_source` chấp nhận khác hoa/thường trên Windows | Hiện khác hoa/thường bị từ chối dù đường dẫn trỏ đúng chỗ. **Fail-closed** nên không sinh ra số sai, chỉ phiền. Auditor xếp LOW |
-| **Máy bắt số động gõ tay trong STATUS** | Luật đã có ở `STATUS.template.md` nhưng chỉ là chữ — và đã bị vi phạm ngay bởi phiên viết ra nó (xem V0.1.1 trong Log) |
+| ~~Máy bắt số động gõ tay trong STATUS~~ | **XONG V0.2-B 27/08.** Detector hẹp theo 4 nhóm machine-owned |
 | Đóng protocol lặp lại (tạo extension / đóng phiên) thành skill | Chưa đủ lần lặp để biết hình dạng đúng |
 
 **Ngoài phạm vi, đã chốt là KHÔNG làm:** agent daemon, automation engine tự chạy.
