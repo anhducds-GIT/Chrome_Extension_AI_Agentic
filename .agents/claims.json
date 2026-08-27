@@ -17,11 +17,11 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "Phien opus-platform-2 DONG. Tat ca V0.1 -> V0.2-E da push. Viec tiep theo: G-01 (doi luat an toan, CAN DUC CHOT TRUC TIEP truoc khi code). Prompt mo phien moi: drafts/NEXT-CHAT-ONBOARDING-PROMPT.md",
-      "released_at": "2026-08-27"
+      "owner": "claude-flow-plan",
+      "ai": "claude",
+      "claimed_at": "2026-08-27",
+      "task": "Viet ke hoach dieu phoi Extension Google Flow (video) vao drafts/ — chi tai lieu, KHONG code. Xong thi tra quyen.",
+      "released_at": null
     }
   }
 }
