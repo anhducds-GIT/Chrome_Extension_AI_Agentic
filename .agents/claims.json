@@ -24,11 +24,11 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "claude-flow-1 tra quyen sau dot regen F-02/04/05 (a35554b) de phien study commit 1 file drafts. claude-flow-1 se claim lai khi FLOW-04 trial xong can regen DASHBOARD.",
-      "released_at": "2026-08-27"
+      "owner": "claude-platform-orchestrator-study",
+      "ai": "claude",
+      "claimed_at": "2026-08-27",
+      "task": "Commit DUNG 1 file drafts/PLATFORM-AI-ORCHESTRATOR-STUDY.md (ban nghien cuu kien truc, Duc yeu cau push cho GPT audit). Khong dung runtime/schema/gate/generator. Tra ngay sau khi push xong de claude-flow-1 claim lai cho FLOW-04.",
+      "released_at": null
     }
   }
 }
