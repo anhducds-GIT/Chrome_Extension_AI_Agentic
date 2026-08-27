@@ -17,11 +17,11 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": "claude-flow-plan",
-      "ai": "claude",
-      "claimed_at": "2026-08-27",
-      "task": "Cap nhat ke hoach Flow theo 3 chot cua Duc (URL, quyen, ten package gg-flow-video). Xong thi tra quyen.",
-      "released_at": null
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "FLOW-00 DA CHOT va DA PUSH (6d7c378). San sang FLOW-01: Duc dan prompt muc 7 cua drafts/FLOW-EXT-COORDINATION-PLAN.md vao phien moi (nhan claude-flow-1). G-01 (Gemini) van cho Duc chot rieng.",
+      "released_at": "2026-08-27"
     }
   }
 }
