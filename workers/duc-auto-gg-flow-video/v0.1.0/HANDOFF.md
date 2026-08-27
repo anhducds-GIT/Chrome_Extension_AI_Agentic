@@ -57,3 +57,14 @@
   content không trả lời → sửa cả 4 (đếm+busy đồng bộ trước await; giành khoá kiểu
   chat.reload; Promise.race 15s) → **PASS**. Suite 81/81. Còn mở: Đức ⟳ + mở lại panel
   → phiên này tự chạy: chat.reload → evidence_submit → poller chụp during/after.
+- 2026-08-27 · `claude-flow-1` · Bằng chứng sống đầu tiên + trượt có giá trị: (a) Bridge
+  folder được Đức gom về `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video\`
+  — bridge-rpc.mjs đã trỏ lại; (b) sau F5, trang render 4 thẻ <video> (trước đó 0 — render
+  lười), URL media pattern `labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=…`, lưu
+  `evidence/F1-snapshot-4-after-video-20260827.json`; (c) evidence_submit lượt 1 TRƯỢT:
+  gõ được chữ vào ô contenteditable nhưng nút Create không sáng → ô đó KHÔNG phải ô prompt
+  nối với Create. Không tốn credit (chưa click). Vá: probe thêm mục `textboxes` (mọi ô nhập
+  ứng viên), evidence_submit thêm `dry_run` (gõ + báo trạng thái nút, KHÔNG click, KHÔNG
+  tiêu lượt) + ưu tiên TEXTAREA với native React setter. Đức chốt thêm: trial thoải mái,
+  nhiều tài khoản free — trần 3/lượt-nạp-trang giữ nguyên (đổi account/F5 = lượt mới).
+  Suite 81/81. Còn mở: Đức ⟳ → dry_run xác định đúng ô prompt → submit thật.

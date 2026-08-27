@@ -918,7 +918,7 @@
       // direction (lose a counted slot, never overspend credits).
       const timeoutMs = 15000;
       const response = await Promise.race([
-        send({ type: "DAC_FLOW_EVIDENCE_SUBMIT", prompt: params.prompt }),
+        send({ type: "DAC_FLOW_EVIDENCE_SUBMIT", prompt: params.prompt, dry_run: params.dry_run === true }),
         new Promise((_, reject) => setTimeout(() => reject(new Error(
           "EVIDENCE_SUBMIT_TIMEOUT: content script không trả lời trong 15s. Khoá đã nhả; lượt đếm phía trang có thể ĐÃ tiêu — kiểm tra trang bằng dom_probe trước khi gọi lại."
         )), timeoutMs))

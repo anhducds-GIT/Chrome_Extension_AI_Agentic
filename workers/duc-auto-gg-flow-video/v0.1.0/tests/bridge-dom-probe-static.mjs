@@ -50,7 +50,12 @@ assert.match(probeBlock, /return false;/, "probe responds synchronously");
 // 2026-08-27 — the image-era probe was blind to them) and ship them in the
 // payload, shrunk under the cap rather than dropped.
 assert.match(probeBlock, /querySelectorAll\("video"\)/, "probe scans <video> elements");
-assert.match(probeBlock, /selectorCounts, buttons, images, videos, customTags, fileInputs/, "videos ride in the probe payload");
+assert.match(probeBlock, /selectorCounts, buttons, images, videos, textboxes, customTags, fileInputs/, "videos and textboxes ride in the probe payload");
 assert.match(probeBlock, /probe\.videos = probe\.videos\.slice\(0, 5\)/, "videos participate in truncation");
+// Live miss 27/08: the first [contenteditable][role=textbox] was NOT the box
+// wired to Create. The probe must list every candidate text-entry surface so
+// the operator picks from evidence instead of guessing.
+assert.match(probeBlock, /querySelectorAll\('textarea, input\[type="text"\], \[contenteditable="true"\], \[role="textbox"\]'\)/, "probe scans all text-entry candidates");
+assert.match(probeBlock, /probe\.textboxes = probe\.textboxes\.slice\(0, 5\)/, "textboxes participate in truncation");
 
 console.log("bridge dom-probe static: PASS");

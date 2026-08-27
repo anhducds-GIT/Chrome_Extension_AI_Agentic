@@ -934,12 +934,32 @@
         sendResponse({ ok: false, error: "EVIDENCE_PROMPT_EMPTY" });
         return false;
       }
+      // dry_run: type + report ONLY — never clicks, never consumes a slot.
+      // Typing costs no credits; this lets the operator debug the input path
+      // without burning the 3-slot budget (live lesson: first real attempt on
+      // Flow typed into a textbox that was not wired to the Create button).
+      const evidenceDryRun = message.dry_run === true;
       STATE.evidenceSubmitInFlight = true;
-      STATE.evidenceSubmitCount += 1;
+      if (!evidenceDryRun) STATE.evidenceSubmitCount += 1;
       (async () => {
-        const composer = findComposer();
-        if (!composer) throw new Error("EVIDENCE_COMPOSER_NOT_FOUND");
-        setComposerText(composer, evidencePrompt);
+        // Flow's prompt box is React-controlled; target the best candidate:
+        // prefer a visible TEXTAREA (Flow), fall back to the adapter composer
+        // (contenteditable). Evidence: F1 snapshots 1-4 + live failure 27/08.
+        const textareas = Array.from(document.querySelectorAll("textarea")).filter(isVisible);
+        const target = textareas[0] || findComposer();
+        if (!target) throw new Error("EVIDENCE_COMPOSER_NOT_FOUND");
+        const targetDescription = `${target.tagName.toLowerCase()}${target.placeholder ? `[placeholder=${String(target.placeholder).slice(0, 60)}]` : ""}`;
+        if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") {
+          // React-controlled inputs ignore plain .value writes; go through the
+          // prototype setter so React's value tracker sees the change.
+          const prototype = target.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+          const setter = Object.getOwnPropertyDescriptor(prototype, "value").set;
+          target.focus();
+          setter.call(target, evidencePrompt);
+          target.dispatchEvent(new Event("input", { bubbles: true }));
+        } else {
+          setComposerText(target, evidencePrompt);
+        }
         const findCreateButton = () => Array.from(document.querySelectorAll("button")).filter(isVisible).find((button) => {
           const label = (button.innerText || "").replace(/\s+/g, " ").trim();
           return /arrow_forward/i.test(label) && /create/i.test(label);
@@ -951,12 +971,25 @@
           if (candidate && !candidate.disabled && candidate.getAttribute("aria-disabled") !== "true") { createButton = candidate; break; }
           await new Promise((resolve) => setTimeout(resolve, 250));
         }
-        if (!createButton) throw new Error("EVIDENCE_CREATE_BUTTON_NOT_READY: composer da co chu nhung nut Create khong bat len trong 8s (luot dem da tieu, khong hoan).");
+        const buttonState = createButton ? "enabled" : (findCreateButton() ? "still_disabled" : "not_found");
+        if (evidenceDryRun) {
+          return {
+            submitted: false,
+            dry_run: true,
+            typed_into: targetDescription,
+            textarea_count: textareas.length,
+            create_button: buttonState,
+            url: location.href,
+            at: new Date().toISOString()
+          };
+        }
+        if (!createButton) throw new Error(`EVIDENCE_CREATE_BUTTON_NOT_READY: da go vao ${targetDescription} nhung nut Create ${buttonState} sau 8s (luot dem da tieu, khong hoan).`);
         createButton.click();
         return {
           submitted: true,
           submit_index: STATE.evidenceSubmitCount,
           cap: EVIDENCE_SUBMIT_CAP,
+          typed_into: targetDescription,
           button_text: (createButton.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40),
           url: location.href,
           at: new Date().toISOString()
@@ -1021,6 +1054,25 @@
         });
         const customTags = [...new Set(Array.from(document.querySelectorAll("*")).map((element) => element.tagName.toLowerCase()).filter((tag) => tag.includes("-")))].slice(0, 100);
         const fileInputs = Array.from(document.querySelectorAll('input[type="file"]')).map((input) => ({ accept: (input.getAttribute("accept") || "").slice(0, 120), multiple: input.multiple, connected: input.isConnected, chain: chainOf(input) }));
+        // Every candidate text-entry surface — Flow's real prompt box turned
+        // out not to be the first [contenteditable][role=textbox] (live miss
+        // 27/08), so the operator needs to SEE all of them to pick the right
+        // target instead of guessing.
+        const textboxes = Array.from(document.querySelectorAll('textarea, input[type="text"], [contenteditable="true"], [role="textbox"]')).slice(0, 15).map((element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            tag: element.tagName.toLowerCase(),
+            visible: isVisible(element),
+            rect: { w: Math.round(rect.width), h: Math.round(rect.height) },
+            placeholder: String(element.placeholder || element.getAttribute?.("aria-placeholder") || element.getAttribute?.("data-placeholder") || "").slice(0, 80),
+            aria: String(element.getAttribute?.("aria-label") || "").slice(0, 60),
+            role: String(element.getAttribute?.("role") || "").slice(0, 20),
+            editable: element.getAttribute?.("contenteditable") === "true",
+            valueLen: (element.value ?? element.textContent ?? "").length,
+            cls: (typeof element.className === "string" ? element.className : "").slice(0, 80),
+            chain: chainOf(element)
+          };
+        });
         const probe = {
           captured_at: new Date().toISOString(),
           url: location.href,
@@ -1034,13 +1086,14 @@
           securityBlocker: securityBlockerText(),
           generationLimitBlocker: generationLimitText(),
           busy: STATE.busy,
-          selectorCounts, buttons, images, videos, customTags, fileInputs,
+          selectorCounts, buttons, images, videos, textboxes, customTags, fileInputs,
           truncated: false,
         };
         // Payload cap ~64KB: shrink the bulky arrays first rather than fail.
         if (JSON.stringify(probe).length > 64 * 1024) {
           probe.images = probe.images.slice(0, 5);
           probe.videos = probe.videos.slice(0, 5);
+          probe.textboxes = probe.textboxes.slice(0, 5);
           probe.buttons = probe.buttons.slice(0, 10);
           probe.customTags = probe.customTags.slice(0, 40);
           probe.truncated = true;

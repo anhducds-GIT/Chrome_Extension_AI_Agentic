@@ -36,7 +36,10 @@ assert.ok(routerCore.BOOTSTRAP_ALLOWED_METHODS.includes("diagnostics.evidence_su
 // Panel wiring: dispatch map + test hooks + forwards DAC_FLOW_EVIDENCE_SUBMIT.
 assert.match(panel, /"diagnostics\.evidence_submit": withBridgeErrors\(bridgeEvidenceSubmit\)/);
 assert.match(panel, /"diagnostics\.evidence_submit": bridgeEvidenceSubmit,/, "test hooks expose the raw handler");
-assert.match(panel, /send\(\{ type: "DAC_FLOW_EVIDENCE_SUBMIT", prompt: params\.prompt \}\)/);
+assert.match(panel, /send\(\{ type: "DAC_FLOW_EVIDENCE_SUBMIT", prompt: params\.prompt, dry_run: params\.dry_run === true \}\)/);
+// dry_run types + reports WITHOUT clicking and WITHOUT consuming a slot.
+assert.deepEqual(bridge.validateParams("diagnostics.evidence_submit", { prompt: "x", dry_run: true }), { prompt: "x", dry_run: true });
+assert.throws(() => bridge.validateParams("diagnostics.evidence_submit", { prompt: "x", dry_run: "yes" }), (error) => error.code === "INVALID_PARAMS", "dry_run must be a boolean");
 
 // Content side: hard cap constant, evidence-backed finders, async response.
 const blockStart = content.indexOf('if (message.type === "DAC_FLOW_EVIDENCE_SUBMIT")');
