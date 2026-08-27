@@ -138,7 +138,7 @@ generator deterministic · `DASHBOARD.md` sinh tự động · test ghim.
 
 | Món | Vì sao chưa làm ở V0.1 |
 |---|---|
-| ~~`node scripts/build-dashboard.mjs --check`~~ + ~~`.gitattributes`~~ | **XONG V0.2-A 27/08.** Nối `--check` thành cổng bắt buộc (6→7) vẫn là việc riêng — đổi cổng kiểm là đổi governance, audit riêng |
+| ~~`--check` + `.gitattributes`~~ · ~~nâng cổng 6→7~~ | **XONG V0.2-A và V0.2-D 27/08.** Cổng #7 so HEAD với HEAD |
 | ~~`scripts/feature-parity.mjs`~~ | **XONG V0.2-C 27/08.** Mục 1 + 3 + nợ method ở mục 4 máy sinh trong khối marker; mục 2 (hành vi) vẫn của người, cấm máy suy diễn |
 | `BACKLOG.md` cho nhánh Gemini | Nhánh đó chưa có sổ; cần phiên giữ package đó dựng |
 | `STATUS.md` cho Observer V0 | Chưa ai giữ package đó |
