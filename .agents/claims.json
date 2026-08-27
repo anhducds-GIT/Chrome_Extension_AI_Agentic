@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-flow-1",
-      "ai": "claude",
-      "claimed_at": "2026-08-27",
-      "task": "FLOW-01: fork bootstrap tu gemini v0.2.0 (Bridge + diagnostics, KHOA run/submit), dung host rieng, chup bang chung DOM trang Flow. Duc da giao phien nay tu chay Codex/AGY den khi hoan thien.",
-      "released_at": null
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "BAN GIAO 27/08: FLOW-00..03 + F-02/04/05 XONG (video dau tien sinh bang may ~70s, audit 3 vong PASS, suite 84/84, push a35554b). FLOW-04 trial runner DANG DO (extension chua nap ban moi). Phien moi doc NEXT-SESSION-BRIEF.md trong package roi claim bang nhan rieng.",
+      "released_at": "2026-08-27"
     },
     "workers/duc-auto-gemini": {
       "owner": "opus-platform-3",
@@ -24,11 +24,11 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "Phien study da push xong drafts/PLATFORM-AI-ORCHESTRATOR-STUDY.md (3760ac8) va tra quyen. claude-flow-1 claim lai khi FLOW-04 trial xong can regen DASHBOARD.",
-      "released_at": "2026-08-27"
+      "owner": "claude-platform-orchestrator-study",
+      "ai": "claude",
+      "claimed_at": "2026-08-27",
+      "task": "Nhan _root de dung ten 1 file drafts moi: PLATFORM-AI-ORCHESTRATOR-STUDY-V2.md (reasoning V2 tra loi 6 phan bien GPT). Duc chi thi KHONG commit/push luot nay — push cho lenh Duc, xong thi tra quyen.",
+      "released_at": null
     }
   }
 }
