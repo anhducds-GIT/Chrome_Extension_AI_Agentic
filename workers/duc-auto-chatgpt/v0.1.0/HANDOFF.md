@@ -382,3 +382,5 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - GPT chốt 3 quyết định V0.2 (artifact cũ cho nghỉ · `--check` bỏ qua dòng dấu HEAD ·
     thêm `.gitattributes`), và chốt **không viết lại lịch sử** để sửa commit message `1`:
     force-push trong repo nhiều phiên AI nguy hơn cái lợi thẩm mỹ. Ghi ở `PLATFORM.md` mục 8.
+
+- 2026-08-27 · Claude (`opus-platform-3`, phiên bên nhánh Gemini) · **Chỉ thêm MỘT mục backlog: B-22** — nhánh này có cùng race G-01 vừa vá bên Gemini: `content.js:703` mở đầu `runPrompt()` bằng `STATE.abortRequested = false`, nên lệnh huỷ tới trước job bị xoá và prompt vẫn bay ([ĐỌC] 27/08, không phải dò tên). Bản vá + test mẫu nằm bên `workers/duc-auto-gemini/v0.2.0` (commit `a173507`). KHÔNG sửa dòng code nào của nhánh này — khác chốt khởi động run (`createQueueRunLock`/`tryBeginRun`), phải viết lại test race cho DOM ChatGPT trước rồi mới vá.
