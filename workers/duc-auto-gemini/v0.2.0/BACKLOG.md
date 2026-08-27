@@ -1,0 +1,108 @@
+# Backlog — Duc Auto Gemini (Platform)
+
+Nơi chứa mọi việc phát sinh mà **không** thuộc checkpoint của phiên đang chạy.
+
+Luật (Đức chốt 2026-08-26): mỗi phiên chỉ đóng **một** checkpoint. Ý tưởng mới nảy ra giữa
+chừng thì ghi vào đây, không mở rộng phiên đang làm.
+
+Cách đọc: `P1` = chặn việc khác, làm trước. `P2` = nên làm sớm. `P3` = khi rảnh.
+Mục nào xong thì chuyển xuống mục **Đã đóng** kèm số commit.
+
+**Đánh số `G-xx`** để không lẫn với `B-xx` của nhánh ChatGPT. Hai sổ, hai nhánh, hai dãy số.
+
+> **Sổ này lập ngày 2026-08-27** (`opus-platform-2`, GPT chốt thứ tự việc). Trước đó nhánh
+> Gemini **không có nơi canonical để giữ việc mở** — chúng nằm rải trong `HANDOFF.md` hoặc
+> nằm nhờ ở sổ của nhánh ChatGPT, tức là một chiều. Đó chính là lỗ vận hành sổ này bịt.
+
+## Đọc mỗi dòng cho đúng độ tin cậy
+
+Kế thừa quy ước của [`FEATURE-PARITY.md`](../../../FEATURE-PARITY.md):
+
+| Ký hiệu | Nghĩa | Tin được tới đâu |
+|---|---|---|
+| **[ĐO]** | Máy đếm được | Chắc |
+| **[ĐỌC]** | Đã mở code đọc thẳng hàm đó | Chắc |
+| **[DÒ]** | Tìm theo tên hàm/hằng số | **Có thể sai** |
+
+**Dòng [DÒ] phải kiểm lại TRƯỚC khi hành động.** Dò theo tên đã cho kết luận sai **bốn lần
+trong một ngày** ở repo này, và lần đắt nhất là một tính năng không ai nghĩ ra để dò.
+
+---
+
+## P1 — Chặn vòng tự hành
+
+### G-01 · Lệnh dừng chỉ ăn ở mốc ngắt, prompt vẫn bay sau khi đã báo dừng — **[ĐỌC]**
+
+Trial live 2026-08-26 ghi sổ cái: `BRIDGE_RUN_STOPPED` lúc 14:20:36 với
+`STOP_REQUESTED_BEFORE_SUBMIT`, rồi **`PROMPT_SUBMITTED` lúc 14:20:37** — đúng một giây sau.
+Cờ dừng chỉ được đọc ở các mốc ngắt, nên job đang chạy đi nốt tới chỗ gửi.
+
+Đã vá **lời nhắn** (trước đó nó trấn an "Không job nào bị gửi thêm", và câu đó sai).
+**Chưa đụng vào thời điểm cờ dừng ăn** — đó là **đổi luật an toàn**, theo `AGENTS.md` mục 2
+phải hỏi Đức trước, và phải đo trước khi sửa.
+
+Bằng chứng: `evidence-stop-reload-20260826/README.md`.
+**Cần Đức chốt** trước khi ai đó động vào.
+
+### G-02 · Khoá tab và khoá hội thoại — Gemini chưa có — **[ĐỌC]**
+
+`sidepanel.js:2414` `activeTab()` vẫn gọi `chrome.tabs.query({active:true})` **mỗi lần gửi**,
+và chỉ kiểm origin chứ không ghim `/c/<id>`. Đổi tab hoặc đổi hội thoại giữa chừng là runner
+âm thầm gõ sang chỗ khác.
+
+Nhánh ChatGPT đã có (B-01). Port sang, **đừng chép nguyên xi** — hai nhánh khác nhau ở chốt
+khởi động run, xem `HANDOFF.md` mục port `run.stop`/`chat.reload` để biết ba chỗ khác nhau.
+
+## P2 — Nên làm sớm
+
+### G-03 · `README.md` của package này là bản chép từ nhánh ChatGPT — **[ĐỌC]**
+
+Dòng tiêu đề vẫn ghi *"Duc Auto ChatGPT V0.3"*. Ai đọc README để hiểu nhánh Gemini bị dẫn sai
+tên **ngay dòng đầu**. So hai file thì chúng chỉ khác đúng một mục (`references.add`).
+
+Đây là lỗi tài liệu rẻ nhất trong sổ này và cũng dễ gây hiểu nhầm nhất cho người mới.
+
+### G-04 · Nợ ba method Bridge — **[ĐO]**
+
+`output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`.
+
+**Đừng gõ lại con số vào đây** — số hiện tại luôn nằm ở khối `AUTO:DEBT-METHODS` trong
+[`FEATURE-PARITY.md`](../../../FEATURE-PARITY.md), do máy sinh. Dòng này chỉ để biết *có nợ*.
+
+### G-05 · `image-evidence-core.js` nhỏ hơn nhánh kia hơn hai lần — **[ĐO]**
+
+145 dòng bên ChatGPT, 66 bên Gemini. Đây là **lớp quy ảnh về job** — tức là lớp **an toàn**,
+không phải UI. Chênh lệch ở đây đáng lo hơn chênh lệch ở giao diện.
+
+Chưa ai đọc để biết 79 dòng đó làm gì. **Việc đầu tiên là ĐỌC, không phải port.**
+
+### G-06 · Bốn hành vi nhánh ChatGPT có mà Gemini chưa — **[DÒ], phải kiểm lại**
+
+- `DETECTION_BLIND` — mù thì dừng cứng, không thử lại (chốt dựng ra sau khi đốt 6 lượt quota ngày 25/08)
+- Ledger khai thật `landed_as_requested`
+- Nhiều ảnh một job
+- Đọc `tab.url || tab.pendingUrl`
+
+Cả bốn đều là **[DÒ]** — chỉ mới dò theo tên hằng số/thuộc tính. **Kiểm lại bằng cách đọc code
+trước khi kết luận là thiếu.** Nhánh Gemini đã hai lần bị báo oan "thiếu" trong khi nó **có**,
+chỉ là làm theo cách khác và đặt tên khác (`tryBeginRun`, `assertTrialDevMode`).
+
+## P3 — Khi rảnh
+
+### G-07 · Poll A/B "thích ảnh nào hơn" — **[ĐO]**
+
+`ab-poll-core.js` chỉ có ở nhánh ChatGPT. Không phải lớp an toàn, nên xếp P3.
+
+### G-08 · Tám module giống hệt từng byte giữa hai nhánh — **[ĐO]**
+
+Danh sách hiện tại ở khối `AUTO:MODULES` trong `FEATURE-PARITY.md`. Dời chúng vào
+`workers/_shared/` thì **rủi ro bằng không** và hết cảnh sửa một chỗ quên chỗ kia.
+
+Đây là việc **chung cả hai nhánh**, nên phải giữ `_root` mới làm được — không thuộc riêng sổ
+này, ghi lại để không quên.
+
+---
+
+## Đã đóng
+
+*(chưa có mục nào)*

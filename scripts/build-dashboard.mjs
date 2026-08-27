@@ -81,22 +81,28 @@ function statusScanLines(text) {
   return redactMarkdown(lines.map((line, index) => ({ text: line, lineNumber: index + 1 })));
 }
 
+// `(?<![\p{L}\d-])` — chữ số KHÔNG được tính nếu nó đi ngay sau dấu gạch nối, vì đó là mã
+// việc chứ không phải phép đo: `G-01 lệnh dừng chưa ăn` bị mẫu Bridge khớp phải "01 lệnh".
+// Mã việc nằm trong nhóm ĐƯỢC PHÉP (GPT chốt 27/08), nên bắt nó là báo oan.
+// Gặp thật 2026-08-27: detector chặn đúng `current_focus` của STATUS Gemini ngay khi nó nhắc
+// tới G-01. Sửa detector, KHÔNG bẻ câu văn cho vừa detector.
+const NOT_TASK_ID = "(?<![\\p{L}\\d-])";
 const STATUS_NUMBER_RULES = [
   {
     kind: "parity",
-    pattern: /\b(?:nợ\s+)?\d+\s+tính năng(?:\s*\+\s*\d+\s+methods?)?(?:\s+còn thiếu)?\b/giu
+    pattern: new RegExp(`${NOT_TASK_ID}(?:nợ\\s+)?\\d+\\s+tính năng(?:\\s*\\+\\s*\\d+\\s+methods?)?(?:\\s+còn thiếu)?\\b`, "giu")
   },
   {
     kind: "parity",
-    pattern: /\b(?:nợ\s+\d+\s+methods?|\d+\s+methods?\s+còn thiếu)\b/giu
+    pattern: new RegExp(`${NOT_TASK_ID}(?:nợ\\s+\\d+\\s+methods?|\\d+\\s+methods?\\s+còn thiếu)\\b`, "giu")
   },
   {
     kind: "bridge",
-    pattern: /\b(?:Bridge\s*\(\s*)?\d+\s+(?:lệnh|methods?)(?:\s+Bridge)?(?:\s*\))?/giu
+    pattern: new RegExp(`\\b(?:Bridge\\s*\\(\\s*)?${NOT_TASK_ID}\\d+\\s+(?:lệnh|methods?)(?:\\s+Bridge)?(?:\\s*\\))?`, "giu")
   },
   {
     kind: "tests",
-    pattern: /\b(?:\d+\s+file test|\d+(?:\/\d+)?\s+test)\b/giu
+    pattern: new RegExp(`${NOT_TASK_ID}(?:\\d+\\s+file test|\\d+(?:/\\d+)?\\s+test)\\b`, "giu")
   },
   {
     kind: "version",

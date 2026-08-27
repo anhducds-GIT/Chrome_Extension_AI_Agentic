@@ -8,10 +8,11 @@ last_verified: 2026-08-26
 last_verified_commit: dd3c736b64206a357e6aa83f85c6e62a9fde43f7
 last_verified_how: "Trial live cặp run.stop/chat.reload 9/9 bước, khoá RUN_ACTIVE chứng minh thật"
 evidence_ref: workers/duc-auto-gemini/v0.2.0/evidence-stop-reload-20260826/README.md
-current_focus: "Reload extension để nạp bản vá lời nhắn; chưa có BACKLOG.md riêng; còn nợ nhánh ChatGPT một số tính năng và method — số hiện tại xem FEATURE-PARITY.md"
+current_focus: "G-01 lệnh dừng chưa ăn ngay (chờ Đức chốt vì là luật an toàn); reload extension để nạp bản vá lời nhắn; còn nợ nhánh ChatGPT một số tính năng và method — xem BACKLOG.md và FEATURE-PARITY.md"
 ref_readme: workers/duc-auto-gemini/v0.2.0/README.md
 ref_handoff: workers/duc-auto-gemini/v0.2.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md
+ref_backlog: workers/duc-auto-gemini/v0.2.0/BACKLOG.md
 ---
 
 # STATUS — Duc Auto Gemini (Platform)
@@ -45,14 +46,16 @@ diễn biến phiên ở cuối [`HANDOFF.md`](HANDOFF.md), bảng lỗi thật 
 
 1. **Bản vá lời nhắn chưa live** — lần reload extension tới sẽ nạp. Chỉ là chữ, không phải
    hành vi, nên không gấp.
-2. **Chưa có `BACKLOG.md` riêng** — việc còn mở của nhánh này không có sổ. Ghi ở mục 6 của
-   [`FEATURE-PARITY.md`](../../../FEATURE-PARITY.md).
+2. **Lệnh dừng chưa ăn ngay** — cờ dừng chỉ đọc ở mốc ngắt, nên một prompt vẫn có thể bay
+   sau khi đã báo dừng. Lời nhắn đã vá cho nói đúng sự thật; **hành vi thì chưa**, vì đổi nó
+   là *đổi luật an toàn* → chờ Đức chốt (**G-01**).
 3. **Còn nợ nhánh ChatGPT một số tính năng và method.** Con số cụ thể **không ghi ở đây** —
-   nó đổi mỗi lần port xong một món, và số gõ tay thì mục ngay. Xem
-   [`FEATURE-PARITY.md`](../../../FEATURE-PARITY.md). **Đọc file đó, đừng đọc backlog** —
-   danh sách port trong backlog đã lạc hậu một lần.
+   nó đổi mỗi lần port xong một món, và số gõ tay thì mục ngay. **Số hiện tại lấy ở khối máy
+   sinh trong** [`FEATURE-PARITY.md`](../../../FEATURE-PARITY.md); [`BACKLOG.md`](BACKLOG.md)
+   nói *có nợ những món nào*, không giữ con số. Lý do tách như vậy: danh sách port gõ tay
+   trong sổ của nhánh ChatGPT đã lạc hậu một lần (B-07).
 4. **`README.md` của package này là bản chép từ nhánh ChatGPT** — tiêu đề vẫn ghi "Duc Auto
-   ChatGPT V0.3", nên nó dẫn sai tên ngay dòng đầu. Chưa có sổ để ghi (xem giới hạn 2).
+   ChatGPT V0.3", nên nó dẫn sai tên ngay dòng đầu (**G-03**).
 
 ## Đọc sâu ở đâu
 
@@ -61,6 +64,7 @@ diễn biến phiên ở cuối [`HANDOFF.md`](HANDOFF.md), bảng lỗi thật 
 | **Vận hành / debug qua Bridge, và bảng lỗi thật đã gặp trên trang** | [`AI-OPERATOR-GUIDE.md`](AI-OPERATOR-GUIDE.md) |
 | Luật riêng của package, Bản đồ file | [`AGENTS.md`](AGENTS.md) |
 | Phiên trước làm tới đâu (cuối file) | [`HANDOFF.md`](HANDOFF.md) |
+| Việc còn mở, đánh số G-xx | [`BACKLOG.md`](BACKLOG.md) |
 | Extension làm gì (**lưu ý giới hạn 4**) | [`README.md`](README.md) |
 | Schema workbook XLSX | [`DAC_XLSX_RUN_PLAN_V1.md`](DAC_XLSX_RUN_PLAN_V1.md) |
 | Đức đã chốt những gì | [`decisions.md`](decisions.md) |

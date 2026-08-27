@@ -84,6 +84,7 @@ COMPANION (đọc khi cần):
 | `AGENTS.md` | File này |
 | `STATUS.md` | **Trạng thái vận hành, một trang, cho mắt Đức** — lifecycle, kiểm chứng lần cuối + bằng chứng, việc đang mở, con trỏ đọc sâu. Máy đọc phần frontmatter để sinh `DASHBOARD.md` ở gốc repo. Chỉ TRỎ sang file khác, không chép nội dung. Schema: `STATUS.template.md` ở gốc repo |
 | `HANDOFF.md` | Trạng thái + Log lịch sử đầy đủ |
+| `BACKLOG.md` | **Việc còn mở của nhánh này, đánh số `G-xx`** — P1/P2/P3. Lập 2026-08-27; trước đó nhánh Gemini không có nơi canonical giữ việc mở. Số `G-xx` cố ý khác `B-xx` của nhánh ChatGPT: hai sổ, hai nhánh, hai dãy số. Mỗi dòng gắn nhãn [ĐO]/[ĐỌC]/[DÒ] — **dòng [DÒ] phải kiểm lại trước khi hành động** |
 | `decisions.md` | Quyết định lớn đã chốt, có nguồn dẫn |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX |
 | `NEXT-SESSION-BRIEF.md` | Brief phiên làm việc tiếp theo (khi còn hiệu lực) |

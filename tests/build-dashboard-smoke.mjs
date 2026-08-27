@@ -488,6 +488,23 @@ function antiDrift(text, measurements = {}) {
   ok("ba lớp bảo vệ vòng 3 đều đã có test ghim (chuẩn tắc, junction, tách đổi tên)");
 }
 
+/* 16. Mã việc KHÔNG được coi là số máy đo — ca báo oan có thật.
+   2026-08-27: `current_focus` của STATUS Gemini đổi sang "G-01 lệnh dừng chưa ăn ngay", và
+   detector chặn thẳng lần sinh dashboard vì mẫu Bridge khớp phải "01 lệnh" trong "G-01 lệnh".
+   Mã việc nằm trong nhóm ĐƯỢC PHÉP. Sửa detector, không bẻ câu văn cho vừa detector — bẻ nội
+   dung cho hợp một detector lỗi chính là cách biến luật thành hình thức. */
+{
+  const thatDay = "G-01 lệnh dừng chưa ăn ngay (chờ Đức chốt vì là luật an toàn); reload extension";
+  assert.deepEqual(antiDrift(thatDay), [], "mã việc G-01 không được bị đọc thành số lệnh Bridge");
+  assert.deepEqual(antiDrift("xem B-14 và G-08 file test đã ghim"), [],
+    "mã việc B-xx / G-xx đứng cạnh danh từ machine-owned vẫn phải được tha");
+
+  // Chiều ngược lại: bỏ dấu gạch nối đi thì đúng là số máy đo, phải bắt.
+  assert.ok(antiDrift("Bridge (22 lệnh)").length > 0, "số thật cạnh danh từ machine-owned vẫn phải bị bắt");
+  assert.ok(antiDrift("có 94 file test").length > 0, "số file test vẫn phải bị bắt");
+  ok("mã việc B-xx/G-xx được tha, số máy đo vẫn bị bắt");
+}
+
 /* Markdown có dấu | trong lời khai không được phá bảng. */
 {
   const model = collectModel(fakeRepo());
