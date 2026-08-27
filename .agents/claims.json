@@ -13,22 +13,22 @@
       "owner": "opus-platform-3",
       "ai": "claude",
       "claimed_at": "2026-08-27",
-      "task": "G-01: sua hanh vi Stop-truoc-submit theo huong B-refined (huy theo attempt). Duc da go 'Go' trong chat 2026-08-27. Test race viet truoc, sua content.js sau, trial live sau khi test xanh.",
+      "task": "G-01 phan tinh DA XONG va DA PUSH (a173507): test race do→xanh, audit Codex vong 2 PASS. Giu quyen de chay TRIAL LIVE ngay khi Duc reload extension (da duyet) — buoc cuoi de dong G-01.",
       "released_at": null
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "opus-platform-3",
-      "ai": "claude",
-      "claimed_at": "2026-08-27",
-      "task": "Chi them MOT muc backlog B-22 (race stop-truoc-submit, cung loi voi G-01 — da DOC content.js:703 xac nhan). KHONG sua code nhanh nay.",
-      "released_at": null
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "B-22 DA GHI (backlog + HANDOFF, push aee955e): cung race G-01 tai content.js:703 [DOC]. Chua sua code — ai nhan viec nay phai viet test race cho DOM ChatGPT truoc.",
+      "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": "opus-platform-3",
-      "ai": "claude",
-      "claimed_at": "2026-08-27",
-      "task": "Regen DASHBOARD.md sau khi STATUS Gemini doi theo G-01 (them 2 file test, current_focus moi). Chi regen artifact may sinh, khong sua chu nguoi viet o goc. Xong thi tra.",
-      "released_at": null
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "DASHBOARD + FEATURE-PARITY da regen sau G-01 va da push (63dde20). Root ranh.",
+      "released_at": "2026-08-27"
     }
   }
 }
