@@ -17,10 +17,10 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "V0.2-B: STATUS anti-drift — detector machine-owned facts (4 nhom), hep theo danh tu, co ca hoi quy tren 2 STATUS that.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "V0.2-B DA XONG va DA PUSH (bb70828): detector machine-owned facts trong STATUS, suite 31 ca, mutation hai chieu 7/7 do. Con lai o V0.2 (PLATFORM.md muc 7): feature-parity.mjs, BACKLOG cho Gemini, STATUS cho Observer, nang cong 6->7 (governance, audit rieng).",
       "released_at": "2026-08-27"
     }
   }
