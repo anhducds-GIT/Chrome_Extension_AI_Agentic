@@ -82,8 +82,7 @@ const hello = await rpc({ ...base, request_id: "integration-hello-0001", method:
 assert.equal(hello.result.executor.available, true);
 const listed = await rpc({ ...base, request_id: "integration-list-0001", method: "queue.list", params: {} });
 assert.equal(listed.request_id, "integration-list-0001");
-assert.equal(listed.error.code, "FORBIDDEN");
-assert.deepEqual(listed.error.details, { reason: "bootstrap_locked", method: "queue.list" });
+assert.deepEqual(listed.result.jobs, []);
 
 const proposalRequest = {
   ...base, request_id: "integration-proposal-0001", method: "queue.propose",
@@ -91,15 +90,12 @@ const proposalRequest = {
 };
 const first = await rpc(proposalRequest);
 const retry = await rpc({ ...proposalRequest, sent_at: "2026-08-24T10:00:01.000Z" });
-assert.equal(first.error.code, "FORBIDDEN");
-assert.deepEqual(first.error.details, { reason: "bootstrap_locked", method: "queue.propose" });
-assert.equal(retry.error.code, "FORBIDDEN", "retries remain bootstrap-locked");
-assert.deepEqual(retry.error.details, first.error.details);
-assert.equal(proposalAcceptCount, 0, "bootstrap-locked proposals never reach the executor");
+assert.deepEqual(retry, first, "identical retry after a lost response returns the original proposal envelope");
+assert.equal(proposalAcceptCount, 1);
 
 executorAvailable = false;
 const closed = await rpc({ ...base, request_id: "integration-list-0002", method: "queue.list", params: {} });
-assert.equal(closed.error.code, "FORBIDDEN", "bootstrap lock precedes executor availability");
+assert.equal(closed.error.code, "EXECUTOR_UNAVAILABLE");
 worker.close();
 await host.stop();
 

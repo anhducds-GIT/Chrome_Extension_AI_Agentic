@@ -1260,7 +1260,7 @@
   // ---------------------------------------------------------------------
   // Development mode + run.trial (owner decision 2026-08-25, decisions.md).
   // The toggle lives only in the owner's hands; while it is ON the AI may
-  // start one small trial run (<=2 jobs, timeout <=90s, delay 20-30s, >=300s
+  // start one small trial run (<=3 videos, timeout <=90s, delay 20-30s, >=300s
   // between trials) through the SAME selected-jobs runner the human uses.
   // ---------------------------------------------------------------------
   function renderDevMode() {
@@ -1282,7 +1282,7 @@
     renderDevMode();
     await chrome.storage.local.set({ [window.DacDevTrialCore.DEV_MODE_STORAGE_KEY]: state.devMode });
     log(state.devMode
-      ? "Chế độ phát triển BẬT — AI được phép chạy trial một chuỗi ≤30 job qua Bridge (run.trial)."
+      ? "Chế độ phát triển BẬT — AI được phép chạy trial một chuỗi ≤3 job qua Bridge (run.trial)."
       : "Chế độ phát triển TẮT — mọi run.trial sẽ bị từ chối (DEV_MODE_OFF).", state.devMode ? "info" : "done");
   }
 
@@ -4428,15 +4428,28 @@
   }
 
   async function finishDetectedOutput(item, result, effectiveOutput, settings) {
+    const videoUrl = result?.type === "video" ? result.video_url : null;
     item.phase = "OUTPUT_DETECTED";
-    item.runtime_stage = "OUTPUT_DETECTED"; setCurrent(item, item.runtime_stage, "Attributable generated image found.", item.settings.timeout_sec);
+    item.runtime_stage = "OUTPUT_DETECTED"; setCurrent(item, item.runtime_stage, videoUrl ? "Attributable generated video found." : "Attributable generated image found.", item.settings.timeout_sec);
     audit("OUTPUT_DETECTED", item);
     update(item, { status: "RUNNING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count });
     if (result?.image_url) {
       item.thumbnailUrl = result.image_url;
       state.sessionThumbnails.set(item.job.id, result.image_url);
     }
-    try {
+    if (videoUrl) {
+      // Owner-approved Flow plan section 2.3: a video result artifact is URL +
+      // metadata only. Record the full redirect URL in the Result ledger and
+      // never route it through any byte-persistence path.
+      const verifiedId = window.DacProviderAdapter.videoIdFromSrc(videoUrl);
+      if (!verifiedId || verifiedId !== result.video_id) return resolveJobFailure(item, "ATTRIBUTION_UNPROVEN", "Flow video URL/id attribution did not verify.", settings);
+      item.phase = "OUTPUT_SAVED";
+      item.detected_not_downloaded = true;
+      update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: result.video_id, persistence_verified: false, detected_not_downloaded: true, result_file: videoUrl, result_download_id: "", write_outcome: "url_recorded", detection_diagnostics: JSON.stringify({ ...(result?.detection || {}), video_id: result.video_id, video_url: videoUrl, detected_at: result.detected_at }) });
+      audit("DETECTED_NOT_DOWNLOADED", item, { message: `Flow video URL recorded; bytes intentionally not fetched (video_id=${result.video_id}).` });
+      item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Video URL and metadata recorded; bytes were not downloaded.");
+      renderQueue(); progress(`${item.job.id} detected; video URL recorded without downloading bytes.`);
+    } else try {
       item.runtime_stage = "SAVING"; setCurrent(item, item.runtime_stage, "Writing generated image to the configured output.", item.settings.timeout_sec);
       if (!result?.image_url) throw new Error("No attributable generated image was found.");
       if (item.references.some((reference) => reference.dataUrl === result.image_url)) throw new Error("INPUT_IMAGE_FALSE_POSITIVE: output URL matches a selected reference image.");
@@ -4466,7 +4479,7 @@
       await waitForChatReady(item);
       item.phase = "CHAT_READY"; audit("CHAT_READY", item);
       item.phase = "SUCCESS";
-      item.runtime_stage = "SUCCESS"; setCurrent(item, item.runtime_stage, "Saved image and idle readiness confirmed.");
+      item.runtime_stage = "SUCCESS"; setCurrent(item, item.runtime_stage, videoUrl ? "Video URL recorded and idle readiness confirmed." : "Saved image and idle readiness confirmed.");
       update(item, { status: "SUCCESS", attempt_phase: item.phase, result_file: item.result_file, result_download_id: item.result_download_id, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "SUCCESS", recreate_attempt_id: item.attempt_id } : {}) });
       audit("JOB_SUCCESS", item); log(`${item.job.id} success after CHAT_READY.`, "done"); renderQueue(); progress(`${item.job.id} complete; saved output is checkpointed.`);
       if (item.operator_recreate) {
@@ -4489,11 +4502,11 @@
     update(item, { status: "RECONCILING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
     audit("RECONCILE_START", item, { message }); renderQueue(); progress(`Reconciling ${item.job.id}; it will not be resubmitted this attempt.`);
     let response;
-    try { response = await send({ type: "DAC_RECONCILE_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, timeoutMs: Math.min(item.settings.timeout_sec * 1000, 60000) }); }
+    try { response = await send({ type: "DAC_RECONCILE_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, timeoutMs: Math.max(item.settings.timeout_sec * 1000, window.DacProviderAdapter.TIMING.perJobTimeoutMs) }); }
     catch (error) { return resolveJobFailure(item, "POST_SUBMIT_UNCERTAIN", messageOf(error), settings); }
     if (!matchesAttempt(response, item)) return resolveJobFailure(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch during reconciliation.", settings);
     applyAttemptTelemetry(item, response.attempt);
-    if (response?.ok && response.result?.image_url) {
+    if (response?.ok && (response.result?.image_url || response.result?.video_url)) {
       audit("RECONCILE_RESULT", item, { message: "Late attributable output found." });
       return finishDetectedOutput(item, response.result, effectiveOutput, settings);
     }
@@ -4589,6 +4602,14 @@
         let completed = false;
         while (!completed && !state.stopRequested) {
           const gate = await gateNextJob(item);
+          // G-01: Stop can arrive while the readiness gate is awaiting. Settle
+          // the untouched row before any attempt id is issued or dispatched.
+          if (state.stopRequested) {
+            update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "USER_STOP", last_error: "Stopped by user before submission.", error: "Stopped by user before submission.", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
+            audit("FAILURE", item, { message: "Stopped by user before submission." });
+            completed = true;
+            break;
+          }
           if (!gate.ok) {
             const outcome = await resolveJobFailure(item, gate.failureType, gate.message, settings);
             completed = outcome.completed; halted ||= outcome.halted;
@@ -4616,7 +4637,7 @@
             audit("PROMPT_SUBMITTED", item, { target_url: target?.url || null });
             if (item.operator_recreate) { update(item, { recreate_status: "SUBMITTED", recreate_attempt_id: item.attempt_id }); audit("RECREATE_PROMPT_SUBMITTED", item, { message: "Operator-approved recreate prompt submitted." }); }
           }
-          if (response?.ok && response.result?.image_url) {
+          if (response?.ok && (response.result?.image_url || response.result?.video_url)) {
             const outcome = await finishDetectedOutput(item, response.result, effectiveOutput, settings);
             completed = outcome.completed; halted ||= outcome.halted;
             continue;
@@ -4682,7 +4703,13 @@
     return false;
   });
 
-  async function stop() { state.stopRequested = true; progress("Stopping current operation…"); try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop prevents further jobs */ } }
+  async function stop() {
+    state.stopRequested = true;
+    progress("Stopping current operation…");
+    const current = state.running ? state.currentItem : null;
+    const scoped = current?.attempt_id ? { job_id: current.job.id, attempt_id: current.attempt_id } : {};
+    try { await send({ type: "DAC_ABORT", ...scoped }); } catch (_) { /* local stop prevents further jobs */ }
+  }
 
   // Pause never interrupts an in-flight attempt -- exact-once submission
   // means a job that has already been sent cannot be safely suspended mid

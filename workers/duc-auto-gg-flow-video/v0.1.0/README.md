@@ -1,4 +1,4 @@
-# Duc Auto GG Flow Video — V0.1 (bootstrap)
+# Duc Auto GG Flow Video — V0.1
 
 > Extension Chrome MV3 cá nhân, chạy kế hoạch XLSX tạo **video** trên **Google Flow**
 > (`https://labs.google/fx/tools/flow/*`), ngay trong trình duyệt của Đức, không gửi gì
@@ -8,19 +8,18 @@
 
 ## Trạng thái thật, đọc trước khi tin
 
-- **Đang ở giai đoạn BOOTSTRAP (FLOW-01).** Chưa chạy được job video nào.
-- `provider-adapter.js` hiện chỉ đúng phần **ORIGIN** (labs.google Flow). Toàn bộ
-  **SELECTORS và TIMING vẫn là của Gemini** — cố tình giữ nguyên, KHÔNG dùng được trên
-  Flow, và sẽ chỉ được thay bằng selector có bằng chứng `dom_probe` (luật vàng: không
-  đoán selector).
-- Bridge đang bị **khoá bootstrap**: chỉ 6 method hoạt động — 4 method đọc/chẩn đoán
-  (`session.hello`, `system.ping`, `system.capabilities`, `diagnostics.dom_probe`),
-  `chat.reload` (F5 tab, không tốn credits), và `diagnostics.evidence_submit` — primitive
-  tương tác DUY NHẤT của bootstrap: gõ 1 prompt + bấm Create 1 lần, **trần cứng 3 lượt
-  mỗi lần nạp trang** (đúng ngân sách free 3 video × 15 credit Đức chốt 27/08).
-  Mọi method chạy/ghi khác bị từ chối cho tới khi adapter có bằng chứng thật.
+- Provider adapter Flow đã được dựng từ bằng chứng DOM thật, có test ghim; F-02 đã qua
+  audit đối kháng. Đường job video chạy ở mức deterministic; kiểm chứng runtime cần reload
+  extension sau khi đổi file `.js`.
+- **Khoá bootstrap Bridge đã được gỡ ngày 2026-08-27.** Toàn bộ method surface trong
+  registry hiện khả dụng theo đúng gate riêng của từng method (executor, approval, Dev Mode,
+  validation và các lớp an toàn khác vẫn giữ nguyên).
+- `diagnostics.evidence_submit` **vẫn được giữ** làm công cụ debug: gõ 1 prompt + bấm Create
+  1 lần, có trần cứng **3 lượt mỗi lần nạp trang**. Đây không thay thế runner thật.
+- `run.trial` có trần cứng **3 job video mỗi chuỗi** và chỉ chạy khi Đức bật toggle
+  **Chế độ phát triển (Dev Mode)** trong side panel.
 - Khác biệt sống còn so với nhánh ảnh: **mỗi lần sinh video trừ credits thật**. Trần
-  trial dev cho nhánh này là **≤2 job** (chốt trong kế hoạch FLOW đã duyệt 27/08),
+  trial dev cho nhánh này là **≤3 video** (Đức chốt 27/08: 3 × 15 credits = ngân sách free),
   không dùng trần 30 job của nhánh ảnh.
 
 ## Kiến trúc — đọc ở đâu
@@ -38,6 +37,8 @@ Nguyên tắc không đổi so với hai nhánh trước:
 - Bridge là ingress + observability. **AI không bắt đầu Run sản xuất** — side panel là
   executor duy nhất, batch thật do Đức bấm. (Trial dev có trần riêng, xem trên.)
 - `run.start` / `run.pause` / `run.resume` không tồn tại trong giao thức.
+- Toàn bộ method đã được mở sau F-05, nhưng `run.trial` vẫn bắt buộc toggle
+  **Chế độ phát triển (Dev Mode)** trong side panel và vẫn bị chặn ở quá 3 job.
 - Muốn đổi token: chạy lại script cài với tham số `RotateToken` (xem
   `scripts/Install-DucAutoChatGPTLoopbackBridgeV1.ps1`). Gỡ host: script
   `Uninstall-DucAutoChatGPTLoopbackBridgeV1` trong cùng thư mục scripts.

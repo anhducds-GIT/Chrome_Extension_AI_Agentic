@@ -5,12 +5,9 @@
   const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
   const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
   const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
-  // Only these three genuinely block the whole batch: each means no further
-  // job can safely run until a human resolves it (CAPTCHA/verification,
-  // quota reset, or the Gemini tab/composer itself being reachable again).
-  // Every other failure type is auto-retried, then skipped so the queue
-  // keeps moving -- see resolveJobFailure() in sidepanel.js.
-  const HARD_STOP_FAILURE_TYPES = new Set(["SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "RECEIVER_LOST"]);
+  // Video submission spends credits. Unknown or ambiguous post-submit output
+  // is a human-decision state, never an automatic resubmission.
+  const HARD_STOP_FAILURE_TYPES = new Set(["SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "RECEIVER_LOST", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "OUTPUT_AMBIGUOUS"]);
   const imageExtension = /\.(avif|gif|jpe?g|png|webp)$/i;
   const normalise = (value) => String(value || "").trim().toLowerCase();
   const basename = (value) => normalise(value).replace(/^.*[\\/]/, "").replace(imageExtension, "");

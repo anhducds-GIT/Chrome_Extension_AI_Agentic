@@ -14,9 +14,9 @@ const retryablePreSubmit = { phase: "PRE_SUBMIT", retry_count: 0, settings: { ma
 assert.equal(runner.canRetry(retryablePreSubmit, "TIMEOUT_PRE_SUBMIT"), true, "a confirmed pre-submit timeout may retry");
 
 const submitted = { phase: "SUBMITTED", retry_count: 0, settings: { max_retries: 2 } };
-assert.equal(runner.canRetry(submitted, "TIMEOUT_AFTER_SUBMIT"), true, "post-submit timeout auto-retries -- Đức chose smooth-to-completion over avoiding a possible duplicate image");
+assert.equal(runner.canRetry(submitted, "TIMEOUT_AFTER_SUBMIT"), false, "video post-submit timeout never spends credits on an automatic retry");
 assert.equal(runner.needsReconciliation("SUBMITTED"), true, "post-submit timeout must reconcile");
-assert.equal(runner.interruptedStatus("SUBMITTED", "POST_SUBMIT_UNCERTAIN"), "FAILED", "exhausted retries settle as skippable FAILED, not a blocking INTERRUPTED -- only the three hard stops reach INTERRUPTED");
+assert.equal(runner.interruptedStatus("SUBMITTED", "POST_SUBMIT_UNCERTAIN"), "INTERRUPTED", "uncertain video output is parked for owner decision");
 assert.equal(runner.interruptedStatus("SUBMITTED", "RECEIVER_LOST"), "INTERRUPTED", "a genuine hard stop mid-job is still INTERRUPTED and still blocks Resume until resolved");
 
 const outputSaved = { phase: "OUTPUT_SAVED", retry_count: 0, settings: { max_retries: 2 } };
@@ -26,13 +26,13 @@ assert.equal(runner.selectQueue([{ job: { id: "saved" }, status: "INTERRUPTED", 
 
 let p03ASends = 0;
 p03ASends += 1;
-assert.equal(runner.canRetry({ phase: "SUBMITTED", retry_count: 0, settings: { max_retries: 2 } }, "TIMEOUT_AFTER_SUBMIT"), true);
+assert.equal(runner.canRetry({ phase: "SUBMITTED", retry_count: 0, settings: { max_retries: 2 } }, "TIMEOUT_AFTER_SUBMIT"), false);
 assert.equal(p03ASends, 1, "P03-A style post-submit timeout starts from exactly one prompt submission before any retry");
 
 let p03BSends = 0;
 p03BSends += 1;
 assert.equal(runner.needsReconciliation("SUBMITTED"), true);
-assert.equal(runner.canRetry({ phase: "SUBMITTED", retry_count: 0, settings: { max_retries: 2 } }, "POST_SUBMIT_UNCERTAIN"), true);
+assert.equal(runner.canRetry({ phase: "SUBMITTED", retry_count: 0, settings: { max_retries: 2 } }, "POST_SUBMIT_UNCERTAIN"), false);
 assert.equal(p03BSends, 1, "P03-B style ambiguity starts from exactly one prompt submission before any retry");
 
 const queue = ["SUCCESS", "RUNNING", "PENDING", "INTERRUPTED"].map((status) => ({ status, skipped: false, settings: { max_retries: 2 }, references: [], job: { id: status } }));

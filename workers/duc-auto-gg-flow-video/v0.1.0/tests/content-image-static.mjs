@@ -50,23 +50,26 @@ assert.match(source, /dispatchSyntheticDrop\(target, transfer\)/);
 assert.match(source, /closeUploadMenu\(\)/, "the CDK overlay menu is closed (Escape) before typing continues");
 assert.match(source, /new KeyboardEvent\("keydown", init\)/);
 const stageAt = source.indexOf("const staged = await stageReferences(referenceImages);");
-const typeAt = source.indexOf("setComposerText(composer, prompt);");
+const typeAt = source.indexOf("await typeIntoFlowComposer(composer, prompt);");
 const confirmAt = source.indexOf("await confirmReferences(staged);");
 const sendAt = source.indexOf("await DECISIONS.clickSend(");
 for (const [label, index] of [["stage", stageAt], ["type", typeAt], ["confirm", confirmAt], ["send", sendAt]]) {
   assert.ok(index > -1, `runPrompt contains the ${label} step`);
 }
 assert.ok(stageAt < typeAt && typeAt < confirmAt && confirmAt < sendAt, "order pinned: attach-stage -> type prompt -> confirm attachment -> send");
-assert.ok(confirmAt < source.indexOf("const boundary = captureBoundary(inputEvidence);"), "the pre-send boundary is captured only after the attachment is confirmed");
+assert.ok(confirmAt < source.indexOf('const boundary = ADAPTER.resultKind === "video" ? captureVideoBoundary() : captureBoundary(inputEvidence);'), "the output boundary is captured only after the attachment is confirmed");
 
 /* ---- submit-once: exactly one guarded Send click --------------------------- */
 assert.equal([...source.matchAll(/sendButton\.click\(\)/g)].length, 1, "exactly one Send click site exists");
 assert.match(source, /await DECISIONS\.clickSend\(\{ snapshot: blockerSnapshot, click: \(\) => sendButton\.click\(\) \}\)/, "the one Send click is blocker-guarded (fail-closed)");
 assert.match(source, /STATE\.submittedInThisTab = true/, "the post-submit surface rule flips only after the real click");
 
-/* ---- Quill composer typing (ported v0.1.0 setComposerText) ---------------- */
+/* ---- Flow composer typing (shared with evidence_submit) ------------------- */
+assert.match(source, /async function typeIntoFlowComposer\(target, text\)/);
 assert.match(source, /document\.execCommand\("insertText", false, text\)/);
-assert.match(source, /target\.textContent = text/, "the textContent+InputEvent fallback survives");
+assert.match(source, /new InputEvent\("beforeinput"/);
+assert.match(source, /new ClipboardEvent\("paste"/);
+assert.doesNotMatch(source.slice(source.indexOf("async function typeIntoFlowComposer"), source.indexOf("\/\* ---- image candidates")), /target\.textContent =|target\.innerText =/, "Flow typing never desynchronizes React state");
 assert.doesNotMatch(source, /await sleep\(750\)/);
 
 /* ---- blob->dataURL guard ---------------------------------------------------- */

@@ -4,15 +4,13 @@
   // Owner decision 2026-08-25 (decisions.md): during development the AI may
   // start a small "trial run" through the Bridge via a dedicated method
   // (run.trial), never run.start. Every ceiling here is a hard-coded guard,
-  // not a tunable: <=2 jobs, timeout <=90s, delay 20-30s between jobs, and at
+  // not a tunable: <=3 videos, timeout <=90s, delay 20-30s between jobs, and at
   // least 5 minutes between trial starts. The panel toggle stays in the
   // owner's hands; production runs remain human-click only.
   const DEV_MODE_STORAGE_KEY = "dac.dev_mode.v1";
   const TRIAL_HISTORY_STORAGE_KEY = "dac.dev_trial_history.v1";
-  // Owner amendment 2026-08-25 (Pilot-04): one trial runs a CONTINUOUS chain,
-  // never split into 2-job slices; the hard cap is 10 jobs per trial. Batches
-  // beyond that stay owner-clicked production runs.
-  const MAX_TRIAL_JOBS = 30;
+  // Owner decision 2026-08-27: 3 videos x 15 credits is the free budget.
+  const MAX_TRIAL_JOBS = 3;
   const MIN_TRIAL_INTERVAL_SEC = 300;
   const TIMEOUT_BOUNDS = Object.freeze({ min: 15, max: 90, default: 90 });
   const DELAY_BOUNDS = Object.freeze({ min: 20, max: 30, default: 25 });

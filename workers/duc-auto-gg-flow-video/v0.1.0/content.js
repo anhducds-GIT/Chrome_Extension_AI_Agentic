@@ -13,6 +13,9 @@
   const STATE = {
     busy: false,
     abortRequested: false,
+    // G-01: preserve a stop that arrives before its named attempt starts.
+    // The identity prevents that stop from leaking into a later attempt.
+    abortedAttempt: null,
     activeAttempt: null,
     // Surface rule (evidence snapshot 3): submitting from /images navigates
     // this tab to /app/<conversation-id>. The CONVERSATION surface is only
@@ -64,14 +67,31 @@
     return firstVisible(ADAPTER.SELECTORS.composer);
   }
 
-  // Gemini renders the Send button ONLY while the composer has content
-  // (evidence snapshot 3, finding 5); there is no <form> to scope into.
   function findSendButton() {
+    if (ADAPTER.resultKind === "video") return ADAPTER.findCreateButton(document);
     return firstVisible(ADAPTER.SELECTORS.send);
   }
 
   function findStopButton() {
+    if (ADAPTER.resultKind === "video") return null;
     return firstVisible(ADAPTER.SELECTORS.stop);
+  }
+
+  function createButtonEnabled() {
+    const candidate = ADAPTER.findCreateButton(document);
+    return Boolean(candidate && !candidate.disabled && candidate.getAttribute("aria-disabled") !== "true");
+  }
+
+  async function waitForCreateButtonEnabled(timeoutMs = ADAPTER.TIMING.sendReadyTimeoutMs) {
+    const until = Date.now() + timeoutMs;
+    while (Date.now() < until) {
+      if (STATE.abortRequested) throw new Error("Automation stopped by user.");
+      const blocker = securityBlockerText();
+      if (blocker) throw new Error(`HARD_STOP: ${blocker}`);
+      if (createButtonEnabled()) return ADAPTER.findCreateButton(document);
+      await sleep(250);
+    }
+    return createButtonEnabled() ? ADAPTER.findCreateButton(document) : null;
   }
 
   function findUploadMenuButton() {
@@ -128,18 +148,38 @@
   }
 
   // Image-generation quotas gate submission the same way security blockers do,
-  // but the detection is two-tier on Gemini:
+  // but the detection is two-tier:
   //  1. DOM anchor: the freemium quota-exceeded disclaimer custom element
   //     (evidence snapshot 3, finding 6) -- unambiguous, no phrase matching.
-  //  2. Phrase fallback, scoped to model-response text ONLY -- scanning the
-  //     whole page like securityBlockerText() would catch the OPERATOR'S OWN
-  //     PROMPT if it happened to contain the same common words.
+  //  2. Phrase fallback over visible page text, with every user-input surface
+  //     excluded so the operator's own prompt can never trigger the stop.
   // The phrase list itself lives in provider-adapter.js (provider wording);
   // the scoping policy stays here.
   function matchesGenerationLimit(text) {
     return ADAPTER.matchesGenerationLimit(text);
   }
+  function quotaPageText() {
+    const body = document.body;
+    if (!body) return "";
+    const parts = [];
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        const value = node.nodeValue || "";
+        if (!parent || !value.trim()) return NodeFilter.FILTER_REJECT;
+        if (parent.closest?.('[contenteditable], input, textarea')) return NodeFilter.FILTER_REJECT;
+        for (let element = parent; element && element !== body; element = element.parentElement) {
+          const style = window.getComputedStyle(element);
+          if (style.display === "none" || style.visibility === "hidden") return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) parts.push(node.nodeValue || "");
+    return parts.join(" ");
+  }
   function quotaAnchorPresent() {
+    if (!ADAPTER.SELECTORS.quotaExceededAnchor) return false;
     // Pilot G2-0 (2026-08-25) proved mere existence is a FALSE POSITIVE:
     // Gemini keeps this disclaimer element in the /app conversation DOM as an
     // empty hidden placeholder after any generation (G1 snapshots 3-4), which
@@ -152,7 +192,7 @@
   }
   function generationLimitText() {
     if (quotaAnchorPresent()) return "Gemini image generation quota reached (freemium quota disclaimer present).";
-    return matchesGenerationLimit(latestAssistantText()) ? "Gemini image generation limit reached for now." : null;
+    return matchesGenerationLimit(quotaPageText()) ? "Gemini image generation limit reached for now." : null;
   }
 
   // Generating signal (evidence snapshot 2): Stop button visible OR
@@ -161,39 +201,61 @@
   // scoped; image-loading-overlay exists in DOM templates even at rest and is
   // never used alone.
   function generatingSignal() {
+    if (ADAPTER.resultKind === "video") return false;
     if (findStopButton()) return true;
-    if (document.querySelector(ADAPTER.SELECTORS.generatingBusy)) return true;
-    return Boolean(document.querySelector(ADAPTER.SELECTORS.thinkingAnimation));
+    if (ADAPTER.SELECTORS.generatingBusy && document.querySelector(ADAPTER.SELECTORS.generatingBusy)) return true;
+    return Boolean(ADAPTER.SELECTORS.thinkingAnimation && document.querySelector(ADAPTER.SELECTORS.thinkingAnimation));
   }
 
-  /* ---- composer text (Quill) ------------------------------------------------ */
+  /* ---- Flow composer typing ------------------------------------------------- */
 
-  // Gemini's composer is a Quill editor that ignores plain value
-  // assignment. Proven v0.1.0 path: focus, select-all, execCommand insertText,
-  // then a textContent+InputEvent fallback if Quill ignored the command.
-  function setComposerText(target, text) {
-    target.focus();
-    const selection = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(target);
-    selection.removeAllRanges();
-    selection.addRange(range);
-
-    let inserted = false;
-    try {
-      inserted = document.execCommand("insertText", false, text);
-    } catch (_) {
-      inserted = false;
-    }
-
-    if (!inserted || (target.innerText || target.textContent || "").trim() !== text.trim()) {
-      target.textContent = text;
-      try {
-        target.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
-      } catch (_) {
-        target.dispatchEvent(new Event("input", { bubbles: true }));
+  // Proven live in FLOW-01 (evidence/F1-EVIDENCE-NOTES.md): the Lexical/React
+  // composer must be driven through keyboard-equivalent events. The ordering,
+  // waits and fallbacks are shared byte-for-byte by evidence_submit and jobs.
+  // Never assign textContent/innerText: that shows text but kills React state.
+  async function typeIntoFlowComposer(target, text) {
+    let typingPath = "none";
+    const focusAndSelectAll = () => {
+      target.focus();
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(target);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
+    if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") {
+      const prototype = target.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      const setter = Object.getOwnPropertyDescriptor(prototype, "value").set;
+      target.focus();
+      setter.call(target, text);
+      target.dispatchEvent(new Event("input", { bubbles: true }));
+      typingPath = "native_setter";
+    } else {
+      focusAndSelectAll();
+      let inserted = false;
+      try { inserted = document.execCommand("insertText", false, text); } catch (_) { inserted = false; }
+      if (inserted && await waitForCreateButtonEnabled(2500)) {
+        typingPath = "execCommand";
+      } else {
+        focusAndSelectAll();
+        try {
+          target.dispatchEvent(new InputEvent("beforeinput", { bubbles: true, cancelable: true, inputType: "insertText", data: text }));
+          target.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
+        } catch (_) { /* reported by ok=false */ }
+        if (await waitForCreateButtonEnabled(2500)) {
+          typingPath = "input_events";
+        } else {
+          focusAndSelectAll();
+          try {
+            const transfer = new DataTransfer();
+            transfer.setData("text/plain", text);
+            target.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: transfer }));
+            typingPath = "paste_event";
+          } catch (_) { typingPath = "all_failed"; }
+        }
       }
     }
+    return { ok: createButtonEnabled(), path: typingPath };
   }
 
   /* ---- image candidates ------------------------------------------------------ */
@@ -276,6 +338,58 @@
       image_node_ids: images.map((candidate) => candidate.node_id),
     });
   }
+
+  function videoSource(video) {
+    return video?.currentSrc || video?.src || video?.querySelector?.("source")?.src || "";
+  }
+
+  // F1 measured that new results are prepended. Preserve DOM order so the
+  // first attributable id is always the newest result.
+  function videoCandidates() {
+    return Array.from(document.querySelectorAll(ADAPTER.SELECTORS.videoSelector)).map((video) => {
+      const source = videoSource(video);
+      return { video, source, id: ADAPTER.videoIdFromSrc(source) };
+    }).filter((candidate) => candidate.id);
+  }
+
+  function captureVideoBoundary() {
+    const candidates = videoCandidates();
+    return Object.freeze({ video_ids: Object.freeze(candidates.map((candidate) => candidate.id)) });
+  }
+
+  async function waitForVideoCompletion({ boundary, timeoutMs, attempt = null }) {
+    const startedAt = Date.now();
+    const known = new Set(boundary?.video_ids || []);
+    let pollCount = 0;
+    while (Date.now() - startedAt < timeoutMs) {
+      pollCount += 1;
+      if (STATE.abortRequested) throw new Error("Automation stopped by user.");
+      const blocker = securityBlockerText();
+      if (blocker) throw new Error(`HARD_STOP: ${blocker}`);
+      const limitBlocker = generationLimitText();
+      if (limitBlocker) throw new Error(`LIMIT_STOP: ${limitBlocker}`);
+      const candidates = videoCandidates();
+      const currentIds = [...new Set(candidates.map((candidate) => candidate.id))];
+      const fresh = [...new Map(candidates.filter((candidate) => !known.has(candidate.id)).map((candidate) => [candidate.id, candidate])).values()];
+      const decisionReason = fresh.length > 1 ? "OUTPUT_AMBIGUOUS" : fresh.length === 1 ? null : "NO_NEW_VIDEO";
+      const detection = { baseline_video_ids: [...known], current_video_ids: currentIds, candidate_video_ids: fresh.map((candidate) => candidate.id), decision_reason: decisionReason, poll_count: pollCount };
+      recordDetection(attempt, detection);
+      if (fresh.length > 1) {
+        const error = new Error(`OUTPUT_AMBIGUOUS: multiple new Flow video ids appeared after submit (${fresh.map((candidate) => candidate.id).join(", ")}).`);
+        error.detection = detection;
+        throw error;
+      }
+      if (fresh.length === 1) {
+        return { type: "video", video_id: fresh[0].id, video_url: fresh[0].source, detected_at: new Date().toISOString(), detection };
+      }
+      await sleep(ADAPTER.TIMING.completionPollMs);
+    }
+    const detection = { baseline_video_ids: [...known], current_video_ids: videoCandidates().map((candidate) => candidate.id), decision_reason: "NO_NEW_VIDEO", timed_out: true, poll_count: pollCount };
+    recordDetection(attempt, detection);
+    const error = new Error("OUTPUT_DETECTION_TIMEOUT: NO_NEW_VIDEO; stop_visible=false.");
+    error.detection = detection;
+    throw error;
+  }
   // A new model-response container appears FIRST; its image content streams in
   // later (evidence snapshot 2). Container identity -- not content
   // fingerprints -- decides which turn is new, so a streaming turn stays "new"
@@ -315,7 +429,7 @@
 
   function composerScope() {
     const target = findComposer();
-    return target?.closest(ADAPTER.SELECTORS.composerScope) || document;
+    return (target && ADAPTER.SELECTORS.composerScope ? target.closest(ADAPTER.SELECTORS.composerScope) : null) || document;
   }
 
   // The idle page keeps page-wide progressbars alive (sidebar spinner,
@@ -434,7 +548,7 @@
   }
 
   function syntheticDropTarget() {
-    return document.querySelector(ADAPTER.SELECTORS.fileDropTarget) || findComposer();
+    return (ADAPTER.SELECTORS.fileDropTarget ? document.querySelector(ADAPTER.SELECTORS.fileDropTarget) : null) || findComposer();
   }
 
   function dispatchSyntheticDrop(target, transfer) {
@@ -482,7 +596,7 @@
     }
     closeUploadMenu();
     await sleep(ADAPTER.TIMING.menuSettleMs);
-    return { input, before, expected: images.length, path };
+    return { input, before, expected: images.length, selected: input?.files?.length ?? 0, path };
   }
 
   // Same set as attachmentNodes() but WITHOUT the size-based fallback, so a
@@ -514,6 +628,17 @@
 
   async function confirmReferences(staged) {
     if (!staged) return null;
+    if (ADAPTER.resultKind === "video") {
+      // F1 proves persistent image/* inputs at body level. Keep the inherited
+      // pre-submit confirmation gate, but verify the actual FileList assigned
+      // to the chosen input instead of inventing an unmeasured preview selector.
+      if (staged.path !== ATTACH_PATH.TRANSIENT_INPUT || staged.selected !== staged.expected) {
+        const detail = new Error(`ATTACHMENT_NOT_READY ${JSON.stringify(attachmentFingerprint(staged.before, staged.expected, staged.input, staged.path))}`);
+        detail.failure_type = "ATTACHMENT_NOT_READY";
+        throw detail;
+      }
+      return { path: staged.path, expected: staged.expected, added: staged.selected, by_selector: 0, scoped: false };
+    }
     try {
       await waitUntil(() => {
         const scope = composerScope();
@@ -779,22 +904,26 @@
   }
 
   async function runPrompt(prompt, timeoutMs, referenceImages = [], expectImage = false, requestAttempt = null) {
-    if (STATE.busy) throw new Error("Gemini receiver busy: this tab is already running an automation prompt.");
+    if (STATE.busy) throw new Error("Flow receiver busy: this tab is already running an automation prompt.");
     STATE.busy = true;
-    STATE.abortRequested = false;
+    STATE.abortRequested = window.DacAttemptIdentity.same(STATE.abortedAttempt, requestAttempt);
     if (requestAttempt) STATE.activeAttempt = requestAttempt;
 
     try {
+      if (STATE.abortRequested) throw new Error("Automation stopped by user.");
       if (!surfaceAllowedNow()) {
-        throw new Error("WRONG_SURFACE: the Gemini receiver tab must be on https://gemini.google.com/images (or a conversation this tab already submitted to).");
+        throw new Error("WRONG_SURFACE: the Flow receiver tab must be on https://labs.google/fx/tools/flow/.");
       }
       if (generatingSignal()) {
-        throw new Error("Gemini is already generating. Wait for it to finish before starting the queue.");
+        throw new Error("Flow is already generating. Wait for it to finish before starting the queue.");
       }
 
       const composer = findComposer();
       if (!composer) {
-        throw new Error("Gemini composer not found. Open gemini.google.com/images and retry.");
+        throw new Error("Flow composer not found. Open a labs.google Flow project and retry.");
+      }
+      if (ADAPTER.resultKind === "video" && !ADAPTER.findCreateButton(document)) {
+        throw new Error("Create button not found. Flow DOM may have changed.");
       }
 
       // Order pinned by tests: attach-stage -> type prompt -> confirm
@@ -803,7 +932,7 @@
       // verified reference.
       emitRuntimeStage(requestAttempt, referenceImages.length ? "ATTACHING_REFS" : "SENDING");
       const staged = await stageReferences(referenceImages);
-      setComposerText(composer, prompt);
+      const typing = await typeIntoFlowComposer(composer, prompt);
       await sleep(ADAPTER.TIMING.postTypeSettleMs);
       // Đặt lại trước mỗi lần thử: biến này ở phạm vi module, để nguyên thì
       // một job không có blob nào sẽ thừa hưởng nhãn của job trước.
@@ -811,10 +940,12 @@
       const attach = await confirmReferences(staged);
 
       const inputEvidence = referenceEvidence(referenceImages);
-      const boundary = captureBoundary(inputEvidence);
-      if (requestAttempt) Object.assign(requestAttempt, { boundary, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, detection: { ...boundaryTelemetry(boundary), decision_reason: "PENDING", attach: attach ?? null } });
 
       const sendButton = await waitForSendButtonReady();
+      // Capture the immutable attribution boundary at the irreversible action:
+      // immediately before Create, after typing and attachment preparation.
+      const boundary = ADAPTER.resultKind === "video" ? captureVideoBoundary() : captureBoundary(inputEvidence);
+      if (requestAttempt) Object.assign(requestAttempt, { boundary, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, resultKind: ADAPTER.resultKind, detection: { ...(ADAPTER.resultKind === "video" ? { baseline_video_ids: boundary.video_ids } : boundaryTelemetry(boundary)), decision_reason: "PENDING", typing_path: typing.path, attach: attach ?? null } });
       emitRuntimeStage(requestAttempt, "SENDING");
       // Exactly one guarded Send click per attempt (submit-once protection):
       // any blocker or operator stop discovered at this instant prevents the
@@ -824,11 +955,13 @@
       if (requestAttempt) { requestAttempt.phase = "SUBMITTED"; requestAttempt.submittedAt = new Date().toISOString(); }
       emitRuntimeStage(requestAttempt, "GENERATING");
 
-      // Let Gemini process the click (and the /images -> /app SPA navigation)
-      // before completion polling.
+      // F1 measured no useful progressbar/Stop state. Let Flow settle after the
+      // click, then poll only for a new stable media id.
       await sleep(ADAPTER.TIMING.postSendSettleMs);
 
-      const result = await waitForCompletion({ boundary, timeoutMs, expectImage, inputEvidence, attempt: requestAttempt });
+      const result = ADAPTER.resultKind === "video"
+        ? await waitForVideoCompletion({ boundary, timeoutMs, attempt: requestAttempt })
+        : await waitForCompletion({ boundary, timeoutMs, expectImage, inputEvidence, attempt: requestAttempt });
       // Carried on the result, not on attempt.detection: recordDetection()
       // replaces attempt.detection wholesale when completion polling settles,
       // so anything parked there before Send is wiped by the time the panel
@@ -837,12 +970,13 @@
       // Cùng lý do như attach: đi kèm result, vì attempt.detection bị
       // recordDetection() ghi đè khi vòng dò kết quả xong.
       if (result && lastBlobConversion) result.blob_conversion = lastBlobConversion;
-      if (result?.image_url && requestAttempt) requestAttempt.phase = "OUTPUT_DETECTED";
-      if (result?.image_url) emitRuntimeStage(requestAttempt, "OUTPUT_DETECTED");
+      if ((result?.image_url || result?.video_url) && requestAttempt) requestAttempt.phase = "OUTPUT_DETECTED";
+      if (result?.image_url || result?.video_url) emitRuntimeStage(requestAttempt, "OUTPUT_DETECTED");
       return result;
     } finally {
       STATE.busy = false;
       STATE.abortRequested = false;
+      if (window.DacAttemptIdentity.same(STATE.abortedAttempt, requestAttempt)) STATE.abortedAttempt = null;
     }
   }
 
@@ -850,10 +984,12 @@
 
   async function reconcileImageAttempt(timeoutMs, requestAttempt) {
     const attempt = STATE.activeAttempt;
-    if (!window.DacAttemptIdentity.same(attempt, requestAttempt) || !window.DacAttemptIdentity.submitted(attempt) || !attempt.expectImage) throw new Error("ATTEMPT_ID_MISMATCH: no matching submitted image attempt is available for reconciliation.");
-    const result = await waitForCompletion({ boundary: attempt.boundary, timeoutMs, expectImage: true, inputEvidence: attempt.inputEvidence, attempt });
-    if (result?.image_url) attempt.phase = "OUTPUT_DETECTED";
-    if (result?.image_url) emitRuntimeStage(attempt, "OUTPUT_DETECTED");
+    if (!window.DacAttemptIdentity.same(attempt, requestAttempt) || !window.DacAttemptIdentity.submitted(attempt) || !attempt.expectImage) throw new Error("ATTEMPT_ID_MISMATCH: no matching submitted output attempt is available for reconciliation.");
+    const result = attempt.resultKind === "video"
+      ? await waitForVideoCompletion({ boundary: attempt.boundary, timeoutMs, attempt })
+      : await waitForCompletion({ boundary: attempt.boundary, timeoutMs, expectImage: true, inputEvidence: attempt.inputEvidence, attempt });
+    if (result?.image_url || result?.video_url) attempt.phase = "OUTPUT_DETECTED";
+    if (result?.image_url || result?.video_url) emitRuntimeStage(attempt, "OUTPUT_DETECTED");
     return result;
   }
 
@@ -949,76 +1085,15 @@
         const target = textareas[0] || findComposer();
         if (!target) throw new Error("EVIDENCE_COMPOSER_NOT_FOUND");
         const targetDescription = `${target.tagName.toLowerCase()}${target.placeholder ? `[placeholder=${String(target.placeholder).slice(0, 60)}]` : ""}`;
-        const findCreateButton = () => Array.from(document.querySelectorAll("button")).filter(isVisible).find((button) => {
-          const label = (button.innerText || "").replace(/\s+/g, " ").trim();
-          return /arrow_forward/i.test(label) && /create/i.test(label);
-        });
-        const buttonEnabled = () => {
-          const candidate = findCreateButton();
-          return Boolean(candidate && !candidate.disabled && candidate.getAttribute("aria-disabled") !== "true");
-        };
-        const waitEnabled = async (ms) => {
-          const until = Date.now() + ms;
-          while (Date.now() < until) {
-            if (buttonEnabled()) return true;
-            await new Promise((resolve) => setTimeout(resolve, 250));
-          }
-          return buttonEnabled();
-        };
         // Flow's composer is a Lexical-style React editor: overwriting
         // textContent desyncs its internal model (live dry_run 27/08 — text
         // visible, Create button dead). Try keyboard-equivalent strategies in
         // order, reporting which one the editor accepted. NEVER assign
         // textContent/innerText here.
-        let typingPath = "none";
-        const focusAndSelectAll = () => {
-          target.focus();
-          const selection = window.getSelection();
-          const range = document.createRange();
-          range.selectNodeContents(target);
-          selection.removeAllRanges();
-          selection.addRange(range);
-        };
-        if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") {
-          const prototype = target.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-          const setter = Object.getOwnPropertyDescriptor(prototype, "value").set;
-          target.focus();
-          setter.call(target, evidencePrompt);
-          target.dispatchEvent(new Event("input", { bubbles: true }));
-          typingPath = "native_setter";
-        } else {
-          // Strategy A: focused selection + execCommand insertText (fires real
-          // beforeinput/input the way a keystroke does).
-          focusAndSelectAll();
-          let inserted = false;
-          try { inserted = document.execCommand("insertText", false, evidencePrompt); } catch (_) { inserted = false; }
-          if (inserted && await waitEnabled(2500)) {
-            typingPath = "execCommand";
-          } else {
-            // Strategy B: explicit beforeinput/input InputEvent pair (Lexical
-            // subscribes to beforeinput and updates its own state).
-            focusAndSelectAll();
-            try {
-              target.dispatchEvent(new InputEvent("beforeinput", { bubbles: true, cancelable: true, inputType: "insertText", data: evidencePrompt }));
-              target.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: evidencePrompt }));
-            } catch (_) { /* reported via create_button below */ }
-            if (await waitEnabled(2500)) {
-              typingPath = "input_events";
-            } else {
-              // Strategy C: synthetic paste (rich editors route paste through
-              // their own pipeline).
-              focusAndSelectAll();
-              try {
-                const transfer = new DataTransfer();
-                transfer.setData("text/plain", evidencePrompt);
-                target.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: transfer }));
-                typingPath = "paste_event";
-              } catch (_) { typingPath = "all_failed"; }
-            }
-          }
-        }
-        const createButton = (await waitEnabled(4000)) ? findCreateButton() : null;
-        const buttonState = createButton ? "enabled" : (findCreateButton() ? "still_disabled" : "not_found");
+        const typing = await typeIntoFlowComposer(target, evidencePrompt);
+        const typingPath = typing.path;
+        const createButton = await waitForCreateButtonEnabled(4000);
+        const buttonState = createButton ? "enabled" : (ADAPTER.findCreateButton(document) ? "still_disabled" : "not_found");
         const composerTextHead = (target.value ?? target.innerText ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
         if (evidenceDryRun) {
           return {
@@ -1158,13 +1233,15 @@
 
     if (message.type === "DAC_ABORT") {
       STATE.abortRequested = true;
+      const scoped = window.DacAttemptIdentity.create(message);
+      STATE.abortedAttempt = window.DacAttemptIdentity.validContext(scoped) ? scoped : STATE.activeAttempt;
       sendResponse({ ok: true });
       return false;
     }
 
     if (message.type === "DAC_RUN_PROMPT") {
       const prompt = typeof message.prompt === "string" ? message.prompt.trim() : "";
-      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 900000));
+      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || ADAPTER.TIMING.perJobTimeoutMs, 900000));
 
       if (!prompt) {
         sendResponse({ ok: false, error: "Prompt is empty." });
@@ -1189,7 +1266,7 @@
     if (message.type === "DAC_RUN_IMAGE_JOB") {
       const requestAttempt = window.DacAttemptIdentity.create(message);
       const prompt = typeof message.prompt === "string" ? message.prompt.trim() : "";
-      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 900000));
+      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || ADAPTER.TIMING.perJobTimeoutMs, 900000));
       if (!window.DacAttemptIdentity.validContext(requestAttempt)) {
         sendResponse({ ok: false, error: "INVALID_ATTEMPT_ID: job_id and attempt_id are required.", attempt: attemptSnapshot(requestAttempt) });
         return false;
@@ -1206,7 +1283,7 @@
 
     if (message.type === "DAC_RECONCILE_IMAGE_JOB") {
       const requestAttempt = window.DacAttemptIdentity.create(message);
-      const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 120000));
+      const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || ADAPTER.TIMING.perJobTimeoutMs, 900000));
       if (!window.DacAttemptIdentity.validContext(requestAttempt) || !window.DacAttemptIdentity.same(STATE.activeAttempt, requestAttempt) || !window.DacAttemptIdentity.submitted(STATE.activeAttempt)) {
         sendResponse({ ok: false, error: "ATTEMPT_ID_MISMATCH: reconciliation request does not own the submitted attempt.", attempt: attemptSnapshot(requestAttempt) });
         return false;

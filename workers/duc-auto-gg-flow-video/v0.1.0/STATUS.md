@@ -36,7 +36,7 @@ chỉ-đọc, chưa có selector Flow nào. Bằng chứng DOM sẽ nằm ở `e
 
 1. **Chưa dùng được** — bootstrap, chưa chạy nổi một job video.
 2. SELECTORS/TIMING trong adapter còn là của Gemini — cố tình, chờ bằng chứng thật.
-3. Video **trừ credits thật** mỗi lần sinh → trần trial dev ≤2 job, chặt hơn nhánh ảnh.
+3. Video **trừ credits thật** mỗi lần sinh → trần trial dev ≤3 video (3 × 15 credits), chặt hơn nhánh ảnh.
 
 ## Đọc sâu ở đâu
 

@@ -55,3 +55,11 @@ Flow" và icon G xanh-tím → F teal, đã làm.)
 Đức chốt trong chat: phiên Claude này tự gọi Codex CLI / Antigravity để code, trial,
 debug, hoàn thiện — theo flow Bridge + developer mode. Vẫn giữ nguyên các mốc phải hỏi:
 quyền mới ngoài pattern đã duyệt, pilot live thật, đổi luật an toàn.
+
+## 2026-08-27 — F-05: gỡ khoá bootstrap Bridge
+
+Gỡ allowlist/bootstrap gate trong `bridge-router-core.js`, mở lại toàn bộ method surface theo
+router chuẩn của Gemini HEAD. Lý do: provider adapter Flow đã được dựng từ bằng chứng DOM thật,
+có test ghim; F-02 hoàn tất và audit đối kháng PASS, F-04 đã hạ trần trial còn 3 job. Các gate
+an toàn riêng của từng method vẫn giữ nguyên. `diagnostics.evidence_submit` vẫn là công cụ debug
+có trần cứng 3 lượt/trang; `run.trial` vẫn cần Đức bật **Chế độ phát triển (Dev Mode)** trong panel.

@@ -1,4 +1,4 @@
-# AI OPERATOR GUIDE — Duc Auto GG Flow Video (V0.1 bootstrap)
+# AI OPERATOR GUIDE — Duc Auto GG Flow Video (V0.1)
 
 > Đọc file này ĐẦU TIÊN nếu bạn là AI vận hành/debug extension này. Nền tảng vận hành
 > giống hệt nhánh Gemini — đọc `workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md`
@@ -11,8 +11,8 @@
 | Host Bridge | `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini\`, cổng 32148 | `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video\`, cổng **32149** |
 | Pairing | `duc-auto-gemini-bridge-pairing-v1.json` | `duc-auto-gg-flow-video-bridge-pairing-v1.json` (cùng thư mục host, KHÔNG commit) |
 | Khởi động host | `START-BRIDGE_Gemini_Extension.cmd` | `START-BRIDGE_GG_Flow_Video.cmd` |
-| Method dùng được | đầy đủ | **KHOÁ BOOTSTRAP**: chỉ `session.hello`, `system.ping`, `system.capabilities`, `diagnostics.dom_probe`, `chat.reload`, `diagnostics.evidence_submit` (gõ 1 prompt + bấm Create, trần 3 lượt/trang — TỐN 15 CREDIT MỖI LƯỢT) — method khác bị từ chối kèm `details.reason: "bootstrap_locked"` |
-| Trần trial dev | ≤30 job | **≤2 job** (video trừ credits thật) — và hiện chưa mở trial |
+| Method dùng được | đầy đủ | **Đầy đủ từ 2026-08-27**; gate executor/approval/validation của từng method vẫn áp dụng. `diagnostics.evidence_submit` được giữ làm debug tool, trần 3 lượt/trang |
+| Trần trial dev | ≤30 job | **≤3 video** (Đức chốt 27/08: 3 × 15 credits); phải bật toggle **Chế độ phát triển (Dev Mode)** trong side panel |
 | Trang đích | gemini.google.com | `https://labs.google/fx/tools/flow/*` |
 
 ## Gọi Bridge
@@ -34,5 +34,5 @@ node "workers/duc-auto-gg-flow-video/v0.1.0/scripts/bridge-rpc.mjs" diagnostics.
 
 | Triệu chứng | Nguyên nhân thật | Xử lý |
 |---|---|---|
-| Method khác 4 method đọc bị từ chối | Khoá bootstrap (cố ý) | Không phải bug. Gỡ khoá chỉ sau F-02+F-04, ghi decisions.md |
-| `composerFound:false`, selectorCounts toàn 0 | SELECTORS còn là của Gemini | Đúng dự kiến ở bootstrap — đọc phần generic của probe (buttons, customTags, fileInputs) |
+| `run.trial` trả lỗi Dev Mode/toggle | Toggle **Chế độ phát triển (Dev Mode)** trong side panel đang tắt | Đức bật toggle trước khi gọi; trần 3 job vẫn luôn áp dụng |
+| `diagnostics.evidence_submit` báo hết lượt | Debug primitive đã chạm trần 3 lượt của lần nạp trang hiện tại | Không bypass; dùng runner thật hoặc nạp lại trang khi đúng phạm vi debug được duyệt |

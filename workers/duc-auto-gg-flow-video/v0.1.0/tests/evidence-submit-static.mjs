@@ -31,7 +31,6 @@ assert.throws(() => bridge.validateParams("diagnostics.evidence_submit", { promp
 assert.throws(() => bridge.validateParams("diagnostics.evidence_submit", { prompt: "x".repeat(2001) }), (error) => error.code === "INVALID_PARAMS", "oversized prompt is rejected");
 
 // Router: it is the SIXTH and last bootstrap-allowlisted method.
-assert.ok(routerCore.BOOTSTRAP_ALLOWED_METHODS.includes("diagnostics.evidence_submit"), "allowlisted during bootstrap");
 
 // Panel wiring: dispatch map + test hooks + forwards DAC_FLOW_EVIDENCE_SUBMIT.
 assert.match(panel, /"diagnostics\.evidence_submit": withBridgeErrors\(bridgeEvidenceSubmit\)/);
@@ -50,15 +49,22 @@ const block = content.slice(blockStart, blockEnd);
 assert.match(block, /EVIDENCE_SUBMIT_CAP = 3/, "hard cap is 3 per page load — the owner's whole free budget");
 assert.match(block, /STATE\.evidenceSubmitCount >= EVIDENCE_SUBMIT_CAP/, "the cap is enforced, not decorative");
 assert.match(block, /findComposer\(\)/, "reuses the evidence-verified composer finder");
+assert.match(block, /typeIntoFlowComposer\(target, evidencePrompt\)/, "evidence scaffold uses the shared proven typing routine");
 // Flow's composer is a Lexical-style React editor: assigning textContent
 // desyncs its state (live dry_run 27/08). The block must type via
 // keyboard-equivalent strategies and never assign textContent/innerText.
-assert.match(block, /execCommand\("insertText"/, "strategy A: execCommand insertText");
-assert.match(block, /new InputEvent\("beforeinput"/, "strategy B: beforeinput/input pair");
-assert.match(block, /new ClipboardEvent\("paste"/, "strategy C: synthetic paste");
+const typingStart = content.indexOf("async function typeIntoFlowComposer(");
+const typingEnd = content.indexOf("/* ---- image candidates", typingStart);
+const typing = content.slice(typingStart, typingEnd);
+assert.match(typing, /execCommand\("insertText"/, "strategy A: execCommand insertText");
+assert.match(typing, /new InputEvent\("beforeinput"/, "strategy B: beforeinput/input pair");
+assert.match(typing, /new ClipboardEvent\("paste"/, "strategy C: synthetic paste");
+assert.match(typing, /return \{ ok: createButtonEnabled\(\), path: typingPath \}/, "shared routine reports acceptance and the winning path");
+assert.doesNotMatch(typing, /\.textContent\s*=/, "shared routine never assigns textContent to a live editor");
+assert.doesNotMatch(typing, /\.innerText\s*=/, "shared routine never assigns innerText to a live editor");
 assert.doesNotMatch(block, /\.textContent\s*=/, "never assigns textContent to a live editor");
 assert.doesNotMatch(block, /\.innerText\s*=/, "never assigns innerText to a live editor");
-assert.match(block, /arrow_forward/, "Create button match is evidence-backed (F1 snapshot 1)");
+assert.match(block, /ADAPTER\.findCreateButton\(document\)/, "Create button finder is centralized in the evidence-backed adapter");
 assert.match(block, /\.then\(\(result\) => sendResponse\(\{ ok: true, result \}\)\)/, "responds asynchronously via promise");
 assert.match(block, /return true;/, "keeps the message channel open for the async response");
 // Audit blockers 2026-08-27 (Codex), pinned so they cannot regress:

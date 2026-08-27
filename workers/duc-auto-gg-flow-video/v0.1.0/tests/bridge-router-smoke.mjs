@@ -34,10 +34,7 @@ assert.equal(hello.result.transport, "loopback_ws");
 const offlinePing = await router.route({ ...base, request_id: "router-request-0002", method: "system.ping", params: {} });
 assert.equal(offlinePing.result.chatgpt.state, "UNKNOWN");
 const unavailable = await router.route({ ...base, request_id: "router-request-0003", method: "queue.list", params: {} });
-assert.equal(unavailable.error.code, "FORBIDDEN");
-assert.deepEqual(unavailable.error.details, { reason: "bootstrap_locked", method: "queue.list" });
-const unavailableProbe = await router.route({ ...base, request_id: "router-request-0003-probe", method: "diagnostics.dom_probe", params: {} });
-assert.equal(unavailableProbe.error.code, "EXECUTOR_UNAVAILABLE");
+assert.equal(unavailable.error.code, "EXECUTOR_UNAVAILABLE");
 
 available = true;
 const ping = await router.route({ ...base, request_id: "router-request-0004", method: "system.ping", params: {} });

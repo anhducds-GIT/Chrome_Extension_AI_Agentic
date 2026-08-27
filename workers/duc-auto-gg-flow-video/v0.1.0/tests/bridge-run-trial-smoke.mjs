@@ -21,6 +21,8 @@ assert.equal(entry.read_only, false);
 assert.equal(entry.approval, "none");
 assert.equal(entry.idempotent, false);
 assert.equal(entry.deadline_ms, 30000);
+assert.match(entry.capability_description, /at most 3 runnable video jobs/, "registry description cannot drift from the owner cap");
+assert.equal(entry.params_schema.job_ids, "job_id[1..3]");
 assert.deepEqual(bridge.POLICY.prohibited_methods, ["run.start", "run.pause", "run.resume"], "the prohibited list is EXACTLY unchanged");
 for (const prohibited of ["run.start", "run.pause", "run.resume"]) {
   assert.equal(bridge.METHOD_REGISTRY[prohibited], undefined, `${prohibited} stays unregistered`);
@@ -49,18 +51,16 @@ assert.deepEqual(
   bridge.validateParams("run.trial", { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: 20 }),
   { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: 20 }
 );
-// Owner amendments 2026-08-25: a trial runs ONE CONTINUOUS chain (never sliced
-// into 2-job runs); cap raised to 30 jobs same day to cover the owner's real
-// 20-30 image workload. Beyond 30 stays owner-clicked.
-assert.equal(devTrial.MAX_TRIAL_JOBS, 30, "trial chain cap is 30 jobs (owner raise, 2026-08-25 PM)");
+// Owner decision 2026-08-27: 3 videos x 15 credits is the whole free budget.
+assert.equal(devTrial.MAX_TRIAL_JOBS, 3, "trial chain cap is 3 videos (owner decision 2026-08-27)");
 assert.deepEqual(
-  bridge.validateParams("run.trial", { job_ids: ["a", "b", "c", "d", "e", "f"] }).job_ids,
-  ["a", "b", "c", "d", "e", "f"],
-  "a 6-job continuous chain is a valid single trial"
+  bridge.validateParams("run.trial", { job_ids: ["a", "b", "c"] }).job_ids,
+  ["a", "b", "c"],
+  "a 3-video continuous chain is the largest valid trial"
 );
 const invalidTrialParams = [
   { job_ids: [] },
-  { job_ids: Array.from({length: 31}, (_, i) => "J" + (i + 1)) },
+  { job_ids: ["J1", "J2", "J3", "J4"] },
   { job_ids: ["P09-01"], timeout_sec: 120 },
   { job_ids: ["P09-01"], timeout_sec: 14 },
   { job_ids: ["P09-01"], delay_sec: 10 },
@@ -150,7 +150,9 @@ assert.match(sidepanel, /async function setDevMode/, "the toggle persists throug
 assert.match(sidepanel, /devModeToggle\?\.addEventListener\("change"/, "the BRIDGE-card toggle is wired");
 assert.match(html, /id="devModeToggle" type="checkbox"(?![^>]*checked)/, "the toggle defaults to OFF");
 assert.match(html, /Chế độ phát triển/, "the toggle uses the Vietnamese operator label");
-assert.match(html, /id="devModeBanner"[^>]*hidden>DEV MODE — AI được phép chạy trial ≤2 job</, "the amber banner is explicit about what DEV MODE allows");
+assert.match(html, /id="devModeBanner"[^>]*hidden>DEV MODE — AI được phép chạy trial ≤3 video</, "the amber banner is explicit about the 3-video cap");
+assert.match(sidepanel, /Chế độ phát triển BẬT — AI được phép chạy trial một chuỗi ≤3 job qua Bridge/, "the operator log uses the video cap of 3");
+assert.doesNotMatch(sidepanel, /≤30 job/, "stale Gemini trial cap is absent from operator text");
 assert.match(html, /id="runDevModeBadge"[^>]*hidden>DEV MODE</, "the RUN screen carries a small DEV MODE badge");
 const bridgeScreenHtml = html.slice(html.indexOf('<section id="bridgeScreen"'), html.indexOf("<footer>"));
 assert.match(bridgeScreenHtml, /id="devModeToggle"/, "the toggle lives on the BRIDGE screen card");

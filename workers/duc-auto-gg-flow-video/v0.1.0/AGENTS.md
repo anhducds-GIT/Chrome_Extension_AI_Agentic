@@ -10,14 +10,14 @@ y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
 1. **Không đoán selector.** Mọi selector Flow phải có bằng chứng `dom_probe`
    trong `evidence/`. SELECTORS/TIMING đang là đồ thừa kế từ Gemini — KHÔNG
    được coi là đúng cho Flow.
-2. **Video trừ credits thật.** Trần trial dev: **≤2 job một chuỗi** (kế hoạch
-   FLOW duyệt 27/08 — KHÔNG dùng trần 30 của nhánh ảnh). Không retry tự động
+2. **Video trừ credits thật.** Trần trial dev: **≤3 video một chuỗi** (Đức chốt
+   27/08: 3 × 15 credits = ngân sách free — KHÔNG dùng trần 30 của nhánh ảnh). Không retry tự động
    khi nghi ngờ đã trừ credits. Nới trần = đổi luật an toàn = hỏi Đức.
-3. **Khoá bootstrap Bridge** (allowlist trong `bridge-router-core.js`: 4 method
-   đọc/chẩn đoán + `chat.reload` + `diagnostics.evidence_submit` trần cứng 3 lượt/trang)
-   chỉ được gỡ khi provider-adapter đã dựng từ bằng chứng thật và có test ghim.
-   Gỡ khoá ghi 1 dòng vào `decisions.md`; `evidence_submit` là giàn giáo — gỡ hoặc
-   gộp vào runner thật ở F-02.
+3. **Khoá bootstrap Bridge đã được gỡ ngày 2026-08-27** sau khi provider adapter được dựng
+   từ bằng chứng thật, có test ghim và audit đối kháng PASS. Full method surface khả dụng,
+   nhưng mọi gate an toàn riêng vẫn giữ nguyên. `diagnostics.evidence_submit` được giữ làm
+   công cụ debug với trần cứng 3 lượt/trang; `run.trial` có trần 3 job và chỉ chạy khi bật
+   toggle **Chế độ phát triển (Dev Mode)** trong side panel.
 4. Các luật thừa kế nguyên văn từ nhánh Gemini/ChatGPT: không innerHTML;
    không làm yếu exact-once / attribution / readiness / persistence /
    checkpoint / security hard-stop; chữ operator tiếng Việt, CODE tiếng Anh;
@@ -29,7 +29,7 @@ y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
 | File / thư mục | Vai trò |
 |---|---|
 | `manifest.json` | MV3, match `https://labs.google/fx/tools/flow/*` |
-| `README.md` | Tổng quan, trạng thái bootstrap, cài đặt |
+| `README.md` | Tổng quan, trạng thái Bridge, cài đặt |
 | `AGENTS.md` | File này |
 | `STATUS.md` | Trạng thái vận hành 1 trang (máy đọc frontmatter sinh DASHBOARD) |
 | `HANDOFF.md` | Trạng thái + Log (chỉ thêm dòng) |
@@ -39,7 +39,7 @@ y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook (thừa kế, sẽ mở rộng cho video) |
 | `provider-adapter.js` | Nơi DUY NHẤT biết về trang Flow (ORIGIN đã đổi; SELECTORS/TIMING còn là của Gemini, chờ bằng chứng) |
 | `background.js`, `content.js`, `sidepanel.js`, `sidepanel.html`, `sidepanel.css`, `sidepanel-ui-semantics.js` | Runtime thừa kế nguyên trạng từ Gemini v0.2.0 |
-| `bridge-core.js`, `bridge-router-core.js`, `bridge-pairing-core.js`, `bridge-proposal-core.js`, `bridge-transport-loopback.js` | Agent Bridge (router có khoá bootstrap) |
+| `bridge-core.js`, `bridge-router-core.js`, `bridge-pairing-core.js`, `bridge-proposal-core.js`, `bridge-transport-loopback.js` | Agent Bridge (full method surface; gate riêng của từng method vẫn áp dụng) |
 | `*-core.js` còn lại (`runner-core.js`, `image-evidence-core.js`, `attempt-identity-core.js`, `attempt-telemetry-core.js`, `approval-persistence-core.js`, `audit-chain-core.js`, `chat-readiness-core.js`, `checkpoint-core.js`, `content-decision-core.js`, `dev-trial-core.js`, `halt-instructions-core.js`, `operator-glossary-core.js`, `operator-messages-core.js`, `orchestrator-review-core.js`, `output-location-core.js`, `output-profile-core.js`, `plan-diagnostics-core.js`, `reconciliation-core.js`, `recreate-core.js`, `resume-core.js`, `run-state-core.js`, `xlsx-codec.js`, `xlsx-run-plan-core.js`) | Core thuần thừa kế — sửa món nào ghi món đó vào Log |
 | `tests/` | Suite deterministic (`node tests/run-all.mjs` phải xanh 100%) |
 | `scripts/` | bridge-rpc.mjs, installer/uninstaller host, tiện ích pilot |

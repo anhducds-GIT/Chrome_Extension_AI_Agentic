@@ -1,28 +1,6 @@
 (() => {
   "use strict";
 
-  // Bootstrap lock; removal requires a decisions.md entry (F-05).
-  // The public export is a FROZEN ARRAY (truly immutable — audit 2026-08-27
-  // proved Object.freeze(new Set(...)) leaves .add() working, so an exported
-  // Set could be mutated to smuggle methods past the gate). Membership checks
-  // use a module-private Set that nothing outside this closure can reach.
-  const BOOTSTRAP_ALLOWED_METHODS = Object.freeze([
-    "session.hello",
-    "system.ping",
-    "system.capabilities",
-    "diagnostics.dom_probe",
-    // chat.reload joined the allowlist 2026-08-27 (decisions.md): it only
-    // F5s the bound tab — no prompt, no credits — and without it every
-    // extension reload during bootstrap needs the owner's hands for the
-    // mandatory tab refresh (RECEIVER_LOST loop).
-    "chat.reload",
-    // diagnostics.evidence_submit (2026-08-27, decisions.md): the single
-    // bootstrap interaction primitive — one typed prompt + one Create click,
-    // content-side hard cap 3 per page load (owner's 45-credit free budget).
-    "diagnostics.evidence_submit"
-  ]);
-  const BOOTSTRAP_ALLOWED_SET = new Set(BOOTSTRAP_ALLOWED_METHODS);
-
   function createRouter(options = {}) {
     const core = options.core || globalThis.DacBridgeCore;
     if (!core) throw new TypeError("DacBridgeCore is required.");
@@ -53,12 +31,6 @@
         request = core.parseRequest(input);
         const method = core.requireMethod(request.method);
         const params = core.validateParams(request.method, request.params);
-        if (!BOOTSTRAP_ALLOWED_SET.has(request.method)) {
-          throw new core.BridgeProtocolError("FORBIDDEN", undefined, {
-            reason: "bootstrap_locked",
-            method: request.method
-          });
-        }
         if (method.context === "executor") {
           if (!executorState().available) return core.failureResponse(request.request_id, "EXECUTOR_UNAVAILABLE", now);
           return core.parseResponse(await options.send_executor(request, { deadline_ms: method.deadline_ms }));
@@ -93,8 +65,5 @@
     return Object.freeze({ route, session_id: sessionId });
   }
 
-  (typeof window !== "undefined" ? window : globalThis).DacBridgeRouterCore = Object.freeze({
-    createRouter,
-    BOOTSTRAP_ALLOWED_METHODS
-  });
+  (typeof window !== "undefined" ? window : globalThis).DacBridgeRouterCore = Object.freeze({ createRouter });
 })();

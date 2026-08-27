@@ -77,7 +77,7 @@ export function commandRequest(command, flags = {}) {
     if (!flags["params-file"]) throw new Error("propose requires --params-file <json>.");
     params = JSON.parse(fs.readFileSync(path.resolve(flags["params-file"]), "utf8"));
   } else if (command === "run-trial") {
-    // Development trial run (owner decision 2026-08-25): <=2 jobs, capped
+    // Flow development trial (owner decision 2026-08-27): <=3 videos, capped
     // timing; refused by the extension unless its dev-mode toggle is ON.
     if (!flags.jobs) throw new Error("run-trial requires --jobs <id[,id]>.");
     const jobIds = String(flags.jobs).split(",").map((item) => item.trim()).filter(Boolean);

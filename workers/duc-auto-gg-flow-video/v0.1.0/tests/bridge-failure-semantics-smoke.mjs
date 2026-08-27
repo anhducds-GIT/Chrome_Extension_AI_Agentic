@@ -46,18 +46,12 @@ const paramsByMethod = {
 for (const [index, method] of executorMethods.entries()) {
   const params = paramsByMethod[method] || {};
   const response = await router.route({ ...base, request_id: `failure-request-000${index + 2}`, method, params });
-  assert.equal(response.error.code, "FORBIDDEN", `${method} is bootstrap-locked before executor availability is considered`);
-  assert.equal(response.error.retryable, false);
-  assert.equal(response.error.details.reason, "bootstrap_locked");
-  assert.equal(response.error.details.method, method);
+  assert.equal(response.error.code, "EXECUTOR_UNAVAILABLE", `${method} fails closed while the side panel executor is absent`);
+  assert.equal(response.error.retryable, true);
 }
 
-const unavailableProbe = await router.route({ ...base, request_id: "failure-request-probe-0001", method: "diagnostics.dom_probe", params: {} });
-assert.equal(unavailableProbe.error.code, "EXECUTOR_UNAVAILABLE", "the allowlisted DOM probe still fails closed while the executor is absent");
-assert.equal(unavailableProbe.error.retryable, true);
-
 available = true;
-const disconnected = await router.route({ ...base, request_id: "failure-request-probe-0002", method: "diagnostics.dom_probe", params: {} });
+const disconnected = await router.route({ ...base, request_id: "failure-request-0008", method: "queue.list", params: {} });
 assert.equal(disconnected.error.code, "INTERNAL_ERROR", "an unexpected Port failure never becomes a job failure or partial result");
 assert.equal(disconnected.error.retryable, false);
 

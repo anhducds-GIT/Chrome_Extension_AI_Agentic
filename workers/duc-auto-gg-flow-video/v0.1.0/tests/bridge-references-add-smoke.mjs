@@ -118,11 +118,10 @@ assert.equal(failed.error.code, "INTERNAL_ERROR");
 assert.equal(failed.error.message, "The bridge could not complete the request.", "the stable taxonomy message is unchanged");
 assert.equal(failed.error.details.message, "REFERENCE_DECODE_FAILED: bad png header", "details.message survives the response envelope for remote diagnosis");
 
-let routerForwarded = false;
 const router = routerCore.createRouter({
   core: bridge,
   executor_state: () => ({ available: true, executor_epoch: "epoch-1" }),
-  send_executor: async () => { routerForwarded = true; throw new Error("panel Port disappeared mid-flight"); },
+  send_executor: async () => { throw new Error("panel Port disappeared mid-flight"); },
   now: () => new Date("2026-08-25T10:00:02.000Z")
 });
 const routed = await router.route({
@@ -131,8 +130,7 @@ const routed = await router.route({
   client: { client_id: "references-test", name: "References Test", version: "1" },
   params: { references: [reference()] }
 });
-assert.equal(routed.error.code, "FORBIDDEN");
-assert.deepEqual(routed.error.details, { reason: "bootstrap_locked", method: "references.add" });
-assert.equal(routerForwarded, false, "bootstrap-locked references never reach the executor");
+assert.equal(routed.error.code, "INTERNAL_ERROR");
+assert.equal(routed.error.details.message, "panel Port disappeared mid-flight", "router-level INTERNAL_ERROR carries the bounded cause");
 
 console.log("bridge references.add smoke tests: PASS");

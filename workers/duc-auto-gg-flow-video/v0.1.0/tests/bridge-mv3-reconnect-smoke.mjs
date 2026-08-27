@@ -96,26 +96,18 @@ const request = {
 };
 secondSocket.emit("message", { data: JSON.stringify({ type: "rpc", relay_id: "relay-1", envelope: request }) });
 await new Promise((resolve) => setTimeout(resolve, 0));
-const locked = secondSocket.sent.find((message) => message.relay_id === "relay-1");
-assert.equal(locked.envelope.error.code, "FORBIDDEN", "queue.list is rejected by the bootstrap gate after reconnect");
-assert.equal(locked.envelope.error.details.reason, "bootstrap_locked");
-assert.equal(currentPosted.length, 0, "bootstrap-locked methods never reach the current executor Port");
-
-const probeRequest = { ...request, request_id: "mv3-probe-0001", method: "diagnostics.dom_probe" };
-secondSocket.emit("message", { data: JSON.stringify({ type: "rpc", relay_id: "relay-probe", envelope: probeRequest }) });
-await new Promise((resolve) => setTimeout(resolve, 0));
 assert.equal(currentPosted[0].type, "DAC_BRIDGE_RPC");
-assert.equal(currentPosted[0].envelope.request_id, probeRequest.request_id);
-portMessage.emit({ type: "DAC_BRIDGE_RPC_RESPONSE", route_id: currentPosted[0].route_id, envelope: core.successResponse(probeRequest, { selector_counts: { stale: 1 } }) });
+assert.equal(currentPosted[0].envelope.request_id, request.request_id);
+portMessage.emit({ type: "DAC_BRIDGE_RPC_RESPONSE", route_id: currentPosted[0].route_id, envelope: core.successResponse(request, { jobs: ["stale"], next_cursor: null }) });
 await new Promise((resolve) => setTimeout(resolve, 0));
-assert.equal(secondSocket.sent.some((message) => message.relay_id === "relay-probe"), false, "a replaced panel Port cannot settle current work");
-currentPortMessage.emit({ type: "DAC_BRIDGE_RPC_RESPONSE", route_id: currentPosted[0].route_id, envelope: core.successResponse(probeRequest, { selector_counts: {} }) });
+assert.equal(secondSocket.sent.some((message) => message.type === "rpc_response"), false, "a replaced panel Port cannot settle current work");
+currentPortMessage.emit({ type: "DAC_BRIDGE_RPC_RESPONSE", route_id: currentPosted[0].route_id, envelope: core.successResponse(request, { jobs: [], next_cursor: null }) });
 await new Promise((resolve) => setTimeout(resolve, 0));
-const response = secondSocket.sent.find((message) => message.relay_id === "relay-probe");
-assert.equal(response.envelope.request_id, probeRequest.request_id, "request_id survives host-worker-panel round trip");
+const response = secondSocket.sent.find((message) => message.type === "rpc_response");
+assert.equal(response.envelope.request_id, request.request_id, "request_id survives host-worker-panel round trip");
 
 currentPortDisconnect.emit();
-const closedRequest = { ...probeRequest, request_id: "mv3-probe-0002" };
+const closedRequest = { ...request, request_id: "mv3-request-0002" };
 secondSocket.emit("message", { data: JSON.stringify({ type: "rpc", relay_id: "relay-2", envelope: closedRequest }) });
 await new Promise((resolve) => setTimeout(resolve, 0));
 const unavailable = secondSocket.sent.find((message) => message.relay_id === "relay-2");

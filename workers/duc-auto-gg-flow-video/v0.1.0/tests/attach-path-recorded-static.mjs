@@ -55,7 +55,7 @@ assert.match(panel, /attach: result\?\.attach \?\? null/, "detection_diagnostics
 //    nhưng sổ cái trả về `undefined` — vì `applyAttemptTelemetry` (chỗ ghi
 //    quyết định của panel) chỉ tuần tự hoá `attempt.detection`, và nó chạy SAU
 //    lần ghi detected-not-downloaded. Chỉ chạy thật mới lộ ra chuyện này.
-assert.match(content, /decision_reason: "PENDING", attach: attach \?\? null/, "attach phải nằm trong attempt.detection lúc khởi tạo, không chỉ trên result");
+assert.match(content, /decision_reason: "PENDING", typing_path: typing\.path, attach: attach \?\? null/, "attach phải nằm trong attempt.detection lúc khởi tạo, không chỉ trên result");
 const record = content.slice(content.indexOf("const CARRIED_DIAGNOSTICS"), content.indexOf("function carryDiagnostic"));
 // Kiểm THÀNH VIÊN, không ghim cứng cả mảng: ý định là "hai trường này phải
 // được giữ lại", và danh sách còn mọc thêm khi tìm ra chẩn đoán mới cần mang
