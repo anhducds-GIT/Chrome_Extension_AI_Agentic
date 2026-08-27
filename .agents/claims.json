@@ -17,11 +17,11 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "Ke hoach Flow Extension DA VIET va DA PUSH: drafts/FLOW-EXT-COORDINATION-PLAN.md. Cho Duc chot 3 dieu o muc 6 (URL Flow, quyen host moi, ten package) roi moi mo phien code claude-flow-1. G-01 (Gemini) van cho Duc chot rieng.",
-      "released_at": "2026-08-27"
+      "owner": "claude-flow-plan",
+      "ai": "claude",
+      "claimed_at": "2026-08-27",
+      "task": "Cap nhat ke hoach Flow theo 3 chot cua Duc (URL, quyen, ten package gg-flow-video). Xong thi tra quyen.",
+      "released_at": null
     }
   }
 }

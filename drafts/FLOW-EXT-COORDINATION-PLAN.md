@@ -1,7 +1,7 @@
 # FLOW-EXT — Kế hoạch điều phối Extension Google Flow (video)
 
 > Viết 2026-08-27 bởi Claude (phiên `claude-flow-plan`).
-> **Trạng thái: CHỜ ĐỨC CHỐT 3 ĐIỀU ở mục 6 — chưa được code.**
+> **Trạng thái: ĐỨC ĐÃ CHỐT CẢ 3 ĐIỀU (27/08, xem mục 6) — được phép bắt đầu FLOW-01.**
 > Mục tiêu: extension thứ 3 của repo, chạy kế hoạch XLSX tạo **video** trên Google Flow,
 > giao diện và cách vận hành gần giống nhánh Gemini, phát triển bằng Bridge + developer mode
 > (AI tự triển khai, tự debug).
@@ -41,7 +41,7 @@ thật trước khi viết code:
 
 ## 3. Cách dựng: fork nhánh Gemini v0.2.0
 
-- Chép `workers/duc-auto-gemini/v0.2.0/` → `workers/duc-auto-flow/v0.1.0/` (tên chờ chốt).
+- Chép `workers/duc-auto-gemini/v0.2.0/` → `workers/duc-auto-gg-flow-video/v0.1.0/` (tên Đức chốt 27/08).
 - **Không mang theo**: thư mục pilot/evidence/Batch của Gemini (bằng chứng của nhánh khác),
   `HANDOFF.md`/`decisions.md`/`BACKLOG.md` cũ (mở sổ mới, dãy số mới `F-xx`).
 - Viết lại `provider-adapter.js` cho Flow từ bằng chứng DOM (bước FLOW-01).
@@ -73,39 +73,54 @@ Audit độc lập trước mọi lần báo "xong" (đúng nếp Pilot/Platform
 | **Codex** | Code adapter + core theo brief, audit chéo |
 | **Antigravity** | Chưa giao gì — headless đang hỏng (hook config cá nhân), và UI đã có sẵn từ fork |
 
-## 6. Ba điều chờ Đức chốt (FLOW-00) — trả lời xong là chạy được
+## 6. FLOW-00 — Đức ĐÃ CHỐT, 2026-08-27
 
-1. **Trang Flow chính xác là trang nào?** Dán URL Đức đang dùng (dạng
-   `https://labs.google/fx/tools/flow` hay khác?). Tài khoản có đủ credits để dev không?
-2. **Duyệt quyền mới**: extension Flow cần host permission cho trang đó. Đồng ý không?
-3. **Tên package**: `workers/duc-auto-flow/v0.1.0` — được chưa, hay muốn tên khác?
+1. **Trang Flow**: Đức dán URL project thật:
+   `https://labs.google/fx/tools/flow/project/d7c07112-eb7f-4efe-b251-8aee4b2b6c4f`.
+   → Origin là `labs.google`, đường dẫn tool là `/fx/tools/flow/…`, mỗi project một URL riêng.
+   Extension phải match theo **pattern tool**, không khoá cứng vào ID project:
+   `https://labs.google/fx/tools/flow/*`. (Credits: phiên FLOW-01 kiểm tra thật trên trang,
+   không giả định.)
+2. **Quyền host mới**: Đức **DUYỆT**. Giữ hẹp nhất có thể: chỉ
+   `https://labs.google/fx/tools/flow/*` — không xin cả `labs.google/*`.
+3. **Tên package**: Đức muốn tên nói rõ "GG Flow video" →
+   **`workers/duc-auto-gg-flow-video/v0.1.0`**, tên hiển thị **"Duc Auto GG Flow Video"**.
 
-Chốt xong 3 điều → dán prompt dưới đây vào một phiên Claude Code mới.
+Ba chốt này sẽ được chép vào `decisions.md` của package ngay khi package ra đời (FLOW-01).
+Đã chốt xong → dán prompt dưới đây vào một phiên Claude Code mới.
 
-## 7. Prompt mở phiên triển khai — dán SAU khi chốt mục 6
+## 7. Prompt mở phiên triển khai — mục 6 đã chốt, dán được ngay
 
 ```text
 You are the implementation coordinator for the Google Flow video extension. Session label: `claude-flow-1`.
 
 Read first, in this exact order:
 1. `AGENTS.md` at repo root — the constitution. Everything in it binds you.
-2. `drafts/FLOW-EXT-COORDINATION-PLAN.md` — the approved plan. Đức has confirmed the three
-   items in section 6; ask him to restate them if they are not in your chat context.
+2. `drafts/FLOW-EXT-COORDINATION-PLAN.md` — the approved plan. Section 6 records Đức's three
+   confirmed decisions (2026-08-27): target page pattern `https://labs.google/fx/tools/flow/*`
+   (his real project URL is in that section), host permission approved for exactly that
+   pattern and nothing wider, and the package is `workers/duc-auto-gg-flow-video/v0.1.0`
+   ("Duc Auto GG Flow Video").
 3. `workers/duc-auto-gemini/v0.2.0/AGENTS.md` + `provider-adapter.js` — the architecture you
    will fork. Read the adapter header comment: every selector there is evidence-backed.
 4. `workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md` — how to drive the Bridge.
 
 Your first checkpoint is FLOW-01 (DOM evidence), not code:
-- Claim `workers/duc-auto-flow` in `.agents/claims.json`.
-- Fork gemini v0.2.0 as a bootstrap: change manifest host to the Flow origin Đức approved,
-  keep only Bridge + diagnostics; do NOT enable any run/submit path yet.
-- Ask Đức to load it unpacked (developer mode) and open the Flow tab.
+- Claim `workers/duc-auto-gg-flow-video` in `.agents/claims.json`.
+- Fork gemini v0.2.0 as a bootstrap: set the manifest match pattern to
+  `https://labs.google/fx/tools/flow/*`, keep only Bridge + diagnostics; do NOT enable any
+  run/submit path yet. Do not copy Gemini's pilot/evidence/Batch folders or its
+  HANDOFF/decisions/BACKLOG — open fresh books, task numbers `F-xx`. Fix the README title
+  at fork time (Gemini's own README still carries the ChatGPT title — bug G-03; don't repeat it).
+- Register the package per `PLATFORM.md` §6 (STATUS.md, claims row, file map, dashboard regen).
+- Ask Đức to load it unpacked (developer mode) and open his Flow project tab.
 - Capture 4 dom_probe snapshots: idle · during generation · after a finished video · the
-  prompt/reference input surface. Store them under the new package's `evidence/` folder.
+  prompt/reference input surface. Also record on-page credits info if visible. Store all under
+  the new package's `evidence/` folder.
 - No selector may be written into the adapter without a snapshot to cite. [DÒ] conclusions
   must be re-verified by reading code — this repo has been burned five times.
 
-Hard rules you must not relax: no new permissions beyond the one Đức approved; no live pilot
+Hard rules you must not relax: no permissions beyond the approved pattern; no live pilot
 without Đức's explicit go; trial cap ≤2 jobs while in dev mode (video costs real credits);
 evidence folders are append-only; push only via `node scripts/safe-push.mjs --as claude-flow-1`
 after `node scripts/session-check.mjs --as claude-flow-1` is fully green.
@@ -117,3 +132,6 @@ completion signal for a finished video actually is, and the single next step.
 ## Log
 
 - 2026-08-27 · claude-flow-plan · Viết kế hoạch này. Chưa code gì. Chờ Đức chốt mục 6.
+- 2026-08-27 · claude-flow-plan · Đức chốt cả 3 điều mục 6 (URL project thật, duyệt quyền
+  `https://labs.google/fx/tools/flow/*`, tên `duc-auto-gg-flow-video`). Prompt mục 7 đã điền
+  giá trị chốt — dán được ngay. Việc tiếp theo: mở phiên `claude-flow-1` chạy FLOW-01.
