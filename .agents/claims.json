@@ -24,11 +24,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-flow-1",
-      "ai": "claude",
-      "claimed_at": "2026-08-27",
-      "task": "Khai extension #003 (gg-flow-video) vao registry PLATFORM.md + so tay AGENTS.md + sinh lai DASHBOARD. Cung phien voi package gg-flow-video.",
-      "released_at": null
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "Extension #003 (gg-flow-video) DA khai registry + DASHBOARD, DA PUSH (1a91373). Root ranh cho phien opus-platform-3 regen DASHBOARD sau commit G-01.",
+      "released_at": "2026-08-27"
     }
   }
 }
