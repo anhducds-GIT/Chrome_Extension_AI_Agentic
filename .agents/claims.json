@@ -17,10 +17,10 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "V0.2-D: viet brief/audit cho Gate #7 concurrency semantics (GPT yeu cau 27/08). CHUA implement gate.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "Audit Gate #7 DA XONG va DA PUSH: drafts/GATE7-CONCURRENCY-AUDIT.md. CHUA implement gate. Cho Duc chot 3 cau o muc 6: (1) tin hieu dirty ra khoi file hay giu; (2) cot claims giu hay bo; (3) co duyet nang EXPECTED_CHECKS 6->7 khong.",
       "released_at": "2026-08-27"
     }
   }
