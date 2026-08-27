@@ -17,10 +17,10 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "V0.2-C (GPT chot 27/08): scripts/feature-parity.mjs — may hoa CHI muc 1 (Bridge) + muc 3 (module/hash), marker block, --check. TUYET DOI khong suy dien hanh vi o muc 2.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "V0.2-C DA XONG va DA PUSH: scripts/feature-parity.mjs (marker block cho muc 1+3+no method o muc 4, --check, 14 ca test). Muc 2 hanh vi van cua nguoi. Con lai o V0.2 (PLATFORM.md muc 7): BACKLOG cho Gemini, STATUS cho Observer, nang cong 6->7 (governance, audit rieng), version_source hoa/thuong tren Windows (LOW).",
       "released_at": "2026-08-27"
     }
   }
