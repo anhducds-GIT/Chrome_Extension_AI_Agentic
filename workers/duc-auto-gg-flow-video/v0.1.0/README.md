@@ -41,7 +41,7 @@ Nguyên tắc không đổi so với hai nhánh trước:
 - Muốn đổi token: chạy lại script cài với tham số `RotateToken` (xem
   `scripts/Install-DucAutoChatGPTLoopbackBridgeV1.ps1`). Gỡ host: script
   `Uninstall-DucAutoChatGPTLoopbackBridgeV1` trong cùng thư mục scripts.
-- Host của nhánh này nằm ở `C:\WORKING ZONE\Duc-Auto-GG-Flow-Video-Bridge\`
+- Host của nhánh này nằm ở `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video\`
   (ngoài repo, vì chứa pairing token). Khởi động: đúp chuột
   `START-BRIDGE_GG_Flow_Video.cmd`.
 

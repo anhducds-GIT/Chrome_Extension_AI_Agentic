@@ -8,14 +8,14 @@
 
 - Extension Chrome MV3 tự động hoá tạo ảnh trên gemini.google.com. Side panel là executor duy nhất.
 - Bạn (AI) nói chuyện với extension qua **Agent Bridge**: host Node tại
-  `C:\WORKING ZONE\Duc-Auto-Gemini-Bridge\` (cổng 32148, loopback, token trong
+  `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini\` (cổng 32148, loopback, token trong
   `duc-auto-gemini-bridge-pairing-v1.json` cùng thư mục — KHÔNG commit file này).
 - Workflow chuẩn (owner đã chốt): Đức đưa đường dẫn thư mục trong chat → AI đọc workbook/ảnh →
   AI bơm mọi thứ qua Bridge → Đức bấm Run (batch sản xuất) hoặc AI tự `run.trial` (dev, chuỗi liên tục ≤30 job).
 
 ## 2. Lệnh Bridge bạn được dùng
 
-CLI có sẵn: `cd "C:\WORKING ZONE\Duc-Auto-Gemini-Bridge" && node bridge-cli.mjs <lệnh> --pairing duc-auto-gemini-bridge-pairing-v1.json`
+CLI có sẵn: `cd "C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini" && node bridge-cli.mjs <lệnh> --pairing duc-auto-gemini-bridge-pairing-v1.json`
 
 | Lệnh CLI | Method | Dùng để |
 |---|---|---|

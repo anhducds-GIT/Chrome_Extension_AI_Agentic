@@ -8,7 +8,7 @@
 
 | Món | Gemini | Nhánh này |
 |---|---|---|
-| Host Bridge | `C:\WORKING ZONE\Duc-Auto-Gemini-Bridge\`, cổng 32148 | `C:\WORKING ZONE\Duc-Auto-GG-Flow-Video-Bridge\`, cổng **32149** |
+| Host Bridge | `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini\`, cổng 32148 | `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video\`, cổng **32149** |
 | Pairing | `duc-auto-gemini-bridge-pairing-v1.json` | `duc-auto-gg-flow-video-bridge-pairing-v1.json` (cùng thư mục host, KHÔNG commit) |
 | Khởi động host | `START-BRIDGE_Gemini_Extension.cmd` | `START-BRIDGE_GG_Flow_Video.cmd` |
 | Method dùng được | đầy đủ | **KHOÁ BOOTSTRAP**: chỉ `session.hello`, `system.ping`, `system.capabilities`, `diagnostics.dom_probe`, `chat.reload`, `diagnostics.evidence_submit` (gõ 1 prompt + bấm Create, trần 3 lượt/trang — TỐN 15 CREDIT MỖI LƯỢT) — method khác bị từ chối kèm `details.reason: "bootstrap_locked"` |
@@ -18,7 +18,7 @@
 ## Gọi Bridge
 
 ```bash
-cd "C:\WORKING ZONE\Duc-Auto-GG-Flow-Video-Bridge" && node bridge-cli.mjs ping --pairing duc-auto-gg-flow-video-bridge-pairing-v1.json
+cd "C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video" && node bridge-cli.mjs ping --pairing duc-auto-gg-flow-video-bridge-pairing-v1.json
 ```
 
 Raw RPC (dom_probe):

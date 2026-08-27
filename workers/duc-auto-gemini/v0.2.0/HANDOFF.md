@@ -330,7 +330,7 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - **Gemini có sẵn đúng cái bẫy phiên ChatGPT đã sập:** `state.stopRequested = false` nằm SAU `await authoritativeValidate`. Vì `run.stop` cố ý đi vòng qua khoá, nó gọi được đúng vào khoảng await đó → cờ dừng bị xoá âm thầm, run vẫn gửi prompt, người gọi thì đã được báo "đã dừng". Đã chuyển lên khoảnh khắc đồng bộ lúc run bắt đầu.
   - Ghim: `tests/bridge-run-stop-chat-reload-smoke.mjs`, 16 phép kiểm, ba phép quan trọng nhất là về **THỨ TỰ** (xoá cờ trước await; giành khoá trước await). **Phá thử 4 chiều, đỏ đúng cả 4**: gỡ cột dừng khỏi chốt · làm yếu chốt `run()` · cho `run.stop` đọc `currentItem` vô điều kiện · bỏ giành khoá của `chat.reload`. Lần phá đầu tiên của tôi SAI (chỉ xoá chú thích chứ không xoá bản vá) và test xanh đúng — làm lại cho đúng thì đỏ.
   - Test cũng bắt được lỗi của chính nó: bản đầu khớp phải chữ "await" trong một dòng CHÚ THÍCH và báo đỏ oan. Nay `body()` lọc bỏ dòng chú thích trước khi soi.
-  - CLI thêm hai lệnh `run-stop` / `chat-reload`; đã đồng bộ sang host đang chạy ở `C:\WORKING ZONE\Duc-Auto-Gemini-Bridge\`.
+  - CLI thêm hai lệnh `run-stop` / `chat-reload`; đã đồng bộ sang host đang chạy ở `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini\`.
   - Suite **79/79** (thêm 1 file test). `npm test` xanh.
   - **CHƯA KIỂM CHỨNG LIVE.** Gọi thử `run-stop` bây giờ trả `METHOD_NOT_FOUND` — đúng, vì extension đang chạy code cũ. Cần Đức bấm ⟳ reload extension VÀ F5 tab Gemini, rồi tôi thử thật.
 - **Next:** Đức reload extension (⟳) + F5 tab Gemini → tôi kiểm chứng live cặp lệnh (đợi `capabilities` thấy method mới, thử `chat.reload` lúc rảnh, và thử `chat.reload` bị từ chối khi đang chạy).
@@ -421,3 +421,9 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   Stop đúng khoảng PRE_SUBMIT, đọc sổ cái chứng minh hết chuỗi
   `STOP_REQUESTED_BEFORE_SUBMIT → PROMPT_SUBMITTED`, ghi bằng chứng `evidence-stop-*/`,
   cập nhật `last_verified*` trong `STATUS.md`, rồi mới đóng G-01 trong `BACKLOG.md`.
+
+- 2026-08-27 · Claude (`opus-platform-2`) · **Bridge host đã dời chỗ — đường dẫn trong package này đã trỏ lại.** Đức yêu cầu quy tập mọi bridge về một nơi, và **duyệt cho tôi sửa package này dù đang có chủ khác** (`AGENTS.md` mục 1 — giành package phải hỏi Đức; đã hỏi, đã được).
+  - Chỗ mới: `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini\` (cũ: `C:\WORKING ZONE\Duc-Auto-Gemini-Bridge\`). Cổng 32148 không đổi, file pairing không đổi tên.
+  - Sửa **5 dòng, thuần đường dẫn**, không đụng logic: `scripts/bridge-rpc.mjs:21` (`DEFAULT_PAIRING`) · `AI-OPERATOR-GUIDE.md` ×2 · `NEXT-SESSION-BRIEF.md` · một dòng Log cũ.
+  - **Thứ suýt gãy âm thầm:** shortcut trong Startup của Windows hard-code đường dẫn cũ — dời xong mà không sửa thì bridge không tự lên và chỉ lộ ra lúc cần dùng. Đã trỏ lại. File `.cmd` thì không cần sửa vì dùng `%~dp0`.
+  - 16/16 file khớp hash trước–sau khi dời. Suite 81/81, `npm test` xanh toàn bộ.

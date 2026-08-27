@@ -31,7 +31,7 @@
   Kiểm chứng độc lập thêm: content.js/sidepanel.js hash-identical với Gemini HEAD (không
   dính WIP G-01 của phiên khác). AGY vẫn hỏng headless (hook cá nhân chặn mọi tool call —
   probe không-tool xanh là bẫy), auditor là Codex. Host Bridge riêng đã dựng và đang nghe
-  cổng 32149 (`C:\WORKING ZONE\Duc-Auto-GG-Flow-Video-Bridge\`). Còn mở: Đức load unpacked
+  cổng 32149 (`C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video\`). Còn mở: Đức load unpacked
   + mở tab Flow + dán pairing → F-01 chụp bằng chứng DOM.
 - 2026-08-27 · `claude-flow-1` · Đức đã nối Bridge (ping OK, extension paired) + yêu cầu 2
   đổi: tên hiển thị → "Duc Auto GG Flow", icon → F nền teal. Đã làm cả hai + thêm
@@ -68,3 +68,8 @@
   tiêu lượt) + ưu tiên TEXTAREA với native React setter. Đức chốt thêm: trial thoải mái,
   nhiều tài khoản free — trần 3/lượt-nạp-trang giữ nguyên (đổi account/F5 = lượt mới).
   Suite 81/81. Còn mở: Đức ⟳ → dry_run xác định đúng ô prompt → submit thật.
+
+- 2026-08-27 · Claude (`opus-platform-2`) · **Bridge host đã dời chỗ — đường dẫn tài liệu trong package này đã trỏ lại.** Đức yêu cầu quy tập mọi bridge về một nơi, và duyệt cho tôi sửa dù package đang do `claude-flow-1` giữ (`AGENTS.md` mục 1 — đã hỏi Đức).
+  - Chỗ mới: `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video\` (cũ: `C:\WORKING ZONE\Duc-Auto-GG-Flow-Video-Bridge\`). Cổng 32149 không đổi.
+  - Sửa **4 dòng, thuần đường dẫn**: `AI-OPERATOR-GUIDE.md` ×2 · `HANDOFF.md` · `README.md`. **Không đụng** `scripts/bridge-rpc.mjs` — `claude-flow-1` đã tự sửa dòng đó trong commit `0fb28ed`.
+  - Không commit hộ việc đang làm dở của `claude-flow-1`: chỉ stage đúng file của tôi.

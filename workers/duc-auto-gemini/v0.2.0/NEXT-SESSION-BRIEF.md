@@ -29,7 +29,7 @@ Ghi tên phiên của bạn vào `.agents/claims.json` trước khi sửa gì.
   nền sâu hơn, đã sửa; lần chạy cuối 2/2 với ảnh tham chiếu bám đúng phong cách ảnh mẫu.
 - Công cụ mới: `scripts/bridge-rpc.mjs` (gọi RPC thô — `jobs.add`, `references.add`,
   `diagnostics.dom_probe`… những method `bridge-cli.mjs` không có subcommand).
-- Bridge host: `C:\WORKING ZONE\Duc-Auto-Gemini-Bridge\` (cổng 32148; chết thì bảo Đức đúp
+- Bridge host: `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini\` (cổng 32148; chết thì bảo Đức đúp
   `START-BRIDGE_Gemini_Extension.cmd`). Dev Mode ON lúc bàn giao.
 
 ## 2. Bài học lớn nhất của phiên này — đọc kỹ, nó sẽ tiết kiệm cho bạn nhiều giờ

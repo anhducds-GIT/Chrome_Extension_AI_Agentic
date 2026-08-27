@@ -18,7 +18,7 @@
 import fs from "node:fs";
 import crypto from "node:crypto";
 
-const DEFAULT_PAIRING = "C:/WORKING ZONE/Duc-Auto-Gemini-Bridge/duc-auto-gemini-bridge-pairing-v1.json";
+const DEFAULT_PAIRING = "C:/WORKING ZONE/Chrome Extension Bridge/duc-auto-gemini/duc-auto-gemini-bridge-pairing-v1.json";
 
 const argv = process.argv.slice(2);
 const method = argv.shift();
