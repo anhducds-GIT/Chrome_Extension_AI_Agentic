@@ -24,11 +24,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "Extension #003 (gg-flow-video) DA khai registry + DASHBOARD, DA PUSH (1a91373). Root ranh cho phien opus-platform-3 regen DASHBOARD sau commit G-01.",
-      "released_at": "2026-08-27"
+      "owner": "opus-platform-3",
+      "ai": "claude",
+      "claimed_at": "2026-08-27",
+      "task": "Regen DASHBOARD.md sau khi STATUS Gemini doi theo G-01 (them 2 file test, current_focus moi). Chi regen artifact may sinh, khong sua chu nguoi viet o goc. Xong thi tra.",
+      "released_at": null
     }
   }
 }

@@ -124,10 +124,10 @@ GPT 32 file `.js` · Gemini 33.
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 5695 | 4987 | 708 |
+| `sidepanel.js` | 5695 | 5012 | 683 |
 | `bridge-core.js` | 943 | 799 | 144 |
+| `content.js` | 982 | 1079 | 97 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
-| `content.js` | 982 | 1053 | 71 |
 | `runner-core.js` | 259 | 203 | 56 |
 | `output-profile-core.js` | 96 | 45 | 51 |
 | `bridge-transport-loopback.js` | 287 | 241 | 46 |
