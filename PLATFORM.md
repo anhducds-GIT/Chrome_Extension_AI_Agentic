@@ -52,6 +52,7 @@ Bảng dưới chỉ để biết *tồn tại những gì*.
 |---|---|---|---|
 | 001 | **Duc Auto ChatGPT** — chạy kế hoạch XLSX tạo ảnh trên ChatGPT | `workers/duc-auto-chatgpt/v0.1.0/` | ✅ [STATUS](workers/duc-auto-chatgpt/v0.1.0/STATUS.md) |
 | 002 | **Duc Auto Gemini (Platform)** — cùng bài toán, trên Gemini | `workers/duc-auto-gemini/v0.2.0/` | ✅ [STATUS](workers/duc-auto-gemini/v0.2.0/STATUS.md) |
+| 003 | **Duc Auto GG Flow Video** — kế hoạch XLSX tạo VIDEO trên Google Flow (fork từ 002, đang dựng) | `workers/duc-auto-gg-flow-video/v0.1.0/` | ✅ [STATUS](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md) |
 | — | Duc Auto Gemini bản cũ | `workers/duc-auto-gemini/v0.1.0/` | ❌ chưa — bản cũ, giữ để tra cứu |
 | — | **Extension Observer V0** — quan sát debug target, chỉ đọc | gốc repo | ❌ chưa — **việc mở** |
 

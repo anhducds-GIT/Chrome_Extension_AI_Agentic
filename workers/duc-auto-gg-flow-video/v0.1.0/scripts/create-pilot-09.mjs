@@ -1,0 +1,76 @@
+/* Builds the Pilot-09 smoke-test workbook.
+
+   Pilot-09 is a plain 4-job smoke test: no reference images, simple
+   single-subject product-photo prompts, so the whole pipeline (queue,
+   run, output, checkpoint, audit) can be exercised quickly end to end.
+
+   Run: node workers/duc-auto-chatgpt/v0.1.0/scripts/create-pilot-09.mjs
+*/
+import fs from "node:fs";
+
+const enc = new TextEncoder();
+const crc = (bytes) => { let c = -1; for (const b of bytes) { c ^= b; for (let i = 0; i < 8; i++) c = (c >>> 1) ^ (c & 1 ? 0xedb88320 : 0); } return (c ^ -1) >>> 0; };
+const u16 = (v, o, n) => v.setUint16(o, n, true), u32 = (v, o, n) => v.setUint32(o, n, true);
+const zip = (entries) => {
+  let off = 0; const parts = [], directory = [];
+  for (const [name, text] of entries) {
+    const n = enc.encode(name), d = enc.encode(text), h = new Uint8Array(30 + n.length + d.length), v = new DataView(h.buffer);
+    u32(v, 0, 0x04034b50); u16(v, 4, 20); u16(v, 8, 0); u16(v, 10, 0); u32(v, 14, crc(d)); u32(v, 18, d.length); u32(v, 22, d.length); u16(v, 26, n.length);
+    h.set(n, 30); h.set(d, 30 + n.length); parts.push(h);
+    const c = new Uint8Array(46 + n.length), cv = new DataView(c.buffer);
+    u32(cv, 0, 0x02014b50); u16(cv, 4, 20); u16(cv, 6, 20); u32(cv, 16, crc(d)); u32(cv, 20, d.length); u32(cv, 24, d.length); u16(cv, 28, n.length); u32(cv, 42, off);
+    c.set(n, 46); directory.push(c); off += h.length;
+  }
+  const ds = directory.reduce((n, p) => n + p.length, 0), end = new Uint8Array(22), ev = new DataView(end.buffer);
+  u32(ev, 0, 0x06054b50); u16(ev, 8, entries.length); u16(ev, 10, entries.length); u32(ev, 12, ds); u32(ev, 16, off);
+  return Buffer.concat([...parts, ...directory, end]);
+};
+const esc = (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const sheet = (rows) => `<?xml version="1.0"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${rows.map((row, r) => `<row r="${r + 1}">${row.map((x, c) => `<c r="${String.fromCharCode(65 + c)}${r + 1}" t="inlineStr"><is><t>${esc(x)}</t></is></c>`).join("")}</row>`).join("")}</sheetData></worksheet>`;
+
+const config = [
+  ["key", "value"],
+  ["timeout_sec", "300"],
+  ["max_retries", "2"],
+  ["delay_min_sec", "3"],
+  ["delay_max_sec", "3"],
+  ["safety_cooldown_sec", "2"],
+  ["max_input_images", "0"],
+  ["continue_on_error", "true"],
+  ["rerun_done", "false"],
+  ["output_destination_mode", "profile"],
+  ["output_profile_id", "pilot-09"],
+  ["output_folder_hint", "C:\\WORKING ZONE\\Chrome_Extension_AI_Agentic\\workers\\duc-auto-chatgpt\\v0.1.0\\Pilot-09_Test-Codex-Bridge-to-Extension"],
+  ["image_filename_pattern", "{job_id}"],
+  ["collision_policy", "overwrite"],
+  ["save_images", "true"],
+  ["save_result_xlsx", "true"],
+  ["save_audit_jsonl", "true"],
+  ["separate_result_destination", "false"],
+  ["result_filename_pattern", "Duc-Auto-ChatGPT-Pilot-09__results__v{version}.xlsx"],
+  ["audit_filename", "Duc-Auto-ChatGPT-Pilot-09__audit.jsonl"]
+];
+
+const jobs = [
+  ["id", "prompt"],
+  ["P09-01", "A single yellow rubber duck floating on a plain white background, sharp studio lighting."],
+  ["P09-02", "One small ceramic espresso cup on a plain wooden table, top-down view, soft natural light."],
+  ["P09-03", "A single red apple on a plain grey background, simple product photography."],
+  ["P09-04", "One blue glass marble on a plain white surface, macro lens, soft shadow."]
+];
+
+const entries = [
+  ["[Content_Types].xml", `<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`],
+  ["_rels/.rels", `<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+  ["xl/workbook.xml", `<?xml version="1.0"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="jobs" sheetId="1" r:id="rId1"/><sheet name="config" sheetId="2" r:id="rId2"/></sheets></workbook>`],
+  ["xl/_rels/workbook.xml.rels", `<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/></Relationships>`],
+  ["xl/worksheets/sheet1.xml", sheet(jobs)],
+  ["xl/worksheets/sheet2.xml", sheet(config)]
+];
+
+const folder = new URL("../Pilot-09_Test-Codex-Bridge-to-Extension/", import.meta.url);
+fs.mkdirSync(folder, { recursive: true });
+const target = new URL("Duc-Auto-ChatGPT-Pilot-09.xlsx", folder);
+if (fs.existsSync(target)) throw new Error("Pilot-09 workbook already exists; delete it deliberately before regenerating.");
+fs.writeFileSync(target, zip(entries));
+console.log(`Wrote ${target.pathname.replace(/^\//, "")}`);

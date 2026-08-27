@@ -1,0 +1,166 @@
+importScripts("bridge-core.js", "bridge-pairing-core.js", "bridge-router-core.js", "bridge-transport-loopback.js");
+
+// Listener registration happens synchronously inside create(); storage lookup
+// and network connection are deliberately deferred behind those listeners.
+const bridgeLoopbackTransport = globalThis.DacBridgeLoopbackTransport.create();
+
+chrome.runtime.onInstalled.addListener(async () => {
+  try {
+    await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  } catch (error) {
+    console.warn("Unable to set side panel behavior", error);
+  }
+});
+
+chrome.runtime.onStartup.addListener(async () => {
+  try {
+    await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  } catch (error) {
+    console.warn("Unable to set side panel behavior", error);
+  }
+});
+
+const DOWNLOAD_COMPLETE_TIMEOUT_MS = 120000;
+const EXPECTED_DOWNLOAD_NAME_TTL_MS = 120000;
+
+// Chrome on this machine ignores the `filename` suggestion for blob: URL
+// downloads (URL-derived GUID names, flat in the download directory — hit
+// live 2026-08-25 on BOTH the GPT and Gemini extensions; ported from the
+// duc-auto-chatgpt fix b587246). A filename determiner has final say, so
+// this extension names its OWN downloads here and defers on everything else.
+// Registered synchronously (MV3 rule).
+const expectedDownloadNames = new Map();
+
+function rememberExpectedDownloadName(url, filename, conflictAction) {
+  const now = Date.now();
+  for (const [key, value] of expectedDownloadNames) if (value.expires < now) expectedDownloadNames.delete(key);
+  if (typeof url !== "string" || !url || typeof filename !== "string" || !filename) return false;
+  const action = ["uniquify", "overwrite", "prompt"].includes(conflictAction) ? conflictAction : "uniquify";
+  expectedDownloadNames.set(url, { filename, conflictAction: action, expires: now + EXPECTED_DOWNLOAD_NAME_TTL_MS });
+  return true;
+}
+
+chrome.downloads.onDeterminingFilename?.addListener((item, suggest) => {
+  if (item.byExtensionId !== chrome.runtime.id) { suggest(); return; }
+  const expected = expectedDownloadNames.get(item.url);
+  expectedDownloadNames.delete(item.url);
+  if (!expected || expected.expires < Date.now()) { suggest(); return; }
+  suggest({ filename: expected.filename, conflictAction: expected.conflictAction });
+});
+
+// Private messages used only by this extension's side panel.
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === "DAC_EXPECT_DOWNLOAD_NAME") {
+    sendResponse({ ok: rememberExpectedDownloadName(message.url, message.filename, message.conflictAction) });
+    return false;
+  }
+  if (message?.type !== "DAC_DOWNLOAD_IMAGE") return false;
+  downloadGeneratedImage(message)
+    .then(sendResponse)
+    .catch((error) => sendResponse(failure("DOWNLOAD_FAILED", error?.message || String(error))));
+  return true;
+});
+
+async function downloadGeneratedImage(message) {
+  const url = typeof message.url === "string" ? message.url : "";
+  if (!/^https:\/\//i.test(url) && !/^data:image\//i.test(url)) {
+    // Kèm phần ĐẦU của URL (không kèm phần dữ liệu) — bí ẩn "URL không dùng
+    // được" ngày 26/08 mất 3 lần thử mới lần ra, chỉ vì thông điệp không nói
+    // nó đã nhận được cái gì. Cắt 40 ký tự là đủ thấy scheme và MIME.
+    const head = url ? url.slice(0, 40) : "(rỗng)";
+    return failure("INVALID_IMAGE_URL", `Generated image URL was not usable (nhận được: ${head}).`);
+  }
+  const safeId = String(message.jobId || "image").replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 100) || "image";
+  const extension = imageExtension(url);
+  const folder = safeDownloadFolder(message.outputFolder);
+  const requestedFilename = safeRequestedFilename(message.filename, folder, `${safeId}.${extension}`);
+  const collisionPolicy = ["overwrite", "uniquify", "fail"].includes(message.collisionPolicy) ? message.collisionPolicy : "uniquify";
+  if (collisionPolicy === "fail") {
+    const existing = await chrome.downloads.search({ filename: requestedFilename });
+    const suffix = requestedFilename.replace(/\//g, "\\").toLowerCase();
+    if (existing.some((item) => String(item.filename || "").toLowerCase().endsWith(suffix) && item.state === "complete")) return failure("COLLISION", `Output already exists: ${requestedFilename}`);
+  }
+  const conflictAction = collisionPolicy === "fail" ? "uniquify" : collisionPolicy;
+  rememberExpectedDownloadName(url, requestedFilename, conflictAction);
+  const downloadId = await chrome.downloads.download({ url, filename: requestedFilename, conflictAction, saveAs: false });
+  const item = await waitForCompletedDownload(downloadId);
+  // A "complete" DownloadItem is Chrome's claim, not proof the bytes are on
+  // disk. The directory writer reopens and measures its file; give the
+  // Downloads path the closest equivalent before reporting a saved image.
+  // An absent byte count means Chrome did not report one; only a byte count
+  // that is present and zero is proof of an empty file.  Reporting an unknown
+  // count as a failure would invent a failure mode rather than remove one.
+  const reportedBytes = [item.fileSize, item.bytesReceived].map(Number).filter((value) => Number.isFinite(value));
+  const persistedBytes = Math.max(0, ...reportedBytes);
+  // The message keeps the code prefix so sidepanel.js persistenceFailureType()
+  // classifies this identically to a directory-write verification failure.
+  if (item.exists === false) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete but the file no longer exists.`);
+  if (reportedBytes.length && persistedBytes <= 0) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete with zero bytes received.`);
+  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename, collision_policy: collisionPolicy, persisted_bytes: persistedBytes, write_outcome: item.filename === requestedFilename ? "written" : collisionPolicy === "overwrite" ? "overwritten" : "uniquified" };
+}
+
+function safeRequestedFilename(value, folder, fallback) {
+  const requested = typeof value === "string" ? value.trim().replace(/\\/g, "/") : "";
+  if (!requested || requested.startsWith("/") || requested.split("/").some((part) => !part || part === "." || part === "..")) return `${folder}/${fallback}`;
+  return requested;
+}
+
+async function waitForCompletedDownload(downloadId, timeoutMs = DOWNLOAD_COMPLETE_TIMEOUT_MS) {
+  const lookup = async () => {
+    const items = await chrome.downloads.search({ id: downloadId });
+    return items?.[0] || null;
+  };
+  const current = await lookup();
+  if (current?.state === "complete" && current.filename) return current;
+  if (current?.state === "interrupted") throw new Error(`Generated image download failed: ${current.error || "interrupted"}.`);
+  if (!chrome.downloads.onChanged?.addListener) throw new Error("Could not verify the final generated-image filename.");
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      chrome.downloads.onChanged.removeListener?.(listener);
+      callback(value);
+    };
+    const listener = async (delta) => {
+      if (delta?.id !== downloadId || (!delta.state && !delta.filename)) return;
+      try {
+        const item = await lookup();
+        if (item?.state === "complete" && item.filename) finish(resolve, item);
+        else if (item?.state === "interrupted") finish(reject, new Error(`Generated image download failed: ${item.error || "interrupted"}.`));
+      } catch (error) { finish(reject, error); }
+    };
+    const timer = setTimeout(() => finish(reject, new Error("Timed out waiting for the final generated-image filename.")), timeoutMs);
+    chrome.downloads.onChanged.addListener(listener);
+    lookup().then((item) => {
+      if (item?.state === "complete" && item.filename) finish(resolve, item);
+      else if (item?.state === "interrupted") finish(reject, new Error(`Generated image download failed: ${item.error || "interrupted"}.`));
+    }).catch((error) => finish(reject, error));
+  });
+}
+
+function imageExtension(url) {
+  const dataMime = /^data:image\/(avif|gif|jpe?g|png|webp)/i.exec(url)?.[1];
+  if (dataMime) return dataMime.toLowerCase().replace("jpeg", "jpg");
+  try {
+    const parsed = new URL(url);
+    const fromPath = /\.(avif|gif|jpe?g|png|webp)$/i.exec(parsed.pathname)?.[1];
+    const fromQuery = parsed.searchParams.get("format") || parsed.searchParams.get("fm");
+    const candidate = fromPath || (/^(avif|gif|jpe?g|png|webp)$/i.test(fromQuery || "") ? fromQuery : null);
+    if (candidate) return candidate.toLowerCase().replace("jpeg", "jpg");
+  } catch (_) { /* URL was already validated; retain the safe fallback. */ }
+  return "png";
+}
+
+function safeDownloadFolder(value) {
+  const folder = String(value || "Duc Auto Gemini").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  if (!folder || folder.split("/").some((part) => !part || part === "." || part === "..")) throw new Error("Image output folder must be a safe relative Downloads folder.");
+  const safeFolder = folder.replace(/[^A-Za-z0-9._ -/]/g, "_").slice(0, 160);
+  if (!safeFolder) throw new Error("Image output folder must not be empty.");
+  return safeFolder;
+}
+
+function failure(code, error, extra) {
+  return { ok: false, code, error, ...(extra || {}) };
+}

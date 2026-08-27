@@ -1,0 +1,102 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import vm from "node:vm";
+
+const root = new URL("../", import.meta.url);
+const context = vm.createContext({ console });
+for (const file of ["runner-core.js", "resume-core.js", "recreate-core.js"]) vm.runInContext(fs.readFileSync(new URL(file, root), "utf8"), context);
+const runner = context.DacRunnerCore;
+const resume = context.DacResumeCore;
+const recreate = context.DacRecreateCore;
+
+const ambiguous = { id: "P05-B", prompt: "B", status: "STOPPED", attempt_phase: "SUBMITTED", attempt_id: "attempt-old-b", submitted_at: "2026-08-21T03:15:31.450Z", detection_diagnostics: "{\"chosen\":\"old\"}", failure_type: "USER_STOP" };
+const prior = { id: "P05-A", prompt: "A", status: "SUCCESS", persistence_verified: "true", result_file: "P05-A.png", requested_file: "P05-A.png" };
+const pending = [{ id: "P05-C", prompt: "C", status: "PENDING" }, { id: "P05-D", prompt: "D", status: "PENDING" }, { id: "P05-E", prompt: "E", status: "PENDING" }];
+
+assert.equal(resume.plan({ fileName: "pilot__results__v001.xlsx", config: { run_id: "pilot-05" }, jobs: [prior, ambiguous, ...pending] }).ready, false, "ambiguous submission blocks normal Continue");
+const approval = recreate.approval({ job: ambiguous, recoveryState: "AMBIGUOUS_SUBMITTED", now: "2026-08-21T04:00:00.000Z" });
+assert.equal(approval.ok, true, "explicit confirmed recreate creates approval fields");
+assert.equal(approval.fields.attempt_id, "", "recreate always starts a new attempt ID");
+assert.equal(approval.fields.recreate_origin_attempt_id, "attempt-old-b", "old ambiguous attempt is preserved");
+assert.match(approval.fields.recreate_history_json, /attempt-old-b/, "old evidence remains in provenance history");
+assert.equal(Object.keys(recreate.cancelled().fields).length, 0, "Cancel has no mutation payload");
+assert.equal(recreate.approval({ job: ambiguous, recoveryState: "SAFE_PENDING" }).ok, false, "non-ambiguous jobs cannot use recreate");
+
+const approvedJob = { ...ambiguous, ...approval.fields };
+const approvedPlan = resume.plan({ fileName: "pilot__results__v002.xlsx", config: { run_id: "pilot-05" }, jobs: [prior, approvedJob, ...pending] });
+assert.equal(approvedPlan.ready, false, "approval alone does not unlock Continue");
+assert.equal(approvedPlan.findings.some((finding) => finding.code === "RESUME_RECREATE_INCOMPLETE"), true, "incomplete recreate remains fail-closed");
+const prepared = runner.prepare({ config: {}, jobs: [prior, approvedJob, ...pending] }, []);
+resume.applyToQueue(prepared.queue, approvedPlan.jobs);
+const recreateItem = prepared.queue.find((item) => item.job.id === "P05-B");
+assert.equal(recreateItem.operator_recreate, true, "approved recreation is a distinct deliberate queue item");
+assert.equal(runner.selectQueue(prepared.queue, "recreate").map((item) => item.job.id).join(","), "P05-B", "only the approved job enters recreate mode");
+assert.equal(runner.selectQueue(prepared.queue, "all").some((item) => item.job.id === "P05-B"), true, "approval is explicit; no hidden replacement job exists");
+
+const failedRecreate = { ...approvedJob, status: "INTERRUPTED", attempt_phase: "SUBMITTED", attempt_id: "attempt-new-b", submitted_at: "2026-08-21T04:05:00.000Z", detection_diagnostics: "{\"chosen\":\"recreate\"}", failure_type: "TIMEOUT_POST_SUBMIT", recreate_attempt_id: "attempt-new-b", recreate_status: "FAILED" };
+const failedPlan = resume.plan({ fileName: "pilot__results__v003.xlsx", config: { run_id: "pilot-05" }, jobs: [prior, failedRecreate, ...pending] });
+assert.equal(failedPlan.ready, false, "failed post-submit recreate remains fail-closed");
+assert.equal(recreate.requiresNewApproval(failedRecreate), true, "failed recreate exposes a new explicit recovery path");
+const failedPrepared = runner.prepare({ config: {}, jobs: [prior, failedRecreate, ...pending] }, []);
+resume.applyToQueue(failedPrepared.queue, failedPlan.jobs);
+assert.equal(runner.selectQueue(failedPrepared.queue, "recreate").length, 0, "a failed recreate cannot silently resubmit");
+const reapproval = recreate.approval({ job: failedRecreate, recoveryState: "AMBIGUOUS_SUBMITTED", now: "2026-08-21T04:10:00.000Z" });
+assert.equal(reapproval.ok, true, "operator can explicitly approve another recreate after failure");
+assert.equal(reapproval.fields.recreate_approval_count, "2", "each recreate requires an independently recorded approval");
+const history = JSON.parse(reapproval.fields.recreate_history_json);
+assert.deepEqual(history.map((entry) => entry.attempt_id), ["attempt-old-b", "attempt-new-b"], "original and failed recreate forensic evidence are both preserved");
+assert.equal(reapproval.fields.recreate_origin_attempt_id, "attempt-old-b", "original submitted boundary remains the root provenance");
+const reapprovedJob = { ...failedRecreate, ...reapproval.fields };
+const reapprovedPrepared = runner.prepare({ config: {}, jobs: [prior, reapprovedJob, ...pending] }, []);
+assert.deepEqual(runner.selectQueue(reapprovedPrepared.queue, "recreate").map((item) => item.job.id), ["P05-B"], "only a newly confirmed recreate returns to the deliberate queue");
+
+const preSubmitFailure = { ...approvedJob, status: "INTERRUPTED", attempt_phase: "PRE_SUBMIT", attempt_id: "", submitted_at: "", failure_type: "RECEIVER_LOST", last_error: "receiver unavailable before prompt submission", recreate_attempt_id: "", recreate_status: "FAILED" };
+const preSubmitPlan = resume.plan({ fileName: "pilot__results__v003.xlsx", config: { run_id: "pilot-05" }, jobs: [prior, preSubmitFailure, ...pending] });
+assert.equal(preSubmitPlan.ready, false, "pre-submit recreate failure remains fail-closed");
+assert.equal(recreate.hasSubmittedBoundary(preSubmitFailure), false, "pre-submit failure has no reconciliation boundary");
+assert.equal(recreate.requiresNewApproval(preSubmitFailure), true, "pre-submit failure exposes explicit recreate recovery");
+const preSubmitPrepared = runner.prepare({ config: {}, jobs: [prior, preSubmitFailure, ...pending] }, []);
+resume.applyToQueue(preSubmitPrepared.queue, preSubmitPlan.jobs);
+assert.equal(runner.selectQueue(preSubmitPrepared.queue, "recreate").length, 0, "pre-submit failure cannot silently retry or recreate");
+const preSubmitReapproval = recreate.approval({ job: preSubmitFailure, recoveryState: "AMBIGUOUS_SUBMITTED", now: "2026-08-21T04:11:00.000Z" });
+assert.equal(preSubmitReapproval.ok, true, "a fresh operator confirmation can recover a pre-submit recreate failure");
+assert.equal(preSubmitReapproval.fields.recreate_approval_count, "2", "pre-submit recovery records a new approval");
+assert.equal(JSON.parse(preSubmitReapproval.fields.recreate_history_json).length, 2, "pre-submit failure is retained beside the original forensic evidence");
+const preSubmitReapprovedPrepared = runner.prepare({ config: {}, jobs: [prior, { ...preSubmitFailure, ...preSubmitReapproval.fields }, ...pending] }, []);
+assert.deepEqual(runner.selectQueue(preSubmitReapprovedPrepared.queue, "recreate").map((item) => item.job.id), ["P05-B"], "only the newly confirmed pre-submit recovery is eligible");
+
+const completedB = { ...approvedJob, status: "SUCCESS", attempt_phase: "SUCCESS", persistence_verified: "true", requested_file: "P05-B.png", result_file: "P05-B.png", recreate_status: "SUCCESS", recreate_attempt_id: "attempt-new-b" };
+const completedPlan = resume.plan({ fileName: "pilot__results__v003.xlsx", config: { run_id: "pilot-05" }, jobs: [prior, completedB, ...pending] });
+assert.equal(completedPlan.ready, true, "queue unlocks only after successful recreate");
+assert.equal(completedPlan.next_eligible_job, "P05-C", "C/D/E are eligible only after P05-B success");
+const completedPrepared = runner.prepare({ config: {}, jobs: [prior, completedB, ...pending] }, []);
+resume.applyToQueue(completedPrepared.queue, completedPlan.jobs);
+assert.deepEqual(runner.selectQueue(completedPrepared.queue, "all").map((item) => item.job.id), ["P05-C", "P05-D", "P05-E"], "a verified recreate resumes the remaining queue without resubmitting P05-B");
+
+const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
+const html = fs.readFileSync(new URL("sidepanel.html", root), "utf8");
+assert.match(sidepanel, /no verified saved image\. Create it again\?/, "ambiguous blocker gives the operator one concise recovery decision");
+assert.match(sidepanel, /Recreate \$\{recovery\.job_id\}/, "recreate action identifies the blocked job");
+assert.match(sidepanel, /requiresNewApproval/, "failed recreate renders explicit recovery again");
+const renderResumeSegment = sidepanel.slice(sidepanel.indexOf("function renderResumePlan"), sidepanel.indexOf("function reconciliationProof"));
+assert.doesNotMatch(renderResumeSegment, /Resolve Existing Output/, "missing-image recovery does not burden the operator with a second action");
+assert.match(html, /has no verified saved image\. Create it again\? This sends one new request and may produce a duplicate image\./, "confirmation explains the one deliberate recreate action");
+assert.match(sidepanel, /Recreate \$\{jobId\}/, "confirmation names the exact job");
+const openSegment = sidepanel.slice(sidepanel.indexOf("function openRecreateDialog"), sidepanel.indexOf("function closeRecreateDialog"));
+assert.doesNotMatch(openSegment, /run\(|DAC_RUN_IMAGE_JOB|send\(/, "opening confirmation never silently resubmits");
+const confirmSegment = sidepanel.slice(sidepanel.indexOf("async function confirmRecreate"), sidepanel.indexOf("async function resolveExistingOutput"));
+assert.match(confirmSegment, /await run\("recreate"\)/, "only confirmed recreate starts the deliberate new attempt");
+assert.match(confirmSegment, /confirmation received; checking approval and persistence prerequisites/, "confirm click emits immediate operator-visible progress");
+assert.match(confirmSegment, /RECREATE_CONFIRM_QUEUE_MISSING/, "missing prepared queue surfaces an exact blocked-start reason");
+assert.match(confirmSegment, /RECREATE_START_BLOCKED/, "a rejected recreate start is surfaced rather than ignored");
+assert.match(confirmSegment, /setStatus\("RUNNING", "RECREATE CHECKPOINTING"\)/, "confirmed recreate visibly enters a running transition before checkpoint persistence");
+assert.match(confirmSegment, /image saved and checkpointed\. Continuing with/, "verified recreate continues the remaining queue without another operator step");
+assert.match(confirmSegment, /await run\("all"\)/, "only after verified recreate completion does the normal queue continue");
+assert.doesNotMatch(confirmSegment, /\) return;/, "confirm flow has no silent guard return");
+const runSegment = sidepanel.slice(sidepanel.indexOf('async function run(mode = "all")'), sidepanel.indexOf("chrome.runtime.onMessage.addListener"));
+assert.match(runSegment, /return \{ ok: false, reason \}/, "blocked recreate run returns its exact reason to the confirmation flow");
+assert.match(runSegment, /return \{ ok: !artifactPersistenceFailed, started: true/, "run reports persistence failure instead of claiming a recreate is complete");
+assert.match(runSegment, /state\.resumePlan = window\.DacResumeCore\.plan\(state\.workbook\)/, "a verified checkpoint refreshes stale recovery state before later work can run");
+assert.match(sidepanel, /recreateConfirmBtn\?\.addEventListener\("click", \(\) => confirmRecreate\(\)/, "confirm button is wired directly to recreate flow");
+
+console.log("explicit recreate smoke tests: PASS");

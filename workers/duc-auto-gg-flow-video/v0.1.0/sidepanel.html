@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Duc Auto Gemini</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <main class="app">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">🤖</div>
+        <div>
+          <h1>Duc Auto Gemini</h1>
+          <p>Local XLSX image runner</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span class="status-notice" role="status" aria-live="polite">
+          <span id="statusChip" class="chip idle">IDLE</span>
+          <span id="statusChipTranslation" class="notice-translation status-translation" lang="vi">Đang chờ</span>
+        </span>
+        <button id="helpBtn" class="help-btn" type="button" aria-label="Hướng dẫn vận hành">?</button>
+        <div class="zoom-group" id="chatZoomControl" title="Gemini Zoom">
+          <span class="zoom-label">CHAT ZOOM</span>
+          <div class="segmented" role="group" aria-label="Gemini Zoom">
+            <button type="button" class="zoom-btn" data-zoom="0.8" disabled>80%</button>
+            <button type="button" class="zoom-btn" data-zoom="0.9" disabled>90%</button>
+            <button type="button" class="zoom-btn" data-zoom="1.0" disabled>100%</button>
+          </div>
+        </div>
+        <div class="zoom-group" id="uiZoomControl" title="Extension interface zoom">
+          <span class="zoom-label">UI ZOOM</span>
+          <div class="segmented" role="group" aria-label="Extension interface zoom">
+            <button type="button" class="ui-zoom-btn" data-ui-zoom="1">100%</button>
+            <button type="button" class="ui-zoom-btn" data-ui-zoom="1.1">110%</button>
+            <button type="button" class="ui-zoom-btn" data-ui-zoom="1.2">120%</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- WORKFLOW NAVIGATION -->
+    <nav class="workflow-tabs" aria-label="Workflow">
+      <button class="workflow-tab active" data-screen="setupScreen" type="button"><span class="tab-num">1</span> SETUP</button>
+      <button class="workflow-tab" data-screen="runScreen" type="button"><span class="tab-num">2</span> RUN</button>
+      <button class="workflow-tab" data-screen="outputScreen" type="button"><span class="tab-num">3</span> OUTPUT</button>
+      <button class="workflow-tab" data-screen="bridgeScreen" type="button"><span class="tab-num">4</span> BRIDGE</button>
+    </nav>
+
+    <!-- =========================================================================
+         1. SETUP SCREEN
+         ========================================================================= -->
+    <section id="setupScreen" class="workflow-screen active">
+      <!-- QUICK PROMPT: one prompt in, one image out, no Excel required -->
+      <section class="card setup-group" id="quickPromptCard">
+        <div class="row spread section-title">
+          <strong>NHẬP PROMPT NHANH <span class="info-icon" tabindex="0" title="Nhập 1 hoặc nhiều prompt — mỗi prompt cách nhau bằng MỘT DÒNG TRỐNG. Bấm &quot;Kiểm tra &amp; thêm vào hàng đợi&quot; để biến mỗi prompt thành 1 job, hiện ra ở tab RUN — bước này CHƯA chạy gì cả. Muốn chạy thật thì sang tab RUN, bấm &quot;Chạy job đã chọn&quot; hoặc &quot;START RUN&quot;.">ⓘ</span></strong>
+          <span id="quickPromptSessionText" class="muted">Chưa có phiên nào</span>
+        </div>
+        <textarea id="quickPromptInput" class="quick-prompt-textarea" rows="3" placeholder="Nhập 1 hoặc nhiều prompt, mỗi prompt cách nhau 1 dòng trống…"></textarea>
+        <button id="quickPromptCheckBtn" class="primary dominant-btn" type="button">✓ Kiểm tra &amp; thêm vào hàng đợi</button>
+        <p id="quickPromptStatus" class="hint" aria-live="polite">Chỉ thêm job vào hàng đợi — chưa chạy. Sang tab RUN để xem từng job và bấm chạy khi bạn sẵn sàng.</p>
+      </section>
+
+      <!-- 1. SOURCE: WORKBOOK & REFERENCES -->
+      <section class="card setup-group" id="workbookCard">
+        <div class="row spread section-title">
+          <strong>1. WORKBOOK</strong>
+        </div>
+        <div class="workbook-layout">
+          <div class="workbook-asset-block">
+            <!-- Loaded Workbook Row -->
+            <div class="asset-body">
+              <div class="asset-icon excel-icon">X</div>
+              <div class="asset-details">
+                <div id="workbookNameDisplay" class="asset-name">No workbook loaded</div>
+                <div id="workbookText" class="hint">Open an XLSX to begin.</div>
+              </div>
+              <div class="workbook-actions">
+                <button id="changeWorkbookBtn" class="secondary setup-action" type="button">Change</button>
+                <button id="continueExistingRunBtn" class="secondary setup-action" type="button">Continue Existing Run</button>
+              </div>
+            </div>
+            <input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+            <input id="resumeWorkbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+            <div id="resumeSourceSummary" class="resume-summary" hidden></div>
+          </div>
+
+          <!-- References Subsection -->
+          <div class="sub-section" id="referencesCard">
+            <div class="row spread sub-title">
+              <label for="referencesInput" class="secondary-label"><strong>References</strong> <span class="muted">(optional)</span></label>
+              <button id="addReferencesBtn" class="secondary setup-action" type="button">+ Add</button>
+            </div>
+            <input id="referencesInput" type="file" accept="image/*" multiple />
+            <div id="referenceGallery" class="reference-gallery" aria-live="polite"></div>
+            <p id="referenceText" class="hint">0 images selected</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. RUN CONFIG -->
+      <section class="card setup-group" id="runtimeSettingsCard">
+        <div class="row spread section-title">
+          <strong>2. RUN SETTINGS</strong>
+          <span class="muted">Mặc định đã phù hợp cho hầu hết trường hợp</span>
+        </div>
+        <details class="secondary-details">
+          <summary>Tuỳ chỉnh nâng cao (timeout, retry, thời gian chờ…)</summary>
+          <div class="settings-grid runtime-settings-grid">
+            <label>Timeout<span class="runtime-value-input"><input id="timeoutSecInput" type="number" min="15" max="900" placeholder="120" /><span class="runtime-unit">giây</span></span></label>
+            <label>Retries<span class="runtime-value-input"><input id="maxRetriesInput" type="number" min="0" max="5" placeholder="2" /><span class="runtime-unit">lần</span></span></label>
+            <label>Inter-job min<span class="runtime-value-input"><input id="delayMinSecInput" type="number" min="1" max="120" placeholder="12" /><span class="runtime-unit">giây</span></span></label>
+            <label>Inter-job max<span class="runtime-value-input"><input id="delayMaxSecInput" type="number" min="1" max="120" placeholder="24" /><span class="runtime-unit">giây</span></span></label>
+            <label>Safety cooldown<span class="runtime-value-input"><input id="safetyCooldownInput" type="text" inputmode="numeric" placeholder="6-9" title="Nhập một giá trị như 8 hoặc khoảng ngẫu nhiên như 6-9" /><span class="runtime-unit">giây</span></span></label>
+          </div>
+          <div class="settings-grid">
+            <label>Max input references<input id="maxInputImagesInput" type="number" min="0" max="10" /></label>
+            <label>Continue on error<select id="continueOnErrorInput"><option value="true">Yes</option><option value="false">No</option></select></label>
+            <label>Rerun DONE<select id="rerunDoneInput"><option value="false">No</option><option value="true">Yes</option></select></label>
+          </div>
+        </details>
+      </section>
+
+      <!-- 3. OUTPUT DESTINATION & NAMING -->
+      <section class="card setup-group" id="outputLocationCard">
+        <div class="row spread section-title">
+          <strong>3. OUTPUT DESTINATION</strong>
+          <span id="outputPermissionText" class="muted">Open an XLSX to set locations.</span>
+        </div>
+        <div class="settings-grid">
+          <label>Destination mode<select id="outputDestinationMode"><option value="downloads">Chrome Downloads</option><option value="profile">Output Profile</option></select></label>
+        </div>
+        <div id="downloadsDestinationControls" class="settings-grid">
+          <label class="full-width">Downloads subfolder<input id="imageOutputFolderInput" type="text" placeholder="Duc Auto Gemini/Pilot03" autocomplete="off" /><span class="hint">Relative to Chrome Downloads. No folder selection required.</span></label>
+        </div>
+        <div id="authorizedDestinationControls" class="destination-authorized" hidden>
+          <div class="output-line"><strong>Output profile:</strong><output id="outputProfileText">Not configured</output></div>
+          <div class="output-line"><strong>Folder:</strong><output id="destinationHandleText">Not bound</output></div>
+          <div class="output-line"><strong>Permission:</strong><output id="outputProfilePermission">Not bound</output></div>
+          <div class="output-line output-folder-hint"><strong>Expected folder:</strong><output id="folderHintText">—</output><button id="copyFolderHintBtn" class="secondary small" type="button">Copy</button></div>
+          <button id="destinationFolderBtn" class="secondary setup-action" type="button">Choose Folder</button>
+        </div>
+        <div class="settings-grid save-toggles">
+          <label class="switch-label"><input id="saveImagesInput" type="checkbox" checked /> Download generated images</label>
+          <label class="switch-label"><input id="saveResultXlsxInput" type="checkbox" checked /> Save Result XLSX</label>
+        </div>
+        <div class="naming-section" id="namingSetupSection">
+          <div class="row spread naming-section-heading"><div class="naming-section-title">ĐẶT TÊN</div><span id="namingProvenance" class="naming-provenance">Giá trị mặc định</span></div>
+          <div class="settings-grid naming-grid">
+            <label>Mẫu tên file ảnh<input id="imagePatternInput" type="text" value="{job_id}" autocomplete="off" /><span class="hint">Biến hỗ trợ: {job_id}, {attempt}, {index}</span></label>
+            <label>Khi tên file đã tồn tại<select id="collisionPolicyInput"><option value="overwrite">Ghi đè file hiện có</option><option value="uniquify" selected>Giữ cả hai — tự thêm số</option><option value="fail">Dừng và báo trùng tên</option></select><span class="hint">Quy định cách xử lý khi đã có file trùng tên.</span></label>
+          </div>
+        </div>
+        <details class="secondary-details" id="outputAdvancedDetails">
+          <summary>Chi tiết đầu ra &amp; đặt tên nâng cao</summary>
+          <div class="settings-grid naming-grid advanced-naming-grid">
+            <label>Mẫu tên checkpoint kết quả<input id="resultFilenameInput" type="text" autocomplete="off" /><span class="hint">Dùng {version}; mỗi checkpoint đã xác minh sẽ không thay đổi.</span></label>
+            <label>Tên file nhật ký Audit JSONL<input id="auditFilenameInput" type="text" autocomplete="off" /></label>
+          </div>
+          <label class="switch-label"><input id="saveAuditJsonlInput" type="checkbox" checked /> Save Audit JSONL (technical log)</label>
+          <div class="checkpoint-meta" aria-label="Thông tin checkpoint kết quả"><span>Mã lần chạy <output id="runIdText">—</output></span><span>Checkpoint mới nhất <output id="checkpointVersionText">—</output></span><span>File checkpoint <output id="checkpointFilenameText">—</output></span></div>
+          <div class="output-previews">
+            <div class="hint output-preview-intro">Chỉ để xem trước nơi extension sẽ lưu file. Các đường dẫn này tự cập nhật theo Output Profile và thiết lập đặt tên.</div>
+            <div class="output-line"><strong>Vị trí lưu ảnh thực tế:</strong><output id="imageOutputText">—</output></div>
+            <div class="output-line"><strong>Xem trước file Result XLSX:</strong><output id="resultOutputText">—</output></div>
+            <div class="output-line"><strong>Xem trước Audit JSONL (nhật ký kỹ thuật):</strong><output id="auditOutputText">—</output></div>
+          </div>
+          <label class="switch-label advanced-separate"><input id="separateResultDestinationInput" type="checkbox" /> Lưu các tệp kết quả sang nơi khác</label>
+          <div id="separateResultDestinationControls" class="settings-grid" hidden>
+            <label>Result destination<select id="resultLocationMode"><option value="downloads">Chrome Downloads</option><option value="profile">Output Profile</option></select></label>
+            <label id="resultDownloadsFolderLabel">Result Downloads subfolder<input id="resultDownloadsFolderInput" type="text" placeholder="Duc Auto Gemini" autocomplete="off" /></label>
+            <div id="resultAuthorizedControls" class="destination-authorized" hidden>
+              <div class="output-line"><strong>Result folder:</strong><output id="resultHandleText">No folder selected</output></div>
+              <button id="chooseResultFolderBtn" class="secondary setup-action" type="button">Choose Result Folder</button>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- 4. PLAN CHECK & ACTION -->
+      <section class="card setup-group" id="validationCard">
+        <div class="row spread section-title plan-check-heading">
+          <strong>4. PLAN CHECK</strong>
+          <div class="plan-check-actions"><span id="configProvenance" class="muted">Configuration: defaults</span><button id="validateBtn" class="secondary setup-action validation-action" disabled type="button">Check plan</button></div>
+        </div>
+        <div id="planCheckSummary" class="plan-check-summary">Load an XLSX, then Check Plan.</div>
+        <div class="readiness-checklist" id="readinessChecklist">
+          <div class="check-item" id="checkWorkbook"><span class="check-icon">○</span><span class="check-label">Workbook</span><span class="check-status" id="statusWorkbook">Not loaded</span></div>
+          <div class="check-item" id="checkJobs"><span class="check-icon">○</span><span class="check-label">Jobs</span><span class="check-status" id="statusJobs">Check plan</span></div>
+          <div class="check-item" id="checkReferences"><span class="check-icon">○</span><span class="check-label">References</span><span class="check-status" id="statusReferences">0 images</span></div>
+          <div class="check-item" id="checkChatGPT"><span class="check-icon">○</span><span class="check-label">Gemini connection</span><span class="check-status" id="statusChatGPT">Checking</span></div>
+          <div class="check-item" id="checkOutput"><span class="check-icon">○</span><span class="check-label">Output destination</span><span class="check-status" id="statusOutput">Ready</span></div>
+          <div class="check-item" id="checkSaveModes"><span class="check-icon">○</span><span class="check-label">Save modes</span><span class="check-status" id="statusSaveModes">Check plan</span></div>
+          <div class="check-item" id="checkNaming"><span class="check-icon">○</span><span class="check-label">Naming</span><span class="check-status" id="statusNaming">Check plan</span></div>
+          <div class="check-item" id="checkSettings"><span class="check-icon">○</span><span class="check-label">Run settings</span><span class="check-status" id="statusSettings">Checking</span></div>
+        </div>
+        <div id="validationGuidance" class="validation-guidance" aria-live="polite"></div>
+        <div id="resumePlanDiagnostics" class="resume-diagnostics" hidden></div>
+        <div id="readinessBanner" class="readiness-banner not-ready">CHECK PLAN BEFORE RUN</div>
+        <button id="runBtn" class="primary dominant-btn" disabled type="button">▶ START RUN</button>
+        <div id="runEligibilityHint" class="hint" hidden></div>
+        <details class="secondary-details">
+          <summary>Nâng cao</summary>
+          <div class="review-packet-actions">
+            <button id="copyReviewPacketBtn" class="secondary small" disabled type="button">Copy for AI Review</button>
+            <span id="copyReviewPacketStatus" class="muted" aria-live="polite">Check Plan to create a review packet.</span>
+          </div>
+        </details>
+      </section>
+    </section>
+
+    <!-- =========================================================================
+         2. RUN SCREEN (OPERATOR HERO DASHBOARD)
+         ========================================================================= -->
+    <section id="runScreen" class="workflow-screen">
+      <div id="runDashboardSplit" class="run-dashboard-split">
+      <!-- HERO BLOCK: PROGRESS & CURRENT JOB -->
+      <div class="hero-block">
+        <!-- OVERALL PROGRESS -->
+        <section class="card runtime-card" id="overallProgressCard">
+          <div class="row spread section-title">
+            <span class="section-badge">PROGRESS <span id="runDevModeBadge" class="dev-mode-badge" hidden>DEV MODE</span></span>
+            <span class="halt-guide-trigger-group">
+              <button id="haltInstructionsBtn" class="halt-instructions-trigger" type="button" aria-haspopup="dialog">ⓘ Halt</button>
+              <span id="progressPercent" class="percent-badge">0%</span>
+            </span>
+          </div>
+          <div class="progress-header row spread">
+            <div id="progressRatio" class="progress-ratio">0 / 0 completed</div>
+            <div id="progressText" class="progress-text-legacy muted" hidden>0 / 0</div>
+          </div>
+          <div class="progress-track" id="progressSegments"><div id="progressBarFill" class="progress-fill" style="width: 0%;" hidden></div></div>
+          <div class="progress-stats">
+            <span class="stat-pill done"><span class="bullet">●</span> <span id="statDoneCount">0</span> done</span>
+            <span class="stat-pill active"><span class="bullet">●</span> <span id="statActiveCount">0</span> active</span>
+            <span class="stat-pill next"><span class="bullet">●</span> <span id="statNextCount">0</span> next</span>
+            <span class="stat-pill failed"><span class="bullet">●</span> <span id="statFailedCount">0</span> failed</span>
+          </div>
+          <div id="progressDetail" class="hint">Open an XLSX to begin.</div>
+        </section>
+
+        <!-- CURRENT JOB (DOMINANT FOCAL CARD) -->
+        <section class="card runtime-card current-job-card" id="currentJobCard">
+          <div id="haltedBanner" class="halted-banner" hidden>
+            <div class="halted-header">
+              <span class="halted-badge">⚠ RUN HALTED</span>
+              <span id="haltedTime" class="halted-time">—</span>
+            </div>
+            <div class="halted-summary-row">
+              <code id="haltedReason" class="halted-reason">HALT_UNKNOWN</code>
+              <span id="haltedRetry" class="halted-retry">Tự động thử lại: —</span>
+            </div>
+            <div id="haltedJob" class="halted-stopped-at">Dừng tại: —</div>
+            <div class="halted-guidance">
+              <div class="halted-guidance-label">Vì sao dừng</div>
+              <p id="haltedCause" class="halted-guidance-text">Extension đã dừng để bảo vệ lần chạy.</p>
+              <div id="haltedDetailRow">
+                <div class="halted-guidance-label">Chi tiết ghi nhận</div>
+                <p id="haltedDetail" class="halted-guidance-text halted-technical-detail">—</p>
+              </div>
+              <div class="halted-guidance-label">Cách xử lý</div>
+              <p id="haltedAction" class="halted-guidance-text halted-action-text">Giữ nguyên tab Gemini và kiểm tra trạng thái job trước khi chạy lại.</p>
+            </div>
+          </div>
+          <div class="row spread current-job-top">
+            <span class="section-badge">CURRENT JOB</span>
+            <div class="row"><span id="continuedRunLabel" class="continued-run-label" hidden>Continued run</span><div id="currentAttemptBadge" class="attempt-badge">Attempt —</div></div>
+          </div>
+          <div id="currentJobContent" class="current-job-content" hidden>
+            <div class="current-job-prompt-column">
+              <span class="current-job-content-label">Prompt</span>
+              <div id="currentPromptPreview" class="prompt-preview" hidden></div>
+            </div>
+            <div id="currentReferenceColumn" class="current-reference-column" hidden>
+              <span class="current-job-content-label">Attached images</span>
+              <div id="currentReferenceGallery" class="current-reference-gallery" aria-label="Images attached to the current job"></div>
+            </div>
+          </div>
+          <div class="row spread current-job-meta">
+            <div id="currentJobId" class="current-job">—</div>
+            <span id="currentStage" class="stage">—</span>
+          </div>
+          <div class="pipeline-stepper" id="pipelineStepper">
+            <div class="step-item" data-step="prepare"><span class="step-dot"></span><span class="step-label">Prepare</span></div>
+            <div class="step-line"></div>
+            <div class="step-item" data-step="generate"><span class="step-dot"></span><span class="step-label">Generate</span></div>
+            <div class="step-line"></div>
+            <div class="step-item" data-step="save"><span class="step-dot"></span><span class="step-label">Save</span></div>
+            <div class="step-line"></div>
+            <div class="step-item" data-step="done"><span class="step-dot"></span><span class="step-label">Done</span></div>
+          </div>
+          <div id="operatorTimerArea" class="operator-timer-area"><span class="timer-badge" id="operatorTimerBadge">⏱ <span id="operatorTimerText">—</span></span></div>
+          <div id="currentTiming" class="hint timing-line">No run in progress.</div>
+          <details class="secondary-details">
+            <summary>Chi tiết vận hành</summary>
+            <div class="runtime-information-grid" aria-label="Current runtime information">
+              <div class="runtime-information runtime-information--timer"><span>⏱ Job elapsed</span><output id="runtimeJobElapsed">—</output></div>
+              <div class="runtime-information"><span>◌ Current operation</span><output id="runtimeCurrentOperation">—</output></div>
+              <div class="runtime-information runtime-information--timer"><span>⌛ Operation timeout remaining</span><output id="runtimeTimeoutRemaining">Not scheduled</output></div>
+              <div class="runtime-information"><span>↻ Retry state</span><output id="runtimeRetryState">Not scheduled</output></div>
+              <div class="runtime-information runtime-information--timer runtime-information--long"><span>↔ Inter-job delay</span><output id="runtimeInterJobDelay">Not scheduled</output></div>
+              <div class="runtime-information runtime-information--timer runtime-information--long"><span>→ Next transition</span><output id="runtimeNextTransition">Waiting…</output></div>
+            </div>
+          </details>
+          <div id="currentSaved" class="saved-output" hidden></div>
+        </section>
+      </div>
+
+      <div id="runWidthSplitter" class="run-width-splitter" role="separator" aria-label="Adjust Run dashboard column width" aria-orientation="vertical" aria-valuemin="30" aria-valuemax="70" aria-valuenow="50" tabindex="0" title="Drag left or right to resize columns; double-click to reset"><span aria-hidden="true">↔</span></div>
+
+      <!-- SECONDARY ROW: LATEST SAVED & NEXT JOB -->
+      <div class="split-cards">
+        <section id="latestSavedCard" class="card mini-card">
+          <div class="muted card-label"><strong>LATEST SAVED</strong></div>
+          <div class="mini-content">
+            <div id="latestSavedThumb" class="mini-thumb">🖼</div>
+            <div class="mini-details">
+              <div id="latestSavedName" class="mini-title">None yet</div>
+              <div id="latestSavedStatus" class="mini-status hint">—</div>
+            </div>
+          </div>
+        </section>
+        <section id="nextTaskCard" class="card mini-card">
+          <div class="muted card-label"><strong>NEXT JOB</strong></div>
+          <div class="mini-content">
+            <div class="mini-details">
+              <div id="nextTaskId" class="mini-title">—</div>
+              <div id="nextTaskCountdown" class="hint mini-status">—</div>
+            </div>
+          </div>
+        </section>
+      </div>
+      </div>
+
+      <!-- QUEUE -->
+      <section class="card queue-card">
+        <div class="row spread section-title">
+          <strong>QUEUE</strong>
+          <span id="queueSummary" class="muted">0 jobs</span>
+        </div>
+        <ol id="queueList" class="queue-list"></ol>
+        <div class="queue-footer-actions">
+          <button id="viewQueueBtn" class="link-button" type="button">View full queue</button>
+          <span class="queue-bulk-actions" aria-label="Chọn nhanh các job trong Queue">
+            <button id="selectAllQueueBtn" class="link-button" type="button">Tick tất cả</button>
+            <button id="clearQueueSelectionBtn" class="link-button" type="button">Bỏ tick tất cả</button>
+          </span>
+          <span class="queue-drag-help">⠿ Kéo để sắp xếp</span>
+          <button id="runSelectedBtn" class="secondary small" disabled type="button">▶ Chạy job đã chọn</button>
+        </div>
+      </section>
+
+      <!-- TECHNICAL DETAILS -->
+      <section class="card">
+        <details class="secondary-details">
+          <summary>Technical details</summary>
+          <ol id="logList" class="queue-list" aria-live="polite"></ol>
+          <button id="clearLogsBtn" class="link-button" type="button">Clear</button>
+        </details>
+      </section>
+
+      <!-- RUN CONTROLS -->
+      <section class="controls run-dashboard-controls">
+        <button id="runFromRunTabBtn" class="primary dominant-btn" disabled type="button">▶ START RUN</button>
+        <button id="pauseResumeBtn" class="secondary" disabled type="button" title="Giữ đúng phiên chạy hiện tại — job đang chạy vẫn hoàn tất bình thường, chỉ job kế tiếp phải chờ. Bấm lại nút này (giờ hiện &quot;Tiếp tục&quot;) để chạy tiếp. Không đóng side panel / tải lại trang khi đang tạm dừng — tiến trình chỉ được lưu file khi cả lượt chạy kết thúc, giống Stop.">⏸ Tạm dừng</button>
+        <button id="stopBtn" class="danger" disabled type="button">Stop Run</button>
+      </section>
+    </section>
+
+    <!-- =========================================================================
+         3. OUTPUT SCREEN (RESULTS & ARTIFACTS DASHBOARD)
+         ========================================================================= -->
+    <section id="outputScreen" class="workflow-screen">
+      <!-- COMPLETION HERO CARD -->
+      <section class="card completion-card" id="completionCard">
+        <div class="completion-hero">
+          <div class="completion-icon" id="completionIcon">✓</div>
+          <div class="completion-title" id="completionTitle">RUN COMPLETE</div>
+          <div id="completionTranslation" class="notice-translation completion-translation" lang="vi">Lần chạy đã hoàn tất</div>
+          <div id="outputSummaryText" class="completion-ratio">0 / 0 completed</div>
+          <div id="failedJobsText" class="completion-failed"></div>
+          <div id="failedJobsTranslation" class="notice-translation completion-detail-translation" lang="vi"></div>
+        </div>
+      </section>
+
+      <!-- Dedicated, contextual definitions for the terms shown on OUTPUT. -->
+      <details class="card output-concepts-card" id="outputConceptsCard">
+        <summary class="row spread section-title">
+          <strong>OUTPUT CONCEPTS</strong>
+          <span class="muted" lang="vi">Khái niệm riêng của tab Output</span>
+        </summary>
+        <div id="outputGlossary" class="output-glossary"></div>
+      </details>
+
+      <!-- RESULTS LIST -->
+      <section class="card">
+        <div class="row spread section-title">
+          <strong>RESULTS</strong>
+          <button id="viewOutputsBtn" class="link-button" type="button">View all outputs</button>
+        </div>
+        <ol id="outputList" class="queue-list output-results-list"></ol>
+      </section>
+
+      <!-- RUN ARTIFACTS TABLE -->
+      <section class="card" id="runArtifactsCard">
+        <div class="row spread section-title">
+          <strong>RUN ARTIFACTS</strong>
+          <span id="artifactStatusPill" class="artifact-status-pill empty">Pending Run</span>
+        </div>
+        <div id="artifactLocationNote" class="artifact-location-note hint">Location: Not configured</div>
+        <div id="artifactList" class="artifact-list">
+          <div class="artifact-row" id="artifactRowImages">
+            <span class="artifact-type">📁 Images folder</span>
+            <span class="artifact-detail" id="artifactImagesDetail">0 verified</span>
+            <span class="artifact-badge disabled" id="artifactImagesStatus">Disabled</span>
+          </div>
+          <div class="artifact-row" id="artifactRowResult">
+            <span class="artifact-type">📊 Result XLSX</span>
+            <span class="artifact-detail" id="artifactResultDetail">—</span>
+            <span class="artifact-badge disabled" id="artifactResultStatus">Disabled</span>
+          </div>
+          <div class="artifact-row" id="artifactRowAudit">
+            <span class="artifact-type">📄 Audit JSONL <span class="muted">(technical log)</span></span>
+            <span class="artifact-detail" id="artifactAuditDetail">—</span>
+            <span class="artifact-badge disabled" id="artifactAuditStatus">Disabled</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- OUTPUT ACTIONS -->
+      <section class="controls output-action-controls">
+        <button id="openOutputFolderBtn" class="primary" type="button" disabled>📁 Open Output Folder</button>
+        <button id="loadNewWorkbookBtn" class="secondary" type="button">📄 Load New Workbook</button>
+        <button id="runFailedBtn" class="secondary" type="button" disabled>↻ Run Failed Jobs</button>
+      </section>
+    </section>
+
+    <!-- =========================================================================
+         4. BRIDGE SCREEN (CONNECTION, ACTIVITY, LEGACY PROPOSAL APPROVAL)
+         ========================================================================= -->
+    <section id="bridgeScreen" class="workflow-screen">
+      <section class="card bridge-pairing-card" id="bridgePairingCard">
+        <div class="row spread section-title">
+          <strong>AGENT BRIDGE</strong>
+          <span id="bridgeTransportStatus" class="bridge-transport-status" role="status" aria-live="polite">Chưa kết nối</span>
+        </div>
+        <dl class="bridge-connection-grid" aria-label="Trạng thái Agent Bridge">
+          <div><dt>Host reachable</dt><dd id="bridgeHostReachable">Không</dd></div>
+          <div><dt>Extension</dt><dd id="bridgePairingState">Chưa pairing</dd></div>
+          <div><dt>Hoạt động gần nhất</dt><dd id="bridgeLastActivity">Chưa có</dd></div>
+        </dl>
+        <p id="bridgeTransportDetail" class="hint">Chọn tệp pairing do bộ cài Bridge V1 tạo. Token chỉ được lưu cục bộ trong extension.</p>
+        <div class="row gap-sm bridge-pairing-actions">
+          <button id="bridgePairingBtn" class="secondary setup-action" type="button">Kết nối Agent Bridge</button>
+          <button id="bridgeUnpairBtn" class="secondary small" type="button" hidden>Ngắt pairing</button>
+        </div>
+        <input id="bridgePairingInput" type="file" accept=".json,application/json" />
+        <div class="dev-mode-block">
+          <label class="dev-mode-toggle">
+            <input id="devModeToggle" type="checkbox" />
+            <strong>Chế độ phát triển</strong>
+          </label>
+          <p class="hint">Khi BẬT, AI được phép tự khởi động trial run qua Bridge (method <code>run.trial</code>): tối đa 2 job, timeout ≤90s, delay 20–30s giữa job, tối thiểu 5 phút giữa 2 trial. Run sản xuất vẫn chỉ do người bấm; <code>run.start</code> vẫn bị cấm.</p>
+          <p id="devModeBanner" class="dev-mode-banner" role="status" aria-live="polite" hidden>DEV MODE — AI được phép chạy trial ≤2 job</p>
+        </div>
+      </section>
+
+      <section class="card bridge-activity-card" aria-labelledby="bridgeActivityTitle">
+        <div class="row spread section-title">
+          <strong id="bridgeActivityTitle">HOẠT ĐỘNG BRIDGE</strong>
+          <span class="muted">Mới nhất trước</span>
+        </div>
+        <p id="bridgeActivityEmpty" class="hint">Chưa có thay đổi Setup trực tiếp nào từ Bridge trong phiên side panel này.</p>
+        <ol id="bridgeActivityList" class="bridge-activity-list" aria-live="polite"></ol>
+      </section>
+
+      <section id="bridgeProposalCard" class="card bridge-proposal-card" hidden aria-labelledby="bridgeProposalTitle">
+        <div class="row spread section-title">
+          <strong id="bridgeProposalTitle">ĐỀ XUẤT TỪ AGENT</strong>
+          <span id="bridgeProposalCount" class="bridge-proposal-count">0 job</span>
+        </div>
+        <div id="bridgeProposalStatus" class="bridge-proposal-status" role="status" aria-live="polite">Đang chờ Đức xem xét</div>
+        <dl id="bridgeProposalMeta" class="bridge-proposal-meta"></dl>
+        <ol id="bridgeProposalList" class="bridge-proposal-list"></ol>
+        <p id="bridgeProposalNotice" class="bridge-proposal-notice">Duyệt chỉ thêm các job này vào Queue và ghi checkpoint. Thao tác này không bắt đầu chạy và không gửi prompt tới Gemini.</p>
+        <p id="bridgeProposalLockReason" class="bridge-proposal-lock-reason" aria-live="polite"></p>
+        <div class="row end gap-sm bridge-proposal-actions">
+          <button id="bridgeProposalFixtureBtn" class="secondary" type="button">Nạp đề xuất thử</button>
+          <button id="bridgeProposalRejectBtn" class="secondary" type="button">Từ chối</button>
+          <button id="bridgeProposalApproveBtn" class="primary" type="button">Duyệt &amp; ghi checkpoint</button>
+        </div>
+      </section>
+    </section>
+
+    <footer>Sequential only · Uses your current Gemini session · No server or separate login.</footer>
+  </main>
+  <aside id="helpDrawer" class="help-drawer" hidden aria-label="Hướng dẫn vận hành">
+    <div class="row spread"><strong>Hướng dẫn vận hành</strong><button id="closeHelpBtn" class="secondary small" type="button">Đóng</button></div>
+    <div id="helpGlossary" class="help-glossary"></div>
+  </aside>
+  <!-- Bilingual dialog contract: English is primary; every operator dialog
+       includes a smaller Vietnamese notice-translation. The static test
+       enumerates every dialog so future pop-ups cannot silently skip it. -->
+  <dialog id="haltInstructionsDialog" class="recreate-confirm-dialog halt-instructions-dialog bilingual-dialog" aria-labelledby="haltInstructionsTitle">
+    <div class="row spread halt-instructions-heading">
+      <h2 id="haltInstructionsTitle">Halt instructions<span class="notice-translation" lang="vi">Hướng dẫn khi hệ thống dừng bảo vệ</span></h2>
+      <span id="haltInstructionsCount" class="halt-count-badge">10 nhóm</span>
+    </div>
+    <p><strong>Halt</strong> is a protective stop: the extension will not move to the next job when the current state could cause a duplicate submission, lost output, or a safety violation.</p>
+    <p class="notice-translation" lang="vi"><strong>Halt</strong> là dừng bảo vệ: extension không chuyển sang job kế tiếp khi trạng thái hiện tại có thể gây gửi trùng, mất output hoặc vi phạm điều kiện an toàn.</p>
+    <div id="haltInstructionsList" class="halt-instructions-list"></div>
+    <section class="halt-special-status" aria-label="Trạng thái artifact riêng">
+      <h3>Status that may appear with Halt<span class="notice-translation" lang="vi">Trạng thái có thể xuất hiện cùng Halt</span></h3>
+      <div id="haltSpecialStatus"></div>
+    </section>
+    <section class="halt-not-halt" aria-label="Các mã không phải nguyên nhân Halt">
+      <h3>Not a cause of Halt<span class="notice-translation" lang="vi">Không phải nguyên nhân Halt</span></h3>
+      <div id="haltNonHaltList"></div>
+    </section>
+    <div class="row end gap-sm">
+      <button id="haltInstructionsCloseBtn" class="primary" type="button">Đóng</button>
+    </div>
+  </dialog>
+  <dialog id="checkpointCollisionDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="checkpointCollisionTitle">
+    <h2 id="checkpointCollisionTitle">Duplicate checkpoint version<span class="notice-translation" lang="vi">Hai file checkpoint trùng số phiên bản</span></h2>
+    <p>Select the file to <strong>KEEP</strong>. The other file will be renamed with <code>__superseded</code>; it is not deleted and can be restored by changing its name back.</p>
+    <p class="notice-translation" lang="vi">Chọn file cần <strong>GIỮ</strong>. File còn lại được đổi tên thêm đuôi <code>__superseded</code> — không xoá, không mất dữ liệu, đổi lại tên cũ là dùng được ngay.</p>
+    <div id="checkpointCollisionList" class="collision-list"></div>
+    <label class="collision-suffix">Đặt tên file còn lại
+      <select id="checkpointCollisionSuffix">
+        <option value="__superseded">Đánh dấu là bản cũ — thêm __superseded</option>
+        <option value=" (1)">Chỉ đổi tên cho khác đi — thêm (1)</option>
+      </select>
+    </label>
+    <p id="checkpointCollisionStatus" class="muted" aria-live="polite"></p>
+    <p id="checkpointCollisionStatusVi" class="notice-translation" lang="vi"></p>
+    <div class="row end gap-sm">
+      <button id="checkpointCollisionCancelBtn" class="secondary" type="button">Huỷ</button>
+      <button id="checkpointCollisionConfirmBtn" class="primary" type="button" disabled>Giữ file đã chọn</button>
+    </div>
+  </dialog>
+
+  <dialog id="folderPickDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="folderPickTitle">
+    <h2><span id="folderPickTitle">Choose the output folder</span><span id="folderPickTitleVi" class="notice-translation" lang="vi">Chọn thư mục lưu output</span></h2>
+    <p>Chrome's folder picker cannot be pre-filled. Copy this path, then paste it into the picker's address bar.</p>
+    <p class="notice-translation" lang="vi">Chrome không thể tự điền sẵn thư mục. Hãy sao chép đường dẫn này rồi dán vào thanh địa chỉ của hộp chọn thư mục.</p>
+    <div class="folder-pick-path">
+      <output id="folderPickPath">—</output>
+      <button id="folderPickCopyBtn" class="secondary setup-action" type="button">Copy path</button>
+    </div>
+    <p id="folderPickStatus" class="muted" aria-live="polite"></p>
+    <p id="folderPickStatusVi" class="notice-translation" lang="vi"></p>
+    <div class="row end gap-sm">
+      <button id="folderPickCancelBtn" class="secondary" type="button">Cancel</button>
+      <button id="folderPickOpenBtn" class="primary" type="button">Open folder picker</button>
+    </div>
+  </dialog>
+
+  <dialog id="recreateConfirmDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="recreateConfirmTitle">
+    <h2><span id="recreateConfirmTitle">Image is not saved</span><span id="recreateConfirmTitleVi" class="notice-translation" lang="vi">Ảnh chưa được lưu và xác minh</span></h2>
+    <p id="recreateConfirmMessage">This job has no verified saved image. Create it again? This sends one new request and may produce a duplicate image.</p>
+    <p id="recreateConfirmMessageVi" class="notice-translation" lang="vi">Job này chưa có ảnh đã lưu được xác minh. Tạo lại sẽ gửi một yêu cầu mới và có thể tạo ảnh trùng.</p>
+    <div class="row end gap-sm">
+      <button id="recreateCancelBtn" class="secondary" type="button">Cancel</button>
+      <button id="recreateConfirmBtn" class="primary" type="button">Recreate image</button>
+    </div>
+  </dialog>
+  <dialog id="rerunConfirmDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="rerunConfirmTitle">
+    <h2><span id="rerunConfirmTitle">Run this job again?</span><span id="rerunConfirmTitleVi" class="notice-translation" lang="vi">Chạy lại job này?</span></h2>
+    <p id="rerunConfirmMessage">This job already has a verified saved image. Running it again sends a new request and creates another image.</p>
+    <p id="rerunConfirmMessageVi" class="notice-translation" lang="vi">Job này đã có ảnh được lưu và xác minh. Chạy lại sẽ gửi một yêu cầu mới và tạo một ảnh khác.</p>
+    <p class="collision-suffix">What happens to the old image?<span class="notice-translation" lang="vi">Ảnh cũ sẽ như thế nào?</span></p>
+    <div class="collision-list">
+      <label class="collision-option">
+        <input type="radio" name="rerunCollisionPolicy" id="rerunKeepPolicyRadio" value="uniquify" checked>
+        <span>Keep the old image — save the new image as a separate file<span class="notice-translation" lang="vi">Giữ ảnh cũ — ảnh mới lưu thành file riêng (khuyến nghị)</span></span>
+      </label>
+      <label class="collision-option">
+        <input type="radio" name="rerunCollisionPolicy" id="rerunOverwritePolicyRadio" value="overwrite">
+        <span>Overwrite the old image — the old image will be lost<span class="notice-translation" lang="vi">Đè hẳn lên ảnh cũ — ảnh cũ sẽ mất</span></span>
+      </label>
+    </div>
+    <div class="row end gap-sm">
+      <button id="rerunCancelBtn" class="secondary" type="button">Huỷ</button>
+      <button id="rerunConfirmBtn" class="primary" type="button">Chạy lại</button>
+    </div>
+  </dialog>
+  <dialog id="queueRemoveDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="queueRemoveTitle">
+    <h2 id="queueRemoveTitle">Remove job from Queue?<span class="notice-translation" lang="vi">Bỏ job khỏi Queue?</span></h2>
+    <p id="queueRemoveMessage">This job will no longer run. Its row remains in Result XLSX to preserve history.</p>
+    <p id="queueRemoveMessageVi" class="notice-translation" lang="vi">Job này sẽ không còn được chạy. Dòng dữ liệu vẫn được giữ trong Result XLSX để bảo toàn lịch sử.</p>
+    <div class="row end gap-sm">
+      <button id="queueRemoveCancelBtn" class="secondary" type="button">Huỷ</button>
+      <button id="queueRemoveConfirmBtn" class="danger queue-remove-confirm" type="button">Bỏ khỏi Queue</button>
+    </div>
+  </dialog>
+  <dialog id="auditGapConfirmDialog" class="recreate-confirm-dialog bilingual-dialog" aria-labelledby="auditGapConfirmTitle">
+    <h2 id="auditGapConfirmTitle">Start a new audit segment?<span class="notice-translation" lang="vi">Bắt đầu một đoạn audit mới?</span></h2>
+    <p>The previous technical audit file is unavailable. Result XLSX remains authoritative. This creates an explicit continuity gap; historical audit data will not be fabricated.</p>
+    <p class="notice-translation" lang="vi">Không tìm thấy file audit kỹ thuật trước đó. Result XLSX vẫn là nguồn có thẩm quyền. Thao tác này tạo một khoảng trống liên tục được ghi nhận rõ; dữ liệu audit lịch sử sẽ không bị dựng lại.</p>
+    <div class="row end gap-sm">
+      <button id="auditGapCancelBtn" class="secondary" type="button">Cancel</button>
+      <button id="auditGapConfirmBtn" class="primary" type="button">Continue with new audit segment</button>
+    </div>
+  </dialog>
+  <script src="provider-adapter.js"></script>
+  <script src="xlsx-codec.js"></script>
+  <script src="checkpoint-core.js"></script>
+  <script src="runner-core.js"></script>
+  <script src="dev-trial-core.js"></script>
+  <script src="attempt-telemetry-core.js"></script>
+  <script src="run-state-core.js"></script>
+  <script src="resume-core.js"></script>
+  <script src="reconciliation-core.js"></script>
+  <script src="recreate-core.js"></script>
+  <script src="audit-chain-core.js"></script>
+  <script src="output-location-core.js"></script>
+  <script src="xlsx-run-plan-core.js"></script>
+  <script src="output-profile-core.js"></script>
+  <script src="plan-diagnostics-core.js"></script>
+  <script src="orchestrator-review-core.js"></script>
+  <script src="operator-glossary-core.js"></script>
+  <script src="operator-messages-core.js"></script>
+  <script src="halt-instructions-core.js"></script>
+  <script src="bridge-core.js"></script>
+  <script src="bridge-pairing-core.js"></script>
+  <script src="bridge-proposal-core.js"></script>
+  <script src="approval-persistence-core.js"></script>
+  <script src="sidepanel-ui-semantics.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

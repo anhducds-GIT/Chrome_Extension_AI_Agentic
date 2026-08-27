@@ -1,0 +1,51 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+
+const root = new URL("../", import.meta.url);
+const html = fs.readFileSync(new URL("sidepanel.html", root), "utf8");
+const js = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
+const uiSemantics = fs.readFileSync(new URL("sidepanel-ui-semantics.js", root), "utf8");
+
+assert.match(html, /id="outputDestinationMode"/);
+assert.match(html, /Chrome Downloads/);
+assert.match(html, /Output Profile/);
+assert.match(html, /id="destinationFolderBtn"/);
+assert.match(html, /Lưu các tệp kết quả sang nơi khác/);
+assert.match(html, /id="separateResultDestinationControls"[^>]*hidden/);
+assert.doesNotMatch(html, /Choose Image Folder|Use Source Folder|id="changeImageFolderBtn"/);
+assert.match(html, /id="planCheckSummary"/);
+assert.match(html, /id="validationGuidance"/);
+assert.match(html, /id="checkSettings"/);
+assert.match(html, /id="checkJobs"/);
+assert.match(html, /id="checkSaveModes"/);
+assert.match(html, /id="checkNaming"/);
+assert.match(html, /id="copyReviewPacketBtn"[^>]*>Copy for AI Review/);
+assert.match(html, /orchestrator-review-core\.js/);
+assert.match(html, /xlsx-run-plan-core\.js/);
+assert.match(html, /output-profile-core\.js/);
+assert.match(html, /operator-glossary-core\.js/);
+assert.match(html, /id="helpBtn"/);
+assert.match(html, /id="helpBtn"[^>]*aria-label="Hướng dẫn vận hành"/);
+assert.match(html, /<strong>Hướng dẫn vận hành<\/strong>/);
+assert.match(html, /id="closeHelpBtn"[^>]*>Đóng<\/button>/);
+assert.match(html, /id="configProvenance"/);
+assert.doesNotMatch(html, /id="runPlanList"/);
+
+assert.match(js, /async function diagnosticChatCheck\(\)/);
+assert.match(js, /window\.DacPlanDiagnostics\.analyze/);
+const diagnosticSource = js.slice(js.indexOf("async function diagnosticChatCheck()"), js.indexOf("async function diagnosticOutputCheck()"));
+assert.match(diagnosticSource, /DAC_PING/);
+assert.doesNotMatch(diagnosticSource, /DAC_RUN_IMAGE_JOB/);
+assert.match(js, /state\.prepared = window\.DacRunnerCore\.prepare\(state\.workbook, state\.files, state\.runtimeOverrides\);/);
+assert.match(js, /async function run\(mode = "all"\)[\s\S]*?effectiveOutput = await authoritativeValidate\(\{ allowRecreate: mode === "recreate" \}\)/);
+assert.match(js, /state\.validated = state\.diagnostics\.summary\.blockers === 0/);
+assert.match(js, /async function copyReviewPacket\(\)/);
+assert.match(js, /DacOrchestratorReview\.copyPayload\(reviewContext\(\)\)/);
+assert.match(js, /DacXlsxRunPlan\.validate/);
+assert.match(js, /DacOutputProfiles\.bind/);
+assert.match(uiSemantics, /Next readiness check in/);
+assert.doesNotMatch(js, /Earliest next readiness check/);
+assert.match(js, /destinationFolderBtn\.textContent = permission === "permission_required" \? "Re-authorize"/);
+assert.doesNotMatch(js, /chooseImageFolderBtn|useSourceFolderBtn|changeImageFolderBtn/);
+
+console.log("validation and output UX static checks: PASS");
