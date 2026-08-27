@@ -141,7 +141,7 @@ generator deterministic · `DASHBOARD.md` sinh tự động · test ghim.
 | ~~`--check` + `.gitattributes`~~ · ~~nâng cổng 6→7~~ | **XONG V0.2-A và V0.2-D 27/08.** Cổng #7 so HEAD với HEAD |
 | ~~`scripts/feature-parity.mjs`~~ | **XONG V0.2-C 27/08.** Mục 1 + 3 + nợ method ở mục 4 máy sinh trong khối marker; mục 2 (hành vi) vẫn của người, cấm máy suy diễn |
 | `BACKLOG.md` cho nhánh Gemini | Nhánh đó chưa có sổ; cần phiên giữ package đó dựng |
-| `STATUS.md` cho Observer V0 | Chưa ai giữ package đó |
+| ~~`STATUS.md` cho Observer V0~~ | **ĐÃ QUYẾT 27/08: KHÔNG làm, giữ nguyên `unclassified · CHƯA KHAI STATUS`.** Xem mục 8 |
 | Cho `version_source` chấp nhận khác hoa/thường trên Windows | Hiện khác hoa/thường bị từ chối dù đường dẫn trỏ đúng chỗ. **Fail-closed** nên không sinh ra số sai, chỉ phiền. Auditor xếp LOW |
 | ~~Máy bắt số động gõ tay trong STATUS~~ | **XONG V0.2-B 27/08.** Detector hẹp theo 4 nhóm machine-owned |
 | Đóng protocol lặp lại (tạo extension / đóng phiên) thành skill | Chưa đủ lần lặp để biết hình dạng đúng |
@@ -158,6 +158,21 @@ Ba câu hỏi treo của V0.1 nay đã có câu trả lời, ghi lại để V0.
 2. **`--check` bỏ qua dòng dấu HEAD**, chỉ so phần bảng deterministic. Đây cũng là phương án
    tôi nghiêng về — nó không đụng vào nguyên tắc 4 đã chốt của brief.
 3. **Thêm `.gitattributes`:** `DASHBOARD.md text eol=lf`.
+
+**Observer V0 giữ nguyên ở gốc repo, KHÔNG chuẩn hoá thành package** (GPT chốt 27/08).
+Ba lý do, theo thứ tự quan trọng:
+
+1. **Nhãn hiện tại đang nói đúng sự thật.** Observer thật sự chưa khai STATUS. Sửa schema chỉ
+   để xoá một cảnh báo đúng là làm tài liệu tệ đi, không phải tốt lên.
+2. **Chi phí thật, lợi ích chưa có.** Generator hard-code dòng Observer (`build-dashboard.mjs`,
+   `key: "_root"`) và chỉ quét `workers/*/*/STATUS.md` — tạo `/STATUS.md` ở gốc thì máy **không
+   đọc**. Muốn nó đọc phải sửa generator **và** nới schema (hiện `version_source` buộc nằm
+   trong package, `id` buộc khớp tên thư mục package). Tức là **một special-case vĩnh viễn**.
+3. **Observer chưa đủ lớn để đáng.** Nó là POC nhỏ, chỉ đọc, không tự động hoá gì, quyền duy
+   nhất là `debugger`, và cách cài hiện tại là Load unpacked **chính gốc repo** — dời đi là
+   đổi cả đường cài.
+
+Mở lại quyết định này khi Observer thật sự lớn lên, không phải khi dashboard trông chưa gọn.
 
 **Không viết lại lịch sử** để sửa commit message `1`. Lý do GPT đưa ra và tôi đồng ý:
 force-push trong một repo nhiều phiên AI dùng chung nguy hiểm hơn cái lợi thẩm mỹ.

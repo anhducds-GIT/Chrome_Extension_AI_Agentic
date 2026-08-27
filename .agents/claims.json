@@ -17,10 +17,10 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "V0.2-E DA XONG va DA PUSH: va false positive detector (ma viec G-xx/B-xx khong con bi doc nham thanh so may do), ghim ca 16. Con lai o V0.2 (PLATFORM.md muc 7): STATUS cho Observer (CHO QUYET DINH KIEN TRUC rieng, dung va special-case vao generator), version_source hoa/thuong tren Windows (LOW), dong protocol thanh skill.",
+      "owner": "opus-platform-2",
+      "ai": "Claude",
+      "claimed_at": "2026-08-27",
+      "task": "Viet brief G-01 vao drafts/ + ghi quyet dinh Observer. CHUA giao code — G-01 la doi luat an toan, cho Duc chot.",
       "released_at": "2026-08-27"
     }
   }
