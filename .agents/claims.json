@@ -17,10 +17,10 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "V0.2-D: Gate #7 governance 6->7. GPT chot 3 quyet dinh 27/08: dirty ra khoi artifact, bo cot claims, duyet nang cong.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "V0.2-D DA XONG va DA PUSH: cong kiem 6->7 (Gate #7 'Su that may sinh con tuoi', so HEAD voi HEAD). Bo cot claims + tin hieu dirty khoi DASHBOARD.md. Con lai o V0.2 (PLATFORM.md muc 7): BACKLOG cho Gemini, STATUS cho Observer, version_source hoa/thuong tren Windows (LOW), dong protocol thanh skill.",
       "released_at": "2026-08-27"
     }
   }
