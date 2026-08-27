@@ -3,10 +3,10 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gemini": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "V0.2-E (GPT chot 27/08): dung BACKLOG.md cho nhanh Gemini — noi canonical giu viec mo. Khong doi generator, khong doi schema, khong doi governance.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "V0.2-E DA XONG va DA PUSH: BACKLOG.md rieng cho nhanh Gemini (G-01..G-08), khai vao Ban do file, STATUS cap nhat theo. Viec mo lon nhat: G-01 — Duc phai chot vi la doi luat an toan.",
       "released_at": "2026-08-27"
     },
     "workers/duc-auto-chatgpt": {
@@ -17,10 +17,10 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "V0.2-E: va false positive cua detector anti-drift — ma viec G-01/B-14 bi doc nham thanh so lenh Bridge. Phat hien khi dung BACKLOG cho Gemini.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "V0.2-E DA XONG va DA PUSH: va false positive detector (ma viec G-xx/B-xx khong con bi doc nham thanh so may do), ghim ca 16. Con lai o V0.2 (PLATFORM.md muc 7): STATUS cho Observer (CHO QUYET DINH KIEN TRUC rieng, dung va special-case vao generator), version_source hoa/thuong tren Windows (LOW), dong protocol thanh skill.",
       "released_at": "2026-08-27"
     }
   }
