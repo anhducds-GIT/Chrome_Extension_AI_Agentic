@@ -23,6 +23,14 @@ Nguồn: `drafts/FLOW-EXT-COORDINATION-PLAN.md` mục 6.
   phục vụ `session.hello`, `system.ping`, `system.capabilities`,
   `diagnostics.dom_probe`. Gỡ khoá phải ghi thêm một mục vào file này.
 
+## 2026-08-27 — Đức chốt trần trial nhánh video: TỐI ĐA 3 VIDEO một lượt
+
+Đức chốt trong chat (27/08): "trial chỉ tạo tối đa 3 Video 15 credit thôi nhé, tổng là
+45 credit, đó là giới hạn free." → Trần cứng cho `run.trial` của nhánh này là **3 job/chuỗi**
+(thay đề xuất ≤2 trong kế hoạch FLOW). 15 credit/video là số đo hiện tại của gói free —
+con số credit có thể đổi theo Google, trần 3 video thì không tự đổi. Code hoá ở F-04
+(`dev-trial-core.js`) trước khi gỡ khoá bootstrap.
+
 ## 2026-08-27 — `chat.reload` vào allowlist bootstrap (thứ 5)
 
 Gặp thật ngay lần nối đầu: tab Flow mở trước khi load extension → content script chưa

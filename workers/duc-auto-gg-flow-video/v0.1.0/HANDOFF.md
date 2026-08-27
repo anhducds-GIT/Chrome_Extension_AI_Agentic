@@ -39,3 +39,12 @@
   load extension, và mọi lần reload extension sau này đều cần F5 tab. 2 test đổi pin theo
   rebrand, bootstrap-gate đổi kỳ vọng chat.reload. Suite 80/80 xanh. Còn mở: Đức bấm ⟳
   extension (nạp icon + allowlist mới) → chat.reload → dom_probe chụp bằng chứng.
+- 2026-08-27 · `claude-flow-1` · FLOW-01 bắt đầu ăn: chat.reload tự F5 tab OK, snapshot #1
+  (idle) đã lưu `evidence/F1-snapshot-1-idle-20260827.json`. Phát hiện chính: composer =
+  đúng 1 `[contenteditable][role=textbox]`; nút gửi = "arrow_forward Create" (disabled khi
+  trống); input file `image/*` multiple; chip cấu hình "Video · 720p · 10s · 16:9 · x1";
+  trang React/Next, KHÔNG có custom tag → bám text/class. Probe cũ MÙ thẻ <video> → đã
+  thêm mắt video + class nút vào DAC_DOM_PROBE (test ghim trong bridge-dom-probe-static).
+  Đức chốt trần trial 3 video/lượt (15 credit/video, free 45) → decisions.md + F-04.
+  Suite 80/80. Còn mở: Đức ⟳ lần nữa (nạp probe mới) → re-probe idle (thấy video sẵn có)
+  → nhờ Đức bấm Create 1 lần để chụp trạng thái "đang sinh" + "xong".

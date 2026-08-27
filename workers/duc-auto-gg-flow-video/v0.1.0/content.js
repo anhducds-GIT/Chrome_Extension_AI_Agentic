@@ -930,8 +930,29 @@
           }
         }
         const buttons = Array.from(document.querySelectorAll("button")).filter(isVisible)
-          .map((button) => ({ aria: (button.getAttribute("aria-label") || "").slice(0, 60), testid: button.getAttribute("data-test-id") || "", txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40), disabled: button.disabled || button.getAttribute("aria-disabled") === "true" }))
+          .map((button) => ({ aria: (button.getAttribute("aria-label") || "").slice(0, 60), testid: button.getAttribute("data-test-id") || "", txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40), disabled: button.disabled || button.getAttribute("aria-disabled") === "true", cls: (button.className && typeof button.className === "string" ? button.className : "").slice(0, 80) }))
           .filter((button) => button.aria || button.testid || button.txt).slice(0, 40);
+        // Flow (labs.google) renders results as <video>, which the original
+        // image-era probe could not see at all -- the operator's remote eyes
+        // were blind to the one element this worker exists for (F-01).
+        const videos = Array.from(document.querySelectorAll("video")).slice(0, 15).map((video) => {
+          const rect = video.getBoundingClientRect();
+          const src = video.currentSrc || video.src || "";
+          const sourceChild = video.querySelector("source");
+          return {
+            rect: { w: Math.round(rect.width), h: Math.round(rect.height) },
+            scheme: (src.match(/^(blob:|data:|https:|http:)/) || ["none"])[0],
+            srcHead: src.slice(0, 70),
+            sourceHead: sourceChild ? String(sourceChild.src || "").slice(0, 70) : "",
+            poster: String(video.poster || "").slice(0, 70),
+            duration: Number.isFinite(video.duration) ? Math.round(video.duration * 10) / 10 : null,
+            readyState: video.readyState,
+            paused: video.paused,
+            controls: video.controls,
+            cls: (typeof video.className === "string" ? video.className : "").slice(0, 80),
+            chain: chainOf(video)
+          };
+        });
         const images = Array.from(document.querySelectorAll("img")).slice(0, 15).map((image) => {
           const rect = image.getBoundingClientRect();
           const src = image.currentSrc || image.src || "";
@@ -952,12 +973,13 @@
           securityBlocker: securityBlockerText(),
           generationLimitBlocker: generationLimitText(),
           busy: STATE.busy,
-          selectorCounts, buttons, images, customTags, fileInputs,
+          selectorCounts, buttons, images, videos, customTags, fileInputs,
           truncated: false,
         };
         // Payload cap ~64KB: shrink the bulky arrays first rather than fail.
         if (JSON.stringify(probe).length > 64 * 1024) {
           probe.images = probe.images.slice(0, 5);
+          probe.videos = probe.videos.slice(0, 5);
           probe.buttons = probe.buttons.slice(0, 10);
           probe.customTags = probe.customTags.slice(0, 40);
           probe.truncated = true;

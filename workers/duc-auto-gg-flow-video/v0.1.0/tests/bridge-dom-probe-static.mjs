@@ -46,4 +46,11 @@ assert.match(probeBlock, /truncated = true/, "truncation is recorded, not silent
 assert.match(probeBlock, /selectorCounts/, "adapter selector match counts are reported");
 assert.match(probeBlock, /return false;/, "probe responds synchronously");
 
+// Flow is a VIDEO product: the probe must scan <video> elements (added F-01,
+// 2026-08-27 — the image-era probe was blind to them) and ship them in the
+// payload, shrunk under the cap rather than dropped.
+assert.match(probeBlock, /querySelectorAll\("video"\)/, "probe scans <video> elements");
+assert.match(probeBlock, /selectorCounts, buttons, images, videos, customTags, fileInputs/, "videos ride in the probe payload");
+assert.match(probeBlock, /probe\.videos = probe\.videos\.slice\(0, 5\)/, "videos participate in truncation");
+
 console.log("bridge dom-probe static: PASS");

@@ -12,8 +12,9 @@
   (video tính bằng phút), surface Flow thật, tín hiệu "video xong". Kèm test ghim.
 - **F-03** · Thay `image-evidence-core.js` bằng lớp bằng chứng video (URL, poster,
   duration; chính sách đề xuất: chỉ ghi URL + metadata, không tự tải file video).
-- **F-04** · Hạ trần `dev-trial-core.js` xuống ≤2 job cho nhánh này (hiện còn 30 của
-  nhánh ảnh [ĐỌC]) — làm TRƯỚC khi gỡ khoá bootstrap.
+- **F-04** · Hạ trần `dev-trial-core.js` xuống **≤3 job** cho nhánh này (Đức chốt 27/08:
+  3 video × 15 credit = 45, giới hạn free; hiện code còn trần 30 của nhánh ảnh [ĐỌC]) —
+  làm TRƯỚC khi gỡ khoá bootstrap.
 
 ## P2 — trước pilot live
 

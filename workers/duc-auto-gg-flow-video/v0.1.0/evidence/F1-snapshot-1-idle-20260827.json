@@ -1,0 +1,212 @@
+﻿{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-2cfbb2ae-e33e-48a6-9d3e-2ba7fbc24a81",
+  "ok": true,
+  "result": {
+    "attachmentPending": false,
+    "busy": false,
+    "buttons": [
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "arrow_back Go Back"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "more_vert More options"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "search Search"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "filter_list Sort & Filter"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "add Add Media"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "help Product Help"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "settings_2 View Settings"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "more_vert More"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "PRO"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "dashboard All Media"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "accessibility_new Characters"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "movie View scenes"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "apps_spark_2 Tools"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "delete View Trash"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "left_panel_close Collapse"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "add_2 Create"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "Agent"
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "Video · 720p · 10s crop_16_9 x1"
+      },
+      {
+        "aria": "",
+        "disabled": true,
+        "testid": "",
+        "txt": "arrow_forward Create"
+      }
+    ],
+    "captured_at": "2026-08-27T08:35:00.509Z",
+    "composerFound": true,
+    "customTags": [
+      "next-route-announcer"
+    ],
+    "fileInputs": [
+      {
+        "accept": "image/*",
+        "chain": "div > div > body > html",
+        "connected": true,
+        "multiple": true
+      }
+    ],
+    "generating": false,
+    "generationLimitBlocker": null,
+    "images": [
+      {
+        "alt": "User profile image",
+        "chain": "button > div > div > div > div",
+        "generated": false,
+        "rect": {
+          "h": 32,
+          "w": 32
+        },
+        "scheme": "https:",
+        "srcHead": "https://lh3.googleusercontent.com/a/ACg8ocKwfS03VzPXNqgRNXbKKGNd2w2CY8"
+      }
+    ],
+    "securityBlocker": null,
+    "selectorCounts": {
+      "attachmentPreview": [
+        "uploader-file-preview gem-media-attachment img => 0",
+        "gem-media-attachment img => 0",
+        "img.gem-attachment-style-img => 0",
+        "img[alt=\"attachment\" i] => 0"
+      ],
+      "composer": [
+        "rich-textarea .ql-editor[role=\"textbox\"][contenteditable=\"true\"] => 0",
+        "[data-test-id=\"textarea-wrapper\"] [role=\"textbox\"][contenteditable=\"true\"] => 0",
+        "[contenteditable=\"true\"][role=\"textbox\"] => 1"
+      ],
+      "composerScope": "input-container => 0",
+      "fileDropTarget": "file-drop-indicator => 0",
+      "fileInput": [
+        "images-files-uploader input[type=\"file\"] => 0",
+        ".cdk-overlay-container input[type=\"file\"] => 0",
+        "input[type=\"file\"] => 1"
+      ],
+      "generatedImage": "generated-image single-image img => 0",
+      "generatedImageAltMarker": "ai generated => 0",
+      "generatedImageContainer": "generated-image => 0",
+      "generatingBusy": "chat-window [role=\"progressbar\"], chat-window [aria-busy=\"true\"] => 0",
+      "outputExclude": "user-query, image-card, input-container => 0",
+      "quotaExceededAnchor": "freemium-file-upload-quota-exceeded-disclaimer => 0",
+      "responseContainer": [
+        "model-response => 0"
+      ],
+      "send": [
+        "button[aria-label=\"Send message\"] => 0",
+        "button[aria-label*=\"Send\" i] => 0",
+        "button[aria-label*=\"Gửi\" i] => 0"
+      ],
+      "stop": [
+        "button[aria-label=\"Stop response\"] => 0",
+        "button[aria-label*=\"Stop\" i] => 0",
+        "button[aria-label*=\"Dừng\" i] => 0"
+      ],
+      "thinkingAnimation": "thinking-dots-animation => 0",
+      "uploadMenuButton": [
+        "button[aria-label=\"Upload & tools\"] => 0",
+        "button[aria-label*=\"Upload\" i][aria-haspopup=\"menu\"] => 0"
+      ],
+      "uploadPending": [
+        "[aria-busy=\"true\"] => 0",
+        "[role=\"progressbar\"] => 0"
+      ],
+      "userQueryContainer": "user-query => 0"
+    },
+    "sendFound": false,
+    "stopFound": false,
+    "surface": "CONVERSATION",
+    "surface_allowed": true,
+    "truncated": false,
+    "url": "https://labs.google/fx/tools/flow/project/d7c07112-eb7f-4efe-b251-8aee4b2b6c4f"
+  },
+  "responded_at": "2026-08-27T08:35:00.511Z"
+}
