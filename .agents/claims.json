@@ -17,10 +17,10 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "Viet brief G-01 vao drafts/ + ghi quyet dinh Observer. CHUA giao code — G-01 la doi luat an toan, cho Duc chot.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "Brief G-01 DA VIET va DA PUSH: drafts/G01-STOP-BEFORE-SUBMIT-BRIEF.md. CHUA GIAO CODE — doi luat an toan, cho Duc chot 3 cau o muc 6 cua brief. Quyet dinh Observer (giu nguyen o goc) ghi o PLATFORM.md muc 8.",
       "released_at": "2026-08-27"
     }
   }
