@@ -876,7 +876,8 @@
       "run.trial": withBridgeErrors(bridgeRunTrial),
       "run.stop": withBridgeErrors(bridgeRunStop),
       "chat.reload": withBridgeErrors(bridgeChatReload),
-      "diagnostics.dom_probe": withBridgeErrors(bridgeDomProbe)
+      "diagnostics.dom_probe": withBridgeErrors(bridgeDomProbe),
+      "diagnostics.evidence_submit": withBridgeErrors(bridgeEvidenceSubmit)
     }
   });
 
@@ -887,6 +888,47 @@
     const response = await send({ type: "DAC_DOM_PROBE" });
     if (!response?.ok) throw new Error(response?.error || "DOM probe failed in the content script.");
     return response.probe;
+  }
+
+  // FLOW-01 evidence scaffold: forwards ONE typed prompt + Create click to the
+  // content script, which enforces the hard cap of 3 submissions per page load
+  // (owner decision 2026-08-27 — the whole free budget is 3 videos).
+  // Audit blocker fixes (Codex, 2026-08-27, two rounds): GIÀNH khoá như
+  // chat.reload, không chỉ ĐỌC cờ — handler này await send(), nên một phép
+  // kiểm trần trụi để hở đúng cửa sổ đó cho run() khởi động rồi method này
+  // vẫn gõ đè composer và bấm Create giữa một run đang sống. Kiểm rồi giành
+  // đều đồng bộ, giữ khoá suốt vòng đời submit, nhả trong finally.
+  async function bridgeEvidenceSubmit(params) {
+    const reason = bridgeApprovalLockReason({ workbookRequired: false, persistenceRequired: false });
+    if (reason) {
+      throw new window.DacBridgeCore.BridgeProtocolError(
+        "RUN_ACTIVE",
+        "RUN_ACTIVE: Đang có run chạy nên không submit bằng chứng được. Gọi run.stop và đợi run dừng hẳn trước.",
+        { lock_reason: reason }
+      );
+    }
+    state.queueMutationRunning = true;
+    controls();
+    try {
+      // Audit round 3: send() awaits chrome.tabs.sendMessage with no timeout of
+      // its own; if the content script never answers, the lock above would be
+      // held forever and run() stays blocked. Bound the wait: the content side
+      // works at most ~8s, so 15s is generous. On timeout the click may still
+      // have happened — the content-side slot stays consumed, which is the safe
+      // direction (lose a counted slot, never overspend credits).
+      const timeoutMs = 15000;
+      const response = await Promise.race([
+        send({ type: "DAC_FLOW_EVIDENCE_SUBMIT", prompt: params.prompt }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error(
+          "EVIDENCE_SUBMIT_TIMEOUT: content script không trả lời trong 15s. Khoá đã nhả; lượt đếm phía trang có thể ĐÃ tiêu — kiểm tra trang bằng dom_probe trước khi gọi lại."
+        )), timeoutMs))
+      ]);
+      if (!response?.ok) throw new Error(response?.error || "Evidence submit failed in the content script.");
+      return response.result;
+    } finally {
+      state.queueMutationRunning = false;
+      controls();
+    }
   }
 
   function connectBridgeExecutor() {
@@ -4977,6 +5019,7 @@
       "queue.propose": bridgeQueuePropose,
       "queue.proposal.get": bridgeProposalGet,
       "diagnostics.dom_probe": bridgeDomProbe,
+      "diagnostics.evidence_submit": bridgeEvidenceSubmit,
       "run.trial": bridgeRunTrial,
       "run.stop": bridgeRunStop,
       "chat.reload": bridgeChatReload

@@ -20,8 +20,8 @@ assert.ok(Object.isFrozen(routerCore.BOOTSTRAP_ALLOWED_METHODS), "the exported b
 assert.ok(Array.isArray(routerCore.BOOTSTRAP_ALLOWED_METHODS), "the export is a frozen ARRAY, not a Set — Object.freeze does not freeze Set contents (audit 2026-08-27)");
 assert.deepEqual(
   [...routerCore.BOOTSTRAP_ALLOWED_METHODS],
-  ["session.hello", "system.ping", "system.capabilities", "diagnostics.dom_probe", "chat.reload"],
-  "only the five bootstrap methods are exposed"
+  ["session.hello", "system.ping", "system.capabilities", "diagnostics.dom_probe", "chat.reload", "diagnostics.evidence_submit"],
+  "only the six bootstrap methods are exposed"
 );
 // Bypass regression (audit blocker 2026-08-27): mutating the exported value
 // must be impossible, and even a swallowed attempt must not open the gate.

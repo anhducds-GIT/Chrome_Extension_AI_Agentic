@@ -15,7 +15,11 @@
     // F5s the bound tab — no prompt, no credits — and without it every
     // extension reload during bootstrap needs the owner's hands for the
     // mandatory tab refresh (RECEIVER_LOST loop).
-    "chat.reload"
+    "chat.reload",
+    // diagnostics.evidence_submit (2026-08-27, decisions.md): the single
+    // bootstrap interaction primitive — one typed prompt + one Create click,
+    // content-side hard cap 3 per page load (owner's 45-credit free budget).
+    "diagnostics.evidence_submit"
   ]);
   const BOOTSTRAP_ALLOWED_SET = new Set(BOOTSTRAP_ALLOWED_METHODS);
 

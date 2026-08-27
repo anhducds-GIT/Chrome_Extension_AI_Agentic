@@ -31,6 +31,16 @@ Nguồn: `drafts/FLOW-EXT-COORDINATION-PLAN.md` mục 6.
 con số credit có thể đổi theo Google, trần 3 video thì không tự đổi. Code hoá ở F-04
 (`dev-trial-core.js`) trước khi gỡ khoá bootstrap.
 
+## 2026-08-27 — `diagnostics.evidence_submit`: primitive tương tác duy nhất của bootstrap
+
+Đức chốt trong chat: "bạn hãy tự động thử tất cả các tính năng" (việc cần tay người để
+cuối). Claude-in-Chrome chưa cài nên extension phải tự có tay. Thêm method
+`diagnostics.evidence_submit`: gõ 1 prompt vào composer (selector có bằng chứng
+`evidence/F1-snapshot-1-idle-20260827.json`) + bấm nút "arrow_forward Create", một lần
+mỗi call, **trần cứng 3 lượt mỗi lần nạp trang** khớp ngân sách free 3 video. Đếm
+TRƯỚC khi click (click lỗi không hoàn lượt — thà mất lượt đếm còn hơn lố credits).
+Là giàn giáo FLOW-01: gỡ hoặc gộp vào runner thật ở F-02.
+
 ## 2026-08-27 — `chat.reload` vào allowlist bootstrap (thứ 5)
 
 Gặp thật ngay lần nối đầu: tab Flow mở trước khi load extension → content script chưa

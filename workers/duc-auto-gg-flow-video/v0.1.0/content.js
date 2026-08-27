@@ -907,6 +907,67 @@
       return false;
     }
 
+    if (message.type === "DAC_FLOW_EVIDENCE_SUBMIT") {
+      // FLOW-01 evidence scaffold (2026-08-27): the ONLY interaction path of
+      // the bootstrap phase. Selectors are evidence-backed, not guessed:
+      // evidence/F1-snapshot-1-idle-20260827.json shows exactly one
+      // [contenteditable][role=textbox] composer and one enabled-on-input
+      // "arrow_forward Create" button. HARD CAP: 3 submissions per page load —
+      // the owner's whole free budget is 3 videos x 15 credits (decisions.md).
+      const EVIDENCE_SUBMIT_CAP = 3;
+      STATE.evidenceSubmitCount = STATE.evidenceSubmitCount || 0;
+      if (STATE.evidenceSubmitCount >= EVIDENCE_SUBMIT_CAP) {
+        sendResponse({ ok: false, error: `EVIDENCE_TRIAL_CAP: da dung het ${EVIDENCE_SUBMIT_CAP} luot submit cua phien trang nay (tran credits free cua owner).` });
+        return false;
+      }
+      // Audit blocker fix (Codex, 2026-08-27): reserve the slot SYNCHRONOUSLY,
+      // before any await, so two concurrent submits cannot both pass the cap
+      // check and overspend credits. A reserved slot is never refunded — losing
+      // a slot to an error is cheaper than losing 15 credits to a race. The
+      // busy flag additionally serializes: one submit in flight at a time.
+      if (STATE.evidenceSubmitInFlight) {
+        sendResponse({ ok: false, error: "EVIDENCE_SUBMIT_BUSY: dang co mot luot submit chua xong." });
+        return false;
+      }
+      const evidencePrompt = typeof message.prompt === "string" ? message.prompt.trim() : "";
+      if (!evidencePrompt) {
+        sendResponse({ ok: false, error: "EVIDENCE_PROMPT_EMPTY" });
+        return false;
+      }
+      STATE.evidenceSubmitInFlight = true;
+      STATE.evidenceSubmitCount += 1;
+      (async () => {
+        const composer = findComposer();
+        if (!composer) throw new Error("EVIDENCE_COMPOSER_NOT_FOUND");
+        setComposerText(composer, evidencePrompt);
+        const findCreateButton = () => Array.from(document.querySelectorAll("button")).filter(isVisible).find((button) => {
+          const label = (button.innerText || "").replace(/\s+/g, " ").trim();
+          return /arrow_forward/i.test(label) && /create/i.test(label);
+        });
+        let createButton = null;
+        const deadline = Date.now() + 8000;
+        while (Date.now() < deadline) {
+          const candidate = findCreateButton();
+          if (candidate && !candidate.disabled && candidate.getAttribute("aria-disabled") !== "true") { createButton = candidate; break; }
+          await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+        if (!createButton) throw new Error("EVIDENCE_CREATE_BUTTON_NOT_READY: composer da co chu nhung nut Create khong bat len trong 8s (luot dem da tieu, khong hoan).");
+        createButton.click();
+        return {
+          submitted: true,
+          submit_index: STATE.evidenceSubmitCount,
+          cap: EVIDENCE_SUBMIT_CAP,
+          button_text: (createButton.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40),
+          url: location.href,
+          at: new Date().toISOString()
+        };
+      })()
+        .then((result) => sendResponse({ ok: true, result }))
+        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error) }))
+        .finally(() => { STATE.evidenceSubmitInFlight = false; });
+      return true;
+    }
+
     if (message.type === "DAC_DOM_PROBE") {
       // STRICTLY READ-ONLY diagnostics for the AI operator (bridge method
       // diagnostics.dom_probe): observes the page and returns a snapshot.

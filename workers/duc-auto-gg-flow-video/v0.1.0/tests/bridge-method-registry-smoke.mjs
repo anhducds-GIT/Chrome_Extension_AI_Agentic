@@ -11,7 +11,7 @@ const bridge = globalThis.DacBridgeCore;
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
   "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
-  "jobs.reorder", "references.add", "diagnostics.dom_probe", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial", "run.stop", "chat.reload"
+  "jobs.reorder", "references.add", "diagnostics.dom_probe", "diagnostics.evidence_submit", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial", "run.stop", "chat.reload"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
@@ -93,7 +93,8 @@ const validByMethod = {
   "run.stop": {},
   "chat.reload": {},
   "run.trial": { job_ids: ["P09-01", "P09-02"], timeout_sec: 90, delay_sec: 25 },
-  "diagnostics.dom_probe": {}
+  "diagnostics.dom_probe": {},
+  "diagnostics.evidence_submit": { prompt: "A calm ocean wave at sunset" }
 };
 for (const [method, params] of Object.entries(validByMethod)) {
   assert.doesNotThrow(() => bridge.validateParams(method, params), `${method} accepts its v1 fixture`);
@@ -120,7 +121,8 @@ const invalidByMethod = {
   "run.stop": { job_id: "Q001" },
   "chat.reload": { tab_id: 7 },
   "run.trial": { job_ids: [] },
-  "diagnostics.dom_probe": { click: true }
+  "diagnostics.dom_probe": { click: true },
+  "diagnostics.evidence_submit": { prompt: "" }
 };
 for (const [method, params] of Object.entries(invalidByMethod)) {
   assert.throws(() => bridge.validateParams(method, params), (error) => error.code === "INVALID_PARAMS", `${method} rejects invalid schema input`);

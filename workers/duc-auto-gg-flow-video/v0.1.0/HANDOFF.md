@@ -48,3 +48,12 @@
   Đức chốt trần trial 3 video/lượt (15 credit/video, free 45) → decisions.md + F-04.
   Suite 80/80. Còn mở: Đức ⟳ lần nữa (nạp probe mới) → re-probe idle (thấy video sẵn có)
   → nhờ Đức bấm Create 1 lần để chụp trạng thái "đang sinh" + "xong".
+- 2026-08-27 · `claude-flow-1` · Đức đổi lệnh: "tự động thử tất cả tính năng, việc cần
+  tay người để cuối". Snapshot #2 (probe có mắt video): videos=[] — project trống, phải
+  tự sinh. Claude-in-Chrome chưa cài → thêm `diagnostics.evidence_submit` (primitive
+  tương tác duy nhất: gõ 1 prompt + bấm Create; trần cứng 3 lượt/trang = ngân sách free
+  3 video Đức chốt). Audit Codex 4 vòng: FAIL race vượt trần khi gọi đồng thời → FAIL
+  thiếu khoá RUN_ACTIVE → FAIL TOCTOU khoá chỉ đọc không giành → FAIL deadlock khi
+  content không trả lời → sửa cả 4 (đếm+busy đồng bộ trước await; giành khoá kiểu
+  chat.reload; Promise.race 15s) → **PASS**. Suite 81/81. Còn mở: Đức ⟳ + mở lại panel
+  → phiên này tự chạy: chat.reload → evidence_submit → poller chụp during/after.

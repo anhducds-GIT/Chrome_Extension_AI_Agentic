@@ -11,7 +11,7 @@
 | Host Bridge | `C:\WORKING ZONE\Duc-Auto-Gemini-Bridge\`, cổng 32148 | `C:\WORKING ZONE\Duc-Auto-GG-Flow-Video-Bridge\`, cổng **32149** |
 | Pairing | `duc-auto-gemini-bridge-pairing-v1.json` | `duc-auto-gg-flow-video-bridge-pairing-v1.json` (cùng thư mục host, KHÔNG commit) |
 | Khởi động host | `START-BRIDGE_Gemini_Extension.cmd` | `START-BRIDGE_GG_Flow_Video.cmd` |
-| Method dùng được | đầy đủ | **KHOÁ BOOTSTRAP**: chỉ `session.hello`, `system.ping`, `system.capabilities`, `diagnostics.dom_probe`, `chat.reload` — method khác bị từ chối kèm `details.reason: "bootstrap_locked"` |
+| Method dùng được | đầy đủ | **KHOÁ BOOTSTRAP**: chỉ `session.hello`, `system.ping`, `system.capabilities`, `diagnostics.dom_probe`, `chat.reload`, `diagnostics.evidence_submit` (gõ 1 prompt + bấm Create, trần 3 lượt/trang — TỐN 15 CREDIT MỖI LƯỢT) — method khác bị từ chối kèm `details.reason: "bootstrap_locked"` |
 | Trần trial dev | ≤30 job | **≤2 job** (video trừ credits thật) — và hiện chưa mở trial |
 | Trang đích | gemini.google.com | `https://labs.google/fx/tools/flow/*` |
 

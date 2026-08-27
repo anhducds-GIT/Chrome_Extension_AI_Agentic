@@ -14,8 +14,10 @@ y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
    FLOW duyệt 27/08 — KHÔNG dùng trần 30 của nhánh ảnh). Không retry tự động
    khi nghi ngờ đã trừ credits. Nới trần = đổi luật an toàn = hỏi Đức.
 3. **Khoá bootstrap Bridge** (allowlist trong `bridge-router-core.js`: 4 method
-   đọc/chẩn đoán + `chat.reload`) chỉ được gỡ khi provider-adapter đã dựng từ bằng
-   chứng thật và có test ghim. Gỡ khoá ghi 1 dòng vào `decisions.md`.
+   đọc/chẩn đoán + `chat.reload` + `diagnostics.evidence_submit` trần cứng 3 lượt/trang)
+   chỉ được gỡ khi provider-adapter đã dựng từ bằng chứng thật và có test ghim.
+   Gỡ khoá ghi 1 dòng vào `decisions.md`; `evidence_submit` là giàn giáo — gỡ hoặc
+   gộp vào runner thật ở F-02.
 4. Các luật thừa kế nguyên văn từ nhánh Gemini/ChatGPT: không innerHTML;
    không làm yếu exact-once / attribution / readiness / persistence /
    checkpoint / security hard-stop; chữ operator tiếng Việt, CODE tiếng Anh;
