@@ -17,10 +17,10 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "V0.2-B DA XONG va DA PUSH (bb70828): detector machine-owned facts trong STATUS, suite 31 ca, mutation hai chieu 7/7 do. Con lai o V0.2 (PLATFORM.md muc 7): feature-parity.mjs, BACKLOG cho Gemini, STATUS cho Observer, nang cong 6->7 (governance, audit rieng).",
+      "owner": "opus-platform-2",
+      "ai": "Claude",
+      "claimed_at": "2026-08-27",
+      "task": "V0.2-C (GPT chot 27/08): scripts/feature-parity.mjs — may hoa CHI muc 1 (Bridge) + muc 3 (module/hash), marker block, --check. TUYET DOI khong suy dien hanh vi o muc 2.",
       "released_at": "2026-08-27"
     }
   }

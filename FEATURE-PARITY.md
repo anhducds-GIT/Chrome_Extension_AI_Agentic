@@ -39,27 +39,47 @@ bảng này bằng máy thay vì gõ tay.
 
 Đếm trực tiếp từ `registryEntry({ name: ... })` trong `bridge-core.js` hai bên.
 
-**GPT 22 · Gemini 19.** Sau hôm nay **GPT đi trước** ở method Bridge.
+<!-- AUTO:BRIDGE START -->
+**GPT 22 · Gemini 19.**
+
+| Method | GPT | Gemini |
+|---|---:|---:|
+| `chat.reload` | ✅ | ✅ |
+| `diagnostics.dom_probe` | ✅ | ✅ |
+| `jobs.add` | ✅ | ✅ |
+| `jobs.remove` | ✅ | ✅ |
+| `jobs.reorder` | ✅ | ✅ |
+| `jobs.update` | ✅ | ✅ |
+| `ledger.read` | ✅ | ✅ |
+| `output.configure` | ✅ | ✅ |
+| `output.set_folder_hint` | ✅ | ❌ |
+| `profiles.remove` | ✅ | ❌ |
+| `queue.list` | ✅ | ✅ |
+| `queue.proposal.get` | ✅ | ✅ |
+| `queue.proposal.withdraw` | ✅ | ❌ |
+| `queue.propose` | ✅ | ✅ |
+| `references.add` | ✅ | ✅ |
+| `run.status` | ✅ | ✅ |
+| `run.stop` | ✅ | ✅ |
+| `run.trial` | ✅ | ✅ |
+| `run_settings.configure` | ✅ | ✅ |
+| `session.hello` | ✅ | ✅ |
+| `system.capabilities` | ✅ | ✅ |
+| `system.ping` | ✅ | ✅ |
+
+**Chỉ GPT có (3):** `output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`.
+
+**Chỉ Gemini có (0):** không có.
+<!-- AUTO:BRIDGE END -->
+
+**GPT đang đi trước ở method Bridge** — đó là *diễn giải* của người về bảng trên, nên nó nằm
+ngoài khối AUTO. Câu này từng bị mất một lần: lúc đặt marker ngày 27/08 nó nằm chung dòng với
+con số máy đo, và bị nuốt theo. Đúng kiểu mất mát âm thầm mà marker sinh ra để chống — nên
+**đừng viết văn của người chung dòng với số của máy.**
 
 > **Đính chính 26/08 (phiên `claude-gemini-4`):** câu "Gemini có mà GPT thiếu đã rỗng" chỉ đúng cho
 > *method Bridge*. Ở bảng **hành vi** (mục 2) thì không rỗng — Gemini có **nhận dạng ảnh theo byte**
 > mà GPT chưa có.
-
-| Method | GPT | Gemini |
-|---|---|---|
-| `session.hello` · `system.ping` · `system.capabilities` | ✅ | ✅ |
-| `queue.list` · `ledger.read` · `run.status` | ✅ | ✅ |
-| `jobs.add` · `jobs.update` · `jobs.remove` · `jobs.reorder` | ✅ | ✅ |
-| `references.add` | ✅ | ✅ |
-| `output.configure` · `run_settings.configure` | ✅ | ✅ |
-| `queue.propose` · `queue.proposal.get` | ✅ | ✅ |
-| `run.trial` · `run.stop` · `chat.reload` | ✅ | ✅ |
-| `diagnostics.dom_probe` | ✅ | ✅ |
-| `output.set_folder_hint` | ✅ | ❌ |
-| `profiles.remove` | ✅ | ❌ |
-| `queue.proposal.withdraw` | ✅ | ❌ |
-
-**Gemini còn thiếu 3 method** ở trên.
 
 `references.add` mới cân bằng hôm nay (port sang GPT, xác minh live ở Pilot-14).
 
@@ -85,44 +105,72 @@ bảng này bằng máy thay vì gõ tay.
 
 ## 3. Module — **[ĐO]**
 
-GPT 32 file `.js` · Gemini 33. **Đã chuẩn hoá xuống dòng** (GPT dùng LF, Gemini dùng CRLF —
-không chuẩn hoá thì mọi file báo lệch 100%).
+<!-- AUTO:MODULES START -->
+GPT 32 file `.js` · Gemini 33.
 
-**8 file GIỐNG HỆT từng byte** — rủi ro bằng không nếu dời vào `workers/_shared/`:
+**8 file giống hệt sau khi chuẩn hoá CRLF/LF:**
 
-`attempt-identity-core` · `attempt-telemetry-core` · `audit-chain-core` ·
-`bridge-pairing-core` · `reconciliation-core` · `recreate-core` · `run-state-core` · `xlsx-codec`
+`attempt-identity-core.js` · `attempt-telemetry-core.js` · `audit-chain-core.js` · `bridge-pairing-core.js` · `reconciliation-core.js` · `recreate-core.js` · `run-state-core.js` · `xlsx-codec.js`
 
 **Chỉ một bên có:**
 
-| File | Bên nào | Là gì |
-|---|---|---|
-| `ab-poll-core.js` | GPT | chính sách trả lời poll A/B |
-| `content-decision-core.js` | Gemini | — chưa đọc, chưa dám mô tả |
-| `dev-trial-core.js` | Gemini | cổng dev-mode cho `run.trial` |
+| File | Bên nào |
+|---|---|
+| `ab-poll-core.js` | GPT |
+| `content-decision-core.js` | Gemini |
+| `dev-trial-core.js` | Gemini |
 
-**Lệch nhiều nhất** (23 file có ở cả hai nhưng khác nhau), đáng chú ý:
+**23 file có ở cả hai nhưng khác nội dung** (xếp theo chênh lệch số dòng giảm dần):
 
-| File | GPT | Gemini |
-|---|---|---|
-| `sidepanel.js` | 5.679 dòng | 4.987 dòng |
-| `bridge-core.js` | 933 | 799 |
-| `image-evidence-core.js` | 145 | **66** |
-| `output-profile-core.js` | 96 | **45** |
-| `checkpoint-core.js` | 101 | **69** |
-| `approval-persistence-core.js` | 61 | **25** |
+| File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
+|---|---:|---:|---:|
+| `sidepanel.js` | 5695 | 4987 | 708 |
+| `bridge-core.js` | 943 | 799 | 144 |
+| `image-evidence-core.js` | 145 | 66 | 79 |
+| `content.js` | 982 | 1053 | 71 |
+| `runner-core.js` | 259 | 203 | 56 |
+| `output-profile-core.js` | 96 | 45 | 51 |
+| `bridge-transport-loopback.js` | 287 | 241 | 46 |
+| `background.js` | 208 | 167 | 41 |
+| `approval-persistence-core.js` | 61 | 25 | 36 |
+| `checkpoint-core.js` | 101 | 69 | 32 |
+| `output-location-core.js` | 389 | 373 | 16 |
+| `provider-adapter.js` | 202 | 187 | 15 |
+| `halt-instructions-core.js` | 140 | 133 | 7 |
+| `chat-readiness-core.js` | 26 | 20 | 6 |
+| `bridge-proposal-core.js` | 377 | 374 | 3 |
+| `bridge-router-core.js` | 68 | 70 | 2 |
+| `operator-glossary-core.js` | 28 | 28 | 0 |
+| `operator-messages-core.js` | 80 | 80 | 0 |
+| `orchestrator-review-core.js` | 120 | 120 | 0 |
+| `plan-diagnostics-core.js` | 195 | 195 | 0 |
+| `resume-core.js` | 122 | 122 | 0 |
+| `sidepanel-ui-semantics.js` | 128 | 128 | 0 |
+| `xlsx-run-plan-core.js` | 60 | 60 | 0 |
+<!-- AUTO:MODULES END -->
+
+**Ghi chú mô tả do người giữ — không nằm trong khối AUTO:**
+
+- `ab-poll-core.js` — chính sách trả lời poll A/B.
+- `content-decision-core.js` — chưa đọc, chưa dám mô tả.
+- `dev-trial-core.js` — cổng dev-mode cho `run.trial`.
 
 `image-evidence-core` lệch hơn hai lần — đó là lớp quy ảnh về job, tức là lớp **an toàn**.
 Chênh lệch ở đây đáng lo hơn chênh lệch ở UI.
 
 ## 4. Tóm cho Đức: ai nợ ai
 
-**Gemini nợ GPT** (nhiều): khoá tab + khoá hội thoại, `DETECTION_BLIND`, ledger khai thật,
-latch dừng, nhiều ảnh một job, poll A/B, và 3 method bridge.
+<!-- AUTO:DEBT-METHODS START -->
+**Nợ method Bridge — [ĐO]:**
 
-**GPT nợ Gemini:** ở *method Bridge* thì không còn gì (`references.add` là món cuối, trả
-26/08). Nhưng ở *hành vi* thì **vẫn còn một món**: **nhận dạng ảnh theo BYTE** — Gemini có
-`sniffImageType` đọc byte đầu file thật, GPT quét ra 0 kết quả (mục 2, dòng **[ĐỌC]**).
+- **Gemini nợ GPT (3):** `output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`.
+- **GPT nợ Gemini (0):** không có.
+<!-- AUTO:DEBT-METHODS END -->
+
+**Nợ hành vi — [KHAI]:** Gemini nợ GPT (nhiều): khoá tab + khoá hội thoại,
+`DETECTION_BLIND`, ledger khai thật, latch dừng, nhiều ảnh một job và poll A/B (xem bằng
+chứng từng dòng ở mục 2). GPT nợ Gemini một món đã biết: **nhận dạng ảnh theo BYTE** — Gemini
+có `sniffImageType` đọc byte đầu file thật, GPT quét ra 0 kết quả (mục 2, dòng **[ĐỌC]**).
 
 Nói cách khác: **hai nhánh vẫn lệch hai chiều**, chỉ là rất không cân — Gemini nợ nhiều,
 GPT nợ đúng một món đã biết.

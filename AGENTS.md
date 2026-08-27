@@ -122,8 +122,22 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Khai trạng thái cho một extension (mới hoặc cũ) | `STATUS.template.md` ở gốc repo → chép thành `STATUS.md` đặt cạnh `manifest.json` |
 | Sắp code Extension Operation Platform V0.1 (STATUS/DASHBOARD) | `drafts/PLATFORM-V01-IMPLEMENTATION-BRIEF.md` — đề bài đã chốt, không tự mở rộng · prompt mở phiên: `drafts/PLATFORM-V01-ONBOARDING-PROMPT.md` |
 
-**Về `FEATURE-PARITY.md`:** bảng tính năng GPT ↔ Gemini, đo bằng máy 2026-08-26. Nó ở **gốc
-repo** vì nói về cả hai nhánh — sửa nó thì phải đang giữ `_root`. Mỗi dòng ghi rõ được xác lập
+**Về `FEATURE-PARITY.md`:** bảng tính năng GPT ↔ Gemini. Nó ở **gốc repo** vì nói về cả hai
+nhánh — sửa nó thì phải đang giữ `_root`.
+
+> **NỬA FILE NÀY DO MÁY SỞ HỮU (từ 2026-08-27).** Mọi thứ nằm giữa `<!-- AUTO:X START -->` và
+> `<!-- AUTO:X END -->` là **máy sinh** — mục 1 (method Bridge), mục 3 (module), và nợ *method*
+> ở mục 4. **Sửa tay trong đó sẽ mất trắng ở lần sinh sau.** Sinh lại / kiểm:
+> ```bash
+> node scripts/feature-parity.mjs           # sinh
+> node scripts/feature-parity.mjs --check    # chỉ kiểm, không ghi
+> ```
+> **Mục 2 (hành vi) thì ngược lại: của NGƯỜI, và máy bị cấm đụng vào.** Dò theo tên hàm đã cho
+> kết luận sai bốn lần trong một ngày. Muốn thêm dòng hành vi thì phải mở code đọc, gắn nhãn
+> **[ĐỌC]**, kèm bằng chứng.
+>
+> Và một luật nhỏ nhưng đã trả giá: **đừng viết văn của người chung dòng với số của máy** —
+> một câu diễn giải đã bị nuốt mất đúng vì nằm chung dòng với con số. Mỗi dòng ghi rõ được xác lập
 bằng cách nào (**[ĐO]** máy đếm · **[ĐỌC]** đọc thẳng code · **[DÒ]** tìm theo tên), vì ba loại
 đó tin được khác nhau: dò theo tên đã cho hai kết quả sai trong một buổi. **Dòng [DÒ] phải kiểm
 lại trước khi hành động.** Port tính năng sang nhánh kia thì đọc file này trước, đừng đọc
