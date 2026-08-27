@@ -86,3 +86,12 @@
 - 2026-08-27 · `claude-flow-1` · Codex implementer sửa đủ F-02 audit blockers R1–R5: video reconcile dùng tối thiểu budget 300s; timeout/uncertain/ambiguous sau submit được park hard-stop, không auto-retry; port G-01 abort theo attempt ở content + side panel và chặn race sau readiness gate; boundary video chụp ngay trước Create, đúng 1 ID mới mới được nhận, nhiều ID trả `OUTPUT_AMBIGUOUS` kèm toàn bộ candidate; khôi phục quota fallback EN+VN+credit và UTF-8 security; UI trial còn ≤3. Thêm test hành vi `content-abort-race-behavior.mjs`, `flow-video-safety-behavior.mjs` và test wiring `sidepanel-stop-before-submit-static.mjs`; suite **85/85 xanh**, syntax/diff check xanh. Không pilot live, không commit/push; cần reload extension trước runtime test.
 - 2026-08-27 · Codex implementer (dưới claim `claude-flow-1`) · Sửa blocker quota unreachable: `content.js` quét text hiển thị toàn trang nhưng loại `[contenteditable]`, `input`, `textarea`; giữ nguyên matcher EN+VN+credit. `generation-limit-smoke.mjs` chạy content receiver thật: “hết credit” + “you are out of credits” hard-stop, câu chỉ trong composer không chặn. Adapter ghi rõ message Flow còn UNMEASURED tới F-09. Suite **85/85 xanh**; không commit/push.
 - 2026-08-27 · Codex implementer F-05 (dưới claim `claude-flow-1`) · Đã gỡ bootstrap gate, khôi phục router + 5 test path byte-equivalent Gemini HEAD (gồm retry idempotent `queue.propose`), xoá test gate, giữ `diagnostics.evidence_submit` với cap 3/trang, cập nhật docs + decisions. Suite **84/84 xanh**; không commit/push.
+- 2026-08-27 · `claude-flow-1` · **BÀN GIAO PHIÊN — chat dài, Đức mở chat mới.** F-02/F-04/F-05
+  đã push (a35554b) sau 3 vòng audit (4 blocker vòng 1 gồm cả thiếu port G-01; quota
+  unreachable vòng 2; vòng 3 PASS). FLOW-04 ĐANG DỞ: trial runner chưa chạy vì extension
+  trong Chrome còn nạp bản cũ (jobs.add báo bootstrap_locked sau một lần ⟳ không ăn) — chờ
+  Đức ⟳ + Dev Mode. Brief bàn giao đầy đủ + prompt mở phiên: `NEXT-SESSION-BRIEF.md` (đã
+  khai Bản đồ file). Artifact "Bảng Điều Phối Duc Auto" được cập nhật thêm khu GG Flow
+  (feature list + roadmap checkpoint, cùng phiên này). STATUS.current_focus còn nói "Tiếp
+  theo F-02" — lạc hậu, phiên sau sửa cùng lượt regen dashboard sau trial (cần _root, đang
+  do phiên study giữ). Quyền package TRẢ sau dòng log này — phiên mới claim bằng nhãn riêng.
