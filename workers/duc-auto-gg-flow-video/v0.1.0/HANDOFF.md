@@ -68,6 +68,15 @@
   tiêu lượt) + ưu tiên TEXTAREA với native React setter. Đức chốt thêm: trial thoải mái,
   nhiều tài khoản free — trần 3/lượt-nạp-trang giữ nguyên (đổi account/F5 = lượt mới).
   Suite 81/81. Còn mở: Đức ⟳ → dry_run xác định đúng ô prompt → submit thật.
+- 2026-08-27 · `claude-flow-1` · **FLOW-01 ĐÓNG — video đầu tiên sinh bằng máy, đầu-cuối.**
+  Chuỗi: dry_run xác nhận bộ gõ 3 chiến thuật (Lexical ăn đường `input_events`; textContent
+  là thuốc độc) → evidence_submit thật (lượt 1/3, path execCommand) → ~70s → thẻ <video>
+  tăng 4→5, video mới `name=7e084b0` đứng đầu danh sách. Bộ bằng chứng đủ 6 snapshot +
+  tổng kết `evidence/F1-EVIDENCE-NOTES.md` (tín hiệu hoàn thành = đếm+so id video, KHÔNG
+  có progressbar; timeout khuyến nghị 180-300s; cấm bám class sc-*). Push chuỗi 3 commit
+  theo lệnh "duyệt carry" của Đức (kèm a19c81f + de61be9 của opus-platform-2, diff đã tự
+  đọc lại). STATUS current_focus → F-02. Còn mở: F-02 adapter thật + video-evidence-core
+  + nối runner/workbook; F-04 hạ trần trial 3; F-05 gỡ khoá bootstrap.
 
 - 2026-08-27 · Claude (`opus-platform-2`) · **Bridge host đã dời chỗ — đường dẫn tài liệu trong package này đã trỏ lại.** Đức yêu cầu quy tập mọi bridge về một nơi, và duyệt cho tôi sửa dù package đang do `claude-flow-1` giữ (`AGENTS.md` mục 1 — đã hỏi Đức).
   - Chỗ mới: `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video\` (cũ: `C:\WORKING ZONE\Duc-Auto-GG-Flow-Video-Bridge\`). Cổng 32149 không đổi.

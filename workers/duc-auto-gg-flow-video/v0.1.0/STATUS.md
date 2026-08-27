@@ -4,7 +4,7 @@ id: duc-auto-gg-flow-video
 name: Duc Auto GG Flow Video
 lifecycle: building
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "FLOW-01: chụp bằng chứng DOM trang Flow qua dom_probe (bootstrap đã fork, Bridge khoá chỉ-đọc, chưa chạy được job video nào)"
+current_focus: "FLOW-01 XONG: máy tự gõ prompt + bấm Create + video sinh thật (~70s, bằng chứng evidence/F1-EVIDENCE-NOTES.md). Tiếp theo F-02: viết provider-adapter thật từ bằng chứng, nối vào runner + workbook"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

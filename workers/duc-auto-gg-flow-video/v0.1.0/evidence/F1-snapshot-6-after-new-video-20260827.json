@@ -123,27 +123,6 @@
     },
     {
       "aria": "",
-      "cls": "sc-16c4830a-1 iBbNYo sc-e7a64add-0 sc-e7a64add-2 fPutAP blvbdy",
-      "disabled": false,
-      "testid": "",
-      "txt": "undo Reuse Prompt"
-    },
-    {
-      "aria": "",
-      "cls": "sc-16c4830a-1 iBbNYo sc-e7a64add-0 sc-e7a64add-2 fPutAP blvbdy",
-      "disabled": false,
-      "testid": "",
-      "txt": "delete_forever Delete"
-    },
-    {
-      "aria": "",
-      "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-40f16b33-9 sc-40f16b33-10 ew",
-      "disabled": false,
-      "testid": "",
-      "txt": "redo Reuse prompt"
-    },
-    {
-      "aria": "",
       "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-253cad92-0 ewGlDn famhRe joS",
       "disabled": false,
       "testid": "",
@@ -171,7 +150,7 @@
       "txt": "arrow_forward Create"
     }
   ],
-  "captured_at": "2026-08-27T15:07:46.067Z",
+  "captured_at": "2026-08-27T15:08:57.556Z",
   "composerFound": true,
   "customTags": [
     "next-route-announcer"
@@ -197,6 +176,17 @@
       },
       "scheme": "https:",
       "srcHead": "https://lh3.googleusercontent.com/a/ACg8ocJMw8Kqh8cLMtJGk5LbUqww_Onnda"
+    },
+    {
+      "alt": "Video thumbnail",
+      "chain": "button > a > div > span > div",
+      "generated": false,
+      "rect": {
+        "h": 187,
+        "w": 332
+      },
+      "scheme": "https:",
+      "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=7e084b0"
     },
     {
       "alt": "Video thumbnail",
@@ -340,17 +330,6 @@
       },
       "scheme": "https:",
       "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=46969ad"
-    },
-    {
-      "alt": "Generated image",
-      "chain": "a > div > span > div > div",
-      "generated": false,
-      "rect": {
-        "h": 155,
-        "w": 332
-      },
-      "scheme": "https:",
-      "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=768d8e1"
     }
   ],
   "securityBlocker": null,
@@ -472,6 +451,22 @@
   "truncated": false,
   "url": "https://labs.google/fx/tools/flow/project/c9d892ab-c453-4ba5-96e6-57bbe034f0dc",
   "videos": [
+    {
+      "chain": "button > a > div > span > div",
+      "cls": "sc-7b689609-2 eibPpl",
+      "controls": false,
+      "duration": null,
+      "paused": true,
+      "poster": "",
+      "readyState": 0,
+      "rect": {
+        "h": 0,
+        "w": 0
+      },
+      "scheme": "https:",
+      "sourceHead": "",
+      "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=7e084b0"
+    },
     {
       "chain": "button > a > div > span > div",
       "cls": "sc-7b689609-2 eibPpl",
