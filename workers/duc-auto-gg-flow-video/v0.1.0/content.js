@@ -949,47 +949,98 @@
         const target = textareas[0] || findComposer();
         if (!target) throw new Error("EVIDENCE_COMPOSER_NOT_FOUND");
         const targetDescription = `${target.tagName.toLowerCase()}${target.placeholder ? `[placeholder=${String(target.placeholder).slice(0, 60)}]` : ""}`;
+        const findCreateButton = () => Array.from(document.querySelectorAll("button")).filter(isVisible).find((button) => {
+          const label = (button.innerText || "").replace(/\s+/g, " ").trim();
+          return /arrow_forward/i.test(label) && /create/i.test(label);
+        });
+        const buttonEnabled = () => {
+          const candidate = findCreateButton();
+          return Boolean(candidate && !candidate.disabled && candidate.getAttribute("aria-disabled") !== "true");
+        };
+        const waitEnabled = async (ms) => {
+          const until = Date.now() + ms;
+          while (Date.now() < until) {
+            if (buttonEnabled()) return true;
+            await new Promise((resolve) => setTimeout(resolve, 250));
+          }
+          return buttonEnabled();
+        };
+        // Flow's composer is a Lexical-style React editor: overwriting
+        // textContent desyncs its internal model (live dry_run 27/08 — text
+        // visible, Create button dead). Try keyboard-equivalent strategies in
+        // order, reporting which one the editor accepted. NEVER assign
+        // textContent/innerText here.
+        let typingPath = "none";
+        const focusAndSelectAll = () => {
+          target.focus();
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(target);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        };
         if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") {
-          // React-controlled inputs ignore plain .value writes; go through the
-          // prototype setter so React's value tracker sees the change.
           const prototype = target.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
           const setter = Object.getOwnPropertyDescriptor(prototype, "value").set;
           target.focus();
           setter.call(target, evidencePrompt);
           target.dispatchEvent(new Event("input", { bubbles: true }));
+          typingPath = "native_setter";
         } else {
-          setComposerText(target, evidencePrompt);
+          // Strategy A: focused selection + execCommand insertText (fires real
+          // beforeinput/input the way a keystroke does).
+          focusAndSelectAll();
+          let inserted = false;
+          try { inserted = document.execCommand("insertText", false, evidencePrompt); } catch (_) { inserted = false; }
+          if (inserted && await waitEnabled(2500)) {
+            typingPath = "execCommand";
+          } else {
+            // Strategy B: explicit beforeinput/input InputEvent pair (Lexical
+            // subscribes to beforeinput and updates its own state).
+            focusAndSelectAll();
+            try {
+              target.dispatchEvent(new InputEvent("beforeinput", { bubbles: true, cancelable: true, inputType: "insertText", data: evidencePrompt }));
+              target.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: evidencePrompt }));
+            } catch (_) { /* reported via create_button below */ }
+            if (await waitEnabled(2500)) {
+              typingPath = "input_events";
+            } else {
+              // Strategy C: synthetic paste (rich editors route paste through
+              // their own pipeline).
+              focusAndSelectAll();
+              try {
+                const transfer = new DataTransfer();
+                transfer.setData("text/plain", evidencePrompt);
+                target.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: transfer }));
+                typingPath = "paste_event";
+              } catch (_) { typingPath = "all_failed"; }
+            }
+          }
         }
-        const findCreateButton = () => Array.from(document.querySelectorAll("button")).filter(isVisible).find((button) => {
-          const label = (button.innerText || "").replace(/\s+/g, " ").trim();
-          return /arrow_forward/i.test(label) && /create/i.test(label);
-        });
-        let createButton = null;
-        const deadline = Date.now() + 8000;
-        while (Date.now() < deadline) {
-          const candidate = findCreateButton();
-          if (candidate && !candidate.disabled && candidate.getAttribute("aria-disabled") !== "true") { createButton = candidate; break; }
-          await new Promise((resolve) => setTimeout(resolve, 250));
-        }
+        const createButton = (await waitEnabled(4000)) ? findCreateButton() : null;
         const buttonState = createButton ? "enabled" : (findCreateButton() ? "still_disabled" : "not_found");
+        const composerTextHead = (target.value ?? target.innerText ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
         if (evidenceDryRun) {
           return {
             submitted: false,
             dry_run: true,
             typed_into: targetDescription,
+            typing_path: typingPath,
+            composer_text_head: composerTextHead,
             textarea_count: textareas.length,
             create_button: buttonState,
             url: location.href,
             at: new Date().toISOString()
           };
         }
-        if (!createButton) throw new Error(`EVIDENCE_CREATE_BUTTON_NOT_READY: da go vao ${targetDescription} nhung nut Create ${buttonState} sau 8s (luot dem da tieu, khong hoan).`);
+        if (!createButton) throw new Error(`EVIDENCE_CREATE_BUTTON_NOT_READY: da go vao ${targetDescription} (path=${typingPath}, text_head=${composerTextHead.slice(0, 30)}) nhung nut Create ${buttonState} (luot dem da tieu, khong hoan).`);
         createButton.click();
         return {
           submitted: true,
           submit_index: STATE.evidenceSubmitCount,
           cap: EVIDENCE_SUBMIT_CAP,
           typed_into: targetDescription,
+          typing_path: typingPath,
           button_text: (createButton.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40),
           url: location.href,
           at: new Date().toISOString()

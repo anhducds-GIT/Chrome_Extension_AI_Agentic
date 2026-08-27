@@ -50,7 +50,14 @@ const block = content.slice(blockStart, blockEnd);
 assert.match(block, /EVIDENCE_SUBMIT_CAP = 3/, "hard cap is 3 per page load — the owner's whole free budget");
 assert.match(block, /STATE\.evidenceSubmitCount >= EVIDENCE_SUBMIT_CAP/, "the cap is enforced, not decorative");
 assert.match(block, /findComposer\(\)/, "reuses the evidence-verified composer finder");
-assert.match(block, /setComposerText\(/, "reuses the proven typing path");
+// Flow's composer is a Lexical-style React editor: assigning textContent
+// desyncs its state (live dry_run 27/08). The block must type via
+// keyboard-equivalent strategies and never assign textContent/innerText.
+assert.match(block, /execCommand\("insertText"/, "strategy A: execCommand insertText");
+assert.match(block, /new InputEvent\("beforeinput"/, "strategy B: beforeinput/input pair");
+assert.match(block, /new ClipboardEvent\("paste"/, "strategy C: synthetic paste");
+assert.doesNotMatch(block, /\.textContent\s*=/, "never assigns textContent to a live editor");
+assert.doesNotMatch(block, /\.innerText\s*=/, "never assigns innerText to a live editor");
 assert.match(block, /arrow_forward/, "Create button match is evidence-backed (F1 snapshot 1)");
 assert.match(block, /\.then\(\(result\) => sendResponse\(\{ ok: true, result \}\)\)/, "responds asynchronously via promise");
 assert.match(block, /return true;/, "keeps the message channel open for the async response");
