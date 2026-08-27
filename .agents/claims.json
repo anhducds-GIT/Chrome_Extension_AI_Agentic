@@ -17,10 +17,10 @@
       "released_at": "2026-08-27"
     },
     "_root": {
-      "owner": "opus-platform-2",
-      "ai": "Claude",
-      "claimed_at": "2026-08-27",
-      "task": "Cap nhat brief G-01 theo phat hien abort-reset race cua GPT + viet prompt ban giao sang chat moi. VAN CHUA giao code.",
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "Phien opus-platform-2 DONG. Tat ca V0.1 -> V0.2-E da push. Viec tiep theo: G-01 (doi luat an toan, CAN DUC CHOT TRUC TIEP truoc khi code). Prompt mo phien moi: drafts/NEXT-CHAT-ONBOARDING-PROMPT.md",
       "released_at": "2026-08-27"
     }
   }
