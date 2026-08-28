@@ -10,11 +10,11 @@
       "released_at": null
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-gemini-bridge-stability",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-08-28",
-      "task": "Bridge transport stability: keepalive ACK deadline + bounded reconnect + installer canonical path. Khong dung G-01, khong dung GG Flow.",
-      "released_at": null
+      "task": "DA XONG 28/08 (commit 3514aa5, da push): transport Bridge co han cho keepalive ACK + reconnect backoff tran 30s + han bat tay + hang doi pairing; installer tro ve dung goc canonical va bo -InstallRoot. Suite 82/82, pha thu 29/32, audit doc lap 10 vong -> CONDITIONAL PASS 7/7 oracle. CON MO: Duc reload extension roi thu rut/cam host de xac nhan live. Khong dung G-01.",
+      "released_at": "2026-08-28"
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-chatgpt-text-reasoning-passb",
@@ -24,10 +24,10 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-platform-orchestrator-study",
+      "owner": "claude-bridge-multiprofile",
       "ai": "claude",
-      "claimed_at": "2026-08-27",
-      "task": "Nhan _root de dung ten 1 file drafts moi: PLATFORM-AI-ORCHESTRATOR-STUDY-V2.md (reasoning V2 tra loi 6 phan bien GPT). Duc chi thi KHONG commit/push luot nay — push cho lenh Duc, xong thi tra quyen.",
+      "claimed_at": "2026-08-28",
+      "task": "Duc duyet 28/08 chuyen _root tu claude-platform-orchestrator-study (task do doc lap, khong issue): dat drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md + khai vao ban do file. Duc da duyet huong A (per-session identity, fail closed khi >=2 ket noi). Phase 2 CHO 2 task dang chay xong (Gemini bridge stability, ChatGPT text-reasoning) roi moi claim worker.",
       "released_at": null
     }
   }
