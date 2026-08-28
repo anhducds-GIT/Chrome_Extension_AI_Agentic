@@ -77,7 +77,7 @@
     // visible box owned by exactly ONE <form>. That form is also the only
     // authorised Create scope, so an ambiguous or form-less composer is an
     // unmeasured page state and must fail closed before any prompt mutation.
-    if (ADAPTER.resultKind === "video") return ADAPTER.composerScope(document)?.composer || null;
+    if (ADAPTER.resultKind === "video") return ADAPTER.findComposer(document);
     return firstVisible(ADAPTER.SELECTORS.composer);
   }
 
@@ -1239,8 +1239,30 @@
         // carries its ancestry and whether it sits inside the one authorised
         // composer form, so selector scope is auditable from evidence alone.
         const composerFormScope = ADAPTER.composerScope?.(document) || null;
+        // Read-only microscope for the submit-scope climb. Two designs have now
+        // failed on this page for want of real ancestry data (the <form> anchor,
+        // then the bounded climb), so the probe reports the walk itself instead
+        // of leaving the next design to guess again. Purely observational.
+        const composerScopeTrace = [];
+        {
+          let node = ADAPTER.findComposer?.(document)?.parentElement || null;
+          for (let hop = 1; node && hop <= 10; hop += 1) {
+            let btns = [];
+            try { btns = Array.from(node.querySelectorAll("button")).filter(isVisible); } catch (_) { /* keep walking */ }
+            let entries = 0;
+            try { entries = Array.from(node.querySelectorAll('textarea, input[type="text"], [contenteditable="true"], [role="textbox"]')).length; } catch (_) { /* keep walking */ }
+            composerScopeTrace.push({
+              hop,
+              tag: node.tagName ? node.tagName.toLowerCase() : "?",
+              buttons: btns.length,
+              labels: btns.map((button) => (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 26)).slice(0, 8),
+              text_entries: entries
+            });
+            node = node.parentElement;
+          }
+        }
         const buttons = Array.from(document.querySelectorAll("button")).filter(isVisible)
-          .map((button) => ({ aria: (button.getAttribute("aria-label") || "").slice(0, 60), testid: button.getAttribute("data-test-id") || "", txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40), disabled: button.disabled || button.getAttribute("aria-disabled") === "true", cls: (button.className && typeof button.className === "string" ? button.className : "").slice(0, 80), in_composer_form: ADAPTER.isInComposerForm?.(document, button) === true, chain: chainOf(button) }))
+          .map((button) => ({ aria: (button.getAttribute("aria-label") || "").slice(0, 60), testid: button.getAttribute("data-test-id") || "", txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40), disabled: button.disabled || button.getAttribute("aria-disabled") === "true", cls: (button.className && typeof button.className === "string" ? button.className : "").slice(0, 80), in_composer_form: ADAPTER.isInComposerScope?.(document, button) === true, chain: chainOf(button) }))
           .filter((button) => button.aria || button.testid || button.txt).slice(0, 40);
         // Flow (labs.google) renders results as <video>, which the original
         // image-era probe could not see at all -- the operator's remote eyes
@@ -1294,6 +1316,8 @@
           runtime_contract: FLOW_RUNTIME_CONTRACT,
           url: location.href,
           composer_scope_resolved: Boolean(composerFormScope),
+          composer_scope_hops: composerFormScope ? composerFormScope.hops : null,
+          composer_scope_trace: composerScopeTrace,
           surface: ADAPTER.surface(location.href),
           surface_allowed: surfaceAllowedNow(),
           composerFound: Boolean(findComposer()),

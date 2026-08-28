@@ -55,6 +55,10 @@ assert.equal(
   "side panel and content script pin the identical runtime contract string"
 );
 assert.match(probeBlock, /in_composer_form:/, "every reported visible button proves whether it belongs to the exact composer form");
+// Two submit-scope designs failed on the live page for want of ancestry data.
+// The probe must report the climb itself so the next one is measured, not guessed.
+assert.match(probeBlock, /composer_scope_trace: composerScopeTrace/, "dom_probe reports the submit-scope climb");
+assert.match(probeBlock, /text_entries: entries/, "each level reports competing text-entry surfaces");
 assert.match(probeBlock, /chain: chainOf\(button\)/, "button ancestry evidence is read-only and included in dom_probe");
 
 // Flow is a VIDEO product: the probe must scan <video> elements (added F-01,

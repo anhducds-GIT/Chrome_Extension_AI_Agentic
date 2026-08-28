@@ -87,17 +87,29 @@
     return Boolean(button) && !button.disabled && button.getAttribute?.("aria-disabled") !== "true";
   }
 
-  // FLOW-04 live failure (evidence/F4-image-mode-live-fail-closed-outcome-20260828.json):
-  // a page-level enabled "add_2 Create" that lives OUTSIDE the prompt form was
-  // selected and clicked; it opened the media panel, the prompt stayed intact
-  // and zero results were produced. Exact label text alone is therefore not
-  // enough evidence -- the control must also be owned by the composer.
+  // ROOT CAUSE, corrected by live measurement 2026-08-28
+  // (evidence/F4-composer-scope-trace-20260828.json):
   //
-  // The single authorised submit scope is the nearest <form> of the ONE visible
-  // composer. No unique visible composer, no owning form, or more than one
-  // candidate inside it => no scope, and every scoped lookup returns null so
-  // the caller fails closed with zero clicks.
-  function composerScope(root) {
+  // "add_2 Create" IS NOT A SUBMIT BUTTON. It is the add-media control, and it
+  // sits in the SAME composer cluster as the real submit button -- one hop above
+  // the composer, alongside "Agent" and the mode chip. It is enabled at all
+  // times, which is why a page-wide scan reached it first. Clicking it opens the
+  // Meo Story media panel: zero videos, zero images, prompt untouched.
+  //
+  // It was added to the submit-label list on 2026-08-28 after a run stopped at
+  // PRE_SUBMIT and a probe showed "add_2 Create" enabled while the real button
+  // was not. That was read as an icon rename ("selector drift"). It was not: the
+  // two controls coexist. The very next run clicked it and produced nothing,
+  // which is the loss this file exists to prevent.
+  //
+  // Measured ground truth: the ONLY control that has ever produced a video is
+  // "arrow_forward Create" (evidence/F1-EVIDENCE-NOTES.md, submit_index 1). It is
+  // disabled while the composer is empty and enables on input -- so "it is
+  // disabled right now" is never a reason to reach for a different button.
+  // The ONE visible prompt surface. Identity only -- it deliberately says nothing
+  // about where the Create control lives, because a composer with no Create yet
+  // is a normal idle state on Flow (the control mounts on first input).
+  function findComposer(root) {
     if (!root?.querySelectorAll) return null;
     const composers = [];
     for (const selector of SELECTORS.composer) {
@@ -107,43 +119,102 @@
         if (!composers.includes(node) && visibleNode(root, node)) composers.push(node);
       }
     }
-    if (composers.length !== 1) return null;
-    const composer = composers[0];
-    const form = typeof composer.closest === "function" ? composer.closest("form") : null;
-    if (!form || typeof form.querySelectorAll !== "function") return null;
-    return Object.freeze({ composer, form });
+    return composers.length === 1 ? composers[0] : null;
+  }
+
+  const CREATE_BUTTON_LABELS = Object.freeze(["arrow_forward Create"]);
+
+  // MEASURED 2026-08-28: the live page carries four text-entry surfaces — the
+  // composer, a nav input, a search input, and a hidden textarea. The composer's
+  // own control cluster contains only the composer. So a candidate container
+  // holding ANY other text-entry surface is proof we climbed past the composer's
+  // area into shared page chrome, and shared page chrome is exactly where the
+  // "add_2 Create" that caused the live loss lives.
+  const TEXT_ENTRY_SELECTOR = 'textarea, input[type="text"], [contenteditable="true"], [role="textbox"]';
+  function overshotComposerArea(container, composer) {
+    let nodes;
+    try { nodes = Array.from(container.querySelectorAll(TEXT_ENTRY_SELECTOR)); } catch (_) { return false; }
+    return nodes.some((node) => node !== composer);
+  }
+
+  function visibleButtonsIn(root, container) {
+    let nodes;
+    try { nodes = Array.from(container.querySelectorAll("button")); } catch (_) { return []; }
+    return nodes.filter((button) => visibleNode(root, button));
+  }
+  function visibleCreateButtonsIn(root, container) {
+    return visibleButtonsIn(root, container).filter((button) => CREATE_BUTTON_LABELS.includes(buttonLabel(button)));
+  }
+  function visibleUpgradeButtonsIn(root, container) {
+    return visibleButtonsIn(root, container).filter((button) => buttonLabel(button) === "Upgrade" && enabledButton(button));
+  }
+
+  // Scope is defence in depth behind the label rule above, not a substitute for
+  // it. MEASURED 2026-08-28: the composer has NO <form> ancestor (the page's only
+  // <form> owns the search box), and its control cluster is two hops up -- hop 1
+  // holds no buttons, hop 2 holds exactly four. Beyond hop 6 the tree opens into
+  // shared page chrome: 19 buttons and 3-4 competing text-entry surfaces.
+  //
+  // So the scope is derived STRUCTURALLY, assuming no tag, class or id: climb
+  // through button-less ancestors and stop dead at the first one holding buttons.
+  // The anchor cannot be Create alone: the measured no-credit wall IS Create
+  // disappearing and being replaced by Upgrade (FLOW-04, 2026-08-28). Anchoring
+  // only on Create would make the quota wall unrecognisable exactly when it
+  // matters. So a level counts as the submit area if it holds either control.
+  // The climb is BOUNDED, and the bound is the whole safety argument. Walk up
+  // from the composer only while ancestors hold NO buttons at all, and stop dead
+  // at the first one that does: that level is the composer's own control cluster.
+  // Never climb past it. Climbing further is how a page-level control gets back
+  // into reach, which is the exact bug this file exists to kill -- an unbounded
+  // search would eventually reach the page root and see "add_2 Create" again.
+  //
+  // At that one level: exactly one Create is the composer's Create; two is an
+  // unmeasured page state and fails closed; none plus a live Upgrade is the
+  // measured no-credit wall (Create is REPLACED by Upgrade, so the wall can only
+  // be recognised at a level that no longer has a Create).
+  const MAX_SCOPE_HOPS = 8;
+  function composerScope(root) {
+    const composer = findComposer(root);
+    if (!composer) return null;
+    let container = composer.parentElement;
+    for (let hop = 1; container && hop <= MAX_SCOPE_HOPS; hop += 1) {
+      // Refuse before inspecting buttons: once the container is shared page
+      // chrome, nothing inside it can be attributed to this composer.
+      if (overshotComposerArea(container, composer)) return null;
+      const buttons = visibleButtonsIn(root, container);
+      if (buttons.length === 0) { container = container.parentElement; continue; }
+      const creates = buttons.filter((button) => CREATE_BUTTON_LABELS.includes(buttonLabel(button)));
+      if (creates.length > 1) return null;
+      if (creates.length === 1) return Object.freeze({ composer, container, create: creates[0], hops: hop });
+      const upgrades = buttons.filter((button) => buttonLabel(button) === "Upgrade" && enabledButton(button));
+      return upgrades.length > 0 ? Object.freeze({ composer, container, create: null, hops: hop }) : null;
+    }
+    return null;
   }
 
   function scopedVisibleButtons(root, scope) {
     if (!scope) return [];
     let nodes;
-    try { nodes = Array.from(scope.form.querySelectorAll("button")); } catch (_) { return []; }
+    try { nodes = Array.from(scope.container.querySelectorAll("button")); } catch (_) { return []; }
     return nodes.filter((button) => visibleNode(root, button));
   }
 
-  // Audit helper for diagnostics.dom_probe: proves for any element whether it
-  // belongs to the authorised composer form, so selector scope is inspectable
-  // from evidence instead of inferred.
-  function isInComposerForm(root, element) {
+  // Audit helper for diagnostics.dom_probe: proves for any element whether it sits
+  // inside the authorised submit scope, so selector reach is inspectable from
+  // evidence instead of inferred.
+  function isInComposerScope(root, element) {
     const scope = composerScope(root);
-    if (!scope || !element || typeof element.closest !== "function") return false;
-    return element.closest("form") === scope.form;
+    if (!scope || !element) return false;
+    return scopedVisibleButtons(root, scope).includes(element);
   }
 
-  // Measured button text: F1 "arrow_forward Create" and FLOW-04 selector-drift
-  // evidence "add_2 Create". Exact normalized text plus composer-form ownership
-  // is intentionally used instead of sc-* classes or a broad "Create" match.
-  const CREATE_BUTTON_LABELS = Object.freeze(["arrow_forward Create", "add_2 Create"]);
   function createCandidates(root, scope) {
     return scopedVisibleButtons(root, scope)
       .filter((button) => CREATE_BUTTON_LABELS.includes(buttonLabel(button)));
   }
   function findCreateButton(root) {
     const scope = composerScope(root);
-    if (!scope) return null;
-    const matches = createCandidates(root, scope);
-    // Two exact Create controls inside one form is an unmeasured page state.
-    return matches.length === 1 ? matches[0] : null;
+    return scope ? scope.create : null;
   }
 
   const IMAGE_MODE_SUMMARY_LABEL = "🍌 Nano Banana 2 crop_9_16 x2";
@@ -189,18 +260,14 @@
   // FLOW-04 (2026-08-28): Upgrade is only quota evidence when it stands INSIDE
   // the composer form in place of the unavailable Create. A page-level Upgrade
   // is ordinary marketing chrome and must never be read as a quota wall.
+  // Ambiguity (two Create controls) resolves the scope to null above, so it can
+  // never arrive here: ambiguity is an unmeasured DOM change, not exhaustion,
+  // and must not send the owner to a billing page.
   function generationLimitBlocker(root) {
     const scope = composerScope(root);
     if (!scope) return null;
-    const candidates = createCandidates(root, scope);
-    // Two or more exact Create controls is AMBIGUITY, not exhaustion. Reading
-    // that as a quota wall would send the owner to a billing page over what is
-    // really an unmeasured DOM change. Ambiguity has its own fail-closed path.
-    if (candidates.length > 1) return null;
-    if (candidates.some(enabledButton)) return null;
-    const upgrade = scopedVisibleButtons(root, scope)
-      .find((button) => buttonLabel(button) === "Upgrade" && enabledButton(button));
-    return upgrade ? FLOW_GENERATION_LIMIT_REASON : null;
+    if (enabledButton(scope.create)) return null;
+    return visibleUpgradeButtonsIn(root, scope.container).length > 0 ? FLOW_GENERATION_LIMIT_REASON : null;
   }
 
   // F1 measured media redirect pattern. Reject other hosts, paths, missing or
@@ -240,7 +307,8 @@
     surface,
     surfaceAllowed,
     composerScope,
-    isInComposerForm,
+    findComposer,
+    isInComposerScope,
     findCreateButton,
     generationMode,
     findVideoModeOption,

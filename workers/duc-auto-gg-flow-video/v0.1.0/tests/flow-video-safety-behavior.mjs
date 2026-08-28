@@ -13,12 +13,13 @@ function harness({
   createAvailability = "always",
   createLabel = "arrow_forward Create",
   createDisabledUntilTyped = false,
+  createAlwaysDisabled = false,
   duplicateCreateCount = 1,
   globalCreateLabel = null,
   upgradeAfterTyping = false,
   upgradeScope = "composer",
   composerCount = 1,
-  composerHasForm = true,
+  composerDetached = false,
   pageText = "",
   pageTextAfterTyping = null,
   modeRegressesAfterTyping = false,
@@ -50,22 +51,30 @@ function harness({
     getBoundingClientRect: () => ({ width: 80, height: 32 }),
     click,
   });
-  let composerForm;
-  let remountForm;
-  const makeComposer = (label, form) => ({
+  // MEASURED 2026-08-28 on the live Flow page: the composer has NO <form>
+  // ancestor -- the page's only <form> owns the search box. The submit scope is
+  // the nearest ANCESTOR that holds the composer's own Create, so the fixture is
+  // built as a real parent chain: composer -> composerArea -> pageRoot.
+  // composerArea holds only the prompt controls; pageRoot holds everything,
+  // including the page-level "add_2 Create" that caused the live loss.
+  let composerArea;
+  let remountArea;
+  let pageRoot;
+  const makeComposer = (label, area) => ({
     tagName: "DIV", dacLabel: label, dispatchEvent() {},
     getBoundingClientRect: () => ({ width: 320, height: 48 }),
     focus() { focusedTargets.push(label); },
-    closest(selector) { return selector === "form" && composerHasForm ? form() : null; },
+    closest: () => null,
     querySelectorAll: () => [],
+    get parentElement() { return composerDetached ? null : area(); },
   });
-  const composers = Array.from({ length: composerCount }, () => makeComposer("base", () => composerForm));
+  const composers = Array.from({ length: composerCount }, () => makeComposer("base", () => composerArea));
   // FLOW-04 audit round 2: Flow may REMOUNT composer + form when the Image ->
   // Video switch lands. The remounted pair is a genuinely different DOM node
   // set, so any reference captured before the switch is detached.
-  const remountComposer = makeComposer("remount", () => remountForm);
+  const remountComposer = makeComposer("remount", () => remountArea);
   const createButtons = Array.from({ length: duplicateCreateCount }, () => buttonNode(createLabel, {
-    disabled: () => createDisabledUntilTyped && !typed,
+    disabled: () => createAlwaysDisabled || (createDisabledUntilTyped && !typed),
     click() { clicks += 1; videos = [...afterClick.map(media), ...videos]; },
   }));
   const globalCreateButton = globalCreateLabel == null ? null : buttonNode(globalCreateLabel, { click() { globalCreateClicks += 1; } });
@@ -91,22 +100,20 @@ function harness({
     if (createAvailability === "after_typing" && !typed) return [];
     return [...createButtons];
   };
-  composerForm = {
-    tagName: "FORM",
+  pageRoot = {
+    tagName: "DIV", parentElement: null,
+    querySelectorAll(selector) { return selector === "button" ? document.querySelectorAll("button") : []; },
+  };
+  composerArea = {
+    tagName: "DIV",
+    get parentElement() { return pageRoot; },
     querySelectorAll(selector) { return selector === "button" ? composerButtons() : []; },
   };
-  remountForm = {
-    tagName: "FORM",
+  remountArea = {
+    tagName: "DIV",
+    get parentElement() { return pageRoot; },
     querySelectorAll(selector) { return selector === "button" ? [remountCreate] : []; },
   };
-  for (const entry of composers) entry.parentElement = composerHasForm ? composerForm : null;
-  remountComposer.parentElement = remountForm;
-  remountCreate.parentElement = remountForm;
-  remountCreate.closest = (selector) => selector === "form" ? remountForm : null;
-  for (const entry of [...createButtons, ...upgradeButtons]) {
-    entry.parentElement = composerForm;
-    entry.closest = (selector) => selector === "form" ? composerForm : null;
-  }
   const document = {
     body: { get innerText() { return pageTextAfterTyping !== null && typed ? pageTextAfterTyping : pageText; } }, defaultView: null,
     querySelectorAll(selector) {
@@ -288,17 +295,19 @@ for (const [index, videoOptionLabel] of [null, "videocam Videos", "Video", "vide
 // composer is empty, then appears after typing. That idle state must not fail
 // pre-submit, while the post-type readiness gate remains fail-closed.
 {
-  const h = harness({ createAvailability: "after_typing", createLabel: "add_2\n  Create", afterClick: ["owned-after-type"] });
+  const h = harness({ createAvailability: "after_typing", createLabel: "arrow_forward\n  Create", afterClick: ["owned-after-type"] });
   const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-LATE-CREATE", attempt_id: "attempt-late-create", prompt: "late Create", timeoutMs: 15000 });
   assert.equal(response.ok, true, "an absent pre-type Create button is a valid idle state");
   assert.equal(h.typed(), true);
   assert.equal(h.clicks(), 1);
 }
 
-// FLOW-04 live defect fixture: a page-level enabled add_2 Create sits outside
-// the prompt form while the prompt-level arrow_forward Create is initially
-// disabled. Typing enables the prompt control; only that exact form-owned
-// control may cross the submit boundary.
+// THE live defect, as finally measured: the add-media control "add_2 Create"
+// sits in the SAME cluster as the real submit button and is enabled at all
+// times, while the real submit button is disabled until the prompt is typed.
+// Reaching for the enabled neighbour is what produced a media panel and no
+// video. Here the neighbour is modelled page-level as well, to prove it is
+// refused on label grounds alone, not merely on position.
 {
   const h = harness({
     globalCreateLabel: "add_2 Create",
@@ -309,7 +318,7 @@ for (const [index, videoOptionLabel] of [null, "videocam Videos", "Video", "vide
   const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-COMPOSER-SCOPE", attempt_id: "attempt-composer-scope", prompt: "scope Create", timeoutMs: 15000 });
   assert.equal(response.ok, true);
   assert.equal(h.typed(), true);
-  assert.equal(h.globalCreateClicks(), 0, "the enabled page-level add_2 Create must never be selected or clicked");
+  assert.equal(h.globalCreateClicks(), 0, "the enabled add-media control must never be selected or clicked");
   assert.equal(h.clicks(), 1, "typing enables and clicks exactly the prompt-form Create");
   assert.equal(response.result.video_id, "composer-owned");
 }
@@ -324,11 +333,11 @@ for (const [index, videoOptionLabel] of [null, "videocam Videos", "Video", "vide
   assert.equal(h.globalCreateClicks(), 0);
 }
 
-// Missing nearest form and multiple visible composer candidates both fail
-// before prompt mutation and before any Create click.
+// Composer IDENTITY must be unambiguous: two visible candidates is not a page
+// this runner understands, and it stops before touching the prompt.
 for (const [name, options] of [
-  ["missing-form", { composerHasForm: false }],
   ["ambiguous-composer", { composerCount: 2 }],
+  ["no-composer", { composerCount: 0 }],
 ]) {
   const h = harness(options);
   const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: `V-${name}`, attempt_id: `attempt-${name}`, prompt: "must remain untouched", timeoutMs: 15000 });
@@ -336,6 +345,18 @@ for (const [name, options] of [
   assert.match(response.error, /Flow composer not found/);
   assert.equal(h.typed(), false, `${name} cannot mutate the prompt`);
   assert.equal(h.clicks(), 0, `${name} cannot click Create`);
+}
+
+// A composer with no ancestor chain at all yields no submit scope. That is NOT
+// a "composer not found" — the composer is right there and gets typed into —
+// it is a readiness failure, and it must still end in zero clicks.
+{
+  const h = harness({ composerDetached: true });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-NO-SCOPE", attempt_id: "attempt-no-scope", prompt: "no scope", timeoutMs: 15000 });
+  assert.equal(response.ok, false);
+  assert.match(response.error, /Send button did not become ready/);
+  assert.equal(h.clicks(), 0);
+  assert.equal(h.globalCreateClicks(), 0, "an unscoped page-level Create is never a fallback");
 }
 
 // Only the two measured, normalized semantic labels are Create controls.
@@ -350,7 +371,7 @@ for (const [index, createLabel] of ["arrow_forward Create project", "arrow_forwa
 
 {
   const h = harness({ createAvailability: "never" });
-  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-CREATE-PROMPT", attempt_id: "attempt-create-prompt", prompt: "Storyboard text: add_2 Create", timeoutMs: 15000 });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-CREATE-PROMPT", attempt_id: "attempt-create-prompt", prompt: "Storyboard text: arrow_forward Create", timeoutMs: 15000 });
   assert.equal(response.ok, false, "prompt text is not structural button evidence");
   assert.equal(h.clicks(), 0, "prompt text cannot authorize a Create click");
 }
@@ -389,7 +410,10 @@ let flowQuotaError;
 // cannot spoof a quota wall. The runner still fails closed because no prompt
 // Create becomes ready, but it must not classify that page control as quota.
 {
-  const h = harness({ createAvailability: "never", upgradeAfterTyping: true, upgradeScope: "global" });
+  // Measured live: the composer keeps its own Create even while empty (disabled),
+  // so the composer's control cluster is where scope stops. A page-level Upgrade
+  // sits outside it and is ordinary marketing chrome.
+  const h = harness({ createAlwaysDisabled: true, upgradeAfterTyping: true, upgradeScope: "global" });
   const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-GLOBAL-UPGRADE", attempt_id: "attempt-global-upgrade", prompt: "global Upgrade is unrelated", timeoutMs: 15000 });
   assert.equal(response.ok, false);
   assert.match(response.error, /Send button did not become ready/);

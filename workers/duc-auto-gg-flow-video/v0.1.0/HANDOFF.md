@@ -153,3 +153,36 @@
   sẽ stash/đụng vào việc đang chạy của họ. Nên DỪNG, không tự rebase. Commit nằm nguyên ở local,
   không mất. Cách xử lý an toàn nhất: đợi hai phiên kia commit xong, rồi một phiên rebase một lần
   cho cả ba. Không dùng force-push.
+- 2026-08-28 · `claude-flow-create-scope` · **ĐO TRANG THẬT LẬT NGƯỢC CHẨN ĐOÁN GỐC. Nguyên nhân
+  thật của FLOW-04 là DANH SÁCH NHÃN, không phải phạm vi.** Bằng chứng mới:
+  `evidence/F4-composer-scope-trace-20260828.json` (trace 10 tầng cha của composer).
+  - Trace nói ba điều, cả ba đều bác bỏ điều tôi tưởng: (1) composer **không có `<form>` cha** —
+    `form` duy nhất của trang thuộc ô search, nên bản vá đầu neo vào `closest("form")` sẽ
+    **từ chối MỌI job** (`composer_scope_resolved:false` đo thật); (2) `add_2 Create`
+    **không phải nút cấp trang** — nó nằm **cùng hop 2** với `arrow_forward Create`, `Agent`
+    và chip mode, tức cùng cụm composer, nên **không phép khoá phạm vi nào tách được hai nút
+    chung cha**; (3) từ hop 7 cây mở ra page chrome (19 nút, 3–4 ô nhập) — đó là biên không
+    được vượt.
+  - **`add_2 Create` là nút THÊM MEDIA, luôn enabled.** Bấm vào mở bảng `Meo Story` và không
+    sinh gì (`F4-image-mode-live-*`: 0 video, 0 ảnh). Nút gửi thật là `arrow_forward Create`,
+    **disabled khi ô prompt rỗng** — và là nút DUY NHẤT từng sinh ra video
+    (`F1-EVIDENCE-NOTES.md`, `submit_index: 1`).
+  - **Đính chính sổ sách:** dòng log 28/08 ghi "Flow đổi icon `arrow_forward` → `add_2`
+    (selector drift)" là **CHẨN ĐOÁN SAI**. Hai nút cùng tồn tại; lúc đó ô prompt rỗng nên nút
+    gửi disabled, chứ nút không đổi tên. Chính việc thêm `add_2 Create` vào danh sách nhãn dựa
+    trên cách đọc đó **là nguyên nhân gây ra lượt chạy hỏng**. Bảng lỗi trong
+    `AI-OPERATOR-GUIDE.md` đã được sửa lại, không để chẩn đoán sai nằm đó như sự thật.
+  - **Sửa:** `CREATE_BUTTON_LABELS` chỉ còn `arrow_forward Create`. Giữ phạm vi cấu trúc làm
+    lớp phòng vệ thứ hai: leo từ composer qua các tầng không có nút, **dừng ở tầng có nút đầu
+    tiên** (hop 2 thật), và từ chối nếu tầng đó chứa ô nhập khác (dấu hiệu đã lọt vào page
+    chrome). Hai lớp chặn đều có pin và đều mutation-verified.
+  - Suite **84/84**. Mutation đã thử và đều làm suite ĐỎ: thêm lại `add_2 Create`; bỏ chặn
+    overshoot; bỏ chặn "dừng ở tầng có nút đầu tiên". `node --check` xanh.
+  - **Bài học đắt nhất phiên này:** 5 vòng audit đối kháng đều PASS trên bản vá `<form>` — vì
+    cả 5 vòng đọc CODE, không đọc TRANG. Chỉ một lệnh `dom_probe` mới lộ ra. `dom_probe` nay
+    trả thêm `composer_scope_trace` (chỉ-đọc) để lần sau đo trước, thiết kế sau.
+  - Vận hành: `AI-OPERATOR-GUIDE.md` thêm thứ tự bắt buộc sau reload — **⟳ → Ctrl+R tab →
+    mở side panel SAU CÙNG**. Panel gắn theo tab: F5 làm đóng panel, nên **AI không được tự
+    gọi `chat.reload` sau khi Đức reload** (đo thật: gọi xong thì 22 lệnh liên tiếp trượt).
+  - Còn mở: audit đối kháng lại (bản cũ đã lạc hậu vì thiết kế đổi hẳn) → live verify
+    `composer_scope_resolved` phải `true` tại hop 2 → rồi mới chạy 1 job, `max_retries=0`.

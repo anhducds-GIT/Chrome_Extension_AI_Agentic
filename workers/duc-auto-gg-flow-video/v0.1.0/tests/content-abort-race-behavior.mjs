@@ -5,15 +5,16 @@ import vm from "node:vm";
 
 let createClicks = 0;
 let videos = [];
-// FLOW-04: the composer must resolve to exactly one owning <form>, and that
-// form is the only authorised Create scope. The settings summary stays
-// page-level, exactly as measured live.
-let composerForm;
+// FLOW-04, measured 2026-08-28: the composer has NO <form> ancestor. The submit
+// scope is the nearest ancestor holding buttons -- the composer's own control
+// cluster. The settings summary stays page-level, exactly as measured live.
+let composerArea;
 const composer = {
   tagName: "DIV", textContent: "", innerText: "", focus() {}, dispatchEvent() {},
   getBoundingClientRect: () => ({ width: 320, height: 48 }),
-  closest: (selector) => selector === "form" ? composerForm : null,
+  closest: () => null,
   querySelectorAll: () => [],
+  get parentElement() { return composerArea; },
 };
 const createButton = {
   innerText: "arrow_forward Create", textContent: "arrow_forward Create", disabled: false,
@@ -23,8 +24,7 @@ const createButton = {
     videos = [{ currentSrc: `https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=created-${createClicks}`, getBoundingClientRect: () => ({ width: 320, height: 180 }) }];
   },
 };
-composerForm = { tagName: "FORM", querySelectorAll: (selector) => selector === "button" ? [createButton] : [] };
-createButton.closest = (selector) => selector === "form" ? composerForm : null;
+composerArea = { tagName: "DIV", parentElement: null, querySelectorAll: (selector) => selector === "button" ? [createButton] : [] };
 const videoModeSummary = {
   innerText: "Video · 360p · 10s crop_16_9 x1", textContent: "Video · 360p · 10s crop_16_9 x1", disabled: false,
   getAttribute: () => null, getBoundingClientRect: () => ({ width: 180, height: 32 }),

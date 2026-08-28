@@ -1,0 +1,206 @@
+{
+  "captured_at": "2026-08-28T07:36:09.856Z",
+  "session": "claude-flow-create-scope",
+  "kind": "live_dom_ancestry_measurement",
+  "not_a_run": true,
+  "runtime_contract": "flow04-image-video-create-scope-v1",
+  "url": "https://labs.google/fx/tools/flow/project/f361b734-24c0-411d-b1fc-3149033dd4a3",
+  "why": "Two submit-scope designs failed on this page in a single session. This is the measurement that should have been taken first: the composer ancestry, level by level.",
+  "composer": {
+    "found": true,
+    "selector_count": [
+      "[contenteditable=\"true\"][role=\"textbox\"] => 1"
+    ]
+  },
+  "scope_result_at_capture": {
+    "resolved": false,
+    "hops": null,
+    "note": "false at capture time because add_2 Create was still on the submit-label list, which made hop 2 look ambiguous"
+  },
+  "composer_scope_trace": [
+    {
+      "buttons": 0,
+      "hop": 1,
+      "labels": [],
+      "tag": "div",
+      "text_entries": 1
+    },
+    {
+      "buttons": 4,
+      "hop": 2,
+      "labels": [
+        "add_2 Create",
+        "Agent",
+        "🍌 Nano Banana 2 crop_9_16",
+        "arrow_forward Create"
+      ],
+      "tag": "div",
+      "text_entries": 1
+    },
+    {
+      "buttons": 4,
+      "hop": 3,
+      "labels": [
+        "add_2 Create",
+        "Agent",
+        "🍌 Nano Banana 2 crop_9_16",
+        "arrow_forward Create"
+      ],
+      "tag": "div",
+      "text_entries": 1
+    },
+    {
+      "buttons": 4,
+      "hop": 4,
+      "labels": [
+        "add_2 Create",
+        "Agent",
+        "🍌 Nano Banana 2 crop_9_16",
+        "arrow_forward Create"
+      ],
+      "tag": "div",
+      "text_entries": 1
+    },
+    {
+      "buttons": 4,
+      "hop": 5,
+      "labels": [
+        "add_2 Create",
+        "Agent",
+        "🍌 Nano Banana 2 crop_9_16",
+        "arrow_forward Create"
+      ],
+      "tag": "div",
+      "text_entries": 1
+    },
+    {
+      "buttons": 4,
+      "hop": 6,
+      "labels": [
+        "add_2 Create",
+        "Agent",
+        "🍌 Nano Banana 2 crop_9_16",
+        "arrow_forward Create"
+      ],
+      "tag": "div",
+      "text_entries": 1
+    },
+    {
+      "buttons": 19,
+      "hop": 7,
+      "labels": [
+        "arrow_back Go Back",
+        "more_vert More options",
+        "search Search",
+        "filter_list Sort & Filter",
+        "add Add Media",
+        "help Product Help",
+        "settings_2 View Settings",
+        "more_vert More"
+      ],
+      "tag": "div",
+      "text_entries": 3
+    },
+    {
+      "buttons": 19,
+      "hop": 8,
+      "labels": [
+        "arrow_back Go Back",
+        "more_vert More options",
+        "search Search",
+        "filter_list Sort & Filter",
+        "add Add Media",
+        "help Product Help",
+        "settings_2 View Settings",
+        "more_vert More"
+      ],
+      "tag": "div",
+      "text_entries": 3
+    },
+    {
+      "buttons": 19,
+      "hop": 9,
+      "labels": [
+        "arrow_back Go Back",
+        "more_vert More options",
+        "search Search",
+        "filter_list Sort & Filter",
+        "add Add Media",
+        "help Product Help",
+        "settings_2 View Settings",
+        "more_vert More"
+      ],
+      "tag": "body",
+      "text_entries": 4
+    },
+    {
+      "buttons": 19,
+      "hop": 10,
+      "labels": [
+        "arrow_back Go Back",
+        "more_vert More options",
+        "search Search",
+        "filter_list Sort & Filter",
+        "add Add Media",
+        "help Product Help",
+        "settings_2 View Settings",
+        "more_vert More"
+      ],
+      "tag": "html",
+      "text_entries": 4
+    }
+  ],
+  "create_like_buttons": [
+    {
+      "txt": "add_2 Create",
+      "disabled": false
+    },
+    {
+      "txt": "arrow_forward Create",
+      "disabled": true
+    }
+  ],
+  "text_entry_surfaces": [
+    {
+      "tag": "input",
+      "visible": true,
+      "role": "",
+      "editable": false,
+      "w": 74,
+      "h": 24
+    },
+    {
+      "tag": "input",
+      "visible": true,
+      "role": "",
+      "editable": false,
+      "w": 370,
+      "h": 38
+    },
+    {
+      "tag": "div",
+      "visible": true,
+      "role": "textbox",
+      "editable": true,
+      "w": 566,
+      "h": 20
+    },
+    {
+      "tag": "textarea",
+      "visible": false,
+      "role": "",
+      "editable": false,
+      "w": 0,
+      "h": 0
+    }
+  ],
+  "conclusions": [
+    "The composer has NO form ancestor. The only form element on the page owns the search box. Anchoring the submit scope on closest(form) refuses every job.",
+    "hop 1 holds no buttons. hop 2 is the composer control cluster: exactly four buttons, and the composer is the only text-entry surface inside it.",
+    "add_2 Create is NOT page-level. It sits at hop 2 beside arrow_forward Create, Agent and the mode chip. Scoping can never separate two controls that share a parent.",
+    "add_2 Create is the add-media control: clicking it opens the Meo Story media panel and produces nothing. It is enabled at all times, which is why a page-wide scan reached it first.",
+    "arrow_forward Create is the only control that has ever produced a video (F1-EVIDENCE-NOTES.md, submit_index 1). It is disabled while the composer is empty and enables on input.",
+    "From hop 7 the tree opens into shared page chrome: 19 buttons and three to four competing text-entry surfaces. That is the boundary the climb must never cross."
+  ],
+  "correction_of_earlier_record": "The 2026-08-28 entry describing an icon rename from arrow_forward to add_2 (recorded as selector drift) was a MISDIAGNOSIS. The two controls coexist in the same cluster. The real submit button was simply disabled at that moment because the composer was empty. Adding add_2 Create to the submit-label list on the strength of that reading is what caused the run that produced no video."
+}

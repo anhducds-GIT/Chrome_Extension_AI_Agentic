@@ -1,0 +1,17 @@
+﻿{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-b5c2f00a-7e6b-4015-81e5-c33eb27f2126",
+  "ok": false,
+  "error": {
+    "code": "EXECUTOR_UNAVAILABLE",
+    "message": "Open the Duc Auto GG Flow side panel and retry the same request_id.",
+    "retryable": true,
+    "details": {
+      "failure_type": null,
+      "halt_instruction": null
+    }
+  },
+  "responded_at": "2026-08-27T16:05:12.699Z"
+}
