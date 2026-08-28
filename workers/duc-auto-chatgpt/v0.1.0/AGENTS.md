@@ -87,6 +87,7 @@ COMPANION (đọc khi cần):
 |---|---|
 | `README.md` | Tổng quan project, kiến trúc, cài đặt, Agent Bridge (kỹ thuật) |
 | `AGENTS.md` | File này |
+| `AI-OPERATOR-GUIDE.md` | **Sổ tay vận hành** — 3 việc phải làm trước khi bấm chạy, và bảng lỗi ĐÃ GẶP THẬT trên trang (kèm "thật ra là gì" và "KHÔNG phải gì"). Mở TRƯỚC khi chạy live, đừng chẩn đoán lại từ đầu |
 | `STATUS.md` | **Trạng thái vận hành, một trang, cho mắt Đức** — lifecycle, kiểm chứng lần cuối + bằng chứng, việc đang mở, con trỏ đọc sâu. Máy đọc phần frontmatter để sinh `DASHBOARD.md` ở gốc repo. Chỉ TRỎ sang file khác, không chép nội dung. Schema: `STATUS.template.md` ở gốc repo |
 | `HANDOFF.md` | Trạng thái + Log lịch sử đầy đủ |
 | `decisions.md` | Quyết định lớn đã chốt, có nguồn dẫn |
