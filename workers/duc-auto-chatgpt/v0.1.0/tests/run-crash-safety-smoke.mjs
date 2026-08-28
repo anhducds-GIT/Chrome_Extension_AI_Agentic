@@ -89,7 +89,9 @@ assert.equal(bothVerified.sendCount, 1, "the send boundary opens only after both
 
 const sidepanel = fs.readFileSync(new URL("../sidepanel.js", import.meta.url), "utf8");
 const runSegment = sidepanel.slice(sidepanel.indexOf("async function run("), sidepanel.indexOf("chrome.runtime.onMessage.addListener", sidepanel.indexOf("async function run(")));
-assert.ok(runSegment.indexOf("submissionReservation(item)") < runSegment.indexOf('send({ type: "DAC_RUN_IMAGE_JOB"'), "durable reservation is created before the send boundary");
-assert.ok(runSegment.indexOf("flushRunCheckpoint(effectiveOutput.result") < runSegment.indexOf('send({ type: "DAC_RUN_IMAGE_JOB"'), "verified audit/checkpoint flush completes before the send boundary");
+const typedSendBoundary = runSegment.indexOf('send({ type: textReasoning ? "DAC_RUN_TEXT_JOB" : "DAC_RUN_IMAGE_JOB"');
+assert.ok(typedSendBoundary > 0, "one typed send boundary selects text or image without bypassing the runner");
+assert.ok(runSegment.indexOf("submissionReservation(item)") < typedSendBoundary, "durable reservation is created before the typed send boundary");
+assert.ok(runSegment.indexOf("flushRunCheckpoint(effectiveOutput.result") < typedSendBoundary, "verified audit/checkpoint flush completes before the typed send boundary");
 
 console.log("run crash-safety smoke tests: PASS");

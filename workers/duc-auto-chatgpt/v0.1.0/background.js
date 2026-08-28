@@ -53,12 +53,53 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({ ok: rememberExpectedDownloadName(message.url, message.filename, message.conflictAction) });
     return false;
   }
+  if (message?.type === "DAC_DOWNLOAD_ARTIFACT") {
+    downloadArtifact(message)
+      .then(sendResponse)
+      .catch((error) => sendResponse(failure("DOWNLOAD_FAILED", error?.message || String(error))));
+    return true;
+  }
   if (message?.type !== "DAC_DOWNLOAD_IMAGE") return false;
   downloadGeneratedImage(message)
     .then(sendResponse)
     .catch((error) => sendResponse(failure("DOWNLOAD_FAILED", error?.message || String(error))));
   return true;
 });
+
+// Audit JSONL and Result XLSX used to reserve the blob filename in one
+// message and start chrome.downloads in a later side-panel turn. MV3 may
+// suspend this worker between those calls, erasing the in-memory reservation
+// and leaving Chrome's GUID as the physical name. Keep the whole operation in
+// one background request so onDeterminingFilename consumes live state.
+async function downloadArtifact(message) {
+  const url = typeof message.url === "string" ? message.url : "";
+  if (!/^blob:/i.test(url)) return failure("INVALID_ARTIFACT_URL", "Artifact download requires an extension-owned blob URL.");
+  const requestedFilename = safeArtifactFilename(message.filename);
+  if (!requestedFilename) return failure("INVALID_ARTIFACT_FILENAME", "Artifact filename must be a safe Downloads-relative path.");
+  const conflictAction = ["uniquify", "overwrite", "prompt"].includes(message.conflictAction) ? message.conflictAction : "uniquify";
+  rememberExpectedDownloadName(url, requestedFilename, conflictAction);
+  const downloadId = await chrome.downloads.download({ url, filename: requestedFilename, conflictAction, saveAs: false });
+  const item = await waitForCompletedDownload(downloadId);
+  const verified = verifyCompletedDownload(item, Number(message.expectedBytes));
+  if (!verified.ok) return verified;
+  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename, persisted_bytes: verified.persisted_bytes };
+}
+
+function safeArtifactFilename(value) {
+  const requested = typeof value === "string" ? value.trim().replace(/\\/g, "/") : "";
+  if (!requested || requested.length > 240 || requested.startsWith("/") || /^[A-Za-z]:/.test(requested)) return "";
+  if (requested.split("/").some((part) => !part || part === "." || part === ".." || /[\x00-\x1f\x7f<>:"|?*]/.test(part))) return "";
+  return requested;
+}
+
+function verifyCompletedDownload(item, expectedBytes = 0) {
+  const reportedBytes = [item?.fileSize, item?.bytesReceived].map(Number).filter((value) => Number.isFinite(value));
+  const persistedBytes = Math.max(0, ...reportedBytes);
+  if (item?.exists === false) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete but the file no longer exists.`);
+  if (reportedBytes.length && persistedBytes <= 0) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete with zero bytes received.`);
+  if (expectedBytes > 0 && reportedBytes.length && persistedBytes !== expectedBytes) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported ${persistedBytes} bytes for '${item.filename}', expected ${expectedBytes}.`);
+  return { ok: true, persisted_bytes: persistedBytes };
+}
 
 // Two DIFFERENT questions about a finished download, kept apart on purpose.
 //
@@ -119,12 +160,9 @@ async function downloadGeneratedImage(message) {
   // An absent byte count means Chrome did not report one; only a byte count
   // that is present and zero is proof of an empty file.  Reporting an unknown
   // count as a failure would invent a failure mode rather than remove one.
-  const reportedBytes = [item.fileSize, item.bytesReceived].map(Number).filter((value) => Number.isFinite(value));
-  const persistedBytes = Math.max(0, ...reportedBytes);
-  // The message keeps the code prefix so sidepanel.js persistenceFailureType()
-  // classifies this identically to a directory-write verification failure.
-  if (item.exists === false) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete but the file no longer exists.`);
-  if (reportedBytes.length && persistedBytes <= 0) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete with zero bytes received.`);
+  const verified = verifyCompletedDownload(item);
+  if (!verified.ok) return verified;
+  const persistedBytes = verified.persisted_bytes;
   // Under the default uniquify policy this distinction is the whole answer to
   // "did anything of mine get shadowed?", so it has to be true.
   //

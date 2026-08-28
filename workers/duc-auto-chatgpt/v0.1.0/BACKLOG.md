@@ -257,6 +257,88 @@ Nên `DAC_XLSX_RUN_PLAN_V1.md` là **hợp đồng schema đang nói sai** — n
 nó là file mà `AGENTS.md` chỉ AI đọc để hiểu schema. Sửa: hoặc ghi rõ đường thứ hai chưa nối,
 hoặc bỏ khỏi hợp đồng.
 
+### B-26 · Mỗi job đẻ ra 3 file XLSX — cần luật DỌN, không phải bớt checkpoint — **[ĐO] live 2026-08-28**
+Đức phát hiện khi chạy trial thật: thư mục output đầy file `__results__vNN.xlsx`.
+
+**Đo thật** trên run `Quick-2026-08-28T02-46` (3 job text, đều SUCCESS): **10 file XLSX**.
+Đọc `__audit.jsonl`, đúng **3 checkpoint mỗi job**, cộng 1 bản lưu cuối lúc kết thúc run:
+
+| # | Vì sao ghi | File |
+|---|---|---|
+| 1 | `Pre-send reservation for Q001` | `v01` |
+| 2 | `Text response checkpoint for Q001` | `v02` |
+| 3 | `Completion interval reached after Q001` | `v03` |
+
+Quy mô: pilot 66 job → khoảng **200 file**. Đó là con số cần nhìn trước khi bàn.
+
+**Cái bẫy — đã kiểm, đừng rơi vào:** phản xạ đầu tiên là nâng `checkpoint_interval_jobs` cho bớt
+file thứ 3. **SAI.** Mở v02 và v03 ra so:
+
+```
+v02  Q001  status=RUNNING  attempt_phase=OUTPUT_SAVED  persistence_verified=false
+v03  Q001  status=SUCCESS  attempt_phase=SUCCESS       persistence_verified=true
+```
+
+`v03` là file **đầu tiên trên đĩa** nói job đã xong và đã xác minh. Bỏ nó thì có một cửa sổ thời
+gian mà đĩa vẫn khai job đang chạy dở — Chrome sập đúng lúc đó, resume sẽ xếp
+`AMBIGUOUS_SUBMITTED` và mời operator "tạo lại" một câu trả lời đã nằm an toàn trên đĩa.
+**Cả ba checkpoint đều mang trạng thái khác nhau. Không cái nào thừa.**
+
+Nên đây **không phải bug**, mà là hệ quả của một luật an toàn đang chạy đúng: mỗi checkpoint là
+một file mới, bất biến (`immutable_result_checkpoints` là FEATURE Bridge công bố;
+`assertCheckpointVersionAvailable` chủ động từ chối ghi đè một version cũ). Bất biến là để một
+lần ghi hỏng giữa chừng không bao giờ phá bản tốt trước đó.
+
+Cũng đã kiểm và **bác** một hướng nữa: bind thư mục thật (thay vì Downloads) **không** giúp gì —
+`persistLedgerCandidate` bump version rồi mới ghi, ở **cả hai** chế độ. Vẫn ra `vNN`.
+
+**Việc cần làm là luật GIỮ/DỌN (retention), không phải bớt checkpoint:** giữ N bản mới nhất, xoá
+những bản đã bị một bản mới hơn *đã xác minh* thay thế. Câu phải trả lời khi làm: resume/scan có
+cần bản cũ không, hay chỉ cần bản version cao nhất — chưa kiểm, đừng đoán.
+
+**CHƯA LÀM, và phải hỏi Đức trước** vì đụng đúng hai luật của chính Đức: (a) *"Đổi luật an toàn
+(… persistence …)"* — mục 2 `AGENTS.md` gốc; (b) *"Xóa file"* — luật gốc `CLAUDE.md`.
+
+### B-23 · `response_sha256` được GHI nhưng KHÔNG bao giờ được KIỂM — **[ĐỌC]**
+Tìm ra bởi Pass B độc lập 2026-08-28 (F-1), đã kiểm chứng lại bằng mắt trong code.
+
+`resume-core.js` (nhánh `text_reasoning` của `validSavedAttribution`) chỉ kiểm **hình dạng**
+của chuỗi hash (`/^sha256:[A-Za-z0-9_-]{20,}$/`), không hề băm lại `response_text` để so.
+Nghĩa là: nếu ai đó mở Result XLSX bằng Excel, sửa một chữ trong ô câu trả lời mà **giữ nguyên
+số ký tự**, hàng đó vẫn được xếp `SAFE_COMPLETE`. Hash nằm đó như một con số trang trí.
+
+**Chưa sửa trong phiên 28/08, và đây là lựa chọn có chủ ý:** SHA-256 trong trình duyệt là hàm
+**bất đồng bộ**, còn `validSavedAttribution`/`classify` là hàm **đồng bộ** và được gọi từ rất
+nhiều chỗ. Sửa cho đúng phải đổi cả chuỗi hàm đó sang async — đó là việc riêng, không phải việc
+nhét kèm vào bản vá text.
+
+Cần nói cho công bằng: nhánh ảnh **cũng không** có kiểm toàn vẹn nội dung (nó chỉ so tên file
+xin với tên file nhận). Nên đây **không phải là bước lùi** so với ảnh, và Acceptance Contract của
+run 28/08 cũng chỉ yêu cầu *ghi* trường count/hash chứ không yêu cầu kiểm lúc resume.
+Tóm lại: `response_sha256` hiện là **dấu vân tay để đối chiếu về sau**, KHÔNG phải chốt chống sửa.
+Đừng viết tài liệu nào nói ngược lại.
+
+### B-24 · `resolveExistingOutput()` là code chết, và nếu nối lại sẽ phá hợp đồng text
+Pass B 2026-08-28 (F-7), đã tự kiểm: `grep` ra **đúng 1 lần** trong `sidepanel.js` (chính dòng
+định nghĩa nó) và **0 lần** trong `sidepanel.html` — không ai gọi.
+
+Hàm này là đường đối chiếu ảnh thủ công: nó gọi `saveGeneratedImage` và
+`DAC_MANUAL_RECONCILE_EXISTING_OUTPUT` mà **không hề kiểm `task_type`**. Hôm nay vô hại vì chết.
+Nhưng ngày nào có người nối lại nút bấm vào nó, một job text sẽ bị đánh dấu SUCCESS kèm một
+`result_file` ảnh — âm thầm phá đúng cái luật mà bản vá 28/08 vừa dựng lên.
+Có sẵn từ trước, không phải do bản vá này sinh ra. Sửa: hoặc xoá hẳn (quyền của Đức), hoặc chèn
+một chốt `task_type === "text_reasoning" → throw` ngay bây giờ, trước khi ai đó nối lại.
+
+### B-25 · Câu lỗi lúc recreate vẫn là tiếng Anh — luật vàng số 4 nói phải tiếng Việt
+Pass B 2026-08-28 (F-4, phần chưa sửa hết). Phiên 28/08 đã sửa cho mấy câu này **đúng loại việc**
+(text thì nói "text response", ảnh thì nói "image"), nhưng vẫn để **tiếng Anh**:
+`RECREATE_PERSISTENCE_REQUIRED`, `RECREATE_COMPLETION_UNVERIFIED`, `OUTPUT_LOCATION`.
+
+Luật vàng số 4 của package: chữ operator nhìn thấy phải tiếng Việt, chỉ mã lỗi (CODE) mới tiếng
+Anh. Không sửa trong phiên 28/08 vì **toàn bộ hàng xóm xung quanh cũng đang tiếng Anh** — sửa lẻ
+một chỗ thì thành chắp vá, mà sửa hết là một việc riêng. Nên gom thành một lượt: rà hết câu lỗi
+`throw new Error("CODE: ...")` mà operator thật sự đọc được, dịch phần sau dấu hai chấm.
+
 ---
 
 ## P2 — Vận hành & đồng bộ

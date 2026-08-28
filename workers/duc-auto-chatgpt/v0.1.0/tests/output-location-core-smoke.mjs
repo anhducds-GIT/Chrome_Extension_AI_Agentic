@@ -56,6 +56,10 @@ const denied = await output.preflight(settings);
 assert.equal(denied.ok, false, "revoked permission fails preflight");
 assert.match(denied.error, /permission is denied/i);
 assert.equal(denied.effective.image.kind, "directory", "permission failure never silently changes the destination to Downloads");
+settings.result = output.downloadsLocation("Text Results");
+const textOnly = await output.preflight(settings, { requireImage: false });
+assert.equal(textOnly.ok, true, "text-only jobs require the Result destination but do not require an unused image folder permission");
+assert.equal(textOnly.checks.length, 1);
 
 const names = output.imageCandidates("job:001", "webp");
 assert.deepEqual(Array.from(names.slice(0, 3)), ["job_001.webp", "job_001__attempt-01.webp", "job_001__attempt-02.webp"]);

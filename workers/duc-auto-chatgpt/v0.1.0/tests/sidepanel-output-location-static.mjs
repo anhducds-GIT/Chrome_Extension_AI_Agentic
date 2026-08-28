@@ -46,7 +46,13 @@ assert.match(source, /Auto-retry: No/);
 assert.match(source, /showScreen\("runScreen"\)/);
 assert.match(source, /showScreen\("outputScreen"\)/);
 assert.match(source, /if \(state\.running && id === "outputScreen"\) return;/);
-assert.match(source, /if \(window\.DacRunnerCore\.needsReconciliation\(item\.phase\)\) \{\s*const outcome = await reconcileSubmittedAttempt\(/, "a post-submit failure is routed to reconciliation (the DAC_RECONCILE_IMAGE_JOB round trip) before any retry/skip decision");
+// 2026-08-28: post-submit routing moved into the pure, behaviourally tested
+// DacTextOutputCore.dispatchOutcome() (see text-reasoning-mode-smoke.mjs).
+// The property pinned here is the same one: a post-submit IMAGE failure still
+// reaches reconciliation before any retry/skip decision -- and the phase, not
+// something cheaper, is still what decides it.
+assert.match(source, /postSubmit: window\.DacRunnerCore\.needsReconciliation\(item\.phase\)/, "post-submit routing is still decided by the attempt phase");
+assert.match(source, /if \(dispatch\.action === actions\.IMAGE_RECONCILE\) \{\s*const outcome = await reconcileSubmittedAttempt\(/, "a post-submit failure is routed to reconciliation (the DAC_RECONCILE_IMAGE_JOB round trip) before any retry/skip decision");
 assert.match(source, /async function resolveJobFailure\(item, failureType, message, settings\)/, "retry vs. hard-stop vs. skip is decided by one shared function, not duplicated per failure site");
 const reconcileBody = source.slice(source.indexOf("async function reconcileSubmittedAttempt"), source.indexOf("async function gateNextJob"));
 assert.equal((reconcileBody.match(/resolveJobFailure\(/g) || []).length, 3, "every non-success reconciliation outcome (network error, attempt mismatch, still no output) defers to the shared retry/skip policy rather than halting inline");

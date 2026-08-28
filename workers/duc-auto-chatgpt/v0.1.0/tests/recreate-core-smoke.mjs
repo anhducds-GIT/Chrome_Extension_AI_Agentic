@@ -75,7 +75,7 @@ assert.deepEqual(runner.selectQueue(completedPrepared.queue, "all").map((item) =
 
 const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 const html = fs.readFileSync(new URL("sidepanel.html", root), "utf8");
-assert.match(sidepanel, /no verified saved image\. Create it again\?/, "ambiguous blocker gives the operator one concise recovery decision");
+assert.match(sidepanel, /no verified saved \$\{textReasoning \? "text response" : "image"\}/, "ambiguous blocker gives the operator one task-aware recovery decision");
 assert.match(sidepanel, /Recreate \$\{recovery\.job_id\}/, "recreate action identifies the blocked job");
 assert.match(sidepanel, /requiresNewApproval/, "failed recreate renders explicit recovery again");
 const renderResumeSegment = sidepanel.slice(sidepanel.indexOf("function renderResumePlan"), sidepanel.indexOf("function reconciliationProof"));
@@ -90,7 +90,11 @@ assert.match(confirmSegment, /confirmation received; checking approval and persi
 assert.match(confirmSegment, /RECREATE_CONFIRM_QUEUE_MISSING/, "missing prepared queue surfaces an exact blocked-start reason");
 assert.match(confirmSegment, /RECREATE_START_BLOCKED/, "a rejected recreate start is surfaced rather than ignored");
 assert.match(confirmSegment, /setStatus\("RUNNING", "RECREATE CHECKPOINTING"\)/, "confirmed recreate visibly enters a running transition before checkpoint persistence");
-assert.match(confirmSegment, /image saved and checkpointed\. Continuing with/, "verified recreate continues the remaining queue without another operator step");
+// The artifact noun became task-aware on 2026-08-28 (a text recreate saves a
+// response, not an image); the property being pinned is unchanged -- a verified
+// recreate continues on its own.
+assert.match(confirmSegment, /saved and checkpointed\. Continuing with/, "verified recreate continues the remaining queue without another operator step");
+assert.match(confirmSegment, /recreateTextReasoning \? "text response" : "image"/, "the recreate outcome names the artifact the job actually produces");
 assert.match(confirmSegment, /await run\("all"\)/, "only after verified recreate completion does the normal queue continue");
 assert.doesNotMatch(confirmSegment, /\) return;/, "confirm flow has no silent guard return");
 const runSegment = sidepanel.slice(sidepanel.indexOf('async function run(mode = "all")'), sidepanel.indexOf("chrome.runtime.onMessage.addListener"));

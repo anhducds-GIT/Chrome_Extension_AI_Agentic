@@ -250,9 +250,9 @@
     }
   }
 
-  async function preflight(settings) {
+  async function preflight(settings, { requireImage = true } = {}) {
     const values = effective(settings);
-    const locations = values.image === values.result ? [values.image] : [values.image, values.result];
+    const locations = requireImage && values.image !== values.result ? [values.image, values.result] : [values.result];
     const checks = await Promise.all(locations.map(permission));
     const failed = checks.find((check) => !check.ok);
     return failed ? { ok: false, checks, error: failed.detail, effective: values } : { ok: true, checks, effective: values };

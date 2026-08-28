@@ -25,16 +25,16 @@ const remember = background.slice(background.indexOf("function rememberExpectedD
 assert.match(remember, /\["uniquify", "overwrite", "prompt"\]/, "conflictAction must be a chrome enum value");
 assert.match(remember, /expires/, "expectations must expire");
 
-// Every chrome.downloads.download call site announces its expected name first.
+// Images already reserve and download inside background.js. Artifact blobs
+// now do the same in one DAC_DOWNLOAD_ARTIFACT request: splitting those two
+// operations across MV3 turns lost the in-memory reservation live and let a
+// GUID filename through.
 const backgroundCall = background.indexOf("chrome.downloads.download({ url, filename: requestedFilename");
 assert.ok(backgroundCall > 0 && background.lastIndexOf("rememberExpectedDownloadName(url, requestedFilename", backgroundCall) > 0, "image download must register its name");
-const panelCalls = [...panel.matchAll(/chrome\.downloads\.download\(\{ url: objectUrl/g)];
-assert.equal(panelCalls.length, 2, "expected the two panel blob-download sites");
-for (const match of panelCalls) {
-  const before = panel.slice(Math.max(0, match.index - 200), match.index);
-  assert.match(before, /await expectDownloadName\(objectUrl, request\)/, "panel download must announce its expected name first");
-}
-assert.match(panel, /DAC_EXPECT_DOWNLOAD_NAME/, "panel must send the registration message");
+assert.doesNotMatch(panel, /chrome\.downloads\.download\(\{ url: objectUrl/, "panel does not start artifact downloads after releasing naming state");
+assert.equal((panel.match(/downloadArtifactViaBackground\(objectUrl, request/g) || []).length, 2, "both panel artifact sites use the atomic background transaction");
+assert.match(panel, /DAC_DOWNLOAD_ARTIFACT/, "panel must call the atomic artifact message");
+assert.match(background, /DAC_DOWNLOAD_ARTIFACT/, "background must accept the atomic artifact message");
 assert.match(background, /DAC_EXPECT_DOWNLOAD_NAME/, "background must accept the registration message");
 
 console.log("download-name-determiner-static: all assertions passed");

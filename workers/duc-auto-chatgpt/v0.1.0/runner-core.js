@@ -3,6 +3,7 @@
 
   const DEFAULTS = { timeout_sec: 180, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false, checkpoint_interval_jobs: 1, ab_poll_action: "random", max_images_per_job: 4 };
   const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
+  const TASK_TYPES = Object.freeze(["image_generation", "text_reasoning"]);
   const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
   const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "DETECTION_BLIND", "SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
   // Only these three genuinely block the whole batch: each means no further
@@ -21,6 +22,12 @@
   const normalise = (value) => String(value || "").trim().toLowerCase();
   const basename = (value) => normalise(value).replace(/^.*[\\/]/, "").replace(imageExtension, "");
   const tokens = (value) => String(value || "").split("|").map((item) => item.trim()).filter(Boolean);
+
+  function taskType(job = {}) {
+    const value = String(job.task_type || "").trim().toLowerCase() || "image_generation";
+    if (!TASK_TYPES.includes(value)) throw new Error(`INVALID_TASK_TYPE: ${job.id || "Job"} must use image_generation or text_reasoning.`);
+    return value;
+  }
 
   function bool(value, fallback) {
     if (value === undefined || value === null || value === "") return fallback;
@@ -221,7 +228,9 @@
       const phase = deliberateRerun ? "PRE_SUBMIT" : ATTEMPT_PHASES.includes(persistedPhase) ? persistedPhase : terminalSuccess ? "SUCCESS" : hasOutputCheckpoint ? "OUTPUT_SAVED" : "PRE_SUBMIT";
       const protectedCheckpoint = hasOutputCheckpoint && !deliberateRerun;
       const operatorRecreate = bool(job.recreate_operator_approved, false) && String(job.recreate_status || "").trim().toUpperCase() === "APPROVED" && !String(job.attempt_id || "").trim() && !String(job.submitted_at || "").trim() && !terminalSuccess;
-      return { job, number: index + 1, references, settings: itemSettings, status, skipped: terminalSuccess && !deliberateRerun || protectedCheckpoint, protected_checkpoint: protectedCheckpoint, deliberate_rerun: deliberateRerun, operator_recreate: operatorRecreate, phase, attempt_id: String(job.attempt_id || ""), submitted_at: String(job.submitted_at || ""), detection_diagnostics: String(job.detection_diagnostics || ""), attempt_count: Number(job.attempt_count) || 0, retry_count: Number(job.retry_count) || 0, failure_type: job.failure_type || "", last_error: job.last_error || job.error || "", result_file: savedOutput, result_download_id: job.result_download_id || "" };
+      const normalizedTaskType = taskType(job);
+      job.task_type = normalizedTaskType;
+      return { job, task_type: normalizedTaskType, output_type: String(job.output_type || ""), response_char_count: String(job.response_char_count || ""), response_sha256: String(job.response_sha256 || ""), number: index + 1, references, settings: itemSettings, status, skipped: terminalSuccess && !deliberateRerun || protectedCheckpoint, protected_checkpoint: protectedCheckpoint, deliberate_rerun: deliberateRerun, operator_recreate: operatorRecreate, phase, attempt_id: String(job.attempt_id || ""), submitted_at: String(job.submitted_at || ""), detection_diagnostics: String(job.detection_diagnostics || ""), attempt_count: Number(job.attempt_count) || 0, retry_count: Number(job.retry_count) || 0, failure_type: job.failure_type || "", last_error: job.last_error || job.error || "", result_file: savedOutput, result_download_id: job.result_download_id || "" };
     });
     return { settings, queue, plan: planSummary(queue, settings) };
   }
@@ -253,6 +262,6 @@
     if (!signal?.composerFound) return "OUTPUT_READY";
     return "CHAT_READY";
   }
-  const api = { DEFAULTS, ATTEMPT_PHASES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, basename, referenceTokens, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
+  const api = { DEFAULTS, ATTEMPT_PHASES, TASK_TYPES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, basename, referenceTokens, taskType, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
   (typeof window !== "undefined" ? window : globalThis).DacRunnerCore = api;
 })();

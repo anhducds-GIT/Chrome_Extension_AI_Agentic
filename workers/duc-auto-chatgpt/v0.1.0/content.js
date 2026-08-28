@@ -946,6 +946,24 @@
       return true;
     }
 
+    if (message.type === "DAC_RUN_TEXT_JOB") {
+      const requestAttempt = window.DacAttemptIdentity.create(message);
+      const prompt = typeof message.prompt === "string" ? message.prompt.trim() : "";
+      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 900000));
+      if (!window.DacAttemptIdentity.validContext(requestAttempt)) {
+        sendResponse({ ok: false, error: "INVALID_ATTEMPT_ID: job_id and attempt_id are required.", attempt: attemptSnapshot(requestAttempt) });
+        return false;
+      }
+      if (!prompt) {
+        sendResponse({ ok: false, error: "Prompt is empty.", attempt: attemptSnapshot(requestAttempt) });
+        return false;
+      }
+      runPrompt(prompt, timeoutMs, message.referenceImages || (message.referenceImage ? [message.referenceImage] : []), false, requestAttempt, 1)
+        .then((result) => sendResponse({ ok: true, result, attempt: attemptSnapshot(requestAttempt) }))
+        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), attempt: attemptSnapshot(requestAttempt) }));
+      return true;
+    }
+
     if (message.type === "DAC_RECONCILE_IMAGE_JOB") {
       const requestAttempt = window.DacAttemptIdentity.create(message);
       const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 120000));

@@ -199,7 +199,14 @@
   // from a workbook the operator opened from disk.
   function createWorkbook(fileName, jobs) {
     if (!Array.isArray(jobs) || !jobs.length) throw new Error("At least one job is required to start a quick-prompt session.");
-    const jobRows = [["id", "prompt"], ...jobs.map((job) => [String(job.id ?? ""), String(job.prompt ?? "")])];
+    const extraHeaders = [];
+    for (const job of jobs) {
+      for (const key of Object.keys(job || {})) {
+        if (key !== "id" && key !== "prompt" && !extraHeaders.includes(key)) extraHeaders.push(key);
+      }
+    }
+    const headers = ["id", "prompt", ...extraHeaders];
+    const jobRows = [headers, ...jobs.map((job) => headers.map((key) => String(job?.[key] ?? "")))];
     const entries = new Map([
       ["[Content_Types].xml", encoder.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>')],
       ["_rels/.rels", encoder.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')],

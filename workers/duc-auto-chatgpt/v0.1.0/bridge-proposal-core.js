@@ -77,7 +77,7 @@
   function sanitizeLedgerJob(job = {}, { redact_local_paths = true } = {}) {
     const clean = {};
     for (const key of Object.keys(job).sort()) {
-      if (key.startsWith("_") || /(?:token|handle|data_url|object_url|absolute_path)$/i.test(key)) continue;
+      if (key === "response_text" || key.startsWith("_") || /(?:token|handle|data_url|object_url|absolute_path)$/i.test(key)) continue;
       clean[key] = redact_local_paths ? safeLedgerValue(key, job[key]) : sanitizeLedgerValue(job[key]);
     }
     return clean;
@@ -188,6 +188,7 @@
         client_job_id: job.client_job_id,
         requested_job_id: job.requested_job_id || null,
         prompt: job.prompt,
+        task_type: job.task_type || "image_generation",
         reference_images: references,
         settings: effectiveSettings(job, default_settings)
       };
@@ -208,6 +209,7 @@
           job_id: item.job_id,
           client_job_id: item.client_job_id,
           prompt: item.prompt,
+          task_type: item.task_type,
           reference_images: item.reference_images,
           settings: item.settings
         })
@@ -266,6 +268,7 @@
         job_id: job.job_id,
         client_job_id: job.client_job_id,
         requested_job_id: job.requested_job_id || null,
+        task_type: job.task_type || "image_generation",
         bridge_prompt_sha256: job.bridge_prompt_sha256,
         bridge_payload_sha256: job.bridge_payload_sha256
       };

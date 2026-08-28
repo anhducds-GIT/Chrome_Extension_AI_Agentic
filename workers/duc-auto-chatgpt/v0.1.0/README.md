@@ -1,6 +1,6 @@
 # Duc Auto ChatGPT V0.3
 
-Personal Chrome extension for **local-only XLSX-driven image generation** on ChatGPT.
+Personal Chrome extension for **local-only XLSX-backed text reasoning and image generation** on ChatGPT.
 
 Before touching this project, read [AGENTS.md](AGENTS.md) (roles, golden rules, file map) and [HANDOFF.md](HANDOFF.md) (current state, Log).
 
@@ -13,7 +13,7 @@ New orchestrator workbooks should follow [DAC_XLSX_RUN_PLAN_V1.md](DAC_XLSX_RUN_
 - Side Panel UI.
 - Open one local `.xlsx` workbook, validate it, then run its jobs strictly in order.
 - Optional local reference images, resolved by filename from the selected image files.
-- Detect the generated image in the new assistant message and download it automatically.
+- Run either `text_reasoning` jobs (capture the attributable assistant text into Result XLSX) or `image_generation` jobs (detect and download attributable generated images).
 - Update the loaded workbook's `jobs` worksheet with status/result data and download that updated XLSX.
 - Configurable delay and timeout using optional workbook `config` values.
 - Visible, editable current-run output settings for generated images and the result XLSX.
@@ -25,7 +25,7 @@ New orchestrator workbooks should follow [DAC_XLSX_RUN_PLAN_V1.md](DAC_XLSX_RUN_
 
 - Bypassing ChatGPT limits, paywalls, account restrictions, or third-party extension licensing.
 - Copying proprietary source code from another extension.
-- Non-XLSX queue formats (TXT/CSV).
+- Importing TXT/CSV queues. The Quick Prompt UI still creates an in-memory XLSX ledger before anything can run.
 - Multi-tab concurrency.
 - Cloud synchronization.
 - Automatic recovery across a closed side panel while a response is in-flight.
@@ -48,10 +48,12 @@ The workbook must have a worksheet named `jobs` with these header columns:
 | Column | Required | Meaning |
 | --- | --- | --- |
 | `id` | Yes | Unique stable job identifier. |
-| `prompt` | Yes | Image-generation prompt. |
+| `prompt` | Yes | Prompt sent to ChatGPT. |
+| `task_type` | No | `image_generation` or `text_reasoning`; missing/blank legacy rows default to `image_generation`. |
 | `reference_images` | No | One or more references separated by `|`; tokens may be basenames or exact filenames. |
 | `reference_image` | No | Legacy single-reference compatibility column. |
 | `status`, `result_file`, `result_download_id`, `output_saved_at`, `attempt_phase`, `failure_type`, `last_error`, `error`, `completed_at` | No | Ledger fields written or updated by the runner. |
+| `output_type`, `response_text`, `response_char_count`, `response_sha256` | No | Text-result fields written by the runner. `response_text` preserves Unicode/newlines and is stored in Result XLSX, not Bridge/audit logs. |
 | `effective_image_output`, `effective_result_xlsx`, `effective_image_naming` | No | Current-run destination/config snapshot written to the ledger. |
 
 **Start every new pilot from `templates/Duc-Auto-ChatGPT-Template.xlsx`, never from a prior Result XLSX.** A Result checkpoint (`*__results__vNN.xlsx`) accumulates 30+ runtime columns (`status`, `attempt_id`, `detection_diagnostics`, ...) that only the runner writes; opening one and typing new prompts over its old rows is how Pilot-07 ended up looking like it needed all of that filled in. The template has only `id`/`prompt` (highlighted, mandatory) and `reference_images` (highlighted, optional) on the `jobs` sheet, plus an empty `config` sheet — every other column above is optional and is populated by the extension itself.
@@ -70,12 +72,13 @@ V0.3 also accepts `max_retries` (0–5, default 2) and `safety_cooldown_sec` (0�
 - `output_folder_hint` is optional XLSX guidance only. It can be copied in the profile UI, but cannot authorize a directory or satisfy Check Plan by itself.
 
 - **Check Plan** validates workbook, aliases/references, effective settings, output destinations, permission, retry budget, and result filename without submitting a ChatGPT prompt. Run validates again authoritatively.
+- **Quick Prompt** has a **Loại công việc** selector. Choose **Reasoning bằng text** to save ChatGPT's final text response in Result XLSX, or **Tạo ảnh** for the established image flow. Checking/staging never sends the prompt; Run remains a separate click.
 - The Side Panel exposes current-run overrides for timeout, retries, cooldown, error continuation, maximum references, and rerun-DONE behavior. They are recorded in result provenance; source XLSX is never overwritten.
 - References have a compact gallery with editable aliases and remove controls. Tokens resolve alias first, then exact filename, then extensionless basename; aliases are case-insensitive and duplicates fail validation.
 - Every attempt is phase-aware and identity-bound: each Side Panel submission carries its own `job_id` + `attempt_id` through `PRE_SUBMIT`, `SUBMITTED`, `OUTPUT_DETECTED`, `OUTPUT_SAVED`, `CHAT_READY`, and `SUCCESS`. Automatic retry is allowed only for a confirmed pre-submit failure. A post-submit timeout or ambiguity enters bounded reconciliation against the original conversation boundary; a remaining uncertain result becomes `INTERRUPTED` and halts the queue without another prompt submission. A stale/mismatched identity fails closed and cannot reconcile or submit another job.
-- A saved image is checkpointed immediately in the result workbook (`result_file`, `result_download_id`, `output_saved_at`, and `attempt_phase=OUTPUT_SAVED`). A later readiness failure preserves that checkpoint and becomes `INTERRUPTED`; it never resubmits the prompt.
+- A saved image is checkpointed immediately in the result workbook (`result_file`, `result_download_id`, `output_saved_at`, and `attempt_phase=OUTPUT_SAVED`). A text response is checkpointed with `output_type=text`, exact `response_text`, character count, and SHA-256 before it may become `SUCCESS`. A later persistence/readiness failure preserves the post-submit boundary, halts, and never resubmits the prompt automatically.
 - Before each new job the runner requires an idle, reachable ChatGPT composer. If a prior generation is still unresolved, it reconciles/waits or halts safely; it does not start the next job.
-- Each run writes one stable `<base>__audit.jsonl` alongside its result location. Events contain attempt phase/status, reference aliases, output filename, target URL when available, and a prompt hash/length rather than duplicating prompt text. A profile-folder continuation reads and appends that existing audit before replacing it only after persistence verification. Image collision policy remains limited to images.
+- Each run writes one stable `<base>__audit.jsonl` alongside its result location. Events contain attempt phase/status, task/output type, reference aliases, output filename or text response count/hash, target URL when available, and a prompt hash/length rather than duplicating prompt or response text. A profile-folder continuation reads and appends that existing audit before replacing it only after persistence verification. Image collision policy remains limited to images.
 - **Run All**, **Run Pending**, **Run Failed**, and **Retry Selected** are side-panel recovery controls only; there is no durable background queue.
 
 ## Output locations
@@ -156,15 +159,12 @@ Every test is a dependency-free Node script. `npm test` runs all worker tests pl
 
 ## Quick validation
 
-1. Open a normal ChatGPT conversation.
-2. Select a workbook with two trivial `jobs` rows; optionally select its referenced images.
-3. Press **Validate**; expect a successful idle-composer check.
-4. Press **Run**.
-5. Verify job #2 is not sent until job #1 produces/downloads an attributable image and the visible countdown completes.
-6. Verify the Run Plan names the source XLSX, generated-image destination, result-XLSX destination, and naming pattern.
-7. Choose a custom output folder, then revoke/rechoose its permission; Validate must fail rather than use Downloads.
-8. In a custom folder, place a file with the first job's expected name; verify `__attempt-01` is used rather than overwriting it. In Chrome Downloads, verify the ledger's `result_file` records Chrome's actual final collision-resolved filename.
-9. Test an image-only response, a Retry/error UI with a visible image, references, and Stop during generation; no later job may begin after Stop.
+1. Reload the extension, open a normal ChatGPT conversation, and open the side panel.
+2. In **Nhập prompt nhanh**, choose **Reasoning bằng text**, enter one harmless prompt, then click **Kiểm tra & thêm vào hàng đợi**. Confirm it appears as `TEXT` and has not been sent yet.
+3. Run that selected job. Confirm Result XLSX contains `output_type=text`, the exact `response_text`, its character count/hash, and `status=SUCCESS`; no image download is created.
+4. Repeat with **Tạo ảnh** (or a two-row image workbook). Verify the established image detection/download path is unchanged and a later image job waits for the prior job's verified output/readiness countdown.
+5. Verify the Run Plan names the source XLSX, generated-image destination, result-XLSX destination, and naming pattern.
+6. For an image run, choose a custom output folder, then revoke/rechoose its permission; Validate must fail rather than use Downloads. A text-only run with a separate valid Result destination does not require the unused image folder permission.
 
 ## Architecture
 
@@ -232,6 +232,14 @@ node (Join-Path $bridgeRoot 'bridge-cli.mjs') profiles-remove --params-file .\pr
 ```
 
 Mọi file truyền qua `--params-file` chứa đúng object `params` của method tương ứng; CLI không tự diễn giải từng field. `proposal-params.json` chứa `if_ledger_etag`, nhãn tùy chọn, và 1–100 job. Dùng `--include-prompt` chỉ khi thật sự cần vì mặc định các lệnh đọc trả fingerprint thay cho prompt đầy đủ. `--request-id` và `--client-id` cho phép script giữ nguyên idempotency identity khi retry; fetch tự hủy sau 40 giây. Exit code: `0` thành công, `3` khi Bridge trả lỗi `retryable: true`, `2` cho lỗi protocol không retry (lỗi parse/file cục bộ dùng `1`). Khi nhận code `3`, retry với cùng `--request-id`.
+
+`jobs.add`, `jobs.update`, và `queue.propose` nhận `task_type: "text_reasoning"` hoặc `"image_generation"`; nếu bỏ trống thì giữ tương thích cũ bằng `image_generation`. Ví dụ `jobs-add.json` cho reasoning:
+
+```json
+{ "jobs": [ { "prompt": "Phân tích và trả lời bằng text.", "task_type": "text_reasoning" } ] }
+```
+
+Bridge có thể đọc `output_type`, `response_char_count`, và `response_sha256` để kiểm tra kết quả, nhưng cố ý không trả toàn bộ `response_text`; nội dung đầy đủ nằm trong Result XLSX đã xác minh.
 
 `propose` chỉ đưa đề xuất vào vùng cách ly. Đức phải xem đúng prompt/tham chiếu trong thẻ **ĐỀ XUẤT TỪ AGENT** và bấm **Duyệt & ghi checkpoint**. Duyệt chỉ thêm vào Queue và ghi checkpoint; **không bắt đầu Run, không gửi prompt tới ChatGPT**. `run-trial` là ngoại lệ dev có nắp riêng: Đức phải bật **Chế độ phát triển**, chỉ 1–2 job, timeout tối đa 90 giây và cách trial trước ít nhất 5 phút; lệnh trả reservation ngay và agent theo dõi bằng `run-status`. V1 vẫn cố ý không có `run.start`, `run.pause`, hay `run.resume`.
 

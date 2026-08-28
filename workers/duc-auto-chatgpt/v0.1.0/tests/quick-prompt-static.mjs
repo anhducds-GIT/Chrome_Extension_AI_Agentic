@@ -21,7 +21,7 @@ import vm from "node:vm";
 const sidepanel = fs.readFileSync(new URL("../sidepanel.js", import.meta.url), "utf8");
 const html = fs.readFileSync(new URL("../sidepanel.html", import.meta.url), "utf8");
 
-for (const id of ["quickPromptCard", "quickPromptInput", "quickPromptCheckBtn", "quickPromptStatus", "quickPromptSessionText"]) {
+for (const id of ["quickPromptCard", "quickPromptTaskType", "quickPromptInput", "quickPromptCheckBtn", "quickPromptStatus", "quickPromptSessionText"]) {
   assert.match(html, new RegExp(`id="${id}"`), `${id} exists in the SETUP screen`);
 }
 assert.ok(html.indexOf('id="quickPromptCard"') < html.indexOf('id="workbookCard"'), "Quick Prompt sits above the Excel workbook card -- it is the primary path for this workflow, not a buried extra");
@@ -31,6 +31,8 @@ assert.ok(html.indexOf('id="quickPromptCard"') < html.indexOf('id="workbookCard"
 const quickPromptCardSegment = html.slice(html.indexOf('id="quickPromptCard"'), html.indexOf('id="workbookCard"'));
 assert.match(quickPromptCardSegment, /class="info-icon"[^>]*title="[^"]*DÒNG TRỐNG[^"]*"/, "the info icon explains the blank-line-separated multi-prompt syntax");
 assert.match(quickPromptCardSegment, /class="info-icon"[^>]*title="[^"]*CHƯA chạy[^"]*"/, "the info icon explains that Check only stages jobs, it does not run them");
+assert.match(quickPromptCardSegment, /value="text_reasoning" selected/, "Quick Prompt defaults to the owner's current text-reasoning workflow");
+assert.match(quickPromptCardSegment, /value="image_generation"/, "image generation remains available as an explicit task type");
 
 // --- multi-prompt splitting -------------------------------------------------
 
@@ -59,8 +61,8 @@ assert.ok(fnSegment.length > 0, "checkQuickPrompt() is present");
 assert.match(fnSegment, /const prompts = splitQuickPromptText\(els\.quickPromptInput\?\.value\);/, "the textarea is parsed for multiple prompts, not read as one block");
 assert.match(fnSegment, /for \(const prompt of prompts\) \{/, "every parsed prompt becomes its own job in one Check click");
 assert.match(fnSegment, /if \(!state\.workbook\) \{/, "workbook creation is gated on there being no session yet");
-assert.match(fnSegment, /window\.DacXlsx\.createWorkbook\(`Quick-\$\{stamp\}\.xlsx`, \[\{ id: nextQuickPromptId\(\), prompt \}\]\)/, "the first prompt builds a real, from-scratch workbook rather than a parallel data structure");
-assert.match(fnSegment, /window\.DacXlsx\.addJob\(state\.workbook, \{ id: nextQuickPromptId\(\), prompt \}\)/, "later prompts append into the same session workbook");
+assert.match(fnSegment, /window\.DacXlsx\.createWorkbook\(`Quick-\$\{stamp\}\.xlsx`, \[\{ id: nextQuickPromptId\(\), prompt, task_type: taskType \}\]\)/, "the first typed prompt builds a real, from-scratch workbook rather than a parallel data structure");
+assert.match(fnSegment, /window\.DacXlsx\.addJob\(state\.workbook, \{ id: nextQuickPromptId\(\), prompt, task_type: taskType \}\)/, "later typed prompts append into the same session workbook");
 assert.doesNotMatch(fnSegment, /DacXlsx\.open\(/, "quick prompt never routes through the file-upload path");
 
 // The critical behavior change: Check must never itself start a run.
@@ -79,6 +81,7 @@ assert.match(idFnSegment, /existing\.has\(`Q\$\{String\(candidate\)\.padStart\(3
 
 // Busy-state gating and wiring.
 assert.match(sidepanel, /if \(els\.quickPromptCheckBtn\) els\.quickPromptCheckBtn\.disabled = operatorLocked;/, "controls() gates the button the same way as every other operator action");
+assert.match(sidepanel, /if \(els\.quickPromptTaskType\) els\.quickPromptTaskType\.disabled = operatorLocked;/, "controls() locks task type while an operator action is active");
 assert.match(sidepanel, /els\.quickPromptCheckBtn\?\.addEventListener\("click", \(\) => checkQuickPrompt\(\)\);/, "the button is wired to the handler");
 
 // A normal workbook load resets the quick-prompt counter so ids never carry

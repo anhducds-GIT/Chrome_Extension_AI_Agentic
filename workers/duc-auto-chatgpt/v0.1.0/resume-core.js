@@ -29,6 +29,17 @@
     return Boolean(text(job.submitted_at)) || postSubmitPhases.has(phase) || ["running", "reconciling", "interrupted", "stopped"].includes(lower(job.status));
   }
   function validSavedAttribution(job = {}) {
+    const taskType = lower(job.task_type) || "image_generation";
+    if (taskType === "text_reasoning") {
+      const response = String(job.response_text ?? "");
+      const charCount = Number(job.response_char_count);
+      return bool(job.persistence_verified)
+        && lower(job.output_type) === "text"
+        && Boolean(response.trim())
+        && Number.isInteger(charCount)
+        && charCount === response.length
+        && /^sha256:[A-Za-z0-9_-]{20,}$/.test(text(job.response_sha256));
+    }
     const result = leaf(job.result_file);
     if (!bool(job.persistence_verified) || !result) return false;
     const requested = leaf(job.requested_file);

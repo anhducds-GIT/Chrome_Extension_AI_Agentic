@@ -102,7 +102,9 @@ COMPANION (đọc khi cần):
 | `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md` | Audit độc lập toàn hệ thống + roadmap 5 giai đoạn tiến tới tự hành (Đức đã chốt cả 5 điểm 2026-08-24) |
 | `drafts/GIAI-DOAN-1-SAFETY-HANDOFF.md` | Brief Giai đoạn 1 (8 fix an toàn nhóm A) giao Codex, kèm bằng chứng sống cho fix A1 |
 | `drafts/GIAI-DOAN-2A-AGENT-BRIDGE-HANDOFF.md` | Brief Giai đoạn 2A (run.trial + 6 nâng cấp Bridge chuẩn agent) giao Codex |
+| `drafts/20260828-chatgpt-text-reasoning-r01.CLAUDE-HANDOFF.md` | Handoff tự chứa cho Claude Code: trạng thái bản vá text reasoning + filename persistence, bằng chứng kiểm và bước tiếp theo |
 | `ab-poll-core.js` | Chính sách trả lời poll A/B của ChatGPT (`ab_poll_action`) — module lõi thuần, dùng chung cho content script và side panel |
+| `text-output-core.js` | Hợp đồng thuần cho `text_reasoning`: enum loại job, giới hạn ô XLSX, trường ledger và trường audit đã loại full response |
 | `provider-adapter.js` | Mọi thứ riêng của ChatGPT: selector DOM, hằng số thời gian, luật origin, mẫu chặn bảo mật. `content.js` đọc từ đây và không biết nó đang lái sản phẩm nào |
 | `drafts/NEXT-CHAT-PROMPT.md` | Prompt mở chat mới + bối cảnh ngắn cho Đức |
 | `drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md` | Gói việc `run.stop` + `chat.reload` giao cho phiên kế tiếp |

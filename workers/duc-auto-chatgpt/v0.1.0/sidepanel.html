@@ -54,12 +54,18 @@
          1. SETUP SCREEN
          ========================================================================= -->
     <section id="setupScreen" class="workflow-screen active">
-      <!-- QUICK PROMPT: one prompt in, one image out, no Excel required -->
+      <!-- QUICK PROMPT: text reasoning or image generation, no Excel required -->
       <section class="card setup-group" id="quickPromptCard">
         <div class="row spread section-title">
           <strong>NHẬP PROMPT NHANH <span class="info-icon" tabindex="0" title="Nhập 1 hoặc nhiều prompt — mỗi prompt cách nhau bằng MỘT DÒNG TRỐNG. Bấm &quot;Kiểm tra &amp; thêm vào hàng đợi&quot; để biến mỗi prompt thành 1 job, hiện ra ở tab RUN — bước này CHƯA chạy gì cả. Muốn chạy thật thì sang tab RUN, bấm &quot;Chạy job đã chọn&quot; hoặc &quot;START RUN&quot;.">ⓘ</span></strong>
           <span id="quickPromptSessionText" class="muted">Chưa có phiên nào</span>
         </div>
+        <label>Loại công việc
+          <select id="quickPromptTaskType">
+            <option value="text_reasoning" selected>Reasoning bằng text</option>
+            <option value="image_generation">Tạo ảnh</option>
+          </select>
+        </label>
         <textarea id="quickPromptInput" class="quick-prompt-textarea" rows="3" placeholder="Nhập 1 hoặc nhiều prompt, mỗi prompt cách nhau 1 dòng trống…"></textarea>
         <button id="quickPromptCheckBtn" class="primary dominant-btn" type="button">✓ Kiểm tra &amp; thêm vào hàng đợi</button>
         <p id="quickPromptStatus" class="hint" aria-live="polite">Chỉ thêm job vào hàng đợi — chưa chạy. Sang tab RUN để xem từng job và bấm chạy khi bạn sẵn sàng.</p>
@@ -583,8 +589,8 @@
     <h2><span id="rerunConfirmTitle">Run this job again?</span><span id="rerunConfirmTitleVi" class="notice-translation" lang="vi">Chạy lại job này?</span></h2>
     <p id="rerunConfirmMessage">This job already has a verified saved image. Running it again sends a new request and creates another image.</p>
     <p id="rerunConfirmMessageVi" class="notice-translation" lang="vi">Job này đã có ảnh được lưu và xác minh. Chạy lại sẽ gửi một yêu cầu mới và tạo một ảnh khác.</p>
-    <p class="collision-suffix">What happens to the old image?<span class="notice-translation" lang="vi">Ảnh cũ sẽ như thế nào?</span></p>
-    <div class="collision-list">
+    <p id="rerunCollisionSuffix" class="collision-suffix">What happens to the old image?<span class="notice-translation" lang="vi">Ảnh cũ sẽ như thế nào?</span></p>
+    <div id="rerunCollisionControls" class="collision-list">
       <label class="collision-option">
         <input type="radio" name="rerunCollisionPolicy" id="rerunKeepPolicyRadio" value="uniquify" checked>
         <span>Keep the old image — save the new image as a separate file<span class="notice-translation" lang="vi">Giữ ảnh cũ — ảnh mới lưu thành file riêng (khuyến nghị)</span></span>
@@ -639,6 +645,7 @@
   <script src="bridge-core.js"></script>
   <script src="bridge-pairing-core.js"></script>
   <script src="bridge-proposal-core.js"></script>
+  <script src="text-output-core.js"></script>
   <script src="approval-persistence-core.js"></script>
   <script src="sidepanel-ui-semantics.js"></script>
   <script src="sidepanel.js"></script>

@@ -32,6 +32,7 @@
   const FEATURES = Object.freeze([
     "proposal_inbox", "immutable_result_checkpoints", "audit_chain", "verified_persistence"
   ]);
+  const TASK_TYPES = Object.freeze(["image_generation", "text_reasoning"]);
   const ERROR_DEFINITIONS = deepFreeze(Object.assign(Object.create(null), {
     INVALID_ENVELOPE: { retryable: false, message: "The RPC envelope is invalid." },
     INTERNAL_ERROR: { retryable: false, message: "The bridge could not complete the request." },
@@ -256,6 +257,13 @@
     return token;
   }
 
+  function taskTypeValue(value, path) {
+    if (value === undefined || value === null || value === "") return "image_generation";
+    const normalized = stringValue(value, path, { min: 1, max: 32 }).toLowerCase();
+    if (!TASK_TYPES.includes(normalized)) invalidParams(path, "expected image_generation or text_reasoning");
+    return normalized;
+  }
+
   // The ONE place an agent may introduce reference image BYTES. Everywhere else
   // reference_images carries a bare filename token that must already resolve
   // against the owner's picker pool -- which is why, before this method
@@ -325,7 +333,7 @@
   function validateProposalJob(raw, index) {
     const path = `params.jobs[${index}]`;
     const job = assertPlainObject(raw, path);
-    rejectUnknown(job, ["client_job_id", "requested_job_id", "prompt", "reference_images", "settings"], path);
+    rejectUnknown(job, ["client_job_id", "requested_job_id", "prompt", "task_type", "reference_images", "settings"], path);
     const clientJobId = stringValue(job.client_job_id, `${path}.client_job_id`, {
       min: 1, max: 128, pattern: /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/, patternMessage: "expected a stable visible identifier"
     });
@@ -348,6 +356,7 @@
       client_job_id: clientJobId,
       requested_job_id: requestedJobId,
       prompt,
+      task_type: taskTypeValue(job.task_type, `${path}.task_type`),
       reference_images: referenceImages,
       settings: validateSettings(job.settings, `${path}.settings`)
     };
@@ -389,7 +398,7 @@
   function validateDirectJob(raw, index) {
     const path = `params.jobs[${index}]`;
     const job = assertPlainObject(raw, path);
-    rejectUnknown(job, ["prompt", "reference_images", "settings"], path);
+    rejectUnknown(job, ["prompt", "task_type", "reference_images", "settings"], path);
     const prompt = stringValue(job.prompt, `${path}.prompt`, { min: 1, max: LIMITS.max_envelope_bytes, trim: false });
     if (!prompt.trim()) invalidParams(`${path}.prompt`, "expected non-whitespace text");
     const references = job.reference_images === undefined ? [] : job.reference_images;
@@ -398,7 +407,7 @@
     }
     const referenceImages = references.map((reference, referenceIndex) => validateReferenceToken(reference, `${path}.reference_images[${referenceIndex}]`));
     if (new Set(referenceImages.map((reference) => reference.toLowerCase())).size !== referenceImages.length) invalidParams(`${path}.reference_images`, "duplicate reference token");
-    return { prompt, reference_images: referenceImages, settings: validateSettings(job.settings, `${path}.settings`) };
+    return { prompt, task_type: taskTypeValue(job.task_type, `${path}.task_type`), reference_images: referenceImages, settings: validateSettings(job.settings, `${path}.settings`) };
   }
 
   function validateJobsAdd(raw) {
@@ -412,12 +421,13 @@
 
   function validateJobUpdateItem(raw, path) {
     const item = assertPlainObject(raw, path);
-    rejectUnknown(item, ["job_id", "prompt", "reference_images", "settings"], path);
+    rejectUnknown(item, ["job_id", "prompt", "task_type", "reference_images", "settings"], path);
     const normalized = { job_id: jobIdValue(item.job_id, `${path}.job_id`) };
     if (item.prompt !== undefined) {
       normalized.prompt = stringValue(item.prompt, `${path}.prompt`, { min: 1, max: LIMITS.max_envelope_bytes, trim: false });
       if (!normalized.prompt.trim()) invalidParams(`${path}.prompt`, "expected non-whitespace text");
     }
+    if (item.task_type !== undefined) normalized.task_type = taskTypeValue(item.task_type, `${path}.task_type`);
     if (item.reference_images !== undefined) {
       if (!Array.isArray(item.reference_images) || item.reference_images.length > LIMITS.max_references_per_job) {
         invalidParams(`${path}.reference_images`, `expected at most ${LIMITS.max_references_per_job} selected filename or alias tokens`);
@@ -426,15 +436,15 @@
       if (new Set(normalized.reference_images.map((reference) => reference.toLowerCase())).size !== normalized.reference_images.length) invalidParams(`${path}.reference_images`, "duplicate reference token");
     }
     if (item.settings !== undefined) normalized.settings = validateSettings(item.settings, `${path}.settings`);
-    if (!Object.hasOwn(normalized, "prompt") && !Object.hasOwn(normalized, "reference_images") && !Object.hasOwn(normalized, "settings")) invalidParams(path, "expected at least one mutable job field");
+    if (!Object.hasOwn(normalized, "prompt") && !Object.hasOwn(normalized, "task_type") && !Object.hasOwn(normalized, "reference_images") && !Object.hasOwn(normalized, "settings")) invalidParams(path, "expected at least one mutable job field");
     return normalized;
   }
 
   function validateJobsUpdate(raw) {
     const params = assertPlainObject(raw, "params");
-    rejectUnknown(params, ["job_id", "prompt", "reference_images", "settings", "jobs", "if_ledger_etag"], "params");
+    rejectUnknown(params, ["job_id", "prompt", "task_type", "reference_images", "settings", "jobs", "if_ledger_etag"], "params");
     const batch = params.jobs !== undefined;
-    if (batch && ["job_id", "prompt", "reference_images", "settings"].some((key) => params[key] !== undefined)) invalidParams("params", "choose either jobs batch or single-job fields");
+    if (batch && ["job_id", "prompt", "task_type", "reference_images", "settings"].some((key) => params[key] !== undefined)) invalidParams("params", "choose either jobs batch or single-job fields");
     let normalized;
     if (batch) {
       if (!Array.isArray(params.jobs) || params.jobs.length < 1 || params.jobs.length > 20) invalidParams("params.jobs", "expected 1-20 job updates");
@@ -644,7 +654,7 @@
     registryEntry({ name: "run.status", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read current run state without changing it.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reserve one capped development trial chain for 1-30 explicit eligible jobs; returns immediately for run.status polling.", params_schema: { job_ids: "string[1..30]" }, params_validator: validateRunTrial }),
     registryEntry({ name: "ledger.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a sanitized page of physical XLSX ledger rows.", params_schema: { cursor: "string|null", limit: "integer:1..100", include_prompt: "boolean", include_removed: "boolean" }, params_validator: validateLedgerRead }),
-    registryEntry({ name: "jobs.add", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Add jobs directly to the current Setup session, or create an in-memory session.", params_schema: { jobs: "direct_job[1..100]" }, params_validator: validateJobsAdd }),
+    registryEntry({ name: "jobs.add", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Add image-generation or text-reasoning jobs directly to the current Setup session, or create an in-memory session.", params_schema: { jobs: "direct_job[1..100] { prompt, task_type?, reference_images?, settings? }" }, params_validator: validateJobsAdd }),
     // idempotent: true, like every other mutation here. An earlier version of
     // this entry said false, reasoning that a second call with the same
     // filename REPLACES the image rather than being a no-op. That confused two
@@ -659,14 +669,14 @@
     // Replacement still works with it true: a deliberate second upload carries
     // a NEW request_id, so the replay store never matches it.
     registryEntry({ name: "references.add", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Add or replace in-memory reference images for the current Setup session from base64 data URLs; jobs pick them up by filename token. The only method that accepts image bytes -- reference_images elsewhere takes a filename token that must already resolve. Requires a session to attach to (jobs.add bootstraps one).", params_schema: { references: "reference_image[1..5]" }, params_validator: validateReferencesAdd }),
-    registryEntry({ name: "jobs.update", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Update mutable input fields on one PRE_SUBMIT job or a batch of 1-20 jobs.", params_schema: { job_id: "string?", prompt: "string?", reference_images: "string[]?", settings: "job_settings?", jobs: "job_update[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobsUpdate }),
+    registryEntry({ name: "jobs.update", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Update mutable input fields, including task_type, on one PRE_SUBMIT job or a batch of 1-20 jobs.", params_schema: { job_id: "string?", prompt: "string?", task_type: "image_generation|text_reasoning?", reference_images: "string[]?", settings: "job_settings?", jobs: "job_update[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobsUpdate }),
     registryEntry({ name: "jobs.remove", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Tombstone one or 1-20 PRE_SUBMIT Queue jobs without deleting ledger rows.", params_schema: { job_id: "string?", job_ids: "string[1..20]?", if_ledger_etag: "string?" }, params_validator: validateJobIdOnly }),
     registryEntry({ name: "jobs.reorder", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Move one PRE_SUBMIT Queue job or persist a full active-queue permutation.", params_schema: { job_id: "string?", position: "integer:1..1000000?", order: "string[]?", if_ledger_etag: "string?" }, params_validator: validateJobsReorder }),
     registryEntry({ name: "output.configure", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Configure naming, collision, and save controls for an already-bound output location — or point output at a Downloads-relative subfolder (the one location an agent may set without a human gesture; absolute directories still require the owner's picker).", params_schema: { image_pattern: "string?", result_filename_pattern: "string?", audit_filename: "string?", collision_policy: "overwrite|uniquify|fail?", save_images: "boolean?", save_result_xlsx: "boolean?", save_audit_jsonl: "boolean?", output_downloads_subfolder: "string?", if_ledger_etag: "string?" }, params_validator: validateOutputConfigure }),
     registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?", if_ledger_etag: "string?" }, params_validator: validateRunSettingsConfigure }),
     registryEntry({ name: "output.set_folder_hint", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Record the absolute folder path the agent is targeting, as operator-copyable display metadata on a stored output profile. Metadata only: writes no workbook data, no checkpoint, and never opens or binds a folder.", params_schema: { folder_hint: "string:1..500", profile_id: "slug?" }, params_validator: validateSetFolderHint }),
     registryEntry({ name: "profiles.remove", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Remove one stale extension-local output-profile metadata record. Never deletes a file or folder on disk.", params_schema: { profile_id: "slug" }, params_validator: validateProfilesRemove }),
-    registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage a quarantined queue proposal; never execute it automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100]" }, params_validator: validateQueuePropose }),
+    registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage quarantined image-generation or text-reasoning jobs; never execute them automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100] { prompt, task_type?, reference_images?, settings? }" }, params_validator: validateQueuePropose }),
     registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet }),
     registryEntry({ name: "queue.proposal.withdraw", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Withdraw the caller's own pending quarantined proposal.", params_schema: { proposal_id: "string" }, params_validator: validateProposalWithdraw }),
     registryEntry({ name: "diagnostics.dom_probe", context: "executor", read_only: true, approval: "none", deadline_ms: 30000, description: "Read-only DOM snapshot of the provider tab (adapter selector match counts, visible buttons, image candidates, custom element tags, file inputs) so an AI operator can diagnose the live page without the owner's eyes. Never clicks, types, or changes focus.", params_schema: {}, params_validator: (raw) => { const params = raw === undefined || raw === null ? {} : assertPlainObject(raw, "params"); rejectUnknown(params, [], "params"); return {}; } }),
@@ -916,6 +926,7 @@
     POLICY,
     FAILURE_TYPES,
     FEATURES,
+    TASK_TYPES,
     ERROR_DEFINITIONS,
     METHOD_REGISTRY,
     BridgeProtocolError,

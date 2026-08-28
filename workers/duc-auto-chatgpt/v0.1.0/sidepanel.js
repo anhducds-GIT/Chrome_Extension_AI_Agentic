@@ -2,7 +2,7 @@
   "use strict";
   const ids = [
     "workbookInput", "resumeWorkbookInput", "continueExistingRunBtn", "referencesInput", "validateBtn", "runBtn", "runFromRunTabBtn", "runFailedBtn", "runSelectedBtn", "runEligibilityHint", "stopBtn", "pauseResumeBtn", "statusChip", "statusChipTranslation",
-    "quickPromptInput", "quickPromptCheckBtn", "quickPromptStatus", "quickPromptSessionText",
+    "quickPromptInput", "quickPromptTaskType", "quickPromptCheckBtn", "quickPromptStatus", "quickPromptSessionText",
     "workbookText", "referenceText", "referenceGallery", "progressText", "progressDetail", "failedJobsText",
     "currentJobId", "currentStage", "currentTiming", "currentSaved", "runtimeJobElapsed", "runtimeCurrentOperation", "runtimeTimeoutRemaining", "runtimeRetryState", "runtimeInterJobDelay", "runtimeNextTransition", "nextTaskCard", "nextTaskId", "nextTaskCountdown",
     "queueSummary", "queueList", "logList", "clearLogsBtn", "imageOutputText", "resultOutputText", "auditOutputText",
@@ -18,7 +18,7 @@
     "changeWorkbookBtn", "addReferencesBtn", "workbookNameDisplay", "readinessChecklist",
     "checkWorkbook", "statusWorkbook", "checkJobs", "statusJobs", "checkReferences", "statusReferences",
     "checkChatGPT", "statusChatGPT", "checkOutput", "statusOutput", "checkSaveModes", "statusSaveModes", "checkNaming", "statusNaming", "checkSettings", "statusSettings", "readinessBanner", "planCheckSummary", "validationGuidance", "resumePlanDiagnostics", "resumeSourceSummary", "configProvenance", "helpBtn", "helpDrawer", "closeHelpBtn", "helpGlossary", "recreateConfirmDialog", "recreateConfirmTitle", "recreateConfirmMessage", "recreateCancelBtn", "recreateConfirmBtn", "auditGapConfirmDialog", "auditGapCancelBtn", "auditGapConfirmBtn",
-    "rerunConfirmDialog", "rerunConfirmTitle", "rerunConfirmTitleVi", "rerunConfirmMessage", "rerunConfirmMessageVi", "rerunKeepPolicyRadio", "rerunOverwritePolicyRadio", "rerunCancelBtn", "rerunConfirmBtn", "queueRemoveDialog", "queueRemoveMessage", "queueRemoveMessageVi", "queueRemoveCancelBtn", "queueRemoveConfirmBtn",
+    "rerunConfirmDialog", "rerunConfirmTitle", "rerunConfirmTitleVi", "rerunConfirmMessage", "rerunConfirmMessageVi", "rerunCollisionSuffix", "rerunCollisionControls", "rerunKeepPolicyRadio", "rerunOverwritePolicyRadio", "rerunCancelBtn", "rerunConfirmBtn", "queueRemoveDialog", "queueRemoveMessage", "queueRemoveMessageVi", "queueRemoveCancelBtn", "queueRemoveConfirmBtn",
     "progressRatio", "progressPercent", "progressBarFill", "progressSegments", "statDoneCount", "statActiveCount",
     "statNextCount", "statFailedCount", "haltedBanner", "haltedTime", "haltedReason", "haltedRetry", "haltedJob", "haltedCause", "haltedDetailRow", "haltedDetail", "haltedAction", "haltInstructionsBtn", "haltInstructionsDialog", "haltInstructionsCount", "haltInstructionsList", "haltSpecialStatus", "haltNonHaltList", "haltInstructionsCloseBtn",
     "currentAttemptBadge", "continuedRunLabel", "currentJobContent", "currentPromptPreview", "currentReferenceColumn", "currentReferenceGallery", "pipelineStepper", "operatorTimerArea",
@@ -219,7 +219,7 @@
       bridge_payload_sha256: item.job.bridge_payload_sha256 || null
     } : {};
     const trial = state.bridgeRunOrigin === "bridge_dev" ? { input_origin: "bridge_dev", bridge_trial_id: state.bridgeTrialId, bridge_trial_timeout_cap_sec: 90 } : {};
-    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_files: item?.result_files || null, image_count: item?.image_count ? Number(item.image_count) : null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge, ...trial, ...(values.input_origin ? { input_origin: values.input_origin } : {}) });
+    state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, task_type: item?.task_type || item?.job?.task_type || null, output_type: values.output_type || item?.output_type || item?.job?.output_type || null, response_char_count: values.response_char_count ?? (item?.response_char_count || item?.job?.response_char_count ? Number(item?.response_char_count || item.job.response_char_count) : null), response_sha256: values.response_sha256 || item?.response_sha256 || item?.job?.response_sha256 || null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_files: item?.result_files || null, image_count: item?.image_count ? Number(item.image_count) : null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge, ...trial, ...(values.input_origin ? { input_origin: values.input_origin } : {}) });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
   function nextEligible(currentId = state.currentItem?.job?.id || null) { return window.DacRunState.nextEligible(state.prepared?.queue || [], currentId); }
@@ -527,6 +527,24 @@
     return state.prepared?.settings || window.DacRunnerCore.runtimeConfig(requireBridgeWorkbook().config, state.runtimeOverrides);
   }
 
+  function requiresImagePersistence(extraJobs = []) {
+    const extra = Array.from(extraJobs || []);
+    // With no workbook and no incoming jobs there is nothing that PROVES this
+    // session is text-only, and the readiness checklist would otherwise show a
+    // green destination while the image folder handle was never checked. Stay
+    // strict until a job list says image saving is genuinely unused.
+    if (!state.workbook && !extra.length) return true;
+    const jobs = [
+      ...window.DacXlsx.activeJobs(state.workbook || { jobs: [] }),
+      ...extra
+    ];
+    return jobs.some((job) => window.DacRunnerCore.taskType(job) === "image_generation");
+  }
+
+  function preflightCurrentOutputs(extraJobs = []) {
+    return window.DacOutputLocation.preflight(state.outputSettings, { requireImage: requiresImagePersistence(extraJobs) });
+  }
+
   async function bridgeQueueList(params) {
     const workbook = requireBridgeWorkbook();
     const preparedById = new Map(Array.from(state.prepared?.queue || [], (item) => [item.job.id, item]));
@@ -549,6 +567,7 @@
         job_id: item.job.id,
         queue_position: item.number,
         status: item.status,
+        task_type: item.task_type || window.DacRunnerCore.taskType(item.job),
         attempt_phase: item.phase,
         failure_type: item.failure_type || "",
         reference_images: item.references.map((file) => file.alias || file.fileName || file.name),
@@ -1115,6 +1134,7 @@
         client_job_id: job.client_job_id,
         requested_job_id: job.requested_job_id,
         prompt: job.prompt,
+        task_type: job.task_type || "image_generation",
         reference_images: job.reference_images,
         settings: job.settings
       }))
@@ -1438,7 +1458,7 @@
           if (!state.outputSettings) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
           state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName);
           state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
-          const preflight = await window.DacOutputLocation.preflight(state.outputSettings);
+          const preflight = await preflightCurrentOutputs();
           if (!preflight.ok) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", preflight.error);
           const auditEvent = bridgeDirectAuditEvent(event, method, mutation);
           state.auditEvents.push(auditEvent);
@@ -1672,9 +1692,11 @@
     appendBridgeMeta("Proposal ID", record.proposal_id);
     for (const job of record.jobs) {
       const item = element("li", "bridge-proposal-job");
-      item.appendChild(element("div", "bridge-proposal-job-title", `${job.job_id} · ${job.client_job_id}`));
+      item.appendChild(element("div", "bridge-proposal-job-title", `${job.job_id} · ${job.client_job_id} · ${job.task_type === "text_reasoning" ? "Reasoning text" : "Tạo ảnh"}`));
       const prompt = element("div", "bridge-proposal-field");
       prompt.append(element("strong", "", "Prompt đầy đủ"), element("div", "bridge-proposal-prompt", job.prompt || "Prompt đã được xoá khỏi vùng cách ly."));
+      const taskType = element("div", "bridge-proposal-field");
+      taskType.append(element("strong", "", "Loại công việc"), element("div", "bridge-proposal-values", job.task_type === "text_reasoning" ? "Reasoning bằng text" : "Tạo ảnh"));
       const references = element("div", "bridge-proposal-field");
       references.append(element("strong", "", "Reference aliases / filenames"), element("div", "bridge-proposal-values", job.reference_images?.join(", ") || "Không có"));
       const settings = element("div", "bridge-proposal-field");
@@ -1682,7 +1704,7 @@
         element("strong", "", "Thiết lập hiệu lực"),
         element("div", "bridge-proposal-values", `Timeout ${job.settings.timeout_sec}s · Retry ${job.settings.max_retries} · Cooldown ${job.settings.safety_cooldown_sec}s · Output ${job.settings.output_folder}`)
       );
-      item.append(prompt, references, settings);
+      item.append(taskType, prompt, references, settings);
       els.bridgeProposalList.appendChild(item);
     }
     const lockReason = bridgeApprovalLockReason();
@@ -1751,7 +1773,7 @@
       jobs.push({
         ...job,
         bridge_prompt_sha256: await window.DacBridgeCore.hashText(job.prompt),
-        bridge_payload_sha256: await window.DacBridgeCore.hashCanonical({ job_id: job.job_id, client_job_id: job.client_job_id, prompt: job.prompt, reference_images: job.reference_images, settings: job.settings })
+        bridge_payload_sha256: await window.DacBridgeCore.hashCanonical({ job_id: job.job_id, client_job_id: job.client_job_id, prompt: job.prompt, task_type: job.task_type, reference_images: job.reference_images, settings: job.settings })
       });
     }
     return { ...record, base_ledger_etag: ledgerEtag, jobs };
@@ -1761,6 +1783,7 @@
     return {
       timestamp: new Date().toISOString(), run_id: state.runId, job_id: job?.job_id || null, attempt_id: null,
       event, attempt: null, phase: "PRE_SUBMIT", status: "PENDING", failure_type: null, message,
+      task_type: job?.task_type || null, output_type: null, response_char_count: null, response_sha256: null,
       elapsed_ms: null, references: job?.reference_images || [], requested_filename: null, result_file: null,
       result_download_id: null, persistence_verified: false, write_outcome: null, detected_not_downloaded: false,
       collision_policy: window.DacOutputLocation.effective(state.outputSettings).collisionPolicy,
@@ -1832,7 +1855,7 @@
 
     let effectiveOutput;
     try {
-      const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
+      const outputCheck = await preflightCurrentOutputs(record.jobs);
       if (!outputCheck.ok) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", outputCheck.error);
       effectiveOutput = outputCheck.effective;
       if (!effectiveOutput.saveAuditJsonl || !effectiveOutput.saveResultXlsx) {
@@ -1862,6 +1885,7 @@
           const rows = record.jobs.map((job, index) => ({
             id: job.job_id,
             prompt: job.prompt,
+            task_type: job.task_type || "image_generation",
             reference_images: job.reference_images.join("|"),
             timeout_sec: job.settings.timeout_sec,
             max_retries: job.settings.max_retries,
@@ -2152,6 +2176,7 @@
     const outputLocked = !state.workbook || operatorLocked;
     els.validateBtn.disabled = !state.workbook || operatorLocked;
     if (els.quickPromptCheckBtn) els.quickPromptCheckBtn.disabled = operatorLocked;
+    if (els.quickPromptTaskType) els.quickPromptTaskType.disabled = operatorLocked;
     // A green "ready" chip that cannot act is the exact lie this project
     // rejects: prepared/validated only means the workbook is well-formed, not
     // that any job is actually eligible (every job may already be
@@ -2230,7 +2255,9 @@
       const retryLabel = isRetryEligible
         ? `attempt ${item.attempt_count}/${1 + item.settings.max_retries}`
         : `attempt ${item.attempt_count}${!isRetryEligible && ["FAILED", "INTERRUPTED", "STOPPED"].includes(item.status) && retriesExhausted(item) ? " · Auto-retry: No" : ""}`;
-      const outputText = item.persistence_verified && item.result_file ? ` · SAVED ✓ ${item.result_file}` : item.result_file ? ` · recorded output (not re-verified): ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : "";
+      const outputText = item.task_type === "text_reasoning" && item.response_char_count
+        ? ` · TEXT ✓ ${item.response_char_count} chars`
+        : item.persistence_verified && item.result_file ? ` · SAVED ✓ ${item.result_file}` : item.result_file ? ` · recorded output (not re-verified): ${item.result_file}` : item.detected_not_downloaded ? " · detected_not_downloaded" : "";
 
       li.className = `queue-row ${isCurrent ? "current" : item.status.toLowerCase()}`;
       const icon = isSuccess ? "✓" : isFailed ? "⛔" : isCurrent ? "●" : "○";
@@ -2310,7 +2337,7 @@
         if (sourceId && sourceId !== item.job.id) placeQueueJob(sourceId, item.job.id, placement).catch(() => controls());
       });
       const left = element("div", "queue-row-left");
-      left.append(dragHandle, selectCheckbox, element("span", `queue-icon ${iconClass}`, icon), element("span", "queue-job-id", item.job.id));
+      left.append(dragHandle, selectCheckbox, element("span", `queue-icon ${iconClass}`, icon), element("span", "queue-job-id", `${item.job.id} · ${item.task_type === "text_reasoning" ? "TEXT" : "IMAGE"}`));
       li.append(left, element("div", `queue-row-status ${statusLabel.toLowerCase()}`, statusWithElapsed), element("div", "queue-row-right", timeOrDetail));
       const promptPreview = element("div", "queue-prompt-preview");
       const promptActions = element("span", "queue-prompt-actions");
@@ -2971,7 +2998,7 @@
   }
 
   function directJobValues(job) {
-    const values = { prompt: job.prompt, reference_images: (job.reference_images || []).join("|") };
+    const values = { prompt: job.prompt, task_type: job.task_type || "image_generation", reference_images: (job.reference_images || []).join("|") };
     for (const [key, value] of Object.entries(job.settings || {})) values[key] = value;
     return values;
   }
@@ -3022,7 +3049,7 @@
     if (!state.workbook) {
       const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 16);
       state.quickPromptCounter = 0;
-      const rows = jobs.map((job, index) => ({ id: `Q${String(index + 1).padStart(3, "0")}`, prompt: job.prompt }));
+      const rows = jobs.map((job, index) => ({ id: `Q${String(index + 1).padStart(3, "0")}`, prompt: job.prompt, task_type: job.task_type || "image_generation" }));
       state.quickPromptCounter = rows.length;
       state.workbook = window.DacXlsx.createWorkbook(`Bridge-${stamp}.xlsx`, rows);
       // applyWorkbookConfig() rebuilds outputSettings from the (empty)
@@ -3054,7 +3081,7 @@
     state.queueExpanded = true;
     return {
       job_ids: assigned,
-      changed_fields: ["prompt", "reference_images", "settings"],
+      changed_fields: ["prompt", "task_type", "reference_images", "settings"],
       message: `Agent Bridge \u0111\u00e3 th\u00eam ${assigned.length} job (${assigned.join(", ")}) v\u00e0o Setup; ch\u01b0a ch\u1ea1y.`
     };
   }
@@ -3063,6 +3090,7 @@
     const item = mutationQueueItem(jobId);
     const values = {};
     if (Object.hasOwn(params, "prompt")) values.prompt = params.prompt;
+    if (Object.hasOwn(params, "task_type")) values.task_type = params.task_type;
     if (Object.hasOwn(params, "reference_images")) values.reference_images = params.reference_images.join("|");
     for (const [key, value] of Object.entries(params.settings || {})) values[key] = value;
     window.DacXlsx.updateJob(state.workbook, item.job, values);
@@ -3296,6 +3324,7 @@
   // (Start Run / "Chạy job đã chọn"), same as any workbook-sourced queue.
   async function checkQuickPrompt() {
     const prompts = splitQuickPromptText(els.quickPromptInput?.value);
+    const taskType = window.DacTextOutputCore.taskType(els.quickPromptTaskType?.value || "text_reasoning");
     if (!prompts.length) { if (els.quickPromptStatus) els.quickPromptStatus.textContent = "Nhập ít nhất 1 prompt trước khi kiểm tra."; return; }
     if (state.running || state.manualReconciliationRunning || state.recreateRunning || state.auditGapRunning) { if (els.quickPromptStatus) els.quickPromptStatus.textContent = "Đợi tiến trình hiện tại xong đã."; return; }
     if (els.quickPromptCheckBtn) els.quickPromptCheckBtn.disabled = true;
@@ -3306,14 +3335,14 @@
         if (!state.workbook) {
           const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 16);
           state.quickPromptCounter = 0;
-          state.workbook = window.DacXlsx.createWorkbook(`Quick-${stamp}.xlsx`, [{ id: nextQuickPromptId(), prompt }]);
+          state.workbook = window.DacXlsx.createWorkbook(`Quick-${stamp}.xlsx`, [{ id: nextQuickPromptId(), prompt, task_type: taskType }]);
           const imported = applyWorkbookConfig();
           if (imported.effective.output.mode === "profile") await resolveOutputProfile(imported.effective.output.profileId);
           if (imported.effective.output.separateResultDestination && imported.effective.output.resultMode === "profile") await resolveResultProfile(imported.effective.output.resultProfileId);
           job = state.workbook.jobs[state.workbook.jobs.length - 1];
           log(`Bắt đầu phiên nhanh: ${state.workbook.fileName}.`, "done");
         } else {
-          job = window.DacXlsx.addJob(state.workbook, { id: nextQuickPromptId(), prompt });
+          job = window.DacXlsx.addJob(state.workbook, { id: nextQuickPromptId(), prompt, task_type: taskType });
         }
         addedIds.push(job.id);
       }
@@ -3463,14 +3492,15 @@
       const action = document.createElement("div");
       action.className = "resume-reconcile-action";
       const job = state.workbook?.jobs?.find((entry) => entry.id === recovery.job_id);
+      const textReasoning = window.DacRunnerCore.taskType(job || {}) === "text_reasoning";
       const queuedApproval = window.DacRecreateCore.isQueuedApproval(job || {});
       const recoveryAvailable = !window.DacRecreateCore.isApproved(job || {}) || window.DacRecreateCore.requiresNewApproval(job || {});
       const label = document.createElement("span");
       label.textContent = queuedApproval
-        ? `${recovery.job_id}: creating a replacement image now.`
+        ? `${recovery.job_id}: creating a replacement ${textReasoning ? "text response" : "image"} now.`
         : window.DacRecreateCore.requiresNewApproval(job || {})
-          ? `${recovery.job_id}: the last recreate did not finish. Still no verified saved image. Create it again?`
-          : `${recovery.job_id}: no verified saved image. Create it again?`;
+          ? `${recovery.job_id}: the last recreate did not finish. Still no verified saved ${textReasoning ? "text response" : "image"}. Create it again?`
+          : `${recovery.job_id}: no verified saved ${textReasoning ? "text response" : "image"}. Create it again?`;
       action.appendChild(label);
       if (recoveryAvailable) {
         const recreate = document.createElement("button");
@@ -3492,10 +3522,11 @@
     const job = state.workbook?.jobs?.find((entry) => entry.id === jobId);
     if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED" || !job || (!window.DacRecreateCore.requiresNewApproval(job) && window.DacRecreateCore.isApproved(job))) return;
     state.pendingRecreateJobId = jobId;
-    if (els.recreateConfirmTitle) els.recreateConfirmTitle.textContent = `${jobId} image is not saved`;
-    if (els.recreateConfirmTitleVi) els.recreateConfirmTitleVi.textContent = `Ảnh của ${jobId} chưa được lưu và xác minh`;
-    if (els.recreateConfirmMessage) els.recreateConfirmMessage.textContent = `${jobId} has no verified saved image. Create it again? This sends one new request and may produce a duplicate image.`;
-    if (els.recreateConfirmMessageVi) els.recreateConfirmMessageVi.textContent = `${jobId} chưa có ảnh đã lưu được xác minh. Tạo lại sẽ gửi một yêu cầu mới và có thể tạo ảnh trùng.`;
+    const textReasoning = window.DacRunnerCore.taskType(job) === "text_reasoning";
+    if (els.recreateConfirmTitle) els.recreateConfirmTitle.textContent = `${jobId} ${textReasoning ? "text response" : "image"} is not saved`;
+    if (els.recreateConfirmTitleVi) els.recreateConfirmTitleVi.textContent = `${textReasoning ? "Câu trả lời text" : "Ảnh"} của ${jobId} chưa được lưu và xác minh`;
+    if (els.recreateConfirmMessage) els.recreateConfirmMessage.textContent = `${jobId} has no verified saved ${textReasoning ? "text response" : "image"}. Create it again? This sends one new request and may produce a duplicate ${textReasoning ? "response" : "image"}.`;
+    if (els.recreateConfirmMessageVi) els.recreateConfirmMessageVi.textContent = `${jobId} chưa có ${textReasoning ? "câu trả lời text" : "ảnh"} đã lưu được xác minh. Tạo lại sẽ gửi một yêu cầu mới và có thể tạo ${textReasoning ? "câu trả lời" : "ảnh"} trùng.`;
     els.recreateConfirmBtn.textContent = `Recreate ${jobId}`;
     if (typeof els.recreateConfirmDialog.showModal === "function") els.recreateConfirmDialog.showModal();
     else els.recreateConfirmDialog.setAttribute("open", "");
@@ -3526,10 +3557,13 @@
     const item = state.prepared?.queue?.find((entry) => entry.job.id === jobId);
     if (!item || item.status !== "SUCCESS" || !item.persistence_verified) return;
     state.pendingRerunJobId = jobId;
+    const textReasoning = item.task_type === "text_reasoning";
     if (els.rerunConfirmTitle) els.rerunConfirmTitle.textContent = `Run ${jobId} again?`;
     if (els.rerunConfirmTitleVi) els.rerunConfirmTitleVi.textContent = `Chạy lại ${jobId}?`;
-    if (els.rerunConfirmMessage) els.rerunConfirmMessage.textContent = `${jobId} already has a verified saved image (${item.result_file || "unknown filename"}). Running it again sends a new request to ChatGPT and creates another image for this job.`;
-    if (els.rerunConfirmMessageVi) els.rerunConfirmMessageVi.textContent = `${jobId} đã có ảnh được lưu và xác minh (${item.result_file || "không rõ tên file"}). Chạy lại sẽ gửi một yêu cầu mới tới ChatGPT và tạo một ảnh khác cho job này.`;
+    if (els.rerunConfirmMessage) els.rerunConfirmMessage.textContent = textReasoning ? `${jobId} already has a verified text response in Result XLSX. Running it again sends a new request to ChatGPT and creates another response for this job.` : `${jobId} already has a verified saved image (${item.result_file || "unknown filename"}). Running it again sends a new request to ChatGPT and creates another image for this job.`;
+    if (els.rerunConfirmMessageVi) els.rerunConfirmMessageVi.textContent = textReasoning ? `${jobId} đã có câu trả lời text được lưu và xác minh trong Result XLSX. Chạy lại sẽ gửi một yêu cầu mới tới ChatGPT và tạo câu trả lời khác cho job này.` : `${jobId} đã có ảnh được lưu và xác minh (${item.result_file || "không rõ tên file"}). Chạy lại sẽ gửi một yêu cầu mới tới ChatGPT và tạo một ảnh khác cho job này.`;
+    if (els.rerunCollisionSuffix) els.rerunCollisionSuffix.hidden = textReasoning;
+    if (els.rerunCollisionControls) els.rerunCollisionControls.hidden = textReasoning;
     if (els.rerunKeepPolicyRadio) els.rerunKeepPolicyRadio.checked = true;
     els.rerunConfirmBtn.textContent = `Chạy lại ${jobId}`;
     if (typeof els.rerunConfirmDialog.showModal === "function") els.rerunConfirmDialog.showModal();
@@ -3678,13 +3712,17 @@
       if (!item) throw new Error(`RECREATE_CONFIRM_JOB_MISSING: ${jobId} is absent from the prepared queue.`);
       const approval = window.DacRecreateCore.approval({ job: item.job, recoveryState: recovery.state });
       if (!approval.ok) throw new Error(`${approval.code}: ${approval.message}`);
-      const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
+      // The recreate DIALOG became task-aware; this action had not, so a
+      // text-only session was offered "Recreate text response" and then failed
+      // on a generated-image requirement it can never satisfy (Pass B F-4).
+      const recreateTextReasoning = window.DacRunnerCore.taskType(item.job) === "text_reasoning";
+      const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings, { requireImage: !recreateTextReasoning });
       if (!outputCheck.ok) throw new Error(`OUTPUT_LOCATION: ${outputCheck.error}`);
       const effectiveOutput = outputCheck.effective;
       const auditChain = await auditChainPreflight(effectiveOutput);
       state.auditChain = auditChain;
       if (!auditChain.ok) { renderResumePlan(); throw new Error(`${auditChain.code}: ${auditChain.message}`); }
-      if (!effectiveOutput.saveImages || !effectiveOutput.saveResultXlsx) throw new Error("RECREATE_PERSISTENCE_REQUIRED: generated-image and Result XLSX saving must both be enabled.");
+      if ((!recreateTextReasoning && !effectiveOutput.saveImages) || !effectiveOutput.saveResultXlsx) throw new Error(recreateTextReasoning ? "RECREATE_PERSISTENCE_REQUIRED: Result XLSX saving must be enabled." : "RECREATE_PERSISTENCE_REQUIRED: generated-image and Result XLSX saving must both be enabled.");
       state.recreateRunning = true;
       setStatus("RUNNING", "RECREATE CHECKPOINTING");
       progress(`${jobId}: saving the operator-approved recreate checkpoint.`);
@@ -3695,10 +3733,10 @@
       const outcome = await run("recreate");
       if (!outcome?.ok) throw new Error(`RECREATE_START_BLOCKED: ${outcome?.reason || "The recreate run did not enter RUNNING state."}`);
       const completed = state.resumePlan?.jobs?.find((entry) => entry.job_id === jobId)?.state === "SAFE_COMPLETE";
-      if (!completed) throw new Error(`RECREATE_COMPLETION_UNVERIFIED: ${jobId} was not checkpointed as a verified saved image.`);
+      if (!completed) throw new Error(`RECREATE_COMPLETION_UNVERIFIED: ${jobId} was not checkpointed as a verified saved ${recreateTextReasoning ? "text response" : "image"}.`);
       const remaining = window.DacRunnerCore.selectQueue(state.prepared?.queue || [], "all");
       if (!remaining.length) return outcome;
-      progress(`${jobId}: image saved and checkpointed. Continuing with ${remaining[0].job.id}.`);
+      progress(`${jobId}: ${recreateTextReasoning ? "text response" : "image"} saved and checkpointed. Continuing with ${remaining[0].job.id}.`);
       log(`${jobId}: verified recreate complete; continuing the remaining queue.`, "done");
       const continuation = await run("all");
       if (!continuation?.ok) {
@@ -4179,7 +4217,7 @@
       if ((!state.resumePlan.ready || state.resumePlan.findings.some((item) => item.severity === "BLOCKER")) && !(allowRecreate && approvedRecreateIsOnlyResumeBlocker())) throw new Error("RESUME_BLOCKED: Resolve the Resume Plan diagnostics before continuing.");
       window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
     }
-    const locationPreflight = await window.DacOutputLocation.preflight(state.outputSettings);
+    const locationPreflight = await preflightCurrentOutputs();
     if (!locationPreflight.ok) throw new Error(`OUTPUT_LOCATION: ${locationPreflight.error}`);
     const auditChain = await auditChainPreflight(locationPreflight.effective);
     state.auditChain = auditChain;
@@ -4212,9 +4250,10 @@
     try { values = window.DacOutputLocation.effective(state.outputSettings); }
     catch (error) { return { ok: false, error: error.message, settings: state.outputSettings, namingInvalid: true }; }
     try {
-      const check = await window.DacOutputLocation.preflight(state.outputSettings);
+      const requireImage = requiresImagePersistence();
+      const check = await window.DacOutputLocation.preflight(state.outputSettings, { requireImage });
       values = check.effective || values;
-      const locations = values.image === values.result ? [values.image] : [values.image, values.result];
+      const locations = requireImage && values.image !== values.result ? [values.image, values.result] : [values.result];
       const auditChain = await auditChainPreflight(values);
       state.auditChain = auditChain;
       return { ...check, settings: state.outputSettings, auditChain, missingDestination: locations.some((location) => location?.kind === "directory" && !location.handle) };
@@ -4629,6 +4668,10 @@
 
   function update(item, values) {
     if (Object.hasOwn(values, "status")) item.status = values.status;
+    if (Object.hasOwn(values, "task_type")) item.task_type = values.task_type;
+    if (Object.hasOwn(values, "output_type")) item.output_type = values.output_type;
+    if (Object.hasOwn(values, "response_char_count")) item.response_char_count = values.response_char_count;
+    if (Object.hasOwn(values, "response_sha256")) item.response_sha256 = values.response_sha256;
     if (Object.hasOwn(values, "attempt_phase")) item.phase = values.attempt_phase;
     if (Object.hasOwn(values, "result_file")) item.result_file = values.result_file;
     if (Object.hasOwn(values, "result_download_id")) item.result_download_id = values.result_download_id;
@@ -4735,9 +4778,7 @@
     const objectUrl = URL.createObjectURL(candidate.blob);
     try {
       const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, "fail");
-      await expectDownloadName(objectUrl, request);
-      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
-      const item = await waitForCompletedDownload(downloadId);
+      const item = await downloadArtifactViaBackground(objectUrl, request, candidate.blob.size);
       window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
       return { ...candidate, actual: item.filename, version, filename, storage: "downloads" };
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
@@ -4826,9 +4867,7 @@
         ? window.DacOutputLocation.downloadArtifactRequest(location, requested, "uniquify")
         : window.DacOutputLocation.downloadArtifactRequest(location, requested, "fail");
       if (!force) await assertDownloadCollisionPolicy(request);
-      await expectDownloadName(objectUrl, request);
-      const downloadId = await chrome.downloads.download({ url: objectUrl, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
-      const item = await waitForCompletedDownload(downloadId);
+      const item = await downloadArtifactViaBackground(objectUrl, request, downloadBlob.size);
       window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
       state.auditPersistedPayload = payload;
       const flushed = new Set(pendingEvents);
@@ -4856,38 +4895,16 @@
     if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw window.DacOutputLocation.collisionError(request);
   }
 
-  // Chrome ignores blob-download filename suggestions on this machine (GUID
-  // names — live evidence 2026-08-25), so the background registers a
-  // filename determiner for this extension's own downloads and the panel
-  // announces each expected name first. Best effort: a missed registration
-  // surfaces at verifyDownloadedFilename, never as a silent wrong name.
-  async function expectDownloadName(url, request) {
-    try { await chrome.runtime.sendMessage({ type: "DAC_EXPECT_DOWNLOAD_NAME", url, filename: request.filename, conflictAction: request.conflictAction }); } catch (_) { /* verify catches it */ }
-  }
-
-  async function waitForCompletedDownload(downloadId, timeoutMs = 120000) {
-    const lookup = async () => (await chrome.downloads.search({ id: downloadId }))?.[0] || null;
-    const current = await lookup();
-    if (current?.state === "complete" && current.filename) return current;
-    if (current?.state === "interrupted") throw new Error(`Result XLSX download failed: ${current.error || "interrupted"}.`);
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      const finish = (callback, value) => { if (!settled) { settled = true; clearTimeout(timer); chrome.downloads.onChanged.removeListener?.(listener); callback(value); } };
-      const listener = async (delta) => {
-        if (delta?.id !== downloadId || (!delta.state && !delta.filename)) return;
-        try {
-          const item = await lookup();
-          if (item?.state === "complete" && item.filename) finish(resolve, item);
-          else if (item?.state === "interrupted") finish(reject, new Error(`Result XLSX download failed: ${item.error || "interrupted"}.`));
-        } catch (error) { finish(reject, error); }
-      };
-      const timer = setTimeout(() => finish(reject, new Error("Timed out waiting for the final result-XLSX filename.")), timeoutMs);
-      chrome.downloads.onChanged.addListener(listener);
-      lookup().then((item) => {
-        if (item?.state === "complete" && item.filename) finish(resolve, item);
-        else if (item?.state === "interrupted") finish(reject, new Error(`Result XLSX download failed: ${item.error || "interrupted"}.`));
-      }).catch((error) => finish(reject, error));
+  async function downloadArtifactViaBackground(url, request, expectedBytes) {
+    const response = await chrome.runtime.sendMessage({
+      type: "DAC_DOWNLOAD_ARTIFACT",
+      url,
+      filename: request.filename,
+      conflictAction: request.conflictAction,
+      expectedBytes
     });
+    if (!response?.ok) throw new Error(response?.error || "PERSISTENCE_VERIFICATION_FAILED: Artifact download was not verified.");
+    return response;
   }
 
   async function countdown(seconds, item) {
@@ -5034,7 +5051,7 @@
       if (!effectiveOutput.saveImages) {
         item.phase = "OUTPUT_SAVED";
         item.detected_not_downloaded = true;
-        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: requestedFirst, persistence_verified: false, detected_not_downloaded: true, result_file: "", result_files: "", image_count: String(totalVariants), result_download_id: "", write_outcome: "detected_not_downloaded", detection_diagnostics: JSON.stringify(result?.detection || {}) });
+        update(item, { status: "RUNNING", attempt_phase: item.phase, output_type: "image", requested_file: requestedFirst, persistence_verified: false, detected_not_downloaded: true, result_file: "", result_files: "", image_count: String(totalVariants), result_download_id: "", write_outcome: "detected_not_downloaded", detection_diagnostics: JSON.stringify(result?.detection || {}) });
         audit("DETECTED_NOT_DOWNLOADED", item, { message: `Attributable image detected (${totalVariants}); generated-image download is disabled.` });
         item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image detected; download disabled.");
         renderQueue(); progress(`${item.job.id} detected; image download disabled.`);
@@ -5070,7 +5087,7 @@
         }
         item.phase = "OUTPUT_SAVED";
         const outputSavedAt = new Date().toISOString();
-        update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: requestedFirst, persistence_verified: true, detected_not_downloaded: false, result_file: firstAccepted.filename, result_files: savedFiles.join(" | "), image_count: String(totalVariants), result_download_id: firstAccepted.download_id ?? "", output_saved_at: outputSavedAt, write_outcome: writeOutcomes.join(" | "), attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+        update(item, { status: "RUNNING", attempt_phase: item.phase, output_type: "image", requested_file: requestedFirst, persistence_verified: true, detected_not_downloaded: false, result_file: firstAccepted.filename, result_files: savedFiles.join(" | "), image_count: String(totalVariants), result_download_id: firstAccepted.download_id ?? "", output_saved_at: outputSavedAt, write_outcome: writeOutcomes.join(" | "), attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
         audit("OUTPUT_SAVED", item, { message: `write_outcome=${writeOutcomes.join(" | ")}; landed_as_requested=${landedAsRequested.join(" | ")}; images=${totalVariants}${totalVariants > 1 ? `; variants=${savedFiles.map((file) => window.DacOutputLocation.artifactLeaf(file)).join(" | ")}` : ""}` });
         item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image checkpoint recorded; waiting for ChatGPT to become idle.");
         renderQueue(); progress(totalVariants > 1 ? `SAVED ✓ ${totalVariants} ảnh: ${savedFiles.map((file) => window.DacOutputLocation.artifactLeaf(file)).join(", ")}` : `SAVED ✓ ${firstAccepted.filename}`);
@@ -5098,6 +5115,69 @@
       return { completed: true, halted: false };
     } catch (error) {
       return resolveJobFailure(item, window.DacRunnerCore.classifyFailure(error, "OUTPUT_SAVED"), messageOf(error), settings);
+    }
+  }
+
+  async function finishTextOutput(item, result, effectiveOutput) {
+    let transition;
+    try {
+      transition = await window.DacTextOutputCore.verifiedTextTransition({
+        result,
+        hashText: (text) => window.DacBridgeCore.hashText(text),
+        onDetected: async ({ captured, audit: auditValues }) => {
+          item.phase = "OUTPUT_DETECTED";
+          item.runtime_stage = "OUTPUT_DETECTED";
+          setCurrent(item, item.runtime_stage, `Text response detected (${captured.response_char_count} characters).`, item.settings.timeout_sec);
+          update(item, { status: "RUNNING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count });
+          audit("OUTPUT_DETECTED", item, { ...auditValues, message: "Attributable text response detected; full response is stored only in Result XLSX." });
+        },
+        onLedger: async ({ audit: auditValues, ledger }) => {
+          item.phase = "OUTPUT_SAVED";
+          update(item, {
+            ...ledger,
+            status: "RUNNING",
+            attempt_phase: item.phase,
+            output_saved_at: new Date().toISOString(),
+            attempt_count: item.attempt_count,
+            retry_count: item.retry_count,
+            failure_type: "",
+            last_error: "",
+            error: ""
+          });
+          audit("OUTPUT_SAVED", item, { ...auditValues, message: "Text response recorded in the in-memory ledger; verified Result checkpoint required before success." });
+          item.runtime_stage = "SAVING";
+          setCurrent(item, item.runtime_stage, "Writing and verifying the Result XLSX text checkpoint.", item.settings.timeout_sec);
+        },
+        persistCheckpoint: () => flushRunCheckpoint(effectiveOutput.result, `Text response checkpoint for ${item.job.id}`),
+        onVerified: async () => update(item, { persistence_verified: true })
+      });
+    } catch (error) {
+      const reason = messageOf(error);
+      const validationFailure = /^TEXT_RESPONSE_|^INVALID_TASK_TYPE/.test(reason);
+      markInterrupted(item, validationFailure ? "VALIDATION_FAILED" : "PERSISTENCE_VERIFICATION_FAILED", validationFailure ? reason : `Text response was received but its Result checkpoint could not be verified: ${reason}`);
+      return { completed: true, halted: true };
+    }
+
+    try {
+      const auditValues = transition.audit;
+      item.runtime_stage = "FINALIZING / WAITING_IDLE";
+      setCurrent(item, item.runtime_stage, "Verified text checkpoint saved; waiting for ChatGPT to become idle.", item.settings.timeout_sec);
+      await waitForChatReady(item);
+      item.phase = "CHAT_READY";
+      audit("CHAT_READY", item, auditValues);
+      item.phase = "SUCCESS";
+      item.runtime_stage = "SUCCESS";
+      update(item, { status: "SUCCESS", attempt_phase: item.phase, persistence_verified: true, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", completed_at: new Date().toISOString() });
+      audit("JOB_SUCCESS", item, { ...auditValues, message: "Verified text response checkpoint and ChatGPT idle readiness confirmed." });
+      setCurrent(item, item.runtime_stage, "Text response saved and verified in Result XLSX.");
+      log(`${item.job.id} text reasoning success after verified checkpoint.`, "done");
+      renderQueue();
+      progress(`${item.job.id} complete; text response is checkpointed.`);
+      return { completed: true, halted: false };
+    } catch (error) {
+      const reason = `Verified text output exists, but ChatGPT readiness could not be confirmed: ${messageOf(error)}`;
+      markInterrupted(item, window.DacRunnerCore.classifyFailure(error, "OUTPUT_SAVED"), reason);
+      return { completed: true, halted: true };
     }
   }
 
@@ -5222,9 +5302,9 @@
           item.status = "RUNNING"; item.phase = "PRE_SUBMIT"; item.attempt_count += 1;
           item.runtime_stage = item.references.length ? "ATTACHING_REFS" : "SENDING";
           item.attempt_id = nextAttemptId();
-          const rerunReset = item.deliberate_rerun ? { result_file: "", result_download_id: "", output_saved_at: "" } : {};
+          const rerunReset = item.deliberate_rerun ? { result_file: "", result_download_id: "", output_saved_at: "", response_text: "", response_char_count: "", response_sha256: "", output_type: "" } : {};
           const reservation = window.DacRunnerCore.submissionReservation(item);
-          update(item, { ...rerunReset, ...reservation, attempt_id: item.attempt_id, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", ...(item.operator_recreate ? { recreate_attempt_id: item.attempt_id, recreate_status: "RUNNING" } : {}) });
+          update(item, { ...rerunReset, ...reservation, task_type: item.task_type, attempt_id: item.attempt_id, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", ...(item.operator_recreate ? { recreate_attempt_id: item.attempt_id, recreate_status: "RUNNING" } : {}) });
           item.deliberate_rerun = false;
           audit(item.operator_recreate ? "RECREATE_ATTEMPT_STARTED" : "JOB_START", item, item.operator_recreate ? { message: "Starting one operator-approved deliberate recreate attempt." } : {}); setCurrent(item, item.runtime_stage, item.references.length ? `Preparing ${item.references.length} reference image(s).` : "Preparing prompt submission."); renderQueue(); nextTask(nextEligible(item.job.id), "Waiting for current job to finish."); progress(`Running ${item.job.id}…`);
           audit("PROMPT_SUBMISSION_RESERVED", item, { message: "Submission risk marker persisted before the content receiver may send the prompt." });
@@ -5238,9 +5318,14 @@
             completed = true; halted = true; break;
           }
           let response;
-          try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references, maxImages: item.settings.max_images_per_job }); }
+          const textReasoning = item.task_type === "text_reasoning";
+          try { response = await send({ type: textReasoning ? "DAC_RUN_TEXT_JOB" : "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references, maxImages: item.settings.max_images_per_job }); }
           catch (error) { response = { ok: false, error: messageOf(error), attempt: { job_id: item.job.id, attempt_id: item.attempt_id, phase: "PRE_SUBMIT", submittedAt: null } }; }
           if (!matchesAttempt(response, item)) {
+            if (textReasoning && (response?.attempt?.submittedAt || window.DacRunnerCore.needsReconciliation(response?.attempt?.phase))) {
+              markInterrupted(item, "ATTEMPT_ID_MISMATCH", "Text prompt may have been submitted, but the response attempt identity did not match. It will not be sent again automatically.");
+              completed = true; halted = true; break;
+            }
             const outcome = await resolveJobFailure(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch from ChatGPT content receiver.", settings);
             completed = outcome.completed; halted ||= outcome.halted;
             if (completed) break; else continue;
@@ -5252,16 +5337,38 @@
             audit("PROMPT_SUBMITTED", item, { target_url: target?.url || null });
             if (item.operator_recreate) { update(item, { recreate_status: "SUBMITTED", recreate_attempt_id: item.attempt_id }); audit("RECREATE_PROMPT_SUBMITTED", item, { message: "Operator-approved recreate prompt submitted." }); }
           }
-          if (response?.ok && response.result?.image_url) {
+          // One pure, tested decision rather than five inline conditionals --
+          // see DacTextOutputCore.dispatchOutcome() for why the task type, not
+          // the presence of an image, is what routes this.
+          const dispatch = window.DacTextOutputCore.dispatchOutcome({
+            task: item.task_type,
+            ok: Boolean(response?.ok),
+            result: response?.result || null,
+            stopRequested: state.stopRequested,
+            postSubmit: window.DacRunnerCore.needsReconciliation(item.phase)
+          });
+          const actions = window.DacTextOutputCore.DISPATCH_ACTIONS;
+          if (dispatch.action === actions.IMAGE_OUTPUT) {
             const outcome = await finishDetectedOutput(item, response.result, effectiveOutput, settings);
             completed = outcome.completed; halted ||= outcome.halted;
             continue;
           }
-          if (state.stopRequested) {
-            update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "USER_STOP", last_error: response?.error || "Stopped by user.", error: response?.error || "Stopped by user.", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
-            audit("FAILURE", item, { message: response?.error || "Stopped by user." }); if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message: response?.error || "Stopped by user." }); completed = true; break;
+          if (dispatch.action === actions.TEXT_OUTPUT) {
+            const outcome = await finishTextOutput(item, response.result, effectiveOutput);
+            completed = outcome.completed; halted ||= outcome.halted;
+            continue;
           }
-          if (window.DacRunnerCore.needsReconciliation(item.phase)) {
+          if (dispatch.action === actions.USER_STOP) {
+            update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "USER_STOP", last_error: response?.error || "Stopped by user.", error: response?.error || "Stopped by user.", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
+            audit("FAILURE", item, { message: response?.error || "Stopped by user." }); if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message: response?.error || "Stopped by user." }); completed = dispatch.completed; break;
+          }
+          if (dispatch.action === actions.TEXT_HALT_NO_RESEND) {
+            const reason = response?.error || "Text prompt was submitted, but no attributable text response could be verified.";
+            markInterrupted(item, window.DacRunnerCore.classifyFailure(reason, item.phase), `${reason} The text prompt will not be sent again automatically.`);
+            completed = dispatch.completed; halted = dispatch.halted;
+            continue;
+          }
+          if (dispatch.action === actions.IMAGE_RECONCILE) {
             const outcome = await reconcileSubmittedAttempt(item, effectiveOutput, response?.error || "No attributable generated image was found.", settings);
             completed = outcome.completed; halted ||= outcome.halted;
             continue;
