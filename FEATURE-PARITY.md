@@ -106,11 +106,11 @@ con số máy đo, và bị nuốt theo. Đúng kiểu mất mát âm thầm mà
 ## 3. Module — **[ĐO]**
 
 <!-- AUTO:MODULES START -->
-GPT 32 file `.js` · Gemini 33.
+GPT 33 file `.js` · Gemini 33.
 
-**8 file giống hệt sau khi chuẩn hoá CRLF/LF:**
+**7 file giống hệt sau khi chuẩn hoá CRLF/LF:**
 
-`attempt-identity-core.js` · `attempt-telemetry-core.js` · `audit-chain-core.js` · `bridge-pairing-core.js` · `reconciliation-core.js` · `recreate-core.js` · `run-state-core.js` · `xlsx-codec.js`
+`attempt-identity-core.js` · `attempt-telemetry-core.js` · `audit-chain-core.js` · `bridge-pairing-core.js` · `reconciliation-core.js` · `recreate-core.js` · `run-state-core.js`
 
 **Chỉ một bên có:**
 
@@ -119,32 +119,34 @@ GPT 32 file `.js` · Gemini 33.
 | `ab-poll-core.js` | GPT |
 | `content-decision-core.js` | Gemini |
 | `dev-trial-core.js` | Gemini |
+| `text-output-core.js` | GPT |
 
-**23 file có ở cả hai nhưng khác nội dung** (xếp theo chênh lệch số dòng giảm dần):
+**24 file có ở cả hai nhưng khác nội dung** (xếp theo chênh lệch số dòng giảm dần):
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 5695 | 5012 | 683 |
-| `bridge-core.js` | 943 | 799 | 144 |
-| `content.js` | 982 | 1079 | 97 |
+| `sidepanel.js` | 5930 | 5012 | 918 |
+| `bridge-core.js` | 954 | 799 | 155 |
+| `bridge-transport-loopback.js` | 287 | 398 | 111 |
+| `checkpoint-core.js` | 160 | 69 | 91 |
+| `background.js` | 246 | 167 | 79 |
+| `content.js` | 1000 | 1079 | 79 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
-| `runner-core.js` | 259 | 203 | 56 |
+| `runner-core.js` | 272 | 203 | 69 |
 | `output-profile-core.js` | 96 | 45 | 51 |
-| `bridge-transport-loopback.js` | 287 | 241 | 46 |
-| `background.js` | 208 | 167 | 41 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
-| `checkpoint-core.js` | 101 | 69 | 32 |
 | `output-location-core.js` | 389 | 373 | 16 |
 | `provider-adapter.js` | 202 | 187 | 15 |
+| `resume-core.js` | 133 | 122 | 11 |
 | `halt-instructions-core.js` | 140 | 133 | 7 |
+| `xlsx-codec.js` | 371 | 364 | 7 |
+| `bridge-proposal-core.js` | 380 | 374 | 6 |
 | `chat-readiness-core.js` | 26 | 20 | 6 |
-| `bridge-proposal-core.js` | 377 | 374 | 3 |
 | `bridge-router-core.js` | 68 | 70 | 2 |
 | `operator-glossary-core.js` | 28 | 28 | 0 |
 | `operator-messages-core.js` | 80 | 80 | 0 |
 | `orchestrator-review-core.js` | 120 | 120 | 0 |
 | `plan-diagnostics-core.js` | 195 | 195 | 0 |
-| `resume-core.js` | 122 | 122 | 0 |
 | `sidepanel-ui-semantics.js` | 128 | 128 | 0 |
 | `xlsx-run-plan-core.js` | 60 | 60 | 0 |
 <!-- AUTO:MODULES END -->
