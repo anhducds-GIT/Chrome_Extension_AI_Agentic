@@ -17,17 +17,17 @@
       "released_at": "2026-08-28"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-chatgpt-retention-pilot",
+      "owner": "claude-chatgpt-interjob-delay",
       "ai": "claude",
       "claimed_at": "2026-08-28",
-      "task": "Pilot kiem tinh nang don rac checkpoint (B-26) tren Chrome that: thu muc MOI hoan toan, workbook nho, checkpoint_retention=2. Duc da reload extension va noi Bridge.",
+      "task": "Khoang nghi giua job bi Chrome bop (cau hinh 12-24s, do that ~11 phut). DO truoc, roi chuyen dong ho cho sang chrome.alarms. Khong xin quyen moi.",
       "released_at": null
     },
     "_root": {
-      "owner": "claude-chatgpt-retention-pilot",
+      "owner": "claude-flow-create-scope",
       "ai": "claude",
       "claimed_at": "2026-08-28",
-      "task": "MUON TAM, Duc duyet: sinh lai DASHBOARD/FEATURE-PARITY. Tra lai ngay sau khi PUSH XONG.",
+      "task": "Nhan _root de regen DASHBOARD + FEATURE-PARITY sau khi commit code FLOW-04, va commit claims.json. Tra ngay sau khi xong.",
       "released_at": null
     }
   }
