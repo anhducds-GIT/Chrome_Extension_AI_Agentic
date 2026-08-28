@@ -4,7 +4,7 @@ id: duc-auto-gg-flow-video
 name: Duc Auto GG Flow Video
 lifecycle: building
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "FLOW-01 XONG: máy tự gõ prompt + bấm Create + video sinh thật (~70s, bằng chứng evidence/F1-EVIDENCE-NOTES.md). Tiếp theo F-02: viết provider-adapter thật từ bằng chứng, nối vào runner + workbook"
+current_focus: "Bản vá FLOW-04 (khoá nút Create vào đúng form composer + tiền kiểm runtime_contract) đã xong, audit PASS, suite 84/84 — nhưng CHƯA kiểm live được: extension nạp ở 3 profile Chrome nên Bridge đang nói chuyện với bản cũ"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md
@@ -29,14 +29,32 @@ máy chủ lạ.
 
 ## Đã kiểm chứng tới đâu
 
-**Chưa kiểm live.** Mới fork xong bootstrap: suite thừa kế xanh, Bridge bị khoá
-chỉ-đọc, chưa có selector Flow nào. Bằng chứng DOM sẽ nằm ở `evidence/` khi FLOW-01 chạy.
+**Đã sinh được video thật bằng máy, nhưng bản code HIỆN TẠI thì chưa kiểm live.**
+Phân biệt hai điều đó là quan trọng:
+
+- ✅ **Đã chạy thật:** 27/08 máy tự gõ prompt + bấm Create, video đầu tiên sinh ra (~70s).
+  28/08 chạy đúng đường runner thật (`jobs.add` → `run.trial`): **2 job thành công**, mỗi
+  job đúng 1 video mới được ghi sổ. Bằng chứng: [`evidence/F1-EVIDENCE-NOTES.md`](evidence/F1-EVIDENCE-NOTES.md),
+  [`evidence/F4-KET-QUA.md`](evidence/F4-KET-QUA.md).
+- ❌ **Chưa kiểm live:** bản vá FLOW-04 ngày 28/08. Suite 84/84 xanh, audit đối kháng 5
+  vòng PASS, 8 phép mutation đều làm suite đỏ — nhưng chưa một job nào chạy qua bản vá này
+  trên trang thật. Bằng chứng: [`evidence/F4-create-scope-fix-audit-20260828.json`](evidence/F4-create-scope-fix-audit-20260828.json).
+
+Vì sao chưa kiểm được: extension đang nạp ở **3 profile Chrome** cùng lúc, Bridge chỉ giữ
+một khe kết nối nên đang nói chuyện với profile chưa reload. Chi tiết + cách xử lý trong
+[`AI-OPERATOR-GUIDE.md`](AI-OPERATOR-GUIDE.md).
 
 ## Giới hạn đã biết
 
-1. **Chưa dùng được** — bootstrap, chưa chạy nổi một job video.
-2. SELECTORS/TIMING trong adapter còn là của Gemini — cố tình, chờ bằng chứng thật.
-3. Video **trừ credits thật** mỗi lần sinh → trần trial dev ≤3 video (3 × 15 credits), chặt hơn nhánh ảnh.
+1. **Chưa tự tin dùng cho việc thật.** Đường chạy đã thông và đã ra video, nhưng bản vá mới
+   nhất chưa được kiểm trên trang thật.
+2. **Nhiều profile Chrome = chưa dùng được ổn định.** Host Bridge chỉ có một khe cho
+   extension; profile nào nối sau cùng thì chiếm khe, và cả ba profile khai danh tính giống
+   hệt nhau nên không phân biệt được. Đang có phiên riêng thiết kế lại phần này.
+3. Video **trừ credits thật** mỗi lần sinh → trần trial dev ≤3 video (3 × 15 credits), chặt
+   hơn nhánh ảnh. Không tự nới.
+4. Nhãn Image mode trong adapter khớp chính xác đúng một chuỗi đã đo (F-11); ảnh tham chiếu
+   image→video chưa thử bao giờ.
 
 ## Đọc sâu ở đâu
 
@@ -45,5 +63,5 @@ chỉ-đọc, chưa có selector Flow nào. Bằng chứng DOM sẽ nằm ở `e
 | Luật riêng + Bản đồ file | [`AGENTS.md`](AGENTS.md) |
 | Tổng quan + cài đặt | [`README.md`](README.md) |
 | Việc còn mở F-xx | [`BACKLOG.md`](BACKLOG.md) |
-| Vận hành qua Bridge | [`AI-OPERATOR-GUIDE.md`](AI-OPERATOR-GUIDE.md) |
+| Vận hành qua Bridge (kèm phép kiểm vân tay runtime BẮT BUỘC) | [`AI-OPERATOR-GUIDE.md`](AI-OPERATOR-GUIDE.md) |
 | Kế hoạch điều phối 5 checkpoint | [`../../../drafts/FLOW-EXT-COORDINATION-PLAN.md`](../../../drafts/FLOW-EXT-COORDINATION-PLAN.md) |
