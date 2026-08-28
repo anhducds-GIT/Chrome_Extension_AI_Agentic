@@ -42,8 +42,11 @@ function harness({
   let settingsOpen = false;
   let currentModeSummary = modeSummaryLabel;
   let videos = [media("old")];
-  const buttonNode = (label, { className = "", disabled = () => false, click = () => {} } = {}) => ({
+  // Measured: settings controls react to the pointer sequence, not to a bare
+  // .click(). Fixtures that respond to .click() would let the old code pass.
+  const buttonNode = (label, { className = "", disabled = () => false, click = () => {}, onPointerDown = null } = {}) => ({
     innerText: label, textContent: label, className,
+    dispatchEvent(event) { if (onPointerDown && event && event.type === "pointerdown") onPointerDown(); },
     get disabled() { return disabled(); },
     getAttribute(name) {
       if (name === "class") return className;
@@ -87,18 +90,25 @@ function harness({
   const globalCreateButton = globalCreateLabel == null ? null : buttonNode(globalCreateLabel, { click() { globalCreateClicks += 1; } });
   const summaryButton = () => {
     const label = modeRegressesAfterTyping && typed ? IMAGE_MODE_SUMMARY : currentModeSummary;
-    return label == null ? null : buttonNode(label, { click() { settingsClicks += 1; settingsOpen = true; } });
+    return label == null ? null : buttonNode(label, {
+      click() { /* measured: a bare click does nothing to this control */ },
+      onPointerDown() { settingsClicks += 1; settingsOpen = true; },
+    });
   };
   const imageOption = buttonNode("image Image", { className: "flow_tab_slider_trigger" });
   const remountCreate = buttonNode(createLabel, {
     click() { remountClicks += 1; videos = [...afterClick.map(media), ...videos]; },
   });
-  const videoOption = buttonNode(videoOptionLabel, { className: "flow_tab_slider_trigger", click() {
-    videoModeClicks += 1;
-    settingsOpen = false;
-    if (remountComposerOnModeSwitch) remounted = true;
-    if (proveVideoAfterClick) currentModeSummary = VIDEO_MODE_SUMMARY;
-  } });
+  const videoOption = buttonNode(videoOptionLabel, {
+    className: "flow_tab_slider_trigger",
+    click() { /* measured: a bare click does nothing to this control */ },
+    onPointerDown() {
+      videoModeClicks += 1;
+      settingsOpen = false;
+      if (remountComposerOnModeSwitch) remounted = true;
+      if (proveVideoAfterClick) currentModeSummary = VIDEO_MODE_SUMMARY;
+    },
+  });
   const upgradeButtons = [1, 2].map(() => buttonNode("Upgrade", { click() { throw new Error("Upgrade must never be clicked by the runner"); } }));
   // Measured: the add-media control "add_2 Create" lives in the SAME cluster as
   // the real submit button. It is enabled at all times and must never be chosen.

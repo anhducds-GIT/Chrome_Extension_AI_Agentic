@@ -251,3 +251,13 @@
   - Đức phải tự tay 2 việc trước khi chạy: đặt **Video mode** (F-14) và đặt **x1** (F-15). Khi
     mode đã là Video thì `ensureFlowVideoMode` thoát sớm, đường tự động không bị ảnh hưởng.
   - Bảng lỗi trong `AI-OPERATOR-GUIDE.md` đã thêm 2 dòng cho hai tình huống trên.
+- 2026-08-28 · `claude-flow-create-scope` · **Sửa F-14: bấm nút cấu hình bằng chuỗi sự kiện chuột
+  thật thay vì `.click()` trần.** Thêm `pressFlowControl()` trong `content.js`, bắn
+  `pointerdown → mousedown → pointerup → mouseup` rồi mới `click`, dùng cho ĐÚNG hai chỗ: chip
+  mode và nút `videocam Video`. **Nút Create cố ý KHÔNG đi qua đây** — nó đã chạy đúng, và nó là
+  hành động duy nhất tiêu credit; đặt cú bấm không hoàn tác được sau lớp code sự kiện vừa viết
+  là rủi ro không có lý do đo đạc nào biện minh.
+  Fixture đã sửa cho trung thực với số đo: chip và nút Video giờ **phớt lờ `.click()`** và chỉ
+  phản ứng với `pointerdown`, đúng như đo được. Hai mutation (trả từng chỗ về `.click()` trần)
+  đều làm suite ĐỎ. Suite **84/84**.
+  Chưa live verify: cần Đức reload extension rồi đặt chip về **Image** để thử đúng khâu này.

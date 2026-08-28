@@ -519,6 +519,52 @@
 
   const FLOW_VIDEO_MODE_ERROR = "WRONG_GENERATION_MODE: FLOW_VIDEO_MODE_NOT_READY";
 
+  // F-14, measured 2026-08-28 at zero credit (evidence/F4-trial-success-live-20260828.json):
+  // element.click() moves Flow's Create button but does NOTHING to its
+  // generation-settings controls, the ones carrying the class token
+  // flow_tab_slider_trigger. Proven twice: clicking the mode chip never opened
+  // its popover, and clicking videocam Video with the popover already open left
+  // the mode on Image. A real mouse emits pointerdown -> mousedown -> mouseup ->
+  // click; element.click() emits only the last of those, and these controls act
+  // on the first. Same shape as the Lexical composer, which needed real
+  // keyboard-equivalent events rather than a textContent assignment.
+  //
+  // Create is deliberately NOT routed through here. It already works, it is the
+  // single action that spends credits, and its exactly-once guard lives in
+  // DECISIONS.clickSend. Widening this helper to cover it would put the one
+  // irreversible click behind newly-written event code for no measured reason.
+  function pressFlowControl(element) {
+    if (!element) return false;
+    const view = element.ownerDocument?.defaultView || (typeof window !== "undefined" ? window : null);
+    const build = (type, constructorName, init) => {
+      const Specific = view?.[constructorName];
+      if (typeof Specific === "function") {
+        try { return new Specific(type, init); } catch (_) { /* fall through to a plain event */ }
+      }
+      const Basic = view?.Event;
+      if (typeof Basic === "function") {
+        try { return new Basic(type, { bubbles: true, cancelable: true }); } catch (_) { /* nothing else to try */ }
+      }
+      return null;
+    };
+    const shared = { bubbles: true, cancelable: true, composed: true, view, button: 0 };
+    const pointer = { ...shared, pointerId: 1, pointerType: "mouse", isPrimary: true };
+    const sequence = [
+      ["pointerdown", "PointerEvent", { ...pointer, buttons: 1 }],
+      ["mousedown", "MouseEvent", { ...shared, buttons: 1 }],
+      ["pointerup", "PointerEvent", { ...pointer, buttons: 0 }],
+      ["mouseup", "MouseEvent", { ...shared, buttons: 0 }],
+    ];
+    for (const [type, constructorName, init] of sequence) {
+      const event = build(type, constructorName, init);
+      if (event && typeof element.dispatchEvent === "function") element.dispatchEvent(event);
+    }
+    // Still send the plain click last: controls that only listen for it (and the
+    // inherited fixtures) must keep behaving exactly as before.
+    if (typeof element.click === "function") element.click();
+    return true;
+  }
+
   async function ensureFlowVideoMode() {
     if (ADAPTER.resultKind !== "video") return;
     // Audit finding (Codex round 2, 2026-08-28): the blocker checks used to sit
@@ -548,7 +594,7 @@
       `${FLOW_VIDEO_MODE_ERROR}: exact enabled Video option was not found.`,
       50,
     );
-    videoOption.click();
+    pressFlowControl(videoOption);
     await waitUntil(
       () => ADAPTER.generationMode(document).mode === "video",
       ADAPTER.TIMING.sendReadyTimeoutMs,
