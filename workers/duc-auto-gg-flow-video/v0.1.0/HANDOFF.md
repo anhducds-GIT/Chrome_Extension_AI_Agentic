@@ -219,3 +219,16 @@
     hai đúng mới chạy 1 job, `max_retries=0`.
   - Cổng kiểm: mọi mục XANH trừ "file gốc không ai đứng tên" — do 4 file nháp **untracked của
     phiên khác** trong `drafts/`. Không phải việc của tôi, không commit hộ.
+- 2026-08-28 · `claude-flow-create-scope` · **KIỂM CHỨNG LIVE BẢN VÁ — ĐẠT, 0 credit.**
+  Probe trên trang thật (`evidence/F4-fix-live-verified-20260828.json`):
+  `runtime_contract = flow04-composer-cluster-submit-v2` ✅ · `composer_scope_resolved = true` ✅ ·
+  `hops = 2` — **đúng y dự đoán từ trace**. Cụm composer nhận đúng 4 nút đã đo.
+  **Kết quả quyết định:** trang đang ở đúng trạng thái đã gây ra lượt hỏng (Image mode,
+  `add_2 Create` đang SÁNG), vậy mà `sendFound=true` và nút được chọn là `arrow_forward Create`
+  (đang TẮT vì ô trống) — tức adapter bỏ qua nút mồi sáng ngay bên cạnh. Lỗi gốc hết, chứng
+  minh trên trang thật. `generationLimitBlocker = null` cũng đúng: có Create thì đây không phải
+  tường credit — bản vá đời đầu của tôi sẽ phán nhầm chỗ này và chặn mọi job.
+  Chưa kiểm live: chuyển mode Image→Video + gõ + click + gán video (ba thứ này đã chạy thật
+  27–28/08, 2 job thành công; thứ hỏng là khâu CHỌN NÚT, và đó là thứ vừa kiểm xong).
+  Muốn chạy 1 job thật thì cần Đức: nạp workbook (reload extension đã xoá phiên —
+  `run.status` trả `WORKBOOK_NOT_LOADED`) + bật Dev Mode, và tài khoản còn credit.
