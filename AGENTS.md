@@ -123,6 +123,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Sắp code Extension Operation Platform V0.1 (STATUS/DASHBOARD) | `drafts/PLATFORM-V01-IMPLEMENTATION-BRIEF.md` — đề bài đã chốt, không tự mở rộng · prompt mở phiên: `drafts/PLATFORM-V01-ONBOARDING-PROMPT.md` |
 | Sắp triển khai Extension Google Flow (video) | `drafts/FLOW-EXT-COORDINATION-PLAN.md` — kế hoạch điều phối 5 checkpoint (FLOW-00 đã chốt 27/08) |
 | Vận hành / sửa worker GG Flow Video | `workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md` · vận hành Bridge: `AI-OPERATOR-GUIDE.md` cùng thư mục |
+| Sắp làm Bridge nhiều profile Chrome (routing theo tên hồ sơ, `bridge.sessions`, `target`) | `drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` — Đức duyệt hướng A 28/08; code CHỜ task ChatGPT text-reasoning đóng |
 
 **Về `FEATURE-PARITY.md`:** bảng tính năng GPT ↔ Gemini. Nó ở **gốc repo** vì nói về cả hai
 nhánh — sửa nó thì phải đang giữ `_root`.
