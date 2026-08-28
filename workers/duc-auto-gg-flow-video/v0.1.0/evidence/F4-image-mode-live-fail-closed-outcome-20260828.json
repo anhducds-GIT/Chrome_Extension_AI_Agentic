@@ -1,0 +1,50 @@
+{
+  "captured_at": "2026-08-28T01:51:28.353Z",
+  "trial_run_id": "20260828-0147-bridge-2026-08-28t01-47",
+  "job_id": "Q001",
+  "attempt_id": "attempt-mtcam66t-1-dzin5d2p",
+  "input": {
+    "starting_mode": "image",
+    "starting_summary": "🍌 Nano Banana 2 crop_9_16 x2",
+    "baseline_video_ids": [],
+    "timeout_sec": 300,
+    "delay_sec": 25,
+    "max_retries": 0
+  },
+  "bridge_requests": {
+    "jobs_add_invalid_params": "ai-143b3f05-1541-412b-be83-75cc8c541b04",
+    "jobs_add_accepted": "ai-08f4b1c4-083a-4225-a8de-8f6c22110cee",
+    "run_trial_accepted": "ai-8b38996b-b79e-4ae5-a9f6-906425672624",
+    "first_stop_executor_unavailable": "ai-a7cf4d78-8cb7-4fac-b997-eda3c7ee8ed6",
+    "stop_accepted": "ai-790e8e94-a107-4cc7-a8de-d5c7da8ca778",
+    "final_ledger_read": "ai-6a822fed-7749-4025-b943-06131d5a58fb"
+  },
+  "measured_behavior": {
+    "mode_after_runner_started": "image",
+    "summary_after_runner_started": "🍌 Nano Banana 2 crop_9_16 x2",
+    "composer_value_length_after_typing": 172,
+    "wrong_control_clicked": "page-level add_2 Create",
+    "wrong_control_effect": "Opened the Meo Story media panel with All, Images, Videos, Voices, Characters, Avatar, and Uploads controls.",
+    "prompt_level_control": "arrow_forward Create",
+    "prompt_level_control_disabled_after_wrong_click": true,
+    "final_video_ids": [],
+    "new_video_count": 0,
+    "new_image_result_count": 0,
+    "security_blocker": null,
+    "generation_limit_blocker": null
+  },
+  "ledger": {
+    "status": "STOPPED",
+    "failure_type": "USER_STOP",
+    "attempt_phase": "SUBMITTED",
+    "submitted_at": "2026-08-28T01:48:43.694Z",
+    "completed_at": "2026-08-28T01:50:07.585Z",
+    "retry_count": 0,
+    "max_retries": 0,
+    "decision_reason": "NO_NEW_VIDEO",
+    "poll_count": 5,
+    "checkpoint": "Bridge-2026-08-28T01-47__results__v02.xlsx",
+    "ledger_etag": "sha256:N8OX-9niXjHCbhkDB0KSLI8t2ufA_UfSryeP1Vfsn7k"
+  },
+  "conclusion": "FAIL_CLOSED: no video was produced. The runner falsely treated a page-level add_2 Create control as the composer submit and the active runtime did not execute the new Image-to-Video precondition. Do not retry until composer-scoped Create matching and runtime fingerprint verification pass live preflight."
+}

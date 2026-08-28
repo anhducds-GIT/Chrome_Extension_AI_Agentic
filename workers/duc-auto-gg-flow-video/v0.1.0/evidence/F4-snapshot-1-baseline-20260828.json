@@ -1,0 +1,321 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-b1c8c689-142e-4a4f-999a-1d20eab44593",
+  "ok": true,
+  "result": {
+    "attachmentPending": false,
+    "busy": false,
+    "buttons": [
+      {
+        "aria": "",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-7cbbf1fc-2 ewGlDn famhRe jjd",
+        "disabled": false,
+        "testid": "",
+        "txt": "arrow_back Go Back"
+      },
+      {
+        "aria": "",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-26aa1721-3 ewGlDn famhRe dUD",
+        "disabled": false,
+        "testid": "",
+        "txt": "more_vert More options"
+      },
+      {
+        "aria": "",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-5c4c0aea-1 ewGlDn famhRe eqh",
+        "disabled": false,
+        "testid": "",
+        "txt": "add Add Media"
+      },
+      {
+        "aria": "",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-51397942-2 ewGlDn famhRe kCs",
+        "disabled": false,
+        "testid": "",
+        "txt": "help Product Help"
+      },
+      {
+        "aria": "",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-2e186340-1 ewGlDn famhRe jNE",
+        "disabled": false,
+        "testid": "",
+        "txt": "more_vert More"
+      },
+      {
+        "aria": "",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-cae65d1b-2 ewGlDn famhRe dLe",
+        "disabled": false,
+        "testid": "",
+        "txt": "search Search"
+      },
+      {
+        "aria": "",
+        "cls": "sc-16c4830a-1 dnFqQq sc-e7a64add-0 sc-e7a64add-2 fPutAP blvbdy sc-fa653d6-8 fLZQ",
+        "disabled": false,
+        "testid": "",
+        "txt": "filter_list Sort & Filter"
+      },
+      {
+        "aria": "",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-253cad92-0 ewGlDn famhRe joS",
+        "disabled": false,
+        "testid": "",
+        "txt": "add_2 Create"
+      },
+      {
+        "aria": "",
+        "cls": "sc-59223abb-3 dmZGYv",
+        "disabled": false,
+        "testid": "",
+        "txt": "Agent"
+      },
+      {
+        "aria": "",
+        "cls": "sc-16c4830a-1 dnFqQq sc-e7a64add-0 sc-e7a64add-1 fPutAP jmLZrS sc-93abd9dc-1 ldb",
+        "disabled": false,
+        "testid": "",
+        "txt": "Video · 720p · 10s crop_16_9 x1"
+      },
+      {
+        "aria": "",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-5c3af813-5 ewGlDn famhRe kmC",
+        "disabled": true,
+        "testid": "",
+        "txt": "arrow_forward Create"
+      }
+    ],
+    "captured_at": "2026-08-27T17:06:50.614Z",
+    "composerFound": true,
+    "customTags": [
+      "next-route-announcer"
+    ],
+    "fileInputs": [
+      {
+        "accept": "image/*",
+        "chain": "div > div > body > html",
+        "connected": true,
+        "multiple": true
+      }
+    ],
+    "generating": false,
+    "generationLimitBlocker": null,
+    "images": [
+      {
+        "alt": "User profile image",
+        "chain": "button > div > div > div > div",
+        "generated": false,
+        "rect": {
+          "h": 32,
+          "w": 32
+        },
+        "scheme": "https:",
+        "srcHead": "https://lh3.googleusercontent.com/a/ACg8ocJMw8Kqh8cLMtJGk5LbUqww_Onnda"
+      },
+      {
+        "alt": "Video thumbnail",
+        "chain": "button > a > div > span > div",
+        "generated": false,
+        "rect": {
+          "h": 197,
+          "w": 350
+        },
+        "scheme": "https:",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=974bbcb"
+      },
+      {
+        "alt": "Generated image",
+        "chain": "a > div > span > div > div",
+        "generated": false,
+        "rect": {
+          "h": 197,
+          "w": 350
+        },
+        "scheme": "https:",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=59ab107"
+      },
+      {
+        "alt": "Generated image",
+        "chain": "a > div > span > div > div",
+        "generated": false,
+        "rect": {
+          "h": 197,
+          "w": 350
+        },
+        "scheme": "https:",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=ad8050a"
+      },
+      {
+        "alt": "Video thumbnail",
+        "chain": "button > a > div > span > div",
+        "generated": false,
+        "rect": {
+          "h": 197,
+          "w": 350
+        },
+        "scheme": "https:",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=823ec9f"
+      },
+      {
+        "alt": "Generated image",
+        "chain": "a > div > span > div > div",
+        "generated": false,
+        "rect": {
+          "h": 197,
+          "w": 350
+        },
+        "scheme": "https:",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=359f1b1"
+      },
+      {
+        "alt": "Video thumbnail",
+        "chain": "button > a > div > span > div",
+        "generated": false,
+        "rect": {
+          "h": 197,
+          "w": 350
+        },
+        "scheme": "https:",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=8452856"
+      }
+    ],
+    "securityBlocker": null,
+    "selectorCounts": {
+      "attachmentPreview": [],
+      "composer": [
+        "[contenteditable=\"true\"][role=\"textbox\"] => 1"
+      ],
+      "fileInput": [
+        "input[type=\"file\"][accept*=\"image\"] => 1"
+      ],
+      "generatedImageAltMarker": " => (not a selector)",
+      "responseContainer": [],
+      "send": [],
+      "stop": [],
+      "uploadMenuButton": [],
+      "uploadPending": [],
+      "videoSelector": "video => 4"
+    },
+    "sendFound": true,
+    "stopFound": false,
+    "surface": "CONVERSATION",
+    "surface_allowed": true,
+    "textboxes": [
+      {
+        "aria": "",
+        "chain": "form > div > div > div > div",
+        "cls": "sc-cae65d1b-3 dguROl",
+        "editable": false,
+        "placeholder": "",
+        "rect": {
+          "h": 48,
+          "w": 210
+        },
+        "role": "",
+        "tag": "input",
+        "valueLen": 0,
+        "visible": true
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-1c9f7009-0 gvAbJD sc-5c3af813-6 iIcaac",
+        "editable": true,
+        "placeholder": "",
+        "rect": {
+          "h": 25,
+          "w": 328
+        },
+        "role": "textbox",
+        "tag": "div",
+        "valueLen": 28,
+        "visible": true
+      },
+      {
+        "aria": "",
+        "chain": "div > div > body > html",
+        "cls": "g-recaptcha-response",
+        "editable": false,
+        "placeholder": "",
+        "rect": {
+          "h": 0,
+          "w": 0
+        },
+        "role": "",
+        "tag": "textarea",
+        "valueLen": 0,
+        "visible": false
+      }
+    ],
+    "truncated": false,
+    "url": "https://labs.google/fx/tools/flow/project/c9d892ab-c453-4ba5-96e6-57bbe034f0dc",
+    "videos": [
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 bYsUvp",
+        "controls": false,
+        "duration": 10,
+        "paused": true,
+        "poster": "",
+        "readyState": 4,
+        "rect": {
+          "h": 197,
+          "w": 350
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=7e084b0"
+      },
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 eibPpl",
+        "controls": false,
+        "duration": null,
+        "paused": true,
+        "poster": "",
+        "readyState": 0,
+        "rect": {
+          "h": 0,
+          "w": 0
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=974bbcb"
+      },
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 eibPpl",
+        "controls": false,
+        "duration": null,
+        "paused": true,
+        "poster": "",
+        "readyState": 0,
+        "rect": {
+          "h": 0,
+          "w": 0
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=823ec9f"
+      },
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 eibPpl",
+        "controls": false,
+        "duration": null,
+        "paused": true,
+        "poster": "",
+        "readyState": 0,
+        "rect": {
+          "h": 0,
+          "w": 0
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=8452856"
+      }
+    ]
+  },
+  "responded_at": "2026-08-27T17:06:50.616Z"
+}

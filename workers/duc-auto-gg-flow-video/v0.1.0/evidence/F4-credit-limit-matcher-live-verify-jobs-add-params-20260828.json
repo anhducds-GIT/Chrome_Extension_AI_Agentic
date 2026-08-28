@@ -1,0 +1,12 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW04-CREDIT-LIMIT-MATCHER-LIVE-VERIFY: One small silver pinwheel standing still in a quiet pale green field, steady wide shot, soft daylight, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    }
+  ]
+}

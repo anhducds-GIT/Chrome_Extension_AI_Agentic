@@ -884,6 +884,11 @@
   // Read-only remote eyes for the AI operator: forwards DAC_DOM_PROBE to the
   // provider tab's content script and returns its snapshot verbatim. Never
   // clicks, types, or changes focus — the content side enforces that too.
+  // FLOW-04 (2026-08-28): the exact content-script contract this panel refuses
+  // to run a trial without. Must stay byte-identical to FLOW_RUNTIME_CONTRACT
+  // in content.js; bump both together when the Create/composer scope changes.
+  const REQUIRED_FLOW_RUNTIME_CONTRACT = "flow04-image-video-create-scope-v1";
+
   async function bridgeDomProbe() {
     const response = await send({ type: "DAC_DOM_PROBE" });
     if (!response?.ok) throw new Error(response?.error || "DOM probe failed in the content script.");
@@ -1260,7 +1265,7 @@
   // ---------------------------------------------------------------------
   // Development mode + run.trial (owner decision 2026-08-25, decisions.md).
   // The toggle lives only in the owner's hands; while it is ON the AI may
-  // start one small trial run (<=3 videos, timeout <=90s, delay 20-30s, >=300s
+  // start one small trial run (<=3 videos, timeout <=300s, delay 20-30s, >=300s
   // between trials) through the SAME selected-jobs runner the human uses.
   // ---------------------------------------------------------------------
   function renderDevMode() {
@@ -1287,6 +1292,27 @@
   }
 
   async function bridgeRunTrial(params) {
+    // Runtime fingerprint preflight — FIRST, before any state read that could
+    // become a write. Live 2026-08-28: the Bridge answered normally while the
+    // Flow tab still ran an OLD content script, which clicked a page-level
+    // Create and burned a job for nothing. bridgeDomProbe is the existing
+    // READ-ONLY method; a mismatch launches nothing and mutates nothing.
+    //
+    // SCOPE, honestly stated (audit finding, Codex 2026-08-28): this check runs
+    // INSIDE the panel, so it catches a stale CONTENT SCRIPT (tab not reloaded)
+    // and nothing else. A stale EXTENSION ships a stale panel, which has no
+    // check to run at all. That case is covered operationally instead: the AI
+    // operator must read runtime_contract from diagnostics.dom_probe before the
+    // first write of a session, and treat a MISSING field as an old build.
+    // See AI-OPERATOR-GUIDE.md, "kiểm vân tay runtime".
+    const runtimeProbe = await bridgeDomProbe();
+    if (runtimeProbe?.runtime_contract !== REQUIRED_FLOW_RUNTIME_CONTRACT) {
+      throw new window.DacBridgeCore.BridgeProtocolError(
+        "VALIDATION_FAILED",
+        `RUNTIME_CONTRACT_MISMATCH: tab Flow đang chạy bản extension cũ. Cần "${REQUIRED_FLOW_RUNTIME_CONTRACT}", đang thấy "${runtimeProbe?.runtime_contract || "(không có)"}". Hãy reload Extension rồi F5 tab Flow, sau đó chạy lại.`,
+        { expected: REQUIRED_FLOW_RUNTIME_CONTRACT, actual: runtimeProbe?.runtime_contract || null }
+      );
+    }
     const workbook = requireBridgeWorkbook();
     const prepared = state.prepared || window.DacRunnerCore.prepare(workbook, state.files, state.runtimeOverrides);
     const nowMs = Date.now();

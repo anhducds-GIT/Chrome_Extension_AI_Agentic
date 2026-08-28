@@ -95,3 +95,52 @@
   (feature list + roadmap checkpoint, cùng phiên này). STATUS.current_focus còn nói "Tiếp
   theo F-02" — lạc hậu, phiên sau sửa cùng lượt regen dashboard sau trial (cần _root, đang
   do phiên study giữ). Quyền package TRẢ sau dòng log này — phiên mới claim bằng nhãn riêng.
+- 2026-08-28 · Codex implementer (dưới claim `claude-flow-2`) · Sửa timeout `run.trial` video: bound 15–90s → 15–300s, default 90s → 180s, registry/comment đồng bộ; test ghim nhận 180s/300s và từ chối 301s. Suite **84/84 xanh**, `node --check` xanh trên 3 file JS/MJS đã sửa; không pilot live, không commit/push.
+- 2026-08-28 · Codex implementer (claim `claude-flow-2`, audit preflight đính chính log ngay trước) · Phát hiện `dev-trial-core.js` thực tế vẫn còn `TIMEOUT_BOUNDS` 15–90/default 90; đã vá thành 15–300/default 180 và thêm test ghim min/default/max nhất quán với `bridge.validateParams`. Smoke PASS, suite mới chạy lại **84/84 xanh**, syntax/diff check xanh; không pilot/Bridge write, không commit/push.
+- 2026-08-28 · `claude-flow-2` (Codex điều phối) · **FLOW-04 trial runner thật đã chạy đúng một lần** qua `jobs.add` → `run.trial`, 3 job, timeout 300s, delay 25s, max_retries=0. Q001/Q002 SUCCESS, mỗi job đúng 1 video ID mới và URL được ghi ledger; Q003 dừng PRE_SUBMIT, 0 Submit, lỗi `Create button not found`. DOM tăng 5→7 video, không CAPTCHA/quota blocker. Bằng chứng mới: `evidence/F4-*`, tổng kết `F4-KET-QUA.md`.
+- 2026-08-28 · Codex implementer (dưới claim `claude-flow-2`) · Sửa lỗi live Q003 bằng thay đổi tối thiểu: bỏ gate tìm Create trước khi gõ; vẫn giữ gate `waitForSendButtonReady()` sau gõ, attribution boundary, `DECISIONS.clickSend` và đúng một click. Test hành vi mới đỏ trên code cũ, xanh sau fix; ca nút không trở lại vẫn fail với zero click. Suite **84/84 xanh**, session-check xanh; cần Đức reload Extension trước live verification của bản vá.
+- 2026-08-28 · `claude-flow-2` + Codex implementer mới · Chạy đúng 1 job Q001 để capture tường hết credit: trước gõ có `Create`, sau gõ `Create` mất và có 2 nút `Upgrade` visible/enabled; audit có **0 `PROMPT_SUBMITTED`**, ledger `attempt_count=1`, `retry_count=0`, PRE_SUBMIT. Runtime cũ phân loại sai `OTHER`; đã thêm matcher Flow để trả `GENERATION_LIMIT_REACHED`, zero click/retry, không đổi tài khoản/bypass. Test mới đỏ→xanh; suite **84/84**, session-check xanh. Bằng chứng thêm mới `evidence/F4-credit-limit-*`; còn cần Đức reload Extension và live verify matcher mới trước audit cuối.
+- 2026-08-28 · `claude-flow-2` + Codex implementer selector drift · Live verify matcher credit chưa tới tường credit: sau gõ, probe thấy nút enabled exact text `add_2 Create`, trong khi adapter chỉ nhận `arrow_forward Create`; job dừng PRE_SUBMIT, **0 `PROMPT_SUBMITTED`**, `attempt_count=1`, `retry_count=0`. Đã ghim matcher exact cho cả 2 nhãn đo thật và từ chối near-match; test đỏ→xanh, suite **84/84**, session-check xanh. Bằng chứng mới `evidence/F4-selector-drift-add-2-live-20260828.json`; cần Đức reload Extension lần nữa rồi mới retry live trên cùng tài khoản hết credit.
+- 2026-08-28 · `claude-flow-2` · Retry live sau reload xác nhận selector `add_2 Create` đã nạp: đúng 1 `JOB_START`, 1 `PROMPT_SUBMITTED`, 0 retry; 7 video không đổi sau 60 poll/300s. Lần này Flow không tái hiện nút `Upgrade`, nên không tuyên bố matcher quota đã được live-confirm; hậu-submit `NO_NEW_VIDEO` được giữ mơ hồ, không gán quota. Reconcile còn chờ nên operator gọi `run.stop` fail-closed, checkpoint `v02`, job `FAILED / USER_STOP`, không job thứ hai. Bằng chứng thêm mới `F4-credit-limit-final-live-*`; bước tiếp theo Đức đổi sang tài khoản đủ credit để chạy một job thành công xác nhận toàn đường sửa.
+- 2026-08-28 · `claude-flow-2` (Codex điều phối) · **BÀN GIAO WIP CHO CLAUDE CODE THEO LỆNH ĐỨC.** Từ điểm bắt đầu Image mode, chạy đúng 1 job qua `jobs.add` → `run.trial`, `max_retries=0`: runner chọn nhầm nút `add_2 Create` cấp trang, mở bảng media thay vì submit composer; prompt còn nguyên, 0 video/ảnh mới. Đã gọi `run.stop`; ledger cuối: run `20260828-0147-bridge-2026-08-28t01-47`, Q001/attempt `attempt-mtcam66t-1-dzin5d2p`, `STOPPED / USER_STOP`, `attempt_phase=SUBMITTED` do race lúc dừng, `retry_count=0`, `decision_reason=NO_NEW_VIDEO`. Bằng chứng thêm mới: `evidence/F4-image-mode-live-*` (file params đầu tiên ghi request invalid cũng phải giữ nguyên vì `evidence/` chỉ-thêm). Nguyên nhân code: `findCreateButton(root)` quét toàn trang; cần khóa vào form chứa đúng một composer và tiền kiểm `runtime_contract` trước mọi mutation của trial vì Bridge đã dao động runtime/profile. Một phiên Codex CLI mới chỉ kịp thêm 3 test regression rồi bị ngắt theo lệnh Đức; implementation fingerprint chưa có. Hiện test đích **ĐỎ**: `flow-video-safety-behavior.mjs` (line 217), `bridge-run-trial-smoke.mjs` (thiếu `REQUIRED_FLOW_RUNTIME_CONTRACT`), `bridge-dom-probe-static.mjs` (thiếu `FLOW_RUNTIME_CONTRACT`). Chưa chạy full suite/session-check sau test đỏ; không commit/push. Claude phải claim package, giữ nguyên WIP/unrelated dirt, hoàn thiện code + test, audit độc lập PASS, rồi mới nhờ Đức reload Extension và thử lại tối đa 1 job, zero retry.
+- 2026-08-28 · `claude-flow-create-scope` (Claude Code, tiếp quản WIP của `claude-flow-2`) ·
+  **Sửa xong nguyên nhân lượt hỏng 28/08 + 5 vòng audit đối kháng, vòng cuối PASS.** Không chạy live.
+  - **Nút Create giờ bị khoá vào đúng form của composer.** `findCreateButton` trước đây quét
+    MỌI `<button>` toàn trang nên đã bấm nhầm nút `add_2 Create` cấp trang. Nay: phải có đúng
+    MỘT composer nhìn thấy được, composer đó phải có đúng MỘT `<form>` cha, và trong form đó
+    phải có đúng MỘT nút đúng nhãn đã đo. Thiếu một điều kiện = không có ứng viên = zero click.
+    `generationLimitBlocker` khoá cùng phạm vi: nút `Upgrade` cấp trang không còn bị đọc thành
+    hết credit; và 2 nút Create = MƠ HỒ chứ không phải hết credit (audit vòng 1).
+  - **Vân tay runtime.** content.js khai `FLOW_RUNTIME_CONTRACT = "flow04-image-video-create-scope-v1"`;
+    `diagnostics.dom_probe` trả `runtime_contract` + `composer_scope_resolved` + mỗi nút kèm
+    `chain` và `in_composer_form` (soi được phạm vi selector từ bằng chứng). `run.trial` gọi
+    dom_probe TRƯỚC TIÊN và từ chối `VALIDATION_FAILED / RUNTIME_CONTRACT_MISMATCH` trước khi
+    ghi history, đổi state, hay khởi chạy. **Giới hạn nói thẳng:** phép kiểm này nằm TRONG panel
+    nên chỉ bắt được "tab chưa F5"; extension cũ thì panel cũng cũ, không có phép kiểm nào để
+    chạy. Bù bằng quy trình vận hành bắt buộc, đã ghi vào `AI-OPERATOR-GUIDE.md`.
+  - **Bốn lỗi thật do audit tìm thêm, đã sửa:** (a) composer được lấy TRƯỚC lúc đổi mode và
+    TRƯỚC lúc gắn ảnh — React remount là mất tham chiếu, gõ vào hư không rồi bấm Create của
+    form mới với prompt RỖNG (15 credit cho không); nay lấy SAU mọi bước đụng DOM, ngay trước
+    khi gõ. (b) `ensureFlowVideoMode` kiểm CAPTCHA/quota SAU khi phán mode, nên CAPTCHA trên
+    trang lạ mode ra `WRONG_GENERATION_MODE` → phân loại `OTHER` → **được retry**; nay hard-stop
+    đứng trên mọi câu hỏi về mode. (c) `waitForSendButtonReady` chỉ đưa security vào `sendReady`
+    chứ không ném, nên CAPTCHA đến muộn hết giờ thành thông báo chung cũng retryable; nay ném
+    `HARD_STOP` đối xứng với `LIMIT_STOP`. (d) mode chỉ được chứng minh một lần; nay chứng minh
+    LẠI ngay trước cú click duy nhất.
+  - **Hai kết luận của audit đã BÁC BỎ có lý do** (ghi lại để phiên sau khỏi làm lại): fallback
+    quét chữ quota toàn trang là lớp bảo vệ CỐ Ý (chữ quota thật của Flow chưa đo được, gỡ đi là
+    làm yếu hard-stop); và "waitUntil không kiểm blocker" là SAI — hàm đó ném cả HARD_STOP lẫn
+    LIMIT_STOP mỗi vòng lặp.
+  - Suite **84/84 xanh**. **8 phép mutation đều làm suite ĐỎ** (trong đó có "xoá call site" của
+    cả hai lớp bảo vệ mới) — pin không phải đồ trang trí. `node --check` + `git diff --check` xanh.
+    session-check xanh. Audit: Codex phiên mới mỗi vòng, 5 vòng, vòng 5 **PASS**. AGY vẫn hỏng
+    headless nên không dùng.
+  - Bằng chứng mới: `evidence/F4-create-scope-fix-audit-20260828.json`. Mở thêm backlog **F-11**
+    (nhãn Image mode khớp chính xác một chuỗi — fail-closed cố ý, muốn nới phải đo trước) và
+    **F-12** (khe hẹp remount giữa lúc gõ xong và lúc click).
+  - **Việc tiếp theo (1):** Đức reload Extension + F5 tab Flow. Rồi phiên sau gọi `dom_probe`,
+    xác nhận `runtime_contract = flow04-image-video-create-scope-v1` và `composer_scope_resolved = true`,
+    **chỉ khi đó** mới thử live lại tối đa 1 job, `max_retries=0`, không bypass quota/CAPTCHA.
+  - Còn mở: `evidence/F1-snapshot-7-high-demand-banner-20260827.json` vẫn là vỏ lỗi
+    EXECUTOR_UNAVAILABLE, chưa commit và chưa xoá — `evidence/` chỉ-thêm nên chờ Đức quyết.
+    STATUS/DASHBOARD cần `_root`, phiên khác đang giữ, nên lượt này không đụng.

@@ -1,0 +1,28 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW04-RUNNER-A: A single red paper boat drifting slowly across a calm blue pond, cinematic wide shot, soft morning light, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04-RUNNER-B: A small yellow toy bus moving slowly from left to right across a clean wooden table, studio lighting, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04-RUNNER-C: One blue balloon floating gently above a quiet green field under a clear sky, steady wide shot, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    }
+  ]
+}

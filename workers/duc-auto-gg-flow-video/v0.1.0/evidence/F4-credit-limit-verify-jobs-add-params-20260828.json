@@ -1,0 +1,12 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW04-CREDIT-LIMIT-VERIFY: A single white kite drifting slowly above a quiet lavender field, steady wide shot, soft daylight, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    }
+  ]
+}

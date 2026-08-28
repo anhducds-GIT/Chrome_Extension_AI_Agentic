@@ -10,6 +10,15 @@
   // loaded from content-decision-core.js.
   const DECISIONS = window.DacContentDecision;
 
+  // Runtime fingerprint (FLOW-04, 2026-08-28). The Bridge has twice served a
+  // STALE extension runtime while looking healthy, and a stale content script
+  // clicked a page-level Create that opened the media panel instead of
+  // submitting. diagnostics.dom_probe reports this string so the side panel can
+  // refuse to start a trial against an old tab. Bump it whenever the composer/
+  // Create scoping contract changes, and update REQUIRED_FLOW_RUNTIME_CONTRACT
+  // in sidepanel.js in the same commit.
+  const FLOW_RUNTIME_CONTRACT = "flow04-image-video-create-scope-v1";
+
   const STATE = {
     busy: false,
     abortRequested: false,
@@ -64,6 +73,11 @@
   }
 
   function findComposer() {
+    // Flow (FLOW-04): a composer only counts when it resolves to exactly ONE
+    // visible box owned by exactly ONE <form>. That form is also the only
+    // authorised Create scope, so an ambiguous or form-less composer is an
+    // unmeasured page state and must fail closed before any prompt mutation.
+    if (ADAPTER.resultKind === "video") return ADAPTER.composerScope(document)?.composer || null;
     return firstVisible(ADAPTER.SELECTORS.composer);
   }
 
@@ -191,6 +205,8 @@
     return text.length > 0 && isVisible(anchor);
   }
   function generationLimitText() {
+    const providerBlocker = ADAPTER.generationLimitBlocker?.(document);
+    if (providerBlocker) return providerBlocker;
     if (quotaAnchorPresent()) return "Gemini image generation quota reached (freemium quota disclaimer present).";
     return matchesGenerationLimit(quotaPageText()) ? "Gemini image generation limit reached for now." : null;
   }
@@ -495,6 +511,46 @@
     throw new Error(code);
   }
 
+  const FLOW_VIDEO_MODE_ERROR = "WRONG_GENERATION_MODE: FLOW_VIDEO_MODE_NOT_READY";
+
+  async function ensureFlowVideoMode() {
+    if (ADAPTER.resultKind !== "video") return;
+    // Audit finding (Codex round 2, 2026-08-28): the blocker checks used to sit
+    // BELOW the mode verdict, so a CAPTCHA or quota wall on a page whose mode
+    // summary was unrecognised surfaced as WRONG_GENERATION_MODE. That string
+    // classifies as OTHER, and OTHER is RETRYABLE (runner-core canRetry) --
+    // which is exactly the auto-retry a hard stop exists to forbid. Page-wide
+    // hard stops therefore outrank every mode question.
+    const blocker = securityBlockerText();
+    if (blocker) throw new Error(`HARD_STOP: ${blocker}`);
+    const limitBlocker = generationLimitText();
+    if (limitBlocker) throw new Error(`LIMIT_STOP: ${limitBlocker}`);
+
+    const current = ADAPTER.generationMode(document);
+    if (current.mode === "video") return;
+    if (current.mode !== "image" || !current.button) {
+      throw new Error(`${FLOW_VIDEO_MODE_ERROR}: current create settings summary is missing or unknown.`);
+    }
+
+    // Reversible settings interaction only. No prompt mutation or Create click
+    // occurs unless the exact measured Video option and the closed Video
+    // summary postcondition are both proven.
+    current.button.click();
+    const videoOption = await waitUntil(
+      () => ADAPTER.findVideoModeOption(document),
+      ADAPTER.TIMING.sendReadyTimeoutMs,
+      `${FLOW_VIDEO_MODE_ERROR}: exact enabled Video option was not found.`,
+      50,
+    );
+    videoOption.click();
+    await waitUntil(
+      () => ADAPTER.generationMode(document).mode === "video",
+      ADAPTER.TIMING.sendReadyTimeoutMs,
+      `${FLOW_VIDEO_MODE_ERROR}: closed Video summary postcondition was not proven.`,
+      50,
+    );
+  }
+
   function queryTransientFileInput() {
     for (const selector of ADAPTER.SELECTORS.fileInput) {
       const input = document.querySelector(selector);
@@ -663,7 +719,17 @@
     while (Date.now() < deadline) {
       if (STATE.abortRequested) throw new Error("Automation stopped by user.");
       const button = findSendButton();
-      if (DECISIONS.sendReady({ found: Boolean(button), disabled: button?.disabled, ariaDisabled: button?.getAttribute("aria-disabled"), security: securityBlockerText(), quota: generationLimitText() })) return button;
+      // Audit finding (Codex round 3, 2026-08-28): quota threw here but a
+      // security blocker was only fed into sendReady(), so a CAPTCHA appearing
+      // AFTER the pre-flight check timed out as the generic "Send button did
+      // not become ready". That string classifies as OTHER, and OTHER is
+      // RETRYABLE -- a CAPTCHA handed straight back to the retry loop. Both
+      // blockers now throw their own hard stop, symmetrically.
+      const security = securityBlockerText();
+      if (security) throw new Error(`HARD_STOP: ${security}`);
+      const quota = generationLimitText();
+      if (quota) throw new Error(`LIMIT_STOP: ${quota}`);
+      if (DECISIONS.sendReady({ found: Boolean(button), disabled: button?.disabled, ariaDisabled: button?.getAttribute("aria-disabled"), security, quota })) return button;
       await sleep(100);
     }
     throw new Error("Send button did not become ready. Gemini DOM may have changed.");
@@ -922,9 +988,8 @@
       if (!composer) {
         throw new Error("Flow composer not found. Open a labs.google Flow project and retry.");
       }
-      if (ADAPTER.resultKind === "video" && !ADAPTER.findCreateButton(document)) {
-        throw new Error("Create button not found. Flow DOM may have changed.");
-      }
+
+      await ensureFlowVideoMode();
 
       // Order pinned by tests: attach-stage -> type prompt -> confirm
       // attachment -> send. Confirmation always completes before the one
@@ -932,7 +997,19 @@
       // verified reference.
       emitRuntimeStage(requestAttempt, referenceImages.length ? "ATTACHING_REFS" : "SENDING");
       const staged = await stageReferences(referenceImages);
-      const typing = await typeIntoFlowComposer(composer, prompt);
+
+      // Audit findings (Codex rounds 2 and 3, 2026-08-28): both the Image ->
+      // Video switch and reference staging mutate Flow's React tree, and either
+      // can REMOUNT the composer and its form. A reference captured earlier is
+      // then detached: typing goes nowhere while the post-type readiness gate
+      // resolves the NEW form and clicks a live Create with an EMPTY prompt --
+      // 15 real credits for nothing. So resolve the composer LAST, after every
+      // DOM-mutating step and immediately before typing.
+      const activeComposer = findComposer();
+      if (!activeComposer) {
+        throw new Error("Flow composer not found. Open a labs.google Flow project and retry.");
+      }
+      const typing = await typeIntoFlowComposer(activeComposer, prompt);
       await sleep(ADAPTER.TIMING.postTypeSettleMs);
       // Đặt lại trước mỗi lần thử: biến này ở phạm vi module, để nguyên thì
       // một job không có blob nào sẽ thừa hưởng nhãn của job trước.
@@ -946,6 +1023,14 @@
       // immediately before Create, after typing and attachment preparation.
       const boundary = ADAPTER.resultKind === "video" ? captureVideoBoundary() : captureBoundary(inputEvidence);
       if (requestAttempt) Object.assign(requestAttempt, { boundary, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, resultKind: ADAPTER.resultKind, detection: { ...(ADAPTER.resultKind === "video" ? { baseline_video_ids: boundary.video_ids } : boundaryTelemetry(boundary)), decision_reason: "PENDING", typing_path: typing.path, attach: attach ?? null } });
+      // Audit finding (Codex round 4, 2026-08-28): mode was proven ONCE, before
+      // reference staging and typing -- both of which mutate Flow's React tree.
+      // The live loss on 2026-08-28 began in Image mode, so re-assert Video at
+      // the one step that spends credits. Same measured summary signal, read
+      // twice: costs nothing, and refusing here is zero-click and zero-spend.
+      if (ADAPTER.resultKind === "video" && ADAPTER.generationMode(document).mode !== "video") {
+        throw new Error(`${FLOW_VIDEO_MODE_ERROR}: Video mode was no longer proven at the submit boundary.`);
+      }
       emitRuntimeStage(requestAttempt, "SENDING");
       // Exactly one guarded Send click per attempt (submit-once protection):
       // any blocker or operator stop discovered at this instant prevents the
@@ -1149,8 +1234,13 @@
             try { selectorCounts[group] = `${value} => ${document.querySelectorAll(value).length}`; } catch (_) { selectorCounts[group] = `${value} => (not a selector)`; }
           }
         }
+        // FLOW-04: the live miss was a correctly-labelled Create that belonged
+        // to the PAGE, not the prompt form. Every reported button therefore
+        // carries its ancestry and whether it sits inside the one authorised
+        // composer form, so selector scope is auditable from evidence alone.
+        const composerFormScope = ADAPTER.composerScope?.(document) || null;
         const buttons = Array.from(document.querySelectorAll("button")).filter(isVisible)
-          .map((button) => ({ aria: (button.getAttribute("aria-label") || "").slice(0, 60), testid: button.getAttribute("data-test-id") || "", txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40), disabled: button.disabled || button.getAttribute("aria-disabled") === "true", cls: (button.className && typeof button.className === "string" ? button.className : "").slice(0, 80) }))
+          .map((button) => ({ aria: (button.getAttribute("aria-label") || "").slice(0, 60), testid: button.getAttribute("data-test-id") || "", txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40), disabled: button.disabled || button.getAttribute("aria-disabled") === "true", cls: (button.className && typeof button.className === "string" ? button.className : "").slice(0, 80), in_composer_form: ADAPTER.isInComposerForm?.(document, button) === true, chain: chainOf(button) }))
           .filter((button) => button.aria || button.testid || button.txt).slice(0, 40);
         // Flow (labs.google) renders results as <video>, which the original
         // image-era probe could not see at all -- the operator's remote eyes
@@ -1201,7 +1291,9 @@
         });
         const probe = {
           captured_at: new Date().toISOString(),
+          runtime_contract: FLOW_RUNTIME_CONTRACT,
           url: location.href,
+          composer_scope_resolved: Boolean(composerFormScope),
           surface: ADAPTER.surface(location.href),
           surface_allowed: surfaceAllowedNow(),
           composerFound: Boolean(findComposer()),

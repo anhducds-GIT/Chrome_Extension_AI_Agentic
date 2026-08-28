@@ -1,0 +1,61 @@
+{
+  "purpose": "FLOW-04 live evidence for the add_2 Create selector drift discovered while verifying the no-credit matcher",
+  "run_id": "20260827-1858-bridge-2026-08-27t18-58",
+  "jobs_add": {
+    "request_id": "ai-1434acdf-72e8-433d-91d6-3fb23dab58c3",
+    "ok": true,
+    "job_ids": ["Q001"]
+  },
+  "run_trial_calls": [
+    {
+      "request_id": "ai-3576df9a-1555-4cac-9219-f84f488865ba",
+      "ok": false,
+      "error_code": "INVALID_PARAMS",
+      "reason": "An old Chrome runtime temporarily owned port 32149 and rejected timeout_sec=300 before any run mutation."
+    },
+    {
+      "request_id": "ai-baeeb5ec-4a26-4e19-8942-215ecf3843e1",
+      "ok": true,
+      "accepted": true,
+      "job_ids": ["Q001"],
+      "timeout_sec": 300,
+      "delay_sec": 25,
+      "input_origin": "bridge_dev"
+    }
+  ],
+  "final_ledger": {
+    "request_id": "ai-fad1bbb8-e3bb-4a2a-967e-f8282f797b77",
+    "checkpoint_version": 2,
+    "job_id": "Q001",
+    "status": "FAILED",
+    "attempt_phase": "PRE_SUBMIT",
+    "attempt_count": "1",
+    "retry_count": "0",
+    "max_retries": "0",
+    "failure_type": "OTHER",
+    "error": "Send button did not become ready. Gemini DOM may have changed."
+  },
+  "post_failure_dom": {
+    "request_id": "ai-9e9ee3ba-cce7-49fe-ac4b-19cbda721fbe",
+    "composer_found": true,
+    "composer_value_length": 152,
+    "measured_create_button": {
+      "normalized_text": "add_2 Create",
+      "disabled": false,
+      "visible": true
+    },
+    "upgrade_button_count": 0,
+    "generation_limit_blocker": null,
+    "security_blocker": null,
+    "generating": false,
+    "video_count": 7
+  },
+  "audit_event_counts": {
+    "BRIDGE_DEV_TRIAL_RUN_START": 1,
+    "JOB_START": 1,
+    "PROMPT_SUBMITTED": 0,
+    "FAILURE": 1,
+    "RUN_END": 1
+  },
+  "conclusion": "This attempt did not reach the Google Flow credit wall. The loaded adapter missed the newly measured exact button text add_2 Create, so the run stopped before click. The selector repair must be reloaded before another live verification."
+}

@@ -45,6 +45,17 @@ assert.match(probeBlock, /64 \* 1024/, "payload cap is present");
 assert.match(probeBlock, /truncated = true/, "truncation is recorded, not silent");
 assert.match(probeBlock, /selectorCounts/, "adapter selector match counts are reported");
 assert.match(probeBlock, /return false;/, "probe responds synchronously");
+assert.match(content, /const FLOW_RUNTIME_CONTRACT = "flow04-image-video-create-scope-v1";/, "content runtime contract is a stable exact constant");
+assert.match(probeBlock, /runtime_contract: FLOW_RUNTIME_CONTRACT/, "dom_probe returns the stable content runtime contract");
+// The two halves of the fingerprint are useless if they can drift apart: the
+// panel would happily accept a runtime that no longer means what it claims.
+assert.equal(
+  panel.match(/const REQUIRED_FLOW_RUNTIME_CONTRACT = "([^"]+)";/)?.[1],
+  content.match(/const FLOW_RUNTIME_CONTRACT = "([^"]+)";/)?.[1],
+  "side panel and content script pin the identical runtime contract string"
+);
+assert.match(probeBlock, /in_composer_form:/, "every reported visible button proves whether it belongs to the exact composer form");
+assert.match(probeBlock, /chain: chainOf\(button\)/, "button ancestry evidence is read-only and included in dom_probe");
 
 // Flow is a VIDEO product: the probe must scan <video> elements (added F-01,
 // 2026-08-27 — the image-era probe was blind to them) and ship them in the

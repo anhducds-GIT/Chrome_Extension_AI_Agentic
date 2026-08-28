@@ -34,12 +34,79 @@ assert.deepEqual([...adapter.SELECTORS.fileInput], ['input[type="file"][accept*=
 assert.equal(adapter.SELECTORS.videoSelector, "video");
 assert.doesNotMatch(adapterSource, /[.#]sc-[a-z0-9]/i, "adapter never binds to styled-components classes");
 
-const visibleCreate = { innerText: "arrow_forward Create" };
-const disabledCreate = { textContent: "arrow_forward   Create", disabled: true };
-const unrelated = { innerText: "Create project" };
-const fakeDocument = { querySelectorAll: (selector) => selector === "button" ? [unrelated, visibleCreate, disabledCreate] : [] };
-assert.equal(adapter.findCreateButton(fakeDocument), visibleCreate, "text matcher finds the first structural Create control");
-assert.equal(adapter.findCreateButton({ querySelectorAll: () => [unrelated] }), null);
+// FLOW-04 scope contract (live miss 2026-08-28, evidence/F4-image-mode-live-*):
+// a correctly-labelled "add_2 Create" that belonged to the PAGE was clicked and
+// opened the media panel. A Create control now counts only when the ONE visible
+// composer resolves to ONE owning <form> that holds exactly ONE exact-label
+// button. Every other shape must fail closed at null.
+const button = (text, extra = {}) => ({
+  innerText: text, textContent: text, getAttribute: () => null,
+  getBoundingClientRect: () => ({ width: 80, height: 32 }), ...extra,
+});
+function scopedDocument({ formButtons = [], pageButtons = [], composerCount = 1, composerHasForm = true } = {}) {
+  const form = { tagName: "FORM", querySelectorAll: (selector) => selector === "button" ? formButtons : [] };
+  for (const node of formButtons) node.closest = (selector) => selector === "form" ? form : null;
+  for (const node of pageButtons) node.closest = () => null;
+  const composers = Array.from({ length: composerCount }, () => ({
+    getBoundingClientRect: () => ({ width: 320, height: 48 }),
+    closest: (selector) => selector === "form" && composerHasForm ? form : null,
+  }));
+  const document = {
+    defaultView: null,
+    querySelectorAll(selector) {
+      if (selector === "button") return [...pageButtons, ...formButtons];
+      if (selector.includes("contenteditable")) return composers;
+      return [];
+    },
+  };
+  return { document, form, composers };
+}
+
+const formCreate = button("arrow_forward Create");
+const pageCreate = button("add_2 Create");
+const scoped = scopedDocument({ formButtons: [formCreate], pageButtons: [button("Create project"), pageCreate] });
+assert.equal(adapter.findCreateButton(scoped.document), formCreate, "the composer-form Create is the only submit candidate");
+assert.equal(adapter.isInComposerForm(scoped.document, formCreate), true);
+assert.equal(adapter.isInComposerForm(scoped.document, pageCreate), false, "a page-level Create is provably outside the composer form");
+assert.equal(adapter.composerScope(scoped.document).form, scoped.form);
+
+// An enabled, exactly-labelled page-level Create with NO composer-form
+// candidate is still not a Create: this is the exact live defect.
+const pageOnly = scopedDocument({ formButtons: [], pageButtons: [button("add_2 Create")] });
+assert.equal(adapter.findCreateButton(pageOnly.document), null, "a page-level Create can never be selected");
+
+// Whitespace in the measured label normalizes; near-matches never do.
+const wrappedLabel = "add_2\n  Create";
+assert.equal(adapter.findCreateButton(scopedDocument({ formButtons: [button(wrappedLabel)] }).document)?.innerText, wrappedLabel);
+for (const label of ["Create", "Create project", "arrow_forward Recreate", "add_2 Create project"]) {
+  assert.equal(adapter.findCreateButton(scopedDocument({ formButtons: [button(label)] }).document), null, `near-match must fail closed: ${label}`);
+}
+
+// Ambiguity in any of the three scope inputs fails closed.
+assert.equal(adapter.findCreateButton(scopedDocument({ formButtons: [button("arrow_forward Create"), button("add_2 Create")] }).document), null, "two Create controls in one form are ambiguous");
+assert.equal(adapter.findCreateButton(scopedDocument({ formButtons: [button("arrow_forward Create")], composerCount: 2 }).document), null, "two visible composers give no scope");
+assert.equal(adapter.findCreateButton(scopedDocument({ formButtons: [button("arrow_forward Create")], composerCount: 0 }).document), null, "no composer gives no scope");
+assert.equal(adapter.findCreateButton(scopedDocument({ formButtons: [button("arrow_forward Create")], composerHasForm: false }).document), null, "a composer with no owning form gives no scope");
+assert.equal(adapter.findCreateButton({ querySelectorAll: () => [] }), null);
+assert.equal(adapter.composerScope(null), null);
+
+// Quota evidence is scoped the same way: Upgrade replacing Create INSIDE the
+// composer form is a wall; a page-level Upgrade is unrelated chrome.
+const wall = scopedDocument({ formButtons: [button("Upgrade")] });
+assert.match(adapter.generationLimitBlocker(wall.document), /Flow generation limit reached/);
+const pageUpgrade = scopedDocument({ formButtons: [], pageButtons: [button("Upgrade")] });
+assert.equal(adapter.generationLimitBlocker(pageUpgrade.document), null, "a page-level Upgrade is never a quota wall");
+assert.equal(adapter.generationLimitBlocker(scopedDocument({ formButtons: [button("arrow_forward Create"), button("Upgrade")] }).document), null, "an available Create outranks any Upgrade");
+// A dead-but-present Create beside Upgrade is still the measured wall shape.
+assert.match(adapter.generationLimitBlocker(scopedDocument({ formButtons: [button("arrow_forward Create", { disabled: true }), button("Upgrade")] }).document), /Flow generation limit reached/);
+// Audit finding (Codex round 1, 2026-08-28): two exact Create controls plus an
+// Upgrade is AMBIGUITY, not exhaustion. Calling it quota would send the owner
+// to a billing page over a DOM change; the ambiguity path already fails closed.
+assert.equal(
+  adapter.generationLimitBlocker(scopedDocument({ formButtons: [button("arrow_forward Create"), button("add_2 Create"), button("Upgrade")] }).document),
+  null,
+  "ambiguous Create controls must never be diagnosed as a credit wall"
+);
 
 const media = "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=7e084b0";
 assert.equal(adapter.videoIdFromSrc(media), "7e084b0");

@@ -1,0 +1,74 @@
+{
+  "source": "Agent Bridge ledger.read (sanitized extract)",
+  "captured_at": "2026-08-27T18:00:17.936Z",
+  "run_id": "20260827-1756-bridge-2026-08-27t17-56",
+  "checkpoint": {
+    "filename": "Bridge-2026-08-27T17-56__results__v02.xlsx",
+    "version": 2
+  },
+  "ledger_etag": "sha256:jdNmky5U7nuiYiv02PJa-ZWvDmLGAFLxwlN6PrTa0kc",
+  "jobs": [
+    {
+      "id": "Q001",
+      "status": "SUCCESS",
+      "attempt_id": "attempt-mtbtqwjp-1-4zeay9tm",
+      "attempt_count": 1,
+      "retry_count": 0,
+      "submitted_at": "2026-08-27T17:56:32.962Z",
+      "completed_at": "2026-08-27T17:57:32.075Z",
+      "baseline_video_ids": [
+        "7e084b00-6ffe-409c-9f24-0a62a32bb2b4",
+        "974bbcb5-6440-4461-abb4-edefbefefd9c",
+        "823ec9f8-aabb-42ee-9a61-fa633f20d50e",
+        "84528569-b0fa-4fec-a638-995c2705c5b4",
+        "9594771e-3493-49ab-bce1-03c1bce3f3f8"
+      ],
+      "candidate_video_ids": [
+        "c42d45f2-6e67-4945-8966-c36a61a60747"
+      ],
+      "video_id": "c42d45f2-6e67-4945-8966-c36a61a60747",
+      "video_url": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=c42d45f2-6e67-4945-8966-c36a61a60747",
+      "write_outcome": "url_recorded",
+      "detected_not_downloaded": true
+    },
+    {
+      "id": "Q002",
+      "status": "SUCCESS",
+      "attempt_id": "attempt-mtbtsyw2-2-2m4jybvj",
+      "attempt_count": 1,
+      "retry_count": 0,
+      "submitted_at": "2026-08-27T17:58:09.396Z",
+      "completed_at": "2026-08-27T17:59:07.107Z",
+      "baseline_video_ids": [
+        "c42d45f2-6e67-4945-8966-c36a61a60747",
+        "7e084b00-6ffe-409c-9f24-0a62a32bb2b4",
+        "974bbcb5-6440-4461-abb4-edefbefefd9c",
+        "823ec9f8-aabb-42ee-9a61-fa633f20d50e",
+        "84528569-b0fa-4fec-a638-995c2705c5b4",
+        "9594771e-3493-49ab-bce1-03c1bce3f3f8"
+      ],
+      "candidate_video_ids": [
+        "10c82c53-a96a-4e39-ab8b-792d0e835d1f"
+      ],
+      "video_id": "10c82c53-a96a-4e39-ab8b-792d0e835d1f",
+      "video_url": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=10c82c53-a96a-4e39-ab8b-792d0e835d1f",
+      "write_outcome": "url_recorded",
+      "detected_not_downloaded": true
+    },
+    {
+      "id": "Q003",
+      "status": "FAILED",
+      "attempt_id": "attempt-mtbtva4e-3-7w5cmj08",
+      "attempt_count": 1,
+      "retry_count": 0,
+      "attempt_phase": "PRE_SUBMIT",
+      "submitted_at": null,
+      "completed_at": "2026-08-27T17:59:54.116Z",
+      "failure_type": "OTHER",
+      "error": "Create button not found. Flow DOM may have changed.",
+      "video_id": null,
+      "video_url": null,
+      "write_outcome": null
+    }
+  ]
+}

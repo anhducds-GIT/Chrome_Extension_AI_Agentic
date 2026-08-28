@@ -1,0 +1,92 @@
+{
+  "source_file": "Bridge-2026-08-27T17-56__audit (1).jsonl",
+  "source_location": "Owner Downloads/Duc Auto GG Flow (local source; not committed)",
+  "source_line_count": 23,
+  "run_id": "20260827-1756-bridge-2026-08-27t17-56",
+  "event_counts": {
+    "RUN_START": 1,
+    "BRIDGE_DEV_TRIAL_RUN_START": 1,
+    "JOB_START": 3,
+    "PROMPT_SUBMITTED": 2,
+    "JOB_SUCCESS": 2,
+    "FAILURE": 1,
+    "RUN_END": 1
+  },
+  "events": [
+    {
+      "source_line": 2,
+      "timestamp": "2026-08-27T17:56:22.792Z",
+      "event": "BRIDGE_DEV_TRIAL_RUN_START",
+      "input_origin": "bridge_dev",
+      "trial_job_ids": [
+        "Q001",
+        "Q002",
+        "Q003"
+      ],
+      "trial_timeout_sec": 300,
+      "trial_delay_sec": 25,
+      "trial_requested_at": "2026-08-27T17:56:22.781Z"
+    },
+    {
+      "source_line": 6,
+      "timestamp": "2026-08-27T17:57:25.052Z",
+      "event": "PROMPT_SUBMITTED",
+      "job_id": "Q001",
+      "attempt_id": "attempt-mtbtqwjp-1-4zeay9tm",
+      "attempt": 1,
+      "submitted_at": "2026-08-27T17:56:32.962Z"
+    },
+    {
+      "source_line": 10,
+      "timestamp": "2026-08-27T17:57:32.076Z",
+      "event": "JOB_SUCCESS",
+      "job_id": "Q001",
+      "attempt_id": "attempt-mtbtqwjp-1-4zeay9tm",
+      "attempt": 1,
+      "result_file": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=c42d45f2-6e67-4945-8966-c36a61a60747",
+      "write_outcome": "url_recorded",
+      "detected_not_downloaded": true
+    },
+    {
+      "source_line": 14,
+      "timestamp": "2026-08-27T17:58:59.107Z",
+      "event": "PROMPT_SUBMITTED",
+      "job_id": "Q002",
+      "attempt_id": "attempt-mtbtsyw2-2-2m4jybvj",
+      "attempt": 1,
+      "submitted_at": "2026-08-27T17:58:09.396Z"
+    },
+    {
+      "source_line": 18,
+      "timestamp": "2026-08-27T17:59:07.108Z",
+      "event": "JOB_SUCCESS",
+      "job_id": "Q002",
+      "attempt_id": "attempt-mtbtsyw2-2-2m4jybvj",
+      "attempt": 1,
+      "result_file": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=10c82c53-a96a-4e39-ab8b-792d0e835d1f",
+      "write_outcome": "url_recorded",
+      "detected_not_downloaded": true
+    },
+    {
+      "source_line": 22,
+      "timestamp": "2026-08-27T17:59:54.118Z",
+      "event": "FAILURE",
+      "job_id": "Q003",
+      "attempt_id": "attempt-mtbtva4e-3-7w5cmj08",
+      "attempt": 1,
+      "phase": "PRE_SUBMIT",
+      "status": "FAILED",
+      "failure_type": "OTHER",
+      "message": "Create button not found. Flow DOM may have changed.",
+      "submitted_at": null,
+      "result_file": null
+    },
+    {
+      "source_line": 23,
+      "timestamp": "2026-08-27T17:59:54.122Z",
+      "event": "RUN_END",
+      "message": "COMPLETE"
+    }
+  ],
+  "interpretation": "One successful Queue add event exists in the separate v01 audit file; this v02 run audit has exactly one trial-start event, two submit events, and no submit event for Q003."
+}

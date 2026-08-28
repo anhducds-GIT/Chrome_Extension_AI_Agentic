@@ -1,0 +1,62 @@
+{
+  "purpose": "FLOW-04 final live outcome on the owner-designated exhausted-credit account after loading the Upgrade matcher and add_2 Create selector repair",
+  "captured_at": "2026-08-27T19:30:07.076Z",
+  "run_id": "20260827-1917-bridge-2026-08-27t19-17",
+  "job_id": "Q001",
+  "attempt_id": "attempt-mtbwopwp-1-3xufmdau",
+  "input_origin": "bridge_dev",
+  "trial": {
+    "job_count": 1,
+    "timeout_sec": 300,
+    "delay_sec": 25,
+    "max_retries": 0,
+    "run_trial_request_id": "ai-3621e5c7-2780-4131-9c8e-73d3b2e40b68"
+  },
+  "measured_timeline": {
+    "job_start_at": "2026-08-27T19:18:46.826Z",
+    "submitted_at": "2026-08-27T19:18:47.042Z",
+    "completion_timeout_recorded_at": "2026-08-27T19:23:49.715Z",
+    "stop_requested_at": "2026-08-27T19:28:36.858Z",
+    "run_end_at": "2026-08-27T19:28:40.235Z"
+  },
+  "measured_behavior": {
+    "create_label_recognized": "add_2 Create",
+    "prompt_submitted_event_count": 1,
+    "job_start_event_count": 1,
+    "retry_event_count": 0,
+    "automatic_retry_count": 0,
+    "account_switch_or_bypass": false,
+    "baseline_video_count": 7,
+    "final_video_count": 7,
+    "new_video_count": 0,
+    "completion_poll_count": 60,
+    "completion_decision_reason": "NO_NEW_VIDEO",
+    "generation_limit_blocker_after_timeout": null,
+    "visible_upgrade_button_after_timeout": false
+  },
+  "terminal_state": {
+    "checkpoint_filename": "Bridge-2026-08-27T19-17__results__v02.xlsx",
+    "checkpoint_version": 2,
+    "run_state": "IDLE",
+    "counts": {
+      "failed": 1,
+      "interrupted": 0,
+      "pending": 0,
+      "running": 0,
+      "success": 0,
+      "total": 1
+    },
+    "failure_type": "USER_STOP",
+    "failure_message": "Automation stopped by user.",
+    "phase": "SUBMITTED"
+  },
+  "interpretation_boundary": {
+    "confirmed": "The repaired add_2 Create selector was live and exactly one prompt was submitted. No retry or second submit occurred. No new video appeared within the 300-second completion window.",
+    "not_confirmed": "This attempt did not expose the measured Upgrade blocker, so it does not live-confirm GENERATION_LIMIT_REACHED classification.",
+    "safety_rule": "Do not infer exhausted credit from NO_NEW_VIDEO alone. Preserve post-submit timeout as ambiguous and never auto-retry."
+  },
+  "source_artifacts": [
+    "C:/Users/MAYTEST_12/Downloads/Duc Auto GG Flow/Bridge-2026-08-27T19-17__audit (1).jsonl",
+    "C:/Users/MAYTEST_12/Downloads/Duc Auto GG Flow/Bridge-2026-08-27T19-17__results__v02.xlsx"
+  ]
+}

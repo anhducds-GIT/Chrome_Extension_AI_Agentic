@@ -1,0 +1,12 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW04-IMAGE-MODE-LIVE: A single orange paper airplane gliding slowly above a calm green field, cinematic wide shot, soft morning light, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    }
+  ]
+}

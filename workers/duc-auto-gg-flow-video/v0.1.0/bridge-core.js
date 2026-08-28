@@ -471,9 +471,10 @@
     }
     const jobIds = params.job_ids.map((value, index) => jobIdValue(value, `params.job_ids[${index}]`));
     if (new Set(jobIds.map((id) => id.toLowerCase())).size !== jobIds.length) invalidParams("params.job_ids", "duplicate job id");
+    // F1 measured ~70s/video and recommends 180-300s; runner-core DEFAULTS already uses 180s.
     return {
       job_ids: jobIds,
-      timeout_sec: params.timeout_sec === undefined ? 90 : integerValue(params.timeout_sec, "params.timeout_sec", 15, 90),
+      timeout_sec: params.timeout_sec === undefined ? 180 : integerValue(params.timeout_sec, "params.timeout_sec", 15, 300),
       delay_sec: params.delay_sec === undefined ? 25 : integerValue(params.delay_sec, "params.delay_sec", 20, 30)
     };
   }
@@ -533,7 +534,7 @@
     registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?" }, params_validator: validateRunSettingsConfigure }),
     registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage a quarantined queue proposal; never execute it automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100]" }, params_validator: validateQueuePropose }),
     registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet }),
-    registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Start one owner-gated development trial run of at most 3 runnable video jobs (one continuous chain); refused unless the side-panel development-mode toggle is ON, no run is active, and 300 seconds have passed since the previous trial. Larger production runs stay owner-only.", params_schema: { job_ids: "job_id[1..3]", timeout_sec: "integer:15..90?", delay_sec: "integer:20..30?" }, params_validator: validateRunTrial }),
+    registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Start one owner-gated development trial run of at most 3 runnable video jobs (one continuous chain); refused unless the side-panel development-mode toggle is ON, no run is active, and 300 seconds have passed since the previous trial. Larger production runs stay owner-only.", params_schema: { job_ids: "job_id[1..3]", timeout_sec: "integer:15..300?", delay_sec: "integer:20..30?" }, params_validator: validateRunTrial }),
     // run.stop là lệnh ghi DUY NHẤT cố ý đi vòng qua khoá RUN_ACTIVE. Mọi lệnh
     // ghi khác bị từ chối khi đang chạy vì chúng có thể đổi thứ run sắp làm;
     // dừng thì chỉ BỚT việc đi. Một lệnh dừng bị từ chối vì "đang chạy" là vô

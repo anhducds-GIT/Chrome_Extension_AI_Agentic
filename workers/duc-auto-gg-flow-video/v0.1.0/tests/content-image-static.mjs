@@ -50,7 +50,7 @@ assert.match(source, /dispatchSyntheticDrop\(target, transfer\)/);
 assert.match(source, /closeUploadMenu\(\)/, "the CDK overlay menu is closed (Escape) before typing continues");
 assert.match(source, /new KeyboardEvent\("keydown", init\)/);
 const stageAt = source.indexOf("const staged = await stageReferences(referenceImages);");
-const typeAt = source.indexOf("await typeIntoFlowComposer(composer, prompt);");
+const typeAt = source.indexOf("await typeIntoFlowComposer(activeComposer, prompt);");
 const confirmAt = source.indexOf("await confirmReferences(staged);");
 const sendAt = source.indexOf("await DECISIONS.clickSend(");
 for (const [label, index] of [["stage", stageAt], ["type", typeAt], ["confirm", confirmAt], ["send", sendAt]]) {

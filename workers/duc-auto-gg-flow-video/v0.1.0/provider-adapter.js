@@ -72,18 +72,135 @@
     return surface(url) === SURFACE.CONVERSATION;
   }
 
-  // F1 measured button text "arrow_forward Create" and no usable aria label.
-  // Text plus element structure is intentionally used instead of sc-* classes.
-  function findCreateButton(root) {
+  function buttonLabel(button) {
+    return (button?.innerText || button?.textContent || "").replace(/\s+/g, " ").trim();
+  }
+
+  function visibleNode(root, node) {
+    if (typeof node?.getBoundingClientRect !== "function") return true;
+    const rect = node.getBoundingClientRect();
+    const style = root.defaultView?.getComputedStyle?.(node);
+    return rect.width > 0 && rect.height > 0 && style?.display !== "none" && style?.visibility !== "hidden";
+  }
+
+  function enabledButton(button) {
+    return Boolean(button) && !button.disabled && button.getAttribute?.("aria-disabled") !== "true";
+  }
+
+  // FLOW-04 live failure (evidence/F4-image-mode-live-fail-closed-outcome-20260828.json):
+  // a page-level enabled "add_2 Create" that lives OUTSIDE the prompt form was
+  // selected and clicked; it opened the media panel, the prompt stayed intact
+  // and zero results were produced. Exact label text alone is therefore not
+  // enough evidence -- the control must also be owned by the composer.
+  //
+  // The single authorised submit scope is the nearest <form> of the ONE visible
+  // composer. No unique visible composer, no owning form, or more than one
+  // candidate inside it => no scope, and every scoped lookup returns null so
+  // the caller fails closed with zero clicks.
+  function composerScope(root) {
     if (!root?.querySelectorAll) return null;
-    return Array.from(root.querySelectorAll("button")).find((button) => {
-      const label = (button.innerText || button.textContent || "").replace(/\s+/g, " ").trim();
-      if (!/arrow_forward/i.test(label) || !/create/i.test(label)) return false;
-      if (typeof button.getBoundingClientRect !== "function") return true;
-      const rect = button.getBoundingClientRect();
-      const style = root.defaultView?.getComputedStyle?.(button);
-      return rect.width > 0 && rect.height > 0 && style?.display !== "none" && style?.visibility !== "hidden";
-    }) || null;
+    const composers = [];
+    for (const selector of SELECTORS.composer) {
+      let nodes;
+      try { nodes = Array.from(root.querySelectorAll(selector)); } catch (_) { return null; }
+      for (const node of nodes) {
+        if (!composers.includes(node) && visibleNode(root, node)) composers.push(node);
+      }
+    }
+    if (composers.length !== 1) return null;
+    const composer = composers[0];
+    const form = typeof composer.closest === "function" ? composer.closest("form") : null;
+    if (!form || typeof form.querySelectorAll !== "function") return null;
+    return Object.freeze({ composer, form });
+  }
+
+  function scopedVisibleButtons(root, scope) {
+    if (!scope) return [];
+    let nodes;
+    try { nodes = Array.from(scope.form.querySelectorAll("button")); } catch (_) { return []; }
+    return nodes.filter((button) => visibleNode(root, button));
+  }
+
+  // Audit helper for diagnostics.dom_probe: proves for any element whether it
+  // belongs to the authorised composer form, so selector scope is inspectable
+  // from evidence instead of inferred.
+  function isInComposerForm(root, element) {
+    const scope = composerScope(root);
+    if (!scope || !element || typeof element.closest !== "function") return false;
+    return element.closest("form") === scope.form;
+  }
+
+  // Measured button text: F1 "arrow_forward Create" and FLOW-04 selector-drift
+  // evidence "add_2 Create". Exact normalized text plus composer-form ownership
+  // is intentionally used instead of sc-* classes or a broad "Create" match.
+  const CREATE_BUTTON_LABELS = Object.freeze(["arrow_forward Create", "add_2 Create"]);
+  function createCandidates(root, scope) {
+    return scopedVisibleButtons(root, scope)
+      .filter((button) => CREATE_BUTTON_LABELS.includes(buttonLabel(button)));
+  }
+  function findCreateButton(root) {
+    const scope = composerScope(root);
+    if (!scope) return null;
+    const matches = createCandidates(root, scope);
+    // Two exact Create controls inside one form is an unmeasured page state.
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  const IMAGE_MODE_SUMMARY_LABEL = "🍌 Nano Banana 2 crop_9_16 x2";
+  const VIDEO_MODE_SUMMARY_PATTERN = /^Video · [^·]+ · [^·]+ crop_[^\s]+ x\d+$/;
+  const MODE_OPTION_CLASS = "flow_tab_slider_trigger";
+
+  function hasClassToken(button, token) {
+    const raw = button?.className?.baseVal || button?.className || button?.getAttribute?.("class") || "";
+    return String(raw).split(/\s+/).includes(token);
+  }
+
+  // FLOW-04 live evidence (2026-08-28): the closed settings trigger is either
+  // the exact measured Image summary or a structured Video summary whose
+  // resolution/duration/aspect/count values may vary. Only visible, enabled
+  // buttons count; prompt/page prose can never identify the generation mode.
+  function generationMode(root) {
+    if (!root?.querySelectorAll) return Object.freeze({ mode: "unknown", button: null, label: "" });
+    const matches = Array.from(root.querySelectorAll("button")).map((button) => ({ button, label: buttonLabel(button) }))
+      .filter(({ button, label }) => visibleNode(root, button) && enabledButton(button) && (label === IMAGE_MODE_SUMMARY_LABEL || VIDEO_MODE_SUMMARY_PATTERN.test(label)));
+    if (matches.length !== 1) return Object.freeze({ mode: "unknown", button: null, label: "" });
+    const match = matches[0];
+    return Object.freeze({ mode: match.label === IMAGE_MODE_SUMMARY_LABEL ? "image" : "video", button: match.button, label: match.label });
+  }
+
+  // The open settings panel exposes this exact semantic button with the
+  // measured stable class token. Duplicate candidates are ambiguous and must
+  // fail closed; no styled-component hash class is used.
+  function findVideoModeOption(root) {
+    if (!root?.querySelectorAll) return null;
+    const matches = Array.from(root.querySelectorAll("button")).filter((button) => (
+      buttonLabel(button) === "videocam Video" && hasClassToken(button, MODE_OPTION_CLASS)
+      && visibleNode(root, button) && enabledButton(button)
+    ));
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  const FLOW_GENERATION_LIMIT_REASON = "Flow generation limit reached: visible Upgrade button replaced the unavailable Create control.";
+
+  // FLOW-04 live evidence (2026-08-28): after prompt entry on a no-credit
+  // account, Create is unavailable and enabled visible buttons whose exact
+  // semantic text is "Upgrade" appear. Button-only evidence deliberately
+  // excludes arbitrary prompt/page prose and avoids styled-component classes.
+  // FLOW-04 (2026-08-28): Upgrade is only quota evidence when it stands INSIDE
+  // the composer form in place of the unavailable Create. A page-level Upgrade
+  // is ordinary marketing chrome and must never be read as a quota wall.
+  function generationLimitBlocker(root) {
+    const scope = composerScope(root);
+    if (!scope) return null;
+    const candidates = createCandidates(root, scope);
+    // Two or more exact Create controls is AMBIGUITY, not exhaustion. Reading
+    // that as a quota wall would send the owner to a billing page over what is
+    // really an unmeasured DOM change. Ambiguity has its own fail-closed path.
+    if (candidates.length > 1) return null;
+    if (candidates.some(enabledButton)) return null;
+    const upgrade = scopedVisibleButtons(root, scope)
+      .find((button) => buttonLabel(button) === "Upgrade" && enabledButton(button));
+    return upgrade ? FLOW_GENERATION_LIMIT_REASON : null;
   }
 
   // F1 measured media redirect pattern. Reject other hosts, paths, missing or
@@ -122,7 +239,12 @@
     isProviderUrl,
     surface,
     surfaceAllowed,
+    composerScope,
+    isInComposerForm,
     findCreateButton,
+    generationMode,
+    findVideoModeOption,
+    generationLimitBlocker,
     videoIdFromSrc,
     securityBlockerPattern,
     matchesGenerationLimit,

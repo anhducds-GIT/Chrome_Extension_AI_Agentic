@@ -1,0 +1,93 @@
+{
+  "captured_at": "2026-08-28",
+  "session": "claude-flow-create-scope",
+  "kind": "code_fix_and_adversarial_audit_record",
+  "not_a_live_run": true,
+  "responds_to": "evidence/F4-image-mode-live-fail-closed-outcome-20260828.json",
+  "problem_fixed": {
+    "root_cause": "findCreateButton(root) scanned every <button> on the page, so an enabled page-level control whose exact text was 'add_2 Create' was selected and clicked. It opened the Meo Story media panel; the prompt was never submitted and 0 videos were produced.",
+    "second_cause": "The Bridge served a stale extension runtime while answering normally, so a fixed content script was not necessarily the one running."
+  },
+  "contract_now_enforced": {
+    "submit_scope": "The nearest <form> of the ONE visible composer. No unique composer, no owning form, or more than one exact-label Create inside it => no candidate, zero clicks.",
+    "create_labels": ["arrow_forward Create", "add_2 Create"],
+    "quota_scope": "An enabled 'Upgrade' inside the same form, only when there are 0 or 1 Create candidates. Two or more candidates is ambiguity, not exhaustion.",
+    "runtime_contract": "flow04-image-video-create-scope-v1",
+    "runtime_preflight": "run.trial calls the read-only diagnostics.dom_probe FIRST and refuses with VALIDATION_FAILED / RUNTIME_CONTRACT_MISMATCH before writing trial history, mutating run state, or launching the runner.",
+    "mode_reassertion": "Video mode is proven again immediately before the one guarded Create click.",
+    "probe_evidence": "diagnostics.dom_probe now returns runtime_contract, composer_scope_resolved, and per-button chain + in_composer_form."
+  },
+  "known_limit_stated_honestly": "The preflight runs INSIDE the side panel, so it catches a stale CONTENT SCRIPT (tab not reloaded) only. A stale EXTENSION ships a stale panel that has no check to run. No code in the new build can gate an old build. Mitigation is operational and is now mandatory in AI-OPERATOR-GUIDE.md: read runtime_contract from dom_probe before the first write of a session, treat a MISSING field as an old build, and keep exactly one Flow tab with no tab switching between preflight and run.",
+  "tests": {
+    "suite": "84 passed, 0 failed, 84 total",
+    "node_check": "clean on provider-adapter.js, content.js, sidepanel.js and every edited .mjs",
+    "git_diff_check": "clean",
+    "session_check": "green before commit"
+  },
+  "mutation_tests_each_confirmed_to_turn_the_suite_red": [
+    "findCreateButton scans the whole page again",
+    "the video branch of the scoped findComposer() is deleted",
+    "the await bridgeDomProbe() preflight is neutered",
+    "typing targets the pre-switch composer reference",
+    "blocker checks move back below the mode verdict in ensureFlowVideoMode",
+    "the composer is resolved before stageReferences instead of after",
+    "the security HARD_STOP in waitForSendButtonReady is deleted",
+    "the submit-boundary Video mode re-assertion is deleted"
+  ],
+  "adversarial_audit": {
+    "auditor": "Codex CLI, a fresh read-only session per round, change inlined as a unified diff",
+    "agy_not_used": "AGY is broken headless on this machine; a no-tool probe passing is a known trap.",
+    "rounds": [
+      {
+        "round": 1,
+        "verdict": "FAIL",
+        "accepted_and_fixed": ["two exact Create controls plus an Upgrade was misdiagnosed as a credit wall"],
+        "rejected_with_reasoning": [
+          "the stale-extension bypass is unfixable from inside a stale build; mitigated operationally",
+          "the page-wide quota text fallback is a deliberate pre-existing protection and deleting it would remove a hard stop",
+          "the exact Image-mode summary label is fail-closed by design; widening it without DOM evidence is forbidden (logged as backlog F-11)"
+        ]
+      },
+      {
+        "round": 2,
+        "verdict": "FAIL, no blockers",
+        "accepted_and_fixed": [
+          "the composer was captured before ensureFlowVideoMode, so an Image->Video remount could leave it detached and submit an EMPTY prompt for 15 credits",
+          "blocker checks sat below the mode verdict, so a CAPTCHA on a page with an unrecognised mode summary surfaced as WRONG_GENERATION_MODE, which classifies as OTHER, which canRetry treats as RETRYABLE"
+        ]
+      },
+      {
+        "round": 3,
+        "verdict": "FAIL, no blockers",
+        "accepted_and_fixed": [
+          "waitForSendButtonReady fed a security blocker into sendReady but never threw it, so a late CAPTCHA timed out as the generic retryable message; it now throws HARD_STOP symmetrically with LIMIT_STOP",
+          "the composer was still resolved before stageReferences; it is now resolved after every DOM-mutating step and immediately before typing"
+        ],
+        "note": "While pinning the late-CAPTCHA case, the fixture was measured to be caught by the typing-path guard instead of the readiness loop. The behavioural test was relabelled to claim only the outcome it proves, and a separate static pin covers the readiness loop guard; deleting that guard turns it red."
+      },
+      {
+        "round": 4,
+        "verdict": "FAIL, no blockers",
+        "accepted_and_fixed": ["Video mode was proven once, before staging and typing; it is now re-asserted at the submit boundary"],
+        "rejected_with_reasoning": [
+          "the claim that ensureFlowVideoMode's waitUntil calls do not poll blockers is factually wrong: the waitUntil helper throws HARD_STOP and LIMIT_STOP on every iteration",
+          "binding the preflight to a tab id is the stale-runtime problem restated at tab granularity, and has the same unfixable core; the operator guide now requires exactly one Flow tab and no tab switching"
+        ]
+      },
+      {
+        "round": 5,
+        "verdict": "PASS",
+        "findings": "No BLOCKER or MAJOR findings."
+      }
+    ]
+  },
+  "safety_laws_unchanged": [
+    "exactly one guarded Create click per attempt",
+    "exactly one new video id is attributable; two or more is OUTPUT_AMBIGUOUS and neither is claimed",
+    "no automatic retry after submit",
+    "quota and CAPTCHA are hard stops",
+    "trial cap is 3 jobs and requires Dev Mode",
+    "diagnostics.dom_probe stays strictly read-only"
+  ],
+  "next_step": "Duc reloads the Extension and F5s the Flow tab. Then: dom_probe must report runtime_contract flow04-image-video-create-scope-v1 and composer_scope_resolved true, before any live retry of at most 1 job with max_retries 0."
+}

@@ -1,0 +1,67 @@
+{
+  "purpose": "FLOW-04 live capture of the Google Flow no-credit behavior before the matcher repair was loaded",
+  "captured_at": "2026-08-27T18:34:30.793Z",
+  "run_id": "20260827-1832-bridge-2026-08-27t18-32",
+  "jobs_add": {
+    "request_id": "ai-01218f61-4da8-4c9d-9808-6a0e7cbe3d06",
+    "ok": true,
+    "job_ids": ["Q001"],
+    "checkpoint": {
+      "filename": "Bridge-2026-08-27T18-32__results__v01.xlsx",
+      "version": 1,
+      "verified": true
+    }
+  },
+  "run_trial": {
+    "request_id": "ai-d91c0d68-fda4-45d6-b609-8e309b9d866c",
+    "ok": true,
+    "accepted": true,
+    "job_ids": ["Q001"],
+    "timeout_sec": 300,
+    "delay_sec": 25,
+    "input_origin": "bridge_dev"
+  },
+  "ledger_read": {
+    "request_id": "ai-748bcae7-95fd-49cd-8a38-7f043fdcdb13",
+    "checkpoint_version": 2,
+    "job": {
+      "id": "Q001",
+      "status": "FAILED",
+      "attempt_phase": "PRE_SUBMIT",
+      "attempt_count": "1",
+      "retry_count": "0",
+      "max_retries": "0",
+      "failure_type_before_repair": "OTHER",
+      "error_before_repair": "Send button did not become ready. Gemini DOM may have changed."
+    }
+  },
+  "dom_before_typing": {
+    "request_id": "ai-453ee298-4b6f-46c8-a7ac-4a50f0186d81",
+    "composer_found": true,
+    "composer_value_length": 28,
+    "create_buttons": 1,
+    "upgrade_buttons": 0,
+    "generation_limit_blocker_before_repair": null,
+    "security_blocker": null,
+    "generating": false
+  },
+  "dom_after_failed_attempt": {
+    "request_id": "ai-ab63ddab-8b86-41cb-966b-7863537ba78d",
+    "composer_found": true,
+    "composer_value_length": 135,
+    "create_buttons": 0,
+    "upgrade_buttons": 2,
+    "upgrade_button_texts": ["Upgrade", "Upgrade"],
+    "upgrade_buttons_disabled": [false, false],
+    "generation_limit_blocker_before_repair": null,
+    "security_blocker": null,
+    "generating": false,
+    "video_count": 7
+  },
+  "safety_observation": {
+    "prompt_submitted_event_count": 0,
+    "create_click_count_inferred_from_audit_boundary": 0,
+    "automatic_retry_count": 0,
+    "account_switch_or_bypass": false
+  }
+}

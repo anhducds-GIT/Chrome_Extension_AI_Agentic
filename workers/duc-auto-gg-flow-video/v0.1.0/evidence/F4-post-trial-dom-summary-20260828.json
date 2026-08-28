@@ -1,0 +1,36 @@
+{
+  "source": "diagnostics.dom_probe (faithful compact extract)",
+  "request_id": "ai-daa705d1-1ca6-4928-80ed-191ec718d461",
+  "captured_at": "2026-08-27T18:00:22.654Z",
+  "url": "https://labs.google/fx/tools/flow/project/c9d892ab-c453-4ba5-96e6-57bbe034f0dc",
+  "surface": "CONVERSATION",
+  "surface_allowed": true,
+  "composer_found": true,
+  "send_found": false,
+  "generating": false,
+  "security_blocker": null,
+  "generation_limit_blocker": null,
+  "video_count": 7,
+  "video_ids": [
+    "10c82c53-a96a-4e39-ab8b-792d0e835d1f",
+    "c42d45f2-6e67-4945-8966-c36a61a60747",
+    "7e084b00-6ffe-409c-9f24-0a62a32bb2b4",
+    "974bbcb5-6440-4461-abb4-edefbefefd9c",
+    "823ec9f8-aabb-42ee-9a61-fa633f20d50e",
+    "84528569-b0fa-4fec-a638-995c2705c5b4",
+    "9594771e-3493-49ab-bce1-03c1bce3f3f8"
+  ],
+  "relevant_visible_buttons": [
+    {
+      "text": "redo Reuse prompt",
+      "disabled": false
+    },
+    {
+      "text": "add_2 Create",
+      "disabled": false,
+      "note": "Top-level Create control, not the prompt submit button."
+    }
+  ],
+  "composer_value_length": 28,
+  "note": "The prompt-level arrow_forward Create button was absent while the empty/idle composer remained present."
+}

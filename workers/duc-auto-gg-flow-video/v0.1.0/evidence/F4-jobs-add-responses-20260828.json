@@ -1,0 +1,40 @@
+{
+  "method": "jobs.add",
+  "requests": [
+    {
+      "sequence": 1,
+      "request_id": "ai-e2bac3b6-30c0-476d-b3bd-fc6a134121fc",
+      "ok": false,
+      "responded_at": "2026-08-27T17:55:10.609Z",
+      "error": {
+        "code": "FORBIDDEN",
+        "retryable": false,
+        "details": {
+          "method": "jobs.add",
+          "reason": "bootstrap_locked"
+        }
+      },
+      "effect": "No Queue mutation. The old profile/runtime rejected the request before execution."
+    },
+    {
+      "sequence": 2,
+      "request_id": "ai-d9426958-9fce-47c9-b4d9-717be9b0fcee",
+      "ok": true,
+      "responded_at": "2026-08-27T17:56:02.005Z",
+      "result": {
+        "audit_event": "BRIDGE_JOB_ADDED_DIRECT",
+        "job_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "checkpoint": {
+          "filename": "Bridge-2026-08-27T17-56__results__v01.xlsx",
+          "verified": true,
+          "version": 1
+        }
+      },
+      "effect": "The only successful Queue mutation; exactly three jobs were added."
+    }
+  ]
+}

@@ -23,6 +23,7 @@ assert.equal(entry.idempotent, false);
 assert.equal(entry.deadline_ms, 30000);
 assert.match(entry.capability_description, /at most 3 runnable video jobs/, "registry description cannot drift from the owner cap");
 assert.equal(entry.params_schema.job_ids, "job_id[1..3]");
+assert.equal(entry.params_schema.timeout_sec, "integer:15..300?", "registry advertises the video timeout ceiling");
 assert.deepEqual(bridge.POLICY.prohibited_methods, ["run.start", "run.pause", "run.resume"], "the prohibited list is EXACTLY unchanged");
 for (const prohibited of ["run.start", "run.pause", "run.resume"]) {
   assert.equal(bridge.METHOD_REGISTRY[prohibited], undefined, `${prohibited} stays unregistered`);
@@ -45,12 +46,23 @@ for (const code of ["DEV_MODE_OFF", "JOB_NOT_RUNNABLE", "TRIAL_RATE_LIMIT"]) {
 assert.equal(bridge.ERROR_DEFINITIONS.RUN_ACTIVE.retryable, true, "RUN_ACTIVE keeps its registered v1 retry policy");
 
 // --- param validation ---
+assert.deepEqual(
+  devTrial.TIMEOUT_BOUNDS,
+  { min: 15, max: 300, default: 180 },
+  "dev-trial timeout bounds pin the video min/default/max"
+);
 const normalized = bridge.validateParams("run.trial", { job_ids: ["P09-01"] });
-assert.deepEqual(normalized, { job_ids: ["P09-01"], timeout_sec: 90, delay_sec: 25 }, "defaults are timeout 90s and delay 25s");
+assert.deepEqual(normalized, { job_ids: ["P09-01"], timeout_sec: 180, delay_sec: 25 }, "defaults are video timeout 180s and delay 25s");
+assert.equal(normalized.timeout_sec, devTrial.TIMEOUT_BOUNDS.default, "bridge default matches dev-trial TIMEOUT_BOUNDS.default");
 assert.deepEqual(
   bridge.validateParams("run.trial", { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: 20 }),
   { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: 20 }
 );
+assert.equal(bridge.validateParams("run.trial", { job_ids: ["P09-01"], timeout_sec: 15 }).timeout_sec, devTrial.TIMEOUT_BOUNDS.min, "bridge minimum matches dev-trial TIMEOUT_BOUNDS.min");
+assert.equal(bridge.validateParams("run.trial", { job_ids: ["P09-01"], timeout_sec: 180 }).timeout_sec, devTrial.TIMEOUT_BOUNDS.default, "bridge accepts the dev-trial default explicitly");
+const acceptedTimeoutCeiling = bridge.validateParams("run.trial", { job_ids: ["P09-01"], timeout_sec: 300 }).timeout_sec;
+assert.equal(acceptedTimeoutCeiling, devTrial.TIMEOUT_BOUNDS.max, "bridge ceiling matches dev-trial TIMEOUT_BOUNDS.max");
+assert.ok(acceptedTimeoutCeiling >= 180, "the accepted ceiling stays at or above the F1-recommended 180s");
 // Owner decision 2026-08-27: 3 videos x 15 credits is the whole free budget.
 assert.equal(devTrial.MAX_TRIAL_JOBS, 3, "trial chain cap is 3 videos (owner decision 2026-08-27)");
 assert.deepEqual(
@@ -61,7 +73,7 @@ assert.deepEqual(
 const invalidTrialParams = [
   { job_ids: [] },
   { job_ids: ["J1", "J2", "J3", "J4"] },
-  { job_ids: ["P09-01"], timeout_sec: 120 },
+  { job_ids: ["P09-01"], timeout_sec: 301 },
   { job_ids: ["P09-01"], timeout_sec: 14 },
   { job_ids: ["P09-01"], delay_sec: 10 },
   { job_ids: ["P09-01"], delay_sec: 31 },
@@ -133,6 +145,17 @@ assert.throws(() => devTrial.historyRecord(Number.NaN), TypeError);
 
 // --- side panel wiring: the trial reuses the human Run Selected path ---
 const handler = sidepanel.slice(sidepanel.indexOf("async function bridgeRunTrial"), sidepanel.indexOf("function appendBridgeMeta"));
+assert.match(sidepanel, /const REQUIRED_FLOW_RUNTIME_CONTRACT = "flow04-image-video-create-scope-v1";/, "side panel pins the exact required content runtime");
+const runtimePreflightIndex = handler.indexOf("await bridgeDomProbe()");
+const historyWriteIndex = handler.indexOf("chrome.storage.local.set");
+const runLaunchIndex = handler.indexOf('run("selected")');
+assert.ok(runtimePreflightIndex > -1, "run.trial calls the existing read-only dom_probe preflight");
+assert.ok(runtimePreflightIndex < historyWriteIndex, "runtime preflight occurs before trial history recording");
+assert.ok(runtimePreflightIndex < runLaunchIndex, "runtime preflight occurs before the real runner launch");
+const runtimeGuard = handler.slice(runtimePreflightIndex, historyWriteIndex);
+assert.match(runtimeGuard, /RUNTIME_CONTRACT_MISMATCH/, "a missing or stale content runtime has a clear fail-closed message code");
+assert.match(runtimeGuard, /BridgeProtocolError\(\s*"VALIDATION_FAILED"/, "runtime mismatch is returned through the existing typed validation error surface");
+assert.doesNotMatch(runtimeGuard, /state\.runSelection|state\.runtimeOverrides\s*=|state\.devTrialContext\s*=|run\("selected"\)/, "mismatch guard launches nothing and mutates no run state");
 assert.match(handler, /DacDevTrialCore\.trialRefusal/, "the executor consults the pure fail-closed gate");
 assert.match(handler, /BridgeProtocolError\(refusal\.code, refusal\.message, refusal\.details\)/, "refusals are thrown as typed bridge errors");
 assert.match(handler, /chrome\.storage\.local\.set\(\{ \[window\.DacDevTrialCore\.TRIAL_HISTORY_STORAGE_KEY\]: window\.DacDevTrialCore\.historyRecord\(nowMs\) \}\)/, "the trial start is persisted before the run launches");

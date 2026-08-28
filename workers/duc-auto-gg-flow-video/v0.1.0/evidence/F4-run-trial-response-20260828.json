@@ -1,0 +1,20 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-6615e92e-8c59-47c3-8ea8-cfaba298219b",
+  "ok": true,
+  "result": {
+    "accepted": true,
+    "delay_sec": 25,
+    "input_origin": "bridge_dev",
+    "job_ids": [
+      "Q001",
+      "Q002",
+      "Q003"
+    ],
+    "run_id": "20260827-1756-bridge-2026-08-27t17-56",
+    "timeout_sec": 300
+  },
+  "responded_at": "2026-08-27T17:56:22.785Z"
+}

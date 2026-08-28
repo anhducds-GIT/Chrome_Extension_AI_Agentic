@@ -46,9 +46,14 @@ assert.match(sidepanel, /if \(hardStop\) \{[\s\S]*?markInterrupted\(item, failur
 function contentHarness({ pageText = "", composerText = "" } = {}) {
   let createClicks = 0;
   let videos = [];
+  // FLOW-04: one visible composer inside one owning <form>; that form is the
+  // only Create scope and the only place an Upgrade button counts as quota.
+  let composerForm;
   const composer = {
     tagName: "DIV", textContent: composerText, innerText: composerText, focus() {}, dispatchEvent() {},
-    getBoundingClientRect: () => ({ width: 320, height: 48 }), closest: () => null, querySelectorAll: () => [],
+    getBoundingClientRect: () => ({ width: 320, height: 48 }),
+    closest: (selector) => selector === "form" ? composerForm : null,
+    querySelectorAll: () => [],
   };
   const createButton = {
     innerText: "arrow_forward Create", textContent: "arrow_forward Create", disabled: false,
@@ -58,6 +63,8 @@ function contentHarness({ pageText = "", composerText = "" } = {}) {
       videos = [{ currentSrc: `https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=quota-test-${createClicks}`, getBoundingClientRect: () => ({ width: 320, height: 180 }) }];
     },
   };
+  composerForm = { tagName: "FORM", querySelectorAll: (selector) => selector === "button" ? [createButton] : [] };
+  createButton.closest = (selector) => selector === "form" ? composerForm : null;
   const body = { innerText: pageText };
   const pageParent = { parentElement: body, closest: () => null };
   const composerParent = { parentElement: body, closest: (selector) => selector.includes("contenteditable") ? composer : null };
