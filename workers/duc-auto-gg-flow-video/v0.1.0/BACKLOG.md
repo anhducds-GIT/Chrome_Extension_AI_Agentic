@@ -59,3 +59,21 @@
   và lời nhắn cho Đức đã viết ở dạng "nhiều khả năng", không khẳng định. **Việc cần làm:** đo
   thật độ trễ mount qua vài lần gõ (dom_probe liên tiếp, đếm ms tới khi nút hiện), rồi đặt
   ngưỡng từ số đo. Trước khi có số, đừng nới/siết ngưỡng theo cảm tính.
+- **F-14** · [ĐO 28/08, hai lần] **`element.click()` KHÔNG có tác dụng lên nhóm nút cấu hình
+  của Flow.** Chứng minh hai lượt, cả hai 0 credit: (Q001) bấm chip mode → bảng không mở;
+  (Q002) bảng đang mở sẵn, runner TÌM THẤY và BẤM đúng `videocam Video` → mode vẫn Image, bảng
+  vẫn mở. Đối chiếu: cũng `element.click()` đó **bấm được `arrow_forward Create`** — Q003 submit
+  thành công bằng đúng đường ấy. Nhóm nút hỏng đều mang class `flow_tab_slider_trigger`.
+  **Giả thuyết (CHƯA chứng minh):** chúng nghe `pointerdown`/`mousedown`, mà `.click()` chỉ bắn
+  mỗi `click` — cùng họ với bài học editor Lexical. Khả năng còn lại chưa loại trừ: component
+  đòi sự kiện thật (`isTrusted`). **Cách phân biệt, rẻ và 0 credit:** thêm một lệnh chẩn đoán
+  chỉ-thử-mở-bảng, bắn `pointerdown`+`mousedown`+`mouseup`+`click` rồi probe xem bảng có mở
+  không. Mở được = giả thuyết 1, sửa luôn. Không mở = giả thuyết 2, và khi đó chuyển mode phải
+  do người làm. **Hệ quả hiện tại:** Đức phải tự đặt Video mode trước mỗi phiên chạy; khi mode
+  đã là Video thì `ensureFlowVideoMode` thoát sớm và đường tự động không bị ảnh hưởng.
+- **F-15** · [ĐO 28/08] Chip cấu hình có ô **số lượng output** (`x1`…`x4`). Đặt `x2` trở lên là
+  Flow sinh nhiều video một lượt → luật gán "đúng 1 id mới" sẽ trả `OUTPUT_AMBIGUOUS`, không
+  nhận cái nào, **mà credit thì đã tiêu**. Lần này bắt được trước khi chạy nhờ đọc chip, nhưng
+  runner hiện KHÔNG tự kiểm điều đó. Nên thêm tiền kiểm: nếu chip không phải `x1` thì từ chối
+  trước khi gõ, kèm lời nhắn bảo Đức đổi về `x1`. (Cẩn thận: đọc `x{n}` từ nhãn chip là selector
+  mới → phải có bằng chứng DOM, đã có trong `F4-trial-success-live-20260828.json`.)

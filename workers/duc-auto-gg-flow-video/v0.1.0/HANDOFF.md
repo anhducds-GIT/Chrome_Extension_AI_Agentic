@@ -232,3 +232,22 @@
   27–28/08, 2 job thành công; thứ hỏng là khâu CHỌN NÚT, và đó là thứ vừa kiểm xong).
   Muốn chạy 1 job thật thì cần Đức: nạp workbook (reload extension đã xoá phiên —
   `run.status` trả `WORKBOOK_NOT_LOADED`) + bật Dev Mode, và tài khoản còn credit.
+- 2026-08-28 · `claude-flow-create-scope` · **FLOW-04 ĐÓNG — video thật sinh ra qua đường runner
+  với bản vá, gán đúng, một lần duy nhất.** Bằng chứng: `evidence/F4-trial-success-live-20260828.json`.
+  - **Q003 SUCCESS.** Video mới `59234df7-5002-4bd8-8de8-20fba718d47b`; mốc trước 0 video, sau
+    đúng 1 ứng viên → gán sạch, không mơ hồ. `attempt_count=1`, `retry_count=0` — exact-once giữ
+    qua một lượt submit thật. Đo được: submit 08:43:45Z → phát hiện 08:44:17Z, **~32s** (360p/8s).
+    Tiền kiểm `runtime_contract` chạy thật ở mọi lệnh `run.trial` và cho qua với v2.
+  - **Hai lượt hỏng trước đó, cả hai 0 credit, `retry_count=0`, dừng ở `PRE_SUBMIT`** — và chúng
+    lại chỉ ra một lỗi ĐO ĐƯỢC, khác hẳn thứ vừa sửa: Q001 bấm chip mode nhưng bảng không mở;
+    Q002 bảng mở sẵn nên runner TÌM THẤY và BẤM đúng `videocam Video`, **mode vẫn không đổi**.
+    → **`element.click()` không ăn với nhóm nút `flow_tab_slider_trigger`**, trong khi cũng
+    `.click()` đó bấm được `arrow_forward Create` (Q003 là bằng chứng). Ghi **F-14** kèm cách
+    phân biệt nguyên nhân bằng thí nghiệm 0 credit. Khâu Image→Video **chưa bao giờ chạy được
+    trên trang thật** — nó là code chưa từng kiểm chứng, không phải thứ mới hỏng.
+  - **Bắt được một cú đốt credit vô ích trước khi nó xảy ra:** chip đang để `x2`, tức Flow sinh
+    2 video một lượt → luật gán "đúng 1 id" sẽ trả `OUTPUT_AMBIGUOUS`, không nhận cái nào, mà
+    ~30 credit thì đã mất. Đọc chip trước khi chạy nên tránh được; runner chưa tự kiểm → **F-15**.
+  - Đức phải tự tay 2 việc trước khi chạy: đặt **Video mode** (F-14) và đặt **x1** (F-15). Khi
+    mode đã là Video thì `ensureFlowVideoMode` thoát sớm, đường tự động không bị ảnh hưởng.
+  - Bảng lỗi trong `AI-OPERATOR-GUIDE.md` đã thêm 2 dòng cho hai tình huống trên.

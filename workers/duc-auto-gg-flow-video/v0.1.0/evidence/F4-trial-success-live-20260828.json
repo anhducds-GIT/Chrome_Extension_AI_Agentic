@@ -1,0 +1,75 @@
+{
+  "captured_at": "2026-08-28",
+  "session": "claude-flow-create-scope",
+  "kind": "live_end_to_end_trial_after_the_flow04_fix",
+  "run_id": "20260828-0825-bridge-2026-08-28t08-25",
+  "checkpoint": {
+    "filename": "Bridge-2026-08-28T08-25__results__v07.xlsx",
+    "version": 7
+  },
+  "runtime_contract": "flow04-composer-cluster-submit-v2",
+  "page_config_at_launch": "Video · 360p · 8s crop_9_16 x1 (set by hand by the owner; see the two blockers below)",
+  "outcome": {
+    "job": "Q003",
+    "status": "SUCCESS",
+    "attempt_phase": "SUCCESS",
+    "attempt_count": "1",
+    "retry_count": "0",
+    "submitted_at": "2026-08-28T08:43:45.782Z",
+    "completed_at": "2026-08-28T08:44:24.835Z",
+    "result_file": "media.getMediaUrlRedirect?name=59234df7-5002-4bd8-8de8-20fba718d47b",
+    "write_outcome": "url_recorded",
+    "detected_not_downloaded": "true"
+  },
+  "attribution": {
+    "baseline_video_ids": [],
+    "current_video_ids": [
+      "59234df7-5002-4bd8-8de8-20fba718d47b"
+    ],
+    "candidate_video_ids": [
+      "59234df7-5002-4bd8-8de8-20fba718d47b"
+    ],
+    "decision_reason": null,
+    "poll_count": 7,
+    "video_id": "59234df7-5002-4bd8-8de8-20fba718d47b",
+    "video_url": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=59234df7-5002-4bd8-8de8-20fba718d47b",
+    "detected_at": "2026-08-28T08:44:17.820Z"
+  },
+  "videos_on_page_after": 1,
+  "what_this_proves": [
+    "The composer-cluster submit selection works end to end on the real page: the runner typed the prompt, clicked arrow_forward Create exactly once, and one new video came back.",
+    "attempt_count 1 with retry_count 0 confirms exact-once held through a real submit.",
+    "Exactly one new media id appeared against an empty baseline, so attribution was unambiguous and the result was claimed cleanly.",
+    "The runtime-contract preflight ran for real on every run.trial call and passed against flow04-composer-cluster-submit-v2.",
+    "Measured latency: submit 08:43:45Z, output detected 08:44:17Z, about 32 seconds at 360p / 8s."
+  ],
+  "failures_on_the_way_all_zero_credit": [
+    {
+      "job": "Q001",
+      "phase": "PRE_SUBMIT",
+      "retry_count": 0,
+      "error": "WRONG_GENERATION_MODE: exact enabled Video option was not found",
+      "meaning": "the settings popover was closed and the synthetic click did not open it"
+    },
+    {
+      "job": "Q002",
+      "phase": "PRE_SUBMIT",
+      "retry_count": 0,
+      "error": "WRONG_GENERATION_MODE: closed Video summary postcondition was not proven",
+      "meaning": "with the popover already open the runner DID find and click videocam Video, and the mode still did not change"
+    }
+  ],
+  "measured_defect_still_open": {
+    "id": "F-14",
+    "statement": "element.click() has no effect on Flow's generation-settings controls. Proven twice: the mode chip did not open or close the popover, and videocam Video did not switch the mode, while the popover stayed open and the chip stayed on Image throughout.",
+    "contrast": "The same element.click() DOES work on arrow_forward Create — this run submitted with it, as did the first video on 2026-08-27.",
+    "likely_cause": "Those controls carry the class token flow_tab_slider_trigger and appear to listen on pointerdown/mousedown; element.click() dispatches only a click event. Same family as the Lexical composer, which needed real keyboard-equivalent events. NOT yet proven, and the alternative (the component requires a trusted event) has not been ruled out.",
+    "consequence_today": "Image to Video must be switched by hand before a run. Once the mode is already Video, ensureFlowVideoMode returns early and the automated path is unaffected.",
+    "cost_of_the_bug": "zero credits, both attempts stopped at PRE_SUBMIT with no click on Create"
+  },
+  "second_thing_the_owner_had_to_set_by_hand": {
+    "what": "output count x2 -> x1",
+    "why": "the attribution rule claims a result only when exactly ONE new media id appears. At x2 Flow would have produced two, the runner would have returned OUTPUT_AMBIGUOUS and claimed neither, and roughly 30 credits would have been spent for a FAILED row.",
+    "note": "This was caught by reading the config chip before launching, not by spending the credits."
+  }
+}
