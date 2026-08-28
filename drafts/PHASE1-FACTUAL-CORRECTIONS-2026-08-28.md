@@ -130,6 +130,27 @@ and `MayWriteLocalFiles()` returns false.
 
 Therefore the local-path upload route is **setup-gated / capability-probed**, not universally open. The broader Artifact Bus hypothesis remains valid, but strategy ranking needs a fallback path.
 
+### 6.1 G5 mostly resolved — programmatic file-access signal exists
+
+Chrome's extension permissions documentation exposes:
+
+```text
+chrome.extension.isAllowedFileSchemeAccess()
+```
+
+which reports whether the user enabled **Allow access to file URLs** for the extension.
+
+Therefore G5 is no longer a pure `[NV]`: there is a documented programmatic signal for the relevant per-extension setting.
+
+Remaining micro-proof question:
+
+> Does this signal correlate exactly with `ExtensionDevToolsClientHost::MayReadLocalFiles()` and successful `DOM.setFileInputFiles` behavior in the controlled upload proof?
+
+This should be verified empirically before marking the upload path PROVEN.
+
+Source:
+- https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions
+
 ## 7. Research discipline going forward
 
 - Chrome Extension API docs define extension-level surface.
@@ -141,5 +162,5 @@ Therefore the local-path upload route is **setup-gated / capability-probed**, no
 
 ---
 
-**Latest completed study:** EXP-09 — `chrome.userScripts` Dynamic Adapter Delivery.  
-**Next planned study:** EXP-10 — `chrome.offscreen` Browser-side Processing Runtime.
+**Latest completed study:** EXP-10 — `chrome.offscreen` Browser-side Processing Runtime.  
+**Next planned study:** TBD after EXP-10 capability-map review.
