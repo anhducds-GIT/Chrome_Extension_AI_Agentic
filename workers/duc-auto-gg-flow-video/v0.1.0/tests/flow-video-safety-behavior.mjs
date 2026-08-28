@@ -14,8 +14,10 @@ function harness({
   createLabel = "arrow_forward Create",
   createDisabledUntilTyped = false,
   createAlwaysDisabled = false,
+  createMountsAfterPolls = 0,
   duplicateCreateCount = 1,
   globalCreateLabel = null,
+  addMediaInCluster = false,
   upgradeAfterTyping = false,
   upgradeScope = "composer",
   composerCount = 1,
@@ -66,6 +68,11 @@ function harness({
     focus() { focusedTargets.push(label); },
     closest: () => null,
     querySelectorAll: () => [],
+    // The composer carries text once the editor has accepted input. The quota
+    // rule depends on this: a missing Create matters only when there is a prompt
+    // waiting to be submitted.
+    get textContent() { return typed ? "a typed prompt" : ""; },
+    get innerText() { return typed ? "a typed prompt" : ""; },
     get parentElement() { return composerDetached ? null : area(); },
   });
   const composers = Array.from({ length: composerCount }, () => makeComposer("base", () => composerArea));
@@ -93,12 +100,24 @@ function harness({
     if (proveVideoAfterClick) currentModeSummary = VIDEO_MODE_SUMMARY;
   } });
   const upgradeButtons = [1, 2].map(() => buttonNode("Upgrade", { click() { throw new Error("Upgrade must never be clicked by the runner"); } }));
+  // Measured: the add-media control "add_2 Create" lives in the SAME cluster as
+  // the real submit button. It is enabled at all times and must never be chosen.
+  const addMediaButton = buttonNode("add_2 Create", { click() { throw new Error("add-media must never be clicked by the runner"); } });
+  let clusterReads = 0;
   const composerButtons = () => {
-    if (remounted) return [remountCreate];
-    if (upgradeAfterTyping && typed && upgradeScope === "composer") return [...upgradeButtons];
-    if (createAvailability === "never") return [];
-    if (createAvailability === "after_typing" && !typed) return [];
-    return [...createButtons];
+    const extra = addMediaInCluster ? [addMediaButton] : [];
+    // Flow can mount the submit control a beat after the editor accepts input.
+    // During that beat the cluster holds the prompt and an Upgrade but no
+    // Create -- indistinguishable from the credit wall in a single snapshot.
+    if (createMountsAfterPolls > 0 && typed) {
+      clusterReads += 1;
+      if (clusterReads <= createMountsAfterPolls) return [...extra, ...upgradeButtons];
+    }
+    if (remounted) return [...extra, remountCreate];
+    if (upgradeAfterTyping && typed && upgradeScope === "composer") return [...extra, ...upgradeButtons];
+    if (createAvailability === "never") return extra;
+    if (createAvailability === "after_typing" && !typed) return extra;
+    return [...extra, ...createButtons];
   };
   pageRoot = {
     tagName: "DIV", parentElement: null,
@@ -200,6 +219,21 @@ function harness({
   assert.equal(h.remountClicks(), 1, "exactly the remounted form Create is clicked");
   assert.equal(h.clicks(), 0, "the detached pre-switch Create must never be clicked");
   assert.equal(response.result.video_id, "remounted-owned");
+}
+
+// Audit round 3 of the redesign (Codex, 2026-08-28): the credit wall and an
+// ordinary mount delay look IDENTICAL in one snapshot once the prompt is typed
+// -- text present, no Create, an Upgrade sitting in the cluster. Deciding on the
+// first snapshot hard-stops healthy jobs with no retry. The verdict may only be
+// taken after the readiness budget is spent, so a Create that turns up late
+// still submits normally.
+{
+  const h = harness({ createMountsAfterPolls: 3, upgradeAfterTyping: false, afterClick: ["mounted-late"] });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-LATE-MOUNT", attempt_id: "attempt-late-mount", prompt: "create mounts a beat late", timeoutMs: 15000 });
+  assert.equal(response.ok, true, "a late-mounting Create must not be read as a credit wall");
+  assert.doesNotMatch(String(response.error || ""), /LIMIT_STOP/);
+  assert.equal(h.clicks(), 1);
+  assert.equal(response.result.video_id, "mounted-late");
 }
 
 // Audit round 4 (Codex, 2026-08-28): mode is proven before staging and typing,
@@ -310,6 +344,7 @@ for (const [index, videoOptionLabel] of [null, "videocam Videos", "Video", "vide
 // refused on label grounds alone, not merely on position.
 {
   const h = harness({
+    addMediaInCluster: true,
     globalCreateLabel: "add_2 Create",
     createLabel: "arrow_forward Create",
     createDisabledUntilTyped: true,
@@ -395,7 +430,9 @@ let flowQuotaError;
   const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-UPGRADE-WALL", attempt_id: "attempt-upgrade-wall", prompt: "unique quota probe", timeoutMs: 15000 });
   assert.equal(h.typed(), true);
   assert.equal(response.ok, false);
-  assert.equal(response.error, "LIMIT_STOP: Flow generation limit reached: visible Upgrade button replaced the unavailable Create control.");
+  assert.match(response.error, /^LIMIT_STOP: /);
+  assert.match(response.error, /hết credit/, "the operator-facing reason is Vietnamese");
+  assert.match(response.error, /nhiều khả năng/, "the reason reports what was seen, it does not assert exhaustion");
   assert.equal(h.clicks(), 0, "quota detection must happen before the Create click");
   flowQuotaError = response.error;
 

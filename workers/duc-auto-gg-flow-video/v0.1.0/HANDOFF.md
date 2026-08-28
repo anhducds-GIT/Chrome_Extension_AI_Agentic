@@ -186,3 +186,36 @@
     gọi `chat.reload` sau khi Đức reload** (đo thật: gọi xong thì 22 lệnh liên tiếp trượt).
   - Còn mở: audit đối kháng lại (bản cũ đã lạc hậu vì thiết kế đổi hẳn) → live verify
     `composer_scope_resolved` phải `true` tại hop 2 → rồi mới chạy 1 job, `max_retries=0`.
+- 2026-08-28 · `claude-flow-create-scope` · **Audit lại từ đầu sau khi thiết kế đổi hẳn: 6 vòng,
+  vòng 6 PASS.** Vân tay runtime bump lên **`flow04-composer-cluster-submit-v2`** (dòng
+  "Việc tiếp theo" ở log trước ghi `...-v1` — nay đã lạc hậu, kiểm theo **v2**).
+  - Năm vòng đầu đều FAIL, và tất cả đều xoay quanh **phép phán "hết credit"** — chỗ nguy hiểm
+    nhất vì nó là hard-stop, không retry, và báo sai thì chặn sạch việc lành:
+    (1) Create *disabled* cạnh Upgrade bị coi là hết credit — mà disabled là trạng thái NGHỈ
+    bình thường của mọi trang, nên chỉ cần trang có nút Upgrade là mọi job chết. (2) Không có
+    Create cũng là bình thường lúc nút chưa mount → thêm điều kiện composer phải CÓ CHỮ.
+    (3) Gõ xong thì composer có chữ ngay, nút thì mount sau → dời phép phán ra khỏi vòng lặp,
+    chỉ kết luận MỘT lần sau khi hết hạn chờ. (4) **Chuỗi vân tay chưa được bump** — tức tiền
+    kiểm sẽ cấp phép cho đúng bản còn nhận nhầm `add_2 Create`; tôi tự viết luật "đổi hợp đồng
+    thì phải bump" rồi tự vi phạm. (5) Blocker mọc lên trong nhịp ngủ cuối của vòng lặp lọt qua
+    cửa → đọc lại security sau vòng lặp, trước phép phán quota.
+  - **Một kết luận của audit tôi KHÔNG sửa, có lý do:** "lấy thời gian làm bằng chứng" để phân
+    biệt tường credit với nút mount chậm. Đúng là chưa có phép đo nào tách được hai cái đó, và
+    bịa một con số ngưỡng thì vi phạm luật vàng 1. Chọn: giữ hướng DỪNG (an toàn credit), nhưng
+    **đổi lời nhắn cho Đức thành mô tả cái nhìn thấy** — "nhiều khả năng hết credit… nếu vẫn
+    còn credit thì báo lại" — thay vì khẳng định. Mở **F-13** để đo độ trễ mount thật rồi mới
+    đặt ngưỡng theo số.
+  - Đổi tên trường chẩn đoán `in_composer_form` → `in_composer_cluster`: trang không có form
+    nào, để tên cũ là dắt người đọc sau quay lại đúng lý thuyết vừa bị bác bỏ.
+  - Suite **84/84**. Tổng cộng **12 phép mutation** đều được xác nhận làm suite ĐỎ, trong đó có
+    ba phép "xoá thẳng call site" của các lớp bảo vệ mới. Ba lần pin của tôi lúc đầu KHÔNG bắt
+    được mutation (late-CAPTCHA, chặn leo tầng, đọc lại security) — đã viết lại cho tới khi bắt
+    được, chứ không để pin làm cảnh.
+  - DASHBOARD + FEATURE-PARITY đã regen **từ worktree HEAD sạch** (bản regen từ working tree bị
+    cổng từ chối vì lẫn file chưa commit của phiên ChatGPT). `_root` mượn rồi trả trong cùng lượt.
+  - **Việc tiếp theo (1):** Đức làm ba bước — **⟳ extension → Ctrl+R tab Flow → mở side panel
+    SAU CÙNG** — rồi tôi probe. Điều kiện đi tiếp: `runtime_contract = flow04-composer-cluster-submit-v2`
+    **và** `composer_scope_resolved = true` (dự đoán từ trace: resolve tại **hop 2**). Chỉ khi cả
+    hai đúng mới chạy 1 job, `max_retries=0`.
+  - Cổng kiểm: mọi mục XANH trừ "file gốc không ai đứng tên" — do 4 file nháp **untracked của
+    phiên khác** trong `drafts/`. Không phải việc của tôi, không commit hộ.

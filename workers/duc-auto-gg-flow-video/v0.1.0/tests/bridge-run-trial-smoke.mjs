@@ -145,7 +145,7 @@ assert.throws(() => devTrial.historyRecord(Number.NaN), TypeError);
 
 // --- side panel wiring: the trial reuses the human Run Selected path ---
 const handler = sidepanel.slice(sidepanel.indexOf("async function bridgeRunTrial"), sidepanel.indexOf("function appendBridgeMeta"));
-assert.match(sidepanel, /const REQUIRED_FLOW_RUNTIME_CONTRACT = "flow04-image-video-create-scope-v1";/, "side panel pins the exact required content runtime");
+assert.match(sidepanel, /const REQUIRED_FLOW_RUNTIME_CONTRACT = "flow04-composer-cluster-submit-v2";/, "side panel pins the exact required content runtime");
 const runtimePreflightIndex = handler.indexOf("await bridgeDomProbe()");
 const historyWriteIndex = handler.indexOf("chrome.storage.local.set");
 const runLaunchIndex = handler.indexOf('run("selected")');

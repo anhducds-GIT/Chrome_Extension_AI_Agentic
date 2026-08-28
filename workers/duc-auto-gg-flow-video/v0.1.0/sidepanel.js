@@ -887,7 +887,7 @@
   // FLOW-04 (2026-08-28): the exact content-script contract this panel refuses
   // to run a trial without. Must stay byte-identical to FLOW_RUNTIME_CONTRACT
   // in content.js; bump both together when the Create/composer scope changes.
-  const REQUIRED_FLOW_RUNTIME_CONTRACT = "flow04-image-video-create-scope-v1";
+  const REQUIRED_FLOW_RUNTIME_CONTRACT = "flow04-composer-cluster-submit-v2";
 
   async function bridgeDomProbe() {
     const response = await send({ type: "DAC_DOM_PROBE" });

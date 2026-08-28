@@ -251,7 +251,14 @@
     return matches.length === 1 ? matches[0] : null;
   }
 
-  const FLOW_GENERATION_LIMIT_REASON = "Flow generation limit reached: visible Upgrade button replaced the unavailable Create control.";
+  // Worded as an OBSERVATION, deliberately. Audit 2026-08-28 is right that a
+  // Create which mounts slower than the readiness budget looks identical to the
+  // wall, and no measurement yet separates them -- see backlog F-13, which is to
+  // measure real mount latency so the budget can be set from data instead of
+  // taste. Until then this stops the batch (the safe direction for credits) but
+  // it must not tell the owner something it cannot prove, so it reports what was
+  // seen rather than asserting the account is empty.
+  const FLOW_GENERATION_LIMIT_REASON = "Nút Create biến mất khỏi thanh nhập và có nút Upgrade đang hiện — nhiều khả năng hết credit. Đã dừng trước khi bấm, chưa tiêu gì. Kiểm tra credit của tài khoản; nếu vẫn còn credit thì báo lại, có thể chỉ là trang mount chậm.";
 
   // FLOW-04 live evidence (2026-08-28): after prompt entry on a no-credit
   // account, Create is unavailable and enabled visible buttons whose exact
@@ -260,13 +267,42 @@
   // FLOW-04 (2026-08-28): Upgrade is only quota evidence when it stands INSIDE
   // the composer form in place of the unavailable Create. A page-level Upgrade
   // is ordinary marketing chrome and must never be read as a quota wall.
+  // The wall is claimed for exactly ONE measured shape: Create is GONE from the
+  // cluster and a live Upgrade stands in its place.
+  //
+  // Audit finding 2026-08-28: an earlier version also claimed the wall when a
+  // DISABLED Create sat beside an Upgrade. That state was never measured, and it
+  // is catastrophic to guess at, because a disabled Create is the NORMAL IDLE
+  // page -- arrow_forward Create is disabled whenever the composer is empty. Any
+  // upsell chrome in the cluster would then have turned every idle page into a
+  // false "out of credits" hard stop and blocked all work.
+  //
   // Ambiguity (two Create controls) resolves the scope to null above, so it can
-  // never arrive here: ambiguity is an unmeasured DOM change, not exhaustion,
-  // and must not send the owner to a billing page.
+  // never arrive here either: ambiguity is an unmeasured DOM change, not
+  // exhaustion, and must not send the owner to a billing page.
+  // Audit finding 2026-08-28, second pass: "no Create in the cluster" is ALSO an
+  // ordinary state -- Flow has been seen to mount the submit control only once
+  // the editor accepts input. An Upgrade already sitting in the cluster would
+  // then hard-stop a perfectly healthy job during a mount delay, with no retry.
+  //
+  // The measured wall was observed AFTER the prompt was typed: text in the
+  // composer, Create gone, Upgrade in its place. So the wall additionally
+  // requires a non-empty composer. Before typing there is nothing to be walled
+  // off from, and a missing Create simply means "not ready yet".
+  //
+  // Reading the composer text is measured-safe: dom_probe reports this exact
+  // value as textboxes[].valueLen (28 on the live capture). If the read ever
+  // fails we under-report the wall, and the run then stops at the readiness gate
+  // with zero clicks -- the safe direction.
+  function composerHasText(composer) {
+    const value = composer?.value ?? composer?.innerText ?? composer?.textContent ?? "";
+    return String(value).trim().length > 0;
+  }
   function generationLimitBlocker(root) {
     const scope = composerScope(root);
     if (!scope) return null;
-    if (enabledButton(scope.create)) return null;
+    if (scope.create) return null;
+    if (!composerHasText(scope.composer)) return null;
     return visibleUpgradeButtonsIn(root, scope.container).length > 0 ? FLOW_GENERATION_LIMIT_REASON : null;
   }
 

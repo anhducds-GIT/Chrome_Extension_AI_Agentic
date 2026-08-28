@@ -37,7 +37,23 @@ assert.ok(type > -1 && type < enabled && enabled < capture && capture < click, "
 const sendWait = content.slice(content.indexOf("async function waitForSendButtonReady"), content.indexOf("// Magic-byte sniff"));
 assert.ok(sendWait.length > 0, "the readiness wait is locatable");
 assert.match(sendWait, /if \(security\) throw new Error\(`HARD_STOP: \$\{security\}`\);/, "the readiness wait raises its own security hard stop");
-assert.match(sendWait, /if \(quota\) throw new Error\(`LIMIT_STOP: \$\{quota\}`\);/, "quota keeps its hard stop, symmetric with security");
+// Quota still raises its own hard stop from the readiness wait, but only AFTER
+// the budget is spent: once the prompt is typed, a not-yet-mounted Create is
+// indistinguishable from the credit wall in a single snapshot, and deciding on
+// the first one would hard-stop healthy jobs with no retry.
+assert.match(sendWait, /const settledQuota = generationLimitText\(\);/, "the quota verdict is taken once, after the wait");
+assert.match(sendWait, /if \(settledQuota\) throw new Error\(`LIMIT_STOP: \$\{settledQuota\}`\);/, "quota keeps its hard stop");
+// The loop can expire during its own sleep, so both blockers are re-read once
+// after it. Security must be re-read FIRST and unconditionally: a CAPTCHA that
+// mounts in that last gap must not be downgraded to a quota verdict or to the
+// generic message, which classifies as OTHER and is retryable.
+const settledSecurityAt = sendWait.indexOf("const settledSecurity = securityBlockerText();");
+const settledQuotaAt = sendWait.indexOf("const settledQuota");
+assert.ok(settledSecurityAt > -1, "security is re-read after the wait expires");
+assert.ok(settledSecurityAt < settledQuotaAt, "the settled security check precedes the quota verdict");
+assert.match(sendWait, /if \(settledSecurity\) throw new Error\(`HARD_STOP: \$\{settledSecurity\}`\);/, "a blocker found after the wait is still a hard stop");
+const loopBody = sendWait.slice(0, settledQuotaAt);
+assert.doesNotMatch(loopBody, /throw new Error\(`LIMIT_STOP/, "no quota verdict may be taken inside the poll loop");
 
 assert.match(run, /postSendSettleMs/);
 assert.match(run, /waitForVideoCompletion/);

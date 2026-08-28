@@ -10,6 +10,12 @@
   // loaded from content-decision-core.js.
   const DECISIONS = window.DacContentDecision;
 
+  // v2 (2026-08-28, same day as v1): v1 was served by the build that still
+  // treated "add_2 Create" as a submit control. Leaving the string alone would
+  // have let run.trial certify exactly the runtime this change exists to retire
+  // -- the fingerprint would have vouched for the bug. Any change to how the
+  // submit control is chosen MUST move this string, or the gate is theatre.
+  //
   // Runtime fingerprint (FLOW-04, 2026-08-28). The Bridge has twice served a
   // STALE extension runtime while looking healthy, and a stale content script
   // clicked a page-level Create that opened the media panel instead of
@@ -17,7 +23,7 @@
   // refuse to start a trial against an old tab. Bump it whenever the composer/
   // Create scoping contract changes, and update REQUIRED_FLOW_RUNTIME_CONTRACT
   // in sidepanel.js in the same commit.
-  const FLOW_RUNTIME_CONTRACT = "flow04-image-video-create-scope-v1";
+  const FLOW_RUNTIME_CONTRACT = "flow04-composer-cluster-submit-v2";
 
   const STATE = {
     busy: false,
@@ -719,19 +725,31 @@
     while (Date.now() < deadline) {
       if (STATE.abortRequested) throw new Error("Automation stopped by user.");
       const button = findSendButton();
-      // Audit finding (Codex round 3, 2026-08-28): quota threw here but a
-      // security blocker was only fed into sendReady(), so a CAPTCHA appearing
-      // AFTER the pre-flight check timed out as the generic "Send button did
-      // not become ready". That string classifies as OTHER, and OTHER is
-      // RETRYABLE -- a CAPTCHA handed straight back to the retry loop. Both
-      // blockers now throw their own hard stop, symmetrically.
+      // A security blocker is instant and unambiguous: throw immediately.
+      // Earlier it was only fed into sendReady(), so a CAPTCHA arriving after
+      // the pre-flight check timed out as the generic message below -- which
+      // classifies as OTHER, and OTHER is RETRYABLE. A CAPTCHA handed back to
+      // the retry loop is exactly what a hard stop exists to forbid.
       const security = securityBlockerText();
       if (security) throw new Error(`HARD_STOP: ${security}`);
+      // Quota is deliberately NOT decided inside the loop. The prompt is
+      // already typed by now, and Flow can mount its submit control a moment
+      // later; a snapshot taken in that gap looks exactly like the credit wall
+      // (text present, no Create) and would hard-stop a healthy job with no
+      // retry. The wall is only real if it is still there when the wait is
+      // over, so the verdict is made once, below, after the full budget.
       const quota = generationLimitText();
-      if (quota) throw new Error(`LIMIT_STOP: ${quota}`);
       if (DECISIONS.sendReady({ found: Boolean(button), disabled: button?.disabled, ariaDisabled: button?.getAttribute("aria-disabled"), security, quota })) return button;
       await sleep(100);
     }
+    // The loop can expire during its own sleep, so re-read both blockers once
+    // more before reporting. Security first and unconditionally: a CAPTCHA that
+    // mounts in that last gap must never be downgraded to a quota verdict or to
+    // the generic retryable message.
+    const settledSecurity = securityBlockerText();
+    if (settledSecurity) throw new Error(`HARD_STOP: ${settledSecurity}`);
+    const settledQuota = generationLimitText();
+    if (settledQuota) throw new Error(`LIMIT_STOP: ${settledQuota}`);
     throw new Error("Send button did not become ready. Gemini DOM may have changed.");
   }
 
@@ -1234,10 +1252,11 @@
             try { selectorCounts[group] = `${value} => ${document.querySelectorAll(value).length}`; } catch (_) { selectorCounts[group] = `${value} => (not a selector)`; }
           }
         }
-        // FLOW-04: the live miss was a correctly-labelled Create that belonged
-        // to the PAGE, not the prompt form. Every reported button therefore
-        // carries its ancestry and whether it sits inside the one authorised
-        // composer form, so selector scope is auditable from evidence alone.
+        // Every reported button carries its ancestry and whether it sits in the
+        // composer's own control cluster, so selector reach is auditable from
+        // evidence alone. Named "cluster", not "form": the measured page has no
+        // composer form at all, and a field called in_composer_form would walk
+        // the next reader straight back into the theory this change disproved.
         const composerFormScope = ADAPTER.composerScope?.(document) || null;
         // Read-only microscope for the submit-scope climb. Two designs have now
         // failed on this page for want of real ancestry data (the <form> anchor,
@@ -1262,7 +1281,7 @@
           }
         }
         const buttons = Array.from(document.querySelectorAll("button")).filter(isVisible)
-          .map((button) => ({ aria: (button.getAttribute("aria-label") || "").slice(0, 60), testid: button.getAttribute("data-test-id") || "", txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40), disabled: button.disabled || button.getAttribute("aria-disabled") === "true", cls: (button.className && typeof button.className === "string" ? button.className : "").slice(0, 80), in_composer_form: ADAPTER.isInComposerScope?.(document, button) === true, chain: chainOf(button) }))
+          .map((button) => ({ aria: (button.getAttribute("aria-label") || "").slice(0, 60), testid: button.getAttribute("data-test-id") || "", txt: (button.innerText || "").replace(/\s+/g, " ").trim().slice(0, 40), disabled: button.disabled || button.getAttribute("aria-disabled") === "true", cls: (button.className && typeof button.className === "string" ? button.className : "").slice(0, 80), in_composer_cluster: ADAPTER.isInComposerScope?.(document, button) === true, chain: chainOf(button) }))
           .filter((button) => button.aria || button.testid || button.txt).slice(0, 40);
         // Flow (labs.google) renders results as <video>, which the original
         // image-era probe could not see at all -- the operator's remote eyes

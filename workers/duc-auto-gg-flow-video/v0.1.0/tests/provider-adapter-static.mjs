@@ -50,7 +50,7 @@ const button = (text, extra = {}) => ({
 });
 // areaButtons = the composer's own control cluster. pageButtons live one level
 // higher, in the page root, exactly where the live "add_2 Create" was found.
-function scopedDocument({ areaButtons = [], pageButtons = [], composerCount = 1, composerDetached = false, emptyAreaLevels = 0, innerAreaButtons = null } = {}) {
+function scopedDocument({ areaButtons = [], pageButtons = [], composerCount = 1, composerDetached = false, emptyAreaLevels = 0, innerAreaButtons = null, composerText = "" } = {}) {
   // Measured: shared page chrome holds other text-entry surfaces (nav + search);
   // the composer's own cluster holds only the composer.
   const searchInput = { tagName: "INPUT" };
@@ -65,6 +65,7 @@ function scopedDocument({ areaButtons = [], pageButtons = [], composerCount = 1,
   for (let i = 0; i < emptyAreaLevels; i += 1) attach = { tagName: "DIV", parentElement: attach, querySelectorAll: () => [] };
   const composers = Array.from({ length: composerCount }, () => ({
     getBoundingClientRect: () => ({ width: 320, height: 48 }),
+    textContent: composerText,
     parentElement: composerDetached ? null : attach,
   }));
   composersRef.push(...composers);
@@ -149,15 +150,27 @@ assert.equal(adapter.composerScope(null), null);
 
 // Quota evidence is scoped the same way: Upgrade replacing Create INSIDE the
 // composer form is a wall; a page-level Upgrade is unrelated chrome.
-// The measured wall: Create is GONE from the cluster and Upgrade stands there.
-const wall = scopedDocument({ areaButtons: [button("Upgrade")] });
-assert.match(adapter.generationLimitBlocker(wall.document), /Flow generation limit reached/);
+// The measured wall: prompt TYPED, Create gone from the cluster, Upgrade there.
+const wall = scopedDocument({ areaButtons: [button("Upgrade")], composerText: "a typed prompt" });
+assert.match(adapter.generationLimitBlocker(wall.document), /hết credit/);
+// Same DOM, empty composer: this is a mount delay, not exhaustion. Claiming the
+// wall here would hard-stop healthy jobs with no retry every time Flow is slow
+// to mount its submit control.
+const notYet = scopedDocument({ areaButtons: [button("Upgrade")] });
+assert.equal(adapter.generationLimitBlocker(notYet.document), null, "an unmounted Create on an empty composer is not a credit wall");
 // A page-level Upgrade is outside the cluster and is ordinary marketing chrome.
 const pageUpgrade = scopedDocument({ areaButtons: [button("arrow_forward Create", { disabled: true })], pageButtons: [button("Upgrade")] });
 assert.equal(adapter.generationLimitBlocker(pageUpgrade.document), null, "a page-level Upgrade is never a quota wall");
 assert.equal(adapter.generationLimitBlocker(scopedDocument({ areaButtons: [button("arrow_forward Create"), button("Upgrade")] }).document), null, "an available Create outranks any Upgrade");
-// A dead-but-present Create beside Upgrade is still the measured wall shape.
-assert.match(adapter.generationLimitBlocker(scopedDocument({ areaButtons: [button("arrow_forward Create", { disabled: true }), button("Upgrade")] }).document), /Flow generation limit reached/);
+// A DISABLED Create beside an Upgrade is NOT a wall, and getting this wrong is
+// expensive in the other direction: arrow_forward Create is disabled on every
+// idle page, so claiming quota here would hard-stop healthy work the moment any
+// upsell chrome appears in the cluster. The measured wall is Create GONE.
+assert.equal(
+  adapter.generationLimitBlocker(scopedDocument({ areaButtons: [button("arrow_forward Create", { disabled: true }), button("Upgrade")] }).document),
+  null,
+  "an idle disabled Create beside upsell chrome is not a credit wall"
+);
 // Audit finding (Codex round 1, 2026-08-28): two exact Create controls plus an
 // Upgrade is AMBIGUITY, not exhaustion. Calling it quota would send the owner
 // to a billing page over a DOM change; the ambiguity path already fails closed.
