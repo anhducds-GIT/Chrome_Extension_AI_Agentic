@@ -705,13 +705,19 @@ a consent dialog.
 
 ### 2.1 Correction — draft V0's domain list is incomplete
 
-Draft V0 §3 lists 13 domains. The documented set is **26** `[DOC]`:
+Draft V0 §3 names **15 domains across 13 bullets** (its first bullet packs three:
+`DOM / DOMSnapshot / DOMDebugger`). The documented set is **27** `[DOC]`, verbatim:
 
-> Accessibility, Audits, CacheStorage, Console, CSS, Database, Debugger, DOM, DOMDebugger,
-> DOMSnapshot, Emulation, Fetch, IO, Input, Inspector, Log, Network, Overlay, Page, Performance,
-> Profiler, Runtime, Storage, Target, Tracing, WebAudio, WebAuthn.
+> "The available domains are: Accessibility, Audits, CacheStorage, Console, CSS, Database, Debugger,
+> DOM, DOMDebugger, DOMSnapshot, Emulation, Fetch, IO, Input, Inspector, Log, Network, Overlay, Page,
+> Performance, Profiler, Runtime, Storage, Target, Tracing, WebAudio, and WebAuthn."
 
 > Source: https://developer.chrome.com/docs/extensions/reference/api/debugger
+
+**In fairness to draft V0:** its wording is *"allowed domains **include** major automation-relevant
+areas **such as**"* — it was explicitly presenting a sample, not claiming a complete enumeration. So
+this is a *completion*, not a contradiction. The 12 domains it does not mention are still worth naming,
+because each is load-bearing and their absence shaped the rest of the study.
 
 **Missing from draft V0, and each one is load-bearing:**
 
@@ -733,40 +739,129 @@ It is enforced by virtual methods on the CDP client object.
 
 `[SRC]` `content/public/browser/devtools_agent_host_client.h` defines the gates:
 
-- `MayAttachToURL` — "Returns true if the client is allowed to attach to the given URL."
-- `MayAttachToRenderFrameHost`
-- `IsTrusted` — controls browser manipulation and discovery of other DevTools targets
-- `MayReadLocalFiles` — "allowed to read local files over the protocol. Example would be exposing
-  file content to the page under debug."
-- `MayWriteLocalFiles` — "allowed to write local files over the protocol. Example would be
-  manipulating a default downloads path."
-- `AllowUnsafeOperations` — privilege-escalation operations, "restricted to already-privileged
-  clients like automation"
-- `GetTypeForMetrics` — returns `"Extension"` for this client
+The current interface declares exactly these virtual methods, in this order `[SRC]`
+(plus the destructor and two pure-virtual message hooks, `DispatchProtocolMessage` and
+`AgentHostClosed`):
+
+| Line | Method |
+|---|---|
+| `:35` | `MayAttachToURL(const GURL& url, bool is_webui)` |
+| `:39` | `MayAttachToRenderFrameHost(RenderFrameHost*)` |
+| `:46` | `IsTrusted()` |
+| `:50` | `MayReadLocalFiles()` |
+| `:54` | `MayWriteLocalFiles()` |
+| `:60` | `AllowUnsafeOperations()` |
+| `:67` | `GetNavigationInitiatorOrigin()` |
+| `:70` | `UsesBinaryProtocol()` |
+| `:74` | `GetTypeForMetrics()` |
+
+**That is the complete list.** A review addendum circulated alongside this pass also listed a
+`MayAccessAllCookies()` on this interface; **it is not there** — `grep` over the current header returns
+zero occurrences. Noted so the enumeration above is not "corrected" back to something inaccurate.
+`[SRC]`
+
+The three that matter here, comments verbatim:
+
+- **`IsTrusted`** — *"Returns true if the client is considered to be in the same trust domain from
+  security perspective. It implies that the client is allowed to attach to the browser agent host and
+  perform other privileged operations."*
+- **`MayReadLocalFiles`** — *"Returns true if the client is allowed to read local files over the
+  protocol. Example would be exposing file content to the page under debug."*
+- **`MayWriteLocalFiles`** — *"Returns true if the client is allowed to write local files over the
+  protocol. Example would be manipulating a deault downloads path."* (sic — typo is in the source)
 
 > Source: https://chromium.googlesource.com/chromium/src/+/refs/heads/main/content/public/browser/devtools_agent_host_client.h
 
-`[SRC]` For the extension client specifically:
+**Naming correction (2026-08-28).** An earlier revision of this section attributed the browser-target
+block to a virtual `MayAttachToBrowser()`. **No such method exists in the current interface** — the
+browser-wide trust gate is `IsTrusted()`. The old name survives only as a *local variable* at the call
+site, which is almost certainly where the stale naming came from. The conclusion is unchanged; the
+mechanism is now stated correctly.
 
-- **`ExtensionDevToolsClientHost::MayAttachToBrowser()` returns `false`**, and the `TargetHandler`
-  is constructed in **`kAutoAttachOnly`** mode.
-- **`MayReadLocalFiles()` returns `util::AllowFileAccess(extension_->id(), profile_)`** — i.e. it is
-  wired to the user's per-extension **"Allow access to file URLs"** checkbox in `chrome://extensions`.
+`[SRC]` For the extension client, in `chrome/browser/extensions/api/debugger/debugger_api.cc`:
 
-> Source: https://issues.chromium.org/issues/40053041 · corroborated by https://issues.chromium.org/issues/512277152
+```cpp
+bool ExtensionDevToolsClientHost::IsTrusted() {          // :829
+  return ExtensionIsTrusted(*extension_);
+}
+bool ExtensionDevToolsClientHost::MayReadLocalFiles() {  // :833
+  return util::AllowFileAccess(extension_->id(), profile_);
+}
+bool ExtensionDevToolsClientHost::MayWriteLocalFiles() { // :837
+  return false;
+}
+```
+
+And `ExtensionIsTrusted` itself `[SRC]` (`debugger_api.cc:269`) is **stricter than "returns false for
+extensions"** — it is an allowlist of exactly one hardcoded extension:
+
+```cpp
+bool ExtensionIsTrusted(const Extension& extension) {
+  if (extension.id() != extension_misc::kPerfettoUIExtensionId) {
+    return false;
+  }
+  return !Manifest::IsUnpackedLocation(extension.location()) ||
+         base::CommandLine::ForCurrentProcess()->HasSwitch(
+             ::switches::kAllowUnpackedPerfettoExtension);
+}
+```
+
+**For any extension we could ever ship, `IsTrusted()` is unconditionally `false`.** This is not a
+policy that might be relaxed per-permission — it is an identity check against the Perfetto UI
+extension ID.
+
+`[SRC]` The access mode follows directly from that, in
+`content/browser/devtools/render_frame_devtools_agent_host.cc:450` (identical logic in
+`web_contents_devtools_agent_host.cc:414`):
+
+```cpp
+const bool may_attach_to_browser = session->GetClient()->IsTrusted();
+session->CreateAndAddHandler<protocol::TargetHandler>(
+    may_attach_to_browser
+        ? protocol::TargetHandler::AccessMode::kRegular
+        : protocol::TargetHandler::AccessMode::kAutoAttachOnly, …);
+```
+
+So an extension's page/WebContents debugger session always receives
+**`TargetHandler::AccessMode::kAutoAttachOnly`**.
 
 **Three consequences, all of which change draft V0's architecture options:**
 
 1. **The browser target is closed.** `Target.attachToBrowserTarget`, the `Browser` domain, and
    `Target.createBrowserContext` are unreachable from an extension. Draft V0 §5.2 says the target
    registry "must be a shared Browser Runtime primitive" — correct conclusion, but the *reason* is
-   stronger than stated: `kAutoAttachOnly` means `Target.setAutoAttach({flatten:true})` is not merely
-   the *recommended* route, it is close to the *only* route. Draft V0's note that auto-attach is
-   non-recursive therefore becomes a hard architectural constraint, not a nuisance.
+   stronger than stated: under `kAutoAttachOnly`, `Target.setAutoAttach` is not merely the
+   *recommended* route, it is **the only Target traversal command left** (proven in §2.2b below).
+   Draft V0's note that auto-attach is non-recursive therefore becomes a hard architectural
+   constraint, not a nuisance.
 2. **No per-context isolated identities.** `createBrowserContext(proxyServer, …)` — the natural way to
    run several authenticated accounts in parallel — is out of reach. Parallel identities must be
    solved with **separate Chrome profiles driven by the local host**, not with CDP.
 3. **Writing local files over CDP is gated separately from reading them.**
+
+### 2.2b Exactly which `Target.*` commands `kAutoAttachOnly` blocks — G2 RESOLVED
+
+The earlier revision left this as gap **G2** `[NV]`. It is now settled from primary source.
+`[SRC]` `content/browser/devtools/protocol/target_handler.cc` — each guard returns
+`Response::ServerError(kNotAllowedError)`:
+
+| Command | Under `kAutoAttachOnly` | Guard |
+|---|---|---|
+| `Target.setAutoAttach` | **allowed** — no access-mode guard | — |
+| `Target.getTargets` | **blocked** | `:1435` |
+| `Target.attachToTarget` | **blocked** | `:1183` |
+| `Target.createTarget` | **blocked** | `:1354` |
+| `Target.setDiscoverTargets` | **blocked** | `:1073` |
+| `Target.activateTarget` | **blocked** | `:1267` |
+| `Target.getTargetInfo` | **own target only** — blocked when `target_id != owner_target_id_` | `:1252` |
+| `Target.closeTarget` | **own target or auto-attached sessions only** | `:1287` |
+| `createBrowserContext` / `disposeBrowserContext` / `getBrowserContexts` / `attachToBrowserTarget` / `exposeDevToolsProtocol` | **blocked** — guarded by `access_mode_ != kBrowser` | `:1135, :1202, :1306, :1522, :1600, :1628, :1714, :1735` |
+
+**The asymmetry flagged earlier is now proven, not suspected:** the *extension API*
+`chrome.debugger.getTargets()` works (shipped and exercised by `observer-engine.js` in this repo),
+while the *CDP command* `Target.getTargets` returns `kNotAllowedError`. They are genuinely different
+code paths. Any design that assumes CDP-side target enumeration will fail; enumeration must come from
+the `chrome.debugger` API, and traversal from `setAutoAttach` alone.
 
 ### 2.3 The `DOM.setFileInputFiles` finding — draft V0's flagship compound capability is conditional
 
@@ -810,8 +905,37 @@ a permission at all — it is an extension setting). The failure is also silent-
 | `Page.handleJavaScriptDialog` | stable | Deterministically accept/dismiss `alert`/`confirm`/`beforeunload`. |
 
 `[DOC]` **`Page.setDownloadBehavior` is marked Experimental *and* Deprecated.** Combined with
-`MayWriteLocalFiles`, CDP is the wrong tool for controlling download destination —
+`MayWriteLocalFiles() == false`, CDP is the wrong tool for controlling download destination —
 `chrome.downloads` + `onDeterminingFilename` is the supported path (and is what the repo already does).
+
+**Stability re-verification (2026-08-28).** Every status in this table was re-checked against the
+machine-readable protocol definition, not the rendered docs: the `experimental` / `deprecated` flags in
+`json/browser_protocol.json` and the `experimental` keyword in `pdl/domains/Page.pdl`. All rows above
+are confirmed unchanged.
+
+One row was specifically challenged in review as being Experimental on tip-of-tree —
+**`Page.setInterceptFileChooserDialog`** — and **the challenge does not hold**. Four independent
+sources agree it is stable:
+
+1. `json/browser_protocol.json` — no `experimental` flag on the command;
+2. the rendered `/tot/Page/` reference — no Experimental badge;
+3. `pdl/domains/Page.pdl` — the neighbouring command shows what an experimental declaration
+   looks like, five lines away:
+
+```
+1277:  experimental command waitForDebugger
+…
+1282:  command setInterceptFileChooserDialog          ← no `experimental` keyword
+```
+
+4. **The decisive test — the stable `1-3` protocol, which excludes experimental commands by
+   construction.** `Page.setInterceptFileChooserDialog` **is present** in `/1-3/Page/` (6 occurrences,
+   with its own command anchor and no Experimental badge), while `Page.captureSnapshot` — genuinely
+   experimental — is **absent from that page entirely** (0 occurrences). A command cannot be
+   experimental and simultaneously appear in the stable-1.3 surface. The same review cited `/1-3/Page/`
+   in support of the challenge; that page in fact refutes it.
+
+It stays marked **stable**. Recorded here rather than silently kept, so the disagreement is auditable.
 
 ### 2.5 Fetch domain is stronger than "pause and continue"
 
@@ -848,28 +972,38 @@ be measured, because provider guards may check it.
 `[DOC]` `DOMSnapshot.captureSnapshot` returns `documents` (flattened, **including iframes and template
 contents**), a deduplicated `strings` table, plus layout and text-box data — DOM, layout and computed
 style in **one round trip**. Options: `computedStyles`, `includePaintOrder`, `includeDOMRects`.
-Experimental.
 
-> Source: https://chromedevtools.github.io/devtools-protocol/tot/DOMSnapshot/
+**Status, precisely `[DOC]`:** the **`DOMSnapshot` domain as a whole is marked experimental**; the
+`captureSnapshot` command carries no separate experimental flag within it. An earlier revision said
+simply "Experimental", which blurred the two. Practical effect is the same — treat the whole domain as
+unstable — but the distinction matters when reading the protocol definition.
+
+> Source: https://chromedevtools.github.io/devtools-protocol/tot/DOMSnapshot/ ·
+> flags verified against `pdl/domains/DOMSnapshot.pdl` and `json/browser_protocol.json`
 
 **Technical implication:** this is a strictly better primitive than the repo's current
 `diagnostics.dom_probe` (which today does N `querySelectorAll` calls inside one `Runtime.evaluate`).
 
 ### 2.8 Storage and Emulation — determinism levers
 
-`[DOC]` Storage: `getCookies` / `setCookies` / `clearCookies` / `clearDataForOrigin` /
-`clearDataForStorageKey` / `getUsageAndQuota` / `trackIndexedDBForOrigin` / `trackCacheStorageForOrigin`.
-Clearable types include `cookies, file_systems, indexeddb, local_storage, service_workers,
-cache_storage, storage_buckets, websql, shader_cache`.
+`[DOC]` Storage — **the whole `Storage` domain is marked experimental**, so everything below inherits
+that: `getCookies` / `setCookies` / `clearCookies` / `clearDataForOrigin` / `clearDataForStorageKey` /
+`getUsageAndQuota` / `trackIndexedDBForOrigin` / `trackCacheStorageForOrigin` (these commands carry no
+*additional* experimental flag of their own). Clearable types include `cookies, file_systems,
+indexeddb, local_storage, service_workers, cache_storage, storage_buckets, websql, shader_cache`.
 
-`[DOC]` Emulation: `setTimezoneOverride`, `setLocaleOverride`, `setDeviceMetricsOverride`,
-`setUserAgentOverride`, `setEmulatedMedia`, `setCPUThrottlingRate`, `setScriptExecutionDisabled`,
-`setFocusEmulationEnabled`, `setAutomationOverride`, `setHardwareConcurrencyOverride`,
-`setVirtualTimePolicy`.
+`[DOC]` Emulation — **mixed stability, and the split matters**:
 
-**Technical implication:** `setTimezoneOverride` + `setLocaleOverride` remove a whole class of
-non-reproducible failures — provider UIs that render different date/number strings per machine, which
-then break selectors. This is a **determinism** primitive, absent from draft V0.
+- **Stable:** `setTimezoneOverride`, `setDeviceMetricsOverride`, `setUserAgentOverride`,
+  `setEmulatedMedia`, `setScriptExecutionDisabled`.
+- **Experimental:** `setLocaleOverride`, `setAutomationOverride`, `setCPUThrottlingRate`,
+  `setFocusEmulationEnabled`, `setHardwareConcurrencyOverride`, `setVirtualTimePolicy`.
+
+**Technical implication, corrected:** `setTimezoneOverride` (**stable**) removes a real class of
+non-reproducible failures — provider UIs rendering different date strings per machine, which then break
+selectors. `setLocaleOverride` extends that to number/locale formatting but is **experimental**, so it
+needs a fallback rather than a hard dependency. An earlier revision presented both as equally solid.
+The determinism idea stands; only the timezone half is safe to build on today.
 
 ### 2.9 Independent corroboration of the extension-CDP ceiling
 
@@ -1009,7 +1143,7 @@ unreachable).
 | **CC14** | `tabCapture.getMediaStreamId` + offscreen `DISPLAY_MEDIA` | Record a whole generation session as video evidence, surviving navigation | **REACHABLE** |
 | **CC15** | offscreen `BLOBS` + `WORKERS` + `DOM_PARSER` | Hash/convert/chunk artifacts **inside the browser** before the Bridge hop — relieves the envelope cap | **REACHABLE** |
 | **CC16** | loopback WebSocket + 20s keepalive + `alarms` ≥30s | Long-lived browser worker: WS keeps the SW alive (Chrome 116+), alarm is the restart net | **PROVEN** `[READ]` |
-| **CC17** | `Target.createBrowserContext(proxyServer)` | Parallel isolated authenticated identities in one browser | **CLOSED** — `MayAttachToBrowser()` is `false` (§2.2). Do it with separate Chrome profiles driven by the host. |
+| **CC17** | `Target.createBrowserContext(proxyServer)` | Parallel isolated authenticated identities in one browser | **CLOSED** — `IsTrusted()` is `false` for every non-Perfetto extension, so the session runs `kAutoAttachOnly` and the browser-context commands are guarded by `access_mode_ != kBrowser` (§2.2, §2.2b). Do it with separate Chrome profiles driven by the host. |
 | **CC18** | host scheduler + WS wake + `run.trial` | Local clock drives browser work across hours/days | **REACHABLE** — host scheduler NOT YET IMPLEMENTED |
 | **CC19** | `Emulation.setTimezoneOverride` + `setLocaleOverride` + `setDeviceMetricsOverride` | Make provider UI render identically on every machine — kills locale/date-dependent selector drift | **REACHABLE** |
 | **CC20** | `Fetch.continueWithAuth` **or** `webRequestAuthProvider` `onAuthRequired` | Pass HTTP auth challenges without a human | **REACHABLE** |
@@ -1037,7 +1171,11 @@ file-access grant; `IsRestrictedUrl()` blocks `chrome://` and policy-blocked hos
 extension background page needs the `--silent-debugger-extension-api` command-line switch. Error strings
 include `"Another debugger is already attached to the * with id: *."` and `"Cannot attach to this target."`
 
-**Browser target** `[SRC]` — closed to extensions (`MayAttachToBrowser() == false`, `kAutoAttachOnly`).
+**Browser target** `[SRC]` — closed to extensions. `ExtensionDevToolsClientHost::IsTrusted()` returns
+`ExtensionIsTrusted()`, which is an allowlist of one hardcoded ID (Perfetto UI), so every shippable
+extension gets `TargetHandler::AccessMode::kAutoAttachOnly`. Under that mode `Target.getTargets`,
+`attachToTarget`, `createTarget`, `setDiscoverTargets` and `activateTarget` all return
+`kNotAllowedError`; only `Target.setAutoAttach` survives (§2.2b).
 
 **Local files over CDP** `[SRC]` — read is gated on the "Allow access to file URLs" toggle; the
 extension client does not get write. `Page.setDownloadBehavior` is deprecated anyway.
@@ -1118,7 +1256,7 @@ tabs.getZoom · .setZoom · .onZoomChange
 | # | Question | Why it blocks | How to settle it |
 |---|---|---|---|
 | **G1** | Does Private Network Access affect a WebSocket from an MV3 service worker to `127.0.0.1`? Is `http://127.0.0.1/*` host permission what exempts it? | The **entire** Bridge rests on this. A future Chrome PNA tightening would break every worker at once. | Official PNA spec + Chrome release notes; then a live probe with the permission removed. |
-| **G2** | Which `Target.*` commands survive `kAutoAttachOnly`? Specifically: does CDP `Target.getTargets` / `attachToTarget` / `createTarget` work, or only `setAutoAttach`? | Decides whether the target registry in draft V0 §5.2 is buildable as described. Note `chrome.debugger.getTargets()` (the **extension API**) demonstrably works — that is a different code path from the CDP command. | Read `TargetHandler` in Chromium source; then probe each command against a live attach. |
+| ~~**G2**~~ | ~~Which `Target.*` commands survive `kAutoAttachOnly`?~~ | **RESOLVED 2026-08-28** — settled from `target_handler.cc`; full command-by-command table in **§2.2b**. Short answer: only `Target.setAutoAttach` survives; `getTargets`, `attachToTarget`, `createTarget`, `setDiscoverTargets`, `activateTarget` all return `kNotAllowedError`; `getTargetInfo`/`closeTarget` are limited to the own/auto-attached targets. The extension-API vs CDP-command asymmetry is confirmed. | — |
 | **G3** | Do `Input.*` events arrive with `isTrusted === true`? | Providers may gate on it; the whole "browser input beats `element.click()`" claim depends on it. No official statement found. | One `Runtime.evaluate` listener + one `Input.dispatchMouseEvent`. Cheap, decisive. |
 | **G4** | Is `MayWriteLocalFiles()` definitively `false` for the extension client, and does that only cost us the (already deprecated) `setDownloadBehavior`? | Determines whether CDP can ever write files, or whether `chrome.downloads` is permanent. | Read `debugger_api.cc` directly. |
 | **G5** | Does the "Allow access to file URLs" toggle have any programmatic signal — can we **detect** it before attempting CC1, instead of catching `"Not allowed"`? | Turns a silent failure into a clean capability probe. | Probe `DOM.setFileInputFiles` against a harmless input on a controlled page and treat the error as the signal. |
@@ -1134,8 +1272,10 @@ tabs.getZoom · .setZoom · .onZoomChange
 
 **Corrections**
 
-1. **§3 domain list is incomplete** — 13 listed, **26 documented**. Missing `Debugger`, `CSS`, `Overlay`,
-   `Log`, `Console`, `CacheStorage`, `Database`, `Performance`, `Profiler`, `Audits`, `Inspector`, `WebAudio`. `[DOC]`
+1. **§3's domain sample is worth completing** — it names **15 domains in 13 bullets**; **27 are
+   documented**. The 12 it does not mention: `Audits`, `CacheStorage`, `Console`, `CSS`, `Database`,
+   `Debugger`, `Inspector`, `Log`, `Overlay`, `Performance`, `Profiler`, `WebAudio`. Draft V0 said
+   "include … such as", so this completes a stated sample rather than correcting a wrong claim. `[DOC]`
 2. **§2 / §10 / Sources: "Native Messaging" is factually wrong for this repo.** The Bridge is a loopback
    WebSocket; there is no `nativeMessaging` permission and no `connectNative` call anywhere. `[READ]`
 3. **§4 / §9 C2 is over-stated.** `DOM.setFileInputFiles` is gated on the "Allow access to file URLs"
@@ -1145,9 +1285,11 @@ tabs.getZoom · .setZoom · .onZoomChange
 5. **§6 omits the 5-minute per-request cap**, which is still documented and is the binding constraint on
    long Bridge RPCs — and omits the **Chrome 116 WebSocket keep-alive**, which is the one this repo
    actually relies on. `[DOC]`
-6. **§5.2's target-registry recommendation is right for a stronger reason than given** —
-   `kAutoAttachOnly` + `MayAttachToBrowser() == false` make auto-attach nearly the only route, so
-   non-recursion is a hard constraint, not an inconvenience. `[SRC]`
+6. **§5.2's target-registry recommendation is right for a stronger reason than given** — because
+   `IsTrusted()` is `false` for every shippable extension, the session runs `kAutoAttachOnly`, and
+   `Target.setAutoAttach` is then the **only** Target traversal command that is not blocked (§2.2b).
+   Auto-attach is not the preferred route, it is the sole route, so non-recursion is a hard constraint,
+   not an inconvenience. `[SRC]`
 7. **§4 Input treats experimental and stable commands as equal.** `insertText` and `dispatchDragEvent`
    are experimental. `[DOC]`
 8. **§12 says repo evidence is "pending"** — it is not. A `debugger`-permissioned read-only CDP probe
@@ -1255,22 +1397,112 @@ It builds the whole nested-target registry on `Target.setAutoAttach()` — recur
 each newly attached child session — and never uses `Target.getTargets`, `attachToTarget`,
 `createTarget` or `setDiscoverTargets`.
 
-`[SRC]` That is the **correct** choice, and §2.2 above supplies the missing reason: the extension client
-runs with `MayAttachToBrowser() == false` and its `TargetHandler` is constructed in **`kAutoAttachOnly`**
-mode. Auto-attach is not merely the recommended traversal strategy for OOPIFs — it is the strategy the
-client mode leaves available. EXP-04's recursive configuration requirement is therefore a **hard
-consequence of the client gate**, not a quirk of the `Target` domain.
+`[SRC]` That is the **correct** choice, and §2.2 / §2.2b supply the missing reason: the extension client
+has `IsTrusted() == false`, so its `TargetHandler` is constructed in **`kAutoAttachOnly`** mode, and in
+that mode `setAutoAttach` is the **only** Target traversal command that is not blocked. Auto-attach is
+not merely the recommended strategy for OOPIFs — it is the only one available. EXP-04's recursive
+configuration requirement is therefore a **hard consequence of the client gate**, not a quirk of the
+`Target` domain.
 
 Two small things this adds to EXP-04:
 
-- Its §"exposure boundary" can state the mechanism (`kAutoAttachOnly`) rather than only the symptom
-  (non-recursion), which makes the constraint predictable instead of empirical.
-- **G2 above remains open and now matters more:** exactly which `Target.*` commands survive
-  `kAutoAttachOnly` is unverified. Note the asymmetry already visible in this repo — the **extension
-  API** `chrome.debugger.getTargets()` works (proven by `observer-engine.js`), while the **CDP command**
-  `Target.getTargets` is a different code path and is untested. EXP-04's micro-proof is the natural
-  place to settle it: one call each, record which error comes back. `[NV]`
+- Its §"exposure boundary" can state the mechanism (`IsTrusted()` → `kAutoAttachOnly`) rather than only
+  the symptom (non-recursion), which makes the constraint predictable instead of empirical.
+- **The asymmetry is now proven, and EXP-04 should record it:** the **extension API**
+  `chrome.debugger.getTargets()` works (shipped in `observer-engine.js`), while the **CDP command**
+  `Target.getTargets` returns `kNotAllowedError` under `kAutoAttachOnly` (`target_handler.cc:1435`).
+  Enumeration must come from the extension API; traversal from `setAutoAttach`. EXP-04's micro-proof no
+  longer needs to discover this — it can assert it.
 
 Same pattern as A1: three GPT studies (EXP-02, EXP-03, EXP-04) reason about the ceiling at
 **domain** granularity. The gate that actually binds is **per-client, per-command**. It weakens EXP-02's
 Path A, leaves EXP-03 intact, and vindicates EXP-04.
+
+---
+
+## Accuracy pass — 2026-08-28 (CC, revision 2)
+
+GPT audited the section above against current official Chrome/Chromium sources and raised five points.
+I re-verified each one myself before editing rather than applying them on trust (AGENTS.md §3 luật 4).
+Result: **three accepted, one accepted with a sharper mechanism, one rejected on evidence.**
+Method note: for CDP stability flags I stopped reading the rendered `/tot/` pages and switched to the
+machine-readable definitions — `json/browser_protocol.json` (the `experimental` / `deprecated` flags)
+and `pdl/domains/*.pdl` (the `experimental` keyword). Those are what the rendered docs are generated
+from, so they settle disagreements the rendered pages cannot.
+
+| # | Point raised | Verdict | What changed |
+|---|---|---|---|
+| 1 | 27 allowed CDP domains, not 26 | **Accepted** — I miscounted when transcribing | §2.1 now quotes the sentence verbatim and says **27** |
+| 2 | Re-check the "13 domains" figure for draft V0 | **Accepted** — draft V0 has **15 domains in 13 bullets** (its first bullet packs `DOM / DOMSnapshot / DOMDebugger`). Also: it said "include … such as", i.e. an explicit sample | §2.1 and Corrections #1 restated; framing softened from "incomplete list" to "completing a stated sample". The 12 missing domains were already right |
+| 3 | `MayAttachToBrowser()` no longer exists; the gate is `IsTrusted()` | **Accepted, and the real mechanism is stricter than either version said** | §2.2 rewritten with source excerpts; §5, CC17, Corrections #6 and A4 all updated |
+| 4 | `Page.setInterceptFileChooserDialog` is Experimental on tip-of-tree | **Rejected** — four sources say stable, including the `/1-3/` page the review itself cited | No change to the status; the disagreement and its evidence are recorded in §2.4 |
+| 5 | Re-check other Stable/Experimental/Deprecated labels | **Accepted** — two genuine errors found, in Emulation and DOMSnapshot | §2.7 and §2.8 corrected; Page, Input, Fetch, DOM, IO tables re-verified and confirmed unchanged |
+
+### On point 3 — what the naming error was hiding
+
+The stale name was not just cosmetic. Chasing it down produced a **stronger** finding than the original
+claim. `ExtensionDevToolsClientHost::IsTrusted()` delegates to `ExtensionIsTrusted()`, which is an
+allowlist of **exactly one hardcoded extension ID** (`kPerfettoUIExtensionId`). So the browser target is
+not merely "closed to extensions by default" — it is closed to every extension that is not Perfetto UI,
+with no permission, flag, or user toggle that opens it. The `may_attach_to_browser` name survives only
+as a local variable at `render_frame_devtools_agent_host.cc:450`, which is the most likely origin of the
+stale API name.
+
+Chasing it also **resolved gap G2**, which the previous revision had left `[NV]`: reading
+`target_handler.cc` gave the exact command-by-command effect of `kAutoAttachOnly` (new **§2.2b**).
+That converts the extension-API-vs-CDP-command asymmetry from a suspicion into a proven constraint.
+
+### Cross-check against `PHASE1-FACTUAL-CORRECTIONS-2026-08-28.md`
+
+That addendum was published while this pass was in flight. It is in agreement on points 1, 2, 3, 5, 6
+and 7, and its §3 independently reaches the same `kAutoAttachOnly` conclusion as §2.2b here — including
+the `chrome.debugger.getTargets()` vs `Target.getTargets` asymmetry. Good convergence; two of its
+details do not survive checking:
+
+- **`MayAccessAllCookies()`** is listed there as part of the current `DevToolsAgentHostClient`
+  interface. It is not in the header (see §2.2). The other seven entries in that list are correct.
+- **Point 4** is addressed below.
+
+Its framing rule — *"Where this file conflicts with the living draft, this file wins until the living
+draft is normalized"* — is worth flagging for Đức, because it would have propagated both of the above
+into the study as authoritative. Phase 1 is an evidence-collection phase: **the source wins, not the
+newer document.** Suggest that rule be relaxed to "flag and re-verify" rather than "wins".
+
+### On point 4 — why it is rejected rather than deferred
+
+`pdl/domains/Page.pdl` shows an experimental command and this one five lines apart:
+
+```
+1277:  experimental command waitForDebugger
+1282:  command setInterceptFileChooserDialog
+```
+
+The `experimental` keyword is present on one and absent on the other, in the same file, in the same
+domain. And the stable-`1-3` surface — which the review cited in its own support — **contains** this
+command while **excluding** `Page.captureSnapshot`, which is the behaviour you would expect only if
+this command is stable and that one is not.
+
+That is not ambiguous, so I have recorded a disagreement rather than split the difference. The most
+likely origin of the challenge is a **per-parameter** experimental flag being read as the command's:
+`setInterceptFileChooserDialog` does carry an experimental *parameter* (`cancel`). The command itself
+is stable. If the review was instead reading a Chromium-internal PDL revision, naming it would settle
+the matter and I will re-check.
+
+### Claims still marked `[NV]` after this pass
+
+Unchanged from revision 1 except G2, which is now resolved:
+
+- **G1** — whether Private Network Access applies to a service-worker WebSocket to `127.0.0.1`.
+  Still the single highest-value unknown; the whole Bridge rests on it.
+- **G3** — whether `Input.*` events carry `isTrusted === true`. No official statement found.
+- **G5** — whether the "Allow access to file URLs" state is readable programmatically.
+- **G6** — how much of the 2022 *Chrowned* attack surface is still open in 2026.
+- **G7** — whether the `userScripts` user toggle survives extension update, and whether its state is readable.
+- **G9** — practical loopback WebSocket throughput against the self-imposed 1 MiB envelope.
+- **G10** — whether the debugger infobar can be suppressed outside `--silent-debugger-extension-api`.
+- **§2.5** — `Network.enable`'s `maxTotalBufferSize` default value.
+- **§5** — whether the File System Access API works from a side panel or extension tab page.
+- **§2.9** — the status of chromium issue 479708131.
+
+Scope discipline: this pass changed **factual statements only**. No conclusion was reversed, no new
+capability was added, and Phase 2 is not opened.
