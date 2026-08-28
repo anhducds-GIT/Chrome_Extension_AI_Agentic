@@ -4,6 +4,10 @@
   const EXECUTOR_PORT_NAME = "dac.bridge.executor.v1";
   const RECONNECT_ALARM = "dac.bridge.loopback.reconnect.v1";
   const KEEPALIVE_MS = 20000;
+  const KEEPALIVE_ACK_TIMEOUT_MS = 10000;
+  const HANDSHAKE_TIMEOUT_MS = 10000;
+  const RECONNECT_CEILING_MS = 30000;
+  const RECONNECT_DELAYS_MS = Object.freeze([1000, 2000, 5000, 10000, RECONNECT_CEILING_MS]);
 
   function create(options = {}) {
     const chromeApi = options.chrome || globalThis.chrome;
@@ -13,10 +17,47 @@
     const routerCore = options.router_core || globalThis.DacBridgeRouterCore;
     if (!chromeApi || !WebSocketApi || !core || !pairingCore || !routerCore) throw new TypeError("Loopback transport dependencies are unavailable.");
 
+    // Timing is injectable so liveness and backoff are testable without real waiting.
+    const timers = options.timers || globalThis;
+    const keepaliveMs = Math.max(1, Number(options.keepalive_ms) || KEEPALIVE_MS);
+    const keepaliveAckTimeoutMs = Math.max(1, Number(options.keepalive_ack_timeout_ms) || KEEPALIVE_ACK_TIMEOUT_MS);
+    const handshakeTimeoutMs = Math.max(1, Number(options.handshake_timeout_ms) || HANDSHAKE_TIMEOUT_MS);
+    // Bounded by construction: no backoff step, configured or default, may exceed the ceiling.
+    const reconnectDelays = (Array.isArray(options.reconnect_delays_ms) && options.reconnect_delays_ms.length
+      ? options.reconnect_delays_ms
+      : RECONNECT_DELAYS_MS).map((value) => Math.min(RECONNECT_CEILING_MS, Math.max(0, Number(value) || 0)));
+
+    // Chrome hands back a numeric id; Node hands back a Timeout that holds the process open.
+    // Unref where it exists so a headless run of this file can still exit, with no behaviour
+    // change in the browser, where there is nothing to unref.
+    function armTimer(kind, callback, delay) {
+      const handle = timers[kind](callback, delay);
+      if (handle && typeof handle.unref === "function") handle.unref();
+      return handle;
+    }
+
     let pairing = null;
     let socket = null;
     let authenticated = false;
     let keepaliveTimer = null;
+    let keepaliveDeadlineTimer = null;
+    let reconnectTimer = null;
+    let reconnectAttempt = 0;
+    let handshakeTimer = null;
+    let statusSequence = 0;
+    let statusWrites = Promise.resolve();
+    // Pairing edits are separate async handlers mutating the same field and the same storage key.
+    // They run one at a time: an epoch check orders their continuations but not their writes.
+    let pairingWork = Promise.resolve();
+    function queuePairingWork(work) {
+      const run = pairingWork.then(work, work);
+      pairingWork = run.then(() => {}, () => {});
+      return run;
+    }
+    // A socket authenticates exactly once. Without this, an auth_ok the browser had already
+    // queued could resurrect a socket the ACK deadline just judged dead, and a host that
+    // repeated auth_ok could restart the keepalive interval forever so no probe ever fires.
+    const settledSockets = new WeakSet();
     let executorPort = null;
     let executorEpoch = null;
     const executorPending = new Map();
@@ -34,19 +75,110 @@
       };
     }
 
+    function currentState() {
+      if (!pairing) return "unpaired";
+      if (authenticated && socket && socket.readyState === WebSocketApi.OPEN) return "connected";
+      return socket && socket.readyState === WebSocketApi.CONNECTING ? "connecting" : "disconnected";
+    }
+
+    // Storage writes are not ordered by the API, so they are serialized here and a write that a
+    // newer status has already superseded is dropped rather than allowed to land last.
     async function publishStatus(state, errorCode = null) {
       const status = safeStatus(state, errorCode);
-      try { await chromeApi.storage.local.set({ [pairingCore.STATUS_STORAGE_KEY]: status }); } catch (_) { /* Status is advisory only. */ }
+      const sequence = ++statusSequence;
+      statusWrites = statusWrites.then(async () => {
+        if (sequence !== statusSequence) return;
+        try { await chromeApi.storage.local.set({ [pairingCore.STATUS_STORAGE_KEY]: status }); } catch (_) { /* Status is advisory only. */ }
+      });
+      await statusWrites;
       return status;
     }
 
+    function clearKeepaliveDeadline() {
+      if (keepaliveDeadlineTimer) timers.clearTimeout(keepaliveDeadlineTimer);
+      keepaliveDeadlineTimer = null;
+    }
+
     function clearKeepalive() {
-      if (keepaliveTimer) clearInterval(keepaliveTimer);
+      if (keepaliveTimer) timers.clearInterval(keepaliveTimer);
       keepaliveTimer = null;
+      clearKeepaliveDeadline();
+    }
+
+    function clearReconnect() {
+      if (reconnectTimer) timers.clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+
+    function clearHandshakeDeadline() {
+      if (handshakeTimer) timers.clearTimeout(handshakeTimer);
+      handshakeTimer = null;
+    }
+
+    function dropSocket(targetSocket) {
+      if (socket !== targetSocket) return false;
+      socket = null;
+      authenticated = false;
+      clearKeepalive();
+      clearHandshakeDeadline();
+      scheduleReconnect();
+      publishStatus(pairing ? "disconnected" : "unpaired", pairing ? "HOST_UNAVAILABLE" : null);
+      return true;
+    }
+
+    // Give up ownership BEFORE asking the browser to close: a socket can sit in CLOSING for as
+    // long as the peer stays silent, and recovery must not wait on an event that may never come.
+    function abandonSocket(targetSocket, code, reason) {
+      dropSocket(targetSocket);
+      try { targetSocket.close(code, reason); }
+      catch (_) { /* Recovery above does not depend on the close succeeding. */ }
+    }
+
+    // An unanswered probe means the socket is half-open: still "open" to us, already gone
+    // to the host. Close it so status stops reporting connected and recovery can start.
+    function armKeepaliveDeadline(targetSocket) {
+      if (keepaliveDeadlineTimer) return;
+      keepaliveDeadlineTimer = armTimer("setTimeout", () => {
+        keepaliveDeadlineTimer = null;
+        if (socket !== targetSocket) return;
+        abandonSocket(targetSocket, 1000, "Keepalive ACK deadline exceeded.");
+      }, keepaliveAckTimeoutMs);
+    }
+
+    function startKeepalive(targetSocket) {
+      clearKeepalive();
+      keepaliveTimer = armTimer("setInterval", () => {
+        if (socket !== targetSocket || !authenticated) return;
+        if (targetSocket.readyState !== WebSocketApi.OPEN) {
+          // We still own an authenticated socket that is no longer open, so its close event is
+          // late or missing. Bound the wait at one probe period instead of trusting the event.
+          abandonSocket(targetSocket, 1000, "Socket left OPEN without a close event.");
+          return;
+        }
+        targetSocket.send(JSON.stringify({ type: "keepalive", sent_at: new Date().toISOString() }));
+        armKeepaliveDeadline(targetSocket);
+      }, keepaliveMs);
+    }
+
+    // One pending reconnect at a time. The 30-second alarm stays the fallback for the case a
+    // close event is simply missed. It cannot rescue a socket wedged in CONNECTING -- the alarm
+    // routes through connectHost, which refuses to replace one -- so that case has its own
+    // deadline below rather than a comment claiming coverage it does not have.
+    function scheduleReconnect() {
+      if (!pairing || authenticated || reconnectTimer) return;
+      const delay = reconnectDelays[Math.min(reconnectAttempt, reconnectDelays.length - 1)];
+      reconnectAttempt += 1;
+      reconnectTimer = armTimer("setTimeout", () => {
+        reconnectTimer = null;
+        if (!pairing || authenticated) return;
+        connectHost().catch(() => publishStatus("disconnected", "HOST_UNAVAILABLE"));
+      }, delay);
     }
 
     function closeSocket() {
       clearKeepalive();
+      clearReconnect();
+      clearHandshakeDeadline();
       authenticated = false;
       const current = socket;
       socket = null;
@@ -94,28 +226,36 @@
         if (typeof event.data !== "string" || new TextEncoder().encode(event.data).byteLength > core.LIMITS.max_envelope_bytes + 8192) throw new Error("invalid transport frame");
         message = JSON.parse(event.data);
       } catch (_) {
-        targetSocket.close(1007, "Text JSON required.");
+        abandonSocket(targetSocket, 1007, "Text JSON required.");
         return;
       }
       if (socket !== targetSocket) return;
       if (message?.type === "auth_ok" && typeof message.session_id === "string") {
+        if (targetSocket.readyState !== WebSocketApi.OPEN || settledSockets.has(targetSocket)) {
+          abandonSocket(targetSocket, 1008, "Unexpected authentication frame.");
+          return;
+        }
+        settledSockets.add(targetSocket);
         authenticated = true;
+        clearHandshakeDeadline();
+        clearReconnect();
+        // Armed before the status write: liveness must not depend on storage succeeding.
+        startKeepalive(targetSocket);
         await publishStatus("connected");
-        clearKeepalive();
-        keepaliveTimer = setInterval(() => {
-          if (socket === targetSocket && authenticated && targetSocket.readyState === WebSocketApi.OPEN) {
-            targetSocket.send(JSON.stringify({ type: "keepalive", sent_at: new Date().toISOString() }));
-          }
-        }, KEEPALIVE_MS);
         return;
       }
       if (!authenticated) {
-        targetSocket.close(1008, "Host authentication is not complete.");
+        abandonSocket(targetSocket, 1008, "Host authentication is not complete.");
         return;
       }
-      if (message?.type === "keepalive_ack") return;
+      if (message?.type === "keepalive_ack") {
+        clearKeepaliveDeadline();
+        // A completed round trip is the first hard evidence the link carries traffic.
+        reconnectAttempt = 0;
+        return;
+      }
       if (message?.type !== "rpc" || typeof message.relay_id !== "string" || !message.envelope) {
-        targetSocket.close(1008, "Unsupported host transport message.");
+        abandonSocket(targetSocket, 1008, "Unsupported host transport message.");
         return;
       }
       const response = await router.route(message.envelope);
@@ -125,28 +265,45 @@
     }
 
     async function connectHost() {
-      if (!pairing || socket && [WebSocketApi.OPEN, WebSocketApi.CONNECTING].includes(socket.readyState)) return;
-      await publishStatus("connecting");
+      if (!pairing || socket && [WebSocketApi.OPEN, WebSocketApi.CONNECTING].includes(socket.readyState)) {
+        return safeStatus(currentState());
+      }
+      // The socket is claimed before the first await so a scheduled reconnect cannot race
+      // a second socket into existence between the status write and the constructor.
+      clearReconnect();
+      // Every timer belonging to the socket being replaced goes with it: one slot, one timer.
+      // A leaked ACK deadline would otherwise fire against the replacement, and a leaked
+      // handshake callback would null the slot and make the live timer uncancellable.
+      clearHandshakeDeadline();
+      clearKeepalive();
+      // Replacing a socket voids whatever authentication the old one had.
+      authenticated = false;
       const candidate = new WebSocketApi(pairing.websocket_url);
       socket = candidate;
+      handshakeTimer = armTimer("setTimeout", () => {
+        handshakeTimer = null;
+        // Covers the whole handshake: still CONNECTING, or OPEN but never answered. The alarm
+        // rescues neither, because connectHost replaces neither state.
+        if (socket !== candidate || authenticated) return;
+        abandonSocket(candidate, 1000, "Handshake deadline exceeded.");
+      }, handshakeTimeoutMs);
       candidate.addEventListener("open", () => {
         if (socket !== candidate) return;
         candidate.send(JSON.stringify({ type: "auth", role: "extension", token: pairing.token }));
       });
       candidate.addEventListener("message", (event) => {
-        handleSocketMessage(event, candidate).catch(() => candidate.close(1011, "Router failure."));
+        handleSocketMessage(event, candidate).catch(() => abandonSocket(candidate, 1011, "Router failure."));
       });
-      candidate.addEventListener("close", () => {
-        if (socket !== candidate) return;
-        socket = null;
-        authenticated = false;
-        clearKeepalive();
-        publishStatus(pairing ? "disconnected" : "unpaired", pairing ? "HOST_UNAVAILABLE" : null);
-      });
+      candidate.addEventListener("close", () => { dropSocket(candidate); });
       candidate.addEventListener("error", () => { /* close publishes the fail-closed state without secret-bearing details. */ });
+      return publishStatus("connecting");
     }
 
-    async function loadPairing() {
+    function loadPairing() {
+      return queuePairingWork(loadPairingNow);
+    }
+
+    async function loadPairingNow() {
       const stored = await chromeApi.storage.local.get(pairingCore.PAIRING_STORAGE_KEY);
       const candidate = stored?.[pairingCore.PAIRING_STORAGE_KEY];
       if (!candidate) {
@@ -162,7 +319,7 @@
         return publishStatus("pairing_invalid", "PAIRING_FILE_INVALID");
       }
       await connectHost();
-      return safeStatus(authenticated ? "connected" : "connecting");
+      return safeStatus(currentState());
     }
 
     chromeApi.runtime.onConnect.addListener((port) => {
@@ -176,7 +333,7 @@
         if (executorPort !== port) return;
         if (message?.type === "DAC_BRIDGE_EXECUTOR_READY" && message.protocol === core.PROTOCOL && message.version === 1 && typeof message.executor_epoch === "string") {
           executorEpoch = message.executor_epoch;
-          publishStatus(authenticated ? "connected" : pairing ? "connecting" : "unpaired");
+          publishStatus(currentState());
           return;
         }
         if (message?.type === "DAC_BRIDGE_RPC_RESPONSE" && typeof message.route_id === "string") {
@@ -193,24 +350,24 @@
         executorPort = null;
         executorEpoch = null;
         failExecutorPending("EXECUTOR_UNAVAILABLE");
-        publishStatus(authenticated ? "connected" : pairing ? "disconnected" : "unpaired");
+        publishStatus(currentState());
       });
     });
 
     chromeApi.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message?.type === "DAC_BRIDGE_PAIRING_SET") {
-        Promise.resolve().then(async () => {
+        queuePairingWork(async () => {
           const validated = pairingCore.validate(message.pairing);
           await chromeApi.storage.local.set({ [pairingCore.PAIRING_STORAGE_KEY]: validated });
           pairing = validated;
           closeSocket();
           await connectHost();
-          return safeStatus("connecting");
+          return safeStatus(currentState());
         }).then((status) => sendResponse({ ok: true, status })).catch(() => sendResponse({ ok: false, code: "PAIRING_FILE_INVALID" }));
         return true;
       }
       if (message?.type === "DAC_BRIDGE_PAIRING_REMOVE") {
-        Promise.resolve().then(async () => {
+        queuePairingWork(async () => {
           pairing = null;
           closeSocket();
           await chromeApi.storage.local.remove(pairingCore.PAIRING_STORAGE_KEY);
@@ -219,7 +376,7 @@
         return true;
       }
       if (message?.type === "DAC_BRIDGE_STATUS_GET") {
-        sendResponse({ ok: true, status: safeStatus(authenticated ? "connected" : pairing ? "disconnected" : "unpaired") });
+        sendResponse({ ok: true, status: safeStatus(currentState()) });
         return false;
       }
       return false;
@@ -231,10 +388,10 @@
     chromeApi.alarms.create(RECONNECT_ALARM, { periodInMinutes: 0.5 });
 
     loadPairing().catch(() => publishStatus("pairing_invalid", "PAIRING_FILE_INVALID"));
-    return Object.freeze({ connectHost, loadPairing, status: () => safeStatus(authenticated ? "connected" : pairing ? "disconnected" : "unpaired"), router });
+    return Object.freeze({ connectHost, loadPairing, status: () => safeStatus(currentState()), router });
   }
 
   (typeof window !== "undefined" ? window : globalThis).DacBridgeLoopbackTransport = Object.freeze({
-    EXECUTOR_PORT_NAME, RECONNECT_ALARM, KEEPALIVE_MS, create
+    EXECUTOR_PORT_NAME, RECONNECT_ALARM, KEEPALIVE_MS, KEEPALIVE_ACK_TIMEOUT_MS, HANDSHAKE_TIMEOUT_MS, RECONNECT_CEILING_MS, RECONNECT_DELAYS_MS, create
   });
 })();

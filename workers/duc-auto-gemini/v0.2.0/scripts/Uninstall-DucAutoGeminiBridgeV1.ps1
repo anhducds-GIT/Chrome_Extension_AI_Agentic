@@ -2,8 +2,8 @@
 param([switch]$KeepPairing)
 
 $ErrorActionPreference = 'Stop'
-$installRoot = [IO.Path]::GetFullPath('C:\WORKING ZONE\Duc-Auto-Gemini-Bridge')
-$allowedRoot = [IO.Path]::GetFullPath('C:\WORKING ZONE\Duc-Auto-Gemini-Bridge')
+$installRoot = [IO.Path]::GetFullPath('C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini')
+$allowedRoot = [IO.Path]::GetFullPath('C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini')
 $startupPath = Join-Path ([Environment]::GetFolderPath('Startup')) 'Duc Auto Gemini Bridge V1.lnk'
 $hostPath = Join-Path $installRoot 'bridge-host.mjs'
 $codecPath = Join-Path $installRoot 'websocket-core.mjs'

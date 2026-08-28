@@ -427,3 +427,69 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - Sửa **5 dòng, thuần đường dẫn**, không đụng logic: `scripts/bridge-rpc.mjs:21` (`DEFAULT_PAIRING`) · `AI-OPERATOR-GUIDE.md` ×2 · `NEXT-SESSION-BRIEF.md` · một dòng Log cũ.
   - **Thứ suýt gãy âm thầm:** shortcut trong Startup của Windows hard-code đường dẫn cũ — dời xong mà không sửa thì bridge không tự lên và chỉ lộ ra lúc cần dùng. Đã trỏ lại. File `.cmd` thì không cần sửa vì dùng `%~dp0`.
   - 16/16 file khớp hash trước–sau khi dời. Suite 81/81, `npm test` xanh toàn bộ.
+
+- 2026-08-28 · Codex (`codex-gemini-bridge-stability-1`) · **DỪNG THEO LỆNH ĐỨC, BÀN GIAO CHO CLAUDE CODE — chưa sửa production, chưa restart host, chưa commit/push.**
+  - Live Gemini Bridge vẫn chạy tại `127.0.0.1:32148`; 5/5 mẫu ping thành công, cùng một remote socket port. Ba file host đang cài (`bridge-host.mjs`, `websocket-core.mjs`, `bridge-cli.mjs`) khớp SHA-256 với source trong package.
+  - Khoảng trống đã đọc thẳng code: worker gửi keepalive mỗi 20 giây nhưng không đặt deadline chờ `keepalive_ack`; khi socket đóng, reconnect chủ động chỉ dựa alarm 30 giây. Half-open có thể bị báo connected quá lâu và outage có thể chờ gần 30 giây.
+  - Đã thêm duy nhất test chưa commit `tests/bridge-transport-liveness-smoke.mjs`; test đang **ĐỎ đúng trên production hiện tại** tại assertion đầu tiên vì transport chưa hỗ trợ clock/timing injection và chưa có ACK deadline/bounded reconnect. Đây là điểm bắt đầu cho Claude, không phải suite PASS.
+  - Drift phụ cần Claude cân nhắc trong cùng audit nhưng không tự mở rộng nếu chưa cần: installer Gemini vẫn mặc định đường cũ `C:\WORKING ZONE\Duc-Auto-Gemini-Bridge`, trong khi host live/canonical nằm tại `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini`.
+  - Claim Gemini đã trả về `null`. Việc G-01 trial live vẫn giữ nguyên, tuyệt đối không trộn vào stability patch này.
+- **Next:** Claude claim `workers/duc-auto-gemini`, sửa test harness nếu cần nhưng giữ đúng oracle: ACK đúng hạn giữ socket; mất ACK đóng half-open; reconnect có backoff giới hạn và alarm 30 giây vẫn là fallback. Vì thay đổi reconnect là luật retry transport, phải ghi rõ phạm vi và xác nhận quyết định của Đức trước khi đưa live.
+
+- 2026-08-28 · Claude (`claude-gemini-bridge-stability`) · **Lớp vận chuyển Bridge: vá xong phần tĩnh. Test 81→82, phá thử 29/32, audit độc lập 10 vòng FAIL→CONDITIONAL PASS (cả 7 oracle MET). KHÔNG cài lại host (không cần). CHỜ Đức reload extension.**
+  - **Đức duyệt trong chat** (câu hỏi yes/no bắt buộc, vì đây là đổi luật retry của transport):
+    cho phép tự đóng socket khi thiếu keepalive ACK và tự reconnect theo backoff có trần 30 giây.
+  - **Root cause, đọc thẳng code chứ không đoán:** worker gửi `keepalive` mỗi 20 giây nhưng
+    **không bao giờ kiểm xem host có trả lời không**. Host thật *có* trả `keepalive_ack` vô điều
+    kiện (`bridge-host.mjs:195-196`, đọc bản đang cài). Nên một socket half-open cứ được báo
+    **Connected** trong khi thực tế đã đứt, và lối nối lại duy nhất là alarm 30 giây.
+  - **Không đụng host.** Chỉ sửa phía extension (`bridge-transport-loopback.js`), 2 script
+    installer, 2 file test. Ba file host đang cài vẫn khớp SHA-256 với source.
+  - **Đã sửa — tất cả trong lớp transport/lifecycle:**
+    1. Hạn chờ ACK 10 giây; quá hạn thì socket bị buông.
+    2. Thang backoff 1s→2s→5s→10s→30s, **có trần ngay trong code**, không phải chỉ trong lời hứa.
+    3. Thang chỉ reset khi có **một vòng đi-về hoàn chỉnh** (ACK), không phải khi vừa `auth_ok` —
+       nếu không, host chập chờn bị nện 1 giây một lần mãi mãi.
+    4. **Buông socket ngay khi phán nó chết**, không đợi sự kiện `close` mà một socket `CLOSING`
+       có thể không bao giờ phát. Gom về hai hàm `dropSocket` / `abandonSocket`, dùng cho **mọi**
+       nhánh đóng-vì-hỏng (khung sai, auth lạ, RPC trước auth, khung lạ, hạn ACK, hạn bắt tay,
+       router lỗi).
+    5. **Hạn bắt tay 10 giây** phủ cả `CONNECTING` lẫn "đã mở nhưng host không bao giờ trả lời
+       auth" — alarm 30 giây **không** cứu được cả hai, vì nó đi qua `connectHost`, mà `connectHost`
+       từ chối thay socket đang `CONNECTING` hoặc `OPEN`.
+    6. Nhịp thử cũng phát hiện được socket không còn `OPEN` → chặn trên cùng ở đúng **một nhịp thử**.
+    7. `auth_ok` chỉ nhận **một lần trên một socket đang OPEN**. Nếu không: một `auth_ok` đã nằm
+       sẵn trong hàng đợi sẽ hồi sinh socket vừa bị phán chết, và host lặp `auth_ok` mỗi 19 giây
+       sẽ làm phép thử **không bao giờ được gửi**.
+    8. Bốn biểu thức trạng thái viết tay đã lệch nhau gom về một `currentState()`, và
+       **"đã xác thực" không còn đồng nghĩa với "đang kết nối"**.
+    9. Ghi trạng thái được **xếp thứ tự**; bản ghi đã bị bản mới hơn vượt qua thì bỏ, không cho
+       nó rơi xuống sau cùng và dựng lại chữ "Connected" cũ.
+    10. Sửa pairing (set / remove / load) chạy **lần lượt trên một hàng đợi** — trước đó chúng có
+        thể cài răng lược và ghi đè kết quả của nhau.
+    11. Thay socket thì **gỡ mọi timer của socket cũ**: một chỗ giữ, một cái timer.
+  - **Sửa drift installer:** mặc định vẫn trỏ `C:\WORKING ZONE\Duc-Auto-Gemini-Bridge` (thư mục
+    **không còn tồn tại**) trong khi host live nằm ở
+    `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini`. Để nguyên thì: chạy lại installer
+    sẽ dựng host **thứ hai** cạnh host thật, còn uninstaller báo "đã gỡ" mà **không xoá gì**.
+    Đồng thời **bỏ tham số `-InstallRoot`** — cài được sang chỗ khác trong khi uninstaller cắm
+    cứng một chỗ nghĩa là có thể để lại host mà uninstaller không với tới. Đã ghim, đỏ trước–xanh sau.
+  - **Phá thử 32 chiều, bắt 29.** Ba cái thoát (`reconnectTimer` guard · phép kiểm danh tính trong
+    hạn chờ ACK · phép kiểm "đã bị vượt qua" khi ghi trạng thái) là **guard lớp hai không còn
+    đường nào tới được** sau khi guard lớp một được vá. Auditor độc lập xác nhận cả ba là phòng
+    thủ chiều sâu đúng đắn, không phải lỗi. Giữ lại, ghi thành `G-10` — **đừng xoá vì thấy test
+    không đụng tới**.
+  - **Audit độc lập (Codex) 10 vòng: FAIL ×9 → CONDITIONAL PASS, không phát hiện mới, 7/7 oracle MET.**
+    Chín vòng đầu tìm ra lỗi **thật**, trong đó **hai lỗi do chính bản vá của tôi tạo ra**
+    (`auth_ok` hồi sinh socket chết; các nhánh đóng-vì-hỏng khác vẫn đợi sự kiện `close`).
+    **Ba lần tôi bác sai và auditor đúng** — M13, M18, và lời bác "epoch là đủ để xếp thứ tự"
+    (không đủ: epoch xếp phần sau `await`, không xếp bản thân thao tác lưu trữ). Ngược lại, bản vá
+    auditor đề nghị ở vòng 1 (cấm thay socket khi nó chưa `CLOSED`) tôi **từ chối** vì nó làm
+    **yếu** khả năng phục hồi — và chính điều đó về sau thành một phép ghim.
+  - Suite **82/82** (81 cũ + 1 file ghim mới), `npm test` gốc xanh, `git diff --check` sạch.
+  - **Phát hiện ngoài phạm vi, không tự làm:** `npm test` ở gốc **không chạy suite Gemini** →
+    ghi `G-09` (phải giữ `_root` mới sửa được `package.json`).
+- **Next:** Đức bấm ⟳ reload extension ở `chrome://extensions` (chỉ sửa code extension — **không**
+  cần cài lại host, **không** cần đổi pairing). Sau đó thử: tắt cửa sổ Bridge → tab BRIDGE phải
+  chuyển **Mất kết nối** trong khoảng 20–30 giây thay vì đứng **Connected** giả; bật lại → tự nối
+  lại trong khoảng 1 giây. Việc G-01 trial live vẫn giữ nguyên, chưa đụng.

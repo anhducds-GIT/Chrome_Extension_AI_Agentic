@@ -94,6 +94,26 @@ Cả bốn đều là **[DÒ]** — chỉ mới dò theo tên hằng số/thuộ
 trước khi kết luận là thiếu.** Nhánh Gemini đã hai lần bị báo oan "thiếu" trong khi nó **có**,
 chỉ là làm theo cách khác và đặt tên khác (`tryBeginRun`, `assertTrialDevMode`).
 
+### G-09 · `npm test` ở gốc repo KHÔNG chạy suite Gemini — **[ĐO]**
+
+`package.json` gốc chạy `workers/duc-auto-chatgpt/.../run-all.mjs` rồi 4 test gốc. Suite Gemini
+(82 phép) **không nằm trong đó**. Cổng `session-check.mjs` thì có chạy, nên luật vẫn được canh —
+nhưng ai chỉ chạy `npm test` sẽ tưởng nhánh Gemini đã xanh mà thật ra chưa chạy dòng nào.
+
+`package.json` là file gốc repo → phải giữ `_root` mới sửa được. Ghi lại để không quên.
+
+### G-10 · Ba guard lớp hai chưa có phép ghim — **[ĐỌC]**
+
+Trong `bridge-transport-loopback.js`: (a) điều kiện `reconnectTimer` trong `scheduleReconnect`,
+(b) phép kiểm danh tính `socket !== targetSocket` trong callback hạn chờ ACK, (c) phép kiểm
+"đã bị bản mới hơn vượt qua" trong `publishStatus`. Phá thử 32 chiều (28/08) bắt được 29, thoát
+đúng ba cái này — **vì không còn đường nào tới được chúng** sau khi guard lớp một được vá:
+`connectHost` nay gỡ **mọi** timer của socket bị thay, và ghi trạng thái đã được xếp thứ tự.
+Auditor độc lập xác nhận cả ba là phòng thủ chiều sâu đúng đắn, không phải lỗi.
+
+Giữ lại. Nếu sau này ai gỡ một guard lớp một, ba cái này thành đường sống — nên **đừng xoá vì
+thấy test không đụng tới**.
+
 ## P3 — Khi rảnh
 
 ### G-07 · Poll A/B "thích ảnh nào hơn" — **[ĐO]**

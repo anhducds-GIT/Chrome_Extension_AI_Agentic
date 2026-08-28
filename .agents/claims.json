@@ -3,25 +3,25 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "BAN GIAO 27/08: FLOW-00..03 + F-02/04/05 XONG (video dau tien sinh bang may ~70s, audit 3 vong PASS, suite 84/84, push a35554b). FLOW-04 trial runner DANG DO (extension chua nap ban moi). Phien moi doc NEXT-SESSION-BRIEF.md trong package roi claim bang nhan rieng.",
-      "released_at": "2026-08-27"
+      "owner": "claude-flow-create-scope",
+      "ai": "claude",
+      "claimed_at": "2026-08-28",
+      "task": "FLOW-04 fix: khoa findCreateButton vao composer form (fail closed), runtime fingerprint preflight cho run.trial (FLOW_RUNTIME_CONTRACT), 3 test dich do -> xanh, audit doc lap PASS.",
+      "released_at": null
     },
     "workers/duc-auto-gemini": {
-      "owner": "opus-platform-3",
+      "owner": "claude-gemini-bridge-stability",
       "ai": "claude",
-      "claimed_at": "2026-08-27",
-      "task": "G-01 phan tinh DA XONG va DA PUSH (a173507): test race do→xanh, audit Codex vong 2 PASS. Giu quyen de chay TRIAL LIVE ngay khi Duc reload extension (da duyet) — buoc cuoi de dong G-01.",
+      "claimed_at": "2026-08-28",
+      "task": "Bridge transport stability: keepalive ACK deadline + bounded reconnect + installer canonical path. Khong dung G-01, khong dung GG Flow.",
       "released_at": null
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "B-22 DA GHI (backlog + HANDOFF, push aee955e): cung race G-01 tai content.js:703 [DOC]. Chua sua code — ai nhan viec nay phai viet test race cho DOM ChatGPT truoc.",
-      "released_at": "2026-08-27"
+      "owner": "claude-chatgpt-text-reasoning-passb",
+      "ai": "claude",
+      "claimed_at": "2026-08-28",
+      "task": "Tiep quan handoff Codex 28/08: refreshed independent Pass B cho text_reasoning + atomic artifact filename persistence. Khong lam lai tu dau, khong live pilot, khong commit/push truoc khi Pass B PASS.",
+      "released_at": null
     },
     "_root": {
       "owner": "claude-platform-orchestrator-study",

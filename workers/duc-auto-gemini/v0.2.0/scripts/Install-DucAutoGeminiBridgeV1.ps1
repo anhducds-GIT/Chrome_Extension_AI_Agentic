@@ -1,7 +1,6 @@
 [CmdletBinding()]
 param(
   [ValidateRange(1024, 65535)][int]$Port = 32148,
-  [string]$InstallRoot = 'C:\WORKING ZONE\Duc-Auto-Gemini-Bridge',
   [switch]$RotateToken,
   [switch]$NoStart
 )
@@ -13,11 +12,17 @@ param(
 # project (not AppData) — this is a single-user local machine and the owner
 # prefers discoverability. Kept OUTSIDE the git worktree so the pairing token
 # can never be committed.
+# 2026-08-27 the owner gathered every bridge under one parent folder and the
+# host was moved to 'Chrome Extension Bridge\duc-auto-gemini'. This default was
+# left behind pointing at the vacated folder, so a rerun would have installed a
+# second host beside the live one instead of upgrading it.
 
 $ErrorActionPreference = 'Stop'
 $sourceRoot = Split-Path -Parent $PSScriptRoot
 $hostSource = Join-Path $sourceRoot 'duc-auto-chatgpt-loopback-bridge-host-v1'
-$installRoot = $InstallRoot
+# One canonical root, declared the same way the uninstaller declares it. Deliberately not a
+# parameter: an overridable install root produced hosts the uninstaller could not reach.
+$installRoot = [IO.Path]::GetFullPath('C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini')
 $pairingPath = Join-Path $installRoot 'duc-auto-gemini-bridge-pairing-v1.json'
 $hostPath = Join-Path $installRoot 'bridge-host.mjs'
 $startupPath = Join-Path ([Environment]::GetFolderPath('Startup')) 'Duc Auto Gemini Bridge V1.lnk'

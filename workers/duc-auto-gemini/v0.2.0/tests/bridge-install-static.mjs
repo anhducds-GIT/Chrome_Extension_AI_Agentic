@@ -28,4 +28,34 @@ for (const installedArtifact of ["$hostPath", "$codecPath", "$cliPath"]) {
 assert.doesNotMatch(keepPairingBranch, /Remove-Item -LiteralPath \$pairingPath/, "-KeepPairing retains only the pairing JSON");
 assert.doesNotMatch(uninstall, /HKCU|HKLM|registry|RunAs/i);
 
+// --- the Gemini variant must install where the live host actually lives ---
+// The host was gathered under one parent folder on 2026-08-27 while these defaults kept
+// pointing at the vacated folder: a rerun would have installed a second host beside the
+// live one, and the uninstaller would have reported success while deleting nothing.
+const CANONICAL_GEMINI_ROOT = "C:\\WORKING ZONE\\Chrome Extension Bridge\\duc-auto-gemini";
+const geminiInstall = fs.readFileSync(new URL("scripts/Install-DucAutoGeminiBridgeV1.ps1", root), "utf8");
+const geminiUninstall = fs.readFileSync(new URL("scripts/Uninstall-DucAutoGeminiBridgeV1.ps1", root), "utf8");
+
+// The install root is not overridable: an -InstallRoot switch put hosts where the uninstaller
+// could not reach them, while the uninstaller still reported success.
+assert.doesNotMatch(geminiInstall, /\$InstallRoot/, "the installer takes no install-root override");
+const declaredRoots = [
+  ...geminiInstall.matchAll(/\$installRoot = \[IO\.Path\]::GetFullPath\('([^']+)'\)/g),
+  ...geminiUninstall.matchAll(/\$(?:installRoot|allowedRoot) = \[IO\.Path\]::GetFullPath\('([^']+)'\)/g)
+].map((match) => match[1]);
+assert.equal(declaredRoots.length, 3, "install root, uninstall target and uninstall delete-guard are each declared once");
+for (const declaredRoot of declaredRoots) {
+  assert.equal(declaredRoot, CANONICAL_GEMINI_ROOT, "every declared root is the one canonical root");
+}
+const geminiInstallRoot = declaredRoots[0];
+assert.equal(geminiInstall.includes("Duc-Auto-Gemini-Bridge"), false, "no vacated install root survives in the installer");
+assert.equal(geminiUninstall.includes("Duc-Auto-Gemini-Bridge"), false, "no vacated install root survives in the uninstaller");
+
+// The two bridges share a machine, so their roots, ports and pairing files must stay apart.
+const chatgptInstallRoot = install.match(/\[string\]\$InstallRoot = '([^']+)'/)?.[1];
+assert.notEqual(geminiInstallRoot, chatgptInstallRoot, "the Gemini host never installs over the ChatGPT host");
+assert.match(geminiInstall, /\$Port = 32148/, "the Gemini default port stays off the ChatGPT port");
+assert.match(geminiInstall, /duc-auto-gemini-bridge-pairing-v1\.json/, "the Gemini pairing file keeps its own name");
+assert.doesNotMatch(geminiInstall, /Write-Output[^\r\n]*token/i, "the Gemini installer never prints token material");
+
 console.log("bridge install static tests: PASS");
