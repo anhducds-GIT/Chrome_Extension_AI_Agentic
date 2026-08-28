@@ -5,10 +5,10 @@ name: Duc Auto Gemini (Platform)
 lifecycle: active
 version_source: workers/duc-auto-gemini/v0.2.0/manifest.json
 last_verified: 2026-08-28
-last_verified_commit: 3514aa557386e91c6b515049ae2b8f05a12eef34
-last_verified_how: "Live 2 cú tắt/bật host: panel báo Mất kết nối cả hai lần (mắt Đức), tự nối lại 22,5s và 27,7s — khớp dự đoán viết trước khi đo, lệch dưới 1 giây"
-evidence_ref: workers/duc-auto-gemini/v0.2.0/evidence-transport-liveness-20260828/README.md
-current_focus: "Lớp vận chuyển Bridge đã kiểm chứng live 28/08 — nhưng lời khai trên là của bản trần 30 giây. Đức chốt cùng ngày hạ trần xuống 5 giây và cho thang nhường alarm sau ~2 phút; bản đó ĐÃ commit nhưng CHƯA đo live, cần Đức reload extension rồi tắt/bật host một lần nữa. G-01 vẫn chờ trial live riêng. Còn nợ nhánh ChatGPT một số tính năng và method — xem BACKLOG.md và FEATURE-PARITY.md"
+last_verified_commit: 4789754b2ad57121fe94d97e1ebd86fc5d4d2148
+last_verified_how: "Live sau khi hạ trần chờ xuống 5 giây: tắt/bật host, nối lại sau 1,0 giây (bản trước đo 22,5s và 27,7s). Khớp dự đoán viết trước khi đo, lần thứ ba liên tiếp"
+evidence_ref: workers/duc-auto-gemini/v0.2.0/evidence-transport-liveness-5s-20260828/README.md
+current_focus: "Lớp vận chuyển Bridge đã xong và đã kiểm chứng live cả hai bản (28/08). Còn một nhánh chưa đo thật: tắt host quá 2 phút thì thang bỏ cuộc và alarm 30 giây lo tiếp — hiện chỉ ghim bằng test. G-01 vẫn chờ trial live riêng. Còn nợ nhánh ChatGPT một số tính năng và method — xem BACKLOG.md và FEATURE-PARITY.md"
 ref_readme: workers/duc-auto-gemini/v0.2.0/README.md
 ref_handoff: workers/duc-auto-gemini/v0.2.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md

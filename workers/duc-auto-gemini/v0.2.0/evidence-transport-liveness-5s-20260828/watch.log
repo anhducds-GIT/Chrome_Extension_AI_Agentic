@@ -1,0 +1,8 @@
+watching 127.0.0.1:32148 — one sample a second, 1800s
+14:02:02  start
+14:02:02  OK
+14:02:36  HOST-DOWN  (previous state held 34.8s)
+14:02:53  NO-EXT  (previous state held 16.1s)
+14:02:54  OK  (previous state held 1.0s)
+
+[killed]

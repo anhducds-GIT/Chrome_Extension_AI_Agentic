@@ -10,11 +10,11 @@
       "released_at": null
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-gemini-bridge-stability",
+      "ai": "claude",
       "claimed_at": "2026-08-28",
-      "task": "XONG 28/08 (3514aa5 + 4789754, da push). Lop van chuyen Bridge: han cho keepalive ACK, han bat tay, backoff tran 5s nhuong alarm sau ~2 phut, hang doi pairing, ghi status co thu tu. Da kiem chung LIVE ban tran 30s (evidence-transport-liveness-20260828). CON MO: G-11 do live ban tran 5s sau khi Duc reload extension. Khong dung G-01.",
-      "released_at": "2026-08-28"
+      "task": "G-11: ghi bang chung live cho ban tran 5 giay (do duoc 1.0s, truoc do 22.5s va 27.7s), dong G-11, cap nhat STATUS.",
+      "released_at": null
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-chatgpt-retention-pilot",

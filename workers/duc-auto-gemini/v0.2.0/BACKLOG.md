@@ -114,13 +114,6 @@ Auditor độc lập xác nhận cả ba là phòng thủ chiều sâu đúng đ
 Giữ lại. Nếu sau này ai gỡ một guard lớp một, ba cái này thành đường sống — nên **đừng xoá vì
 thấy test không đụng tới**.
 
-### G-11 · Đo live bản trần 5 giây — **[ĐỌC]**
-
-Bằng chứng `evidence-transport-liveness-20260828/` là của bản **trần 30 giây**. Đức đã chốt hạ
-trần xuống 5 giây và cho thang nhường alarm sau ~2 phút; bản đó đã commit nhưng **chưa ai đo
-trên máy thật**. Cần: reload extension, tắt/bật host, xác nhận chờ **dưới 5 giây** thay vì
-22–28 giây, rồi thêm một file bằng chứng mới (không sửa file cũ).
-
 ## P3 — Khi rảnh
 
 ### G-07 · Poll A/B "thích ảnh nào hơn" — **[ĐO]**
@@ -139,4 +132,10 @@ này, ghi lại để không quên.
 
 ## Đã đóng
 
-*(chưa có mục nào)*
+### G-11 · Đo live bản trần 5 giây — **ĐÓNG 28/08** ✅
+
+Đo được **1,0 giây** (bản trước: 22,5s và 27,7s). Bằng chứng:
+`evidence-transport-liveness-5s-20260828/`. Khớp dự đoán viết trước khi đo, lần thứ ba liên tiếp.
+
+Còn một nhánh **chưa đo thật**, ghi lại để không tưởng là đã phủ: tắt host **quá 2 phút** thì
+thang bỏ cuộc và alarm 30 giây lo tiếp. Hiện chỉ ghim bằng test.

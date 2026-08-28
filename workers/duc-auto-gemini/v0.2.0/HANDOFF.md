@@ -533,3 +533,17 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
 - **Next:** Đức bấm ⟳ reload extension lần nữa, rồi tắt/bật host **một lần** để xác nhận bản
   trần 5 giây: chờ phải **dưới 5 giây** thay vì 22–28 giây. Xong thì thêm một file bằng chứng
   mới (`G-11`), **không sửa file bằng chứng cũ**. G-01 trial live vẫn giữ nguyên, chưa đụng.
+
+- 2026-08-28 (chiều, tiếp) · Claude (`claude-gemini-bridge-stability`) · **G-11 ĐÓNG: bản trần 5 giây đo live được 1,0 giây.**
+  - Đức reload extension rồi tắt/bật host một lần. Máy đo: host tắt 16,1 giây, **nối lại sau
+    1,0 giây**. Bản trần 30 giây sáng nay đo 22,5s và 27,7s.
+  - **Dự đoán viết trước khi đo, khớp lần thứ ba liên tiếp:** thang mới thử lại ở giây 1, 3, 8,
+    13, 18… Host sống lại ở giây 17 → lần thử kế tiếp là giây 18. Đo đúng giây 18.
+  - Bằng chứng: `evidence-transport-liveness-5s-20260828/`. Thư mục buổi sáng **không bị sửa** —
+    luật bằng chứng chỉ cho thêm mới — nên `STATUS.md` là con trỏ chuẩn, nay trỏ sang thư mục mới.
+  - **Đọc con số cho đúng:** 1,0 giây là may (host sống lại sát một mốc thử). Cái được bảo đảm
+    là **trần 5 giây**.
+  - **Còn một nhánh chưa đo thật:** tắt host quá 2 phút → thang bỏ cuộc → alarm 30 giây lo tiếp.
+    Hiện chỉ ghim bằng test, đã ghi rõ trong bằng chứng và trong `BACKLOG.md`.
+- **Next:** Không còn việc mở của lớp vận chuyển. `G-01` trial live vẫn giữ nguyên, chưa đụng.
+
