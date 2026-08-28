@@ -29,6 +29,7 @@
     "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus", "runDashboardSplit", "runWidthSplitter",
     "bridgeProposalCard", "bridgeProposalCount", "bridgeProposalStatus", "bridgeProposalMeta", "bridgeProposalList", "bridgeProposalNotice", "bridgeProposalLockReason", "bridgeProposalFixtureBtn", "bridgeProposalRejectBtn", "bridgeProposalApproveBtn",
     "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput",
+    "bridgeProfileLabelInput", "bridgeProfileLabelHint",
     "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeActivityEmpty",
     "devModeToggle", "devModeBanner", "runDevModeBadge"
   ];
@@ -407,6 +408,43 @@
       if (response?.ok) renderBridgeTransportStatus(response.status);
       else renderBridgeTransportStatus({ state: "disconnected", paired: false });
     } catch (_) { renderBridgeTransportStatus({ state: "disconnected", paired: false }); }
+  }
+
+  // Multi-profile identity (BRIDGE-MULTIPROFILE-DESIGN-V1, Đức duyệt 28/08).
+  // Tên do Đức đặt, lưu chrome.storage.local (kho RIÊNG của từng profile);
+  // transport đọc nó ở LẦN KẾT NỐI TIẾP THEO và báo danh với host.
+  const BRIDGE_INSTANCE_LABEL_KEY = "dac.bridge.instance_label.v1";
+
+  function sanitizeBridgeProfileLabel(value) {
+    return typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 64) : "";
+  }
+
+  function renderBridgeProfileLabelHint(label) {
+    if (!els.bridgeProfileLabelHint) return;
+    els.bridgeProfileLabelHint.textContent = label
+      ? `Hồ sơ này sẽ báo danh là "${label}" ở lần kết nối tiếp theo của Bridge.`
+      : "Chưa đặt tên — khi nhiều profile cùng nối Bridge, AI chỉ thấy hồ sơ này bằng mã máy. Đặt tên để gọi đúng hồ sơ. Tên có hiệu lực ở LẦN KẾT NỐI TIẾP THEO.";
+  }
+
+  async function loadBridgeProfileLabel() {
+    if (!els.bridgeProfileLabelInput) return;
+    try {
+      const stored = await chrome.storage.local.get(BRIDGE_INSTANCE_LABEL_KEY);
+      const label = sanitizeBridgeProfileLabel(stored?.[BRIDGE_INSTANCE_LABEL_KEY]);
+      els.bridgeProfileLabelInput.value = label;
+      renderBridgeProfileLabelHint(label);
+    } catch (_) { /* Tên chỉ là nhãn hiển thị; lỗi đọc không chặn Bridge. */ }
+  }
+
+  async function saveBridgeProfileLabel() {
+    if (!els.bridgeProfileLabelInput) return;
+    const label = sanitizeBridgeProfileLabel(els.bridgeProfileLabelInput.value);
+    els.bridgeProfileLabelInput.value = label;
+    await chrome.storage.local.set({ [BRIDGE_INSTANCE_LABEL_KEY]: label });
+    renderBridgeProfileLabelHint(label);
+    log(label
+      ? `Đã lưu tên hồ sơ Bridge: "${label}". Có hiệu lực ở lần kết nối tiếp theo.`
+      : "Đã xoá tên hồ sơ Bridge; hồ sơ này sẽ báo danh bằng mã máy.", "done");
   }
 
   async function pairAgentBridgeFile(file) {
@@ -5008,6 +5046,7 @@
     pairAgentBridgeFile(file).catch((error) => log(messageOf(error), "error")).finally(() => { els.bridgePairingInput.value = ""; });
   });
   els.bridgeUnpairBtn?.addEventListener("click", () => unpairAgentBridge().catch((error) => log(messageOf(error), "error")));
+  els.bridgeProfileLabelInput?.addEventListener("change", () => saveBridgeProfileLabel().catch((error) => log(messageOf(error), "error")));
   els.devModeToggle?.addEventListener("change", () => setDevMode(els.devModeToggle.checked).catch((error) => { renderDevMode(); log(messageOf(error), "error"); }));
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFromRunTabBtn?.addEventListener("click", () => run("all"));
@@ -5026,6 +5065,7 @@
   renderOutput(); renderRuntime(); renderOutputGlossary(); renderOutputScreen(); controls(); restoreUiZoom().catch(() => applyUiZoom(1)); initRunWidthSplitter().catch(() => {}); syncZoomState().catch(() => {});
   renderBridgeTransportStatus(); renderBridgeActivityFeed();
   refreshBridgeTransportStatus();
+  loadBridgeProfileLabel();
   restoreDevMode().catch(() => renderDevMode());
   chrome.storage?.onChanged?.addListener((changes, areaName) => {
     if (areaName === "local" && changes[window.DacBridgePairingCore.STATUS_STORAGE_KEY]?.newValue) {

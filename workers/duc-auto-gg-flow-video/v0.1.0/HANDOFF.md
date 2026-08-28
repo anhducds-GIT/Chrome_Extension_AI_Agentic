@@ -261,3 +261,37 @@
   phản ứng với `pointerdown`, đúng như đo được. Hai mutation (trả từng chỗ về `.click()` trần)
   đều làm suite ĐỎ. Suite **84/84**.
   Chưa live verify: cần Đức reload extension rồi đặt chip về **Image** để thử đúng khâu này.
+- 2026-08-28 · `claude-bridge-multiprofile` · **MULTI-PROFILE BRIDGE — code xong theo thiết kế
+  Đức đã duyệt (`drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md`, hướng A).** Suite **85/85**,
+  **11/11 mutation đều làm suite ĐỎ** (trong đó: xoá luật từ chối ambiguous → đỏ; failSession
+  nới thành failAll → đỏ; bỏ dấu `served_by` → đỏ; bỏ chặn phiên ma → đỏ).
+  - **Host** (`bridge-host.mjs`): bỏ luật một-ghế — Map phiên theo `instance_id`; cùng id nối
+    lại chỉ thay ghế CỦA CHÍNH NÓ và chỉ huỷ in-flight của nó (hết cảnh `failAll` giết oan việc
+    profile khác); `bridge.sessions` (host tự trả, chỉ đọc); `target` ở envelope được tiêu thụ
+    và GỠ trước khi relay; mọi phản hồi relay đóng dấu `served_by`; 2 mã lỗi mới
+    `TARGET_AMBIGUOUS` (không retry) / `TARGET_NOT_CONNECTED` (retry). Định tuyến fail-closed:
+    ≥2 phiên mà không nêu đích là TỪ CHỐI kèm danh sách, kể cả khi chỉ 1 phiên "có tên" + 1 legacy.
+  - **Bug thật tìm ra khi viết test:** socket server HTTP Node để half-open — service worker
+    MV3 chết chỉ gửi FIN thì host KHÔNG BAO GIỜ thấy `close`, phiên ma nằm lại và gây ambiguous
+    oan. Vá bằng `socket.on("end", () => socket.end())`, có mutation ghim.
+  - **Transport**: khối `instance` trong `auth` (id bền `chrome.storage.local`
+    `dac.bridge.instance.v1` + label `dac.bridge.instance_label.v1`, đọc mới mỗi lần connect);
+    lỗi storage → degrade thành auth legacy, vẫn fail-closed. **Panel**: ô "Tên hồ sơ Chrome
+    này" (change → lưu, hint nói rõ hiệu lực ở lần kết nối tiếp theo). **CLI**: lệnh `sessions`
+    + cờ `--target` (cả `bridge-cli.mjs` lẫn `scripts/bridge-rpc.mjs`).
+  - **Sửa kèm, thuộc F-14:** suite tại HEAD đang ĐỎ SẴN (`flow-video-safety-behavior`, 3/3 lần)
+    — bản vá 83ed2ed mô tả dùng `pressFlowControl` cho "đúng hai chỗ" nhưng chỉ nối một: chip
+    mode vẫn `.click()` trần ở `content.js` (`ensureFlowVideoMode`). Đã nối nốt
+    (`pressFlowControl(current.button)`), mutation trả về `.click()` → đỏ. Handoff trước ghi
+    "84/84" không đúng với HEAD đã commit — đo lại trước khi tin, đúng luật vàng 4.
+  - Tương thích ngược ghim bằng test: 1 phiên không cần `--target` (hành vi cũ giữ nguyên),
+    extension cũ (không `instance`) vẫn nối được, được liệt kê `legacy:true`.
+  - Docs: guide thêm mục vận hành nhiều profile + sửa 2 dòng bảng lỗi đã lỗi thời;
+    decisions.md ghi 4 quyết định của Đức; BACKLOG thêm F-16 (nút "Tạo danh tính mới",
+    chống copy profile trùng id) và F-17 (contract trong auth — V2).
+  - **CHƯA kiểm live — cần tay Đức, theo thứ tự:** (1) chép `bridge-host.mjs` + `bridge-cli.mjs`
+    mới sang `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gg-flow-video\` (AI đã chuẩn bị
+    sẵn nếu được phép) rồi chạy lại `START-BRIDGE_GG_Flow_Video.cmd`; (2) reload extension ở
+    TỪNG profile muốn dùng; (3) mở panel từng profile, điền ô "Tên hồ sơ Chrome này";
+    (4) AI gọi `bridge.sessions` xác nhận thấy đủ tên. Việc mở kế tiếp của nhánh: live-check
+    F-14 chip mode (cần chip đang ở Image) — vẫn 0 credit.

@@ -77,3 +77,11 @@
   runner hiện KHÔNG tự kiểm điều đó. Nên thêm tiền kiểm: nếu chip không phải `x1` thì từ chối
   trước khi gõ, kèm lời nhắn bảo Đức đổi về `x1`. (Cẩn thận: đọc `x{n}` từ nhãn chip là selector
   mới → phải có bằng chứng DOM, đã có trong `F4-trial-success-live-20260828.json`.)
+- **F-16** · [Thiết kế 28/08, rủi ro có thật] Copy nguyên thư mục profile Chrome sẽ nhân đôi
+  `instance_id` trong `chrome.storage.local` → hai profile thay nhau chiếm ghế CỦA NHAU trên
+  host (khoanh trong một cặp, các profile khác không bị vạ). Cần nút **"Tạo danh tính mới"**
+  trong side panel để đổi `instance_id` tại chỗ. Dấu hiệu nhận biết: `bridge.sessions` thấy một
+  entry có `connected_at` nhảy liên tục.
+- **F-17** · [V2 của design multi-profile §5.4] Panel/transport gửi kèm chuỗi `runtime_contract`
+  trong `auth` để MỘT lệnh `bridge.sessions` thấy độ tươi của mọi profile. Hiện tại phải
+  `dom_probe --target` từng đích (2 lệnh) — vẫn đủ dùng, chưa gấp.

@@ -54,6 +54,26 @@ Bẫy đã dẫm: ngay sau reload có một khe vài giây mà `session.hello` c
 **Đừng tin một lần đọc duy nhất** — `available:true` rồi `EXECUTOR_UNAVAILABLE` ngay sau đó
 nghĩa là panel đóng, không phải Bridge hỏng.
 
+## Nhiều profile Chrome cùng nối Bridge — từ 2026-08-28 KHÔNG phải tắt extension nữa
+
+Host giữ được nhiều kết nối cùng lúc, mỗi profile báo danh bằng tên Đức đặt trong side panel
+(ô **"Tên hồ sơ Chrome này"**). Thiết kế: `drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` gốc repo.
+
+**Luật vận hành, theo đúng thứ tự:**
+
+1. Mở phiên: gọi `bridge.sessions` (CLI: `node bridge-cli.mjs sessions --pairing ...`) để xem
+   AI đang nói chuyện được với những profile nào. Kết quả có `instance_id`, `label` (tên Đức
+   đặt), `legacy` (true = extension bản cũ chưa báo danh).
+2. **Có ≥2 kết nối → MỌI lệnh phải nêu đích**: `--target <tên|instance_id>` (cả `bridge-cli.mjs`
+   lẫn `scripts/bridge-rpc.mjs`). Quên là host TỪ CHỐI bằng `TARGET_AMBIGUOUS` kèm danh sách —
+   nó không bao giờ tự chọn. Đúng 1 kết nối thì như cũ, không cần `--target`.
+3. **Probe và run phải CÙNG MỘT `--target`.** Mọi phản hồi chuyển tiếp đều có dấu
+   `served_by: {instance_id, label}` — thấy `served_by` đổi giữa probe và run là DỪNG.
+4. `TARGET_NOT_CONNECTED` (retryable) = đích có tên nhưng đang offline, thường là service
+   worker ngủ; báo thức 30s sẽ nối lại — đợi rồi gọi lại, đừng đổi đích.
+5. Hai profile trùng tên → `TARGET_AMBIGUOUS` kèm `instance_id` từng ứng viên; nhắm bằng
+   `instance_id`, và nhờ Đức đổi tên một trong hai trong panel.
+
 ## BẮT BUỘC trước mọi `run.trial`: kiểm vân tay runtime
 
 Từ 2026-08-28, content script khai một chuỗi vân tay và `diagnostics.dom_probe` trả nó về:
@@ -114,11 +134,11 @@ chạy. Vì vậy AI vận hành phải tự kiểm một bước, mỗi phiên,
 |---|---|---|
 | `run.trial` trả lỗi Dev Mode/toggle | Toggle **Chế độ phát triển (Dev Mode)** trong side panel đang tắt | Đức bật toggle trước khi gọi; trần 3 job vẫn luôn áp dụng |
 | `diagnostics.evidence_submit` báo hết lượt | Debug primitive đã chạm trần 3 lượt của lần nạp trang hiện tại | Không bypass; dùng runner thật hoặc nạp lại trang khi đúng phạm vi debug được duyệt |
-| Lệnh đọc lúc được lúc báo `FORBIDDEN/bootstrap_locked`, capability đổi qua lại giữa bản cũ/mới | Hai Chrome profile cùng pair vào cổng 32149; host chỉ giữ kết nối extension đến sau cùng nên hai runtime giành nhau | Chỉ giữ profile có tab Flow cần chạy được pair; profile còn lại bấm **Ngắt kết nối** Bridge hoặc tắt extension. Không gửi lại lệnh ghi khi chưa xác định lần trước có chạy hay không |
+| Lệnh đọc lúc được lúc báo `FORBIDDEN/bootstrap_locked`, capability đổi qua lại giữa bản cũ/mới | Hai Chrome profile cùng pair vào cổng 32149; host chỉ giữ kết nối extension đến sau cùng nên hai runtime giành nhau | **ĐÃ VÁ 28/08 (multi-profile routing, xem mục riêng ở đầu guide):** host giữ mọi kết nối, lệnh nhắm đích bằng `--target`. Cách cũ (tắt extension profile thừa) chỉ còn cần khi host chưa được cập nhật. Luật "không gửi lại lệnh ghi khi chưa xác định lần trước có chạy hay không" vẫn nguyên |
 | Job thứ 2/3 chạy nối tiếp lỗi `Create button not found` ở `PRE_SUBMIT`, trong khi DOM probe vẫn thấy composer | Flow có lúc tháo nút submit prompt lúc composer rỗng rồi remount sau khi React nhận chữ; kiểm nút trước khi gõ là quá sớm | Bản vá FLOW-04 cho phép gõ trước, nhưng vẫn bắt buộc `waitForSendButtonReady()` sau gõ và zero click nếu nút không trở lại. Reload Extension trước khi kiểm chứng bản vá |
 | Sau khi gõ prompt, `Create` biến mất và xuất hiện nút `Upgrade`; ledger cũ báo `Send button did not become ready` | Tài khoản đã hết credit. FLOW-04 đo thật 28/08: 2 nút `Upgrade` visible/enabled thay `Create`, zero `PROMPT_SUBMITTED`, zero retry | Bản vá nhận diện mẫu này thành `GENERATION_LIMIT_REACHED` và dừng trước click. Không retry, không đổi tài khoản, không bypass. Sau khi sửa `.js`, Đức reload Extension rồi mới kiểm chứng live |
 | Prompt đã gõ nhưng runner báo `Send button did not become ready`; probe vẫn thấy nút enabled `add_2 Create` | **CHẨN ĐOÁN CŨ SAI — đã đính chính 28/08.** Ghi ban đầu là "Flow đổi icon `arrow_forward` → `add_2`". KHÔNG PHẢI. Hai nút **cùng tồn tại** trong một cụm (trace hop 2). `add_2 Create` là nút **thêm media**, luôn enabled; `arrow_forward Create` là nút gửi thật, **disabled khi ô prompt rỗng**. Lúc đó ô prompt rỗng nên nút gửi disabled, chứ nút không hề đổi tên | Nút gửi **chỉ có một nhãn**: `arrow_forward Create`. Nút disabled nghĩa là chưa gõ được chữ vào composer — đi sửa đường gõ, **đừng đi tìm nút khác**. Bấm `add_2 Create` mở bảng media và không sinh gì cả (đã trả giá một lượt chạy) |
 | Chạy từ giao diện Image mở bảng media (`Meo Story / All / Images / Videos`) rồi ledger vẫn chuyển `SUBMITTED`, nhưng prompt còn nguyên và không có video mới | Adapter đã chọn nhầm nút `add_2 Create` cấp trang thay vì nút submit trong đúng form composer; Bridge chập chờn giữa runtime cũ/mới làm thiếu tiền kiểm phiên bản | Gọi `run.stop`, không retry mù. **ĐÍNH CHÍNH 28/08:** cách sửa ghi ở đây lúc đầu ("chỉ nhận nút Create trong form chứa composer") là SAI — đo thật cho thấy composer **không có `<form>` cha**, làm vậy sẽ từ chối mọi job. Cách đúng: nút gửi chỉ có một nhãn `arrow_forward Create`, và tìm trong **cụm điều khiển của composer** (tầng cha đầu tiên có nút). `run.trial` kiểm `runtime_contract` trước khi ghi history/chạy |
 | Job dừng `PRE_SUBMIT` với `WRONG_GENERATION_MODE` (không thấy nút Video, hoặc bấm rồi mà mode không đổi) | **`element.click()` không ăn với nhóm nút cấu hình của Flow** (class `flow_tab_slider_trigger`). Đo 28/08 hai lượt: chip không mở được bảng; và khi bảng mở sẵn thì bấm đúng `videocam Video` mode vẫn không đổi. Cùng `.click()` đó vẫn bấm được `arrow_forward Create` | Nhờ Đức **tự đặt Video mode bằng tay** trước khi chạy. Mode đã là Video thì runner bỏ qua khâu này, chạy bình thường. Chi tiết + cách phân biệt nguyên nhân: **F-14** trong `BACKLOG.md`. Cả hai lượt hỏng đều 0 credit, `retry_count=0` |
 | Chip cấu hình đang để `x2`/`x3`/`x4` | Flow sẽ sinh nhiều video một lượt. Luật gán chỉ nhận **đúng 1 id mới**, nhiều hơn thì trả `OUTPUT_AMBIGUOUS` và không nhận cái nào — **credit vẫn bị tiêu** | **Đọc chip TRƯỚC khi chạy.** Không phải `x1` thì nhờ Đức đổi về `x1` rồi mới chạy. Runner chưa tự kiểm việc này (**F-15**) |
-| `dom_probe` trả `ok:true` nhưng THIẾU `runtime_contract`, dù Đức vừa reload extension và tab đã F5 | Extension được nạp trong **NHIỀU profile Chrome cùng lúc** (đo thật 28/08: 3 profile — Default, Profile 10, Profile 4 — cùng nạp từ một thư mục). Host chỉ giữ kết nối của extension pair SAU CÙNG, mà đó có thể là profile Đức KHÔNG bấm reload. `extension_id` giống hệt nhau ở cả ba nên `session.hello` không phát hiện ra | Nhờ Đức **tắt/gỡ extension ở các profile thừa**, chỉ để đúng một profile có tab Flow. Rồi reload extension ở profile đó + F5 tab. Kiểm lại bằng `runtime_contract`. TUYỆT ĐỐI không chạy job khi còn thiếu trường này — bản cũ sẽ bấm nhầm nút `add_2 Create` cấp trang |
+| `dom_probe` trả `ok:true` nhưng THIẾU `runtime_contract`, dù Đức vừa reload extension và tab đã F5 | Extension được nạp trong **NHIỀU profile Chrome cùng lúc** (đo thật 28/08: 3 profile — Default, Profile 10, Profile 4 — cùng nạp từ một thư mục). Host chỉ giữ kết nối của extension pair SAU CÙNG, mà đó có thể là profile Đức KHÔNG bấm reload. `extension_id` giống hệt nhau ở cả ba nên `session.hello` không phát hiện ra | **ĐÃ VÁ 28/08 (multi-profile routing, xem mục riêng ở đầu guide):** gọi `bridge.sessions` để thấy đủ các profile, rồi `--target` đúng profile Đức vừa reload; `served_by` trên phản hồi xác nhận đúng runtime trả lời. TUYỆT ĐỐI vẫn không chạy job khi thiếu `runtime_contract` |

@@ -3,10 +3,10 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-flow-create-scope",
+      "owner": "claude-bridge-multiprofile",
       "ai": "claude",
       "claimed_at": "2026-08-28",
-      "task": "FLOW-04 fix: khoa findCreateButton vao composer form (fail closed), runtime fingerprint preflight cho run.trial (FLOW_RUNTIME_CONTRACT), 3 test dich do -> xanh, audit doc lap PASS.",
+      "task": "Phase 2 multi-profile Bridge theo drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md (Duc duyet huong A). Duc xac nhan cac phien khac da dung han -> tiep quan tu claude-flow-create-scope (FLOW-04 da dong, commit 91fa16f). Pham vi: host sessions Map + target/bridge.sessions/served_by, transport instance block, sidepanel o ten profile, script --target, test ghim + mutation + audit Codex.",
       "released_at": null
     },
     "workers/duc-auto-gemini": {

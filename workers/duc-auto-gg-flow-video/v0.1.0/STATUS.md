@@ -4,7 +4,7 @@ id: duc-auto-gg-flow-video
 name: Duc Auto GG Flow Video
 lifecycle: building
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "Bản vá FLOW-04 (khoá nút Create vào đúng form composer + tiền kiểm runtime_contract) đã xong, audit PASS, suite 84/84 — nhưng CHƯA kiểm live được: extension nạp ở 3 profile Chrome nên Bridge đang nói chuyện với bản cũ"
+current_focus: "Multi-profile Bridge (hướng A, Đức duyệt 28/08) đã code xong: host giữ nhiều kết nối + target/bridge.sessions/served_by, panel có ô tên hồ sơ, sửa nốt F-14 (chip mode qua pressFlowControl). Suite xanh, mutation đỏ đủ. CHƯA kiểm live: cần Đức chép host mới sang thư mục Bridge + khởi động lại host + reload extension ở từng profile + đặt tên từng profile"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

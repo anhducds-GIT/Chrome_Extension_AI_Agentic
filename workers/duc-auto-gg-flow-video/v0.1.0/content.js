@@ -587,7 +587,7 @@
     // Reversible settings interaction only. No prompt mutation or Create click
     // occurs unless the exact measured Video option and the closed Video
     // summary postcondition are both proven.
-    current.button.click();
+    pressFlowControl(current.button);
     const videoOption = await waitUntil(
       () => ADAPTER.findVideoModeOption(document),
       ADAPTER.TIMING.sendReadyTimeoutMs,

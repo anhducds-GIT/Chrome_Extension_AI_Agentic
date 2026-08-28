@@ -459,6 +459,11 @@
           <button id="bridgeUnpairBtn" class="secondary small" type="button" hidden>Ngắt pairing</button>
         </div>
         <input id="bridgePairingInput" type="file" accept=".json,application/json" />
+        <div class="bridge-profile-label-block">
+          <label for="bridgeProfileLabelInput"><strong>Tên hồ sơ Chrome này</strong></label>
+          <input id="bridgeProfileLabelInput" type="text" maxlength="64" placeholder="ví dụ: kaito" autocomplete="off" />
+          <p id="bridgeProfileLabelHint" class="hint">Chưa đặt tên — khi nhiều profile cùng nối Bridge, AI chỉ thấy hồ sơ này bằng mã máy. Đặt tên để gọi đúng hồ sơ. Tên có hiệu lực ở LẦN KẾT NỐI TIẾP THEO.</p>
+        </div>
         <div class="dev-mode-block">
           <label class="dev-mode-toggle">
             <input id="devModeToggle" type="checkbox" />

@@ -63,3 +63,17 @@ router chuẩn của Gemini HEAD. Lý do: provider adapter Flow đã được d�
 có test ghim; F-02 hoàn tất và audit đối kháng PASS, F-04 đã hạ trần trial còn 3 job. Các gate
 an toàn riêng của từng method vẫn giữ nguyên. `diagnostics.evidence_submit` vẫn là công cụ debug
 có trần cứng 3 lượt/trang; `run.trial` vẫn cần Đức bật **Chế độ phát triển (Dev Mode)** trong panel.
+
+## 2026-08-28 — Multi-profile Bridge: Đức duyệt hướng A
+
+Đức chốt trong chat (phiên `claude-bridge-multiprofile`), thiết kế đầy đủ ở
+`drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` gốc repo:
+
+1. **Duyệt đổi bề mặt auth**: message `auth` mang thêm khối `instance`
+   (`instance_id` bền trong `chrome.storage.local` + tên Đức đặt trong panel).
+   Token vẫn là thứ duy nhất quyết định cho vào — instance chỉ để định tuyến.
+2. **Bỏ luật "một ghế"** ở host: nhiều profile nối cùng lúc; từ 2 kết nối trở lên,
+   lệnh không nêu `target` bị TỪ CHỐI (`TARGET_AMBIGUOUS`) kèm danh sách — không bao
+   giờ tự chọn. Một kết nối thì chạy y như cũ.
+3. **Không thêm quyền Chrome nào.**
+4. Thứ tự triển khai: gg-flow-video → gemini → chatgpt (chờ phiên ChatGPT đóng).
