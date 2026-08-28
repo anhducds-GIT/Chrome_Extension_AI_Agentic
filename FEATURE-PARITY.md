@@ -106,7 +106,7 @@ con số máy đo, và bị nuốt theo. Đúng kiểu mất mát âm thầm mà
 ## 3. Module — **[ĐO]**
 
 <!-- AUTO:MODULES START -->
-GPT 34 file `.js` · Gemini 33.
+GPT 33 file `.js` · Gemini 33.
 
 **7 file giống hệt sau khi chuẩn hoá CRLF/LF:**
 
@@ -119,21 +119,20 @@ GPT 34 file `.js` · Gemini 33.
 | `ab-poll-core.js` | GPT |
 | `content-decision-core.js` | Gemini |
 | `dev-trial-core.js` | Gemini |
-| `interjob-delay-core.js` | GPT |
 | `text-output-core.js` | GPT |
 
 **24 file có ở cả hai nhưng khác nội dung** (xếp theo chênh lệch số dòng giảm dần):
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 5967 | 5012 | 955 |
+| `sidepanel.js` | 5952 | 5012 | 940 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
 | `bridge-core.js` | 954 | 799 | 155 |
 | `bridge-transport-loopback.js` | 287 | 425 | 138 |
 | `background.js` | 246 | 167 | 79 |
 | `content.js` | 1000 | 1079 | 79 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
-| `runner-core.js` | 277 | 203 | 74 |
+| `runner-core.js` | 272 | 203 | 69 |
 | `output-profile-core.js` | 96 | 45 | 51 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
 | `output-location-core.js` | 389 | 373 | 16 |
