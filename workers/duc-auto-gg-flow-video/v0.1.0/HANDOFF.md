@@ -144,3 +144,12 @@
   - Còn mở: `evidence/F1-snapshot-7-high-demand-banner-20260827.json` vẫn là vỏ lỗi
     EXECUTOR_UNAVAILABLE, chưa commit và chưa xoá — `evidence/` chỉ-thêm nên chờ Đức quyết.
     STATUS/DASHBOARD cần `_root`, phiên khác đang giữ, nên lượt này không đụng.
+- 2026-08-28 · `claude-flow-create-scope` · **Đã commit `7246bd8`, nhưng CHƯA PUSH ĐƯỢC — cần Đức quyết.**
+  `safe-push` liệt kê đúng 1 commit của mình rồi bị GitHub từ chối `non-fast-forward`: nhánh local
+  đang **sau origin/main 12 commit**. 12 commit đó **toàn là tài liệu trong `drafts/`, không đụng
+  package này** (đã kiểm `git diff --name-only HEAD...origin/main -- workers/duc-auto-gg-flow-video`
+  → rỗng), nên về nội dung rebase sẽ sạch. Nhưng: (a) rebase là sửa lịch sử, luật mục 2 bắt hỏi Đức;
+  (b) cây làm việc đang có **27 file đang sửa dở của hai phiên khác** (chatgpt, gemini) — `pull --rebase`
+  sẽ stash/đụng vào việc đang chạy của họ. Nên DỪNG, không tự rebase. Commit nằm nguyên ở local,
+  không mất. Cách xử lý an toàn nhất: đợi hai phiên kia commit xong, rồi một phiên rebase một lần
+  cho cả ba. Không dùng force-push.
