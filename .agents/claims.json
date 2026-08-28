@@ -24,11 +24,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-flow-create-scope",
-      "ai": "claude",
-      "claimed_at": "2026-08-28",
-      "task": "Nhan _root de regen DASHBOARD + FEATURE-PARITY sau khi commit code FLOW-04, va commit claims.json. Tra ngay sau khi xong.",
-      "released_at": null
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": "Da regen DASHBOARD + FEATURE-PARITY tu worktree HEAD sach va commit claims.json (28/08, claude-flow-create-scope). Tra quyen.",
+      "released_at": "2026-08-28"
     }
   }
 }
