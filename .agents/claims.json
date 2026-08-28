@@ -10,11 +10,11 @@
       "released_at": null
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-gemini-bridge-stability",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-08-28",
-      "task": "G-11: ghi bang chung live cho ban tran 5 giay (do duoc 1.0s, truoc do 22.5s va 27.7s), dong G-11, cap nhat STATUS.",
-      "released_at": null
+      "task": "XONG 28/08, da push. Lop van chuyen Bridge on dinh: han cho keepalive ACK, han bat tay, backoff tran 5s nhuong alarm sau ~2 phut, hang doi pairing, ghi status co thu tu. Kiem chung LIVE ca hai ban: tran 30s do 22.5s/27.7s, tran 5s do 1.0s. Bang chung: evidence-transport-liveness-20260828 va -5s-20260828. CON MO duy nhat: nhanh tat host qua 2 phut (thang bo cuoc, alarm lo tiep) chua do live, chi ghim bang test. Khong dung G-01.",
+      "released_at": "2026-08-28"
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-chatgpt-retention-pilot",
@@ -24,10 +24,10 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-bridge-multiprofile",
+      "owner": "claude-chatgpt-retention-pilot",
       "ai": "claude",
       "claimed_at": "2026-08-28",
-      "task": "Duc duyet 28/08 chuyen _root tu claude-platform-orchestrator-study (task do doc lap, khong issue): dat drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md + khai vao ban do file. Duc da duyet huong A (per-session identity, fail closed khi >=2 ket noi). Phase 2 CHO 2 task dang chay xong (Gemini bridge stability, ChatGPT text-reasoning) roi moi claim worker.",
+      "task": "MUON TAM, Duc duyet: sinh lai DASHBOARD/FEATURE-PARITY. Tra lai ngay sau khi PUSH XONG.",
       "released_at": null
     }
   }
