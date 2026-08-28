@@ -1,0 +1,66 @@
+{
+  "captured_at": "2026-08-28T08:19:58.622Z",
+  "session": "claude-flow-create-scope",
+  "kind": "live_verification_of_the_flow04_fix",
+  "credits_spent": 0,
+  "read_only": true,
+  "url": "https://labs.google/fx/tools/flow/project/f361b734-24c0-411d-b1fc-3149033dd4a3",
+  "runtime_contract": "flow04-composer-cluster-submit-v2",
+  "what_this_proves": "The corrected build is loaded and, on the exact page state that caused the 2026-08-28 loss, it now selects the right control. No job was run and no credit was spent: this is a DOM-level verification only.",
+  "page_state": {
+    "generation_mode_chip": "🍌 Nano Banana 2 crop_9_16 x2",
+    "note": "Image mode, the same starting state as the failed run",
+    "videos_on_page": 0,
+    "securityBlocker": null,
+    "generationLimitBlocker": null
+  },
+  "scope": {
+    "composer_found": true,
+    "composer_scope_resolved": true,
+    "composer_scope_hops": 2,
+    "predicted_hops_from_the_earlier_trace": 2,
+    "prediction_held": true
+  },
+  "composer_cluster_contents": [
+    {
+      "txt": "add_2 Create",
+      "disabled": false
+    },
+    {
+      "txt": "Agent",
+      "disabled": false
+    },
+    {
+      "txt": "🍌 Nano Banana 2 crop_9_16 x2",
+      "disabled": false
+    },
+    {
+      "txt": "arrow_forward Create",
+      "disabled": true
+    }
+  ],
+  "create_like_controls_anywhere": [
+    {
+      "txt": "add_2 Create",
+      "disabled": false,
+      "in_composer_cluster": true
+    },
+    {
+      "txt": "arrow_forward Create",
+      "disabled": true,
+      "in_composer_cluster": true
+    }
+  ],
+  "the_decisive_result": {
+    "send_control_found": true,
+    "selected": "arrow_forward Create (disabled, because the composer is empty)",
+    "ignored": "add_2 Create (enabled, sitting in the same cluster) — the control that was clicked on 2026-08-28 and opened the media panel",
+    "quota_verdict": null,
+    "quota_note": "null is correct here: a Create is present, so this idle page is not the credit wall. An earlier version of the fix would have called this exhaustion and hard-stopped every job."
+  },
+  "not_yet_verified_live": [
+    "the Image -> Video mode switch",
+    "typing, the single guarded click, and video attribution — these were already proven live on 2026-08-27 and 2026-08-28 (two jobs, one new video id each); what broke was control selection, which is what this capture verifies",
+    "running one real job needs a workbook loaded in the side panel (cleared by the extension reload: run.status returns WORKBOOK_NOT_LOADED) and the owner's Dev Mode toggle"
+  ]
+}
