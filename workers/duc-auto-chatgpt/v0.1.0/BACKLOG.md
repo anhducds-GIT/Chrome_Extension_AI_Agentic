@@ -257,6 +257,16 @@ Nên `DAC_XLSX_RUN_PLAN_V1.md` là **hợp đồng schema đang nói sai** — n
 nó là file mà `AGENTS.md` chỉ AI đọc để hiểu schema. Sửa: hoặc ghi rõ đường thứ hai chưa nối,
 hoặc bỏ khỏi hợp đồng.
 
+### B-27 · Câu trả lời text dài hơn một ô Excel — CHỜ, chỉ làm khi Đức cần
+Đức đã chốt (A) giữ nguyên ngày 2026-08-28: vượt 32.767 ký tự thì dừng batch và **không lưu gì**.
+Đo được: trial live dài 180/178/177 ký tự — **dưới 1%** giới hạn, vì prompt của Đức có `BUDGET: 35 w`.
+
+**Đừng tự làm sớm.** Chỉ mở lại khi Đức bỏ giới hạn độ dài trong prompt và thật sự cần câu trả lời dài.
+Khi đó làm phương án (C), KHÔNG phải (B): lưu đầy đủ ra một file `.txt` riêng, ô Excel ghi tên file đó.
+Lý do chọn (C) chứ không cắt bớt: một ô Excel nhìn như đầy đủ mà thiếu đuôi là đúng kiểu lỗi mà
+project này cấm — người đọc không có cách nào biết. Kèm theo: file `.txt` sinh thêm thì cần luật
+dọn giống B-26, đừng quên phần đó khi ước lượng công.
+
 ### ~~B-26 · Mỗi job đẻ ra 3 file XLSX — cần luật DỌN, không phải bớt checkpoint~~ — **ĐÃ ĐÓNG 2026-08-28**
 
 > **Đã làm:** `checkpoint_retention` (mặc định 2). Sau mỗi checkpoint đã ghi VÀ đã xác minh, các bản cũ hơn N bản mới nhất bị xoá. Mở lại side panel thì đọc lại lịch sử tải của Chrome, nên rác của phiên trước cũng được dọn — nhưng CHỈ khi phiên mới thật sự ghi thêm một checkpoint; mở lên rồi không chạy gì thì không dọn gì. Đức chốt phương án xoá thật, thay cho luật `superseded/` ngày 24/08 — xem `decisions.md`. Ghi chú đo được bên dưới giữ nguyên vì nó giải thích VÌ SAO không được ghi ít checkpoint đi.
