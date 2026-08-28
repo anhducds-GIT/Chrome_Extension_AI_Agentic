@@ -1,0 +1,7 @@
+﻿HIEN TRANG THU MUC RA - TRUOC KHI CHAY (2026-08-28)
+duong dan: C:\Users\MAYTEST_12\Downloads\Phai sinh\DucAuto_GPT-Output\Pilot-15_CheckpointRetention
+
+Bridge-2026-08-28T04-36__audit.jsonl  1598 byte
+Bridge-2026-08-28T04-36__results__v02.xlsx  7840 byte
+
+tong: 2 file

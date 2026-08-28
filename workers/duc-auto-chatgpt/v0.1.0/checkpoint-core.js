@@ -76,6 +76,28 @@
     return directory(candidatePath) === anchor;
   }
 
+  // Keep only the entries that live in the same directory as the anchor.
+  //
+  // Pilot-15, 2026-08-28, LIVE: this is the guard whose absence deleted a real
+  // file. Recovery ran once, at the first checkpoint, and anchored the folder
+  // scope to wherever output pointed THEN. `output.configure` later moved the
+  // destination, the once-per-workbook flag stopped recovery re-running, and
+  // the history quietly held rows from two different folders with nothing but a
+  // filename to tell them apart. Pruning then reached into the old folder.
+  //
+  // The lesson is why this exists as a separate step rather than as a filter
+  // inside recovery: scoping must be applied at DELETE time, against the
+  // checkpoint actually just written, so no later change of destination can
+  // leave a stale anchor behind. An entry with no recorded path is treated as
+  // out of scope -- unknown location is never licence to delete.
+  function scopedTo(entries = [], anchorPath = "") {
+    // Redundant given sameFolder()'s own empty-anchor guard, so no test can
+    // kill this line -- kept as an explicit statement of the rule at the point
+    // a reader looks for it, not as covered behaviour.
+    if (!anchorPath) return [];
+    return (entries || []).filter((entry) => entry && entry.path && sameFolder(anchorPath, entry.path));
+  }
+
   function highest(candidates = []) {
     return [...candidates].filter((item) => Number.isInteger(item?.version) && item.version >= 1)
       .sort((left, right) => right.version - left.version || String(left.filename).localeCompare(String(right.filename)))[0] || null;
@@ -199,5 +221,5 @@
       .sort((left, right) => right.version - left.version);
   }
 
-  (typeof window !== "undefined" ? window : globalThis).DacCheckpointCore = { formatVersion, hasVersionToken, render, parse, filenameRegex, sameFolder, highest, prunable, pruneTargets, nextVersion, hasVersionConflict, partialFilename, quarantinePartial, persistDirectoryCheckpoint, versionCollisions };
+  (typeof window !== "undefined" ? window : globalThis).DacCheckpointCore = { formatVersion, hasVersionToken, render, parse, filenameRegex, sameFolder, scopedTo, highest, prunable, pruneTargets, nextVersion, hasVersionConflict, partialFilename, quarantinePartial, persistDirectoryCheckpoint, versionCollisions };
 })();

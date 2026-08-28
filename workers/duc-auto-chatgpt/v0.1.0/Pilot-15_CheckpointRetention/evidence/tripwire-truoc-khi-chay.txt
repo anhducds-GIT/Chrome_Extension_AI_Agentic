@@ -1,0 +1,7 @@
+﻿BAY THU PHAM VI XOA - ghi luc 2026-08-28 truoc khi chay Pilot-15
+File nay cung MAU TEN voi checkpoint cua run, nhung nam o THU MUC KHAC.
+Neu co che don rac scope dung thi no phai con nguyen sau khi chay.
+
+duong dan: C:\Users\MAYTEST_12\Downloads\Phai sinh\Duc Auto ChatGPT\Bridge-2026-08-28T04-36__results__v01.xlsx
+SHA256:    BA543967E0A120DFCF5E0C728385BB03E1724A7754A9747BBD5D9686EF5DABFF
+kich thuoc: 7555 byte

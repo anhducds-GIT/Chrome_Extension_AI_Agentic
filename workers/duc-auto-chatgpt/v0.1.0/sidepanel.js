@@ -4804,18 +4804,24 @@
       // Only mark recovery done once it actually had an anchor to work with.
       // Setting the flag unconditionally meant one anchor-less first checkpoint
       // permanently disabled cleanup of the previous session's files.
-      if (!state.checkpointHistoryRecovered && persisted.actual) {
+      // Recovery is folder-agnostic now, so running it once per workbook is
+      // safe: it records paths, and prune scopes by folder at delete time.
+      if (!state.checkpointHistoryRecovered) {
         state.checkpointHistoryRecovered = true;
-        await recoverDownloadsCheckpointHistory(persisted.actual);
+        await recoverDownloadsCheckpointHistory();
       }
       // Filter by FILENAME, not by version. Filtering by version dropped a
       // legitimately ambiguous neighbour ('v011' when writing 'v11') out of the
       // candidate set, so versionCollisions() saw nothing and the refuse-on-
       // ambiguity rule was quietly defeated. prunable() already de-duplicates
       // by filename, so keeping the row costs nothing and preserves the guard.
-      state.checkpointHistory = [...state.checkpointHistory.filter((entry) => entry.filename !== persisted.filename), { version: persisted.version, filename: persisted.filename, download_id: persisted.download_id }];
+      // `path` is what makes the entry identifiable. Pilot-15 deleted a real
+      // file because history rows carried only a filename: after the output
+      // folder changed mid-session, two folders' checkpoints sat in one list
+      // with nothing to tell them apart.
+      state.checkpointHistory = [...state.checkpointHistory.filter((entry) => entry.filename !== persisted.filename), { version: persisted.version, filename: persisted.filename, path: persisted.actual, download_id: persisted.download_id }];
     }
-    await pruneSupersededCheckpoints(location, { version: persisted.version, filename: persisted.filename });
+    await pruneSupersededCheckpoints(location, { version: persisted.version, filename: persisted.filename, path: persisted.actual });
   }
 
   async function saveLedger(location) {
@@ -4839,29 +4845,23 @@
   // name (e.g. Quick-2026-08-28T02-46__results__v{version}.xlsx), so it can
   // only ever match checkpoints of THIS workbook -- never another run's files,
   // and never the audit JSONL, which has no version token.
-  async function recoverDownloadsCheckpointHistory(anchorPath) {
+  async function recoverDownloadsCheckpointHistory() {
     const pattern = window.DacOutputLocation.effective(state.outputSettings).checkpointFilenamePattern;
-    if (!window.DacCheckpointCore.hasVersionToken(pattern) || !anchorPath) return;
-    // The leaf name alone is NOT enough to identify a file: parse() strips the
-    // folder, so the same workbook run into two different Downloads subfolders
-    // yields identical leaves. Merging both into one candidate list deleted the
-    // other folder's only surviving ledger. The anchor is the absolute path
-    // Chrome just reported for the checkpoint WE wrote, so "same folder" is an
-    // exact directory comparison rather than a guess about path shape.
+    if (!window.DacCheckpointCore.hasVersionToken(pattern)) return;
+    // Recovery deliberately does NOT filter by folder. It records every match
+    // WITH its absolute path and leaves the scoping to prune time. Filtering
+    // here was the shape that failed in Pilot-15: it anchored to whatever the
+    // destination was at the first checkpoint, and a later output.configure
+    // left that anchor stale with no way to notice.
     const found = await chrome.downloads.search({ filenameRegex: window.DacCheckpointCore.filenameRegex(pattern), state: "complete" });
     const recovered = [];
-    let elsewhere = 0;
     for (const item of found || []) {
       if (item?.exists === false) continue;
       const absolute = String(item.filename || "");
       const parsed = window.DacCheckpointCore.parse(pattern, absolute);
       if (!parsed) continue;
-      if (!window.DacCheckpointCore.sameFolder(anchorPath, absolute)) { elsewhere += 1; continue; }
-      recovered.push({ version: parsed.version, filename: parsed.filename, download_id: item.id });
+      recovered.push({ version: parsed.version, filename: parsed.filename, path: absolute, download_id: item.id });
     }
-    // Matching the name but not the folder is exactly the case that used to
-    // delete another run's ledger. Say so rather than discarding it in silence.
-    if (elsewhere) audit("CHECKPOINT_PRUNE_SCOPE", null, { message: `${elsewhere} checkpoint(s) with this run's filename live in a different folder and were left alone.` });
     state.checkpointHistory = recovered;
   }
 
@@ -4884,7 +4884,18 @@
     try {
       const pattern = window.DacOutputLocation.effective(state.outputSettings).checkpointFilenamePattern;
       const directory = location?.kind === "directory" && location.handle;
-      const candidates = directory ? await discoverCheckpoints(location.handle, pattern) : state.checkpointHistory;
+      // Directory mode enumerates one folder, so it is scoped by construction.
+      // Downloads mode is not: the history can span folders once output moves
+      // mid-session, so scope it HERE, at delete time, against the checkpoint
+      // actually just written -- never against whatever the destination
+      // happened to be when the history was first built.
+      const known = directory ? await discoverCheckpoints(location.handle, pattern) : state.checkpointHistory;
+      const candidates = directory ? known : window.DacCheckpointCore.scopedTo(known, justWritten?.path);
+      const outOfScope = known.length - candidates.length;
+      if (outOfScope > 0) {
+        audit("CHECKPOINT_PRUNE_SCOPE", null, { message: `${outOfScope} checkpoint(s) of this run sit in a different folder than the one just written and were left alone.` });
+        log(`Bỏ qua ${outOfScope} checkpoint nằm ở thư mục khác — không đụng tới.`, "info");
+      }
       if (!candidates.length) return;
       // THE guard, kept pure in checkpoint-core so it is testable: pruning is
       // only ever correct when the checkpoint just written IS the newest one

@@ -114,6 +114,7 @@ COMPANION (đọc khi cần):
 | `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
 | `Pilot-07/`, `Pilot-08/`, `Pilot-09.../` | Pilot đang hoạt động, có thể có dữ liệu mới |
 | `Pilot-13_References/` | **TẠM HOÃN, không chạy** — pilot ảnh tham chiếu dựng từ 3 job thật của Pilot-08. Giữ lại vì phần kiểm offline "cả 66 job đều giải được ảnh" vẫn dùng được khi nào chạy Pilot-08 thật |
+| `Pilot-15_CheckpointRetention/` | Pilot kiểm tính năng **dọn rác checkpoint** (B-26) — thư mục ra hoàn toàn mới và trống nên kết quả tự tố cáo: chạy 2 job ghi 7 checkpoint, cuối run phải còn ĐÚNG 2 file. Đọc `README.md` trong đó để biết ĐẠT/HỎNG trước khi chạy |
 | `Pilot-14_RefFeatureTest/` | Pilot kiểm tính năng ảnh tham chiếu — 3/3 SUCCESS, ảnh ref tự tạo (1 hình + 1 màu + chữ nhãn) nên **kết quả tự tố cáo**. Kèm `RESULT-PILOT-14.md` và `evidence/` (976 lần dò DOM) |
 
 Thêm file/thư mục mới cấp cao → phải thêm 1 dòng vào bảng này. Không khai báo

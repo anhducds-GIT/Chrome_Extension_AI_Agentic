@@ -1,0 +1,7 @@
+﻿BAY THU LAN 2 - dat truoc khi chay 2026-08-28
+Dung dieu kien da gay ra vu xoa nham lan 1: v01 nam o THU MUC MAC DINH,
+sau do output se doi sang thu muc pilot moi. Neu ban va dung, file nay phai CON NGUYEN.
+
+duong dan: C:\Users\MAYTEST_12\Downloads\Phai sinh\Duc Auto ChatGPT\Bridge-2026-08-28T05-24__results__v01.xlsx
+SHA256:    0D22487B754A981448CB59182CDC12F2C2AC897AADBA869A2467603DB4507420
+kich thuoc: 7431 byte

@@ -268,6 +268,39 @@ assert.equal(checkpoint.pruneTargets(ten, { version: 10, filename: "Someone-Else
 // consulted: highest() returns v010, which is not what we wrote.
 assert.equal(checkpoint.pruneTargets([...ten, { version: 10, filename: "Pilot__results__v010.xlsx" }], cp(10), { keep: 2 }).ok, false, "ambiguity at the newest version blocks the whole decision");
 
+/* PILOT-15, 2026-08-28, LIVE FAILURE. This is the scenario that deleted a real
+   file on Đức's machine, reproduced exactly.
+
+   The run wrote v01 to folder A, then output.configure moved the destination to
+   folder B, where v02..v05 were written. History carried only filenames, so the
+   two folders became indistinguishable and pruning reached back into folder A.
+
+   Three passes of static audit called this "inside the contract" and I wrote
+   that into HANDOFF.md. It is not: deletion reached a folder that was not the
+   configured destination, and the audit trail never said so. Scoping therefore
+   happens at DELETE time, against the checkpoint just written -- never against
+   whatever the destination was when the history was first built. */
+const folderA = "C:\\Users\\x\\Downloads\\Phai sinh\\Duc Auto ChatGPT\\";
+const folderB = "C:\\Users\\x\\Downloads\\Phai sinh\\DucAuto_GPT-Output\\Pilot-15\\";
+const at = (folder, version) => ({ version, filename: checkpoint.render(pattern, version), path: folder + checkpoint.render(pattern, version) });
+const mixedHistory = [at(folderA, 1), at(folderB, 2), at(folderB, 3), at(folderB, 4), at(folderB, 5)];
+const justWrittenB = at(folderB, 5);
+
+const inScope = checkpoint.scopedTo(mixedHistory, justWrittenB.path);
+assert.deepEqual(versions(inScope), [2, 3, 4, 5], "only the folder just written to is in scope");
+assert.equal(Array.from(inScope).some((item) => item.path.startsWith(folderA)), false, "the previous destination is never a deletion candidate");
+
+const live = checkpoint.pruneTargets(inScope, justWrittenB, { keep: 2 });
+assert.equal(live.ok, true, "the run may still prune its own current folder");
+assert.deepEqual(versions(live.stale), [3, 2], "it prunes only its own older checkpoints in that folder");
+assert.equal(Array.from(live.stale).some((item) => item.version === 1), false, "the file in the other folder survives -- this is the exact live failure");
+
+// Scoping must be the thing that decides, not the ordering or the count.
+assert.deepEqual(versions(checkpoint.scopedTo(mixedHistory, at(folderA, 1).path)), [1], "anchoring on folder A scopes to folder A alone");
+assert.deepEqual(versions(checkpoint.scopedTo(mixedHistory, "")), [], "no anchor means nothing may be deleted");
+assert.deepEqual(versions(checkpoint.scopedTo([{ version: 1, filename: "x__results__v01.xlsx" }], folderB + "y.xlsx")), [], "an entry with no recorded path is out of scope, never a guess");
+assert.deepEqual(versions(checkpoint.scopedTo([null, undefined, { version: 2 }], folderB + "y.xlsx")), [], "malformed rows are dropped rather than deleted");
+
 // AUDIT: `checkpoint_retention` was referenced nowhere in tests/, so its
 // default, its range, and its acceptance as an XLSX config key were all
 // unpinned. A retention that silently defaulted to 0 or accepted a stray value
