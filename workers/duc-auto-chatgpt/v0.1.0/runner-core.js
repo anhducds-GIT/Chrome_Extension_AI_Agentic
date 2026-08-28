@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const DEFAULTS = { timeout_sec: 180, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false, checkpoint_interval_jobs: 1, ab_poll_action: "random", max_images_per_job: 4 };
+  const DEFAULTS = { timeout_sec: 180, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", max_retries: 2, continue_on_error: true, output_folder: "Duc Auto ChatGPT", max_input_images: 5, rerun_done: false, checkpoint_interval_jobs: 1, checkpoint_retention: 2, ab_poll_action: "random", max_images_per_job: 4 };
   const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
   const TASK_TYPES = Object.freeze(["image_generation", "text_reasoning"]);
   const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
@@ -67,6 +67,10 @@
       max_input_images: whole(raw.max_input_images, DEFAULTS.max_input_images, 0, 10, "max_input_images"),
       rerun_done: bool(raw.rerun_done, false),
       checkpoint_interval_jobs: whole(raw.checkpoint_interval_jobs, DEFAULTS.checkpoint_interval_jobs, 1, 1000, "checkpoint_interval_jobs"),
+      // How many Result checkpoints survive on disk. Minimum 1, because the
+      // newest one IS the recoverable ledger; 2 by default so a corrupt newest
+      // file still leaves the operator a readable predecessor.
+      checkpoint_retention: whole(raw.checkpoint_retention, DEFAULTS.checkpoint_retention, 1, 1000, "checkpoint_retention"),
       // How the runner answers ChatGPT's "Which image do you like more?"
       // poll, and how many images ONE job may legitimately produce. Both are
       // owner policy (decisions.md 2026-08-25), not detection heuristics.

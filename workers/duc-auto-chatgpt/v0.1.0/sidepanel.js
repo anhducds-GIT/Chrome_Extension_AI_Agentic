@@ -93,6 +93,8 @@
     resumePlan: null,
     resumeLedgerFile: "",
     checkpointVersion: 0,
+    checkpointHistory: [],
+    checkpointHistoryRecovered: false,
     checkpointFilename: "",
     checkpointCreatedAt: "",
     resumeCheckpointFindings: [],
@@ -1472,6 +1474,10 @@
         persist_checkpoint: async (applied, auditFile) => {
           const checkpoint = await persistLedgerCandidate(applied.candidate, applied.output.result, auditFile, { force: true });
           if (!checkpoint) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", "BRIDGE_DIRECT_CHECKPOINT_FAILED: Result checkpoint was not verified.");
+          // An agent editing Setup 20 times writes 20 checkpoints; without this
+          // they escape retention entirely in Downloads mode (decisions.md
+          // 2026-08-24 already called that unusable).
+          await recordAndPruneCheckpoint(applied.output.result, checkpoint);
           return checkpoint;
         },
         commit: async (applied, auditFile, checkpoint) => {
@@ -1908,6 +1914,7 @@
         persist_checkpoint: async (applied, auditFile) => {
           const persisted = await persistLedgerCandidate(applied.candidate, effectiveOutput.result, auditFile);
           if (!persisted) throw new Error("BRIDGE_APPROVAL_CHECKPOINT_FAILED: Result checkpoint was not verified.");
+          await recordAndPruneCheckpoint(effectiveOutput.result, persisted);
           return persisted;
         },
         commit: async (applied, auditFile, checkpoint) => {
@@ -2920,7 +2927,7 @@
   }
 
   async function openWorkbook() {
-    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = false; state.resumePlan = null; state.resumeLedgerFile = ""; state.runId = null; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = []; state.runSelection.clear(); state.quickPromptCounter = 0; renderResumePlan(); renderOutput();
+    state.workbook = null; state.prepared = null; state.outputSettings = null; state.runtimeOverrides = {}; state.validated = false; state.terminal = 0; state.importedConfig = null; state.configFindings = []; state.localOverrides.clear(); state.outputProfileState = null; state.resumeMode = false; state.resumePlan = null; state.resumeLedgerFile = ""; state.runId = null; state.checkpointVersion = 0; state.checkpointHistory = []; state.checkpointHistoryRecovered = false; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; state.resumeCheckpointFindings = []; state.runSelection.clear(); state.quickPromptCounter = 0; renderResumePlan(); renderOutput();
     try {
       state.workbook = await window.DacXlsx.open(els.workbookInput.files?.[0]);
       const imported = applyWorkbookConfig();
@@ -4780,8 +4787,35 @@
       const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, "fail");
       const item = await downloadArtifactViaBackground(objectUrl, request, candidate.blob.size);
       window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
-      return { ...candidate, actual: item.filename, version, filename, storage: "downloads" };
+      return { ...candidate, actual: item.filename, version, filename, storage: "downloads", download_id: item.download_id };
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
+  }
+
+  // Every writer of a Result checkpoint funnels through here, so retention
+  // covers the Bridge Setup checkpoints too -- they call persistLedgerCandidate
+  // directly and would otherwise pile up forever in Downloads mode, which is
+  // the exact complaint decisions.md 2026-08-24 already recorded.
+  async function recordAndPruneCheckpoint(location, persisted) {
+    if (persisted.storage === "downloads") {
+      // A reopened side panel starts with no memory of yesterday's run, so read
+      // the previous session's checkpoints back out of Chrome's own download
+      // records BEFORE appending this one -- Đức asked for cleanup to happen on
+      // "lần load tiếp theo", and an empty history can never clean anything.
+      // Only mark recovery done once it actually had an anchor to work with.
+      // Setting the flag unconditionally meant one anchor-less first checkpoint
+      // permanently disabled cleanup of the previous session's files.
+      if (!state.checkpointHistoryRecovered && persisted.actual) {
+        state.checkpointHistoryRecovered = true;
+        await recoverDownloadsCheckpointHistory(persisted.actual);
+      }
+      // Filter by FILENAME, not by version. Filtering by version dropped a
+      // legitimately ambiguous neighbour ('v011' when writing 'v11') out of the
+      // candidate set, so versionCollisions() saw nothing and the refuse-on-
+      // ambiguity rule was quietly defeated. prunable() already de-duplicates
+      // by filename, so keeping the row costs nothing and preserves the guard.
+      state.checkpointHistory = [...state.checkpointHistory.filter((entry) => entry.filename !== persisted.filename), { version: persisted.version, filename: persisted.filename, download_id: persisted.download_id }];
+    }
+    await pruneSupersededCheckpoints(location, { version: persisted.version, filename: persisted.filename });
   }
 
   async function saveLedger(location) {
@@ -4794,7 +4828,112 @@
     if (state.prepared?.queue) window.DacRunnerCore.rebindQueueRows(state.prepared.queue, state.workbook, window.DacXlsx.activeJobs);
     renderCheckpointMeta();
     log(`Result checkpoint v${window.DacCheckpointCore.formatVersion(persisted.version)} ${persisted.storage === "directory" ? "verified" : "downloaded"}: ${persisted.actual}.`, "done");
+    // Pruning runs only AFTER the new checkpoint is written and verified, so
+    // disk never passes through a moment with no good ledger on it.
+    await recordAndPruneCheckpoint(location, persisted);
     return persisted.actual;
+  }
+
+  // Rebuild this run's checkpoint list from Chrome's download records after a
+  // side-panel reopen. The checkpoint pattern carries the workbook's own base
+  // name (e.g. Quick-2026-08-28T02-46__results__v{version}.xlsx), so it can
+  // only ever match checkpoints of THIS workbook -- never another run's files,
+  // and never the audit JSONL, which has no version token.
+  async function recoverDownloadsCheckpointHistory(anchorPath) {
+    const pattern = window.DacOutputLocation.effective(state.outputSettings).checkpointFilenamePattern;
+    if (!window.DacCheckpointCore.hasVersionToken(pattern) || !anchorPath) return;
+    // The leaf name alone is NOT enough to identify a file: parse() strips the
+    // folder, so the same workbook run into two different Downloads subfolders
+    // yields identical leaves. Merging both into one candidate list deleted the
+    // other folder's only surviving ledger. The anchor is the absolute path
+    // Chrome just reported for the checkpoint WE wrote, so "same folder" is an
+    // exact directory comparison rather than a guess about path shape.
+    const found = await chrome.downloads.search({ filenameRegex: window.DacCheckpointCore.filenameRegex(pattern), state: "complete" });
+    const recovered = [];
+    let elsewhere = 0;
+    for (const item of found || []) {
+      if (item?.exists === false) continue;
+      const absolute = String(item.filename || "");
+      const parsed = window.DacCheckpointCore.parse(pattern, absolute);
+      if (!parsed) continue;
+      if (!window.DacCheckpointCore.sameFolder(anchorPath, absolute)) { elsewhere += 1; continue; }
+      recovered.push({ version: parsed.version, filename: parsed.filename, download_id: item.id });
+    }
+    // Matching the name but not the folder is exactly the case that used to
+    // delete another run's ledger. Say so rather than discarding it in silence.
+    if (elsewhere) audit("CHECKPOINT_PRUNE_SCOPE", null, { message: `${elsewhere} checkpoint(s) with this run's filename live in a different folder and were left alone.` });
+    state.checkpointHistory = recovered;
+  }
+
+  // Đức, 2026-08-28: "ta cần control rác, để nó không nhân không giới hạn."
+  // A live 3-job run left 10 Result checkpoints; a 66-job pilot would leave
+  // ~200. Every checkpoint carries state the previous one lacks, so the runner
+  // keeps writing all of them -- it just stops KEEPING all of them.
+  //
+  // Deleting an operator's file is normally forbidden without asking. Đức
+  // approved this specific, bounded case on 2026-08-28 (see decisions.md):
+  // superseded checkpoints of the CURRENT run only, never the newest, never
+  // the audit log, never anything this run did not itself write.
+  async function pruneSupersededCheckpoints(location, justWritten) {
+    // Read defensively: pruning is housekeeping and must work even before a
+    // queue is prepared, so it must not go through an accessor that throws
+    // when no workbook is loaded.
+    const keep = state.prepared?.settings?.checkpoint_retention ?? window.DacRunnerCore.DEFAULTS.checkpoint_retention;
+    const removed = [];
+    const failed = [];
+    try {
+      const pattern = window.DacOutputLocation.effective(state.outputSettings).checkpointFilenamePattern;
+      const directory = location?.kind === "directory" && location.handle;
+      const candidates = directory ? await discoverCheckpoints(location.handle, pattern) : state.checkpointHistory;
+      if (!candidates.length) return;
+      // THE guard, kept pure in checkpoint-core so it is testable: pruning is
+      // only ever correct when the checkpoint just written IS the newest one
+      // present. Re-running a fresh source workbook into a folder that already
+      // holds an older run's v09/v10 restarts numbering at v01, and without
+      // this the runner deleted v01 the instant it was written and verified --
+      // emptying the new run of every recoverable ledger while telling the
+      // operator it had tidied up.
+      const decision = window.DacCheckpointCore.pruneTargets(candidates, justWritten, { keep });
+      if (!decision.ok) {
+        audit("CHECKPOINT_PRUNE_SKIPPED", null, { message: `Checkpoint '${justWritten?.filename || "(unknown)"}' is not the newest file in this destination (newest: '${decision.newest?.filename || "none"}'). Nothing was deleted; the folder holds checkpoints this run did not write.` });
+        log(`Không dọn: thư mục còn checkpoint của run khác (mới nhất là ${decision.newest?.filename || "không rõ"}). Không xoá gì cả.`, "warn");
+        return;
+      }
+      const stale = decision.stale;
+      for (const entry of stale) {
+        try {
+          if (directory) await location.handle.removeEntry(entry.filename);
+          // removeFile deletes the bytes but leaves the Chrome download-history
+          // row, so the operator can still see that the file once existed.
+          else if (Number.isInteger(entry.download_id)) await chrome.downloads.removeFile(entry.download_id);
+          else throw new Error("no Chrome download id is recorded for this checkpoint");
+          removed.push(entry.filename);
+        } catch (error) {
+          // Counting a file as removed when it is still on disk turns a
+          // nuisance into a lie AND drops it from history, so it would never be
+          // retried. Keep it, and say so.
+          failed.push(`${entry.filename} (${messageOf(error)})`);
+        }
+      }
+      if (!directory) {
+        const gone = new Set(removed);
+        state.checkpointHistory = state.checkpointHistory.filter((entry) => !gone.has(entry.filename));
+      }
+    } catch (error) {
+      // Housekeeping must never take a verified run down with it. The
+      // checkpoint is already safely on disk; failing to tidy is a nuisance,
+      // and turning it into a run failure would be the worse bug.
+      audit("CHECKPOINT_PRUNE_FAILED", null, { message: `Could not remove a superseded Result checkpoint: ${messageOf(error)}. Nothing was lost; the newest checkpoint is untouched.` });
+      log(`Không dọn được checkpoint cũ: ${messageOf(error)}. Bản mới nhất vẫn nguyên vẹn.`, "warn");
+      return;
+    }
+    if (failed.length) {
+      audit("CHECKPOINT_PRUNE_PARTIAL", null, { message: `${failed.length} superseded Result checkpoint(s) could not be deleted and remain on disk: ${failed.join(" | ")}.` });
+      log(`Còn ${failed.length} checkpoint cũ chưa xoá được, vẫn nằm trên đĩa: ${failed.join(" | ")}.`, "warn");
+    }
+    if (!removed.length) return;
+    audit("CHECKPOINT_PRUNED", null, { message: `Removed ${removed.length} superseded Result checkpoint(s), keeping the newest ${keep}: ${removed.join(" | ")}.` });
+    log(`Đã dọn ${removed.length} checkpoint cũ, giữ lại ${keep} bản mới nhất.`, "done");
   }
 
   async function saveAuditLog(location, { appendExisting = false, force = false } = {}) {

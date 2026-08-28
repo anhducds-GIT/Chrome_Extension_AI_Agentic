@@ -257,7 +257,9 @@ Nên `DAC_XLSX_RUN_PLAN_V1.md` là **hợp đồng schema đang nói sai** — n
 nó là file mà `AGENTS.md` chỉ AI đọc để hiểu schema. Sửa: hoặc ghi rõ đường thứ hai chưa nối,
 hoặc bỏ khỏi hợp đồng.
 
-### B-26 · Mỗi job đẻ ra 3 file XLSX — cần luật DỌN, không phải bớt checkpoint — **[ĐO] live 2026-08-28**
+### ~~B-26 · Mỗi job đẻ ra 3 file XLSX — cần luật DỌN, không phải bớt checkpoint~~ — **ĐÃ ĐÓNG 2026-08-28**
+
+> **Đã làm:** `checkpoint_retention` (mặc định 2). Sau mỗi checkpoint đã ghi VÀ đã xác minh, các bản cũ hơn N bản mới nhất bị xoá. Mở lại side panel thì đọc lại lịch sử tải của Chrome, nên rác của phiên trước cũng được dọn — nhưng CHỈ khi phiên mới thật sự ghi thêm một checkpoint; mở lên rồi không chạy gì thì không dọn gì. Đức chốt phương án xoá thật, thay cho luật `superseded/` ngày 24/08 — xem `decisions.md`. Ghi chú đo được bên dưới giữ nguyên vì nó giải thích VÌ SAO không được ghi ít checkpoint đi.
 Đức phát hiện khi chạy trial thật: thư mục output đầy file `__results__vNN.xlsx`.
 
 **Đo thật** trên run `Quick-2026-08-28T02-46` (3 job text, đều SUCCESS): **10 file XLSX**.
