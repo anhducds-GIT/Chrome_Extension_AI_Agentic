@@ -139,7 +139,13 @@ assert.equal(second.readyState, FakeWebSocket.OPEN, "a timely ACK preserves the 
 
 // --- the backoff is bounded by construction, not merely by convention ---
 const transport = globalThis.DacBridgeLoopbackTransport;
-assert.equal(transport.RECONNECT_CEILING_MS, 30000, "bounded reconnect never waits longer than the 30-second ceiling");
+// Far past anything any case here arms, stated outright so it cannot shrink with a constant.
+const FAR_FUTURE_MS = 300000;
+// Owner decision 2026-08-28, taken from live measurement: the host is on loopback, so backing
+// off to spare it buys nothing while the operator waits. Two live cycles recovered in 22.5s and
+// 27.7s, both explained exactly by the ladder sitting on its old 30-second rung.
+assert.equal(transport.RECONNECT_CEILING_MS, 5000, "bounded reconnect never waits longer than the five-second ceiling");
+assert.ok(transport.RECONNECT_WINDOW_MS > transport.RECONNECT_CEILING_MS, "the give-up window spans several rungs rather than cutting the ladder off at once");
 assert.ok(transport.RECONNECT_DELAYS_MS.length > 1, "the backoff actually steps rather than repeating one delay");
 assert.ok(
   transport.RECONNECT_DELAYS_MS.every((delay) => delay > 0 && delay <= transport.RECONNECT_CEILING_MS),
@@ -198,7 +204,7 @@ const removalDuringBackoff = await removePairing();
 assert.equal(removalDuringBackoff?.ok, true, "pairing removal reports success");
 assert.equal(removalDuringBackoff.status.state, "unpaired");
 assert.equal(clock.pending(), 0, "pairing removal cancels a pending reconnect timer");
-clock.advance(transport.RECONNECT_CEILING_MS * 10);
+clock.advance(FAR_FUTURE_MS);
 assert.equal(FakeWebSocket.instances.length, socketsBeforeUnpair, "an unpaired transport never reconnects");
 
 // Case B: a live authenticated socket with its keepalive and ACK deadline armed.
@@ -220,7 +226,7 @@ assert.equal(removalWhileLive?.ok, true);
 assert.equal(fourth.readyState, FakeWebSocket.CLOSED, "pairing removal closes the live socket");
 assert.equal(clock.pending(), 0, "pairing removal cancels the keepalive interval and the ACK deadline");
 const socketsAtRemoval = FakeWebSocket.instances.length;
-clock.advance(transport.RECONNECT_CEILING_MS * 10);
+clock.advance(FAR_FUTURE_MS);
 assert.equal(FakeWebSocket.instances.length, socketsAtRemoval, "closing on removal does not itself trigger a reconnect");
 assert.equal(fourth.sent.length, framesAtRemoval, "no probe is sent after removal");
 
@@ -494,9 +500,9 @@ assert.equal(repeatClock.pending(), 1, "only recovery stays armed; the keepalive
 repeatClock.advance(3);
 assert.equal(RepeatSocket.instances.length, 2, "the bounded reconnect recovers from the violation without a close event");
 
-// --- a stale ACK deadline must not shoot the socket that replaced its own ---
-// Reachable via the exposed connectHost(): an unsupported frame leaves the old socket CLOSING
-// with its deadline still armed, and CLOSING is deliberately replaceable.
+// --- a protocol violation gives up ownership at once, CLOSING window included ---
+// An unsupported frame drops the socket immediately: its keepalive interval and ACK deadline go
+// with it, and recovery is armed without waiting for a close event the peer may never send.
 const staleClock = fakeClock();
 const staleStore = { [globalThis.DacBridgePairingCore.PAIRING_STORAGE_KEY]: pairing };
 const StaleSocket = makeSocketClass({ lingering: true });
@@ -874,5 +880,210 @@ await reload;
 assert.equal(secondRemoval?.ok, true, "the removal still reports success");
 assert.equal(raceTransport.status().state, "unpaired", "a concurrent reload does not resurrect a pairing that was just removed");
 assert.equal(raceTransport.status().paired, false, "and the transport does not claim to be paired");
+
+// --- the ladder gives up after its window and leaves the alarm to it ---
+// Retrying is what keeps an MV3 worker resident, and that -- not the connect itself -- is what
+// costs battery. So a host that stays down stops being chased: after the window the 30-second
+// alarm is the only path, which is what an overnight outage already costs today.
+const giveUpClock = fakeClock();
+const giveUpChrome = makeChrome({ [globalThis.DacBridgePairingCore.PAIRING_STORAGE_KEY]: pairing });
+const GiveUpSocket = makeSocketClass({ lingering: false });
+transport.create({
+  chrome: giveUpChrome,
+  WebSocket: GiveUpSocket,
+  timers: giveUpClock,
+  keepalive_ms: 20,
+  keepalive_ack_timeout_ms: 5,
+  handshake_timeout_ms: 1000,
+  reconnect_delays_ms: [5],
+  reconnect_window_ms: 20
+});
+await settle();
+
+function refuseLatestConnect() {
+  GiveUpSocket.instances.at(-1).close();
+}
+
+refuseLatestConnect();
+for (let attempt = 0; attempt < 12; attempt += 1) {
+  const before = GiveUpSocket.instances.length;
+  giveUpClock.advance(5);
+  if (GiveUpSocket.instances.length > before) refuseLatestConnect();
+}
+assert.equal(
+  GiveUpSocket.instances.length,
+  5,
+  "the ladder spends its 20ms window on four retries and then stops, instead of chasing a dead host forever"
+);
+giveUpClock.advance(FAR_FUTURE_MS);
+assert.equal(GiveUpSocket.instances.length, 5, "and it stays stopped");
+
+giveUpChrome.alarms.onAlarm.emit({ name: transport.RECONNECT_ALARM });
+assert.equal(GiveUpSocket.instances.length, 6, "the 30-second alarm is still the fallback once the ladder has given up");
+
+// A connection that proves itself restores the budget, so the next outage is chased again.
+const revived = GiveUpSocket.instances.at(-1);
+revived.emit("open");
+revived.emit("message", authOk("give-up-revived"));
+await settle();
+giveUpClock.advance(20);
+revived.emit("message", ackFrame);
+await settle();
+revived.close();
+giveUpClock.advance(5);
+assert.equal(
+  GiveUpSocket.instances.length,
+  7,
+  "an answered probe restores the reconnect budget, so a later outage is chased from the first rung again"
+);
+
+// --- an ACK that answers nothing must not refill the reconnect budget ---
+// Otherwise a host that authenticates, sends an unsolicited keepalive_ack and drops resets the
+// budget every cycle, and the give-up window never closes: unlimited first-rung retries.
+const refillClock = fakeClock();
+const refillChrome = makeChrome({ [globalThis.DacBridgePairingCore.PAIRING_STORAGE_KEY]: pairing });
+const RefillSocket = makeSocketClass({ lingering: false });
+transport.create({
+  chrome: refillChrome,
+  WebSocket: RefillSocket,
+  timers: refillClock,
+  keepalive_ms: 20,
+  keepalive_ack_timeout_ms: 5,
+  handshake_timeout_ms: 1000,
+  reconnect_delays_ms: [5],
+  reconnect_window_ms: 20
+});
+await settle();
+
+RefillSocket.instances.at(-1).close();
+for (let attempt = 0; attempt < 12; attempt += 1) {
+  const before = RefillSocket.instances.length;
+  refillClock.advance(5);
+  if (RefillSocket.instances.length > before) RefillSocket.instances.at(-1).close();
+}
+const spentBudgetSockets = RefillSocket.instances.length;
+refillClock.advance(FAR_FUTURE_MS);
+assert.equal(RefillSocket.instances.length, spentBudgetSockets, "the budget is spent and the ladder has given up");
+
+refillChrome.alarms.onAlarm.emit({ name: transport.RECONNECT_ALARM });
+const revivedByAlarm = RefillSocket.instances.at(-1);
+revivedByAlarm.emit("open");
+revivedByAlarm.emit("message", authOk("refill-1"));
+await settle();
+// No probe has been sent yet -- the keepalive interval has not fired -- so this ACK answers nothing.
+revivedByAlarm.emit("message", ackFrame);
+await settle();
+revivedByAlarm.close();
+const socketsAfterUnsolicitedAck = RefillSocket.instances.length;
+refillClock.advance(FAR_FUTURE_MS);
+assert.equal(
+  RefillSocket.instances.length,
+  socketsAfterUnsolicitedAck,
+  "an unsolicited ACK answers no outstanding probe, so it does not refill a spent budget"
+);
+
+// --- every rung must cost budget, or the window never closes ---
+// A zero delay would be a free rung: the ladder would spin without ever giving up.
+const zeroClock = fakeClock();
+const ZeroSocket = makeSocketClass({ lingering: false });
+transport.create({
+  chrome: makeChrome({ [globalThis.DacBridgePairingCore.PAIRING_STORAGE_KEY]: pairing }),
+  WebSocket: ZeroSocket,
+  timers: zeroClock,
+  keepalive_ms: 20,
+  keepalive_ack_timeout_ms: 5,
+  handshake_timeout_ms: 1000,
+  reconnect_delays_ms: [0],
+  reconnect_window_ms: 3
+});
+await settle();
+
+ZeroSocket.instances.at(-1).close();
+for (let attempt = 0; attempt < 20; attempt += 1) {
+  const before = ZeroSocket.instances.length;
+  zeroClock.advance(1);
+  if (ZeroSocket.instances.length > before) ZeroSocket.instances.at(-1).close();
+}
+assert.equal(
+  ZeroSocket.instances.length,
+  4,
+  "a zero delay is floored to a real rung, so a 3ms window buys exactly three retries and then stops"
+);
+zeroClock.advance(FAR_FUTURE_MS);
+assert.equal(ZeroSocket.instances.length, 4, "and it stays stopped rather than spinning");
+
+// --- a window that never closes is not a window ---
+// Infinity survived Number(), so the give-up condition could never become true and the ladder
+// would chase a dead host forever. A non-finite or non-positive window falls back to the default.
+const foreverClock = fakeClock();
+const ForeverSocket = makeSocketClass({ lingering: false });
+transport.create({
+  chrome: makeChrome({ [globalThis.DacBridgePairingCore.PAIRING_STORAGE_KEY]: pairing }),
+  WebSocket: ForeverSocket,
+  timers: foreverClock,
+  keepalive_ms: 20,
+  keepalive_ack_timeout_ms: 5,
+  handshake_timeout_ms: 1000,
+  reconnect_delays_ms: [transport.RECONNECT_CEILING_MS],
+  reconnect_window_ms: Infinity
+});
+await settle();
+
+const expectedRetries = transport.RECONNECT_WINDOW_MS / transport.RECONNECT_CEILING_MS;
+ForeverSocket.instances.at(-1).close();
+for (let attempt = 0; attempt < expectedRetries + 5; attempt += 1) {
+  const before = ForeverSocket.instances.length;
+  foreverClock.advance(transport.RECONNECT_CEILING_MS);
+  if (ForeverSocket.instances.length > before) ForeverSocket.instances.at(-1).close();
+}
+assert.equal(
+  ForeverSocket.instances.length,
+  expectedRetries + 1,
+  "a non-finite window is refused and the default window applies, so the ladder still gives up"
+);
+
+// --- a nonsense knob must not hand back a transport with no bounds ---
+// Production passes no options at all, so this guards the test seam: Infinity survived Number()
+// on every timing knob, and an array hole became a NaN rung that cost no budget. Both produced a
+// transport that could never probe, never expire a probe, or never give up.
+const junkClock = fakeClock();
+const JunkSocket = makeSocketClass({ lingering: false });
+transport.create({
+  chrome: makeChrome({ [globalThis.DacBridgePairingCore.PAIRING_STORAGE_KEY]: pairing }),
+  WebSocket: JunkSocket,
+  timers: junkClock,
+  keepalive_ms: Infinity,
+  keepalive_ack_timeout_ms: Number.NaN,
+  handshake_timeout_ms: -1,
+  reconnect_delays_ms: new Array(2)
+});
+await settle();
+
+const junk = JunkSocket.instances[0];
+junk.emit("open");
+junk.emit("message", authOk("junk-1"));
+await settle();
+junkClock.advance(transport.KEEPALIVE_MS);
+assert.equal(
+  junk.sent.at(-1).type,
+  "keepalive",
+  "an Infinity probe period falls back to the default rather than disabling probing outright"
+);
+junkClock.advance(transport.KEEPALIVE_ACK_TIMEOUT_MS);
+assert.equal(
+  junk.readyState,
+  JunkSocket.CLOSED,
+  "a NaN ACK deadline falls back to the default rather than letting an unanswered probe hang forever"
+);
+
+const junkSocketsBeforeRetry = JunkSocket.instances.length;
+junkClock.advance(transport.RECONNECT_DELAYS_MS[0] - 1);
+assert.equal(JunkSocket.instances.length, junkSocketsBeforeRetry, "nothing retries before the default first rung");
+junkClock.advance(1);
+assert.equal(
+  JunkSocket.instances.length,
+  junkSocketsBeforeRetry + 1,
+  "an all-holes ladder falls back to the default ladder rather than becoming NaN rungs that cost no budget"
+);
 
 console.log("bridge transport liveness smoke tests: PASS");

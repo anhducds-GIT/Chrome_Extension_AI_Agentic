@@ -110,6 +110,7 @@ COMPANION (đọc khi cần):
 | `Pilot-REF-01/` | Pilot ảnh tham chiếu, lần đầu chạy live (26/08) — bằng chứng, không sửa |
 | `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
 | `Pilot-07/`, `Pilot-08/`, `Pilot-09.../` | Pilot đang hoạt động, có thể có dữ liệu mới |
+| `evidence-transport-liveness-20260828/` | Bằng chứng live 28/08: hai cú tắt/bật host sau bản vá lớp vận chuyển — panel báo **Mất kết nối** đúng cả hai lần, tự nối lại 22,5s và 27,7s, khớp dự đoán viết trước khi đo. Kèm log nguyên văn của hai máy đo và script đo. **Là của bản trần 30 giây** — bằng chứng, không sửa |
 | `evidence-stop-reload-20260826/` | Sổ cái nguyên bản của trial live kiểm chứng `run.stop` / `chat.reload` (26/08), kèm 3 dòng chứng minh lời nhắn cũ nói sai — bằng chứng, không sửa |
 | `Pilot-07-Tạo Ảnh tô màu/` | Pilot 07 (26/08): 18 ảnh màu gốc của Đức → 18 tranh nét cho trẻ 5 tuổi tô. Kế hoạch `PILOT-07-PLAN.md`, kết quả `PILOT-07-KET-QUA.md`. **Ảnh gốc `*.png` (44 MB) KHÔNG vào git** — xem `.gitignore` trong thư mục |
 | `Pilot-07-Tạo Ảnh tô màu/ket-qua/` | 18 tranh nét thành phẩm `to-mau-01..18.jpg` + `BANG-DOI-CHIEU-KET-QUA.md` (tranh ↔ ảnh gốc ↔ job) — bằng chứng, không sửa |

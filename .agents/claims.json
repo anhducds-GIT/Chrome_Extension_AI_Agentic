@@ -10,17 +10,17 @@
       "released_at": null
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-08-28",
-      "task": "DA XONG 28/08 (commit 3514aa5, da push): transport Bridge co han cho keepalive ACK + reconnect backoff tran 30s + han bat tay + hang doi pairing; installer tro ve dung goc canonical va bo -InstallRoot. Suite 82/82, pha thu 29/32, audit doc lap 10 vong -> CONDITIONAL PASS 7/7 oracle. CON MO: Duc reload extension roi thu rut/cam host de xac nhan live. Khong dung G-01.",
-      "released_at": "2026-08-28"
-    },
-    "workers/duc-auto-chatgpt": {
-      "owner": "claude-chatgpt-text-reasoning-passb",
+      "owner": "claude-gemini-bridge-stability",
       "ai": "claude",
       "claimed_at": "2026-08-28",
-      "task": "Tiep quan handoff Codex 28/08: refreshed independent Pass B cho text_reasoning + atomic artifact filename persistence. Khong lam lai tu dau, khong live pilot, khong commit/push truoc khi Pass B PASS.",
+      "task": "Duc chot 28/08: ha tran cho noi lai xuong 5s, sau ~2 phut thi nhuong lai cho alarm 30s. Kem ghi bang chung live (panel bao Mat ket noi dung, reconnect 22.5s va 27.7s khop du doan).",
+      "released_at": null
+    },
+    "workers/duc-auto-chatgpt": {
+      "owner": "claude-chatgpt-retention-pilot",
+      "ai": "claude",
+      "claimed_at": "2026-08-28",
+      "task": "Pilot kiem tinh nang don rac checkpoint (B-26) tren Chrome that: thu muc MOI hoan toan, workbook nho, checkpoint_retention=2. Duc da reload extension va noi Bridge.",
       "released_at": null
     },
     "_root": {

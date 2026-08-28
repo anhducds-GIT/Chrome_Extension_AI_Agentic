@@ -6,8 +6,9 @@
   const KEEPALIVE_MS = 20000;
   const KEEPALIVE_ACK_TIMEOUT_MS = 10000;
   const HANDSHAKE_TIMEOUT_MS = 10000;
-  const RECONNECT_CEILING_MS = 30000;
-  const RECONNECT_DELAYS_MS = Object.freeze([1000, 2000, 5000, 10000, RECONNECT_CEILING_MS]);
+  const RECONNECT_CEILING_MS = 5000;
+  const RECONNECT_DELAYS_MS = Object.freeze([1000, 2000, RECONNECT_CEILING_MS]);
+  const RECONNECT_WINDOW_MS = 120000;
 
   function create(options = {}) {
     const chromeApi = options.chrome || globalThis.chrome;
@@ -17,15 +18,31 @@
     const routerCore = options.router_core || globalThis.DacBridgeRouterCore;
     if (!chromeApi || !WebSocketApi || !core || !pairingCore || !routerCore) throw new TypeError("Loopback transport dependencies are unavailable.");
 
-    // Timing is injectable so liveness and backoff are testable without real waiting.
+    // Timing is injectable so liveness and backoff are testable without real waiting. Production
+    // passes no options at all (background.js), so this normalization guards the test seam and any
+    // future caller -- but a seam that quietly accepts Infinity, NaN or a hole hands back a
+    // transport with no bounds at all, which is worse than refusing the value.
+    const MAX_TIMING_MS = 86400000;
+    function timingMs(value, fallback) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) && parsed > 0 ? Math.min(MAX_TIMING_MS, parsed) : fallback;
+    }
+
     const timers = options.timers || globalThis;
-    const keepaliveMs = Math.max(1, Number(options.keepalive_ms) || KEEPALIVE_MS);
-    const keepaliveAckTimeoutMs = Math.max(1, Number(options.keepalive_ack_timeout_ms) || KEEPALIVE_ACK_TIMEOUT_MS);
-    const handshakeTimeoutMs = Math.max(1, Number(options.handshake_timeout_ms) || HANDSHAKE_TIMEOUT_MS);
-    // Bounded by construction: no backoff step, configured or default, may exceed the ceiling.
-    const reconnectDelays = (Array.isArray(options.reconnect_delays_ms) && options.reconnect_delays_ms.length
-      ? options.reconnect_delays_ms
-      : RECONNECT_DELAYS_MS).map((value) => Math.min(RECONNECT_CEILING_MS, Math.max(0, Number(value) || 0)));
+    const keepaliveMs = timingMs(options.keepalive_ms, KEEPALIVE_MS);
+    const keepaliveAckTimeoutMs = timingMs(options.keepalive_ack_timeout_ms, KEEPALIVE_ACK_TIMEOUT_MS);
+    const handshakeTimeoutMs = timingMs(options.handshake_timeout_ms, HANDSHAKE_TIMEOUT_MS);
+    // Holes and non-numbers are dropped rather than becoming NaN rungs that cost no budget; if
+    // nothing usable is left, the default ladder stands. Bounded by construction: no rung, given
+    // or default, may exceed the ceiling, and every rung costs at least a millisecond.
+    // Coerced once: checking one coercion and then using another lets a value pass the check and
+    // come back NaN on second reading.
+    const configuredDelays = Array.isArray(options.reconnect_delays_ms)
+      ? options.reconnect_delays_ms.map((value) => Number(value)).filter(Number.isFinite)
+      : [];
+    const reconnectDelays = (configuredDelays.length ? configuredDelays : RECONNECT_DELAYS_MS)
+      .map((value) => Math.min(RECONNECT_CEILING_MS, Math.max(1, value)));
+    const reconnectWindowMs = timingMs(options.reconnect_window_ms, RECONNECT_WINDOW_MS);
 
     // Chrome hands back a numeric id; Node hands back a Timeout that holds the process open.
     // Unref where it exists so a headless run of this file can still exit, with no behaviour
@@ -43,6 +60,9 @@
     let keepaliveDeadlineTimer = null;
     let reconnectTimer = null;
     let reconnectAttempt = 0;
+    // Summed from the delays we scheduled, not from a clock: the transport must stay testable
+    // against an injected clock, and this is the same quantity either way.
+    let reconnectElapsedMs = 0;
     let handshakeTimer = null;
     let statusSequence = 0;
     let statusWrites = Promise.resolve();
@@ -166,8 +186,12 @@
     // deadline below rather than a comment claiming coverage it does not have.
     function scheduleReconnect() {
       if (!pairing || authenticated || reconnectTimer) return;
+      // Past the window the host is not coming back in a hurry, so stop holding the worker awake
+      // for it and let the 30-second alarm carry on alone.
+      if (reconnectElapsedMs >= reconnectWindowMs) return;
       const delay = reconnectDelays[Math.min(reconnectAttempt, reconnectDelays.length - 1)];
       reconnectAttempt += 1;
+      reconnectElapsedMs += delay;
       reconnectTimer = armTimer("setTimeout", () => {
         reconnectTimer = null;
         if (!pairing || authenticated) return;
@@ -249,9 +273,12 @@
         return;
       }
       if (message?.type === "keepalive_ack") {
+        // Only an ACK that answers an outstanding probe is a completed round trip, and only that
+        // is evidence the link carries traffic. An unsolicited one refills nothing.
+        if (!keepaliveDeadlineTimer) return;
         clearKeepaliveDeadline();
-        // A completed round trip is the first hard evidence the link carries traffic.
         reconnectAttempt = 0;
+        reconnectElapsedMs = 0;
         return;
       }
       if (message?.type !== "rpc" || typeof message.relay_id !== "string" || !message.envelope) {
@@ -392,6 +419,6 @@
   }
 
   (typeof window !== "undefined" ? window : globalThis).DacBridgeLoopbackTransport = Object.freeze({
-    EXECUTOR_PORT_NAME, RECONNECT_ALARM, KEEPALIVE_MS, KEEPALIVE_ACK_TIMEOUT_MS, HANDSHAKE_TIMEOUT_MS, RECONNECT_CEILING_MS, RECONNECT_DELAYS_MS, create
+    EXECUTOR_PORT_NAME, RECONNECT_ALARM, KEEPALIVE_MS, KEEPALIVE_ACK_TIMEOUT_MS, HANDSHAKE_TIMEOUT_MS, RECONNECT_CEILING_MS, RECONNECT_DELAYS_MS, RECONNECT_WINDOW_MS, create
   });
 })();

@@ -493,3 +493,43 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   cần cài lại host, **không** cần đổi pairing). Sau đó thử: tắt cửa sổ Bridge → tab BRIDGE phải
   chuyển **Mất kết nối** trong khoảng 20–30 giây thay vì đứng **Connected** giả; bật lại → tự nối
   lại trong khoảng 1 giây. Việc G-01 trial live vẫn giữ nguyên, chưa đụng.
+
+- 2026-08-28 (chiều) · Claude (`claude-gemini-bridge-stability`) · **Đã KIỂM CHỨNG LIVE bản vá sáng nay, rồi Đức chốt hạ trần chờ 30s → 5s. Bản trần 5 giây đã commit nhưng CHƯA đo live.**
+  - **Kiểm chứng live, hai cú tắt/bật host** (Đức reload extension trước). Bằng chứng đầy đủ:
+    `evidence-transport-liveness-20260828/`. Hai nửa:
+    · **mắt Đức:** tab BRIDGE báo **Mất kết nối** cả hai lần — không còn đứng **Connected** giả;
+    · **máy đo:** tự nối lại sau **22,5 giây** và **27,7 giây**.
+  - **Hai con số đó được DỰ ĐOÁN trước khi đo, và khớp trong vòng 1 giây.** Thang chờ cũ là
+    1→2→5→10→30 nên extension thử lại ở giây 1, 3, 8, 18, 48, 78; thời gian chờ chỉ là khoảng
+    cách từ lúc host sống lại tới lần thử kế tiếp. Cú 1: host tắt 57s → dự đoán 21,0s, đo 22,5s.
+    Cú 2: host tắt 19s → dự đoán 28,8s, đo 27,7s. Khớp hai lần cũng **chứng minh service worker
+    MV3 vẫn thức suốt cú đứt** — nếu nó ngủ thì đồng hồ chết theo và thang không chạy tới giây 78.
+  - **Tôi đã nói sai một chỗ và đã đính chính với Đức:** trước khi đo tôi bảo "nối lại trong
+    ~1 giây". Đó chỉ đúng với cú đứt chớp nhoáng. Với đúng kịch bản tắt/bật host, bản vá sáng
+    **không làm nối lại nhanh hơn bản cũ** (trước là alarm 30s, sau là trần thang cũng 30s).
+    Cái nó thật sự chữa nằm ở ba chỗ khác — kết nối chết lặng, socket kẹt lúc nối, host không
+    trả lời auth — và **không tái hiện được bằng cách tắt cửa sổ host**, nên không nằm trong
+    bằng chứng này; chúng được ghim bằng test.
+  - **Đức chốt (sau khi hỏi cụ thể về pin và tài nguyên): trần 5 giây, và thang nhường lại cho
+    alarm 30 giây sau ~2 phút.** Lý do: host nằm ngay trên `127.0.0.1` nên "lùi để khỏi nện"
+    không còn lý do; còn cái thật sự tốn pin là **extension phải thức**, mà số đo cho thấy nó
+    **đã thức sẵn** ngay ở trần 30 giây. Nên hạ trần gần như không thêm giá, mà cắt thời gian
+    chờ xuống 6 lần. Thang mới: 1→2→5 lặp, **26 lần thử trong 123 giây** rồi im, để alarm lo —
+    tức host tắt cả đêm thì tốn đúng bằng bây giờ.
+  - **Audit độc lập vòng tiếp: FAIL ×3 → CONDITIONAL PASS, oracle 3 MET.** Bảy phát hiện, đều
+    thật, đều đã vá: ACK không mời mà đến vẫn nạp lại ngân sách · độ trễ bằng 0 là nấc miễn phí
+    nên cửa sổ không bao giờ đóng · `Infinity` lọt vào cửa sổ · `Infinity` lọt vào ba núm thời
+    gian · lỗ hổng trong mảng thành nấc `NaN` · cửa sổ hữu hạn quá lớn · ép kiểu hai lần.
+    **Cả bảy chỉ tới được qua tham số tiêm vào, mà production gọi `create()` không truyền gì
+    (`background.js:5`)** — nên là siết khe test, không phải lỗi sản phẩm. Vẫn vá, vì một khe
+    im lặng nhận `Infinity` thì trả về một transport không còn giới hạn nào.
+  - **Một sự cố đáng ghi, vì nó suýt lọt:** máy phá thử bị cắt giữa chừng để lại đột biến M22
+    trên đĩa; lần chạy sau thấy baseline đỏ nên thoát **trước** khối `finally` nên không hoàn
+    nguyên — đột biến bị **bake vào source thật**. Suite bắt được ngay. Đã khôi phục, đã đối
+    chiếu `git diff` với HEAD (bản đã audit) để chứng minh không sót gì khác, và máy phá thử
+    giờ hoàn nguyên bằng `atexit` nên không tái diễn được.
+  - Phá thử **36/39**. Ba cái thoát vẫn là ba guard lớp hai không tới được (`G-10`).
+    Suite **82/82**, `npm test` gốc xanh, `git diff --check` sạch.
+- **Next:** Đức bấm ⟳ reload extension lần nữa, rồi tắt/bật host **một lần** để xác nhận bản
+  trần 5 giây: chờ phải **dưới 5 giây** thay vì 22–28 giây. Xong thì thêm một file bằng chứng
+  mới (`G-11`), **không sửa file bằng chứng cũ**. G-01 trial live vẫn giữ nguyên, chưa đụng.

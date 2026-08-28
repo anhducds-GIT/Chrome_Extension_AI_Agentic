@@ -106,13 +106,20 @@ nhưng ai chỉ chạy `npm test` sẽ tưởng nhánh Gemini đã xanh mà th�
 
 Trong `bridge-transport-loopback.js`: (a) điều kiện `reconnectTimer` trong `scheduleReconnect`,
 (b) phép kiểm danh tính `socket !== targetSocket` trong callback hạn chờ ACK, (c) phép kiểm
-"đã bị bản mới hơn vượt qua" trong `publishStatus`. Phá thử 32 chiều (28/08) bắt được 29, thoát
+"đã bị bản mới hơn vượt qua" trong `publishStatus`. Phá thử 39 chiều (28/08) bắt được 36, thoát
 đúng ba cái này — **vì không còn đường nào tới được chúng** sau khi guard lớp một được vá:
-`connectHost` nay gỡ **mọi** timer của socket bị thay, và ghi trạng thái đã được xếp thứ tự.
+`connectHost` gỡ **mọi** timer của socket bị thay, và ghi trạng thái đã được xếp thứ tự.
 Auditor độc lập xác nhận cả ba là phòng thủ chiều sâu đúng đắn, không phải lỗi.
 
 Giữ lại. Nếu sau này ai gỡ một guard lớp một, ba cái này thành đường sống — nên **đừng xoá vì
 thấy test không đụng tới**.
+
+### G-11 · Đo live bản trần 5 giây — **[ĐỌC]**
+
+Bằng chứng `evidence-transport-liveness-20260828/` là của bản **trần 30 giây**. Đức đã chốt hạ
+trần xuống 5 giây và cho thang nhường alarm sau ~2 phút; bản đó đã commit nhưng **chưa ai đo
+trên máy thật**. Cần: reload extension, tắt/bật host, xác nhận chờ **dưới 5 giây** thay vì
+22–28 giây, rồi thêm một file bằng chứng mới (không sửa file cũ).
 
 ## P3 — Khi rảnh
 

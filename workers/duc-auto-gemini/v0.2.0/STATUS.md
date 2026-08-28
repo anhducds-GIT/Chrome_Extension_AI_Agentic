@@ -4,11 +4,11 @@ id: duc-auto-gemini
 name: Duc Auto Gemini (Platform)
 lifecycle: active
 version_source: workers/duc-auto-gemini/v0.2.0/manifest.json
-last_verified: 2026-08-26
-last_verified_commit: dd3c736b64206a357e6aa83f85c6e62a9fde43f7
-last_verified_how: "Trial live cặp run.stop/chat.reload 9/9 bước, khoá RUN_ACTIVE chứng minh thật"
-evidence_ref: workers/duc-auto-gemini/v0.2.0/evidence-stop-reload-20260826/README.md
-current_focus: "G-01 đã vá hành vi (Đức Go 27/08, hướng huỷ-theo-attempt) — test race đỏ→xanh, CHỜ trial live sau khi Đức reload extension; lời khai kiểm chứng bên dưới là của bản TRƯỚC bản vá; còn nợ nhánh ChatGPT một số tính năng và method — xem BACKLOG.md và FEATURE-PARITY.md"
+last_verified: 2026-08-28
+last_verified_commit: 3514aa557386e91c6b515049ae2b8f05a12eef34
+last_verified_how: "Live 2 cú tắt/bật host: panel báo Mất kết nối cả hai lần (mắt Đức), tự nối lại 22,5s và 27,7s — khớp dự đoán viết trước khi đo, lệch dưới 1 giây"
+evidence_ref: workers/duc-auto-gemini/v0.2.0/evidence-transport-liveness-20260828/README.md
+current_focus: "Lớp vận chuyển Bridge đã kiểm chứng live 28/08 — nhưng lời khai trên là của bản trần 30 giây. Đức chốt cùng ngày hạ trần xuống 5 giây và cho thang nhường alarm sau ~2 phút; bản đó ĐÃ commit nhưng CHƯA đo live, cần Đức reload extension rồi tắt/bật host một lần nữa. G-01 vẫn chờ trial live riêng. Còn nợ nhánh ChatGPT một số tính năng và method — xem BACKLOG.md và FEATURE-PARITY.md"
 ref_readme: workers/duc-auto-gemini/v0.2.0/README.md
 ref_handoff: workers/duc-auto-gemini/v0.2.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md
