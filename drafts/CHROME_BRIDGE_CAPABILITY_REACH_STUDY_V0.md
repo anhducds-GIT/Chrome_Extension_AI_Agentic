@@ -1474,6 +1474,7 @@ newer document.** Suggest that rule be relaxed to "flag and re-verify" rather th
 
 ```
 1277:  experimental command waitForDebugger
+…
 1282:  command setInterceptFileChooserDialog
 ```
 
@@ -1506,3 +1507,163 @@ Unchanged from revision 1 except G2, which is now resolved:
 
 Scope discipline: this pass changed **factual statements only**. No conclusion was reversed, no new
 capability was added, and Phase 2 is not opened.
+
+---
+
+# Seed / Scouter Discovery Protocol — Working Agreement
+
+**Status:** working architecture agreement inside this living study; not a separate SSOT and not yet a production spec.
+
+## Core role split
+
+The preferred abstraction is **Scouter AI + Seed Extension**, not “a Seed Extension that independently understands and converts every website.”
+
+```text
+Scouter AI
+  ├─ discovery/research protocol
+  ├─ website behavioral reasoning
+  ├─ experiment planning
+  ├─ adapter/code generation
+  ├─ debug/patch loop
+  └─ verification skill
+        ↓
+Seed Extension
+  ├─ observe browser/page signals
+  ├─ expose Chrome/CDP primitives
+  ├─ execute requested trials
+  ├─ capture before/after evidence
+  └─ return structured results
+        ↓
+Bridge / Local Runtime
+  ├─ durable evidence
+  ├─ filesystem / CLI / code/repo operations as implemented
+  └─ checkpoints / artifacts
+```
+
+**Agreement:** the Seed is the browser-side arm of Scouter. Research policy and experimental protocol belong primarily in the AI/skill layer, not hard-coded into the Seed.
+
+## What Seed should study
+
+Seed should not stop at “which buttons/selectors exist.” Scouter uses Seed to infer the **behavioral model** of a website or individual app surface:
+
+- site/app identity and surface identity;
+- interaction archetypes such as fetch/research, task execution, workflow orchestration, transaction, communication and artifact/file handling;
+- state machines such as `IDLE → INPUT_READY → RUNNING → WAITING → DONE/FAILED`;
+- observable and controllable primitives behind each state transition;
+- SPA/navigation, frame, popup, worker, upload/download, streaming and failure-state behavior.
+
+One domain can expose several different surfaces/archetypes; classification should therefore be at the **workflow/surface** level, not only the domain level.
+
+## Capability-rich Seed
+
+The Seed should be designed as a **general-purpose browser capability kernel / laboratory** with the broadest useful Chrome/CDP capability surface available to the platform. The goal is that Scouter can systematically ask “can this website support primitive X?” and run a controlled proof.
+
+Top-level capability families currently expected:
+
+- OBSERVE — DOM, Accessibility, frames, navigation, Runtime state, Network;
+- INPUT — focus, click, keyboard, text, select, editor and browser-input paths;
+- TRANSFER — local→web upload, web→local download, clipboard/artifact paths;
+- CONTROL — tabs, popups, iframes, redirects, SPA lifecycle, long-running task states, reload/recovery;
+- NETWORK — request/response/WebSocket/stream observation and selected interception/simulation primitives;
+- BROWSER/LOCAL — storage, evidence capture, Bridge/local filesystem/CLI/DB/scheduler where implemented.
+
+The intent is **full capability availability**, not a weak Seed whose API surface must be expanded for every new website.
+
+## Capability checklist / trial ledger
+
+For each website/surface, Scouter should build a capability checklist and progressively mark evidence-backed reach.
+
+A primitive should not be represented only as binary ✓/✗. Working progression:
+
+```text
+UNKNOWN
+→ OBSERVED
+→ INFERRED
+→ TRIAL_READY
+→ PROVEN
+→ STABLE
+```
+
+Example evidence record:
+
+```text
+UPLOAD_FILE
+[✓] observable
+[✓] controllable
+[✓] micro-proof passed
+[✓] repeatable
+[ ] regulation cleared
+Evidence: EV-018 → EV-027
+```
+
+A technical capability proof and a regulation/provider-boundary verdict remain independent dimensions.
+
+## Scouter self-build / self-debug / self-verify loop
+
+Preferred operating loop:
+
+```text
+discover
+→ hypothesize
+→ generate adapter/code
+→ reload/configure runtime
+→ trial
+→ observe evidence
+→ diagnose
+→ patch
+→ retry
+→ regression proof
+→ mark capability
+```
+
+**Agreement:** one Scouter AI may build and verify its own code. A second AI is not architecturally required merely for independence. Verification should instead be a distinct **skill/mode with evidence-based PASS/FAIL criteria**, so the Scouter does not treat its previous conclusion as proof.
+
+Each bug should be convertible into reusable knowledge:
+
+```text
+failure signature
+→ diagnosis
+→ counter-code / fallback
+→ regression proof
+→ reusable adapter/runtime pattern
+```
+
+This creates cumulative learning without requiring inter-AI handoff overhead for every iteration.
+
+## Where constraints should live
+
+Research protocol, trial sequencing, dummy/test data, provider-specific boundaries and stop/escalation decisions belong to **Scouter skills/protocols**.
+
+Seed/runtime may still own generic technical invariants needed for deterministic execution — command IDs, timeout/abort semantics, idempotency, evidence logging, crash/restart recovery and structured error reporting. These are runtime correctness guarantees, not provider policy.
+
+## Adapter outcome
+
+The system should not assume every discovered website becomes a dedicated extension.
+
+Preferred progression:
+
+```text
+Site / Surface Capability Profile
+        ↓
+Declarative adapter / selectors / state detectors
+        ↓
+Generic Browser Runtime + adapter
+        ↓
+runtime-delivered or packaged site module when needed
+        ↓
+Dedicated extension only when isolation/UX/permissions/runtime requirements justify it
+```
+
+Therefore the stronger abstraction remains:
+
+> **Browser Discovery Runtime + Scouter AI produces evidence-backed Site Adapters / Capability Profiles; dedicated extensions are an escalation path, not the default output.**
+
+## Architecture discipline / blind spot
+
+The main 1–3 month risk is Seed core absorbing provider-specific fixes until it becomes another monolith. Provider-specific counter-code, selectors, workflow semantics and drift fixes should stay in adapter/skill/library layers wherever possible. Seed core should remain generic and capability-oriented.
+
+## Current unresolved design question
+
+Before implementation, the next architecture boundary to reason about is:
+
+> Which primitives and invariants belong permanently in **Seed core**, which reasoning/protocol belongs in **Scouter skills**, and which behavior belongs in a **Site Adapter**?

@@ -1,8 +1,8 @@
 # Phase 1 Factual Corrections — 2026-08-28
 
-**Status:** Active correction addendum  
-**Scope:** Correct factual claims in `drafts/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md`, especially the appended `## CC Independent Research — Phase 1` section.  
-**Rule:** Where this file conflicts with the living draft, this file wins until the living draft is normalized.
+**Status:** Active factual-reconciliation addendum  
+**Scope:** Record source-level corrections discovered while auditing `drafts/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md`.  
+**Rule:** **Current primary source wins.** If this file, the living draft, GPT, or CC disagree, flag the claim and re-verify against current Chrome docs / CDP PDL+protocol JSON / Chromium source before treating it as canonical.
 
 ## 1. `chrome.debugger` allowed-domain count
 
@@ -10,14 +10,14 @@ Current Chrome documentation lists **27** CDP domains exposed through `chrome.de
 
 Accessibility, Audits, CacheStorage, Console, CSS, Database, Debugger, DOM, DOMDebugger, DOMSnapshot, Emulation, Fetch, IO, Input, Inspector, Log, Network, Overlay, Page, Performance, Profiler, Runtime, Storage, Target, Tracing, WebAudio, WebAuthn.
 
-Therefore the CC claim "26 domains" is incorrect.
+The original GPT draft presented a **sample**, not a complete enumeration. CC initially transcribed the complete list as 26; the correct count is 27.
 
 Source:
 - https://developer.chrome.com/docs/extensions/reference/api/debugger
 
-## 2. Current Chromium trust/file-access gates
+## 2. Current Chromium trust / cookie / file-access gates
 
-The current `DevToolsAgentHostClient` interface uses:
+Current `DevToolsAgentHostClient` includes:
 
 - `MayAttachToURL(...)`
 - `MayAttachToRenderFrameHost(...)`
@@ -27,17 +27,18 @@ The current `DevToolsAgentHostClient` interface uses:
 - `MayWriteLocalFiles()`
 - `AllowUnsafeOperations()`
 
-The older `MayAttachToBrowser()` API appears in historical Chromium revisions but is **not** the current interface.
+The historical `MayAttachToBrowser()` API is not the current trust gate.
 
-For `ExtensionDevToolsClientHost`, current Chromium source shows:
+Current `ExtensionDevToolsClientHost` overrides:
 
 ```text
-IsTrusted()          -> ExtensionIsTrusted(*extension_)
-MayReadLocalFiles()  -> util::AllowFileAccess(extension_->id(), profile_)
-MayWriteLocalFiles() -> false
+MayAccessAllCookies() -> false
+IsTrusted()           -> ExtensionIsTrusted(*extension_)
+MayReadLocalFiles()   -> util::AllowFileAccess(extension_->id(), profile_)
+MayWriteLocalFiles()  -> false
 ```
 
-So the CC architectural conclusion about local-file gating remains directionally valid, but its explanation must use the current gate names/model.
+`ExtensionIsTrusted()` currently grants trusted status only to Chromium's hard-coded Perfetto UI extension identity (with its own location/switch conditions). A normal extension we ship should therefore be modeled as **untrusted**.
 
 Sources:
 - https://chromium.googlesource.com/chromium/src/+/refs/heads/main/content/public/browser/devtools_agent_host_client.h
@@ -45,59 +46,74 @@ Sources:
 
 ## 3. `Target` reach under page-level extension debugger sessions
 
-Current Chromium `TargetHandler::AccessMode::kAutoAttachOnly` explicitly documents:
+Current Chromium `TargetHandler::AccessMode::kAutoAttachOnly` is a hard reach boundary for ordinary extension debugger sessions.
 
-> Only setAutoAttach is supported. Any non-related target are not accessible.
-
-Current implementation rejects at least:
+Under this mode, generic target discovery/control commands including at least:
 
 - `Target.setDiscoverTargets`
 - `Target.getTargets`
 - `Target.attachToTarget`
 - `Target.createTarget`
+- `Target.activateTarget`
 
-when the handler is in `kAutoAttachOnly` mode, while `Target.setAutoAttach` remains the intended related-target mechanism.
+are rejected, while `Target.setAutoAttach` is the related-target mechanism that survives.
 
-Important distinction:
+Important asymmetry:
 
 ```text
 chrome.debugger.getTargets()     !=     CDP Target.getTargets
 ```
 
-The extension API `chrome.debugger.getTargets()` remains independently available.
+The Chrome Extension API remains independently available even when the CDP command is blocked.
 
 Sources:
 - https://chromium.googlesource.com/chromium/src/+/refs/heads/main/content/browser/devtools/protocol/target_handler.h
 - https://chromium.googlesource.com/chromium/src/+/refs/heads/main/content/browser/devtools/protocol/target_handler.cc
 - https://developer.chrome.com/docs/extensions/reference/api/debugger
 
-## 4. Page method status correction
+## 4. Page protocol status — corrected after PDL / stable-channel verification
 
-Current tip-of-tree/stable-1.3 CDP docs mark:
+`Page.setInterceptFileChooserDialog` is a **stable command**.
 
-- `Page.setInterceptFileChooserDialog` — **Experimental**
-- `Page.captureSnapshot` — **Experimental**
-- `Page.setDownloadBehavior` — **Experimental + Deprecated**
-- `Page.setBypassCSP` — not marked Experimental
-- `Page.createIsolatedWorld` — not marked Experimental
-- `Page.printToPDF` — not marked Experimental
+The current PDL declares:
 
-Therefore CC's table incorrectly labeled `Page.setInterceptFileChooserDialog` stable.
+```text
+command setInterceptFileChooserDialog
+  parameters
+    boolean enabled
+    experimental optional boolean cancel
+```
 
-Source:
-- https://chromedevtools.github.io/devtools-protocol/tot/Page/
+Therefore the **`cancel` parameter is experimental**, not the command itself.
+
+This is also consistent with stable CDP 1.3: `setInterceptFileChooserDialog` is present, while genuinely experimental-only commands such as `Page.captureSnapshot` are excluded from that stable subset.
+
+Other relevant status notes:
+
+- `Page.captureSnapshot` — Experimental
+- `Page.setDownloadBehavior` — Experimental + Deprecated
+- `Page.setBypassCSP` — stable
+- `Page.createIsolatedWorld` — stable
+- `Page.printToPDF` — stable
+- `Emulation.setLocaleOverride` — Experimental
+- `DOMSnapshot` and `Storage` are experimental at the domain level in CDP metadata; individual command interpretation must preserve that context.
+
+Sources:
+- https://chromium.googlesource.com/chromium/src/+/refs/heads/main/third_party/blink/public/devtools_protocol/domains/Page.pdl
 - https://chromedevtools.github.io/devtools-protocol/1-3/Page/
+- https://chromedevtools.github.io/devtools-protocol/tot/Page/
 
 ## 5. Corrections accepted from CC
 
-The following CC findings are retained as important Phase-1 evidence:
+Retained as important Phase-1 evidence:
 
-1. Current repo Bridge transport is a loopback WebSocket design rather than Chrome Native Messaging.
-2. Chrome 116+ active WebSocket traffic can extend MV3 service-worker lifetime by resetting the idle timer.
+1. Current repo Bridge transport is **loopback WebSocket**, not Chrome Native Messaging.
+2. Chrome 116+ WebSocket traffic can reset MV3 service-worker idle timers.
 3. The generic service-worker lifecycle still documents a five-minute limit for a single request, with specific API exceptions.
 4. `chrome.userScripts` and `chrome.offscreen` are major previously omitted capability families.
-5. Current repo workers do not yet implement `chrome.debugger`; repo CDP evidence is partial/prototype-level rather than deployed worker capability.
-6. Local-machine primitives described in the reach model must remain theoretical/reachable unless separately proven in repo implementation.
+5. Current repo workers do not yet implement `chrome.debugger`; repo CDP evidence is prototype/partial rather than deployed worker capability.
+6. Local-machine primitives in the reach model remain theoretical/reachable unless separately proven by repo implementation.
+7. `kAutoAttachOnly` makes related-target auto-attach a hard architectural constraint, not merely a convenience.
 
 ## 6. EXP-02 local-file upload correction
 
@@ -112,20 +128,39 @@ MayReadLocalFiles()
 
 and `MayWriteLocalFiles()` returns false.
 
-Therefore the local-path upload route is **setup-gated / needs runtime probe** rather than universally open.
+Therefore the local-path upload route is **setup-gated / capability-probed**, not universally open. The broader Artifact Bus hypothesis remains valid, but strategy ranking needs a fallback path.
 
-This does not invalidate the broader Artifact Bus hypothesis; it changes strategy ranking and requires a fallback path.
+### 6.1 G5 mostly resolved — programmatic file-access signal exists
+
+Chrome's extension permissions documentation exposes:
+
+```text
+chrome.extension.isAllowedFileSchemeAccess()
+```
+
+which reports whether the user enabled **Allow access to file URLs** for the extension.
+
+Therefore G5 is no longer a pure `[NV]`: there is a documented programmatic signal for the relevant per-extension setting.
+
+Remaining micro-proof question:
+
+> Does this signal correlate exactly with `ExtensionDevToolsClientHost::MayReadLocalFiles()` and successful `DOM.setFileInputFiles` behavior in the controlled upload proof?
+
+This should be verified empirically before marking the upload path PROVEN.
+
+Source:
+- https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions
 
 ## 7. Research discipline going forward
 
-For all next experiments:
-
-- Chrome extension API docs define extension-level surface.
-- Current Chromium source is used where the behavior is gated below domain level.
-- Full CDP docs do **not** imply `chrome.debugger` reach by themselves.
-- Experimental/deprecated status must be recorded explicitly.
+- Chrome Extension API docs define extension-level surface.
+- CDP PDL / protocol JSON are preferred for Stable / Experimental / Deprecated flags.
+- Current Chromium source is used where reach is gated below domain level.
+- Full CDP does **not** imply `chrome.debugger` reach.
 - Repo implementation remains evidence only, never the theoretical ceiling.
+- Newer internal notes do not override primary evidence automatically.
 
 ---
 
-**Next study:** EXP-08 — popup / new-tab / redirect / target handoff.
+**Latest completed study:** EXP-10 — `chrome.offscreen` Browser-side Processing Runtime.  
+**Next planned study:** TBD after EXP-10 capability-map review.
