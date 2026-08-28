@@ -206,6 +206,11 @@
     if (!resultFile) throw new Error("PERSISTENCE_VERIFICATION_FAILED: Run requires a verified Result XLSX checkpoint before prompt submission.");
     return { auditFile, resultFile };
   }
+  // NOT the inter-job clock any more. Counting these ticks is what made a
+  // configured 12s gap take ~11 minutes in a hidden side panel (measured live
+  // 2026-08-28). The gap now runs on a wall-clock deadline plus a chrome.alarms
+  // wake-up -- see interjob-delay-core.js. Kept only because it is still
+  // exported and covered by tests; do not wire it back to a wait.
   function countdownValues(seconds) { return Array.from({ length: Math.max(0, Number(seconds) || 0) }, (_unused, index) => seconds - index); }
   function planSummary(queue, settings) {
     const count = (predicate) => queue.filter(predicate).length;

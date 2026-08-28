@@ -106,6 +106,7 @@ COMPANION (đọc khi cần):
 | `drafts/20260828-chatgpt-text-reasoning-r01.CLAUDE-HANDOFF.md` | Handoff tự chứa cho Claude Code: trạng thái bản vá text reasoning + filename persistence, bằng chứng kiểm và bước tiếp theo |
 | `ab-poll-core.js` | Chính sách trả lời poll A/B của ChatGPT (`ab_poll_action`) — module lõi thuần, dùng chung cho content script và side panel |
 | `text-output-core.js` | Hợp đồng thuần cho `text_reasoning`: enum loại job, giới hạn ô XLSX, trường ledger và trường audit đã loại full response |
+| `interjob-delay-core.js` | **Đồng hồ chờ giữa hai job.** Chờ theo MỐC thời gian thật cộng một lần đánh thức bằng `chrome.alarms`, vì đếm nhịp `setTimeout` trong panel bị che biến khoảng nghỉ 12 giây thành ~11 phút (đo live 2026-08-28). Mốc là thẩm quyền, đánh thức chỉ để hỏi lại — nên một cái alarm sớm không bao giờ rút ngắn được khoảng nghỉ |
 | `provider-adapter.js` | Mọi thứ riêng của ChatGPT: selector DOM, hằng số thời gian, luật origin, mẫu chặn bảo mật. `content.js` đọc từ đây và không biết nó đang lái sản phẩm nào |
 | `drafts/NEXT-CHAT-PROMPT.md` | Prompt mở chat mới + bối cảnh ngắn cho Đức |
 | `drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md` | Gói việc `run.stop` + `chat.reload` giao cho phiên kế tiếp |
@@ -116,6 +117,7 @@ COMPANION (đọc khi cần):
 | `Pilot-07/`, `Pilot-08/`, `Pilot-09.../` | Pilot đang hoạt động, có thể có dữ liệu mới |
 | `Pilot-13_References/` | **TẠM HOÃN, không chạy** — pilot ảnh tham chiếu dựng từ 3 job thật của Pilot-08. Giữ lại vì phần kiểm offline "cả 66 job đều giải được ảnh" vẫn dùng được khi nào chạy Pilot-08 thật |
 | `Pilot-15_CheckpointRetention/` | Pilot kiểm tính năng **dọn rác checkpoint** (B-26) — thư mục ra hoàn toàn mới và trống nên kết quả tự tố cáo: chạy 2 job ghi 7 checkpoint, cuối run phải còn ĐÚNG 2 file. Đọc `README.md` trong đó để biết ĐẠT/HỎNG trước khi chạy |
+| `Pilot-16_InterJobDelay/` | **Số đo, không phải pilot trên trang thật.** Bằng chứng cho bug khoảng nghỉ giữa job bị Chrome bóp: hai harness Chrome thật, bảng số hiện/bị-che, mutation test, và công thức 4 bước để Đức đo lại live. Không tốn lượt ChatGPT nào |
 | `Pilot-14_RefFeatureTest/` | Pilot kiểm tính năng ảnh tham chiếu — 3/3 SUCCESS, ảnh ref tự tạo (1 hình + 1 màu + chữ nhãn) nên **kết quả tự tố cáo**. Kèm `RESULT-PILOT-14.md` và `evidence/` (976 lần dò DOM) |
 
 Thêm file/thư mục mới cấp cao → phải thêm 1 dòng vào bảng này. Không khai báo

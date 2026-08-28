@@ -36,15 +36,18 @@ Mỗi dòng dưới đây là **lỗi đã gặp thật**, có bằng chứng. �
 | **Giá phải trả** | Một lượt sinh đã tốn mà không thu được gì. Job thành `INTERRUPTED`, **không tự gửi lại** (đúng luật). |
 | **Bằng chứng** | `Pilot-15_CheckpointRetention/evidence/KET-QUA.md` (lần 1 hỏng) và `KET-QUA-LAN-2.md` (lần 2 đạt). |
 
-### #3 · Run **trông như treo** giữa hai job — **[ĐO] live 2026-08-28**
+### #3 · Run **trông như treo** giữa hai job — **ĐÃ VÁ 2026-08-28**, để lại đây vì số đo đáng biết
 
 | | |
 |---|---|
-| **Triệu chứng** | `run.status` đứng yên `RUNNING`, `current` vẫn là job vừa xong, job kế `PENDING`. Kéo dài **~11 phút** dù khoảng nghỉ chỉ đặt 12–24 giây. |
-| **Thật ra là gì** | Side panel **không ở tiền cảnh**. Chrome bóp `setTimeout` của tài liệu ẩn, nên đồng hồ đếm ngược giữa job chạy chậm hàng chục lần. |
-| **Làm gì** | Đưa cửa sổ chứa side panel ra trước, hoặc cứ chờ — **nó vẫn chạy tới cùng**. |
-| **KHÔNG phải** | Không treo, không mất dữ liệu, không cần `run.stop`. Phân biệt nhanh: `paused: false`, `halt: null`, và checkpoint mới nhất vẫn đúng bản vừa ghi. |
-| **Vì sao đáng ghi** | Chính tôi mất 10 phút mới loại trừ được khả năng treo thật, phải đọc code mới yên tâm. |
+| **Triệu chứng (bản cũ)** | `run.status` đứng yên `RUNNING`, `current` vẫn là job vừa xong, job kế `PENDING`. Kéo dài **~11 phút** dù khoảng nghỉ chỉ đặt 12–24 giây. |
+| **Thật ra là gì** | Side panel **không ở tiền cảnh**. Chrome bóp `setTimeout` của tài liệu bị che, nên đồng hồ đếm ngược giữa job chạy chậm hàng chục lần. Không phải treo. |
+| **Đã đo được bao nhiêu** | Đo trong Chrome 151 thật, tài liệu extension bị che, khoảng nghỉ đặt 12 giây: bản cũ (đếm 12 nhịp `sleep(1000)`) mất **276.982 giây → gấp 23 lần**. Cùng đoạn code đó khi tài liệu hiện: **12,06 giây**. |
+| **Bản vá** | Khoảng nghỉ giờ chờ theo **mốc thời gian thật**, và được đánh thức bằng **`chrome.alarms`** — sự kiện alarm do tiến trình trình duyệt gửi, không đi qua hàng đợi timer bị bóp. Đo lại trong cùng điều kiện: **12,005 giây → gấp 1,00**. Không xin quyền mới; `"alarms"` đã có trong `manifest.json` từ trước. |
+| **Giờ trông như thế nào** | Khoảng nghỉ đúng bằng con số cấu hình, kể cả khi panel bị che. Đồng hồ đếm ngược trên màn hình vẫn nhảy từng giây khi panel hiện; khi panel bị che nó nhảy thưa — **đó là hiển thị, không phải đồng hồ chờ**, đừng lấy nó để suy ra run có chạy hay không. |
+| **Nếu vẫn thấy chậm** | Còn HAI đồng hồ nữa CHƯA vá, và một cái nằm ngoài panel: nút **"Tiếp tục"** sau khi tạm dừng (B-28), và **nghỉ an toàn 6–9 giây bên trong content script** của tab chatgpt.com (B-29 — chưa đo, đừng đoán). Nếu tổng khoảng cách giữa hai job vẫn hơn cấu hình đáng kể thì nghi B-29 trước. |
+| **Bằng chứng** | `Pilot-16_InterJobDelay/` — số đo, script harness, và cách chạy lại. |
+| **CHƯA làm được** | **Chưa đo lại trên trang thật.** Bản vá đã kiểm trong panel thật của Chrome thật, nhưng chưa chạy hết một run có ChatGPT. Xem `Pilot-16_InterJobDelay/README.md` mục "Việc còn lại cho Đức". |
 
 ### #4 · Trần cứng 90 giây của `run.trial`
 

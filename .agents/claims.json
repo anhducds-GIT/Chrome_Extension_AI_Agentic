@@ -24,11 +24,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": null,
-      "task": "Da regen DASHBOARD + FEATURE-PARITY tu worktree HEAD sach va commit claims.json (28/08, claude-flow-create-scope). Tra quyen.",
-      "released_at": "2026-08-28"
+      "owner": "claude-chatgpt-interjob-delay",
+      "ai": "claude",
+      "claimed_at": "2026-08-28",
+      "task": "Duc duyet TAM nhan de sinh lai DASHBOARD/FEATURE-PARITY sau commit interjob-delay (module moi lam GPT 33 -> 34 file .js). Tra quyen ngay sau khi sinh xong. KHONG dung 4 file drafts/ chua track cua phien khac.",
+      "released_at": null
     }
   }
 }

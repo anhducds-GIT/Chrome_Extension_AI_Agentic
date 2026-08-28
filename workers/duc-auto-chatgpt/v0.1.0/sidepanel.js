@@ -5057,19 +5057,34 @@
     return response;
   }
 
+  // The gap between two jobs is a rate-limit protection, so it has to be
+  // measured in real time -- not in "however often Chrome felt like waking a
+  // hidden document". Counting one-second ticks turned a configured 12s gap
+  // into ~11 minutes, measured live 2026-08-28; see interjob-delay-core.js.
+  let interJobDelaySequence = 0;
+
   async function countdown(seconds, item) {
     state.selectedInterJobDelay = seconds;
-    for (const remaining of window.DacRunnerCore.countdownValues(seconds)) {
-      if (state.stopRequested) break;
-      state.interJobCountdown = remaining;
-      const runtimeInfo = currentRuntimeInfo();
-      nextTask(item, `${runtimeInfo.nextTransition} · ${runtimeInfo.interJobDelay}`);
+    interJobDelaySequence += 1;
+    try {
+      return await window.DacInterJobDelay.waitBetweenJobs({
+        seconds,
+        token: String(interJobDelaySequence),
+        alarms: chrome.alarms,
+        sleep,
+        shouldStop: () => state.stopRequested,
+        onTick: (remaining) => {
+          state.interJobCountdown = remaining;
+          const runtimeInfo = currentRuntimeInfo();
+          nextTask(item, `${runtimeInfo.nextTransition} · ${runtimeInfo.interJobDelay}`);
+          renderRuntime();
+        }
+      });
+    } finally {
+      state.interJobCountdown = null;
+      state.selectedInterJobDelay = null;
       renderRuntime();
-      await sleep(1000);
     }
-    state.interJobCountdown = null;
-    state.selectedInterJobDelay = null;
-    renderRuntime();
   }
 
   async function waitForChatReady(item) {

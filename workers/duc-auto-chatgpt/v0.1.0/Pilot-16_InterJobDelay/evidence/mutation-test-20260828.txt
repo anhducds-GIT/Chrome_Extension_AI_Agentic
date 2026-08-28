@@ -1,0 +1,30 @@
+  M1  countdown() goes back to counting one-second ticks
+      interjob-delay-core-smoke.mjs      FAILED (good)
+         AssertionError [ERR_ASSERTION]: the inter-job gap is waited through the throttle-immune module
+      sidepanel-countdown-static.mjs     FAILED (good)
+         AssertionError [ERR_ASSERTION]: the inter-job gap runs on the throttle-immune wait
+      => CAUGHT
+
+  M2  the alarm is dropped from the race (throttleable timer only)
+      interjob-delay-core-smoke.mjs      FAILED (good)
+         AssertionError [ERR_ASSERTION]: a hidden, throttled panel must still wait the configured gap and no longer -- this is the 11-minute bug
+      => CAUGHT
+
+  M3  the loop ends on the WAKE instead of re-checking the deadline
+      interjob-delay-core-smoke.mjs      FAILED (good)
+         AssertionError [ERR_ASSERTION]: an alarm firing 5s early must not end the wait at 7000ms -- the deadline decides, not the wake-up
+      => CAUGHT
+
+  M4  the wait counts ticks instead of watching the wall clock
+      interjob-delay-core-smoke.mjs      FAILED (good)
+         AssertionError [ERR_ASSERTION]: a hidden, throttled panel must still wait the configured gap and no longer -- this is the 11-minute bug
+      => CAUGHT
+
+  M5  a stale alarm is left armed after the wait ends
+      interjob-delay-core-smoke.mjs      FAILED (good)
+         AssertionError [ERR_ASSERTION]: a stopped wait disarms its alarm
+      => CAUGHT
+
+  baseline after restore: PASS
+
+ALL MUTATIONS CAUGHT

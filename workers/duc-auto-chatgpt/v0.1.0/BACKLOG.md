@@ -50,6 +50,37 @@ Gemini đã vá 27/08 (hướng B-refined, Đức duyệt): huỷ theo attempt �
 — chốt khởi động run khác nhau (xem bài học port B-04). Viết lại test race cho DOM ChatGPT
 trước, thấy đỏ rồi mới vá.
 
+### B-28 · Còn HAI đồng hồ nữa vẫn bị Chrome bóp: "Tiếp tục" và cooldown thử lại — **[ĐỌC]**
+
+Cùng gốc bệnh với khoảng nghỉ giữa job (đã vá 2026-08-28), khác vòng lặp. Đọc thẳng code,
+không dò tên:
+
+- `sidepanel.js` · `waitWhilePaused()` — `while (state.pauseRequested && !state.stopRequested)
+  await sleep(250)`. Panel bị che thì Chrome chỉ đánh thức ~1 lần/phút, nên bấm **"Tiếp tục"**
+  có thể mất tới khoảng một phút mới ăn. Không mất dữ liệu, nhưng Đức sẽ tưởng nút chết.
+- `sidepanel.js` · `resolveJobFailure()` — `await sleep(retryCooldownMs)`, một giấc dài duy
+  nhất. Panel bị che thì nó **dài hơn** cấu hình (bị dồn tới nhịp thức kế tiếp), không ngắn
+  hơn — nên KHÔNG phá luật an toàn, chỉ làm dòng "next retry in" hiển thị sai.
+
+Cách vá đã có sẵn và đã kiểm: `interjob-delay-core.js` + `tests/interjob-delay-core-smoke.mjs`.
+Vòng "Tiếp tục" thì đúng hơn là **đánh thức bằng sự kiện** (nút bấm resolve một promise) chứ
+không phải hẹn giờ — vì thời điểm không đoán trước được.
+
+### B-29 · Đồng hồ chờ bên trong content script cũng bị bóp — **CHƯA ĐO, đừng vá theo giả thuyết**
+
+`content.js:679` — `if (safetyCooldownSec > 0) await sleep(safetyCooldownSec * 1000);` — nghỉ
+an toàn 6–9 giây nằm trong **content script của tab chatgpt.com**, không phải trong panel.
+Cửa sổ Chrome bị cửa sổ khác che thì trang đó cũng thành "hidden" (Windows có phát hiện
+occlusion) → cùng kiểu bóp. `waitForChatReady()` được gọi **hai lần mỗi job** (trước khi gửi
+và sau khi có kết quả), nên mỗi job có thể ăn thêm tới ~2 nhịp thức.
+
+Tin được phần nào: mọi vòng dò trong `content.js` (dòng 191, 399, 477, 520, 659) đã dùng
+**mốc `Date.now()`**, nên chúng không bao giờ chờ lâu hơn `timeout_sec` — chỉ dò thưa hơn.
+Riêng dòng 679 là một giấc ngủ trần, không có mốc.
+
+**Việc cần làm trước tiên là ĐO**, bằng đúng cái probe đã dùng cho B-28 (nhật ký phiên
+2026-08-28), nhưng đo trên content script. Chỉ vá nếu số đo nói có.
+
 ### B-02 · Selector ChatGPT phải có bằng chứng, không kế thừa
 **Đã làm một phần** (`c1e7d04`, `f418bc1`): `assistantMessage`/`userMessage` đã
 sửa theo bằng chứng đo được, `conversationRoot` đã bỏ phụ thuộc tên.
@@ -424,6 +455,40 @@ push nên không ảnh hưởng ai; hash file của Gemini xác minh nguyên v�
 package có chủ khác** (đọc `.agents/claims.json`, so với `git show --name-only` các commit
 chưa push của mình). Rẻ, và đúng loại "luật nào không kiểm được bằng máy thì sớm muộn cũng bị
 bỏ qua".
+
+### B-30 · Cổng kiểm bắt oan phiên này vì **file rác ở gốc repo của phiên khác** — (việc ở GỐC REPO)
+
+Gặp thật 2026-08-28. Phiên `claude-chatgpt-interjob-delay` chỉ sửa trong package của mình,
+nhưng cổng kiểm vẫn **ĐỎ** mục "Phạm vi trách nhiệm":
+
+> File gốc repo bị sửa nhưng không ai đứng tên.
+
+Thủ phạm là 4 file **chưa track** ở gốc, do phiên khác để lại và có từ trước khi phiên này
+mở: `drafts/ORCH-01-EVIDENCE.md`, `drafts/ORCH-01B-EVIDENCE.md`,
+`drafts/PLATFORM-AI-ORCHESTRATOR-STUDY-V2.md`, `drafts/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md`.
+
+Bế tắc là thật, không phải lười: muốn xanh thì phải **claim `_root`** (cần Đức duyệt) hoặc
+**xoá file người khác** (luật cấm). Nên một phiên hoàn toàn ngoan vẫn không thể đóng phiên
+đúng luật.
+
+Cùng họ với B-12 (cổng phân trách nhiệm theo package nhưng gộp mọi file gốc thành một rổ).
+Đề xuất: `rootTouched` **chỉ tính file đã track bị sửa**, còn file chưa track ở gốc thì báo
+riêng thành cảnh báo có tên phiên nghi vấn — chứ không chặn. Lý do: một phiên không thể chịu
+trách nhiệm cho file nó không tạo và không được xoá.
+
+### B-31 · Harness "chatgpt.com giả lập" để đo đường chạy END-TO-END — việc RIÊNG, đừng nhét vào fix nhỏ
+
+Luật vàng số 8 đã cho phép harness Chrome thật với trang chatgpt.com giả lập. Phiên 28/08 đã
+dựng được **một nửa**: nạp extension thật vào Chrome thật bằng CDP (`Extensions.loadUnpacked`
+— lưu ý `--load-extension` đã **chết** ở Chrome 151, phải dùng CDP kèm
+`--enable-unsafe-extension-debugging`), mở `sidepanel.html` thật thành tab ẩn, và gọi thẳng
+module trong đó. Script còn ở scratchpad của phiên; hình dạng đã kiểm.
+
+Còn thiếu để đo end-to-end: chặn `https://chatgpt.com/*` bằng `Fetch.enable` và trả về DOM
+giả khớp selector của `provider-adapter.js`, nạp workbook, cấu hình output. Đó là **một
+checkpoint riêng**, không phải phần phụ của một fix nhỏ — dựng nửa vời sẽ nuốt trọn một phiên.
+Giá trị: đo được khoảng nghỉ + cooldown + phát hiện kết quả trên đường chạy thật mà không
+tốn lượt ChatGPT và không cần tay Đức.
 
 ### B-11 · `run.trial` không có workbook bị bọc thành `INTERNAL_ERROR`
 Đo 2026-08-26: gọi `run.trial` khi chưa nạp workbook trả về `INTERNAL_ERROR` /

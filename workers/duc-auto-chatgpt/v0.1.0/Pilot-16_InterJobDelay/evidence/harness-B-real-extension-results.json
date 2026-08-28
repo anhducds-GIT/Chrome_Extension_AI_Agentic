@@ -1,0 +1,53 @@
+{
+  "old_hidden_ms": 288039,
+  "new_hidden": {
+    "wall_ms": 12007,
+    "reported": {
+      "plan": {
+        "total_sec": 12,
+        "started_at_ms": 1787904427587,
+        "deadline_ms": 1787904439587,
+        "alarm_name": "dac-interjob-delay:1787904427587:harness"
+      },
+      "reason": "elapsed",
+      "ticks": 7,
+      "waited_ms": 12006
+    }
+  },
+  "visibility_after_activate": "visible",
+  "old_visible_ms": 12062,
+  "new_visible": {
+    "wall_ms": 12007,
+    "reported": {
+      "plan": {
+        "total_sec": 12,
+        "started_at_ms": 1787904454184,
+        "deadline_ms": 1787904466184,
+        "alarm_name": "dac-interjob-delay:1787904454184:harness"
+      },
+      "reason": "elapsed",
+      "ticks": 12,
+      "waited_ms": 12007
+    }
+  },
+  "chrome": "Chrome/151.0.7922.174",
+  "extension_id": "efjihnbjlneiheacaehhjdbemoklkcka",
+  "configured_seconds": 12,
+  "hidden_grace_ms": 340000,
+  "wiring": {
+    "visibility": "hidden",
+    "hasModule": true,
+    "api": [
+      "ALARM_PREFIX",
+      "MAX_TICK_MS",
+      "armWake",
+      "isElapsed",
+      "nextTickMs",
+      "plan",
+      "remainingSeconds",
+      "waitBetweenJobs"
+    ],
+    "hasAlarms": true,
+    "hasRunnerCore": true
+  }
+}

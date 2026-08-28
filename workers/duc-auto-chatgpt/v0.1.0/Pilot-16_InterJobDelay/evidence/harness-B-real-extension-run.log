@@ -1,0 +1,13 @@
+2026-08-28T07:56:35.475Z chrome up: Chrome/151.0.7922.174
+2026-08-28T07:56:35.504Z real extension loaded: efjihnbjlneiheacaehhjdbemoklkcka
+2026-08-28T07:56:35.516Z panel target: 5DFF2452A60206CCDFD74329CD813499
+2026-08-28T07:56:39.534Z wiring: {"visibility":"hidden","hasModule":true,"api":["ALARM_PREFIX","MAX_TICK_MS","armWake","isElapsed","nextTickMs","plan","remainingSeconds","waitBetweenJobs"],"hasAlarms":true,"hasRunnerCore":true}
+2026-08-28T07:56:39.534Z staying hidden for 340s to cross Chrome's grace period and enter intensive throttling...
+2026-08-28T08:02:19.542Z visibility now: hidden
+2026-08-28T08:02:19.542Z measuring OLD clock (12s configured) in the hidden panel -- this is the bug, expect minutes
+2026-08-28T08:07:07.584Z OLD hidden: 288039 ms
+2026-08-28T08:07:07.584Z measuring NEW clock (12s configured) in the same hidden panel
+2026-08-28T08:07:19.596Z NEW hidden: {"wall_ms":12007,"reported":{"plan":{"total_sec":12,"started_at_ms":1787904427587,"deadline_ms":1787904439587,"alarm_name":"dac-interjob-delay:1787904427587:harness"},"reason":"elapsed","ticks":7,"waited_ms":12006}}
+2026-08-28T08:07:22.122Z visibility now: visible
+2026-08-28T08:07:46.191Z OLD visible: 12062 ms · NEW visible: {"wall_ms":12007,"reported":{"plan":{"total_sec":12,"started_at_ms":1787904454184,"deadline_ms":1787904466184,"alarm_name":"dac-interjob-delay:1787904454184:harness"},"reason":"elapsed","ticks":12,"waited_ms":12007}}
+2026-08-28T08:07:46.193Z written C:\Users\MAYTEST_12\AppData\Local\Temp\claude\C--WORKING-ZONE-Chrome-Extension-AI-Agentic\12efb109-e470-4c60-8e5f-8903ff7eac53\scratchpad\throttle-probe\real-ext-results.json

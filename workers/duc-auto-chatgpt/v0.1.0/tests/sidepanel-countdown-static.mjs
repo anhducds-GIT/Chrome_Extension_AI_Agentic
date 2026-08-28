@@ -10,7 +10,13 @@ assert.match(source, /function nextTask/);
 assert.match(source, /function setCurrent/);
 assert.match(source, /SAVED ✓/);
 assert.match(source, /els\.logList\.textContent = "";/, "a new run clears stale visible log entries");
-assert.match(source, /countdownValues\(seconds\)/);
+// This used to assert `countdownValues(seconds)` -- i.e. it pinned the very
+// implementation that made a 12s gap take 11 minutes in a hidden panel. It now
+// pins the replacement instead, and the replacement is a strictly stronger
+// claim: the gap is waited on a wall-clock deadline with a throttle-immune
+// chrome.alarms wake-up. Behaviour is pinned in interjob-delay-core-smoke.mjs.
+assert.match(source, /window\.DacInterJobDelay\.waitBetweenJobs\(/, "the inter-job gap runs on the throttle-immune wait");
+assert.match(source, /alarms: chrome\.alarms/, "the wait is handed the real chrome.alarms API");
 assert.ok(source.indexOf("nextTask(item, `${runtimeInfo.nextTransition} · ${runtimeInfo.interJobDelay}`)") > source.indexOf("async function countdown"), "countdown identifies the real next job and exposes only the readiness-check transition");
 assert.ok(!/progress\(`Next job in/.test(source), "countdown must not overwrite Progress detail");
 assert.doesNotMatch(source.slice(source.indexOf("async function countdown"), source.indexOf("async function waitForChatReady")), /Earliest next readiness check/, "countdown must not promise a wall-clock prompt time before readiness authority");

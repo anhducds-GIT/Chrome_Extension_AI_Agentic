@@ -1,0 +1,111 @@
+const PORT = 38217;
+const TARGET_SEC = 12; // the configured delay_min_sec Duc actually runs with
+const out = document.getElementById("out");
+const log = (line) => { out.textContent += line + "\n"; };
+const post = (body) => fetch(`http://127.0.0.1:${PORT}/result`, {
+  method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body)
+}).catch(() => {});
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const countdownValues = (seconds) =>
+  Array.from({ length: Math.max(0, Number(seconds) || 0) }, (_u, i) => seconds - i);
+
+const waiters = new Map();
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg?.type === "begin") { waiters.get("begin")?.(); return false; }
+  if (msg?.type === "sw_alarm_done") { waiters.get("sw_alarm")?.(msg.elapsed_ms); return false; }
+  if (msg?.type === "sw_settimeout_done") { waiters.get("sw_settimeout")?.(msg.elapsed_ms); return false; }
+  return false;
+});
+const awaitSignal = (key) => new Promise((resolve) => waiters.set(key, resolve));
+
+// --- the five clocks under test -------------------------------------------
+
+// E1: exactly the shape sidepanel.js countdown() uses today.
+async function chainedSleep(seconds) {
+  for (const _remaining of countdownValues(seconds)) await sleep(1000);
+}
+
+// E2: same visual 1s tick, but wall-clock deadline decides when to stop.
+async function deadlineLoop(seconds) {
+  const deadline = Date.now() + seconds * 1000;
+  while (Date.now() < deadline) await sleep(Math.min(1000, deadline - Date.now()));
+}
+
+// E3: chrome.alarms created and awaited inside this (hidden) document.
+async function pageAlarm(seconds) {
+  const name = `pagealarm:${Date.now()}`;
+  return new Promise((resolve) => {
+    const handler = (alarm) => {
+      if (alarm.name !== name) return;
+      chrome.alarms.onAlarm.removeListener(handler);
+      resolve();
+    };
+    chrome.alarms.onAlarm.addListener(handler);
+    chrome.alarms.create(name, { when: Date.now() + seconds * 1000 });
+  });
+}
+
+// E4: chrome.alarms created in the service worker, result relayed back.
+async function swAlarm(seconds) {
+  const signal = awaitSignal("sw_alarm");
+  await chrome.runtime.sendMessage({ type: "sw_alarm_start", ms: seconds * 1000 });
+  return signal;
+}
+
+// E5: plain setTimeout inside the service worker, result relayed back.
+async function swSetTimeout(seconds) {
+  const signal = awaitSignal("sw_settimeout");
+  await chrome.runtime.sendMessage({ type: "sw_settimeout_start", ms: seconds * 1000 });
+  return signal;
+}
+
+async function measure(name, phase, fn) {
+  const started = Date.now();
+  const inner = await fn(TARGET_SEC);
+  const elapsed = Date.now() - started;
+  const row = {
+    event: "measurement", clock: name, phase,
+    visibility: document.visibilityState,
+    target_ms: TARGET_SEC * 1000,
+    elapsed_ms: elapsed,
+    inner_elapsed_ms: typeof inner === "number" ? inner : null,
+    ratio: Number((elapsed / (TARGET_SEC * 1000)).toFixed(2)),
+    at: Date.now()
+  };
+  log(`${phase} ${name}: ${elapsed}ms (x${row.ratio})`);
+  await post(row);
+  return row;
+}
+
+(async () => {
+  await post({ event: "probe_loaded", visibility: document.visibilityState, ua: navigator.userAgent, at: Date.now() });
+
+  // ---- CONTROL FIRST: the same code in a VISIBLE document. Running it before
+  // the hidden treatment means a hang in the last hidden experiment cannot cost
+  // us the comparison.
+  await chrome.runtime.sendMessage({ type: "show_me" });
+  await sleep(2000);
+  await measure("chained_sleep_1000", "visible", chainedSleep);
+  await measure("deadline_loop", "visible", deadlineLoop);
+  await measure("page_alarm", "visible", pageAlarm);
+
+  // ---- TREATMENT: hide the document, cross the 5-minute grace period, and
+  // measure again under intensive wake-up throttling.
+  await chrome.runtime.sendMessage({ type: "hide_me" });
+  await sleep(1500);
+  const hiddenAt = Date.now();
+  await post({ event: "now_hidden", visibility: document.visibilityState, at: hiddenAt });
+  await chrome.runtime.sendMessage({ type: "arm_begin" });
+  await awaitSignal("begin");
+  await post({ event: "grace_period_crossed", hidden_ms: Date.now() - hiddenAt, visibility: document.visibilityState, at: Date.now() });
+
+  await measure("chained_sleep_1000", "hidden", chainedSleep);
+  await measure("deadline_loop", "hidden", deadlineLoop);
+  await measure("page_alarm", "hidden", pageAlarm);
+  await measure("sw_alarm", "hidden", swAlarm);
+  await measure("sw_settimeout", "hidden", swSetTimeout);
+
+  await post({ event: "done", at: Date.now() });
+  log("DONE");
+})();

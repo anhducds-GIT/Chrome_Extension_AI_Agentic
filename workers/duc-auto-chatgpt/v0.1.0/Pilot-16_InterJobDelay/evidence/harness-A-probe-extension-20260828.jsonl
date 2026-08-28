@@ -1,0 +1,15 @@
+{"event":"sw_installed","at":1787903299917}
+{"event":"probe_tab_created","tab_id":803890517,"active":false,"at":1787903299936}
+{"event":"probe_loaded","visibility":"hidden","ua":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36","at":1787903299952}
+{"event":"measurement","clock":"chained_sleep_1000","phase":"visible","visibility":"visible","target_ms":12000,"elapsed_ms":12064,"inner_elapsed_ms":null,"ratio":1.01,"at":1787903314045}
+{"event":"measurement","clock":"deadline_loop","phase":"visible","visibility":"visible","target_ms":12000,"elapsed_ms":12003,"inner_elapsed_ms":null,"ratio":1,"at":1787903326053}
+{"event":"measurement","clock":"page_alarm","phase":"visible","visibility":"visible","target_ms":12000,"elapsed_ms":12003,"inner_elapsed_ms":null,"ratio":1,"at":1787903338059}
+{"event":"now_hidden","visibility":"hidden","at":1787903340580}
+{"event":"sw_alarm_begin","at":1787903670599}
+{"event":"grace_period_crossed","hidden_ms":330024,"visibility":"hidden","at":1787903670604}
+{"event":"measurement","clock":"chained_sleep_1000","phase":"hidden","visibility":"hidden","target_ms":12000,"elapsed_ms":276982,"inner_elapsed_ms":null,"ratio":23.08,"at":1787903947588}
+{"event":"measurement","clock":"deadline_loop","phase":"hidden","visibility":"hidden","target_ms":12000,"elapsed_ms":59976,"inner_elapsed_ms":null,"ratio":5,"at":1787904007580}
+{"event":"measurement","clock":"page_alarm","phase":"hidden","visibility":"hidden","target_ms":12000,"elapsed_ms":12005,"inner_elapsed_ms":null,"ratio":1,"at":1787904019593}
+{"event":"measurement","clock":"sw_alarm","phase":"hidden","visibility":"hidden","target_ms":12000,"elapsed_ms":12017,"inner_elapsed_ms":12012,"ratio":1,"at":1787904031614}
+{"event":"measurement","clock":"sw_settimeout","phase":"hidden","visibility":"hidden","target_ms":12000,"elapsed_ms":12004,"inner_elapsed_ms":12002,"ratio":1,"at":1787904043620}
+{"event":"done","at":1787904043623}
