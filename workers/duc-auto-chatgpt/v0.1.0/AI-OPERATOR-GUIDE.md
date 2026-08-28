@@ -12,6 +12,13 @@ Mỗi dòng dưới đây là **lỗi đã gặp thật**, có bằng chứng. �
 2. **Vừa reload extension?** Phải nạp lại content script vào tab: `chat.reload` qua Bridge,
    hoặc bấm F5 tab đó. Xem lỗi #1.
 3. **Sắp chạy tính năng có XOÁ FILE?** Chụp bản sao thư mục ra trước. Xem lỗi #3.
+4. **Bridge host của Đức KHÔNG nằm ở đường dẫn mặc định của installer.** Nó ở
+   `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-chatgpt\` (mỗi worker một thư mục con cạnh nhau).
+   Gọi CLI thì phải truyền `--pairing "<đường dẫn đó>\duc-auto-chatgpt-bridge-pairing-v1.json"`.
+   Không truyền thì CLI tìm ở `%LOCALAPPDATA%\DucAutoChatGPT\BridgeV1\` và báo `ENOENT` —
+   **rất dễ tưởng là Bridge chưa chạy trong khi nó đang chạy.** Đã mất thời gian vì đúng chuyện này
+   ngày 28/08: tôi kết luận "chưa cài Bridge" và cài lại một bản thứ hai, hoá ra host thật đã chạy
+   từ sáng và đang giữ cổng 32147. Kiểm nhanh: `Get-Process node | ... CommandLine -like "*bridge-host*"`.
 
 ## Bảng lỗi đã gặp thật
 
@@ -47,7 +54,9 @@ Mỗi dòng dưới đây là **lỗi đã gặp thật**, có bằng chứng. �
 | **Giờ trông như thế nào** | Khoảng nghỉ đúng bằng con số cấu hình, kể cả khi panel bị che. Đồng hồ đếm ngược trên màn hình vẫn nhảy từng giây khi panel hiện; khi panel bị che nó nhảy thưa — **đó là hiển thị, không phải đồng hồ chờ**, đừng lấy nó để suy ra run có chạy hay không. |
 | **Nếu vẫn thấy chậm** | Còn HAI đồng hồ nữa CHƯA vá, và một cái nằm ngoài panel: nút **"Tiếp tục"** sau khi tạm dừng (B-28), và **nghỉ an toàn 6–9 giây bên trong content script** của tab chatgpt.com (B-29 — chưa đo, đừng đoán). Nếu tổng khoảng cách giữa hai job vẫn hơn cấu hình đáng kể thì nghi B-29 trước. |
 | **Bằng chứng** | `Pilot-16_InterJobDelay/` — số đo, script harness, và cách chạy lại. |
-| **CHƯA làm được** | **Chưa đo lại trên trang thật.** Bản vá đã kiểm trong panel thật của Chrome thật, nhưng chưa chạy hết một run có ChatGPT. Xem `Pilot-16_InterJobDelay/README.md` mục "Việc còn lại cho Đức". |
+| **Đo lại trên trang thật** | **ĐÃ ĐO 2026-08-28**, trial `trial-e99addeb`, 2 job text, 2/2 SUCCESS. Tách từ nhật ký: `JOB_SUCCESS` Q001 → `RECONCILE_START` Q002 = **12,0 giây** (cấu hình 12) → `RECONCILE_RESULT` idle sau **6,3 giây** (nghỉ an toàn 6). Tổng `completed_at` → `submitted_at` = **20 giây**. |
+| **Điều kiện lúc đo** | Đức xác nhận **cửa sổ Chrome bị che suốt từ trước khi chạy tới hết run** — tức đo ĐÚNG điều kiện sinh ra bug, không phải điều kiện dễ. Nguồn: lời Đức, không phải suy luận từ artifact. |
+| **Vì sao bug này ẩn được lâu** | Cùng lúc đó, nghỉ an toàn 6 giây **trong content script** đo được **6,3 giây — không bị bóp**. Không mâu thuẫn: Chrome bóp nặng **chuỗi timer nối nhau** (đúng hình dạng vòng 12 nhịp cũ), chứ không bóp một `sleep()` đơn lẻ. Nên mọi lớp cooldown vẫn trông bình thường trong khi khoảng nghỉ đã phồng lên gấp hàng chục lần. Đừng dùng "cooldown vẫn đúng giờ" để kết luận "không bị bóp". |
 
 ### #4 · Trần cứng 90 giây của `run.trial`
 

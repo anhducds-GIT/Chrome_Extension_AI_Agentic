@@ -86,21 +86,45 @@ giờ được rút ngắn** khoảng nghỉ. Dài hơn thì an toàn; ngắn h�
   che, gọi thẳng module trong đó. Xác nhận panel thật có nạp module, `chrome.alarms` với tới
   được từ panel, và số đo ở trên.
 
-## Việc còn lại cho Đức — CHƯA đo lại trên trang thật
+## Đo trên trang thật — ĐÃ XONG 2026-08-28
 
-Bản vá đã đo trong panel thật, nhưng **chưa chạy hết một run có ChatGPT**. Theo luật repo
-(AGENTS.md mục 2), chạy pilot live mới **phải Đức duyệt**. Cần đúng 4 việc:
+Trial `trial-e99addeb-7780-41fe-9cbe-05fb33a5f59d`, 2 job `text_reasoning`, **2/2 SUCCESS**,
+khoảng nghỉ đặt **cố định 12 giây** (min=max=12 để số không mơ hồ), `max_retries: 0`.
+**Cửa sổ Chrome bị che suốt từ trước khi chạy tới hết run** — Đức xác nhận. Tức đo đúng điều
+kiện sinh ra bug, không phải điều kiện dễ.
 
-1. **Reload extension** ở `chrome://extensions` (đã sửa file `.js`).
-2. Mở tab ChatGPT **ở sẵn MỘT CUỘC HỘI THOẠI** (`/c/<id>`), không phải trang chủ — lỗi #2
-   trong `AI-OPERATOR-GUIDE.md`. Vừa reload thì nạp lại content script (`chat.reload` hoặc F5)
-   — lỗi #1.
-3. Chạy **2–3 job**, `delay_min_sec: 12`, `delay_max_sec: 24`, `max_retries: 0`. Trong lúc
-   chạy, **cố tình để cửa sổ khác che side panel suốt khoảng nghỉ** — đó chính là điều kiện
-   sinh ra bug.
-4. Đọc số trong audit JSONL: khoảng cách từ `completed_at` của job N tới `submitted_at` của
-   job N+1. **Đạt** = 12–24 giây cộng thêm nghỉ an toàn. **Chưa đạt** = còn hàng phút → nghi
-   B-29 (đồng hồ trong content script) trước, đừng nghi lại bản vá này.
+Tách từ nhật ký JSONL (`evidence/live-trial-audit-20260828.jsonl`), mốc 0 = `JOB_SUCCESS` Q001:
+
+| Mốc | Lệch |
+|---|---|
+| `JOB_SUCCESS` Q001 | +0,0 s |
+| checkpoint ghi xong | +0,7 s |
+| `RECONCILE_START` Q002 — **hết khoảng nghỉ** | **+12,7 s** |
+| `RECONCILE_RESULT` — ChatGPT idle | +19,0 s |
+| `PROMPT_SUBMISSION_RESERVED` Q002 | +19,0 s |
+
+**Khoảng nghỉ thật = 12,0 giây, cấu hình 12 giây.** Tổng `completed_at` Q001 →
+`submitted_at` Q002 = **20 giây**, trong đó 6,3 giây là nghỉ an toàn (cấu hình 6).
+
+Trước bản vá, cùng điều kiện đó, riêng khoảng nghỉ 12 giây đo được **288 giây**.
+
+### Một chi tiết giải thích vì sao bug này ẩn được lâu
+
+Cùng lúc panel bị che, nghỉ an toàn 6 giây **trong content script** vẫn đo đúng **6,3 giây**.
+Không mâu thuẫn: Chrome bóp nặng **chuỗi timer nối nhau** (nesting cao) — đúng hình dạng vòng
+lặp 12 nhịp `await sleep(1000)` cũ — chứ không bóp một `sleep()` đơn lẻ gọi từ message handler.
+
+Nên mọi lớp cooldown vẫn trông bình thường trong khi khoảng nghỉ đã phồng gấp hàng chục lần.
+**Đừng dùng "cooldown vẫn đúng giờ" để kết luận "không bị bóp".** Đây cũng là lý do B-29 đóng
+lại mà không cần vá.
+
+### Còn một mảnh nhỏ, nói rõ cho khỏi tưởng đã kín
+
+Trạng thái "panel bị che" là **lời Đức**, không phải thứ artifact tự tố giác. Không có dòng nào
+trong JSONL ghi `document.visibilityState`, nên một phiên sau đọc lại file này không thể tự kiểm
+điều đó. Muốn kín hoàn toàn thì ghi thêm số nhịp (`ticks`) mà module trả về vào audit — panel
+hiện cho 12 nhịp/12 giây, panel bị che cho ~7 — lúc đó chính con số tự nói nó chạy ở chế độ nào.
+Chưa làm, vì nó là đổi hợp đồng audit chứ không phải phần của fix này.
 
 ## Chạy lại số đo (không cần ChatGPT, không cần tay Đức)
 
@@ -133,3 +157,5 @@ Hai cái bẫy khác đã trả giá, ghi lại để phiên sau không mất gi
 | `harness-B-real-extension-results.json` | Số đo thô của harness B |
 | `harness-B-real-extension-run.log` | Nhật ký chạy harness B, có mốc giờ từng bước |
 | `mutation-test-20260828.txt` | 5 phát phá bản vá và test bắt được cái nào |
+| `live-trial-audit-20260828.jsonl` | **Nhật ký run thật** — 42 event, chứa mọi mốc của bảng trên |
+| `live-trial-results-v10-20260828.xlsx` | Sổ cái run thật, 2/2 SUCCESS |

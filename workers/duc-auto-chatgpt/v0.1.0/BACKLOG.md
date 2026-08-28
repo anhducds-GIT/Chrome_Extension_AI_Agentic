@@ -66,7 +66,7 @@ Cách vá đã có sẵn và đã kiểm: `interjob-delay-core.js` + `tests/inte
 Vòng "Tiếp tục" thì đúng hơn là **đánh thức bằng sự kiện** (nút bấm resolve một promise) chứ
 không phải hẹn giờ — vì thời điểm không đoán trước được.
 
-### B-29 · Đồng hồ chờ bên trong content script cũng bị bóp — **CHƯA ĐO, đừng vá theo giả thuyết**
+### B-29 · Đồng hồ chờ trong content script — **ĐÃ ĐO 28/08: KHÔNG bị bóp, không cần vá**
 
 `content.js:679` — `if (safetyCooldownSec > 0) await sleep(safetyCooldownSec * 1000);` — nghỉ
 an toàn 6–9 giây nằm trong **content script của tab chatgpt.com**, không phải trong panel.
@@ -78,8 +78,16 @@ Tin được phần nào: mọi vòng dò trong `content.js` (dòng 191, 399, 47
 **mốc `Date.now()`**, nên chúng không bao giờ chờ lâu hơn `timeout_sec` — chỉ dò thưa hơn.
 Riêng dòng 679 là một giấc ngủ trần, không có mốc.
 
-**Việc cần làm trước tiên là ĐO**, bằng đúng cái probe đã dùng cho B-28 (nhật ký phiên
-2026-08-28), nhưng đo trên content script. Chỉ vá nếu số đo nói có.
+**ĐÃ ĐO 28/08, và câu trả lời là KHÔNG cần vá — hạ xuống P3.** Trial `trial-e99addeb` chạy với
+cửa sổ Chrome **bị che suốt** (Đức xác nhận): nghỉ an toàn cấu hình 6 giây đo được **6,3 giây**.
+Không bị bóp.
+
+**Vì sao:** Chrome bóp nặng **chuỗi timer nối nhau** (nesting cao) — đúng hình dạng vòng lặp
+12 nhịp `await sleep(1000)` của khoảng nghỉ cũ. Dòng 679 là **một `sleep()` đơn lẻ** gọi từ trong
+một message handler, nesting thấp, nên chỉ chịu mức kẹp nhẹ.
+
+**Bài học đáng giữ hơn cả kết luận:** đừng lấy "cooldown vẫn đúng giờ" làm bằng chứng "không bị
+bóp" — hai loại timer bị đối xử khác nhau, và chính điều đó làm bug khoảng nghỉ ẩn được lâu.
 
 ### B-02 · Selector ChatGPT phải có bằng chứng, không kế thừa
 **Đã làm một phần** (`c1e7d04`, `f418bc1`): `assistantMessage`/`userMessage` đã
