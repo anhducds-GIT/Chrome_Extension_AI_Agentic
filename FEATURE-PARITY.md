@@ -101,12 +101,13 @@ con số máy đo, và bị nuốt theo. Đúng kiểu mất mát âm thầm mà
 | Trần 90 giây của `run.trial` | ✅ | ✅ | [ĐO] | cả hai khai trong registry |
 | AI tự đặt thư mục Downloads | ✅ | ✅ | [ĐO] | `output_downloads_subfolder` GPT 4 file, Gemini 3 |
 | Poll A/B "thích ảnh nào hơn" | ✅ | ❌ | [ĐO] | `ab-poll-core.js` chỉ có ở GPT |
+| Khoảng nghỉ giữa job KHÔNG bị Chrome bóp | ✅ | ❌ | **[ĐỌC]** | Gemini `sidepanel.js:4314` `countdown()` vẫn `await sleep(1000)` mỗi nhịp — **cùng bug đã đo ×24 bên GPT 28/08**; GPT vá bằng `interjob-delay-core.js` (mốc thời gian + `chrome.alarms`) |
 | Nhận dạng ảnh theo BYTE, không tin nhãn MIME | ❌ | ✅ | **[ĐỌC]** | Gemini `content.js` có `sniffImageType` đọc byte đầu file thật (PNG `89 50 4E 47`, JPEG `FF D8 FF`, GIF, WebP, AVIF). GPT: quét `content.js` + `background.js` tìm mọi dấu hiệu đọc byte (`0x89`, `ffd8`, `Uint8Array`, `sniff`, `magic`) → **0 kết quả**. Đây là món **Gemini có mà GPT thiếu** |
 
 ## 3. Module — **[ĐO]**
 
 <!-- AUTO:MODULES START -->
-GPT 33 file `.js` · Gemini 33.
+GPT 34 file `.js` · Gemini 33.
 
 **7 file giống hệt sau khi chuẩn hoá CRLF/LF:**
 
@@ -119,20 +120,21 @@ GPT 33 file `.js` · Gemini 33.
 | `ab-poll-core.js` | GPT |
 | `content-decision-core.js` | Gemini |
 | `dev-trial-core.js` | Gemini |
+| `interjob-delay-core.js` | GPT |
 | `text-output-core.js` | GPT |
 
 **24 file có ở cả hai nhưng khác nội dung** (xếp theo chênh lệch số dòng giảm dần):
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 5952 | 5012 | 940 |
+| `sidepanel.js` | 5967 | 5012 | 955 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
 | `bridge-core.js` | 954 | 799 | 155 |
 | `bridge-transport-loopback.js` | 287 | 425 | 138 |
 | `background.js` | 246 | 167 | 79 |
 | `content.js` | 1000 | 1079 | 79 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
-| `runner-core.js` | 272 | 203 | 69 |
+| `runner-core.js` | 277 | 203 | 74 |
 | `output-profile-core.js` | 96 | 45 | 51 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
 | `output-location-core.js` | 389 | 373 | 16 |
