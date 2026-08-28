@@ -46,16 +46,37 @@ Side panel cũng ghim đúng chuỗi đó và `run.trial` sẽ tự từ chối 
 chạy. Vì vậy AI vận hành phải tự kiểm một bước, mỗi phiên, TRƯỚC lệnh ghi đầu tiên:
 
 1. Gọi `diagnostics.dom_probe`.
-2. Nhìn `runtime_contract`:
-   - đúng `flow04-image-video-create-scope-v1` → bản mới, chạy tiếp;
-   - **thiếu hẳn trường này** → extension đang chạy là BẢN CŨ. Dừng. Nhờ Đức reload
-     Extension rồi F5 tab Flow. Không gọi `run.trial`;
-   - chuỗi khác → bản không khớp, xử lý như trên.
-3. Nhìn `composer_scope_resolved`. `false` = không xác định được đúng một composer trong
+2. **Xem `ok` TRƯỚC, rồi mới xem `runtime_contract`.** Hai thứ này dễ nhìn giống nhau mà ý
+   nghĩa ngược hẳn — đã suýt đọc nhầm ngày 28/08:
+   - `ok:false` + `EXECUTOR_UNAVAILABLE` → side panel chưa mở hoặc service worker đang ngủ.
+     **Không kết luận gì về phiên bản cả** — probe chưa hề chạm tới trang. Nhờ Đức mở side
+     panel, đợi 15–30s rồi gọi lại. (Chính vỏ lỗi này từng bị lưu nhầm thành "bằng chứng":
+     `evidence/F1-snapshot-7-high-demand-banner-20260827.json`.)
+   - `ok:true` mà **thiếu hẳn `runtime_contract`** → probe chạy thật và trả về dữ liệu trang,
+     nhưng là BẢN CŨ. Dừng. Không gọi `run.trial`.
+   - `ok:true` + đúng `flow04-image-video-create-scope-v1` → bản mới, chạy tiếp.
+   - `ok:true` + chuỗi khác → bản không khớp, xử lý như bản cũ.
+
+   Cách kiểm chéo nhanh khi nghi ngờ: nhìn một phần tử bất kỳ trong `buttons`. Bản mới nút nào
+   cũng có `in_composer_form` và `chain`; bản cũ thì không có hai trường đó.
+
+3. **Bản cũ thì F5 tab Flow TRƯỚC, đừng vội reload lại extension.** `dom_probe` do content
+   script trả lời, mà content script trong một tab đã mở sẵn vẫn là bản cũ cho tới khi tab được
+   nạp lại — kể cả khi extension đã reload thành công. F5 xong mà `runtime_contract` vẫn thiếu
+   thì lúc đó mới là extension chưa reload thật.
+4. Nhìn `composer_scope_resolved`. `false` = không xác định được đúng một composer trong
    đúng một form → mọi lệnh chạy sẽ fail closed, đừng tốn một job để biết điều đó.
-4. Gọi `session.hello` 5–6 lần, `extension_id` phải ổn định. Hai profile cùng pair vào
-   cổng 32149 là nguyên nhân thật đã gặp của "lúc cũ lúc mới" (xem bảng lỗi bên dưới).
-5. **Đúng MỘT tab Flow đang mở, và không đổi tab giữa lúc kiểm và lúc chạy.** Mọi lệnh
+5. Gọi `session.hello` 5–6 lần, `extension_id` phải ổn định. **CẢNH BÁO — phép này KHÔNG
+   phân biệt được profile** (đo thật 28/08): extension nạp dạng unpacked lấy ID từ ĐƯỜNG DẪN
+   thư mục, nên mọi profile nạp cùng một thư mục đều có **cùng một `extension_id`**.
+   `extension_id` ổn định 6/6 lần vẫn có thể là ba profile khác nhau thay phiên trả lời.
+   Nó chỉ loại được trường hợp hai extension KHÁC THƯ MỤC. Muốn biết có mấy profile đang
+   nạp extension này, đọc `Secure Preferences` của từng profile Chrome (chỉ đọc):
+
+   ```bash
+   node -e "const fs=require('fs'),path=require('path');const ID='<extension_id>';const base=process.env.LOCALAPPDATA+'\Google\Chrome\User Data';for(const d of fs.readdirSync(base)){const f=path.join(base,d,'Secure Preferences');if(!fs.existsSync(f))continue;const raw=fs.readFileSync(f,'utf8');if(!raw.includes(ID))continue;const e=JSON.parse(raw)?.extensions?.settings?.[ID];console.log(d,'->',e&&e.path);}"
+   ```
+6. **Đúng MỘT tab Flow đang mở, và không đổi tab giữa lúc kiểm và lúc chạy.** Mọi lệnh
    Bridge gửi tới *tab đang active*, nên phép kiểm ở bước 1–3 kiểm tab lúc đó, không phải
    tab sẽ nhận job nếu Đức bấm sang tab khác ở giữa. Hai tab Flow (một tab đã F5, một tab
    chưa) là đúng cái bẫy đã làm hỏng lượt 28/08. Đóng bớt cho còn một tab.
@@ -71,3 +92,4 @@ chạy. Vì vậy AI vận hành phải tự kiểm một bước, mỗi phiên,
 | Sau khi gõ prompt, `Create` biến mất và xuất hiện nút `Upgrade`; ledger cũ báo `Send button did not become ready` | Tài khoản đã hết credit. FLOW-04 đo thật 28/08: 2 nút `Upgrade` visible/enabled thay `Create`, zero `PROMPT_SUBMITTED`, zero retry | Bản vá nhận diện mẫu này thành `GENERATION_LIMIT_REACHED` và dừng trước click. Không retry, không đổi tài khoản, không bypass. Sau khi sửa `.js`, Đức reload Extension rồi mới kiểm chứng live |
 | Prompt đã gõ nhưng runner báo `Send button did not become ready`; probe vẫn thấy nút enabled `add_2 Create` | Flow đổi icon semantic của nút từ `arrow_forward` sang `add_2`; matcher cũ quá hẹp nên dừng trước click | Adapter chỉ nhận đúng hai nhãn đã đo: `arrow_forward Create` và `add_2 Create`; vẫn từ chối `Create project`/`Recreate`. Đức reload Extension trước live verify |
 | Chạy từ giao diện Image mở bảng media (`Meo Story / All / Images / Videos`) rồi ledger vẫn chuyển `SUBMITTED`, nhưng prompt còn nguyên và không có video mới | Adapter đã chọn nhầm nút `add_2 Create` cấp trang thay vì nút submit trong đúng form composer; Bridge chập chờn giữa runtime cũ/mới làm thiếu tiền kiểm phiên bản | Gọi `run.stop`, không retry mù. Sửa selector để chỉ nhận đúng một nút Create trong form chứa đúng một composer; `run.trial` phải kiểm `runtime_contract` qua DOM probe trước khi ghi history/chạy. Chỉ thử lại sau khi test xanh, Đức reload Extension và Bridge ổn định một profile |
+| `dom_probe` trả `ok:true` nhưng THIẾU `runtime_contract`, dù Đức vừa reload extension và tab đã F5 | Extension được nạp trong **NHIỀU profile Chrome cùng lúc** (đo thật 28/08: 3 profile — Default, Profile 10, Profile 4 — cùng nạp từ một thư mục). Host chỉ giữ kết nối của extension pair SAU CÙNG, mà đó có thể là profile Đức KHÔNG bấm reload. `extension_id` giống hệt nhau ở cả ba nên `session.hello` không phát hiện ra | Nhờ Đức **tắt/gỡ extension ở các profile thừa**, chỉ để đúng một profile có tab Flow. Rồi reload extension ở profile đó + F5 tab. Kiểm lại bằng `runtime_contract`. TUYỆT ĐỐI không chạy job khi còn thiếu trường này — bản cũ sẽ bấm nhầm nút `add_2 Create` cấp trang |
