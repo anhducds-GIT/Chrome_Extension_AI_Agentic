@@ -24,11 +24,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": "s1-complete",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "S1 hoan tat theo docs/briefs/BRIEF-S1-COMPLETE.md: frontmatter 3 truong cho ROADMAP + SEND-TO-OTHER-REPOS, git mv docs/studies/archive -> docs/archive, tao docs/_TEMPLATE-study.md. Kem: sinh lai DASHBOARD/FEATURE-PARITY (viec phien claude-bridge-multiprofile bo do, Duc duyet chuyen quyen 2026-09-02). Xong thi tra.",
-      "released_at": null
+      "task": "XONG 2026-09-02, da push (cfc66fc). S1 hoan tat: frontmatter 3 truong cho ROADMAP + SEND-TO-OTHER-REPOS, docs/studies/archive -> docs/archive, tao docs/_TEMPLATE-study.md, tao HANDOFF.md goc. Kem: sinh lai DASHBOARD (bang lech 1 commit do phien claude-bridge-multiprofile bo do; Duc duyet chuyen quyen). Cong kiem XANH TOAN BO. CON MO o goc repo: buoc 2 K-MIGRATE va buoc 3 harness_parity_check.py — chua ai nhan.",
+      "released_at": "2026-09-02"
     }
   }
 }
