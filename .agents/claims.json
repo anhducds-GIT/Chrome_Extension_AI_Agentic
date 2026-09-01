@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "s1-complete",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02, da push (cfc66fc). S1 hoan tat: frontmatter 3 truong cho ROADMAP + SEND-TO-OTHER-REPOS, docs/studies/archive -> docs/archive, tao docs/_TEMPLATE-study.md, tao HANDOFF.md goc. Kem: sinh lai DASHBOARD (bang lech 1 commit do phien claude-bridge-multiprofile bo do; Duc duyet chuyen quyen). Cong kiem XANH TOAN BO. CON MO o goc repo: buoc 2 K-MIGRATE va buoc 3 harness_parity_check.py — chua ai nhan.",
-      "released_at": "2026-09-02"
+      "task": "Duc giao 2026-09-02: (1) noi ROADMAP-CLEAN-AND-TEMPLATE-V1 khop 14 quyet dinh K0 — huy repo-template doc lap, doi thanh promote artifact vao Kho tier SEED; tick S1. (2) Chay S2: nang build-dashboard.mjs sinh them llms.txt + repo-map.json, them Khoi A/D vao DASHBOARD, kem test ghim. Claude Code viet thay Codex (Codex chet 7 lan thu tu 27/08) — khai ly do trong HANDOFF. Hai commit rieng de GPT audit tung cai.",
+      "released_at": null
     }
   }
 }

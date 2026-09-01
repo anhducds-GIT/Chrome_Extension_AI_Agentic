@@ -10,6 +10,16 @@ ttl_days: 180
 > **Điều phối:** Claude (phiên chat này và các phiên kế tiếp).
 > **Lập:** 2026-08-31, trên commit `b5430f9`.
 
+> **Vị trí của file này trong bức tranh lớn (bổ sung 2026-09-02).** Roadmap này là **một làn**,
+> không phải toàn bộ kế hoạch. Nó lo **repo Chrome Extension — nơi thí điểm và nuôi template**.
+> Song song có làn **HARNESS** ở Kho (Project-3): 21 repo, `sync_manifest.json`, verifier
+> `harness_parity_check.py` — GPT chạy, Đức duyệt từng diff. Thứ tự tổng của cả hai làn nằm ở
+> mục E (14 bước) của `evidence/20260901-harness-audit-r01/AUDIT-GPT.md`; trong đó S1→S7 của
+> file này là bước 6A và 7.
+>
+> **Khi hai tài liệu mâu thuẫn: 14 quyết định K0 thắng** (Đức chốt 2026-09-01, sau file này).
+> Ai sửa roadmap thì đối chiếu K0 trước.
+
 ---
 
 ## 0. Bộ tài liệu — file nào để làm gì
@@ -30,12 +40,18 @@ Bốn file sau vào `docs/studies/` ở phiên S1, có frontmatter đầy đủ.
 
 Trước đây tôi đề xuất làm template sau khi xong hết. Sai — sẽ phải làm lại từ đầu.
 
-Cách đúng: **mỗi phiên sinh ra một artifact chuẩn thì copy ngay sang repo template.**
+Cách đúng: **mỗi phiên sinh ra một artifact chuẩn thì trích ngay vào bộ template.**
 Tới phiên cuối là template đã có sẵn, chỉ việc đánh dấu "đã kiểm chứng".
 
-Chống rủi ro nhân bản thiết kế chưa thử: repo template mang nhãn **`unproven`** trong
-`README.md` của nó. Chỉ gỡ nhãn sau khi bài test một dòng (S7) đạt. Trong lúc mang nhãn
-`unproven`, **không dùng cho dự án thật.**
+> **⚠️ ĐÃ ĐỔI 2026-09-01 — template KHÔNG còn là một repo riêng.**
+> Quyết định K0 số 1 (Đức chốt nguyên trạng; hồ sơ tại `evidence/20260901-harness-audit-r01/`):
+> **huỷ repo `repo-template` độc lập**; artifact nào đã kiểm chứng thì **promote vào Kho
+> (Project-3) ở tier `SEED`** của `sync_manifest.json`. Lý do: dựng một repo template riêng
+> tạo nguồn sự thật thứ hai bên cạnh Kho — đúng cái bệnh cả chương trình này sinh ra để chữa.
+
+Chống rủi ro nhân bản thiết kế chưa thử: artifact trích ra mang nhãn **`unproven`** cho tới khi
+bài test một dòng (S7) đạt. Trong lúc mang nhãn `unproven`, **không promote lên tier `SEED`
+và không dùng cho dự án thật.**
 
 ---
 
@@ -176,7 +192,7 @@ Phân loại 29 file: `EXP-*` và `PHASE-1-SYNTHESIS` → `studies` · `*-BRIEF`
 | **Ai** | Claude Code · Đức tự chạy bài test |
 | **Làm** | Bật chặn B1–B5, B7, B10, B12. Rút mục 9 Project Instructions còn một dòng. |
 | **Đức nghiệm thu** | **Bài test một dòng** — xem mục 4 dưới |
-| **Trích template** | Gỡ nhãn `unproven` khỏi repo template |
+| **Trích template** | Gỡ nhãn `unproven` khỏi bộ artifact đã trích — mở đường promote lên Kho tier `SEED` |
 
 **Đây là cột mốc.** Đạt = mục tiêu chính của dự án đã xong.
 
@@ -195,17 +211,21 @@ Món ④ đụng `build-dashboard.mjs` + `package.json` — làm cuối, commit 
 
 ---
 
-### S9 — Đóng gói template
+### S9 — Promote bộ template vào Kho, tier SEED
+
+> **Phiên này bị viết lại 2026-09-01 theo quyết định K0 số 1.** Bản cũ nói "tạo repo
+> `repo-template` + bật Template repository trên GitHub" — **đã huỷ**.
 
 | | |
 |---|---|
-| **Ai** | Claude điều phối · Claude Code tạo repo |
-| **Làm** | Tạo repo `repo-template` từ các artifact đã trích ở S1–S7. Bật "Template repository" trên GitHub. Viết `README.md` hướng dẫn Đức dùng. |
-| **Đức nghiệm thu** | Vào GitHub, bấm **"Use this template"**, tạo một repo thử tên `test-template-01`. Repo mới có sẵn `AGENTS.md`, `llms.txt`, `scripts/`, `docs/`. Chạy cổng kiểm ra xanh. |
+| **Ai** | Claude điều phối · Đức duyệt từng diff |
+| **Làm** | Gom bộ artifact đã trích ở S1–S7, promote vào **Kho (Project-3)** ở tier `SEED` của `sync_manifest.json`. Không tạo repo mới, không tạo manifest thứ hai. |
+| **Điều kiện tiên quyết** | **K-MIGRATE xong** — `sync_manifest.json` đã có `schema_version`, version/path/tier đã sửa, checksum sinh lại. Chưa xong mà promote = đổ vào một manifest đang mâu thuẫn. |
+| **Đức nghiệm thu** | Mở `sync_manifest.json` trong Kho. Bộ artifact có mặt ở tier `SEED`, không nằm ở `LOCKED`. Một repo mới lấy SEED về, chạy cổng kiểm ra xanh. |
 
-Nội dung template:
+Bộ artifact phải trích đủ — đây vẫn là "template", chỉ khác chỗ ở:
 ```
-repo-template/
+(tier SEED trong Kho — trước đây dự kiến là repo-template/)
 ├─ AGENTS.md              khung luật, chỗ trống cho tên dự án
 ├─ CLAUDE.md              stub 7 dòng, @AGENTS.md
 ├─ README.md              hướng dẫn dùng template
@@ -270,7 +290,7 @@ Ghi kết quả vào `evidence/20260901-bootstrap-test-r01/` như mọi phép đ
 
 | | Phiên | Ai | Xong | Template đã trích |
 |---|---|---|---|---|
-| ☐ | S1 Dọn chỗ chứa | Claude Code | | `docs/` + `_TEMPLATE-study.md` |
+| ☑ | S1 Dọn chỗ chứa | Claude Code | **2026-09-02** `cfc66fc` | `docs/` + `_TEMPLATE-study.md` |
 | ☐ | S2 Cổng vào | Codex + Claude | | `build-dashboard.mjs` · mẫu `llms.txt` |
 | ☐ | S3 Bịt lỗ hổng | Claude Code | | `STATUS.template.md` v2 |
 | ☐ | S4 Cổng kiểm | Codex + Claude | | `check-bootstrap.mjs` · `.repo-structure.json` |
@@ -278,7 +298,7 @@ Ghi kết quả vào `evidence/20260901-bootstrap-test-r01/` như mọi phép đ
 | ☐ | **S7 Bật chặn + TEST** | Claude Code + Đức | | gỡ nhãn `unproven` |
 | ☐ | S5 ADR *(hạ ưu tiên, sau S7)* | Claude Code | | `_TEMPLATE-adr.md` · ADR-0000 |
 | ☐ | S8 Trả nợ cũ | Claude Code | | — |
-| ☐ | S9 Đóng gói template | Claude + Claude Code | | repo hoàn chỉnh, có P5 |
+| ☐ | S9 Promote template vào Kho tier SEED | Claude + Đức duyệt | | bộ artifact hoàn chỉnh, có P5 |
 | ☐ | S10 Global Control *(chỉ khi ≥2 repo qua S7)* | Claude + Claude Code | | `scan.mjs` · `registry.json` |
 
 **S1–S4, S6, S7 là phần bắt buộc.** S5 (ADR) hạ ưu tiên xuống sau S7: nó không chặn gì và
