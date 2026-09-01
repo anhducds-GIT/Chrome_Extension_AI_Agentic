@@ -38,10 +38,17 @@ Nguyên tắc số một: thứ gì máy đếm được thì máy đếm. Con s
 
 --- MƯỜI ĐIỂM CORE (bắt buộc mọi repo) ---
 
-C1 CỔNG VÀO MÁY SINH — file llms.txt ở gốc repo, theo định dạng llmstxt.org: một "#" tiêu
+C1 CỔNG VÀO MÁY SINH — hai file, cùng một lần sinh, cùng nguồn dữ liệu.
+   (a) llms.txt ở gốc repo, theo định dạng llmstxt.org: một "#" tiêu
    đề, một ">" blockquote tóm tắt, các mục "##" chứa danh sách link, mỗi link kèm MỘT DÒNG
    mô tả. Máy sinh, không gõ tay, dưới 50 dòng. Lý do chọn định dạng này: công cụ AI phổ
    biến tự tìm /llms.txt, chủ repo không phải dán đường dẫn nữa.
+   (b) repo-map.json — HỢP ĐỒNG MÁY ĐỌC, là giao diện cross-repo: một hệ điều phối cấp cao
+   chỉ đọc file này, không đọc gì khác. Bắt buộc có: schema_version (số nguyên — thiếu nó thì
+   mọi hệ đọc file này sẽ vỡ khi một repo nâng cấp trước) · generated_at · generated_commit ·
+   profile · entry_point · units[] (id/path/lifecycle/owner/next_step/last_verified/
+   last_verified_commit/superseded_by) · active_work (id/unit/title/claim) ·
+   health (units_without_status / dead_links / undeclared_dirs / draft_debt).
 
 C2 HIẾN PHÁP NGẮN — AGENTS.md (chuẩn mở, cascade gốc repo → thư mục con, file gần nhất
    thắng). DƯỚI 200 DÒNG: file này nạp vào MỌI phiên, mỗi dòng thừa cạnh tranh sự chú ý.
@@ -74,11 +81,16 @@ C6 QUYẾT ĐỊNH BẤT BIẾN — docs/adr/, chuẩn ADR: một file một quy
    trỏ nhau. Lý do không dùng một file decisions.md gộp: file gộp thì sẽ bị sửa đè, sáu
    tháng sau không ai biết ngày đó quyết gì và vì sao.
 
-C7 VÒNG ĐỜI TÀI LIỆU — mọi file trong docs/ mở đầu bằng frontmatter YAML:
-   kind (brief|study|spec|guide|adr) · status (active|done|superseded) · created ·
-   ttl_days (brief 30 · study 180 · guide 365) · last_reviewed.
-   Dùng ttl_days TƯƠNG ĐỐI thay vì ngày hết hạn tuyệt đối — tương đối không mục khi copy
-   file. Cổng cảnh báo vàng khi quá hạn mà status vẫn active. Không tự xoá, chỉ nhắc.
+C7 VÒNG ĐỜI TÀI LIỆU — mọi file trong docs/ mở đầu bằng ĐÚNG BA TRƯỜNG gõ tay:
+   kind (study|brief|spec|guide) · status (active|done|superseded) ·
+   ttl_days (brief 30 · study 180 · guide 365).
+   KHÔNG thêm id (đường dẫn file đã là id duy nhất), created / last_reviewed (lịch sử phiên
+   bản đã biết), owner (suy từ commit), task_id (chỉ thêm khi hệ quản lý task đã tồn tại —
+   trỏ tới thứ chưa có là tạo nợ). Trường nào máy suy được thì không gõ tay.
+   Dùng ttl_days TƯƠNG ĐỐI thay vì ngày hết hạn tuyệt đối — tương đối không mục khi copy file.
+   DRAFT LÀ NỢ, KHÔNG PHẢI RÁC: mỗi file nháp tạo một nghĩa vụ phải xử lý về sau.
+   draft_debt = số file status:active đã quá ttl_days. Một con số, máy đếm, hiện ở Khối D.
+   KHÔNG cần sổ đăng ký nháp thủ công — scanner đọc frontmatter là đủ.
 
 C8 CỔNG KIỂM + SCHEMA MÁY ĐỌC — một file cấu hình JSON là nguồn sự thật duy nhất; cả tài
    liệu lẫn script đều đọc từ đó. Phép kiểm tối thiểu:
@@ -94,6 +106,10 @@ C8 CỔNG KIỂM + SCHEMA MÁY ĐỌC — một file cấu hình JSON là nguồ
    G10 hiến pháp vượt giới hạn dòng ....................... VÀNG
    G11 tài liệu quá ttl_days .............................. VÀNG
    G12 file cổng cũ hơn commit gần nhất của file trạng thái VÀNG
+   G13 file MỚI trong docs/ thiếu frontmatter ba trường ..... ĐỎ  ← cổng chặn nguồn
+   G14 việc đã đóng nhưng file nháp chưa được phân loại ..... VÀNG
+   G13 quan trọng nhất bảng: chặn ở lúc TẠO rẻ hơn dọn ở lúc PHÌNH nhiều lần. Đây là điểm
+   duy nhất trong vòng đời tài liệu được phép chặn cứng.
    THÔNG BÁO LỖI PHẢI NÓI CẢ CHỖ SAI LẪN CHỖ ĐÚNG — đây là chi tiết quyết định thành bại,
    vì AI đọc thông báo là tự sửa được, không cần người nhắc. Ví dụ:
      ✗ G7 ROOT-EXTRA: REPORT-2026-08-30.md
@@ -125,6 +141,13 @@ P3 REPO NGHIÊN CỨU / TÀI LIỆU: docs/ là thân chính. Bắt buộc chặt
    bằng một chỉ mục máy sinh.
 P4 REPO HẠ TẦNG / SCRIPT: chặt nhất ở C6 vì mọi thay đổi đều có hệ quả vận hành.
    evidence/ chứa log chạy thật, không phải ảnh chụp màn hình.
+P5 CONTROL PLANE — repo mà SẢN PHẨM CỦA NÓ LÀ ĐIỀU PHỐI CÁC REPO KHÁC (orchestrator, radar
+   toàn cục, hệ chạy tự động cross-repo). Đơn vị công việc = một repo BÊN NGOÀI, không phải
+   thư mục bên trong. Bắt buộc khai depends_on trỏ sang repo khác kèm schema_version mong đợi.
+   Bắt buộc C6. evidence/ chứa log các lần điều phối. LUẬT RIÊNG QUAN TRỌNG NHẤT: trường nào
+   tính được từ repo-map.json của repo con thì KHÔNG ĐƯỢC nằm ngoài tầng GENERATED — vi phạm
+   là tạo nguồn sự thật thứ hai, chắc chắn lệch. Repo Control Plane chỉ ghi tay ĐÚNG MỘT FILE:
+   danh sách repo cần theo dõi. Mọi thứ khác derive.
 
 --- NGƯỠNG SỐ (điều chỉnh được, nhưng phải CÓ một con số cố định) ---
 File .md ở gốc repo: 6 (nới tới 8) | File .md ở gốc mỗi gói: 3 (nới tới 5)
@@ -139,6 +162,29 @@ Số dòng hiến pháp: 200 (nới tới 300)
 · Thêm tài liệu để chữa bệnh thiếu điều hướng: repo nguồn của chuẩn này có 148 file tài
   liệu và AI vào vẫn không biết bắt đầu từ đâu. Thừa tài liệu, thiếu điều hướng.
 · Dùng cơ chế duyệt PR làm khoá ghi: cơ chế duyệt là để DUYỆT, không phải để KHOÁ QUYỀN GHI.
+· Gom mọi thứ điều khiển vào một thư mục control/: không giảm thời gian AI làm quen (AI đọc
+  file cổng, không duyệt thư mục), không rõ hơn, không giảm trùng lặp, chi phí sửa mọi đường
+  dẫn trong script thì cao. Cấu trúc vật lý chỉ đổi khi có LỢI ÍCH ĐO ĐƯỢC. Nhất quán về
+  LOGIC quan trọng hơn nhất quán về HÌNH THỨC.
+· Sổ đăng ký nháp thủ công: frontmatter + scanner cho cùng kết quả, không tốn công giữ sổ.
+· Bảng điều khiển dạng ứng dụng tương tác khi số đơn vị theo dõi còn ít: không có link ổn
+  định, phải sinh lại mỗi phiên, và CŨ MÀ VẪN TRÔNG ĐẸP. Một file bảng trạng thái máy sinh
+  render tốt trên điện thoại, link vĩnh viễn, luôn khớp phiên bản.
+
+--- VÒNG ĐỜI DỌN DẸP: bốn nhịp, chỉ MỘT nhịp chặn cứng ---
+Khi TẠO file ....... bắt buộc ba trường frontmatter ................ ĐỎ, CHẶN (G13)
+Khi ĐÓNG một việc .. mỗi file nháp chọn đúng một: PROMOTE (thành tài liệu chính thức) /
+                     EVIDENCE (bất biến) / ARCHIVE (giữ, không active). Còn việc dở thì mở
+                     một mục backlog mới có chủ ............................ VÀNG, nhắc (G14)
+HÀNG TUẦN 2 phút ... mở Khối D, CHỈ NHÌN, KHÔNG DỌN ...................... không chặn
+HÀNG THÁNG ......... rà TTL quá hạn, nháp cũ, file mồ côi, trùng lặp, ref chết, file máy sinh
+                     thừa, việc mở quá lâu. Xoá/di chuyển lớn cần người duyệt.
+Vì sao chỉ BA lựa chọn khi đóng việc, không phải năm: xoá và lưu trữ trong hệ quản lý phiên
+bản thực chất là một, không gì mất đi; "chuyển giao" không phải trạng thái của file mà là
+hành động tạo một mục backlog mới, ghi ở chỗ khác.
+Vì sao "khi đóng việc" chỉ NHẮC, không CHẶN: muốn chặn thì máy phải nhận biết được sự kiện
+"việc đã đóng". Repo nào chưa có sự kiện đó thì cổng chặn không bao giờ chạy — xây cổng cho
+sự kiện không tồn tại là xây rồi bỏ. Chặn ở NGUỒN (G13) rẻ hơn và luôn chạy được.
 
 ════════════════════════════════════════════════════════════════
 PHẦN II — VIỆC BẠN PHẢI LÀM
@@ -172,7 +218,7 @@ C9 ước lượng số đường dẫn cần miễn trừ.
 **Điểm tương thích: N/10** — đếm số điểm ĐÃ CÓ hoặc MỘT PHẦN.
 
 ## 4. PROFILE phù hợp
-Chọn P1/P2/P3/P4 kèm lý do 2-3 câu. Nêu chỗ cần điều chỉnh so với profile chuẩn.
+Chọn P1/P2/P3/P4/P5 kèm lý do 2-3 câu. Nêu chỗ cần điều chỉnh so với profile chuẩn.
 Nếu không profile nào hợp, nói rõ và mô tả loại repo này.
 
 ## 5. Điểm KHÔNG hợp — BẮT BUỘC CÓ
