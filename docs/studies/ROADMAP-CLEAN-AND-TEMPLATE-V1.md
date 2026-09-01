@@ -58,7 +58,7 @@ Mỗi phiên: một mục tiêu, một commit, một lần push. **Không gộp 
 |---|---|
 | **Ai** | Claude Code |
 | **Vì sao trước** | Luồng capacity study đang đẻ file nhanh nhất. Chặn nguồn trước khi dọn. |
-| **Làm** | Tạo `docs/studies/`, `docs/briefs/`, `docs/archive/`. Chuyển 5 file nghiên cứu của phiên 31/08 vào `docs/studies/`, thêm frontmatter `kind/status/created/ttl_days`. **Chưa đụng 29 file `drafts/` cũ.** |
+| **Làm** | Tạo `docs/studies/`, `docs/briefs/`, `docs/archive/`. Chuyển 5 file nghiên cứu của phiên 31/08 vào `docs/studies/`, thêm frontmatter **ba trường** `kind/status/ttl_days`. **Chưa đụng 29 file `drafts/` cũ.** |
 | **Đức nghiệm thu** | Mở `docs/studies/` trên GitHub. Thấy 5 file. Mở một file: dòng đầu có khối `---` với `ttl_days`. |
 | **Trích template** | Cây thư mục `docs/` rỗng + `docs/_TEMPLATE-study.md` |
 
@@ -67,7 +67,10 @@ Mỗi phiên: một mục tiêu, một commit, một lần push. **Không gộp 
 > Đọc `AGENTS.md` gốc repo rồi `DASHBOARD.md`. Làm đúng phiên S1 của
 > `ROADMAP-CLEAN-AND-TEMPLATE-V1`: tạo `docs/studies/`, `docs/briefs/`, `docs/archive/`;
 > chuyển 5 file nghiên cứu ngày 31/08 vào `docs/studies/` kèm frontmatter
-> `kind / status / created / ttl_days / last_reviewed`. `ttl_days`: study 180, brief 30.
+> ĐÚNG BA TRƯỜNG: `kind` / `status` / `ttl_days`. Không thêm `id`, `created`, `owner`,
+> `last_reviewed` — máy suy được từ lịch sử phiên bản, gõ tay là tạo con số sẽ mục.
+> `ttl_days`: study 180, brief 30, guide 365.
+> Sửa lại frontmatter của 8 file đã có trong `docs/studies/` cho khớp luật ba trường.
 > KHÔNG đụng `drafts/` cũ. Xong: commit → `session-check` → `safe-push`.
 
 </details>
@@ -119,7 +122,9 @@ Trường mới của schema `extension-status/v2`: `owner` · `superseded_by` �
 | | |
 |---|---|
 | **Ai** | Codex viết · Claude audit |
-| **Làm** | `scripts/check-bootstrap.mjs` + `.repo-structure.json`. Nối vào `session-check.mjs`. 14 phép kiểm B1–B14. **Chỉ in ra, chưa chặn.** |
+| **Làm** | `scripts/check-bootstrap.mjs` + `.repo-structure.json`. Nối vào `session-check.mjs`. 14 phép kiểm B1–B14, cộng **G13** (file mới trong `docs/` thiếu frontmatter ba trường → ĐỎ,
+là cổng chặn nguồn, quan trọng nhất) và **G14** (việc đã đóng nhưng file nháp chưa được phân
+loại PROMOTE/EVIDENCE/ARCHIVE → vàng). **Chỉ in ra, chưa chặn.** |
 | **Bắt buộc** | `.repo-structure.json` có khối `grandfathered` miễn trừ 52 đường dẫn cũ có dấu cách và tiếng Việt có dấu |
 | **Đức nghiệm thu** | Bảo AI chạy `node scripts/check-bootstrap.mjs` rồi dán kết quả. Mỗi dòng cảnh báo phải nói **cả chỗ sai lẫn chỗ đúng**. |
 | **Trích template** | `check-bootstrap.mjs` + `.repo-structure.json` mẫu (rỗng `grandfathered`) |
@@ -198,7 +203,7 @@ repo-template/
 ├─ AGENTS.md              khung luật, chỗ trống cho tên dự án
 ├─ CLAUDE.md              stub 7 dòng, @AGENTS.md
 ├─ README.md              hướng dẫn dùng template
-├─ .repo-structure.json   schema, grandfathered rỗng
+├─ .repo-structure.json   schema, grandfathered rỗng, chọn được P1–P5
 ├─ scripts/               build-dashboard · check-bootstrap · session-check · safe-push
 ├─ docs/
 │  ├─ STATUS.template.md
@@ -208,6 +213,30 @@ repo-template/
 ├─ .agents/claims.json    rỗng
 └─ .github/workflows/structure.yml
 ```
+
+---
+
+### S10 — Global Control *(điều kiện: ≥2 repo đã qua bài test một dòng)*
+
+| | |
+|---|---|
+| **Ai** | Claude điều phối · Claude Code |
+| **Điều kiện khởi công** | Ít nhất hai repo có `repo-map.json` hợp lệ và đã đạt bài test S7. **Chưa đủ thì không khởi công** — radar không có tín hiệu sẽ phải điền tay, thành đúng cái cơ sở dữ liệu đồng bộ thủ công cần tránh. |
+| **Làm** | Repo `global-control` theo **Profile P5**. Ghi tay đúng MỘT file: `registry.json` (~10 dòng mỗi repo: id · owner/repo · branch · profile · active). `scripts/scan.mjs` lấy `repo-map.json` của từng repo qua API. Sinh `GLOBAL-DASHBOARD.md` + `llms.txt`. |
+| **TUYỆT ĐỐI không copy** | file trạng thái · việc đang mở · quyết định · bằng chứng của repo con. Copy = nguồn sự thật thứ hai, chắc chắn lệch. |
+| **Luật chống phình** | Trường nào tính được từ `repo-map.json` của repo con thì **không được** nằm ngoài tầng GENERATED. Cổng kiểm chặn. |
+| **Đức nghiệm thu** | Mở `GLOBAL-DASHBOARD.md`. Thấy mỗi repo một dòng: tên · profile · việc #1 · độ tươi · số nợ. Repo nào chưa chuẩn hoá hiện `CHƯA CHUẨN HOÁ`. |
+
+**Xử lý hỏng hóc — luật "thà trống còn hơn cũ":**
+
+| Sự cố | Hiển thị |
+|---|---|
+| Không lấy được dữ liệu repo | `KHÔNG ĐỌC ĐƯỢC` + thời điểm đọc thành công gần nhất. **Không dùng số cũ.** |
+| Repo chưa có `repo-map.json` | `CHƯA CHUẨN HOÁ` — đây là tín hiệu hữu ích, không phải lỗi |
+| `schema_version` lệch | `SCHEMA CŨ`, không cố đọc tiếp |
+| Bảng cũ hơn 7 ngày | Banner đỏ ngay dòng đầu file |
+
+Số cũ trông như số thật là kiểu hỏng nguy hiểm nhất của mọi bảng điều khiển.
 
 ---
 
@@ -239,13 +268,18 @@ Ghi kết quả vào `evidence/20260901-bootstrap-test-r01/` như mọi phép đ
 | ☐ | S2 Cổng vào | Codex + Claude | | `build-dashboard.mjs` · mẫu `llms.txt` |
 | ☐ | S3 Bịt lỗ hổng | Claude Code | | `STATUS.template.md` v2 |
 | ☐ | S4 Cổng kiểm | Codex + Claude | | `check-bootstrap.mjs` · `.repo-structure.json` |
-| ☐ | S5 ADR | Claude Code | | `_TEMPLATE-adr.md` · ADR-0000 |
-| ☐ | S6 Draft có hạn | Claude Code | | quy tắc `ttl_days` |
+| ☐ | S6 Draft có hạn + dọn drafts/ | Claude Code | | quy tắc `ttl_days` 3 trường |
 | ☐ | **S7 Bật chặn + TEST** | Claude Code + Đức | | gỡ nhãn `unproven` |
+| ☐ | S5 ADR *(hạ ưu tiên, sau S7)* | Claude Code | | `_TEMPLATE-adr.md` · ADR-0000 |
 | ☐ | S8 Trả nợ cũ | Claude Code | | — |
-| ☐ | S9 Đóng gói template | Claude + Claude Code | | repo hoàn chỉnh |
+| ☐ | S9 Đóng gói template | Claude + Claude Code | | repo hoàn chỉnh, có P5 |
+| ☐ | S10 Global Control *(chỉ khi ≥2 repo qua S7)* | Claude + Claude Code | | `scan.mjs` · `registry.json` |
 
-**S1–S7 là phần bắt buộc.** S8 dọn dẹp, làm dần được. S9 chỉ chạy sau khi S7 đạt.
+**S1–S4, S6, S7 là phần bắt buộc.** S5 (ADR) hạ ưu tiên xuống sau S7: nó không chặn gì và
+không giúp nhìn thấy trạng thái — thứ Đức đang thiếu là khả năng nhìn, không phải lịch sử
+quyết định. S8 dọn dẹp, làm dần được. S9 chỉ chạy sau khi S7 đạt.
+**S10 chỉ khởi công khi ít nhất hai repo đã qua bài test một dòng** — xây radar khi chưa có
+tín hiệu thì sẽ phải điền tay, và thành đúng cái cơ sở dữ liệu đồng bộ thủ công cần tránh.
 
 ---
 
