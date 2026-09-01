@@ -24,11 +24,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-bridge-multiprofile",
+      "ai": "claude",
       "claimed_at": "2026-08-28",
-      "task": "TRA QUYEN 28/08. Duc duyet tam nhan de sinh lai DASHBOARD/FEATURE-PARITY sau commit interjob-delay; da xong. Them 1 dong HANH VI vao FEATURE-PARITY muc 2 co bang chung [DOC]: Gemini sidepanel.js:4314 con nguyen bug khoang nghi bi Chrome bop. CANH BAO van con: 4 file drafts/ chua track o goc la cua phien khac, khong ai dung.",
-      "released_at": "2026-08-28"
+      "task": "Nhan lai _root (dang trong) sau commit multi-profile 6c59266: cap nhat dong so tay AGENTS.md (design da thanh code o gg-flow-video) + sinh lai DASHBOARD/FEATURE-PARITY tu HEAD sach sau commit cuoi. Xong thi tra.",
+      "released_at": null
     }
   }
 }
