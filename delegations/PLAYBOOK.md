@@ -1,6 +1,6 @@
-# PLAYBOOK — Delegation CC → ChatGPT Web (v0.1)
+# PLAYBOOK — Delegation CC → ChatGPT Web (v0.2)
 
-Phiên bản: 0.1 · Trần file: 250 dòng · Mọi thay đổi = diff có bằng chứng, Đức duyệt (xem SELF-IMPROVE.md)
+Phiên bản: 0.2 · Trần file: 250 dòng · Mọi thay đổi = diff có bằng chứng, Đức duyệt (xem SELF-IMPROVE.md)
 
 ## 1. Vòng delegation chuẩn
 
@@ -62,13 +62,21 @@ CC ghi vào RUN-LOG turn đạt tiêu chí NÀO. Không đạt = noise.
 `NEW FACTS · NEW DECISIONS · EVIDENCE POINTERS · OPEN QUESTIONS`
 Nguyên văn GPT không lưu file riêng — đã nằm trong Result XLSX ledger, digest chỉ trỏ tới.
 
-## 8. VÙNG ĐÓNG BĂNG — CC không được đề xuất nới (chỉ Đức chủ động mở)
+## 8. HARD BOUNDARY — đóng băng, CC không được đề xuất nới (chỉ Đức chủ động mở)
 
 1. Gate 0 trước mọi dispatch
 2. Đức bấm Run (policy bridge-core giữ nguyên)
-3. Trần vòng 1+1 delta
-4. Trần digest 3.000 ký tự
-5. Kênh rỗng sau digest
-6. Sheet không làm shared state
-7. GPT chỉ ghi `delegations/inbox/`
-8. Không permission mới · output GPT là báo cáo cần kiểm chứng, không phải bằng chứng (luật 4 AGENTS.md)
+3. Không permission mới
+4. Output GPT là báo cáo cần kiểm chứng, không phải bằng chứng (luật 4 AGENTS.md)
+5. GPT chỉ ghi `delegations/inbox/`
+6. Kênh rỗng sau digest — luật chống hidden state, không phải tunable
+7. Sheet không làm shared state — quyết định kiến trúc Đức đã chốt (study n8n); mở lại là việc của Đức, không đi qua ngả self-improve
+
+## 9. EXPERIMENTAL BASELINE — giá trị hiện hành, retro ĐƯỢC đề xuất diff kèm số đo
+
+- Trần vòng: 1 + 1 delta
+- Trần digest: 3.000 ký tự
+- Heuristic chọn topology/kênh (mục 2–3)
+- Trần từ trong output contract của từng pattern
+
+Khi đang chạy, các giá trị này BẤT ĐỘNG. Chỉ được đổi qua diff có bằng chứng + số đo kỳ vọng tại kỳ review (SELF-IMPROVE.md).
