@@ -1,9 +1,7 @@
 ---
 kind: spec
-status: rfc
-version: 1.0
-created: 2026-08-31
-review_deadline: 2026-09-14
+status: active
+ttl_days: 180
 ---
 
 # REPO-STRUCTURE-SPEC-V1
@@ -64,6 +62,27 @@ một nguồn. Chủ repo không phải dán đường dẫn nữa.
 
 Máy sinh. Không gõ tay. Mục tiêu độ dài: dưới 50 dòng.
 
+**Kèm `repo-map.json` — hợp đồng máy đọc.** Cùng lần sinh, cùng nguồn dữ liệu.
+Đây là **giao diện cross-repo**: một hệ điều phối cấp cao chỉ đọc file này, không đọc gì khác.
+Bắt buộc có:
+
+```json
+{
+  "schema_version": 1,
+  "generated_at": "…", "generated_commit": "…",
+  "profile": "P1",
+  "entry_point": "llms.txt",
+  "units": [ { "id","path","lifecycle","owner","next_step",
+               "last_verified","last_verified_commit","superseded_by" } ],
+  "active_work": { "id","unit","title","claim" },
+  "health": { "units_without_status": 0, "dead_links": 0,
+              "undeclared_dirs": 0, "draft_debt": 0 }
+}
+```
+
+`schema_version` là bắt buộc: thiếu nó thì mọi hệ đọc file này sẽ vỡ khi một repo nâng cấp trước.
+`health.draft_debt` = số file `status: active` đã quá `ttl_days`.
+
 ### C2 · Hiến pháp ngắn — `AGENTS.md`
 
 Chuẩn mở, nhiều hãng công cụ AI cùng hỗ trợ. Cascade: gốc repo → thư mục con, file gần nhất thắng.
@@ -122,24 +141,37 @@ ADR cũ chuyển `Superseded by ADR-NNNN`, hai bên trỏ nhau.
 Vì sao không dùng một file `decisions.md` gộp: file gộp thì sẽ bị sửa đè. Sáu tháng sau
 không ai biết ngày đó quyết gì và vì sao.
 
-### C7 · Vòng đời tài liệu — frontmatter
+### C7 · Vòng đời tài liệu — ba trường, không hơn
 
-Mọi file trong `docs/` mở đầu bằng:
+Mọi file trong `docs/` mở đầu bằng **đúng ba trường gõ tay**:
 
 ```yaml
 ---
-kind: brief          # brief | study | spec | guide | adr
+kind: study          # study | brief | spec | guide
 status: active       # active | done | superseded
-created: 2026-08-31
-ttl_days: 30         # brief 30 · study 180 · guide 365
-last_reviewed: 2026-08-31
+ttl_days: 180        # brief 30 · study 180 · guide 365
 ---
 ```
 
-Dùng `ttl_days` (tương đối) thay vì ngày hết hạn tuyệt đối — tương đối không mục khi copy file.
+**Vì sao đúng ba, không phải năm.** Trường nào máy suy ra được thì không gõ tay:
 
-Cổng cảnh báo **vàng** khi quá hạn mà `status` vẫn `active`. Không tự xoá, chỉ nhắc.
-Đây là thứ chặn thư mục nháp phình vô hạn.
+| Trường thường bị thêm nhầm | Vì sao bỏ |
+|---|---|
+| `id` | Đường dẫn file **đã là** id duy nhất. Đánh số tay tạo nghĩa vụ giữ sổ. |
+| `created` · `last_reviewed` | Lịch sử phiên bản đã biết. Gõ tay = con số người ghi, sẽ mục. |
+| `owner` | Suy từ lịch sử commit. |
+| `task_id` | Chỉ thêm khi hệ thống quản lý task đã tồn tại. Trỏ tới thứ chưa có = tạo nợ. |
+
+Dùng `ttl_days` **tương đối** thay vì ngày hết hạn tuyệt đối — tương đối không mục khi copy file
+sang repo khác.
+
+**Draft là nợ, không phải rác.** Mỗi file nháp tạo ra một nghĩa vụ phải xử lý về sau.
+Đóng khung nó thành **nợ đo được** thì hiện lên bảng trạng thái được, và có chủ:
+
+> `draft_debt` = số file `status: active` đã quá `ttl_days`.
+
+Một con số, máy đếm, hiện ở Khối D. **Không cần sổ đăng ký nháp thủ công** — scanner đọc
+frontmatter là đủ.
 
 ### C8 · Cổng kiểm — `check-structure` + `.repo-structure.json`
 
@@ -161,6 +193,11 @@ Phép kiểm tối thiểu:
 | G10 | Hiến pháp vượt giới hạn dòng | 🟡 |
 | G11 | Tài liệu quá `ttl_days` | 🟡 |
 | G12 | File cổng cũ hơn commit gần nhất của file trạng thái | 🟡 |
+| G13 | **File mới trong `docs/` thiếu frontmatter ba trường** | **ĐỎ** |
+| G14 | Việc đã đóng nhưng file nháp sinh ra chưa được phân loại | 🟡 |
+
+**G13 là cổng chặn nguồn — quan trọng nhất trong bảng.** Chặn ở lúc *tạo* rẻ hơn dọn ở lúc
+*phình* nhiều lần. Đây là điểm duy nhất trong vòng đời tài liệu được phép chặn cứng.
 
 **Thông báo lỗi phải nói cả chỗ sai lẫn chỗ đúng.** Đây là chi tiết quyết định thành bại —
 AI đọc thông báo là tự sửa được, không cần người nhắc:
@@ -237,6 +274,23 @@ nhưng phải thay bằng một chỉ mục máy sinh.
 Chặt nhất ở C6 (ADR) vì mọi thay đổi đều có hệ quả vận hành.
 `evidence/` chứa log chạy thật, không phải ảnh chụp màn hình.
 
+### P5 · Control Plane — điều phối repo khác
+
+Dành cho repo mà **sản phẩm của nó là việc điều phối các repo khác**: hệ orchestrator,
+hệ radar toàn cục, hệ chạy tự động cross-repo.
+
+Khác biệt so với P1–P4:
+
+- **Đơn vị công việc = một repo bên ngoài**, không phải một thư mục bên trong.
+- Bắt buộc khai `depends_on` trỏ sang repo khác, kèm `schema_version` mà nó mong đợi.
+- Bắt buộc C6 (ADR) — mọi thay đổi ở tầng điều phối đều có hệ quả vận hành ở nhiều nơi.
+- `evidence/` chứa log chạy thật của các lần điều phối.
+- **Luật riêng, quan trọng nhất:** nếu một trường có thể tính ra từ `repo-map.json` của repo
+  con thì nó **không được phép** nằm trong bất kỳ file nào ngoài tầng GENERATED. Vi phạm =
+  tạo nguồn sự thật thứ hai, chắc chắn lệch. Cổng kiểm chặn.
+
+Repo Control Plane chỉ **ghi tay đúng một file**: danh sách repo cần theo dõi. Mọi thứ khác derive.
+
 ---
 
 ## 4. Ngưỡng số — điều chỉnh được
@@ -260,6 +314,30 @@ Ba con số dưới đây là đề xuất, không phải chân lý. Điều qua
 | Sinh tài liệu ngữ cảnh bằng AI hàng loạt | Nghiên cứu 2026 cho thấy file ngữ cảnh do mô hình sinh ra **làm giảm hiệu năng agent và tăng chi phí** — agent làm theo hướng dẫn thừa một cách trung thành. |
 | Thêm tài liệu để chữa bệnh thiếu điều hướng | Repo nguồn của spec này có 148 file tài liệu và AI vào vẫn không biết bắt đầu từ đâu. Thừa tài liệu, thiếu điều hướng. |
 | Dùng cơ chế duyệt PR làm khoá ghi | Cơ chế duyệt PR là để **duyệt**, không phải để **khoá quyền ghi**. Nhiều agent cùng ghi một thư mục cần khoá riêng. |
+| Gom mọi thứ điều khiển vào một thư mục `control/` | Không giảm thời gian AI làm quen (AI đọc file cổng, không duyệt thư mục) · không rõ hơn (thêm một tầng) · không giảm trùng lặp · chi phí sửa mọi đường dẫn trong script thì cao. **Cấu trúc vật lý chỉ đổi khi có lợi ích đo được.** Nhất quán về logic quan trọng hơn nhất quán về hình thức. |
+| Sổ đăng ký nháp thủ công | Frontmatter + scanner cho cùng kết quả, không tốn công giữ sổ, không lệch được. |
+| Bảng điều khiển dạng ứng dụng tương tác, khi số đơn vị theo dõi còn ít | Không có link ổn định, phải sinh lại mỗi phiên, và **cũ mà vẫn trông đẹp**. Một file bảng trạng thái máy sinh render tốt trên điện thoại, link vĩnh viễn, luôn khớp phiên bản. Chỉ chuyển sang giao diện tương tác khi thật sự cần lọc và sắp xếp. |
+
+---
+
+## 5b. Vòng đời dọn dẹp
+
+Bốn nhịp, chỉ **một** nhịp được chặn cứng.
+
+| Nhịp | Làm gì | Chặn? |
+|---|---|---|
+| **Khi tạo file** | Bắt buộc ba trường frontmatter | **ĐỎ — chặn** (G13) |
+| **Khi đóng một việc** | Mỗi file nháp sinh ra chọn đúng một: **PROMOTE** (thành tài liệu chính thức) · **EVIDENCE** (bất biến) · **ARCHIVE** (giữ, không active). Còn việc dở thì mở một mục backlog mới có chủ. | 🟡 nhắc (G14) |
+| **Hàng tuần — 2 phút** | Mở Khối D. **Chỉ nhìn, không dọn.** | không |
+| **Hàng tháng** | Rà TTL quá hạn · nháp cũ · file mồ côi · trùng lặp · tham chiếu chết · file máy sinh thừa · việc mở quá lâu | Xoá/di chuyển lớn cần người duyệt |
+
+**Vì sao chỉ ba lựa chọn khi đóng việc, không phải năm.** Xoá và lưu trữ trong hệ quản lý
+phiên bản thực chất là một — không có gì mất đi. "Chuyển giao" không phải trạng thái của file,
+nó là *hành động tạo một mục backlog mới*, ghi ở chỗ khác.
+
+**Vì sao "khi đóng việc" chỉ nhắc, không chặn.** Muốn chặn thì máy phải nhận biết được sự kiện
+"việc đã đóng". Repo nào chưa có sự kiện đó thì cổng chặn sẽ không bao giờ chạy — xây cổng cho
+một sự kiện không tồn tại là xây rồi bỏ. Chặn ở **nguồn** (G13) rẻ hơn và luôn chạy được.
 
 ---
 
