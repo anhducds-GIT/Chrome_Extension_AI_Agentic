@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-bridge-multiprofile",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-08-28",
-      "task": "Phase 2 multi-profile Bridge theo drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md (Duc duyet huong A). Duc xac nhan cac phien khac da dung han -> tiep quan tu claude-flow-create-scope (FLOW-04 da dong, commit 91fa16f). Pham vi: host sessions Map + target/bridge.sessions/served_by, transport instance block, sidepanel o ten profile, script --target, test ghim + mutation + audit Codex.",
-      "released_at": null
+      "task": "TRA QUYEN 2026-09-02 (Duc chot: phien claude-bridge-multiprofile bo do tu 28/08, don claim mo coi). DA XONG va da len GitHub: multi-profile Bridge huong A (commit 6c59266) — host giu nhieu ket noi theo instance_id, target/bridge.sessions/served_by, 2 ma loi TARGET_AMBIGUOUS/TARGET_NOT_CONNECTED, dinh tuyen fail-closed; va nut F-14 chip mode noi vao pressFlowControl. Suite xanh, mutation do du. DASHBOARD da sinh lai boi phien s1-complete (viec phien nay bo do). CON MO 2 viec, chi tiet o cuoi HANDOFF.md: (1) CHUA KIEM LIVE multi-profile — can tay Duc 4 buoc: chep bridge-host.mjs + bridge-cli.mjs moi sang C:WORKING ZONEChrome Extension Bridgeduc-auto-gg-flow-video, chay lai START-BRIDGE, reload extension TUNG profile, dien o Ten ho so tung panel, roi goi bridge.sessions dem du ten. (2) live-check F-14 chip mode, can chip dang o Image, 0 credit.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -17,11 +17,11 @@
       "released_at": "2026-08-28"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-chatgpt-interjob-delay",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-08-28",
-      "task": "Khoang nghi giua job bi Chrome bop (cau hinh 12-24s, do that ~11 phut). DO truoc, roi chuyen dong ho cho sang chrome.alarms. Khong xin quyen moi.",
-      "released_at": null
+      "task": "TRA QUYEN 2026-09-02 (Duc chot: phien claude-chatgpt-interjob-delay bo do tu 28/08, don claim mo coi). DA XONG va da len GitHub: khoang nghi giua job chuyen sang chrome.alarms — do live 12,0 giay (truoc va 288 giay), trial 2/2 SUCCESS, panel bi che suot run. B-29 dong khong can va, co so do. Suite 95/95, mutation 5/5 bat duoc. CON NO DUY NHAT: AUDIT DOC LAP chua chay duoc — da thu 7 lan, Codex ra mot dong roi im, agy ra 0 byte. Dung leo lai tu day: bat dau thang bang codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check -C <thu-muc-toi-gian> \"<prompt>\" < /dev/null; van im thi ket luan kenh audit chet va bao Duc. Brief dung san o scratchpad/auditmin/BRIEF.md (5KB). Backlog mo: B-28 (nut Tiep tuc + cooldown thu lai cung dong ho bi bop, DA DOC code), B-31 (harness chatgpt.com gia lap, dung duoc nua).",
+      "released_at": "2026-09-02"
     },
     "_root": {
       "owner": null,
