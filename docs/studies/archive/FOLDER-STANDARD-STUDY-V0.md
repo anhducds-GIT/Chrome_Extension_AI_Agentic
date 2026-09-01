@@ -1,3 +1,9 @@
+---
+kind: study
+status: superseded
+ttl_days: 180
+---
+
 # FOLDER-STANDARD-STUDY-V0
 
 > **Trạng thái:** bản nháp nghiên cứu. Chưa phải luật.
