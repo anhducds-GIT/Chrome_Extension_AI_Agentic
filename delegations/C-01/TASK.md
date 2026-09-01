@@ -12,9 +12,9 @@ scheduled work reliable when documents are hidden. Respond ONLY with
 a single JSON object, no markdown fences, no prose, matching exactly:
 {"rows":[{"mechanism":"","min_interval":"","survives_hidden_doc":true,
 "survives_sw_kill":true,"permission_needed":"","source_url":"","note":""}],
-"row_count":0}
+"row_count":0,"end_marker":"END_OF_RESPONSE"}
 Cover at least: chrome.alarms, offscreen document, dedicated worker,
 host-side scheduling via WebSocket, side panel focus.
 Max 8 rows. "note" <=25 words each.
-Last line after the JSON must be exactly:
-END_OF_RESPONSE
+The final field "end_marker" must be exactly "END_OF_RESPONSE".
+Output nothing outside the single JSON object.
