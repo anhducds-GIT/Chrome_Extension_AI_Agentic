@@ -1,3 +1,9 @@
+---
+kind: study
+status: active
+ttl_days: 180
+---
+
 # BENCHMARK-REPO-STANDARDS-V0
 
 > **Mục đích:** đối chiếu thiết kế đề xuất (`REPO-BOOTSTRAP-SPEC-V0` +
