@@ -24,10 +24,18 @@ Chỉ **BRIEF-class trong chính task đang chạy**: đề bài tồi → sửa
 | BRIEF | GPT hiểu sai vì đề bài tồi | Sửa TASK, delta round (ngay) |
 | CONTRACT | GPT không tuân schema/trần | Đề xuất diff PLAYBOOK (kỳ review) |
 | ROUTING | Chọn sai topology/kênh | Đề xuất diff PLAYBOOK (kỳ review) |
-| CHANNEL | Kênh hỏng: capture, parse, Sheet | Việc kỹ thuật → BACKLOG.md package, đi cổng repo bình thường |
+| CHANNEL | Kênh hỏng: capture, parse, Sheet | CC tự vá NGAY TRONG PHIÊN nếu đủ 3 điều kiện (mục 3b); thiếu → BACKLOG + báo Đức |
 | PLATFORM | Lỗi trang thật/extension | Bảng lỗi AI-OPERATOR-GUIDE.md (cơ chế sẵn có) |
 
-Self-improve chỉ tự trị ở tầng prompt/routing. Sửa code, đổi luật an toàn → cổng cũ của repo.
+Self-improve tự trị ở tầng prompt/routing; tầng code CHỈ theo điều kiện 3b. Đổi luật an toàn → cổng cũ của repo.
+
+### 3b. Điều kiện CHANNEL self-fix trong phiên (đủ CẢ 3 mới được tự vá)
+
+1. File thuộc package CC đang claim hợp lệ trong `.agents/claims.json` — authority nằm ở claims, không tự suy diễn;
+2. Mỗi fix một test ghim (luật 2 AGENTS.md);
+3. Cổng kiểm xanh trước khi tiếp tục run.
+
+Thiếu bất kỳ điều kiện nào → ghi BACKLOG + báo Đức. Mục tiêu: Đức không phải làm debugger, nhưng không phiên nào vá code ngoài quyền sở hữu.
 
 ## 4. Đồng hồ 2 — Kỳ review (gắn weekly review của Đức; MVP: retro sớm sau Job C)
 
@@ -43,7 +51,7 @@ So trend giữa các `playbook_version`: compliance rate · tỉ lệ nén · s�
 ## 5. RUN-LOG.json — mỗi run bắt buộc, máy đọc
 
 ```json
-{"id":"", "playbook_version":"0.1", "topology":"", "channel":"",
+{"id":"", "playbook_version":"0.2", "topology":"", "channel":"",
  "rounds":1, "contract_ok":true, "violations":[],
  "chars_returned":0, "chars_ingested":0,
  "value_criteria_met":[], "failure_class":null, "duc_verdict":""}
@@ -53,4 +61,4 @@ So trend giữa các `playbook_version`: compliance rate · tỉ lệ nén · s�
 
 ## 6. Vùng đóng băng
 
-Xem PLAYBOOK.md mục 8. Self-improve tối ưu BÊN TRONG khung, không ăn mòn khung.
+Xem PLAYBOOK.md mục 8 (HARD) và mục 9 (EXPERIMENTAL). Self-improve tối ưu BÊN TRONG khung, không ăn mòn khung.
