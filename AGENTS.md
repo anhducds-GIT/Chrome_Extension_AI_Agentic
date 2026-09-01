@@ -115,7 +115,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Xem lỗi thật đã gặp trên trang, đừng chẩn đoán lại từ đầu | bảng lỗi trong `AI-OPERATOR-GUIDE.md` |
 | Hiểu schema workbook XLSX | `DAC_XLSX_RUN_PLAN_V1.md` của package |
 | Biết Đức đã chốt gì | `decisions.md` của package (mới nhất ở cuối) |
-| Biết phiên trước làm tới đâu | `HANDOFF.md` của package (cuối file) |
+| Biết phiên trước làm tới đâu | `HANDOFF.md` của package (cuối file) · việc ở gốc repo: `HANDOFF.md` gốc |
 | **Biết nhánh mình đang thiếu tính năng gì so với nhánh kia** | `FEATURE-PARITY.md` ở gốc repo |
 | **Muốn biết repo có extension nào, cái nào dùng được, đã kiểm chứng chưa** | `DASHBOARD.md` ở gốc repo — **SINH TỰ ĐỘNG, đừng sửa tay**; sinh lại: `node scripts/build-dashboard.mjs` |
 | Hiểu cách vận hành nhiều extension trong một repo, hoặc thêm extension mới | `PLATFORM.md` ở gốc repo |
@@ -124,6 +124,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Sắp triển khai Extension Google Flow (video) | `drafts/FLOW-EXT-COORDINATION-PLAN.md` — kế hoạch điều phối 5 checkpoint (FLOW-00 đã chốt 27/08) |
 | Vận hành / sửa worker GG Flow Video | `workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md` · vận hành Bridge: `AI-OPERATOR-GUIDE.md` cùng thư mục |
 | Vận hành Bridge khi NHIỀU profile Chrome cùng nối (`bridge.sessions`, `--target`, `served_by`) | Thiết kế: `drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` (Đức duyệt hướng A 28/08) · đã thành code ở gg-flow-video 28/08 — luật vận hành: mục "Nhiều profile" trong `workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md` · gemini + chatgpt CHƯA port |
+| Viết một file nghiên cứu mới trong `docs/studies/` | `docs/_TEMPLATE-study.md` — bản mẫu: frontmatter 3 trường (`kind`/`status`/`ttl_days`), số liệu lấy từ nguồn máy sinh · hồ sơ đã nghỉ nằm ở `docs/archive/` |
 
 **Về `FEATURE-PARITY.md`:** bảng tính năng GPT ↔ Gemini. Nó ở **gốc repo** vì nói về cả hai
 nhánh — sửa nó thì phải đang giữ `_root`.

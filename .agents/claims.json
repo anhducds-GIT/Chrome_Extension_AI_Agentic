@@ -24,10 +24,10 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-bridge-multiprofile",
+      "owner": "s1-complete",
       "ai": "claude",
-      "claimed_at": "2026-08-28",
-      "task": "Nhan lai _root (dang trong) sau commit multi-profile 6c59266: cap nhat dong so tay AGENTS.md (design da thanh code o gg-flow-video) + sinh lai DASHBOARD/FEATURE-PARITY tu HEAD sach sau commit cuoi. Xong thi tra.",
+      "claimed_at": "2026-09-02",
+      "task": "S1 hoan tat theo docs/briefs/BRIEF-S1-COMPLETE.md: frontmatter 3 truong cho ROADMAP + SEND-TO-OTHER-REPOS, git mv docs/studies/archive -> docs/archive, tao docs/_TEMPLATE-study.md. Kem: sinh lai DASHBOARD/FEATURE-PARITY (viec phien claude-bridge-multiprofile bo do, Duc duyet chuyen quyen 2026-09-02). Xong thi tra.",
       "released_at": null
     }
   }

@@ -1,3 +1,9 @@
+---
+kind: study
+status: active
+ttl_days: 180
+---
+
 # ROADMAP-CLEAN-AND-TEMPLATE-V1
 
 > **File điều hành.** Đức chỉ cần mở file này. Bốn file kia là hồ sơ, đọc khi cần chứng cứ.

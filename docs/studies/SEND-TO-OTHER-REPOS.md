@@ -1,7 +1,6 @@
 ---
 kind: brief
 status: active
-created: 2026-08-31
 ttl_days: 60
 ---
 
