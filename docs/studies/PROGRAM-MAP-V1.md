@@ -1,3 +1,9 @@
+---
+kind: study
+status: active
+ttl_days: 180
+---
+
 # PROGRAM-MAP-V1
 
 > **Bảy luồng việc Đức nhớ, đối chiếu với repo.** Đo tại 2026-08-31, commit `b5430f9`.
