@@ -1,3 +1,9 @@
+---
+kind: spec
+status: active
+ttl_days: 180
+---
+
 # RESTRUCTURE-PLAN-V1
 
 > **Đây là bản chốt.** Thay thế `FOLDER-STANDARD-STUDY-V0` và `REPO-BOOTSTRAP-SPEC-V0`;
