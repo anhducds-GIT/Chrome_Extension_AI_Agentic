@@ -1,3 +1,9 @@
+---
+kind: study
+status: superseded
+ttl_days: 180
+---
+
 # REPO-BOOTSTRAP-SPEC-V0
 
 > **Bài toán:** một phiên AI mới vào repo phải hiểu ngay chuyện gì đang xảy ra,
