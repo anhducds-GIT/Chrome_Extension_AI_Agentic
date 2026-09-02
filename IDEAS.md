@@ -12,9 +12,15 @@
 1. **Ghi vào đây khi ý tưởng chưa có nhà.** Đã có nhà thì **đừng chép lại** — chép là đẻ ra
    nguồn sự thật thứ hai, đúng cái bệnh cả repo này chữa.
 
-2. **Ba cửa ra.** Một ý tưởng được nhận làm thì đi khỏi phòng chờ vào **một** trong ba chỗ:
-   thành một đơn vị có `STATUS.md` riêng · thành một phiên trong roadmap · thành một mục nợ
-   trong `BACKLOG.md` của gói. Ra cửa nào thì điền trường `nhà:` trỏ tới đó.
+2. **Bốn cửa ra.** Một ý tưởng rời phòng chờ theo **một** trong bốn đường:
+   - thành một đơn vị có `STATUS.md` riêng · thành một phiên trong roadmap · thành một mục nợ
+     trong `BACKLOG.md` của gói → điền `nhà:` trỏ tới đó, và nó **biến khỏi bảng** (nếu còn
+     hiện thì bảng đếm hai lần một việc);
+   - **hoặc làm xong luôn tại đây** → đổi `bậc` thành `đã chứng minh` và **để nguyên trong
+     sổ**. Nó vẫn hiện trên bảng ở bậc cuối, để Đức thấy việc đã chạy tới đâu.
+
+   > Cửa thứ tư này thiếu ở bản đầu của luật, và Y-04 là ca đầu tiên không lọt vào cửa nào —
+   > nó không đi đâu cả, nó **xong**. Vá luật thay vì nhét bừa nó vào một cửa sai.
 
 3. **Hai trường bắt buộc: `bậc` và `việc kế`.** Còn lại tuỳ. **Đức cứ viết một câu** — AI
    chuẩn hoá lại. Đừng để cái sổ này thành thủ tục, vì thủ tục thì Đức sẽ không ghi.
@@ -61,22 +67,34 @@ hiển thị sai.
 
 ## Y-03 · Trường "Đức cần làm" trong hồ sơ trạng thái
 
-- **bậc:** ý tưởng
+- **bậc:** đang xây
 - **nguồn:** phát hiện khi dựng bảng trạng thái 2026-09-02
-- **việc kế:** Thêm một trường khai vào hồ sơ trạng thái, rồi bảng đọc thẳng trường đó
-- **vì sao:** Ba trong bốn việc đang mở **có chờ tay Đức**, nhưng chữ đó nằm lẫn trong câu mô
-  tả. Bảng không được đoán từ chữ (luật vàng 1), nên ô "Đức cần làm" đang trống — trong khi
-  nó đúng là ô Đức cần nhất.
+- **chủ:** `claude-y03`
+- **phạm vi:** hồ sơ trạng thái, bộ sinh, bản mẫu, phép kiểm. **Cấm** đụng gói
+  `duc-auto-gg-flow-video` — phiên khác đang giữ.
+- **việc kế:** GIAI ĐOẠN 2 — chuyển `human_action` thành **bắt buộc** cho đơn vị còn sống, khi
+  mọi đơn vị đã khai. **Hai gói còn thiếu, và cả hai đang do phiên khác giữ** nên chủ của
+  chúng phải tự điền: `duc-auto-gg-flow-video` (`claude-f18-evidence`) và `duc-auto-chatgpt`
+  (`claude-surface-fix`, Đức giao 02/09)
+- **vì sao:** Ba việc đang chờ Đức nhưng chữ đó nằm lẫn trong câu mô tả. Bảng không được đoán
+  từ chữ (luật vàng 1), nên ô "Đức cần làm" bỏ trống — trong khi nó đúng là ô Đức cần nhất.
+- **đã xong giai đoạn 1:** trường `human_action` có trong lược đồ và bản mẫu, ba đơn vị đã
+  khai, bảng hiện đủ việc **và** thừa nhận số đơn vị chưa khai. Không thể bắt buộc ngay vì
+  **không đòi hỏi được một trường mà người khai khác chưa có** — luật chung của mọi lần đổi
+  lược đồ.
+- **ghi minh bạch một va chạm quyền:** lúc tôi điền, `duc-auto-chatgpt` đang trống chủ (đã
+  kiểm trước khi nhận). Giữa phiên, Đức giao gói đó cho `claude-surface-fix`. Nên commit của
+  tôi có **một dòng** trong `STATUS.md` của gói họ. Tôi **cố ý không gỡ lại**: gỡ là đụng gói
+  của họ lần thứ hai, cho một dòng dữ liệu vốn đúng. Ghi ra đây để phiên sau không tưởng là
+  tôi lách luật.
 
 ## Y-04 · Bảng trạng thái sinh ngay trong repo
 
-- **bậc:** đang xây
+- **bậc:** đã chứng minh
 - **nguồn:** Đức nêu 2026-09-02
-- **chủ:** `claude-so-y-tuong`
-- **phạm vi:** được đụng `scripts/` và file gốc repo. **Cấm** đụng `workers/` (có chủ khác) và
-  `evidence/`.
-- **việc kế:** Chuyển bộ sinh đang nằm ngoài repo vào `scripts/`, nối vào cổng kiểm để nó
-  không mục
+- **việc kế:** Không còn gì. Bộ sinh đã nằm trong repo, có lệnh chạy riêng và 6 phép kiểm
+- **kết quả:** Bản ra cố ý KHÔNG commit — nó để publish, và trang tự in ngày sinh rồi bật cờ
+  đỏ sau 7 ngày, nên cũ thì nhìn thấy là cũ
 - **vì sao:** Bản đầu đã chạy được và đang là artifact, nhưng bộ sinh **nằm ngoài repo** nên
   không đi theo template và không ai cưỡng chế được độ tươi.
 

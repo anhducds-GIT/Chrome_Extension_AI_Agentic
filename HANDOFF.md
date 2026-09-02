@@ -723,3 +723,37 @@ cả 9 chỗ mới đến từ `template/` mà K1 vừa trích: thư mục đó 
 một AI lạ vào repo sẽ không tìm thấy bộ chuẩn. Đã khai `template/` vào Bản đồ file (phần thuộc
 `_root`); **9 file bên trong cần liên kết từ `template/README.md`** — việc của phiên tiếp K1,
 không phải việc của sổ ý tưởng.
+
+## 2026-09-02 — `claude-y03`: trường `human_action` — việc chờ tay Đức thôi nằm lẫn trong mô tả
+
+**Vấn đề.** Ba việc đang chờ Đức, nhưng chữ đó nằm **lẫn** trong `next_step`. Bảng không được
+đoán từ chữ (luật vàng 1), nên ô "Đức cần làm" bỏ trống — đúng ô Đức cần nhất.
+
+**Làm gì.** Thêm `human_action` vào lược đồ trạng thái. Ba trạng thái, và **gộp bất kỳ hai cái
+là bảng nói dối**: chuỗi thật = có việc chờ · `không` = đã trả lời, không có gì · rỗng = **chưa
+ai trả lời**. Lược đồ **từ chối khai rỗng**, vì rỗng làm bảng không phân biệt được hai cái cuối.
+
+**GIAI ĐOẠN 1 là tuỳ chọn, có chủ đích.** Không đòi hỏi được một trường mà người khai khác chưa
+có — hai gói đang do phiên khác giữ. Đây là luật chung của mọi lần đổi lược đồ, không phải thoả
+hiệp riêng lần này. Giai đoạn 2 ghi ở Y-03.
+
+**Số:** bảng-trạng-thái 5 → **6** phép kiểm · dashboard 81 → **82** · **4/4 đột biến bị bắt.**
+
+**Hai lỗi của tôi mà phép kiểm bắt được:**
+1. `human_action` khai **toàn dấu cách** bị đếm CẢ là việc thật CẢ là chưa khai — cùng một đơn
+   vị nằm ở hai nhóm loại trừ nhau. Do lọc trên chuỗi thô trước khi cắt khoảng trắng.
+2. Bất biến "bảng không lộ chi tiết kỹ thuật" **đỏ** vì chính `IDEAS.md` của tôi: một tên thư
+   mục trơ có gạch chéo ở CUỐI lọt cả hai luật cắt (chỉ một gạch chéo, không đuôi file). Đã
+   thêm luật thứ ba, và kiểm để không cắt oan `và/hoặc` hay `3/4`.
+
+**Luật của sổ ý tưởng có lỗ, đã vá.** Ba cửa ra không có cửa nào cho ý tưởng *làm xong luôn tại
+đây*; Y-04 là ca đầu tiên không lọt cửa nào. Thêm cửa thứ tư: đổi bậc thành `đã chứng minh` và
+**để nguyên trong sổ** để Đức thấy việc đã chạy tới đâu.
+
+**VA CHẠM QUYỀN — ghi minh bạch.** Lúc điền, `duc-auto-chatgpt` đang trống chủ (đã kiểm trước
+khi nhận). Giữa phiên, **Đức giao gói đó cho `claude-surface-fix`**. Nên commit của tôi có một
+dòng trong `STATUS.md` của gói họ. **Cố ý không gỡ lại** — gỡ là đụng gói của họ lần thứ hai cho
+một dòng dữ liệu vốn đúng. Cổng kiểm phạm vi vẫn XANH.
+
+**Việc kế:** Y-05 (viết lại chữ trong hồ sơ cho mắt Đức đọc) — nó sẽ làm mọi dòng trên bảng
+đọc được, không chỉ ô "Đức cần làm".

@@ -1876,4 +1876,28 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
 }
 
 
+/* Y-03 (2026-09-02) — trường `human_action`: việc đang chờ tay Đức.
+   GIAI ĐOẠN 1 là TUỲ CHỌN có chủ đích: lúc thêm trường, gói gg-flow-video đang do phiên khác
+   giữ nên không sửa được: bắt buộc ngay là cổng đỏ vì việc của người khác. Luật chung của mọi
+   lần đổi lược đồ — không đòi hỏi được thứ mà người khai chưa có.
+   Nhưng KHAI RỖNG thì phải đỏ: rỗng làm bảng không phân biệt được "không có gì chờ Đức" với
+   "chưa ai trả lời câu đó", và hai thứ đó khác nhau hoàn toàn. */
+{
+  assert.deepEqual(validateStatus(validFm(), validationDeps()), [],
+    "khong khai human_action thi VAN hop le — giai doan 1 la tuy chon");
+
+  for (const bad of ["", "   ", "\t"]) {
+    const errors = validateStatus(validFm({ human_action: bad }), validationDeps());
+    assert.ok(errors.some((m) => m.includes("human_action")),
+      `human_action khai rong (${JSON.stringify(bad)}) phai do — rong khac voi "khong"`);
+  }
+
+  assert.deepEqual(validateStatus(validFm({ human_action: "không" }), validationDeps()), [],
+    '"khong" la mot cau tra loi hop le: da tra loi, va khong co gi cho');
+  assert.deepEqual(validateStatus(validFm({ human_action: "Nạp lại tiện ích ở từng hồ sơ." }), validationDeps()), [],
+    "khai mot cau tieng Viet la hop le");
+  ok("Y-03 human_action: tuy chon o giai doan 1, nhung khai RONG thi do");
+}
+
+
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

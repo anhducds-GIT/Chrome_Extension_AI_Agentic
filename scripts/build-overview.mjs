@@ -54,6 +54,11 @@ export function shorten(text, max = 96) {
   // "scripts/build-dashboard.mjs" chỉ có MỘT gạch chéo nên luật hai-gạch-chéo không thấy nó.
   s = s.replace(/\S*\.(?:js|mjs|md|json|html)\S*/gi, "…"); // bất cứ gì mang đuôi file mã
   s = s.replace(/\S*\/\S*\/\S*/g, "…");                      // đường dẫn ≥2 tầng, không có đuôi
+  // Tên thư mục trơ, gạch chéo ở CUỐI ("vào scripts/, nối vào…"). Lọt cả hai luật trên vì
+  // chỉ có một gạch chéo và không có đuôi file. Phát hiện khi chính IDEAS.md của tôi làm nó
+  // lọt lên bảng — phép kiểm bất biến bắt được. Đòi ký tự chữ ngay trước dấu gạch, và một
+  // dấu ngắt ngay sau, nên "và/hoặc" không bị cắt oan.
+  s = s.replace(/\S*\w\/(?=[\s,.;:)\]]|$)/g, "…");
   // Một gạch chéo mà không có đuôi file thì là chữ thường ("và/hoặc") — cố ý không cắt.
   s = s.replace(/\s+/g, " ").trim();
   if (s.length <= max) return s;
@@ -123,6 +128,27 @@ export function debtByUnit(deps, model) {
     rows.push({ name: found ? found.name : key.split("/").slice(-2, -1)[0], n: open });
   }
   return rows.sort((a, b) => b.n - a.n);
+}
+
+/* VIỆC CHỜ TAY ĐỨC — đọc trường `human_action`, KHÔNG đoán từ chữ (luật vàng 1).
+   BA trạng thái phải phân biệt. Gộp bất kỳ hai cái là bảng nói dối:
+     chuỗi thật  → có việc chờ Đức
+     "không"     → đã trả lời, và không có gì chờ
+     rỗng        → CHƯA AI TRẢ LỜI câu đó
+   Cái tệ nhất là gộp "không" với rỗng: bảng sẽ báo "không có việc nào chờ Đức" trong khi
+   thật ra chưa ai được hỏi. Đó đúng là tình trạng trước khi có trường này.
+   Đơn vị đã nghỉ hưu không tính — nó ra khỏi cuộc đua rồi. */
+export const RETIRED_LIFECYCLES = new Set(["superseded", "archived"]);
+
+export function humanWork(rows) {
+  const live = rows.filter((r) => !RETIRED_LIFECYCLES.has(r.lifecycle));
+  // CẮT KHOẢNG TRẮNG TRƯỚC khi phân loại. Bản đầu lọc trên chuỗi thô, nên một trường khai
+  // toàn dấu cách bị đếm CẢ là việc thật CẢ là chưa khai — cùng một đơn vị nằm ở hai nhóm
+  // loại trừ nhau. Lược đồ đã chặn ca này, nhưng hàm hiển thị vẫn phải tự đúng.
+  const trimmed = live.map((r) => ({ unit: r.name, what: String(r.humanAction ?? "").trim() }));
+  const actions = trimmed.filter((a) => a.what && a.what.toLowerCase() !== "không");
+  const undeclared = trimmed.filter((a) => !a.what).length;
+  return { actions, undeclared };
 }
 
 const esc = (s) => String(s ?? "")
@@ -263,18 +289,7 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const ageDays = Math.max(0, Math.round((today - Date.parse(stamp)) / 86400000));
   const stale = ageDays > 7;
 
-  /* VIỆC CHỜ TAY ĐỨC — đọc trường `human_action`, KHÔNG đoán từ chữ.
-     Ba trạng thái phải phân biệt, và gộp bất kỳ hai cái là bảng nói dối:
-       chuỗi thật  → có việc chờ Đức
-       "không"     → đã trả lời, và không có gì chờ
-       rỗng        → CHƯA AI TRẢ LỜI câu đó
-     Đơn vị đã nghỉ hưu không tính — nó ra khỏi cuộc đua rồi. */
-  const RETIRED = new Set(["superseded", "archived"]);
-  const live = model.rows.filter((r) => !RETIRED.has(r.lifecycle));
-  const humanActions = live
-    .filter((r) => r.humanAction && r.humanAction.trim().toLowerCase() !== "không")
-    .map((r) => ({ unit: r.name, what: r.humanAction.trim() }));
-  const humanUndeclared = live.filter((r) => !r.humanAction).length;
+  const { actions: humanActions, undeclared: humanUndeclared } = humanWork(model.rows);
 
   const ranked = model.rows.filter((r) => r.nextStep)
     .sort((a, b) => (a.priorityRank ?? Infinity) - (b.priorityRank ?? Infinity) || a.key.localeCompare(b.key));

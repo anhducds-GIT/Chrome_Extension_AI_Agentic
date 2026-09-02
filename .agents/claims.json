@@ -9,25 +9,25 @@
       "task": "Duc doi sang profile Binh (360p/8s/6 credit), da reload. Chay chuoi voi nhip MOI de do pacing_ms lan dau tren trang that."
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-y03",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 02/09 (ab8ab2a + 21afb9e, da push): va cua so bo cuoc cho khop ba nhanh. Suite 84/84. Do live 28/08 van dung.",
-      "released_at": "2026-09-02"
+      "task": "Y-03: them truong human_action vao luoc do trang thai (giai doan 1: tuy chon). Chi sua STATUS.md, khong dung code.",
+      "released_at": null
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-surface-fix",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 02/09 (ab8ab2a + 21afb9e, da push): port lop on dinh + va cua so bo cuoc. Suite 98/98. CON MO: chua do live.",
-      "released_at": "2026-09-02"
+      "task": "DUC CHOT 02/09 giao gói: va lo hong surface — trang chu chatgpt.com bi coi la hoi thoai, va surfaceAllowed khong duoc noi vao dau. Port tu nhanh gemini/flow. KHONG dung STATUS.md (viec cua claude-y03).",
+      "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-y03",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-so-y-tuong). XONG: IDEAS.md (phong cho) + scripts/build-overview.mjs (bang trang thai, ban ra KHONG commit) + 5 phep kiem, 4/4 dot bien. Suite 233.",
-      "released_at": "2026-09-02"
+      "task": "Y-03: them truong human_action vao luoc do + bo sinh + bang + test.",
+      "released_at": null
     }
   }
 }

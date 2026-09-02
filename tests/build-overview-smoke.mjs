@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { buildOverview, IDEA_STAGES, readIdeas, shorten } from "../scripts/build-overview.mjs";
+import { buildOverview, humanWork, IDEA_STAGES, readIdeas, shorten } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -118,5 +118,43 @@ const ideasDeps = (text) => ({
   assert.ok(old.html.includes(String(old.stats.ageDays)), "banner phai noi ro cu bao nhieu ngay");
   ok("co cu bat theo ngay do duoc, va banner noi ro so ngay");
 }
+
+/* ---- 6. Y-03 · VIỆC CHỜ TAY ĐỨC — ba trạng thái phải phân biệt được.
+     Cái tệ nhất là gộp "không" (đã trả lời, không có gì) với rỗng (chưa ai trả lời): bảng sẽ
+     báo "không có việc nào chờ Đức" trong khi thật ra chưa ai được hỏi. Đó đúng là tình
+     trạng trước khi có trường này, và là lý do Y-03 tồn tại. ---- */
+{
+  const rows = [
+    { name: "Có việc",        lifecycle: "active",     humanAction: "Nạp lại tiện ích rồi điền tên hồ sơ." },
+    { name: "Đã trả lời không", lifecycle: "active",   humanAction: "không" },
+    { name: "Viết hoa KHÔNG", lifecycle: "building",   humanAction: "KHÔNG" },
+    { name: "Chưa khai",      lifecycle: "building",   humanAction: "" },
+    { name: "Khai toàn dấu cách", lifecycle: "active", humanAction: "   " },
+    { name: "Đã nghỉ mà có việc", lifecycle: "superseded", humanAction: "Việc này KHÔNG được tính" },
+    { name: "Đã lưu trữ",     lifecycle: "archived",   humanAction: "" }
+  ];
+  const { actions, undeclared } = humanWork(rows);
+
+  assert.deepEqual(actions.map((a) => a.unit), ["Có việc"],
+    'chi don vi khai chuoi THAT moi la viec cho Duc');
+  assert.equal(actions[0].what, "Nạp lại tiện ích rồi điền tên hồ sơ.", "giu nguyen van cau Duc doc");
+  assert.equal(undeclared, 2, 'rong VA toan dau cach deu la "chua ai tra loi" — dem ca hai');
+
+  // Đơn vị đã nghỉ hưu KHÔNG được lọt vào, dù có khai việc.
+  assert.ok(!actions.some((a) => a.unit === "Đã nghỉ mà có việc"),
+    'don vi da nghi huu ra khoi cuoc dua — khong duoc dem viec cua no');
+  assert.ok(!actions.some((a) => a.unit === "Đã lưu trữ"), 'don vi luu tru cung vay');
+
+  // "không" viết kiểu nào cũng là "không có gì chờ", và KHÔNG bị đếm là chưa khai.
+  assert.ok(!actions.some((a) => a.unit === "Viết hoa KHÔNG"), '"KHONG" viet hoa cung la khong co gi cho');
+  assert.equal(humanWork([{ name: "x", lifecycle: "active", humanAction: "không" }]).undeclared, 0,
+    'khai "khong" la DA tra loi — khong duoc dem la chua khai');
+
+  // Và trên repo thật: cả ba trạng thái phải cùng xuất hiện, nếu không phép kiểm trên là lý thuyết.
+  const { html } = buildOverview(createDefaultDeps(ROOT));
+  assert.match(html, /việc đang chờ|Không có việc nào chờ Đức/, "bang phai noi ro co bao nhieu viec cho Duc");
+  ok("Y-03 ba trang thai: co viec / da tra loi khong / chua ai tra loi — khong gop lan nhau");
+}
+
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
