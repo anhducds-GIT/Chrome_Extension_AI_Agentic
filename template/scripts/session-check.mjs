@@ -16,7 +16,7 @@ import path from "node:path";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyFromNumstat, areaOf, claimPrefixesFrom, generatorsFrom, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, areaOf, claimPrefixesFrom, generatorsFrom, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -59,6 +59,10 @@ const touched = [...new Set([...workingChanges.map((c) => c.file), ...unpushed])
 const structure = readStructureFromDisk(ROOT);
 const claimPrefixes = claimPrefixesFrom(structure);
 const unitShape = unitsFrom(structure);
+// Vùng chia-theo-gói vẫn hỏi `areaOf` ở đây, và đó KHÔNG phải cửa thứ hai: `stewardOf` gọi
+// chính `areaOf` cho mọi đường dẫn thuộc gói rồi mới xét `steward` cho phần còn lại. Cửa thứ hai
+// mà K2-2b vừa đóng là ở tập khoá GỐC. Không gộp dòng này vào `ownershipKeys` vì nó cần chạy
+// TRƯỚC `adminFile` (thứ phải hỏi git), còn miễn trừ thì không đổi gì cho đường dẫn trong gói.
 const packagesTouched = [...new Set(touched.map((f) => areaOf(f, claimPrefixes)).filter((a) => a !== "_root"))];
 
 // Nhiều phiên AI dùng CHUNG một thư mục làm việc, nên `git status` cho thấy cả
@@ -107,15 +111,27 @@ const orphanPackages = packagesTouched.filter((pkg) => !CLAIMS?.[pkg] || !CLAIMS
      chỉ để tuân luật là tự chặn luật của mình. NHƯNG chỉ miễn khi **chỉ thêm dòng**: sửa hay
      xoá dòng cũ là viết lại lịch sử của phiên khác, và cái đó thì không được miễn. */
 const ROOT_HANDOFF = "HANDOFF.md";
-// So với origin/main tới WORKING TREE, nên bắt được cả commit chưa push lẫn bản sửa dở.
-// Phần QUYẾT ĐỊNH nằm trong `appendOnlyFromNumstat` để kiểm được mọi nhánh mà không cần git.
-const handoffAppendOnly = appendOnlyFromNumstat(git("diff", "--numstat", "origin/main", "--", ROOT_HANDOFF));
+// So với origin/main tới WORKING TREE, nên bắt được cả commit chưa push lẫn bản sửa dở. Đây là
+// phạm vi ĐÚNG cho cổng ("việc của phiên này"); `safe-push` cố ý dùng phạm vi khác (`origin/main`
+// … `HEAD` = "thứ tôi sắp công bố") — xem ghi chú ở đó. Dùng chung là HÀM QUYẾT ĐỊNH, không phải
+// phạm vi: dùng chung phạm vi thì một bản sửa dở chưa commit có thể che một commit phá hoại.
+//
+// CHẶT HƠN TỪ K2-2b: `appendOnlyFromNumstat` (A2) chỉ chứng minh "0 dòng bị xoá", nên chèn một
+// dòng bịa vào GIỮA `HANDOFF.md` vẫn được miễn — một lỗ CẤP QUYỀN: ghi file luật ở gốc mà không
+// cần nhận khoá gốc. `appendOnlyAtEof` đòi thêm: đúng một hunk, và nó bắt đầu ngay sau dòng cuối
+// của bản cũ. Đây là SIẾT, không phải nới: thứ trước đây lọt thì nay đỏ, và đó là chủ ý.
+const handoffAppendOnly = appendOnlyAtEof(
+  git("diff", "-U0", "origin/main", "--", ROOT_HANDOFF),
+  git("show", `origin/main:${ROOT_HANDOFF}`)
+);
 const adminFile = (f) => f === ".agents/claims.json" || (f === ROOT_HANDOFF && handoffAppendOnly);
 
 const keyOf = (f) => stewardOf(f, structure, claimPrefixes);
-const rootAreasTouched = [...new Set(
-  touched.filter((f) => areaOf(f, claimPrefixes) === "_root" && !adminFile(f)).map(keyOf)
-)].sort();
+// MỘT CỬA DUY NHẤT (K2-2b): cả cổng này và `safe-push.mjs` đi qua `ownershipKeys`. Trước đó mỗi
+// bên tự gộp tập khoá, và 02/09 hai bên đã trả hai câu khác nhau cho cùng một file — xem ghi chú
+// trong repo-structure.mjs. Khoá gốc luôn bắt đầu bằng "_"; vùng chia-theo-gói thì không.
+const keysTouched = ownershipKeys(touched, structure, claimPrefixes, adminFile);
+const rootAreasTouched = keysTouched.filter((k) => k.startsWith("_"));
 const myRootAreas = rootAreasTouched.filter((k) => ownedBy(k) === asLabel);
 const orphanRootAreas = rootAreasTouched.filter((k) => !CLAIMS?.[k] || !CLAIMS[k].owner);
 const foreignRootAreas = rootAreasTouched.filter((k) => ownedBy(k) && ownedBy(k) !== asLabel);
@@ -290,6 +306,29 @@ function verifierMatchesHead(script) {
   }
 }
 
+/* K2-2 (thu hẹp bán kính của phép kiểm này) CỐ Ý CHƯA LÀM Ở ĐÂY — và lý do đáng ghi lại.
+
+   Vấn đề là thật, đo được ba lần trong ngày 02/09: phép kiểm dưới đây so bản-sinh-từ-HEAD với
+   bản-đã-commit, nên nó ĐỎ CHO MỌI PHIÊN cùng lúc khi bất kỳ ai commit mà không sinh lại — và
+   cách sửa là chạm `DASHBOARD.md`, file thuộc một khoá mà phiên khác có thể đang giữ. Tức một
+   phiên bị chặn bởi khoản nợ nó BỊ CẤM TRẢ.
+
+   Tôi ĐÃ viết bản vá cho nó trong phiên này, và audit độc lập (Codex) BÁC với hai lỗi chặn —
+   cả hai đều kiểm chứng lại là thật:
+     1. Không có commit nào chưa push thì bản vá coi như "nợ không phải của tôi". Nhưng repo này
+        push sớm theo chính sách, nên nợ CỦA TÔI vừa push xong sẽ tự được miễn.
+     2. Bản vá quy trách nhiệm theo chủ HIỆN TẠI của vùng. Trả quyền xong là thoát; và tệ hơn,
+        phiên nhận vùng SAU đó bị quy cho nợ của người trước — đúng cái "đổ oan" mà cả lớp phân
+        vùng này sinh ra để tránh.
+   Cả hai đều cùng một gốc: **không có cách quy trách nhiệm cho một COMMIT.** Chủ sở hữu là
+   trạng thái sống, commit là chuyện đã qua; lấy trạng thái hiện tại để phán chuyện đã qua thì
+   sai theo cả hai chiều.
+
+   Nên K2-2 PHỤ THUỘC K2-3 (nhãn `Lane:` trong commit), không phải ngược lại như thứ tự tôi xếp
+   ban đầu. Có nhãn thì quy đúng người, và cả hai lỗi trên biến mất. Chưa có nhãn thì thà để
+   phép kiểm này rộng quá còn hơn nới sai — nới sai thì nó vừa tha nợ thật vừa buộc tội người
+   vô can. Đừng làm lại bản vá đó trước khi có K2-3. */
+
 check("Sự thật máy sinh còn tươi", () => {
   // Đọc từ `.repo-structure.json`. Trước 2026-09-02 danh sách này viết cứng và gồm cả
   // `feature-parity.mjs` — một script CHỈ repo này có. Bộ khung cố ý không mang nó theo, nên
@@ -377,13 +416,34 @@ check("Cổng kiểm cấu trúc B1–B14", () => {
   return { ok: true, msg: `${tomTat(stdout)} — nhóm CHẶN đạt hết. ${XEM}` };
 });
 
+/* ---- 9. Bất biến ba tầng của quyền sở hữu ------------------------------- */
+// Yêu cầu bởi audit GPT 02/09, sau khi A2 tách gốc repo thành bốn khoá. Ba tầng phải luôn khớp:
+//   LAW    `steward` trong .repo-structure.json
+//   STATE  khoá quyền trong .agents/claims.json
+//   MÁY    một hàm phân giải duy nhất (`ownershipKeys` → `stewardOf`)
+// Lệch một tầng thì bảng nói một đằng máy nói một nẻo, và cổng LẶNG LẼ quy việc cho sai người
+// mà vẫn xanh — đúng kiểu hỏng đã xảy ra thật trong ngày. Nên đây là BẤT BIẾN, không phải luật
+// di-trú: kiểm mỗi phiên, không phải kiểm một lần lúc chuyển đổi.
+// Đọc CÂY LÀM VIỆC, không phải HEAD: mối nguy nửa-di-trú sống ở bản sửa dở, và bắt được lúc đó
+// mới kịp. `check-bootstrap.mjs` chỉ đọc HEAD nên không phải chỗ của phép kiểm này.
+check("Bất biến quyền sở hữu ba tầng", () => {
+  if (!CLAIMS) return { ok: false, msg: "Thiếu (hoặc hỏng) .agents/claims.json — không kiểm được bất biến." };
+  if (!structure) return { ok: true, msg: "Repo chưa có .repo-structure.json — không có gì để lệch." };
+  const problems = ownershipInvariant(structure, CLAIMS);
+  if (problems.length) return { ok: false, msg: problems.join(" · ") };
+  const keys = [...new Set(Object.keys(CLAIMS).filter((k) => k.startsWith("_")))].sort();
+  return { ok: true, msg: `${keys.length} khoá vùng gốc (${keys.join(", ")}) đều có thư mục khai steward, và ngược lại.` };
+});
+
 /* ---- chống tự tháo cổng ------------------------------------------------- */
 // Cách dễ nhất để "làm cho cổng xanh" là lặng lẽ xoá bớt một phép kiểm.
 // Con số này chặn đúng việc đó: thêm phép kiểm thật thì tăng nó lên và ghi
 // một dòng vào HANDOFF nói vì sao.
 // 2026-09-02, phiên S4: 7 → 8. Thêm "Cổng kiểm cấu trúc B1–B14 (chỉ cảnh báo)". Lý do đã ghi
 // một dòng vào HANDOFF.md gốc repo, đúng luật chống tự tháo cổng.
-const EXPECTED_CHECKS = 8;
+// 2026-09-02, phiên K2-2b: 8 → 9. Thêm "Bất biến quyền sở hữu ba tầng", vì trong cùng ngày hai
+// công cụ đã quy một file về hai vùng khác nhau mà cổng vẫn xanh. Lý do ghi ở HANDOFF.md gốc.
+const EXPECTED_CHECKS = 9;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

@@ -1002,3 +1002,105 @@ sửa lớp phân quyền thì hãy thử với **đúng một khoá**, không p
 **C3 (Đức đã duyệt) PHẢI CHỜ.** Nó sửa `safe-push.mjs` + `session-check.mjs` — cả hai là `_code`,
 đang do `claude-k2-design` giữ để làm đúng cái refactor mà C3 dựa lên. Làm bây giờ là viết trên
 nền đang bị dời.
+
+---
+
+## Log — 2026-09-02, `claude-dashboard` · HAI CON SỐ TRÊN BẢNG CỦA ĐỨC ĐANG SAI
+
+Đi kiểm xem bảng trực quan (`build-overview.mjs`) có cần lịch cập nhật định kỳ không.
+Kết luận: **không cần lịch** — nhưng phát hiện hai lỗi trong chính con số bảng đang hiện.
+
+**Đo được:** 6 commit mới của các phiên khác (21:05 → 21:25) làm bảng đổi **0 byte**.
+Bảng đọc *trạng thái được khai* (STATUS, `IDEAS.md`, số ADR, số nợ), không đọc nhịp commit.
+Nên lịch theo thời gian là công cụ sai: nó chạy khi không có gì đổi, và vẫn trễ khi có.
+
+**Lỗi 1 — số nợ kỹ thuật sai 6 đơn vị.** Bảng hiện **63**, thật khoảng **57**.
+`debtByUnit` nhận việc đã đóng qua ba cụm chữ `ĐÃ ĐÓNG|ĐÃ XONG|ĐÃ VÁ XONG` hoặc `~~gạch~~`.
+BACKLOG của gg-flow-video viết `**XONG 02/09**` — không khớp cụm nào, nên 6 việc đã đóng
+(F-11, F-15, F-21, F-23, F-24, F-26) vẫn bị đếm là nợ.
+
+**ĐỪNG vá bằng cách nới thêm chữ vào biểu thức.** Tôi đã thử đọc 8 dòng có chữ "xong":
+hai trong số đó **vẫn đang mở** — `F-05` chỉ chứa chữ "xong" trong một điều kiện
+("sau khi F-02+F-04 xong"), và `F-19` ghi "XONG **một phần**". Nới chữ là đóng oan hai việc.
+Gốc bệnh: **bảng đang suy ra trạng thái từ văn xuôi của người.** Cách chữa đúng là một dấu
+máy đọc được ở vị trí cố định (`~~gạch~~` đã có sẵn và không nhập nhằng), rồi cấm dò văn xuôi.
+Việc này đổi một con số Đức đọc → cần Đức gật, và cần một phép kiểm ghim dựng đúng hai ca
+F-05 / F-19 (fixture không dựng được hai ca đó thì phép kiểm vô nghĩa).
+
+**Lỗi 2 — dòng tuổi bảng làm tròn sai.** `ageDays` lấy `Date.now()` (có giờ, phút) trừ
+`Date.parse("2026-09-02")` (nửa đêm UTC) rồi `Math.round`. Sinh bảng sau trưa là ra
+"1 ngày trước" **ngay trong ngày sinh**. Cùng cơ chế đó có thể bật cờ đỏ 7 ngày sớm nửa ngày.
+Chữa: so hai mốc **ngày**, không so mốc thời điểm, và dùng `Math.floor`.
+
+**Cả hai nằm trong `scripts/` = `_code`, do `claude-k2-design` giữ.** Tôi không sửa, chỉ đọc.
+Lúc ghi dòng này tôi **không giữ khoá nào** — cả 7 khoá đang có chủ khác. C3 vẫn chờ `_code`.
+
+## 2026-09-02 — `claude-k2-design`: K2-2b · một bộ phân giải quyền, mọi công cụ đi qua nó
+
+**Chuyện đã xảy ra.** A2 tách gốc repo thành `_root` · `_docs` · `_code` · `_template` bằng hàm
+mới `stewardOf`, nối dây cho `session-check.mjs` mà **không** nối cho `safe-push.mjs`. Đo được:
+`docs/studies/X.md` thì cổng quy `_docs`, safe-push quy `_root`. Nghĩa là một phiên giữ `_docs`
+đúng luật, làm xong, **cổng XANH**, rồi **bị chính safe-push từ chối đẩy việc của mình** — và
+đường thoát duy nhất là `--carry`, thứ phải hỏi Đức.
+
+**Đây là lần lệch THỨ HAI ở đúng hai file của lần thứ nhất.** 26/08 hai bản regex `^workers/`
+lệch nhau, chữa bằng cách tách ra `areaOf` dùng chung. Lần này lệch lại vì **thêm một hàm thứ
+hai rồi chỉ nối dây một bên**. Bài học đắt hơn bản vá: *tách hàm dùng chung không chặn được
+lệch — người sau vẫn thêm được hàm thứ hai.* Thứ chặn được là **một cửa duy nhất**, cộng một
+phép kiểm ghim **dây nối**, không ghim cái hàm.
+
+### Làm gì
+
+| | |
+|---|---|
+| `ownershipKeys()` | cửa DUY NHẤT trả lời "file này thuộc vùng nào". Cả cổng và safe-push đi qua nó |
+| `ownershipInvariant()` | bất biến LAW `steward` ↔ STATE khoá quyền. Thành **phép kiểm #9**, `EXPECTED_CHECKS` 8 → 9 |
+| `appendOnlyAtEof()` | siết miễn trừ `HANDOFF.md`: đòi ĐÚNG MỘT hunk và nó bắt đầu ngay sau dòng cuối bản cũ |
+| safe-push fail-open | ref `origin/main` không tồn tại → bản cũ in "không có gì để push" rồi thoát 0. Nay **CHẶN** |
+
+**Số:** suite 251 → **257**. Cổng 8 → **9** phép kiểm.
+
+### Hai vòng audit độc lập (Codex), cả hai đều BÁC — và cả hai đều đúng
+
+**Vòng 1 giết một tính năng tôi đã viết xong.** Tôi có làm cả K2-2 (thu hẹp bán kính phép kiểm
+#7, để nợ artifact của lane khác không chặn mọi người). Codex bác với hai lỗi chặn, tôi kiểm lại
+thì **cả hai thật**: ① không có commit nào chưa push thì bản vá coi như "nợ không phải của tôi",
+mà repo này push sớm theo chính sách, nên nợ CỦA TÔI vừa push xong sẽ tự được miễn; ② quy trách
+nhiệm theo chủ HIỆN TẠI của vùng, nên trả quyền là thoát — và phiên nhận vùng SAU đó bị quy cho
+nợ của người trước.
+
+Cùng một gốc: **không có cách quy trách nhiệm cho một COMMIT.** Chủ sở hữu là trạng thái sống,
+commit là chuyện đã qua. **Nên K2-2 PHỤ THUỘC K2-3 (nhãn `Lane:` trong commit), không phải
+ngược lại như thứ tự tôi xếp ban đầu.** Đã gỡ sạch bản vá đó, để lại một khối ghi chú ở đúng chỗ
+nó từng nằm. **Đừng làm lại nó trước khi có K2-3.**
+
+**Vòng 2 giết bản vá của vòng 1.** Tôi làm hai công cụ dùng chung cả PHẠM VI đo; Codex bác đúng:
+một bản sửa dở **chưa commit** có thể che một commit phá hoại **đã nằm trong HEAD**, và safe-push
+sẽ đẩy nó đi. Nên phạm vi hai bên **cố ý khác nhau** — cổng phán "việc của phiên này"
+(`origin/main` → cây làm việc), safe-push phán "thứ tôi sắp công bố" (`origin/main` → `HEAD`) —
+và thứ dùng chung là **hàm quyết định**, không phải phạm vi.
+
+Vòng 2 cũng bác việc tôi *ghi chú* một lỗ cấp quyền rồi mở rộng nó: `appendOnlyFromNumstat` chỉ
+chứng minh "0 dòng bị xoá", nên chèn một dòng bịa vào GIỮA `HANDOFF.md` vẫn được miễn — ghi vào
+file luật ở gốc mà không cần nhận khoá gốc. Ghi chú ra không làm nó hợp lệ. Đã vá thật bằng
+`appendOnlyAtEof`.
+
+**Hai dương tính giả, đã kiểm và bác lại:** Codex nói git probe có thể ném và giết cả cổng
+(`git()` là wrapper try/catch, không ném được), và nói cổng bóc dấu nháy khác `unquote` của
+safe-push (hai biểu thức **giống hệt từng ký tự**).
+
+### Một lỗi của phiên khác, vá luôn vì tôi đang giữ đúng file
+
+Phiên K1 báo `safe-push` fail-open, rồi **tự đính chính điều kiện kích hoạt sau khi chạy thử** —
+mạng hỏng thì KHÔNG nổ (ref cũ vẫn phân giải); chỉ nổ khi ref `origin/main` **không tồn tại**
+(clone mới, nhánh mặc định tên khác). Bản vá đi theo số đo đó: fetch hỏng thì **nói to rồi đi
+tiếp**, ref không có thì **chặn**. Siết cả hai là chặn oan một phiên chỉ vì mạng chớp.
+
+### Còn mở
+
+- **K2-3 (nhãn `Lane:` trong commit)** — điều kiện của K2-2 và của mọi phép cưỡng chế phạm vi.
+- **Bốn khoá một chủ = một khoá.** A2 tách gốc thành 4 khoá để lane khỏi chạm nhau, rồi việc đầu
+  tiên xảy ra là một lane giữ cả bốn. Thiếu luật: **lane chỉ được giữ những khoá mà phạm vi của
+  nó thật sự cần**, và trả từng khoá ngay khi xong phần đó.
+- `ownershipInvariant` chỉ kiểm **tham chiếu**, không biết một đường dẫn *đáng ra* thuộc steward
+  nào. Khai `docs/` thành `_root` là sai mà bất biến vẫn xanh.

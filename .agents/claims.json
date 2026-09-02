@@ -12,29 +12,29 @@
       "owner": "claude-bridge-multiprofile",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "Nut 'Luu ten' + bao danh ngay: message DAC_BRIDGE_LABEL_SET -> luu label + cycle socket cua chinh profile, khong dung host. Duc chot 02/09. Sau do: design doc multi-session-per-profile (docs/studies).",
+      "task": "GIU DEN KHI PUSH XONG (nut Luu ten + 2 vong audit da xong, gate xanh; push dang ket vi phien f18-evidence chua day). Tra ngay sau push.",
       "released_at": null
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-bridge-multiprofile",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "Port nut Luu ten (DAC_BRIDGE_LABEL_SET + cycle socket) + bo va sanitize label (bound 256, C1, surrogate) tu gemini sang; test + mutation nhu mau",
+      "task": "GIU DEN KHI PUSH XONG (commit nut Luu ten + sanitize da xong, gate xanh; push dang ket vi phien f18-evidence chua day). Tra ngay sau push.",
       "released_at": null
     },
     "_root": {
       "owner": "claude-bridge-multiprofile",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "Sinh lai DASHBOARD/FEATURE-PARITY sau cac commit nut Luu ten; tra ngay sau push",
+      "task": "GIU DEN KHI PUSH XONG (artifact DASHBOARD/FEATURE-PARITY da commit, cho push).",
       "released_at": null
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-bridge-multiprofile",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "Ghi bai hoc: A2 co loi noi day, va vi sao test cua toi khong bat duoc",
-      "released_at": "2026-09-02"
+      "task": "GIU DEN KHI PUSH XONG (study MULTI-SESSION-PER-PROFILE da commit, cho push).",
+      "released_at": null
     },
     "_code": {
       "owner": "claude-k2-design",
@@ -44,11 +44,11 @@
       "released_at": null
     },
     "_template": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-k2-design",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "A2: sinh lai bo khung sau khi sua hai script",
-      "released_at": "2026-09-02"
+      "task": "K2-2b: sinh lai ban trich sau khi sua repo-structure/session-check/safe-push",
+      "released_at": null
     }
   }
 }

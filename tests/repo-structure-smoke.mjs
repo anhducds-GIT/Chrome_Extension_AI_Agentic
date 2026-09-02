@@ -20,8 +20,13 @@ import {
   DEFAULT_UNITS,
   unitsFrom,
   unitDirOf,
+  ownershipKeys,
+  ownershipInvariant,
+  appendOnlyAtEof,
+  lineCountOf,
   DEFAULT_REPO
 } from "../scripts/repo-structure.mjs";
+import fsMod from "node:fs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -240,6 +245,160 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   assert.equal(f("5"), false, "thieu cot so xoa thi KHONG mien");
   assert.equal(f("12\tx\tHANDOFF.md"), false, "cot so xoa khong phai so thi KHONG mien");
   ok("A2 · mien tru HANDOFF chi khi chi-them-dong; doc khong ra so thi FAIL CLOSED");
+}
+
+/* ---- K2-2b · MOT CUA DUY NHAT cho cau hoi "file nay thuoc ai" ------------ */
+/* Vi sao ghim: day la LAN LECH THU HAI o dung hai file cua lan thu nhat. 26/08 hai ban regex
+   `^workers/` lech nhau -> chua bang `areaOf` dung chung. 02/09 A2 them `stewardOf` va chi noi
+   day cho `session-check.mjs`, KHONG noi cho `safe-push.mjs` -> `docs/studies/X.md` thi cong quy
+   `_docs` con safe-push quy `_root`, nen mot phien giu `_docs` lam xong, cong XANH, roi bi chinh
+   safe-push tu choi day viec cua minh.
+
+   Bai hoc dat hon ban va: tach ham dung chung KHONG chan duoc lech, vi nguoi sau van them duoc
+   ham thu hai. Nen o day ghim HAI thu khac nhau: ham cho dung dap an, VA hai script that su di
+   qua no. */
+{
+  const parsed = {
+    areas: {
+      "docs/":     { steward: "_docs",     ownership_mode: "root" },
+      "scripts/":  { steward: "_code",     ownership_mode: "root" },
+      "tests/":    { steward: "_code",     ownership_mode: "root" },
+      "template/": { steward: "_template", ownership_mode: "root" },
+      "evidence/": { steward: "_root",     ownership_mode: "root" },
+      "workers/":  { steward: null, ownership_mode: "per-package", claim_prefix: "workers/" }
+    }
+  };
+  const prefixes = claimPrefixesFrom(parsed);
+  const files = [
+    "docs/studies/X.md", "docs/README.md", "scripts/safe-push.mjs", "tests/a.mjs",
+    "template/AGENTS.md", "AGENTS.md", "workers/pkg-a/v1/x.js", "workers/pkg-b/v1/y.js"
+  ];
+  assert.deepEqual(
+    ownershipKeys(files, parsed, prefixes),
+    ["_code", "_docs", "_root", "_template", "workers/pkg-a", "workers/pkg-b"],
+    "tap khoa phai la tap stewardOf, da sap xep, khong trung"
+  );
+  for (const f of files) {
+    assert.equal(ownershipKeys([f], parsed, prefixes)[0], stewardOf(f, parsed, prefixes),
+      `cua chung phai tra dung nhu stewardOf cho ${f}`);
+  }
+  // DAY LA CA DA HONG THAT 02/09.
+  assert.deepEqual(ownershipKeys(["docs/studies/X.md"], parsed, prefixes), ["_docs"],
+    "REGRESSION 02/09: docs/ phai ra _docs, KHONG duoc ra _root");
+  // `isAdmin` mac dinh KHONG mien gi — quen truyen thi mien tru bien mat, khong phai noi ra.
+  assert.deepEqual(ownershipKeys([".agents/claims.json"], parsed, prefixes), ["_root"],
+    "FAIL CLOSED: khong truyen isAdmin thi khong mien gi ca");
+  assert.deepEqual(
+    ownershipKeys([".agents/claims.json"], parsed, prefixes, (f) => f === ".agents/claims.json"), [],
+    "truyen isAdmin thi mien dung file do");
+  assert.throws(() => ownershipKeys("docs/x.md", parsed, prefixes), /OWNERSHIP_HONG/,
+    "dua vao mot chuoi thay vi mang thi NEM, khong lang le coi la mot file");
+  ok("K2-2b · ownershipKeys = tap stewardOf; docs/ KHONG ve _root; thieu isAdmin thi FAIL CLOSED");
+}
+
+/* DAY NOI moi la thu phai ghim. Phep kiem ham o tren KHONG bat duoc ca hong 02/09, vi luc do
+   `stewardOf` hoan toan dung — chi co `safe-push.mjs` la khong goi no. */
+{
+  const readScript = (name) => fsMod.readFileSync(new URL(`../scripts/${name}`, import.meta.url), "utf8");
+  for (const name of ["session-check.mjs", "safe-push.mjs"]) {
+    assert.match(readScript(name), /ownershipKeys\(/,
+      `${name} phai goi ownershipKeys — day la dung cai day noi da dut 02/09`);
+  }
+  assert.doesNotMatch(readScript("safe-push.mjs"), /\bareaOf\(/,
+    "safe-push.mjs KHONG duoc tu quy vung bang areaOf — do la cua thu hai, va no da lech mot lan");
+  ok("K2-2b · DAY NOI: ca hai script di qua cua chung, va safe-push khong con duong rieng");
+}
+
+/* ---- K2-2b · bat bien ba tang (audit GPT 02/09) -------------------------- */
+/* LAW `steward` <-> STATE khoa quyen <-> MAY mot ham. Lech mot tang thi bang noi mot dang may
+   noi mot neo, va cong LANG LE quy viec cho sai nguoi ma van xanh. Thieu mot trong ba = FAIL. */
+{
+  const areas = {
+    "docs/":     { steward: "_docs" },
+    "scripts/":  { steward: "_code" },
+    "evidence/": { steward: "_root" }
+  };
+  const claims = {
+    "_docs": { owner: null }, "_code": { owner: null }, "_root": { owner: null },
+    "workers/pkg": { owner: null }
+  };
+  assert.deepEqual(ownershipInvariant({ areas }, claims), [], "ba tang khop thi khong co van de");
+
+  const thieuKhoa = ownershipInvariant({ areas }, { "_docs": {}, "_root": {} });
+  assert.equal(thieuKhoa.length, 1);
+  assert.match(thieuKhoa[0], /STEWARD_THIEU_KHOA/);
+  assert.match(thieuKhoa[0], /_code/, "phai noi thang khoa nao thieu");
+  assert.match(thieuKhoa[0], /scripts\//, "va thu muc nao dang khai no");
+
+  const khoaChet = ownershipInvariant({ areas }, { ...claims, "_template": { owner: null } });
+  assert.equal(khoaChet.length, 1);
+  assert.match(khoaChet[0], /KHOA_KHONG_VUNG/);
+  assert.match(khoaChet[0], /_template/);
+
+  // Khoa chia-theo-goi khong bat dau bang "_" nen khong duoc tinh la khoa chet — neu tinh, moi
+  // repo co package deu do oan.
+  assert.deepEqual(ownershipInvariant({ areas }, { ...claims, "workers/them": { owner: null } }), [],
+    "khoa package khong phai khoa vung goc, khong duoc tinh la khoa chet");
+  // `steward: null` = ve `_root`, hop le, khong doi khoa rieng.
+  assert.deepEqual(ownershipInvariant({ areas: { "workers/": { steward: null } } }, { "_root": {} }), [],
+    "steward null thi khong doi khoa nao");
+  // FAIL CLOSED: dau vao hong thi noi la hong, khong tra rong (rong = "dat").
+  assert.match(ownershipInvariant(null, claims)[0], /BAT_BIEN_HONG/);
+  assert.match(ownershipInvariant({ areas }, null)[0], /BAT_BIEN_HONG/);
+  assert.match(ownershipInvariant({ areas: [] }, claims)[0], /BAT_BIEN_HONG/);
+  // `_root` PHAI CO MAT. Mien no khoi phep kiem khoa-chet la dung (khong thu muc nao can khai
+  // no), nhung quen doi no ton tai thi moi file o tang ngoai cung thanh mo coi vinh vien.
+  // Audit doc lap (Codex, vong 2) bat dung cho nay trong ban dau cua toi.
+  assert.match(ownershipInvariant({ areas: { "workers/": { steward: null } } }, {})[0], /THIEU_KHOA_ROOT/,
+    "khong co khoa _root thi phai bao — file o tang ngoai cung se khong ai nhan duoc");
+  assert.deepEqual(ownershipInvariant({ areas: { "workers/": { steward: null } } }, { "_root": {} }), [],
+    "co _root thi du, khong doi thu muc nao phai khai no");
+  ok("K2-2b · bat bien ba tang: thieu khoa / khoa chet / thieu _root / dau vao hong deu bi bat");
+}
+
+/* ---- K2-2b · "CHI THEM VAO CUOI FILE?" ---------------------------------- */
+/* Vi sao chat hon `appendOnlyFromNumstat`: ham do chi chung minh "0 dong bi xoa", KHONG chung
+   minh dong moi nam o CUOI. Nen mot phien khong giu khoa goc van chen duoc mot dong bia vao
+   GIUA `HANDOFF.md` va duoc mien tru hanh chinh cho qua — mot lo CAP QUYEN. Audit doc lap
+   (Codex, vong 2) bac dung: ghi chu ra thi khong co nghia la duoc phep mo rong no. */
+{
+  const f = appendOnlyAtEof;
+  const cu = "a\nb\nc\n";                              // 3 dong
+
+  assert.equal(f("", cu), true, "file khong doi thi mien");
+  assert.equal(f(null, cu), true, "khong co diff cung vay");
+
+  // THEM THUAN O CUOI: mot hunk, khong cham dong cu, bat dau ngay sau dong 3.
+  assert.equal(f("@@ -3,0 +4,2 @@\n+moi 1\n+moi 2\n", cu), true, "them 2 dong o cuoi -> MIEN");
+  assert.equal(f("@@ -3,0 +4 @@\n+mot dong\n", cu), true, "them dung 1 dong o cuoi -> MIEN");
+
+  // CHEN GIUA: dung 1 hunk, 0 dong xoa — `appendOnlyFromNumstat` se MIEN oan, ham nay thi khong.
+  assert.equal(f("@@ -1,0 +2,1 @@\n+dong bia\n", cu), false,
+    "DAY LA LO: chen giua file, 0 dong xoa, numstat mien oan -> ham nay PHAI tu choi");
+  assert.equal(appendOnlyFromNumstat("1\t0\tHANDOFF.md"), true,
+    "va day la bang chung ham cu THAT SU mien oan ca do — hai ham khong the thay nhau");
+
+  // CHAM DONG CU: sua hoac xoa thi khong bao gio mien.
+  assert.equal(f("@@ -3,1 +3,2 @@\n-c\n+c\n+moi\n", cu), false, "cham dong cu -> KHONG mien");
+  assert.equal(f("@@ -2,1 +1,0 @@\n-b\n", cu), false, "xoa dong -> KHONG mien");
+
+  // FAIL CLOSED.
+  assert.equal(f("@@ -1,0 +2 @@\n+x\n@@ -3,0 +5 @@\n+y\n", cu), false,
+    "hai hunk = chen nhieu cho, KHONG mien du ca hai deu khong xoa gi");
+  assert.equal(f("rac khong phai diff\n", cu), false, "khong doc ra hunk thi KHONG mien");
+  assert.equal(f("@@ -x,0 +4 @@\n+y\n", cu), false, "moc hunk khong phai so thi KHONG mien");
+
+  // File MOI toanh: khong ton tai o ban cu = 0 dong, ca file la them o cuoi.
+  assert.equal(f("@@ -0,0 +1,2 @@\n+a\n+b\n", ""), true, "file moi thi toan bo la them o cuoi");
+  // Nhung dung so dong SAI thi lech: hunk noi "sau dong 5" ma ban cu chi 3 dong.
+  assert.equal(f("@@ -5,0 +6 @@\n+x\n", cu), false, "moc khong khop so dong ban cu -> KHONG mien");
+
+  // Dem dong: chuoi git tra ve ket thuc bang "\n", khong duoc dem thanh mot dong rong.
+  assert.equal(lineCountOf(""), 0);
+  assert.equal(lineCountOf("a\n"), 1);
+  assert.equal(lineCountOf("a\nb\n"), 2);
+  assert.equal(lineCountOf("a\nb"), 2, "khong co newline cuoi thi dong cuoi van tinh");
+  ok("K2-2b · appendOnlyAtEof: chen giua file KHONG duoc mien; nhieu hunk / moc la deu FAIL CLOSED");
 }
 
 

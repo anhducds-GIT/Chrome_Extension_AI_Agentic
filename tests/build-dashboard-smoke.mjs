@@ -673,7 +673,10 @@ function antiDrift(text, measurements = {}) {
     encoding: "utf8"
   });
   const assertGateGreen = (run, label) => {
-    assert.match(run.stdout, /\[XANH\] Sự thật máy sinh còn tươi/, `${label}: Gate 7 phải XANH`);
+    // In cả stdout/stderr vào thông báo: một phép kiểm đỏ mà không nói vì sao thì lần sau ai
+    // cũng phải đi dựng lại fixture bằng tay để xem. Đã mất thời gian đúng vì chuyện đó.
+    const why = `\n--- stdout ---\n${run.stdout}\n--- stderr ---\n${run.stderr}`;
+    assert.match(run.stdout, /\[XANH\] Sự thật máy sinh còn tươi/, `${label}: Gate 7 phải XANH${why}`);
     assert.doesNotMatch(run.stdout, /\[BỎ  \] Sự thật máy sinh còn tươi/, `${label}: --quick không được bỏ Gate 7`);
     assert.doesNotMatch(run.stderr, /CỔNG BỊ SỬA/, `${label}: số phép kiểm phải khớp EXPECTED_CHECKS`);
   };
@@ -752,6 +755,94 @@ function antiDrift(text, measurements = {}) {
     ok("Gate 7 dùng HEAD, chỉ đọc, không bị --quick bỏ, và bắt artifact stale");
   } finally {
     assert.ok(tempRoot.startsWith(join(tmpdir(), "gate7-committed-truth-")), "chỉ dọn đúng temp fixture Gate 7");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+/* 23b. K2-2b · safe-push và cổng đóng phiên PHẢI quy cùng một file về CÙNG MỘT VÙNG.
+   Ghim ở tầng HÀNH VI, chạy cả hai tiến trình thật. Vì sao không ghim bằng cách dò chuỗi nguồn:
+   audit độc lập (Codex) chỉ ra đúng một đột biến thoát được phép dò — `import { areaOf as x }`
+   rồi gọi `x()`; file không còn chuỗi `areaOf(` nên phép dò xanh trong khi lệch đã trở lại.
+   Ca này là ca ĐÃ HỎNG THẬT ngày 02/09: A2 nối `stewardOf` cho cổng mà không nối cho safe-push,
+   nên `docs/…` ra `_docs` ở cổng và `_root` ở safe-push — một phiên giữ `_docs` làm xong, cổng
+   XANH, rồi bị chính safe-push từ chối đẩy việc của mình. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-2b-one-door-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2 One Door");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "safe-push.mjs", "session-check.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    // `docs/` có steward RIÊNG. Đây là điều kiện của cả phép kiểm: nếu `docs/` vẫn về `_root`
+    // thì không phân biệt được "quy đúng" với "quy về mặc định".
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1,
+      areas: {
+        "docs/": { steward: "_docs", mutability: "rw", ownership_mode: "root" },
+        "scripts/": { steward: "_root", mutability: "rw", ownership_mode: "root" },
+        "workers/": { steward: null, mutability: "rw", ownership_mode: "per-package", claim_prefix: "workers/" }
+      }
+    }, null, 2));
+    put(".agents/claims.json", JSON.stringify({ claims: {
+      _root: { owner: "nguoi-khac" },
+      _docs: { owner: "toi" }
+    } }, null, 2));
+    put("docs/mot-ghi-chu.md", "seed\n");
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed");
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+
+    // Một commit CHỈ chạm `docs/` — vùng mà "toi" đang giữ đúng luật.
+    put("docs/mot-ghi-chu.md", "seed\nthem mot dong\n");
+    gitAt("add", "docs/mot-ghi-chu.md");
+    gitAt("commit", "-m", "docs: viec cua toi");
+
+    const push = spawnSync(process.execPath, [join(tempRoot, "scripts", "safe-push.mjs"), "--as", "toi", "--dry-run"], {
+      cwd: tempRoot, encoding: "utf8"
+    });
+    // ĐÂY là vế quan trọng: quy về `_docs`, KHÔNG phải `_root`.
+    assert.match(push.stdout, /_docs \[toi\]/, "safe-push phải quy docs/ về _docs của chính tôi");
+    assert.doesNotMatch(push.stdout, /_root/, "REGRESSION 02/09: docs/ KHÔNG được quy về _root");
+    // Và vì nó là của tôi, safe-push KHÔNG được từ chối.
+    assert.doesNotMatch(push.stdout + push.stderr, /TỪ CHỐI PUSH/, "việc của chính mình thì không được bị từ chối");
+    assert.equal(push.status, 0, "--dry-run với commit của chính mình phải thoát 0");
+
+    // CỔNG ĐÓNG PHIÊN PHẢI TRẢ LỜI Y HỆT — audit độc lập (Codex, vòng 2) chỉ ra rằng ghim hành
+    // vi cho một mình safe-push là để cổng lại chỉ được canh bằng phép dò chuỗi nguồn, thứ đã
+    // có đột biến thoát được. Hai tiến trình thật, cùng một repo, cùng một file → cùng một vùng.
+    const gate = spawnSync(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "toi", "--quick"], {
+      cwd: tempRoot, encoding: "utf8"
+    });
+    assert.match(gate.stdout, /Bạn chịu trách nhiệm: [^\n]*_docs/,
+      "cổng phải quy docs/ cho _docs của tôi — cùng đáp án với safe-push ở trên");
+    assert.doesNotMatch(gate.stdout, /Bạn chịu trách nhiệm: [^\n]*_root/,
+      "REGRESSION 02/09: cổng KHÔNG được quy docs/ về _root");
+    assert.doesNotMatch(gate.stderr, /CỔNG BỊ SỬA/, "số phép kiểm phải khớp EXPECTED_CHECKS");
+
+    // Vế NGƯỢC, để phép kiểm phân biệt được hai nhánh: chạm `scripts/` (steward `_root`, của
+    // "nguoi-khac") thì PHẢI bị từ chối. Chỉ khẳng định vế trên thì một đột biến "không bao giờ
+    // từ chối" sẽ thoát sạch.
+    put("scripts/them.mjs", "export const x = 1;\n");
+    gitAt("add", "scripts/them.mjs");
+    gitAt("commit", "-m", "scripts: viec cua nguoi khac");
+    const push2 = spawnSync(process.execPath, [join(tempRoot, "scripts", "safe-push.mjs"), "--as", "toi", "--dry-run"], {
+      cwd: tempRoot, encoding: "utf8"
+    });
+    assert.match(push2.stdout + push2.stderr, /TỪ CHỐI PUSH/, "cuốn theo vùng của phiên khác thì phải từ chối");
+    assert.match(push2.stdout + push2.stderr, /_root \(của "nguoi-khac"\)/, "và phải nói rõ vùng nào, của ai");
+    assert.notEqual(push2.status, 0, "từ chối thì không được thoát 0");
+    ok("K2-2b · HÀNH VI: safe-push quy docs/ về _docs (không phải _root), và vẫn từ chối vùng người khác");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-2b-one-door-")), "chỉ dọn đúng temp fixture K2-2b");
     rmSync(tempRoot, { recursive: true, force: true });
   }
 }

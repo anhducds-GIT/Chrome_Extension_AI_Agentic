@@ -169,6 +169,130 @@ export function appendOnlyFromNumstat(stat) {
   return Number.isFinite(deleted) && deleted === 0;
 }
 
+/* "CHỈ THÊM VÀO CUỐI FILE?" — chặt hơn `appendOnlyFromNumstat`, và đây là lý do phải chặt hơn.
+
+   `appendOnlyFromNumstat` chỉ chứng minh **0 dòng bị xoá**. Nó KHÔNG chứng minh dòng mới nằm ở
+   CUỐI. Nên một phiên không giữ khoá gốc vẫn chèn được một dòng bịa vào GIỮA `HANDOFF.md` — git
+   báo "thêm N, xoá 0" và miễn trừ hành chính cho qua. Đó là một lỗ CẤP QUYỀN: ghi vào file luật
+   ở gốc repo mà không cần nhận khoá gốc. Lỗ có từ A2 (02/09) ở cổng đóng phiên; audit độc lập
+   (Codex, vòng 2) bác đúng chuyện "ghi chú ra thì không có nghĩa là được phép mở rộng nó".
+
+   Đầu vào là diff `-U0` của MỘT file, cộng NỘI DUNG bản cũ. Nhận nội dung chứ không nhận số
+   dòng là có chủ ý: đếm dòng ở mỗi bên gọi là sinh ra bản đếm thứ hai, thứ ba — đúng cái bệnh
+   "hai bản lệch nhau" mà cả bản vá K2-2b này sinh ra để chữa.
+
+   Với `-U0`, một cú thêm thuần ở cuối cho ĐÚNG MỘT hunk dạng `@@ -<N>,0 +<N+1>,K @@` với N =
+   số dòng bản cũ. Ba điều kiện, thiếu một là không miễn: một hunk · hunk không chạm dòng cũ
+   (`oldLen === 0`) · hunk bắt đầu ngay sau dòng cuối bản cũ.
+
+   FAIL CLOSED ở mọi chỗ mờ: nhiều hunk, hay đọc không ra số, thì KHÔNG miễn. */
+export function appendOnlyAtEof(diffU0, oldText) {
+  const text = String(diffU0 ?? "");
+  if (text.trim() === "") return true;                 // file không đổi
+  const hunks = [...text.matchAll(/^@@ -(\d+)(?:,(\d+))? \+\d+(?:,\d+)? @@/gm)];
+  if (hunks.length !== 1) return false;                // chèn nhiều chỗ = không phải thêm ở cuối
+  const oldStart = Number(hunks[0][1]);
+  const oldLen = hunks[0][2] === undefined ? 1 : Number(hunks[0][2]);
+  if (!Number.isFinite(oldStart) || !Number.isFinite(oldLen)) return false;
+  if (oldLen !== 0) return false;                      // chạm dòng cũ = sửa/xoá, không được miễn
+  return oldStart === lineCountOf(oldText);
+}
+
+/* Đếm dòng của một chuỗi git trả về. Chuỗi đó kết thúc bằng "\n", nên `split` sinh một phần tử
+   rỗng ở cuối — trừ nó ra. Chuỗi rỗng = file chưa tồn tại = 0 dòng, và khi đó cả file là mới,
+   tức toàn bộ đúng là "thêm ở cuối". */
+export function lineCountOf(text) {
+  const value = String(text ?? "");
+  if (value === "") return 0;
+  const parts = value.split("\n");
+  return parts[parts.length - 1] === "" ? parts.length - 1 : parts.length;
+}
+
+/* MỘT BỘ PHÂN GIẢI, MỌI CÔNG CỤ ĐI QUA NÓ — thêm K2-2b, 2026-09-02.
+
+   Vì sao có hàm này, và nó là LẦN LỆCH THỨ HAI ở đúng hai file của lần thứ nhất:
+   26/08 `session-check.mjs` và `safe-push.mjs` mỗi bên giữ một bản regex `^workers/`, hai bản
+   lệch nhau, và một đường dẫn tiếng Việt bị quy sai chủ. Chữa bằng cách tách ra `areaOf` dùng
+   chung. Rồi 02/09 A2 tách gốc repo thành `_root` · `_docs` · `_code` · `_template` bằng hàm
+   MỚI `stewardOf`, nối dây cho cổng đóng phiên mà không nối cho `safe-push`. Lệch lại — lần này
+   không phải vì chép hai bản, mà vì **thêm một hàm thứ hai rồi chỉ nối một bên**.
+
+   Hậu quả ĐO ĐƯỢC ngày 02/09: `docs/studies/X.md` thì cổng quy `_docs`, `safe-push` quy `_root`.
+   Một phiên giữ `_docs` đúng luật, làm xong, cổng XANH, rồi bị chính `safe-push` từ chối đẩy
+   việc của mình — và đường thoát duy nhất là `--carry`, thứ phải hỏi Đức. Tức hai công cụ trả
+   hai câu khác nhau cho cùng một câu hỏi "file này thuộc ai".
+
+   Nên câu trả lời đó nay chỉ có MỘT chỗ. Bài học đắt hơn bản vá: tách hàm dùng chung không
+   chặn được lệch, vì người sau vẫn thêm được hàm thứ hai. Thứ chặn được là **một cửa duy nhất**,
+   cộng một phép kiểm ghim rằng không công cụ nào còn đường quy vùng riêng.
+
+   `isAdmin` là của BÊN GỌI, có chủ ý: cả hai bên miễn trừ cùng một tập file, nhưng hỏi git theo
+   hai cách khác nhau (cổng so `origin/main` → cây làm việc; `safe-push` so từng commit). Đúng
+   cách chia đã khai ở đầu file: hàm SUY RA thì thuần và dùng chung, việc ĐỌC thì mỗi bên tự làm.
+   Mặc định `() => false` = không miễn gì: quên truyền thì miễn trừ BIẾN MẤT, không phải nới ra. */
+export function ownershipKeys(files, parsed, prefixes = DEFAULT_CLAIM_PREFIXES, isAdmin = () => false) {
+  if (!Array.isArray(files)) {
+    throw new TypeError("OWNERSHIP_HONG: `files` phải là mảng đường dẫn tương đối.");
+  }
+  const keys = new Set();
+  for (const file of files) {
+    if (isAdmin(file)) continue;
+    keys.add(stewardOf(file, parsed, prefixes));
+  }
+  return [...keys].sort();
+}
+
+/* BẤT BIẾN BA TẦNG — LAW `steward` ↔ STATE khoá quyền ↔ MÁY một hàm duy nhất.
+
+   Yêu cầu bởi audit GPT 02/09, và nó không phải luật di-trú mà là bất biến: A2 đổi tầng LAW
+   (`steward` trong `.repo-structure.json`) và tầng STATE (khoá trong `.agents/claims.json`) và
+   tầng MÁY, nhưng nếu ba tầng lệch nhau thì bảng nói một đằng máy nói một nẻo — và cổng lặng lẽ
+   quy việc cho sai người, vẫn xanh. Thiếu một trong ba thì FAIL CLOSED.
+
+   Trả về danh sách lỗi (rỗng = đạt) thay vì ném, để bên gọi in được cả các lỗi cùng lúc. */
+export function ownershipInvariant(parsed, claims) {
+  const problems = [];
+  const areas = parsed?.areas;
+  if (!areas || typeof areas !== "object" || Array.isArray(areas)) {
+    return ["BAT_BIEN_HONG: thiếu khối `areas` trong .repo-structure.json — không kiểm được bất biến."];
+  }
+  if (!claims || typeof claims !== "object" || Array.isArray(claims)) {
+    return ["BAT_BIEN_HONG: thiếu khối `claims` trong .agents/claims.json — không kiểm được bất biến."];
+  }
+  const stewards = new Map();                        // khoá quyền → thư mục đã khai nó
+  for (const [key, value] of Object.entries(areas)) {
+    if (key.startsWith("_")) continue;
+    const steward = value?.steward;
+    if (typeof steward !== "string") continue;       // null / không khai = về `_root`, hợp lệ
+    if (!stewards.has(steward)) stewards.set(steward, []);
+    stewards.get(steward).push(key);
+  }
+  const claimKeys = new Set(Object.keys(claims).filter((k) => k.startsWith("_")));
+  // `_root` PHẢI TỒN TẠI. Nó là khoá mà `stewardOf` trả về cho mọi file ở tầng ngoài cùng
+  // (`AGENTS.md`, `package.json`…), nên thiếu nó thì những file đó không ai nhận được — việc mồ
+  // côi vĩnh viễn, và cổng sẽ chặn mọi phiên chạm chúng. Audit độc lập (Codex, vòng 2) bắt đúng
+  // chỗ này: bản trước của tôi MIỄN `_root` khỏi phép kiểm khoá-chết rồi quên đòi nó có mặt.
+  if (!claimKeys.has("_root")) {
+    problems.push(`THIEU_KHOA_ROOT: .agents/claims.json không có khoá "_root". Đó là khoá cho mọi file ở tầng ngoài cùng repo, nên thiếu nó là không ai nhận được chúng. Thêm "_root": { "owner": null, "ai": null, "claimed_at": null, "task": null, "released_at": null }.`);
+  }
+  for (const [steward, dirs] of stewards) {
+    if (!claimKeys.has(steward)) {
+      problems.push(`STEWARD_THIEU_KHOA: areas ${dirs.join(", ")} khai steward "${steward}" nhưng .agents/claims.json không có khoá đó. Không ai nhận được vùng đó — thêm "${steward}": { "owner": null, … } vào bảng quyền.`);
+    }
+  }
+  for (const key of claimKeys) {
+    // `_root` LUÔN sống, kể cả khi không thư mục nào khai nó: đó là khoá DỰ PHÒNG mà `stewardOf`
+    // trả về cho mọi đường dẫn ở tầng ngoài cùng (`AGENTS.md`, `package.json`, `.gitignore`…).
+    // Phép kiểm ghim bắt được đúng chỗ này: bản đầu của tôi báo `_root` là "khoá chết" trong một
+    // repo chỉ khai `workers/`, tức sẽ đỏ oan mọi repo dựng từ bộ khung.
+    if (key === "_root") continue;
+    if (!stewards.has(key)) {
+      problems.push(`KHOA_KHONG_VUNG: .agents/claims.json có khoá "${key}" mà không thư mục nào khai steward đó. Khoá chết — hoặc khai steward cho một thư mục, hoặc bỏ khoá đi.`);
+    }
+  }
+  return problems;
+}
+
 /* Danh tính repo dùng cho trang cổng vào máy đọc. THÊM 2026-09-02 sau khi audit độc lập chỉ ra
    bộ sinh đóng cứng chuỗi tên repo gốc: mọi repo lấy bộ khung về sẽ sinh ra một trang **tự nhận
    là repo Chrome**. Đúng cái bệnh "mọi repo cùng nói dối" mà luật cấm chép tầng GENERATED sinh

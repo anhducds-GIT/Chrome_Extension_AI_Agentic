@@ -18,7 +18,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { areaOf, claimPrefixesFrom, readStructureFromDisk } from "./repo-structure.mjs";
+import { appendOnlyAtEof, claimPrefixesFrom, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -39,7 +39,41 @@ const unquote = (line) => line.replace(/^"|"$/g, "");
 const gitQuiet = (...a) => { try { return git(...a); } catch { return ""; } };
 
 // Đối chiếu với remote thật, không tin con trỏ cũ trên máy.
-gitQuiet("fetch", "origin", "main", "--quiet");
+//
+// FAIL CLOSED, và đây là một FAIL-OPEN THẬT vừa được vá (phát hiện bởi phiên K1 qua audit
+// Codex, 02/09). Bản cũ gọi `gitQuiet("fetch", …)` — hàm nuốt mọi lỗi. Nếu `fetch` hỏng (mạng,
+// xác thực) hoặc `origin/main` không phân giải được, thì `origin/main..HEAD` trả RỖNG, công cụ
+// in "Không có gì để push — máy đang bằng với remote" rồi thoát 0. Tức người đóng phiên tin là
+// đã đẩy, trong khi remote chưa có gì. Fail-open trên đúng công cụ mà cả repo dùng để đẩy, và
+// nó im lặng — không thể tệ hơn về mặt hình dạng lỗi.
+// Tự kiểm nhanh sau mỗi lần đẩy: `git status -sb`, còn `ahead N` là chưa đẩy thật.
+// HAI CA, HAI CÁCH XỬ KHÁC NHAU — và sự khác nhau đó là kết quả ĐO, không phải suy luận.
+// Phiên K1 nêu lỗi này rồi tự đính chính sau khi chạy thử, và bản vá đi theo số đo của họ:
+//
+//   · `fetch` HỎNG (mạng, xác thực) → KHÔNG nổ. Ref `origin/main` cũ vẫn còn trên máy nên
+//     `origin/main..HEAD` vẫn liệt kê đúng commit đang chờ; cùng lắm là so với một mốc cũ.
+//     Chặn ở đây là chặn oan một phiên chỉ vì mạng chớp. Nên: NÓI TO, rồi đi tiếp.
+//   · Ref `origin/main` KHÔNG TỒN TẠI (clone mới chưa fetch, nhánh mặc định tên khác, remote
+//     đổi tên) → NỔ THẬT. `git log origin/main..HEAD` báo `fatal: ambiguous argument`,
+//     `gitQuiet` nuốt, trả rỗng, và bản cũ in "Không có gì để push — máy đang bằng với remote"
+//     rồi thoát 0. Người đóng phiên tin là đã đẩy trong khi remote chưa có gì. Nên: CHẶN.
+//
+// Ca thứ hai gần như không xảy ra với repo này, nhưng nó là bẫy cho repo MỚI dựng từ bộ khung —
+// tức đúng đối tượng mà bộ khung nhắm tới. Tự kiểm sau mỗi lần đẩy: `git status -sb`, còn
+// `ahead N` là chưa đẩy thật.
+try {
+  git("fetch", "origin", "main", "--quiet");
+} catch (error) {
+  const detail = String(error.stderr || error.stdout || error.message).trim().split("\n").slice(-2).join(" | ");
+  console.error(`\n⚠ KHONG_FETCH_DUOC: \`git fetch origin main\` thất bại → ${detail}`);
+  console.error(`  Vẫn đi tiếp, nhưng mốc so sánh là bản origin/main CŨ trên máy. Nếu push bị từ chối vì không tiến thẳng thì đó là lý do.\n`);
+}
+if (!gitQuiet("rev-parse", "--verify", "origin/main").trim()) {
+  console.error(`\nKHONG_CO_ORIGIN_MAIN: không phân giải được \`origin/main\`.`);
+  console.error(`Không có mốc để so thì không đếm được commit nào chưa đẩy — và im lặng ở đây là báo "xong" cho một cú đẩy CHƯA HỀ XẢY RA.`);
+  console.error(`Kiểm: \`git remote -v\` và \`git branch -r\`. Repo mới thì chạy \`git fetch origin\` một lần.\n`);
+  process.exit(1);
+}
 
 const pending = gitQuiet("log", "--format=%H%x1f%s%x1f%an", "origin/main..HEAD").split("\n").filter(Boolean)
   .map((line) => { const [sha, subject, author] = line.split("\x1f"); return { sha, subject, author }; });
@@ -51,21 +85,49 @@ if (!pending.length) {
 
 const claims = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.json"), "utf8")).claims || {};
 
-// Một commit thuộc về ai? Xét theo package mà nó đụng.
-// .agents/claims.json là thao tác hành chính (nhận/trả quyền) — ai cũng được
-// đẩy kèm, nếu không thì một phiên trả quyền xong sẽ chặn mọi phiên khác.
-// Tiền tố quyền đọc từ `.repo-structure.json`, dùng CHUNG hàm với cổng đóng phiên — xem
-// ghi chú trong session-check.mjs về lần hai bản regex lệch nhau.
-const claimPrefixes = claimPrefixesFrom(readStructureFromDisk(ROOT));
+// Một commit thuộc về ai? Xét theo VÙNG QUYỀN mà nó đụng.
+//
+// K2-2b, 02/09: chú thích cũ ở đây khẳng định nó "dùng CHUNG hàm với cổng đóng phiên" — và câu
+// đó ĐÃ THÀNH SAI. A2 tách gốc repo thành `_root` · `_docs` · `_code` · `_template` bằng hàm mới
+// `stewardOf`, nối dây cho `session-check.mjs` mà không nối cho file này. Đo được: `docs/…` thì
+// cổng quy `_docs`, chỗ này quy `_root` → phiên giữ `_docs` làm xong, cổng XANH, rồi bị chính
+// safe-push từ chối đẩy việc của mình. Nay cả hai đi qua `ownershipKeys` — xem ghi chú dài trong
+// repo-structure.mjs về vì sao "tách hàm dùng chung" không đủ và phải là MỘT CỬA duy nhất.
+const structure = readStructureFromDisk(ROOT);
+const claimPrefixes = claimPrefixesFrom(structure);
+
+const ROOT_HANDOFF = "HANDOFF.md";
+
+// MIỄN TRỪ CŨNG PHẢI GIỐNG CỔNG — đây là lệch thứ hai trong cùng bản vá, và nó nặng hơn.
+// `.agents/claims.json`: nhận/trả quyền là thao tác hành chính, ai cũng được đẩy kèm; không miễn
+// thì một phiên vừa trả quyền sẽ chặn mọi phiên khác.
+// `HANDOFF.md` gốc: luật mục 7 BẮT mọi phiên ghi Log vào đó, và cổng đã miễn từ A2. Chỗ này thì
+// chưa — nên tuân luật mục 7 là tự quy commit của mình về `_root` rồi bị mục 1 từ chối. Hai luật
+// của repo đá nhau, và không ai thấy vì nó chỉ hiện ra lúc push.
+// Miễn CHỈ khi chỉ-thêm-dòng: sửa hay xoá dòng cũ là viết lại Log của phiên khác, không được miễn.
+//
+// ĐO THEO CẢ LOẠT, KHÔNG THEO TỪNG COMMIT. Bản đầu của tôi hỏi `git show --numstat` từng commit,
+// trong khi cổng hỏi cả loạt. Hai độ hạt = hai đáp án: một commit xoá một dòng cũ rồi commit sau
+// thêm lại, thì cả loạt có 0 dòng xoá (cổng MIỄN) nhưng commit đầu có xoá (safe-push KHÔNG miễn)
+// → lại từ chối một cú push mà cổng đã cho xanh. Audit độc lập (Codex, vòng 1) bắt chỗ này.
+//
+// NHƯNG PHẠM VI HAI BÊN CỐ Ý KHÁC NHAU, và đó không phải lệch:
+//   · cổng đóng phiên phán "việc của phiên này"  → `origin/main` … CÂY LÀM VIỆC
+//   · safe-push phán "thứ tôi sắp công bố"        → `origin/main` … `HEAD`
+// Bản vòng 2 của tôi dùng phạm vi của cổng cho cả hai, và audit (Codex, vòng 2) bác đúng: một
+// bản sửa dở CHƯA COMMIT có thể che một commit phá hoại ĐÃ nằm trong HEAD — safe-push sẽ đẩy nó
+// đi. Cái phải dùng chung là HÀM QUYẾT ĐỊNH, không phải phạm vi. Đúng đúng cách chia đã khai ở
+// đầu `repo-structure.mjs`: hàm suy ra thì thuần và dùng chung, việc đọc thì mỗi bên tự làm.
+const handoffAppendOnly = appendOnlyAtEof(
+  gitQuiet("diff", "-U0", "origin/main", "HEAD", "--", ROOT_HANDOFF),
+  gitQuiet("show", `origin/main:${ROOT_HANDOFF}`)
+);
+const adminFile = (file) => file === ".agents/claims.json" || (file === ROOT_HANDOFF && handoffAppendOnly);
 
 function ownersOf(sha) {
   const files = gitQuiet("show", "--name-only", "--format=", sha).split("\n").filter(Boolean).map(unquote);
-  const areas = new Set();
-  for (const file of files) {
-    if (file === ".agents/claims.json") continue;
-    areas.add(areaOf(file, claimPrefixes));
-  }
-  return [...areas].map((area) => ({ area, owner: claims[area]?.owner ?? null }));
+  const areas = ownershipKeys(files, structure, claimPrefixes, adminFile);
+  return areas.map((area) => ({ area, owner: claims[area]?.owner ?? null }));
 }
 
 const rows = pending.map((commit) => {
@@ -102,4 +164,9 @@ if (dryRun) { console.log("\n--dry-run: dừng ở đây, chưa đẩy gì.\n");
 console.log("\nĐang đẩy...");
 try { console.log(git("push", "origin", "main").trim() || "Xong."); }
 catch (error) { console.error(`Push thất bại: ${String(error.stdout || error.stderr || error.message).trim()}`); process.exit(1); }
-console.log(`\nĐÃ PUSH ${rows.length} commit. Nhớ trả quyền _root về null trong .agents/claims.json nếu đã xong việc ở gốc repo.\n`);
+// Đừng đóng cứng `_root`: sau A2 gốc repo có BỐN khoá, nên câu cũ dặn sai tên vùng — và đây là
+// chữ operator, tức luật vàng 5. Kể đúng vùng vừa đẩy, và nêu luôn lệnh trả quyền (đừng dặn sửa
+// tay `claims.json`: A1 sinh ra `claim.mjs` chính vì sửa tay là chỗ quyền bị ghi đè).
+const pushedAreas = [...new Set(rows.flatMap((row) => row.areas.map((a) => a.area)))].sort();
+console.log(`\nĐÃ PUSH ${rows.length} commit, chạm vùng: ${pushedAreas.join(", ") || "(chỉ thao tác hành chính)"}.`);
+console.log(`Xong việc ở vùng nào thì trả quyền vùng đó: node scripts/claim.mjs --release <khoá> --as ${asLabel}\n`);
