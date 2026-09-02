@@ -13,22 +13,22 @@
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02. S3 da THEM STATUS.md cho v0.1.0 khai superseded -> v0.2.0. Khong dung Pilot-01 hay evidence. Viec cua v0.2.0 khong doi: con no do live nhanh tat host qua 2 phut.",
+      "task": "XONG 2026-09-02 (S5): 67 quyet dinh -> docs/adr/, decisions.md thanh muc luc. 227/227 o doi chieu nguyen van. No cu khong doi: v0.2.0 con do live nhanh tat host qua 2 phut.",
       "released_at": "2026-09-02"
     },
     "workers/duc-auto-chatgpt": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-08-28",
-      "task": "TRA QUYEN 2026-09-02 (Duc chot: phien claude-chatgpt-interjob-delay bo do tu 28/08, don claim mo coi). DA XONG va da len GitHub: khoang nghi giua job chuyen sang chrome.alarms — do live 12,0 giay (truoc va 288 giay), trial 2/2 SUCCESS, panel bi che suot run. B-29 dong khong can va, co so do. Suite 95/95, mutation 5/5 bat duoc. CON NO DUY NHAT: AUDIT DOC LAP chua chay duoc — da thu 7 lan, Codex ra mot dong roi im, agy ra 0 byte. Dung leo lai tu day: bat dau thang bang codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check -C <thu-muc-toi-gian> \"<prompt>\" < /dev/null; van im thi ket luan kenh audit chet va bao Duc. Brief dung san o scratchpad/auditmin/BRIEF.md (5KB). Backlog mo: B-28 (nut Tiep tuc + cooldown thu lai cung dong ho bi bop, DA DOC code), B-31 (harness chatgpt.com gia lap, dung duoc nua).",
+      "claimed_at": "2026-09-02",
+      "task": "XONG 2026-09-02 (S5): 45 quyet dinh -> docs/adr/, decisions.md thanh muc luc. 180/180 o doi chieu nguyen van. Cac no cu khong doi: AUDIT DOC LAP chua chay duoc; B-28, B-31 mo.",
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "claude-bridge-multiprofile",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "DANG GIU DEN KHI PUSH XONG (tra bang commit rieng ngay sau push). sinh lai DASHBOARD sau khi STATUS gg-flow-video doi current_focus/next_step (kiem live multi-profile dat phan may).",
-      "released_at": null
+      "task": "XONG 2026-09-02 (S5). Tach 112 quyet dinh thanh ADR bat bien (chatgpt 45, gemini 67), docs/adr/0000 = luat ADR, docs/_TEMPLATE-adr.md = ban mau. B12 nay quet CA HAI tang va da BAT: soi 113 ADR, XANH. So trong BRIEF-S5 sai hon 3 lan (ghi 30, thuc te 120) — no dem tieu de ## chu khong dem dong bang. VIEC KE TIEP: phien S6 — don drafts/ (25 trong 49 no B6 nam o do). Chi tiet o cuoi HANDOFF.md.",
+      "released_at": "2026-09-02"
     }
   }
 }
