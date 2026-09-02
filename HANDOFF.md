@@ -1165,3 +1165,20 @@ repo này vi phạm thì bộ trích đỏ trước khi nó kịp sinh ra bản 
 **Đã trả `_template`.** Việc còn lại của bộ khung — mang theo một `tests/` tối thiểu và khai
 `scripts.test` — là quyết định về **nội dung** bộ khung, thuộc chương trình bộ trích của K1,
 không phải của tôi. Fail-loud đã gỡ phần *im lặng* của lỗ đó; phần *có răng* thì K1 chốt.
+
+## 2026-09-02 — `claude-k2-design`: cổng thôi im lặng khi không so được với `origin/main`
+
+Lỗ cùng họ với fail-open vừa vá ở `safe-push`, khác chỗ: `git()` nuốt lỗi, nên khi `origin/main`
+không phân giải được thì `unpushed` **rỗng**, và cổng lặng lẽ **bỏ qua mọi commit chưa push** —
+không đòi Log HANDOFF cho chúng, không quy chủ cho file trong chúng, không kích hoạt suite vì
+chúng. Đo được ngay trong fixture repo rỗng: `fatal: bad revision 'origin/main'` in ra stderr rồi
+mọi thứ vẫn xanh, và **không một dòng nào trên màn hình nói cho người đọc biết**.
+
+→ Cổng nay in một khối cảnh báo ở đầu báo cáo, kèm lệnh tự kiểm. Đã ghim trong phép thử repo rỗng.
+
+**CỐ Ý CHƯA CÓ TEETH, và nói thẳng vì sao:** chọn mốc so thay thế là một quyết định thật (gốc
+lịch sử? commit đầu? bắt buộc phải có remote?). Đoán bừa một mốc thì sinh ra một cổng nói về một
+phạm vi khác cái nó tưởng — tệ hơn im lặng. Việc kế cho ai làm tiếp: **chốt mốc so khi không có
+`origin/main`**, rồi mới cho nó chặn.
+
+**Số:** suite giữ **259** (phép ghim thêm vào một khối đã có).

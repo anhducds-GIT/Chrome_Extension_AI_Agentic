@@ -210,6 +210,15 @@ const files = buildTemplateFiles();
     assert.match(gateOwned, /\[BỎ  \] Test xanh/,
       "chua kiem duoc gi thi phai hien la BO QUA, khong duoc doi lot XANH");
 
+    // CÙNG HỌ VỚI FAIL-OPEN CỦA `safe-push`, khác chỗ: repo tam nay KHONG co remote, nen
+    // `git diff origin/main...HEAD` fail va `unpushed` RONG — cong lang le bo qua moi commit
+    // chua push. Chua co teeth (chon moc so thay the la mot quyet dinh that), nhung PHAI thoi
+    // im lang. Do duoc: truoc ban va, stderr in `fatal: bad revision 'origin/main'` roi moi
+    // thu van xanh, va khong mot dong nao tren man hinh noi cho nguoi doc biet.
+    assert.match(gateOwned, /KHÔNG SO ĐƯỢC VỚI origin\/main/,
+      "khong phan giai duoc origin/main thi cong phai NOI RA, khong duoc im: " + gateOwned.slice(0, 600));
+    assert.match(gateOwned, /git remote -v/, "va phai chi luon lenh de tu kiem");
+
     // NỘI DUNG trang sinh ra không được mang danh tính repo gốc. Kiểm DANH SÁCH file mang theo
     // là chưa đủ: bộ sinh từng đóng cứng tên repo gốc ngay trong trang cổng vào, nên mọi repo
     // dùng bộ khung đều sinh ra một trang TỰ NHẬN LÀ repo gốc, và mọi phép kiểm cũ đều xanh.
