@@ -607,3 +607,16 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
     phía tiết kiệm pin. Auditor nêu, tôi chấp nhận có chủ đích.
   - Sửa **một dòng** ở nhánh này, giữ ba nhánh không lệch nhau. Phép ghim đặt ở `gg-flow-video`
     (nơi phát hiện ra). Suite nhánh này vẫn xanh toàn bộ.
+
+## 2026-09-02 — `claude-y03`: khai `human_action` (một dòng, không đụng code)
+
+Lược đồ trạng thái có trường mới `human_action` — **việc đang chờ tay Đức**, tách khỏi
+`next_step` (việc của phiên AI kế tiếp). Trước đó việc chờ Đức nằm lẫn trong câu mô tả nên
+bảng trạng thái phải đoán từ chữ, mà luật vàng 1 cấm đoán.
+
+Gói này đã khai: *"Mở từng hồ sơ Chrome đang dùng cho Gemini, nạp lại tiện ích, rồi điền tên
+hồ sơ vào ô trong bảng điều khiển."* — viết tiếng Việt có dấu, không thuật ngữ, vì Đức đọc câu
+này rồi đi làm luôn.
+
+**Không đụng một dòng code nào của gói.** Chi tiết trường: `STATUS.template.md` ở gốc repo.
+Giai đoạn 2 (chuyển thành bắt buộc) ghi ở Y-03 trong `IDEAS.md`.
