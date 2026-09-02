@@ -13,7 +13,7 @@
   const INSTANCE_STORAGE_KEY = "dac.bridge.instance.v1";
   const INSTANCE_LABEL_STORAGE_KEY = "dac.bridge.instance_label.v1";
   const INSTANCE_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
-  const INSTANCE_LABEL_STRIP = new RegExp("[\\u0000-\\u001f\\u007f]", "g");
+  const INSTANCE_LABEL_STRIP = new RegExp("[\\u0000-\\u001f\\u007f-\\u009f]", "g");
   const WORKER_ID = "duc-auto-gemini";
   const HANDSHAKE_TIMEOUT_MS = 10000;
   const RECONNECT_CEILING_MS = 5000;
@@ -319,7 +319,9 @@
     }
 
     function sanitizeInstanceLabel(value) {
-      return typeof value === "string" ? value.replace(INSTANCE_LABEL_STRIP, "").trim().slice(0, 64) : "";
+      // Bound BEFORE scanning: a hostile huge string must cost O(cap), not O(input).
+      const raw = typeof value === "string" ? value.slice(0, 256) : "";
+      return raw.replace(INSTANCE_LABEL_STRIP, "").trim().slice(0, 64);
     }
 
     async function loadInstance() {

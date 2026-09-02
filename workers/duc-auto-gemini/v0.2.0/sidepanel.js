@@ -414,10 +414,11 @@
   // Tên do Đức đặt, lưu chrome.storage.local (kho RIÊNG của từng profile);
   // transport đọc nó ở LẦN KẾT NỐI TIẾP THEO và báo danh với host.
   const BRIDGE_INSTANCE_LABEL_KEY = "dac.bridge.instance_label.v1";
-  const BRIDGE_LABEL_STRIP = new RegExp("[\\u0000-\\u001f\\u007f]", "g");
+  const BRIDGE_LABEL_STRIP = new RegExp("[\\u0000-\\u001f\\u007f-\\u009f]", "g");
 
   function sanitizeBridgeProfileLabel(value) {
-    return typeof value === "string" ? value.replace(BRIDGE_LABEL_STRIP, "").trim().slice(0, 64) : "";
+    const raw = typeof value === "string" ? value.slice(0, 256) : "";
+    return raw.replace(BRIDGE_LABEL_STRIP, "").trim().slice(0, 64);
   }
 
   function renderBridgeProfileLabelHint(label) {

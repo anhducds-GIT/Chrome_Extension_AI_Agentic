@@ -89,8 +89,9 @@ export function validatePairing(input) {
 const INSTANCE_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
 
 function sanitizeInstanceLabel(value) {
+  // Bound BEFORE scanning, and strip C1 controls too (audit 02/09).
   if (typeof value !== "string") return "";
-  return value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 64);
+  return value.slice(0, 256).replace(/[\u0000-\u001f\u007f-\u009f]/g, "").trim().slice(0, 64);
 }
 
 // The instance block is routing metadata only. It never participates in

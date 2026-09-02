@@ -84,6 +84,25 @@ const announced = second.sent.find((frame) => frame.type === "auth");
 assert.equal(announced.instance.label, "Máy A", "the fresh connect announces the NEW name immediately");
 assert.equal(announced.token, token, "authentication is untouched by the label flow");
 
+// Hostile inputs (audit 02/09): a huge label must be bounded BEFORE scanning,
+// C1 controls (U+0080-U+009F) must be stripped like C0, non-strings become "".
+const hostile = "Máy" + String.fromCharCode(0x9f) + " B" + "y".repeat(1000000);
+let hostileReply = null;
+runtimeMessage.emit({ type: "DAC_BRIDGE_LABEL_SET", label: hostile }, {}, (response) => { hostileReply = response; });
+await tick();
+await tick();
+assert.equal(hostileReply?.ok, true);
+assert.ok(hostileReply.label.length <= 64, "a million-char label is capped");
+const C1 = new RegExp("[\\u0080-\\u009f]");
+assert.equal(C1.test(hostileReply.label), false, "C1 controls are stripped too");
+assert.ok(hostileReply.label.startsWith("Máy B"), "the human part of the name survives");
+let numberReply = null;
+runtimeMessage.emit({ type: "DAC_BRIDGE_LABEL_SET", label: 12345 }, {}, (response) => { numberReply = response; });
+await tick();
+await tick();
+assert.equal(numberReply?.ok, true);
+assert.equal(numberReply.label, "", "a non-string label becomes empty, never garbage");
+
 // Wiring pins: the panel exposes the button and routes the save through the
 // SAME message the transport handles.
 import fs from "node:fs";
