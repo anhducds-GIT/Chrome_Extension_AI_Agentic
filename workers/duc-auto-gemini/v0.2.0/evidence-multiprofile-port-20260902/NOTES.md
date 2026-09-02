@@ -1,0 +1,28 @@
+# Port multi-profile Bridge — audit 2 vòng + kiểm host sống (2026-09-02)
+
+Phiên: claude-bridge-multiprofile · Mẫu gốc: gg-flow-video 6c59266 (audit PASS + kiểm live 3 profile cùng nối).
+
+## Kết quả
+
+- Suite 84/84 xanh. Mutation: 10 chốt định tuyến/danh tính (M1–M10) + 3 chốt ranh giới async (M11–M13) — TẤT CẢ làm test ĐỎ.
+- Host mới đã deploy sang thư mục Bridge và chạy sống trên cổng 32148; extension đang nối dạng legacy (chưa reload — tay Đức).
+- Audit Codex vòng 1 (kênh auditmin): **FAIL, và Codex ĐÚNG** — HIGH: auth gửi SAU lần đọc identity async nên auth_ok đến sớm được chấp nhận (Gemini còn huỷ luôn deadline bắt tay; ChatGPT cùng lỗ một bước sâu hơn vì tokenSent bật trước await để chống replay).
+- Vá: cờ authSent chỉ bật sau khi khung auth THẬT SỰ rời socket; auth_ok thiếu authSent → đóng socket fail-closed. Test bridge-multiprofile-transport-async-smoke.mjs ghim cả hai ranh giới.
+- Audit Codex vòng 2: HIGH đã đóng, không còn khe async thứ ba; MED duy nhất (độ cô lập mutation) đã xử bằng fixture ép vế identity — mutation cô lập ĐỎ.
+
+## Báo cáo Codex nguyên văn
+
+### Vòng 1
+```
+VERDICT: FAIL
+1. HIGH — Gemini can accept `auth_ok` and cancel the handshake deadline before it has sent any auth frame. The auth send is deferred behind the asynchronous identity read (`gemini-transport.js:351-364`), but the message path accepts `auth_ok`, marks the socket authenticated, and clears the deadline without checking that auth was sent (`gemini-transport.js:267-278`). With the storage read held pending, a premature `auth_ok` leaves `sent` empty, clears the deadline, and the deadline callback no longer closes the socket. This violates safety contract 6: the deadline does not cover the now-async auth send. Track an `authSent` state per candidate, set it only after the auth frame is successfully sent, and require it before accepting `auth_ok`.
+2. MED — The added Gemini tests do not exercise either asynchronous boundary guard. Their storage mock resolves array reads immediately and the reconnect test only waits one turn before asserting the auth payload (`DIFF-gemini-550da43.patch:933-961`); the liveness adjustment likewise only waits for the immediate read (`DIFF-gemini-550da43.patch:969-976`). There is no deferred identity read followed by socket replacement or premature `auth_ok`, so deleting the post-read `socket !== candidate` guard (`gemini-transport.js:359-360`) or leaving the deadline defect above would stay green.
+```
+### Vòng 2
+```
+VERDICT: FAIL
+1. MED — The new replacement tests do not individually pin the post-read socket-identity guards identified in round 1. Each fake socket's `close()` first changes `readyState` to `CLOSED` (`gemini-async-test.mjs:34`, `chatgpt-async-test.mjs:38`), and each replacement scenario closes the old socket before releasing its identity-read gate (`gemini-async-test.mjs:94-104`, `chatgpt-async-test.mjs:95-104`). The production checks combine socket identity with readiness (`gemini-transport.js:366`, `chatgpt-transport.js:187`), so deleting only `socket !== candidate` / `socket !== targetSocket` still leaves `readyState !== OPEN` true and both tests stay green. The tests do fail if the whole composite post-read check is deleted, but that does not satisfy the narrower mutation promised by the round-1 finding. Add a mutation-isolating case in which ownership changes while the old fake remains `OPEN`, or otherwise assert the identity predicate independently.
+2. INFO — The round-1 Gemini HIGH is closed, including the handshake-deadline cancellation path. `authSent` begins false and is reset when the active socket is dropped or a candidate is created (`gemini-transport.js:72`, `gemini-transport.js:152-159`, `gemini-transport.js:345-349`); it flips only after `candidate.send(...)` returns (`gemini-transport.js:365-370`). `auth_ok` is rejected unless that flag is true, and only the accepted branch marks the transport authenticated and clears the handshake deadline (`gemini-transport.js:271-280`). A premature frame therefore abandons the socket fail-closed rather than authenticating it or silently cancelling protection with no auth frame in flight.
+3. INFO — The ChatGPT gate introduces no deadlock or legitimate-flow regression in the reviewed challenge path. A fresh socket sends the challenge and resets all three gates (`chatgpt-transport.js:225-231`); a valid proof sets `hostProofVerified` and the replay-protection `tokenSent` before the identity await, then sends auth and sets `authSent` after the await (`chatgpt-transport.js:173-191`). Only then can `auth_ok` authenticate (`chatgpt-transport.js:194-203`). The positive tail of the new test exercises that exact order and reaches connected (`chatgpt-async-test.mjs:105-112`); the test itself also passed when run against the supplied final state.
+4. INFO — The premature-`auth_ok` pins do exercise the new `authSent` gates: each holds the identity read, confirms no auth frame exists, injects `auth_ok`, and requires fail-closed behavior (`gemini-async-test.mjs:74-86`, `chatgpt-async-test.mjs:78-89`), so deleting the Gemini check at `gemini-transport.js:273` or the ChatGPT conjunct at `chatgpt-transport.js:194` makes the corresponding assertion fail. No third exploitable async ordering was found in the scoped state transitions: stale-socket continuations are blocked by the post-read composite checks, Gemini resets `authSent` on ownership changes, and ChatGPT resets handshake gates before a replacement socket emits its challenge (`gemini-transport.js:152-159`, `gemini-transport.js:345-370`, `chatgpt-transport.js:92-101`, `chatgpt-transport.js:225-231`).
+```

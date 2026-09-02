@@ -122,6 +122,7 @@ COMPANION (đọc khi cần):
 | `Pilot-13_References/` | **TẠM HOÃN, không chạy** — pilot ảnh tham chiếu dựng từ 3 job thật của Pilot-08. Giữ lại vì phần kiểm offline "cả 66 job đều giải được ảnh" vẫn dùng được khi nào chạy Pilot-08 thật |
 | `Pilot-15_CheckpointRetention/` | Pilot kiểm tính năng **dọn rác checkpoint** (B-26) — thư mục ra hoàn toàn mới và trống nên kết quả tự tố cáo: chạy 2 job ghi 7 checkpoint, cuối run phải còn ĐÚNG 2 file. Đọc `README.md` trong đó để biết ĐẠT/HỎNG trước khi chạy |
 | `Pilot-16_InterJobDelay/` | **Số đo, không phải pilot trên trang thật.** Bằng chứng cho bug khoảng nghỉ giữa job bị Chrome bóp: hai harness Chrome thật, bảng số hiện/bị-che, mutation test, và công thức 4 bước để Đức đo lại live. Không tốn lượt ChatGPT nào |
+| `evidence-multiprofile-port-20260902/` | Bằng chứng port multi-profile 02/09: 2 vòng audit Codex (vòng 1 FAIL bắt đúng lỗi authSent, vòng 2 đóng), mutation 13/13 đỏ, host sống 32147 — bằng chứng, không sửa |
 | `Pilot-14_RefFeatureTest/` | Pilot kiểm tính năng ảnh tham chiếu — 3/3 SUCCESS, ảnh ref tự tạo (1 hình + 1 màu + chữ nhãn) nên **kết quả tự tố cáo**. Kèm `RESULT-PILOT-14.md` và `evidence/` (976 lần dò DOM) |
 
 Thêm file/thư mục mới cấp cao → phải thêm 1 dòng vào bảng này. Không khai báo

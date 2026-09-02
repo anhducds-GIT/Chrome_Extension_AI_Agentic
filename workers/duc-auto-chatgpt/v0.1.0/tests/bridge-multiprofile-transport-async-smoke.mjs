@@ -97,6 +97,10 @@ await transport.connectHost();
 const third = FakeWebSocket.instances.at(-1);
 assert.notEqual(third, second, "a replacement socket exists");
 await handshakeUpToProof(third);
+// Fixture trick that isolates the IDENTITY predicate of the post-read guard:
+// ownership already moved to the replacement, but the old handle is forced to
+// look OPEN again — so only socket-identity, not readiness, can block the send.
+second.readyState = FakeWebSocket.OPEN;
 const gateSecond = gates.shift();
 const gateThird = gates.shift();
 gateSecond();

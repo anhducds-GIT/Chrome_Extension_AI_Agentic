@@ -115,6 +115,7 @@ COMPANION (đọc khi cần):
 | `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
 | `Pilot-07/`, `Pilot-08/`, `Pilot-09.../` | Pilot đang hoạt động, có thể có dữ liệu mới |
 | `evidence-transport-liveness-5s-20260828/` | Bằng chứng live 28/08 (chiều): sau khi hạ trần chờ xuống 5 giây, nối lại sau **1,0 giây** — bản trần 30 giây đo 22,5s và 27,7s. Hoàn tất phần treo của thư mục bằng chứng buổi sáng. Bằng chứng, không sửa |
+| `evidence-multiprofile-port-20260902/` | Bằng chứng port multi-profile 02/09: 2 vòng audit Codex (vòng 1 FAIL bắt đúng lỗi authSent, vòng 2 đóng), mutation 13/13 đỏ, host sống 32148 — bằng chứng, không sửa |
 | `evidence-transport-liveness-20260828/` | Bằng chứng live 28/08: hai cú tắt/bật host sau bản vá lớp vận chuyển — panel báo **Mất kết nối** đúng cả hai lần, tự nối lại 22,5s và 27,7s, khớp dự đoán viết trước khi đo. Kèm log nguyên văn của hai máy đo và script đo. **Là của bản trần 30 giây** — bằng chứng, không sửa |
 | `evidence-stop-reload-20260826/` | Sổ cái nguyên bản của trial live kiểm chứng `run.stop` / `chat.reload` (26/08), kèm 3 dòng chứng minh lời nhắn cũ nói sai — bằng chứng, không sửa |
 | `Pilot-07-Tạo Ảnh tô màu/` | Pilot 07 (26/08): 18 ảnh màu gốc của Đức → 18 tranh nét cho trẻ 5 tuổi tô. Kế hoạch `PILOT-07-PLAN.md`, kết quả `PILOT-07-KET-QUA.md`. **Ảnh gốc `*.png` (44 MB) KHÔNG vào git** — xem `.gitignore` trong thư mục |
