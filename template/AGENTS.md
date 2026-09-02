@@ -71,11 +71,10 @@ sử của phiên khác).
 ngày 02/09 đo được **98 trong 127 commit (77%) chạm gốc repo** — một khoá duy nhất là điểm nghẽn
 thật, không phải lý thuyết.
 
-## 2. Ba việc PHẢI hỏi Đức trước
+## 2. Những việc PHẢI hỏi Đức trước
 
-1. Thêm quyền (permission) mới cho extension
-2. Chạy pilot live mới trên trang thật
-3. Đổi luật an toàn (retry, halt, attribution, persistence, exact-once)
+1. Đổi luật an toàn của repo (thử lại · dừng khẩn · quy trách nhiệm · lưu trạng thái · làm-đúng-một-lần)
+2. Bất cứ việc nào **phụ lục nghề** của repo bạn liệt kê — xem `docs/ANNEX-*.md`
 
 Ngoài ra, luật gốc của Đức: không gửi gì ra ngoài, không xoá file, không sửa dữ liệu gốc,
 không tạo automation tự chạy — nếu chưa hỏi.
@@ -96,9 +95,10 @@ vào `main`.
 
 ## 3. Năm luật vàng
 
-1. **Không đoán selector.** Mọi selector phải có bằng chứng DOM thật. Cần bằng chứng mới →
-   gọi `diagnostics.dom_probe` qua Bridge, đừng mượn mắt Đức.
-2. **Mỗi fix một test ghim.** Suite không chạm DOM thật, nên fixture bằng chứng là vàng.
+1. **Không đoán.** Mọi khẳng định về một hệ thống thật phải có bằng chứng ĐO ĐƯỢC. Cần bằng
+   chứng mới → tự đi lấy, đừng mượn mắt Đức. Lấy bằng cách nào là việc của phụ lục nghề.
+2. **Mỗi fix một test ghim.** Và fixture phải DỰNG NỔI ca hỏng — một phép kiểm không phân
+   biệt được hai nhánh là đồ trang trí, dù nó xanh.
 3. **Không làm yếu lớp bảo vệ đã có** để cho test xanh. Sửa bug được; gỡ bảo vệ thì không.
 4. **Kiểm chứng độc lập mọi báo cáo của AI khác.** Tự chạy lại test, tự đọc lại diff.
    Agent phụ báo "xong" không phải bằng chứng.
@@ -107,17 +107,17 @@ vào `main`.
 
 ## 4. Vùng cấm sửa
 
-- `pilot-*/`, `Pilot-*/`, `Batch-*/`, `evidence/` — **bằng chứng vận hành**. Chỉ được THÊM mới,
-  không sửa, không xoá, không tạo lại.
+- Thư mục bằng chứng — khai `"mutability": "append-only"` trong `.repo-structure.json`.
+  **Chỉ được THÊM mới**, không sửa, không xoá, không tạo lại. Tên thư mục là việc của repo bạn.
 - Không bao giờ để token / mật khẩu / file pairing vào repo.
-- Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.
+- Những điều cấm riêng của nghề repo bạn — xem `docs/ANNEX-*.md`. Chưa có phụ lục thì bỏ dòng này.
 
 ## 5. Vai từng AI
 
 | AI | Việc chính | Không được |
 |---|---|---|
 | **Đức** | Chốt mọi thứ | — |
-| **Claude** | Kiến trúc, phản biện, audit độc lập, điều phối, vận hành Bridge | Push khi cổng kiểm chưa xanh |
+| **Claude** | Kiến trúc, phản biện, audit độc lập, điều phối | Push khi cổng kiểm chưa xanh |
 | **Codex** | Code theo brief, audit độc lập | Tự mở rộng phạm vi ngoài brief |
 | **Antigravity** | Dựng UI, tạo giao diện | Sửa lớp an toàn / runner / bridge |
 
@@ -156,6 +156,7 @@ không đọc trước, tới việc nào thì mở sổ tay đó.
 | Biết phiên trước làm tới đâu | [HANDOFF.md](HANDOFF.md) — đọc phần **cuối** file |
 | Biết repo đang nợ gì về cấu trúc | chạy `npm run bootstrap` |
 | Hiểu bộ khung tự kiểm mình bằng gì, hoặc thêm test của repo bạn | [tests/harness-smoke.mjs](tests/harness-smoke.mjs) — bốn khối hạt giống, chạy bằng `npm test` |
+| Biết luật riêng của NGHỀ repo bạn (không phải luật chung) | phụ lục nghề: [docs/ANNEX-tu-dong-hoa-trinh-duyet.md](docs/ANNEX-tu-dong-hoa-trinh-duyet.md) là bản mẫu có thật · viết cái của bạn theo [docs/_TEMPLATE-annex.md](docs/_TEMPLATE-annex.md) |
 
 **Vì sao phải là liên kết chứ không phải chữ thường:** phép kiểm độ sâu điều hướng (B6) đi theo
 liên kết từ cổng vào máy đọc. File không ai trỏ tới thì máy coi là không tới được — và một bản
@@ -168,7 +169,7 @@ Không khai = không tồn tại. Cổng đóng phiên có phép kiểm này.
 
 1. Một dòng Log vào `HANDOFF.md` của package: làm gì, kết quả số, còn gì mở.
 2. Quyết định mới của Đức → `decisions.md`.
-3. Gặp lỗi mới trên trang thật → thêm 1 dòng vào bảng lỗi của sổ tay, **và** cân nhắc thêm
-   1 phép kiểm vào `scripts/session-check.mjs`.
+3. Gặp lỗi mới ở một hệ thống bên ngoài → thêm 1 dòng vào bảng lỗi của sổ tay, **và** cân
+   nhắc thêm 1 phép kiểm vào `scripts/session-check.mjs`.
 
 > Luật nào không kiểm được bằng máy thì sớm muộn cũng bị bỏ qua. Đó là lý do có cổng kiểm.

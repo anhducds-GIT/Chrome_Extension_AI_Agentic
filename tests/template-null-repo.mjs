@@ -123,6 +123,43 @@ const files = buildTemplateFiles();
   ok("moc cat muc 6 la tieu de THAT va DUY NHAT; hai moc thi FAIL CLOSED kem so dong");
 }
 
+/* ---- 2c. Luật CHUNG không được mang từ vựng của một NGHỀ ------------------ */
+/* Ba tầng: luật chung (mọi repo) · phụ lục nghề (bật khi cần) · bản đồ địa phương (mục 6, vốn
+   đã cắt). Trước K1, bản trích mang cả chín dòng chỉ đúng với repo lái trình duyệt — nên một
+   repo tài liệu dựng từ bộ khung sẽ nhận luật về selector DOM và lệnh cấm gán `.innerHTML`.
+   Đúng với repo gốc, vô nghĩa với nó. */
+{
+  const NGHE_TU_VUNG = /selector|dom_probe|innerHTML|outerHTML|insertAdjacentHTML|Bridge|pilot-|Pilot-|Batch-|trang thật/;
+
+  const luatTrich = files.get("AGENTS.md");
+  assert.ok(luatTrich, "ban trich phai co AGENTS.md");
+  const dinh = luatTrich.split("\n").filter((d) => NGHE_TU_VUNG.test(d));
+  assert.deepEqual(dinh, [], "luat CHUNG cua ban trich con mang tu vung nghe:\n" + dinh.join("\n"));
+
+  // ĐỐI CHỨNG DƯƠNG — bắt buộc, nếu không phép kiểm trên rỗng nghĩa: một bộ dò hỏng (regex sai,
+  // hay biến rỗng) cũng cho "khong thay gi". AGENTS.md THẬT của repo này PHẢI khớp, vì repo này
+  // đúng là repo lái trình duyệt và luật của nó nói đúng chuyện đó.
+  const luatGoc = readFileSync(new URL("../AGENTS.md", import.meta.url), "utf8");
+  const dinhGoc = luatGoc.split("\n").filter((d) => NGHE_TU_VUNG.test(d));
+  assert.ok(dinhGoc.length >= 5,
+    `bo do phai bat duoc tu vung nghe trong AGENTS.md THAT, dang bat ${dinhGoc.length} — bo do hong`);
+
+  // TÁCH KHÔNG PHẢI VỨT. Chín dòng đó phải hạ cánh nguyên vẹn ở phụ lục, nếu không bộ khung
+  // im lặng đánh mất chín bài học đã trả giá.
+  const phuLuc = files.get("docs/ANNEX-tu-dong-hoa-trinh-duyet.md");
+  assert.ok(phuLuc, "tach luat nghe ra thi phai co file phu luc de no ha canh");
+  for (const tu of ["selector", "dom_probe", "innerHTML", "Bridge", "pilot-", "trang thật"]) {
+    assert.ok(phuLuc.includes(tu), `phu luc phai giu lai "${tu}" — tach la CHUYEN CHO, khong phai vut`);
+  }
+  assert.ok(files.has("docs/_TEMPLATE-annex.md"), "phai co ban mau de repo khac tu viet phu luc nghe cua minh");
+
+  // Và mục 2 không được nói dối: tiêu đề cũ là "Ba việc" với đúng ba mục; thay hai mục mà giữ
+  // nguyên tiêu đề là để lại một câu sai trong chính hiến pháp.
+  assert.doesNotMatch(luatTrich, /## 2\. Ba việc/,
+    "muc 2 khong con ba muc thi tieu de khong duoc noi 'Ba viec'");
+  ok(`luat chung sach tu vung nghe (${dinhGoc.length} dong nhu the o ban goc, deu chuyen sang phu luc)`);
+}
+
 /* ---- 3. Repo rỗng + bộ khung → cổng kiểm KHÔNG có chỗ đỏ ------------------ */
 {
   const tempRoot = mkdtempSync(join(tmpdir(), "template-null-repo-"));

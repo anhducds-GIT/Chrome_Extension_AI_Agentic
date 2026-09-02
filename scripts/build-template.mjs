@@ -179,6 +179,163 @@ function genericize(rel, text) {
   return out;
 }
 
+/* Phụ lục nghề — bản CÓ THẬT, không phải ví dụ bịa. Chín dòng bị tách khỏi luật chung nằm
+   nguyên ở đây. Repo không làm nghề này thì xoá file đi; giữ lại một phụ lục sai nghề còn tệ
+   hơn không có phụ lục. */
+const ANNEX_SEED = `---
+kind: annex
+nghe: tự động hoá trình duyệt
+status: optional
+---
+
+# PHỤ LỤC NGHỀ — tự động hoá trình duyệt
+
+> **Tuỳ chọn.** Repo bạn không lái trình duyệt thì **xoá file này** và xoá dòng trỏ tới nó ở
+> mục 6 của \`AGENTS.md\`. Giữ một phụ lục sai nghề còn tệ hơn không có phụ lục: nó dạy phiên AI
+> sau tuân luật cho một việc repo này không làm.
+
+Chín luật dưới đây từng nằm trong luật chung của repo sinh ra bộ khung. Chúng **đúng** — mỗi
+dòng là một lần trả giá thật — nhưng chỉ đúng với repo lái trình duyệt. Để lẫn vào luật chung
+là ép một repo tài liệu tuân luật về selector DOM.
+
+## Phải hỏi chủ repo trước
+
+1. **Thêm quyền (permission) mới cho extension.** Quyền là thứ người dùng cuối nhìn thấy và
+   phải đồng ý; thêm âm thầm là đổi hợp đồng với họ.
+2. **Chạy pilot live mới trên trang thật.** Chạy thật thì tốn lượt thật và để lại dấu vết thật.
+
+## Luật vàng, bản của nghề này
+
+3. **Không đoán selector.** Mọi selector phải có bằng chứng DOM thật. Cần bằng chứng mới →
+   gọi \`diagnostics.dom_probe\` qua Bridge, đừng mượn mắt chủ repo.
+4. **Suite không chạm DOM thật**, nên fixture bằng chứng là vàng: một bản chụp DOM có thật
+   đáng giá hơn mười phép kiểm dựng trên DOM tưởng tượng.
+
+## Vùng cấm sửa
+
+5. **\`pilot-*/\` · \`Pilot-*/\` · \`Batch-*/\` · \`evidence/\`** — bằng chứng vận hành. Chỉ được
+   THÊM mới, không sửa, không xoá, không tạo lại.
+6. **Không bao giờ gán \`.innerHTML\` / \`.outerHTML\` / \`insertAdjacentHTML\`.** Trang đích là
+   nội dung không tin được; gán thẳng HTML là mở cửa cho nó chạy code trong ngữ cảnh của bạn.
+
+## Vai
+
+7. **Vận hành Bridge** thuộc về phiên làm kiến trúc/điều phối, không phải phiên dựng UI.
+
+## Đóng phiên
+
+8. **Gặp lỗi mới trên trang thật** → thêm một dòng vào bảng lỗi của sổ tay vận hành. Trang thật
+   đổi mà không báo trước; bảng lỗi là bộ nhớ duy nhất giữa các phiên.
+9. **Mỗi lỗi mới trên trang thật cũng là ứng viên cho một phép kiểm máy** — cân nhắc thêm vào
+   cổng đóng phiên. Luật nào không kiểm được bằng máy thì sớm muộn cũng bị bỏ qua.
+`;
+
+const ANNEX_TEMPLATE = `---
+kind: annex
+nghe: <tên nghề của repo bạn>
+status: optional
+---
+
+# PHỤ LỤC NGHỀ — <tên nghề>
+
+> Chép file này thành \`docs/ANNEX-<ten-nghe>.md\`, rồi khai một dòng vào bản đồ mục 6 của
+> \`AGENTS.md\`. Không khai = không tồn tại.
+
+**Phụ lục là gì:** luật chỉ đúng với **nghề** repo bạn làm, không đúng với mọi repo. Nếu một
+dòng luật đúng với cả repo tài liệu lẫn repo hạ tầng thì nó thuộc luật chung, đừng để ở đây.
+
+**Phép thử một câu:** *"Một repo hoàn toàn khác nghề có phải tuân dòng này không?"* — Có thì
+nó là luật chung. Không thì nó thuộc phụ lục.
+
+## Phải hỏi chủ repo trước
+
+<Việc nào của nghề này tốn tiền thật, đổi hợp đồng với người dùng, hoặc không lùi lại được?>
+
+## Luật vàng, bản của nghề này
+
+<Nghề này lấy bằng chứng bằng cách nào? Cái gì ở đây dễ ĐOÁN nhất, và đoán sai thì mất gì?>
+
+## Vùng cấm sửa
+
+<Thư mục nào chỉ được thêm? Hàm/cấu trúc nào không bao giờ được dùng, và vì sao?>
+
+## Đóng phiên
+
+<Bài học nào của nghề này phải ghi lại, kẻo phiên sau vấp đúng chỗ?>
+
+---
+
+**Mỗi dòng phải kể được một lần trả giá.** Không nhớ nổi vì sao có dòng đó thì đừng viết —
+luật không ai giải thích được là luật sẽ bị bỏ qua.
+`;
+
+/* ---- phụ lục nghề: tách luật CHUNG khỏi luật của một NGHỀ ------------------
+   Repo này là repo tự động hoá trình duyệt, nên luật của NÓ nói về selector, về DOM, về chạy
+   thử trên trang thật. Đúng với nó. Nhưng bản trích thì đi sang repo tài liệu, repo hạ tầng,
+   repo điều phối — và ở đó chín dòng ấy là luật của một nghề mà repo đó không làm.
+
+   Đo được (02/09): mục 0 · 1 · 6 có 0 dòng thuộc riêng nghề; mục 2 có 2, mục 3 có 3, mục 4
+   có 2, mục 5 có 1, mục 7 có 1. Tổng CHÍN.
+
+   BA TẦNG, không phải hai: luật chung (mọi repo) · phụ lục nghề (bật khi cần) · bản đồ địa
+   phương (mục 6, vốn đã cắt). Chín dòng kia không bị VỨT — chúng là bài học trả giá thật —
+   mà chuyển sang docs/ANNEX-tu-dong-hoa-trinh-duyet.md.
+
+   THAY, KHÔNG XOÁ. Mục 2 có tiêu đề "Ba việc" và đúng ba mục; xoá hai mục thì tiêu đề nói dối.
+   Mỗi dòng có một bản thay tương đương ở mức chung, và mỗi bản thay phải khớp ĐÚNG MỘT LẦN —
+   không khớp thì NÉM, vì một dòng luật nghề lọt vào bản trích là hỏng im lặng. */
+const NGHE = [
+  ["## 2. Ba việc PHẢI hỏi Đức trước", "## 2. Những việc PHẢI hỏi Đức trước"],
+  [
+    "1. Thêm quyền (permission) mới cho extension\n2. Chạy pilot live mới trên trang thật\n3. Đổi luật an toàn (retry, halt, attribution, persistence, exact-once)",
+    "1. Đổi luật an toàn của repo (thử lại · dừng khẩn · quy trách nhiệm · lưu trạng thái · làm-đúng-một-lần)\n2. Bất cứ việc nào **phụ lục nghề** của repo bạn liệt kê — xem `docs/ANNEX-*.md`"
+  ],
+  [
+    "1. **Không đoán selector.** Mọi selector phải có bằng chứng DOM thật. Cần bằng chứng mới →\n   gọi `diagnostics.dom_probe` qua Bridge, đừng mượn mắt Đức.",
+    "1. **Không đoán.** Mọi khẳng định về một hệ thống thật phải có bằng chứng ĐO ĐƯỢC. Cần bằng\n   chứng mới → tự đi lấy, đừng mượn mắt Đức. Lấy bằng cách nào là việc của phụ lục nghề."
+  ],
+  [
+    "2. **Mỗi fix một test ghim.** Suite không chạm DOM thật, nên fixture bằng chứng là vàng.",
+    "2. **Mỗi fix một test ghim.** Và fixture phải DỰNG NỔI ca hỏng — một phép kiểm không phân\n   biệt được hai nhánh là đồ trang trí, dù nó xanh."
+  ],
+  [
+    "- `pilot-*/`, `Pilot-*/`, `Batch-*/`, `evidence/` — **bằng chứng vận hành**. Chỉ được THÊM mới,\n  không sửa, không xoá, không tạo lại.",
+    "- Thư mục bằng chứng — khai `\"mutability\": \"append-only\"` trong `.repo-structure.json`.\n  **Chỉ được THÊM mới**, không sửa, không xoá, không tạo lại. Tên thư mục là việc của repo bạn."
+  ],
+  [
+    "- Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.",
+    "- Những điều cấm riêng của nghề repo bạn — xem `docs/ANNEX-*.md`. Chưa có phụ lục thì bỏ dòng này."
+  ],
+  [
+    "| **Claude** | Kiến trúc, phản biện, audit độc lập, điều phối, vận hành Bridge | Push khi cổng kiểm chưa xanh |",
+    "| **Claude** | Kiến trúc, phản biện, audit độc lập, điều phối | Push khi cổng kiểm chưa xanh |"
+  ],
+  [
+    "3. Gặp lỗi mới trên trang thật → thêm 1 dòng vào bảng lỗi của sổ tay, **và** cân nhắc thêm\n   1 phép kiểm vào `scripts/session-check.mjs`.",
+    "3. Gặp lỗi mới ở một hệ thống bên ngoài → thêm 1 dòng vào bảng lỗi của sổ tay, **và** cân\n   nhắc thêm 1 phép kiểm vào `scripts/session-check.mjs`."
+  ]
+];
+
+export function stripNghe(text) {
+  // Chuẩn hoá xuống dòng TRƯỚC khi so. AGENTS.md trên máy Windows là CRLF, còn các đoạn thay ở
+  // bảng NGHE viết bằng LF — không chuẩn hoá thì mọi đoạn nhiều dòng đều khớp 0 lần và bộ trích
+  // chết ở đúng chỗ nó đang cố bảo vệ. (Bắt được ngay lần chạy đầu, nhờ fail-closed.)
+  let out = text.split(String.fromCharCode(13)).join("");
+  for (const [from, to] of NGHE) {
+    const parts = out.split(from);
+    if (parts.length !== 2) {
+      throw new Error(
+        `TRICH_HONG: bản thay luật-nghề khớp ${parts.length - 1} lần, cần đúng 1. Đoạn tìm:\n` +
+        `  ${from.split("\n")[0]}\n` +
+        "AGENTS.md đã đổi lời. Sửa bảng NGHE trong build-template.mjs cho khớp — ĐỪNG bỏ qua: " +
+        "bỏ qua là để một dòng luật của nghề này lọt vào bộ khung của mọi repo khác."
+      );
+    }
+    out = parts.join(to);
+  }
+  return out;
+}
+
 /* ---- luật: cắt bản đồ địa phương ra --------------------------------------
    `AGENTS.md` mục 6 ("Sổ tay mở khi cần") là bản đồ file của RIÊNG repo này — đo được 13 trên
    47 dòng mang tên dự án, cao gấp nhiều lần phần còn lại (1 trên 117). Nó đáng lẽ không đi
@@ -211,7 +368,9 @@ export function soleHeadingIndex(text, marker) {
 }
 
 function lawForTemplate() {
-  const text = read("AGENTS.md");
+  // Thứ tự có lý do: tách luật-nghề TRƯỚC, cắt mục 6 SAU. Cắt trước thì các mốc chỉ số dời đi
+  // và mọi phép thay phải tính lại — thừa một cơ hội sai mà không đổi lại được gì.
+  const text = stripNghe(read("AGENTS.md"));
   const start = soleHeadingIndex(text, "## 6.").index;
   const end = soleHeadingIndex(text, "## 7.").index;
   if (start < 0 || end < 0 || end <= start) {
@@ -240,6 +399,7 @@ không đọc trước, tới việc nào thì mở sổ tay đó.
 | Biết phiên trước làm tới đâu | [HANDOFF.md](HANDOFF.md) — đọc phần **cuối** file |
 | Biết repo đang nợ gì về cấu trúc | chạy \`npm run bootstrap\` |
 | Hiểu bộ khung tự kiểm mình bằng gì, hoặc thêm test của repo bạn | [tests/harness-smoke.mjs](tests/harness-smoke.mjs) — bốn khối hạt giống, chạy bằng \`npm test\` |
+| Biết luật riêng của NGHỀ repo bạn (không phải luật chung) | phụ lục nghề: [docs/ANNEX-tu-dong-hoa-trinh-duyet.md](docs/ANNEX-tu-dong-hoa-trinh-duyet.md) là bản mẫu có thật · viết cái của bạn theo [docs/_TEMPLATE-annex.md](docs/_TEMPLATE-annex.md) |
 
 **Vì sao phải là liên kết chứ không phải chữ thường:** phép kiểm độ sâu điều hướng (B6) đi theo
 liên kết từ cổng vào máy đọc. File không ai trỏ tới thì máy coi là không tới được — và một bản
@@ -363,6 +523,8 @@ Nguyên tắc số một: **thứ gì máy đếm được thì máy đếm** �
 | \`scripts/session-check.mjs\` | máy | Cổng đóng phiên — đỏ thì chưa xong |
 | \`scripts/safe-push.mjs\` | máy | Đẩy mà không cuốn theo commit của phiên khác |
 | \`tests/harness-smoke.mjs\` | máy | **Lưới đỡ của chính bộ khung** — bốn chỗ đã hỏng thật ở repo sinh ra nó. Thêm test của bạn vào cùng thư mục, đừng xoá bốn khối này |
+| [\`docs/ANNEX-tu-dong-hoa-trinh-duyet.md\`](docs/ANNEX-tu-dong-hoa-trinh-duyet.md) | LAW | **Phụ lục nghề — TUỲ CHỌN.** Chín luật của nghề tự động hoá trình duyệt, tách khỏi luật chung. Repo bạn không làm nghề đó thì **xoá file này đi** |
+| [\`docs/_TEMPLATE-annex.md\`](docs/_TEMPLATE-annex.md) | LAW | Bản mẫu để viết phụ lục nghề của repo bạn |
 | [\`docs/_TEMPLATE-adr.md\`](docs/_TEMPLATE-adr.md) · [\`-study\`](docs/_TEMPLATE-study.md) · [\`-brief\`](docs/_TEMPLATE-brief.md) | LAW | Bản mẫu: quyết định · nghiên cứu · đề bài phiên |
 | [\`docs/adr/0000-…\`](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) | EVIDENCE | Luật ghi quyết định. Đọc trước khi ghi cái đầu tiên |
 | [\`STATUS.template.md\`](STATUS.template.md) | LAW | Khuôn khai trạng thái cho mỗi đơn vị công việc |
@@ -443,6 +605,10 @@ export function buildTemplateFiles() {
   files.set("HANDOFF.md", HANDOFF_SEED);
   files.set("STATUS.md", STATUS_SEED);
   files.set("README.md", readme(TEMPLATE_VERSION));
+  // Chín dòng luật-nghề mà `stripNghe()` tách khỏi luật chung phải HẠ CÁNH ở đâu đó. Không có
+  // hai file này thì tách = vứt, và bộ khung im lặng đánh mất chín bài học đã trả giá.
+  files.set("docs/ANNEX-tu-dong-hoa-trinh-duyet.md", ANNEX_SEED);
+  files.set("docs/_TEMPLATE-annex.md", ANNEX_TEMPLATE);
   files.set("package.json", packageJson(TEMPLATE_VERSION));
   return files;
 }
