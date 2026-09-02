@@ -139,3 +139,32 @@
   - **Đo:** suite **63/63** · npm test 95+6+63+15 xanh · **9/9 mutation bị bắt** (5 cái mới
     cho 4 quyết định trên, 4 cái cũ kiểm lại). Khối D vẫn 2 · 0 · 7 · 0.
   - **Còn mở:** S3 sẵn sàng mở. Trước khi mở nên cho Codex audit một lượt bản patch này.
+
+- **2026-09-02 · `s2-fix` (patch r4)** — Đóng nốt audit Codex vòng 3 + audit GPT S3. Đối chiếu
+  trước khi làm: **4/5 mục GPT nêu đã được sửa** trong vòng Codex 3 (GPT audit một commit cũ
+  hơn) — không làm lại. Còn 5 chỗ thật, cộng 6 chỗ Codex vòng 3.
+  - **Nặng nhất:** ① `priority_rank:` bỏ trống cho `Number("") === 0`, và 0 nhỏ nhất nên nó
+    **thắng mọi đơn vị khai đàng hoàng, lặng lẽ**. ② `realPath` là thứ **duy nhất** còn kéo
+    hệ thống file vào đường đọc — xoá `manifest.json` khỏi working tree trong khi HEAD vẫn có
+    thì bộ sinh chết, kèm thông báo dẫn sai hướng hoàn toàn. ③ Đơn vị gốc repo không đọc được
+    `STATUS.md`, nên S3 có tạo file đó thì nợ vẫn không giảm — **đề bài không thể đạt mục tiêu
+    của chính nó**. ④ `BRIEF-S3` có bẫy thứ tự: chạy bộ sinh trước commit thì nó dựng lại từ
+    HEAD **cũ**, rồi commit dữ liệu mới cạnh artifact cũ → cổng đỏ.
+  - **Ba lỗ fail-open:** ma commit trong `repo-map.json` nhận cả rác như `khac123` · cổng kiểm
+    trả "ổn" khi không hỏi được git (nay `VERIFIER_UNKNOWN` — không biết thì nói là không
+    biết) · bản `superseded`/`archived` vẫn có thể thành ưu tiên số 1.
+  - **Bộ sinh nay tự in CẢNH BÁO THỨ TỰ** khi thấy file đầu vào sửa dở chưa commit — cái bẫy
+    ở mục ④ không im lặng nữa.
+  - **Tài liệu:** ROADMAP bỏ `session_intent` (nó là thứ theo phiên, thuộc HANDOFF), thêm
+    `priority_rank`, dòng cuối "Xong S1 báo tôi" → "Xong S3 báo tôi";
+    `RESTRUCTURE-PLAN` GĐ2 sửa "khai `pilots/` trong `repo-map.json`" — sai hai chỗ:
+    `repo-map.json` là file MÁY SINH không khai tay vào được, và thực đo là **7** thư mục
+    chứ không phải 1.
+  - **Một đột biến "thoát" hoá ra là equivalent mutant** — bỏ `if (text === "")` không đổi
+    hành vi vì phép kiểm `>= 1` đã chặn sẵn. Ghi lại để vòng sau không đuổi theo.
+  - **Đo:** suite **73/73** · npm test 95+6+73+15 xanh · **8/8 mutation bị bắt** · cổng
+    fail-closed đã kiểm thực tế (giả lập git hỏng → `VERIFIER_UNKNOWN`).
+  - **CÒN NỢ, GPT nói đúng:** mọi con số trên đây vẫn là **[KHAI]** — repo không có CI, nên
+    auditor đọc qua GitHub không tự kiểm lại được. Thêm một workflow chạy `npm test` mỗi lần
+    push sẽ biến chúng thành **[ĐO]**. Đó là **tạo automation tự chạy — luật gốc bắt phải hỏi
+    Đức trước.** Chưa làm.
