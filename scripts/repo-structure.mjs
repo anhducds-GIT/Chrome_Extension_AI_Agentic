@@ -242,6 +242,53 @@ export function ownershipKeys(files, parsed, prefixes = DEFAULT_CLAIM_PREFIXES, 
   return [...keys].sort();
 }
 
+/* NHÃN LANE TRONG COMMIT — K2-3, 2026-09-02. NGUỒN GỐC, KHÔNG PHẢI QUYỀN.
+ *
+ * Vì sao phải có, và nó sửa một lỗi ĐO ĐƯỢC: `safe-push` quy một commit cho ai bằng cách xem
+ * **chủ HIỆN TẠI** của vùng mà commit đó chạm. Chủ sở hữu là trạng thái SỐNG, commit là chuyện
+ * ĐÃ QUA — nên phép quy đó sai theo cả hai chiều:
+ *   · commit của TÔI trong một vùng nay là của người khác → safe-push **từ chối việc của tôi**;
+ *   · commit của NGƯỜI KHÁC trong một vùng nay là của tôi → safe-push coi là của tôi và
+ *     **đẩy kèm việc của họ trong im lặng**. Cái thứ hai nguy hiểm hơn hẳn.
+ * Audit độc lập (Codex) chỉ ra đúng cặp này khi bác bản K2-2 đầu tiên, và đó là lý do K2-3 phải
+ * đứng TRƯỚC K2-2 chứ không phải sau.
+ *
+ * Nhãn trả lời đúng một câu: *"commit này do phiên nào làm?"* Nó KHÔNG cấp quyền. Quyền vẫn nằm
+ * ở bảng `claims.json` — nếu không thì một phiên tự cấp phạm vi cho mình bằng cách gõ một dòng.
+ *
+ * FAIL CLOSED khi KHÔNG QUY THUỘC ĐƯỢC, và phân biệt hai ca khác nhau:
+ *   · KHÔNG CÓ nhãn  → `{ lane: null, problem: null }`. Đây là ca THƯỜNG, không phải lỗi: 509
+ *     commit trong lịch sử repo không có nhãn nào. Bên gọi tự quyết cách xử (hiện: lùi về quy
+ *     theo vùng, và NÓI TO là đang lùi).
+ *   · CÓ nhãn mà HỎNG → `{ lane: null, problem: "<mã>: …" }`. Rỗng, có khoảng trắng, hay hai
+ *     nhãn khác nhau trong một commit đều là hỏng — và một commit không quy thuộc được thì thà
+ *     nói là không biết, đừng đoán lấy cái đầu.
+ */
+export const LANE_TRAILER = "Lane:";
+
+export function laneFromMessage(text) {
+  const lines = String(text ?? "").split("\n");
+  const values = [];
+  for (const line of lines) {
+    if (!line.startsWith(LANE_TRAILER)) continue;      // chỉ TRAILER ở đầu dòng, không nhắc giữa câu
+    values.push(line.slice(LANE_TRAILER.length).trim());
+  }
+  if (values.length === 0) return { lane: null, problem: null };
+  const empty = values.some((v) => v === "");
+  if (empty) {
+    return { lane: null, problem: `LANE_RONG: commit có dòng \`${LANE_TRAILER}\` nhưng không có nhãn nào sau nó.` };
+  }
+  const bad = values.find((v) => /\s/.test(v));
+  if (bad !== undefined) {
+    return { lane: null, problem: `LANE_CO_KHOANG_TRANG: nhãn lane "${bad}" có khoảng trắng. Nhãn phiên là một từ, ví dụ "claude-k2-design".` };
+  }
+  const unique = [...new Set(values)];
+  if (unique.length > 1) {
+    return { lane: null, problem: `LANE_XUNG_DOT: một commit mang ${unique.length} nhãn khác nhau (${unique.join(", ")}). Không quy thuộc được cho ai — sửa thông điệp commit.` };
+  }
+  return { lane: unique[0], problem: null };
+}
+
 /* BẤT BIẾN BA TẦNG — LAW `steward` ↔ STATE khoá quyền ↔ MÁY một hàm duy nhất.
 
    Yêu cầu bởi audit GPT 02/09, và nó không phải luật di-trú mà là bất biến: A2 đổi tầng LAW

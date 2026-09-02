@@ -24,6 +24,7 @@ import {
   ownershipInvariant,
   appendOnlyAtEof,
   lineCountOf,
+  laneFromMessage,
   DEFAULT_REPO
 } from "../scripts/repo-structure.mjs";
 import fsMod from "node:fs";
@@ -399,6 +400,48 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   assert.equal(lineCountOf("a\nb\n"), 2);
   assert.equal(lineCountOf("a\nb"), 2, "khong co newline cuoi thi dong cuoi van tinh");
   ok("K2-2b · appendOnlyAtEof: chen giua file KHONG duoc mien; nhieu hunk / moc la deu FAIL CLOSED");
+}
+
+/* ---- K2-3 · nhan lane trong commit ------------------------------------- */
+/* Nhan tra loi "commit nay do phien nao lam". Vi sao can: safe-push quy commit theo chu HIEN TAI
+   cua vung, ma chu so huu la trang thai SONG con commit la chuyen DA QUA — sai ca hai chieu, va
+   chieu nguy hiem la IM LANG DAY KEM viec nguoi khac khi ban vua nhan vung cua ho.
+
+   Phan biet HAI ca khong-quy-thuoc-duoc, va do la diem quan trong nhat cua ham nay:
+     · KHONG CO nhan  -> ca THUONG (509 commit lich su deu vay), ben goi tu quyet
+     · CO nhan ma HONG -> LOI, phai noi ra, khong duoc doan lay cai dau */
+{
+  const f = laneFromMessage;
+
+  assert.deepEqual(f("tieu de\n\nthan\n\nLane: claude-abc\n"), { lane: "claude-abc", problem: null },
+    "trailer o cuoi thi doc duoc");
+  assert.deepEqual(f("Lane: claude-abc"), { lane: "claude-abc", problem: null }, "khong co newline cuoi cung duoc");
+  assert.deepEqual(f("tieu de\n\nLane:   claude-abc   \n"), { lane: "claude-abc", problem: null },
+    "khoang trang hai dau nhan bi cat");
+  assert.deepEqual(f("Lane: a\nCo-Authored-By: x\nLane: a\n"), { lane: "a", problem: null },
+    "hai dong CUNG mot nhan thi khong phai xung dot");
+
+  // KHONG CO nhan = ca thuong, KHONG phai loi.
+  assert.deepEqual(f("tieu de\n\nthan khong co nhan\n"), { lane: null, problem: null });
+  assert.deepEqual(f(""), { lane: null, problem: null });
+  assert.deepEqual(f(null), { lane: null, problem: null });
+
+  // Chi nhan TRAILER o DAU DONG. Nhac giua cau thi khong tinh — neu tinh thi mot commit ke ve
+  // nhan cua nguoi khac se bi quy cho nguoi do.
+  assert.deepEqual(f("tieu de\n\nban cu ghi Lane: nguoi-khac o giua cau\n"), { lane: null, problem: null },
+    "nhac giua cau KHONG duoc tinh la trailer");
+  assert.deepEqual(f("tieu de\n\n> Lane: trong-trich-dan\n"), { lane: null, problem: null },
+    "trong khoi trich dan cung khong tinh");
+
+  // FAIL CLOSED — ba kieu hong, moi kieu mot ma rieng de doc log biet ngay phai sua gi.
+  assert.match(f("Lane:\n").problem, /LANE_RONG/);
+  assert.match(f("Lane:    \n").problem, /LANE_RONG/);
+  assert.match(f("Lane: hai tu\n").problem, /LANE_CO_KHOANG_TRANG/);
+  const xungDot = f("Lane: mot\n\nLane: hai\n");
+  assert.equal(xungDot.lane, null, "xung dot thi KHONG duoc tra ve mot trong hai");
+  assert.match(xungDot.problem, /LANE_XUNG_DOT/);
+  assert.match(xungDot.problem, /mot, hai/, "phai ke ra ca hai nhan de nguoi sua biet");
+  ok("K2-3 · laneFromMessage: doc trailer, phan biet THIEU voi HONG, va ba kieu hong deu FAIL CLOSED");
 }
 
 

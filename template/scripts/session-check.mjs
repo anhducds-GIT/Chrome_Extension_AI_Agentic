@@ -16,7 +16,7 @@ import path from "node:path";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyAtEof, areaOf, claimPrefixesFrom, generatorsFrom, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, areaOf, claimPrefixesFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -464,6 +464,53 @@ check("Bất biến quyền sở hữu ba tầng", () => {
   return { ok: true, msg: `${keys.length} khoá vùng gốc (${keys.join(", ")}) đều có thư mục khai steward, và ngược lại.` };
 });
 
+/* ---- 10. Nhãn lane trong commit — K2-3 --------------------------------- */
+// Quy thuộc một COMMIT cho một phiên. Vì sao cần: `safe-push` quy commit theo chủ HIỆN TẠI của
+// vùng, mà chủ sở hữu là trạng thái sống còn commit là chuyện đã qua — nên nó sai cả hai chiều,
+// và chiều nguy hiểm là **im lặng đẩy kèm việc người khác** khi bạn vừa nhận vùng của họ. Xem
+// ghi chú dài ở `laneFromMessage` trong repo-structure.mjs.
+//
+// CHẾ ĐỘ CẢNH BÁO, CÓ CHỦ Ý. 509 commit trong lịch sử repo không có nhãn nào, và các phiên khác
+// đang có commit chưa push ngay lúc này — bật chặn ngay là làm đỏ cổng của người không liên
+// quan, đúng kiểu chặn oan mà cả lớp phân vùng này sinh ra để tránh. Nên: nhãn hỏng thì ĐỎ
+// (không quy thuộc được là lỗi thật, và chỉ người vừa gõ nó mới sửa được), thiếu nhãn thì chỉ
+// nhắc. Bật chặn là một quyết định LUẬT — khai ở `.repo-structure.json`, và file đó thuộc `_root`
+// nên phiên này KHÔNG tự bật được. Đã ghi vào HANDOFF.
+check("Nhãn lane trong commit", () => {
+  if (!originMainResolves) {
+    return { ok: true, skipped: true, msg: "Không so được với origin/main nên không đếm được commit nào chưa push — xem cảnh báo ở đầu báo cáo." };
+  }
+  const shas = git("log", "--format=%H", "origin/main..HEAD").split("\n").filter(Boolean);
+  if (!shas.length) return { ok: true, msg: "Không có commit nào chưa push." };
+  const hong = [];
+  const thieu = [];
+  const cuaToi = [];
+  const cuaNguoiKhac = new Map();
+  for (const sha of shas) {
+    const { lane, problem } = laneFromMessage(git("log", "-1", "--format=%B", sha));
+    if (problem) hong.push(`${sha.slice(0, 7)} (${problem})`);
+    else if (!lane) thieu.push(sha.slice(0, 7));
+    else if (lane === asLabel) cuaToi.push(sha.slice(0, 7));
+    else cuaNguoiKhac.set(lane, (cuaNguoiKhac.get(lane) ?? 0) + 1);
+  }
+  // Nhãn HỎNG thì ĐỎ: một commit mang hai nhãn khác nhau, hay nhãn rỗng, là thứ không ai quy
+  // thuộc được — và nó chỉ có thể do phiên vừa gõ commit đó tạo ra, nên không có chuyện đổ oan.
+  if (hong.length) {
+    return { ok: false, msg: `LANE_KHONG_QUY_THUOC_DUOC: ${hong.join(" · ")}. Sửa thông điệp commit (\`git commit --amend\`) cho mỗi commit đúng MỘT dòng \`${LANE_TRAILER} <nhãn-phiên>\`.` };
+  }
+  const ke = [];
+  if (cuaToi.length) ke.push(`${cuaToi.length} của bạn`);
+  for (const [lane, n] of [...cuaNguoiKhac].sort()) ke.push(`${n} của "${lane}"`);
+  if (thieu.length) {
+    return {
+      ok: true,
+      skipped: true,
+      msg: `${thieu.length}/${shas.length} commit chưa push KHÔNG có nhãn (${thieu.slice(0, 6).join(", ")}${thieu.length > 6 ? ", …" : ""})${ke.length ? ` · ${ke.join(" · ")}` : ""}. Chưa chặn (509 commit cũ đều không có nhãn), nhưng quy theo vùng sai được cả hai chiều. Từ nay thêm dòng cuối commit: \`${LANE_TRAILER} ${asLabel}\``
+    };
+  }
+  return { ok: true, msg: `${shas.length} commit chưa push đều quy thuộc được: ${ke.join(" · ")}.` };
+});
+
 /* ---- chống tự tháo cổng ------------------------------------------------- */
 // Cách dễ nhất để "làm cho cổng xanh" là lặng lẽ xoá bớt một phép kiểm.
 // Con số này chặn đúng việc đó: thêm phép kiểm thật thì tăng nó lên và ghi
@@ -472,7 +519,9 @@ check("Bất biến quyền sở hữu ba tầng", () => {
 // một dòng vào HANDOFF.md gốc repo, đúng luật chống tự tháo cổng.
 // 2026-09-02, phiên K2-2b: 8 → 9. Thêm "Bất biến quyền sở hữu ba tầng", vì trong cùng ngày hai
 // công cụ đã quy một file về hai vùng khác nhau mà cổng vẫn xanh. Lý do ghi ở HANDOFF.md gốc.
-const EXPECTED_CHECKS = 9;
+// 2026-09-02, phiên K2-3: 9 → 10. Thêm "Nhãn lane trong commit", vì quy commit theo chủ HIỆN
+// TẠI của vùng sai cả hai chiều — và chiều nguy hiểm là im lặng đẩy kèm việc người khác.
+const EXPECTED_CHECKS = 10;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

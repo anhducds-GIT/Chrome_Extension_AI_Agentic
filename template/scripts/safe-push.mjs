@@ -18,7 +18,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyAtEof, claimPrefixesFrom, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
+import { appendOnlyAtEof, claimPrefixesFrom, laneFromMessage, LANE_TRAILER, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -130,11 +130,41 @@ function ownersOf(sha) {
   return areas.map((area) => ({ area, owner: claims[area]?.owner ?? null }));
 }
 
+/* QUY THEO AI ĐÃ LÀM, KHÔNG THEO AI ĐANG GIỮ VÙNG — K2-3.
+   Bản cũ chỉ có một cách quy: xem chủ HIỆN TẠI của vùng mà commit chạm. Sai cả hai chiều, xem
+   ghi chú dài ở `laneFromMessage` trong repo-structure.mjs. Nay:
+     · có nhãn `Lane:` → quy theo nhãn. Chính xác, và không đổi khi quyền đổi chủ.
+     · nhãn HỎNG      → KHÔNG quy thuộc được → coi là của phiên khác (fail closed). Thà chặn
+                        oan mình còn hơn im lặng đẩy việc người khác.
+     · KHÔNG có nhãn  → lùi về quy theo vùng như cũ, VÀ nói to là đang lùi. Bắt buộc phải lùi:
+                        509 commit trong lịch sử repo không có nhãn nào, chặn hết là khoá repo. */
+const laneOf = (sha) => laneFromMessage(gitQuiet("log", "-1", "--format=%B", sha));
+
 const rows = pending.map((commit) => {
   const areas = ownersOf(commit.sha);
-  const foreign = areas.filter((a) => a.owner && a.owner !== asLabel);
-  return { ...commit, areas, foreign };
+  const { lane, problem } = laneOf(commit.sha);
+  let foreign;
+  let basis;
+  if (problem) {
+    foreign = [{ area: "(nhãn lane hỏng)", owner: problem }];
+    basis = "lane-hong";
+  } else if (lane) {
+    foreign = lane === asLabel ? [] : [{ area: `lane ${lane}`, owner: lane }];
+    basis = "lane";
+  } else {
+    foreign = areas.filter((a) => a.owner && a.owner !== asLabel);
+    basis = "vung";
+  }
+  return { ...commit, areas, foreign, lane, laneProblem: problem, basis };
 });
+
+const khongCoNhan = rows.filter((row) => row.basis === "vung");
+if (khongCoNhan.length) {
+  console.log(`\n⚠ ${khongCoNhan.length}/${rows.length} commit KHÔNG có nhãn \`${LANE_TRAILER} <phiên>\`, nên đang tạm quy theo VÙNG.`);
+  console.log(`  Quy theo vùng sai được cả hai chiều: từ chối việc của chính bạn nếu vùng đã đổi chủ,`);
+  console.log(`  và im lặng đẩy kèm việc người khác nếu bạn vừa nhận vùng của họ.`);
+  console.log(`  Từ nay thêm một dòng cuối thông điệp commit:  ${LANE_TRAILER} ${asLabel}\n`);
+}
 
 console.log(`\nSẮP ĐẨY LÊN origin/main — phiên "${asLabel}"`);
 console.log(`${rows.length} commit:\n`);
@@ -142,6 +172,12 @@ for (const row of rows) {
   const mark = row.foreign.length ? "  ⚠" : "   ";
   const areaText = row.areas.map((a) => `${a.area}${a.owner ? ` [${a.owner}]` : " [trống chủ]"}`).join(", ") || "(chỉ claims.json)";
   console.log(`${mark} ${row.sha.slice(0, 7)}  ${row.subject.slice(0, 68)}`);
+  // In cả CĂN CỨ quy thuộc, không chỉ kết quả: đọc "vùng: _root [ai-đó]" mà không biết nó đang
+  // quy theo nhãn hay theo vùng thì không kiểm lại được phán quyết. Ba căn cứ, ba cách hiện.
+  const canCu = row.laneProblem ? `NHÃN HỎNG (${row.laneProblem.split(":")[0]})`
+    : row.lane ? `lane ${row.lane}${row.lane === asLabel ? " — của bạn" : ""}`
+    : "KHÔNG có nhãn → tạm quy theo vùng";
+  console.log(`      ${canCu}`);
   console.log(`      vùng: ${areaText}`);
 }
 

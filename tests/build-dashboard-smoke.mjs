@@ -894,6 +894,90 @@ function antiDrift(text, measurements = {}) {
   }
 }
 
+/* 23d. K2-3 · safe-push quy commit theo AI ĐÃ LÀM, không theo AI ĐANG GIỮ VÙNG.
+   ĐÂY LÀ CA NGUY HIỂM NHẤT của mô hình cũ, và nó im lặng: một commit của phiên khác nằm trong
+   vùng mà TÔI vừa nhận thì phép quy theo-vùng nói "của tôi" → safe-push **đẩy kèm việc của họ
+   mà không cảnh báo gì**. Chiều ngược lại chỉ gây chặn oan (ồn ào, ai cũng thấy); chiều này
+   công bố việc chưa ai duyệt (im lặng, không ai thấy). Audit độc lập chỉ ra cặp này khi bác bản
+   K2-2 đầu tiên, và đó là lý do K2-3 phải đứng TRƯỚC K2-2. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-3-lane-trailer-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  const push = (label) => spawnSync(process.execPath, [join(tempRoot, "scripts", "safe-push.mjs"), "--as", label, "--dry-run"], {
+    cwd: tempRoot, encoding: "utf8"
+  });
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2-3 Lane");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "safe-push.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1,
+      areas: { "docs/": { steward: "_docs", mutability: "rw", ownership_mode: "root" } }
+    }, null, 2));
+    // `_docs` là của "toi" — nên phép quy THEO VÙNG sẽ nói mọi commit trong `docs/` là của tôi.
+    put(".agents/claims.json", JSON.stringify({ claims: {
+      _root: { owner: null }, _docs: { owner: "toi" }
+    } }, null, 2));
+    put("docs/ghi-chu.md", "seed\n");
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed");
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+
+    // Commit của NGƯỜI KHÁC, trong vùng của TÔI, mang nhãn của họ.
+    put("docs/ghi-chu.md", "seed\nviec cua nguoi khac\n");
+    gitAt("add", "docs/ghi-chu.md");
+    gitAt("commit", "-m", "docs: viec cua nguoi khac\n\nLane: nguoi-khac");
+
+    const r1 = push("toi");
+    const out1 = `${r1.stdout}${r1.stderr}`;
+    // MÔ HÌNH CŨ SẼ CHO QUA ĐÂY. Mô hình mới phải TỪ CHỐI.
+    assert.match(out1, /CHỐI PUSH/,
+      "commit cua phien khac phai bi tu choi DU no nam trong vung toi dang giu: " + out1.slice(0, 700));
+    assert.match(out1, /lane nguoi-khac/, "va phai noi ro quy theo NHAN, khong phai theo vung");
+    assert.notEqual(r1.status, 0, "tu choi thi khong duoc thoat 0");
+
+    // Vế NGƯỢC: chính chủ nhãn thì đẩy được, dù vùng KHÔNG phải của họ (`_docs` là của "toi").
+    // Đây là chiều thứ hai của cùng một lỗi cũ: mô hình theo-vùng se TU CHOI viec cua chinh ho.
+    const r2 = push("nguoi-khac");
+    const out2 = `${r2.stdout}${r2.stderr}`;
+    assert.doesNotMatch(out2, /CHỐI PUSH/,
+      "chinh chu nhan phai day duoc viec cua minh, du vung da doi chu: " + out2.slice(0, 700));
+    assert.match(out2, /lane nguoi-khac — của bạn/, "va phai noi ro day la cua ho");
+    assert.equal(r2.status, 0, "viec cua chinh minh thi --dry-run phai thoat 0");
+
+    // Commit KHÔNG có nhãn: lùi về quy theo vùng, VÀ phải nói to là đang lùi.
+    put("docs/ghi-chu.md", "seed\nviec cua nguoi khac\nkhong nhan\n");
+    gitAt("add", "docs/ghi-chu.md");
+    gitAt("commit", "-m", "docs: khong co nhan");
+    const r3 = push("toi");
+    const out3 = `${r3.stdout}${r3.stderr}`;
+    assert.match(out3, /KHÔNG có nhãn/, "thieu nhan thi phai NOI TO la dang lui ve quy theo vung");
+    assert.match(out3, /Lane: toi/, "va phai chi luon dong can them, kem dung nhan cua phien dang chay");
+
+    // Nhãn HỎNG: fail closed — thà chặn oan mình còn hơn im lặng đẩy việc người khác.
+    put("docs/ghi-chu.md", "seed\nviec cua nguoi khac\nkhong nhan\nnhan hong\n");
+    gitAt("add", "docs/ghi-chu.md");
+    gitAt("commit", "-m", "docs: nhan hong\n\nLane: mot\nLane: hai");
+    const r4 = push("toi");
+    const out4 = `${r4.stdout}${r4.stderr}`;
+    assert.match(out4, /NHÃN HỎNG|LANE_XUNG_DOT/, "hai nhan khac nhau thi phai bao hong, khong duoc chon cai dau");
+    assert.notEqual(r4.status, 0, "khong quy thuoc duoc thi FAIL CLOSED");
+    ok("K2-3 · safe-push quy theo NHAN: commit nguoi khac trong vung cua toi bi TU CHOI; thieu nhan thi noi to; nhan hong thi fail closed");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-3-lane-trailer-")), "chỉ dọn đúng temp fixture K2-3");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
 
 /* ==========================================================================
    S2 — cổng vào: llms.txt + repo-map.json + Khối A/D

@@ -1182,3 +1182,45 @@ phạm vi khác cái nó tưởng — tệ hơn im lặng. Việc kế cho ai l�
 `origin/main`**, rồi mới cho nó chặn.
 
 **Số:** suite giữ **259** (phép ghim thêm vào một khối đã có).
+
+## 2026-09-02 — `claude-k2-design`: K2-3 · nhãn `Lane:` trong commit
+
+**Lỗi nó sửa, và nó sai theo CẢ HAI chiều.** `safe-push` quy một commit cho ai bằng cách xem
+**chủ HIỆN TẠI** của vùng mà commit đó chạm. Chủ sở hữu là trạng thái **sống**; commit là chuyện
+**đã qua**. Hệ quả:
+
+- commit của **tôi** trong một vùng nay là của người khác → safe-push **từ chối việc của tôi**;
+- commit của **người khác** trong một vùng nay là của tôi → safe-push coi là của tôi và
+  **đẩy kèm việc của họ trong im lặng**.
+
+Chiều thứ nhất gây chặn oan — ồn ào, ai cũng thấy. **Chiều thứ hai công bố việc chưa ai duyệt,
+và không ai thấy.** Đó mới là chiều đáng sợ, và nó là ca ghim chính của phiên này.
+
+Audit độc lập (Codex) chỉ ra đúng cặp này khi bác bản K2-2 đầu tiên. Vì thế **K2-3 đứng TRƯỚC
+K2-2**, không phải sau — thứ tự tôi xếp trong bản thiết kế đầu là sai.
+
+### Làm gì
+
+- `laneFromMessage()` đọc trailer `Lane: <nhãn-phiên>`. **Nguồn gốc, KHÔNG phải quyền** — quyền
+  vẫn ở `claims.json`, nếu không thì một phiên tự cấp phạm vi cho mình bằng cách gõ một dòng.
+- Phân biệt **THIẾU** nhãn (ca thường: 509 commit lịch sử đều vậy) với nhãn **HỎNG** (rỗng, có
+  khoảng trắng, hai nhãn khác nhau → không quy thuộc được, phải nói ra).
+- `safe-push` quy theo nhãn khi có; **nhãn hỏng → coi là của phiên khác** (thà chặn oan mình còn
+  hơn im lặng đẩy việc người khác); **thiếu nhãn → lùi về quy theo vùng, VÀ nói to là đang lùi**,
+  kèm đúng dòng cần thêm. Mỗi dòng commit nay in cả **căn cứ** quy thuộc, không chỉ kết quả —
+  đọc "vùng: _root [ai-đó]" mà không biết nó quy theo nhãn hay theo vùng thì không kiểm lại được.
+- Cổng: phép kiểm **#10 "Nhãn lane trong commit"**. `EXPECTED_CHECKS` 9 → **10**.
+
+### CHẾ ĐỘ CẢNH BÁO, có chủ ý
+
+509 commit trong lịch sử không có nhãn nào, và các phiên khác đang có commit chưa push **ngay lúc
+này**. Bật chặn ngay là làm đỏ cổng của người không liên quan — đúng kiểu chặn oan mà cả lớp phân
+vùng này sinh ra để tránh. Nên: **nhãn hỏng thì ĐỎ** (chỉ phiên vừa gõ nó mới tạo ra được, không
+có chuyện đổ oan), **thiếu nhãn thì chỉ nhắc**.
+
+**Bật chặn là quyết định LUẬT.** Nó cần hai thứ tôi không có: một dòng trong `AGENTS.md` dạy
+convention, và một cờ trong `.repo-structure.json` — **cả hai thuộc `_root`**. Việc kế cho phiên
+giữ `_root`: viết convention vào mục 0 của `AGENTS.md`, rồi bật chặn khi phần lớn commit đã có
+nhãn. Đừng bật khi chưa dạy.
+
+**Số:** suite 259 → **261**. Cổng 9 → **10** phép kiểm.

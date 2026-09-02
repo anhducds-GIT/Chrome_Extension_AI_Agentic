@@ -645,7 +645,7 @@ const chay = (deps) => {
   // STATE khoá quyền ↔ MÁY một hàm), vì trong cùng ngày `session-check` và `safe-push` đã quy
   // một file về hai vùng khác nhau mà cổng vẫn xanh. Con số này phải sửa BẰNG TAY ở hai chỗ —
   // đó là chủ ý: lớp chống tự tháo cổng chỉ có nghĩa nếu đổi nó là một hành động có ý thức.
-  assert.match(gate, /const EXPECTED_CHECKS = 9;/, "thêm cổng con thì EXPECTED_CHECKS phải là 9 — lớp chống tự tháo cổng");
+  assert.match(gate, /const EXPECTED_CHECKS = 10;/, "thêm cổng con thì EXPECTED_CHECKS phải là 10 — lớp chống tự tháo cổng");
   // Và nó KHÔNG được biến nợ cấu trúc thành cổng đỏ ở phiên S4.
   // S7: cổng con nay PHẢI biến mã thoát 1 thành cổng đỏ, và phải TÁCH mã 1 (repo có nợ) khỏi
   // mã 2 (bộ kiểm hỏng). Đây là mắt nối duy nhất giữa check-bootstrap và cổng đóng phiên;
@@ -670,7 +670,7 @@ const chay = (deps) => {
   assert.ok(block.indexOf("error.status === 1") < block.indexOf("BOOTSTRAP_KHONG_CHAY_DUOC"),
     "nhánh mã 1 phải xét trước nhánh bộ kiểm hỏng");
   assert.match(block, /^\s*return \{ ok: true, msg: `\$\{tomTat\(stdout\)\}/m, "mã 0 mới được xanh");
-  ok("TÍCH HỢP · session-check.mjs biến mã thoát 1 thành cổng đỏ, EXPECTED_CHECKS = 9");
+  ok("TÍCH HỢP · session-check.mjs biến mã thoát 1 thành cổng đỏ, EXPECTED_CHECKS = 10");
 }
 
 /* ---- Mắt nối cuối: MÃ THOÁT THẬT CỦA MỘT TIẾN TRÌNH ---------------------- */
