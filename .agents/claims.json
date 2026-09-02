@@ -10,25 +10,25 @@
       "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-bridge-multiprofile",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Port multi-profile Bridge (thiet ke da duyet, mau gg-flow-video 6c59266): host sessions Map + target/bridge.sessions/served_by, khoi instance trong auth (WORKER_ID duc-auto-gemini), o ten profile trong panel, --target cho CLI/bridge-rpc, test ghim + mutation, audit. KHONG dung keepalive-deadline/backoff cua commit 3514aa5.",
-      "released_at": null
+      "task": "TRA QUYEN 2026-09-02 (claude-bridge-multiprofile). XONG + da push: port multi-profile (550da43) + va authSent tu audit (5aa7540) + evidence 2 vong audit. Suite 84/84, mutation 13/13 do, host moi deploy + song tren 32148. CON MO (tay Duc): reload extension tung profile + dat ten o tab BRIDGE; no cu: do live nhanh tat host qua 2 phut.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-bridge-multiprofile",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Port multi-profile Bridge sau gemini. HOST NHANH NAY KHAC (auth_challenge/auth_proof HMAC) — diff tay, khong copy de. WORKER_ID duc-auto-chatgpt.",
-      "released_at": null
+      "task": "TRA QUYEN 2026-09-02 (claude-bridge-multiprofile). XONG + da push: port multi-profile giu nguyen bat tay challenge (414e7ea) + va authSent (5aa7540) + evidence 2 vong audit. Suite 97/97, mutation 13/13 do, host moi deploy + song tren 32147. CON MO (tay Duc): reload extension tung profile + dat ten; no cu: B-14…B-21.",
+      "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "claude-bridge-multiprofile",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "DANG GIU DEN KHI PUSH XONG. Cap nhat dong so tay AGENTS.md (multi-profile da port xong gemini+chatgpt) + sinh lai DASHBOARD/FEATURE-PARITY sau cac commit port.",
-      "released_at": null
+      "task": "TRA QUYEN 2026-09-02 sau push (claude-bridge-multiprofile): cap nhat dong so tay multi-profile (ca ba worker da port) + sinh lai DASHBOARD/llms/repo-map/FEATURE-PARITY.",
+      "released_at": "2026-09-02"
     }
   }
 }
