@@ -4,7 +4,7 @@ import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { dirname, join, sep } from "node:path";
 
-import { buildDashboard, buildLlmsTxt, buildRepoMap, collectModel, compareRepoMap, createDefaultDeps, createHeadDeps, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, priorityFrom, rankOf, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
+import { buildDashboard, buildLlmsTxt, buildRepoMap, collectModel, compareRepoMap, createDefaultDeps, createHeadDeps, DEFAULT_UNITS, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, priorityFrom, rankOf, readUnits, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -1773,4 +1773,105 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   assert.throws(() => collectModel(noAreas), /CAU_TRUC_THIEU_AREAS/, "thieu khoi areas phai bao do");
   ok("SAU-VONG4 chu thu muc lay tu .repo-structure.json, file hong thi bao do chu khong lui ve claims");
 }
+/* K1 (2026-09-02) — HÌNH DẠNG ĐƠN VỊ THAM SỐ HOÁ.
+   Trước K1, bộ sinh đóng cứng "workers" và "manifest.json". Đó là hình dạng riêng của repo
+   Chrome, không phải luật chung — nên bộ MÁY không đi được sang repo khác dù bộ LUẬT đã sạch
+   91% tên dự án. Ghim: (a) không khai thì y như cũ, (b) khai sai thì NÉM chứ không âm thầm
+   lùi về mặc định, (c) khai hình dạng khác thì tìm đúng đơn vị ở chỗ khác — đo trên repo git
+   THẬT, vì đó là điều duy nhất chứng minh được tính di động. */
+{
+  const cfg = (obj) => ({
+    fileExists: (p) => p === ".repo-structure.json",
+    readFile: () => JSON.stringify(obj)
+  });
+
+  assert.deepEqual(readUnits({ fileExists: () => false }), DEFAULT_UNITS,
+    "repo chua co .repo-structure.json thi phai dung hinh dang mac dinh");
+  assert.deepEqual(readUnits(cfg({ schema_version: 1 })), DEFAULT_UNITS,
+    "khong khai khoi units thi phai dung mac dinh — day la loi tuong thich nguoc");
+  assert.equal(DEFAULT_UNITS.rootDir, "workers", "mac dinh phai la hinh dang cu cua repo Chrome");
+  assert.equal(DEFAULT_UNITS.marker, "manifest.json", "mac dinh phai la hinh dang cu cua repo Chrome");
+
+  assert.deepEqual(readUnits(cfg({ units: { root_dir: "packages", marker: "package.json", depth: 1 } })),
+    { rootDir: "packages", marker: "package.json", depth: 1 }, "khai du ba truong thi phai doc dung ca ba");
+  assert.equal(readUnits(cfg({ units: { depth: 3 } })).rootDir, "workers",
+    "khai thieu truong thi truong do lay mac dinh");
+  assert.equal(readUnits(cfg({ units: { root_dir: null } })).rootDir, null,
+    "root_dir null la hop le — repo khong co don vi con");
+
+  // FAIL CLOSED. Khai sai mà lặng lẽ lùi về mặc định là kiểu hỏng tệ nhất: bảng vẫn sinh ra,
+  // trông như thật, và đếm đơn vị ở SAI thư mục.
+  for (const [bad, why] of [
+    [{ units: [] }, "units la mang"],
+    [{ units: { root_dir: "a/b" } }, "root_dir co dau gach cheo"],
+    [{ units: { root_dir: "" } }, "root_dir rong"],
+    [{ units: { marker: "" } }, "marker rong"],
+    [{ units: { marker: "docs/x.json" } }, "marker co duong dan"],
+    [{ units: { depth: 0 } }, "depth 0"],
+    [{ units: { depth: 9 } }, "depth qua sau"],
+    [{ units: { depth: "2" } }, "depth la chuoi"]
+  ]) {
+    assert.throws(() => readUnits(cfg(bad)), /UNITS_HONG/, `khai sai (${why}) phai NEM, khong duoc lui ve mac dinh`);
+  }
+  ok("K1 hinh dang don vi doc tu cau hinh; khong khai thi y nhu cu, khai sai thi nem");
+}
+
+{
+  // Phép kiểm di động THẬT: một repo có layout khác hẳn repo Chrome —
+  // `packages/<ten>/package.json`, KHÔNG có tầng phiên bản. Bản trước K1 sẽ tìm trong
+  // "workers/" và trả về 0 đơn vị con; bản sau phải tìm đúng `packages/alpha`.
+  const tempRoot = mkdtempSync(join(tmpdir(), "units-shape-"));
+  try {
+    const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+    const put = (relPath, text) => {
+      const target = join(tempRoot, ...relPath.split("/"));
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, text, "utf8");
+    };
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "Units Shape Test");
+    gitAt("config", "user.email", "units@example.invalid");
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1,
+      units: { root_dir: "packages", marker: "package.json", depth: 1 },
+      areas: { "packages/": {}, "docs/": {}, "workers/": {} }
+    }));
+    put(".agents/claims.json", JSON.stringify({ claims: {} }));
+    // MỒI BẪY, cố ý: repo tạm CÓ luôn `workers/` với một đơn vị hợp lệ. Không có mồi này thì
+    // hai phép kiểm dưới đều RỖNG — "không tìm trong workers/" đúng một cách vô nghĩa vì
+    // workers/ không tồn tại, và một đột biến lùi `root_dir: null` về "workers" vẫn thoát.
+    // Đo thật: đột biến đó ĐÃ thoát ở bản đầu của phép kiểm này.
+    put("workers/legacy/package.json", JSON.stringify({ name: "Goi Cu", version: "1.0.0" }));
+    put("packages/alpha/package.json", JSON.stringify({ name: "Goi Alpha", version: "2.0.0" }));
+    put("packages/alpha/README.md", "readme\n");
+    put("docs/ghi-chu.md", "---\nkind: study\nstatus: active\nttl_days: 90\n---\nx\n");
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed");
+
+    const model = collectModel(createDefaultDeps(tempRoot), { tolerant: true });
+    const keys = model.rows.map((row) => row.key);
+    assert.ok(keys.includes("packages/alpha"),
+      `phai tim thay don vi o layout khac; dang thay: ${JSON.stringify(keys)}`);
+    assert.ok(!keys.some((k) => k.startsWith("workers/")),
+      "khong duoc con tim trong workers/ khi cau hinh da khai packages/");
+    assert.equal(model.units.marker, "package.json", "model phai lo hinh dang ra cho cong kiem cau truc doc");
+
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1,
+      units: { root_dir: null, marker: "package.json", depth: 1 },
+      areas: { "packages/": {}, "docs/": {}, "workers/": {} }
+    }));
+    gitAt("add", ".");
+    gitAt("commit", "-m", "khong co don vi con");
+    const bare = collectModel(createDefaultDeps(tempRoot), { tolerant: true });
+    assert.deepEqual(bare.rows.map((row) => row.key), ["_root"],
+      "root_dir null thi chi con don vi GOC — day la ca cua repo trong, tuc phep thu repo rong");
+    ok("K1 bo may tim dung don vi tren repo git THAT co layout khac han, va chiu duoc repo khong co don vi con");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "units-shape-")), "chi don dung temp fixture cua phep kiem nay");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

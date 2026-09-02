@@ -36,6 +36,48 @@ export const DASHBOARD_FILE = "DASHBOARD.md";
 export const REPO_MAP_SCHEMA_VERSION = 1;
 export const REPO_PROFILE = "P1"; // monorepo nhiều gói — REPO-STRUCTURE-SPEC-V1 mục 3
 
+/* HÌNH DẠNG ĐƠN VỊ — tham số hoá 2026-09-02 (K1).
+   Trước đây bộ sinh đóng cứng hai chuỗi: thư mục đơn vị là "workers", file đánh dấu là
+   "manifest.json". Hai chuỗi đó KHÔNG phải luật chung — chúng là hình dạng riêng của repo
+   Chrome. Repo khác dùng "packages/", "services/", hoặc không có tầng phiên bản, thì bộ sinh
+   không chạy. Đây là lý do bộ MÁY kém di động hơn bộ LUẬT (luật đo được 91% sạch tên dự án).
+
+   `depth` = số tầng thư mục dưới `root_dir` cho tới đơn vị:
+     depth 2 → workers/<gói>/<phiên-bản>/manifest.json   (repo Chrome, P1)
+     depth 1 → packages/<tên>/package.json               (monorepo phẳng)
+     root_dir null → repo không có đơn vị con, chỉ có đơn vị GỐC (P2/P3/P4)
+
+   Mặc định giữ nguyên hình dạng cũ, nên repo chưa khai khối `units` vẫn sinh ra y hệt. */
+export const DEFAULT_UNITS = Object.freeze({ rootDir: "workers", marker: "manifest.json", depth: 2 });
+
+export function readUnits(deps) {
+  if (!deps.fileExists(".repo-structure.json")) return DEFAULT_UNITS;
+  let parsed;
+  try { parsed = readJson(deps, ".repo-structure.json"); }
+  catch (error) {
+    throw new Error(`CAU_TRUC_HONG: .repo-structure.json không phải JSON đọc được (${error.message}). Sửa file đó rồi chạy lại.`);
+  }
+  const block = parsed?.units;
+  if (block === undefined) return DEFAULT_UNITS;
+  if (block === null || typeof block !== "object" || Array.isArray(block)) {
+    throw new Error("UNITS_HONG: khối `units` trong .repo-structure.json phải là object (hoặc bỏ hẳn để dùng mặc định).");
+  }
+  const rootDir = block.root_dir === null ? null : (block.root_dir ?? DEFAULT_UNITS.rootDir);
+  const marker = block.marker ?? DEFAULT_UNITS.marker;
+  const depth = block.depth ?? DEFAULT_UNITS.depth;
+  // Fail-closed: khai sai còn tệ hơn không khai, vì bảng vẫn sinh ra và trông như thật.
+  if (rootDir !== null && (typeof rootDir !== "string" || rootDir === "" || rootDir.includes("/"))) {
+    throw new Error(`UNITS_HONG: units.root_dir phải là MỘT đoạn thư mục (ví dụ "workers"), hoặc null nếu repo không có đơn vị con. Đang là: ${JSON.stringify(block.root_dir)}`);
+  }
+  if (typeof marker !== "string" || marker === "" || marker.includes("/")) {
+    throw new Error(`UNITS_HONG: units.marker phải là tên MỘT file (ví dụ "manifest.json"). Đang là: ${JSON.stringify(block.marker)}`);
+  }
+  if (!Number.isInteger(depth) || depth < 1 || depth > 4) {
+    throw new Error(`UNITS_HONG: units.depth phải là số nguyên 1..4. Đang là: ${JSON.stringify(block.depth)}`);
+  }
+  return Object.freeze({ rootDir, marker, depth });
+}
+
 // Hai trường này đổi theo TỪNG commit. So sánh nguyên văn thì cổng kiểm sẽ đỏ
 // ngay sau mỗi commit dù nội dung thật không đổi. Lọc ra khi so, giống hệt cách
 // STAMP_PREFIX được lọc khỏi DASHBOARD.
@@ -294,7 +336,7 @@ export function validateStatusDetailed(fm, deps) {
   // một `STATUS.md` ở gốc có thể trỏ `version_source` sang `workers/<gói-khác>/manifest.json`
   // và lấy số đo của người ta. Audit Codex vòng 4, mục 3.
   if (deps.rootUnit && fm.version_source && fm.version_source.includes("/")) {
-    fail(`version_source "${fm.version_source}" của đơn vị GỐC repo phải là file ở tầng ngoài cùng (ví dụ "manifest.json"), không được trỏ vào thư mục con — số đo sẽ bị gán nhầm đơn vị.`);
+    fail(`version_source "${fm.version_source}" của đơn vị GỐC repo phải là file ở tầng ngoài cùng (ví dụ "${deps.unitMarker ?? DEFAULT_UNITS.marker}"), không được trỏ vào thư mục con — số đo sẽ bị gán nhầm đơn vị.`);
   }
   if (deps.packageDir) {
     const expectedId = deps.packageId;
@@ -419,6 +461,7 @@ function measuredRow(deps, dirRelPath, manifestRelPath, tracked = trackedIndex(d
    phải "một đơn vị khai sai" mà là "không đọc nổi bảng chủ sở hữu" — đoán tiếp là nói dối. */
 export function collectModel(deps = createDefaultDeps(), { tolerant = false } = {}) {
   const tracked = trackedIndex(deps);
+  const units = readUnits(deps);
   // Ở chế độ tolerant, một `manifest.json` thiếu/hỏng không được phép giết cả lượt chạy —
   // nó chỉ làm các cột ĐO của riêng đơn vị đó về 0. Chế độ thường vẫn để lỗi bay lên.
   const measure = (dirRelPath, manifestRelPath) => {
@@ -429,14 +472,27 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
   const descriptors = [];
   // Phát hiện package cũng đọc từ git: một thư mục worker chưa commit không được
   // xuất hiện trong bảng đã commit.
-  for (const packageName of tracked.dirsIn("workers")) {
-    const packagePath = `workers/${packageName}`;
-    for (const versionName of tracked.dirsIn(packagePath)) {
-      const dirRelPath = `${packagePath}/${versionName}`;
-      const manifestPath = `${dirRelPath}/manifest.json`;
-      if (deps.fileExists(manifestPath)) descriptors.push({ packageName, packagePath, versionName, dirRelPath, manifestPath });
+  // Đi xuống đúng `units.depth` tầng. Với hình dạng mặc định (workers/<gói>/<phiên-bản>)
+  // vòng này duyệt y hệt bản đóng cứng cũ — đó là điều kiện nghiệm thu của K1: bảng sinh ra
+  // phải giống HỆT TỪNG BYTE bản đã commit.
+  const walkUnits = (prefix, segments) => {
+    if (segments.length === units.depth) {
+      const markerPath = `${prefix}/${units.marker}`;
+      if (deps.fileExists(markerPath)) {
+        descriptors.push({
+          packageName: segments[0],
+          packagePath: `${units.rootDir}/${segments[0]}`,
+          versionName: segments.length > 1 ? segments[segments.length - 1] : null,
+          dirRelPath: prefix,
+          manifestPath: markerPath,
+          idFallback: segments.join("-")
+        });
+      }
+      return;
     }
-  }
+    for (const name of tracked.dirsIn(prefix)) walkUnits(`${prefix}/${name}`, [...segments, name]);
+  };
+  if (units.rootDir !== null) walkUnits(units.rootDir, []);
 
   const parsed = [];
   const errors = [];
@@ -479,7 +535,7 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
       : 0;
     return {
       key: item.dirRelPath,
-      id: item.fm?.id ?? `${item.packageName}-${item.versionName}`,
+      id: item.fm?.id ?? item.idFallback,
       ...measured,
       lifecycle: item.fm?.lifecycle ?? "unclassified",
       missingStatus: !item.fm,
@@ -509,17 +565,17 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
   const rootFm = deps.fileExists(rootStatusPath) ? parseStatus(deps.readFile(rootStatusPath)).frontmatter : null;
   let rootErrors = [];
   if (rootFm) {
-    rootErrors = validateStatusDetailed(rootFm, { ...deps, statusPath: rootStatusPath, rootUnit: true });
+    rootErrors = validateStatusDetailed(rootFm, { ...deps, statusPath: rootStatusPath, rootUnit: true, unitMarker: units.marker });
     if (rootErrors.length && !tolerant) throw statusValidationError(rootErrors);
     errors.push(...rootErrors);
   }
   // Cùng luật như đơn vị trong `workers/`: STATUS sai thì KHÔNG tin `version_source` của nó
   // nữa, lùi về `manifest.json` ở gốc. Không có nhánh này thì ở chế độ tolerant một
   // `version_source` bịa ra sẽ làm cả lượt chạy chết — đúng thứ tolerant sinh ra để tránh.
-  const rootMeasured = measure("", rootErrors.length === 0 ? (rootFm?.version_source ?? "manifest.json") : "manifest.json");
+  const rootMeasured = measure("", rootErrors.length === 0 ? (rootFm?.version_source ?? units.marker) : units.marker);
   rows.push({
     key: "_root",
-    id: rootFm?.id ?? "extension-observer-v0",
+    id: rootFm?.id ?? "_root",   // K1: bỏ tên riêng của repo Chrome ra khỏi bộ máy
     ...rootMeasured,
     lifecycle: rootFm?.lifecycle ?? "unclassified",
     missingStatus: !rootFm,
@@ -555,7 +611,10 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
     docs: collectDocs(deps, headDate),
     // Rỗng ở chế độ thường (vì lỗi đã được ném). Chỉ có nội dung ở chế độ tolerant —
     // đó là nguồn DUY NHẤT của B2/B5/B7 trong cổng kiểm cấu trúc.
-    statusErrors: errors
+    statusErrors: errors,
+    // Hình dạng đơn vị của repo này. Cổng kiểm cấu trúc đọc lại để nói đúng tên file
+    // đánh dấu thay vì đóng cứng "manifest.json" trong thông báo lỗi.
+    units
   };
   model.gatewayLinks = gatewayLinks(model, deps);
   model.health = {

@@ -572,3 +572,37 @@ ghim-phiên-bản · bốn nấc migrate · bảy mốc M0–M6.
 
 **Việc kế tiếp:** M0 (GPT thu hoạch Project 3AI) và M1 (tách template). **Cần Đức chỉ một repo
 đang sống, khác loại** cho M4 — chưa có ứng viên.
+
+## 2026-09-02 — `claude-core-k1`: bộ máy thôi đóng cứng hình dạng repo Chrome
+
+**Phát hiện mở đầu, và nó đổi thứ tự việc.** Trước khi trích template, tôi đo thử bộ máy có
+di động không. **Bộ MÁY kém di động hơn bộ LUẬT nhiều:** luật đo được 91% sạch tên dự án,
+nhưng `build-dashboard.mjs` đóng cứng **hai chuỗi định hình cả repo** — thư mục đơn vị là
+`"workers"`, file đánh dấu là `"manifest.json"` — cộng một id dự phòng `"extension-observer-v0"`
+nằm thẳng trong bộ máy. Repo có layout khác là **không chạy**.
+
+Nếu trích trước rồi mới sửa thì sinh ra một template hỏng sẵn, và phải vá ở hai nơi. Nên đã
+**tham số hoá trước, trích sau**.
+
+**Làm gì:** thêm khối `units` vào `.repo-structure.json` (`root_dir` · `marker` · `depth`);
+bộ sinh và cổng kiểm đọc từ đó. `root_dir: null` = repo không có đơn vị con — chính là ca của
+một repo trống, tức nền cho phép thử repo rỗng sau này.
+
+**Bằng chứng mạnh nhất — bảng sinh ra GIỐNG HỆT TỪNG BYTE.** Chạy bộ máy CŨ (lấy từ HEAD) và
+bộ máy MỚI trên cùng một HEAD, so `DASHBOARD.md` + `llms.txt` + `repo-map.json`: **không khác
+một byte nào**. Tham số hoá không đánh rơi gì. Đây chính là ý "audit ngược từ template về repo
+Chrome" của Đức, ở dạng chặt nhất.
+
+**Số:** suite 225 → **227** (2 phép kiểm mới). **6/6 đột biến bị bắt.**
+
+**Một phép kiểm của tôi lúc đầu là GIẢ, đã sửa.** Đột biến "lùi `root_dir: null` về workers"
+**thoát** ở vòng đầu — vì repo tạm trong fixture không có `workers/` nên lùi về đó cũng không
+tìm thấy gì. Cùng lý do, assert "không được tìm trong workers/" khi ấy **rỗng nghĩa**. Đã thêm
+mồi bẫy `workers/legacy/package.json` vào fixture; sau đó đột biến bị bắt. Đúng cái bẫy repo
+này đã dính hai lần: mutation bị bắt giả vì fixture không dựng nổi ca hỏng.
+
+**CHƯA làm — nói rõ để không ai tưởng đã xong:** **chưa trích** một dòng nào ra `template/`.
+Phiên này chỉ làm bộ máy *có thể* đi được. Việc trích, cùng phép thử repo rỗng, là bước kế.
+
+**Việc kế tiếp:** trích `template/` theo bản kê khai, rồi chạy cặp phép thử — repo rỗng phải
+XANH, và repo Chrome phải KHÔNG tệ đi.

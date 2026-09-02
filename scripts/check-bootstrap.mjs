@@ -110,15 +110,19 @@ const report = (code, level, title, findings, note) => findings.length
 
 /* ---- B1 · thư mục có manifest.json mà không có STATUS.md ------------------ */
 export function checkB1(model) {
+  // K1 (2026-09-02): tên file đánh dấu đọc từ `.repo-structure.json` (khối `units`), không
+  // đóng cứng "manifest.json" nữa — repo khác dùng tên khác thì thông báo lỗi phải nói đúng
+  // tên của họ, nếu không người đọc sẽ đi tạo nhầm file.
+  const marker = model.units?.marker ?? "manifest.json";
   const findings = model.rows.filter((row) => row.missingStatus).map((row) => ({
     tag: "NO-STATUS",
-    where: row.key === "_root" ? `./manifest.json (${row.name})` : `${row.key}/manifest.json (${row.name})`,
+    where: row.key === "_root" ? `./${marker} (${row.name})` : `${row.key}/${marker} (${row.name})`,
     fix: [
       `tạo: ${row.key === "_root" ? "" : `${row.key}/`}STATUS.md ở cùng thư mục, chép từ STATUS.template.md`,
       "tối thiểu cần: schema, id, name, lifecycle, owner, version_source, current_focus, ref_readme, ref_handoff, next_step, priority_rank"
     ]
   }));
-  return report("B1", RED, "Thư mục có manifest.json mà không có STATUS.md", findings,
+  return report("B1", RED, `Thư mục có ${marker} mà không có STATUS.md`, findings,
     `đã soi ${model.rows.length} đơn vị`);
 }
 

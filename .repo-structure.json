@@ -2,6 +2,12 @@
   "_doc": "Bản đồ cấu trúc TĨNH của repo. Đây là tầng LAW: đổi khi thêm/bớt thư mục top-level, tức là hiếm. KHÔNG nhầm với .agents/claims.json — file đó là tầng STATE, ghi phiên AI nào đang giữ package nào, đổi vài lần mỗi phiên. Trộn hai tầng vào một file là trái luật mục 1 của REPO-STRUCTURE-SPEC-V1.",
   "schema_version": 1,
   "profile": "P1",
+  "units": {
+    "_doc": "Hình dạng đơn vị công việc của repo NÀY. Bộ sinh và cổng kiểm đọc khối này thay vì đóng cứng tên thư mục/tên file. Repo khác khai khác — đó là điểm khiến bộ máy đi được sang repo khác. root_dir null = repo không có đơn vị con, chỉ có đơn vị GỐC.",
+    "root_dir": "workers",
+    "marker": "manifest.json",
+    "depth": 2
+  },
   "bootstrap": {
     "_doc": "Muc chan cua cong kiem cau truc (scripts/check-bootstrap.mjs). Ma trong `blocking` ma DO thi session-check.mjs DO theo, va phien khong duoc bao xong. Ma khong co trong danh sach thi CHI CANH BAO. Day la tang LAW: doi khi Duc chot bat/tat chan mot phep kiem, tuc la hiem. Dat o day chu khong viet cung trong code de S8 va cac repo khac doi duoc danh sach ma khong phai sua script.",
     "_fail_closed": "THIEU khoi nay, hoac `blocking` khong phai mang, thi check-bootstrap.mjs THOAT MA 2 va cong DO. Co y: cach de nhat de tu thao chan la xoa cau hinh di, nen xoa cau hinh phai la mot loi to, khong phai mot su im lang.",

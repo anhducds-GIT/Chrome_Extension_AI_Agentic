@@ -3,11 +3,10 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-f18-evidence",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG: F-21 va + xac nhan live (luot F4R4) — so cai nay giu du chan doan tien-submit. F-18 cho tai hien. No nho con lai: nhanh ANH cua sidepanel cung khong trai ban cu.",
-      "released_at": "2026-09-02"
+      "task": "Duc cho trial thoai mai 02/09: chay chuoi 3 job (dung tran dev) de THU TAI HIEN F-18 — gia thuyet composer lai xuat hien tu job thu hai tro di."
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-core-k1",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-dieu-phoi). ADR-0001 (template doc lap, Project 3AI nghi) + roadmap muc 10 (Giai doan 2, M0-M6). Lan B rut khoi lo trinh.",
-      "released_at": "2026-09-02"
+      "task": "K1 loi: tham so hoa units (workers/manifest.json) ra .repo-structure.json de bo may di duoc sang repo khac.",
+      "released_at": null
     }
   }
 }
