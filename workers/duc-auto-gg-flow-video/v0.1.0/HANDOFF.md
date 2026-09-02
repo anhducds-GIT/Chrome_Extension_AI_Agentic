@@ -900,3 +900,30 @@ với F4R8 là **7/7 job, 42/50 credit trên `Bình`**, giao diện tiếng Vi�
   khớp luôn vào `WAITING_IDLE |`. Đã sửa bằng cách **tách riêng trường `state` rồi so bằng**.
   Đây là lần thứ ba trong ngày bị chuỗi con cắn (sau `composer` trong câu báo lỗi và các bản sao
   hằng số), nên xin ghi thành luật: **đừng dò trạng thái bằng chuỗi con của một dòng gộp.**
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 13): F-15 xong, và backlog bị bắt quả tang nói dối hai lần
+
+- **F-15 XONG.** Cổng tự động chặn chip `x2`+: đọc `x{n}` từ nhãn chip (`outputCountFromSummary`)
+  rồi **từ chối trước khi gõ và trước mọi cú bấm**, nên mọi đường thoát đều **0 credit**. Đây là
+  đường mất credit thật: `x2` là Flow sinh nhiều video một lượt, mà luật quy gán đòi **đúng một**
+  id mới → `OUTPUT_AMBIGUOUS`, không nhận cái nào trong khi credit đã tiêu.
+  **Tôi đặt sai chỗ lần đầu và test bắt được:** kiểm trước khi chuyển mode sẽ chặn nhầm **mọi**
+  job ảnh→video, vì chip Image vốn là `... x2`. Số đáng quan tâm là số trên **chip Video sắp dùng
+  để gửi**, nên cổng chạy ở cả hai nhánh: mode đã đúng, và **sau khi** chuyển xong.
+  Suite **93/93** · mutation **4/6**.
+  **Hai đột biến lọt lưới, nói rõ chứ không giấu:** cả hai nằm trên nhánh "không đọc được số
+  lượng" — một lớp phòng thủ thứ hai **hiện chưa thể tới được**, vì `VIDEO_MODE_SUMMARY_PATTERN`
+  đã đòi hậu tố `x{n}` mới nhận một nhãn là chip Video. **Cố ý không viết test giả vờ phủ nó:**
+  một test đi qua đường khác rồi báo "đã phủ" còn tệ hơn không có test.
+- **BACKLOG NÓI DỐI — bắt được hai chỗ, và đây là món nợ Đức chưa từng thấy.**
+  ① **F-01…F-08 chưa mục nào được đánh dấu** dù là việc dựng nền từ 27/08; ai mở file hôm nay sẽ
+  tưởng gói chưa có adapter. Đã rà **bằng máy, chỉ đánh dấu cái kiểm chứng được**: F-01 (9 file
+  snapshot), F-02 (adapter trỏ Flow), F-04 (trần 30 → 7), F-05 (hết `bootstrap_locked`). F-03,
+  F-06, F-07, F-08, F-10 để nguyên kèm nhãn **CHƯA RÀ** — đánh dấu bừa là lặp lại đúng cái bệnh.
+  ② **F-14 mô tả sai thực trạng:** nó đề xuất "thêm lệnh chẩn đoán bắn `pointerdown`+…" như thể
+  bản vá chưa có. **Bản vá đã có từ 28/08** — `pressFlowControl` (`content.js:575`) bắn đủ chuỗi
+  pointer/mouse. Cái thật sự thiếu là **kiểm chứng live**, vì Đức luôn đặt mode bằng tay nên
+  chưa lượt nào đi qua đường chuyển mode.
+- **Việc kế tiếp:** F-14 cần một quyết định ngân sách, không phải kỹ thuật — còn **8/50 credit**
+  trên `Bình`. Cách rẻ về công tốn 6 credit (đặt chip về Image, chạy 1 job); cách 0 credit tốn
+  công (thêm `diagnostics.mode_probe`). Sau đó tới **F-25**, vật cản thật của chuỗi dài.

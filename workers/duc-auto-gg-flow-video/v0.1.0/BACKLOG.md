@@ -5,6 +5,19 @@
 
 ## P1 — chặn đường
 
+> **RÀ SOÁT 02/09 (`claude-f18-evidence`) — backlog này đang nói dối, và đây là phần đã kiểm.**
+> Các mục F-01…F-08 là việc dựng nền từ 27/08 và không mục nào từng được đánh dấu, nên ai mở
+> file này hôm nay sẽ tưởng gói chưa có adapter. Tôi **chỉ đánh dấu những mục kiểm chứng được
+> bằng máy**, phần còn lại để nguyên kèm ghi "chưa rà" — đánh dấu bừa là lặp lại đúng cái bệnh.
+>
+> - **F-01 XONG** — 9 file `evidence/F1-snapshot-*.json`.
+> - **F-02 XONG** — `provider-adapter.js` trỏ `labs.google` ở 5 chỗ, SELECTORS/TIMING là của
+>   Flow, đã chạy live nhiều lượt.
+> - **F-04 XONG** — `MAX_TRIAL_JOBS = 7` (trần 30 của nhánh ảnh đã bỏ; con số 7 nay tính theo
+>   ngân sách một tài khoản, xem F-22).
+> - **F-05 XONG** — không còn chỗ nào `bootstrap_locked` trong router.
+> - **F-03, F-06, F-07, F-08, F-10: CHƯA RÀ.** F-06 đã trả một phần (xem F-19, F-23).
+
 - **F-01** · Chụp bằng chứng DOM trang Flow (4 snapshot: nghỉ / đang sinh / có video /
   màn nhập prompt) qua `diagnostics.dom_probe`, lưu `evidence/`. [ĐỌC] — dom_probe là
   generic, không phụ thuộc selector Gemini (content.js, nhánh `DAC_DOM_PROBE`).
@@ -59,7 +72,23 @@
   và lời nhắn cho Đức đã viết ở dạng "nhiều khả năng", không khẳng định. **Việc cần làm:** đo
   thật độ trễ mount qua vài lần gõ (dom_probe liên tiếp, đếm ms tới khi nút hiện), rồi đặt
   ngưỡng từ số đo. Trước khi có số, đừng nới/siết ngưỡng theo cảm tính.
-- **F-14** · [ĐO 28/08, hai lần] **`element.click()` KHÔNG có tác dụng lên nhóm nút cấu hình
+- **F-14** · **RÀ LẠI 02/09 — mục này đang mô tả sai thực trạng.** Nó viết như thể bản vá chưa
+  tồn tại và đề xuất "thêm một lệnh chẩn đoán bắn `pointerdown`+`mousedown`+…". **Bản vá ĐÃ CÓ:**
+  `pressFlowControl()` trong `content.js:575` bắn đủ chuỗi `pointerdown` → `mousedown` →
+  `pointerup` → `mouseup` → `click`, có dựng `PointerEvent` thật và lùi về `Event` khi không
+  dựng được. `ensureFlowVideoMode` dùng nó cho cả chip lẫn tuỳ chọn Video.
+  **Cái THẬT SỰ còn thiếu là KIỂM CHỨNG LIVE** — chưa lượt nào đi qua đường chuyển mode trên
+  trang thật, vì Đức luôn đặt Video mode bằng tay trước khi chạy.
+  **Hai cách kiểm, chọn theo giá:**
+  ① *6 credit* — Đức đặt chip về **Image**, chạy 1 job; nếu `pressFlowControl` chạy thì mode tự
+  chuyển sang Video rồi job đi tiếp bình thường. Rẻ về công, tốn credit, và cho câu trả lời dứt
+  khoát.
+  ② *0 credit, tốn công* — thêm `diagnostics.mode_probe`: chỉ mở bảng cấu hình rồi probe xem nó
+  có mở không, không bao giờ gõ, không bao giờ bấm Create. Dùng lại được mãi, nhưng phải thêm
+  method Bridge (registry + validator + handler + test) và một lần reload.
+  **Chưa làm cách nào** — còn đúng 8/50 credit trên `Bình`, nên cách ① là quyết định về ngân
+  sách chứ không phải về kỹ thuật. Hỏi Đức trước khi tiêu nốt.
+  ~~[ĐO 28/08, hai lần] **`element.click()` KHÔNG có tác dụng lên nhóm nút cấu hình~~
   của Flow.** Chứng minh hai lượt, cả hai 0 credit: (Q001) bấm chip mode → bảng không mở;
   (Q002) bảng đang mở sẵn, runner TÌM THẤY và BẤM đúng `videocam Video` → mode vẫn Image, bảng
   vẫn mở. Đối chiếu: cũng `element.click()` đó **bấm được `arrow_forward Create`** — Q003 submit
@@ -71,7 +100,15 @@
   không. Mở được = giả thuyết 1, sửa luôn. Không mở = giả thuyết 2, và khi đó chuyển mode phải
   do người làm. **Hệ quả hiện tại:** Đức phải tự đặt Video mode trước mỗi phiên chạy; khi mode
   đã là Video thì `ensureFlowVideoMode` thoát sớm và đường tự động không bị ảnh hưởng.
-- **F-15** · [ĐO 28/08] Chip cấu hình có ô **số lượng output** (`x1`…`x4`). Đặt `x2` trở lên là
+- **F-15** · **XONG 02/09** (`claude-f18-evidence`). Cổng tự động: đọc `x{n}` từ nhãn chip
+  (`outputCountFromSummary`) và **từ chối trước khi gõ, trước mọi cú bấm** nếu không phải `x1` —
+  nên mọi đường thoát đều **0 credit**. Kiểm ở **cả hai** nhánh: khi mode đã là Video, và **sau
+  khi chuyển Ảnh→Video** (chip Image vốn là `x2`, nên kiểm trước lúc chuyển sẽ chặn nhầm mọi job
+  ảnh→video — tôi đặt sai chỗ lần đầu và test bắt được). Suite 93/93, mutation 4/6.
+  **Hai đột biến lọt lưới, nói rõ chứ không giấu:** cả hai nằm trên nhánh "không đọc được số
+  lượng", một lớp phòng thủ thứ hai **hiện chưa thể tới được** vì `VIDEO_MODE_SUMMARY_PATTERN`
+  đã đòi hậu tố `x{n}` mới nhận là chip Video. Cố ý **không** viết test giả vờ phủ nó.
+  ~~[ĐO 28/08] Chip cấu hình có ô **số lượng output**~~ (`x1`…`x4`). Đặt `x2` trở lên là
   Flow sinh nhiều video một lượt → luật gán "đúng 1 id mới" sẽ trả `OUTPUT_AMBIGUOUS`, không
   nhận cái nào, **mà credit thì đã tiêu**. Lần này bắt được trước khi chạy nhờ đọc chip, nhưng
   runner hiện KHÔNG tự kiểm điều đó. Nên thêm tiền kiểm: nếu chip không phải `x1` thì từ chối

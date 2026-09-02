@@ -29,6 +29,7 @@ function harness({
   modeSummaryLabel = VIDEO_MODE_SUMMARY,
   videoOptionLabel = "videocam Video",
   proveVideoAfterClick = true,
+  videoSummaryAfterSwitch = VIDEO_MODE_SUMMARY,
 } = {}) {
   let clicks = 0;
   let remountClicks = 0;
@@ -106,7 +107,7 @@ function harness({
       videoModeClicks += 1;
       settingsOpen = false;
       if (remountComposerOnModeSwitch) remounted = true;
-      if (proveVideoAfterClick) currentModeSummary = VIDEO_MODE_SUMMARY;
+      if (proveVideoAfterClick) currentModeSummary = videoSummaryAfterSwitch;
     },
   });
   const upgradeButtons = [1, 2].map(() => buttonNode("Upgrade", { click() { throw new Error("Upgrade must never be clicked by the runner"); } }));
@@ -196,13 +197,57 @@ function harness({
 // The real DAC_RUN_IMAGE_JOB path must establish Video mode before prompt
 // typing. An already-Video summary is a zero-settings-click no-op.
 {
-  const h = harness({ modeSummaryLabel: "Video · 720p · 5s crop_9_16 x2", afterClick: ["already-video"] });
+  // Chip o x1: kich ban nay kiem chuyen MODE, khong phai so luong output. Ban
+  // dau fixture de "x2" mot cach tinh co, va cong F-15 (chan x2+) chan dung no.
+  const h = harness({ modeSummaryLabel: "Video · 720p · 5s crop_9_16 x1", afterClick: ["already-video"] });
   const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-MODE-VIDEO", attempt_id: "attempt-mode-video", prompt: "already video", timeoutMs: 15000 });
   assert.equal(response.ok, true);
   assert.equal(h.settingsClicks(), 0);
   assert.equal(h.videoModeClicks(), 0);
   assert.equal(h.clicks(), 1);
 }
+
+// F-15: chip dat x2 tro len = mot luot sinh NHIEU video, ma luat quy gan doi
+// dung MOT id moi -> khong nhan duoc gi trong khi credit da tieu. Cong nay phai
+// tu choi TRUOC khi go va truoc moi cu bam, nen moi duong thoat deu ZERO CREDIT.
+//
+// Kiem ca ca "mode da dung Video ma van x4": do la ca nguy hiem nhat, vi moi
+// tien de khac deu xanh nen khong ai nghi ngo gi.
+for (const label of ["Video · 360p · 8s crop_16_9 x2", "Video · 360p · 8s crop_16_9 x4"]) {
+  const h = harness({ modeSummaryLabel: label, afterClick: ["already-video"] });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-X2", attempt_id: "attempt-x2", prompt: "khong duoc gui", timeoutMs: 15000 });
+  assert.equal(response.ok, false, `${label} phai bi tu choi`);
+  assert.match(response.error, /x[24]/, "chu bao loi phai noi ro chip dang dat bao nhieu");
+  assert.equal(h.clicks(), 0, `${label}: KHONG duoc bam Create — day la cho credit bi tieu`);
+  assert.equal(h.settingsClicks(), 0, `${label}: khong duoc dung toi bang cau hinh`);
+}
+
+// VA TREN DUONG CHUYEN ANH -> VIDEO. Day la ca de sot nhat: chip Image von la
+// `... x2`, nen kiem so luong TRUOC khi chuyen se chan nham moi job anh->video.
+// Cong phai kiem tren chip VIDEO VUA CO — tuc sau khi hau dieu kien duoc chung
+// minh. Mot dot bien go dung cong nay tung lot luoi vi khong test nao di qua
+// duong chuyen mode voi chip x2 o dau kia.
+{
+  const h = harness({
+    modeSummaryLabel: IMAGE_MODE_SUMMARY,
+    videoSummaryAfterSwitch: "Video · 360p · 8s crop_16_9 x3",
+    afterClick: ["switched-video"],
+  });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-SWITCH-X3", attempt_id: "attempt-switch-x3", prompt: "khong duoc gui", timeoutMs: 15000 });
+  assert.equal(response.ok, false, "chuyen sang Video ma chip la x3 thi phai tu choi");
+  assert.match(response.error, /x3/, "chu bao loi phai noi ro chip dang dat bao nhieu");
+  assert.equal(h.clicks(), 0, "KHONG duoc bam Create — day la cho credit bi tieu");
+  assert.equal(h.typed(), false, "khong duoc go prompt khi da biet luot nay se sinh 3 video");
+}
+
+// Ghi chu ve nhanh "khong doc duoc so luong" trong assertSingleOutputChip:
+// no la lop phong thu thu hai va HIEN CHUA THE TOI DUOC, vi
+// VIDEO_MODE_SUMMARY_PATTERN da doi hau to ` x{n}` moi nhan mot nhan la chip
+// Video — nhan thieu hau to se thanh mode "unknown" va bi chan som hon boi mot
+// cau bao loi khac. Giu lai co chu dich: neu ai noi pattern do ra, nhanh nay la
+// thu duy nhat con dung giua ta va mot luot chay khong biet se sinh may video.
+// KHONG viet test gia vo kiem no — mot test di qua duong khac roi bao "da phu"
+// con te hon khong co test.
 
 // Measured Image summary: one settings click, one exact measured Video-option
 // click, then a proven closed Video summary before typing/Create.

@@ -545,6 +545,19 @@
 
   const FLOW_VIDEO_MODE_ERROR = "WRONG_GENERATION_MODE: FLOW_VIDEO_MODE_NOT_READY";
 
+  // Nem TRUOC khi go va truoc moi cu bam, nen moi duong thoat o day deu la
+  // ZERO CREDIT. Chu bao loi co y KHONG chua tu khoa nao cua classifyFailure
+  // (xem F-20) — de no phan loai la OTHER nhu moi loi PRE_SUBMIT khac, chu
+  // khong lo bien thanh mot cu dung cung mang y nghia khac.
+  function assertSingleOutputChip(mode) {
+    const count = mode?.outputCount ?? null;
+    if (count === 1) return;
+    if (count === null) {
+      throw new Error(`${FLOW_VIDEO_MODE_ERROR}: khong doc duoc so luong output tren chip cau hinh (nhan: ${JSON.stringify(String(mode?.label || ""))}). Khong chay khi chua biet mot luot se sinh ra may video.`);
+    }
+    throw new Error(`${FLOW_VIDEO_MODE_ERROR}: chip cau hinh dang dat x${count}. Mot luot se sinh ${count} video, ma goi nay chi nhan dung 1 ket qua moi -> se khong nhan duoc video nao trong khi credit da tieu. Dat chip ve x1 roi chay lai.`);
+  }
+
   // F-14, measured 2026-08-28 at zero credit (evidence/F4-trial-success-live-20260828.json):
   // element.click() moves Flow's Create button but does NOTHING to its
   // generation-settings controls, the ones carrying the class token
@@ -605,7 +618,19 @@
     if (limitBlocker) throw new Error(`LIMIT_STOP: ${limitBlocker}`);
 
     const current = ADAPTER.generationMode(document);
-    if (current.mode === "video") return;
+    // F-15: so luong output tren chip la mot con so TON TIEN. `x2` tro len la
+    // Flow sinh nhieu video mot luot, ma luat quy gan cua goi nay doi DUNG MOT
+    // id moi -> ket qua OUTPUT_AMBIGUOUS: khong nhan cai nao, credit da tieu.
+    // Do 28/08 da bat duoc ca nay nho doc chip BANG MAT truoc khi chay; day la
+    // bien no thanh mot cong tu dong.
+    //
+    // Kiem TRUOC lenh `return` cua nhanh "mode da dung": chip co the dang o
+    // Video ma van dat x4, va do la dung ca nguy hiem nhat — moi tien de khac
+    // deu xanh nen khong ai nghi ngo gi.
+    //
+    // `null` (khong doc duoc) KHONG duoc coi la dat: fail-closed. Mot nhan chip
+    // khong doc duoc nghia la ta khong biet minh sap tieu bao nhieu.
+    if (current.mode === "video") { assertSingleOutputChip(current); return; }
     if (current.mode !== "image" || !current.button) {
       throw new Error(`${FLOW_VIDEO_MODE_ERROR}: current create settings summary is missing or unknown.`);
     }
@@ -627,6 +652,10 @@
       `${FLOW_VIDEO_MODE_ERROR}: closed Video summary postcondition was not proven.`,
       50,
     );
+    // Kiem so luong tren CHIP VIDEO vua co, khong phai chip truoc do. Chip Image
+    // von la `x2` (`Nano Banana 2 ... x2`), nen kiem truoc khi chuyen la chan
+    // nham moi job anh->video. So dang quan tam la so cua chip SAP DUNG DE GUI.
+    assertSingleOutputChip(ADAPTER.generationMode(document));
   }
 
   function queryTransientFileInput() {

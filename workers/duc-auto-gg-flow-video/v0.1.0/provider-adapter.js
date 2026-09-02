@@ -309,7 +309,26 @@
       .filter(({ button, label }) => visibleNode(root, button) && enabledButton(button) && (label === IMAGE_MODE_SUMMARY_LABEL || VIDEO_MODE_SUMMARY_PATTERN.test(label)));
     if (matches.length !== 1) return Object.freeze({ mode: "unknown", button: null, label: "" });
     const match = matches[0];
-    return Object.freeze({ mode: match.label === IMAGE_MODE_SUMMARY_LABEL ? "image" : "video", button: match.button, label: match.label });
+    return Object.freeze({ mode: match.label === IMAGE_MODE_SUMMARY_LABEL ? "image" : "video", button: match.button, label: match.label, outputCount: outputCountFromSummary(match.label) });
+  }
+
+  // F-15: chip cau hinh mang ca SO LUONG OUTPUT (`x1`...`x4`), va no la mot con
+  // so ton tien. Dat `x2` la Flow sinh NHIEU video mot luot; luat quy gan cua
+  // goi nay doi DUNG MOT id moi, nen ket qua se la OUTPUT_AMBIGUOUS —
+  // KHONG NHAN CAI NAO trong khi credit DA TIEU.
+  //
+  // Doc `x{n}` tu nhan chip la mot selector moi, nen no phai co bang chung DOM:
+  // evidence/F4-trial-success-live-20260828.json va moi probe cua F4R7..F4R9
+  // deu cho thay hau to `x1` o cuoi nhan (`Video · 360p · 8s crop_16_9 x1`).
+  //
+  // Tra `null` khi khong doc duoc — chu KHONG tra 1. Nguoi goi phai phan biet
+  // duoc "da do va dung 1" voi "khong do duoc", vi hai truong hop do dan toi
+  // hai quyet dinh khac nhau.
+  function outputCountFromSummary(label) {
+    const match = String(label || "").match(/\sx(\d+)$/);
+    if (!match) return null;
+    const count = Number(match[1]);
+    return Number.isInteger(count) && count > 0 ? count : null;
   }
 
   // The open settings panel exposes this exact semantic button with the
@@ -421,6 +440,7 @@
     isInComposerScope,
     findCreateButton,
     generationMode,
+    outputCountFromSummary,
     findVideoModeOption,
     generationLimitBlocker,
     videoIdFromSrc,

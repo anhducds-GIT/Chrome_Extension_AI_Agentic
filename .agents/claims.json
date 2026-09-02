@@ -1,13 +1,12 @@
 {
   "_doc": "Bảng chủ sở hữu package. MỘT package chỉ MỘT phiên AI được ghi tại một thời điểm. Chủ không phải bạn = chỉ đọc. Muốn giành = hỏi Đức. Xong việc thì đặt owner về null.",
-  "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
+  "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau. Gốc repo chia làm nhiều khoá (A2, 02/09): `_docs` cho docs/, `_code` cho scripts/ + tests/, `_template` cho template/, `_root` cho phần còn lại và các file ở tầng ngoài cùng. Chia vì 77% commit trong ngày 02/09 chạm gốc repo, và một khoá duy nhất chặn cả những việc không chồng nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-f18-evidence",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG: 7/7 job tren ho so Binh voi nhip moi, khong bi gan co, nhip do duoc tren trang that. CON NO: F-25 (vong chay chet o F4R8, khong tai hien o F4R9 — chua biet co che), F-24 (min locale con lai, hong an toan). Con 8/50 credit tren Binh.",
-      "released_at": "2026-09-02"
+      "task": "F-15 (cong chan chip x2+) + ra soat backlog. Duc chot chay thang theo thu tu F-15 -> F-14 -> F-25."
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,10 +23,31 @@
       "released_at": "2026-09-02"
     },
     "_root": {
+      "owner": "claude-y02-a2",
+      "ai": "Claude",
+      "claimed_at": "2026-09-02",
+      "task": "A2: tach _root thanh nhieu khoa theo steward, de hai phien khong choang nhau o goc repo",
+      "released_at": null
+    },
+    "_docs": {
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-surface-fix). Da sua 15/20 phat hien audit K1, cong XANH TOAN BO, suite 243. CHUA PUSH — phien khac se day. Con lai: 4 phat hien nho + 1 cau hoi thiet ke (bo trich giu nguyen luat nghe-cu-the cua repo Chrome).",
+      "task": "A2: tai lieu khao sat Y-02",
+      "released_at": "2026-09-02"
+    },
+    "_code": {
+      "owner": "claude-y02-a2",
+      "ai": "Claude",
+      "claimed_at": "2026-09-02",
+      "task": "A2: stewardOf + cong kiem xet theo tung khoa goc",
+      "released_at": null
+    },
+    "_template": {
+      "owner": null,
+      "ai": null,
+      "claimed_at": "2026-09-02",
+      "task": "KHOÁ MỚI (A2 02/09) — bộ khung trích: template/",
       "released_at": "2026-09-02"
     }
   }
