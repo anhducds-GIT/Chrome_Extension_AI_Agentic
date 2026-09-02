@@ -232,6 +232,11 @@ Luật của repo này nằm trong \`AGENTS.md\` ở cùng thư mục — **mộ
 const STRUCTURE_SEED = `{
   "_doc": "Hình dạng repo NÀY. Bộ sinh và cổng kiểm đọc file này thay vì đoán. Sửa cho khớp repo của bạn TRƯỚC KHI chạy cổng lần đầu.",
   "schema_version": 1,
+  "repo": {
+    "_doc": "Danh tính repo, dùng cho trang cổng vào máy đọc. ĐỔI NGAY khi khởi tạo — bỏ trống thì trang sinh ra sẽ nói thẳng là repo chưa đặt tên.",
+    "name": "ĐỔI THÀNH TÊN REPO CỦA BẠN",
+    "tagline": null
+  },
   "profile": "P1",
   "_profile_doc": "P1 monorepo nhiều gói · P2 ứng dụng đơn · P3 repo tài liệu · P4 repo hạ tầng · P5 điều phối repo khác",
   "units": {
@@ -247,6 +252,8 @@ const STRUCTURE_SEED = `{
     "tests/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "suite gốc repo" },
     "evidence/": { "steward": "_root", "mutability": "append-only", "ownership_mode": "root", "note": "bằng chứng vận hành: chỉ thêm, không sửa, không xoá" }
   },
+  "generators": ["build-dashboard.mjs"],
+  "_generators_doc": "Script nào sinh ra artifact đã commit. Cổng đóng phiên đối chiếu từng cái với HEAD. CHỈ khai script repo này THẬT SỰ có — khai thừa là cổng đỏ vì thiếu file.",
   "grandfathered": [],
   "_grandfathered_doc": "Đường dẫn cũ được miễn trừ vĩnh viễn. Repo mới để RỖNG. Repo cũ đang migrate thì liệt kê ở đây thay vì đổi tên hàng loạt.",
   "bootstrap": {
@@ -417,6 +424,12 @@ export function leakedNames(files) {
 
 /* ---- chạy ------------------------------------------------------------------ */
 
+// So sánh bỏ qua ký tự xuống dòng kiểu Windows: git có thể checkout CRLF trong khi bộ sinh
+// luôn viết LF. Dùng mã ký tự thay vì dấu thoát trong chuỗi — chính dòng này đã bị một tầng
+// thoát nuốt mất và biến thành ngắt dòng thật khi viết bằng script.
+const CARRIAGE_RETURN = String.fromCharCode(13);
+const eol = (text) => text.split(CARRIAGE_RETURN).join("");
+
 function main() {
   const checkOnly = process.argv.includes("--check");
   const files = buildTemplateFiles();
@@ -434,7 +447,10 @@ function main() {
     for (const [rel, want] of files) {
       const abs = path.join(ROOT, OUT, rel);
       if (!fs.existsSync(abs)) { drift.push(`${rel}: THIẾU trong ${OUT}/`); continue; }
-      if (fs.readFileSync(abs, "utf8") !== want) drift.push(`${rel}: LỆCH bản gốc`);
+      // So sau khi chuẩn hoá xuống dòng. Git trên Windows có thể checkout thành CRLF trong khi
+      // bộ sinh luôn viết LF; so chuỗi thô thì một bản sao chép SẠCH cũng báo mọi file "lệch"
+      // và `npm test` đỏ mà không ai làm gì sai. Audit độc lập bắt được 2026-09-02.
+      if (eol(fs.readFileSync(abs, "utf8")) !== eol(want)) drift.push(`${rel}: LỆCH bản gốc`);
     }
     const expected = new Set([...files.keys()]);
     for (const rel of walk(path.join(ROOT, OUT))) {

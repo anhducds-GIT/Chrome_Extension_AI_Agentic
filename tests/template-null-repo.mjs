@@ -16,7 +16,7 @@
 
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -92,11 +92,41 @@ const files = buildTemplateFiles();
     }
 
     const summary = out.split("\n").find((line) => line.startsWith("TỔNG:")) ?? "";
-    assert.match(summary, /0 chỗ ĐỎ/, `repo rong phai KHONG co cho do. Dong tong ket: "${summary}"`);
-    // Vàng cũng phải sạch: một bộ khung phát cho người khác mà ngay lúc mở hộp đã có cảnh báo
-    // thì người ta học ngay thói quen ngó lơ cảnh báo — đúng cái bệnh làm chết một cổng kiểm.
-    assert.match(summary, /0 chỗ VÀNG/, `repo rong nen sach ca VANG. Dong tong ket: "${summary}"`);
-    ok("repo git TRONG + bo khung + sinh trang → cong kiem 0 do, 0 vang");
+    // ĐỌC SỐ, đừng dò chuỗi. Bản đầu dùng một mẫu dò không chặn biên số nên nó khớp cả
+    // "10 chỗ ĐỎ" lẫn "40 chỗ ĐỎ" — phép kiểm nghiệm thu sẽ XANH kể cả khi repo có 40 chỗ đỏ.
+    // Audit độc lập bắt được 2026-09-02. Con số 0 tôi báo là thật, nhưng không gì bảo vệ nó.
+    const count = (label) => {
+      const m = summary.match(new RegExp("([0-9]+)[^0-9]*chỗ[^0-9]*" + label));
+      assert.ok(m, `khong doc duoc so "${label}" tu dong tong ket: "${summary}"`);
+      return Number(m[1]);
+    };
+    assert.equal(count("ĐỎ"), 0, `repo rong phai KHONG co cho do: "${summary}"`);
+    assert.equal(count("VÀNG"), 0, `repo rong nen sach ca VANG: "${summary}"`);
+
+    // CỔNG ĐÓNG PHIÊN cũng phải chạy được. Bản đầu CHỈ chạy cổng cấu trúc nên nó mù hoàn toàn
+    // với việc cổng đóng phiên đòi một script mà bộ khung cố ý không mang theo — repo dựng từ
+    // bộ khung hỏng ngay ở cổng của chính nó. Phép thử nghiệm thu phải chạy ĐỦ MỌI CỔNG mà
+    // người dùng thật sẽ chạy; nếu không nó chỉ chứng minh đúng phần mình đã nghĩ tới.
+    let gate = "";
+    try {
+      gate = at(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "phep-thu-repo-rong"]);
+    } catch (error) {
+      gate = String(error.stdout || "") + String(error.stderr || "");
+    }
+    assert.ok(!/Cannot find module|ENOENT|KHONG_CHAY_DUOC/i.test(gate),
+      "cong dong phien phai CHAY DUOC tren repo dung tu bo khung: " + gate.slice(0, 900));
+    assert.ok(!/feature-parity/i.test(gate),
+      "cong dong phien khong duoc doi script ma bo khung khong mang theo: " + gate.slice(0, 900));
+
+    // NỘI DUNG trang sinh ra không được mang danh tính repo gốc. Kiểm DANH SÁCH file mang theo
+    // là chưa đủ: bộ sinh từng đóng cứng tên repo gốc ngay trong trang cổng vào, nên mọi repo
+    // dùng bộ khung đều sinh ra một trang TỰ NHẬN LÀ repo gốc, và mọi phép kiểm cũ đều xanh.
+    for (const artifact of ["llms.txt", "DASHBOARD.md", "repo-map.json"]) {
+      const text = readFileSync(join(tempRoot, artifact), "utf8");
+      assert.ok(!/Chrome Extension AI Agentic/i.test(text),
+        artifact + " sinh ra trong repo la MANG TEN repo goc — bo sinh dang dong cung danh tinh");
+    }
+    ok("repo rong: cong cau truc 0/0 · cong dong phien chay duoc · trang sinh ra khong mang ten repo goc");
   } finally {
     assert.ok(tempRoot.startsWith(join(tmpdir(), "template-null-repo-")), "chi don dung temp fixture cua phep kiem nay");
     rmSync(tempRoot, { recursive: true, force: true });

@@ -28,6 +28,7 @@ lifecycle: building
 owner: ten-nguoi-hoac-phien-chiu-trach-nhiem
 priority_rank: 1   # so nguyen >= 1. DUNG MOT don vi trong ca repo duoc mang hang 1.
 next_step: "mot cau: viec ke tiep cua don vi nay"
+human_action: "mot cau: viec dang cho tay Duc — hoac ghi khong neu khong co gi cho"
 # superseded_by: workers/.../vX.Y.Z   # BAT BUOC khi lifecycle: superseded
 # depends_on: workers/.../vX.Y.Z       # khong bat buoc
 version_source: workers/ten-thu-muc-package/vX.Y.Z/manifest.json
@@ -41,15 +42,31 @@ ref_handoff: workers/ten-thu-muc-package/vX.Y.Z/HANDOFF.md
 ---
 ```
 
+### `human_action` — việc chờ tay Đức
+
+Đây là trường **duy nhất** trên bảng trạng thái mà Đức đọc để biết *"tôi phải làm gì"*.
+
+- Có việc chờ Đức → viết **một câu tiếng Việt có dấu, không thuật ngữ**. Đức đọc câu này
+  rồi đi làm luôn, nên đừng viết "reload ext + fill profile name field".
+- Không có gì chờ → ghi đúng chữ **`không`**.
+- **Đừng để trống.** Trống thì bảng không phân biệt được *"không có gì"* với *"chưa ai trả
+  lời câu đó"* — và hai thứ đó khác nhau hoàn toàn.
+
+Vì sao tách khỏi `next_step`: `next_step` là việc của phiên AI kế tiếp. Trước khi có trường
+này, việc chờ Đức nằm **lẫn** trong câu đó, nên bảng phải đoán từ chữ — mà đoán thì luật vàng
+1 cấm. Kết quả: ô "Đức cần làm" trên bảng bỏ trống trong khi thực tế có ba việc đang chờ.
+
+
+
 ### Từng trường nghĩa là gì
 
 | Trường | Bắt buộc? | Điền gì | Máy kiểm gì |
 |---|---|---|---|
-| `schema` | ✅ luôn | đúng chuỗi `extension-status/v1` | sai chuỗi → **đỏ** |
+| `schema` | ✅ luôn | đúng chuỗi `extension-status/v2` | sai chuỗi → **đỏ** |
 | `id` | ✅ luôn | trùng **tên thư mục** package | — |
 | `name` | ✅ luôn | tên cho người đọc | — |
 | `lifecycle` | ✅ luôn | một trong enum bên dưới | ngoài enum → **đỏ** |
-| `version_source` | ✅ luôn | đường dẫn tới `manifest.json`, tính **từ gốc repo** | không tồn tại / không phải JSON → **đỏ** |
+| `version_source` | ✅ luôn | đường dẫn tới file đánh dấu đơn vị (`units.marker` trong `.repo-structure.json` — repo này là `manifest.json`), tính **từ gốc repo** | không tồn tại / không phải JSON → **đỏ** |
 | `last_verified` | ✅ nếu `active` | ngày `YYYY-MM-DD` kiểm chứng gần nhất | có nó mà thiếu `evidence_ref` → **đỏ** |
 | `last_verified_commit` | nên có | **full SHA 40 ký tự** | sai dạng, hoặc repo không có commit đó → **đỏ** |
 | `last_verified_how` | nên có | một dòng: kiểm bằng cách nào | — |
@@ -94,6 +111,12 @@ căn bệnh platform này sinh ra để chữa, và nó tái phát ngay trong fi
 
 **Cách thử nhanh:** đọc lại STATUS, nếu số đang lặp lại một trong bốn phép đo machine-owned
 thì xoá và trỏ sang nguồn máy. Không xoá số kiểm chứng, giới hạn an toàn hay mã việc.
+
+> **Về các đường dẫn ví dụ bên dưới.** Chúng dùng hình dạng của repo NÀY
+> (`workers/<gói>/<phiên-bản>/manifest.json`). Repo của bạn khai hình dạng khác trong khối
+> `units` của `.repo-structure.json` thì thay cho khớp — ví dụ `packages/<tên>/package.json`,
+> hoặc chỉ `package.json` nếu repo không có đơn vị con. Chép nguyên si sang một repo hình dạng
+> khác là cổng kiểm báo đỏ ở `version_source`.
 
 ### Ba luật máy ép, đừng tìm cách lách
 

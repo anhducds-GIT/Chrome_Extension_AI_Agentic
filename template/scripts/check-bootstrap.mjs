@@ -1,4 +1,4 @@
-/* Cổng kiểm CẤU TRÚC — 14 phép kiểm B1…B14, phiên S4.
+/* Cổng kiểm CẤU TRÚC — 15 phép kiểm B1…B15, phiên S4.
 
    Mục tiêu: nợ điều hướng hiện ra BẰNG SỐ CÓ TÊN. Mỗi phép kiểm chặn đứng một câu hỏi mà
    một phiên AI mới sẽ phải đi hỏi Đức. Không trả lời được bằng repo = một khoản nợ.
@@ -550,6 +550,57 @@ export function checkB14(deps, model, times) {
     `đã soi ${units.length} đơn vị`);
 }
 
+/* ---- B15 · chữ operator viết không dấu (luật vàng 5) --------------------- */
+/* Luật vàng 5 của `AGENTS.md` đã quy định: **chữ operator nhìn thấy là tiếng Việt**, mã lỗi
+   mới dùng tiếng Anh. Ba trường `current_focus` · `next_step` · `human_action` là chữ Đức
+   đọc trên bảng trạng thái — nên chúng thuộc diện đó.
+   Trước khi có bảng, chưa ai đọc mấy trường này bằng mắt người, nên luật bị vi phạm âm thầm
+   suốt: Đức mở bảng ra thấy "CAN DUC RELOAD EXTENSION roi chay mot chuoi de do pacing_ms".
+   Luật không kiểm được bằng máy thì sớm muộn cũng bị bỏ qua — đó là lý do có phép kiểm này.
+
+   HEURISTIC CỐ TÌNH BẢO THỦ: chỉ báo khi phần chữ dài từ 40 ký tự mà KHÔNG có LẤY MỘT dấu
+   tiếng Việt nào. Một câu tiếng Việt 40 chữ cái luôn có ít nhất một dấu, nên zero dấu gần
+   như chắc chắn là tiếng Việt đã bị bỏ dấu — hoặc tiếng Anh, mà tiếng Anh ở đây cũng là vi
+   phạm cùng luật đó.
+   Hệ quả của việc bảo thủ: một câu 200 ký tự chỉ có ĐÚNG MỘT chữ có dấu thì lọt. Chấp nhận
+   có chủ đích — một phép kiểm hay báo oan sẽ bị ngó lơ, và lúc đó nó vô dụng hoàn toàn. */
+const OPERATOR_FIELDS = [
+  ["current_focus", "currentFocus"],
+  ["next_step", "nextStep"],
+  ["human_action", "humanAction"]
+];
+const VN_DAU = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i;
+
+export function checkB15(model) {
+  const findings = [];
+  for (const row of model.rows) {
+    for (const [khai, field] of OPERATOR_FIELDS) {
+      const text = String(row[field] ?? "").trim();
+      if (!text) continue;
+      // Bỏ mã, đường dẫn và tên file trước khi đo — chúng ĐƯỢC PHÉP là tiếng Anh.
+      const prose = text
+        .replace(/`[^`]*`/g, " ")
+        .replace(/\S*\/\S*/g, " ")
+        .replace(/\b[A-Z]{1,3}-\d+\b/g, " ")
+        .replace(/\S*\.(?:js|mjs|md|json|html)\b/gi, " ");
+      const letters = prose.replace(/[^\p{L}]/gu, "");
+      if (letters.length < 40 || VN_DAU.test(prose)) continue;
+      findings.push({
+        tag: "NO-DIACRITICS",
+        where: `${row.key === "_root" ? "STATUS.md" : row.key + "/STATUS.md"} → ${khai}`,
+        why: `${letters.length} chữ cái mà không có một dấu tiếng Việt nào — Đức đọc trường này trên bảng trạng thái`,
+        fix: [
+          "viết lại thành tiếng Việt CÓ DẤU — đây là chữ Đức đọc trên bảng trạng thái, không phải ghi chú cho máy",
+          "giữ tiếng Anh cho mã lỗi và tên định danh; bỏ thuật ngữ mà người ngoài không hiểu",
+          `đang là: "${prose.trim().slice(0, 70)}…"`
+        ]
+      });
+    }
+  }
+  return report("B15", WARN, "Chữ operator viết không dấu (luật vàng 5)", findings,
+    `đã soi ${model.rows.length} đơn vị × ${OPERATOR_FIELDS.length} trường`);
+}
+
 /* ---------------------------------------------------------------------------
    Chạy cả 14 phép kiểm.
 --------------------------------------------------------------------------- */
@@ -572,7 +623,8 @@ export function collectChecks(deps) {
     checkB11(model),
     checkB12(deps),
     checkGeneratedFreshness(deps, { code: "B13", file: "llms.txt", times }),
-    checkB14(deps, model, times)
+    checkB14(deps, model, times),
+    checkB15(model)
   ];
   // Gắn mức chặn từ cấu hình. Làm ở ĐÂY, một chỗ duy nhất, để không có đường nào dựng ra một
   // danh sách phép kiểm mà quên gắn — quên gắn nghĩa là `blocking` undefined, và undefined thì
@@ -645,7 +697,7 @@ export function renderChecks(checks, { showLimit = DEFAULT_SHOW, extras = null }
   const chiCanhBao = checks.filter((check) => !check.blocking).map((check) => check.code);
   const lines = [
     "",
-    "CỔNG KIỂM CẤU TRÚC — 14 phép kiểm B1…B14",
+    "CỔNG KIỂM CẤU TRÚC — 15 phép kiểm B1…B15",
     `CHẶN (đỏ là không được báo xong): ${dangChan.join(" · ") || "không có"}`,
     `CHỈ CẢNH BÁO (đỏ vẫn đóng phiên được): ${chiCanhBao.join(" · ") || "không có"}`,
     "Danh sách chặn khai ở `bootstrap.blocking` trong .repo-structure.json, không viết cứng trong code.",
@@ -686,9 +738,9 @@ export function renderChecks(checks, { showLimit = DEFAULT_SHOW, extras = null }
   if (extras?.grandfathered) {
     const { declared, gone } = extras.grandfathered;
     // KHÔNG nói "phiên S7 sẽ dùng" nữa: S7 đã chạy và cố ý KHÔNG dùng khối này. Phép kiểm tên
-    // đường dẫn chưa tồn tại trong B1…B14, nên nói nó "sắp được dùng" là hứa hộ một phiên
+    // đường dẫn chưa tồn tại trong B1…B15, nên nói nó "sắp được dùng" là hứa hộ một phiên
     // không có thật. Nói đúng cái nó đang làm: kiểm ngược, chống danh sách miễn trừ mục nát.
-    lines.push(`MIỄN TRỪ VĨNH VIỄN: ${declared} đường dẫn cũ (có dấu cách / tiếng Việt có dấu) khai ở khối "grandfathered" của .repo-structure.json. B1…B14 KHÔNG có phép kiểm tên đường dẫn, nên khối này hiện chỉ được kiểm NGƯỢC: đường dẫn nào đã biến mất khỏi HEAD thì phải xoá khỏi danh sách.`);
+    lines.push(`MIỄN TRỪ VĨNH VIỄN: ${declared} đường dẫn cũ (có dấu cách / tiếng Việt có dấu) khai ở khối "grandfathered" của .repo-structure.json. B1…B15 KHÔNG có phép kiểm tên đường dẫn, nên khối này hiện chỉ được kiểm NGƯỢC: đường dẫn nào đã biến mất khỏi HEAD thì phải xoá khỏi danh sách.`);
     if (gone.length) {
       lines.push(`  ✗ ${gone.length} đường dẫn trong danh sách miễn trừ KHÔNG còn ở HEAD: ${gone.slice(0, 3).join(", ")}${gone.length > 3 ? ", …" : ""}`);
       lines.push("        → xoá chúng khỏi khối \"grandfathered\" — danh sách miễn trừ để mục nát cũng là một khoản nợ.");

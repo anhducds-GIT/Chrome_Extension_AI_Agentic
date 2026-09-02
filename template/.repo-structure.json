@@ -1,6 +1,11 @@
 {
   "_doc": "Hình dạng repo NÀY. Bộ sinh và cổng kiểm đọc file này thay vì đoán. Sửa cho khớp repo của bạn TRƯỚC KHI chạy cổng lần đầu.",
   "schema_version": 1,
+  "repo": {
+    "_doc": "Danh tính repo, dùng cho trang cổng vào máy đọc. ĐỔI NGAY khi khởi tạo — bỏ trống thì trang sinh ra sẽ nói thẳng là repo chưa đặt tên.",
+    "name": "ĐỔI THÀNH TÊN REPO CỦA BẠN",
+    "tagline": null
+  },
   "profile": "P1",
   "_profile_doc": "P1 monorepo nhiều gói · P2 ứng dụng đơn · P3 repo tài liệu · P4 repo hạ tầng · P5 điều phối repo khác",
   "units": {
@@ -16,6 +21,8 @@
     "tests/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "suite gốc repo" },
     "evidence/": { "steward": "_root", "mutability": "append-only", "ownership_mode": "root", "note": "bằng chứng vận hành: chỉ thêm, không sửa, không xoá" }
   },
+  "generators": ["build-dashboard.mjs"],
+  "_generators_doc": "Script nào sinh ra artifact đã commit. Cổng đóng phiên đối chiếu từng cái với HEAD. CHỈ khai script repo này THẬT SỰ có — khai thừa là cổng đỏ vì thiếu file.",
   "grandfathered": [],
   "_grandfathered_doc": "Đường dẫn cũ được miễn trừ vĩnh viễn. Repo mới để RỖNG. Repo cũ đang migrate thì liệt kê ở đây thay vì đổi tên hàng loạt.",
   "bootstrap": {

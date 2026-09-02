@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { DEFAULT_UNITS, STRUCTURE_FILE, unitsFrom } from "./repo-structure.mjs";
+import { DEFAULT_UNITS, profileFrom, repoIdentityFrom, STRUCTURE_FILE, unitsFrom } from "./repo-structure.mjs";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -278,6 +278,23 @@ export function validateStatusDetailed(fm, deps) {
     else if (rankOf(fm.priority_rank) === null) fail(`priority_rank "${fm.priority_rank}" phải là số nguyên ≥ 1.`);
   }
 
+  // `human_action` — việc đang chờ tay người chốt (với repo này là Đức).
+  //
+  // GIAI ĐOẠN 1: TUỲ CHỌN, có chủ đích. Không thể đòi hỏi một trường mà những người khai
+  // khác chưa có — lúc thêm trường này, một trong các gói đang do phiên khác giữ nên không
+  // sửa được từ đây; bắt buộc ngay là cổng đỏ vì việc của người khác. Đây là luật chung của
+  // mọi lần đổi lược đồ, không phải thoả hiệp riêng lần này.
+  // GIAI ĐOẠN 2 (Y-03 trong IDEAS.md): khi cả năm đơn vị đã khai thì chuyển vào khối
+  // "đơn vị CÒN SỐNG" ở trên, cạnh `next_step`.
+  //
+  // Khai thì phải đúng dạng. Chuỗi rỗng là kiểu hỏng tệ nhất: bảng đọc ra "không có gì chờ
+  // Đức" trong khi thực tế chưa ai trả lời câu đó.
+  if (fm.human_action !== undefined) {
+    if (!String(fm.human_action).trim()) {
+      fail('human_action khai rỗng. Bỏ hẳn trường đó, hoặc ghi "không" nếu thật sự không có gì chờ Đức — rỗng thì bảng không phân biệt được "không có gì" với "chưa ai trả lời".');
+    }
+  }
+
   if (fm.version_source) {
     if (!deps.fileExists(fm.version_source)) {
       fail(`không tìm thấy version_source "${fm.version_source}".`);
@@ -437,6 +454,9 @@ function measuredRow(deps, dirRelPath, manifestRelPath, tracked = trackedIndex(d
 export function collectModel(deps = createDefaultDeps(), { tolerant = false } = {}) {
   const tracked = trackedIndex(deps);
   const units = readUnits(deps);
+  const structure = deps.fileExists(STRUCTURE_FILE) ? readJson(deps, STRUCTURE_FILE) : {};
+  const repo = repoIdentityFrom(structure);
+  const profile = profileFrom(structure);
   // Ở chế độ tolerant, một `manifest.json` thiếu/hỏng không được phép giết cả lượt chạy —
   // nó chỉ làm các cột ĐO của riêng đơn vị đó về 0. Chế độ thường vẫn để lỗi bay lên.
   const measure = (dirRelPath, manifestRelPath) => {
@@ -525,6 +545,7 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
       // sửa lại bộ sinh.
       owner: item.fm?.owner ?? "",
       nextStep: item.fm?.next_step ?? "",
+      humanAction: item.fm?.human_action ?? "",
       priorityRank: rankOf(item.fm?.priority_rank),
       supersededBy: item.fm?.superseded_by ?? "",
       statusPath: item.fm ? item.statusPath : ""
@@ -564,6 +585,7 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
     currentFocus: rootFm?.current_focus ?? "Chưa khai STATUS; đây là một việc đang mở.",
     owner: rootFm?.owner ?? "",
     nextStep: rootFm?.next_step ?? "",
+    humanAction: rootFm?.human_action ?? "",
     supersededBy: rootFm?.superseded_by ?? "",
     priorityRank: rankOf(rootFm?.priority_rank),
     statusPath: rootFm ? rootStatusPath : ""
@@ -589,7 +611,11 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
     statusErrors: errors,
     // Hình dạng đơn vị của repo này. Cổng kiểm cấu trúc đọc lại để nói đúng tên file
     // đánh dấu thay vì đóng cứng "manifest.json" trong thông báo lỗi.
-    units
+    units,
+    // Danh tính repo. Đóng cứng ở đây là mọi repo dùng bộ khung đều sinh ra một trang tự nhận
+    // là repo gốc — audit độc lập bắt đúng chỗ này 2026-09-02.
+    repo,
+    profile
   };
   model.gatewayLinks = gatewayLinks(model, deps);
   model.health = {
@@ -1009,9 +1035,11 @@ export function buildLlmsTxt(model) {
   const alive = model.rows.filter((row) => !row.missingStatus).length;
 
   const lines = [
-    "# Chrome Extension AI Agentic",
+    `# ${model.repo.name}`,
     "",
-    `> Monorepo ${model.rows.length} extension Chrome tự động hoá các trang AI (ChatGPT, Gemini, Google Flow) qua một Bridge chung. ${alive}/${model.rows.length} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`,
+    model.repo.tagline
+      ? `> ${model.repo.tagline} ${alive}/${model.rows.length} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`
+      : `> ${alive}/${model.rows.length} trên ${model.rows.length} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`,
     "",
     `> **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng \`node scripts/build-dashboard.mjs\`.`,
     "",
@@ -1061,7 +1089,7 @@ export function buildRepoMap(model) {
     schema_version: REPO_MAP_SCHEMA_VERSION,
     generated_at: model.headDate,
     generated_commit: model.shortHead,
-    profile: REPO_PROFILE,
+    profile: model.profile,
     entry_point: LLMS_FILE,
     law_files: ["AGENTS.md", "CLAUDE.md"],
     top_level: model.topLevel,
@@ -1079,6 +1107,10 @@ export function buildRepoMap(model) {
       // và phía đọc phải xử lý hai kiểu "không có" thay vì một.
       owner: row.owner || null,
       next_step: row.nextStep || null,
+      // Khoá LUÔN có mặt dù giai đoạn 1 trường này còn tuỳ chọn — hình dạng hợp đồng phải
+      // ổn định, phía đọc không phải đoán. `null` = chưa khai; chuỗi "không" = đã khai và
+      // không có gì chờ. Hai thứ đó KHÁC nhau, đừng gộp.
+      human_action: row.humanAction || null,
       priority_rank: Number.isFinite(row.priorityRank) ? row.priorityRank : null,
       superseded_by: row.supersededBy || null,
       last_verified: row.lastVerified || null,

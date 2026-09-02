@@ -90,6 +90,99 @@ export function areaOf(relPath, prefixes = DEFAULT_CLAIM_PREFIXES) {
   return "_root";
 }
 
+/* Danh tính repo dùng cho trang cổng vào máy đọc. THÊM 2026-09-02 sau khi audit độc lập chỉ ra
+   bộ sinh đóng cứng chuỗi tên repo gốc: mọi repo lấy bộ khung về sẽ sinh ra một trang **tự nhận
+   là repo Chrome**. Đúng cái bệnh "mọi repo cùng nói dối" mà luật cấm chép tầng GENERATED sinh
+   ra để tránh — và luật đó không chặn nổi, vì nó chỉ soi DANH SÁCH file mang theo, không soi
+   NỘI DUNG file sinh ra. Mặc định giữ nguyên chuỗi cũ để repo này sinh ra y hệt. */
+/* Mặc định phải TRUNG TÍNH. Để mặc định là tên repo gốc chính là cái bẫy: repo nào quên khai
+   sẽ lặng lẽ sinh ra một trang tự nhận là repo gốc, và không phép kiểm nào thấy vì file vẫn
+   sinh ra bình thường. Nay quên khai thì trang nói thẳng là chưa đặt tên — khó chịu đúng mức
+   để người ta đi khai, và không bao giờ nói dối. */
+export const DEFAULT_REPO = Object.freeze({
+  name: "Repo chưa đặt tên",
+  tagline: null
+});
+
+export function repoIdentityFrom(parsed) {
+  const block = parsed?.repo;
+  if (block === undefined) return DEFAULT_REPO;
+  if (block === null || typeof block !== "object" || Array.isArray(block)) {
+    throw new Error("REPO_HONG: khối `repo` trong .repo-structure.json phải là object (hoặc bỏ hẳn để dùng mặc định).");
+  }
+  const name = block.name ?? DEFAULT_REPO.name;
+  if (typeof name !== "string" || name.trim() === "") {
+    throw new Error(`REPO_HONG: repo.name phải là chuỗi không rỗng. Đang là: ${JSON.stringify(block.name)}`);
+  }
+  const tagline = block.tagline ?? null;
+  if (tagline !== null && (typeof tagline !== "string" || tagline.trim() === "")) {
+    throw new Error(`REPO_HONG: repo.tagline phải là chuỗi không rỗng, hoặc bỏ hẳn. Đang là: ${JSON.stringify(block.tagline)}`);
+  }
+  return Object.freeze({ name: name.trim(), tagline: tagline && tagline.trim() });
+}
+
+/* Hồ sơ repo (P1…P5). Trước 2026-09-02 bộ sinh xuất hằng "P1" vào hợp đồng máy đọc bất kể
+   `.repo-structure.json` khai gì — tức bản đồ máy đọc nói dối về chính hình dạng repo. */
+export const PROFILES = Object.freeze(["P1", "P2", "P3", "P4", "P5"]);
+
+export function profileFrom(parsed) {
+  const value = parsed?.profile;
+  if (value === undefined) return "P1";
+  if (!PROFILES.includes(value)) {
+    throw new Error(`PROFILE_HONG: profile phải là một trong ${PROFILES.join(" · ")}. Đang là: ${JSON.stringify(value)}`);
+  }
+  return value;
+}
+
+/* Script nào sinh ra artifact đã commit. Cổng đóng phiên đối chiếu từng cái với HEAD.
+   Trước 2026-09-02 danh sách này viết cứng và gồm cả `feature-parity.mjs` — một script CHỈ có
+   ở repo này. Bộ khung cố ý không mang nó theo, nên một repo dựng từ bộ khung chạy cổng đóng
+   phiên là **hỏng ngay ở cổng của chính nó**. Phép thử repo rỗng không thấy, vì nó chỉ chạy
+   cổng cấu trúc. */
+export const DEFAULT_GENERATORS = Object.freeze(["build-dashboard.mjs", "feature-parity.mjs"]);
+
+export function generatorsFrom(parsed) {
+  const value = parsed?.generators;
+  if (value === undefined) return DEFAULT_GENERATORS;
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error("GENERATORS_HONG: `generators` phải là mảng không rỗng các tên script trong scripts/ (hoặc bỏ hẳn để dùng mặc định).");
+  }
+  for (const name of value) {
+    if (typeof name !== "string" || name === "" || name.includes("/") || name.includes("\\")) {
+      throw new Error(`GENERATORS_HONG: mỗi phần tử phải là TÊN một file trong scripts/ (ví dụ "build-dashboard.mjs"). Đang là: ${JSON.stringify(name)}`);
+    }
+  }
+  return Object.freeze([...value]);
+}
+
+/* Thư mục ĐƠN VỊ mà một đường dẫn thuộc về — khác `areaOf`, và lẫn hai cái này là sai thật.
+   `areaOf("workers/abc/v1/x.js")` trả `workers/abc` (VÙNG SỞ HỮU, nơi khai chủ trong claims).
+   `unitDirOf` trả `workers/abc/v1` (ĐƠN VỊ, nơi có manifest, AGENTS.md và suite của nó).
+   Với `depth: 1` hai cái trùng nhau; với `depth: 2` thì không, và cổng đóng phiên cần cái sau. */
+export function unitDirOf(relPath, units = DEFAULT_UNITS) {
+  if (units.rootDir === null) return null;
+  const prefix = `${units.rootDir}/`;
+  if (!relPath.startsWith(prefix)) return null;
+  const parts = relPath.slice(prefix.length).split("/");
+  if (parts.length <= units.depth) return null;          // chưa đủ sâu, hoặc chính là file đơn vị
+  if (parts.slice(0, units.depth).some((part) => part === "")) return null;
+  return prefix + parts.slice(0, units.depth).join("/");
+}
+
+/* Mọi thư mục đơn vị nằm dưới một vùng sở hữu, tìm bằng cách đi xuống đúng số tầng còn lại.
+   `listDirs(path)` trả tên các thư mục con; bên gọi tự quyết đọc từ đĩa hay từ git. */
+export function unitDirsUnder(areaPath, units = DEFAULT_UNITS, listDirs) {
+  if (units.rootDir === null) return [];
+  const prefix = `${units.rootDir}/`;
+  if (!areaPath.startsWith(prefix)) return [];
+  const consumed = areaPath.slice(prefix.length).split("/").filter(Boolean).length;
+  let level = [areaPath];
+  for (let i = consumed; i < units.depth; i += 1) {
+    level = level.flatMap((dir) => listDirs(dir).map((name) => `${dir}/${name}`));
+  }
+  return level;
+}
+
 /* Đọc từ CÂY LÀM VIỆC. Chỉ dành cho cổng đóng phiên và safe-push — hai chỗ buộc phải thấy
    cả bản sửa dở. Bộ sinh KHÔNG dùng hàm này: nó đọc từ HEAD qua deps của chính nó. */
 export function readStructureFromDisk(root) {

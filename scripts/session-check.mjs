@@ -16,7 +16,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { areaOf, claimPrefixesFrom, readStructureFromDisk } from "./repo-structure.mjs";
+import { areaOf, claimPrefixesFrom, generatorsFrom, readStructureFromDisk, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -56,7 +56,9 @@ const touched = [...new Set([...workingChanges.map((c) => c.file), ...unpushed])
 // Đơn vị sở hữu đọc từ `.repo-structure.json` (K1, 2026-09-02) — trước đây regex `^workers/`
 // nằm cứng ở ĐÂY và một bản y hệt nằm trong safe-push.mjs. Hai bản đã lệch nhau một lần thật
 // (26/08, đường dẫn tiếng Việt bị quy nhầm chủ). Một hàm dùng chung thì không lệch được.
-const claimPrefixes = claimPrefixesFrom(readStructureFromDisk(ROOT));
+const structure = readStructureFromDisk(ROOT);
+const claimPrefixes = claimPrefixesFrom(structure);
+const unitShape = unitsFrom(structure);
 const packagesTouched = [...new Set(touched.map((f) => areaOf(f, claimPrefixes)).filter((a) => a !== "_root"))];
 
 // Nhiều phiên AI dùng CHUNG một thư mục làm việc, nên `git status` cho thấy cả
@@ -143,9 +145,10 @@ check("File mới đã khai vào Bản đồ file", () => {
   const added = workingChanges.filter((c) => /^(A|\?\?)/.test(c.code)).map((c) => c.file).filter(mine);
   const undeclared = [];
   for (const file of added) {
-    const m = file.match(/^(workers\/[^/]+\/[^/]+)\/(.+)$/);
-    if (!m) continue;
-    const [, pkgDir, rest] = m;
+    // Thư mục đơn vị lấy theo hình dạng đã khai, không đóng cứng `workers/<gói>/<phiên-bản>`.
+    const pkgDir = unitDirOf(file, unitShape);
+    if (!pkgDir) continue;
+    const rest = file.slice(pkgDir.length + 1);
     const agentsPath = path.join(ROOT, pkgDir, "AGENTS.md");
     if (!fs.existsSync(agentsPath)) continue;
     const topLevel = rest.split("/")[0];
@@ -171,8 +174,16 @@ check("HANDOFF đã ghi Log phiên này", () => {
 /* ---- 6. Test ------------------------------------------------------------ */
 check("Test xanh", () => {
   if (quick) return { ok: true, skipped: true, msg: "ĐÃ BỎ QUA (--quick). Chưa được báo 'xong' khi chưa chạy thật." };
+  // Đi xuống đúng số tầng đã khai. Bản cũ giả định LUÔN có một tầng phiên bản dưới vùng sở
+  // hữu, nên repo khai `depth: 1` có suite đỏ mà cổng vẫn báo "không có suite nào bị ảnh hưởng".
+  const listDirs = (rel) => {
+    try {
+      return fs.readdirSync(path.join(ROOT, rel), { withFileTypes: true })
+        .filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+    } catch { return []; }
+  };
   const suites = myPackages
-    .flatMap((pkg) => fs.readdirSync(path.join(ROOT, pkg)).map((v) => path.join(pkg, v, "tests", "run-all.mjs")))
+    .flatMap((pkg) => unitDirsUnder(pkg, unitShape, listDirs).map((dir) => path.join(dir, "tests", "run-all.mjs")))
     .filter((p) => fs.existsSync(path.join(ROOT, p)));
   if (!suites.length) return { ok: true, msg: "Không package nào của bạn có suite bị ảnh hưởng." };
   const lines = [];
@@ -215,7 +226,11 @@ function verifierMatchesHead(script) {
 }
 
 check("Sự thật máy sinh còn tươi", () => {
-  const scripts = ["build-dashboard.mjs", "feature-parity.mjs"];
+  // Đọc từ `.repo-structure.json`. Trước 2026-09-02 danh sách này viết cứng và gồm cả
+  // `feature-parity.mjs` — một script CHỈ repo này có. Bộ khung cố ý không mang nó theo, nên
+  // một repo dựng từ bộ khung chạy cổng này là hỏng ngay ở cổng của chính nó. Audit độc lập
+  // bắt được; phép thử repo rỗng của tôi thì không, vì nó chỉ chạy cổng CẤU TRÚC.
+  const scripts = generatorsFrom(structure);
   const failures = [];
   const verdicts = scripts.map((script) => ({ script, clean: verifierMatchesHead(script) }));
   const unknown = verdicts.filter((entry) => entry.clean === null);
@@ -248,10 +263,14 @@ check("Sự thật máy sinh còn tươi", () => {
   if (failures.length) {
     return {
       ok: false,
-      msg: `${failures.join(" · ")}. Hãy sửa bằng: node scripts/build-dashboard.mjs && node scripts/feature-parity.mjs, rồi commit --amend hoặc tạo commit mới.`
+      // Câu gợi ý dựng từ chính danh sách đã khai. Đóng cứng ở đây thì một repo không có
+      // `feature-parity.mjs` vẫn bị bảo đi chạy nó — chỉ dẫn sai còn tệ hơn không chỉ dẫn.
+      msg: `${failures.join(" · ")}. Hãy sửa bằng: ${scripts.map((name) => `node scripts/${name}`).join(" && ")}, rồi commit --amend hoặc tạo commit mới.`
     };
   }
-  return { ok: true, msg: "DASHBOARD.md, llms.txt, repo-map.json và FEATURE-PARITY.md đã commit đều khớp với HEAD." };
+  // Nói đúng thứ VỪA kiểm, không liệt kê cứng tên artifact: repo khác khai bộ sinh khác thì
+  // câu này sẽ kể tên những file nó không hề có.
+  return { ok: true, msg: `Artifact do ${scripts.join(" và ")} sinh ra đã commit đều khớp với HEAD.` };
 });
 
 /* ---- 8. Cổng kiểm cấu trúc — CHẶN từ phiên S7 -------------------------- */

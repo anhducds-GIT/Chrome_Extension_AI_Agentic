@@ -16,7 +16,9 @@ import {
   claimPrefixesFrom,
   DEFAULT_CLAIM_PREFIXES,
   DEFAULT_UNITS,
-  unitsFrom
+  unitsFrom,
+  unitDirOf,
+  DEFAULT_REPO
 } from "../scripts/repo-structure.mjs";
 
 let passed = 0;
@@ -107,6 +109,38 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   assert.equal(areaOf("workers/abc/v1/x.js", []), "_root",
     "khong co tien to nao thi moi thu thuoc _root");
   ok("quy duong dan ve vung so huu: mot ham, mot cau tra loi, ke ca ca file nam thang duoi tien to");
+}
+
+/* ---- MẶC ĐỊNH PHẢI TRUNG TÍNH -------------------------------------------
+   Ghim thẳng cái luật, không đi đường vòng. Phép thử repo rỗng KHÔNG bắt được lỗi này: bộ
+   khung luôn khai tên riêng nên giá trị mặc định chẳng bao giờ được dùng ở đó. Đo thật: đột
+   biến đổi mặc định về lại tên repo gốc ĐÃ THOÁT qua cả phép thử repo rỗng.
+
+   Vì sao nó nguy hiểm: repo nào QUÊN khai sẽ lặng lẽ sinh ra một trang tự nhận là repo gốc,
+   và không phép kiểm nào thấy vì file vẫn sinh ra bình thường. */
+{
+  for (const [field, value] of Object.entries(DEFAULT_REPO)) {
+    if (typeof value !== "string") continue;
+    for (const forbidden of ["Chrome Extension", "duc-auto", "gg-flow", "Agentic"]) {
+      assert.ok(!value.includes(forbidden),
+        `DEFAULT_REPO.${field} mang danh tinh repo goc ("${forbidden}") — mac dinh phai TRUNG TINH`);
+    }
+  }
+  assert.ok(DEFAULT_REPO.name.trim().length > 0, "mac dinh van phai co mot cai ten doc duoc");
+  ok("mac dinh khong mang danh tinh repo goc — quen khai thi trang noi that, khong noi doi");
+}
+
+/* ---- unitDirOf: chính thư mục đơn vị KHÔNG phải file bên trong nó ---------
+   Ghim ca bien. Đột biến nới `<=` thành `<` đã THOÁT vì không ca nào chạm đúng ranh giới. */
+{
+  assert.equal(unitDirOf("workers/abc/v1", DEFAULT_UNITS), null,
+    "duong dan CHINH LA thu muc don vi thi khong phai file ben trong no");
+  assert.equal(unitDirOf("workers/abc/v1/manifest.json", DEFAULT_UNITS), "workers/abc/v1",
+    "file ngay trong thu muc don vi thi thuoc ve no");
+  assert.equal(unitDirOf("workers/abc", DEFAULT_UNITS), null, "chua du sau");
+  assert.equal(unitDirOf("workers/abc/v1/tests/x.mjs", DEFAULT_UNITS), "workers/abc/v1",
+    "file sau nhieu tang van thuoc dung don vi");
+  ok("unitDirOf phan biet dung thu muc don vi voi file ben trong no");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

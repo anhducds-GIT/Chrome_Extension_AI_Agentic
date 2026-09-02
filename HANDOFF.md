@@ -788,3 +788,56 @@ của Đức lẫn việc của AI**. Nay việc của Đức đã có trường
 thoát vì fixture của tôi chỉ có 5 mã một-chữ = 5 chữ cái, dưới ngưỡng 40 — bỏ mã hay không cũng
 ra cùng kết quả. Đổi sang 14 mã ba-chữ (42 chữ cái) thì nó bị bắt. **Lần thứ ba trong ngày một
 phép kiểm của tôi không dựng nổi ca hỏng** — và cả ba lần đều chỉ lộ ra khi chạy đột biến thật.
+
+## 2026-09-02 — `claude-surface-fix`: sửa 7 phát hiện của audit độc lập (K1 bị REJECT)
+
+Codex audit K1 tại `bae0483` → **REJECT, 20 phát hiện**. Tôi kiểm chứng độc lập bảy cái nặng
+nhất trước khi sửa (luật vàng 4) — **cả bảy đều thật**. Đức cho mượn `_root` để sửa.
+
+### Hai lỗi nặng, và cả hai đều là *phép thử của tôi quá nông*
+
+**① Phép thử repo rỗng chưa bao giờ chạy cổng đóng phiên** — chỉ chạy cổng cấu trúc. Mà cổng
+đóng phiên đòi `feature-parity.mjs`, thứ bộ trích **cố ý không mang theo**. Repo dựng từ bộ
+khung sẽ hỏng ngay ở cổng của chính nó, và phép thử mù hoàn toàn.
+→ Danh sách bộ sinh nay đọc từ `.repo-structure.json` (`generators`); bộ khung khai đúng thứ nó
+mang theo. **Ba** chỗ đóng cứng phải sửa, không phải một: danh sách, câu gợi ý cách sửa, và câu
+báo thành công — hai câu sau vẫn kể tên `FEATURE-PARITY.md` cho một repo không hề có nó.
+
+**② Bộ sinh đóng cứng tên repo gốc** trong trang cổng vào. Mọi repo dùng bộ khung sẽ sinh ra
+một trang **tự nhận là repo Chrome** — đúng cái bệnh luật cấm-chép-tầng-GENERATED sinh ra để
+tránh, và luật đó không chặn nổi vì nó chỉ soi DANH SÁCH file mang theo, không soi NỘI DUNG.
+→ Danh tính đọc từ khối `repo`, và **giá trị mặc định nay TRUNG TÍNH**. Để mặc định là tên repo
+gốc mới chính là cái bẫy: repo nào quên khai sẽ lặng lẽ nói dối.
+
+### Năm cái còn lại
+
+| | Sửa gì |
+|---|---|
+| Bản đồ máy đọc luôn khai `P1` | đọc `profile` từ cấu hình, kiểm hợp lệ P1…P5 |
+| Cổng đóng phiên đóng cứng `workers/<gói>/<phiên-bản>` ở **2** chỗ | thêm `unitDirOf` / `unitDirsUnder`, đi xuống đúng số tầng đã khai |
+| `--check` so chuỗi thô | chuẩn hoá xuống dòng — bản clone sạch trên Windows từng báo 9 file "lệch" |
+| Khuôn trạng thái tự mâu thuẫn `v1`/`v2` | sửa về `v2`, và nói rõ đường dẫn ví dụ là của repo NÀY |
+| Mẫu dò `"0 chỗ ĐỎ"` không chặn biên số | **đọc số**, không dò chuỗi — mẫu cũ khớp cả `"40 chỗ ĐỎ"` |
+
+### Phép thử nghiệm thu nay sâu hơn hẳn
+
+Repo rỗng giờ phải qua **ba** cửa, không phải một: cổng cấu trúc 0/0 · **cổng đóng phiên chạy
+được** · **nội dung trang sinh ra không mang tên repo gốc**.
+
+### Bộ tự kiểm bắt được một rò rỉ của phiên khác
+
+Trong lúc sửa, phép kiểm tên-dự-án chặn commit `74593d2` (phiên `claude-y03`): một chú thích
+trong `build-dashboard.mjs` — script **portable** — nhắc tên một gói cụ thể. Đã viết lại trung
+tính. Phép kiểm làm đúng việc của nó, trên thay đổi của người khác.
+
+### Số
+
+Suite **233 → 243**. Đột biến: 8 lượt, **2 THOÁT rồi được vá**. Cả hai thoát vì cùng một lý do:
+phép kiểm đi **đường vòng** qua phép thử tích hợp thay vì **ghim thẳng luật**. Bộ khung luôn
+khai tên riêng nên giá trị mặc định không bao giờ chạy tới; và không ca nào chạm đúng ranh giới
+của `unitDirOf`. Nay ghim thẳng: mặc định không được chứa danh tính repo gốc, và ranh giới
+"chính là thư mục đơn vị" ≠ "file bên trong nó".
+
+**Bài học lặp lại lần thứ năm trong hai phiên** — và nay đã đủ để thành luật:
+*một phép kiểm chỉ thật khi fixture của nó dựng được ca hỏng; kiểm qua đường vòng thì đường vòng
+mới là thứ được ghim.*

@@ -1,6 +1,11 @@
 {
   "_doc": "Bản đồ cấu trúc TĨNH của repo. Đây là tầng LAW: đổi khi thêm/bớt thư mục top-level, tức là hiếm. KHÔNG nhầm với .agents/claims.json — file đó là tầng STATE, ghi phiên AI nào đang giữ package nào, đổi vài lần mỗi phiên. Trộn hai tầng vào một file là trái luật mục 1 của REPO-STRUCTURE-SPEC-V1.",
   "schema_version": 1,
+  "repo": {
+    "_doc": "Danh tính repo dùng cho trang cổng vào máy đọc. Bỏ khối này là bộ sinh dùng mặc định — và mặc định đó mang tên repo GỐC, nên repo mới PHẢI khai.",
+    "name": "Chrome Extension AI Agentic",
+    "tagline": "Monorepo 5 extension Chrome tự động hoá các trang AI (ChatGPT, Gemini, Google Flow) qua một Bridge chung."
+  },
   "profile": "P1",
   "units": {
     "_doc": "Hình dạng đơn vị công việc của repo NÀY. Bộ sinh và cổng kiểm đọc khối này thay vì đóng cứng tên thư mục/tên file. Repo khác khai khác — đó là điểm khiến bộ máy đi được sang repo khác. root_dir null = repo không có đơn vị con, chỉ có đơn vị GỐC.",
@@ -8,6 +13,11 @@
     "marker": "manifest.json",
     "depth": 2
   },
+  "generators": [
+    "build-dashboard.mjs",
+    "feature-parity.mjs"
+  ],
+  "_generators_doc": "Script nào sinh ra artifact đã commit. Cổng đóng phiên đối chiếu từng cái với HEAD. Repo dựng từ bộ khung chỉ khai những script nó THẬT SỰ mang theo — khai thừa là cổng đỏ vì thiếu file.",
   "bootstrap": {
     "_doc": "Muc chan cua cong kiem cau truc (scripts/check-bootstrap.mjs). Ma trong `blocking` ma DO thi session-check.mjs DO theo, va phien khong duoc bao xong. Ma khong co trong danh sach thi CHI CANH BAO. Day la tang LAW: doi khi Duc chot bat/tat chan mot phep kiem, tuc la hiem. Dat o day chu khong viet cung trong code de S8 va cac repo khac doi duoc danh sach ma khong phai sua script.",
     "_fail_closed": "THIEU khoi nay, hoac `blocking` khong phai mang, thi check-bootstrap.mjs THOAT MA 2 va cong DO. Co y: cach de nhat de tu thao chan la xoa cau hinh di, nen xoa cau hinh phai la mot loi to, khong phai mot su im lang.",
