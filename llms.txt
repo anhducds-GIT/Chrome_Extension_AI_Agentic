@@ -1,14 +1,14 @@
 # Chrome Extension AI Agentic
 
-> Monorepo 5 extension Chrome tự động hoá các trang AI (ChatGPT, Gemini, Google Flow) qua một Bridge chung. 3/5 đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.
+> Monorepo 5 extension Chrome tự động hoá các trang AI (ChatGPT, Gemini, Google Flow) qua một Bridge chung. 5/5 đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `72b6ea9` (2026-09-02).
+Trang được sinh tại commit `b7302e3` (2026-09-02).
 
 ## Việc ưu tiên #1
 
-- **CHƯA KHAI** — chưa STATUS nào khai `next_step` (trường của schema `extension-status/v2`, phiên S3 thêm). Tạm thời xem cột "Việc đang mở" ở bảng B.
+- **workers/duc-auto-gg-flow-video/v0.1.0** — Kiem live multi-profile: chep bridge-host.mjs + bridge-cli.mjs moi sang thu muc Bridge, reload extension tung profile, dat ten tung ho so, roi goi bridge.sessions dem du ten
 
 ## Đọc theo thứ tự này
 
@@ -19,7 +19,9 @@ Trang được sinh tại commit `72b6ea9` (2026-09-02).
 
 ## Từng extension
 
+- [Extension Observer V0](STATUS.md): idea — Chưa từng chạy pilot nào
 - [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — B-14…B-21 đang mở
+- [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Lớp vận chuyển Bridge đã xong và đã kiểm chứng live cả hai bản (28/08)
 - [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Multi-profile Bridge (hướng A, Đức duyệt 28/08) đã code xong: host giữ nhiều kết nối + target/bridge.sessions/served_by, panel có ô tên hồ sơ, sửa nốt F-14…
 

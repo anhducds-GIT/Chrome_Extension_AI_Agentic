@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-02",
-  "generated_commit": "72b6ea9",
+  "generated_commit": "b7302e3",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -11,31 +11,31 @@
   "top_level": [
     {
       "path": "delegations/",
-      "owner_declared": false
+      "owner_declared": true
     },
     {
       "path": "docs/",
-      "owner_declared": false
+      "owner_declared": true
     },
     {
       "path": "drafts/",
-      "owner_declared": false
+      "owner_declared": true
     },
     {
       "path": "evidence/",
-      "owner_declared": false
+      "owner_declared": true
     },
     {
       "path": "pilots/",
-      "owner_declared": false
+      "owner_declared": true
     },
     {
       "path": "scripts/",
-      "owner_declared": false
+      "owner_declared": true
     },
     {
       "path": "tests/",
-      "owner_declared": false
+      "owner_declared": true
     },
     {
       "path": "workers/",
@@ -46,50 +46,50 @@
     {
       "id": "extension-observer-v0",
       "path": ".",
-      "lifecycle": "unclassified",
-      "status_md": null,
-      "owner": null,
-      "next_step": null,
-      "priority_rank": null,
+      "lifecycle": "idea",
+      "status_md": "STATUS.md",
+      "owner": "claude",
+      "next_step": "Quyết định: nuôi tiếp hay cho nghỉ. Nếu nuôi thì chuyển vào workers/observer-v0/v0.1.0/ theo phiên S8; nếu không thì khai archived.",
+      "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Chưa khai STATUS; đây là một việc đang mở."
+      "open_item": "Chưa từng chạy pilot nào. Đây là mã quan sát ở gốc repo, còn nằm ngoài cấu trúc workers/ — phiên S8 sẽ chuyển nó vào đúng chỗ."
     },
     {
       "id": "duc-auto-chatgpt",
       "path": "workers/duc-auto-chatgpt/v0.1.0",
       "lifecycle": "active",
       "status_md": "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
-      "owner": null,
-      "next_step": null,
-      "priority_rank": null,
+      "owner": "claude",
+      "next_step": "Chay audit doc lap cho ban va khoang nghi giua job — mon no duy nhat con lai cua goi nay",
+      "priority_rank": 2,
       "superseded_by": null,
       "last_verified": "2026-08-26",
       "last_verified_commit": "00d1f99b44bd490cac079da5e803917346571a26",
       "open_item": "B-14…B-21 đang mở; việc thật không chạy qua trần 90s của run.trial (B-17)"
     },
     {
-      "id": "duc-auto-gemini-v0.1.0",
+      "id": "duc-auto-gemini",
       "path": "workers/duc-auto-gemini/v0.1.0",
-      "lifecycle": "unclassified",
-      "status_md": null,
-      "owner": null,
+      "lifecycle": "superseded",
+      "status_md": "workers/duc-auto-gemini/v0.1.0/STATUS.md",
+      "owner": "claude",
       "next_step": null,
       "priority_rank": null,
-      "superseded_by": null,
+      "superseded_by": "workers/duc-auto-gemini/v0.2.0",
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "CHƯA KHAI STATUS — cần khai trạng thái và việc đang mở."
+      "open_item": "Bản đã nghỉ. Mọi việc tiếp tục ở v0.2.0. Giữ lại vì Pilot-01 là bằng chứng vận hành, không được xoá."
     },
     {
       "id": "duc-auto-gemini",
       "path": "workers/duc-auto-gemini/v0.2.0",
       "lifecycle": "active",
       "status_md": "workers/duc-auto-gemini/v0.2.0/STATUS.md",
-      "owner": null,
-      "next_step": null,
-      "priority_rank": null,
+      "owner": "claude",
+      "next_step": "Do live nhanh tat host qua 2 phut (thang bo cuoc, alarm lo tiep) — hien chi ghim bang test",
+      "priority_rank": 3,
       "superseded_by": null,
       "last_verified": "2026-08-28",
       "last_verified_commit": "4789754b2ad57121fe94d97e1ebd86fc5d4d2148",
@@ -100,20 +100,49 @@
       "path": "workers/duc-auto-gg-flow-video/v0.1.0",
       "lifecycle": "building",
       "status_md": "workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md",
-      "owner": null,
-      "next_step": null,
-      "priority_rank": null,
+      "owner": "claude",
+      "next_step": "Kiem live multi-profile: chep bridge-host.mjs + bridge-cli.mjs moi sang thu muc Bridge, reload extension tung profile, dat ten tung ho so, roi goi bridge.sessions dem du ten",
+      "priority_rank": 1,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
       "open_item": "Multi-profile Bridge (hướng A, Đức duyệt 28/08) đã code xong: host giữ nhiều kết nối + target/bridge.sessions/served_by, panel có ô tên hồ sơ, sửa nốt F-14 (chip mode qua pressFlowControl). Suite xanh, mutation đỏ đủ. CHƯA kiểm live: cần Đức chép host mới sang thư mục Bridge + khởi động lại host + reload extension ở từng profile + đặt tên từng profile"
     }
   ],
-  "active_work": [],
+  "active_work": [
+    {
+      "id": "workers/duc-auto-gg-flow-video/v0.1.0",
+      "unit": "workers/duc-auto-gg-flow-video/v0.1.0",
+      "title": "Kiem live multi-profile: chep bridge-host.mjs + bridge-cli.mjs moi sang thu muc Bridge, reload extension tung profile, dat ten tung ho so, roi goi bridge.sessions dem du ten",
+      "rank": 1,
+      "claim": null
+    },
+    {
+      "id": "workers/duc-auto-chatgpt/v0.1.0",
+      "unit": "workers/duc-auto-chatgpt/v0.1.0",
+      "title": "Chay audit doc lap cho ban va khoang nghi giua job — mon no duy nhat con lai cua goi nay",
+      "rank": 2,
+      "claim": null
+    },
+    {
+      "id": "workers/duc-auto-gemini/v0.2.0",
+      "unit": "workers/duc-auto-gemini/v0.2.0",
+      "title": "Do live nhanh tat host qua 2 phut (thang bo cuoc, alarm lo tiep) — hien chi ghim bang test",
+      "rank": 3,
+      "claim": null
+    },
+    {
+      "id": "_root",
+      "unit": "_root",
+      "title": "Quyết định: nuôi tiếp hay cho nghỉ. Nếu nuôi thì chuyển vào workers/observer-v0/v0.1.0/ theo phiên S8; nếu không thì khai archived.",
+      "rank": 4,
+      "claim": null
+    }
+  ],
   "health": {
-    "units_without_status": 2,
+    "units_without_status": 0,
     "dead_links": 0,
-    "undeclared_dirs": 7,
+    "undeclared_dirs": 0,
     "draft_debt": 0
   }
 }

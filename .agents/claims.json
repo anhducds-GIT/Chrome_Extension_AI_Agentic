@@ -10,11 +10,11 @@
       "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
-      "owner": "s3-gaps",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "S3 mon 2: THEM STATUS.md cho v0.1.0 khai superseded. Chi them file, khong dung Pilot-01 hay evidence.",
-      "released_at": null
+      "task": "XONG 2026-09-02. S3 da THEM STATUS.md cho v0.1.0 khai superseded -> v0.2.0. Khong dung Pilot-01 hay evidence. Viec cua v0.2.0 khong doi: con no do live nhanh tat host qua 2 phut.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-chatgpt": {
       "owner": null,
@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "s3-gaps",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Phien S3 theo docs/briefs/BRIEF-S3.md: STATUS goc repo, .repo-structure.json khoi areas, schema v2 (migrate truoc siet sau), test ghim.",
-      "released_at": null
+      "task": "XONG 2026-09-02. S1 + S2 + S3 deu dong, da push. Khoi D ve 0/0/0/0. Suite 79/79, 11/11 mutation bi bat, 4 vong audit doc lap. VIEC KE TIEP: S4 — cong kiem cau truc, mo rong .repo-structure.json thanh 14 phep kiem, CHI CANH BAO chua chan.",
+      "released_at": "2026-09-02"
     }
   }
 }

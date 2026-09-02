@@ -168,3 +168,28 @@
     auditor đọc qua GitHub không tự kiểm lại được. Thêm một workflow chạy `npm test` mỗi lần
     push sẽ biến chúng thành **[ĐO]**. Đó là **tạo automation tự chạy — luật gốc bắt phải hỏi
     Đức trước.** Chưa làm.
+
+- **2026-09-02 · `s3-gaps`** — **PHIÊN S3 XONG. Khối D về 0 · 0 · 0 · 0.**
+  - Khai `STATUS.md` cho đơn vị gốc repo (`lifecycle: idea` — nó chưa từng chạy pilot, khai
+    `building` là nói quá) · khai `duc-auto-gemini/v0.1.0` là `superseded` (chỉ THÊM file, không
+    đụng `Pilot-01`) · tạo `.repo-structure.json` khối `areas` khai chủ cả 8 thư mục top-level ·
+    nâng schema lên `extension-status/v2`, migrate 6 file TRƯỚC rồi mới siết `SCHEMA`/`REQUIRED`.
+  - **Xếp hạng ưu tiên (mới, thay cho việc máy đoán):** gg-flow-video 1 (chưa kiểm live, đang
+    chặn) · chatgpt 2 (còn nợ audit độc lập) · gemini v0.2.0 3 · gốc repo 4. Khối A và
+    `llms.txt` nay nêu đúng việc số 1 thay vì "CHƯA KHAI".
+  - **`areas` đặt ở `.repo-structure.json`, KHÔNG phải `claims.json`** — audit GPT bác đề xuất
+    đầu của tôi và bác đúng: claims là tầng STATE (đổi vài lần mỗi phiên), areas là tầng LAW.
+    Trộn hai tầng là trái luật của chính SPEC; thêm nữa quyền khai trong claims cho `docs/`
+    không được `safe-push` cưỡng chế — một lời khai không có răng.
+  - **Ba trường bắt buộc CÓ ĐIỀU KIỆN:** `next_step` + `priority_rank` chỉ cho đơn vị còn sống;
+    `superseded_by` chỉ khi `superseded`, và phải trỏ tới thứ CÓ THẬT. Bỏ hẳn `unclassified`
+    khỏi lifecycle hợp lệ.
+  - **Audit Codex vòng 4 TỰ CHẠY suite** (73/73, exit 0) — lần đầu con số không còn là lời khai.
+    Nó tìm thêm 6 MAJOR; đã sửa 4 mục code + 3 lỗi quy trình trong brief. Nặng nhất: brief bảo
+    "đỏ thì dừng" ở giữa chừng, mà bộ sinh đọc từ HEAD nên nó PHẢI đỏ ở đúng chỗ đó — làm theo
+    là phiên S3 tự chặn đứng chính nó. **Tôi vừa sống qua đúng ca này khi làm S3.**
+  - **Đo:** suite **79/79** · npm test 95+6+79+15 xanh · **11/11 mutation bị bắt**.
+  - **Còn nợ, đẩy sang sau:** enumeration chưa ghim vào một ảnh chụp HEAD bất biến (Codex xếp
+    LOW) · `firstSentence` cắt theo ký tự · `compareRepoMap` chưa kiểm sâu hơn hình dạng.
+  - **Việc kế tiếp:** S4 — cổng kiểm cấu trúc, mở rộng `.repo-structure.json` thành 14 phép
+    kiểm. **Chỉ cảnh báo, chưa chặn.** Kèm: gộp luôn CI vào S4 nếu Đức đổi ý (xem mục nợ dưới).
