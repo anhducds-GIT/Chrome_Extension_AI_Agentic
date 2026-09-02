@@ -166,6 +166,38 @@ cổng đóng phiên xanh · gộp là tiến thẳng, không xung đột.
 | **B3** nhánh riêng | **Có** | Duyệt gộp mỗi lần — **có thể tệ hơn B1** | Trung bình |
 | **B4** nhánh + gộp tự động | **Có** | **Gần như không** | Một phiên, và một lần Đức duyệt luật |
 
+## 5b. VẤN ĐỀ 3 — cuộc đua do phép kiểm độ tươi artifact. **Phát hiện 20:45 ngày 02/09.**
+
+> Đo thật: tôi mất **bốn lượt** mới đóng nổi cổng, trong khi ba phiên khác commit lúc 20:40 ·
+> 20:42 · 20:45 · 20:45. Không phải tranh chấp quyền — lúc đó tôi đã giữ đủ cả ba khoá cần.
+
+**Cơ chế.** Phép kiểm *"sự thật máy sinh còn tươi"* so bốn trang máy sinh với **toàn bộ repo**.
+Nên **bất kỳ phiên nào commit** cũng làm artifact của tôi cũ, dù tôi giữ đúng vùng của mình.
+A1 và A2 **không chữa được cái này** — nó không phải bài toán quyền.
+
+**Và nó vừa tệ hơn, vì một lý do tốt.** Bản vá audit K1 khiến cổng **thật sự chạy suite gốc**
+(trước đó suite không hề chạy với phiên chỉ giữ gốc repo — đúng, cần thiết, và là một bản vá
+quan trọng). Hệ quả: cổng từ vài giây thành **vài phút**. Cửa sổ đua rộng ra đúng bằng đó.
+
+Nói cách khác: **sửa cổng cho chặt hơn đã làm cuộc đua này lộ ra.** Nó vốn đã tồn tại, chỉ là
+trước đây cổng chạy nhanh nên ít ai vấp.
+
+### Bốn cách, và giá từng cách
+
+| | Làm gì | Được | Mất |
+|---|---|---|---|
+| **C1** | Cho phép artifact chậm 1 commit | Không đua nữa | **Làm yếu bảo đảm**: artifact có thể nói sai và cổng vẫn xanh. Đúng thứ luật vàng 3 cấm |
+| **C2** | Một phiên "dọn cuối" sinh lại theo lịch | Phiên thường khỏi lo | Artifact cũ giữa hai lượt dọn — mà GPT audit qua GitHub đọc chính mấy file đó |
+| **C3** ⭐ | `safe-push` **tự sinh lại + commit artifact ngay trước khi đẩy** | Cửa sổ đua co về **mili-giây**, vì không còn lượt chạy cổng nào chen giữa. **Không làm yếu phép kiểm nào** | `safe-push` từ chỗ chỉ đọc thành có ghi commit. Cần phép kiểm ghim, và cần Đức gật vì đó là đổi hành vi công cụ |
+| **C4** | Không commit artifact nữa | Hết đua | **Phá vòng audit chéo**: GPT đọc repo qua GitHub connector, không có artifact thì nó mù |
+
+### Khuyến nghị: C3
+
+C1 và C4 đều đổi bảo đảm để lấy tiện lợi — C1 cho artifact nói sai, C4 làm GPT mù. C2 chỉ dời
+cơn đau sang chỗ khác. **C3 là cách duy nhất xoá cuộc đua mà không bỏ một lớp bảo vệ nào**: nó
+đặt việc sinh lại vào đúng khoảnh khắc cuối, nơi không còn gì chen vào được.
+
+**Cần Đức gật một câu**, vì C3 khiến `safe-push` tạo commit — hôm nay nó chỉ đọc và đẩy.
 ## 6. Khuyến nghị
 
 **ĐÃ ĐỔI KHUYẾN NGHỊ 19:2x — vì tôi bị chặn thật trong lúc viết tài liệu này.**

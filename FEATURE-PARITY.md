@@ -128,7 +128,7 @@ GPT 34 file `.js` · Gemini 33.
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 6014 | 5057 | 957 |
+| `sidepanel.js` | 6014 | 5058 | 956 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
 | `bridge-core.js` | 954 | 799 | 155 |
 | `runner-core.js` | 289 | 203 | 86 |
@@ -137,7 +137,7 @@ GPT 34 file `.js` · Gemini 33.
 | `output-profile-core.js` | 96 | 45 | 51 |
 | `provider-adapter.js` | 228 | 187 | 41 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
-| `bridge-transport-loopback.js` | 548 | 512 | 36 |
+| `bridge-transport-loopback.js` | 548 | 514 | 34 |
 | `output-location-core.js` | 389 | 373 | 16 |
 | `halt-instructions-core.js` | 147 | 133 | 14 |
 | `resume-core.js` | 133 | 122 | 11 |

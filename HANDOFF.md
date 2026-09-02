@@ -949,3 +949,25 @@ trên một nhánh). Bảng giá bốn cách: `docs/studies/PARALLEL-WORK-DESIGN
 
 **Cũng làm:** xoá file rác `nul` 19KB ở gốc (Đức duyệt), giữ dòng `.gitignore` để mọi phiên sau
 khỏi tạo lại.
+
+## 2026-09-02 — `claude-y02-a2`: ghi VẤN ĐỀ 3 — cuộc đua do phép kiểm độ tươi artifact
+
+**Không phải tranh chấp quyền.** Tôi mất **bốn lượt** mới đóng nổi cổng cho A2, trong khi đã giữ
+đủ cả ba khoá cần. Nguyên nhân: phép kiểm *"sự thật máy sinh còn tươi"* so bốn trang máy sinh với
+**toàn bộ repo**, nên **bất kỳ phiên nào commit** cũng làm artifact của tôi cũ. Ba phiên khác
+commit lúc 20:40 · 20:42 · 20:45 · 20:45.
+
+**Và nó vừa tệ hơn vì một lý do TỐT.** Bản vá audit K1 khiến cổng thật sự chạy suite gốc — trước
+đó suite không hề chạy với phiên chỉ giữ gốc repo. Đúng và cần thiết. Hệ quả: cổng từ vài giây
+thành vài phút, và cửa sổ đua rộng ra đúng bằng đó. **Sửa cổng cho chặt hơn đã làm cuộc đua này
+lộ ra** — nó vốn đã tồn tại.
+
+**A1 và A2 KHÔNG chữa cái này.** Ghi rõ để không ai tưởng đã xong.
+
+**Bốn phương án kèm giá đã ghi vào `docs/studies/PARALLEL-WORK-DESIGN-V0.md` mục 5b.**
+Khuyến nghị **C3**: cho `safe-push` tự sinh lại artifact rồi đẩy ngay trong cùng một thao tác —
+cửa sổ đua co về mili-giây vì không còn lượt chạy cổng nào chen giữa, và **không bỏ lớp bảo vệ
+nào**. Ba cách kia đều đổi bảo đảm để lấy tiện lợi: C1 cho artifact nói sai, C4 làm GPT mù khi
+audit qua GitHub, C2 chỉ dời cơn đau.
+
+**Cần Đức gật** vì C3 khiến `safe-push` tạo commit — hôm nay nó chỉ đọc và đẩy.

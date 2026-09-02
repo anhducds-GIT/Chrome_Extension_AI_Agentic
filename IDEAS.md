@@ -62,8 +62,11 @@ hiển thị sai.
 - **phạm vi:** `scripts/claim.mjs` (file mới) · `tests/claim-smoke.mjs` (file mới) ·
   `docs/studies/` · khai báo trong bản đồ file. **CẤM đụng `session-check.mjs` và
   `repo-structure.mjs`** — xem lý do hoãn A2 ở dưới.
-- **việc kế:** Còn **vấn đề 2** (push cuốn theo commit người khác) — chưa chốt phương án.
-  Bảng giá bốn cách ở `docs/studies/PARALLEL-WORK-DESIGN-V0.md` mục 5. Cần Đức chọn
+- **việc kế:** Còn **hai vấn đề chưa chốt phương án**, cả hai cần Đức chọn một câu:
+  ① push cuốn theo commit người khác (mục 5 của khảo sát) ·
+  ② **vấn đề 3, mới phát hiện 20:45** — phép kiểm độ tươi artifact so với TOÀN repo, nên bất kỳ
+  phiên nào commit cũng làm artifact của mình cũ. Khuyến nghị **C3**: cho `safe-push` tự sinh
+  lại rồi đẩy ngay, cửa sổ đua co về mili-giây và không bỏ lớp bảo vệ nào (mục 5b)
 - **vì sao:** Đức có nhiều ý tưởng và **không đủ thời gian làm lần lượt**. Mỗi phiên AI phải
   tự biết: làm gì · cập nhật gì · **cấm đụng gì**.
 
@@ -80,6 +83,8 @@ hiển thị sai.
 - **A2 tự chứng minh ngay trong lượt làm nó:** cổng lần lượt bắt tôi nhận `_code`, rồi
   `_template` (vì sinh lại bộ khung), và tôi trả `_docs` ngay khi không cần. Trước A2 thì cả ba
   việc đó dùng chung một khoá và không ai thấy gì.
+- **A2 KHÔNG chữa vấn đề 2 và 3.** Ghi rõ ở đây để không ai tưởng đã xong: A1 chữa quyền bị ghi
+  đè, A2 chữa quyền bị chặn. Push cuốn theo nhau và cuộc đua độ tươi artifact vẫn còn nguyên.
 
 - **số đo đặt ra bài toán:** 127 commit/ngày · 77% chạm `_root` · 63 lần ghi bảng quyền · 21
   nhãn phiên từ 01/09. Khảo sát đầy đủ và bốn phương án kèm giá:

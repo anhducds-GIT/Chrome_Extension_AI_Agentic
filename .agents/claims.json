@@ -9,18 +9,18 @@
       "task": "F-15 (cong chan chip x2+) + ra soat backlog. Duc chot chay thang theo thu tu F-15 -> F-14 -> F-25."
     },
     "workers/duc-auto-gemini": {
+      "owner": "claude-bridge-multiprofile",
+      "ai": "Claude",
+      "claimed_at": "2026-09-02",
+      "task": "Nut 'Luu ten' + bao danh ngay: message DAC_BRIDGE_LABEL_SET -> luu label + cycle socket cua chinh profile, khong dung host. Duc chot 02/09. Sau do: design doc multi-session-per-profile (docs/studies).",
+      "released_at": null
+    },
+    "workers/duc-auto-chatgpt": {
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-y05). XONG Y-05 phan cua goi nay: viet lai next_step + current_focus thanh tieng Viet co dau, tach viec cua Duc sang human_action. Khong dung code.",
-      "released_at": "2026-09-02"
-    },
-    "workers/duc-auto-chatgpt": {
-      "owner": "claude-y02-probe-article",
-      "ai": "Claude",
-      "claimed_at": "2026-09-02",
       "task": "Sua articleSample cua dom_probe: selector article da chet, lam no len tieng khi khong khop",
-      "released_at": null
+      "released_at": "2026-09-02"
     },
     "_root": {
       "owner": "claude-y02-a2",
@@ -30,11 +30,11 @@
       "released_at": null
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-y02-a2",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "A2: tai lieu khao sat Y-02",
-      "released_at": "2026-09-02"
+      "task": "Ghi phat hien thu ba: cuoc dua do phep kiem do tuoi artifact",
+      "released_at": null
     },
     "_code": {
       "owner": "claude-y02-a2",
