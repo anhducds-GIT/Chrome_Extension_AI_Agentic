@@ -164,7 +164,38 @@
     return composers.length === 1 ? composers[0] : null;
   }
 
-  const CREATE_BUTTON_LABELS = Object.freeze(["arrow_forward Create"]);
+  // NHAN NUT GUI: DANH SACH NHAN CHINH XAC, MOI NHAN PHAI CO BANG CHUNG DOM.
+  //
+  // Do that 2026-09-02 tren ho so Binh (giao dien tieng Viet): cung mot trang,
+  // cung mot cau truc DOM, nhung nhan nut BI DICH —
+  //     "arrow_forward Create"  (en)   ->  "arrow_forward Tao"  (vi)
+  //     "add_2 Create"          (en)   ->  "add_2 Tao"          (vi)
+  // Ban cu chi co chuoi tieng Anh nen khong tim thay nut nao: scope khong giai
+  // duoc, sendFound=false, khong job nao chay. Bang chung:
+  // evidence/F4R7-probe-BEFORE-trial-20260902.json
+  //
+  // DA THU MOT CACH GON HON VA DA BO: so khop theo tien to ligature
+  // (`^arrow_forward\s+\S`), vi ligature cua Material Symbols khong bi dich.
+  // No nhan dung ca hai locale VA loai dung `add_2` o ca hai — nhung no cung
+  // nhan luon `arrow_forward Recreate`, mot near-miss ma phep kiem cu co y chan.
+  // Noi long mot cong CHI TIEU CREDIT de do phai them nhan cho tung ngon ngu la
+  // doi sai chieu. Giu danh sach chinh xac.
+  //
+  // THEM MOT NGON NGU MOI: chay `diagnostics.dom_probe`, doc nhan THAT tren
+  // trang do, luu probe vao evidence/, roi moi them vao day. Dung dich tay va
+  // dung doan — luat vang 1. Thieu nhan thi he thong TU CHOI chay, do la huong
+  // hong dung: khong click nham con hon click nham mot nut ton 6-7 credit.
+  //
+  // VA DAY LA CHO PHAI CAN THAN NHAT: o tieng Viet CA HAI nut deu ket thuc bang
+  // "Tao". Bat ky cach so khop nao chi nhin CHU dang sau ligature deu se nuot
+  // luon `add_2 Tao` — dung cai nut mo bang media da gay mat credit 28/08.
+  const CREATE_BUTTON_LABELS = Object.freeze([
+    "arrow_forward Create", // en — evidence/F1-EVIDENCE-NOTES.md (2026-08-27)
+    "arrow_forward Tạo",  // vi — evidence/F4R7-probe-BEFORE-trial-20260902.json
+  ]);
+  function isCreateButtonLabel(label) {
+    return CREATE_BUTTON_LABELS.includes(String(label || ""));
+  }
 
   // MEASURED 2026-08-28: the live page carries four text-entry surfaces — the
   // composer, a nav input, a search input, and a hidden textarea. The composer's
@@ -185,7 +216,7 @@
     return nodes.filter((button) => visibleNode(root, button));
   }
   function visibleCreateButtonsIn(root, container) {
-    return visibleButtonsIn(root, container).filter((button) => CREATE_BUTTON_LABELS.includes(buttonLabel(button)));
+    return visibleButtonsIn(root, container).filter((button) => isCreateButtonLabel(buttonLabel(button)));
   }
   function visibleUpgradeButtonsIn(root, container) {
     return visibleButtonsIn(root, container).filter((button) => buttonLabel(button) === "Upgrade" && enabledButton(button));
@@ -225,7 +256,7 @@
       if (overshotComposerArea(container, composer)) return null;
       const buttons = visibleButtonsIn(root, container);
       if (buttons.length === 0) { container = container.parentElement; continue; }
-      const creates = buttons.filter((button) => CREATE_BUTTON_LABELS.includes(buttonLabel(button)));
+      const creates = buttons.filter((button) => isCreateButtonLabel(buttonLabel(button)));
       if (creates.length > 1) return null;
       if (creates.length === 1) return Object.freeze({ composer, container, create: creates[0], hops: hop });
       const upgrades = buttons.filter((button) => buttonLabel(button) === "Upgrade" && enabledButton(button));
@@ -252,7 +283,7 @@
 
   function createCandidates(root, scope) {
     return scopedVisibleButtons(root, scope)
-      .filter((button) => CREATE_BUTTON_LABELS.includes(buttonLabel(button)));
+      .filter((button) => isCreateButtonLabel(buttonLabel(button)));
   }
   function findCreateButton(root) {
     const scope = composerScope(root);

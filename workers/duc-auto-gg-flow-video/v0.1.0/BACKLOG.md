@@ -245,5 +245,18 @@ Chỉ mở lại nếu có bằng chứng thật là extension nhường alarm q
   `fx/*/tools/flow/*` vào manifest và cho adapter nhận **đúng một** đoạn dạng mã ngôn ngữ.
   Suite 93/93, 5/5 đột biến bị bắt. Xem `decisions.md` (mục cấp quyền) và
   `tests/flow-locale-url-static.mjs`.
+  **NỬA THỨ HAI, cũng đã xong:** giao diện tiếng Việt còn **dịch cả nhãn nút** —
+  `arrow_forward Create` → `arrow_forward **Tạo**`, `add_2 Create` → `add_2 **Tạo**`. Sửa URL
+  xong vẫn không chạy được: `composer_scope_resolved: false`, `sendFound: false`. Đã thêm nhãn
+  tiếng Việt vào `CREATE_BUTTON_LABELS` **kèm trích nguồn bằng chứng**.
+  **Đã thử một cách gọn hơn và BỎ:** so khớp theo tiền tố ligature (`^arrow_forward\s+\S`) —
+  ligature Material Symbols không bị dịch nên nó nhận đúng cả hai locale và loại đúng `add_2`
+  ở cả hai. Nhưng nó nuốt luôn near-miss `arrow_forward Recreate` mà `provider-adapter-static.mjs`
+  cố ý chặn. **Nới một cổng chi tiêu credit để đỡ phải thêm nhãn cho từng ngôn ngữ là đổi sai
+  chiều.** Giữ danh sách chính xác; thiếu nhãn thì hệ thống TỪ CHỐI chạy — hướng hỏng đúng.
+  Thêm ngôn ngữ mới: chạy `dom_probe`, lưu probe vào `evidence/`, rồi mới thêm nhãn (luật vàng 1).
+  Có phép kiểm đòi mỗi nhãn phải kèm trích nguồn, và mutation T4 (thêm nhãn không bằng chứng)
+  bị bắt.
+
   **Còn mở, nhỏ:** các worker khác (`duc-auto-gemini`, `duc-auto-chatgpt`) chưa được soi xem có
   dính cùng bẫy locale không — chưa gặp thật, và mỗi gói có chủ riêng.

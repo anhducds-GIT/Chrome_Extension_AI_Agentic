@@ -772,3 +772,45 @@ không phải thao tác tay.
   Ghi chú số học: 360p/8s = **6 credit**, nên một tài khoản 50 credit đủ **8 video**, rộng hơn
   trần 7 hiện tại — trần vẫn để 7 (42/50, an toàn), và đây là bằng chứng nữa cho **F-22**
   (suy trần từ cấu hình đọc trên chip thay vì khoá cứng).
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 9): locale còn dịch cả NHÃN NÚT — nửa thứ hai của F-23
+
+Sửa URL xong, content script đã được tiêm vào `/fx/vi/...`, nhưng vẫn không chạy được:
+`composer_scope_resolved: false`, `sendFound: false`.
+
+- **Nguyên nhân:** giao diện tiếng Việt dịch luôn nhãn nút —
+  `arrow_forward Create` → `arrow_forward **Tạo**`, `add_2 Create` → `add_2 **Tạo**`,
+  `Agent` → `Tác nhân`. Cấu trúc DOM y hệt (scope trace hop 2 vẫn đúng 4 nút), chỉ chữ khác.
+  Chip cấu hình thì **không** bị dịch (`Video · 360p · 8s crop_16_9 x1` vẫn khớp pattern cấu trúc).
+- **ĐÃ THỬ MỘT CÁCH GỌN HƠN VÀ BỎ NÓ — đây là phần đáng đọc.** Ý tưởng: so khớp theo **tiền tố
+  ligature** `arrow_forward`, vì ligature Material Symbols là mã icon, không bị dịch. Nó nhận
+  đúng cả hai locale, và loại đúng `add_2` ở cả hai. Nhưng `provider-adapter-static.mjs` bắt
+  ngay: quy tắc tiền tố **nuốt luôn** near-miss `arrow_forward Recreate` mà phép kiểm cũ cố ý
+  chặn. Đó là **làm yếu một lớp bảo vệ đã có để cho test xanh** — luật vàng 3 cấm.
+  Nới một cổng **chi tiêu credit** chỉ để đỡ phải thêm nhãn cho từng ngôn ngữ là đổi sai chiều.
+  **Giữ danh sách chính xác**, mỗi nhãn kèm trích nguồn bằng chứng; thiếu nhãn thì hệ thống TỪ
+  CHỐI chạy — hướng hỏng đúng cho một nút tốn 6–7 credit.
+- **Chỗ nguy hiểm nhất, ghi lại cho phiên sau:** ở tiếng Việt **cả hai** nút đều kết thúc bằng
+  "Tạo". Bất kỳ cách so khớp nào chỉ nhìn chữ sau ligature đều nuốt luôn `add_2 Tạo` — đúng cái
+  nút mở bảng media đã gây mất credit ngày 28/08. Mutation T3 dựng lại đúng kịch bản đó.
+- **Một lỗi của tôi, suite bắt ngay:** bản đầu viết regex bằng **template literal** —
+  ``new RegExp(`^${ICON}\s+\S`)`` — mà trong template literal thì `\s` bị nuốt thành chữ `s`,
+  nên regex thành `/^arrow_forwards+S/`, khớp đúng con số không. Ba test đỏ cùng lúc.
+- **Đo:** suite **93/93** · **5/5 đột biến bị bắt** (gỡ nhãn tiếng Việt · quay lại tiền tố
+  ligature · so theo chữ sau ligature · thêm nhãn không kèm bằng chứng · gỡ pattern locale khỏi
+  manifest).
+- **Việc kế tiếp:** cần Đức **reload extension** lần nữa (đã sửa `provider-adapter.js`), rồi
+  chạy chuỗi trên `Bình` để đo `pacing_ms` lần đầu.
+- **SAI SÓT CỦA TÔI VỚI `evidence/`, đã sửa đúng luật.** Ở commit `eb86e49` tôi lỡ commit một
+  **vỏ lỗi** (`ok:false`, *"Open the Google Flow project tab as the active tab"*) dưới tên
+  `F4R7-probe-BEFORE-trial-20260902.json`, rồi ghi đè nó bằng probe thật — mà `evidence/` là
+  **chỉ thêm**. Cổng kiểm bắt được ("Vùng bằng chứng không bị sửa"). Đã **khôi phục nguyên
+  trạng** file đã commit, lưu probe thật thành file MỚI
+  `F4R7-probe-vi-locale-r02-20260902.json`, và thêm `F4R7-DOC-DAY-TRUOC.md` nói rõ file nào là
+  bằng chứng, file nào là vỏ lỗi. **Không sửa, không xoá cái đã commit.**
+  Đáng nói là sổ tay đã cảnh báo đúng chuyện này (ca `F1-snapshot-7` ngày 27/08) và tôi vẫn
+  mắc lại. Luật rút ra, đã ghi vào file trên: **kiểm `ok:true` TRƯỚC KHI ghi một phản hồi vào
+  `evidence/`.**
+- **Nợ, không phải việc của gói này:** sinh lại `DASHBOARD/llms.txt/repo-map` cần `_root`, hiện
+  do phiên `claude-y03` giữ và họ đang sửa dở bộ sinh. Cổng đóng phiên vì thế còn đúng một mục
+  đỏ nằm ở đấy; phần của gói này xanh.

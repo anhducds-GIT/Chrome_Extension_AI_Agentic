@@ -81,4 +81,33 @@ const manifestWouldAllow = "https://labs.google/fx/evil/path/tools/flow/x";
 assert.equal(ADAPTER.isProviderUrl(manifestWouldAllow), false,
   "adapter phải chặn được đường mà match pattern của manifest buộc phải cho lọt — nếu không, nới manifest là nới thật");
 
+/* ---- 3. NHÃN NÚT cũng bị dịch, và đó là bẫy nguy hiểm hơn URL ------------- */
+
+// Đo thật trên hồ sơ `Bình`: giao diện tiếng Việt dịch cả nhãn nút.
+//     "arrow_forward Create" -> "arrow_forward Tạo"
+//     "add_2 Create"         -> "add_2 Tạo"
+// Cấu trúc DOM y hệt, chỉ chữ khác — nên URL sửa xong rồi vẫn không chạy được.
+const adapterSource = fs.readFileSync(new URL("../provider-adapter.js", import.meta.url), "utf8");
+const labelBlock = adapterSource.slice(adapterSource.indexOf("const CREATE_BUTTON_LABELS"), adapterSource.indexOf("function isCreateButtonLabel"));
+for (const label of ["arrow_forward Create", "arrow_forward Tạo"]) {
+  assert.ok(labelBlock.includes(label), `danh sách nhãn nút gửi thiếu ${JSON.stringify(label)}`);
+}
+
+// MỖI nhãn phải kèm trích nguồn bằng chứng ngay trên dòng đó — luật vàng 1.
+// Thiếu trích nguồn nghĩa là ai đó đã dịch tay một nhãn thay vì đo nó.
+for (const line of labelBlock.split(String.fromCharCode(10)).filter((l) => l.includes("arrow_forward"))) {
+  assert.match(line, /\/\/\s*\w+\s*—\s*evidence\//, `nhãn nút phải trích nguồn bằng chứng: ${line.trim()}`);
+}
+
+// VÀ ĐÂY LÀ CHỖ NGUY HIỂM: ở tiếng Việt CẢ HAI nút đều kết thúc bằng "Tạo".
+// Bất kỳ cách so khớp nào chỉ nhìn chữ sau ligature đều nuốt luôn `add_2 Tạo` —
+// đúng nút mở bảng media đã gây mất credit 28/08. Và một quy tắc chỉ so tiền tố
+// ligature thì nuốt luôn near-miss `arrow_forward Recreate` mà file
+// provider-adapter-static.mjs cố ý chặn. Nên cách so khớp phải là DANH SÁCH
+// CHÍNH XÁC — tôi đã thử quy tắc tiền tố ngày 02/09 và bỏ nó vì đúng lý do này.
+assert.match(labelBlock, /Object\.freeze\(\[/, "danh sách nhãn phải là danh sách đóng băng, không phải một quy tắc so khớp mờ");
+assert.ok(!/\^arrow_forward\s/.test(adapterSource), "không được quay lại so khớp theo tiền tố ligature: nó nuốt cả 'arrow_forward Recreate'");
+const matcher = adapterSource.slice(adapterSource.indexOf("function isCreateButtonLabel"), adapterSource.indexOf("function isCreateButtonLabel") + 200);
+assert.match(matcher, /CREATE_BUTTON_LABELS\.includes\(/, "so khớp phải là so bằng CHÍNH XÁC với danh sách đã đo");
+
 console.log(`flow locale URLs accepted, adapter still stricter than manifest (${ACCEPT.length} nhận / ${REJECT.length} từ chối): PASS`);
