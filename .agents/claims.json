@@ -3,10 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-f18-evidence",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Duc 02/09: chay chuoi 7 job voi nhip moi. Tai khoan chi con 15 credit -> du kien 2 job chay duoc roi CHAM TUONG CREDIT. Muc tieu chinh: CHUP HIEN TRUONG tuong credit o 360p (chua ai do)."
+      "task": "TRA QUYEN 02/09 (claude-f18-evidence). DUNG: Google gan co 'unusual activity', chuoi dung cung o job 2 (dung thiet ke). CAN DUC QUYET truoc khi chay tiep — xem HANDOFF cuoi file.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
       "owner": null,

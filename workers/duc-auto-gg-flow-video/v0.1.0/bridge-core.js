@@ -463,11 +463,26 @@
     return normalized;
   }
 
+  // Tran chuoi trial, ban sao thu hai cua con so trong dev-trial-core.js.
+  //
+  // Vi sao KHONG doc cheo tu dev-trial-core: file nay co luat thuan khiet cam
+  // moi tham chieu toi bien toan cuc cua trang (co test ghim grep tren chinh
+  // ma nguon nay, ke ca trong ghi chu), va no duoc nap trong service worker qua
+  // background.js — noi dev-trial-core khong he co mat. Doc cheo o day se luon
+  // roi ve gia tri du phong, tuc te hon la go lai con so.
+  //
+  // Doi lai, hai ban sao KHONG DUOC LECH NHAU, va co test ghim dung dieu do
+  // (tests/trial-cap-single-truth.mjs). Chuyen nay da xay ra that ngay
+  // 2026-09-02: Duc nang tran 3 -> 7, toi sua dev-trial-core, va lop Bridge van
+  // tu choi 7 job. Suite khong bat duoc vi no kiem hai lop rieng re va moi lop
+  // deu "dung" theo con so cua chinh no; chi mot luot chay that moi lo ra.
+  const MAX_TRIAL_JOBS = 7;
+
   function validateRunTrial(raw) {
     const params = assertPlainObject(raw, "params");
     rejectUnknown(params, ["job_ids", "timeout_sec", "delay_sec"], "params");
-    if (!Array.isArray(params.job_ids) || params.job_ids.length < 1 || params.job_ids.length > 3) {
-      invalidParams("params.job_ids", "expected 1-3 video job ids (owner free-credit budget: 3 videos x 15 credits)");
+    if (!Array.isArray(params.job_ids) || params.job_ids.length < 1 || params.job_ids.length > MAX_TRIAL_JOBS) {
+      invalidParams("params.job_ids", `expected 1-${MAX_TRIAL_JOBS} video job ids (owner free-credit budget: one free account covers ${MAX_TRIAL_JOBS} videos at 360p)`);
     }
     const jobIds = params.job_ids.map((value, index) => jobIdValue(value, `params.job_ids[${index}]`));
     if (new Set(jobIds.map((id) => id.toLowerCase())).size !== jobIds.length) invalidParams("params.job_ids", "duplicate job id");

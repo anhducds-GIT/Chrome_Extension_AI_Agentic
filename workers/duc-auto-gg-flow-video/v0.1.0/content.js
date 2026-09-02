@@ -461,7 +461,7 @@
   // sạch attempt.detection khi vòng dò kết quả xong -- nên không nằm trong danh
   // sách này thì ngay cả một lượt THÀNH CÔNG cũng về sổ cái với typing_path
   // rỗng, và không ai so được lượt chạy được với lượt hỏng.
-  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped", "typing_path", "typing_ok", "prompt_len", "composer_len_before_typing", "composer_len_after_typing"]);
+  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped", "typing_path", "typing_ok", "prompt_len", "composer_len_before_typing", "composer_len_after_typing", "pacing_ms"]);
   function recordDetection(attempt, values) {
     if (!attempt) return;
     const carried = {};

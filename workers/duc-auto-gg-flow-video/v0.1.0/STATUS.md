@@ -5,9 +5,9 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "CAN DUC RELOAD EXTENSION (da sua .js). Roi chay mot chuoi that voi nhip moi de do pacing_ms tren trang that. Tran chuoi nay la 7 job = dung ngan sach mot tai khoan free o 360p (50 credit / 7 moi video); het chuoi thi Duc doi ho so Chrome sang tai khoan khac. Giao thuc day du o muc cuoi AI-OPERATOR-GUIDE.md"
+next_step: "CAN DUC QUYET: (1) kiem credit con lai cua kaito — Q002 da SUBMITTED roi moi bi chan nen co the da tru 7 credit ma khong ra video; (2) co 'unusual activity' la tin hieu chong lam dung cua Google, khong phai loi ky thuat — doi tai khoan de chay tiep la bo qua tin hieu do. Neu van chay tiep: nhip giong nguoi CHUA TUNG duoc kiem chung tren trang that (pacing_ms bi recordDetection xoa, da va)"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "Nhip thao tac giong nguoi da cai (3 quang nghi ngau nhien, ghi vao so cai o pacing_ms), tran trial 3->7 theo ngan sach mot tai khoan, huong dan tuong-credit viet lai theo quy trinh doi ho so, va giao thuc nhieu tai khoan cho AI dieu phoi. Suite 91/91, 8/8 dot bien. CHUA do live nhip moi. Truoc do trong ngay: F-21 va + xac nhan live, gia thuyet F-18 bi bac bang chuoi 3 job"
+current_focus: "F4R6 (02/09 10:18): chuoi DUNG CUNG o job thu hai — Google bao 'We noticed some unusual activity'. KHONG phai tuong credit (generationLimitBlocker null). Q001 SUCCESS, Q002 INTERRUPTED o SUBMITTED khong co video, Q003 khong chay. Lop bao ve chay dung. Luot nay cung lo ra pacing_ms bi recordDetection xoa nen CHUA chung minh duoc nhip giong nguoi co chay hay khong — da va bang mot LUAT CHUNG. Bang chung: evidence/F4R6-KET-QUA.md"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

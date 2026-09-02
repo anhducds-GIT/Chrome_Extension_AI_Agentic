@@ -96,4 +96,20 @@ assert.match(catchBlock[1], /carryDiagnostic\(requestAttempt, "typing_path", "th
 // một đột biến đã lọt lưới lúc chạy mutation, và đây là bản vá cho nó.
 assert.match(catchBlock[1], /carryDiagnostic\(requestAttempt, "composer_len_before_typing", composerLenBeforeTyping\)/, "nhánh ném cũng phải để lại mốc độ dài trước khi gõ");
 
+// 9. LUAT CHUNG, thay cho viec liet ke tay tung truong. Moi khoa duoc ghi bang
+//    carryDiagnostic trong runPrompt PHAI co mat trong CARRIED_DIAGNOSTICS,
+//    khong tru khoa nao.
+//
+//    Vi sao ghim o dang luat chu khong dang danh sach: cung mot loi da xay ra
+//    NAM LAN trong ngay 02/09 — sua luat o mot cho, quen day noi o cho khac.
+//    Lan cuoi la `pacing_ms`: no duoc ghi dung, roi recordDetection xoa sach vi
+//    khong ai them no vao danh sach giu lai, va so cai tra ve null. Mot phep
+//    kiem liet ke tay se lai bo sot truong tiep theo; phep kiem nay thi khong.
+const written = [...run.matchAll(/carryDiagnostic\(requestAttempt, "([a-z_]+)"/g)].map((m) => m[1]);
+assert.ok(written.length >= 6, `phai thay it nhat 6 lan ghi carryDiagnostic, dang thay ${written.length}`);
+for (const key of new Set(written)) {
+  assert.ok(carried.includes(`"${key}"`),
+    `"${key}" duoc ghi bang carryDiagnostic nhung KHONG co trong CARRIED_DIAGNOSTICS — recordDetection se xoa no va so cai tra ve null`);
+}
+
 console.log("typing path survives the send gate: PASS");

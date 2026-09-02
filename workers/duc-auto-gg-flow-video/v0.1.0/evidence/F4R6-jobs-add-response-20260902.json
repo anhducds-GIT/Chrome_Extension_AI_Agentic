@@ -1,0 +1,35 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-d73660f9-d80b-4134-ad84-c70cf90fa5e5",
+  "ok": true,
+  "result": {
+    "audit_event": "BRIDGE_JOB_ADDED_DIRECT",
+    "changed_fields": [
+      "prompt",
+      "reference_images",
+      "settings"
+    ],
+    "checkpoint": {
+      "filename": "Bridge-2026-09-02T10-14__results__v01.xlsx",
+      "verified": true,
+      "version": 1
+    },
+    "job_ids": [
+      "Q001",
+      "Q002",
+      "Q003",
+      "Q004",
+      "Q005",
+      "Q006",
+      "Q007"
+    ],
+    "message": "Agent Bridge đã thêm 7 job (Q001, Q002, Q003, Q004, Q005, Q006, Q007) vào Setup; chưa chạy."
+  },
+  "responded_at": "2026-09-02T10:14:59.492Z",
+  "served_by": {
+    "instance_id": "d8c543ee-1cb0-4363-98b0-cdffe687af47",
+    "label": "kaito"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-2a9bc7b7-b886-4cf6-85bf-67449d5c6c38",
+  "ok": true,
+  "result": {
+    "accepted": true,
+    "delay_sec": 25,
+    "input_origin": "bridge_dev",
+    "job_ids": [
+      "Q001",
+      "Q002",
+      "Q003"
+    ],
+    "run_id": "20260902-1014-bridge-2026-09-02t10-14",
+    "timeout_sec": 300
+  },
+  "responded_at": "2026-09-02T10:18:35.986Z",
+  "served_by": {
+    "instance_id": "d8c543ee-1cb0-4363-98b0-cdffe687af47",
+    "label": "kaito"
+  }
+}

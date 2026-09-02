@@ -1,0 +1,26 @@
+2026-09-02T10:18:44.049Z | RUNNING | Q001 | PRE_SUBMIT | WAITING_READY | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:18:50.315Z | RUNNING | Q001 | PRE_SUBMIT | SENDING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:18:56.581Z | RUNNING | Q001 | PRE_SUBMIT | SENDING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:19:02.878Z | RUNNING | Q001 | PRE_SUBMIT | SENDING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:19:09.203Z | RUNNING | Q001 | PRE_SUBMIT | SENDING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:19:15.471Z | RUNNING | Q001 | PRE_SUBMIT | SENDING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:19:21.820Z | RUNNING | Q001 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:19:28.161Z | RUNNING | Q001 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:19:34.545Z | RUNNING | Q001 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:19:40.994Z | RUNNING | Q001 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:19:47.341Z | RUNNING | Q001 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:19:53.675Z | RUNNING | Q001 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:20:00.228Z | RUNNING | Q001 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:20:06.660Z | RUNNING | Q001 | OUTPUT_SAVED | FINALIZING / WAITING_IDLE | {"failed":0,"interrupted":0,"pending":6,"running":1,"success":0,"total":7} | 
+2026-09-02T10:20:13.028Z | RUNNING | Q001 | SUCCESS | SUCCESS | {"failed":0,"interrupted":0,"pending":6,"running":0,"success":1,"total":7} | 
+2026-09-02T10:20:19.342Z | RUNNING | Q001 | SUCCESS | SUCCESS | {"failed":0,"interrupted":0,"pending":6,"running":0,"success":1,"total":7} | 
+2026-09-02T10:20:25.617Z | RUNNING | Q001 | SUCCESS | SUCCESS | {"failed":0,"interrupted":0,"pending":6,"running":0,"success":1,"total":7} | 
+2026-09-02T10:20:31.895Z | RUNNING | Q001 | SUCCESS | SUCCESS | {"failed":0,"interrupted":0,"pending":6,"running":0,"success":1,"total":7} | 
+2026-09-02T10:20:38.159Z | RUNNING | Q002 | PRE_SUBMIT | WAITING_READY | {"failed":0,"interrupted":0,"pending":5,"running":1,"success":1,"total":7} | 
+2026-09-02T10:20:44.442Z | RUNNING | Q002 | PRE_SUBMIT | SENDING | {"failed":0,"interrupted":0,"pending":5,"running":1,"success":1,"total":7} | 
+2026-09-02T10:20:50.804Z | RUNNING | Q002 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":5,"running":1,"success":1,"total":7} | 
+2026-09-02T10:20:57.174Z | RUNNING | Q002 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":5,"running":1,"success":1,"total":7} | 
+2026-09-02T10:21:03.717Z | RUNNING | Q002 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":5,"running":1,"success":1,"total":7} | 
+2026-09-02T10:21:10.079Z | RUNNING | Q002 | PRE_SUBMIT | GENERATING | {"failed":0,"interrupted":0,"pending":5,"running":1,"success":1,"total":7} | 
+2026-09-02T10:21:16.383Z | RUNNING | Q002 | SUBMITTED | GENERATING | {"failed":0,"interrupted":1,"pending":5,"running":0,"success":1,"total":7} | HALT={"failure_type":"SECURITY_HARD_STOP","instruction":{"action":"Open the Gemini tab yourself, complete the CAPTCHA/verific
+2026-09-02T10:21:22.699Z | HALTED | Q002 | SUBMITTED | GENERATING | {"failed":0,"interrupted":1,"pending":5,"running":0,"success":1,"total":7} | HALT={"failure_type":"SECURITY_HARD_STOP","instruction":{"action":"Open the Gemini tab yourself, complete the CAPTCHA/verific

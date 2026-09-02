@@ -1,0 +1,60 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW04R6-A: A single ripe persimmon on a chipped enamel plate, low winter sun through a dusty window, slow drift left, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R6-B: Ink diffusing through a glass of still water, dark tendrils unfurling, macro lens, very slow motion, black background, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R6-C: An empty wooden rowboat knocking gently against a mossy jetty, early fog on the lake, static wide shot, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R6-D: Dry grass bending in a hot wind across a cracked salt flat, heat shimmer on the horizon, slow pan right, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R6-E: A moth circling a bare filament bulb in a dark shed, soft focus falloff, slight camera sway, warm amber tones, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R6-F: Rain beading and running down a bus window at night, blurred streetlights behind, static close shot, cool tones, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R6-G: A potters hands steadying wet clay rising on a spinning wheel, overhead shot, soft north light, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    }
+  ]
+}

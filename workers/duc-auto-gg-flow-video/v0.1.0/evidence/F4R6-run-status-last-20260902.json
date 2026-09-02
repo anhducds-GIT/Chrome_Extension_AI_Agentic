@@ -1,0 +1,48 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-9eb8157d-fe52-4b2f-a173-b59834c72c9b",
+  "ok": true,
+  "result": {
+    "artifact_persistence_failed": false,
+    "checkpoint": {
+      "filename": "Bridge-2026-09-02T10-14__results__v02.xlsx",
+      "version": 2
+    },
+    "counts": {
+      "failed": 0,
+      "interrupted": 1,
+      "pending": 5,
+      "running": 0,
+      "success": 1,
+      "total": 7
+    },
+    "current": {
+      "attempt_id": "attempt-mtjy3sx6-2-bmhqiv5u",
+      "job_id": "Q002",
+      "phase": "SUBMITTED",
+      "runtime_stage": "GENERATING"
+    },
+    "halt": {
+      "failure_type": "SECURITY_HARD_STOP",
+      "instruction": {
+        "action": "Open the Gemini tab yourself, complete the CAPTCHA/verification, and wait until the composer works normally again. Then Check Plan and Continue Run. Do not try to bypass it, and do not resend the job before the warning clears. (Mở đúng tab Gemini, tự hoàn tất CAPTCHA/xác minh, chờ composer hoạt động bình thường trở lại. Sau đó Check Plan rồi Continue Run. Không cố bypass, không gửi lại job trước khi cảnh báo biến mất.)",
+        "codes": [
+          "SECURITY_HARD_STOP"
+        ],
+        "meaning": "Gemini is asking for a CAPTCHA, human verification, or has flagged unusual activity. (Gemini yêu cầu CAPTCHA, xác minh con người, hoặc báo hoạt động bất thường.)",
+        "retry": "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",
+        "title": "Security hard stop"
+      }
+    },
+    "pause_requested": false,
+    "paused": false,
+    "state": "HALTED"
+  },
+  "responded_at": "2026-09-02T10:21:22.604Z",
+  "served_by": {
+    "instance_id": "d8c543ee-1cb0-4363-98b0-cdffe687af47",
+    "label": "kaito"
+  }
+}

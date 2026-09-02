@@ -670,3 +670,42 @@ kèm đổi hồ sơ, và **bắt sự kiện hết-credit** rồi dựng code q
   hai lỗi im lặng ở trên và mutation nâng trần vượt ngân sách một tài khoản.
 - **Việc kế tiếp:** chạy một chuỗi thật với nhịp mới để đo `pacing_ms` trên trang thật (**cần
   Đức reload extension** — đã sửa `.js`). Sau đó mới tính tới gõ theo đoạn.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 6): Google gắn cờ "unusual activity", chuỗi dừng cứng
+
+**Bằng chứng:** [`evidence/F4R6-KET-QUA.md`](evidence/F4R6-KET-QUA.md) · **1 video, rồi dừng.**
+
+- **Định đi đo tường credit, gặp thứ khác.** Đức nói tài khoản `kaito` còn 15 credit nên chuỗi
+  sẽ chạm tường ở job 3. Thực tế: Q001 `SUCCESS`, **Q002 dừng cứng `SECURITY_HARD_STOP`** ở
+  phase `SUBMITTED`, Q003 không bao giờ chạy. Chữ trên màn hình (Đức đọc):
+  *"Failed. We noticed some unusual activity. Please visit the Help Center for more information."*
+  `unusual activity` nằm **đúng trong** `securityBlockerPattern` → **dừng cứng là ĐÚNG, không
+  phải báo động giả**. `generationLimitBlocker` là `null` → **không phải hết credit**.
+- **Đo được lúc dừng:** `arrow_forward Create` **biến mất khỏi DOM**, `sendFound: false`,
+  `composer_scope_resolved: false`; xuất hiện nhóm nút lỗi `refresh Retry` / `undo Reuse Prompt`
+  / `delete_forever Delete`; và `g-recaptcha-response` từ `valueLen: 0` → **2510** (một token
+  reCAPTCHA đã sinh ra — mọi lần đo trước đều rỗng). **Không ai bấm Retry** — dừng cứng nghĩa là
+  người quyết.
+- **Lỗi của tôi mà chính lượt này lộ ra:** sổ cái ghi `pacing_ms: null` cho cả hai job, vì
+  `pacing_ms` được ghi đúng nhưng **không có trong `CARRIED_DIAGNOSTICS`** nên `recordDetection`
+  xoá sạch. **Lần thứ NĂM trong ngày cùng một họ lỗi** — sửa luật một chỗ, quên dây nối chỗ khác.
+  **Hệ quả:** lượt F4R6 **không nói được gì về nhịp giống người** — không chứng minh nó chạy,
+  cũng không chứng minh nó vô dụng.
+  **Đã vá, và lần này ghim ở dạng LUẬT CHUNG** (mục 9 của `typing-path-survives-send-gate-static.mjs`):
+  mọi khoá ghi bằng `carryDiagnostic` trong `runPrompt` **phải** có trong `CARRIED_DIAGNOSTICS`.
+  Danh sách liệt kê tay sẽ lại bỏ sót trường tiếp theo; luật chung thì không.
+- **Trần trial: hai bản sao, tôi chỉ sửa một.** `dev-trial-core.js` lên 7 nhưng `bridge-core.js`
+  gõ lại con số 3 ở phép kiểm tham số riêng → lệnh 7 job bị từ chối. Suite không bắt vì nó kiểm
+  hai lớp **riêng rẽ** và mỗi lớp đều "đúng" theo con số của chính nó. Đã vá + ghim
+  `tests/trial-cap-single-truth.mjs` (đọc hằng số ra khỏi **cả hai** file, đỏ nếu lệch, và bắt
+  câu từ chối phải **nội suy** từ hằng số chứ không gõ lại con số).
+  Ghi chú kiến trúc: **không** cho `bridge-core` đọc chéo — file đó có luật thuần khiết cấm tham
+  chiếu biến toàn cục của trang, *và* nó chạy trong service worker nơi `dev-trial-core` không hề
+  được nạp, nên đọc chéo sẽ luôn rơi về giá trị dự phòng. (Phép kiểm thuần khiết đó sau đó bắt
+  lỗi tôi **trong chính comment** — nó grep cả ghi chú.)
+- **Đo:** suite **92/92** (91 → +1 pin) · cổng đóng phiên xanh.
+- **CẦN ĐỨC QUYẾT, không phải việc AI tự làm:** ① kiểm credit còn lại của `kaito` — Q002 đã
+  `SUBMITTED` rồi mới bị chặn nên có thể đã trừ 7 mà không ra video; ② cờ "unusual activity" là
+  **tín hiệu chống lạm dụng**, không phải lỗi kỹ thuật — đổi tài khoản để chạy tiếp là bỏ qua
+  tín hiệu đó và rủi ro rơi vào chính các tài khoản; ③ nếu chạy tiếp thì việc hợp lý là một lượt
+  **đo được `pacing_ms`** trước khi mở rộng quy mô.

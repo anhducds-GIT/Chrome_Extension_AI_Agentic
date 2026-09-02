@@ -86,7 +86,9 @@ assert.deepEqual(
 );
 const invalidTrialParams = [
   { job_ids: [] },
-  { job_ids: ["J1", "J2", "J3", "J4"] },
+  // Vuot tran mot job: tran nay la 7 (ngan sach mot tai khoan free o 360p,
+  // Duc chot 2026-09-02), nen 8 phai bi tu choi. Doi tran thi doi ca day.
+  { job_ids: ["J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8"] },
   { job_ids: ["P09-01"], timeout_sec: 301 },
   { job_ids: ["P09-01"], timeout_sec: 14 },
   { job_ids: ["P09-01"], delay_sec: 10 },
