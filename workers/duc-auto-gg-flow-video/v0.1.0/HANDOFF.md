@@ -709,3 +709,30 @@ kèm đổi hồ sơ, và **bắt sự kiện hết-credit** rồi dựng code q
   **tín hiệu chống lạm dụng**, không phải lỗi kỹ thuật — đổi tài khoản để chạy tiếp là bỏ qua
   tín hiệu đó và rủi ro rơi vào chính các tài khoản; ③ nếu chạy tiếp thì việc hợp lý là một lượt
   **đo được `pacing_ms`** trước khi mở rộng quy mô.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 7): nâng nhịp lần hai, sau cờ "unusual activity"
+
+Đức chốt lại mục tiêu sau lượt F4R6: **"chạy 1 flow trọn vẹn không bị interrupt"**, không phải
+chạy nhanh. Và yêu cầu nhịp **dài hơn, random hơn nhiều**.
+
+- **Đòn bẩy lớn nhất không phải ba quãng nghỉ trong trang, mà là nhịp GIỮA HAI JOB.** Trước đây
+  20–30s → bảy video trong ~10 phút; không người nào tạo video với nhịp đó, và F4R6 bị gắn cờ ở
+  job thứ hai. Nay **45–120s, mặc định 90s**. Sàn được **nâng** (20 → 45) chứ không chỉ nới
+  trần: đề nghị một nhịp gấp là thứ không ai nên làm được nữa, kể cả AI điều phối. Trần 120s là
+  mức `runner-core.config()` cho phép.
+- **Nghỉ trong trang:** mỗi job 2,1–6,1s → **7,3–33s**. Chuỗi 7 job: **~9 phút → ~18 phút**.
+- **Ghim BIÊN ĐỘ, không chỉ độ dài.** Một nhịp đều đặn vẫn là một dấu vân tay dù nó chậm, nên
+  phép kiểm đòi `max >= 3 × min` cho mọi quãng. Mutation R5 ("giữ độ dài nhưng bóp biên độ") bị
+  bắt đúng nhờ điều này.
+- **Phép kiểm chịu trách nhiệm chính, nói thẳng ý định của Đức:** một chuỗi đầy phải tốn **≥10
+  phút** chỉ riêng phần chờ (`MAX_TRIAL_JOBS × delay.default >= 600`). Ai hạ bất kỳ con số nào để
+  "chạy cho nhanh" đều vỡ ở đây, và thông báo lỗi nói rõ vì sao, kèm trỏ tới `F4R6-KET-QUA.md`.
+- **Dấu hiệu xấu tôi tự bắt được:** sau khi đổi hết các con số, suite vẫn **92/92 xanh** — nghĩa
+  là trước đó **không phép kiểm nào canh chúng**, và cũng sẽ không chặn ai hạ chúng về mức cũ.
+  Đó là lý do phần ghim ở trên tồn tại.
+- **Đo:** suite **92/92** · **6/6 đột biến bị bắt**, gồm mutation hạ nhịp về đúng mức đã bị gắn
+  cờ, mutation biến nhịp thành hằng số, và mutation gỡ `pacing_ms` khỏi `CARRIED_DIAGNOSTICS`.
+- **CHƯA đo live.** Cần Đức reload extension. Lượt sau sẽ là **lần đầu tiên** nhịp giống người
+  được kiểm chứng trên trang thật — `pacing_ms` nay về được sổ cái nên sẽ đọc ra con số thật.
+- **Push đang chờ:** `safe-push` từ chối vì sẽ cuốn theo 2 commit của phiên `claude-core-k1`
+  (`fc1f085`, `1aa09a6`). Đức chọn **chờ phiên đó tự push**. Commit của tôi nằm sẵn ở local.

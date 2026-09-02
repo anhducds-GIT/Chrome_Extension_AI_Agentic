@@ -13,11 +13,15 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
+function load(name, globalName) {
+  const context = { window: {} };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(new URL(`../${name}`, import.meta.url), "utf8"), context);
+  return context.window[globalName] || context[globalName];
+}
+
 const content = fs.readFileSync(new URL("../content.js", import.meta.url), "utf8");
-const ctx = { window: {} };
-vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(new URL("../provider-adapter.js", import.meta.url), "utf8"), ctx);
-const ADAPTER = ctx.window.DacProviderAdapter;
+const ADAPTER = load("provider-adapter.js", "DacProviderAdapter");
 
 /* ---- 1. dây nối: nhịp phải tới được content script -------------------------- */
 
@@ -27,8 +31,33 @@ for (const key of ["preComposeMs", "postTypeMs", "preSubmitMs"]) {
   assert.ok(span, `thiếu quãng nghỉ ${key}`);
   assert.ok(Number.isFinite(span.min) && Number.isFinite(span.max), `${key} phải là khoảng số`);
   assert.ok(span.min < span.max, `${key} phải là một KHOẢNG, không phải hằng số — nghỉ đúng một con số lặp lại hàng chục lần còn dễ nhận ra hơn là không nghỉ`);
-  assert.ok(span.min >= 400, `${key} tối thiểu ${span.min}ms là quá nhanh so với nhịp người`);
+  assert.ok(span.min >= 1500, `${key} tối thiểu ${span.min}ms là quá nhanh so với nhịp người`);
+  // BIÊN ĐỘ, không chỉ độ dài. Một nhịp đều đặn vẫn là một dấu vân tay dù nó
+  // chậm — Đức chốt 02/09 "dài hơn và random hơn nhiều".
+  assert.ok(span.max >= span.min * 3, `${key} có biên độ quá hẹp (${span.min}-${span.max}ms): nghỉ lâu nhưng đều đặn vẫn là một nhịp máy`);
 }
+
+/* ---- 1b. nhịp GIỮA HAI JOB — đòn bẩy lớn nhất ------------------------------ */
+
+// Đây mới là thứ quyết định "chạy trọn một flow không bị ngắt", lớn hơn hẳn ba
+// quãng nghỉ trong trang cộng lại. Trước 02/09 là 20-30s: bảy video trong ~10
+// phút, và lượt F4R6 bị Google gắn cờ "unusual activity" ở job thứ hai.
+const devTrial = load("dev-trial-core.js", "DacDevTrialCore");
+const delay = devTrial.DELAY_BOUNDS;
+assert.ok(delay, "dev-trial-core phải khai DELAY_BOUNDS");
+assert.ok(delay.min >= 45, `sàn nhịp giữa hai job (${delay.min}s) quá ngắn — sàn phải chặn được cả AI điều phối đề nghị một nhịp gấp`);
+assert.ok(delay.default >= 90, `nhịp mặc định (${delay.default}s) quá ngắn cho mục tiêu chạy trọn flow`);
+assert.ok(delay.max > delay.min, "nhịp giữa hai job phải là một KHOẢNG để còn bốc ngẫu nhiên");
+assert.ok(delay.default >= delay.min && delay.default <= delay.max, "mặc định phải nằm trong khoảng");
+
+// Thuộc tính nói thẳng ý định của Đức: một chuỗi đầy KHÔNG được bắn hết trong
+// vòng mươi phút. Đây là phép kiểm chịu trách nhiệm chính — ai hạ bất kỳ con số
+// nào ở trên để "chạy cho nhanh" đều vỡ ở đây, và thông báo nói rõ vì sao.
+const fullChainDelaySec = devTrial.MAX_TRIAL_JOBS * delay.default;
+assert.ok(fullChainDelaySec >= 600,
+  `một chuỗi đầy (${devTrial.MAX_TRIAL_JOBS} job × ${delay.default}s = ${fullChainDelaySec}s) chỉ mất ${Math.round(fullChainDelaySec / 60)} phút chờ. ` +
+  "Mục tiêu Đức chốt 02/09 là chạy TRỌN một flow không bị ngắt, không phải chạy nhanh — " +
+  "nhịp cũ 20-30s đã bị Google gắn cờ 'unusual activity' ở job thứ hai (evidence/F4R6-KET-QUA.md).");
 
 /* ---- 2. có gọi thật, ở cả ba chỗ ------------------------------------------- */
 

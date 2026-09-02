@@ -6,7 +6,7 @@
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-f18-evidence). DUNG: Google gan co 'unusual activity', chuoi dung cung o job 2 (dung thiet ke). CAN DUC QUYET truoc khi chay tiep — xem HANDOFF cuoi file.",
+      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG phan code: nang nhip len (giua hai job 45-120s mac dinh 90s; trong trang 7-33s moi job) + ghim y dinh thanh thuoc tinh do duoc. CON NO: sinh lai DASHBOARD/llms/repo-map (can _root, dang do claude-core-k1 giu) va push (safe-push tu choi vi se cuon theo commit cua ho).",
       "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {

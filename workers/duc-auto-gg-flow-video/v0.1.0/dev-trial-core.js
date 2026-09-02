@@ -27,7 +27,17 @@
   const MAX_TRIAL_JOBS = 7;
   const MIN_TRIAL_INTERVAL_SEC = 300;
   const TIMEOUT_BOUNDS = Object.freeze({ min: 15, max: 300, default: 180 });
-  const DELAY_BOUNDS = Object.freeze({ min: 20, max: 30, default: 25 });
+  // Nhip giua hai job — DON BAY LON NHAT cho viec "chay tron mot flow khong bi
+  // ngat", lon hon han ba quang nghi trong trang cong lai.
+  //
+  // Truoc 02/09: 20-30s. Bay ra 7 video trong ~10 phut. Khong nguoi nao tao
+  // video voi nhip do, va luot F4R6 bi Google gan co "unusual activity" o job
+  // thu hai. Duc chot lai muc tieu la chay tron ven, khong phai chay nhanh.
+  //
+  // San duoi cung duoc NANG (20 -> 45), khong chi noi tran: de nghi mot nhip
+  // qua ngan la thu khong ai nen lam duoc nua, ke ca AI dieu phoi. Tran 120s la
+  // muc runner-core cho phep (config() chan delay_* trong 1..120).
+  const DELAY_BOUNDS = Object.freeze({ min: 45, max: 120, default: 90 });
 
   function refusal(code, message, details = {}) {
     return { code, message, details };

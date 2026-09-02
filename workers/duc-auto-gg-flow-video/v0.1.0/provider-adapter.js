@@ -62,10 +62,16 @@
   //   · `preSubmitMs`   — SAU khi nút đã sáng, TRƯỚC lúc chụp mốc quy gán. Không
   //     đặt sau mốc: luật "chụp mốc ngay sát cú bấm" là thứ giữ cho việc quy gán
   //     video không bị lẫn, và một quãng nghỉ chen vào giữa sẽ làm nền cũ đi.
+  //
+  // NANG LEN 02/09 lan hai, sau khi Google gan co "unusual activity" o luot
+  // F4R6 (evidence/F4R6-KET-QUA.md). Duc chot lai muc tieu: "chay 1 flow tron
+  // ven khong bi interrupt", KHONG phai chay nhanh. Nen moi khoang deu duoc noi
+  // rong han va bien do lon han — bien do moi la thu quan trong, vi mot nhip
+  // deu dan van la mot dau van tay du no cham.
   const HUMAN_PACING = Object.freeze({
-    preComposeMs: Object.freeze({ min: 900, max: 2600 }),
-    postTypeMs: Object.freeze({ min: 700, max: 1900 }),
-    preSubmitMs: Object.freeze({ min: 500, max: 1600 }),
+    preComposeMs: Object.freeze({ min: 3000, max: 14000 }),
+    postTypeMs: Object.freeze({ min: 2500, max: 11000 }),
+    preSubmitMs: Object.freeze({ min: 1800, max: 8000 }),
   });
 
   const SURFACE = Object.freeze({ IMAGES: "IMAGES", CONVERSATION: "CONVERSATION", WRONG: "WRONG" });
