@@ -4,11 +4,11 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `cbe4262` (2026-09-02).
+Trang được sinh tại commit `4b3bedc` (2026-09-02).
 
 ## Việc ưu tiên #1
 
-- **workers/duc-auto-gg-flow-video/v0.1.0** — F-18 (van la viec #1): duong BANG CHUNG da va 02/09 — lan chay sau se ghi typing_path + composer_len truoc/sau ngay ca khi chet o PRE_SUBMIT. Can tay Duc: bat panel + Dev Mode + Video mode tren ho so kaito, RELOAD extension, roi AI chay run.trial x1. Hong thi van 0 credit. KHONG can nap workbook (jobs.add tu tao)
+- **workers/duc-auto-gg-flow-video/v0.1.0** — F-21: tren duong VIDEO, attempt.detection bi nhanh video cua sidepanel ghi de nen typing_path/attach khong toi so cai (sidepanel.js:4512 thay trang cai 4697 vua ghi). Sua thi can 1 luot live nua (15 credit) de xac nhan -> HOI DUC. F-18 da HA khoi P1: luot F4R3 02/09 chay tron ven, video that, typing_path=input_events, create_button=enabled
 
 ## Đọc theo thứ tự này
 
@@ -23,7 +23,7 @@ Trang được sinh tại commit `cbe4262` (2026-09-02).
 - [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới…
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (mẫu gg-flow-video đã audit PASS): host nhiều kết nối fail-closed + bridge.sessions/target/served_by, ô tên hồ sơ trong…
-- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Doc lai bang chung F-18 (02/09, 0 credit): so do detection.typing_path cua luot F4R2 CHUA BAO GIO duoc ghi — cho ghi nam sau dung cai cong da nem
+- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — F4R3 (02/09, kaito): luot trial x1 CHAY XONG — video that c81af2c5, quy gan dung 1 ung vien, 0 retry, 15 credit
 
 ## Luật bắt buộc trước khi sửa gì
 
