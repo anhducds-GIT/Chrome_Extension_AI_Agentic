@@ -879,3 +879,37 @@ thay mục 6 rồi giữ nguyên mọi luật còn lại của repo Chrome*, nê
 về quyền extension, pilot live, selector DOM và vai của Bridge. Cần bàn với Đức trước, không tự
 quyết. Ba phát hiện nhỏ khác (đối chứng dương hẹp, cấm bằng chứng chỉ soi `evidence/`,
 `safe-push` nuốt lỗi remote) để lượt sau.
+
+## 2026-09-02 — `claude-y02`: lệnh nhận/trả quyền (A1). Hoãn A2 có chủ đích.
+
+**Vì sao có A1.** Nhận quyền vốn là `node -e "…"` thủ công, tức đọc → sửa → ghi. Hai phiên cùng
+đọc thấy "trống" rồi cùng ghi tên mình thì **người ghi sau thắng, người ghi trước không hề
+biết**. Hôm nay tôi là người bị ghi đè. Nghịch lý: `claims.json` sinh ra để chống tranh chấp,
+mà chính nó là tài nguyên bị tranh chấp và không được bảo vệ — 63 lần ghi trong một ngày.
+
+**Làm gì.** `node scripts/claim.mjs --take|--release <khoá> --as <phiên> --task "…"`. Nó **từ
+chối** nhận gói người khác đang giữ (và in ghi chú của họ để biết họ đang làm gì), **từ chối**
+trả quyền hộ người khác, bắt buộc `--task`, và **ghi rồi đọc lại để kiểm** — không chặn được
+đua tuyệt đối, nhưng không để nó âm thầm. **Từ nay đừng sửa `claims.json` bằng tay.**
+
+**Số:** suite 233 → **248**. 5 phép kiểm mới, trong đó một phép **chạy thật** và xác nhận điều
+quan trọng nhất: *lần cướp quyền KHÔNG ghi một chữ nào vào bảng.*
+
+**HOÃN A2 (tách `_root` thành nhiều khoá) — có chủ đích, không phải quên.** A2 viết lại chính
+hàm phân vùng trong `session-check.mjs` + `repo-structure.mjs`, mà phiên `claude-surface-fix`
+**đang lặp audit K1 trên đúng hai file đó** (vòng 2: `c1c92f3`, 20:00). Sửa cùng lúc là bảo đảm
+xung đột — và tệ hơn, hai bản vá cùng đụng lớp phân quyền thì không ai đọc nổi cái nào đúng.
+
+**ĐÍNH CHÍNH BÁO CÁO CỦA TÔI HÔM NAY.** Audit K1 vòng 2 phát hiện `mine()` chỉ khớp package,
+nên **một phiên chỉ giữ `_root` thì `mine()` luôn false** → phép kiểm "Test xanh" báo *"không
+package nào của bạn có suite bị ảnh hưởng"* và **suite gốc không hề chạy**. Đó là chính các
+phiên K1 · Y-03 · Y-05 của tôi. Tôi có chạy `npm test` bằng tay mỗi lần và báo số thật
+(227 · 232 · 233), nên không có gì lọt — nhưng khi tôi nói "cổng XANH TOÀN BỘ" thì **một trong
+tám phép kiểm đang rỗng** với việc của tôi. Câu đó mang nhiều bảo đảm hơn nó đáng có. Nay họ đã
+vá, và lượt này cổng chạy suite gốc thật.
+
+**Ghi minh bạch về quyền:** hồ sơ còn ghi `claude-surface-fix` giữ `_root`; Đức bảo đã trống lúc
+20:06. Tôi nhận theo lời Đức và **giữ nguyên bản ghi việc của họ** trong ghi chú, không xoá.
+
+**Việc kế:** A2, khi audit K1 lắng. Đường đi và giá từng phương án:
+`docs/studies/PARALLEL-WORK-DESIGN-V0.md`.

@@ -56,14 +56,31 @@ hiển thị sai.
 
 ## Y-02 · Protocol làm nhiều việc song song
 
-- **bậc:** ý tưởng
+- **bậc:** đang xây
 - **nguồn:** Đức nêu 2026-09-02
-- **việc kế:** Chốt hình dạng — mỗi việc song song là một mục trong sổ này, có `chủ` và
-  `phạm vi`; `claims.json` khoá thật; bảng trạng thái hiện ai đang làm gì
+- **chủ:** `claude-y02`
+- **phạm vi:** `scripts/claim.mjs` (file mới) · `tests/claim-smoke.mjs` (file mới) ·
+  `docs/studies/` · khai báo trong bản đồ file. **CẤM đụng `session-check.mjs` và
+  `repo-structure.mjs`** — xem lý do hoãn A2 ở dưới.
+- **việc kế:** **A2** — tách `_root` thành `_docs` · `_code` · `_template` · `_root`.
+  **HOÃN CÓ CHỦ ĐÍCH**, không phải quên
 - **vì sao:** Đức có nhiều ý tưởng và **không đủ thời gian làm lần lượt**. Mỗi phiên AI phải
   tự biết: làm gì · cập nhật gì · **cấm đụng gì**.
-- **ghi chú:** Luật khoá đã có (`claims.json`, một gói một chủ). Thiếu là **chỗ nhìn** — không
-  ai biết cả năm phiên đang làm gì. Sổ này cộng bảng trạng thái lấp đúng chỗ đó.
+
+- **đã xong A1:** `node scripts/claim.mjs --take|--release` thay cho việc sửa bảng quyền bằng
+  tay. Nó **từ chối** nhận gói người khác đang giữ, **từ chối** trả quyền hộ, và ghi rồi đọc
+  lại để kiểm. 5 phép kiểm ghim, trong đó một phép chạy thật và xác nhận *lần cướp quyền không
+  ghi một chữ nào*.
+
+- **vì sao HOÃN A2:** A2 viết lại chính hàm phân vùng trong `session-check.mjs` và
+  `repo-structure.mjs`. Mà phiên `claude-surface-fix` **đang lặp audit K1 trên đúng hai file
+  đó** — vòng 2 vừa commit `c1c92f3` lúc 20:00. Sửa cùng lúc là bảo đảm xung đột, và tệ hơn:
+  hai bản vá cùng đụng lớp phân quyền thì không ai còn đọc nổi cái nào đúng.
+  Chờ audit K1 lắng là **rẻ hơn nhiều** so với gộp hai bản vá chồng nhau.
+
+- **số đo đặt ra bài toán:** 127 commit/ngày · 77% chạm `_root` · 63 lần ghi bảng quyền · 21
+  nhãn phiên từ 01/09. Khảo sát đầy đủ và bốn phương án kèm giá:
+  `docs/studies/PARALLEL-WORK-DESIGN-V0.md`
 
 ## Y-03 · Trường "Đức cần làm" trong hồ sơ trạng thái
 

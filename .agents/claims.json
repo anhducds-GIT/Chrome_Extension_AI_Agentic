@@ -3,11 +3,10 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-f18-evidence",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG: nhip giong nguoi da KIEM CHUNG tren trang that (4 video, khong bi gan co). NO MOI F-25: vong chay job chet theo side panel — chuoi dung am tham trong khi moi lop deu song. Con 26/50 credit tren Binh.",
-      "released_at": "2026-09-02"
+      "task": "Chay not 3 job con lai tren Binh (E,F,G). Theo doi kem PHAT HIEN DUNG MAY (F-25)."
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,10 +23,10 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "claude-surface-fix",
+      "owner": "claude-y02",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "DUC CHOT 02/09 cho muon _root: sua 7 phat hien cua audit doc lap K1 (Codex REJECT).",
+      "task": "A1: lenh nhan/tra quyen (scripts/claim.mjs) + tai lieu khao sat Y-02. GHI CHU: ho so con ghi claude-surface-fix giu, Duc bao da trong luc 20:06 — nhan theo loi Duc, khong xoa viec cua ho (K1 audit vong 2 da commit c1c92f3).",
       "released_at": null
     }
   }
