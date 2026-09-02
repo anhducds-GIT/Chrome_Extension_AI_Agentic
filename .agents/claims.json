@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-bridge-multiprofile",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 2026-09-02 (phien claude-bridge-multiprofile, luot 2). XONG: deploy bridge-host.mjs + bridge-cli.mjs moi sang thu muc Bridge (host cu khong chay luc chep), host moi song tren 32149. KIEM LIVE DAT phan may: 3 profile cung noi khong ai da ai; khong neu target -> TARGET_AMBIGUOUS kem 3 ung vien; neu target -> served_by dung dich (ca bridge-cli lan bridge-rpc, ke ca phan hoi loi). Audit Codex kenh auditmin: VERDICT PASS, 0 HIGH/MED; LOW#1 doi chat bang mutation 2 lan -> Codex sai, pin that. Bang chung: evidence/MP-01-live-routing-and-audit-20260902.md. CON MO (tay Duc): reload extension tung profile de het legacy + dat ten tung panel + dung START-BRIDGE cho host lau dai; roi trial video + live-check F-14.",
-      "released_at": "2026-09-02"
+      "task": "DANG GIU DEN KHI PUSH XONG (tra bang commit rieng ngay sau push). XONG: deploy bridge-host.mjs + bridge-cli.mjs moi sang thu muc Bridge (host cu khong chay luc chep), host moi song tren 32149. KIEM LIVE DAT phan may: 3 profile cung noi khong ai da ai; khong neu target -> TARGET_AMBIGUOUS kem 3 ung vien; neu target -> served_by dung dich (ca bridge-cli lan bridge-rpc, ke ca phan hoi loi). Audit Codex kenh auditmin: VERDICT PASS, 0 HIGH/MED; LOW#1 doi chat bang mutation 2 lan -> Codex sai, pin that. Bang chung: evidence/MP-01-live-routing-and-audit-20260902.md. CON MO (tay Duc): reload extension tung profile de het legacy + dat ten tung panel + dung START-BRIDGE cho host lau dai; roi trial video + live-check F-14.",
+      "released_at": null
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-bridge-multiprofile",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "Muon va tra trong cung luot (claude-bridge-multiprofile 02/09): sinh lai DASHBOARD sau khi STATUS gg-flow-video doi current_focus/next_step (kiem live multi-profile dat phan may).",
-      "released_at": "2026-09-02"
+      "task": "DANG GIU DEN KHI PUSH XONG (tra bang commit rieng ngay sau push). sinh lai DASHBOARD sau khi STATUS gg-flow-video doi current_focus/next_step (kiem live multi-profile dat phan may).",
+      "released_at": null
     }
   }
 }
