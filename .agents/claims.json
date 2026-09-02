@@ -23,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-so-y-tuong",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-core-k1). K1 XONG: repo-structure.mjs (mot nguon hinh dang) + build-template.mjs (bo trich) + template/ 18 file. Phep thu repo rong 0 do 0 vang. Suite 233. Cho audit: docs/briefs/AUDIT-PROMPT-K1.md",
-      "released_at": "2026-09-02"
+      "task": "Dung so y tuong (IDEAS.md) + noi vao bo sinh bang trang thai.",
+      "released_at": null
     }
   }
 }

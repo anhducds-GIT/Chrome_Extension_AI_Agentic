@@ -680,3 +680,40 @@ tôi viết một phép kiểm không phân biệt được hai nhánh — nên 
 bản trích chưa được audit thì chỉ chuyển chỗ cho vấn đề.
 
 **Việc kế tiếp:** gửi audit độc lập (gói đề bài ở `docs/briefs/AUDIT-PROMPT-K1.md`), rồi mới dời.
+
+## 2026-09-02 — `claude-so-y-tuong`: sổ ý tưởng + bảng trạng thái vào repo
+
+**Vì sao có sổ này.** Repo có gần 60 mục nợ trong các `BACKLOG.md`, nhưng đó là **sổ của kỹ
+sư** — mã lỗi, race condition. **Ý tưởng của Đức không có chỗ nào để nằm**, nên nó chỉ tồn tại
+trong đầu và trong chat, và bảng trạng thái có một ô trống không lấp được.
+
+**Làm gì:**
+- `IDEAS.md` ở gốc repo — **phòng chờ**, KHÔNG phải roadmap thứ hai. Luật: ý tưởng có nhà thì
+  rời sổ (điền `nhà:`), chép lại là đẻ nguồn sự thật thứ hai. Hai trường bắt buộc: `bậc` +
+  `việc kế`. **Đang xây thì PHẢI khai `chủ` + `phạm vi`** — đó chính là thứ cho phép nhiều
+  phiên chạy song song mà không giẫm chân.
+- `scripts/build-overview.mjs` — sinh bảng trạng thái trực quan từ **cùng nguồn** với
+  `DASHBOARD.md`, nên các trang không thể nói khác nhau. **Bản ra KHÔNG commit** (nó để
+  publish); trang tự in ngày sinh và bật cờ đỏ khi quá 7 ngày.
+- 5 ý tưởng đầu, trong đó Y-01 là MVP của Đức (dùng Claude Code điều phối GPT) với **ba câu
+  chưa rõ ghi thẳng vào sổ** — tôi cố ý không bịa chi tiết.
+
+**Số:** suite +5 phép kiểm (`test:overview`). **4/4 đột biến bị bắt.**
+
+**Hai lỗi của tôi mà phép kiểm bắt được — đáng ghi vì cả hai đều là loại âm thầm:**
+1. Một regex chứa **ký tự backspace 0x08** (Python dịch `\b` thành ký tự thật khi tôi vá file
+   bằng script). Regex đòi một ký tự không bao giờ xuất hiện → **không bao giờ khớp**, và
+   đường dẫn kèm tên file lọt lên bảng. `cat -A` mới thấy.
+2. Một phép kiểm **GIẢ**: tôi tìm chuỗi `stalebanner` để xác nhận cờ cũ, nhưng chuỗi đó luôn
+   có trong CSS nên phép kiểm đúng một cách vô nghĩa. Đã đổi sang tìm **thẻ được vẽ ra**.
+
+**Phép kiểm đáng giá nhất là bất biến "bảng không lộ chi tiết kỹ thuật"** — đo trên repo THẬT,
+vì cái hỏng ở đây đến từ nội dung hồ sơ trạng thái, không từ mã bộ sinh. Fixture giả không bao
+giờ dựng lại được ca hỏng thật.
+
+**Nợ mới phát hiện, đã ghi thành ý tưởng:** Y-03 (thiếu trường "Đức cần làm") · Y-05 (chữ
+trong hồ sơ viết không dấu + thuật ngữ, **vi phạm luật vàng 5 của chính repo** — bảng vừa làm
+nó lộ ra vì trước giờ chưa ai đọc mấy trường đó bằng mắt người).
+
+**Chú ý cho phiên sau:** thêm `IDEAS.md` làm gốc repo có **10 file `.md`**. Chỉ tiêu của S8 là
+6 — cần đổi thành 7, hoặc S8 hạ bớt file khác. Đừng xoá `IDEAS.md` để đạt chỉ tiêu.
