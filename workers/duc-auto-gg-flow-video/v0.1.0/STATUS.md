@@ -5,9 +5,9 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "F-18: sua duong go prompt — chu vao duoc DOM (valueLen 172) nhung nut arrow_forward Create khong bao gio enable nen job chet o PRE_SUBMIT (0 credit). Duc da biet, chot 02/09 debug sau. KHONG con can nap workbook bang tay: jobs.add tu tao workbook trong bo nho"
+next_step: "F-18 (van la viec #1): duong BANG CHUNG da va 02/09 — lan chay sau se ghi typing_path + composer_len truoc/sau ngay ca khi chet o PRE_SUBMIT. Can tay Duc: bat panel + Dev Mode + Video mode tren ho so kaito, RELOAD extension, roi AI chay run.trial x1. Hong thi van 0 credit. KHONG can nap workbook (jobs.add tu tao)"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "FLOW-04 lượt 2 (02/09, hồ sơ kaito): đường chạy Bridge THÔNG đầu-cuối — jobs.add tự tạo workbook, chip Video mode được matcher chấp nhận, vân tay runtime v2 đúng, run.trial chạy tới PRE_SUBMIT/SENDING. Dừng ở nút gửi không enable (F-18), 0 credit, 0 retry, số video 15→15, fail-closed đúng. Bằng chứng: evidence/F4R2-KET-QUA.md"
+current_focus: "Doc lai bang chung F-18 (02/09, 0 credit): so do detection.typing_path cua luot F4R2 CHUA BAO GIO duoc ghi — cho ghi nam sau dung cai cong da nem. Da va duong bang chung + pin test (suite 88/88, 15/15 dot bien bi bat, audit doc lap 2 vong). Doc lai snapshot 27/08 con loai duoc 2 trong 4 ung vien cua F-18: valueLen 172 khong chung minh gi ca. Bang chung: evidence/F18-PHAN-TICH-BANG-CHUNG-20260902.md"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

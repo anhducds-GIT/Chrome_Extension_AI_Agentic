@@ -235,6 +235,15 @@
   // composer must be driven through keyboard-equivalent events. The ordering,
   // waits and fallbacks are shared byte-for-byte by evidence_submit and jobs.
   // Never assign textContent/innerText: that shows text but kills React state.
+  // Đo ĐÚNG cách dom_probe đo `textboxes[].valueLen` (xem chỗ dựng textboxes
+  // bên dưới). Cố ý dùng chung một công thức: hai con số này sẽ được đặt cạnh
+  // nhau khi soi F-18, và hai công cụ của cùng một repo đo lệch nhau là loại bẫy
+  // đã trả giá một lần rồi (nợ feature-parity 02/09, HANDOFF gốc).
+  function composerTextLength(target) {
+    if (!target) return null;
+    return (target.value ?? target.textContent ?? "").length;
+  }
+
   async function typeIntoFlowComposer(target, text) {
     let typingPath = "none";
     const focusAndSelectAll = () => {
@@ -435,7 +444,12 @@
   // detected-not-downloaded write -- so anything not in here is erased before
   // it reaches the ledger. Live proof 2026-08-26: a first attempt parked these
   // on `result` instead, the job passed, and both fields came back undefined.
-  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped"]);
+  // Nhóm `typing_*` / `composer_len_*` / `prompt_len` vào đây vì cùng một lý do
+  // (F-18, 02/09): chúng được xác lập TRƯỚC cổng gửi, và recordDetection thay
+  // sạch attempt.detection khi vòng dò kết quả xong -- nên không nằm trong danh
+  // sách này thì ngay cả một lượt THÀNH CÔNG cũng về sổ cái với typing_path
+  // rỗng, và không ai so được lượt chạy được với lượt hỏng.
+  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped", "typing_path", "typing_ok", "prompt_len", "composer_len_before_typing", "composer_len_after_typing"]);
   function recordDetection(attempt, values) {
     if (!attempt) return;
     const carried = {};
@@ -766,7 +780,13 @@
 
   /* ---- send + completion ----------------------------------------------------- */
 
-  async function waitForSendButtonReady(timeoutMs = ADAPTER.TIMING.sendReadyTimeoutMs) {
+  // `typingNote` đi vào CHỮ BÁO LỖI — và chữ báo lỗi ở gói này KHÔNG vô hại:
+  // `classifyFailure` đọc lại nó để quyết có được thử lại hay dừng cả mẻ (xem
+  // ghi chú dài ở chỗ ném bên dưới, và F-20 trong BACKLOG). Có nó
+  // vì lượt F4R2 (02/09) trả về đúng một câu "Send button did not become ready"
+  // và câu đó chỉ tay vào nút gửi, trong khi thứ đã hỏng là đường gõ -- người
+  // đọc sổ cái đi tìm nhầm chỗ mất hai phiên (F-18).
+  async function waitForSendButtonReady(timeoutMs = ADAPTER.TIMING.sendReadyTimeoutMs, typingNote = "") {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       if (STATE.abortRequested) throw new Error("Automation stopped by user.");
@@ -796,7 +816,18 @@
     if (settledSecurity) throw new Error(`HARD_STOP: ${settledSecurity}`);
     const settledQuota = generationLimitText();
     if (settledQuota) throw new Error(`LIMIT_STOP: ${settledQuota}`);
-    throw new Error("Send button did not become ready. Gemini DOM may have changed.");
+    // CẨN THẬN KHI SỬA CÂU NÀY. `classifyFailure` (runner-core.js) phân loại
+    // bằng cách DÒ TỪ KHOÁ trên TOÀN BỘ chữ báo lỗi, không phải trên tiền tố.
+    // Bản đầu của phiên 02/09 viết "The Flow composer…" và "composer_len" —
+    // audit độc lập bắt được: chữ `composer` khớp nhánh RECEIVER_LOST, mà
+    // RECEIVER_LOST nằm trong HARD_STOP_FAILURE_TYPES → `canRetry` thành false
+    // và **cả mẻ job bị dừng**. Một câu báo lỗi đáng lẽ chỉ để đọc đã lặng lẽ
+    // đổi hành vi runtime. Từ khoá phải né: receiver · composer · chatgpt tab ·
+    // session integrity · limit · captcha · timeout/timed out · ambiguous ·
+    // no attributable / no output · reference / attachment / upload ·
+    // download / fetch / write · validation / invalid. Có test ghim chạy đúng
+    // câu này qua classifyFailure thật — đừng sửa chữ mà không chạy nó.
+    throw new Error(`Send button did not become ready${typingNote}. The prompt may never have been accepted by the page, or the Flow DOM changed.`);
   }
 
   // Magic-byte sniff: đọc BYTE để biết ảnh gì, không tin NHÃN mà trang tự đặt
@@ -1073,7 +1104,37 @@
       if (!activeComposer) {
         throw new Error("Flow composer not found. Open a labs.google Flow project and retry.");
       }
-      const typing = await typeIntoFlowComposer(activeComposer, prompt);
+      const composerLenBeforeTyping = composerTextLength(activeComposer);
+      // Audit độc lập vòng 1 (02/09) nêu đúng một lỗ còn lại: chính
+      // `typeIntoFlowComposer` cũng ném được (abort, HARD_STOP từ
+      // waitForCreateButtonEnabled, hay focus/selection hỏng) — và khi nó ném
+      // thì không có `typing` để ghi, đúng lại cái bệnh F-18. Bọc để ghi dấu
+      // rồi NÉM LẠI NGUYÊN LỖI: `HARD_STOP`/`USER_STOP` phải giữ nguyên phân
+      // loại, nên không được bọc lại, không được đổi chữ, không được nuốt.
+      let typing;
+      try {
+        typing = await typeIntoFlowComposer(activeComposer, prompt);
+      } catch (typingError) {
+        carryDiagnostic(requestAttempt, "typing_path", "threw");
+        carryDiagnostic(requestAttempt, "composer_len_before_typing", composerLenBeforeTyping);
+        throw typingError;
+      }
+      // F-18, đo 02/09: đường gõ ĐÃ biết nó hỏng và biết hỏng ở tầng nào --
+      // typeIntoFlowComposer chờ nút Create sáng sau mỗi tầng và trả về
+      // { ok, path } -- nhưng số đo đó chỉ được ghi vào attempt.detection ở
+      // dưới, SAU waitForSendButtonReady, tức là sau đúng cái cổng đã ném ở
+      // lượt F4R2. Lượt hỏng vì thế không để lại một con số nào về đường gõ, và
+      // hai phiên liền phải đoán (F-18 trong BACKLOG.md). Ghi NGAY tại đây,
+      // trước mọi cổng có thể ném, nên một lượt chết ở PRE_SUBMIT vẫn nói được
+      // nó dừng ở tầng dự phòng nào. Chỉ THÊM bằng chứng: không đọc, không rẽ
+      // nhánh theo typing.ok. Đường gõ vẫn được quyền tự phục hồi trong
+      // postTypeSettleMs -- tầng paste_event trả về mà chưa chờ React một nhịp
+      // nào, nên typing.ok=false ở đó KHÔNG có nghĩa là lượt gõ đã hỏng.
+      carryDiagnostic(requestAttempt, "typing_path", typing.path);
+      carryDiagnostic(requestAttempt, "typing_ok", typing.ok);
+      carryDiagnostic(requestAttempt, "prompt_len", prompt.length);
+      carryDiagnostic(requestAttempt, "composer_len_before_typing", composerLenBeforeTyping);
+      carryDiagnostic(requestAttempt, "composer_len_after_typing", composerTextLength(activeComposer));
       await sleep(ADAPTER.TIMING.postTypeSettleMs);
       // Đặt lại trước mỗi lần thử: biến này ở phạm vi module, để nguyên thì
       // một job không có blob nào sẽ thừa hưởng nhãn của job trước.
@@ -1082,11 +1143,15 @@
 
       const inputEvidence = referenceEvidence(referenceImages);
 
-      const sendButton = await waitForSendButtonReady();
+      // `text_len` chứ không phải `composer_len` (tên trường trong detection vẫn
+      // là composer_len_*, chỗ đó vô hại): chuỗi này đi thẳng vào chữ báo lỗi, và
+      // `classifyFailure` dò từ khoá `composer` trên toàn bộ câu — xem ghi chú
+      // dài ở waitForSendButtonReady.
+      const sendButton = await waitForSendButtonReady(undefined, ` (typing_path=${typing.path}, typing_ok=${typing.ok}, text_len ${composerLenBeforeTyping}->${composerTextLength(activeComposer)}, prompt_len=${prompt.length})`);
       // Capture the immutable attribution boundary at the irreversible action:
       // immediately before Create, after typing and attachment preparation.
       const boundary = ADAPTER.resultKind === "video" ? captureVideoBoundary() : captureBoundary(inputEvidence);
-      if (requestAttempt) Object.assign(requestAttempt, { boundary, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, resultKind: ADAPTER.resultKind, detection: { ...(ADAPTER.resultKind === "video" ? { baseline_video_ids: boundary.video_ids } : boundaryTelemetry(boundary)), decision_reason: "PENDING", typing_path: typing.path, attach: attach ?? null } });
+      if (requestAttempt) Object.assign(requestAttempt, { boundary, inputEvidence, hasReferences: referenceImages.length > 0, expectImage, resultKind: ADAPTER.resultKind, detection: { ...(requestAttempt.detection || {}), ...(ADAPTER.resultKind === "video" ? { baseline_video_ids: boundary.video_ids } : boundaryTelemetry(boundary)), decision_reason: "PENDING", typing_path: typing.path, attach: attach ?? null } });
       // Audit finding (Codex round 4, 2026-08-28): mode was proven ONCE, before
       // reference staging and typing -- both of which mutate Flow's React tree.
       // The live loss on 2026-08-28 began in Image mode, so re-assert Video at

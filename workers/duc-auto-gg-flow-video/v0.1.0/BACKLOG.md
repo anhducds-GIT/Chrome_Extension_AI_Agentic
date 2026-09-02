@@ -121,11 +121,60 @@
   ký tự thì `selectNodeContents` **không phủ hết** nội dung Lexical — và một composer chứa
   nội dung lai có thể là lý do React từ chối mở nút.
 
-  **Số liệu tự do nhất, không tốn credit, không cần mở trang:** lượt F4R2 CÓ ghi
-  `detection.typing_path` vào bản ghi lượt thử ([content.js:1076](content.js:1076)) — biết nó
-  dừng ở tầng nào trong bốn tầng dự phòng là biết ngay phải soi tầng nào. Con số đó **chưa ai
-  đọc**; `evidence/F4R2-KET-QUA.md` không nhắc tới. Đọc nó TRƯỚC KHI chạy lượt mới.
-- **F-19** · [ĐO 02/09] Chữ lỗi trả về operator còn nói **"Gemini DOM may have changed"** trên
+  ~~**Số liệu tự do nhất, không tốn credit, không cần mở trang:** lượt F4R2 CÓ ghi
+  `detection.typing_path`…~~ **SAI — đã kiểm 02/09, xem ngay dưới.**
+
+  **ĐÃ ĐỌC LẠI BẰNG CHỨNG, 02/09 (`claude-f18-evidence`) — 0 credit, không mở trang Flow.**
+  Toàn văn: [`evidence/F18-PHAN-TICH-BANG-CHUNG-20260902.md`](evidence/F18-PHAN-TICH-BANG-CHUNG-20260902.md).
+  Ba điều, mỗi điều đổi việc phải làm tiếp:
+
+  1. **`detection.typing_path` của F4R2 KHÔNG TỒN TẠI.** `grep -rn "detection" evidence/F4R2-*`
+     ra 0 dòng. Lý do: chỗ ghi số đo nằm **sau** `waitForSendButtonReady` — đúng cái cổng đã
+     ném ở lượt đó. Số đo về đường gõ vì thế chỉ được lưu ở những lượt KHÔNG cần tới nó. Thêm
+     một tầng hụt nữa: `typing_path` không nằm trong `CARRIED_DIAGNOSTICS`, nên lượt **thành
+     công** cũng về sổ cái với trường rỗng. **Đã vá cả hai** (thuần bằng chứng, không đụng
+     `typeIntoFlowComposer`; pin `tests/typing-path-survives-send-gate-static.mjs`, 8/8 đột
+     biến bị bắt).
+  2. **Bỏ câu "chữ ĐÃ vào DOM mà nút vẫn disabled".** `valueLen` không đo cái ta tưởng. Ngày
+     27/08 — ngày MỌI THỨ CHẠY ĐƯỢC — composer đọc ra **28** ở cả năm snapshot: trước khi gõ
+     (14:54), 4 giây sau khi submit (15:07:46), và sau khi video đã xong (15:08:57). Một con
+     số đứng yên trong khi prompt được gõ rồi gửi đi thì **không phải prompt**; nó là phần
+     `textContent` cố định của phần tử.
+  3. **Ứng viên số 4 (27 ký tự thừa) — LOẠI.** `145 + 27 = 172` (02/09) và `0 + 28 = 28`
+     (27/08): phần dôi ra có mặt ở **cả hai** ngày, kể cả ngày chạy được. Không phải rác của
+     lượt trước; đi soi `selectNodeContents` là sai đường. Đọc ngược lại thì `172` còn nói
+     prompt **đã vào thật**.
+     **Ứng viên số 1 (đường gọi) — LOẠI phần lớn:** dry_run lọc `textareas` theo `isVisible`, mà
+     `<textarea>` duy nhất trên trang là `g-recaptcha-response` `visible:false` ở cả hai ngày →
+     dry_run cũng rơi về `findComposer()`, **cùng một phần tử**. Và ở lượt F4R2 thì
+     `ensureFlowVideoMode()` (mode đã đúng do Đức đặt tay) lẫn `stageReferences([])` đều
+     **return ngay** — hai bước "khác biệt" ấy là no-op.
+     **Còn sống: ứng viên 2 (hồ sơ) và 3 (bản Flow đổi sau 5 ngày) — số 3 nay mạnh nhất.**
+     Và lượt F4R2 **đã chờ đủ**, không phải chờ hụt: `typeIntoFlowComposer` tự chờ 2×2500 ms,
+     rồi `waitForSendButtonReady` chờ tiếp trọn `sendReadyTimeoutMs`.
+
+  **Việc kế tiếp của F-18 (vẫn chờ Đức bật panel + Dev Mode + Video mode trên `kaito`):** chạy
+  `run.trial` **x1**, có lưu `dom_probe` TRƯỚC khi chạy. Hỏng thì vẫn 0 credit, nhưng sổ cái
+  lần này có `typing_path` + `composer_len_before/after` → kết luận được ngay, không cần lượt
+  thứ ba. Bảng đọc kết quả ở mục 5 của file phân tích. **Nhớ reload extension** — đã sửa `.js`.
+- **F-20** · **LUẬT MỚI, đã ghim, đọc trước khi sửa BẤT KỲ chữ báo lỗi nào trong gói này.**
+  `classifyFailure` (`runner-core.js:88-103`) quyết định một thất bại có được thử lại hay dừng
+  cả mẻ, và nó **dò từ khoá trên TOÀN BỘ câu báo lỗi**, không phải trên tiền tố. Nên **sửa lời
+  văn là sửa hành vi runtime.** Phiên 02/09 đã dính: thêm chữ `composer` vào câu ở cổng gửi làm
+  `OTHER` (thử lại được) thành `RECEIVER_LOST` (dừng cứng cả mẻ) — audit độc lập bắt được trước
+  khi push. Từ khoá phải né: `receiver` · `composer` · `chatgpt tab` · `session integrity` ·
+  `limit` · `captcha` · `timed out`/`timeout` · `ambiguous` · `no attributable`/`no output` ·
+  `reference`/`attachment`/`upload` · `download`/`fetch`/`write` · `validation`/`invalid`.
+  Cổng gửi đã có `tests/send-gate-error-classification.mjs` canh; **các câu báo lỗi khác trong
+  gói thì CHƯA ai canh** — đó là phần còn mở của F-20.
+
+- **F-19** · **XONG một phần 02/09** (`claude-f18-evidence`): câu ở cổng gửi — câu operator gặp
+  nhiều nhất — đã đổi thành *"The prompt may never have been accepted by the page, or the Flow
+  DOM changed"*, và mang theo `typing_path`. (Bản đầu viết "The Flow composer…" và **đã gây ra
+  một hồi quy phân loại thật** — xem **F-20**.) Ghim ở mục 6 của
+  `tests/typing-path-survives-send-gate-static.mjs` và toàn bộ
+  `tests/send-gate-error-classification.mjs`. **Còn lại:** các chuỗi "Gemini" khác trong
+  gói, thuộc nợ rebrand **F-06**. · [ĐO 02/09] Chữ lỗi trả về operator còn nói **"Gemini DOM may have changed"** trên
   một trang Google Flow — đồ thừa kế từ nhánh Gemini, thuộc nợ rebrand **F-06**. Nhỏ, nhưng
   người đọc ledger sẽ đi tìm nhầm chỗ.
 

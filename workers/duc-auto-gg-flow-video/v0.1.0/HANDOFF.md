@@ -449,3 +449,79 @@ ngay. **Không tốn credit, không cần mở trang Flow.** Đọc trước khi
 **Không đụng code.** Đức chốt 02/09 debug F-18 sau; phiên này chỉ sửa hồ sơ.
 
 **Việc kế tiếp:** vẫn là F-18, nhưng bắt đầu bằng đọc `typing_path` của F4R2, không bằng sửa code.
+
+## 2026-09-02 — `claude-f18-evidence`: việc được giao là đọc một con số chưa từng được ghi
+
+**Bằng chứng:** [`evidence/F18-PHAN-TICH-BANG-CHUNG-20260902.md`](evidence/F18-PHAN-TICH-BANG-CHUNG-20260902.md)
+· **Credit tiêu: 0. Không mở trang Flow. Không đụng `typeIntoFlowComposer`.**
+
+- **Việc nhận:** "đọc `detection.typing_path` của lượt F4R2" — việc rẻ nhất chưa ai làm, do
+  phiên `claude-dieu-phoi` đề ra. **Con số đó không tồn tại.** `grep -rn "detection"
+  evidence/F4R2-*` ra 0 dòng.
+- **Vì sao nó không tồn tại — và đây mới là cái đáng sửa.** Chỗ ghi `typing_path` nằm ở
+  `content.js:1089`, tức là **sau** `waitForSendButtonReady()` ở `1085` — đúng cái cổng đã ném
+  ở lượt F4R2. Nói gọn: **số đo về đường gõ chỉ được lưu ở những lượt KHÔNG cần tới nó.** Hụt
+  thêm một tầng nữa: `typing_path` không có trong `CARRIED_DIAGNOSTICS`, nên `recordDetection`
+  xoá nó kể cả trên đường THÀNH CÔNG. Thông tin cần thiết **được tính ra trong bộ nhớ ngay lúc
+  chạy** (`typeIntoFlowComposer` trả về `{ ok, path }`) rồi bị vứt đi hai lần. Đó là lý do thật
+  khiến F-18 đứng yên hai phiên.
+- **Đọc lại snapshot 27/08 thì loại được 2 trong 4 ứng viên của F-18, không tốn gì.**
+  ① `valueLen` không đo cái ta tưởng: ngày 27/08 — ngày MỌI THỨ CHẠY ĐƯỢC — composer đọc ra
+  **28** ở cả năm snapshot, gồm 4 giây sau khi submit thành công và sau khi video đã xong. Số
+  đứng yên qua cả ba trạng thái thì không phải prompt. Nên câu "chữ ĐÃ vào DOM mà nút vẫn
+  disabled" **phải bỏ**. ② Ứng viên số 4 (27 ký tự thừa) — **LOẠI**: `145+27=172` (02/09) và
+  `0+28=28` (27/08), phần dôi có mặt ở cả hai ngày. ③ Ứng viên số 1 (đường gọi khác) — **LOẠI
+  phần lớn**: dry_run lọc `textareas` theo `isVisible`, `<textarea>` duy nhất là
+  `g-recaptcha-response` `visible:false` ở cả hai ngày → nó cũng rơi về `findComposer()`, cùng
+  một phần tử; và ở lượt F4R2 cả `ensureFlowVideoMode()` lẫn `stageReferences([])` đều return
+  ngay. **Còn sống: hồ sơ, và bản Flow đổi sau 5 ngày — cái sau nay mạnh nhất.**
+- **Vá gì:** thuần đường bằng chứng. `typing_path` / `typing_ok` / `prompt_len` /
+  `composer_len_before_typing` / `composer_len_after_typing` ghi bằng `carryDiagnostic` **ngay
+  sau khi gõ**, trước mọi cổng có thể ném; thêm cả năm vào `CARRIED_DIAGNOSTICS`; câu báo lỗi ở
+  cổng gửi mang theo đường gõ. Tiện thể trả **F-19** cho đúng câu đó (bỏ "Gemini DOM" trên một
+  trang Flow).
+- **CỐ Ý KHÔNG LÀM:** không fail-fast theo `typing.ok`. Tầng dự phòng cuối (`paste_event`) trả
+  về mà chưa chờ React một nhịp nào, nên `ok:false` ở đó **không** có nghĩa lượt gõ đã hỏng —
+  chặn theo nó là giết đúng tầng đang đỡ. Đã ghim cấm ở mục 7 của pin, vì đây là thứ một phiên
+  sau rất dễ "sửa cho gọn".
+- **AUDIT ĐỘC LẬP BẮT ĐƯỢC MỘT LỖI THẬT DO CHÍNH TÔI GÂY RA — phần đáng ghi nhất của phiên.**
+  Câu báo lỗi bản đầu viết *"The **Flow composer** may never have accepted the prompt"* kèm
+  `composer_len 27->172`. Nghe vô hại. Nhưng `classifyFailure` (`runner-core.js:102`) phân loại
+  bằng cách **dò từ khoá trên TOÀN BỘ câu**: `/receiver|composer|…/` → `RECEIVER_LOST` →
+  nằm trong `HARD_STOP_FAILURE_TYPES` → `canRetry` false → **dừng cả mẻ job**. Tôi tự chạy lại
+  qua bộ phân loại thật để xác nhận, không tin báo cáo: bản cũ `OTHER`, **bản đầu của tôi
+  `RECEIVER_LOST`**, bản sau khi sửa `OTHER`. **Một thay đổi tôi khai là "thuần bằng chứng,
+  không đổi hành vi" đã lặng lẽ đổi hành vi runtime.** Bộ đột biến 8/8 của tôi không bắt được
+  vì **không mutation nào chạm bộ phân loại** — đúng bài học "mutation-test cái DÂY NỐI, không
+  chỉ cái luật".
+  **Sửa:** đổi lời văn + đổi `composer_len` → `text_len` trong chú thích (tên trường trong
+  `detection` giữ nguyên, chỗ đó không vào câu báo lỗi). **Ghim:**
+  `tests/send-gate-error-classification.mjs` **không ghim chữ** — nó đọc câu thật ra khỏi
+  `content.js`, dựng lại câu runtime sẽ ném cho cả năm giá trị `typing_path`, chạy qua
+  `classifyFailure` THẬT và đòi `OTHER` + `canRetry`; đồng thời đòi bản cũ vẫn ra
+  `RECEIVER_LOST` — phép kiểm không chứng minh được là nó biết đỏ thì không chứng minh gì.
+- **Lỗ thứ hai audit nêu, đã vá:** `typeIntoFlowComposer` **tự nó cũng ném được** (abort,
+  `HARD_STOP`, focus hỏng) và khi đó lại không có gì để ghi — đúng cái bệnh F-18. Nay bọc để
+  ghi `typing_path: "threw"` rồi **ném lại NGUYÊN lỗi cũ**: hard stop cũng phân loại bằng chữ,
+  nên bọc lại hay đổi chữ là mất luôn cú dừng cứng. Đã ghim cả hai chiều.
+- **Audit vòng 2: CONDITIONAL PASS** — hết lỗi hành vi, chỉ còn góp ý làm chặt phép kiểm; đã
+  làm hết trước khi push (phủ thêm nhánh `native_setter`; đòi ĐÚNG MỘT chỗ khớp; `render()` của
+  phép kiểm nay NÉM khi gặp ô nội suy lạ thay vì lặng lẽ thay bằng chữ vô hại).
+- **Bộ đột biến mở rộng tự tìm ra HAI lỗ ghim nữa, cùng một gốc bệnh.**
+  `composer_len_before_typing` được ghi ở **cả hai** nhánh (thành công và ném), nên phép kiểm
+  hỏi "chuỗi này có xuất hiện đâu đó trong `runPrompt` không" vẫn XANH khi **một trong hai**
+  nhánh bị xoá sạch — lọt lưới một lần cho mỗi nhánh. Nay ghim theo **đoạn**. Cùng bài học S7:
+  ghim ĐÚNG chỗ, đừng ghim GẦN chỗ đúng.
+- **Đo cuối:** suite **88/88** (86 → +2 file pin) · **15/15 đột biến bị bắt**, gồm bốn mutation
+  gieo lại từ khoá vào câu báo lỗi, một mutation bọc lại lỗi trong nhánh catch (mất hard stop),
+  và một mutation thêm trường động mới để thử bẫy `render()`.
+  Pin mới: `tests/typing-path-survives-send-gate-static.mjs` ·
+  `tests/send-gate-error-classification.mjs`.
+- **Sửa một pin cũ:** `tests/flow-video-job-static.mjs` dò `waitForSendButtonReady()` bằng cặp
+  ngoặc **rỗng** nên vỡ khi lời gọi thêm tham số. Thứ nó bảo vệ là **thứ tự**, và thứ tự không
+  đổi — đổi chỗ dò thành `waitForSendButtonReady(`, ghi lý do ngay tại đó. Cùng họ bài học với
+  "ghim GẦN chỗ đúng thay vì ghim ĐÚNG chỗ" ở S7.
+- **Việc kế tiếp (đúng một việc):** F-18 vẫn là việc #1. Cần **tay Đức**: bật panel + Dev Mode
+  + Video mode trên hồ sơ `kaito`, **reload extension** (đã sửa `.js`), rồi AI chạy `run.trial`
+  **x1** — có lưu `dom_probe` TRƯỚC khi chạy. Hỏng thì vẫn 0 credit, nhưng lần này sổ cái nói
+  ra được đường gõ dừng ở tầng nào. Bảng đọc kết quả ở mục 5 của file phân tích.

@@ -27,7 +27,11 @@ const type = run.indexOf("typeIntoFlowComposer(activeComposer, prompt)");
 // it earlier can leave it detached across a React remount, which types into
 // nothing and then clicks the new form's Create with an empty prompt.
 assert.ok(stage > -1 && stage < resolve && resolve < type, "the composer is resolved after staging and immediately before typing");
-const enabled = run.indexOf("waitForSendButtonReady()");
+// Dò theo `waitForSendButtonReady(` chứ không phải `waitForSendButtonReady()`:
+// điều được ghim ở đây là THỨ TỰ, không phải chữ ký hàm. Bản ghim cũ dò cặp
+// ngoặc rỗng nên vỡ ngay khi lời gọi được thêm chữ báo lỗi (F-18, 02/09) —
+// vỡ vì một lý do chẳng liên quan gì tới thứ tự nó đang bảo vệ.
+const enabled = run.indexOf("waitForSendButtonReady(");
 const click = run.indexOf("DECISIONS.clickSend(");
 assert.ok(type > -1 && type < enabled && enabled < capture && capture < click, "typing -> enabled Create -> immediate boundary -> one guarded click");
 // Audit round 3: quota threw here but security was only fed into sendReady(),
