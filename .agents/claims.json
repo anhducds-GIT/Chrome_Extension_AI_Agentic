@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "fix-dead-refs",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Sua 8 tham chieu drafts/ da chet sau phien S6. Chi sua CON TRO DANG SONG, khong sua nhat ky ke lai lich su.",
-      "released_at": null
+      "task": "XONG 2026-09-02 (fix-dead-refs): va 2 con tro chet o AI-OPERATOR-GUIDE va STATUS sau khi S6 xoa drafts/. Co y KHONG sua 6 cho con lai — chung la ban ghi (decisions) va nhat ky (HANDOFF). CON MO cua goi: 8 quyet dinh trong decisions.md chua thanh ADR (dinh dang van xuoi, can bo tach rieng — phien S8).",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,11 +24,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": "fix-dead-refs",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Sinh lai artifact sau khi va con tro chet o gg-flow-video. Giu den khi push xong.",
-      "released_at": null
+      "task": "XONG 2026-09-02. S1..S7 dong, bai test nghiem thu DAT ca hai vong. Con tro chet sau S6 da va. VIEC KE TIEP: S8 tra no cu.",
+      "released_at": "2026-09-02"
     }
   }
 }
