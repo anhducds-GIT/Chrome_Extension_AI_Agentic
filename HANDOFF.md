@@ -1224,3 +1224,44 @@ giữ `_root`: viết convention vào mục 0 của `AGENTS.md`, rồi bật ch�
 nhãn. Đừng bật khi chưa dạy.
 
 **Số:** suite 259 → **261**. Cổng 9 → **10** phép kiểm.
+
+## 2026-09-02 — `claude-delegation-a01`: MVP điều phối CC → GPT, Job A-01 đã nằm trong queue
+
+**Việc:** chạy vòng delegation đầu tiên của `delegations/` (Job A-01 — nhờ GPT audit độc lập
+`docs/archive/PLATFORM-AI-ORCHESTRATOR-STUDY.md`). Phạm vi phiên: CHỈ A-01.
+
+**Kiểm chứng gốc của `delegations/` (Đức nhờ xác nhận).** 9 commit ngày 01/09 (`d8983ae` →
+`12ff92a`, tác giả `J`, qua Composio) **không chạm một file nào ngoài `delegations/`** — đo bằng
+`git show --numstat` từng commit. Bảy file scaffold là thêm thuần (`X 0`); ba commit sau là bản
+v0.2 sửa chính file trong `delegations/`. Vậy "additive-only" đúng ở tầng repo.
+
+**Nhưng cổng KHÔNG xanh toàn bộ, và tôi không được phép nói xanh.** `session-check --as
+claude-delegation-a01`: **1 mục ĐỎ** — `DASHBOARD.md` lệch với HEAD tại dòng 18 (số phép kiểm
+Observer 9 → 10). Nợ này **có trước phiên tôi**, không do `delegations/` sinh ra, và **thuộc
+`_root`** — vùng tôi không giữ. Chín mục còn lại xanh; B1–B15 nhóm CHẶN đạt hết.
+
+**Dispatch đã xong (bước 4).** Profile Chrome **kaito** (`instance 417f7af3`, extension 0.3.0,
+một trong ba profile đang nối). Job `Q001`, `task_type: text_reasoning`, prompt **nguyên khối
+506 ký tự** lấy máy móc từ `A-01/TASK.md` (đối chiếu lại qua `queue-list --include-prompt`:
+khớp từng ký tự, `prompt_fingerprint sha256:ph1WwhRLA7lgk2sVCWQu9dcaE60P8j7LmOlh7wh41GA`).
+Workbook in-memory `Bridge-2026-09-02T16-16__results__v01.xlsx`, checkpoint v1 `verified: true`,
+run `20260902-1616-bridge-2026-09-02t16-16`. **Chưa gửi gì tới ChatGPT, chưa tốn lượt nào.**
+
+Dùng `jobs.add` chứ không `queue.propose` **vì propose đòi `if_ledger_etag`, mà lúc đó chưa có
+workbook nào** (`WORKBOOK_NOT_LOADED`) — `jobs.add` là lệnh duy nhất tự dựng được session. Ranh
+giới HARD của PLAYBOOK vẫn nguyên: **Đức bấm Run**, không có `run.start` trong V1.
+
+**Hai lỗi thật gặp trên đường, cả hai đã có trong bảng lỗi:** `ping` đầu tiên trả
+`RECEIVER_LOST` (lỗi #1 — reload extension không nạp lại content script) → `chat.reload` chữa
+xong trong 1,9 giây. Sau đó `WRONG_SURFACE` (lỗi #2) vì tab kaito đang ở `chatgpt.com/` trang
+chủ. Phép kiểm 02/09 làm đúng việc của nó: **chặn trước khi chạm trang**, không tiêu lượt nào.
+
+**CÒN MỞ — hai việc, cả hai cần tay Đức:**
+1. Tab ChatGPT của profile **kaito** phải bấm vào một hội thoại thật (`chatgpt.com/c/...`) rồi
+   bấm **Run**. Job đã sẵn trong Setup.
+2. **`_root` đang bị giữ chết.** Chủ là `claude-bridge-multiprofile`, ghi chú của họ là "GIU DEN
+   KHI PUSH XONG… Trả ngay sau push" — mà commit của họ (`fe3fbed`, `32a97cd`, `1e407e3`) **đã
+   nằm trong `origin/main`**, tức đã push rồi mà chưa trả quyền. Tôi **không tự lấy** (luật mục 1)
+   và `claim.mjs` cũng từ chối trả quyền hộ. Chưa có `_root` thì tôi không ghi được
+   `A-01/TASK.md` (dấu Gate 0), `RESULT-DIGEST.md`, `RUN-LOG.json`, `LESSON-INBOX.md`, và không
+   sinh lại được `DASHBOARD.md` để chữa mục đỏ.

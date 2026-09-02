@@ -3,7 +3,7 @@
 - Topology: COVERAGE (mầm VERIFY) — lý do: tài liệu lớn cần quét đủ theo rubric, có ground truth là chính tài liệu trong repo.
 - Kênh: XLSX → MD digest · Vòng: 1 (+1 delta nếu thiếu mục) · Trần: ~800 từ
 - Mục tiêu đo: (1) câu trả lời dài ≥2.000 ký tự được bắt NGUYÊN VẸN vào Result XLSX; (2) tỉ lệ nén digest; (3) kết quả audit dùng được cho quyết định orchestrator đang mở.
-- Gate 0: [ ] Đức đã duyệt
+- Gate 0: [x] Đức đã duyệt — **2026-09-01**, xác nhận lại khi mở phiên dispatch 2026-09-02 (`claude-delegation-a01`)
 
 ## PROMPT (gửi nguyên khối, task_type=text_reasoning)
 

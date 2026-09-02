@@ -23,10 +23,10 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-bridge-multiprofile",
+      "owner": "claude-delegation-a01",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "GIU DEN KHI PUSH XONG (artifact DASHBOARD/FEATURE-PARITY da commit, cho push).",
+      "task": "Job A-01 delegation CC->GPT: dau Gate 0, RESULT-DIGEST, RUN-LOG, LESSON-INBOX, va sinh lai DASHBOARD.md",
       "released_at": null
     },
     "_docs": {
@@ -37,17 +37,17 @@
       "released_at": null
     },
     "_code": {
-      "owner": "claude-k2-design",
+      "owner": "claude-k1-template",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "K2-2b: safe-push va cong kiem dang quy cung mot file ve hai vung khac nhau (areaOf vs stewardOf) — gom ve mot ham thuan dung chung, dong bo ca luat mien tru, va ghim bat bien steward <-> khoa quyen",
+      "task": "K1 muc 1b: bo khung mang theo suite cua chinh no — tests/harness-smoke.mjs + scripts.test trong ban trich",
       "released_at": null
     },
     "_template": {
-      "owner": "claude-k2-design",
+      "owner": "claude-k1-template",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "K2-2b: sinh lai ban trich sau khi sua repo-structure/session-check/safe-push",
+      "task": "K1: bo khung phai mang theo suite cua chinh no — them tests/ va scripts.test vao ban trich",
       "released_at": null
     }
   }
