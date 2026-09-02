@@ -131,11 +131,11 @@ GPT 34 file `.js` · Gemini 33.
 | `sidepanel.js` | 6008 | 5053 | 955 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
 | `bridge-core.js` | 954 | 799 | 155 |
-| `bridge-transport-loopback.js` | 338 | 477 | 139 |
 | `background.js` | 246 | 167 | 79 |
 | `content.js` | 1000 | 1079 | 79 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
 | `runner-core.js` | 277 | 203 | 74 |
+| `bridge-transport-loopback.js` | 536 | 482 | 54 |
 | `output-profile-core.js` | 96 | 45 | 51 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
 | `output-location-core.js` | 389 | 373 | 16 |
