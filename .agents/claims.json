@@ -24,11 +24,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-bridge-multiprofile",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02 (S7 PHAN A). Bat chan 8 phep kiem B1 B2 B3 B4 B5 B7 B10 B12; 6 phep kiem con lai (B6 B8 B9 B11 B13 B14) giu muc canh bao. Danh sach chan khai o bootstrap.blocking trong .repo-structure.json, fail-closed khi thieu. Ba ma thoat: 0 dat / 1 no nhom CHAN / 2 bo kiem hong. Tu chay bai nghiem thu tren ban sao repo that: 3 vi pham -> 1,1,1; no canh bao -> 0; sach -> 0 = DAT. Tim ra va sua mot loi thiet ke: B12 phai do TRANG THAI hien tai, khong do LICH SU, neu khong thi git revert cung bi tinh la sua va cong do vinh vien. Suite 97+6+79+15+27, mutation 14/14. CON LAI CUA S7: (1) muc 4 — Duc tu dan mot dong vao o Project Instructions: \"Doc AGENTS.md o goc repo truoc khi lam gi.\"; (2) PHAN B — Duc tu chay bai test o mot chat MOI, ghi vao evidence/2026xxxx-bootstrap-test-r02/; (3) muc 5 — go nhan unproven, CHI sau khi Duc bao phan B dat. Chi tiet o cuoi HANDOFF.md.",
-      "released_at": "2026-09-02"
+      "task": "DANG GIU DEN KHI PUSH XONG. Cap nhat dong so tay AGENTS.md (multi-profile da port xong gemini+chatgpt) + sinh lai DASHBOARD/FEATURE-PARITY sau cac commit port.",
+      "released_at": null
     }
   }
 }
