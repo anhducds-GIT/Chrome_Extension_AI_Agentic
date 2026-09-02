@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Vá F-18: ghi bằng chứng phản chứng FLOW-01 (typing_path input_events ĐÃ enable được nút 27/08) để phiên sau không đi viết lại đường gõ.",
-      "released_at": null
+      "task": "TRA QUYEN 02/09 (claude-dieu-phoi). XONG: va F-18 thanh HOI QUY (FLOW-01 27/08 da go duoc, typing_path=input_events, nut da sang) — dung viet lai typeIntoFlowComposer. Viec re nhat chua ai lam: doc detection.typing_path cua luot F4R2.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Sinh lai artifact sau va F-18.",
-      "released_at": null
+      "task": "TRA QUYEN 02/09 (claude-dieu-phoi). Sinh lai artifact sau va F-18.",
+      "released_at": "2026-09-02"
     }
   }
 }
