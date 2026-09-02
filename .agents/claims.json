@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "evidence-r02",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Ghi bang chung r02 — bai test nghiem thu S7 phan B, dang ba cau hoi. Chi them file evidence.",
-      "released_at": null
+      "task": "XONG 2026-09-02. S1..S7 da dong. BAI TEST NGHIEM THU DAT CA HAI VONG (r01 dang van hanh, r02 dang ba cau hoi) — muc tieu chinh cua chuong trinh dong lai. Chan da bat va da kiem chay duoc. CON LAI: S8 tra no cu, S9 promote template vao Kho, S10 radar.",
+      "released_at": "2026-09-02"
     }
   }
 }
