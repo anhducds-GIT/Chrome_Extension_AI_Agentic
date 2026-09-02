@@ -78,3 +78,15 @@ Cách đặt bẫy: trước khi chạy, chọn một file **cùng mẫu tên nh
 của nó vào `evidence/`. Chạy xong so lại. Còn nguyên = phạm vi đúng. Mất hoặc đổi = dừng ngay.
 
 **Đây là bước bắt buộc, không phải tuỳ chọn.**
+
+## Nhiều profile Chrome cùng nối Bridge — từ 2026-09-02 KHÔNG phải tắt extension nữa
+
+Port từ nhánh gg-flow-video (thiết kế: `drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` gốc repo,
+Đức duyệt hướng A 28/08). Host giữ nhiều kết nối cùng lúc; mỗi profile báo danh bằng tên
+Đức đặt trong side panel (tab BRIDGE, ô **"Tên hồ sơ Chrome này"**).
+
+1. Mở phiên: `cd "C:WORKING ZONEChrome Extension Bridgeduc-auto-chatgpt" && node bridge-cli.mjs sessions --pairing duc-auto-chatgpt-bridge-pairing-v1.json` — xem profile nào đang nối (`label`, `legacy`).
+2. **Có ≥2 kết nối → MỌI lệnh phải nêu đích** `--target <tên|instance_id>`. Quên là host TỪ CHỐI bằng `TARGET_AMBIGUOUS` kèm danh sách — không bao giờ tự chọn. Đúng 1 kết nối thì như cũ.
+3. **Probe và run phải CÙNG MỘT `--target`.** Mọi phản hồi chuyển tiếp mang dấu `served_by` — thấy đổi giữa chừng là DỪNG.
+4. `TARGET_NOT_CONNECTED` (retryable) = đích đang offline (service worker ngủ); đợi ~30s gọi lại, đừng đổi đích.
+5. `legacy: true` = profile đó còn chạy bản extension CŨ trong RAM — nhờ Đức reload extension ở profile đó rồi đặt tên.

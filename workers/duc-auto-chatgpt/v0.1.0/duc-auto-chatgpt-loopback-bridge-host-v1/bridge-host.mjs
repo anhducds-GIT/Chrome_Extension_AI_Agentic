@@ -13,6 +13,8 @@ const ERRORS = Object.freeze({
   UNAUTHENTICATED: { retryable: false, message: "Bridge authentication failed." },
   FORBIDDEN: { retryable: false, message: "The transport role is not allowed to perform this action." },
   EXTENSION_OFFLINE: { retryable: true, message: "No authenticated extension connection is available." },
+  TARGET_AMBIGUOUS: { retryable: false, message: "More than one extension session is connected; name exactly one target." },
+  TARGET_NOT_CONNECTED: { retryable: true, message: "The named target session is not connected." },
   REQUEST_TIMEOUT: { retryable: true, message: "The request timed out; retry the identical idempotency key." },
   TRANSPORT_DISCONNECTED: { retryable: true, message: "The transport disconnected; retry the identical idempotency key." },
   INTERNAL_ERROR: { retryable: false, message: "The bridge could not complete the request." }
@@ -42,6 +44,18 @@ function failureEnvelope(requestId, code, details = {}) {
   };
 }
 
+function successEnvelope(requestId, result) {
+  return {
+    protocol: "duc-auto-chatgpt.bridge",
+    version: 1,
+    kind: "response",
+    request_id: requestId,
+    ok: true,
+    result,
+    responded_at: new Date().toISOString()
+  };
+}
+
 function tokenBytes(token) {
   const value = String(token || "");
   if (!/^[A-Za-z0-9_-]{43}$/.test(value)) throw new Error("Pairing token must encode exactly 32 random bytes as base64url.");
@@ -59,7 +73,6 @@ function sameToken(expected, supplied) {
     return false;
   }
 }
-
 function hostProof(token, nonce) {
   return crypto.createHmac("sha256", tokenBytes(token)).update(String(nonce), "utf8").digest("base64url");
 }
@@ -74,6 +87,32 @@ export function validatePairing(input) {
   const websocketUrl = `ws://${DEFAULT_HOST}:${input.port}/v1/extension`;
   if (input.http_url !== httpUrl || input.websocket_url !== websocketUrl) throw new Error("Pairing endpoints do not match the fixed loopback paths.");
   return Object.freeze({ schema_version: 1, host: DEFAULT_HOST, port: input.port, http_url: httpUrl, websocket_url: websocketUrl, token: input.token });
+}
+
+const INSTANCE_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
+
+function sanitizeInstanceLabel(value) {
+  if (typeof value !== "string") return "";
+  return value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 64);
+}
+
+// The instance block is routing metadata only. It never participates in
+// authentication: the pairing token alone decides admission. Absent block =
+// a pre-multiprofile extension (legacy). A present-but-malformed block is
+// rejected fail-closed so a broken identity can never route ambiguously.
+export function parseInstance(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "object" || Array.isArray(value)) throw new Error("instance must be a JSON object.");
+  if (value.schema_version !== 1) throw new Error("instance.schema_version must equal 1.");
+  if (typeof value.instance_id !== "string" || !INSTANCE_ID_PATTERN.test(value.instance_id)) {
+    throw new Error("instance.instance_id must be 8-64 characters of A-Za-z0-9 or hyphen.");
+  }
+  return Object.freeze({
+    instance_id: value.instance_id,
+    label: sanitizeInstanceLabel(value.label),
+    worker: typeof value.worker === "string" ? value.worker.slice(0, 64) : null,
+    extension_version: typeof value.extension_version === "string" ? value.extension_version.slice(0, 32) : null
+  });
 }
 
 function readBody(request, limit) {
@@ -116,7 +155,10 @@ export function createBridgeHost(options = {}) {
   const authTimeoutMs = Math.max(100, Number(options.authTimeoutMs || 5000));
   const maxInflight = Math.max(1, Math.min(256, Number(options.maxInflight || MAX_INFLIGHT)));
   const inflight = new Map();
-  let extension = null;
+  // One entry per connected extension session, keyed by instance_id (or a
+  // per-connection legacy key). Several Chrome profiles may sit here at once;
+  // nothing ever evicts a DIFFERENT instance's seat.
+  const sessions = new Map();
   let listening = null;
 
   function send(socket, value) {
@@ -130,6 +172,30 @@ export function createBridgeHost(options = {}) {
     socket.end();
   }
 
+  function liveSessions() {
+    return [...sessions.values()].filter((entry) => entry.socket && !entry.socket.destroyed);
+  }
+
+  function candidateList(entries = liveSessions()) {
+    return entries.map((entry) => ({
+      instance_id: entry.key,
+      label: entry.instance ? entry.instance.label : null,
+      legacy: !entry.instance
+    }));
+  }
+
+  function sessionDirectory() {
+    return liveSessions().map((entry) => ({
+      instance_id: entry.key,
+      label: entry.instance ? entry.instance.label : null,
+      legacy: !entry.instance,
+      worker: entry.instance ? entry.instance.worker : null,
+      extension_version: entry.instance ? entry.instance.extension_version : null,
+      connected_at: entry.connectedAt,
+      last_seen_at: entry.lastSeenAt
+    }));
+  }
+
   function settleRelay(relayId, envelope) {
     const pending = inflight.get(relayId);
     if (!pending) return;
@@ -138,7 +204,17 @@ export function createBridgeHost(options = {}) {
     const correlated = envelope && typeof envelope === "object" && !Array.isArray(envelope) &&
       envelope.protocol === "duc-auto-chatgpt.bridge" && envelope.version === 1 && envelope.kind === "response" &&
       envelope.request_id === pending.requestId && typeof envelope.ok === "boolean";
-    json(pending.response, 200, correlated ? envelope : failureEnvelope(pending.requestId, "INTERNAL_ERROR", { reason: "uncorrelated_extension_response" }));
+    const payload = correlated ? envelope : failureEnvelope(pending.requestId, "INTERNAL_ERROR", { reason: "uncorrelated_extension_response" });
+    if (pending.servedBy) payload.served_by = pending.servedBy;
+    json(pending.response, 200, payload);
+  }
+
+  // Scoped failure: only the named session's in-flight work dies with it.
+  // Other profiles' requests keep running untouched.
+  function failSession(sessionKey, code) {
+    for (const [relayId, pending] of inflight) {
+      if (pending.sessionKey === sessionKey) settleRelay(relayId, failureEnvelope(pending.requestId, code));
+    }
   }
 
   function failAll(code) {
@@ -172,6 +248,7 @@ export function createBridgeHost(options = {}) {
     ].join("\r\n"));
     const decoder = createFrameDecoder({ maxPayloadBytes: MAX_ENVELOPE_BYTES + 8192, requireMasked: true });
     let authenticated = false;
+    let entry = null;
     let challengeAccepted = false;
     const authTimer = setTimeout(() => closeSocket(socket, 1008, "Authentication required."), authTimeoutMs);
 
@@ -192,16 +269,31 @@ export function createBridgeHost(options = {}) {
           closeSocket(socket, 1008, "Authentication failed.");
           return;
         }
+        let instance;
+        try { instance = parseInstance(message.instance); }
+        catch (_) {
+          closeSocket(socket, 1008, "Invalid instance metadata.");
+          return;
+        }
         authenticated = true;
         clearTimeout(authTimer);
-        if (extension?.socket && extension.socket !== socket) {
-          failAll("TRANSPORT_DISCONNECTED");
-          closeSocket(extension.socket, 1000, "Replaced by a fresh extension session.");
+        const key = instance ? instance.instance_id : `legacy:${crypto.randomUUID()}`;
+        const incumbent = sessions.get(key);
+        if (incumbent && incumbent.socket !== socket) {
+          // The SAME instance reconnected (MV3 service worker woke up).
+          // Replace only its own seat; every other profile keeps its seat
+          // and its in-flight work.
+          failSession(key, "TRANSPORT_DISCONNECTED");
+          sessions.delete(key);
+          closeSocket(incumbent.socket, 1000, "Replaced by a fresh session from the same instance.");
         }
-        extension = { socket, sessionId: crypto.randomUUID(), origin: request.headers.origin };
-        send(socket, { type: "auth_ok", session_id: extension.sessionId, server_time: new Date().toISOString() });
+        const now = new Date().toISOString();
+        entry = { key, socket, sessionId: crypto.randomUUID(), origin: request.headers.origin, instance, connectedAt: now, lastSeenAt: now };
+        sessions.set(key, entry);
+        send(socket, { type: "auth_ok", session_id: entry.sessionId, server_time: now });
         return;
       }
+      if (entry) entry.lastSeenAt = new Date().toISOString();
       if (message?.type === "keepalive") {
         send(socket, { type: "keepalive_ack", server_time: new Date().toISOString() });
         return;
@@ -219,11 +311,16 @@ export function createBridgeHost(options = {}) {
     });
     socket.on("close", () => {
       clearTimeout(authTimer);
-      if (extension?.socket === socket) {
-        extension = null;
-        failAll("TRANSPORT_DISCONNECTED");
+      if (entry && sessions.get(entry.key)?.socket === socket) {
+        sessions.delete(entry.key);
+        failSession(entry.key, "TRANSPORT_DISCONNECTED");
       }
     });
+    // The HTTP server hands us allowHalfOpen sockets: a peer that dies with a
+    // bare FIN (an MV3 service worker being killed does exactly this) would
+    // otherwise never fire "close", leaving a zombie seat that still counts
+    // toward TARGET_AMBIGUOUS. Answer the FIN so "close" always arrives.
+    socket.on("end", () => socket.end());
     socket.on("error", () => { /* close handles authoritative cleanup. */ });
     if (head?.length) socket.emit("data", head);
   }
@@ -252,8 +349,41 @@ export function createBridgeHost(options = {}) {
       if (!response.writableEnded) json(response, error?.code === "LIMIT" ? 413 : 400, failureEnvelope(envelope?.request_id, "INVALID_ENVELOPE"));
       return;
     }
-    if (!extension?.socket || extension.socket.destroyed) {
+    if (envelope.method === "bridge.sessions") {
+      // Answered by the host itself, read-only: who is connected right now.
+      json(response, 200, successEnvelope(envelope.request_id, { sessions: sessionDirectory(), count: liveSessions().length }));
+      return;
+    }
+    let target = null;
+    if (envelope.target !== undefined) {
+      if (typeof envelope.target !== "string" || !envelope.target.trim() || envelope.target.length > 128) {
+        json(response, 400, failureEnvelope(envelope.request_id, "INVALID_ENVELOPE", { field: "target" }));
+        return;
+      }
+      target = envelope.target;
+    }
+    // Routing is fail-closed: with several sessions connected, an untargeted
+    // request is refused with the candidate list — the host never picks one.
+    const live = liveSessions();
+    let chosen = null;
+    if (target !== null) {
+      const matches = live.filter((entry) => entry.key === target || (entry.instance && entry.instance.label !== "" && entry.instance.label === target));
+      if (matches.length === 0) {
+        json(response, 200, failureEnvelope(envelope.request_id, "TARGET_NOT_CONNECTED", { target, candidates: candidateList(live) }));
+        return;
+      }
+      if (matches.length > 1) {
+        json(response, 200, failureEnvelope(envelope.request_id, "TARGET_AMBIGUOUS", { target, candidates: candidateList(matches) }));
+        return;
+      }
+      chosen = matches[0];
+    } else if (live.length === 0) {
       json(response, 200, failureEnvelope(envelope.request_id, "EXTENSION_OFFLINE"));
+      return;
+    } else if (live.length === 1) {
+      chosen = live[0];
+    } else {
+      json(response, 200, failureEnvelope(envelope.request_id, "TARGET_AMBIGUOUS", { candidates: candidateList(live) }));
       return;
     }
     if (inflight.size >= maxInflight) {
@@ -261,9 +391,18 @@ export function createBridgeHost(options = {}) {
       return;
     }
     const relayId = crypto.randomUUID();
+    // The target field is host routing metadata; the extension never sees it.
+    const relayEnvelope = { ...envelope };
+    delete relayEnvelope.target;
     const timer = setTimeout(() => settleRelay(relayId, failureEnvelope(envelope.request_id, "REQUEST_TIMEOUT")), requestTimeoutMs);
-    inflight.set(relayId, { response, requestId: envelope.request_id, timer });
-    try { send(extension.socket, { type: "rpc", relay_id: relayId, envelope }); }
+    inflight.set(relayId, {
+      response,
+      requestId: envelope.request_id,
+      timer,
+      sessionKey: chosen.key,
+      servedBy: { instance_id: chosen.key, label: chosen.instance ? chosen.instance.label : null }
+    });
+    try { send(chosen.socket, { type: "rpc", relay_id: relayId, envelope: relayEnvelope }); }
     catch (_) { settleRelay(relayId, failureEnvelope(envelope.request_id, "TRANSPORT_DISCONNECTED")); }
   });
   server.on("upgrade", acceptExtension);
@@ -284,15 +423,22 @@ export function createBridgeHost(options = {}) {
   }
 
   async function stop() {
-    if (extension?.socket) closeSocket(extension.socket, 1001, "Host stopping.");
-    extension = null;
+    for (const entry of sessions.values()) closeSocket(entry.socket, 1001, "Host stopping.");
+    sessions.clear();
     failAll("TRANSPORT_DISCONNECTED");
     if (!server.listening) return;
     await new Promise((resolve) => server.close(resolve));
     listening = null;
   }
 
-  return Object.freeze({ start, stop, address: () => server.address(), inflightCount: () => inflight.size, extensionConnected: () => Boolean(extension) });
+  return Object.freeze({
+    start,
+    stop,
+    address: () => server.address(),
+    inflightCount: () => inflight.size,
+    extensionConnected: () => liveSessions().length > 0,
+    sessionCount: () => liveSessions().length
+  });
 }
 
 function argument(name) {

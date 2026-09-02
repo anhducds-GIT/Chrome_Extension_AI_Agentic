@@ -459,3 +459,13 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - Từ nay **đừng thêm dòng vào `decisions.md`**; chép `docs/_TEMPLATE-adr.md` thành ADR mới,
     đánh số tiếp từ `0046`. ADR đã `Accepted` là bất biến — phép kiểm **B12** cưỡng chế.
 - **Next:** không đổi việc đang mở của gói này.
+- 2026-09-02 · `claude-bridge-multiprofile` · **PORT MULTI-PROFILE BRIDGE — xong, suite 96/96,
+  10/10 mutation đỏ (kể cả M8 chạy lại riêng vì lệch indent).** Port từ gg-flow-video (mẫu
+  6c59266, audit PASS). Host = bản multi-profile mới + đắp lại NGUYÊN VẸN 3 hunk bắt tay
+  `auth_challenge`/`auth_proof` (diff tay, không copy đè — đúng cảnh báo trong thiết kế).
+  Transport: khối `instance` gắn vào message `auth` CUỐI, SAU khi verify proof; `tokenSent`
+  đặt trước await nên proof replay trong lúc đọc storage vẫn bị bỏ qua. Panel: ô "Tên hồ sơ
+  Chrome này". CLI: `sessions` + `--target` (giữ cờ `--request-id`/`--client-id` riêng của nhánh).
+  Test multi-profile bản chuyển thể: mọi phiên giả phải đi qua challenge trước auth.
+  Host mới ĐÃ deploy + khởi động (32147 vốn đang TẮT); live thấy 1 kết nối legacy (extension
+  chưa reload — tay Đức). Việc mở: Đức reload extension từng profile + đặt tên.

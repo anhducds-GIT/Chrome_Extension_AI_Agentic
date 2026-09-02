@@ -5,13 +5,13 @@ name: Duc Auto ChatGPT
 lifecycle: active
 owner: claude
 priority_rank: 2
-next_step: "Chay audit doc lap cho ban va khoang nghi giua job — mon no duy nhat con lai cua goi nay"
+next_step: "Duc reload extension o TUNG profile ChatGPT + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: audit doc lap goi khoang-nghi-giua-job (kenh auditmin da chung minh song 02/09)"
 version_source: workers/duc-auto-chatgpt/v0.1.0/manifest.json
 last_verified: 2026-08-26
 last_verified_commit: 00d1f99b44bd490cac079da5e803917346571a26
 last_verified_how: "Pilot-14 live 3/3 job ảnh tham chiếu đầu-cuối + xác minh live idempotency 5/5 phép đo"
 evidence_ref: workers/duc-auto-chatgpt/v0.1.0/Pilot-14_RefFeatureTest/evidence/idempotency-fix-live-proof.md
-current_focus: "B-14…B-21 đang mở; việc thật không chạy qua trần 90s của run.trial (B-17)"
+current_focus: "Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới deploy + chạy trên 32147, thấy 1 kết nối legacy — chờ tay Đức reload extension + đặt tên. Việc cũ vẫn mở: B-14…B-21, audit độc lập gói khoảng-nghỉ-giữa-job"
 ref_readme: workers/duc-auto-chatgpt/v0.1.0/README.md
 ref_handoff: workers/duc-auto-chatgpt/v0.1.0/HANDOFF.md
 ref_backlog: workers/duc-auto-chatgpt/v0.1.0/BACKLOG.md

@@ -27,7 +27,10 @@ const chromeMock = {
   alarms: { onAlarm: alarms, create(name, spec) { alarmSpec = { name, spec }; } },
   storage: {
     local: {
-      async get(key) { return key ? { [key]: values[key] } : { ...values }; },
+      async get(key) {
+        if (Array.isArray(key)) return Object.fromEntries(key.map((name) => [name, values[name]]));
+        return key ? { [key]: values[key] } : { ...values };
+      },
       async set(next) { Object.assign(values, next); },
       async remove(key) { delete values[key]; }
     },
@@ -84,7 +87,17 @@ const secondChallenge = secondSocket.sent[0];
 const validProof = crypto.createHmac("sha256", Buffer.from(token, "base64url")).update(secondChallenge.nonce, "utf8").digest("base64url");
 secondSocket.emit("message", { data: JSON.stringify({ type: "auth_proof", proof: validProof }) });
 await new Promise((resolve) => setTimeout(resolve, 25));
-assert.deepEqual(secondSocket.sent[1], { type: "auth", role: "extension", token }, "token is sent only after valid HMAC proof");
+// Multi-profile: the auth frame now carries an instance block and is sent one
+// microtask after the proof verifies (identity read from storage).
+await new Promise((resolve) => setTimeout(resolve, 0));
+const finalAuth = secondSocket.sent[1];
+assert.equal(finalAuth.type, "auth", "token is sent only after valid HMAC proof");
+assert.equal(finalAuth.role, "extension");
+assert.equal(finalAuth.token, token);
+assert.equal(finalAuth.instance.schema_version, 1);
+assert.match(finalAuth.instance.instance_id, /^[A-Za-z0-9-]{8,64}$/);
+assert.equal(finalAuth.instance.worker, "duc-auto-chatgpt");
+assert.equal(finalAuth.instance.instance_id, values["dac.bridge.instance.v1"].instance_id, "the announced identity is the persisted one");
 secondSocket.emit("message", { data: JSON.stringify({ type: "auth_ok", session_id: "host-session", server_time: new Date().toISOString() }) });
 await new Promise((resolve) => setTimeout(resolve, 0));
 assert.equal(values[globalThis.DacBridgePairingCore.STATUS_STORAGE_KEY].state, "connected");
