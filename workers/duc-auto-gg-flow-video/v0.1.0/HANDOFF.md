@@ -1037,3 +1037,31 @@ chạy chặn được một vật cản chưa ai lường:
 - **Chưa kiểm live được F-14/F-26** — cần Đức reload (đã sửa `provider-adapter.js`). Sau reload,
   giữ nguyên chip `x3` + chế độ Image, tôi chạy **một** job: nó sẽ đi qua **cả** đường chuyển
   mode (nửa sau F-14) **lẫn** đường tự sửa `x3` → `x1` (F-26).
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 18): F-14 xong hẳn; F-26 hỏng ở chỗ tôi giả định trạng thái
+
+**Bằng chứng:** [`evidence/F26-KET-QUA-luot1.md`](evidence/F26-KET-QUA-luot1.md) · **0 credit.**
+
+- **NỬA SAU CỦA F-14: CHỨNG MINH ĐƯỢC.** Job khởi đầu ở chế độ Image với chip `x3`. Sổ cái ghi
+  `output_chip.label_before: "Video · 360p · 8s crop_16_9 x3"` — nhãn **Video**. Nghĩa là bản vá
+  F-11 nhận đúng nhãn Image biến thể, **và** `pressFlowControl` bấm được `videocam Video` để
+  **chuyển mode thật**. Đây là thứ F-14 treo từ 28/08. **F-14 đóng hoàn toàn.**
+- **F-26 hỏng, 0 credit, fail-closed đúng** (`count_before: 3` → `count_after: 3`, chưa gõ,
+  không video).
+- **Chẩn đoán bằng hai phép đo, không bằng suy luận.** Sổ cái lượt đó không phân biệt được
+  "không tìm thấy nút" với "bấm rồi mà không ăn". Nên tôi chạy `mode_probe` (0 credit) ngay sau:
+  `opened: false`, `appeared_labels: []` — trong khi lần trước là `opened: true` với 17 nhãn.
+  Ghép lại: **sau khi chuyển mode, bảng cấu hình VẪN ĐANG MỞ.**
+  `pressFlowControl` trên chip là **công tắc bật/tắt**, nên cú bấm "để mở" của tôi đã **đóng** nó;
+  tìm `x1` không thấy; cú bấm "để đóng" lại **mở** ra và bỏ đó cho lệnh sau.
+- **Sai của tôi, gọn một câu: giả định trạng thái thay vì đo nó.** Đã vá bằng
+  `settingsPanelOpen()` — đo qua sự có mặt của bốn nút `x1`…`x4`, thứ **chỉ tồn tại khi bảng mở**.
+  Nay: đo trước, chỉ bấm khi cần, và **trả bảng về đúng trạng thái ban đầu**.
+- **Sổ cái ghi thêm bước trung gian** (`panel_was_open`, `option_found`, `option_pressed`,
+  `panel_restored`): một chẩn đoán không phân biệt được "không tìm thấy" với "bấm không ăn" thì
+  không dẫn ai tới đâu.
+- **Harness test sai theo cùng một kiểu** — chỉ hiện nút `x{n}` khi kịch bản khai `offerOutputX1`,
+  nên bộ dò trạng thái bị mù. Trang thật **luôn** lộ cả bốn nút khi bảng mở. Đã sửa cho giống.
+- **Đo:** suite **94/94** · mutation **5/5**, gồm đột biến dựng lại **đúng lỗi vừa gặp**.
+- **Việc kế tiếp:** reload rồi chạy lại đúng một job như lượt này (Image + `x3`). Hỏng nữa thì
+  vẫn **0 credit**, và lần này sổ cái nói ra hỏng ở bước nào.

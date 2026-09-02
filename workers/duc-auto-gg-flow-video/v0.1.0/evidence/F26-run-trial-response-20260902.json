@@ -1,0 +1,22 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-ce445e64-e0ba-4525-bbde-fae253e4fb79",
+  "ok": true,
+  "result": {
+    "accepted": true,
+    "delay_sec": 90,
+    "input_origin": "bridge_dev",
+    "job_ids": [
+      "Q001"
+    ],
+    "run_id": "20260902-1418-bridge-2026-09-02t14-18",
+    "timeout_sec": 300
+  },
+  "responded_at": "2026-09-02T14:18:40.848Z",
+  "served_by": {
+    "instance_id": "e08e1d6a-63d0-4be1-909a-f0cbd56ef891",
+    "label": "Binh"
+  }
+}

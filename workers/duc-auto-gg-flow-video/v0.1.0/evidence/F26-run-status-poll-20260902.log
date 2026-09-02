@@ -1,0 +1,2 @@
+14:18:52 ~ RUNNING ~ Q001 ~ PRE_SUBMIT ~ SENDING ~ {"failed":0,"interrupted":0,"pending":0,"running":1,"success":0,"total":1}
+14:19:03 ~ IDLE ~ Q001 ~ PRE_SUBMIT ~ SENDING ~ {"failed":1,"interrupted":0,"pending":0,"running":0,"success":0,"total":1}

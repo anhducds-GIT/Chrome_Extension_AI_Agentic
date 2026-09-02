@@ -1,0 +1,9 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW-F26: A brass compass needle settling slowly on a weathered map, low raking light, dust in the air, slow macro drift, no text.",
+      "reference_images": [],
+      "settings": { "timeout_sec": 300, "max_retries": 0 }
+    }
+  ]
+}

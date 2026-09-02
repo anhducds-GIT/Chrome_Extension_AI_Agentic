@@ -371,6 +371,25 @@
     return matches.length === 1 ? matches[0] : null;
   }
 
+  // Bang cau hinh dang MO hay dang DONG — do, dung doan.
+  //
+  // Do that 02/09, va no la nguyen nhan lam F-26 hong o luot dau: sau khi
+  // chuyen mode Image->Video, bang van DANG MO. trySetSingleOutput gia dinh
+  // bang dang dong nen bam chip de 'mo' — cu bam do DONG bang lai; tim x1
+  // khong thay; bam lan nua de 'dong' — thuc ra MO ra, va de bang mo cho lenh
+  // sau. Hai phep do dan toi ket luan nay: mode_probe lan mot 'opened:true',
+  // lan hai ngay sau luot hong 'opened:false' voi 0 nhan moi.
+  //
+  // Dau hieu: bon nut so luong x1..x4 CHI ton tai khi bang mo
+  // (evidence/F14-mode-probe-vi-20260902.json: chung nam trong 17 nhan xuat
+  // hien SAU cu bam, va bien mat sau khi dong).
+  function settingsPanelOpen(root) {
+    for (let count = 1; count <= 4; count += 1) {
+      if (findOutputCountOption(root, count)) return true;
+    }
+    return false;
+  }
+
   function findVideoModeOption(root) {
     if (!root?.querySelectorAll) return null;
     const matches = Array.from(root.querySelectorAll("button")).filter((button) => (
@@ -480,6 +499,7 @@
     outputCountFromSummary,
     findVideoModeOption,
     findOutputCountOption,
+    settingsPanelOpen,
     generationLimitBlocker,
     videoIdFromSrc,
     securityBlockerPattern,

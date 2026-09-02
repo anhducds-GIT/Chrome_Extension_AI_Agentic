@@ -30,6 +30,7 @@ function harness({
   videoOptionLabel = "videocam Video",
   proveVideoAfterClick = true,
   offerOutputX1 = false,
+  settingsOpenAtStart = false,
   outputFixSilentlyFails = false,
   videoSummaryAfterSwitch = VIDEO_MODE_SUMMARY,
 } = {}) {
@@ -42,7 +43,7 @@ function harness({
   let videoModeClicks = 0;
   let tick = 0;
   let typed = false;
-  let settingsOpen = false;
+  let settingsOpen = settingsOpenAtStart;
   let outputOptionPresses = 0;
   let currentModeSummary = modeSummaryLabel;
   let videos = [media("old")];
@@ -104,6 +105,9 @@ function harness({
   // (do that: evidence/F14-mode-probe-vi-20260902.json). Harness chi dung nut x1
   // khi kich ban khai `offerOutputX1`, de con test duoc ca ca "khong co nut de
   // sua" — do la duong runner phai TU CHOI chu khong duoc im lang di tiep.
+  const inertOutputOption2 = buttonNode("x2", {});
+  const inertOutputOption3 = buttonNode("x3", {});
+  const inertOutputOption4 = buttonNode("x4", {});
   const outputX1Option = buttonNode("x1", {
     onPointerDown() {
       outputOptionPresses += 1;
@@ -164,7 +168,16 @@ function harness({
     querySelectorAll(selector) {
       if (selector === "button") {
         const buttons = [summaryButton()].filter(Boolean);
-        if (settingsOpen) { buttons.push(imageOption, videoOption); if (offerOutputX1) buttons.push(outputX1Option); }
+        if (settingsOpen) {
+          buttons.push(imageOption, videoOption);
+          // Trang that LUON lo ca bon nut so luong khi bang mo
+          // (evidence/F14-mode-probe-vi-20260902.json). Harness phai giong the,
+          // vi bo do 'bang dang mo' dua tren chinh su co mat cua chung — thieu
+          // chung thi bo do bi mu va test khong con phan anh trang that.
+          // `offerOutputX1` chi quyet dinh nut x1 CO BAM DUOC khong.
+          buttons.push(inertOutputOption2, inertOutputOption3, inertOutputOption4);
+          if (offerOutputX1) buttons.push(outputX1Option);
+        }
         if (globalCreateButton) buttons.push(globalCreateButton);
         if (upgradeAfterTyping && typed && upgradeScope === "global") buttons.push(...upgradeButtons);
         return [...buttons, ...composerButtons()];
@@ -312,6 +325,31 @@ for (const label of ["Video · 360p · 8s crop_16_9 x2", "Video · 360p · 8s cr
   const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-NOFIX", attempt_id: "attempt-nofix", prompt: "khong duoc gui", timeoutMs: 15000 });
   assert.equal(response.ok, false);
   assert.equal(h.settingsClicks(), 2, "mo bang ra thi phai dong lai: dung hai cu bam chip (mo + dong)");
+}
+
+// (e) BANG DA MO SAN — ca da lam F-26 hong o luot live dau tien 02/09.
+//     Sau khi chuyen mode Image->Video, bang cau hinh VAN DANG MO. Ban dau
+//     trySetSingleOutput gia dinh no dang dong nen bam chip de "mo" — cu bam do
+//     DONG bang lai, x1 khong con nhin thay, va lan bam thu hai (de "dong") lai
+//     MO ra, de bang mo cho lenh sau.
+//     Nay: DO trang thai truoc, chi bam khi can, va tra bang ve dung trang thai
+//     ban dau. Neu bang da mo san thi KHONG duoc bam chip lan nao.
+{
+  const h = harness({
+    modeSummaryLabel: "Video · 360p · 8s crop_16_9 x3",
+    offerOutputX1: true,
+    settingsOpenAtStart: true,
+    afterClick: ["fixed-with-panel-open"],
+  });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-PANEL-OPEN", attempt_id: "attempt-panel-open", prompt: "bang da mo san", timeoutMs: 15000 });
+  assert.equal(response.ok, true, "bang mo san thi van phai sua duoc chip");
+  assert.equal(h.outputOptionPresses(), 1, "van bam dung mot lan vao x1");
+  assert.equal(h.settingsClicks(), 0, "bang da mo san thi KHONG duoc bam chip lan nao — bam la dong no lai");
+  const chip = response.attempt?.detection?.output_chip;
+  assert.equal(chip.panel_was_open, true, "phai ghi nhan la bang da mo san");
+  assert.equal(chip.option_found, true);
+  assert.equal(chip.fixed, true);
+  assert.equal(h.clicks(), 1, "sua xong roi moi bam Create, dung mot lan");
 }
 
 // Measured Image summary: one settings click, one exact measured Video-option

@@ -566,31 +566,42 @@
   // thanh `return true` lot luoi vi gia tri do la code chet. Mot ham tra ve mot
   // phan quyet ma no khong so huu la mot cau noi doi trong code, va no lam moi
   // phep kiem quanh no mat nghia.
-  async function trySetSingleOutput() {
+  // KHONG tra ve phan quyet. Ham nay chi THU SUA; nguoi duy nhat duoc ket luan
+  // la fixAndRecordOutputChip, va no ket luan bang cach DOC LAI CHIP.
+  //
+  // VA KHONG GIA DINH TRANG THAI BANG. Ban dau ham nay bam chip de "mo bang" —
+  // nhung sau khi chuyen mode Image->Video thi bang VAN DANG MO, nen cu bam do
+  // DONG no lai, x1 khong con nhin thay, va lan bam thu hai (de "dong") lai MO
+  // ra, de bang mo cho lenh sau. Do la ly do F-26 hong o luot live dau tien.
+  // Nay: DO xem bang dang mo hay dong, chi bam khi can, va tra ve dung trang
+  // thai ban dau.
+  async function trySetSingleOutput(record = {}) {
     const before = ADAPTER.generationMode(document);
     if (!before.button || before.outputCount === 1) return;
 
-    // Mo bang cau hinh. Dung dung duong da chung minh chay duoc o F-14
-    // (pressFlowControl ban chuoi pointer, khong phai element.click() tran).
-    pressFlowControl(before.button);
-    await sleep(600);
+    const wasOpen = ADAPTER.settingsPanelOpen(document);
+    record.panel_was_open = wasOpen;
+    if (!wasOpen) {
+      pressFlowControl(before.button);
+      await sleep(600);
+    }
+    record.panel_open_after_attempt = ADAPTER.settingsPanelOpen(document);
 
     const option = ADAPTER.findOutputCountOption(document, 1);
-    if (!option) {
-      // Khong thay, hoac thay nhieu hon mot: dong bang lai roi tu choi. Mo ho o
-      // day la mo ho ve tien — bang nay con co 360p/720p, bam nham la doi don
-      // gia moi video.
-      pressFlowControl(before.button);
-      await sleep(300);
-      return;
+    record.option_found = Boolean(option);
+    if (option) {
+      pressFlowControl(option);
+      await sleep(500);
+      record.option_pressed = true;
     }
-    pressFlowControl(option);
-    await sleep(500);
 
-    // Dong bang, roi doc lai chip. Doc SAU khi dong de chac chan minh doc cai
-    // nhan tom tat da chot, khong phai mot trang thai trung gian cua bang.
-    pressFlowControl(before.button);
-    await sleep(500);
+    // Tra bang ve DUNG trang thai luc ta gap no. Mo san thi de mo; ta mo ra thi
+    // ta dong. Dung dan la mot phan cua hop dong, khong phai phep lich su.
+    if (ADAPTER.settingsPanelOpen(document) !== wasOpen) {
+      pressFlowControl(before.button);
+      await sleep(400);
+    }
+    record.panel_restored = ADAPTER.settingsPanelOpen(document) === wasOpen;
   }
 
   function assertSingleOutputChip(mode) {
@@ -714,7 +725,12 @@
   // duoc no da thay gi va da thu gi.
   async function fixAndRecordOutputChip(attempt, before) {
     const attempted = before.outputCount !== 1;
-    if (attempted) await trySetSingleOutput();
+    // `record` mang ve cac buoc TRUNG GIAN. Luot live dau tien cua F-26 that bai
+    // ma so cai chi noi duoc "khong sua duoc" — khong noi duoc la khong tim thay
+    // nut hay bam roi ma khong an. Mot chan doan khong phan biet duoc hai thu do
+    // thi khong dan ai toi dau ca.
+    const record = {};
+    if (attempted) await trySetSingleOutput(record);
     const after = ADAPTER.generationMode(document);
     carryDiagnostic(attempt, "output_chip", {
       label_before: before.label || null,
@@ -724,6 +740,7 @@
       // `fixed` la KET LUAN DOC TU CHIP, khong phai "toi da bam". Mot cu bam bao
       // thanh cong khong phai bang chung; nhan chip moi la bang chung.
       fixed: attempted && after.outputCount === 1,
+      ...record,
     });
     assertSingleOutputChip(after);
   }
