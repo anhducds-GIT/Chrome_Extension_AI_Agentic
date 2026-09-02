@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 2026-09-02 (claude-flow04). XONG + da push: sinh lai DASHBOARD/llms/repo-map/FEATURE-PARITY hai luot. Viec uu tien #1 nay la F-18 (duong go prompt Flow), KHONG con la cho tay Duc nap workbook — jobs.add tu tao workbook trong bo nho.",
-      "released_at": "2026-09-02"
+      "task": "Sinh lai artifact sau va F-18.",
+      "released_at": null
     }
   }
 }
