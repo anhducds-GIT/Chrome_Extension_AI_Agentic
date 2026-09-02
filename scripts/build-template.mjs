@@ -280,7 +280,8 @@ const STRUCTURE_SEED = `{
   },
   "areas": {
     "_doc_": "Mỗi thư mục top-level phải có một dòng ở đây, nếu không cổng kiểm đếm nó là chưa khai chủ. ownership_mode: root = một chủ duy nhất; per-package = chia chủ theo từng gói con, kèm claim_prefix.",
-    "docs/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "tài liệu bốn tầng: studies, briefs, archive, adr" },
+    "_areas_doc2": "HAI CHỦ, CỐ Ý — đừng gộp về một. Một repo một-chủ làm cả lớp phân vùng thành hình nền: mọi đường dẫn quy về cùng một khoá, nên bất biến steward↔khoá quyền, phép kiểm nhãn lane, và hàm quy chủ đều ĐẠT TẦM THƯỜNG — đúng ở cả hai chiều, không ghim được gì. Đo thật ở bản trích đầu: cả bốn đường dẫn thử đều trả _root, và một đột biến phá sạch hàm quy chủ vẫn thoát. Tách docs/ ra là ca thật rẻ nhất để lớp đó có việc mà làm.",
+    "docs/": { "steward": "_docs", "mutability": "rw", "ownership_mode": "root", "note": "tài liệu bốn tầng: studies, briefs, archive, adr" },
     "scripts/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "bộ sinh + cổng kiểm + đẩy an toàn" },
     "tests/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "suite gốc repo" },
     "evidence/": { "steward": "_root", "mutability": "append-only", "ownership_mode": "root", "note": "bằng chứng vận hành: chỉ thêm, không sửa, không xoá" }
@@ -300,7 +301,8 @@ const CLAIMS_SEED = `{
   "_doc": "Bảng chủ sở hữu. MỘT vùng chỉ MỘT phiên AI được ghi tại một thời điểm. Chủ không phải bạn = chỉ đọc. Muốn giành = hỏi chủ dự án. Xong việc thì đặt owner về null.",
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-dashboard' — hai phiên khác nhau phải có hai nhãn khác nhau.",
   "claims": {
-    "_root": { "owner": null, "ai": null, "claimed_at": null, "task": null, "released_at": null }
+    "_root": { "owner": null, "ai": null, "claimed_at": null, "task": null, "released_at": null },
+    "_docs": { "owner": null, "ai": null, "claimed_at": null, "task": null, "released_at": null }
   }
 }
 `;
