@@ -303,3 +303,40 @@
     của phiên khác. Nó dùng định dạng **văn xuôi `##`, không có bảng** nên cần một bộ tách
     riêng — đừng đem bộ tách bảng ra dùng lại. Đức đã xác nhận phiên đó còn đang chạy thật.
   - **Việc kế tiếp: phiên S6 — dọn `drafts/`.** 25 trong 49 khoản nợ B6 nằm ở đó.
+
+- **2026-09-02 · `s6-drafts`** — **PHIÊN S6 XONG. Thư mục `drafts/` ở gốc repo đã BIẾN MẤT.**
+  **Nợ cấu trúc: 51 → 20 chỗ VÀNG. B6 rơi từ 49 xuống 18.**
+  - **33 file** (roadmap ghi 29 — đo lại ra 33) chuyển bằng `git mv`; git nhận **cả 33 là ĐỔI
+    CHỖ**, không phải xoá+thêm, nên lịch sử từng file đi theo. Không xoá gì.
+    → `docs/studies/` **20** file (`status: active`) · `docs/archive/` **13** (`status: superseded`).
+  - **Phân loại:** theo luật roadmap (`EXP-*` + `PHASE-1-SYNTHESIS` → studies · `*-BRIEF` đã
+    thực thi → archive · `*-ONBOARDING-PROMPT` → archive). Phần roadmap KHÔNG nói thì xét
+    từng file, và **chỉ archive cái chứng minh được là đã xong** — archive nhầm một hồ sơ còn
+    sống thì nó biến mất khỏi mọi phép đếm nợ, sai đắt hơn hẳn chiều ngược lại. Vì thế
+    `BRIDGE-MULTIPROFILE-DESIGN-V1` (gemini + chatgpt CHƯA port) và `FLOW-EXT-COORDINATION-PLAN`
+    (checkpoint đang chạy) vào **studies**, không vào archive.
+  - **`docs/README.md` mới — mục lục bốn tầng, kèm BẢN ĐỒ 33 đường dẫn cũ → mới.** Bản đồ này
+    là bắt buộc chứ không phải trang trí: **ADR đã `Accepted` là BẤT BIẾN** (luật S5) nên
+    không được sửa đường dẫn bên trong chúng, mà chúng vẫn trỏ `drafts/…`.
+  - **Đây cũng là thứ kéo B6 xuống.** Chỉ chuyển chỗ thì 20 file studies vẫn "không tới được".
+    `llms.txt` → `AGENTS.md` → `docs/README.md` → tài liệu = đúng 3 bước. Dọn mà không nối
+    đường thì chỉ là dời một đống từ chỗ này sang chỗ khác.
+  - **RANH GIỚI TÔI TỰ ĐẶT, và một lần suýt phạm:** sửa **con trỏ đang sống** (bảng điều hướng
+    `AGENTS.md`, `delegations/A-01/TASK.md`) thì được; **KHÔNG sửa nhật ký lịch sử**
+    (`HANDOFF.md`, `decisions.md`, ADR, `BACKLOG.md`). Tôi đã đổi 4 đường dẫn trong
+    `BACKLOG.md` của chatgpt rồi **hoàn nguyên** khi đọc kỹ: đó là báo cáo sự cố **B-30 ngày
+    28/08**, kể lại 4 file rác *lúc đó* nằm ở đâu. Sửa đường dẫn trong một bản tường thuật là
+    làm sai bản ghi, không phải dọn dẹp. Package chatgpt cuối cùng **không bị đụng một chữ**.
+  - **CÒN LẠI, cần phiên sau làm:** **6 tham chiếu `drafts/…`** trong
+    `workers/duc-auto-gg-flow-video/v0.1.0/` (`AI-OPERATOR-GUIDE.md`, `HANDOFF.md`,
+    `STATUS.md`, `decisions.md`) trỏ tới `BRIDGE-MULTIPROFILE-DESIGN-V1.md` và
+    `FLOW-EXT-COORDINATION-PLAN.md`. Package đó đang do phiên `claude-bridge-multiprofile`
+    giữ nên luật mục 1 cấm tôi ghi vào. Đường dẫn mới có trong bảng ở `docs/README.md`.
+    **`AI-OPERATOR-GUIDE.md` là tài liệu operator đọc lúc vận hành live** — nên sửa sớm.
+  - **18 khoản B6 còn lại KHÔNG thuộc S6:** 7 ở `delegations/`, 10 ở bản Gemini `v0.1.0` (đã
+    `superseded`) và `drafts/` của nó, 1 ở gốc gói chatgpt. Cả ba nhóm nằm trong phạm vi
+    **S8** ("chuyển 6–8 file `.md` ở gốc mỗi gói xuống `docs/`").
+  - **Đo:** cổng kiểm cấu trúc **0 ĐỎ · 20 VÀNG** (B6 18 · B9 2). npm test xanh toàn bộ.
+  - **Việc kế tiếp: phiên S7 — bật chặn B1–B5, B7, B10, B12** (roadmap gọi đây là cột mốc:
+    đạt = mục tiêu chính của dự án xong). Nay đã đủ điều kiện: **mọi phép kiểm sắp bật chặn
+    đều đang XANH**, chỉ còn B6/B9 màu vàng và cả hai KHÔNG nằm trong danh sách bật chặn.
