@@ -1,0 +1,430 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "cli-210389f9-bb26-48f7-b672-d7ff0b4f45c9",
+  "ok": true,
+  "result": {
+    "abPoll": null,
+    "abPollPending": false,
+    "articleSample": [],
+    "assistantCount": 1,
+    "attachmentPending": false,
+    "attributeValues": {
+      "data-message-author-role": [
+        "user x1",
+        "assistant x1"
+      ],
+      "data-testid": [
+        "create-new-chat-button x2",
+        "sidebar-item-recall x2",
+        "accounts-profile-button x2",
+        "blocking-initial-modals-done x1",
+        "close-sidebar-button x1",
+        "sidebar-item-tasks x1",
+        "plugins-button x1",
+        "explore-gpts-button x1",
+        "undefined-options x1",
+        "history-item-0-options x1",
+        "history-item-1-options x1",
+        "history-item-2-options x1"
+      ],
+      "data-turn": [
+        "user x1",
+        "assistant x1"
+      ],
+      "data-turn-id-container": [
+        "0fc24a00-35c7-4d3a-a85b-9f1a03e6bba1 x2",
+        "request-WEB:4ec3333d-d978-489b-a06d-9abe6e3d169a-0 x2",
+        "client-created-root x1"
+      ]
+    },
+    "busy": false,
+    "buttons": [
+      {
+        "aria": "Open sidebar",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Search",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Close sidebar",
+        "disabled": false,
+        "testid": "close-sidebar-button",
+        "txt": ""
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "Pinned"
+      },
+      {
+        "aria": "Unpin Triển khai fix file GG Sheet",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Triển khai fix file GG Sheet",
+        "disabled": false,
+        "testid": "undefined-options",
+        "txt": ""
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "Agents"
+      },
+      {
+        "aria": "Open actions for Sheet Style Auditor",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "Projects"
+      },
+      {
+        "aria": "New project",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Organize chats",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open project home",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open project options for Radar lab",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open project home",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open project options for Architect",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "",
+        "disabled": false,
+        "testid": "",
+        "txt": "Chats"
+      },
+      {
+        "aria": "Organize chats",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Thiết kế giao thức K2",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Thiết kế giao thức K2",
+        "disabled": false,
+        "testid": "history-item-0-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Triển khai audit",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Triển khai audit",
+        "disabled": false,
+        "testid": "history-item-1-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Review kế hoạch tái cơ cấu",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Review kế hoạch tái cơ cấu",
+        "disabled": false,
+        "testid": "history-item-2-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Gửi file và repo",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Gửi file và repo",
+        "disabled": false,
+        "testid": "history-item-3-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Cài skill Unlazy",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Cài skill Unlazy",
+        "disabled": false,
+        "testid": "history-item-4-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Generate image copy",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Generate image copy",
+        "disabled": false,
+        "testid": "history-item-5-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Apple product shot",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Apple product shot",
+        "disabled": false,
+        "testid": "history-item-6-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Tạo ảnh động vật",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Tạo ảnh động vật",
+        "disabled": false,
+        "testid": "history-item-7-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Yellow Rubber Duck Image",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Yellow Rubber Duck Image",
+        "disabled": false,
+        "testid": "history-item-8-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Review Excel Prompts",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Review Excel Prompts",
+        "disabled": false,
+        "testid": "history-item-9-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Tạo skill nghiên cứu ý tưởng",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      },
+      {
+        "aria": "Open conversation options for Tạo skill nghiên cứu ý tưởng",
+        "disabled": false,
+        "testid": "history-item-10-options",
+        "txt": ""
+      },
+      {
+        "aria": "Pin Khả năng đồng nhiễm cúm",
+        "disabled": false,
+        "testid": "",
+        "txt": ""
+      }
+    ],
+    "captured_at": "2026-09-02T13:39:22.568Z",
+    "composerFound": true,
+    "customTags": [],
+    "fileInputs": [
+      {
+        "accept": "",
+        "chain": "div > form > div > div > div",
+        "connected": true,
+        "multiple": true
+      },
+      {
+        "accept": "image/*",
+        "chain": "div > div > div > div > div",
+        "connected": true,
+        "multiple": true
+      },
+      {
+        "accept": "image/*",
+        "chain": "div > div > div > div > div",
+        "connected": true,
+        "multiple": true
+      },
+      {
+        "accept": "image/*,video/*",
+        "chain": "div > div > div > div > div",
+        "connected": true,
+        "multiple": true
+      }
+    ],
+    "generatedChains": [],
+    "generationLimitBlocker": null,
+    "imageCandidateCount": 1,
+    "images": [
+      {
+        "alt": "",
+        "chain": "div > div > a > div > nav",
+        "complete": true,
+        "naturalW": 40,
+        "rect": {
+          "h": 20,
+          "w": 20
+        },
+        "scheme": "https:",
+        "srcHead": "https://cdn.openai.com/1b5df12c-f279-4e36-a2ea-30388340d792/digit_pink",
+        "visible": true
+      },
+      {
+        "alt": "",
+        "chain": "span > span > span > span > a",
+        "complete": true,
+        "naturalW": 32,
+        "rect": {
+          "h": 15,
+          "w": 15
+        },
+        "scheme": "https:",
+        "srcHead": "https://www.google.com/s2/favicons?domain=https://git-scm.com&sz=128",
+        "visible": true
+      }
+    ],
+    "messageAttributes": [
+      "data-testid",
+      "data-fill",
+      "data-sidebar-item",
+      "data-discover",
+      "data-size",
+      "data-state",
+      "data-revealed",
+      "data-trailing-button",
+      "data-conversation-options-trigger",
+      "data-turn-id",
+      "data-turn-id-container",
+      "data-turn",
+      "data-message-author-role",
+      "data-message-id",
+      "data-custom-highlighting-behavior",
+      "data-collapsed",
+      "data-turn-start-message",
+      "data-message-model-slug",
+      "data-thread-footer-overflow-spacer"
+    ],
+    "provider": "chatgpt",
+    "securityBlocker": null,
+    "selectorCounts": {
+      "assistantMessage": [
+        "[data-turn=\"assistant\"] => 1",
+        "[data-message-author-role=\"assistant\"] => 1"
+      ],
+      "attachmentContainer": "form, [data-testid*=\"attachment\"], [data-testid*=\"upload-preview\"], [data-testid*=\"file-upload\"] => 1",
+      "attachmentPreview": [
+        "[data-testid*=\"attachment\"] => 0",
+        "[data-testid*=\"file-upload\"] => 0",
+        "[data-testid*=\"upload-preview\"] => 0",
+        "button[aria-label*=\"Remove attachment\"] => 0",
+        "button[aria-label*=\"Remove file\"] => 0"
+      ],
+      "composer": [
+        "#prompt-textarea => 1",
+        "textarea[data-testid=\"prompt-textarea\"] => 0",
+        "div[data-testid=\"composer-text-input\"][contenteditable=\"true\"] => 0",
+        "form div.ProseMirror[contenteditable=\"true\"] => 1",
+        "form [contenteditable=\"true\"][role=\"textbox\"] => 1",
+        "form textarea => 1"
+      ],
+      "conversationRoot": "[data-testid=\"conversation-turns\"], main, [role=\"main\"] => 1",
+      "fileInput": "form input[type=\"file\"] => 1",
+      "pollControl": "button, [role=\"button\"], a[href], [tabindex]:not([tabindex=\"-1\"]) => 115",
+      "send": [
+        "button[data-testid=\"send-button\"] => 0",
+        "button[aria-label=\"Send prompt\"] => 0",
+        "button[aria-label^=\"Send\"] => 0",
+        "button[aria-label^=\"Gửi\"] => 0"
+      ],
+      "sendInForm": [
+        "button[type=\"submit\"] => 0",
+        "button[data-testid*=\"send\"] => 0"
+      ],
+      "stop": [
+        "button[data-testid=\"stop-button\"] => 0",
+        "button[aria-label=\"Stop generating\"] => 0",
+        "button[aria-label^=\"Stop\"] => 0",
+        "button[aria-label^=\"Dừng\"] => 0"
+      ],
+      "uploadPending": [
+        "[data-testid*=\"uploading\"] => 0",
+        "[aria-busy=\"true\"] => 0",
+        "[role=\"progressbar\"] => 0"
+      ],
+      "userMessage": [
+        "[data-turn=\"user\"] => 1",
+        "[data-message-author-role=\"user\"] => 1"
+      ]
+    },
+    "sendFound": false,
+    "stopFound": false,
+    "surface": "CONVERSATION",
+    "surface_allowed": true,
+    "truncated": false,
+    "url": "https://chatgpt.com/c/6a981a93-0960-83ec-8703-b024b8819f17"
+  },
+  "responded_at": "2026-09-02T13:39:22.622Z",
+  "served_by": {
+    "instance_id": "417f7af3-73f0-4091-bd1f-11c831fd8a53",
+    "label": "kaito"
+  }
+}

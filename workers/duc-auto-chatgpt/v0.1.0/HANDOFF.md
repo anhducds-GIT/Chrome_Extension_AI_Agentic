@@ -658,3 +658,24 @@ nối (`Bình`, `kaito`, `anhducds_multi work flow`). Reload tab là **không đ
 `chat.reload` trên `kaito` lúc 13:44, probe sau đó vẫn trả trường cũ `articleSample` —
 đúng như lỗi #1 của sổ tay đã ghi. Nghiệm thu không tốn credit: chạy lại `dom-probe`, phải
 thấy `messageSampleDiag.status: "OK"` và `messageSample[].txtHead` có chữ thật của trang.
+
+### Bổ sung cùng ngày — nghiệm thu live sau khi Đức reload extension
+
+Đức reload xong. Chạy lại `dom-probe` trên `anhducds_multi work flow`, `served_by` xác nhận
+đúng nhãn: `messageSampleDiag` trả `status: "OK"` · `matched: 10` · `sampled: 4` ·
+`with_text: 4`, và `txtHead` có **chữ thật của trang, tiếng Việt còn nguyên dấu**. Trường cũ
+`articleSample` đã biến mất khỏi payload. **B-32 đóng.**
+
+Payload thô trước và sau lưu ở `evidence-dom-probe-message-sample-20260902/` — hai profile
+lúc còn lỗi, một profile sau khi vá, kèm `KET-QUA.md`.
+
+**Một điều học được lúc nghiệm thu, đã ghi vào sổ tay:** `matched: 10` trên trang có **5**
+lượt. Mỗi lượt ChatGPT có **hai** tầng cùng khớp — khung ngoài mang `data-turn`, khối trong
+mang `data-message-author-role`. Nên 4 mẫu chữ chỉ phủ **2** lượt. **Giữ nguyên có chủ
+đích:** khi một tầng marker chết thì thứ cần thấy chính là tầng nào còn sống, và `attrs`
+hiển thị rõ hai tầng cạnh nhau. Ai muốn đếm số lượt thì đọc `assistantCount`, đừng đọc
+`matched` — đã ghi đúng câu đó vào bảng lỗi #5 để người sau không phải đoán.
+
+**Còn mở:** B-33 (worker gemini và gg-flow-video có cùng lỗi selector chết không — gói khác,
+chủ khác). Và commit của phiên này **chưa push**: `safe-push` từ chối vì bên dưới có 9 commit
+của ba phiên khác, đúng luật ngoại lệ (a) ở mục 2 của `AGENTS.md`.
