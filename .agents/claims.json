@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "s1-complete",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "S2 sinh cong vao: llms.txt + repo-map.json + Khoi A/D. Giu quyen toi khi push xong roi moi tra (cong kiem xet ca file trong commit, khong chi working tree).",
-      "released_at": null
+      "task": "XONG 2026-09-02, da push. S1 (cfc66fc) + noi roadmap khop K0 (f2e45f9) + S2 sinh cong vao (829d644: llms.txt, repo-map.json, Khoi A/D). Suite 45/45, 10/10 dot bien bi bat. CON NO: audit doc lap cho S2 — de xuat giao GPT qua GitHub connector vi Codex hong tren may nay. VIEC KE TIEP: S3, nhung doc canh bao trong HANDOFF.md goc truoc — thuc do 7 thu muc chua khai chu, brief S3 chi du kien 1.",
+      "released_at": "2026-09-02"
     }
   }
 }
