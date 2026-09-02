@@ -436,7 +436,9 @@ const STRUCTURE_SEED = `{
     "_doc": "Đơn vị công việc nằm ở đâu. depth = số tầng dưới root_dir cho tới đơn vị. root_dir null = repo không có đơn vị con, chỉ có đơn vị GỐC.",
     "root_dir": null,
     "marker": "package.json",
-    "depth": 1
+    "depth": 1,
+    "ten": "Đơn vị",
+    "_ten_doc": "Gọi một đơn vị công việc là gì — dùng cho tiêu đề bảng và tên cột. Đổi cho hợp repo bạn: Extension · Gói · Dịch vụ · Tài liệu."
   },
   "areas": {
     "_doc_": "Mỗi thư mục top-level phải có một dòng ở đây, nếu không cổng kiểm đếm nó là chưa khai chủ. ownership_mode: root = một chủ duy nhất; per-package = chia chủ theo từng gói con, kèm claim_prefix.",

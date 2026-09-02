@@ -27,7 +27,7 @@ export const STRUCTURE_FILE = ".repo-structure.json";
      depth 2 → workers/<gói>/<phiên-bản>/manifest.json   (repo Chrome, hồ sơ P1)
      depth 1 → packages/<tên>/package.json               (monorepo phẳng)
      root_dir null → repo không có đơn vị con, chỉ có đơn vị GỐC (P2/P3/P4)  */
-export const DEFAULT_UNITS = Object.freeze({ rootDir: "workers", marker: "manifest.json", depth: 2 });
+export const DEFAULT_UNITS = Object.freeze({ rootDir: "workers", marker: "manifest.json", depth: 2, ten: "Đơn vị" });
 
 /* Tiền tố quyền sở hữu: thư mục nào chia chủ theo từng gói con. Mặc định giữ hình dạng cũ. */
 export const DEFAULT_CLAIM_PREFIXES = Object.freeze(["workers/"]);
@@ -41,6 +41,11 @@ export function unitsFrom(parsed) {
   const rootDir = block.root_dir === null ? null : (block.root_dir ?? DEFAULT_UNITS.rootDir);
   const marker = block.marker ?? DEFAULT_UNITS.marker;
   const depth = block.depth ?? DEFAULT_UNITS.depth;
+  // TÊN GỌI của một đơn vị, dùng cho tiêu đề bảng và tên cột. Trước 03/09 bộ sinh đóng cứng
+  // chữ "Extension" ở hai chỗ, nên MỌI repo dựng từ bộ khung đều nhận một bảng tên là "Bảng
+  // điều hành Extension" với một cột tên "Extension" — kể cả repo tài liệu. Lộ ra ngay lần đầu
+  // dựng thử một repo mới. Cùng họ với lỗi "bộ sinh đóng cứng tên repo gốc" mà audit đã bắt.
+  const ten = block.ten ?? DEFAULT_UNITS.ten;
   // Cấm cả `..`, dấu gạch ngược và mọi dạng đường dẫn. Bản đầu chỉ cấm "/", nên trên Windows
   // một cấu hình dị dạng (`a\b`, `..`) không ném mà lặng lẽ quét sai thư mục.
   const badSegment = (value) => typeof value !== "string" || value === "" || value === "." || value === ".."
@@ -51,10 +56,13 @@ export function unitsFrom(parsed) {
   if (badSegment(marker)) {
     throw new Error(`UNITS_HONG: units.marker phải là tên MỘT file (ví dụ "manifest.json"). Đang là: ${JSON.stringify(block.marker)}`);
   }
+  if (typeof ten !== "string" || ten.trim() === "") {
+    throw new Error(`UNITS_HONG: units.ten phải là một chữ không rỗng (ví dụ "Extension", "Gói", "Dịch vụ"). Đang là: ${JSON.stringify(block.ten)}`);
+  }
   if (!Number.isInteger(depth) || depth < 1 || depth > 4) {
     throw new Error(`UNITS_HONG: units.depth phải là số nguyên 1..4. Đang là: ${JSON.stringify(block.depth)}`);
   }
-  return Object.freeze({ rootDir, marker, depth });
+  return Object.freeze({ rootDir, marker, depth, ten });
 }
 
 /* Đọc tiền tố quyền từ chính khối `areas` đã có sẵn — KHÔNG thêm khối cấu hình mới.

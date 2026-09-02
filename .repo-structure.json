@@ -11,7 +11,8 @@
     "_doc": "Hình dạng đơn vị công việc của repo NÀY. Bộ sinh và cổng kiểm đọc khối này thay vì đóng cứng tên thư mục/tên file. Repo khác khai khác — đó là điểm khiến bộ máy đi được sang repo khác. root_dir null = repo không có đơn vị con, chỉ có đơn vị GỐC.",
     "root_dir": "workers",
     "marker": "manifest.json",
-    "depth": 2
+    "depth": 2,
+    "ten": "Extension"
   },
   "generators": [
     "build-dashboard.mjs",

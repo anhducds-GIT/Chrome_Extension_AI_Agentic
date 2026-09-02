@@ -291,6 +291,11 @@ const files = buildTemplateFiles();
       const text = readFileSync(join(tempRoot, artifact), "utf8");
       assert.ok(!/Chrome Extension AI Agentic/i.test(text),
         artifact + " sinh ra trong repo la MANG TEN repo goc — bo sinh dang dong cung danh tinh");
+      // Và cũng không được mang TÊN GỌI ĐƠN VỊ của repo gốc. Bộ sinh từng đóng cứng chữ
+      // "Extension" ở tiêu đề bảng và tên cột, nên một repo tài liệu dựng từ bộ khung vẫn nhận
+      // "Bảng điều hành Extension". Danh tính rò rỉ theo hai đường; bịt một đường là chưa đủ.
+      assert.ok(!/Bảng điều hành Extension/.test(text),
+        artifact + " mang TEN GOI DON VI cua repo goc — bo sinh phai doc units.ten");
     }
     ok("repo rong: cong cau truc 0/0 · cong dong phien chay duoc · trang sinh ra khong mang ten repo goc");
   } finally {

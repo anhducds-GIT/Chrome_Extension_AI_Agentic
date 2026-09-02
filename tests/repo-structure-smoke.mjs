@@ -37,7 +37,7 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 {
   assert.deepEqual(unitsFrom({}), DEFAULT_UNITS, "khong khai units thi dung mac dinh");
   assert.deepEqual(unitsFrom({ units: { root_dir: "packages", marker: "package.json", depth: 1 } }),
-    { rootDir: "packages", marker: "package.json", depth: 1 }, "khai du ba truong thi doc dung ca ba");
+    { rootDir: "packages", marker: "package.json", depth: 1, ten: "Đơn vị" }, "khai du ba truong thi doc dung ca ba");
   assert.equal(unitsFrom({ units: { depth: 3 } }).rootDir, DEFAULT_UNITS.rootDir,
     "khai thieu truong thi truong do lay mac dinh");
   assert.equal(unitsFrom({ units: { root_dir: null } }).rootDir, null,
@@ -491,6 +491,27 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   assert.deepEqual(generatedFrom({}), [], "khong khai = mang rong");
   assert.deepEqual(generatedFrom(null), [], "khong co cau hinh = mang rong");
   ok("K2-1 · file may sinh khong doi khoa; tron voi file that thi van doi; khai hong thi NEM");
+}
+
+/* ---- units.ten — tên gọi một đơn vị, dùng cho tiêu đề bảng ---------------- */
+{
+  // Trước 03/09 bộ sinh đóng cứng chữ "Extension" ở tiêu đề bảng VÀ ở tên cột, nên mọi repo
+  // dựng từ bộ khung — kể cả repo tài liệu — đều nhận một bảng gọi mọi thứ là Extension. Lộ ra
+  // ngay lần đầu dựng thử một repo mới bằng init-repo. Cùng họ với lỗi "bộ sinh đóng cứng tên
+  // repo gốc" mà audit vòng một đã bắt: một chữ của repo này lọt vào bộ khung của mọi repo khác.
+  assert.equal(unitsFrom({}).ten, "Đơn vị", "khong khai thi phai lui ve mot chu trung tinh");
+  assert.equal(unitsFrom({ units: { ten: "Dịch vụ" } }).ten, "Dịch vụ", "khai gi thi phai dung cai do");
+
+  // FAIL CLOSED: khai rỗng hay sai kiểu thì NÉM, không lặng lẽ lùi về mặc định — một bảng mang
+  // tên sai vẫn trông hoàn toàn bình thường, nên đây là kiểu hỏng im lặng.
+  // `null` KHÔNG nằm trong danh sách này, và đó là lựa chọn có ý thức: cả file dùng `??` nên
+  // null nghĩa là "chưa khai" y như `marker` và `depth`, và lùi về một chữ trung tính thì an
+  // toàn — bảng chỉ generic đi, không nói sai. Phép kiểm dưới ghim đúng điều đó.
+  assert.equal(unitsFrom({ units: { ten: null } }).ten, "Đơn vị", "null = chua khai, lui ve mac dinh");
+  for (const xau of [{ units: { ten: "" } }, { units: { ten: "   " } }, { units: { ten: 7 } }]) {
+    assert.throws(() => unitsFrom(xau), /UNITS_HONG/, `khai sai phai NEM: ${JSON.stringify(xau)}`);
+  }
+  ok("units.ten: mac dinh trung tinh · khai thi ton trong · khai sai thi nem");
 }
 
 

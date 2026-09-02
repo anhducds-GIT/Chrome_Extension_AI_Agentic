@@ -932,7 +932,7 @@ function renderChanged(row) {
 
 export function buildDashboard(model) {
   const lines = [
-    "# Bảng điều hành Extension",
+    `# Bảng điều hành ${model.units.ten}`,
     "",
     "> **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.",
     "",
@@ -941,7 +941,7 @@ export function buildDashboard(model) {
     ...blockA(model),
     "## B · Có gì trong repo",
     "",
-    "| Extension | Version [ĐO] | Lifecycle [KHAI] | Method Bridge [ĐO] | File test [ĐO] | Kiểm chứng cuối (ngày @ commit 7 ký tự, cách kiểm) [KHAI + bằng chứng] | Code đã commit đổi sau kiểm chứng? [ĐO] | Việc đang mở | Đọc sâu (link STATUS) |",
+    `| ${model.units.ten} | Version [ĐO] | Lifecycle [KHAI] | Method Bridge [ĐO] | File test [ĐO] | Kiểm chứng cuối (ngày @ commit 7 ký tự, cách kiểm) [KHAI + bằng chứng] | Code đã commit đổi sau kiểm chứng? [ĐO] | Việc đang mở | Đọc sâu (link STATUS) |`,
     "|---|---:|---|---:|---:|---|---|---|---|"
   ];
 

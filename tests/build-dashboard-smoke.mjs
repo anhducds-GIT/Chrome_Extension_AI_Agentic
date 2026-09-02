@@ -2162,7 +2162,7 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   assert.equal(DEFAULT_UNITS.marker, "manifest.json", "mac dinh phai la hinh dang cu cua repo Chrome");
 
   assert.deepEqual(readUnits(cfg({ units: { root_dir: "packages", marker: "package.json", depth: 1 } })),
-    { rootDir: "packages", marker: "package.json", depth: 1 }, "khai du ba truong thi phai doc dung ca ba");
+    { rootDir: "packages", marker: "package.json", depth: 1, ten: "Đơn vị" }, "khai du ba truong thi phai doc dung ca ba");
   assert.equal(readUnits(cfg({ units: { depth: 3 } })).rootDir, "workers",
     "khai thieu truong thi truong do lay mac dinh");
   assert.equal(readUnits(cfg({ units: { root_dir: null } })).rootDir, null,
