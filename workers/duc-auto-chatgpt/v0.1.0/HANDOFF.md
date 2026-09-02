@@ -679,3 +679,10 @@ hiển thị rõ hai tầng cạnh nhau. Ai muốn đếm số lượt thì đ�
 **Còn mở:** B-33 (worker gemini và gg-flow-video có cùng lỗi selector chết không — gói khác,
 chủ khác). Và commit của phiên này **chưa push**: `safe-push` từ chối vì bên dưới có 9 commit
 của ba phiên khác, đúng luật ngoại lệ (a) ở mục 2 của `AGENTS.md`.
+- 2026-09-02 · `claude-bridge-multiprofile` · **Port nút "Lưu tên" + bộ vá sanitize label từ Gemini.**
+  `DAC_BRIDGE_LABEL_SET`: sanitize → lưu → cycle đúng socket profile này → lần nối mới (đi trọn
+  challenge → proof → auth) báo danh tên mới tức thì. Sanitize cả ba bản sao (transport, panel,
+  host): chặn 256 ký tự TRƯỚC khi quét (O(cap)), lọc thêm C1 U+0080–U+009F, quét surrogate mồ côi
+  ở nấc cắt. Test `bridge-profile-label-save-smoke.mjs` bản chuyển thể (mọi kết nối giả đi qua
+  challenge; ghim hành vi cho cả parseInstance của host); 5/5 mutation đỏ. Suite 100/100.
+  Mẫu gốc đã qua 2 vòng audit Codex bên Gemini cùng ngày; diff bên này là cùng khuôn.

@@ -20,7 +20,7 @@
   const INSTANCE_STORAGE_KEY = "dac.bridge.instance.v1";
   const INSTANCE_LABEL_STORAGE_KEY = "dac.bridge.instance_label.v1";
   const INSTANCE_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
-  const INSTANCE_LABEL_STRIP = new RegExp("[\\u0000-\\u001f\\u007f]", "g");
+  const INSTANCE_LABEL_STRIP = new RegExp("[\\u0000-\\u001f\\u007f-\\u009f]", "g");
   const WORKER_ID = "duc-auto-chatgpt";
 
   function base64Url(bytes) {
@@ -310,7 +310,10 @@
     });
 
     function sanitizeInstanceLabel(value) {
-      return typeof value === "string" ? value.replace(INSTANCE_LABEL_STRIP, "").trim().slice(0, 64) : "";
+      // Bound BEFORE scanning (O(cap), not O(input)); the caps cut by UTF-16
+      // code unit, so sweep lone surrogates to keep the label well-formed.
+      const raw = typeof value === "string" ? value.slice(0, 256) : "";
+      return raw.replace(INSTANCE_LABEL_STRIP, "").trim().slice(0, 64).replace(/(?:[\uD800-\uDBFF](?![\uDC00-\uDFFF]))|(?:(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])/g, "");
     }
 
     async function loadInstance() {
@@ -513,6 +516,21 @@
           await connectHost();
           return safeStatus(currentState());
         }).then((status) => sendResponse({ ok: true, status })).catch(() => sendResponse({ ok: false, code: "PAIRING_FILE_INVALID" }));
+        return true;
+      }
+      if (message?.type === "DAC_BRIDGE_LABEL_SET") {
+        // Save the owner-typed profile name AND announce it at once by cycling
+        // only THIS profile's socket — the fresh connect (challenge -> proof ->
+        // auth) reads the new label. No host restart, no extension reload.
+        Promise.resolve().then(async () => {
+          const label = sanitizeInstanceLabel(message.label);
+          await chromeApi.storage.local.set({ [INSTANCE_LABEL_STORAGE_KEY]: label });
+          if (pairing) {
+            closeSocket();
+            await connectHost();
+          }
+          return label;
+        }).then((label) => sendResponse({ ok: true, label })).catch(() => sendResponse({ ok: false, code: "LABEL_SET_FAILED" }));
         return true;
       }
       if (message?.type === "DAC_BRIDGE_PAIRING_REMOVE") {

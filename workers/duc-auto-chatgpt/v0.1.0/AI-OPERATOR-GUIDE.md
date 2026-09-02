@@ -108,3 +108,4 @@ Port từ nhánh gg-flow-video (thiết kế: `drafts/BRIDGE-MULTIPROFILE-DESIGN
 3. **Probe và run phải CÙNG MỘT `--target`.** Mọi phản hồi chuyển tiếp mang dấu `served_by` — thấy đổi giữa chừng là DỪNG.
 4. `TARGET_NOT_CONNECTED` (retryable) = đích đang offline (service worker ngủ); đợi ~30s gọi lại, đừng đổi đích.
 5. `legacy: true` = profile đó còn chạy bản extension CŨ trong RAM — nhờ Đức reload extension ở profile đó rồi đặt tên.
+6. Đổi tên hồ sơ: gõ vào ô rồi bấm **Lưu tên** (hoặc click ra ngoài ô) — panel lưu và tự nối lại đúng socket của profile đó (đi trọn bắt tay challenge), tên hiện trên `bridge.sessions` NGAY, không đụng host, không đụng profile khác.
