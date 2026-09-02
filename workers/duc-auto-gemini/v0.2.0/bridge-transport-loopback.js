@@ -462,6 +462,24 @@
         }).then((status) => sendResponse({ ok: true, status })).catch(() => sendResponse({ ok: false, code: "PAIRING_FILE_INVALID" }));
         return true;
       }
+      if (message?.type === "DAC_BRIDGE_LABEL_SET") {
+        // Save the owner-typed profile name AND announce it at once by cycling
+        // only THIS profile's socket — the fresh connect reads the new label.
+        // No host restart, no extension reload, other profiles untouched.
+        // In-flight relays of this profile settle TRANSPORT_DISCONNECTED
+        // (retryable, identical idempotency key) — the same thing an ordinary
+        // MV3 service-worker wake already does many times a day.
+        queuePairingWork(async () => {
+          const label = sanitizeInstanceLabel(message.label);
+          await chromeApi.storage.local.set({ [INSTANCE_LABEL_STORAGE_KEY]: label });
+          if (pairing) {
+            closeSocket();
+            await connectHost();
+          }
+          return label;
+        }).then((label) => sendResponse({ ok: true, label })).catch(() => sendResponse({ ok: false, code: "LABEL_SET_FAILED" }));
+        return true;
+      }
       if (message?.type === "DAC_BRIDGE_PAIRING_REMOVE") {
         queuePairingWork(async () => {
           pairing = null;

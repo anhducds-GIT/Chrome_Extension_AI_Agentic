@@ -632,3 +632,12 @@ của Đức nay nằm ở trường riêng `human_action`, nên `next_step` ch�
 tiếp**. Đừng nhập lại hai thứ đó.
 
 Nội dung kỹ thuật không đổi một chữ — chỉ đổi cách viết. **Không đụng một dòng code nào.**
+- 2026-09-02 · `claude-bridge-multiprofile` · **Nút "Lưu tên" — báo danh NGAY, Đức chốt 02/09.**
+  Message mới `DAC_BRIDGE_LABEL_SET` trong transport (đi qua `queuePairingWork` như PAIRING_SET):
+  sanitize → lưu label → `closeSocket()` + `connectHost()` của ĐÚNG profile đó → lần nối mới
+  báo danh tên mới tức thì. Không đụng host, không reload extension, profile khác vô can.
+  Panel: nút Lưu tên cạnh ô nhập; cả change-event lẫn nút đi cùng một đường. Test ghim
+  `bridge-profile-label-save-smoke.mjs` (label bẩn có ký tự điều khiển → lưu bản sạch, socket
+  cũ bị thay, auth mới mang tên mới, token nguyên vẹn); 3/3 mutation đỏ (bỏ cycle / bỏ lưu /
+  bỏ sanitize). Suite 85/85. NỢ PORT: gg-flow-video + chatgpt đang có chủ phiên khác —
+  đắp cùng khuôn khi họ trả quyền (transport handler + nút panel + test, y hệt).

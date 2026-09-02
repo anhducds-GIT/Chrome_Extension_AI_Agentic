@@ -29,7 +29,7 @@
     "artifactResultStatus", "artifactRowAudit", "artifactAuditDetail", "artifactAuditStatus", "runDashboardSplit", "runWidthSplitter",
     "bridgeProposalCard", "bridgeProposalCount", "bridgeProposalStatus", "bridgeProposalMeta", "bridgeProposalList", "bridgeProposalNotice", "bridgeProposalLockReason", "bridgeProposalFixtureBtn", "bridgeProposalRejectBtn", "bridgeProposalApproveBtn",
     "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput",
-    "bridgeProfileLabelInput", "bridgeProfileLabelHint",
+    "bridgeProfileLabelInput", "bridgeProfileLabelHint", "bridgeProfileLabelSaveBtn",
     "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeActivityEmpty",
     "devModeToggle", "devModeBanner", "runDevModeBadge"
   ];
@@ -423,8 +423,8 @@
   function renderBridgeProfileLabelHint(label) {
     if (!els.bridgeProfileLabelHint) return;
     els.bridgeProfileLabelHint.textContent = label
-      ? `Hồ sơ này sẽ báo danh là "${label}" ở lần kết nối tiếp theo của Bridge.`
-      : "Chưa đặt tên — khi nhiều profile cùng nối Bridge, AI chỉ thấy hồ sơ này bằng mã máy. Đặt tên để gọi đúng hồ sơ. Tên có hiệu lực ở LẦN KẾT NỐI TIẾP THEO.";
+      ? `Hồ sơ này báo danh là "${label}".`
+      : "Chưa đặt tên — khi nhiều profile cùng nối Bridge, AI chỉ thấy hồ sơ này bằng mã máy. Bấm nút Lưu tên là báo danh NGAY, không phải khởi động lại gì.";
   }
 
   async function loadBridgeProfileLabel() {
@@ -441,11 +441,14 @@
     if (!els.bridgeProfileLabelInput) return;
     const label = sanitizeBridgeProfileLabel(els.bridgeProfileLabelInput.value);
     els.bridgeProfileLabelInput.value = label;
-    await chrome.storage.local.set({ [BRIDGE_INSTANCE_LABEL_KEY]: label });
-    renderBridgeProfileLabelHint(label);
-    log(label
-      ? `Đã lưu tên hồ sơ Bridge: "${label}". Có hiệu lực ở lần kết nối tiếp theo.`
-      : "Đã xoá tên hồ sơ Bridge; hồ sơ này sẽ báo danh bằng mã máy.", "done");
+    // Đi qua transport: lưu label RỒI tự nối lại đúng socket của profile này,
+    // nên tên báo danh với host NGAY — không chờ lần kết nối kế, không đụng host.
+    const response = await chrome.runtime.sendMessage({ type: "DAC_BRIDGE_LABEL_SET", label });
+    if (!response?.ok) throw new Error("Không lưu được tên hồ sơ Bridge.");
+    renderBridgeProfileLabelHint(response.label);
+    log(response.label
+      ? `Đã lưu và báo danh ngay: "${response.label}".`
+      : "Đã xoá tên; hồ sơ này báo danh bằng mã máy.", "done");
   }
 
   async function pairAgentBridgeFile(file) {
@@ -4978,6 +4981,7 @@
   });
   els.bridgeUnpairBtn?.addEventListener("click", () => unpairAgentBridge().catch((error) => log(messageOf(error), "error")));
   els.bridgeProfileLabelInput?.addEventListener("change", () => saveBridgeProfileLabel().catch((error) => log(messageOf(error), "error")));
+  els.bridgeProfileLabelSaveBtn?.addEventListener("click", () => saveBridgeProfileLabel().catch((error) => log(messageOf(error), "error")));
   els.devModeToggle?.addEventListener("change", () => setDevMode(els.devModeToggle.checked).catch((error) => { renderDevMode(); log(messageOf(error), "error"); }));
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFromRunTabBtn?.addEventListener("click", () => run("all"));
