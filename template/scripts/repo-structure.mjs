@@ -41,10 +41,14 @@ export function unitsFrom(parsed) {
   const rootDir = block.root_dir === null ? null : (block.root_dir ?? DEFAULT_UNITS.rootDir);
   const marker = block.marker ?? DEFAULT_UNITS.marker;
   const depth = block.depth ?? DEFAULT_UNITS.depth;
-  if (rootDir !== null && (typeof rootDir !== "string" || rootDir === "" || rootDir.includes("/"))) {
+  // Cấm cả `..`, dấu gạch ngược và mọi dạng đường dẫn. Bản đầu chỉ cấm "/", nên trên Windows
+  // một cấu hình dị dạng (`a\b`, `..`) không ném mà lặng lẽ quét sai thư mục.
+  const badSegment = (value) => typeof value !== "string" || value === "" || value === "." || value === ".."
+    || value.includes("/") || value.includes("\\");
+  if (rootDir !== null && badSegment(rootDir)) {
     throw new Error(`UNITS_HONG: units.root_dir phải là MỘT đoạn thư mục (ví dụ "workers"), hoặc null nếu repo không có đơn vị con. Đang là: ${JSON.stringify(block.root_dir)}`);
   }
-  if (typeof marker !== "string" || marker === "" || marker.includes("/")) {
+  if (badSegment(marker)) {
     throw new Error(`UNITS_HONG: units.marker phải là tên MỘT file (ví dụ "manifest.json"). Đang là: ${JSON.stringify(block.marker)}`);
   }
   if (!Number.isInteger(depth) || depth < 1 || depth > 4) {
@@ -57,19 +61,46 @@ export function unitsFrom(parsed) {
    `areas` đã khai `ownership_mode: "per-package"` kèm `claim_prefix` từ trước; chỉ là chưa
    script nào đọc. Thêm một khối thứ hai nói cùng một điều là tự tạo nguồn sự thật thứ hai. */
 export function claimPrefixesFrom(parsed) {
-  const areas = parsed?.areas;
-  if (areas === undefined || areas === null) return DEFAULT_CLAIM_PREFIXES;
+  // `null` = KHÔNG có file cấu hình (repo chưa chuẩn hoá) → giữ hình dạng cũ, hợp lệ.
+  // Có file mà thiếu `areas`, hoặc `areas: null` → NÉM. Bản đầu gộp hai ca này làm một, nên gõ
+  // nhầm tên trường (`areass`) là lặng lẽ lùi về `workers/` và quy chủ sai cho mọi commit.
+  if (parsed === null || parsed === undefined) return DEFAULT_CLAIM_PREFIXES;
+  const areas = parsed.areas;
+  if (areas === undefined || areas === null) {
+    throw new Error("CAU_TRUC_THIEU_AREAS: có .repo-structure.json nhưng thiếu khối `areas` (hoặc khai null). Không đoán được thư mục nào đã khai chủ — khai rõ, kể cả khi rỗng: \"areas\": {}.");
+  }
   if (typeof areas !== "object" || Array.isArray(areas)) {
     throw new Error("CAU_TRUC_HONG: khối `areas` phải là object.");
   }
+  const OWNERSHIP_MODES = new Set(["root", "per-package"]);
   const prefixes = [];
   for (const [key, value] of Object.entries(areas)) {
-    if (!value || typeof value !== "object" || value.ownership_mode !== "per-package") continue;
+    if (key.startsWith("_")) continue;                 // khoá chú thích, ví dụ "_doc_"
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      throw new Error(`CAU_TRUC_HONG: areas["${key}"] phải là object.`);
+    }
+    // Gõ sai `ownership_mode` (ví dụ "per-pacakge") mà im lặng bỏ qua là kiểu hỏng tệ nhất:
+    // danh sách tiền tố thành rỗng, MỌI package bị quy về `_root`, và cổng vẫn xanh.
+    if (value.ownership_mode !== undefined && !OWNERSHIP_MODES.has(value.ownership_mode)) {
+      throw new Error(`CAU_TRUC_HONG: areas["${key}"].ownership_mode phải là ${[...OWNERSHIP_MODES].join(" hoặc ")}. Đang là: ${JSON.stringify(value.ownership_mode)}`);
+    }
+    if (value.ownership_mode !== "per-package") continue;
     const prefix = value.claim_prefix ?? key;
     if (typeof prefix !== "string" || prefix === "" || !prefix.endsWith("/")) {
       throw new Error(`CAU_TRUC_HONG: areas["${key}"].claim_prefix phải là chuỗi kết thúc bằng "/". Đang là: ${JSON.stringify(value.claim_prefix)}`);
     }
     prefixes.push(prefix);
+  }
+  // Cấm tiền tố CHỒNG LẤN. `areaOf` lấy tiền tố khớp ĐẦU TIÊN, nên với `packages/` và
+  // `packages/special/` cùng khai thì câu trả lời phụ thuộc thứ tự khoá trong JSON — tức
+  // quyền sở hữu đổi theo cách người ta gõ file cấu hình. Cấm hẳn còn rõ hơn là chọn tiền tố
+  // dài nhất: hai vùng lồng nhau vốn đã là một mô hình sở hữu mập mờ.
+  for (const a of prefixes) {
+    for (const b of prefixes) {
+      if (a !== b && b.startsWith(a)) {
+        throw new Error(`CAU_TRUC_HONG: hai vùng chia-theo-gói lồng nhau ("${a}" chứa "${b}"). Quyền sở hữu sẽ phụ thuộc thứ tự khai — hãy chọn một trong hai.`);
+      }
+    }
   }
   // Không khai vùng chia-theo-gói nào là hợp lệ: repo một chủ duy nhất, mọi thứ thuộc `_root`.
   return Object.freeze(prefixes);

@@ -13,7 +13,7 @@
 */
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { areaOf, claimPrefixesFrom, generatorsFrom, readStructureFromDisk, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
@@ -70,6 +70,14 @@ const CLAIMS = (() => {
   catch { return null; }
 })();
 const ownedBy = (area) => CLAIMS?.[area]?.owner ?? null;
+// Chạy qua shell chứ không spawn trực tiếp: từ Node 24, spawn một file `.cmd` trên Windows
+// trả `EINVAL` (siết bảo mật). Và `scripts.test` vốn là một chuỗi lệnh nhiều bước nối bằng
+// `&&` — thứ chỉ shell hiểu. Đo thật: bản đầu dùng execFileSync("npm.cmd") và chết ngay.
+const runRootSuite = () => execSync("npm test --silent", { cwd: ROOT, encoding: "utf8", timeout: 900000 });
+const hasRootTestScript = () => {
+  try { return Boolean(JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))?.scripts?.test); }
+  catch { return false; }
+};
 const myPackages = packagesTouched.filter((pkg) => ownedBy(pkg) === asLabel);
 const foreignPackages = packagesTouched.filter((pkg) => ownedBy(pkg) && ownedBy(pkg) !== asLabel);
 // Mồ côi = KHÔNG có mục trong bảng, HOẶC có mục nhưng owner = null (vừa được
@@ -79,7 +87,16 @@ const foreignPackages = packagesTouched.filter((pkg) => ownedBy(pkg) && ownedBy(
 // lặng** — suite của nó cũng không chạy. Lỗ này lộ ra ngày 26/08 lúc đóng
 // phiên: trả quyền trước khi commit thì cổng báo xanh mà không kiểm gì.
 const orphanPackages = packagesTouched.filter((pkg) => !CLAIMS?.[pkg] || !CLAIMS[pkg].owner);
-const mine = (file) => myPackages.some((pkg) => file.startsWith(`${pkg}/`));
+// VÙNG GỐC CŨNG LÀ VÙNG. Trước 2026-09-02 `mine()` chỉ khớp package, nên một phiên chỉ giữ
+// `_root` — tức MỌI phiên sửa `scripts/`, `tests/`, hay cả bộ khung — có `mine()` luôn false.
+// Hậu quả đo thật: phép kiểm "Test xanh" báo "không package nào của bạn có suite bị ảnh hưởng"
+// và **suite gốc không hề chạy**, dù phiên vừa sửa chính bộ sinh và cổng kiểm. Và trong một
+// repo dựng từ bộ khung (`root_dir: null`) thì KHÔNG có package nào cả, nên cổng mất răng vĩnh
+// viễn. Audit độc lập bắt được; tôi đã chạy tay `npm test` nên không có gì lọt, nhưng cổng thì
+// không bảo vệ gì.
+const rootMine = (CLAIMS?._root?.owner ?? null) === asLabel;
+const mine = (file) => myPackages.some((pkg) => file.startsWith(`${pkg}/`))
+  || (rootMine && areaOf(file, claimPrefixes) === "_root");
 // claims.json không tính là "sửa file gốc": nhận và TRẢ quyền là thao tác
 // hành chính, không phải đổi luật. Không miễn trừ nó thì không ai trả lại
 // được quyền gốc — vì chính thao tác trả cũng bị coi là sửa file gốc.
@@ -147,13 +164,17 @@ check("File mới đã khai vào Bản đồ file", () => {
   for (const file of added) {
     // Thư mục đơn vị lấy theo hình dạng đã khai, không đóng cứng `workers/<gói>/<phiên-bản>`.
     const pkgDir = unitDirOf(file, unitShape);
-    if (!pkgDir) continue;
-    const rest = file.slice(pkgDir.length + 1);
-    const agentsPath = path.join(ROOT, pkgDir, "AGENTS.md");
+    // File GỐC repo đối chiếu bản đồ ở `AGENTS.md` GỐC. Bản cũ `continue` ở đây, nên thêm một
+    // thư mục top-level mới mà không khai vào bản đồ thì không ai bắt — đúng lỗ mà luật vàng 4
+    // ("không khai = không tồn tại") sinh ra để bịt.
+    const base = pkgDir ?? "";
+    const agentsPath = path.join(ROOT, base, "AGENTS.md");
     if (!fs.existsSync(agentsPath)) continue;
+    const rest = pkgDir ? file.slice(pkgDir.length + 1) : file;
     const topLevel = rest.split("/")[0];
+    if (!topLevel || topLevel === "AGENTS.md") continue;
     const map = fs.readFileSync(agentsPath, "utf8");
-    if (!map.includes(topLevel)) undeclared.push(`${pkgDir}/${topLevel}`);
+    if (!map.includes(topLevel)) undeclared.push(base ? `${base}/${topLevel}` : topLevel);
   }
   const unique = [...new Set(undeclared)];
   if (unique.length) return { ok: false, msg: `Chưa khai vào Bản đồ file của package: ${unique.join(", ")}. Không khai = không tồn tại (luật gốc).` };
@@ -185,8 +206,26 @@ check("Test xanh", () => {
   const suites = myPackages
     .flatMap((pkg) => unitDirsUnder(pkg, unitShape, listDirs).map((dir) => path.join(dir, "tests", "run-all.mjs")))
     .filter((p) => fs.existsSync(path.join(ROOT, p)));
-  if (!suites.length) return { ok: true, msg: "Không package nào của bạn có suite bị ảnh hưởng." };
+  // SUITE GỐC REPO. Đây là lỗ nặng nhất audit tìm ra: suite chỉ lấy từ `myPackages`, nên một
+  // phiên chỉ giữ `_root` — mọi phiên sửa bộ sinh, cổng kiểm, hay cả bộ khung — nhận câu
+  // "không package nào của bạn có suite bị ảnh hưởng" và **suite gốc không hề chạy**. Trong
+  // repo dựng từ bộ khung (`root_dir: null`) thì không có package nào cả, nên cổng mất răng
+  // vĩnh viễn. Đo thật 2026-09-02: suốt một phiên sửa `build-dashboard`, `session-check`,
+  // `repo-structure`, cổng vẫn báo "Test xanh" mà chưa chạy một test nào.
+  const rootSuite = rootMine && rootTouched && hasRootTestScript();
+  if (!suites.length && !rootSuite) return { ok: true, msg: "Không package nào của bạn có suite bị ảnh hưởng." };
   const lines = [];
+  if (rootSuite) {
+    try {
+      const out = runRootSuite();
+      const NEWLINE = String.fromCharCode(10);
+      const totals = out.split(NEWLINE).filter((line) => /[0-9]+ passed, [0-9]+ failed/.test(line));
+      lines.push(`suite gốc repo: ${totals.length ? totals.join(" · ") : "chạy xong"}`);
+    } catch (error) {
+      const tail = String(error.stdout || error.message).trim().split(String.fromCharCode(10)).slice(-3).join(" | ");
+      return { ok: false, msg: `suite gốc repo ĐỎ → ${tail}` };
+    }
+  }
   for (const suite of suites) {
     try {
       const out = execFileSync("node", [suite], { cwd: ROOT, encoding: "utf8", timeout: 600000 });
@@ -327,7 +366,6 @@ if (results.length !== EXPECTED_CHECKS) {
 
 /* ---- báo cáo ------------------------------------------------------------ */
 console.log(`\nCỔNG KIỂM ĐÓNG PHIÊN — phiên "${asLabel}"`);
-const rootMine = (CLAIMS?._root?.owner ?? null) === asLabel;
 console.log(`Bạn chịu trách nhiệm: ${myPackages.join(", ") || "(không package nào)"}${rootTouched && rootMine ? " + file gốc repo" : ""}`);
 const others = [...foreignPackages.map((pkg) => `${pkg} [${ownedBy(pkg)}]`), ...(rootTouched && !rootMine ? [`file gốc repo [${CLAIMS?._root?.owner}]`] : [])];
 if (others.length) console.log(`Phiên khác đang làm dở, KHÔNG tính cho bạn: ${others.join(", ")}`);

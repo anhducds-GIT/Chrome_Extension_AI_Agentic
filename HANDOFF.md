@@ -841,3 +841,41 @@ của `unitDirOf`. Nay ghim thẳng: mặc định không được chứa danh t
 **Bài học lặp lại lần thứ năm trong hai phiên** — và nay đã đủ để thành luật:
 *một phép kiểm chỉ thật khi fixture của nó dựng được ca hỏng; kiểm qua đường vòng thì đường vòng
 mới là thứ được ghim.*
+
+### Vòng 2 — sáu phát hiện fail-open còn lại, trong đó một cái làm cổng mất răng
+
+**Lỗ nặng nhất, và nặng hơn mô tả của Codex.** `mine()` chỉ khớp package, nên một phiên chỉ giữ
+`_root` — **mọi phiên sửa `scripts/`, `tests/`, hay cả bộ khung** — có `mine()` luôn false. Hậu
+quả đo thật: phép kiểm *"Test xanh"* báo *"không package nào của bạn có suite bị ảnh hưởng"* và
+**suite gốc 243 test không hề chạy**. Suốt cả phiên hôm nay sửa `build-dashboard`,
+`session-check`, `repo-structure`, cổng chưa từng chạy một test nào — tôi chạy tay `npm test`
+nên không có gì lọt, nhưng **cổng thì không bảo vệ gì**. Và trong repo dựng từ bộ khung
+(`root_dir: null`) thì không có package nào cả, nên cổng mất răng **vĩnh viễn**.
+
+Nay `_root` là một vùng thật: `mine()` nhận file gốc khi phiên giữ `_root`; suite gốc được chạy
+qua `npm test`; và phép kiểm bản đồ file đối chiếu `AGENTS.md` GỐC cho file gốc (trước đây
+`continue` bỏ qua, nên thêm một thư mục top-level mới mà không khai thì không ai bắt).
+
+**Hai chi tiết kỹ thuật đáng ghi, vì cả hai đều làm hỏng bản đầu:**
+- Node 24 trên Windows **không spawn được file `.cmd`** (`EINVAL`) — phải chạy qua shell.
+  Thêm nữa `scripts.test` là chuỗi lệnh nối bằng `&&`, thứ chỉ shell hiểu.
+- Viết code bằng script thì **dấu thoát bị nuốt một tầng**: `"\n"` thành ngắt dòng thật và làm
+  vỡ chuỗi. Dính ba lần hôm nay; cách chắc ăn là `String.fromCharCode(10)`.
+
+**Bốn phát hiện fail-open trong bộ đọc cấu hình:**
+
+| Trước | Sau |
+|---|---|
+| Thiếu `areas` hoặc `areas: null` → lặng lẽ lùi về `workers/` | **NÉM.** Gõ nhầm `areass` từng quy chủ sai cho mọi commit |
+| `ownership_mode` gõ sai → im lặng bỏ qua | **NÉM.** `per-pacakge` từng làm danh sách tiền tố rỗng và mọi package rơi về `_root` |
+| `root_dir`/`marker` chỉ cấm `/` | cấm cả `..`, `.`, và dấu gạch ngược |
+| Hai vùng chia-theo-gói lồng nhau | **NÉM.** `areaOf` lấy tiền tố khớp đầu tiên, nên quyền sở hữu đổi theo thứ tự khoá trong JSON |
+
+**Số:** suite **243**, exit 0. Phép kiểm lệch template bắt được chính tôi quên sinh lại `template/`
+sau khi sửa script portable — đúng việc của nó.
+
+**CÒN LẠI, chưa làm:** một phát hiện là câu hỏi thiết kế chứ không phải bản vá — *bộ trích chỉ
+thay mục 6 rồi giữ nguyên mọi luật còn lại của repo Chrome*, nên repo khác loại vẫn nhận luật
+về quyền extension, pilot live, selector DOM và vai của Bridge. Cần bàn với Đức trước, không tự
+quyết. Ba phát hiện nhỏ khác (đối chứng dương hẹp, cấm bằng chứng chỉ soi `evidence/`,
+`safe-push` nuốt lỗi remote) để lượt sau.

@@ -40,6 +40,10 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
     [{ units: { root_dir: "" } }, "root_dir rong"],
     [{ units: { marker: "" } }, "marker rong"],
     [{ units: { marker: "docs/x.json" } }, "marker co duong dan"],
+    [{ units: { root_dir: ".." } }, "root_dir la .."],
+    [{ units: { root_dir: "." } }, "root_dir la ."],
+    [{ units: { root_dir: "a" + String.fromCharCode(92) + "b" } }, "root_dir co dau gach nguoc"],
+    [{ units: { marker: "a" + String.fromCharCode(92) + "b.json" } }, "marker co dau gach nguoc"],
     [{ units: { depth: 0 } }, "depth 0"],
     [{ units: { depth: 9 } }, "depth qua sau"],
     [{ units: { depth: "2" } }, "depth la chuoi"]
@@ -51,8 +55,15 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 
 /* ---- tiền tố quyền sở hữu ------------------------------------------------ */
 {
-  assert.deepEqual(claimPrefixesFrom({}), DEFAULT_CLAIM_PREFIXES,
-    "khong co areas thi giu hinh dang cu (tuong thich nguoc)");
+  // `null` = KHÔNG có file cấu hình. Đây mới là ca "repo chưa chuẩn hoá", và nó hợp lệ.
+  assert.deepEqual(claimPrefixesFrom(null), DEFAULT_CLAIM_PREFIXES,
+    "khong co file cau hinh thi giu hinh dang cu (tuong thich nguoc)");
+  // Nhưng CÓ file mà thiếu `areas` thì phải NÉM. Gộp hai ca này làm một là kiểu hỏng im lặng:
+  // gõ nhầm tên trường (`areass`) sẽ lùi về `workers/` và quy chủ sai cho mọi commit.
+  assert.throws(() => claimPrefixesFrom({ schema_version: 1 }), /CAU_TRUC_THIEU_AREAS/,
+    "co file ma thieu areas thi phai NEM, khong duoc lui ve mac dinh");
+  assert.throws(() => claimPrefixesFrom({ areas: null }), /CAU_TRUC_THIEU_AREAS/,
+    "areas: null cung phai NEM");
 
   // CHỈ vùng khai `per-package` mới sinh ra tiền tố. Vùng `root` thuộc `_root`, không chia nhỏ.
   const areas = {
@@ -65,6 +76,22 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 
   assert.deepEqual([...claimPrefixesFrom({ areas: { "docs/": { ownership_mode: "root" } } })], [],
     "repo khong co vung chia theo goi la hop le — moi thu thuoc _root");
+
+  // Gõ sai `ownership_mode` mà im lặng bỏ qua là kiểu hỏng tệ nhất: danh sách tiền tố thành
+  // rỗng, MỌI package bị quy về `_root`, và cổng vẫn xanh.
+  assert.throws(() => claimPrefixesFrom({ areas: { "w/": { ownership_mode: "per-pacakge" } } }),
+    /CAU_TRUC_HONG/, "go sai ownership_mode phai NEM chu khong im lang bo qua");
+
+  // Hai vùng chia-theo-gói LỒNG NHAU: `areaOf` lấy tiền tố khớp đầu tiên, nên câu trả lời sẽ
+  // phụ thuộc thứ tự khoá trong JSON — quyền sở hữu đổi theo cách người ta gõ file cấu hình.
+  assert.throws(() => claimPrefixesFrom({ areas: {
+    "p/": { ownership_mode: "per-package" },
+    "p/s/": { ownership_mode: "per-package", claim_prefix: "p/s/" }
+  } }), /CAU_TRUC_HONG/, "tien to long nhau phai NEM");
+
+  // Khoá chú thích (bắt đầu bằng "_") không phải một vùng.
+  assert.deepEqual([...claimPrefixesFrom({ areas: { "_doc_": "ghi chu", "w/": { ownership_mode: "per-package" } } })],
+    ["w/"], "khoa chu thich khong duoc coi la mot vung");
 
   for (const [bad, why] of [
     [{ areas: [] }, "areas la mang"],
