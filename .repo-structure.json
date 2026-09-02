@@ -15,12 +15,6 @@
       "ownership_mode": "root",
       "note": "tài liệu bốn tầng: studies, briefs, archive"
     },
-    "drafts/": {
-      "steward": "_root",
-      "mutability": "rw",
-      "ownership_mode": "root",
-      "note": "nháp — phiên S6 sẽ dọn hết và xoá thư mục này"
-    },
     "evidence/": {
       "steward": "_root",
       "mutability": "append-only",

@@ -7,7 +7,7 @@
 
 ## PROMPT (gửi nguyên khối, task_type=text_reasoning)
 
-Use your GitHub connector to read drafts/PLATFORM-AI-ORCHESTRATOR-STUDY.md
+Use your GitHub connector to read docs/archive/PLATFORM-AI-ORCHESTRATOR-STUDY.md
 in repo anhducds-GIT/Chrome_Extension_AI_Agentic (branch main).
 Audit it as an independent reviewer. Respond ONLY with:
 

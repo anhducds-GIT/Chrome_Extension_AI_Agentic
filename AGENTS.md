@@ -122,11 +122,12 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Hiểu cách vận hành nhiều extension trong một repo, hoặc thêm extension mới | `PLATFORM.md` ở gốc repo |
 | Khai trạng thái cho một extension (mới hoặc cũ) | `STATUS.template.md` ở gốc repo → chép thành `STATUS.md` đặt cạnh `manifest.json` |
 | **Muốn biết repo đang nợ gì về cấu trúc điều hướng** | `node scripts/check-bootstrap.mjs` — 14 phép kiểm B1…B14, mỗi dòng nói cả chỗ sai lẫn cách sửa. Thêm `--all` để xem hết. **Từ phiên S4 nó CHỈ CẢNH BÁO, chưa chặn ai** (bật chặn là việc của S7). Luật khai chủ thư mục + miễn trừ đường dẫn cũ nằm ở `.repo-structure.json` |
-| Sắp code Extension Operation Platform V0.1 (STATUS/DASHBOARD) | `drafts/PLATFORM-V01-IMPLEMENTATION-BRIEF.md` — đề bài đã chốt, không tự mở rộng · prompt mở phiên: `drafts/PLATFORM-V01-ONBOARDING-PROMPT.md` |
-| Sắp triển khai Extension Google Flow (video) | `drafts/FLOW-EXT-COORDINATION-PLAN.md` — kế hoạch điều phối 5 checkpoint (FLOW-00 đã chốt 27/08) |
+| Sắp code Extension Operation Platform V0.1 (STATUS/DASHBOARD) | `docs/archive/PLATFORM-V01-IMPLEMENTATION-BRIEF.md` — đề bài đã chốt, không tự mở rộng · prompt mở phiên: `docs/archive/PLATFORM-V01-ONBOARDING-PROMPT.md` (đã thực thi xong, giữ làm bản ghi) |
+| Sắp triển khai Extension Google Flow (video) | `docs/studies/FLOW-EXT-COORDINATION-PLAN.md` — kế hoạch điều phối 5 checkpoint (FLOW-00 đã chốt 27/08) |
 | Vận hành / sửa worker GG Flow Video | `workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md` · vận hành Bridge: `AI-OPERATOR-GUIDE.md` cùng thư mục |
-| Vận hành Bridge khi NHIỀU profile Chrome cùng nối (`bridge.sessions`, `--target`, `served_by`) | Thiết kế: `drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` (Đức duyệt hướng A 28/08) · đã thành code ở gg-flow-video 28/08 — luật vận hành: mục "Nhiều profile" trong `workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md` · gemini + chatgpt CHƯA port |
-| Viết một file nghiên cứu mới trong `docs/studies/` | `docs/_TEMPLATE-study.md` — bản mẫu: frontmatter 3 trường (`kind`/`status`/`ttl_days`), số liệu lấy từ nguồn máy sinh · hồ sơ đã nghỉ nằm ở `docs/archive/` |
+| Vận hành Bridge khi NHIỀU profile Chrome cùng nối (`bridge.sessions`, `--target`, `served_by`) | Thiết kế: `docs/studies/BRIDGE-MULTIPROFILE-DESIGN-V1.md` (Đức duyệt hướng A 28/08) · đã thành code ở gg-flow-video 28/08 — luật vận hành: mục "Nhiều profile" trong `workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md` · gemini + chatgpt CHƯA port |
+| **Tìm một tài liệu, hoặc tra đường dẫn `drafts/…` cũ nay nằm đâu** | `docs/README.md` — mục lục bốn tầng (studies · briefs · archive · adr), kèm bản đồ 33 đường dẫn cũ → mới. Thư mục `drafts/` ở gốc repo **đã biến mất** từ phiên S6 (2026-09-02) |
+| Viết một file nghiên cứu mới trong `docs/studies/` | `docs/_TEMPLATE-study.md` — bản mẫu: frontmatter 3 trường (`kind`/`status`/`ttl_days`), số liệu lấy từ nguồn máy sinh · hồ sơ đã nghỉ nằm ở `docs/archive/`; mục lục: `docs/README.md` |
 
 **Về `FEATURE-PARITY.md`:** bảng tính năng GPT ↔ Gemini. Nó ở **gốc repo** vì nói về cả hai
 nhánh — sửa nó thì phải đang giữ `_root`.
