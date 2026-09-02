@@ -100,10 +100,15 @@ hiển thị sai.
 
 ## Y-05 · Viết lại chữ trong hồ sơ cho mắt Đức đọc
 
-- **bậc:** ý tưởng
+- **bậc:** đang xây
 - **nguồn:** phát hiện khi dựng bảng trạng thái 2026-09-02
-- **việc kế:** Rà `next_step` và `current_focus` của từng đơn vị, viết lại thành tiếng Việt
-  có dấu, bỏ thuật ngữ
+- **chủ:** `claude-y05`
+- **phạm vi:** hồ sơ trạng thái của `_root` và `duc-auto-gemini`, cộng cổng kiểm cấu trúc.
+  **Cấm** đụng `duc-auto-chatgpt` và `duc-auto-gg-flow-video` — phiên khác đang giữ.
+- **việc kế:** **3 chỗ còn lại thuộc hai gói do phiên khác giữ** — chủ của chúng phải tự viết
+  lại. B15 giờ tự nhắc mỗi lần họ chạy cổng, không cần ai đi dặn
+- **đã xong:** thêm phép kiểm **B15** (mức cảnh báo) cưỡng chế luật vàng 5, và viết lại chữ
+  của gemini v0.2.0. B15 tìm ra 4 chỗ vi phạm; còn 3
 - **vì sao:** Đức mở bảng thấy *"CAN DUC RELOAD EXTENSION roi chay mot chuoi de do pacing_ms"*.
   Bảng chỉ hiện lại nguyên văn nguồn. **Luật vàng 5 đã quy định "chữ operator nhìn thấy:
   tiếng Việt"** — nên đây không phải yêu cầu mới, mà là một luật đang bị vi phạm. Bảng vừa
