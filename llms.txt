@@ -4,11 +4,11 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `2d806c4` (2026-09-02).
+Trang được sinh tại commit `a11a79f` (2026-09-02).
 
 ## Việc ưu tiên #1
 
-- **workers/duc-auto-gg-flow-video/v0.1.0** — F-25: vong chay job chet theo side panel — chuoi dung sau Q004 va dung yen 22 phut trong khi MOI LOP DEU SONG (run.stop tra ok nhung state khong doi). Nang nhip dua chuoi 7 job tu ~9 phut len ~20+ phut nen diem gay nay nguy hiem gap doi. Can tim ra cai gi giet vong lap TRUOC KHI tin vao chuoi dai. Con 26/50 credit tren Binh
+- **workers/duc-auto-gg-flow-video/v0.1.0** — F-25 van chua giai (vong chay chet o luot F4R8 nhung KHONG tai hien o F4R9) — can biet co che truoc khi tin vao chuoi dai. Con 8/50 credit tren Binh. Chua du de ket luan nhip cham LA NGUYEN NHAN khong bi gan co: da doi nhieu hon mot bien
 
 ## Đọc theo thứ tự này
 
@@ -23,7 +23,7 @@ Trang được sinh tại commit `2d806c4` (2026-09-02).
 - [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới…
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Lớp nối nhiều hồ sơ Chrome đã chuyển xong sang nhánh này (02/09), theo mẫu đã qua kiểm chéo của nhánh Flow Video: máy chủ chịu được nhiều kết nối và dừng an…
-- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — F4R8 (02/09, ho so Binh, giao dien tieng Viet): 4 video that, 0 loi, KHONG bi gan co — khac han luot F4R6 bi chan o job thu hai
+- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — 7/7 job tren mot tai khoan (F4R8 4 + F4R9 3), 42/50 credit, KHONG canh bao nao cua Google
 
 ## Luật bắt buộc trước khi sửa gì
 
