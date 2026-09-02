@@ -178,10 +178,36 @@ function genericize(rel, text) {
    47 dòng mang tên dự án, cao gấp nhiều lần phần còn lại (1 trên 117). Nó đáng lẽ không đi
    theo template; nó là thứ mỗi repo tự viết. Cắt bằng mốc tiêu đề chứ không bằng số dòng, để
    mục 6 dài ra cũng không làm hỏng bộ trích. */
+/* Mốc cắt phải là TIÊU ĐỀ THẬT và DUY NHẤT — phiên K1 chỉ ra 02/09, mục (d) của brief.
+   Bản cũ dùng `text.indexOf("\n## 6.")`, tức lấy lần khớp ĐẦU TIÊN và không kiểm gì thêm. Một
+   dòng văn hay một khối trích dẫn nhắc `## 6.` nằm TRƯỚC tiêu đề thật là cắt sai — và cắt sai
+   âm thầm: bộ trích vẫn sinh ra `AGENTS.md`, chỉ là mất một phần mục 5. Kiểu hỏng tệ nhất.
+
+   Hai lớp: chỉ nhận dòng BẮT ĐẦU bằng mốc (nên `> ... ## 6. ...` trong trích dẫn không tính),
+   và đòi ĐÚNG MỘT dòng như vậy. Nhiều hơn một thì FAIL CLOSED kèm số dòng, để người sửa biết
+   đi đâu — chứ không âm thầm chọn cái đầu. */
+export function soleHeadingIndex(text, marker) {
+  const lines = text.split("\n");
+  const hits = [];
+  let offset = 0;
+  for (let i = 0; i < lines.length; i += 1) {
+    if (lines[i].startsWith(marker)) hits.push({ index: offset, line: i + 1 });
+    offset += lines[i].length + 1;
+  }
+  if (hits.length === 0) return { index: -1, hits };
+  if (hits.length > 1) {
+    throw new Error(
+      `TRICH_HONG: AGENTS.md có ${hits.length} dòng bắt đầu bằng \`${marker}\` (dòng ${hits.map((h) => h.line).join(", ")}). ` +
+      "Bộ trích cắt theo tiêu đề mục, nên mốc phải DUY NHẤT. Sửa AGENTS.md, đừng để bộ trích tự chọn cái đầu rồi cắt sai âm thầm."
+    );
+  }
+  return { index: hits[0].index, hits };
+}
+
 function lawForTemplate() {
   const text = read("AGENTS.md");
-  const start = text.indexOf("\n## 6.");
-  const end = text.indexOf("\n## 7.");
+  const start = soleHeadingIndex(text, "## 6.").index;
+  const end = soleHeadingIndex(text, "## 7.").index;
   if (start < 0 || end < 0 || end <= start) {
     throw new Error(
       "TRICH_HONG: không tìm thấy mốc `## 6.` và `## 7.` trong AGENTS.md. Bộ trích cắt theo tiêu đề mục; " +

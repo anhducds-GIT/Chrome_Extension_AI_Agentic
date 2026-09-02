@@ -136,6 +136,7 @@ kết luận "package có chủ rồi nên tôi chỉ được đọc" — dù k
 Nhưng chưa chứng minh được nó **tự** nạp lúc mở phiên, nên câu mở màn là bắt buộc: 3 giây,
 miễn nhiễm với mọi thay đổi phiên bản, và nếu nó vốn tự nạp thì câu đó chỉ thừa vô hại.
 
+
 ## 6. Sổ tay mở khi cần — Tầng 2
 
 > **Bảng này là BẢN ĐỒ RIÊNG CỦA REPO BẠN.** Bộ khung điền sẵn các dòng cho chính những file
@@ -162,7 +163,6 @@ thì **4 file** rơi ra ngoài bản đồ, kể cả chính `README.md`.
 
 **Luật vàng số 4 áp ở đây:** thêm file hoặc thư mục mới thì phải khai một dòng vào bảng này.
 Không khai = không tồn tại. Cổng đóng phiên có phép kiểm này.
-
 ## 7. Đóng phiên — ghi lại 3 thứ
 
 1. Một dòng Log vào `HANDOFF.md` của package: làm gì, kết quả số, còn gì mở.

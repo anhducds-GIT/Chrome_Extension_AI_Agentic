@@ -1147,3 +1147,21 @@ Repo gốc hết bệnh, bộ khung vẫn nguyên bệnh — mà bộ khung mớ
   nên tôi không tự chốt — để K1 (chủ chương trình bộ trích) làm, tôi trả `_template`.
 - Mục (d) brief K1: `scripts/build-template.mjs:183` mốc cắt `"\n## 6."` không kiểm là tiêu đề
   THẬT và DUY NHẤT. Nằm trong `_code`, chưa làm.
+
+## 2026-09-02 — `claude-k2-design`: mục (d) brief K1 — mốc cắt bản trích
+
+`scripts/build-template.mjs` cắt mục 6 của `AGENTS.md` bằng `indexOf("\n## 6.")`, tức lấy lần
+khớp **đầu tiên** và không kiểm gì thêm. Một dòng văn hoặc khối trích dẫn nhắc `## 6.` nằm TRƯỚC
+tiêu đề thật là cắt sai — và cắt sai **âm thầm**: bộ trích vẫn sinh ra `AGENTS.md`, chỉ là mất
+một phần mục 5. Không ai thấy cho tới khi đọc kỹ bản trích.
+
+→ `soleHeadingIndex()`: chỉ nhận dòng **bắt đầu** bằng mốc (nên nhắc trong trích dẫn không tính),
+và đòi **đúng một** dòng như vậy. Hai mốc thật thì **NÉM** kèm số dòng từng mốc, chứ không âm
+thầm chọn cái đầu. Ghim cả bốn nhánh, cộng một phép kiểm chạy trên `AGENTS.md` **thật** — nếu
+repo này vi phạm thì bộ trích đỏ trước khi nó kịp sinh ra bản trích bị cắt sai.
+
+**Số:** suite 258 → **259**.
+
+**Đã trả `_template`.** Việc còn lại của bộ khung — mang theo một `tests/` tối thiểu và khai
+`scripts.test` — là quyết định về **nội dung** bộ khung, thuộc chương trình bộ trích của K1,
+không phải của tôi. Fail-loud đã gỡ phần *im lặng* của lỗ đó; phần *có răng* thì K1 chốt.

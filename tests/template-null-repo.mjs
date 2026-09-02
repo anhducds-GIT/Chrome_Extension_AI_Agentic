@@ -20,7 +20,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-import { buildTemplateFiles, leakedNames, TEMPLATE_VERSION } from "../scripts/build-template.mjs";
+import { buildTemplateFiles, leakedNames, soleHeadingIndex, TEMPLATE_VERSION } from "../scripts/build-template.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -86,6 +86,41 @@ const files = buildTemplateFiles();
   }
   assert.ok(!VUNG_BANG_CHUNG.test("docs/pilot-ghi-chu.md"), "khong duoc bao oan file chi NHAC chu pilot o giua duong dan");
   ok("khong mang theo trang may sinh, khong mang theo bang chung");
+}
+
+/* ---- 2b. Mốc cắt mục 6 phải là TIÊU ĐỀ THẬT và DUY NHẤT ------------------ */
+/* Phiên K1 chỉ ra 02/09, mục (d). Bản cũ dùng `indexOf("\n## 6.")` — lấy lần khớp ĐẦU TIÊN,
+   không kiểm gì. Một dòng văn hay khối trích dẫn nhắc `## 6.` nằm TRƯỚC tiêu đề thật là cắt
+   sai, và cắt sai ÂM THẦM: bộ trích vẫn sinh ra `AGENTS.md`, chỉ là mất một phần mục 5. */
+{
+  const f = soleHeadingIndex;
+
+  // Chỉ nhận dòng BẮT ĐẦU bằng mốc. Nhắc trong trích dẫn hay giữa câu thì không tính.
+  const trichDan = "# Luat\n\n> muc `## 6.` noi rang ...\n\nvan xuoi nhac ## 6. o giua cau\n\n## 6. So tay\n\nthan\n";
+  const hit = f(trichDan, "## 6.");
+  assert.equal(hit.hits.length, 1, "chi duoc tinh dong BAT DAU bang moc, khong tinh nhac trong trich dan hay giua cau");
+  assert.equal(trichDan.slice(hit.index, hit.index + 12), "## 6. So tay", "phai tro dung tieu de THAT");
+
+  // ĐÂY LÀ CA HỎNG: hai tiêu đề thật thì FAIL CLOSED, không âm thầm chọn cái đầu.
+  assert.throws(() => f("## 6. Mot\n\nthan\n\n## 6. Hai\n", "## 6."), /TRICH_HONG/,
+    "hai moc that thi phai NEM, khong duoc tu chon cai dau roi cat sai");
+  // Và thông báo phải nói SỐ DÒNG, để người sửa biết đi đâu — tiêu chí nghiệm thu của Đức.
+  try {
+    f("## 6. Mot\n\nthan\n\n## 6. Hai\n", "## 6.");
+    assert.fail("phai nem");
+  } catch (error) {
+    assert.match(error.message, /dòng 1, 5/, "phai chi dung so dong cua tung moc: " + error.message);
+  }
+
+  assert.equal(f("khong co moc nao\n", "## 6.").index, -1, "khong co moc thi tra -1, de ben goi tu bao loi");
+
+  // Và trên AGENTS.md THẬT: mỗi mốc đúng một dòng. Nếu repo này vi phạm thì bộ trích phải đỏ
+  // ở đây trước khi nó kịp sinh ra một bản trích bị cắt sai.
+  const luatThat = readFileSync(new URL("../AGENTS.md", import.meta.url), "utf8");
+  for (const moc of ["## 6.", "## 7."]) {
+    assert.equal(f(luatThat, moc).hits.length, 1, `AGENTS.md that phai co DUNG MOT dong bat dau bang \`${moc}\``);
+  }
+  ok("moc cat muc 6 la tieu de THAT va DUY NHAT; hai moc thi FAIL CLOSED kem so dong");
 }
 
 /* ---- 3. Repo rỗng + bộ khung → cổng kiểm KHÔNG có chỗ đỏ ------------------ */
