@@ -414,3 +414,31 @@
   - **Việc kế tiếp:** ① **Đức chạy PHẦN B** — chat mới, dán đúng một dòng trong `BRIEF-S7.md`,
     ghi kết quả vào `evidence/2026xxxx-bootstrap-test-r02/`. Đạt cả A và B = **mục tiêu chính
     của chương trình xong**. ② Sau khi Đức báo đạt: gỡ nhãn `unproven` (mục 5). ③ Rồi mới tới S8.
+
+- **2026-09-02 · `s7-block` (vòng 2)** — **Bài nghiệm thu phần A tôi TỰ CHẠY đã tìm ra một lỗi
+  thiết kế do chính tôi vừa gây ra. Đã sửa, và nó là bài học đáng ghi nhất của phiên này.**
+  - **Cách tìm:** không suy luận. Tôi `git clone` HEAD ra một thư mục tạm, commit vào đó **ba
+    vi phạm thật** (đổi `lifecycle` thành chữ bậy · xoá một `STATUS.md` · sửa thân một ADR đã
+    Accepted), rồi chạy cổng kiểm trên bản sao đó. Không đụng cây làm việc — phiên
+    `claude-bridge-multiprofile` đang có việc dở ở đấy.
+  - **Kết quả đo:** ba vi phạm nhóm CHẶN → mã thoát **1 · 1 · 1**; thêm một nợ nhóm CẢNH BÁO
+    → **0**; bản sao sạch → **0**. **ĐẠT.**
+  - **LỖI TÌM RA:** B12 bản đầu báo lỗi khi có **bất kỳ** commit nào từng đổi phần thân sau mốc
+    `Accepted`. Nghe đúng luật hơn. Nhưng `git revert` bản sửa **cũng là** một lần đổi thân sau
+    mốc đó → **B12 ĐỎ VĨNH VIỄN, không cách nào xoá** trừ sửa lịch sử (luật cấm). Một phép kiểm
+    thuộc nhóm **CHẶN** mà không xoá được là cái bẫy khoá cả repo — đúng thứ BRIEF-S7 cảnh báo
+    ở mục điều kiện mở, và tôi đã tự dựng lại nó.
+  - **Sửa:** B12 nay hỏi *"nội dung ADR **hiện tại** có còn đúng bản đã Accepted không"*. Sửa
+    rồi hoàn nguyên thì xanh lại; lịch sử git vẫn giữ nguyên dấu vết, không ai xoá được. Thông
+    báo khi đỏ kèm sẵn lệnh lấy lại bản đúng: `git show <sha>:<đường-dẫn>`. Đã ghim test cho ca
+    hoàn nguyên, để không ai "sửa cho đúng luật hơn" rồi dựng lại cái bẫy.
+  - **Nguyên tắc rút ra, viết cho phiên sau:** một phép kiểm thuộc nhóm CHẶN phải đo **TRẠNG
+    THÁI**, không đo **LỊCH SỬ**. Đo lịch sử thì người sửa đúng cách vẫn không xoá được màu đỏ,
+    và một cổng không xoá được thì người ta sẽ học cách đi vòng qua nó.
+  - **Đo lại sau sửa:** suite **97 + 6 + 79 + 15 + 27** xanh · cổng kiểm cấu trúc **0 ĐỎ · 19
+    VÀNG** (B6 17 · B9 2) · **14/14 đột biến bị bắt**.
+  - **Đã cuốn theo 3 commit của phiên `claude-bridge-multiprofile`** khi push (`550da43`,
+    `414e7ea`, `5aa7540` — port multi-profile sang gemini và chatgpt, suite của họ xanh).
+    `safe-push` từ chối hai lần, dùng `--carry` theo đúng chỗ Đức đã duyệt 02/09 cho việc chạy
+    song song với phiên đó. Tôi cũng sinh lại `DASHBOARD/llms/repo-map/FEATURE-PARITY` ba lượt
+    vì mỗi commit của họ làm số đo đổi — chỉ khối AUTO đổi, mục 2 của người không bị đụng.
