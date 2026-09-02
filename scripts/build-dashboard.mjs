@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { DEFAULT_UNITS, STRUCTURE_FILE, unitsFrom } from "./repo-structure.mjs";
+
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SCHEMA = "extension-status/v2";
@@ -36,46 +38,19 @@ export const DASHBOARD_FILE = "DASHBOARD.md";
 export const REPO_MAP_SCHEMA_VERSION = 1;
 export const REPO_PROFILE = "P1"; // monorepo nhiều gói — REPO-STRUCTURE-SPEC-V1 mục 3
 
-/* HÌNH DẠNG ĐƠN VỊ — tham số hoá 2026-09-02 (K1).
-   Trước đây bộ sinh đóng cứng hai chuỗi: thư mục đơn vị là "workers", file đánh dấu là
-   "manifest.json". Hai chuỗi đó KHÔNG phải luật chung — chúng là hình dạng riêng của repo
-   Chrome. Repo khác dùng "packages/", "services/", hoặc không có tầng phiên bản, thì bộ sinh
-   không chạy. Đây là lý do bộ MÁY kém di động hơn bộ LUẬT (luật đo được 91% sạch tên dự án).
-
-   `depth` = số tầng thư mục dưới `root_dir` cho tới đơn vị:
-     depth 2 → workers/<gói>/<phiên-bản>/manifest.json   (repo Chrome, P1)
-     depth 1 → packages/<tên>/package.json               (monorepo phẳng)
-     root_dir null → repo không có đơn vị con, chỉ có đơn vị GỐC (P2/P3/P4)
-
-   Mặc định giữ nguyên hình dạng cũ, nên repo chưa khai khối `units` vẫn sinh ra y hệt. */
-export const DEFAULT_UNITS = Object.freeze({ rootDir: "workers", marker: "manifest.json", depth: 2 });
+/* HÌNH DẠNG ĐƠN VỊ — đọc từ `.repo-structure.json`, không đóng cứng trong code.
+   Phần suy ra nằm ở `repo-structure.mjs` để cổng đóng phiên và safe-push dùng CHUNG một
+   bản; ở đây chỉ nối phần ĐỌC, vì bộ sinh đọc từ HEAD chứ không đọc cây làm việc. */
+export { DEFAULT_UNITS };
 
 export function readUnits(deps) {
-  if (!deps.fileExists(".repo-structure.json")) return DEFAULT_UNITS;
+  if (!deps.fileExists(STRUCTURE_FILE)) return DEFAULT_UNITS;
   let parsed;
-  try { parsed = readJson(deps, ".repo-structure.json"); }
+  try { parsed = readJson(deps, STRUCTURE_FILE); }
   catch (error) {
-    throw new Error(`CAU_TRUC_HONG: .repo-structure.json không phải JSON đọc được (${error.message}). Sửa file đó rồi chạy lại.`);
+    throw new Error(`CAU_TRUC_HONG: ${STRUCTURE_FILE} không phải JSON đọc được (${error.message}). Sửa file đó rồi chạy lại.`);
   }
-  const block = parsed?.units;
-  if (block === undefined) return DEFAULT_UNITS;
-  if (block === null || typeof block !== "object" || Array.isArray(block)) {
-    throw new Error("UNITS_HONG: khối `units` trong .repo-structure.json phải là object (hoặc bỏ hẳn để dùng mặc định).");
-  }
-  const rootDir = block.root_dir === null ? null : (block.root_dir ?? DEFAULT_UNITS.rootDir);
-  const marker = block.marker ?? DEFAULT_UNITS.marker;
-  const depth = block.depth ?? DEFAULT_UNITS.depth;
-  // Fail-closed: khai sai còn tệ hơn không khai, vì bảng vẫn sinh ra và trông như thật.
-  if (rootDir !== null && (typeof rootDir !== "string" || rootDir === "" || rootDir.includes("/"))) {
-    throw new Error(`UNITS_HONG: units.root_dir phải là MỘT đoạn thư mục (ví dụ "workers"), hoặc null nếu repo không có đơn vị con. Đang là: ${JSON.stringify(block.root_dir)}`);
-  }
-  if (typeof marker !== "string" || marker === "" || marker.includes("/")) {
-    throw new Error(`UNITS_HONG: units.marker phải là tên MỘT file (ví dụ "manifest.json"). Đang là: ${JSON.stringify(block.marker)}`);
-  }
-  if (!Number.isInteger(depth) || depth < 1 || depth > 4) {
-    throw new Error(`UNITS_HONG: units.depth phải là số nguyên 1..4. Đang là: ${JSON.stringify(block.depth)}`);
-  }
-  return Object.freeze({ rootDir, marker, depth });
+  return unitsFrom(parsed);
 }
 
 // Hai trường này đổi theo TỪNG commit. So sánh nguyên văn thì cổng kiểm sẽ đỏ
@@ -798,9 +773,9 @@ function topLevelDirsFromGit(deps) {
    sẽ KHÔNG được `safe-push.mjs` cưỡng chế — một lời khai không có răng.
    `claims` vẫn được dùng cho `workers/`, nơi chủ thật sự khai theo từng package. */
 function readAreas(deps) {
-  if (!deps.fileExists(".repo-structure.json")) return null;
+  if (!deps.fileExists(STRUCTURE_FILE)) return null;
   let parsed;
-  try { parsed = readJson(deps, ".repo-structure.json"); }
+  try { parsed = readJson(deps, STRUCTURE_FILE); }
   catch (error) {
     throw new Error(`CAU_TRUC_HONG: .repo-structure.json không phải JSON đọc được (${error.message}). Sửa file đó rồi chạy lại.`);
   }

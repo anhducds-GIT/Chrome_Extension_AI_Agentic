@@ -16,6 +16,8 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { areaOf, claimPrefixesFrom, readStructureFromDisk } from "./repo-structure.mjs";
+
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
 // chạy sai thư mục rồi trả về rỗng — cả cổng kiểm sẽ báo xanh giả.
@@ -51,8 +53,11 @@ const workingChanges = porcelain.map((line) => ({ code: line.slice(0, 2).trim(),
 const unpushed = git("diff", "--name-only", "origin/main...HEAD").split("\n").filter(Boolean);
 const touched = [...new Set([...workingChanges.map((c) => c.file), ...unpushed])];
 
-// Package = workers/<tên>. Đây là đơn vị sở hữu.
-const packagesTouched = [...new Set(touched.map((f) => (f.match(/^(workers\/[^/]+)\//) || [])[1]).filter(Boolean))];
+// Đơn vị sở hữu đọc từ `.repo-structure.json` (K1, 2026-09-02) — trước đây regex `^workers/`
+// nằm cứng ở ĐÂY và một bản y hệt nằm trong safe-push.mjs. Hai bản đã lệch nhau một lần thật
+// (26/08, đường dẫn tiếng Việt bị quy nhầm chủ). Một hàm dùng chung thì không lệch được.
+const claimPrefixes = claimPrefixesFrom(readStructureFromDisk(ROOT));
+const packagesTouched = [...new Set(touched.map((f) => areaOf(f, claimPrefixes)).filter((a) => a !== "_root"))];
 
 // Nhiều phiên AI dùng CHUNG một thư mục làm việc, nên `git status` cho thấy cả
 // việc đang làm dở của phiên khác. Không tách ra thì cổng đổ việc của họ lên
@@ -76,7 +81,7 @@ const mine = (file) => myPackages.some((pkg) => file.startsWith(`${pkg}/`));
 // claims.json không tính là "sửa file gốc": nhận và TRẢ quyền là thao tác
 // hành chính, không phải đổi luật. Không miễn trừ nó thì không ai trả lại
 // được quyền gốc — vì chính thao tác trả cũng bị coi là sửa file gốc.
-const rootTouched = touched.some((f) => !f.startsWith("workers/") && f !== ".agents/claims.json");
+const rootTouched = touched.some((f) => areaOf(f, claimPrefixes) === "_root" && f !== ".agents/claims.json");
 
 /* ---- 1. Chủ sở hữu ------------------------------------------------------ */
 check("Phạm vi trách nhiệm", () => {

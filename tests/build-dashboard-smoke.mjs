@@ -683,7 +683,9 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "Gate 7 Test");
     gitAt("config", "user.email", "gate7@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["build-dashboard.mjs", "feature-parity.mjs", "session-check.mjs"]) {
+    // `repo-structure.mjs` PHẢI có mặt: từ K1 nó là nguồn sự thật chung về hình dạng repo,
+    // và cả ba script kia đều import nó. Thiếu nó thì repo tạm chết ngay lúc nạp module.
+    for (const name of ["repo-structure.mjs", "build-dashboard.mjs", "feature-parity.mjs", "session-check.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".agents/claims.json", JSON.stringify({ claims: {

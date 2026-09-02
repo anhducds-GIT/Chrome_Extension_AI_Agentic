@@ -606,3 +606,33 @@ Phiên này chỉ làm bộ máy *có thể* đi được. Việc trích, cùng 
 
 **Việc kế tiếp:** trích `template/` theo bản kê khai, rồi chạy cặp phép thử — repo rỗng phải
 XANH, và repo Chrome phải KHÔNG tệ đi.
+
+## 2026-09-02 — `claude-core-k1` (tiếp): gom hình dạng repo về MỘT nguồn
+
+**Vấn đề còn lại sau lượt trước.** Lượt trước mới gỡ đóng cứng ở `build-dashboard` và
+`check-bootstrap`. Nhưng `session-check.mjs` và `safe-push.mjs` vẫn mỗi bên giữ **một bản regex
+`^workers/` chép tay**. Hai bản đó **đã lệch nhau một lần thật** — 26/08, đường dẫn tiếng Việt
+bị quy nhầm chủ.
+
+**Phát hiện dễ chịu:** `.repo-structure.json` **đã khai sẵn** `ownership_mode: "per-package"` kèm
+`claim_prefix: "workers/"` cho `workers/` từ trước. Chỉ là chưa script nào đọc. Nên không cần
+thêm khối cấu hình mới — thêm khối thứ hai nói cùng một điều chính là tự tạo nguồn sự thật thứ hai.
+
+**Làm gì:** thêm `scripts/repo-structure.mjs` — nguồn sự thật duy nhất về hình dạng repo. Phần
+SUY RA là hàm thuần (`unitsFrom` · `claimPrefixesFrom` · `areaOf`); phần ĐỌC để mỗi bên tự làm,
+vì bộ sinh đọc từ HEAD còn cổng đóng phiên và safe-push phải đọc cây làm việc. Cả bốn script nay
+dùng chung.
+
+**Một bất đồng cũ nay đã hết:** file nằm THẲNG dưới `workers/` (không thuộc gói nào) — safe-push
+coi là `_root`, session-check lại coi là *không phải file gốc*. Hai script trả lời khác nhau ở
+cùng một câu hỏi. Một hàm thì chỉ có một câu trả lời.
+
+**Số:** suite 227 → **230** (`tests/repo-structure-smoke.mjs`, 3 phép kiểm). Đột biến: 4 lượt,
+**1 THOÁT rồi được vá**. Đột biến thoát là `slash <= 0` → `slash < 0` — hai bản chỉ khác nhau ở
+đường dẫn dị dạng hai gạch chéo, mà fixture không có ca đó. Đã thêm ca; đột biến bị bắt.
+
+**Cổng kiểm bắt đúng một lỗi thật của tôi giữa chừng:** `GENERATOR_DIRTY` — bộ sinh đang sửa dở
+thì phép kiểm "sự thật máy sinh còn tươi" từ chối phán xử bằng chính script đó. Fail-closed chạy
+đúng.
+
+**Việc kế tiếp:** trích `template/`, rồi cặp phép thử nghiệm thu.

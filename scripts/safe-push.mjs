@@ -18,6 +18,8 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { areaOf, claimPrefixesFrom, readStructureFromDisk } from "./repo-structure.mjs";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const asLabel = args[args.indexOf("--as") + 1];
@@ -52,13 +54,16 @@ const claims = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.jso
 // Một commit thuộc về ai? Xét theo package mà nó đụng.
 // .agents/claims.json là thao tác hành chính (nhận/trả quyền) — ai cũng được
 // đẩy kèm, nếu không thì một phiên trả quyền xong sẽ chặn mọi phiên khác.
+// Tiền tố quyền đọc từ `.repo-structure.json`, dùng CHUNG hàm với cổng đóng phiên — xem
+// ghi chú trong session-check.mjs về lần hai bản regex lệch nhau.
+const claimPrefixes = claimPrefixesFrom(readStructureFromDisk(ROOT));
+
 function ownersOf(sha) {
   const files = gitQuiet("show", "--name-only", "--format=", sha).split("\n").filter(Boolean).map(unquote);
   const areas = new Set();
   for (const file of files) {
     if (file === ".agents/claims.json") continue;
-    const pkg = (file.match(/^(workers\/[^/]+)\//) || [])[1];
-    areas.add(pkg || "_root");
+    areas.add(areaOf(file, claimPrefixes));
   }
   return [...areas].map((area) => ({ area, owner: claims[area]?.owner ?? null }));
 }

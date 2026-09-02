@@ -6,7 +6,7 @@
       "owner": "claude-f18-evidence",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "Duc cho trial thoai mai 02/09: chay chuoi 3 job (dung tran dev) de THU TAI HIEN F-18 — gia thuyet composer lai xuat hien tu job thu hai tro di."
+      "task": "Duc 02/09: chay chuoi 7 job voi nhip moi. Tai khoan chi con 15 credit -> du kien 2 job chay duoc roi CHAM TUONG CREDIT. Muc tieu chinh: CHUP HIEN TRUONG tuong credit o 360p (chua ai do)."
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -23,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-core-k1",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-core-k1). XONG: bo may doc hinh dang don vi tu khoi units trong .repo-structure.json; bang sinh ra GIONG HET TUNG BYTE ban cu. Suite 227, 6/6 dot bien. CHUA trich template/.",
-      "released_at": "2026-09-02"
+      "task": "K1 buoc 2+3: trich template/, cap phep thu nghiem thu, chong troi hai ban script.",
+      "released_at": null
     }
   }
 }
