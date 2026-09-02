@@ -1,6 +1,11 @@
 # decisions.md — Duc Auto GG Flow Video
 
 > Quyết định đã chốt | vì sao | ai chốt. Mới nhất ở cuối. Chỉ thêm dòng.
+>
+> **Ghi chú thêm 2026-09-02 (phiên S6 đã xoá thư mục `drafts/`).** Các dòng
+> "Nguồn: `drafts/…`" bên dưới nay trỏ vào chỗ trống. **Không sửa chúng** — đây là bản ghi,
+> và sửa trích nguồn trong một bản ghi là làm sai bản ghi. Tra đường dẫn mới ở
+> [`docs/README.md`](../../../docs/README.md), mục bản đồ đường dẫn cũ → mới.
 
 ## 2026-08-27 — FLOW-00: ba chốt khai sinh package (Đức chốt trong chat)
 

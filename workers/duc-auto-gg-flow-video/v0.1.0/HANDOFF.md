@@ -316,3 +316,22 @@
   - Việc mở kế tiếp của nhánh (cần tay Đức): reload extension 3 profile → đặt tên → AI gọi
     `bridge.sessions` đếm đủ tên; rồi mới tới trial video (panel + workbook + Dev Mode +
     Video mode + x1) và live-check F-14.
+
+## 2026-09-02 — `fix-dead-refs`: vá 2 con trỏ chết sau phiên S6
+
+Phiên S6 xoá thư mục `drafts/` ở gốc repo, làm 8 tham chiếu trong gói này trỏ vào chỗ trống.
+Không phép kiểm nào bắt được — B4 chỉ soi `DASHBOARD.md` và `llms.txt`.
+
+**Sửa 2, cố ý KHÔNG sửa 6.**
+
+| Chỗ | Xử lý |
+|---|---|
+| `AI-OPERATOR-GUIDE.md` — link thiết kế multi-profile | **ĐÃ SỬA** → `docs/studies/BRIDGE-MULTIPROFILE-DESIGN-V1.md`. Đây là tài liệu operator đọc **lúc chạy live**, để chết là sai lúc đang chạy thật |
+| `STATUS.md` — link kế hoạch điều phối | **ĐÃ SỬA** → `docs/studies/FLOW-EXT-COORDINATION-PLAN.md`. STATUS là file trạng thái hiện tại, con trỏ phải sống |
+| `decisions.md` ×2 — dòng "Nguồn: …" | **KHÔNG SỬA.** Là bản ghi; sửa trích nguồn trong bản ghi là làm sai bản ghi. Đã **thêm** một ghi chú đầu file trỏ sang bản đồ đường dẫn (luật cho phép thêm, cấm sửa) |
+| `HANDOFF.md` ×4 — nằm dưới "Trạng thái hiện tại (2026-08-27)" và các dòng kể lại | **KHÔNG SỬA.** Nhật ký có ngày; sửa đường dẫn trong một bản tường thuật là làm sai lịch sử |
+
+Đường dẫn cũ → mới tra ở `docs/README.md`.
+
+Cùng lý do phiên S6 đã hoàn nguyên 4 đường dẫn trong `BACKLOG.md` của chatgpt: **con trỏ thì
+sửa, tường thuật thì không.**

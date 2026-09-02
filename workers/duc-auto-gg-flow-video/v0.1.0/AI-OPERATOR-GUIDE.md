@@ -57,7 +57,7 @@ nghĩa là panel đóng, không phải Bridge hỏng.
 ## Nhiều profile Chrome cùng nối Bridge — từ 2026-08-28 KHÔNG phải tắt extension nữa
 
 Host giữ được nhiều kết nối cùng lúc, mỗi profile báo danh bằng tên Đức đặt trong side panel
-(ô **"Tên hồ sơ Chrome này"**). Thiết kế: `drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` gốc repo.
+(ô **"Tên hồ sơ Chrome này"**). Thiết kế: `docs/studies/BRIDGE-MULTIPROFILE-DESIGN-V1.md` gốc repo.
 
 **Luật vận hành, theo đúng thứ tự:**
 
