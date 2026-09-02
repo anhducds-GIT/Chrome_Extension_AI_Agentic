@@ -27,7 +27,7 @@
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02 (S5). Tach 112 quyet dinh thanh ADR bat bien (chatgpt 45, gemini 67), docs/adr/0000 = luat ADR, docs/_TEMPLATE-adr.md = ban mau. B12 nay quet CA HAI tang va da BAT: soi 113 ADR, XANH. So trong BRIEF-S5 sai hon 3 lan (ghi 30, thuc te 120) — no dem tieu de ## chu khong dem dong bang. VIEC KE TIEP: phien S6 — don drafts/ (25 trong 49 no B6 nam o do). Chi tiet o cuoi HANDOFF.md.",
+      "task": "XONG 2026-09-02 (S6). Thu muc drafts/ o goc repo DA BIEN MAT: 33 file (roadmap ghi 29) git mv sang docs/studies (20, active) va docs/archive (13, superseded), ca 33 duoc git nhan la doi cho. Them docs/README.md = muc luc bon tang + ban do 33 duong dan cu -> moi (bat buoc, vi ADR da Accepted la bat bien nen khong sua duong dan trong do duoc). No cau truc: 51 -> 19 cho VANG, B6 tu 49 xuong 18. CON LAI: 6 tham chieu drafts/ trong workers/duc-auto-gg-flow-video (phien khac dang giu). VIEC KE TIEP: phien S7 — bat chan B1-B5, B7, B10, B12; moi phep kiem sap bat deu dang XANH. Chi tiet o cuoi HANDOFF.md.",
       "released_at": "2026-09-02"
     }
   }
