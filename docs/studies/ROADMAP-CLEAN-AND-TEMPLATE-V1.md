@@ -68,6 +68,30 @@ Luật giao chéo: nếu một phiên phải làm việc của vai khác, **nói
 
 ---
 
+## 2b. Yêu cầu bổ sung — bảng vận hành dựng sẵn ở MỖI repo
+
+> **Đức chốt 2026-09-02.** Chuẩn không dừng ở "máy đọc được". Cả repo Chrome lẫn Kho đều phải
+> mang được bảng điều hành của chính nó, nối đủ dữ liệu, có hook cưỡng chế, và sổ tay cho AI.
+
+Bốn tầng, là **một bộ** — thiếu tầng nào thì tầng trên nói dối:
+
+| Tầng | Repo Chrome | Kho |
+|---|---|---|
+| 1 · Nền máy đọc — `llms.txt` · `repo-map.json` · `DASHBOARD.md`, sinh từ HEAD | ✅ xong (S2) | ⬜ chưa có |
+| 2 · **Bảng cho người đọc** — giao diện thân thiện, mở ra là thấy trạng thái | ⬜ chưa có | ⬜ chưa có |
+| 3 · Hook cưỡng chế — cổng đóng phiên + cổng cấu trúc + kiểm tự chạy | 🟡 một nửa (S4 làm nốt) | ⬜ chưa có |
+| 4 · Sổ tay cho AI — `AGENTS.md` + cổng vào | ✅ có | ⬜ chưa có |
+
+**Tầng 2 là việc MỚI, chưa nằm trong S1–S10.** Nó là thứ Đức sẽ dùng để nghiệm thu ở mức ~90%
+thay cho việc đọc file — xem `memory`/phản hồi 2026-09-02: *"tôi không muốn tôi phải là người
+check các vấn đề này"*. Chèn thành một phiên riêng **sau S7**, vì bảng chỉ đáng làm khi dữ liệu
+bên dưới đã được chứng minh là đúng; làm sớm hơn là dựng mặt tiền trên nền chưa nghiệm thu.
+
+**Hệ quả cho S9:** bộ template promote vào Kho không phải là mấy file rời, mà là **cả bốn tầng**.
+Làn A dựng và chứng minh; Kho nhận bản đã chứng minh, không dựng lại từ đầu.
+
+---
+
 ## 3. Mười phiên
 
 Mỗi phiên: một mục tiêu, một commit, một lần push. **Không gộp hai phiên.**
