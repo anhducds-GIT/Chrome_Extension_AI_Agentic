@@ -3,25 +3,25 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-stabilizing-bridge",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Port lop on dinh ket noi — nhanh 3/3 (gg-flow). Ban va cua so bo cuoc (tru ky thu + han cho ACK) ap cho CA BA nhanh de chung khong lech nhau, nen ca ba dang co thay doi.",
-      "released_at": null
+      "task": "XONG 02/09 (21afb9e, da push): port lop on dinh ket noi — nhanh 3/3. Giu cach rieng cua nhanh nay (co dang-noi thay vi giu socket truoc await) vi duong multi-profile vua kiem chung live 3 profile; audit xac nhan SOUND 2 vong. Suite 86/86, pha thu 25/26. Viec FLOW-04 va quyet Profile 9 KHONG dung toi. CON MO: chua do live.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-stabilizing-bridge",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Port lop on dinh ket noi — nhanh 3/3 (gg-flow). Ban va cua so bo cuoc (tru ky thu + han cho ACK) ap cho CA BA nhanh de chung khong lech nhau, nen ca ba dang co thay doi.",
-      "released_at": null
+      "task": "XONG 02/09 (ab8ab2a + 21afb9e, da push): va cua so bo cuoc cho khop ba nhanh. Suite 84/84. Do live 28/08 van dung.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-stabilizing-bridge",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Port lop on dinh ket noi — nhanh 3/3 (gg-flow). Ban va cua so bo cuoc (tru ky thu + han cho ACK) ap cho CA BA nhanh de chung khong lech nhau, nen ca ba dang co thay doi.",
-      "released_at": null
+      "task": "XONG 02/09 (ab8ab2a + 21afb9e, da push): port lop on dinh + va cua so bo cuoc. Suite 98/98. CON MO: chua do live.",
+      "released_at": "2026-09-02"
     },
     "_root": {
       "owner": "claude-flow04",
