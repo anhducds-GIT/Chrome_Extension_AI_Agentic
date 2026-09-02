@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-02",
-  "generated_commit": "81f5b49",
+  "generated_commit": "bf1cea4",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -91,13 +91,13 @@
       "lifecycle": "active",
       "status_md": "workers/duc-auto-gemini/v0.2.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Duc reload extension o TUNG profile Gemini + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: do live nhanh tat host qua 2 phut",
+      "next_step": "Sau khi Đức nạp lại tiện ích và đặt tên hồ sơ: gọi `bridge.sessions` để đối chiếu đủ tên. Nợ cũ còn lại: đo thật nhánh tắt máy chủ quá hai phút.",
       "human_action": "Mở từng hồ sơ Chrome đang dùng cho Gemini, nạp lại tiện ích, rồi điền tên hồ sơ vào ô trong bảng điều khiển.",
       "priority_rank": 3,
       "superseded_by": null,
       "last_verified": "2026-08-28",
       "last_verified_commit": "4789754b2ad57121fe94d97e1ebd86fc5d4d2148",
-      "open_item": "Multi-profile Bridge đã PORT xong 02/09 (mẫu gg-flow-video đã audit PASS): host nhiều kết nối fail-closed + bridge.sessions/target/served_by, ô tên hồ sơ trong panel, suite 83/83, 10/10 mutation đỏ. Host mới đã deploy + chạy trên 32148, thấy 1 kết nối legacy — chờ tay Đức reload extension + đặt tên. Nợ cũ giữ nguyên: đo live nhánh tắt host quá 2 phút; G-01 chờ trial live"
+      "open_item": "Lớp nối nhiều hồ sơ Chrome đã chuyển xong sang nhánh này (02/09), theo mẫu đã qua kiểm chéo của nhánh Flow Video: máy chủ chịu được nhiều kết nối và dừng an toàn khi nhập nhằng, bảng điều khiển có ô đặt tên hồ sơ, 83/83 phép kiểm xanh, 10/10 phép thử phá hoại đều bị bắt. Máy chủ mới đã chạy và thấy một kết nối kiểu cũ — đang chờ Đức nạp lại tiện ích rồi đặt tên. Hai nợ cũ giữ nguyên: đo thật nhánh tắt máy chủ quá hai phút, và G-01 chờ một lượt chạy thật."
     },
     {
       "id": "duc-auto-gg-flow-video",
@@ -132,7 +132,7 @@
     {
       "id": "workers/duc-auto-gemini/v0.2.0",
       "unit": "workers/duc-auto-gemini/v0.2.0",
-      "title": "Duc reload extension o TUNG profile Gemini + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: do live nhanh tat host qua 2 phut",
+      "title": "Sau khi Đức nạp lại tiện ích và đặt tên hồ sơ: gọi `bridge.sessions` để đối chiếu đủ tên. Nợ cũ còn lại: đo thật nhánh tắt máy chủ quá hai phút.",
       "rank": 3,
       "claim": null
     },
