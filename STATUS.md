@@ -6,6 +6,7 @@ lifecycle: idea
 owner: claude
 priority_rank: 4
 next_step: "Quyết định: nuôi tiếp hay cho nghỉ. Nếu nuôi thì chuyển vào workers/observer-v0/v0.1.0/ theo phiên S8; nếu không thì khai archived."
+human_action: "Quyết định Extension Observer V0: nuôi tiếp hay cho nghỉ. Chỉ Đức chốt được."
 version_source: manifest.json
 current_focus: "Chưa từng chạy pilot nào. Đây là mã quan sát ở gốc repo, còn nằm ngoài cấu trúc workers/ — phiên S8 sẽ chuyển nó vào đúng chỗ."
 ref_readme: README.md

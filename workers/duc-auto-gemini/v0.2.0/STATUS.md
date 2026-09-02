@@ -6,6 +6,7 @@ lifecycle: active
 owner: claude
 priority_rank: 3
 next_step: "Duc reload extension o TUNG profile Gemini + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: do live nhanh tat host qua 2 phut"
+human_action: "Mở từng hồ sơ Chrome đang dùng cho Gemini, nạp lại tiện ích, rồi điền tên hồ sơ vào ô trong bảng điều khiển."
 version_source: workers/duc-auto-gemini/v0.2.0/manifest.json
 last_verified: 2026-08-28
 last_verified_commit: 4789754b2ad57121fe94d97e1ebd86fc5d4d2148

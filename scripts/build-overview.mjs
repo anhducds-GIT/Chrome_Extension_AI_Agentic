@@ -263,6 +263,19 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const ageDays = Math.max(0, Math.round((today - Date.parse(stamp)) / 86400000));
   const stale = ageDays > 7;
 
+  /* VIỆC CHỜ TAY ĐỨC — đọc trường `human_action`, KHÔNG đoán từ chữ.
+     Ba trạng thái phải phân biệt, và gộp bất kỳ hai cái là bảng nói dối:
+       chuỗi thật  → có việc chờ Đức
+       "không"     → đã trả lời, và không có gì chờ
+       rỗng        → CHƯA AI TRẢ LỜI câu đó
+     Đơn vị đã nghỉ hưu không tính — nó ra khỏi cuộc đua rồi. */
+  const RETIRED = new Set(["superseded", "archived"]);
+  const live = model.rows.filter((r) => !RETIRED.has(r.lifecycle));
+  const humanActions = live
+    .filter((r) => r.humanAction && r.humanAction.trim().toLowerCase() !== "không")
+    .map((r) => ({ unit: r.name, what: r.humanAction.trim() }));
+  const humanUndeclared = live.filter((r) => !r.humanAction).length;
+
   const ranked = model.rows.filter((r) => r.nextStep)
     .sort((a, b) => (a.priorityRank ?? Infinity) - (b.priorityRank ?? Infinity) || a.key.localeCompare(b.key));
   const top = ranked[0] || null;
@@ -321,8 +334,8 @@ ${STYLE}
       </div>
       <div class="nb duc">
         <span class="k">Đức cần làm</span>
-        <span class="t">Chưa khai được</span>
-        <span class="s">Việc chờ tay Đức đang nằm lẫn trong câu mô tả. Bảng không tự suy từ chữ — đã ghi thành Y-03 trong sổ ý tưởng.</span>
+        <span class="t">${humanActions.length === 0 ? "Không có việc nào chờ Đức" : humanActions.length === 1 ? "1 việc đang chờ" : humanActions.length + " việc đang chờ"}</span>
+        <span class="s">${esc(humanActions.length ? humanActions[0].what : (humanUndeclared ? "Nhưng còn đơn vị chưa khai trường này — xem danh sách bên dưới." : "Mọi đơn vị đều đã trả lời câu này."))}</span>
       </div>
     </div>
   </div>
@@ -350,12 +363,17 @@ ${STYLE}
         <p class="note">Số mục còn mở trong sổ nợ của từng gói — tổng ${debtTotal}. Bảng cố ý KHÔNG liệt kê mã lỗi; chi tiết nằm trong repo.</p>
       </div>
 
-      <div class="card gaps">
-        <div class="sect">Một ô còn thiếu dữ liệu</div>
-        <div class="gap">
-          <span class="k">Đức cần làm</span>
-          <p>Hồ sơ trạng thái chưa có trường riêng cho “việc này chờ tay Đức”. Nó đang nằm lẫn trong câu mô tả, nên bảng phải đoán — và đoán thì không được phép. Đã ghi thành <strong>Y-03</strong>.</p>
-        </div>
+      <div class="card">
+        <div class="sect">Đức cần làm</div>
+        <div class="bl">`);
+  for (const a of humanActions) {
+    p.push(`          <div class="bi"><span class="c">›</span><span class="d"><strong>${esc(a.unit)}</strong> — ${esc(a.what)}</span></div>`);
+  }
+  if (humanActions.length === 0) {
+    p.push(`          <div class="bi"><span class="c">✓</span><span class="d">Không có việc nào đang chờ Đức.</span></div>`);
+  }
+  p.push(`        </div>${humanUndeclared ? `
+        <p class="note"><strong>${humanUndeclared} đơn vị chưa khai trường này</strong> — nên danh sách trên có thể còn thiếu. Trường mới, đang ở giai đoạn tuỳ chọn; xem Y-03 trong sổ ý tưởng.</p>` : ""}
       </div>
     </div>
 

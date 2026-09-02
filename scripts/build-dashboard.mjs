@@ -278,6 +278,23 @@ export function validateStatusDetailed(fm, deps) {
     else if (rankOf(fm.priority_rank) === null) fail(`priority_rank "${fm.priority_rank}" phải là số nguyên ≥ 1.`);
   }
 
+  // `human_action` — việc đang chờ tay người chốt (với repo này là Đức).
+  //
+  // GIAI ĐOẠN 1: TUỲ CHỌN, có chủ đích. Không thể đòi hỏi một trường mà những người khai
+  // khác chưa có — lúc thêm trường này, gói gg-flow-video đang do phiên khác giữ nên không
+  // sửa được từ đây; bắt buộc ngay là cổng đỏ vì việc của người khác. Đây là luật chung của
+  // mọi lần đổi lược đồ, không phải thoả hiệp riêng lần này.
+  // GIAI ĐOẠN 2 (Y-03 trong IDEAS.md): khi cả năm đơn vị đã khai thì chuyển vào khối
+  // "đơn vị CÒN SỐNG" ở trên, cạnh `next_step`.
+  //
+  // Khai thì phải đúng dạng. Chuỗi rỗng là kiểu hỏng tệ nhất: bảng đọc ra "không có gì chờ
+  // Đức" trong khi thực tế chưa ai trả lời câu đó.
+  if (fm.human_action !== undefined) {
+    if (!String(fm.human_action).trim()) {
+      fail('human_action khai rỗng. Bỏ hẳn trường đó, hoặc ghi "không" nếu thật sự không có gì chờ Đức — rỗng thì bảng không phân biệt được "không có gì" với "chưa ai trả lời".');
+    }
+  }
+
   if (fm.version_source) {
     if (!deps.fileExists(fm.version_source)) {
       fail(`không tìm thấy version_source "${fm.version_source}".`);
@@ -525,6 +542,7 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
       // sửa lại bộ sinh.
       owner: item.fm?.owner ?? "",
       nextStep: item.fm?.next_step ?? "",
+      humanAction: item.fm?.human_action ?? "",
       priorityRank: rankOf(item.fm?.priority_rank),
       supersededBy: item.fm?.superseded_by ?? "",
       statusPath: item.fm ? item.statusPath : ""
@@ -564,6 +582,7 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
     currentFocus: rootFm?.current_focus ?? "Chưa khai STATUS; đây là một việc đang mở.",
     owner: rootFm?.owner ?? "",
     nextStep: rootFm?.next_step ?? "",
+    humanAction: rootFm?.human_action ?? "",
     supersededBy: rootFm?.superseded_by ?? "",
     priorityRank: rankOf(rootFm?.priority_rank),
     statusPath: rootFm ? rootStatusPath : ""
@@ -1079,6 +1098,10 @@ export function buildRepoMap(model) {
       // và phía đọc phải xử lý hai kiểu "không có" thay vì một.
       owner: row.owner || null,
       next_step: row.nextStep || null,
+      // Khoá LUÔN có mặt dù giai đoạn 1 trường này còn tuỳ chọn — hình dạng hợp đồng phải
+      // ổn định, phía đọc không phải đoán. `null` = chưa khai; chuỗi "không" = đã khai và
+      // không có gì chờ. Hai thứ đó KHÁC nhau, đừng gộp.
+      human_action: row.humanAction || null,
       priority_rank: Number.isFinite(row.priorityRank) ? row.priorityRank : null,
       superseded_by: row.supersededBy || null,
       last_verified: row.lastVerified || null,

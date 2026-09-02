@@ -6,6 +6,7 @@ lifecycle: active
 owner: claude
 priority_rank: 2
 next_step: "Duc reload extension o TUNG profile ChatGPT + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: audit doc lap goi khoang-nghi-giua-job (kenh auditmin da chung minh song 02/09)"
+human_action: "Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích, rồi điền tên hồ sơ vào ô trong bảng điều khiển."
 version_source: workers/duc-auto-chatgpt/v0.1.0/manifest.json
 last_verified: 2026-08-26
 last_verified_commit: 00d1f99b44bd490cac079da5e803917346571a26
