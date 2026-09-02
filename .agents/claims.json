@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
+      "owner": "fix-dead-refs",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 2026-09-02 (claude-bridge-multiprofile). XONG TRON: multi-profile live DAT — 3 ghe co ten (Binh/anhducds/kaito) cung noi, fail-closed dung, served_by dung; audit Codex PASS; da push (58e5bb1, 945fba7, 34545e9 len origin qua push cua chuoi S). Ghe legacy con lai = Profile 9 (profile thu 4, Duc quyet dat ten hoac tat). Con mo cua nhanh: trial video (can panel+workbook+DevMode+VideoMode+x1) va live-check F-14.",
-      "released_at": "2026-09-02"
+      "task": "Sua 8 tham chieu drafts/ da chet sau phien S6. Chi sua CON TRO DANG SONG, khong sua nhat ky ke lai lich su.",
+      "released_at": null
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -17,18 +17,18 @@
       "released_at": "2026-09-02"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-stabilizing-bridge",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 2026-09-02 (claude-bridge-multiprofile). XONG + da push: port multi-profile giu nguyen bat tay challenge (414e7ea) + va authSent (5aa7540) + evidence 2 vong audit. Suite 97/97, mutation 13/13 do, host moi deploy + song tren 32147. CON MO (tay Duc): reload extension tung profile + dat ten; no cu: B-14…B-21.",
-      "released_at": "2026-09-02"
+      "task": "Port lop stability tu Gemini (3514aa5+): keepalive ACK deadline, backoff tran 5s + nhuong alarm, handshake deadline, drop/abandonSocket, currentState, ghi status co thu tu, hang doi pairing. DAP LEN ban hien tai (da co multi-profile instance + authSent), KHONG copy de tu Gemini. Giu 2 bat bien: giu socket truoc moi await trong connectHost; auth_ok truoc khi authSent phai bi tu choi.",
+      "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "fix-dead-refs",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02. S1..S7 da dong. BAI TEST NGHIEM THU DAT CA HAI VONG (r01 dang van hanh, r02 dang ba cau hoi) — muc tieu chinh cua chuong trinh dong lai. Chan da bat va da kiem chay duoc. CON LAI: S8 tra no cu, S9 promote template vao Kho, S10 radar.",
-      "released_at": "2026-09-02"
+      "task": "Sinh lai artifact sau khi va con tro chet o gg-flow-video. Giu den khi push xong.",
+      "released_at": null
     }
   }
 }
