@@ -135,13 +135,13 @@ GPT 34 file `.js` · Gemini 33.
 | `background.js` | 246 | 167 | 79 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
 | `bridge-transport-loopback.js` | 548 | 494 | 54 |
-| `content.js` | 1027 | 1079 | 52 |
 | `output-profile-core.js` | 96 | 45 | 51 |
 | `provider-adapter.js` | 228 | 187 | 41 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
 | `output-location-core.js` | 389 | 373 | 16 |
 | `halt-instructions-core.js` | 147 | 133 | 14 |
 | `resume-core.js` | 133 | 122 | 11 |
+| `content.js` | 1072 | 1079 | 7 |
 | `xlsx-codec.js` | 371 | 364 | 7 |
 | `bridge-proposal-core.js` | 380 | 374 | 6 |
 | `chat-readiness-core.js` | 26 | 20 | 6 |
