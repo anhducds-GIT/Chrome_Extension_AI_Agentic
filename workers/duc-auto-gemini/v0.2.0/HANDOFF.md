@@ -583,3 +583,4 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   mới (bỏ cổng authSent, bỏ guard sau await) đều làm test ĐỎ. Hệ quả phụ: các test cũ bắn
   auth_ok ngay sau open phải chờ 1 nhịp (`settle()`/tick) — sửa mv3-reconnect + liveness.
   Suite 84/84.
+- 2026-09-02 · `claude-bridge-multiprofile` · Đóng gói: `evidence-multiprofile-port-20260902/` (2 vòng audit Codex nguyên văn + mutation 13/13 đỏ), fixture cô lập vế identity của guard sau await, khai bản đồ file. Suite 84/84. Còn tay Đức: reload extension từng profile + đặt tên (ô ở tab BRIDGE).

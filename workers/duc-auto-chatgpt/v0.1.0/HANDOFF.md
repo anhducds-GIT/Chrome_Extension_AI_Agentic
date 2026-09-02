@@ -476,3 +476,4 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   `tokenSent` vẫn bật sớm để giữ nguyên lớp chống replay. Thêm
   `tests/bridge-multiprofile-transport-async-smoke.mjs` (đi qua challenge thật với HMAC proof
   hợp lệ). 2 mutation mới đều ĐỎ. Suite 97/97.
+- 2026-09-02 · `claude-bridge-multiprofile` · Đóng gói: `evidence-multiprofile-port-20260902/` (2 vòng audit Codex nguyên văn + mutation 13/13 đỏ), fixture cô lập vế identity của guard sau await, khai bản đồ file. Suite 97/97. Còn tay Đức: reload extension từng profile + đặt tên (ô ở tab BRIDGE).
