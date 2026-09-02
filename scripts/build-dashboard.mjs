@@ -413,6 +413,7 @@ export function collectModel(deps = createDefaultDeps()) {
       // sửa lại bộ sinh.
       owner: item.fm?.owner ?? "",
       nextStep: item.fm?.next_step ?? "",
+      priorityRank: Number.isFinite(Number(item.fm?.priority_rank)) ? Number(item.fm.priority_rank) : null,
       supersededBy: item.fm?.superseded_by ?? "",
       statusPath: item.fm ? item.statusPath : ""
     };
@@ -499,10 +500,29 @@ function readClaims(deps) {
    extension-status/v2, do phiên S3 thêm. Tới lúc đó Khối A khai thẳng CHƯA KHAI.
    Đây không phải thiếu sót giấu đi: nó hiện ra ngay dòng đầu bảng, đúng nguyên tắc
    "mỗi câu AI phải hỏi người = một trường dữ liệu còn thiếu". */
-function priorityFrom(rows) {
+/* Thứ hạng phải do người KHAI, không do máy đoán.
+
+   Bản trước lấy `declared[0]` — phần tử đầu sau khi sắp theo đường dẫn. Lúc mới có một
+   đơn vị khai `next_step` thì trông đúng; nhưng khi schema v2 bắt MỌI đơn vị khai
+   `next_step`, "việc ưu tiên #1" lặng lẽ trở thành "việc của package đứng đầu bảng chữ
+   cái". Một con số sai mà trông rất hợp lý. Audit GPT 2026-09-02, mục 7.
+
+   Nay: thứ hạng lấy từ `priority_rank` trong STATUS. Không ai khai thì nói CHƯA XẾP HẠNG
+   — không đoán. Hai đơn vị cùng khai hạng nhỏ nhất thì nói XUNG ĐỘT — không chọn bừa
+   một cái. Cả hai trường hợp đều hiện ra chỗ Đức nhìn, thay vì im lặng. */
+export function priorityFrom(rows) {
   const declared = rows.filter((row) => row.nextStep);
   if (declared.length === 0) return null;
-  return { unit: declared[0].key, title: declared[0].nextStep, statusPath: declared[0].statusPath };
+  const ranked = declared.filter((row) => Number.isFinite(row.priorityRank));
+  if (ranked.length === 0) {
+    return { unranked: true, count: declared.length };
+  }
+  const best = Math.min(...ranked.map((row) => row.priorityRank));
+  const winners = ranked.filter((row) => row.priorityRank === best);
+  if (winners.length > 1) {
+    return { conflict: true, rank: best, units: winners.map((row) => row.key).sort(compareText) };
+  }
+  return { unit: winners[0].key, title: winners[0].nextStep, statusPath: winners[0].statusPath, rank: best };
 }
 
 function firstSentence(text) {
@@ -510,7 +530,28 @@ function firstSentence(text) {
   if (!flat) return "";
   const cut = flat.search(/[.·;]\s/);
   const head = cut > 0 ? flat.slice(0, cut) : flat;
-  return head.length > 160 ? `${head.slice(0, 157)}...` : head;
+  return safeTruncate(head, 160);
+}
+
+/* Cắt mà KHÔNG cắt gãy cú pháp markdown.
+   Bản trước cắt cứng ở ký tự thứ 157, nên một câu kết thúc bằng "[hướng dẫn](docs/x.md)"
+   biến thành "[hướng dẫn](docs/..." — một link mở mà không đóng, và mọi thứ sau nó
+   trong dòng bị nuốt. Đức nhìn thấy đúng ca này trong `llms.txt` ngày 2026-09-02.
+   Cả hai auditor đều bắt (Codex phát hiện 6, GPT xếp cùng nhóm). */
+function safeTruncate(text, max) {
+  if (text.length <= max) return text;
+  let cut = text.slice(0, max);
+  // Lùi về ranh giới từ gần nhất, nhưng đừng lùi quá nửa — thà cắt giữa từ còn hơn
+  // trả về một mẩu cụt lủn.
+  const space = cut.lastIndexOf(" ");
+  if (space > max * 0.6) cut = cut.slice(0, space);
+  // Bỏ cấu trúc mở mà chưa đóng: "[nhãn](đường-dẫn" hoặc "[nhãn"
+  const lastOpen = Math.max(cut.lastIndexOf("["), cut.lastIndexOf("("));
+  const lastClose = Math.max(cut.lastIndexOf("]"), cut.lastIndexOf(")"));
+  if (lastOpen > lastClose) cut = cut.slice(0, lastOpen);
+  // Backtick lẻ cũng làm hỏng phần còn lại của dòng.
+  if (((cut.match(/`/g) ?? []).length % 2) === 1) cut = cut.slice(0, cut.lastIndexOf("`"));
+  return `${cut.trimEnd()}…`;
 }
 
 /* Liệt kê từ GIT, không từ đĩa.
@@ -699,12 +740,25 @@ export function buildDashboard(model) {
   return lines.join("\n");
 }
 
+/* MỘT chỗ diễn giải "việc ưu tiên #1" cho cả DASHBOARD lẫn llms.txt. Hai chỗ tự
+   viết câu riêng thì sớm muộn sẽ nói hai điều khác nhau về cùng một dữ liệu. */
+function priorityText(priority, makeLink) {
+  if (!priority) {
+    return "**CHƯA KHAI** — chưa STATUS nào khai `next_step` (trường của schema `extension-status/v2`, phiên S3 thêm). Tạm thời xem cột \"Việc đang mở\" ở bảng B.";
+  }
+  if (priority.unranked) {
+    return `**CHƯA XẾP HẠNG** — ${priority.count} đơn vị có khai \`next_step\` nhưng không đơn vị nào khai \`priority_rank\`. Máy KHÔNG tự chọn hộ: chọn theo thứ tự bảng chữ cái là một con số sai trông rất hợp lý.`;
+  }
+  if (priority.conflict) {
+    return `**XUNG ĐỘT** — ${priority.units.length} đơn vị cùng khai \`priority_rank: ${priority.rank}\` (${priority.units.map((unit) => `\`${unit}\``).join(" · ")}). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.`;
+  }
+  return `**${priority.unit}** — ${priority.title}${priority.statusPath && makeLink ? ` · ${makeLink("STATUS", priority.statusPath)}` : ""}`;
+}
+
 /* Khối A đặt TRÊN CÙNG có chủ đích: người (và AI) mới vào phải trả lời được
    "bắt đầu từ đâu" trước khi thấy bất kỳ bảng số nào. */
 function blockA(model) {
-  const priorityLine = model.priority
-    ? `**${model.priority.unit}** — ${model.priority.title}${model.priority.statusPath ? ` · ${link("STATUS", model.priority.statusPath)}` : ""}`
-    : "**CHƯA KHAI** — chưa STATUS nào khai `next_step` (trường của schema `extension-status/v2`, phiên S3 thêm). Tạm thời xem cột \"Việc đang mở\" ở bảng B.";
+  const priorityLine = priorityText(model.priority, (label, path) => link(label, path));
   return [
     "## A · Bắt đầu từ đâu",
     "",
@@ -759,9 +813,7 @@ export function buildLlmsTxt(model) {
     "",
     "## Việc ưu tiên #1",
     "",
-    model.priority
-      ? `- **${model.priority.unit}** — ${model.priority.title}`
-      : "- **CHƯA KHAI** — chưa STATUS nào khai `next_step`. Xem cột \"Việc đang mở\" ở `DASHBOARD.md`, và `.agents/claims.json` để biết ai đang giữ package nào.",
+    `- ${priorityText(model.priority, null)}`,
     "",
     "## Đọc theo thứ tự này",
     ""
@@ -821,6 +873,7 @@ export function buildRepoMap(model) {
       // và phía đọc phải xử lý hai kiểu "không có" thay vì một.
       owner: row.owner || null,
       next_step: row.nextStep || null,
+      priority_rank: Number.isFinite(row.priorityRank) ? row.priorityRank : null,
       superseded_by: row.supersededBy || null,
       last_verified: row.lastVerified || null,
       last_verified_commit: row.lastVerifiedCommit || null,
@@ -830,8 +883,11 @@ export function buildRepoMap(model) {
     // `next_step` (S3). KHÔNG đổ claim đang mở vào đây: claim là trạng thái sống,
     // xem ghi chú ở `priorityFrom`. Phía đọc muốn biết ai đang giữ gì thì đọc
     // `.agents/claims.json` — nguồn sự thật duy nhất của việc đó.
-    active_work: model.priority
-      ? [{ id: model.priority.unit, unit: model.priority.unit, title: model.priority.title, claim: null }]
+    // MẢNG, không phải object. C1 bản đầu vẽ nó như một object đơn — không diễn tả
+    // được hai trạng thái có thật: "không có việc nào" và "nhiều việc song song".
+    // Đã sửa SPEC cho khớp code thay vì ngược lại (quyết định 2026-09-02, ghi ở C1).
+    active_work: model.priority && model.priority.unit
+      ? [{ id: model.priority.unit, unit: model.priority.unit, title: model.priority.title, rank: model.priority.rank, claim: null }]
       : [],
     health: model.health
   };
@@ -846,7 +902,16 @@ export function compareRepoMap(expected, actual) {
     let parsed;
     try { parsed = JSON.parse(text); }
     catch { return { broken: `${label}: không phải JSON hợp lệ` }; }
-    for (const key of REPO_MAP_VOLATILE_KEYS) delete parsed[key];
+    // Bỏ qua GIÁ TRỊ (nó đổi theo từng commit), nhưng vẫn ĐÒI KHOÁ CÓ MẶT và đúng
+    // kiểu. Bản trước xoá vô điều kiện, nên một `repo-map.json` mất hẳn hai trường
+    // xuất xứ vẫn được coi là khớp — hợp đồng cross-repo mất khả năng truy nguồn mà
+    // cổng vẫn xanh. Codex phát hiện 3, GPT xếp MAJOR; hai auditor cùng chỉ một chỗ.
+    for (const key of REPO_MAP_VOLATILE_KEYS) {
+      if (typeof parsed[key] !== "string" || parsed[key].trim() === "") {
+        return { broken: `${label}: thiếu hoặc sai kiểu trường xuất xứ \`${key}\` (phải là chuỗi không rỗng)` };
+      }
+      delete parsed[key];
+    }
     return { value: parsed };
   };
   const left = strip(expected, "bản sinh ra");

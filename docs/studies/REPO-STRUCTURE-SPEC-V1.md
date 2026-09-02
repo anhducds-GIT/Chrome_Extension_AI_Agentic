@@ -72,9 +72,9 @@ Bắt buộc có:
   "generated_at": "…", "generated_commit": "…",
   "profile": "P1",
   "entry_point": "llms.txt",
-  "units": [ { "id","path","lifecycle","owner","next_step",
+  "units": [ { "id","path","lifecycle","owner","next_step","priority_rank",
                "last_verified","last_verified_commit","superseded_by" } ],
-  "active_work": { "id","unit","title","claim" },
+  "active_work": [ { "id","unit","title","rank","claim" } ],
   "health": { "units_without_status": 0, "dead_links": 0,
               "undeclared_dirs": 0, "draft_debt": 0 }
 }
@@ -82,6 +82,24 @@ Bắt buộc có:
 
 `schema_version` là bắt buộc: thiếu nó thì mọi hệ đọc file này sẽ vỡ khi một repo nâng cấp trước.
 `health.draft_debt` = số file `status: active` đã quá `ttl_days`.
+
+**`active_work` là MẢNG — sửa 2026-09-02.** Bản đầu vẽ nó như một object đơn. Sai, vì có hai
+trạng thái thật mà object không diễn tả được: *không có việc nào đang chạy* (mảng rỗng) và
+*nhiều việc song song*. Ép thành object thì phía đọc phải đoán, và mỗi lần đoán là một lần lệch.
+Phát hiện bởi audit GPT ngày 2026-09-02: code phát ra mảng còn spec ghi object. Chốt theo mảng.
+
+**Trường trống trả `null`, KHÔNG được bỏ khoá đi.** Hình dạng hợp đồng phải ổn định kể cả khi
+chưa có dữ liệu — bỏ khoá là bắt phía đọc phân biệt "không có" với "chưa hỗ trợ".
+
+**`priority_rank` quyết định việc ưu tiên #1, và nó phải do người khai.** Số nhỏ hơn = ưu tiên
+cao hơn. Đúng MỘT đơn vị được mang hạng nhỏ nhất. Không ai khai thì hệ khai thẳng
+*chưa xếp hạng*; hai đơn vị cùng hạng nhỏ nhất thì khai *xung đột*. **Máy không được tự chọn
+hộ** — bản trước lấy đơn vị đầu tiên theo thứ tự đường dẫn, tức là "việc ưu tiên #1" thầm lặng
+biến thành "việc của package đứng đầu bảng chữ cái": một con số sai trông rất hợp lý.
+
+**Hai trường xuất xứ `generated_at` / `generated_commit`:** phía so sánh được phép bỏ qua *giá
+trị* (chúng đổi theo từng commit) nhưng **phải đòi khoá có mặt và đúng kiểu chuỗi**. Bỏ qua cả
+sự tồn tại thì một `repo-map.json` mất khả năng truy nguồn vẫn lọt cổng kiểm.
 
 ### C2 · Hiến pháp ngắn — `AGENTS.md`
 

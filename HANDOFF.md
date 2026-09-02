@@ -106,3 +106,36 @@
     đang có thì `collectModel` từ chối toàn repo. Đã kiểm: cả 3 STATUS + template đều v1.
     Kèm theo: `areas` nên nằm ở `.repo-structure.json` chứ không phải `claims.json` (GPT
     bác đề xuất của tôi, và GPT đúng); roadmap canonical còn tự mâu thuẫn.
+
+- **2026-09-02 · `s2-fix` (patch tài liệu)** — Đóng nốt phần còn nợ của hai vòng audit. Đức
+  chốt: **Đức không còn là người đi bắt lỗi kỹ thuật** — vòng AI phải tự đóng, Đức chỉ review
+  khi có dashboard thân thiện ở mức ~90%. Vòng này tôi tự chạy audit + mutation, không giao
+  việc kiểm cho Đức.
+  - **Bốn quyết định kỹ thuật, đã chốt và đã code:**
+    ① `active_work` là **MẢNG** — sửa SPEC cho khớp code, không phải ngược lại. Object đơn
+    không diễn tả được "không có việc nào" và "nhiều việc song song".
+    ② `compareRepoMap` bỏ qua **giá trị** hai trường xuất xứ nhưng **đòi khoá có mặt, đúng
+    kiểu** — trước đây một `repo-map.json` mất khả năng truy nguồn vẫn lọt cổng.
+    ③ **`priority_rank`** thay cho "lấy dòng đầu theo thứ tự đường dẫn". Không ai khai thì hệ
+    nói **CHƯA XẾP HẠNG**; hai đơn vị cùng hạng nhỏ nhất thì nói **XUNG ĐỘT**. Máy không đoán
+    hộ — bản cũ khiến "việc ưu tiên #1" thầm lặng thành "việc của package đầu bảng chữ cái".
+    ④ `safeTruncate` — cắt câu không còn cắt gãy link markdown hay backtick. Đây là chỗ Đức
+    nhìn thấy `(...` trong `llms.txt`.
+  - **Bốn tài liệu điều hành đã hết mâu thuẫn:** roadmap "Chín phiên" → "Mười phiên"; S2 đã
+    tick (`6ef131c`, ghi rõ Claude Code viết thay Codex); mục 8 "Bắt đầu" trỏ S3 thay vì vẫn
+    bảo bắt đầu S1; phạm vi S3 sửa từ "mỗi `pilots/`" thành 7 thư mục + migrate schema;
+    `RESTRUCTURE-PLAN` bỏ đòi frontmatter 5 trường (`created`/`last_reviewed` là ngày gõ tay,
+    máy suy được từ git) về đúng luật 3 trường; `REPO-STRUCTURE-SPEC` C1 cập nhật hợp đồng.
+  - **Bài nghiệm thu cũ KHÔNG chạy được, đã sửa:** nó bảo "bấm thử 3 link trong `llms.txt`".
+    GitHub hiển thị `.txt` dạng chữ trơn nên link không bấm được. Không phải lỗi của file
+    (chuẩn llmstxt.org bắt buộc đuôi `.txt`) mà là lỗi của bài kiểm. Nay: nhìn cấu trúc ở
+    `llms.txt`, bấm link ở `DASHBOARD.md`.
+  - **BRIEF-S3 viết lại từ đầu.** Bản cũ là blocker: bảo nâng schema lên v2 mà không giao
+    migrate ba STATUS `v1` đang có → `collectModel` từ chối toàn repo. Bản mới bắt làm đúng
+    thứ tự **migrate trước, siết sau**, và đặt `areas` vào `.repo-structure.json` chứ không
+    phải `claims.json` (audit GPT bác đề xuất đầu của tôi, và bác đúng: `claims` là STATE,
+    `areas` là LAW, trộn hai tầng là trái luật của chính SPEC). Bỏ `session_intent` khỏi nhóm
+    bắt buộc — nó là thứ theo phiên, thuộc HANDOFF.
+  - **Đo:** suite **63/63** · npm test 95+6+63+15 xanh · **9/9 mutation bị bắt** (5 cái mới
+    cho 4 quyết định trên, 4 cái cũ kiểm lại). Khối D vẫn 2 · 0 · 7 · 0.
+  - **Còn mở:** S3 sẵn sàng mở. Trước khi mở nên cho Codex audit một lượt bản patch này.

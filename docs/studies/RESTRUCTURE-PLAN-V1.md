@@ -80,7 +80,14 @@ Mỗi giai đoạn: một phiên, một commit, một lần push.
 | **Sửa file** | `scripts/build-dashboard.mjs` |
 | **Sinh mới** | `llms.txt` (gốc repo), `repo-map.json` (gốc repo) |
 | **Sửa nội dung** | `DASHBOARD.md` thêm Khối A và Khối D |
-| **Đức nhìn thấy gì** | Mở `llms.txt` trên GitHub. Thấy tên repo, một đoạn tóm tắt, và danh sách link — mỗi link một dòng mô tả. Bấm thử 3 link bất kỳ, cả 3 phải mở được. |
+| **Đức nhìn thấy gì** | Mở `llms.txt` trên GitHub: tên repo, một đoạn tóm tắt, mỗi link một dòng mô tả, không có chữ "LINK CHẾT". Việc bấm link làm ở `DASHBOARD.md` — 3 link bất kỳ, cả 3 phải mở được. |
+
+> **Sửa 2026-09-02 — bài nghiệm thu cũ KHÔNG chạy được.** Nó bảo "bấm thử 3 link trong
+> `llms.txt`". GitHub hiển thị file `.txt` dạng chữ trơn, nên `[nhãn](đường-dẫn)` chỉ là chữ,
+> không thành nút bấm. Không phải lỗi của file — chuẩn llmstxt.org bắt buộc đuôi `.txt` — mà
+> là lỗi của bài kiểm. Chỗ bấm được là `DASHBOARD.md` (đuôi `.md`, GitHub render thành link
+> thật) và nó chứa đúng những đường dẫn đó. Máy cũng tự đếm link chết ở Khối D; con số đó
+> phải là 0.
 
 `llms.txt` theo đúng định dạng chuẩn llmstxt.org: một `#` tiêu đề, một `>` blockquote tóm tắt,
 các mục `##` chứa danh sách link kèm mô tả một dòng.
@@ -143,7 +150,12 @@ Cùng nguyên tắc với `evidence/` — chỉ khác là áp cho **quyết đ�
 | | |
 |---|---|
 | **Mục tiêu** | `drafts/` không bao giờ phình tới 29 file lần nữa |
-| **Việc** | Thêm frontmatter `kind` / `status` / `created` / `ttl_days` / `last_reviewed` cho mọi file trong `docs/`. Cổng B11 cảnh báo khi quá hạn. |
+| **Việc** | Thêm frontmatter **ĐÚNG BA TRƯỜNG** `kind` / `status` / `ttl_days` cho mọi file trong `docs/`. Cổng B11 cảnh báo khi quá hạn. |
+
+> **Sửa 2026-09-02.** Bản trước đòi năm trường, thêm `created` và `last_reviewed`. Đã bỏ:
+> hai trường đó là **ngày gõ tay**, và ngày gõ tay thì mục. Máy suy được cả hai từ lịch sử
+> git (`git log -1` trên chính file đó), nên khai tay chỉ tạo thêm một nguồn sự thật thứ hai
+> để lệch. Luật ba trường đã áp dụng thật ở phiên S1 và bộ sinh đang đo theo nó.
 | **Đức nhìn thấy gì** | Khối D của DASHBOARD có thêm dòng: *"Tài liệu quá hạn chưa rà: N"*. |
 
 `ttl_days` gợi ý: brief 30 · study 180 · guide 365.

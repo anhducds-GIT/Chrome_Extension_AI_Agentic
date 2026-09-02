@@ -68,7 +68,7 @@ Luật giao chéo: nếu một phiên phải làm việc của vai khác, **nói
 
 ---
 
-## 3. Chín phiên
+## 3. Mười phiên
 
 Mỗi phiên: một mục tiêu, một commit, một lần push. **Không gộp hai phiên.**
 
@@ -105,7 +105,14 @@ Mỗi phiên: một mục tiêu, một commit, một lần push. **Không gộp 
 |---|---|
 | **Ai** | Codex viết script · Claude audit |
 | **Làm** | Nâng `scripts/build-dashboard.mjs` sinh thêm `llms.txt` (định dạng llmstxt.org) + `repo-map.json`. Thêm Khối A "Bắt đầu từ đâu" và Khối D "Sức khoẻ điều hướng" vào `DASHBOARD.md`. |
-| **Đức nghiệm thu** | Mở `llms.txt`. Thấy tiêu đề, đoạn tóm tắt, danh sách link mỗi link một dòng mô tả. **Bấm thử 3 link, cả 3 mở được.** |
+| **Đức nghiệm thu** | Mở `llms.txt`: có tiêu đề, đoạn tóm tắt, mỗi link kèm một dòng mô tả, và **không có chữ "LINK CHẾT"** ở đâu. Rồi mở `DASHBOARD.md` **bấm thử 3 link** — cả 3 phải mở được. |
+
+> **Sửa 2026-09-02 — bài nghiệm thu cũ KHÔNG chạy được.** Nó bảo "bấm thử 3 link trong
+> `llms.txt`". GitHub hiển thị file `.txt` dạng chữ trơn, nên `[nhãn](đường-dẫn)` chỉ là chữ,
+> không thành nút bấm. Không phải lỗi của file — chuẩn llmstxt.org bắt buộc đuôi `.txt` — mà
+> là lỗi của bài kiểm. Chỗ bấm được là `DASHBOARD.md` (đuôi `.md`, GitHub render thành link
+> thật) và nó chứa đúng những đường dẫn đó. Máy cũng tự đếm link chết ở Khối D; con số đó
+> phải là 0.
 | **Trích template** | `build-dashboard.mjs` (bản rút gọn) + mẫu `llms.txt` |
 
 <details><summary><b>Brief dán sẵn</b></summary>
@@ -130,7 +137,11 @@ Mỗi phiên: một mục tiêu, một commit, một lần push. **Không gộp 
 | | |
 |---|---|
 | **Ai** | Claude Code |
-| **Làm** | ① `STATUS.md` cho Extension Observer V0 · ② `lifecycle: superseded` + `superseded_by` cho `duc-auto-gemini/v0.1.0` · ③ khai `owner` cho `pilots/` trong `repo-map.json` |
+| **Làm** | ① `STATUS.md` cho Extension Observer V0 · ② `lifecycle: superseded` + `superseded_by` cho `duc-auto-gemini/v0.1.0` · ③ khai chủ cho **cả 7** thư mục top-level chưa có chủ · ④ nâng STATUS lên schema v2 **kèm migrate 3 file v1 đang có** |
+
+> **Phạm vi đã rộng ra, đo tại `6ef131c`.** Bản trước ghi mỗi `pilots/`; thực đo là **7** thư
+> mục chưa khai chủ. Và nâng schema mà không migrate ba STATUS `v1` đang có thì bộ sinh từ
+> chối toàn repo. Đề bài đầy đủ ở `docs/briefs/BRIEF-S3.md`.
 | **Cấm** | Đụng bất cứ thứ gì trong `v0.1.0/evidence/` |
 | **Đức nghiệm thu** | Mở `DASHBOARD.md` Khối D. **Ba dòng đếm phải về 0.** |
 | **Trích template** | `STATUS.template.md` bản đã bổ sung trường mới |
@@ -291,7 +302,7 @@ Ghi kết quả vào `evidence/20260901-bootstrap-test-r01/` như mọi phép đ
 | | Phiên | Ai | Xong | Template đã trích |
 |---|---|---|---|---|
 | ☑ | S1 Dọn chỗ chứa | Claude Code | **2026-09-02** `cfc66fc` | `docs/` + `_TEMPLATE-study.md` |
-| ☐ | S2 Cổng vào | Codex + Claude | | `build-dashboard.mjs` · mẫu `llms.txt` |
+| ☑ | S2 Cổng vào | **Claude Code** (Codex hỏng) | **2026-09-02** `6ef131c` | `build-dashboard.mjs` · mẫu `llms.txt` |
 | ☐ | S3 Bịt lỗ hổng | Claude Code | | `STATUS.template.md` v2 |
 | ☐ | S4 Cổng kiểm | Codex + Claude | | `check-bootstrap.mjs` · `.repo-structure.json` |
 | ☐ | S6 Draft có hạn + dọn drafts/ | Claude Code | | quy tắc `ttl_days` 3 trường |
@@ -334,6 +345,10 @@ Ba thứ đó đã có `DASHBOARD.md` lo.
 
 ## 8. Bắt đầu
 
-Phiên **S1**. Đức mở chat Claude Code mới, dán brief trong khối gấp ở S1.
+Phiên **S3**. S1 và S2 đã đóng và đã push. Đức mở chat Claude Code mới, dán
+`docs/briefs/BRIEF-S3.md`.
+
+> Cập nhật 2026-09-02. Mục này trước đây vẫn bảo bắt đầu từ S1 dù S1 đã xong — một dòng
+> lạc hậu ở đúng chỗ người ta đọc để biết làm gì tiếp.
 
 Xong S1 báo tôi, tôi viết brief S2.

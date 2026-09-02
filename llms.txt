@@ -4,11 +4,11 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `9e3ed84` (2026-09-02).
+Trang được sinh tại commit `6ef131c` (2026-09-02).
 
 ## Việc ưu tiên #1
 
-- **CHƯA KHAI** — chưa STATUS nào khai `next_step`. Xem cột "Việc đang mở" ở `DASHBOARD.md`, và `.agents/claims.json` để biết ai đang giữ package nào.
+- **CHƯA KHAI** — chưa STATUS nào khai `next_step` (trường của schema `extension-status/v2`, phiên S3 thêm). Tạm thời xem cột "Việc đang mở" ở bảng B.
 
 ## Đọc theo thứ tự này
 
@@ -21,7 +21,7 @@ Trang được sinh tại commit `9e3ed84` (2026-09-02).
 
 - [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — B-14…B-21 đang mở
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Lớp vận chuyển Bridge đã xong và đã kiểm chứng live cả hai bản (28/08)
-- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Multi-profile Bridge (hướng A, Đức duyệt 28/08) đã code xong: host giữ nhiều kết nối + target/bridge.sessions/served_by, panel có ô tên hồ sơ, sửa nốt F-14 (...
+- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Multi-profile Bridge (hướng A, Đức duyệt 28/08) đã code xong: host giữ nhiều kết nối + target/bridge.sessions/served_by, panel có ô tên hồ sơ, sửa nốt F-14…
 
 ## Luật bắt buộc trước khi sửa gì
 

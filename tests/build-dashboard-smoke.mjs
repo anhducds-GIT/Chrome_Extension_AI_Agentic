@@ -4,7 +4,7 @@ import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { dirname, join, sep } from "node:path";
 
-import { buildDashboard, buildLlmsTxt, buildRepoMap, collectModel, compareRepoMap, createDefaultDeps, createHeadDeps, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
+import { buildDashboard, buildLlmsTxt, buildRepoMap, collectModel, compareRepoMap, createDefaultDeps, createHeadDeps, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, priorityFrom, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -1088,10 +1088,11 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
    `withNext.priority` thay vì để `collectModel` tự suy ra. Nay bơm `next_step`
    vào ĐÚNG frontmatter của STATUS và bắt bộ sinh tự tìm ra. */
 {
-  const model = collectModel(s2Repo({ statusOverrides: { next_step: "Đo lại trần 90 giây" } }));
+  const model = collectModel(s2Repo({ statusOverrides: { next_step: "Đo lại trần 90 giây", priority_rank: "1" } }));
   assert.ok(model.priority, "collectModel phải TỰ suy ra việc ưu tiên từ next_step của STATUS");
   assert.equal(model.priority.title, "Đo lại trần 90 giây");
   assert.equal(model.priority.unit, "workers/demo/v1");
+  assert.equal(model.priority.rank, 1, "thứ hạng phải lấy từ priority_rank đã khai");
   assert.match(buildDashboard(model), /Việc ưu tiên #1.*Đo lại trần 90 giây/s);
   assert.match(buildLlmsTxt(model), /Đo lại trần 90 giây/);
   const map = JSON.parse(buildRepoMap(model));
@@ -1324,5 +1325,103 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   assert.equal(model.health.undeclared_dirs, collectModel(base).health.undeclared_dirs + 1,
     "và phải được đếm vào nợ, vì chưa ai đứng tên nó");
   ok("SAU-VONG2 submodule ở tầng gốc vẫn được tính vào thư mục chưa khai chủ");
+}
+
+/* ==========================================================================
+   PATCH TÀI LIỆU — bốn quyết định kỹ thuật, mỗi cái một phép kiểm ghim.
+   ========================================================================== */
+
+/* D1. Thứ hạng phải do NGƯỜI khai. Máy không được đoán, và không được chọn bừa
+   khi có tranh chấp. Bản trước lấy phần tử đầu sau khi sắp theo đường dẫn, nên khi
+   schema v2 bắt mọi đơn vị khai `next_step` thì "ưu tiên #1" lặng lẽ thành "việc
+   của package đứng đầu bảng chữ cái". */
+{
+  // (a) Có next_step nhưng KHÔNG ai khai thứ hạng -> nói CHƯA XẾP HẠNG, không đoán.
+  const unranked = collectModel(s2Repo({ statusOverrides: { next_step: "Việc gì đó" } }));
+  assert.equal(unranked.priority.unranked, true, "không ai khai priority_rank thì không được tự chọn");
+  assert.match(buildDashboard(unranked), /CHƯA XẾP HẠNG/);
+  assert.match(buildLlmsTxt(unranked), /CHƯA XẾP HẠNG/);
+  assert.deepEqual(JSON.parse(buildRepoMap(unranked)).active_work, [],
+    "chưa xếp hạng thì active_work phải rỗng, không được đoán ra một mục");
+
+  // (b) Khai rõ thì lấy đúng cái hạng nhỏ nhất.
+  const ranked = collectModel(s2Repo({ statusOverrides: { next_step: "Việc số một", priority_rank: "1" } }));
+  assert.equal(ranked.priority.unit, "workers/demo/v1");
+  assert.equal(JSON.parse(buildRepoMap(ranked)).active_work.length, 1);
+  assert.equal(JSON.parse(buildRepoMap(ranked)).units.find((u) => u.path === "workers/demo/v1").priority_rank, 1);
+  ok("PATCH thứ hạng lấy từ priority_rank; không ai khai thì nói CHƯA XẾP HẠNG chứ không đoán");
+}
+
+/* D2. Hai đơn vị cùng khai hạng nhỏ nhất = XUNG ĐỘT. Máy phải NÓI RA, không
+   được chọn bừa một cái — chọn bừa là con số sai trông rất hợp lý. */
+{
+  const row = (key, rank, step) => ({ key, priorityRank: rank, nextStep: step, statusPath: key + "/STATUS.md" });
+
+  const conflict = priorityFrom([row("workers/a/v1", 1, "Việc A"), row("workers/b/v1", 1, "Việc B")]);
+  assert.equal(conflict.conflict, true, "hai đơn vị cùng hạng 1 phải là xung đột");
+  assert.deepEqual(conflict.units, ["workers/a/v1", "workers/b/v1"], "và phải nêu ĐỦ tên cả hai");
+
+  const clear = priorityFrom([row("workers/z/v1", 1, "Việc Z"), row("workers/a/v1", 2, "Việc A")]);
+  assert.equal(clear.unit, "workers/z/v1", "hạng nhỏ nhất thắng, KHÔNG phải thứ tự bảng chữ cái");
+
+  const noRank = priorityFrom([row("workers/a/v1", null, "Việc A")]);
+  assert.equal(noRank.unranked, true, "có next_step mà không có hạng thì nói chưa xếp hạng");
+
+  assert.equal(priorityFrom([row("workers/a/v1", 1, "")]), null, "không có next_step thì không có việc ưu tiên");
+
+  // Và bảng phải hiện xung đột ra cho người đọc, không nuốt.
+  const model = collectModel(s2Repo());
+  const shown = buildDashboard({ ...model, priority: conflict });
+  assert.match(shown, /XUNG ĐỘT/);
+  assert.ok(shown.includes("workers/a/v1"), "phải nêu tên đơn vị đang tranh chấp");
+  ok("PATCH hai đơn vị cùng hạng 1 bị báo XUNG ĐỘT, hạng nhỏ nhất thắng chứ không phải bảng chữ cái");
+}
+
+/* D3. `compareRepoMap` bỏ qua GIÁ TRỊ dấu commit nhưng vẫn ĐÒI khoá có mặt.
+   Bản trước xoá vô điều kiện, nên một repo-map mất hẳn hai trường xuất xứ vẫn được
+   coi là khớp — hợp đồng cross-repo mất khả năng truy nguồn mà cổng vẫn xanh. */
+{
+  const generated = buildRepoMap(collectModel(s2Repo()));
+
+  const otherStamp = JSON.parse(generated);
+  otherStamp.generated_commit = "khac123";
+  otherStamp.generated_at = "1999-01-01";
+  assert.equal(compareRepoMap(generated, `${JSON.stringify(otherStamp, null, 2)}\n`).matches, true,
+    "đổi GIÁ TRỊ dấu commit thì vẫn phải coi là khớp");
+
+  for (const [label, mutate] of [
+    ["thiếu hẳn", (map) => { delete map.generated_commit; }],
+    ["rỗng", (map) => { map.generated_commit = "  "; }],
+    ["sai kiểu", (map) => { map.generated_commit = 12345; }]
+  ]) {
+    const broken = JSON.parse(generated);
+    mutate(broken);
+    const verdict = compareRepoMap(generated, `${JSON.stringify(broken, null, 2)}\n`);
+    assert.equal(verdict.matches, false, `trường xuất xứ ${label} phải bị bắt`);
+    assert.match(verdict.reason ?? "", /generated_commit/, "và lỗi phải nêu đúng tên trường");
+  }
+  ok("PATCH compareRepoMap bỏ qua giá trị dấu commit nhưng vẫn đòi khoá có mặt, đúng kiểu");
+}
+
+/* D4. Cắt câu không được cắt gãy cú pháp markdown. Đức nhìn thấy đúng ca này trong
+   llms.txt: một link bị cắt giữa chừng thành "[nhãn](docs/..." nuốt hết phần sau. */
+{
+  const long = (tail) => `${"x".repeat(150)} ${tail}`;
+  const build = (focus) => buildLlmsTxt(collectModel(s2Repo({ statusOverrides: { current_focus: focus } })));
+
+  const withLink = build(long("[hướng dẫn](docs/huong-dan.md) và thêm nữa"));
+  const line = withLink.split("\n").find((entry) => entry.includes("xxx"));
+  assert.ok(line, "phải tìm được dòng bị cắt");
+  const afterLabel = line.slice(line.indexOf("xxx"));
+  const opens = (afterLabel.match(/\(/g) ?? []).length;
+  const closes = (afterLabel.match(/\)/g) ?? []).length;
+  assert.equal(opens, closes, `cắt xong không được để lại dấu ngoặc lẻ: ${afterLabel.slice(-60)}`);
+  assert.ok(!/\[[^\]]*$/.test(afterLabel), "không được để lại dấu [ mở mà chưa đóng");
+
+  const withTick = build(long("dùng `một-lệnh-rất-dài-nào-đó` rồi thôi"));
+  const tickLine = withTick.split("\n").find((entry) => entry.includes("xxx"));
+  assert.equal(((tickLine.slice(tickLine.indexOf("xxx")).match(/`/g) ?? []).length % 2), 0,
+    "không được để lại backtick lẻ");
+  ok("PATCH cắt câu dài không làm gãy link markdown hay backtick");
 }
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
