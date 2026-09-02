@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "claude-y02",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "A1: lenh nhan/tra quyen (scripts/claim.mjs) + tai lieu khao sat Y-02. GHI CHU: ho so con ghi claude-surface-fix giu, Duc bao da trong luc 20:06 — nhan theo loi Duc, khong xoa viec cua ho (K1 audit vong 2 da commit c1c92f3).",
-      "released_at": null
+      "task": "TRA QUYEN 02/09 (claude-surface-fix). Da sua 15/20 phat hien audit K1, cong XANH TOAN BO, suite 243. CHUA PUSH — phien khac se day. Con lai: 4 phat hien nho + 1 cau hoi thiet ke (bo trich giu nguyen luat nghe-cu-the cua repo Chrome).",
+      "released_at": "2026-09-02"
     }
   }
 }
