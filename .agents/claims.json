@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-mp-gate",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Xac nhan cong tay multi-profile da qua: goi bridge.sessions tren ca 3 host, ghi bang chung, cap nhat STATUS + HANDOFF cua goi nay. Khong dung goi chatgpt/gemini (co chu khac).",
-      "released_at": null
+      "task": "TRA QUYEN 2026-09-02 (claude-mp-gate). XONG: cong tay multi-profile DA QUA ca 3 nhanh — 3 ho so co ten (Binh/anhducds/kaito), --target route dung, served_by khop; bang chung evidence/20260902-multiprofile-naming-gate-r01. Da push (1b1c249, 001da50, c251a37). CON MO: (1) trial video — CAN TAY DUC bat panel + workbook + Dev Mode + Video mode roi AI chay x1; (2) live-check F-14 (can chip dang o Image); (3) DUC QUYET ghe legacy o profile Chrome thu tu: dat ten hoac tat.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,11 +24,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-mp-gate",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Sinh lai DASHBOARD/llms.txt/repo-map sau khi commit thay doi STATUS cua gg-flow-video.",
-      "released_at": null
+      "task": "TRA QUYEN 2026-09-02 (claude-mp-gate). XONG: sinh lai DASHBOARD/llms.txt/repo-map/FEATURE-PARITY sau khi viec uu tien #1 doi noi dung. NO MOI ghi o HANDOFF.md goc: feature-parity.mjs do CAY LAM VIEC con cong kiem do HEAD — bat dong moi khi co phien khac sua do. Va tam bang clone HEAD ra duong dan NGAN. Sua goc can Duc chot.",
+      "released_at": "2026-09-02"
     }
   }
 }
