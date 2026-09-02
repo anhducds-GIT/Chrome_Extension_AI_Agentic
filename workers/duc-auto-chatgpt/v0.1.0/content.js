@@ -797,7 +797,12 @@
         ok: true,
         url: location.href,
         composerFound: Boolean(composer),
-        sendButtonFound: Boolean(sendButton),
+        // Trang phóng (trang chủ, /gpts…) CÓ đủ ô soạn và nút gửi, nên `composerFound` một
+        // mình không bao giờ phát hiện ra vấn đề. Báo riêng surface thay vì bóp méo
+        // `composerFound` thành false: một chẩn đoán nói sai bệnh còn tệ hơn không nói, và
+        // side panel đang ánh xạ `!composerFound` thành RECEIVER_LOST — tức bảo người ta đi
+        // reload tab trong khi thứ họ cần là mở một cuộc hội thoại.
+        surfaceAllowed: surfaceAllowedNow(),
         generating: Boolean(findStopButton()),
         assistantCount: assistantMessages().length,
         busy: STATE.busy,

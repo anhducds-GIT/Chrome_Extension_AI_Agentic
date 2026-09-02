@@ -880,6 +880,12 @@
       let failureType = null;
       if (ping?.securityBlocker) failureType = "SECURITY_HARD_STOP";
       else if (ping?.generationLimitBlocker) failureType = "GENERATION_LIMIT_REACHED";
+      // Phải đứng TRƯỚC nhánh RECEIVER_LOST. Trang phóng có đủ ô soạn nên nhánh dưới không
+      // bao giờ bắt được nó; mà kể cả có bắt được thì RECEIVER_LOST vẫn là chẩn đoán SAI —
+      // nó bảo operator reload tab, trong khi việc cần làm là mở một cuộc hội thoại.
+      // `surfaceAllowed === false` mới là tín hiệu đúng; `undefined` (content script bản cũ
+      // chưa có trường này) cố tình KHÔNG kích hoạt nhánh này.
+      else if (ping?.surfaceAllowed === false) failureType = "WRONG_SURFACE";
       else if (!ping?.composerFound) failureType = "RECEIVER_LOST";
       chatgpt = {
         state: failureType ? "HARD_STOP" : ping.generating || ping.busy ? "BUSY" : "READY",

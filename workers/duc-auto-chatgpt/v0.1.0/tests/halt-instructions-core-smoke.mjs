@@ -10,7 +10,7 @@ for (const file of ["runner-core.js", "halt-instructions-core.js"]) {
 
 const guide = context.DacHaltInstructions;
 const runner = context.DacRunnerCore;
-assert.equal(guide.HALT_GROUPS.length, 11, "the operator guide exposes eleven distinct Halt groups");
+assert.equal(guide.HALT_GROUPS.length, 12, "the operator guide exposes twelve distinct Halt groups");
 // DETECTION_BLIND must stay a HARD STOP and must never be described as
 // retryable: retrying it resends the prompt and spends real image quota while
 // proving nothing (2026-08-26 -- six generations burned exactly this way).
@@ -18,7 +18,28 @@ const blind = guide.HALT_GROUPS.find((group) => group.codes.includes("DETECTION_
 assert.ok(blind, "the guide covers DETECTION_BLIND");
 assert.match(blind.retry, /^No -- hard stop/, "DETECTION_BLIND is never presented as retryable");
 assert.match(blind.action, /chatgpt\.com\/c\//, "the operator is told exactly what a correct tab looks like");
-assert.equal(new Set(guide.HALT_GROUPS.map((group) => group.title)).size, 11, "Halt group titles are unique");
+assert.equal(new Set(guide.HALT_GROUPS.map((group) => group.title)).size, 12, "Halt group titles are unique");
+
+// WRONG_SURFACE (thêm 2026-09-02). Điểm mấu chốt của mã này là nó KHÔNG tốn gì: phép kiểm
+// chạy trước khi bất cứ thứ gì chạm vào trang. Nếu hướng dẫn không nói rõ điều đó, operator
+// sẽ tưởng mình vừa mất một lượt sinh và ngần ngại chạy lại — đúng phản ứng sai.
+const wrongSurface = guide.HALT_GROUPS.find((group) => group.codes.includes("WRONG_SURFACE"));
+assert.ok(wrongSurface, "the guide covers WRONG_SURFACE");
+assert.match(wrongSurface.retry, /^No -- nothing was sent/, "WRONG_SURFACE phải nói rõ là chưa gửi gì");
+assert.match(wrongSurface.action, /chatgpt\.com\/c\//, "operator phải được cho biết một tab đúng trông thế nào");
+assert.match(wrongSurface.meaning, /composer/i, "phải giải thích vì sao mọi phép kiểm khác vẫn xanh: trang phóng CÓ ô soạn");
+
+// CHUỖI ĐẦY ĐỦ, không chỉ danh mục. Khai một mã lỗi mà quên luật phân loại thì lớp bảo vệ im
+// lặng không chạy: thông điệp rơi xuống nhánh cuối thành "OTHER", mà OTHER thì ĐƯỢC RETRY.
+// Ghim cả ba mắt xích — phân loại → hard stop → không retry — vì hỏng một mắt là hỏng cả.
+{
+  const thrown = new Error("WRONG_SURFACE: tab đang ở https://chatgpt.com/ — đây không phải một cuộc hội thoại.");
+  assert.equal(runner.classifyFailure(thrown, "PRE_SUBMIT"), "WRONG_SURFACE",
+    "thông điệp WRONG_SURFACE phải được phân loại đúng, không rơi xuống OTHER");
+  assert.ok(runner.HARD_STOP_FAILURE_TYPES.has("WRONG_SURFACE"), "WRONG_SURFACE phải là hard stop");
+  assert.equal(runner.canRetry({ retry_count: 0, settings: { max_retries: 3 } }, "WRONG_SURFACE"), false,
+    "không được retry: mỗi lần thử lại chỉ gặp đúng cái trang phóng đó, chỉ người mới sửa được");
+}
 
 const covered = [...guide.coveredFailureCodes()].sort();
 const declared = [...runner.FAILURE_TYPES].sort();

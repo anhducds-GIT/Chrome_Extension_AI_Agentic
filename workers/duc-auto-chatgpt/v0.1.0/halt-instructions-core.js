@@ -38,6 +38,13 @@
       action: "Reload the correct ChatGPT tab, wait for the composer to become available, then Check Plan and Continue Run. This stays a hard stop on purpose: if the tab is genuinely gone, auto-retrying would just fail every remaining job in the queue back-to-back without producing anything. (Tải lại đúng tab ChatGPT, chờ composer sẵn sàng, rồi Check Plan và Continue Run. Đây vẫn là hard stop có chủ đích: nếu tab thật sự mất, tự động retry sẽ chỉ khiến mọi job còn lại trong queue fail liên tục mà không tạo được ảnh nào.)"
     }),
     Object.freeze({
+      title: "Wrong surface",
+      codes: Object.freeze(["WRONG_SURFACE"]),
+      retry: "No -- nothing was sent, nothing was spent (Không -- chưa gửi gì, chưa tốn gì)",
+      meaning: "The tab is on a ChatGPT launcher page (the new-chat home page, /gpts, a GPT's intro page) instead of an open conversation. Those pages DO show a composer and a send button, which is why every other check passes -- but submitting there makes the page navigate to a new conversation, and the run loses track of its own answer. (Tab đang ở một trang phóng của ChatGPT -- trang chat mới, /gpts, hoặc trang giới thiệu một GPT -- chứ không phải một cuộc hội thoại đang mở. Mấy trang đó VẪN hiện ô soạn và nút gửi, nên mọi phép kiểm khác đều xanh; nhưng gửi từ đó làm trang điều hướng sang một hội thoại mới, và run mất dấu chính câu trả lời của nó.)",
+      action: "Open or click into a real conversation -- the address bar must show chatgpt.com/c/... -- then Check Plan and run again. Nothing was submitted and no quota was spent: this check runs before anything touches the page. Before 2026-09-02 there was no such check, and a run started from the home page spent a generation and came back with an opaque timeout. (Mở hoặc bấm vào một cuộc hội thoại thật -- thanh địa chỉ phải hiện chatgpt.com/c/... -- rồi Check Plan và chạy lại. Chưa có gì được gửi và chưa tốn lượt nào: phép kiểm này chạy trước khi bất cứ thứ gì chạm vào trang. Trước 2026-09-02 chưa có phép kiểm này, và một run bắt đầu từ trang chủ đã tiêu một lượt sinh rồi trả về lỗi hết giờ không nói lên điều gì.)"
+    }),
+    Object.freeze({
       title: "Detection blind",
       codes: Object.freeze(["DETECTION_BLIND"]),
       retry: "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",

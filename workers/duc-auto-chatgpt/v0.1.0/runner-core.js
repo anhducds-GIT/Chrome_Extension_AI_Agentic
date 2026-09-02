@@ -5,7 +5,7 @@
   const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
   const TASK_TYPES = Object.freeze(["image_generation", "text_reasoning"]);
   const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
-  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "DETECTION_BLIND", "SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
+  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "DETECTION_BLIND", "WRONG_SURFACE", "SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
   // Only these three genuinely block the whole batch: each means no further
   // job can safely run until a human resolves it (CAPTCHA/verification,
   // quota reset, or the ChatGPT tab/composer itself being reachable again).
@@ -17,7 +17,14 @@
   // either the message selector had rotted or the tab was not on a
   // conversation. Neither is a condition a retry can improve, and retrying
   // costs the owner quota per attempt, so it halts the batch instead.
-  const HARD_STOP_FAILURE_TYPES = new Set(["SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "RECEIVER_LOST", "DETECTION_BLIND"]);
+  // WRONG_SURFACE joined this set on 2026-09-02. Retrying it cannot help: the tab is on a
+  // launcher page (new-chat home, /gpts, a GPT intro) and only a human can move it to a real
+  // conversation. Unlike the other four this one costs NOTHING -- the check runs before the
+  // page is touched at all -- so hard-stopping here is pure gain: the batch pauses, the
+  // operator gets one clear instruction, and no quota is spent. Before this existed, the same
+  // situation submitted the prompt, lost the answer to a navigation, and reported an opaque
+  // TIMEOUT_AFTER_SUBMIT.
+  const HARD_STOP_FAILURE_TYPES = new Set(["SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "RECEIVER_LOST", "DETECTION_BLIND", "WRONG_SURFACE"]);
   const imageExtension = /\.(avif|gif|jpe?g|png|webp)$/i;
   const normalise = (value) => String(value || "").trim().toLowerCase();
   const basename = (value) => normalise(value).replace(/^.*[\\/]/, "").replace(imageExtension, "");
@@ -127,6 +134,11 @@
     // ALSO looks like a timeout, and classifying it as one would send it back
     // through the retry path this exists to stop.
     if (/^DETECTION_BLIND:/i.test(text)) return "DETECTION_BLIND";
+    // Phải khớp theo TIỀN TỐ và phải đứng trên các luật chung. Không có dòng này thì thông
+    // điệp WRONG_SURFACE rơi xuống nhánh cuối và thành "OTHER" — mà OTHER thì ĐƯỢC RETRY, nên
+    // khai nó là hard stop ở HARD_STOP_FAILURE_TYPES trở thành vô hiệu. Đo thật khi viết bản
+    // vá 2026-09-02: khai mã lỗi mà quên luật phân loại thì cả lớp bảo vệ im lặng không chạy.
+    if (/^WRONG_SURFACE:/i.test(text)) return "WRONG_SURFACE";
     if (/LIMIT_STOP|image generation limit/i.test(text)) return "GENERATION_LIMIT_REACHED";
     if (/HARD_STOP|captcha|unusual activity|security\/interstitial/i.test(text)) return "SECURITY_HARD_STOP";
     if (/stopped by user|automation stopped/i.test(text)) return "USER_STOP";

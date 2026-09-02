@@ -566,3 +566,43 @@ lúc gõ chữ; nay so với **tác dụng phụ đầu tiên**, và mốc phả
 thì mới có hiệu lực. Nghiệm thu: để tab ở trang chủ → `ping` phải thôi trả `READY`.
 
 **Không đụng `STATUS.md`** — đó là việc của phiên `claude-y03` đang giữ `_root` và `gemini`.
+
+### Vòng 2 cùng ngày — đo live cho thấy bản vá vòng 1 CHƯA ĐỦ
+
+Đức reload extension và chuyển tab về trang chủ. Đo:
+
+| Đo trên `https://chatgpt.com/` | Kết quả |
+|---|---|
+| `surface` | `LAUNCHER` ✅ (bản cũ trả `CONVERSATION`) |
+| `surface_allowed` | `false` ✅ |
+| **`ping` → `chatgpt.state`** | **`READY` ❌ — vẫn sai** |
+
+**Tôi đã nối dây thiếu, đúng cái lỗi tôi vừa phê phán.** Vòng 1 nối `surfaceAllowedNow()` vào
+hai chỗ gọi `DacChatReadiness.evaluate`, nhưng **đường của `ping` không đi qua đó**: handler
+`DAC_PING` trong `content.js` trả thẳng `composerFound` thô, và side panel tự tính `state` từ
+các trường đó.
+
+**Vòng 2 vá ba mắt xích còn thiếu — và mỗi mắt đều được đo, không đoán:**
+
+1. `DAC_PING` nay báo thêm `surfaceAllowed`. **Cố ý KHÔNG bóp méo `composerFound` thành false:**
+   side panel đang ánh xạ `!composerFound` → `RECEIVER_LOST`, mà mã đó bảo operator *reload tab*
+   — sai thuốc. Thứ họ cần là *mở một cuộc hội thoại*.
+2. Side panel có nhánh riêng `WRONG_SURFACE`, đặt **trước** nhánh `RECEIVER_LOST`. Content
+   script bản cũ không có trường này sẽ trả `undefined`, và nhánh cố ý chỉ bắt `=== false`.
+3. `runner-core.js`: khai `WRONG_SURFACE` vào danh mục chuẩn **và** thêm luật phân loại theo
+   tiền tố. **Thiếu luật phân loại thì cả lớp bảo vệ im lặng không chạy** — thông điệp rơi
+   xuống nhánh cuối thành `OTHER`, mà `OTHER` thì ĐƯỢC RETRY, nên khai "hard stop" trở thành
+   vô nghĩa. Đây là mắt xích tôi suýt bỏ qua lần thứ ba.
+
+Thêm nhóm hướng dẫn `WRONG_SURFACE` vào bảng Halt (11 → 12 nhóm), nói rõ **chưa gửi gì, chưa
+tốn lượt nào** — nếu không operator sẽ tưởng vừa mất một lượt sinh và ngần ngại chạy lại.
+
+**Ghim cả chuỗi ba mắt xích** (phân loại → hard stop → không retry) chứ không ghim từng mảnh:
+hỏng một mắt là hỏng cả. Suite 98/98, **2/2 đột biến bị bắt**.
+
+**Bài học lặp lại lần thứ ba trong một phiên:** khai một luật ở một chỗ rồi tưởng là xong.
+Lần sau, với mọi luật mới, phải liệt kê **mọi đường đi tới nó** rồi mới báo xong — `ping`,
+`runPrompt`, `dom_probe` là ba đường khác nhau và chúng không dùng chung mã.
+
+**CẦN RELOAD LẦN NỮA** — vòng 2 sửa `content.js`, `sidepanel.js`, `runner-core.js`.
+Nghiệm thu: trên trang chủ, `ping` phải trả `failure_type: WRONG_SURFACE` thay vì `READY`.
