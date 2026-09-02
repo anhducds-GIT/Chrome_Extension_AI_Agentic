@@ -1061,7 +1061,7 @@
       observer?.disconnect();
       wake = null;
     }
-    throw new Error("Timed out waiting for an idle Gemini composer.");
+    throw new Error("Timed out waiting for an idle Flow composer.");
   }
 
   async function runPrompt(prompt, timeoutMs, referenceImages = [], expectImage = false, requestAttempt = null) {

@@ -727,7 +727,7 @@
       target_url: urlAfter || urlBefore,
       input_origin: "bridge"
     });
-    log(`Bridge đã F5 tab Gemini (tab ${tabId}).`, ready ? "info" : "error");
+    log(`Bridge đã F5 tab Flow (tab ${tabId}).`, ready ? "info" : "error");
     return {
       ready,
       tab_id: tabId,
@@ -2526,7 +2526,7 @@
   async function send(message) {
     const tab = await activeTab();
     try { return await chrome.tabs.sendMessage(tab.id, message); }
-    catch (_) { throw new Error("HARD_STOP: Gemini receiver unavailable. Reload the Gemini tab once."); }
+    catch (_) { throw new Error("HARD_STOP: Flow receiver unavailable. Reload the Flow tab once."); }
   }
 
   function dataUrl(file) {
@@ -3740,7 +3740,7 @@
       catch (_) { return { ok: false, code: "CHATGPT_RECEIVER_UNAVAILABLE", message: "Gemini receiver is unavailable.", guidance: "Reload the active normal Gemini conversation, then retry Check Plan." }; }
       if (ping?.securityBlocker) return { ok: false, code: "CHATGPT_SECURITY_BLOCKER", message: `Security blocker: ${ping.securityBlocker}`, guidance: "Resolve the security warning in Gemini before running." };
       if (ping?.generationLimitBlocker) return { ok: false, code: "CHATGPT_GENERATION_LIMIT", message: `Generation limit: ${ping.generationLimitBlocker}`, guidance: "Gemini has stopped generating images for now. Wait for the limit to reset (or upgrade/switch account), then retry Check Plan." };
-      if (!ping?.composerFound) return { ok: false, code: "CHATGPT_COMPOSER_UNAVAILABLE", message: "Gemini composer is not available.", guidance: "Open a normal conversation with a visible composer, then retry Check Plan." };
+      if (!ping?.composerFound) return { ok: false, code: "CHATGPT_COMPOSER_UNAVAILABLE", message: "Flow composer is not available.", guidance: "Open a normal conversation with a visible composer, then retry Check Plan." };
       if (ping.generating || ping.busy) return { ok: false, code: "CHATGPT_BUSY", message: "Gemini is generating or busy.", guidance: "Wait until Gemini is idle, then retry Check Plan." };
       return { ok: true, tabId: tab.id };
     } catch (error) {
@@ -4435,7 +4435,7 @@
   async function waitForChatReady(item) {
     const selectedSafetyCooldownSec = window.DacRunnerCore.safetyCooldownSeconds(item.settings);
     const response = await send({ type: "DAC_WAIT_CHAT_READY", timeoutMs: item.settings.timeout_sec * 1000, safetyCooldownSec: selectedSafetyCooldownSec, outputVerified: true });
-    if (!response?.ok) throw new Error(response?.error || "Gemini did not become ready for the next job.");
+    if (!response?.ok) throw new Error(response?.error || "Flow did not become ready for the next job.");
   }
 
   function imageLocationFor(item, effectiveOutput) {
@@ -4690,7 +4690,7 @@
           try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
           catch (error) { response = { ok: false, error: messageOf(error), attempt: { job_id: item.job.id, attempt_id: item.attempt_id, phase: "PRE_SUBMIT", submittedAt: null } }; }
           if (!matchesAttempt(response, item)) {
-            const outcome = await resolveJobFailure(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch from Gemini content receiver.", settings);
+            const outcome = await resolveJobFailure(item, "ATTEMPT_ID_MISMATCH", "Attempt identity mismatch from Flow content receiver.", settings);
             completed = outcome.completed; halted ||= outcome.halted;
             if (completed) break; else continue;
           }

@@ -7,7 +7,7 @@ owner: claude
 priority_rank: 1
 next_step: "F-18 cho tai hien: duong go lanh (typing_path=input_events, do 2 luot live), va tu nay MOI luot deu ghi typing_path + composer_len truoc/sau vao so cai — luot nao lai hong thi doc thang, khong phai doan. No con lai (nho, chua gap that): nhanh ANH cua sidepanel cung khong trai ban cu, cung goc benh F-21"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "F-21 XONG va da xac nhan tren trang that (luot F4R4, 02/09): so cai nay giu du typing_path/typing_ok/prompt_len/composer_len truoc-sau/attach VA khong lam mat truong ket qua. Hai luot live lien tiep chay tron ven (video that, 15 credit moi luot). Do 3 lan bang 3 co che khac nhau: go sach thi composer doc dung do dai prompt -> luot F4R2 doi 27 ky tu la bat thuong that. Suite 89/89, 6/6 dot bien. Bang chung: evidence/F4R4-KET-QUA.md"
+current_focus: "F4R5 (02/09): chuoi 3 job dau tien chay TRON VEN — 3/3 SUCCESS, moi job dung 1 video, 0 retry, va so cai co du chan doan cho TUNG job. Gia thuyet F-18 (composer lai do job thu 2 tro di) DA BI BAC: ca ba job deu before=28, after=prompt_len chan chan. Tinh ca truoc do la 5 luot go sach lien tiep; chi luot F4R2 lech. Bang chung: evidence/F4R5-KET-QUA.md"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

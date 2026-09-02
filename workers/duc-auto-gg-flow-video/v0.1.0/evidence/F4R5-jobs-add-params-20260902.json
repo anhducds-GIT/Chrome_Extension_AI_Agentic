@@ -1,0 +1,19 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW04R5-A: A brass diving helmet half buried in wet black sand, tide sliding around it, overcast light, slow low dolly, no text.",
+      "reference_images": [],
+      "settings": { "timeout_sec": 300, "max_retries": 0 }
+    },
+    {
+      "prompt": "FLOW04R5-B: Steam rising off a cast iron kettle on a snowy windowsill at dawn, warm lamp glow behind frosted glass, static shot with slow steam drift, no text, and a faint blue rim light along the metal edge.",
+      "reference_images": [],
+      "settings": { "timeout_sec": 300, "max_retries": 0 }
+    },
+    {
+      "prompt": "FLOW04R5-C: Neon sign flickering above a rain slicked alley, reflections breaking in puddles, slow handheld push, no text.",
+      "reference_images": [],
+      "settings": { "timeout_sec": 300, "max_retries": 0 }
+    }
+  ]
+}

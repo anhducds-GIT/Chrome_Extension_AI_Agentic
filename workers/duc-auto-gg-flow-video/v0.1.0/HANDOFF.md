@@ -595,3 +595,33 @@ ngay. **Không tốn credit, không cần mở trang Flow.** Đọc trước khi
   prompt cố định để so lượt-với-lượt và **bị bác**. Lượt F4R4 là lượt cuối dùng lại prompt cũ.
 - **Việc kế tiếp:** F-18 chờ tái hiện — nay mọi lượt đều ghi `composer_len_before_typing` nên
   lượt nào lai sẽ đọc thẳng ra, không phải đoán. Nợ nhỏ còn lại: nhánh **ảnh** cùng gốc bệnh F-21.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 4): chuỗi 3 job, giả thuyết F-18 bị bác, và một bãi mìn chữ nghĩa
+
+**Bằng chứng:** [`evidence/F4R5-KET-QUA.md`](evidence/F4R5-KET-QUA.md) · **3 video, đúng trần dev.**
+
+- **Chuỗi 3 job đầu tiên chạy trọn vẹn** của nhánh này: 3/3 SUCCESS, mỗi job đúng 1 video ứng
+  viên, 0 retry, và sổ cái có đủ chẩn đoán tiền-submit cho **từng** job.
+- **Giả thuyết đem đi thử đã BỊ BÁC.** Tôi nghĩ composer lai xuất hiện từ job thứ hai trở đi
+  (gõ vào ô job trước vừa dùng) — lượt F4R2 và hai lượt sau đều chỉ có MỘT job nên chưa lần nào
+  chạm điều kiện đó. Dùng ba prompt dài khác hẳn nhau (129/208/122) để `composer_len_after_typing`
+  tự tố. Kết quả: cả ba đều `before=28`, `after=prompt_len`, lệch **0**. **Chuỗi nhiều job không
+  phải cơ chế.** Tính cả trước đó là **5 lượt gõ sạch liên tiếp**; chỉ F4R2 lệch.
+  Giả thuyết còn lại (chưa có bằng chứng, đừng sửa mù): content script ở trạng thái nửa vời —
+  hôm nay tôi gặp ca họ hàng, reload extension mà chưa F5 tab thì content script mồ côi.
+- **Trả một phần nợ rebrand F-06/F-19, 0 credit** — nhưng nó hoá ra là bãi mìn F-20. Đổi 5 chuỗi
+  operator "Gemini" → "Flow", gồm đúng câu đã bắt tôi chẩn đoán nhầm sáng nay. **KHÔNG đổi**
+  `"Gemini image generation limit reached for now."`: đo thật cho thấy đổi nó thì
+  `GENERATION_LIMIT_REACHED` tụt xuống `OTHER` — **mất cú dừng cứng khi hết credit**, job sẽ bị
+  thử lại trên tài khoản đã cạn. Mỗi chuỗi đổi đều chạy qua `classifyFailure` thật trước và sau.
+- **Pin mới `tests/error-strings-load-bearing.mjs`** — ghim **phán quyết**, không ghim chữ, cho
+  6 câu chịu tải. Ai làm tiếp F-06 mà đổi chữ tuột nhánh phân loại là đỏ ngay.
+  **Và nó tự tìm ra lỗ của chính nó khi chạy mutation, lần thứ ba trong ngày cùng một gốc bệnh:**
+  câu hết-credit nằm ở **hai** chỗ, nên phép kiểm hỏi *"chuỗi có tồn tại đâu đó không"* vẫn xanh
+  khi đột biến đổi **một** trong hai. Nay ghim **SỐ LẦN xuất hiện**, không chỉ sự tồn tại.
+  Trước sửa 4/5 đột biến bị bắt, sau sửa **5/5**.
+- **Đo:** suite **90/90** (89 → +1 pin) · **5/5 đột biến bị bắt** · cổng đóng phiên xanh.
+- **Việc kế tiếp:** Đức vừa giao hướng mới — chạy video nhiều hơn qua nhiều tài khoản free, và
+  **nhịp thao tác phải giống người** (đừng gõ cả prompt trong một sự kiện, đừng refresh dồn dập),
+  cộng với bắt sự kiện hết-credit rồi dựng code quanh nó. Xem phần trả lời trong chat + mục kế
+  tiếp; **trần trial `MAX_TRIAL_JOBS=3` là luật an toàn Đức chốt 27/08, chưa nới.**
