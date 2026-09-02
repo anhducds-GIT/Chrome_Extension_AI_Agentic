@@ -1,0 +1,23 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-376da4d5-b643-4474-8e48-9e8067ed491c",
+  "ok": true,
+  "result": {
+    "at": "2026-09-02T09:15:48.446Z",
+    "composer_text_head": "FLOW04R3-DRYRUN: A single white paper crane resting on a cal",
+    "create_button": "enabled",
+    "dry_run": true,
+    "submitted": false,
+    "textarea_count": 0,
+    "typed_into": "div",
+    "typing_path": "input_events",
+    "url": "https://labs.google/fx/tools/flow/project/575b20b1-e19c-4e33-b3ab-bedb5dc9e880"
+  },
+  "responded_at": "2026-09-02T09:15:48.447Z",
+  "served_by": {
+    "instance_id": "d8c543ee-1cb0-4363-98b0-cdffe687af47",
+    "label": "kaito"
+  }
+}

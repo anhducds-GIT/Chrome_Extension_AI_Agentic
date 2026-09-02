@@ -1,0 +1,9 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW04R3-A: A single white paper crane resting on a calm dark pond, cinematic wide shot, soft morning light, slow gentle camera push in, no text.",
+      "reference_images": [],
+      "settings": { "timeout_sec": 300, "max_retries": 0 }
+    }
+  ]
+}

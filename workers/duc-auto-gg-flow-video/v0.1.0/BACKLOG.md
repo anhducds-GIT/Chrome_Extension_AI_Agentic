@@ -153,10 +153,38 @@
      Và lượt F4R2 **đã chờ đủ**, không phải chờ hụt: `typeIntoFlowComposer` tự chờ 2×2500 ms,
      rồi `waitForSendButtonReady` chờ tiếp trọn `sendReadyTimeoutMs`.
 
+  **ĐÍNH CHÍNH LỚN 02/09 sau lượt live F4R3 — đọc trước khi tin ba gạch đầu dòng ngay trên.**
+  Kết luận "ứng viên số 4 đã LOẠI" ở trên là **SAI**, và tôi là người kết luận sai. Đo trực
+  tiếp hôm nay: composer rỗng đọc ra **28**, nhưng gõ 141 ký tự thì đọc ra **141** — hằng số 28
+  **bị THAY THẾ khi gõ đúng cách, không cộng thêm**. Vậy lượt F4R2 đọc ra `172` cho prompt 145
+  ký tự là **dôi 27 ký tự bất thường thật** → composer ở trạng thái **lai**, đúng như ứng viên
+  số 4 mô tả. **Ứng viên 4 sống lại và nay mạnh nhất.** Chỗ sai: cả năm snapshot 27/08 đều chụp
+  lúc composer RỖNG, tôi ngoại suy sang trạng thái có chữ mà không có số đo cho trạng thái đó —
+  *năm lần đo cùng một trạng thái vẫn là một điểm dữ liệu.*
+
+  **VÀ F-18 KHÔNG TÁI HIỆN.** Lượt F4R3 (02/09, `kaito`, cùng prompt) chạy **trọn vẹn**: video
+  thật `c81af2c5…`, quy gán đúng 1 ứng viên, 0 retry. Đường gõ đo được `typing_path:
+  "input_events"` + `create_button: "enabled"` (0 credit, qua `dry_run`) — **trùng khít 27/08**.
+  Nên F-18 **hạ khỏi P1**: đường gõ không hỏng. Câu hỏi còn lại hẹp hơn nhiều — *vì sao lượt
+  F4R2 để composer ở trạng thái lai* — và **đừng sửa mù**: chờ nó xuất hiện lại, lúc đó
+  `composer_len_before_typing` (bản vá `be17e75`) sẽ nói ngay ô có sạch trước khi gõ hay không.
+  Bằng chứng: `evidence/F4R3-KET-QUA.md`.
+
   **Việc kế tiếp của F-18 (vẫn chờ Đức bật panel + Dev Mode + Video mode trên `kaito`):** chạy
   `run.trial` **x1**, có lưu `dom_probe` TRƯỚC khi chạy. Hỏng thì vẫn 0 credit, nhưng sổ cái
   lần này có `typing_path` + `composer_len_before/after` → kết luận được ngay, không cần lượt
   thứ ba. Bảng đọc kết quả ở mục 5 của file phân tích. **Nhớ reload extension** — đã sửa `.js`.
+- **F-21** · [ĐO 02/09, lượt F4R3 live] **Trên đường VIDEO, `attempt.detection` KHÔNG tới được
+  sổ cái.** `sidepanel.js:4697` gọi `applyAttemptTelemetry` ghi `detection_diagnostics` từ
+  `attempt.detection`; rồi `finishDetectedOutput` chạy sau và nhánh video ở `sidepanel.js:4512`
+  ghi **thay trắng** `JSON.stringify({...result.detection, video_id, video_url, detected_at})`.
+  Nhánh ảnh (`:4523`) có mang theo `attach`/`blob_conversion`/`image_url_dropped`; nhánh video
+  **không mang gì**. Bằng chứng: sổ cái lượt F4R3 mất **cả** `typing_path` **lẫn** `attach` —
+  mà `attach` đã ở trong `CARRIED_DIAGNOSTICS` từ trước, nên **lỗ này có sẵn, không do bản vá
+  `be17e75`**; chỉ là chưa ai đọc `attach` trên đường video nên chưa lộ. Sửa: nhánh video trải
+  lại `item.detection_diagnostics` đang có trước khi chồng trường video lên. Xác nhận thì cần
+  một lượt live nữa (15 credit) → **hỏi Đức trước**. Bằng chứng: `evidence/F4R3-KET-QUA.md`.
+
 - **F-20** · **LUẬT MỚI, đã ghim, đọc trước khi sửa BẤT KỲ chữ báo lỗi nào trong gói này.**
   `classifyFailure` (`runner-core.js:88-103`) quyết định một thất bại có được thử lại hay dừng
   cả mẻ, và nó **dò từ khoá trên TOÀN BỘ câu báo lỗi**, không phải trên tiền tố. Nên **sửa lời

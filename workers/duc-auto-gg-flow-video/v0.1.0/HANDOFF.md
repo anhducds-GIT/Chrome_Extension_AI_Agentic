@@ -525,3 +525,40 @@ ngay. **Không tốn credit, không cần mở trang Flow.** Đọc trước khi
   + Video mode trên hồ sơ `kaito`, **reload extension** (đã sửa `.js`), rồi AI chạy `run.trial`
   **x1** — có lưu `dom_probe` TRƯỚC khi chạy. Hỏng thì vẫn 0 credit, nhưng lần này sổ cái nói
   ra được đường gõ dừng ở tầng nào. Bảng đọc kết quả ở mục 5 của file phân tích.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 2): chạy live F4R3, F-18 không tái hiện, và tôi đính chính chính mình
+
+**Bằng chứng:** [`evidence/F4R3-KET-QUA.md`](evidence/F4R3-KET-QUA.md) · **Credit tiêu: 15 (1 video).**
+Đức duyệt chạy, sau khi reload extension + F5 tab + mở panel + bật Dev Mode + đặt chip `x1`.
+
+- **Job chạy TRỌN VẸN.** `Q001` → `SUCCESS` trong ~38 giây, video thật
+  `c81af2c5-6883-465f-8417-7d2b28f27ce9`, **quy gán đúng 1 ứng viên** (không nằm trong 44 id
+  nền), 0 retry, `poll_count` 7. Tiền kiểm trước khi tốn credit đều xanh, và **probe TRƯỚC khi
+  chạy đã được lưu** — trả xong nợ của lượt F4R2.
+- **Số đo đường gõ, lấy với 0 CREDIT** qua `diagnostics.evidence_submit --dry_run`:
+  `typing_path: "input_events"`, `create_button: "enabled"`, `typed_into: "div"`,
+  `textarea_count: 0`. **Trùng khít 27/08.** Tầng 1 (`execCommand`) không được Flow nhận và
+  rơi xuống tầng 2 — đó là hành vi bình thường của trang, không phải lỗi. **F-18 không tái
+  hiện**, đã hạ khỏi P1.
+- **TÔI KẾT LUẬN SAI Ở PHIÊN TRƯỚC, đính chính ở đây.** File
+  `F18-PHAN-TICH-BANG-CHUNG-20260902.md` nói `valueLen` có hằng số **cộng thêm** ~28 nên
+  `172 = 145 + hằng số` là bình thường, và loại ứng viên số 4. Đo thật hôm nay: composer rỗng
+  đọc **28**, gõ 141 ký tự đọc **141** — hằng số **bị THAY THẾ, không cộng thêm**. Vậy `172`
+  cho prompt 145 là **dôi 27 ký tự bất thường thật**, đúng như ứng viên số 4 mô tả.
+  **Ứng viên 4 sống lại và nay mạnh nhất.** Chỗ tôi sai: cả năm snapshot 27/08 đều chụp lúc
+  composer RỖNG, tôi ngoại suy sang trạng thái có chữ mà không có số đo cho trạng thái đó —
+  **năm lần đo cùng một trạng thái vẫn là một điểm dữ liệu.** `evidence/` chỉ được THÊM nên
+  file cũ giữ nguyên; đính chính nằm ở `F4R3-KET-QUA.md` và trong BACKLOG F-18.
+- **Nợ mới F-21, và lượt live là thứ duy nhất lộ ra nó.** Bản vá `be17e75` ghi số đo vào
+  `attempt.detection` đúng, nhưng sổ cái vẫn `undefined`: `sidepanel.js:4697`
+  (`applyAttemptTelemetry`) ghi xong thì `finishDetectedOutput` chạy sau, và nhánh **video**
+  ở `:4512` **ghi thay trắng** bằng `result.detection`. Nhánh ảnh (`:4523`) có mang theo
+  `attach`/`blob_conversion`/`image_url_dropped`; nhánh video không mang gì. Sổ cái lượt này
+  mất **cả** `typing_path` **lẫn** `attach` — mà `attach` có trong `CARRIED_DIAGNOSTICS` từ
+  trước, nên **lỗ này có sẵn, không do bản vá gây ra**. Chưa sửa: hết phạm vi Đức duyệt, và
+  xác nhận thì tốn thêm 15 credit.
+- **CẢNH BÁO VẬN HÀNH:** lượt `dry_run` để lại 141 ký tự trong ô prompt và nút
+  `arrow_forward Create` đang **ENABLED**. Không tự bấm, nhưng ai chạm là 15 credit — **xoá ô
+  prompt bằng tay**.
+- **Việc kế tiếp:** ① xoá ô prompt · ② F-21 (cần Đức duyệt vì phải chạy live để xác nhận) ·
+  ③ F-18 chờ tái hiện, đừng sửa mù.
