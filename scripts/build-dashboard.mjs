@@ -467,13 +467,20 @@ export function collectModel(deps = createDefaultDeps()) {
    và không một dòng nào nói vì sao. Bảng điều hành nói dối êm ru còn tệ hơn bảng
    không sinh ra được. Audit Codex 2026-09-02, phát hiện 4. */
 function readClaims(deps) {
-  if (!deps.fileExists(".agents/claims.json")) return {};
+  // Thiếu hẳn file cũng phải dừng. Bảng chủ sở hữu là bắt buộc; chạy tiếp với bảng
+  // rỗng nghĩa là khai MỌI thư mục đều chưa có chủ — một con số nợ sai mà không ai
+  // biết vì sao. Audit Codex vòng 2, phát hiện 2.
+  if (!deps.fileExists(".agents/claims.json")) {
+    throw new Error("CLAIMS_THIEU_FILE: không thấy .agents/claims.json. Đây là bảng chủ sở hữu bắt buộc — không sinh bảng từ một bảng chủ sở hữu không tồn tại.");
+  }
   let parsed;
   try { parsed = readJson(deps, ".agents/claims.json"); }
   catch (error) {
     throw new Error(`CLAIMS_HONG: .agents/claims.json không phải JSON đọc được (${error.message}). Sửa file đó rồi chạy lại — không sinh bảng từ một bảng chủ sở hữu đang hỏng.`);
   }
-  if (!parsed || typeof parsed.claims !== "object" || parsed.claims === null) {
+  // `Array.isArray`: mảng cũng cho `typeof "object"`, nên `{"claims": []}` trước đây
+  // lọt qua và lặng lẽ biến thành bảng rỗng.
+  if (!parsed || typeof parsed.claims !== "object" || parsed.claims === null || Array.isArray(parsed.claims)) {
     throw new Error("CLAIMS_THIEU_KHOI: .agents/claims.json không có khối `claims`. Không đoán được ai giữ gì, nên dừng thay vì khai bừa là chưa ai khai.");
   }
   return parsed.claims;
@@ -536,7 +543,12 @@ function trackedIndex(deps) {
 }
 
 function topLevelDirsFromGit(deps) {
-  return trackedIndex(deps).dirsIn("");
+  const dirs = new Set(trackedIndex(deps).dirsIn(""));
+  // Submodule ở tầng gốc được `ls-tree -r` trả về như MỘT đường dẫn không có dấu "/",
+  // nên bị xếp nhầm là file và không bao giờ vào bảng chủ sở hữu — một thư mục cả
+  // repo phụ thuộc vào mà không ai đứng tên. Audit Codex vòng 2, phát hiện 4.
+  for (const name of deps.git.gitlinksAtRoot?.() ?? []) dirs.add(name);
+  return [...dirs];
 }
 
 function topLevelOwnership(deps, claims) {
@@ -569,12 +581,23 @@ function collectDocs(deps, headDate) {
     if (!relPath.startsWith("docs/") || !relPath.endsWith(".md")) continue;
     const fm = parseStatus(deps.readFile(relPath)).frontmatter;
     const active = fm.status === "active";
+    // BÁC MỘT PHẦN phát hiện 3 của audit Codex vòng 2. Nó đề nghị: `kind` lạ thì
+    // tính nợ NGAY CẢ KHI đã khai `ttl_days`. Tôi thử và thấy sai: hai file
+    // `kind: spec` vừa commit hôm qua, có `ttl_days` đàng hoàng, lập tức bị gọi là
+    // "quá hạn". Đó là BÁO OAN, và một bảng nợ báo oan thì người đọc sẽ học cách
+    // phớt lờ nó — hỏng đúng thứ Khối D sinh ra để làm.
+    // `ttl_days` khai thẳng thì hạn dùng LÀ chứng minh được, bất kể `kind` có nằm
+    // trong bảng mặc định hay không. Bảng mặc định chỉ để suy ra hạn khi không ai khai.
+    // Còn "kind lạ có hợp lệ không" là câu hỏi của cổng kiểm schema (phiên S4), không
+    // phải của phép đếm quá hạn. Ghi lại để phiên sau đừng "sửa" ngược lại.
     const rawTtl = fm.ttl_days ?? TTL_FALLBACK[fm.kind];
     const ttl = Number(rawTtl);
     const ttlUsable = rawTtl !== undefined && String(rawTtl).trim() !== "" && Number.isFinite(ttl) && ttl > 0;
     const touched = deps.git.lastCommitDate?.(relPath) ?? "";
     const age = daysBetween(touched, headDate);
-    const unprovable = !ttlUsable || age === null;
+    // `age === null` một mình là không đủ: ngày hỏng kiểu "2026-99-99" cho `NaN` chứ
+    // không phải `null`, và `NaN > ttl` là false nên tài liệu đó lặng lẽ được tha.
+    const unprovable = !ttlUsable || age === null || !Number.isFinite(age);
     out.push({
       path: relPath,
       kind: fm.kind ?? "",
@@ -891,7 +914,7 @@ export function runDashboard({ check = false, deps = createDefaultDeps(), output
       for (const row of model.rows.filter((item) => item.key !== "_root")) {
         const dirtyCount = (deps.git.dirtyFiles?.(row.key) ?? []).filter(isBehaviourFile).length;
         if (dirtyCount > 0) {
-          output.log(`CẢNH BÁO: ${row.key} đang có ${dirtyCount} file .js sửa dở chưa commit — số trên trang là số ĐÃ COMMIT, chưa tính phần đang sửa.`);
+          output.log(`CẢNH BÁO: ${row.key} đang có ${dirtyCount} file .js sửa dở chưa commit. Trang này dựng HOÀN TOÀN TỪ HEAD, nên phần đang sửa KHÔNG có ở đây — commit trước rồi sinh lại.`);
         }
       }
       return 0;
@@ -939,37 +962,35 @@ export function runDashboard({ check = false, deps = createDefaultDeps(), output
   }
 }
 
+/* MỘT ĐƯỜNG ĐỌC DUY NHẤT, VÀ NÓ LÀ HEAD.
+
+   Ba vòng audit đều quay về đúng một chỗ. Vòng 1 bắt việc LIỆT KÊ đọc từ đĩa; tôi
+   vá phần đó. Vòng 2 bắt tiếp: việc ĐỌC NỘI DUNG vẫn từ đĩa, nên chỉ cần sửa một
+   `STATUS.md` mà chưa commit là cả ba artifact đổi theo — lời hứa "chỉ chứa sự thật
+   đã commit" vẫn sai. Tôi đã tự dựng lại ca đó và thấy đúng.
+
+   Vá phần ngọn thêm lần nữa thì lần sau lại lòi ra một kênh khác. Nên: bộ sinh
+   ĐỌC HOÀN TOÀN TỪ HEAD ở CẢ HAI chế độ. Đĩa chỉ còn dùng để GHI. Hai chế độ nay
+   khác nhau đúng một điểm — ghi ra file hay đem đi so — nên không còn cách nào để
+   chúng bất đồng.
+
+   Đổi lại: sửa STATUS xong phải commit rồi mới thấy bảng cập nhật. Đó đúng là quy
+   trình đã ghi (commit trước → sinh lại → commit artifact), và bộ sinh nay tự nói
+   ra điều đó khi thấy có file sửa dở. */
 export function createDefaultDeps(root = ROOT) {
   const absolute = (relPath) => path.join(root, ...relPath.replaceAll("\\", "/").split("/"));
   const git = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: root, encoding: "utf8" });
+  const head = createHeadDeps(root);
   return {
-    root,
-    fileExists: (relPath) => fs.existsSync(absolute(relPath)),
-    isFile: (relPath) => { try { return fs.statSync(absolute(relPath)).isFile(); } catch { return false; } },
+    ...head,
+    // Giữ `realPath` (chế độ HEAD không có): lớp chặn junction/symlink ở
+    // `validateStatus` là `else if (deps.realPath)`, bỏ đi là im lặng gỡ một lớp
+    // bảo vệ đã có. Nay nó chỉ còn là lớp thừa — đọc đã không qua hệ thống file
+    // nữa — nhưng thừa thì giữ, gỡ thì không.
     realPath: (relPath) => { try { return fs.realpathSync(absolute(relPath)); } catch { return null; } },
-    readFile: (relPath) => fs.readFileSync(absolute(relPath), "utf8"),
     writeFile: (relPath, text) => fs.writeFileSync(absolute(relPath), text, "utf8"),
-    listDirs: (relPath) => fs.readdirSync(absolute(relPath), { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort(compareText),
-    listFiles: (relPath) => fs.readdirSync(absolute(relPath), { withFileTypes: true }).filter((entry) => entry.isFile()).map((entry) => entry.name).sort(compareText),
     git: {
-      shortHead: () => git("rev-parse", "--short", "HEAD").trim(),
-      headDate: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d").trim(),
-      // Ngày commit cuối chạm vào file. Dùng làm "lần rà gần nhất" để tính nợ tài
-      // liệu quá hạn — vì frontmatter CỐ TÌNH không có trường `created`/`last_reviewed`:
-      // ngày gõ tay sẽ mục, còn lịch sử git thì không nói dối được.
-      lastCommitDate: (relPath) => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", "--", relPath).trim(),
-      // Danh sách file ĐÃ TRACK tại HEAD. Cả chế độ đĩa lẫn chế độ HEAD đều gọi
-      // đúng lệnh này, nên hai chế độ không bao giờ nhìn thấy hai tập file khác
-      // nhau. `-z` để tên có dấu cách / tiếng Việt không bị git bọc dấu nháy.
-      trackedPaths: () => git("ls-tree", "-r", "-z", "--name-only", "HEAD").split("\0").filter(Boolean),
-      verifyCommit: (sha) => {
-        try {
-          git("rev-parse", "--verify", `${sha}^{commit}`);
-          return true;
-        } catch {
-          return false;
-        }
-      },
+      ...head.git,
       // `--no-renames` BẮT BUỘC. Mặc định git gộp đổi tên thành một dòng chỉ ghi tên MỚI,
       // nên đổi `bridge-core.js` -> `bridge-core.md` sẽ chỉ hiện một file `.md` và bị bộ lọc
       // tài liệu nuốt mất — code biến mất khỏi package mà cột vẫn khai "KHÔNG đổi". Tắt
@@ -1021,6 +1042,12 @@ export function createHeadDeps(root = ROOT) {
       // đúng lệnh này, nên hai chế độ không bao giờ nhìn thấy hai tập file khác
       // nhau. `-z` để tên có dấu cách / tiếng Việt không bị git bọc dấu nháy.
       trackedPaths: () => git("ls-tree", "-r", "-z", "--name-only", "HEAD").split("\0").filter(Boolean),
+      // Submodule ở tầng gốc: `ls-tree` KHÔNG có `-r` mới khai kiểu đối tượng, và
+      // gitlink có kiểu "commit". Với `-r --name-only` nó chỉ là một tên trơ, không
+      // có dấu "/", nên bị xếp nhầm là file.
+      gitlinksAtRoot: () => git("ls-tree", "-z", "HEAD").split("\0").filter(Boolean)
+        .filter((entry) => entry.split(/\s+/)[1] === "commit")
+        .map((entry) => entry.slice(entry.indexOf("\t") + 1)),
       verifyCommit: (sha) => {
         try {
           git("rev-parse", "--verify", `${sha}^{commit}`);

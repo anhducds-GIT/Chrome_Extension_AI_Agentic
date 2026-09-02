@@ -72,3 +72,37 @@
     Đức đã chốt để lại. **Gốc repo chưa có `BACKLOG.md`** — cân nhắc thêm ở S3 hoặc S8.
   - **Còn nợ:** audit vòng hai cho chính bản vá này, và audit GPT (prompt đã sẵn ở
     `docs/briefs/AUDIT-PROMPT-S2-GPT.md`).
+
+- **2026-09-02 · `s2-fix` (vòng 3)** — **Audit vòng 2 của Codex và audit GPT, cả hai đều
+  REJECTED/CONDITIONAL. Đã sửa gốc bệnh.** Ba vòng audit đều quay về đúng một chỗ: vòng 1 bắt
+  việc LIỆT KÊ đọc từ đĩa (tôi vá); vòng 2 bắt tiếp việc ĐỌC NỘI DUNG vẫn từ đĩa — sửa một
+  `STATUS.md` chưa commit là cả ba artifact đổi theo. Tôi tự dựng lại ca đó trên repo thật:
+  đúng. **Vá gốc: bộ sinh nay đọc HOÀN TOÀN TỪ HEAD ở cả hai chế độ** (`createDefaultDeps`
+  dựng trên `createHeadDeps`), đĩa chỉ còn dùng để GHI. Hai chế độ nay khác nhau đúng một
+  điểm — ghi ra file hay đem đi so — nên không còn cách nào để chúng bất đồng.
+  - Sửa kèm: `claims.json` thiếu hẳn file hoặc là mảng đều bị chặn · ngày commit hỏng
+    (`2026-99-99` cho `NaN`, không phải `null`) nay tính là nợ · submodule tầng gốc nay vào
+    được bảng chủ sở hữu (`ls-tree -r --name-only` trả tên trơn nên bị xếp nhầm là file) ·
+    cổng kiểm từ chối tin chính nó khi bộ sinh chưa commit (`GENERATOR_DIRTY`).
+  - **BÁC MỘT PHẦN audit, có lý do và có số:** Codex đề nghị "kind lạ thì tính nợ kể cả khi
+    đã khai `ttl_days`". Tôi làm theo và `draft_debt` nhảy 0 → 2: hai file `kind: spec` vừa
+    commit hôm qua, có `ttl_days` đàng hoàng, bị gọi là quá hạn. Đó là báo oan, và một bảng
+    nợ báo oan thì người đọc học cách phớt lờ nó. Đã revert, ghi lý do ngay trong code lẫn
+    test để phiên sau đừng "sửa" ngược lại. Việc "kind lạ có hợp lệ không" thuộc cổng kiểm
+    schema ở S4.
+  - **Một phép kiểm của chính tôi hoá ra là giả:** bản đầu ghim "đọc từ HEAD" bằng cách DÒ
+    VĂN BẢN NGUỒN. Một mutation chỉ cần đổi tên tham số từ `(relPath)` thành `(r)` là lách
+    qua — thử thì thoát thật. Đã thay bằng phép đo trên một repo git tạm: commit một file,
+    sửa nó trên đĩa, và bắt `readFile` phải trả bản đã commit. **Dò văn bản nguồn ghim cách
+    viết, không ghim hành vi.**
+  - **Đo:** suite 59/59 · npm test 95+6+59+15 xanh · **8/8 mutation bị bắt**, gồm cả ba cái
+    Codex vòng 2 tìm ra và hai cái GPT tìm ra.
+  - **Còn nợ, cần Đức chốt (đều là quyết định, không phải lỗi):** `active_work` C1 quy định
+    object mà code phát ra array · `compareRepoMap` xoá vô điều kiện hai trường xuất xứ ·
+    `priorityFrom` lấy dòng đầu theo thứ tự path nên khi schema v2 bắt mọi unit có
+    `next_step` thì "ưu tiên #1" thành ưu tiên theo bảng chữ cái · `firstSentence` cắt 160
+    ký tự có thể cắt gãy link markdown.
+  - **BRIEF-S3 vẫn là BLOCKER, chưa sửa:** nâng SCHEMA lên v2 mà không migrate 3 STATUS v1
+    đang có thì `collectModel` từ chối toàn repo. Đã kiểm: cả 3 STATUS + template đều v1.
+    Kèm theo: `areas` nên nằm ở `.repo-structure.json` chứ không phải `claims.json` (GPT
+    bác đề xuất của tôi, và GPT đúng); roadmap canonical còn tự mâu thuẫn.

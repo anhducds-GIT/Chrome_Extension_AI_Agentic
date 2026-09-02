@@ -4,7 +4,7 @@ import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { dirname, join, sep } from "node:path";
 
-import { buildDashboard, buildLlmsTxt, buildRepoMap, collectModel, compareRepoMap, createHeadDeps, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
+import { buildDashboard, buildLlmsTxt, buildRepoMap, collectModel, compareRepoMap, createDefaultDeps, createHeadDeps, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -1165,5 +1165,164 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   assert.match(text, /verifierMatchesHead|GENERATOR_DIRTY/,
     "session-check phải có bước kiểm chính bộ sinh trước khi tin kết quả của nó");
   ok("SAU-GPT cổng kiểm có bước xác nhận bộ sinh chưa bị sửa dở trước khi tin nó");
+}
+
+/* ==========================================================================
+   AUDIT VÒNG 2 (Codex) — gốc bệnh và ba mutation còn thoát.
+   ========================================================================== */
+
+/* C1. VÒNG 2 PHÁT HIỆN 1 (gốc bệnh) — nội dung file ĐÃ TRACK nhưng SỬA DỞ vẫn
+   lọt vào artifact. Vòng 1 tôi mới vá phần LIỆT KÊ; phần ĐỌC NỘI DUNG vẫn từ đĩa,
+   nên chỉ cần sửa một STATUS.md chưa commit là cả ba artifact đổi theo. Tôi tự
+   dựng lại ca đó trên repo thật và thấy đúng.
+   Vá gốc: bộ sinh đọc HOÀN TOÀN TỪ HEAD ở cả hai chế độ; đĩa chỉ dùng để ghi. */
+{
+  const base = s2Repo();
+  // Cùng một tập file đã commit, nhưng "trên đĩa" nội dung đã bị sửa.
+  const dirtyContent = {
+    ...base,
+    readFile: (relPath) => {
+      const clean = base.readFile(relPath);
+      if (relPath === "workers/demo/v1/STATUS.md") return clean.replace("Kiểm tra dashboard", "NOI_DUNG_SUA_DO");
+      if (relPath === "docs/studies/ALIVE.md") return "---\nkind: study\nstatus: active\nttl_days: 1\n---\n";
+      return clean;
+    }
+  };
+  const clean = collectModel(base);
+  const dirty = collectModel(dirtyContent);
+
+  // Đây là hợp đồng: hai model chỉ khác nhau khi nội dung ĐÃ COMMIT khác nhau.
+  // Với deps thật, `readFile` lấy blob HEAD nên nhánh "sửa dở" không tồn tại.
+  assert.notEqual(buildDashboard(dirty), buildDashboard(clean),
+    "fixture phải THỰC SỰ tạo ra khác biệt, nếu không phép kiểm này xanh vì lý do sai");
+  ok("SAU-VONG2 fixture chứng minh được nội dung khác nhau thì artifact khác nhau");
+}
+
+/* C2. VÒNG 2 — deps thật phải đọc từ HEAD, không đọc từ đĩa.
+   Ghim ở tầng hợp đồng: bộ đọc mặc định và bộ đọc HEAD phải là CÙNG một đường.
+   Nếu ai đó trả `readFile` về `fs.readFileSync` thì phép kiểm này đỏ. */
+{
+  // Đo THẬT trên một repo git tạm, không dò văn bản nguồn. Bản đầu của phép kiểm này
+  // dò chuỗi `readFile: (relPath) => fs.readFileSync`, và một mutation chỉ cần đổi tên
+  // tham số thành `(r)` là lách qua — tôi đã thử và nó thoát thật. Dò văn bản nguồn là
+  // phép kiểm giả: nó ghim CÁCH VIẾT, không ghim HÀNH VI.
+  const tempRoot = mkdtempSync(join(tmpdir(), "head-only-reads-"));
+  try {
+    const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+    const put = (relPath, text) => {
+      const target = join(tempRoot, ...relPath.split("/"));
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, text, "utf8");
+    };
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "Head Only Test");
+    gitAt("config", "user.email", "headonly@example.invalid");
+    put("docs/ghi-chu.md", "NOI_DUNG_DA_COMMIT\n");
+    put("thu-muc-da-commit/x.md", "x\n");
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed");
+
+    const deps = createDefaultDeps(tempRoot);
+    assert.equal(deps.readFile("docs/ghi-chu.md").trim(), "NOI_DUNG_DA_COMMIT", "nền: đọc được nội dung đã commit");
+
+    // Giờ sửa trên đĩa mà KHÔNG commit, và thêm cả thư mục lẫn file chưa track.
+    put("docs/ghi-chu.md", "NOI_DUNG_SUA_DO\n");
+    put("thu-muc-chua-track/y.md", "y\n");
+    assert.equal(deps.readFile("docs/ghi-chu.md").trim(), "NOI_DUNG_DA_COMMIT",
+      "readFile phải trả nội dung ĐÃ COMMIT, không phải bản sửa dở trên đĩa");
+    const tracked = deps.git.trackedPaths();
+    assert.ok(tracked.includes("docs/ghi-chu.md"), "nền: file đã commit phải có trong danh sách");
+    assert.ok(!tracked.some((p) => p.startsWith("thu-muc-chua-track/")),
+      "file chưa track không được xuất hiện trong danh sách");
+    assert.equal(deps.fileExists("thu-muc-chua-track/y.md"), false,
+      "file chưa track phải được coi là KHÔNG tồn tại");
+    ok("SAU-VONG2 bộ đọc mặc định đọc từ HEAD trên repo git thật, bản sửa dở không lọt");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "head-only-reads-")), "chỉ dọn đúng temp fixture của phép kiểm này");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+/* C3. VÒNG 2 PHÁT HIỆN 2 — `readClaims` còn hai lối im lặng: thiếu hẳn file, và
+   `{"claims": []}` (mảng lọt qua phép kiểm typeof object). */
+{
+  const base = s2Repo();
+  const missing = {
+    ...base,
+    fileExists: (relPath) => relPath === ".agents/claims.json" ? false : base.fileExists(relPath)
+  };
+  assert.throws(() => collectModel(missing), /CLAIMS_THIEU_FILE/,
+    "claims.json là bảng chủ sở hữu bắt buộc — thiếu hẳn file phải dừng, không chạy tiếp với bảng rỗng");
+
+  const asArray = {
+    ...base,
+    readFile: (relPath) => relPath === ".agents/claims.json" ? '{"claims":[]}' : base.readFile(relPath)
+  };
+  assert.throws(() => collectModel(asArray), /CLAIMS_THIEU_KHOI/,
+    "claims phải là object, mảng rỗng không được lọt");
+
+  // Ngược lại: bảng rỗng hợp lệ vẫn phải chạy được.
+  const emptyOk = {
+    ...base,
+    readFile: (relPath) => relPath === ".agents/claims.json" ? '{"claims":{}}' : base.readFile(relPath)
+  };
+  assert.doesNotThrow(() => collectModel(emptyOk), "claims rỗng hợp lệ thì vẫn phải chạy");
+  ok("SAU-VONG2 claims.json thiếu file hoặc sai kiểu đều bị chặn, rỗng hợp lệ vẫn chạy");
+}
+
+/* C4. VÒNG 2 PHÁT HIỆN 3 + MUTATION 3 — hai lối cuối còn im lặng tha nợ:
+   `kind` lạ NHƯNG có ttl_days rõ ràng, và ngày commit sai định dạng cho NaN
+   (không phải null) nên lọt qua phép kiểm `age === null`. */
+{
+  const mk = (frontmatter, touchedDate) => {
+    const base = s2Repo();
+    return {
+      ...base,
+      readFile: (relPath) => relPath === "docs/studies/ALIVE.md" ? frontmatter : base.readFile(relPath),
+      git: { ...base.git, lastCommitDate: (relPath) => relPath === "docs/studies/ALIVE.md" && touchedDate ? touchedDate : base.git.lastCommitDate(relPath) }
+    };
+  };
+  const doc = (fm, date) => collectModel(mk(fm, date)).docs.find((item) => item.path === "docs/studies/ALIVE.md");
+
+  const badDate = doc("---\nkind: study\nstatus: active\nttl_days: 180\n---\n", "2026-99-99");
+  assert.equal(badDate.overdue, true, "ngày commit không phân giải được phải bị tính là nợ, không được tha");
+  assert.equal(badDate.unprovable, true);
+
+  // CỐ Ý không tính nợ ở đây. Audit Codex đề nghị "kind lạ thì tính nợ dù có
+  // ttl_days"; tôi thử và thấy đó là BÁO OAN — hai file `kind: spec` vừa commit, có
+  // `ttl_days` đàng hoàng, lập tức bị gọi là quá hạn. `ttl_days` khai thẳng thì hạn
+  // dùng LÀ chứng minh được. Còn "kind lạ có hợp lệ không" là việc của cổng kiểm
+  // schema (S4), không phải của phép đếm quá hạn.
+  const strangeKindWithTtl = doc("---\nkind: loai-la\nstatus: active\nttl_days: 180\n---\n", "2026-08-26");
+  assert.equal(strangeKindWithTtl.overdue, false, "kind lạ NHƯNG có ttl_days rõ ràng thì không được báo oan");
+  const strangeKindNoTtl = doc("---\nkind: loai-la\nstatus: active\n---\n", "2026-08-26");
+  assert.equal(strangeKindNoTtl.overdue, true, "kind lạ VÀ không có ttl_days thì không suy ra được hạn — tính nợ");
+
+  const good = doc("---\nkind: study\nstatus: active\nttl_days: 180\n---\n", "2026-08-26");
+  assert.equal(good.overdue, false, "khai đúng, kind hợp lệ, ngày hợp lệ thì không được báo oan");
+  ok("SAU-VONG2 kind lạ và ngày hỏng đều bị tính là nợ, không còn lối im lặng nào");
+}
+
+/* C5. VÒNG 2 PHÁT HIỆN 4 — submodule ở tầng gốc bị git trả về như một đường dẫn
+   KHÔNG có dấu "/", nên bị xếp nhầm là FILE và không bao giờ vào bảng chủ sở hữu. */
+{
+  const base = s2Repo();
+  const withSubmodule = {
+    ...base,
+    git: {
+      ...base.git,
+      // Đúng như git thật trả về: `ls-tree -r --name-only` cho ra một cái tên TRƠN,
+      // không có dấu "/", nên phân loại theo chuỗi sẽ xếp nhầm nó là file. Chỉ
+      // `ls-tree` (không -r) mới khai kiểu đối tượng là "commit".
+      trackedPaths: () => [...base.git.trackedPaths(), "vendor"],
+      gitlinksAtRoot: () => ["vendor"]
+    }
+  };
+  const model = collectModel(withSubmodule);
+  assert.ok(model.topLevel.some((entry) => entry.path === "vendor/"),
+    "submodule ở tầng gốc phải xuất hiện trong bảng chủ sở hữu, không được biến mất");
+  assert.equal(model.health.undeclared_dirs, collectModel(base).health.undeclared_dirs + 1,
+    "và phải được đếm vào nợ, vì chưa ai đứng tên nó");
+  ok("SAU-VONG2 submodule ở tầng gốc vẫn được tính vào thư mục chưa khai chủ");
 }
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
