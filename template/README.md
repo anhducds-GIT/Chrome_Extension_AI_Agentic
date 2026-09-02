@@ -37,6 +37,7 @@ Nguyên tắc số một: **thứ gì máy đếm được thì máy đếm** �
 | `scripts/check-bootstrap.mjs` | máy | Cổng kiểm cấu trúc B1–B14 |
 | `scripts/session-check.mjs` | máy | Cổng đóng phiên — đỏ thì chưa xong |
 | `scripts/safe-push.mjs` | máy | Đẩy mà không cuốn theo commit của phiên khác |
+| `tests/harness-smoke.mjs` | máy | **Lưới đỡ của chính bộ khung** — bốn chỗ đã hỏng thật ở repo sinh ra nó. Thêm test của bạn vào cùng thư mục, đừng xoá bốn khối này |
 | [`docs/_TEMPLATE-adr.md`](docs/_TEMPLATE-adr.md) · [`-study`](docs/_TEMPLATE-study.md) · [`-brief`](docs/_TEMPLATE-brief.md) | LAW | Bản mẫu: quyết định · nghiên cứu · đề bài phiên |
 | [`docs/adr/0000-…`](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) | EVIDENCE | Luật ghi quyết định. Đọc trước khi ghi cái đầu tiên |
 | [`STATUS.template.md`](STATUS.template.md) | LAW | Khuôn khai trạng thái cho mỗi đơn vị công việc |

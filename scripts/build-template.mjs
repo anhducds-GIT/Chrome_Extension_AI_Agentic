@@ -39,7 +39,13 @@ const VERBATIM = [
   ["STATUS.template.md", "STATUS.template.md"],
   ["docs/_TEMPLATE-adr.md", "docs/_TEMPLATE-adr.md"],
   ["docs/_TEMPLATE-study.md", "docs/_TEMPLATE-study.md"],
-  ["docs/_TEMPLATE-brief.md", "docs/_TEMPLATE-brief.md"]
+  ["docs/_TEMPLATE-brief.md", "docs/_TEMPLATE-brief.md"],
+  // SUITE HẠT GIỐNG — MỘT bản dùng cho cả repo này lẫn mọi repo dựng từ bộ khung. Chép nguyên
+  // văn chứ không nhúng thành chuỗi trong file này, vì hai lý do: nhúng một file JS vào một
+  // template literal là mời gọi hỏng do backtick và `${`, và quan trọng hơn — chép nguyên văn
+  // nghĩa là repo gốc CHẠY THẬT đúng cái nó phát cho người khác. `--check` không cho hai bản
+  // trôi khỏi nhau. Bốn khối bên trong đều đã qua đột biến.
+  ["tests/harness-smoke.mjs", "tests/harness-smoke.mjs"]
 ];
 
 /* ADR-0000 CỐ Ý KHÔNG chép nguyên văn. Bản gốc kể lại lịch sử di trú của riêng repo gốc — ba
@@ -233,6 +239,7 @@ không đọc trước, tới việc nào thì mở sổ tay đó.
 | Viết đề bài cho một phiên AI | [docs/_TEMPLATE-brief.md](docs/_TEMPLATE-brief.md) |
 | Biết phiên trước làm tới đâu | [HANDOFF.md](HANDOFF.md) — đọc phần **cuối** file |
 | Biết repo đang nợ gì về cấu trúc | chạy \`npm run bootstrap\` |
+| Hiểu bộ khung tự kiểm mình bằng gì, hoặc thêm test của repo bạn | [tests/harness-smoke.mjs](tests/harness-smoke.mjs) — bốn khối hạt giống, chạy bằng \`npm test\` |
 
 **Vì sao phải là liên kết chứ không phải chữ thường:** phép kiểm độ sâu điều hướng (B6) đi theo
 liên kết từ cổng vào máy đọc. File không ai trỏ tới thì máy coi là không tới được — và một bản
@@ -353,6 +360,7 @@ Nguyên tắc số một: **thứ gì máy đếm được thì máy đếm** �
 | \`scripts/check-bootstrap.mjs\` | máy | Cổng kiểm cấu trúc B1–B14 |
 | \`scripts/session-check.mjs\` | máy | Cổng đóng phiên — đỏ thì chưa xong |
 | \`scripts/safe-push.mjs\` | máy | Đẩy mà không cuốn theo commit của phiên khác |
+| \`tests/harness-smoke.mjs\` | máy | **Lưới đỡ của chính bộ khung** — bốn chỗ đã hỏng thật ở repo sinh ra nó. Thêm test của bạn vào cùng thư mục, đừng xoá bốn khối này |
 | [\`docs/_TEMPLATE-adr.md\`](docs/_TEMPLATE-adr.md) · [\`-study\`](docs/_TEMPLATE-study.md) · [\`-brief\`](docs/_TEMPLATE-brief.md) | LAW | Bản mẫu: quyết định · nghiên cứu · đề bài phiên |
 | [\`docs/adr/0000-…\`](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) | EVIDENCE | Luật ghi quyết định. Đọc trước khi ghi cái đầu tiên |
 | [\`STATUS.template.md\`](STATUS.template.md) | LAW | Khuôn khai trạng thái cho mỗi đơn vị công việc |
@@ -408,7 +416,11 @@ function packageJson(version) {
       dashboard: "node scripts/build-dashboard.mjs",
       bootstrap: "node scripts/check-bootstrap.mjs",
       gate: "node scripts/session-check.mjs",
-      push: "node scripts/safe-push.mjs"
+      push: "node scripts/safe-push.mjs",
+      // KHÔNG ĐƯỢC BỎ. `session-check.mjs` hỏi `package.json.scripts.test`; không khai thì
+      // `hasRootTestScript()` false VĨNH VIỄN và cổng đóng phiên không chạy một dòng test nào
+      // của repo bạn. Thêm suite của bạn vào chuỗi này, đừng thay thế suite hạt giống.
+      test: "node tests/harness-smoke.mjs"
     }
   }, null, 2) + "\n";
 }

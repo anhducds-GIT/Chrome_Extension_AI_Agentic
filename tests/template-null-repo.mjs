@@ -203,12 +203,40 @@ const files = buildTemplateFiles();
     } catch (error) {
       gateOwned = String(error.stdout || "") + String(error.stderr || "");
     }
-    assert.match(gateOwned, /REPO CHƯA CÓ SUITE GỐC/,
-      "cong phai NOI TO rang repo nay chua co suite, thay vi im lang bao xanh: " + gateOwned.slice(0, 900));
+    // BỘ KHUNG NAY MANG THEO SUITE CUA CHINH NO (K1 muc 1b, 02/09). Truoc do ban trich mang 5
+    // script ma khong mang mot phep kiem nao, va `package.json` khong khai `scripts.test` — nen
+    // `hasRootTestScript()` false VINH VIEN va cong dong phien cua MOI repo dung tu bo khung
+    // khong chay mot dong test nao. Cong co, ma khong co rang.
+    //
+    // Nen o day khong con doi cau "REPO CHUA CO SUITE GOC" nua: doi CHINH suite do CHAY THAT.
+    assert.doesNotMatch(gateOwned, /REPO CHƯA CÓ SUITE GỐC/,
+      "bo khung phai MANG THEO suite cua chinh no, khong duoc de repo moi khong co gi de chay: " + gateOwned.slice(0, 900));
     assert.doesNotMatch(gateOwned, /Không package nào của bạn có suite bị ảnh hưởng/,
-      "cau nay ngu y ĐA KIEM va khong thay gi — sai, vi that ra chua kiem duoc mot dong nao");
-    assert.match(gateOwned, /\[BỎ  \] Test xanh/,
-      "chua kiem duoc gi thi phai hien la BO QUA, khong duoc doi lot XANH");
+      "cau nay ngu y ĐA KIEM va khong thay gi — sai o mot repo co suite that");
+    assert.match(gateOwned, /suite gốc repo: [0-9]+ passed, 0 failed/,
+      "cong phai CHAY suite hat giong va bao so, khong duoc bo qua: " + gateOwned.slice(0, 900));
+
+    // ĐỐI CHỨNG NGƯỢC — giữ lại lớp bảo vệ mà phiên `claude-k2-design` thêm ngày 02/09, đừng để
+    // nó mất theo thay đổi trên. Repo NÀO ĐÓ vẫn có thể gỡ `scripts.test` đi; lúc ấy cổng phải
+    // NÓI TO là chưa kiểm được gì, chứ không được im lặng báo xanh. Dựng đúng ca đó.
+    {
+      const pkgPath = join(tempRoot, "package.json");
+      const gốc = readFileSync(pkgPath, "utf8");
+      const pkg = JSON.parse(gốc);
+      delete pkg.scripts.test;
+      writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + String.fromCharCode(10), "utf8");
+      let gateNoSuite = "";
+      try {
+        gateNoSuite = at(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "phep-thu-co-khoa"]);
+      } catch (error) {
+        gateNoSuite = String(error.stdout || "") + String(error.stderr || "");
+      }
+      writeFileSync(pkgPath, gốc, "utf8");
+      assert.match(gateNoSuite, /REPO CHƯA CÓ SUITE GỐC/,
+        "go `scripts.test` di thi cong phai NOI TO, khong duoc im lang bao xanh: " + gateNoSuite.slice(0, 900));
+      assert.match(gateNoSuite, /\[BỎ  \] Test xanh/,
+        "chua kiem duoc gi thi phai hien la BO QUA, khong duoc doi lot XANH");
+    }
 
     // CÙNG HỌ VỚI FAIL-OPEN CỦA `safe-push`, khác chỗ: repo tam nay KHONG co remote, nen
     // `git diff origin/main...HEAD` fail va `unpushed` RONG — cong lang le bo qua moi commit

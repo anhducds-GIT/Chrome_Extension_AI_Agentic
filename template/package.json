@@ -8,6 +8,7 @@
     "dashboard": "node scripts/build-dashboard.mjs",
     "bootstrap": "node scripts/check-bootstrap.mjs",
     "gate": "node scripts/session-check.mjs",
-    "push": "node scripts/safe-push.mjs"
+    "push": "node scripts/safe-push.mjs",
+    "test": "node tests/harness-smoke.mjs"
   }
 }
