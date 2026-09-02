@@ -136,7 +136,6 @@ kết luận "package có chủ rồi nên tôi chỉ được đọc" — dù k
 Nhưng chưa chứng minh được nó **tự** nạp lúc mở phiên, nên câu mở màn là bắt buộc: 3 giây,
 miễn nhiễm với mọi thay đổi phiên bản, và nếu nó vốn tự nạp thì câu đó chỉ thừa vô hại.
 
-
 ## 6. Sổ tay mở khi cần — Tầng 2
 
 > **Bảng này là BẢN ĐỒ RIÊNG CỦA REPO BẠN.** Bộ khung điền sẵn các dòng cho chính những file

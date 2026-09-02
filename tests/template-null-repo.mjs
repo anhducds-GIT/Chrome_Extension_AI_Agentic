@@ -20,7 +20,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-import { buildTemplateFiles, leakedNames, soleHeadingIndex, TEMPLATE_VERSION } from "../scripts/build-template.mjs";
+import { buildTemplateFiles, leakedNames, soleHeadingIndex, stripNghe, TEMPLATE_VERSION } from "../scripts/build-template.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -141,9 +141,21 @@ const files = buildTemplateFiles();
   // đúng là repo lái trình duyệt và luật của nó nói đúng chuyện đó.
   const luatGoc = readFileSync(new URL("../AGENTS.md", import.meta.url), "utf8");
   const dinhGoc = luatGoc.split("\n").filter((d) => NGHE_TU_VUNG.test(d));
-  assert.ok(dinhGoc.length >= 5,
-    `bo do phai bat duoc tu vung nghe trong AGENTS.md THAT, dang bat ${dinhGoc.length} — bo do hong`);
 
+  // PHẢI CHẠY ĐÚNG Ở CẢ HAI NHÀ. Ở repo sinh ra bộ khung, luật còn mùi nghề nên chính nó là đối
+  // chứng dương tốt nhất. Ở REPO NHÀ của bộ khung, luật vốn đã ở dạng chung — và một phép kiểm
+  // đòi "luật phải có từ vựng nghề" sẽ ĐỎ ở đúng cái repo làm mọi thứ đúng nhất. Đo được ngay
+  // lần chạy đầu sau khi chuyển nhà.
+  if (dinhGoc.length > 0) {
+    assert.ok(dinhGoc.length >= 5,
+      `luat repo nay con mui nghe thi phai bat duoc nhieu dong, dang bat ${dinhGoc.length}`);
+  } else {
+    // Luật đã chung: đối chứng dương phải TRỒNG, không mượn được từ repo.
+    assert.ok(NGHE_TU_VUNG.test("- Khong bao gio gan `.innerHTML` cho node nao."),
+      "bo do phai bat duoc tu vung nghe khi co that");
+    assert.ok(!NGHE_TU_VUNG.test("- Moi fix mot test ghim."),
+      "bo do khong duoc bao oan mot dong luat chung");
+  }
   // TÁCH KHÔNG PHẢI VỨT. Chín dòng đó phải hạ cánh nguyên vẹn ở phụ lục, nếu không bộ khung
   // im lặng đánh mất chín bài học đã trả giá.
   const phuLuc = files.get("docs/ANNEX-tu-dong-hoa-trinh-duyet.md");
@@ -158,6 +170,32 @@ const files = buildTemplateFiles();
   assert.doesNotMatch(luatTrich, /## 2\. Ba việc/,
     "muc 2 khong con ba muc thi tieu de khong duoc noi 'Ba viec'");
   ok(`luat chung sach tu vung nghe (${dinhGoc.length} dong nhu the o ban goc, deu chuyen sang phu luc)`);
+}
+
+/* ---- 2d. Tách luật-nghề: được ăn cả, ngã về không ------------------------ */
+/* Ba ca, và ca giữa là ca mà bộ khung phải sống được để có nhà riêng: khi bộ trích chạy ở REPO
+   NHÀ của chính nó, luật nguồn VỐN ĐÃ ở dạng chung nên không phép thay nào khớp. Bản đầu ném
+   ngay ở phép thay đầu tiên — tức bộ khung không tự trích lại được chính nó. */
+{
+  const luatGoc = readFileSync(new URL("../AGENTS.md", import.meta.url), "utf8");
+
+  // ① Luật nguồn phải tách được — dù còn mùi nghề (repo gốc) hay đã chung (repo nhà).
+  assert.doesNotThrow(() => stripNghe(luatGoc), "luat nguon phai tach duoc, o ca hai nha");
+  const daChung = stripNghe(luatGoc);
+  // Chỉ soi PHẦN LUẬT CHUNG: mục 6 là bản đồ địa phương, bị cắt ở bước sau, nên từ vựng nghề
+  // trong đó không tính. Bản đầu soi cả file và báo động nhầm 4 dòng — tất cả đều ở mục 6.
+  const phanChung = daChung.split("## 6.")[0] + (daChung.split("## 7.")[1] || "");
+  assert.ok(!/selector|dom_probe|innerHTML/.test(phanChung),
+    "tach xong thi phan luat chung phai sach tu vung nghe");
+  assert.doesNotThrow(() => stripNghe(daChung), "luat da o dang chung thi tach lai phai la khong-lam-gi");
+  assert.equal(stripNghe(daChung), daChung, "tach lan hai khong duoc doi mot ky tu nao");
+
+  // ③ Luật ĐỔI LỜI: cũng khớp 0 lần, nhưng vẫn còn từ vựng nghề → PHẢI ném. Hai ca ② và ③ trông
+  // giống hệt nhau từ phía bảng thay; phân biệt bằng bằng chứng, không bằng đoán.
+  const doiLoi = daChung + String.fromCharCode(10) + "- Khong bao gio gan `.innerHTML` cho node nao." + String.fromCharCode(10);
+  assert.throws(() => stripNghe(doiLoi), /TRICH_HONG/,
+    "con tu vung nghe ma khong phep thay nao khop thi phai NEM");
+  ok("tách luật-nghề: tách được · tách lại là không-làm-gì · đổi lời thì ném");
 }
 
 /* ---- 3. Repo rỗng + bộ khung → cổng kiểm KHÔNG có chỗ đỏ ------------------ */

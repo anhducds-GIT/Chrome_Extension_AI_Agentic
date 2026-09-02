@@ -316,11 +316,57 @@ const NGHE = [
   ]
 ];
 
+/* Phần luật mà `stripNghe` chịu trách nhiệm = toàn bộ TRỪ mục 6. Mục 6 là bản đồ file của
+   riêng repo, bị cắt ở bước sau, nên từ vựng nghề trong đó không tính. */
+function phanLuatChung(text) {
+  const moc = (so) => String.fromCharCode(10) + "## " + so + ".";
+  const dau = text.indexOf(moc(6));
+  const cuoi = text.indexOf(moc(7));
+  if (dau < 0 || cuoi < 0 || cuoi <= dau) return text;
+  return text.slice(0, dau) + text.slice(cuoi);
+}
+
+/* Dùng để phân biệt "luật đã ở dạng chung" với "luật đã bị đổi lời". Hai ca đó trông giống hệt
+   nhau từ phía bảng NGHE — cả hai đều khớp 0 lần — nhưng một cái vô hại và một cái là mất luật. */
+const NGHE_TU_VUNG = /selector|dom_probe|innerHTML|outerHTML|insertAdjacentHTML|Bridge|pilot-|Pilot-|Batch-|trang thật/;
+
 export function stripNghe(text) {
   // Chuẩn hoá xuống dòng TRƯỚC khi so. AGENTS.md trên máy Windows là CRLF, còn các đoạn thay ở
   // bảng NGHE viết bằng LF — không chuẩn hoá thì mọi đoạn nhiều dòng đều khớp 0 lần và bộ trích
   // chết ở đúng chỗ nó đang cố bảo vệ. (Bắt được ngay lần chạy đầu, nhờ fail-closed.)
   let out = text.split(String.fromCharCode(13)).join("");
+
+  // BA CA, và ca giữa là ca mà bộ khung phải sống được: khi bộ trích chạy ở REPO NHÀ của chính
+  // nó, luật nguồn VỐN ĐÃ ở dạng chung, nên không phép thay nào khớp. Bản đầu ném ngay ở phép
+  // thay đầu tiên — tức bộ khung không tự trích lại được chính nó, và nhà riêng là bất khả thi.
+  //
+  // Nhưng "khớp 0 lần" cũng là hình dạng của một ca NGUY HIỂM: luật bị đổi lời, phép thay trượt
+  // hết, và một dòng luật nghề lọt sang mọi repo khác. Hai ca trông giống hệt nhau từ phía bảng
+  // NGHE. Phân biệt bằng bằng chứng chứ không bằng đoán: khớp 0 lần MÀ luật vẫn còn từ vựng
+  // nghề thì đó là ca thứ hai, và phải ném.
+  const soKhop = NGHE.filter(([from]) => out.split(from).length === 2).length;
+  if (soKhop === 0) {
+    // Soi ĐÚNG PHẠM VI mình chịu trách nhiệm. Mục 6 là bản đồ địa phương và sẽ bị cắt ở bước
+    // sau, nên từ vựng nghề trong đó KHÔNG phải việc của hàm này. Bản đầu soi cả file và báo
+    // động nhầm 4 dòng — tất cả đều nằm gọn trong mục 6. Phép kiểm bắt được ngay lần chạy đầu.
+    const chung = phanLuatChung(out);
+    if (NGHE_TU_VUNG.test(chung)) {
+      throw new Error(
+        "TRICH_HONG: không phép thay luật-nghề nào khớp, NHƯNG luật vẫn còn từ vựng nghề " +
+        `(${chung.split(String.fromCharCode(10)).filter((d) => NGHE_TU_VUNG.test(d)).length} dòng). ` +
+        "Nghĩa là AGENTS.md đã đổi lời và bảng NGHE trượt hết — sửa bảng cho khớp. " +
+        "Bỏ qua là để luật của một nghề lọt vào bộ khung của mọi repo khác."
+      );
+    }
+    return out;   // luật đã ở dạng chung — không có gì để tách
+  }
+  if (soKhop !== NGHE.length) {
+    throw new Error(
+      `TRICH_HONG: bảng luật-nghề khớp ${soKhop}/${NGHE.length} phép thay — được ăn cả, ngã về không. ` +
+      "Khớp một phần nghĩa là AGENTS.md đổi lời ở vài chỗ; tách nửa vời còn tệ hơn không tách."
+    );
+  }
+
   for (const [from, to] of NGHE) {
     const parts = out.split(from);
     if (parts.length !== 2) {
@@ -379,8 +425,12 @@ function lawForTemplate() {
       "nếu đã đánh số lại các mục thì phải sửa `lawForTemplate()` cho khớp, đừng để nó cắt bừa."
     );
   }
-  const replacement = `
-## 6. Sổ tay mở khi cần — Tầng 2
+  // KHÔNG mở đầu bằng xuống dòng. `soleHeadingIndex` trả chỉ số ĐẦU DÒNG tiêu đề, nên
+  // `slice(0, start)` đã kết thúc bằng ký tự xuống dòng rồi; thêm một cái nữa là mỗi lần
+  // trích cộng thêm một dòng trống.
+  // một dòng trống. Trích một lần thì không ai thấy; trích lại từ bản trích — đúng việc phải
+  // làm khi bộ khung có nhà riêng — thì lệch dần, và hai bản không còn bằng byte.
+  const replacement = `## 6. Sổ tay mở khi cần — Tầng 2
 
 > **Bảng này là BẢN ĐỒ RIÊNG CỦA REPO BẠN.** Bộ khung điền sẵn các dòng cho chính những file
 > nó mang theo — vừa để repo mới xanh ngay, vừa làm mẫu cho định dạng. **Thêm dòng của bạn vào
