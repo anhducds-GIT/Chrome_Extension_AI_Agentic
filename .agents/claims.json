@@ -27,7 +27,7 @@
       "owner": "claude-flow04",
       "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "Sinh lai DASHBOARD/llms.txt/repo-map/FEATURE-PARITY sau khi FLOW-04 luot 2 doi next_step.",
+      "task": "Sinh lai DASHBOARD/llms/repo-map/FEATURE-PARITY tai HEAD moi sau commit 21afb9e cua phien claude-stabilizing-bridge. Tra quyen SAU khi push, khong truoc.",
       "released_at": null
     }
   }

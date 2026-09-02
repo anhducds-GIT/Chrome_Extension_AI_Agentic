@@ -135,7 +135,7 @@ GPT 34 file `.js` · Gemini 33.
 | `content.js` | 1000 | 1079 | 79 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
 | `runner-core.js` | 277 | 203 | 74 |
-| `bridge-transport-loopback.js` | 536 | 482 | 54 |
+| `bridge-transport-loopback.js` | 548 | 494 | 54 |
 | `output-profile-core.js` | 96 | 45 | 51 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
 | `output-location-core.js` | 389 | 373 | 16 |
