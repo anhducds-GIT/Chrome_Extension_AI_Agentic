@@ -58,6 +58,7 @@ dẫn `drafts/…`. Bảng dưới là chỗ tra đường dẫn cũ → mới.
 |---|---|---|
 | [BENCHMARK-REPO-STANDARDS-V0.md](studies/BENCHMARK-REPO-STANDARDS-V0.md) | `?` | BENCHMARK-REPO-STANDARDS-V0 |
 | [BRIDGE-MULTIPROFILE-DESIGN-V1.md](studies/BRIDGE-MULTIPROFILE-DESIGN-V1.md) | `active` | BRIDGE-MULTIPROFILE-DESIGN-V1 — Nhiều profile Chrome dùng chung một Bridge |
+| [MULTI-SESSION-PER-PROFILE-DESIGN-V1.md](studies/MULTI-SESSION-PER-PROFILE-DESIGN-V1.md) | `active` | Nhiều phiên làm việc có tên trong MỘT profile Chrome — thiết kế V1, CHỜ ĐỨC DUYỆT 4 câu |
 | [CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md](studies/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md) | `active` | Chrome Extension + Native Bridge Capability Reach Study V0 |
 | [EXP-02-LOCAL-FILE-TO-WEB-UPLOAD-STUDY-V0.md](studies/EXP-02-LOCAL-FILE-TO-WEB-UPLOAD-STUDY-V0.md) | `active` | EXP-02 — Local File → Bridge → Web Upload Study V0 |
 | [EXP-03-BROWSER-ACTION-NETWORK-DOM-CORRELATION-STUDY-V0.md](studies/EXP-03-BROWSER-ACTION-NETWORK-DOM-CORRELATION-STUDY-V0.md) | `active` | EXP-03 — Browser Action → Network/Fetch → DOM Correlation Study V0 |
