@@ -757,3 +757,34 @@ một dòng dữ liệu vốn đúng. Cổng kiểm phạm vi vẫn XANH.
 
 **Việc kế:** Y-05 (viết lại chữ trong hồ sơ cho mắt Đức đọc) — nó sẽ làm mọi dòng trên bảng
 đọc được, không chỉ ô "Đức cần làm".
+
+## 2026-09-02 — `claude-y05`: luật vàng 5 giờ có răng — phép kiểm B15
+
+**Vấn đề.** Luật vàng 5 quy định *"chữ operator nhìn thấy: tiếng Việt"* từ đầu. Ba trường
+`current_focus` · `next_step` · `human_action` là chữ Đức đọc trên bảng — nên chúng thuộc diện
+đó. Nhưng **trước khi có bảng, chưa ai đọc mấy trường này bằng mắt người**, nên luật bị vi phạm
+âm thầm suốt: Đức mở bảng thấy *"CAN DUC RELOAD EXTENSION roi chay mot chuoi de do pacing_ms"*.
+
+**Vì sao không chỉ sửa chữ.** Đơn vị ưu tiên #1 — thứ hiện ở ô "Đang tập trung" — thuộc phiên
+khác, tôi không sửa được. Sửa tay phần của mình thì lấp được một nửa bảng, và **tái phát ngay
+lần khai sau**. Luật không kiểm được bằng máy thì sớm muộn cũng bị bỏ qua.
+
+**Làm gì.** Thêm **B15** — mức CẢNH BÁO, không chặn. Chặn là cổng đỏ vì chữ của gói mình không
+sở hữu. Heuristic **cố tình bảo thủ**: chỉ báo khi ≥40 chữ cái mà **không có lấy một dấu tiếng
+Việt nào**; mã, đường dẫn, tên định danh được bỏ ra trước khi đo vì chúng ĐƯỢC PHÉP tiếng Anh.
+Hệ quả nhận có chủ đích: một câu dài chỉ có đúng một chữ có dấu thì lọt — vì **một phép kiểm
+báo oan một lần là từ đó không ai nhìn nó nữa**.
+
+**B15 tìm ra 4 chỗ vi phạm thật**, mỗi chỗ nêu tên trường và trích nguyên văn. Tôi sửa được 1
+(gemini v0.2.0); 3 chỗ còn lại thuộc hai gói do phiên khác giữ — B15 giờ tự nhắc chủ của chúng.
+
+**Sửa kèm một chuyện đúng hơn về ranh giới trường:** `next_step` cũ của gemini **trộn cả việc
+của Đức lẫn việc của AI**. Nay việc của Đức đã có trường riêng (Y-03), nên tách hẳn:
+`next_step` chỉ còn việc của phiên AI kế tiếp.
+
+**Số:** cổng cấu trúc 14 → **15 phép kiểm** · test 28/28 · **5/5 đột biến bị bắt.**
+
+**Một đột biến THOÁT ở vòng đầu, và lý do đáng ghi.** Đột biến "xoá luật bỏ mã trước khi đo"
+thoát vì fixture của tôi chỉ có 5 mã một-chữ = 5 chữ cái, dưới ngưỡng 40 — bỏ mã hay không cũng
+ra cùng kết quả. Đổi sang 14 mã ba-chữ (42 chữ cái) thì nó bị bắt. **Lần thứ ba trong ngày một
+phép kiểm của tôi không dựng nổi ca hỏng** — và cả ba lần đều chỉ lộ ra khi chạy đột biến thật.

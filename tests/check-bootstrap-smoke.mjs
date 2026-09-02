@@ -1,4 +1,4 @@
-/* Test ghim cho cổng kiểm cấu trúc B1…B14 (scripts/check-bootstrap.mjs), phiên S4.
+/* Test ghim cho cổng kiểm cấu trúc B1…B15 (scripts/check-bootstrap.mjs), phiên S4 + Y-05.
 
    LUẬT CỦA BỘ TEST NÀY — đọc trước khi thêm phép kiểm:
 
@@ -22,7 +22,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
-  ADR_DIR, checkB1, checkB3, checkB4, checkB6, checkB9, checkB10, checkB11, checkB12, checkB14,
+  ADR_DIR, checkB1, checkB3, checkB4, checkB6, checkB9, checkB10, checkB11, checkB12, checkB14, checkB15,
   blockingFailures, checkGeneratedFreshness, checkStatusCode, collectChecks, DOC_LINE_LIMIT, grandfatheredNote, isAdrPath,
   NAV_DEPTH_LIMIT, parseLastCommitTimes, renderChecks, ruleBearingLines, runBootstrapCheck
 } from "../scripts/check-bootstrap.mjs";
@@ -34,7 +34,7 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 
 const DAY = 86400;
 const NOW = 1788300000;
-const EXPECTED_CODES = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14"];
+const EXPECTED_CODES = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14", "B15"];
 
 // Danh sach chan THAT cua repo (.repo-structure.json). Fixture nao ghi de
 // `.repo-structure.json` cung phai khai lai khoi nay, neu khong bo kiem se fail-closed.
@@ -157,8 +157,8 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
 /* ---- 1. WIRING: đủ 14 phép kiểm, đúng thứ tự, và fixture sạch thì không đỏ -- */
 {
   const { checks, model } = collectChecks(fixture());
-  assert.deepEqual(codesOf(checks), EXPECTED_CODES, "phải chạy đủ 14 phép kiểm B1…B14, đúng thứ tự");
-  assert.equal(checks.length, 14, "14 phép kiểm, không hơn không kém");
+  assert.deepEqual(codesOf(checks), EXPECTED_CODES, "phải chạy đủ 15 phép kiểm B1…B15, đúng thứ tự");
+  assert.equal(checks.length, 15, "15 phép kiểm, không hơn không kém");
   assert.deepEqual(model.statusErrors, [], "fixture sạch thì không có lỗi STATUS nào");
   const red = checks.filter((check) => check.state === "fail" && check.level === "ĐỎ");
   assert.deepEqual(red.map((check) => check.code), [], `fixture sạch KHÔNG được đỏ, nhưng đỏ ở: ${red.map((c) => `${c.code}:${JSON.stringify(c.findings)}`).join(" | ")}`);
@@ -728,5 +728,55 @@ const chay = (deps) => {
   }
   ok(`NGHIỆM THU · cả ${warnings.length} cảnh báo đều nói cả chỗ sai lẫn cách sửa`);
 }
+
+/* Y-05 — B15: chữ operator viết không dấu (luật vàng 5).
+   Heuristic CỐ TÌNH bảo thủ: chỉ báo khi ≥40 chữ cái mà KHÔNG có lấy một dấu tiếng Việt nào.
+   Phép kiểm này ghim đúng ranh giới đó — cả hai phía. Báo oan một lần là từ đó không ai nhìn
+   nó nữa, và lúc ấy nó vô dụng hoàn toàn. */
+{
+  const unit = (fields) => ({ rows: [{ key: "workers/demo/v1", currentFocus: "", nextStep: "", humanAction: "", ...fields }] });
+  const codes = (r) => r.findings.map((f) => f.where);
+
+  // Không dấu, đủ dài → PHẢI báo.
+  const khongDau = checkB15(unit({ nextStep: "Duc reload extension o TUNG profile roi dien ten ho so Chrome vao o trong bang" }));
+  assert.equal(khongDau.state, "fail", "chu khong dau, du dai thi PHAI bao");
+  assert.ok(codes(khongDau)[0].includes("next_step"), "phai chi dung ten truong sai");
+
+  // Có dấu → im.
+  assert.equal(checkB15(unit({ nextStep: "Sau khi Đức nạp lại tiện ích thì gọi bridge.sessions để đối chiếu đủ tên hồ sơ" })).state,
+    "ok", "co dau thi khong duoc bao");
+
+  // Ngắn thì im, dù không dấu — "F-21 xong" không phải văn tiếng Việt bỏ dấu.
+  assert.equal(checkB15(unit({ nextStep: "F-21 xong" })).state, "ok", "chuoi ngan thi khong bao oan");
+
+  // Mã, đường dẫn và tên file ĐƯỢC PHÉP tiếng Anh — bỏ ra TRƯỚC khi đo.
+  // FIXTURE PHẢI ĐỦ DÀI ĐỂ PHÂN BIỆT. Bản đầu chỉ có 5 mã, góp 5 chữ cái — dưới ngưỡng 40 nên
+  // bỏ mã hay không cũng ra cùng kết quả, và một đột biến xoá hẳn luật bỏ mã vẫn THOÁT. Đo
+  // thật: nó đã thoát. Nay dùng 16 mã (48 chữ cái) để luật bỏ mã thành load-bearing.
+  // Mã ba chữ: mỗi mã góp 3 chữ cái, nên 14 mã = 42 — vượt ngưỡng 40. Mã một chữ như "B-14"
+  // chỉ góp 1, và đó chính là chỗ bản đầu tính sai: 16 mã mới được 16 chữ cái.
+  const toanMa = "BRG-01 BRG-02 BRG-03 XLS-11 XLS-12 XLS-13 DOM-21 DOM-22 DOM-23 RUN-31 RUN-32 RUN-33 EVD-41 EVD-42";
+  assert.ok(toanMa.replace(/[^A-Z]/g, "").length >= 40,
+    "fixture phai du dai de luat bo ma thanh load-bearing, neu khong phep kiem nay la gia");
+  assert.equal(checkB15(unit({ nextStep: toanMa })).state,
+    "ok", "chi toan ma thi khong phai van tieng Viet — khong duoc bao oan");
+  assert.equal(checkB15(unit({ nextStep: "`bridge.sessions` `run.trial` `diagnostics.dom_probe` `jobs.add` `run.stop`" })).state,
+    "ok", "ten dinh danh trong dau nhay nguoc cung khong phai van");
+
+  // Soi CẢ BA trường operator, không chỉ next_step.
+  const baTruong = checkB15(unit({
+    currentFocus: "Nang nhip lan hai sau khi Google gan co unusual activity tren trang that",
+    humanAction: "Mo tung ho so Chrome roi nap lai tien ich va dien ten ho so vao o"
+  }));
+  assert.equal(baTruong.findings.length, 2, "phai soi ca current_focus va human_action, khong chi next_step");
+
+  // Trường rỗng không phải vi phạm — B15 nói về CÁCH VIẾT, không nói về việc thiếu khai.
+  assert.equal(checkB15(unit({})).state, "ok", "truong rong la viec cua phep kiem khac, khong phai B15");
+
+  // Và B15 phải ở mức CẢNH BÁO: hai gói đang do phiên khác giữ, chặn là đỏ vì việc người khác.
+  assert.equal(khongDau.level, "VÀNG", "B15 phai la canh bao — khong the chan vi chu cua goi minh khong so huu");
+  ok("B15 bao dung chu khong dau, im voi chu co dau / chuoi ngan / toan ma; soi ca ba truong; muc canh bao");
+}
+
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

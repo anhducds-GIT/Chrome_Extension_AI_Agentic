@@ -620,3 +620,15 @@ này rồi đi làm luôn.
 
 **Không đụng một dòng code nào của gói.** Chi tiết trường: `STATUS.template.md` ở gốc repo.
 Giai đoạn 2 (chuyển thành bắt buộc) ghi ở Y-03 trong `IDEAS.md`.
+
+## 2026-09-02 — `claude-y05`: viết lại chữ operator cho mắt Đức đọc (không đụng code)
+
+Phép kiểm **B15** mới (luật vàng 5) bắt `next_step` của gói này viết không dấu. Đã viết lại
+`next_step` và `current_focus` thành tiếng Việt có dấu, bỏ thuật ngữ mà người ngoài không hiểu.
+
+**Đổi ranh giới trường, quan trọng hơn cả việc thêm dấu:** `next_step` cũ trộn cả việc của Đức
+(*nạp lại tiện ích, đặt tên hồ sơ*) lẫn việc của AI (*gọi `bridge.sessions` đối chiếu*). Việc
+của Đức nay nằm ở trường riêng `human_action`, nên `next_step` chỉ còn **việc của phiên AI kế
+tiếp**. Đừng nhập lại hai thứ đó.
+
+Nội dung kỹ thuật không đổi một chữ — chỉ đổi cách viết. **Không đụng một dòng code nào.**

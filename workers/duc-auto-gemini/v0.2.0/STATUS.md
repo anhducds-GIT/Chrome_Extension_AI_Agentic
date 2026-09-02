@@ -5,14 +5,14 @@ name: Duc Auto Gemini (Platform)
 lifecycle: active
 owner: claude
 priority_rank: 3
-next_step: "Duc reload extension o TUNG profile Gemini + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: do live nhanh tat host qua 2 phut"
+next_step: "Sau khi Đức nạp lại tiện ích và đặt tên hồ sơ: gọi `bridge.sessions` để đối chiếu đủ tên. Nợ cũ còn lại: đo thật nhánh tắt máy chủ quá hai phút."
 human_action: "Mở từng hồ sơ Chrome đang dùng cho Gemini, nạp lại tiện ích, rồi điền tên hồ sơ vào ô trong bảng điều khiển."
 version_source: workers/duc-auto-gemini/v0.2.0/manifest.json
 last_verified: 2026-08-28
 last_verified_commit: 4789754b2ad57121fe94d97e1ebd86fc5d4d2148
 last_verified_how: "Live sau khi hạ trần chờ xuống 5 giây: tắt/bật host, nối lại sau 1,0 giây (bản trước đo 22,5s và 27,7s). Khớp dự đoán viết trước khi đo, lần thứ ba liên tiếp"
 evidence_ref: workers/duc-auto-gemini/v0.2.0/evidence-transport-liveness-5s-20260828/README.md
-current_focus: "Multi-profile Bridge đã PORT xong 02/09 (mẫu gg-flow-video đã audit PASS): host nhiều kết nối fail-closed + bridge.sessions/target/served_by, ô tên hồ sơ trong panel, suite 83/83, 10/10 mutation đỏ. Host mới đã deploy + chạy trên 32148, thấy 1 kết nối legacy — chờ tay Đức reload extension + đặt tên. Nợ cũ giữ nguyên: đo live nhánh tắt host quá 2 phút; G-01 chờ trial live"
+current_focus: "Lớp nối nhiều hồ sơ Chrome đã chuyển xong sang nhánh này (02/09), theo mẫu đã qua kiểm chéo của nhánh Flow Video: máy chủ chịu được nhiều kết nối và dừng an toàn khi nhập nhằng, bảng điều khiển có ô đặt tên hồ sơ, 83/83 phép kiểm xanh, 10/10 phép thử phá hoại đều bị bắt. Máy chủ mới đã chạy và thấy một kết nối kiểu cũ — đang chờ Đức nạp lại tiện ích rồi đặt tên. Hai nợ cũ giữ nguyên: đo thật nhánh tắt máy chủ quá hai phút, và G-01 chờ một lượt chạy thật."
 ref_readme: workers/duc-auto-gemini/v0.2.0/README.md
 ref_handoff: workers/duc-auto-gemini/v0.2.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md

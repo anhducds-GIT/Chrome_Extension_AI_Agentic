@@ -9,11 +9,11 @@
       "task": "Duc doi sang profile Binh (360p/8s/6 credit), da reload. Chay chuoi voi nhip MOI de do pacing_ms lan dau tren trang that."
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-y05",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-y03). Chi khai human_action vao STATUS.md, KHONG dung code.",
-      "released_at": "2026-09-02"
+      "task": "Y-05: viet lai chu operator cho mat Duc doc + them phep kiem B15 cuong che luat vang 5.",
+      "released_at": null
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-surface-fix",
@@ -23,11 +23,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-y05",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-y03). XONG Y-03 giai doan 1: truong human_action trong luoc do + ban mau + bang. Giai doan 2 (bat buoc) cho 2 goi con lai khai.",
-      "released_at": "2026-09-02"
+      "task": "Y-05: viet lai chu operator cho mat Duc doc + them phep kiem B15 cuong che luat vang 5.",
+      "released_at": null
     }
   }
 }
