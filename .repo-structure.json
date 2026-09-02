@@ -3,13 +3,109 @@
   "schema_version": 1,
   "profile": "P1",
   "areas": {
-    "delegations/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "giao thức uỷ thác MVP" },
-    "docs/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "tài liệu bốn tầng: studies, briefs, archive" },
-    "drafts/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "nháp — phiên S6 sẽ dọn hết và xoá thư mục này" },
-    "evidence/": { "steward": "_root", "mutability": "append-only", "ownership_mode": "root", "note": "bằng chứng vận hành: chỉ thêm, không sửa, không xoá" },
-    "pilots/": { "steward": "_root", "mutability": "append-only", "ownership_mode": "root", "note": "bằng chứng chạy thử: chỉ thêm" },
-    "scripts/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "bộ sinh + cổng kiểm + safe-push" },
-    "tests/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "suite gốc repo" },
-    "workers/": { "steward": null, "mutability": "rw", "ownership_mode": "per-package", "claim_prefix": "workers/", "note": "chủ khai theo từng package trong .agents/claims.json" }
+    "delegations/": {
+      "steward": "_root",
+      "mutability": "rw",
+      "ownership_mode": "root",
+      "note": "giao thức uỷ thác MVP"
+    },
+    "docs/": {
+      "steward": "_root",
+      "mutability": "rw",
+      "ownership_mode": "root",
+      "note": "tài liệu bốn tầng: studies, briefs, archive"
+    },
+    "drafts/": {
+      "steward": "_root",
+      "mutability": "rw",
+      "ownership_mode": "root",
+      "note": "nháp — phiên S6 sẽ dọn hết và xoá thư mục này"
+    },
+    "evidence/": {
+      "steward": "_root",
+      "mutability": "append-only",
+      "ownership_mode": "root",
+      "note": "bằng chứng vận hành: chỉ thêm, không sửa, không xoá"
+    },
+    "pilots/": {
+      "steward": "_root",
+      "mutability": "append-only",
+      "ownership_mode": "root",
+      "note": "bằng chứng chạy thử: chỉ thêm"
+    },
+    "scripts/": {
+      "steward": "_root",
+      "mutability": "rw",
+      "ownership_mode": "root",
+      "note": "bộ sinh + cổng kiểm + safe-push"
+    },
+    "tests/": {
+      "steward": "_root",
+      "mutability": "rw",
+      "ownership_mode": "root",
+      "note": "suite gốc repo"
+    },
+    "workers/": {
+      "steward": null,
+      "mutability": "rw",
+      "ownership_mode": "per-package",
+      "claim_prefix": "workers/",
+      "note": "chủ khai theo từng package trong .agents/claims.json"
+    }
+  },
+  "grandfathered": {
+    "_doc": "Mien tru VINH VIEN cho duong dan CU co dau cach hoac tieng Viet co dau. Day la bang chung van hanh da nam trong repo tu truoc khi co luat dat ten; doi ten chung se lam gay moi tham chieu trong pilot da chay. Danh sach nay DO BANG MAY, khong go tay: git ls-files roi loc duong dan co dau cach / ky tu ngoai ASCII. Phien S4 CHUA co phep kiem nao dung toi khoi nay (phep kiem ten duong dan la viec cua S7); check-bootstrap.mjs hien chi kiem nguoc lai: duong dan nao trong danh sach da bien mat khoi HEAD thi phai xoa di.",
+    "_rule": "Duong dan MOI KHONG duoc them vao day. Them moi = dat ten dung luat.",
+    "measured_count": 48,
+    "paths": [
+      "workers/duc-auto-chatgpt/v0.1.0/Pilot-08/Input content/Duc1.jpg",
+      "workers/duc-auto-chatgpt/v0.1.0/Pilot-08/Input content/Duc2.jpg",
+      "workers/duc-auto-chatgpt/v0.1.0/Pilot-08/Input content/Meo1.png",
+      "workers/duc-auto-chatgpt/v0.1.0/Pilot-08/Input content/Meo2.png",
+      "workers/duc-auto-chatgpt/v0.1.0/pilot-06/Duc-Auto-ChatGPT-Pilot-06__results__v002 (1).xlsx",
+      "workers/duc-auto-chatgpt/v0.1.0/pilot-06B/Duc-Auto-ChatGPT-Pilot-06__results__v002 (1).xlsx",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/.gitignore",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/PILOT-07-KET-QUA.md",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/PILOT-07-PLAN.md",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/BANG-DOI-CHIEU-KET-QUA.md",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-01.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-02.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-03.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-04.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-05.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-06.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-07.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-08.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-09.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-10.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-11.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-12.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-13.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-14.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-15.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-16.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-17.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/ket-qua/to-mau-18.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/BANG-DOI-CHIEU.md",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/MANIFEST.json",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-01.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-02.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-03.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-04.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-05.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-06.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-07.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-08.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-09.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-10.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-11.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-12.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-13.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-14.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-15.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-16.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-17.jpg",
+      "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-18.jpg"
+    ]
   }
 }

@@ -210,13 +210,28 @@ export function detectStatusMachineOwnedFacts(text, {
   return errors;
 }
 
+/* Giữ nguyên chữ ký cũ: trả về mảng CHUỖI. Mọi nơi đang gọi không phải đổi gì. */
 export function validateStatus(fm, deps) {
+  return validateStatusDetailed(fm, deps).map((entry) => entry.message);
+}
+
+/* Cùng MỘT phép đo, nhưng có kèm MÃ để máy khác phân loại được.
+
+   Phiên S4 cần biết một lỗi STATUS thuộc nhóm nào (B2 thiếu `superseded_by` · B7 lifecycle
+   sai · B5 thiếu trường schema v2) để in đúng tên phép kiểm. Cách sai là để S4 tự dò lại
+   frontmatter một lần nữa: hai phép đo cùng một thứ thì sớm muộn sẽ nói hai con số khác
+   nhau — đúng điều BRIEF-S4 cấm. Nên mã được gắn ngay tại chỗ ĐANG đo, và `validateStatus`
+   trở thành một lớp mỏng bọc ngoài. Câu chữ thông báo KHÔNG đổi. */
+export function validateStatusDetailed(fm, deps) {
   const errors = [];
   const source = deps.statusPath ?? "STATUS.md";
-  const fail = (message) => errors.push(`${source}: ${message}`);
+  // Mặc định là B5 ("thiếu/sai trường bắt buộc của schema v2") vì đó là nhóm đông nhất.
+  // Hai nhóm còn lại gọi `failCode` để nói rõ mình là ai.
+  const fail = (message) => errors.push({ code: "B5", message: `${source}: ${message}` });
+  const failCode = (code, message) => errors.push({ code, message: `${source}: ${message}` });
   if (fm.schema !== SCHEMA) fail(`schema phải là "${SCHEMA}", hiện là "${fm.schema || "thiếu"}".`);
   for (const key of REQUIRED) if (!fm[key]) fail(`thiếu trường bắt buộc "${key}".`);
-  if (fm.lifecycle && !LIFECYCLES.has(fm.lifecycle)) fail(`lifecycle "${fm.lifecycle}" không hợp lệ.`);
+  if (fm.lifecycle && !LIFECYCLES.has(fm.lifecycle)) failCode("B7", `lifecycle "${fm.lifecycle}" không hợp lệ.`);
   if (fm.lifecycle === "active" && !fm.last_verified) fail('lifecycle "active" phải có "last_verified".');
   // Bắt buộc CÓ ĐIỀU KIỆN. Khai "đã bị thay thế" mà không nói thay bằng bản nào thì
   // người đọc phải đi tìm — đúng một câu hỏi mà repo lẽ ra trả lời được. Không nhét
@@ -224,16 +239,16 @@ export function validateStatus(fm, deps) {
   // lifecycle. Audit Codex vòng 3 chỉ ra BRIEF-S3 không thể làm được nếu chỉ sửa
   // SCHEMA và REQUIRED.
   if (fm.lifecycle === "superseded" && !fm.superseded_by) {
-    fail('lifecycle "superseded" phải có "superseded_by" trỏ tới bản thay thế.');
+    failCode("B2", 'lifecycle "superseded" phải có "superseded_by" trỏ tới bản thay thế.');
   } else if (fm.superseded_by) {
     // Trỏ tới thứ KHÔNG TỒN TẠI thì lời khai vô giá trị: người đọc đi theo và lạc.
     // Bản trước chỉ kiểm "có khai hay không" nên `banana` và `../outside` đều lọt.
     // Audit Codex vòng 4, mục 4.
     const target = fm.superseded_by.replaceAll("\\", "/");
     if (path.posix.normalize(target) !== target || target.startsWith("/")) {
-      fail(`superseded_by "${fm.superseded_by}" phải là đường dẫn thẳng, không dùng ".." hay "./".`);
+      failCode("B2", `superseded_by "${fm.superseded_by}" phải là đường dẫn thẳng, không dùng ".." hay "./".`);
     } else if (!deps.fileExists(target)) {
-      fail(`superseded_by "${fm.superseded_by}" trỏ tới thứ không tồn tại — bản thay thế phải có thật.`);
+      failCode("B2", `superseded_by "${fm.superseded_by}" trỏ tới thứ không tồn tại — bản thay thế phải có thật.`);
     }
   }
   // `priority_rank` bắt buộc cho đơn vị CÒN SỐNG. Đơn vị đã nghỉ hưu không cần xếp
@@ -368,6 +383,17 @@ function readJson(deps, relPath) {
   return JSON.parse(deps.readFile(relPath));
 }
 
+/* Một chỗ duy nhất dựng lỗi validate. `validationErrors` vẫn là mảng CHUỖI y như trước —
+   `runDashboard` và các test cũ đọc đúng hình dạng đó, đổi nó đi là làm hỏng thông báo lỗi
+   mà không ai thấy cho tới lúc có một STATUS sai thật. */
+function statusValidationError(entries) {
+  const messages = entries.map((entry) => entry.message);
+  const error = new Error(messages.join("\n"));
+  error.name = "StatusValidationError";
+  error.validationErrors = messages;
+  return error;
+}
+
 function measuredRow(deps, dirRelPath, manifestRelPath, tracked = trackedIndex(deps)) {
   const manifest = readJson(deps, manifestRelPath);
   const bridgePath = dirRelPath ? `${dirRelPath}/bridge-core.js` : "bridge-core.js";
@@ -382,8 +408,24 @@ function measuredRow(deps, dirRelPath, manifestRelPath, tracked = trackedIndex(d
   return { name: manifest.name || "KHÔNG RÕ TÊN", version: manifest.version || "KHÔNG RÕ PHIÊN BẢN", bridgeMethods, testFiles };
 }
 
-export function collectModel(deps = createDefaultDeps()) {
+/* `tolerant` — CHỈ dùng cho cổng kiểm cấu trúc (scripts/check-bootstrap.mjs), phiên S4.
+
+   Mặc định vẫn NÉM như cũ: bộ sinh không được phép dựng bảng từ một STATUS sai luật.
+   Nhưng cổng kiểm cấu trúc thì ngược lại — nó sinh ra để CHỈ TÊN cái sai, nên nếu nó cũng
+   chết ngay ở lỗi STATUS đầu tiên thì nó vô dụng đúng lúc cần nhất: người đọc chỉ thấy một
+   lỗi, không thấy 13 phép kiểm còn lại. Ở chế độ này lỗi được GOM vào `model.statusErrors`
+   (kèm mã B2/B5/B7/DRIFT) thay vì ném ra.
+   Lỗi ĐẦU VÀO HỎNG (claims.json, .repo-structure.json) vẫn ném ở cả hai chế độ: đó không
+   phải "một đơn vị khai sai" mà là "không đọc nổi bảng chủ sở hữu" — đoán tiếp là nói dối. */
+export function collectModel(deps = createDefaultDeps(), { tolerant = false } = {}) {
   const tracked = trackedIndex(deps);
+  // Ở chế độ tolerant, một `manifest.json` thiếu/hỏng không được phép giết cả lượt chạy —
+  // nó chỉ làm các cột ĐO của riêng đơn vị đó về 0. Chế độ thường vẫn để lỗi bay lên.
+  const measure = (dirRelPath, manifestRelPath) => {
+    if (!tolerant) return measuredRow(deps, dirRelPath, manifestRelPath, tracked);
+    try { return measuredRow(deps, dirRelPath, manifestRelPath, tracked); }
+    catch { return { name: "KHÔNG ĐỌC ĐƯỢC MANIFEST", version: "KHÔNG RÕ PHIÊN BẢN", bridgeMethods: 0, testFiles: 0 }; }
+  };
   const descriptors = [];
   // Phát hiện package cũng đọc từ git: một thư mục worker chưa commit không được
   // xuất hiện trong bảng đã commit.
@@ -406,7 +448,7 @@ export function collectModel(deps = createDefaultDeps()) {
     }
     const statusText = deps.readFile(statusPath);
     const fm = parseStatus(statusText).frontmatter;
-    const statusErrors = validateStatus(fm, {
+    const statusErrors = validateStatusDetailed(fm, {
       ...deps,
       statusPath,
       packageDir: descriptor.dirRelPath,
@@ -416,25 +458,22 @@ export function collectModel(deps = createDefaultDeps()) {
     // `version_source` hợp lệ vẫn là SSOT của version. Nếu STATUS sai ở bất kỳ luật nền nào,
     // đo từ manifest discovery để detector tiếp tục gom lỗi thay vì crash trước khi báo.
     const measuredPath = statusErrors.length === 0 ? fm.version_source : descriptor.manifestPath;
-    const measured = measuredRow(deps, descriptor.dirRelPath, measuredPath, tracked);
-    errors.push(...detectStatusMachineOwnedFacts(statusText, {
+    const measured = measure(descriptor.dirRelPath, measuredPath);
+    for (const message of detectStatusMachineOwnedFacts(statusText, {
       statusPath,
       bridgeMethods: measured.bridgeMethods,
       testFiles: measured.testFiles,
       version: measured.version
-    }));
+    })) errors.push({ code: "DRIFT", message });
     parsed.push({ ...descriptor, statusPath, fm, measured });
   }
-  if (errors.length) {
-    const error = new Error(errors.join("\n"));
-    error.name = "StatusValidationError";
-    error.validationErrors = errors;
-    throw error;
+  if (errors.length && !tolerant) {
+    throw statusValidationError(errors);
   }
 
   const rows = parsed.map((item) => {
     const manifestPath = item.fm?.version_source ?? item.manifestPath;
-    const measured = item.measured ?? measuredRow(deps, item.dirRelPath, manifestPath, tracked);
+    const measured = item.measured ?? measure(item.dirRelPath, manifestPath);
     const changedCount = item.fm?.last_verified_commit
       ? changedCommitCount(deps.git.changedFilesSince(item.fm.last_verified_commit, item.dirRelPath))
       : 0;
@@ -468,16 +507,16 @@ export function collectModel(deps = createDefaultDeps()) {
   // không nằm trong `workers/`, nên luật "id và version_source phải thuộc package" không áp.
   const rootStatusPath = "STATUS.md";
   const rootFm = deps.fileExists(rootStatusPath) ? parseStatus(deps.readFile(rootStatusPath)).frontmatter : null;
+  let rootErrors = [];
   if (rootFm) {
-    const rootErrors = validateStatus(rootFm, { ...deps, statusPath: rootStatusPath, rootUnit: true });
-    if (rootErrors.length) {
-      const error = new Error(rootErrors.join("\n"));
-      error.name = "StatusValidationError";
-      error.validationErrors = rootErrors;
-      throw error;
-    }
+    rootErrors = validateStatusDetailed(rootFm, { ...deps, statusPath: rootStatusPath, rootUnit: true });
+    if (rootErrors.length && !tolerant) throw statusValidationError(rootErrors);
+    errors.push(...rootErrors);
   }
-  const rootMeasured = measuredRow(deps, "", rootFm?.version_source ?? "manifest.json", tracked);
+  // Cùng luật như đơn vị trong `workers/`: STATUS sai thì KHÔNG tin `version_source` của nó
+  // nữa, lùi về `manifest.json` ở gốc. Không có nhánh này thì ở chế độ tolerant một
+  // `version_source` bịa ra sẽ làm cả lượt chạy chết — đúng thứ tolerant sinh ra để tránh.
+  const rootMeasured = measure("", rootErrors.length === 0 ? (rootFm?.version_source ?? "manifest.json") : "manifest.json");
   rows.push({
     key: "_root",
     id: rootFm?.id ?? "extension-observer-v0",
@@ -513,7 +552,10 @@ export function collectModel(deps = createDefaultDeps()) {
     // phép ảnh hưởng tới artifact.
     priority: priorityFrom(sortedRows),
     topLevel: topLevelOwnership(deps, claims),
-    docs: collectDocs(deps, headDate)
+    docs: collectDocs(deps, headDate),
+    // Rỗng ở chế độ thường (vì lỗi đã được ném). Chỉ có nội dung ở chế độ tolerant —
+    // đó là nguồn DUY NHẤT của B2/B5/B7 trong cổng kiểm cấu trúc.
+    statusErrors: errors
   };
   model.gatewayLinks = gatewayLinks(model, deps);
   model.health = {

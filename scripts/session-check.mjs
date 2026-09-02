@@ -249,11 +249,41 @@ check("Sự thật máy sinh còn tươi", () => {
   return { ok: true, msg: "DASHBOARD.md, llms.txt, repo-map.json và FEATURE-PARITY.md đã commit đều khớp với HEAD." };
 });
 
+/* ---- 8. Cổng kiểm cấu trúc (CHẾ ĐỘ CẢNH BÁO) --------------------------- */
+// Phiên S4. Phép kiểm này CỐ Ý không bao giờ đỏ vì nợ cấu trúc — nợ B1…B14 chỉ được IN RA.
+// Bật chặn là việc của phiên S7, sau khi nợ đã về 0; bật sớm thì mọi phiên đang làm dở việc
+// khác sẽ tắc cổng vì một khoản nợ không phải của mình, và người ta sẽ học cách bỏ qua cổng.
+//
+// NGOẠI LỆ DUY NHẤT, và nó không phải là chặn nợ: nếu chính check-bootstrap.mjs KHÔNG CHẠY
+// ĐƯỢC (thoát khác 0 — claims.json hỏng, .repo-structure.json hỏng, git không chạy) thì đỏ.
+// Đó là "bộ kiểm hỏng", không phải "repo có nợ". Fail-open ở đây nghĩa là cổng báo xanh dựa
+// trên một điều nó không kiểm được — đúng thứ mục 7 vừa phải đi sửa.
+check("Cổng kiểm cấu trúc B1–B14 (chỉ cảnh báo)", () => {
+  let stdout;
+  try {
+    stdout = execFileSync(process.execPath, [path.join(ROOT, "scripts", "check-bootstrap.mjs")], {
+      cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 300000
+    });
+  } catch (error) {
+    const detail = String(error.stderr || error.stdout || error.message).trim().split("\n").slice(-4).join(" | ");
+    return { ok: false, msg: `BOOTSTRAP_KHONG_CHAY_DUOC: scripts/check-bootstrap.mjs thoát khác 0 → ${detail}. Đây là bộ kiểm hỏng, KHÔNG phải nợ cấu trúc.` };
+  }
+  // Chỉ lấy các dòng tổng kết. In cả bản đầy đủ ở đây thì báo cáo cổng dài gấp ba và không ai
+  // đọc nữa — chi tiết nằm sau một lệnh, và lệnh đó được in ra ngay dưới đây.
+  const summary = stdout.split("\n")
+    .filter((line) => /^(TỔNG|BỎ QUA|NGOÀI 14|MIỄN TRỪ)/.test(line.trim()))
+    .map((line) => line.trim());
+  const head = summary.length ? summary.join(" · ") : "không đọc được dòng tổng kết";
+  return { ok: true, msg: `${head} — CHỈ CẢNH BÁO, không chặn. Xem chi tiết: node scripts/check-bootstrap.mjs --all` };
+});
+
 /* ---- chống tự tháo cổng ------------------------------------------------- */
 // Cách dễ nhất để "làm cho cổng xanh" là lặng lẽ xoá bớt một phép kiểm.
 // Con số này chặn đúng việc đó: thêm phép kiểm thật thì tăng nó lên và ghi
 // một dòng vào HANDOFF nói vì sao.
-const EXPECTED_CHECKS = 7;
+// 2026-09-02, phiên S4: 7 → 8. Thêm "Cổng kiểm cấu trúc B1–B14 (chỉ cảnh báo)". Lý do đã ghi
+// một dòng vào HANDOFF.md gốc repo, đúng luật chống tự tháo cổng.
+const EXPECTED_CHECKS = 8;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");
