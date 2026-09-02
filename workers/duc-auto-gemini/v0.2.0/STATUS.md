@@ -1,8 +1,11 @@
 ---
-schema: extension-status/v1
+schema: extension-status/v2
 id: duc-auto-gemini
 name: Duc Auto Gemini (Platform)
 lifecycle: active
+owner: claude
+priority_rank: 3
+next_step: "Do live nhanh tat host qua 2 phut (thang bo cuoc, alarm lo tiep) — hien chi ghim bang test"
 version_source: workers/duc-auto-gemini/v0.2.0/manifest.json
 last_verified: 2026-08-28
 last_verified_commit: 4789754b2ad57121fe94d97e1ebd86fc5d4d2148

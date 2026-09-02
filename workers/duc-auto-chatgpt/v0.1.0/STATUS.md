@@ -1,8 +1,11 @@
 ---
-schema: extension-status/v1
+schema: extension-status/v2
 id: duc-auto-chatgpt
 name: Duc Auto ChatGPT
 lifecycle: active
+owner: claude
+priority_rank: 2
+next_step: "Chay audit doc lap cho ban va khoang nghi giua job — mon no duy nhat con lai cua goi nay"
 version_source: workers/duc-auto-chatgpt/v0.1.0/manifest.json
 last_verified: 2026-08-26
 last_verified_commit: 00d1f99b44bd490cac079da5e803917346571a26

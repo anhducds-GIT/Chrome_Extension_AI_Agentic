@@ -5,12 +5,18 @@ import { fileURLToPath } from "node:url";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SCHEMA = "extension-status/v1";
+const SCHEMA = "extension-status/v2";
 // "superseded" có mặt từ 2026-09-02: phiên S3 phải khai được một bản đã bị thay thế.
 // Thiếu nó thì BRIEF-S3 bảo khai `lifecycle: superseded` còn validateStatus từ chối —
 // đề bài và bộ kiểm đánh nhau. Audit Codex vòng 3 bắt được trước khi ai chạy S3.
-const LIFECYCLES = new Set(["idea", "building", "active", "paused", "archived", "experimental", "superseded", "unclassified"]);
-const REQUIRED = ["schema", "id", "name", "lifecycle", "version_source", "current_focus", "ref_readme", "ref_handoff"];
+// "unclassified" da bi bo tu 2026-09-02 (phien S3): sau khi hai don vi con thieu da khai
+// STATUS, khong con don vi nao dung no. Giu lai la de ngo mot loi thoat cho viec khong khai.
+const LIFECYCLES = new Set(["idea", "building", "active", "paused", "archived", "experimental", "superseded"]);
+const REQUIRED = ["schema", "id", "name", "lifecycle", "version_source", "current_focus", "ref_readme", "ref_handoff", "owner", "next_step"];
+// Bat buoc CO DIEU KIEN. Khong nhet vao REQUIRED duoc vi REQUIRED ap cho MOI STATUS,
+// con hai luat nay chi ap cho mot so lifecycle. Mot ban da nghi huu khong can xep hang
+// uu tien (no da bi loai khoi cuoc dua), nhung phai noi ro no bi thay the boi cai nao.
+const RETIRED_LIFECYCLES = new Set(["superseded", "archived"]);
 const BEHAVIOUR_EXTENSIONS = new Set([".js", ".mjs", ".json", ".html", ".css"]);
 const EVIDENCE_ZONE = /(^|\/)(evidence[^/]*|pilot-[^/]*|batch-[^/]*)\//i;
 export const STAMP_PREFIX = "Trang được sinh tại commit";
@@ -219,6 +225,14 @@ export function validateStatus(fm, deps) {
   // SCHEMA và REQUIRED.
   if (fm.lifecycle === "superseded" && !fm.superseded_by) {
     fail('lifecycle "superseded" phải có "superseded_by" trỏ tới bản thay thế.');
+  }
+  // `priority_rank` bắt buộc cho đơn vị CÒN SỐNG. Đơn vị đã nghỉ hưu không cần xếp
+  // hạng vì nó đã bị loại khỏi cuộc đua ưu tiên — bắt nó khai một con số vô nghĩa chỉ
+  // tạo thêm rác. Và hạng phải đúng dạng: rỗng hay 0 thì `Number("")` ra 0 và nó sẽ
+  // thắng mọi đơn vị khác.
+  if (fm.lifecycle && !RETIRED_LIFECYCLES.has(fm.lifecycle)) {
+    if (!fm.priority_rank) fail('thiếu trường bắt buộc "priority_rank" (số nguyên ≥ 1, đúng MỘT đơn vị mang hạng 1).');
+    else if (rankOf(fm.priority_rank) === null) fail(`priority_rank "${fm.priority_rank}" phải là số nguyên ≥ 1.`);
   }
 
   if (fm.version_source) {
@@ -649,8 +663,37 @@ function topLevelDirsFromGit(deps) {
   return [...dirs];
 }
 
+/* Nguồn khai chủ là `.repo-structure.json` (tầng LAW), KHÔNG phải `.agents/claims.json`
+   (tầng STATE). Vòng trước tôi định nhét `areas` vào claims.json; audit GPT bác đúng:
+   claims đổi vài lần mỗi phiên, areas đổi khi thêm thư mục. Trộn hai tầng vào một file
+   là trái luật mục 1 của chính SPEC. Thêm nữa, quyền khai trong claims.json cho `docs/`
+   sẽ KHÔNG được `safe-push.mjs` cưỡng chế — một lời khai không có răng.
+   `claims` vẫn được dùng cho `workers/`, nơi chủ thật sự khai theo từng package. */
+function readAreas(deps) {
+  if (!deps.fileExists(".repo-structure.json")) return null;
+  let parsed;
+  try { parsed = readJson(deps, ".repo-structure.json"); }
+  catch (error) {
+    throw new Error(`CAU_TRUC_HONG: .repo-structure.json không phải JSON đọc được (${error.message}). Sửa file đó rồi chạy lại.`);
+  }
+  const areas = parsed?.areas;
+  if (!areas || typeof areas !== "object" || Array.isArray(areas)) {
+    throw new Error("CAU_TRUC_THIEU_AREAS: .repo-structure.json không có khối `areas` dạng object. Không đoán được thư mục nào đã khai chủ.");
+  }
+  return areas;
+}
+
 function topLevelOwnership(deps, claims) {
+  const areas = readAreas(deps);
   const keys = Object.keys(claims);
+  if (areas) {
+    return topLevelDirsFromGit(deps)
+      .filter((name) => !name.startsWith(".") && !TOPLEVEL_IGNORED.has(name))
+      .sort(compareText)
+      .map((name) => ({ path: `${name}/`, owner_declared: Object.prototype.hasOwnProperty.call(areas, `${name}/`) }));
+  }
+  // Chưa có `.repo-structure.json` thì lùi về tập khoá của claims — giữ cho repo chưa
+  // chuẩn hoá vẫn sinh được bảng, thay vì chết.
   return topLevelDirsFromGit(deps)
     .filter((name) => !name.startsWith(".") && !TOPLEVEL_IGNORED.has(name))
     .sort(compareText)

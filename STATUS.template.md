@@ -21,10 +21,15 @@ Chỉ dùng `khoá: giá trị` một tầng. Không lồng nhau, không danh s�
 
 ```yaml
 ---
-schema: extension-status/v1
+schema: extension-status/v2
 id: ten-thu-muc-package
 name: Tên Người Đọc Được
 lifecycle: building
+owner: ten-nguoi-hoac-phien-chiu-trach-nhiem
+priority_rank: 1   # so nguyen >= 1. DUNG MOT don vi trong ca repo duoc mang hang 1.
+next_step: "mot cau: viec ke tiep cua don vi nay"
+# superseded_by: workers/.../vX.Y.Z   # BAT BUOC khi lifecycle: superseded
+# depends_on: workers/.../vX.Y.Z       # khong bat buoc
 version_source: workers/ten-thu-muc-package/vX.Y.Z/manifest.json
 last_verified: 2026-08-26
 last_verified_commit: 0000000000000000000000000000000000000000

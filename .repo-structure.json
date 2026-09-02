@@ -1,0 +1,15 @@
+{
+  "_doc": "Bản đồ cấu trúc TĨNH của repo. Đây là tầng LAW: đổi khi thêm/bớt thư mục top-level, tức là hiếm. KHÔNG nhầm với .agents/claims.json — file đó là tầng STATE, ghi phiên AI nào đang giữ package nào, đổi vài lần mỗi phiên. Trộn hai tầng vào một file là trái luật mục 1 của REPO-STRUCTURE-SPEC-V1.",
+  "schema_version": 1,
+  "profile": "P1",
+  "areas": {
+    "delegations/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "giao thức uỷ thác MVP" },
+    "docs/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "tài liệu bốn tầng: studies, briefs, archive" },
+    "drafts/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "nháp — phiên S6 sẽ dọn hết và xoá thư mục này" },
+    "evidence/": { "steward": "_root", "mutability": "append-only", "ownership_mode": "root", "note": "bằng chứng vận hành: chỉ thêm, không sửa, không xoá" },
+    "pilots/": { "steward": "_root", "mutability": "append-only", "ownership_mode": "root", "note": "bằng chứng chạy thử: chỉ thêm" },
+    "scripts/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "bộ sinh + cổng kiểm + safe-push" },
+    "tests/": { "steward": "_root", "mutability": "rw", "ownership_mode": "root", "note": "suite gốc repo" },
+    "workers/": { "steward": null, "mutability": "rw", "ownership_mode": "per-package", "claim_prefix": "workers/", "note": "chủ khai theo từng package trong .agents/claims.json" }
+  }
+}

@@ -10,11 +10,11 @@
       "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-08-28",
-      "task": "XONG 28/08, da push. Lop van chuyen Bridge on dinh: han cho keepalive ACK, han bat tay, backoff tran 5s nhuong alarm sau ~2 phut, hang doi pairing, ghi status co thu tu. Kiem chung LIVE ca hai ban: tran 30s do 22.5s/27.7s, tran 5s do 1.0s. Bang chung: evidence-transport-liveness-20260828 va -5s-20260828. CON MO duy nhat: nhanh tat host qua 2 phut (thang bo cuoc, alarm lo tiep) chua do live, chi ghim bang test. Khong dung G-01.",
-      "released_at": "2026-08-28"
+      "owner": "s3-gaps",
+      "ai": "claude",
+      "claimed_at": "2026-09-02",
+      "task": "S3 mon 2: THEM STATUS.md cho v0.1.0 khai superseded. Chi them file, khong dung Pilot-01 hay evidence.",
+      "released_at": null
     },
     "workers/duc-auto-chatgpt": {
       "owner": null,
@@ -24,10 +24,10 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "s2-fix",
+      "owner": "s3-gaps",
       "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "Sua phat hien cua audit Codex tren S2 (829d644): F1 liet ke thu muc/tai lieu tu git thay vi tu dia, F2 lam test 11 that su kiem kenh do, F4 claims hong phai bao do, F5 ttl sai kieu khong duoc am tham giau no, va ghim test cho 3 mutation da thoat (validateStatus call site, priorityFrom call site, provenance repo-map). Duc duyet 2026-09-02.",
+      "task": "Phien S3 theo docs/briefs/BRIEF-S3.md: STATUS goc repo, .repo-structure.json khoi areas, schema v2 (migrate truoc siet sau), test ghim.",
       "released_at": null
     }
   }

@@ -1,8 +1,11 @@
 ---
-schema: extension-status/v1
+schema: extension-status/v2
 id: duc-auto-gg-flow-video
 name: Duc Auto GG Flow Video
 lifecycle: building
+owner: claude
+priority_rank: 1
+next_step: "Kiem live multi-profile: chep bridge-host.mjs + bridge-cli.mjs moi sang thu muc Bridge, reload extension tung profile, dat ten tung ho so, roi goi bridge.sessions dem du ten"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
 current_focus: "Multi-profile Bridge (hướng A, Đức duyệt 28/08) đã code xong: host giữ nhiều kết nối + target/bridge.sessions/served_by, panel có ô tên hồ sơ, sửa nốt F-14 (chip mode qua pressFlowControl). Suite xanh, mutation đỏ đủ. CHƯA kiểm live: cần Đức chép host mới sang thư mục Bridge + khởi động lại host + reload extension ở từng profile + đặt tên từng profile"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
