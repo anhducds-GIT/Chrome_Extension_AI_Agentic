@@ -4,11 +4,11 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `fc1f085` (2026-09-02).
+Trang được sinh tại commit `62bd1b0` (2026-09-02).
 
 ## Việc ưu tiên #1
 
-- **workers/duc-auto-gg-flow-video/v0.1.0** — CAN DUC RELOAD EXTENSION (da sua .js). Roi chay mot chuoi that voi nhip moi de do pacing_ms tren trang that. Tran chuoi nay la 7 job = dung ngan sach mot tai khoan free o 360p (50 credit / 7 moi video); het chuoi thi Duc doi ho so Chrome sang tai khoan khac. Giao thuc day du o muc cuoi AI-OPERATOR-GUIDE.md
+- **workers/duc-auto-gg-flow-video/v0.1.0** — CAN DUC RELOAD EXTENSION (da sua .js) roi chay mot chuoi de do pacing_ms tren trang that — day se la lan DAU TIEN nhip giong nguoi duoc kiem chung. Truoc do van can Duc quyet: kiem credit con lai cua kaito, va co unusual activity co nen chay tiep khong. Push dang cho phien claude-core-k1 tu push (safe-push tu choi vi se cuon theo 2 commit cua ho)
 
 ## Đọc theo thứ tự này
 
@@ -23,7 +23,7 @@ Trang được sinh tại commit `fc1f085` (2026-09-02).
 - [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới…
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (mẫu gg-flow-video đã audit PASS): host nhiều kết nối fail-closed + bridge.sessions/target/served_by, ô tên hồ sơ trong…
-- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Nhip thao tac giong nguoi da cai (3 quang nghi ngau nhien, ghi vao so cai o pacing_ms), tran trial 3->7 theo ngan sach mot tai khoan, huong dan tuong-credit…
+- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Nang nhip lan hai sau khi Google gan co unusual activity (Duc chot: muc tieu la chay TRON mot flow, khong phai chay nhanh)
 
 ## Luật bắt buộc trước khi sửa gì
 

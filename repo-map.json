@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-02",
-  "generated_commit": "fc1f085",
+  "generated_commit": "62bd1b0",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -27,6 +27,10 @@
     },
     {
       "path": "scripts/",
+      "owner_declared": true
+    },
+    {
+      "path": "template/",
       "owner_declared": true
     },
     {
@@ -97,19 +101,19 @@
       "lifecycle": "building",
       "status_md": "workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "CAN DUC RELOAD EXTENSION (da sua .js). Roi chay mot chuoi that voi nhip moi de do pacing_ms tren trang that. Tran chuoi nay la 7 job = dung ngan sach mot tai khoan free o 360p (50 credit / 7 moi video); het chuoi thi Duc doi ho so Chrome sang tai khoan khac. Giao thuc day du o muc cuoi AI-OPERATOR-GUIDE.md",
+      "next_step": "CAN DUC RELOAD EXTENSION (da sua .js) roi chay mot chuoi de do pacing_ms tren trang that — day se la lan DAU TIEN nhip giong nguoi duoc kiem chung. Truoc do van can Duc quyet: kiem credit con lai cua kaito, va co unusual activity co nen chay tiep khong. Push dang cho phien claude-core-k1 tu push (safe-push tu choi vi se cuon theo 2 commit cua ho)",
       "priority_rank": 1,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Nhip thao tac giong nguoi da cai (3 quang nghi ngau nhien, ghi vao so cai o pacing_ms), tran trial 3->7 theo ngan sach mot tai khoan, huong dan tuong-credit viet lai theo quy trinh doi ho so, va giao thuc nhieu tai khoan cho AI dieu phoi. Suite 91/91, 8/8 dot bien. CHUA do live nhip moi. Truoc do trong ngay: F-21 va + xac nhan live, gia thuyet F-18 bi bac bang chuoi 3 job"
+      "open_item": "Nang nhip lan hai sau khi Google gan co unusual activity (Duc chot: muc tieu la chay TRON mot flow, khong phai chay nhanh). Nhip giua hai job 20-30s -> 45-120s mac dinh 90s; nghi trong trang 2.1-6.1s -> 7.3-33s moi job. Chuoi 7 job: ~9 phut -> ~18 phut. Ghim y dinh thanh thuoc tinh do duoc, gom ca BIEN DO (nghi lau ma deu dan van la nhip may) va mot phep kiem doi chuoi day phai ton >=10 phut cho. Suite 92/92, 6/6 dot bien. CHUA do live"
     }
   ],
   "active_work": [
     {
       "id": "workers/duc-auto-gg-flow-video/v0.1.0",
       "unit": "workers/duc-auto-gg-flow-video/v0.1.0",
-      "title": "CAN DUC RELOAD EXTENSION (da sua .js). Roi chay mot chuoi that voi nhip moi de do pacing_ms tren trang that. Tran chuoi nay la 7 job = dung ngan sach mot tai khoan free o 360p (50 credit / 7 moi video); het chuoi thi Duc doi ho so Chrome sang tai khoan khac. Giao thuc day du o muc cuoi AI-OPERATOR-GUIDE.md",
+      "title": "CAN DUC RELOAD EXTENSION (da sua .js) roi chay mot chuoi de do pacing_ms tren trang that — day se la lan DAU TIEN nhip giong nguoi duoc kiem chung. Truoc do van can Duc quyet: kiem credit con lai cua kaito, va co unusual activity co nen chay tiep khong. Push dang cho phien claude-core-k1 tu push (safe-push tu choi vi se cuon theo 2 commit cua ho)",
       "rank": 1,
       "claim": null
     },
