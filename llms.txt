@@ -4,11 +4,11 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `8b20c88` (2026-09-02).
+Trang được sinh tại commit `fc1f085` (2026-09-02).
 
 ## Việc ưu tiên #1
 
-- **workers/duc-auto-gg-flow-video/v0.1.0** — F-18 cho tai hien: duong go lanh (typing_path=input_events, do 2 luot live), va tu nay MOI luot deu ghi typing_path + composer_len truoc/sau vao so cai — luot nao lai hong thi doc thang, khong phai doan. No con lai (nho, chua gap that): nhanh ANH cua sidepanel cung khong trai ban cu, cung goc benh F-21
+- **workers/duc-auto-gg-flow-video/v0.1.0** — CAN DUC RELOAD EXTENSION (da sua .js). Roi chay mot chuoi that voi nhip moi de do pacing_ms tren trang that. Tran chuoi nay la 7 job = dung ngan sach mot tai khoan free o 360p (50 credit / 7 moi video); het chuoi thi Duc doi ho so Chrome sang tai khoan khac. Giao thuc day du o muc cuoi AI-OPERATOR-GUIDE.md
 
 ## Đọc theo thứ tự này
 
@@ -23,7 +23,7 @@ Trang được sinh tại commit `8b20c88` (2026-09-02).
 - [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới…
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (mẫu gg-flow-video đã audit PASS): host nhiều kết nối fail-closed + bridge.sessions/target/served_by, ô tên hồ sơ trong…
-- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — F4R5 (02/09): chuoi 3 job dau tien chay TRON VEN — 3/3 SUCCESS, moi job dung 1 video, 0 retry, va so cai co du chan doan cho TUNG job
+- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Nhip thao tac giong nguoi da cai (3 quang nghi ngau nhien, ghi vao so cai o pacing_ms), tran trial 3->7 theo ngan sach mot tai khoan, huong dan tuong-credit…
 
 ## Luật bắt buộc trước khi sửa gì
 
