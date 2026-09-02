@@ -686,3 +686,4 @@ của ba phiên khác, đúng luật ngoại lệ (a) ở mục 2 của `AGENTS.
   ở nấc cắt. Test `bridge-profile-label-save-smoke.mjs` bản chuyển thể (mọi kết nối giả đi qua
   challenge; ghim hành vi cho cả parseInstance của host); 5/5 mutation đỏ. Suite 100/100.
   Mẫu gốc đã qua 2 vòng audit Codex bên Gemini cùng ngày; diff bên này là cùng khuôn.
+- 2026-09-02 · `claude-bridge-multiprofile` · Bổ khuyết theo audit port nút Lưu tên (2 MED, 0 lỗi sản xuất — 2 INFO xác nhận code đúng): thêm ca proof SAI ngay sau chu kỳ đổi tên → vẫn fail-closed, token không rời máy; premature auth_ok + cổng authSent đã được ghim từ trước ở test async. Hạn chế ghi nhận trung thực: thứ tự chặn-trước-quét của sanitize không ghim được bằng outcome test (đã xác nhận tĩnh ở 2 vòng audit bên Gemini); bản sao sanitize trong panel chỉ ghim wiring. Suite 100/100.
