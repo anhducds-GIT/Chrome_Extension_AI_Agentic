@@ -596,3 +596,14 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - Suite **84/84**. Không đụng gì khác trong package này.
 - **Next:** không có việc mở của lớp vận chuyển. Số đo live 28/08 vẫn đúng — bản vá này chỉ đổi
   hành vi ở nhánh host-im-lặng-kéo-dài, không đổi đường bật/tắt host thường.
+
+- 2026-09-02 (tiếp) · Claude (`claude-stabilizing-bridge`) · **Cửa sổ bỏ cuộc nay trừ cả kỳ thử và hạn chờ ACK — áp cho cả ba nhánh cùng lúc.**
+  - Audit khi port sang `duc-auto-gg-flow-video` chỉ ra: host **xác thực xong rồi im lặng** lặp một
+    chu kỳ ~30 giây (kỳ thử + hạn chờ ACK) nhưng chỉ bị trừ độ trễ reconnect, nên cửa sổ 2 phút
+    kéo ra nhiều phút và giữ service worker thức. Nay chu kỳ đó tự trừ vào ngân sách, giống hạn
+    bắt tay đã làm.
+  - **Phép trừ là cận trên, không phải đồng hồ thật** — ghi rõ trong code. Sau một ACK về muộn,
+    chu kỳ kế bị trừ trọn một kỳ dù thực tế trôi ít hơn; lệch về phía **bỏ cuộc sớm hơn**, tức
+    phía tiết kiệm pin. Auditor nêu, tôi chấp nhận có chủ đích.
+  - Sửa **một dòng** ở nhánh này, giữ ba nhánh không lệch nhau. Phép ghim đặt ở `gg-flow-video`
+    (nơi phát hiện ra). Suite nhánh này vẫn xanh toàn bộ.

@@ -28,6 +28,7 @@ y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
 
 | File / thư mục | Vai trò |
 |---|---|
+| `tests/bridge-transport-liveness-smoke.mjs` | Ghim lớp ổn định kết nối Bridge (port từ Gemini qua ChatGPT, 02/09): keepalive **chờ ACK có hạn**; buông socket ngay khi phán nó chết chứ không đợi sự kiện `close` mà socket `CLOSING` có thể không bao giờ phát; reconnect **thang trần 5 giây**, bỏ cuộc sau cửa sổ rồi nhường alarm 30 giây; **hạn bắt tay** phủ cả socket không bao giờ mở lẫn socket mở mà host không trả lời. Ghim riêng cho nhánh này: **cờ đang-nối** — nhánh này đọc identity TRƯỚC khi tạo socket nên không giữ socket trước `await` được như hai nhánh kia, và cờ này là thứ chặn hai lượt nối chồng nhau. Fake socket có trạng thái `CLOSING` thật |
 | `manifest.json` | MV3, match `https://labs.google/fx/tools/flow/*` |
 | `README.md` | Tổng quan, trạng thái Bridge, cài đặt |
 | `AGENTS.md` | File này |

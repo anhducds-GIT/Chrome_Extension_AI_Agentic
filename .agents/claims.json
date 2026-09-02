@@ -3,25 +3,25 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-flow04",
+      "owner": "claude-stabilizing-bridge",
       "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "FLOW-04: Duc da bat Kaito + Dev Mode, KHONG nap workbook. AI tu trien khai phan con lai: tim duong nap/khoi tao workbook session qua Bridge, kiem van tay runtime, jobs.add roi run.trial <=3 (tran cung). Ghi bang chung.",
+      "task": "Port lop on dinh ket noi — nhanh 3/3 (gg-flow). Ban va cua so bo cuoc (tru ky thu + han cho ACK) ap cho CA BA nhanh de chung khong lech nhau, nen ca ba dang co thay doi.",
       "released_at": null
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-stabilizing-bridge",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 02/09 (ab8ab2a, da push): va cua so bo cuoc — han bat tay nay tu tru vao ngan sach, truoc do host im lang giu worker thuc ~3x cua so. Suite 84/84. Do live 28/08 van dung.",
-      "released_at": "2026-09-02"
+      "task": "Port lop on dinh ket noi — nhanh 3/3 (gg-flow). Ban va cua so bo cuoc (tru ky thu + han cho ACK) ap cho CA BA nhanh de chung khong lech nhau, nen ca ba dang co thay doi.",
+      "released_at": null
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-stabilizing-bridge",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 02/09 (ab8ab2a, da push): port lop on dinh ket noi tu Gemini, dap len bat tay rieng cua nhanh nay (auth_challenge/auth_proof/auth/auth_ok) va multi-profile. Hai bat bien giu nguyen, audit xac nhan HELD. Suite 98/98, pha thu 26/27. CON MO: chua do live.",
-      "released_at": "2026-09-02"
+      "task": "Port lop on dinh ket noi — nhanh 3/3 (gg-flow). Ban va cua so bo cuoc (tru ky thu + han cho ACK) ap cho CA BA nhanh de chung khong lech nhau, nen ca ba dang co thay doi.",
+      "released_at": null
     },
     "_root": {
       "owner": "claude-flow04",

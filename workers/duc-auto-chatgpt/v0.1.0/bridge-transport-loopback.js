@@ -195,6 +195,18 @@
       keepaliveDeadlineTimer = armTimer("setTimeout", () => {
         keepaliveDeadlineTimer = null;
         if (socket !== targetSocket) return;
+        // The probe period and this deadline are waits we scheduled, so they are charged to the
+        // give-up window like the handshake deadline is. Otherwise a host that authenticates and
+        // then never answers a probe repeats a ~30s cycle while paying only the reconnect delay,
+        // and the window stretches to many minutes. An answered probe resets the budget anyway.
+        //
+        // This is an UPPER BOUND on the wait, not a clock reading: the interval keeps its own
+        // cadence, so a late ACK that resets the budget mid-interval still gets the full period
+        // charged on the next miss. That errs toward handing over to the alarm sooner, which is
+        // the safe direction for a budget whose whole purpose is to stop holding the worker awake.
+        // Reading a real clock would be exact but would make every deadline here untestable
+        // against the injected one.
+        reconnectElapsedMs += keepaliveMs + keepaliveAckTimeoutMs;
         abandonSocket(targetSocket, 1000, "Keepalive ACK deadline exceeded.");
       }, keepaliveAckTimeoutMs);
     }

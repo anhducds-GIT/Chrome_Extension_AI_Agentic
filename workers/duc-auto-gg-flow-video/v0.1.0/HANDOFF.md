@@ -396,3 +396,35 @@ Toàn lệnh đọc, **0 credit**.
 - **Nợ mới:** F-18 (đường gõ — **Đức đã biết, chốt 02/09 debug sau, đừng tự sửa mù**),
   F-19 (chữ lỗi còn nói "Gemini DOM" trên trang Flow, thuộc nợ rebrand F-06).
 - **Việc kế tiếp:** F-18. Mọi tiền đề khác của FLOW-04 đã thông.
+
+- 2026-09-02 · Claude (`claude-stabilizing-bridge`) · **Port lớp ổn định kết nối vào nhánh này — nhánh thứ ba và cuối. Suite 85→86, phá thử 25/26, audit độc lập 2 vòng. CHƯA đo live.**
+  - **Đức chốt giao tiếp quyền** từ `claude-flow04` để làm nốt. Cây làm việc của phiên đó **sạch**,
+    commit cuối `3ec2722` đã lưu, và sửa file transport không ảnh hưởng lượt chạy đang bay (chỉ có
+    hiệu lực sau khi reload) — nên rủi ro thấp. Chỉ đụng `bridge-transport-loopback.js` và thêm
+    một file test; **không đụng runner, content, hay việc FLOW-04**.
+  - **Vì sao cần:** nhánh này gửi `keepalive` mỗi 20 giây nhưng **không bao giờ kiểm host có trả
+    lời không**. Kết nối đứt kiểu chết lặng vẫn hiện **Connected**, và lối nối lại duy nhất là
+    alarm 30 giây.
+  - **Một khác biệt thật, và tôi cố ý KHÔNG san phẳng nó.** Hai nhánh kia chặn "hai socket cùng
+    lúc" bằng cách **giữ socket trước `await` đầu tiên** trong `connectHost`. Nhánh này **không làm
+    thế được**: nó đọc identity **trước khi** socket tồn tại — cố ý, để nhãn Đức vừa gõ áp dụng
+    ngay lần nối kế. Muốn giống hai nhánh kia thì phải dời lượt đọc đó vào trong bắt tay, mà
+    **đường multi-profile của nhánh này vừa được kiểm chứng live trên 3 profile hôm 02/09** — không
+    đáng động vào chỉ để giống nhau. Thay vào đó dùng **cờ đang-nối**: không lượt nối thứ hai nào
+    được khởi động khi lượt trước còn đang quyết. **Auditor độc lập xác nhận `SOUND` ở cả hai
+    vòng**, kể cả trên đường lỗi (identity đọc hỏng, constructor ném). Ghim cả hai chiều: gỡ cờ
+    (M43) và không bao giờ nhả cờ (M44).
+  - **Đã thêm:** hạn chờ ACK · thang backoff trần 5 giây + cửa sổ bỏ cuộc · hạn bắt tay ·
+    `dropSocket`/`abandonSocket` · `currentState()` (**"đã xác thực" ≠ "đang kết nối"**) ·
+    `auth_ok` chỉ nhận một lần trên socket đang mở · ghi trạng thái có thứ tự · sửa pairing chạy
+    lần lượt · chuẩn hoá tham số + `unref`.
+  - **Audit độc lập 2 vòng.** Vòng 1 tìm ra: cửa sổ bỏ cuộc chưa trừ thời gian nằm trong chu kỳ
+    thử-và-chờ-ACK, nên host xác thực xong rồi im lặng kéo dài được cửa sổ ra nhiều phút.
+    **Đã vá, và vá cho cả ba nhánh** để chúng không lệch nhau. Vòng 2 chỉ ra phép trừ đó là **cận
+    trên** chứ không phải đồng hồ thật: sau một ACK về muộn, chu kỳ kế bị trừ trọn một kỳ dù thực
+    tế trôi ít hơn. **Chấp nhận, có ghi rõ trong code**: lệch về phía **bỏ cuộc sớm hơn**, tức phía
+    tiết kiệm pin — đúng mục đích của cửa sổ. Đọc đồng hồ thật sẽ chính xác nhưng làm mọi hạn chờ ở
+    đây không test được bằng đồng hồ tiêm vào.
+  - Suite nhánh này **86/86**, cả ba nhánh xanh, `npm test` gốc xanh, `git diff --check` sạch.
+- **Next:** đo live khi tiện — tắt/bật host, panel phải báo **Mất kết nối** rồi tự nối lại **dưới
+  5 giây**. Việc FLOW-04 và quyết Profile 9 vẫn nguyên, tôi không đụng.

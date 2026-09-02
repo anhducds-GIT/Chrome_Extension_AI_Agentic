@@ -101,3 +101,15 @@
 - **F-19** · [ĐO 02/09] Chữ lỗi trả về operator còn nói **"Gemini DOM may have changed"** trên
   một trang Google Flow — đồ thừa kế từ nhánh Gemini, thuộc nợ rebrand **F-06**. Nhỏ, nhưng
   người đọc ledger sẽ đi tìm nhầm chỗ.
+
+### Cửa sổ bỏ cuộc là cận trên, không phải đồng hồ thật — **[ĐỌC]**, chấp nhận có chủ đích
+
+`bridge-transport-loopback.js` trừ vào ngân sách bỏ cuộc **những khoảng chờ chính nó hẹn** (độ trễ
+giữa các lần thử, hạn bắt tay, kỳ thử + hạn chờ ACK). Nó **không** đọc đồng hồ thật, nên sau một
+ACK về muộn, chu kỳ kế bị trừ trọn một kỳ dù thực tế trôi ít hơn.
+
+Hệ quả: thang **bỏ cuộc sớm hơn** 2 phút một chút trong tình huống đó — lệch về phía tiết kiệm
+pin, đúng mục đích của cửa sổ. Auditor độc lập nêu 02/09; **chấp nhận, không sửa**, vì đọc đồng hồ
+thật sẽ làm mọi hạn chờ trong file này không test được bằng đồng hồ tiêm vào.
+
+Chỉ mở lại nếu có bằng chứng thật là extension nhường alarm quá sớm và gây phiền.
