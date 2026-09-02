@@ -717,3 +717,9 @@ nó lộ ra vì trước giờ chưa ai đọc mấy trường đó bằng mắt
 
 **Chú ý cho phiên sau:** thêm `IDEAS.md` làm gốc repo có **10 file `.md`**. Chỉ tiêu của S8 là
 6 — cần đổi thành 7, hoặc S8 hạ bớt file khác. Đừng xoá `IDEAS.md` để đạt chỉ tiêu.
+
+**Ghi thêm cùng phiên:** cổng cấu trúc nhảy 19 → 28 chỗ VÀNG. **Không phải nợ của phiên này** —
+cả 9 chỗ mới đến từ `template/` mà K1 vừa trích: thư mục đó chưa được trỏ tới từ cổng vào, nên
+một AI lạ vào repo sẽ không tìm thấy bộ chuẩn. Đã khai `template/` vào Bản đồ file (phần thuộc
+`_root`); **9 file bên trong cần liên kết từ `template/README.md`** — việc của phiên tiếp K1,
+không phải việc của sổ ý tưởng.
