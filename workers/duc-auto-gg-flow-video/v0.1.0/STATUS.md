@@ -5,9 +5,9 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "F-25 van chua giai (vong chay chet o luot F4R8 nhung KHONG tai hien o F4R9) — can biet co che truoc khi tin vao chuoi dai. Con 8/50 credit tren Binh. Chua du de ket luan nhip cham LA NGUYEN NHAN khong bi gan co: da doi nhieu hon mot bien"
+next_step: "F-25 (vat can that cua chuoi dai: vong chay chet am tham) — chua giai. Truoc do co hai viec re: (a) kiem not nua sau F-14 bang MOT job tu che do Image (6 credit, con 8/50 tren Binh); (b) F-26 can Duc chot — bang cau hinh liet ke duoc nen runner CO THE tu dat x1/doc do phan giai, nhung bam vao do la doi cau hinh cua Duc"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "7/7 job tren mot tai khoan (F4R8 4 + F4R9 3), 42/50 credit, KHONG canh bao nao cua Google. Nhip giong nguoi do duoc tren trang that: pre_compose 4996-11215ms, post_type 3329-9337ms, khong gia tri nao trung nhau. composer before=17 va after-prompt_len=0 o CA BAY job -> o prompt sach moi luot, trang thai lai cua F4R2 khong tai hien lan nao. Bang chung: evidence/F4R9-KET-QUA.md"
+current_focus: "F-15 XONG (cong chan chip x2+, 0 credit moi duong thoat). F-14 GIAI bang cong cu 0 credit moi diagnostics.mode_probe: bang cau hinh MO RA -> nhom nut co nghe su kien pointer, ket luan cu da het han; nua sau (bam tuy chon co doi mode khong) chua chung minh. F-24 la BAO DONG GIA cua chinh toi: videocam Video KHONG bi dich, nhung image Hinh anh THI CO -> rui ro chuyen sang F-11. Phat hien kem: bang cau hinh liet ke duoc (F-26). Suite 94/94"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

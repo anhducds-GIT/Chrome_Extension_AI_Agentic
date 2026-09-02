@@ -956,3 +956,29 @@ với F4R8 là **7/7 job, 42/50 credit trên `Bình`**, giao diện tiếng Vi�
 - **Đo:** suite **94/94** (93 → +1 pin) · **6/6 đột biến bị bắt**.
 - **Việc kế tiếp:** Đức reload một lần rồi tôi chạy `diagnostics.mode_probe --target Binh`.
   **0 credit**, chạy được cả khi tài khoản đã cạn. Sau đó tới **F-25**.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 15): F-14 giải bằng 0 credit, và F-24 là báo động giả của chính tôi
+
+**Bằng chứng:** [`evidence/F14-KET-QUA.md`](evidence/F14-KET-QUA.md) · **0 credit.**
+
+- **F-14: `opened: true`.** Bảng cấu hình **mở ra** khi bấm bằng `pressFlowControl`. Nhóm nút của
+  Flow **có** nghe sự kiện pointer tổng hợp — giả thuyết `isTrusted` **sai**. Trang trả về nguyên
+  trạng. Kết luận cũ *"`element.click()` không tác dụng nên chuyển mode phải do người làm"*
+  **đã hết hạn**.
+  ⚠️ **Nửa còn lại chưa chứng minh:** mở được bảng ≠ bấm `videocam Video` sẽ đổi mode. Đó là cú
+  bấm khác, và lệnh probe **cố ý không bấm**. Kiểm nốt bằng một job từ chế độ Image (6 credit).
+- **F-24 LÀ BÁO ĐỘNG GIẢ, do chính tôi tạo ra.** Tôi thấy `arrow_forward Create` bị dịch thành
+  `arrow_forward Tạo` rồi **suy ra** `videocam Video` "gần chắc" cũng bị dịch. Đo thật:
+  `videocam Video` **giữ nguyên** — vì "Video" trong tiếng Việt cũng là "Video". Hàm chạy đúng
+  **do may mắn về từ vựng, không phải do thiết kế**.
+  **Rủi ro chuyển chỗ chứ không biến mất:** `image Hình ảnh` **bị dịch thật**, nên nhãn Image
+  mode mới là chỗ đáng lo (**F-11**).
+  **Bài học:** một quả mìn suy ra bằng loại suy cần một phép đo trước khi được coi là mìn — và
+  cũng cần một phép đo trước khi được coi là an toàn. Sáng nay tôi phê bình backlog nói dối; đây
+  là một dòng nói dối do chính tôi viết vào, và nó chỉ bị lật bằng một phép đo 0 credit.
+- **Phát hiện kèm theo (F-26):** bảng cấu hình **liệt kê được** — 17 nhãn gồm `360p` `720p`,
+  `4s`…`10s`, `16:9` `9:16`, và **`x1`…`x4`**. Nghĩa là runner **có thể tự đặt chip về `x1`**
+  thay vì chỉ từ chối (F-15), và **đọc được độ phân giải** để suy trần chuỗi (F-22), và đọc được
+  thời lượng — thứ quyết định 6 hay 7 credit mỗi video. **Chưa làm gì: bấm vào đó là đổi cấu
+  hình của Đức, cần Đức chốt.**
+- **Đo:** suite **94/94**.

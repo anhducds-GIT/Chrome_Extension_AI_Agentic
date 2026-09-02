@@ -97,9 +97,14 @@
   sự kiện thật, chuyển mode mãi mãi là việc của người và nên ngừng đổ công vào đó.
   **Và nó đáng giá gấp đôi:** trường `appeared_labels` là **bằng chứng DOM** để thêm nhãn tuỳ
   chọn Video cho locale khác (**F-24**) mà không phải dịch tay — đúng luật vàng 1.
-  **Còn lại: chạy nó.** Cần Đức reload extension một lần (đã sửa `content.js`, `sidepanel.js`,
-  `bridge-core.js`), rồi gọi `diagnostics.mode_probe --target <hồ sơ>`. **0 credit**, nên chạy
-  được bất cứ lúc nào, kể cả khi tài khoản đã cạn.
+  **ĐÃ CHẠY 02/09, 0 CREDIT — `opened: true`.** Bảng cấu hình **mở ra**. Nhóm nút của Flow **có**
+  nghe sự kiện pointer tổng hợp; giả thuyết `isTrusted` **sai**. Trang trả về nguyên trạng
+  (`panel_closed_again: true`). Kết luận cũ *"`element.click()` không tác dụng nên chuyển mode
+  phải do người"* **đã hết hạn** — `pressFlowControl` làm được việc mà `click()` trần không làm được.
+  ⚠️ **Nửa còn lại chưa chứng minh:** phép đo này chứng minh **mở được bảng**, chưa chứng minh
+  **bấm `videocam Video` sẽ đổi mode** — đó là cú bấm khác, và lệnh probe **cố ý không bấm**.
+  Kiểm nốt bằng cách rẻ nhất: Đức đặt chip về Image rồi chạy **một** job.
+  Bằng chứng: `evidence/F14-KET-QUA.md` · `evidence/F14-mode-probe-vi-20260902.json`.
   ~~[ĐO 28/08, hai lần] **`element.click()` KHÔNG có tác dụng lên nhóm nút cấu hình~~
   của Flow.** Chứng minh hai lượt, cả hai 0 credit: (Q001) bấm chip mode → bảng không mở;
   (Q002) bảng đang mở sẵn, runner TÌM THẤY và BẤM đúng `videocam Video` → mode vẫn Image, bảng
@@ -254,7 +259,16 @@
   — đã có bằng chứng DOM) rồi suy ra trần thay vì khoá cứng. Cẩn thận: đọc `360p` từ nhãn chip
   là **selector mới**, phải có bằng chứng DOM trước, đúng luật vàng 1.
 
-- **F-24** · [QUÉT 02/09, chưa gặp thật, **hỏng an toàn**] **Quả mìn locale còn lại duy nhất:**
+- **F-24** · **BÁO ĐỘNG GIẢ — đã đo, đóng lại 02/09.** Tôi ghi mục này bằng **suy đoán**:
+  thấy `arrow_forward Create` bị dịch thành `arrow_forward Tạo` nên kết luận `videocam Video`
+  "gần chắc" cũng bị dịch. **Sai.** Đo thật trên giao diện tiếng Việt: `videocam Video`
+  **giữ nguyên** (vì "Video" trong tiếng Việt cũng là "Video"), và
+  `video_option_found_by_english_label: true`.
+  **Nhưng rủi ro chuyển chỗ, không biến mất:** `image Hình ảnh` **bị dịch thật** — nên nhãn
+  **Image mode** mới là chỗ đáng lo (thuộc **F-11**), không phải Video.
+  **Bài học ghi lại:** một quả mìn suy ra bằng loại suy cần một phép đo trước khi được coi là
+  mìn — và cũng cần một phép đo trước khi được coi là an toàn.
+  ~~[QUÉT 02/09, chưa gặp thật, hỏng an toàn] Quả mìn locale còn lại duy nhất:~~
   `findVideoModeOption()` trong `provider-adapter.js` so khớp **chính xác** chuỗi tiếng Anh
   `"videocam Video"`. Trên giao diện tiếng Việt nhãn đó gần chắc bị dịch (cùng probe đã thấy
   `videocam Xem video` ở thanh bên), nên hàm sẽ trả `null`.
@@ -287,6 +301,16 @@
   phối phát hiện trong một phút thay vì hai mươi; ③ cân nhắc cho vòng lặp sống ở service worker
   thay vì panel — **đổi lớn, cần Đức chốt**.
   Bằng chứng: `evidence/F4R8-KET-QUA.md`.
+
+- **F-26** · [ĐO 02/09, kèm theo F-14] **Bảng cấu hình LIỆT KÊ ĐƯỢC — ba việc đang treo có
+  đường đi rẻ hơn hẳn.** `diagnostics.mode_probe` cho thấy 17 nhãn, gồm **toàn bộ** nút cấu hình
+  rời: `360p` `720p` · `4s` `6s` `8s` `10s` · `16:9` `9:16` · **`x1` `x2` `x3` `x4`**.
+  Hệ quả: **F-15** hiện *từ chối* khi chip không phải `x1` — với bảng này runner có thể **tự đặt
+  về `x1`** (vẫn giữ cổng từ chối làm lớp cuối). **F-22** cần độ phân giải để suy trần chuỗi —
+  nay đọc được trực tiếp. Và thời lượng `8s` vs `10s`, thứ quyết định 6 hay 7 credit mỗi video,
+  cũng đọc được.
+  **CHƯA LÀM GÌ — cần Đức chốt.** Mỗi cú bấm vào các nút đó là **đổi cấu hình của Đức**; đó là
+  quyết định của anh ấy chứ không phải việc AI tự tiện. Bằng chứng: `evidence/F14-KET-QUA.md`.
 
 - **F-20** · **LUẬT MỚI, đã ghim, đọc trước khi sửa BẤT KỲ chữ báo lỗi nào trong gói này.**
   `classifyFailure` (`runner-core.js:88-103`) quyết định một thất bại có được thử lại hay dừng
