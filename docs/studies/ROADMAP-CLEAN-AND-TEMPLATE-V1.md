@@ -261,7 +261,7 @@ Món ④ đụng `build-dashboard.mjs` + `package.json` — làm cuối, commit 
 |---|---|
 | **Ai** | Claude điều phối · Đức duyệt từng diff |
 | **Làm** | Gom bộ artifact đã trích ở S1–S7, promote vào **Kho (Project-3)** ở tier `SEED` của `sync_manifest.json`. Không tạo repo mới, không tạo manifest thứ hai. |
-| **Điều kiện tiên quyết** | **K-MIGRATE xong** — `sync_manifest.json` đã có `schema_version`, version/path/tier đã sửa, checksum sinh lại. Chưa xong mà promote = đổ vào một manifest đang mâu thuẫn. |
+| **Điều kiện tiên quyết** | ⚠️ **ĐANG NGHI NGỜ — xem 9.5 trước khi khởi công.** Bản cũ: *"K-MIGRATE xong — `sync_manifest.json` đã có `schema_version`, version/path/tier đã sửa, checksum sinh lại."* Điều kiện này giả định Kho đang sống. Đức báo 02/09 là **không**. |
 | **Đức nghiệm thu** | Mở `sync_manifest.json` trong Kho. Bộ artifact có mặt ở tier `SEED`, không nằm ở `LOCKED`. Một repo mới lấy SEED về, chạy cổng kiểm ra xanh. |
 
 Bộ artifact phải trích đủ — đây vẫn là "template", chỉ khác chỗ ở:
@@ -460,6 +460,49 @@ Luật đã có sẵn cho việc đó, đừng phát minh lại: mục 1 của `
 `safe-push.mjs` (không cuốn theo commit người khác), và luật của K5 (chỉ gửi đề nghị,
 Đức duyệt từng cái, cấm ghi đè).
 
-**Cái còn thiếu cho Giai đoạn 2:** một cách để nhiều phiên chạy trên **nhiều repo** cùng lúc
-mà vẫn kiểm được — `claims.json` hiện chỉ khoá trong phạm vi một repo. Ghi lại đây để không
-quên, chưa phải việc bây giờ.
+**Đính chính 02/09 (chính tôi ghi sai vài giờ trước).** Tôi từng viết ở đây rằng Giai đoạn 2
+*"cần một cách khoá rộng hơn vì `claims.json` chỉ khoá trong phạm vi một repo"*. **Sai.**
+Khoá theo repo là đơn vị tự nhiên: mỗi repo một bản làm việc, hai phiên cùng một repo đã bị
+`claims.json` chặn rồi. Chạy 5 repo song song **không cần khoá mới**.
+
+Thứ thật sự thiếu là **nhìn thấy** — không chỗ nào cho biết cả 5 phiên đang làm gì. Mà cái đó
+chính là **radar S10**, đã nằm trong kế hoạch. Không phải lỗ hổng mới.
+
+### 9.5 ⚠️ Đức báo 02/09: Kho (Project 3AI) đã lâu không còn được triển khai
+
+**Đây là thông tin làm lung lay giả định gốc của cả làn B.** Ghi lại ngay để không phiên nào
+khởi công K-MIGRATE trước khi việc này được làm rõ.
+
+Làn B (K-MIGRATE · K2 công cụ đo lệch · K3 chụp mốc) **đều dựng trên một giả định**: Kho là
+thứ đang sống, và `sync_manifest.json` là cơ chế phát hành thật. Nếu Kho đang ngủ thì
+K-MIGRATE là *sửa một manifest trong repo không ai dùng*, và S9 là *promote vào một chỗ chết*.
+
+**Hệ quả tốt, nếu đúng:** S9 đang bị chặn bởi K-MIGRATE. Cộng với việc Đức đã chốt template
+**độc lập, không thuộc dự án nào**, thì template không vào Kho nữa — nên **S9 hết bị chặn.**
+
+**CHƯA ĐƯỢC XOÁ LÀN B.** Phải nhìn trước. Ba câu hỏi quyết định, và **chưa ai trả lời**:
+
+1. `sync_manifest.json` đang đồng bộ **cái gì**? Chỉ luật/harness, hay còn thứ khác
+   (CI, cấu hình, xoay khoá…)?
+2. Đã có repo nào **thật sự nhận** từ nó chưa, hay nó chưa từng chạy lần nào?
+3. Commit cuối cùng của Project 3AI là bao giờ?
+
+| Nếu | Thì |
+|---|---|
+| (1) chỉ là luật/harness **và** (2) chưa từng chạy | **K-MIGRATE · K2 · K3 nghỉ hẳn**, thay bằng trường `harness_version` + radar. Ba mốc biến mất khỏi roadmap |
+| (1) còn đồng bộ thứ khác | Giữ làn B, nhưng **tách nó khỏi chuyện template** — hai việc khác nhau |
+
+**Ai làm việc nhìn này: GPT.** Nó có connector đọc thẳng GitHub; một lượt là xong. Claude Code
+không đọc được repo khác. Đây là việc rẻ nhất trên bàn và nó quyết định ba mốc.
+
+**Còn một câu Đức chưa chốt:** Project 3AI nhận vai nào —
+
+- **(a) Nhà của template.** Nó vốn là "gốc của kho", tức chỗ chứa luật chung — đúng vai template
+  cần. Không phải dựng repo mới nên tôn trọng trọn vẹn K0 số 1. Và template repo **tự chạy
+  chuẩn nó phát hành** là bằng chứng sống, không phải lời khai.
+- **(b) Repo thử đầu tiên (M2).** Được, nhưng repo đang ngủ **không có gói chạy, không có
+  tranh chấp quyền, không có bằng chứng sống** — nên chỉ chứng minh được nấc 1–2, không chứng
+  minh được nấc 3–4.
+
+**Khuyến nghị: (a).** Và dù chọn gì thì vẫn cần thêm **một repo đang sống, khác loại** để thử
+thật — migrate sang một extension thứ hai không chứng minh được gì.

@@ -3,11 +3,10 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-f18-evidence",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG: va duong bang chung F-18 (typing_path ghi TRUOC cong gui) + F-20 (sua chu bao loi LA sua hanh vi). Viec ke tiep can TAY DUC: reload extension + bat panel/Dev Mode/Video mode tren ho so kaito, roi chay run.trial x1.",
-      "released_at": "2026-09-02"
+      "task": "Duc duyet 02/09: chay run.trial x1 tren ho so kaito de doc typing_path (ban va bang chung da push, extension da reload)."
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-dieu-phoi). XONG: ghi Giai doan 2 vao roadmap muc 9 (hai dashboard · template co phien ban · cau hoi 9.3 chua chot). Sua muc 8 het lac hau.",
-      "released_at": "2026-09-02"
+      "task": "Ghi canh bao: Project 3AI (Kho) dang ngu — dieu kien tien quyet cua S9 co the da vo hieu.",
+      "released_at": null
     }
   }
 }

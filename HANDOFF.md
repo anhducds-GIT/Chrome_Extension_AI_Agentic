@@ -523,3 +523,23 @@ là **migrate đa repo bằng AI multitask**, lấy repo này làm mẫu.
 hẳn số phiên khỏi mục đó, vì trạng thái sống thuộc về `DASHBOARD.md`.
 
 **Việc kế tiếp:** S8 và dashboard repo Chrome — cả hai không chờ ai.
+
+## 2026-09-02 — `claude-dieu-phoi`: Kho (Project 3AI) đang ngủ — cảnh báo cho làn B
+
+**Đức báo:** repo **Project 3AI**, gốc của Kho, *"đã lâu không còn được triển khai nữa"*.
+
+**Vì sao đáng ghi ngay:** cả làn B (K-MIGRATE · K2 · K3) dựng trên giả định Kho đang sống và
+`sync_manifest.json` là cơ chế phát hành thật. Nếu Kho ngủ thì K-MIGRATE là sửa manifest trong
+repo không ai dùng. **Đã gắn cảnh báo vào điều kiện tiên quyết của S9** để không phiên nào
+khởi công nhầm. Chi tiết + ba câu hỏi quyết định: mục **9.5**.
+
+**Hệ quả tốt:** S9 bị chặn bởi K-MIGRATE. Cộng với việc Đức chốt template **độc lập**, template
+không vào Kho nữa → **S9 hết bị chặn.**
+
+**Việc rẻ nhất trên bàn, và là của GPT:** đọc Project 3AI, trả lời 3 câu ở 9.5. Claude Code
+không đọc được repo khác. Ba câu đó quyết định ba mốc còn hay nghỉ.
+
+**Cũng đính chính một dòng tôi tự ghi sai sáng nay** (mục 9.4): `claims.json` khoá theo repo là
+ĐỦ cho multitask đa repo; thứ thiếu là *nhìn thấy*, và đó là radar S10 đã có kế hoạch.
+
+**Chưa chốt:** Project 3AI làm **nhà của template** (khuyến nghị) hay **repo thử đầu tiên**.
