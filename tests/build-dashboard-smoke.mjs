@@ -67,22 +67,46 @@ function fakeRepo({ includeStatus = true, changedCommits = [], statusOverrides =
     ["workers", ["demo"]],
     ["workers/demo", ["v1"]]
   ]);
+  // `dirty` = file ĐANG SỬA DỞ / CHƯA COMMIT. Trước đây nó chỉ được nhét vào
+  // `git.dirtyFiles()`, mà `buildDashboard` không hề gọi hàm đó — nên phép kiểm 11
+  // ("artifact chỉ chứa sự thật đã commit") so hai model y hệt nhau và luôn xanh,
+  // kể cả khi bộ sinh thật sự đọc trạng thái chưa commit. Audit Codex 2026-09-02
+  // phát hiện 2. Nay `dirty` hiện ra ĐÚNG như trên đĩa thật: có trong listDirs /
+  // listFiles, KHÔNG có trong trackedPaths. Đó mới là kênh rò thật.
+  const onDisk = new Set([...files.keys(), ...dirty]);
+  const childrenOf = (relPath, source) => {
+    const head = relPath ? `${relPath}/` : "";
+    const dirs = new Set();
+    const kids = [];
+    for (const name of source) {
+      if (!name.startsWith(head)) continue;
+      const rest = name.slice(head.length);
+      if (!rest) continue;
+      const slash = rest.indexOf("/");
+      if (slash < 0) kids.push(rest);
+      else dirs.add(rest.slice(0, slash));
+    }
+    return { dirs: [...dirs], files: kids };
+  };
   return {
     root: "C:/repo co khoang trang",
-    fileExists: (relPath) => files.has(relPath) || relPath === "workers/demo/v1/tests" || relPath === "tests",
-    isFile: (relPath) => files.has(relPath),
+    fileExists: (relPath) => onDisk.has(relPath) || relPath === "workers/demo/v1/tests" || relPath === "tests",
+    isFile: (relPath) => onDisk.has(relPath),
     readFile: (relPath) => {
       if (!files.has(relPath)) throw new Error(`fixture thiếu ${relPath}`);
       return files.get(relPath);
     },
-    listDirs: (relPath) => directories.get(relPath) ?? [],
-    listFiles: (relPath) => [...files.keys()].filter((name) => name.startsWith(`${relPath}/`) && !name.slice(relPath.length + 1).includes("/")).map((name) => name.slice(relPath.length + 1)),
+    listDirs: (relPath) => directories.get(relPath) ?? childrenOf(relPath, onDisk).dirs,
+    listFiles: (relPath) => childrenOf(relPath, onDisk).files,
     git: {
       shortHead: () => "abc1234",
       headDate: () => "2026-08-26",
       verifyCommit: () => true,
       changedFilesSince: () => changedCommits,
-      dirtyFiles: () => dirty
+      dirtyFiles: () => dirty,
+      lastCommitDate: () => "2026-08-26",
+      // Chỉ file ĐÃ COMMIT. `dirty` cố tình không có mặt ở đây.
+      trackedPaths: () => [...files.keys()]
     }
   };
 }
@@ -727,22 +751,29 @@ function antiDrift(text, measurements = {}) {
    S2 — cổng vào: llms.txt + repo-map.json + Khối A/D
    ========================================================================== */
 
-function s2Repo({ claims = null, generatedOnDisk = true } = {}) {
-  const base = fakeRepo();
+function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverrides = null } = {}) {
+  const base = fakeRepo({ dirty, statusOverrides });
   const extra = new Map([
     ["docs/studies/ALIVE.md", "---\nkind: study\nstatus: active\nttl_days: 180\n---\nCòn hạn.\n"],
     ["docs/studies/STALE.md", "---\nkind: brief\nstatus: active\nttl_days: 30\n---\nQuá hạn.\n"],
     ["docs/archive/RETIRED.md", "---\nkind: study\nstatus: archived\nttl_days: 180\n---\nĐã nghỉ.\n"],
+    // Hai file nay ton tai de Khoi D con do duoc: drafts/ la thu muc DA COMMIT
+    // nhung chua khai chu; node_modules/ da commit nhung phai bi mien tru.
+    ["drafts/CU.md", "nhap cu"],
+    ["node_modules/goi/index.js", ""],
     ["AGENTS.md", "# luật"],
     ["HANDOFF.md", "# bàn giao"]
   ]);
+  const generatedNames = new Set(["DASHBOARD.md", "llms.txt", "repo-map.json"]);
   if (generatedOnDisk) {
     extra.set("DASHBOARD.md", "cũ");
     extra.set("llms.txt", "cũ");
     extra.set("repo-map.json", "{}");
   }
   const dirs = new Map([
-    ["", ["docs", "drafts", "workers", "node_modules"]],
+    // CO Y KHONG hardcode thu muc goc o day. Hardcode thi `listDirs("")` tra ve
+    // cung mot danh sach du tren dia co gi — va mot mutation quay ve doc-tu-dia
+    // se THOAT. De no tinh tu onDisk (co ca file dirty) thi phep kiem A1 moi that.
     ["docs", ["studies", "archive"]],
     ["docs/studies", []],
     ["docs/archive", []],
@@ -774,7 +805,12 @@ function s2Repo({ claims = null, generatedOnDisk = true } = {}) {
       const own = [...extra.keys()].filter((name) => name.startsWith(`${relPath}/`) && !name.slice(relPath.length + 1).includes("/"));
       return own.length ? own.map((name) => name.slice(relPath.length + 1)) : base.listFiles(relPath);
     },
-    git: { ...base.git, lastCommitDate: (relPath) => touched[relPath] ?? "2026-08-26" }
+    git: {
+      ...base.git,
+      lastCommitDate: (relPath) => touched[relPath] ?? "2026-08-26",
+      // Tai lieu trong docs/ deu DA COMMIT trong fixture nay; ba file GENERATED thi khong.
+      trackedPaths: () => [...base.git.trackedPaths(), ...[...extra.keys()].filter((k) => !generatedNames.has(k))]
+    }
   };
 }
 
@@ -950,5 +986,130 @@ function s2Repo({ claims = null, generatedOnDisk = true } = {}) {
   assert.match(run({ "repo-map.json": '{"schema_version":1}' }).errors, /repo-map\.json/, "repo-map.json cũ phải bị bắt");
   assert.match(run({ "llms.txt": null }).errors, /llms\.txt đang thiếu/, "thiếu llms.txt phải bị bắt");
   ok("S2 --check kiểm cả ba file cổng, thiếu hay cũ đều đỏ");
+}
+
+/* ==========================================================================
+   VÒNG SỬA SAU AUDIT — mỗi phép kiểm dưới đây ghim đúng một phát hiện mà
+   auditor độc lập (Codex, 2026-09-02) tìm ra và tôi đã tự kiểm chứng lại.
+   ========================================================================== */
+
+/* A1. PHÁT HIỆN 1 — trạng thái CHƯA COMMIT không được lọt vào artifact.
+   Đo thật trước khi sửa: tạo một thư mục rác chưa track rồi sinh lại thì
+   `undeclared_dirs` nhảy 7 → 8. Commit con số đó lên là cổng kiểm ĐỎ OAN cho
+   phiên sau, vì cổng dựng lại từ HEAD và HEAD không có thư mục rác đó. */
+{
+  const clean = collectModel(s2Repo());
+  const withJunk = collectModel(s2Repo({ dirty: [
+    "rac-chua-track/ghi-chu.md",       // cả một thư mục top-level mới
+    "docs/studies/CHUA-TRACK.md",       // một tài liệu chưa commit
+    "workers/demo/v1/tests/ba.mjs",     // một file test chưa commit
+    "workers/moi-toanh/v1/manifest.json" // cả một package chưa commit
+  ] }));
+
+  assert.equal(withJunk.health.undeclared_dirs, clean.health.undeclared_dirs,
+    "thư mục chưa track không được làm đổi số nợ");
+  assert.equal(withJunk.health.draft_debt, clean.health.draft_debt,
+    "tài liệu chưa track không được làm đổi số nợ");
+  assert.equal(withJunk.rows.length, clean.rows.length,
+    "package chưa commit không được hiện trong bảng đã commit");
+  const demo = withJunk.rows.find((row) => row.key === "workers/demo/v1");
+  assert.equal(demo.testFiles, clean.rows.find((row) => row.key === "workers/demo/v1").testFiles,
+    "file test chưa commit không được làm đổi cột File test [ĐO]");
+
+  assert.equal(buildDashboard(withJunk), buildDashboard(clean), "DASHBOARD phải y hệt");
+  assert.equal(buildLlmsTxt(withJunk), buildLlmsTxt(clean), "llms.txt phải y hệt");
+  assert.equal(buildRepoMap(withJunk), buildRepoMap(clean), "repo-map.json phải y hệt");
+  ok("SAU-AUDIT trạng thái chưa commit (thư mục, tài liệu, test, package) không lọt vào artifact");
+}
+
+/* A2. PHÁT HIỆN 4 — `claims.json` hỏng phải BÁO ĐỎ, không được im lặng bỏ qua.
+   Bản trước nuốt lỗi và trả `{}`, nghĩa là mọi thư mục thành "chưa khai chủ",
+   con số nợ nhảy vọt, và không một dòng nào nói vì sao. */
+{
+  const base = s2Repo();
+  const broken = { ...base, readFile: (relPath) => relPath === ".agents/claims.json" ? "{khong-phai-json" : base.readFile(relPath) };
+  assert.throws(() => collectModel(broken), /CLAIMS_HONG/, "claims.json hỏng phải ném lỗi có mã tra được");
+
+  const noBlock = { ...base, readFile: (relPath) => relPath === ".agents/claims.json" ? '{"gi-do":1}' : base.readFile(relPath) };
+  assert.throws(() => collectModel(noBlock), /CLAIMS_THIEU_KHOI/, "claims.json thiếu khối claims phải ném lỗi");
+  ok("SAU-AUDIT claims.json hỏng làm bộ sinh dừng lại, không âm thầm khai bừa là chưa ai khai");
+}
+
+/* A3. PHÁT HIỆN 5 — hạn dùng không đọc được thì TÍNH NỢ, không được âm thầm tha.
+   `Number("ba-mươi")` ra NaN, `NaN > ttl` là false, nên tài liệu đó lặng lẽ thoát
+   khỏi mọi phép đếm. Một trường gõ sai làm khoản nợ TÀNG HÌNH — đúng thứ Khối D
+   sinh ra để chống. */
+{
+  const mk = (frontmatter) => {
+    const base = s2Repo();
+    return { ...base, readFile: (relPath) => relPath === "docs/studies/ALIVE.md" ? frontmatter : base.readFile(relPath) };
+  };
+  const debtOf = (fm) => {
+    const doc = collectModel(mk(fm)).docs.find((item) => item.path === "docs/studies/ALIVE.md");
+    return doc;
+  };
+
+  const badTtl = debtOf("---\nkind: study\nstatus: active\nttl_days: ba-muoi\n---\n");
+  assert.equal(badTtl.overdue, true, "ttl_days không phải số phải bị tính là nợ");
+  assert.equal(badTtl.unprovable, true, "và phải được đánh dấu là không chứng minh được");
+
+  assert.equal(debtOf("---\nkind: study\nstatus: active\nttl_days:\n---\n").overdue, true, "ttl_days rỗng phải bị tính là nợ");
+  assert.equal(debtOf("---\nkind: loai-la\nstatus: active\n---\n").overdue, true, "kind lạ, không suy ra được hạn, phải bị tính là nợ");
+
+  // Chiều ngược lại: khai đúng và còn hạn thì KHÔNG được báo oan.
+  const good = debtOf("---\nkind: study\nstatus: active\nttl_days: 180\n---\n");
+  assert.equal(good.overdue, false, "khai đúng và còn hạn thì không được báo oan");
+  // Và đã nghỉ hưu thì hạn hỏng cũng không phải nợ của ai.
+  assert.equal(debtOf("---\nkind: study\nstatus: archived\nttl_days: ba-muoi\n---\n").overdue, false,
+    "tài liệu đã nghỉ hưu thì không tính nợ dù hạn dùng hỏng");
+  ok("SAU-AUDIT hạn dùng không đọc được thì tính là nợ, không âm thầm tha");
+}
+
+/* A4. MUTATION THOÁT SỐ 1 — gỡ `validateStatus` ra khỏi đường chạy thì cả suite
+   vẫn xanh. Đây là loại "xoá chỗ gọi" mà repo này đã trả giá một lần: mọi phép
+   kiểm đơn vị vẫn gọi thẳng hàm đó nên vẫn xanh, chỉ sợi dây NỐI nó vào bộ sinh
+   là đứt. Ghim ở tầng tích hợp, qua nhiều luật khác nhau. */
+{
+  const withStatus = (overrides) => collectModel(s2Repo({ statusOverrides: overrides }));
+
+  assert.throws(() => withStatus({ schema: "extension-status/v0" }), /extension-status\/v1/,
+    "schema sai phải bị chặn NGAY TRONG collectModel");
+  assert.throws(() => withStatus({ lifecycle: "khong-co-that" }), /khong-co-that/,
+    "lifecycle lạ phải bị chặn ngay trong collectModel");
+  assert.throws(() => withStatus({ id: "khac-package" }), /khac-package/,
+    "id không thuộc package phải bị chặn ngay trong collectModel");
+  assert.throws(() => withStatus({ last_verified_commit: "khong-phai-sha" }), /khong-phai-sha/,
+    "SHA sai dạng phải bị chặn ngay trong collectModel");
+  ok("SAU-AUDIT validateStatus được ghim ở tầng tích hợp qua 4 luật, gỡ chỗ gọi là đỏ");
+}
+
+/* A5. MUTATION THOÁT SỐ 2 — thay `priority: priorityFrom(sortedRows)` bằng
+   `priority: null` thì suite cũ vẫn xanh, vì phép kiểm S2-8b tự tay gán
+   `withNext.priority` thay vì để `collectModel` tự suy ra. Nay bơm `next_step`
+   vào ĐÚNG frontmatter của STATUS và bắt bộ sinh tự tìm ra. */
+{
+  const model = collectModel(s2Repo({ statusOverrides: { next_step: "Đo lại trần 90 giây" } }));
+  assert.ok(model.priority, "collectModel phải TỰ suy ra việc ưu tiên từ next_step của STATUS");
+  assert.equal(model.priority.title, "Đo lại trần 90 giây");
+  assert.equal(model.priority.unit, "workers/demo/v1");
+  assert.match(buildDashboard(model), /Việc ưu tiên #1.*Đo lại trần 90 giây/s);
+  assert.match(buildLlmsTxt(model), /Đo lại trần 90 giây/);
+  const map = JSON.parse(buildRepoMap(model));
+  assert.equal(map.active_work.length, 1);
+  assert.equal(map.units.find((u) => u.path === "workers/demo/v1").next_step, "Đo lại trần 90 giây");
+  ok("SAU-AUDIT việc ưu tiên #1 do collectModel tự suy ra từ STATUS, không phải do test gán tay");
+}
+
+/* A6. MUTATION THOÁT SỐ 3 — bỏ hai trường xuất xứ khỏi repo-map thì không
+   assertion nào kêu. Đây là hai trường trả lời câu "kiểm chứng lần cuối khi nào,
+   ở commit nào" — thiếu chúng thì hợp đồng cross-repo mất khả năng truy nguồn. */
+{
+  const map = JSON.parse(buildRepoMap(collectModel(s2Repo())));
+  const unit = map.units.find((item) => item.path === "workers/demo/v1");
+  assert.equal(unit.last_verified, "2026-08-26", "repo-map phải giữ ngày kiểm chứng cuối");
+  assert.equal(unit.last_verified_commit, "a".repeat(40), "repo-map phải giữ commit kiểm chứng cuối");
+  assert.equal(unit.status_md, "workers/demo/v1/STATUS.md");
+  assert.equal(unit.lifecycle, "active");
+  ok("SAU-AUDIT repo-map giữ đủ trường truy nguồn (ngày + commit kiểm chứng cuối)");
 }
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

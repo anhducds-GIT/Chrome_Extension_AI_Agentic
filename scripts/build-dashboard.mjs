@@ -326,24 +326,28 @@ function readJson(deps, relPath) {
   return JSON.parse(deps.readFile(relPath));
 }
 
-function measuredRow(deps, dirRelPath, manifestRelPath) {
+function measuredRow(deps, dirRelPath, manifestRelPath, tracked = trackedIndex(deps)) {
   const manifest = readJson(deps, manifestRelPath);
   const bridgePath = dirRelPath ? `${dirRelPath}/bridge-core.js` : "bridge-core.js";
   const testsPath = dirRelPath ? `${dirRelPath}/tests` : "tests";
   const bridgeMethods = deps.fileExists(bridgePath)
     ? (deps.readFile(bridgePath).match(/registryEntry\(\{/g) ?? []).length
     : 0;
-  const testFiles = deps.fileExists(testsPath)
-    ? deps.listFiles(testsPath).filter((name) => name.toLowerCase().endsWith(".mjs")).length
-    : 0;
+  // Đếm từ git, không từ đĩa: một file test chưa commit không được phép làm đổi
+  // cột "File test [ĐO]". Cùng gốc bệnh với phát hiện 1 của audit — Codex trích
+  // `listDirs`, nhưng `listFiles` ở đây rò đúng y như vậy.
+  const testFiles = tracked.filesIn(testsPath).filter((name) => name.toLowerCase().endsWith(".mjs")).length;
   return { name: manifest.name || "KHÔNG RÕ TÊN", version: manifest.version || "KHÔNG RÕ PHIÊN BẢN", bridgeMethods, testFiles };
 }
 
 export function collectModel(deps = createDefaultDeps()) {
+  const tracked = trackedIndex(deps);
   const descriptors = [];
-  for (const packageName of [...deps.listDirs("workers")].sort(compareText)) {
+  // Phát hiện package cũng đọc từ git: một thư mục worker chưa commit không được
+  // xuất hiện trong bảng đã commit.
+  for (const packageName of tracked.dirsIn("workers")) {
     const packagePath = `workers/${packageName}`;
-    for (const versionName of [...deps.listDirs(packagePath)].sort(compareText)) {
+    for (const versionName of tracked.dirsIn(packagePath)) {
       const dirRelPath = `${packagePath}/${versionName}`;
       const manifestPath = `${dirRelPath}/manifest.json`;
       if (deps.fileExists(manifestPath)) descriptors.push({ packageName, packagePath, versionName, dirRelPath, manifestPath });
@@ -370,7 +374,7 @@ export function collectModel(deps = createDefaultDeps()) {
     // `version_source` hợp lệ vẫn là SSOT của version. Nếu STATUS sai ở bất kỳ luật nền nào,
     // đo từ manifest discovery để detector tiếp tục gom lỗi thay vì crash trước khi báo.
     const measuredPath = statusErrors.length === 0 ? fm.version_source : descriptor.manifestPath;
-    const measured = measuredRow(deps, descriptor.dirRelPath, measuredPath);
+    const measured = measuredRow(deps, descriptor.dirRelPath, measuredPath, tracked);
     errors.push(...detectStatusMachineOwnedFacts(statusText, {
       statusPath,
       bridgeMethods: measured.bridgeMethods,
@@ -388,7 +392,7 @@ export function collectModel(deps = createDefaultDeps()) {
 
   const rows = parsed.map((item) => {
     const manifestPath = item.fm?.version_source ?? item.manifestPath;
-    const measured = item.measured ?? measuredRow(deps, item.dirRelPath, manifestPath);
+    const measured = item.measured ?? measuredRow(deps, item.dirRelPath, manifestPath, tracked);
     const changedCount = item.fm?.last_verified_commit
       ? changedCommitCount(deps.git.changedFilesSince(item.fm.last_verified_commit, item.dirRelPath))
       : 0;
@@ -414,7 +418,7 @@ export function collectModel(deps = createDefaultDeps()) {
     };
   });
 
-  const rootMeasured = measuredRow(deps, "", "manifest.json");
+  const rootMeasured = measuredRow(deps, "", "manifest.json", tracked);
   rows.push({
     key: "_root",
     id: "extension-observer-v0",
@@ -458,10 +462,21 @@ export function collectModel(deps = createDefaultDeps()) {
 
 /* --- S2: dữ liệu cho cổng vào -------------------------------------------- */
 
+/* FAIL CLOSED. Bản trước nuốt lỗi và trả `{}` — nghĩa là một `claims.json` hỏng
+   hoặc đang ghi dở sẽ làm MỌI thư mục thành "chưa khai chủ", con số nợ nhảy vọt,
+   và không một dòng nào nói vì sao. Bảng điều hành nói dối êm ru còn tệ hơn bảng
+   không sinh ra được. Audit Codex 2026-09-02, phát hiện 4. */
 function readClaims(deps) {
   if (!deps.fileExists(".agents/claims.json")) return {};
-  try { return readJson(deps, ".agents/claims.json").claims ?? {}; }
-  catch { return {}; }
+  let parsed;
+  try { parsed = readJson(deps, ".agents/claims.json"); }
+  catch (error) {
+    throw new Error(`CLAIMS_HONG: .agents/claims.json không phải JSON đọc được (${error.message}). Sửa file đó rồi chạy lại — không sinh bảng từ một bảng chủ sở hữu đang hỏng.`);
+  }
+  if (!parsed || typeof parsed.claims !== "object" || parsed.claims === null) {
+    throw new Error("CLAIMS_THIEU_KHOI: .agents/claims.json không có khối `claims`. Không đoán được ai giữ gì, nên dừng thay vì khai bừa là chưa ai khai.");
+  }
+  return parsed.claims;
 }
 
 /* "Việc ưu tiên #1" — vì sao KHÔNG lấy từ `.agents/claims.json`.
@@ -491,9 +506,42 @@ function firstSentence(text) {
   return head.length > 160 ? `${head.slice(0, 157)}...` : head;
 }
 
+/* Liệt kê từ GIT, không từ đĩa.
+
+   Bản trước dùng `deps.listDirs("")`, tức đọc thư mục thật trên máy. Hậu quả đo
+   được (audit Codex 2026-09-02, phát hiện 1): tạo một thư mục rác CHƯA TRACK rồi
+   sinh lại thì `undeclared_dirs` nhảy 7 → 8. Commit con số đó lên là cổng kiểm ĐỎ
+   OAN cho phiên sau, vì cổng dựng lại từ HEAD và HEAD không có thư mục rác đó.
+   Đúng cái đỏ oan mà phiên này mở màn đã phải đi dọn.
+
+   `trackedPaths()` chạy cùng một lệnh git ở cả hai chế độ (đĩa và HEAD), nên hai
+   chế độ luôn nhìn thấy y hệt nhau. */
+function trackedIndex(deps) {
+  const paths = deps.git.trackedPaths();
+  const childrenOf = (prefix) => {
+    const head = prefix ? `${prefix}/` : "";
+    const dirs = new Set();
+    const files = [];
+    for (const relPath of paths) {
+      if (!relPath.startsWith(head)) continue;
+      const rest = relPath.slice(head.length);
+      if (!rest) continue;
+      const slash = rest.indexOf("/");
+      if (slash < 0) files.push(rest);
+      else dirs.add(rest.slice(0, slash));
+    }
+    return { dirs: [...dirs].sort(compareText), files: files.sort(compareText) };
+  };
+  return { paths, dirsIn: (p) => childrenOf(p).dirs, filesIn: (p) => childrenOf(p).files };
+}
+
+function topLevelDirsFromGit(deps) {
+  return trackedIndex(deps).dirsIn("");
+}
+
 function topLevelOwnership(deps, claims) {
   const keys = Object.keys(claims);
-  return deps.listDirs("")
+  return topLevelDirsFromGit(deps)
     .filter((name) => !name.startsWith(".") && !TOPLEVEL_IGNORED.has(name))
     .sort(compareText)
     .map((name) => {
@@ -507,31 +555,39 @@ function topLevelOwnership(deps, claims) {
 
 const TTL_FALLBACK = { brief: 30, study: 180, guide: 365 };
 
+/* Cùng lý do như `topLevelDirsFromGit`: liệt kê tài liệu từ git, không từ đĩa —
+   một file .md chưa track không được phép làm đổi con số nợ.
+
+   Và KHÔNG ĐƯỢC IM LẶNG THA. Bản trước: `ttl_days: ba-mươi` cho `Number()` ra NaN,
+   `NaN > ttl` là false, nên tài liệu đó lặng lẽ thoát khỏi mọi phép đếm nợ. `kind`
+   lạ không có trong bảng mặc định cũng vậy. Một trường gõ sai làm khoản nợ TÀNG HÌNH
+   — mà cả Khối D sinh ra chỉ để làm nợ nhìn thấy được. Audit Codex 2026-09-02,
+   phát hiện 5. Nay: không chứng minh được là còn hạn thì tính là quá hạn. */
 function collectDocs(deps, headDate) {
-  if (!deps.fileExists("docs")) return [];
   const out = [];
-  const walk = (dir) => {
-    for (const name of deps.listFiles(dir)) {
-      if (!name.endsWith(".md")) continue;
-      const relPath = `${dir}/${name}`;
-      const fm = parseStatus(deps.readFile(relPath)).frontmatter;
-      const ttl = Number(fm.ttl_days ?? TTL_FALLBACK[fm.kind] ?? 0);
-      const touched = deps.git.lastCommitDate?.(relPath) ?? "";
-      const age = daysBetween(touched, headDate);
-      out.push({
-        path: relPath,
-        kind: fm.kind ?? "",
-        status: fm.status ?? "",
-        ttl_days: ttl,
-        last_touched: touched,
-        age_days: age,
-        // Chỉ `status: active` mới tính nợ. Tài liệu đã nghỉ hưu thì cũ là đúng.
-        overdue: fm.status === "active" && ttl > 0 && age !== null && age > ttl
-      });
-    }
-    for (const sub of deps.listDirs(dir)) walk(`${dir}/${sub}`);
-  };
-  walk("docs");
+  for (const relPath of deps.git.trackedPaths()) {
+    if (!relPath.startsWith("docs/") || !relPath.endsWith(".md")) continue;
+    const fm = parseStatus(deps.readFile(relPath)).frontmatter;
+    const active = fm.status === "active";
+    const rawTtl = fm.ttl_days ?? TTL_FALLBACK[fm.kind];
+    const ttl = Number(rawTtl);
+    const ttlUsable = rawTtl !== undefined && String(rawTtl).trim() !== "" && Number.isFinite(ttl) && ttl > 0;
+    const touched = deps.git.lastCommitDate?.(relPath) ?? "";
+    const age = daysBetween(touched, headDate);
+    const unprovable = !ttlUsable || age === null;
+    out.push({
+      path: relPath,
+      kind: fm.kind ?? "",
+      status: fm.status ?? "",
+      ttl_days: ttlUsable ? ttl : null,
+      last_touched: touched,
+      age_days: age,
+      // Chỉ `status: active` mới tính nợ — tài liệu đã nghỉ hưu thì cũ là đúng.
+      // Nhưng trong nhóm active, không đọc được hạn dùng = tính nợ, không tha.
+      overdue: active && (unprovable || age > ttl),
+      unprovable: active && unprovable
+    });
+  }
   return out.sort((a, b) => compareText(a.path, b.path));
 }
 
@@ -902,6 +958,10 @@ export function createDefaultDeps(root = ROOT) {
       // liệu quá hạn — vì frontmatter CỐ TÌNH không có trường `created`/`last_reviewed`:
       // ngày gõ tay sẽ mục, còn lịch sử git thì không nói dối được.
       lastCommitDate: (relPath) => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", "--", relPath).trim(),
+      // Danh sách file ĐÃ TRACK tại HEAD. Cả chế độ đĩa lẫn chế độ HEAD đều gọi
+      // đúng lệnh này, nên hai chế độ không bao giờ nhìn thấy hai tập file khác
+      // nhau. `-z` để tên có dấu cách / tiếng Việt không bị git bọc dấu nháy.
+      trackedPaths: () => git("ls-tree", "-r", "-z", "--name-only", "HEAD").split("\0").filter(Boolean),
       verifyCommit: (sha) => {
         try {
           git("rev-parse", "--verify", `${sha}^{commit}`);
@@ -957,6 +1017,10 @@ export function createHeadDeps(root = ROOT) {
       // liệu quá hạn — vì frontmatter CỐ TÌNH không có trường `created`/`last_reviewed`:
       // ngày gõ tay sẽ mục, còn lịch sử git thì không nói dối được.
       lastCommitDate: (relPath) => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", "--", relPath).trim(),
+      // Danh sách file ĐÃ TRACK tại HEAD. Cả chế độ đĩa lẫn chế độ HEAD đều gọi
+      // đúng lệnh này, nên hai chế độ không bao giờ nhìn thấy hai tập file khác
+      // nhau. `-z` để tên có dấu cách / tiếng Việt không bị git bọc dấu nháy.
+      trackedPaths: () => git("ls-tree", "-r", "-z", "--name-only", "HEAD").split("\0").filter(Boolean),
       verifyCommit: (sha) => {
         try {
           git("rev-parse", "--verify", `${sha}^{commit}`);

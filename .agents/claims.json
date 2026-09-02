@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "s2-fix",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02, da push. S1 + noi roadmap khop K0 + S2 cong vao + brief S3 + prompt audit GPT. CON NO: audit doc lap cho S2 (829d644) — Codex dang chay, prompt GPT o docs/briefs/AUDIT-PROMPT-S2-GPT.md. CHUA DUOC MO S3 khi chua co it nhat mot audit PASS/CONDITIONAL.",
-      "released_at": "2026-09-02"
+      "task": "Sua phat hien cua audit Codex tren S2 (829d644): F1 liet ke thu muc/tai lieu tu git thay vi tu dia, F2 lam test 11 that su kiem kenh do, F4 claims hong phai bao do, F5 ttl sai kieu khong duoc am tham giau no, va ghim test cho 3 mutation da thoat (validateStatus call site, priorityFrom call site, provenance repo-map). Duc duyet 2026-09-02.",
+      "released_at": null
     }
   }
 }
