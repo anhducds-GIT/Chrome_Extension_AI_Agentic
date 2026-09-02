@@ -12,7 +12,9 @@
 import assert from "node:assert/strict";
 
 import {
+  appendOnlyFromNumstat,
   areaOf,
+  stewardOf,
   claimPrefixesFrom,
   DEFAULT_CLAIM_PREFIXES,
   DEFAULT_UNITS,
@@ -169,5 +171,76 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
     "file sau nhieu tang van thuoc dung don vi");
   ok("unitDirOf phan biet dung thu muc don vi voi file ben trong no");
 }
+
+/* A2 (2026-09-02) — KHOÁ QUYỀN theo `steward`.
+   Trước A2, mọi thứ ngoài vùng chia-theo-gói gộp về một khoá `_root`. Đo thật: 77% commit
+   trong ngày chạm gốc repo, và một khoá chặn cả những việc KHÔNG chồng nhau. Phép kiểm này
+   ghim cả hai chiều — tách đúng, và khai sai thì NÉM. */
+{
+  const st = {
+    areas: {
+      "_doc_": "khoá chú thích, phải bị bỏ qua",
+      "docs/": { steward: "_docs" },
+      "scripts/": { steward: "_code" },
+      "tests/": { steward: "_code" },
+      "template/": { steward: "_template" },
+      "evidence/": { steward: "_root" },
+      "khong-khai-steward/": { mutability: "rw" },
+      "workers/": { steward: null, ownership_mode: "per-package", claim_prefix: "workers/" }
+    }
+  };
+  const p = ["workers/"];
+  const at = (f) => stewardOf(f, st, p);
+
+  assert.equal(at("docs/studies/x.md"), "_docs", "file trong docs/ thuoc khoa _docs");
+  assert.equal(at("scripts/claim.mjs"), "_code", "scripts/ va tests/ CHUNG mot khoa _code");
+  assert.equal(at("tests/a.mjs"), "_code", "scripts/ va tests/ CHUNG mot khoa _code");
+  assert.equal(at("template/README.md"), "_template", "bo khung co khoa rieng");
+  assert.equal(at("evidence/e.md"), "_root", "vung van khai _root thi giu nguyen _root");
+  assert.equal(at("khong-khai-steward/x.md"), "_root", "khong khai steward thi ve _root — giu hinh dang cu");
+  assert.equal(at("AGENTS.md"), "_root", "file o tang ngoai cung khong thuoc vung nao -> _root");
+  assert.equal(at("HANDOFF.md"), "_root", "HANDOFF.md o goc cung vay");
+  assert.equal(at("workers/abc/v1/x.js"), "workers/abc",
+    "vung chia-theo-goi KHONG bi steward de len — areaOf da tra loi truoc");
+
+  // Không có file cấu hình, hoặc `areas` sai kiểu → giữ hình dạng cũ, KHÔNG ném.
+  assert.equal(stewardOf("docs/x.md", null, p), "_root", "chua co file cau hinh thi ve _root");
+  assert.equal(stewardOf("docs/x.md", { areas: [] }, p), "_root", "areas sai kieu thi ve _root, khong nem");
+
+  // FAIL CLOSED: khai steward sai hình dạng thì NÉM. Im lặng về `_root` là kiểu hỏng tệ nhất —
+  // vùng đó lặng lẽ dùng chung khoá, hai phiên lại choảng nhau, và cổng vẫn xanh.
+  for (const bad of ["docs", "", 42, {}, []]) {
+    assert.throws(() => stewardOf("docs/x.md", { areas: { "docs/": { steward: bad } } }, p),
+      /CAU_TRUC_HONG/, `steward = ${JSON.stringify(bad)} phai NEM, khong duoc im lang ve _root`);
+  }
+  ok("A2 · khoa quyen doc tu steward: tach dung tung vung, khai sai thi NEM, thieu khai thi giu _root");
+}
+
+
+/* A2 · MIỄN TRỪ `HANDOFF.md` — chỉ khi CHỈ THÊM DÒNG.
+   Vì sao cần miễn trừ: luật mục 7 bắt MỌI phiên ghi Log vào `HANDOFF.md` ở gốc. Bắt phải nhận
+   thêm một khoá chỉ để tuân luật là tự chặn luật của mình.
+   Vì sao miễn trừ phải CÓ ĐIỀU KIỆN: sửa hay xoá dòng cũ là viết lại lịch sử của phiên khác.
+   Một miễn trừ không có điều kiện là một cái lỗ, và nó sẽ không bao giờ tự lộ ra. */
+{
+  const f = appendOnlyFromNumstat;
+  assert.equal(f(""), true, "file khong doi thi coi nhu chi-them-dong");
+  assert.equal(f(null), true, "khong co dong numstat nao cung vay");
+  assert.equal(f(undefined), true, "va undefined nua");
+  assert.equal(f("12\t0\tHANDOFF.md"), true, "them 12 xoa 0 = chi them dong -> MIEN");
+  assert.equal(f("  12\t0\tHANDOFF.md  "), true, "khoang trang hai dau khong duoc lam sai ket qua");
+
+  assert.equal(f("12\t3\tHANDOFF.md"), false, "xoa 3 dong = viet lai lich su -> KHONG mien");
+  assert.equal(f("0\t9\tHANDOFF.md"), false, "chi xoa cung khong mien");
+
+  // FAIL CLOSED — day moi la phan de hong am tham.
+  assert.equal(f("-\t-\tHANDOFF.md"), false,
+    "git tra '-' cho file nhi phan: doc khong ra so thi KHONG mien, khong duoc doan la 0");
+  assert.equal(f("rac"), false, "chuoi la thi KHONG mien");
+  assert.equal(f("5"), false, "thieu cot so xoa thi KHONG mien");
+  assert.equal(f("12\tx\tHANDOFF.md"), false, "cot so xoa khong phai so thi KHONG mien");
+  ok("A2 · mien tru HANDOFF chi khi chi-them-dong; doc khong ra so thi FAIL CLOSED");
+}
+
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

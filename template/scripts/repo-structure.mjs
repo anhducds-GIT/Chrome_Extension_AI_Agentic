@@ -121,6 +121,54 @@ export function areaOf(relPath, prefixes = DEFAULT_CLAIM_PREFIXES) {
   return "_root";
 }
 
+/* KHOÁ QUYỀN của một đường dẫn — A2, 2026-09-02.
+   `areaOf` gộp MỌI thứ không thuộc vùng chia-theo-gói về một khoá `_root`. Đo thật ngày 02/09:
+   **98 trong 127 commit (77%) chạm `_root`**, vì cổng đóng phiên bắt sinh lại bốn trang máy
+   sinh ở gốc repo — nên một phiên chỉ sửa code trong một gói vẫn buộc phải nhận `_root` ở cuối.
+   Hậu quả thật cùng ngày: một phiên mượn `_root` để sửa audit K1 (chỉ cần `scripts/`), còn tôi
+   chỉ cần `docs/` — hai việc KHÔNG chồng nhau mà một khoá chặn cả hai.
+
+   Khối `areas` **đã có sẵn** trường `steward` cho từng thư mục; chỉ là cả bảy đều khai `_root`
+   nên chưa ai tách. Hàm này đọc đúng trường đó. Không thêm khối cấu hình mới — thêm là tự tạo
+   nguồn sự thật thứ hai, đúng cái luật này cấm.
+
+   Không khai `steward`, hoặc khai `null`, thì về `_root`: giữ hình dạng cũ cho repo chưa tách. */
+export function stewardOf(relPath, parsed, prefixes = DEFAULT_CLAIM_PREFIXES) {
+  const area = areaOf(relPath, prefixes);
+  if (area !== "_root") return area;                 // vùng chia theo gói, `areaOf` đã trả lời
+  const areas = parsed?.areas;
+  if (!areas || typeof areas !== "object" || Array.isArray(areas)) return "_root";
+  for (const [key, value] of Object.entries(areas)) {
+    if (key.startsWith("_")) continue;               // khoá chú thích, ví dụ "_doc_"
+    if (!key.endsWith("/")) continue;                // chỉ vùng dạng thư mục mới có tiền tố
+    if (!relPath.startsWith(key)) continue;
+    const steward = value?.steward;
+    if (steward === null || steward === undefined) return "_root";
+    // Gõ sai tên khoá (ví dụ "root" thiếu gạch dưới) mà im lặng bỏ qua là kiểu hỏng tệ nhất:
+    // vùng đó lặng lẽ về `_root`, hai phiên lại choảng nhau, và cổng vẫn xanh.
+    if (typeof steward !== "string" || !steward.startsWith("_")) {
+      throw new Error(`CAU_TRUC_HONG: areas["${key}"].steward phải là khoá quyền bắt đầu bằng "_" (ví dụ "_root", "_docs"). Đang là: ${JSON.stringify(steward)}`);
+    }
+    return steward;
+  }
+  return "_root";                                    // file ở tầng ngoài cùng, không thuộc vùng nào
+}
+
+/* "CHỈ THÊM DÒNG?" — quyết định thuần, tách khỏi việc gọi git để kiểm được mọi nhánh.
+   Dùng cho miễn trừ `HANDOFF.md` ở gốc (A2): luật mục 7 bắt MỌI phiên ghi Log vào đó, nên bắt
+   phải nhận thêm một khoá chỉ để tuân luật là tự chặn luật của mình. Nhưng miễn trừ chỉ đúng
+   khi **chỉ thêm dòng** — sửa hay xoá dòng cũ là viết lại lịch sử của phiên khác.
+
+   Đầu vào là một dòng `git diff --numstat`: "<thêm>\t<xoá>\t<đường dẫn>".
+   FAIL CLOSED: đọc không ra số dòng xoá thì KHÔNG miễn. Với file nhị phân git trả "-\t-", và
+   miễn oan ở đó là mở cửa cho việc thay trắng nội dung mà cổng vẫn xanh. */
+export function appendOnlyFromNumstat(stat) {
+  const line = String(stat ?? "").trim();
+  if (!line) return true;                       // không có dòng nào = file không đổi
+  const deleted = Number(line.split(/\s+/)[1]);
+  return Number.isFinite(deleted) && deleted === 0;
+}
+
 /* Danh tính repo dùng cho trang cổng vào máy đọc. THÊM 2026-09-02 sau khi audit độc lập chỉ ra
    bộ sinh đóng cứng chuỗi tên repo gốc: mọi repo lấy bộ khung về sẽ sinh ra một trang **tự nhận
    là repo Chrome**. Đúng cái bệnh "mọi repo cùng nói dối" mà luật cấm chép tầng GENERATED sinh

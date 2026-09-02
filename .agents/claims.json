@@ -16,11 +16,11 @@
       "released_at": "2026-09-02"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-y02-probe-article",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-surface-fix). XONG va da push: va lo hong surface — trang chu chatgpt.com khong con bi coi la hoi thoai; WRONG_SURFACE noi vao ping, phan loai loi, hard-stop, va bang Halt. Suite 98/98. CON MO: chua nghiem thu live (can reload extension lan nua).",
-      "released_at": "2026-09-02"
+      "task": "Sua articleSample cua dom_probe: selector article da chet, lam no len tieng khi khong khop",
+      "released_at": null
     },
     "_root": {
       "owner": "claude-y02-a2",
@@ -44,11 +44,11 @@
       "released_at": null
     },
     "_template": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-y02-a2",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "KHOÁ MỚI (A2 02/09) — bộ khung trích: template/",
-      "released_at": "2026-09-02"
+      "task": "A2: sinh lai bo khung sau khi sua hai script",
+      "released_at": null
     }
   }
 }

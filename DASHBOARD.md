@@ -2,12 +2,12 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `a11a79f` (2026-09-02). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
+Trang được sinh tại commit `32c7c95` (2026-09-02). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
 
 ## A · Bắt đầu từ đâu
 
 1. **Việc ưu tiên #1** — **workers/duc-auto-gg-flow-video/v0.1.0** — F-25 van chua giai (vong chay chet o luot F4R8 nhung KHONG tai hien o F4R9) — can biet co che truoc khi tin vao chuoi dai. Con 8/50 credit tren Binh. Chua du de ket luan nhip cham LA NGUYEN NHAN khong bi gan co: da doi nhieu hon mot bien · [STATUS](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md)
-2. **Phiên gần nhất** — 2026-09-02 @ `a11a79f` · [HANDOFF.md](HANDOFF.md)
+2. **Phiên gần nhất** — 2026-09-02 @ `32c7c95` · [HANDOFF.md](HANDOFF.md)
 3. **Luật phải đọc trước khi sửa gì** — [AGENTS.md](AGENTS.md) · cổng vào cho AI: [llms.txt](llms.txt)
 4. **Ai đang giữ package nào** — `.agents/claims.json` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)
 

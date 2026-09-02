@@ -913,3 +913,39 @@ vá, và lượt này cổng chạy suite gốc thật.
 
 **Việc kế:** A2, khi audit K1 lắng. Đường đi và giá từng phương án:
 `docs/studies/PARALLEL-WORK-DESIGN-V0.md`.
+
+## 2026-09-02 — `claude-y02-a2`: gốc repo không còn là MỘT vùng (A2)
+
+**Số đo đặt ra bài toán:** 98/127 commit trong ngày (**77%**) chạm gốc repo — vì cổng đóng phiên
+bắt sinh lại bốn trang máy sinh ở đó. Nên một phiên chỉ sửa code trong một gói **vẫn buộc phải
+nhận `_root`** ở cuối. Và ca thật cùng ngày: một phiên mượn `_root` để sửa audit K1 (chỉ cần
+`scripts/`), tôi chỉ cần `docs/` — **hai việc không chồng nhau mà một khoá chặn cả hai.**
+
+**Làm gì.** Khối `areas` **đã có sẵn** trường `steward` cho từng thư mục; cả bảy đều khai `_root`
+nên chưa ai tách. Nay: `_docs` (docs/) · `_code` (scripts/ + tests/) · `_template` (template/) ·
+`_root` (phần còn lại + file tầng ngoài). Cổng đóng phiên xét **theo từng khoá** — thiếu khoá
+nào thì nó gọi tên khoá đó ra, kèm nguyên lệnh để nhận.
+
+**Miễn trừ có điều kiện cho `HANDOFF.md`, và đây là mảnh khiến A2 thật sự mở khoá.** Luật mục 7
+bắt MỌI phiên ghi Log vào `HANDOFF.md` ở gốc. Bắt phải nhận thêm một khoá chỉ để tuân luật là
+**tự chặn luật của mình**. Nên nó được miễn như `claims.json` — nhưng **chỉ khi chỉ thêm dòng**:
+sửa hay xoá dòng cũ là viết lại lịch sử của phiên khác, và cái đó không được miễn. Quyết định
+tách thành hàm thuần `appendOnlyFromNumstat`, **fail closed**: git trả `-` cho file nhị phân thì
+KHÔNG miễn, không đoán là 0.
+
+**A2 tự chứng minh ngay trong lượt làm nó.** Cổng lần lượt bắt tôi nhận `_code`, rồi `_template`
+(vì sinh lại bộ khung), và tôi trả `_docs` ngay khi không còn cần. Trước A2, cả ba việc đó dùng
+chung một khoá và **không ai thấy gì**.
+
+**Số:** suite 248 → **250**. Hai phép kiểm mới trong `tests/repo-structure-smoke.mjs`.
+**3/3 đột biến bị bắt**, trong đó cái đáng nhất: *"miễn oan khi đọc không ra số dòng xoá"*.
+
+**Giới hạn tôi tự nhận:** phần **quyết định** miễn trừ được kiểm kỹ mọi nhánh, nhưng phần **nối
+dây** trong `session-check.mjs` thì không có test riêng — dựng cổng đầy đủ trong repo tạm quá
+nặng. Bù lại nó được chạy thật mỗi phiên, vì gần như phiên nào cũng chạm `HANDOFF.md`.
+
+**Còn mở:** **vấn đề 2** — push cuốn theo commit người khác. A2 KHÔNG chữa cái đó (commit vẫn
+trên một nhánh). Bảng giá bốn cách: `docs/studies/PARALLEL-WORK-DESIGN-V0.md` mục 5. Cần Đức chọn.
+
+**Cũng làm:** xoá file rác `nul` 19KB ở gốc (Đức duyệt), giữ dòng `.gitignore` để mọi phiên sau
+khỏi tạo lại.

@@ -16,7 +16,7 @@ import path from "node:path";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { areaOf, claimPrefixesFrom, generatorsFrom, readStructureFromDisk, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyFromNumstat, areaOf, claimPrefixesFrom, generatorsFrom, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -94,13 +94,37 @@ const orphanPackages = packagesTouched.filter((pkg) => !CLAIMS?.[pkg] || !CLAIMS
 // repo dựng từ bộ khung (`root_dir: null`) thì KHÔNG có package nào cả, nên cổng mất răng vĩnh
 // viễn. Audit độc lập bắt được; tôi đã chạy tay `npm test` nên không có gì lọt, nhưng cổng thì
 // không bảo vệ gì.
-const rootMine = (CLAIMS?._root?.owner ?? null) === asLabel;
+/* GỐC REPO KHÔNG PHẢI MỘT VÙNG — nó là NHIỀU vùng (A2, 2026-09-02).
+   Đo thật ngày 02/09: 98/127 commit (77%) chạm gốc repo. Và một ca thật cùng ngày: một phiên
+   mượn khoá gốc để sửa audit K1 (chỉ cần `scripts/`), còn phiên này chỉ cần `docs/` — hai việc
+   KHÔNG chồng nhau mà một khoá chặn cả hai. Nay mỗi thư mục gốc có `steward` riêng trong
+   `areas`, và mọi phép kiểm dưới đây xét THEO TỪNG KHOÁ.
+
+   HAI FILE ĐƯỢC MIỄN, và lý do khác nhau:
+   · `.agents/claims.json` — nhận và TRẢ quyền là thao tác hành chính. Không miễn thì không ai
+     trả lại được quyền, vì chính thao tác trả cũng bị coi là sửa file gốc.
+   · `HANDOFF.md` ở gốc — luật mục 7 bắt MỌI phiên ghi Log vào đây. Bắt phải nhận thêm một khoá
+     chỉ để tuân luật là tự chặn luật của mình. NHƯNG chỉ miễn khi **chỉ thêm dòng**: sửa hay
+     xoá dòng cũ là viết lại lịch sử của phiên khác, và cái đó thì không được miễn. */
+const ROOT_HANDOFF = "HANDOFF.md";
+// So với origin/main tới WORKING TREE, nên bắt được cả commit chưa push lẫn bản sửa dở.
+// Phần QUYẾT ĐỊNH nằm trong `appendOnlyFromNumstat` để kiểm được mọi nhánh mà không cần git.
+const handoffAppendOnly = appendOnlyFromNumstat(git("diff", "--numstat", "origin/main", "--", ROOT_HANDOFF));
+const adminFile = (f) => f === ".agents/claims.json" || (f === ROOT_HANDOFF && handoffAppendOnly);
+
+const keyOf = (f) => stewardOf(f, structure, claimPrefixes);
+const rootAreasTouched = [...new Set(
+  touched.filter((f) => areaOf(f, claimPrefixes) === "_root" && !adminFile(f)).map(keyOf)
+)].sort();
+const myRootAreas = rootAreasTouched.filter((k) => ownedBy(k) === asLabel);
+const orphanRootAreas = rootAreasTouched.filter((k) => !CLAIMS?.[k] || !CLAIMS[k].owner);
+const foreignRootAreas = rootAreasTouched.filter((k) => ownedBy(k) && ownedBy(k) !== asLabel);
+const rootTouched = rootAreasTouched.length > 0;
+// "Gốc là của tôi" chỉ đúng khi MỌI khoá gốc đã chạm đều của tôi. Một khoá của người khác là
+// đủ để phần đó không phải trách nhiệm của tôi.
+const rootMine = rootTouched && myRootAreas.length === rootAreasTouched.length;
 const mine = (file) => myPackages.some((pkg) => file.startsWith(`${pkg}/`))
-  || (rootMine && areaOf(file, claimPrefixes) === "_root");
-// claims.json không tính là "sửa file gốc": nhận và TRẢ quyền là thao tác
-// hành chính, không phải đổi luật. Không miễn trừ nó thì không ai trả lại
-// được quyền gốc — vì chính thao tác trả cũng bị coi là sửa file gốc.
-const rootTouched = touched.some((f) => areaOf(f, claimPrefixes) === "_root" && f !== ".agents/claims.json");
+  || (areaOf(file, claimPrefixes) === "_root" && myRootAreas.includes(keyOf(file)));
 
 /* ---- 1. Chủ sở hữu ------------------------------------------------------ */
 check("Phạm vi trách nhiệm", () => {
@@ -116,18 +140,19 @@ check("Phạm vi trách nhiệm", () => {
   // Có người đứng tên nhưng không phải bạn = việc của họ, xử như package của
   // phiên khác. Chặn ở đây thì mỗi lần một phiên sửa luật là mọi phiên còn lại
   // tắc cổng — đúng kiểu đổ oan mà phần trên vừa bỏ.
-  if (rootTouched && !ownedBy("_root")) {
-    return { ok: false, msg: `File gốc repo bị sửa nhưng không ai đứng tên. Hỏi Đức; được duyệt rồi thì ghi "${asLabel}" vào _root.owner trong .agents/claims.json.` };
+  if (orphanRootAreas.length) {
+    return { ok: false, msg: `Vùng gốc repo bị sửa nhưng chưa ai đứng tên: ${orphanRootAreas.join(", ")}. Nhận bằng: node scripts/claim.mjs --take ${orphanRootAreas[0]} --as ${asLabel} --task "…"` };
   }
-  const rootIsMine = ownedBy("_root") === asLabel;
+  const rootIsMine = rootMine;
   // Việc của phiên khác trong cùng thư mục KHÔNG phải lỗi của bạn — báo cho
   // biết rồi loại khỏi mọi phép kiểm sau. Cổng không thể biết ai gõ phím nào;
   // giả vờ biết chỉ tạo ra lời buộc tội sai.
   const foreign = foreignPackages.map((pkg) => `${pkg} [${ownedBy(pkg)}]`);
-  if (rootTouched && !rootIsMine) foreign.push(`file gốc repo [${ownedBy("_root")}]`);
+  for (const key of foreignRootAreas) foreign.push(`${key} [${ownedBy(key)}]`);
   const note = foreign.length ? ` · bỏ qua (của phiên khác): ${foreign.join(", ")}` : "";
-  const yours = myPackages.length ? myPackages.join(", ") : "(không đụng package nào)";
-  return { ok: true, msg: `Phần của bạn: ${yours}${rootTouched && rootIsMine ? " + file gốc repo" : ""}${note}` };
+  const yoursList = [...myPackages, ...myRootAreas];
+  const yours = yoursList.length ? yoursList.join(", ") : "(không đụng vùng nào)";
+  return { ok: true, msg: `Phần của bạn: ${yours}${note}` };
 });
 
 /* ---- 2. Vùng bằng chứng ------------------------------------------------- */
@@ -212,7 +237,8 @@ check("Test xanh", () => {
   // repo dựng từ bộ khung (`root_dir: null`) thì không có package nào cả, nên cổng mất răng
   // vĩnh viễn. Đo thật 2026-09-02: suốt một phiên sửa `build-dashboard`, `session-check`,
   // `repo-structure`, cổng vẫn báo "Test xanh" mà chưa chạy một test nào.
-  const rootSuite = rootMine && rootTouched && hasRootTestScript();
+  // Chạy khi có BẤT KỲ khoá gốc nào là của mình — suite gốc là một, không chia theo khoá.
+  const rootSuite = myRootAreas.length > 0 && hasRootTestScript();
   if (!suites.length && !rootSuite) return { ok: true, msg: "Không package nào của bạn có suite bị ảnh hưởng." };
   const lines = [];
   if (rootSuite) {
@@ -366,8 +392,8 @@ if (results.length !== EXPECTED_CHECKS) {
 
 /* ---- báo cáo ------------------------------------------------------------ */
 console.log(`\nCỔNG KIỂM ĐÓNG PHIÊN — phiên "${asLabel}"`);
-console.log(`Bạn chịu trách nhiệm: ${myPackages.join(", ") || "(không package nào)"}${rootTouched && rootMine ? " + file gốc repo" : ""}`);
-const others = [...foreignPackages.map((pkg) => `${pkg} [${ownedBy(pkg)}]`), ...(rootTouched && !rootMine ? [`file gốc repo [${CLAIMS?._root?.owner}]`] : [])];
+console.log(`Bạn chịu trách nhiệm: ${[...myPackages, ...myRootAreas].join(", ") || "(không vùng nào)"}`);
+const others = [...foreignPackages, ...foreignRootAreas].map((k) => `${k} [${ownedBy(k)}]`);
 if (others.length) console.log(`Phiên khác đang làm dở, KHÔNG tính cho bạn: ${others.join(", ")}`);
 console.log("");
 for (const r of results) {

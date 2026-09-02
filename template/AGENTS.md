@@ -30,13 +30,46 @@ cuốn theo việc người khác. Push được tự làm khi đủ điều ki�
 
 ## 1. Ai giữ package nào — chống hai AI giẫm chân
 
-Bảng chủ sở hữu là `.agents/claims.json`. **Một package chỉ có MỘT phiên AI được ghi tại một thời điểm.**
+Bảng chủ sở hữu là `.agents/claims.json`. **Một vùng chỉ có MỘT phiên AI được ghi tại một thời điểm.**
 
-- Package đang có chủ, mà chủ không phải bạn → **chỉ được đọc, tuyệt đối không sửa**.
-- Package trống chủ → ghi tên mình vào `claims.json` rồi làm.
-- Muốn giành package người khác đang giữ → **hỏi Đức**, không tự lấy.
+**Nhận và trả quyền bằng lệnh, đừng sửa file bằng tay:**
 
-Đây không phải hình thức. Ngày 25–26/08 đã suýt hỏng vì hai phiên AI cùng làm trên một repo.
+```bash
+node scripts/claim.mjs --list
+node scripts/claim.mjs --take <khoá> --as <tên-phiên> --task "một câu"
+node scripts/claim.mjs --release <khoá> --as <tên-phiên>
+```
+
+Sửa tay là đọc-sửa-ghi, và ngày 02/09 đã có một quyền **bị ghi đè im lặng** vì thế: hai phiên
+cùng đọc thấy "trống" rồi cùng ghi tên mình, người ghi sau thắng, người ghi trước không hề biết.
+Lệnh này **từ chối** nhận vùng đã có chủ khác, **từ chối** trả quyền hộ người khác, và ghi rồi
+đọc lại để kiểm.
+
+- Vùng đang có chủ, mà chủ không phải bạn → **chỉ được đọc, tuyệt đối không sửa**.
+- Vùng trống chủ → nhận rồi làm.
+- Muốn giành vùng người khác đang giữ → **hỏi Đức**, không tự lấy.
+
+**Gốc repo chia làm NHIỀU khoá** (từ 02/09) — trước đó một khoá `_root` che cả bảy thư mục gốc,
+nên hai việc không hề chồng nhau vẫn chặn nhau:
+
+| Khoá | Che gì |
+|---|---|
+| `_docs` | `docs/` |
+| `_code` | `scripts/` + `tests/` |
+| `_template` | `template/` |
+| `_root` | phần còn lại và các file ở tầng ngoài cùng |
+
+Nhận đúng vùng mình đụng, không nhận cả gốc repo. Cổng đóng phiên sẽ nói tên khoá còn thiếu.
+Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.json`.
+
+**Hai file được MIỄN, và lý do khác nhau:** `.agents/claims.json` (nhận/trả quyền là thao tác
+hành chính — không miễn thì không ai trả lại được quyền) và `HANDOFF.md` ở gốc (luật mục 7 bắt
+MỌI phiên ghi Log — nhưng **chỉ miễn khi chỉ thêm dòng**; sửa hay xoá dòng cũ là viết lại lịch
+sử của phiên khác).
+
+Đây không phải hình thức. Ngày 25–26/08 đã suýt hỏng vì hai phiên AI cùng làm trên một repo, và
+ngày 02/09 đo được **98 trong 127 commit (77%) chạm gốc repo** — một khoá duy nhất là điểm nghẽn
+thật, không phải lý thuyết.
 
 ## 2. Ba việc PHẢI hỏi Đức trước
 

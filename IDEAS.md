@@ -62,8 +62,8 @@ hiển thị sai.
 - **phạm vi:** `scripts/claim.mjs` (file mới) · `tests/claim-smoke.mjs` (file mới) ·
   `docs/studies/` · khai báo trong bản đồ file. **CẤM đụng `session-check.mjs` và
   `repo-structure.mjs`** — xem lý do hoãn A2 ở dưới.
-- **việc kế:** **A2** — tách `_root` thành `_docs` · `_code` · `_template` · `_root`.
-  **HOÃN CÓ CHỦ ĐÍCH**, không phải quên
+- **việc kế:** Còn **vấn đề 2** (push cuốn theo commit người khác) — chưa chốt phương án.
+  Bảng giá bốn cách ở `docs/studies/PARALLEL-WORK-DESIGN-V0.md` mục 5. Cần Đức chọn
 - **vì sao:** Đức có nhiều ý tưởng và **không đủ thời gian làm lần lượt**. Mỗi phiên AI phải
   tự biết: làm gì · cập nhật gì · **cấm đụng gì**.
 
@@ -72,11 +72,14 @@ hiển thị sai.
   lại để kiểm. 5 phép kiểm ghim, trong đó một phép chạy thật và xác nhận *lần cướp quyền không
   ghi một chữ nào*.
 
-- **vì sao HOÃN A2:** A2 viết lại chính hàm phân vùng trong `session-check.mjs` và
-  `repo-structure.mjs`. Mà phiên `claude-surface-fix` **đang lặp audit K1 trên đúng hai file
-  đó** — vòng 2 vừa commit `c1c92f3` lúc 20:00. Sửa cùng lúc là bảo đảm xung đột, và tệ hơn:
-  hai bản vá cùng đụng lớp phân quyền thì không ai còn đọc nổi cái nào đúng.
-  Chờ audit K1 lắng là **rẻ hơn nhiều** so với gộp hai bản vá chồng nhau.
+- **đã xong A2 (02/09, sau khi audit K1 lắng):** gốc repo chia làm bốn khoá theo trường
+  `steward` vốn đã có trong `areas`. Cổng đóng phiên xét **theo từng khoá**: nhận thiếu khoá
+  nào thì nó gọi tên khoá đó ra. Kèm một miễn trừ có điều kiện cho `HANDOFF.md` — vì luật mục 7
+  bắt mọi phiên ghi Log ở gốc, nên **không miễn là tự chặn luật của mình**; nhưng chỉ miễn khi
+  chỉ thêm dòng.
+- **A2 tự chứng minh ngay trong lượt làm nó:** cổng lần lượt bắt tôi nhận `_code`, rồi
+  `_template` (vì sinh lại bộ khung), và tôi trả `_docs` ngay khi không cần. Trước A2 thì cả ba
+  việc đó dùng chung một khoá và không ai thấy gì.
 
 - **số đo đặt ra bài toán:** 127 commit/ngày · 77% chạm `_root` · 63 lần ghi bảng quyền · 21
   nhãn phiên từ 01/09. Khảo sát đầy đủ và bốn phương án kèm giá:
