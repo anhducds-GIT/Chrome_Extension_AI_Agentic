@@ -27,3 +27,6 @@ workers/duc-auto-chatgpt/v0.1.0/Pilot-08/outputs/
 # giờ, và chỉ lộ ra khi phép kiểm "khai vào Bản đồ file" được vá để soi cả file gốc.
 # Bỏ qua ở đây thay vì xoá: xoá file cần Đức duyệt, còn cái này thì mọi phiên sẽ còn tạo lại.
 nul
+
+# bản ra của trang bộ khung — để publish, không commit
+*.template-overview.html
