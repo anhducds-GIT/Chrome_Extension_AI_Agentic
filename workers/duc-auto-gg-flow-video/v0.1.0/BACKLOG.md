@@ -85,3 +85,19 @@
 - **F-17** · [V2 của design multi-profile §5.4] Panel/transport gửi kèm chuỗi `runtime_contract`
   trong `auth` để MỘT lệnh `bridge.sessions` thấy độ tươi của mọi profile. Hiện tại phải
   `dom_probe --target` từng đích (2 lệnh) — vẫn đủ dùng, chưa gấp.
+
+- **F-18** · [ĐO 02/09, lượt trial F4R2] **Chữ vào được composer nhưng nút gửi không bao giờ
+  enable → job chết ở `PRE_SUBMIT`.** Đo thật trên hồ sơ `kaito`: sau khi runner gõ, composer
+  `[contenteditable="true"][role="textbox"]` có `valueLen: 172` (không rỗng), nhưng
+  `arrow_forward Create` vẫn `disabled: true`, nên `waitForSendButtonReady()` hết giờ và ledger
+  ghi `Send button did not become ready`. **0 credit, 0 retry, số video không đổi** — fail-closed
+  đúng. Nghi: đường gõ ở `content.js` (`execCommand insertText` → `beforeinput`/`input` →
+  `ClipboardEvent paste`, dòng ~253–275) ghi được ký tự vào DOM nhưng Flow (React/Lexical) không
+  ghi nhận vào state, nên Create không mở. **Đính chính bảng lỗi dòng 150 của
+  `AI-OPERATOR-GUIDE.md`:** kết luận cũ "nút disabled nghĩa là chưa gõ được chữ" chưa đủ — chữ
+  ĐÃ vào DOM. **Chưa giải thích:** prompt 145 ký tự mà composer đo 172, lệch 27; lượt sau phải
+  lưu probe TRƯỚC khi chạy để có mốc so. **Đức đã biết lỗi này, chốt 02/09 để debug sau** —
+  đừng tự sửa mù. Bằng chứng: `evidence/F4R2-KET-QUA.md`.
+- **F-19** · [ĐO 02/09] Chữ lỗi trả về operator còn nói **"Gemini DOM may have changed"** trên
+  một trang Google Flow — đồ thừa kế từ nhánh Gemini, thuộc nợ rebrand **F-06**. Nhỏ, nhưng
+  người đọc ledger sẽ đi tìm nhầm chỗ.

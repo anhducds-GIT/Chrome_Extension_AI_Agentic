@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-flow04",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "Da tra 02/09. Ghi 1 dong port lop on dinh vao muc 2 FEATURE-PARITY + sinh lai artifact.",
-      "released_at": "2026-09-02"
+      "task": "Sinh lai DASHBOARD/llms.txt/repo-map/FEATURE-PARITY sau khi FLOW-04 luot 2 doi next_step.",
+      "released_at": null
     }
   }
 }

@@ -5,9 +5,9 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "Trial video: can tay Duc bat panel + workbook + Dev Mode + Video mode, roi AI chay x1; sau do live-check F-14 (can chip dang o Image). Viec rieng cho Duc: ghe legacy con lai o profile thu 4 — dat ten hoac tat"
+next_step: "F-18: sua duong go prompt — chu vao duoc DOM (valueLen 172) nhung nut arrow_forward Create khong bao gio enable nen job chet o PRE_SUBMIT (0 credit). Duc da biet, chot 02/09 debug sau. KHONG con can nap workbook bang tay: jobs.add tu tao workbook trong bo nho"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "Cổng tay multi-profile ĐÃ QUA 02/09: 3 hồ sơ có tên (Binh/anhducds/kaito) cùng nối, đều legacy:false, tên dùng được làm --target và served_by khớp instance_id; không nêu target thì host từ chối TARGET_AMBIGUOUS. Bằng chứng: evidence/20260902-multiprofile-naming-gate-r01. Còn 1 ghế legacy ở profile thứ tư chờ Đức quyết. Việc kế tiếp: trial video (cần tay Đức bật panel + workbook + Dev Mode + Video mode) rồi live-check F-14"
+current_focus: "FLOW-04 lượt 2 (02/09, hồ sơ kaito): đường chạy Bridge THÔNG đầu-cuối — jobs.add tự tạo workbook, chip Video mode được matcher chấp nhận, vân tay runtime v2 đúng, run.trial chạy tới PRE_SUBMIT/SENDING. Dừng ở nút gửi không enable (F-18), 0 credit, 0 retry, số video 15→15, fail-closed đúng. Bằng chứng: evidence/F4R2-KET-QUA.md"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md
@@ -39,7 +39,7 @@ Phân biệt hai điều đó là quan trọng:
   28/08 chạy đúng đường runner thật (`jobs.add` → `run.trial`): **2 job thành công**, mỗi
   job đúng 1 video mới được ghi sổ. Bằng chứng: [`evidence/F1-EVIDENCE-NOTES.md`](evidence/F1-EVIDENCE-NOTES.md),
   [`evidence/F4-KET-QUA.md`](evidence/F4-KET-QUA.md).
-- ❌ **Chưa kiểm live:** bản vá FLOW-04 ngày 28/08. Suite 84/84 xanh, audit đối kháng 5
+- ⚠️ **Đã chạm trang thật 02/09, chưa đi hết:** bản vá FLOW-04 ngày 28/08. Suite 84/84 xanh, audit đối kháng 5
   vòng PASS, 8 phép mutation đều làm suite đỏ — nhưng chưa một job nào chạy qua bản vá này
   trên trang thật. Bằng chứng: [`evidence/F4-create-scope-fix-audit-20260828.json`](evidence/F4-create-scope-fix-audit-20260828.json).
 

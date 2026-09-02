@@ -1,0 +1,29 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-e5005f3c-c9a9-4332-8ba5-683f9e7aaf8a",
+  "ok": true,
+  "result": {
+    "audit_event": "BRIDGE_JOB_ADDED_DIRECT",
+    "changed_fields": [
+      "prompt",
+      "reference_images",
+      "settings"
+    ],
+    "checkpoint": {
+      "filename": "Bridge-2026-09-02T06-28__results__v01.xlsx",
+      "verified": true,
+      "version": 1
+    },
+    "job_ids": [
+      "Q001"
+    ],
+    "message": "Agent Bridge đã thêm 1 job (Q001) vào Setup; chưa chạy."
+  },
+  "responded_at": "2026-09-02T06:28:24.578Z",
+  "served_by": {
+    "instance_id": "d8c543ee-1cb0-4363-98b0-cdffe687af47",
+    "label": "kaito"
+  }
+}

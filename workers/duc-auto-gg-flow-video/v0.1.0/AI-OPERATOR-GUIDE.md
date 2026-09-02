@@ -95,6 +95,11 @@ chạy. Vì vậy AI vận hành phải tự kiểm một bước, mỗi phiên,
 1. Gọi `diagnostics.dom_probe`.
 2. **Xem `ok` TRƯỚC, rồi mới xem `runtime_contract`.** Hai thứ này dễ nhìn giống nhau mà ý
    nghĩa ngược hẳn — đã suýt đọc nhầm ngày 28/08:
+   - `ok:false` + `INTERNAL_ERROR` → **đọc `error.details.message`, đừng dừng ở mã lỗi.**
+     Đo 02/09: cả ba hồ sơ trả `INTERNAL_ERROR` với chi tiết `"Open the Google Flow project
+     tab as the active tab."` — extension SỐNG và trả lời bình thường, chỉ là tab Flow không
+     phải tab đang xem. Mã lỗi trần nghe như hỏng nặng; chi tiết mới là câu trả lời thật.
+     Cũng không kết luận gì về phiên bản.
    - `ok:false` + `EXECUTOR_UNAVAILABLE` → side panel chưa mở hoặc service worker đang ngủ.
      **Không kết luận gì về phiên bản cả** — probe chưa hề chạm tới trang. Nhờ Đức mở side
      panel, đợi 15–30s rồi gọi lại. (Chính vỏ lỗi này từng bị lưu nhầm thành "bằng chứng":
@@ -105,7 +110,12 @@ chạy. Vì vậy AI vận hành phải tự kiểm một bước, mỗi phiên,
    - `ok:true` + chuỗi khác → bản không khớp, xử lý như bản cũ.
 
    Cách kiểm chéo nhanh khi nghi ngờ: nhìn một phần tử bất kỳ trong `buttons`. Bản mới nút nào
-   cũng có `in_composer_form` và `chain`; bản cũ thì không có hai trường đó.
+   cũng có `in_composer_cluster` và `chain`; bản cũ thì không có hai trường đó.
+   **ĐÍNH CHÍNH 02/09:** dòng này trước ghi `in_composer_form` — SAI, không có trường tên đó.
+   Bản v2 đặt tên là `in_composer_cluster` (khớp chính tên contract `composer-cluster`), và
+   nhãn nút nằm ở `txt`, không phải `label`. Đo thật trên hồ sơ `kaito`: contract trả đúng
+   `v2` nhưng kiểm chéo theo tên cũ lại báo "bản cũ" — tức phép kiểm chéo tự nó tạo báo
+   động giả, đúng loại bẫy làm người vận hành dừng oan.
 
 3. **Bản cũ thì F5 tab Flow TRƯỚC, đừng vội reload lại extension.** `dom_probe` do content
    script trả lời, mà content script trong một tab đã mở sẵn vẫn là bản cũ cho tới khi tab được
@@ -137,7 +147,7 @@ chạy. Vì vậy AI vận hành phải tự kiểm một bước, mỗi phiên,
 | Lệnh đọc lúc được lúc báo `FORBIDDEN/bootstrap_locked`, capability đổi qua lại giữa bản cũ/mới | Hai Chrome profile cùng pair vào cổng 32149; host chỉ giữ kết nối extension đến sau cùng nên hai runtime giành nhau | **ĐÃ VÁ 28/08 (multi-profile routing, xem mục riêng ở đầu guide):** host giữ mọi kết nối, lệnh nhắm đích bằng `--target`. Cách cũ (tắt extension profile thừa) chỉ còn cần khi host chưa được cập nhật. Luật "không gửi lại lệnh ghi khi chưa xác định lần trước có chạy hay không" vẫn nguyên |
 | Job thứ 2/3 chạy nối tiếp lỗi `Create button not found` ở `PRE_SUBMIT`, trong khi DOM probe vẫn thấy composer | Flow có lúc tháo nút submit prompt lúc composer rỗng rồi remount sau khi React nhận chữ; kiểm nút trước khi gõ là quá sớm | Bản vá FLOW-04 cho phép gõ trước, nhưng vẫn bắt buộc `waitForSendButtonReady()` sau gõ và zero click nếu nút không trở lại. Reload Extension trước khi kiểm chứng bản vá |
 | Sau khi gõ prompt, `Create` biến mất và xuất hiện nút `Upgrade`; ledger cũ báo `Send button did not become ready` | Tài khoản đã hết credit. FLOW-04 đo thật 28/08: 2 nút `Upgrade` visible/enabled thay `Create`, zero `PROMPT_SUBMITTED`, zero retry | Bản vá nhận diện mẫu này thành `GENERATION_LIMIT_REACHED` và dừng trước click. Không retry, không đổi tài khoản, không bypass. Sau khi sửa `.js`, Đức reload Extension rồi mới kiểm chứng live |
-| Prompt đã gõ nhưng runner báo `Send button did not become ready`; probe vẫn thấy nút enabled `add_2 Create` | **CHẨN ĐOÁN CŨ SAI — đã đính chính 28/08.** Ghi ban đầu là "Flow đổi icon `arrow_forward` → `add_2`". KHÔNG PHẢI. Hai nút **cùng tồn tại** trong một cụm (trace hop 2). `add_2 Create` là nút **thêm media**, luôn enabled; `arrow_forward Create` là nút gửi thật, **disabled khi ô prompt rỗng**. Lúc đó ô prompt rỗng nên nút gửi disabled, chứ nút không hề đổi tên | Nút gửi **chỉ có một nhãn**: `arrow_forward Create`. Nút disabled nghĩa là chưa gõ được chữ vào composer — đi sửa đường gõ, **đừng đi tìm nút khác**. Bấm `add_2 Create` mở bảng media và không sinh gì cả (đã trả giá một lượt chạy) |
+| Prompt đã gõ nhưng runner báo `Send button did not become ready`; probe vẫn thấy nút enabled `add_2 Create` | **CHẨN ĐOÁN CŨ SAI — đã đính chính 28/08.** Ghi ban đầu là "Flow đổi icon `arrow_forward` → `add_2`". KHÔNG PHẢI. Hai nút **cùng tồn tại** trong một cụm (trace hop 2). `add_2 Create` là nút **thêm media**, luôn enabled; `arrow_forward Create` là nút gửi thật, **disabled khi ô prompt rỗng**. Lúc đó ô prompt rỗng nên nút gửi disabled, chứ nút không hề đổi tên | Nút gửi **chỉ có một nhãn**: `arrow_forward Create`. Nút disabled nghĩa là chưa gõ được chữ vào composer — đi sửa đường gõ, **đừng đi tìm nút khác**. **BỔ SUNG 02/09 (F-18):** đo lượt F4R2 cho thấy chữ CÓ vào DOM (composer `valueLen:172`) mà nút vẫn disabled — nên câu "chưa gõ được chữ" chưa đủ. Hướng sửa vẫn là đường gõ, nhưng nguyên nhân là gõ không đúng cách React/Lexical chấp nhận, chứ không phải không gõ được. Bằng chứng: `evidence/F4R2-KET-QUA.md`. Bấm `add_2 Create` mở bảng media và không sinh gì cả (đã trả giá một lượt chạy) |
 | Chạy từ giao diện Image mở bảng media (`Meo Story / All / Images / Videos`) rồi ledger vẫn chuyển `SUBMITTED`, nhưng prompt còn nguyên và không có video mới | Adapter đã chọn nhầm nút `add_2 Create` cấp trang thay vì nút submit trong đúng form composer; Bridge chập chờn giữa runtime cũ/mới làm thiếu tiền kiểm phiên bản | Gọi `run.stop`, không retry mù. **ĐÍNH CHÍNH 28/08:** cách sửa ghi ở đây lúc đầu ("chỉ nhận nút Create trong form chứa composer") là SAI — đo thật cho thấy composer **không có `<form>` cha**, làm vậy sẽ từ chối mọi job. Cách đúng: nút gửi chỉ có một nhãn `arrow_forward Create`, và tìm trong **cụm điều khiển của composer** (tầng cha đầu tiên có nút). `run.trial` kiểm `runtime_contract` trước khi ghi history/chạy |
 | Job dừng `PRE_SUBMIT` với `WRONG_GENERATION_MODE` (không thấy nút Video, hoặc bấm rồi mà mode không đổi) | **`element.click()` không ăn với nhóm nút cấu hình của Flow** (class `flow_tab_slider_trigger`). Đo 28/08 hai lượt: chip không mở được bảng; và khi bảng mở sẵn thì bấm đúng `videocam Video` mode vẫn không đổi. Cùng `.click()` đó vẫn bấm được `arrow_forward Create` | Nhờ Đức **tự đặt Video mode bằng tay** trước khi chạy. Mode đã là Video thì runner bỏ qua khâu này, chạy bình thường. Chi tiết + cách phân biệt nguyên nhân: **F-14** trong `BACKLOG.md`. Cả hai lượt hỏng đều 0 credit, `retry_count=0` |
 | Chip cấu hình đang để `x2`/`x3`/`x4` | Flow sẽ sinh nhiều video một lượt. Luật gán chỉ nhận **đúng 1 id mới**, nhiều hơn thì trả `OUTPUT_AMBIGUOUS` và không nhận cái nào — **credit vẫn bị tiêu** | **Đọc chip TRƯỚC khi chạy.** Không phải `x1` thì nhờ Đức đổi về `x1` rồi mới chạy. Runner chưa tự kiểm việc này (**F-15**) |

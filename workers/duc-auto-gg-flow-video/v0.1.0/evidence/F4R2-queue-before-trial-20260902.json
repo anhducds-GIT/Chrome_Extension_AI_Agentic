@@ -1,0 +1,35 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-5ccae853-8711-4c14-a254-91a83b577368",
+  "ok": true,
+  "result": {
+    "checkpoint": {
+      "filename": "Bridge-2026-09-02T06-28__results__v01.xlsx",
+      "version": 1
+    },
+    "jobs": [
+      {
+        "attempt_phase": "PRE_SUBMIT",
+        "bridge_proposal_id": null,
+        "failure_type": "",
+        "job_id": "Q001",
+        "origin": "workbook",
+        "prompt": null,
+        "prompt_fingerprint": "sha256:-92jzXcdrnChW1E8T3cK4mcMmeoWAD8z2NqFv6f0y64",
+        "queue_position": 1,
+        "reference_images": [],
+        "status": "PENDING"
+      }
+    ],
+    "ledger_etag": "sha256:V6WHAtCBwyPTrEYMMR_AO7ZiCqH70IDZjUhvkSeHEZ0",
+    "next_cursor": null,
+    "run_id": "20260902-0628-bridge-2026-09-02t06-28"
+  },
+  "responded_at": "2026-09-02T06:28:31.780Z",
+  "served_by": {
+    "instance_id": "d8c543ee-1cb0-4363-98b0-cdffe687af47",
+    "label": "kaito"
+  }
+}

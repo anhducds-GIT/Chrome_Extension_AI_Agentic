@@ -365,3 +365,34 @@ Toàn lệnh đọc, **0 credit**.
   và đã push xong, cũng chỉ đọc, không sửa file.
 - **Việc kế tiếp (đúng một việc):** trial video — cần Đức bật panel + nạp workbook + Dev Mode
   + Video mode, rồi AI chạy **x1**. Sau đó mới tới live-check F-14 (cần chip đang ở Image).
+
+## 2026-09-02 — `claude-flow04`: chạy được một lượt trial thật; dừng ở nút gửi (F-18)
+
+**Bằng chứng:** [`evidence/F4R2-KET-QUA.md`](evidence/F4R2-KET-QUA.md) · **Credit tiêu: 0.**
+
+- **Bối cảnh:** Đức đã bật hồ sơ `kaito` + Dev Mode + đặt Video mode bằng tay, và **từ chối nạp
+  workbook**, giao AI tự triển khai.
+- **Phát hiện gỡ được nút thắt:** **không cần nạp workbook bằng tay.** `jobs.add` tự tạo workbook
+  trong bộ nhớ khi side panel chưa có (`sidepanel.js:2635`). STATUS/DASHBOARD/llms.txt đều đang
+  bảo Đức phải nạp XLSX — sai. Đã sửa `next_step` cho đúng.
+- **Tiền kiểm trước khi tốn credit, tất cả xanh:** vân tay `flow04-composer-cluster-submit-v2`;
+  surface `CONVERSATION` allowed; composer + send tìm thấy, scope 2 hop; không blocker; chip
+  `Video · 360p · 10s crop_16_9 x1` và **đã kiểm bằng máy** là `VIDEO_MODE_SUMMARY_PATTERN` nhận
+  chuỗi đó (không vướng F-11).
+- **Chạy:** `run.trial` đúng **1** job, timeout 300s, delay 25s, `max_retries=0`.
+  Kết quả: `FAILED` ở `PRE_SUBMIT` / `SENDING`, `Send button did not become ready`.
+  **Submit 0 lần, retry 0, video 15 → 15, 0 credit.** Lớp bảo vệ chạy đúng.
+- **Đo được cái mới, và nó ĐÍNH CHÍNH sổ tay:** bảng lỗi dòng 150 kết luận "nút disabled nghĩa là
+  chưa gõ được chữ". Probe sau khi hỏng cho thấy composer **`valueLen: 172`** — chữ ĐÃ vào DOM —
+  mà nút vẫn `disabled`. Vậy đường gõ ghi được ký tự nhưng React/Lexical của Flow không ghi nhận.
+  Hướng sửa vẫn là đường gõ, nhưng lý do khác hẳn. Ghi thành **F-18**.
+- **Lỗ hổng bằng chứng tự nhận:** prompt 145 ký tự, composer đo 172, lệch 27 chưa giải thích được;
+  tôi **không lưu probe TRƯỚC khi chạy** nên không có mốc so. Lượt sau phải lưu.
+- **Vá 3 chỗ sổ tay đã sai:** (1) phép kiểm chéo ghi trường `in_composer_form` — không tồn tại,
+  bản v2 dùng `in_composer_cluster`, nhãn ở `txt` không phải `label`; kiểm theo tên cũ cho báo
+  động giả "bản cũ" trong khi contract đúng v2. (2) thêm ca `INTERNAL_ERROR` + details
+  `"Open the Google Flow project tab as the active tab."` — mã lỗi trần nghe như hỏng nặng,
+  chi tiết mới là câu trả lời. (3) bổ sung đính chính vào dòng 150.
+- **Nợ mới:** F-18 (đường gõ — **Đức đã biết, chốt 02/09 debug sau, đừng tự sửa mù**),
+  F-19 (chữ lỗi còn nói "Gemini DOM" trên trang Flow, thuộc nợ rebrand F-06).
+- **Việc kế tiếp:** F-18. Mọi tiền đề khác của FLOW-04 đã thông.
