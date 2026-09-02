@@ -4509,7 +4509,7 @@
       if (!verifiedId || verifiedId !== result.video_id) return resolveJobFailure(item, "ATTRIBUTION_UNPROVEN", "Flow video URL/id attribution did not verify.", settings);
       item.phase = "OUTPUT_SAVED";
       item.detected_not_downloaded = true;
-      update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: result.video_id, persistence_verified: false, detected_not_downloaded: true, result_file: videoUrl, result_download_id: "", write_outcome: "url_recorded", detection_diagnostics: JSON.stringify({ ...(result?.detection || {}), video_id: result.video_id, video_url: videoUrl, detected_at: result.detected_at }) });
+      update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: result.video_id, persistence_verified: false, detected_not_downloaded: true, result_file: videoUrl, result_download_id: "", write_outcome: "url_recorded", detection_diagnostics: window.DacAttemptTelemetry.mergeDetection(item.detection_diagnostics, { ...(result?.detection || {}), video_id: result.video_id, video_url: videoUrl, detected_at: result.detected_at }) });
       audit("DETECTED_NOT_DOWNLOADED", item, { message: `Flow video URL recorded; bytes intentionally not fetched (video_id=${result.video_id}).` });
       item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Video URL and metadata recorded; bytes were not downloaded.");
       renderQueue(); progress(`${item.job.id} detected; video URL recorded without downloading bytes.`);

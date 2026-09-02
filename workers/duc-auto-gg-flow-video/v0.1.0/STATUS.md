@@ -5,9 +5,9 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "F-21: tren duong VIDEO, attempt.detection bi nhanh video cua sidepanel ghi de nen typing_path/attach khong toi so cai (sidepanel.js:4512 thay trang cai 4697 vua ghi). Sua thi can 1 luot live nua (15 credit) de xac nhan -> HOI DUC. F-18 da HA khoi P1: luot F4R3 02/09 chay tron ven, video that, typing_path=input_events, create_button=enabled"
+next_step: "F-18 cho tai hien: duong go lanh (typing_path=input_events, do 2 luot live), va tu nay MOI luot deu ghi typing_path + composer_len truoc/sau vao so cai — luot nao lai hong thi doc thang, khong phai doan. No con lai (nho, chua gap that): nhanh ANH cua sidepanel cung khong trai ban cu, cung goc benh F-21"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "F4R3 (02/09, kaito): luot trial x1 CHAY XONG — video that c81af2c5, quy gan dung 1 ung vien, 0 retry, 15 credit. Duong go do duoc typing_path=input_events + create_button=enabled voi 0 credit (dry_run), TRUNG KHIT 27/08 -> F-18 khong tai hien. DINH CHINH: ung vien 27-ky-tu-thua SONG LAI (composer rong=28 nhung go 141 ky tu ra 141 -> hang so bi THAY THE chu khong cong them). No moi: F-21. Bang chung: evidence/F4R3-KET-QUA.md"
+current_focus: "F-21 XONG va da xac nhan tren trang that (luot F4R4, 02/09): so cai nay giu du typing_path/typing_ok/prompt_len/composer_len truoc-sau/attach VA khong lam mat truong ket qua. Hai luot live lien tiep chay tron ven (video that, 15 credit moi luot). Do 3 lan bang 3 co che khac nhau: go sach thi composer doc dung do dai prompt -> luot F4R2 doi 27 ky tu la bat thuong that. Suite 89/89, 6/6 dot bien. Bang chung: evidence/F4R4-KET-QUA.md"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

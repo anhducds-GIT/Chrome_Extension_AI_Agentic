@@ -3,10 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-f18-evidence",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Duc duyet 02/09: va F-21 (nhanh video cua sidepanel ghi de detection_diagnostics) roi chay x1 xac nhan."
+      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG: F-21 va + xac nhan live (luot F4R4) — so cai nay giu du chan doan tien-submit. F-18 cho tai hien. No nho con lai: nhanh ANH cua sidepanel cung khong trai ban cu.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
       "owner": null,

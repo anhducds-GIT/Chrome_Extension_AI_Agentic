@@ -82,3 +82,27 @@ có trần cứng 3 lượt/trang; `run.trial` vẫn cần Đức bật **Chế 
    giờ tự chọn. Một kết nối thì chạy y như cũ.
 3. **Không thêm quyền Chrome nào.**
 4. Thứ tự triển khai: gg-flow-video → gemini → chatgpt (chờ phiên ChatGPT đóng).
+
+## 2026-09-02 — Bỏ audit độc lập cho fix nhỏ (Đức chốt trong chat)
+
+**Chốt:** với các sửa nhỏ, **không chạy audit độc lập nữa** — làm thẳng, gặp bug thì sửa thẳng.
+
+**Vì sao (lời Đức):** audit rất chậm và tốn thời gian; Đức muốn tăng tốc.
+
+**Điều này ĐI NGƯỢC `AGENTS.md` gốc mục 2**, chỗ đang ghi điều kiện push cho code là *"đã qua
+audit độc lập"*. Ghi lại đây để phiên sau không tưởng là tôi quên luật. **Chưa sửa `AGENTS.md`**
+— sửa hiến pháp repo là việc riêng, cần Đức chốt câu chữ (nhất là ranh giới "fix nhỏ" là gì).
+
+**Ranh giới tôi đang áp dụng, chờ Đức xác nhận nếu thấy sai:**
+
+- **Bỏ audit** — sửa đường bằng chứng/log, sửa chữ hiển thị, sửa phép kiểm, đổi tài liệu,
+  vá nhỏ có test ghim + mutation.
+- **VẪN audit** — đụng lớp an toàn Đức đã liệt ở `AGENTS.md` mục 2 (retry, halt, attribution,
+  persistence, exact-once), đụng đường tiêu credit, hay đổi bắt tay Bridge.
+
+Lý do giữ nhóm sau: đó đúng là chỗ audit đã bắt được lỗi thật trong ngày 02/09 — một chữ trong
+câu báo lỗi làm `classifyFailure` đổi `OTHER` → `RECEIVER_LOST` và dừng cả mẻ job (F-20).
+Phần còn lại thì test ghim + mutation đã đủ, và nhanh hơn nhiều.
+
+**Vẫn giữ nguyên, không đổi:** suite phải xanh, cổng `session-check.mjs` phải xanh, mỗi fix
+một test ghim, và push bằng `safe-push.mjs`.

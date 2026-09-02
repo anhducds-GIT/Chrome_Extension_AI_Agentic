@@ -174,7 +174,19 @@
   `run.trial` **x1**, có lưu `dom_probe` TRƯỚC khi chạy. Hỏng thì vẫn 0 credit, nhưng sổ cái
   lần này có `typing_path` + `composer_len_before/after` → kết luận được ngay, không cần lượt
   thứ ba. Bảng đọc kết quả ở mục 5 của file phân tích. **Nhớ reload extension** — đã sửa `.js`.
-- **F-21** · [ĐO 02/09, lượt F4R3 live] **Trên đường VIDEO, `attempt.detection` KHÔNG tới được
+- **F-21** · **XONG 02/09, đã xác nhận trên trang thật (lượt F4R4).** Vá: thêm
+  `mergeDetection()` vào `attempt-telemetry-core.js`, nhánh video gọi nó thay cho
+  `JSON.stringify` thẳng. Sổ cái lượt F4R4 nay có đủ `typing_path="input_events"`,
+  `typing_ok=true`, `prompt_len=145`, `composer_len_before_typing=28`,
+  `composer_len_after_typing=145`, `attach=null` — **và lần ghi kết quả không mất gì**.
+  Suite 89/89, 6/6 đột biến bị bắt. Pin: `tests/video-ledger-keeps-attempt-detection.mjs`.
+  Bằng chứng: `evidence/F4R4-KET-QUA.md`.
+  **CÒN MỞ (nhỏ, chưa gặp thật):** nhánh **ảnh** (`sidepanel.js:4523`) cũng không trải bản cũ —
+  nó mang tay đúng ba trường `attach`/`blob_conversion`/`image_url_dropped`, nên trường
+  tiền-submit nào khác cũng sẽ rơi y như nhánh video từng rơi. Cố ý chưa sửa: nhánh ảnh đang
+  chạy được và tôi không kiểm live được nó.
+
+- **F-21-cu** · [ĐO 02/09, lượt F4R3 live] **Trên đường VIDEO, `attempt.detection` KHÔNG tới được
   sổ cái.** `sidepanel.js:4697` gọi `applyAttemptTelemetry` ghi `detection_diagnostics` từ
   `attempt.detection`; rồi `finishDetectedOutput` chạy sau và nhánh video ở `sidepanel.js:4512`
   ghi **thay trắng** `JSON.stringify({...result.detection, video_id, video_url, detected_at})`.

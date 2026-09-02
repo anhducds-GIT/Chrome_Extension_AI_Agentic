@@ -562,3 +562,36 @@ ngay. **Không tốn credit, không cần mở trang Flow.** Đọc trước khi
   prompt bằng tay**.
 - **Việc kế tiếp:** ① xoá ô prompt · ② F-21 (cần Đức duyệt vì phải chạy live để xác nhận) ·
   ③ F-18 chờ tái hiện, đừng sửa mù.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 3): vá F-21 và xác nhận trên trang thật
+
+**Bằng chứng:** [`evidence/F4R4-KET-QUA.md`](evidence/F4R4-KET-QUA.md) · **Credit tiêu: 15 (1 video).**
+
+- **Vá F-21:** thêm `mergeDetection(existing, values)` vào `attempt-telemetry-core.js` (trộn
+  thay vì xoá; giá trị mới đè khi trùng khoá; không bao giờ ném; bản cũ hỏng/rỗng/không phải
+  object thì coi như `{}`), và nhánh **video** của `finishDetectedOutput` gọi nó thay cho
+  `JSON.stringify` thẳng. **Nhánh ảnh cố ý KHÔNG đụng** — đang chạy được, không kiểm live được.
+- **Xác nhận LIVE (lượt F4R4).** Sổ cái nay có đủ: `typing_path="input_events"`,
+  `typing_ok=true`, `prompt_len=145`, `composer_len_before_typing=28`,
+  `composer_len_after_typing=145`, `attach=null` — **và lần ghi kết quả không mất gì**
+  (`video_id`, `candidate_video_ids` đúng 1, `poll_count` 9). Trước vá, cả sáu trường đầu đều
+  `undefined`.
+- **Đo lần thứ ba, bằng cơ chế thứ ba, cùng một kết luận.** `before=28` → `after=145` = **đúng
+  bằng `prompt_len`**, đo từ trong trang lúc chạy thật (không phải `dom_probe`). Gõ sạch thì
+  composer đọc ra đúng độ dài prompt → hằng số 28 **bị thay thế, không cộng thêm** → lượt F4R2
+  dôi 27 ký tự là **bất thường thật**. Ứng viên số 4 của F-18 đứng vững.
+- **Đo:** suite **89/89** (88 → +1 pin) · **6/6 đột biến bị bắt**, gồm mutation dựng lại đúng
+  lỗi F-21. Pin `tests/video-ledger-keeps-attempt-detection.mjs` ghim **hai tầng**: hành vi của
+  `mergeDetection`, và **dây nối** (nhánh video có thật sự gọi nó không).
+  Một bản ghim đầu của tôi so **vị trí định nghĩa hàm** thay vì thứ tự **lời gọi** —
+  `finishDetectedOutput` định nghĩa TRÊN vòng lặp gọi nó nên kết quả ngược hẳn thứ tự chạy.
+  Suite bắt ngay, đã sửa thành so theo lời gọi.
+- **KHÔNG chạy audit độc lập.** Đức chốt 02/09: bỏ audit cho fix nhỏ, làm thẳng, gặp bug sửa
+  thẳng. Đã ghi vào `decisions.md` kèm ranh giới tôi đang áp dụng (vẫn audit khi đụng lớp an
+  toàn / đường tiêu credit / bắt tay Bridge) — **và ghi rõ điều này đi ngược `AGENTS.md` mục 2**,
+  chỗ đang ghi điều kiện push cho code là "đã qua audit độc lập". Sửa hiến pháp là việc riêng,
+  chờ Đức chốt câu chữ.
+- **Luật mới của Đức:** **mỗi lượt trial một prompt MỚI**, không ngoại lệ. Tôi có đề xuất giữ
+  prompt cố định để so lượt-với-lượt và **bị bác**. Lượt F4R4 là lượt cuối dùng lại prompt cũ.
+- **Việc kế tiếp:** F-18 chờ tái hiện — nay mọi lượt đều ghi `composer_len_before_typing` nên
+  lượt nào lai sẽ đọc thẳng ra, không phải đoán. Nợ nhỏ còn lại: nhánh **ảnh** cùng gốc bệnh F-21.

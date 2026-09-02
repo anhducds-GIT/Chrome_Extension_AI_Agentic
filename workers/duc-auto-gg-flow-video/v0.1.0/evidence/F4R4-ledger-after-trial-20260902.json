@@ -1,0 +1,64 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-9ccc1e34-fbf4-4375-aade-80ac5eb5b7ab",
+  "ok": true,
+  "result": {
+    "checkpoint": {
+      "filename": "Bridge-2026-09-02T09-27__results__v02.xlsx",
+      "version": 2
+    },
+    "jobs": [
+      {
+        "attempt_count": "1",
+        "attempt_id": "attempt-mtjwf1wa-1-82a0zupy",
+        "attempt_phase": "SUCCESS",
+        "completed_at": "2026-09-02T09:34:19.491Z",
+        "detected_not_downloaded": "true",
+        "detection_diagnostics": "{\"baseline_video_ids\":[\"c81af2c5-6883-465f-8417-7d2b28f27ce9\",\"61010d72-0e11-4dbf-9424-a1339cc245e4\",\"9c936c81-5d02-4fa3-b2e2-892851757fbc\",\"f1d7b54a-86ff-4266-b307-49d38fee711e\",\"d59dc963-a29f-4fb3-9cba-a1f320350182\",\"8b3270c8-3f94-494d-a5de-732607bab006\",\"f4160f7f-e7a6-44f3-85a3-5ef489c6e519\",\"0bff5ddd-0636-4b98-ad83-a8374fe95b86\",\"dd69734c-7e9b-4a5f-86c1-ee87802fe7e6\",\"c99e3d83-c21b-4942-aa82-9fe3eb78aa7c\",\"fc09db95-e8cf-420c-ab6a-f89333786814\",\"4800945b-7f3e-4934-90c1-c12c7b74c45d\",\"cc9884ee-e815-4d74-a6bd-f481804d243d\",\"09589f87-e66a-4ad6-b8b8-c13916822719\",\"7a0db223-8b37-47ea-a2d8-2418d39745c6\",\"52630257-4c57-42a2-a4bc-6e486c8cc238\",\"1b196910-d723-4128-8745-74367d002c09\",\"cbb0b564-c485-4b34-b7ce-eee23331d491\",\"c6eb58a1-6994-484b-9574-e6cf1814d2e8\",\"aecb2a3b-3907-4e54-a9a2-9e701c7da327\",\"3108c315-cf53-4ffd-8070-cddcaba188f8\",\"92f81a21-accc-4796-aa9e-93c9d7d6e600\",\"e17fc2cd-531e-4520-93c9-c6778fab9a51\",\"9b703b6f-bede-4980-9607-b143ea360f6d\",\"f5732807-57a2-4d2f-a392-f2e17899d43d\",\"f54b1a7a-5eb7-4808-93bd-f23b69fbbb17\",\"54bd92d7-0476-45fe-9e76-f5666aae9e79\",\"a43d07dd-3cb4-4c67-8272-0a0a4b907194\",\"d3e6d151-17bd-4ad6-86c6-9d57406109d7\",\"225ce7f4-6388-4d17-9b3e-f07bd94febc1\",\"b51ee029-9c56-44fa-a216-3315231bc4ed\",\"e819d4c5-f5ca-4800-901f-1eea34a14def\",\"3228108b-34fe-4925-80d0-fc06821c433d\",\"9a105a08-6345-412e-b156-92aee6ad7e2e\",\"9291eec8-8f2a-4690-a72f-32ed9bc82bed\",\"969d55f0-91dc-418d-a52c-69b81b69281c\",\"30c0eda3-dc28-4832-bc8e-e9140d7c0996\",\"1d56bd7d-4a8c-4c31-9746-9ee8e8cfb1c1\",\"02fa90e8-5292-4c02-9061-05f0baa574a4\",\"aaafe26c-6d36-4826-ac8b-7f625748ab3f\",\"15f2198e-def5-4e2c-9b60-d9df73de8bc9\",\"50e4ae3f-42e4-4961-ad06-78175e665984\",\"6b604b47-5215-4a4d-9421-7ca64f9c3b1f\",\"d09baf9e-7a9a-4847-815d-6eda05545b46\"],\"current_video_ids\":[\"696005ca-be49-4445-a976-200871a7d0fd\",\"c81af2c5-6883-465f-8417-7d2b28f27ce9\",\"61010d72-0e11-4dbf-9424-a1339cc245e4\",\"9c936c81-5d02-4fa3-b2e2-892851757fbc\",\"f1d7b54a-86ff-4266-b307-49d38fee711e\",\"d59dc963-a29f-4fb3-9cba-a1f320350182\",\"8b3270c8-3f94-494d-a5de-732607bab006\",\"f4160f7f-e7a6-44f3-85a3-5ef489c6e519\",\"0bff5ddd-0636-4b98-ad83-a8374fe95b86\",\"dd69734c-7e9b-4a5f-86c1-ee87802fe7e6\",\"c99e3d83-c21b-4942-aa82-9fe3eb78aa7c\",\"fc09db95-e8cf-420c-ab6a-f89333786814\",\"4800945b-7f3e-4934-90c1-c12c7b74c45d\",\"cc9884ee-e815-4d74-a6bd-f481804d243d\",\"09589f87-e66a-4ad6-b8b8-c13916822719\",\"7a0db223-8b37-47ea-a2d8-2418d39745c6\",\"52630257-4c57-42a2-a4bc-6e486c8cc238\",\"1b196910-d723-4128-8745-74367d002c09\",\"cbb0b564-c485-4b34-b7ce-eee23331d491\",\"c6eb58a1-6994-484b-9574-e6cf1814d2e8\",\"aecb2a3b-3907-4e54-a9a2-9e701c7da327\",\"3108c315-cf53-4ffd-8070-cddcaba188f8\",\"92f81a21-accc-4796-aa9e-93c9d7d6e600\",\"e17fc2cd-531e-4520-93c9-c6778fab9a51\",\"9b703b6f-bede-4980-9607-b143ea360f6d\",\"f5732807-57a2-4d2f-a392-f2e17899d43d\",\"f54b1a7a-5eb7-4808-93bd-f23b69fbbb17\",\"54bd92d7-0476-45fe-9e76-f5666aae9e79\",\"a43d07dd-3cb4-4c67-8272-0a0a4b907194\",\"d3e6d151-17bd-4ad6-86c6-9d57406109d7\",\"225ce7f4-6388-4d17-9b3e-f07bd94febc1\",\"b51ee029-9c56-44fa-a216-3315231bc4ed\",\"e819d4c5-f5ca-4800-901f-1eea34a14def\",\"3228108b-34fe-4925-80d0-fc06821c433d\",\"9a105a08-6345-412e-b156-92aee6ad7e2e\",\"9291eec8-8f2a-4690-a72f-32ed9bc82bed\",\"969d55f0-91dc-418d-a52c-69b81b69281c\",\"30c0eda3-dc28-4832-bc8e-e9140d7c0996\",\"1d56bd7d-4a8c-4c31-9746-9ee8e8cfb1c1\",\"02fa90e8-5292-4c02-9061-05f0baa574a4\",\"aaafe26c-6d36-4826-ac8b-7f625748ab3f\",\"15f2198e-def5-4e2c-9b60-d9df73de8bc9\",\"50e4ae3f-42e4-4961-ad06-78175e665984\",\"6b604b47-5215-4a4d-9421-7ca64f9c3b1f\"],\"candidate_video_ids\":[\"696005ca-be49-4445-a976-200871a7d0fd\"],\"decision_reason\":null,\"poll_count\":9,\"attach\":null,\"blob_conversion\":null,\"image_url_dropped\":null,\"typing_path\":\"input_events\",\"typing_ok\":true,\"prompt_len\":145,\"composer_len_before_typing\":28,\"composer_len_after_typing\":145,\"video_id\":\"696005ca-be49-4445-a976-200871a7d0fd\",\"video_url\":\"https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=696005ca-be49-4445-a976-200871a7d0fd\",\"detected_at\":\"2026-09-02T09:34:10.478Z\"}",
+        "effective_audit_log": "[local value redacted]",
+        "effective_collision_policy": "uniquify",
+        "effective_continue_on_error": "true",
+        "effective_image_naming": "{job_id}",
+        "effective_image_output": "[local value redacted]",
+        "effective_max_input_images": "5",
+        "effective_max_retries": "2",
+        "effective_rerun_done": "false",
+        "effective_result_xlsx": "[local value redacted]",
+        "effective_safety_cooldown_sec": "6-9",
+        "effective_save_audit_jsonl": "true",
+        "effective_save_images": "true",
+        "effective_save_result_xlsx": "true",
+        "effective_source_workbook": "[local value redacted]",
+        "effective_timeout_sec": "300",
+        "error": "",
+        "failure_type": "",
+        "id": "Q001",
+        "last_error": "",
+        "max_retries": "0",
+        "persistence_verified": "false",
+        "prompt_fingerprint": "sha256:XVmjlrOtzdSARU9XOLIP-SHtWuUUXRjTqMe1SOxfTXI",
+        "reference_images": "",
+        "requested_file": "696005ca-be49-4445-a976-200871a7d0fd",
+        "result_download_id": "",
+        "result_file": "media.getMediaUrlRedirect?name=696005ca-be49-4445-a976-200871a7d0fd",
+        "result_filename_pattern": "Bridge-2026-09-02T09-27__results__v{version}.xlsx",
+        "retry_count": "0",
+        "run_id": "20260902-0927-bridge-2026-09-02t09-27",
+        "status": "SUCCESS",
+        "submitted_at": "2026-09-02T09:33:28.416Z",
+        "timeout_sec": "300",
+        "write_outcome": "url_recorded"
+      }
+    ],
+    "ledger_etag": "sha256:XscHZKE4Xr5Mg2RP-UZExO8rBunXSuroe8OqZXIRjiM",
+    "next_cursor": null,
+    "run_id": "20260902-0927-bridge-2026-09-02t09-27"
+  },
+  "responded_at": "2026-09-02T09:34:37.629Z",
+  "served_by": {
+    "instance_id": "d8c543ee-1cb0-4363-98b0-cdffe687af47",
+    "label": "kaito"
+  }
+}
