@@ -3,10 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-f18-evidence",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "F-18: doc detection.typing_path cua luot F4R2 (viec re nhat chua ai lam). Chi doc + sua duong BANG CHUNG, KHONG sua typeIntoFlowComposer."
+      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG: va duong bang chung F-18 (typing_path ghi TRUOC cong gui) + F-20 (sua chu bao loi LA sua hanh vi). Viec ke tiep can TAY DUC: reload extension + bat panel/Dev Mode/Video mode tren ho so kaito, roi chay run.trial x1.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
       "owner": null,
