@@ -3,32 +3,32 @@
   "_labels": "owner l\u00e0 nh\u00e3n phi\u00ean t\u1ef1 \u0111\u1eb7t, v\u00ed d\u1ee5 'claude-gemini' \u2014 hai phi\u00ean Claude kh\u00e1c nhau ph\u1ea3i c\u00f3 hai nh\u00e3n kh\u00e1c nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-flow04",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 2026-09-02 (claude-mp-gate). XONG: cong tay multi-profile DA QUA ca 3 nhanh \u2014 3 ho so co ten (Binh/anhducds/kaito), --target route dung, served_by khop; bang chung evidence/20260902-multiprofile-naming-gate-r01. Da push (1b1c249, 001da50, c251a37). CON MO: (1) trial video \u2014 CAN TAY DUC bat panel + workbook + Dev Mode + Video mode roi AI chay x1; (2) live-check F-14 (can chip dang o Image); (3) DUC QUYET ghe legacy o profile Chrome thu tu: dat ten hoac tat.",
-      "released_at": "2026-09-02"
+      "task": "FLOW-04: Duc da bat Kaito + Dev Mode, KHONG nap workbook. AI tu trien khai phan con lai: tim duong nap/khoi tao workbook session qua Bridge, kiem van tay runtime, jobs.add roi run.trial <=3 (tran cung). Ghi bang chung.",
+      "released_at": null
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-stabilizing-bridge",
-      "ai": "claude",
-      "claimed_at": "2026-09-02",
-      "task": "Vet lai cua so bo cuoc: audit khi port sang ChatGPT phat hien elapsed chi dem do tre giua cac lan thu, khong dem han bat tay 10s moi vong -> host im lang giu worker thuc ~3x cua so. Cung mot loi o Gemini (goc). Va + ghim.",
-      "released_at": null
-    },
-    "workers/duc-auto-chatgpt": {
-      "owner": "claude-stabilizing-bridge",
-      "ai": "claude",
-      "claimed_at": "2026-09-02",
-      "task": "Port lop stability tu Gemini (3514aa5+): keepalive ACK deadline, backoff tran 5s + nhuong alarm, handshake deadline, drop/abandonSocket, currentState, ghi status co thu tu, hang doi pairing. DAP LEN ban hien tai (da co multi-profile instance + authSent), KHONG copy de tu Gemini. Giu 2 bat bien: giu socket truoc moi await trong connectHost; auth_ok truoc khi authSent phai bi tu choi.",
-      "released_at": null
-    },
-    "_root": {
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 2026-09-02 (claude-mp-gate). XONG: sinh lai DASHBOARD/llms.txt/repo-map/FEATURE-PARITY sau khi viec uu tien #1 doi noi dung. NO MOI ghi o HANDOFF.md goc: feature-parity.mjs do CAY LAM VIEC con cong kiem do HEAD \u2014 bat dong moi khi co phien khac sua do. Va tam bang clone HEAD ra duong dan NGAN. Sua goc can Duc chot.",
+      "task": "XONG 02/09 (ab8ab2a, da push): va cua so bo cuoc \u2014 han bat tay nay tu tru vao ngan sach, truoc do host im lang giu worker thuc ~3x cua so. Suite 84/84. Do live 28/08 van dung.",
       "released_at": "2026-09-02"
+    },
+    "workers/duc-auto-chatgpt": {
+      "owner": null,
+      "ai": null,
+      "claimed_at": "2026-09-02",
+      "task": "XONG 02/09 (ab8ab2a, da push): port lop on dinh ket noi tu Gemini, dap len bat tay rieng cua nhanh nay (auth_challenge/auth_proof/auth/auth_ok) va multi-profile. Hai bat bien giu nguyen, audit xac nhan HELD. Suite 98/98, pha thu 26/27. CON MO: chua do live.",
+      "released_at": "2026-09-02"
+    },
+    "_root": {
+      "owner": "claude-stabilizing-bridge",
+      "ai": "claude",
+      "claimed_at": "2026-09-02",
+      "task": "Ghi 1 dong vao muc 2 (cua NGUOI) trong FEATURE-PARITY.md: lop on dinh ket noi Bridge da co o Gemini + ChatGPT, gg-flow-video chua co. Chi 1 dong, tra quyen ngay.",
+      "released_at": null
     }
   }
 }

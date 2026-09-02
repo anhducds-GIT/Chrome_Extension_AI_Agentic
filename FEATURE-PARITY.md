@@ -102,6 +102,7 @@ con số máy đo, và bị nuốt theo. Đúng kiểu mất mát âm thầm mà
 | AI tự đặt thư mục Downloads | ✅ | ✅ | [ĐO] | `output_downloads_subfolder` GPT 4 file, Gemini 3 |
 | Poll A/B "thích ảnh nào hơn" | ✅ | ❌ | [ĐO] | `ab-poll-core.js` chỉ có ở GPT |
 | Khoảng nghỉ giữa job KHÔNG bị Chrome bóp | ✅ | ❌ | **[ĐỌC]** | Gemini `sidepanel.js:4314` `countdown()` vẫn `await sleep(1000)` mỗi nhịp — **cùng bug đã đo ×24 bên GPT 28/08**; GPT vá bằng `interjob-delay-core.js` (mốc thời gian + `chrome.alarms`) |
+| Lớp ổn định kết nối Bridge (hạn chờ ACK · backoff trần 5s · hạn bắt tay) | ✅ | ✅ | **[ĐỌC]** | Gemini vá 28/08 (`3514aa5`), GPT port 02/09 (`ab8ab2a`). **Cùng thiết kế nhưng KHÔNG chép đè** — đắp lên bắt tay riêng của từng nhánh (GPT có thêm `auth_challenge`/`auth_proof` HMAC). Trước đó cả hai gửi `keepalive` mà không bao giờ kiểm host có trả lời không, nên kết nối đứt vẫn hiện **Connected**. **`duc-auto-gg-flow-video` CHƯA có** — `grep armKeepaliveDeadline` ở đó ra 0. Port sang nhánh ba còn nợ: ngày 02/09 package đó đang chạy trial live FLOW-04 nên không đụng vào |
 | Nhận dạng ảnh theo BYTE, không tin nhãn MIME | ❌ | ✅ | **[ĐỌC]** | Gemini `content.js` có `sniffImageType` đọc byte đầu file thật (PNG `89 50 4E 47`, JPEG `FF D8 FF`, GIF, WebP, AVIF). GPT: quét `content.js` + `background.js` tìm mọi dấu hiệu đọc byte (`0x89`, `ffd8`, `Uint8Array`, `sniff`, `magic`) → **0 kết quả**. Đây là món **Gemini có mà GPT thiếu** |
 
 ## 3. Module — **[ĐO]**
