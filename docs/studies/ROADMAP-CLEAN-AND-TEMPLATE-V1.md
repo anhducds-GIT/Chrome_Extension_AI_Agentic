@@ -373,15 +373,93 @@ Ba thứ đó đã có `DASHBOARD.md` lo.
 
 ---
 
-## 8. Bắt đầu
+## 8. Đang ở đâu
 
-Phiên **S3**. S1 và S2 đã đóng và đã push. Đức mở chat Claude Code mới, dán
-`docs/briefs/BRIEF-S3.md`.
+**S1 → S7 đã đóng và đã push.** Bài test nghiệm thu đạt cả hai vòng
+(`evidence/20260902-bootstrap-test-r01` và `-r02`) — **mục tiêu chính của Giai đoạn 1 đã xong.**
 
-> Cập nhật 2026-09-02. Mục này trước đây vẫn bảo bắt đầu từ S1 dù S1 đã xong — một dòng
-> lạc hậu ở đúng chỗ người ta đọc để biết làm gì tiếp.
+Việc kế tiếp: **S8** (trả nợ cũ) và **dashboard cho người đọc** (mục 9.1). Cả hai không chờ ai.
+S9 chờ K-MIGRATE của làn B, và chờ Đức chốt câu hỏi ở mục 9.3.
 
-Xong S3 báo tôi, tôi viết brief S4.
+Cách mở phiên mới, đã chứng minh hai lần — dán đúng một dòng, không cần brief:
 
-> Cập nhật 2026-09-02. Dòng này trước ghi "Xong S1... brief S2" trong khi S1 và S2 đã đóng —
-> đúng chỗ người ta đọc để biết làm gì tiếp mà lại chỉ về quá khứ.
+```
+Đọc llms.txt ở gốc repo anhducds-GIT/Chrome_Extension_AI_Agentic rồi làm theo.
+```
+
+> **Đừng gõ số phiên vào mục này nữa.** Ba lần liên tiếp nó lạc hậu đúng ở chỗ người ta đọc
+> để biết làm gì tiếp (bảo bắt đầu S1 khi S1 xong; bảo S3 khi S7 xong). Trạng thái sống thuộc
+> về `DASHBOARD.md` và `HANDOFF.md` — máy sinh, tự tươi. Mục này chỉ nên nói *cách* bắt đầu.
+
+---
+
+## 9. Giai đoạn 2 — Đức mở phạm vi 2026-09-02
+
+> **Câu chốt của Đức, nguyên ý:** *"đây không phải là điểm kết thúc, mà mới là điểm bắt đầu
+> thôi. Sau bước chuẩn hoá này xong, tôi sẽ request AI multitask để migrate repo mẫu này
+> sang các repo khác."*
+
+S1–S10 ở trên là **Giai đoạn 1 — chuẩn hoá**. Nó không còn là toàn bộ chương trình.
+
+### 9.1 Hai dashboard, hai nhiệm vụ khác nhau — đừng gộp
+
+Cho tới 02/09 tài liệu chỉ nói "bảng vận hành" chung chung. Đức tách làm hai, và chúng khác
+nhau ở **đối tượng phục vụ**, nên khác cả nội dung:
+
+| | **Dashboard của repo Chrome** | **Dashboard của Template** |
+|---|---|---|
+| Trả lời câu | *"Dự án này đang chạy tới đâu?"* | *"Bộ khung này gồm những gì, vận hành ra sao?"* |
+| Nội dung | Các Extension · guide · luật dự án · hệ thống thư mục · luật vận hành · **task đang mở** | Toàn bộ cấu trúc · kiến trúc · guide · cách vận hành · **thông tin đầy đủ của harness ở trạng thái null, sạch nhất** |
+| Dữ liệu | Có thật, thay đổi mỗi phiên | **Rỗng có chủ đích** — nó là bản mẫu, không phải bản đang chạy |
+| Dạng | Trực quan cho người dùng, không phải file `.md` để đọc | Trực quan, và là thứ người ta xem trước khi quyết định lấy template về |
+
+Điểm dễ sai: dashboard của Template **không phải** dashboard repo Chrome bị xoá dữ liệu. Một
+cái báo cáo tiến độ; cái kia mô tả một bộ khung. Viết chung một bộ sinh cho cả hai là sẽ phải
+tách lại sau.
+
+### 9.2 Template là một sản phẩm có phiên bản, không phải một lần trích
+
+Đức chốt: template **sẽ còn improve qua nhiều version**, nên nó cần:
+
+1. một **chỗ ở cố định** để maintain qua các phiên bản;
+2. một **AI hiểu nó**, có bộ skill riêng để: maintain · sửa · cập nhật · **dùng template làm
+   gốc đi migrate sang repo khác**.
+
+Đây là điểm khác hẳn cách hiểu cũ. Trước 02/09, template được coi là *kết quả trích ra* của
+S1–S10 — làm xong là xong. Từ 02/09 nó là **sản phẩm được nuôi tiếp**.
+
+### 9.3 ⚠️ Một chỗ phải chốt trước khi làm S9 — chưa ai quyết
+
+Đức viết *"cần có 1 repo riêng để maintain nó"*. Câu này có **hai cách hiểu**, và chúng dẫn
+tới hai kế hoạch S9 khác hẳn nhau:
+
+| Cách hiểu | Nghĩa là | Hệ quả |
+|---|---|---|
+| **A — "riêng" = không nằm trong repo Chrome** | Template ở trong **Kho (Project-3)**, tier `SEED`, và Kho trở thành nhà nuôi nó | **Khớp với K0 số 1**, S9 giữ nguyên kế hoạch, không cần ADR mới |
+| **B — "riêng" = một repo thứ ba, tách khỏi cả Kho** | Dựng repo mới chỉ để chứa template | **Đảo ngược K0 số 1**, phải viết ADR thay thế, S9 phải viết lại |
+
+**K0 số 1 (Đức chốt 01/09) đã huỷ repo `repo-template` độc lập**, lý do ghi trong mục 1 file
+này: *dựng một repo template riêng tạo nguồn sự thật thứ hai bên cạnh Kho.*
+
+**Khuyến nghị của điều phối: chọn A.** Kho vốn sinh ra để làm đúng việc này — giữ luật chung
+cho 21 repo. Thêm một repo thứ ba nghĩa là có hai chỗ cùng khai "chuẩn là gì", và lúc chúng
+lệch nhau thì không ai biết tin chỗ nào. Thứ Đức thật sự cần — phiên bản, AI riêng, bộ skill
+riêng — **đều làm được bên trong Kho**, không cần repo mới.
+
+Nếu Đức vẫn muốn B thì được, nhưng phải đi kèm **một ADR thay thế K0 số 1**, nói rõ chỗ nào
+là nguồn sự thật khi hai bên lệch. Không có ADR đó thì sáu tháng nữa không ai biết vì sao có
+hai chỗ.
+
+### 9.4 Giai đoạn 2 — migrate đa repo
+
+Chưa lên lịch chi tiết, cố ý. Điều kiện khởi công: Giai đoạn 1 đóng và template đã gỡ nhãn
+`unproven`. Hình dung của Đức là **AI multitask** — nhiều phiên chạy song song trên nhiều
+repo, lấy template làm gốc.
+
+Luật đã có sẵn cho việc đó, đừng phát minh lại: mục 1 của `AGENTS.md` (một gói một chủ),
+`safe-push.mjs` (không cuốn theo commit người khác), và luật của K5 (chỉ gửi đề nghị,
+Đức duyệt từng cái, cấm ghi đè).
+
+**Cái còn thiếu cho Giai đoạn 2:** một cách để nhiều phiên chạy trên **nhiều repo** cùng lúc
+mà vẫn kiểm được — `claims.json` hiện chỉ khoá trong phạm vi một repo. Ghi lại đây để không
+quên, chưa phải việc bây giờ.

@@ -501,3 +501,25 @@
     reload + đặt tên, hoặc tắt extension ở profile đó.
   - **Không đụng gói `duc-auto-chatgpt`** (chủ `claude-stabilizing-bridge` đang làm dở); chỉ chạy
     lệnh đọc trên host của nó.
+
+## 2026-09-02 — `claude-dieu-phoi`: Đức mở phạm vi Giai đoạn 2
+
+**Đức chốt:** chuẩn hoá **không phải điểm kết thúc**, mà là điểm bắt đầu. Sau Giai đoạn 1 sẽ
+là **migrate đa repo bằng AI multitask**, lấy repo này làm mẫu.
+
+**Ba điều làm rõ, đã ghi vào `docs/studies/ROADMAP-CLEAN-AND-TEMPLATE-V1.md` mục 9:**
+
+1. **Hai dashboard, không phải một.** Repo Chrome cần bảng *"dự án chạy tới đâu"* (extension ·
+   guide · luật · thư mục · task đang mở). Template cần bảng *"bộ khung này gồm gì"* — toàn bộ
+   cấu trúc/kiến trúc/cách vận hành ở **trạng thái null, sạch nhất**. Cái sau KHÔNG phải cái
+   trước bị xoá dữ liệu.
+2. **Template là sản phẩm có phiên bản**, cần chỗ ở cố định + một AI có bộ skill riêng để
+   maintain và để đi migrate.
+3. **Một câu chưa ai quyết (mục 9.3):** "1 repo riêng" nghĩa là *không nằm trong repo Chrome*
+   (⇒ ở trong Kho, khớp K0 số 1) hay *một repo thứ ba tách khỏi cả Kho* (⇒ đảo K0 số 1, cần
+   ADR thay thế). **Điều phối khuyến nghị cách 1.** Chưa chốt thì chưa mở S9.
+
+**Cũng sửa:** mục 8 của roadmap lạc hậu lần thứ ba (bảo bắt đầu từ S3 khi S7 đã đóng) — bỏ
+hẳn số phiên khỏi mục đó, vì trạng thái sống thuộc về `DASHBOARD.md`.
+
+**Việc kế tiếp:** S8 và dashboard repo Chrome — cả hai không chờ ai.

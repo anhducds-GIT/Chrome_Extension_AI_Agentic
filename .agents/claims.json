@@ -3,11 +3,10 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-f18-evidence",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-dieu-phoi). XONG: va F-18 thanh HOI QUY (FLOW-01 27/08 da go duoc, typing_path=input_events, nut da sang) — dung viet lai typeIntoFlowComposer. Viec re nhat chua ai lam: doc detection.typing_path cua luot F4R2.",
-      "released_at": "2026-09-02"
+      "task": "F-18: doc detection.typing_path cua luot F4R2 (viec re nhat chua ai lam). Chi doc + sua duong BANG CHUNG, KHONG sua typeIntoFlowComposer."
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-dieu-phoi). Sinh lai artifact sau va F-18.",
-      "released_at": "2026-09-02"
+      "task": "Ghi pham vi Giai doan 2 (Duc chot 02/09): hai dashboard, nha rieng cho template, migrate da repo.",
+      "released_at": null
     }
   }
 }
