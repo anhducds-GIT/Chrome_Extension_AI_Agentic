@@ -442,3 +442,29 @@
     `safe-push` từ chối hai lần, dùng `--carry` theo đúng chỗ Đức đã duyệt 02/09 cho việc chạy
     song song với phiên đó. Tôi cũng sinh lại `DASHBOARD/llms/repo-map/FEATURE-PARITY` ba lượt
     vì mỗi commit của họ làm số đo đổi — chỉ khối AUTO đổi, mục 2 của người không bị đụng.
+
+- **2026-09-02 · `evidence-r02`** — **CỘT MỐC: bài test nghiệm thu S7 phần B ĐẠT.**
+  Cùng với r01, **mục tiêu chính của chương trình tái cơ cấu đóng lại.**
+  - Đức dán đúng một dòng vào chat hoàn toàn mới. Phiên đó trả lời **cả ba câu**
+    (repo có gì / việc ưu tiên #1 thuộc gói nào / đọc file nào tiếp), **0 câu hỏi ngược lại**.
+    Bằng chứng: `evidence/20260902-bootstrap-test-r02/`.
+  - **Kiểm chứng độc lập, không tin báo cáo:** `npm test` **exit 0** (6 suite) · cổng kiểm
+    exit 0 · `check-bootstrap` 0 ĐỎ · `blocking` khai đúng 8 phép kiểm.
+  - **Và kiểm rằng CHẶN CHẠY ĐƯỢC, không chỉ được cấu hình.** Cố tình đổi `lifecycle` của
+    `duc-auto-chatgpt` thành chữ bậy → cổng thoát **1**, báo đúng
+    *"CHẶN: B7 (1 chỗ) — thuộc nhóm CHẶN nên KHÔNG được báo xong"*. Đã khôi phục nguyên
+    trạng ngay, repo sạch.
+  - **Hai cảnh báo phiên test tự nêu, đều đã kiểm:**
+    ① *"`llms.txt` chậm 3 commit"* — đúng phần dấu, sai phần hàm ý. Dòng dấu sinh trang có
+    lag, nhưng cổng dựng lại từ HEAD và XANH → **nội dung đang khớp**; dòng dấu **cố ý bị
+    lọc** khỏi phép so, nếu không thì mỗi commit là artifact hoá cũ. Vẫn là quan sát tốt:
+    nó tự đối chiếu hai nguồn thay vì tin một.
+    ② *"npm test có 1 phép kiểm đỏ"* — đúng lúc nó nhìn, nay đã hết: phiên
+    `claude-bridge-multiprofile` đã commit bản vá (`b40cba3`). Đáng ghi là nó **không giấu**
+    một phép kiểm đỏ để báo cáo cho đẹp.
+  - **Còn lại của chương trình:** S8 (trả nợ cũ) · S9 (promote bộ template vào Kho tier SEED,
+    cần K-MIGRATE xong trước) · S10 (radar P5, cần ≥2 repo đạt). Đều là **mở rộng**, không
+    phải dựng nền.
+  - ⚠️ **Nợ vận hành vẫn còn:** 8 tham chiếu `drafts/…` đã chết trong
+    `workers/duc-auto-gg-flow-video/`, gồm `AI-OPERATOR-GUIDE.md` — tài liệu operator đọc lúc
+    chạy live. Không phép kiểm nào bắt (B4 chỉ soi file cổng). Sửa ngay khi có phiên giữ gói đó.
