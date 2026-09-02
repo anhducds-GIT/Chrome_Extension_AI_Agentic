@@ -418,7 +418,7 @@
 
   function sanitizeBridgeProfileLabel(value) {
     const raw = typeof value === "string" ? value.slice(0, 256) : "";
-    return raw.replace(BRIDGE_LABEL_STRIP, "").trim().slice(0, 64);
+    return raw.replace(BRIDGE_LABEL_STRIP, "").trim().slice(0, 64).replace(/(?:[\uD800-\uDBFF](?![\uDC00-\uDFFF]))|(?:(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])/g, "");
   }
 
   function renderBridgeProfileLabelHint(label) {

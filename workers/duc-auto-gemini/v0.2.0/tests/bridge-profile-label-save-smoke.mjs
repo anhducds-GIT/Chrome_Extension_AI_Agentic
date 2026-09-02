@@ -103,6 +103,25 @@ await tick();
 assert.equal(numberReply?.ok, true);
 assert.equal(numberReply.label, "", "a non-string label becomes empty, never garbage");
 
+// Cap boundary must never leave a lone surrogate: 255 padding chars + an emoji
+// makes the 256-cap split the astral pair; the sweep must remove the orphan.
+// 255 control chars are stripped AFTER the 256-cap cuts the astral pair in half,
+// leaving exactly one lone high surrogate for the sweep to catch.
+const splitEmoji = String.fromCharCode(1).repeat(255) + String.fromCodePoint(0x1f600);
+let surrogateReply = null;
+runtimeMessage.emit({ type: "DAC_BRIDGE_LABEL_SET", label: splitEmoji }, {}, (response) => { surrogateReply = response; });
+await tick();
+await tick();
+assert.equal(surrogateReply?.ok, true);
+assert.equal(surrogateReply.label.isWellFormed(), true, "the stored label is always well-formed Unicode");
+
+// The HOST copy of the sanitizer must behave the same (behavioral pin, not lexical).
+const { parseInstance } = await import(pathToFileURL(path.join(here, "..", "duc-auto-chatgpt-loopback-bridge-host-v1", "bridge-host.mjs")));
+const hostInstance = parseInstance({ schema_version: 1, instance_id: "h".repeat(12), label: hostile });
+assert.ok(hostInstance.label.length <= 64, "host caps a million-char label");
+assert.equal(C1.test(hostInstance.label), false, "host strips C1 controls");
+assert.equal(parseInstance({ schema_version: 1, instance_id: "h".repeat(12), label: splitEmoji }).label.isWellFormed(), true, "host never keeps a lone surrogate");
+
 // Wiring pins: the panel exposes the button and routes the save through the
 // SAME message the transport handles.
 import fs from "node:fs";

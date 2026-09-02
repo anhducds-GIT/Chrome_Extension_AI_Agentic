@@ -321,7 +321,9 @@
     function sanitizeInstanceLabel(value) {
       // Bound BEFORE scanning: a hostile huge string must cost O(cap), not O(input).
       const raw = typeof value === "string" ? value.slice(0, 256) : "";
-      return raw.replace(INSTANCE_LABEL_STRIP, "").trim().slice(0, 64);
+      // The caps cut by UTF-16 code unit and can split an astral char; sweep
+      // lone surrogates so the stored label is always well-formed Unicode.
+      return raw.replace(INSTANCE_LABEL_STRIP, "").trim().slice(0, 64).replace(/(?:[\uD800-\uDBFF](?![\uDC00-\uDFFF]))|(?:(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])/g, "");
     }
 
     async function loadInstance() {

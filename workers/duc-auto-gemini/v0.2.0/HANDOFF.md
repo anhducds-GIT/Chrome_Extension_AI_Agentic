@@ -641,3 +641,12 @@ Nội dung kỹ thuật không đổi một chữ — chỉ đổi cách viết.
   cũ bị thay, auth mới mang tên mới, token nguyên vẹn); 3/3 mutation đỏ (bỏ cycle / bỏ lưu /
   bỏ sanitize). Suite 85/85. NỢ PORT: gg-flow-video + chatgpt đang có chủ phiên khác —
   đắp cùng khuôn khi họ trả quyền (transport handler + nút panel + test, y hệt).
+- 2026-09-02 · `claude-bridge-multiprofile` · **Audit nút Lưu tên: 2 vòng.** Vòng 1 FAIL đúng:
+  sanitize quét chuỗi TRƯỚC khi chặn độ dài (kẻ gửi label 1 triệu ký tự bắt SW trả giá O(input))
+  và C1 controls (U+0080–U+009F) lọt lưới. Vá cả BA bản sao trong gói (transport, panel, host):
+  slice(0,256) trước regex, lớp lọc thêm C1, và quét surrogate mồ côi (LOW vòng 2: nấc cắt
+  256/64 có thể chém đôi emoji). Test thêm 4 ca thù địch + ghim HÀNH VI cho cả bản sao của host;
+  fixture đầu tiên của tôi bị chính mutation tố là trang trí (đệm x bị nấc 64 cắt trước) —
+  đổi sang đệm ký tự điều khiển đúng repro của Codex, giờ S1/S2 ĐỎ thật. Suite 85/85.
+  Ghi chú trung thực: THỨ TỰ chặn-trước-quét không ghim được bằng outcome test (mutation đổi
+  thứ tự cho cùng kết quả) — điểm này dựa trên xác nhận tĩnh của audit vòng 2.
