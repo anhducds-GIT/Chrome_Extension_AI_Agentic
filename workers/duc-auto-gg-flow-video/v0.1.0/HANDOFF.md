@@ -295,3 +295,24 @@
     TỪNG profile muốn dùng; (3) mở panel từng profile, điền ô "Tên hồ sơ Chrome này";
     (4) AI gọi `bridge.sessions` xác nhận thấy đủ tên. Việc mở kế tiếp của nhánh: live-check
     F-14 chip mode (cần chip đang ở Image) — vẫn 0 credit.
+- 2026-09-02 · `claude-bridge-multiprofile` · **MULTI-PROFILE: DEPLOY + KIỂM LIVE ĐẠT (phần máy
+  làm được) + AUDIT CODEX PASS.** Bằng chứng: `evidence/MP-01-live-routing-and-audit-20260902.md`.
+  - Deploy: `bridge-host.mjs` + `bridge-cli.mjs` mới đã chép sang thư mục Bridge (byte-identical,
+    host cũ không chạy lúc chép nên không cắt ngang ai), host mới khởi động trên 32149.
+  - Live: **3 profile Chrome cùng nối, không ai đá ai** (trước đây một ghế). Không nêu `--target`
+    → `TARGET_AMBIGUOUS` kèm đủ 3 ứng viên. Nêu `--target` → route đúng, mọi phản hồi (kể cả
+    phản hồi LỖI) mang `served_by` đúng đích. Cả `bridge-cli.mjs` lẫn `scripts/bridge-rpc.mjs`.
+    Toàn lệnh đọc, 0 credit.
+  - Cả 3 phiên là `legacy:true` — extension các profile còn chạy transport CŨ trong RAM (chưa
+    reload từ 28/08). Legacy vẫn nhắm được, vẫn fail-closed — nhưng id đổi khi SW ngủ. Muốn có
+    TÊN bền: Đức reload extension từng profile + điền ô "Tên hồ sơ Chrome này" từng panel.
+  - Audit độc lập commit 6c59266: kênh Codex cũ chết (exit 4, nhiều lần); dùng kênh auditmin
+    của phiên chatgpt (`--dangerously-bypass-approvals-and-sandbox -C <thư-mục-tối-giản>`,
+    stdin đóng) → **VERDICT: PASS**, 0 HIGH/MED, 3 LOW về độ phủ test. LOW#1 (xoá vá phiên-ma
+    thì test vẫn xanh) đã ĐỐI CHẤT BẰNG MÁY và Codex SAI: mutation đo 2 lần (28/08, 02/09) đều
+    ĐỎ. HEAD trước/sau audit không đổi (eea3d6f).
+  - STATUS.md cập nhật cùng lượt (`current_focus` + `next_step`) và DASHBOARD tái sinh ngay
+    sau đó — `_root` được phiên `audit-s4` trả đúng lúc giữa phiên, nhận lại để làm trọn.
+  - Việc mở kế tiếp của nhánh (cần tay Đức): reload extension 3 profile → đặt tên → AI gọi
+    `bridge.sessions` đếm đủ tên; rồi mới tới trial video (panel + workbook + Dev Mode +
+    Video mode + x1) và live-check F-14.

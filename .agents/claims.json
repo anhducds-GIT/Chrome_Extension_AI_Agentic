@@ -3,10 +3,10 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-bridge-multiprofile",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 2026-09-02 (Duc chot: phien claude-bridge-multiprofile bo do tu 28/08, don claim mo coi). DA XONG va da len GitHub: multi-profile Bridge huong A (commit 6c59266) — host giu nhieu ket noi theo instance_id, target/bridge.sessions/served_by, 2 ma loi TARGET_AMBIGUOUS/TARGET_NOT_CONNECTED, dinh tuyen fail-closed; va nut F-14 chip mode noi vao pressFlowControl. Suite xanh, mutation do du. DASHBOARD da sinh lai boi phien s1-complete (viec phien nay bo do). CON MO 2 viec, chi tiet o cuoi HANDOFF.md: (1) CHUA KIEM LIVE multi-profile — can tay Duc 4 buoc: chep bridge-host.mjs + bridge-cli.mjs moi sang C:WORKING ZONEChrome Extension Bridgeduc-auto-gg-flow-video, chay lai START-BRIDGE, reload extension TUNG profile, dien o Ten ho so tung panel, roi goi bridge.sessions dem du ten. (2) live-check F-14 chip mode, can chip dang o Image, 0 credit.",
+      "task": "TRA QUYEN 2026-09-02 (phien claude-bridge-multiprofile, luot 2). XONG: deploy bridge-host.mjs + bridge-cli.mjs moi sang thu muc Bridge (host cu khong chay luc chep), host moi song tren 32149. KIEM LIVE DAT phan may: 3 profile cung noi khong ai da ai; khong neu target -> TARGET_AMBIGUOUS kem 3 ung vien; neu target -> served_by dung dich (ca bridge-cli lan bridge-rpc, ke ca phan hoi loi). Audit Codex kenh auditmin: VERDICT PASS, 0 HIGH/MED; LOW#1 doi chat bang mutation 2 lan -> Codex sai, pin that. Bang chung: evidence/MP-01-live-routing-and-audit-20260902.md. CON MO (tay Duc): reload extension tung profile de het legacy + dat ten tung panel + dung START-BRIDGE cho host lau dai; roi trial video + live-check F-14.",
       "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
@@ -27,7 +27,7 @@
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02. S1+S2+S3+S4 da dong va push. Audit doc lap S4 DAT, kem mot lo test da va (tieu chi nghiem thu cua Duc chua duoc ghim). Bai test mot dong cua S7 DA DAT SOM o S4. VIEC KE TIEP: phien S5 — tao docs/adr/, B12 se tu chay.",
+      "task": "Muon va tra trong cung luot (claude-bridge-multiprofile 02/09): sinh lai DASHBOARD sau khi STATUS gg-flow-video doi current_focus/next_step (kiem live multi-profile dat phan may).",
       "released_at": "2026-09-02"
     }
   }
