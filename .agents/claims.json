@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "s1-complete",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Them brief S3 + prompt audit S2 cho GPT vao docs/briefs/. Giu quyen toi khi push xong.",
-      "released_at": null
+      "task": "XONG 2026-09-02, da push. S1 + noi roadmap khop K0 + S2 cong vao + brief S3 + prompt audit GPT. CON NO: audit doc lap cho S2 (829d644) — Codex dang chay, prompt GPT o docs/briefs/AUDIT-PROMPT-S2-GPT.md. CHUA DUOC MO S3 khi chua co it nhat mot audit PASS/CONDITIONAL.",
+      "released_at": "2026-09-02"
     }
   }
 }
