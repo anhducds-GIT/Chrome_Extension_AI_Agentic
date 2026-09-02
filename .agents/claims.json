@@ -3,11 +3,10 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-f18-evidence",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG: luot live F4R3 chay tron ven (video that, 15 credit), typing_path=input_events do duoc voi 0 credit, F-18 ha khoi P1. NO MOI F-21 (nhanh video cua sidepanel ghi de detection_diagnostics) — sua thi CAN DUC DUYET vi phai chay live xac nhan.",
-      "released_at": "2026-09-02"
+      "task": "Duc duyet 02/09: va F-21 (nhanh video cua sidepanel ghi de detection_diagnostics) roi chay x1 xac nhan."
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-dieu-phoi). Ghi muc 9.5: Kho dang ngu, canh bao dieu kien tien quyet S9. Dinh chinh 9.4.",
-      "released_at": "2026-09-02"
+      "task": "ADR-0001: template doc lap, Project 3AI nghi. Cho lan B nghi, viet lai S9.",
+      "released_at": null
     }
   }
 }

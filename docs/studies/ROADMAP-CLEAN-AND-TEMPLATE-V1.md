@@ -43,6 +43,10 @@ Trước đây tôi đề xuất làm template sau khi xong hết. Sai — sẽ 
 Cách đúng: **mỗi phiên sinh ra một artifact chuẩn thì trích ngay vào bộ template.**
 Tới phiên cuối là template đã có sẵn, chỉ việc đánh dấu "đã kiểm chứng".
 
+> **⛔ ĐÃ BỊ THAY THẾ 2026-09-02 bởi [ADR-0001](../adr/0001-template-o-repo-doc-lap-project-3ai-nghi.md).**
+> Đức chốt: template **ở một repo độc lập**, Project 3AI kết thúc vai trò và có thể archive.
+> Giữ nguyên đoạn dưới làm bản ghi lịch sử — đừng làm theo nó.
+>
 > **⚠️ ĐÃ ĐỔI 2026-09-01 — template KHÔNG còn là một repo riêng.**
 > Quyết định K0 số 1 (Đức chốt nguyên trạng; hồ sơ tại `evidence/20260901-harness-audit-r01/`):
 > **huỷ repo `repo-template` độc lập**; artifact nào đã kiểm chứng thì **promote vào Kho
@@ -260,7 +264,7 @@ Món ④ đụng `build-dashboard.mjs` + `package.json` — làm cuối, commit 
 | | |
 |---|---|
 | **Ai** | Claude điều phối · Đức duyệt từng diff |
-| **Làm** | Gom bộ artifact đã trích ở S1–S7, promote vào **Kho (Project-3)** ở tier `SEED` của `sync_manifest.json`. Không tạo repo mới, không tạo manifest thứ hai. |
+| **Làm** | ⛔ **VIẾT LẠI 02/09 — [ADR-0001](../adr/0001-template-o-repo-doc-lap-project-3ai-nghi.md).** Không promote vào Kho nữa. Thay bằng: **dựng nhà độc lập cho template** (mốc M1–M2 ở mục 10). Bản cũ: *"promote vào Kho (Project-3) ở tier SEED"* — giữ làm bản ghi. |
 | **Điều kiện tiên quyết** | ⚠️ **ĐANG NGHI NGỜ — xem 9.5 trước khi khởi công.** Bản cũ: *"K-MIGRATE xong — `sync_manifest.json` đã có `schema_version`, version/path/tier đã sửa, checksum sinh lại."* Điều kiện này giả định Kho đang sống. Đức báo 02/09 là **không**. |
 | **Đức nghiệm thu** | Mở `sync_manifest.json` trong Kho. Bộ artifact có mặt ở tier `SEED`, không nằm ở `LOCKED`. Một repo mới lấy SEED về, chạy cổng kiểm ra xanh. |
 
@@ -495,7 +499,13 @@ K-MIGRATE là *sửa một manifest trong repo không ai dùng*, và S9 là *pro
 **Ai làm việc nhìn này: GPT.** Nó có connector đọc thẳng GitHub; một lượt là xong. Claude Code
 không đọc được repo khác. Đây là việc rẻ nhất trên bàn và nó quyết định ba mốc.
 
-**Còn một câu Đức chưa chốt:** Project 3AI nhận vai nào —
+> **✅ ĐÃ CHỐT 02/09, cùng ngày — [ADR-0001](../adr/0001-template-o-repo-doc-lap-project-3ai-nghi.md).**
+> Đức chọn **cả hai đều không**: Project 3AI *kết thúc vai trò*, có thể archive. Template ở
+> **repo độc lập**. Làn B nghỉ. Ba câu hỏi ở trên **không còn để quyết số phận Kho** — chúng
+> thu lại thành một câu duy nhất: *"trong Project 3AI có gì đáng mang sang trước khi archive?"*
+> Vẫn là việc của GPT, nhưng rẻ hơn nhiều.
+
+**Bản ghi hai lựa chọn đã cân nhắc, giữ lại vì nó giải thích vì sao chốt như vậy:** Project 3AI nhận vai nào —
 
 - **(a) Nhà của template.** Nó vốn là "gốc của kho", tức chỗ chứa luật chung — đúng vai template
   cần. Không phải dựng repo mới nên tôn trọng trọn vẹn K0 số 1. Và template repo **tự chạy
@@ -506,3 +516,82 @@ không đọc được repo khác. Đây là việc rẻ nhất trên bàn và n
 
 **Khuyến nghị: (a).** Và dù chọn gì thì vẫn cần thêm **một repo đang sống, khác loại** để thử
 thật — migrate sang một extension thứ hai không chứng minh được gì.
+
+---
+
+## 10. Giai đoạn 2 — Template độc lập và nhân bản ra các repo khác
+
+> Chốt 2026-09-02, [ADR-0001](../adr/0001-template-o-repo-doc-lap-project-3ai-nghi.md).
+> **Làn B đã nghỉ** — K-MIGRATE · K2 · K3 · K5 không còn trong lộ trình.
+
+### 10.1 Template gồm tám thứ — và hai thứ CHƯA TỒN TẠI
+
+Đức liệt kê 02/09: *harness · rules · structure · folder · dashboard · protocol audit ·
+protocol migrate · khởi tạo mới*. Đo lại xem cái nào đã có:
+
+| Thành phần | Hôm nay | Việc còn phải làm |
+|---|---|---|
+| harness · rules · structure · folder | **Có, đã chứng minh** | Trích ra, bỏ tên dự án |
+| dashboard | **Có nền máy sinh** | Thêm lớp hiển thị cho người |
+| **protocol audit** | ❌ **CHƯA CÓ** | Viết mới — hiện chỉ có một prompt cho một phiên |
+| **protocol migrate · khởi tạo mới** | ❌ **CHƯA CÓ** | Viết mới — không tài liệu, không script |
+
+**Đừng nhầm "trích ra" với "viết mới".** Sáu thứ đầu là trích; hai thứ cuối là làm từ đầu, và
+chúng chính là phần đắt nhất của Giai đoạn 2.
+
+### 10.2 Cái gì đi theo template, cái gì ở lại — luật quan trọng nhất
+
+| Thành phần | Đi? | Vì sao |
+|---|---|---|
+| `scripts/` | **Đi trọn**, có phiên bản | Logic thuần, không dính dự án |
+| Luật chung (`AGENTS.md` mục 0–5, 7) | **Đi trọn** | Đo được: 1/117 dòng có tên dự án |
+| Bản mẫu (`STATUS.template`, `_TEMPLATE-*`, ADR-0000) | **Đi trọn** | Chúng vốn là khuôn |
+| `.repo-structure.json` | **Schema đi, giá trị ở lại** | `areas`/`grandfathered` là của từng repo |
+| Bản đồ file (`AGENTS.md` mục 6) | **KHÔNG** | 13/47 dòng là tên dự án — nó là bản đồ địa phương |
+| `STATUS.md` · `HANDOFF.md` · `claims.json` | **Khuôn đi, nội dung ở lại** | Chép nội dung = đẻ ra nguồn sự thật giả |
+| `DASHBOARD.md` · `llms.txt` · `repo-map.json` | **KHÔNG BAO GIỜ** | Mỗi repo tự sinh. **Bộ sinh đi, sản phẩm ở lại** |
+| `evidence/` | **KHÔNG BAO GIỜ** | Bằng chứng của repo nào là của repo đó |
+
+Chép nhầm nhóm cuối thì **mọi repo sẽ đồng loạt hiển thị trạng thái của repo Chrome**.
+
+### 10.3 Cơ chế nhân bản: kéo về + ghim phiên bản
+
+| Cách | Vì sao loại / chọn |
+|---|---|
+| Chép một lần | Không có đường nâng cấp. Chỉ hợp repo mới tinh |
+| Đẩy từ trung tâm | Ghi đè sửa đổi địa phương, **và chống lại luật "Đức duyệt từng thay đổi"** |
+| **Kéo về + ghim phiên bản** ✅ | Mỗi repo khai đang dùng bản nào; nâng cấp là hành động có chủ ý tại chỗ |
+
+Chi phí: thêm **một trường** `harness_version` vào `.repo-structure.json`. Từ đó độ lệch đếm
+được, và `repo-map.json` đã có sẵn cơ chế đưa trường đó ra ngoài cho radar đọc.
+
+### 10.4 Migrate có bốn nấc — không phải bật/tắt
+
+| Nấc | Đạt được gì | Nghiệm thu |
+|---|---|---|
+| **1 · Đọc được** | AI lạ vào repo là hiểu ngay | Bài test một dòng |
+| **2 · Kiểm được** | Cổng chạy, mới cảnh báo | `check-bootstrap` chạy ra số |
+| **3 · Chặn được** | Cổng đỏ thật khi sai | Cố tình làm hỏng → cổng đỏ |
+| **4 · Tự nuôi** | ADR + bằng chứng thành thói quen | Dùng hằng ngày |
+
+**Không phải repo nào cũng cần nấc 4.** Repo lưu trữ chỉ cần **nấc 1**. Ép cả 21 repo lên nấc 4
+là công việc khổng lồ và phần lớn lãng phí. Nấc 1 đã mang lại phần lớn giá trị.
+
+### 10.5 Bảy mốc
+
+| Mốc | Làm gì | Nghiệm thu bằng máy |
+|---|---|---|
+| **M0** | GPT đọc Project 3AI: *có gì đáng mang sang trước khi archive?* | Danh sách thu hoạch, hoặc "không có gì" |
+| **M1** | Tách template — cắt mục 6, gom scripts + bản mẫu + schema | **Repo rỗng + template → cổng XANH** |
+| **M2** | Dựng nhà độc lập cho template, đóng `v1.0.0`, nhà tự chạy chuẩn của chính nó | `check-bootstrap` xanh **trong chính repo template** |
+| **M3** | Viết **protocol audit** + **protocol migrate/khởi tạo** | Một repo lạ đi theo protocol mà không hỏi câu nào |
+| **M4** | Migrate **một repo đang sống, khác loại** | Bài test một dòng đạt ở repo đó |
+| **M5** | Vá template theo cái vỡ ra ở M4 | `v1.1.0` |
+| **M6** | Hai repo song song, rồi radar | 2 repo xanh không giẫm chân · bảng hiện `harness_version` từng repo |
+
+**M1 là mốc then chốt, và phép thử của nó rẻ:** tạo một repo **rỗng**, thả template vào, chạy
+cổng kiểm. **Xanh = template thật sự độc lập.** Đỏ = có thứ của Chrome lọt vào. Đây là bài test
+một dòng phiên bản dành cho template — dùng lại đúng công thức đã cứu Giai đoạn 1.
+
+**M4 phải là repo KHÁC LOẠI.** Migrate sang một extension thứ hai không chứng minh được gì
+ngoài "template hợp với extension" — thứ đã biết. **Chưa chọn được repo nào; cần Đức chỉ.**

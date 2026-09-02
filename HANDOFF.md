@@ -543,3 +543,32 @@ không đọc được repo khác. Ba câu đó quyết định ba mốc còn ha
 ĐỦ cho multitask đa repo; thứ thiếu là *nhìn thấy*, và đó là radar S10 đã có kế hoạch.
 
 **Chưa chốt:** Project 3AI làm **nhà của template** (khuyến nghị) hay **repo thử đầu tiên**.
+
+## 2026-09-02 — `claude-dieu-phoi`: ADR-0001 — template độc lập, Project 3AI nghỉ
+
+**Đức chốt:** template tách ra **nằm độc lập một nơi**; Project 3AI *"đã xong nhiệm vụ"*, sau
+này archive cũng không ảnh hưởng. Hệ thống mới xoay quanh template.
+
+**Đây là đảo ngược K0 số 1 (01/09)**, nên đã ghi thành **ADR-0001** ở `docs/adr/` — ADR đầu tiên
+ở tầng gốc repo ngoài ADR-0000. Phát hiện kèm theo: **K0 chưa bao giờ được ghi thành ADR**, nó
+chỉ sống dưới dạng văn xuôi trong roadmap. Đã gắn dấu "đã bị thay thế" vào đúng chỗ đó.
+
+**Làn B nghỉ hẳn:** K-MIGRATE · K2 · K3 · K5 đều dựng trên giả định Kho đang sống. **Bốn mốc
+rời khỏi lộ trình.** S9 viết lại: không promote vào Kho, mà dựng nhà độc lập cho template.
+
+**Phát hiện quan trọng nhất — hai trong tám thứ template phải mang thì CHƯA TỒN TẠI:**
+
+| Thành phần | Trạng thái |
+|---|---|
+| harness · rules · structure · folder | Có, đã chứng minh |
+| dashboard | Có nền máy sinh, thiếu lớp hiển thị |
+| **protocol audit** | **CHƯA CÓ** — chỉ có một prompt cho một phiên |
+| **protocol migrate · khởi tạo mới** | **CHƯA CÓ** — không tài liệu, không script |
+
+Đừng nhầm "trích ra" với "viết mới". Hai thứ cuối là phần đắt nhất của Giai đoạn 2.
+
+**Đã ghi mục 10 vào roadmap:** tám thành phần · luật cái gì đi cái gì ở lại · cơ chế kéo-về
+ghim-phiên-bản · bốn nấc migrate · bảy mốc M0–M6.
+
+**Việc kế tiếp:** M0 (GPT thu hoạch Project 3AI) và M1 (tách template). **Cần Đức chỉ một repo
+đang sống, khác loại** cho M4 — chưa có ứng viên.
