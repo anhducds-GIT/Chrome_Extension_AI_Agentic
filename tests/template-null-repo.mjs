@@ -35,6 +35,27 @@ const files = buildTemplateFiles();
   // MẪU ĐỐI CHỨNG DƯƠNG — bắt buộc. Không có nó thì phép kiểm trên RỖNG NGHĨA: template hiện
   // đã sạch, nên "không thấy gì" đúng ở cả hai chiều, và một đột biến xoá sạch danh sách mẫu
   // dò vẫn thoát. Đo thật: đột biến đó ĐÃ thoát ở bản đầu của phép kiểm này.
+  // TRỒNG ĐỦ BỐN MẪU, không chỉ một. Bản trước chỉ trồng `duc-auto`, nên ba mẫu còn lại
+  // (`gg-flow`, tên repo gốc, `extension-observer`) CHƯA TỪNG được chứng minh là bắt được: một
+  // đột biến xoá riêng chúng khỏi danh sách sẽ thoát sạch. Phiên K1 chỉ ra 02/09, mục (a) của
+  // brief. Bài học lặp lại: đối chứng dương phải phủ TỪNG phần tử của bộ dò, không phủ "một cái
+  // đại diện" — một cái đại diện chỉ chứng minh đúng cái đó.
+  // Mỗi mẫu một chuỗi trồng RIÊNG, và chuỗi đó chỉ được khớp ĐÚNG mẫu đang thử. Bản đầu của
+  // chính đối chứng này trồng "workers/duc-auto-gg-flow-video" — khớp CẢ HAI mẫu một lúc, nên
+  // nó đếm ra 2 và không chứng minh được mẫu nào cả. Đúng bệnh nó đang đi chữa.
+  const MAU_PHAI_BAT = [
+    ["gia/mot.md", "duong dan workers/duc-auto-gemini/v0.2.0 lot vao", "duc-auto"],
+    ["gia/hai.md", "nhac nhanh gg-flow-video trong van", "gg-flow"],
+    ["gia/ba.md", "duong dan C:/X/Chrome_Extension_AI_Agentic/y", "Chrome_Extension_AI_Agentic"],
+    ["gia/bon.md", "nhac goi extension-observer o day", "extension-observer"]
+  ];
+  for (const [file, text, expected] of MAU_PHAI_BAT) {
+    const hits = leakedNames(new Map([[file, text], ["gia/sach.md", "khong co gi dang ngo"]]));
+    assert.equal(hits.length, 1, `bo do phai bat DUNG MOT lan ten cam trong ${file}, dang bat ${hits.length}`);
+    assert.equal(hits[0].file, file, `phai chi dung file co ten cam, khong bao oan ${hits[0].file}`);
+    assert.equal(hits[0].found.toLowerCase(), expected.toLowerCase(),
+      `phai bat dung mau "${expected}", dang bat "${hits[0].found}"`);
+  }
   const planted = leakedNames(new Map([
     ["gia/mot.md", "duong dan workers/duc-auto-gemini/v0.2.0 lot vao"],
     ["gia/hai.md", "khong co gi dang ngo"]
@@ -52,10 +73,18 @@ const files = buildTemplateFiles();
     assert.ok(!files.has(forbidden),
       `${forbidden} thuoc tang GENERATED — bo SINH thi di theo, san pham cua no thi KHONG`);
   }
-  // Và cũng không mang bằng chứng của repo gốc.
+  // Và cũng không mang bằng chứng của repo gốc. SOI CẢ BA HÌNH DẠNG, không chỉ `evidence/`:
+  // luật vùng bằng chứng của repo (AGENTS.md mục 4) gồm `pilot-*` · `Pilot-*` · `Batch-*` nữa,
+  // nên chỉ soi một tiền tố là bỏ sót hai hình dạng còn lại. Phiên K1 chỉ ra 02/09, mục (b).
+  const VUNG_BANG_CHUNG = /^(evidence|pilots?|pilot-|Pilot-|Batch-|batch-)/;
   for (const rel of files.keys()) {
-    assert.ok(!rel.startsWith("evidence/"), `${rel}: bang chung cua repo nao la cua repo do`);
+    assert.ok(!VUNG_BANG_CHUNG.test(rel), `${rel}: bang chung cua repo nao la cua repo do`);
   }
+  // Đối chứng dương cho chính bộ dò trên — không có nó thì phép kiểm rỗng nghĩa y như mục 1.
+  for (const gia of ["evidence/x.md", "pilots/v0/x.md", "pilot-07/x.md", "Pilot-07/x.md", "Batch-01/x.md"]) {
+    assert.ok(VUNG_BANG_CHUNG.test(gia), `bo do phai coi ${gia} la vung bang chung`);
+  }
+  assert.ok(!VUNG_BANG_CHUNG.test("docs/pilot-ghi-chu.md"), "khong duoc bao oan file chi NHAC chu pilot o giua duong dan");
   ok("khong mang theo trang may sinh, khong mang theo bang chung");
 }
 
@@ -117,6 +146,34 @@ const files = buildTemplateFiles();
       "cong dong phien phai CHAY DUOC tren repo dung tu bo khung: " + gate.slice(0, 900));
     assert.ok(!/feature-parity/i.test(gate),
       "cong dong phien khong duoc doi script ma bo khung khong mang theo: " + gate.slice(0, 900));
+
+    // CỔNG KHÔNG ĐƯỢC IM LẶNG BÁO XANH KHI NÓ CHƯA KIỂM GÌ — nửa chưa vá của lỗi nặng số 1,
+    // phiên K1 tìm ra 02/09. Dây chuyền: bộ khung không mang `tests/` và `package.json` của nó
+    // không khai `scripts.test` → `hasRootTestScript()` false VĨNH VIỄN → phép kiểm Test trả
+    // XANH kèm câu "Không package nào của bạn có suite bị ảnh hưởng". Repo gốc hết bệnh sau bản
+    // vá trước, bộ khung thì vẫn nguyên — mà bộ khung mới là thứ sắp nhân ra nhiều repo. Nhân
+    // một cổng kiểm rỗng ra 21 repo còn tệ hơn không có bộ khung.
+    //
+    // Ba vế, và cả ba đều cần: nói ĐÚNG chuyện gì đang xảy ra · KHÔNG nói câu gây hiểu nhầm là
+    // đã kiểm · và hiện ở mức BỎ QUA chứ không phải XANH.
+    // Ca trên chạy với một phiên KHÔNG giữ khoá nào, và khi đó "không có suite nào bị ảnh
+    // hưởng" là câu ĐÚNG. Ca hỏng thật là: phiên CÓ giữ khoá gốc, CÓ sửa file, mà repo không có
+    // suite — lúc đó cổng phải nói ra, không được im. Dựng đúng ca đó, không dựng ca dễ.
+    writeFileSync(join(tempRoot, ".agents", "claims.json"),
+      JSON.stringify({ claims: { _root: { owner: "phep-thu-co-khoa", ai: null, claimed_at: null, task: "thu", released_at: null } } }, null, 2), "utf8");
+    writeFileSync(join(tempRoot, "README.md"), "# Repo\n\nmot dong moi de co gi cho cong kiem\n", "utf8");
+    let gateOwned = "";
+    try {
+      gateOwned = at(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "phep-thu-co-khoa"]);
+    } catch (error) {
+      gateOwned = String(error.stdout || "") + String(error.stderr || "");
+    }
+    assert.match(gateOwned, /REPO CHƯA CÓ SUITE GỐC/,
+      "cong phai NOI TO rang repo nay chua co suite, thay vi im lang bao xanh: " + gateOwned.slice(0, 900));
+    assert.doesNotMatch(gateOwned, /Không package nào của bạn có suite bị ảnh hưởng/,
+      "cau nay ngu y ĐA KIEM va khong thay gi — sai, vi that ra chua kiem duoc mot dong nao");
+    assert.match(gateOwned, /\[BỎ  \] Test xanh/,
+      "chua kiem duoc gi thi phai hien la BO QUA, khong duoc doi lot XANH");
 
     // NỘI DUNG trang sinh ra không được mang danh tính repo gốc. Kiểm DANH SÁCH file mang theo
     // là chưa đủ: bộ sinh từng đóng cứng tên repo gốc ngay trong trang cổng vào, nên mọi repo

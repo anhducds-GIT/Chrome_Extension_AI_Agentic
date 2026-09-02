@@ -1104,3 +1104,46 @@ tiếp**, ref không có thì **chặn**. Siết cả hai là chặn oan một p
   nó thật sự cần**, và trả từng khoá ngay khi xong phần đó.
 - `ownershipInvariant` chỉ kiểm **tham chiếu**, không biết một đường dẫn *đáng ra* thuộc steward
   nào. Khai `docs/` thành `_root` là sai mà bất biến vẫn xanh.
+
+## 2026-09-02 — `claude-k2-design`: đóng nốt ba lỗ phiên K1 chỉ ra (K2-2b vòng 2)
+
+**Lỗ của chính tôi, K1 bắt được.** Tôi thêm guard `KHONG_CO_ORIGIN_MAIN` vào `safe-push.mjs`
+mà **không ghim test**. K1 grep cả `tests/` và chỉ ra chuỗi đó không có trong phép kiểm nào; hai
+fixture chạm `origin/main` đều `update-ref` — tức chỉ dựng ca CHẠY ĐƯỢC. Tôi kiểm bằng đột biến:
+gỡ guard rồi **đồng bộ bản trích** thì suite **xanh sạch, exit 0**. (Lần chạy đầu tôi tưởng nó bị
+bắt — nhưng cái bắt được chỉ là phép kiểm bản trích, thứ bắt mọi ký tự chứ không ghim hành vi.)
+→ Nay có fixture dựng đúng ca hỏng: `git init` + 1 commit + **không remote nào** → khẳng định
+`KHONG_CO_ORIGIN_MAIN`, thoát khác 0, và **không** in "Không có gì để push". Đột biến nay bị bắt.
+
+**Lỗ NẶNG hơn, và nó là nửa chưa vá của lỗi nặng số 1 audit vòng một.** Vòng đó tìm ra "cổng chưa
+từng chạy suite gốc". Bản vá làm vùng gốc thành vùng thật **trong repo này** — và báo là đã đóng.
+Nhưng nguyên nhân ở bộ khung là **không có suite để mà chạy**: `template/` không mang `tests/`, và
+`template/package.json` không khai `scripts.test`. Dây chuyền đã kiểm từng mắt: `hasRootTestScript()`
+false vĩnh viễn → phép kiểm Test trả **XANH kèm "Không package nào của bạn có suite bị ảnh hưởng"**.
+Repo gốc hết bệnh, bộ khung vẫn nguyên bệnh — mà bộ khung mới là thứ sắp nhân ra nhiều repo.
+
+→ **Fail loud, đừng fail silent.** Giữ khoá gốc mà repo không khai `scripts.test` thì cổng in
+`[BỎ  ]` kèm *"REPO CHƯA CÓ SUITE GỐC — cổng KHÔNG kiểm được một dòng code nào của bạn"*. Cố ý
+**không** ĐỎ: repo vừa dựng chưa có test là chuyện thật và hợp lệ, đỏ ở đây là khoá repo ngay phiên
+đầu. Nhưng "chưa kiểm" phải hiện ra là chưa kiểm, không được đội lốt XANH.
+
+**Hai lỗ trong phép thử repo rỗng** (mục a, b của brief K1):
+- Đối chứng dương chỉ trồng `duc-auto`; ba mẫu còn lại chưa từng được chứng minh là bắt được →
+  nay trồng **cả bốn**, mỗi mẫu một chuỗi riêng. *Bản đầu của chính đối chứng này trồng
+  `duc-auto-gg-flow-video` — khớp hai mẫu một lúc nên không chứng minh được mẫu nào.*
+- Phép cấm bằng chứng chỉ soi `evidence/`, bỏ sót `pilot-*` · `Pilot-*` · `Batch-*` → nay soi cả
+  ba, kèm đối chứng dương và một ca chống báo oan (`docs/pilot-ghi-chu.md` không phải bằng chứng).
+
+**Số:** suite 257 → **258**.
+
+### Còn mở — cùng họ, chưa vá
+
+- **CỔNG cũng nuốt "không có origin/main".** Đo được ngay trong fixture repo rỗng:
+  `git diff --name-only origin/main...HEAD` fail → `unpushed` rỗng → cổng chỉ còn thấy cây làm
+  việc, tức **bỏ qua mọi commit chưa push** mà không nói gì. Cùng hình dạng lỗ vừa vá ở
+  `safe-push`, chỉ khác chỗ. Chưa vá vì nó nằm ngoài phạm vi phiên này.
+- **Bộ khung nên mang một `tests/` tối thiểu + khai `scripts.test`.** Fail-loud ở trên gỡ phần
+  *im lặng* của lỗ, nhưng bộ khung vẫn chưa có răng. Đây là quyết định về **nội dung** bộ khung
+  nên tôi không tự chốt — để K1 (chủ chương trình bộ trích) làm, tôi trả `_template`.
+- Mục (d) brief K1: `scripts/build-template.mjs:183` mốc cắt `"\n## 6."` không kiểm là tiêu đề
+  THẬT và DUY NHẤT. Nằm trong `_code`, chưa làm.

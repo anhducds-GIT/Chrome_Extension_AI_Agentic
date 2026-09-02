@@ -847,6 +847,53 @@ function antiDrift(text, measurements = {}) {
   }
 }
 
+/* 23c. K2-2b · safe-push KHÔNG được báo "đã đẩy" cho một cú đẩy chưa hề xảy ra.
+   FAIL-OPEN THẬT, phiên K1 tìm ra: `gitQuiet` nuốt lỗi, nên khi ref `origin/main` KHÔNG TỒN TẠI
+   (clone mới chưa fetch, nhánh mặc định tên khác, remote đổi tên) thì `origin/main..HEAD` trả
+   rỗng, và bản cũ in "Không có gì để push — máy đang bằng với remote" rồi THOÁT 0. Người đóng
+   phiên tin là đã đẩy trong khi remote chưa có gì.
+
+   Vì sao khối này phải tồn tại RIÊNG: hai fixture kia đều `update-ref refs/remotes/origin/main`,
+   tức chỉ dựng ca CHẠY ĐƯỢC. K1 chỉ ra chuỗi `KHONG_CO_ORIGIN_MAIN` không có trong một test nào,
+   và tôi kiểm lại bằng đột biến: gỡ guard rồi đồng bộ bản trích thì **suite xanh sạch, exit 0**.
+   Đúng luật vàng 2 của repo: một phép kiểm chỉ thật khi fixture của nó dựng được ca hỏng. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-2b-no-remote-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2 No Remote");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "safe-push.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    writeFileSync(join(tempRoot, ".repo-structure.json"), JSON.stringify({ schema_version: 1, areas: {} }), "utf8");
+    mkdirSync(join(tempRoot, ".agents"), { recursive: true });
+    writeFileSync(join(tempRoot, ".agents", "claims.json"), JSON.stringify({ claims: { _root: { owner: null } } }), "utf8");
+    gitAt("add", ".");
+    gitAt("commit", "-m", "mot commit, va KHONG remote nao");
+
+    // KHÔNG `git remote add`, KHÔNG `update-ref` — đây chính là ca hỏng.
+    const run = spawnSync(process.execPath, [join(tempRoot, "scripts", "safe-push.mjs"), "--as", "toi"], {
+      cwd: tempRoot, encoding: "utf8"
+    });
+    const out = `${run.stdout}${run.stderr}`;
+    assert.match(out, /KHONG_CO_ORIGIN_MAIN/,
+      "không phân giải được origin/main thì phải NÓI RA bằng mã lỗi, không được im");
+    assert.notEqual(run.status, 0,
+      "và phải thoát KHÁC 0 — thoát 0 ở đây là báo 'xong' cho một cú đẩy chưa hề xảy ra");
+    assert.doesNotMatch(run.stdout, /Không có gì để push/,
+      "TUYỆT ĐỐI không được nói 'máy đang bằng với remote' khi chưa biết remote ở đâu");
+    // Câu lỗi phải nói CÁCH SỬA, không chỉ nói sai — tiêu chí nghiệm thu của Đức.
+    assert.match(out, /git remote -v/, "phải chỉ luôn lệnh để tự kiểm");
+    ok("K2-2b · FAIL-OPEN: khong co origin/main thi safe-push CHAN, khong bao 'da bang voi remote'");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-2b-no-remote-")), "chỉ dọn đúng temp fixture no-remote");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
 
 /* ==========================================================================
    S2 — cổng vào: llms.txt + repo-map.json + Khối A/D
