@@ -23,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "ADR-0001: template doc lap, Project 3AI nghi. Cho lan B nghi, viet lai S9.",
-      "released_at": null
+      "task": "TRA QUYEN 02/09 (claude-dieu-phoi). ADR-0001 (template doc lap, Project 3AI nghi) + roadmap muc 10 (Giai doan 2, M0-M6). Lan B rut khoi lo trinh.",
+      "released_at": "2026-09-02"
     }
   }
 }
