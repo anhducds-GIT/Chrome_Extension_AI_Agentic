@@ -8,6 +8,19 @@
  * Bốn khối dưới đây KHÔNG phải là bộ test đầy đủ của bộ khung. Chúng là bốn chỗ đã HỎNG THẬT
  * trong repo sinh ra bộ khung này — nên chúng là bốn chỗ đáng ghim nhất khi bạn chưa có gì.
  *
+ * ⚠️ NỢ CHƯA TRẢ (02/09) — repo GỐC chưa chạy file này. `package.json` ở gốc repo chưa nối
+ * `node tests/harness-smoke.mjs` vào chuỗi `test`, nên bốn khối dưới đây chạy trong MỌI repo
+ * dựng từ bộ khung, nhưng KHÔNG chạy trong repo sinh ra chúng. "Một bản dùng cho cả hai" hiện
+ * mới đúng một nửa, và hai bản có thể trôi khỏi nhau mà không ai biết.
+ *
+ * Sửa: thêm `&& node tests/harness-smoke.mjs` vào `scripts.test` của `package.json` gốc. Một
+ * dòng. Chưa làm vì `package.json` thuộc vùng `_root` — hợp đồng test của cả repo, nên nó cần
+ * một phiên giữ `_root` VÀ có phạm vi cho việc đó; chủ dự án đã từ chối làm kèm trong một phiên
+ * delegation đang mở dở, và từ chối đó đúng.
+ *
+ * Ghi ở đây chứ không ghi vào sổ việc-mở vì sổ đó cũng thuộc `_root` (và ở repo này chưa tồn
+ * tại). Nợ nằm cạnh chính thứ nó nói về thì không rơi.
+ *
  * **Đây là hạt giống, không phải đích.** Repo của bạn thêm test của repo bạn vào cùng thư mục
  * này và nối vào `scripts.test`. Đừng xoá bốn khối này để cho nhanh — mỗi khối là một lần
  * ai đó đã trả giá.
