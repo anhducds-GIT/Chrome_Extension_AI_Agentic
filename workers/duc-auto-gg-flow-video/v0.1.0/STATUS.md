@@ -5,9 +5,9 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "F-25: vong chay job chet theo side panel — chuoi dung sau Q004 va dung yen 22 phut trong khi MOI LOP DEU SONG (run.stop tra ok nhung state khong doi). Nang nhip dua chuoi 7 job tu ~9 phut len ~20+ phut nen diem gay nay nguy hiem gap doi. Can tim ra cai gi giet vong lap TRUOC KHI tin vao chuoi dai. Con 26/50 credit tren Binh"
+next_step: "F-25 van chua giai (vong chay chet o luot F4R8 nhung KHONG tai hien o F4R9) — can biet co che truoc khi tin vao chuoi dai. Con 8/50 credit tren Binh. Chua du de ket luan nhip cham LA NGUYEN NHAN khong bi gan co: da doi nhieu hon mot bien"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "F4R8 (02/09, ho so Binh, giao dien tieng Viet): 4 video that, 0 loi, KHONG bi gan co — khac han luot F4R6 bi chan o job thu hai. NHIP GIONG NGUOI DUOC KIEM CHUNG LAN DAU tren trang that: pre_compose 4996-8621ms, post_type 3329-8717ms, deu trong khoang khai va khong gia tri nao trung nhau. composer_len before=17 moi job (locale khac thi hang so nen khac: kaito la 28) va after=prompt_len chan chan. Diem gay moi: F-25. Bang chung: evidence/F4R8-KET-QUA.md"
+current_focus: "7/7 job tren mot tai khoan (F4R8 4 + F4R9 3), 42/50 credit, KHONG canh bao nao cua Google. Nhip giong nguoi do duoc tren trang that: pre_compose 4996-11215ms, post_type 3329-9337ms, khong gia tri nao trung nhau. composer before=17 va after-prompt_len=0 o CA BAY job -> o prompt sach moi luot, trang thai lai cua F4R2 khong tai hien lan nao. Bang chung: evidence/F4R9-KET-QUA.md"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

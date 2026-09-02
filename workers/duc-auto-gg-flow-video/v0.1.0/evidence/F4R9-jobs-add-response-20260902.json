@@ -1,0 +1,31 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-6a0811b0-a0d0-455d-a3fd-d35714e55175",
+  "ok": true,
+  "result": {
+    "audit_event": "BRIDGE_JOB_ADDED_DIRECT",
+    "changed_fields": [
+      "prompt",
+      "reference_images",
+      "settings"
+    ],
+    "checkpoint": {
+      "filename": "Bridge-2026-09-02T12-47__results__v01.xlsx",
+      "verified": true,
+      "version": 1
+    },
+    "job_ids": [
+      "Q001",
+      "Q002",
+      "Q003"
+    ],
+    "message": "Agent Bridge đã thêm 3 job (Q001, Q002, Q003) vào Setup; chưa chạy."
+  },
+  "responded_at": "2026-09-02T12:47:46.582Z",
+  "served_by": {
+    "instance_id": "e08e1d6a-63d0-4be1-909a-f0cbd56ef891",
+    "label": "Binh"
+  }
+}

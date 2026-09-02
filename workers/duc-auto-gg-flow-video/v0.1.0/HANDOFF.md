@@ -870,3 +870,33 @@ trên `Bình`** · chạy trên **giao diện tiếng Việt**, nhờ F-23.
   (trả `null` → dừng trước khi gõ, 0 credit). Hai thứ tưởng là mìn nhưng không phải: chuỗi ở
   `content.js:1291` nằm trong comment, và đường `dry_run` đi qua `findCreateButton` nên đã được
   F-23 sửa.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 12): 7/7 job trên một tài khoản, và một báo động giả của chính tôi
+
+**Bằng chứng:** [`evidence/F4R9-KET-QUA.md`](evidence/F4R9-KET-QUA.md) · **3/3 SUCCESS**, gộp
+với F4R8 là **7/7 job, 42/50 credit trên `Bình`**, giao diện tiếng Việt.
+
+- **Số gộp cả hai chuỗi:** `typing_path` = `input_events` ở cả 7 · `pre_compose` **4996–11215 ms**
+  · `post_type` **3329–9337 ms** · **không giá trị nào trùng nhau** · `composer_len_before_typing`
+  = **17** ở cả 7 · **`after − prompt_len` = 0 ở cả 7**.
+  Con số cuối là bằng chứng mạnh nhất tới nay cho việc **ô prompt sạch trước mỗi lượt gõ** — kể
+  cả job 2..7 gõ vào ô mà job trước vừa dùng. Trạng thái lai của F4R2 (dôi 27 ký tự) **không
+  tái hiện lần nào trong 7 lượt**.
+- **Không cảnh báo nào của Google.** Nhưng **chưa đủ kết luận nhân quả**: đã đổi nhiều hơn một
+  biến (tài khoản, độ dài video, locale). Là dấu hiệu mạnh, không phải bằng chứng.
+- **F-25 KHÔNG tái hiện** — chuỗi này chạy trọn. Điểm gãy ở F4R8 **không phải tất định**, và
+  cơ chế vẫn chưa biết. Nợ còn nguyên.
+- **TÔI SUÝT BÁO SAI, ghi lại vì đây là loại sai nguy hiểm nhất — sai theo hướng "tìm thấy bug".**
+  Bộ phát hiện đứng máy tôi vừa viết đặt ngưỡng **4 phút**, một con số tôi **suy luận** ra
+  (nhịp 90s + sinh ~50s). Nó kêu sau Q001 và tôi đã soạn sẵn câu "F-25 tái hiện". Kiểm lại
+  trạng thái trước khi gửi thì thấy **Q002 đã khởi động** — khoảng nghỉ thật có thể vượt 5 phút.
+  Và phép đo tôi dùng để hiệu chỉnh ngưỡng lần đầu cũng **vô nghĩa**: nó đo khoảng cách giữa hai
+  lần poll, vì trong lúc đếm nhịp thì `run.status.current` vẫn hiển thị job vừa xong.
+  **Bài học:** một bộ phát hiện dựng bằng suy luận chỉ đáng tin bằng đúng suy luận đó — ngưỡng
+  phải đến từ số đo, và trước khi báo "hỏng" thì hỏi lại hệ thống một câu.
+  Ngưỡng nay là **10 phút**, dựa trên hai số đo thật: F4R8 kẹt 22 phút không hồi, F4R9 nghỉ ~4–5
+  phút rồi tự đi tiếp.
+- **Cũng trong lượt này, một lỗi so khớp chuỗi con nữa:** poller thoát sớm vì mẫu `"IDLE |"`
+  khớp luôn vào `WAITING_IDLE |`. Đã sửa bằng cách **tách riêng trường `state` rồi so bằng**.
+  Đây là lần thứ ba trong ngày bị chuỗi con cắn (sau `composer` trong câu báo lỗi và các bản sao
+  hằng số), nên xin ghi thành luật: **đừng dò trạng thái bằng chuỗi con của một dòng gộp.**

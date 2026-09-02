@@ -1,0 +1,28 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW04R8-E: Old ceiling fan turning too slowly in a green tiled room, shadows sweeping the wall, static shot, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R8-F: Hands folding a paper boat on a train tray table, landscape blurring past the window, overhead, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R8-G: A single candle guttering in a draft beside a stack of books, warm falloff into dark, static close, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    }
+  ]
+}

@@ -3,10 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-f18-evidence",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Chay not 3 job con lai tren Binh (E,F,G). Theo doi kem PHAT HIEN DUNG MAY (F-25)."
+      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG: 7/7 job tren ho so Binh voi nhip moi, khong bi gan co, nhip do duoc tren trang that. CON NO: F-25 (vong chay chet o F4R8, khong tai hien o F4R9 — chua biet co che), F-24 (min locale con lai, hong an toan). Con 8/50 credit tren Binh.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
       "owner": null,
