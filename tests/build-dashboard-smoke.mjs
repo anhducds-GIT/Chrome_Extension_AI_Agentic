@@ -19,10 +19,13 @@ const REQUIRED_PATHS = new Set([
 
 function validFm(overrides = {}) {
   return {
-    schema: "extension-status/v1",
+    schema: "extension-status/v2",
     id: "demo",
     name: "Bản demo",
     lifecycle: "active",
+    owner: "phien-thu-nghiem",
+    priority_rank: "1",
+    next_step: "Việc kế tiếp của bản demo",
     version_source: "workers/demo/v1/manifest.json",
     last_verified: "2026-08-26",
     last_verified_commit: SHA,
@@ -90,7 +93,12 @@ function fakeRepo({ includeStatus = true, changedCommits = [], statusOverrides =
   };
   return {
     root: "C:/repo co khoang trang",
-    fileExists: (relPath) => onDisk.has(relPath) || relPath === "workers/demo/v1/tests" || relPath === "tests",
+    // Thư mục CŨNG tồn tại, giống hệt git: `cat-file -t HEAD:<thư-mục>` trả "tree".
+    // Fixture cũ chỉ biết tới file nên một phép kiểm "đường dẫn này có thật không"
+    // đối với thư mục sẽ cho kết quả sai so với repo thật.
+    fileExists: (relPath) => onDisk.has(relPath)
+      || [...onDisk].some((name) => name.startsWith(`${relPath}/`))
+      || relPath === "workers/demo/v1/tests" || relPath === "tests",
     isFile: (relPath) => onDisk.has(relPath),
     readFile: (relPath) => {
       if (!files.has(relPath)) throw new Error(`fixture thiếu ${relPath}`);
@@ -183,7 +191,7 @@ function antiDrift(text, measurements = {}) {
 /* Các luật validate còn lại đều có test ghim riêng để mutation test làm đỏ. */
 {
   const schemaErrors = validateStatus(validFm({ schema: "extension-status/v0" }), validationDeps());
-  assert.ok(schemaErrors.some((message) => message.includes("extension-status/v1")));
+  assert.ok(schemaErrors.some((message) => message.includes("extension-status/v2")));
   const missingField = validFm();
   delete missingField.current_focus;
   assert.ok(validateStatus(missingField, validationDeps()).some((message) => message.includes("current_focus")));
@@ -766,8 +774,9 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   ]);
   if (rootStatus) {
     extra.set("STATUS.md", statusText({
-      schema: "extension-status/v1", id: "extension-observer-v0", name: "Observer goc repo",
-      lifecycle: "building", version_source: "manifest.json",
+      schema: "extension-status/v2", id: "extension-observer-v0", name: "Observer goc repo",
+      lifecycle: "building", owner: "phien-thu-nghiem", priority_rank: "9",
+      next_step: "Viec cua don vi goc", version_source: "manifest.json",
       current_focus: "Dang dung", ref_readme: "AGENTS.md", ref_handoff: "HANDOFF.md"
     }));
   }
@@ -850,11 +859,16 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
     assert.equal(typeof map.health[key], "number", `health.${key} phải là số`);
   }
   const unit = map.units.find((item) => item.path === "workers/demo/v1");
-  // Trường của schema v2 (S3 mới đổ dữ liệu) phải CÓ MẶT với giá trị null, không được biến mất.
-  assert.ok("next_step" in unit && unit.next_step === null, "next_step phải có mặt, giá trị null");
-  assert.ok("superseded_by" in unit && unit.superseded_by === null, "superseded_by phải có mặt, giá trị null");
-  assert.ok("owner" in unit && unit.owner === null, "owner phải có mặt, giá trị null (S3 khai vào STATUS, KHONG lay tu claims)");
-  assert.deepEqual(map.active_work, [], "chưa STATUS nào khai next_step thì active_work rỗng, không đổ claim vào");
+  // Từ S3, STATUS đã khai các trường v2 nên chúng có giá trị thật. Hai luật vẫn phải giữ:
+  // (a) khoá LUÔN có mặt, kể cả khi không có dữ liệu — phía đọc không phải phân biệt
+  // "không có" với "chưa hỗ trợ"; (b) `owner` lấy từ STATUS chứ KHÔNG từ claims.json.
+  for (const key of ["next_step", "superseded_by", "owner", "priority_rank"]) {
+    assert.ok(key in unit, `khoá hợp đồng "${key}" phải luôn có mặt`);
+  }
+  assert.equal(unit.superseded_by, null, "không khai thì phải là null, không phải chuỗi rỗng");
+  assert.equal(unit.owner, "phien-thu-nghiem", "owner lấy từ STATUS");
+  assert.notEqual(unit.owner, "codex-dashboard", "và TUYỆT ĐỐI không lấy từ claims.json");
+  assert.equal(map.active_work.length, 1, "đơn vị có next_step phải xuất hiện trong active_work");
   ok("S2 repo-map.json giữ nguyên hình dạng hợp đồng, trường chưa có dữ liệu vẫn giữ khoá");
 }
 
@@ -1079,7 +1093,7 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
 {
   const withStatus = (overrides) => collectModel(s2Repo({ statusOverrides: overrides }));
 
-  assert.throws(() => withStatus({ schema: "extension-status/v0" }), /extension-status\/v1/,
+  assert.throws(() => withStatus({ schema: "extension-status/v0" }), /extension-status\/v2/,
     "schema sai phải bị chặn NGAY TRONG collectModel");
   assert.throws(() => withStatus({ lifecycle: "khong-co-that" }), /khong-co-that/,
     "lifecycle lạ phải bị chặn ngay trong collectModel");
@@ -1343,17 +1357,19 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
    schema v2 bắt mọi đơn vị khai `next_step` thì "ưu tiên #1" lặng lẽ thành "việc
    của package đứng đầu bảng chữ cái". */
 {
-  // (a) Có next_step nhưng KHÔNG ai khai thứ hạng -> nói CHƯA XẾP HẠNG, không đoán.
-  const unranked = collectModel(s2Repo({ statusOverrides: { next_step: "Việc gì đó" } }));
-  assert.equal(unranked.priority.unranked, true, "không ai khai priority_rank thì không được tự chọn");
-  assert.match(buildDashboard(unranked), /CHƯA XẾP HẠNG/);
-  assert.match(buildLlmsTxt(unranked), /CHƯA XẾP HẠNG/);
-  // `active_work` VẪN liệt kê đơn vị đó (nó có việc thật), nhưng với `rank: null` —
-  // và Khối A vẫn nói CHƯA XẾP HẠNG. Hai thứ khác nhau: "có việc gì đang mở" và
-  // "việc nào là số 1". Máy trả lời được câu đầu, không được bịa câu sau.
-  const work = JSON.parse(buildRepoMap(unranked)).active_work;
-  assert.equal(work.length, 1, "đơn vị có next_step vẫn phải xuất hiện trong active_work");
-  assert.equal(work[0].rank, null, "nhưng không được gán cho nó một thứ hạng nào");
+  // (a) Tu S3, thu hang la BAT BUOC voi don vi con song — bo trong bi chan ngay o
+  // tang validate, tuc CHAT HON viec chi hien "CHUA XEP HANG". Nhanh "chua xep hang"
+  // trong priorityFrom van con, va van duoc ghim truc tiep o phep kiem D2 duoi day:
+  // no la lop phong cho repo chua migrate, khong phai duong di binh thuong nua.
+  assert.throws(() => collectModel(s2Repo({ statusOverrides: { next_step: "Việc gì đó", priority_rank: "" } })),
+    /priority_rank/, "don vi con song bo trong thu hang phai bi chan ngay khi validate");
+  assert.throws(() => collectModel(s2Repo({ statusOverrides: { next_step: "Việc gì đó", priority_rank: "0" } })),
+    /priority_rank/, "hang 0 cung bi chan");
+  // Va don vi da nghi huu thi KHONG bi doi thu hang — bat no khai mot con so vo nghia
+  // chi tao rac.
+  assert.doesNotThrow(() => collectModel(s2Repo({ statusOverrides: {
+    lifecycle: "superseded", superseded_by: "workers/demo/v1", priority_rank: "", next_step: ""
+  } })), "don vi da nghi huu khong bi doi thu hang hay viec ke tiep");
 
   // (b) Khai rõ thì lấy đúng cái hạng nhỏ nhất.
   const ranked = collectModel(s2Repo({ statusOverrides: { next_step: "Việc số một", priority_rank: "1" } }));
@@ -1453,9 +1469,9 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   assert.equal(rankOf("2"), 2);
   assert.equal(rankOf(" 3 "), 3, "khoảng trắng thừa vẫn đọc được");
 
-  // Và đi qua đúng đường bộ sinh: khai rỗng thì phải thành CHƯA XẾP HẠNG.
-  const blank = collectModel(s2Repo({ statusOverrides: { next_step: "Việc A", priority_rank: "" } }));
-  assert.equal(blank.priority.unranked, true, "priority_rank rỗng phải là chưa xếp hạng, không được thành hạng 0");
+  // Va nhanh trong priorityFrom van dung khi du lieu den tu noi khac (repo chua migrate).
+  assert.equal(priorityFrom([{ key: "a", priorityRank: rankOf(""), nextStep: "Việc A", lifecycle: "active", statusPath: "a" }]).unranked,
+    true, "rank rong phai thanh chua xep hang, khong duoc thanh hang 0");
   ok("SAU-VONG3 priority_rank rỗng/0/âm/thập phân đều không phải hạng, không lén thắng");
 }
 
@@ -1577,7 +1593,7 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   const missing = validateStatus(fm({}), base);
   assert.ok(missing.some((message) => message.includes("superseded_by")), "superseded mà thiếu superseded_by phải đỏ");
 
-  const complete = validateStatus(fm({ superseded_by: "workers/demo/v2" }), base);
+  const complete = validateStatus(fm({ superseded_by: "workers/demo/v1" }), base);
   assert.deepEqual(complete, [], "khai đủ thì không được kêu");
 
   // Và các lifecycle khác KHÔNG bị đòi superseded_by.
@@ -1606,10 +1622,19 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   // (a) Ban da nghi huu khong duoc lam viec uu tien so 1.
   const row = (key, rank, step, lifecycle) => ({ key, priorityRank: rank, nextStep: step, lifecycle, statusPath: key + "/STATUS.md" });
   const picked = priorityFrom([
-    row("workers/cu/v1", 1, "Cho xoa sau khi V2 chay on", "superseded"),
+    row("workers/cu/v1", 2, "Cho xoa sau khi V2 chay on", "superseded"),
+    row("workers/moi/v2", 1, "Viec that", "active")
+  ]);
+  assert.equal(picked.unit, "workers/moi/v2", "ban superseded khong duoc xet, ban con song hang 1 duoc chon");
+
+  // Tuong tac dang chu y: neu hang 1 lai nam tren mot ban DA NGHI HUU thi ban con song
+  // thap nhat la hang 2 -> he bao CHUA CO HANG 1 thay vi lang le don hang 2 len. Do la
+  // dung: no noi cho chu repo biet thu hang cua ho dang gan sai cho.
+  const misplaced = priorityFrom([
+    row("workers/cu/v1", 1, "Da nghi", "superseded"),
     row("workers/moi/v2", 2, "Viec that", "active")
   ]);
-  assert.equal(picked.unit, "workers/moi/v2", "ban superseded co hang 1 van khong duoc chon");
+  assert.equal(misplaced.norank1, true, "hang 1 gan cho ban da nghi huu thi phai bao ra");
   assert.equal(priorityFrom([row("workers/cu/v1", 1, "x", "archived")]), null, "archived cung vay");
 
   // (b) Ma commit phai dung hinh dang, khong nhan rac.
@@ -1629,5 +1654,123 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   assert.match(gate, /VERIFIER_UNKNOWN/, "git hong thi cong phai noi khong biet, khong duoc noi on");
   assert.ok(!gate.includes("return true; // không hỏi được git"), "khong duoc quay ve fail-open");
   ok("SAU-GPT superseded khong lam uu tien 1, ma commit phai dung hinh dang, cong fail-closed khi git hong");
+}
+
+/* ==========================================================================
+   AUDIT VÒNG 4 — ba lớp mới. Codex tự chạy suite lần này (73/73), nên con số
+   không còn là lời khai.
+   ========================================================================== */
+
+/* F1. VÒNG 4 MỤC 2 — hạng nhỏ nhất phải LÀ 1. Nếu cả repo chỉ có hạng 2 và 3 thì
+   `Math.min` vẫn chọn ra hạng 2 và trình bày nó như "việc ưu tiên #1" — một con số
+   không ai khai là số 1 mà trông y như thật. */
+{
+  const row = (key, rank, step) => ({ key, priorityRank: rank, nextStep: step, lifecycle: "active", statusPath: key + "/STATUS.md" });
+
+  const noOne = priorityFrom([row("workers/a/v1", 2, "A"), row("workers/b/v1", 3, "B")]);
+  assert.equal(noOne.norank1, true, "khong co hang 1 thi phai noi ra, khong duoc lay hang 2 lam so 1");
+  assert.equal(noOne.lowest, 2, "va phai noi ro hang nho nhat dang la bao nhieu");
+
+  const good = priorityFrom([row("workers/a/v1", 1, "A"), row("workers/b/v1", 2, "B")]);
+  assert.equal(good.unit, "workers/a/v1", "co hang 1 thi chon dung no");
+
+  // Va phai hien ra cho nguoi doc, khong nuot.
+  const model = collectModel(s2Repo());
+  const shown = buildDashboard({ ...model, priority: noOne });
+  assert.ok(shown.includes("CHƯA CÓ HẠNG 1"), "bang phai noi ro chua ai khai hang 1");
+  ok("SAU-VONG4 khong co hang 1 thi bao ra, khong lay hang nho nhat lam so 1");
+}
+
+/* F2. VÒNG 4 MỤC 4 — `superseded_by` trỏ tới thứ không tồn tại thì lời khai vô giá
+   trị: người đọc đi theo và lạc. Bản trước chỉ kiểm "có khai hay không". */
+{
+  // Chi "workers/demo/v2" va cac duong dan chuan la co that; moi thu khac la bia.
+  const base = { statusPath: "workers/demo/v1/STATUS.md",
+    fileExists: (p) => p === "workers/demo/v2" || REQUIRED_PATHS.has(p),
+    isFile: () => true, readFile: () => '{"name":"D","version":"1.0.0"}', git: { verifyCommit: () => true } };
+  const fm = (target) => ({ ...validFm(), lifecycle: "superseded", superseded_by: target, priority_rank: "", next_step: "" });
+
+  for (const bad of ["banana", "workers/missing/v999", "../outside", "./workers/demo/v2"]) {
+    const errors = validateStatus(fm(bad), base);
+    assert.ok(errors.some((message) => message.includes("superseded_by")), `superseded_by "${bad}" phai bi bat`);
+  }
+  assert.deepEqual(validateStatus(fm("workers/demo/v2"), base), [], "tro toi thu co that thi phai qua");
+  ok("SAU-VONG4 superseded_by phai tro toi thu CO THAT, khong nhan duong dan bia");
+}
+
+/* F3. VÒNG 4 MỤC 3 — đơn vị GỐC repo không có `packageDir` nên toàn bộ khối ràng buộc
+   danh tính bị bỏ qua: `STATUS.md` ở gốc có thể trỏ `version_source` sang package khác
+   và lấy số đo của người ta. */
+{
+  const base = { statusPath: "STATUS.md", rootUnit: true, fileExists: () => true, isFile: () => true,
+    readFile: () => '{"name":"D","version":"1.0.0"}', git: { verifyCommit: () => true } };
+  const errors = validateStatus({ ...validFm(), version_source: "workers/duc-auto-gemini/v0.2.0/manifest.json" }, base);
+  assert.ok(errors.some((message) => message.includes("version_source")), "don vi goc tro version_source vao thu muc con phai bi chan");
+
+  assert.deepEqual(validateStatus({ ...validFm(), version_source: "manifest.json" }, base), [],
+    "tro dung file o tang ngoai cung thi phai qua");
+  ok("SAU-VONG4 don vi goc repo khong lay duoc so do cua package khac");
+}
+
+/* F4. VÒNG 4 MỤC 7 — ngày phải CÓ THẬT, không chỉ đúng định dạng. "2026-13-99" khớp
+   regex nhưng không tồn tại trên lịch. */
+{
+  const generated = buildRepoMap(collectModel(s2Repo()));
+  for (const bad of ["2026-13-99", "2026-02-30", "0000-00-00"]) {
+    const broken = JSON.parse(generated); broken.generated_at = bad;
+    const verdict = compareRepoMap(generated, `${JSON.stringify(broken, null, 2)}\n`);
+    assert.equal(verdict.matches, false, `ngay khong co that "${bad}" phai bi bat`);
+  }
+  const okMap = JSON.parse(generated); okMap.generated_at = "2026-02-28";
+  assert.equal(compareRepoMap(generated, `${JSON.stringify(okMap, null, 2)}\n`).matches, true, "ngay co that phai qua");
+  ok("SAU-VONG4 ngay xuat xu phai co that tren lich, khong chi dung dinh dang");
+}
+
+/* F5. S3 — `next_step` bắt buộc CÓ ĐIỀU KIỆN: đơn vị còn sống phải khai, đơn vị đã
+   nghỉ hưu thì không. Không ghim thì gỡ hẳn luật này đi mà suite vẫn xanh. */
+{
+  const base = { statusPath: "workers/demo/v1/STATUS.md", fileExists: (p) => REQUIRED_PATHS.has(p) || p === "workers/demo/v2",
+    isFile: () => true, readFile: () => '{"name":"D","version":"1.0.0"}', git: { verifyCommit: () => true } };
+
+  const live = validFm(); delete live.next_step;
+  assert.ok(validateStatus(live, base).some((m) => m.includes("next_step")), "don vi con song thieu next_step phai do");
+
+  const liveNoRank = validFm(); delete liveNoRank.priority_rank;
+  assert.ok(validateStatus(liveNoRank, base).some((m) => m.includes("priority_rank")), "don vi con song thieu priority_rank phai do");
+
+  const retired = { ...validFm(), lifecycle: "superseded", superseded_by: "workers/demo/v2" };
+  delete retired.next_step; delete retired.priority_rank;
+  assert.deepEqual(validateStatus(retired, base), [], "don vi da nghi huu KHONG bi doi next_step hay priority_rank");
+  ok("SAU-VONG4 next_step va priority_rank bat buoc dung cho don vi con song");
+}
+
+/* F6. S3 — nguồn khai chủ là `.repo-structure.json` (tầng LAW), KHÔNG phải
+   `.agents/claims.json` (tầng STATE). Fixture phải CÓ file đó, nếu không thì một
+   mutation "quay về đọc claims" sẽ thoát vì hai đường cho cùng kết quả. */
+{
+  const base = s2Repo();
+  const structure = JSON.stringify({ schema_version: 1, profile: "P1", areas: {
+    "docs/": { steward: "_root" }, "workers/": { steward: null, ownership_mode: "per-package" }
+  } });
+  const withAreas = {
+    ...base,
+    fileExists: (p) => p === ".repo-structure.json" ? true : base.fileExists(p),
+    readFile: (p) => p === ".repo-structure.json" ? structure : base.readFile(p),
+    git: { ...base.git, trackedPaths: () => [...base.git.trackedPaths(), ".repo-structure.json"] }
+  };
+  const model = collectModel(withAreas);
+  const declared = model.topLevel.filter((entry) => entry.owner_declared).map((entry) => entry.path).sort();
+  assert.deepEqual(declared, ["docs/", "workers/"], "chi thu muc khai trong areas moi duoc tinh la co chu");
+  // `drafts/` co trong claims? Khong. Nhung diem chinh: `node_modules/` bi mien tru va
+  // `drafts/` KHONG co trong areas nen phai bi dem la no — ket qua khac han duong claims.
+  assert.ok(model.topLevel.some((entry) => entry.path === "drafts/" && !entry.owner_declared),
+    "drafts/ khong co trong areas thi phai bi dem la chua khai chu");
+
+  // Va file hong thi phai bao do, khong am tham lui ve claims.
+  const broken = { ...withAreas, readFile: (p) => p === ".repo-structure.json" ? "{khong-phai-json" : withAreas.readFile(p) };
+  assert.throws(() => collectModel(broken), /CAU_TRUC_HONG/, ".repo-structure.json hong phai bao do");
+  const noAreas = { ...withAreas, readFile: (p) => p === ".repo-structure.json" ? '{"schema_version":1}' : withAreas.readFile(p) };
+  assert.throws(() => collectModel(noAreas), /CAU_TRUC_THIEU_AREAS/, "thieu khoi areas phai bao do");
+  ok("SAU-VONG4 chu thu muc lay tu .repo-structure.json, file hong thi bao do chu khong lui ve claims");
 }
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

@@ -93,7 +93,11 @@ là thứ cổng kiểm S4 sẽ cưỡng chế được.
    Tất cả đổi sang `schema: extension-status/v2` và thêm các trường mới.
 2. **Chỉ SAU khi cả sáu file đã v2**, mới sửa `SCHEMA` và `REQUIRED` trong
    `scripts/build-dashboard.mjs`.
-3. Chạy `node scripts/build-dashboard.mjs` sau mỗi bước. Đỏ thì dừng, đừng đi tiếp.
+3. **Bộ sinh SẼ báo đỏ ở giữa chừng, và đó là đúng.** Nó đọc từ HEAD: khi bạn đã đổi `SCHEMA`
+   sang v2 trong working tree mà HEAD vẫn còn STATUS `v1`, nó *phải* kêu "schema phải là v2".
+   **Đừng dừng ở đó** — commit nguồn đi rồi chạy lại. Chỉ dừng nếu nó vẫn đỏ SAU khi đã commit.
+   Audit Codex vòng 4 xếp câu "đỏ thì dừng" của bản trước là lỗi CRITICAL: nó chặn đứng chính
+   phiên S3 ngay giữa chừng.
 
 **Trường nào bắt buộc, trường nào không** — audit GPT chốt, và tôi đồng ý:
 
@@ -134,21 +138,35 @@ chỉ gọi thẳng `validateStatus`. Repo này đã có bài học: gỡ chỗ 
 > thấy dòng đó thì dừng lại, đừng commit tiếp.
 
 ```bash
-# 1. Commit NGUỒN trước (STATUS, .repo-structure.json, code, test) — chưa đụng artifact
-git add -A && git commit -m "S3: khai STATUS con thieu, areas, schema v2"
+# 1. Commit NGUON truoc — LIET KE TUNG FILE, khong dung `git add -A`.
+#    Repo nay nhieu phien AI dung chung mot thu muc; `-A` gom ca viec dang do cua
+#    phien khac vao commit cua ban. Audit Codex vong 4, muc 5.
+git add STATUS.md .repo-structure.json STATUS.template.md
+git add workers/duc-auto-gemini/v0.1.0/STATUS.md workers/duc-auto-chatgpt/v0.1.0/STATUS.md
+git add workers/duc-auto-gemini/v0.2.0/STATUS.md workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md
+git add scripts/build-dashboard.mjs tests/build-dashboard-smoke.mjs
+git status --short          # doc lai: co file nao khong phai cua ban khong?
+git commit -m "S3: khai STATUS con thieu, areas, schema v2"
 
-# 2. Giờ HEAD đã có dữ liệu mới, sinh lại artifact từ chính nó
+# 2. Gio HEAD da co du lieu moi, sinh lai artifact tu chinh no
 node scripts/build-dashboard.mjs
 
-# 3. Artifact vào một commit RIÊNG (hoặc --amend nếu muốn gộp)
-git add -A && git commit -m "chore: sinh lai artifact sau S3"
+# 3. HANDOFF + tra quyen _root vao CUNG mot commit voi artifact — de moi thu deu
+#    di qua cong kiem VA duoc push. Dat sau safe-push la nam ngoai ca hai.
+#    Audit Codex vong 4, muc 6.
+git add DASHBOARD.md llms.txt repo-map.json HANDOFF.md .agents/claims.json
+git commit -m "chore: sinh lai artifact + ghi HANDOFF + tra _root sau S3"
 
-# 4. Cổng kiểm chạy SAU cùng, khi cây làm việc đã sạch
+# 4. Cong kiem chay SAU cung, khi cay lam viec da sach
 node scripts/session-check.mjs --as s3-gaps
 node scripts/safe-push.mjs --as s3-gaps
 ```
 
-Ghi 1 dòng Log vào `HANDOFF.md` gốc. Rồi trả `_root` bằng commit riêng.
+> **DUNG HOANG khi buoc 1 chua chay ma bo sinh bao do.** Ban vua doi `SCHEMA` sang v2
+> trong working tree, nhung HEAD van con STATUS `v1` — bo sinh doc tu HEAD nen no PHAI
+> bao "schema phai la v2". **Do la dung, khong phai hong.** Commit nguon di roi chay lai.
+> Chi dung lai neu no van do SAU khi da commit. Audit Codex vong 4, muc 1.
+
 
 **Bộ sinh đã hỗ trợ sẵn ba thứ S3 cần — không phải tự code:**
 `STATUS.md` ở gốc repo đã được đọc như mọi đơn vị khác · `lifecycle: superseded` đã hợp lệ và

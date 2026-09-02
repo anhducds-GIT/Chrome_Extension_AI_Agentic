@@ -225,6 +225,16 @@ export function validateStatus(fm, deps) {
   // SCHEMA và REQUIRED.
   if (fm.lifecycle === "superseded" && !fm.superseded_by) {
     fail('lifecycle "superseded" phải có "superseded_by" trỏ tới bản thay thế.');
+  } else if (fm.superseded_by) {
+    // Trỏ tới thứ KHÔNG TỒN TẠI thì lời khai vô giá trị: người đọc đi theo và lạc.
+    // Bản trước chỉ kiểm "có khai hay không" nên `banana` và `../outside` đều lọt.
+    // Audit Codex vòng 4, mục 4.
+    const target = fm.superseded_by.replaceAll("\\", "/");
+    if (path.posix.normalize(target) !== target || target.startsWith("/")) {
+      fail(`superseded_by "${fm.superseded_by}" phải là đường dẫn thẳng, không dùng ".." hay "./".`);
+    } else if (!deps.fileExists(target)) {
+      fail(`superseded_by "${fm.superseded_by}" trỏ tới thứ không tồn tại — bản thay thế phải có thật.`);
+    }
   }
   // `priority_rank` bắt buộc cho đơn vị CÒN SỐNG. Đơn vị đã nghỉ hưu không cần xếp
   // hạng vì nó đã bị loại khỏi cuộc đua ưu tiên — bắt nó khai một con số vô nghĩa chỉ
@@ -265,6 +275,12 @@ export function validateStatus(fm, deps) {
   // thể trỏ version_source sang extension khác: số version lấy của người ta, còn số method
   // và số test vẫn đếm của mình — số đúng nhưng gán nhầm chủ. Auditor Codex dựng được ca
   // đó thật 2026-08-26.
+  // Đơn vị GỐC repo không có `packageDir`, nên khối ràng buộc dưới bị bỏ qua hoàn toàn —
+  // một `STATUS.md` ở gốc có thể trỏ `version_source` sang `workers/<gói-khác>/manifest.json`
+  // và lấy số đo của người ta. Audit Codex vòng 4, mục 3.
+  if (deps.rootUnit && fm.version_source && fm.version_source.includes("/")) {
+    fail(`version_source "${fm.version_source}" của đơn vị GỐC repo phải là file ở tầng ngoài cùng (ví dụ "manifest.json"), không được trỏ vào thư mục con — số đo sẽ bị gán nhầm đơn vị.`);
+  }
   if (deps.packageDir) {
     const expectedId = deps.packageId;
     if (expectedId && fm.id && fm.id !== expectedId) {
@@ -453,7 +469,7 @@ export function collectModel(deps = createDefaultDeps()) {
   const rootStatusPath = "STATUS.md";
   const rootFm = deps.fileExists(rootStatusPath) ? parseStatus(deps.readFile(rootStatusPath)).frontmatter : null;
   if (rootFm) {
-    const rootErrors = validateStatus(rootFm, { ...deps, statusPath: rootStatusPath });
+    const rootErrors = validateStatus(rootFm, { ...deps, statusPath: rootStatusPath, rootUnit: true });
     if (rootErrors.length) {
       const error = new Error(rootErrors.join("\n"));
       error.name = "StatusValidationError";
@@ -582,6 +598,16 @@ export function priorityFrom(rows) {
     return { unranked: true, count: declared.length };
   }
   const best = Math.min(...ranked.map((row) => row.priorityRank));
+  // Hạng nhỏ nhất phải LÀ 1. Nếu cả repo chỉ khai hạng 2 và 3 thì `Math.min` vẫn chọn
+  // ra hạng 2 và trình bày nó như "việc ưu tiên #1" — một con số không ai khai là số 1
+  // mà trông y như thật. Audit Codex vòng 4, mục 2.
+  if (best !== 1) {
+    return {
+      norank1: true,
+      lowest: best,
+      units: ranked.filter((row) => row.priorityRank === best).map((row) => row.key).sort(compareText)
+    };
+  }
   const winners = ranked.filter((row) => row.priorityRank === best);
   if (winners.length > 1) {
     return { conflict: true, rank: best, units: winners.map((row) => row.key).sort(compareText) };
@@ -850,6 +876,9 @@ function priorityText(priority, makeLink) {
   if (priority.unranked) {
     return `**CHƯA XẾP HẠNG** — ${priority.count} đơn vị có khai \`next_step\` nhưng không đơn vị nào khai \`priority_rank\`. Máy KHÔNG tự chọn hộ: chọn theo thứ tự bảng chữ cái là một con số sai trông rất hợp lý.`;
   }
+  if (priority.norank1) {
+    return `**CHƯA CÓ HẠNG 1** — hạng nhỏ nhất đang khai là \`${priority.lowest}\` (${priority.units.map((unit) => `\`${unit}\``).join(" · ")}). Đúng một đơn vị phải mang hạng 1; máy không tự đôn hạng nhỏ nhất lên làm số 1.`;
+  }
   if (priority.conflict) {
     return `**XUNG ĐỘT** — ${priority.units.length} đơn vị cùng khai \`priority_rank: ${priority.rank}\` (${priority.units.map((unit) => `\`${unit}\``).join(" · ")}). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.`;
   }
@@ -876,7 +905,7 @@ function blockD(model) {
   const rows = [
     ["Đơn vị chưa khai STATUS", model.health.units_without_status, "mỗi dòng là một câu hỏi AI sẽ phải hỏi Đức"],
     ["Link chết trong file cổng", model.health.dead_links, `kiểm ${model.gatewayLinks.length} link ở ${LLMS_FILE} và bảng B`],
-    ["Thư mục top-level chưa khai chủ", model.health.undeclared_dirs, "chưa có khoá trong `.agents/claims.json`"],
+    ["Thư mục top-level chưa khai chủ", model.health.undeclared_dirs, "chưa khai trong khối `areas` của `.repo-structure.json`"],
     ["Tài liệu quá hạn chưa rà", model.health.draft_debt, "`status: active` mà quá `ttl_days` tính từ commit cuối chạm vào"]
   ];
   const lines = [
@@ -1022,7 +1051,14 @@ export function compareRepoMap(expected, actual) {
     // làm mã commit hợp lệ — tức trường truy nguồn có thể chứa rác mà cổng vẫn xanh,
     // đúng thứ nó sinh ra để chống. Audit GPT 2026-09-02, mục 5.
     const SHAPES = {
-      generated_at: { test: (value) => /^\d{4}-\d{2}-\d{2}$/.test(value), want: "ngày dạng YYYY-MM-DD" },
+      // Đúng định dạng chưa đủ: "2026-13-99" khớp regex nhưng không phải ngày có thật.
+      // Audit Codex vòng 4, mục 7.
+      generated_at: {
+        test: (value) => /^\d{4}-\d{2}-\d{2}$/.test(value)
+          && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
+          && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value,
+        want: "ngày CÓ THẬT dạng YYYY-MM-DD"
+      },
       generated_commit: { test: (value) => /^[0-9a-f]{7,40}$/.test(value), want: "mã commit hệ 16, 7–40 ký tự" }
     };
     for (const key of REPO_MAP_VOLATILE_KEYS) {
