@@ -468,3 +468,36 @@
   - ⚠️ **Nợ vận hành vẫn còn:** 8 tham chiếu `drafts/…` đã chết trong
     `workers/duc-auto-gg-flow-video/`, gồm `AI-OPERATOR-GUIDE.md` — tài liệu operator đọc lúc
     chạy live. Không phép kiểm nào bắt (B4 chỉ soi file cổng). Sửa ngay khi có phiên giữ gói đó.
+
+- **2026-09-02 · `claude-mp-gate`** — **Cổng tay multi-profile ĐÃ QUA trên cả ba nhánh; sinh lại
+  bốn trang máy sinh; tìm ra một bất đồng thật giữa máy sinh và cổng kiểm.**
+  - **Việc ưu tiên #1 đổi nội dung.** Đức đã reload extension từng profile + đặt tên xong.
+    Phiên này làm nửa AI: `bridge.sessions` trên cả 3 host → chatgpt **3/0 legacy**, gemini
+    **3/0 legacy**, flow-video **3 có tên + 1 legacy**. Ba tên `Bình`/`anhducds`/`kaito`.
+    Kiểm thêm: `--target <tên>` route đúng, `served_by` khớp `instance_id`; không nêu target
+    thì từ chối `TARGET_AMBIGUOUS`. Bằng chứng:
+    [`evidence/20260902-multiprofile-naming-gate-r01/`](evidence/20260902-multiprofile-naming-gate-r01/README.md).
+    `llms.txt` việc #1 nay là **trial video + live-check F-14**, không còn là chờ tay Đức.
+  - **NỢ MỚI, chưa sửa, để lại cho phiên sau — `scripts/feature-parity.mjs` đo SAI NGUỒN.**
+    Cổng kiểm (`session-check.mjs`) so `FEATURE-PARITY.md` với **HEAD**. Nhưng chính
+    `feature-parity.mjs` (và cờ `--check` của nó) lại đếm dòng trên **CÂY LÀM VIỆC**. Hai bên
+    bất đồng bất cứ khi nào có phiên khác đang sửa dở — và repo này thiết kế để nhiều phiên
+    chạy song song, nên đây là chuyện thường ngày chứ không phải ca hiếm.
+  - **Đã gặp thật hôm nay:** phiên `claude-stabilizing-bridge` đang sửa
+    `workers/duc-auto-chatgpt/v0.1.0/bridge-transport-loopback.js` (HEAD 338 dòng, cây làm việc
+    532). Sinh bằng lệnh chuẩn → cổng ĐỎ. Chạy `--check` → báo XANH. **Hai công cụ của cùng
+    một repo nói ngược nhau về cùng một file** — đúng loại bẫy làm người ta mất niềm tin vào
+    cổng rồi tìm cách đi vòng.
+  - **Cách vá tạm đã dùng (ghi lại để phiên sau khỏi mò):** `git clone` HEAD ra **đường dẫn
+    NGẮN** rồi chạy `feature-parity.mjs` ở đó, chép `FEATURE-PARITY.md` về. Không đụng file
+    đang sửa dở của phiên khác. **Đường dẫn ngắn là bắt buộc** — clone vào thư mục scratchpad
+    (dài) thì checkout hỏng im lặng vì chạm trần MAX_PATH của Windows, `git status` báo mọi
+    file là `D` và máy sinh vẫn chạy ra kết quả rác. Mất một vòng mới thấy.
+  - **Đề xuất sửa gốc (cần Đức chốt vì đụng luật cổng kiểm):** cho `feature-parity.mjs` đọc số
+    đo từ HEAD (`git show HEAD:<path>`) thay vì đọc đĩa, để máy sinh và cổng kiểm dùng chung
+    một nguồn sự thật. Cùng bài học B12 của S7: **một phép kiểm thuộc nhóm CHẶN phải đo cùng
+    thứ mà công cụ sửa nó tạo ra**, nếu không thì đỏ mà không ai sửa nổi.
+  - **Còn mở, cần Đức quyết:** ghế `legacy` thứ tư ở nhánh Flow Video (profile Chrome thứ tư) —
+    reload + đặt tên, hoặc tắt extension ở profile đó.
+  - **Không đụng gói `duc-auto-chatgpt`** (chủ `claude-stabilizing-bridge` đang làm dở); chỉ chạy
+    lệnh đọc trên host của nó.
