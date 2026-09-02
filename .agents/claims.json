@@ -3,31 +3,31 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
+      "owner": null,
+      "ai": null,
+      "claimed_at": "2026-09-02",
+      "task": "TRA QUYEN 2026-09-02 (claude-bridge-multiprofile). XONG TRON: multi-profile live DAT — 3 ghe co ten (Binh/anhducds/kaito) cung noi, fail-closed dung, served_by dung; audit Codex PASS; da push (58e5bb1, 945fba7, 34545e9 len origin qua push cua chuoi S). Ghe legacy con lai = Profile 9 (profile thu 4, Duc quyet dat ten hoac tat). Con mo cua nhanh: trial video (can panel+workbook+DevMode+VideoMode+x1) va live-check F-14.",
+      "released_at": "2026-09-02"
+    },
+    "workers/duc-auto-gemini": {
       "owner": "claude-bridge-multiprofile",
       "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "DANG GIU DEN KHI PUSH XONG (tra bang commit rieng ngay sau push). XONG: deploy bridge-host.mjs + bridge-cli.mjs moi sang thu muc Bridge (host cu khong chay luc chep), host moi song tren 32149. KIEM LIVE DAT phan may: 3 profile cung noi khong ai da ai; khong neu target -> TARGET_AMBIGUOUS kem 3 ung vien; neu target -> served_by dung dich (ca bridge-cli lan bridge-rpc, ke ca phan hoi loi). Audit Codex kenh auditmin: VERDICT PASS, 0 HIGH/MED; LOW#1 doi chat bang mutation 2 lan -> Codex sai, pin that. Bang chung: evidence/MP-01-live-routing-and-audit-20260902.md. CON MO (tay Duc): reload extension tung profile de het legacy + dat ten tung panel + dung START-BRIDGE cho host lau dai; roi trial video + live-check F-14.",
+      "task": "Port multi-profile Bridge (thiet ke da duyet, mau gg-flow-video 6c59266): host sessions Map + target/bridge.sessions/served_by, khoi instance trong auth (WORKER_ID duc-auto-gemini), o ten profile trong panel, --target cho CLI/bridge-rpc, test ghim + mutation, audit. KHONG dung keepalive-deadline/backoff cua commit 3514aa5.",
       "released_at": null
     },
-    "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02 (S5): 67 quyet dinh -> docs/adr/, decisions.md thanh muc luc. 227/227 o doi chieu nguyen van. No cu khong doi: v0.2.0 con do live nhanh tat host qua 2 phut.",
-      "released_at": "2026-09-02"
-    },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-bridge-multiprofile",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02 (S5): 45 quyet dinh -> docs/adr/, decisions.md thanh muc luc. 180/180 o doi chieu nguyen van. Cac no cu khong doi: AUDIT DOC LAP chua chay duoc; B-28, B-31 mo.",
-      "released_at": "2026-09-02"
+      "task": "Port multi-profile Bridge sau gemini. HOST NHANH NAY KHAC (auth_challenge/auth_proof HMAC) — diff tay, khong copy de. WORKER_ID duc-auto-chatgpt.",
+      "released_at": null
     },
     "_root": {
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02. S1..S6 da dong va push, kiem chung doc lap DAT ca ba phien S4/S5/S6. BRIEF-S7 da soan: docs/briefs/BRIEF-S7.md — chia HAI PHAN, phan B (bai test) Duc tu dan vao chat MOI. VIEC KE TIEP: phien S7 — bat chan 8 phep kiem.",
+      "task": "XONG 2026-09-02 (S7 PHAN A). Bat chan 8 phep kiem B1 B2 B3 B4 B5 B7 B10 B12; 6 phep kiem con lai (B6 B8 B9 B11 B13 B14) giu muc canh bao. Danh sach chan khai o bootstrap.blocking trong .repo-structure.json, fail-closed khi thieu. Ba ma thoat: 0 dat / 1 no nhom CHAN / 2 bo kiem hong. Tu chay bai nghiem thu tren ban sao repo that: 3 vi pham -> 1,1,1; no canh bao -> 0; sach -> 0 = DAT. Tim ra va sua mot loi thiet ke: B12 phai do TRANG THAI hien tai, khong do LICH SU, neu khong thi git revert cung bi tinh la sua va cong do vinh vien. Suite 97+6+79+15+27, mutation 14/14. CON LAI CUA S7: (1) muc 4 — Duc tu dan mot dong vao o Project Instructions: \"Doc AGENTS.md o goc repo truoc khi lam gi.\"; (2) PHAN B — Duc tu chay bai test o mot chat MOI, ghi vao evidence/2026xxxx-bootstrap-test-r02/; (3) muc 5 — go nhan unproven, CHI sau khi Duc bao phan B dat. Chi tiet o cuoi HANDOFF.md.",
       "released_at": "2026-09-02"
     }
   }
