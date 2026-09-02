@@ -2,12 +2,12 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `2e1f1d4` (2026-09-02). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
+Trang được sinh tại commit `d28360e` (2026-09-02). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
 
 ## A · Bắt đầu từ đâu
 
 1. **Việc ưu tiên #1** — **workers/duc-auto-gg-flow-video/v0.1.0** — CAN DUC RELOAD EXTENSION (da sua .js) roi chay mot chuoi de do pacing_ms tren trang that — day se la lan DAU TIEN nhip giong nguoi duoc kiem chung. Truoc do van can Duc quyet: kiem credit con lai cua kaito, va co unusual activity co nen chay tiep khong. Push dang cho phien claude-core-k1 tu push (safe-push tu choi vi se cuon theo 2 commit cua ho) · [STATUS](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md)
-2. **Phiên gần nhất** — 2026-09-02 @ `2e1f1d4` · [HANDOFF.md](HANDOFF.md)
+2. **Phiên gần nhất** — 2026-09-02 @ `d28360e` · [HANDOFF.md](HANDOFF.md)
 3. **Luật phải đọc trước khi sửa gì** — [AGENTS.md](AGENTS.md) · cổng vào cho AI: [llms.txt](llms.txt)
 4. **Ai đang giữ package nào** — `.agents/claims.json` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)
 
