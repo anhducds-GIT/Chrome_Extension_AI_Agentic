@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "audit-s4",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Audit doc lap phien S4. Va mot lo test tim duoc: tieu chi nghiem thu cua Duc (moi canh bao phai noi ca cho sai lan cach sua) chua duoc ghim — xoa sach dau -> ma suite van xanh.",
-      "released_at": null
+      "task": "XONG 2026-09-02. S1+S2+S3+S4 da dong va push. Audit doc lap S4 DAT, kem mot lo test da va (tieu chi nghiem thu cua Duc chua duoc ghim). Bai test mot dong cua S7 DA DAT SOM o S4. VIEC KE TIEP: phien S5 — tao docs/adr/, B12 se tu chay.",
+      "released_at": "2026-09-02"
     }
   }
 }
