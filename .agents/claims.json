@@ -27,7 +27,7 @@
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02 (S6). Thu muc drafts/ o goc repo DA BIEN MAT: 33 file (roadmap ghi 29) git mv sang docs/studies (20, active) va docs/archive (13, superseded), ca 33 duoc git nhan la doi cho. Them docs/README.md = muc luc bon tang + ban do 33 duong dan cu -> moi (bat buoc, vi ADR da Accepted la bat bien nen khong sua duong dan trong do duoc). No cau truc: 51 -> 19 cho VANG, B6 tu 49 xuong 18. CON LAI: 6 tham chieu drafts/ trong workers/duc-auto-gg-flow-video (phien khac dang giu). VIEC KE TIEP: phien S7 — bat chan B1-B5, B7, B10, B12; moi phep kiem sap bat deu dang XANH. Chi tiet o cuoi HANDOFF.md.",
+      "task": "XONG 2026-09-02. S1..S6 da dong va push, kiem chung doc lap DAT ca ba phien S4/S5/S6. BRIEF-S7 da soan: docs/briefs/BRIEF-S7.md — chia HAI PHAN, phan B (bai test) Duc tu dan vao chat MOI. VIEC KE TIEP: phien S7 — bat chan 8 phep kiem.",
       "released_at": "2026-09-02"
     }
   }
