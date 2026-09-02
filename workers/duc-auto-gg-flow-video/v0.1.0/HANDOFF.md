@@ -927,3 +927,32 @@ với F4R8 là **7/7 job, 42/50 credit trên `Bình`**, giao diện tiếng Vi�
 - **Việc kế tiếp:** F-14 cần một quyết định ngân sách, không phải kỹ thuật — còn **8/50 credit**
   trên `Bình`. Cách rẻ về công tốn 6 credit (đặt chip về Image, chạy 1 job); cách 0 credit tốn
   công (thêm `diagnostics.mode_probe`). Sau đó tới **F-25**, vật cản thật của chuỗi dài.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 14): thêm `diagnostics.mode_probe` — công cụ 0 credit cho F-14
+
+Đức chốt cách ②: đừng đốt 6 credit cuối để hỏi một câu có/không.
+
+- **Method Bridge mới `diagnostics.mode_probe`.** Bấm chip cấu hình **đúng một lần** bằng
+  `pressFlowControl`, báo lại bảng **có mở ra không**, rồi **đóng lại trả trang về nguyên trạng**.
+- **Vì sao nó đáng tồn tại:** F-14 hỏi một câu rất hẹp — nhóm nút cấu hình của Flow có nghe sự
+  kiện pointer tổng hợp không? Trước lệnh này, cách duy nhất để biết là **chạy một job thật:
+  6–7 credit cho một câu trả lời có/không**. Nay 0 credit, và dùng lại được mãi.
+- **Một lệnh chẩn đoán BIẾT BẤM thì nguy hiểm hơn hẳn một lệnh chỉ đọc** — nó nằm sát ba thứ tốn
+  tiền: nút Create, tuỳ chọn mode, và ô prompt. Nên giới hạn cứng được ghim ở
+  `tests/mode-probe-is-zero-credit.mjs`: không chạm Create · không gõ · **không bấm tuỳ chọn
+  mode** (bấm là đổi cấu hình của Đức sau lưng) · mở được thì phải đóng lại.
+  Mutation dựng lại cả bốn vi phạm — cộng "bỏ `appeared_labels`" và "panel quên đăng ký" —
+  **6/6 đều bị bắt**.
+- **Ghim ở tầng nguồn, có lý do:** lệnh này chỉ chạy thật trên trang Flow, nên không có cách test
+  hành vi mà không mở Chrome. Phép kiểm vì thế đọc thẳng thân handler và khoanh đúng ba đường
+  tốn tiền.
+- **Nó đáng giá gấp đôi:** trường `appeared_labels` chính là **bằng chứng DOM** để thêm nhãn tuỳ
+  chọn Video cho locale khác (**F-24**) mà không phải dịch tay — đúng luật vàng 1. Một lệnh, hai
+  món nợ.
+- **Danh sách method của Bridge là phép ghim CHÍNH XÁC** (mảng đầy đủ), nên thêm method là hành
+  động có chủ đích phải khai vào đó. Đã khai, kèm ghim hợp đồng riêng: `read_only: false` (nó
+  **có** bấm — khai read_only cho một lệnh biết bấm là nói dối mọi lớp đọc nó) và **không nhận
+  tham số nào**.
+- **Đo:** suite **94/94** (93 → +1 pin) · **6/6 đột biến bị bắt**.
+- **Việc kế tiếp:** Đức reload một lần rồi tôi chạy `diagnostics.mode_probe --target Binh`.
+  **0 credit**, chạy được cả khi tài khoản đã cạn. Sau đó tới **F-25**.

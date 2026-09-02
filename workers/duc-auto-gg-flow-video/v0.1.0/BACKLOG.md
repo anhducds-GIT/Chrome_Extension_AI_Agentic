@@ -86,8 +86,20 @@
   ② *0 credit, tốn công* — thêm `diagnostics.mode_probe`: chỉ mở bảng cấu hình rồi probe xem nó
   có mở không, không bao giờ gõ, không bao giờ bấm Create. Dùng lại được mãi, nhưng phải thêm
   method Bridge (registry + validator + handler + test) và một lần reload.
-  **Chưa làm cách nào** — còn đúng 8/50 credit trên `Bình`, nên cách ① là quyết định về ngân
-  sách chứ không phải về kỹ thuật. Hỏi Đức trước khi tiêu nốt.
+  **Đức chốt cách ② 02/09, ĐÃ LÀM XONG phần code.** Thêm method Bridge
+  `diagnostics.mode_probe`: bấm chip cấu hình đúng một lần bằng `pressFlowControl`, báo lại bảng
+  **có mở ra không**, rồi **đóng lại trả trang về nguyên trạng**. Suite 94/94, mutation **6/6**.
+  **Giới hạn cứng, đã ghim** (`tests/mode-probe-is-zero-credit.mjs`): không bao giờ chạm nút
+  Create · không bao giờ gõ · **không bao giờ bấm một tuỳ chọn mode** (bấm là đổi cấu hình của
+  Đức sau lưng) · mở được thì phải đóng lại. Mutation dựng lại cả bốn vi phạm đó đều bị bắt.
+  **Nó trả lời dứt khoát hai giả thuyết:** `opened: true` → nhóm nút nghe sự kiện pointer, đường
+  chuyển mode **tự động được** và Đức thôi phải đặt tay mỗi phiên; `opened: false` → chúng đòi
+  sự kiện thật, chuyển mode mãi mãi là việc của người và nên ngừng đổ công vào đó.
+  **Và nó đáng giá gấp đôi:** trường `appeared_labels` là **bằng chứng DOM** để thêm nhãn tuỳ
+  chọn Video cho locale khác (**F-24**) mà không phải dịch tay — đúng luật vàng 1.
+  **Còn lại: chạy nó.** Cần Đức reload extension một lần (đã sửa `content.js`, `sidepanel.js`,
+  `bridge-core.js`), rồi gọi `diagnostics.mode_probe --target <hồ sơ>`. **0 credit**, nên chạy
+  được bất cứ lúc nào, kể cả khi tài khoản đã cạn.
   ~~[ĐO 28/08, hai lần] **`element.click()` KHÔNG có tác dụng lên nhóm nút cấu hình~~
   của Flow.** Chứng minh hai lượt, cả hai 0 credit: (Q001) bấm chip mode → bảng không mở;
   (Q002) bảng đang mở sẵn, runner TÌM THẤY và BẤM đúng `videocam Video` → mode vẫn Image, bảng

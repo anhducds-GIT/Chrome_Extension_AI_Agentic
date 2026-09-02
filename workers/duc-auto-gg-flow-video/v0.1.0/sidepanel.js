@@ -915,6 +915,7 @@
       "run.stop": withBridgeErrors(bridgeRunStop),
       "chat.reload": withBridgeErrors(bridgeChatReload),
       "diagnostics.dom_probe": withBridgeErrors(bridgeDomProbe),
+      "diagnostics.mode_probe": withBridgeErrors(bridgeModeProbe),
       "diagnostics.evidence_submit": withBridgeErrors(bridgeEvidenceSubmit)
     }
   });
@@ -931,6 +932,15 @@
     const response = await send({ type: "DAC_DOM_PROBE" });
     if (!response?.ok) throw new Error(response?.error || "DOM probe failed in the content script.");
     return response.probe;
+  }
+
+  // F-14, 0 credit: bam chip cau hinh mot lan roi bao lai bang co mo ra khong,
+  // va dong lai ngay. Khong bao gio chon mot tuy chon mode nao, khong bao gio
+  // go, khong bao gio cham Create — phia content cuong che dieu do.
+  async function bridgeModeProbe() {
+    const response = await send({ type: "DAC_MODE_PROBE" });
+    if (!response?.ok) throw new Error(response?.error || "Mode probe failed in the content script.");
+    return response.result;
   }
 
   // FLOW-01 evidence scaffold: forwards ONE typed prompt + Create click to the
@@ -5112,6 +5122,7 @@
       "queue.propose": bridgeQueuePropose,
       "queue.proposal.get": bridgeProposalGet,
       "diagnostics.dom_probe": bridgeDomProbe,
+      "diagnostics.mode_probe": bridgeModeProbe,
       "diagnostics.evidence_submit": bridgeEvidenceSubmit,
       "run.trial": bridgeRunTrial,
       "run.stop": bridgeRunStop,

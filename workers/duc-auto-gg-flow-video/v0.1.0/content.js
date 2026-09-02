@@ -1396,6 +1396,76 @@
       return true;
     }
 
+    if (message.type === "DAC_MODE_PROBE") {
+      // F-14, cong cu 0 CREDIT. Chi lam DUNG MOT viec: bam chip cau hinh bang
+      // pressFlowControl roi bao lai bang cau hinh CO MO RA KHONG.
+      //
+      // Vi sao can: do 28/08 cho thay `element.click()` khong tac dong len nhom
+      // nut cau hinh cua Flow. Ban va da co tu hom do (pressFlowControl ban du
+      // chuoi pointer/mouse) nhung CHUA AI KIEM CHUNG TREN TRANG THAT, vi Duc
+      // luon dat mode bang tay nen khong luot nao di qua duong chuyen mode.
+      // Truoc lenh nay, cach duy nhat de biet la chay mot job that = 6-7 credit.
+      //
+      // Ket qua phan biet dut khoat hai gia thuyet cua F-14:
+      //   opened=true  -> nhom nut do nghe pointer event; duong chuyen mode
+      //                   TU DONG DUOC, va Duc khong con phai dat tay moi phien.
+      //   opened=false -> chung doi su kien that (isTrusted); chuyen mode mai
+      //                   mai la viec cua nguoi, va nen ngung do cong vao do.
+      //
+      // GIOI HAN CUNG, khong duoc noi ra:
+      //   · KHONG BAO GIO bam mot tuy chon mode nao — bam la doi cau hinh cua
+      //     Duc sau lung anh ay.
+      //   · KHONG BAO GIO go, khong bao gio cham nut Create.
+      //   · Mo xong thi DONG LAI, tra trang ve nguyen trang.
+      // Nen moi duong thoat cua lenh nay deu la 0 credit va khong de lai dau vet.
+      (async () => {
+        const before = ADAPTER.generationMode(document);
+        if (!before.button) {
+          return { opened: false, reason: "MODE_CHIP_NOT_FOUND", mode_before: before.mode, label_before: before.label };
+        }
+        const optionLabelsNow = () => Array.from(document.querySelectorAll("button"))
+          .filter((b) => isVisible(b))
+          .map((b) => (b.innerText || b.textContent || "").replace(/\s+/g, " ").trim())
+          .filter(Boolean);
+        const labelsBefore = new Set(optionLabelsNow());
+
+        pressFlowControl(before.button);
+        await sleep(600);
+
+        const labelsAfter = optionLabelsNow();
+        // Nhan MOI xuat hien sau cu bam chinh la noi dung bang vua mo ra. Do
+        // bang HIEU chu khong bang so luong: mot bang mo ra co the vua them vua
+        // bot nut, va dem so se noi doi.
+        const appeared = labelsAfter.filter((l) => !labelsBefore.has(l));
+        const videoOption = ADAPTER.findVideoModeOption(document);
+        const opened = appeared.length > 0 || Boolean(videoOption);
+
+        // Tra trang ve nguyen trang. Bam lai chip la cach dong cung duong da mo.
+        if (opened) { pressFlowControl(before.button); await sleep(400); }
+        const after = ADAPTER.generationMode(document);
+
+        return {
+          opened,
+          // Nhan tieng Anh cua tuy chon Video ("videocam Video") duoc go cung
+          // trong findVideoModeOption; tren giao dien tieng Viet no bi dich va
+          // ham se tra null. Danh sach `appeared` duoi day chinh la BANG CHUNG
+          // DOM can de them nhan locale (F-24) ma khong phai dich tay.
+          video_option_found_by_english_label: Boolean(videoOption),
+          appeared_labels: appeared.slice(0, 40),
+          mode_before: before.mode,
+          label_before: before.label,
+          mode_after: after.mode,
+          label_after: after.label,
+          panel_closed_again: opened ? appeared.every((l) => !optionLabelsNow().includes(l)) : null,
+          url: location.href,
+          at: new Date().toISOString(),
+        };
+      })()
+        .then((result) => sendResponse({ ok: true, result }))
+        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error) }));
+      return true;
+    }
+
     if (message.type === "DAC_DOM_PROBE") {
       // STRICTLY READ-ONLY diagnostics for the AI operator (bridge method
       // diagnostics.dom_probe): observes the page and returns a snapshot.

@@ -11,9 +11,24 @@ const bridge = globalThis.DacBridgeCore;
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
   "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
-  "jobs.reorder", "references.add", "diagnostics.dom_probe", "diagnostics.evidence_submit", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial", "run.stop", "chat.reload"
+  "jobs.reorder", "references.add", "diagnostics.dom_probe", "diagnostics.mode_probe", "diagnostics.evidence_submit", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial", "run.stop", "chat.reload"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
+// diagnostics.mode_probe (F-14, them 02/09): cong cu 0 CREDIT. No CO cham vao
+// trang (bam chip cau hinh) nen read_only PHAI la false — khai read_only cho mot
+// lenh biet bam la noi doi voi moi lop doc no. Nhung no khong duoc nhan tham so
+// nao: mot lenh cham vao trang ma nhan tham so tu ngoai la mot be mat tan cong
+// khong can thiet cho thu chi lam dung mot viec.
+{
+  const entry = bridge.METHOD_REGISTRY["diagnostics.mode_probe"];
+  assert.ok(entry, "diagnostics.mode_probe phai co trong registry");
+  assert.equal(entry.read_only, false, "no bam vao trang, khong duoc khai read_only");
+  assert.equal(entry.context, "executor");
+  assert.equal(entry.approval, "none");
+  assert.deepEqual(bridge.validateParams("diagnostics.mode_probe", undefined), {}, "khong tham so");
+  assert.throws(() => bridge.validateParams("diagnostics.mode_probe", { mode: "video" }), "khong duoc nhan tham so la");
+}
+
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
 assert.equal(Object.getPrototypeOf(bridge.METHOD_REGISTRY), null, "the registry cannot inherit callable Object.prototype names");
 assert.equal(Object.getPrototypeOf(bridge.ERROR_DEFINITIONS), null, "the error registry cannot inherit Object.prototype names either");
