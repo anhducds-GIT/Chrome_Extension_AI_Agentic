@@ -428,3 +428,24 @@ Toàn lệnh đọc, **0 credit**.
   - Suite nhánh này **86/86**, cả ba nhánh xanh, `npm test` gốc xanh, `git diff --check` sạch.
 - **Next:** đo live khi tiện — tắt/bật host, panel phải báo **Mất kết nối** rồi tự nối lại **dưới
   5 giây**. Việc FLOW-04 và quyết Profile 9 vẫn nguyên, tôi không đụng.
+
+## 2026-09-02 — `claude-dieu-phoi`: F-18 là HỒI QUY, không phải bài chưa giải
+
+**Làm gì:** đọc lại F-18 để điều phối việc kế tiếp, và tìm thấy một mâu thuẫn trong chính hồ sơ.
+
+**Phát hiện.** F-18 ghi *"nghi đường gõ ... không ghi nhận vào state"*. Nhưng
+`evidence/F1-EVIDENCE-NOTES.md` (27/08) đã đo: cùng selector composer đó, `typing_path:
+"input_events"`, `create_button: "enabled"` — rồi submit và sinh video thật. **Đường gõ đã
+chạy được rồi.** Nên F-18 là hồi quy 27/08 → 02/09, và một phiên tin theo dòng "nghi" sẽ đi
+viết lại `typeIntoFlowComposer` — sửa đúng thứ đang không hỏng.
+
+**Kết quả:** vá `BACKLOG.md` (F-18) và bảng lỗi `AI-OPERATOR-GUIDE.md` với phản chứng, bảng
+bốn ứng viên khác biệt, và một việc rẻ chưa ai làm.
+
+**Việc rẻ nhất chưa ai làm:** lượt F4R2 CÓ ghi `detection.typing_path` vào bản ghi lượt thử
+(`content.js:1076`). Biết nó dừng ở tầng nào trong bốn tầng dự phòng là khoanh được vùng soi
+ngay. **Không tốn credit, không cần mở trang Flow.** Đọc trước khi chạy lượt mới.
+
+**Không đụng code.** Đức chốt 02/09 debug F-18 sau; phiên này chỉ sửa hồ sơ.
+
+**Việc kế tiếp:** vẫn là F-18, nhưng bắt đầu bằng đọc `typing_path` của F4R2, không bằng sửa code.

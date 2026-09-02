@@ -98,6 +98,33 @@
   ĐÃ vào DOM. **Chưa giải thích:** prompt 145 ký tự mà composer đo 172, lệch 27; lượt sau phải
   lưu probe TRƯỚC khi chạy để có mốc so. **Đức đã biết lỗi này, chốt 02/09 để debug sau** —
   đừng tự sửa mù. Bằng chứng: `evidence/F4R2-KET-QUA.md`.
+
+  **PHẢN CHỨNG — đọc trước khi đụng vào `content.js`, 03/09.** Câu "nghi đường gõ" ở trên
+  **mâu thuẫn với bằng chứng đã có**. FLOW-01 ngày 27/08 gõ THÀNH CÔNG vào **đúng selector
+  composer đó** và nút Create **đã sáng**: `evidence/F1-EVIDENCE-NOTES.md` ghi
+  `typing_path: "input_events"`, `create_button: "enabled"`, rồi submit và sinh ra video thật.
+  Vậy đường gõ **không phải chưa bao giờ chạy được** — nó **đã chạy được rồi và hỏng về sau**.
+  F-18 là một **hồi quy**, không phải một bài chưa giải.
+
+  Hệ quả cho phiên sửa: **đừng viết lại `typeIntoFlowComposer`.** Việc đầu tiên là tìm cái gì
+  đã khác đi giữa hai lượt. Bốn ứng viên, chưa loại được cái nào:
+
+  | Khác biệt | 27/08 (chạy được) | 02/09 (hỏng) |
+  |---|---|---|
+  | Đường gọi | `evidence_submit` (dry_run) | runner `jobs` / `run.trial` |
+  | Hồ sơ Chrome | không ghi lại | `kaito` |
+  | Trang Flow | bản 27/08 | bản 02/09 — **cách nhau 5 ngày**, Flow có thể đã đổi |
+  | Composer lúc bắt đầu | không ghi lại | **có sẵn 27 ký tự thừa** (145 nạp vào, đo ra 172) |
+
+  Ứng viên thứ tư là đáng ngờ nhất và cũng rẻ nhất để loại: `typeIntoFlowComposer` gọi
+  `focusAndSelectAll()` rồi mới chèn, nên chữ cũ đáng lẽ bị thay. Nếu composer vẫn dôi ra 27
+  ký tự thì `selectNodeContents` **không phủ hết** nội dung Lexical — và một composer chứa
+  nội dung lai có thể là lý do React từ chối mở nút.
+
+  **Số liệu tự do nhất, không tốn credit, không cần mở trang:** lượt F4R2 CÓ ghi
+  `detection.typing_path` vào bản ghi lượt thử ([content.js:1076](content.js:1076)) — biết nó
+  dừng ở tầng nào trong bốn tầng dự phòng là biết ngay phải soi tầng nào. Con số đó **chưa ai
+  đọc**; `evidence/F4R2-KET-QUA.md` không nhắc tới. Đọc nó TRƯỚC KHI chạy lượt mới.
 - **F-19** · [ĐO 02/09] Chữ lỗi trả về operator còn nói **"Gemini DOM may have changed"** trên
   một trang Google Flow — đồ thừa kế từ nhánh Gemini, thuộc nợ rebrand **F-06**. Nhỏ, nhưng
   người đọc ledger sẽ đi tìm nhầm chỗ.
