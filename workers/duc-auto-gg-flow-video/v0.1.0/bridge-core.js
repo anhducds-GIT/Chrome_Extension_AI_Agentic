@@ -477,6 +477,12 @@
   // tu choi 7 job. Suite khong bat duoc vi no kiem hai lop rieng re va moi lop
   // deu "dung" theo con so cua chinh no; chi mot luot chay that moi lo ra.
   const MAX_TRIAL_JOBS = 7;
+  // Cung ly do, cung cach cuong che: nhip giua hai job cung co ban sao thu hai
+  // o day. Ngay 02/09 toi nang nhip trong dev-trial-core len 45-120s de tranh bi
+  // gan co "unusual activity", chay suite XANH, roi lenh that bi CHINH LOP NAY
+  // tu choi vi no van khoa 20-30. Day la lan THU HAI trong mot ngay cung mot ho
+  // loi o cung mot ham. tests/trial-cap-single-truth.mjs cuong che ca hai.
+  const TRIAL_DELAY_BOUNDS = Object.freeze({ min: 45, max: 120, default: 90 });
 
   function validateRunTrial(raw) {
     const params = assertPlainObject(raw, "params");
@@ -490,7 +496,7 @@
     return {
       job_ids: jobIds,
       timeout_sec: params.timeout_sec === undefined ? 180 : integerValue(params.timeout_sec, "params.timeout_sec", 15, 300),
-      delay_sec: params.delay_sec === undefined ? 25 : integerValue(params.delay_sec, "params.delay_sec", 20, 30)
+      delay_sec: params.delay_sec === undefined ? TRIAL_DELAY_BOUNDS.default : integerValue(params.delay_sec, "params.delay_sec", TRIAL_DELAY_BOUNDS.min, TRIAL_DELAY_BOUNDS.max)
     };
   }
 
@@ -549,7 +555,7 @@
     registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?" }, params_validator: validateRunSettingsConfigure }),
     registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage a quarantined queue proposal; never execute it automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100]" }, params_validator: validateQueuePropose }),
     registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet }),
-    registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Start one owner-gated development trial run of at most 3 runnable video jobs (one continuous chain); refused unless the side-panel development-mode toggle is ON, no run is active, and 300 seconds have passed since the previous trial. Larger production runs stay owner-only.", params_schema: { job_ids: "job_id[1..3]", timeout_sec: "integer:15..300?", delay_sec: "integer:20..30?" }, params_validator: validateRunTrial }),
+    registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: `Start one owner-gated development trial run of at most ${MAX_TRIAL_JOBS} runnable video jobs (one continuous chain, one free account’s budget); refused unless the side-panel development-mode toggle is ON, no run is active, and 300 seconds have passed since the previous trial. Larger production runs stay owner-only.`, params_schema: { job_ids: `job_id[1..${MAX_TRIAL_JOBS}]`, timeout_sec: "integer:15..300?", delay_sec: `integer:${TRIAL_DELAY_BOUNDS.min}..${TRIAL_DELAY_BOUNDS.max}?` }, params_validator: validateRunTrial }),
     // run.stop là lệnh ghi DUY NHẤT cố ý đi vòng qua khoá RUN_ACTIVE. Mọi lệnh
     // ghi khác bị từ chối khi đang chạy vì chúng có thể đổi thứ run sắp làm;
     // dừng thì chỉ BỚT việc đi. Một lệnh dừng bị từ chối vì "đang chạy" là vô

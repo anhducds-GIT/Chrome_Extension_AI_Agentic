@@ -1,0 +1,60 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW04R8-A: Steam curling off a bowl of pho at a street stall before dawn, single hanging bulb, slow tilt down, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R8-B: A kite string cutting a slow arc against flat grey cloud, frayed tail spinning, handheld, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R8-C: Wet cobblestones drying unevenly as sun returns after rain, steam lifting in patches, static wide, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R8-D: A cat stretching across a sunlit wooden floor, dust motes drifting through the beam, very slow push in, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R8-E: Old ceiling fan turning too slowly in a green tiled room, shadows sweeping the wall, static shot, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R8-F: Hands folding a paper boat on a train tray table, landscape blurring past the window, overhead, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    },
+    {
+      "prompt": "FLOW04R8-G: A single candle guttering in a draft beside a stack of books, warm falloff into dark, static close, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 300,
+        "max_retries": 0
+      }
+    }
+  ]
+}

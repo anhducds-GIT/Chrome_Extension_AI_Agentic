@@ -814,3 +814,27 @@ Sửa URL xong, content script đã được tiêm vào `/fx/vi/...`, nhưng v�
 - **Nợ, không phải việc của gói này:** sinh lại `DASHBOARD/llms.txt/repo-map` cần `_root`, hiện
   do phiên `claude-y03` giữ và họ đang sửa dở bộ sinh. Cổng đóng phiên vì thế còn đúng một mục
   đỏ nằm ở đấy; phần của gói này xanh.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 10): nhịp có BẢN SAO THỨ BA, và nó lệch trong cùng một ngày
+
+Lệnh `run.trial` với `delay_sec: 90` bị **chính lớp Bridge** từ chối: *"expected an integer from
+20 to 30"*. `bridge-core.js` gõ cứng cả nhịp giữa hai job, y như nó từng gõ cứng trần job.
+
+- **Hai lần, cùng một hàm (`validateRunTrial`), cùng một gốc bệnh, cách nhau vài giờ.** Lần một
+  là `MAX_TRIAL_JOBS` (đã vá sáng nay); lần hai là `DELAY_BOUNDS`. Cả hai lần suite đều XANH và
+  chỉ **một lệnh thật** mới lộ ra. Điểm tích cực: 7 job ĐƯỢC chấp nhận, tức bản vá trần job hôm
+  nay đã sống trong bản đang chạy.
+- **Vá, và lần này kéo luôn phần "quảng cáo ra ngoài" vào cùng một nguồn:** mô tả `run.trial`
+  và `params_schema` giờ **nội suy** từ `MAX_TRIAL_JOBS` / `TRIAL_DELAY_BOUNDS` thay vì gõ lại
+  con số — trước đây chúng vẫn nói "at most 3 jobs, delay 20..30" trong khi validator thực thi
+  con số khác, tức là nói dối người đọc.
+- **Ghim mở rộng** trong `tests/trial-cap-single-truth.mjs`: nay so **cả** trần job **lẫn** ba
+  con số nhịp giữa hai file, và đòi câu quảng cáo phải nội suy. Các test Bridge cũng đã đổi
+  sang suy từ hằng số (`devTrial.DELAY_BOUNDS.min/max/default`) thay vì gõ tay 20/25/31.
+- **Một phép kiểm của tôi bắt nhầm, đã thu hẹp:** `/integer:\d+\.\.\d+\?"/` bắt luôn
+  `timeout_sec: "integer:15..300?"` — một con số gõ cứng **hợp lệ**, vì trần timeout không phải
+  thứ đang được tham số hoá. Một phép kiểm bắt nhầm thì sớm muộn cũng bị ai đó nới lỏng cho xong.
+- **Đo:** suite **93/93**.
+- **Chưa chạy được chuỗi.** `bridge-core.js` sống trong **service worker**, nên bản vá chỉ có
+  hiệu lực sau khi reload extension. Đây là lần reload cuối của đợt này — sau nó không còn con
+  số nào của nhịp nằm ngoài tầm với.

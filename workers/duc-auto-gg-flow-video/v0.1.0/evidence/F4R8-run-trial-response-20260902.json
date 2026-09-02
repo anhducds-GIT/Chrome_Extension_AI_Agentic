@@ -1,0 +1,21 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-62b9f4ba-3a2d-436f-af9b-44019345ca52",
+  "ok": false,
+  "error": {
+    "code": "INVALID_PARAMS",
+    "message": "Invalid params at 'params.delay_sec': expected an integer from 20 to 30",
+    "retryable": false,
+    "details": {
+      "issue": "expected an integer from 20 to 30",
+      "path": "params.delay_sec"
+    }
+  },
+  "responded_at": "2026-09-02T11:33:08.322Z",
+  "served_by": {
+    "instance_id": "e08e1d6a-63d0-4be1-909a-f0cbd56ef891",
+    "label": "Binh"
+  }
+}

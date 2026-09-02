@@ -46,6 +46,27 @@ assert.match(bridgeSource, /expected 1-\$\{MAX_TRIAL_JOBS\} video job ids/,
 assert.ok(!/expected 1-\d+ video job ids/.test(bridgeSource),
   "còn một con số gõ cứng trong câu từ chối của bridge-core");
 
+// NHỊP GIỮA HAI JOB cũng có bản sao thứ hai ở `bridge-core.js`, và nó đã lệch
+// THẬT trong cùng một ngày, ở cùng một hàm, chỉ vài giờ sau lần lệch của trần
+// job: 02/09 tôi nâng nhịp trong `dev-trial-core` lên 45–120s để tránh bị gắn
+// cờ "unusual activity", suite XANH, rồi lệnh thật bị chính lớp Bridge từ chối
+// vì nó vẫn khoá 20–30. Hai lần, cùng một hàm, cùng một gốc bệnh.
+const bridgeDelay = bridgeSource.match(/const TRIAL_DELAY_BOUNDS = Object\.freeze\(\{ min: (\d+), max: (\d+), default: (\d+) \}\);/);
+assert.ok(bridgeDelay, "bridge-core phải khai TRIAL_DELAY_BOUNDS ở một hằng số đọc được");
+const [, bMin, bMax, bDefault] = bridgeDelay.map(Number);
+assert.equal(bMin, devTrial.DELAY_BOUNDS.min, `sàn nhịp ở bridge-core (${bMin}s) lệch dev-trial-core (${devTrial.DELAY_BOUNDS.min}s)`);
+assert.equal(bMax, devTrial.DELAY_BOUNDS.max, `trần nhịp ở bridge-core (${bMax}s) lệch dev-trial-core (${devTrial.DELAY_BOUNDS.max}s)`);
+assert.equal(bDefault, devTrial.DELAY_BOUNDS.default, `nhịp mặc định ở bridge-core (${bDefault}s) lệch dev-trial-core (${devTrial.DELAY_BOUNDS.default}s)`);
+
+// Và câu quảng cáo ra ngoài phải NỘI SUY, không được gõ lại con số.
+// Chi soi RIENG delay_sec. Ban dau toi viet /integer:\d+\.\.\d+\?"/ va no bat
+// nham ca timeout_sec: "integer:15..300?" — mot con so go cung HOP LE vi tran
+// timeout khong phai thu dang duoc tham so hoa. Mot phep kiem bat nham thi som
+// muon cung bi ai do noi long cho xong.
+assert.ok(!/delay_sec: "integer:\d+\.\.\d+\?"/.test(bridgeSource), "schema delay_sec còn con số gõ cứng trong bridge-core");
+assert.match(bridgeSource, /delay_sec: `integer:\$\{TRIAL_DELAY_BOUNDS\.min\}\.\.\$\{TRIAL_DELAY_BOUNDS\.max\}\?`/, "schema delay_sec phải nội suy từ TRIAL_DELAY_BOUNDS");
+assert.ok(!/at most \d+ runnable video jobs/.test(bridgeSource), "mô tả run.trial còn con số gõ cứng trong bridge-core");
+
 // Và trần phải khớp ngân sách một tài khoản free ở 360p — cùng phép tính đã
 // ghim ở bridge-run-trial-smoke.mjs. Nhắc lại ở đây có chủ đích: ai đổi trần
 // phải gặp phép tính này ở mọi chỗ trần xuất hiện.

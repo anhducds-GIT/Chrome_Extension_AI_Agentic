@@ -21,8 +21,12 @@ assert.equal(entry.read_only, false);
 assert.equal(entry.approval, "none");
 assert.equal(entry.idempotent, false);
 assert.equal(entry.deadline_ms, 30000);
-assert.match(entry.capability_description, /at most 3 runnable video jobs/, "registry description cannot drift from the owner cap");
-assert.equal(entry.params_schema.job_ids, "job_id[1..3]");
+// Suy TU hang so, khong go lai con so: mo ta va schema quang cao ra ngoai phai
+// noi dung cai ma validator thuc thi. Ngay 02/09 chung da lech that — dev-trial
+// len 7 nhung bridge-core van khoa 3, va chi mot lenh that moi lo ra.
+assert.match(entry.capability_description, new RegExp(`at most ${devTrial.MAX_TRIAL_JOBS} runnable video jobs`), "registry description cannot drift from the owner cap");
+assert.equal(entry.params_schema.job_ids, `job_id[1..${devTrial.MAX_TRIAL_JOBS}]`);
+assert.equal(entry.params_schema.delay_sec, `integer:${devTrial.DELAY_BOUNDS.min}..${devTrial.DELAY_BOUNDS.max}?`, "schema quang cao ra ngoai phai khop nhip that");
 assert.equal(entry.params_schema.timeout_sec, "integer:15..300?", "registry advertises the video timeout ceiling");
 assert.deepEqual(bridge.POLICY.prohibited_methods, ["run.start", "run.pause", "run.resume"], "the prohibited list is EXACTLY unchanged");
 for (const prohibited of ["run.start", "run.pause", "run.resume"]) {
@@ -52,11 +56,12 @@ assert.deepEqual(
   "dev-trial timeout bounds pin the video min/default/max"
 );
 const normalized = bridge.validateParams("run.trial", { job_ids: ["P09-01"] });
-assert.deepEqual(normalized, { job_ids: ["P09-01"], timeout_sec: 180, delay_sec: 25 }, "defaults are video timeout 180s and delay 25s");
+assert.deepEqual(normalized, { job_ids: ["P09-01"], timeout_sec: 180, delay_sec: devTrial.DELAY_BOUNDS.default }, `defaults are video timeout 180s and delay ${devTrial.DELAY_BOUNDS.default}s`);
 assert.equal(normalized.timeout_sec, devTrial.TIMEOUT_BOUNDS.default, "bridge default matches dev-trial TIMEOUT_BOUNDS.default");
 assert.deepEqual(
-  bridge.validateParams("run.trial", { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: 20 }),
-  { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: 20 }
+  // Bien duoi cua CA HAI khoang, lay tu hang so — go tay la lech lan nua.
+  bridge.validateParams("run.trial", { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: devTrial.DELAY_BOUNDS.min }),
+  { job_ids: ["P09-01", "P09-02"], timeout_sec: 15, delay_sec: devTrial.DELAY_BOUNDS.min }
 );
 assert.equal(bridge.validateParams("run.trial", { job_ids: ["P09-01"], timeout_sec: 15 }).timeout_sec, devTrial.TIMEOUT_BOUNDS.min, "bridge minimum matches dev-trial TIMEOUT_BOUNDS.min");
 assert.equal(bridge.validateParams("run.trial", { job_ids: ["P09-01"], timeout_sec: 180 }).timeout_sec, devTrial.TIMEOUT_BOUNDS.default, "bridge accepts the dev-trial default explicitly");
@@ -91,8 +96,9 @@ const invalidTrialParams = [
   { job_ids: ["J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8"] },
   { job_ids: ["P09-01"], timeout_sec: 301 },
   { job_ids: ["P09-01"], timeout_sec: 14 },
-  { job_ids: ["P09-01"], delay_sec: 10 },
-  { job_ids: ["P09-01"], delay_sec: 31 },
+  // Ngoai khoang o CA HAI dau, suy tu hang so.
+  { job_ids: ["P09-01"], delay_sec: devTrial.DELAY_BOUNDS.min - 1 },
+  { job_ids: ["P09-01"], delay_sec: devTrial.DELAY_BOUNDS.max + 1 },
   { job_ids: ["P09-01", "p09-01"] },
   { job_ids: ["P09-01"], start_production_run: true },
   { job_ids: ["../escape"] }

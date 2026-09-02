@@ -92,7 +92,7 @@ const validByMethod = {
   "queue.proposal.get": { proposal_id: "proposal-uuid" },
   "run.stop": {},
   "chat.reload": {},
-  "run.trial": { job_ids: ["P09-01", "P09-02"], timeout_sec: 90, delay_sec: 25 },
+  "run.trial": { job_ids: ["P09-01", "P09-02"], timeout_sec: 90, delay_sec: 90 }, // delay 90s: nhip moi 02/09 la 45-120s
   "diagnostics.dom_probe": {},
   "diagnostics.evidence_submit": { prompt: "A calm ocean wave at sunset" }
 };
