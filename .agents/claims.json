@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "ban-giao-s4",
-      "ai": "claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Soan docs/briefs/BRIEF-S4.md. Giu quyen toi khi push xong roi moi tra bang commit rieng.",
-      "released_at": null
+      "task": "XONG 2026-09-02. S1+S2+S3 da dong va push, Khoi D 0/0/0/0. Brief S4 da soan: docs/briefs/BRIEF-S4.md. VIEC KE TIEP: phien S4 — cong kiem cau truc B1-B14, CHI CANH BAO chua chan.",
+      "released_at": "2026-09-02"
     }
   }
 }
