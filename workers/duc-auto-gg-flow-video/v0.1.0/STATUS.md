@@ -5,9 +5,9 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "Duc lam tay: reload extension o TUNG profile (het legacy) + dien o 'Ten ho so Chrome nay' tung panel; roi AI goi bridge.sessions dem du ten. Sau do moi toi trial video (panel + workbook + Dev Mode + Video mode + x1) va live-check F-14"
+next_step: "Trial video: can tay Duc bat panel + workbook + Dev Mode + Video mode, roi AI chay x1; sau do live-check F-14 (can chip dang o Image). Viec rieng cho Duc: ghe legacy con lai o profile thu 4 — dat ten hoac tat"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "Multi-profile Bridge: KIỂM LIVE ĐẠT 02/09 phần định tuyến (host mới đã deploy + chạy trên 32149; 3 profile cùng nối không ai đá ai; không nêu target bị từ chối TARGET_AMBIGUOUS; nêu target thì served_by đúng đích; audit Codex PASS — evidence/MP-01). Còn thiếu phần tay Đức: reload extension từng profile để hết legacy + đặt tên từng hồ sơ; sau đó trial video"
+current_focus: "Cổng tay multi-profile ĐÃ QUA 02/09: 3 hồ sơ có tên (Binh/anhducds/kaito) cùng nối, đều legacy:false, tên dùng được làm --target và served_by khớp instance_id; không nêu target thì host từ chối TARGET_AMBIGUOUS. Bằng chứng: evidence/20260902-multiprofile-naming-gate-r01. Còn 1 ghế legacy ở profile thứ tư chờ Đức quyết. Việc kế tiếp: trial video (cần tay Đức bật panel + workbook + Dev Mode + Video mode) rồi live-check F-14"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md
@@ -43,17 +43,20 @@ Phân biệt hai điều đó là quan trọng:
   vòng PASS, 8 phép mutation đều làm suite đỏ — nhưng chưa một job nào chạy qua bản vá này
   trên trang thật. Bằng chứng: [`evidence/F4-create-scope-fix-audit-20260828.json`](evidence/F4-create-scope-fix-audit-20260828.json).
 
-Vì sao chưa kiểm được: extension đang nạp ở **3 profile Chrome** cùng lúc, Bridge chỉ giữ
-một khe kết nối nên đang nói chuyện với profile chưa reload. Chi tiết + cách xử lý trong
-[`AI-OPERATOR-GUIDE.md`](AI-OPERATOR-GUIDE.md).
+Vì sao chưa kiểm được — **rào cản này đã gỡ ngày 02/09.** Trước đó Bridge chỉ giữ một khe
+kết nối nên luôn nói chuyện nhầm profile. Nay host nhận nhiều phiên, mỗi hồ sơ Chrome có tên
+riêng và nhắm được bằng `--target` ([bằng chứng](../../../evidence/20260902-multiprofile-naming-gate-r01/README.md)).
+Cái còn thiếu để kiểm live giờ là **tay Đức bật panel + workbook + Dev Mode + Video mode**, không
+còn là hạ tầng. Cách vận hành trong [`AI-OPERATOR-GUIDE.md`](AI-OPERATOR-GUIDE.md).
 
 ## Giới hạn đã biết
 
 1. **Chưa tự tin dùng cho việc thật.** Đường chạy đã thông và đã ra video, nhưng bản vá mới
    nhất chưa được kiểm trên trang thật.
-2. **Nhiều profile Chrome = chưa dùng được ổn định.** Host Bridge chỉ có một khe cho
-   extension; profile nào nối sau cùng thì chiếm khe, và cả ba profile khai danh tính giống
-   hệt nhau nên không phân biệt được. Đang có phiên riêng thiết kế lại phần này.
+2. ~~Nhiều profile Chrome = chưa dùng được ổn định.~~ **ĐÃ GỠ 02/09.** Host nhận nhiều phiên
+   cùng lúc, mỗi hồ sơ có tên riêng, nhắm bằng `--target`; không nêu đích thì host **từ chối**
+   chứ không đoán. Còn lại một ghế `legacy` ở profile thứ tư (không tên, id đổi khi service
+   worker ngủ dậy) — **chờ Đức quyết đặt tên hay tắt.**
 3. Video **trừ credits thật** mỗi lần sinh → trần trial dev ≤3 video (3 × 15 credits), chặt
    hơn nhánh ảnh. Không tự nới.
 4. Nhãn Image mode trong adapter khớp chính xác đúng một chuỗi đã đo (F-11); ảnh tham chiếu

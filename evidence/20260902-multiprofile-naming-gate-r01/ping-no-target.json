@@ -1,0 +1,38 @@
+### system.ping KHONG target (mong doi: bi tu choi TARGET_AMBIGUOUS)
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-60461a0a-95c0-4f80-8525-0fde226b6328",
+  "ok": false,
+  "error": {
+    "code": "TARGET_AMBIGUOUS",
+    "message": "More than one extension session is connected; name exactly one target.",
+    "retryable": false,
+    "details": {
+      "candidates": [
+        {
+          "instance_id": "e08e1d6a-63d0-4be1-909a-f0cbd56ef891",
+          "label": "Binh",
+          "legacy": false
+        },
+        {
+          "instance_id": "be1dd2d0-49d3-4e87-848b-1ddb8774c1fb",
+          "label": "anhducds",
+          "legacy": false
+        },
+        {
+          "instance_id": "legacy:ea6c1300-b01e-4629-b697-b26bb89420f2",
+          "label": null,
+          "legacy": true
+        },
+        {
+          "instance_id": "d8c543ee-1cb0-4363-98b0-cdffe687af47",
+          "label": "kaito",
+          "legacy": false
+        }
+      ]
+    }
+  },
+  "responded_at": "2026-09-02T06:10:51.484Z"
+}

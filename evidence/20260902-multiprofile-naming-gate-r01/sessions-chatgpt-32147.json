@@ -1,0 +1,40 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "cli-649959d8-7966-4e34-8201-92725095274b",
+  "ok": true,
+  "result": {
+    "sessions": [
+      {
+        "instance_id": "b9711206-731c-49d0-a436-cdaee7246375",
+        "label": "Bình",
+        "legacy": false,
+        "worker": "duc-auto-chatgpt",
+        "extension_version": "0.3.0",
+        "connected_at": "2026-09-02T06:06:23.642Z",
+        "last_seen_at": "2026-09-02T06:10:23.648Z"
+      },
+      {
+        "instance_id": "4372a218-6f6f-4ebe-adb9-0c6443e48f88",
+        "label": "anhducds",
+        "legacy": false,
+        "worker": "duc-auto-chatgpt",
+        "extension_version": "0.3.0",
+        "connected_at": "2026-09-02T06:06:24.596Z",
+        "last_seen_at": "2026-09-02T06:10:24.613Z"
+      },
+      {
+        "instance_id": "417f7af3-73f0-4091-bd1f-11c831fd8a53",
+        "label": "kaito",
+        "legacy": false,
+        "worker": "duc-auto-chatgpt",
+        "extension_version": "0.3.0",
+        "connected_at": "2026-09-02T06:06:52.488Z",
+        "last_seen_at": "2026-09-02T06:10:12.502Z"
+      }
+    ],
+    "count": 3
+  },
+  "responded_at": "2026-09-02T06:10:27.171Z"
+}

@@ -335,3 +335,33 @@ Không phép kiểm nào bắt được — B4 chỉ soi `DASHBOARD.md` và `llm
 
 Cùng lý do phiên S6 đã hoàn nguyên 4 đường dẫn trong `BACKLOG.md` của chatgpt: **con trỏ thì
 sửa, tường thuật thì không.**
+
+## 2026-09-02 — `claude-mp-gate`: cổng tay multi-profile ĐÃ QUA, đo trên cả 3 nhánh
+
+**Bằng chứng:** [`../../../evidence/20260902-multiprofile-naming-gate-r01/README.md`](../../../evidence/20260902-multiprofile-naming-gate-r01/README.md)
+Toàn lệnh đọc, **0 credit**.
+
+- **Việc ưu tiên #1 của repo đã sang chặng mới.** Nửa đầu (tay Đức: reload extension từng
+  profile + điền ô "Tên hồ sơ Chrome này") **Đức đã làm xong** trước phiên này. Phiên này làm
+  nửa sau — gọi `bridge.sessions` đếm tên — và **đếm đủ**.
+- **Số đo:** ChatGPT 32147 → **3 phiên, 0 legacy**. Gemini 32148 → **3 phiên, 0 legacy**.
+  Flow Video 32149 → **4 phiên, 3 có tên + 1 legacy**. Ba tên: `Bình` · `anhducds` · `kaito`.
+  Mọi phiên không-legacy đều khai đủ `worker` + `extension_version` → transport MỚI đã thật sự
+  nạp trong RAM. Lần đo MP-01 cùng ngày cả 3 ghế còn `legacy:true`; nay đã sạch.
+- **Kiểm thêm phần MP-01 chưa làm — tên có DÙNG ĐƯỢC không.** MP-01 định tuyến bằng
+  `instance_id`; lần này nhắm bằng **tên người đặt**, vì tên mới là thứ thực sự gõ hằng ngày.
+  `system.ping --target Binh|anhducds|kaito` → `ok:true`, `served_by.instance_id` khớp đúng
+  dòng tương ứng trong `bridge.sessions`, cả ba. Không nêu `--target` → **từ chối**
+  `TARGET_AMBIGUOUS` kèm đủ 4 ứng viên. Fail-closed đúng thiết kế.
+- **STATUS.md sửa 3 chỗ đã lạc hậu:** `next_step`, `current_focus`, và giới hạn #2 ("nhiều
+  profile chưa dùng được ổn định") nay gạch đi kèm ghi rõ ngày gỡ. Đoạn "vì sao chưa kiểm live
+  được" cũng viết lại: rào cản **không còn là hạ tầng**, mà là tay Đức bật panel/workbook/
+  Dev Mode/Video mode.
+- **CÒN MỞ, CẦN ĐỨC QUYẾT:** một ghế `legacy:ea6c1300…` ở nhánh Flow Video — profile Chrome
+  thứ tư, không tên, id đổi mỗi lần service worker ngủ dậy. Hoặc reload + đặt tên, hoặc tắt
+  extension ở profile đó.
+- **KHÔNG đụng gói `duc-auto-chatgpt`** — đang có chủ `claude-stabilizing-bridge` làm việc dở
+  trong cây (2 file). Chỉ chạy lệnh đọc trên host của nó. `duc-auto-gemini` lúc đo đã trả quyền
+  và đã push xong, cũng chỉ đọc, không sửa file.
+- **Việc kế tiếp (đúng một việc):** trial video — cần Đức bật panel + nạp workbook + Dev Mode
+  + Video mode, rồi AI chạy **x1**. Sau đó mới tới live-check F-14 (cần chip đang ở Image).

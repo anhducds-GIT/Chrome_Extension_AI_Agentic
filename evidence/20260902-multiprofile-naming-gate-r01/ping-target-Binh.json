@@ -1,0 +1,42 @@
+### system.ping --target Binh
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-07773697-4ac3-4148-b81e-e8e25b828cb7",
+  "ok": true,
+  "result": {
+    "bridge": {
+      "extension_paired": true,
+      "host_reachable": true,
+      "last_activity_at": "2026-09-02T06:10:51.590Z"
+    },
+    "chatgpt": {
+      "composer_found": false,
+      "failure_type": "RECEIVER_LOST",
+      "generating": false,
+      "halt_instruction": {
+        "action": "Reload the correct Gemini tab, wait for the composer to become available, then Check Plan and Continue Run. This stays a hard stop on purpose: if the tab is genuinely gone, auto-retrying would just fail every remaining job in the queue back-to-back without producing anything. (Tải lại đúng tab Gemini, chờ composer sẵn sàng, rồi Check Plan và Continue Run. Đây vẫn là hard stop có chủ đích: nếu tab thật sự mất, tự động retry sẽ chỉ khiến mọi job còn lại trong queue fail liên tục mà không tạo được ảnh nào.)",
+        "codes": [
+          "RECEIVER_LOST"
+        ],
+        "meaning": "The extension lost its connection to the Gemini tab, composer, or content receiver. (Extension mất kết nối với tab Gemini, composer, hoặc content receiver.)",
+        "retry": "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",
+        "title": "Receiver lost"
+      },
+      "state": "HARD_STOP"
+    },
+    "executor": "available",
+    "extension": "online",
+    "workbook": {
+      "file_name": null,
+      "loaded": false,
+      "run_id": null
+    }
+  },
+  "responded_at": "2026-09-02T06:10:51.626Z",
+  "served_by": {
+    "instance_id": "e08e1d6a-63d0-4be1-909a-f0cbd56ef891",
+    "label": "Binh"
+  }
+}
