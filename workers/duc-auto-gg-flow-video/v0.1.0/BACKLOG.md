@@ -302,7 +302,20 @@
   thay vì panel — **đổi lớn, cần Đức chốt**.
   Bằng chứng: `evidence/F4R8-KET-QUA.md`.
 
-- **F-26** · [ĐO 02/09, kèm theo F-14] **Bảng cấu hình LIỆT KÊ ĐƯỢC — ba việc đang treo có
+- **F-26** · **XONG 02/09** (Đức chốt: *"cho runner tự đặt x1 và tự đọc cấu hình"*). Runner nay
+  **tự mở bảng cấu hình, tự bấm `x1`, rồi ĐỌC LẠI CHIP để kết luận** — không tin cú bấm.
+  `findOutputCountOption` nhận nút theo **nhãn chính xác** đã đo (`"x1"`), đòi **đúng một** ứng
+  viên, và từ chối nếu mờ: bảng này còn có `360p`/`720p`, bấm nhầm không mất credit ngay nhưng
+  **đổi đơn giá mỗi video** — mờ ở đây là mờ về tiền.
+  **Cổng từ chối của F-15 GIỮ NGUYÊN làm lớp cuối.** Tự sửa được thì đi tiếp; sửa không được thì
+  vẫn từ chối, và **luôn đóng bảng lại** trước khi từ chối.
+  **Ghi vào sổ cái trường `output_chip`** (`label_before`, `count_before`, `fix_attempted`,
+  `count_after`, `fixed`): một thay đổi cấu hình do AI tự làm mà không để lại dấu vết thì Đức
+  không còn cách nào biết. `fixed` là **kết luận đọc từ chip**, không phải "tôi đã bấm".
+  Suite 94/94 · mutation **7/7**. Bằng chứng nhãn: `evidence/F14-mode-probe-vi-20260902.json`.
+  **CÒN LẠI:** chưa kiểm live. Và F-22 (đọc độ phân giải để suy trần chuỗi) vẫn mở — nay đã có
+  `findOutputCountOption` làm mẫu, cùng cách làm.
+  ~~[ĐO 02/09, kèm theo F-14] Bảng cấu hình LIỆT KÊ ĐƯỢC~~ — ba việc đang treo có
   đường đi rẻ hơn hẳn.** `diagnostics.mode_probe` cho thấy 17 nhãn, gồm **toàn bộ** nút cấu hình
   rời: `360p` `720p` · `4s` `6s` `8s` `10s` · `16:9` `9:16` · **`x1` `x2` `x3` `x4`**.
   Hệ quả: **F-15** hiện *từ chối* khi chip không phải `x1` — với bảng này runner có thể **tự đặt

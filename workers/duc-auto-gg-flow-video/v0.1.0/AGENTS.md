@@ -52,3 +52,33 @@ y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
 | `pilot-04/`, `pilot-05/` | CHỈ fixture XLSX cho test thừa kế (không phải bằng chứng vận hành của nhánh này) |
 
 Thêm file/thư mục top-level mới → thêm 1 dòng vào bảng này. Không khai = không tồn tại.
+
+## Chọn nhãn cấu hình trên trang: việc của AI, và luật cho nó
+
+Đức chốt 2026-09-02: **chọn nhãn cấu hình là việc AI nên tự làm được**, và không riêng gói này —
+mọi extension trong repo. Trước đó Đức phải tự đặt Video mode và tự sửa chip `x{n}` mỗi phiên.
+
+**Đường đã chứng minh chạy được** (F-14/F-26, bằng chứng `evidence/F14-mode-probe-vi-20260902.json`):
+
+1. `pressFlowControl(chip)` — bắn chuỗi `pointerdown` → `mousedown` → `pointerup` → `mouseup` →
+   `click`. **`element.click()` trần KHÔNG mở được bảng cấu hình của Flow.**
+2. Bảng mở ra thì **liệt kê được** toàn bộ nút cấu hình rời (`360p` `720p` · `4s`…`10s` ·
+   `16:9` `9:16` · `x1`…`x4`).
+3. Bấm nút cần, rồi **ĐỌC LẠI nhãn tóm tắt** để kết luận.
+
+**Bốn luật, rút ra từ chỗ đã trả giá:**
+
+1. **Nhãn phải có bằng chứng DOM, không dịch tay.** `arrow_forward Create` bị dịch thành
+   `arrow_forward Tạo`; nhưng `videocam Video` thì KHÔNG bị dịch. Suy từ ca này sang ca kia đã
+   sai một lần (F-24 là báo động giả của chính AI). Đo trước, ghi probe vào `evidence/`, rồi mới
+   thêm nhãn kèm trích nguồn.
+2. **Mờ là từ chối.** Đòi **đúng một** ứng viên khớp **chính xác** nhãn. Bảng cấu hình nằm cạnh
+   những nút đổi đơn giá (720p tốn gấp đôi 360p) — mờ ở đó là mờ về tiền.
+3. **Cú bấm không phải bằng chứng; nhãn tóm tắt mới là bằng chứng.** Bấm xong phải đọc lại. Một
+   hàm trả về phán quyết mà nó không tự đọc được là code nói dối.
+4. **Mở bảng thì phải đóng lại, và phải GHI LẠI vào sổ cái.** Một thay đổi cấu hình do AI tự làm
+   mà không để dấu vết thì Đức không còn cách nào biết. Xem trường `output_chip`.
+
+> **NỢ: cần một ADR ở tầng repo.** Luật này áp cho **mọi** extension nhưng hiện chỉ được viết
+> trong gói này, vì `docs/adr/` ở gốc repo cần quyền `_root` mà phiên khác đang giữ. Phiên nào
+> giữ được `_root` thì chuyển mục này thành ADR và để đây một dòng trỏ sang.

@@ -461,7 +461,7 @@
   // sạch attempt.detection khi vòng dò kết quả xong -- nên không nằm trong danh
   // sách này thì ngay cả một lượt THÀNH CÔNG cũng về sổ cái với typing_path
   // rỗng, và không ai so được lượt chạy được với lượt hỏng.
-  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped", "typing_path", "typing_ok", "prompt_len", "composer_len_before_typing", "composer_len_after_typing", "pacing_ms"]);
+  const CARRIED_DIAGNOSTICS = Object.freeze(["attach", "blob_conversion", "image_url_dropped", "typing_path", "typing_ok", "prompt_len", "composer_len_before_typing", "composer_len_after_typing", "pacing_ms", "output_chip"]);
   function recordDetection(attempt, values) {
     if (!attempt) return;
     const carried = {};
@@ -549,6 +549,50 @@
   // ZERO CREDIT. Chu bao loi co y KHONG chua tu khoa nao cua classifyFailure
   // (xem F-20) — de no phan loai la OTHER nhu moi loi PRE_SUBMIT khac, chu
   // khong lo bien thanh mot cu dung cung mang y nghia khac.
+  // F-26 (Duc chot 02/09: "cho runner tu dat x1 va tu doc cau hinh"). Truoc ban
+  // nay, chip dat x2 thi he thong chi TU CHOI va bat Duc sua tay. Nay no tu sua,
+  // va cong tu choi o duoi VAN GIU NGUYEN lam lop cuoi.
+  //
+  // Thu tu la phan quan trong: SUA roi moi KIEM, va cai kiem cuoi cung khong
+  // phai "toi da bam" ma la "chip bay gio doc ra x1". Mot cu bam bao thanh cong
+  // khong phai bang chung; nhan chip moi la bang chung.
+  //
+  // Duong hong: tra false va de assertSingleOutputChip tu choi. KHONG bao gio
+  // im lang di tiep — day la duong tieu credit.
+  // KHONG tra ve phan quyet. Ham nay chi THU SUA; nguoi duy nhat duoc ket luan
+  // la fixAndRecordOutputChip, va no ket luan bang cach DOC LAI CHIP.
+  //
+  // Ban dau ham nay co tra ve true/false va khong ai dung toi — mutation doi no
+  // thanh `return true` lot luoi vi gia tri do la code chet. Mot ham tra ve mot
+  // phan quyet ma no khong so huu la mot cau noi doi trong code, va no lam moi
+  // phep kiem quanh no mat nghia.
+  async function trySetSingleOutput() {
+    const before = ADAPTER.generationMode(document);
+    if (!before.button || before.outputCount === 1) return;
+
+    // Mo bang cau hinh. Dung dung duong da chung minh chay duoc o F-14
+    // (pressFlowControl ban chuoi pointer, khong phai element.click() tran).
+    pressFlowControl(before.button);
+    await sleep(600);
+
+    const option = ADAPTER.findOutputCountOption(document, 1);
+    if (!option) {
+      // Khong thay, hoac thay nhieu hon mot: dong bang lai roi tu choi. Mo ho o
+      // day la mo ho ve tien — bang nay con co 360p/720p, bam nham la doi don
+      // gia moi video.
+      pressFlowControl(before.button);
+      await sleep(300);
+      return;
+    }
+    pressFlowControl(option);
+    await sleep(500);
+
+    // Dong bang, roi doc lai chip. Doc SAU khi dong de chac chan minh doc cai
+    // nhan tom tat da chot, khong phai mot trang thai trung gian cua bang.
+    pressFlowControl(before.button);
+    await sleep(500);
+  }
+
   function assertSingleOutputChip(mode) {
     const count = mode?.outputCount ?? null;
     if (count === 1) return;
@@ -604,7 +648,11 @@
     return true;
   }
 
-  async function ensureFlowVideoMode() {
+  // Nhan `attempt` de GHI LAI cau hinh da doc va da sua. Duc chot 02/09 cho
+  // runner tu dat x1; mot thay doi cau hinh do AI tu lam ma khong de lai dau vet
+  // thi Duc khong con cach nao biet. Ghi vao so cai la cach de anh ay doc lai
+  // duoc bang mat, khong phai tin loi AI.
+  async function ensureFlowVideoMode(attempt = null) {
     if (ADAPTER.resultKind !== "video") return;
     // Audit finding (Codex round 2, 2026-08-28): the blocker checks used to sit
     // BELOW the mode verdict, so a CAPTCHA or quota wall on a page whose mode
@@ -630,7 +678,10 @@
     //
     // `null` (khong doc duoc) KHONG duoc coi la dat: fail-closed. Mot nhan chip
     // khong doc duoc nghia la ta khong biet minh sap tieu bao nhieu.
-    if (current.mode === "video") { assertSingleOutputChip(current); return; }
+    if (current.mode === "video") {
+      await fixAndRecordOutputChip(attempt, current);
+      return;
+    }
     if (current.mode !== "image" || !current.button) {
       throw new Error(`${FLOW_VIDEO_MODE_ERROR}: current create settings summary is missing or unknown.`);
     }
@@ -655,7 +706,26 @@
     // Kiem so luong tren CHIP VIDEO vua co, khong phai chip truoc do. Chip Image
     // von la `x2` (`Nano Banana 2 ... x2`), nen kiem truoc khi chuyen la chan
     // nham moi job anh->video. So dang quan tam la so cua chip SAP DUNG DE GUI.
-    assertSingleOutputChip(ADAPTER.generationMode(document));
+    await fixAndRecordOutputChip(attempt, ADAPTER.generationMode(document));
+  }
+
+  // Mot cho duy nhat lo: doc chip -> tu sua neu can -> DOC LAI -> ghi so -> tu
+  // choi neu van sai. Ghi TRUOC khi tu choi, de mot luot bi tu choi cung noi ra
+  // duoc no da thay gi va da thu gi.
+  async function fixAndRecordOutputChip(attempt, before) {
+    const attempted = before.outputCount !== 1;
+    if (attempted) await trySetSingleOutput();
+    const after = ADAPTER.generationMode(document);
+    carryDiagnostic(attempt, "output_chip", {
+      label_before: before.label || null,
+      count_before: before.outputCount ?? null,
+      fix_attempted: attempted,
+      count_after: after.outputCount ?? null,
+      // `fixed` la KET LUAN DOC TU CHIP, khong phai "toi da bam". Mot cu bam bao
+      // thanh cong khong phai bang chung; nhan chip moi la bang chung.
+      fixed: attempted && after.outputCount === 1,
+    });
+    assertSingleOutputChip(after);
   }
 
   function queryTransientFileInput() {
@@ -1125,7 +1195,7 @@
         throw new Error("Flow composer not found. Open a labs.google Flow project and retry.");
       }
 
-      await ensureFlowVideoMode();
+      await ensureFlowVideoMode(requestAttempt);
 
       // Order pinned by tests: attach-stage -> type prompt -> confirm
       // attachment -> send. Confirmation always completes before the one

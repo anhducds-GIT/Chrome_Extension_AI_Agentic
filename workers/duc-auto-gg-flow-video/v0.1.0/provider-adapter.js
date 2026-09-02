@@ -334,6 +334,28 @@
   // The open settings panel exposes this exact semantic button with the
   // measured stable class token. Duplicate candidates are ambiguous and must
   // fail closed; no styled-component hash class is used.
+  // F-26: bang cau hinh mo ra thi lo ra TOAN BO nut cau hinh roi. Do that
+  // 02/09 tren giao dien tieng Viet (evidence/F14-mode-probe-vi-20260902.json):
+  // 17 nhan, trong do so luong output la bon nut co nhan CHINH XAC "x1", "x2",
+  // "x3", "x4" — khong kem icon, khong bi dich.
+  //
+  // Chi nhan khi co DUNG MOT ung vien. Bang cau hinh cua Flow con co do phan
+  // giai (360p/720p) va thoi luong (4s..10s); bam nham mot trong nhung nut do
+  // KHONG mat credit ngay, nhung no doi don gia moi video (720p ton gap doi),
+  // nen mo ho o day la mo ho ve tien. Hai ung vien = tu choi.
+  //
+  // KHONG suy ra selector tu class: probe chi cho ta NHAN, chua cho ta class cua
+  // may nut nay. Bam theo nhan da do la co bang chung; bam theo class suy doan
+  // thi khong. Luat vang 1.
+  function findOutputCountOption(root, count) {
+    if (!root?.querySelectorAll || !Number.isInteger(count) || count < 1) return null;
+    const wanted = `x${count}`;
+    let nodes;
+    try { nodes = Array.from(root.querySelectorAll("button")); } catch (_) { return null; }
+    const matches = nodes.filter((button) => buttonLabel(button) === wanted && visibleNode(root, button) && enabledButton(button));
+    return matches.length === 1 ? matches[0] : null;
+  }
+
   function findVideoModeOption(root) {
     if (!root?.querySelectorAll) return null;
     const matches = Array.from(root.querySelectorAll("button")).filter((button) => (
@@ -442,6 +464,7 @@
     generationMode,
     outputCountFromSummary,
     findVideoModeOption,
+    findOutputCountOption,
     generationLimitBlocker,
     videoIdFromSrc,
     securityBlockerPattern,

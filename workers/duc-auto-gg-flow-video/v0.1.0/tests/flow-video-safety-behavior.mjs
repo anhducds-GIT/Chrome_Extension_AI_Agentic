@@ -29,6 +29,8 @@ function harness({
   modeSummaryLabel = VIDEO_MODE_SUMMARY,
   videoOptionLabel = "videocam Video",
   proveVideoAfterClick = true,
+  offerOutputX1 = false,
+  outputFixSilentlyFails = false,
   videoSummaryAfterSwitch = VIDEO_MODE_SUMMARY,
 } = {}) {
   let clicks = 0;
@@ -41,6 +43,7 @@ function harness({
   let tick = 0;
   let typed = false;
   let settingsOpen = false;
+  let outputOptionPresses = 0;
   let currentModeSummary = modeSummaryLabel;
   let videos = [media("old")];
   // Measured: settings controls react to the pointer sequence, not to a bare
@@ -93,10 +96,22 @@ function harness({
     const label = modeRegressesAfterTyping && typed ? IMAGE_MODE_SUMMARY : currentModeSummary;
     return label == null ? null : buttonNode(label, {
       click() { /* measured: a bare click does nothing to this control */ },
-      onPointerDown() { settingsClicks += 1; settingsOpen = true; },
+      onPointerDown() { settingsClicks += 1; settingsOpen = !settingsOpen; },
     });
   };
   const imageOption = buttonNode("image Image", { className: "flow_tab_slider_trigger" });
+  // F-26: bang cau hinh lo ra bon nut so luong output co nhan chinh xac x1..x4
+  // (do that: evidence/F14-mode-probe-vi-20260902.json). Harness chi dung nut x1
+  // khi kich ban khai `offerOutputX1`, de con test duoc ca ca "khong co nut de
+  // sua" — do la duong runner phai TU CHOI chu khong duoc im lang di tiep.
+  const outputX1Option = buttonNode("x1", {
+    onPointerDown() {
+      outputOptionPresses += 1;
+      // Mo phong ca xau: nut bam duoc, khong bao loi, ma chip KHONG doi. Neu
+      // runner tin cu bam thay vi doc lai chip thi no se di tiep va tieu credit.
+      if (!outputFixSilentlyFails) currentModeSummary = String(currentModeSummary || "").replace(/\sx\d+$/, " x1");
+    },
+  });
   const remountCreate = buttonNode(createLabel, {
     click() { remountClicks += 1; videos = [...afterClick.map(media), ...videos]; },
   });
@@ -149,7 +164,7 @@ function harness({
     querySelectorAll(selector) {
       if (selector === "button") {
         const buttons = [summaryButton()].filter(Boolean);
-        if (settingsOpen) buttons.push(imageOption, videoOption);
+        if (settingsOpen) { buttons.push(imageOption, videoOption); if (offerOutputX1) buttons.push(outputX1Option); }
         if (globalCreateButton) buttons.push(globalCreateButton);
         if (upgradeAfterTyping && typed && upgradeScope === "global") buttons.push(...upgradeButtons);
         return [...buttons, ...composerButtons()];
@@ -188,6 +203,7 @@ function harness({
     remountClicks: () => remountClicks,
     typedInto: () => focusedTargets[focusedTargets.length - 1] || null,
     settingsClicks: () => settingsClicks,
+    outputOptionPresses: () => outputOptionPresses,
     videoModeClicks: () => videoModeClicks,
     globalCreateClicks: () => globalCreateClicks,
     typed: () => typed,
@@ -213,13 +229,33 @@ function harness({
 //
 // Kiem ca ca "mode da dung Video ma van x4": do la ca nguy hiem nhat, vi moi
 // tien de khac deu xanh nen khong ai nghi ngo gi.
+// (a) KHONG co nut de sua -> phai TU CHOI. Duong nay la lop cuoi, va no van
+//     phai dung: F-26 cho runner TU SUA, khong phai cho no im lang di tiep.
+//     Luu y: nay runner DUOC PHEP mo bang cau hinh de thu sua — phep kiem cu
+//     "khong duoc dung toi bang cau hinh" da lac hau va da bo.
 for (const label of ["Video · 360p · 8s crop_16_9 x2", "Video · 360p · 8s crop_16_9 x4"]) {
   const h = harness({ modeSummaryLabel: label, afterClick: ["already-video"] });
   const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-X2", attempt_id: "attempt-x2", prompt: "khong duoc gui", timeoutMs: 15000 });
-  assert.equal(response.ok, false, `${label} phai bi tu choi`);
+  assert.equal(response.ok, false, `${label}: sua khong duoc thi phai tu choi`);
   assert.match(response.error, /x[24]/, "chu bao loi phai noi ro chip dang dat bao nhieu");
   assert.equal(h.clicks(), 0, `${label}: KHONG duoc bam Create — day la cho credit bi tieu`);
-  assert.equal(h.settingsClicks(), 0, `${label}: khong duoc dung toi bang cau hinh`);
+  assert.equal(h.typed(), false, `${label}: khong duoc go khi chua sua duoc chip`);
+}
+
+// (b) CO nut x1 -> runner phai TU SUA roi chay tiep. Day la dieu Duc chot
+//     02/09: "cho runner tu dat x1 va tu doc cau hinh" — thay vi bat nguoi sua tay.
+{
+  const h = harness({ modeSummaryLabel: "Video · 360p · 8s crop_16_9 x3", offerOutputX1: true, afterClick: ["fixed-then-ran"] });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-FIX", attempt_id: "attempt-fix", prompt: "duoc gui sau khi sua", timeoutMs: 15000 });
+  assert.equal(response.ok, true, "co nut x1 thi runner phai tu sua roi chay tiep");
+  assert.equal(h.outputOptionPresses(), 1, "phai bam DUNG MOT lan vao nut x1");
+  const fixedChip = response.attempt?.detection?.output_chip;
+  assert.ok(fixedChip, "sua xong cung phai ghi lai — Duc phai doc duoc bang mat rang AI da doi cau hinh cua anh ay");
+  assert.equal(fixedChip.count_before, 3);
+  assert.equal(fixedChip.count_after, 1);
+  assert.equal(fixedChip.fixed, true);
+  assert.equal(h.clicks(), 1, "sua xong roi moi duoc bam Create, dung mot lan");
+  assert.equal(h.typed(), true);
 }
 
 // VA TREN DUONG CHUYEN ANH -> VIDEO. Day la ca de sot nhat: chip Image von la
@@ -248,6 +284,35 @@ for (const label of ["Video · 360p · 8s crop_16_9 x2", "Video · 360p · 8s cr
 // thu duy nhat con dung giua ta va mot luot chay khong biet se sinh may video.
 // KHONG viet test gia vo kiem no — mot test di qua duong khac roi bao "da phu"
 // con te hon khong co test.
+
+// (c) Bam duoc nut x1 nhung CHIP KHONG DOI. Day la ca duy nhat phan biet duoc
+//     "kiem lai chip" voi "tin cu bam". Mot dot bien doi buoc kiem cuoi thanh
+//     `return true` tung lot luoi vi trong harness cu bam luon thanh cong.
+{
+  const h = harness({ modeSummaryLabel: "Video · 360p · 8s crop_16_9 x2", offerOutputX1: true, outputFixSilentlyFails: true, afterClick: ["khong-duoc-chay"] });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-FIXFAIL", attempt_id: "attempt-fixfail", prompt: "khong duoc gui", timeoutMs: 15000 });
+  assert.equal(response.ok, false, "bam xong ma chip khong doi thi phai tu choi — cu bam khong phai bang chung");
+  assert.equal(h.outputOptionPresses(), 1, "van phai thu sua dung mot lan");
+  // `fixed` phai la KET LUAN DOC TU CHIP, khong phai "toi da bam". Day la ca
+  // duy nhat phan biet duoc hai thu do — o moi ca khac, bam xong la chip doi.
+  const chip = response.attempt?.detection?.output_chip;
+  assert.ok(chip, "phai ghi lai output_chip ke ca khi tu choi");
+  assert.equal(chip.fix_attempted, true, "phai ghi nhan la da thu sua");
+  assert.equal(chip.fixed, false, "chip khong doi thi KHONG duoc bao la da sua xong");
+  assert.equal(chip.count_before, 2);
+  assert.equal(chip.count_after, 2, "phai doc LAI chip sau khi bam, khong duoc tin cu bam");
+  assert.equal(h.clicks(), 0, "KHONG duoc bam Create");
+  assert.equal(h.typed(), false, "khong duoc go");
+}
+
+// (d) Khong tim thay nut x1 -> phai DONG BANG lai truoc khi tu choi. De bang mo
+//     la de trang o trang thai Duc khong dat, va luot sau se gap mot bang dang mo.
+{
+  const h = harness({ modeSummaryLabel: "Video · 360p · 8s crop_16_9 x2", afterClick: ["khong-duoc-chay"] });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-NOFIX", attempt_id: "attempt-nofix", prompt: "khong duoc gui", timeoutMs: 15000 });
+  assert.equal(response.ok, false);
+  assert.equal(h.settingsClicks(), 2, "mo bang ra thi phai dong lai: dung hai cu bam chip (mo + dong)");
+}
 
 // Measured Image summary: one settings click, one exact measured Video-option
 // click, then a proven closed Video summary before typing/Create.

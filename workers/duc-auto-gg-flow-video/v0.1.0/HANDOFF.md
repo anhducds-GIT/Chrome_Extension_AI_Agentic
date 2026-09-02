@@ -982,3 +982,32 @@ với F4R8 là **7/7 job, 42/50 credit trên `Bình`**, giao diện tiếng Vi�
   thời lượng — thứ quyết định 6 hay 7 credit mỗi video. **Chưa làm gì: bấm vào đó là đổi cấu
   hình của Đức, cần Đức chốt.**
 - **Đo:** suite **94/94**.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 16): runner tự đặt `x1` và tự đọc cấu hình (F-26)
+
+Đức chốt hai điều: cho runner tự đặt `x1` và tự đọc cấu hình; **và** đây là việc AI nên tự làm
+được **trên mọi extension**, không riêng gói này.
+
+- **F-26 XONG.** Runner tự mở bảng cấu hình, tự bấm `x1`, rồi **đọc lại chip để kết luận** —
+  không tin cú bấm. Cổng từ chối của F-15 **giữ nguyên làm lớp cuối**; sửa không được thì vẫn
+  từ chối, và **luôn đóng bảng lại** trước khi từ chối.
+- **Ghi vào sổ cái trường `output_chip`** (`label_before`, `count_before`, `fix_attempted`,
+  `count_after`, `fixed`). Lý do: **một thay đổi cấu hình do AI tự làm mà không để lại dấu vết
+  thì Đức không còn cách nào biết**. `fixed` là kết luận **đọc từ chip**, không phải "tôi đã bấm".
+- **Luật cho mọi extension đã viết vào `AGENTS.md` của gói**, kèm ghi rõ **nợ một ADR ở tầng
+  repo** — luật này áp cho mọi extension nhưng `docs/adr/` cần `_root`, phiên khác đang giữ.
+- **Ba sai sót của tôi trong lượt này, cả ba đều do test/công cụ bắt:**
+  ① Phép kiểm cũ *"không được dùng tới bảng cấu hình"* nay **lạc hậu** — runner được phép mở bảng
+  để tự sửa. Đã thay bằng ca mạnh hơn: mở thì phải đóng, và **đúng hai** cú bấm chip (mở + đóng).
+  ② `trySetSingleOutput` trả về một phán quyết mà **không ai dùng** sau khi tôi tách hàm — code
+  chết, và mutation đổi nó thành `return true` lọt lưới vì thế. **Một hàm trả về phán quyết mà nó
+  không tự đọc được là code nói dối.** Đã bỏ giá trị trả về.
+  ③ **Một đột biến bị bỏ lại trong `provider-adapter.js`** — lần thứ hai trong ngày bộ mutation
+  rò rỉ. Suite bắt được, nhưng đó là **may, không phải thiết kế**.
+- **Đã dựng bộ chạy đột biến CÓ KIỂM TOÀN VẸN** (`mut-run.mjs` ở scratchpad): băm SHA trước/sau,
+  khôi phục trong `process.on("exit"/"SIGINT"/"SIGTERM")`, và **thoát mã 1 nếu file nguồn lệch**.
+  Từ nay không có mutation nào lặng lẽ ở lại.
+- **Đo:** suite **94/94** · mutation **7/7** · toàn vẹn **OK**.
+- **Còn lại:** F-26 **chưa kiểm live** (cần reload). F-22 (đọc độ phân giải để suy trần chuỗi)
+  nay đã có `findOutputCountOption` làm mẫu — cùng một cách làm. Và **F-25** vẫn là vật cản
+  thật của chuỗi dài.

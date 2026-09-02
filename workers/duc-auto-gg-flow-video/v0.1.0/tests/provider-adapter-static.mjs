@@ -205,3 +205,28 @@ const html = fs.readFileSync(new URL("sidepanel.html", root), "utf8");
 assert.ok(html.indexOf('<script src="provider-adapter.js"></script>') < html.indexOf('src="sidepanel.js"'));
 
 console.log("provider adapter static tests: PASS");
+
+// F-26: findOutputCountOption nhan nut so luong output theo nhan CHINH XAC da do
+// (evidence/F14-mode-probe-vi-20260902.json cho thay bon nut nhan dung "x1".."x4").
+// Bang cau hinh nay con co 360p/720p — bam nham mot trong do KHONG mat credit
+// ngay, nhung no doi DON GIA moi video, nen mo ho o day la mo ho ve tien.
+// Ghim ba dieu: khop chinh xac (khong startsWith), doi DUNG MOT ung vien, va
+// khong bao gio tra ve mot nut khong nhin thay duoc.
+{
+  const btn = (text, extra = {}) => ({
+    innerText: text, textContent: text, disabled: false,
+    getAttribute: () => null,
+    getBoundingClientRect: () => ({ width: extra.hidden ? 0 : 40, height: extra.hidden ? 0 : 24 }),
+  });
+  const docOf = (buttons) => ({
+    defaultView: { getComputedStyle: () => ({ display: "block", visibility: "visible" }) },
+    querySelectorAll: (sel) => (sel === "button" ? buttons : []),
+  });
+  const x1 = btn("x1");
+  assert.equal(adapter.findOutputCountOption(docOf([x1, btn("x2"), btn("360p")]), 1), x1, "dung mot ung vien x1 thi nhan");
+  assert.equal(adapter.findOutputCountOption(docOf([btn("x1"), btn("x1")]), 1), null, "hai ung vien la mo ho -> tu choi");
+  assert.equal(adapter.findOutputCountOption(docOf([btn("x2"), btn("x3")]), 1), null, "khong co x1 -> tu choi");
+  assert.equal(adapter.findOutputCountOption(docOf([btn("x1 lan")]), 1), null, "phai khop CHINH XAC, khong duoc startsWith");
+  assert.equal(adapter.findOutputCountOption(docOf([btn("x1", { hidden: true })]), 1), null, "nut khong nhin thay duoc thi khong duoc bam");
+  assert.equal(adapter.findOutputCountOption(docOf([btn("x1")]), 0), null, "so luong khong hop le -> tu choi");
+}
