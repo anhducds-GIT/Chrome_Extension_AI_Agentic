@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "s4-gate",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02. S1+S2+S3 da dong va push, Khoi D 0/0/0/0. Brief S4 da soan: docs/briefs/BRIEF-S4.md. VIEC KE TIEP: phien S4 — cong kiem cau truc B1-B14, CHI CANH BAO chua chan.",
-      "released_at": "2026-09-02"
+      "task": "PHIEN S4 DA XONG, dang giu quyen den khi push xong (tra quyen bang commit rieng ngay sau day). XONG 2026-09-02. Phien S4 da dong: scripts/check-bootstrap.mjs voi 14 phep kiem B1-B14, khoi grandfathered 48 duong dan (DO THAT, ke hoach ghi 52), noi vao session-check o CHE DO CANH BAO (EXPECTED_CHECKS 7 -> 8). Do duoc: 0 cho DO, 51 cho VANG (B6 49 + B9 2); B12 KHONG AP DUNG vi chua co docs/adr/. Suite 95+6+79+15+20 xanh, 22/22 dot bien bi bat. VIEC KE TIEP: phien S5 — tao docs/adr/, B12 se tu chay khong can sua code. Chi tiet o cuoi HANDOFF.md.",
+      "released_at": null
     }
   }
 }

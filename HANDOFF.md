@@ -193,3 +193,53 @@
     LOW) · `firstSentence` cắt theo ký tự · `compareRepoMap` chưa kiểm sâu hơn hình dạng.
   - **Việc kế tiếp:** S4 — cổng kiểm cấu trúc, mở rộng `.repo-structure.json` thành 14 phép
     kiểm. **Chỉ cảnh báo, chưa chặn.** Kèm: gộp luôn CI vào S4 nếu Đức đổi ý (xem mục nợ dưới).
+
+- **2026-09-02 · `s4-gate`** — **PHIÊN S4 XONG. Cổng kiểm cấu trúc B1–B14 đã chạy, CHẾ ĐỘ CẢNH BÁO.**
+  - Thêm `scripts/check-bootstrap.mjs`. Chạy: `node scripts/check-bootstrap.mjs` (thêm `--all`
+    để xem hết, mặc định cắt ở 12 dòng mỗi phép kiểm và **nói rõ đã cắt bao nhiêu**).
+  - **Đo được hôm nay: 0 chỗ ĐỎ · 51 chỗ VÀNG** — B6 độ sâu điều hướng 49 chỗ (25 trong
+    `drafts/`, phần còn lại là `delegations/`, `docs/studies`, `docs/briefs`, và tài liệu của
+    bản Gemini v0.1.0 đã nghỉ) · B9 hai file `AGENTS.md` dài quá 200 dòng (chatgpt 204,
+    gemini v0.2.0 201). **B12 in KHÔNG ÁP DỤNG** vì repo chưa có `docs/adr/` — đó là phiên S5,
+    và bịa ra một kết quả xanh ở đó là nói dối.
+  - **KHÔNG đo lại thứ đã có số đo.** B1/B3/B4/B11 lấy thẳng `model.health` của
+    `build-dashboard.mjs`; B2/B5/B7 lấy thẳng `validateStatus`. Để làm được vế thứ hai,
+    `validateStatus` được tách thành `validateStatusDetailed` — **cùng một phép đo, gắn thêm
+    MÃ ngay tại chỗ đang đo**. Câu chữ thông báo không đổi một chữ; `validateStatus` cũ trở
+    thành lớp bọc mỏng, nên không nơi gọi nào phải sửa.
+  - **`collectModel` có thêm chế độ `tolerant`** (mặc định vẫn ném như cũ). Lý do: cổng kiểm
+    cấu trúc sinh ra để CHỈ TÊN cái sai, nên nếu nó cũng chết ở lỗi STATUS đầu tiên thì người
+    đọc chỉ thấy một lỗi và mất 13 phép kiểm còn lại. Ở chế độ này lỗi được gom vào
+    `model.statusErrors`. Đầu vào hỏng (`claims.json`, `.repo-structure.json`) **vẫn ném ở cả
+    hai chế độ** — đó không phải "một đơn vị khai sai" mà là "không đọc nổi bảng chủ sở hữu".
+  - **`.repo-structure.json` có thêm khối `grandfathered`: 48 đường dẫn.** Kế hoạch ghi 52,
+    đo lại tại `b7302e3` ra **48** — tôi lấy số đo, không lấy số trong kế hoạch. Chưa phép kiểm
+    nào dùng tới khối này (kiểm tên đường dẫn là việc của S7); hôm nay `check-bootstrap` chỉ
+    kiểm chiều ngược lại: đường dẫn nào trong danh sách miễn trừ đã biến mất khỏi HEAD thì
+    phải nói ra — một danh sách miễn trừ để mục nát cũng là nợ.
+  - **`EXPECTED_CHECKS` 7 → 8**, đúng luật chống tự tháo cổng: thêm cổng con "Cổng kiểm cấu
+    trúc B1–B14 (chỉ cảnh báo)" vào `session-check.mjs`. Nó **KHÔNG BAO GIỜ đỏ vì nợ cấu trúc**
+    — nợ chỉ được in ra. Ngoại lệ duy nhất, và nó không phải chặn nợ: nếu chính
+    `check-bootstrap.mjs` **không chạy được** (thoát khác 0) thì đỏ, vì đó là *bộ kiểm hỏng*,
+    không phải *repo có nợ*; báo xanh dựa trên một điều không kiểm được chính là lỗ fail-open
+    mà mục 7 vừa phải đi vá.
+  - **Đo:** suite **95 + 6 + 79 + 15 + 20** xanh · **22/22 đột biến bị bắt**.
+    Hai đột biến THOÁT ở vòng đầu và đã phải sửa test, ghi lại để vòng sau đừng lặp:
+    ① fixture không có `scripts/` nên nhánh "đơn vị gốc repo" của B14 **không bao giờ chạy** —
+    fixture không phân biệt được hai nhánh thì con số mutation nói dối, đúng cảnh báo trong
+    BRIEF-S4; ② phép kiểm tích hợp chỉ tìm chuỗi `"check-bootstrap.mjs"` trong
+    `session-check.mjs`, mà tên đó còn nằm trong một dòng ghi chú — nên đổi lời gọi sang script
+    khác vẫn xanh. Nay nó soi đúng lời gọi `execFileSync`.
+  - **Còn mở:** 51 cảnh báo VÀNG ở trên — **cố ý chưa trả**, S4 chỉ có nhiệm vụ làm nó nhìn
+    thấy được. B6 sẽ tự tụt mạnh sau S6 (dọn `drafts/`). Nợ cũ chưa đụng, y như S3 để lại:
+    enumeration chưa ghim vào ảnh chụp HEAD bất biến · `firstSentence` cắt theo ký tự ·
+    `compareRepoMap` chưa kiểm sâu hơn hình dạng · repo chưa có kiểm tự chạy trên GitHub nên
+    số test vẫn là **[KHAI]** với auditor đọc qua GitHub (Đức đã chốt 02/09: chưa làm CI).
+  - **BẪY THỨ TỰ TRONG CHÍNH `BRIEF-S4.md`, phiên sau đừng vấp lại:** bước "Mở phiên" bảo giữ
+    claim `_root` **tới khi push xong**, nhưng phần "Đóng phiên" lại commit `claims.json` đã
+    trả quyền **trước** khi chạy cổng — mà mục 1 của cổng đỏ ngay khi file gốc repo bị sửa
+    trong commit chưa push mà không ai đứng tên. Thứ tự đúng: **giữ quyền → cổng xanh → push
+    → trả quyền bằng một commit riêng → cổng xanh → push lần hai.** Đây là biến thể của đúng
+    cái bẫy S3 đã ghi lại (bộ sinh đọc từ HEAD), nên nó thuộc loại lỗi lặp lại được.
+  - **Việc kế tiếp: phiên S5 — `docs/adr/`.** Tạo được thư mục đó là B12 tự hết KHÔNG ÁP DỤNG,
+    không phải sửa thêm dòng code nào (phần thân B12 đã viết đủ và đã có test ghim bằng fixture).
