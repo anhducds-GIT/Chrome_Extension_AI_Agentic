@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-02",
-  "generated_commit": "4b3bedc",
+  "generated_commit": "8b20c88",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -97,19 +97,19 @@
       "lifecycle": "building",
       "status_md": "workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "F-21: tren duong VIDEO, attempt.detection bi nhanh video cua sidepanel ghi de nen typing_path/attach khong toi so cai (sidepanel.js:4512 thay trang cai 4697 vua ghi). Sua thi can 1 luot live nua (15 credit) de xac nhan -> HOI DUC. F-18 da HA khoi P1: luot F4R3 02/09 chay tron ven, video that, typing_path=input_events, create_button=enabled",
+      "next_step": "F-18 cho tai hien: duong go lanh (typing_path=input_events, do 2 luot live), va tu nay MOI luot deu ghi typing_path + composer_len truoc/sau vao so cai — luot nao lai hong thi doc thang, khong phai doan. No con lai (nho, chua gap that): nhanh ANH cua sidepanel cung khong trai ban cu, cung goc benh F-21",
       "priority_rank": 1,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "F4R3 (02/09, kaito): luot trial x1 CHAY XONG — video that c81af2c5, quy gan dung 1 ung vien, 0 retry, 15 credit. Duong go do duoc typing_path=input_events + create_button=enabled voi 0 credit (dry_run), TRUNG KHIT 27/08 -> F-18 khong tai hien. DINH CHINH: ung vien 27-ky-tu-thua SONG LAI (composer rong=28 nhung go 141 ky tu ra 141 -> hang so bi THAY THE chu khong cong them). No moi: F-21. Bang chung: evidence/F4R3-KET-QUA.md"
+      "open_item": "F4R5 (02/09): chuoi 3 job dau tien chay TRON VEN — 3/3 SUCCESS, moi job dung 1 video, 0 retry, va so cai co du chan doan cho TUNG job. Gia thuyet F-18 (composer lai do job thu 2 tro di) DA BI BAC: ca ba job deu before=28, after=prompt_len chan chan. Tinh ca truoc do la 5 luot go sach lien tiep; chi luot F4R2 lech. Bang chung: evidence/F4R5-KET-QUA.md"
     }
   ],
   "active_work": [
     {
       "id": "workers/duc-auto-gg-flow-video/v0.1.0",
       "unit": "workers/duc-auto-gg-flow-video/v0.1.0",
-      "title": "F-21: tren duong VIDEO, attempt.detection bi nhanh video cua sidepanel ghi de nen typing_path/attach khong toi so cai (sidepanel.js:4512 thay trang cai 4697 vua ghi). Sua thi can 1 luot live nua (15 credit) de xac nhan -> HOI DUC. F-18 da HA khoi P1: luot F4R3 02/09 chay tron ven, video that, typing_path=input_events, create_button=enabled",
+      "title": "F-18 cho tai hien: duong go lanh (typing_path=input_events, do 2 luot live), va tu nay MOI luot deu ghi typing_path + composer_len truoc/sau vao so cai — luot nao lai hong thi doc thang, khong phai doan. No con lai (nho, chua gap that): nhanh ANH cua sidepanel cung khong trai ban cu, cung goc benh F-21",
       "rank": 1,
       "claim": null
     },
