@@ -3,10 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-f18-evidence",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Duc doi sang profile Binh (360p/8s/6 credit), da reload. Chay chuoi voi nhip MOI de do pacing_ms lan dau tren trang that."
+      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG: nhip giong nguoi da KIEM CHUNG tren trang that (4 video, khong bi gan co). NO MOI F-25: vong chay job chet theo side panel — chuoi dung am tham trong khi moi lop deu song. Con 26/50 credit tren Binh.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
       "owner": "claude-y05",
@@ -16,11 +17,11 @@
       "released_at": null
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-surface-fix",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "DUC CHOT 02/09 giao gói: va lo hong surface — trang chu chatgpt.com bi coi la hoi thoai, va surfaceAllowed khong duoc noi vao dau. Port tu nhanh gemini/flow. KHONG dung STATUS.md (viec cua claude-y03).",
-      "released_at": null
+      "task": "TRA QUYEN 02/09 (claude-surface-fix). XONG va da push: va lo hong surface — trang chu chatgpt.com khong con bi coi la hoi thoai; WRONG_SURFACE noi vao ping, phan loai loi, hard-stop, va bang Halt. Suite 98/98. CON MO: chua nghiem thu live (can reload extension lan nua).",
+      "released_at": "2026-09-02"
     },
     "_root": {
       "owner": "claude-surface-fix",

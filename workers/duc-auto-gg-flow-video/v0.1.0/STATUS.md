@@ -5,9 +5,9 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "CAN DUC RELOAD EXTENSION (da sua .js) roi chay mot chuoi de do pacing_ms tren trang that — day se la lan DAU TIEN nhip giong nguoi duoc kiem chung. Truoc do van can Duc quyet: kiem credit con lai cua kaito, va co unusual activity co nen chay tiep khong. Push dang cho phien claude-core-k1 tu push (safe-push tu choi vi se cuon theo 2 commit cua ho)"
+next_step: "F-25: vong chay job chet theo side panel — chuoi dung sau Q004 va dung yen 22 phut trong khi MOI LOP DEU SONG (run.stop tra ok nhung state khong doi). Nang nhip dua chuoi 7 job tu ~9 phut len ~20+ phut nen diem gay nay nguy hiem gap doi. Can tim ra cai gi giet vong lap TRUOC KHI tin vao chuoi dai. Con 26/50 credit tren Binh"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "Nang nhip lan hai sau khi Google gan co unusual activity (Duc chot: muc tieu la chay TRON mot flow, khong phai chay nhanh). Nhip giua hai job 20-30s -> 45-120s mac dinh 90s; nghi trong trang 2.1-6.1s -> 7.3-33s moi job. Chuoi 7 job: ~9 phut -> ~18 phut. Ghim y dinh thanh thuoc tinh do duoc, gom ca BIEN DO (nghi lau ma deu dan van la nhip may) va mot phep kiem doi chuoi day phai ton >=10 phut cho. Suite 92/92, 6/6 dot bien. CHUA do live"
+current_focus: "F4R8 (02/09, ho so Binh, giao dien tieng Viet): 4 video that, 0 loi, KHONG bi gan co — khac han luot F4R6 bi chan o job thu hai. NHIP GIONG NGUOI DUOC KIEM CHUNG LAN DAU tren trang that: pre_compose 4996-8621ms, post_type 3329-8717ms, deu trong khoang khai va khong gia tri nao trung nhau. composer_len before=17 moi job (locale khac thi hang so nen khac: kaito la 28) va after=prompt_len chan chan. Diem gay moi: F-25. Bang chung: evidence/F4R8-KET-QUA.md"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

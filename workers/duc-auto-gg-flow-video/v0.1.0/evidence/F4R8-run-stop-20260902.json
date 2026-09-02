@@ -1,0 +1,21 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-79886606-2234-43ef-a659-e45e40cd79c8",
+  "ok": true,
+  "result": {
+    "attempt_id": "attempt-mtk20x21-4-vbjb9mp3",
+    "job_id": "Q004",
+    "note": "Đã yêu cầu dừng. Prompt của job này ĐÃ gửi đi rồi, không thu hồi được — chỉ các job sau mới không được gửi.",
+    "phase": "SUCCESS",
+    "prompt_already_sent": true,
+    "stopped_at": "2026-09-02T12:38:24.484Z",
+    "was_running": true
+  },
+  "responded_at": "2026-09-02T12:38:24.484Z",
+  "served_by": {
+    "instance_id": "e08e1d6a-63d0-4be1-909a-f0cbd56ef891",
+    "label": "Binh"
+  }
+}

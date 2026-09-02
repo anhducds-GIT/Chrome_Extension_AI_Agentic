@@ -1,0 +1,37 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-3dbed8ad-37f3-4ee3-8b65-f820d9402ac8",
+  "ok": true,
+  "result": {
+    "artifact_persistence_failed": false,
+    "checkpoint": {
+      "filename": "Bridge-2026-09-02T11-38__results__v01.xlsx",
+      "version": 1
+    },
+    "counts": {
+      "failed": 0,
+      "interrupted": 0,
+      "pending": 3,
+      "running": 0,
+      "success": 4,
+      "total": 7
+    },
+    "current": {
+      "attempt_id": "attempt-mtk20x21-4-vbjb9mp3",
+      "job_id": "Q004",
+      "phase": "SUCCESS",
+      "runtime_stage": "SUCCESS"
+    },
+    "halt": null,
+    "pause_requested": false,
+    "paused": false,
+    "state": "RUNNING"
+  },
+  "responded_at": "2026-09-02T12:37:09.306Z",
+  "served_by": {
+    "instance_id": "e08e1d6a-63d0-4be1-909a-f0cbd56ef891",
+    "label": "Binh"
+  }
+}

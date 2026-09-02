@@ -205,6 +205,40 @@
   — đã có bằng chứng DOM) rồi suy ra trần thay vì khoá cứng. Cẩn thận: đọc `360p` từ nhãn chip
   là **selector mới**, phải có bằng chứng DOM trước, đúng luật vàng 1.
 
+- **F-24** · [QUÉT 02/09, chưa gặp thật, **hỏng an toàn**] **Quả mìn locale còn lại duy nhất:**
+  `findVideoModeOption()` trong `provider-adapter.js` so khớp **chính xác** chuỗi tiếng Anh
+  `"videocam Video"`. Trên giao diện tiếng Việt nhãn đó gần chắc bị dịch (cùng probe đã thấy
+  `videocam Xem video` ở thanh bên), nên hàm sẽ trả `null`.
+  **Vì sao chưa cắn:** nó chỉ được gọi khi `ensureFlowVideoMode()` thấy mode **không phải**
+  video và cần tự chuyển. Hiện Đức đặt Video mode bằng tay, và F-14 đã đo rằng `element.click()`
+  không tác dụng lên nhóm nút cấu hình đó — nên đường tự chuyển vốn đang không dùng được.
+  **Hỏng an toàn:** trả `null` → `FLOW_VIDEO_MODE_ERROR` → dừng trước khi gõ, 0 credit. Không
+  bao giờ bấm nhầm.
+  **Cách sửa, đúng luật vàng 1 — đừng dịch tay:** mở bảng chọn mode trên một hồ sơ tiếng Việt,
+  chạy `dom_probe`, đọc nhãn THẬT, lưu probe vào `evidence/`, rồi mới thêm nhãn kèm trích nguồn
+  — y như đã làm cho `CREATE_BUTTON_LABELS` ở F-23.
+  **Đã kiểm và KHÔNG phải mìn:** chuỗi `"arrow_forward Create"` ở `content.js:1291` nằm trong
+  **comment**; đường `dry_run` gọi qua `ADAPTER.findCreateButton` nên đã được F-23 sửa. Nhãn
+  chip `IMAGE_MODE_SUMMARY_LABEL` là tên sản phẩm + tham số, rủi ro thấp, và đã có nợ riêng F-11.
+
+- **F-25** · [ĐO 02/09, lượt F4R8 live] **Vòng chạy job chết theo side panel — và nâng nhịp làm
+  điểm gãy này nguy hiểm gấp đôi.** Chuỗi 7 job dừng sau Q004 và **đứng yên 22 phút**:
+  `queue.list` cho Q005–Q007 `PENDING`, `run.status` cho `state: RUNNING` / `running: 0` /
+  **`halt: null`**, trong khi `system.ping` báo mọi lớp đều sống (`executor: available`,
+  `state: READY`, composer tìm thấy, không generating). Chi tiết chốt hạ: **`run.stop` trả
+  `ok:true` mà trạng thái không đổi** → không có ai tiêu thụ cả yêu cầu dừng. Vòng lặp chạy job
+  nằm trong `sidepanel.js`, nên panel đóng/mất là chuỗi chết âm thầm — **không lỗi, không halt,
+  không dấu hiệu gì ngoài việc số đếm ngừng nhích.**
+  **Vì sao nay mới đau:** nâng nhịp đưa một chuỗi 7 job từ ~9 phút lên **~20+ phút**, tức hơn
+  gấp đôi thời gian phơi ra trước điểm gãy. Nhịp chậm là đúng cho mục tiêu không bị chặn, nhưng
+  nó biến **độ bền của chuỗi** thành nút thắt mới.
+  **Việc cần làm, theo thứ tự:** ① tìm ra chính xác cái gì giết vòng lặp (panel đóng? cửa sổ đổi?
+  service worker ngủ kéo panel theo?) — chưa đo được, đừng đoán; ② cho `run.status` phân biệt
+  được "đang chờ nhịp" với "không còn ai chạy" (ví dụ một mốc thời gian nhích đều), để AI điều
+  phối phát hiện trong một phút thay vì hai mươi; ③ cân nhắc cho vòng lặp sống ở service worker
+  thay vì panel — **đổi lớn, cần Đức chốt**.
+  Bằng chứng: `evidence/F4R8-KET-QUA.md`.
+
 - **F-20** · **LUẬT MỚI, đã ghim, đọc trước khi sửa BẤT KỲ chữ báo lỗi nào trong gói này.**
   `classifyFailure` (`runner-core.js:88-103`) quyết định một thất bại có được thử lại hay dừng
   cả mẻ, và nó **dò từ khoá trên TOÀN BỘ câu báo lỗi**, không phải trên tiền tố. Nên **sửa lời

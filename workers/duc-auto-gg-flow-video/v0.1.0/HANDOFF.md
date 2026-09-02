@@ -838,3 +838,35 @@ Lệnh `run.trial` với `delay_sec: 90` bị **chính lớp Bridge** từ chố
 - **Chưa chạy được chuỗi.** `bridge-core.js` sống trong **service worker**, nên bản vá chỉ có
   hiệu lực sau khi reload extension. Đây là lần reload cuối của đợt này — sau nó không còn con
   số nào của nhịp nằm ngoài tầm với.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 11): nhịp được kiểm chứng, và một điểm gãy mới
+
+**Bằng chứng:** [`evidence/F4R8-KET-QUA.md`](evidence/F4R8-KET-QUA.md) · **4 video, 24/50 credit
+trên `Bình`** · chạy trên **giao diện tiếng Việt**, nhờ F-23.
+
+- **NHỊP GIỐNG NGƯỜI: xác nhận trên trang thật, lần đầu.** `pre_compose` **4996–8621 ms**
+  (khai 3000–14000), `post_type` **3329–8717 ms** (khai 2500–11000), **không giá trị nào trùng
+  nhau**. Đây cũng là lần đầu chuỗi `carryDiagnostic → CARRIED_DIAGNOSTICS → mergeDetection →
+  sổ cái` chạy trọn cho một trường mới — ba lượt trước đều trả `null` vì thiếu một mắt xích.
+- **Không bị gắn cờ.** Lượt F4R6 (nhịp 20–30s) bị chặn ở **job thứ hai**; lượt này 4 job liên
+  tiếp, không cảnh báo nào. **Chưa đủ kết luận nhân quả** — một lượt không chứng minh được, và
+  đã đổi nhiều hơn một biến (đổi cả tài khoản lẫn độ dài video). Là dấu hiệu, không phải bằng chứng.
+- **`composer_len` xác nhận lần thứ tư:** `before` = **17** ở mọi job kể cả job 2/3/4, `after` =
+  đúng `prompt_len`. **Nhưng baseline là 17 chứ không phải 28 như hồ sơ `kaito`** — hằng số nền
+  **phụ thuộc ngôn ngữ**, đừng ghim con số 28 ở đâu cả.
+- **ĐIỂM GÃY MỚI (F-25):** chuỗi dừng sau Q004 và **đứng yên 22 phút** trong khi **mọi lớp đều
+  sống** — `executor: available`, `state: READY`, composer tìm thấy, `halt: null`. Chi tiết chốt
+  hạ: **`run.stop` trả `ok:true` mà trạng thái không đổi**, tức không có ai tiêu thụ cả yêu cầu
+  dừng. Vòng lặp chạy job nằm trong `sidepanel.js` nên panel mất là chuỗi chết **âm thầm**.
+  **Đánh đổi phải nói thẳng:** nâng nhịp đưa chuỗi 7 job từ ~9 phút lên ~20+ phút, tức **hơn gấp
+  đôi thời gian phơi ra** trước điểm gãy này. Nhịp chậm vẫn đúng, nhưng **độ bền chuỗi** là nút
+  thắt mới.
+- **Hai lỗi vặt của tôi trong lượt này:** ① poller đặt 220 vòng × 10s = 36 phút, không đủ cho
+  nhịp mới — **nới nhịp thì phải nới cả ngân sách theo dõi**; ② đọc `ledger.read` giữa chừng ra
+  rỗng vì sổ cái chỉ đầy ở mốc checkpoint, tưởng nhầm là mất dữ liệu.
+- **Cũng trong lượt này, theo yêu cầu Đức, đã QUÉT toàn gói** tìm mọi bản sao còn lại của
+  luật/hằng số/chuỗi tiếng Anh, thay vì đợi từng cái tự lộ. Kết quả: còn **đúng một** quả mìn
+  locale (`findVideoModeOption` so khớp `"videocam Video"`) → **F-24**, và nó **hỏng an toàn**
+  (trả `null` → dừng trước khi gõ, 0 credit). Hai thứ tưởng là mìn nhưng không phải: chuỗi ở
+  `content.js:1291` nằm trong comment, và đường `dry_run` đi qua `findCreateButton` nên đã được
+  F-23 sửa.
