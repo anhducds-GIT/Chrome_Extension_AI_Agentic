@@ -249,32 +249,43 @@ check("Sự thật máy sinh còn tươi", () => {
   return { ok: true, msg: "DASHBOARD.md, llms.txt, repo-map.json và FEATURE-PARITY.md đã commit đều khớp với HEAD." };
 });
 
-/* ---- 8. Cổng kiểm cấu trúc (CHẾ ĐỘ CẢNH BÁO) --------------------------- */
-// Phiên S4. Phép kiểm này CỐ Ý không bao giờ đỏ vì nợ cấu trúc — nợ B1…B14 chỉ được IN RA.
-// Bật chặn là việc của phiên S7, sau khi nợ đã về 0; bật sớm thì mọi phiên đang làm dở việc
-// khác sẽ tắc cổng vì một khoản nợ không phải của mình, và người ta sẽ học cách bỏ qua cổng.
+/* ---- 8. Cổng kiểm cấu trúc — CHẶN từ phiên S7 -------------------------- */
+// S4 dựng phép kiểm này ở chế độ chỉ-in-ra. S7 bật chặn: nợ thuộc nhóm CHẶN nay làm cổng đỏ.
 //
-// NGOẠI LỆ DUY NHẤT, và nó không phải là chặn nợ: nếu chính check-bootstrap.mjs KHÔNG CHẠY
-// ĐƯỢC (thoát khác 0 — claims.json hỏng, .repo-structure.json hỏng, git không chạy) thì đỏ.
-// Đó là "bộ kiểm hỏng", không phải "repo có nợ". Fail-open ở đây nghĩa là cổng báo xanh dựa
-// trên một điều nó không kiểm được — đúng thứ mục 7 vừa phải đi sửa.
-check("Cổng kiểm cấu trúc B1–B14 (chỉ cảnh báo)", () => {
+// BA MÃ THOÁT của check-bootstrap.mjs, và cố ý KHÔNG gộp:
+//   0 = không có phép kiểm nhóm CHẶN nào đỏ (cảnh báo như B6/B9 vẫn có thể đỏ) -> XANH
+//   1 = repo CÓ NỢ thuộc nhóm CHẶN                                              -> ĐỎ
+//   2 = CHÍNH BỘ KIỂM không chạy được                                           -> ĐỎ, mã khác
+// Gộp 1 với 2 thì người đóng phiên đọc "cổng đỏ" mà không biết phải sửa repo hay sửa bộ kiểm.
+// Lớp fail-closed từ S4 giữ nguyên: bộ kiểm hỏng không được im lặng thành "repo ổn".
+//
+// Nhóm nào bị chặn thì khai ở `bootstrap.blocking` trong `.repo-structure.json`, KHÔNG viết
+// cứng ở đây — S8 sẽ mở thêm B6/B9 sau khi trả nợ, và lúc đó không ai phải sửa script.
+check("Cổng kiểm cấu trúc B1–B14", () => {
+  const tomTat = (text) => {
+    const summary = String(text).split("\n")
+      .filter((line) => /^(TỔNG|CHAN|BỎ QUA|NGOÀI 14|MIỄN TRỪ)/.test(line.trim()))
+      .map((line) => line.trim());
+    return summary.length ? summary.join(" · ") : "không đọc được dòng tổng kết";
+  };
+  const XEM = "Xem chi tiết: node scripts/check-bootstrap.mjs --all";
   let stdout;
   try {
     stdout = execFileSync(process.execPath, [path.join(ROOT, "scripts", "check-bootstrap.mjs")], {
       cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 300000
     });
   } catch (error) {
-    const detail = String(error.stderr || error.stdout || error.message).trim().split("\n").slice(-4).join(" | ");
-    return { ok: false, msg: `BOOTSTRAP_KHONG_CHAY_DUOC: scripts/check-bootstrap.mjs thoát khác 0 → ${detail}. Đây là bộ kiểm hỏng, KHÔNG phải nợ cấu trúc.` };
+    const out = String(error.stdout || "");
+    if (error.status === 1) {
+      // Repo có nợ thuộc nhóm CHẶN. Đây là cái S7 sinh ra để làm.
+      return { ok: false, msg: `${tomTat(out)} — có nợ thuộc nhóm CHẶN nên CHƯA được báo xong. ${XEM}` };
+    }
+    const detail = String(error.stderr || out || error.message).trim().split("\n").slice(-4).join(" | ");
+    return { ok: false, msg: `BOOTSTRAP_KHONG_CHAY_DUOC (mã thoát ${error.status ?? "?"}): scripts/check-bootstrap.mjs không chạy được → ${detail}. Đây là BỘ KIỂM HỎNG, KHÔNG phải nợ cấu trúc — đừng đi sửa repo.` };
   }
   // Chỉ lấy các dòng tổng kết. In cả bản đầy đủ ở đây thì báo cáo cổng dài gấp ba và không ai
   // đọc nữa — chi tiết nằm sau một lệnh, và lệnh đó được in ra ngay dưới đây.
-  const summary = stdout.split("\n")
-    .filter((line) => /^(TỔNG|BỎ QUA|NGOÀI 14|MIỄN TRỪ)/.test(line.trim()))
-    .map((line) => line.trim());
-  const head = summary.length ? summary.join(" · ") : "không đọc được dòng tổng kết";
-  return { ok: true, msg: `${head} — CHỈ CẢNH BÁO, không chặn. Xem chi tiết: node scripts/check-bootstrap.mjs --all` };
+  return { ok: true, msg: `${tomTat(stdout)} — nhóm CHẶN đạt hết. ${XEM}` };
 });
 
 /* ---- chống tự tháo cổng ------------------------------------------------- */

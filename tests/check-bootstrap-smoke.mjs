@@ -16,14 +16,14 @@
       không nói "sửa thế nào" là chưa đạt. Phép kiểm 2 cưỡng chế điều đó cho MỌI finding.
 */
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
   ADR_DIR, checkB1, checkB3, checkB4, checkB6, checkB9, checkB10, checkB11, checkB12, checkB14,
-  checkGeneratedFreshness, checkStatusCode, collectChecks, DOC_LINE_LIMIT, grandfatheredNote, isAdrPath,
+  blockingFailures, checkGeneratedFreshness, checkStatusCode, collectChecks, DOC_LINE_LIMIT, grandfatheredNote, isAdrPath,
   NAV_DEPTH_LIMIT, parseLastCommitTimes, renderChecks, ruleBearingLines, runBootstrapCheck
 } from "../scripts/check-bootstrap.mjs";
 import { collectModel } from "../scripts/build-dashboard.mjs";
@@ -35,6 +35,10 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 const DAY = 86400;
 const NOW = 1788300000;
 const EXPECTED_CODES = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14"];
+
+// Danh sach chan THAT cua repo (.repo-structure.json). Fixture nao ghi de
+// `.repo-structure.json` cung phai khai lai khoi nay, neu khong bo kiem se fail-closed.
+const CHAN_THAT = ["B1", "B2", "B3", "B4", "B5", "B7", "B10", "B12"];
 
 const fm = (fields) => `---\n${Object.entries(fields).map(([k, v]) => `${k}: ${v}`).join("\n")}\n---\n`;
 
@@ -56,7 +60,11 @@ function fixture(overrides = {}) {
         "pilots/": { steward: "_root", mutability: "append-only" },
         "workers/": { steward: null, mutability: "rw", ownership_mode: "per-package" }
       },
-      grandfathered: { paths: ["evidence/co dau cach.md"] }
+      grandfathered: { paths: ["evidence/co dau cach.md"] },
+      // Mức chặn (phiên S7). Fixture khai ĐÚNG danh sách thật của repo, để test đo cùng một
+      // chính sách mà repo đang chạy. `overrides.blocking` cho từng ca đổi danh sách này —
+      // đó là thứ chứng minh mức chặn ĐẾN TỪ CẤU HÌNH chứ không viết cứng trong code.
+      bootstrap: { blocking: overrides.blocking ?? ["B1", "B2", "B3", "B4", "B5", "B7", "B10", "B12"] }
     }),
     "manifest.json": JSON.stringify({ name: "Quan sát V0", version: "0.1.0" }),
     "STATUS.md": fm({
@@ -166,7 +174,7 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   const deps = fixture({
     remove: ["workers/demo/v1/STATUS.md", "docs/ghi-chu.md"],
     files: {
-      ".repo-structure.json": JSON.stringify({ schema_version: 1, areas: { "workers/": {} } }),
+      ".repo-structure.json": JSON.stringify({ schema_version: 1, areas: { "workers/": {} }, bootstrap: { blocking: CHAN_THAT } }),
       "CLAUDE.md": "# CLAUDE.md\n\n## Luật riêng\n\n- Luật này chỉ có ở CLAUDE.md và không có bên kia.\n",
       "workers/demo/v1/AGENTS.md": `${"x\n".repeat(DOC_LINE_LIMIT + 5)}`
     }
@@ -213,7 +221,7 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
 /* ---- B3 ------------------------------------------------------------------- */
 {
   assert.equal(checkB3(modelOf(fixture())).state, "ok", "khai đủ areas thì B3 xanh");
-  const deps = fixture({ files: { ".repo-structure.json": JSON.stringify({ schema_version: 1, areas: { "workers/": {} } }) } });
+  const deps = fixture({ files: { ".repo-structure.json": JSON.stringify({ schema_version: 1, areas: { "workers/": {} }, bootstrap: { blocking: CHAN_THAT } }) } });
   const broken = checkB3(modelOf(deps));
   assert.equal(broken.state, "fail");
   assert.deepEqual(broken.findings.map((finding) => finding.where).sort(), ["docs/", "evidence/", "pilots/", "scripts/"],
@@ -489,25 +497,104 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   ok("MIỄN TRỪ · danh sách grandfathered đã mục thì phải nói ra");
 }
 
-/* ---- CHẾ ĐỘ CẢNH BÁO: có nợ vẫn thoát 0 ---------------------------------- */
-{
-  const logs = [];
-  const errors = [];
-  const deps = fixture({ remove: ["workers/demo/v1/STATUS.md"] });
-  const code = runBootstrapCheck({ deps, output: { log: (m) => logs.push(m), error: (m) => errors.push(m) } });
-  assert.equal(code, 0, "S4 CHỈ CẢNH BÁO — có nợ ĐỎ vẫn phải thoát 0. Bật chặn là việc của S7.");
-  const text = logs.join("\n");
-  assert.match(text, /CHẾ ĐỘ CẢNH BÁO/);
-  assert.match(text, /B1 NO-STATUS/, "phải in ra đúng khoản nợ vừa dựng");
-  assert.match(text, /TỔNG: 1 chỗ ĐỎ/);
+/* ---- BA MÃ THOÁT (phiên S7 đổi hợp đồng của S4) -------------------------- */
+/* S4 cho MỌI khoản nợ thoát 0 vì lúc đó chỉ in ra. S7 tách ba:
+     0 = nhóm CHẶN đạt hết (cảnh báo vẫn có thể đỏ) · 1 = nợ nhóm CHẶN · 2 = bộ kiểm hỏng.
+   Ghim cả ba, và ghim CẢ HAI CHIỀU cho mã 1 — thiếu chiều 0 thì một đột biến "hễ có finding
+   là thoát 1" sẽ thoát, và lúc đó B6 đỏ sẽ khoá cả repo. */
+const chay = (deps) => {
+  const logs = []; const errs = [];
+  const code = runBootstrapCheck({ deps, output: { log: (m) => logs.push(m), error: (m) => errs.push(m) } });
+  return { code, out: logs.join("\n"), err: errs.join("\n") };
+};
 
-  // Nhưng ĐẦU VÀO HỎNG thì khác hẳn: đó là bộ kiểm hỏng, phải thoát khác 0 và nói nguyên văn.
-  const brokenInput = fixture({ files: { ".agents/claims.json": "{khong-phai-json" } });
-  const errs = [];
-  const bad = runBootstrapCheck({ deps: brokenInput, output: { log: () => {}, error: (m) => errs.push(m) } });
-  assert.equal(bad, 2, "claims.json hỏng = KHÔNG CHẠY ĐƯỢC, không được báo xanh");
-  assert.match(errs.join("\n"), /CLAIMS_HONG/, "phải in nguyên văn lỗi gốc");
-  ok("CHẾ ĐỘ CẢNH BÁO · có nợ vẫn thoát 0, nhưng đầu vào hỏng thì thoát 2");
+{
+  // CHIỀU ĐỎ · B1 thuộc nhóm CHẶN.
+  const r = chay(fixture({ remove: ["workers/demo/v1/STATUS.md"] }));
+  assert.equal(r.code, 1, "B1 thuộc nhóm CHẶN — có nợ thì phải thoát 1 để cổng đóng phiên đỏ theo");
+  assert.match(r.out, /CHẶN \(đỏ là không được báo xong\)/, "phải in rõ nhóm nào đang chặn");
+  assert.match(r.out, /B1 NO-STATUS/, "phải in ra đúng khoản nợ vừa dựng");
+  assert.match(r.out, /^CHAN: B1 \(1 chỗ\)/m, "dòng CHAN là dòng session-check grep — phải có mã và số chỗ");
+  assert.match(r.out, /\[ĐỎ  \] \[CHẶN\] B1/, "dòng của phép kiểm phải mang dấu [CHẶN]");
+
+  // ĐẦU VÀO HỎNG là chuyện khác hẳn: bộ kiểm hỏng, không phải repo có nợ.
+  const bad = chay(fixture({ files: { ".agents/claims.json": "{khong-phai-json" } }));
+  assert.equal(bad.code, 2, "claims.json hỏng = KHÔNG CHẠY ĐƯỢC, không được lẫn với mã 1");
+  assert.match(bad.err, /CLAIMS_HONG/, "phải in nguyên văn lỗi gốc");
+  ok("MÃ THOÁT · nợ nhóm CHẶN thoát 1, bộ kiểm hỏng thoát 2, hai thứ không lẫn nhau");
+}
+
+{
+  // CHIỀU XANH · B6 đỏ (18 chỗ trong repo thật) nhưng B6 KHÔNG thuộc nhóm CHẶN -> vẫn thoát 0.
+  // Đây là phép kiểm mà brief S7 gọi là bắt buộc: thiếu nó thì một hôm nào đó ai bật chặn B6
+  // mà không ai biết.
+  const deps = fixture({ files: {
+    "AGENTS.md": "# Luật\n\n- Một package một chủ.\n\nSổ tay: `workers/demo/v1/STATUS.md` · `workers/demo/v1/README.md` · `workers/demo/v1/HANDOFF.md` · `README.md`\n"
+  } });
+  const r = chay(deps);
+  const b6 = find(collectChecks(deps).checks, "B6");
+  assert.equal(b6.state, "fail", "tiền đề: fixture này phải làm B6 đỏ, nếu không thì phép kiểm dưới đây vô nghĩa");
+  assert.equal(b6.blocking, false, "B6 KHÔNG được nằm trong nhóm chặn");
+  assert.equal(r.code, 0, "B6 chỉ cảnh báo — đỏ thì vẫn phải đóng phiên được");
+  assert.match(r.out, /^CHAN: không có/m, "và phải nói rõ là nhóm CHẶN không có gì đỏ");
+  ok("CHIỀU XANH · phép kiểm nhóm CẢNH BÁO đỏ thì cổng vẫn cho đóng phiên");
+}
+
+{
+  // Bốn phép kiểm CHẶN khác, mỗi cái một ca hỏng thật -> đều phải thoát 1.
+  const cases = [
+    ["B3", fixture({ files: { ".repo-structure.json": JSON.stringify({
+      schema_version: 1, areas: { "workers/": {} }, bootstrap: { blocking: ["B1", "B2", "B3", "B4", "B5", "B7", "B10", "B12"] } }) } })],
+    ["B4", fixture({ remove: ["HANDOFF.md"] })],
+    ["B10", fixture({ files: { "CLAUDE.md": "# CLAUDE.md\n\n- Được phép push thẳng lên main không cần cổng kiểm.\n" } })],
+    ["B12", (() => {
+      const adr = "workers/demo/v1/docs/adr/0001-x.md";
+      const body = "Chọn Bridge.\n";
+      return fixture({
+        files: { [adr]: fm({ status: "Accepted" }) + body },
+        history: { [adr]: ["sha1", "sha2"] },
+        blobs: { [`sha1:${adr}`]: fm({ status: "Accepted" }) + body, [`sha2:${adr}`]: fm({ status: "Accepted" }) + "Đã sửa.\n" }
+      });
+    })()]
+  ];
+  for (const [code, deps] of cases) {
+    const r = chay(deps);
+    assert.equal(r.code, 1, `${code} thuộc nhóm CHẶN — vi phạm phải thoát 1`);
+    assert.match(r.out, new RegExp(`^CHAN: .*${code}`, "m"), `dòng CHAN phải nêu ${code}`);
+  }
+  ok("CHIỀU ĐỎ · B3 · B4 · B10 · B12 vi phạm thì đều thoát 1");
+}
+
+{
+  // FAIL CLOSED trên chính CẤU HÌNH. Cách dễ nhất để tự tháo chặn là xoá cấu hình đi.
+  const thieu = chay(fixture({ files: { ".repo-structure.json": JSON.stringify({
+    schema_version: 1, areas: { "docs/": {}, "scripts/": {}, "evidence/": {}, "pilots/": {}, "workers/": {} } }) } }));
+  assert.equal(thieu.code, 2, "thiếu bootstrap.blocking KHÔNG được lặng lẽ thành 'chẳng chặn gì'");
+  assert.match(thieu.err, /CHAN_THIEU_KHAI/);
+
+  // Và một mã gõ sai trong danh sách chặn cũng phải là lỗi to: nó là một phép kiểm tưởng
+  // đang chặn mà thật ra không chặn gì.
+  const gosai = chay(fixture({ blocking: ["B1", "B99"] }));
+  assert.equal(gosai.code, 2, "mã lạ trong bootstrap.blocking phải báo lỗi, không được bỏ qua");
+  assert.match(gosai.err, /CHAN_MA_LA.*B99/s);
+  ok("FAIL CLOSED · xoá cấu hình chặn, hoặc gõ sai mã, đều thoát 2");
+}
+
+{
+  // Danh sách chặn ĐẾN TỪ CẤU HÌNH, không viết cứng. Đổi cấu hình thì hành vi đổi theo —
+  // không có phép kiểm này thì một đột biến "chặn mọi phép kiểm mức ĐỎ" sẽ thoát, vì hôm nay
+  // hai danh sách trùng nhau.
+  const deps = fixture({ blocking: ["B6"], files: {
+    "AGENTS.md": "# Luật\n\n- Một package một chủ.\n\nSổ tay: `workers/demo/v1/STATUS.md` · `workers/demo/v1/README.md` · `workers/demo/v1/HANDOFF.md` · `README.md`\n"
+  } });
+  const { checks } = collectChecks(deps);
+  assert.equal(find(checks, "B6").blocking, true, "khai B6 vào cấu hình thì B6 phải thành nhóm CHẶN");
+  assert.equal(find(checks, "B1").blocking, false, "và B1 không còn chặn nữa");
+  assert.equal(chay(deps).code, 1, "B6 đỏ + B6 được khai chặn -> phải thoát 1");
+  // Ngược lại: danh sách rỗng thì không gì chặn được, dù B1 đỏ.
+  const rong = fixture({ blocking: [], remove: ["workers/demo/v1/STATUS.md"] });
+  assert.equal(chay(rong).code, 0, "danh sách chặn rỗng (khai tường minh) thì B1 đỏ vẫn thoát 0");
+  ok("CẤU HÌNH · mức chặn đọc thật từ .repo-structure.json, không viết cứng trong code");
 }
 
 /* ---- Cắt bớt dòng nhưng phải nói là đã cắt -------------------------------- */
@@ -530,9 +617,51 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
     "session-check.mjs phải THẬT SỰ chạy scripts/check-bootstrap.mjs, không phải chỉ nhắc tên nó trong ghi chú");
   assert.match(gate, /const EXPECTED_CHECKS = 8;/, "thêm cổng con thì EXPECTED_CHECKS phải là 8 — lớp chống tự tháo cổng");
   // Và nó KHÔNG được biến nợ cấu trúc thành cổng đỏ ở phiên S4.
-  const block = gate.slice(gate.indexOf("Cổng kiểm cấu trúc B1–B14"));
-  assert.match(block, /CHỈ CẢNH BÁO, không chặn/, "cổng con phải nói rõ nó chỉ cảnh báo");
-  ok("TÍCH HỢP · session-check.mjs gọi cổng kiểm cấu trúc, EXPECTED_CHECKS = 8");
+  // S7: cổng con nay PHẢI biến mã thoát 1 thành cổng đỏ, và phải TÁCH mã 1 (repo có nợ) khỏi
+  // mã 2 (bộ kiểm hỏng). Đây là mắt nối duy nhất giữa check-bootstrap và cổng đóng phiên;
+  // gỡ nó ra là cả phiên S7 thành trang trí, nên nó phải có test.
+  const block = gate.slice(gate.indexOf("check(\"Cổng kiểm cấu trúc B1–B14\""));
+  // `\)` bắt buộc: không có nó thì `/error\.status === 1/` khớp luôn cả `=== 101`, và một đột
+  // biến đổi số so sánh (làm nhánh mã 1 không bao giờ chạy) sẽ thoát. Bắt được ở mutation S7.
+  assert.match(block, /if \(error\.status === 1\)/, "cổng con phải nhận ra ĐÚNG mã thoát 1 = repo có nợ nhóm CHẶN");
+  // Ghim `ok: false` NGAY TRONG nhánh đó, không chỉ ghim câu chữ. Bản trước chỉ tìm câu
+  // "nhóm CHẶN nên CHƯA được báo xong" nên một đột biến đổi `ok: false` -> `ok: true` mà GIỮ
+  // NGUYÊN câu chữ đã thoát sạch — cổng in ra lời cảnh báo rồi vẫn cho báo xong. Tìm được ở
+  // vòng mutation của chính phiên S7.
+  // Buộc `ok: false` với ĐÚNG thông báo của nhánh mã 1. Bản trước dùng `[\s\S]{0,300}?` nên
+  // nó khớp sang câu `return { ok: false, … BOOTSTRAP_KHONG_CHAY_DUOC }` ngay bên dưới, và
+  // đột biến `ok: false` -> `ok: true` vẫn thoát. Hai lần liên tiếp phép kiểm này ghim hụt,
+  // cùng một gốc bệnh: ghim gần chỗ đúng thay vì ghim đúng chỗ.
+  assert.match(block, /return \{ ok: false, msg: `\$\{tomTat\(out\)\} — có nợ thuộc nhóm CHẶN nên CHƯA được báo xong\./,
+    "nhánh mã thoát 1 phải trả về ok: false kèm đúng thông báo đó — in ra lời cảnh báo rồi vẫn cho xanh là vô nghĩa");
+  assert.match(block, /BOOTSTRAP_KHONG_CHAY_DUOC/, "mã khác 1 vẫn phải là 'bộ kiểm hỏng', không lẫn với nợ");
+  // Thứ tự quan trọng: nhánh mã 1 phải nằm TRƯỚC nhánh 'bộ kiểm hỏng', nếu không mọi khoản nợ
+  // sẽ bị dán nhãn sai và người đóng phiên đi sửa bộ kiểm thay vì sửa repo.
+  assert.ok(block.indexOf("error.status === 1") < block.indexOf("BOOTSTRAP_KHONG_CHAY_DUOC"),
+    "nhánh mã 1 phải xét trước nhánh bộ kiểm hỏng");
+  assert.match(block, /^\s*return \{ ok: true, msg: `\$\{tomTat\(stdout\)\}/m, "mã 0 mới được xanh");
+  ok("TÍCH HỢP · session-check.mjs biến mã thoát 1 thành cổng đỏ, EXPECTED_CHECKS = 8");
+}
+
+/* ---- Mắt nối cuối: MÃ THOÁT THẬT CỦA MỘT TIẾN TRÌNH ---------------------- */
+// Mọi phép kiểm trên đây gọi `runBootstrapCheck` trong cùng tiến trình, nên chúng ghim GIÁ TRỊ
+// TRẢ VỀ. Nhưng session-check đọc MÃ THOÁT của một tiến trình con — đó là hai thứ khác nhau,
+// nối với nhau bằng đúng một dòng `process.exitCode = ...`. Dòng đó cũng phải có bằng chứng.
+{
+  const src = fs.readFileSync(path.join(ROOT, "scripts/check-bootstrap.mjs"), "utf8");
+  assert.match(src, /process\.exitCode = runBootstrapCheck\(/, "main() phải đem giá trị trả về ra làm mã thoát");
+
+  // Và chạy THẬT một tiến trình con để xem con số shell nhìn thấy. `deps` không tuần tự hoá
+  // qua biên tiến trình được, nên ca dựng được ở đây là ca "không đọc nổi đầu vào" -> 2.
+  const url = JSON.stringify(pathToFileURL(path.join(ROOT, "scripts/check-bootstrap.mjs")).href);
+  const probe = `import { runBootstrapCheck } from ${url};
+    process.exit(runBootstrapCheck({
+      deps: { fileExists: () => false, readFile: () => "", isFile: () => false, git: {} },
+      output: { log() {}, error() {} }
+    }));`;
+  const r = spawnSync(process.execPath, ["--input-type=module", "-e", probe], { encoding: "utf8" });
+  assert.equal(r.status, 2, "đầu vào không đọc nổi -> tiến trình phải thoát 2, và shell phải THẤY đúng con số đó");
+  ok("MẮT NỐI · mã thoát của tiến trình thật đúng bằng giá trị runBootstrapCheck trả về");
 }
 
 /* NGHIỆM THU CỦA ĐỨC — mỗi cảnh báo phải nói CẢ chỗ sai LẪN cách sửa.
@@ -542,9 +671,18 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
    mức nhẹ, nhưng đây LÀ tiêu chí nghiệm thu Đức dùng để phán đạt hay không — thứ
    Đức dùng để chấm bài mà không có test ghim thì sớm muộn sẽ trôi. */
 {
-  const output = execFileSync(process.execPath, [path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "scripts", "check-bootstrap.mjs")], {
-    cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."), encoding: "utf8"
-  });
+  // Từ S7, `check-bootstrap.mjs` thoát 1 khi repo có nợ thuộc nhóm CHẶN — hoàn toàn bình
+  // thường, và `execFileSync` thì NÉM khi mã thoát khác 0. Không bắt lấy stdout ở đây thì
+  // phép kiểm nghiệm thu này sẽ đỏ oan đúng vào ngày repo có một khoản nợ chặn. Mã 2 (bộ kiểm
+  // hỏng) thì vẫn phải để nó nổ — lúc đó không có gì đáng đọc.
+  const output = (() => {
+    const bin = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "scripts", "check-bootstrap.mjs");
+    const cwd = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+    const r = spawnSync(process.execPath, [bin], { cwd, encoding: "utf8" });
+    assert.ok(r.status === 0 || r.status === 1,
+      `check-bootstrap.mjs phải thoát 0 hoặc 1, nhận ${r.status}. Mã 2 = BỘ KIỂM HỎNG: ${String(r.stderr).trim().split("\n").slice(0, 3).join(" | ")}`);
+    return r.stdout;
+  })();
   const lines = output.split("\n");
   const warnings = lines.map((line, index) => ({ line, index })).filter((entry) => entry.line.trimStart().startsWith("✗"));
   assert.ok(warnings.length > 0, "nền: repo hiện phải có ít nhất một cảnh báo để phép kiểm này có nghĩa");

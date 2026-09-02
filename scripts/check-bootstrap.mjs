@@ -558,6 +558,15 @@ export function collectChecks(deps) {
     checkGeneratedFreshness(deps, { code: "B13", file: "llms.txt", times }),
     checkB14(deps, model, times)
   ];
+  // Gắn mức chặn từ cấu hình. Làm ở ĐÂY, một chỗ duy nhất, để không có đường nào dựng ra một
+  // danh sách phép kiểm mà quên gắn — quên gắn nghĩa là `blocking` undefined, và undefined thì
+  // không bao giờ chặn: một lỗ fail-open im lặng.
+  const blocking = blockingCodes(deps);
+  for (const check of checks) check.blocking = blocking.has(check.code);
+  const laKhaiBua = [...blocking].filter((code) => !checks.some((check) => check.code === code));
+  if (laKhaiBua.length) {
+    throw new Error(`CHAN_MA_LA: \`bootstrap.blocking\` khai mã không tồn tại: ${laKhaiBua.join(", ")}. Sửa .repo-structure.json — một mã gõ sai là một phép kiểm tưởng đang chặn mà thật ra không chặn gì.`);
+  }
   // Trả kèm `model` để nơi gọi KHÔNG phải dựng lại lần thứ hai. Dựng hai lần thì hai lần đó
   // có thể khác nhau (git đổi giữa chừng), và đó đúng là kiểu bug không ai tìm ra.
   return { checks, model };
@@ -569,6 +578,36 @@ function appendOnlyAreas(deps) {
   if (!deps.fileExists(".repo-structure.json")) return [];
   const areas = JSON.parse(deps.readFile(".repo-structure.json")).areas ?? {};
   return Object.entries(areas).filter(([, value]) => value?.mutability === "append-only").map(([key]) => key);
+}
+
+/* MỨC CHẶN — phiên S7. Đọc từ `.repo-structure.json`, KHÔNG viết cứng ở đây.
+   Lý do đặt ngoài code: đây là chính sách (Đức chốt bật/tắt chặn từng phép kiểm), còn `level`
+   của mỗi phép kiểm là bản chất của nó. Hôm nay hai thứ trùng nhau (đúng 8 phép kiểm mức ĐỎ
+   đang bị chặn) nhưng chúng sẽ tách ra: S8 sẽ bật chặn thêm B6/B9 sau khi trả nợ, mà bản chất
+   hai phép kiểm đó vẫn là cảnh báo chất lượng.
+
+   FAIL CLOSED, và đây là điểm chính: thiếu khai thì NÉM, không mặc định "chẳng chặn gì".
+   Cách dễ nhất để tự tháo chặn là xoá cấu hình đi — nên xoá cấu hình phải là một lỗi to,
+   không phải một sự im lặng. Cùng một lý lẽ đã dùng cho `claims.json` và `areas`. */
+export function blockingCodes(deps) {
+  if (!deps.fileExists(".repo-structure.json")) {
+    throw new Error("CHAN_THIEU_FILE: không thấy .repo-structure.json — không đọc được mức chặn nào đang bật. Không đoán hộ.");
+  }
+  let parsed;
+  try { parsed = JSON.parse(deps.readFile(".repo-structure.json")); }
+  catch (error) {
+    throw new Error(`CAU_TRUC_HONG: .repo-structure.json không phải JSON đọc được (${error.message}).`);
+  }
+  const list = parsed?.bootstrap?.blocking;
+  if (!Array.isArray(list)) {
+    throw new Error('CHAN_THIEU_KHAI: .repo-structure.json không có `bootstrap.blocking` dạng mảng. Đây là danh sách phép kiểm được phép làm đỏ cổng đóng phiên; thiếu nó thì cổng không biết mình đang cưỡng chế cái gì, nên dừng thay vì lặng lẽ tha hết.');
+  }
+  return new Set(list.map(String));
+}
+
+// Những phép kiểm ĐANG bị chặn mà lại đỏ. Đây là thứ duy nhất được phép làm đỏ cổng đóng phiên.
+export function blockingFailures(checks) {
+  return checks.filter((check) => check.blocking && check.state === "fail");
 }
 
 /* Khối miễn trừ vĩnh viễn. CHƯA phép kiểm nào dùng tới nó (phép kiểm tên đường dẫn là việc
@@ -586,16 +625,21 @@ export function grandfatheredNote(deps) {
 }
 
 export function renderChecks(checks, { showLimit = DEFAULT_SHOW, extras = null } = {}) {
+  const dangChan = checks.filter((check) => check.blocking).map((check) => check.code);
+  const chiCanhBao = checks.filter((check) => !check.blocking).map((check) => check.code);
   const lines = [
     "",
     "CỔNG KIỂM CẤU TRÚC — 14 phép kiểm B1…B14",
-    "CHẾ ĐỘ CẢNH BÁO: file này CHỈ IN RA, không chặn ai. Bật chặn là việc của phiên S7.",
+    `CHẶN (đỏ là không được báo xong): ${dangChan.join(" · ") || "không có"}`,
+    `CHỈ CẢNH BÁO (đỏ vẫn đóng phiên được): ${chiCanhBao.join(" · ") || "không có"}`,
+    "Danh sách chặn khai ở `bootstrap.blocking` trong .repo-structure.json, không viết cứng trong code.",
     ""
   ];
   for (const check of checks) {
     const badge = check.state === "skip" ? "BỎ  " : check.state === "ok" ? "XANH" : (check.level === RED ? "ĐỎ  " : "VÀNG");
     const count = check.state === "fail" ? ` — ${check.findings.length} chỗ` : "";
-    lines.push(`  [${badge}] ${check.code} · ${check.title}${count}`);
+    const dau = check.blocking ? " [CHẶN]" : "";
+    lines.push(`  [${badge}]${dau} ${check.code} · ${check.title}${count}`);
     if (check.note) lines.push(`         ${check.note}`);
     const shown = check.findings.slice(0, showLimit);
     for (const finding of shown) {
@@ -612,6 +656,12 @@ export function renderChecks(checks, { showLimit = DEFAULT_SHOW, extras = null }
   const redCount = red.reduce((sum, c) => sum + c.findings.length, 0);
   const warnCount = warn.reduce((sum, c) => sum + c.findings.length, 0);
   lines.push(`TỔNG: ${redCount} chỗ ĐỎ (${red.map((c) => c.code).join(", ") || "không có"}) · ${warnCount} chỗ VÀNG (${warn.map((c) => c.code).join(", ") || "không có"})`);
+  // Dòng máy đọc được. `session-check.mjs` grep đúng tiền tố này để nói cho người đóng phiên
+  // biết vì sao cổng đỏ. Đổi chữ ở đây thì phải đổi cả bên đó — có test ghim hai đầu.
+  const chan = blockingFailures(checks);
+  lines.push(chan.length
+    ? `CHAN: ${chan.map((c) => `${c.code} (${c.findings.length} chỗ)`).join(", ")} — thuộc nhóm CHẶN nên KHÔNG được báo xong. Sửa rồi chạy lại.`
+    : "CHAN: không có — mọi phép kiểm thuộc nhóm CHẶN đều đạt.");
   const skipped = checks.filter((c) => c.state === "skip");
   if (skipped.length) lines.push(`BỎ QUA: ${skipped.map((c) => `${c.code} (${c.note})`).join(" · ")}`);
   if (extras?.drift) {
@@ -619,7 +669,10 @@ export function renderChecks(checks, { showLimit = DEFAULT_SHOW, extras = null }
   }
   if (extras?.grandfathered) {
     const { declared, gone } = extras.grandfathered;
-    lines.push(`MIỄN TRỪ VĨNH VIỄN: ${declared} đường dẫn cũ (có dấu cách / tiếng Việt có dấu) khai ở khối "grandfathered" của .repo-structure.json. Chưa phép kiểm nào dùng tới — phiên S7 sẽ dùng.`);
+    // KHÔNG nói "phiên S7 sẽ dùng" nữa: S7 đã chạy và cố ý KHÔNG dùng khối này. Phép kiểm tên
+    // đường dẫn chưa tồn tại trong B1…B14, nên nói nó "sắp được dùng" là hứa hộ một phiên
+    // không có thật. Nói đúng cái nó đang làm: kiểm ngược, chống danh sách miễn trừ mục nát.
+    lines.push(`MIỄN TRỪ VĨNH VIỄN: ${declared} đường dẫn cũ (có dấu cách / tiếng Việt có dấu) khai ở khối "grandfathered" của .repo-structure.json. B1…B14 KHÔNG có phép kiểm tên đường dẫn, nên khối này hiện chỉ được kiểm NGƯỢC: đường dẫn nào đã biến mất khỏi HEAD thì phải xoá khỏi danh sách.`);
     if (gone.length) {
       lines.push(`  ✗ ${gone.length} đường dẫn trong danh sách miễn trừ KHÔNG còn ở HEAD: ${gone.slice(0, 3).join(", ")}${gone.length > 3 ? ", …" : ""}`);
       lines.push("        → xoá chúng khỏi khối \"grandfathered\" — danh sách miễn trừ để mục nát cũng là một khoản nợ.");
@@ -649,9 +702,14 @@ export function runBootstrapCheck({ deps = createBootstrapDeps(), output = conso
     grandfathered: grandfatheredNote(deps)
   };
   for (const line of renderChecks(checks, { showLimit, extras })) output.log(line);
-  // LUÔN 0 khi chạy được. S4 chỉ in ra. Đừng đổi dòng này thành `redCount ? 1 : 0` —
-  // đó là bật chặn, và bật chặn là việc của S7 sau khi nợ đã về 0.
-  return 0;
+  /* BA MÃ THOÁT, và chúng KHÔNG được gộp — phiên S7.
+       0 = không có phép kiểm thuộc nhóm CHẶN nào đỏ. Cảnh báo (B6, B9…) vẫn có thể đỏ.
+       1 = có nợ thuộc nhóm CHẶN → cổng đóng phiên phải đỏ theo.
+       2 = CHÍNH BỘ KIỂM không chạy được (xem khối catch ở trên).
+     Gộp 1 với 2 thì người đóng phiên đọc "cổng đỏ" mà không biết mình phải sửa repo hay sửa
+     bộ kiểm — hai việc khác hẳn nhau. Đây cũng là lớp fail-closed đã có từ S4: bộ kiểm hỏng
+     không được im lặng thành "repo ổn". */
+  return blockingFailures(checks).length ? 1 : 0;
 }
 
 function main() {

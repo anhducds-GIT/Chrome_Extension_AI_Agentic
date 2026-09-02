@@ -85,6 +85,11 @@ dẫn `drafts/…`. Bảng dưới là chỗ tra đường dẫn cũ → mới.
 
 ## `docs/briefs/` — đề bài từng phiên
 
+> ⚠️ **Ba bảng dưới đây là danh sách GÕ TAY, và nó mục.** Phiên S6 dựng file này; đúng một
+> commit sau, `BRIEF-S7.md` ra đời và bảng đã thiếu — B6 bắt được ngay. Đã thêm tay lần này,
+> nhưng cách sửa thật là **cho máy sinh mục lục này** (cùng lượt với `DASHBOARD.md`), vì luật
+> của repo là số và danh sách phải máy đếm. Đã ghi vào việc mở của phiên S8.
+
 | Tài liệu | Trạng thái | Nói về gì |
 |---|---|---|
 | [AUDIT-PROMPT-S2-GPT.md](briefs/AUDIT-PROMPT-S2-GPT.md) | `active` | PROMPT AUDIT S2 — dán cho GPT (đọc repo qua GitHub connector) |
@@ -92,6 +97,7 @@ dẫn `drafts/…`. Bảng dưới là chỗ tra đường dẫn cũ → mới.
 | [BRIEF-S3.md](briefs/BRIEF-S3.md) | `active` | BRIEF — Phiên S3: bịt ba lỗ hổng, đưa Khối D về 0 |
 | [BRIEF-S4.md](briefs/BRIEF-S4.md) | `active` | BRIEF — Phiên S4: cổng kiểm cấu trúc, **chỉ cảnh báo** |
 | [BRIEF-S5.md](briefs/BRIEF-S5.md) | `active` | BRIEF — Phiên S5: quyết định thành bất biến (ADR) |
+| [BRIEF-S7.md](briefs/BRIEF-S7.md) | `active` | BRIEF — Phiên S7: bật chặn + BÀI TEST NGHIỆM THU |
 | [PROMPTS-HANDOFF.md](briefs/PROMPTS-HANDOFF.md) | `?` | HAI PROMPT BÀN GIAO |
 
 ## `docs/archive/` — hồ sơ đã nghỉ
