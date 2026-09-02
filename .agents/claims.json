@@ -3,11 +3,10 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-f18-evidence",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 02/09 (claude-f18-evidence). XONG phan code: nang nhip len (giua hai job 45-120s mac dinh 90s; trong trang 7-33s moi job) + ghim y dinh thanh thuoc tinh do duoc. CON NO: sinh lai DASHBOARD/llms/repo-map (can _root, dang do claude-core-k1 giu) va push (safe-push tu choi vi se cuon theo commit cua ho).",
-      "released_at": "2026-09-02"
+      "task": "Duc doi sang profile Binh (360p/8s/6 credit), da reload. Chay chuoi voi nhip MOI de do pacing_ms lan dau tren trang that."
     },
     "workers/duc-auto-gemini": {
       "owner": null,
@@ -24,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "claude-core-k1",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "K1 buoc 2+3: trich template/, cap phep thu nghiem thu, chong troi hai ban script.",
-      "released_at": null
+      "task": "TRA QUYEN 02/09 (claude-core-k1). K1 XONG: repo-structure.mjs (mot nguon hinh dang) + build-template.mjs (bo trich) + template/ 18 file. Phep thu repo rong 0 do 0 vang. Suite 233. Cho audit: docs/briefs/AUDIT-PROMPT-K1.md",
+      "released_at": "2026-09-02"
     }
   }
 }
