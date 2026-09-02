@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "ban-giao-s4",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02. S1 + S2 + S3 deu dong, da push. Khoi D ve 0/0/0/0. Suite 79/79, 11/11 mutation bi bat, 4 vong audit doc lap. VIEC KE TIEP: S4 — cong kiem cau truc, mo rong .repo-structure.json thanh 14 phep kiem, CHI CANH BAO chua chan.",
-      "released_at": "2026-09-02"
+      "task": "Soan docs/briefs/BRIEF-S4.md. Giu quyen toi khi push xong roi moi tra bang commit rieng.",
+      "released_at": null
     }
   }
 }
