@@ -10,11 +10,11 @@
       "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-y05",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Y-05: viet lai chu operator cho mat Duc doc + them phep kiem B15 cuong che luat vang 5.",
-      "released_at": null
+      "task": "TRA QUYEN 02/09 (claude-y05). XONG Y-05 phan cua goi nay: viet lai next_step + current_focus thanh tieng Viet co dau, tach viec cua Duc sang human_action. Khong dung code.",
+      "released_at": "2026-09-02"
     },
     "workers/duc-auto-chatgpt": {
       "owner": null,
