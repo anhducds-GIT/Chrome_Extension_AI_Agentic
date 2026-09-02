@@ -23,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Ghi pham vi Giai doan 2 (Duc chot 02/09): hai dashboard, nha rieng cho template, migrate da repo.",
-      "released_at": null
+      "task": "TRA QUYEN 02/09 (claude-dieu-phoi). XONG: ghi Giai doan 2 vao roadmap muc 9 (hai dashboard · template co phien ban · cau hoi 9.3 chua chot). Sua muc 8 het lac hau.",
+      "released_at": "2026-09-02"
     }
   }
 }
