@@ -116,6 +116,7 @@ await new Promise((resolve) => setImmediate(resolve));
 
 const first = FakeWebSocket.instances[0];
 first.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 first.emit("message", { data: JSON.stringify({ type: "auth_ok", session_id: "session-1" }) });
 await Promise.resolve();
 await Promise.resolve();
@@ -128,6 +129,7 @@ assert.equal(FakeWebSocket.instances.length, 2, "the first bounded reconnect att
 
 const second = FakeWebSocket.instances[1];
 second.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 second.emit("message", { data: JSON.stringify({ type: "auth_ok", session_id: "session-2" }) });
 await Promise.resolve();
 await Promise.resolve();
@@ -178,6 +180,7 @@ assert.equal(FakeWebSocket.instances.length, 3, "a reconnect superseded by the a
 
 const third = FakeWebSocket.instances[2];
 third.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 third.emit("message", { data: JSON.stringify({ type: "auth_ok", session_id: "session-3" }) });
 await Promise.resolve();
 await Promise.resolve();
@@ -215,6 +218,7 @@ assert.equal(repaired?.ok, true, "re-pairing reports success");
 const fourth = FakeWebSocket.instances.at(-1);
 assert.equal(FakeWebSocket.instances.length, socketsBeforeUnpair + 1, "re-pairing opens exactly one socket");
 fourth.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 fourth.emit("message", { data: JSON.stringify({ type: "auth_ok", session_id: "session-4" }) });
 await settle();
 clock.advance(20);
@@ -308,6 +312,7 @@ await settle();
 
 const lingering = LingerSocket.instances[0];
 lingering.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 lingering.emit("message", authOk("linger-1"));
 await settle();
 assert.equal(lingerTransport.status().state, "connected", "a freshly authenticated socket reports connected");
@@ -381,6 +386,7 @@ function measureReconnectDelay() {
 async function authenticateThenDrop(label) {
   const sock = FlapSocket.instances.at(-1);
   sock.emit("open");
+  await settle(); // multi-profile: the auth frame lands one microtask after open
   sock.emit("message", authOk(label));
   await settle();
   sock.close();
@@ -396,6 +402,7 @@ assert.equal(measureReconnectDelay(), 11, "the ladder keeps climbing while the l
 
 const proven = FlapSocket.instances.at(-1);
 proven.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 proven.emit("message", authOk("proven"));
 await settle();
 flapClock.advance(20);
@@ -427,6 +434,7 @@ await settle();
 
 const zombie = ZombieSocket.instances[0];
 zombie.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 zombie.emit("message", authOk("zombie-1"));
 await settle();
 zombieClock.advance(20);
@@ -485,6 +493,7 @@ await settle();
 
 const live = RepeatSocket.instances[0];
 live.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 live.emit("message", authOk("repeat-1"));
 await settle();
 repeatClock.advance(15);
@@ -519,6 +528,7 @@ await settle();
 
 const stale = StaleSocket.instances[0];
 stale.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 stale.emit("message", authOk("stale-1"));
 await settle();
 staleClock.advance(20);
@@ -572,6 +582,7 @@ await settle();
 
 const established = InheritSocket.instances[0];
 established.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 established.emit("message", authOk("inherit-1"));
 await settle();
 assert.equal(inheritTransport.status().state, "connected", "the first socket really is authenticated");
@@ -590,6 +601,7 @@ assert.equal(
 );
 
 replacementSocket.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 const preAuthRequest = {
   protocol: globalThis.DacBridgeCore.PROTOCOL,
   version: 1,
@@ -632,6 +644,7 @@ await settle();
 
 const silent = SilentSocket.instances[0];
 silent.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 silent.emit("message", authOk("silent-1"));
 await settle();
 assert.equal(silentTransport.status().state, "connected", "the socket is genuinely connected first");
@@ -674,6 +687,7 @@ await settle();
 
 const mute = MuteSocket.instances[0];
 mute.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 // Multi-profile: the auth frame is sent one microtask after "open" (the
 // identity is read from storage inside the open handler).
 await settle();
@@ -727,6 +741,7 @@ await settle();
 
 const ordered = OrderedSocket.instances[0];
 ordered.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 holdWrites = true;
 ordered.emit("message", authOk("ordered-1"));
 await settle();
@@ -784,6 +799,7 @@ const unauthTransport = transport.create({
 await settle();
 const unauth = UnauthSocket.instances[0];
 unauth.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 assert.equal(unauthClock.pending(), 1, "an unauthenticated socket holds its handshake deadline");
 unauth.close();
 assert.equal(unauth.readyState, UnauthSocket.CLOSING, "the peer closed it and withheld the event");
@@ -800,6 +816,7 @@ assert.equal(
 // follows must not inherit either of them.
 const abandoned = SlotSocket.instances[0];
 abandoned.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 abandoned.emit("message", authOk("slot-1"));
 await settle();
 slotClock.advance(20);
@@ -927,6 +944,7 @@ assert.equal(GiveUpSocket.instances.length, 6, "the 30-second alarm is still the
 // A connection that proves itself restores the budget, so the next outage is chased again.
 const revived = GiveUpSocket.instances.at(-1);
 revived.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 revived.emit("message", authOk("give-up-revived"));
 await settle();
 giveUpClock.advance(20);
@@ -971,6 +989,7 @@ assert.equal(RefillSocket.instances.length, spentBudgetSockets, "the budget is s
 refillChrome.alarms.onAlarm.emit({ name: transport.RECONNECT_ALARM });
 const revivedByAlarm = RefillSocket.instances.at(-1);
 revivedByAlarm.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 revivedByAlarm.emit("message", authOk("refill-1"));
 await settle();
 // No probe has been sent yet -- the keepalive interval has not fired -- so this ACK answers nothing.
@@ -1064,6 +1083,7 @@ await settle();
 
 const junk = JunkSocket.instances[0];
 junk.emit("open");
+await settle(); // multi-profile: the auth frame lands one microtask after open
 junk.emit("message", authOk("junk-1"));
 await settle();
 junkClock.advance(transport.KEEPALIVE_MS);

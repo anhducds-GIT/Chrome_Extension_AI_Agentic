@@ -55,6 +55,11 @@
     let handshakeNonce = null;
     let hostProofVerified = false;
     let tokenSent = false;
+    // tokenSent flips BEFORE the identity read (replay protection); authSent
+    // flips only after the auth frame actually left the socket. auth_ok is
+    // acceptable only after authSent — a host answering earlier is broken or
+    // hostile and must not cancel the pending handshake state.
+    let authSent = false;
     let keepaliveTimer = null;
     let executorPort = null;
     let executorEpoch = null;
@@ -90,6 +95,7 @@
       handshakeNonce = null;
       hostProofVerified = false;
       tokenSent = false;
+      authSent = false;
       const current = socket;
       socket = null;
       try { current?.close?.(1000, "Reconnect requested."); } catch (_) { /* Best effort. */ }
@@ -182,9 +188,10 @@
         const auth = { type: "auth", role: "extension", token: pairing.token };
         if (instance) auth.instance = instance;
         targetSocket.send(JSON.stringify(auth));
+        authSent = true;
         return;
       }
-      if (message?.type === "auth_ok" && typeof message.session_id === "string" && hostProofVerified && tokenSent) {
+      if (message?.type === "auth_ok" && typeof message.session_id === "string" && hostProofVerified && tokenSent && authSent) {
         authenticated = true;
         await publishStatus("connected");
         clearKeepalive();
@@ -220,6 +227,7 @@
         handshakeNonce = freshNonce();
         hostProofVerified = false;
         tokenSent = false;
+        authSent = false;
         candidate.send(JSON.stringify({ type: "auth_challenge", role: "extension", nonce: handshakeNonce }));
       });
       candidate.addEventListener("message", (event) => {

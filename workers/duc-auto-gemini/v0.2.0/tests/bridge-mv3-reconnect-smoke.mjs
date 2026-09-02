@@ -58,6 +58,7 @@ const firstSocket = FakeWebSocket.instances[0];
 assert.equal(firstSocket.url, pairing.websocket_url);
 assert.equal(firstSocket.url.includes(token), false, "token is not placed in the WebSocket URL");
 firstSocket.emit("open");
+await new Promise((resolve) => setTimeout(resolve, 0)); // multi-profile: auth lands one microtask after open
 // Multi-profile (port tu gg-flow-video): auth mang khoi instance va duoc gui
 // sau mot microtask (doc identity tu storage trong handler open).
 await new Promise((resolve) => setTimeout(resolve, 0));
@@ -90,6 +91,7 @@ alarms.emit({ name: "dac.bridge.loopback.reconnect.v1" });
 await new Promise((resolve) => setTimeout(resolve, 0));
 const secondSocket = FakeWebSocket.instances[1];
 secondSocket.emit("open");
+await new Promise((resolve) => setTimeout(resolve, 0)); // multi-profile: auth lands one microtask after open
 secondSocket.emit("message", { data: JSON.stringify({ type: "auth_ok", session_id: "host-session", server_time: new Date().toISOString() }) });
 await new Promise((resolve) => setTimeout(resolve, 0));
 assert.equal(values[globalThis.DacBridgePairingCore.STATUS_STORAGE_KEY].state, "connected");

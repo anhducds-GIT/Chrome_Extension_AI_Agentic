@@ -66,6 +66,10 @@
     let pairing = null;
     let socket = null;
     let authenticated = false;
+    // Set only after the auth frame actually left this socket. An auth_ok that
+    // arrives earlier is unanswerable proof of a broken or hostile host, and
+    // accepting it would cancel the handshake deadline with nothing in flight.
+    let authSent = false;
     let keepaliveTimer = null;
     let keepaliveDeadlineTimer = null;
     let reconnectTimer = null;
@@ -146,6 +150,7 @@
     }
 
     function dropSocket(targetSocket) {
+      if (socket === targetSocket) authSent = false;
       if (socket !== targetSocket) return false;
       socket = null;
       authenticated = false;
@@ -265,7 +270,7 @@
       }
       if (socket !== targetSocket) return;
       if (message?.type === "auth_ok" && typeof message.session_id === "string") {
-        if (targetSocket.readyState !== WebSocketApi.OPEN || settledSockets.has(targetSocket)) {
+        if (!authSent || targetSocket.readyState !== WebSocketApi.OPEN || settledSockets.has(targetSocket)) {
           abandonSocket(targetSocket, 1008, "Unexpected authentication frame.");
           return;
         }
@@ -339,6 +344,7 @@
       clearKeepalive();
       // Replacing a socket voids whatever authentication the old one had.
       authenticated = false;
+      authSent = false;
       const candidate = new WebSocketApi(pairing.websocket_url);
       socket = candidate;
       handshakeTimer = armTimer("setTimeout", () => {
@@ -361,6 +367,7 @@
           const auth = { type: "auth", role: "extension", token: pairing.token };
           if (instance) auth.instance = instance;
           candidate.send(JSON.stringify(auth));
+          authSent = true;
         });
       });
       candidate.addEventListener("message", (event) => {

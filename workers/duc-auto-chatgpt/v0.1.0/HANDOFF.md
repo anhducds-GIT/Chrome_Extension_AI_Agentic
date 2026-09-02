@@ -469,3 +469,10 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   Test multi-profile bản chuyển thể: mọi phiên giả phải đi qua challenge trước auth.
   Host mới ĐÃ deploy + khởi động (32147 vốn đang TẮT); live thấy 1 kết nối legacy (extension
   chưa reload — tay Đức). Việc mở: Đức reload extension từng profile + đặt tên.
+- 2026-09-02 · `claude-bridge-multiprofile` · **Cùng lỗ với phát hiện audit bên Gemini, một bước
+  sâu hơn:** `tokenSent` bật TRƯỚC await đọc identity (chủ ý chống replay proof), nên `auth_ok`
+  đến trong lúc chờ đọc vẫn lọt điều kiện cũ. Vá cùng khuôn: thêm cờ `authSent` (bật sau khi
+  khung auth rời socket), `auth_ok` đòi đủ `hostProofVerified && tokenSent && authSent`;
+  `tokenSent` vẫn bật sớm để giữ nguyên lớp chống replay. Thêm
+  `tests/bridge-multiprofile-transport-async-smoke.mjs` (đi qua challenge thật với HMAC proof
+  hợp lệ). 2 mutation mới đều ĐỎ. Suite 97/97.

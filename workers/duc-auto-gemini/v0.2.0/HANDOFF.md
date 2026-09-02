@@ -573,3 +573,13 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   Host mới ĐÃ deploy sang thư mục Bridge + khởi động lại (host cũ idle, executor unavailable,
   không có run đang bay); live thấy 1 kết nối legacy (extension chưa reload — tay Đức).
   Việc mở: Đức reload extension từng profile + đặt tên; live-check ambiguous/target như gg-flow.
+- 2026-09-02 · `claude-bridge-multiprofile` · **Audit Codex vòng 1 cho port: FAIL — và nó ĐÚNG.**
+  Phát hiện HIGH: vì auth giờ gửi SAU lần đọc identity async, transport có thể nhận `auth_ok`
+  TRƯỚC khi mình gửi auth — tự đánh dấu authenticated và huỷ deadline bắt tay với con số 0
+  khung đã gửi. Vá: cờ `authSent` chỉ bật sau khi khung auth thật sự rời socket; `auth_ok`
+  thiếu `authSent` → đóng socket fail-closed. Phát hiện MED (test chưa ép ranh giới async):
+  thêm `tests/bridge-multiprofile-transport-async-smoke.mjs` — ghim (1) auth_ok đến sớm bị
+  từ chối, (2) socket bị thay giữa lúc đọc identity KHÔNG BAO GIỜ nhận khung auth. 2 mutation
+  mới (bỏ cổng authSent, bỏ guard sau await) đều làm test ĐỎ. Hệ quả phụ: các test cũ bắn
+  auth_ok ngay sau open phải chờ 1 nhịp (`settle()`/tick) — sửa mv3-reconnect + liveness.
+  Suite 84/84.
