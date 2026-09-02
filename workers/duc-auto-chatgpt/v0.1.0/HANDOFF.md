@@ -477,3 +477,32 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   `tests/bridge-multiprofile-transport-async-smoke.mjs` (đi qua challenge thật với HMAC proof
   hợp lệ). 2 mutation mới đều ĐỎ. Suite 97/97.
 - 2026-09-02 · `claude-bridge-multiprofile` · Đóng gói: `evidence-multiprofile-port-20260902/` (2 vòng audit Codex nguyên văn + mutation 13/13 đỏ), fixture cô lập vế identity của guard sau await, khai bản đồ file. Suite 97/97. Còn tay Đức: reload extension từng profile + đặt tên (ô ở tab BRIDGE).
+
+- 2026-09-02 · Claude (`claude-stabilizing-bridge`) · **Port lớp ổn định kết nối từ Gemini sang nhánh này. Suite 97→98, phá thử 26/27, audit độc lập FAIL→PASS. CHƯA đo live.**
+  - **Vì sao cần:** nhánh này gửi `keepalive` mỗi 20 giây nhưng **không bao giờ kiểm host có trả
+    lời không** (dòng cũ 209: `keepalive_ack` chỉ `return`). Nên kết nối đứt kiểu chết lặng vẫn
+    hiện **Connected**, và lối nối lại duy nhất là alarm 30 giây. Gemini đã chữa từ 28/08.
+  - **Đắp lên bản hiện tại, KHÔNG chép đè từ Gemini** — theo đúng lời dặn của Đức. Nhánh này đã có
+    multi-profile (khối `instance`) và bắt tay **dài hơn**: `auth_challenge` → `auth_proof` (kiểm
+    HMAC) → `auth` → `auth_ok`. Cả hai giữ nguyên.
+  - **Hai bất biến Đức dặn không được phá — đã ghim và audit xác nhận HELD:**
+    (a) `connectHost` giữ socket **trước mọi `await`** (mutation M41 bị bắt);
+    (b) `auth_ok` tới **trước khi khung `auth` rời socket** phải bị từ chối (mutation M40 bị bắt).
+    Ca ghim cho (b) đáng nói: khe nguy hiểm **không phải** trước khi bắt tay, mà là **bên trong**
+    nó — sau khi host chứng minh xong, trước khi khung `auth` được gửi. Test dừng đúng khe đó bằng
+    cách chặn lượt đọc identity, rồi bắn `auth_ok` vào.
+  - **Đã thêm:** hạn chờ ACK · thang backoff trần 5 giây, bỏ cuộc sau cửa sổ 120 giây rồi nhường
+    alarm 30 giây · **hạn bắt tay phủ cả chuỗi bốn bước** (alarm không cứu được socket kẹt ở
+    `CONNECTING`, cũng không cứu được socket đã mở mà host không bao giờ trả lời) ·
+    `dropSocket`/`abandonSocket` (buông quyền sở hữu khi phán socket chết, không đợi sự kiện
+    `close`) · `currentState()` — **"đã xác thực" không còn đồng nghĩa "đang kết nối"** · ghi
+    trạng thái có thứ tự · sửa pairing chạy lần lượt · chuẩn hoá tham số + `unref`.
+  - **Audit độc lập (Codex) 2 vòng: FAIL → PASS, không phát hiện mới, hai bất biến HELD.**
+    Phát hiện vòng 1 là **thật và đáng giá**: cửa sổ bỏ cuộc chỉ đếm thời gian chờ **giữa** các lần
+    thử, không đếm 10 giây nằm trong mỗi hạn bắt tay — nên host im lặng giữ extension thức
+    **~6,5 phút** thay vì 2 phút như code nói. Đã vá: hạn bắt tay nay tự trừ vào ngân sách.
+    **Cùng lỗi đó có ở Gemini (nhánh gốc) và đã vá luôn cùng lượt.**
+  - Suite nhánh này **98/98**, `npm test` gốc xanh, `git diff --check` sạch.
+- **Next:** đo live nhánh này khi Đức tiện — tắt/bật host, panel phải báo **Mất kết nối** rồi tự
+  nối lại **dưới 5 giây**. Port sang `duc-auto-gg-flow-video` còn treo: package đó đang có chủ
+  (`fix-dead-refs`) nên chưa đụng được.

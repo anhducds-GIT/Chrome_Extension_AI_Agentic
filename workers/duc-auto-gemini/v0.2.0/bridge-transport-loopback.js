@@ -352,6 +352,11 @@
         // Covers the whole handshake: still CONNECTING, or OPEN but never answered. The alarm
         // rescues neither, because connectHost replaces neither state.
         if (socket !== candidate || authenticated) return;
+        // The wait we just spent counts against the give-up window too. Counting only the delays
+        // BETWEEN attempts would let a host that accepts connections and never answers hold the
+        // worker awake for several times the window the code claims to enforce. Found by the
+        // independent audit while porting this layer to duc-auto-chatgpt.
+        reconnectElapsedMs += handshakeTimeoutMs;
         abandonSocket(candidate, 1000, "Handshake deadline exceeded.");
       }, handshakeTimeoutMs);
       candidate.addEventListener("open", () => {

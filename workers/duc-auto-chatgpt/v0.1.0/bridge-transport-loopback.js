@@ -4,6 +4,14 @@
   const EXECUTOR_PORT_NAME = "dac.bridge.executor.v1";
   const RECONNECT_ALARM = "dac.bridge.loopback.reconnect.v1";
   const KEEPALIVE_MS = 20000;
+  // Liveness and recovery, ported from duc-auto-gemini (3514aa5 + 4789754) and layered on top of
+  // this branch's own handshake -- not copied over it. The probe period was already here; what was
+  // missing is any deadline on the answer, so a half-open socket kept reporting connected.
+  const KEEPALIVE_ACK_TIMEOUT_MS = 10000;
+  const HANDSHAKE_TIMEOUT_MS = 10000;
+  const RECONNECT_CEILING_MS = 5000;
+  const RECONNECT_DELAYS_MS = Object.freeze([1000, 2000, RECONNECT_CEILING_MS]);
+  const RECONNECT_WINDOW_MS = 120000;
   // Multi-profile identity (BRIDGE-MULTIPROFILE-DESIGN-V1, approved 2026-08-28;
   // ported from gg-flow-video). chrome.storage.local is PER Chrome profile, so
   // the id persisted here is a stable per-profile identity; the label is the
@@ -49,6 +57,38 @@
     const routerCore = options.router_core || globalThis.DacBridgeRouterCore;
     if (!chromeApi || !WebSocketApi || !core || !pairingCore || !routerCore) throw new TypeError("Loopback transport dependencies are unavailable.");
 
+    // Timing is injectable so liveness and backoff are testable without real waiting. Production
+    // passes no options at all (background.js), so this normalization guards the test seam and any
+    // future caller -- a seam that quietly accepts Infinity, NaN or a hole hands back a transport
+    // with no bounds at all, which is worse than refusing the value.
+    const MAX_TIMING_MS = 86400000;
+    function timingMs(value, fallback) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) && parsed > 0 ? Math.min(MAX_TIMING_MS, parsed) : fallback;
+    }
+
+    const timers = options.timers || globalThis;
+    const keepaliveMs = timingMs(options.keepalive_ms, KEEPALIVE_MS);
+    const keepaliveAckTimeoutMs = timingMs(options.keepalive_ack_timeout_ms, KEEPALIVE_ACK_TIMEOUT_MS);
+    const handshakeTimeoutMs = timingMs(options.handshake_timeout_ms, HANDSHAKE_TIMEOUT_MS);
+    // Coerced once, holes and non-numbers dropped; if nothing usable is left the default ladder
+    // stands. Bounded by construction: no rung may exceed the ceiling or cost less than a millisecond.
+    const configuredDelays = Array.isArray(options.reconnect_delays_ms)
+      ? options.reconnect_delays_ms.map((value) => Number(value)).filter(Number.isFinite)
+      : [];
+    const reconnectDelays = (configuredDelays.length ? configuredDelays : RECONNECT_DELAYS_MS)
+      .map((value) => Math.min(RECONNECT_CEILING_MS, Math.max(1, value)));
+    const reconnectWindowMs = timingMs(options.reconnect_window_ms, RECONNECT_WINDOW_MS);
+
+    // Chrome hands back a numeric id; Node hands back a Timeout that holds the process open.
+    // Unref where it exists so a headless run can still exit, with no behaviour change in the
+    // browser, where there is nothing to unref.
+    function armTimer(kind, callback, delay) {
+      const handle = timers[kind](callback, delay);
+      if (handle && typeof handle.unref === "function") handle.unref();
+      return handle;
+    }
+
     let pairing = null;
     let socket = null;
     let authenticated = false;
@@ -60,7 +100,28 @@
     // acceptable only after authSent — a host answering earlier is broken or
     // hostile and must not cancel the pending handshake state.
     let authSent = false;
+    // A socket authenticates once. Without this, an auth_ok the browser had already queued could
+    // resurrect a socket the ACK deadline just judged dead, and a host repeating auth_ok under the
+    // probe period would restart the keepalive interval so no probe ever fires.
+    const settledSockets = new WeakSet();
     let keepaliveTimer = null;
+    let keepaliveDeadlineTimer = null;
+    let reconnectTimer = null;
+    let reconnectAttempt = 0;
+    // Summed from the delays we scheduled, not from a clock, so the transport stays testable
+    // against an injected clock.
+    let reconnectElapsedMs = 0;
+    let handshakeTimer = null;
+    let statusSequence = 0;
+    let statusWrites = Promise.resolve();
+    // Pairing edits are separate async handlers mutating the same field and the same storage key.
+    // They run one at a time: an epoch check orders their continuations but not their writes.
+    let pairingWork = Promise.resolve();
+    function queuePairingWork(work) {
+      const run = pairingWork.then(work, work);
+      pairingWork = run.then(() => {}, () => {});
+      return run;
+    }
     let executorPort = null;
     let executorEpoch = null;
     const executorPending = new Map();
@@ -78,24 +139,124 @@
       };
     }
 
+    // One honest reading of the current state. Being authenticated is not the same as being
+    // connected: a socket that is no longer OPEN is not a connection.
+    function currentState() {
+      if (!pairing) return "unpaired";
+      if (authenticated && socket && socket.readyState === WebSocketApi.OPEN) return "connected";
+      return socket && socket.readyState === WebSocketApi.CONNECTING ? "connecting" : "disconnected";
+    }
+
+    // Storage writes are not ordered by the API, so they are serialized here and a write that a
+    // newer status has already superseded is dropped rather than allowed to land last.
     async function publishStatus(state, errorCode = null) {
       const status = safeStatus(state, errorCode);
-      try { await chromeApi.storage.local.set({ [pairingCore.STATUS_STORAGE_KEY]: status }); } catch (_) { /* Status is advisory only. */ }
+      const sequence = ++statusSequence;
+      statusWrites = statusWrites.then(async () => {
+        if (sequence !== statusSequence) return;
+        try { await chromeApi.storage.local.set({ [pairingCore.STATUS_STORAGE_KEY]: status }); } catch (_) { /* Status is advisory only. */ }
+      });
+      await statusWrites;
       return status;
     }
 
-    function clearKeepalive() {
-      if (keepaliveTimer) clearInterval(keepaliveTimer);
-      keepaliveTimer = null;
+    function clearKeepaliveDeadline() {
+      if (keepaliveDeadlineTimer) timers.clearTimeout(keepaliveDeadlineTimer);
+      keepaliveDeadlineTimer = null;
     }
 
-    function closeSocket() {
-      clearKeepalive();
-      authenticated = false;
+    function clearKeepalive() {
+      if (keepaliveTimer) timers.clearInterval(keepaliveTimer);
+      keepaliveTimer = null;
+      clearKeepaliveDeadline();
+    }
+
+    function clearReconnect() {
+      if (reconnectTimer) timers.clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+
+    function clearHandshakeDeadline() {
+      if (handshakeTimer) timers.clearTimeout(handshakeTimer);
+      handshakeTimer = null;
+    }
+
+    function resetHandshakeState() {
       handshakeNonce = null;
       hostProofVerified = false;
       tokenSent = false;
       authSent = false;
+    }
+
+    // An unanswered probe means the socket is half-open: still "open" to us, already gone to the
+    // host. Give up on it so status stops lying and recovery can start.
+    function armKeepaliveDeadline(targetSocket) {
+      if (keepaliveDeadlineTimer) return;
+      keepaliveDeadlineTimer = armTimer("setTimeout", () => {
+        keepaliveDeadlineTimer = null;
+        if (socket !== targetSocket) return;
+        abandonSocket(targetSocket, 1000, "Keepalive ACK deadline exceeded.");
+      }, keepaliveAckTimeoutMs);
+    }
+
+    function startKeepalive(targetSocket) {
+      clearKeepalive();
+      keepaliveTimer = armTimer("setInterval", () => {
+        if (socket !== targetSocket || !authenticated) return;
+        if (targetSocket.readyState !== WebSocketApi.OPEN) {
+          // We still own an authenticated socket that is no longer open, so its close event is
+          // late or missing. Bound the wait at one probe period instead of trusting the event.
+          abandonSocket(targetSocket, 1000, "Socket left OPEN without a close event.");
+          return;
+        }
+        targetSocket.send(JSON.stringify({ type: "keepalive", sent_at: new Date().toISOString() }));
+        armKeepaliveDeadline(targetSocket);
+      }, keepaliveMs);
+    }
+
+    // One pending reconnect at a time. The 30-second alarm stays the fallback for a missed close
+    // event; it cannot rescue a socket wedged mid-handshake, which is what the handshake deadline
+    // below is for. Past the window the host is not coming back in a hurry, so stop holding the
+    // worker awake for it and let the alarm carry on alone.
+    function scheduleReconnect() {
+      if (!pairing || authenticated || reconnectTimer) return;
+      if (reconnectElapsedMs >= reconnectWindowMs) return;
+      const delay = reconnectDelays[Math.min(reconnectAttempt, reconnectDelays.length - 1)];
+      reconnectAttempt += 1;
+      reconnectElapsedMs += delay;
+      reconnectTimer = armTimer("setTimeout", () => {
+        reconnectTimer = null;
+        if (!pairing || authenticated) return;
+        connectHost().catch(() => publishStatus("disconnected", "HOST_UNAVAILABLE"));
+      }, delay);
+    }
+
+    function dropSocket(targetSocket) {
+      if (socket !== targetSocket) return false;
+      socket = null;
+      authenticated = false;
+      resetHandshakeState();
+      clearKeepalive();
+      clearHandshakeDeadline();
+      scheduleReconnect();
+      publishStatus(pairing ? "disconnected" : "unpaired", pairing ? "HOST_UNAVAILABLE" : null);
+      return true;
+    }
+
+    // Give up ownership BEFORE asking the browser to close: a socket can sit in CLOSING for as
+    // long as the peer stays silent, and recovery must not wait on an event that may never come.
+    function abandonSocket(targetSocket, code, reason) {
+      dropSocket(targetSocket);
+      try { targetSocket.close(code, reason); }
+      catch (_) { /* Recovery above does not depend on the close succeeding. */ }
+    }
+
+    function closeSocket() {
+      clearKeepalive();
+      clearReconnect();
+      clearHandshakeDeadline();
+      authenticated = false;
+      resetHandshakeState();
       const current = socket;
       socket = null;
       try { current?.close?.(1000, "Reconnect requested."); } catch (_) { /* Best effort. */ }
@@ -166,14 +327,14 @@
         if (typeof event.data !== "string" || new TextEncoder().encode(event.data).byteLength > core.LIMITS.max_envelope_bytes + 8192) throw new Error("invalid transport frame");
         message = JSON.parse(event.data);
       } catch (_) {
-        targetSocket.close(1007, "Text JSON required.");
+        abandonSocket(targetSocket, 1007, "Text JSON required.");
         return;
       }
       if (socket !== targetSocket) return;
       if (!authenticated && message?.type === "auth_proof" && typeof message.proof === "string" && handshakeNonce && !hostProofVerified && !tokenSent) {
         const verified = await verifyHostProof(pairing.token, handshakeNonce, message.proof);
         if (socket !== targetSocket || !verified) {
-          targetSocket.close(1008, "Host authentication failed.");
+          abandonSocket(targetSocket, 1008, "Host authentication failed.");
           return;
         }
         hostProofVerified = true;
@@ -191,24 +352,39 @@
         authSent = true;
         return;
       }
-      if (message?.type === "auth_ok" && typeof message.session_id === "string" && hostProofVerified && tokenSent && authSent) {
+      if (message?.type === "auth_ok" && typeof message.session_id === "string") {
+        // The branch's own handshake contract is unchanged: auth_ok counts only after the host
+        // proved itself and our auth frame actually left the socket. Added on top: it counts only
+        // from a socket that is genuinely open, and only once per socket.
+        if (!hostProofVerified || !tokenSent || !authSent
+          || targetSocket.readyState !== WebSocketApi.OPEN || settledSockets.has(targetSocket)) {
+          abandonSocket(targetSocket, 1008, "Unexpected authentication frame.");
+          return;
+        }
+        settledSockets.add(targetSocket);
         authenticated = true;
+        clearHandshakeDeadline();
+        clearReconnect();
+        // Armed before the status write: liveness must not depend on storage succeeding.
+        startKeepalive(targetSocket);
         await publishStatus("connected");
-        clearKeepalive();
-        keepaliveTimer = setInterval(() => {
-          if (socket === targetSocket && authenticated && targetSocket.readyState === WebSocketApi.OPEN) {
-            targetSocket.send(JSON.stringify({ type: "keepalive", sent_at: new Date().toISOString() }));
-          }
-        }, KEEPALIVE_MS);
         return;
       }
       if (!authenticated) {
-        targetSocket.close(1008, "Host authentication is not complete.");
+        abandonSocket(targetSocket, 1008, "Host authentication is not complete.");
         return;
       }
-      if (message?.type === "keepalive_ack") return;
+      if (message?.type === "keepalive_ack") {
+        // Only an ACK that answers an outstanding probe is a completed round trip, and only that
+        // is evidence the link carries traffic. An unsolicited one refills nothing.
+        if (!keepaliveDeadlineTimer) return;
+        clearKeepaliveDeadline();
+        reconnectAttempt = 0;
+        reconnectElapsedMs = 0;
+        return;
+      }
       if (message?.type !== "rpc" || typeof message.relay_id !== "string" || !message.envelope) {
-        targetSocket.close(1008, "Unsupported host transport message.");
+        abandonSocket(targetSocket, 1008, "Unsupported host transport message.");
         return;
       }
       const response = await router.route(message.envelope);
@@ -218,10 +394,32 @@
     }
 
     async function connectHost() {
-      if (!pairing || socket && [WebSocketApi.OPEN, WebSocketApi.CONNECTING].includes(socket.readyState)) return;
-      await publishStatus("connecting");
+      if (!pairing || socket && [WebSocketApi.OPEN, WebSocketApi.CONNECTING].includes(socket.readyState)) {
+        return safeStatus(currentState());
+      }
+      clearReconnect();
+      // Every timer belonging to the socket being replaced goes with it: one slot, one timer.
+      clearHandshakeDeadline();
+      clearKeepalive();
+      // Replacing a socket voids whatever authentication and handshake state the old one had.
+      authenticated = false;
+      resetHandshakeState();
+      // The socket is claimed before the first await so a scheduled reconnect cannot race a second
+      // socket into existence between the status write and the constructor.
       const candidate = new WebSocketApi(pairing.websocket_url);
       socket = candidate;
+      // Covers the whole handshake -- still CONNECTING, or open but never carried through
+      // challenge/proof/auth to auth_ok. The alarm rescues neither, because connectHost replaces
+      // neither state.
+      handshakeTimer = armTimer("setTimeout", () => {
+        handshakeTimer = null;
+        if (socket !== candidate || authenticated) return;
+        // The wait we just spent counts against the give-up window too. Counting only the delays
+        // BETWEEN attempts would let a host that accepts connections and never answers hold the
+        // worker awake for several times the window the code claims to enforce.
+        reconnectElapsedMs += handshakeTimeoutMs;
+        abandonSocket(candidate, 1000, "Handshake deadline exceeded.");
+      }, handshakeTimeoutMs);
       candidate.addEventListener("open", () => {
         if (socket !== candidate) return;
         handshakeNonce = freshNonce();
@@ -231,19 +429,18 @@
         candidate.send(JSON.stringify({ type: "auth_challenge", role: "extension", nonce: handshakeNonce }));
       });
       candidate.addEventListener("message", (event) => {
-        handleSocketMessage(event, candidate).catch(() => candidate.close(1011, "Router failure."));
+        handleSocketMessage(event, candidate).catch(() => abandonSocket(candidate, 1011, "Router failure."));
       });
-      candidate.addEventListener("close", () => {
-        if (socket !== candidate) return;
-        socket = null;
-        authenticated = false;
-        clearKeepalive();
-        publishStatus(pairing ? "disconnected" : "unpaired", pairing ? "HOST_UNAVAILABLE" : null);
-      });
+      candidate.addEventListener("close", () => { dropSocket(candidate); });
       candidate.addEventListener("error", () => { /* close publishes the fail-closed state without secret-bearing details. */ });
+      return publishStatus("connecting");
     }
 
-    async function loadPairing() {
+    function loadPairing() {
+      return queuePairingWork(loadPairingNow);
+    }
+
+    async function loadPairingNow() {
       const stored = await chromeApi.storage.local.get(pairingCore.PAIRING_STORAGE_KEY);
       const candidate = stored?.[pairingCore.PAIRING_STORAGE_KEY];
       if (!candidate) {
@@ -259,7 +456,7 @@
         return publishStatus("pairing_invalid", "PAIRING_FILE_INVALID");
       }
       await connectHost();
-      return safeStatus(authenticated ? "connected" : "connecting");
+      return safeStatus(currentState());
     }
 
     chromeApi.runtime.onConnect.addListener((port) => {
@@ -273,7 +470,7 @@
         if (executorPort !== port) return;
         if (message?.type === "DAC_BRIDGE_EXECUTOR_READY" && message.protocol === core.PROTOCOL && message.version === 1 && typeof message.executor_epoch === "string") {
           executorEpoch = message.executor_epoch;
-          publishStatus(authenticated ? "connected" : pairing ? "connecting" : "unpaired");
+          publishStatus(currentState());
           return;
         }
         if (message?.type === "DAC_BRIDGE_RPC_RESPONSE" && typeof message.route_id === "string") {
@@ -290,24 +487,24 @@
         executorPort = null;
         executorEpoch = null;
         failExecutorPending("EXECUTOR_UNAVAILABLE");
-        publishStatus(authenticated ? "connected" : pairing ? "disconnected" : "unpaired");
+        publishStatus(currentState());
       });
     });
 
     chromeApi.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message?.type === "DAC_BRIDGE_PAIRING_SET") {
-        Promise.resolve().then(async () => {
+        queuePairingWork(async () => {
           const validated = pairingCore.validate(message.pairing);
           await chromeApi.storage.local.set({ [pairingCore.PAIRING_STORAGE_KEY]: validated });
           pairing = validated;
           closeSocket();
           await connectHost();
-          return safeStatus("connecting");
+          return safeStatus(currentState());
         }).then((status) => sendResponse({ ok: true, status })).catch(() => sendResponse({ ok: false, code: "PAIRING_FILE_INVALID" }));
         return true;
       }
       if (message?.type === "DAC_BRIDGE_PAIRING_REMOVE") {
-        Promise.resolve().then(async () => {
+        queuePairingWork(async () => {
           pairing = null;
           closeSocket();
           await chromeApi.storage.local.remove(pairingCore.PAIRING_STORAGE_KEY);
@@ -316,7 +513,7 @@
         return true;
       }
       if (message?.type === "DAC_BRIDGE_STATUS_GET") {
-        sendResponse({ ok: true, status: safeStatus(authenticated ? "connected" : pairing ? "disconnected" : "unpaired") });
+        sendResponse({ ok: true, status: safeStatus(currentState()) });
         return false;
       }
       return false;
@@ -328,10 +525,11 @@
     chromeApi.alarms.create(RECONNECT_ALARM, { periodInMinutes: 0.5 });
 
     loadPairing().catch(() => publishStatus("pairing_invalid", "PAIRING_FILE_INVALID"));
-    return Object.freeze({ connectHost, loadPairing, status: () => safeStatus(authenticated ? "connected" : pairing ? "disconnected" : "unpaired"), router });
+    return Object.freeze({ connectHost, loadPairing, status: () => safeStatus(currentState()), router });
   }
 
   (typeof window !== "undefined" ? window : globalThis).DacBridgeLoopbackTransport = Object.freeze({
-    EXECUTOR_PORT_NAME, RECONNECT_ALARM, KEEPALIVE_MS, verifyHostProof, create
+    EXECUTOR_PORT_NAME, RECONNECT_ALARM, KEEPALIVE_MS, KEEPALIVE_ACK_TIMEOUT_MS, HANDSHAKE_TIMEOUT_MS,
+    RECONNECT_CEILING_MS, RECONNECT_DELAYS_MS, RECONNECT_WINDOW_MS, verifyHostProof, create
   });
 })();

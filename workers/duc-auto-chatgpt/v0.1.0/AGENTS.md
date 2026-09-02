@@ -117,6 +117,7 @@ COMPANION (đọc khi cần):
 | `templates/Duc-Auto-ChatGPT-Template.xlsx` | Workbook trống chuẩn để bắt đầu pilot mới |
 | `scripts/create-pilot-NN.mjs` | Script tạo workbook cho từng pilot |
 | ~~`FEATURE-PARITY.md`~~ | **Đã dời về gốc repo** 2026-08-26 theo Đức chốt — xem `FEATURE-PARITY.md` ở gốc. Nó nói về cả hai nhánh nên không thuộc package nào |
+| `tests/bridge-transport-liveness-smoke.mjs` | Ghim lớp ổn định kết nối Bridge (port từ Gemini 02/09): keepalive phải **chờ ACK có hạn**; buông socket ngay khi phán nó chết chứ không đợi sự kiện `close` mà socket `CLOSING` có thể không bao giờ phát; reconnect theo **thang trần 5 giây**, thang chỉ reset khi có **một vòng đi-về hoàn chỉnh**; **hạn bắt tay phủ cả chuỗi** `auth_challenge`→`auth_proof`→`auth`→`auth_ok` của nhánh này. Ghim luôn hai bất biến sẵn có: `auth_ok` tới **trước khi khung `auth` rời socket** phải bị từ chối (kể cả đúng khe giữa lúc proof xong và lúc gửi), và `connectHost` phải **giữ socket trước mọi `await`**. Fake socket có trạng thái `CLOSING` thật — fake đóng-tức-thì che mất đúng cửa sổ lỗi |
 | `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
 | `Pilot-07/`, `Pilot-08/`, `Pilot-09.../` | Pilot đang hoạt động, có thể có dữ liệu mới |
 | `Pilot-13_References/` | **TẠM HOÃN, không chạy** — pilot ảnh tham chiếu dựng từ 3 job thật của Pilot-08. Giữ lại vì phần kiểm offline "cả 66 job đều giải được ảnh" vẫn dùng được khi nào chạy Pilot-08 thật |

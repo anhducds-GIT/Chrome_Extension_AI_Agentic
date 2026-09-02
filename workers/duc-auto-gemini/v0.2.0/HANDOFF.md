@@ -584,3 +584,15 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   auth_ok ngay sau open phải chờ 1 nhịp (`settle()`/tick) — sửa mv3-reconnect + liveness.
   Suite 84/84.
 - 2026-09-02 · `claude-bridge-multiprofile` · Đóng gói: `evidence-multiprofile-port-20260902/` (2 vòng audit Codex nguyên văn + mutation 13/13 đỏ), fixture cô lập vế identity của guard sau await, khai bản đồ file. Suite 84/84. Còn tay Đức: reload extension từng profile + đặt tên (ô ở tab BRIDGE).
+
+- 2026-09-02 · Claude (`claude-stabilizing-bridge`) · **Vá một lỗi của chính lớp ổn định này, do audit phát hiện khi port sang nhánh ChatGPT.**
+  - **Lỗi:** cửa sổ bỏ cuộc 120 giây chỉ đếm thời gian chờ **giữa** các lần thử, không đếm hạn bắt
+    tay 10 giây nằm **trong** mỗi vòng. Với host chấp nhận kết nối rồi im lặng, mỗi vòng tốn
+    5 giây chờ + 10 giây bắt tay nhưng chỉ bị trừ 5 — nên thang chạy **~6,5 phút** thay vì 2 phút,
+    và giữ service worker thức suốt thời gian đó. Đúng cái mà cửa sổ sinh ra để tránh.
+  - **Vá:** hạn bắt tay tự trừ thời gian của nó vào ngân sách trước khi buông socket. Một dòng.
+  - Ghim bằng ca mới: mọi socket đều mở rồi im, nên mỗi vòng tốn cả độ trễ lẫn hạn bắt tay —
+    cửa sổ 20ms mua được **hai** lần thử chứ không phải bốn. Đỏ trước, xanh sau.
+  - Suite **84/84**. Không đụng gì khác trong package này.
+- **Next:** không có việc mở của lớp vận chuyển. Số đo live 28/08 vẫn đúng — bản vá này chỉ đổi
+  hành vi ở nhánh host-im-lặng-kéo-dài, không đổi đường bật/tắt host thường.

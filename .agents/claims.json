@@ -1,20 +1,20 @@
 {
-  "_doc": "Bảng chủ sở hữu package. MỘT package chỉ MỘT phiên AI được ghi tại một thời điểm. Chủ không phải bạn = chỉ đọc. Muốn giành = hỏi Đức. Xong việc thì đặt owner về null.",
-  "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
+  "_doc": "B\u1ea3ng ch\u1ee7 s\u1edf h\u1eefu package. M\u1ed8T package ch\u1ec9 M\u1ed8T phi\u00ean AI \u0111\u01b0\u1ee3c ghi t\u1ea1i m\u1ed9t th\u1eddi \u0111i\u1ec3m. Ch\u1ee7 kh\u00f4ng ph\u1ea3i b\u1ea1n = ch\u1ec9 \u0111\u1ecdc. Mu\u1ed1n gi\u00e0nh = h\u1ecfi \u0110\u1ee9c. Xong vi\u1ec7c th\u00ec \u0111\u1eb7t owner v\u1ec1 null.",
+  "_labels": "owner l\u00e0 nh\u00e3n phi\u00ean t\u1ef1 \u0111\u1eb7t, v\u00ed d\u1ee5 'claude-gemini' \u2014 hai phi\u00ean Claude kh\u00e1c nhau ph\u1ea3i c\u00f3 hai nh\u00e3n kh\u00e1c nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 2026-09-02 (claude-mp-gate). XONG: cong tay multi-profile DA QUA ca 3 nhanh — 3 ho so co ten (Binh/anhducds/kaito), --target route dung, served_by khop; bang chung evidence/20260902-multiprofile-naming-gate-r01. Da push (1b1c249, 001da50, c251a37). CON MO: (1) trial video — CAN TAY DUC bat panel + workbook + Dev Mode + Video mode roi AI chay x1; (2) live-check F-14 (can chip dang o Image); (3) DUC QUYET ghe legacy o profile Chrome thu tu: dat ten hoac tat.",
+      "task": "TRA QUYEN 2026-09-02 (claude-mp-gate). XONG: cong tay multi-profile DA QUA ca 3 nhanh \u2014 3 ho so co ten (Binh/anhducds/kaito), --target route dung, served_by khop; bang chung evidence/20260902-multiprofile-naming-gate-r01. Da push (1b1c249, 001da50, c251a37). CON MO: (1) trial video \u2014 CAN TAY DUC bat panel + workbook + Dev Mode + Video mode roi AI chay x1; (2) live-check F-14 (can chip dang o Image); (3) DUC QUYET ghe legacy o profile Chrome thu tu: dat ten hoac tat.",
       "released_at": "2026-09-02"
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-stabilizing-bridge",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 2026-09-02 (claude-bridge-multiprofile). XONG + da push: port multi-profile (550da43) + va authSent tu audit (5aa7540) + evidence 2 vong audit. Suite 84/84, mutation 13/13 do, host moi deploy + song tren 32148. CON MO (tay Duc): reload extension tung profile + dat ten o tab BRIDGE; no cu: do live nhanh tat host qua 2 phut.",
-      "released_at": "2026-09-02"
+      "task": "Vet lai cua so bo cuoc: audit khi port sang ChatGPT phat hien elapsed chi dem do tre giua cac lan thu, khong dem han bat tay 10s moi vong -> host im lang giu worker thuc ~3x cua so. Cung mot loi o Gemini (goc). Va + ghim.",
+      "released_at": null
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-stabilizing-bridge",
@@ -27,7 +27,7 @@
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "TRA QUYEN 2026-09-02 (claude-mp-gate). XONG: sinh lai DASHBOARD/llms.txt/repo-map/FEATURE-PARITY sau khi viec uu tien #1 doi noi dung. NO MOI ghi o HANDOFF.md goc: feature-parity.mjs do CAY LAM VIEC con cong kiem do HEAD — bat dong moi khi co phien khac sua do. Va tam bang clone HEAD ra duong dan NGAN. Sua goc can Duc chot.",
+      "task": "TRA QUYEN 2026-09-02 (claude-mp-gate). XONG: sinh lai DASHBOARD/llms.txt/repo-map/FEATURE-PARITY sau khi viec uu tien #1 doi noi dung. NO MOI ghi o HANDOFF.md goc: feature-parity.mjs do CAY LAM VIEC con cong kiem do HEAD \u2014 bat dong moi khi co phien khac sua do. Va tam bang clone HEAD ra duong dan NGAN. Sua goc can Duc chot.",
       "released_at": "2026-09-02"
     }
   }

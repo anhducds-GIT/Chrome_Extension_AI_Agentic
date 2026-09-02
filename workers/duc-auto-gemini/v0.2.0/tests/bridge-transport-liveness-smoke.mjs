@@ -1109,4 +1109,38 @@ assert.equal(
   "an all-holes ladder falls back to the default ladder rather than becoming NaN rungs that cost no budget"
 );
 
+// --- the give-up window is wall time, not just the gaps between attempts ---
+// Found by the independent audit while porting this layer to duc-auto-chatgpt: a host that
+// accepts the socket and never answers spends most of each cycle inside the handshake deadline.
+// While that wait was free, the ladder -- and the MV3 worker with it -- stayed awake for several
+// times the window this code claims to enforce.
+const chargeClock = fakeClock();
+const ChargeSocket = makeSocketClass({ lingering: true });
+transport.create({
+  chrome: makeChrome({ [globalThis.DacBridgePairingCore.PAIRING_STORAGE_KEY]: pairing }),
+  WebSocket: ChargeSocket,
+  timers: chargeClock,
+  keepalive_ms: 20,
+  keepalive_ack_timeout_ms: 5,
+  handshake_timeout_ms: 5,
+  reconnect_delays_ms: [5],
+  reconnect_window_ms: 20
+});
+await settle();
+
+for (let cycle = 0; cycle < 10; cycle += 1) {
+  const before = ChargeSocket.instances.length;
+  const latest = ChargeSocket.instances.at(-1);
+  if (latest.readyState === ChargeSocket.CONNECTING) latest.emit("open");
+  chargeClock.advance(5);
+  if (ChargeSocket.instances.length === before) chargeClock.advance(5);
+}
+assert.equal(
+  ChargeSocket.instances.length,
+  3,
+  "each cycle spends a delay AND a handshake deadline, so a 20ms window buys two retries, not four"
+);
+chargeClock.advance(FAR_FUTURE_MS);
+assert.equal(ChargeSocket.instances.length, 3, "and it stays stopped");
+
 console.log("bridge transport liveness smoke tests: PASS");
