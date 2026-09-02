@@ -39,6 +39,18 @@
   };
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // Nghỉ một quãng ngẫu nhiên trong khoảng đã khai ở ADAPTER.HUMAN_PACING.
+  // Ngẫu nhiên chứ không phải hằng số: một quãng nghỉ cố định lặp y hệt hàng
+  // chục lần còn dễ nhận ra hơn là không nghỉ. Khoảng nào chưa khai thì bỏ qua,
+  // để một adapter không có mục này vẫn chạy y như cũ.
+  async function humanPause(name) {
+    const span = ADAPTER.HUMAN_PACING?.[name];
+    if (!span) return 0;
+    const ms = span.min + Math.floor(Math.random() * (span.max - span.min + 1));
+    await sleep(ms);
+    return ms;
+  }
   const nodeIds = new WeakMap();
   let nextNodeId = 1;
 
@@ -1100,6 +1112,11 @@
       // resolves the NEW form and clicks a live Create with an EMPTY prompt --
       // 15 real credits for nothing. So resolve the composer LAST, after every
       // DOM-mutating step and immediately before typing.
+      //
+      // Quang nghi giong nguoi dat TRUOC lenh do composer, khong phai sau. Dat
+      // sau la mo lai dung lo hong o tren: tham chieu composer se cu di mot
+      // nhip truoc khi duoc dung.
+      const pausedBeforeCompose = await humanPause("preComposeMs");
       const activeComposer = findComposer();
       if (!activeComposer) {
         throw new Error("Flow composer not found. Open a labs.google Flow project and retry.");
@@ -1136,6 +1153,11 @@
       carryDiagnostic(requestAttempt, "composer_len_before_typing", composerLenBeforeTyping);
       carryDiagnostic(requestAttempt, "composer_len_after_typing", composerTextLength(activeComposer));
       await sleep(ADAPTER.TIMING.postTypeSettleMs);
+      const pausedAfterType = await humanPause("postTypeMs");
+      // Ghi sau khi CA HAI quang nghi da chay xong. Ban dau toi ghi dong nay
+      // ngay canh cac so do composer, tuc TRUOC dong khai `pausedAfterType` —
+      // TDZ, va no lam MOI job chet o PRE_SUBMIT. Suite bat ngay.
+      carryDiagnostic(requestAttempt, "pacing_ms", { pre_compose: pausedBeforeCompose, post_type: pausedAfterType });
       // Đặt lại trước mỗi lần thử: biến này ở phạm vi module, để nguyên thì
       // một job không có blob nào sẽ thừa hưởng nhãn của job trước.
       lastBlobConversion = null;
@@ -1148,6 +1170,10 @@
       // `classifyFailure` dò từ khoá `composer` trên toàn bộ câu — xem ghi chú
       // dài ở waitForSendButtonReady.
       const sendButton = await waitForSendButtonReady(undefined, ` (typing_path=${typing.path}, typing_ok=${typing.ok}, text_len ${composerLenBeforeTyping}->${composerTextLength(activeComposer)}, prompt_len=${prompt.length})`);
+      // Quang nghi giong nguoi cuoi cung: nut da sang roi moi nghi, va nghi
+      // TRUOC khi chup moc quy gan — chup moc phai sat cu bam, chen mot quang
+      // nghi vao giua se lam nen cu di va lam viec quy gan video kem chac.
+      const pausedBeforeSubmit = await humanPause("preSubmitMs");
       // Capture the immutable attribution boundary at the irreversible action:
       // immediately before Create, after typing and attachment preparation.
       const boundary = ADAPTER.resultKind === "video" ? captureVideoBoundary() : captureBoundary(inputEvidence);

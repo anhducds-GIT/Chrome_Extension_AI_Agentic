@@ -4,13 +4,27 @@
   // Owner decision 2026-08-25 (decisions.md): during development the AI may
   // start a small "trial run" through the Bridge via a dedicated method
   // (run.trial), never run.start. Every ceiling here is a hard-coded guard,
-  // not a tunable: <=3 videos, timeout 15-300s (default 180s), delay 20-30s between jobs, and at
+  // not a tunable: <=7 videos, timeout 15-300s (default 180s), delay 20-30s between jobs, and at
   // least 5 minutes between trial starts. The panel toggle stays in the
   // owner's hands; production runs remain human-click only.
   const DEV_MODE_STORAGE_KEY = "dac.dev_mode.v1";
   const TRIAL_HISTORY_STORAGE_KEY = "dac.dev_trial_history.v1";
-  // Owner decision 2026-08-27: 3 videos x 15 credits is the free budget.
-  const MAX_TRIAL_JOBS = 3;
+  // Owner decision 2026-08-27: 3 videos x 15 credits (720p) was the free budget.
+  //
+  // Owner decision 2026-09-02, SUPERSEDES the above: a free account carries 50
+  // credits and a 360p video costs 7, so ONE ACCOUNT COVERS 7 VIDEOS (49 of 50).
+  // Duc delegated the exact number ("tuy case ma ban muon dong & test, toi ko co
+  // gioi han") and said runs must be intermittent with an account switch between
+  // chains. So the ceiling is set to exactly ONE ACCOUNT'S BUDGET: a chain ends
+  // when that account is spent, and the operator switches Chrome profile before
+  // the next chain. MIN_TRIAL_INTERVAL_SEC already enforces the gap between them.
+  //
+  // THIS NUMBER IS TIED TO 360p. At 720p a video costs 15, so one account covers
+  // only 3, and jobs 4-7 of a chain would meet the credit wall. That degrades
+  // SAFELY -- the wall raises GENERATION_LIMIT_REACHED, a hard stop with no retry
+  // and no spend -- but the operator loses a chain's worth of planning. Deriving
+  // this ceiling from the resolution measured on the mode chip is F-22.
+  const MAX_TRIAL_JOBS = 7;
   const MIN_TRIAL_INTERVAL_SEC = 300;
   const TIMEOUT_BOUNDS = Object.freeze({ min: 15, max: 300, default: 180 });
   const DELAY_BOUNDS = Object.freeze({ min: 20, max: 30, default: 25 });

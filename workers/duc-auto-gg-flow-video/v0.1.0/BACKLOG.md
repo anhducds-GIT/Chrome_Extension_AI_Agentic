@@ -197,6 +197,14 @@
   lại `item.detection_diagnostics` đang có trước khi chồng trường video lên. Xác nhận thì cần
   một lượt live nữa (15 credit) → **hỏi Đức trước**. Bằng chứng: `evidence/F4R3-KET-QUA.md`.
 
+- **F-22** · [Đức chốt 02/09] **Trần chuỗi trial đang khoá cứng ở 7, mà 7 chỉ đúng với 360p.**
+  Phép tính: tài khoản free 50 credit ÷ 7 credit/video (360p) = 7 video (49/50). Ở **720p** một
+  video tốn 15 → một tài khoản chỉ đủ **3**, và job thứ 4 trở đi của một chuỗi đầy sẽ chạm tường
+  credit. Hỏng an toàn (`GENERATION_LIMIT_REACHED` = dừng cứng, 0 chi) nhưng mất công lập kế
+  hoạch. **Việc cần làm:** đọc độ phân giải từ chip cấu hình (`Video · 360p · 10s crop_16_9 x1`
+  — đã có bằng chứng DOM) rồi suy ra trần thay vì khoá cứng. Cẩn thận: đọc `360p` từ nhãn chip
+  là **selector mới**, phải có bằng chứng DOM trước, đúng luật vàng 1.
+
 - **F-20** · **LUẬT MỚI, đã ghim, đọc trước khi sửa BẤT KỲ chữ báo lỗi nào trong gói này.**
   `classifyFailure` (`runner-core.js:88-103`) quyết định một thất bại có được thử lại hay dừng
   cả mẻ, và nó **dò từ khoá trên TOÀN BỘ câu báo lỗi**, không phải trên tiền tố. Nên **sửa lời

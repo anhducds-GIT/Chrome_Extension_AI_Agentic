@@ -46,6 +46,28 @@
     menuSettleMs: 0,
   });
 
+  // Nhịp thao tác giống người (Đức chốt 02/09). Trước bản này, runner mở trang
+  // là gõ ngay, gõ xong 150 ms là bấm — nhịp không người nào có, và Đức yêu cầu
+  // đừng thao tác kiểu đó.
+  //
+  // Ba quãng nghỉ, mỗi quãng là một KHOẢNG rồi bốc ngẫu nhiên trong đó: một
+  // hằng số cố định lặp lại y hệt hàng chục lần còn dễ nhận ra hơn là nhanh.
+  //
+  // Vì sao chỉ có ba chỗ này, và vì sao ĐÚNG ba chỗ này:
+  //   · `preComposeMs`  — đặt TRƯỚC lúc dò lại composer, không phải sau. Đặt sau
+  //     là mở lại đúng lỗ hổng audit Codex vòng 3 đã bắt: composer phải được dò
+  //     ở bước cuối cùng ngay trước khi gõ, vì mọi bước làm đổi DOM đều có thể
+  //     remount nó, và một tham chiếu cũ thì gõ vào chỗ không còn tồn tại.
+  //   · `postTypeMs`    — thay chỗ cho postTypeSettleMs cố định 150 ms.
+  //   · `preSubmitMs`   — SAU khi nút đã sáng, TRƯỚC lúc chụp mốc quy gán. Không
+  //     đặt sau mốc: luật "chụp mốc ngay sát cú bấm" là thứ giữ cho việc quy gán
+  //     video không bị lẫn, và một quãng nghỉ chen vào giữa sẽ làm nền cũ đi.
+  const HUMAN_PACING = Object.freeze({
+    preComposeMs: Object.freeze({ min: 900, max: 2600 }),
+    postTypeMs: Object.freeze({ min: 700, max: 1900 }),
+    preSubmitMs: Object.freeze({ min: 500, max: 1600 }),
+  });
+
   const SURFACE = Object.freeze({ IMAGES: "IMAGES", CONVERSATION: "CONVERSATION", WRONG: "WRONG" });
 
   const ORIGIN = Object.freeze({
@@ -337,6 +359,7 @@
     resultKind: "video",
     SELECTORS,
     TIMING,
+    HUMAN_PACING,
     ORIGIN,
     SURFACE,
     isProviderUrl,

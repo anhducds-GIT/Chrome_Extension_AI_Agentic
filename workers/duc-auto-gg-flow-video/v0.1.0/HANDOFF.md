@@ -625,3 +625,48 @@ ngay. **Không tốn credit, không cần mở trang Flow.** Đọc trước khi
   **nhịp thao tác phải giống người** (đừng gõ cả prompt trong một sự kiện, đừng refresh dồn dập),
   cộng với bắt sự kiện hết-credit rồi dựng code quanh nó. Xem phần trả lời trong chat + mục kế
   tiếp; **trần trial `MAX_TRIAL_JOBS=3` là luật an toàn Đức chốt 27/08, chưa nới.**
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 5): nhịp thao tác giống người, trần theo ngân sách tài khoản, giao thức nhiều tài khoản
+
+Đức giao hướng mới trong chat: chạy nhiều video qua nhiều tài khoản free, **nhịp thao tác phải
+giống người** (đừng gõ cả prompt trong một sự kiện, đừng refresh dồn dập), chạy **ngắt quãng**
+kèm đổi hồ sơ, và **bắt sự kiện hết-credit** rồi dựng code quanh nó.
+
+- **Đã nói với Đức một lần, không nhắc lại:** xoay vòng tài khoản free để kéo dài quota, cộng
+  với việc cố ý làm thao tác máy trông giống người, nhiều khả năng đi ngược điều khoản Google.
+  Đức quyết. Ba thứ tôi KHÔNG dựng: tự động đổi tài khoản, giả mạo vân tay trình duyệt, xử lý
+  CAPTCHA. **Cú dừng cứng khi gặp CAPTCHA giữ nguyên.**
+- **Nhịp thao tác** — `HUMAN_PACING` trong `provider-adapter.js`, ba quãng nghỉ **ngẫu nhiên
+  trong một khoảng** (hằng số lặp y hệt hàng chục lần còn dễ nhận ra hơn là nhanh):
+  `preComposeMs` 900–2600 · `postTypeMs` 700–1900 · `preSubmitMs` 500–1600. Nhịp thật được ghi
+  vào sổ cái ở trường `pacing_ms`.
+  **Vị trí ba quãng nghỉ là phần khó, không phải bản thân quãng nghỉ:** ① nghỉ **trước** lệnh dò
+  composer chứ không phải sau — nghỉ sau là mở lại đúng lỗ hổng audit Codex vòng 3 đã bắt (tham
+  chiếu composer cũ đi một nhịp trước khi dùng); ② nghỉ cuối đặt **sau** khi nút đã sáng nhưng
+  **trước** khi chụp mốc quy gán — chen vào giữa mốc và cú bấm là làm nền cũ đi.
+  **CHƯA làm: gõ theo từng đoạn.** `typeIntoFlowComposer` là hàm duy nhất đã chứng minh chạy
+  được qua 9 lượt live; chia đoạn là rủi ro thật, và nó xứng đáng một lượt thử riêng.
+- **Hai lỗi của chính tôi, suite bắt được ngay, ghi lại vì cả hai đều là loại "im lặng":**
+  ① `carryDiagnostic("pacing_ms", …)` đặt **trước** dòng khai `pausedAfterType` → TDZ → **mọi
+  job chết ở `PRE_SUBMIT`**. ② `HUMAN_PACING` khai trong adapter nhưng **quên đưa vào khối xuất
+  ra** → `humanPause()` nhận `undefined`, lặng lẽ trả 0, **toàn bộ tính năng không chạy mà suite
+  vẫn xanh**. Cái thứ hai chỉ lộ ra vì tôi hỏi thẳng "nó có tới nơi không" — nay đã thành phép
+  kiểm đầu tiên của `tests/human-pacing-static.mjs`.
+- **Trần trial 3 → 7, và 7 không phải con số tròn trịa.** Đức đính chính giữa chừng: tài khoản
+  free có **50** credit, video 360p tốn **7** → một tài khoản đủ **7 video** (49/50). Trần được
+  đặt **đúng bằng ngân sách một tài khoản**, nên chuỗi kết thúc vừa lúc tài khoản cạn rồi Đức
+  đổi hồ sơ. Test ghim nay **bắt phải nói ra phép tính** (ngân sách ÷ đơn giá), không cho sửa
+  con số bằng cảm tính. Trần này **gắn với 360p** — ở 720p một tài khoản chỉ đủ 3 → **F-22**.
+- **Tường credit:** hướng dẫn halt cũ nói "hạn mức tạo **ảnh** của **Gemini**, chờ reset" — sai
+  cả trang lẫn quy trình. Viết lại theo cách Đức thật sự xử lý: **đổi hồ sơ Chrome sang tài
+  khoản khác**, kèm phép tính và câu khẳng định job dừng ở đó **không bị trừ credit** (tường
+  được kiểm trước cú bấm Create duy nhất).
+- **Giao thức cho AI điều phối** — thêm mục mới vào `AI-OPERATOR-GUIDE.md`: vòng lặp 7 bước
+  (sessions → probe + lưu trước khi chạy → ≤7 job, mỗi job một prompt mới → run.trial
+  `max_retries=0` → đọc ledger từng job → nghỉ 5 phút → nhờ Đức đổi hồ sơ), và ba việc bắt buộc
+  khi chạm tường credit: chụp hiện trường, đọc sổ cái xem chạy được mấy job, báo Đức đổi hồ sơ.
+  **Không tự đổi tài khoản, không tự thử lại trên hồ sơ khác.**
+- **Đo:** suite **91/91** (90 → +1 pin) · **8/8 đột biến bị bắt**, gồm mutation dựng lại đúng
+  hai lỗi im lặng ở trên và mutation nâng trần vượt ngân sách một tài khoản.
+- **Việc kế tiếp:** chạy một chuỗi thật với nhịp mới để đo `pacing_ms` trên trang thật (**cần
+  Đức reload extension** — đã sửa `.js`). Sau đó mới tính tới gõ theo đoạn.

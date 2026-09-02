@@ -64,7 +64,21 @@ const acceptedTimeoutCeiling = bridge.validateParams("run.trial", { job_ids: ["P
 assert.equal(acceptedTimeoutCeiling, devTrial.TIMEOUT_BOUNDS.max, "bridge ceiling matches dev-trial TIMEOUT_BOUNDS.max");
 assert.ok(acceptedTimeoutCeiling >= 180, "the accepted ceiling stays at or above the F1-recommended 180s");
 // Owner decision 2026-08-27: 3 videos x 15 credits is the whole free budget.
-assert.equal(devTrial.MAX_TRIAL_JOBS, 3, "trial chain cap is 3 videos (owner decision 2026-08-27)");
+// Trần chuỗi trial = NGÂN SÁCH CỦA ĐÚNG MỘT TÀI KHOẢN, không phải một con số
+// tròn trịa ai đó thấy hợp lý. Đức chốt 2026-09-02: tài khoản free có 50 credit,
+// video 360p tốn 7 → một tài khoản đủ 7 video (49/50). Chuỗi kết thúc vừa lúc
+// tài khoản cạn, rồi người vận hành đổi hồ sơ Chrome trước chuỗi sau.
+// (Quyết định cũ 2026-08-27 là 3, tính theo 720p × 15 credit — đã bị thay.)
+//
+// Sửa con số này thì phải sửa cả phép tính dưới, nghĩa là phải nói ra ngân sách
+// và đơn giá mới. Đó là chủ đích: một trần chi tiêu không được đổi bằng cảm tính.
+const FREE_ACCOUNT_CREDITS = 50;
+const CREDITS_PER_VIDEO_360P = 7;
+assert.equal(devTrial.MAX_TRIAL_JOBS, Math.floor(FREE_ACCOUNT_CREDITS / CREDITS_PER_VIDEO_360P),
+  "trần chuỗi trial phải bằng đúng số video một tài khoản free trả nổi ở 360p (Đức chốt 2026-09-02)");
+assert.equal(devTrial.MAX_TRIAL_JOBS, 7, "trần chuỗi trial là 7 video");
+assert.ok(devTrial.MAX_TRIAL_JOBS * CREDITS_PER_VIDEO_360P <= FREE_ACCOUNT_CREDITS,
+  "một chuỗi đầy không được vượt ngân sách một tài khoản");
 assert.deepEqual(
   bridge.validateParams("run.trial", { job_ids: ["a", "b", "c"] }).job_ids,
   ["a", "b", "c"],

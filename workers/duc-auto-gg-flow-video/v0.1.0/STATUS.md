@@ -5,9 +5,9 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "F-18 cho tai hien: duong go lanh (typing_path=input_events, do 2 luot live), va tu nay MOI luot deu ghi typing_path + composer_len truoc/sau vao so cai — luot nao lai hong thi doc thang, khong phai doan. No con lai (nho, chua gap that): nhanh ANH cua sidepanel cung khong trai ban cu, cung goc benh F-21"
+next_step: "CAN DUC RELOAD EXTENSION (da sua .js). Roi chay mot chuoi that voi nhip moi de do pacing_ms tren trang that. Tran chuoi nay la 7 job = dung ngan sach mot tai khoan free o 360p (50 credit / 7 moi video); het chuoi thi Duc doi ho so Chrome sang tai khoan khac. Giao thuc day du o muc cuoi AI-OPERATOR-GUIDE.md"
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "F4R5 (02/09): chuoi 3 job dau tien chay TRON VEN — 3/3 SUCCESS, moi job dung 1 video, 0 retry, va so cai co du chan doan cho TUNG job. Gia thuyet F-18 (composer lai do job thu 2 tro di) DA BI BAC: ca ba job deu before=28, after=prompt_len chan chan. Tinh ca truoc do la 5 luot go sach lien tiep; chi luot F4R2 lech. Bang chung: evidence/F4R5-KET-QUA.md"
+current_focus: "Nhip thao tac giong nguoi da cai (3 quang nghi ngau nhien, ghi vao so cai o pacing_ms), tran trial 3->7 theo ngan sach mot tai khoan, huong dan tuong-credit viet lai theo quy trinh doi ho so, va giao thuc nhieu tai khoan cho AI dieu phoi. Suite 91/91, 8/8 dot bien. CHUA do live nhip moi. Truoc do trong ngay: F-21 va + xac nhan live, gia thuyet F-18 bi bac bang chuoi 3 job"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

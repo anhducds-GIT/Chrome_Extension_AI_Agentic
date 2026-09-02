@@ -27,8 +27,8 @@
       title: "Generation limit reached",
       codes: Object.freeze(["GENERATION_LIMIT_REACHED"]),
       retry: "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",
-      meaning: "The account has hit Gemini's image-generation quota for now. (Tài khoản đã chạm giới hạn tạo ảnh của Gemini ở thời điểm hiện tại.)",
-      action: "Stop this Run and wait for the quota to reset, or switch/upgrade the account per your own policy. Once Gemini can generate images again, Check Plan and Continue Run. (Dừng Run hiện tại, chờ Gemini reset hạn mức -- hoặc đổi/nâng cấp tài khoản theo cách bạn xử lý. Khi Gemini tạo ảnh lại được, Check Plan rồi Continue Run.)"
+      meaning: "This account is out of generation credits. (Tài khoản này đã hết credit tạo video.)",
+      action: "Switch to another Chrome profile signed in to a different account, then run the next chain against that profile. A free account carries 50 credits and a 360p video costs 7, so one account covers 7 videos -- a full trial chain is deliberately sized to exactly that, so hitting this wall mid-chain means the account was already partly spent. Nothing was charged for the job that stopped here: the wall is checked before the one guarded Create click. (Đổi sang hồ sơ Chrome đang đăng nhập tài khoản khác, rồi chạy chuỗi tiếp theo trên hồ sơ đó. Tài khoản free có 50 credit, video 360p tốn 7, nên một tài khoản đủ 7 video -- một chuỗi trial đầy được đặt đúng bằng con số đó, vì vậy chạm tường giữa chừng nghĩa là tài khoản đã tiêu bớt từ trước. Job dừng ở đây KHÔNG bị trừ credit nào: tường được kiểm trước cú bấm Create duy nhất.)"
     }),
     Object.freeze({
       title: "Receiver lost",

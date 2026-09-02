@@ -152,3 +152,65 @@ chạy. Vì vậy AI vận hành phải tự kiểm một bước, mỗi phiên,
 | Job dừng `PRE_SUBMIT` với `WRONG_GENERATION_MODE` (không thấy nút Video, hoặc bấm rồi mà mode không đổi) | **`element.click()` không ăn với nhóm nút cấu hình của Flow** (class `flow_tab_slider_trigger`). Đo 28/08 hai lượt: chip không mở được bảng; và khi bảng mở sẵn thì bấm đúng `videocam Video` mode vẫn không đổi. Cùng `.click()` đó vẫn bấm được `arrow_forward Create` | Nhờ Đức **tự đặt Video mode bằng tay** trước khi chạy. Mode đã là Video thì runner bỏ qua khâu này, chạy bình thường. Chi tiết + cách phân biệt nguyên nhân: **F-14** trong `BACKLOG.md`. Cả hai lượt hỏng đều 0 credit, `retry_count=0` |
 | Chip cấu hình đang để `x2`/`x3`/`x4` | Flow sẽ sinh nhiều video một lượt. Luật gán chỉ nhận **đúng 1 id mới**, nhiều hơn thì trả `OUTPUT_AMBIGUOUS` và không nhận cái nào — **credit vẫn bị tiêu** | **Đọc chip TRƯỚC khi chạy.** Không phải `x1` thì nhờ Đức đổi về `x1` rồi mới chạy. Runner chưa tự kiểm việc này (**F-15**) |
 | `dom_probe` trả `ok:true` nhưng THIẾU `runtime_contract`, dù Đức vừa reload extension và tab đã F5 | Extension được nạp trong **NHIỀU profile Chrome cùng lúc** (đo thật 28/08: 3 profile — Default, Profile 10, Profile 4 — cùng nạp từ một thư mục). Host chỉ giữ kết nối của extension pair SAU CÙNG, mà đó có thể là profile Đức KHÔNG bấm reload. `extension_id` giống hệt nhau ở cả ba nên `session.hello` không phát hiện ra | **ĐÃ VÁ 28/08 (multi-profile routing, xem mục riêng ở đầu guide):** gọi `bridge.sessions` để thấy đủ các profile, rồi `--target` đúng profile Đức vừa reload; `served_by` trên phản hồi xác nhận đúng runtime trả lời. TUYỆT ĐỐI vẫn không chạy job khi thiếu `runtime_contract` |
+
+## Chạy nhiều video qua nhiều tài khoản — giao thức cho AI điều phối (Đức chốt 02/09)
+
+**Bối cảnh Đức đặt ra:** "unlimited credit" nghĩa là Đức có nhiều tài khoản free và sẽ đổi
+sang tài khoản khác khi tài khoản cũ cạn. **Không chạy liên tiếp không nghỉ** — chạy ngắt
+quãng, xen giữa là đổi tài khoản.
+
+### Phép tính, và vì sao trần là 7
+
+| | |
+|---|---|
+| Tài khoản free | **50 credit** |
+| Video 360p | **7 credit** |
+| Một tài khoản đủ | **7 video** (49/50) |
+
+`MAX_TRIAL_JOBS = 7` được đặt **đúng bằng ngân sách một tài khoản**, không phải một con số
+tròn trịa. Một chuỗi đầy kết thúc vừa lúc tài khoản cạn.
+
+⚠️ **Con số này gắn với 360p.** Ở 720p một video tốn 15, một tài khoản chỉ đủ **3**, và job
+thứ 4 trở đi của chuỗi sẽ chạm tường credit. Hỏng an toàn (dừng cứng, 0 chi), nhưng mất công
+lập kế hoạch. **Đọc độ phân giải trên chip trước khi xếp chuỗi.**
+
+### Vòng lặp chuẩn
+
+1. `bridge.sessions` → xem hồ sơ nào đang nối, lấy đúng nhãn.
+2. `diagnostics.dom_probe --target <nhãn>` → kiểm vân tay runtime, `composer_scope_resolved`,
+   không blocker, và **chip phải là `x1`** (chip `x2` trở lên → `OUTPUT_AMBIGUOUS` mà credit
+   thì đã tiêu — F-15). **Lưu probe này vào `evidence/` TRƯỚC khi chạy.**
+3. `jobs.add` với **≤7 job**, **mỗi job một prompt khác nhau** (luật Đức 02/09 — đừng dùng lại
+   prompt cũ, kể cả để so lượt-với-lượt; tôi đã đề xuất ngoại lệ đó và bị bác).
+4. `run.trial` với `max_retries=0`, rồi poll `run.status`.
+5. Xong chuỗi → đọc `ledger.read`, kiểm `typing_path` / `composer_len_before|after` / quy gán
+   **từng job**.
+6. **Nghỉ.** `MIN_TRIAL_INTERVAL_SEC = 300` cưỡng chế tối thiểu 5 phút giữa hai chuỗi. Đừng
+   tìm cách lách nó.
+7. Muốn chạy tiếp → **nhờ Đức đổi hồ sơ Chrome**, rồi quay lại bước 1 với nhãn mới.
+
+### Khi chạm tường credit (`GENERATION_LIMIT_REACHED`)
+
+Đây là **dừng cứng**: không retry, không chi thêm, cả mẻ dừng. Đúng thiết kế — tường được
+kiểm **trước** cú bấm Create duy nhất, nên job dừng ở đó không bị trừ credit.
+
+AI phải làm đúng ba việc, theo thứ tự:
+
+1. **Chụp hiện trường ngay**: `diagnostics.dom_probe --target <nhãn>` lưu vào `evidence/`. Đây
+   là bằng chứng DOM của tường credit ở đúng cấu hình đang chạy — F-09 mới chỉ đo một lần
+   ngày 28/08 ở 720p, chưa ai đo ở 360p.
+2. **Đọc sổ cái** và ghi lại job nào chạy được trước khi cạn — đó là số credit thật còn lại
+   của tài khoản đó lúc bắt đầu, thông tin không lấy được bằng cách nào khác.
+3. **Báo Đức đổi hồ sơ**, nêu rõ hồ sơ nào đã cạn. **Không tự đổi tài khoản, không tự thử
+   lại trên hồ sơ khác** — đổi tài khoản là việc của Đức.
+
+### Nhịp thao tác — đừng làm nhanh hơn
+
+Đức yêu cầu 02/09: thao tác thong thả như người, đừng nhập ở tốc độ máy, đừng refresh dồn dập.
+Đã cài ba quãng nghỉ ngẫu nhiên trong `provider-adapter.js` (`HUMAN_PACING`): trước khi dò
+composer, sau khi gõ, và trước khi bấm. Chúng được ghi vào sổ cái ở trường `pacing_ms` nên
+đọc lại được thực tế đã nghỉ bao lâu.
+
+**Đừng hạ các quãng này xuống để chạy nhanh hơn**, và đừng gọi `chat.reload` liên tục để "cho
+chắc" — có test ghim (`tests/human-pacing-static.mjs`) và một phép kiểm đòi quãng nghỉ tối
+thiểu 400 ms.
