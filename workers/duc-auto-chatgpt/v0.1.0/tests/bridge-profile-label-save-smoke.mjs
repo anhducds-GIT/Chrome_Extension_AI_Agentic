@@ -98,6 +98,30 @@ const secondAuth = await fullHandshake(second);
 assert.equal(secondAuth.instance.label, "Máy A", "the fresh connect announces the NEW name immediately");
 assert.equal(secondAuth.token, token, "authentication is untouched by the label flow");
 
+// The label cycle must not weaken the handshake: on the very connection a label
+// save produces, an INVALID proof must still end fail-closed with no auth frame
+// and no connected status. (Premature auth_ok and the authSent gate are pinned
+// separately in bridge-multiprofile-transport-async-smoke.mjs.)
+let badProofReply = null;
+runtimeMessage.emit({ type: "DAC_BRIDGE_LABEL_SET", label: "Máy A" }, {}, (response) => { badProofReply = response; });
+await tick();
+await tick();
+assert.equal(badProofReply?.ok, true);
+const cycled = FakeWebSocket.instances.at(-1);
+cycled.emit("open");
+await tick();
+assert.equal(cycled.sent[0].type, "auth_challenge");
+cycled.emit("message", { data: JSON.stringify({ type: "auth_proof", proof: "A".repeat(43) }) });
+await tick();
+assert.equal(cycled.readyState, FakeWebSocket.CLOSED, "an invalid proof still closes the socket fail-closed after a label save");
+assert.equal(cycled.sent.some((frame) => frame.type === "auth"), false, "the token never follows an invalid proof");
+assert.notEqual(values[pairingCore.STATUS_STORAGE_KEY].state, "connected", "a failed handshake never reports connected");
+// Recover for the rest of the test: reconnect and complete a real handshake.
+runtimeMessage.emit({ type: "DAC_BRIDGE_LABEL_SET", label: "Máy A" }, {}, () => {});
+await tick();
+await tick();
+await fullHandshake(FakeWebSocket.instances.at(-1));
+
 // Hostile inputs: bounded before scanning, C1 stripped, non-strings emptied,
 // no lone surrogate survives the cap boundary.
 const hostile = "Máy" + String.fromCharCode(0x9f) + " B" + "y".repeat(1000000);
