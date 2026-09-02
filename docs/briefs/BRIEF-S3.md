@@ -125,16 +125,35 @@ chỉ gọi thẳng `validateStatus`. Repo này đã có bài học: gỡ chỗ 
 - KHÔNG bịa miễn trừ để một con số nợ về 0. Không về được thì báo, đừng làm đẹp nó.
 - KHÔNG bật chặn cổng kiểm nào (đó là S4/S7). S3 chỉ khai dữ liệu và đọc dữ liệu đó.
 
-## Đóng phiên
+## Đóng phiên — **thứ tự này quan trọng, đừng đảo**
+
+> **Bộ sinh đọc HOÀN TOÀN từ HEAD.** Chạy nó trước khi commit thì nó dựng lại từ HEAD **CŨ** —
+> mọi STATUS và `.repo-structure.json` bạn vừa sửa đều không có trong đó. Rồi bạn commit dữ
+> liệu mới nằm cạnh artifact cũ, và cổng kiểm đỏ. Bản đầu của brief này ghi sai đúng chỗ đó;
+> audit GPT và Codex cùng bắt được. Bộ sinh nay tự in **CẢNH BÁO THỨ TỰ** nếu bạn làm sai —
+> thấy dòng đó thì dừng lại, đừng commit tiếp.
 
 ```bash
-node scripts/build-dashboard.mjs
+# 1. Commit NGUỒN trước (STATUS, .repo-structure.json, code, test) — chưa đụng artifact
 git add -A && git commit -m "S3: khai STATUS con thieu, areas, schema v2"
+
+# 2. Giờ HEAD đã có dữ liệu mới, sinh lại artifact từ chính nó
+node scripts/build-dashboard.mjs
+
+# 3. Artifact vào một commit RIÊNG (hoặc --amend nếu muốn gộp)
+git add -A && git commit -m "chore: sinh lai artifact sau S3"
+
+# 4. Cổng kiểm chạy SAU cùng, khi cây làm việc đã sạch
 node scripts/session-check.mjs --as s3-gaps
 node scripts/safe-push.mjs --as s3-gaps
 ```
 
 Ghi 1 dòng Log vào `HANDOFF.md` gốc. Rồi trả `_root` bằng commit riêng.
+
+**Bộ sinh đã hỗ trợ sẵn ba thứ S3 cần — không phải tự code:**
+`STATUS.md` ở gốc repo đã được đọc như mọi đơn vị khác · `lifecycle: superseded` đã hợp lệ và
+`superseded_by` đã bắt buộc có điều kiện · `priority_rank` đã được đọc, và đơn vị
+`superseded`/`archived` tự động không được xét làm ưu tiên #1.
 
 ## Đức nghiệm thu
 

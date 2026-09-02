@@ -104,7 +104,13 @@ Khối D tên là **"Sức khoẻ điều hướng [ĐO]"**: đếm extension ch
 | | |
 |---|---|
 | **Mục tiêu** | Ba câu AI đã phải hỏi Đức ngày 31/08 biến mất vĩnh viễn |
-| **Việc** | ① Khai `STATUS.md` cho Extension Observer V0 · ② thêm `lifecycle: superseded` + `superseded_by` cho `duc-auto-gemini/v0.1.0` · ③ khai chủ cho `pilots/` trong `repo-map.json` |
+| **Việc** | ① Khai `STATUS.md` cho Extension Observer V0 · ② thêm `lifecycle: superseded` + `superseded_by` cho `duc-auto-gemini/v0.1.0` · ③ khai chủ cho **cả 7** thư mục top-level trong **`.repo-structure.json`** (khối `areas`) · ④ nâng STATUS lên schema v2, migrate file cũ TRƯỚC khi siết |
+
+> **Sửa 2026-09-02.** Bản trước ghi "khai `owner` cho `pilots/` trong `repo-map.json`". Hai chỗ
+> sai: `repo-map.json` là file MÁY SINH, không khai tay vào đó được — khai phải nằm ở nguồn
+> rồi chảy vào; và thực đo có **7** thư mục chưa khai chủ chứ không phải 1. Nguồn khai là
+> `.repo-structure.json`, tách khỏi `.agents/claims.json` vì claims là trạng thái phiên còn
+> areas là luật tĩnh. Đề bài đầy đủ: `docs/briefs/BRIEF-S3.md`.
 | **Không được** | Di chuyển hoặc sửa bất cứ thứ gì trong `v0.1.0/evidence/` |
 | **Đức nhìn thấy gì** | Mở `DASHBOARD.md`, Khối D. Ba dòng đếm phải về **0**. |
 

@@ -4,7 +4,7 @@ import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { dirname, join, sep } from "node:path";
 
-import { buildDashboard, buildLlmsTxt, buildRepoMap, collectModel, compareRepoMap, createDefaultDeps, createHeadDeps, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, priorityFrom, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
+import { buildDashboard, buildLlmsTxt, buildRepoMap, collectModel, compareRepoMap, createDefaultDeps, createHeadDeps, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, priorityFrom, rankOf, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -751,7 +751,7 @@ function antiDrift(text, measurements = {}) {
    S2 — cổng vào: llms.txt + repo-map.json + Khối A/D
    ========================================================================== */
 
-function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverrides = null } = {}) {
+function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverrides = null, rootStatus = false } = {}) {
   const base = fakeRepo({ dirty, statusOverrides });
   const extra = new Map([
     ["docs/studies/ALIVE.md", "---\nkind: study\nstatus: active\nttl_days: 180\n---\nCòn hạn.\n"],
@@ -764,6 +764,13 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
     ["AGENTS.md", "# luật"],
     ["HANDOFF.md", "# bàn giao"]
   ]);
+  if (rootStatus) {
+    extra.set("STATUS.md", statusText({
+      schema: "extension-status/v1", id: "extension-observer-v0", name: "Observer goc repo",
+      lifecycle: "building", version_source: "manifest.json",
+      current_focus: "Dang dung", ref_readme: "AGENTS.md", ref_handoff: "HANDOFF.md"
+    }));
+  }
   const generatedNames = new Set(["DASHBOARD.md", "llms.txt", "repo-map.json"]);
   if (generatedOnDisk) {
     extra.set("DASHBOARD.md", "cũ");
@@ -943,7 +950,7 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   const model = collectModel(s2Repo());
   const generated = buildRepoMap(model);
   const onlyStamp = JSON.parse(generated);
-  onlyStamp.generated_commit = "khac123";
+  onlyStamp.generated_commit = "deadbee";
   onlyStamp.generated_at = "1999-01-01";
   assert.equal(compareRepoMap(generated, `${JSON.stringify(onlyStamp, null, 2)}\n`).matches, true, "đổi mỗi dấu commit thì không được coi là lệch");
 
@@ -1341,8 +1348,12 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   assert.equal(unranked.priority.unranked, true, "không ai khai priority_rank thì không được tự chọn");
   assert.match(buildDashboard(unranked), /CHƯA XẾP HẠNG/);
   assert.match(buildLlmsTxt(unranked), /CHƯA XẾP HẠNG/);
-  assert.deepEqual(JSON.parse(buildRepoMap(unranked)).active_work, [],
-    "chưa xếp hạng thì active_work phải rỗng, không được đoán ra một mục");
+  // `active_work` VẪN liệt kê đơn vị đó (nó có việc thật), nhưng với `rank: null` —
+  // và Khối A vẫn nói CHƯA XẾP HẠNG. Hai thứ khác nhau: "có việc gì đang mở" và
+  // "việc nào là số 1". Máy trả lời được câu đầu, không được bịa câu sau.
+  const work = JSON.parse(buildRepoMap(unranked)).active_work;
+  assert.equal(work.length, 1, "đơn vị có next_step vẫn phải xuất hiện trong active_work");
+  assert.equal(work[0].rank, null, "nhưng không được gán cho nó một thứ hạng nào");
 
   // (b) Khai rõ thì lấy đúng cái hạng nhỏ nhất.
   const ranked = collectModel(s2Repo({ statusOverrides: { next_step: "Việc số một", priority_rank: "1" } }));
@@ -1384,7 +1395,7 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   const generated = buildRepoMap(collectModel(s2Repo()));
 
   const otherStamp = JSON.parse(generated);
-  otherStamp.generated_commit = "khac123";
+  otherStamp.generated_commit = "deadbee";
   otherStamp.generated_at = "1999-01-01";
   assert.equal(compareRepoMap(generated, `${JSON.stringify(otherStamp, null, 2)}\n`).matches, true,
     "đổi GIÁ TRỊ dấu commit thì vẫn phải coi là khớp");
@@ -1423,5 +1434,200 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   assert.equal(((tickLine.slice(tickLine.indexOf("xxx")).match(/`/g) ?? []).length % 2), 0,
     "không được để lại backtick lẻ");
   ok("PATCH cắt câu dài không làm gãy link markdown hay backtick");
+}
+
+/* ==========================================================================
+   AUDIT VÒNG 3 (Codex) — bốn phát hiện và ba mutation còn thoát.
+   ========================================================================== */
+
+/* E1. VÒNG 3 PHÁT HIỆN 1 — `priority_rank:` bỏ TRỐNG cho `Number("") === 0`, và 0 là
+   số nhỏ nhất nên nó THẮNG mọi đơn vị khai đàng hoàng, lặng lẽ. */
+{
+  assert.equal(rankOf(""), null, "rỗng thì không phải hạng");
+  assert.equal(rankOf("   "), null, "toàn khoảng trắng cũng vậy");
+  assert.equal(rankOf(undefined), null);
+  assert.equal(rankOf("0"), null, "hạng 0 là dữ liệu hỏng, không phải ưu tiên cao nhất");
+  assert.equal(rankOf("-1"), null, "hạng âm cũng vậy");
+  assert.equal(rankOf("1.5"), null, "hạng phải là số nguyên");
+  assert.equal(rankOf("abc"), null);
+  assert.equal(rankOf("2"), 2);
+  assert.equal(rankOf(" 3 "), 3, "khoảng trắng thừa vẫn đọc được");
+
+  // Và đi qua đúng đường bộ sinh: khai rỗng thì phải thành CHƯA XẾP HẠNG.
+  const blank = collectModel(s2Repo({ statusOverrides: { next_step: "Việc A", priority_rank: "" } }));
+  assert.equal(blank.priority.unranked, true, "priority_rank rỗng phải là chưa xếp hạng, không được thành hạng 0");
+  ok("SAU-VONG3 priority_rank rỗng/0/âm/thập phân đều không phải hạng, không lén thắng");
+}
+
+/* E2. VÒNG 3 PHÁT HIỆN 2 — `active_work` mang hình dạng MẢNG nhưng chỉ chứa được
+   0-hoặc-1. Tôi lấy lý do "diễn tả được nhiều việc song song" để chốt kiểu mảng rồi
+   lại không sống theo nó. */
+{
+  const model = collectModel(s2Repo({ statusOverrides: { next_step: "Việc của demo", priority_rank: "2" } }));
+  const twoJobs = {
+    ...model,
+    rows: model.rows.map((row) => row.key === "_root"
+      ? { ...row, nextStep: "Việc của gốc repo", priorityRank: 1 }
+      : row)
+  };
+  const work = JSON.parse(buildRepoMap(twoJobs)).active_work;
+  assert.equal(work.length, 2, "hai đơn vị có next_step thì active_work phải có hai mục");
+  assert.equal(work[0].unit, "_root", "xếp theo HẠNG: hạng 1 đứng trước");
+  assert.equal(work[0].rank, 1);
+  assert.equal(work[1].rank, 2);
+
+  // Đơn vị chưa xếp hạng vẫn phải có mặt, và nằm cuối.
+  const mixed = { ...model, rows: model.rows.map((row) => row.key === "_root" ? { ...row, nextStep: "Chưa xếp hạng", priorityRank: null } : row) };
+  const mixedWork = JSON.parse(buildRepoMap(mixed)).active_work;
+  assert.equal(mixedWork.length, 2);
+  assert.equal(mixedWork[mixedWork.length - 1].rank, null, "chưa xếp hạng thì nằm cuối, rank null");
+  ok("SAU-VONG3 active_work chứa 0..n việc, xếp theo hạng, chưa xếp hạng nằm cuối");
+}
+
+/* E3. VÒNG 3 PHÁT HIỆN 3 — `safeTruncate` vẫn để lọt một dấu mở treo khi có cặp
+   ngoặc cân bằng đứng SAU nó: "… [treo (ổn) …". So `lastIndexOf` bị qua mặt. */
+{
+  const build = (focus) => buildLlmsTxt(collectModel(s2Repo({ statusOverrides: { current_focus: focus } })));
+  const balanced = (text) => {
+    const stack = [];
+    const pairs = { "]": "[", ")": "(" };
+    for (const ch of text) {
+      if (ch === "[" || ch === "(") stack.push(ch);
+      else if (pairs[ch] && stack[stack.length - 1] === pairs[ch]) stack.pop();
+    }
+    return stack.length === 0;
+  };
+  for (const tail of [
+    "[treo (ổn) rồi thêm nữa cho dài ra",
+    "[nhãn](docs/x.md) và tiếp tục dài",
+    "(mở tròn [rồi vuông] mà chưa đóng tròn",
+    "dùng `lệnh-dài-quá-cỡ` rồi nói thêm"
+  ]) {
+    const line = build(`${"x".repeat(150)} ${tail}`).split("\n").find((entry) => entry.includes("xxx"));
+    const cut = line.slice(line.indexOf("xxx"));
+    assert.ok(balanced(cut), `cắt xong phải cân ngoặc: ${cut.slice(-70)}`);
+    assert.equal(((cut.match(/`/g) ?? []).length % 2), 0, `và không được để backtick lẻ: ${cut.slice(-70)}`);
+  }
+  ok("SAU-VONG3 cắt câu cân được cả ngoặc lồng nhau, không bị cặp cân bằng phía sau che");
+}
+
+/* E4. MUTATION THOÁT SỐ 1 — xoá chỗ gọi `safeTruncate` thì suite cũ vẫn xanh, vì các
+   ví dụ trong phép kiểm đều CÂN khi không bị cắt. Không assertion nào đòi có trần độ dài. */
+{
+  const long = `${"y".repeat(400)} hết`;
+  const text = buildLlmsTxt(collectModel(s2Repo({ statusOverrides: { current_focus: long } })));
+  const line = text.split("\n").find((entry) => entry.includes("yyy"));
+  const note = line.slice(line.indexOf("yyy"));
+  assert.ok(note.length <= 170, `phần mô tả phải bị cắt về dưới trần, đang ${note.length} ký tự`);
+  assert.ok(note.endsWith("…"), "và phải có dấu … cho người đọc biết là đã cắt");
+  ok("SAU-VONG3 mô tả dài bị cắt về đúng trần và có dấu …, không chỉ cân ngoặc");
+}
+
+/* E5. MUTATION THOÁT SỐ 2 — đổi `profile` sang giá trị khác thì không ai kêu, vì phép
+   kiểm cũ chỉ hỏi "khoá có tồn tại không". `profile` là thứ hệ điều phối cấp cao dùng
+   để biết đọc repo này theo luật nào; sai giá trị là đọc sai cả repo. */
+{
+  const map = JSON.parse(buildRepoMap(collectModel(s2Repo())));
+  assert.equal(map.profile, "P1", "repo này là monorepo nhiều gói — profile phải đúng P1");
+  assert.equal(map.entry_point, "llms.txt");
+  assert.equal(map.schema_version, 1);
+  assert.deepEqual(map.law_files, ["AGENTS.md", "CLAUDE.md"]);
+  ok("SAU-VONG3 hợp đồng ghim GIÁ TRỊ của profile/entry_point/schema_version, không chỉ sự tồn tại");
+}
+
+/* E6. MUTATION THOÁT SỐ 3 — chỉ kiểm `generated_commit` mà bỏ `generated_at` thì lọt,
+   vì mọi phép kiểm âm tính cũ chỉ đụng vào một trong hai trường. */
+{
+  const generated = buildRepoMap(collectModel(s2Repo()));
+  for (const key of ["generated_at", "generated_commit"]) {
+    for (const [label, value] of [["thiếu hẳn", undefined], ["rỗng", "  "], ["sai kiểu", 12345]]) {
+      const broken = JSON.parse(generated);
+      if (value === undefined) delete broken[key]; else broken[key] = value;
+      const verdict = compareRepoMap(generated, `${JSON.stringify(broken, null, 2)}\n`);
+      assert.equal(verdict.matches, false, `${key} ${label} phải bị bắt`);
+      assert.ok((verdict.reason ?? "").includes(key), `và lỗi phải nêu đúng tên trường ${key}`);
+    }
+  }
+  ok("SAU-VONG3 CẢ HAI trường xuất xứ đều được kiểm, không chỉ generated_commit");
+}
+
+/* E7. VÒNG 3 MỤC 4.2 — đơn vị gốc repo phải ĐỌC ĐƯỢC `STATUS.md` như mọi đơn vị khác.
+   Bản trước ghim cứng `missingStatus: true`, nên phiên S3 có tạo file đó thì con số nợ
+   vẫn không nhúc nhích — đề bài không thể đạt mục tiêu của chính nó. */
+{
+  const withRoot = collectModel(s2Repo({ rootStatus: true }));
+  const rootRow = withRoot.rows.find((row) => row.key === "_root");
+  assert.equal(rootRow.missingStatus, false, "gốc repo có STATUS.md thì không được coi là thiếu");
+  assert.equal(rootRow.lifecycle, "building", "và phải lấy lifecycle từ chính file đó");
+  assert.equal(rootRow.statusPath, "STATUS.md");
+  assert.equal(withRoot.health.units_without_status, collectModel(s2Repo()).health.units_without_status - 1,
+    "khai STATUS ở gốc phải làm con số nợ giảm đúng 1");
+  assert.ok(buildLlmsTxt(withRoot).includes("STATUS.md"), "và đơn vị gốc phải xuất hiện ở cổng vào");
+  ok("SAU-VONG3 đơn vị gốc repo đọc được STATUS.md, khai xong là nợ giảm thật");
+}
+
+/* E8. VÒNG 3 MỤC 4.3 + 4.4 — `lifecycle: superseded` phải hợp lệ, và khai nó mà không
+   nói thay bằng bản nào thì phải ĐỎ. BRIEF-S3 bảo khai `superseded`; nếu bộ kiểm từ
+   chối thì đề bài và bộ kiểm đánh nhau. */
+{
+  const base = { statusPath: "workers/demo/v1/STATUS.md", fileExists: () => true, isFile: () => true,
+    readFile: () => '{"name":"D","version":"1.0.0"}', git: { verifyCommit: () => true } };
+  const fm = (extra) => ({ ...validFm(), lifecycle: "superseded", ...extra });
+
+  const missing = validateStatus(fm({}), base);
+  assert.ok(missing.some((message) => message.includes("superseded_by")), "superseded mà thiếu superseded_by phải đỏ");
+
+  const complete = validateStatus(fm({ superseded_by: "workers/demo/v2" }), base);
+  assert.deepEqual(complete, [], "khai đủ thì không được kêu");
+
+  // Và các lifecycle khác KHÔNG bị đòi superseded_by.
+  assert.deepEqual(validateStatus(validFm(), base), [], "lifecycle khác không bị đòi superseded_by");
+  ok("SAU-VONG3 lifecycle superseded hợp lệ, và bắt buộc superseded_by CÓ ĐIỀU KIỆN");
+}
+
+/* E9. VÒNG 3 MỤC 1 — bộ sinh không được phụ thuộc hệ thống file ở đường ĐỌC nữa.
+   `realPath` là thứ cuối cùng còn kéo đĩa vào: xoá một file khỏi working tree trong khi
+   HEAD vẫn có nó thì bộ sinh chết, kèm thông báo dẫn sai hướng hoàn toàn. */
+{
+  const source = readFileSync(new URL("../scripts/build-dashboard.mjs", import.meta.url), "utf8");
+  const block = source.slice(source.indexOf("export function createDefaultDeps"), source.indexOf("export function createHeadDeps"));
+  assert.doesNotMatch(block, /realPath:/, "createDefaultDeps không được cung cấp realPath — nó kéo đĩa vào đường đọc");
+  // Phép kiểm hành vi đi kèm nằm ở khối "bộ đọc mặc định đọc từ HEAD" phía trên; ở đây
+  // chỉ ghim thêm rằng luật CHUỖI (chặn "..") vẫn còn nguyên, tức là không nới lỏng.
+  const deps = { statusPath: "workers/demo/v1/STATUS.md", packageDir: "workers/demo/v1", packageId: "demo",
+    fileExists: () => true, isFile: () => true, readFile: () => "{}", git: { verifyCommit: () => true } };
+  const escaped = validateStatus({ ...validFm(), version_source: "workers/demo/v1/../../khac/manifest.json" }, deps);
+  assert.ok(escaped.some((message) => message.includes("version_source")), 'luật chuỗi vẫn phải chặn ".."');
+  ok("SAU-VONG3 realPath đã gỡ khỏi đường đọc, luật chuỗi chặn \"..\" vẫn nguyên");
+}
+
+/* E10. AUDIT GPT — ba lo cuoi. */
+{
+  // (a) Ban da nghi huu khong duoc lam viec uu tien so 1.
+  const row = (key, rank, step, lifecycle) => ({ key, priorityRank: rank, nextStep: step, lifecycle, statusPath: key + "/STATUS.md" });
+  const picked = priorityFrom([
+    row("workers/cu/v1", 1, "Cho xoa sau khi V2 chay on", "superseded"),
+    row("workers/moi/v2", 2, "Viec that", "active")
+  ]);
+  assert.equal(picked.unit, "workers/moi/v2", "ban superseded co hang 1 van khong duoc chon");
+  assert.equal(priorityFrom([row("workers/cu/v1", 1, "x", "archived")]), null, "archived cung vay");
+
+  // (b) Ma commit phai dung hinh dang, khong nhan rac.
+  const generated = buildRepoMap(collectModel(s2Repo()));
+  for (const [key, bad] of [["generated_commit", "khac123"], ["generated_commit", "ZZZZZZZ"], ["generated_at", "hom-qua"], ["generated_at", "2026-13-99x"]]) {
+    const broken = JSON.parse(generated); broken[key] = bad;
+    const verdict = compareRepoMap(generated, `${JSON.stringify(broken, null, 2)}\n`);
+    assert.equal(verdict.matches, false, key + " = " + bad + " phai bi bat");
+    assert.ok((verdict.reason ?? "").includes("hình dạng"), "va phai noi ro la sai hinh dang");
+  }
+  // Ma commit that thi phai qua.
+  const okMap = JSON.parse(generated); okMap.generated_commit = "a1b2c3d";
+  assert.equal(compareRepoMap(generated, `${JSON.stringify(okMap, null, 2)}\n`).matches, true, "ma commit that phai qua");
+
+  // (c) Cong kiem khong duoc tra "on" khi khong hoi duoc git.
+  const gate = readFileSync(new URL("../scripts/session-check.mjs", import.meta.url), "utf8");
+  assert.match(gate, /VERIFIER_UNKNOWN/, "git hong thi cong phai noi khong biet, khong duoc noi on");
+  assert.ok(!gate.includes("return true; // không hỏi được git"), "khong duoc quay ve fail-open");
+  ok("SAU-GPT superseded khong lam uu tien 1, ma commit phai dung hinh dang, cong fail-closed khi git hong");
 }
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

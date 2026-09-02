@@ -146,7 +146,13 @@ Mỗi phiên: một mục tiêu, một commit, một lần push. **Không gộp 
 | **Đức nghiệm thu** | Mở `DASHBOARD.md` Khối D. **Ba dòng đếm phải về 0.** |
 | **Trích template** | `STATUS.template.md` bản đã bổ sung trường mới |
 
-Trường mới của schema `extension-status/v2`: `owner` · `superseded_by` · `session_intent` · `next_step` · `depends_on`. Bỏ giá trị `unclassified` khỏi `lifecycle`.
+Trường mới của schema `extension-status/v2`: `owner` · `next_step` · **`priority_rank`** · `superseded_by` (bắt buộc CÓ ĐIỀU KIỆN, chỉ khi `lifecycle: superseded`) · `depends_on` (không bắt buộc). Bỏ giá trị `unclassified` khỏi `lifecycle`.
+
+> **Sửa 2026-09-02.** Bản trước liệt kê `session_intent` và thiếu `priority_rank`. `session_intent`
+> đã bị bỏ: nó là thứ theo PHIÊN, thuộc `HANDOFF.md`, không phải trạng thái của đơn vị.
+> `priority_rank` là trường quyết định "việc ưu tiên #1" — thiếu nó thì máy phải đoán, và
+> bản cũ đoán bằng thứ tự bảng chữ cái. Đúng MỘT đơn vị được mang hạng 1; đơn vị
+> `superseded`/`archived` không được xét làm ưu tiên.
 
 ---
 
@@ -351,4 +357,7 @@ Phiên **S3**. S1 và S2 đã đóng và đã push. Đức mở chat Claude Code
 > Cập nhật 2026-09-02. Mục này trước đây vẫn bảo bắt đầu từ S1 dù S1 đã xong — một dòng
 > lạc hậu ở đúng chỗ người ta đọc để biết làm gì tiếp.
 
-Xong S1 báo tôi, tôi viết brief S2.
+Xong S3 báo tôi, tôi viết brief S4.
+
+> Cập nhật 2026-09-02. Dòng này trước ghi "Xong S1... brief S2" trong khi S1 và S2 đã đóng —
+> đúng chỗ người ta đọc để biết làm gì tiếp mà lại chỉ về quá khứ.

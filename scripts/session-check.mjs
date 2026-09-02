@@ -201,14 +201,26 @@ function verifierMatchesHead(script) {
     });
     return diff.trim() === "";
   } catch {
-    return true; // không hỏi được git thì không bịa ra một cáo buộc
+    // FAIL CLOSED. Bản trước trả `true` với lý lẽ "không hỏi được git thì đừng bịa ra
+    // cáo buộc" — nghe hợp lý, nhưng hậu quả là: git hỏng → phép kiểm im lặng bỏ qua →
+    // cổng vẫn xanh dựa trên một điều nó KHÔNG kiểm được. Không biết thì phải nói là
+    // không biết, không được nói là ổn. Audit GPT 2026-09-02, mục 5.
+    return null;
   }
 }
 
 check("Sự thật máy sinh còn tươi", () => {
   const scripts = ["build-dashboard.mjs", "feature-parity.mjs"];
   const failures = [];
-  const dirtyVerifiers = scripts.filter((script) => !verifierMatchesHead(script));
+  const verdicts = scripts.map((script) => ({ script, clean: verifierMatchesHead(script) }));
+  const unknown = verdicts.filter((entry) => entry.clean === null);
+  if (unknown.length) {
+    return {
+      ok: false,
+      msg: `VERIFIER_UNKNOWN: không hỏi được git về ${unknown.map((entry) => `scripts/${entry.script}`).join(", ")}. Phép kiểm này dùng chính script đó để phán xử; không xác nhận được nó có sạch không thì kết quả không đáng tin. Không biết thì nói là không biết.`
+    };
+  }
+  const dirtyVerifiers = verdicts.filter((entry) => entry.clean === false).map((entry) => entry.script);
   if (dirtyVerifiers.length) {
     return {
       ok: false,

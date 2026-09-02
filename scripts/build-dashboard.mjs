@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SCHEMA = "extension-status/v1";
-const LIFECYCLES = new Set(["idea", "building", "active", "paused", "archived", "experimental", "unclassified"]);
+// "superseded" có mặt từ 2026-09-02: phiên S3 phải khai được một bản đã bị thay thế.
+// Thiếu nó thì BRIEF-S3 bảo khai `lifecycle: superseded` còn validateStatus từ chối —
+// đề bài và bộ kiểm đánh nhau. Audit Codex vòng 3 bắt được trước khi ai chạy S3.
+const LIFECYCLES = new Set(["idea", "building", "active", "paused", "archived", "experimental", "superseded", "unclassified"]);
 const REQUIRED = ["schema", "id", "name", "lifecycle", "version_source", "current_focus", "ref_readme", "ref_handoff"];
 const BEHAVIOUR_EXTENSIONS = new Set([".js", ".mjs", ".json", ".html", ".css"]);
 const EVIDENCE_ZONE = /(^|\/)(evidence[^/]*|pilot-[^/]*|batch-[^/]*)\//i;
@@ -209,6 +212,14 @@ export function validateStatus(fm, deps) {
   for (const key of REQUIRED) if (!fm[key]) fail(`thiếu trường bắt buộc "${key}".`);
   if (fm.lifecycle && !LIFECYCLES.has(fm.lifecycle)) fail(`lifecycle "${fm.lifecycle}" không hợp lệ.`);
   if (fm.lifecycle === "active" && !fm.last_verified) fail('lifecycle "active" phải có "last_verified".');
+  // Bắt buộc CÓ ĐIỀU KIỆN. Khai "đã bị thay thế" mà không nói thay bằng bản nào thì
+  // người đọc phải đi tìm — đúng một câu hỏi mà repo lẽ ra trả lời được. Không nhét
+  // vào REQUIRED được vì REQUIRED áp cho mọi STATUS, còn luật này chỉ áp cho một
+  // lifecycle. Audit Codex vòng 3 chỉ ra BRIEF-S3 không thể làm được nếu chỉ sửa
+  // SCHEMA và REQUIRED.
+  if (fm.lifecycle === "superseded" && !fm.superseded_by) {
+    fail('lifecycle "superseded" phải có "superseded_by" trỏ tới bản thay thế.');
+  }
 
   if (fm.version_source) {
     if (!deps.fileExists(fm.version_source)) {
@@ -413,26 +424,48 @@ export function collectModel(deps = createDefaultDeps()) {
       // sửa lại bộ sinh.
       owner: item.fm?.owner ?? "",
       nextStep: item.fm?.next_step ?? "",
-      priorityRank: Number.isFinite(Number(item.fm?.priority_rank)) ? Number(item.fm.priority_rank) : null,
+      priorityRank: rankOf(item.fm?.priority_rank),
       supersededBy: item.fm?.superseded_by ?? "",
       statusPath: item.fm ? item.statusPath : ""
     };
   });
 
-  const rootMeasured = measuredRow(deps, "", "manifest.json", tracked);
+  // Đơn vị ở gốc repo (Extension Observer V0) ĐỌC ĐƯỢC `STATUS.md` như mọi đơn vị khác.
+  // Bản trước ghim cứng `missingStatus: true`, nên phiên S3 có tạo `STATUS.md` ở gốc thì
+  // con số nợ vẫn không nhúc nhích — đề bài không thể đạt được mục tiêu của chính nó.
+  // Audit Codex vòng 3, mục 4.2. Không truyền `packageDir` vào validateStatus: đơn vị gốc
+  // không nằm trong `workers/`, nên luật "id và version_source phải thuộc package" không áp.
+  const rootStatusPath = "STATUS.md";
+  const rootFm = deps.fileExists(rootStatusPath) ? parseStatus(deps.readFile(rootStatusPath)).frontmatter : null;
+  if (rootFm) {
+    const rootErrors = validateStatus(rootFm, { ...deps, statusPath: rootStatusPath });
+    if (rootErrors.length) {
+      const error = new Error(rootErrors.join("\n"));
+      error.name = "StatusValidationError";
+      error.validationErrors = rootErrors;
+      throw error;
+    }
+  }
+  const rootMeasured = measuredRow(deps, "", rootFm?.version_source ?? "manifest.json", tracked);
   rows.push({
     key: "_root",
-    id: "extension-observer-v0",
+    id: rootFm?.id ?? "extension-observer-v0",
     ...rootMeasured,
-    lifecycle: "unclassified",
-    missingStatus: true,
-    lastVerified: "",
-    lastVerifiedCommit: "",
-    lastVerifiedHow: "",
-    evidenceRef: "",
-    changedCount: 0,
-    currentFocus: "Chưa khai STATUS; đây là một việc đang mở.",
-    statusPath: ""
+    lifecycle: rootFm?.lifecycle ?? "unclassified",
+    missingStatus: !rootFm,
+    lastVerified: rootFm?.last_verified ?? "",
+    lastVerifiedCommit: rootFm?.last_verified_commit ?? "",
+    lastVerifiedHow: rootFm?.last_verified_how ?? "",
+    evidenceRef: rootFm?.evidence_ref ?? "",
+    changedCount: rootFm?.last_verified_commit
+      ? changedCommitCount(deps.git.changedFilesSince(rootFm.last_verified_commit, "."))
+      : 0,
+    currentFocus: rootFm?.current_focus ?? "Chưa khai STATUS; đây là một việc đang mở.",
+    owner: rootFm?.owner ?? "",
+    nextStep: rootFm?.next_step ?? "",
+    supersededBy: rootFm?.superseded_by ?? "",
+    priorityRank: rankOf(rootFm?.priority_rank),
+    statusPath: rootFm ? rootStatusPath : ""
   });
 
   const headDate = deps.git.headDate();
@@ -510,8 +543,24 @@ function readClaims(deps) {
    Nay: thứ hạng lấy từ `priority_rank` trong STATUS. Không ai khai thì nói CHƯA XẾP HẠNG
    — không đoán. Hai đơn vị cùng khai hạng nhỏ nhất thì nói XUNG ĐỘT — không chọn bừa
    một cái. Cả hai trường hợp đều hiện ra chỗ Đức nhìn, thay vì im lặng. */
+/* `Number("")` trả 0 — và 0 là số nhỏ nhất, nên một `priority_rank:` bỏ trống sẽ
+   THẮNG mọi đơn vị khai đàng hoàng, lặng lẽ. Audit Codex vòng 3, phát hiện 1.
+   Phải đòi chuỗi không rỗng TRƯỚC khi ép sang số. Hạng cũng phải ≥ 1: hạng 0 hay
+   hạng âm là dữ liệu hỏng, không phải "ưu tiên cao hơn nữa". */
+export function rankOf(raw) {
+  const text = String(raw ?? "").trim();
+  if (text === "") return null;
+  const value = Number(text);
+  return Number.isInteger(value) && value >= 1 ? value : null;
+}
+
+// Một bản đã nghỉ hưu không được làm việc ưu tiên số 1. Nó vẫn có thể có `next_step`
+// (ví dụ "chờ xoá sau khi V2 chạy ổn"), nhưng đưa nó lên đầu bảng là chỉ sai đường cho
+// phiên sau. Audit GPT 2026-09-02, mục 3.
+const NOT_PRIORITY_LIFECYCLES = new Set(["superseded", "archived"]);
+
 export function priorityFrom(rows) {
-  const declared = rows.filter((row) => row.nextStep);
+  const declared = rows.filter((row) => row.nextStep && !NOT_PRIORITY_LIFECYCLES.has(row.lifecycle));
   if (declared.length === 0) return null;
   const ranked = declared.filter((row) => Number.isFinite(row.priorityRank));
   if (ranked.length === 0) {
@@ -545,10 +594,18 @@ function safeTruncate(text, max) {
   // trả về một mẩu cụt lủn.
   const space = cut.lastIndexOf(" ");
   if (space > max * 0.6) cut = cut.slice(0, space);
-  // Bỏ cấu trúc mở mà chưa đóng: "[nhãn](đường-dẫn" hoặc "[nhãn"
-  const lastOpen = Math.max(cut.lastIndexOf("["), cut.lastIndexOf("("));
-  const lastClose = Math.max(cut.lastIndexOf("]"), cut.lastIndexOf(")"));
-  if (lastOpen > lastClose) cut = cut.slice(0, lastOpen);
+  // Cắt tại dấu mở SỚM NHẤT còn treo, không phải dấu mở cuối cùng.
+  // So `lastIndexOf` như bản trước bị qua mặt bởi "… [treo (ổn) …": cặp ngoặc tròn
+  // cân bằng ở sau che mất dấu `[` treo ở trước. Audit Codex vòng 3, phát hiện 3.
+  // Quét một lượt bằng ngăn xếp thì không có thứ tự nào lách được.
+  const stack = [];
+  const pairs = { "]": "[", ")": "(" };
+  for (let i = 0; i < cut.length; i += 1) {
+    const ch = cut[i];
+    if (ch === "[" || ch === "(") stack.push(i);
+    else if (pairs[ch] && stack.length && cut[stack[stack.length - 1]] === pairs[ch]) stack.pop();
+  }
+  if (stack.length) cut = cut.slice(0, stack[0]);
   // Backtick lẻ cũng làm hỏng phần còn lại của dòng.
   if (((cut.match(/`/g) ?? []).length % 2) === 1) cut = cut.slice(0, cut.lastIndexOf("`"));
   return `${cut.trimEnd()}…`;
@@ -886,9 +943,20 @@ export function buildRepoMap(model) {
     // MẢNG, không phải object. C1 bản đầu vẽ nó như một object đơn — không diễn tả
     // được hai trạng thái có thật: "không có việc nào" và "nhiều việc song song".
     // Đã sửa SPEC cho khớp code thay vì ngược lại (quyết định 2026-09-02, ghi ở C1).
-    active_work: model.priority && model.priority.unit
-      ? [{ id: model.priority.unit, unit: model.priority.unit, title: model.priority.title, rank: model.priority.rank, claim: null }]
-      : [],
+    // 0..n, không phải 0-hoặc-1. Tôi đã lấy lý do "diễn tả được nhiều việc song song"
+    // để chốt kiểu mảng, rồi lại chỉ phát ra đúng một mục — hình dạng đúng mà nội dung
+    // không sống theo. Audit Codex vòng 3, phát hiện 2. Nay liệt kê MỌI đơn vị có
+    // `next_step`, xếp theo hạng, đơn vị chưa xếp hạng nằm cuối.
+    active_work: model.rows
+      .filter((row) => row.nextStep)
+      .sort((a, b) => (a.priorityRank ?? Infinity) - (b.priorityRank ?? Infinity) || compareText(a.key, b.key))
+      .map((row) => ({
+        id: row.key,
+        unit: row.key,
+        title: row.nextStep,
+        rank: Number.isFinite(row.priorityRank) ? row.priorityRank : null,
+        claim: null
+      })),
     health: model.health
   };
   return `${JSON.stringify(map, null, 2)}\n`;
@@ -906,9 +974,20 @@ export function compareRepoMap(expected, actual) {
     // kiểu. Bản trước xoá vô điều kiện, nên một `repo-map.json` mất hẳn hai trường
     // xuất xứ vẫn được coi là khớp — hợp đồng cross-repo mất khả năng truy nguồn mà
     // cổng vẫn xanh. Codex phát hiện 3, GPT xếp MAJOR; hai auditor cùng chỉ một chỗ.
+    // Đòi ĐÚNG HÌNH DẠNG, không chỉ "là chuỗi không rỗng". Bản trước nhận cả `khac123`
+    // làm mã commit hợp lệ — tức trường truy nguồn có thể chứa rác mà cổng vẫn xanh,
+    // đúng thứ nó sinh ra để chống. Audit GPT 2026-09-02, mục 5.
+    const SHAPES = {
+      generated_at: { test: (value) => /^\d{4}-\d{2}-\d{2}$/.test(value), want: "ngày dạng YYYY-MM-DD" },
+      generated_commit: { test: (value) => /^[0-9a-f]{7,40}$/.test(value), want: "mã commit hệ 16, 7–40 ký tự" }
+    };
     for (const key of REPO_MAP_VOLATILE_KEYS) {
-      if (typeof parsed[key] !== "string" || parsed[key].trim() === "") {
+      const value = parsed[key];
+      if (typeof value !== "string" || value.trim() === "") {
         return { broken: `${label}: thiếu hoặc sai kiểu trường xuất xứ \`${key}\` (phải là chuỗi không rỗng)` };
+      }
+      if (!SHAPES[key].test(value.trim())) {
+        return { broken: `${label}: trường xuất xứ \`${key}\` sai hình dạng — phải là ${SHAPES[key].want}, đang là "${value}"` };
       }
       delete parsed[key];
     }
@@ -971,6 +1050,17 @@ export function runDashboard({ check = false, deps = createDefaultDeps(), output
       deps.writeFile(LLMS_FILE, generatedLlms);
       deps.writeFile(REPO_MAP_FILE, generatedMap);
       output.log(`Đã sinh ${DASHBOARD_FILE}, ${LLMS_FILE} và ${REPO_MAP_FILE} thành công.`);
+      // BẪY THỨ TỰ, phải nói to. Bộ sinh đọc HOÀN TOÀN từ HEAD. Nếu bạn vừa sửa
+      // STATUS/manifest mà CHƯA commit rồi chạy lệnh này, artifact sinh ra phản ánh
+      // HEAD CŨ — rồi bạn commit dữ liệu mới nằm cạnh artifact cũ, và cổng kiểm đỏ.
+      // Audit Codex vòng 3 chỉ ra đúng cái bẫy này trong đề bài phiên S3.
+      // Thứ tự đúng: commit nguồn TRƯỚC → chạy lệnh này → commit artifact riêng.
+      const dirtyInputs = (deps.git.dirtyFiles?.(".") ?? [])
+        .filter((file) => /(^|\/)(STATUS\.md|manifest\.json|claims\.json)$/i.test(file) || file.startsWith("docs/"));
+      if (dirtyInputs.length) {
+        output.log(`CẢNH BÁO THỨ TỰ: ${dirtyInputs.length} file đầu vào đang sửa dở chưa commit (${dirtyInputs.slice(0, 3).join(", ")}${dirtyInputs.length > 3 ? ", …" : ""}).`);
+        output.log("Trang vừa sinh dựng từ HEAD nên KHÔNG có các thay đổi đó. Hãy commit nguồn trước, chạy lại lệnh này, rồi commit artifact bằng một commit riêng.");
+      }
       const debt = model.health.units_without_status + model.health.dead_links
         + model.health.undeclared_dirs + model.health.draft_debt;
       if (debt > 0) {
@@ -1048,11 +1138,21 @@ export function createDefaultDeps(root = ROOT) {
   const head = createHeadDeps(root);
   return {
     ...head,
-    // Giữ `realPath` (chế độ HEAD không có): lớp chặn junction/symlink ở
-    // `validateStatus` là `else if (deps.realPath)`, bỏ đi là im lặng gỡ một lớp
-    // bảo vệ đã có. Nay nó chỉ còn là lớp thừa — đọc đã không qua hệ thống file
-    // nữa — nhưng thừa thì giữ, gỡ thì không.
-    realPath: (relPath) => { try { return fs.realpathSync(absolute(relPath)); } catch { return null; } },
+    // `realPath` ĐÃ BỊ GỠ, và đây là lý do — không phải là nới lỏng.
+    //
+    // Vòng trước tôi giữ nó lại với lý lẽ "thừa thì giữ, gỡ thì không". Sai. Nó là
+    // thứ DUY NHẤT còn kéo hệ thống file vào đường ĐỌC, nên lời hứa "đĩa chỉ dùng để
+    // ghi" vẫn sai. Đo được (audit Codex vòng 3): xoá `manifest.json` khỏi working
+    // tree trong khi HEAD vẫn có nó thì bộ sinh CHẾT, kèm thông báo dẫn sai hướng
+    // hoàn toàn — "version_source trỏ RA NGOÀI package" trong khi thật ra chỉ là
+    // thiếu file trên đĩa.
+    //
+    // Lớp nó bảo vệ là junction/symlink trỏ version_source sang package khác. Lớp đó
+    // nay VÔ NGHĨA: `readFile` là `git show HEAD:<path>`, và git phân giải đường dẫn
+    // trong cây commit chứ không đi theo junction của hệ thống file. Một symlink được
+    // commit vào git là một blob chứa chữ, `JSON.parse` sẽ hỏng ngay. Phép kiểm chuỗi
+    // (chuẩn hoá + phải nằm trong package) vẫn chạy và vẫn chặn `..`.
+    // Gỡ một lớp chắn cho một kênh đã bịt thì không phải là gỡ bảo vệ.
     writeFile: (relPath, text) => fs.writeFileSync(absolute(relPath), text, "utf8"),
     git: {
       ...head.git,
