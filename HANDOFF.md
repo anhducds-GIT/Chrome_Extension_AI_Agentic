@@ -340,3 +340,30 @@
   - **Việc kế tiếp: phiên S7 — bật chặn B1–B5, B7, B10, B12** (roadmap gọi đây là cột mốc:
     đạt = mục tiêu chính của dự án xong). Nay đã đủ điều kiện: **mọi phép kiểm sắp bật chặn
     đều đang XANH**, chỉ còn B6/B9 màu vàng và cả hai KHÔNG nằm trong danh sách bật chặn.
+
+- **2026-09-02 · `brief-s7`** — **Kiểm chứng độc lập S4 + S5 + S6, cả ba ĐẠT.** Tự chạy lại,
+  không tin báo cáo (luật vàng 4).
+  - **Khớp hết:** npm test **217 xanh** (6 suite) · cổng exit 0 · `check-bootstrap` exit 0,
+    **0 ĐỎ / 19 VÀNG** · B12 hết `KHÔNG ÁP DỤNG`, nay **XANH soi 113 ADR** · `drafts/` biến
+    mất · **33/33 file được git nhận là ĐỔI CHỖ** (`R099`), không phải xoá+thêm.
+  - **Tự chạy lại phép chứng minh vòng tròn của S5** — đây là khẳng định quan trọng nhất
+    ("chỉ đổi hình dạng, không mất chữ nào"). Trích từng ô bảng ở bản gốc `181c06e` rồi soi
+    trong ADR: chatgpt **181 ô, 1 không thấy** · gemini **227 ô, 1 không thấy**. Ô "không
+    thấy" ở cả hai gói **chính là tiêu đề cột `ai chốt`**, không phải quyết định. Tức **mọi ô
+    dữ liệu đều còn nguyên**. 45 + 67 = 112 ADR + ADR-0000 = 113.
+  - **Con số trong BRIEF-S5 của tôi SAI, và phiên S5 bắt đúng.** Tôi ghi 30 quyết định vì đếm
+    tiêu đề `##` (là *nhóm*); đơn vị thật là *dòng bảng* — **112**. Tôi có đo, nhưng **đo sai
+    đơn vị**. Đây là lần thứ **tư** một con số viết trong kế hoạch sai khi có phiên đi làm
+    thật (52→48 · 1→7 · 29→33 · 30→112). Luật rút ra, đã áp vào BRIEF-S7: **viết LỆNH ĐO vào
+    brief, đừng viết con số.**
+  - **BRIEF-S7 đã soạn.** Điểm khác mọi brief trước: nó chia **hai phần chạy ở hai chỗ**.
+    Phần A (bật chặn) AI làm ở chat nào cũng được. **Phần B (bài test) Đức tự dán vào một
+    chat HOÀN TOÀN MỚI** — một phiên đã đọc repo thì không còn là phép thử, nó biết đáp án.
+    Brief cấm AI tự chạy phần B rồi báo đạt.
+  - **Điều kiện bật chặn đã đủ, đã kiểm:** cả 8 phép kiểm sắp chặn (B1–B5, B7, B10, B12) đều
+    XANH. Sáu phép kiểm còn lại giữ mức cảnh báo vì đang có nợ thật (B6 17 chỗ, B9 2 chỗ) —
+    chặn khi còn nợ là khoá repo vì việc chưa ai hứa làm xong hôm nay.
+  - ⚠️ **RỦI RO ĐANG SỐNG:** `workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md` —
+    tài liệu operator đọc **lúc chạy live** — có tham chiếu `drafts/…` nay trỏ vào chỗ trống
+    (tổng 8 chỗ trong gói, ở 4 file). Không phép kiểm nào bắt vì B4 chỉ soi file cổng. Không
+    sửa được vì `claude-bridge-multiprofile` đang giữ package. **Sửa ngay khi package trả.**
