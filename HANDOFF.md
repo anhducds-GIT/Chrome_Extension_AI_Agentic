@@ -1358,3 +1358,50 @@ Cùng họ đường hỏng F4 trong bản thiết kế K2, nhưng ở lớp QUY
 tự lấy khoá của phiên đang ngủ là đúng tai nạn 02/09 mà `claim.mjs` sinh ra để chặn.
 
 **Số:** suite 261 → **264**.
+
+## 2026-09-03 — `claude-template-finish`: đóng nốt tám món của ADR-0001
+
+**Điều kiện làm việc khác mọi phiên trước:** Đức dừng tất cả phiên khác để một phiên chạy một
+mạch. Bốn khoá gốc đều do phiên đã tắt giữ, và `claim.mjs` **không có đường giành lại quyền của
+phiên đã chết** — đó là một lỗ hổng thật, ghi lại ở cuối. Gỡ chủ cũ bằng tay theo miễn trừ mục 1,
+còn việc nhận vẫn cho đi qua công cụ.
+
+**VÁ CHẶN, tìm ra trong 3 phút đầu:** `session-check.mjs` **chết ngay khi nạp** với mọi phiên —
+`originMainResolves` khai ở dòng 106 nhưng dùng ở dòng 76, và `const` có vùng chết tạm thời.
+Vào từ `a7bf62e`, đẩy lên trong lúc phiên khác đang làm việc khác. Cổng đóng phiên của cả repo
+hỏng hoàn toàn cho tới lúc vá.
+
+**Bốn thứ mới, đều có test và đều đã qua đột biến:**
+
+| | |
+|---|---|
+| `scripts/assess.mjs` | một repo bất kỳ cách bộ khung bao xa — mức 0–3, chi phí tách ba loại |
+| `scripts/init-repo.mjs` | dựng repo mới bằng một lệnh, thay sáu bước làm tay dễ lệch thứ tự |
+| `scripts/build-template-overview.mjs` | trang mô tả chính bộ khung, sinh từ chính nó |
+| `docs/protocols/` | quy trình kiểm một repo · quy trình đưa repo cũ lên chuẩn |
+
+**ADR-0002** chốt cái gì đi theo bản trích, cái gì ở lại repo nhà. Mâu thuẫn lộ ra khi làm: công
+cụ đo cần biết "chuẩn" là gì, mà nguồn của chuẩn là bộ sinh — thứ cố ý không đi theo. Chép bộ
+sinh sang mọi repo là tạo N nguồn chuẩn. Quyết: repo đích cần *sống theo* chuẩn, không cần
+*phát hành* chuẩn.
+
+**RÒ RỈ DANH TÍNH, đường thứ hai.** Audit vòng một bắt "bộ sinh đóng cứng tên repo gốc". Còn hai
+chuỗi nữa: tiêu đề `# Bảng điều hành Extension` và cột đầu tên `Extension`. Mọi repo dựng từ bộ
+khung — kể cả repo tài liệu — đều nhận một bảng gọi mọi thứ là Extension. Nay đọc `units.ten`.
+**Bịt một đường là chưa đủ**, và đường thứ hai chỉ lộ ra khi thật sự dựng thử một repo mới.
+
+**Hai lỗi công cụ đo tự bắt được, cả hai đều là lỗi phân loại của tôi:** xếp `package.json` vào
+tầng máy (báo nợ oan cho 100% repo thật), và tính `tests/` vào "bộ máy đầy đủ" (repo có đủ 5
+công cụ mà thiếu suite bị chấm sai mức). Cả hai lộ ra ở lần chạy đầu tiên trên dữ liệu thật.
+
+**Số:** suite 269 → 285. Cổng XANH TOÀN BỘ. Bộ khung 21 file, 0 dòng luật thuộc riêng nghề.
+
+**CÒN MỞ — hai thứ, và cả hai cần Đức:**
+1. **Bộ khung vẫn ở nhờ trong repo này.** ADR-0001 nói nó sống ở repo độc lập. Cần một repo
+   GitHub trống là dời được ngay.
+2. **Chưa từng chạy trên một repo thật khác nghề.** Nhãn `0.1.0-unproven` vẫn đúng. Quy trình
+   `CHUYEN-REPO-LEN-CHUAN.md` là **giả thuyết** cho tới lần chạy thật đầu tiên.
+
+**NỢ CÔNG CỤ, chưa vá:** `claim.mjs` không giành lại được quyền của phiên đã tắt. Hôm nay phải
+sửa bảng bằng tay — đúng thao tác mà luật khuyên tránh. Cần một đường `--giành` có kiểm chứng
+(ví dụ đòi nêu lý do và ghi lại chủ cũ), kẻo lần sau lại sửa tay.
