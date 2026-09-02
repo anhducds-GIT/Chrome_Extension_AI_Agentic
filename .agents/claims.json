@@ -16,39 +16,39 @@
       "released_at": null
     },
     "workers/duc-auto-chatgpt": {
+      "owner": "claude-y02-probe-article",
+      "ai": "Claude",
+      "claimed_at": "2026-09-02",
+      "task": "Ghi bang chung nghiem thu live cua messageSample sau khi Duc reload",
+      "released_at": null
+    },
+    "_root": {
       "owner": null,
       "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Sua articleSample cua dom_probe: selector article da chet, lam no len tieng khi khong khop",
+      "task": "A2: tach _root thanh nhieu khoa theo steward, de hai phien khong choang nhau o goc repo",
       "released_at": "2026-09-02"
     },
-    "_root": {
-      "owner": "claude-y02-a2",
-      "ai": "Claude",
-      "claimed_at": "2026-09-02",
-      "task": "A2: tach _root thanh nhieu khoa theo steward, de hai phien khong choang nhau o goc repo",
-      "released_at": null
-    },
     "_docs": {
-      "owner": "claude-y02-a2",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
       "task": "Ghi phat hien thu ba: cuoc dua do phep kiem do tuoi artifact",
-      "released_at": null
+      "released_at": "2026-09-02"
     },
     "_code": {
-      "owner": "claude-y02-a2",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
       "task": "A2: stewardOf + cong kiem xet theo tung khoa goc",
-      "released_at": null
+      "released_at": "2026-09-02"
     },
     "_template": {
-      "owner": "claude-y02-a2",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
       "task": "A2: sinh lai bo khung sau khi sua hai script",
-      "released_at": null
+      "released_at": "2026-09-02"
     }
   }
 }
