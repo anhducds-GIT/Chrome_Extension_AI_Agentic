@@ -374,8 +374,10 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   });
   assert.equal(checkB12(untouched).state, "ok", "ADR vừa được Accepted, chưa ai sửa thân -> xanh");
 
+  const daSua = fm({ status: "Accepted" }) + "Đổi ý, chọn thứ khác.\n";
   const edited = fixture({
-    files: { [adr]: accepted },
+    // NỘI DUNG HIỆN TẠI là bản đã sửa — B12 so TRẠNG THÁI hiện tại, không so "đã từng bị sửa".
+    files: { [adr]: daSua },
     history: { [adr]: ["sha1", "sha2", "sha3"] },
     blobs: {
       [`sha1:${adr}`]: fm({ status: "Proposed" }) + body,
@@ -400,12 +402,36 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   });
   assert.equal(checkB12(supersededLater).state, "ok", "đổi frontmatter sau Accepted là hợp lệ, chỉ thân mới bị cấm");
 
+  /* SỬA RỒI HOÀN NGUYÊN -> XANH LẠI. Đây là phát hiện của chính bài nghiệm thu phần A, không
+     phải một ca tưởng tượng: bản đầu của B12 báo lỗi khi có BẤT KỲ commit nào từng đổi thân,
+     nên `git revert` bản sửa cũng bị tính là một lần đổi thân sau mốc Accepted → ĐỎ VĨNH VIỄN,
+     không cách nào xoá trừ sửa lịch sử (luật cấm). Một phép kiểm thuộc nhóm CHẶN mà không xoá
+     được là cái bẫy khoá cả repo — đúng thứ BRIEF-S7 cảnh báo. Thiếu phép kiểm này thì một hôm
+     nào đó ai đó "sửa cho đúng luật hơn" và dựng lại cái bẫy. */
+  const daHoanNguyen = fixture({
+    files: { [adr]: accepted },
+    history: { [adr]: ["sha1", "sha2", "sha3", "sha4"] },
+    blobs: {
+      [`sha1:${adr}`]: fm({ status: "Proposed" }) + body,
+      [`sha2:${adr}`]: accepted,
+      [`sha3:${adr}`]: fm({ status: "Accepted" }) + "Sửa sai.\n",
+      [`sha4:${adr}`]: accepted
+    }
+  });
+  assert.equal(checkB12(daHoanNguyen).state, "ok",
+    "sửa rồi hoàn nguyên thì B12 phải XANH lại — một phép kiểm CHẶN buộc phải xoá được, nếu không nó khoá cả repo");
+  // Nhưng thông báo vẫn phải chỉ được ĐƯỜNG HOÀN NGUYÊN khi đang đỏ, nếu không thì người đọc
+  // biết mình sai mà không biết bản đúng nằm ở đâu.
+  assert.match(checkB12(edited).findings[0].fix.join(" "), /git show \S+:docs\/adr\/\S+\.md/,
+    "khi đỏ, cách sửa phải kèm lệnh lấy lại đúng bản đã Accepted");
+
   // ĐÚNG HAI COMMIT. Ghim cái thoát sớm `history.length <= 1`: nới nó thành `<= 2` là ca này
   // lọt, mà đây đúng là ca mỏng nhất của một ADR bị sửa (thêm Accepted rồi sửa ngay).
+  const thanDaSua = fm({ status: "Accepted" }) + "Thân đã bị sửa.\n";
   const haiCommit = fixture({
-    files: { [adr]: accepted },
+    files: { [adr]: thanDaSua },
     history: { [adr]: ["sha1", "sha2"] },
-    blobs: { [`sha1:${adr}`]: accepted, [`sha2:${adr}`]: fm({ status: "Accepted" }) + "Thân đã bị sửa.\n" }
+    blobs: { [`sha1:${adr}`]: accepted, [`sha2:${adr}`]: thanDaSua }
   });
   assert.equal(checkB12(haiCommit).state, "fail", "ADR chỉ có 2 commit mà thân đã đổi thì vẫn phải bắt được");
 
@@ -418,7 +444,7 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
 
   const adrGoi = "workers/demo/v1/docs/adr/0001-quyet-dinh-goi.md";
   const trongGoi = fixture({
-    files: { [adrGoi]: accepted },
+    files: { [adrGoi]: fm({ status: "Accepted" }) + "Đổi ý.\n" },
     history: { [adrGoi]: ["sha1", "sha2", "sha3"] },
     blobs: {
       [`sha1:${adrGoi}`]: fm({ status: "Proposed" }) + body,
@@ -439,7 +465,7 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   const adr = "workers/demo/v1/docs/adr/0001-quyet-dinh-goi.md";
   const body = "Chọn Bridge làm lớp vận chuyển.\n";
   const deps = fixture({
-    files: { [adr]: fm({ status: "Accepted" }) + body },
+    files: { [adr]: fm({ status: "Accepted" }) + "Thân đã bị sửa sau khi Accepted.\n" },
     history: { [adr]: ["sha1", "sha2"] },
     blobs: {
       [`sha1:${adr}`]: fm({ status: "Accepted" }) + body,
@@ -551,7 +577,7 @@ const chay = (deps) => {
       const adr = "workers/demo/v1/docs/adr/0001-x.md";
       const body = "Chọn Bridge.\n";
       return fixture({
-        files: { [adr]: fm({ status: "Accepted" }) + body },
+        files: { [adr]: fm({ status: "Accepted" }) + "Đã sửa.\n" },
         history: { [adr]: ["sha1", "sha2"] },
         blobs: { [`sha1:${adr}`]: fm({ status: "Accepted" }) + body, [`sha2:${adr}`]: fm({ status: "Accepted" }) + "Đã sửa.\n" }
       });

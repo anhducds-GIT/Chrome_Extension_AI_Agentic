@@ -467,6 +467,7 @@ export function checkB12(deps) {
     if (history.length <= 1) continue;
     let acceptedAt = -1;
     let acceptedBody = null;
+    let lechTai = null;
     for (let index = 0; index < history.length; index += 1) {
       const text = deps.git.showAt(history[index], relPath);
       if (text === null) continue;
@@ -476,19 +477,30 @@ export function checkB12(deps) {
         if (accepted) { acceptedAt = index; acceptedBody = normalizeForCompare(body); }
         continue;
       }
-      if (normalizeForCompare(body) !== acceptedBody) {
-        findings.push({
-          tag: "ADR-EDITED",
-          where: `${relPath} @ ${history[index].slice(0, 7)}`,
-          why: `phần thân đổi sau khi ADR đã Accepted tại ${history[acceptedAt].slice(0, 7)}`,
-          fix: [
-            "hoàn nguyên phần thân về đúng bản đã Accepted",
-            "muốn đổi quyết định thì viết ADR MỚI và đặt `status: superseded` cho bản cũ — ADR là biên bản, không phải bản nháp"
-          ]
-        });
-        break;
-      }
+      if (lechTai === null && normalizeForCompare(body) !== acceptedBody) lechTai = history[index];
     }
+    if (acceptedAt < 0) continue;
+    /* SO TRẠNG THÁI HIỆN TẠI, không so "đã từng bị sửa" — và đây không phải nới lỏng.
+
+       Bản đầu báo lỗi ngay khi có MỘT commit nào đó từng đổi phần thân. Nghe đúng luật hơn,
+       nhưng tôi tự chạy bài nghiệm thu phần A và thấy hậu quả: `git revert` bản sửa cũng là
+       một lần đổi thân sau mốc Accepted, nên B12 ĐỎ VĨNH VIỄN và không cách nào xoá — trừ
+       việc sửa lịch sử, thứ luật cấm. Một phép kiểm thuộc nhóm CHẶN mà không xoá được là cái
+       bẫy khoá cả repo, đúng thứ BRIEF-S7 cảnh báo ở mục điều kiện mở.
+       Nay: hỏi "nội dung ADR HIỆN TẠI có còn đúng bản đã Accepted không". Sửa rồi hoàn nguyên
+       thì xanh lại — và lịch sử git vẫn giữ nguyên dấu vết, không ai xoá được nó. */
+    const hienTai = normalizeForCompare(parseStatus(deps.readFile(relPath)).body);
+    if (hienTai === acceptedBody) continue;
+    findings.push({
+      tag: "ADR-EDITED",
+      where: relPath,
+      why: `phần thân HIỆN TẠI khác bản đã Accepted tại ${history[acceptedAt].slice(0, 7)}${lechTai ? ` (lệch từ ${lechTai.slice(0, 7)})` : ""}`,
+      fix: [
+        `hoàn nguyên phần thân về đúng bản đã Accepted: git show ${history[acceptedAt].slice(0, 12)}:${relPath}`,
+        "muốn đổi quyết định thì viết ADR MỚI và đặt `status: superseded` cho bản cũ — ADR là biên bản, không phải bản nháp",
+        "phép kiểm này so TRẠNG THÁI HIỆN TẠI, nên hoàn nguyên là xoá được nó; lịch sử git vẫn giữ dấu vết lần sửa"
+      ]
+    });
   }
   return report("B12", RED, title, findings, `đã soi ${files.length} ADR`);
 }
