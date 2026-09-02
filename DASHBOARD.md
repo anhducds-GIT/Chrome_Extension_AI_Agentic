@@ -2,12 +2,12 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `59db34c` (2026-09-02). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
+Trang được sinh tại commit `2fcdeee` (2026-09-02). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
 
 ## A · Bắt đầu từ đâu
 
 1. **Việc ưu tiên #1** — **workers/duc-auto-gg-flow-video/v0.1.0** — Duc lam tay: reload extension o TUNG profile (het legacy) + dien o 'Ten ho so Chrome nay' tung panel; roi AI goi bridge.sessions dem du ten. Sau do moi toi trial video (panel + workbook + Dev Mode + Video mode + x1) va live-check F-14 · [STATUS](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md)
-2. **Phiên gần nhất** — 2026-09-02 @ `59db34c` · [HANDOFF.md](HANDOFF.md)
+2. **Phiên gần nhất** — 2026-09-02 @ `2fcdeee` · [HANDOFF.md](HANDOFF.md)
 3. **Luật phải đọc trước khi sửa gì** — [AGENTS.md](AGENTS.md) · cổng vào cho AI: [llms.txt](llms.txt)
 4. **Ai đang giữ package nào** — `.agents/claims.json` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)
 

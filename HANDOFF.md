@@ -269,3 +269,37 @@
     `_root` tới khi push xong, nhưng khối "Đóng phiên" lại trả quyền TRƯỚC khi chạy cổng — cổng
     đỏ ngay ở mục 1. Tôi đã mắc đúng lỗi này hai lần trong phiên trước và vẫn viết sai vào brief.
   - **Việc kế tiếp: S5 — tạo `docs/adr/`.** B12 sẽ tự chạy, không phải sửa dòng code nào.
+
+- **2026-09-02 · `s5-adr`** — **PHIÊN S5 XONG. B12 hết `KHÔNG ÁP DỤNG`, nay XANH, soi 113 ADR.**
+  - `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` = luật ADR · `docs/_TEMPLATE-adr.md` = bản mẫu.
+    Tách **112 quyết định** thành 112 ADR: `duc-auto-chatgpt/v0.1.0` **45**,
+    `duc-auto-gemini/v0.2.0` **67**. `decisions.md` KHÔNG bị xoá — thành **mục lục**.
+  - **SỐ TRONG BRIEF-S5 SAI HƠN BA LẦN, phiên sau đừng chép lại.** Brief ghi 30 quyết định
+    (4 · 18 · 8); nó đếm tiêu đề `##` — là **NHÓM** — chứ không đếm dòng bảng — là **QUYẾT ĐỊNH**.
+    Đo thật: chatgpt **45**, gemini **67**, gg-flow-video **8** → tổng **120**. Đếm bằng hai
+    cách độc lập (bộ tách, và `grep` trừ header/ngăn cách), hai cách khớp nhau.
+  - **"Chỉ đổi hình dạng" được CHỨNG MINH BẰNG MÁY, không phải bằng lời hứa:** bộ tách đối
+    chiếu từng ô của bảng cũ phải xuất hiện NGUYÊN VĂN trong ADR tương ứng —
+    **180/180** (chatgpt) và **227/227** (gemini) ô không rỗng, **0 sai lệch**. Brief dặn
+    "đừng viết bộ tách chung rồi tin nó"; tôi vẫn viết bộ tách, nhưng **không tin nó** — bằng
+    chứng là phép đối chiếu, không phải là code. Với 112 dòng thì chép tay mới là thứ không ai
+    soát lại được. Bộ tách là công cụ một lần, cố ý KHÔNG đưa vào repo; bản gốc đọc lại bằng
+    `git show 181c06e:<đường-dẫn>`.
+  - **Bẫy 1 của brief là thật và đã sửa:** B12 chỉ so `startsWith("docs/adr/")` nên nó mù với
+    ADR trong package. Nay `isAdrPath()` khớp cả hai tầng. Thêm thoát sớm khi file chỉ có 1
+    commit — đúng logic (không có commit thứ hai thì không có gì để so) và giữ cổng ở ~8 giây
+    thay vì đọc blob của 113 ADR.
+  - **Mục "Hệ quả" của cả 112 ADR đều ghi `không ghi lại`** — bảng gốc chỉ có 3–4 cột, không
+    có cột đó. Bịa cho đủ bốn mục thì bản ghi lịch sử hết đáng tin.
+  - **112 ADR KHÔNG làm B6 tăng** — chúng mang `status: Accepted` nên rơi vào luật "hồ sơ đã
+    nghỉ" của B6. Đúng (ADR là bản ghi bất biến, không phải chặng đường đi), nhưng phải nói rõ:
+    chúng thoát vì LUẬT ĐÓ, không phải vì đã có ai trỏ tới được chúng. Đã ghi vào code.
+  - **Một sửa nội dung duy nhất, cố ý:** tiêu đề `decisions.md` của gemini ghi
+    "Decisions — Duc Auto **ChatGPT**" (lỗi chép dán cũ). Mục lục mới ghi đúng tên gói.
+  - **Đo:** suite **95 + 6 + 79 + 15 + 22** xanh. Cổng kiểm cấu trúc: **0 ĐỎ · 51 VÀNG**
+    (B6 49 · B9 2), B12 XANH.
+  - **CHƯA LÀM, và vì sao:** `duc-auto-gg-flow-video/v0.1.0` (**8 quyết định**) chưa chuyển.
+    Package đó đang do phiên `claude-bridge-multiprofile` giữ, luật mục 1 cấm ghi vào package
+    của phiên khác. Nó dùng định dạng **văn xuôi `##`, không có bảng** nên cần một bộ tách
+    riêng — đừng đem bộ tách bảng ra dùng lại. Đức đã xác nhận phiên đó còn đang chạy thật.
+  - **Việc kế tiếp: phiên S6 — dọn `drafts/`.** 25 trong 49 khoản nợ B6 nằm ở đó.
