@@ -4,11 +4,11 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `4f68158` (2026-09-02).
+Trang được sinh tại commit `58e5bb1` (2026-09-02).
 
 ## Việc ưu tiên #1
 
-- **workers/duc-auto-gg-flow-video/v0.1.0** — Kiem live multi-profile: chep bridge-host.mjs + bridge-cli.mjs moi sang thu muc Bridge, reload extension tung profile, dat ten tung ho so, roi goi bridge.sessions dem du ten
+- **workers/duc-auto-gg-flow-video/v0.1.0** — Duc lam tay: reload extension o TUNG profile (het legacy) + dien o 'Ten ho so Chrome nay' tung panel; roi AI goi bridge.sessions dem du ten. Sau do moi toi trial video (panel + workbook + Dev Mode + Video mode + x1) va live-check F-14
 
 ## Đọc theo thứ tự này
 
@@ -23,7 +23,7 @@ Trang được sinh tại commit `4f68158` (2026-09-02).
 - [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — B-14…B-21 đang mở
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Lớp vận chuyển Bridge đã xong và đã kiểm chứng live cả hai bản (28/08)
-- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Multi-profile Bridge (hướng A, Đức duyệt 28/08) đã code xong: host giữ nhiều kết nối + target/bridge.sessions/served_by, panel có ô tên hồ sơ, sửa nốt F-14…
+- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Multi-profile Bridge: KIỂM LIVE ĐẠT 02/09 phần định tuyến (host mới đã deploy + chạy trên 32149
 
 ## Luật bắt buộc trước khi sửa gì
 
