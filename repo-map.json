@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-03",
-  "generated_commit": "ceca3e9",
+  "generated_commit": "0a3074c",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -27,10 +27,6 @@
     },
     {
       "path": "scripts/",
-      "owner_declared": true
-    },
-    {
-      "path": "template/",
       "owner_declared": true
     },
     {
