@@ -3,9 +3,9 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-08-28",
+      "owner": "claude-bridge-multiprofile",
+      "ai": "claude",
+      "claimed_at": "2026-09-02",
       "task": "TRA QUYEN 2026-09-02 (Duc chot: phien claude-bridge-multiprofile bo do tu 28/08, don claim mo coi). DA XONG va da len GitHub: multi-profile Bridge huong A (commit 6c59266) — host giu nhieu ket noi theo instance_id, target/bridge.sessions/served_by, 2 ma loi TARGET_AMBIGUOUS/TARGET_NOT_CONNECTED, dinh tuyen fail-closed; va nut F-14 chip mode noi vao pressFlowControl. Suite xanh, mutation do du. DASHBOARD da sinh lai boi phien s1-complete (viec phien nay bo do). CON MO 2 viec, chi tiet o cuoi HANDOFF.md: (1) CHUA KIEM LIVE multi-profile — can tay Duc 4 buoc: chep bridge-host.mjs + bridge-cli.mjs moi sang C:WORKING ZONEChrome Extension Bridgeduc-auto-gg-flow-video, chay lai START-BRIDGE, reload extension TUNG profile, dien o Ten ho so tung panel, roi goi bridge.sessions dem du ten. (2) live-check F-14 chip mode, can chip dang o Image, 0 credit.",
       "released_at": "2026-09-02"
     },
@@ -24,11 +24,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "audit-s4",
+      "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "XONG 2026-09-02. Phien S4 da dong: scripts/check-bootstrap.mjs voi 14 phep kiem B1-B14, khoi grandfathered 48 duong dan (DO THAT, ke hoach ghi 52), noi vao session-check o CHE DO CANH BAO (EXPECTED_CHECKS 7 -> 8). Do duoc: 0 cho DO, 51 cho VANG (B6 49 + B9 2); B12 KHONG AP DUNG vi chua co docs/adr/. Suite 95+6+79+15+20 xanh, 22/22 dot bien bi bat. VIEC KE TIEP: phien S5 — tao docs/adr/, B12 se tu chay khong can sua code. Chi tiet o cuoi HANDOFF.md.",
-      "released_at": "2026-09-02"
+      "task": "Audit doc lap phien S4. Va mot lo test tim duoc: tieu chi nghiem thu cua Duc (moi canh bao phai noi ca cho sai lan cach sua) chua duoc ghim — xoa sach dau -> ma suite van xanh.",
+      "released_at": null
     }
   }
 }

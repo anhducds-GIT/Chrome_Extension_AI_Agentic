@@ -243,3 +243,29 @@
     cái bẫy S3 đã ghi lại (bộ sinh đọc từ HEAD), nên nó thuộc loại lỗi lặp lại được.
   - **Việc kế tiếp: phiên S5 — `docs/adr/`.** Tạo được thư mục đó là B12 tự hết KHÔNG ÁP DỤNG,
     không phải sửa thêm dòng code nào (phần thân B12 đã viết đủ và đã có test ghim bằng fixture).
+
+- **2026-09-02 · `audit-s4`** — **Audit độc lập phiên S4. Xác nhận đạt, kèm một lỗ test đã vá.**
+  Luật vàng 4: báo cáo của AI khác không phải bằng chứng. Tôi tự chạy lại tất cả.
+  - **Kiểm chứng lại, khớp hết:** 3 commit có thật và đã push · `npm test` **216 xanh** (5 suite,
+    tôi tự chạy) · cổng kiểm exit 0 · `EXPECTED_CHECKS` 7→8 khớp đúng 8 phép kiểm ·
+    `check-bootstrap.mjs` exit 0, **0 ĐỎ / 51 VÀNG** · định dạng thông báo đạt tiêu chí Đức.
+  - **`grandfathered`: 48 khai / 48 thực đo / 0 thiếu / 0 thừa.** Phiên S4 đo thật chứ không
+    chép con số 52 của kế hoạch — đúng điều brief dặn.
+  - **"Không đo lại thứ đã có số đo" — ĐÚNG, và làm còn khéo hơn brief đòi.** Ghi chú đầu file
+    nói lấy `model.health`, nhưng code lấy `model.rows` / `topLevel` / `gatewayLinks` / `docs`
+    — tức chính các mảng mà `health` được suy ra từ đó. Tốt hơn: có cả con số LẪN chi tiết để
+    chỉ đúng file cần sửa. Tôi đối chiếu bốn cặp B1/B3/B4/B11 với `health`: khớp từng cái.
+  - **LỖ TÔI TÌM ĐƯỢC, đã vá:** tiêu chí nghiệm thu của Đức — *"mỗi cảnh báo phải nói cả chỗ
+    sai lẫn cách sửa"* — **chưa có test ghim**. Xoá sạch dấu `→` khỏi bộ sinh thông báo thì
+    30+ dòng hướng dẫn mất dấu mà suite vẫn 20/20 xanh. Nội dung vẫn còn nên mức nhẹ, nhưng
+    **thứ Đức dùng để chấm bài mà không có test ghim thì sớm muộn sẽ trôi.** Đã thêm một phép
+    kiểm chạy chính `check-bootstrap.mjs` rồi soi từng dòng `✗`: phải có dòng `vì:` VÀ ít nhất
+    một dòng `→`. Suite 20 → **21**. Hai đột biến (xoá `→`, xoá `vì:`) nay đều đỏ.
+  - **Bài test một dòng của S7 ĐÃ ĐẠT SỚM.** Đức dán đúng một câu *"Đọc `llms.txt` … rồi làm
+    theo"* vào một phiên hoàn toàn mới. Phiên đó tự lần ra `BRIEF-S4.md`, tự nhận `_root`, làm
+    trọn S4 và push — **không hỏi lại câu nào**. Đây là tiêu chí nghiệm thu chính của cả dự án,
+    đạt ở S4 thay vì phải chờ S7. Nên ghi thành bằng chứng ở `evidence/`.
+  - **Phiên S4 bắt được một lỗi trong brief của tôi, và nó đúng:** mục "Mở phiên" bảo giữ
+    `_root` tới khi push xong, nhưng khối "Đóng phiên" lại trả quyền TRƯỚC khi chạy cổng — cổng
+    đỏ ngay ở mục 1. Tôi đã mắc đúng lỗi này hai lần trong phiên trước và vẫn viết sai vào brief.
+  - **Việc kế tiếp: S5 — tạo `docs/adr/`.** B12 sẽ tự chạy, không phải sửa dòng code nào.

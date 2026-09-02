@@ -16,6 +16,7 @@
       không nói "sửa thế nào" là chưa đạt. Phép kiểm 2 cưỡng chế điều đó cho MỌI finding.
 */
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -475,6 +476,36 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   const block = gate.slice(gate.indexOf("Cổng kiểm cấu trúc B1–B14"));
   assert.match(block, /CHỈ CẢNH BÁO, không chặn/, "cổng con phải nói rõ nó chỉ cảnh báo");
   ok("TÍCH HỢP · session-check.mjs gọi cổng kiểm cấu trúc, EXPECTED_CHECKS = 8");
+}
+
+/* NGHIỆM THU CỦA ĐỨC — mỗi cảnh báo phải nói CẢ chỗ sai LẪN cách sửa.
+
+   Tìm ra bằng audit độc lập 2026-09-02: xoá sạch dấu `→` khỏi bộ sinh thông báo thì
+   toàn bộ 30+ dòng hướng dẫn mất dấu mà suite vẫn 20/20 xanh. Nội dung vẫn còn nên
+   mức nhẹ, nhưng đây LÀ tiêu chí nghiệm thu Đức dùng để phán đạt hay không — thứ
+   Đức dùng để chấm bài mà không có test ghim thì sớm muộn sẽ trôi. */
+{
+  const output = execFileSync(process.execPath, [path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "scripts", "check-bootstrap.mjs")], {
+    cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."), encoding: "utf8"
+  });
+  const lines = output.split("\n");
+  const warnings = lines.map((line, index) => ({ line, index })).filter((entry) => entry.line.trimStart().startsWith("✗"));
+  assert.ok(warnings.length > 0, "nền: repo hiện phải có ít nhất một cảnh báo để phép kiểm này có nghĩa");
+
+  for (const { line, index } of warnings) {
+    // Đọc các dòng thụt sâu hơn ngay dưới nó, tới cảnh báo kế tiếp.
+    const detail = [];
+    for (let i = index + 1; i < lines.length; i += 1) {
+      const next = lines[i];
+      if (!next.trim() || next.trimStart().startsWith("✗") || !next.startsWith("    ")) break;
+      detail.push(next);
+    }
+    assert.ok(detail.some((entry) => entry.includes("vì:")),
+      `cảnh báo phải nói VÌ SAO sai: ${line.trim()}`);
+    assert.ok(detail.some((entry) => entry.trimStart().startsWith("→")),
+      `cảnh báo phải có ít nhất một dòng "→" nói CÁCH SỬA: ${line.trim()}`);
+  }
+  ok(`NGHIỆM THU · cả ${warnings.length} cảnh báo đều nói cả chỗ sai lẫn cách sửa`);
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
