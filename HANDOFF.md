@@ -1265,3 +1265,32 @@ chủ. Phép kiểm 02/09 làm đúng việc của nó: **chặn trước khi ch
    và `claim.mjs` cũng từ chối trả quyền hộ. Chưa có `_root` thì tôi không ghi được
    `A-01/TASK.md` (dấu Gate 0), `RESULT-DIGEST.md`, `RUN-LOG.json`, `LESSON-INBOX.md`, và không
    sinh lại được `DASHBOARD.md` để chữa mục đỏ.
+
+### Phụ lục: khi nào trang máy sinh mới thật sự mục — đọc trước khi sinh lại hai lần
+
+Phiên này tưởng phải sinh lại `DASHBOARD.md` **hai lần** (một lần cho phiên K1, một lần sau khi
+tôi commit `RUN-LOG.json`). Đọc code thì sai: `isBehaviourFile()` trong `build-dashboard.mjs`
+chỉ tính đuôi `.js .mjs .json .html .css` **và loại vùng bằng chứng ra**. Cột "File test [ĐO]"
+thì đếm **số file test**, không đếm commit.
+
+Rút ra, dùng được cho mọi phiên sau:
+
+- Commit **toàn `.md`** không làm trang mục. Ghi HANDOFF, sửa ADR, viết study — sinh lại xong thì
+  cứ commit tiếp, trang vẫn tươi.
+- Trang mục khi có file `.js/.mjs/.json/.html/.css` **vào hay ra khỏi** HEAD, hoặc khi số file
+  test đổi. **Sửa nội dung** một file test đã có thì cột đếm KHÔNG đổi.
+- Nên thứ tự đúng vẫn là "commit nguồn trước, sinh artifact sau" — nhưng chỉ cần **một** lần
+  sinh, đặt sau commit nguồn cuối cùng có đuôi thuộc danh sách trên.
+
+Phiên K1 ban đầu đọc cột đó là "số commit" và đã báo con số ấy cho Đức; họ tự đọc diff, tự đính
+chính, và sửa cả chỗ đã báo sai. Ghi lại vì cái bẫy nằm ở chỗ **tên cột đúng mà người đọc vẫn
+hiểu sai** — `9 → 10` sau hai commit thì trông y như đếm commit.
+
+**Và một lỗi của chính tôi trong cùng phiên, cùng hình dạng:** tôi khuyên phiên K1 ghi nợ vào
+`BACKLOG.md` ở gốc repo, "thuộc `_code`". Sai cả hai vế — **`BACKLOG.md` ở gốc không tồn tại**
+(chỉ có bản trong từng worker), và mọi file ở tầng ngoài cùng đều thuộc `_root`, không phải
+`_code`. `stewardOf` là câu trả lời duy nhất đáng tin: `tests/` và `scripts/` mới là `_code`.
+Bài học: **đừng khuyên phiên khác ghi vào một đường dẫn mình chưa `ls`**, và đừng suy quyền sở
+hữu theo trực giác khi có một hàm trả lời được. Lưu ý khi tự kiểm: `stewardOf(relPath, parsed)`
+cần truyền `.repo-structure.json` vào — gọi thiếu tham số thì nó trả `_root` cho mọi thứ, và
+tôi đã tự lừa mình đúng một lượt vì thế.
