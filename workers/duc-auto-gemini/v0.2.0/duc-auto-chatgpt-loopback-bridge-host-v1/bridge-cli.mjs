@@ -17,7 +17,9 @@ const COMMANDS = Object.freeze({
   // việc), chat-reload thì bị khoá đó chặn (F5 giữa chừng giết attempt đang
   // bay). Dùng nối tiếp: run-stop -> chat-reload -> chạy lại.
   "run-stop": "run.stop",
-  "chat-reload": "chat.reload"
+  "chat-reload": "chat.reload",
+  // Multi-profile: the host answers this itself — who is connected right now.
+  sessions: "bridge.sessions"
 });
 
 const DEFAULT_PAIRING_NAME = "duc-auto-chatgpt-bridge-pairing-v1.json";
@@ -101,17 +103,28 @@ export function buildEnvelope(method, params, now = new Date(), requestId = `cli
   };
 }
 
+// --target <label|instance_id> rides at the ENVELOPE top level; the host
+// consumes it for routing and strips it before relaying to the extension.
+// With several profiles connected and no target, the host refuses with
+// TARGET_AMBIGUOUS — it never picks one on its own.
+export function applyTarget(envelope, flags = {}) {
+  if (flags.target === undefined) return envelope;
+  const target = String(flags.target).trim();
+  if (!target || target.length > 128) throw new Error("--target must be 1-128 characters (a session label or instance_id).");
+  return { ...envelope, target };
+}
+
 export async function main(argv = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr, fetch: globalThis.fetch }) {
   const [command, ...rest] = argv;
   if (!command || command === "help" || command === "--help") {
-    io.stdout.write("Usage: node bridge-cli.mjs <ping|capabilities|queue-list|run-status|ledger-read|proposal-get|propose|run-trial|run-stop|chat-reload> [options]\n");
+    io.stdout.write("Usage: node bridge-cli.mjs <ping|capabilities|queue-list|run-status|ledger-read|proposal-get|propose|run-trial|run-stop|chat-reload|sessions> [options] [--target <label|instance_id>]\n");
     return 0;
   }
   const flags = parseFlags(rest);
   const pairingPath = path.resolve(flags.pairing || defaultPairingPath());
   const pairing = validatePairing(JSON.parse(fs.readFileSync(pairingPath, "utf8")));
   const { method, params } = commandRequest(command, flags);
-  const envelope = buildEnvelope(method, params);
+  const envelope = applyTarget(buildEnvelope(method, params), flags);
   const response = await io.fetch(pairing.http_url, {
     method: "POST",
     headers: { Authorization: `Bearer ${pairing.token}`, "Content-Type": "application/json" },

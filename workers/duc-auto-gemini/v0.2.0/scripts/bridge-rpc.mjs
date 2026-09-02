@@ -23,16 +23,18 @@ const DEFAULT_PAIRING = "C:/WORKING ZONE/Chrome Extension Bridge/duc-auto-gemini
 const argv = process.argv.slice(2);
 const method = argv.shift();
 if (!method || method.startsWith("--")) {
-  console.error("Usage: node scripts/bridge-rpc.mjs <method> [json | --params-file <path>] [--pairing <path>]");
+  console.error("Usage: node scripts/bridge-rpc.mjs <method> [json | --params-file <path>] [--pairing <path>] [--target <label|instance_id>]");
   process.exit(1);
 }
 
 let params = {};
 let pairingPath = DEFAULT_PAIRING;
+let target;
 while (argv.length) {
   const token = argv.shift();
   if (token === "--params-file") params = JSON.parse(fs.readFileSync(argv.shift(), "utf8"));
   else if (token === "--pairing") pairingPath = argv.shift();
+  else if (token === "--target") target = argv.shift();
   else params = JSON.parse(token);
 }
 
@@ -52,7 +54,9 @@ const response = await fetch(`http://127.0.0.1:${port}/v1/rpc`, {
     method,
     sent_at: new Date().toISOString(),
     client: { client_id: "duc-auto-gemini-ai-operator", name: "AI Operator raw RPC", version: "1.0.0" },
-    params
+    params,
+    // Host routing metadata (multi-profile): stripped before relay.
+    ...(target !== undefined ? { target: String(target) } : {})
   })
 });
 

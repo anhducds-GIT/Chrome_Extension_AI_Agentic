@@ -26,7 +26,10 @@ const chromeMock = {
   alarms: { onAlarm: alarms, create(name, spec) { alarmSpec = { name, spec }; } },
   storage: {
     local: {
-      async get(key) { return key ? { [key]: values[key] } : { ...values }; },
+      async get(key) {
+        if (Array.isArray(key)) return Object.fromEntries(key.map((name) => [name, values[name]]));
+        return key ? { [key]: values[key] } : { ...values };
+      },
       async set(next) { Object.assign(values, next); },
       async remove(key) { delete values[key]; }
     },
@@ -55,7 +58,18 @@ const firstSocket = FakeWebSocket.instances[0];
 assert.equal(firstSocket.url, pairing.websocket_url);
 assert.equal(firstSocket.url.includes(token), false, "token is not placed in the WebSocket URL");
 firstSocket.emit("open");
-assert.deepEqual(firstSocket.sent[0], { type: "auth", role: "extension", token });
+// Multi-profile (port tu gg-flow-video): auth mang khoi instance va duoc gui
+// sau mot microtask (doc identity tu storage trong handler open).
+await new Promise((resolve) => setTimeout(resolve, 0));
+const firstAuth = firstSocket.sent[0];
+assert.equal(firstAuth.type, "auth");
+assert.equal(firstAuth.role, "extension");
+assert.equal(firstAuth.token, token);
+assert.equal(firstAuth.instance.schema_version, 1);
+assert.match(firstAuth.instance.instance_id, /^[A-Za-z0-9-]{8,64}$/);
+assert.equal(firstAuth.instance.worker, "duc-auto-gemini");
+const persistedInstance = values["dac.bridge.instance.v1"];
+assert.equal(firstAuth.instance.instance_id, persistedInstance.instance_id, "the announced identity is the persisted one");
 const portMessage = eventSource();
 const portDisconnect = eventSource();
 const posted = [];

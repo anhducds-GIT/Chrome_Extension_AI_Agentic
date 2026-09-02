@@ -35,6 +35,18 @@ Raw POST: dùng `node workers/duc-auto-gemini/v0.2.0/scripts/bridge-rpc.mjs <met
 (đã kiểm chứng thực chiến Batch-SX-01). Envelope thủ công nếu cần: `{protocol:"duc-auto-chatgpt.bridge",version:1,kind:"request",request_id,method,sent_at,client,params}`
 gửi tới `http://127.0.0.1:32148/v1/rpc` với header `Authorization: Bearer <token>`.
 
+## Nhiều profile Chrome cùng nối Bridge — từ 2026-09-02 KHÔNG phải tắt extension nữa
+
+Port từ nhánh gg-flow-video (thiết kế: `drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` gốc repo,
+Đức duyệt hướng A 28/08). Host giữ nhiều kết nối cùng lúc; mỗi profile báo danh bằng tên
+Đức đặt trong side panel (tab BRIDGE, ô **"Tên hồ sơ Chrome này"**).
+
+1. Mở phiên: `cd "C:WORKING ZONEChrome Extension Bridgeduc-auto-gemini" && node bridge-cli.mjs sessions --pairing duc-auto-gemini-bridge-pairing-v1.json` — xem profile nào đang nối (`label`, `legacy`).
+2. **Có ≥2 kết nối → MỌI lệnh phải nêu đích** `--target <tên|instance_id>`. Quên là host TỪ CHỐI bằng `TARGET_AMBIGUOUS` kèm danh sách — không bao giờ tự chọn. Đúng 1 kết nối thì như cũ.
+3. **Probe và run phải CÙNG MỘT `--target`.** Mọi phản hồi chuyển tiếp mang dấu `served_by` — thấy đổi giữa chừng là DỪNG.
+4. `TARGET_NOT_CONNECTED` (retryable) = đích đang offline (service worker ngủ); đợi ~30s gọi lại, đừng đổi đích.
+5. `legacy: true` = profile đó còn chạy bản extension CŨ trong RAM — nhờ Đức reload extension ở profile đó rồi đặt tên.
+
 ## 3. Ranh giới quyền — KHÔNG thương lượng
 
 - `run.start/pause/resume` KHÔNG tồn tại trong giao thức. Batch sản xuất (>30 job) = Đức bấm.

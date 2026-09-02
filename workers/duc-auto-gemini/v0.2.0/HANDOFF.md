@@ -562,3 +562,14 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
   - Từ nay **đừng thêm dòng vào `decisions.md`**; chép `docs/_TEMPLATE-adr.md` thành ADR mới,
     đánh số tiếp từ `0068`. ADR đã `Accepted` là bất biến — phép kiểm **B12** cưỡng chế.
 - **Next:** không đổi việc đang mở của gói này.
+- 2026-09-02 · `claude-bridge-multiprofile` · **PORT MULTI-PROFILE BRIDGE — xong, suite 83/83,
+  10/10 mutation đỏ.** Port từ gg-flow-video (mẫu 6c59266, đã audit PASS + kiểm live 3 profile).
+  Host = chép nguyên bản mới (host hai nhánh vốn giống từng byte). Transport: khối `instance`
+  nạp TRONG handler `open` có guard — giữ nguyên bất biến "giữ socket trước await" của bản vá
+  stability 3514aa5, không đụng keepalive-deadline/backoff. Panel: ô "Tên hồ sơ Chrome này".
+  CLI: lệnh `sessions` + cờ `--target`; `scripts/bridge-rpc.mjs` thêm `--target`.
+  Chốt ghim sửa theo hành vi mới: mv3-reconnect (auth mang instance, gửi trễ 1 microtask),
+  transport-liveness (thêm 1 `await settle()`), test multi-profile mới (bản gg-flow đổi worker id).
+  Host mới ĐÃ deploy sang thư mục Bridge + khởi động lại (host cũ idle, executor unavailable,
+  không có run đang bay); live thấy 1 kết nối legacy (extension chưa reload — tay Đức).
+  Việc mở: Đức reload extension từng profile + đặt tên; live-check ambiguous/target như gg-flow.

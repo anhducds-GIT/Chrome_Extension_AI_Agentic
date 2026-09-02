@@ -5,13 +5,13 @@ name: Duc Auto Gemini (Platform)
 lifecycle: active
 owner: claude
 priority_rank: 3
-next_step: "Do live nhanh tat host qua 2 phut (thang bo cuoc, alarm lo tiep) — hien chi ghim bang test"
+next_step: "Duc reload extension o TUNG profile Gemini + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: do live nhanh tat host qua 2 phut"
 version_source: workers/duc-auto-gemini/v0.2.0/manifest.json
 last_verified: 2026-08-28
 last_verified_commit: 4789754b2ad57121fe94d97e1ebd86fc5d4d2148
 last_verified_how: "Live sau khi hạ trần chờ xuống 5 giây: tắt/bật host, nối lại sau 1,0 giây (bản trước đo 22,5s và 27,7s). Khớp dự đoán viết trước khi đo, lần thứ ba liên tiếp"
 evidence_ref: workers/duc-auto-gemini/v0.2.0/evidence-transport-liveness-5s-20260828/README.md
-current_focus: "Lớp vận chuyển Bridge đã xong và đã kiểm chứng live cả hai bản (28/08). Còn một nhánh chưa đo thật: tắt host quá 2 phút thì thang bỏ cuộc và alarm 30 giây lo tiếp — hiện chỉ ghim bằng test. G-01 vẫn chờ trial live riêng. Còn nợ nhánh ChatGPT một số tính năng và method — xem BACKLOG.md và FEATURE-PARITY.md"
+current_focus: "Multi-profile Bridge đã PORT xong 02/09 (mẫu gg-flow-video đã audit PASS): host nhiều kết nối fail-closed + bridge.sessions/target/served_by, ô tên hồ sơ trong panel, suite 83/83, 10/10 mutation đỏ. Host mới đã deploy + chạy trên 32148, thấy 1 kết nối legacy — chờ tay Đức reload extension + đặt tên. Nợ cũ giữ nguyên: đo live nhánh tắt host quá 2 phút; G-01 chờ trial live"
 ref_readme: workers/duc-auto-gemini/v0.2.0/README.md
 ref_handoff: workers/duc-auto-gemini/v0.2.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md

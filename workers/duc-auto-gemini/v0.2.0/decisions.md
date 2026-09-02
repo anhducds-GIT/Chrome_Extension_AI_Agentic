@@ -173,3 +173,10 @@ từ `0068`. **Đừng thêm dòng vào file này nữa** — nó là mục lụ
 | [0065](docs/adr/0065-g-01-chua-dong-chi-dong-sau-trial-live-duc-da-duyet.md) | G-01 chưa đóng: chỉ đóng sau trial live (Đức đã duyệt, điều kiện test tĩnh PASS —… | Đức (điều kiện trial đặt từ brief) | 2026-08-27 |
 | [0066](docs/adr/0066-cung-loi-ben-nhanh-chatgpt-ghi-thanh-b-22-doc.md) | Cùng lỗi bên nhánh ChatGPT ghi thành B-22 ([ĐỌC] content.js:703), KHÔNG sửa hộ… | Claude, theo brief §5 | 2026-08-27 |
 | [0067](docs/adr/0067-audit-codex-vong-1-fail-3-phat-hien-1-high-huy-lech.md) | Audit Codex vòng 1: FAIL, 3 phát hiện. (1) HIGH "huỷ lệch danh tính giết attempt… | Claude xử lý; hành vi fail-closed giữ theo hợp đồng mục 6 | 2026-08-27 |
+
+## 2026-09-02 — Port multi-profile Bridge (Đức chỉ thị trong chat)
+
+Đức chốt 02/09: "triển khai áp dụng cho GPT và Gemini" theo đúng thiết kế đã duyệt 28/08
+(`drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md`, hướng A — đổi bề mặt auth đã được duyệt từ 28/08).
+Khối `instance` trong `auth` (WORKER_ID `duc-auto-gemini`), host giữ nhiều kết nối fail-closed,
+`bridge.sessions` + `--target` + `served_by`, ô tên hồ sơ trong panel. Không quyền Chrome mới.

@@ -674,6 +674,9 @@ await settle();
 
 const mute = MuteSocket.instances[0];
 mute.emit("open");
+// Multi-profile: the auth frame is sent one microtask after "open" (the
+// identity is read from storage inside the open handler).
+await settle();
 assert.equal(mute.sent[0].type, "auth", "we did ask the host to authenticate us");
 muteChrome.alarms.onAlarm.emit({ name: transport.RECONNECT_ALARM });
 assert.equal(

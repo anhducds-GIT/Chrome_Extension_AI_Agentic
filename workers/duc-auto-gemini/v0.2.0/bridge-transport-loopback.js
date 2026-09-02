@@ -5,6 +5,16 @@
   const RECONNECT_ALARM = "dac.bridge.loopback.reconnect.v1";
   const KEEPALIVE_MS = 20000;
   const KEEPALIVE_ACK_TIMEOUT_MS = 10000;
+  // Multi-profile identity (BRIDGE-MULTIPROFILE-DESIGN-V1, approved 2026-08-28;
+  // ported from gg-flow-video). chrome.storage.local is PER Chrome profile, so
+  // the id persisted here is a stable per-profile identity; the label is the
+  // human name the owner typed in the side panel. Routing metadata only —
+  // never authentication.
+  const INSTANCE_STORAGE_KEY = "dac.bridge.instance.v1";
+  const INSTANCE_LABEL_STORAGE_KEY = "dac.bridge.instance_label.v1";
+  const INSTANCE_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
+  const INSTANCE_LABEL_STRIP = new RegExp("[\\u0000-\\u001f\\u007f]", "g");
+  const WORKER_ID = "duc-auto-gemini";
   const HANDSHAKE_TIMEOUT_MS = 10000;
   const RECONNECT_CEILING_MS = 5000;
   const RECONNECT_DELAYS_MS = Object.freeze([1000, 2000, RECONNECT_CEILING_MS]);
@@ -291,6 +301,30 @@
       }
     }
 
+    function sanitizeInstanceLabel(value) {
+      return typeof value === "string" ? value.replace(INSTANCE_LABEL_STRIP, "").trim().slice(0, 64) : "";
+    }
+
+    async function loadInstance() {
+      const stored = await chromeApi.storage.local.get([INSTANCE_STORAGE_KEY, INSTANCE_LABEL_STORAGE_KEY]);
+      let record = stored?.[INSTANCE_STORAGE_KEY];
+      if (!record || typeof record !== "object" || typeof record.instance_id !== "string" || !INSTANCE_ID_PATTERN.test(record.instance_id)) {
+        record = {
+          schema_version: 1,
+          instance_id: globalThis.crypto?.randomUUID?.() || `inst-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`,
+          created_at: new Date().toISOString()
+        };
+        await chromeApi.storage.local.set({ [INSTANCE_STORAGE_KEY]: record });
+      }
+      return {
+        schema_version: 1,
+        instance_id: record.instance_id,
+        label: sanitizeInstanceLabel(stored?.[INSTANCE_LABEL_STORAGE_KEY]),
+        worker: WORKER_ID,
+        extension_version: chromeApi.runtime?.getManifest?.()?.version || "0.0.0"
+      };
+    }
+
     async function connectHost() {
       if (!pairing || socket && [WebSocketApi.OPEN, WebSocketApi.CONNECTING].includes(socket.readyState)) {
         return safeStatus(currentState());
@@ -316,7 +350,18 @@
       }, handshakeTimeoutMs);
       candidate.addEventListener("open", () => {
         if (socket !== candidate) return;
-        candidate.send(JSON.stringify({ type: "auth", role: "extension", token: pairing.token }));
+        // Identity is read fresh per connect so a label the owner just typed
+        // takes effect at the very next (re)connect. The read happens INSIDE
+        // the open handler to preserve this function's invariant that the
+        // socket slot is claimed before any await; the socket !== candidate
+        // guard re-runs after the read. A storage failure degrades to a
+        // legacy (no-instance) auth — routing stays fail-closed either way.
+        loadInstance().catch(() => null).then((instance) => {
+          if (socket !== candidate || candidate.readyState !== WebSocketApi.OPEN) return;
+          const auth = { type: "auth", role: "extension", token: pairing.token };
+          if (instance) auth.instance = instance;
+          candidate.send(JSON.stringify(auth));
+        });
       });
       candidate.addEventListener("message", (event) => {
         handleSocketMessage(event, candidate).catch(() => abandonSocket(candidate, 1011, "Router failure."));
