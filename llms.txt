@@ -4,11 +4,11 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `1b1c249` (2026-09-02).
+Trang được sinh tại commit `3ec2722` (2026-09-02).
 
 ## Việc ưu tiên #1
 
-- **workers/duc-auto-gg-flow-video/v0.1.0** — Trial video: can tay Duc bat panel + workbook + Dev Mode + Video mode, roi AI chay x1; sau do live-check F-14 (can chip dang o Image). Viec rieng cho Duc: ghe legacy con lai o profile thu 4 — dat ten hoac tat
+- **workers/duc-auto-gg-flow-video/v0.1.0** — F-18: sua duong go prompt — chu vao duoc DOM (valueLen 172) nhung nut arrow_forward Create khong bao gio enable nen job chet o PRE_SUBMIT (0 credit). Duc da biet, chot 02/09 debug sau. KHONG con can nap workbook bang tay: jobs.add tu tao workbook trong bo nho
 
 ## Đọc theo thứ tự này
 
@@ -23,7 +23,7 @@ Trang được sinh tại commit `1b1c249` (2026-09-02).
 - [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới…
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (mẫu gg-flow-video đã audit PASS): host nhiều kết nối fail-closed + bridge.sessions/target/served_by, ô tên hồ sơ trong…
-- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Cổng tay multi-profile ĐÃ QUA 02/09: 3 hồ sơ có tên (Binh/anhducds/kaito) cùng nối, đều legacy:false, tên dùng được làm --target và served_by khớp instance_id
+- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — FLOW-04 lượt 2 (02/09, hồ sơ kaito): đường chạy Bridge THÔNG đầu-cuối — jobs.add tự tạo workbook, chip Video mode được matcher chấp nhận, vân tay runtime v2…
 
 ## Luật bắt buộc trước khi sửa gì
 
