@@ -237,3 +237,13 @@ pin, đúng mục đích của cửa sổ. Auditor độc lập nêu 02/09; **ch
 thật sẽ làm mọi hạn chờ trong file này không test được bằng đồng hồ tiêm vào.
 
 Chỉ mở lại nếu có bằng chứng thật là extension nhường alarm quá sớm và gây phiền.
+
+- **F-23** · **XONG 02/09** (`claude-f18-evidence`, Đức duyệt quyền). **URL Flow có đoạn locale
+  không được nhận.** Đo trên hồ sơ `Bình`: `labs.google/fx/**vi/**tools/flow/project/<id>` không
+  khớp `manifest.json` → Chrome không tiêm content script → panel `composer_found: false` →
+  triệu chứng là **`RECEIVER_LOST`**, chỉ thẳng vào một chỗ không hề sai. Đã thêm
+  `fx/*/tools/flow/*` vào manifest và cho adapter nhận **đúng một** đoạn dạng mã ngôn ngữ.
+  Suite 93/93, 5/5 đột biến bị bắt. Xem `decisions.md` (mục cấp quyền) và
+  `tests/flow-locale-url-static.mjs`.
+  **Còn mở, nhỏ:** các worker khác (`duc-auto-gemini`, `duc-auto-chatgpt`) chưa được soi xem có
+  dính cùng bẫy locale không — chưa gặp thật, và mỗi gói có chủ riêng.

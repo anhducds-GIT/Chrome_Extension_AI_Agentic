@@ -736,3 +736,39 @@ chạy nhanh. Và yêu cầu nhịp **dài hơn, random hơn nhiều**.
   được kiểm chứng trên trang thật — `pacing_ms` nay về được sổ cái nên sẽ đọc ra con số thật.
 - **Push đang chờ:** `safe-push` từ chối vì sẽ cuốn theo 2 commit của phiên `claude-core-k1`
   (`fc1f085`, `1aa09a6`). Đức chọn **chờ phiên đó tự push**. Commit của tôi nằm sẵn ở local.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 8): URL có locale không được nhận (F-23)
+
+Đức đổi sang hồ sơ `Bình` (360p/8s/**6 credit**) và reload. Chuỗi không chạy được, và lý do
+không phải thao tác tay.
+
+- **Triệu chứng dẫn đi sai đường.** `dom_probe` trả *"Open the Google Flow project tab as the
+  active tab"* ba lần liên tiếp dù Đức khẳng định đã mở đúng tab. `system.ping --target Binh`
+  cho thấy: định tuyến **đúng** (`served_by: Binh`), panel **đang mở** (`executor: available`),
+  nhưng `composer_found: false` + `RECEIVER_LOST`. Hai giả thuyết dễ đổ lỗi nhất đã bị loại
+  bằng số đo trước khi hỏi Đức thêm câu nào.
+- **Nguyên nhân thật:** URL của `Bình` là
+  `https://labs.google/fx/**vi/**tools/flow/project/<id>` — Flow phục vụ cùng một dự án ở cả
+  dạng có và không có **đoạn locale**. `manifest.json` chỉ khớp dạng không locale, nên Chrome
+  **không tiêm content script**, và triệu chứng nổi lên là `RECEIVER_LOST` — một mã lỗi chỉ
+  thẳng vào "mất kết nối với tab". Người vận hành sẽ đi reload extension, reload tab, đổi hồ
+  sơ; tất cả đều vô ích.
+- **Đã vá cả hai lớp, và cố ý KHÔNG giống nhau.** Manifest **buộc** phải rộng (match pattern
+  của Chrome chỉ có `*`, và `*` nuốt cả dấu gạch chéo — không có cách nói "đúng một đoạn");
+  adapter thì **siết**: đúng một đoạn, dạng mã ngôn ngữ (`vi`, `en`, `pt-BR`). Manifest quyết
+  định script **có được nạp**; adapter mới là cổng quyết định trang đó **có phải Flow thật**.
+  Nới lớp một mà quên siết lớp hai là biến một sự nới lỏng kỹ thuật thành lỗ hổng thật — có
+  phép kiểm ghim đúng điều đó, và mutation `S2` dựng lại chính kịch bản ấy đã bị bắt.
+- **Quyền mới → đã hỏi và đã ghi.** `AGENTS.md` mục 2 bắt buộc; Đức duyệt trong chat, chi tiết
+  + ranh giới ở `decisions.md`. Không nới gì thêm: vẫn dưới `labs.google`, vẫn kết thúc bằng
+  `/tools/flow/*`, và phép kiểm từ chối mọi pattern rộng hơn.
+- **Một lỗi của phép ĐO, không phải của code, ghi lại kẻo phiên sau mắc lại:** phép kiểm nhanh
+  đầu tiên của tôi báo `surface()` trả `WRONG` cho cả URL đang chạy được. Sai ở chỗ `URL` không
+  tồn tại trong `vm` context nên `new URL()` ném rồi rơi vào `catch`. Phải bơm `URL` vào context.
+  Tôi đã không báo con số đó cho Đức trước khi kiểm lại — đúng ra nên vậy.
+- **Đo:** suite **93/93** (92 → +1 pin) · **5/5 đột biến bị bắt**.
+- **Việc kế tiếp:** cần Đức **reload extension một lần nữa** (đổi `manifest.json` thì bắt buộc),
+  rồi chạy chuỗi trên `Bình` để **đo `pacing_ms` lần đầu** với nhịp mới.
+  Ghi chú số học: 360p/8s = **6 credit**, nên một tài khoản 50 credit đủ **8 video**, rộng hơn
+  trần 7 hiện tại — trần vẫn để 7 (42/50, an toàn), và đây là bằng chứng nữa cho **F-22**
+  (suy trần từ cấu hình đọc trên chip thay vì khoá cứng).

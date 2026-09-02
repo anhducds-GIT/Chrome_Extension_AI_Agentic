@@ -17,7 +17,15 @@ assert.equal(adapter.resultKind, "video");
 const manifest = JSON.parse(fs.readFileSync(new URL("manifest.json", root), "utf8"));
 const contentScripts = manifest.content_scripts[0].js;
 assert.deepEqual(contentScripts, ["provider-adapter.js", "image-evidence-core.js", "attempt-identity-core.js", "reconciliation-core.js", "chat-readiness-core.js", "content-decision-core.js", "content.js"]);
-assert.deepEqual(manifest.content_scripts[0].matches, ["https://labs.google/fx/tools/flow/*"]);
+// Doan locale duoc them 2026-09-02 (Duc duyet): Flow phuc vu cung mot du an o
+// ca /fx/tools/flow/... lan /fx/vi/tools/flow/... Thieu pattern thu hai thi
+// Chrome khong tiem content script tren giao dien tieng Viet, va trieu chung
+// noi len la RECEIVER_LOST — mot ma loi chi thang vao cho khong he sai.
+// Chi tiet + ranh gioi "adapter phai siet hon manifest": tests/flow-locale-url-static.mjs
+assert.deepEqual(manifest.content_scripts[0].matches, [
+  "https://labs.google/fx/tools/flow/*",
+  "https://labs.google/fx/*/tools/flow/*",
+]);
 assert.deepEqual([...adapter.ORIGIN.hosts], ["labs.google"]);
 assert.equal(adapter.isProviderUrl("https://labs.google/fx/tools/flow/project/abc"), true);
 assert.equal(adapter.isProviderUrl("https://labs.google/fx/tools/flow?hl=vi"), true);

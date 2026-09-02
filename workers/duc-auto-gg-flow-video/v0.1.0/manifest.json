@@ -7,6 +7,7 @@
   "permissions": ["storage", "sidePanel", "tabs", "downloads", "alarms"],
   "host_permissions": [
     "https://labs.google/fx/tools/flow/*",
+      "https://labs.google/fx/*/tools/flow/*",
     "http://127.0.0.1/*"
   ],
   "background": {
@@ -33,7 +34,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://labs.google/fx/tools/flow/*"
+        "https://labs.google/fx/tools/flow/*",
+      "https://labs.google/fx/*/tools/flow/*"
       ],
       "js": ["provider-adapter.js", "image-evidence-core.js", "attempt-identity-core.js", "reconciliation-core.js", "chat-readiness-core.js", "content-decision-core.js", "content.js"],
       "run_at": "document_idle"

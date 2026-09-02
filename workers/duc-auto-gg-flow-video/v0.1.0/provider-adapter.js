@@ -76,9 +76,23 @@
 
   const SURFACE = Object.freeze({ IMAGES: "IMAGES", CONVERSATION: "CONVERSATION", WRONG: "WRONG" });
 
+  // MOT DOAN LOCALE TUY CHON, do that 2026-09-02 tren ho so Binh: Flow phuc vu
+  // cung mot du an o CA HAI dang duong dan —
+  //   https://labs.google/fx/tools/flow/project/<id>
+  //   https://labs.google/fx/vi/tools/flow/project/<id>   <- giao dien tieng Viet
+  // Ban truoc chi nhan dang thu nhat, nen tren mot Chrome dat tieng Viet thi
+  // manifest khong tiem content script, panel bao composer_found:false va
+  // trieu chung hien ra la RECEIVER_LOST — chi thang vao mot cho khong he sai.
+  //
+  // O day co y SIET CHAT: dung mot doan, va doan do phai co dang ma ngon ngu
+  // (vi, en, pt-BR...). Manifest thi khong the chat nhu vay — match pattern cua
+  // Chrome chi co `*` va no nuot ca dau gach cheo — nen manifest buoc phai rong
+  // hon. Day la co y: manifest quyet dinh script CO DUOC NAP khong, con file
+  // nay moi la cong quyet dinh trang do CO PHAI Flow that khong.
+  const LOCALE_SEGMENT = "(?:[a-z]{2}(?:-[a-zA-Z]{2,4})?/)?";
   const ORIGIN = Object.freeze({
     hosts: Object.freeze(["labs.google"]),
-    urlPattern: /^https:\/\/labs\.google\/fx\/tools\/flow(?:\/|[?#]|$)/i,
+    urlPattern: new RegExp(`^https://labs\.google/fx/${LOCALE_SEGMENT}tools/flow(?:/|[?#]|$)`, "i"),
   });
 
   function isProviderUrl(url) {
@@ -89,7 +103,7 @@
     try {
       const parsed = new URL(url);
       if (parsed.origin !== "https://labs.google") return SURFACE.WRONG;
-      if (/^\/fx\/tools\/flow(?:\/|$)/.test(parsed.pathname)) return SURFACE.CONVERSATION;
+      if (new RegExp(`^/fx/${LOCALE_SEGMENT}tools/flow(?:/|$)`, "i").test(parsed.pathname)) return SURFACE.CONVERSATION;
       return SURFACE.WRONG;
     } catch (_) {
       return SURFACE.WRONG;
