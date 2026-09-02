@@ -12,7 +12,7 @@ const SCHEMA = "extension-status/v2";
 // "unclassified" da bi bo tu 2026-09-02 (phien S3): sau khi hai don vi con thieu da khai
 // STATUS, khong con don vi nao dung no. Giu lai la de ngo mot loi thoat cho viec khong khai.
 const LIFECYCLES = new Set(["idea", "building", "active", "paused", "archived", "experimental", "superseded"]);
-const REQUIRED = ["schema", "id", "name", "lifecycle", "version_source", "current_focus", "ref_readme", "ref_handoff", "owner", "next_step"];
+const REQUIRED = ["schema", "id", "name", "lifecycle", "version_source", "current_focus", "ref_readme", "ref_handoff", "owner"];
 // Bat buoc CO DIEU KIEN. Khong nhet vao REQUIRED duoc vi REQUIRED ap cho MOI STATUS,
 // con hai luat nay chi ap cho mot so lifecycle. Mot ban da nghi huu khong can xep hang
 // uu tien (no da bi loai khoi cuoc dua), nhung phai noi ro no bi thay the boi cai nao.
@@ -231,6 +231,7 @@ export function validateStatus(fm, deps) {
   // tạo thêm rác. Và hạng phải đúng dạng: rỗng hay 0 thì `Number("")` ra 0 và nó sẽ
   // thắng mọi đơn vị khác.
   if (fm.lifecycle && !RETIRED_LIFECYCLES.has(fm.lifecycle)) {
+    if (!fm.next_step) fail('thiếu trường bắt buộc "next_step" (một câu: việc kế tiếp của đơn vị này).');
     if (!fm.priority_rank) fail('thiếu trường bắt buộc "priority_rank" (số nguyên ≥ 1, đúng MỘT đơn vị mang hạng 1).');
     else if (rankOf(fm.priority_rank) === null) fail(`priority_rank "${fm.priority_rank}" phải là số nguyên ≥ 1.`);
   }
