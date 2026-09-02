@@ -16,32 +16,32 @@
       "released_at": null
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-y02-probe-article",
+      "owner": "claude-bridge-multiprofile",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "Ghi bang chung nghiem thu live cua messageSample sau khi Duc reload",
+      "task": "Port nut Luu ten (DAC_BRIDGE_LABEL_SET + cycle socket) + bo va sanitize label (bound 256, C1, surrogate) tu gemini sang; test + mutation nhu mau",
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-bridge-multiprofile",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "A2: tach _root thanh nhieu khoa theo steward, de hai phien khong choang nhau o goc repo",
-      "released_at": "2026-09-02"
+      "task": "Sinh lai DASHBOARD/FEATURE-PARITY sau cac commit nut Luu ten; tra ngay sau push",
+      "released_at": null
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-y02-c3",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "Ghi phat hien thu ba: cuoc dua do phep kiem do tuoi artifact",
-      "released_at": "2026-09-02"
+      "task": "Ghi bai hoc: A2 co loi noi day, va vi sao test cua toi khong bat duoc",
+      "released_at": null
     },
     "_code": {
-      "owner": null,
-      "ai": null,
+      "owner": "claude-k2-design",
+      "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "A2: stewardOf + cong kiem xet theo tung khoa goc",
-      "released_at": "2026-09-02"
+      "task": "K2-2b: safe-push va cong kiem dang quy cung mot file ve hai vung khac nhau (areaOf vs stewardOf) — gom ve mot ham thuan dung chung, dong bo ca luat mien tru, va ghim bat bien steward <-> khoa quyen",
+      "released_at": null
     },
     "_template": {
       "owner": null,

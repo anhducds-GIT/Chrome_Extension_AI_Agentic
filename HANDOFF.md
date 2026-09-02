@@ -971,3 +971,34 @@ nào**. Ba cách kia đều đổi bảo đảm để lấy tiện lợi: C1 cho
 audit qua GitHub, C2 chỉ dời cơn đau.
 
 **Cần Đức gật** vì C3 khiến `safe-push` tạo commit — hôm nay nó chỉ đọc và đẩy.
+
+## 2026-09-02 — `claude-y02-c3`: A2 của tôi có lỗi nối dây. Phiên khác tìm ra và đã vá.
+
+**Lỗi.** Tôi nối `stewardOf` vào `session-check.mjs` nhưng **không nối vào `safe-push.mjs`**.
+Hai công cụ quy cùng một file về hai vùng khác nhau: `docs/…` là `_docs` với cổng kiểm nhưng
+`_root` với safe-push. **Hậu quả đo được:** một phiên làm trong `docs/` bị safe-push **từ chối
+đẩy việc của chính nó**, vì safe-push đòi `_root` mà phiên đó không giữ.
+
+Đúng lớp lỗi repo này đã trả giá một lần (26/08: hai bản regex riêng ở hai file, lệch nhau ở
+đường dẫn tiếng Việt) — và luật đã ghi *"một hàm thì không lệch được"*. Tôi thêm hàm thứ hai
+thay vì gom về một.
+
+**Phiên `claude-k2-design` tìm ra và vá** (`88c176c`, 20:51): cả hai đi qua `ownershipKeys` dùng
+chung. Tôi đã kiểm chứng lại độc lập, không tin báo cáo suông — `areaOf` và `stewardOf` thật sự
+trả hai kết quả khác nhau cho cùng một đường dẫn.
+
+**VÌ SAO TEST CỦA TÔI KHÔNG BẮT ĐƯỢC — bài học đắt nhất phiên này.**
+Lúc chạy A2 tôi giữ **cả ba khoá** `_root` + `_code` + `_template`. Nên `areaOf → _root` tình cờ
+khớp một khoá tôi đang giữ, và safe-push không hề từ chối. **Phiên của tôi không thể tái hiện
+lỗi vì tôi giữ hết mọi khoá.**
+
+> Cả mục đích của A2 là để một phiên giữ ÍT khoá hơn — mà tôi kiểm nó trong điều kiện giữ HẾT.
+> **Điều kiện thử nghiệm đi ngược mục đích của chính tính năng.**
+
+Đây là họ hàng của bài học "fixture phải dựng được ca hỏng", nhưng ở tầng cao hơn: không chỉ
+fixture, mà **cả trạng thái quyền của phiên đang thử** cũng là một phần của fixture. Phiên sau
+sửa lớp phân quyền thì hãy thử với **đúng một khoá**, không phải với tất cả.
+
+**C3 (Đức đã duyệt) PHẢI CHỜ.** Nó sửa `safe-push.mjs` + `session-check.mjs` — cả hai là `_code`,
+đang do `claude-k2-design` giữ để làm đúng cái refactor mà C3 dựa lên. Làm bây giờ là viết trên
+nền đang bị dời.
