@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Local-only Chrome extension workers. Tests are dependency-free Node scripts.",
   "scripts": {
-    "test": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs && node tests/repo-structure-smoke.mjs && node tests/observer-engine-smoke.mjs && node tests/session-check-utf8-paths.mjs && node tests/build-dashboard-smoke.mjs && node tests/feature-parity-smoke.mjs && node tests/check-bootstrap-smoke.mjs",
+    "test": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs && node tests/repo-structure-smoke.mjs && node tests/observer-engine-smoke.mjs && node tests/session-check-utf8-paths.mjs && node tests/build-dashboard-smoke.mjs && node tests/feature-parity-smoke.mjs && node tests/check-bootstrap-smoke.mjs && node scripts/build-template.mjs --check && node tests/template-null-repo.mjs",
     "test:worker": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs",
     "test:observer": "node tests/observer-engine-smoke.mjs",
     "test:gate-paths": "node tests/session-check-utf8-paths.mjs",
@@ -15,6 +15,8 @@
     "test:parity": "node tests/feature-parity-smoke.mjs",
     "test:bootstrap": "node tests/check-bootstrap-smoke.mjs",
     "bootstrap": "node scripts/check-bootstrap.mjs",
-    "test:structure": "node tests/repo-structure-smoke.mjs"
+    "test:structure": "node tests/repo-structure-smoke.mjs",
+    "template": "node scripts/build-template.mjs",
+    "test:template": "node scripts/build-template.mjs --check && node tests/template-null-repo.mjs"
   }
 }

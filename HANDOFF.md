@@ -636,3 +636,47 @@ thì phép kiểm "sự thật máy sinh còn tươi" từ chối phán xử b�
 đúng.
 
 **Việc kế tiếp:** trích `template/`, rồi cặp phép thử nghiệm thu.
+
+## 2026-09-02 — `claude-core-k1` (đóng K1): template đã tồn tại như một vật thể
+
+**Trích bằng BỘ SINH, không chép tay.** `scripts/build-template.mjs` dựng `template/` từ chính
+repo này; `--check` biến câu hỏi *"template còn khớp bản gốc không"* thành việc của máy. Chép
+tay thì có hai bản, và hai bản thì trôi khỏi nhau — đúng cái bệnh chương trình này chữa.
+`template/` đã khai vào `areas` và mang nhãn **sinh tự động, đừng sửa tay**.
+
+**Kết quả: 18 file.** Bộ luật (cắt bản đồ địa phương) · 5 script · 4 bản mẫu · hạt giống cấu
+hình, quyền, bàn giao, trạng thái · README. **Cố ý KHÔNG mang:** trang máy sinh
+(`DASHBOARD.md` · `llms.txt` · `repo-map.json`), bằng chứng, và `feature-parity.mjs` — bộ sinh
+thì đi theo, sản phẩm của nó thì ở lại.
+
+### Phép thử repo rỗng — ĐẠT, và nó bắt được ba lỗi thật của chính tôi
+
+Dựng repo git trống, thả bộ khung vào, chạy cổng. **Bản trích đầu tiên KHÔNG đạt:**
+
+| Lượt | Kết quả | Lỗi lộ ra |
+|---|---|---|
+| 1 | **1 ĐỎ · 8 VÀNG** | Quên `STATUS.md` cho gốc repo → B1 đỏ. Template có `package.json` nên gốc LÀ một đơn vị |
+| 2 | 0 ĐỎ · 4 VÀNG | Thứ tự trong README sai: phải chạy bộ sinh TRƯỚC khi đo điều hướng |
+| 3 | 0 ĐỎ · 4 VÀNG | Để bản đồ (mục 6) rỗng thì **chính `README.md`** rơi ra ngoài đường điều hướng |
+| **4** | **0 ĐỎ · 0 VÀNG** | Điền sẵn bản đồ bằng chính các file bộ khung mang theo |
+
+**Không lỗi nào trong ba lỗi đó phát hiện được từ trong repo gốc** — ở đây mọi file đều có sẵn
+nên cổng luôn xanh. Đó là toàn bộ lý do phép thử này tồn tại.
+
+**Một bẫy tự gài, đã gỡ:** hạt giống ADR-0000 ban đầu mang `status: Accepted`. B12 khoá mọi ADR
+đã `Accepted`, nên lần cập nhật bộ khung sau sẽ bị chính cổng kiểm chặn. Đổi sang `Proposed` —
+vừa gỡ bẫy, vừa đúng bản chất: một ADR ghi `date: YYYY-MM-DD`, `deciders: <ai chốt>` thì chưa
+ai chốt cả. Chủ repo mới lật sang `Accepted` — đó là **hành động nhận luật**.
+
+**Số:** suite 230 → **233**. Đột biến: 6 lượt, **1 THOÁT rồi được vá**.
+
+**Phép kiểm rỗng nghĩa thứ hai tôi tự bắt được.** Đột biến "xoá sạch danh sách mẫu dò tên dự
+án" **thoát** — vì template đã sạch nên *"không thấy gì"* đúng ở cả hai chiều. Đã thêm **mẫu
+đối chứng dương**: bộ dò phải bắt được một chuỗi cấm cắm sẵn. Đây là lần thứ ba trong hai phiên
+tôi viết một phép kiểm không phân biệt được hai nhánh — nên nay mọi phép kiểm dạng "không có X"
+đều phải kèm một ca có X.
+
+**CHƯA làm:** template **chưa rời repo này**. `template/` là bãi tập kết theo ADR-0001; dời một
+bản trích chưa được audit thì chỉ chuyển chỗ cho vấn đề.
+
+**Việc kế tiếp:** gửi audit độc lập (gói đề bài ở `docs/briefs/AUDIT-PROMPT-K1.md`), rồi mới dời.

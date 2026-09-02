@@ -1,0 +1,7 @@
+{
+  "_doc": "Bảng chủ sở hữu. MỘT vùng chỉ MỘT phiên AI được ghi tại một thời điểm. Chủ không phải bạn = chỉ đọc. Muốn giành = hỏi chủ dự án. Xong việc thì đặt owner về null.",
+  "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-dashboard' — hai phiên khác nhau phải có hai nhãn khác nhau.",
+  "claims": {
+    "_root": { "owner": null, "ai": null, "claimed_at": null, "task": null, "released_at": null }
+  }
+}
