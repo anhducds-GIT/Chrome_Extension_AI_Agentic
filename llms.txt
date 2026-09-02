@@ -1,0 +1,30 @@
+# Chrome Extension AI Agentic
+
+> Monorepo 5 extension Chrome tự động hoá các trang AI (ChatGPT, Gemini, Google Flow) qua một Bridge chung. 3/5 đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.
+
+> **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
+
+Trang được sinh tại commit `0c7f596` (2026-09-02).
+
+## Việc ưu tiên #1
+
+- **CHƯA KHAI** — chưa STATUS nào khai `next_step`. Xem cột "Việc đang mở" ở `DASHBOARD.md`, và `.agents/claims.json` để biết ai đang giữ package nào.
+
+## Đọc theo thứ tự này
+
+- [AGENTS.md](AGENTS.md): hiến pháp repo — luật chung, đọc trước tiên
+- [DASHBOARD.md](DASHBOARD.md): bảng trạng thái máy sinh: có extension gì, cái nào sống, việc đang mở
+- [HANDOFF.md](HANDOFF.md): phiên gần nhất ở gốc repo làm gì, còn gì mở
+- [repo-map.json](repo-map.json): bản đồ máy đọc — hệ điều phối cấp cao chỉ cần đọc file này
+
+## Từng extension
+
+- [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — B-14…B-21 đang mở
+- [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Lớp vận chuyển Bridge đã xong và đã kiểm chứng live cả hai bản (28/08)
+- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Multi-profile Bridge (hướng A, Đức duyệt 28/08) đã code xong: host giữ nhiều kết nối + target/bridge.sessions/served_by, panel có ô tên hồ sơ, sửa nốt F-14 (...
+
+## Luật bắt buộc trước khi sửa gì
+
+- Một package chỉ MỘT phiên AI được ghi: xem `.agents/claims.json`, chủ không phải bạn thì chỉ đọc.
+- Đóng phiên phải xanh cổng: `node scripts/session-check.mjs --as <tên-phiên>`.
+- Push bằng `node scripts/safe-push.mjs --as <tên-phiên>`, không bao giờ `git push` trần.

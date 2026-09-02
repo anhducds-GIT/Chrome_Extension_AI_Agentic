@@ -209,7 +209,7 @@ check("Sự thật máy sinh còn tươi", () => {
       msg: `${failures.join(" · ")}. Hãy sửa bằng: node scripts/build-dashboard.mjs && node scripts/feature-parity.mjs, rồi commit --amend hoặc tạo commit mới.`
     };
   }
-  return { ok: true, msg: "DASHBOARD.md và FEATURE-PARITY.md đã commit đều khớp với HEAD." };
+  return { ok: true, msg: "DASHBOARD.md, llms.txt, repo-map.json và FEATURE-PARITY.md đã commit đều khớp với HEAD." };
 });
 
 /* ---- chống tự tháo cổng ------------------------------------------------- */

@@ -11,7 +11,33 @@ const REQUIRED = ["schema", "id", "name", "lifecycle", "version_source", "curren
 const BEHAVIOUR_EXTENSIONS = new Set([".js", ".mjs", ".json", ".html", ".css"]);
 const EVIDENCE_ZONE = /(^|\/)(evidence[^/]*|pilot-[^/]*|batch-[^/]*)\//i;
 export const STAMP_PREFIX = "Trang được sinh tại commit";
+// Dòng "Phiên gần nhất" của Khối A cũng mang mã commit, nên cũng đổi theo TỪNG commit.
+// Không lọc thì artifact cũ ngay sau mỗi lần commit và cổng kiểm đỏ vĩnh viễn —
+// đúng lý do STAMP_PREFIX ra đời. Hai dòng này là DẤU SINH TRANG, không phải số đo.
+export const SESSION_STAMP_PREFIX = "2. **Phiên gần nhất**";
 const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
+
+/* --- S2: cổng vào cho AI mới ---------------------------------------------
+   Ba file GENERATED, sinh cùng một lượt từ CÙNG một model. Nếu tách ra sinh
+   riêng thì sớm muộn ba file sẽ nói ba điều khác nhau — đúng thứ tầng
+   GENERATED sinh ra để chống. */
+export const LLMS_FILE = "llms.txt";
+export const REPO_MAP_FILE = "repo-map.json";
+export const DASHBOARD_FILE = "DASHBOARD.md";
+export const REPO_MAP_SCHEMA_VERSION = 1;
+export const REPO_PROFILE = "P1"; // monorepo nhiều gói — REPO-STRUCTURE-SPEC-V1 mục 3
+
+// Hai trường này đổi theo TỪNG commit. So sánh nguyên văn thì cổng kiểm sẽ đỏ
+// ngay sau mỗi commit dù nội dung thật không đổi. Lọc ra khi so, giống hệt cách
+// STAMP_PREFIX được lọc khỏi DASHBOARD.
+export const REPO_MAP_VOLATILE_KEYS = ["generated_at", "generated_commit"];
+
+// Chỉ bỏ qua thứ KHÔNG được track. Cố tình không miễn trừ `scripts/`, `tests/`,
+// `docs/`: miễn trừ là cách êm ái nhất để một con số nợ trông như đã trả. Thà để
+// số đúng và cao, rồi khai chủ thật, còn hơn bịa ngoại lệ cho nó về 0.
+const TOPLEVEL_IGNORED = new Set(["node_modules"]);
+
+const childPath = (relPath, name) => relPath ? `${relPath}/${name}` : name;
 
 export function parseStatus(text) {
   // Cắt BOM UTF-8 trước. Windows sinh BOM rất dễ (Notepad, PowerShell `Set-Content -Encoding
@@ -378,6 +404,12 @@ export function collectModel(deps = createDefaultDeps()) {
       evidenceRef: item.fm?.evidence_ref ?? "",
       changedCount,
       currentFocus: item.fm?.current_focus ?? "CHƯA KHAI STATUS — cần khai trạng thái và việc đang mở.",
+      // Ba trường của schema extension-status/v2. Chưa STATUS nào khai, nên hiện là "".
+      // Đọc sẵn từ bây giờ để phiên S3 chỉ phải thêm dữ liệu vào STATUS, không phải
+      // sửa lại bộ sinh.
+      owner: item.fm?.owner ?? "",
+      nextStep: item.fm?.next_step ?? "",
+      supersededBy: item.fm?.superseded_by ?? "",
       statusPath: item.fm ? item.statusPath : ""
     };
   });
@@ -398,11 +430,141 @@ export function collectModel(deps = createDefaultDeps()) {
     statusPath: ""
   });
 
-  return {
+  const headDate = deps.git.headDate();
+  const claims = readClaims(deps);
+  const sortedRows = rows.sort((a, b) => compareText(a.key, b.key));
+  const model = {
     shortHead: deps.git.shortHead(),
-    headDate: deps.git.headDate(),
-    rows: rows.sort((a, b) => compareText(a.key, b.key))
+    headDate,
+    rows: sortedRows,
+    claims,
+    // Chỉ dùng TẬP KHOÁ của claims.json (package nào đã có mục), không dùng giá trị
+    // `owner`. Tập khoá đổi khi thêm/bớt package — chuyện cấu trúc, hiếm. Giá trị
+    // `owner` đổi mỗi lần nhận/trả quyền — chuyện phiên, liên tục. Chỉ cái đầu được
+    // phép ảnh hưởng tới artifact.
+    priority: priorityFrom(sortedRows),
+    topLevel: topLevelOwnership(deps, claims),
+    docs: collectDocs(deps, headDate)
   };
+  model.gatewayLinks = gatewayLinks(model, deps);
+  model.health = {
+    units_without_status: sortedRows.filter((row) => row.missingStatus).length,
+    dead_links: model.gatewayLinks.filter((entry) => !entry.exists).length,
+    undeclared_dirs: model.topLevel.filter((entry) => !entry.owner_declared).length,
+    draft_debt: model.docs.filter((doc) => doc.overdue).length
+  };
+  return model;
+}
+
+/* --- S2: dữ liệu cho cổng vào -------------------------------------------- */
+
+function readClaims(deps) {
+  if (!deps.fileExists(".agents/claims.json")) return {};
+  try { return readJson(deps, ".agents/claims.json").claims ?? {}; }
+  catch { return {}; }
+}
+
+/* "Việc ưu tiên #1" — vì sao KHÔNG lấy từ `.agents/claims.json`.
+
+   Cám dỗ là lấy claim đang mở làm việc ưu tiên: nó có sẵn và máy đọc được. Nhưng
+   claims.json là TRẠNG THÁI SỐNG — nhận/trả quyền vài lần mỗi phiên. Đổ nó vào một
+   artifact máy sinh thì mỗi lần nhận quyền là artifact cũ đi, cổng kiểm đỏ, và
+   phiên sau mở repo ra gặp một cái đỏ không phải của mình. Đúng cảnh đã xảy ra
+   ngày 2026-09-02. Phép kiểm 22 trong bộ test ghim đúng luật này từ trước, và
+   luật đó đúng.
+
+   Nguồn ỔN ĐỊNH cho việc ưu tiên là trường `next_step` của STATUS — thuộc schema
+   extension-status/v2, do phiên S3 thêm. Tới lúc đó Khối A khai thẳng CHƯA KHAI.
+   Đây không phải thiếu sót giấu đi: nó hiện ra ngay dòng đầu bảng, đúng nguyên tắc
+   "mỗi câu AI phải hỏi người = một trường dữ liệu còn thiếu". */
+function priorityFrom(rows) {
+  const declared = rows.filter((row) => row.nextStep);
+  if (declared.length === 0) return null;
+  return { unit: declared[0].key, title: declared[0].nextStep, statusPath: declared[0].statusPath };
+}
+
+function firstSentence(text) {
+  const flat = String(text).replace(/\s+/g, " ").trim();
+  if (!flat) return "";
+  const cut = flat.search(/[.·;]\s/);
+  const head = cut > 0 ? flat.slice(0, cut) : flat;
+  return head.length > 160 ? `${head.slice(0, 157)}...` : head;
+}
+
+function topLevelOwnership(deps, claims) {
+  const keys = Object.keys(claims);
+  return deps.listDirs("")
+    .filter((name) => !name.startsWith(".") && !TOPLEVEL_IGNORED.has(name))
+    .sort(compareText)
+    .map((name) => {
+      // CHỈ xét khoá có tồn tại hay không. Cố tình KHÔNG đọc giá trị `owner`: ai đang
+      // giữ là chuyện của phiên, không phải của bản đồ repo. Khai rồi trả quyền vẫn
+      // là ĐÃ KHAI.
+      const declared = keys.some((key) => key === name || key.startsWith(`${name}/`));
+      return { path: `${name}/`, owner_declared: declared };
+    });
+}
+
+const TTL_FALLBACK = { brief: 30, study: 180, guide: 365 };
+
+function collectDocs(deps, headDate) {
+  if (!deps.fileExists("docs")) return [];
+  const out = [];
+  const walk = (dir) => {
+    for (const name of deps.listFiles(dir)) {
+      if (!name.endsWith(".md")) continue;
+      const relPath = `${dir}/${name}`;
+      const fm = parseStatus(deps.readFile(relPath)).frontmatter;
+      const ttl = Number(fm.ttl_days ?? TTL_FALLBACK[fm.kind] ?? 0);
+      const touched = deps.git.lastCommitDate?.(relPath) ?? "";
+      const age = daysBetween(touched, headDate);
+      out.push({
+        path: relPath,
+        kind: fm.kind ?? "",
+        status: fm.status ?? "",
+        ttl_days: ttl,
+        last_touched: touched,
+        age_days: age,
+        // Chỉ `status: active` mới tính nợ. Tài liệu đã nghỉ hưu thì cũ là đúng.
+        overdue: fm.status === "active" && ttl > 0 && age !== null && age > ttl
+      });
+    }
+    for (const sub of deps.listDirs(dir)) walk(`${dir}/${sub}`);
+  };
+  walk("docs");
+  return out.sort((a, b) => compareText(a.path, b.path));
+}
+
+function daysBetween(from, to) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) return null;
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000);
+}
+
+// MỘT nguồn link cho cả hai file cổng. Nếu DASHBOARD và llms.txt tự đi tìm link
+// riêng thì "đếm link chết" sẽ đếm thiếu đúng những link mà file kia mới thêm.
+function gatewayLinks(model, deps) {
+  const entries = [
+    { label: "AGENTS.md", path: "AGENTS.md", note: "hiến pháp repo — luật chung, đọc trước tiên" },
+    { label: "DASHBOARD.md", path: DASHBOARD_FILE, note: "bảng trạng thái máy sinh: có extension gì, cái nào sống, việc đang mở" },
+    { label: "HANDOFF.md", path: "HANDOFF.md", note: "phiên gần nhất ở gốc repo làm gì, còn gì mở" },
+    { label: REPO_MAP_FILE, path: REPO_MAP_FILE, note: "bản đồ máy đọc — hệ điều phối cấp cao chỉ cần đọc file này" }
+  ];
+  for (const row of model.rows) {
+    if (!row.statusPath) continue;
+    entries.push({ label: row.name, path: row.statusPath, note: `${row.lifecycle} — ${firstSentence(row.currentFocus)}`, unit: true });
+  }
+  // Ba file GENERATED do CHÍNH lượt chạy này ghi ra — chúng tồn tại theo thiết kế.
+  // Không miễn trừ thì lần chạy đầu (khi file chưa có trên đĩa) sẽ tự khai mình là
+  // link chết, và nội dung sinh ra phụ thuộc vào việc chính nó đã chạy lần nào chưa
+  // — artifact máy sinh mà không tất định thì cổng kiểm HEAD-vs-HEAD hết tin được.
+  const selfProduced = new Set([DASHBOARD_FILE, LLMS_FILE, REPO_MAP_FILE]);
+  // `isFile` chứ không phải `fileExists`: một thư mục trùng tên vẫn "tồn tại"
+  // nhưng bấm vào link thì không mở ra tài liệu nào.
+  const probe = (relPath) => deps.isFile ? deps.isFile(relPath) : deps.fileExists(relPath);
+  return entries.map((entry) => ({
+    ...entry,
+    exists: selfProduced.has(entry.path) ? true : probe(entry.path)
+  }));
 }
 
 function cell(value) {
@@ -427,6 +589,9 @@ export function buildDashboard(model) {
     "",
     `${STAMP_PREFIX} \`${model.shortHead}\` (${model.headDate}). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.`,
     "",
+    ...blockA(model),
+    "## B · Có gì trong repo",
+    "",
     "| Extension | Version [ĐO] | Lifecycle [KHAI] | Method Bridge [ĐO] | File test [ĐO] | Kiểm chứng cuối (ngày @ commit 7 ký tự, cách kiểm) [KHAI + bằng chứng] | Code đã commit đổi sau kiểm chứng? [ĐO] | Việc đang mở | Đọc sâu (link STATUS) |",
     "|---|---:|---|---:|---:|---|---|---|---|"
   ];
@@ -442,6 +607,8 @@ export function buildDashboard(model) {
     lines.push(`| ${values.map(cell).join(" | ")} |`);
   }
 
+  lines.push("", ...blockD(model));
+
   lines.push(
     "",
     "## Chú giải",
@@ -453,6 +620,173 @@ export function buildDashboard(model) {
   return lines.join("\n");
 }
 
+/* Khối A đặt TRÊN CÙNG có chủ đích: người (và AI) mới vào phải trả lời được
+   "bắt đầu từ đâu" trước khi thấy bất kỳ bảng số nào. */
+function blockA(model) {
+  const priorityLine = model.priority
+    ? `**${model.priority.unit}** — ${model.priority.title}${model.priority.statusPath ? ` · ${link("STATUS", model.priority.statusPath)}` : ""}`
+    : "**CHƯA KHAI** — chưa STATUS nào khai `next_step` (trường của schema `extension-status/v2`, phiên S3 thêm). Tạm thời xem cột \"Việc đang mở\" ở bảng B.";
+  return [
+    "## A · Bắt đầu từ đâu",
+    "",
+    `1. **Việc ưu tiên #1** — ${priorityLine}`,
+    `2. **Phiên gần nhất** — ${model.headDate} @ \`${model.shortHead}\` · ${link("HANDOFF.md", "HANDOFF.md")}`,
+    `3. **Luật phải đọc trước khi sửa gì** — ${link("AGENTS.md", "AGENTS.md")} · cổng vào cho AI: ${link(LLMS_FILE, LLMS_FILE)}`,
+    `4. **Ai đang giữ package nào** — \`.agents/claims.json\` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)`,
+    ""
+  ];
+}
+
+/* Khối D làm NỢ ĐIỀU HƯỚNG nhìn thấy được. Không nhìn thấy thì không ai trả. */
+function blockD(model) {
+  const rows = [
+    ["Đơn vị chưa khai STATUS", model.health.units_without_status, "mỗi dòng là một câu hỏi AI sẽ phải hỏi Đức"],
+    ["Link chết trong file cổng", model.health.dead_links, `kiểm ${model.gatewayLinks.length} link ở ${LLMS_FILE} và bảng B`],
+    ["Thư mục top-level chưa khai chủ", model.health.undeclared_dirs, "chưa có khoá trong `.agents/claims.json`"],
+    ["Tài liệu quá hạn chưa rà", model.health.draft_debt, "`status: active` mà quá `ttl_days` tính từ commit cuối chạm vào"]
+  ];
+  const lines = [
+    "## D · Sức khoẻ điều hướng [ĐO]",
+    "",
+    "| Nợ | Số | Nghĩa là gì |",
+    "|---|---:|---|"
+  ];
+  for (const [label, count, meaning] of rows) lines.push(`| ${label} | ${count} | ${meaning} |`);
+  const undeclared = model.topLevel.filter((entry) => !entry.owner_declared).map((entry) => `\`${entry.path}\``);
+  if (undeclared.length) lines.push("", `Thư mục chưa khai chủ: ${undeclared.join(" · ")}`);
+  const dead = model.gatewayLinks.filter((entry) => !entry.exists).map((entry) => `\`${entry.path}\``);
+  if (dead.length) lines.push("", `Link chết: ${dead.join(" · ")}`);
+  return lines;
+}
+
+/* --- S2: llms.txt — cổng vào cho AI ---------------------------------------
+   Định dạng llmstxt.org: một `#` tiêu đề · một `>` blockquote tóm tắt · các mục
+   `##` chứa link, mỗi link kèm MỘT dòng mô tả. Mục tiêu độ dài: dưới 50 dòng.
+   Nhiều công cụ AI tự tìm `/llms.txt` khi được trỏ vào một nguồn, nên đây là
+   file đầu tiên một phiên mới chạm vào. */
+export function buildLlmsTxt(model) {
+  const units = model.gatewayLinks.filter((entry) => entry.unit);
+  const core = model.gatewayLinks.filter((entry) => !entry.unit);
+  const alive = model.rows.filter((row) => !row.missingStatus).length;
+
+  const lines = [
+    "# Chrome Extension AI Agentic",
+    "",
+    `> Monorepo ${model.rows.length} extension Chrome tự động hoá các trang AI (ChatGPT, Gemini, Google Flow) qua một Bridge chung. ${alive}/${model.rows.length} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`,
+    "",
+    `> **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng \`node scripts/build-dashboard.mjs\`.`,
+    "",
+    `${STAMP_PREFIX} \`${model.shortHead}\` (${model.headDate}).`,
+    "",
+    "## Việc ưu tiên #1",
+    "",
+    model.priority
+      ? `- **${model.priority.unit}** — ${model.priority.title}`
+      : "- **CHƯA KHAI** — chưa STATUS nào khai `next_step`. Xem cột \"Việc đang mở\" ở `DASHBOARD.md`, và `.agents/claims.json` để biết ai đang giữ package nào.",
+    "",
+    "## Đọc theo thứ tự này",
+    ""
+  ];
+  for (const entry of core) lines.push(linkLine(entry));
+  lines.push("", "## Từng extension", "");
+  if (units.length === 0) lines.push("- CHƯA KHAI — chưa đơn vị nào có STATUS.md.");
+  for (const entry of units) lines.push(linkLine(entry));
+  lines.push(
+    "",
+    "## Luật bắt buộc trước khi sửa gì",
+    "",
+    "- Một package chỉ MỘT phiên AI được ghi: xem `.agents/claims.json`, chủ không phải bạn thì chỉ đọc.",
+    "- Đóng phiên phải xanh cổng: `node scripts/session-check.mjs --as <tên-phiên>`.",
+    "- Push bằng `node scripts/safe-push.mjs --as <tên-phiên>`, không bao giờ `git push` trần.",
+    ""
+  );
+  return lines.join("\n");
+}
+
+function linkLine(entry) {
+  const dead = entry.exists ? "" : " ⚠ LINK CHẾT";
+  return `- [${entry.label}](${encodeLinkPath(entry.path)}): ${entry.note}${dead}`;
+}
+
+function encodeLinkPath(relPath) {
+  return relPath.replaceAll("\\", "/").split("/").map(encodeURIComponent).join("/");
+}
+
+/* --- S2: repo-map.json — hợp đồng máy đọc ---------------------------------
+   Đây là GIAO DIỆN CROSS-REPO: một hệ điều phối cấp cao (P5) chỉ đọc file này,
+   không đọc gì khác trong repo. Vì vậy hình dạng phải ỔN ĐỊNH kể cả khi trường
+   chưa có dữ liệu — trường trống trả `null`, KHÔNG bỏ khoá đi. Bỏ khoá là bắt
+   phía đọc đoán, và mỗi lần đoán là một lần lệch.
+   `schema_version` bắt buộc: thiếu nó thì mọi hệ đọc file này sẽ vỡ khi một repo
+   nâng cấp trước các repo khác. */
+export function buildRepoMap(model) {
+  const map = {
+    schema_version: REPO_MAP_SCHEMA_VERSION,
+    generated_at: model.headDate,
+    generated_commit: model.shortHead,
+    profile: REPO_PROFILE,
+    entry_point: LLMS_FILE,
+    law_files: ["AGENTS.md", "CLAUDE.md"],
+    top_level: model.topLevel,
+    units: model.rows.map((row) => ({
+      id: row.id,
+      path: row.key === "_root" ? "." : row.key,
+      lifecycle: row.lifecycle,
+      status_md: row.statusPath || null,
+      // `owner`, `next_step`, `superseded_by` là trường của schema extension-status/v2,
+      // do phiên S3 khai vào STATUS. Giữ khoá với giá trị null ngay từ bây giờ để hình
+      // dạng hợp đồng không đổi khi S3 đổ dữ liệu vào — phía đọc không phải đoán.
+      // `owner` CỐ TÌNH không lấy từ claims.json: xem ghi chú ở `priorityFrom`.
+      // `|| null` chứ không phải `?? null`: STATUS chưa khai thì giá trị là chuỗi
+      // rỗng, mà `?? ` không bắt chuỗi rỗng — hợp đồng sẽ trả `""` thay vì `null`,
+      // và phía đọc phải xử lý hai kiểu "không có" thay vì một.
+      owner: row.owner || null,
+      next_step: row.nextStep || null,
+      superseded_by: row.supersededBy || null,
+      last_verified: row.lastVerified || null,
+      last_verified_commit: row.lastVerifiedCommit || null,
+      open_item: row.currentFocus || null
+    })),
+    // Khoá luôn có mặt để hình dạng hợp đồng ổn định. Rỗng cho tới khi STATUS có
+    // `next_step` (S3). KHÔNG đổ claim đang mở vào đây: claim là trạng thái sống,
+    // xem ghi chú ở `priorityFrom`. Phía đọc muốn biết ai đang giữ gì thì đọc
+    // `.agents/claims.json` — nguồn sự thật duy nhất của việc đó.
+    active_work: model.priority
+      ? [{ id: model.priority.unit, unit: model.priority.unit, title: model.priority.title, claim: null }]
+      : [],
+    health: model.health
+  };
+  return `${JSON.stringify(map, null, 2)}\n`;
+}
+
+/* --- S2: so sánh repo-map.json ------------------------------------------
+   So theo NGHĨA (JSON đã bỏ hai trường đổi theo commit), không so theo chữ.
+   So theo chữ thì một lần đổi thứ tự khoá vô hại cũng làm cổng đỏ. */
+export function compareRepoMap(expected, actual) {
+  const strip = (text, label) => {
+    let parsed;
+    try { parsed = JSON.parse(text); }
+    catch { return { broken: `${label}: không phải JSON hợp lệ` }; }
+    for (const key of REPO_MAP_VOLATILE_KEYS) delete parsed[key];
+    return { value: parsed };
+  };
+  const left = strip(expected, "bản sinh ra");
+  const right = strip(actual, REPO_MAP_FILE);
+  if (right.broken) return { matches: false, reason: right.broken };
+  if (left.broken) return { matches: false, reason: left.broken };
+  const a = JSON.stringify(left.value, null, 2);
+  const b = JSON.stringify(right.value, null, 2);
+  if (a === b) return { matches: true };
+  const aLines = a.split("\n");
+  const bLines = b.split("\n");
+  for (let i = 0; i < Math.max(aLines.length, bLines.length); i += 1) {
+    if (aLines[i] !== bLines[i]) {
+      return { matches: false, line: i + 1, expected: aLines[i] ?? "<thiếu dòng>", actual: bLines[i] ?? "<thiếu dòng>" };
+    }
+  }
+  return { matches: false, reason: "khác nhau nhưng không định vị được dòng" };
+}
+
 // Giữ SỐ DÒNG THẬT trong file, không phải số thứ tự sau khi lọc. Dòng dấu commit bị lọc ra,
 // nên nếu đếm theo danh sách đã lọc thì mọi dòng phía sau bị lùi một — và `--check` sẽ bảo
 // Đức "lệch tại dòng 8" trong khi mở file ra thì nó nằm ở dòng 9. Lời nhắn dẫn sai chỗ cũng
@@ -461,7 +795,7 @@ export function buildDashboard(model) {
 function comparableLines(text) {
   return String(text).replace(/\r\n?/g, "\n").split("\n")
     .map((text, index) => ({ text, lineNumber: index + 1 }))
-    .filter((entry) => !entry.text.startsWith(STAMP_PREFIX));
+    .filter((entry) => !entry.text.startsWith(STAMP_PREFIX) && !entry.text.startsWith(SESSION_STAMP_PREFIX));
 }
 
 export function compareDashboard(expected, actual) {
@@ -486,9 +820,18 @@ export function runDashboard({ check = false, deps = createDefaultDeps(), output
   try {
     const model = collectModel(deps);
     const generated = buildDashboard(model);
+    const generatedLlms = buildLlmsTxt(model);
+    const generatedMap = buildRepoMap(model);
     if (!check) {
-      deps.writeFile("DASHBOARD.md", generated);
-      output.log("Đã sinh DASHBOARD.md thành công.");
+      deps.writeFile(DASHBOARD_FILE, generated);
+      deps.writeFile(LLMS_FILE, generatedLlms);
+      deps.writeFile(REPO_MAP_FILE, generatedMap);
+      output.log(`Đã sinh ${DASHBOARD_FILE}, ${LLMS_FILE} và ${REPO_MAP_FILE} thành công.`);
+      const debt = model.health.units_without_status + model.health.dead_links
+        + model.health.undeclared_dirs + model.health.draft_debt;
+      if (debt > 0) {
+        output.log(`Nợ điều hướng [ĐO]: chưa khai STATUS ${model.health.units_without_status} · link chết ${model.health.dead_links} · thư mục chưa khai chủ ${model.health.undeclared_dirs} · tài liệu quá hạn ${model.health.draft_debt}. Chi tiết ở Khối D của ${DASHBOARD_FILE}.`);
+      }
       for (const row of model.rows.filter((item) => item.key !== "_root")) {
         const dirtyCount = (deps.git.dirtyFiles?.(row.key) ?? []).filter(isBehaviourFile).length;
         if (dirtyCount > 0) {
@@ -498,21 +841,32 @@ export function runDashboard({ check = false, deps = createDefaultDeps(), output
       return 0;
     }
 
-    if (!deps.fileExists("DASHBOARD.md")) {
-      output.error("DASHBOARD.md đang thiếu nên không khớp với repo.");
-      output.error("Hãy sửa bằng lệnh: node scripts/build-dashboard.mjs");
-      return 1;
+    // Kiểm CẢ BA file. Chỉ kiểm DASHBOARD thì llms.txt và repo-map.json có thể mục
+    // âm thầm — mà đó lại đúng là hai file một phiên AI mới đọc đầu tiên.
+    const targets = [
+      { file: DASHBOARD_FILE, generated, compare: compareDashboard },
+      { file: LLMS_FILE, generated: generatedLlms, compare: compareDashboard },
+      { file: REPO_MAP_FILE, generated: generatedMap, compare: compareRepoMap }
+    ];
+    const problems = [];
+    for (const target of targets) {
+      if (!deps.fileExists(target.file)) {
+        problems.push(`${target.file} đang thiếu nên không khớp với repo.`);
+        continue;
+      }
+      const comparison = target.compare(target.generated, deps.readFile(target.file));
+      if (comparison.matches) continue;
+      if (comparison.reason) {
+        problems.push(`${target.file} ${comparison.reason}.`);
+        continue;
+      }
+      problems.push(`${target.file} lệch tại dòng ${comparison.line}. - Đang có: ${comparison.actual} | - Cần có: ${comparison.expected}`);
     }
-
-    const comparison = compareDashboard(generated, deps.readFile("DASHBOARD.md"));
-    if (comparison.matches) {
-      output.log("DASHBOARD.md đang khớp với repo.");
+    if (problems.length === 0) {
+      output.log(`${DASHBOARD_FILE}, ${LLMS_FILE} và ${REPO_MAP_FILE} đang khớp với repo.`);
       return 0;
     }
-
-    output.error(`DASHBOARD.md lệch tại dòng ${comparison.line}.`);
-    output.error(`- Đang có: ${comparison.actual}`);
-    output.error(`- Cần có: ${comparison.expected}`);
+    for (const problem of problems) output.error(problem);
     output.error("Hãy sửa bằng lệnh: node scripts/build-dashboard.mjs");
     return 1;
   } catch (error) {
@@ -544,6 +898,10 @@ export function createDefaultDeps(root = ROOT) {
     git: {
       shortHead: () => git("rev-parse", "--short", "HEAD").trim(),
       headDate: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d").trim(),
+      // Ngày commit cuối chạm vào file. Dùng làm "lần rà gần nhất" để tính nợ tài
+      // liệu quá hạn — vì frontmatter CỐ TÌNH không có trường `created`/`last_reviewed`:
+      // ngày gõ tay sẽ mục, còn lịch sử git thì không nói dối được.
+      lastCommitDate: (relPath) => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", "--", relPath).trim(),
       verifyCommit: (sha) => {
         try {
           git("rev-parse", "--verify", `${sha}^{commit}`);
@@ -586,11 +944,19 @@ export function createHeadDeps(root = ROOT) {
     isFile: (relPath) => objectType(relPath) === "blob",
     readFile: (relPath) => git("show", `HEAD:${relPath}`),
     writeFile: () => { throw new Error("HEAD_READ_ONLY: --check-head không được ghi file."); },
-    listDirs: (relPath) => treeEntries(relPath).filter((name) => objectType(`${relPath}/${name}`) === "tree"),
-    listFiles: (relPath) => treeEntries(relPath).filter((name) => objectType(`${relPath}/${name}`) === "blob"),
+    // `childPath` chứ không phải `${relPath}/${name}`: khi relPath là "" (thư mục gốc
+    // repo, cần cho phép đếm top-level của S2) thì cách cũ sinh ra "/docs" và
+    // `cat-file -t HEAD:/docs` không phân giải được — mọi thư mục gốc sẽ bị coi là
+    // không tồn tại, và số "chưa khai chủ" âm thầm về 0.
+    listDirs: (relPath) => treeEntries(relPath).filter((name) => objectType(childPath(relPath, name)) === "tree"),
+    listFiles: (relPath) => treeEntries(relPath).filter((name) => objectType(childPath(relPath, name)) === "blob"),
     git: {
       shortHead: () => git("rev-parse", "--short", "HEAD").trim(),
       headDate: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d").trim(),
+      // Ngày commit cuối chạm vào file. Dùng làm "lần rà gần nhất" để tính nợ tài
+      // liệu quá hạn — vì frontmatter CỐ TÌNH không có trường `created`/`last_reviewed`:
+      // ngày gõ tay sẽ mục, còn lịch sử git thì không nói dối được.
+      lastCommitDate: (relPath) => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", "--", relPath).trim(),
       verifyCommit: (sha) => {
         try {
           git("rev-parse", "--verify", `${sha}^{commit}`);

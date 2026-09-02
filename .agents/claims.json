@@ -27,7 +27,7 @@
       "owner": "s1-complete",
       "ai": "claude",
       "claimed_at": "2026-09-02",
-      "task": "Duc giao 2026-09-02: (1) noi ROADMAP-CLEAN-AND-TEMPLATE-V1 khop 14 quyet dinh K0 — huy repo-template doc lap, doi thanh promote artifact vao Kho tier SEED; tick S1. (2) Chay S2: nang build-dashboard.mjs sinh them llms.txt + repo-map.json, them Khoi A/D vao DASHBOARD, kem test ghim. Claude Code viet thay Codex (Codex chet 7 lan thu tu 27/08) — khai ly do trong HANDOFF. Hai commit rieng de GPT audit tung cai.",
+      "task": "S2 sinh cong vao: llms.txt + repo-map.json + Khoi A/D. Giu quyen toi khi push xong roi moi tra (cong kiem xet ca file trong commit, khong chi working tree).",
       "released_at": null
     }
   }

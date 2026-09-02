@@ -4,7 +4,7 @@ import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { dirname, join, sep } from "node:path";
 
-import { buildDashboard, collectModel, createHeadDeps, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
+import { buildDashboard, buildLlmsTxt, buildRepoMap, collectModel, compareRepoMap, createHeadDeps, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -92,10 +92,19 @@ function checkHarness({ dashboard, exists = true } = {}) {
   const writes = [];
   const logs = [];
   const errors = [];
+  // Từ S2, `--check` so CẢ BA file cổng. Harness phải phục vụ cả ba bản TƯƠI, nếu
+  // không thì mọi phép kiểm cũ sẽ đỏ vì "thiếu llms.txt" chứ không vì cái nó định
+  // kiểm — và ta sẽ đọc nhầm nguyên nhân.
+  const model = collectModel(base);
+  const served = {
+    "DASHBOARD.md": dashboard,
+    "llms.txt": buildLlmsTxt(model),
+    "repo-map.json": buildRepoMap(model)
+  };
   const deps = {
     ...base,
-    fileExists: (relPath) => relPath === "DASHBOARD.md" ? exists : base.fileExists(relPath),
-    readFile: (relPath) => relPath === "DASHBOARD.md" ? dashboard : base.readFile(relPath),
+    fileExists: (relPath) => relPath === "DASHBOARD.md" ? exists : (relPath in served ? true : base.fileExists(relPath)),
+    readFile: (relPath) => relPath in served ? served[relPath] : base.readFile(relPath),
     writeFile: (relPath, text) => writes.push({ relPath, text })
   };
   const output = {
@@ -373,7 +382,13 @@ function antiDrift(text, measurements = {}) {
   const dirtyRepo = fakeRepo({ dirty: ["workers/demo/v1/content.js", "workers/demo/v1/HANDOFF.md"] });
   const dirty = buildDashboard(collectModel(dirtyRepo));
   assert.equal(dirty, clean, "dirty working tree không được đổi artifact");
-  assert.doesNotMatch(dirty, /CHƯA commit|file đang sửa dở|claims/);
+  // `claims` đã rời khỏi mẫu này ở S2, và đây là lý do — KHÔNG phải nới lỏng:
+  // Khối D nay trỏ người đọc tới `.agents/claims.json` để biết thư mục nào chưa
+  // khai chủ. Đó là một ĐƯỜNG DẪN đã commit, không phải trạng thái sửa dở. Lớp
+  // bảo vệ thật của phép kiểm này là dòng `assert.equal(dirty, clean)` ngay trên,
+  // và nó vẫn nguyên. Hai từ khoá còn lại vẫn chặn đúng thứ cần chặn: artifact
+  // không được kể chuyện working tree.
+  assert.doesNotMatch(dirty, /CHƯA commit|file đang sửa dở/);
   assert.match(dirty, /Code đã commit đổi sau kiểm chứng\? \[ĐO\]/);
 
   const logs = [];
@@ -663,7 +678,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("commit", "-m", "seed gate fixture");
     execFileSync(process.execPath, [join(tempRoot, "scripts", "build-dashboard.mjs")], { cwd: tempRoot, encoding: "utf8" });
     execFileSync(process.execPath, [join(tempRoot, "scripts", "feature-parity.mjs")], { cwd: tempRoot, encoding: "utf8" });
-    gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md");
+    gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md", "llms.txt", "repo-map.json");
     gitAt("commit", "-m", "commit generated truth");
     gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
 
@@ -692,7 +707,7 @@ function antiDrift(text, measurements = {}) {
     const parityBefore = readFileSync(join(tempRoot, "FEATURE-PARITY.md"), "utf8");
     assert.ok(parityBefore.includes("**GPT 1 · Gemini 1.**"), "fixture parity phải có dòng sắp làm cũ");
     put("FEATURE-PARITY.md", parityBefore.replace("**GPT 1 · Gemini 1.**", "**GPT 999 · Gemini 1.**"));
-    gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md");
+    gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md", "llms.txt", "repo-map.json");
     gitAt("commit", "-m", "make committed artifacts stale");
     const stale = runSession();
     assert.notEqual(stale.status, 0, "artifact stale đã commit phải làm cổng đỏ");
@@ -707,4 +722,233 @@ function antiDrift(text, measurements = {}) {
   }
 }
 
+
+/* ==========================================================================
+   S2 — cổng vào: llms.txt + repo-map.json + Khối A/D
+   ========================================================================== */
+
+function s2Repo({ claims = null, generatedOnDisk = true } = {}) {
+  const base = fakeRepo();
+  const extra = new Map([
+    ["docs/studies/ALIVE.md", "---\nkind: study\nstatus: active\nttl_days: 180\n---\nCòn hạn.\n"],
+    ["docs/studies/STALE.md", "---\nkind: brief\nstatus: active\nttl_days: 30\n---\nQuá hạn.\n"],
+    ["docs/archive/RETIRED.md", "---\nkind: study\nstatus: archived\nttl_days: 180\n---\nĐã nghỉ.\n"],
+    ["AGENTS.md", "# luật"],
+    ["HANDOFF.md", "# bàn giao"]
+  ]);
+  if (generatedOnDisk) {
+    extra.set("DASHBOARD.md", "cũ");
+    extra.set("llms.txt", "cũ");
+    extra.set("repo-map.json", "{}");
+  }
+  const dirs = new Map([
+    ["", ["docs", "drafts", "workers", "node_modules"]],
+    ["docs", ["studies", "archive"]],
+    ["docs/studies", []],
+    ["docs/archive", []],
+    ["workers", ["demo"]],
+    ["workers/demo", ["v1"]]
+  ]);
+  const claimsJson = JSON.stringify({
+    claims: claims ?? {
+      "workers/demo": { owner: "codex-dashboard", ai: "codex", claimed_at: "2026-09-01", task: "Sửa cột đo. Việc phụ không tính." },
+      _root: { owner: null, ai: null, task: "đã trả" }
+    }
+  });
+  // Ngày commit cuối: STALE.md bị bỏ quên 90 ngày, các file khác vừa chạm.
+  // RETIRED.md CŨNG phải thật sự cũ. Nếu nó mới thì phép kiểm "đã nghỉ hưu không
+  // tính nợ" xanh vì lý do sai (nó mới), và việc gỡ điều kiện `status === active`
+  // sẽ không bị bắt. Mutation M6 thoát đúng vì lý do này.
+  const touched = { "docs/studies/STALE.md": "2026-05-29", "docs/archive/RETIRED.md": "2026-01-01" };
+  return {
+    ...base,
+    fileExists: (relPath) => extra.has(relPath) || relPath === "docs" || base.fileExists(relPath),
+    isFile: (relPath) => extra.has(relPath) || base.isFile(relPath),
+    readFile: (relPath) => {
+      if (relPath === ".agents/claims.json") return claimsJson;
+      if (extra.has(relPath)) return extra.get(relPath);
+      return base.readFile(relPath);
+    },
+    listDirs: (relPath) => dirs.get(relPath) ?? base.listDirs(relPath),
+    listFiles: (relPath) => {
+      const own = [...extra.keys()].filter((name) => name.startsWith(`${relPath}/`) && !name.slice(relPath.length + 1).includes("/"));
+      return own.length ? own.map((name) => name.slice(relPath.length + 1)) : base.listFiles(relPath);
+    },
+    git: { ...base.git, lastCommitDate: (relPath) => touched[relPath] ?? "2026-08-26" }
+  };
+}
+
+/* S2-1. llms.txt đúng định dạng llmstxt.org và đủ ngắn. */
+{
+  const text = buildLlmsTxt(collectModel(s2Repo()));
+  const lines = text.split("\n");
+  assert.ok(lines[0].startsWith("# "), "dòng đầu phải là tiêu đề `#`");
+  assert.ok(lines.some((line) => line.startsWith("> ")), "phải có blockquote tóm tắt");
+  assert.ok(lines.filter((line) => line.startsWith("## ")).length >= 3, "phải có ít nhất 3 mục `##`");
+  const linkLines = lines.filter((line) => line.startsWith("- ["));
+  assert.ok(linkLines.length >= 4, "phải có link");
+  for (const line of linkLines) {
+    assert.match(line, /^- \[[^\]]+\]\([^)]+\): .+/, `link phải kèm mô tả một dòng: ${line}`);
+  }
+  assert.ok(lines.length < 50, `llms.txt phải dưới 50 dòng, đang ${lines.length}`);
+  assert.match(text, /SINH TỰ ĐỘNG — ĐỪNG SỬA TAY/);
+  ok("S2 llms.txt đúng định dạng llmstxt.org, mỗi link một dòng mô tả, dưới 50 dòng");
+}
+
+/* S2-2. repo-map.json giữ đủ khoá hợp đồng, kể cả khoá chưa có dữ liệu. */
+{
+  const map = JSON.parse(buildRepoMap(collectModel(s2Repo())));
+  for (const key of ["schema_version", "generated_at", "generated_commit", "profile", "entry_point", "law_files", "top_level", "units", "active_work", "health"]) {
+    assert.ok(key in map, `thiếu khoá hợp đồng: ${key}`);
+  }
+  assert.equal(map.schema_version, 1);
+  assert.equal(map.entry_point, "llms.txt");
+  for (const key of ["units_without_status", "dead_links", "undeclared_dirs", "draft_debt"]) {
+    assert.equal(typeof map.health[key], "number", `health.${key} phải là số`);
+  }
+  const unit = map.units.find((item) => item.path === "workers/demo/v1");
+  // Trường của schema v2 (S3 mới đổ dữ liệu) phải CÓ MẶT với giá trị null, không được biến mất.
+  assert.ok("next_step" in unit && unit.next_step === null, "next_step phải có mặt, giá trị null");
+  assert.ok("superseded_by" in unit && unit.superseded_by === null, "superseded_by phải có mặt, giá trị null");
+  assert.ok("owner" in unit && unit.owner === null, "owner phải có mặt, giá trị null (S3 khai vào STATUS, KHONG lay tu claims)");
+  assert.deepEqual(map.active_work, [], "chưa STATUS nào khai next_step thì active_work rỗng, không đổ claim vào");
+  ok("S2 repo-map.json giữ nguyên hình dạng hợp đồng, trường chưa có dữ liệu vẫn giữ khoá");
+}
+
+/* S2-3. Bốn con số nợ đếm đúng, không bịa miễn trừ. */
+{
+  const model = collectModel(s2Repo());
+  assert.equal(model.health.units_without_status, 1, "chỉ _root thiếu STATUS trong fixture");
+  assert.equal(model.health.draft_debt, 1, "đúng một tài liệu active quá ttl_days");
+  // node_modules bị bỏ; docs + drafts chưa khai chủ; workers đã khai qua workers/demo.
+  assert.equal(model.health.undeclared_dirs, 2, "docs/ và drafts/ chưa khai chủ");
+  assert.ok(model.topLevel.every((entry) => entry.path !== "node_modules/"), "node_modules không được tính");
+  const workers = model.topLevel.find((entry) => entry.path === "workers/");
+  assert.equal(workers.owner_declared, true, "workers/ đã khai qua khoá workers/demo");
+  ok("S2 Khối D đếm đúng bốn loại nợ, chỉ miễn trừ node_modules");
+}
+
+/* S2-4. Tài liệu đã nghỉ hưu thì cũ là đúng, không tính nợ. */
+{
+  const model = collectModel(s2Repo());
+  const retired = model.docs.find((doc) => doc.path === "docs/archive/RETIRED.md");
+  assert.equal(retired.status, "archived");
+  assert.equal(retired.overdue, false, "status khác active thì không bao giờ tính quá hạn");
+  assert.ok(retired.age_days > retired.ttl_days, "fixture phải THỰC SỰ quá tuổi, nếu không phép kiểm này xanh vì lý do sai");
+  ok("S2 chỉ `status: active` mới bị tính là tài liệu quá hạn");
+}
+
+/* S2-5. REGRESSION: nội dung sinh ra KHÔNG được phụ thuộc vào việc file đã tồn tại chưa.
+   Bug thật gặp lúc dựng S2: lần chạy đầu, repo-map.json chưa có trên đĩa nên chính nó
+   bị đếm là "link chết", và artifact ra khác lần chạy thứ hai. Artifact máy sinh mà
+   không tất định thì cổng kiểm HEAD-vs-HEAD vô nghĩa. */
+{
+  const withFiles = collectModel(s2Repo({ generatedOnDisk: true }));
+  const withoutFiles = collectModel(s2Repo({ generatedOnDisk: false }));
+  assert.equal(withoutFiles.health.dead_links, withFiles.health.dead_links, "số link chết không được đổi theo việc file sinh đã có hay chưa");
+  assert.equal(buildLlmsTxt(withoutFiles), buildLlmsTxt(withFiles), "llms.txt phải tất định");
+  assert.equal(buildRepoMap(withoutFiles), buildRepoMap(withFiles), "repo-map.json phải tất định");
+  assert.equal(withFiles.health.dead_links, 0, "fixture không có link chết thật");
+  ok("S2 artifact tất định — không tự đếm mình là link chết ở lần chạy đầu");
+}
+
+/* S2-6. Link chết THẬT thì vẫn phải bị bắt. */
+{
+  const base = s2Repo();
+  const model = collectModel({ ...base, isFile: (relPath) => relPath === "AGENTS.md" ? false : base.isFile(relPath) });
+  assert.equal(model.health.dead_links, 1, "AGENTS.md biến mất phải bị đếm là link chết");
+  assert.match(buildLlmsTxt(model), /LINK CHẾT/);
+  ok("S2 link chết thật vẫn bị bắt và hiện ngay trong llms.txt");
+}
+
+/* S2-7. Khối A nằm TRÊN bảng, Khối D nằm dưới, và Khối A nói được việc ưu tiên #1. */
+{
+  const text = buildDashboard(collectModel(s2Repo()));
+  const posA = text.indexOf("## A · Bắt đầu từ đâu");
+  const posB = text.indexOf("## B · Có gì trong repo");
+  const posD = text.indexOf("## D · Sức khoẻ điều hướng [ĐO]");
+  assert.ok(posA > -1 && posB > -1 && posD > -1, "phải có đủ ba khối");
+  assert.ok(posA < posB && posB < posD, "thứ tự phải là A trước bảng, D sau bảng");
+  assert.match(text, /Việc ưu tiên #1.*CHƯA KHAI/s);
+  assert.match(text, /Ai đang giữ package nào.*claims.json/s, "Khối A phải TRỎ tới claims.json chứ không chép nội dung nó");
+  assert.match(text, /Phiên gần nhất.*HANDOFF\.md/s);
+  ok("S2 Khối A trên cùng nói được việc ưu tiên #1, Khối D nằm dưới bảng");
+}
+
+/* S2-8. REGRESSION: GIÁ TRỊ owner trong claims.json không được lọt vào artifact.
+   Phép kiểm 22 đã ghim luật này từ trước S2. Bản thiết kế Khối A đầu tiên của tôi
+   vi phạm nó (lấy claim đang mở làm "việc ưu tiên #1"), nên thiết kế bị sửa chứ
+   không phải phép kiểm. Claim đổi vài lần mỗi phiên; artifact mà bám theo nó thì
+   lúc nào cũng cũ, và cổng kiểm đỏ cho phiên sau. */
+{
+  const held = collectModel(s2Repo());
+  const released = collectModel(s2Repo({ claims: { "workers/demo": { owner: null }, _root: { owner: null } } }));
+  assert.equal(buildDashboard(released), buildDashboard(held), "nhận/trả quyền không được đổi DASHBOARD");
+  assert.equal(buildLlmsTxt(released), buildLlmsTxt(held), "nhận/trả quyền không được đổi llms.txt");
+  assert.equal(buildRepoMap(released), buildRepoMap(held), "nhận/trả quyền không được đổi repo-map.json");
+  assert.doesNotMatch(buildRepoMap(held), /codex-dashboard/, "tên phiên đang giữ không được nằm trong artifact");
+  ok("S2 giá trị owner của claims.json không lọt vào artifact — chỉ tập khoá mới được dùng");
+}
+
+/* S2-8b. Khi S3 khai next_step vào STATUS thì Khối A phải tự có việc ưu tiên #1. */
+{
+  const model = collectModel(s2Repo());
+  const withNext = { ...model, rows: model.rows.map((row) => row.key === "workers/demo/v1" ? { ...row, nextStep: "Đo lại trần 90 giây" } : row) };
+  withNext.priority = { unit: "workers/demo/v1", title: "Đo lại trần 90 giây", statusPath: "workers/demo/v1/STATUS.md" };
+  assert.match(buildDashboard(withNext), /Việc ưu tiên #1.*Đo lại trần 90 giây/s);
+  const map = JSON.parse(buildRepoMap(withNext));
+  assert.equal(map.active_work.length, 1, "có next_step thì active_work phải có một mục");
+  assert.equal(map.units.find((u) => u.path === "workers/demo/v1").next_step, "Đo lại trần 90 giây");
+  ok("S2 đã nối sẵn đường cho S3: có next_step là Khối A và active_work tự đầy");
+}
+
+/* S2-9. So repo-map.json bỏ qua hai trường đổi theo commit, nhưng bắt thay đổi thật. */
+{
+  const model = collectModel(s2Repo());
+  const generated = buildRepoMap(model);
+  const onlyStamp = JSON.parse(generated);
+  onlyStamp.generated_commit = "khac123";
+  onlyStamp.generated_at = "1999-01-01";
+  assert.equal(compareRepoMap(generated, `${JSON.stringify(onlyStamp, null, 2)}\n`).matches, true, "đổi mỗi dấu commit thì không được coi là lệch");
+
+  const realChange = JSON.parse(generated);
+  realChange.health.undeclared_dirs = 999;
+  const verdict = compareRepoMap(generated, `${JSON.stringify(realChange, null, 2)}\n`);
+  assert.equal(verdict.matches, false, "đổi số thật phải bị bắt");
+  assert.ok(verdict.line > 0, "phải chỉ được dòng lệch");
+
+  assert.equal(compareRepoMap(generated, "{khong-phai-json").matches, false, "JSON hỏng phải bị bắt");
+  ok("S2 so repo-map.json bỏ qua dấu commit, vẫn bắt đúng thay đổi thật và JSON hỏng");
+}
+
+/* S2-10. Chế độ --check phải kiểm CẢ BA file, không chỉ DASHBOARD. */
+{
+  const base = s2Repo();
+  const model = collectModel(base);
+  const fresh = {
+    "DASHBOARD.md": buildDashboard(model),
+    "llms.txt": buildLlmsTxt(model),
+    "repo-map.json": buildRepoMap(model)
+  };
+  const run = (overrides) => {
+    const errors = [];
+    const files = { ...fresh, ...overrides };
+    const code = runDashboard({
+      check: true,
+      deps: {
+        ...base,
+        fileExists: (relPath) => relPath in files ? files[relPath] !== null : base.fileExists(relPath),
+        readFile: (relPath) => relPath in files ? files[relPath] : base.readFile(relPath),
+        writeFile: () => { throw new Error("check mode không được ghi"); }
+      },
+      output: { log: () => {}, error: (message) => errors.push(message) }
+    });
+    return { code, errors: errors.join(" | ") };
+  };
+  assert.equal(run({}).code, 0, "ba file tươi thì phải xanh");
+  assert.match(run({ "llms.txt": "# sai\n" }).errors, /llms\.txt/, "llms.txt cũ phải bị bắt");
+  assert.match(run({ "repo-map.json": '{"schema_version":1}' }).errors, /repo-map\.json/, "repo-map.json cũ phải bị bắt");
+  assert.match(run({ "llms.txt": null }).errors, /llms\.txt đang thiếu/, "thiếu llms.txt phải bị bắt");
+  ok("S2 --check kiểm cả ba file cổng, thiếu hay cũ đều đỏ");
+}
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
