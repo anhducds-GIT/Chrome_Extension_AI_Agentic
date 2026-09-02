@@ -517,6 +517,12 @@ Nguyên tắc số một: **thứ gì máy đếm được thì máy đếm** �
 
 ## Trong gói này có gì
 
+
+> **Hai thứ CỐ Ý không có trong bộ khung này:** công cụ *đo một repo cách chuẩn bao xa* và công cụ
+> *dựng repo mới*. Chúng sống ở **repo nhà của bộ khung**, vì cả hai đều cần biết "chuẩn" là gì —
+> và chuẩn phải có **một** nguồn. Phát bản sao của chuẩn đi khắp nơi là tạo ra N nguồn, rồi lúc
+> chúng lệch nhau thì không ai biết tin bản nào. Repo bạn cần *sống theo chuẩn*, không cần
+> *phát hành chuẩn*.
 | Đường dẫn | Tầng | Việc của nó |
 |---|---|---|
 | \`AGENTS.md\` | LAW | Hiến pháp một trang. **Mục 6 để trống — bạn tự điền bản đồ file của repo mình** |
