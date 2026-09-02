@@ -290,7 +290,22 @@
     return scope ? scope.create : null;
   }
 
-  const IMAGE_MODE_SUMMARY_LABEL = "🍌 Nano Banana 2 crop_9_16 x2";
+  // F-11 GIAI 02/09. Ban cu khop CHINH XAC dung mot chuoi da do 28/08:
+  //     🍌 Nano Banana 2 crop_9_16 x2
+  // Doi model, doi ti le, hay doi so luong la generationMode() tra 'unknown'
+  // va moi job dung o WRONG_GENERATION_MODE. Fail-closed dung, nhung no bien
+  // mot thay doi cau hinh binh thuong cua Duc thanh mot cu dung may.
+  //
+  // Do that 02/09 tren ho so Binh, nhan Image la:
+  //     🍌 Nano Banana 2 Lite crop_16_9 x3
+  // Hai diem do -> du de nhan theo CAU TRUC thay vi khop cung, y het cach nhan
+  // nhan Video von da lam vay tu dau. Bang chung:
+  //   evidence/F4-trial-success-live-20260828.json        (x2, crop_9_16)
+  //   evidence/F26-probe-BEFORE-imagemode-20260902.json   (Lite, x3, crop_16_9)
+  //
+  // KHONG chong lan voi nhan Video: nhan Video bat dau bang 'Video . ', khong
+  // co emoji. Hai pattern loai tru nhau, va co test ghim dieu do.
+  const IMAGE_MODE_SUMMARY_PATTERN = /^\u{1F34C} .+ crop_[^\s]+ x\d+$/u;
   const VIDEO_MODE_SUMMARY_PATTERN = /^Video · [^·]+ · [^·]+ crop_[^\s]+ x\d+$/;
   const MODE_OPTION_CLASS = "flow_tab_slider_trigger";
 
@@ -306,10 +321,10 @@
   function generationMode(root) {
     if (!root?.querySelectorAll) return Object.freeze({ mode: "unknown", button: null, label: "" });
     const matches = Array.from(root.querySelectorAll("button")).map((button) => ({ button, label: buttonLabel(button) }))
-      .filter(({ button, label }) => visibleNode(root, button) && enabledButton(button) && (label === IMAGE_MODE_SUMMARY_LABEL || VIDEO_MODE_SUMMARY_PATTERN.test(label)));
+      .filter(({ button, label }) => visibleNode(root, button) && enabledButton(button) && (IMAGE_MODE_SUMMARY_PATTERN.test(label) || VIDEO_MODE_SUMMARY_PATTERN.test(label)));
     if (matches.length !== 1) return Object.freeze({ mode: "unknown", button: null, label: "" });
     const match = matches[0];
-    return Object.freeze({ mode: match.label === IMAGE_MODE_SUMMARY_LABEL ? "image" : "video", button: match.button, label: match.label, outputCount: outputCountFromSummary(match.label) });
+    return Object.freeze({ mode: IMAGE_MODE_SUMMARY_PATTERN.test(match.label) ? "image" : "video", button: match.button, label: match.label, outputCount: outputCountFromSummary(match.label) });
   }
 
   // F-15: chip cau hinh mang ca SO LUONG OUTPUT (`x1`...`x4`), va no la mot con

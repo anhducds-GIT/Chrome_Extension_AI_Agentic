@@ -431,10 +431,27 @@ for (const [index, videoOptionLabel] of [null, "videocam Videos", "Video", "vide
   assert.equal(h.clicks(), 0);
 }
 
+// F-11 (va 02/09): nhan Image duoc nhan theo CAU TRUC, khong khop cung mot
+// chuoi. Do that tren ho so Binh: "🍌 Nano Banana 2 Lite crop_16_9 x3" —
+// Duc doi model (Lite), doi ti le, doi so luong, va ban cu tra "unknown" nen
+// MOI job dung o WRONG_GENERATION_MODE. Do la fail-closed dung, nhung no bien
+// mot thay doi cau hinh binh thuong thanh mot cu dung may.
+{
+  const h = harness({ modeSummaryLabel: "🍌 Nano Banana 2 Lite crop_16_9 x3", afterClick: ["switched"] });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-IMG-VARIANT", attempt_id: "attempt-img-variant", prompt: "chuyen tu bien the Image", timeoutMs: 15000 });
+  assert.equal(h.settingsClicks() > 0, true, "phai nhan ra day la Image va bat dau chuyen mode, thay vi bo cuoc voi unknown");
+  assert.equal(h.videoModeClicks(), 1, "phai bam dung mot lan vao tuy chon Video");
+}
+
 // Prompt prose containing "Video" is not settings-button evidence and cannot
 // spoof an unknown Image summary into authorizing prompt mutation or Create.
 {
-  const h = harness({ modeSummaryLabel: "🍌 Nano Banana 2 crop_9_16 x3" });
+  // Nhan KHONG nhan ra duoc: thieu emoji dan dau nen khong phai nhan Image,
+  // cung khong phai nhan Video. Ban cu dung "🍌 ... x3" lam dai dien cho
+  // "khong nhan ra", nhung sau ban va F-11 (nhan Image theo CAU TRUC thay vi
+  // khop cung mot chuoi) thi x3 la mot cau hinh HOP LE — fixture do da lac hau,
+  // khong phai y dinh cua test lac hau.
+  const h = harness({ modeSummaryLabel: "Nano Banana 2 crop_9_16 x3" });
   const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-MODE-PROMPT-SPOOF", attempt_id: "attempt-mode-prompt-spoof", prompt: "Image prompt containing the word Video", timeoutMs: 15000 });
   assert.equal(response.ok, false);
   assert.match(response.error, /WRONG_GENERATION_MODE.*FLOW_VIDEO_MODE_NOT_READY/);

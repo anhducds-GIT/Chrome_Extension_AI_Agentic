@@ -1,0 +1,585 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-6e0b792d-764c-4c70-b981-e7152685d39c",
+  "ok": true,
+  "result": {
+    "attachmentPending": false,
+    "busy": false,
+    "buttons": [
+      {
+        "aria": "",
+        "chain": "div > nav > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-7cbbf1fc-2 ewGlDn famhRe jjd",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "arrow_back Quay lại"
+      },
+      {
+        "aria": "",
+        "chain": "div > nav > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-26aa1721-3 ewGlDn famhRe dUD",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "more_vert Tuỳ chọn khác"
+      },
+      {
+        "aria": "",
+        "chain": "form > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-cae65d1b-2 ewGlDn famhRe dLe",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "search Tìm kiếm"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-16c4830a-1 dnFqQq sc-e7a64add-0 sc-e7a64add-2 fPutAP blvbdy sc-fa653d6-8 fLZQ",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "filter_list Sắp xếp và lọc"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-5c4c0aea-1 ewGlDn famhRe eqh",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "add Thêm nội dung nghe nhìn"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-26e430f4-2 ewGlDn famhRe lmA",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "help Trợ giúp về sản phẩm"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-a4925f7f-6 ewGlDn famhRe gdB",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "settings_2 Cài đặt chế độ xem"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-71fcf43d-1 ewGlDn famhRe hQO",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "more_vert Khác"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-5 sc-3ce961f7-0 sc-7e7bc024-0 ewG",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "dashboard Tất cả nội dung nghe nhìn"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-5 sc-3ce961f7-0 ewGlDn hGbzYr fqb",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "videocam Xem video"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-5 sc-3ce961f7-0 ewGlDn hGbzYr fqb",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "accessibility_new Nhân vật"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-5 sc-3ce961f7-0 ewGlDn hGbzYr fqb",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "movie Xem các cảnh"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-5 sc-3ce961f7-0 ewGlDn hGbzYr fqb",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "apps_spark_2 Công cụ"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-5 sc-3ce961f7-0 ewGlDn hGbzYr fqb",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "delete Xem thùng rác"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-5 sc-3ce961f7-0 ewGlDn hGbzYr fqb",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "left_panel_close Thu gọn"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-253cad92-0 ewGlDn famhRe joS",
+        "disabled": false,
+        "in_composer_cluster": true,
+        "testid": "",
+        "txt": "add_2 Tạo"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-59223abb-3 dmZGYv",
+        "disabled": false,
+        "in_composer_cluster": true,
+        "testid": "",
+        "txt": "Tác nhân"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-16c4830a-1 dnFqQq sc-e7a64add-0 sc-e7a64add-1 fPutAP jmLZrS sc-93abd9dc-1 ldb",
+        "disabled": false,
+        "in_composer_cluster": true,
+        "testid": "",
+        "txt": "🍌 Nano Banana 2 Lite crop_16_9 x3"
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-e8425ea6-0 hOBPaw sc-d3791a4f-0 sc-d3791a4f-4 sc-5c3af813-5 ewGlDn famhRe kmC",
+        "disabled": true,
+        "in_composer_cluster": true,
+        "testid": "",
+        "txt": "arrow_forward Tạo"
+      }
+    ],
+    "captured_at": "2026-09-02T14:08:44.241Z",
+    "composerFound": true,
+    "composer_scope_hops": 2,
+    "composer_scope_resolved": true,
+    "composer_scope_trace": [
+      {
+        "buttons": 0,
+        "hop": 1,
+        "labels": [],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 2,
+        "labels": [
+          "add_2 Tạo",
+          "Tác nhân",
+          "🍌 Nano Banana 2 Lite crop",
+          "arrow_forward Tạo"
+        ],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 3,
+        "labels": [
+          "add_2 Tạo",
+          "Tác nhân",
+          "🍌 Nano Banana 2 Lite crop",
+          "arrow_forward Tạo"
+        ],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 4,
+        "labels": [
+          "add_2 Tạo",
+          "Tác nhân",
+          "🍌 Nano Banana 2 Lite crop",
+          "arrow_forward Tạo"
+        ],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 5,
+        "labels": [
+          "add_2 Tạo",
+          "Tác nhân",
+          "🍌 Nano Banana 2 Lite crop",
+          "arrow_forward Tạo"
+        ],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 6,
+        "labels": [
+          "add_2 Tạo",
+          "Tác nhân",
+          "🍌 Nano Banana 2 Lite crop",
+          "arrow_forward Tạo"
+        ],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 27,
+        "hop": 7,
+        "labels": [
+          "arrow_back Quay lại",
+          "more_vert Tuỳ chọn khác",
+          "search Tìm kiếm",
+          "filter_list Sắp xếp và lọc",
+          "add Thêm nội dung nghe nhì",
+          "help Trợ giúp về sản phẩm",
+          "settings_2 Cài đặt chế độ ",
+          "more_vert Khác"
+        ],
+        "tag": "div",
+        "text_entries": 3
+      },
+      {
+        "buttons": 27,
+        "hop": 8,
+        "labels": [
+          "arrow_back Quay lại",
+          "more_vert Tuỳ chọn khác",
+          "search Tìm kiếm",
+          "filter_list Sắp xếp và lọc",
+          "add Thêm nội dung nghe nhì",
+          "help Trợ giúp về sản phẩm",
+          "settings_2 Cài đặt chế độ ",
+          "more_vert Khác"
+        ],
+        "tag": "div",
+        "text_entries": 3
+      },
+      {
+        "buttons": 27,
+        "hop": 9,
+        "labels": [
+          "arrow_back Quay lại",
+          "more_vert Tuỳ chọn khác",
+          "search Tìm kiếm",
+          "filter_list Sắp xếp và lọc",
+          "add Thêm nội dung nghe nhì",
+          "help Trợ giúp về sản phẩm",
+          "settings_2 Cài đặt chế độ ",
+          "more_vert Khác"
+        ],
+        "tag": "body",
+        "text_entries": 4
+      },
+      {
+        "buttons": 27,
+        "hop": 10,
+        "labels": [
+          "arrow_back Quay lại",
+          "more_vert Tuỳ chọn khác",
+          "search Tìm kiếm",
+          "filter_list Sắp xếp và lọc",
+          "add Thêm nội dung nghe nhì",
+          "help Trợ giúp về sản phẩm",
+          "settings_2 Cài đặt chế độ ",
+          "more_vert Khác"
+        ],
+        "tag": "html",
+        "text_entries": 4
+      }
+    ],
+    "customTags": [
+      "next-route-announcer"
+    ],
+    "fileInputs": [
+      {
+        "accept": "image/*",
+        "chain": "div > div > body > html",
+        "connected": true,
+        "multiple": true
+      }
+    ],
+    "generating": false,
+    "generationLimitBlocker": null,
+    "images": [
+      {
+        "alt": "Hình ảnh hồ sơ người dùng",
+        "chain": "button > div > div > div > div",
+        "generated": false,
+        "rect": {
+          "h": 32,
+          "w": 32
+        },
+        "scheme": "https:",
+        "srcHead": "https://lh3.googleusercontent.com/a/ACg8ocKPREcyGx_0-BZt65mvL6gwNCDiuS"
+      },
+      {
+        "alt": "Hình thu nhỏ video",
+        "chain": "button > a > div > span > div",
+        "generated": false,
+        "rect": {
+          "h": 226,
+          "w": 402
+        },
+        "scheme": "https:",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=83ef97e"
+      },
+      {
+        "alt": "Hình thu nhỏ video",
+        "chain": "button > a > div > span > div",
+        "generated": false,
+        "rect": {
+          "h": 226,
+          "w": 402
+        },
+        "scheme": "https:",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=3986bb8"
+      },
+      {
+        "alt": "Hình thu nhỏ video",
+        "chain": "button > a > div > span > div",
+        "generated": false,
+        "rect": {
+          "h": 226,
+          "w": 402
+        },
+        "scheme": "https:",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=8824e15"
+      }
+    ],
+    "runtime_contract": "flow04-composer-cluster-submit-v2",
+    "securityBlocker": null,
+    "selectorCounts": {
+      "attachmentPreview": [],
+      "composer": [
+        "[contenteditable=\"true\"][role=\"textbox\"] => 1"
+      ],
+      "fileInput": [
+        "input[type=\"file\"][accept*=\"image\"] => 1"
+      ],
+      "generatedImageAltMarker": " => (not a selector)",
+      "responseContainer": [],
+      "send": [],
+      "stop": [],
+      "uploadMenuButton": [],
+      "uploadPending": [],
+      "videoSelector": "video => 7"
+    },
+    "sendFound": true,
+    "stopFound": false,
+    "surface": "CONVERSATION",
+    "surface_allowed": true,
+    "textboxes": [
+      {
+        "aria": "Văn bản có thể chỉnh sửa",
+        "chain": "div > div > nav > div > div",
+        "cls": "sc-b2595011-2 eIJedz",
+        "editable": false,
+        "placeholder": "",
+        "rect": {
+          "h": 24,
+          "w": 74
+        },
+        "role": "",
+        "tag": "input",
+        "valueLen": 9,
+        "visible": true
+      },
+      {
+        "aria": "",
+        "chain": "form > div > div > div > div",
+        "cls": "sc-cae65d1b-3 dguROl",
+        "editable": false,
+        "placeholder": "",
+        "rect": {
+          "h": 38,
+          "w": 370
+        },
+        "role": "",
+        "tag": "input",
+        "valueLen": 0,
+        "visible": true
+      },
+      {
+        "aria": "",
+        "chain": "div > div > div > div > div",
+        "cls": "sc-1c9f7009-0 gvAbJD sc-5c3af813-6 iIcaac",
+        "editable": true,
+        "placeholder": "",
+        "rect": {
+          "h": 20,
+          "w": 566
+        },
+        "role": "textbox",
+        "tag": "div",
+        "valueLen": 17,
+        "visible": true
+      },
+      {
+        "aria": "",
+        "chain": "div > div > body > html",
+        "cls": "g-recaptcha-response",
+        "editable": false,
+        "placeholder": "",
+        "rect": {
+          "h": 0,
+          "w": 0
+        },
+        "role": "",
+        "tag": "textarea",
+        "valueLen": 0,
+        "visible": false
+      }
+    ],
+    "truncated": false,
+    "url": "https://labs.google/fx/vi/tools/flow/project/e20b7325-e703-4c62-9423-2ac9223a25a2",
+    "videos": [
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 eibPpl",
+        "controls": false,
+        "duration": null,
+        "paused": true,
+        "poster": "",
+        "readyState": 0,
+        "rect": {
+          "h": 0,
+          "w": 0
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=83ef97e"
+      },
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 eibPpl",
+        "controls": false,
+        "duration": null,
+        "paused": true,
+        "poster": "",
+        "readyState": 0,
+        "rect": {
+          "h": 0,
+          "w": 0
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=3986bb8"
+      },
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 bYsUvp",
+        "controls": false,
+        "duration": 8,
+        "paused": true,
+        "poster": "",
+        "readyState": 4,
+        "rect": {
+          "h": 226,
+          "w": 402
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=e408440"
+      },
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 bYsUvp",
+        "controls": false,
+        "duration": 8,
+        "paused": true,
+        "poster": "",
+        "readyState": 4,
+        "rect": {
+          "h": 226,
+          "w": 402
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=5d56935"
+      },
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 bYsUvp",
+        "controls": false,
+        "duration": 8,
+        "paused": true,
+        "poster": "",
+        "readyState": 4,
+        "rect": {
+          "h": 226,
+          "w": 402
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=1a606b4"
+      },
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 bYsUvp",
+        "controls": false,
+        "duration": 8,
+        "paused": true,
+        "poster": "",
+        "readyState": 4,
+        "rect": {
+          "h": 226,
+          "w": 402
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=a2d98e3"
+      },
+      {
+        "chain": "button > a > div > span > div",
+        "cls": "sc-7b689609-2 eibPpl",
+        "controls": false,
+        "duration": null,
+        "paused": true,
+        "poster": "",
+        "readyState": 0,
+        "rect": {
+          "h": 0,
+          "w": 0
+        },
+        "scheme": "https:",
+        "sourceHead": "",
+        "srcHead": "https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=8824e15"
+      }
+    ]
+  },
+  "responded_at": "2026-09-02T14:08:44.249Z",
+  "served_by": {
+    "instance_id": "e08e1d6a-63d0-4be1-909a-f0cbd56ef891",
+    "label": "Binh"
+  }
+}

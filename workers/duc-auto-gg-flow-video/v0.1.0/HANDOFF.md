@@ -1011,3 +1011,29 @@ với F4R8 là **7/7 job, 42/50 credit trên `Bình`**, giao diện tiếng Vi�
 - **Còn lại:** F-26 **chưa kiểm live** (cần reload). F-22 (đọc độ phân giải để suy trần chuỗi)
   nay đã có `findOutputCountOption` làm mẫu — cùng một cách làm. Và **F-25** vẫn là vật cản
   thật của chuỗi dài.
+
+## 2026-09-02 — `claude-f18-evidence` (lượt 17): F-11 nổ thật ngay trước khi kiểm live, đã vá
+
+Đức đặt chip `x3` rồi chuyển sang chế độ **Image** để tôi kiểm live F-14 + F-26. Probe trước khi
+chạy chặn được một vật cản chưa ai lường:
+
+- **Nhãn Image thật là `🍌 Nano Banana 2 Lite crop_16_9 x3`** — đổi model (Lite), đổi tỉ lệ, đổi
+  số lượng so với **chuỗi duy nhất** đã đo 28/08. Bản cũ khớp **chính xác** nên `generationMode()`
+  trả `unknown` → mọi job sẽ dừng ở `WRONG_GENERATION_MODE`. Fail-closed đúng, nhưng nó biến
+  **một thay đổi cấu hình bình thường của Đức** thành một cú dừng máy. **Đây là F-11, nổ đúng
+  như hồ sơ đã cảnh báo từ 28/08.**
+- **Đã vá:** nhận nhãn Image theo **cấu trúc** (`emoji + tên model + crop_* + x{n}`), y hệt cách
+  nhãn Video vốn làm từ đầu. **Hai điểm đo** làm bằng chứng (bản 28/08 và bản 02/09), nên không
+  phải suy đoán — đúng luật vàng 1.
+- **Ghim cả hai chiều**, và chiều thứ hai mới là chiều quan trọng: từ chối `🍌 rác`, từ chối
+  thiếu `x{n}`, từ chối thiếu `crop_*`. Nới lỏng pattern này **không mất credit ngay**, nhưng nó
+  làm hệ thống tin nhầm một trang lạ là "đang ở chế độ Image" — và mọi quyết định sau đó dựa
+  trên một tiền đề sai. Mutation nới lỏng: **4/4 bị bắt**.
+- **Một fixture test lạc hậu vì chính bản vá này:** một test dùng `🍌 … x3` làm *đại diện cho
+  "nhãn không nhận ra"*. Sau F-11 thì `x3` là cấu hình **hợp lệ**, nên fixture sai chứ không
+  phải ý định của test sai. Đã đổi sang một nhãn thật sự không nhận ra (thiếu emoji), giữ nguyên
+  ý định chống giả mạo mode bằng chữ trong prompt.
+- **Đo:** suite **94/94** · mutation **4/4** · toàn vẹn OK.
+- **Chưa kiểm live được F-14/F-26** — cần Đức reload (đã sửa `provider-adapter.js`). Sau reload,
+  giữ nguyên chip `x3` + chế độ Image, tôi chạy **một** job: nó sẽ đi qua **cả** đường chuyển
+  mode (nửa sau F-14) **lẫn** đường tự sửa `x3` → `x1` (F-26).

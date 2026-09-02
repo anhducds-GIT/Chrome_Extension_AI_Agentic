@@ -49,7 +49,18 @@
   `Create` biến mất và có 2 nút `Upgrade` visible/enabled. Matcher + test đã ghim
   `GENERATION_LIMIT_REACHED`, zero click/retry; còn cần reload và live verify bản vá.
 - **F-10** · FEATURE-PARITY: nhánh này sẽ vào bảng parity khi có method Bridge chạy thật.
-- **F-11** · [ĐỌC 28/08, do audit Codex nêu] Nhãn Image mode trong `provider-adapter.js`
+- **F-11** · **XONG 02/09 — và nó nổ thật trước khi kịp vá.** Đức chuyển sang chế độ Image để
+  kiểm F-14/F-26, và probe cho thấy nhãn thật là `🍌 Nano Banana 2 **Lite** crop_16_9 x3`:
+  đổi model, đổi tỉ lệ, đổi số lượng so với chuỗi duy nhất đã đo 28/08. Bản cũ khớp **chính xác**
+  nên `generationMode()` trả `unknown` → **mọi job dừng ở `WRONG_GENERATION_MODE`**. Fail-closed
+  đúng, nhưng nó biến **một thay đổi cấu hình bình thường của Đức** thành một cú dừng máy.
+  **Vá:** nhận theo **cấu trúc** (`emoji + tên model + crop_* + x{n}`), y hệt cách nhãn Video vốn
+  đã làm từ đầu. Hai điểm đo làm bằng chứng — bản 28/08 và bản 02/09 — nên đây không phải suy đoán.
+  **Ghim cả hai chiều:** nhận đúng hai biến thể đã đo, **và từ chối** `🍌 rác` (chỉ có emoji),
+  thiếu `x{n}`, thiếu `crop_*`. Nới lỏng pattern này không mất credit ngay, nhưng nó làm hệ thống
+  tin nhầm một trang lạ là 'đang ở chế độ Image', và mọi quyết định sau đó dựa trên tiền đề sai.
+  Suite 94/94 · mutation **4/4**. Bằng chứng: `evidence/F26-probe-BEFORE-imagemode-20260902.json`.
+  ~~[ĐỌC 28/08, do audit Codex nêu] Nhãn Image mode trong `provider-adapter.js`~~
   đang khớp CHÍNH XÁC đúng một chuỗi đã đo: `🍌 Nano Banana 2 crop_9_16 x2`. Đổi model
   ảnh, đổi tỉ lệ, hay đổi số lượng (`x3`) → `generationMode()` trả `unknown` → job dừng
   `WRONG_GENERATION_MODE` trước khi gõ. Đây là fail-closed CỐ Ý (chưa có bằng chứng DOM

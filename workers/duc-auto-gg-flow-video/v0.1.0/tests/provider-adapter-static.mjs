@@ -230,3 +230,38 @@ console.log("provider adapter static tests: PASS");
   assert.equal(adapter.findOutputCountOption(docOf([btn("x1", { hidden: true })]), 1), null, "nut khong nhin thay duoc thi khong duoc bam");
   assert.equal(adapter.findOutputCountOption(docOf([btn("x1")]), 0), null, "so luong khong hop le -> tu choi");
 }
+
+// F-11: nhan Image duoc nhan theo CAU TRUC (emoji + ten model + crop_* + x{n}),
+// khong khop cung mot chuoi. Ban cu chi nhan dung "🍌 Nano Banana 2 crop_9_16 x2",
+// nen Duc doi model/ti le/so luong la moi job dung o WRONG_GENERATION_MODE.
+//
+// Ghim CA HAI chieu. Noi long pattern nay khong lam mat credit ngay, nhung no
+// lam he thong nhan nham mot trang la thanh "dang o che do Image" — va tu do
+// moi quyet dinh ve sau deu dua tren mot tien de sai.
+{
+  const btn = (text) => ({
+    innerText: text, textContent: text, disabled: false,
+    getAttribute: () => null,
+    getBoundingClientRect: () => ({ width: 160, height: 30 }),
+  });
+  const docOf = (labels) => ({
+    defaultView: { getComputedStyle: () => ({ display: "block", visibility: "visible" }) },
+    querySelectorAll: (sel) => (sel === "button" ? labels.map(btn) : []),
+  });
+  const modeOf = (label) => adapter.generationMode(docOf([label])).mode;
+
+  assert.equal(modeOf("🍌 Nano Banana 2 crop_9_16 x2"), "image", "ban da do 28/08");
+  assert.equal(modeOf("🍌 Nano Banana 2 Lite crop_16_9 x3"), "image", "ban da do 02/09 tren ho so Binh");
+  assert.equal(modeOf("Video · 360p · 8s crop_16_9 x1"), "video");
+
+  // Noi long thi vo o day: mot nhan chi co emoji khong phai la mot cau hinh.
+  assert.equal(modeOf("🍌 rac"), "unknown", "chi co emoji thi khong du — pattern khong duoc nuot moi thu bat dau bang emoji");
+  // Thieu hau to x{n} = khong biet mot luot sinh ra may output. Khong duoc nhan.
+  assert.equal(modeOf("🍌 Nano Banana 2 crop_9_16"), "unknown", "thieu x{n} thi khong duoc nhan la Image");
+  assert.equal(modeOf("🍌 Nano Banana 2 x2"), "unknown", "thieu crop_* thi khong duoc nhan la Image");
+
+  // Hai pattern phai loai tru nhau: khong nhan nao vua la Image vua la Video.
+  for (const label of ["🍌 Nano Banana 2 crop_9_16 x2", "Video · 360p · 8s crop_16_9 x1"]) {
+    assert.notEqual(modeOf(label), "unknown", `phai nhan ra: ${label}`);
+  }
+}
