@@ -66,12 +66,6 @@
       "ownership_mode": "root",
       "note": "bộ sinh + cổng kiểm + safe-push"
     },
-    "template/": {
-      "steward": "_template",
-      "mutability": "rw",
-      "ownership_mode": "root",
-      "note": "BỘ KHUNG SINH TỰ ĐỘNG — đừng sửa tay. Sinh lại: node scripts/build-template.mjs · kiểm: --check. Đây là chỗ ở TẠM; theo ADR-0001 template sẽ dời sang repo độc lập."
-    },
     "tests/": {
       "steward": "_code",
       "mutability": "rw",

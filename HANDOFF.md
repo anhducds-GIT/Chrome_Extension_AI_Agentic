@@ -1405,3 +1405,22 @@ công cụ mà thiếu suite bị chấm sai mức). Cả hai lộ ra ở lần 
 **NỢ CÔNG CỤ, chưa vá:** `claim.mjs` không giành lại được quyền của phiên đã tắt. Hôm nay phải
 sửa bảng bằng tay — đúng thao tác mà luật khuyên tránh. Cần một đường `--giành` có kiểm chứng
 (ví dụ đòi nêu lý do và ghi lại chủ cũ), kẻo lần sau lại sửa tay.
+
+## 2026-09-03 — `claude-don-nha`: dọn bản sao harness, repo này thành NGƯỜI DÙNG
+
+Bộ khung đã có nhà riêng (`Ark_Repo_Harness`, đã lên GitHub). Giữ bản sao ở đây là **hai nguồn
+cùng khai "chuẩn là gì"** — đúng thứ ADR-0002 nói phải tránh, và đúng bệnh cả chương trình sinh
+ra để chữa. Đức duyệt dọn 03/09.
+
+**Đã gỡ:** `template/` · bốn công cụ của nhà (bộ trích · đo độ lệch · khởi tạo repo mới · trang
+mô tả bộ khung) · bốn suite đi kèm · `docs/protocols/`.
+
+**Giữ lại, và đây là ranh giới:** năm công cụ vận hành (sinh trang · hai gate · đẩy an toàn ·
+đọc cấu hình) cộng `claim.mjs` và `tests/harness-smoke.mjs`. Repo này **dùng** bộ khung; nó
+không **phát hành** bộ khung nữa.
+
+**ADR-0001 và ADR-0002 giữ nguyên tại chỗ** — chúng ghi lại quyết định đã ra ở đây, và ADR
+`Accepted` là bất biến. Xoá đi là viết lại lịch sử của chính mình.
+
+**Số:** suite 286 → 265 (21 phép kiểm theo bộ khung sang nhà mới). Mục 6 của `AGENTS.md` nay trỏ
+thẳng sang repo mới cho ai đi tìm bộ khung.
