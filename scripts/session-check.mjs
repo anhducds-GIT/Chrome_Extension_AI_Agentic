@@ -53,6 +53,52 @@ const workingChanges = porcelain.map((line) => ({ code: line.slice(0, 2).trim(),
 const unpushed = git("diff", "--name-only", "origin/main...HEAD").split("\n").filter(Boolean);
 const touched = [...new Set([...workingChanges.map((c) => c.file), ...unpushed])];
 
+/* VIỆC ĐÃ COMMIT CỦA LANE KHÁC KHÔNG PHẢI VIỆC MỒ CÔI CỦA TÔI — K2-1b, 2026-09-02.
+ *
+ * ĐO ĐƯỢC: 6 trong 64 lượt nhận quyền ngày 02/09 (9%) là phiên giữ khoá vì **không push được**,
+ * không phải vì đang làm. Ghi chú nguyên văn: "DANG GIU DEN KHI PUSH XONG" ×3, "giu quyen den
+ * khi push xong" ×3. Tức một chỗ tắc ở git biến thành chỗ tắc ở QUYỀN — hàng đợi push khuếch
+ * đại tranh chấp khoá.
+ *
+ * Vì sao trước đây buộc phải giữ tới lúc push (bài học 26/08): trả quyền sớm thì file trong
+ * commit chưa push của mình rơi vào vùng KHÔNG CÓ CHỦ, và cổng của phiên SAU đọc thấy "việc mồ
+ * côi" rồi ĐỎ oan. Nên kỷ luật đúng lúc đó là giữ khoá — và cái giá là chặn người khác.
+ *
+ * Nhãn `Lane:` (K2-3) tháo được ràng buộc đó: quy thuộc không còn phụ thuộc ai đang giữ vùng.
+ * Cổng nay phân biệt được **mồ côi thật** với **của lane khác, đã commit, đang chờ push**.
+ *
+ * CHIỀU FAIL-CLOSED, và nó quan trọng hơn bản thân bản vá: chỉ MIỄN khi commit mang nhãn của
+ * NGƯỜI KHÁC. Commit **không có nhãn** thì giữ nguyên hành vi cũ (vẫn tính vào mồ côi) — vì
+ * không có nhãn thì tôi không chứng minh được nó không phải của tôi. Nới theo chiều "không nhãn
+ * thì cho qua" là biến bản vá này thành một đường lách: cứ bỏ nhãn là hết bị soi. */
+// PHẢI khai TRƯỚC khối dò nhãn lane bên dưới. Bản đầu của K2-1 để dòng này ở dưới chỗ
+// dùng đầu tiên (~30 dòng), và vì `const` có vùng chết tạm thời nên cổng NÉM NGAY khi
+// nạp — mọi phiên, mọi lệnh, không riêng ca nào. Đo được 03/09: `session-check.mjs --as`
+// bất kỳ đều chết ở dòng đầu tiên dùng nó.
+const originMainResolves = git("rev-parse", "--verify", "origin/main").trim() !== "";
+
+const workingFiles = new Set(workingChanges.map((c) => c.file));
+const nhanCuaFile = new Map();                       // file -> tập nhãn đã chạm nó (null = không nhãn)
+if (originMainResolves) {
+  for (const sha of git("log", "--format=%H", "origin/main..HEAD").split("\n").filter(Boolean)) {
+    const { lane, problem } = laneFromMessage(git("log", "-1", "--format=%B", sha));
+    // Nhãn HỎNG cũng coi như KHÔNG có nhãn: không quy thuộc được thì không được miễn cho ai.
+    const nhan = problem ? null : lane;
+    for (const f of git("show", "--name-only", "--format=", sha).split("\n").filter(Boolean).map((s) => s.replace(/^"|"$/g, ""))) {
+      if (!nhanCuaFile.has(f)) nhanCuaFile.set(f, new Set());
+      nhanCuaFile.get(f).add(nhan);
+    }
+  }
+}
+// "Của lane khác" chỉ đúng khi: không nằm trong cây làm việc của tôi, VÀ mọi nguồn đã chạm nó
+// đều là commit mang nhãn của người khác. Một nguồn không nhãn là đủ để KHÔNG miễn.
+const cuaLaneKhac = (file) => !workingFiles.has(file)
+  && nhanCuaFile.has(file)
+  && [...nhanCuaFile.get(file)].every((nhan) => nhan && nhan !== asLabel);
+// Chỉ dùng cho việc dò MỒ CÔI. Các phép kiểm khác vẫn thấy `touched` đầy đủ — thu hẹp phạm vi
+// của chúng là một bản vá khác, và trộn hai việc vào một là cách làm mất dấu cái nào gây ra gì.
+const touchedToiPhaiTraLoi = touched.filter((f) => !cuaLaneKhac(f));
+
 // CÙNG HỌ VỚI FAIL-OPEN VỪA VÁ Ở `safe-push`, khác chỗ. `git()` nuốt lỗi, nên nếu `origin/main`
 // không phân giải được (repo mới dựng từ bộ khung chưa có remote, nhánh mặc định tên khác) thì
 // `unpushed` RỖNG — và cổng lặng lẽ **bỏ qua mọi commit chưa push**: không đòi Log HANDOFF cho
@@ -63,7 +109,6 @@ const touched = [...new Set([...workingChanges.map((c) => c.file), ...unpushed])
 // lịch sử? commit đầu? bắt phải có remote?), và đoán bừa một mốc thì sinh ra một cổng nói về
 // một phạm vi khác cái nó tưởng. Nên bản này làm đúng một việc: **thôi im lặng**. Không biết
 // thì phải nói là không biết — đó là mức tối thiểu, không phải mức đủ.
-const originMainResolves = git("rev-parse", "--verify", "origin/main").trim() !== "";
 
 // Đơn vị sở hữu đọc từ `.repo-structure.json` (K1, 2026-09-02) — trước đây regex `^workers/`
 // nằm cứng ở ĐÂY và một bản y hệt nằm trong safe-push.mjs. Hai bản đã lệch nhau một lần thật
@@ -102,7 +147,10 @@ const foreignPackages = packagesTouched.filter((pkg) => ownedBy(pkg) && ownedBy(
 // bạn, không phải của phiên khác, không phải mồ côi) và **bị bỏ qua im
 // lặng** — suite của nó cũng không chạy. Lỗ này lộ ra ngày 26/08 lúc đóng
 // phiên: trả quyền trước khi commit thì cổng báo xanh mà không kiểm gì.
-const orphanPackages = packagesTouched.filter((pkg) => !CLAIMS?.[pkg] || !CLAIMS[pkg].owner);
+// Dò mồ côi trên tập ĐÃ TRỪ việc của lane khác (K2-1b) — xem ghi chú dài ở đầu file. Các phép
+// kiểm khác giữ nguyên `packagesTouched` đầy đủ, để chúng vẫn báo đúng "của phiên khác".
+const packagesToiPhaiTraLoi = [...new Set(touchedToiPhaiTraLoi.map((f) => areaOf(f, claimPrefixes)).filter((a) => a !== "_root"))];
+const orphanPackages = packagesToiPhaiTraLoi.filter((pkg) => !CLAIMS?.[pkg] || !CLAIMS[pkg].owner);
 // VÙNG GỐC CŨNG LÀ VÙNG. Trước 2026-09-02 `mine()` chỉ khớp package, nên một phiên chỉ giữ
 // `_root` — tức MỌI phiên sửa `scripts/`, `tests/`, hay cả bộ khung — có `mine()` luôn false.
 // Hậu quả đo thật: phép kiểm "Test xanh" báo "không package nào của bạn có suite bị ảnh hưởng"
@@ -145,7 +193,11 @@ const keyOf = (f) => stewardOf(f, structure, claimPrefixes);
 const keysTouched = ownershipKeys(touched, structure, claimPrefixes, adminFile);
 const rootAreasTouched = keysTouched.filter((k) => k.startsWith("_"));
 const myRootAreas = rootAreasTouched.filter((k) => ownedBy(k) === asLabel);
-const orphanRootAreas = rootAreasTouched.filter((k) => !CLAIMS?.[k] || !CLAIMS[k].owner);
+// Mồ côi xét trên tập ĐÃ TRỪ việc của lane khác (K2-1b). Đây là chỗ 9% lượt "giữ khoá vì chưa
+// push được" biến mất: một phiên nay trả khoá xong vẫn đẩy được sau, mà cổng phiên kế không đỏ oan.
+const orphanRootAreas = ownershipKeys(touchedToiPhaiTraLoi, structure, claimPrefixes, adminFile)
+  .filter((k) => k.startsWith("_"))
+  .filter((k) => !CLAIMS?.[k] || !CLAIMS[k].owner);
 const foreignRootAreas = rootAreasTouched.filter((k) => ownedBy(k) && ownedBy(k) !== asLabel);
 const rootTouched = rootAreasTouched.length > 0;
 // "Gốc là của tôi" chỉ đúng khi MỌI khoá gốc đã chạm đều của tôi. Một khoá của người khác là

@@ -23,31 +23,31 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-delegation-a01",
+      "owner": "claude-template-finish",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "Job A-01 delegation CC->GPT: dau Gate 0, RESULT-DIGEST, RUN-LOG, LESSON-INBOX, va sinh lai DASHBOARD.md",
+      "task": "Hoan thien bo khung mot mach: cong cu do do lech, no package.json, cong cu khoi tao, bang cua bo khung",
       "released_at": null
     },
     "_docs": {
-      "owner": "claude-bridge-multiprofile",
+      "owner": "claude-template-finish",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "GIU DEN KHI PUSH XONG (study MULTI-SESSION-PER-PROFILE da commit, cho push).",
+      "task": "Hoan thien bo khung mot mach: cong cu do do lech, no package.json, cong cu khoi tao, bang cua bo khung",
       "released_at": null
     },
     "_code": {
-      "owner": "claude-k2-design",
+      "owner": "claude-template-finish",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "K2-1 nua MAY: ownership_mode generated — file may sinh khong can ai nhan quyen. Do duoc: 19% luot nhan _root ton tai CHI de chay bo sinh. Mac dinh chua khai = hanh vi cu, khong pha lane nao. Nua LUAT can _root",
+      "task": "Hoan thien bo khung mot mach: cong cu do do lech, no package.json, cong cu khoi tao, bang cua bo khung",
       "released_at": null
     },
     "_template": {
-      "owner": "claude-k2-design",
+      "owner": "claude-template-finish",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "K2-1: bo khung khai generated (3 file build-dashboard sinh ra) — sinh lai ban trich",
+      "task": "Hoan thien bo khung mot mach: cong cu do do lech, no package.json, cong cu khoi tao, bang cua bo khung",
       "released_at": null
     }
   }

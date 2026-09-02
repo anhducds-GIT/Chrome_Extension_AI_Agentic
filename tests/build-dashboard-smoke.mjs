@@ -1050,6 +1050,79 @@ function antiDrift(text, measurements = {}) {
   }
 }
 
+/* 23f. K2-1b · việc ĐÃ COMMIT của lane khác không phải việc MỒ CÔI của tôi.
+   ĐO ĐƯỢC: 6/64 lượt nhận quyền ngày 02/09 (9%) là phiên giữ khoá vì KHÔNG PUSH ĐƯỢC, không vì
+   đang làm — "DANG GIU DEN KHI PUSH XONG". Lý do phải giữ: trả quyền sớm thì file trong commit
+   chưa push rơi vào vùng không chủ, và cổng phiên SAU đỏ oan. Nhãn `Lane:` tháo được ràng buộc.
+
+   HAI VẾ, và vế hai mới là vế khó: chỉ miễn khi commit mang nhãn NGƯỜI KHÁC. Không nhãn thì giữ
+   nguyên hành vi cũ — nới theo chiều "không nhãn thì cho qua" là biến bản vá thành đường lách:
+   cứ bỏ nhãn là hết bị soi. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-1b-orphan-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  const gate = () => spawnSync(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "toi", "--quick"], {
+    cwd: tempRoot, encoding: "utf8"
+  });
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2-1b Orphan");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "session-check.mjs", "build-dashboard.mjs", "check-bootstrap.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1,
+      generators: [],
+      areas: { "docs/": { steward: "_docs", mutability: "rw", ownership_mode: "root" } }
+    }, null, 2));
+    // `_docs` TRỐNG CHỦ — đúng trạng thái sau khi một phiên trả quyền mà chưa push.
+    put(".agents/claims.json", JSON.stringify({ claims: { _root: { owner: null }, _docs: { owner: null } } }, null, 2));
+    put("docs/x.md", "seed\n");
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed");
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+
+    // VẾ MỘT: commit của LANE KHÁC, đã commit, chưa push, vùng trống chủ → KHÔNG được tính là
+    // việc mồ côi của tôi. Trước K2-1b đây là ĐỎ, và là lý do người ta phải giữ khoá tới lúc push.
+    put("docs/x.md", "seed\nviec cua nguoi khac\n");
+    gitAt("add", "docs/x.md");
+    gitAt("commit", "-m", "docs: viec cua nguoi khac\n\nLane: nguoi-khac");
+    const g1 = gate();
+    assert.doesNotMatch(g1.stdout, /chưa khai chủ|chưa ai đứng tên/,
+      "commit da co NHAN cua lane khac thi KHONG phai viec mo coi cua toi: " + g1.stdout.slice(0, 700));
+
+    // VẾ HAI — FAIL CLOSED: cùng hoàn cảnh, nhưng commit KHÔNG có nhãn → vẫn phải ĐỎ.
+    // Đây là vế chống lách. Sai vế này thì bỏ nhãn là thoát mọi phép soi.
+    gitAt("reset", "--hard", "HEAD~1");
+    put("docs/x.md", "seed\nkhong co nhan\n");
+    gitAt("add", "docs/x.md");
+    gitAt("commit", "-m", "docs: khong co nhan gi ca");
+    const g2 = gate();
+    assert.match(g2.stdout, /chưa ai đứng tên|chưa khai chủ/,
+      "commit KHONG NHAN thi phai giu hanh vi cu — bo nhan khong duoc thanh duong lach: " + g2.stdout.slice(0, 700));
+
+    // VẾ BA: nhãn HỎNG cũng không được miễn — không quy thuộc được thì không miễn cho ai.
+    gitAt("reset", "--hard", "HEAD~1");
+    put("docs/x.md", "seed\nnhan hong\n");
+    gitAt("add", "docs/x.md");
+    gitAt("commit", "-m", "docs: nhan hong\n\nLane: mot\nLane: hai");
+    const g3 = gate();
+    assert.match(g3.stdout, /chưa ai đứng tên|chưa khai chủ/,
+      "nhan HONG thi khong duoc mien — fail closed: " + g3.stdout.slice(0, 700));
+    ok("K2-1b · viec da commit CO NHAN cua lane khac khong phai mo coi; khong nhan / nhan hong thi VAN do");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-1b-orphan-")), "chỉ dọn đúng temp fixture K2-1b");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
 
 /* ==========================================================================
    S2 — cổng vào: llms.txt + repo-map.json + Khối A/D
