@@ -187,9 +187,34 @@ check("Test xanh", () => {
 // Phép kiểm này dựng và so hoàn toàn từ HEAD: chạy SAU commit, trước safe-push.
 // Nó không đọc hay ghi working tree, vì việc đang làm dở của bất kỳ phiên nào
 // cũng không được làm đỏ sự thật đã commit. --quick chỉ bỏ test, không bỏ phép này.
+// Bộ kiểm phải là bản ĐÃ COMMIT. Phép kiểm này chạy `scripts/*.mjs` ở WORKING TREE
+// để phán xem artifact đã commit có khớp HEAD không — nên một bản sửa dở của chính
+// bộ sinh có thể làm cổng nói dối về chính nó. Audit GPT 2026-09-02, mục 4.
+// Không sửa bằng cách chạy blob HEAD trong thư mục tạm: bộ sinh tự tính ROOT theo vị
+// trí file của nó, chạy ở chỗ khác là tính sai gốc repo. Cách đúng và rẻ: từ chối tin
+// kết quả khi bộ kiểm chưa commit. Đúng quy trình đã ghi (commit → cổng → push) thì
+// lúc chạy cổng cây làm việc vốn đã sạch, nên phép kiểm này không cản ai cả.
+function verifierMatchesHead(script) {
+  try {
+    const diff = execFileSync("git", ["-c", "core.quotepath=false", "diff", "HEAD", "--name-only", "--", `scripts/${script}`], {
+      cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"]
+    });
+    return diff.trim() === "";
+  } catch {
+    return true; // không hỏi được git thì không bịa ra một cáo buộc
+  }
+}
+
 check("Sự thật máy sinh còn tươi", () => {
   const scripts = ["build-dashboard.mjs", "feature-parity.mjs"];
   const failures = [];
+  const dirtyVerifiers = scripts.filter((script) => !verifierMatchesHead(script));
+  if (dirtyVerifiers.length) {
+    return {
+      ok: false,
+      msg: `GENERATOR_DIRTY: ${dirtyVerifiers.map((s) => `scripts/${s}`).join(", ")} đang sửa dở chưa commit. Phép kiểm này dùng chính script đó để phán xử, nên kết quả không đáng tin. Commit bộ sinh trước, rồi chạy lại cổng.`
+    };
+  }
   for (const script of scripts) {
     try {
       execFileSync(process.execPath, [path.join(ROOT, "scripts", script), "--check-head"], {

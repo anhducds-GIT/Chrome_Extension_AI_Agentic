@@ -1112,4 +1112,58 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   assert.equal(unit.lifecycle, "active");
   ok("SAU-AUDIT repo-map giữ đủ trường truy nguồn (ngày + commit kiểm chứng cuối)");
 }
+
+/* ==========================================================================
+   VÒNG AUDIT GPT — hai lỗ hổng test GPT tìm ra và tôi đã tự kiểm chứng:
+   cả hai mutation dưới đây THOÁT được suite 51 phép kiểm.
+   ========================================================================== */
+
+/* B1. GPT-1 — xoá vòng lặp liệt kê extension khỏi `llms.txt` thì suite vẫn xanh,
+   vì phép kiểm cũ chỉ đếm "có ít nhất 4 link" — đúng bằng số link lõi. Cổng vào
+   mất sạch phần quan trọng nhất (repo có extension gì) mà không ai kêu. */
+{
+  const model = collectModel(s2Repo());
+  const text = buildLlmsTxt(model);
+  const withStatus = model.rows.filter((row) => row.statusPath);
+  assert.ok(withStatus.length > 0, "fixture phải có ít nhất một đơn vị đã khai STATUS");
+  for (const row of withStatus) {
+    assert.ok(text.includes(row.statusPath), `llms.txt phải liệt kê ${row.statusPath}`);
+    assert.ok(text.includes(row.name), `llms.txt phải nêu tên ${row.name}`);
+  }
+  // Và mục "Từng extension" không được rỗng khi có đơn vị thật.
+  const section = text.split("## Từng extension")[1] ?? "";
+  assert.equal((section.match(/^- \[/gm) ?? []).length, withStatus.length,
+    "mục Từng extension phải có đúng một dòng cho mỗi đơn vị đã khai STATUS");
+  ok("SAU-GPT llms.txt liệt kê ĐỦ từng extension, không chỉ đủ số link lõi");
+}
+
+/* B2. GPT-2 — xoá riêng một dòng khỏi bảng Khối D thì suite vẫn xanh, vì phép
+   kiểm cũ đọc con số trong model chứ không đọc bảng đã render. Nợ biến mất khỏi
+   thứ Đức thật sự nhìn. */
+{
+  const text = buildDashboard(collectModel(s2Repo()));
+  const block = text.split("## D · Sức khoẻ điều hướng [ĐO]")[1] ?? "";
+  for (const label of [
+    "Đơn vị chưa khai STATUS",
+    "Link chết trong file cổng",
+    "Thư mục top-level chưa khai chủ",
+    "Tài liệu quá hạn chưa rà"
+  ]) {
+    assert.ok(block.includes(label), `Khối D phải render dòng "${label}"`);
+  }
+  const rows = (block.match(/^\| [^|]+ \| \d+ \|/gm) ?? []).length;
+  assert.equal(rows, 4, "Khối D phải có ĐÚNG bốn dòng nợ có số, không thiếu dòng nào");
+  ok("SAU-GPT Khối D render đủ bốn dòng nợ, không chỉ đúng bốn con số trong model");
+}
+
+/* B3. GPT-4 — cổng kiểm không được tự kiểm mình bằng một bộ kiểm đang sửa dở.
+   Phép kiểm 7 chạy `scripts/build-dashboard.mjs` ở WORKING TREE để phán xem
+   artifact đã commit có khớp HEAD không. Một bản sửa dở của chính bộ sinh đó có
+   thể làm cổng nói dối. Ghim: bộ sinh phải khai được nó đang chạy bản nào. */
+{
+  const text = readFileSync(new URL("../scripts/session-check.mjs", import.meta.url), "utf8");
+  assert.match(text, /verifierMatchesHead|GENERATOR_DIRTY/,
+    "session-check phải có bước kiểm chính bộ sinh trước khi tin kết quả của nó");
+  ok("SAU-GPT cổng kiểm có bước xác nhận bộ sinh chưa bị sửa dở trước khi tin nó");
+}
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
