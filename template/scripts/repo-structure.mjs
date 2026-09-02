@@ -208,6 +208,56 @@ export function lineCountOf(text) {
   return parts[parts.length - 1] === "" ? parts.length - 1 : parts.length;
 }
 
+/* THỨ MÁY SỞ HỮU THÌ KHÔNG AI PHẢI NHẬN QUYỀN — K2-1, 2026-09-02.
+ *
+ * ĐO ĐƯỢC, không phải suy luận. Dựng lại 138 lượt ghi lịch sử `.agents/claims.json`:
+ *   · **5 trong 27 lượt nhận `_root` ngày 02/09 (19%) tồn tại CHỈ để chạy bộ sinh.** Ghi chú
+ *     nguyên văn trong bảng quyền: "Sinh lai artifact sau khi va con tro chet" · "Sinh lai
+ *     DASHBOARD/llms.txt/repo-map" · "Sinh lai artifact sau va F-18"…
+ *   · 21.7% commit chạm `_root` chỉ vì file máy sinh.
+ * Nội dung mấy file đó **tất định từ HEAD** — không ai "sở hữu" chúng theo nghĩa nào. Nên tranh
+ * chấp quanh chúng là **nhân tạo**: một phiên chỉ sửa code trong một gói vẫn buộc phải nhận khoá
+ * gốc ở cuối, chỉ để ghi lại thứ máy tự tính ra.
+ *
+ * KHÔNG LÀM YẾU LỚP BẢO VỆ NÀO, và đây là chỗ phải nói rõ vì nó dễ bị đọc thành nới lỏng:
+ * miễn cho chúng khỏi **tranh chấp quyền** thì nội dung vẫn bị **phép kiểm #7** ("Sự thật máy
+ * sinh còn tươi") đối chiếu với HEAD ở mọi phiên. Sửa tay một dòng trong `DASHBOARD.md` vẫn ĐỎ
+ * — chỉ là nó đỏ ở phép kiểm ĐÚNG chỗ, thay vì đòi một cái khoá không liên quan. Audit GPT
+ * 02/09 chốt đúng điều kiện này: bỏ khỏi tranh chấp được, bỏ khỏi kiểm chứng thì không.
+ *
+ * ĐỪNG GỘP `generated` VỚI `generators` — hai khoá khác nhau một chữ, và gộp là hỏng cả hai:
+ *   · `generators` = danh sách SCRIPT sinh ra artifact. Phép kiểm #7 chạy từng cái với
+ *     `--check-head` để hỏi "bản đã commit có còn khớp HEAD không".
+ *   · `generated`  = danh sách FILE do chúng sinh ra. Chỉ dùng cho việc quy quyền ở đây.
+ * Phép kiểm #7 KHÔNG hề đọc `generated`, và đó là chủ ý: nhờ vậy miễn quyền không thể vô tình
+ * miễn luôn kiểm chứng. Đã đọc lại code để chắc — #7 chỉ gọi `generatorsFrom` và `--check-head`,
+ * không chạm `ownershipKeys`, `generatedFrom`, `adminFile` hay `mine()`.
+ *
+ * TƯƠNG THÍCH NGƯỢC CÓ CHỦ Ý: chưa khai `generated` thì trả mảng RỖNG, tức hành vi y hệt trước.
+ * Nhờ vậy nửa MÁY này vào được mà không cần nửa LUẬT, và không phá phiên nào đang chạy — đúng
+ * thứ tự "MÁY trước, LUẬT sau" mà bài học A2 (nửa di trú) đã dạy trong chính ngày này. */
+export function generatedFrom(parsed) {
+  const value = parsed?.generated;
+  if (value === undefined) return Object.freeze([]);
+  if (!Array.isArray(value)) {
+    throw new Error("GENERATED_HONG: `generated` phải là MẢNG đường dẫn tương đối của file máy sinh (hoặc bỏ hẳn). Đang là: " + JSON.stringify(value));
+  }
+  for (const name of value) {
+    if (typeof name !== "string" || name.trim() === "") {
+      throw new Error(`GENERATED_HONG: mỗi phần tử phải là đường dẫn không rỗng. Đang là: ${JSON.stringify(name)}`);
+    }
+    // Đường dẫn tuyệt đối hay đi ngược lên trên là cách âm thầm miễn trừ thứ ngoài repo.
+    if (name.startsWith("/") || name.startsWith("\\") || name.includes("..") || /^[A-Za-z]:/.test(name)) {
+      throw new Error(`GENERATED_HONG: "${name}" phải là đường dẫn TƯƠNG ĐỐI trong repo, không tuyệt đối và không chứa "..".`);
+    }
+    // Thư mục thì không: miễn cả một thư mục là mở một lỗ rộng mà không ai đọc ra từ cấu hình.
+    if (name.endsWith("/")) {
+      throw new Error(`GENERATED_HONG: "${name}" là thư mục. Khai TỪNG FILE máy sinh — miễn cả thư mục là một lỗ mà đọc cấu hình không thấy.`);
+    }
+  }
+  return Object.freeze([...value]);
+}
+
 /* MỘT BỘ PHÂN GIẢI, MỌI CÔNG CỤ ĐI QUA NÓ — thêm K2-2b, 2026-09-02.
 
    Vì sao có hàm này, và nó là LẦN LỆCH THỨ HAI ở đúng hai file của lần thứ nhất:
@@ -234,8 +284,14 @@ export function ownershipKeys(files, parsed, prefixes = DEFAULT_CLAIM_PREFIXES, 
   if (!Array.isArray(files)) {
     throw new TypeError("OWNERSHIP_HONG: `files` phải là mảng đường dẫn tương đối.");
   }
+  // File MÁY SINH bỏ qua ngay tại cửa, không qua `isAdmin`. Hai thứ khác nhau và cố ý tách:
+  // `isAdmin` là của bên gọi vì nó phải hỏi git (`HANDOFF.md` chỉ miễn khi chỉ-thêm-dòng), còn
+  // "file này do máy sinh" là một sự thật THUẦN của tầng LUẬT — đọc cấu hình là biết, không cần
+  // hỏi git. Nhét nó vào `isAdmin` là buộc mọi bên gọi tự nhớ, và người thứ ba sẽ quên.
+  const generated = new Set(generatedFrom(parsed));
   const keys = new Set();
   for (const file of files) {
+    if (generated.has(file)) continue;
     if (isAdmin(file)) continue;
     keys.add(stewardOf(file, parsed, prefixes));
   }

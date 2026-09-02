@@ -1294,3 +1294,67 @@ Bài học: **đừng khuyên phiên khác ghi vào một đường dẫn mình 
 hữu theo trực giác khi có một hàm trả lời được. Lưu ý khi tự kiểm: `stewardOf(relPath, parsed)`
 cần truyền `.repo-structure.json` vào — gọi thiếu tham số thì nó trả `_root` cho mọi thứ, và
 tôi đã tự lừa mình đúng một lượt vì thế.
+
+## 2026-09-02 — `claude-k2-design`: K2-1 nửa MÁY · thứ máy sở hữu thì không ai phải nhận quyền
+
+**Đo trước, rồi mới vá.** Dựng lại 138 lượt ghi lịch sử `.agents/claims.json`:
+
+- **5 trong 27 lượt nhận `_root` ngày 02/09 (19%) tồn tại CHỈ để chạy bộ sinh.** Ghi chú nguyên
+  văn trong bảng quyền: *"Sinh lai artifact sau khi va con tro chet"* · *"Sinh lai
+  DASHBOARD/llms.txt/repo-map"* · *"Sinh lai artifact sau va F-18"*…
+- 21.7% commit chạm `_root` chỉ vì file máy sinh.
+- **24 phiên** khác nhau giữ khoá trong một ngày (ngày trước: 3–7).
+- **16.7% thời gian hôm nay MỌI khoá đều có chủ** — 2h45/16h25, một phiên mới không thể bắt đầu
+  việc gì cần ghi file.
+
+Nội dung mấy file đó **tất định từ HEAD**. Không ai "sở hữu" chúng theo nghĩa nào, nên tranh chấp
+quanh chúng là **nhân tạo**: một phiên chỉ sửa code trong một gói vẫn buộc phải nhận khoá gốc ở
+cuối, chỉ để ghi lại thứ máy tự tính ra.
+
+→ `generatedFrom()` đọc khối `generated` (danh sách FILE), và `ownershipKeys` bỏ chúng **ngay tại
+cửa**. Commit chỉ sinh lại artifact nay **không đòi khoá nào**.
+
+**KHÔNG làm yếu lớp bảo vệ nào — và tôi đọc lại code để chắc, không chỉ tin lý lẽ.** Phép kiểm #7
+chỉ gọi `generatorsFrom` + `--check-head`; nó **không hề** chạm `ownershipKeys`, `generatedFrom`,
+`adminFile` hay `mine()`. Hai lớp độc lập, nên miễn quyền không thể vô tình miễn kiểm chứng. Sửa
+tay một dòng trong `DASHBOARD.md` vẫn ĐỎ — chỉ là đỏ ở phép kiểm ĐÚNG chỗ. Đúng điều kiện audit
+GPT đặt ra 02/09.
+
+**Đừng gộp `generated` với `generators`** — khác một chữ: cái kia là SCRIPT, cái này là FILE.
+Đã ghi cảnh báo ngay trong cả hai file.
+
+### Ghim, gồm ca chống-lách
+
+- Commit chỉ sinh lại artifact → **không đòi khoá nào** (hành vi thật, `safe-push` chạy trong repo tạm).
+- **Trộn file THẬT vào cùng commit với artifact → vẫn lộ ra vùng của file thật.** Đây là ca lách
+  hiển nhiên: nhét một file thật cạnh artifact rồi đẩy đi mà không cần khoá. Vá sai vế này thì
+  bản vá thành một đường lách, nên nó có fixture riêng.
+- Khai hỏng thì **NÉM**: chuỗi thay vì mảng · phần tử rỗng · đường dẫn tuyệt đối (cả kiểu
+  Windows) · chứa `..` · khai cả **thư mục** (miễn thư mục là lỗ rộng mà đọc cấu hình không thấy).
+- **Chưa khai `generated` = hành vi y hệt trước.** Tương thích ngược có chủ ý.
+
+### Nửa LUẬT còn thiếu, và cố ý
+
+`.repo-structure.json` của repo NÀY chưa khai `generated` — file đó thuộc `_root`, phiên này không
+giữ. **Bộ khung thì đã khai** (`DASHBOARD.md` · `llms.txt` · `repo-map.json`), nên repo mới dựng
+từ bộ khung được lợi ngay.
+
+Thứ tự này là **có chủ ý**, theo đúng bài học A2 trong cùng ngày: **đổi tầng MÁY trước, LUẬT sau**.
+Máy mặc định "chưa khai gì" nên vào được mà không phá phiên nào đang chạy. **Việc kế cho phiên giữ
+`_root`:** thêm một dòng
+`"generated": ["DASHBOARD.md", "llms.txt", "repo-map.json", "FEATURE-PARITY.md"]`
+vào `.repo-structure.json`. Chỉ một dòng, và nó xoá 19% lượt nhận khoá gốc.
+
+### Một lỗ hở MỚI tìm ra trong lúc dò, chưa vá
+
+**Khoá của phiên đã tắt bị giữ mãi.** Đếm được: 4 nhãn đang giữ khoá, mà `ListAgents` chỉ thấy 3
+phiên sống — nên ít nhất một nhãn đã tắt mà vẫn giữ. Bảng quyền **không có cách nào biết**:
+`claimed_at` **chỉ có ngày, không có giờ**, không `heartbeat`, không `expires_at`, không phép kiểm
+nào soi tuổi. Phát hiện được chỉ vì có người ngồi đếm `ListAgents` bằng tay.
+
+Cùng họ đường hỏng F4 trong bản thiết kế K2, nhưng ở lớp QUYỀN chứ không phải lớp clone.
+**Đề xuất mức tối thiểu — "nói ra", không tự thu hồi:** `claimed_at` mang cả giờ · `claim.mjs
+--list` in tuổi từng khoá · cổng **cảnh báo** khi khoá quá N giờ. **Tuyệt đối không tự thu hồi** —
+tự lấy khoá của phiên đang ngủ là đúng tai nạn 02/09 mà `claim.mjs` sinh ra để chặn.
+
+**Số:** suite 261 → **264**.

@@ -978,6 +978,78 @@ function antiDrift(text, measurements = {}) {
   }
 }
 
+/* 23e. K2-1 · file MÁY SINH không đòi khoá — và sửa tay vẫn phải ĐỎ.
+   Hai vế, và vế thứ hai mới là vế khó: rất dễ viết một bản vá "miễn file máy sinh" rồi vô tình
+   miễn luôn cả việc kiểm chứng nội dung chúng. Audit GPT 02/09 chốt đúng điều kiện: bỏ khỏi
+   TRANH CHẤP QUYỀN được, bỏ khỏi KIỂM CHỨNG thì không. Nên fixture này khẳng định cả hai. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-1-generated-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2-1 Generated");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "safe-push.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    // `_root` là của NGƯỜI KHÁC. Trước K2-1, một commit chỉ sinh lại `DASHBOARD.md` sẽ quy về
+    // `_root` và bị từ chối — đúng 19% lượt nhận quyền mà phép đo tìm ra.
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1,
+      generated: ["DASHBOARD.md", "llms.txt"],
+      areas: { "docs/": { steward: "_docs", mutability: "rw", ownership_mode: "root" } }
+    }, null, 2));
+    put(".agents/claims.json", JSON.stringify({ claims: {
+      _root: { owner: "nguoi-khac" }, _docs: { owner: null }
+    } }, null, 2));
+    put("DASHBOARD.md", "bang\n");
+    put("llms.txt", "cong vao\n");
+    put("docs/x.md", "seed\n");
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed");
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+
+    // VẾ MỘT: commit CHỈ sinh lại artifact → không đòi khoá nào → đẩy được.
+    put("DASHBOARD.md", "bang\nso moi\n");
+    put("llms.txt", "cong vao\nmuc moi\n");
+    gitAt("add", "DASHBOARD.md", "llms.txt");
+    gitAt("commit", "-m", "chore: sinh lai artifact\n\nLane: toi");
+    const r1 = spawnSync(process.execPath, [join(tempRoot, "scripts", "safe-push.mjs"), "--as", "toi", "--dry-run"], {
+      cwd: tempRoot, encoding: "utf8"
+    });
+    const out1 = `${r1.stdout}${r1.stderr}`;
+    assert.doesNotMatch(out1, /CHỐI PUSH/,
+      "commit chi sinh lai artifact KHONG duoc bi tu choi — day la 19% luot nhan quyen bi xoa: " + out1.slice(0, 600));
+    assert.match(out1, /chỉ thao tác hành chính|\(chỉ/, "va phai hien la khong cham vung nao");
+    assert.equal(r1.status, 0, "--dry-run phai thoat 0");
+
+    // VẾ HAI — VẾ KHÓ: tron file may sinh voi file THAT thi van doi khoa cua file that.
+    // Neu ban va lam sai ve nay thi no thanh mot duong lach: nhet mot file that vao cung commit
+    // voi artifact roi day di ma khong can khoa.
+    put("docs/x.md", "seed\nsua noi dung that\n");
+    put("DASHBOARD.md", "bang\nso moi\nthem\n");
+    gitAt("add", "docs/x.md", "DASHBOARD.md");
+    gitAt("commit", "-m", "docs: sua that, nup sau artifact\n\nLane: toi");
+    // `_docs` trống chủ nên safe-push hiện "[trống chủ]" chứ không từ chối — điều phải khẳng
+    // định là nó VẪN THẤY `_docs`, tức không bị artifact che mất.
+    const r2 = spawnSync(process.execPath, [join(tempRoot, "scripts", "safe-push.mjs"), "--as", "toi", "--dry-run"], {
+      cwd: tempRoot, encoding: "utf8"
+    });
+    assert.match(`${r2.stdout}${r2.stderr}`, /_docs/,
+      "file THAT trong cung commit voi artifact van phai lo ra vung cua no — khong duoc nup sau artifact");
+    ok("K2-1 · HANH VI: commit chi sinh lai artifact khong doi khoa; file that KHONG nup duoc sau artifact");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-1-generated-")), "chỉ dọn đúng temp fixture K2-1");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
 
 /* ==========================================================================
    S2 — cổng vào: llms.txt + repo-map.json + Khối A/D

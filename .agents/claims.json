@@ -37,17 +37,17 @@
       "released_at": null
     },
     "_code": {
-      "owner": "claude-k1-template",
+      "owner": "claude-k2-design",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "K1 muc 1b: bo khung mang theo suite cua chinh no — tests/harness-smoke.mjs + scripts.test trong ban trich",
+      "task": "K2-1 nua MAY: ownership_mode generated — file may sinh khong can ai nhan quyen. Do duoc: 19% luot nhan _root ton tai CHI de chay bo sinh. Mac dinh chua khai = hanh vi cu, khong pha lane nao. Nua LUAT can _root",
       "released_at": null
     },
     "_template": {
-      "owner": "claude-k1-template",
+      "owner": "claude-k2-design",
       "ai": "Claude",
       "claimed_at": "2026-09-02",
-      "task": "K1: bo khung phai mang theo suite cua chinh no — them tests/ va scripts.test vao ban trich",
+      "task": "K2-1: bo khung khai generated (3 file build-dashboard sinh ra) — sinh lai ban trich",
       "released_at": null
     }
   }

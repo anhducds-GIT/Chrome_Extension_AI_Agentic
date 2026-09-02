@@ -25,6 +25,7 @@ import {
   appendOnlyAtEof,
   lineCountOf,
   laneFromMessage,
+  generatedFrom,
   DEFAULT_REPO
 } from "../scripts/repo-structure.mjs";
 import fsMod from "node:fs";
@@ -442,6 +443,54 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   assert.match(xungDot.problem, /LANE_XUNG_DOT/);
   assert.match(xungDot.problem, /mot, hai/, "phai ke ra ca hai nhan de nguoi sua biet");
   ok("K2-3 · laneFromMessage: doc trailer, phan biet THIEU voi HONG, va ba kieu hong deu FAIL CLOSED");
+}
+
+/* ---- K2-1 · thu MAY so huu thi khong ai phai nhan quyen ------------------ */
+/* DO DUOC: 5/27 luot nhan `_root` ngay 02/09 (19%) ton tai CHI de chay bo sinh. Noi dung may
+   file do tat dinh tu HEAD — khong ai so huu chung. Tranh chap quanh chung la NHAN TAO.
+
+   KHONG lam yeu lop bao ve nao: mien khoi TRANH CHAP quyen, nhung noi dung van bi phep kiem #7
+   doi chieu voi HEAD o moi phien. Sua tay mot dong trong DASHBOARD.md van DO — chi la do o phep
+   kiem DUNG cho, thay vi doi mot cai khoa khong lien quan. */
+{
+  const parsed = {
+    generated: ["DASHBOARD.md", "llms.txt", "repo-map.json", "FEATURE-PARITY.md"],
+    areas: {
+      "docs/": { steward: "_docs", ownership_mode: "root" },
+      "scripts/": { steward: "_code", ownership_mode: "root" },
+      "workers/": { steward: null, ownership_mode: "per-package", claim_prefix: "workers/" }
+    }
+  };
+  const prefixes = claimPrefixesFrom(parsed);
+
+  // CA QUYET DINH: commit CHI cham file may sinh -> KHONG can khoa nao.
+  assert.deepEqual(ownershipKeys(["DASHBOARD.md", "llms.txt", "repo-map.json"], parsed, prefixes), [],
+    "commit chi sinh lai artifact thi khong doi khoa nao — day la 19% luot nhan quyen bi xoa");
+
+  // Nhung tron voi file THAT thi van doi khoa cua file that.
+  assert.deepEqual(ownershipKeys(["DASHBOARD.md", "scripts/x.mjs"], parsed, prefixes), ["_code"],
+    "tron file may sinh voi file that thi van phai nhan khoa cua file that");
+  assert.deepEqual(ownershipKeys(["llms.txt", "docs/a.md", "workers/pkg/v1/y.js"], parsed, prefixes),
+    ["_docs", "workers/pkg"], "mien dung nhung file da khai, khong mien lay");
+
+  // CHUA KHAI thi khong mien gi — tuong thich nguoc, va la mac dinh an toan.
+  const chuaKhai = { areas: parsed.areas };
+  assert.deepEqual(ownershipKeys(["DASHBOARD.md"], chuaKhai, prefixes), ["_root"],
+    "chua khai `generated` thi hanh vi y HET truoc: DASHBOARD.md van thuoc _root");
+
+  // Khai HONG thi NEM — lang le lui ve mac dinh la mo mot lo ma doc cau hinh khong thay.
+  const nem = (g, re) => assert.throws(() => generatedFrom({ generated: g }), re, `phai nem voi ${JSON.stringify(g)}`);
+  nem("DASHBOARD.md", /GENERATED_HONG/);              // chuoi thay vi mang
+  nem([""], /GENERATED_HONG/);
+  nem(["   "], /GENERATED_HONG/);
+  nem([42], /GENERATED_HONG/);
+  nem(["/etc/passwd"], /GENERATED_HONG/);             // tuyet doi
+  nem(["C:/x/y.md"], /GENERATED_HONG/);               // tuyet doi kieu Windows
+  nem(["../ngoai-repo.md"], /GENERATED_HONG/);        // di nguoc len tren
+  nem(["docs/"], /GENERATED_HONG/);                   // ca THU MUC — lo rong
+  assert.deepEqual(generatedFrom({}), [], "khong khai = mang rong");
+  assert.deepEqual(generatedFrom(null), [], "khong co cau hinh = mang rong");
+  ok("K2-1 · file may sinh khong doi khoa; tron voi file that thi van doi; khai hong thi NEM");
 }
 
 
