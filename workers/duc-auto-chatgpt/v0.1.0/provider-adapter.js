@@ -144,7 +144,7 @@
     sendReadyTimeoutMs: 5000, // Send button must become enabled within this window
   });
 
-  const SURFACE = Object.freeze({ CONVERSATION: "CONVERSATION", WRONG: "WRONG" });
+  const SURFACE = Object.freeze({ CONVERSATION: "CONVERSATION", LAUNCHER: "LAUNCHER", WRONG: "WRONG" });
 
   const ORIGIN = Object.freeze({
     hosts: Object.freeze(["chatgpt.com", "chat.openai.com"]),
@@ -155,11 +155,37 @@
     return Boolean(url && ORIGIN.urlPattern.test(url));
   }
 
-  // ChatGPT has no images-vs-app split the way Gemini does: every normal
-  // conversation URL is the same surface. Kept as a function anyway so both
-  // adapters expose one shape.
+  // Surface rule. CORRECTED 2026-09-02 after a live loss.
+  //
+  // The previous version returned CONVERSATION for EVERY chatgpt.com URL. Its
+  // comment reasoned "ChatGPT has no images-vs-app split the way Gemini does:
+  // every normal conversation URL is the same surface" -- true of conversations,
+  // but it forgot that the HOME PAGE is not a conversation. Submitting from
+  // https://chatgpt.com/ makes the tab NAVIGATE to /c/<id>, and the run dies
+  // after the navigation with an opaque OUTPUT_DETECTION_TIMEOUT. One generation
+  // spent, nothing detected. This is the same failure Gemini already solved in
+  // v0.1.0 (its own note: "submitting from /images NAVIGATES the tab to
+  // /app/<conversation-id>"), so this branch was the odd one out.
+  //
+  // EVIDENCE LEVEL, stated honestly:
+  //   [ĐO] /c/<id> is a real conversation — probed live 2026-09-02 on profile
+  //        kaito, url https://chatgpt.com/c/6a9803a5-..., assistantCount 2.
+  //   [ĐO] / (bare home) is NOT — probed live the same day, assistantCount 0,
+  //        and a run started there was lost.
+  //   [DÒ] every other chatgpt.com path is treated as a LAUNCHER (blocked).
+  //        Not measured. Chosen deliberately: a wrong block costs one clear
+  //        message and one click, a wrong allow costs a generation and lands
+  //        the operator in a timeout that says nothing. If a real conversation
+  //        shape without a /c/ segment turns up, widen this WITH the probe that
+  //        proves it -- do not widen it on a hunch.
+  const CONVERSATION_PATH = /(^|\/)c\/[^/]+/i;
+
   function surface(url) {
-    return isProviderUrl(url) ? SURFACE.CONVERSATION : SURFACE.WRONG;
+    if (!isProviderUrl(url)) return SURFACE.WRONG;
+    let pathname;
+    try { pathname = new URL(url).pathname; }
+    catch (_) { return SURFACE.WRONG; }
+    return CONVERSATION_PATH.test(pathname) ? SURFACE.CONVERSATION : SURFACE.LAUNCHER;
   }
 
   function surfaceAllowed(url, _context = {}) {

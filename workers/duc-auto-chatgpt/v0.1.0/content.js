@@ -75,6 +75,21 @@
   function assistantSelector() { return resolveSelector(SEL.assistantMessage); }
   function userSelector() { return resolveSelector(SEL.userMessage); }
 
+  // Trang hiện tại có phải một hội thoại thật không. THÊM 2026-09-02.
+  //
+  // Trước hôm nay `ADAPTER.surfaceAllowed` tồn tại nhưng **không ai gọi** ngoài một dòng in ra
+  // trong `diagnostics.dom_probe` — tức có luật mà không nối dây. Hậu quả đo được cùng ngày:
+  // `ping` trả `state: READY` khi tab đang ở trang chủ chatgpt.com, và một job gửi từ đó đã
+  // mất trắng một lượt sinh. Hai nhánh gemini và gg-flow-video đều đã nối dây này từ trước;
+  // nhánh này là cái duy nhất còn hở.
+  function surfaceAllowedNow() {
+    // Không truyền context: luật của nhánh này thuần theo đường dẫn. Nhánh gemini có truyền
+    // `submittedInThisTab` vì luật của nó cho phép ở lại hội thoại mà chính tab đó vừa gửi —
+    // chép sang đây là ám chỉ một tính năng không tồn tại, và `STATE.submittedInThisTab` ở
+    // nhánh này thực sự KHÔNG có (sẽ là undefined).
+    return ADAPTER.surfaceAllowed(location.href);
+  }
+
   function findComposer() {
     return firstVisible(SEL.composer);
   }
@@ -673,7 +688,7 @@
         const sendButton = findSendButton(composer);
         const blocker = securityBlockerText();
         const limitBlocker = generationLimitText();
-        const readiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(composer), sendUsable: sendUsable(composer, sendButton), generating: Boolean(findStopButton()), securityBlocker: blocker, generationLimitBlocker: limitBlocker, attachmentPending: uploadIsPending(), abPollPending: abPollPending(), outputVerified });
+        const readiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(composer) && surfaceAllowedNow(), sendUsable: sendUsable(composer, sendButton), generating: Boolean(findStopButton()), securityBlocker: blocker, generationLimitBlocker: limitBlocker, attachmentPending: uploadIsPending(), abPollPending: abPollPending(), outputVerified });
         if (readiness === "HARD_STOP") throw hardStopError(limitBlocker ? `LIMIT_STOP: ${limitBlocker}` : `HARD_STOP: ${blocker}`, abPoll);
         if (readiness === "READY") {
           if (safetyCooldownSec > 0) await sleep(safetyCooldownSec * 1000);
@@ -681,7 +696,7 @@
           const finalSendButton = findSendButton(finalComposer);
           const finalBlocker = securityBlockerText();
           const finalLimitBlocker = generationLimitText();
-          const finalReadiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(finalComposer), sendUsable: sendUsable(finalComposer, finalSendButton), generating: Boolean(findStopButton()), securityBlocker: finalBlocker, generationLimitBlocker: finalLimitBlocker, attachmentPending: uploadIsPending(), abPollPending: abPollPending(), outputVerified });
+          const finalReadiness = window.DacChatReadiness.evaluate({ composerFound: Boolean(finalComposer) && surfaceAllowedNow(), sendUsable: sendUsable(finalComposer, finalSendButton), generating: Boolean(findStopButton()), securityBlocker: finalBlocker, generationLimitBlocker: finalLimitBlocker, attachmentPending: uploadIsPending(), abPollPending: abPollPending(), outputVerified });
           if (finalReadiness === "HARD_STOP") throw hardStopError(finalLimitBlocker ? `LIMIT_STOP: ${finalLimitBlocker}` : `HARD_STOP: ${finalBlocker}`, abPoll);
           if (finalReadiness === "READY") return { ok: true, state: "IDLE_READY", composerFound: true, sendUsable: sendUsable(finalComposer, finalSendButton), ab_poll: abPoll };
         }
@@ -704,6 +719,13 @@
     if (requestAttempt) STATE.activeAttempt = requestAttempt;
 
     try {
+      // CHẶN TRƯỚC KHI TIÊU BẤT CỨ THỨ GÌ. Phải đứng trước mọi thứ khác trong khối này:
+      // trang chủ chatgpt.com CÓ composer và CÓ nút gửi, nên mọi phép kiểm phía dưới đều
+      // xanh và không cái nào nhận ra vấn đề. Gửi từ đó thì trang điều hướng sang /c/<id>
+      // và lượt sinh mất trắng kèm một lỗi hết-giờ không nói lên điều gì.
+      if (!surfaceAllowedNow()) {
+        throw new Error(`WRONG_SURFACE: tab đang ở ${location.href} — đây không phải một cuộc hội thoại. Mở sẵn một hội thoại (địa chỉ có dạng chatgpt.com/c/<id>) rồi chạy lại. Chưa gửi gì, chưa tốn lượt nào.`);
+      }
       if (findStopButton()) {
         throw new Error("ChatGPT is already generating. Wait for it to finish before starting the queue.");
       }
@@ -868,7 +890,7 @@
           provider: ADAPTER.provider,
           url: location.href,
           surface: ADAPTER.surface(location.href),
-          surface_allowed: ADAPTER.surfaceAllowed(location.href),
+          surface_allowed: surfaceAllowedNow(),
           composerFound: Boolean(findComposer()),
           sendFound: Boolean(findSendButton()),
           stopFound: Boolean(findStopButton()),

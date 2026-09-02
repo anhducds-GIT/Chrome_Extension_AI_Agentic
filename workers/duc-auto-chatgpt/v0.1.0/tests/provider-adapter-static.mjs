@@ -17,7 +17,11 @@ const content = read("content.js");
 const manifest = JSON.parse(read("manifest.json"));
 const html = read("sidepanel.html");
 
-const context = { window: null };
+// `URL` phải có mặt trong hộp cát: luật surface phân tích đường dẫn bằng `new URL()`, và
+// `vm.runInNewContext` với một object trần KHÔNG có sẵn global đó. Thiếu nó thì `surface()`
+// ném, rơi vào nhánh bắt lỗi, và trả WRONG cho MỌI url — phép kiểm sẽ đỏ vì lý do sai hoàn
+// toàn (đã mất vài phút vì đúng chuyện này 2026-09-02).
+const context = { window: null, URL };
 context.window = context;
 vm.runInNewContext(read("provider-adapter.js"), context);
 const adapter = context.DacProviderAdapter;
@@ -54,7 +58,11 @@ assert.equal(adapter.isProviderUrl("https://chatgpt.com.evil.test/c/abc"), false
 assert.equal(adapter.isProviderUrl(""), false);
 assert.equal(adapter.surface("https://chatgpt.com/c/abc"), adapter.SURFACE.CONVERSATION);
 assert.equal(adapter.surface("https://example.com"), adapter.SURFACE.WRONG);
-assert.equal(adapter.surfaceAllowed("https://chatgpt.com/"), true);
+// SỬA 2026-09-02. Dòng này TRƯỚC ĐÂY khẳng định trang chủ `https://chatgpt.com/` là bề mặt
+// HỢP LỆ — tức suite đang ghim đúng cái lỗi đã làm mất một lượt sinh, và ghim nó từ trước khi
+// ai kịp nghi ngờ. Đây là lý do lỗi sống lâu: không phải vì không ai kiểm, mà vì phép kiểm
+// khẳng định hành vi sai. Bộ luật surface đầy đủ nằm ở khối cuối file.
+assert.equal(adapter.surfaceAllowed("https://chatgpt.com/"), false, "trang chủ KHÔNG phải hội thoại");
 
 // --- blockers still classify the way the safety tests expect -----------
 assert.equal(adapter.securityBlockerPattern.test("please complete the captcha"), true);
@@ -129,6 +137,81 @@ assert.match(probe, /for \(const \[group, value\] of Object\.entries\(SEL\)\)/, 
 assert.match(probe, /messageAttributes/, "the probe samples the attributes the page ACTUALLY uses, which is the whole question when attribution goes blind");
 for (const mutation of [".click()", ".focus()", "setComposerValue", "dispatchEvent", "answerAbPoll", ".remove()"]) {
   assert.ok(!probe.includes(mutation), `the DOM probe must never ${mutation} -- it is strictly read-only`);
+}
+
+/* --- LUẬT SURFACE: trang chủ KHÔNG phải hội thoại (thêm 2026-09-02) ----------
+   Bản trước trả CONVERSATION cho MỌI url chatgpt.com, kể cả trang chủ. Gửi từ trang chủ làm
+   tab điều hướng sang /c/<id> và lượt sinh mất trắng kèm một lỗi hết-giờ không nói gì. Đo thật
+   cùng ngày: probe trên trang chủ cho assistantCount 0 nhưng `ping` vẫn trả state READY.
+
+   Ghim CẢ HAI chiều. Chỉ ghim "trang chủ bị chặn" là không đủ: một luật chặn sạch mọi thứ cũng
+   qua được phép kiểm đó, và nó sẽ khoá luôn công việc thật. */
+{
+  const conversations = [
+    "https://chatgpt.com/c/6a9803a5-b3c4-83ec-b0ad-9c67388926d7",  // [ĐO] live 2026-09-02, hồ sơ kaito
+    "https://chatgpt.com/g/g-abc123/c/xyz-789",                     // GPT tuỳ chỉnh vẫn là hội thoại
+    "https://chat.openai.com/c/older-id"                            // tên miền cũ vẫn phải chạy
+  ];
+  for (const url of conversations) {
+    assert.equal(adapter.surface(url), adapter.SURFACE.CONVERSATION, `phải nhận ra hội thoại: ${url}`);
+    assert.equal(adapter.surfaceAllowed(url), true, `phải CHO PHÉP: ${url}`);
+  }
+
+  const launchers = [
+    "https://chatgpt.com/",            // [ĐO] chính là ca đã mất một lượt sinh
+    "https://chatgpt.com/?model=gpt-5",
+    "https://chatgpt.com/gpts",
+    "https://chatgpt.com/g/g-abc123"   // trang giới thiệu GPT, chưa có hội thoại
+  ];
+  for (const url of launchers) {
+    assert.equal(adapter.surface(url), adapter.SURFACE.LAUNCHER, `phải là trang phóng, không phải hội thoại: ${url}`);
+    assert.equal(adapter.surfaceAllowed(url), false, `phải CHẶN: ${url}`);
+  }
+
+  for (const url of ["https://example.com/c/1", "http://chatgpt.com/c/1", "", null]) {
+    assert.equal(adapter.surface(url), adapter.SURFACE.WRONG, `ngoài nhà cung cấp thì phải WRONG: ${url}`);
+  }
+
+  // `https://chatgpt.com` KHÔNG có gạch chéo cuối trả WRONG chứ không phải LAUNCHER, vì mẫu
+  // nhận diện tên miền đòi dấu `/`. Trình duyệt luôn chuẩn hoá `location.href` thành có gạch
+  // chéo nên ca này không xảy ra trên thực tế; cả hai giá trị đều bị chặn nên hành vi vẫn
+  // đúng. Ghim ở mức "bị chặn" thay vì ghim giá trị, để không khoá cứng một chi tiết vô hại.
+  assert.equal(adapter.surfaceAllowed("https://chatgpt.com"), false, "thiếu gạch chéo cuối vẫn phải bị chặn");
+}
+
+/* --- NỐI DÂY: có luật mà không ai gọi thì suite vẫn xanh --------------------
+   Đây là lỗi thật, không phải giả định. Trước 2026-09-02 `surfaceAllowed` chỉ được gọi ĐÚNG
+   MỘT chỗ trong cả nhánh: dòng in ra của dom_probe. Nó không chặn gì cả, nên `ping` vẫn nói
+   READY trên trang chủ và runner vẫn gửi. Ghim từng điểm nối, không ghim chỉ sự tồn tại. */
+{
+  assert.match(content, /function surfaceAllowedNow\(\)/, "content.js phải có surfaceAllowedNow()");
+
+  const guard = /if \(!surfaceAllowedNow\(\)\) \{[\s\S]{0,400}?WRONG_SURFACE/;
+  assert.match(content, guard, "phải CHẶN TRƯỚC KHI GỬI bằng WRONG_SURFACE");
+
+  // Chặn phải đứng trước TÁC DỤNG PHỤ ĐẦU TIÊN, không chỉ trước lúc bấm gửi. Trang chủ có đủ
+  // composer và nút gửi nên mọi phép kiểm phía sau đều xanh; chặn muộn là chặn sau khi đã tiêu.
+  // Mốc là `attachReferenceImages` — thao tác đầu tiên chạm vào trang (đính ảnh tham chiếu),
+  // đứng trước cả lúc gõ chữ. Ghim theo mốc này thì mọi cách dời lớp chặn xuống dưới đều đỏ.
+  const guardAt = content.search(guard);
+  for (const [marker, why] of [
+    // Mốc phải là LỜI GỌI, không phải tên hàm trần: định nghĩa hàm nằm sớm hơn trong file nên
+    // `indexOf("attachReferenceImages(...)")` bắt trúng chỗ khai báo và phép kiểm đỏ oan.
+    ["await attachReferenceImages(referenceImages)", "đính ảnh tham chiếu — tác dụng phụ đầu tiên"],
+    ["setComposerValue(composer, prompt)", "gõ chữ vào ô soạn"],
+    ["= captureBoundary(inputEvidence)", "chốt mốc gán kết quả"]
+  ]) {
+    const at = content.indexOf(marker);
+    assert.ok(at > 0, `không tìm thấy mốc ${marker} — nếu đã đổi tên thì sửa phép kiểm này cho khớp`);
+    assert.ok(guardAt > 0 && guardAt < at, `WRONG_SURFACE phải đứng TRƯỚC ${why} (${marker})`);
+  }
+
+  // readiness phải hỏi surface, nếu không `ping` lại nói READY trên trang chủ.
+  const readiness = content.match(/DacChatReadiness\.evaluate\(\{[^}]*composerFound:[^,]*/g) || [];
+  assert.ok(readiness.length >= 2, "phải có ít nhất hai chỗ tính readiness");
+  for (const call of readiness) {
+    assert.match(call, /surfaceAllowedNow\(\)/, `readiness phải hỏi surface: ${call.slice(0, 90)}`);
+  }
 }
 
 console.log("provider adapter static checks: PASS");

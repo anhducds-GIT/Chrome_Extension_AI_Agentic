@@ -517,3 +517,52 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
     phía tiết kiệm pin. Auditor nêu, tôi chấp nhận có chủ đích.
   - Sửa **một dòng** ở nhánh này, giữ ba nhánh không lệch nhau. Phép ghim đặt ở `gg-flow-video`
     (nơi phát hiện ra). Suite nhánh này vẫn xanh toàn bộ.
+
+## 2026-09-02 — `claude-surface-fix`: vá lỗ hổng surface (Đức giao gói)
+
+**Triệu chứng Đức nêu:** chạy từ trang chủ `chatgpt.com/` thì hỏng, muốn từ sau không bị chặn nữa.
+
+**Sổ tay đang ghi SAI nguyên nhân.** Bảng lỗi #2 nói *"cú điều hướng xoá mốc gán kết quả trong
+bộ nhớ content script"*. Đọc code thì nguyên nhân sớm hơn và tầm thường hơn nhiều — **hai lỗi
+tách bạch**:
+
+1. **Mô hình sai.** `surface()` trả `CONVERSATION` cho **mọi** url chatgpt.com, kể cả trang chủ.
+   Chú thích cũ tự giải thích: *"mọi URL hội thoại đều là cùng một surface"* — đúng với hội
+   thoại, nhưng quên trang chủ không phải hội thoại.
+2. **Có luật mà không nối dây.** `surfaceAllowed` được gọi **đúng một chỗ trong cả nhánh**:
+   dòng in ra của `dom_probe`. Nó không chặn gì. Đo thật cùng ngày: `ping` trả `state: READY`
+   khi tab ở trang chủ — tôi suýt tin con số đó mà gửi.
+
+**Đây là lỗ hổng NGANG HÀNG, không phải bài toán mới.** Cả `gemini` lẫn `gg-flow-video` đã nối
+dây này từ trước; chú thích của gemini mô tả đúng cùng một lỗi (*"gửi từ /images khiến tab ĐIỀU
+HƯỚNG sang /app/<id>"*), giải xong từ 25/08. Nhánh này là cái duy nhất còn hở.
+
+**Đã vá — port, không sáng chế:**
+
+| Điểm | Trước | Sau |
+|---|---|---|
+| `surface()` | mọi url = hội thoại | phân biệt theo đường dẫn: `/c/<id>` = hội thoại, còn lại = `LAUNCHER` |
+| `surfaceAllowedNow()` | không có | có, trong `content.js` |
+| readiness | không hỏi surface | hỏi — `ping` thôi nói READY ở trang chủ |
+| trước khi gửi | không chặn | ném `WRONG_SURFACE` **trước tác dụng phụ đầu tiên** |
+
+`/g/<gpt>/c/<id>` của GPT tuỳ chỉnh vẫn được cho qua — đã ghim.
+
+**PHÁT HIỆN ĐÁNG GIÁ NHẤT: suite đang ghim chính cái lỗi.** `tests/provider-adapter-static.mjs`
+có sẵn dòng `assert.equal(adapter.surfaceAllowed("https://chatgpt.com/"), true)`. Lỗi sống dai
+**không phải vì không ai kiểm**, mà vì **phép kiểm khẳng định hành vi sai**. Đã sửa dòng đó và
+ghi rõ lý do ngay tại chỗ. Bài học: lỗi nào sống dai thì đọc phép kiểm đang bảo vệ nó.
+
+**Mức bằng chứng, nói thẳng:** `/c/<id>` là hội thoại và `/` thì không — **[ĐO]** live 02/09 hồ
+sơ kaito. Mọi đường dẫn chatgpt.com khác bị xếp `LAUNCHER` là **[DÒ]**, chưa đo. Chọn có chủ
+đích: chặn nhầm tốn một câu thông báo rõ ràng và một cú bấm; cho qua nhầm tốn một lượt sinh và
+một lỗi hết-giờ không nói gì. Gặp dạng hội thoại không có `/c/` thì nới **kèm probe chứng minh**.
+
+**Số:** suite 98/98. Đột biến: 8 lượt, **1 THOÁT rồi được vá** (mốc thứ tự ban đầu chỉ so với
+lúc gõ chữ; nay so với **tác dụng phụ đầu tiên**, và mốc phải là LỜI GỌI chứ không phải tên hàm
+— `indexOf` bắt trúng chỗ khai báo nằm sớm hơn).
+
+**CHƯA kiểm chứng LIVE.** Bản vá nằm trong `content.js`, cần Đức **reload extension** rồi F5 tab
+thì mới có hiệu lực. Nghiệm thu: để tab ở trang chủ → `ping` phải thôi trả `READY`.
+
+**Không đụng `STATUS.md`** — đó là việc của phiên `claude-y03` đang giữ `_root` và `gemini`.
