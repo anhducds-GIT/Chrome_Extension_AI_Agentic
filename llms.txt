@@ -4,7 +4,7 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `45f6b0b` (2026-09-02).
+Trang được sinh tại commit `fab43f2` (2026-09-02).
 
 ## Việc ưu tiên #1
 
@@ -20,9 +20,9 @@ Trang được sinh tại commit `45f6b0b` (2026-09-02).
 ## Từng extension
 
 - [Extension Observer V0](STATUS.md): idea — Chưa từng chạy pilot nào
-- [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — B-14…B-21 đang mở
+- [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới…
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
-- [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Lớp vận chuyển Bridge đã xong và đã kiểm chứng live cả hai bản (28/08)
+- [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (mẫu gg-flow-video đã audit PASS): host nhiều kết nối fail-closed + bridge.sessions/target/served_by, ô tên hồ sơ trong…
 - [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Multi-profile Bridge: KIỂM LIVE ĐẠT 02/09 phần định tuyến (host mới đã deploy + chạy trên 32149
 
 ## Luật bắt buộc trước khi sửa gì

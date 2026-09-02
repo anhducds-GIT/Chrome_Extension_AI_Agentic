@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-02",
-  "generated_commit": "45f6b0b",
+  "generated_commit": "fab43f2",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -58,12 +58,12 @@
       "lifecycle": "active",
       "status_md": "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Chay audit doc lap cho ban va khoang nghi giua job — mon no duy nhat con lai cua goi nay",
+      "next_step": "Duc reload extension o TUNG profile ChatGPT + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: audit doc lap goi khoang-nghi-giua-job (kenh auditmin da chung minh song 02/09)",
       "priority_rank": 2,
       "superseded_by": null,
       "last_verified": "2026-08-26",
       "last_verified_commit": "00d1f99b44bd490cac079da5e803917346571a26",
-      "open_item": "B-14…B-21 đang mở; việc thật không chạy qua trần 90s của run.trial (B-17)"
+      "open_item": "Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới deploy + chạy trên 32147, thấy 1 kết nối legacy — chờ tay Đức reload extension + đặt tên. Việc cũ vẫn mở: B-14…B-21, audit độc lập gói khoảng-nghỉ-giữa-job"
     },
     {
       "id": "duc-auto-gemini",
@@ -84,12 +84,12 @@
       "lifecycle": "active",
       "status_md": "workers/duc-auto-gemini/v0.2.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Do live nhanh tat host qua 2 phut (thang bo cuoc, alarm lo tiep) — hien chi ghim bang test",
+      "next_step": "Duc reload extension o TUNG profile Gemini + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: do live nhanh tat host qua 2 phut",
       "priority_rank": 3,
       "superseded_by": null,
       "last_verified": "2026-08-28",
       "last_verified_commit": "4789754b2ad57121fe94d97e1ebd86fc5d4d2148",
-      "open_item": "Lớp vận chuyển Bridge đã xong và đã kiểm chứng live cả hai bản (28/08). Còn một nhánh chưa đo thật: tắt host quá 2 phút thì thang bỏ cuộc và alarm 30 giây lo tiếp — hiện chỉ ghim bằng test. G-01 vẫn chờ trial live riêng. Còn nợ nhánh ChatGPT một số tính năng và method — xem BACKLOG.md và FEATURE-PARITY.md"
+      "open_item": "Multi-profile Bridge đã PORT xong 02/09 (mẫu gg-flow-video đã audit PASS): host nhiều kết nối fail-closed + bridge.sessions/target/served_by, ô tên hồ sơ trong panel, suite 83/83, 10/10 mutation đỏ. Host mới đã deploy + chạy trên 32148, thấy 1 kết nối legacy — chờ tay Đức reload extension + đặt tên. Nợ cũ giữ nguyên: đo live nhánh tắt host quá 2 phút; G-01 chờ trial live"
     },
     {
       "id": "duc-auto-gg-flow-video",
@@ -116,14 +116,14 @@
     {
       "id": "workers/duc-auto-chatgpt/v0.1.0",
       "unit": "workers/duc-auto-chatgpt/v0.1.0",
-      "title": "Chay audit doc lap cho ban va khoang nghi giua job — mon no duy nhat con lai cua goi nay",
+      "title": "Duc reload extension o TUNG profile ChatGPT + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: audit doc lap goi khoang-nghi-giua-job (kenh auditmin da chung minh song 02/09)",
       "rank": 2,
       "claim": null
     },
     {
       "id": "workers/duc-auto-gemini/v0.2.0",
       "unit": "workers/duc-auto-gemini/v0.2.0",
-      "title": "Do live nhanh tat host qua 2 phut (thang bo cuoc, alarm lo tiep) — hien chi ghim bang test",
+      "title": "Duc reload extension o TUNG profile Gemini + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: do live nhanh tat host qua 2 phut",
       "rank": 3,
       "claim": null
     },
