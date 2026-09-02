@@ -30,11 +30,11 @@
       "released_at": null
     },
     "_docs": {
-      "owner": "claude-y02-c3",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
       "task": "Ghi bai hoc: A2 co loi noi day, va vi sao test cua toi khong bat duoc",
-      "released_at": null
+      "released_at": "2026-09-02"
     },
     "_code": {
       "owner": "claude-k2-design",
