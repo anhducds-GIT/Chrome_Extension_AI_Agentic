@@ -23,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Ghi canh bao: Project 3AI (Kho) dang ngu — dieu kien tien quyet cua S9 co the da vo hieu.",
-      "released_at": null
+      "task": "TRA QUYEN 02/09 (claude-dieu-phoi). Ghi muc 9.5: Kho dang ngu, canh bao dieu kien tien quyet S9. Dinh chinh 9.4.",
+      "released_at": "2026-09-02"
     }
   }
 }
