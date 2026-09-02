@@ -72,7 +72,10 @@ CORE (đọc mỗi lần):
   đầu tiên trước khi bắt tay vào việc, ghi cuối cùng sau khi xong).
 
 COMPANION (đọc khi cần):
-- `decisions.md` — quyết định lớn đã chốt | vì sao | nguồn.
+- `decisions.md` — **nay là MỤC LỤC** trỏ sang 45 ADR trong `docs/adr/`.
+- `docs/adr/` — 45 quyết định, mỗi cái một file **bất biến** (chuẩn Nygard, bốn mục).
+  Đã `Accepted` thì KHÔNG sửa — đổi ý thì viết ADR mới, trỏ hai chiều. Phép kiểm B12
+  cưỡng chế. Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` ở gốc repo.
 - `DAC_XLSX_RUN_PLAN_V1.md` — hợp đồng schema XLSX (jobs/config) cho mọi
   workbook mới.
 - `NEXT-SESSION-BRIEF.md` — brief chi tiết cho phiên làm việc tiếp theo khi có
@@ -90,7 +93,8 @@ COMPANION (đọc khi cần):
 | `AI-OPERATOR-GUIDE.md` | **Sổ tay vận hành** — 3 việc phải làm trước khi bấm chạy, và bảng lỗi ĐÃ GẶP THẬT trên trang (kèm "thật ra là gì" và "KHÔNG phải gì"). Mở TRƯỚC khi chạy live, đừng chẩn đoán lại từ đầu |
 | `STATUS.md` | **Trạng thái vận hành, một trang, cho mắt Đức** — lifecycle, kiểm chứng lần cuối + bằng chứng, việc đang mở, con trỏ đọc sâu. Máy đọc phần frontmatter để sinh `DASHBOARD.md` ở gốc repo. Chỉ TRỎ sang file khác, không chép nội dung. Schema: `STATUS.template.md` ở gốc repo |
 | `HANDOFF.md` | Trạng thái + Log lịch sử đầy đủ |
-| `decisions.md` | Quyết định lớn đã chốt, có nguồn dẫn |
+| `decisions.md` | Mục lục trỏ sang 45 ADR (nội dung đã chuyển) |
+| `docs/adr/` | 45 ADR bất biến — quyết định của riêng gói này |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX |
 | `BACKLOG.md` | Việc phát sinh ngoài checkpoint của phiên đang chạy — P1/P2/P3 + câu hỏi còn treo. Mọi ý tưởng làm phình phạm vi đều ghi vào đây thay vì mở rộng phiên |
 | `NEXT-SESSION-BRIEF.md` | Brief phiên làm việc tiếp theo (khi còn hiệu lực) |

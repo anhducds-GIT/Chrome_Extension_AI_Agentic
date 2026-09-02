@@ -547,3 +547,18 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
     Hiện chỉ ghim bằng test, đã ghi rõ trong bằng chứng và trong `BACKLOG.md`.
 - **Next:** Không còn việc mở của lớp vận chuyển. `G-01` trial live vẫn giữ nguyên, chưa đụng.
 
+- **2026-09-02 · `s5-adr`** — **Tách 67 quyết định trong `decisions.md` thành 67 ADR bất biến**
+  (`docs/adr/`, chuẩn Nygard bốn mục). Phiên S5 ở gốc repo, xem `docs/briefs/BRIEF-S5.md`.
+  - **`decisions.md` KHÔNG bị xoá** — nó thành **mục lục** trỏ sang từng ADR, giữ nguyên nhóm cũ.
+    Nội dung gốc vẫn đọc nguyên vẹn bằng `git show 181c06e:workers/duc-auto-gemini/v0.2.0/decisions.md`.
+  - **Chỉ đổi HÌNH DẠNG, không đổi một chữ.** Chứng minh bằng máy, không bằng lời hứa: bộ tách
+    đối chiếu **từng ô** của bảng cũ phải xuất hiện NGUYÊN VĂN trong ADR tương ứng — 227/227 ô
+    khớp, 0 sai lệch (227 chứ không phải 268 vì 14 bảng của file này chỉ có ba cột — không có
+    cột Nguồn). Đây là bằng chứng mạnh hơn chép tay, vì chép tay 67 dòng không ai soát lại được.
+  - **Mục "Hệ quả" của mọi ADR chuyển đổi đều ghi `không ghi lại`** — bảng gốc không có cột đó.
+    Bịa cho đủ bốn mục thì bản ghi lịch sử hết đáng tin.
+  - **Số quyết định thật là 67, không phải 18 như BRIEF-S5 ghi** — brief đếm tiêu đề `##` (là
+    NHÓM) chứ không đếm dòng bảng (là QUYẾT ĐỊNH). Đã đếm lại bằng hai cách độc lập, khớp nhau.
+  - Từ nay **đừng thêm dòng vào `decisions.md`**; chép `docs/_TEMPLATE-adr.md` thành ADR mới,
+    đánh số tiếp từ `0068`. ADR đã `Accepted` là bất biến — phép kiểm **B12** cưỡng chế.
+- **Next:** không đổi việc đang mở của gói này.

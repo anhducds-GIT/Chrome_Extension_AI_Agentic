@@ -1,0 +1,35 @@
+---
+status: Accepted
+adr: 0024
+date: 2026-08-24
+deciders: Đức
+source_section: Roadmap tự hành (chốt sau audit 2026-08-24)
+migrated_from: workers/duc-auto-gemini/v0.2.0/decisions.md
+---
+
+# ADR-0024 — Chính sách dọn checkpoint
+
+## Bối cảnh
+
+Chống phình thư mục vô hạn mà không mất bằng chứng
+
+Nhóm trong bản ghi gốc: Roadmap tự hành (chốt sau audit 2026-08-24).
+
+## Quyết định
+
+Chính sách dọn checkpoint: giữ `v01` + 5 bản cuối; phần còn lại CHUYỂN vào thư mục `superseded/`, không bao giờ xoá
+
+## Hệ quả
+
+không ghi lại — bảng gốc trong `workers/duc-auto-gemini/v0.2.0/decisions.md` chỉ có bốn cột (Quyết định · Vì sao · Ai chốt · Nguồn), không có mục Hệ quả.
+Không bịa thêm: đây là bản ghi lịch sử, không phải bài viết lại.
+
+## Trạng thái
+
+Accepted — chốt ngày 2026-08-24. Người chốt: Đức.
+
+Nguồn gốc: Audit 2026-08-24, điểm chốt #4
+
+> ADR này được TÁCH RA từ `workers/duc-auto-gemini/v0.2.0/decisions.md` trong phiên S5 (2026-09-02). Chỉ đổi HÌNH DẠNG, không
+> đổi một chữ nội dung. Đã Accepted nên **bất biến** — đổi ý thì viết ADR mới và trỏ hai
+> chiều, xem `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md`.

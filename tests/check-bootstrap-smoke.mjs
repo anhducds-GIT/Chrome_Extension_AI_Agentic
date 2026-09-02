@@ -23,7 +23,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   ADR_DIR, checkB1, checkB3, checkB4, checkB6, checkB9, checkB10, checkB11, checkB12, checkB14,
-  checkGeneratedFreshness, checkStatusCode, collectChecks, DOC_LINE_LIMIT, grandfatheredNote,
+  checkGeneratedFreshness, checkStatusCode, collectChecks, DOC_LINE_LIMIT, grandfatheredNote, isAdrPath,
   NAV_DEPTH_LIMIT, parseLastCommitTimes, renderChecks, ruleBearingLines, runBootstrapCheck
 } from "../scripts/check-bootstrap.mjs";
 import { collectModel } from "../scripts/build-dashboard.mjs";
@@ -391,7 +391,64 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
     }
   });
   assert.equal(checkB12(supersededLater).state, "ok", "đổi frontmatter sau Accepted là hợp lệ, chỉ thân mới bị cấm");
-  ok("B12 · ADR đã Accepted bị sửa THÂN, còn sửa frontmatter thì không sao");
+
+  // ĐÚNG HAI COMMIT. Ghim cái thoát sớm `history.length <= 1`: nới nó thành `<= 2` là ca này
+  // lọt, mà đây đúng là ca mỏng nhất của một ADR bị sửa (thêm Accepted rồi sửa ngay).
+  const haiCommit = fixture({
+    files: { [adr]: accepted },
+    history: { [adr]: ["sha1", "sha2"] },
+    blobs: { [`sha1:${adr}`]: accepted, [`sha2:${adr}`]: fm({ status: "Accepted" }) + "Thân đã bị sửa.\n" }
+  });
+  assert.equal(checkB12(haiCommit).state, "fail", "ADR chỉ có 2 commit mà thân đã đổi thì vẫn phải bắt được");
+
+  // HAI TẦNG (bẫy 1 của BRIEF-S5). ADR trong package phải được quét y như ADR ở gốc repo.
+  // Bản S4 chỉ so startsWith("docs/adr/") nên ca này lọt hoàn toàn.
+  assert.equal(isAdrPath("docs/adr/0000-x.md"), true, "ADR gốc repo");
+  assert.equal(isAdrPath("workers/duc-auto-gemini/v0.2.0/docs/adr/0001-x.md"), true, "ADR trong package");
+  assert.equal(isAdrPath("docs/adr/README.txt"), false, "không phải .md thì không phải ADR");
+  assert.equal(isAdrPath("docs/adrenaline/0001-x.md"), false, "trùng tiền tố chữ không phải là thư mục ADR");
+
+  const adrGoi = "workers/demo/v1/docs/adr/0001-quyet-dinh-goi.md";
+  const trongGoi = fixture({
+    files: { [adrGoi]: accepted },
+    history: { [adrGoi]: ["sha1", "sha2", "sha3"] },
+    blobs: {
+      [`sha1:${adrGoi}`]: fm({ status: "Proposed" }) + body,
+      [`sha2:${adrGoi}`]: accepted,
+      [`sha3:${adrGoi}`]: fm({ status: "Accepted" }) + "Đổi ý.\n"
+    }
+  });
+  const brokenGoi = checkB12(trongGoi);
+  assert.equal(brokenGoi.state, "fail", "ADR trong package bị sửa thân cũng phải bị bắt");
+  assert.match(brokenGoi.findings[0].where, /workers\/demo\/v1\/docs\/adr/);
+  ok("B12 · quét CẢ HAI tầng ADR, bắt được ca 2 commit, và sửa frontmatter thì không sao");
+}
+
+/* ---- B12 ở TẦNG TÍCH HỢP -------------------------------------------------- */
+// Gọi thẳng checkB12 là chưa đủ: repo này đã trả giá vì một luật bị gỡ khỏi ĐƯỜNG CHẠY mà
+// suite vẫn xanh. Ca này đi qua collectChecks, đúng như khi chạy thật.
+{
+  const adr = "workers/demo/v1/docs/adr/0001-quyet-dinh-goi.md";
+  const body = "Chọn Bridge làm lớp vận chuyển.\n";
+  const deps = fixture({
+    files: { [adr]: fm({ status: "Accepted" }) + body },
+    history: { [adr]: ["sha1", "sha2"] },
+    blobs: {
+      [`sha1:${adr}`]: fm({ status: "Accepted" }) + body,
+      [`sha2:${adr}`]: fm({ status: "Accepted" }) + "Thân đã bị sửa sau khi Accepted.\n"
+    }
+  });
+  const { checks } = collectChecks(deps);
+  const b12 = find(checks, "B12");
+  assert.equal(b12.state, "fail", "B12 phải ĐỎ khi chạy qua collectChecks, không chỉ khi gọi thẳng hàm");
+  assert.equal(b12.level, "ĐỎ");
+  assert.deepEqual(tags(b12), ["ADR-EDITED"]);
+  assert.ok(b12.findings[0].fix.length > 0, "phải nói cách sửa");
+
+  // Và khi KHÔNG có ADR nào thì vẫn phải là BỎ QUA, không phải XANH giả.
+  const { checks: khongAdr } = collectChecks(fixture());
+  assert.equal(find(khongAdr, "B12").state, "skip");
+  ok("TÍCH HỢP · B12 chạy thật qua collectChecks, bắt ADR trong package bị sửa");
 }
 
 /* ---- B14 ------------------------------------------------------------------ */

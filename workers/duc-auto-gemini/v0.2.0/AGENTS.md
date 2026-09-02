@@ -67,7 +67,10 @@ CORE (đọc mỗi lần):
   đầu tiên trước khi bắt tay vào việc, ghi cuối cùng sau khi xong).
 
 COMPANION (đọc khi cần):
-- `decisions.md` — quyết định lớn đã chốt | vì sao | nguồn.
+- `decisions.md` — **nay là MỤC LỤC** trỏ sang 67 ADR trong `docs/adr/`.
+- `docs/adr/` — 67 quyết định, mỗi cái một file **bất biến** (chuẩn Nygard, bốn mục).
+  Đã `Accepted` thì KHÔNG sửa — đổi ý thì viết ADR mới, trỏ hai chiều. Phép kiểm B12
+  cưỡng chế. Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` ở gốc repo.
 - `DAC_XLSX_RUN_PLAN_V1.md` — hợp đồng schema XLSX (jobs/config) cho mọi
   workbook mới.
 - `NEXT-SESSION-BRIEF.md` — brief chi tiết cho phiên làm việc tiếp theo khi có
@@ -85,7 +88,8 @@ COMPANION (đọc khi cần):
 | `STATUS.md` | **Trạng thái vận hành, một trang, cho mắt Đức** — lifecycle, kiểm chứng lần cuối + bằng chứng, việc đang mở, con trỏ đọc sâu. Máy đọc phần frontmatter để sinh `DASHBOARD.md` ở gốc repo. Chỉ TRỎ sang file khác, không chép nội dung. Schema: `STATUS.template.md` ở gốc repo |
 | `HANDOFF.md` | Trạng thái + Log lịch sử đầy đủ |
 | `BACKLOG.md` | **Việc còn mở của nhánh này, đánh số `G-xx`** — P1/P2/P3. Lập 2026-08-27; trước đó nhánh Gemini không có nơi canonical giữ việc mở. Số `G-xx` cố ý khác `B-xx` của nhánh ChatGPT: hai sổ, hai nhánh, hai dãy số. Mỗi dòng gắn nhãn [ĐO]/[ĐỌC]/[DÒ] — **dòng [DÒ] phải kiểm lại trước khi hành động** |
-| `decisions.md` | Quyết định lớn đã chốt, có nguồn dẫn |
+| `decisions.md` | Mục lục trỏ sang 67 ADR (nội dung đã chuyển) |
+| `docs/adr/` | 67 ADR bất biến — quyết định của riêng gói này |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX |
 | `NEXT-SESSION-BRIEF.md` | Brief phiên làm việc tiếp theo (khi còn hiệu lực) |
 | `AUDIT.md` | Kết quả audit kiến trúc |

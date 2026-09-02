@@ -444,3 +444,18 @@ Do not rewrite the extension wholesale. Preserve V0 scope.
     - Sau tất cả: Codex đọc xong brief, ra **một dòng suy luận**, rồi im. `agy` trả **0 byte** kể cả khi nhét toàn bộ brief vào prompt để nó **không cần gọi tool nào** — nên lỗi của agy không chỉ là hook chặn tool.
     - **Hai bẫy đo lường tôi tự mắc, ghi lại vì chúng làm tôi tưởng đã xong khi chưa:** (a) `pgrep -f codex` trong Git Bash **không thấy** process Windows nên báo "đã thoát" khi nó còn chạy — phải dùng `tasklist //FI "IMAGENAME eq codex.exe"`; (b) chờ bằng `grep "^VERDICT: (PASS|...)"` khớp vào **chính dòng mẫu trong brief** (`VERDICT: PASS | CONDITIONAL PASS | FAIL`) vì alternation không neo cuối dòng — tôi mắc **hai lần trong một phiên**. Cách chắc: chọn token kết luận không hề xuất hiện trong brief.
     - **Việc tiếp theo, đừng leo lại từ đáy:** bắt đầu thẳng bằng `codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check -C <thư-mục-tối-giản> "<prompt>" < /dev/null`. Nếu vẫn im thì kết luận kênh audit đang chết và báo Đức, đừng đốt thêm một tiếng. Brief đã dựng sẵn: `scratchpad/audit/AUDIT-BRIEF.md` (đầy đủ, ~40KB) và `scratchpad/auditmin/BRIEF.md` (ngắn, 5KB).
+
+- **2026-09-02 · `s5-adr`** — **Tách 45 quyết định trong `decisions.md` thành 45 ADR bất biến**
+  (`docs/adr/`, chuẩn Nygard bốn mục). Phiên S5 ở gốc repo, xem `docs/briefs/BRIEF-S5.md`.
+  - **`decisions.md` KHÔNG bị xoá** — nó thành **mục lục** trỏ sang từng ADR, giữ nguyên nhóm cũ.
+    Nội dung gốc vẫn đọc nguyên vẹn bằng `git show 181c06e:workers/duc-auto-chatgpt/v0.1.0/decisions.md`.
+  - **Chỉ đổi HÌNH DẠNG, không đổi một chữ.** Chứng minh bằng máy, không bằng lời hứa: bộ tách
+    đối chiếu **từng ô** của bảng cũ phải xuất hiện NGUYÊN VĂN trong ADR tương ứng — 180/180 ô
+    khớp, 0 sai lệch. Đây là bằng chứng mạnh hơn chép tay, vì chép tay 45 dòng không ai soát lại được.
+  - **Mục "Hệ quả" của mọi ADR chuyển đổi đều ghi `không ghi lại`** — bảng gốc không có cột đó.
+    Bịa cho đủ bốn mục thì bản ghi lịch sử hết đáng tin.
+  - **Số quyết định thật là 45, không phải 4 như BRIEF-S5 ghi** — brief đếm tiêu đề `##` (là
+    NHÓM) chứ không đếm dòng bảng (là QUYẾT ĐỊNH). Đã đếm lại bằng hai cách độc lập, khớp nhau.
+  - Từ nay **đừng thêm dòng vào `decisions.md`**; chép `docs/_TEMPLATE-adr.md` thành ADR mới,
+    đánh số tiếp từ `0046`. ADR đã `Accepted` là bất biến — phép kiểm **B12** cưỡng chế.
+- **Next:** không đổi việc đang mở của gói này.

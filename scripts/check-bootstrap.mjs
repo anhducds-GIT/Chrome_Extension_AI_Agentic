@@ -32,7 +32,7 @@ export const NAV_ROOT = "llms.txt";
 export const NAV_DEPTH_LIMIT = 3;     // B6
 export const DOC_LINE_LIMIT = 200;    // B9
 export const DOC_STALE_DAYS = 30;     // B14
-export const ADR_DIR = "docs/adr/";   // B12
+export const ADR_DIR = "docs/adr/";   // B12 — tên thư mục, khớp ở CẢ HAI tầng (xem isAdrPath)
 const DEFAULT_SHOW = 12;
 const DAY = 86400;
 
@@ -266,6 +266,12 @@ function isEvidencePath(relPath, appendOnlyAreas) {
 
 // Hồ sơ đã nghỉ thì nằm sâu là đúng. Dùng đúng khái niệm `status: active` mà Khối D dùng cho
 // nợ tài liệu — hai phép kiểm hiểu "còn sống" giống nhau thì mới không cãi nhau.
+//
+// TỪ PHIÊN S5, ĐÂY LÀ CHỖ 112 ADR RƠI VÀO, và nói thẳng ra để phiên sau không tưởng là bug:
+// ADR mang `status: Accepted`, tức khác `active`, nên B6 KHÔNG soi chúng. Đó là đúng — một
+// ADR là bản ghi bất biến, ngang `evidence/`, không phải một chặng trên đường điều hướng; và
+// nếu soi thì 112 file sẽ nhấn chìm 49 khoản nợ điều hướng thật. Nhưng phải nói rõ: chúng
+// thoát B6 vì LUẬT NÀY, không phải vì đã có ai trỏ tới được chúng.
 function isRetiredDoc(deps, relPath) {
   let text;
   try { text = deps.readFile(relPath); } catch { return false; }
@@ -437,15 +443,28 @@ export function checkB11(model) {
    Luật: đi xuôi lịch sử của từng file ADR, tìm commit ĐẦU TIÊN mà `status` thành Accepted.
    Sau mốc đó, mọi commit làm đổi PHẦN THÂN (ngoài frontmatter) là vi phạm — sửa frontmatter
    thì được, vì `superseded_by`/`status` chính là cách một ADR được thay thế đúng luật. */
+/* ADR sống ở HAI TẦNG (ADR-0000, luật 3): `docs/adr/` ở gốc cho quyết định của cả repo, và
+   `workers/<gói>/<phiên-bản>/docs/adr/` cho quyết định của một package. Bản S4 chỉ so
+   `startsWith(ADR_DIR)` nên nó chỉ thấy tầng gốc — làm đúng roadmap (ADR trong package) thì
+   B12 vẫn in KHÔNG ÁP DỤNG, tức phép kiểm không đạt được mục tiêu của chính nó.
+   BRIEF-S5 gọi đây là "bẫy 1" và tìm ra nó trước khi ai vấp. */
+export function isAdrPath(relPath) {
+  return isMarkdown(relPath) && (relPath.startsWith(ADR_DIR) || relPath.includes(`/${ADR_DIR}`));
+}
+
 export function checkB12(deps) {
-  const files = deps.git.trackedPaths().filter((relPath) => relPath.startsWith(ADR_DIR) && isMarkdown(relPath)).sort(compareText);
+  const files = deps.git.trackedPaths().filter(isAdrPath).sort(compareText);
   const title = "ADR đã Accepted bị sửa nội dung";
   if (!files.length) {
-    return skip("B12", RED, title, `KHÔNG ÁP DỤNG — repo chưa có ${ADR_DIR} (thư mục này là việc của phiên S5)`);
+    return skip("B12", RED, title, `KHÔNG ÁP DỤNG — repo chưa có thư mục \`${ADR_DIR}\` nào (gốc repo, hoặc trong package)`);
   }
   const findings = [];
   for (const relPath of files) {
     const history = deps.git.fileHistory(relPath);
+    // Một file mới thêm chỉ có ĐÚNG một commit, nên không thể có commit nào SAU mốc Accepted.
+    // Thoát sớm ở đây tránh đọc blob của cả trăm ADR mỗi lần chạy cổng — và nó đúng về logic,
+    // không phải nới lỏng: không có commit thứ hai thì không có gì để so.
+    if (history.length <= 1) continue;
     let acceptedAt = -1;
     let acceptedBody = null;
     for (let index = 0; index < history.length; index += 1) {
