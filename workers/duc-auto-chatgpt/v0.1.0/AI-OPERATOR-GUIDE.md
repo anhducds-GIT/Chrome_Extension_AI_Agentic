@@ -69,6 +69,21 @@ Mỗi dòng dưới đây là **lỗi đã gặp thật**, có bằng chứng. �
 | **Làm gì** | Việc thật cần lâu hơn → **Đức tự bấm Run** trong panel. AI không được nới nắp này. |
 | **Chi tiết** | B-17 trong `BACKLOG.md`. |
 
+### #5 · `dom_probe` không bao giờ trả chữ trên trang — **[ĐO] live 2026-09-02**
+
+| | |
+|---|---|
+| **Triệu chứng** | `dom_probe` chạy xong, `ok: true`, `truncated: false`, payload chỉ 7,7 KB trên nắp 64 KB — trông khoẻ hoàn toàn. Nhưng `articleSample` trả `[]`, và đó là **trường duy nhất trong cả payload có chữ của trang**. |
+| **Thật ra là gì** | Selector đã chết. Trường đó dựng từ `document.querySelectorAll("article")`, mà ChatGPT đã chuyển lượt hội thoại sang `data-turn` / `data-message-author-role` từ lâu. Cùng lúc đó `assistantCount` vẫn đúng (2 và 3 trên hai profile) vì nó đi qua selector khác. Nên probe **mù một nửa mà tự báo khoẻ**. |
+| **Vì sao nó quan trọng hơn một trường rỗng** | Luật vàng 1 bắt mọi AI lấy bằng chứng DOM bằng `dom_probe` thay vì đoán selector. Trường chữ mù nghĩa là AI đi chẩn đoán lỗi phát hiện kết quả sẽ nhận được **cấu trúc mà không có một chữ nào của trang**, và không thể phân biệt "trang chưa có chữ" với "selector đã chết" — hai kết luận chỉ về hai hướng ngược nhau. |
+| **Đo được gì** | Hai profile, hai hội thoại khác nhau, cùng kết quả: `articleSample: []`, `assistantCount: 3` và `1`, `data-turn` trả `assistant x3, user x2`, `truncated: false`. Nhánh bóp payload **không** hề chạy, nên không phải do cắt cho vừa nắp. |
+| **Nó sống được bao lâu** | **Một tuần, trong chính hồ sơ bằng chứng.** `Pilot-13_References/evidence/dom-probe-baseline-before-run.json` ngày 2026-08-26 đã ghi `articleSample: []` ngay cạnh `assistantCount: 7`. Có người đọc file đó, không ai đọc hai dòng ấy cùng nhau. |
+| **Đã vá thế nào** | Một định nghĩa selector, hai người đọc: `MESSAGE_TURN_SELECTOR` (lượt thật, có `data-turn` đứng đầu) cho mẫu **chữ**, và `MESSAGE_DISCOVERY_SELECTOR` = selector đó **cộng** `[data-testid]` cho việc dò tên attribute. Trường đổi tên thành `messageSample` — tên cũ nói dối về selector của chính nó. |
+| **Và nay nó lên tiếng** | Thêm `messageSampleDiag` với 4 trạng thái: `OK` · `MATCHED_BUT_NO_TEXT` (container thật, trang chưa có chữ) · `NO_CONTAINER_MATCHED` (**selector chết — dựng lại từ `attributeValues`, đừng đoán**) · `DROPPED_FOR_SIZE` (nắp payload cắt mất, trường này không nói gì về trang). Kèm `selector` · `matched` · `sampled` · `with_text` để người đọc thấy thứ đã thử. |
+| **Bài học** | Bản vá #2 dạy "lỗi sống dai thì đọc phép kiểm đang bảo vệ nó". Lần này **không có phép kiểm nào cả** — trước phiên này không một test nào nhắc tới `articleSample`, kể cả để khẳng định nó được phép rỗng. Nên có hai cách một lỗi sống: phép kiểm khẳng định sai, hoặc **trường quan trọng không có phép kiểm nào**. Cái thứ hai khó thấy hơn, vì grep không trả về gì thì trông như sạch sẽ. |
+| **KHÔNG phải** | Không phải payload bị cắt (`truncated: false`, 7,7 KB / 64 KB). Không phải trang trống (`assistantCount` > 0). Không phải sai profile (`served_by` xác nhận đúng nhãn). |
+| **Bằng chứng** | `tests/dom-probe-message-sample-smoke.mjs` — chạy **chính đoạn mã đã ship**, cắt ra từ `content.js`, trên 3 DOM giả dựng theo số đo live. 3/3 đột biến bị bắt. |
+
 ## Chạy tính năng có xoá file — bắt buộc đặt bẫy
 
 Luật rút ra từ Pilot-15, **đã trả giá bằng một file thật bị xoá**:

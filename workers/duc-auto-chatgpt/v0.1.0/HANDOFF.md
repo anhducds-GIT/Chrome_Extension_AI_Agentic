@@ -606,3 +606,55 @@ Lần sau, với mọi luật mới, phải liệt kê **mọi đường đi t�
 
 **CẦN RELOAD LẦN NỮA** — vòng 2 sửa `content.js`, `sidepanel.js`, `runner-core.js`.
 Nghiệm thu: trên trang chủ, `ping` phải trả `failure_type: WRONG_SURFACE` thay vì `READY`.
+
+---
+
+## 2026-09-02 · phiên `claude-y02-probe-article` — `dom_probe` thôi mù chữ trên trang
+
+**Làm gì:** vá trường duy nhất trong payload `diagnostics.dom_probe` có chữ của trang.
+Nó dựng từ `document.querySelectorAll("article")`, mà ChatGPT đã rời `<article>` từ lâu.
+
+**Số đo, tự chạy lại chứ không nhận báo cáo:** hai profile (`anhducds_multi work flow`,
+`kaito`), hai hội thoại khác nhau, `served_by` xác nhận đúng nhãn cả hai lần. Kết quả giống
+nhau: `articleSample: []` · `assistantCount: 3` và `1` · `data-turn` trả `assistant/user`
+đầy đủ · `truncated: false` · payload 7.780 và 7.404 byte trên nắp 65.536. Tức **không**
+phải bị cắt cho vừa nắp, và **không** phải trang trống — selector chết, im lặng.
+
+**Nó sống một tuần trong chính hồ sơ bằng chứng:** `Pilot-13_References/evidence/`
+`dom-probe-baseline-before-run.json` ngày 26/08 đã ghi `articleSample: []` ngay cạnh
+`assistantCount: 7`.
+
+**Vá thế nào:** một định nghĩa, hai người đọc — `MESSAGE_TURN_SELECTOR` (`data-turn` đứng
+đầu) cho mẫu **chữ**; `MESSAGE_DISCOVERY_SELECTOR` = selector đó **cộng** `[data-testid]`,
+chỉ để dò tên attribute. `[data-testid]` **không** được đọc chữ: trên trang thật nó khớp cả
+hàng sidebar và nút bấm, và mẫu chữ không được báo "New chat" như thể là nội dung hội thoại.
+Trường đổi tên `articleSample` → `messageSample`: tên cũ nói dối về selector của chính nó.
+
+**Và nay nó lên tiếng** — `messageSampleDiag` với 4 trạng thái phân biệt được ba tình huống
+trước đây trông giống nhau: `OK` · `MATCHED_BUT_NO_TEXT` · `NO_CONTAINER_MATCHED` · và
+`DROPPED_FOR_SIZE`. Cái cuối là **đường im lặng thứ hai vào cùng một hiểu nhầm**: nhánh bóp
+payload xoá trắng mẫu chữ mà không nói gì. Kèm `selector` · `matched` · `sampled` ·
+`with_text` để người đọc sau thấy thứ đã thử.
+
+**Kiểm phép kiểm cũ trước khi sửa** (bài học lỗi #2 của sổ tay): grep cả gói —
+**không một test nào nhắc `articleSample`**, kể cả để khẳng định nó được phép rỗng. Không
+phải nới lỏng gì để bản vá xanh. Nên ghi lại: một lỗi sống dai vì phép kiểm khẳng định sai
+(lỗi #2), hoặc vì **trường quan trọng không có phép kiểm nào** (lỗi #5). Cái thứ hai khó
+thấy hơn — grep không trả gì thì trông như sạch.
+
+**Ghim:** `tests/dom-probe-message-sample-smoke.mjs`. Nó **không grep mã**, nó **chạy chính
+đoạn đã ship** — cắt khối mã ra khỏi `content.js` rồi thực thi trong `vm` trên 3 DOM giả
+dựng theo số đo live, cộng một lượt chạy thật nhánh bóp payload. Suite **99/99 xanh**.
+**3/3 đột biến bị bắt:** trả selector về `'article'` → sai ở case live; ép status luôn `OK`
+→ sai ở case selector chết; bỏ dòng `DROPPED_FOR_SIZE` → sai ở nhánh nắp payload.
+
+**Không đụng vào:** `sanitizeLedgerJob` trong `bridge-proposal-core.js` — lớp che
+`response_text` là ranh giới attribution có chủ đích, đổi phải hỏi Đức.
+
+**Còn mở:** B-32 (nghiệm thu trên trang thật) và B-33 (ba nhánh kia có cùng lỗi không).
+
+**CẦN ĐỨC RELOAD EXTENSION** — `chrome://extensions` → Reload, trên **cả ba** profile đang
+nối (`Bình`, `kaito`, `anhducds_multi work flow`). Reload tab là **không đủ**: đã thử
+`chat.reload` trên `kaito` lúc 13:44, probe sau đó vẫn trả trường cũ `articleSample` —
+đúng như lỗi #1 của sổ tay đã ghi. Nghiệm thu không tốn credit: chạy lại `dom-probe`, phải
+thấy `messageSampleDiag.status: "OK"` và `messageSample[].txtHead` có chữ thật của trang.

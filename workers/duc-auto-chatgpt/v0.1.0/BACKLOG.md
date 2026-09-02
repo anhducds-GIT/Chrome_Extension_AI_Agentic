@@ -551,6 +551,32 @@ checkpoint `Bridge-2026-08-26T06-32__results__v01..` + audit của `trial-09c93c
 mang trạng thái `INTERRUPTED` là **đúng thiết kế** (prompt đã gửi rồi mới dừng), không phải lỗi.
 Gộp vào B-09 khi Đức muốn dọn.
 
+## P2 — Còn mở sau phiên 2026-09-02
+
+### B-32 · Nghiệm thu `messageSample` trên trang thật — **CHỜ ĐỨC RELOAD EXTENSION**
+Bản vá selector của `dom_probe` (lỗi #5 trong sổ tay) đã xanh trên 99/99 test và trên DOM
+giả dựng theo số đo live, **nhưng chưa chạy trên trang thật**: reload tab không nạp lại
+content script từ đĩa. Đã thử `chat.reload` trên profile `kaito` lúc 13:44 — probe sau đó
+vẫn trả trường cũ `articleSample`, đúng như lỗi #1 của sổ tay đã ghi.
+
+**Đức cần làm:** vào `chrome://extensions` bấm Reload extension, trên **cả ba** profile đang
+nối (`Bình`, `kaito`, `anhducds_multi work flow`).
+
+**Nghiệm thu, không tốn credit:**
+```
+node bridge-cli.mjs dom-probe --pairing <đường-dẫn-pairing> --target "kaito"
+```
+Phải thấy `messageSampleDiag.status: "OK"` và `messageSample[].txtHead` có chữ thật của
+trang. Nếu ra `NO_CONTAINER_MATCHED` thì ChatGPT đã đổi marker lần nữa — đọc
+`attributeValues` trong cùng payload rồi dựng lại selector, **đừng đoán**.
+
+### B-33 · Ba nhánh kia có cùng lỗi selector chết trong `dom_probe` không?
+Lỗi #5 là **hai bản copy của một selector trôi xa nhau** — một dạng lỗi không đặc thù
+ChatGPT. Worker `duc-auto-gemini` và `duc-auto-gg-flow-video` cũng có `diagnostics.dom_probe`
+học từ cùng một khuôn. Chưa kiểm. Ngoài phạm vi phiên này (gói khác, chủ khác).
+Việc cần làm: với mỗi nhánh, tìm trường nào trong payload có **chữ của trang**, rồi kiểm
+xem selector dựng nó có còn khớp gì trên trang thật hay không.
+
 ## Đã đóng
 
 - **2026-08-26 · `d53a7e7`** — `provider-adapter.js` + `diagnostics.dom_probe` cho GPT,

@@ -846,17 +846,59 @@
           const src = image.currentSrc || image.src || "";
           return { rect: { w: Math.round(rect.width), h: Math.round(rect.height) }, scheme: (src.match(/^(blob:|data:|https:|http:)/) || ["none"])[0], srcHead: src.slice(0, 70), alt: (image.alt || "").slice(0, 40), complete: image.complete, naturalW: image.naturalWidth, visible: isVisible(image), chain: chainOf(image) };
         });
+        // ONE definition, two readers. The turn markers ChatGPT has actually
+        // used, newest first -- VERIFIED live 2026-09-02 by diagnostics.dom_probe
+        // on two profiles and two conversations: data-turn and
+        // data-message-author-role each matched every turn, bare <article>
+        // matched NOTHING.
+        //
+        // Why one constant instead of two literals: there WERE two, and they
+        // drifted. The attribute-name sampler below carried the wide list while
+        // the TEXT sampler was still on bare "article", so once ChatGPT moved
+        // its turns off <article> the text sample went permanently empty --
+        // silently, with truncated:false and an otherwise healthy payload. That
+        // one field was the probe's ONLY sample of page TEXT, so every AI sent
+        // here by golden rule 1 to gather DOM evidence got structure and no
+        // text, and could not tell "the page has no text" from "the selector is
+        // dead". It sat unnoticed for a week: Pilot-13's own baseline of
+        // 2026-08-26 already recorded an empty sample next to assistantCount: 7.
+        const MESSAGE_TURN_SELECTOR = '[data-turn], [data-message-author-role], [data-message-id], [data-turn-id], article';
+        // Wider net, for attribute-name DISCOVERY only: if every marker above
+        // dies at once, data-testid is the last thing still sitting on a turn
+        // container. Never read TEXT through this one -- it also matches sidebar
+        // rows and buttons, which is exactly the noise a text sample must not
+        // report as conversation content.
+        const MESSAGE_DISCOVERY_SELECTOR = `${MESSAGE_TURN_SELECTOR}, [data-testid]`;
         // What the page uses INSTEAD of the inherited message selectors is the
         // whole question when attribution goes blind, so sample the attribute
         // names actually present on likely message containers.
-        const messageAttributes = [...new Set(Array.from(document.querySelectorAll("article, [data-message-id], [data-testid], [data-turn], [data-turn-id]")).slice(0, 60)
+        const messageAttributes = [...new Set(Array.from(document.querySelectorAll(MESSAGE_DISCOVERY_SELECTOR)).slice(0, 60)
           .flatMap((element) => Array.from(element.attributes).map((attribute) => attribute.name).filter((name) => /^data-/.test(name))))].slice(0, 40);
-        const articleSample = Array.from(document.querySelectorAll("article")).slice(0, 4).map((element) => ({
+        const messageContainers = Array.from(document.querySelectorAll(MESSAGE_TURN_SELECTOR));
+        const messageSample = messageContainers.slice(0, 4).map((element) => ({
           testid: element.getAttribute("data-testid") || "",
           attrs: Array.from(element.attributes).map((attribute) => `${attribute.name}=${String(attribute.value).slice(0, 30)}`).slice(0, 8),
           imgs: element.querySelectorAll("img").length,
           txtHead: (element.innerText || "").replace(/\s+/g, " ").trim().slice(0, 60)
         }));
+        // An empty sample used to be indistinguishable from a page carrying no
+        // text. Say WHICH it is, in one field, so the next reader is not misled:
+        //   NO_CONTAINER_MATCHED -- the selector above is dead. Re-derive it
+        //                           from attributeValues below, do not guess.
+        //   MATCHED_BUT_NO_TEXT  -- containers are real, the page genuinely has
+        //                           no text yet.
+        //   DROPPED_FOR_SIZE     -- the payload cap dropped the sample; this
+        //                           field says nothing about the page.
+        const sampledWithText = messageSample.filter((entry) => entry.txtHead).length;
+        const messageSampleDiag = {
+          status: messageContainers.length === 0
+            ? "NO_CONTAINER_MATCHED"
+            : sampledWithText === 0 ? "MATCHED_BUT_NO_TEXT" : "OK",
+          selector: MESSAGE_TURN_SELECTOR,
+          matched: messageContainers.length,
+          sampled: messageSample.length,
+          with_text: sampledWithText,
+        };
         // Attribute NAMES alone were not enough on 2026-08-26: the page still
         // used data-message-author-role, but only for user turns, and the
         // assistant turn had moved to some other marker. What a selector
@@ -907,7 +949,7 @@
           abPollPending: abPollPending(),
           abPoll: poll ? poll.diagnostics : null,
           busy: STATE.busy,
-          selectorCounts, buttons, images, messageAttributes, attributeValues, generatedChains, articleSample, customTags, fileInputs,
+          selectorCounts, buttons, images, messageAttributes, attributeValues, generatedChains, messageSample, messageSampleDiag, customTags, fileInputs,
           truncated: false,
         };
         // Payload cap ~64KB: shrink the bulky arrays first rather than fail.
@@ -915,7 +957,10 @@
           probe.images = probe.images.slice(0, 5);
           probe.buttons = probe.buttons.slice(0, 10);
           probe.customTags = probe.customTags.slice(0, 40);
-          probe.articleSample = [];
+          // Blanking the sample without saying so was the SECOND silent path
+          // into the same confusion, so the status carries the reason out.
+          probe.messageSample = [];
+          probe.messageSampleDiag = { ...probe.messageSampleDiag, status: "DROPPED_FOR_SIZE", sampled: 0, with_text: 0 };
           probe.truncated = true;
         }
         sendResponse({ ok: true, probe });
