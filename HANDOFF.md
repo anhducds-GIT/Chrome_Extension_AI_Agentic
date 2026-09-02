@@ -367,3 +367,50 @@
     tài liệu operator đọc **lúc chạy live** — có tham chiếu `drafts/…` nay trỏ vào chỗ trống
     (tổng 8 chỗ trong gói, ở 4 file). Không phép kiểm nào bắt vì B4 chỉ soi file cổng. Không
     sửa được vì `claude-bridge-multiprofile` đang giữ package. **Sửa ngay khi package trả.**
+
+- **2026-09-02 · `s7-block`** — **PHIÊN S7 PHẦN A XONG. Tám phép kiểm nay CHẶN THẬT.**
+  **Phần B (bài test nghiệm thu) CHƯA chạy — đó là việc của Đức ở một chat mới, cố ý không đụng.**
+  - **Chặn:** `B1 B2 B3 B4 B5 B7 B10 B12`. **Vẫn chỉ cảnh báo:** `B6 B8 B9 B11 B13 B14`.
+    Danh sách khai ở `bootstrap.blocking` trong `.repo-structure.json` — **không viết cứng
+    trong code**, để S8 mở thêm B6/B9 sau khi trả nợ mà không ai phải sửa script.
+  - **BA MÃ THOÁT, cố ý không gộp:** `0` nhóm CHẶN đạt hết (cảnh báo vẫn có thể đỏ) · `1` repo
+    CÓ NỢ nhóm CHẶN → cổng đóng phiên đỏ theo · `2` CHÍNH BỘ KIỂM không chạy được. Gộp 1 với 2
+    thì người đóng phiên đọc "cổng đỏ" mà không biết phải sửa repo hay sửa bộ kiểm.
+  - **FAIL CLOSED trên chính CẤU HÌNH.** Thiếu `bootstrap.blocking`, hoặc nó không phải mảng,
+    hoặc trong đó có mã lạ (`CHAN_MA_LA`) → thoát 2, cổng đỏ. Lý do: cách dễ nhất để tự tháo
+    chặn là xoá cấu hình đi, nên xoá cấu hình phải là một lỗi to chứ không phải một sự im lặng.
+  - **PHẢI COMMIT CẤU HÌNH RIÊNG, TRƯỚC CODE — ghi lại vì phiên sau sẽ vấp lại.**
+    `check-bootstrap.mjs` đọc `.repo-structure.json` **từ HEAD**. Code S7 fail-closed khi thiếu
+    khoá đó, nên chừng nào cấu hình chưa vào HEAD thì bộ kiểm thoát 2 và suite KHÔNG THỂ xanh —
+    tức là không thể commit đúng luật "test xanh trước khi commit". Thứ tự đúng: commit cấu
+    hình một mình (là no-op vì code ở HEAD chưa đọc khoá đó) → suite xanh → commit code + test.
+    Cùng họ với bẫy "bộ sinh đọc từ HEAD" đã ghi ở S3/S4.
+  - **Đo:** suite bootstrap **27/27** · **14/14 đột biến bị bắt**.
+    **HAI LỖ GHIM HỤT tự tìm ra khi chạy mutation, cùng một gốc bệnh — ghim GẦN chỗ đúng thay
+    vì ghim ĐÚNG chỗ:** ① phép kiểm tích hợp chỉ tìm câu chữ của nhánh mã 1, nên đột biến đổi
+    `ok: false` → `ok: true` mà giữ nguyên câu chữ đã thoát sạch — cổng in ra lời cảnh báo rồi
+    vẫn cho báo xong; ② regex `/error\.status === 1/` khớp luôn cả `=== 101`, nên đột biến làm
+    nhánh mã 1 không bao giờ chạy cũng thoát. Cả hai nay ghim vào đúng cặp điều kiện–hành vi.
+  - **B6 đo được 18, brief ghi 17.** Chênh vì `BRIEF-S7.md` là tài liệu mới, chưa ai trỏ tới.
+    Đã thêm nó vào `docs/README.md`, nên sau commit này B6 về 17.
+  - **KHIẾM KHUYẾT TÔI TỰ GÂY RA Ở S6, nay nói thẳng:** `docs/README.md` là mục lục **gõ tay**,
+    và nó mục sau đúng MỘT commit (thiếu `BRIEF-S7.md`, B6 bắt được ngay). Lần này thêm tay,
+    nhưng cách sửa thật là **cho máy sinh mục lục đó** cùng lượt với `DASHBOARD.md`. Đã ghi
+    cảnh báo ngay trong file và đẩy sang **S8**.
+  - **Mục 4 của brief — ô "Project Instructions" của Đức. AI KHÔNG sửa được, Đức tự dán.**
+    Dòng thay thế đã soạn, xoá hết phần còn lại của mục 9:
+    > `Đọc AGENTS.md ở gốc repo trước khi làm gì.`
+    Vì sao rút gọn được: từ S1–S6 mọi luật đã nằm trong repo và **tự cưỡng chế được bằng máy**
+    (`session-check.mjs` + 8 phép kiểm chặn). Chép luật vào ô Project Instructions là tạo nguồn
+    sự thật thứ hai — đúng cái bệnh cả chương trình này chữa. **CHƯA làm, chờ Đức.**
+  - **Mục 5 của brief — gỡ nhãn `unproven`: CHƯA làm, đúng luật.** Brief ghi rõ chỉ gỡ SAU KHI
+    Đức báo phần B đạt.
+  - **KHÔNG PHẢI LỖI CỦA PHIÊN NÀY, nhưng phải báo:** `npm test` hiện có **1 phép kiểm đỏ** —
+    `bridge-mv3-reconnect-smoke.mjs` của gói chatgpt ("token is sent only after valid HMAC
+    proof"). Đó là **việc đang làm dở của phiên `claude-bridge-multiprofile`** (6 file trong cây
+    làm việc chưa commit, gồm `bridge-transport-loopback.js` và một test mới
+    `bridge-multiprofile-host-smoke.mjs` — họ đang port multi-profile sang chatgpt). Chạy riêng
+    file test đó thì XANH. Tôi không đụng gói đó; cổng đóng phiên loại đúng phần của họ ra.
+  - **Việc kế tiếp:** ① **Đức chạy PHẦN B** — chat mới, dán đúng một dòng trong `BRIEF-S7.md`,
+    ghi kết quả vào `evidence/2026xxxx-bootstrap-test-r02/`. Đạt cả A và B = **mục tiêu chính
+    của chương trình xong**. ② Sau khi Đức báo đạt: gỡ nhãn `unproven` (mục 5). ③ Rồi mới tới S8.
