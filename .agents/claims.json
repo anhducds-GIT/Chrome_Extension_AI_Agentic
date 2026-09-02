@@ -23,11 +23,11 @@
       "released_at": "2026-09-02"
     },
     "_root": {
-      "owner": "claude-so-y-tuong",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
-      "task": "Dung so y tuong (IDEAS.md) + noi vao bo sinh bang trang thai.",
-      "released_at": null
+      "task": "TRA QUYEN 02/09 (claude-so-y-tuong). XONG: IDEAS.md (phong cho) + scripts/build-overview.mjs (bang trang thai, ban ra KHONG commit) + 5 phep kiem, 4/4 dot bien. Suite 233.",
+      "released_at": "2026-09-02"
     }
   }
 }
