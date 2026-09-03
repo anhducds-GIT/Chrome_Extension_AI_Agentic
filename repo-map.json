@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-03",
-  "generated_commit": "314263d",
+  "generated_commit": "f5e3b13",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -59,13 +59,13 @@
       "lifecycle": "active",
       "status_md": "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Đức reload extension ở từng profile ChatGPT, đặt tên hồ sơ, rồi thử khối Phiên làm việc theo tab (tối đa 3) — gắn tên 2–3 tab và gọi bridge.sessions kiểm tên. Nợ cũ vẫn còn: audit độc lập gói khoảng-nghỉ-giữa-job",
+      "next_step": "Pilot vận hành thật cho phiên-theo-tab (Đức duyệt rồi mới chạy): reload extension, gắn tên 2–3 tab, gọi bridge.sessions + dom_probe --target từng phiên, thử gắn lại sau khi đóng Chrome",
       "human_action": "Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích; muốn chạy nhiều luồng song song thì mở tab BRIDGE, gõ tên và bấm Gắn tab đang mở cho từng tab.",
       "priority_rank": 2,
       "superseded_by": null,
       "last_verified": "2026-08-26",
       "last_verified_commit": "00d1f99b44bd490cac079da5e803917346571a26",
-      "open_item": "Phiên làm việc theo tab (ADR-0046, Đức duyệt 03/09): một profile gắn tên tối đa 3 tab ChatGPT, mỗi tab một ghế riêng trên Bridge, gọi bằng --target; method chạm tab đi đúng tab của phiên; tab đóng là ghế tự ngắt; vẫn một run một lúc. Suite 101/101, 13/13 mutation đỏ. Việc cũ vẫn mở: B-14…B-21, audit độc lập gói khoảng-nghỉ-giữa-job"
+      "open_item": "Phiên làm việc theo tab (ADR-0046) — bước 1 ĐÓNG BĂNG với phán quyết PASS của GPT sau 6 vòng audit, 32 mutation đỏ, suite 102/102. Chờ pilot vận hành thật (cần Đức duyệt). Việc cũ vẫn mở: B-14…B-21, B-34, B-35, audit độc lập gói khoảng-nghỉ-giữa-job"
     },
     {
       "id": "duc-auto-gemini",
@@ -121,7 +121,7 @@
     {
       "id": "workers/duc-auto-chatgpt/v0.1.0",
       "unit": "workers/duc-auto-chatgpt/v0.1.0",
-      "title": "Đức reload extension ở từng profile ChatGPT, đặt tên hồ sơ, rồi thử khối Phiên làm việc theo tab (tối đa 3) — gắn tên 2–3 tab và gọi bridge.sessions kiểm tên. Nợ cũ vẫn còn: audit độc lập gói khoảng-nghỉ-giữa-job",
+      "title": "Pilot vận hành thật cho phiên-theo-tab (Đức duyệt rồi mới chạy): reload extension, gắn tên 2–3 tab, gọi bridge.sessions + dom_probe --target từng phiên, thử gắn lại sau khi đóng Chrome",
       "rank": 2,
       "claim": null
     },
