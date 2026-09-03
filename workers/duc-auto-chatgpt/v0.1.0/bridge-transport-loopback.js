@@ -253,6 +253,13 @@
       const isProfile = spec.kind === "profile";
       let workspaceRecord = isProfile ? null : spec.workspace;
       let retired = false;
+      // Bumped by every close and every workspace-record change. A workspace
+      // connect awaits the tab check BEFORE claiming the socket slot, so a
+      // continuation from an OLDER lifecycle must find itself stale and stand
+      // down — otherwise a connect started against tab A can seat itself after
+      // the owner re-attached the workspace to tab B (audit 03/09 round 4,
+      // INV-5: validated-A-connects-as-B interleaving).
+      let seatEpoch = 0;
 
       let socket = null;
       let authenticated = false;
@@ -402,6 +409,7 @@
       }
 
       function closeSocket() {
+        seatEpoch += 1;
         clearKeepalive();
         clearReconnect();
         clearHandshakeDeadline();
@@ -513,9 +521,15 @@
           // a closed or navigated-away tab must read as TARGET_NOT_CONNECTED on
           // the host, never as a seat that answers for some other tab. The
           // check awaits, so re-guard the slot before claiming it — two
-          // concurrent connects must not race two sockets into one seat.
-          const usable = await workspaceTabUsable(workspaceRecord.tab_id);
+          // concurrent connects must not race two sockets into one seat, and a
+          // continuation whose lifecycle epoch has moved on (a close, or the
+          // owner re-attaching this workspace to another tab) must stand down:
+          // its verdict is about a tab this seat may no longer be bound to.
+          const epochAtCheck = seatEpoch;
+          const recordAtCheck = workspaceRecord;
+          const usable = await workspaceTabUsable(recordAtCheck.tab_id);
           if (retired || !pairing) return safeStatus(currentState());
+          if (seatEpoch !== epochAtCheck || workspaceRecord !== recordAtCheck) return safeStatus(currentState());
           if (socket && [WebSocketApi.OPEN, WebSocketApi.CONNECTING].includes(socket.readyState)) return safeStatus(currentState());
           if (!usable) {
             closeSocket();
@@ -568,7 +582,10 @@
           retired = true;
           closeSocket();
         },
-        updateWorkspace(record) { workspaceRecord = record; },
+        updateWorkspace(record) {
+          seatEpoch += 1;
+          workspaceRecord = record;
+        },
         workspace: () => workspaceRecord,
         isAuthenticated: () => authenticated && socket && socket.readyState === WebSocketApi.OPEN,
         currentState

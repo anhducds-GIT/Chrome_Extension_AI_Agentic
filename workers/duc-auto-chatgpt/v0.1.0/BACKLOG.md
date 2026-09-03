@@ -569,6 +569,21 @@ học từ cùng một khuôn. Chưa kiểm. Ngoài phạm vi phiên này (gói 
 Việc cần làm: với mỗi nhánh, tìm trường nào trong payload có **chữ của trang**, rồi kiểm
 xem selector dựng nó có còn khớp gì trên trang thật hay không.
 
+### B-34 · (P3) Gom điều khiển transport về MỘT hàng đợi điều khiển / transportEpoch
+Gợi ý MED của GPT (audit 03/09, sau khi đọc thiết kế workspace): pairing change, reconnect,
+đổi nhãn, gắn/gỡ phiên đều chạm cùng vòng đời socket, hiện được trị bằng BỐN hàng đợi +
+đóng-đồng-bộ tại chỗ (`pairingWork`, `workspaceWork`, `instanceWork`, per-seat state) — mỗi
+race đã có pin riêng (22 mutation đỏ + 3 vòng audit Codex xác nhận). Một `controlQueue` +
+`transportEpoch` thống nhất sẽ ĐẸP hơn về kiến trúc nhưng là viết lại file transport đã tôi
+luyện — làm khi có lý do mạnh hơn "gọn", và làm như một brief riêng có audit riêng. KHÔNG
+nhét vào fix nhỏ.
+
+### B-35 · (P2) N run đồng thời theo phiên — tách hàng đợi / run-state / ledger
+ADR-0046 đã duyệt "cả hai chiều", nhưng miếng exact-once này cần brief + test ghim + audit
+riêng (đúng ghi chú trong chính ADR). Gồm: mỗi phiên một RUN_ACTIVE + ledger namespace,
+attribution gắn theo tab, GPT invariant "page-scoped vs session-scoped" (mục 6 sổ tay) sẽ
+đổi nghĩa khi đó. Làm xong trên GPT rồi mới nghĩ tới migrate.
+
 ## Đã đóng
 
 - **2026-08-26 · `d53a7e7`** — `provider-adapter.js` + `diagnostics.dom_probe` cho GPT,

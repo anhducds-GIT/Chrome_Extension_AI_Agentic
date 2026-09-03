@@ -135,3 +135,21 @@ Khác biệt duy nhất phải biết khi vận hành:
    VẪN CÒN: mở lại tab, gõ ĐÚNG tên cũ rồi bấm **Gắn tab đang mở** là phiên trở lại với đúng
    mã cũ. Panel ghi rõ dòng nào đang chờ gắn lại. Reload extension giữa chừng (không đóng
    Chrome) thì KHÔNG mất gì.
+6. **Phiên = định tuyến tab, KHÔNG phải kho dữ liệu riêng.** Hàng đợi, workbook, ledger,
+   cấu hình output là MỘT bộ chung cho cả profile: `jobs.add` / `queue.list` /
+   `queue.propose` gọi qua phiên nào cũng đọc-ghi cùng một hàng đợi đó. Chỉ 4 method chạm
+   tab (`dom_probe`, `system.ping`, `chat.reload`, `run.trial`) là theo phiên. Đừng suy ra
+   "queue của gpt-A" — chưa tồn tại; tách kho theo phiên là bước N-run-đồng-thời, có brief
+   riêng.
+7. **`run.stop` dừng RUN DUY NHẤT đang chạy, gọi qua phiên nào cũng vậy** — cả profile chỉ
+   có một run tại một thời điểm nên không có chuyện dừng nhầm run của phiên khác; câu trả
+   lời vẫn nêu rõ job/phase bị dừng. `run.trial` qua phiên B khi phiên A đang chạy sẽ bị
+   `RUN_ACTIVE` — đúng luật, không phải lỗi. Stop tới ĐÚNG cửa sổ run vừa khởi động (chưa
+   khoá tab): cờ dừng vẫn ăn, nhưng extension KHÔNG gửi thông điệp abort vào tab nào cả —
+   vì lúc đó chưa có gì trong tab để huỷ (vá theo audit vòng 4, 03/09).
+8. **Phiên bám TAB, không bám CUỘC HỘI THOẠI** (thiết kế đã chốt trong ADR-0046). Đổi chat
+   trong cùng tab — kể cả mở chat mới — thì phiên vẫn là phiên đó; rời hẳn chatgpt.com thì
+   ghế ngắt, quay lại là tự nối (cùng tab = cùng phiên). Cái bám theo hội thoại là RUN:
+   `run.trial` khoá tab + khoá hội thoại từ lúc bind, trôi hội thoại giữa run là
+   `RECEIVER_LOST`. Operator cần "đúng cuộc hội thoại X" thì tự kiểm bằng `dom_probe`
+   trước khi hành động, đừng suy từ tên phiên.

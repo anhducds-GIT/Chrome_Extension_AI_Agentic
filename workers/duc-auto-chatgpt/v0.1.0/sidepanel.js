@@ -842,7 +842,16 @@
       // The same best-effort abort the owner's Stop button sends. A dead
       // content script must not turn a stop into a failure: the local flag
       // alone already prevents every later job from being submitted.
-      try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop still holds */ }
+      //
+      // Only once a tab is BOUND. In the startup window (runStarting, no
+      // boundTabId yet) nothing is in flight in any tab, so there is nothing
+      // to abort — and send() would fall back to the ACTIVE tab, aiming the
+      // abort at whatever tab happens to be in front (audit 03/09 round 4,
+      // INV-3: a stop while seat A's run is starting must never message seat
+      // B's or the front tab). The local flag is the entire stop then.
+      if (state.boundTabId !== null) {
+        try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop still holds */ }
+      }
       log("Bridge đã yêu cầu dừng run.", "error");
     }
     // audit() no-ops without a run_id, so an idle stop records nothing rather

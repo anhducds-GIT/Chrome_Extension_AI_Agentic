@@ -279,6 +279,31 @@ assert.deepEqual(workspaceRouted.workspace, { workspace_id: "ws-kichban-0001", n
 const profileRouted = await rpcThrough(socketByInstance.get("prof-abcd-0001"), "profreq-0001");
 assert.equal(profileRouted.workspace, undefined, "a profile rpc carries NO workspace — today's behavior, untouched");
 
+// -- CONCURRENT rpcs on two seats stay on their own rails (GPT invariant 1,
+// 03/09): the workspace travels PER MESSAGE, never through any shared
+// "current seat" variable, so two in-flight requests answered OUT OF ORDER
+// must each keep their own workspace tag and land on their own socket.
+{
+  const seatA = socketByInstance.get("ws-kichban-0001");
+  const seatB = socketByInstance.get("ws-research-0002");
+  seatA.emit("message", { data: JSON.stringify({ type: "rpc", relay_id: "relay-conc-a", envelope: { ...baseEnvelope, request_id: "conc-cheo-ghe-000a", method: "queue.list", params: {} } }) });
+  seatB.emit("message", { data: JSON.stringify({ type: "rpc", relay_id: "relay-conc-b", envelope: { ...baseEnvelope, request_id: "conc-cheo-ghe-000b", method: "queue.list", params: {} } }) });
+  await settle(1);
+  const routedA = port.posted.find((message) => message.envelope?.request_id === "conc-cheo-ghe-000a");
+  const routedB = port.posted.find((message) => message.envelope?.request_id === "conc-cheo-ghe-000b");
+  assert.deepEqual(routedA.workspace, { workspace_id: "ws-kichban-0001", name: "gpt-kichban", tab_id: 101 }, "in-flight request A carries seat A's workspace");
+  assert.deepEqual(routedB.workspace, { workspace_id: "ws-research-0002", name: "gpt-research", tab_id: 102 }, "in-flight request B carries seat B's workspace — no cross-contamination while both are pending");
+  // Answer B FIRST — the out-of-order case that a shared mutable would corrupt.
+  port.onMessage.emit({ type: "DAC_BRIDGE_RPC_RESPONSE", route_id: routedB.route_id, envelope: core.successResponse(core.parseRequest(routedB.envelope), { jobs: [], cursor: null }) });
+  await settle(1);
+  assert.ok(seatB.sent.some((frame) => frame.type === "rpc_response" && frame.relay_id === "relay-conc-b"), "B's answer lands on B's socket");
+  assert.equal(seatA.sent.some((frame) => frame.type === "rpc_response" && frame.relay_id === "relay-conc-a"), false, "A's socket sees nothing of B's answer");
+  assert.equal(seatA.sent.some((frame) => frame.type === "rpc_response" && frame.relay_id === "relay-conc-b"), false, "B's relay never leaks onto A's socket");
+  port.onMessage.emit({ type: "DAC_BRIDGE_RPC_RESPONSE", route_id: routedA.route_id, envelope: core.successResponse(core.parseRequest(routedA.envelope), { jobs: [], cursor: null }) });
+  await settle(1);
+  assert.ok(seatA.sent.some((frame) => frame.type === "rpc_response" && frame.relay_id === "relay-conc-a"), "A's answer lands on A's socket");
+}
+
 // -- fail closed on tab death -------------------------------------------------
 tabs.delete(101);
 chromeMock.tabs.onRemoved.emit(101);
@@ -494,7 +519,19 @@ function freshHarness({ sessionValues, localValues, tabRows }) {
       onRemoved: eventSource(),
       onUpdated: eventSource(),
       onReplaced: eventSource(),
+      hangTabs: new Set(),
+      hangResolvers: [],
+      releaseHang(tabId) {
+        const index = this.hangResolvers.findIndex((entry) => entry.tabId === tabId);
+        if (index < 0) return false;
+        const [entry] = this.hangResolvers.splice(index, 1);
+        entry.resolve();
+        return true;
+      },
       async get(tabId) {
+        if (this.hangTabs.has(tabId)) {
+          await new Promise((resolve) => this.hangResolvers.push({ tabId, resolve }));
+        }
         const tab = rows.get(tabId);
         if (!tab) throw new Error(`No tab with id: ${tabId}.`);
         return tab;
@@ -639,6 +676,60 @@ assert.equal(bootNoSession.local[wsCore.STORAGE_KEY].workspaces[0].tab_id, null,
 assert.equal(FakeWebSocket.instances.slice(socketsBeforeNoSession).length, 1, "only the profile connects");
 
 // ---------------------------------------------------------------------------
+// 2d. A stale connect continuation must stand down (seat lifecycle epoch)
+// ---------------------------------------------------------------------------
+// Audit 03/09 round 4, INV-5: a workspace connect awaits the tab check BEFORE
+// claiming the socket slot. Without an epoch, a connect started against tab A
+// can seat itself AFTER the owner re-attached the workspace to tab B — and
+// even after B navigated off-provider. The interleaving, step by step:
+const epochLocal = {
+  [pairingCore.PAIRING_STORAGE_KEY]: pairing,
+  "dac.bridge.instance.v1": { schema_version: 1, instance_id: "prof-epoch-0001", created_at: "2026-09-01T00:00:00.000Z" }
+};
+const bootEpoch = freshHarness({ sessionValues: { [SESSION_MARK]: "already-marked" }, localValues: epochLocal, tabRows: [[401, { id: 401, url: "https://chatgpt.com/c/doicho-a" }], [402, { id: 402, url: "https://chatgpt.com/c/doicho-b" }]] });
+globalThis.DacBridgeLoopbackTransport.create({ chrome: bootEpoch.mock, WebSocket: FakeWebSocket });
+await settle(2);
+const sendEpochMessage = (message) => new Promise((resolve) => bootEpoch.mock.runtime.onMessage.emit(message, {}, resolve));
+const createdEpoch = await sendEpochMessage({ type: "DAC_BRIDGE_WORKSPACE_UPSERT", name: "gpt-doi-cho", tab_id: 401 });
+assert.equal(createdEpoch.ok, true);
+await settle(2);
+const epochSocket1 = FakeWebSocket.instances.at(-1);
+// The seat loses its socket; the alarm starts a reconnect whose tab check we park.
+bootEpoch.mock.tabs.hangTabs.add(401);
+epochSocket1.close();
+bootEpoch.mock.alarms.onAlarm.emit({ name: globalThis.DacBridgeLoopbackTransport.RECONNECT_ALARM });
+await settle(1);
+assert.equal(bootEpoch.mock.tabs.hangResolvers.some((entry) => entry.tabId === 401), true, "the old connect is parked on tab A's check");
+// Owner re-attaches the SAME workspace to tab B (door check parked, then released).
+bootEpoch.mock.tabs.hangTabs.add(402);
+const reattachEpoch = sendEpochMessage({ type: "DAC_BRIDGE_WORKSPACE_UPSERT", workspace_id: createdEpoch.workspace.workspace_id, name: "gpt-doi-cho", tab_id: 402 });
+await settle(1);
+bootEpoch.mock.tabs.releaseHang(402); // door check passes on live tab B
+await settle(2);                       // reconcile: update record -> close -> connect, parked on B's check
+// Tab B leaves ChatGPT while both checks are still parked.
+bootEpoch.rows.set(402, { id: 402, url: "https://example.com/roi-trang" });
+bootEpoch.mock.tabs.onUpdated.emit(402, { url: "https://example.com/roi-trang" });
+await settle(1);
+const socketsBeforeStale = FakeWebSocket.instances.length;
+// The OLD continuation resumes with a `usable: true` verdict about tab A…
+bootEpoch.mock.tabs.releaseHang(401);
+await settle(2);
+assert.equal(FakeWebSocket.instances.length, socketsBeforeStale,
+  "…and stands down: its lifecycle epoch has moved on, so tab A's verdict may not seat a workspace now bound to tab B");
+// The B continuation resumes too — also stale (the off-provider close bumped the epoch).
+// Hangs are disarmed first so the UPSERT's own answer (which re-checks tab liveness
+// for its seat listing) can complete.
+bootEpoch.mock.tabs.hangTabs.clear();
+bootEpoch.mock.tabs.releaseHang(402);
+await settle(2);
+for (const entry of bootEpoch.mock.tabs.hangResolvers.splice(0)) entry.resolve();
+await settle(2);
+assert.equal(FakeWebSocket.instances.length, socketsBeforeStale, "no continuation seats the workspace while its tab is off-provider");
+await reattachEpoch;
+const epochListing = await sendEpochMessage({ type: "DAC_BRIDGE_WORKSPACES_GET" });
+assert.deepEqual(epochListing.seats.map((seat) => [seat.name, seat.state]), [["gpt-doi-cho", "disconnected"]], "the seat stays down until the tab is a live provider tab again");
+
+// ---------------------------------------------------------------------------
 // 2c. First-run identity is minted ONCE even with seats racing
 // ---------------------------------------------------------------------------
 // No instance record exists yet, and the profile seat and a workspace seat
@@ -708,6 +799,11 @@ assert.match(handlerBody("async function bridgeDomProbe"), /resolveWorkspaceTab\
 assert.match(handlerBody("async function bridgeSystemPing"), /resolveWorkspaceTab\(call\)/, "system.ping reports on the workspace's tab");
 assert.match(handlerBody("async function bridgeChatReload"), /performChatReload\(await resolveWorkspaceTab\(call\)\)/, "chat.reload reloads the workspace's tab");
 assert.match(handlerBody("async function bridgeRunTrial"), /bindRunTab\(await resolveWorkspaceTab\(call\)\)/, "run.trial binds the run to the workspace's tab — the one-run-at-a-time lock is untouched");
+// run.stop in the startup window (runStarting, no bound tab yet): nothing is
+// in flight in ANY tab, and send() would fall back to the ACTIVE tab — so the
+// best-effort abort may only be sent once a tab is bound (audit 03/09 round 4,
+// INV-3: a stop must never message the front tab or another seat's tab).
+assert.match(handlerBody("async function bridgeRunStop"), /if \(state\.boundTabId !== null\) \{\s*try \{ await send\(\{ type: "DAC_ABORT" \}\); \}/, "the abort message is gated on a BOUND tab; the local stop flag alone covers the startup window");
 
 // The transport must load the workspace module in production.
 const background = fs.readFileSync(path.join(here, "..", "background.js"), "utf8");
