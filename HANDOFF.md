@@ -1513,3 +1513,35 @@ thuộc `duc-auto-chatgpt`** — gói của lane khác. Không một dòng nào 
   **cổng xuất bản** (artifact tươi). Độ tươi là tính chất của *trạng thái đã publish*, không phải
   của *phiên làm việc*.
 - **Chờ Đức:** đổi chỗ một điều kiện chặn là luật an toàn, mục 2 bắt hỏi.
+
+### Audit GPT vòng 2 — tôi sai một chỗ, và chỗ đó là một lỗ thật
+
+**Tôi sai về `2733ee9`.** Nó **có thật** — trong `Ark_Repo_Harness`, repo vừa nhận bộ khung
+ngày 03/09 và dùng **đúng bộ sinh này**. Tôi chỉ tra repo mình đang đứng (528 commit, clone đầy
+đủ, đã fetch, 0 object khớp) rồi kết luận quá tay là nó không tồn tại. GPT đúng.
+
+**Và nó phơi ra lỗ tôi bỏ sót.** Tôi nói đúng rằng phép **SO** đã lọc dấu sinh trang từ lâu.
+Nhưng kết luận "vậy là xong" thì sai — vì bộ **GHI** vẫn ghi đè vô điều kiện. `2733ee9` đổi đúng
+**bốn dòng, cả bốn là dấu sinh**, không một dòng nội dung. Và commit đó lại làm HEAD nhích tiếp
+→ dấu đổi tiếp → bẩn tiếp. **Một vòng lặp tự nuôi.**
+
+**K2-7 đã vá.** Không ghi khi bản sinh ra giống về **ngữ nghĩa** với bản ở HEAD. Dấu cũ ở lại, và
+điều đó vẫn đúng: trang *đã* được sinh tại commit đó, và từ đó tới giờ không có gì đổi. Ghi đè
+mới là thứ ngụ ý có gì đó mới.
+
+Hai điều kiện chứ không phải một: đĩa bẩn mà HEAD đúng thì **vẫn phải ghi** để chữa — bỏ qua lúc
+đó là để nguyên bản hỏng. Cả hai dùng API đã có, không mở thêm đường đọc đĩa.
+
+**Chứng minh sống ngay sau khi commit K2-7:** HEAD nhích → chạy bộ sinh → **ghi 0 file** → cổng
+vẫn XANH. Đúng chỗ trước đây đẻ ra commit rác.
+
+**Hai chỗ GPT nhầm, nói cho đủ:**
+
+- Nhãn `ĐÃ SHIP` còn lại trên bảng là của **K2-2b và K2-3** — hai món đó **có thật trên
+  `origin/main`**, đã tra lại. GPT đang xem bản cache trước lúc tôi sửa.
+- `--carry` là quyền của **Đức**, không phải của GPT. Lý lẽ "carry che mất bottleneck" thì đúng,
+  nhưng nó để lại **15 commit của tôi kẹt vô thời hạn** — đó là một câu trả lời cần Đức, không
+  phải một câu chốt của bên thứ ba.
+
+**Chưa làm, chờ Đức:** tách cổng lane / cổng xuất bản. GPT duyệt, tôi đồng ý, nhưng đổi chỗ một
+điều kiện chặn là luật an toàn — mục 2 bắt hỏi Đức, không hỏi GPT.
