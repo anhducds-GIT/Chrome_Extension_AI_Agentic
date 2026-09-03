@@ -16,6 +16,7 @@ import path from "node:path";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
 import { appendOnlyAtEof, areaOf, claimPrefixesFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
@@ -528,6 +529,39 @@ check("Bất biến quyền sở hữu ba tầng", () => {
 // (không quy thuộc được là lỗi thật, và chỉ người vừa gõ nó mới sửa được), thiếu nhãn thì chỉ
 // nhắc. Bật chặn là một quyết định LUẬT — khai ở `.repo-structure.json`, và file đó thuộc `_root`
 // nên phiên này KHÔNG tự bật được. Đã ghi vào HANDOFF.
+/* Bảng quyền có bị mở ra sửa tay không.
+ *
+ * Lệnh `claim.mjs` bảo vệ ĐƯỜNG GHI, nhưng không gì bảo vệ chính `claims.json`. Ngày 03/09 cả
+ * bốn khoá gốc bị đổi chủ bằng một lượt sửa hàng loạt đi vòng qua lệnh, và phiên đang giữ khoá
+ * không hề biết cho tới lúc mở lệnh ra xem.
+ *
+ * Phép kiểm này CỐ Ý không so trạng thái cũ với mới. Ảnh chụp không phân biệt được "trả rồi
+ * nhận" với "ghi đè" — cùng ngày 03/09 `_root` đi thẳng từ chủ này sang chủ kia trong đúng một
+ * diff mà chuỗi thật là hai thao tác hợp lệ. So trạng thái chỉ báo oan. Nên: soi DẤU.
+ *
+ * ĐỎ cho MỌI phiên, không riêng phiên gây ra. Cố ý: người cần biết nhất là người vừa BỊ mất
+ * khoá, mà họ thì không chạy lệnh nào cả — họ chỉ chạy cổng.
+ */
+check("Bảng quyền chưa bị sửa tay", () => {
+  let parsed;
+  try { parsed = readClaims(); }
+  catch (error) { return { ok: false, msg: `Không đọc được .agents/claims.json: ${error.message}` }; }
+
+  const seal = fingerprintState(parsed);
+  if (seal.ok === true) {
+    return { ok: true, msg: `Dấu niêm phong khớp (${seal.stamped}) — mọi lượt nhận/trả đều đi qua claim.mjs.` };
+  }
+  if (seal.ok === null) {
+    return {
+      ok: false,
+      msg: `CHUA_DONG_DAU: .agents/claims.json thiếu trường \`${FINGERPRINT_FIELD}\`, nên không kiểm được có ai sửa tay hay không.`
+        + ` Đóng dấu trạng thái hiện tại: node scripts/claim.mjs --restamp --as ${asLabel}`
+    };
+  }
+  const XUONG_DONG = String.fromCharCode(10);
+  return { ok: false, msg: VO_DAU.split(XUONG_DONG).join(`${XUONG_DONG}         `) };
+});
+
 check("Nhãn lane trong commit", () => {
   if (!originMainResolves) {
     return { ok: true, skipped: true, msg: "Không so được với origin/main nên không đếm được commit nào chưa push — xem cảnh báo ở đầu báo cáo." };
@@ -573,7 +607,7 @@ check("Nhãn lane trong commit", () => {
 // công cụ đã quy một file về hai vùng khác nhau mà cổng vẫn xanh. Lý do ghi ở HANDOFF.md gốc.
 // 2026-09-02, phiên K2-3: 9 → 10. Thêm "Nhãn lane trong commit", vì quy commit theo chủ HIỆN
 // TẠI của vùng sai cả hai chiều — và chiều nguy hiểm là im lặng đẩy kèm việc người khác.
-const EXPECTED_CHECKS = 10;
+const EXPECTED_CHECKS = 11;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

@@ -21,6 +21,7 @@
  *
  * Mã thoát:  0 xong · 2 dùng sai · 3 TỪ CHỐI (đã có chủ khác / không phải chủ) · 4 bị ghi đè
  */
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,6 +43,64 @@ export function readClaims(file = CLAIMS_FILE) {
     throw new Error("CLAIMS_HONG: thiếu khối `claims` dạng object.");
   }
   return parsed;
+}
+
+/* ---- DẤU NIÊM PHONG -------------------------------------------------------
+ *
+ * Vấn đề còn lại sau khi có lệnh này: lệnh bảo vệ ĐƯỜNG GHI, nhưng không gì bảo vệ chính
+ * `claims.json` khỏi bị mở ra sửa tay. Ngày 03/09 đã xảy ra thật — cả bốn khoá gốc bị đổi chủ
+ * bằng một lượt sửa hàng loạt, đi vòng qua lệnh này, và phiên đang giữ khoá không hề biết.
+ *
+ * VÌ SAO KHÔNG SOI BẰNG CÁCH SO TRẠNG THÁI: hướng hiển nhiên là so bảng cũ với bảng mới rồi
+ * bắt lỗi "chủ đổi thẳng từ người này sang người kia". Hướng đó SAI, và tự tay tôi chứng minh
+ * cùng ngày: `_root` đi từ "claude-don-nha" sang "claude-k2-design" trong đúng một diff, mà
+ * chuỗi thật là TRẢ rồi NHẬN — hai thao tác hoàn toàn hợp lệ, chỉ bị ép phẳng khi so hai ảnh
+ * chụp. Ảnh chụp không phân biệt được "trả rồi nhận" với "ghi đè", nên phép kiểm kiểu đó chỉ
+ * báo oan.
+ *
+ * Nên: đóng dấu, đừng so. Lệnh này ghi một dấu băm của khối `claims` vào chính file. Sửa tay
+ * làm dấu vỡ, và cổng đóng phiên của BẤT KỲ phiên nào cũng thấy — kể cả phiên vừa bị mất khoá.
+ *
+ * Chỉ băm khối `claims`. Văn xuôi `_doc` / `_labels` sửa thoải mái không vỡ dấu — dấu để bắt
+ * đổi chủ lén, không phải để đóng băng tài liệu.
+ *
+ * KHÔNG hứa chống người cố tình: ai muốn thì tính lại dấu được. Nó chặn ĐƯỜNG TẮT, không chặn
+ * kẻ địch — và đường tắt mới là thứ đã xảy ra hai lần. Muốn mạnh hơn thì cần sổ cái chỉ-thêm
+ * (mỗi lượt nhận/trả một dòng, cổng phát lại từ gốc); ghi ở BACKLOG, chưa xây vì chưa cần.
+ */
+export const FINGERPRINT_FIELD = "_fingerprint";
+
+export const VO_DAU = "DAU_VO: `.agents/claims.json` đã bị sửa NGOÀI lệnh này — dấu niêm phong không khớp nội dung.\n"
+  + "Nghĩa là có người mở file ra sửa tay. Ngày 03/09 chuyện này đã lấy mất khoá của một phiên đang làm dở,\n"
+  + "và phiên đó không hề biết. ĐỪNG đóng lại dấu cho xong.\n"
+  + "  1. xem đã đổi gì:  git diff .agents/claims.json\n"
+  + "  2. khoá của bạn có bị đổi chủ không? nếu có thì hỏi Đức — luật mục 1: muốn giành thì hỏi.\n"
+  + "  3. chốt xong rồi mới đóng lại dấu: node scripts/claim.mjs --restamp --as <phiên>";
+
+const canon = (v) => {
+  if (v === undefined) return "null";
+  if (Array.isArray(v)) return `[${v.map(canon).join(",")}]`;
+  if (v && typeof v === "object") {
+    return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canon(v[k])}`).join(",")}}`;
+  }
+  return JSON.stringify(v);
+};
+
+/* Băm ổn định: thứ tự khoá trong file không đổi được dấu, nội dung đổi thì dấu đổi. */
+export function claimsFingerprint(claims) {
+  if (!claims || typeof claims !== "object" || Array.isArray(claims)) {
+    throw new Error("CLAIMS_HONG: không băm được — khối `claims` phải là object.");
+  }
+  return createHash("sha256").update(canon(claims)).digest("hex").slice(0, 16);
+}
+
+/* null = chưa từng đóng dấu (file cũ) · true/false = dấu còn nguyên / đã vỡ. Ba trạng thái,
+ * cố ý không gộp: "chưa kiểm" không được đội lốt "đã đạt". */
+export function fingerprintState(parsed) {
+  const stamped = parsed?.[FINGERPRINT_FIELD];
+  if (typeof stamped !== "string" || stamped === "") return { stamped: null, actual: claimsFingerprint(parsed?.claims), ok: null };
+  const actual = claimsFingerprint(parsed.claims);
+  return { stamped, actual, ok: stamped === actual };
 }
 
 /* Quyết định THUẦN — tách khỏi việc đọc/ghi để kiểm được mọi nhánh mà không cần đĩa. */
@@ -95,11 +154,36 @@ function main() {
   try { parsed = readClaims(); }
   catch (error) { console.error(error.message); process.exit(EXIT.MISUSE); }
 
-  if (flag("list") || argv.length === 0) {
+  const seal = fingerprintState(parsed);
+  const bang = () => {
     for (const [key, value] of Object.entries(parsed.claims)) {
       const owner = value.owner || "";
       console.log(`${owner ? "GIU  " : "TRỐNG"} ${key.padEnd(34)}${owner}`);
     }
+  };
+
+  if (flag("list") || argv.length === 0) {
+    bang();
+    if (seal.ok === false) console.error(`\n${VO_DAU}`);
+    if (seal.ok === null) console.error("\nCHUA_DONG_DAU: bảng này chưa có dấu niêm phong. Đóng: node scripts/claim.mjs --restamp --as <phiên>");
+    process.exit(EXIT.OK);
+  }
+
+  // ĐÓNG LẠI DẤU — lối thoát tường minh, và cố ý ồn ào. Dùng khi: (a) file cũ chưa có dấu;
+  // (b) Đức đã phân xử xong một vụ sửa tay và muốn chốt trạng thái hiện tại là đúng.
+  // Nó in cả bảng ra trước khi đóng, để người chạy phải NHÌN thấy mình đang niêm phong cái gì.
+  if (flag("restamp")) {
+    const as = flag("as");
+    if (typeof as !== "string") {
+      console.error("Dùng: node scripts/claim.mjs --restamp --as <phiên>");
+      process.exit(EXIT.MISUSE);
+    }
+    console.log(`Đang niêm phong trạng thái này (phiên "${as}"):`);
+    bang();
+    parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims);
+    fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
+    console.log(`\ndấu cũ: ${seal.stamped ?? "(chưa có)"}  →  dấu mới: ${parsed[FINGERPRINT_FIELD]}`);
+    console.log("Nếu bạn KHÔNG cố ý làm việc này thì vừa xoá dấu vết một vụ sửa tay. Xem lại git diff .agents/claims.json.");
     process.exit(EXIT.OK);
   }
 
@@ -121,11 +205,16 @@ function main() {
     process.exit(EXIT.MISUSE);
   }
 
+  // Dấu vỡ thì DỪNG TRƯỚC KHI GHI. Ghi đè lên một bảng đã bị sửa tay là đóng dấu hợp lệ cho
+  // vụ sửa đó — tang chứng biến mất, và phiên bị mất khoá vĩnh viễn không biết.
+  if (seal.ok === false) { console.error(VO_DAU); process.exit(EXIT.REFUSED); }
+
   const today = new Date().toISOString().slice(0, 10);
   const verdict = decide(parsed.claims, { action, key, as, today });
   if (verdict.code !== EXIT.OK) { console.error(verdict.message); process.exit(verdict.code); }
 
   parsed.claims[key] = typeof task === "string" ? { ...verdict.next, task } : verdict.next;
+  parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims);
   fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
 
   // GHI RỒI ĐỌC LẠI. Không chặn được đua, nhưng không để nó âm thầm.

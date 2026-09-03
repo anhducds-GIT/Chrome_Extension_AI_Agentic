@@ -688,7 +688,7 @@ function antiDrift(text, measurements = {}) {
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
     // `repo-structure.mjs` PHẢI có mặt: từ K1 nó là nguồn sự thật chung về hình dạng repo,
     // và cả ba script kia đều import nó. Thiếu nó thì repo tạm chết ngay lúc nạp module.
-    for (const name of ["repo-structure.mjs", "build-dashboard.mjs", "feature-parity.mjs", "session-check.mjs"]) {
+    for (const name of ["repo-structure.mjs", "build-dashboard.mjs", "feature-parity.mjs", "session-check.mjs", "claim.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".agents/claims.json", JSON.stringify({ claims: {
@@ -779,7 +779,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 One Door");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "safe-push.mjs", "session-check.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+    for (const name of ["repo-structure.mjs", "safe-push.mjs", "session-check.mjs", "build-dashboard.mjs", "feature-parity.mjs", "claim.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     // `docs/` có steward RIÊNG. Đây là điều kiện của cả phép kiểm: nếu `docs/` vẫn về `_root`
@@ -843,6 +843,76 @@ function antiDrift(text, measurements = {}) {
     ok("K2-2b · HÀNH VI: safe-push quy docs/ về _docs (không phải _root), và vẫn từ chối vùng người khác");
   } finally {
     assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-2b-one-door-")), "chỉ dọn đúng temp fixture K2-2b");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+/* 23g. K2-4 · HÀNH VI: cổng đóng phiên ĐỎ khi bảng quyền bị mở ra sửa tay.
+   `tests/claim-smoke.mjs` đã ghim phía LỆNH (nó từ chối ghi khi dấu vỡ). Khối này ghim phía
+   CỔNG, và đó mới là vế cứu được nạn nhân: người bị mất khoá KHÔNG chạy `claim.mjs` — họ đang
+   bận làm việc của họ. Thứ duy nhất họ chắc chắn chạy là cổng đóng phiên.
+
+   Chứng ÂM nằm ngay trong khối, không tách ra: sửa văn xuôi `_doc` PHẢI vẫn xanh. Thiếu vế đó
+   thì một đột biến "cứ đỏ" hoặc "băm cả file" vẫn thoát, và cổng sẽ đỏ mỗi lần ai sửa lời giải
+   thích — nghĩa là ba ngày sau sẽ có người tắt nó đi. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-4-dau-niem-phong-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const claimsPath = join(tempRoot, ".agents", "claims.json");
+  const docClaims = () => JSON.parse(readFileSync(claimsPath, "utf8"));
+  const ghiClaims = (p) => writeFileSync(claimsPath, `${JSON.stringify(p, null, 2)}\n`, "utf8");
+  const dongCheck = () => {
+    const gate = spawnSync(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "toi", "--quick"], {
+      cwd: tempRoot, encoding: "utf8"
+    });
+    assert.doesNotMatch(gate.stderr, /CỔNG BỊ SỬA/, "số phép kiểm phải khớp EXPECTED_CHECKS");
+    const dong = (gate.stdout.match(/^.*Bảng quyền chưa bị sửa tay.*$/m) ?? [""])[0];
+    assert.notEqual(dong, "", "cổng PHẢI có phép kiểm 'Bảng quyền chưa bị sửa tay' — gỡ nó ra là hỏng cả khối này");
+    return dong;
+  };
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2 Dau");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "session-check.mjs", "build-dashboard.mjs", "feature-parity.mjs", "claim.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    mkdirSync(join(tempRoot, ".agents"), { recursive: true });
+    writeFileSync(join(tempRoot, ".repo-structure.json"), JSON.stringify({
+      schema_version: 1,
+      areas: { "scripts/": { steward: "_root", mutability: "rw", ownership_mode: "root" } }
+    }, null, 2), "utf8");
+    ghiClaims({ _doc: "loi giai thich ban dau", claims: { _root: { owner: "toi", ai: "Claude", task: "viec cua toi" } } });
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed");
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+
+    // (a) CHƯA đóng dấu = CHƯA KIỂM, và chưa kiểm KHÔNG được đội lốt đã đạt.
+    assert.match(dongCheck(), /ĐỎ/, "bảng chưa có dấu thì cổng phải ĐỎ — 'chưa kiểm' không phải 'đã đạt'");
+
+    // (b) Đóng dấu qua đúng lệnh → xanh.
+    const restamp = spawnSync(process.execPath, [join(tempRoot, "scripts", "claim.mjs"), "--restamp", "--as", "toi"], {
+      cwd: tempRoot, encoding: "utf8"
+    });
+    assert.equal(restamp.status, 0, "--restamp phải chạy được trong repo dựng từ bộ khung");
+    assert.match(dongCheck(), /XANH/, "đóng dấu đúng lệnh thì cổng phải XANH");
+
+    // (c) CHỨNG ÂM: sửa văn xuôi ngoài khối `claims` KHÔNG được làm cổng đỏ.
+    const vanXuoi = docClaims();
+    vanXuoi._doc = "doi loi giai thich, khong dung toi ai giu gi";
+    ghiClaims(vanXuoi);
+    assert.match(dongCheck(), /XANH/,
+      "sửa lời giải thích KHÔNG phải sửa tay bảng quyền — đỏ ở đây là cổng sẽ bị tắt trong ba ngày");
+
+    // (d) CA CHÍNH: đổi chủ bằng tay, đi vòng qua lệnh.
+    const cuop = docClaims();
+    cuop.claims._root.owner = "ke-cuop";
+    ghiClaims(cuop);
+    assert.match(dongCheck(), /ĐỎ/, "đổi chủ bằng tay thì cổng PHẢI đỏ — đây là lý do cả phép kiểm tồn tại");
+    ok("K2-4 · HÀNH VI: cổng ĐỎ khi bảng quyền bị sửa tay và khi chưa đóng dấu; sửa văn xuôi thì KHÔNG đỏ");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-4-dau-niem-phong-")), "chỉ dọn đúng temp fixture K2-4");
     rmSync(tempRoot, { recursive: true, force: true });
   }
 }
@@ -1074,7 +1144,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2-1b Orphan");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "session-check.mjs", "build-dashboard.mjs", "check-bootstrap.mjs"]) {
+    for (const name of ["repo-structure.mjs", "session-check.mjs", "build-dashboard.mjs", "check-bootstrap.mjs", "claim.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
