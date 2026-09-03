@@ -56,11 +56,18 @@ nên hai việc không hề chồng nhau vẫn chặn nhau:
 |---|---|
 | `_docs` | `docs/` |
 | `_code` | `scripts/` + `tests/` |
-| `_template` | `template/` |
 | `_root` | phần còn lại và các file ở tầng ngoài cùng |
+
+(`_template` đã bỏ ngày 03/09 — bộ khung dọn ra nhà riêng theo ADR-0001, không còn `template/`.)
 
 Nhận đúng vùng mình đụng, không nhận cả gốc repo. Cổng đóng phiên sẽ nói tên khoá còn thiếu.
 Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.json`.
+
+**Ba artifact máy sinh KHÔNG đòi khoá nào** (từ 03/09): `DASHBOARD.md` · `llms.txt` ·
+`repo-map.json`. Không có gì của ai trong đó để mất — chạy lại bộ sinh là ra y hệt, và đo ngày
+02/09 thấy **19% lượt nhận `_root` tồn tại CHỈ để chạy một bộ sinh rồi trả ngay**. Danh sách khai
+ở khối `generated` của `.repo-structure.json`. `FEATURE-PARITY.md` **cố ý không** nằm trong đó:
+mục 2 của nó là chữ của người, nên chạm nó vẫn phải giữ `_root`.
 
 **Hai file được MIỄN, và lý do khác nhau:** `.agents/claims.json` (nhận/trả quyền là thao tác
 hành chính — không miễn thì không ai trả lại được quyền) và `HANDOFF.md` ở gốc (luật mục 7 bắt
@@ -163,6 +170,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Viết một file nghiên cứu mới trong `docs/studies/` | `docs/_TEMPLATE-study.md` — bản mẫu: frontmatter 3 trường (`kind`/`status`/`ttl_days`), số liệu lấy từ nguồn máy sinh · hồ sơ đã nghỉ nằm ở `docs/archive/`; mục lục: `docs/README.md` |
 | **Lấy bộ chuẩn về dùng cho repo khác, hoặc sửa bộ chuẩn** | **KHÔNG CÒN Ở REPO NÀY.** Bộ khung đã dọn ra nhà riêng 03/09 theo ADR-0001: `https://github.com/anhducds-GIT/Ark_Repo_Harness`. Repo này nay là một **người dùng** của bộ khung, không phải nơi phát hành nó — sửa bộ khung thì sửa ở đó |
 | **Nhận hoặc trả quyền một gói** | `node scripts/claim.mjs --take <khoá> --as <phiên> --task "một câu"` · trả: `--release`. **Đừng sửa `claims.json` bằng tay nữa** — làm tay là đọc-sửa-ghi, và ngày 02/09 đã có một quyền bị ghi đè im lặng vì thế. Lệnh này TỪ CHỐI nếu gói đã có chủ khác, TỪ CHỐI trả quyền hộ người khác, và ghi rồi đọc lại để kiểm |
+| **Cổng báo `DAU_VO` — bảng quyền bị sửa tay** | Từ 03/09 bảng có **dấu niêm phong**, và sửa tay làm dấu vỡ. Lý do: lệnh trên giữ *đường ghi*, nhưng không gì giữ chính file — ngày 03/09 cả bốn khoá gốc bị đổi chủ một lượt đi vòng qua lệnh, và phiên đang làm dở không hề biết. Dấu vỡ thì `claim.mjs` **từ chối ghi** (mã 3) và cổng đóng phiên **ĐỎ với MỌI phiên** — cố ý, vì người cần biết nhất là người vừa BỊ mất khoá, mà họ chỉ chạy cổng chứ không chạy lệnh. Gặp thì: `git diff .agents/claims.json` → khoá của bạn có bị đổi chủ không → có thì **hỏi Đức** (luật mục 1) → chốt xong mới `node scripts/claim.mjs --restamp --as <phiên>`. **Đừng restamp cho xong việc** — làm thế là đóng dấu hợp lệ cho vụ sửa tay và xoá luôn tang chứng. Sửa văn xuôi `_doc` / `_labels` KHÔNG làm vỡ dấu |
 | **Hiểu vì sao nhiều phiên hay va nhau, và các phương án đã cân** | `docs/studies/PARALLEL-WORK-DESIGN-V0.md` — đo thật ngày 02/09: 127 commit/ngày, 77% chạm `_root`, 63 lần ghi bảng quyền. Tách **hai vấn đề khác nhau**: quyền bị ghi đè (bug, đã vá bằng lệnh trên) và push cuốn theo commit người khác (hệ quả của một nhánh, chưa chốt phương án) |
 | **Đức có một ý tưởng, hoặc muốn biết đang có những hướng nào chờ làm** | `IDEAS.md` ở gốc repo — **phòng chờ**, không phải roadmap thứ hai. Hai trường bắt buộc: `bậc` và `việc kế`. Đang xây thì PHẢI khai `chủ` + `phạm vi` — đó là thứ cho phép nhiều phiên chạy song song mà không giẫm chân. Ý tưởng có nhà rồi thì rời sổ (điền `nhà:`), đừng chép lại |
 | **Sinh bảng trạng thái cho Đức xem** | `node scripts/build-overview.mjs <file-ra.html>` — trang trực quan, sinh từ cùng nguồn với `DASHBOARD.md` nên ba trang không thể nói khác nhau. **Bản ra KHÔNG commit**: nó để publish, và tự in ngày sinh + bật cờ đỏ khi quá 7 ngày. Cấm trong trang: SHA · đường dẫn · phần trăm · lời máy tự khen |

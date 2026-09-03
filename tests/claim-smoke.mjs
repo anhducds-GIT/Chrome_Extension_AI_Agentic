@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, readClaims } from "../scripts/claim.mjs";
+import { ageHours, ageLabel, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, readClaims } from "../scripts/claim.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -208,6 +208,79 @@ const CLAIMS = () => ({
     ok("K2-4 · lenh dong dau khi ghi; sua tay thi TU CHOI ma KHONG ghi de; --restamp la loi thoat on ao");
   } finally {
     assert.ok(temp.startsWith(join(tmpdir(), "claim-dau-")), "chi don dung temp fixture cua phep kiem nay");
+    rmSync(temp, { recursive: true, force: true });
+  }
+}
+
+/* ---- K2-5. TUỔI KHOÁ — cho người quyết định nhìn thấy, KHÔNG tự đòi lại ----
+ *
+ * Ngày 03/09 hai khoá gốc bị giành bằng tay, và phần đó ĐÚNG: chủ của chúng đã tắt thật. Nhưng
+ * bảng không nói ra được điều đó — `claimed_at` chỉ có NGÀY, nên khoá nhận 5 phút trước và khoá
+ * bỏ quên từ sáng trông y hệt nhau. Người muốn làm đúng cũng phải đoán.
+ *
+ * Vế PHẢI GHIM MẠNH NHẤT là vế phủ định: lệnh KHÔNG được tự đòi lại khoá quá hạn. `claimed_at`
+ * không được chạm lại trong lúc làm, nên "cũ" không đồng nghĩa "chết"; tự đòi lại là biến đúng
+ * tai nạn hôm nay thành tính năng.
+ */
+{
+  const moc = new Date("2026-09-03T12:00Z");
+  assert.equal(ageHours("2026-09-03T10:00", moc), 2, "doc duoc dang MOI co gio");
+  assert.equal(ageHours("2026-09-03", moc), 12, "dang CU chi co ngay van doc duoc — tinh tu 00:00");
+  assert.equal(ageHours("2026-09-03T10:00Z", moc), 2, "co san hau to Z thi khong duoc dan them");
+  assert.equal(ageHours("2026-09-03T20:00", moc), 0, "moc tuong lai thi ve 0, khong duoc ra so AM");
+
+  // Không đọc được thì trả null. Đoán bừa một con số giờ tệ hơn không nói gì — người đọc sẽ
+  // tin vào nó để quyết định có giành khoá của người khác hay không.
+  for (const xau of [null, undefined, "", "hom qua", 42, "2026-13-99"]) {
+    assert.equal(ageHours(xau, moc), null, `moc khong doc duoc phai tra null: ${JSON.stringify(xau)}`);
+  }
+  assert.equal(ageLabel(null), "", "khong biet tuoi thi khong in gi");
+  assert.match(ageLabel(0.5), /phút/, "duoi 1h thi in phut");
+  assert.match(ageLabel(5), /^5h$/, "vai gio thi in gio");
+  assert.match(ageLabel(72), /ngày/, "qua 48h thi in ngay cho de doc");
+  ok("K2-5 · tuoi khoa: doc ca dang cu lan moi, moc hong tra null, nhan don vi theo do lon");
+}
+
+{
+  const temp = mkdtempSync(join(tmpdir(), "claim-tuoi-"));
+  try {
+    const claimsPath = join(temp, ".agents", "claims.json");
+    mkdirSync(dirname(claimsPath), { recursive: true });
+    mkdirSync(join(temp, "scripts"), { recursive: true });
+    const here = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "claim.mjs");
+    writeFileSync(join(temp, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+    const cu = new Date(Date.now() - (GIO_NHAC + 2) * 3600000).toISOString().slice(0, 16);
+    const moi = new Date(Date.now() - 5 * 60000).toISOString().slice(0, 16);
+    writeFileSync(claimsPath, `${JSON.stringify({ claims: {
+      _root: { owner: "phien-cu", ai: "Claude", claimed_at: cu, task: "giu lau roi" },
+      _docs: { owner: "phien-moi", ai: "Claude", claimed_at: moi, task: "vua nhan" },
+      "workers/goi-b": { owner: null, ai: null, claimed_at: cu, task: "" }
+    } }, null, 2)}\n`, "utf8");
+
+    const run = (...args) => {
+      const r = spawnSync(process.execPath, [join(temp, "scripts", "claim.mjs"), ...args], { encoding: "utf8" });
+      return { code: r.status, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
+    };
+    const dong = (khoa) => (run("--list").out.match(new RegExp(`^.*${khoa.replace("/", "\\/")}.*$`, "m")) ?? [""])[0];
+
+    assert.match(dong("_root"), /⚠/, "khoa giu qua nguong phai co dau nhac");
+    assert.doesNotMatch(dong("_docs"), /⚠/, "khoa vua nhan thi KHONG duoc nhac — bao oan la nguoi ta bo qua het");
+    assert.doesNotMatch(dong("workers/goi-b"), /giữ/, "khoa TRONG thi khong co tuoi de in");
+    assert.match(run("--list").out, /hỏi Đức/, "phai noi ro day la so lieu de HOI, khong phai giay phep gianh");
+
+    // VẾ PHỦ ĐỊNH — quan trọng nhất cả khối.
+    const cuop = run("--take", "_root", "--as", "phien-khac", "--task", "khoa nay cu roi ma");
+    assert.equal(cuop.code, EXIT.REFUSED, "khoa QUA HAN van la khoa co chu — TUYET DOI khong tu doi lai");
+    assert.equal(JSON.parse(readFileSync(claimsPath, "utf8")).claims._root.owner, "phien-cu",
+      "va khong duoc ghi mot chu nao vao bang");
+
+    // Mốc mới phải có GIỜ, không chỉ ngày — nếu không thì cả khối này vô nghĩa từ lần ghi sau.
+    assert.equal(run("--take", "workers/goi-b", "--as", "phien-moi", "--task", "viec moi").code, EXIT.OK);
+    assert.match(JSON.parse(readFileSync(claimsPath, "utf8")).claims["workers/goi-b"].claimed_at,
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "moc moi PHAI co gio — ngay tran la goc benh dang chua");
+    ok("K2-5 · --list in tuoi va nhac dung khoa cu; khoa qua han VAN khong tu doi lai duoc");
+  } finally {
+    assert.ok(temp.startsWith(join(tmpdir(), "claim-tuoi-")), "chi don dung temp fixture cua phep kiem nay");
     rmSync(temp, { recursive: true, force: true });
   }
 }

@@ -103,6 +103,39 @@ export function fingerprintState(parsed) {
   return { stamped, actual, ok: stamped === actual };
 }
 
+/* ---- TUỔI KHOÁ ------------------------------------------------------------
+ *
+ * Ngày 03/09 hai khoá gốc bị giành bằng tay, và một phần lý do là ĐÚNG: chủ của chúng đã tắt
+ * thật, khoá thành bỏ rơi. Nhưng bảng không hề nói ra điều đó — `claimed_at` chỉ có NGÀY, nên
+ * một khoá nhận cách đây 5 phút và một khoá bỏ quên từ sáng trông y hệt nhau. Người muốn làm
+ * đúng cũng không có cách nào phân biệt, nên họ đoán.
+ *
+ * Nên: ghi cả GIỜ, và in tuổi ra ngay chỗ người ta nhìn trước khi quyết định — `--list`.
+ *
+ * CỐ Ý KHÔNG tự đòi lại khoá quá hạn. Một phiên chạy dài là chuyện bình thường ở repo này, và
+ * `claimed_at` không được chạm lại trong lúc làm, nên "cũ" KHÔNG đồng nghĩa "chết". Tự đòi lại
+ * là dựng đúng cái tai nạn hôm nay thành tính năng. Đây là số liệu cho người đọc, không phải
+ * một phán quyết — luật mục 1 vẫn giữ nguyên: muốn giành thì hỏi Đức.
+ */
+export const GIO_NHAC = 6;
+
+/* Chấp nhận cả dạng cũ chỉ có ngày ("2026-09-02") lẫn dạng mới có giờ. Không đọc được thì trả
+ * null — đoán bừa một con số giờ còn tệ hơn không nói gì. */
+export function ageHours(stamp, now = new Date()) {
+  if (typeof stamp !== "string" || stamp === "") return null;
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(stamp) ? `${stamp}T00:00Z` : stamp;
+  const t = Date.parse(/[Zz]|[+-]\d{2}:?\d{2}$/.test(iso) ? iso : `${iso}Z`);
+  if (!Number.isFinite(t)) return null;
+  return Math.max(0, (now.getTime() - t) / 3600000);
+}
+
+export function ageLabel(hours) {
+  if (hours === null) return "";
+  if (hours < 1) return `${Math.round(hours * 60)} phút`;
+  if (hours < 48) return `${Math.round(hours)}h`;
+  return `${Math.round(hours / 24)} ngày`;
+}
+
 /* Quyết định THUẦN — tách khỏi việc đọc/ghi để kiểm được mọi nhánh mà không cần đĩa. */
 export function decide(claims, { action, key, as, today }) {
   if (!Object.prototype.hasOwnProperty.call(claims, key)) {
@@ -156,9 +189,23 @@ function main() {
 
   const seal = fingerprintState(parsed);
   const bang = () => {
+    let coCu = false;
     for (const [key, value] of Object.entries(parsed.claims)) {
       const owner = value.owner || "";
-      console.log(`${owner ? "GIU  " : "TRỐNG"} ${key.padEnd(34)}${owner}`);
+      let duoi = "";
+      if (owner) {
+        const gio = ageHours(value.claimed_at);
+        if (gio !== null) {
+          duoi = `  (giữ ${ageLabel(gio)})`;
+          if (gio >= GIO_NHAC) { duoi += "  ⚠"; coCu = true; }
+        }
+      }
+      console.log(`${owner ? "GIU  " : "TRỐNG"} ${key.padEnd(34)}${owner}${duoi}`);
+    }
+    if (coCu) {
+      console.log(`\n⚠ = giữ đã quá ${GIO_NHAC}h. CŨ KHÔNG CÓ NGHĨA LÀ CHẾT — phiên chạy dài là bình thường,`);
+      console.log("  và `claimed_at` không được chạm lại trong lúc làm. Đây là số liệu để bạn HỎI, không phải");
+      console.log("  giấy phép để giành. Muốn lấy vùng người khác đang giữ thì hỏi Đức (luật mục 1).");
     }
   };
 
@@ -209,7 +256,9 @@ function main() {
   // vụ sửa đó — tang chứng biến mất, và phiên bị mất khoá vĩnh viễn không biết.
   if (seal.ok === false) { console.error(VO_DAU); process.exit(EXIT.REFUSED); }
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Có GIỜ, không chỉ có ngày: xem khối "TUỔI KHOÁ" ở trên. Ngày trần khiến khoá nhận 5 phút
+  // trước và khoá bỏ quên từ sáng trông y hệt nhau.
+  const today = new Date().toISOString().slice(0, 16);
   const verdict = decide(parsed.claims, { action, key, as, today });
   if (verdict.code !== EXIT.OK) { console.error(verdict.message); process.exit(verdict.code); }
 
