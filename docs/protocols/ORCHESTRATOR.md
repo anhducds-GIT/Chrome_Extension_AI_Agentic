@@ -142,12 +142,23 @@ sách quyết định đang chờ Đức. Hết. Không kể số commit, không
 **Lớp thực thi — làm im lặng, đúng luật `AGENTS.md`:** cổng kiểm xanh → Log vào `HANDOFF.md`
 → `safe-push.mjs`. Thêm hai việc riêng của vai này, và cả hai đã trả giá thật:
 
-- **Trả khoá TRƯỚC commit cuối, không phải sau khi push.** Ngày 04/09 phiên này trả ba khoá
-  *sau* khi push, nên trên máy chúng trống mà **trên GitHub vẫn ghi là đang bị giữ** — và
-  GitHub là chỗ GPT audit, cũng là chỗ phiên khác nhìn vào để biết mình có bị chặn không.
-  Đúng thứ tự: nhận khoá → làm hết việc → **trả khoá** → commit tất cả (gồm cả lượt trả) →
-  push **một** lần. Chính Đức bắt được sai lệch này, tức lớp thực thi đã rò lên lớp điều
-  phối — đó là lỗi cần tránh, không phải chuyện nhỏ.
+- **Trả khoá là một lượt push RIÊNG, và phải có lượt đó.** Đúng thứ tự, sáu bước:
+
+  ```
+  nhận khoá → làm việc → commit → push  ←── khoá VẪN đứng tên bạn ở bước này
+            → trả khoá → commit (chỉ claims.json) → push lần hai
+  ```
+
+  Vì sao không gộp: ngày 04/09 phiên này trả ba khoá *sau* lượt push duy nhất, nên trên máy
+  chúng trống mà **trên GitHub vẫn ghi là đang bị giữ** — và GitHub là chỗ GPT audit, cũng
+  là chỗ phiên khác nhìn vào để biết mình có bị chặn. Chính Đức bắt được sai lệch đó, tức
+  lớp thực thi đã rò lên lớp điều phối.
+
+  Nhưng cách chữa hiển nhiên — trả khoá *trước* commit cuối — **cổng bác ngay**: phép kiểm
+  "Phạm vi trách nhiệm" ĐỎ với `Vùng gốc repo bị sửa nhưng chưa ai đứng tên`, vì vùng đó
+  đang có commit chưa push. Và cổng đúng: một commit chưa công bố mà không ai đứng tên là
+  commit không quy được chủ. Nên giá thật của việc này là **hai lượt push**, lượt hai chỉ
+  một file. Đừng bỏ lượt hai.
 - **Sinh lại bảng nếu số đã đổi:** `node scripts/build-overview.mjs` rồi commit. Đức xem
   bảng, không xem chat — bảng cũ là Đức mù.
 

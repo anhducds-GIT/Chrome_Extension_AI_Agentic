@@ -32,11 +32,11 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-03T18:42",
-      "task": "Tach lop dieu phoi khoi lop thuc thi trong so tay, theo Duc chot 04/09",
-      "released_at": "2026-09-03T18:44",
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
+      "claimed_at": "2026-09-03T18:46",
+      "task": "Sua lai luat tra khoa: cong doi dung ten vung co commit chua push",
+      "released_at": null,
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -50,5 +50,5 @@
       "taken_by_duc_decision": "2026-09-04 (lan hai)"
     }
   },
-  "_fingerprint": "bb56f8ae5616afdd"
+  "_fingerprint": "ffa080d47eeb8d7a"
 }
