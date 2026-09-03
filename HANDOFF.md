@@ -1465,3 +1465,20 @@ xuôi `_doc` PHẢI vẫn xanh).
    — mục 2 bắt hỏi Đức**.
 3. **Artifact tươi là điểm nghẽn nối tiếp.** Mỗi commit của bất kỳ phiên nào làm artifact của mọi
    phiên khác thành cũ; chỉ phiên commit CUỐI mới xanh. Phiên này tôi phải sinh lại 3 lần.
+
+### Đính chính trong cùng phiên — K2-1b KHÔNG làm được điều tôi đã ghi
+
+Tôi thử thật trước khi báo xong: trả `_code` + `_root` rồi chạy cổng. **Cổng ĐỎ ngay** —
+*"Vùng gốc repo bị sửa nhưng chưa ai đứng tên: _code, _root"*.
+
+Nên câu "lý do phải giữ khoá tới lúc push biến mất" là **nói quá**. Sự thật hẹp hơn:
+
+- **K2-1b LÀM ĐƯỢC:** bạn không còn bị đòi khoá cho file mà *chỉ* commit có nhãn của lane khác
+  chạm tới. Đó là chống đổ oan, và nó thật.
+- **K2-1b KHÔNG làm được:** commit CHƯA PUSH của chính bạn vẫn đòi bạn giữ khoá vùng đó. Nên
+  9% "giữ khoá đến khi push xong" **vẫn còn nguyên**.
+
+Muốn xoá thật thì cổng phải chấp nhận "việc này có nhãn lane của tôi" là đủ cho **việc của chính
+mình**, tức chuyển từ *quyền* sang *nguồn gốc* cho phần đã commit. Làm được, và có lý: việc đã
+commit rồi thì lane khác nhận khoá cũng không giẫm vào đâu. Nhưng **đó là đổi cách quy trách
+nhiệm — luật an toàn, mục 2 bắt hỏi Đức**, nên tôi dừng ở đây.
