@@ -129,8 +129,8 @@ GPT 35 file `.js` · Gemini 33.
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 6139 | 5058 | 1081 |
-| `bridge-transport-loopback.js` | 929 | 516 | 413 |
+| `sidepanel.js` | 6148 | 5058 | 1090 |
+| `bridge-transport-loopback.js` | 946 | 516 | 430 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
 | `bridge-core.js` | 954 | 799 | 155 |
 | `runner-core.js` | 289 | 203 | 86 |
