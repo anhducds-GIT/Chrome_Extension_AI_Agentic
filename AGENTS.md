@@ -101,6 +101,16 @@ Hai ngoại lệ vẫn phải hỏi: (a) safe-push từ chối vì sắp cuốn 
 đẩy hộ việc người khác không nằm trong luật này; (b) force-push, sửa lịch sử, merge nhánh
 vào `main`.
 
+**MỌI commit phải có dòng cuối `Lane: <tên-phiên>`** — đúng tên bạn đưa cho `--as`, một dòng,
+không dấu cách. Thiếu nhãn thì cổng đóng phiên ĐỎ (từ 03/09).
+
+Vì sao: nhiều phiên chung một nhánh, nên `safe-push` phải biết commit nào của ai. Không nhãn
+thì nó đoán theo **chủ vùng lúc chạy** — mà chủ đổi được sau lúc commit, nên nó quy sai **cả
+hai chiều**: chặn oan việc bạn, hoặc **im lặng cuốn việc người khác lên remote** (đã xảy ra
+26/08, xem mục 0). Nhãn là **nguồn gốc, không phải quyền** — ai được ghi vẫn do mục 1 quyết.
+Nhãn hỏng (rỗng · có dấu cách · hai nhãn trong một commit) thì ĐỎ, không đoán; sửa bằng
+`git commit --amend`.
+
 ## 3. Năm luật vàng
 
 1. **Không đoán selector.** Mọi selector phải có bằng chứng DOM thật. Cần bằng chứng mới →

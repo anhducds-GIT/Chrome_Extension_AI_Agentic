@@ -16,33 +16,33 @@
       "released_at": "2026-09-03"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-bridge-multiprofile",
-      "ai": "Claude",
-      "claimed_at": "2026-09-03",
-      "task": "A1 workspace theo tab (chi-doc): nhieu ghe co ten trong 1 profile, Duc duyet huong A 03/09",
-      "released_at": null
+      "owner": null,
+      "ai": null,
+      "claimed_at": "2026-09-03T09:30",
+      "task": "Ghi phan quyet PASS/freeze cua GPT (vong 6) + chuyen bang trang thai sang cho pilot van hanh",
+      "released_at": "2026-09-03T09:32"
     },
     "_root": {
       "owner": "claude-k2-design",
       "ai": "Claude",
-      "claimed_at": "2026-09-03T03:59",
-      "task": "K2: dong not, dang cho Duc chot carry de push",
+      "claimed_at": "2026-09-03T09:30",
+      "task": "K2-3b: day convention Lane vao AGENTS.md",
       "released_at": null
     },
     "_docs": {
-      "owner": "claude-bridge-multiprofile",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-03",
       "task": "Ghi quyet dinh Duc duyet huong A vao design study",
-      "released_at": null
+      "released_at": "2026-09-03T05:21"
     },
     "_code": {
-      "owner": "claude-k2-design",
+      "owner": "claude-dashboard",
       "ai": "Claude",
-      "claimed_at": "2026-09-03T03:59",
-      "task": "K2: dong not, dang cho Duc chot carry de push",
+      "claimed_at": "2026-09-03T09:29",
+      "task": "Sua bo dem no ky thuat (Duc gat 63 -> 57) + mac dinh tieu de bang + lam tron dong tuoi",
       "released_at": null
     }
   },
-  "_fingerprint": "89fb7bec0711f86b"
+  "_fingerprint": "ea42fdd5d14fdd4f"
 }
