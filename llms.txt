@@ -4,7 +4,7 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `60b0ea5` (2026-09-03).
+Trang được sinh tại commit `c6e6f48` (2026-09-03).
 
 ## Việc ưu tiên #1
 
@@ -20,7 +20,7 @@ Trang được sinh tại commit `60b0ea5` (2026-09-03).
 ## Từng extension
 
 - [Extension Observer V0](STATUS.md): idea — Chưa từng chạy pilot nào
-- [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới…
+- [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — Phiên làm việc theo tab (ADR-0046, Đức duyệt 03/09): một profile gắn tên tối đa 3 tab ChatGPT, mỗi tab một ghế riêng trên Bridge, gọi bằng --target
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Lớp nối nhiều hồ sơ Chrome đã chuyển xong sang nhánh này (02/09), theo mẫu đã qua kiểm chéo của nhánh Flow Video: máy chủ chịu được nhiều kết nối và dừng an…
 - [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — F-15 XONG (cong chan chip x2+, 0 credit moi duong thoat)

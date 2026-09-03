@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-03",
-  "generated_commit": "60b0ea5",
+  "generated_commit": "c6e6f48",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -59,13 +59,13 @@
       "lifecycle": "active",
       "status_md": "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Duc reload extension o TUNG profile ChatGPT + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: audit doc lap goi khoang-nghi-giua-job (kenh auditmin da chung minh song 02/09)",
-      "human_action": "Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích, rồi điền tên hồ sơ vào ô trong bảng điều khiển.",
+      "next_step": "Đức reload extension ở từng profile ChatGPT, đặt tên hồ sơ, rồi thử khối Phiên làm việc theo tab (tối đa 3) — gắn tên 2–3 tab và gọi bridge.sessions kiểm tên. Nợ cũ vẫn còn: audit độc lập gói khoảng-nghỉ-giữa-job",
+      "human_action": "Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích; muốn chạy nhiều luồng song song thì mở tab BRIDGE, gõ tên và bấm Gắn tab đang mở cho từng tab.",
       "priority_rank": 2,
       "superseded_by": null,
       "last_verified": "2026-08-26",
       "last_verified_commit": "00d1f99b44bd490cac079da5e803917346571a26",
-      "open_item": "Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới deploy + chạy trên 32147, thấy 1 kết nối legacy — chờ tay Đức reload extension + đặt tên. Việc cũ vẫn mở: B-14…B-21, audit độc lập gói khoảng-nghỉ-giữa-job"
+      "open_item": "Phiên làm việc theo tab (ADR-0046, Đức duyệt 03/09): một profile gắn tên tối đa 3 tab ChatGPT, mỗi tab một ghế riêng trên Bridge, gọi bằng --target; method chạm tab đi đúng tab của phiên; tab đóng là ghế tự ngắt; vẫn một run một lúc. Suite 101/101, 13/13 mutation đỏ. Việc cũ vẫn mở: B-14…B-21, audit độc lập gói khoảng-nghỉ-giữa-job"
     },
     {
       "id": "duc-auto-gemini",
@@ -121,7 +121,7 @@
     {
       "id": "workers/duc-auto-chatgpt/v0.1.0",
       "unit": "workers/duc-auto-chatgpt/v0.1.0",
-      "title": "Duc reload extension o TUNG profile ChatGPT + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: audit doc lap goi khoang-nghi-giua-job (kenh auditmin da chung minh song 02/09)",
+      "title": "Đức reload extension ở từng profile ChatGPT, đặt tên hồ sơ, rồi thử khối Phiên làm việc theo tab (tối đa 3) — gắn tên 2–3 tab và gọi bridge.sessions kiểm tên. Nợ cũ vẫn còn: audit độc lập gói khoảng-nghỉ-giữa-job",
       "rank": 2,
       "claim": null
     },
