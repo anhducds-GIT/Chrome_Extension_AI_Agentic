@@ -225,4 +225,7 @@ kiem("không có việc song song thì nói thẳng, không im lặng bỏ trố
   assert.match(ra, /không có: mọi vùng có việc mở đều đang có chủ/);
 });
 
-console.log("\nwhat-next-smoke: " + so + "/" + so + " xanh");
+// Format PHẢI khớp 9 test kia: cổng đóng phiên trích số theo mẫu "N passed, M failed, N total".
+// Bản đầu in "18/18 xanh" — test vẫn chạy và vẫn đỏ khi hỏng, nhưng cổng KHÔNG trích được số
+// nên nó lặng lẽ vắng mặt khỏi dòng tổng kết. Một suite không được đếm là một suite dễ bị bỏ.
+console.log(`\n${so} passed, 0 failed, ${so} total`);

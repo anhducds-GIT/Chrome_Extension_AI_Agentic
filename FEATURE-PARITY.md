@@ -40,10 +40,11 @@ bảng này bằng máy thay vì gõ tay.
 Đếm trực tiếp từ `registryEntry({ name: ... })` trong `bridge-core.js` hai bên.
 
 <!-- AUTO:BRIDGE START -->
-**GPT 22 · Gemini 19.**
+**GPT 23 · Gemini 19.**
 
 | Method | GPT | Gemini |
 |---|---:|---:|
+| `chat.read` | ✅ | ❌ |
 | `chat.reload` | ✅ | ✅ |
 | `diagnostics.dom_probe` | ✅ | ✅ |
 | `jobs.add` | ✅ | ✅ |
@@ -67,7 +68,7 @@ bảng này bằng máy thay vì gõ tay.
 | `system.capabilities` | ✅ | ✅ |
 | `system.ping` | ✅ | ✅ |
 
-**Chỉ GPT có (3):** `output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`.
+**Chỉ GPT có (4):** `chat.read` · `output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`.
 
 **Chỉ Gemini có (0):** không có.
 <!-- AUTO:BRIDGE END -->
@@ -129,20 +130,20 @@ GPT 35 file `.js` · Gemini 33.
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 6163 | 5058 | 1105 |
+| `sidepanel.js` | 6185 | 5058 | 1127 |
 | `bridge-transport-loopback.js` | 946 | 516 | 430 |
+| `bridge-core.js` | 980 | 799 | 181 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
-| `bridge-core.js` | 954 | 799 | 155 |
+| `background.js` | 276 | 167 | 109 |
 | `runner-core.js` | 289 | 203 | 86 |
-| `background.js` | 246 | 167 | 79 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
+| `content.js` | 1157 | 1079 | 78 |
 | `output-profile-core.js` | 96 | 45 | 51 |
 | `provider-adapter.js` | 228 | 187 | 41 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
 | `output-location-core.js` | 389 | 373 | 16 |
 | `halt-instructions-core.js` | 147 | 133 | 14 |
 | `resume-core.js` | 133 | 122 | 11 |
-| `content.js` | 1072 | 1079 | 7 |
 | `xlsx-codec.js` | 371 | 364 | 7 |
 | `bridge-proposal-core.js` | 380 | 374 | 6 |
 | `chat-readiness-core.js` | 26 | 20 | 6 |
@@ -169,7 +170,7 @@ Chênh lệch ở đây đáng lo hơn chênh lệch ở UI.
 <!-- AUTO:DEBT-METHODS START -->
 **Nợ method Bridge — [ĐO]:**
 
-- **Gemini nợ GPT (3):** `output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`.
+- **Gemini nợ GPT (4):** `chat.read` · `output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`.
 - **GPT nợ Gemini (0):** không có.
 <!-- AUTO:DEBT-METHODS END -->
 
