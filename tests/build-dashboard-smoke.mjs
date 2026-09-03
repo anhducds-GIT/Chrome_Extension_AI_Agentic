@@ -847,6 +847,103 @@ function antiDrift(text, measurements = {}) {
   }
 }
 
+/* 23h. K2-7 · HÀNH VI: bộ sinh KHÔNG ghi khi chỉ có dấu sinh trang đổi.
+   Bệnh (audit GPT chỉ ra, tôi xác minh): phép SO đã lọc dấu sinh từ lâu, nhưng bộ GHI vẫn ghi
+   đè vô điều kiện. Nên mỗi lần HEAD nhích một commit — kể cả commit của phiên khác, kể cả
+   commit chẳng liên quan — ba artifact bẩn theo, và `git add` sinh ra một commit rỗng nghĩa.
+   Bằng chứng thật: `2733ee9` ở repo Ark_Repo_Harness đổi đúng BỐN dòng, cả bốn là dấu sinh.
+   Và commit đó lại làm HEAD nhích tiếp → dấu đổi tiếp. Một vòng lặp tự nuôi.
+
+   BA nhánh, và nhánh thứ ba mới là chốt an toàn: nếu file trên đĩa đang bẩn mà HEAD lại đúng,
+   bỏ qua ghi sẽ ĐỂ NGUYÊN bản hỏng. Không ghim nhánh đó thì sớm muộn ai đó "dọn cho gọn" và
+   mất chốt mà suite vẫn xanh. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-7-khong-ghi-thua-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  // Kèm nguyên văn output vào thông báo lỗi: một `1 !== 0` trần không nói được gì, và fixture
+  // này dựng cả một repo nên chỗ hỏng có thể ở bất kỳ đâu.
+  const sinh = () => {
+    const r = spawnSync(process.execPath, [join(tempRoot, "scripts", "build-dashboard.mjs")], { cwd: tempRoot, encoding: "utf8" });
+    r.noiDung = `${r.stdout ?? ""}${r.stderr ?? ""}`;
+    return r;
+  };
+  const banThiu = () => gitAt("status", "--porcelain", "DASHBOARD.md", "llms.txt", "repo-map.json").trim();
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2 Khong Ghi Thua");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "build-dashboard.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1,
+      repo: { name: "Repo Thu", tagline: "de thu bo sinh" },
+      units: { root_dir: "workers", marker: "manifest.json", depth: 2, ten: "Extension" },
+      areas: { "scripts/": { steward: "_root", mutability: "rw", ownership_mode: "root" } }
+    }, null, 2));
+    put("HANDOFF.md", "# Handoff\n");
+    put("manifest.json", JSON.stringify({ name: "Root", version: "0.0.1" }));
+    put(".agents/claims.json", JSON.stringify({ claims: { _root: { owner: null } } }, null, 2));
+    put("workers/goi-mot/v0.1.0/manifest.json", JSON.stringify({ name: "Goi Mot", version: "0.1.0" }));
+    put("workers/goi-mot/v0.1.0/HANDOFF.md", "# Log\n");
+    put("mot-file.md", "noi dung ban dau\n");
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed");
+    const dau = sinh(); assert.equal(dau.status, 0, `lan sinh dau tien phai chay duoc: ${dau.noiDung}`);
+    gitAt("add", "-A");
+    gitAt("commit", "-m", "artifact dau tien");
+    assert.equal(banThiu(), "", "sau khi commit artifact thi cay phai sach");
+
+    // (a) HEAD NHÍCH nhưng nội dung KHÔNG đổi → phải KHÔNG ghi gì. Đây là ca đã đẻ ra rác.
+    put("mot-file.md", "noi dung ban dau\nthem mot dong khong lien quan\n");
+    gitAt("add", "mot-file.md");
+    gitAt("commit", "-m", "viec khac hoan toan, khong dung toi artifact");
+    const a = sinh();
+    assert.equal(a.status, 0, "chay lai sau khi HEAD nhich phai thoat 0");
+    assert.match(a.stdout, /Không ghi gì/, "chi dau sinh doi thi phai NOI RO la khong ghi");
+    assert.equal(banThiu(), "",
+      "REGRESSION: HEAD nhich ma noi dung khong doi thi TUYET DOI khong duoc lam ban artifact — day la goc cua commit rong nghia");
+
+    // (b) CHỨNG DƯƠNG: nội dung THẬT đổi thì phải ghi. Thiếu vế này thì một đột biến
+    // "không bao giờ ghi" vẫn thoát sạch, và artifact đóng băng vĩnh viễn.
+    put("workers/goi-hai/v0.1.0/manifest.json", JSON.stringify({ name: "Goi Hai", version: "0.1.0" }));
+    put("workers/goi-hai/v0.1.0/HANDOFF.md", "# Log\n");
+    gitAt("add", "-A");
+    gitAt("commit", "-m", "them mot extension that");
+    const b = sinh();
+    assert.equal(b.status, 0, "sinh lai sau thay doi that phai thoat 0");
+    assert.match(b.stdout, /Đã sinh/, "co thay doi that thi phai bao la DA GHI");
+    assert.notEqual(banThiu(), "", "noi dung that doi thi artifact PHAI duoc ghi lai");
+    gitAt("add", "-A");
+    gitAt("commit", "-m", "artifact sau khi them extension");
+
+    // (c) CHỐT AN TOÀN: đĩa bẩn mà HEAD đúng → vẫn PHẢI ghi để chữa bản hỏng.
+    put("DASHBOARD.md", "BAN NAY DA BI SUA TAY VA HONG\n");
+    assert.notEqual(banThiu(), "", "dung fixture: file phai dang ban truoc khi chay");
+    const c = sinh();
+    assert.equal(c.status, 0, "chay tren cay ban phai thoat 0");
+    assert.match(c.stdout, /Đã sinh/, "dia ban thi PHAI ghi de chua, khong duoc bo qua");
+    assert.doesNotMatch(gitAt("show", "HEAD:DASHBOARD.md"), /DA BI SUA TAY/, "dung fixture: HEAD van sach");
+    // Ghim NGỮ NGHĨA, không ghim từng byte: bản chữa mang dấu sinh MỚI nên `git status` vẫn
+    // báo "M" — đúng và vô hại. Tính chất thật cần giữ là: chữ bậy đã biến mất, và `--check`
+    // xanh trở lại. Bản ghim đầu tiên của tôi đòi byte khớp và đỏ oan ở đúng chỗ này.
+    assert.doesNotMatch(readFileSync(join(tempRoot, "DASHBOARD.md"), "utf8"), /DA BI SUA TAY/,
+      "dia ban thi phai duoc CHUA — bo qua ghi o day la de nguyen ban hong tren dia");
+    const lai = spawnSync(process.execPath, [join(tempRoot, "scripts", "build-dashboard.mjs"), "--check"], { cwd: tempRoot, encoding: "utf8" });
+    assert.equal(lai.status, 0, `sau khi chua thi --check phai xanh lai: ${lai.stdout}${lai.stderr}`);
+    ok("K2-7 · HÀNH VI: HEAD nhích mà nội dung không đổi thì KHÔNG ghi; đổi thật thì ghi; đĩa bẩn thì vẫn ghi để chữa");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-7-khong-ghi-thua-")), "chỉ dọn đúng temp fixture K2-7");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
 /* 23g. K2-4 · HÀNH VI: cổng đóng phiên ĐỎ khi bảng quyền bị mở ra sửa tay.
    `tests/claim-smoke.mjs` đã ghim phía LỆNH (nó từ chối ghi khi dấu vỡ). Khối này ghim phía
    CỔNG, và đó mới là vế cứu được nạn nhân: người bị mất khoá KHÔNG chạy `claim.mjs` — họ đang

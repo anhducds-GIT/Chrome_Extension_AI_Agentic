@@ -1233,11 +1233,48 @@ export function runDashboard({ check = false, deps = createDefaultDeps(), output
     const generated = buildDashboard(model);
     const generatedLlms = buildLlmsTxt(model);
     const generatedMap = buildRepoMap(model);
+    // KHÔNG GHI KHI CHỈ CÓ DẤU SINH ĐỔI — vá phía GHI, bổ cho phía SO ĐÃ CÓ.
+    //
+    // Phép so đã lọc `STAMP_PREFIX` · `SESSION_STAMP_PREFIX` · `generated_at` ·
+    // `generated_commit` từ lâu, nhưng bộ GHI thì vẫn ghi đè vô điều kiện. Nên mỗi lần
+    // HEAD nhích một commit — kể cả commit của phiên khác, kể cả commit chẳng liên quan —
+    // ba file này bẩn theo, và ai đó `git add` là sinh ra một commit KHÔNG CÓ NỘI DUNG.
+    //
+    // Bằng chứng thật, do audit GPT chỉ ra: `2733ee9` ở repo `Ark_Repo_Harness` đổi đúng
+    // BỐN dòng, cả bốn đều là dấu sinh trang, không một dòng nội dung. Và commit đó lại
+    // làm HEAD nhích tiếp → dấu đổi tiếp → bẩn tiếp. Một vòng lặp tự nuôi.
+    //
+    // Bỏ qua ghi thì dấu cũ ở lại, và điều đó VẪN ĐÚNG: trang này *đã* được sinh tại
+    // commit đó, và từ đó tới giờ không có gì đổi. Ghi đè mới là thứ nói dối bằng cách
+    // ngụ ý có gì đó mới.
+    //
+    // Hai điều kiện, không phải một. Chỉ so ngữ nghĩa với HEAD thì chưa đủ: nếu file
+    // trên đĩa đang bẩn (ai đó sửa tay, hay một lần sinh trước bỏ dở) mà HEAD lại đang
+    // đúng, ta sẽ bỏ qua ghi và **để nguyên bản hỏng trên đĩa**. Nên phải thêm: file đó
+    // cũng không được nằm trong danh sách đang-sửa-dở. Hai điều kiện này dùng đúng hai
+    // API đã có (`readFile` đọc HEAD · `dirtyFiles` hỏi git), nên KHÔNG mở thêm đường
+    // đọc đĩa — đường đó đã bị gỡ có chủ ý, xem ghi chú ở `createDefaultDeps`.
+    const dangSuaDo = new Set(deps.git.dirtyFiles?.(".") ?? []);
+    const ghiNeuDoi = (file, text, compare) => {
+      if (deps.fileExists(file) && !dangSuaDo.has(file) && compare(text, deps.readFile(file)).matches) {
+        return false;
+      }
+      deps.writeFile(file, text);
+      return true;
+    };
+
     if (!check) {
-      deps.writeFile(DASHBOARD_FILE, generated);
-      deps.writeFile(LLMS_FILE, generatedLlms);
-      deps.writeFile(REPO_MAP_FILE, generatedMap);
-      output.log(`Đã sinh ${DASHBOARD_FILE}, ${LLMS_FILE} và ${REPO_MAP_FILE} thành công.`);
+      const daGhi = [
+        ghiNeuDoi(DASHBOARD_FILE, generated, compareDashboard) ? DASHBOARD_FILE : null,
+        ghiNeuDoi(LLMS_FILE, generatedLlms, compareDashboard) ? LLMS_FILE : null,
+        ghiNeuDoi(REPO_MAP_FILE, generatedMap, compareRepoMap) ? REPO_MAP_FILE : null
+      ].filter(Boolean);
+      if (daGhi.length === 0) {
+        output.log(`Không ghi gì: ${DASHBOARD_FILE}, ${LLMS_FILE} và ${REPO_MAP_FILE} đã đúng rồi (chỉ dấu sinh trang là khác, mà dấu thì không phải nội dung).`);
+        output.log("Không có gì để commit. Đây là kết quả ĐÚNG, không phải lỗi.");
+        return 0;
+      }
+      output.log(`Đã sinh ${daGhi.join(", ")} thành công.${daGhi.length < 3 ? " (những file còn lại đã đúng sẵn nên không ghi.)" : ""}`);
       // BẪY THỨ TỰ, phải nói to. Bộ sinh đọc HOÀN TOÀN từ HEAD. Nếu bạn vừa sửa
       // STATUS/manifest mà CHƯA commit rồi chạy lệnh này, artifact sinh ra phản ánh
       // HEAD CŨ — rồi bạn commit dữ liệu mới nằm cạnh artifact cũ, và cổng kiểm đỏ.
