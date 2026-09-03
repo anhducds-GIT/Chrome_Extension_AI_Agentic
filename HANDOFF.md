@@ -1482,3 +1482,34 @@ Muốn xoá thật thì cổng phải chấp nhận "việc này có nhãn lane 
 mình**, tức chuyển từ *quyền* sang *nguồn gốc* cho phần đã commit. Làm được, và có lý: việc đã
 commit rồi thì lane khác nhận khoá cũng không giẫm vào đâu. Nhưng **đó là đổi cách quy trách
 nhiệm — luật an toàn, mục 2 bắt hỏi Đức**, nên tôi dừng ở đây.
+
+### Audit GPT vòng này — hai nhận, một trích sai, một chẩn đoán ngược
+
+**Nhận 1 — "ĐÃ SHIP" dùng sai.** Đúng. *Ship* phải nghĩa là **đã có trên `origin/main`**. Kiểm lại:
+K2-2b · K2-3 · nửa máy K2-1 **đã ở đó thật**; nửa luật K2-1, K2-4, K2-5 **mới chỉ ở máy**. Đã sửa nhãn.
+
+**Nhận 2 — bộ sinh đẻ commit rác.** Đúng, và số thật là **7 trong 40 commit gần nhất (17.5%)**.
+
+**Trích sai — commit `2733ee9` không tồn tại trong repo này.** `git cat-file -t 2733ee9` →
+`Not a valid object name`. Hiện tượng có thật, bằng chứng viện dẫn thì không. Ghi ra vì một SHA sai
+đi vào tài liệu là thứ phiên sau sẽ tin.
+
+**Chẩn đoán ngược — và đây mới là điểm quan trọng.** GPT đề xuất "semantic no-op: bỏ metadata biến
+động rồi mới so". **Việc đó đã làm rồi** — `STAMP_PREFIX`, `SESSION_STAMP_PREFIX`,
+`REPO_MAP_VOLATILE_KEYS` đã bị lọc khỏi phép so từ trước, nên nó không thể là nguyên nhân.
+
+Tôi phân loại từng dòng của cả ba commit sinh lại trong phiên này. **100% dòng "số đo thật" đều
+thuộc `duc-auto-chatgpt`** — gói của lane khác. Không một dòng nào của tôi.
+
+> **Gốc bệnh thật:** artifact *đo việc của mọi lane*, mà độ tươi lại bị kiểm *lúc một lane đóng
+> phiên*. Đó là kiểm một bất biến **toàn cục** tại một thời điểm **cục bộ** — với nhiều lane thì
+> chắc chắn chập chờn, và ai commit sau cùng thì thắng.
+
+**Hệ quả: đề xuất nhỏ lại, không to ra.**
+
+- **Bỏ** "một Artifact Materializer duy nhất" — nó dựng thêm **một điểm nối tiếp mới**, đúng thứ K2
+  sinh ra để xoá, và chỉ cần nếu độ tươi vẫn bị kiểm ở cổng lane.
+- **Giữ, và đây là món chịu lực:** tách **cổng lane** (quyền · phạm vi · test · quy thuộc) khỏi
+  **cổng xuất bản** (artifact tươi). Độ tươi là tính chất của *trạng thái đã publish*, không phải
+  của *phiên làm việc*.
+- **Chờ Đức:** đổi chỗ một điều kiện chặn là luật an toàn, mục 2 bắt hỏi.
