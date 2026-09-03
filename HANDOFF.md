@@ -2000,3 +2000,41 @@ vẫn có **6 file đang sửa dở** của `claude-dieu-phoi` (`repo-structure.
 `session-check.mjs` · `repo-structure-smoke.mjs` · `what-next.mjs` · `what-next-smoke.mjs`).
 Giành khoá **không** dừng việc họ đang làm — nó chỉ lấy đi cái nhãn quyền, còn chữ họ viết vẫn
 nằm đó. Nên phiên nào giành khoá thì phải tự tay tránh file của người trước; cổng không tránh hộ.
+
+### Bổ sung cùng phiên `claude-dieu-phoi` — commit xong, push chờ Đức
+
+**Lấy `_code` lần hai (Đức chốt).** Lần đầu tôi lấy ba khoá, rồi `claude-dashboard` nhận lại
+`_code` để sửa `build-overview.mjs`. Tôi **không** giành ngay — nhắn họ, đặt canh bảng quyền, và
+báo Đức. Đức chốt lấy. Lúc lấy thì việc của họ **đã commit xong** (`8980fc2`, `0e4387f`), nên
+không phá việc dở nào. Ghi vết: `taken_from` + `taken_by_duc_decision: 2026-09-04 (lan hai)`.
+
+**Ba commit:** `f29fcc6` (bản đồ việc + sổ tay + luật miễn) · `7ec73e0` (sinh lại artifact + đóng
+format số của test) · `733f291` (sinh lại artifact theo HEAD mới nhất).
+
+**Cổng đóng phiên XANH TOÀN BỘ.** Suite gốc `104 + 17 + 6 + 95 + 15 + 28 + 15 + 9 + 4 + 18`.
+
+**Push BỊ TỪ CHỐI, và từ chối đúng:** 7 commit của ba lane khác (`claude-gpt-kenh` ×4 ·
+`claude-dashboard` ×2 · `claude-k2-vaLoi` ×1) đang nằm trước commit của tôi trên nhánh. Đây là
+ngoại lệ (a) của luật mục 2 — đẩy hộ việc người khác không nằm trong quyền tự push. Chờ Đức chốt
+`--carry`, hoặc chờ họ tự push.
+
+### Ba chuyện về chính mô hình nhiều phiên một thư mục — đo được, không suy luận
+
+1. **Cổng kiểm cho kết quả SAI khi hai phiên chạy suite cùng lúc.** Lần chạy đầu: 4 test bridge
+   đỏ. Chạy lại từng cái: `3/3 PASS`, và `git status` cho thấy **không file nào** của gói đó bị
+   sửa. Chúng tranh cổng mạng. Một phiên có thể bị chặn oan, hoặc tệ hơn — tin là mình gây ra
+   regression của người khác. `git worktree add` để kiểm ở HEAD **thất bại hai lần** trên máy này
+   (`Could not reset index file`), nên đường kiểm chứng đó hiện không dùng được.
+
+2. **Commit của phiên khác cuốn theo file của tôi.** `0e4387f` (lane `claude-dashboard`) chứa
+   **+183 dòng `HANDOFF.md` — Log của tôi**; `8980fc2` chứa **bảng quyền tôi vừa sửa**. Không mất
+   dữ liệu, nhưng lịch sử quy sai chủ. `safe-push` chống chuyện này ở tầng PUSH; ở tầng COMMIT thì
+   `git add -A` của bất kỳ phiên nào vẫn cuốn được. Nhãn `Lane:` không cứu được ca này.
+
+3. **Cuộc đua độ tươi artifact là thật, không phải lý thuyết.** Sinh lại xong, commit, chạy cổng —
+   artifact đã cũ vì lane khác vừa commit (test `105 → 106`). Phải sinh-commit-đẩy liên tiếp trong
+   một lệnh mới thắng. Đúng "vấn đề 3" của `Y-02`, và ủng hộ khuyến nghị **C3** ở đó.
+
+**Kênh tin nhắn giữa phiên là MỘT CHIỀU với phiên này** — gửi được, không nhận được trả lời
+(`notify_when_idle` báo phiên này không mở kênh vào). Nên kênh phản hồi thật giữa các phiên AI là
+**bảng quyền**, không phải tin nhắn. Phiên sau đừng chờ tin nhắn trả lời; hãy đọc `claims.json`.
