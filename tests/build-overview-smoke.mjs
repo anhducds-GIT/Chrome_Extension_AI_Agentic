@@ -9,12 +9,14 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { buildOverview, debtByUnit, humanWork, IDEA_STAGES, isDone, readIdeas, shorten } from "../scripts/build-overview.mjs";
+import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
+import { buildOverview, debtByUnit, humanWork, IDEA_STAGES, isDone, readBrief, readDecisions, readFeatures, readIdeas, shorten } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
+
+const collectModelRows = (deps) => collectModel(deps, { tolerant: true }).rows;
 
 const ideasDeps = (text) => ({
   fileExists: (p) => p === "IDEAS.md" && text !== null,
@@ -97,7 +99,7 @@ const ideasDeps = (text) => ({
   }
 
   // Con số phải là số đo thật, không phải chỗ trống trang trí.
-  assert.ok(stats.initiatives > 0, "phai co it nhat mot huong dang chay");
+  assert.ok(stats.extensions > 0, "phai co it nhat mot extension");
   assert.ok(stats.decisions > 0, "phai dem duoc quyet dinh da chot");
   assert.match(stats.stamp, /^\d{4}-\d{2}-\d{2}$/, "ngay sinh phai co that va dung hinh dang");
   ok("BAT BIEN tren repo that: bang khong lo duong dan / ten file / ma commit");
@@ -219,6 +221,103 @@ const ideasDeps = (text) => ({
   assert.equal(cu.stats.ageDays, 8, "qua 8 ngay thi phai dem ra 8");
   assert.equal(cu.stats.stale, true, "qua 7 ngay thi PHAI bat co do");
   ok("tuoi bang: 0 ngay trong ngay sinh, 8 ngay thi bat co do");
+}
+
+/* ---- 10. TAB — mỗi link ở bảng tổng phải có đích thật ---- */
+{
+  const { html } = buildOverview(createDefaultDeps(ROOT));
+  const tabs = [...html.matchAll(/role="tab" data-tab="([a-z-]+)" aria-selected="(true|false)"/g)];
+  const panes = [...html.matchAll(/role="tabpanel" data-pane="([a-z-]+)"/g)].map((m) => m[1]);
+  assert.equal(tabs.length, 7, "phai co dung 7 tab");
+  assert.equal(panes.length, 7, "moi tab phai co dung mot khung noi dung");
+  assert.equal(tabs.filter((t) => t[2] === "true").length, 1, "dung MOT tab duoc chon san");
+  assert.deepEqual(tabs.map((t) => t[1]).sort(), [...panes].sort(), "ten tab va ten khung phai khop");
+
+  // Sáu khung sau phải mang `hidden`, nếu không thì mở trang ra là bảy khung chồng nhau —
+  // đúng cái bệnh cuộn-quá-nhiều mà tab sinh ra để chữa.
+  assert.equal([...html.matchAll(/role="tabpanel" data-pane="[a-z-]+" hidden/g)].length, 6,
+    "sau khung con lai PHAI co hidden, khong thi bay khung chong nhau");
+
+  // LINK CHẾT LÀ LỖI ÂM THẦM: Đức bấm, không có gì xảy ra, và không ai biết.
+  const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
+  const links = [...html.matchAll(/href="#([^"]+)" data-goto="([a-z-]+)"/g)];
+  assert.ok(links.length >= 5, "bang tong phai co link sang chi tiet");
+  for (const [, target, goto] of links) {
+    assert.ok(ids.has(target), `link "#${target}" khong co dich tren trang — bam vao khong co gi xay ra`);
+    assert.ok(panes.includes(goto), `link tro sang tab "${goto}" khong ton tai`);
+  }
+  ok(`7 tab, 6 khung an, va ca ${links.length} link o bang tong deu co dich that`);
+}
+
+/* ---- 11. MÔ TẢ FAIL CLOSED — thà trống còn hơn khai sai tên ---- */
+{
+  const deps = (h1) => ({ fileExists: () => true, readFile: () => `# ${h1}\n\nMột câu mô tả gói.\n\n## Mục sau` });
+
+  const khop = readBrief(deps("Duc Auto ChatGPT V0.3"), { key: "workers/x/v1", name: "Duc Auto ChatGPT" });
+  assert.equal(khop.text, "Một câu mô tả gói.", "tieu de khop ten thi LAY duoc mo ta");
+
+  // Ca thật, đo 03/09: README của gói Gemini mở đầu bằng "Duc Auto ChatGPT V0.3".
+  const lech = readBrief(deps("Duc Auto ChatGPT V0.3"), { key: "workers/y/v2", name: "Duc Auto Gemini (Platform)" });
+  assert.equal(lech.text, "", "tieu de KHONG khop ten thi TUYET DOI khong hien chu do");
+  assert.match(lech.why, /không khớp/, "phai noi ro vi sao de trong");
+
+  // Ngoặc là chú thích của bảng, README không buộc phải có.
+  const ngoac = readBrief(deps("Duc Auto Gemini V0.2"), { key: "workers/y/v2", name: "Duc Auto Gemini (Platform)" });
+  assert.equal(ngoac.text, "Một câu mô tả gói.", "bo phan trong ngoac roi so — (Platform) khong lam lech");
+
+  assert.equal(readBrief({ fileExists: () => false }, { key: "a", name: "B" }).text, "", "khong co README thi de trong");
+
+  // Và trên repo thật: đúng cái gói đó phải đang bị chặn.
+  const real = createDefaultDeps(ROOT);
+  const gem = collectModelRows(real).find((r) => /gemini/i.test(r.id) && r.lifecycle === "active");
+  if (gem) {
+    assert.equal(readBrief(real, gem).text, "", "tren repo that: goi Gemini dang co README sai ten, phai bi chan");
+  }
+  ok("mo ta FAIL CLOSED: tieu de README khong khop ten don vi thi de trong va noi ro ly do");
+}
+
+/* ---- 12. TÍNH NĂNG — ô bảng có dấu gạch chéo ngược từng làm vỡ cả bảng ---- */
+{
+  const BS = String.fromCharCode(92);
+  const md = [
+    "## 2. Tính năng",
+    "",
+    "| Tính năng | GPT | Gemini | Loại | Bằng chứng |",
+    "|---|---|---|---|---|",
+    "| Khoá tab lúc Run (B-01) | ✅ | ❌ | [ĐỌC] | chỗ nào đó |",
+    `| Đọc tab.url ${BS}|${BS}| tab.pendingUrl | ✅ | ❌ | [DÒ] | đếm file |`,
+    "| Cả hai đều có | ✅ | ✅ | [ĐO] | registry |",
+    "",
+    "## 3. Module",
+    "| Không được lấy mục này | ✅ | ❌ | x | y |"
+  ].join("\n");
+  const rows = readFeatures({ fileExists: () => true, readFile: () => md });
+
+  assert.equal(rows.length, 3, "dung 3 dong: bo dong tieu de, dong ke, va ca muc 3");
+  assert.ok(!rows.some((r) => /Module|Không được lấy/.test(r.name)), "TUYET DOI khong lay muc 3 — do la ten module");
+  assert.equal(rows[0].name, "Khoá tab lúc Run", "ma ky thuat (B-01) phai bi cat");
+  assert.deepEqual([rows[0].gpt, rows[0].gemini], [true, false], "cot co/khong phai doc dung");
+
+  // ĐÂY LÀ CA ĐÃ HỎNG THẬT: pipe có gạch chéo ngược là pipe THUỘC NỘI DUNG, không phải
+  // vách ô. Tháo sai thì ô lệch và cột co/khong doc sang o sai.
+  assert.match(rows[1].name, /tab\.url \|\| tab\.pendingUrl/, "pipe trong noi dung phai giu lai nguyen ven");
+  assert.deepEqual([rows[1].gpt, rows[1].gemini], [true, false], "va cot co/khong KHONG duoc lech theo");
+  assert.deepEqual([rows[2].gpt, rows[2].gemini], [true, true], "ca hai co thi ca hai la true");
+  ok("bang tinh nang: giu pipe trong noi dung, cot khong lech, va khong lan sang muc 3");
+}
+
+/* ---- 13. NHẬT KÝ — tên quyết định phải là chữ người viết, có dấu ---- */
+{
+  const real = createDefaultDeps(ROOT);
+  const d = readDecisions(real, 6);
+  assert.ok(d.total > 100, "repo nay phai co tren 100 quyet dinh");
+  assert.equal(d.top.length, 6, "lay dung so luong xin");
+  // Tên lấy từ tên file là slug không dấu — Đức đọc không hiểu. Phải đọc tiêu đề trong file.
+  assert.ok(d.top.some((x) => /[àáãạăâêôơưđýếệốồớủịùũọ]/i.test(x.name)),
+    "ten quyet dinh phai co dau tieng Viet — lay tu tieu de trong file, khong suy tu ten file");
+  assert.ok(d.top.every((x) => /^\d{4}$/.test(x.num)), "so hieu phai la 4 chu so");
+  assert.ok(d.top.every((x) => x.where), "moi quyet dinh phai noi thuoc pham vi nao");
+  ok(`nhat ky: ${d.total} quyet dinh, ten doc tu tieu de trong file nen co dau`);
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
