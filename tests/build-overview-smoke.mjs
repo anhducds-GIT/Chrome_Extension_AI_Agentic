@@ -267,11 +267,17 @@ const ideasDeps = (text) => ({
 
   assert.equal(readBrief({ fileExists: () => false }, { key: "a", name: "B" }).text, "", "khong co README thi de trong");
 
-  // Và trên repo thật: đúng cái gói đó phải đang bị chặn.
+  /* Và trên repo thật — BẤT BIẾN, không ghim một gói cụ thể.
+     Bản đầu chỗ này khẳng định "gói Gemini đang có README sai tên". Sửa README xong thì
+     phép kiểm ĐỎ — tức nó ghim CON BUG chứ không ghim CƠ CHẾ, và nó chặn đường sửa.
+     Bất biến đúng: mỗi đơn vị phải có ĐÚNG MỘT trong hai — một câu mô tả, HOẶC một lý do
+     vì sao không có. Trống cả hai là lỗi âm thầm: bảng hiện một ô rỗng không ai giải thích. */
   const real = createDefaultDeps(ROOT);
-  const gem = collectModelRows(real).find((r) => /gemini/i.test(r.id) && r.lifecycle === "active");
-  if (gem) {
-    assert.equal(readBrief(real, gem).text, "", "tren repo that: goi Gemini dang co README sai ten, phai bi chan");
+  for (const r of collectModelRows(real)) {
+    const b = readBrief(real, r);
+    assert.ok(Boolean(b.text) !== Boolean(b.why),
+      `don vi "${r.name}": phai co dung MOT trong hai (mo ta / ly do de trong) — dang co`
+      + ` text=${JSON.stringify(b.text)} why=${JSON.stringify(b.why)}`);
   }
   ok("mo ta FAIL CLOSED: tieu de README khong khop ten don vi thi de trong va noi ro ly do");
 }
