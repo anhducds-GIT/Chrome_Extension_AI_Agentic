@@ -1,0 +1,11 @@
+# Đầu ra LÚC CHẠY, không phải nguồn. `XLSX_TEMPLATE_GOVERNANCE.md` luật 6 & 7 định
+# nghĩa đúng hai mẫu tên này, nên đây không phải mẫu quét bừa.
+#
+# Vì sao có file này: 03/09 Đức chọn chính thư mục nguồn làm đích ghi output (để đi
+# vòng qua B-36). Run ghi thẳng checkpoint + sổ audit vào đây, và cổng đóng phiên đỏ
+# vì "file mới chưa khai vào Bản đồ file" — đúng luật, nhưng khai chúng vào bản đồ là
+# nói rằng rác lúc chạy là tài sản của package. Chặn ở đây mới đúng chỗ.
+#
+# Chỉ ảnh hưởng file CHƯA track: bằng chứng pilot đã commit vẫn nguyên.
+*__audit.jsonl
+*__results__v*.xlsx

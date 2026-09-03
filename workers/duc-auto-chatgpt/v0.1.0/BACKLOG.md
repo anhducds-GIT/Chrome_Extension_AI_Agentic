@@ -584,6 +584,83 @@ riêng (đúng ghi chú trong chính ADR). Gồm: mỗi phiên một RUN_ACTIVE 
 attribution gắn theo tab, GPT invariant "page-scoped vs session-scoped" (mục 6 sổ tay) sẽ
 đổi nghĩa khi đó. Làm xong trên GPT rồi mới nghĩ tới migrate.
 
+### B-36 · (P1) `PERSISTENCE_FILENAME_MISMATCH` chặn MỌI mutation Bridge khi đích ghi là Chrome Downloads — **[ĐO] live 2026-09-03**
+
+**Triệu chứng.** `jobs.add` qua Bridge trả `INTERNAL_ERROR`, stack:
+
+```
+PERSISTENCE_FILENAME_MISMATCH: requested 'Bridge-2026-09-03T12-46__audit.jsonl'
+  but Chrome reported 'bd00d527-e43a-4806-bb1b-df5c59f6aa19'.
+  verifyDownloadedFilename (output-location-core.js:223)
+  saveAuditLog (sidepanel.js:5230)
+  persist_audit (sidepanel.js:1642)
+  execute (approval-persistence-core.js:13)
+```
+
+**Phạm vi rộng hơn nó trông.** `persist_audit` nằm trong `approval-persistence-core` — tức
+**mọi** mutation Bridge ghi sổ audit TRƯỚC khi có tác dụng (luật "quy trách nhiệm"). Nên khi
+đích ghi rơi về Chrome Downloads, không chỉ `jobs.add` chết mà cả `jobs.update` ·
+`jobs.remove` · `queue.propose` · `output.configure`… Đo được: sau lỗi này `queue.list` trả
+`WORKBOOK_NOT_LOADED`, tức job **không** vào hàng đợi — fail-closed đúng, không mất dữ liệu.
+
+**Vì sao phép kiểm hiện có không bắt.** Có ba file test nhắc tới determiner
+(`download-name-determiner-static.mjs` · `persistence-download-filename-regression.mjs` ·
+`bridge-workspace-lease-race-smoke.mjs`) nhưng cái canh đúng chỗ này là **test TĨNH**: nó
+`assert.match` hình dạng mã — determiner có đăng ký, có khớp `expectedDownloadNames.get(item.url)`,
+có `suggest({filename, conflictAction})`. **Hình dạng vẫn đúng nguyên** mà GUID vẫn lọt. Đúng
+bài học lỗi #5 của sổ tay: trường quan trọng được canh bằng thứ không phân biệt được hai nhánh.
+
+**Cơ chế, đọc ra từ mã (03/09) — hẹp hơn "determiner hỏng":** nó nổ ở ĐÚNG cửa bootstrap.
+`bridgeJobsAdd` (`sidepanel.js:1716`) đặt `persistenceRequired: !bootstrap` — chủ ý là lần gọi
+đầu chưa có đích ghi nên đừng đòi. **Nhưng cái cờ đó chỉ đi vào `bridgeDirectLock`, tức chỉ tắt
+một phép KIỂM TRƯỚC; nó không tắt việc ghi.** `DacApprovalPersistence.execute` vẫn chạy
+`persist_audit` (`:1641`) vô điều kiện. Cộng với `:1629` — session bootstrap tự mặc định
+`outputSettings` về **chế độ Downloads** (quyết định của Đức 25/08) — nên lần gọi đầu tiên luôn
+đi qua đúng nhánh Chrome Downloads, tức đúng nhánh cần determiner. Determiner trượt → GUID →
+`verifyDownloadedFilename` ném.
+
+Nói cách khác: **tên cờ nói "không cần ghi bền", hành vi là "vẫn ghi, và ghi vào nhánh mong
+manh nhất".** Đó là chỗ phải sửa, không phải chỗ nào khác.
+
+**BẰNG CHỨNG TRÊN ĐĨA — nó CHƯA TỪNG hoạt động.** Đếm file tên-GUID trong thư mục Downloads
+của Đức, 03/09: **36 file**, rải từ 09/07 tới 00:29 ngày 04/09. Gồm cả ba loại đầu ra của
+extension: ảnh `.png`, checkpoint `.xlsx`, và sổ audit (không đuôi, vì Chrome không biết
+`application/jsonl`). Có file ngày **28/08 — SAU khi B-13 được ghi vào "Đã đóng" là đã vá**.
+Đọc nội dung `bd00d527-e43a-4806-bb1b-df5c59f6aa19` (793 byte): JSONL audit hoàn toàn đúng,
+`event: BRIDGE_JOB_ADDED_DIRECT`, `run_id: 20260903-1246-…`. **Nội dung luôn đúng; chỉ cái tên
+bị Chrome tự đặt.** Nên đây không phải lỗi mới của phiên này, mà là một lỗi sống 8 tuần bị ba
+phép kiểm TĨNH che: chúng `assert.match` rằng *mã có chứa dòng đăng ký determiner*, không chứng
+minh determiner **chạy**. `?.addListener` còn làm im lặng luôn trường hợp API không tồn tại.
+
+**Còn hai giả thuyết cho việc determiner trượt** (cần console service worker, tức cần Đức):
+0. ~~API không tồn tại nên `?.` bỏ qua êm.~~ **ĐÃ LOẠI, đo 03/09** — Đức chạy trong console
+   service worker: `{api: 'object', listener: true}`. API có, listener CÓ đăng ký. Nên determiner
+   chạy mà **trượt lúc khớp**, không phải không chạy. Giữ dòng này lại để không ai đi kiểm lại.
+1. `item.byExtensionId` không bằng `chrome.runtime.id` khi download do CHÍNH service worker
+   khởi tạo → nhánh `suggest()` trần chạy → Chrome dùng tên mặc định = GUID của blob URL.
+2. `item.url` lúc determiner chạy khác chuỗi blob URL dùng làm khoá Map → `get` trả undefined
+   → cùng nhánh `suggest()` trần.
+
+**Vòng tròn kẹt trong UI, đo 03/09:** đường đi vòng là chọn thư mục đích, nhưng panel ghi
+"Open an XLSX to set locations" — không có session thì không chọn được thư mục, mà `jobs.add`
+(cửa dựng session qua Bridge) thì đang chết vì chính lỗi này. Lối ra duy nhất không cần sửa mã
+là **Quick Prompt** trên panel (`:3554` cũng gọi `createWorkbook`), nó dựng session bằng tay
+để mở khoá ô chọn thư mục.
+
+Comment ở `background.js:25` đã ghi số đo 2026-08-25: "Chrome trên máy này bỏ qua `filename`
+cho blob URL". Bản vá là determiner. Nay determiner có mà GUID vẫn qua → **bản vá có lỗ**,
+không phải Chrome đổi hành vi.
+
+**Đường đi vòng KHÔNG cần sửa mã** (đã dùng để mở nghẽn 03/09): Đức chọn một thư mục đích
+trong Side Panel. Khi đó `saveAuditLog` đi nhánh `writeFileWithPolicy(location.handle, …)` —
+File System Access, không qua Chrome Downloads, determiner không nằm trên đường. Đây cũng là
+cấu hình mà chính mã khuyến nghị ("Continue using the authorized run folder").
+
+**Làm xong nghĩa là gì.** Một phép kiểm **hành vi** (không phải tĩnh) dựng nổi cả hai giả
+thuyết: fake `chrome.downloads` phát `onDeterminingFilename` với `byExtensionId` sai, và với
+`item.url` lệch — cả hai phải làm test ĐỎ trước khi vá. Harness đã có sẵn:
+`bridge-workspace-lease-race-smoke.mjs` chạy `sidepanel.js` thật trong vm.
+
 ## Đã đóng
 
 - **2026-08-26 · `d53a7e7`** — `provider-adapter.js` + `diagnostics.dom_probe` cho GPT,
