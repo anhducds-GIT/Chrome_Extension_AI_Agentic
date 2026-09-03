@@ -92,6 +92,21 @@ const afterRemove = wsCore.removeWorkspace(renamed.store, third.workspace.worksp
 assert.equal(afterRemove.store.workspaces.length, 2);
 assert.throws(() => wsCore.removeWorkspace(afterRemove.store, "ws-khong-co-0001"), (error) => error.code === "WORKSPACE_NOT_FOUND");
 
+// leaseHolds — the ACT-TIME route lease (GPT audit vòng 5, HIGH). An rpc's
+// tab_id is a snapshot from dispatch; before any side effect the panel must
+// re-verify the binding against the durable store. These are the two demanded
+// race cases expressed at the predicate (the wiring — run.trial and
+// chat.reload both entering through resolveWorkspaceTab, and the resolver
+// enforcing this lease — is pinned statically in section 3):
+const leaseStore = { schema_version: 1, workspaces: [{ workspace_id: "ws-aaaa-0001", name: "mot", tab_id: 102, created_at: "2026-09-03T00:00:00.000Z" }] };
+assert.equal(wsCore.leaseHolds(leaseStore, "ws-aaaa-0001", 101), false,
+  "run.trial in flight with snapshot tab 101, owner re-attached to 102 → the stale rpc may NOT bind tab 101");
+assert.equal(wsCore.leaseHolds(leaseStore, "ws-aaaa-0001", 102), true, "a binding that still matches holds");
+assert.equal(wsCore.leaseHolds(leaseStore, "ws-khac-0002", 102), false, "a removed workspace holds no lease");
+assert.equal(wsCore.leaseHolds({ workspaces: [{ workspace_id: "ws-aaaa-0001", name: "mot", tab_id: null }] }, "ws-aaaa-0001", 101), false,
+  "a voided binding (browser restart) holds no lease — chat.reload on the old snapshot is refused");
+assert.equal(wsCore.leaseHolds(null, "ws-aaaa-0001", 101), false, "no store, no lease — fail closed");
+
 // deriveInstance: routing metadata only, same shape as the profile block.
 const profileInstance = { schema_version: 1, instance_id: "prof-1234", label: "kaito", worker: "duc-auto-chatgpt", extension_version: "0.3.0" };
 const derived = wsCore.deriveInstance(profileInstance, { workspace_id: "ws-aaaa-0001", name: "gpt-kichban", tab_id: 101 });
@@ -789,6 +804,15 @@ assert.ok(resolverStart >= 0, "resolveWorkspaceTab exists");
 const resolver = codeOnly.slice(resolverStart, resolverStart + codeOnly.slice(resolverStart).search(/^ {2}\}$/m) + 3);
 assert.match(resolver, /RECEIVER_LOST/, "a workspace whose tab is gone refuses — never a silent fallback to the front tab");
 assert.match(resolver, /isChatGPTTabUrl/, "the workspace tab must still be ON the provider");
+// The act-time lease: the resolver re-reads the durable store and refuses a
+// snapshot whose workspace no longer binds this tab. Every tab-scoped handler
+// (dom_probe, ping, chat.reload, run.trial — all pinned below to enter through
+// this resolver) inherits the gate; removing it re-opens the stale-rpc race.
+assert.match(resolver, /chrome\.storage\.local\.get\(window\.DacBridgeWorkspaceCore\.STORAGE_KEY\)/, "the lease reads the durable store at ACT time");
+assert.match(resolver, /leaseHolds\(stored\?\.\[window\.DacBridgeWorkspaceCore\.STORAGE_KEY\], workspace\.workspace_id, tabId\)/, "the lease predicate gates every tab-scoped side effect");
+const panelHtml = fs.readFileSync(path.join(here, "..", "sidepanel.html"), "utf8");
+assert.ok(panelHtml.indexOf('src="bridge-workspace-core.js"') > 0 && panelHtml.indexOf('src="bridge-workspace-core.js"') < panelHtml.indexOf('src="sidepanel.js"'),
+  "the panel loads the workspace core BEFORE sidepanel.js so the lease predicate exists");
 
 function handlerBody(anchor) {
   const start = codeOnly.indexOf(anchor);

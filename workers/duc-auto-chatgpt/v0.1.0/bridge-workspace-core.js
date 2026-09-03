@@ -118,6 +118,18 @@
     return { store: { schema_version: 1, workspaces: base.workspaces.filter((entry) => entry.workspace_id !== workspaceId) }, removed };
   }
 
+  // Route lease: is this workspace STILL bound to this very tab, according to
+  // the durable store (the single source of truth the service worker writes
+  // BEFORE reconciling seats)? Tab-scoped handlers check this at ACT time,
+  // because the tab_id on an rpc is a snapshot from dispatch: an rpc in flight
+  // while the owner re-attaches the workspace to another tab would otherwise
+  // reload/bind/probe the OLD tab (GPT audit vòng 5, 03/09, HIGH — the socket
+  // guard only suppresses the stale RESPONSE, not the side effect).
+  function leaseHolds(store, workspaceId, tabId) {
+    const record = normalizeStore(store).workspaces.find((entry) => entry.workspace_id === workspaceId);
+    return Boolean(record && record.tab_id !== null && record.tab_id === tabId);
+  }
+
   // The Bridge identity a workspace seat announces. Routing metadata only —
   // never authentication (same rule as the profile instance block): the seat
   // still walks the full challenge → proof → auth handshake. The host cannot
@@ -149,6 +161,7 @@
     sanitizeWorkspaceName,
     isProviderTabUrl,
     normalizeStore,
+    leaseHolds,
     upsertWorkspace,
     removeWorkspace,
     deriveInstance
