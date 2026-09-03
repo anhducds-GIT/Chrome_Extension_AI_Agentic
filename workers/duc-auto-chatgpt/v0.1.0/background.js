@@ -1,4 +1,4 @@
-importScripts("bridge-core.js", "bridge-pairing-core.js", "bridge-router-core.js", "bridge-transport-loopback.js");
+importScripts("bridge-core.js", "bridge-pairing-core.js", "bridge-router-core.js", "bridge-workspace-core.js", "bridge-transport-loopback.js");
 
 // Listener registration happens synchronously inside create(); storage lookup
 // and network connection are deliberately deferred behind those listeners.

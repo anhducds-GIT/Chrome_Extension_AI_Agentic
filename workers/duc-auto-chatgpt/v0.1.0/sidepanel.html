@@ -481,6 +481,15 @@
           </div>
           <p id="bridgeProfileLabelHint" class="hint">Chưa đặt tên — khi nhiều profile cùng nối Bridge, AI chỉ thấy hồ sơ này bằng mã máy. Bấm nút Lưu tên là báo danh NGAY, không phải khởi động lại gì.</p>
         </div>
+        <div class="bridge-profile-label-block">
+          <label for="bridgeWorkspaceNameInput"><strong>Phiên làm việc theo tab (tối đa 3)</strong></label>
+          <ol id="bridgeWorkspaceList" class="bridge-activity-list" aria-live="polite"></ol>
+          <div class="row gap-sm">
+            <input id="bridgeWorkspaceNameInput" type="text" maxlength="64" placeholder="ví dụ: gpt-kichban" autocomplete="off" />
+            <button id="bridgeWorkspaceAttachBtn" class="secondary small" type="button">Gắn tab đang mở</button>
+          </div>
+          <p id="bridgeWorkspaceHint" class="hint">Mở tab ChatGPT muốn đặt tên, gõ tên rồi bấm "Gắn tab đang mở" — phiên báo danh NGAY trên Bridge, gọi được bằng --target. Tab đóng hay rời ChatGPT thì phiên tự ngắt, không bao giờ trôi sang tab khác.</p>
+        </div>
       </section>
 
       <section id="bridgeAttentionCard" class="card bridge-attention-card" hidden aria-labelledby="bridgeAttentionTitle">

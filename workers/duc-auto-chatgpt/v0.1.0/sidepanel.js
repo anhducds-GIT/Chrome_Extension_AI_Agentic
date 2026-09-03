@@ -30,6 +30,7 @@
     "bridgeProposalCard", "bridgeProposalCount", "bridgeProposalStatus", "bridgeProposalMeta", "bridgeProposalList", "bridgeProposalNotice", "bridgeProposalLockReason", "bridgeProposalFixtureBtn", "bridgeProposalRejectBtn", "bridgeProposalApproveBtn",
     "bridgePairingCard", "bridgeTransportStatus", "bridgeTransportDetail", "bridgePairingBtn", "bridgeUnpairBtn", "bridgePairingInput",
     "bridgeProfileLabelInput", "bridgeProfileLabelHint", "bridgeProfileLabelSaveBtn",
+    "bridgeWorkspaceList", "bridgeWorkspaceNameInput", "bridgeWorkspaceAttachBtn", "bridgeWorkspaceHint",
     "bridgeHostReachable", "bridgePairingState", "bridgeLastActivity", "bridgeActivityList", "bridgeActivityEmpty",
     "bridgeAttentionCard", "bridgeAttentionList", "bridgeAttentionCount", "bridgeTabAttentionBadge", "bridgeAttentionRestoreBtn", "bridgeDevModeToggle", "bridgeDevModeBadge"
   ];
@@ -464,6 +465,68 @@
       : "Đã xoá tên; hồ sơ này báo danh bằng mã máy.", "done");
   }
 
+  // ── Phiên làm việc theo tab (workspace) ──────────────────────────────────
+  // Nhiều ghế CÓ TÊN trong MỘT hồ sơ Chrome (Đức duyệt hướng A 03/09): mỗi tab
+  // ChatGPT được gắn tên thành một phiên, service worker mở một kết nối Bridge
+  // riêng cho phiên đó. Panel chỉ là chỗ khai báo — mọi kiểm tra thật (trần 3,
+  // trùng tên, tab sống) nằm ở service worker + bridge-workspace-core.
+
+  const WORKSPACE_STATE_LABELS = {
+    connected: "đã nối",
+    connecting: "đang nối",
+    disconnected: "chưa nối",
+    unpaired: "chưa pairing"
+  };
+
+  function renderBridgeWorkspaces(seats) {
+    if (!els.bridgeWorkspaceList) return;
+    els.bridgeWorkspaceList.replaceChildren();
+    for (const seat of Array.isArray(seats) ? seats : []) {
+      const item = document.createElement("li");
+      const name = document.createElement("strong");
+      name.textContent = seat.name;
+      const detail = document.createElement("span");
+      const stateLabel = seat.tab_alive === false ? "tab đã đóng" : WORKSPACE_STATE_LABELS[seat.state] || seat.state;
+      detail.textContent = ` — tab ${seat.tab_id} · ${stateLabel} `;
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "secondary small";
+      removeBtn.textContent = "Gỡ";
+      removeBtn.addEventListener("click", () => removeBridgeWorkspace(seat.workspace_id, seat.name).catch((error) => log(messageOf(error), "error")));
+      item.append(name, detail, removeBtn);
+      els.bridgeWorkspaceList.append(item);
+    }
+  }
+
+  async function refreshBridgeWorkspaces() {
+    if (!els.bridgeWorkspaceList) return;
+    try {
+      const response = await chrome.runtime.sendMessage({ type: "DAC_BRIDGE_WORKSPACES_GET" });
+      if (response?.ok) renderBridgeWorkspaces(response.seats);
+    } catch (_) { /* Danh sách phiên chỉ là hiển thị; lỗi đọc không chặn Bridge. */ }
+  }
+
+  async function attachBridgeWorkspace() {
+    const name = String(els.bridgeWorkspaceNameInput?.value || "").trim();
+    if (!name) throw new Error("Gõ tên phiên trước khi gắn tab.");
+    const tab = await pickActiveChatGPTTab();
+    const response = await chrome.runtime.sendMessage({ type: "DAC_BRIDGE_WORKSPACE_UPSERT", name, tab_id: tab.id });
+    if (!response?.ok) {
+      renderBridgeWorkspaces(response?.seats);
+      throw new Error(response?.error || `Không gắn được phiên (${response?.code || "WORKSPACE_UPSERT_FAILED"}).`);
+    }
+    if (els.bridgeWorkspaceNameInput) els.bridgeWorkspaceNameInput.value = "";
+    renderBridgeWorkspaces(response.seats);
+    log(`Đã gắn phiên "${response.workspace.name}" vào tab ${response.workspace.tab_id} — báo danh ngay trên Bridge.`, "done");
+  }
+
+  async function removeBridgeWorkspace(workspaceId, name) {
+    const response = await chrome.runtime.sendMessage({ type: "DAC_BRIDGE_WORKSPACE_REMOVE", workspace_id: workspaceId });
+    if (!response?.ok) throw new Error(response?.error || "Không gỡ được phiên làm việc.");
+    renderBridgeWorkspaces(response.seats);
+    log(`Đã gỡ phiên "${name}"; ghế của nó rời Bridge ngay.`, "done");
+  }
+
   async function pairAgentBridgeFile(file) {
     if (!file) return;
     let pairing;
@@ -668,13 +731,22 @@
     renderBridgeDevMode();
   }
 
-  async function bridgeDomProbe() {
-    const response = await send({ type: "DAC_DOM_PROBE" });
+  async function bridgeDomProbe(params, call) {
+    // A workspace call probes ITS tab — that is the entire read-only value of
+    // a named workspace: several tabs, each inspectable by name, in parallel.
+    const workspaceTab = await resolveWorkspaceTab(call);
+    let response;
+    if (workspaceTab) {
+      try { response = await chrome.tabs.sendMessage(workspaceTab.id, { type: "DAC_DOM_PROBE" }); }
+      catch (_) { throw new Error("RECEIVER_LOST: ChatGPT receiver unavailable in the workspace tab. Reload that tab once."); }
+    } else {
+      response = await send({ type: "DAC_DOM_PROBE" });
+    }
     if (!response?.ok) throw new Error(response?.error || "DOM probe failed in the content script.");
     return response.probe;
   }
 
-  async function bridgeRunTrial(params) {
+  async function bridgeRunTrial(params, call) {
     window.DacBridgeCore.assertTrialDevMode(state.bridgeDevMode);
     if (!queueRunLock.tryBeginRun()) throw new window.DacBridgeCore.BridgeProtocolError("RUN_ACTIVE");
     const previousSelection = new Set(state.runSelection);
@@ -690,8 +762,10 @@
       // Bound here, not inside run(): this handler validates against the page
       // before run() is ever called, so binding later would let the trial be
       // validated on one tab and executed on another. bindRunTab() is
-      // idempotent, so run() keeps this same tab.
-      await bindRunTab();
+      // idempotent, so run() keeps this same tab. A workspace call binds the
+      // run to the WORKSPACE's tab, not the front one; the one-run-at-a-time
+      // lock above is untouched, so three workspaces still mean one run.
+      await bindRunTab(await resolveWorkspaceTab(call));
       const effectiveOutput = await authoritativeValidate();
       state.runSelection = new Set(params.job_ids);
       const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, "selected", state.runSelection);
@@ -797,7 +871,7 @@
   // BACKLOG B-05 framed the rule as "refuse while any job is post-submit".
   // Refusing on any active run is both stricter and simpler to verify: with no
   // run active there is no in-flight attempt left to lose.
-  async function bridgeChatReload() {
+  async function bridgeChatReload(params, call) {
     // TAKE the mutation latch; do not merely read the flags. This handler
     // awaits twice over -- activeTab(), then a readiness poll of up to 20s --
     // and a naked check would leave that entire window open for a run to start
@@ -814,21 +888,23 @@
       );
     }
     try {
-      return await performChatReload();
+      // A workspace call reloads ITS tab, resolved before anything happens so
+      // a dead workspace tab refuses cleanly instead of reloading the front tab.
+      return await performChatReload(await resolveWorkspaceTab(call));
     } finally {
       queueRunLock.endMutation();
       controls();
     }
   }
 
-  async function performChatReload() {
+  async function performChatReload(targetTab = null) {
     // B-01 is fixed now: a RUN binds one tab and activeTab() resolves that
     // bound tab by id. This handler, though, only ever runs when NO run is
     // active (the latch above refuses otherwise), so there is no binding and
     // it deliberately targets the active tab -- reload is a recovery tool the
-    // operator points by hand. The answer and the audit row still name the
-    // tab explicitly rather than letting the caller assume which one it was.
-    const before = await activeTab();
+    // operator points by hand -- unless the call came through a workspace
+    // seat, whose own tab is the only tab it may ever touch.
+    const before = targetTab || await activeTab();
     const tabId = before.id;
     const urlBefore = before.url || null;
     const startedAt = Date.now();
@@ -875,11 +951,13 @@
     };
   }
 
-  async function bridgeSystemPing() {
+  async function bridgeSystemPing(params, call) {
     const workbook = state.workbook;
     let chatgpt = { state: "HARD_STOP", failure_type: "RECEIVER_LOST", composer_found: false, generating: false };
     try {
-      const tab = await activeTab();
+      // A workspace call reports on ITS tab; a missing workspace tab lands in
+      // the catch below and answers HARD_STOP/RECEIVER_LOST — same contract.
+      const tab = (await resolveWorkspaceTab(call)) || await activeTab();
       const ping = await chrome.tabs.sendMessage(tab.id, { type: "DAC_PING" });
       let failureType = null;
       if (ping?.securityBlocker) failureType = "SECURITY_HARD_STOP";
@@ -1313,7 +1391,11 @@
     port.onMessage.addListener((message) => {
       const wrapped = message?.type === "DAC_BRIDGE_RPC" && typeof message.route_id === "string";
       const envelope = wrapped ? message.envelope : message;
-      bridgeExecutorDispatch(envelope, { executor_epoch: state.bridgeExecutorEpoch })
+      // A request that arrived through a workspace seat carries the workspace
+      // on the PORT message (never in the protocol envelope). Handlers that
+      // touch a tab read call.context.workspace and bind to THAT tab.
+      const workspace = wrapped && message.workspace && typeof message.workspace === "object" ? message.workspace : null;
+      bridgeExecutorDispatch(envelope, { executor_epoch: state.bridgeExecutorEpoch, workspace })
         .then((response) => port.postMessage(wrapped ? { type: "DAC_BRIDGE_RPC_RESPONSE", route_id: message.route_id, envelope: response } : response))
         .catch(() => {
           const response = window.DacBridgeCore.failureResponse(envelope?.request_id, "INTERNAL_ERROR");
@@ -2899,9 +2981,9 @@
   // this job's output. It bit twice in one session: a trial ran against the
   // empty new-chat page, and a diagnostic probe reported on a different tab
   // than the one being debugged.
-  async function bindRunTab() {
+  async function bindRunTab(preferredTab = null) {
     if (state.boundTabId !== null) return state.boundTabId;
-    const tab = await pickActiveChatGPTTab();
+    const tab = preferredTab || await pickActiveChatGPTTab();
     state.boundTabId = tab.id;
     state.boundTabUrl = tab.url || "";
     state.boundConversationId = conversationIdOf(tab.url || "");
@@ -2955,6 +3037,28 @@
     const tab = await activeTab();
     try { return await chrome.tabs.sendMessage(tab.id, message); }
     catch (_) { throw new Error("RECEIVER_LOST: ChatGPT receiver unavailable. Reload the ChatGPT tab once."); }
+  }
+
+  // The tab a Bridge call is FOR. A call that arrived through a workspace seat
+  // names its workspace (see connectBridgeExecutor); it must act on that
+  // workspace's own tab and never drift to whichever tab is in front — the
+  // same defect bindRunTab() exists to prevent, one seat up. Returns null for
+  // profile-seat calls so callers keep today's behavior; a workspace whose tab
+  // is gone or has left ChatGPT is RECEIVER_LOST, never a silent fallback.
+  async function resolveWorkspaceTab(call) {
+    const workspace = call?.context?.workspace;
+    if (!workspace) return null;
+    const tabId = Number(workspace.tab_id);
+    const name = String(workspace.name || "").slice(0, 64);
+    let tab = null;
+    if (Number.isInteger(tabId) && tabId > 0) {
+      try { tab = await chrome.tabs.get(tabId); } catch (_) { tab = null; }
+    }
+    const url = tab?.url || tab?.pendingUrl || "";
+    if (!tab?.id || !isChatGPTTabUrl(url)) {
+      throw new Error(`RECEIVER_LOST: tab của phiên làm việc '${name}' đã đóng hoặc không còn ở ChatGPT. Mở lại trang và gắn lại phiên trong side panel.`);
+    }
+    return tab;
   }
 
   function dataUrl(file) {
@@ -5933,6 +6037,10 @@
   els.bridgeUnpairBtn?.addEventListener("click", () => unpairAgentBridge().catch((error) => log(messageOf(error), "error")));
   els.bridgeProfileLabelInput?.addEventListener("change", () => saveBridgeProfileLabel().catch((error) => log(messageOf(error), "error")));
   els.bridgeProfileLabelSaveBtn?.addEventListener("click", () => saveBridgeProfileLabel().catch((error) => log(messageOf(error), "error")));
+  els.bridgeWorkspaceAttachBtn?.addEventListener("click", () => attachBridgeWorkspace().catch((error) => log(messageOf(error), "error")));
+  els.bridgeWorkspaceNameInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") attachBridgeWorkspace().catch((error) => log(messageOf(error), "error"));
+  });
   els.runBtn.addEventListener("click", () => run("all"));
   els.runFromRunTabBtn?.addEventListener("click", () => run("all"));
   els.runFailedBtn.addEventListener("click", () => run("failed"));
@@ -5957,6 +6065,7 @@
   probeBridgePersistence().catch(() => {});
   refreshBridgeTransportStatus();
   loadBridgeProfileLabel();
+  refreshBridgeWorkspaces();
   chrome.storage?.onChanged?.addListener((changes, areaName) => {
     if (areaName === "local" && changes[BRIDGE_DEV_MODE_STORAGE_KEY]) {
       state.bridgeDevMode = changes[BRIDGE_DEV_MODE_STORAGE_KEY].newValue === true;

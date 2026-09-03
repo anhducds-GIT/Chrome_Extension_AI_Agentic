@@ -56,6 +56,11 @@
     const pairingCore = options.pairing_core || globalThis.DacBridgePairingCore;
     const routerCore = options.router_core || globalThis.DacBridgeRouterCore;
     if (!chromeApi || !WebSocketApi || !core || !pairingCore || !routerCore) throw new TypeError("Loopback transport dependencies are unavailable.");
+    // Workspaces (MULTI-SESSION-PER-PROFILE-DESIGN-V1, direction A) are an
+    // optional layer: without the core module the transport is exactly the
+    // single-seat transport it always was. Production loads it (background.js
+    // importScripts, pinned by the static test); the guard is for harnesses.
+    const workspaceCore = options.workspace_core || globalThis.DacBridgeWorkspaceCore || null;
 
     // Timing is injectable so liveness and backoff are testable without real waiting. Production
     // passes no options at all (background.js), so this normalization guards the test seam and any
@@ -90,28 +95,6 @@
     }
 
     let pairing = null;
-    let socket = null;
-    let authenticated = false;
-    let handshakeNonce = null;
-    let hostProofVerified = false;
-    let tokenSent = false;
-    // tokenSent flips BEFORE the identity read (replay protection); authSent
-    // flips only after the auth frame actually left the socket. auth_ok is
-    // acceptable only after authSent — a host answering earlier is broken or
-    // hostile and must not cancel the pending handshake state.
-    let authSent = false;
-    // A socket authenticates once. Without this, an auth_ok the browser had already queued could
-    // resurrect a socket the ACK deadline just judged dead, and a host repeating auth_ok under the
-    // probe period would restart the keepalive interval so no probe ever fires.
-    const settledSockets = new WeakSet();
-    let keepaliveTimer = null;
-    let keepaliveDeadlineTimer = null;
-    let reconnectTimer = null;
-    let reconnectAttempt = 0;
-    // Summed from the delays we scheduled, not from a clock, so the transport stays testable
-    // against an injected clock.
-    let reconnectElapsedMs = 0;
-    let handshakeTimer = null;
     let statusSequence = 0;
     let statusWrites = Promise.resolve();
     // Pairing edits are separate async handlers mutating the same field and the same storage key.
@@ -120,6 +103,14 @@
     function queuePairingWork(work) {
       const run = pairingWork.then(work, work);
       pairingWork = run.then(() => {}, () => {});
+      return run;
+    }
+    // Workspace edits are the same shape of hazard (read-modify-write on one
+    // storage key from several async handlers), so they get the same cure.
+    let workspaceWork = Promise.resolve();
+    function queueWorkspaceWork(work) {
+      const run = workspaceWork.then(work, work);
+      workspaceWork = run.then(() => {}, () => {});
       return run;
     }
     let executorPort = null;
@@ -139,14 +130,6 @@
       };
     }
 
-    // One honest reading of the current state. Being authenticated is not the same as being
-    // connected: a socket that is no longer OPEN is not a connection.
-    function currentState() {
-      if (!pairing) return "unpaired";
-      if (authenticated && socket && socket.readyState === WebSocketApi.OPEN) return "connected";
-      return socket && socket.readyState === WebSocketApi.CONNECTING ? "connecting" : "disconnected";
-    }
-
     // Storage writes are not ordered by the API, so they are serialized here and a write that a
     // newer status has already superseded is dropped rather than allowed to land last.
     async function publishStatus(state, errorCode = null) {
@@ -160,120 +143,6 @@
       return status;
     }
 
-    function clearKeepaliveDeadline() {
-      if (keepaliveDeadlineTimer) timers.clearTimeout(keepaliveDeadlineTimer);
-      keepaliveDeadlineTimer = null;
-    }
-
-    function clearKeepalive() {
-      if (keepaliveTimer) timers.clearInterval(keepaliveTimer);
-      keepaliveTimer = null;
-      clearKeepaliveDeadline();
-    }
-
-    function clearReconnect() {
-      if (reconnectTimer) timers.clearTimeout(reconnectTimer);
-      reconnectTimer = null;
-    }
-
-    function clearHandshakeDeadline() {
-      if (handshakeTimer) timers.clearTimeout(handshakeTimer);
-      handshakeTimer = null;
-    }
-
-    function resetHandshakeState() {
-      handshakeNonce = null;
-      hostProofVerified = false;
-      tokenSent = false;
-      authSent = false;
-    }
-
-    // An unanswered probe means the socket is half-open: still "open" to us, already gone to the
-    // host. Give up on it so status stops lying and recovery can start.
-    function armKeepaliveDeadline(targetSocket) {
-      if (keepaliveDeadlineTimer) return;
-      keepaliveDeadlineTimer = armTimer("setTimeout", () => {
-        keepaliveDeadlineTimer = null;
-        if (socket !== targetSocket) return;
-        // The probe period and this deadline are waits we scheduled, so they are charged to the
-        // give-up window like the handshake deadline is. Otherwise a host that authenticates and
-        // then never answers a probe repeats a ~30s cycle while paying only the reconnect delay,
-        // and the window stretches to many minutes. An answered probe resets the budget anyway.
-        //
-        // This is an UPPER BOUND on the wait, not a clock reading: the interval keeps its own
-        // cadence, so a late ACK that resets the budget mid-interval still gets the full period
-        // charged on the next miss. That errs toward handing over to the alarm sooner, which is
-        // the safe direction for a budget whose whole purpose is to stop holding the worker awake.
-        // Reading a real clock would be exact but would make every deadline here untestable
-        // against the injected one.
-        reconnectElapsedMs += keepaliveMs + keepaliveAckTimeoutMs;
-        abandonSocket(targetSocket, 1000, "Keepalive ACK deadline exceeded.");
-      }, keepaliveAckTimeoutMs);
-    }
-
-    function startKeepalive(targetSocket) {
-      clearKeepalive();
-      keepaliveTimer = armTimer("setInterval", () => {
-        if (socket !== targetSocket || !authenticated) return;
-        if (targetSocket.readyState !== WebSocketApi.OPEN) {
-          // We still own an authenticated socket that is no longer open, so its close event is
-          // late or missing. Bound the wait at one probe period instead of trusting the event.
-          abandonSocket(targetSocket, 1000, "Socket left OPEN without a close event.");
-          return;
-        }
-        targetSocket.send(JSON.stringify({ type: "keepalive", sent_at: new Date().toISOString() }));
-        armKeepaliveDeadline(targetSocket);
-      }, keepaliveMs);
-    }
-
-    // One pending reconnect at a time. The 30-second alarm stays the fallback for a missed close
-    // event; it cannot rescue a socket wedged mid-handshake, which is what the handshake deadline
-    // below is for. Past the window the host is not coming back in a hurry, so stop holding the
-    // worker awake for it and let the alarm carry on alone.
-    function scheduleReconnect() {
-      if (!pairing || authenticated || reconnectTimer) return;
-      if (reconnectElapsedMs >= reconnectWindowMs) return;
-      const delay = reconnectDelays[Math.min(reconnectAttempt, reconnectDelays.length - 1)];
-      reconnectAttempt += 1;
-      reconnectElapsedMs += delay;
-      reconnectTimer = armTimer("setTimeout", () => {
-        reconnectTimer = null;
-        if (!pairing || authenticated) return;
-        connectHost().catch(() => publishStatus("disconnected", "HOST_UNAVAILABLE"));
-      }, delay);
-    }
-
-    function dropSocket(targetSocket) {
-      if (socket !== targetSocket) return false;
-      socket = null;
-      authenticated = false;
-      resetHandshakeState();
-      clearKeepalive();
-      clearHandshakeDeadline();
-      scheduleReconnect();
-      publishStatus(pairing ? "disconnected" : "unpaired", pairing ? "HOST_UNAVAILABLE" : null);
-      return true;
-    }
-
-    // Give up ownership BEFORE asking the browser to close: a socket can sit in CLOSING for as
-    // long as the peer stays silent, and recovery must not wait on an event that may never come.
-    function abandonSocket(targetSocket, code, reason) {
-      dropSocket(targetSocket);
-      try { targetSocket.close(code, reason); }
-      catch (_) { /* Recovery above does not depend on the close succeeding. */ }
-    }
-
-    function closeSocket() {
-      clearKeepalive();
-      clearReconnect();
-      clearHandshakeDeadline();
-      authenticated = false;
-      resetHandshakeState();
-      const current = socket;
-      socket = null;
-      try { current?.close?.(1000, "Reconnect requested."); } catch (_) { /* Best effort. */ }
-    }
-
     function failExecutorPending(code = "EXECUTOR_UNAVAILABLE") {
       for (const [routeId, pending] of executorPending) {
         executorPending.delete(routeId);
@@ -282,7 +151,10 @@
       }
     }
 
-    function sendExecutor(request, values = {}) {
+    // `workspace` rides the PORT message, not the protocol envelope: the wire
+    // schema, the host, and the CLI stay untouched. The panel reads it to bind
+    // tab-scoped methods to the workspace's own tab instead of the active one.
+    function sendExecutor(request, values = {}, workspace = null) {
       if (!executorPort || !executorEpoch) return Promise.reject(new core.BridgeProtocolError("EXECUTOR_UNAVAILABLE"));
       const routeId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
       const deadline = Math.max(1000, Number(values.deadline_ms || 10000));
@@ -292,7 +164,9 @@
           reject(new core.BridgeProtocolError("REQUEST_TIMEOUT"));
         }, deadline);
         executorPending.set(routeId, { resolve, reject, timer });
-        try { executorPort.postMessage({ type: "DAC_BRIDGE_RPC", route_id: routeId, envelope: request }); }
+        const message = { type: "DAC_BRIDGE_RPC", route_id: routeId, envelope: request };
+        if (workspace) message.workspace = { workspace_id: workspace.workspace_id, name: workspace.name, tab_id: workspace.tab_id };
+        try { executorPort.postMessage(message); }
         catch (_) {
           clearTimeout(timer);
           executorPending.delete(routeId);
@@ -301,11 +175,13 @@
       });
     }
 
+    const executorStateFn = () => ({ available: Boolean(executorPort && executorEpoch), executor_epoch: executorEpoch });
+
     const router = routerCore.createRouter({
       core,
       extension_id: chromeApi.runtime.id,
       session_id: extensionSessionId,
-      executor_state: () => ({ available: Boolean(executorPort && executorEpoch), executor_epoch: executorEpoch }),
+      executor_state: executorStateFn,
       send_executor: sendExecutor
     });
 
@@ -336,119 +212,428 @@
       };
     }
 
-    async function handleSocketMessage(event, targetSocket) {
-      let message;
+    async function workspaceTabUsable(tabId) {
+      const tabsApi = chromeApi.tabs;
+      if (!workspaceCore || !tabsApi || typeof tabsApi.get !== "function") return false;
       try {
-        if (typeof event.data !== "string" || new TextEncoder().encode(event.data).byteLength > core.LIMITS.max_envelope_bytes + 8192) throw new Error("invalid transport frame");
-        message = JSON.parse(event.data);
-      } catch (_) {
-        abandonSocket(targetSocket, 1007, "Text JSON required.");
-        return;
-      }
-      if (socket !== targetSocket) return;
-      if (!authenticated && message?.type === "auth_proof" && typeof message.proof === "string" && handshakeNonce && !hostProofVerified && !tokenSent) {
-        const verified = await verifyHostProof(pairing.token, handshakeNonce, message.proof);
-        if (socket !== targetSocket || !verified) {
-          abandonSocket(targetSocket, 1008, "Host authentication failed.");
-          return;
-        }
-        hostProofVerified = true;
-        tokenSent = true;
-        // Identity is read fresh per connect so a label the owner just typed
-        // takes effect at the very next (re)connect. tokenSent is already set,
-        // so a replayed auth_proof during this await stays ignored; the socket
-        // guard re-runs after the read. A storage failure degrades to a legacy
-        // (no-instance) auth — routing stays fail-closed either way.
-        const instance = await loadInstance().catch(() => null);
-        if (socket !== targetSocket || targetSocket.readyState !== WebSocketApi.OPEN) return;
-        const auth = { type: "auth", role: "extension", token: pairing.token };
-        if (instance) auth.instance = instance;
-        targetSocket.send(JSON.stringify(auth));
-        authSent = true;
-        return;
-      }
-      if (message?.type === "auth_ok" && typeof message.session_id === "string") {
-        // The branch's own handshake contract is unchanged: auth_ok counts only after the host
-        // proved itself and our auth frame actually left the socket. Added on top: it counts only
-        // from a socket that is genuinely open, and only once per socket.
-        if (!hostProofVerified || !tokenSent || !authSent
-          || targetSocket.readyState !== WebSocketApi.OPEN || settledSockets.has(targetSocket)) {
-          abandonSocket(targetSocket, 1008, "Unexpected authentication frame.");
-          return;
-        }
-        settledSockets.add(targetSocket);
-        authenticated = true;
-        clearHandshakeDeadline();
-        clearReconnect();
-        // Armed before the status write: liveness must not depend on storage succeeding.
-        startKeepalive(targetSocket);
-        await publishStatus("connected");
-        return;
-      }
-      if (!authenticated) {
-        abandonSocket(targetSocket, 1008, "Host authentication is not complete.");
-        return;
-      }
-      if (message?.type === "keepalive_ack") {
-        // Only an ACK that answers an outstanding probe is a completed round trip, and only that
-        // is evidence the link carries traffic. An unsolicited one refills nothing.
-        if (!keepaliveDeadlineTimer) return;
-        clearKeepaliveDeadline();
-        reconnectAttempt = 0;
-        reconnectElapsedMs = 0;
-        return;
-      }
-      if (message?.type !== "rpc" || typeof message.relay_id !== "string" || !message.envelope) {
-        abandonSocket(targetSocket, 1008, "Unsupported host transport message.");
-        return;
-      }
-      const response = await router.route(message.envelope);
-      if (socket === targetSocket && authenticated && targetSocket.readyState === WebSocketApi.OPEN) {
-        targetSocket.send(JSON.stringify({ type: "rpc_response", relay_id: message.relay_id, envelope: response }));
-      }
+        const tab = await tabsApi.get(tabId);
+        return Boolean(tab?.id) && workspaceCore.isProviderTabUrl(tab.url || tab.pendingUrl || "");
+      } catch (_) { return false; }
     }
 
-    async function connectHost() {
-      if (!pairing || socket && [WebSocketApi.OPEN, WebSocketApi.CONNECTING].includes(socket.readyState)) {
-        return safeStatus(currentState());
+    // One seat = one socket = one identity on the host. The profile seat is the
+    // transport as it has always been (it alone publishes the status the panel
+    // reads); workspace seats are additional named connections, one per
+    // owner-declared work session, each bound to one tab. The host cannot tell
+    // them apart from profiles, which is the whole point of direction A: the
+    // routing, fail-closed ambiguity rules, served_by, and bridge.sessions all
+    // apply unchanged.
+    function createSeat(spec) {
+      const isProfile = spec.kind === "profile";
+      let workspaceRecord = isProfile ? null : spec.workspace;
+      let retired = false;
+
+      let socket = null;
+      let authenticated = false;
+      let handshakeNonce = null;
+      let hostProofVerified = false;
+      let tokenSent = false;
+      // tokenSent flips BEFORE the identity read (replay protection); authSent
+      // flips only after the auth frame actually left the socket. auth_ok is
+      // acceptable only after authSent — a host answering earlier is broken or
+      // hostile and must not cancel the pending handshake state.
+      let authSent = false;
+      // A socket authenticates once. Without this, an auth_ok the browser had already queued could
+      // resurrect a socket the ACK deadline just judged dead, and a host repeating auth_ok under the
+      // probe period would restart the keepalive interval so no probe ever fires.
+      const settledSockets = new WeakSet();
+      let keepaliveTimer = null;
+      let keepaliveDeadlineTimer = null;
+      let reconnectTimer = null;
+      let reconnectAttempt = 0;
+      // Summed from the delays we scheduled, not from a clock, so the transport stays testable
+      // against an injected clock.
+      let reconnectElapsedMs = 0;
+      let handshakeTimer = null;
+
+      // Workspace seats do not own the profile-level status record; their
+      // state is reported through the workspace listing instead.
+      function publish(state, errorCode = null) {
+        return isProfile ? publishStatus(state, errorCode) : Promise.resolve(null);
       }
-      clearReconnect();
-      // Every timer belonging to the socket being replaced goes with it: one slot, one timer.
-      clearHandshakeDeadline();
-      clearKeepalive();
-      // Replacing a socket voids whatever authentication and handshake state the old one had.
-      authenticated = false;
-      resetHandshakeState();
-      // The socket is claimed before the first await so a scheduled reconnect cannot race a second
-      // socket into existence between the status write and the constructor.
-      const candidate = new WebSocketApi(pairing.websocket_url);
-      socket = candidate;
-      // Covers the whole handshake -- still CONNECTING, or open but never carried through
-      // challenge/proof/auth to auth_ok. The alarm rescues neither, because connectHost replaces
-      // neither state.
-      handshakeTimer = armTimer("setTimeout", () => {
+
+      const seatRouter = isProfile ? router : routerCore.createRouter({
+        core,
+        extension_id: chromeApi.runtime.id,
+        executor_state: executorStateFn,
+        send_executor: (request, values) => sendExecutor(request, values, workspaceRecord)
+      });
+
+      // One honest reading of the current state. Being authenticated is not the same as being
+      // connected: a socket that is no longer OPEN is not a connection.
+      function currentState() {
+        if (!pairing) return "unpaired";
+        if (authenticated && socket && socket.readyState === WebSocketApi.OPEN) return "connected";
+        return socket && socket.readyState === WebSocketApi.CONNECTING ? "connecting" : "disconnected";
+      }
+
+      function clearKeepaliveDeadline() {
+        if (keepaliveDeadlineTimer) timers.clearTimeout(keepaliveDeadlineTimer);
+        keepaliveDeadlineTimer = null;
+      }
+
+      function clearKeepalive() {
+        if (keepaliveTimer) timers.clearInterval(keepaliveTimer);
+        keepaliveTimer = null;
+        clearKeepaliveDeadline();
+      }
+
+      function clearReconnect() {
+        if (reconnectTimer) timers.clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+
+      function clearHandshakeDeadline() {
+        if (handshakeTimer) timers.clearTimeout(handshakeTimer);
         handshakeTimer = null;
-        if (socket !== candidate || authenticated) return;
-        // The wait we just spent counts against the give-up window too. Counting only the delays
-        // BETWEEN attempts would let a host that accepts connections and never answers hold the
-        // worker awake for several times the window the code claims to enforce.
-        reconnectElapsedMs += handshakeTimeoutMs;
-        abandonSocket(candidate, 1000, "Handshake deadline exceeded.");
-      }, handshakeTimeoutMs);
-      candidate.addEventListener("open", () => {
-        if (socket !== candidate) return;
-        handshakeNonce = freshNonce();
+      }
+
+      function resetHandshakeState() {
+        handshakeNonce = null;
         hostProofVerified = false;
         tokenSent = false;
         authSent = false;
-        candidate.send(JSON.stringify({ type: "auth_challenge", role: "extension", nonce: handshakeNonce }));
-      });
-      candidate.addEventListener("message", (event) => {
-        handleSocketMessage(event, candidate).catch(() => abandonSocket(candidate, 1011, "Router failure."));
-      });
-      candidate.addEventListener("close", () => { dropSocket(candidate); });
-      candidate.addEventListener("error", () => { /* close publishes the fail-closed state without secret-bearing details. */ });
-      return publishStatus("connecting");
+      }
+
+      // An unanswered probe means the socket is half-open: still "open" to us, already gone to the
+      // host. Give up on it so status stops lying and recovery can start.
+      function armKeepaliveDeadline(targetSocket) {
+        if (keepaliveDeadlineTimer) return;
+        keepaliveDeadlineTimer = armTimer("setTimeout", () => {
+          keepaliveDeadlineTimer = null;
+          if (socket !== targetSocket) return;
+          // The probe period and this deadline are waits we scheduled, so they are charged to the
+          // give-up window like the handshake deadline is. Otherwise a host that authenticates and
+          // then never answers a probe repeats a ~30s cycle while paying only the reconnect delay,
+          // and the window stretches to many minutes. An answered probe resets the budget anyway.
+          //
+          // This is an UPPER BOUND on the wait, not a clock reading: the interval keeps its own
+          // cadence, so a late ACK that resets the budget mid-interval still gets the full period
+          // charged on the next miss. That errs toward handing over to the alarm sooner, which is
+          // the safe direction for a budget whose whole purpose is to stop holding the worker awake.
+          // Reading a real clock would be exact but would make every deadline here untestable
+          // against the injected one.
+          reconnectElapsedMs += keepaliveMs + keepaliveAckTimeoutMs;
+          abandonSocket(targetSocket, 1000, "Keepalive ACK deadline exceeded.");
+        }, keepaliveAckTimeoutMs);
+      }
+
+      function startKeepalive(targetSocket) {
+        clearKeepalive();
+        keepaliveTimer = armTimer("setInterval", () => {
+          if (socket !== targetSocket || !authenticated) return;
+          if (targetSocket.readyState !== WebSocketApi.OPEN) {
+            // We still own an authenticated socket that is no longer open, so its close event is
+            // late or missing. Bound the wait at one probe period instead of trusting the event.
+            abandonSocket(targetSocket, 1000, "Socket left OPEN without a close event.");
+            return;
+          }
+          targetSocket.send(JSON.stringify({ type: "keepalive", sent_at: new Date().toISOString() }));
+          armKeepaliveDeadline(targetSocket);
+        }, keepaliveMs);
+      }
+
+      // One pending reconnect at a time. The 30-second alarm stays the fallback for a missed close
+      // event; it cannot rescue a socket wedged mid-handshake, which is what the handshake deadline
+      // below is for. Past the window the host is not coming back in a hurry, so stop holding the
+      // worker awake for it and let the alarm carry on alone.
+      function scheduleReconnect() {
+        if (!pairing || retired || authenticated || reconnectTimer) return;
+        if (reconnectElapsedMs >= reconnectWindowMs) return;
+        const delay = reconnectDelays[Math.min(reconnectAttempt, reconnectDelays.length - 1)];
+        reconnectAttempt += 1;
+        reconnectElapsedMs += delay;
+        reconnectTimer = armTimer("setTimeout", () => {
+          reconnectTimer = null;
+          if (!pairing || retired || authenticated) return;
+          connectHost().catch(() => publish("disconnected", "HOST_UNAVAILABLE"));
+        }, delay);
+      }
+
+      function dropSocket(targetSocket) {
+        if (socket !== targetSocket) return false;
+        socket = null;
+        authenticated = false;
+        resetHandshakeState();
+        clearKeepalive();
+        clearHandshakeDeadline();
+        scheduleReconnect();
+        publish(pairing ? "disconnected" : "unpaired", pairing ? "HOST_UNAVAILABLE" : null);
+        return true;
+      }
+
+      // Give up ownership BEFORE asking the browser to close: a socket can sit in CLOSING for as
+      // long as the peer stays silent, and recovery must not wait on an event that may never come.
+      function abandonSocket(targetSocket, code, reason) {
+        dropSocket(targetSocket);
+        try { targetSocket.close(code, reason); }
+        catch (_) { /* Recovery above does not depend on the close succeeding. */ }
+      }
+
+      function closeSocket() {
+        clearKeepalive();
+        clearReconnect();
+        clearHandshakeDeadline();
+        authenticated = false;
+        resetHandshakeState();
+        const current = socket;
+        socket = null;
+        try { current?.close?.(1000, "Reconnect requested."); } catch (_) { /* Best effort. */ }
+      }
+
+      async function handleSocketMessage(event, targetSocket) {
+        let message;
+        try {
+          if (typeof event.data !== "string" || new TextEncoder().encode(event.data).byteLength > core.LIMITS.max_envelope_bytes + 8192) throw new Error("invalid transport frame");
+          message = JSON.parse(event.data);
+        } catch (_) {
+          abandonSocket(targetSocket, 1007, "Text JSON required.");
+          return;
+        }
+        if (socket !== targetSocket) return;
+        if (!authenticated && message?.type === "auth_proof" && typeof message.proof === "string" && handshakeNonce && !hostProofVerified && !tokenSent) {
+          const verified = await verifyHostProof(pairing.token, handshakeNonce, message.proof);
+          if (socket !== targetSocket || !verified) {
+            abandonSocket(targetSocket, 1008, "Host authentication failed.");
+            return;
+          }
+          hostProofVerified = true;
+          tokenSent = true;
+          // Identity is read fresh per connect so a label the owner just typed
+          // takes effect at the very next (re)connect. tokenSent is already set,
+          // so a replayed auth_proof during this await stays ignored; the socket
+          // guard re-runs after the read. A storage failure degrades to a legacy
+          // (no-instance) auth on the profile seat — routing stays fail-closed
+          // either way. A workspace seat without its identity is refused
+          // outright: an anonymous extra seat would only poison the ambiguity
+          // rules it exists to serve.
+          const instance = await loadInstance()
+            .then((base) => (isProfile ? base : workspaceCore.deriveInstance(base, workspaceRecord)))
+            .catch(() => null);
+          if (socket !== targetSocket || targetSocket.readyState !== WebSocketApi.OPEN) return;
+          if (!isProfile && !instance) {
+            abandonSocket(targetSocket, 1008, "Workspace identity unavailable.");
+            return;
+          }
+          const auth = { type: "auth", role: "extension", token: pairing.token };
+          if (instance) auth.instance = instance;
+          targetSocket.send(JSON.stringify(auth));
+          authSent = true;
+          return;
+        }
+        if (message?.type === "auth_ok" && typeof message.session_id === "string") {
+          // The branch's own handshake contract is unchanged: auth_ok counts only after the host
+          // proved itself and our auth frame actually left the socket. Added on top: it counts only
+          // from a socket that is genuinely open, and only once per socket.
+          if (!hostProofVerified || !tokenSent || !authSent
+            || targetSocket.readyState !== WebSocketApi.OPEN || settledSockets.has(targetSocket)) {
+            abandonSocket(targetSocket, 1008, "Unexpected authentication frame.");
+            return;
+          }
+          settledSockets.add(targetSocket);
+          authenticated = true;
+          clearHandshakeDeadline();
+          clearReconnect();
+          // Armed before the status write: liveness must not depend on storage succeeding.
+          startKeepalive(targetSocket);
+          await publish("connected");
+          return;
+        }
+        if (!authenticated) {
+          abandonSocket(targetSocket, 1008, "Host authentication is not complete.");
+          return;
+        }
+        if (message?.type === "keepalive_ack") {
+          // Only an ACK that answers an outstanding probe is a completed round trip, and only that
+          // is evidence the link carries traffic. An unsolicited one refills nothing.
+          if (!keepaliveDeadlineTimer) return;
+          clearKeepaliveDeadline();
+          reconnectAttempt = 0;
+          reconnectElapsedMs = 0;
+          return;
+        }
+        if (message?.type !== "rpc" || typeof message.relay_id !== "string" || !message.envelope) {
+          abandonSocket(targetSocket, 1008, "Unsupported host transport message.");
+          return;
+        }
+        const response = await seatRouter.route(message.envelope);
+        if (socket === targetSocket && authenticated && targetSocket.readyState === WebSocketApi.OPEN) {
+          targetSocket.send(JSON.stringify({ type: "rpc_response", relay_id: message.relay_id, envelope: response }));
+        }
+      }
+
+      async function connectHost() {
+        if (retired || !pairing || socket && [WebSocketApi.OPEN, WebSocketApi.CONNECTING].includes(socket.readyState)) {
+          return safeStatus(currentState());
+        }
+        if (!isProfile) {
+          // A workspace seat exists only while its tab is a live provider tab:
+          // a closed or navigated-away tab must read as TARGET_NOT_CONNECTED on
+          // the host, never as a seat that answers for some other tab. The
+          // check awaits, so re-guard the slot before claiming it — two
+          // concurrent connects must not race two sockets into one seat.
+          const usable = await workspaceTabUsable(workspaceRecord.tab_id);
+          if (retired || !pairing) return safeStatus(currentState());
+          if (socket && [WebSocketApi.OPEN, WebSocketApi.CONNECTING].includes(socket.readyState)) return safeStatus(currentState());
+          if (!usable) {
+            closeSocket();
+            return safeStatus(currentState());
+          }
+        }
+        clearReconnect();
+        // Every timer belonging to the socket being replaced goes with it: one slot, one timer.
+        clearHandshakeDeadline();
+        clearKeepalive();
+        // Replacing a socket voids whatever authentication and handshake state the old one had.
+        authenticated = false;
+        resetHandshakeState();
+        // The socket is claimed before the first await so a scheduled reconnect cannot race a second
+        // socket into existence between the status write and the constructor.
+        const candidate = new WebSocketApi(pairing.websocket_url);
+        socket = candidate;
+        // Covers the whole handshake -- still CONNECTING, or open but never carried through
+        // challenge/proof/auth to auth_ok. The alarm rescues neither, because connectHost replaces
+        // neither state.
+        handshakeTimer = armTimer("setTimeout", () => {
+          handshakeTimer = null;
+          if (socket !== candidate || authenticated) return;
+          // The wait we just spent counts against the give-up window too. Counting only the delays
+          // BETWEEN attempts would let a host that accepts connections and never answers hold the
+          // worker awake for several times the window the code claims to enforce.
+          reconnectElapsedMs += handshakeTimeoutMs;
+          abandonSocket(candidate, 1000, "Handshake deadline exceeded.");
+        }, handshakeTimeoutMs);
+        candidate.addEventListener("open", () => {
+          if (socket !== candidate) return;
+          handshakeNonce = freshNonce();
+          hostProofVerified = false;
+          tokenSent = false;
+          authSent = false;
+          candidate.send(JSON.stringify({ type: "auth_challenge", role: "extension", nonce: handshakeNonce }));
+        });
+        candidate.addEventListener("message", (event) => {
+          handleSocketMessage(event, candidate).catch(() => abandonSocket(candidate, 1011, "Router failure."));
+        });
+        candidate.addEventListener("close", () => { dropSocket(candidate); });
+        candidate.addEventListener("error", () => { /* close publishes the fail-closed state without secret-bearing details. */ });
+        return publish("connecting");
+      }
+
+      return {
+        connect: connectHost,
+        close: closeSocket,
+        retire() {
+          retired = true;
+          closeSocket();
+        },
+        updateWorkspace(record) { workspaceRecord = record; },
+        workspace: () => workspaceRecord,
+        isAuthenticated: () => authenticated && socket && socket.readyState === WebSocketApi.OPEN,
+        currentState
+      };
+    }
+
+    const profileSeat = createSeat({ kind: "profile" });
+    const workspaceSeats = new Map();
+    let workspaceStore = { schema_version: 1, workspaces: [] };
+
+    // Bring the seat map in line with the store: retire seats whose workspace
+    // is gone, cycle seats whose name or tab changed (a cycle re-announces the
+    // new identity immediately — same owner promise as the Lưu tên button),
+    // create and connect seats for new workspaces.
+    async function reconcileWorkspaces(nextStore) {
+      if (!workspaceCore) return;
+      workspaceStore = workspaceCore.normalizeStore(nextStore);
+      const wanted = new Map(workspaceStore.workspaces.map((entry) => [entry.workspace_id, entry]));
+      for (const [workspaceId, seat] of [...workspaceSeats]) {
+        if (!wanted.has(workspaceId)) {
+          seat.retire();
+          workspaceSeats.delete(workspaceId);
+        }
+      }
+      for (const record of wanted.values()) {
+        const existing = workspaceSeats.get(record.workspace_id);
+        if (!existing) {
+          const seat = createSeat({ kind: "workspace", workspace: record });
+          workspaceSeats.set(record.workspace_id, seat);
+          if (pairing) await seat.connect().catch(() => {});
+          continue;
+        }
+        const previous = existing.workspace();
+        const changed = previous.name !== record.name || previous.tab_id !== record.tab_id;
+        existing.updateWorkspace(record);
+        if (!pairing) continue;
+        if (changed) {
+          existing.close();
+          await existing.connect().catch(() => {});
+        } else if (!existing.isAuthenticated()) {
+          await existing.connect().catch(() => {});
+        }
+      }
+    }
+
+    async function workspaceSeatStates() {
+      const rows = [];
+      for (const record of workspaceStore.workspaces) {
+        const seat = workspaceSeats.get(record.workspace_id);
+        rows.push({
+          workspace_id: record.workspace_id,
+          name: record.name,
+          tab_id: record.tab_id,
+          state: seat ? seat.currentState() : "disconnected",
+          tab_alive: await workspaceTabUsable(record.tab_id)
+        });
+      }
+      return rows;
+    }
+
+    async function persistWorkspaceStore(store) {
+      await chromeApi.storage.local.set({ [workspaceCore.STORAGE_KEY]: store });
+    }
+
+    function workspaceUnavailableError() {
+      const error = new Error("Workspace module is not loaded.");
+      error.code = "WORKSPACES_UNAVAILABLE";
+      return error;
+    }
+
+    async function loadWorkspacesNow() {
+      if (!workspaceCore) return;
+      const stored = await chromeApi.storage.local.get(workspaceCore.STORAGE_KEY);
+      await reconcileWorkspaces(stored?.[workspaceCore.STORAGE_KEY] || { schema_version: 1, workspaces: [] });
+    }
+
+    // Pairing changed out from under every seat: reconnect them all (or, with
+    // pairing gone, make sure none of them keeps a socket to the old host).
+    async function reconnectAllSeats() {
+      if (!pairing) {
+        for (const seat of workspaceSeats.values()) seat.close();
+        return;
+      }
+      for (const seat of workspaceSeats.values()) {
+        seat.close();
+        await seat.connect().catch(() => {});
+      }
+    }
+
+    // The gentle variant for boot ordering: pairing load and workspace load run
+    // on two queues, so whichever lands second just makes sure every seat is on
+    // its way up — without cycling sockets that are already mid-handshake.
+    async function ensureWorkspaceSeatsConnected() {
+      if (!pairing) return;
+      for (const seat of workspaceSeats.values()) {
+        if (!seat.isAuthenticated()) await seat.connect().catch(() => {});
+      }
     }
 
     function loadPairing() {
@@ -460,18 +645,21 @@
       const candidate = stored?.[pairingCore.PAIRING_STORAGE_KEY];
       if (!candidate) {
         pairing = null;
-        closeSocket();
+        profileSeat.close();
+        queueWorkspaceWork(reconnectAllSeats);
         return publishStatus("unpaired");
       }
       try {
         pairing = pairingCore.validate(candidate);
       } catch (_) {
         pairing = null;
-        closeSocket();
+        profileSeat.close();
+        queueWorkspaceWork(reconnectAllSeats);
         return publishStatus("pairing_invalid", "PAIRING_FILE_INVALID");
       }
-      await connectHost();
-      return safeStatus(currentState());
+      await profileSeat.connect();
+      queueWorkspaceWork(ensureWorkspaceSeatsConnected);
+      return safeStatus(profileSeat.currentState());
     }
 
     chromeApi.runtime.onConnect.addListener((port) => {
@@ -485,7 +673,7 @@
         if (executorPort !== port) return;
         if (message?.type === "DAC_BRIDGE_EXECUTOR_READY" && message.protocol === core.PROTOCOL && message.version === 1 && typeof message.executor_epoch === "string") {
           executorEpoch = message.executor_epoch;
-          publishStatus(currentState());
+          publishStatus(profileSeat.currentState());
           return;
         }
         if (message?.type === "DAC_BRIDGE_RPC_RESPONSE" && typeof message.route_id === "string") {
@@ -502,7 +690,7 @@
         executorPort = null;
         executorEpoch = null;
         failExecutorPending("EXECUTOR_UNAVAILABLE");
-        publishStatus(currentState());
+        publishStatus(profileSeat.currentState());
       });
     });
 
@@ -512,9 +700,10 @@
           const validated = pairingCore.validate(message.pairing);
           await chromeApi.storage.local.set({ [pairingCore.PAIRING_STORAGE_KEY]: validated });
           pairing = validated;
-          closeSocket();
-          await connectHost();
-          return safeStatus(currentState());
+          profileSeat.close();
+          await profileSeat.connect();
+          queueWorkspaceWork(reconnectAllSeats);
+          return safeStatus(profileSeat.currentState());
         }).then((status) => sendResponse({ ok: true, status })).catch(() => sendResponse({ ok: false, code: "PAIRING_FILE_INVALID" }));
         return true;
       }
@@ -522,12 +711,13 @@
         // Save the owner-typed profile name AND announce it at once by cycling
         // only THIS profile's socket — the fresh connect (challenge -> proof ->
         // auth) reads the new label. No host restart, no extension reload.
+        // Workspace seats keep their own names and their own sockets.
         Promise.resolve().then(async () => {
           const label = sanitizeInstanceLabel(message.label);
           await chromeApi.storage.local.set({ [INSTANCE_LABEL_STORAGE_KEY]: label });
           if (pairing) {
-            closeSocket();
-            await connectHost();
+            profileSeat.close();
+            await profileSeat.connect();
           }
           return label;
         }).then((label) => sendResponse({ ok: true, label })).catch(() => sendResponse({ ok: false, code: "LABEL_SET_FAILED" }));
@@ -536,26 +726,106 @@
       if (message?.type === "DAC_BRIDGE_PAIRING_REMOVE") {
         queuePairingWork(async () => {
           pairing = null;
-          closeSocket();
+          profileSeat.close();
+          queueWorkspaceWork(reconnectAllSeats);
           await chromeApi.storage.local.remove(pairingCore.PAIRING_STORAGE_KEY);
           return publishStatus("unpaired");
         }).then((status) => sendResponse({ ok: true, status })).catch(() => sendResponse({ ok: false, code: "PAIRING_REMOVE_FAILED" }));
         return true;
       }
       if (message?.type === "DAC_BRIDGE_STATUS_GET") {
-        sendResponse({ ok: true, status: safeStatus(currentState()) });
+        sendResponse({ ok: true, status: safeStatus(profileSeat.currentState()) });
         return false;
+      }
+      if (message?.type === "DAC_BRIDGE_WORKSPACE_UPSERT") {
+        queueWorkspaceWork(async () => {
+          if (!workspaceCore) throw workspaceUnavailableError();
+          // Fail closed at the door: a workspace may only ever be born onto a
+          // live provider tab. Everything later (navigation, closure) is
+          // handled by the tab listeners and the connect-time guard.
+          const usable = await workspaceTabUsable(message.tab_id);
+          if (!usable) {
+            const error = new Error("Tab được gắn phải là một tab ChatGPT đang mở.");
+            error.code = "WORKSPACE_TAB_INVALID";
+            throw error;
+          }
+          const { store, workspace } = workspaceCore.upsertWorkspace(
+            workspaceStore,
+            { workspace_id: message.workspace_id, name: message.name, tab_id: message.tab_id },
+            () => globalThis.crypto?.randomUUID?.()
+          );
+          await persistWorkspaceStore(store);
+          await reconcileWorkspaces(store);
+          return { workspace, seats: await workspaceSeatStates() };
+        }).then((result) => sendResponse({ ok: true, ...result }))
+          .catch((error) => sendResponse({ ok: false, code: error?.code || "WORKSPACE_UPSERT_FAILED", error: error?.message || "" }));
+        return true;
+      }
+      if (message?.type === "DAC_BRIDGE_WORKSPACE_REMOVE") {
+        queueWorkspaceWork(async () => {
+          if (!workspaceCore) throw workspaceUnavailableError();
+          const { store, removed } = workspaceCore.removeWorkspace(workspaceStore, message.workspace_id);
+          await persistWorkspaceStore(store);
+          await reconcileWorkspaces(store);
+          return { removed, seats: await workspaceSeatStates() };
+        }).then((result) => sendResponse({ ok: true, ...result }))
+          .catch((error) => sendResponse({ ok: false, code: error?.code || "WORKSPACE_REMOVE_FAILED", error: error?.message || "" }));
+        return true;
+      }
+      if (message?.type === "DAC_BRIDGE_WORKSPACES_GET") {
+        queueWorkspaceWork(async () => {
+          if (!workspaceCore) return { seats: [] };
+          return { seats: await workspaceSeatStates() };
+        }).then((result) => sendResponse({ ok: true, ...result }))
+          .catch((error) => sendResponse({ ok: false, code: error?.code || "WORKSPACES_GET_FAILED" }));
+        return true;
       }
       return false;
     });
 
+    // A workspace's tab dying or leaving the provider is the fail-closed edge
+    // of direction A: the seat's socket must drop so the host answers
+    // TARGET_NOT_CONNECTED instead of ever letting that name drift to another
+    // tab. The record stays, so re-opening the page and re-attaching is cheap.
+    chromeApi.tabs?.onRemoved?.addListener?.((tabId) => {
+      queueWorkspaceWork(async () => {
+        for (const seat of workspaceSeats.values()) {
+          if (seat.workspace()?.tab_id === tabId) seat.close();
+        }
+      });
+    });
+    chromeApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
+      if (!changeInfo || typeof changeInfo.url !== "string") return;
+      queueWorkspaceWork(async () => {
+        if (!workspaceCore) return;
+        for (const seat of workspaceSeats.values()) {
+          if (seat.workspace()?.tab_id !== tabId) continue;
+          if (workspaceCore.isProviderTabUrl(changeInfo.url)) {
+            if (pairing && !seat.isAuthenticated()) await seat.connect().catch(() => {});
+          } else {
+            seat.close();
+          }
+        }
+      });
+    });
+
     chromeApi.alarms.onAlarm.addListener((alarm) => {
-      if (alarm?.name === RECONNECT_ALARM && pairing && !authenticated) connectHost().catch(() => publishStatus("disconnected", "HOST_UNAVAILABLE"));
+      if (alarm?.name !== RECONNECT_ALARM || !pairing) return;
+      if (!profileSeat.isAuthenticated()) profileSeat.connect().catch(() => publishStatus("disconnected", "HOST_UNAVAILABLE"));
+      for (const seat of workspaceSeats.values()) {
+        if (!seat.isAuthenticated()) seat.connect().catch(() => {});
+      }
     });
     chromeApi.alarms.create(RECONNECT_ALARM, { periodInMinutes: 0.5 });
 
     loadPairing().catch(() => publishStatus("pairing_invalid", "PAIRING_FILE_INVALID"));
-    return Object.freeze({ connectHost, loadPairing, status: () => safeStatus(currentState()), router });
+    queueWorkspaceWork(loadWorkspacesNow).catch(() => {});
+    return Object.freeze({
+      connectHost: profileSeat.connect,
+      loadPairing,
+      status: () => safeStatus(profileSeat.currentState()),
+      router
+    });
   }
 
   (typeof window !== "undefined" ? window : globalThis).DacBridgeLoopbackTransport = Object.freeze({

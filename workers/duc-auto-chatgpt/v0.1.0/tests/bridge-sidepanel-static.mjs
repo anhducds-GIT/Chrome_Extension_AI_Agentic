@@ -32,7 +32,7 @@ assert.match(sidepanel, /const BRIDGE_EXECUTOR_PORT = "dac\.bridge\.executor\.v1
 assert.match(sidepanel, /crypto\.randomUUID\(\)/, "each side-panel document announces a random executor epoch");
 assert.match(sidepanel, /DAC_BRIDGE_EXECUTOR_READY[\s\S]*?executor_epoch: state\.bridgeExecutorEpoch/, "the named Port announces the document epoch");
 assert.match(sidepanel, /const bridgeExecutorDispatch = window\.DacBridgeCore\.createDispatcher/, "Port requests enter the full bridge dispatcher");
-assert.match(sidepanel, /const envelope = wrapped \? message\.envelope : message;[\s\S]*?bridgeExecutorDispatch\(envelope, \{ executor_epoch: state\.bridgeExecutorEpoch \}\)/, "direct and routed Port envelopes both enter the full dispatcher, never a handler");
+assert.match(sidepanel, /const envelope = wrapped \? message\.envelope : message;[\s\S]*?bridgeExecutorDispatch\(envelope, \{ executor_epoch: state\.bridgeExecutorEpoch, workspace \}\)/, "direct and routed Port envelopes both enter the full dispatcher, never a handler");
 assert.match(sidepanel, /port\.onDisconnect\.addListener[\s\S]*?setTimeout\(\(\) => connectBridgeExecutor\(\), 1000\)/, "an open panel reconnects its executor Port after a worker restart");
 
 const proposalHandler = sidepanel.slice(sidepanel.indexOf("async function bridgeQueuePropose"), sidepanel.indexOf("async function bridgeProposalGet"));

@@ -13,7 +13,7 @@ assert.ok(manifest.permissions.includes("alarms"));
 assert.ok(manifest.host_permissions.includes("http://127.0.0.1/*"));
 assert.equal(manifest.permissions.includes("debugger"), false);
 assert.equal(manifest.host_permissions.some((value) => value.includes("<all_urls>") || value.includes("0.0.0.0")), false);
-assert.match(background, /^importScripts\("bridge-core\.js", "bridge-pairing-core\.js", "bridge-router-core\.js", "bridge-transport-loopback\.js"\);/);
+assert.match(background, /^importScripts\("bridge-core\.js", "bridge-pairing-core\.js", "bridge-router-core\.js", "bridge-workspace-core\.js", "bridge-transport-loopback\.js"\);/);
 assert.match(transport, /KEEPALIVE_MS = 20000/);
 assert.match(transport, /periodInMinutes: 0\.5/);
 assert.match(transport, /type: "auth", role: "extension", token: pairing\.token/);

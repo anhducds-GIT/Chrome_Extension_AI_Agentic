@@ -30,13 +30,15 @@ const between = (from, to) => {
 // --- the binding exists -------------------------------------------------
 assert.match(sidepanel, /boundTabId: null,/, "the bound tab is run state, not a local");
 assert.match(sidepanel, /boundTabUrl: "",/);
-assert.match(sidepanel, /async function bindRunTab\(\)/);
+// bindRunTab accepts an optional preferred tab (a workspace call binds the
+// run to the WORKSPACE's tab); with no argument the behavior is unchanged.
+assert.match(sidepanel, /async function bindRunTab\(preferredTab = null\)/);
 assert.match(sidepanel, /function releaseRunTab\(\)/);
 
 // --- binding is chosen ONCE ---------------------------------------------
-const bind = between("async function bindRunTab()", "function releaseRunTab()");
+const bind = between("async function bindRunTab(preferredTab = null)", "function releaseRunTab()");
 assert.match(bind, /if \(state\.boundTabId !== null\) return state\.boundTabId;/, "binding is idempotent, so a second caller cannot re-pick the tab");
-assert.match(bind, /pickActiveChatGPTTab\(\)/);
+assert.match(bind, /preferredTab \|\| await pickActiveChatGPTTab\(\)/, "the front tab is only the fallback when no workspace tab was named");
 
 // --- once bound, the tab is resolved by ID and never re-picked ----------
 const resolve = between("async function activeTab()", "async function send(message)");
@@ -89,9 +91,9 @@ assert.ok(
   runStart.indexOf("await bindRunTab();") < runStart.indexOf("await authoritativeValidate("),
   "run() binds before it validates"
 );
-const trial = between("async function bridgeRunTrial(params)", "async function bridgeRunStop()");
+const trial = between("async function bridgeRunTrial(params, call)", "async function bridgeRunStop()");
 assert.ok(
-  trial.indexOf("await bindRunTab();") > 0 && trial.indexOf("await bindRunTab();") < trial.indexOf("await authoritativeValidate()"),
+  trial.indexOf("await bindRunTab(await resolveWorkspaceTab(call));") > 0 && trial.indexOf("await bindRunTab(await resolveWorkspaceTab(call));") < trial.indexOf("await authoritativeValidate()"),
   "the bridge trial binds before it validates too -- it reaches the page before run() is ever called"
 );
 
@@ -99,7 +101,7 @@ assert.ok(
 // A binding that outlived its run would pin the NEXT run to a stale tab.
 assert.ok((sidepanel.match(/releaseRunTab\(\);/g) || []).length >= 4, "release is wired on the failure, empty-queue, trial-rejected and normal-completion paths");
 assert.match(sidepanel, /state\.running = false; state\.stopRequested = false; releaseRunTab\(\);/, "the normal end-of-run cleanup releases the tab");
-const trialTail = between("async function bridgeRunTrial(params)", "async function bridgeRunStop()");
+const trialTail = between("async function bridgeRunTrial(params, call)", "async function bridgeRunStop()");
 assert.match(trialTail, /if \(!accepted\) \{[\s\S]*releaseRunTab\(\);/, "a rejected trial does not leave a tab bound");
 
 console.log("bound tab static checks: PASS");
