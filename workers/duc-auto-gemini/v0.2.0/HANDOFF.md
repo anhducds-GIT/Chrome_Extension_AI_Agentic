@@ -650,3 +650,30 @@ Nội dung kỹ thuật không đổi một chữ — chỉ đổi cách viết.
   đổi sang đệm ký tự điều khiển đúng repro của Codex, giờ S1/S2 ĐỎ thật. Suite 85/85.
   Ghi chú trung thực: THỨ TỰ chặn-trước-quét không ghim được bằng outcome test (mutation đổi
   thứ tự cho cùng kết quả) — điểm này dựa trên xác nhận tĩnh của audit vòng 2.
+
+---
+
+## Log — 2026-09-03, `claude-dashboard` · README+AGENTS của gói này là bản chép từ gói ChatGPT
+
+**Vì sao tới đây:** bảng trạng thái hiện **chữ sai tên extension** cho Đức đọc. Truy ra `README.md` mở đầu bằng "# Duc Auto ChatGPT V0.3" và mô tả ChatGPT. 27 dòng README ghi "ChatGPT" trong khi gói này chạy trên `gemini.google.com`. `AGENTS.md` — **file AI đọc đầu tiên mỗi phiên** — cũng mang tiêu đề "Duc Auto ChatGPT".
+
+**Cách sửa: từng chỗ một, mỗi chỗ một bằng chứng.** Không find-replace. Tên ← `manifest.json` · tên miền ← `content.js` + `sidepanel.js` · tên script ← `scripts/` · đường dẫn pairing ← đọc thẳng dòng 25–26 của chính script cài.
+
+**Chỗ nặng nhất:** README ghi `output_folder` mặc định là `Duc Auto ChatGPT`, còn mã nguồn ghi `Duc Auto Gemini` (đo 4 chỗ). Đức đọc README rồi đi tìm thư mục tải về là **tìm sai chỗ**.
+
+**Ba chỗ tôi TƯỞNG sai nhưng ĐÚNG, giữ nguyên:** `templates/Duc-Auto-ChatGPT-Template.xlsx` và `pilot-04/Duc-Auto-ChatGPT-Pilot-04.xlsx` **có thật** trong gói này; hai khối prompt `#01`/`#02` cuối `AGENTS.md` là **bản ghi lịch sử** của dự án ChatGPT. Find-replace mù sẽ làm sai chính ba câu đang đúng — đã dán nhãn tại chỗ thay vì sửa.
+
+**PHÁT HIỆN NGOÀI DỰ TÍNH, và nó là cái đáng giá nhất của phiên này.** Sửa tài liệu làm ĐỎ `tests/bridge-migration-closure-smoke.mjs`: test đó ghim README phải nhắc `Uninstall-DucAutoChatGPTLoopbackBridgeV1`. Trước khi sửa test, đo hai script:
+
+| Script | Cổng | Gốc cài |
+|---|---|---|
+| `Install-DucAutoGeminiBridgeV1.ps1` | **32148** | `C:\WORKING ZONE\Chrome Extension Bridge\duc-auto-gemini` |
+| `Install-DucAutoChatGPTLoopbackBridgeV1.ps1` | **32147** | `%LOCALAPPDATA%\DucAutoChatGPT\BridgeV1` |
+
+Gói ChatGPT **thật** cũng dùng 32147. Nên bản ChatGPT nằm trong gói này là **đồ thừa lúc fork**, và chạy nó là **đâm cổng** với Bridge của gói ChatGPT. Triệu chứng sẽ là "nối mãi không được", không phải một lỗi rõ ràng.
+
+Nên test đang ghim **tên cũ đã sai**, không phải tôi làm hỏng nó. Sửa test theo hướng **mạnh hơn**, không nới: giữ nguyên ý đồ (README phải khai lệnh xoá), đổi tên script cho đúng gói, **và thêm một khẳng định mới** — README gói này KHÔNG được chỉ Đức chạy script của gói ChatGPT. Bản cũ chỉ đòi README nhắc một tên script nào đó, nên nó vẫn xanh khi README dẫn Đức chạy đúng cái script gây đâm cổng. Đột biến: trả README về tên cũ → bắt được.
+
+**Còn mở:** `G-12` soát nốt README từ mục cài đặt trở xuống · `G-13` xoá hai script ChatGPT thừa trong `scripts/` — **cần Đức chốt**, luật gốc không cho xoá file khi chưa hỏi. Sổ nợ gói này 11 → 13.
+
+**Suite gói này:** 85 passed, 0 failed sau khi sửa (trước đó 84/1).
