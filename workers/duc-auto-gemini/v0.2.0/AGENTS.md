@@ -1,4 +1,7 @@
-# AGENTS — Duc Auto ChatGPT
+# AGENTS — Duc Auto Gemini (Platform)
+
+> **SỬA 03/09.** File này từng mang tiêu đề "Duc Auto ChatGPT" — nó là bản chép từ gói ChatGPT lúc fork, và **đây là file AI đọc ĐẦU TIÊN mỗi phiên**, nên một AI mở ra có thể tưởng mình đang làm trên ChatGPT. Đã sửa những chỗ có bằng chứng.
+> Hai khối prompt `#01` / `#02` ở cuối file **cố ý giữ nguyên chữ "ChatGPT"**: đó là prompt onboarding đã dùng thật của dự án ChatGPT, tức bản ghi lịch sử. Sửa chúng là viết lại lịch sử. **Đừng đọc chúng như luật của gói này.**
 
 CORE của project này. Đọc file này cùng `README.md` (đóng vai design_brief —
 project là gì, kiến trúc, phạm vi) và `HANDOFF.md` (trạng thái, việc tiếp
@@ -25,7 +28,7 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
    `pilot-06/`, `pilot-06B/`.** Đây là bằng chứng vận hành (evidence) của các
    lỗi đã tìm ra và đã sửa — ghi đè lên là xoá mất bằng chứng.
 2. **Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.**
-   Đây là yêu cầu bảo mật — nội dung ảnh/text từ chatgpt.com đi vào side panel
+   Đây là yêu cầu bảo mật — nội dung ảnh/text từ gemini.google.com đi vào side panel
    có quyền cao, phải build DOM node, không được ghép chuỗi HTML.
    `tests/artifact-integrity-smoke.mjs` chặn build nếu có.
 3. **Không làm yếu bất kỳ cơ chế bảo vệ nào đã có:** exact-once submission,
@@ -143,13 +146,13 @@ CODE PACKAGE: duc-auto-chatgpt-v0
 
 SCOPE LOCK:
 - Chrome Manifest V3 personal extension
-- local-only Text Batch Automation on chatgpt.com
+- local-only Text Batch Automation on gemini.google.com
 - no separate login
 - no backend/server
 - no extension quota
 - no image/file automation
 - no multi-tab concurrency
-- no bypass of ChatGPT/account limits
+- no bypass of Gemini/account limits
 - clean-room implementation; do not copy proprietary extension source
 
 TASK:
@@ -182,7 +185,7 @@ AUDIT TARGET:
 - content.js
 
 V0 CONTRACT:
-Sequential text prompts only. Side Panel -> content script -> ChatGPT DOM -> wait for completion -> next prompt.
+Sequential text prompts only. Side Panel -> content script -> Gemini DOM -> wait for completion -> next prompt.
 No server, no login, no quota logic, no image/file automation, no concurrency, no paywall/rate-limit bypass.
 
 AUDIT:

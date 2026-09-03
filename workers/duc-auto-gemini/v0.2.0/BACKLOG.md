@@ -130,6 +130,26 @@ này, ghi lại để không quên.
 
 ---
 
+## P2 — Dọn nợ fork (mở 03/09)
+
+### G-12 · Soát nốt README từ mục cài đặt trở xuống — **[ĐỌC]**
+
+`README.md` và `AGENTS.md` của gói này là **bản chép nguyên từ gói ChatGPT** lúc fork. Ngày 03/09 phiên `claude-dashboard` sửa những chỗ **có bằng chứng**: tên lấy từ `manifest.json`, tên miền từ mã nguồn, tên script từ `scripts/`, đường dẫn pairing đọc thẳng trong script cài.
+
+Chỗ nặng nhất đã sửa: README ghi thư mục tải về mặc định là `Duc Auto ChatGPT`, còn mã nguồn ghi `Duc Auto Gemini` (đo 4 chỗ) — Đức đọc README là đi tìm sai chỗ.
+
+**Còn nợ:** phần README từ mục cài đặt trở xuống chưa soát từng dòng.
+
+**Một cái bẫy, ghi lại để phiên sau đừng mắc:** ĐỪNG find-replace `ChatGPT` thành `Gemini`. Gói này **thật sự chứa** `templates/Duc-Auto-ChatGPT-Template.xlsx` và `pilot-04/Duc-Auto-ChatGPT-Pilot-04.xlsx` — tên file đúng là vậy, thay là làm sai một câu đang đúng. Hai khối prompt `#01` / `#02` ở cuối `AGENTS.md` cũng cố ý giữ: đó là bản ghi lịch sử của dự án ChatGPT, sửa là viết lại lịch sử. Đã dán nhãn tại chỗ.
+
+### G-13 · Hai script Bridge của ChatGPT còn nằm trong `scripts/` — **[ĐO]**
+
+`scripts/` của gói này có **cả hai bộ**: `Install-DucAutoGeminiBridgeV1.ps1` + `Uninstall-DucAutoGeminiBridgeV1.ps1` (bộ đúng), và `Install-DucAutoChatGPTLoopbackBridgeV1.ps1` + `Uninstall-DucAutoChatGPTLoopbackBridgeV1.ps1` (đồ thừa lúc fork).
+
+Rủi ro thật: hai script cài vào **hai thư mục khác nhau**, nên chạy nhầm là dựng Bridge ở chỗ extension không tìm tới. Triệu chứng sẽ là "nối mãi không được" chứ không phải một lỗi rõ ràng. README nay đã trỏ đúng bộ Gemini, nhưng file kia vẫn nằm đó và vẫn chạy được.
+
+**Cần Đức chốt trước khi xoá** — luật gốc: không xoá file khi chưa hỏi.
+
 ## Đã đóng
 
 ### G-11 · Đo live bản trần 5 giây — **ĐÓNG 28/08** ✅
