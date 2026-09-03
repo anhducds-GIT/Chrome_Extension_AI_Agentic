@@ -35,11 +35,11 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-03T18:46",
-      "task": "Sua lai luat tra khoa: cong doi dung ten vung co commit chua push",
-      "released_at": "2026-09-03T18:54",
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
+      "claimed_at": "2026-09-03T23:55",
+      "task": "Viet brief ROLE-DRIFT-01 de giao executor",
+      "released_at": null,
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -53,5 +53,5 @@
       "taken_by_duc_decision": "2026-09-04 (lan hai)"
     }
   },
-  "_fingerprint": "404c202d518edc6f"
+  "_fingerprint": "adb10b1cdb20d4dc"
 }
