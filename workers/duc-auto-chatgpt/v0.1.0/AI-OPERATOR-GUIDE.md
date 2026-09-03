@@ -109,3 +109,24 @@ Port từ nhánh gg-flow-video (thiết kế: `drafts/BRIDGE-MULTIPROFILE-DESIGN
 4. `TARGET_NOT_CONNECTED` (retryable) = đích đang offline (service worker ngủ); đợi ~30s gọi lại, đừng đổi đích.
 5. `legacy: true` = profile đó còn chạy bản extension CŨ trong RAM — nhờ Đức reload extension ở profile đó rồi đặt tên.
 6. Đổi tên hồ sơ: gõ vào ô rồi bấm **Lưu tên** (hoặc click ra ngoài ô) — panel lưu và tự nối lại đúng socket của profile đó (đi trọn bắt tay challenge), tên hiện trên `bridge.sessions` NGAY, không đụng host, không đụng profile khác.
+
+## Nhiều PHIÊN LÀM VIỆC có tên trong MỘT profile — từ 2026-09-03 (ADR-0046)
+
+Một profile mở nhiều tab ChatGPT: Đức gắn tên từng tab trong side panel (tab BRIDGE, khối
+**"Phiên làm việc theo tab"**, tối đa 3). Mỗi phiên là MỘT ghế riêng trên `bridge.sessions`
+(instance_id = mã phiên, label = tên phiên) — gọi bằng `--target <tên phiên>` y hệt gọi một
+profile. Host không phân biệt phiên với profile, nên mọi luật ở mục trên áp dụng nguyên xi.
+
+Khác biệt duy nhất phải biết khi vận hành:
+
+1. **Method chạm tab đi theo ĐÚNG tab của phiên**: `dom_probe`, `system.ping`, `chat.reload`,
+   `run.trial` gọi qua `--target <tên phiên>` tác động lên tab của phiên đó — KHÔNG phải tab
+   đang mở trước mặt. Gọi không `--target` (hoặc target = tên hồ sơ) thì như cũ (tab active).
+2. **Tab đóng / rời ChatGPT → ghế của phiên tự ngắt** → `TARGET_NOT_CONNECTED`. Tên không bao
+   giờ trôi sang tab khác. Mở lại trang là ghế tự nối lại (cùng tên, cùng mã).
+3. **Vẫn chỉ MỘT run tại một thời điểm** cho cả profile: `run.trial` qua phiên thứ hai khi
+   đang có run sẽ bị `RUN_ACTIVE` — đúng luật, đừng coi là lỗi. Ba phiên đọc/probe song song
+   thoải mái.
+4. Tên phiên trùng tên hồ sơ hay trùng nhau → host trả `TARGET_AMBIGUOUS` như mọi khi; panel
+   đã chặn trùng trong cùng profile, nhưng hai profile khác nhau vẫn có thể đặt trùng — đặt
+   tên có tiền tố cho dễ (ví dụ `kaito-kichban`).

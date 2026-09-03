@@ -5,14 +5,14 @@ name: Duc Auto ChatGPT
 lifecycle: active
 owner: claude
 priority_rank: 2
-next_step: "Duc reload extension o TUNG profile ChatGPT + dien o Ten ho so Chrome nay (tab BRIDGE); AI goi bridge.sessions kiem ten. No cu van con: audit doc lap goi khoang-nghi-giua-job (kenh auditmin da chung minh song 02/09)"
-human_action: "Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích, rồi điền tên hồ sơ vào ô trong bảng điều khiển."
+next_step: "Đức reload extension ở từng profile ChatGPT, đặt tên hồ sơ, rồi thử khối Phiên làm việc theo tab (tối đa 3) — gắn tên 2–3 tab và gọi bridge.sessions kiểm tên. Nợ cũ vẫn còn: audit độc lập gói khoảng-nghỉ-giữa-job"
+human_action: "Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích; muốn chạy nhiều luồng song song thì mở tab BRIDGE, gõ tên và bấm Gắn tab đang mở cho từng tab."
 version_source: workers/duc-auto-chatgpt/v0.1.0/manifest.json
 last_verified: 2026-08-26
 last_verified_commit: 00d1f99b44bd490cac079da5e803917346571a26
 last_verified_how: "Pilot-14 live 3/3 job ảnh tham chiếu đầu-cuối + xác minh live idempotency 5/5 phép đo"
 evidence_ref: workers/duc-auto-chatgpt/v0.1.0/Pilot-14_RefFeatureTest/evidence/idempotency-fix-live-proof.md
-current_focus: "Multi-profile Bridge đã PORT xong 02/09 (bắt tay auth_challenge/auth_proof GIỮ NGUYÊN, instance gắn vào auth cuối): suite 96/96, 10/10 mutation đỏ, host mới deploy + chạy trên 32147, thấy 1 kết nối legacy — chờ tay Đức reload extension + đặt tên. Việc cũ vẫn mở: B-14…B-21, audit độc lập gói khoảng-nghỉ-giữa-job"
+current_focus: "Phiên làm việc theo tab (ADR-0046, Đức duyệt 03/09): một profile gắn tên tối đa 3 tab ChatGPT, mỗi tab một ghế riêng trên Bridge, gọi bằng --target; method chạm tab đi đúng tab của phiên; tab đóng là ghế tự ngắt; vẫn một run một lúc. Suite 101/101, 13/13 mutation đỏ. Việc cũ vẫn mở: B-14…B-21, audit độc lập gói khoảng-nghỉ-giữa-job"
 ref_readme: workers/duc-auto-chatgpt/v0.1.0/README.md
 ref_handoff: workers/duc-auto-chatgpt/v0.1.0/HANDOFF.md
 ref_backlog: workers/duc-auto-chatgpt/v0.1.0/BACKLOG.md

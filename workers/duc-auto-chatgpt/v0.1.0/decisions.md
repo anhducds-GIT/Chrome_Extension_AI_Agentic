@@ -81,6 +81,7 @@ từ `0046`. **Đừng thêm dòng vào file này nữa** — nó là mục lụ
 | [0043](docs/adr/0043-supersedes-dong-chinh-sach-don-checkpoint.md) | SUPERSEDES dòng "Chính sách dọn checkpoint | Đức | 2026-08-28 |
 | [0044](docs/adr/0044-quick-prompt-mac-dinh-la-reasoning-bang-text-khong.md) | Quick Prompt mặc định là "Reasoning bằng text", KHÔNG phải "Tạo ảnh" | Đức | 2026-08-28 |
 | [0045](docs/adr/0045-cau-tra-loi-text-dai-qua-32-767-ky-tu-thi-dung-va.md) | Câu trả lời text dài quá 32.767 ký tự thì DỪNG và KHÔNG lưu gì cả | Đức | 2026-08-28 |
+| [0046](docs/adr/0046-nhieu-phien-lam-viec-co-ten-trong-mot-profile-huong-a.md) | Nhiều phiên làm việc có tên trong một profile: hướng A, trần 3, cả hai chiều, ChatGPT trước | Đức | 2026-09-03 |
 
 ## 2026-09-02 — Port multi-profile Bridge (Đức chỉ thị trong chat)
 

@@ -4,11 +4,18 @@ status: active
 ttl_days: 180
 ---
 
-# Nhiều phiên làm việc có tên trong MỘT profile Chrome — thiết kế V1, chờ Đức duyệt
+# Nhiều phiên làm việc có tên trong MỘT profile Chrome — thiết kế V1 (ĐÃ DUYỆT 03/09)
 
 > Đức yêu cầu 02/09: "làm tiếp tính năng có nhiều ID trong 1 chrome profile để có thể
 > gọi tên nhiều phiên làm việc song song trên cùng 1 tài khoản chrome."
-> Đây là Phase 1 (thiết kế). Code chỉ bắt đầu sau khi Đức duyệt mục "Cần Đức duyệt".
+>
+> **Đức trả lời 4 câu ngày 03/09** — bản ghi chính thức:
+> `workers/duc-auto-chatgpt/v0.1.0/docs/adr/0046-…`: (1) duyệt **hướng A**, tên có hiệu
+> lực NGAY khi lưu, không reset gì; (2) **ChatGPT trước**, Gemini/Flow chưa làm vội —
+> debug xong mới migrate; (3) **trần 3** phiên song song; (4) làm **cả hai chiều**,
+> "tương tác y hệt hiện tại, chỉ thêm ID tách 3 nhánh" — không chia hai bước phê duyệt.
+> Bước 1 đã thành code: commit `54160a2` (ghế workspace + method chạm tab bind theo
+> phiên; khoá một-run-một-lúc giữ nguyên).
 
 ## Câu hỏi
 
@@ -88,5 +95,8 @@ brief + test ghim + audit như nếp cũ.
 
 ## Việc tiếp theo
 
-Đức trả lời 4 câu ở mục "Cần Đức duyệt" — rồi phiên kế claim `workers/duc-auto-chatgpt`
-làm bước A1.
+~~Đức trả lời 4 câu ở mục "Cần Đức duyệt"~~ — **đã trả lời 03/09, xem đầu file.**
+Bước 1 đã ship (`54160a2`). Việc còn lại của hướng này: thiết kế + brief riêng cho
+**N run đồng thời** (tách hàng đợi / run-state / ledger theo phiên — phần đụng
+exact-once thật sự; "cả hai chiều" đã được duyệt nhưng miếng này vẫn cần brief + test
+ghim + audit như nếp cũ trước khi code).
