@@ -134,7 +134,7 @@ GPT 35 file `.js` · Gemini 33.
 | `bridge-transport-loopback.js` | 946 | 516 | 430 |
 | `bridge-core.js` | 980 | 799 | 181 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
-| `background.js` | 276 | 167 | 109 |
+| `background.js` | 293 | 167 | 126 |
 | `runner-core.js` | 289 | 203 | 86 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
 | `content.js` | 1157 | 1079 | 78 |

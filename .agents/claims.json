@@ -23,11 +23,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T00:15",
-      "task": "Vai dieu phoi: khoi PROMPTS.md + khai bao AGENTS.md + mien IDEAS.md khi chi them dong (Duc chot 04/09)",
-      "released_at": "2026-09-03T18:38",
+      "owner": "claude-dashboard",
+      "ai": "Claude",
+      "claimed_at": "2026-09-03T18:47",
+      "task": "Doi chieu FEATURE-PARITY sau khi chat.read len HEAD",
+      "released_at": null,
       "taken_from": "claude-k2-vaLoi",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -50,5 +50,5 @@
       "taken_by_duc_decision": "2026-09-04 (lan hai)"
     }
   },
-  "_fingerprint": "ffa080d47eeb8d7a"
+  "_fingerprint": "015406ae8768317a"
 }
