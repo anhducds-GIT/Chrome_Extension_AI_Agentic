@@ -23,26 +23,32 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-k2-vaLoi",
+      "owner": "claude-dieu-phoi",
       "ai": "Claude",
-      "claimed_at": "2026-09-03T12:16",
-      "task": "Ghi mot dong luat: thieu nhan Lane thi safe-push cung tu choi",
-      "released_at": null
+      "claimed_at": "2026-09-04T00:15",
+      "task": "Vai dieu phoi: khoi PROMPTS.md + khai bao AGENTS.md + mien IDEAS.md khi chi them dong (Duc chot 04/09)",
+      "released_at": null,
+      "taken_from": "claude-k2-vaLoi",
+      "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": "claude-gpt-kenh",
+      "owner": "claude-dieu-phoi",
       "ai": "Claude",
-      "claimed_at": "2026-09-03T10:56",
-      "task": "Ghi ho so kenh CC<->GPT + cau hoi cua gui cho Duc",
-      "released_at": null
+      "claimed_at": "2026-09-04T00:15",
+      "task": "Vai dieu phoi: docs/protocols/ORCHESTRATOR.md (Duc chot 04/09, gianh tu claude-gpt-kenh)",
+      "released_at": null,
+      "taken_from": "claude-gpt-kenh",
+      "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": "claude-k2-vaLoi",
+      "owner": "claude-dashboard",
       "ai": "Claude",
-      "claimed_at": "2026-09-03T12:16",
-      "task": "Va 3 loi audit GPT vong 5: safe-push thieu nhan Lane, suite package khong qua quyTrachNhiemSuite, git read fail-open",
-      "released_at": null
+      "claimed_at": "2026-09-04T01:05",
+      "task": "Va 4 loi GPT audit trong build-overview.mjs + 3 phep kiem yeu (Duc chot 04/09)",
+      "released_at": null,
+      "taken_from": "claude-dieu-phoi",
+      "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "656635dcc84fbd72"
+  "_fingerprint": "a1614337f0356321"
 }

@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { buildOverview, debtByUnit, humanWork, IDEA_STAGES, isDone, readBrief, readDecisions, readFeatures, readIdeas, shorten, sinhTrang, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { buildOverview, debtByUnit, humanWork, IDEA_STAGES, isDone, readBrief, readDecisions, readFeatures, readAreas, readIdeas, readRefreshLine, shorten, sinhTrang, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -105,8 +105,15 @@ const ideasDeps = (text) => ({
   const khoiMap = full.slice(iMap, jMap);
   const body = full.slice(0, iMap) + full.slice(jMap);
 
-  // Fixture phải dựng được ca hỏng: nếu khối map rỗng thì hai khẳng định dưới đều vô nghĩa.
-  assert.ok(khoiMap.length > 400, "khoi ban do phai co noi dung that, khong phai the rong");
+  /* Fixture phải dựng được ca hỏng: khối map rỗng thì hai khẳng định dưới đều vô nghĩa.
+     Bản cũ đo bằng `khoiMap.length > 400` — một ngưỡng byte, GPT audit chỉ đúng: 400 byte
+     chỉ nói "có chữ", không nói "có đủ thư mục". Đếm theo QUAN HỆ với nguồn: bản đồ phải có
+     đúng một dòng cho mỗi vùng khai trong bảng phân vùng. Rơi một thư mục là đỏ ngay. */
+  const soVung = readAreas(createDefaultDeps(ROOT)).length;
+  const soDong = [...khoiMap.matchAll(/<div class="tr">/g)].length;
+  assert.ok(soVung > 0, "phai doc duoc bang phan vung — 0 la bo doc hong");
+  assert.equal(soDong, soVung,
+    `ban do phai co dung mot dong cho moi vung: ${soVung} vung, dang ve ${soDong} dong`);
 
   for (const [pattern, why] of [
     [/workers\//, "duong dan thu muc"],
@@ -134,20 +141,56 @@ const ideasDeps = (text) => ({
   ok("BAT BIEN tren repo that: bang khong lo duong dan / ten file / ma commit");
 }
 
-/* ---- 5. Cờ cũ bật theo ngày, không theo cảm giác ---- */
+/* ---- 5. MỐC HEAD HỎNG PHẢI NÉM, tuyệt đối không lùi về giờ đồng hồ.
+ *
+ * Chỗ này thay cho phép kiểm cũ về "cờ cũ bật theo ngày". Phép kiểm cũ ĐÃ BỊ XOÁ, và xoá có
+ * lý do — không phải để cho suite dễ thở:
+ *
+ *   Cờ `stale` chỉ bật khi `ageDays > 7`. Nhưng cả HAI đường trong `main()` đều đi qua
+ *   `sinhTrang`, mà hàm đó luôn truyền `today: "head"`, nên `ageDays` LUÔN bằng 0. Cờ đó chưa
+ *   từng bật một lần nào trong bất kỳ lượt sinh thật. Bốn phép kiểm xanh cho một nhánh không
+ *   ai chạm tới được — và cái giá không phải là bốn dòng code, mà là người đọc sau tin rằng
+ *   "bảng tự báo cũ" trong khi việc đó do đoạn JS lúc mở trang làm.
+ *
+ * Đổi lấy phép kiểm này, ghim đúng cái nguy hiểm thật: `Date.parse(headDate) || Date.now()`.
+ * Cái `||` đó là fail-OPEN. Mốc HEAD hỏng thì bản commit lặng lẽ nhìn đồng hồ, sang ngày là
+ * lệch HEAD, và `safe-push` chặn ĐẨY VIỆC CỦA MỌI PHIÊN dù không dữ liệu nào đổi.
+ *
+ * Fixture phải dựng được ca hỏng: bốn dạng mốc hỏng, và phải chứng minh mốc TỐT vẫn chạy —
+ * không có nửa sau thì "cái gì cũng ném" cũng xanh. */
 {
   const deps = createDefaultDeps(ROOT);
-  const fresh = buildOverview(deps, { today: Date.parse("2026-09-02T12:00:00Z") });
-  const old = buildOverview(deps, { today: Date.parse("2026-10-02T12:00:00Z") });
-  assert.equal(fresh.stats.stale, false, "moi sinh thi khong bat co");
-  assert.equal(old.stats.stale, true, "qua 7 ngay thi PHAI bat co");
-  // Tim THE duoc ve ra, khong tim ten class — ten class luon co trong CSS nen phep kiem ban
-  // dau do do va chinh no bao lam. Do la mot phep kiem GIA neu khong sua.
-  const BANNER = '<div class="stalebanner">';
-  assert.ok(!fresh.html.includes(BANNER), "khong cu thi khong ve banner");
-  assert.ok(old.html.includes(BANNER), "cu thi PHAI ve banner do");
-  assert.ok(old.html.includes(String(old.stats.ageDays)), "banner phai noi ro cu bao nhieu ngay");
-  ok("co cu bat theo ngay do duoc, va banner noi ro so ngay");
+  const tot = buildOverview(deps, { today: "head" });
+  assert.match(tot.stats.stamp, /^\d{4}-\d{2}-\d{2}$/, "moc HEAD that phai chay duoc, khong nem");
+
+  for (const hong of ["", "khong-phai-ngay", null, undefined]) {
+    const depsHong = { ...deps, git: { ...deps.git, headDate: () => hong } };
+    let nem = null;
+    try { buildOverview(depsHong, { today: "head" }); } catch (e) { nem = e; }
+    assert.ok(nem, `moc HEAD = ${JSON.stringify(hong)} PHAI nem, khong duoc lui ve Date.now()`);
+    assert.match(nem.message, /MOC_HEAD_HONG/, "loi phai noi ro ten nguyen nhan");
+  }
+  ok("moc HEAD hong thi NEM (4 dang), moc tot van chay — het cua fail-open");
+}
+
+/* ---- 5b. Câu "làm mới bảng" phải ĐỌC từ PROMPTS.md, không được gõ cứng.
+ *
+ * Bản cũ gõ cứng "sinh lại rồi ĐĂNG LẠI ARTIFACT". Rồi bảng vào repo, PROMPTS.md sửa theo,
+ * chuỗi trong bộ sinh thì không — nên trang bảo AI làm một đằng, sổ prompt bảo một nẻo.
+ * Chép là tạo bản thứ hai, và bản thứ hai luôn lệch. */
+{
+  const deps = createDefaultDeps(ROOT);
+  const cau = readRefreshLine(deps);
+  assert.ok(cau.length > 10, "cau lam moi phai doc ra duoc noi dung that");
+  assert.ok(buildOverview(deps, { today: "head" }).html.includes(cau),
+    "cau doc tu PROMPTS.md PHAI la cau in ra tren trang");
+
+  // Ca hỏng: PROMPTS.md mất mục 2 thì phải NÉM, không được âm thầm dùng câu dự phòng —
+  // câu dự phòng âm thầm chính là con đường đã đi vào lỗi trên.
+  const mat = { ...deps, readFile: (f) => f === "PROMPTS.md" ? "# rong" : deps.readFile(f) };
+  assert.throws(() => readRefreshLine(mat), /THIEU_CAU_LAM_MOI/,
+    "mat muc 2 thi phai nem, khong duoc lang le dung cau go cung");
+  ok("cau lam moi doc tu PROMPTS.md, va mat nguon thi nem chu khong doan");
 }
 
 /* ---- 6. Y-03 · VIỆC CHỜ TAY ĐỨC — ba trạng thái phải phân biệt được.
@@ -242,14 +285,12 @@ const ideasDeps = (text) => ({
   // ĐÚNG ca đó; đặt giờ sớm hơn 12:00 thì phép kiểm xanh cả khi lỗi còn nguyên.
   const { html, stats } = buildOverview(deps, { today: Date.parse(headDate + "T20:00:00Z") });
   assert.equal(stats.ageDays, 0, "sinh trong ngay thi tuoi phai la 0, khong phai 1");
-  assert.equal(stats.stale, false, "0 ngay thi khong duoc bat co do");
   assert.match(html, /hôm nay/, "bang phai in hom nay");
 
   // Và vẫn phải đếm đúng khi thật sự đã cũ — nếu không thì phép kiểm trên là do luôn trả 0.
   const cu = buildOverview(deps, { today: Date.parse(headDate + "T20:00:00Z") + 8 * 86400000 });
   assert.equal(cu.stats.ageDays, 8, "qua 8 ngay thi phai dem ra 8");
-  assert.equal(cu.stats.stale, true, "qua 7 ngay thi PHAI bat co do");
-  ok("tuoi bang: 0 ngay trong ngay sinh, 8 ngay thi bat co do");
+  ok("tuoi bang: 0 ngay trong ngay sinh, 8 ngay thi dem ra 8");
 }
 
 /* ---- 10. TAB — mỗi link ở bảng tổng phải có đích thật ---- */
@@ -275,9 +316,27 @@ const ideasDeps = (text) => ({
   assert.equal(an, tabs.length - 1,
     `moi khung TRU MOT phai co hidden: co ${tabs.length} tab thi phai ${tabs.length - 1} khung an, dang co ${an}`);
   // LINK CHẾT LÀ LỖI ÂM THẦM: Đức bấm, không có gì xảy ra, và không ai biết.
-  const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
+  /* ID TRÙNG là lỗi VÔ HÌNH với bản trước của chính phép kiểm này: nó nhồi id vào `Set` rồi
+     mới hỏi "đích có tồn tại", và `Set` ăn mất trùng lặp. Nên hai thẻ cùng
+     `id="ext-duc-auto-gemini"` vẫn xanh, trong khi Đức bấm "Gemini (Platform)" ở bảng tổng thì
+     trình duyệt nhảy vào thẻ ĐẦU TIÊN — bản v0.1.0 đã nghỉ.
+
+     Đo 04/09: `r.id` duy nhất 4/5, `r.key` duy nhất 5/5. GPT audit chỉ ra, chỗ này ghim lại.
+     Kiểm trên DANH SÁCH, trước khi nhồi vào Set — không thì lại tự bịt mắt mình lần nữa. */
+  const idList = [...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
+  const trung = idList.filter((v, i) => idList.indexOf(v) !== i);
+  assert.deepEqual(trung, [], `id trong trang PHAI duy nhat — dang trung: ${trung.join(" ")}`);
+
+  const ids = new Set(idList);
   const links = [...html.matchAll(/href="#([^"]+)" data-goto="([a-z-]+)"/g)];
-  assert.ok(links.length >= 5, "bang tong phai co link sang chi tiet");
+
+  /* GHIM QUAN HỆ chứ không ghim ngưỡng. Bản cũ viết `links.length >= 5` — một con số hiện
+     trạng: nó KHÔNG đỏ khi một đơn vị bị rơi khỏi bảng tổng, mà rơi đúng là cái đáng sợ —
+     Đức mở bảng, không thấy extension đó, và tưởng nó không tồn tại. */
+  const soDonVi = collectModelRows(createDefaultDeps(ROOT)).length;
+  const soYTuong = readIdeas(createDefaultDeps(ROOT)).length;
+  assert.equal(links.length, soDonVi + soYTuong,
+    `bang tong phai co dung MOT link cho moi don vi va moi y tuong: ${soDonVi}+${soYTuong}, dang co ${links.length}`);
   for (const [, target, goto] of links) {
     assert.ok(ids.has(target), `link "#${target}" khong co dich tren trang — bam vao khong co gi xay ra`);
     assert.ok(panes.includes(goto), `link tro sang tab "${goto}" khong ton tai`);
@@ -352,7 +411,12 @@ const ideasDeps = (text) => ({
 {
   const real = createDefaultDeps(ROOT);
   const d = readDecisions(real, 6);
-  assert.ok(d.total > 100, "repo nay phai co tren 100 quyet dinh");
+  /* Bản cũ viết `d.total > 100` — ngưỡng hiện trạng, GPT audit chỉ đúng. Nó không nói gì về
+     cơ chế: sắp xếp lại thư mục quyết định thì nó đỏ oan, còn bộ đọc hỏng hoàn toàn thì nó
+     vẫn xanh miễn còn hơn 100 file. Cái PHẢI đúng là quan hệ giữa tổng và danh sách hiển thị. */
+  assert.ok(d.total > 0, "phai dem duoc quyet dinh — 0 la bo doc hong, khong phai repo trong");
+  assert.ok(d.top.length > 0, "phai lay ra duoc quyet dinh gan nhat de hien tren bang");
+  assert.ok(d.total >= d.top.length, "tong khong the nho hon so dong dang hien");
   assert.equal(d.top.length, 6, "lay dung so luong xin");
   // Tên lấy từ tên file là slug không dấu — Đức đọc không hiểu. Phải đọc tiêu đề trong file.
   assert.ok(d.top.some((x) => /[àáãạăâêôơưđýếệốồớủịùũọ]/i.test(x.name)),
@@ -402,7 +466,10 @@ const ideasDeps = (text) => ({
 
   // Báo cũ không mất đi: nó do JS trong trang tự tính lúc MỞ, từ mốc ngày nhúng sẵn.
   assert.match(a, /data-sinh="[0-9]{4}-[0-9]{2}-[0-9]{2}"/, "trang phai nhung moc ngay de JS tinh tuoi luc xem");
-  assert.match(a, /nay > b[.]dataset[.]sinh/, "va phai co doan JS so ngay xem voi ngay sinh");
+  /* Ghim CƠ CHẾ: trang phải có đoạn JS ĐỌC mốc ngày đã nhúng. Bản cũ ghim nguyên văn
+     `nay > b.dataset.sinh` — viết lại đoạn đó cho gọn hơn là đỏ oan dù hành vi y nguyên.
+     GPT audit chỉ đúng chỗ này. */
+  assert.match(a, /dataset[.]sinh/, "trang phai co doan JS DOC moc ngay da nhung de tinh tuoi luc xem");
 
   assert.equal(TRANG_FILE, "DASHBOARD.html", "ten ban chuan cua repo");
   ok("ban commit TAT DINH: doi dong ho 99 ngay khong doi mot byte, bao cu do JS tinh luc mo");

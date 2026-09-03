@@ -422,8 +422,6 @@ p{margin:0}
   text-transform:uppercase;color:var(--ink);margin-bottom:11px}
 .stampbar{display:flex;justify-content:space-between;align-items:center;gap:12px;
   flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em}
-.stalebanner{background:var(--off-bg);border:1px solid var(--off);border-radius:10px;
-  padding:11px 15px;color:var(--off);font-weight:600;font-size:14px}
 .cu{display:none;background:var(--off-bg);border:1px solid var(--off);border-radius:10px;
   padding:11px 15px;color:var(--off);font-weight:600;font-size:14px}
 .cu[data-hien="1"]{display:block}
@@ -582,12 +580,41 @@ const chip = (stage) => `<span class="chip s${stage}">${esc(STAGES[stage])}</spa
 const slug = (s) => String(s ?? "").toLowerCase()
   .replace(/[^a-z0-9]+/g, "-").replace(/^-+/, "").replace(/-+$/, "") || "x";
 
+/* MỘT nơi duy nhất dựng id của đơn vị. Link ở bảng tổng và đích ở tab chi tiết PHẢI bằng nhau,
+   nên chúng không được tự tính riêng — bản cũ tính ở hai chỗ, và hai chỗ thì sẽ có ngày lệch.
+
+   Khoá là `key`, KHÔNG phải `id`: `id` không duy nhất. Hai bản Gemini (v0.1.0 và v0.2.0) cùng
+   khai `id: duc-auto-gemini`, nên `slug(r.id)` sinh ra HAI thẻ cùng `id="ext-duc-auto-gemini"`.
+   Đức bấm "Gemini (Platform)" thì trình duyệt nhảy vào thẻ ĐẦU TIÊN — bản v0.1.0 đã nghỉ.
+   Đo 04/09: `key` duy nhất 5/5, `id` chỉ 4/5. GPT audit bắt được, phép kiểm cũ của tôi không:
+   nó hỏi "id có tồn tại" chứ không hỏi "id có duy nhất". */
+const unitId = (r) => `ext-${slug(r.key || r.id || r.name)}`;
+
 /* Một dòng trong bảng tổng: tên có link nhảy sang tab chi tiết và tự mở toggle ở đó. */
 const bigRow = (tab, id, name, stage, meta) =>
   `        <div class="br"><a href="#${esc(id)}" data-goto="${esc(tab)}">${esc(name)}</a>` +
   `${chip(stage)}<span class="meta">${esc(meta)}</span></div>`;
 
-const CAU_LAM_MOI = "Làm mới bảng trạng thái: sinh lại rồi đăng lại artifact.";
+/* ĐỌC LẠI câu từ `PROMPTS.md`, không chép nó lần thứ hai.
+ *
+ * Bản cũ gõ cứng "sinh lại rồi ĐĂNG LẠI ARTIFACT" — đúng vào lúc bảng chỉ sống trên claude.ai.
+ * Rồi 03/09 `DASHBOARD.html` vào repo, `PROMPTS.md` được sửa theo, còn chuỗi ở đây thì không.
+ * Kết quả: trang bảo AI làm một đằng, sổ prompt bảo một nẻo, và trang là thứ AI đọc trước.
+ * GPT audit bắt được 04/09.
+ *
+ * Chép là tạo bản thứ hai, và bản thứ hai luôn lệch. Nên đọc. Không tìm thấy thì NÉM — không
+ * có câu dự phòng, vì một câu dự phòng âm thầm chính là con đường vừa đi vào lỗi này. */
+export function readRefreshLine(deps) {
+  const text = deps.readFile("PROMPTS.md");
+  const m = /^##\s+2\..*$([\s\S]*?)^```/m.exec(text);
+  const block = m && /^```text\r?\n([^\r\n]+)/m.exec(text.slice(m.index));
+  if (!block) {
+    throw new Error("THIEU_CAU_LAM_MOI: PROMPTS.md không còn mục \"## 2.\" kèm khối ```text. "
+      + "Câu làm mới bảng phải đọc được từ đó, không được gõ cứng ở đây — gõ cứng là hai bản, "
+      + "và hai bản thì sẽ lệch (đã lệch một lần 03/09).");
+  }
+  return block[1].trim();
+}
 
 export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = Date.now() } = {}) {
   const model = collectModel(deps, { tolerant: true });
@@ -600,6 +627,7 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const areas = readAreas(deps);
   const rootFiles = readRootFiles(deps);
   const openWhen = readOpenWhen(deps);
+  const CAU_LAM_MOI = readRefreshLine(deps);
 
   const supersededCount = model.rows.filter((r) => r.lifecycle === "superseded").length;
   const decisionCount = decisions.total;
@@ -608,13 +636,35 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
      nửa đêm UTC rồi làm tròn — sinh bảng sau trưa là ra "1 ngày trước" NGAY TRONG NGÀY SINH. */
   // `today: "head"` = suy mốc từ chính HEAD, để bản commit không nhìn đồng hồ. Xem ghi chú
   // dài ở `sinhTrang`: nội dung phụ thuộc giờ đồng hồ sẽ chặn push của MỌI phiên khi sang ngày.
-  const nowMs = today === "head"
-    ? (Date.parse(`${model.headDate}T00:00:00Z`) || Date.now())
-    : today;
+  /* FAIL-CLOSED, không fail-open. Bản đầu viết `Date.parse(...) || Date.now()`, và cái `||` đó
+     là một cửa hậu mở thẳng vào đúng tai nạn mà cả đoạn ghi chú trên vừa cảnh báo: mốc HEAD
+     hỏng thì bản commit lặng lẽ quay lại nhìn đồng hồ, sang ngày là lệch HEAD, và `safe-push`
+     chặn MỌI phiên dù không dữ liệu nào đổi. Người bị chặn sẽ không hiểu vì sao.
+
+     Ném lỗi thì bộ sinh chết ngay tại chỗ, kèm tên nguyên nhân. Chết sớm và nói rõ tốt hơn
+     xanh giả rồi làm tê cả repo vào hôm sau. GPT audit bắt được chỗ này 04/09. */
+  let nowMs;
+  if (today === "head") {
+    nowMs = Date.parse(`${model.headDate}T00:00:00Z`);
+    if (!Number.isFinite(nowMs)) {
+      throw new Error(`MOC_HEAD_HONG: không đọc được ngày của HEAD (${JSON.stringify(model.headDate)}). `
+        + "Bản commit PHẢI suy mốc từ HEAD, không được lùi về giờ đồng hồ — lùi là sang ngày "
+        + "mai mọi phiên bị chặn push. Kiểm lại git log của HEAD.");
+    }
+  } else {
+    nowMs = today;
+  }
   const todayStamp = new Date(nowMs).toISOString().slice(0, 10);
   const stamp = model.headDate || todayStamp;
   const ageDays = Math.max(0, Math.round((Date.parse(todayStamp) - Date.parse(stamp)) / 86400000));
-  const stale = ageDays > 7;
+
+  /* KHÔNG có cờ "cũ" tính lúc sinh nữa — đã xoá 04/09, và nó là code chết chứ không phải bảo vệ.
+     Cả HAI đường trong `main()` (ghi vào repo, và ghi ra file tạm) đều đi qua `sinhTrang`, mà
+     hàm đó luôn truyền `today: "head"` → `ageDays` LUÔN bằng 0 → cờ luôn tắt. Dải đỏ ở bộ sinh
+     chưa từng hiện ra một lần nào, nhưng có 4 phép kiểm xanh cho nó, nên nó trông như đang bảo
+     vệ một thứ. Đó là loại xanh giả tệ nhất: nó làm người sau tin rằng bảng tự báo cũ.
+     Việc báo cũ do đoạn JS cuối trang làm, tính lúc Đức MỞ trang — đúng chỗ, vì trang tĩnh
+     không biết trước bao giờ có người mở. GPT audit 04/09 chỉ ra chỗ này. */
 
   const { actions: humanActions, undeclared: humanUndeclared } = humanWork(model.rows);
 
@@ -647,13 +697,10 @@ ${STYLE}
 
 <div class="wrap">
   <div class="stampbar">
-    <span>Sinh ngày ${esc(stamp)}${stale ? "" : ` · ${ageDays === 0 ? "hôm nay" : ageDays + " ngày trước"}`}</span>
+    <span>Sinh ngày ${esc(stamp)} · ${ageDays === 0 ? "hôm nay" : ageDays + " ngày trước"}</span>
     <span>Nguồn sự thật nằm trong repo</span>
   </div>
   <div class="cu" id="cu" data-sinh="${esc(stamp)}"></div>`);
-  if (stale) {
-    p.push(`  <div class="stalebanner">Bảng này sinh cách đây ${ageDays} ngày — có thể đã cũ. Sinh lại trước khi tin con số.</div>`);
-  }
   p.push(`
   <h1>${esc(title)}</h1>
 
@@ -692,7 +739,7 @@ ${STYLE}
       <div class="big">`);
   for (const r of model.rows) {
     const n = debtOf.get(r.name);
-    p.push(bigRow("extension", `ext-${slug(r.id || r.name)}`, r.name, stageOf(r),
+    p.push(bigRow("extension", unitId(r), r.name, stageOf(r),
       n === undefined ? "extension" : `${n} việc nợ`));
   }
   for (const idea of ideas) {
@@ -735,7 +782,7 @@ ${STYLE}
     const n = debtOf.get(r.name);
     const twoBranch = /chatgpt|gemini/i.test(r.id || r.name);
     const duc = String(r.humanAction ?? "").trim();
-    p.push(`      <details class="the" id="ext-${slug(r.id || r.name)}">
+    p.push(`      <details class="the" id="${unitId(r)}">
         <summary>
           <span><span class="nm">${esc(r.name)}</span><span class="sub">${esc(brief.text || "Mô tả chưa khai được — " + brief.why)}</span></span>
           ${chip(stageOf(r))}
@@ -816,7 +863,7 @@ ${STYLE}
         <summary><span><span class="nm">Câu để dán cho AI</span><span class="sub">cách nhanh nhất, không cần mở terminal</span></span></summary>
         <div class="in"><pre class="cmd">${esc(CAU_LAM_MOI)}</pre></div>
       </details>
-      <p class="note">Bản ra <strong>không commit</strong> vào repo, có chủ đích: nó sinh ra để đăng cho Đức xem, và chạy lại là ra y hệt. Lệnh chạy nằm trong repo — bảng cố ý không in đường dẫn nào, vì phép kiểm bất biến cấm.</p>
+      <p class="note">Bảng <strong>được commit vào repo</strong>, có chủ đích: nhờ vậy bất kỳ AI nào cũng sinh lại rồi commit được, không phải nhờ riêng một AI đăng hộ. Cổng đóng phiên so bảng đã commit với trạng thái repo mỗi phiên, nên bảng <strong>không thể âm thầm cũ</strong>. Nội dung bảng suy hoàn toàn từ lần commit gần nhất, không nhìn giờ đồng hồ — nếu nó nhìn đồng hồ thì sang ngày là mọi phiên bị chặn đẩy việc lên dù không dữ liệu nào đổi.</p>
     </div>
 
     <div class="card">
@@ -990,7 +1037,7 @@ ${STYLE}
     html: p.join(NL),
     stats: {
       ideas: ideas.length, extensions: model.rows.length, debt: debtTotal,
-      decisions: decisionCount, superseded: supersededCount, stamp, ageDays, stale
+      decisions: decisionCount, superseded: supersededCount, stamp, ageDays
     }
   };
 }
