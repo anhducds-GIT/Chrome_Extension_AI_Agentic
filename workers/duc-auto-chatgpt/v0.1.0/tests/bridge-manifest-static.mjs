@@ -16,7 +16,10 @@ assert.equal(manifest.host_permissions.some((value) => value.includes("<all_urls
 assert.match(background, /^importScripts\("bridge-core\.js", "bridge-pairing-core\.js", "bridge-router-core\.js", "bridge-workspace-core\.js", "bridge-transport-loopback\.js"\);/);
 assert.match(transport, /KEEPALIVE_MS = 20000/);
 assert.match(transport, /periodInMinutes: 0\.5/);
-assert.match(transport, /type: "auth", role: "extension", token: pairing\.token/);
+// The token in the auth frame comes from the pairing FROZEN at proof time —
+// never the live global, which a mid-handshake pairing swap could have
+// replaced with a token this host never proved (audit 03/09, HIGH).
+assert.match(transport, /type: "auth", role: "extension", token: pairingAtProof\.token/);
 assert.doesNotMatch(transport, /new WebSocketApi\([^\n]*token|protocols?:[^\n]*token/i, "token is absent from URL and subprotocol");
 assert.match(sidepanel, /DacBridgePairingCore\.parse\(await file\.text\(\)\)/);
 assert.match(sidepanel, /DAC_BRIDGE_RPC_RESPONSE/);

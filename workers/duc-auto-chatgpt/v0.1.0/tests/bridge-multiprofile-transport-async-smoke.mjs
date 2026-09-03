@@ -101,11 +101,16 @@ await handshakeUpToProof(third);
 // ownership already moved to the replacement, but the old handle is forced to
 // look OPEN again — so only socket-identity, not readiness, can block the send.
 second.readyState = FakeWebSocket.OPEN;
+// Identity reads are SERIALIZED since the workspace-seat work (audit 03/09,
+// MED: two first-run reads racing the create-if-missing write could mint two
+// different profile ids). So the third socket's read is only ISSUED once the
+// second's resolves: release them one at a time instead of shifting both.
+assert.equal(gates.length, 1, "the serialized identity queue holds exactly one pending read");
 const gateSecond = gates.shift();
-const gateThird = gates.shift();
 gateSecond();
 await tick();
 assert.equal(second.sent.some((frame) => frame.type === "auth"), false, "the replaced socket never receives the auth frame");
+const gateThird = gates.shift();
 gateThird();
 await tick();
 const auth = third.sent.find((frame) => frame.type === "auth");

@@ -42,6 +42,9 @@
   // A hostile or corrupted store must never crash the transport or smuggle a
   // seat past the cap: anything invalid is dropped, duplicates keep the FIRST
   // record (the one that was there before the conflicting write).
+  // tab_id may be null: a named workspace whose binding was voided (Chrome
+  // restarted, so the stored tab id may name a stranger's tab now) keeps its
+  // name and identity but connects to nothing until the owner re-attaches.
   function normalizeStore(raw) {
     const workspaces = [];
     const seenIds = new Set();
@@ -53,13 +56,13 @@
       if (!candidate || typeof candidate !== "object") continue;
       const workspaceId = typeof candidate.workspace_id === "string" ? candidate.workspace_id : "";
       const name = sanitizeWorkspaceName(candidate.name);
-      const tabId = candidate.tab_id;
-      if (!WORKSPACE_ID_PATTERN.test(workspaceId) || !name || !validTabId(tabId)) continue;
+      const tabId = candidate.tab_id === null ? null : candidate.tab_id;
+      if (!WORKSPACE_ID_PATTERN.test(workspaceId) || !name || (tabId !== null && !validTabId(tabId))) continue;
       const nameKey = name.toLowerCase();
-      if (seenIds.has(workspaceId) || seenNames.has(nameKey) || seenTabs.has(tabId)) continue;
+      if (seenIds.has(workspaceId) || seenNames.has(nameKey) || (tabId !== null && seenTabs.has(tabId))) continue;
       seenIds.add(workspaceId);
       seenNames.add(nameKey);
-      seenTabs.add(tabId);
+      if (tabId !== null) seenTabs.add(tabId);
       workspaces.push({
         workspace_id: workspaceId,
         name,
@@ -85,7 +88,7 @@
       if (index === existingIndex) continue;
       const other = base.workspaces[index];
       if (other.name.toLowerCase() === nameKey) throw workspaceError("WORKSPACE_NAME_TAKEN", `Tên '${name}' đã có phiên khác dùng trong hồ sơ này.`);
-      if (other.tab_id === input.tab_id) throw workspaceError("WORKSPACE_TAB_TAKEN", `Tab này đã thuộc phiên '${other.name}'. Một tab chỉ thuộc một phiên.`);
+      if (other.tab_id !== null && other.tab_id === input.tab_id) throw workspaceError("WORKSPACE_TAB_TAKEN", `Tab này đã thuộc phiên '${other.name}'. Một tab chỉ thuộc một phiên.`);
     }
     if (existingIndex < 0 && base.workspaces.length >= MAX_WORKSPACES) {
       throw workspaceError("WORKSPACE_LIMIT", `Tối đa ${MAX_WORKSPACES} phiên làm việc song song trong một hồ sơ (Đức chốt 2026-09-03). Gỡ một phiên trước khi thêm.`);
@@ -122,6 +125,12 @@
   function deriveInstance(profileInstance, workspace) {
     if (!profileInstance || typeof profileInstance !== "object") return null;
     if (!workspace || !WORKSPACE_ID_PATTERN.test(String(workspace.workspace_id || ""))) return null;
+    // A workspace_id equal to the profile's own instance_id (reachable only
+    // through a hostile/corrupted store — honest ids are UUIDs minted here)
+    // would collide on the host, which keys seats by instance_id: the two
+    // sockets would evict each other and targeting would oscillate. No
+    // identity, no seat (audit 03/09, HIGH).
+    if (String(workspace.workspace_id) === String(profileInstance.instance_id)) return null;
     const label = sanitizeWorkspaceName(workspace.name);
     if (!label) return null;
     return {

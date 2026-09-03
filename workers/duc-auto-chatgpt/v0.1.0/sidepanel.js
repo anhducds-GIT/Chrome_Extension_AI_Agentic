@@ -486,8 +486,10 @@
       const name = document.createElement("strong");
       name.textContent = seat.name;
       const detail = document.createElement("span");
-      const stateLabel = seat.tab_alive === false ? "tab đã đóng" : WORKSPACE_STATE_LABELS[seat.state] || seat.state;
-      detail.textContent = ` — tab ${seat.tab_id} · ${stateLabel} `;
+      const stateLabel = seat.tab_id === null
+        ? "chưa gắn lại sau khi mở Chrome — gõ đúng tên này rồi bấm Gắn tab đang mở"
+        : seat.tab_alive === false ? "tab đã đóng" : WORKSPACE_STATE_LABELS[seat.state] || seat.state;
+      detail.textContent = seat.tab_id === null ? ` — ${stateLabel} ` : ` — tab ${seat.tab_id} · ${stateLabel} `;
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
       removeBtn.className = "secondary small";
@@ -510,7 +512,16 @@
     const name = String(els.bridgeWorkspaceNameInput?.value || "").trim();
     if (!name) throw new Error("Gõ tên phiên trước khi gắn tab.");
     const tab = await pickActiveChatGPTTab();
-    const response = await chrome.runtime.sendMessage({ type: "DAC_BRIDGE_WORKSPACE_UPSERT", name, tab_id: tab.id });
+    // Gõ đúng tên một phiên đã có = GẮN LẠI phiên đó vào tab đang mở (đường
+    // phục hồi sau khi Chrome khởi động lại, khi mọi tab_id cũ đã bị vô hiệu).
+    let workspaceId;
+    try {
+      const listed = await chrome.runtime.sendMessage({ type: "DAC_BRIDGE_WORKSPACES_GET" });
+      workspaceId = listed?.ok
+        ? listed.seats.find((seat) => seat.name.toLowerCase() === name.toLowerCase())?.workspace_id
+        : undefined;
+    } catch (_) { workspaceId = undefined; }
+    const response = await chrome.runtime.sendMessage({ type: "DAC_BRIDGE_WORKSPACE_UPSERT", workspace_id: workspaceId, name, tab_id: tab.id });
     if (!response?.ok) {
       renderBridgeWorkspaces(response?.seats);
       throw new Error(response?.error || `Không gắn được phiên (${response?.code || "WORKSPACE_UPSERT_FAILED"}).`);

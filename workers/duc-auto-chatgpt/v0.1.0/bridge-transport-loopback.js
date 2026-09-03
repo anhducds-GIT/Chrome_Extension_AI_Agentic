@@ -19,6 +19,10 @@
   // never authentication; the challenge handshake is untouched.
   const INSTANCE_STORAGE_KEY = "dac.bridge.instance.v1";
   const INSTANCE_LABEL_STORAGE_KEY = "dac.bridge.instance_label.v1";
+  // Lives in chrome.storage.session: present = same browser session as the
+  // last workspace load, absent = Chrome restarted and every stored tab_id is
+  // potentially someone else's tab now.
+  const WORKSPACE_SESSION_MARK_KEY = "dac.bridge.workspaces.session_mark.v1";
   const INSTANCE_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
   const INSTANCE_LABEL_STRIP = new RegExp("[\\u0000-\\u001f\\u007f-\\u009f]", "g");
   const WORKER_ID = "duc-auto-chatgpt";
@@ -192,7 +196,23 @@
       return raw.replace(INSTANCE_LABEL_STRIP, "").trim().slice(0, 64).replace(/(?:[\uD800-\uDBFF](?![\uDC00-\uDFFF]))|(?:(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])/g, "");
     }
 
-    async function loadInstance() {
+    // Identity reads are SERIALIZED: several seats authenticate concurrently
+    // now, and two first-run reads racing the create-if-missing write would
+    // mint two different profile ids — one announced, the other persisted, so
+    // the profile's routing identity would silently change on its next
+    // reconnect (audit 03/09, MED). One at a time, same cure as pairing edits.
+    let instanceWork = Promise.resolve();
+    function queueInstanceWork(work) {
+      const run = instanceWork.then(work, work);
+      instanceWork = run.then(() => {}, () => {});
+      return run;
+    }
+
+    function loadInstance() {
+      return queueInstanceWork(loadInstanceNow);
+    }
+
+    async function loadInstanceNow() {
       const stored = await chromeApi.storage.local.get([INSTANCE_STORAGE_KEY, INSTANCE_LABEL_STORAGE_KEY]);
       let record = stored?.[INSTANCE_STORAGE_KEY];
       if (!record || typeof record !== "object" || typeof record.instance_id !== "string" || !INSTANCE_ID_PATTERN.test(record.instance_id)) {
@@ -213,6 +233,7 @@
     }
 
     async function workspaceTabUsable(tabId) {
+      if (tabId === null || tabId === undefined) return false;
       const tabsApi = chromeApi.tabs;
       if (!workspaceCore || !tabsApi || typeof tabsApi.get !== "function") return false;
       try {
@@ -402,7 +423,14 @@
         }
         if (socket !== targetSocket) return;
         if (!authenticated && message?.type === "auth_proof" && typeof message.proof === "string" && handshakeNonce && !hostProofVerified && !tokenSent) {
-          const verified = await verifyHostProof(pairing.token, handshakeNonce, message.proof);
+          // The pairing this proof is judged against is FROZEN here. If the
+          // owner swaps pairing mid-verification, the handler below must not
+          // read the fresh global and hand the NEW token to a host that only
+          // ever proved knowledge of the OLD one (audit 03/09, HIGH). Primary
+          // defense is the synchronous seat close in the pairing handlers;
+          // this epoch pin is the belt-and-braces for any future await path.
+          const pairingAtProof = pairing;
+          const verified = await verifyHostProof(pairingAtProof.token, handshakeNonce, message.proof);
           if (socket !== targetSocket || !verified) {
             abandonSocket(targetSocket, 1008, "Host authentication failed.");
             return;
@@ -421,11 +449,15 @@
             .then((base) => (isProfile ? base : workspaceCore.deriveInstance(base, workspaceRecord)))
             .catch(() => null);
           if (socket !== targetSocket || targetSocket.readyState !== WebSocketApi.OPEN) return;
+          if (pairing !== pairingAtProof) {
+            abandonSocket(targetSocket, 1008, "Pairing changed during authentication.");
+            return;
+          }
           if (!isProfile && !instance) {
             abandonSocket(targetSocket, 1008, "Workspace identity unavailable.");
             return;
           }
-          const auth = { type: "auth", role: "extension", token: pairing.token };
+          const auth = { type: "auth", role: "extension", token: pairingAtProof.token };
           if (instance) auth.instance = instance;
           targetSocket.send(JSON.stringify(auth));
           authSent = true;
@@ -610,7 +642,29 @@
     async function loadWorkspacesNow() {
       if (!workspaceCore) return;
       const stored = await chromeApi.storage.local.get(workspaceCore.STORAGE_KEY);
-      await reconcileWorkspaces(stored?.[workspaceCore.STORAGE_KEY] || { schema_version: 1, workspaces: [] });
+      let store = workspaceCore.normalizeStore(stored?.[workspaceCore.STORAGE_KEY] || { schema_version: 1, workspaces: [] });
+      // Chrome tab ids are unique only WITHIN one browser session: after a
+      // restart, an unrelated tab can inherit a stored id and a stale binding
+      // would hand a workspace's name to a stranger's page (audit 03/09,
+      // HIGH). chrome.storage.session survives service-worker restarts but
+      // not browser restarts, so a missing mark means a fresh browser session:
+      // keep the names, void the tab bindings, let the owner re-attach with
+      // one click. Harness note: MV3 guarantees storage.session; when a test
+      // harness omits it, bindings are trusted as-is.
+      const sessionApi = chromeApi.storage.session;
+      if (sessionApi && typeof sessionApi.get === "function") {
+        let freshBrowserSession = false;
+        try {
+          const mark = await sessionApi.get(WORKSPACE_SESSION_MARK_KEY);
+          freshBrowserSession = !mark?.[WORKSPACE_SESSION_MARK_KEY];
+          if (freshBrowserSession) await sessionApi.set({ [WORKSPACE_SESSION_MARK_KEY]: new Date().toISOString() });
+        } catch (_) { freshBrowserSession = false; }
+        if (freshBrowserSession && store.workspaces.some((entry) => entry.tab_id !== null)) {
+          store = { schema_version: 1, workspaces: store.workspaces.map((entry) => ({ ...entry, tab_id: null })) };
+          await persistWorkspaceStore(store);
+        }
+      }
+      await reconcileWorkspaces(store);
     }
 
     // Pairing changed out from under every seat: reconnect them all (or, with
@@ -646,7 +700,7 @@
       if (!candidate) {
         pairing = null;
         profileSeat.close();
-        queueWorkspaceWork(reconnectAllSeats);
+        for (const seat of workspaceSeats.values()) seat.close();
         return publishStatus("unpaired");
       }
       try {
@@ -654,7 +708,7 @@
       } catch (_) {
         pairing = null;
         profileSeat.close();
-        queueWorkspaceWork(reconnectAllSeats);
+        for (const seat of workspaceSeats.values()) seat.close();
         return publishStatus("pairing_invalid", "PAIRING_FILE_INVALID");
       }
       await profileSeat.connect();
@@ -701,6 +755,12 @@
           await chromeApi.storage.local.set({ [pairingCore.PAIRING_STORAGE_KEY]: validated });
           pairing = validated;
           profileSeat.close();
+          // Workspace seats close IN THIS SAME synchronous block as the
+          // pairing swap — never merely queued. A queued close leaves an old
+          // socket mid-handshake able to resume after the swap and leak the
+          // new token to a host that proved only the old one (audit 03/09,
+          // HIGH). The queued reconnect below then brings them back up.
+          for (const seat of workspaceSeats.values()) seat.close();
           await profileSeat.connect();
           queueWorkspaceWork(reconnectAllSeats);
           return safeStatus(profileSeat.currentState());
@@ -727,7 +787,9 @@
         queuePairingWork(async () => {
           pairing = null;
           profileSeat.close();
-          queueWorkspaceWork(reconnectAllSeats);
+          // Synchronous for the same reason as PAIRING_SET: no socket may
+          // outlive the pairing it authenticated under.
+          for (const seat of workspaceSeats.values()) seat.close();
           await chromeApi.storage.local.remove(pairingCore.PAIRING_STORAGE_KEY);
           return publishStatus("unpaired");
         }).then((status) => sendResponse({ ok: true, status })).catch(() => sendResponse({ ok: false, code: "PAIRING_REMOVE_FAILED" }));
@@ -791,6 +853,18 @@
       queueWorkspaceWork(async () => {
         for (const seat of workspaceSeats.values()) {
           if (seat.workspace()?.tab_id === tabId) seat.close();
+        }
+      });
+    });
+    // Chrome can swap a tab's id wholesale (prerender/Instant activation
+    // fires onReplaced, NOT onRemoved). The old id our record holds no longer
+    // names any tab, so the seat drops — the owner re-attaches with one click
+    // (audit 03/09, HIGH: without this the seat kept answering for a tab id
+    // that no longer exists).
+    chromeApi.tabs?.onReplaced?.addListener?.((addedTabId, removedTabId) => {
+      queueWorkspaceWork(async () => {
+        for (const seat of workspaceSeats.values()) {
+          if (seat.workspace()?.tab_id === removedTabId) seat.close();
         }
       });
     });
