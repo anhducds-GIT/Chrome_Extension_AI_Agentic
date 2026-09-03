@@ -23,32 +23,32 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T00:15",
       "task": "Vai dieu phoi: khoi PROMPTS.md + khai bao AGENTS.md + mien IDEAS.md khi chi them dong (Duc chot 04/09)",
-      "released_at": null,
+      "released_at": "2026-09-03T18:38",
       "taken_from": "claude-k2-vaLoi",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
-      "claimed_at": "2026-09-04T00:15",
-      "task": "Vai dieu phoi: docs/protocols/ORCHESTRATOR.md (Duc chot 04/09, gianh tu claude-gpt-kenh)",
-      "released_at": null,
+      "owner": null,
+      "ai": null,
+      "claimed_at": "2026-09-03T18:42",
+      "task": "Tach lop dieu phoi khoi lop thuc thi trong so tay, theo Duc chot 04/09",
+      "released_at": "2026-09-03T18:44",
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T00:40",
       "task": "Vai dieu phoi: what-next.mjs + test ghim + gom danh sach mien tru ve mot nguon",
-      "released_at": null,
+      "released_at": "2026-09-03T18:38",
       "taken_from": "claude-dashboard",
       "taken_by_duc_decision": "2026-09-04 (lan hai)"
     }
   },
-  "_fingerprint": "341267bf8821fa99"
+  "_fingerprint": "bb56f8ae5616afdd"
 }
