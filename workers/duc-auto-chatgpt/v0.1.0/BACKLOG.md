@@ -675,9 +675,36 @@ bức tường chặn đường sửa bug.** Đã viết lại thành bất bi�
 quyết định · phải còn đường nhường · KHÔNG được quay lại gác bằng `byExtensionId`), và dời phần
 kiểm KẾT QUẢ sang phép kiểm hành vi. Suite 103 → **104/104**, 8/8 mutation đỏ.
 
-**CHƯA nghiệm thu live.** Cần Đức reload extension một lần rồi chạy lại một mutation Bridge với
-đích ghi là Chrome Downloads (tức KHÔNG chọn thư mục). Đạt = file mang đúng tên
-`<base>__audit.jsonl`, không phải GUID. Đừng ghi là đã đóng trước lúc đó.
+**NGHIỆM THU LIVE 2026-09-04: BẢN VÁ KHÔNG GIỮ ĐƯỢC. VẪN HỎNG.** Đức reload, panel về trạng
+thái trống nên `jobs.add` tự mặc định về chế độ Chrome Downloads — đúng nhánh cần đo. Kết quả:
+
+```
+PERSISTENCE_FILENAME_MISMATCH: requested 'Bridge-2026-09-03T18-41__audit.jsonl'
+  but Chrome reported '16f87e2b-3d75-4a5d-9cee-884f1c7b732a'
+```
+
+Số file GUID trong Downloads: **36 → 37**. Nội dung file vẫn đúng (793 byte, `run_id`
+`20260903-1841-…`). Nên hai giả thuyết tôi mô hình hoá (byExtensionId trống · khoá URL lệch)
+**không phải nguyên nhân**, hoặc không phải nguyên nhân duy nhất.
+
+Bản vá vẫn giữ, vì nó bịt hai đường im lặng mất tên **thật có** trong mã và có 8/8 mutation
+ghim — nhưng nó **không** là bản vá cho B-36. Đừng đọc nó thành đã sửa.
+
+**Ba khả năng còn lại, và một phép đo đọc-thuần phân biệt được cả ba** (chạy trong console
+service worker, không tạo file mới, không tác dụng phụ):
+
+```js
+({ patched: typeof takeExpectedDownloadName,
+   tickets: [...expectedDownloadNames].map(([u, v]) => [u, v.filename]) })
+```
+
+| Kết quả | Nghĩa |
+|---|---|
+| `patched: "undefined"` | reload không nạp mã mới → phép đo live vừa rồi vô nghĩa, đo lại |
+| `patched: "function"`, `tickets: []` | phiếu ĐÃ bị tiêu → determiner có khớp, có đề xuất, **mà Chrome bỏ qua đề xuất**. Lớp lỗi hoàn toàn khác: nghi determiner của một extension khác (Gemini / Flow, cùng mã) thắng theo luật "extension cài sau thắng", hoặc Chrome không nhận đề xuất cho blob URL |
+| `patched: "function"`, `tickets` còn 1 dòng | determiner **chưa bao giờ khớp** → nó không được gọi cho download này |
+
+**Không vá tiếp trước khi có con số đó.** Vá mò lần nữa là thêm mã vào chỗ không hỏng.
 
 **Làm xong nghĩa là gì.** Một phép kiểm **hành vi** (không phải tĩnh) dựng nổi cả hai giả
 thuyết: fake `chrome.downloads` phát `onDeterminingFilename` với `byExtensionId` sai, và với
