@@ -240,12 +240,13 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         <div class="br"><a href="#ext-workers-duc-auto-gemini-v0-2-0" data-goto="extension">Duc Auto Gemini (Platform)</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">12 việc nợ</span></div>
         <div class="br"><a href="#ext-workers-duc-auto-gg-flow-video-v0-1-0" data-goto="extension">Duc Auto GG Flow Video</a><span class="chip s1">ĐANG XÂY</span><span class="meta">21 việc nợ</span></div>
         <div class="br"><a href="#y-y-01" data-goto="y-tuong">Y-01 · MVP: dùng Claude Code điều phối GPT</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
+        <div class="br"><a href="#y-y-06" data-goto="y-tuong">Y-06 · Luật nói &quot;dòng cuối&quot;, máy chỉ cần &quot;có mặt&quot;</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
         <div class="br"><a href="#y-y-02" data-goto="y-tuong">Y-02 · Protocol làm nhiều việc song song</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
         <div class="br"><a href="#y-y-03" data-goto="y-tuong">Y-03 · Trường &quot;Đức cần làm&quot; trong hồ sơ trạng thái</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
         <div class="br"><a href="#y-y-05" data-goto="y-tuong">Y-05 · Viết lại chữ trong hồ sơ cho mắt Đức đọc</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
         <div class="br"><a href="#y-y-04" data-goto="y-tuong">Y-04 · Bảng trạng thái sinh ngay trong repo</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">chưa ai nhận</span></div>
       </div>
-      <p class="note">5 extension và 5 ý tưởng. Chi tiết extension ở tab <strong>Extension</strong>, chi tiết ý tưởng ở tab <strong>Ý tưởng</strong>.</p>
+      <p class="note">5 extension và 6 ý tưởng. Chi tiết extension ở tab <strong>Extension</strong>, chi tiết ý tưởng ở tab <strong>Ý tưởng</strong>.</p>
     </div>
 
     <div class="card">
@@ -440,6 +441,42 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 <p>qua đâu (Đức dán tay, hay có kênh khác) · ③ đo thế nào là MVP đạt</p>
 <p>&gt; Tôi cố ý không tự bịa chi tiết cho ý tưởng này. Đức mới nêu một dòng, và ba câu trên là</p>
 <p>&gt; ba thứ quyết định nó là việc một ngày hay việc một tuần.</p></div>
+        </div>
+      </details>
+      <details class="the" id="y-y-06">
+        <summary>
+          <span><span class="nm">Y-06 · Luật nói &quot;dòng cuối&quot;, máy chỉ cần &quot;có mặt&quot;</span><span class="sub">cho bộ kiểm nhãn lane đòi đúng dòng cuối, kèm phép ghim dựng được ca hỏng:</span></span>
+          <span class="chip s0">Ý TƯỞNG</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>cho bộ kiểm nhãn lane đòi đúng dòng cuối, kèm phép ghim dựng được ca hỏng:</dd>
+            <dt>Ai đang làm</dt><dd>chưa ai nhận</dd>
+            <dt>Phạm vi</dt><dd>chưa khai</dd>
+            <dt>nguồn</dt><dd>bắt được 2026-09-04 khi phiên claude-dashboard tự vi phạm chính luật đó</dd>
+            <dt>phạm vi khi làm</dt><dd>bộ kiểm nhãn trong … + phép ghim của nó.</dd>
+            <dt>vì sao</dt><dd>luật mục 2 viết *&quot;MỌI commit phải có dòng cuối Lane: &lt;tên-phiên&gt;&quot;*, nhưng</dd>
+            <dt>và đây là chỗ đau thật</dt><dd>nhãn lane sinh ra để safe-push biết commit nào của ai. Công cụ</dd>
+          </dl>
+          <div class="prose"><p>một commit có Lane: ở giữa lời commit thì phải ĐỎ. Cần Đức chốt trước khi sửa — nhãn lane</p>
+<p>là luật attribution, thuộc nhóm phải hỏi</p>
+<p>Cấm sửa lịch sử commit cũ để làm đẹp — commit cũ nằm lẫn với commit của phiên khác,</p>
+<p>viết lại là viết lại việc của họ</p>
+<p>bộ kiểm chỉ tìm nhãn có mặt ở đâu đó. Nên một commit qua được cổng mà vẫn sai luật.</p>
+<p>Chuyện này không phải giả thuyết: ngày 04/09 tôi sửa lời commit để khai một việc, dán đoạn</p>
+<p>khai vào sau dòng Lane:, và nhãn thôi là dòng cuối. safe-push vẫn nhận; git thì</p>
+<p>không đọc ra nhãn nữa (%(trailers:key=Lane) trả rỗng).</p>
+<p>nào đọc nhãn bằng bộ phân tích trailer chuẩn của git sẽ không thấy commit đó thuộc về</p>
+<p>ai — tức đúng cái tình huống 26/08 mà nhãn được đặt ra để chặn: đoán sai chủ, rồi âm thầm</p>
+<p>cuốn việc người khác lên remote.</p>
+<li>hai bản sao của một luật thì sẽ lệch nhau. Luật ở … là chữ; luật ở bộ kiểm là</li>
+<p>mã. Chúng đã lệch. Vá bộ kiểm, đừng nới chữ.</p>
+<p>&gt; Quan sát về giành khoá không dừng được người đang làm KHÔNG ghi thành entry mới —</p>
+<p>&gt; nó thuộc [[Y-02]], vốn đã theo dõi &quot;push cuốn theo nhau&quot; và cuộc đua độ tươi artifact.</p>
+<p>&gt; Đức chốt 04/09: mở vòng thiết kế đó sau khi bảng trạng thái ổn định. Số đo để dành:</p>
+<p>&gt; khoá _code đổi chủ ba lần trong dưới một tiếng ngày 04/09, không lần nào bên bị lấy</p>
+<p>&gt; được thông báo, và lúc bị lấy vẫn có 6 file đang sửa dở của chủ cũ nằm trong thư mục.</p></div>
         </div>
       </details>
       <details class="the" id="y-y-02">
