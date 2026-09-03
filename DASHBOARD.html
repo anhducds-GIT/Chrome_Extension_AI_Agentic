@@ -1,0 +1,683 @@
+<title>Chrome_Extension_AI_Agentic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F1F4F2; --surface:#FFFFFF; --inset:#F6F8F7;
+  --ink:#141C19; --ink-2:#3D4A45; --muted:#67766F;
+  --line:#D8DFDB; --line-2:#C2CCC7;
+  --accent:#0E6A58; --good:#0E6A58; --good-bg:#DCEBE6;
+  --warn:#A9500B; --warn-bg:#F7E7D5;
+  --off:#7C2B33; --off-bg:#F7E4E5;
+  --shadow:0 1px 2px rgba(20,28,25,.05),0 6px 20px -12px rgba(20,28,25,.16);
+  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --disp:"Bricolage Grotesque","IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0E1312; --surface:#161D1B; --inset:#121917;
+  --ink:#E7EEEB; --ink-2:#B7C4BF; --muted:#8B9A94;
+  --line:#2A3532; --line-2:#3A4744;
+  --accent:#54C4A6; --good:#54C4A6; --good-bg:#123029;
+  --warn:#E0954A; --warn-bg:#3A2611;
+  --off:#E08A92; --off-bg:#3A1D21;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px -12px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --ground:#0E1312; --surface:#161D1B; --inset:#121917;
+  --ink:#E7EEEB; --ink-2:#B7C4BF; --muted:#8B9A94;
+  --line:#2A3532; --line-2:#3A4744;
+  --accent:#54C4A6; --good:#54C4A6; --good-bg:#123029;
+  --warn:#E0954A; --warn-bg:#3A2611;
+  --off:#E08A92; --off-bg:#3A1D21;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;
+  line-height:1.55;margin:0;padding:clamp(12px,2.2vw,26px);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:13px}
+h1{font-family:var(--disp);margin:0;letter-spacing:-.02em;text-wrap:balance;
+  font-size:clamp(22px,3.2vw,32px);font-weight:800;line-height:1.06}
+h2{font-family:var(--disp);font-size:17px;font-weight:800;margin:0 0 9px;letter-spacing:-.01em}
+p{margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:clamp(13px,1.8vw,19px);box-shadow:var(--shadow)}
+.sect{font-family:var(--disp);font-size:12.5px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink);margin-bottom:11px}
+.stampbar{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em}
+.stalebanner{background:var(--off-bg);border:1px solid var(--off);border-radius:10px;
+  padding:11px 15px;color:var(--off);font-weight:600;font-size:14px}
+.cu{display:none;background:var(--off-bg);border:1px solid var(--off);border-radius:10px;
+  padding:11px 15px;color:var(--off);font-weight:600;font-size:14px}
+.cu[data-hien="1"]{display:block}
+
+/* TAB — Đức nói trang cũ phải cuộn quá nhiều. Bảy tab, và mỗi tab lại dùng toggle bên trong,
+   nên mặc định trang chỉ cao bằng một màn hình. */
+.tabs{display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tab{font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--muted);
+  background:none;border:1px solid transparent;border-bottom:none;cursor:pointer;
+  padding:9px 14px;border-radius:9px 9px 0 0;margin-bottom:-1px}
+.tab:hover{color:var(--ink);background:var(--inset)}
+.tab[aria-selected="true"]{color:var(--accent);background:var(--surface);
+  border-color:var(--line);border-bottom-color:var(--surface)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[role="tabpanel"]{display:flex;flex-direction:column;gap:13px}
+
+.now{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:11px}
+@media (max-width:640px){.now{grid-template-columns:1fr}}
+.nb{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--inset);
+  display:flex;flex-direction:column;gap:5px;min-width:0}
+.nb.focus{border-left:3px solid var(--accent)}
+.nb.next{border-left:3px solid var(--warn)}
+.nb.duc{border-left:3px solid var(--off);background:var(--off-bg)}
+.nb .k{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.11em;text-transform:uppercase}
+.nb.focus .k{color:var(--accent)}
+.nb.next .k{color:var(--warn)}
+.nb.duc .k{color:var(--off)}
+.nb .t{font-family:var(--disp);font-size:15px;font-weight:600;line-height:1.3}
+.nb .s{font-size:13px;color:var(--muted);line-height:1.45}
+
+/* BẢNG TỔNG — mục 6 của Đức: một danh sách ngắn, có link nhảy sang tab chi tiết. */
+.big{display:flex;flex-direction:column}
+.br{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:baseline;
+  padding:9px 0;border-bottom:1px solid var(--line)}
+.br:last-child{border-bottom:none}
+@media (max-width:560px){.br{grid-template-columns:1fr auto}}
+.br a{color:var(--ink);font-weight:600;text-decoration:none;border-bottom:1px solid var(--line-2)}
+.br a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.chip{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.chip.s0{background:var(--inset);color:var(--muted)}
+.chip.s1{background:var(--warn-bg);color:var(--warn)}
+.chip.s2{background:var(--good-bg);color:var(--good)}
+.chip.s3{background:var(--off-bg);color:var(--off)}
+.meta{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.br .meta{white-space:nowrap}
+@media (max-width:560px){.br .meta{display:none}}
+
+.hgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.hc{background:var(--surface);padding:11px 13px;display:flex;flex-direction:column;gap:3px}
+.hc .n{font-family:var(--disp);font-size:23px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.hc .l{font-size:12px;color:var(--ink-2);line-height:1.3;font-weight:600}
+.hc .w{font-size:11.5px;color:var(--muted);line-height:1.35}
+.hc.zero .n{color:var(--good)}
+.hc.bad .n{color:var(--warn)}
+
+.bl{display:flex;flex-direction:column}
+.bi{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--line);align-items:baseline}
+.bi:last-child{border-bottom:none}
+.bi .c{font-family:var(--disp);font-size:18px;font-weight:800;color:var(--warn);
+  font-variant-numeric:tabular-nums;text-align:right}
+.bi .d{font-size:13.4px;color:var(--ink-2);line-height:1.4;min-width:0}
+.note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:9px}
+
+/* TOGGLE — mục 9 của Đức: đọc lướt được, mở ra mới thấy chi tiết. */
+details.the{border:1px solid var(--line);border-radius:10px;background:var(--inset);
+  padding:11px 14px}
+details.the + details.the{margin-top:9px}
+details.the > summary{cursor:pointer;list-style:none;display:grid;
+  grid-template-columns:1fr auto;gap:10px;align-items:baseline}
+details.the > summary::-webkit-details-marker{display:none}
+details.the > summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+details.the .nm{font-family:var(--disp);font-size:15px;font-weight:600;line-height:1.3;display:block}
+details.the .sub{font-size:12.5px;color:var(--muted);line-height:1.4;margin-top:2px;display:block}
+details.the .in{margin-top:11px;padding-top:11px;border-top:1px solid var(--line-2);
+  display:flex;flex-direction:column;gap:9px}
+.kv{display:grid;grid-template-columns:122px 1fr;gap:8px;font-size:13.2px;line-height:1.45;margin:0}
+@media (max-width:560px){.kv{grid-template-columns:1fr;gap:3px}}
+.kv dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);padding-top:3px}
+.kv dd{margin:0;color:var(--ink-2)}
+.kv dd.warn{color:var(--warn);font-weight:600}
+.prose{font-size:13.4px;color:var(--ink-2);line-height:1.55}
+.prose p{margin:0 0 6px}
+.prose ul{margin:4px 0;padding-left:19px}
+.prose li{margin:2px 0}
+
+.feat{display:flex;flex-direction:column;font-size:13px}
+.fr{display:grid;grid-template-columns:1fr 46px 46px;gap:6px;padding:5px 0;
+  border-bottom:1px solid var(--line);align-items:baseline}
+.fr:last-child{border-bottom:none}
+.fr .y{color:var(--good);font-weight:700;text-align:center}
+.fr .x{color:var(--off);font-weight:700;text-align:center}
+.fr .q{color:var(--muted);text-align:center}
+.fr.fh{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--line-2)}
+.fr.fh span{text-align:center}
+.fr.fh span:first-child{text-align:left}
+
+.railrow{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+.node{display:flex;flex-direction:column;align-items:center;gap:5px;position:relative}
+.node::before{content:"";position:absolute;top:5px;left:0;right:50%;height:1px;background:var(--line-2)}
+.node::after{content:"";position:absolute;top:5px;left:50%;right:0;height:1px;background:var(--line-2)}
+.node:first-child::before,.node:last-child::after{display:none}
+.node .dot{width:11px;height:11px;border-radius:50%;background:var(--surface);
+  border:2px solid var(--line-2);position:relative;z-index:1}
+.node .lbl{font-family:var(--mono);font-size:8.5px;font-weight:600;letter-spacing:.03em;
+  color:var(--muted);text-align:center;line-height:1.2}
+.node.past .dot{background:var(--line-2);border-color:var(--line-2)}
+.node.on .dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--good-bg)}
+.node.on .lbl{color:var(--accent)}
+
+pre.cmd{background:var(--inset);border:1px solid var(--line-2);border-radius:8px;
+  padding:11px 13px;margin:0;overflow-x:auto;font-family:var(--mono);font-size:12px;
+  line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.hint{background:var(--good-bg);border-left:3px solid var(--good);border-radius:8px;
+  padding:11px 14px;font-size:13.2px;color:var(--ink-2);line-height:1.5}
+footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
+</style>
+
+<div class="wrap">
+  <div class="stampbar">
+    <span>Sinh ngày 2026-09-03 · hôm nay</span>
+    <span>Nguồn sự thật nằm trong repo</span>
+  </div>
+  <div class="cu" id="cu" data-sinh="2026-09-03"></div>
+
+  <h1>Chrome_Extension_AI_Agentic</h1>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="tong-quan" aria-selected="true">Tổng quan</button>
+    <button class="tab" role="tab" data-tab="extension" aria-selected="false">Extension</button>
+    <button class="tab" role="tab" data-tab="y-tuong" aria-selected="false">Ý tưởng</button>
+    <button class="tab" role="tab" data-tab="van-hanh" aria-selected="false">Vận hành</button>
+    <button class="tab" role="tab" data-tab="suc-khoe" aria-selected="false">Sức khoẻ &amp; nợ</button>
+    <button class="tab" role="tab" data-tab="nhat-ky" aria-selected="false">Nhật ký</button>
+    <button class="tab" role="tab" data-tab="tra-cuu" aria-selected="false">Tra cứu</button>
+  </div>
+
+  <div role="tabpanel" data-pane="tong-quan">
+    <div class="card">
+      <div class="sect">Đang làm / Kế tiếp</div>
+      <div class="now">
+        <div class="nb focus">
+          <span class="k">Đang tập trung</span>
+          <span class="t">Duc Auto GG Flow Video</span>
+          <span class="s">F-15 XONG (cong chan chip x2+, 0 credit moi duong thoat). F-14 GIAI bang cong cu 0 credit moi…</span>
+        </div>
+        <div class="nb next">
+          <span class="k">Kế tiếp</span>
+          <span class="t">F-25 (vat can that cua chuoi dai: vong chay chet am tham)…</span>
+          <span class="s">Sau đó: Duc Auto ChatGPT — Pilot vận hành thật cho phiên-theo-tab (Đức duyệt rồi mới chạy):…</span>
+        </div>
+        <div class="nb duc">
+          <span class="k">Đức cần làm</span>
+          <span class="t">3 việc đang chờ</span>
+          <span class="s">Quyết định Extension Observer V0: nuôi tiếp hay cho nghỉ. Chỉ Đức chốt được.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sect">Toàn bộ việc lớn — bấm tên để xem chi tiết</div>
+      <div class="big">
+        <div class="br"><a href="#ext-extension-observer-v0" data-goto="extension">Extension Observer V0</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">extension</span></div>
+        <div class="br"><a href="#ext-duc-auto-chatgpt" data-goto="extension">Duc Auto ChatGPT</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">28 việc nợ</span></div>
+        <div class="br"><a href="#ext-duc-auto-gemini" data-goto="extension">Duc Auto Gemini</a><span class="chip s3">NGHỈ / THAY THẾ</span><span class="meta">extension</span></div>
+        <div class="br"><a href="#ext-duc-auto-gemini" data-goto="extension">Duc Auto Gemini (Platform)</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">12 việc nợ</span></div>
+        <div class="br"><a href="#ext-duc-auto-gg-flow-video" data-goto="extension">Duc Auto GG Flow Video</a><span class="chip s1">ĐANG XÂY</span><span class="meta">21 việc nợ</span></div>
+        <div class="br"><a href="#y-y-01" data-goto="y-tuong">Y-01 · MVP: dùng Claude Code điều phối GPT</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
+        <div class="br"><a href="#y-y-02" data-goto="y-tuong">Y-02 · Protocol làm nhiều việc song song</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
+        <div class="br"><a href="#y-y-03" data-goto="y-tuong">Y-03 · Trường &quot;Đức cần làm&quot; trong hồ sơ trạng thái</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
+        <div class="br"><a href="#y-y-05" data-goto="y-tuong">Y-05 · Viết lại chữ trong hồ sơ cho mắt Đức đọc</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
+        <div class="br"><a href="#y-y-04" data-goto="y-tuong">Y-04 · Bảng trạng thái sinh ngay trong repo</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">chưa ai nhận</span></div>
+      </div>
+      <p class="note">5 extension và 5 ý tưởng. Chi tiết extension ở tab <strong>Extension</strong>, chi tiết ý tưởng ở tab <strong>Ý tưởng</strong>.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Đức cần làm</div>
+      <div class="bl">
+        <div class="bi"><span class="c">›</span><span class="d"><strong>Extension Observer V0</strong> — Quyết định Extension Observer V0: nuôi tiếp hay cho nghỉ. Chỉ Đức chốt được.</span></div>
+        <div class="bi"><span class="c">›</span><span class="d"><strong>Duc Auto ChatGPT</strong> — Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích; muốn chạy nhiều luồng song song thì mở tab BRIDGE, gõ tên và bấm Gắn tab đang mở cho từng tab.</span></div>
+        <div class="bi"><span class="c">›</span><span class="d"><strong>Duc Auto Gemini (Platform)</strong> — Mở từng hồ sơ Chrome đang dùng cho Gemini, nạp lại tiện ích, rồi điền tên hồ sơ vào ô trong bảng điều khiển.</span></div>
+      </div>
+      <p class="note"><strong>1 đơn vị chưa khai trường này</strong> — nên danh sách trên có thể còn thiếu.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Làm mới bảng</div>
+      <div class="hint">Bảng không tự làm mới. Nó in ngày sinh ở đầu trang và <strong>tự bật dải đỏ khi Đức mở nó vào một ngày khác ngày sinh</strong>. Thấy dải đỏ thì dán câu dưới đây cho tôi.</div>
+      <pre class="cmd">Làm mới bảng trạng thái: sinh lại rồi đăng lại artifact.</pre>
+      <p class="note">Cách nó chạy, và lệnh chạy tay, nằm ở tab <strong>Vận hành</strong>.</p>
+    </div>
+  </div>
+
+  <div role="tabpanel" data-pane="extension" hidden>
+    <div class="card">
+      <div class="sect">Extension trong repo</div>
+      <details class="the" id="ext-extension-observer-v0">
+        <summary>
+          <span><span class="nm">Extension Observer V0</span><span class="sub">Mô tả chưa khai được — gói chưa có README</span></span>
+          <span class="chip s0">Ý TƯỞNG</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Quyết định: nuôi tiếp hay cho nghỉ. Nếu nuôi thì chuyển vào … theo phiên S8; nếu không thì khai archived.</dd>
+            <dt>Đức cần làm</dt><dd class="warn">Quyết định Extension Observer V0: nuôi tiếp hay cho nghỉ. Chỉ Đức chốt được.</dd>
+            <dt>Kiểm chứng cuối</dt><dd>chưa từng khai kiểm chứng</dd>
+            <dt>Việc còn nợ</dt><dd>gói chưa có sổ nợ</dd>
+            <dt>Lệnh Bridge</dt><dd>0 lệnh · 9 file kiểm</dd>
+          </dl>
+          <p class="note">Chưa có bảng tính năng cho extension này. Bảng đối chiếu trong repo hiện chỉ so hai nhánh GPT và Gemini.</p>
+        </div>
+      </details>
+      <details class="the" id="ext-duc-auto-chatgpt">
+        <summary>
+          <span><span class="nm">Duc Auto ChatGPT</span><span class="sub">Personal Chrome extension for local-only XLSX-backed text reasoning and image generation on ChatGPT.</span></span>
+          <span class="chip s2">ĐÃ CHỨNG MINH</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node past"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node on"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Pilot vận hành thật cho phiên-theo-tab (Đức duyệt rồi mới chạy): reload extension, gắn tên 2–3 tab, gọi bridge.sessions + dom_probe --target từng phiên, thử gắn lại sau khi đóng Chrome</dd>
+            <dt>Đức cần làm</dt><dd class="warn">Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích; muốn chạy nhiều luồng song song thì mở tab BRIDGE, gõ tên và bấm Gắn tab đang mở cho từng tab.</dd>
+            <dt>Kiểm chứng cuối</dt><dd>2026-08-26</dd>
+            <dt>Việc còn nợ</dt><dd>28 việc</dd>
+            <dt>Lệnh Bridge</dt><dd>22 lệnh · 104 file kiểm</dd>
+          </dl>
+          <div>
+            <h2>Tính năng đã đo</h2>
+            <div class="feat">
+              <div class="fr fh"><span>Tính năng</span><span>GPT</span><span>Gemini</span></div>
+              <div class="fr"><span>Khoá tab lúc Run</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Khoá hội thoại …</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Đọc tab.url || tab.pendingUrl</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>DETECTION_BLIND — mù thì dừng, không retry</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Ledger khai thật landed_as_requested</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Chốt khởi động run (không nuốt lệnh dừng)</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Nhiều ảnh một job</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Cổng Chế độ phát triển cho run.trial</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Trần 90 giây của run.trial</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>AI tự đặt thư mục Downloads</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Poll A/B &quot;thích ảnh nào hơn&quot;</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Khoảng nghỉ giữa job KHÔNG bị Chrome bóp</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Lớp ổn định kết nối Bridge (hạn chờ ACK · backoff trần 5s · hạn bắt tay)</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Nhận dạng ảnh theo BYTE, không tin nhãn MIME</span><span class="x">không</span><span class="y">có</span></div>
+            </div>
+            <p class="note">Lấy từ bảng đối chiếu hai nhánh trong repo, phần đã đo. Bảng đó chỉ so GPT với Gemini nên extension khác không có cột.</p>
+          </div>
+        </div>
+      </details>
+      <details class="the" id="ext-duc-auto-gemini">
+        <summary>
+          <span><span class="nm">Duc Auto Gemini</span><span class="sub">Local-only Manifest V3 Side Panel extension for sequential XLSX-driven image jobs on Gemini Images.</span></span>
+          <span class="chip s3">NGHỈ / THAY THẾ</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node past"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node past"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node on"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>chưa khai</dd>
+            <dt>Đức cần làm</dt><dd>chưa ai trả lời câu này</dd>
+            <dt>Kiểm chứng cuối</dt><dd>chưa từng khai kiểm chứng</dd>
+            <dt>Việc còn nợ</dt><dd>gói chưa có sổ nợ</dd>
+            <dt>Lệnh Bridge</dt><dd>0 lệnh · 21 file kiểm</dd>
+          </dl>
+          <div>
+            <h2>Tính năng đã đo</h2>
+            <div class="feat">
+              <div class="fr fh"><span>Tính năng</span><span>GPT</span><span>Gemini</span></div>
+              <div class="fr"><span>Khoá tab lúc Run</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Khoá hội thoại …</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Đọc tab.url || tab.pendingUrl</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>DETECTION_BLIND — mù thì dừng, không retry</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Ledger khai thật landed_as_requested</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Chốt khởi động run (không nuốt lệnh dừng)</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Nhiều ảnh một job</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Cổng Chế độ phát triển cho run.trial</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Trần 90 giây của run.trial</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>AI tự đặt thư mục Downloads</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Poll A/B &quot;thích ảnh nào hơn&quot;</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Khoảng nghỉ giữa job KHÔNG bị Chrome bóp</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Lớp ổn định kết nối Bridge (hạn chờ ACK · backoff trần 5s · hạn bắt tay)</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Nhận dạng ảnh theo BYTE, không tin nhãn MIME</span><span class="x">không</span><span class="y">có</span></div>
+            </div>
+            <p class="note">Lấy từ bảng đối chiếu hai nhánh trong repo, phần đã đo. Bảng đó chỉ so GPT với Gemini nên extension khác không có cột.</p>
+          </div>
+        </div>
+      </details>
+      <details class="the" id="ext-duc-auto-gemini">
+        <summary>
+          <span><span class="nm">Duc Auto Gemini (Platform)</span><span class="sub">Extension Chrome MV3 cá nhân, chạy kế hoạch XLSX để tạo ảnh trên Gemini … ngay trong trình duyệt của Đức, không gửi gì ra máy chủ lạ. Bản này là nhánh nền tảng: mang thêm Agent Bridge để AI gọi việc qua RPC cục bộ.</span></span>
+          <span class="chip s2">ĐÃ CHỨNG MINH</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node past"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node on"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Sau khi Đức nạp lại tiện ích và đặt tên hồ sơ: gọi bridge.sessions để đối chiếu đủ tên. Nợ cũ còn lại: đo thật nhánh tắt máy chủ quá hai phút.</dd>
+            <dt>Đức cần làm</dt><dd class="warn">Mở từng hồ sơ Chrome đang dùng cho Gemini, nạp lại tiện ích, rồi điền tên hồ sơ vào ô trong bảng điều khiển.</dd>
+            <dt>Kiểm chứng cuối</dt><dd>2026-08-28</dd>
+            <dt>Việc còn nợ</dt><dd>12 việc</dd>
+            <dt>Lệnh Bridge</dt><dd>19 lệnh · 87 file kiểm</dd>
+          </dl>
+          <div>
+            <h2>Tính năng đã đo</h2>
+            <div class="feat">
+              <div class="fr fh"><span>Tính năng</span><span>GPT</span><span>Gemini</span></div>
+              <div class="fr"><span>Khoá tab lúc Run</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Khoá hội thoại …</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Đọc tab.url || tab.pendingUrl</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>DETECTION_BLIND — mù thì dừng, không retry</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Ledger khai thật landed_as_requested</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Chốt khởi động run (không nuốt lệnh dừng)</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Nhiều ảnh một job</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Cổng Chế độ phát triển cho run.trial</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Trần 90 giây của run.trial</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>AI tự đặt thư mục Downloads</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Poll A/B &quot;thích ảnh nào hơn&quot;</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Khoảng nghỉ giữa job KHÔNG bị Chrome bóp</span><span class="y">có</span><span class="x">không</span></div>
+              <div class="fr"><span>Lớp ổn định kết nối Bridge (hạn chờ ACK · backoff trần 5s · hạn bắt tay)</span><span class="y">có</span><span class="y">có</span></div>
+              <div class="fr"><span>Nhận dạng ảnh theo BYTE, không tin nhãn MIME</span><span class="x">không</span><span class="y">có</span></div>
+            </div>
+            <p class="note">Lấy từ bảng đối chiếu hai nhánh trong repo, phần đã đo. Bảng đó chỉ so GPT với Gemini nên extension khác không có cột.</p>
+          </div>
+        </div>
+      </details>
+      <details class="the" id="ext-duc-auto-gg-flow-video">
+        <summary>
+          <span><span class="nm">Duc Auto GG Flow Video</span><span class="sub">Extension Chrome MV3 cá nhân, chạy kế hoạch XLSX tạo video trên Google Flow … ngay trong trình duyệt của Đức, không gửi gì ra máy chủ lạ. Là fork từ … (nhánh ảnh Gemini) — kiến trúc, lớp an toàn, Bridge giữ nguyên; phần biết-về-trang (selector, timing) sẽ…</span></span>
+          <span class="chip s1">ĐANG XÂY</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node on"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>F-25 (vat can that cua chuoi dai: vong chay chet am tham) — chua giai. Truoc do co hai viec re: (a) kiem not nua sau F-14 bang MOT job tu che do Image (6 credit, con 8/50 tren Binh); (b)…</dd>
+            <dt>Đức cần làm</dt><dd>chưa ai trả lời câu này</dd>
+            <dt>Kiểm chứng cuối</dt><dd>chưa từng khai kiểm chứng</dd>
+            <dt>Việc còn nợ</dt><dd>21 việc</dd>
+            <dt>Lệnh Bridge</dt><dd>21 lệnh · 96 file kiểm</dd>
+          </dl>
+          <p class="note">Chưa có bảng tính năng cho extension này. Bảng đối chiếu trong repo hiện chỉ so hai nhánh GPT và Gemini.</p>
+        </div>
+      </details>
+      <p class="note">Mô tả lấy từ file giới thiệu của từng gói. Gói nào tiêu đề không khớp tên đơn vị thì bảng <strong>để trống và nói rõ lý do</strong>, không hiện chữ sai.</p>
+    </div>
+  </div>
+
+  <div role="tabpanel" data-pane="y-tuong" hidden>
+    <div class="card">
+      <div class="sect">Sổ ý tưởng — phòng chờ của cả repo</div>
+      <details class="the" id="y-y-01">
+        <summary>
+          <span><span class="nm">Y-01 · MVP: dùng Claude Code điều phối GPT</span><span class="sub">Đức mô tả rõ hơn phạm vi thử — xem ba câu chưa rõ ở dưới</span></span>
+          <span class="chip s0">Ý TƯỞNG</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Đức mô tả rõ hơn phạm vi thử — xem ba câu chưa rõ ở dưới</dd>
+            <dt>Ai đang làm</dt><dd>chưa ai nhận</dd>
+            <dt>Phạm vi</dt><dd>chưa khai</dd>
+            <dt>nguồn</dt><dd>Đức nêu 2026-09-02</dd>
+            <dt>vì sao</dt><dd>Hiện GPT làm việc qua GitHub connector và Đức phải tự chuyển tiếp giữa hai bên.</dd>
+            <dt>chưa rõ, cần Đức nói</dt><dd>① thử trên việc gì · ② Claude Code &quot;điều phối&quot; nghĩa là gọi GPT</dd>
+          </dl>
+          <div class="prose"><p>Nếu Claude Code điều phối được GPT thì bớt được Đức khỏi vòng lặp.</p>
+<p>qua đâu (Đức dán tay, hay có kênh khác) · ③ đo thế nào là MVP đạt</p>
+<p>&gt; Tôi cố ý không tự bịa chi tiết cho ý tưởng này. Đức mới nêu một dòng, và ba câu trên là</p>
+<p>&gt; ba thứ quyết định nó là việc một ngày hay việc một tuần.</p></div>
+        </div>
+      </details>
+      <details class="the" id="y-y-02">
+        <summary>
+          <span><span class="nm">Y-02 · Protocol làm nhiều việc song song</span><span class="sub">Còn hai vấn đề chưa chốt phương án, cả hai cần Đức chọn một câu:</span></span>
+          <span class="chip s1">ĐANG XÂY</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node on"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Còn hai vấn đề chưa chốt phương án, cả hai cần Đức chọn một câu:</dd>
+            <dt>Ai đang làm</dt><dd>`claude-y02`</dd>
+            <dt>Phạm vi</dt><dd>… (file mới) · … (file mới) ·</dd>
+            <dt>nguồn</dt><dd>Đức nêu 2026-09-02</dd>
+            <dt>vì sao</dt><dd>Đức có nhiều ý tưởng và không đủ thời gian làm lần lượt. Mỗi phiên AI phải</dd>
+            <dt>đã xong A1</dt><dd>node … --take|--release thay cho việc sửa bảng quyền bằng</dd>
+            <dt>đã xong A2 (02/09, sau khi audit K1 lắng)</dt><dd>gốc repo chia làm bốn khoá theo trường</dd>
+            <dt>A2 tự chứng minh ngay trong lượt làm nó</dt><dd>cổng lần lượt bắt tôi nhận _code, rồi</dd>
+            <dt>số đo đặt ra bài toán</dt><dd>127 commit/ngày · 77% chạm _root · 63 lần ghi bảng quyền · 21</dd>
+          </dl>
+          <div class="prose"><p>… · khai báo trong bản đồ file. **CẤM đụng … và</p>
+<p>… — xem lý do hoãn A2 ở dưới.</p>
+<p>① push cuốn theo commit người khác (mục 5 của khảo sát) ·</p>
+<p>② vấn đề 3, mới phát hiện 20:45 — phép kiểm độ tươi artifact so với TOÀN repo, nên bất kỳ</p>
+<p>phiên nào commit cũng làm artifact của mình cũ. Khuyến nghị C3: cho safe-push tự sinh</p>
+<p>lại rồi đẩy ngay, cửa sổ đua co về mili-giây và không bỏ lớp bảo vệ nào (mục 5b)</p>
+<p>tự biết: làm gì · cập nhật gì · cấm đụng gì.</p>
+<p>tay. Nó từ chối nhận gói người khác đang giữ, từ chối trả quyền hộ, và ghi rồi đọc</p>
+<p>lại để kiểm. 5 phép kiểm ghim, trong đó một phép chạy thật và xác nhận *lần cướp quyền không</p>
+<p>ghi một chữ nào*.</p>
+<p>steward vốn đã có trong areas. Cổng đóng phiên xét theo từng khoá: nhận thiếu khoá</p>
+<p>nào thì nó gọi tên khoá đó ra. Kèm một miễn trừ có điều kiện cho … — vì luật mục 7</p>
+<p>bắt mọi phiên ghi Log ở gốc, nên không miễn là tự chặn luật của mình; nhưng chỉ miễn khi</p>
+<p>chỉ thêm dòng.</p>
+<p>_template (vì sinh lại bộ khung), và tôi trả _docs ngay khi không cần. Trước A2 thì cả ba</p>
+<p>việc đó dùng chung một khoá và không ai thấy gì.</p>
+<li>A2 KHÔNG chữa vấn đề 2 và 3. Ghi rõ ở đây để không ai tưởng đã xong: A1 chữa quyền bị ghi</li>
+<p>đè, A2 chữa quyền bị chặn. Push cuốn theo nhau và cuộc đua độ tươi artifact vẫn còn nguyên.</p></div>
+        </div>
+      </details>
+      <details class="the" id="y-y-03">
+        <summary>
+          <span><span class="nm">Y-03 · Trường &quot;Đức cần làm&quot; trong hồ sơ trạng thái</span><span class="sub">GIAI ĐOẠN 2 — chuyển human_action thành bắt buộc cho đơn vị còn sống, khi</span></span>
+          <span class="chip s1">ĐANG XÂY</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node on"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>GIAI ĐOẠN 2 — chuyển human_action thành bắt buộc cho đơn vị còn sống, khi</dd>
+            <dt>Ai đang làm</dt><dd>`claude-y03`</dd>
+            <dt>Phạm vi</dt><dd>hồ sơ trạng thái, bộ sinh, bản mẫu, phép kiểm. Cấm đụng gói</dd>
+            <dt>nguồn</dt><dd>phát hiện khi dựng bảng trạng thái 2026-09-02</dd>
+            <dt>vì sao</dt><dd>Ba việc đang chờ Đức nhưng chữ đó nằm lẫn trong câu mô tả. Bảng không được đoán</dd>
+            <dt>đã xong giai đoạn 1</dt><dd>trường human_action có trong lược đồ và bản mẫu, ba đơn vị đã</dd>
+            <dt>ghi minh bạch một va chạm quyền</dt><dd>lúc tôi điền, duc-auto-chatgpt đang trống chủ (đã</dd>
+          </dl>
+          <div class="prose"><p>duc-auto-gg-flow-video — phiên khác đang giữ.</p>
+<p>mọi đơn vị đã khai. Hai gói còn thiếu, và cả hai đang do phiên khác giữ nên chủ của</p>
+<p>chúng phải tự điền: duc-auto-gg-flow-video (claude-f18-evidence) và duc-auto-chatgpt</p>
+<p>(claude-surface-fix, Đức giao 02/09)</p>
+<p>từ chữ (luật vàng 1), nên ô &quot;Đức cần làm&quot; bỏ trống — trong khi nó đúng là ô Đức cần nhất.</p>
+<p>khai, bảng hiện đủ việc và thừa nhận số đơn vị chưa khai. Không thể bắt buộc ngay vì</p>
+<p>không đòi hỏi được một trường mà người khai khác chưa có — luật chung của mọi lần đổi</p>
+<p>lược đồ.</p>
+<p>kiểm trước khi nhận). Giữa phiên, Đức giao gói đó cho claude-surface-fix. Nên commit của</p>
+<p>tôi có một dòng trong … của gói họ. Tôi cố ý không gỡ lại: gỡ là đụng gói</p>
+<p>của họ lần thứ hai, cho một dòng dữ liệu vốn đúng. Ghi ra đây để phiên sau không tưởng là</p>
+<p>tôi lách luật.</p></div>
+        </div>
+      </details>
+      <details class="the" id="y-y-05">
+        <summary>
+          <span><span class="nm">Y-05 · Viết lại chữ trong hồ sơ cho mắt Đức đọc</span><span class="sub">3 chỗ còn lại thuộc hai gói do phiên khác giữ — chủ của chúng phải tự viết</span></span>
+          <span class="chip s1">ĐANG XÂY</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node on"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>3 chỗ còn lại thuộc hai gói do phiên khác giữ — chủ của chúng phải tự viết</dd>
+            <dt>Ai đang làm</dt><dd>`claude-y05`</dd>
+            <dt>Phạm vi</dt><dd>hồ sơ trạng thái của _root và duc-auto-gemini, cộng cổng kiểm cấu trúc.</dd>
+            <dt>nguồn</dt><dd>phát hiện khi dựng bảng trạng thái 2026-09-02</dd>
+            <dt>đã xong</dt><dd>thêm phép kiểm B15 (mức cảnh báo) cưỡng chế luật vàng 5, và viết lại chữ</dd>
+            <dt>vì sao</dt><dd>Đức mở bảng thấy *&quot;CAN DUC RELOAD EXTENSION roi chay mot chuoi de do pacing_ms&quot;*.</dd>
+          </dl>
+          <div class="prose"><p>Cấm đụng duc-auto-chatgpt và duc-auto-gg-flow-video — phiên khác đang giữ.</p>
+<p>lại. B15 giờ tự nhắc mỗi lần họ chạy cổng, không cần ai đi dặn</p>
+<p>của gemini v0.2.0. B15 tìm ra 4 chỗ vi phạm; còn 3</p>
+<p>Bảng chỉ hiện lại nguyên văn nguồn. **Luật vàng 5 đã quy định &quot;chữ operator nhìn thấy:</p>
+<p>tiếng Việt&quot;** — nên đây không phải yêu cầu mới, mà là một luật đang bị vi phạm. Bảng vừa</p>
+<p>làm nó lộ ra, vì trước giờ chưa ai đọc mấy trường đó bằng mắt người.</p></div>
+        </div>
+      </details>
+      <details class="the" id="y-y-04">
+        <summary>
+          <span><span class="nm">Y-04 · Bảng trạng thái sinh ngay trong repo</span><span class="sub">Không còn gì. Bộ sinh đã nằm trong repo, có lệnh chạy riêng và 6 phép kiểm</span></span>
+          <span class="chip s2">ĐÃ CHỨNG MINH</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node past"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node on"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Không còn gì. Bộ sinh đã nằm trong repo, có lệnh chạy riêng và 6 phép kiểm</dd>
+            <dt>Ai đang làm</dt><dd>chưa ai nhận</dd>
+            <dt>Phạm vi</dt><dd>chưa khai</dd>
+            <dt>nguồn</dt><dd>Đức nêu 2026-09-02</dd>
+            <dt>kết quả</dt><dd>Bản ra cố ý KHÔNG commit — nó để publish, và trang tự in ngày sinh rồi bật cờ</dd>
+            <dt>vì sao</dt><dd>Bản đầu đã chạy được và đang là artifact, nhưng bộ sinh nằm ngoài repo nên</dd>
+          </dl>
+          <div class="prose"><p>đỏ sau 7 ngày, nên cũ thì nhìn thấy là cũ</p>
+<p>không đi theo template và không ai cưỡng chế được độ tươi.</p></div>
+        </div>
+      </details>
+      <p class="note">Ý tưởng nào đã có nhà thì rời sổ nên không hiện ở đây nữa. Đức cứ viết một câu, tôi chuẩn hoá lại.</p>
+    </div>
+  </div>
+
+  <div role="tabpanel" data-pane="van-hanh" hidden>
+    <div class="card">
+      <div class="sect">Làm mới bảng này</div>
+      <div class="hint">Bảng là ảnh chụp, <strong>không tự cập nhật</strong>. Dải đỏ ở đầu trang tự bật khi Đức mở nó vào một ngày khác ngày sinh — nó tính lúc XEM, không lúc sinh, nên không cần sinh lại mới biết là cũ.</div>
+      <details class="the">
+        <summary><span><span class="nm">Câu để dán cho AI</span><span class="sub">cách nhanh nhất, không cần mở terminal</span></span></summary>
+        <div class="in"><pre class="cmd">Làm mới bảng trạng thái: sinh lại rồi đăng lại artifact.</pre></div>
+      </details>
+      <p class="note">Bản ra <strong>không commit</strong> vào repo, có chủ đích: nó sinh ra để đăng cho Đức xem, và chạy lại là ra y hệt. Lệnh chạy nằm trong repo — bảng cố ý không in đường dẫn nào, vì phép kiểm bất biến cấm.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Bảng này lấy số ở đâu</div>
+      <div class="prose"><p>Không một con số nào gõ tay. Tất cả đọc từ file trong repo, cùng nguồn với ba trang máy sinh khác — nên bốn trang không thể nói khác nhau.</p></div>
+      <details class="the" style="margin-top:11px">
+        <summary><span><span class="nm">Từng con số đến từ đâu</span><span class="sub">mở ra nếu Đức muốn kiểm chéo</span></span></summary>
+        <div class="in"><dl class="kv">
+          <dt>Extension</dt><dd>hồ sơ trạng thái đặt cạnh mỗi extension</dd>
+          <dt>Mô tả</dt><dd>file giới thiệu của từng gói, và bảng từ chối hiện nếu tiêu đề không khớp tên</dd>
+          <dt>Tính năng</dt><dd>bảng đối chiếu hai nhánh, phần đã đo</dd>
+          <dt>Ý tưởng</dt><dd>sổ ý tưởng ở gốc repo</dd>
+          <dt>Việc còn nợ</dt><dd>sổ nợ của từng gói, đếm mục chưa đóng</dd>
+          <dt>Quyết định</dt><dd>mỗi quyết định một file bất biến</dd>
+        </dl></div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="sect">Đức góp ý ngay trên trang</div>
+      <div class="hint">Bôi đen bất kỳ dòng nào rồi <strong>để lại bình luận</strong> — bình luận gắn đúng vào khối đó, nên tôi biết Đức đang nói về mục nào mà không cần Đức mô tả lại. Muốn tôi trả lời thì gửi bình luận cho Claude.</div>
+      <p class="note">Đây là cách nhanh nhất để sửa một mô tả viết chưa rõ: Đức bình luận vào đúng chỗ, tôi viết lại vào file trong repo rồi sinh lại bảng.</p>
+    </div>
+  </div>
+
+  <div role="tabpanel" data-pane="suc-khoe" hidden>
+    <div class="card">
+      <div class="sect">Sức khoẻ — bốn phép dò, và mỗi phép đã dò bao nhiêu</div>
+      <div class="hgrid">
+        <div class="hc zero"><span class="n">0</span><span class="l">Đơn vị chưa khai hồ sơ</span><span class="w">đã dò cả 5 đơn vị có hồ sơ trạng thái</span></div>
+        <div class="hc zero"><span class="n">0</span><span class="l">Liên kết chết</span><span class="w">đã mở thử 9 liên kết trong các file cổng vào</span></div>
+        <div class="hc zero"><span class="n">0</span><span class="l">Thư mục chưa khai chủ</span><span class="w">đã đối chiếu 7 thư mục tầng ngoài cùng với bảng phân vùng</span></div>
+        <div class="hc zero"><span class="n">0</span><span class="l">Tài liệu quá hạn rà</span><span class="w">đã tính tuổi 59 tài liệu theo hạn rà mỗi file tự khai</span></div>
+      </div>
+      <p class="note">Cả bốn phép đều sạch. Con số 0 ở đây là 0 <em>trên mẫu đã dò ghi ngay dưới nó</em> — không phải 0 vì chưa dò gì.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Việc còn nợ — 61 mục đang mở</div>
+      <div class="bl">
+        <div class="bi"><span class="c">28</span><span class="d">Duc Auto ChatGPT</span></div>
+        <div class="bi"><span class="c">21</span><span class="d">Duc Auto GG Flow Video</span></div>
+        <div class="bi"><span class="c">12</span><span class="d">Duc Auto Gemini (Platform)</span></div>
+      </div>
+      <details class="the" style="margin-top:11px">
+        <summary><span><span class="nm">Con số này đếm thế nào</span><span class="sub">và vì sao nó thà đếm thừa hơn đếm thiếu</span></span></summary>
+        <div class="in"><div class="prose">
+          <p>Đếm số mục chưa đóng trong sổ nợ của từng gói. Một mục tính là đã đóng khi nó bị gạch ngang, hoặc khi dòng của nó <strong>mở đầu</strong> bằng chữ xong.</p>
+          <p>Dấu đóng phải nằm ở đầu dòng, không tìm giữa câu — vì có mục viết "gỡ khoá sau khi việc kia xong", chữ xong ở đó là một điều kiện chứ không phải trạng thái. Tìm giữa câu là đóng oan một việc đang mở, tức bảng báo <em>thiếu</em> nợ. Mục nào viết dấu đóng ở giữa câu sẽ bị tính là còn mở: cố ý lệch về phía báo thừa.</p>
+        </div></div>
+      </details>
+      <p class="note">Bảng cố ý KHÔNG liệt kê mã lỗi. Chi tiết nằm trong sổ nợ của từng gói.</p>
+    </div>
+  </div>
+
+  <div role="tabpanel" data-pane="nhat-ky" hidden>
+    <div class="card">
+      <div class="sect">Quyết định đã chốt — 116 bản ghi</div>
+      <div class="prose"><p>Mỗi quyết định là một file bất biến: đã chốt thì không sửa được, chỉ thay bằng bản mới. Bản bị thay vẫn giữ nguyên để tra lại được. Hiện có 1 đơn vị đã bị bản mới thay thế.</p></div>
+      <details class="the" style="margin-top:11px" open>
+        <summary><span><span class="nm">14 quyết định số cao nhất</span><span class="sub">số KHÔNG phải ngày — mỗi phạm vi đánh số riêng</span></span></summary>
+        <div class="in"><div class="bl">
+          <div class="bi"><span class="c">0067</span><span class="d">Audit Codex vòng 1: FAIL, 3 phát hiện. (1) HIGH &quot;huỷ lệch danh tính giết attempt…<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0066</span><span class="d">Cùng lỗi bên nhánh ChatGPT ghi thành B-22 , KHÔNG sửa hộ…<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0065</span><span class="d">G-01 chưa đóng: chỉ đóng sau trial live (Đức đã duyệt, điều kiện test tĩnh PASS —…<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0064</span><span class="d">Bài học mutation mới, ghi để không lặp<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0063</span><span class="d">Vá thêm phía runner: run() kiểm lại state.stopRequested ngay sau await gateNextJob…<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0062</span><span class="d">Root cause phải chứng minh bằng test tái hiện trước khi vá<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0061</span><span class="d">Hướng B-refined — huỷ theo attempt, không phải A (round-trip hỏi ngược) hay B…<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0060</span><span class="d">Duyệt hợp đồng G-01: Stop nhận trước thời điểm gửi thật → attempt đó không được…<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0059</span><span class="d">Lỗi này có ở CẢ worker ChatGPT (tôi port nguyên văn lời nhắn từ đó sang)<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0058</span><span class="d">KHÔNG đổi thời điểm cờ dừng ăn (để job đang chạy không kịp gửi).<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0057</span><span class="d">Sửa lời nhắn của run.stop lúc PRE_SUBMIT<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0056</span><span class="d">Chạy trial live ngay sau khi code xong, thay vì tin suite xanh là đủ.<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0055</span><span class="d">Ghim bằng … (16 phép kiểm), đã phá thử 4…<br><span class="meta">duc-auto-gemini</span></span></div>
+          <div class="bi"><span class="c">0054</span><span class="d">Gemini có sẵn đúng cái bẫy phiên ChatGPT đã sập<br><span class="meta">duc-auto-gemini</span></span></div>
+        </div></div>
+      </details>
+    </div>
+  </div>
+
+  <div role="tabpanel" data-pane="tra-cuu" hidden>
+    <div class="card">
+      <div class="sect">Tra cứu — chữ trên bảng nghĩa là gì</div>
+      <dl class="kv">
+        <dt>Ý tưởng</dt><dd>đã ghi nhận, chưa ai bắt tay làm.</dd>
+        <dt>Đang xây</dt><dd>đang có người làm, nhưng chưa chứng minh chạy được trên trang thật.</dd>
+        <dt>Đã chứng minh</dt><dd>đã chạy thật và có bằng chứng lưu trong repo. Bảng không tự phong bậc này — phải có ngày kiểm chứng khai trong hồ sơ.</dd>
+        <dt>Nghỉ / thay thế</dt><dd>dừng, hoặc đã có bản mới thay. Không xoá, giữ để tra lại.</dd>
+        <dt>Việc còn nợ</dt><dd>việc đã biết là phải làm nhưng chưa làm. Không phải lỗi đang hỏng.</dd>
+        <dt>Kiểm chứng cuối</dt><dd>lần gần nhất extension đó chạy thật và có bằng chứng, không phải lần sửa code gần nhất.</dd>
+        <dt>Lệnh Bridge</dt><dd>số việc AI có thể nhờ extension làm hộ qua kênh điều khiển.</dd>
+        <dt>File kiểm</dt><dd>số file phép thử tự động của gói đó.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <footer>Bảng này là bản chiếu sinh tự động. Nguồn sự thật nằm trong repo.</footer>
+</div>
+
+<script>
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll("[role=tab]"));
+  var panes = Array.prototype.slice.call(document.querySelectorAll("[role=tabpanel]"));
+  function show(id) {
+    tabs.forEach(function (t) { t.setAttribute("aria-selected", t.dataset.tab === id ? "true" : "false"); });
+    panes.forEach(function (pn) { pn.hidden = pn.dataset.pane !== id; });
+  }
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(t.dataset.tab); }); });
+
+  Array.prototype.slice.call(document.querySelectorAll("a[data-goto]")).forEach(function (a) {
+    a.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      show(a.dataset.goto);
+      var el = document.getElementById(a.getAttribute("href").slice(1));
+      if (!el) return;
+      if (el.tagName === "DETAILS") el.open = true;
+      el.scrollIntoView({ block: "start" });
+    });
+  });
+
+  // Dải đỏ tính tuổi lúc XEM, không lúc sinh: trang tĩnh đem đăng thì lúc sinh nó luôn mới,
+  // mà cái Đức cần biết là "hôm tôi mở, nó còn mới không".
+  var b = document.getElementById("cu");
+  if (b && b.dataset.sinh) {
+    var d = new Date();
+    var nay = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    if (nay > b.dataset.sinh) {
+      b.dataset.hien = "1";
+      b.textContent = "Bảng sinh ngày " + b.dataset.sinh + ", hôm nay " + nay
+        + " — số liệu có thể đã cũ. Nhờ AI: Làm mới bảng trạng thái.";
+    }
+  }
+})();
+</script>
