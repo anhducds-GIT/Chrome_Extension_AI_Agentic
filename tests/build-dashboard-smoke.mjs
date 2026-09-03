@@ -747,12 +747,20 @@ function antiDrift(text, measurements = {}) {
     gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md", "llms.txt", "repo-map.json");
     gitAt("commit", "-m", "make committed artifacts stale");
     const stale = runSession();
-    assert.notEqual(stale.status, 0, "artifact stale đã commit phải làm cổng đỏ");
-    assert.match(stale.stdout, /\[ĐỎ  \] Sự thật máy sinh còn tươi/);
-    assert.match(stale.stdout, /build-dashboard\.mjs không khớp với HEAD/);
+    // SỬA CÓ Ý THỨC, 03/09 (K2-8). Trước đây khối này ghim "artifact cũ ⇒ cổng lane ĐỎ". Nay
+    // KHÔNG còn đỏ ở đây nữa, và đó là chủ ý chứ không phải nới tay: artifact đo việc của MỌI
+    // lane, nên độ tươi là tính chất của thứ sắp publish, không phải của một phiên đang đóng —
+    // một phiên 03/09 bị chặn ba lần, cả ba lần 100% dòng lệch đều thuộc gói của lane khác.
+    // Chỗ chặn dời sang `safe-push`, và fixture 23i ghim vế đó. Đổi dòng này mà KHÔNG có 23i
+    // thì đây đúng là gỡ bảo vệ — hai khối phải sống chết cùng nhau.
+    assert.match(stale.stdout, /Sự thật máy sinh còn tươi/, "phép kiểm vẫn phải CÒN — dời chỗ, không phải xoá");
+    assert.doesNotMatch(stale.stdout, /\[ĐỎ  \] Sự thật máy sinh còn tươi/,
+      "K2-8: artifact cũ KHÔNG còn chặn cổng lane — chỗ chặn nằm ở safe-push (xem fixture 23i)");
+    assert.match(stale.stdout, /build-dashboard\.mjs không khớp với HEAD/, "vẫn phải NÓI TO là nó cũ");
     assert.match(stale.stdout, /feature-parity\.mjs không khớp với HEAD/);
     assert.match(stale.stdout, /node scripts\/build-dashboard\.mjs && node scripts\/feature-parity\.mjs/);
-    ok("Gate 7 dùng HEAD, chỉ đọc, không bị --quick bỏ, và bắt artifact stale");
+    assert.match(stale.stdout, /safe-push SẼ TỪ CHỐI/, "phải chỉ rõ nó sẽ bị chặn ở đâu");
+    ok("Gate 7 dùng HEAD, chỉ đọc, không bị --quick bỏ; artifact cũ nay CẢNH BÁO ở cổng lane (chặn ở push)");
   } finally {
     assert.ok(tempRoot.startsWith(join(tmpdir(), "gate7-committed-truth-")), "chỉ dọn đúng temp fixture Gate 7");
     rmSync(tempRoot, { recursive: true, force: true });
@@ -843,6 +851,102 @@ function antiDrift(text, measurements = {}) {
     ok("K2-2b · HÀNH VI: safe-push quy docs/ về _docs (không phải _root), và vẫn từ chối vùng người khác");
   } finally {
     assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-2b-one-door-")), "chỉ dọn đúng temp fixture K2-2b");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+/* 23i. K2-8 · HÀNH VI: độ tươi artifact rời cổng lane sang cổng PUSH.
+   Vì sao dời (đo thật 03/09): artifact ĐO VIỆC CỦA MỌI LANE, nên độ tươi là tính chất của thứ
+   sắp publish, không phải của một phiên đang đóng. Một phiên bị chặn BA lần, và cả ba lần 100%
+   dòng lệch đều thuộc gói của lane khác.
+
+   KHỐI NÀY LÀ THỨ NGĂN VIỆC DỜI ĐỔI THÀNH GỠ BẢO VỆ. Hai vế phải đi cùng nhau, và vế thứ hai
+   mới là vế chịu lực: cổng lane KHÔNG còn đỏ, nhưng safe-push PHẢI từ chối. Ghim mỗi vế một
+   thì một đột biến "bỏ luôn phép kiểm" vẫn thoát sạch. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-8-tach-cong-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  const chay = (script, ...extra) => spawnSync(process.execPath, [join(tempRoot, "scripts", script), "--as", "toi", ...extra], { cwd: tempRoot, encoding: "utf8" });
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2 Tach Cong");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "build-dashboard.mjs", "session-check.mjs", "safe-push.mjs", "check-bootstrap.mjs", "claim.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1,
+      repo: { name: "Repo Thu", tagline: "de thu tach cong" },
+      units: { root_dir: "workers", marker: "manifest.json", depth: 2, ten: "Extension" },
+      generators: ["build-dashboard.mjs"],
+      areas: { "scripts/": { steward: "_root", mutability: "rw", ownership_mode: "root" } }
+    }, null, 2));
+    put(".agents/claims.json", JSON.stringify({ claims: { _root: { owner: "toi" } } }, null, 2));
+    put("manifest.json", JSON.stringify({ name: "Root", version: "0.0.1" }));
+    put("HANDOFF.md", "# Handoff\n");
+    put("workers/goi-mot/v0.1.0/manifest.json", JSON.stringify({ name: "Goi Mot", version: "0.1.0" }));
+    put("workers/goi-mot/v0.1.0/HANDOFF.md", "# Log\n");
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed");
+    execFileSync(process.execPath, [join(tempRoot, "scripts", "build-dashboard.mjs")], { cwd: tempRoot, encoding: "utf8" });
+    gitAt("add", "-A");
+    gitAt("commit", "-m", "artifact dau tien");
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+
+    // Trạng thái sạch: cả hai cổng phải im về artifact.
+    const sachGate = chay("session-check.mjs", "--quick");
+    assert.match(sachGate.stdout, /\[XANH\][^\n]*Sự thật máy sinh còn tươi/, "artifact dang tuoi thi cong lane phai XANH");
+
+    // Làm artifact CŨ THẬT: thêm một extension rồi commit mà KHÔNG sinh lại.
+    put("workers/goi-hai/v0.1.0/manifest.json", JSON.stringify({ name: "Goi Hai", version: "0.1.0" }));
+    put("workers/goi-hai/v0.1.0/HANDOFF.md", "# Log\n");
+    gitAt("add", "-A");
+    gitAt("commit", "-m", "them extension ma khong sinh lai\n\nLane: toi");
+
+    // VẾ 1 — cổng lane KHÔNG được đỏ vì chuyện này nữa, nhưng vẫn phải NÓI TO.
+    const gate = chay("session-check.mjs", "--quick");
+    assert.doesNotMatch(gate.stderr, /CỔNG BỊ SỬA/, "so phep kiem phai khop EXPECTED_CHECKS");
+    const dongArtifact = (gate.stdout.match(/^.*Sự thật máy sinh còn tươi.*$/m) ?? [""])[0];
+    assert.notEqual(dongArtifact, "", "phep kiem artifact PHAI con o cong lane — doi cho, khong phai xoa");
+    assert.doesNotMatch(dongArtifact, /\[ĐỎ/, "artifact cu KHONG duoc chan dong phien nua — no do viec cua MOI lane");
+    assert.match(gate.stdout, /safe-push SẼ TỪ CHỐI/,
+      "phai chi ro no se bi chan o dau — ha xuong canh bao ma khong noi gi la lang le go bao ve");
+
+    // VẾ 2 — VẾ CHỊU LỰC: safe-push PHẢI từ chối. Không có vế này thì vế 1 là gỡ bảo vệ.
+    const push = chay("safe-push.mjs", "--dry-run");
+    assert.match(push.stderr, /TỪ CHỐI PUSH — sự thật máy sinh chưa khớp/,
+      "artifact cu thi safe-push PHAI tu choi — day la ly do duy nhat viec ha cong lane xuong la hop le");
+    assert.notEqual(push.status, 0, "tu choi thi khong duoc thoat 0");
+
+    // Sửa xong thì cả hai phải thông trở lại — thiếu vế này thì một đột biến "luôn từ chối" thoát.
+    execFileSync(process.execPath, [join(tempRoot, "scripts", "build-dashboard.mjs")], { cwd: tempRoot, encoding: "utf8" });
+    gitAt("add", "-A");
+    gitAt("commit", "-m", "sinh lai artifact\n\nLane: toi");
+    const push2 = chay("safe-push.mjs", "--dry-run");
+    assert.doesNotMatch(push2.stderr, /sự thật máy sinh chưa khớp/, "sinh lai roi thi khong duoc chan nua");
+
+    // VẾ 3 — bộ sinh SỬA DỞ thì nó không đáng tin để tự phán xử.
+    //
+    // Thêm sau khi mutation bắt được lỗ của chính tôi: gỡ chốt này ra thì suite VẪN XANH. Chốt
+    // có mà không ai ghim thì nó chỉ là bình luận. Ca thật: một phiên đang sửa `build-dashboard`
+    // rồi push — bản sửa dở tự chấm chính nó "khớp", và một artifact sai lên remote.
+    const nguyenVan = readFileSync(join(tempRoot, "scripts", "build-dashboard.mjs"), "utf8");
+    writeFileSync(join(tempRoot, "scripts", "build-dashboard.mjs"), `${nguyenVan}\n// dang sua do\n`, "utf8");
+    const push3 = chay("safe-push.mjs", "--dry-run");
+    assert.match(push3.stderr, /đang sửa dở chưa commit/,
+      "bo sinh sua do thi PHAI tu choi — no la thu phan xu, khong the vua sua vua tu cham");
+    assert.notEqual(push3.status, 0, "tu choi thi khong duoc thoat 0");
+    writeFileSync(join(tempRoot, "scripts", "build-dashboard.mjs"), nguyenVan, "utf8");
+    assert.equal(chay("safe-push.mjs", "--dry-run").status, 0, "tra bo sinh ve nguyen ven thi phai thong lai");
+    ok("K2-8 · HÀNH VI: artifact cũ KHÔNG chặn cổng lane nhưng CHẶN safe-push; bộ sinh sửa dở cũng chặn");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-8-tach-cong-")), "chỉ dọn đúng temp fixture K2-8");
     rmSync(tempRoot, { recursive: true, force: true });
   }
 }

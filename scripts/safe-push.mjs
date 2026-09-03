@@ -195,6 +195,49 @@ if (blocked.length && carry) {
   console.log(`\n--carry: Đức đã duyệt cho đẩy kèm việc của ${[...new Set(blocked.flatMap((r) => r.foreign.map((f) => f.owner)))].join(", ")}.`);
 }
 
+/* ---- CỔNG XUẤT BẢN: artifact phải tươi TRƯỚC KHI ĐẨY ----------------------
+ *
+ * Phép kiểm này TỪ cổng đóng phiên chuyển sang đây (03/09, GPT duyệt). Lý do là một lỗi tầng,
+ * không phải chuyện tiện tay: artifact ĐO VIỆC CỦA MỌI LANE — số commit mỗi gói, số dòng mỗi
+ * file — nên độ tươi của nó là tính chất của **trạng thái sắp publish**, không phải của **một
+ * phiên đang đóng**. Kiểm một bất biến toàn cục tại một thời điểm cục bộ thì với nhiều lane nó
+ * chắc chắn chập chờn, và ai commit sau cùng thì thắng.
+ *
+ * Đo thật trong một phiên ngày 03/09: bị chặn BA lần, và cả ba lần 100% dòng lệch đều thuộc gói
+ * của lane khác — không một dòng nào của lane đang bị chặn.
+ *
+ * Ở đây thì nó đúng chỗ: cái sắp lên remote phải khớp với chính nó. Và nhờ K2-7 (bộ sinh không
+ * ghi khi chỉ dấu sinh đổi) chạy lại ở đây là rẻ — nội dung không đổi thì không sinh ra commit.
+ *
+ * CỐ Ý KHÔNG tự sinh rồi tự commit. Làm thế là biến công cụ ĐẨY thành công cụ VIẾT, và một
+ * commit bạn không gõ là một commit bạn không đọc. Nó từ chối, và đưa đúng câu lệnh.
+ */
+const generators = Array.isArray(structure?.generators) ? structure.generators : [];
+const artifactStale = [];
+for (const script of generators) {
+  const file = path.join(ROOT, "scripts", script);
+  if (!fs.existsSync(file)) continue;
+  // Bộ sinh sửa dở thì chính nó không đáng tin để phán xử — nói ra, đừng lặng lẽ cho qua.
+  if (gitQuiet("status", "--porcelain", `scripts/${script}`).trim() !== "") {
+    artifactStale.push(`scripts/${script} đang sửa dở chưa commit — nó là thứ phán xử, nên kết quả không đáng tin.`);
+    continue;
+  }
+  try {
+    execFileSync(process.execPath, [file, "--check-head"], { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 120000 });
+  } catch (error) {
+    const detail = String(error.stderr || error.stdout || error.message).trim().split("\n").slice(-2).join(" | ");
+    artifactStale.push(`${script} không khớp với HEAD${detail ? ` → ${detail}` : ""}`);
+  }
+}
+if (artifactStale.length) {
+  console.error("\nTỪ CHỐI PUSH — sự thật máy sinh chưa khớp với thứ bạn sắp đẩy:");
+  for (const line of artifactStale) console.error(`  ${line}`);
+  console.error(`\nĐẩy lúc này là công bố một bảng nói sai về chính nhánh vừa đẩy.`);
+  console.error(`Cách sửa: ${generators.map((s) => `node scripts/${s}`).join(" && ")}`);
+  console.error("Rồi commit phần vừa sinh (nếu có — nội dung không đổi thì nó KHÔNG ghi gì) và chạy lại lệnh này.\n");
+  process.exit(1);
+}
+
 if (dryRun) { console.log("\n--dry-run: dừng ở đây, chưa đẩy gì.\n"); process.exit(0); }
 
 console.log("\nĐang đẩy...");

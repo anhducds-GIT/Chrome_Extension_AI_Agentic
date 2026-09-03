@@ -1545,3 +1545,32 @@ vẫn XANH. Đúng chỗ trước đây đẻ ra commit rác.
 
 **Chưa làm, chờ Đức:** tách cổng lane / cổng xuất bản. GPT duyệt, tôi đồng ý, nhưng đổi chỗ một
 điều kiện chặn là luật an toàn — mục 2 bắt hỏi Đức, không hỏi GPT.
+
+### K2-8 — tách cổng lane khỏi cổng xuất bản (GPT duyệt, Đức cho làm)
+
+**Vì sao dời, nói cho gọn:** artifact **đo việc của mọi lane** — số commit mỗi gói, số dòng mỗi
+file. Nên độ tươi của nó là tính chất của **thứ sắp publish**, không phải của **một phiên đang
+đóng**. Kiểm một bất biến toàn cục tại một thời điểm cục bộ thì với nhiều lane nó chắc chắn chập
+chờn, và ai commit sau cùng thì thắng. Đo thật trong phiên hôm nay: bị chặn **ba lần**, cả ba lần
+**100% dòng lệch đều thuộc gói của lane khác**.
+
+- **Cổng lane** (`session-check.mjs`): artifact cũ nay là **cảnh báo**, không chặn. Vẫn nói to,
+  và nói rõ *nó sẽ bị chặn ở đâu*.
+- **Cổng xuất bản** (`safe-push.mjs`): artifact cũ thì **TỪ CHỐI ĐẨY**. Không gì lên được remote
+  với artifact cũ.
+
+**Đây KHÔNG phải gỡ bảo vệ, và có phép ghim chứng minh:** hai vế sống chết cùng nhau trong
+fixture 23i. Đổi vế một mà không có vế hai thì đúng là gỡ bảo vệ.
+
+**Cố ý KHÔNG cho `safe-push` tự sinh rồi tự commit.** Làm thế là biến công cụ *đẩy* thành công cụ
+*viết*, và **một commit bạn không gõ là một commit bạn không đọc**. Nó từ chối, và đưa đúng câu
+lệnh. Nhờ K2-7, chạy lại là rẻ: nội dung không đổi thì không sinh ra commit nào.
+
+**Một fixture cũ phải sửa, và tôi sửa CÓ Ý THỨC** — khối "Gate 7" trước đây ghim "artifact cũ ⇒
+cổng lane ĐỎ". Nay nó ghim điều ngược lại, kèm lý do và con trỏ sang 23i.
+
+**Mutation bắt được lỗ của chính tôi.** Chốt "bộ sinh đang sửa dở thì không đáng tin để tự phán
+xử" đã có trong code, nhưng gỡ nó ra thì **suite vẫn xanh** — tức nó chỉ là bình luận. Đã thêm vế
+ba vào 23i. Sau đó **5/5 mutation đều bắt được**.
+
+**Số.** Suite 273 → 274. Cổng vẫn 11 phép kiểm (dời chỗ chặn, không xoá phép kiểm).
