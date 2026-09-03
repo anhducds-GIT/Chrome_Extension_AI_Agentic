@@ -302,6 +302,72 @@ export function readDecisions(deps, limit = 14) {
   };
 }
 
+
+/* CẤU TRÚC REPO — Đức yêu cầu 03/09: bản đồ file và thư mục là thông tin quan trọng.
+ *
+ * ĐỌC HẾT TỪ REPO, không gõ tay một dòng nào: thư mục tầng ngoài cùng và chủ của chúng đọc
+ * từ bảng phân vùng; số file đếm từ danh sách git theo dõi; bảng "khi cần gì mở file nào"
+ * đọc từ mục 6 của luật gốc — tức nó tự đồng bộ khi luật đổi, thay vì mục lục thứ hai sẽ mục.
+ *
+ * VÀ ĐÂY LÀ NGOẠI LỆ DUY NHẤT của bất biến "bảng không in đường dẫn". Bất biến đó sinh ra
+ * để chặn đường dẫn LỌT VÀO VĂN XUÔI mô tả — Đức không phải đọc chi tiết kỹ thuật trong một
+ * câu kể. Ở tab này đường dẫn CHÍNH LÀ nội dung Đức yêu cầu. Nên nó được bọc trong
+ * `<div class="map">`, và phép kiểm bất biến vừa bỏ qua khối đó, vừa THÊM một khẳng định:
+ * đường dẫn chỉ được xuất hiện TRONG khối đó. Thu hẹp phạm vi, không khoét lỗ. */
+export function readAreas(deps) {
+  let parsed;
+  try { parsed = JSON.parse(deps.readFile(".repo-structure.json")); } catch { return []; }
+  const areas = parsed?.areas;
+  if (!areas || typeof areas !== "object") return [];
+  const paths = deps.git.trackedPaths();
+  return Object.entries(areas)
+    .filter(([key]) => key.endsWith("/"))
+    .map(([dir, value]) => ({
+      dir,
+      steward: value?.steward ?? null,
+      files: paths.filter((f) => f.startsWith(dir)).length
+    }))
+    .sort((a, b) => b.files - a.files);
+}
+
+export function readRootFiles(deps) {
+  let sinh = [];
+  try { sinh = JSON.parse(deps.readFile(".repo-structure.json"))?.generated ?? []; } catch { /* để trống */ }
+  const bo = new Set(sinh);
+  return deps.git.trackedPaths()
+    .filter((f) => !f.includes("/") && !f.startsWith("."))
+    .sort()
+    .map((f) => ({ file: f, maySinh: bo.has(f) }));
+}
+
+/* Bảng "khi bạn sắp… thì mở file nào" của luật gốc. Đọc lại thay vì chép: chép là tạo một
+   mục lục thứ hai, và mục lục thứ hai luôn mục trước mục lục thứ nhất. */
+export function readOpenWhen(deps) {
+  if (!deps.fileExists("AGENTS.md")) return [];
+  let text;
+  try { text = deps.readFile("AGENTS.md"); } catch { return []; }
+  const out = [];
+  let inside = false;
+  for (const line of text.split(/\r?\n/)) {
+    if (/^##\s+6\./.test(line)) { inside = true; continue; }
+    if (inside && /^##\s/.test(line)) break;
+    if (!inside || !line.startsWith(chr_pipe)) continue;
+    const cells = line.split(chr_pipe).slice(1, -1).map((c) => c.trim());
+    if (cells.length < 2) continue;
+    if (/^-+$/.test(cells[0].replace(/[: ]/g, "")) || /^Khi b/.test(cells[0])) continue;
+    // Chỉ lấy đích ĐẦU TIÊN trong ô thứ hai. Phần văn xuôi sau nó là giải thích cho AI đọc,
+    // dài và đầy mã lỗi — đúng thứ Đức nói không muốn thấy.
+    const dich = /`([^`]+)`/.exec(cells[1]);
+    if (!dich) continue;
+    const target = dich[1].trim();
+    out.push({
+      when: shorten(cells[0], 84),
+      target,
+      laLenh: target.startsWith("node ")
+    });
+  }
+  return out;
+}
 const esc = (s) => String(s ?? "")
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -472,6 +538,26 @@ details.the .in{margin-top:11px;padding-top:11px;border-top:1px solid var(--line
 .node.on .dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--good-bg)}
 .node.on .lbl{color:var(--accent)}
 
+/* Khối bản đồ — nơi DUY NHẤT trên bảng được phép in đường dẫn. */
+.map{display:flex;flex-direction:column;gap:13px}
+.mono{font-family:var(--mono);font-size:12px;color:var(--ink)}
+.tree{display:flex;flex-direction:column}
+.tr{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:7px 0;
+  border-bottom:1px solid var(--line);align-items:baseline}
+.tr:last-child{border-bottom:none}
+.tr .d{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink)}
+.tr .o{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap}
+.tr .c{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;text-align:right}
+.fl{display:flex;flex-wrap:wrap;gap:5px}
+.fl span{font-family:var(--mono);font-size:11.5px;padding:3px 8px;border-radius:5px;
+  background:var(--inset);border:1px solid var(--line);color:var(--ink)}
+.fl span.g{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.ow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:6px 0;
+  border-bottom:1px solid var(--line);align-items:baseline;font-size:13px}
+.ow:last-child{border-bottom:none}
+.ow .t{font-family:var(--mono);font-size:11.5px;color:var(--accent);white-space:nowrap}
+@media (max-width:640px){.ow{grid-template-columns:1fr}.ow .t{white-space:normal}}
 pre.cmd{background:var(--inset);border:1px solid var(--line-2);border-radius:8px;
   padding:11px 13px;margin:0;overflow-x:auto;font-family:var(--mono);font-size:12px;
   line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word}
@@ -486,6 +572,7 @@ const TABS = [
   ["y-tuong", "Ý tưởng"],
   ["van-hanh", "Vận hành"],
   ["suc-khoe", "Sức khoẻ & nợ"],
+  ["cau-truc", "Cấu trúc"],
   ["nhat-ky", "Nhật ký"],
   ["tra-cuu", "Tra cứu"]
 ];
@@ -510,6 +597,9 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const debtOf = new Map(debt.map((d) => [d.name, d.n]));
   const features = readFeatures(deps);
   const decisions = readDecisions(deps);
+  const areas = readAreas(deps);
+  const rootFiles = readRootFiles(deps);
+  const openWhen = readOpenWhen(deps);
 
   const supersededCount = model.rows.filter((r) => r.lifecycle === "superseded").length;
   const decisionCount = decisions.total;
@@ -782,6 +872,43 @@ ${STYLE}
         </div></div>
       </details>
       <p class="note">Bảng cố ý KHÔNG liệt kê mã lỗi. Chi tiết nằm trong sổ nợ của từng gói.</p>
+    </div>
+  </div>`);
+
+  /* ===== TAB 6 · CẤU TRÚC — khối duy nhất được in đường dẫn ===== */
+  p.push(`
+  <div role="tabpanel" data-pane="cau-truc" hidden>
+    <div class="map">
+      <div class="card">
+        <div class="sect">Thư mục ở tầng ngoài cùng — ${areas.length} vùng</div>
+        <div class="tree">`);
+  for (const a of areas) {
+    const chu = a.steward === null ? "từng gói tự giữ" : a.steward;
+    p.push(`          <div class="tr"><span class="d">${esc(a.dir)}</span>` +
+      `<span class="o">${esc(chu)}</span><span class="c">${a.files} file</span></div>`);
+  }
+  p.push(`        </div>
+        <p class="note">Cột giữa là <strong>ai được ghi vào đó</strong>. Một vùng chỉ một AI được ghi tại một thời điểm; vùng của người khác thì chỉ được đọc. <code class="mono">workers/</code> không có chủ chung — từng gói extension tự giữ riêng.</p>
+      </div>
+
+      <div class="card">
+        <div class="sect">File ở gốc repo — ${rootFiles.length} file</div>
+        <div class="fl">`);
+  for (const f of rootFiles) {
+    p.push(`          <span class="${f.maySinh ? "g" : ""}">${esc(f.file)}</span>`);
+  }
+  p.push(`        </div>
+        <p class="note">Ô <strong>xanh</strong> là file <strong>máy sinh</strong> — đừng sửa tay, sửa là mất ở lần sinh sau. Số còn lại là chữ của người.</p>
+      </div>
+
+      <div class="card">
+        <div class="sect">Khi cần gì thì mở file nào — ${openWhen.length} lối</div>`);
+  for (const r of openWhen) {
+    p.push(`        <div class="ow"><span>${esc(r.when)}</span>` +
+      `<span class="t">${esc(r.target)}</span></div>`);
+  }
+  p.push(`        <p class="note">Bảng này <strong>đọc lại từ luật gốc</strong>, không phải bản chép — nên nó không thể nói khác luật. Dòng có lệnh là việc chạy được, không phải file để mở.</p>
+      </div>
     </div>
   </div>`);
 

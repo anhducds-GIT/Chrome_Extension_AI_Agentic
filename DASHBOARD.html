@@ -163,6 +163,26 @@ details.the .in{margin-top:11px;padding-top:11px;border-top:1px solid var(--line
 .node.on .dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--good-bg)}
 .node.on .lbl{color:var(--accent)}
 
+/* Khối bản đồ — nơi DUY NHẤT trên bảng được phép in đường dẫn. */
+.map{display:flex;flex-direction:column;gap:13px}
+.mono{font-family:var(--mono);font-size:12px;color:var(--ink)}
+.tree{display:flex;flex-direction:column}
+.tr{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:7px 0;
+  border-bottom:1px solid var(--line);align-items:baseline}
+.tr:last-child{border-bottom:none}
+.tr .d{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink)}
+.tr .o{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap}
+.tr .c{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;text-align:right}
+.fl{display:flex;flex-wrap:wrap;gap:5px}
+.fl span{font-family:var(--mono);font-size:11.5px;padding:3px 8px;border-radius:5px;
+  background:var(--inset);border:1px solid var(--line);color:var(--ink)}
+.fl span.g{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.ow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:6px 0;
+  border-bottom:1px solid var(--line);align-items:baseline;font-size:13px}
+.ow:last-child{border-bottom:none}
+.ow .t{font-family:var(--mono);font-size:11.5px;color:var(--accent);white-space:nowrap}
+@media (max-width:640px){.ow{grid-template-columns:1fr}.ow .t{white-space:normal}}
 pre.cmd{background:var(--inset);border:1px solid var(--line-2);border-radius:8px;
   padding:11px 13px;margin:0;overflow-x:auto;font-family:var(--mono);font-size:12px;
   line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word}
@@ -186,6 +206,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
     <button class="tab" role="tab" data-tab="y-tuong" aria-selected="false">Ý tưởng</button>
     <button class="tab" role="tab" data-tab="van-hanh" aria-selected="false">Vận hành</button>
     <button class="tab" role="tab" data-tab="suc-khoe" aria-selected="false">Sức khoẻ &amp; nợ</button>
+    <button class="tab" role="tab" data-tab="cau-truc" aria-selected="false">Cấu trúc</button>
     <button class="tab" role="tab" data-tab="nhat-ky" aria-selected="false">Nhật ký</button>
     <button class="tab" role="tab" data-tab="tra-cuu" aria-selected="false">Tra cứu</button>
   </div>
@@ -598,6 +619,83 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         </div></div>
       </details>
       <p class="note">Bảng cố ý KHÔNG liệt kê mã lỗi. Chi tiết nằm trong sổ nợ của từng gói.</p>
+    </div>
+  </div>
+
+  <div role="tabpanel" data-pane="cau-truc" hidden>
+    <div class="map">
+      <div class="card">
+        <div class="sect">Thư mục ở tầng ngoài cùng — 7 vùng</div>
+        <div class="tree">
+          <div class="tr"><span class="d">workers/</span><span class="o">từng gói tự giữ</span><span class="c">1118 file</span></div>
+          <div class="tr"><span class="d">docs/</span><span class="o">_docs</span><span class="c">59 file</span></div>
+          <div class="tr"><span class="d">evidence/</span><span class="o">_root</span><span class="c">12 file</span></div>
+          <div class="tr"><span class="d">pilots/</span><span class="o">_root</span><span class="c">12 file</span></div>
+          <div class="tr"><span class="d">tests/</span><span class="o">_code</span><span class="c">9 file</span></div>
+          <div class="tr"><span class="d">scripts/</span><span class="o">_code</span><span class="c">8 file</span></div>
+          <div class="tr"><span class="d">delegations/</span><span class="o">_root</span><span class="c">7 file</span></div>
+        </div>
+        <p class="note">Cột giữa là <strong>ai được ghi vào đó</strong>. Một vùng chỉ một AI được ghi tại một thời điểm; vùng của người khác thì chỉ được đọc. <code class="mono">workers/</code> không có chủ chung — từng gói extension tự giữ riêng.</p>
+      </div>
+
+      <div class="card">
+        <div class="sect">File ở gốc repo — 20 file</div>
+        <div class="fl">
+          <span class="">AGENTS.md</span>
+          <span class="">CLAUDE.md</span>
+          <span class="g">DASHBOARD.html</span>
+          <span class="g">DASHBOARD.md</span>
+          <span class="">FEATURE-PARITY.md</span>
+          <span class="">HANDOFF.md</span>
+          <span class="">IDEAS.md</span>
+          <span class="">PLATFORM.md</span>
+          <span class="">PROMPTS.md</span>
+          <span class="">README.md</span>
+          <span class="">STATUS.md</span>
+          <span class="">STATUS.template.md</span>
+          <span class="g">llms.txt</span>
+          <span class="">manifest.json</span>
+          <span class="">observer-engine.js</span>
+          <span class="">package.json</span>
+          <span class="">popup.css</span>
+          <span class="">popup.html</span>
+          <span class="">popup.js</span>
+          <span class="g">repo-map.json</span>
+        </div>
+        <p class="note">Ô <strong>xanh</strong> là file <strong>máy sinh</strong> — đừng sửa tay, sửa là mất ở lần sinh sau. Số còn lại là chữ của người.</p>
+      </div>
+
+      <div class="card">
+        <div class="sect">Khi cần gì thì mở file nào — 27 lối</div>
+        <div class="ow"><span>Vận hành / debug extension Gemini qua Bridge</span><span class="t">workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md</span></div>
+        <div class="ow"><span>Sửa code worker Gemini</span><span class="t">workers/duc-auto-gemini/v0.2.0/AGENTS.md</span></div>
+        <div class="ow"><span>Sửa code worker ChatGPT</span><span class="t">workers/duc-auto-chatgpt/v0.1.0/AGENTS.md</span></div>
+        <div class="ow"><span>Xem lỗi thật đã gặp trên trang, đừng chẩn đoán lại từ đầu</span><span class="t">AI-OPERATOR-GUIDE.md</span></div>
+        <div class="ow"><span>Hiểu schema workbook XLSX</span><span class="t">DAC_XLSX_RUN_PLAN_V1.md</span></div>
+        <div class="ow"><span>Biết Đức đã chốt gì, và vì sao</span><span class="t">docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md</span></div>
+        <div class="ow"><span>Biết phiên trước làm tới đâu</span><span class="t">HANDOFF.md</span></div>
+        <div class="ow"><span>Biết nhánh mình đang thiếu tính năng gì so với nhánh kia</span><span class="t">FEATURE-PARITY.md</span></div>
+        <div class="ow"><span>Mở phiên AI mới và cần hiểu repo trong một lần đọc</span><span class="t">llms.txt</span></div>
+        <div class="ow"><span>Muốn biết repo có extension nào, cái nào dùng được, đã kiểm chứng chưa</span><span class="t">DASHBOARD.md</span></div>
+        <div class="ow"><span>Hiểu cách vận hành nhiều extension trong một repo, hoặc thêm extension mới</span><span class="t">PLATFORM.md</span></div>
+        <div class="ow"><span>Khai trạng thái cho một extension (mới hoặc cũ)</span><span class="t">STATUS.template.md</span></div>
+        <div class="ow"><span>Muốn biết repo đang nợ gì về cấu trúc điều hướng</span><span class="t">node scripts/check-bootstrap.mjs</span></div>
+        <div class="ow"><span>Sắp code Extension Operation Platform V0.1 (STATUS/DASHBOARD)</span><span class="t">docs/archive/PLATFORM-V01-IMPLEMENTATION-BRIEF.md</span></div>
+        <div class="ow"><span>Sắp triển khai Extension Google Flow (video)</span><span class="t">docs/studies/FLOW-EXT-COORDINATION-PLAN.md</span></div>
+        <div class="ow"><span>Vận hành / sửa worker GG Flow Video</span><span class="t">workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md</span></div>
+        <div class="ow"><span>Vận hành Bridge khi NHIỀU profile Chrome cùng nối (bridge.sessions, --target,…</span><span class="t">drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md</span></div>
+        <div class="ow"><span>Tìm một tài liệu, hoặc tra đường dẫn drafts/… cũ nay nằm đâu</span><span class="t">docs/README.md</span></div>
+        <div class="ow"><span>Viết một file nghiên cứu mới trong …</span><span class="t">docs/_TEMPLATE-study.md</span></div>
+        <div class="ow"><span>Lấy bộ chuẩn về dùng cho repo khác, hoặc sửa bộ chuẩn</span><span class="t">https://github.com/anhducds-GIT/Ark_Repo_Harness</span></div>
+        <div class="ow"><span>Nhận hoặc trả quyền một gói</span><span class="t">node scripts/claim.mjs --take &lt;khoá&gt; --as &lt;phiên&gt; --task &quot;một câu&quot;</span></div>
+        <div class="ow"><span>Cổng báo DAU_VO — bảng quyền bị sửa tay</span><span class="t">claim.mjs</span></div>
+        <div class="ow"><span>Hiểu vì sao nhiều phiên hay va nhau, và các phương án đã cân</span><span class="t">docs/studies/PARALLEL-WORK-DESIGN-V0.md</span></div>
+        <div class="ow"><span>Đức cần một câu để dán cho AI, không muốn nhớ lệnh</span><span class="t">PROMPTS.md</span></div>
+        <div class="ow"><span>Xem bảng trạng thái mà không cần AI đăng hộ</span><span class="t">DASHBOARD.html</span></div>
+        <div class="ow"><span>Đức có một ý tưởng, hoặc muốn biết đang có những hướng nào chờ làm</span><span class="t">IDEAS.md</span></div>
+        <div class="ow"><span>Sinh bảng trạng thái cho Đức xem</span><span class="t">node scripts/build-overview.mjs &lt;file-ra.html&gt;</span></div>
+        <p class="note">Bảng này <strong>đọc lại từ luật gốc</strong>, không phải bản chép — nên nó không thể nói khác luật. Dòng có lệnh là việc chạy được, không phải file để mở.</p>
+      </div>
     </div>
   </div>
 

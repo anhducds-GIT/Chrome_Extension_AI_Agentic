@@ -86,7 +86,27 @@ const ideasDeps = (text) => ({
      bộ sinh. Fixture giả sẽ không bao giờ dựng lại được ca hỏng thật. ---- */
 {
   const { html, stats } = buildOverview(createDefaultDeps(ROOT));
-  const body = html.slice(html.indexOf('<div class="wrap">'));
+  const full = html.slice(html.indexOf(String.fromCharCode(60) + 'div class="wrap"' + String.fromCharCode(62)));
+
+  /* KHỐI BẢN ĐỒ là ngoại lệ DUY NHẤT, và nó thu hẹp phạm vi chứ không khoét lỗ.
+
+     Bất biến này sinh ra để chặn đường dẫn LỌT VÀO VĂN XUÔI mô tả — Đức không phải đọc chi
+     tiết kỹ thuật trong một câu kể. Ngày 03/09 Đức yêu cầu bản đồ file và cấu trúc thư mục
+     phải có trên bảng: ở đó đường dẫn CHÍNH LÀ nội dung được yêu cầu, không phải rác lọt vào.
+
+     Nên cách xử lý là: cắt khối `map` ra rồi kiểm phần CÒN LẠI như cũ, VÀ thêm một khẳng
+     định mới — đường dẫn chỉ được xuất hiện TRONG khối đó. Bản cũ không có khẳng định thứ
+     hai, nên nếu sau này ai chuyển bản đồ ra ngoài khối thì không ai biết. */
+  const MO = String.fromCharCode(60) + 'div class="map"' + String.fromCharCode(62);
+  const iMap = full.indexOf(MO);
+  assert.notEqual(iMap, -1, "phai co khoi ban do — Duc yeu cau 03/09");
+  const jMap = full.indexOf(String.fromCharCode(60) + "/div" + String.fromCharCode(62) + String.fromCharCode(10) + "  </div>", iMap);
+  assert.notEqual(jMap, -1, "khoi ban do phai dong lai duoc — neu khong, cat sai va phep kiem duoi vo nghia");
+  const khoiMap = full.slice(iMap, jMap);
+  const body = full.slice(0, iMap) + full.slice(jMap);
+
+  // Fixture phải dựng được ca hỏng: nếu khối map rỗng thì hai khẳng định dưới đều vô nghĩa.
+  assert.ok(khoiMap.length > 400, "khoi ban do phai co noi dung that, khong phai the rong");
 
   for (const [pattern, why] of [
     [/workers\//, "duong dan thu muc"],
@@ -96,6 +116,15 @@ const ideasDeps = (text) => ({
     [/\b[0-9a-f]{7,40}\b/, "chuoi giong ma commit"]
   ]) {
     assert.ok(!pattern.test(body), `bang KHONG duoc chua ${why} (khop ${pattern}) — Duc doc bang, khong doc repo`);
+  }
+
+  /* Và chiều ngược lại: bản đồ PHẢI nằm trong khối map. Không có khẳng định này thì ai
+     chuyển bản đồ ra ngoài khối sẽ làm bất biến trên xanh một cách sai. */
+  for (const [pattern, why] of [
+    [/workers\//, "duong dan goi extension"],
+    [/scripts\//, "duong dan thu muc ma"]
+  ]) {
+    assert.ok(pattern.test(khoiMap), `khoi ban do PHAI chua ${why} — neu khong thi ban do da bi chuyen ra ngoai khoi, va phep kiem tren xanh mot cach sai`);
   }
 
   // Con số phải là số đo thật, không phải chỗ trống trang trí.
@@ -228,16 +257,23 @@ const ideasDeps = (text) => ({
   const { html } = buildOverview(createDefaultDeps(ROOT));
   const tabs = [...html.matchAll(/role="tab" data-tab="([a-z-]+)" aria-selected="(true|false)"/g)];
   const panes = [...html.matchAll(/role="tabpanel" data-pane="([a-z-]+)"/g)].map((m) => m[1]);
-  assert.equal(tabs.length, 7, "phai co dung 7 tab");
-  assert.equal(panes.length, 7, "moi tab phai co dung mot khung noi dung");
+  /* GHIM QUAN HỆ, KHÔNG GHIM CON SỐ.
+
+     Bản đầu viết `assert.equal(tabs.length, 7)`. Thêm một tab là phép kiểm ĐỎ dù không có gì
+     sai — lại đúng cái bệnh "ghim hiện trạng thay vì ghim cơ chế" đã bắt hai lần trong ngày
+     03/09. Số tab là chuyện Đức quyết, không phải bất biến.
+
+     Cái PHẢI đúng là quan hệ: mỗi tab có đúng một khung, tên khớp nhau, đúng một tab được
+     chọn sẵn, và tất cả khung còn lại mang `hidden` — hỏng cái cuối là mở trang ra thấy mọi
+     khung chồng nhau, đúng bệnh cuộn-quá-nhiều mà tab sinh ra để chữa. */
+  assert.ok(tabs.length >= 7, `phai co it nhat 7 tab, dang co ${tabs.length}`);
+  assert.equal(panes.length, tabs.length, "moi tab phai co dung mot khung noi dung");
   assert.equal(tabs.filter((t) => t[2] === "true").length, 1, "dung MOT tab duoc chon san");
   assert.deepEqual(tabs.map((t) => t[1]).sort(), [...panes].sort(), "ten tab va ten khung phai khop");
 
-  // Sáu khung sau phải mang `hidden`, nếu không thì mở trang ra là bảy khung chồng nhau —
-  // đúng cái bệnh cuộn-quá-nhiều mà tab sinh ra để chữa.
-  assert.equal([...html.matchAll(/role="tabpanel" data-pane="[a-z-]+" hidden/g)].length, 6,
-    "sau khung con lai PHAI co hidden, khong thi bay khung chong nhau");
-
+  const an = [...html.matchAll(/role="tabpanel" data-pane="[a-z-]+" hidden/g)].length;
+  assert.equal(an, tabs.length - 1,
+    `moi khung TRU MOT phai co hidden: co ${tabs.length} tab thi phai ${tabs.length - 1} khung an, dang co ${an}`);
   // LINK CHẾT LÀ LỖI ÂM THẦM: Đức bấm, không có gì xảy ra, và không ai biết.
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
   const links = [...html.matchAll(/href="#([^"]+)" data-goto="([a-z-]+)"/g)];
@@ -246,7 +282,7 @@ const ideasDeps = (text) => ({
     assert.ok(ids.has(target), `link "#${target}" khong co dich tren trang — bam vao khong co gi xay ra`);
     assert.ok(panes.includes(goto), `link tro sang tab "${goto}" khong ton tai`);
   }
-  ok(`7 tab, 6 khung an, va ca ${links.length} link o bang tong deu co dich that`);
+  ok(`${tabs.length} tab, ${an} khung an, va ca ${links.length} link o bang tong deu co dich that`);
 }
 
 /* ---- 11. MÔ TẢ FAIL CLOSED — thà trống còn hơn khai sai tên ---- */
