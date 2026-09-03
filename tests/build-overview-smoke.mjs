@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { buildOverview, debtByUnit, humanWork, IDEA_STAGES, isDone, readBrief, readDecisions, readFeatures, readIdeas, shorten } from "../scripts/build-overview.mjs";
+import { buildOverview, debtByUnit, humanWork, IDEA_STAGES, isDone, readBrief, readDecisions, readFeatures, readIdeas, shorten, sinhTrang, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -326,4 +326,49 @@ const ideasDeps = (text) => ({
   ok(`nhat ky: ${d.total} quyet dinh, ten doc tu tieu de trong file nen co dau`);
 }
 
+/* ---- 14. BẢN COMMIT PHẢI TẤT ĐỊNH — phép kiểm quan trọng nhất của lần này ----
+
+   `DASHBOARD.html` nay nằm trong khối `generators`, nên cổng chạy `--check-head` mỗi phiên
+   và `safe-push` TỪ CHỐI ĐẨY khi nó lệch. Nếu nội dung phụ thuộc GIỜ ĐỒNG HỒ thì sang ngày
+   mới là nó lệch HEAD **dù không một dữ liệu nào đổi**, và MỌI phiên khác bị chặn push chỉ
+   vì một ngày đã qua. Đó không phải lỗi của bảng — đó là lỗi làm tê cả repo.
+
+   Bốn lượt sinh, không nhiều hơn: một lượt tốn ~9 giây (đo 03/09) và suite này chạy trong
+   cổng đóng phiên của MỌI phiên. Bản đầu gọi sáu lượt bằng deps HEAD và vượt 120 giây —
+   cơ chế cần kiểm là "có nhìn đồng hồ hay không", và nó không khác nhau giữa hai loại
+   deps, nên deps đĩa là đủ. ---- */
+{
+  const deps = createDefaultDeps(ROOT);
+  const ten = path.basename(ROOT);
+  const r1 = sinhTrang(deps);
+  const a = r1.html;
+  /* KHONG kiem lai "sinh hai lan ra y het" o day: cong dong phien chay
+     `build-overview.mjs --check-head` MOI PHIEN, tuc tinh tat dinh duoc kiem lien tuc tren
+     repo that. Mot luot sinh ton ~9 giay, va file nay chay trong cong cua moi phien — bo
+     mot luot du la tra lai 9 giay cho tung phien, moi ngay. */
+
+  const moc = Date.parse(`${r1.stats.stamp}T00:00:00Z`);
+
+  /* FIXTURE PHẢI DỰNG ĐƯỢC CA HỎNG. Nếu `buildOverview` vốn đã phớt lờ `today` thì khẳng
+     định bên dưới xanh một cách vô nghĩa. Chứng minh nó CÓ nhảy theo `today` trước đã. */
+  assert.notEqual(buildOverview(deps, { title: ten, today: moc + 40 * 86400000 }).html, a,
+    "buildOverview VAN phai nhay theo `today` khi duoc truyen — neu khong, khang dinh duoi vo nghia");
+
+  // Và điều thật sự phải đúng: `sinhTrang` KHÔNG ĐƯỢC nhìn đồng hồ.
+  const thuc = Date.now;
+  try {
+    Date.now = () => moc + 99 * 86400000;
+    assert.equal(sinhTrang(deps).html, a,
+      "doi dong ho len 99 ngay ma ban commit PHAI khong doi mot byte — neu doi thi moi phien bi chan push khi sang ngay");
+  } finally {
+    Date.now = thuc;
+  }
+
+  // Báo cũ không mất đi: nó do JS trong trang tự tính lúc MỞ, từ mốc ngày nhúng sẵn.
+  assert.match(a, /data-sinh="[0-9]{4}-[0-9]{2}-[0-9]{2}"/, "trang phai nhung moc ngay de JS tinh tuoi luc xem");
+  assert.match(a, /nay > b[.]dataset[.]sinh/, "va phai co doan JS so ngay xem voi ngay sinh");
+
+  assert.equal(TRANG_FILE, "DASHBOARD.html", "ten ban chuan cua repo");
+  ok("ban commit TAT DINH: doi dong ho 99 ngay khong doi mot byte, bao cu do JS tinh luc mo");
+}
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

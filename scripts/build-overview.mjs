@@ -18,7 +18,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { collectModel, createDefaultDeps } from "./build-dashboard.mjs";
+import { collectModel, createDefaultDeps, createHeadDeps } from "./build-dashboard.mjs";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(MODULE_FILE), "..");
@@ -516,7 +516,12 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
 
   /* So hai MỐC NGÀY, không so mốc thời điểm. Bản cũ lấy `Date.now()` (có giờ, phút) trừ
      nửa đêm UTC rồi làm tròn — sinh bảng sau trưa là ra "1 ngày trước" NGAY TRONG NGÀY SINH. */
-  const todayStamp = new Date(today).toISOString().slice(0, 10);
+  // `today: "head"` = suy mốc từ chính HEAD, để bản commit không nhìn đồng hồ. Xem ghi chú
+  // dài ở `sinhTrang`: nội dung phụ thuộc giờ đồng hồ sẽ chặn push của MỌI phiên khi sang ngày.
+  const nowMs = today === "head"
+    ? (Date.parse(`${model.headDate}T00:00:00Z`) || Date.now())
+    : today;
+  const todayStamp = new Date(nowMs).toISOString().slice(0, 10);
   const stamp = model.headDate || todayStamp;
   const ageDays = Math.max(0, Math.round((Date.parse(todayStamp) - Date.parse(stamp)) / 86400000));
   const stale = ageDays > 7;
@@ -864,19 +869,59 @@ ${STYLE}
 }
 
 
+export const TRANG_FILE = "DASHBOARD.html";
+
+/* MỐC THỜI GIAN CỦA BẢN COMMIT SUY TỪ HEAD, KHÔNG TỪ ĐỒNG HỒ.
+ *
+ * Vì sao đây là chỗ dễ làm hỏng cả repo: `DASHBOARD.html` nay nằm trong khối `generators`,
+ * nên cổng chạy `--check-head` mỗi phiên và `safe-push` TỪ CHỐI ĐẨY khi nó lệch. Nếu nội
+ * dung file phụ thuộc giờ đồng hồ (dòng "hôm nay" / "N ngày trước") thì sang ngày mới là
+ * nó lệch HEAD **dù không một dữ liệu nào đổi** — và mọi phiên khác bị chặn push chỉ vì một
+ * ngày đã qua. Đó là tự bắn vào chân cả repo.
+ *
+ * Nên bản commit lấy `today` = chính mốc ngày của HEAD: `ageDays` luôn 0, chữ luôn là
+ * "hôm nay", và output suy hoàn toàn từ HEAD. Việc BÁO CŨ không mất đi — nó do đoạn JS
+ * trong trang tự tính lúc Đức MỞ trang, từ `data-sinh`. Đúng chỗ hơn: một trang tĩnh không
+ * biết trước bao giờ có người mở nó. */
+export function sinhTrang(deps) {
+  // `today: "head"` chu khong phai mot con so tinh truoc: tinh truoc thi phai goi
+  // collectModel MOT LAN NUA chi de lay mot ngay, va do la ca mot luot doc 59 tai lieu.
+  // Ban dau lam the va suite chay qua 120 giay.
+  return buildOverview(deps, { title: path.basename(ROOT), today: "head" });
+}
+
 function main() {
-  const out = process.argv[2];
-  if (!out) {
-    console.error("Dùng: node scripts/build-overview.mjs <file-ra.html>");
-    process.exit(2);
+  const args = process.argv.slice(2);
+
+  if (args.includes("--check-head")) {
+    // Sinh TỪ HEAD rồi so với chính bản đã commit. Không đọc đĩa: đĩa có thể đang sửa dở,
+    // và cổng hỏi một câu về HEAD chứ không về thư mục làm việc.
+    const deps = createHeadDeps(ROOT);
+    let dangCo;
+    try { dangCo = deps.readFile(TRANG_FILE); }
+    catch {
+      console.error(`THIEU_TRANG: ${TRANG_FILE} chưa có trong HEAD. Sinh lại rồi commit:`);
+      console.error(`  node scripts/build-overview.mjs`);
+      process.exit(1);
+    }
+    const { html } = sinhTrang(deps);
+    if (html !== dangCo) {
+      console.error(`TRANG_CU: ${TRANG_FILE} đã commit không khớp với HEAD. Sinh lại rồi commit:`);
+      console.error(`  node scripts/build-overview.mjs`);
+      process.exit(1);
+    }
+    console.log(`${TRANG_FILE} khớp với HEAD.`);
+    process.exit(0);
   }
-  // Tên bảng = tên repo, lấy từ thư mục gốc. Không viết tên cứng vào đây: bộ sinh này
-  // được mang sang repo khác, và một cái tên cứng sẽ theo sang đó mà không ai để ý.
-  const { html, stats } = buildOverview(createDefaultDeps(ROOT), { title: path.basename(ROOT) });
+
+  // Không đưa đường dẫn thì ghi vào bản chuẩn của repo. Có đưa thì ghi ra đó — dùng khi
+  // muốn xem thử mà không chạm file trong repo.
+  const out = args.find((a) => !a.startsWith("--")) || path.join(ROOT, TRANG_FILE);
+  const { html, stats } = sinhTrang(createDefaultDeps(ROOT));
   fs.writeFileSync(out, html, "utf8");
   console.log(`Đã sinh ${out}`);
   console.log(`  ý tưởng: ${stats.ideas} · extension: ${stats.extensions} · nợ kỹ thuật: ${stats.debt} · quyết định: ${stats.decisions} · đã thay thế: ${stats.superseded}`);
-  console.log(`  sinh tại mốc ${stats.stamp} (${stats.ageDays} ngày trước)${stats.stale ? " — ĐÃ CŨ, cờ đỏ bật" : ""}`);
+  console.log(`  mốc HEAD ${stats.stamp} — báo cũ do trang tự tính lúc mở`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === MODULE_FILE) main();
