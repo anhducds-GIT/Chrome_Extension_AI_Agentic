@@ -584,7 +584,7 @@ riêng (đúng ghi chú trong chính ADR). Gồm: mỗi phiên một RUN_ACTIVE 
 attribution gắn theo tab, GPT invariant "page-scoped vs session-scoped" (mục 6 sổ tay) sẽ
 đổi nghĩa khi đó. Làm xong trên GPT rồi mới nghĩ tới migrate.
 
-### B-36 · (P1) `PERSISTENCE_FILENAME_MISMATCH` chặn MỌI mutation Bridge khi đích ghi là Chrome Downloads — **[ĐO] live 2026-09-03**
+### B-36 · (P1) `PERSISTENCE_FILENAME_MISMATCH` chặn MỌI mutation Bridge khi đích ghi là Chrome Downloads — **[ĐO] live 2026-09-03 · ĐÃ VÁ 2026-09-04, CHỜ NGHIỆM THU LIVE**
 
 **Triệu chứng.** `jobs.add` qua Bridge trả `INTERNAL_ERROR`, stack:
 
@@ -655,6 +655,29 @@ không phải Chrome đổi hành vi.
 trong Side Panel. Khi đó `saveAuditLog` đi nhánh `writeFileWithPolicy(location.handle, …)` —
 File System Access, không qua Chrome Downloads, determiner không nằm trên đường. Đây cũng là
 cấu hình mà chính mã khuyến nghị ("Continue using the authorized run folder").
+
+**ĐÃ VÁ 2026-09-04 — và cách phát biểu bản vá quan trọng hơn bản vá.** Tôi *không* đo được
+Chrome đang kích nhánh nào; đo được là **mã có HAI nhánh im lặng mất tên**, và cả hai đều dựng
+nổi ca hỏng. Nên không cần biết Chrome cư xử ra sao mới gọi cả hai là lỗi: im lặng mất tên của
+một download do chính mình khởi tạo là lỗi ở cả hai nhánh.
+
+Bản vá đổi **bằng chứng sở hữu**: từ `item.byExtensionId` sang **phiếu giữ tên**. Phiếu khớp URL
+là bằng chứng mạnh hơn — chỉ extension này tạo nổi một blob URL trên origin của nó, và phiếu chỉ
+được trồng ngay trước `downloads.download`, trong cùng một lượt. Tra phiếu TRƯỚC, nhường chỉ khi
+không có phiếu dùng được. Thêm một nhánh đi vòng hẹp cho trường hợp Chrome báo lại URL lệch: chỉ
+nhận khi đủ ba điều — blob trên origin của chính mình, còn đúng MỘT phiếu còn hạn, phiếu cũng
+trỏ vào origin ấy. Nhiều phiếu thì nhường, vì đoán là gán tên của job này cho file của job kia.
+
+**Một phép kiểm cũ phải viết lại, và đó là bài học riêng.** `download-name-determiner-static.mjs`
+khẳng định determiner PHẢI chứa `item.byExtensionId !== chrome.runtime.id` — nó ghim CÁCH LÀM, mà
+cách làm chính là con bug. Vá xong là nó đỏ: **một phép kiểm khẳng định sự tồn tại của bug là một
+bức tường chặn đường sửa bug.** Đã viết lại thành bất biến sống được qua bản vá (sở hữu do phiếu
+quyết định · phải còn đường nhường · KHÔNG được quay lại gác bằng `byExtensionId`), và dời phần
+kiểm KẾT QUẢ sang phép kiểm hành vi. Suite 103 → **104/104**, 8/8 mutation đỏ.
+
+**CHƯA nghiệm thu live.** Cần Đức reload extension một lần rồi chạy lại một mutation Bridge với
+đích ghi là Chrome Downloads (tức KHÔNG chọn thư mục). Đạt = file mang đúng tên
+`<base>__audit.jsonl`, không phải GUID. Đừng ghi là đã đóng trước lúc đó.
 
 **Làm xong nghĩa là gì.** Một phép kiểm **hành vi** (không phải tĩnh) dựng nổi cả hai giả
 thuyết: fake `chrome.downloads` phát `onDeterminingFilename` với `byExtensionId` sai, và với

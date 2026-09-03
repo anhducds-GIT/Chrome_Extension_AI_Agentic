@@ -39,11 +39,41 @@ function rememberExpectedDownloadName(url, filename, conflictAction) {
   return true;
 }
 
+// Bằng chứng sở hữu là PHIẾU GIỮ TÊN, không phải `item.byExtensionId`.
+//
+// Bản trước hỏi `byExtensionId` TRƯỚC rồi mới tra phiếu, và trả về sớm bằng
+// `suggest()` trần khi trường đó không khớp. `suggest()` trần nghĩa là "tôi
+// không có ý kiến", nên Chrome dùng tên mặc định — mà tên mặc định của một blob
+// URL LÀ cái GUID. Kết quả: một trường metadata trống là đủ để mất tên, im lặng.
+// Đo được (B-36): 36 file tên-GUID trong Downloads, 09/07 → 04/09, gồm cả file
+// 28/08 tức sau khi B-13 được ghi "đã đóng".
+//
+// Phiếu giữ tên khớp URL là bằng chứng sở hữu MẠNH HƠN: chỉ extension này tạo
+// nổi một blob URL trên origin của chính nó, và phiếu chỉ được trồng ngay trước
+// khi `downloads.download` được gọi, trong cùng một lượt. Nên: tra phiếu trước,
+// nhường chỉ khi KHÔNG có phiếu dùng được.
+function takeExpectedDownloadName(item) {
+  const now = Date.now();
+  const direct = expectedDownloadNames.get(item?.url);
+  if (direct) {
+    expectedDownloadNames.delete(item.url);
+    return direct.expires < now ? null : direct;
+  }
+  // Chrome có thể báo lại một chuỗi URL khác chuỗi ta dùng làm khoá. Chỉ nhận
+  // khi đúng ba điều cùng lúc: blob trên origin của CHÍNH extension này, còn
+  // đúng MỘT phiếu còn hạn, và phiếu đó cũng trỏ vào origin ấy. Nhiều phiếu
+  // cùng lúc thì không đoán — đặt sai tên tệ hơn để Chrome đặt GUID.
+  const ourBlobPrefix = `blob:chrome-extension://${chrome.runtime.id}/`;
+  if (typeof item?.url !== "string" || !item.url.startsWith(ourBlobPrefix)) return null;
+  const live = [...expectedDownloadNames].filter(([url, value]) => value.expires >= now && url.startsWith(ourBlobPrefix));
+  if (live.length !== 1) return null;
+  expectedDownloadNames.delete(live[0][0]);
+  return live[0][1];
+}
+
 chrome.downloads.onDeterminingFilename?.addListener((item, suggest) => {
-  if (item.byExtensionId !== chrome.runtime.id) { suggest(); return; }
-  const expected = expectedDownloadNames.get(item.url);
-  expectedDownloadNames.delete(item.url);
-  if (!expected || expected.expires < Date.now()) { suggest(); return; }
+  const expected = takeExpectedDownloadName(item);
+  if (!expected) { suggest(); return; }
   suggest({ filename: expected.filename, conflictAction: expected.conflictAction });
 });
 

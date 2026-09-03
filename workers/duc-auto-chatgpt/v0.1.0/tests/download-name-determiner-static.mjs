@@ -15,9 +15,26 @@ const panel = fs.readFileSync(path.join(root, "sidepanel.js"), "utf8");
 // Determiner registered, scoped to our own downloads, defers otherwise.
 assert.match(background, /chrome\.downloads\.onDeterminingFilename\?\.addListener/, "determiner must be registered");
 const determiner = background.slice(background.indexOf("onDeterminingFilename"), background.indexOf("chrome.runtime.onMessage.addListener"));
-assert.match(determiner, /item\.byExtensionId !== chrome\.runtime\.id/, "must defer on other extensions' downloads");
-assert.match(determiner, /expectedDownloadNames\.get\(item\.url\)/, "must key expectations by url");
+// 2026-09-04, B-36: this file used to assert the determiner contains
+// `item.byExtensionId !== chrome.runtime.id`. That pinned the IMPLEMENTATION,
+// and the implementation was the bug -- Chrome does not always populate that
+// field, and the bare `suggest()` behind it silently handed the download
+// Chrome's default name, which for a blob URL is a GUID. 36 GUID-named files
+// on disk between 09 Jul and 04 Sep, including one dated 28 Aug, i.e. AFTER
+// B-13 was written into "closed". A test that asserts the presence of a bug is
+// a wall across the road to fixing it.
+//
+// Rewritten as invariants that survive the fix. The OUTCOMES these lines used
+// to gesture at -- names honoured, other people's downloads deferred, expired
+// tickets refused -- are now proven by running the shipped code against real
+// DownloadItem shapes in tests/download-name-determiner-behaviour.mjs (8/8
+// mutations red). Static assertions keep only what static reading can prove:
+// that ownership is decided by the ticket, and that a defer path exists.
+assert.match(determiner, /takeExpectedDownloadName\(item\)/, "ownership must be decided by the reservation lookup, not by a metadata field");
+assert.match(determiner, /if \(!expected\) \{ suggest\(\); return; \}/, "must keep a defer path: no usable ticket means no opinion, so other extensions' downloads are left alone");
 assert.match(determiner, /suggest\(\{ filename: expected\.filename, conflictAction: expected\.conflictAction \}\)/, "must suggest the expected name");
+assert.match(background, /expectedDownloadNames\.get\(item\?\.url\)/, "must still key expectations by url as the primary lookup");
+assert.doesNotMatch(determiner, /byExtensionId/, "the determiner must NOT gate on byExtensionId again -- that field is the 8-week bug (B-36)");
 
 // Expectations validated and TTL-pruned; conflictAction restricted to the
 // chrome enum (never "fail" — that policy is pre-checked before download).
