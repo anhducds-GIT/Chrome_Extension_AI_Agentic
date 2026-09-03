@@ -198,6 +198,31 @@
     return {};
   }
 
+  /* `chat.read` — hai nắp, và CẢ HAI đều có mặc định nên người gọi không phải nghĩ.
+     `limit` là số LƯỢT (mới nhất trước hết), `max_chars_per_turn` là chữ mỗi lượt.
+     Trần 50 lượt × 40000 chữ = 2M, vẫn trên nắp envelope 1MB — nên nắp envelope vẫn là
+     lớp chặn cuối, và người gọi tham thì bị nó chặn chứ không được đi qua êm. */
+  const CHAT_READ_TOTAL_CHAR_BUDGET = 200000;
+
+  function validateChatRead(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["limit", "max_chars_per_turn"], "params");
+    const value = {
+      limit: params.limit === undefined ? 10 : integerValue(params.limit, "params.limit", 1, 50),
+      max_chars_per_turn: params.max_chars_per_turn === undefined ? 8000 : integerValue(params.max_chars_per_turn, "params.max_chars_per_turn", 200, 40000)
+    };
+    // Each cap is safe alone and lethal multiplied: 50 turns x 40000 characters is
+    // about 2 MB of text, and the envelope ceiling is 1 MB, so the frame would be
+    // rejected on the way back rather than the request refused on the way out --
+    // the caller would see a transport failure and blame the connection. Refuse the
+    // combination at the door instead, and refuse rather than silently drop turns:
+    // a short answer that looks complete is worse than an error that says ask for less.
+    if (value.limit * value.max_chars_per_turn > CHAT_READ_TOTAL_CHAR_BUDGET) {
+      invalidParams("params", `limit x max_chars_per_turn must not exceed ${CHAT_READ_TOTAL_CHAR_BUDGET} characters in total (asked for ${value.limit * value.max_chars_per_turn})`);
+    }
+    return value;
+  }
+
   function negotiateVersion(clientVersions) {
     if (!Array.isArray(clientVersions) || !clientVersions.length || clientVersions.some((version) => !Number.isInteger(version) || version < 1)) {
       invalidParams("params.supported_versions", "expected a non-empty array of positive integer major versions");
@@ -691,7 +716,8 @@
     // it. Reloading mid-run destroys the content script and any attempt in
     // flight, which costs quota already spent and risks a second submission of
     // the same prompt. The pair is meant to be used in sequence, never stacked.
-    registryEntry({ name: "chat.reload", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reload the provider tab (F5) and wait until its content script answers again before replying. Refused with RUN_ACTIVE while a run is live, because a reload would kill an in-flight attempt and risk resubmitting a prompt: call run.stop first. Reports ready plus the tab id and the URL before and after, since the tab is resolved as the active tab at call time.", params_schema: {}, params_validator: validateEmptyParams })
+    registryEntry({ name: "chat.reload", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reload the provider tab (F5) and wait until its content script answers again before replying. Refused with RUN_ACTIVE while a run is live, because a reload would kill an in-flight attempt and risk resubmitting a prompt: call run.stop first. Reports ready plus the tab id and the URL before and after, since the tab is resolved as the active tab at call time.", params_schema: {}, params_validator: validateEmptyParams }),
+    registryEntry({ name: "chat.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read the newest conversation turns on the provider tab as text, oldest first inside the returned slice, each with role, id, character count and its own truncation flag. Strictly read-only: never clicks, types, or moves focus, and allowed while a run is live because reading disturbs nothing. Refused with WRONG_SURFACE off a conversation page, since reading a launcher page returns zero turns and looks exactly like an empty conversation. Reports NO_TURNS_MATCHED plus the data-attribute names actually present when the turn selector has rotted, so a dead selector is rebuilt from evidence instead of guessed. The two caps are also bounded together: limit x max_chars_per_turn may not exceed 200000 characters, because either cap at its own maximum is fine and the product would overflow the 1 MB envelope.", params_schema: { limit: "integer:1..50", max_chars_per_turn: "integer:200..40000", _total: "limit * max_chars_per_turn <= 200000" }, params_validator: validateChatRead }),
   ];
   const METHOD_REGISTRY = (() => {
     const registry = Object.create(null);

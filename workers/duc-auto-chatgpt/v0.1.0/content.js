@@ -146,6 +146,63 @@
     return message ? (message.innerText || message.textContent || "").trim() : "";
   }
 
+  /* chat.read — ĐỌC TRỌN CHỮ CỦA CÁC LƯỢT HỘI THOẠI. Hàm THUẦN: nhận `doc` và hai selector,
+     không đọc biến ngoài — nên phép kiểm chạy được CHÍNH đoạn này trên DOM giả, không phải một
+     bản chép. Chỗ nào không gọi được thì không kiểm được (bài học lỗi #5).
+
+     VÌ SAO KHÔNG NỚI `diagnostics.dom_probe` CHO ĐỦ CHỮ: probe là máy soi CẤU TRÚC. Payload của
+     nó có nắp 64KB và mọi trường cố tình cắt ngắn — `txtHead` 60 ký tự, 4 khung. Nới nó ra để
+     chở nội dung là bắt một trường làm hai việc, và cái vỡ trước sẽ là chẩn đoán: đúng lỗi #5
+     (02/09), một trường vừa mù vừa tự báo khoẻ, sống một tuần ngay trong hồ sơ bằng chứng.
+
+     BA TRẠNG THÁI, và chúng PHẢI phân biệt được — cùng lý do như `messageSampleDiag`:
+       OK                  · có lượt, có chữ
+       MATCHED_BUT_NO_TEXT · khung thật, trang chưa có chữ
+       NO_TURNS_MATCHED    · SELECTOR ĐÃ CHẾT — dựng lại từ `attribute_names`, đừng đoán
+     Gộp hai cái sau thành một là bắt người đọc phân biệt "trang trống" với "selector chết",
+     hai kết luận chỉ về hai hướng ngược nhau. */
+  function readTurns(doc, assistantSel, userSel, limit, maxChars) {
+    const selector = `${assistantSel}, ${userSel}`;
+    const turns = Array.from(doc.querySelectorAll(selector));
+    if (turns.length === 0) {
+      // Trả kèm tên attribute ĐANG CÓ THẬT trên trang. Không có nó thì phiên sau phải ĐOÁN
+      // selector mới, mà đoán selector là đúng thứ luật vàng 1 cấm.
+      //
+      // LƯỚI DÒ KHÔNG CHỨA MỘT CHỮ NÀO CỦA NHÀ CUNG CẤP — cố ý, và phép kiểm
+      // `provider-adapter-static` cưỡng chế đúng điều này: ngoài khối probe, mọi kiến thức
+      // selector phải đi qua adapter. Bản đầu của tôi đóng cứng tên attribute lượt-nói ngay
+      // ở đây và bị phép kiểm đó bắt — đúng kiểu drift đã sinh ra lỗi #5.
+      //
+      // Và quét trần `*` còn ĐÚNG HƠN về mặt chức năng: nhánh này chỉ chạy khi MỌI marker đã
+      // biết đều chết, nên một lưới dò cũng dựng từ marker đã biết thì sẽ chết cùng lúc và trả
+      // về rỗng — vô dụng đúng lúc cần nhất. Nắp 400 phần tử: đây là đường CHẨN ĐOÁN, chỉ chạy
+      // khi đã hỏng, nên trả chậm một nhịp còn hơn không nói được gì.
+      const names = [...new Set(Array.from(doc.querySelectorAll("*"))
+        .slice(0, 400)
+        .flatMap((element) => Array.from(element.attributes || []).map((attribute) => attribute.name))
+        .filter((name) => /^data-/.test(name)))].slice(0, 30);
+      return { status: "NO_TURNS_MATCHED", selector, matched: 0, returned: 0, with_text: 0, attribute_names: names, turns: [] };
+    }
+    // ĐUÔI, không phải ĐẦU: một cuộc trao đổi cần lượt MỚI NHẤT. `slice(0, limit)` trả về phần
+    // mở đầu và bỏ mất đúng câu trả lời vừa tới — sai lặng lẽ, vì payload vẫn trông đầy đủ.
+    const tail = turns.slice(Math.max(0, turns.length - limit));
+    let withText = 0;
+    const rows = tail.map((element) => {
+      const full = assistantMessageText(element);
+      if (full) withText += 1;
+      return {
+        role: element.matches(assistantSel) ? "assistant" : "user",
+        id: element.getAttribute("data-message-id") || element.getAttribute("data-turn-id") || null,
+        chars: full.length,
+        truncated: full.length > maxChars,
+        text: full.slice(0, maxChars)
+      };
+    });
+    // `attribute_names` GIỮ KHOÁ cả ở đường thành công: hình dạng ổn định thì phía đọc không
+    // phải xử lý hai kiểu payload. Cùng luật đang áp cho `repo-map.json`.
+    return { status: withText === 0 ? "MATCHED_BUT_NO_TEXT" : "OK", selector, matched: turns.length, returned: rows.length, with_text: withText, attribute_names: [], turns: rows };
+  }
+
   function latestAssistantText() {
     const messages = assistantMessages();
     return assistantMessageText(messages[messages.length - 1]);
@@ -810,6 +867,34 @@
         generationLimitBlocker: generationLimitText(),
         abPollPending: abPollPending(),
       });
+      return false;
+    }
+
+    if (message.type === "DAC_CHAT_READ") {
+      // STRICTLY READ-ONLY (bridge method chat.read): đọc chữ của các lượt hội thoại.
+      // Không click, không gõ, không đổi focus — cùng luật với DAC_DOM_PROBE.
+      //
+      // CỬA SURFACE ĐÓNG NGAY Ở ĐÂY. Lỗi #2 (vá 02/09): `surfaceAllowed` tồn tại mà KHÔNG ai
+      // gọi, nên `ping` báo READY cả ở trang chủ. Đọc ở trang phóng thì trả 0 lượt, và 0 lượt
+      // trông y hệt một hội thoại trống — lại đúng hình dạng "mù mà tự báo khoẻ".
+      if (!surfaceAllowedNow()) {
+        sendResponse({ ok: false, error: `WRONG_SURFACE: ${location.href} không phải một cuộc hội thoại. Mở /c/<id> rồi gọi lại — đọc ở trang phóng chỉ trả 0 lượt và trông y như hội thoại trống.` });
+        return false;
+      }
+      // HAI NẮP LÀ BẮT BUỘC, và thiếu thì TỪ CHỐI chứ không tự đặt mặc định. Envelope tối đa
+      // 1MB; một hội thoại dài vượt xa con số đó, nên "không khai nắp" mà lùi về đọc-tất-cả là
+      // đường vòng làm vỡ envelope. Bridge đã validate rồi — nhánh này chặn lời gọi từ chỗ khác.
+      const limit = Number(message.limit);
+      const maxChars = Number(message.maxCharsPerTurn);
+      if (!Number.isInteger(limit) || limit < 1 || !Number.isInteger(maxChars) || maxChars < 1) {
+        sendResponse({ ok: false, error: "CHAT_READ_FAILED: thiếu limit / maxCharsPerTurn hợp lệ. Hai nắp này bắt buộc — envelope tối đa 1MB." });
+        return false;
+      }
+      try {
+        sendResponse({ ok: true, read: { url: location.href, ...readTurns(document, assistantSelector(), userSelector(), limit, maxChars) } });
+      } catch (error) {
+        sendResponse({ ok: false, error: `CHAT_READ_FAILED: ${error?.message || error}` });
+      }
       return false;
     }
 

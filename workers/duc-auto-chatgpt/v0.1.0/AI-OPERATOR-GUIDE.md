@@ -85,6 +85,37 @@ Mỗi dòng dưới đây là **lỗi đã gặp thật**, có bằng chứng. �
 | **Đọc `matched` cho đúng** | `matched: 10` trên một trang **5 lượt** không phải lỗi. Mỗi lượt ChatGPT có **hai** tầng cùng khớp: khung ngoài (`data-turn` + `data-testid="conversation-turn-N"`) và khối trong (`data-message-author-role` + `data-message-id`). Nên 4 mẫu chữ phủ **2 lượt**, không phải 4. Giữ nguyên có chủ đích: khi một tầng marker chết, thứ cần thấy chính là tầng nào còn sống, và `attrs` hiển thị rõ hai tầng cạnh nhau. Muốn đếm lượt thì đọc `assistantCount`, đừng đọc `matched`. |
 | **Bằng chứng** | `tests/dom-probe-message-sample-smoke.mjs` — chạy **chính đoạn mã đã ship**, cắt ra từ `content.js`, trên 3 DOM giả dựng theo số đo live. 3/3 đột biến bị bắt. **Nghiệm thu live 02/09 sau khi Đức reload:** `evidence-dom-probe-message-sample-20260902/` — payload thô trước và sau, `status: "OK"`, `with_text: 4`, chữ tiếng Việt có dấu của trang nằm trong `txtHead`. |
 
+## Muốn ĐỌC nội dung hội thoại về máy — dùng `chat.read`, không dùng `dom_probe`
+
+**[ĐO] live 2026-09-03**, ghế `MVP_GPT Chat debug`, bằng chứng thô ở
+`evidence-chat-read-20260903/`.
+
+Lỗi #5 vá cho probe **thấy** được chữ. Nó không làm probe **chở** được chữ, và đây là số đo:
+`dom_probe` cắt mỗi mẫu ở 60 ký tự và chỉ lấy 4 khung, mà mỗi lượt ChatGPT khớp **hai** tầng
+khung — nên nó phủ đúng **2 lượt**. Quét cả payload probe, trường chữ dài nhất là cái URL:
+**114 ký tự**. Đủ để trả lời "selector còn sống không", không đủ để đọc một câu trả lời.
+
+**Đừng nới `dom_probe` cho đủ chữ.** Probe là máy soi *cấu trúc*: nắp 64 KB, mọi trường cắt
+ngắn có chủ đích. Bắt nó chở nội dung là bắt một trường làm hai việc, và cái vỡ trước sẽ là
+**chẩn đoán** — đúng cách lỗi #5 sống được một tuần.
+
+| | |
+|---|---|
+| **Gọi thế nào** | `node bridge-cli.mjs chat-read --pairing <...> --target "<nhãn phiên>" --limit 2 --max-chars 400` |
+| **Trả về gì** | `turns[]` **cũ trước mới sau trong lát đã lấy**, mỗi lượt có `role` · `id` · `chars` · `truncated` · `text`. Kèm `matched` · `returned` · `with_text` · `selector` · `status`. |
+| **`limit` lấy từ ĐUÔI** | `limit: 3` trên hội thoại 12 lượt trả **3 lượt cuối**. Đây là ca đột biến im lặng nhất: lấy từ đầu vẫn trả đủ số lượt, payload trông y như thật, chỉ là câu trả lời vừa tới **không có trong đó**. |
+| **`chars` là độ dài THẬT trên trang** | Không phải độ dài sau khi cắt. Nên `chars > max_chars_per_turn` cộng `truncated: true` là cách biết mình đang đọc thiếu bao nhiêu — đọc `text.length` thì không bao giờ biết. |
+| **`matched: 5` trên hội thoại 5 lượt** | **Khác `dom_probe` có chủ đích.** Probe cố ý khớp cả hai tầng marker nên `matched: 10` trên trang 5 lượt (lỗi #5). `chat.read` phân giải qua adapter và lấy ứng viên **ĐẦU TIÊN** khớp, nên mỗi lượt đếm đúng một lần. Đó là lý do hai method không gộp được. |
+| **Selector chết thì nó NÓI** | `status: NO_TURNS_MATCHED` kèm `selector` đã thử và `attribute_names` — tên attribute **thật đang có trên trang**, quét trung tính (`*`, nắp 400 phần tử), **không** dựng từ marker đã biết: một lưới dò dựng từ marker đã biết sẽ chết đúng lúc cần nó nhất. Dựng lại selector từ danh sách đó, đừng đoán. |
+| **Ba trạng thái phải phân biệt** | `OK` (có chữ) · `MATCHED_BUT_NO_TEXT` (khung thật, trang chưa có chữ) · `NO_TURNS_MATCHED` (selector chết). Gộp hai cái sau là chỉ về hai hướng ngược nhau. |
+| **Đọc được trong lúc run đang chạy** | Có chủ đích: nó không bấm, không gõ, không chạm focus, nên **không** lấy chốt mutation. |
+| **Ở trang phóng thì bị TỪ CHỐI** | `WRONG_SURFACE`. Đọc ở trang chủ trả 0 lượt và trông **y như hội thoại trống** — cùng cái bẫy của lỗi #2. |
+| **Hai nắp bắt buộc, và chúng nhân nhau** | `--limit` 1..50, `--max-chars` 200..40000, mặc định 10 / 8000. Nhưng **tổ hợp** bị chặn ở `limit x max_chars_per_turn <= 200000`: mỗi nắp ở mức tối đa của riêng nó thì vô hại, nhân lên là ~2 MB trong khi trần envelope 1 MB (`bridge-host.mjs:8`). Không chặn ở cửa vào thì **frame vỡ trên đường về** và lỗi trông như đứt mạng. Vượt nắp bị `INVALID_PARAMS`, **không** bị cắt bớt lượt — một câu trả lời ngắn mà trông đầy đủ tệ hơn một lỗi nói "hỏi ít thôi". |
+| **Số đo thật** | Hội thoại 5 lượt, nắp 50/4000: envelope **14.340 byte** trên trần 1 MB. Nắp 50/40000 trên hội thoại này ra 15.926 byte — *trông* vô hại, và chính vì trông vô hại nên phải chặn bằng luật chứ không bằng cảm giác. |
+| **Bằng chứng** | `tests/chat-read-smoke.mjs` — cắt **chính đoạn mã đã ship** ra khỏi `content.js` và **chạy** trên DOM giả dựng theo số đo live; cộng `validateParams` thật của `bridge-core.js`. 7/7 rồi 4/4 đột biến bị bắt. Live: `evidence-chat-read-20260903/`. |
+| **CHƯA nghiệm thu live** | Riêng **nắp tổ hợp**: bản trong RAM lúc chụp bằng chứng là bản trước khi có nắp, nên file `02-…-cho-qua.json` là bằng chứng của **lỗ**, không phải của tính năng. Cần một lần reload extension nữa mới ghi được là đã nghiệm thu. |
+| **Không giải quyết chuyện GỬI** | `chat.read` chỉ đọc. Đường gửi duy nhất vẫn là `run.trial`, và nó có trần cứng 90 giây (lỗi #4). |
+
 ## Chạy tính năng có xoá file — bắt buộc đặt bẫy
 
 Luật rút ra từ Pilot-15, **đã trả giá bằng một file thật bị xoá**:

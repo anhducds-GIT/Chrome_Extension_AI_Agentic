@@ -27,7 +27,14 @@ const expectedMethods = [
   // stop reduces risk. See tests/bridge-run-stop-smoke.mjs.
   "run.stop",
   // 2026-08-26: the mirror image -- gated BY the same lock run.stop bypasses.
-  "chat.reload"
+  "chat.reload",
+  // 2026-09-03: read-only conversation TEXT, added so an AI operator can read a reply
+  // instead of the owner pasting it by hand. Deliberately NOT a widening of
+  // diagnostics.dom_probe: that one is a STRUCTURE probe whose every text field is clipped
+  // (60 chars, 4 frames) under a 64KB payload cap, so making it carry content would break
+  // the diagnosis first -- which is exactly how error #5 stayed hidden for a week.
+  // read_only, so idempotent stays false like every other reader here.
+  "chat.read"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));

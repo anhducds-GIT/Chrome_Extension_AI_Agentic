@@ -757,6 +757,26 @@
     return response.probe;
   }
 
+  async function bridgeChatRead(params, call) {
+    // Cùng khuôn với bridgeDomProbe: một workspace seat đọc ĐÚNG tab của nó — đó là toàn bộ
+    // giá trị read-only của một phiên có tên: nhiều tab, mỗi tab đọc được bằng tên, song song.
+    //
+    // CỐ Ý KHÔNG lấy latch mutation (khác chat.reload): đọc không click, không gõ, không đổi
+    // focus, nên nó không thể giết một attempt đang bay. Chặn nó trong lúc run chạy sẽ bỏ mất
+    // đúng lúc người ta cần đọc nhất — lúc đang chẩn đoán một run.
+    const workspaceTab = await resolveWorkspaceTab(call);
+    const payload = { type: "DAC_CHAT_READ", limit: params.limit, maxCharsPerTurn: params.max_chars_per_turn };
+    let response;
+    if (workspaceTab) {
+      try { response = await chrome.tabs.sendMessage(workspaceTab.id, payload); }
+      catch (_) { throw new Error("RECEIVER_LOST: ChatGPT receiver unavailable in the workspace tab. Reload that tab once."); }
+    } else {
+      response = await send(payload);
+    }
+    if (!response?.ok) throw new Error(response?.error || "chat.read failed in the content script.");
+    return response.read;
+  }
+
   async function bridgeRunTrial(params, call) {
     window.DacBridgeCore.assertTrialDevMode(state.bridgeDevMode);
     if (!queueRunLock.tryBeginRun()) throw new window.DacBridgeCore.BridgeProtocolError("RUN_ACTIVE");
@@ -1386,6 +1406,7 @@
       "run.stop": withBridgeErrors(bridgeRunStop),
       "chat.reload": withBridgeErrors(bridgeChatReload),
       "diagnostics.dom_probe": withBridgeErrors(bridgeDomProbe),
+      "chat.read": withBridgeErrors(bridgeChatRead),
       "ledger.read": withBridgeErrors(bridgeLedgerRead),
       "jobs.add": withBridgeErrors(bridgeJobsAdd),
       "references.add": withBridgeErrors(bridgeReferencesAdd),
@@ -6143,6 +6164,7 @@
       "run.stop": bridgeRunStop,
       "chat.reload": bridgeChatReload,
       "diagnostics.dom_probe": bridgeDomProbe,
+      "chat.read": bridgeChatRead,
       "ledger.read": bridgeLedgerRead,
       "jobs.add": bridgeJobsAdd,
       "references.add": bridgeReferencesAdd,

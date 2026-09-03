@@ -31,6 +31,10 @@ const COMMANDS = Object.freeze({
   // Takes no --params-file: a stop has no arguments, so it stays usable in the
   // one situation it exists for -- a run going wrong and needing to end now.
   "run-stop": "run.stop",
+  // Read-only conversation text. Separate from dom-probe on purpose: that one is a
+  // STRUCTURE probe whose fields are all deliberately clipped (60 chars, 4 frames), so
+  // widening it to carry content would break the diagnosis first.
+  "chat-read": "chat.read",
   // Also argument-free: which tab it reloads is reported back, not chosen here.
   "chat-reload": "chat.reload",
   // Multi-profile: the host answers this itself — who is connected right now.
@@ -92,6 +96,18 @@ export function commandRequest(command, flags = {}) {
       limit: positiveInteger(flags.limit, "limit", 50),
       include_prompt: Boolean(flags["include-prompt"]),
       include_removed: Boolean(flags["include-removed"])
+    };
+  } else if (command === "chat-read") {
+    // KHONG dung positiveInteger: no chan cung o 100, con max_chars_per_turn toi 40000.
+    const bounded = (value, name, fallback, min, max) => {
+      if (value === undefined) return fallback;
+      const parsed = Number(value);
+      if (!Number.isInteger(parsed) || parsed < min || parsed > max) throw new Error(`--${name} must be an integer from ${min} to ${max}.`);
+      return parsed;
+    };
+    params = {
+      limit: bounded(flags.limit, "limit", 10, 1, 50),
+      max_chars_per_turn: bounded(flags["max-chars"], "max-chars", 8000, 200, 40000)
     };
   } else if (command === "proposal-get") {
     if (!flags["proposal-id"]) throw new Error("proposal-get requires --proposal-id <id>.");
