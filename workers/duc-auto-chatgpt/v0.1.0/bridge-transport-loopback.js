@@ -651,18 +651,30 @@
       // keep the names, void the tab bindings, let the owner re-attach with
       // one click. Harness note: MV3 guarantees storage.session; when a test
       // harness omits it, bindings are trusted as-is.
+      // FAIL CLOSED: only a readable mark proves this is still the browser
+      // session the bindings were made in. No session API, or a session API
+      // that errors, counts as a restart. (Chrome ships storage.session from
+      // 102 and this manifest requires 120, so in production the API exists;
+      // the fail-closed default is for every other condition.)
+      let freshBrowserSession = true;
       const sessionApi = chromeApi.storage.session;
       if (sessionApi && typeof sessionApi.get === "function") {
-        let freshBrowserSession = false;
         try {
           const mark = await sessionApi.get(WORKSPACE_SESSION_MARK_KEY);
           freshBrowserSession = !mark?.[WORKSPACE_SESSION_MARK_KEY];
-          if (freshBrowserSession) await sessionApi.set({ [WORKSPACE_SESSION_MARK_KEY]: new Date().toISOString() });
-        } catch (_) { freshBrowserSession = false; }
-        if (freshBrowserSession && store.workspaces.some((entry) => entry.tab_id !== null)) {
+        } catch (_) { freshBrowserSession = true; }
+      }
+      if (freshBrowserSession) {
+        // Void FIRST, plant the mark AFTER the voided store is durably
+        // written. The other order is not crash-consistent: a planted mark
+        // over an un-voided store would make the next worker start trust
+        // bindings that were never cleared (audit 03/09 round 2, HIGH).
+        if (store.workspaces.some((entry) => entry.tab_id !== null)) {
           store = { schema_version: 1, workspaces: store.workspaces.map((entry) => ({ ...entry, tab_id: null })) };
           await persistWorkspaceStore(store);
         }
+        try { await sessionApi?.set?.({ [WORKSPACE_SESSION_MARK_KEY]: new Date().toISOString() }); }
+        catch (_) { /* Next start voids again — the safe direction. */ }
       }
       await reconcileWorkspaces(store);
     }
@@ -703,6 +715,7 @@
         for (const seat of workspaceSeats.values()) seat.close();
         return publishStatus("unpaired");
       }
+      const previous = pairing;
       try {
         pairing = pairingCore.validate(candidate);
       } catch (_) {
@@ -711,8 +724,17 @@
         for (const seat of workspaceSeats.values()) seat.close();
         return publishStatus("pairing_invalid", "PAIRING_FILE_INVALID");
       }
+      // A pairing that CHANGED on disk is a rollover exactly like PAIRING_SET:
+      // no socket may outlive the pairing it authenticated under, and the
+      // close happens in this same synchronous block as the swap (audit 03/09
+      // round 2, HIGH — this path used to leave old-pairing seats serving).
+      const changed = Boolean(previous) && (previous.token !== pairing.token || previous.websocket_url !== pairing.websocket_url);
+      if (changed) {
+        profileSeat.close();
+        for (const seat of workspaceSeats.values()) seat.close();
+      }
       await profileSeat.connect();
-      queueWorkspaceWork(ensureWorkspaceSeatsConnected);
+      queueWorkspaceWork(changed ? reconnectAllSeats : ensureWorkspaceSeatsConnected);
       return safeStatus(profileSeat.currentState());
     }
 
@@ -849,36 +871,33 @@
     // of direction A: the seat's socket must drop so the host answers
     // TARGET_NOT_CONNECTED instead of ever letting that name drift to another
     // tab. The record stays, so re-opening the page and re-attaching is cheap.
-    chromeApi.tabs?.onRemoved?.addListener?.((tabId) => {
-      queueWorkspaceWork(async () => {
-        for (const seat of workspaceSeats.values()) {
-          if (seat.workspace()?.tab_id === tabId) seat.close();
-        }
-      });
-    });
+    //
+    // Every CLOSE below is synchronous in the event callback itself — never
+    // queued. The workspace queue can be legitimately busy (a listing awaiting
+    // tabs.get, a reconcile mid-flight), and a close parked behind it would
+    // leave the dead tab's seat authenticated exactly as long as the queue is
+    // wedged (audit 03/09 round 2, HIGH). Only reconnects, which are not
+    // safety-relevant, go through the queue.
+    function closeSeatsBoundToTab(tabId) {
+      for (const seat of workspaceSeats.values()) {
+        if (seat.workspace()?.tab_id === tabId) seat.close();
+      }
+    }
+    chromeApi.tabs?.onRemoved?.addListener?.((tabId) => { closeSeatsBoundToTab(tabId); });
     // Chrome can swap a tab's id wholesale (prerender/Instant activation
     // fires onReplaced, NOT onRemoved). The old id our record holds no longer
-    // names any tab, so the seat drops — the owner re-attaches with one click
-    // (audit 03/09, HIGH: without this the seat kept answering for a tab id
-    // that no longer exists).
-    chromeApi.tabs?.onReplaced?.addListener?.((addedTabId, removedTabId) => {
-      queueWorkspaceWork(async () => {
-        for (const seat of workspaceSeats.values()) {
-          if (seat.workspace()?.tab_id === removedTabId) seat.close();
-        }
-      });
-    });
+    // names any tab, so the seat drops — the owner re-attaches with one click.
+    chromeApi.tabs?.onReplaced?.addListener?.((addedTabId, removedTabId) => { closeSeatsBoundToTab(removedTabId); });
     chromeApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
-      if (!changeInfo || typeof changeInfo.url !== "string") return;
+      if (!changeInfo || typeof changeInfo.url !== "string" || !workspaceCore) return;
+      if (!workspaceCore.isProviderTabUrl(changeInfo.url)) {
+        closeSeatsBoundToTab(tabId);
+        return;
+      }
       queueWorkspaceWork(async () => {
-        if (!workspaceCore) return;
         for (const seat of workspaceSeats.values()) {
           if (seat.workspace()?.tab_id !== tabId) continue;
-          if (workspaceCore.isProviderTabUrl(changeInfo.url)) {
-            if (pairing && !seat.isAuthenticated()) await seat.connect().catch(() => {});
-          } else {
-            seat.close();
-          }
+          if (pairing && !seat.isAuthenticated()) await seat.connect().catch(() => {});
         }
       });
     });

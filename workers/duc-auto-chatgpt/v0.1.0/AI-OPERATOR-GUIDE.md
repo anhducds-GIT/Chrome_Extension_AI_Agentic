@@ -130,3 +130,8 @@ Khác biệt duy nhất phải biết khi vận hành:
 4. Tên phiên trùng tên hồ sơ hay trùng nhau → host trả `TARGET_AMBIGUOUS` như mọi khi; panel
    đã chặn trùng trong cùng profile, nhưng hai profile khác nhau vẫn có thể đặt trùng — đặt
    tên có tiền tố cho dễ (ví dụ `kaito-kichban`).
+5. **Khởi động lại Chrome → mọi phiên tự rời ghế** (mã tab của Chrome không sống qua phiên
+   trình duyệt — giữ liên kết cũ là cầm tên của Đức gắn vào tab của người lạ). Tên và mã phiên
+   VẪN CÒN: mở lại tab, gõ ĐÚNG tên cũ rồi bấm **Gắn tab đang mở** là phiên trở lại với đúng
+   mã cũ. Panel ghi rõ dòng nào đang chờ gắn lại. Reload extension giữa chừng (không đóng
+   Chrome) thì KHÔNG mất gì.

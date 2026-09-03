@@ -190,6 +190,13 @@ const chromeMock = {
       async set(next) { Object.assign(values, next); },
       async remove(key) { delete values[key]; }
     },
+    // The main scenario runs "mid browser session": the mark is present, so
+    // seeded tab bindings are trusted. Section 2b covers the fresh session.
+    session: {
+      marked: true,
+      async get(key) { return this.marked ? { [key]: "marked" } : {}; },
+      async set() { this.marked = true; }
+    },
     onChanged: eventSource()
   }
 };
@@ -197,7 +204,7 @@ const chromeMock = {
 const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
 async function settle(times = 4) { for (let i = 0; i < times; i += 1) await tick(); }
 
-globalThis.DacBridgeLoopbackTransport.create({ chrome: chromeMock, WebSocket: FakeWebSocket });
+const transport = globalThis.DacBridgeLoopbackTransport.create({ chrome: chromeMock, WebSocket: FakeWebSocket });
 await settle();
 
 const liveSockets = () => FakeWebSocket.instances.filter((socket) => socket.readyState !== FakeWebSocket.CLOSED);
@@ -425,6 +432,49 @@ chromeMock.tabs.hangTabs.clear();
 await wedgedListing;
 await settle(2);
 
+// After the rollover, the queued reconnect brought the surviving seats back up
+// under pairing B. Authenticate them so the next two pins act on LIVE seats.
+const postRollSockets = FakeWebSocket.instances.filter((socket) => socket.readyState !== FakeWebSocket.CLOSED && socket.sent.length === 0);
+const postRollByInstance = new Map();
+for (const socket of postRollSockets) {
+  socket.emit("open");
+  await settle(2);
+  const challenge = socket.sent.find((frame) => frame.type === "auth_challenge");
+  socket.emit("message", { data: JSON.stringify({ type: "auth_proof", proof: hostProofFor(tokenB, challenge.nonce) }) });
+  await settle(2);
+  const auth = socket.sent.find((frame) => frame.type === "auth");
+  if (auth?.instance) postRollByInstance.set(auth.instance.label, socket);
+  socket.emit("message", { data: JSON.stringify({ type: "auth_ok", session_id: `roll-${Math.random().toString(36).slice(2)}` }) });
+  await settle(1);
+}
+
+// -- onReplaced (and onRemoved) close seats SYNCHRONOUSLY, never via the queue.
+// A close parked behind a wedged workspace queue leaves the dead tab's seat
+// authenticated for as long as the wedge lasts (audit 03/09 round 2, HIGH).
+const researchRolled = postRollByInstance.get("gpt-research");
+assert.ok(researchRolled && researchRolled.readyState === FakeWebSocket.OPEN, "gpt-research is live under the new pairing");
+chromeMock.tabs.hangTabs.add(105);
+const wedgeForReplace = sendPanelMessage({ type: "DAC_BRIDGE_WORKSPACES_GET" });
+await settle(1);
+chromeMock.tabs.onReplaced.emit(888, 102);
+assert.equal(researchRolled.readyState, FakeWebSocket.CLOSED,
+  "the swapped-out tab's seat closes IMMEDIATELY, wedged queue or not");
+for (const release of chromeMock.tabs.hangResolvers.splice(0)) release();
+chromeMock.tabs.hangTabs.clear();
+await wedgeForReplace;
+await settle(2);
+
+// -- loadPairing() with a pairing that CHANGED on disk is a rollover too:
+// seats of the old pairing close in the same synchronous block as the swap.
+const somRolled = postRollByInstance.get("gpt-som-2");
+assert.ok(somRolled && somRolled.readyState === FakeWebSocket.OPEN, "gpt-som-2 is live under pairing B");
+const tokenC = Buffer.alloc(32, 13).toString("base64url");
+values[pairingCore.PAIRING_STORAGE_KEY] = { ...pairing, token: tokenC };
+await transport.loadPairing();
+assert.equal(somRolled.readyState, FakeWebSocket.CLOSED,
+  "a pairing changed on disk closes every workspace seat before loadPairing() returns — no old-pairing seat keeps serving");
+await settle(2);
+
 // ---------------------------------------------------------------------------
 // 2b. Fresh browser session: stored tab ids are strangers now
 // ---------------------------------------------------------------------------
@@ -453,6 +503,7 @@ function freshHarness({ sessionValues, localValues, tabRows }) {
     storage: {
       local: {
         instanceGates: null,
+        failSetKeys: new Set(),
         get(key) {
           if (Array.isArray(key)) {
             if (this.instanceGates) {
@@ -462,16 +513,23 @@ function freshHarness({ sessionValues, localValues, tabRows }) {
           }
           return Promise.resolve(key ? { [key]: local[key] } : { ...local });
         },
-        async set(next) { Object.assign(local, next); },
+        async set(next) {
+          for (const key of Object.keys(next)) {
+            if (this.failSetKeys.has(key)) { this.failSetKeys.delete(key); throw new Error("storage write failed"); }
+          }
+          Object.assign(local, next);
+        },
         async remove(key) { delete local[key]; }
-      },
-      session: {
-        async get(key) { return { [key]: session[key] }; },
-        async set(next) { Object.assign(session, next); }
       },
       onChanged: eventSource()
     }
   };
+  if (sessionValues !== null) {
+    mock.storage.session = {
+      async get(key) { return { [key]: session[key] }; },
+      async set(next) { Object.assign(session, next); }
+    };
+  }
   return { mock, local, session, rows };
 }
 
@@ -541,6 +599,44 @@ assert.deepEqual(boot2Announced, ["prof-fresh-0001", "ws-fresh-0001"],
   "exactly two identities authenticate; the impostor workspace derives NO identity and is refused");
 const impostorSocket = boot2Sockets.find((socket) => !socket.sent.some((frame) => frame.type === "auth"));
 assert.equal(impostorSocket.readyState, FakeWebSocket.CLOSED, "the impostor's socket is abandoned fail-closed");
+
+// -- crash consistency: the mark is planted only AFTER the voided store lands.
+// If voiding fails, no mark may exist — the next start must void again. The
+// other order (mark first) would let a crash freeze stale bindings forever.
+const crashLocal = {
+  [pairingCore.PAIRING_STORAGE_KEY]: pairing,
+  "dac.bridge.instance.v1": { schema_version: 1, instance_id: "prof-crash-0001", created_at: "2026-09-01T00:00:00.000Z" },
+  [wsCore.STORAGE_KEY]: {
+    schema_version: 1,
+    workspaces: [{ workspace_id: "ws-crash-0001", name: "gpt-crash", tab_id: 211, created_at: "2026-09-03T00:00:00.000Z" }]
+  }
+};
+const bootCrash = freshHarness({ sessionValues: {}, localValues: crashLocal, tabRows: [[211, { id: 211, url: "https://chatgpt.com/c/crash" }]] });
+bootCrash.mock.storage.local.failSetKeys.add(wsCore.STORAGE_KEY);
+globalThis.DacBridgeLoopbackTransport.create({ chrome: bootCrash.mock, WebSocket: FakeWebSocket });
+await settle(3);
+assert.equal(bootCrash.session[SESSION_MARK], undefined,
+  "voiding failed, so NO mark was planted — the next start will void again instead of trusting stale bindings");
+assert.equal(bootCrash.local[wsCore.STORAGE_KEY].workspaces[0].tab_id, 211, "the store itself is untouched by the failed write");
+
+// -- no storage.session at all = no proof of same-session = fail closed.
+// (Production always has the API — manifest requires Chrome 120, storage.session
+// ships from 102 — so this is the harness/unknown-environment edge.)
+const noSessionLocal = {
+  [pairingCore.PAIRING_STORAGE_KEY]: pairing,
+  "dac.bridge.instance.v1": { schema_version: 1, instance_id: "prof-nosess-0001", created_at: "2026-09-01T00:00:00.000Z" },
+  [wsCore.STORAGE_KEY]: {
+    schema_version: 1,
+    workspaces: [{ workspace_id: "ws-nosess-0001", name: "gpt-nosess", tab_id: 221, created_at: "2026-09-03T00:00:00.000Z" }]
+  }
+};
+const bootNoSession = freshHarness({ sessionValues: null, localValues: noSessionLocal, tabRows: [[221, { id: 221, url: "https://chatgpt.com/c/nosess" }]] });
+const socketsBeforeNoSession = FakeWebSocket.instances.length;
+globalThis.DacBridgeLoopbackTransport.create({ chrome: bootNoSession.mock, WebSocket: FakeWebSocket });
+await settle(3);
+assert.equal(bootNoSession.local[wsCore.STORAGE_KEY].workspaces[0].tab_id, null,
+  "without a session mark to read, bindings are voided — fail closed, never trusted");
+assert.equal(FakeWebSocket.instances.slice(socketsBeforeNoSession).length, 1, "only the profile connects");
 
 // ---------------------------------------------------------------------------
 // 2c. First-run identity is minted ONCE even with seats racing
