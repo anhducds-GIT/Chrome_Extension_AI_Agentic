@@ -19,6 +19,13 @@
     "feature-parity.mjs"
   ],
   "_generators_doc": "Script nào sinh ra artifact đã commit. Cổng đóng phiên đối chiếu từng cái với HEAD. Repo dựng từ bộ khung chỉ khai những script nó THẬT SỰ mang theo — khai thừa là cổng đỏ vì thiếu file.",
+  "generated": [
+    "DASHBOARD.md",
+    "llms.txt",
+    "repo-map.json"
+  ],
+  "_generated_doc": "Artifact MAY SINH TOAN BO. Cham vao chung KHONG can giu khoa nao — vi khong co gi cua ai trong do de mat: chay lai bo sinh la ra y het. Do that ngay 02/09: 19% luot nhan khoa `_root` ton tai CHI de chay mot bo sinh roi tra ngay. Do la nghen gia, va khoi nay xoa no.",
+  "_generated_rule": "Chi khai file may sinh 100%. FEATURE-PARITY.md CO Y khong nam day: muc 2 cua no la chu CUA NGUOI, co bang chung [DOC] — mien no la mo duong ghi vao nua cua nguoi ma khong phai giu khoa. File nua may nua nguoi thi van phai giu khoa.",
   "bootstrap": {
     "_doc": "Muc chan cua cong kiem cau truc (scripts/check-bootstrap.mjs). Ma trong `blocking` ma DO thi session-check.mjs DO theo, va phien khong duoc bao xong. Ma khong co trong danh sach thi CHI CANH BAO. Day la tang LAW: doi khi Duc chot bat/tat chan mot phep kiem, tuc la hiem. Dat o day chu khong viet cung trong code de S8 va cac repo khac doi duoc danh sach ma khong phai sua script.",
     "_fail_closed": "THIEU khoi nay, hoac `blocking` khong phai mang, thi check-bootstrap.mjs THOAT MA 2 va cong DO. Co y: cach de nhat de tu thao chan la xoa cau hinh di, nen xoa cau hinh phai la mot loi to, khong phai mot su im lang.",

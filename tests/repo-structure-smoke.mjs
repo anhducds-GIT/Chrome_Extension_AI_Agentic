@@ -493,6 +493,46 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   ok("K2-1 · file may sinh khong doi khoa; tron voi file that thi van doi; khai hong thi NEM");
 }
 
+/* ---- K2-1 nửa LUẬT — repo NÀY phải khai, và khai đúng ---------------------
+ *
+ * Khối trên ghim tầng MÁY (`generatedFrom` xử lý cấu hình ra sao). Khối này ghim tầng LUẬT:
+ * `.repo-structure.json` của chính repo này. Hai thứ khác nhau — máy có thể đúng hoàn hảo
+ * trong khi repo quên khai, và khi đó 19% lượt nhận khoá `_root` chỉ-để-chạy-bộ-sinh quay lại
+ * y nguyên mà không phép kiểm nào kêu.
+ *
+ * Phép kiểm quan trọng nhất ở đây là chiều NGƯỢC: mỗi artifact bộ sinh ghi ra mà KHÔNG có
+ * trong danh sách thì phải nằm trong danh sách loại trừ có lý do. Nhờ vậy, ai thêm một bộ sinh
+ * mới sẽ đụng đúng test này và buộc phải QUYẾT ĐỊNH, thay vì để file mới rơi vào im lặng.
+ */
+{
+  const thatSu = JSON.parse(fsMod.readFileSync(new URL("../.repo-structure.json", import.meta.url), "utf8"));
+  const khai = generatedFrom(thatSu);
+
+  assert.ok(khai.length > 0, "repo NAY phai khai khoi `generated` — thieu la nghen `_root` gia quay lai");
+  for (const ten of khai) {
+    assert.ok(fsMod.existsSync(new URL(`../${ten}`, import.meta.url)),
+      `"${ten}" khai la may sinh nhung khong co trong repo — khai thua thi mien nham`);
+  }
+
+  // Chiều ngược: bộ sinh ghi ra những gì? Đọc thẳng hằng số trong mã nguồn, không gõ tay lại.
+  const nguon = ["../scripts/build-dashboard.mjs", "../scripts/feature-parity.mjs"]
+    .map((p) => fsMod.readFileSync(new URL(p, import.meta.url), "utf8")).join("\n");
+  const boSinhGhi = [...nguon.matchAll(/^(?:export )?const \w*(?:FILE|_FILE) = "([^"]+)";$/gm)].map((m) => m[1]);
+  assert.ok(boSinhGhi.length >= 4, "khong doc duoc hang so ten artifact tu ma nguon bo sinh — sua regex, dung bo qua");
+
+  // CỐ Ý để ngoài: nửa file là chữ của người, có bằng chứng [ĐỌC]. Miễn nó = mở đường ghi vào
+  // nửa của người mà không phải giữ khoá. Đây không phải sót — đổi thì phải đổi cả dòng này.
+  const coYDeNgoai = new Set(["FEATURE-PARITY.md"]);
+  const sot = boSinhGhi.filter((t) => !khai.includes(t) && !coYDeNgoai.has(t));
+  assert.deepEqual(sot, [],
+    `bo sinh ghi ra file khong khai va cung khong co ly do de ngoai: ${sot.join(", ")} — quyet dinh di, dung de im lang`);
+
+  for (const t of coYDeNgoai) {
+    assert.ok(!khai.includes(t), `${t} KHONG duoc mien: nua muc 2 la chu cua NGUOI, mien la mo duong ghi khong can khoa`);
+  }
+  ok("K2-1 nua LUAT: repo nay khai du artifact may sinh; file nua-nguoi khong duoc mien; bo sinh moi khong lot im lang");
+}
+
 /* ---- units.ten — tên gọi một đơn vị, dùng cho tiêu đề bảng ---------------- */
 {
   // Trước 03/09 bộ sinh đóng cứng chữ "Extension" ở tiêu đề bảng VÀ ở tên cột, nên mọi repo

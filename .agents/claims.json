@@ -9,38 +9,38 @@
       "task": "F-15 (cong chan chip x2+) + ra soat backlog. Duc chot chay thang theo thu tu F-15 -> F-14 -> F-25."
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-bridge-multiprofile",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-02",
       "task": "GIU DEN KHI PUSH XONG (nut Luu ten + 2 vong audit da xong, gate xanh; push dang ket vi phien f18-evidence chua day). Tra ngay sau push.",
-      "released_at": null
+      "released_at": "2026-09-03"
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-bridge-multiprofile",
       "ai": "Claude",
-      "claimed_at": "2026-09-02",
-      "task": "GIU DEN KHI PUSH XONG (commit nut Luu ten + sanitize da xong, gate xanh; push dang ket vi phien f18-evidence chua day). Tra ngay sau push.",
+      "claimed_at": "2026-09-03",
+      "task": "A1 workspace theo tab (chi-doc): nhieu ghe co ten trong 1 profile, Duc duyet huong A 03/09",
       "released_at": null
     },
     "_root": {
-      "owner": "claude-don-nha",
+      "owner": "claude-k2-design",
       "ai": "Claude",
-      "claimed_at": "2026-09-02",
-      "task": "Don ban sao harness sau khi da chuyen nha sang Ark_Repo_Harness (Duc duyet 03/09)",
+      "claimed_at": "2026-09-03",
+      "task": "K2-1 nua LUAT: khai khoi generated de khoi phai nhan _root chi de chay bo sinh",
       "released_at": null
     },
     "_docs": {
-      "owner": "claude-don-nha",
+      "owner": "claude-bridge-multiprofile",
       "ai": "Claude",
-      "claimed_at": "2026-09-02",
-      "task": "Don ban sao harness sau khi da chuyen nha sang Ark_Repo_Harness (Duc duyet 03/09)",
+      "claimed_at": "2026-09-03",
+      "task": "Ghi quyet dinh Duc duyet huong A vao design study",
       "released_at": null
     },
     "_code": {
-      "owner": "claude-don-nha",
+      "owner": "claude-k2-design",
       "ai": "Claude",
-      "claimed_at": "2026-09-02",
-      "task": "Don ban sao harness sau khi da chuyen nha sang Ark_Repo_Harness (Duc duyet 03/09)",
+      "claimed_at": "2026-09-03",
+      "task": "K2 phan con lai: ghim nua LUAT K2-1, phep kiem chuyen quyen, tuoi khoa",
       "released_at": null
     }
   }
