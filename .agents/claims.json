@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau. Gốc repo chia làm nhiều khoá (A2, 02/09): `_docs` cho docs/, `_code` cho scripts/ + tests/, `_template` cho template/, `_root` cho phần còn lại và các file ở tầng ngoài cùng. Chia vì 77% commit trong ngày 02/09 chạm gốc repo, và một khoá duy nhất chặn cả những việc không chồng nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T01:10",
       "task": "F-25 buoc 2: run.status phan biet dang-cho-nhip voi khong-con-ai-chay",
-      "released_at": null,
+      "released_at": "2026-09-03T19:19",
       "taken_from": "claude-f18-evidence",
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
@@ -53,5 +53,5 @@
       "taken_by_duc_decision": "2026-09-04 (lan hai)"
     }
   },
-  "_fingerprint": "4280e9a4e83268d9"
+  "_fingerprint": "404c202d518edc6f"
 }
