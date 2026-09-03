@@ -88,6 +88,10 @@
     localOverrides: new Set(),
     outputProfileState: null,
     selectedInterJobDelay: null,
+    // F-25 bước ②: nhịp tim của VÒNG LẶP chạy job. Đọc bởi `bridgeRunStatus` để phân biệt
+    // "đang chờ nhịp" với "vòng lặp đã chết âm thầm" — hai ca mà trạng thái không phân biệt
+    // được. Nhịp phải do chính vòng lặp đập; xem `dapNhip` và ghi chú trong run-liveness-core.js.
+    loopBeat: null,
     retryResumeAt: null,
     resumeMode: false,
     resumePlan: null,
@@ -592,6 +596,13 @@
     }));
     const count = (status) => queue.filter((item) => status.includes(item.status)).length;
     const halted = queue.find((item) => window.DacRunnerCore.HARD_STOP_FAILURE_TYPES.has(item.failure_type));
+    const liveness = window.DacRunLiveness.danhGia({
+      beat: state.loopBeat,
+      now: Date.now(),
+      running: state.running,
+      paused: state.paused,
+      pauseRequested: state.pauseRequested
+    });
     return {
       state: state.running ? state.paused ? "PAUSED" : "RUNNING" : halted ? "HALTED" : "IDLE",
       paused: state.paused,
@@ -600,7 +611,13 @@
       counts: { total: queue.length, pending: count(["PENDING"]), running: count(["RUNNING", "RECONCILING"]), success: count(["SUCCESS", "DONE"]), failed: count(["FAILED"]), interrupted: count(["INTERRUPTED", "STOPPED"]) },
       halt: halted ? { failure_type: halted.failure_type, instruction: window.DacHaltInstructions?.findInstruction?.(halted.failure_type) || null } : null,
       artifact_persistence_failed: state.artifactErrors.length > 0,
-      checkpoint: checkpointSummary()
+      checkpoint: checkpointSummary(),
+      // F-25 bước ②. Trước bản này, một chuỗi đang chờ nhịp 90 giây và một chuỗi đã chết âm
+      // thầm trả về CÙNG MỘT câu trả lời: `state: RUNNING`, `running: 0`, `halt: null`. Đo
+      // thật 02/09: 22 phút không ai phát hiện. Khối này là thứ phân biệt hai ca đó, và nó nói
+      // cả bước nào lẫn đứng yên bao lâu — một chẩn đoán không chỉ ra bước thì không dẫn ai
+      // tới đâu (bài học F-26, lượt 18).
+      loop: liveness
     };
   }
 
@@ -4427,10 +4444,23 @@
     });
   }
 
+  /* Biên cộng thêm vào trần chờ job: đường về của message, một lượt ghi sổ cái, một lượt
+     render. Đo bằng gì thì chưa — nên chọn rộng có chủ đích: báo động oan ở bước dài nhất là
+     thứ người vận hành sẽ học cách phớt lờ, và một cảnh báo bị phớt lờ tệ hơn không có. */
+  const NHIP_BIEN_MS = 30000;
+
+  /* F-25 bước ②: một nhịp tim của vòng lặp chạy job.
+     Đặt ở TRONG vòng lặp, không phải trong một `setInterval` — panel VẪN SỐNG lúc chuỗi gãy
+     (chính nó trả lời `run.status`), nên đồng hồ riêng sẽ tích tắc vui vẻ và không thấy gì. */
+  function dapNhip(stage, expectedNextMs) {
+    state.loopBeat = window.DacRunLiveness.nhip(stage, expectedNextMs, Date.now());
+  }
+
   async function countdown(seconds, item) {
     state.selectedInterJobDelay = seconds;
     for (const remaining of window.DacRunnerCore.countdownValues(seconds)) {
       if (state.stopRequested) break;
+      dapNhip("INTER_JOB_DELAY");
       state.interJobCountdown = remaining;
       const runtimeInfo = currentRuntimeInfo();
       nextTask(item, `${runtimeInfo.nextTransition} · ${runtimeInfo.interJobDelay}`);
@@ -4641,6 +4671,10 @@
     // Một run.stop rơi vào khoảng await ở trên đã đặt stopRequested=true và
     // KHÔNG bị xoá ở đây — vòng lặp job bên dưới sẽ thấy và dừng ngay.
     state.running = true; state.runStarting = false; state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    // Nhịp ĐẦU TIÊN đập ngay ở đây, cùng lúc với `running = true`. Nếu để vòng lặp tự đập nhịp
+    // đầu thì có một khoảnh khắc "đang chạy mà chưa có nhịp" — và `danhGia` fail-closed sẽ gọi
+    // đó là chuỗi chết. Một báo động oan ngay giây đầu mỗi lượt chạy.
+    dapNhip("QUEUE_ADVANCE");
     showScreen("runScreen");
     state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = []; if (!state.resumeMode) { state.auditFile = ""; state.resultFile = ""; state.verifiedImageFiles = []; state.checkpointVersion = 0; state.checkpointFilename = ""; state.checkpointCreatedAt = ""; } state.artifactErrors = []; renderCheckpointMeta();
     if (mode !== "recreate") els.logList.textContent = "";
@@ -4670,11 +4704,13 @@
       snapshotOutputSettings();
       for (let runIndex = 0; runIndex < runQueue.length; runIndex += 1) {
         const item = runQueue[runIndex];
+        dapNhip("QUEUE_ADVANCE");
         if (state.stopRequested) break;
         await waitWhilePaused();
         if (state.stopRequested) break;
         let completed = false;
         while (!completed && !state.stopRequested) {
+          dapNhip("GATE_CHECK");
           const gate = await gateNextJob(item);
           // G-01: Stop can arrive while the readiness gate is awaiting. Settle
           // the untouched row before any attempt id is issued or dispatched.
@@ -4697,6 +4733,10 @@
           item.deliberate_rerun = false;
           audit(item.operator_recreate ? "RECREATE_ATTEMPT_STARTED" : "JOB_START", item, item.operator_recreate ? { message: "Starting one operator-approved deliberate recreate attempt." } : {}); setCurrent(item, item.runtime_stage, item.references.length ? `Preparing ${item.references.length} reference image(s).` : "Preparing prompt submission."); renderQueue(); nextTask(nextEligible(item.job.id), "Waiting for current job to finish."); progress(`Running ${item.job.id}…`);
           let response;
+          // Trần chờ ở bước này LÀ timeout thật của job, cộng một biên cho đường về. Không
+          // dùng trần chung: chờ video sinh là giai đoạn dài nhất, nên lấy nó làm trần cho mọi
+          // bước sẽ làm các bước ngắn mù suốt mấy phút.
+          dapNhip("WAITING_JOB", item.settings.timeout_sec * 1000 + NHIP_BIEN_MS);
           try { response = await send({ type: "DAC_RUN_IMAGE_JOB", job_id: item.job.id, attempt_id: item.attempt_id, prompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000, referenceImages: item.references }); }
           catch (error) { response = { ok: false, error: messageOf(error), attempt: { job_id: item.job.id, attempt_id: item.attempt_id, phase: "PRE_SUBMIT", submittedAt: null } }; }
           if (!matchesAttempt(response, item)) {

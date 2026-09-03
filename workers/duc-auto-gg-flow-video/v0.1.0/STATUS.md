@@ -5,9 +5,10 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "F-25 (vat can that cua chuoi dai: vong chay chet am tham) — chua giai. Truoc do co hai viec re: (a) kiem not nua sau F-14 bang MOT job tu che do Image (6 credit, con 8/50 tren Binh); (b) F-26 can Duc chot — bang cau hinh liet ke duoc nen runner CO THE tu dat x1/doc do phan giai, nhung bam vao do la doi cau hinh cua Duc"
+next_step: "F-25 bước ③ — CẦN ĐỨC CHỐT: cho vòng chạy job sống ở service worker thay vì side panel. Đây là đổi lớn nên chưa tự làm. Trước đó cần bước ①: đo xem cái gì giết vòng lặp (panel đóng? cửa sổ đổi? service worker ngủ kéo panel theo?) — chưa đo được, không đoán. Bước ② ĐÃ XONG nên bước ① nay rẻ hơn hẳn: chuỗi chết bị phát hiện trong khoảng một phút thay vì hai mươi hai phút. Việc rẽ đang chờ Đức: nạp lại tiện ích rồi chạy MỘT job (Image + chip x3) để kiểm live F-26 — hỏng thì vẫn 0 credit."
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "F-15 XONG (cong chan chip x2+, 0 credit moi duong thoat). F-14 GIAI bang cong cu 0 credit moi diagnostics.mode_probe: bang cau hinh MO RA -> nhom nut co nghe su kien pointer, ket luan cu da het han; nua sau (bam tuy chon co doi mode khong) chua chung minh. F-24 la BAO DONG GIA cua chinh toi: videocam Video KHONG bi dich, nhung image Hinh anh THI CO -> rui ro chuyen sang F-11. Phat hien kem: bang cau hinh liet ke duoc (F-26). Suite 94/94"
+current_focus: "F-25 bước ② XONG: `run.status` nay trả thêm khối `loop` nói rõ vòng chạy còn sống hay đã chết, đứng yên bao lâu, và chết ở BƯỚC NÀO. Nhịp tim do chính vòng lặp chạy job đập ra chứ không phải một đồng hồ riêng — vì lúc chuỗi gãy ngày 02/09 thì side panel VẪN SỐNG, chính nó trả lời `run.status`, nên đồng hồ riêng sẽ không thấy gì. Mỗi giai đoạn tự khai trần chờ riêng, `WAITING_JOB` lấy trần từ timeout thật của job. F-14 ĐÓNG HOÀN TOÀN từ 02/09 (nửa sau đã chứng minh: sổ cái ghi nhãn Video sau khi chuyển mode). F-26 XONG code, chờ kiểm live. Suite 95/95, thử phá 25/25 đều bị bắt."
+human_action: "Nạp lại tiện ích trong Chrome, rồi chạy MỘT job ở chế độ Image với chip x3. Một lượt đó kiểm cả F-26 lẫn khối `loop` mới. Hỏng thì vẫn 0 credit. Và một câu cần Đức chốt: có cho chuyển vòng chạy job sang service worker không (F-25 bước ③) — đó là đổi lớn về kiến trúc nên AI không tự quyết."
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md

@@ -306,6 +306,18 @@
   **Vì sao nay mới đau:** nâng nhịp đưa một chuỗi 7 job từ ~9 phút lên **~20+ phút**, tức hơn
   gấp đôi thời gian phơi ra trước điểm gãy. Nhịp chậm là đúng cho mục tiêu không bị chặn, nhưng
   nó biến **độ bền của chuỗi** thành nút thắt mới.
+  **BƯỚC ② XONG 2026-09-04** (`claude-dieu-phoi`, Đức chốt làm ngay). `run.status` nay trả thêm
+  khối `loop`: `alive` · `stalled` · `heartbeat_age_ms` · `expected_next_ms` · `stage` · `reason`.
+  Nhịp tim do **chính vòng lặp chạy job** đập ra tại bốn mốc (`QUEUE_ADVANCE` ×2 · `GATE_CHECK` ·
+  `WAITING_JOB`) cộng mỗi giây trong `countdown` — **không** dùng `setInterval`, vì lúc chuỗi gãy
+  02/09 thì panel VẪN SỐNG (chính nó trả lời `run.status`), nên một đồng hồ riêng sẽ tích tắc vui
+  vẻ mà không thấy gì. Mỗi giai đoạn **tự khai trần chờ**; `WAITING_JOB` lấy trần từ timeout thật
+  của job. Logic nằm ở `run-liveness-core.js` (hàm thuần, `now` là tham số — nên ca "đã 22 phút"
+  dựng được bằng test). Suite 95/95 · thử phá **25/25** bị bắt, trong đó **ba lượt đầu THOÁT** vì
+  khẳng định chỗ nối dùng `[\s\S]*?` chạy ra ngoài thân hàm; đã siết bằng cách cắt đúng thân hàm.
+  **Thứ tự ①② đã đảo có chủ đích:** làm ② trước vì nó không cần Đức, không cần credit, và nó biến
+  bước ① từ "ngồi chờ 22 phút mới biết có gãy" thành "một phút". Bước ③ vẫn **cần Đức chốt**.
+
   **Việc cần làm, theo thứ tự:** ① tìm ra chính xác cái gì giết vòng lặp (panel đóng? cửa sổ đổi?
   service worker ngủ kéo panel theo?) — chưa đo được, đừng đoán; ② cho `run.status` phân biệt
   được "đang chờ nhịp" với "không còn ai chạy" (ví dụ một mốc thời gian nhích đều), để AI điều

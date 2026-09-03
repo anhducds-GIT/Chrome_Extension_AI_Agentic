@@ -1065,3 +1065,75 @@ chạy chặn được một vật cản chưa ai lường:
 - **Đo:** suite **94/94** · mutation **5/5**, gồm đột biến dựng lại **đúng lỗi vừa gặp**.
 - **Việc kế tiếp:** reload rồi chạy lại đúng một job như lượt này (Image + `x3`). Hỏng nữa thì
   vẫn **0 credit**, và lần này sổ cái nói ra hỏng ở bước nào.
+
+## 2026-09-04 — `claude-dieu-phoi`: F-25 bước ② — chuỗi chết không còn im lặng được
+
+**Đức chốt làm ngay, và chốt đảo thứ tự.** Backlog định ①→②→③; tôi đề xuất **② trước ①** vì ②
+không cần Đức, không cần credit, và nó biến bước ① từ "ngồi chờ 22 phút mới biết có gãy" thành
+"một phút". Đức đồng ý.
+
+### Vấn đề, nói lại cho gọn
+
+Một chuỗi **đang chờ nhịp 90 giây** và một chuỗi **đã chết âm thầm** trả về **cùng một câu trả
+lời**: `state: RUNNING`, `running: 0`, `halt: null`. `run.status` cũ chỉ chụp **trạng thái**, mà
+trạng thái không phân biệt được hai ca đó. Thứ phân biệt là **thời gian**: chuỗi sống thì có cái
+gì đó nhích đều.
+
+### Điểm dễ làm sai nhất, và tôi suýt làm sai
+
+Cách hiển nhiên là một `setInterval` trong panel ghi mốc thời gian mỗi giây. **Sai.** Lúc chuỗi
+gãy ngày 02/09, **panel VẪN SỐNG** — chính nó trả lời `run.status`. Một đồng hồ riêng sẽ tích tắc
+vui vẻ và không phát hiện được gì. Nhịp tim phải do **chính vòng lặp chạy job** đập ra, nên nó im
+đúng lúc vòng lặp im. Đã ghim bằng một khẳng định phủ định: `setInterval` gần `dapNhip` là ĐỎ.
+
+### Đã làm
+
+- `run-liveness-core.js` — hàm **thuần**, `now` là tham số. Vì sao quan trọng: một phép kiểm về
+  thời gian mà tự đọc `Date.now()` thì **không dựng được ca "đã 22 phút"** — và ca đó chính là ca
+  phải ghim. `danhGia()` trả `alive · stalled · heartbeat_age_ms · expected_next_ms · stage · reason`.
+- **Mỗi giai đoạn tự khai trần chờ**, không dùng một trần chung. Trần chung phải lấy theo giai
+  đoạn dài nhất (chờ video, hàng phút), nên nó sẽ mù suốt những bước đáng ra chỉ vài giây — tức
+  chậm phát hiện đúng ở chỗ rẻ nhất để phát hiện. `WAITING_JOB` cố ý **không** có trần mặc định:
+  trần của nó LÀ timeout thật của job, và hàm **NÉM** nếu bên gọi quên đưa.
+- Bốn nhịp trong `run()` (`QUEUE_ADVANCE` ×2 · `GATE_CHECK` · `WAITING_JOB`) + mỗi giây trong
+  `countdown()`. Nhịp đầu đập **ngay cạnh** `state.running = true` — nếu để vòng lặp tự đập nhịp
+  đầu thì có một khoảnh khắc "đang chạy mà chưa có nhịp", và fail-closed sẽ báo động oan ngay giây
+  đầu mỗi lượt chạy.
+- `bridgeRunStatus()` trả khối `loop`. Nó nói cả **bước nào** lẫn **đứng yên bao lâu** — bài học
+  F-26 lượt 18: một chẩn đoán không chỉ ra bước thì không dẫn ai tới đâu.
+
+### Fail-closed, và ranh giới của nó
+
+Đang chạy mà **không có nhịp nào** → coi là chết (im lặng ở đây là im lặng đúng kiểu đã mất 22
+phút). Nhưng **người tạm dừng thì KHÔNG phải chết** — nó đang chờ NGƯỜI, và người không có trần
+thời gian; báo động ở đây là báo động oan mỗi lần Đức đi uống nước. Và đồng hồ chạy lùi (đổi giờ
+hệ thống, máy ngủ rồi thức) cho tuổi **âm** — để nguyên thì nó **luôn "sống"**, tức fail-OPEN,
+đúng hướng hỏng nguy hiểm. Kẹp về 0.
+
+### Số, và ba lượt thử phá THOÁT
+
+Suite **95/95** (94 → 95). Thử phá **25/25** bị bắt: 10 ca lõi + 15 ca chỗ nối.
+
+Nhưng **ba lượt đầu THOÁT**, và đáng ghi lại: khẳng định chỗ nối viết
+`/async function countdown[\s\S]*?dapNhip\(/` — `[\s\S]*?` **chạy tiếp ra ngoài thân hàm** để tìm
+`dapNhip(` ở một hàm khác phía sau, nên xoá nhịp khỏi `countdown` vẫn xanh. Đúng loại phép kiểm
+xanh một cách vô nghĩa mà repo này đã bắt được ba lần. Đã siết: cắt đúng thân hàm rồi mới khẳng
+định, ghim từng nhịp vào **đúng vị trí** của nó, và đếm số nhịp (thêm/bớt thì phải sửa phép kiểm
+một cách có ý thức). Hai lượt sau đó cũng thoát vì cùng một bệnh — đòi "hàm `run` có nhịp nào đó"
+thì xoá một nhịp vẫn còn ba nhịp khác.
+
+### Sai lệch trạng thái đã sửa — Đức là người bắt được, và đó là lỗi của tôi
+
+`STATUS.md` của gói này đang nói **sai về chính nó**: ghi F-14 "nửa sau chưa chứng minh" và F-26
+"cần Đức chốt", trong khi Log lượt 18 (02/09) nói **F-14 đóng hoàn toàn** và **F-26 XONG** (Đức đã
+chốt, đã vá `settingsPanelOpen()`). Nên `next_step` của gói ưu tiên #1 đang mô tả hai việc đã
+xong — và bản đồ việc ở gốc repo cũng hiển thị sai theo, vì nó đọc `STATUS.md`. Đã viết lại cả ba
+trường, có dấu (luật vàng 5), và thêm `human_action`.
+
+**Còn mở:**
+- **Bước ①** — đo cái gì giết vòng lặp. Nay rẻ hơn hẳn nhờ ②.
+- **Bước ③ CẦN ĐỨC CHỐT** — cho vòng chạy job sống ở service worker thay vì side panel. Đổi lớn.
+- **Cần Đức:** nạp lại tiện ích rồi chạy **một** job (Image + chip `x3`). Một lượt đó kiểm cả
+  F-26 lẫn khối `loop` mới. Hỏng thì vẫn **0 credit**.
+- Khối `loop` **chưa được kiểm live** — mọi khẳng định trên đây là test + đọc code, chưa có bằng
+  chứng từ trang thật.
