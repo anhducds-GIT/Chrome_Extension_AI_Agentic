@@ -855,6 +855,111 @@ function antiDrift(text, measurements = {}) {
   }
 }
 
+/* 23j. K2-9 · HÀNH VI: suite của lane KHÁC đỏ thì không chặn tôi; của TÔI đỏ thì chặn.
+   Bệnh (đo thật 03/09): `scripts.test` nối các suite bằng `&&`, và nó mở đầu bằng suite của
+   `workers/duc-auto-chatgpt`. Nên một lane lưu file dở làm MỌI lane khác không đóng được phiên
+   — một phiên bị chặn BỐN lần, mỗi lần tự xanh lại khi lane kia lưu xong.
+
+   BA vế, và vế 2 mới là vế chịu lực: bỏ chặn cho lane khác mà không giữ chặn cho chính mình thì
+   đây là gỡ bảo vệ, không phải sửa tầng. Vế 3 chặn đúng đường lách: chạm vào vùng của họ rồi
+   thì đỏ đó có thể do mình, nên không được đổ cho họ. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-9-test-cua-ai-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  const gate = () => spawnSync(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "toi"], { cwd: tempRoot, encoding: "utf8" });
+  // Lấy ĐÚNG khối của "Test xanh": dòng nhãn cộng mọi dòng thụt sau nó. Bản đầu của tôi dò
+  // một dòng thụt bất kỳ chứa "ĐỎ", nên nó bắt sang thông báo của phép kiểm KHÁC và báo oan.
+  const dongTest = (r) => {
+    const rows = r.stdout.split(String.fromCharCode(10));
+    const i = rows.findIndex((l) => l.includes("Test xanh"));
+    if (i < 0) return "";
+    const out = [rows[i]];
+    for (let k = i + 1; k < rows.length && /^\s{5,}\S/.test(rows[k]); k += 1) out.push(rows[k]);
+    return out.join(" ");
+  };
+  const suiteXanh = 'console.log("1 passed, 0 failed, 1 total");\n';
+  const suiteDo = 'console.log("0 passed, 1 failed, 1 total");\nprocess.exit(1);\n';
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2 Test Cua Ai");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1,
+      repo: { name: "Repo Thu", tagline: "de thu quy chu suite" },
+      units: { root_dir: "workers", marker: "manifest.json", depth: 2, ten: "Extension" },
+      generators: [],
+      areas: {
+        "scripts/": { steward: "_code", mutability: "rw", ownership_mode: "root" },
+        "tests/": { steward: "_code", mutability: "rw", ownership_mode: "root" },
+        "workers/": { steward: null, mutability: "rw", ownership_mode: "per-package", claim_prefix: "workers/" }
+      }
+    }, null, 2));
+    put(".agents/claims.json", JSON.stringify({ claims: {
+      _root: { owner: null },
+      _code: { owner: "toi" },
+      "workers/goi-cua-ho": { owner: "lane-khac" }
+    } }, null, 2));
+    put("manifest.json", JSON.stringify({ name: "Root", version: "0.0.1" }));
+    put("HANDOFF.md", "# Handoff\n");
+    put("workers/goi-cua-ho/v0.1.0/manifest.json", JSON.stringify({ name: "Goi Cua Ho", version: "0.1.0" }));
+    put("workers/goi-cua-ho/v0.1.0/HANDOFF.md", "# Log\n");
+    put("workers/goi-cua-ho/v0.1.0/tests/run-all.mjs", suiteXanh);
+    put("tests/cua-toi.mjs", suiteXanh);
+    put("package.json", JSON.stringify({
+      name: "repo-thu", private: true, type: "module",
+      scripts: { test: "node workers/goi-cua-ho/v0.1.0/tests/run-all.mjs && node tests/cua-toi.mjs" }
+    }, null, 2));
+    gitAt("add", ".");
+    gitAt("commit", "-m", "seed");
+    // `origin/main` phải trỏ vào SEED, không phải vào HEAD sau cùng: cổng chỉ tính việc CHƯA
+    // push, nên đặt sau thì `touched` rỗng và cả nhánh `rootSuite` không hề chạy. Bản fixture
+    // đầu của tôi sai đúng chỗ này và "xanh" một cách vô nghĩa.
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+    // Tôi chạm `_code` để có việc mà đóng phiên.
+    put("scripts/viec-cua-toi.mjs", "export const x = 1;\n");
+    gitAt("add", "-A");
+    gitAt("commit", "-m", "viec cua toi\n\nLane: toi");
+    assert.match(dongTest(gate()), /\[XANH\]/, "hai suite xanh thi cong phai XANH");
+
+    // VẾ 1 — suite của LANE KHÁC đỏ: không chặn tôi, nhưng phải nói ra.
+    put("workers/goi-cua-ho/v0.1.0/tests/run-all.mjs", suiteDo);
+    const r1 = gate();
+    const d1 = dongTest(r1);
+    assert.doesNotMatch(d1, /\[ĐỎ/, `suite cua lane khac do thi KHONG duoc chan toi. Khoi Test xanh: ${d1}`);
+    assert.match(r1.stdout, /workers\/goi-cua-ho \(của "lane-khac"\)/, "phai noi RO do cua ai, khong duoc im lang cho qua");
+    assert.doesNotMatch(d1, /\[XANH\]/, "cung KHONG duoc in XANH — viec cua ho dang hong that");
+
+    // VẾ 2 — VẾ CHỊU LỰC: suite của TÔI đỏ thì VẪN chặn. Thiếu vế này thì vế 1 là gỡ bảo vệ.
+    put("workers/goi-cua-ho/v0.1.0/tests/run-all.mjs", suiteXanh);
+    put("tests/cua-toi.mjs", suiteDo);
+    const r2 = gate();
+    assert.match(dongTest(r2), /\[ĐỎ/, "suite cua CHINH TOI do thi PHAI chan — neu khong thi day la go bao ve");
+    assert.notEqual(r2.status, 0, "cong do thi khong duoc thoat 0");
+
+    // VẾ 3 — đường lách: tôi CHẠM vùng của họ rồi thì đỏ đó có thể do tôi, không được đổ cho họ.
+    put("tests/cua-toi.mjs", suiteXanh);
+    put("workers/goi-cua-ho/v0.1.0/tests/run-all.mjs", suiteDo);
+    put("workers/goi-cua-ho/v0.1.0/toi-sua-vao-day.js", "// toi cham vao goi cua ho\n");
+    gitAt("add", "-A");
+    gitAt("commit", "-m", "toi cham vao goi cua ho\n\nLane: toi");
+    assert.match(dongTest(gate()), /\[ĐỎ/,
+      "cham vao vung cua ho roi thi do do co the do TOI — do cho ho la mot duong lach, phai chan");
+    ok("K2-9 · HÀNH VI: suite lane khác đỏ thì không chặn tôi (vẫn nói rõ của ai); suite của tôi đỏ thì chặn; chạm vào vùng họ rồi thì hết được miễn");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-9-test-cua-ai-")), "chỉ dọn đúng temp fixture K2-9");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
 /* 23i. K2-8 · HÀNH VI: độ tươi artifact rời cổng lane sang cổng PUSH.
    Vì sao dời (đo thật 03/09): artifact ĐO VIỆC CỦA MỌI LANE, nên độ tươi là tính chất của thứ
    sắp publish, không phải của một phiên đang đóng. Một phiên bị chặn BA lần, và cả ba lần 100%
@@ -944,7 +1049,48 @@ function antiDrift(text, measurements = {}) {
     assert.notEqual(push3.status, 0, "tu choi thi khong duoc thoat 0");
     writeFileSync(join(tempRoot, "scripts", "build-dashboard.mjs"), nguyenVan, "utf8");
     assert.equal(chay("safe-push.mjs", "--dry-run").status, 0, "tra bo sinh ve nguyen ven thi phai thong lai");
-    ok("K2-8 · HÀNH VI: artifact cũ KHÔNG chặn cổng lane nhưng CHẶN safe-push; bộ sinh sửa dở cũng chặn");
+
+    /* BA FAIL-OPEN TRONG CHÍNH HARD GATE — audit GPT 03/09 bắt được, tôi vá, và ghim ở đây.
+       Cả ba cùng một hình dạng: cổng không đỏ, cổng biến thành KHÔNG LÀM GÌ. Loại đó tệ nhất,
+       vì nó trông y hệt "đã đạt". Không có ba vế dưới thì bản vá của tôi cũng chỉ là bình luận —
+       đúng bài học vừa học ở chốt "bộ sinh sửa dở" ngay trên. */
+    const capNhatCauHinh = (doi) => {
+      const cfg = JSON.parse(readFileSync(join(tempRoot, ".repo-structure.json"), "utf8"));
+      doi(cfg);
+      writeFileSync(join(tempRoot, ".repo-structure.json"), JSON.stringify(cfg, null, 2), "utf8");
+    };
+    const cauHinhGoc = readFileSync(join(tempRoot, ".repo-structure.json"), "utf8");
+
+    // (E) `generators` khai HỎNG phải NÉM, không được lặng lẽ thành mảng rỗng. Bản đầu của tôi
+    // tự viết `Array.isArray(...) ? ... : []` thay vì đi qua `generatorsFrom` — xoá cấu hình là
+    // hard gate hết kiểm gì.
+    capNhatCauHinh((c) => { c.generators = []; });
+    gitAt("add", "-A"); gitAt("commit", "-m", "khai generators hong\n\nLane: toi");
+    const e = chay("safe-push.mjs", "--dry-run");
+    assert.match(e.stderr, /GENERATORS_HONG/, "khai `generators` hong thi PHAI tu choi, khong duoc lui ve mang rong");
+    assert.notEqual(e.status, 0, "tu choi thi khong duoc thoat 0");
+
+    // (F) Khai một bộ sinh KHÔNG TỒN TẠI. Bản đầu `continue` — khai rồi mà thiếu là repo hỏng.
+    capNhatCauHinh((c) => { c.generators = ["khong-he-co.mjs"]; });
+    gitAt("add", "-A"); gitAt("commit", "-m", "khai bo sinh khong ton tai\n\nLane: toi");
+    const f = chay("safe-push.mjs", "--dry-run");
+    assert.match(f.stderr, /khong-he-co\.mjs đã KHAI[\s\S]*KHÔNG có trong repo/, "khai ma thieu file thi PHAI do");
+    assert.notEqual(f.status, 0, "tu choi thi khong duoc thoat 0");
+
+    // (G) Cấu hình phải đọc từ HEAD, không từ cây làm việc: thứ sắp publish là HEAD, nên một bản
+    // sửa CHƯA COMMIT không được đổi danh sách verifier của cái sắp đẩy.
+    writeFileSync(join(tempRoot, ".repo-structure.json"), cauHinhGoc, "utf8");
+    gitAt("add", "-A"); gitAt("commit", "-m", "tra cau hinh ve dung\n\nLane: toi");
+    put("workers/goi-ba/v0.1.0/manifest.json", JSON.stringify({ name: "Goi Ba", version: "0.1.0" }));
+    put("workers/goi-ba/v0.1.0/HANDOFF.md", "# Log\n");
+    gitAt("add", "-A"); gitAt("commit", "-m", "them extension ma khong sinh lai\n\nLane: toi");
+    assert.notEqual(chay("safe-push.mjs", "--dry-run").status, 0, "dung fixture: artifact phai dang cu");
+    capNhatCauHinh((c) => { delete c.generators; });   // CHỈ ở cây làm việc, KHÔNG commit
+    const g = chay("safe-push.mjs", "--dry-run");
+    assert.notEqual(g.status, 0,
+      "xoa `generators` o CAY LAM VIEC khong duoc lam thong hard gate — cai sap publish la HEAD");
+    assert.match(g.stderr, /sự thật máy sinh chưa khớp/, "phai van bao dung ly do, khong phai mot loi khac");
+    ok("K2-8 · HÀNH VI: artifact cũ chặn safe-push; bộ sinh sửa dở chặn; và ba fail-open (khai hỏng / khai mà thiếu / đọc cây làm việc) đều chặn");
   } finally {
     assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-8-tach-cong-")), "chỉ dọn đúng temp fixture K2-8");
     rmSync(tempRoot, { recursive: true, force: true });

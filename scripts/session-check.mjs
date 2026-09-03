@@ -135,7 +135,31 @@ const ownedBy = (area) => CLAIMS?.[area]?.owner ?? null;
 // Chạy qua shell chứ không spawn trực tiếp: từ Node 24, spawn một file `.cmd` trên Windows
 // trả `EINVAL` (siết bảo mật). Và `scripts.test` vốn là một chuỗi lệnh nhiều bước nối bằng
 // `&&` — thứ chỉ shell hiểu. Đo thật: bản đầu dùng execFileSync("npm.cmd") và chết ngay.
-const runRootSuite = () => execSync("npm test --silent", { cwd: ROOT, encoding: "utf8", timeout: 900000 });
+/* `scripts.test` là các lệnh nối bằng `&&`. Cắt ra chạy TỪNG cái, đừng `npm test` một cục.
+ *
+ * Vì sao (đo thật 03/09, một phiên bị chặn BỐN lần): `scripts.test` của repo này mở đầu bằng
+ * suite của `workers/duc-auto-chatgpt`. `&&` nghĩa là suite đó đỏ thì dừng hết — nên một lane
+ * lưu file dở làm MỌI lane khác không đóng được phiên, và cổng còn không nói nổi đỏ của ai.
+ * Cả bốn lần đều tự xanh lại khi lane kia lưu xong.
+ *
+ * Cắt ra thì mỗi lệnh quy được về một vùng, và quy được thì mới đòi đúng người.
+ */
+const rootSuiteParts = () => {
+  let raw = "";
+  try { raw = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))?.scripts?.test ?? ""; }
+  catch { return []; }
+  return String(raw).split("&&").map((s) => s.trim()).filter(Boolean);
+};
+
+/* File nào lệnh này chạy — để quy chủ. Không nhận ra dạng lệnh thì trả null, và nơi gọi coi
+ * như CỦA MÌNH. Fail closed: thà nhận oan việc của mình còn hơn bỏ qua một suite thật. */
+const suiteFileOf = (cmd) => {
+  const parts = cmd.split(/\s+/).filter((t) => !t.startsWith("-"));
+  if (parts[0] !== "node" || parts.length < 2) return null;
+  return parts[1].replaceAll("\\", "/");
+};
+
+const runOne = (cmd) => execSync(cmd, { cwd: ROOT, encoding: "utf8", timeout: 900000 });
 const hasRootTestScript = () => {
   try { return Boolean(JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))?.scripts?.test); }
   catch { return false; }
@@ -192,6 +216,19 @@ const keyOf = (f) => stewardOf(f, structure, claimPrefixes);
 // bên tự gộp tập khoá, và 02/09 hai bên đã trả hai câu khác nhau cho cùng một file — xem ghi chú
 // trong repo-structure.mjs. Khoá gốc luôn bắt đầu bằng "_"; vùng chia-theo-gói thì không.
 const keysTouched = ownershipKeys(touched, structure, claimPrefixes, adminFile);
+
+/* Vùng nào bị chính TÔI sửa qua một commit chưa push — dùng để quy chủ một suite đỏ.
+ * Khác `keysTouched` ở đúng chỗ quan trọng: cây làm việc là CHUNG, nên `keysTouched` chứa cả
+ * file chưa commit của lane khác. Commit mang nhãn của tôi thì không lẫn được.
+ * Commit không nhãn → không quy thuộc được → tính là của tôi (fail closed). */
+const keysCuaCommitToi = new Set(
+  ownershipKeys(
+    [...nhanCuaFile.entries()]
+      .filter(([, nhan]) => [...nhan].some((n) => n === null || n === asLabel))
+      .map(([file]) => file),
+    structure, claimPrefixes, adminFile
+  )
+);
 const rootAreasTouched = keysTouched.filter((k) => k.startsWith("_"));
 const myRootAreas = rootAreasTouched.filter((k) => ownedBy(k) === asLabel);
 // Mồ côi xét trên tập ĐÃ TRỪ việc của lane khác (K2-1b). Đây là chỗ 9% lượt "giữ khoá vì chưa
@@ -339,16 +376,37 @@ check("Test xanh", () => {
   }
   if (!suites.length && !rootSuite) return { ok: true, msg: "Không package nào của bạn có suite bị ảnh hưởng." };
   const lines = [];
+  const doCuaLaneKhac = [];
   if (rootSuite) {
-    try {
-      const out = runRootSuite();
-      const NEWLINE = String.fromCharCode(10);
-      const totals = out.split(NEWLINE).filter((line) => /[0-9]+ passed, [0-9]+ failed/.test(line));
-      lines.push(`suite gốc repo: ${totals.length ? totals.join(" · ") : "chạy xong"}`);
-    } catch (error) {
-      const tail = String(error.stdout || error.message).trim().split(String.fromCharCode(10)).slice(-3).join(" | ");
-      return { ok: false, msg: `suite gốc repo ĐỎ → ${tail}` };
+    const NEWLINE = String.fromCharCode(10);
+    const totals = [];
+    for (const cmd of rootSuiteParts()) {
+      let out;
+      try { out = runOne(cmd); }
+      catch (error) {
+        const tail = String(error.stdout || error.message).trim().split(NEWLINE).slice(-3).join(" | ");
+        // Suite này thuộc vùng nào, và vùng đó có phải của tôi?
+        const file = suiteFileOf(cmd);
+        const key = file ? stewardOf(file, structure, claimPrefixes) : null;
+        const chu = key ? ownedBy(key) : null;
+        // Quy theo COMMIT CÓ NHÃN CỦA TÔI, không theo `keysTouched`.
+        //
+        // Đây là chỗ bản đầu của tôi sai, và fixture bắt được: cây làm việc là CHUNG, nên file
+        // CHƯA COMMIT của lane khác vẫn nằm trong `touched` của tôi — đúng cái đã chặn oan tôi
+        // bốn lần. Lấy "tôi có chạm vùng đó không" làm điều kiện thì nó tự vô hiệu hoá chính
+        // bản vá này ở đúng ca phổ biến nhất.
+        //
+        // Quy theo commit của mình thì chắc: commit mang nhãn của tôi là việc tôi thật sự làm.
+        // Commit KHÔNG nhãn thì không quy thuộc được → tính là của tôi (fail closed).
+        if (chu && chu !== asLabel && !keysCuaCommitToi.has(key)) {
+          doCuaLaneKhac.push(`${key} (của "${chu}") → ${tail}`);
+          continue;
+        }
+        return { ok: false, msg: `${file ?? cmd} ĐỎ → ${tail}` };
+      }
+      totals.push(...out.split(NEWLINE).filter((line) => /[0-9]+ passed, [0-9]+ failed/.test(line)));
     }
+    lines.push(`suite gốc repo: ${totals.length ? totals.join(" · ") : "chạy xong"}`);
   }
   for (const suite of suites) {
     try {
@@ -358,6 +416,15 @@ check("Test xanh", () => {
       const tail = String(error.stdout || error.message).trim().split("\n").slice(-3).join(" | ");
       return { ok: false, msg: `${suite} ĐỎ → ${tail}` };
     }
+  }
+  // Suite của lane khác đỏ: KHÔNG chặn tôi, nhưng cũng KHÔNG được in ra XANH. Việc của tôi
+  // xanh thật, việc của họ đang hỏng thật — hai sự thật, và bảng phải nói cả hai.
+  if (doCuaLaneKhac.length) {
+    return {
+      ok: true,
+      skipped: true,
+      msg: `Việc của bạn xanh (${lines.join(" · ")}). NHƯNG suite của lane khác đang đỏ, và đó KHÔNG phải việc của bạn: ${doCuaLaneKhac.join(" · ")}. Không chặn bạn đóng phiên — nhưng safe-push của HỌ sẽ chặn họ.`
+    };
   }
   return { ok: true, msg: lines.join(" · ") };
 });

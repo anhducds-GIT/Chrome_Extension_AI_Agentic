@@ -18,7 +18,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyAtEof, claimPrefixesFrom, laneFromMessage, LANE_TRAILER, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
+import { appendOnlyAtEof, claimPrefixesFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -212,11 +212,55 @@ if (blocked.length && carry) {
  * CỐ Ý KHÔNG tự sinh rồi tự commit. Làm thế là biến công cụ ĐẨY thành công cụ VIẾT, và một
  * commit bạn không gõ là một commit bạn không đọc. Nó từ chối, và đưa đúng câu lệnh.
  */
-const generators = Array.isArray(structure?.generators) ? structure.generators : [];
+/* BA FAIL-OPEN, audit GPT 03/09 bắt được trong chính hard gate này. Ghi cả ba ra đây vì cả ba
+ * đều là loại "cổng tự thông" — nó không đỏ, nó biến thành không làm gì:
+ *
+ * 1. Tôi tự viết `Array.isArray(structure?.generators) ? … : []`. `generatorsFrom` thì NÉM khi
+ *    cấu hình hỏng; bản của tôi lặng lẽ trả mảng RỖNG, tức xoá `generators` là hard gate hết
+ *    kiểm gì. Nay đi qua đúng một cửa, và để nó ném.
+ * 2. `if (!fs.existsSync(file)) continue;` — bộ sinh ĐÃ KHAI mà file biến mất thì bỏ qua. Khai
+ *    rồi mà thiếu là repo hỏng, phải ĐỎ.
+ * 3. Đọc `.repo-structure.json` từ CÂY LÀM VIỆC. Nhưng thứ sắp publish là HEAD — một bản sửa
+ *    chưa commit đổi được danh sách verifier của cái sắp đẩy. Nay đọc từ HEAD.
+ */
+const structureAtHead = (() => {
+  const raw = gitQuiet("show", "HEAD:.repo-structure.json");
+  if (raw.trim() === "") return null;   // không có ở HEAD = chưa khai, `generatorsFrom` lùi về mặc định
+  try { return JSON.parse(raw); }
+  catch (error) {
+    console.error(`\nTỪ CHỐI PUSH — .repo-structure.json ở HEAD không phải JSON đọc được: ${error.message}`);
+    console.error("Đây là file khai bộ sinh nào phải kiểm. Không đọc được nó thì không kiểm được gì, và không kiểm được thì không đẩy.\n");
+    process.exit(1);
+  }
+})();
+// KHAI hay MẶC ĐỊNH — hai chuyện khác nhau, và fixture 23b bắt được đúng lúc tôi gộp chúng.
+// Một repo dựng từ bộ khung KHÔNG khai `generators`: `generatorsFrom` lùi về mặc định, nhưng
+// repo đó không mang mấy script ấy theo VÀ cũng không có đầu vào cho chúng chạy. Đòi nó phải
+// tươi là khoá repo vĩnh viễn ngay ở cú push đầu tiên.
+// Nên: chưa khai thì KHÔNG kiểm — và NÓI RA là chưa kiểm, đừng để nó đội lốt đã đạt.
+const declaredGenerators = structureAtHead?.generators !== undefined;
+let generators = [];
+if (declaredGenerators) {
+  try { generators = generatorsFrom(structureAtHead); }
+  catch (error) { console.error(`\nTỪ CHỐI PUSH — ${error.message}\n`); process.exit(1); }
+} else {
+  console.log("\n⚠ .repo-structure.json ở HEAD chưa khai `generators` — cổng xuất bản KHÔNG kiểm được artifact nào.");
+  console.log("  Đây là \"chưa kiểm\", không phải \"đã đạt\". Repo có bộ sinh thì khai nó vào để cổng có răng.");
+}
+
 const artifactStale = [];
 for (const script of generators) {
   const file = path.join(ROOT, "scripts", script);
-  if (!fs.existsSync(file)) continue;
+  // KHAI mà thiếu thì ĐỎ; MẶC ĐỊNH mà thiếu thì bỏ qua. Hai chuyện khác nhau, và fixture 23b
+  // bắt được đúng lúc tôi gộp chúng: một repo dựng từ bộ khung KHÔNG khai `generators` và cũng
+  // không mang mấy script đó theo — nó là repo không có bộ sinh, chặn nó là khoá repo vĩnh viễn.
+  // Còn khai rồi mà file biến mất thì là repo hỏng thật.
+  if (!fs.existsSync(file)) {
+    if (declaredGenerators) {
+      artifactStale.push(`scripts/${script} đã KHAI trong .repo-structure.json nhưng KHÔNG có trong repo — khai rồi mà thiếu là repo hỏng, không phải chuyện bỏ qua.`);
+    }
+    continue;
+  }
   // Bộ sinh sửa dở thì chính nó không đáng tin để phán xử — nói ra, đừng lặng lẽ cho qua.
   if (gitQuiet("status", "--porcelain", `scripts/${script}`).trim() !== "") {
     artifactStale.push(`scripts/${script} đang sửa dở chưa commit — nó là thứ phán xử, nên kết quả không đáng tin.`);

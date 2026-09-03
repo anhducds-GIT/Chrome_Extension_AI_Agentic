@@ -1574,3 +1574,44 @@ xử" đã có trong code, nhưng gỡ nó ra thì **suite vẫn xanh** — tứ
 ba vào 23i. Sau đó **5/5 mutation đều bắt được**.
 
 **Số.** Suite 273 → 274. Cổng vẫn 11 phép kiểm (dời chỗ chặn, không xoá phép kiểm).
+
+### K2-9 — cổng "Test xanh" thôi chặn oan (Đức chốt 03/09)
+
+**Lỗ nằm đúng một dòng:** `runRootSuite` chạy `npm test` một cục, mà `scripts.test` của repo này
+mở đầu bằng suite của `workers/duc-auto-chatgpt`. `&&` nghĩa là suite đó đỏ thì **dừng hết** — nên
+một lane lưu file dở làm mọi lane khác không đóng được phiên, và cổng còn không nói nổi đỏ của ai.
+Đo trong phiên hôm nay: **bốn lần**, mỗi lần tự xanh lại khi lane kia lưu xong.
+
+**Sửa:** cắt `scripts.test` theo `&&`, chạy từng lệnh, quy mỗi lệnh về một vùng. Suite của lane
+khác đỏ → **không chặn tôi**, nhưng in ra `[BỎ]` kèm tên vùng và tên chủ. Suite của tôi đỏ → **vẫn
+chặn**.
+
+> **Chỗ tôi làm sai lần đầu, và fixture bắt được.** Tôi định quy theo `keysTouched` — "tôi có chạm
+> vùng đó không". Sai: cây làm việc là **chung**, nên file **chưa commit** của lane khác vẫn nằm
+> trong `touched` của tôi. Đó chính là cái đã chặn oan tôi bốn lần, nên lấy nó làm điều kiện là tự
+> vô hiệu hoá bản vá ở đúng ca phổ biến nhất. Nay quy theo **commit mang nhãn của tôi** — commit
+> không nhãn thì không quy thuộc được, tính là của tôi (fail closed).
+
+**Thử phá 4/4:** miễn cho mọi suite đỏ · không miễn gì · bỏ vế "chạm vùng họ rồi thì hết miễn" ·
+in XANH thay vì BỎ — đều bắt được.
+
+### Audit GPT — ba fail-open trong chính hard gate K2-8, GPT đúng cả ba
+
+Cả ba cùng hình dạng: **cổng không đỏ, cổng biến thành không làm gì**. Loại đó tệ nhất vì nó
+trông y hệt "đã đạt".
+
+1. Tôi tự viết `Array.isArray(structure?.generators) ? … : []` thay vì đi qua `generatorsFrom`.
+   Hàm kia **NÉM** khi cấu hình hỏng; bản của tôi lặng lẽ trả mảng rỗng → xoá `generators` là
+   hard gate hết kiểm gì.
+2. `if (!fs.existsSync(file)) continue;` — bộ sinh **đã khai** mà file biến mất thì bỏ qua.
+3. Đọc `.repo-structure.json` từ **cây làm việc**, nhưng thứ sắp publish là **HEAD** — một bản sửa
+   chưa commit đổi được danh sách verifier của cái sắp đẩy.
+
+**Đã vá cả ba, và ghim cả ba** (vế E · F · G của fixture 23i). Mutation: trước khi ghim thì cả ba
+**thoát sạch**; sau khi ghim thì cả ba **đỏ**.
+
+**Một phân biệt phải giữ, do fixture 23b bắt được:** `generators` **khai** mà thiếu thì ĐỎ;
+**chưa khai** thì không kiểm và **nói ra là chưa kiểm**. Repo dựng từ bộ khung không khai
+`generators` và cũng không mang script đó theo — chặn nó là khoá repo ngay ở cú push đầu tiên.
+
+**Số.** Suite 274 → 275. Cổng vẫn 11 phép kiểm.
