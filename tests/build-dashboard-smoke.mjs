@@ -855,6 +855,80 @@ function antiDrift(text, measurements = {}) {
   }
 }
 
+/* 23k. K2-3b · HÀNH VI: commit thiếu nhãn `Lane:` thì cổng ĐỎ (bật chặn 03/09, Đức chốt).
+   Trước đó phép kiểm #10 chỉ cảnh báo, và KHÔNG có test nào ghim chế độ đó — nên lật sang chặn
+   không làm đỏ một test nào. Đó chính là cái bẫy đã bắt được hai lần trong phiên này: một chốt
+   không ai ghim thì nó chỉ là bình luận. Khối này ghim cả hai chiều.
+   Phạm vi CỐ Ý chỉ là `origin/main..HEAD` — không quét lịch sử (GPT đính chính đúng). */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-3b-bat-chan-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  const dongNhan = () => {
+    const r = spawnSync(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "toi", "--quick"], { cwd: tempRoot, encoding: "utf8" });
+    const rows = r.stdout.split(String.fromCharCode(10));
+    const i = rows.findIndex((l) => l.includes("Nhãn lane trong commit"));
+    assert.ok(i >= 0, `cong PHAI con phep kiem "Nhan lane trong commit". stdout: ${r.stdout}`);
+    const out = [rows[i]];
+    for (let k = i + 1; k < rows.length && /^\s{5,}\S/.test(rows[k]); k += 1) out.push(rows[k]);
+    return { dong: out.join(" "), status: r.status, stderr: r.stderr };
+  };
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2 Bat Chan");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1, repo: { name: "R", tagline: "t" }, generators: [],
+      units: { root_dir: "workers", marker: "manifest.json", depth: 2, ten: "E" },
+      areas: { "scripts/": { steward: "_code", mutability: "rw", ownership_mode: "root" } }
+    }, null, 2));
+    put(".agents/claims.json", JSON.stringify({ claims: { _root: { owner: null }, _code: { owner: "toi" } } }, null, 2));
+    put("manifest.json", JSON.stringify({ name: "R", version: "0.0.1" }));
+    put("HANDOFF.md", "# Handoff\n");
+    put("workers/goi/v0.1.0/manifest.json", JSON.stringify({ name: "G", version: "0.1.0" }));
+    put("workers/goi/v0.1.0/HANDOFF.md", "# Log\n");
+    gitAt("add", "."); gitAt("commit", "-m", "seed");
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+
+    // Không có commit nào chưa push → không có gì để xét.
+    assert.match(dongNhan().dong, /\[XANH\]/, "khong co commit chua push thi phai XANH");
+
+    // CHIỀU ĐỎ: commit KHÔNG nhãn.
+    put("scripts/x.mjs", "export const x = 1;\n");
+    gitAt("add", "-A"); gitAt("commit", "-m", "khong co nhan lane");
+    const thieu = dongNhan();
+    assert.match(thieu.dong, /\[ĐỎ/, "K2-3b: commit thieu nhan `Lane:` thi cong PHAI DO — truoc 03/09 no chi canh bao");
+    assert.match(thieu.dong, /LANE_THIEU_NHAN/, "phai co ma loi doc duoc");
+    assert.match(thieu.dong, /git commit --amend/, "phai dua dung cach sua, khong bat nguoi doc di tim");
+    assert.notEqual(thieu.status, 0, "do thi khong duoc thoat 0");
+
+    // CHIỀU XANH: thêm nhãn thì thông. Thiếu vế này thì một đột biến "luôn đỏ" vẫn thoát.
+    gitAt("commit", "--amend", "-m", "khong co nhan lane\n\nLane: toi");
+    const co = dongNhan();
+    assert.doesNotMatch(co.dong, /\[ĐỎ/, `them nhan roi thi khong duoc do nua: ${co.dong}`);
+
+    // Nhãn HỎNG vẫn phải ĐỎ, và bằng một mã khác — bỏ nhãn không được thành đường thoát,
+    // mà nhãn rác cũng không được thành đường thoát.
+    put("scripts/y.mjs", "export const y = 1;\n");
+    gitAt("add", "-A"); gitAt("commit", "-m", "nhan hong\n\nLane: co dau cach");
+    const hong = dongNhan();
+    assert.match(hong.dong, /\[ĐỎ/, "nhan hong thi PHAI do");
+    assert.match(hong.dong, /LANE_KHONG_QUY_THUOC_DUOC/, "nhan hong va thieu nhan la HAI ma khac nhau");
+    ok("K2-3b · HÀNH VI: thiếu nhãn `Lane:` thì ĐỎ kèm cách sửa; thêm nhãn thì thông; nhãn hỏng ĐỎ bằng mã riêng");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-3b-bat-chan-")), "chỉ dọn đúng temp fixture K2-3b");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
 /* 23j. K2-9 · HÀNH VI: suite của lane KHÁC đỏ thì không chặn tôi; của TÔI đỏ thì chặn.
    Bệnh (đo thật 03/09): `scripts.test` nối các suite bằng `&&`, và nó mở đầu bằng suite của
    `workers/duc-auto-chatgpt`. Nên một lane lưu file dở làm MỌI lane khác không đóng được phiên
@@ -928,32 +1002,38 @@ function antiDrift(text, measurements = {}) {
     put("scripts/viec-cua-toi.mjs", "export const x = 1;\n");
     gitAt("add", "-A");
     gitAt("commit", "-m", "viec cua toi\n\nLane: toi");
-    assert.match(dongTest(gate()), /\[XANH\]/, "hai suite xanh thi cong phai XANH");
+    // CA 1 — mọi thứ sạch, mọi suite xanh.
+    assert.match(dongTest(gate()), /\[XANH\]/, "clean-pass: hai suite xanh thi cong phai XANH");
 
-    // VẾ 1 — suite của LANE KHÁC đỏ: không chặn tôi, nhưng phải nói ra.
+    // CA 2 — file CHƯA COMMIT của LANE KHÁC làm suite đỏ. Vùng tôi giữ thì sạch, HEAD xanh.
+    // Đây là ca đã chặn oan tôi bốn lần trong một phiên.
     put("workers/goi-cua-ho/v0.1.0/tests/run-all.mjs", suiteDo);
-    const r1 = gate();
-    const d1 = dongTest(r1);
-    assert.doesNotMatch(d1, /\[ĐỎ/, `suite cua lane khac do thi KHONG duoc chan toi. Khoi Test xanh: ${d1}`);
-    assert.match(r1.stdout, /workers\/goi-cua-ho \(của "lane-khac"\)/, "phai noi RO do cua ai, khong duoc im lang cho qua");
-    assert.doesNotMatch(d1, /\[XANH\]/, "cung KHONG duoc in XANH — viec cua ho dang hong that");
-
-    // VẾ 2 — VẾ CHỊU LỰC: suite của TÔI đỏ thì VẪN chặn. Thiếu vế này thì vế 1 là gỡ bảo vệ.
-    put("workers/goi-cua-ho/v0.1.0/tests/run-all.mjs", suiteXanh);
-    put("tests/cua-toi.mjs", suiteDo);
     const r2 = gate();
-    assert.match(dongTest(r2), /\[ĐỎ/, "suite cua CHINH TOI do thi PHAI chan — neu khong thi day la go bao ve");
-    assert.notEqual(r2.status, 0, "cong do thi khong duoc thoat 0");
+    const d2 = dongTest(r2);
+    assert.doesNotMatch(d2, /\[ĐỎ/, `foreign-dirty + HEAD xanh: KHONG duoc chan toi. Khoi Test xanh: ${d2}`);
+    assert.doesNotMatch(d2, /\[XANH\]/, "cung KHONG duoc in XANH — cay lam viec dang hong that");
+    assert.match(r2.stdout, /Thứ ĐÃ COMMIT xanh/, "phai noi ro: da commit thi lanh, cay lam viec thi hong");
 
-    // VẾ 3 — đường lách: tôi CHẠM vùng của họ rồi thì đỏ đó có thể do tôi, không được đổ cho họ.
-    put("tests/cua-toi.mjs", suiteXanh);
+    // CA 3 — CHỐT GPT, và là ca K2-9 v1 mất: chính TÔI còn sửa dở. HEAD vẫn xanh, nhưng nếu
+    // lấy "HEAD xanh" ra miễn thì tôi tự miễn cho chính lỗi của mình. PHẢI ĐỎ.
+    put("scripts/viec-cua-toi.mjs", "export const x = 2;\n");   // bẩn, trong vùng `_code` TÔI giữ
+    const r3 = gate();
+    assert.match(dongTest(r3), /\[ĐỎ/, "own-dirty + HEAD xanh: PHAI DO — day la fail-open GPT bat duoc");
+    assert.match(r3.stdout, /TOI_CON_SUA_DO/, "phai noi dung ly do, de nguoi doc biet commit truoc la xong");
+    assert.notEqual(r3.status, 0, "do thi khong duoc thoat 0");
+
+    // CA 4 — regression ĐÃ COMMIT: HEAD đỏ. Vùng tôi sạch, nhưng vẫn phải đỏ.
+    // Đây là vế mà quy-theo-đường-dẫn của v1 sẽ [BỎ] mất: suite nằm trong gói của lane khác,
+    // nhưng thứ làm nó đỏ đã nằm trong HEAD.
+    gitAt("checkout", "--", "."); gitAt("clean", "-fd");
     put("workers/goi-cua-ho/v0.1.0/tests/run-all.mjs", suiteDo);
-    put("workers/goi-cua-ho/v0.1.0/toi-sua-vao-day.js", "// toi cham vao goi cua ho\n");
-    gitAt("add", "-A");
-    gitAt("commit", "-m", "toi cham vao goi cua ho\n\nLane: toi");
-    assert.match(dongTest(gate()), /\[ĐỎ/,
-      "cham vao vung cua ho roi thi do do co the do TOI — do cho ho la mot duong lach, phai chan");
-    ok("K2-9 · HÀNH VI: suite lane khác đỏ thì không chặn tôi (vẫn nói rõ của ai); suite của tôi đỏ thì chặn; chạm vào vùng họ rồi thì hết được miễn");
+    gitAt("add", "-A"); gitAt("commit", "-m", "commit ca suite do\n\nLane: toi");
+    assert.equal(gitAt("status", "--porcelain").trim(), "", "dung fixture: cay phai sach o ca nay");
+    const r4 = gate();
+    assert.match(dongTest(r4), /\[ĐỎ/, "own-committed + HEAD do: PHAI DO");
+    assert.match(r4.stdout, /REGRESSION_DA_COMMIT/, "phai noi dung ly do — do nay co that trong HEAD");
+    assert.notEqual(r4.status, 0, "do thi khong duoc thoat 0");
+    ok("K2-9 v2 · HÀNH VI: 4 ca — clean-pass · foreign-dirty/HEAD-xanh → BỎ · own-dirty/HEAD-xanh → ĐỎ · own-committed/HEAD-đỏ → ĐỎ");
   } finally {
     assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-9-test-cua-ai-")), "chỉ dọn đúng temp fixture K2-9");
     rmSync(tempRoot, { recursive: true, force: true });

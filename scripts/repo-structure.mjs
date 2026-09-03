@@ -508,3 +508,17 @@ export function readStructureFromDisk(root) {
     throw new Error(`CAU_TRUC_HONG: ${STRUCTURE_FILE} không phải JSON đọc được (${error.message}). Sửa file đó rồi chạy lại.`);
   }
 }
+
+/* Quyết định THUẦN, tách khỏi việc chạy để kiểm được mọi nhánh. Nguyên mẫu đã chạy 5/5 trên
+ * một repo giả trước khi port vào đây (4 ca GPT yêu cầu + fail-closed). */
+export function quyTrachNhiemSuite({ vungToiGiuConBan, ketQuaTrenHead }) {
+  // CHỐT GPT THÊM, và là ca dễ mất nhất: nếu CHÍNH TÔI còn sửa dở gây lỗi thì HEAD cũng xanh —
+  // tức tôi tự miễn cho mình. Quy được vì luật mục 1: chỉ tôi được ghi vào vùng tôi giữ, nên
+  // file bẩn trong đó LÀ CỦA TÔI. Đây là vế duy nhất quy thuộc được một file chưa commit.
+  if (vungToiGiuConBan.length) {
+    return { ok: false, ly_do: `TOI_CON_SUA_DO: ${vungToiGiuConBan.join(", ")}` };
+  }
+  if (ketQuaTrenHead === null) return { ok: false, ly_do: "KHONG_TRICH_DUOC_HEAD" };
+  if (ketQuaTrenHead === false) return { ok: false, ly_do: "REGRESSION_DA_COMMIT" };
+  return { ok: true, bo_qua: true, ly_do: "NHIEM_TU_CAY_LAM_VIEC" };
+}

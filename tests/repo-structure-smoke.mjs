@@ -26,6 +26,7 @@ import {
   lineCountOf,
   laneFromMessage,
   generatedFrom,
+  quyTrachNhiemSuite,
   DEFAULT_REPO
 } from "../scripts/repo-structure.mjs";
 import fsMod from "node:fs";
@@ -531,6 +532,47 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
     assert.ok(!khai.includes(t), `${t} KHONG duoc mien: nua muc 2 la chu cua NGUOI, mien la mo duong ghi khong can khoa`);
   }
   ok("K2-1 nua LUAT: repo nay khai du artifact may sinh; file nua-nguoi khong duoc mien; bo sinh moi khong lot im lang");
+}
+
+/* ---- K2-9 v2 · suite đỏ là của ai — quy theo TRẠNG THÁI, không theo ĐƯỜNG DẪN
+ *
+ * Bản v1 quy theo đường dẫn file test. Audit GPT bác đúng, sai theo cả hai chiều: tôi commit
+ * vào `scripts/` dùng chung mà làm test gói khác đỏ thì cổng [BỎ] một regression THẬT; còn một
+ * suite gốc đọc file sửa dở của lane khác thì vẫn chặn oan tôi. Gốc bệnh là suite chạy trên một
+ * CÂY LÀM VIỆC DÙNG CHUNG, nên câu hỏi đúng là: **lỗi này có trong thứ đã commit không?**
+ *
+ * Hàm nằm ở ĐÂY chứ không ở `session-check.mjs` vì file đó là SCRIPT — nạp nó là nó chạy và
+ * `process.exit`. Không import được thì không ghim được từng nhánh, và mutation đã chứng minh
+ * điều đó: nhánh "không trích được HEAD" gỡ ra mà suite vẫn xanh. Đúng cách chia repo đã khai:
+ * hàm suy ra thì thuần và dùng chung, việc đọc thì mỗi bên tự làm.
+ */
+{
+  // CHỐT GPT, và là ca v1 mất: chính TÔI còn sửa dở thì HEAD cũng xanh — lấy "HEAD xanh" ra
+  // miễn là tôi tự miễn cho lỗi của mình. Quy được vì luật mục 1: chỉ tôi được ghi vào vùng tôi
+  // giữ. Điều kiện này phải xét TRƯỚC mọi thứ khác, nên ghim cả khi HEAD xanh lẫn khi HEAD đỏ.
+  for (const head of [true, false, null]) {
+    const v = quyTrachNhiemSuite({ vungToiGiuConBan: ["scripts/x.mjs"], ketQuaTrenHead: head });
+    assert.equal(v.ok, false, `toi con sua do thi PHAI do, ke ca khi HEAD = ${head}`);
+    assert.match(v.ly_do, /TOI_CON_SUA_DO/);
+    assert.match(v.ly_do, /scripts\/x\.mjs/, "phai ke ten file, de nguoi doc biet commit cai gi");
+  }
+
+  // Vùng tôi sạch → mới được hỏi HEAD.
+  const doOHead = quyTrachNhiemSuite({ vungToiGiuConBan: [], ketQuaTrenHead: false });
+  assert.equal(doOHead.ok, false, "HEAD do = regression DA COMMIT, phai chan");
+  assert.equal(doOHead.ly_do, "REGRESSION_DA_COMMIT");
+
+  const xanhOHead = quyTrachNhiemSuite({ vungToiGiuConBan: [], ketQuaTrenHead: true });
+  assert.equal(xanhOHead.ok, true, "HEAD xanh + vung toi sach = nhiem tu cay lam viec, khong chan toi");
+  assert.equal(xanhOHead.bo_qua, true, "nhung phai la BO, khong phai XANH — cay lam viec dang hong that");
+  assert.equal(xanhOHead.ly_do, "NHIEM_TU_CAY_LAM_VIEC");
+
+  // FAIL CLOSED — nhánh này mutation đã cho THOÁT khi hàm còn nằm trong session-check.mjs.
+  // Không trích được HEAD nghĩa là KHÔNG BIẾT, và không biết thì không được miễn.
+  const khongBiet = quyTrachNhiemSuite({ vungToiGiuConBan: [], ketQuaTrenHead: null });
+  assert.equal(khongBiet.ok, false, "khong trich duoc HEAD thi PHAI do — khong biet khong duoc doi lot da dat");
+  assert.equal(khongBiet.ly_do, "KHONG_TRICH_DUOC_HEAD");
+  ok("K2-9 v2 · vung toi ban thi chan truoc moi thu; HEAD do thi chan; HEAD xanh thi BO; khong biet thi chan");
 }
 
 /* ---- units.ten — tên gọi một đơn vị, dùng cho tiêu đề bảng ---------------- */

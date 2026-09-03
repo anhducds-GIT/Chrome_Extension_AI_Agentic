@@ -13,11 +13,12 @@
 */
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
-import { appendOnlyAtEof, areaOf, claimPrefixesFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, areaOf, claimPrefixesFrom, generatorsFrom, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -141,8 +142,6 @@ const ownedBy = (area) => CLAIMS?.[area]?.owner ?? null;
  * suite của `workers/duc-auto-chatgpt`. `&&` nghĩa là suite đó đỏ thì dừng hết — nên một lane
  * lưu file dở làm MỌI lane khác không đóng được phiên, và cổng còn không nói nổi đỏ của ai.
  * Cả bốn lần đều tự xanh lại khi lane kia lưu xong.
- *
- * Cắt ra thì mỗi lệnh quy được về một vùng, và quy được thì mới đòi đúng người.
  */
 const rootSuiteParts = () => {
   let raw = "";
@@ -151,15 +150,35 @@ const rootSuiteParts = () => {
   return String(raw).split("&&").map((s) => s.trim()).filter(Boolean);
 };
 
-/* File nào lệnh này chạy — để quy chủ. Không nhận ra dạng lệnh thì trả null, và nơi gọi coi
- * như CỦA MÌNH. Fail closed: thà nhận oan việc của mình còn hơn bỏ qua một suite thật. */
-const suiteFileOf = (cmd) => {
-  const parts = cmd.split(/\s+/).filter((t) => !t.startsWith("-"));
-  if (parts[0] !== "node" || parts.length < 2) return null;
-  return parts[1].replaceAll("\\", "/");
+const runOne = (cmd, cwd = ROOT) => execSync(cmd, { cwd, encoding: "utf8", timeout: 900000 });
+
+/* ---- SUITE ĐỎ LÀ CỦA AI — quy theo TRẠNG THÁI, không theo ĐƯỜNG DẪN -------
+ *
+ * Bản K2-9 v1 của tôi quy theo đường dẫn file test: test nằm trong gói của lane khác thì bỏ
+ * qua. Audit GPT bác đúng, và sai đó nặng theo cả hai chiều:
+ *   · tôi commit vào `scripts/` DÙNG CHUNG mà làm test gói khác đỏ → cổng [BỎ] một
+ *     **regression thật**;
+ *   · một suite gốc dưới `tests/` đọc file sửa dở của lane khác → vẫn **chặn oan tôi**, vì
+ *     chủ của file test đó là `_code`, tức của tôi.
+ * Gốc bệnh không nằm ở đường dẫn: nó nằm ở chỗ suite chạy trên một CÂY LÀM VIỆC DÙNG CHUNG.
+ *
+ * Nên hỏi đúng câu: **lỗi này có trong thứ đã commit không?** Trích HEAD ra thư mục tạm, chạy
+ * lại đúng suite đó ở đó. Đỏ ở đó = thật. Xanh ở đó = nhiễm từ cây làm việc.
+ *
+ * `git archive` chứ KHÔNG `git worktree add`: nó không ghi vào `.git/worktrees` — state dùng
+ * chung mà hai lane chạy cùng lúc có thể giẫm nhau — và cũng không phạm luật "KHÔNG worktree".
+ * Đo: 1.8s cho 1249 file. Ảnh chụp sống vài giây rồi xoá, không phải hộp cát thường trú (K2-6).
+ */
+const chayLaiTrenHead = (cmd) => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "gate-head-"));
+  try {
+    runOne(`git archive HEAD | tar -x -C "${d}"`);
+    try { runOne(cmd, d); return true; }
+    catch { return false; }
+  } catch { return null; }        // không trích được → KHÔNG biết → không được miễn
+  finally { fs.rmSync(d, { recursive: true, force: true }); }
 };
 
-const runOne = (cmd) => execSync(cmd, { cwd: ROOT, encoding: "utf8", timeout: 900000 });
 const hasRootTestScript = () => {
   try { return Boolean(JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))?.scripts?.test); }
   catch { return false; }
@@ -221,16 +240,21 @@ const keysTouched = ownershipKeys(touched, structure, claimPrefixes, adminFile);
  * Khác `keysTouched` ở đúng chỗ quan trọng: cây làm việc là CHUNG, nên `keysTouched` chứa cả
  * file chưa commit của lane khác. Commit mang nhãn của tôi thì không lẫn được.
  * Commit không nhãn → không quy thuộc được → tính là của tôi (fail closed). */
-const keysCuaCommitToi = new Set(
-  ownershipKeys(
-    [...nhanCuaFile.entries()]
-      .filter(([, nhan]) => [...nhan].some((n) => n === null || n === asLabel))
-      .map(([file]) => file),
-    structure, claimPrefixes, adminFile
-  )
-);
 const rootAreasTouched = keysTouched.filter((k) => k.startsWith("_"));
 const myRootAreas = rootAreasTouched.filter((k) => ownedBy(k) === asLabel);
+
+/* File CHƯA COMMIT nằm trong vùng TÔI đang giữ. Đây là thứ duy nhất trong cả bài này quy thuộc
+ * được một file chưa commit, và nó dựa thẳng vào luật mục 1: chỉ tôi được ghi vào vùng tôi giữ,
+ * nên file bẩn ở đó là của tôi. Dùng cho `quyTrachNhiemSuite` — nếu vùng tôi còn bẩn thì KHÔNG
+ * được lấy "HEAD xanh" ra tự miễn, vì thay đổi gây lỗi có thể là của chính tôi và nó chưa có
+ * trong HEAD. Chốt này do audit GPT thêm; thiếu nó thì bản vá tự mở một fail-open mới. */
+const banTrongVungCuaToi = () => {
+  const cuaToi = new Set([...myPackages, ...myRootAreas]);
+  return workingChanges
+    .map((c) => c.file)
+    .filter((f) => !adminFile(f))
+    .filter((f) => cuaToi.has(stewardOf(f, structure, claimPrefixes)));
+};
 // Mồ côi xét trên tập ĐÃ TRỪ việc của lane khác (K2-1b). Đây là chỗ 9% lượt "giữ khoá vì chưa
 // push được" biến mất: một phiên nay trả khoá xong vẫn đẩy được sau, mà cổng phiên kế không đỏ oan.
 const orphanRootAreas = ownershipKeys(touchedToiPhaiTraLoi, structure, claimPrefixes, adminFile)
@@ -385,24 +409,12 @@ check("Test xanh", () => {
       try { out = runOne(cmd); }
       catch (error) {
         const tail = String(error.stdout || error.message).trim().split(NEWLINE).slice(-3).join(" | ");
-        // Suite này thuộc vùng nào, và vùng đó có phải của tôi?
-        const file = suiteFileOf(cmd);
-        const key = file ? stewardOf(file, structure, claimPrefixes) : null;
-        const chu = key ? ownedBy(key) : null;
-        // Quy theo COMMIT CÓ NHÃN CỦA TÔI, không theo `keysTouched`.
-        //
-        // Đây là chỗ bản đầu của tôi sai, và fixture bắt được: cây làm việc là CHUNG, nên file
-        // CHƯA COMMIT của lane khác vẫn nằm trong `touched` của tôi — đúng cái đã chặn oan tôi
-        // bốn lần. Lấy "tôi có chạm vùng đó không" làm điều kiện thì nó tự vô hiệu hoá chính
-        // bản vá này ở đúng ca phổ biến nhất.
-        //
-        // Quy theo commit của mình thì chắc: commit mang nhãn của tôi là việc tôi thật sự làm.
-        // Commit KHÔNG nhãn thì không quy thuộc được → tính là của tôi (fail closed).
-        if (chu && chu !== asLabel && !keysCuaCommitToi.has(key)) {
-          doCuaLaneKhac.push(`${key} (của "${chu}") → ${tail}`);
-          continue;
-        }
-        return { ok: false, msg: `${file ?? cmd} ĐỎ → ${tail}` };
+        const verdict = quyTrachNhiemSuite({
+          vungToiGiuConBan: banTrongVungCuaToi(),
+          ketQuaTrenHead: banTrongVungCuaToi().length ? null : chayLaiTrenHead(cmd)
+        });
+        if (verdict.ok) { doCuaLaneKhac.push(`${cmd} → ${tail}`); continue; }
+        return { ok: false, msg: `${cmd} ĐỎ (${verdict.ly_do}) → ${tail}` };
       }
       totals.push(...out.split(NEWLINE).filter((line) => /[0-9]+ passed, [0-9]+ failed/.test(line)));
     }
@@ -417,13 +429,13 @@ check("Test xanh", () => {
       return { ok: false, msg: `${suite} ĐỎ → ${tail}` };
     }
   }
-  // Suite của lane khác đỏ: KHÔNG chặn tôi, nhưng cũng KHÔNG được in ra XANH. Việc của tôi
-  // xanh thật, việc của họ đang hỏng thật — hai sự thật, và bảng phải nói cả hai.
+  // Đỏ ở cây làm việc nhưng XANH ở HEAD: không chặn tôi, nhưng cũng KHÔNG được in ra XANH.
+  // Thứ đã commit thì lành thật, cây làm việc thì đang hỏng thật — hai sự thật, nói cả hai.
   if (doCuaLaneKhac.length) {
     return {
       ok: true,
       skipped: true,
-      msg: `Việc của bạn xanh (${lines.join(" · ")}). NHƯNG suite của lane khác đang đỏ, và đó KHÔNG phải việc của bạn: ${doCuaLaneKhac.join(" · ")}. Không chặn bạn đóng phiên — nhưng safe-push của HỌ sẽ chặn họ.`
+      msg: `Thứ ĐÃ COMMIT xanh (${lines.join(" · ")}). NHƯNG chạy trên CÂY LÀM VIỆC thì đỏ: ${doCuaLaneKhac.join(" · ")}. Đỏ đó KHÔNG có trong HEAD và vùng bạn đang giữ thì sạch, nên nó đến từ file sửa dở của phiên khác — không chặn bạn. Ai commit nó thì cổng của HỌ sẽ chặn.`
     };
   }
   return { ok: true, msg: lines.join(" · ") };
@@ -669,11 +681,24 @@ check("Nhãn lane trong commit", () => {
   const ke = [];
   if (cuaToi.length) ke.push(`${cuaToi.length} của bạn`);
   for (const [lane, n] of [...cuaNguoiKhac].sort()) ke.push(`${n} của "${lane}"`);
+  // K2-3b, BẬT CHẶN 2026-09-03 (Đức chốt). Trước đó chỉ cảnh báo.
+  //
+  // Điều kiện đã đủ, theo đúng thứ tự: convention dạy vào `AGENTS.md` mục 2 TRƯỚC
+  // (commit 4f0cbab), rồi mới bật chặn. Bật trước khi dạy là đỏ oan mọi phiên chưa đọc luật.
+  //
+  // Phạm vi CHỈ là `origin/main..HEAD` — GPT đính chính đúng chỗ này: lý lẽ "509 commit cũ đều
+  // không có nhãn" của tôi KHÔNG liên quan, vì phép kiểm không hề quét lịch sử. Cản trở thật
+  // chỉ là commit CHƯA PUSH hiện tại thiếu nhãn, và chúng sửa được bằng một `--amend`.
+  //
+  // Vì sao đáng chặn: không có nhãn thì `safe-push` quy commit theo CHỦ VÙNG LÚC CHẠY, mà chủ
+  // đổi được sau lúc commit — nên nó quy sai cả hai chiều, và chiều nguy hiểm là **im lặng cuốn
+  // việc của người khác lên remote**. Ngày 26/08 đã có 2 commit chưa duyệt lên `main` đúng đường đó.
   if (thieu.length) {
     return {
-      ok: true,
-      skipped: true,
-      msg: `${thieu.length}/${shas.length} commit chưa push KHÔNG có nhãn (${thieu.slice(0, 6).join(", ")}${thieu.length > 6 ? ", …" : ""})${ke.length ? ` · ${ke.join(" · ")}` : ""}. Chưa chặn (509 commit cũ đều không có nhãn), nhưng quy theo vùng sai được cả hai chiều. Từ nay thêm dòng cuối commit: \`${LANE_TRAILER} ${asLabel}\``
+      ok: false,
+      msg: `LANE_THIEU_NHAN: ${thieu.length}/${shas.length} commit chưa push không có nhãn (${thieu.slice(0, 6).join(", ")}${thieu.length > 6 ? ", …" : ""})${ke.length ? ` · ${ke.join(" · ")}` : ""}.`
+        + ` Không có nhãn thì safe-push quy commit theo chủ vùng lúc chạy, và nó quy sai cả hai chiều.`
+        + ` Sửa: \`git commit --amend\` rồi thêm dòng cuối \`${LANE_TRAILER} ${asLabel}\`. Từ commit sau thì thêm sẵn dòng đó.`
     };
   }
   return { ok: true, msg: `${shas.length} commit chưa push đều quy thuộc được: ${ke.join(" · ")}.` };

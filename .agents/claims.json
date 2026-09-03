@@ -11,16 +11,16 @@
     "workers/duc-auto-gemini": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-02",
-      "task": "GIU DEN KHI PUSH XONG (nut Luu ten + 2 vong audit da xong, gate xanh; push dang ket vi phien f18-evidence chua day). Tra ngay sau push.",
-      "released_at": "2026-09-03"
+      "claimed_at": "2026-09-03T10:17",
+      "task": "Sua README+AGENTS goi Gemini v0.2.0 dang la ban copy cua goi ChatGPT",
+      "released_at": "2026-09-03T10:52"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-03T09:30",
-      "task": "Ghi phan quyet PASS/freeze cua GPT (vong 6) + chuyen bang trang thai sang cho pilot van hanh",
-      "released_at": "2026-09-03T09:32"
+      "owner": "claude-gpt-kenh",
+      "ai": "Claude",
+      "claimed_at": "2026-09-03T10:56",
+      "task": "Cai thien kenh CC<->GPT: them chat.read doc tron van ban hoi thoai (read-only)",
+      "released_at": null
     },
     "_root": {
       "owner": "claude-k2-design",
@@ -30,19 +30,19 @@
       "released_at": null
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-03",
-      "task": "Ghi quyet dinh Duc duyet huong A vao design study",
-      "released_at": "2026-09-03T05:21"
+      "owner": "claude-gpt-kenh",
+      "ai": "Claude",
+      "claimed_at": "2026-09-03T10:56",
+      "task": "Ghi ho so kenh CC<->GPT + cau hoi cua gui cho Duc",
+      "released_at": null
     },
     "_code": {
-      "owner": "claude-dashboard",
+      "owner": "claude-k2-design",
       "ai": "Claude",
-      "claimed_at": "2026-09-03T09:29",
-      "task": "Sua bo dem no ky thuat (Duc gat 63 -> 57) + mac dinh tieu de bang + lam tron dong tuoi",
+      "claimed_at": "2026-09-03T10:53",
+      "task": "K2-9 v2 + K2-3b bat chan nhan lane — dong K2",
       "released_at": null
     }
   },
-  "_fingerprint": "ea42fdd5d14fdd4f"
+  "_fingerprint": "249f02d644ee234f"
 }
