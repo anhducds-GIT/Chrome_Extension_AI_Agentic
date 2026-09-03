@@ -1724,3 +1724,49 @@ số bằng **ngưỡng sàn 15** — thứ duy nhất phép so hai bên không 
 về 0. Thử phá: đổi tên `registryEntry` → đỏ.
 
 **Số.** Suite 275 → 286. Cổng 11 phép kiểm. Thử phá **8/8** (trước khi chuyển hàm thuần thì 1 thoát).
+
+---
+
+## Log — 2026-09-03, `claude-dashboard` · `DASHBOARD.html` + `PROMPTS.md`, và đo lại chuyện đa-AI
+
+**Ba việc Đức chốt cùng lúc, và việc thứ ba đổi hình dạng của hai việc đầu.**
+
+### Đo trước, vì tôi đã đoán sai
+
+Đức yêu cầu mọi flow phải chạy được với Codex và Antigravity, không chỉ Claude. Tôi tưởng sẽ phải sửa nhiều. Đo ra thì **ngược lại**:
+
+| Đo gì | Kết quả |
+|---|---|
+| `AGENTS.md` gốc giả định công cụ riêng của Claude | **0 chỗ** |
+| Chỉ dẫn vận hành | 100% là `node scripts/*.mjs` — cả ba AI chạy như nhau |
+| Hai chỗ tìm kiếm bắt được trong sổ tay | **dương tính giả** (`ARTIFACT PERSISTENCE FAILED` là mã lỗi của trang Gemini) |
+| Việc chỉ Claude làm được | **đúng một**: đăng artifact lên claude.ai |
+
+Nên luật này **vốn đã** không phụ thuộc Claude. Điểm phụ thuộc duy nhất là **bảng trạng thái** — nó chỉ tồn tại dạng artifact trên claude.ai. `DASHBOARD.html` xoá bỏ đúng chỗ đó: bất kỳ AI nào cũng `node scripts/build-overview.mjs` rồi commit, Đức mở file trực tiếp.
+
+### Chỗ suýt làm tê cả repo
+
+`DASHBOARD.html` khai vào khối `generators`, nên **cổng chạy `--check-head` mỗi phiên và `safe-push` từ chối đẩy khi nó lệch**. Trang có dòng "hôm nay" / "N ngày trước" tính từ **giờ đồng hồ**. Nếu bản commit giữ dòng đó thì sang ngày mới là nó lệch HEAD **dù không một dữ liệu nào đổi**, và **mọi phiên khác bị chặn push chỉ vì một ngày đã qua**.
+
+Bản commit nay lấy mốc từ chính HEAD (`today: "head"`). Việc báo cũ **không mất đi** — nó do đoạn JS trong trang tự tính lúc Đức MỞ trang, từ `data-sinh`. Đúng chỗ hơn: một trang tĩnh không biết trước bao giờ có người mở nó.
+
+Phép ghim 14 dựng đúng ca đó: **đổi đồng hồ lên 99 ngày, bản commit không được đổi một byte** — và trước đó phải chứng minh `buildOverview` CÓ nhảy theo `today`, nếu không thì khẳng định kia xanh một cách vô nghĩa.
+
+### KHÔNG sinh lại `FEATURE-PARITY.md`, có chủ đích
+
+`--check` (thư mục làm việc) ĐỎ, nhưng `--check-head` XANH. Chênh lệch đến từ việc phiên `claude-gpt-kenh` đang thêm một lệnh Bridge **chưa commit**. Sinh lại là **commit số đo việc đang dở của họ như thể đã xong**. Cổng dùng `--check-head` nên nó xanh. Phiên sau gặp cảnh này thì hỏi `--check-head` trước khi vội sinh lại.
+
+### Hai lỗi của chính tôi, tự bắt được
+
+1. **Một phép kiểm giả:** `assert.equal(a, ... === a ? a : a)` — luôn đúng bất kể code thế nào. Để lại là thêm một dòng xanh vô nghĩa, đúng loại lỗi khó thấy nhất.
+2. **Tính model hai lần:** `sinhTrang` gọi `collectModel` một lần chỉ để lấy ngày rồi `buildOverview` gọi lại. Một lượt sinh tốn **8,8 giây**, nên suite vượt 120 giây.
+
+### Chi phí còn lại, nói ra thay vì để phiên sau tự phát hiện
+
+`tests/build-overview-smoke.mjs` mất **1 phút 39** (11 lượt sinh × ~9 giây) và là file chậm nhất của suite. Hạn của cổng là 600s/900s nên **không có rủi ro**, chỉ là chậm. Đã cắt hai lần: bỏ lượt `collectModel` dư trong code, và bỏ khẳng định "sinh hai lần ra y hệt" — vì cổng đã kiểm đúng điều đó mỗi phiên bằng `--check-head`, kiểm lại trong test là trả tiền hai lần cho cùng một câu. Chữa thật nếu cần: nhớ đệm `collectModel`, nhưng đó là code dùng chung với cổng nên tôi không tự sửa.
+
+### Và một điều nhỏ về cách lấy quyền
+
+Cả bốn khoá tôi cần đều có chủ. Đức cho phép giành `_root`. Tôi **nhắn phiên đang giữ trước** — họ trả cả `_root` và `_code` ngay. Nhận bằng lệnh bình thường: không sửa tay, không vỡ dấu niêm phong, không ai mất quyền im lặng. **Nhắn một câu rẻ hơn giành.**
+
+Còn mở: `G-12` (soát nốt README gói Gemini) · hai câu hỏi cho phiên giữ `gg-flow-video` ở Log trước · C3 và bốn phát hiện của brief K1 · `Y-01` chờ Đức trả lời ba câu.
