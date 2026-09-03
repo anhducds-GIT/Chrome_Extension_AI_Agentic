@@ -2,8 +2,26 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const root = new URL("../", import.meta.url);
-const install = fs.readFileSync(new URL("scripts/Install-DucAutoChatGPTLoopbackBridgeV1.ps1", root), "utf8");
-const uninstall = fs.readFileSync(new URL("scripts/Uninstall-DucAutoChatGPTLoopbackBridgeV1.ps1", root), "utf8");
+const install = fs.readFileSync(new URL("scripts/Install-DucAutoGeminiBridgeV1.ps1", root), "utf8");
+const uninstall = fs.readFileSync(new URL("scripts/Uninstall-DucAutoGeminiBridgeV1.ps1", root), "utf8");
+
+/* HAI SCRIPT CỦA GÓI ChatGPT KHÔNG ĐƯỢC MỌC LẠI Ở ĐÂY.
+
+   Đo 03/09: `scripts/` của gói này từng chứa CẢ HAI bộ.
+     Install-DucAutoGeminiBridgeV1.ps1            cổng 32148 · gốc .../duc-auto-gemini
+     Install-DucAutoChatGPTLoopbackBridgeV1.ps1   cổng 32147 · gốc %LOCALAPPDATA%/DucAutoChatGPT
+   Gói ChatGPT THẬT cũng dùng 32147, nên chạy bản kia là ĐÂM CỔNG với Bridge của gói đó.
+   Triệu chứng là "nối mãi không được", không phải một lỗi rõ ràng — rất khó truy.
+   Đức chốt xoá 03/09.
+
+   Và một điều đáng ghi: mười lăm khẳng định siết an toàn bên dưới TRƯỚC ĐÂY ghim vào bộ
+   ChatGPT — tức lớp bảo vệ được kiểm trên một file không ai nên chạy, còn script thật thì
+   không ai kiểm. Nay chúng ghim vào bộ Gemini. Đã thử: bộ Gemini chịu được cả mười lăm,
+   nên đây là chuyển chỗ ghim, không phải nới lỏng. */
+for (const bo of ["Install-DucAutoChatGPTLoopbackBridgeV1.ps1", "Uninstall-DucAutoChatGPTLoopbackBridgeV1.ps1"]) {
+  assert.equal(fs.existsSync(new URL(`scripts/${bo}`, root)), false,
+    `${bo} da bi xoa 03/09 vi dam cong 32147 voi goi ChatGPT — dung mang no ve day`);
+}
 
 assert.match(install, /New-Object byte\[\] 32/);
 assert.match(install, /RandomNumberGenerator/);

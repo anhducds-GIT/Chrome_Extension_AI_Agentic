@@ -1615,3 +1615,69 @@ trông y hệt "đã đạt".
 `generators` và cũng không mang script đó theo — chặn nó là khoá repo ngay ở cú push đầu tiên.
 
 **Số.** Suite 274 → 275. Cổng vẫn 11 phép kiểm.
+
+---
+
+## Log — 2026-09-03, `claude-dashboard` · SỬA BỘ ĐẾM NỢ, VÀ CON SỐ KHÁC VỚI LÚC BÁO
+
+Đức gật cho sửa bộ đếm nợ kỹ thuật trên bảng trực quan. Đo lại trước khi sửa, và **con số
+khác với con số tôi báo lúc đầu** — ghi rõ ở đây để không ai tin sai:
+
+| | |
+|---|---|
+| Luật cũ | **65** mục mở (bảng hiện 63 lúc đó, vì HEAD đã tiến thêm 2 mục của chatgpt) |
+| Luật mới | **60** mục mở |
+
+Không phải 63 → 57. Chỉ **5** mục khớp chứ không phải 6: `F-24` viết *"BÁO ĐỘNG GIẢ — đã đo,
+đóng lại 02/09"*, không mở đầu bằng chữ xong nên vẫn bị tính là nợ. **Để nguyên** — lệch về
+phía báo thừa, không báo thiếu.
+
+**Phát hiện quan trọng nhất, và nó ngược với chẩn đoán ban đầu của tôi:** ba cụm chữ
+`ĐÃ ĐÓNG|ĐÃ XONG|ĐÃ VÁ XONG` mà bộ lọc cũ đi tìm **chưa khớp một lần nào** trong cả ba sổ nợ.
+Đó là **code chết**. Nên "bỏ dò văn xuôi" một mình **không hạ được số nào** — tôi đã định làm
+đúng thế, và số sẽ không nhúc nhích. Cái hạ được số là **neo dấu đóng vào ĐẦU tiêu đề**.
+
+Bài học: tôi đề xuất một bản sửa cho Đức **trước khi** làm phép trừ. Nếu Đức gật rồi tôi làm
+luôn theo lời mình nói thì kết quả là một commit không đổi gì mà vẫn báo "đã sửa".
+**Đo trước, hứa sau** — nhất là khi con số sẽ hiện lên bảng Đức đọc.
+
+**Ba chỗ sửa, cùng `scripts/build-overview.mjs`:** `isDone` neo đầu tiêu đề + chặn "một phần" ·
+dòng tuổi bảng so hai mốc NGÀY thay vì mốc thời điểm (bản cũ sinh sau trưa là ra "1 ngày trước"
+ngay trong ngày sinh) · tên bảng mặc định lấy từ tên thư mục gốc, không viết cứng.
+
+**Ba phép ghim mới (7-8-9)**, và fixture dựng ĐƯỢC cả hai ca bẫy `F-05` / `F-19` — đây là chỗ
+đã hỏng bốn lần trong hai ngày. Đột biến 4 lần, bắt được 4: trả về bộ lọc cũ · bỏ chặn
+"một phần" · bỏ neo `^` · trả về cách tính tuổi cũ.
+
+**Đính chính một điều tôi đã nhắn các phiên khác:** tôi báo lỗi thiếu phép ghim của
+`KHONG_CO_ORIGIN_MAIN` "nhân đôi vì đã sao sang `template/`". Nay `template/` **không còn trong
+repo này** (dọn ra nhà riêng theo ADR-0001), nên phần "nhân đôi" đó sai — chỉ còn một chỗ, và
+nó ở repo bộ khung.
+
+Còn mở: (a)(b)(d) của brief K1 · C3 · một dòng luật "báo bảng cũ" ở `AGENTS.md` (cần `_root`).
+
+---
+
+## Log — 2026-09-03, `claude-dashboard` · bảng 7 tab, và một cái bẫy đâm cổng tìm ra dọc đường
+
+**Bảng trạng thái dựng lại theo 9 góp ý của Đức.** 7 tab (học cấu trúc từ artifact Ark Repo Harness), 6 tab ẩn mặc định, toggle bên trong. Bảng tổng có link nhảy sang tab chi tiết và tự mở đúng toggle. Dải đỏ **tự tính tuổi lúc XEM** thay vì lúc sinh. 13 phép ghim, đột biến 10 lần bắt được 10.
+
+**Hai phép kiểm hoá ra là bức tường chặn đường sửa** — cùng một bệnh, hai chỗ:
+
+| Phép kiểm | Ghim cái gì | Hậu quả |
+|---|---|---|
+| của tôi, phiên này | "gói Gemini đang có README sai tên" | vá xong là ĐỎ |
+| của phiên trước | "README nhắc tên script ChatGPT" | vá xong là ĐỎ |
+
+Cả hai **ghim hiện trạng thay vì ghim cơ chế**. Người đến sau thấy suite đỏ và tưởng mình làm sai. Đã viết lại thành bất biến sống được qua bản vá.
+
+**VIỆC CHO PHIÊN ĐANG GIỮ `workers/duc-auto-gg-flow-video` — tôi chỉ đọc được, không sửa.**
+
+Gói Gemini từng chứa hai bộ script cài Bridge, cổng khác nhau: bộ Gemini **32148**, bộ ChatGPT **32147** — mà gói ChatGPT thật cũng dùng 32147, nên chạy nhầm là đâm cổng. Đức chốt xoá, đã xoá, có phép ghim chặn mọc lại.
+
+**`gg-flow-video` đang có CẢ BỐN file đó** (đo `ls scripts/` ngày 03/09), và cổng tìm thấy trong đó cũng chỉ có 32147 với 32148 — tức gói này **không có cổng riêng**. Hai câu hỏi cho chủ gói, tôi không tự kết luận:
+
+1. Bộ ChatGPT trong đó có phải đồ thừa lúc fork như bên Gemini không? Nếu có thì cùng cái bẫy.
+2. Nếu `gg-flow-video` dùng bộ Gemini thì nó **dùng chung cổng 32148 và chung gốc cài** với gói Gemini — cố ý, hay là chưa ai để ý?
+
+Cách kiểm bên đó giống hệt: `tests/bridge-install-static.mjs` có ghim lớp siết an toàn vào bộ nào? Nếu ghim vào bộ ChatGPT thì **đừng xoá trước khi chuyển chỗ ghim** — bên Gemini xoá thẳng là mất mười lăm lớp bảo vệ.

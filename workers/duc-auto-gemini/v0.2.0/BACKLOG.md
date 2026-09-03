@@ -142,13 +142,13 @@ Chỗ nặng nhất đã sửa: README ghi thư mục tải về mặc định l
 
 **Một cái bẫy, ghi lại để phiên sau đừng mắc:** ĐỪNG find-replace `ChatGPT` thành `Gemini`. Gói này **thật sự chứa** `templates/Duc-Auto-ChatGPT-Template.xlsx` và `pilot-04/Duc-Auto-ChatGPT-Pilot-04.xlsx` — tên file đúng là vậy, thay là làm sai một câu đang đúng. Hai khối prompt `#01` / `#02` ở cuối `AGENTS.md` cũng cố ý giữ: đó là bản ghi lịch sử của dự án ChatGPT, sửa là viết lại lịch sử. Đã dán nhãn tại chỗ.
 
-### G-13 · Hai script Bridge của ChatGPT còn nằm trong `scripts/` — **[ĐO]**
+### ~~G-13~~ · Hai script Bridge của ChatGPT còn nằm trong `scripts/` — **ĐÓNG 03/09** ✅
 
 `scripts/` của gói này có **cả hai bộ**: `Install-DucAutoGeminiBridgeV1.ps1` + `Uninstall-DucAutoGeminiBridgeV1.ps1` (bộ đúng), và `Install-DucAutoChatGPTLoopbackBridgeV1.ps1` + `Uninstall-DucAutoChatGPTLoopbackBridgeV1.ps1` (đồ thừa lúc fork).
 
 Rủi ro thật: hai script cài vào **hai thư mục khác nhau**, nên chạy nhầm là dựng Bridge ở chỗ extension không tìm tới. Triệu chứng sẽ là "nối mãi không được" chứ không phải một lỗi rõ ràng. README nay đã trỏ đúng bộ Gemini, nhưng file kia vẫn nằm đó và vẫn chạy được.
 
-**Cần Đức chốt trước khi xoá** — luật gốc: không xoá file khi chưa hỏi.
+**ĐÃ XOÁ 03/09, Đức chốt.** Trước khi xoá đã kiểm: `tests/bridge-install-static.mjs` ghim mười lăm tính chất an toàn của script cài, và chúng ghim vào **bộ ChatGPT** — xoá thẳng là mất trắng mười lăm lớp bảo vệ (luật vàng 3). Nên chuyển chúng sang bộ Gemini trước và chạy thử: **bộ Gemini chịu được cả mười lăm**. Giờ lớp bảo vệ ghim vào script THẬT SỰ đang dùng, mạnh hơn trước. Có phép ghim chặn hai file mọc lại.
 
 ## Đã đóng
 

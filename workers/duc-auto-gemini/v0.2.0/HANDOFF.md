@@ -677,3 +677,13 @@ Nên test đang ghim **tên cũ đã sai**, không phải tôi làm hỏng nó. 
 **Còn mở:** `G-12` soát nốt README từ mục cài đặt trở xuống · `G-13` xoá hai script ChatGPT thừa trong `scripts/` — **cần Đức chốt**, luật gốc không cho xoá file khi chưa hỏi. Sổ nợ gói này 11 → 13.
 
 **Suite gói này:** 85 passed, 0 failed sau khi sửa (trước đó 84/1).
+
+### Tiếp — Đức chốt xoá hai script thừa (03/09)
+
+Đã xoá `scripts/Install-DucAutoChatGPTLoopbackBridgeV1.ps1` và `Uninstall-DucAutoChatGPTLoopbackBridgeV1.ps1`. `G-13` đóng.
+
+**Không xoá thẳng, và đây là lý do.** `tests/bridge-install-static.mjs` ghim **mười lăm tính chất an toàn** của script cài — siết ACL, không ghi registry, không bao giờ in token, hành vi `-KeepPairing` — và chúng ghim vào **bộ ChatGPT**. Xoá thẳng là mất trắng mười lăm lớp bảo vệ, luật vàng 3 cấm.
+
+Nên chuyển chỗ ghim sang bộ Gemini **trước**, rồi chạy thử: **bộ Gemini chịu được cả mười lăm**. Xoá xong suite vẫn 85/0.
+
+Điều đáng ghi hơn cả việc xoá: mười lăm lớp bảo vệ đó **trước đây kiểm trên một file không ai nên chạy**, còn script thật thì không ai kiểm. Nay chúng ghim vào script đang dùng — mạnh hơn trước, không phải nới lỏng. Kèm phép ghim chặn hai file mọc lại (đột biến: mang một file về → bắt được).
