@@ -136,35 +136,27 @@ function ownersOf(sha) {
      · có nhãn `Lane:` → quy theo nhãn. Chính xác, và không đổi khi quyền đổi chủ.
      · nhãn HỎNG      → KHÔNG quy thuộc được → coi là của phiên khác (fail closed). Thà chặn
                         oan mình còn hơn im lặng đẩy việc người khác.
-     · KHÔNG có nhãn  → lùi về quy theo vùng như cũ, VÀ nói to là đang lùi. Bắt buộc phải lùi:
-                        509 commit trong lịch sử repo không có nhãn nào, chặn hết là khoá repo. */
+     · KHÔNG có nhãn  → CŨNG KHÔNG quy thuộc được → chặn. Xem ngay dưới.
+
+   ĐƯỜNG LÙI "quy theo vùng" ĐÃ BỎ HẲN — K2-3c, audit GPT vòng 5, 03/09. Bản trước chỉ CẢNH BÁO
+   rồi lùi về quy theo vùng, tức chính cách mà đoạn trên vừa nói là "sai được cả hai chiều".
+   Hậu quả: gọi thẳng `safe-push` là né được K2-3b của cổng đóng phiên, và quay lại đúng lỗi
+   ngày 26/08 — im lặng cuốn commit của phiên khác lên remote.
+
+   Lý do tôi từng viết đường lùi ("509 commit trong lịch sử không có nhãn") là SAI PHẠM VI, và
+   GPT đã sửa tôi đúng chỗ này một lần rồi ở phép kiểm #10: `pending` chỉ là `origin/main..HEAD`
+   — commit CHƯA push. Lịch sử cũ không bao giờ đi qua đây, nên chặn ở đây không khoá gì cả. */
 const laneOf = (sha) => laneFromMessage(gitQuiet("log", "-1", "--format=%B", sha));
 
 const rows = pending.map((commit) => {
   const areas = ownersOf(commit.sha);
   const { lane, problem } = laneOf(commit.sha);
-  let foreign;
-  let basis;
-  if (problem) {
-    foreign = [{ area: "(nhãn lane hỏng)", owner: problem }];
-    basis = "lane-hong";
-  } else if (lane) {
-    foreign = lane === asLabel ? [] : [{ area: `lane ${lane}`, owner: lane }];
-    basis = "lane";
-  } else {
-    foreign = areas.filter((a) => a.owner && a.owner !== asLabel);
-    basis = "vung";
-  }
-  return { ...commit, areas, foreign, lane, laneProblem: problem, basis };
+  return {
+    ...commit, areas, lane, laneProblem: problem,
+    foreign: lane && !problem && lane !== asLabel ? [{ area: `lane ${lane}`, owner: lane }] : [],
+    khongQuyDuoc: problem ? `nhãn HỎNG (${problem.split(":")[0]})` : lane ? null : "THIẾU nhãn"
+  };
 });
-
-const khongCoNhan = rows.filter((row) => row.basis === "vung");
-if (khongCoNhan.length) {
-  console.log(`\n⚠ ${khongCoNhan.length}/${rows.length} commit KHÔNG có nhãn \`${LANE_TRAILER} <phiên>\`, nên đang tạm quy theo VÙNG.`);
-  console.log(`  Quy theo vùng sai được cả hai chiều: từ chối việc của chính bạn nếu vùng đã đổi chủ,`);
-  console.log(`  và im lặng đẩy kèm việc người khác nếu bạn vừa nhận vùng của họ.`);
-  console.log(`  Từ nay thêm một dòng cuối thông điệp commit:  ${LANE_TRAILER} ${asLabel}\n`);
-}
 
 console.log(`\nSẮP ĐẨY LÊN origin/main — phiên "${asLabel}"`);
 console.log(`${rows.length} commit:\n`);
@@ -176,9 +168,22 @@ for (const row of rows) {
   // quy theo nhãn hay theo vùng thì không kiểm lại được phán quyết. Ba căn cứ, ba cách hiện.
   const canCu = row.laneProblem ? `NHÃN HỎNG (${row.laneProblem.split(":")[0]})`
     : row.lane ? `lane ${row.lane}${row.lane === asLabel ? " — của bạn" : ""}`
-    : "KHÔNG có nhãn → tạm quy theo vùng";
+    : "KHÔNG có nhãn → không quy thuộc được";
   console.log(`      ${canCu}`);
   console.log(`      vùng: ${areaText}`);
+}
+
+/* KHÔNG QUY THUỘC ĐƯỢC THÌ KHÔNG ĐẨY — và `--carry` KHÔNG mở được cửa này.
+   `--carry` là "Đức duyệt cho đẩy kèm việc của phiên X" — nó cần biết X là ai. Commit không
+   nhãn thì không có X, nên không có gì để duyệt. Sửa nhãn thì miễn phí và không mất việc gì. */
+const moCoi = rows.filter((row) => row.khongQuyDuoc);
+if (moCoi.length) {
+  console.error(`\nTỪ CHỐI PUSH — ${moCoi.length}/${rows.length} commit không quy thuộc được về lane nào:`);
+  for (const row of moCoi) console.error(`  ${row.sha.slice(0, 7)}  ${row.khongQuyDuoc}  ${row.subject.slice(0, 60)}`);
+  console.error(`\nKhông biết commit của ai thì không biết đang đẩy kèm việc của ai — đúng lỗi ngày 26/08.`);
+  console.error(`Sửa: commit CUỐI thì \`git commit --amend\` rồi thêm dòng cuối \`${LANE_TRAILER} ${asLabel}\`.`);
+  console.error(`Nhiều commit thì: git rebase origin/main --exec "git commit --amend --no-edit --trailer '${LANE_TRAILER} ${asLabel}'"\n`);
+  process.exit(1);
 }
 
 const blocked = rows.filter((row) => row.foreign.length);

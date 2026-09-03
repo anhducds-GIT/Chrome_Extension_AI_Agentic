@@ -40,7 +40,29 @@ if (!args.includes("--as") || !asLabel || asLabel.startsWith("--")) {
 // mục đặt tên tiếng Việt đều bị báo đỏ oan. Gặp thật 26/08 với
 // "Pilot-07-Tạo Ảnh tô màu". Đức là người Việt và đặt tên thư mục bằng tiếng
 // Việt, nên đây không phải trường hợp hiếm.
-const git = (...a) => { try { return execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: ROOT, encoding: "utf8" }); } catch { return ""; } };
+/* NUỐT LỖI GIT LÀ FAIL-OPEN, VÀ NÓ NẰM NGAY DƯỚI K2-9 — audit GPT vòng 5, 03/09.
+ *
+ * Bản cũ `catch { return ""; }`: mọi lệnh git hỏng đều thành chuỗi rỗng, không dấu vết. Đường
+ * đi của lỗi: `git status --porcelain` hỏng → `workingChanges` RỖNG → `banTrongVungCuaToi()`
+ * rỗng → cổng tin là vùng tôi sạch → chạy lại trên HEAD → HEAD xanh → `[BỎ]`. Tức cổng vừa
+ * MIỄN cho một regression của chính tôi, bằng đúng cái guard sinh ra để chặn nó. Và `touched`
+ * rỗng làm một loạt phép kiểm khác xanh rỗng theo.
+ *
+ * Nay mọi lỗi được GHI LẠI, và phép kiểm cuối cùng biến chúng thành ĐỎ. Không đoán, không
+ * đi tiếp im lặng. */
+const gitLoi = [];
+const gitRaw = (a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: ROOT, encoding: "utf8" });
+const git = (...a) => {
+  try { return gitRaw(a); }
+  catch (error) {
+    gitLoi.push(`git ${a.join(" ")} → ${String(error.stderr || error.message).trim().split(String.fromCharCode(10))[0]}`);
+    return "";
+  }
+};
+// BA CHỖ MÀ LỖI LÀ BÌNH THƯỜNG, nên không ghi: dò xem `origin/main` có tồn tại (repo mới thì
+// KHÔNG, và cổng đã có đường xử riêng), và đọc `HANDOFF.md` ở origin/main (repo dựng từ bộ
+// khung chưa có file đó). Ghi cả mấy chỗ này là chặn oan đúng repo vừa dựng.
+const gitLoiLaBinhThuong = (...a) => { try { return gitRaw(a); } catch { return ""; } };
 
 const results = [];
 const check = (name, fn) => {
@@ -77,7 +99,7 @@ const touched = [...new Set([...workingChanges.map((c) => c.file), ...unpushed])
 // dùng đầu tiên (~30 dòng), và vì `const` có vùng chết tạm thời nên cổng NÉM NGAY khi
 // nạp — mọi phiên, mọi lệnh, không riêng ca nào. Đo được 03/09: `session-check.mjs --as`
 // bất kỳ đều chết ở dòng đầu tiên dùng nó.
-const originMainResolves = git("rev-parse", "--verify", "origin/main").trim() !== "";
+const originMainResolves = gitLoiLaBinhThuong("rev-parse", "--verify", "origin/main").trim() !== "";
 
 const workingFiles = new Set(workingChanges.map((c) => c.file));
 const nhanCuaFile = new Map();                       // file -> tập nhãn đã chạm nó (null = không nhãn)
@@ -225,8 +247,8 @@ const ROOT_HANDOFF = "HANDOFF.md";
 // cần nhận khoá gốc. `appendOnlyAtEof` đòi thêm: đúng một hunk, và nó bắt đầu ngay sau dòng cuối
 // của bản cũ. Đây là SIẾT, không phải nới: thứ trước đây lọt thì nay đỏ, và đó là chủ ý.
 const handoffAppendOnly = appendOnlyAtEof(
-  git("diff", "-U0", "origin/main", "--", ROOT_HANDOFF),
-  git("show", `origin/main:${ROOT_HANDOFF}`)
+  gitLoiLaBinhThuong("diff", "-U0", "origin/main", "--", ROOT_HANDOFF),
+  gitLoiLaBinhThuong("show", `origin/main:${ROOT_HANDOFF}`)
 );
 const adminFile = (f) => f === ".agents/claims.json" || (f === ROOT_HANDOFF && handoffAppendOnly);
 
@@ -401,34 +423,39 @@ check("Test xanh", () => {
   if (!suites.length && !rootSuite) return { ok: true, msg: "Không package nào của bạn có suite bị ảnh hưởng." };
   const lines = [];
   const doCuaLaneKhac = [];
-  if (rootSuite) {
-    const NEWLINE = String.fromCharCode(10);
-    const totals = [];
-    for (const cmd of rootSuiteParts()) {
-      let out;
-      try { out = runOne(cmd); }
-      catch (error) {
-        const tail = String(error.stdout || error.message).trim().split(NEWLINE).slice(-3).join(" | ");
-        const verdict = quyTrachNhiemSuite({
-          vungToiGiuConBan: banTrongVungCuaToi(),
-          ketQuaTrenHead: banTrongVungCuaToi().length ? null : chayLaiTrenHead(cmd)
-        });
-        if (verdict.ok) { doCuaLaneKhac.push(`${cmd} → ${tail}`); continue; }
-        return { ok: false, msg: `${cmd} ĐỎ (${verdict.ly_do}) → ${tail}` };
-      }
-      totals.push(...out.split(NEWLINE).filter((line) => /[0-9]+ passed, [0-9]+ failed/.test(line)));
+  const NEWLINE = String.fromCharCode(10);
+  /* MỌI SUITE ĐI QUA CÙNG MỘT PHÁN QUYẾT — K2-9c, audit GPT vòng 5, 03/09.
+   *
+   * K2-9 v2 chỉ bọc suite GỐC REPO. Suite của package vẫn chạy thẳng trên cây làm việc dùng
+   * chung và đỏ là `return ok:false` ngay — nên một lane chỉ giữ package vẫn bị file sửa dở
+   * của lane khác chặn oan, đúng bệnh mà K2-9 sinh ra để chữa.
+   *
+   * Gốc bệnh KHÔNG nằm ở suite nào: nó nằm ở chỗ suite chạy trên một CÂY LÀM VIỆC DÙNG CHUNG.
+   * Bệnh ở cây thì thuốc phải áp cho mọi thứ chạy trên cây đó. Nên hai vòng lặp gộp thành
+   * một danh sách lệnh, và một đường xử lý lỗi duy nhất — ít code hơn bản cũ.
+   */
+  const menhLenh = [
+    ...(rootSuite ? rootSuiteParts().map((cmd) => ({ cmd, nhan: null })) : []),
+    ...suites.map((suite) => ({ cmd: `node "${suite}"`, nhan: suite }))
+  ];
+  const totals = [];
+  for (const { cmd, nhan } of menhLenh) {
+    let out;
+    try { out = runOne(cmd); }
+    catch (error) {
+      const tail = String(error.stdout || error.message).trim().split(NEWLINE).slice(-3).join(" | ");
+      const banCuaToi = banTrongVungCuaToi();
+      const verdict = quyTrachNhiemSuite({
+        vungToiGiuConBan: banCuaToi,
+        ketQuaTrenHead: banCuaToi.length ? null : chayLaiTrenHead(cmd)
+      });
+      if (verdict.ok) { doCuaLaneKhac.push(`${nhan ?? cmd} → ${tail}`); continue; }
+      return { ok: false, msg: `${nhan ?? cmd} ĐỎ (${verdict.ly_do}) → ${tail}` };
     }
-    lines.push(`suite gốc repo: ${totals.length ? totals.join(" · ") : "chạy xong"}`);
+    if (nhan) lines.push(`${nhan}: ${(out.trim().split(NEWLINE).pop() || "").trim()}`);
+    else totals.push(...out.split(NEWLINE).filter((line) => /[0-9]+ passed, [0-9]+ failed/.test(line)));
   }
-  for (const suite of suites) {
-    try {
-      const out = execFileSync("node", [suite], { cwd: ROOT, encoding: "utf8", timeout: 600000 });
-      lines.push(`${suite}: ${(out.trim().split("\n").pop() || "").trim()}`);
-    } catch (error) {
-      const tail = String(error.stdout || error.message).trim().split("\n").slice(-3).join(" | ");
-      return { ok: false, msg: `${suite} ĐỎ → ${tail}` };
-    }
-  }
+  if (rootSuite) lines.unshift(`suite gốc repo: ${totals.length ? totals.join(" · ") : "chạy xong"}`);
   // Đỏ ở cây làm việc nhưng XANH ở HEAD: không chặn tôi, nhưng cũng KHÔNG được in ra XANH.
   // Thứ đã commit thì lành thật, cây làm việc thì đang hỏng thật — hai sự thật, nói cả hai.
   if (doCuaLaneKhac.length) {
@@ -690,18 +717,46 @@ check("Nhãn lane trong commit", () => {
   // không có nhãn" của tôi KHÔNG liên quan, vì phép kiểm không hề quét lịch sử. Cản trở thật
   // chỉ là commit CHƯA PUSH hiện tại thiếu nhãn, và chúng sửa được bằng một `--amend`.
   //
-  // Vì sao đáng chặn: không có nhãn thì `safe-push` quy commit theo CHỦ VÙNG LÚC CHẠY, mà chủ
-  // đổi được sau lúc commit — nên nó quy sai cả hai chiều, và chiều nguy hiểm là **im lặng cuốn
-  // việc của người khác lên remote**. Ngày 26/08 đã có 2 commit chưa duyệt lên `main` đúng đường đó.
+  // Vì sao đáng chặn: không có nhãn thì không quy thuộc được commit về lane nào, và chiều nguy
+  // hiểm là **im lặng cuốn việc của người khác lên remote**. Ngày 26/08 đã có 2 commit chưa
+  // duyệt lên `main` đúng đường đó.
+  //
+  // Từ K2-3c (03/09) `safe-push` CŨNG chặn ca này. Trước đó nó chỉ cảnh báo rồi lùi về quy theo
+  // chủ vùng — nên gọi thẳng `safe-push` là né được đúng phép kiểm này. Audit GPT vòng 5.
   if (thieu.length) {
     return {
       ok: false,
       msg: `LANE_THIEU_NHAN: ${thieu.length}/${shas.length} commit chưa push không có nhãn (${thieu.slice(0, 6).join(", ")}${thieu.length > 6 ? ", …" : ""})${ke.length ? ` · ${ke.join(" · ")}` : ""}.`
-        + ` Không có nhãn thì safe-push quy commit theo chủ vùng lúc chạy, và nó quy sai cả hai chiều.`
+        + ` Không quy thuộc được thì safe-push cũng TỪ CHỐI đẩy, vì không biết đang cuốn theo việc của ai.`
         + ` Sửa: \`git commit --amend\` rồi thêm dòng cuối \`${LANE_TRAILER} ${asLabel}\`. Từ commit sau thì thêm sẵn dòng đó.`
     };
   }
   return { ok: true, msg: `${shas.length} commit chưa push đều quy thuộc được: ${ke.join(" · ")}.` };
+});
+
+/* ---- 12. Đọc git có lỗi nào không -------------------------------------- */
+// PHẢI LÀ PHÉP KIỂM CUỐI. Nó phán về thứ mà mười một phép kiểm trên vừa đọc, nên đặt sớm hơn
+// là phán trên một danh sách chưa đầy.
+//
+// Vì sao là ĐỎ chứ không phải cảnh báo: cả cổng này suy ra từ những gì git kể. Git không kể
+// được thì cổng không biết gì — mà "không biết" đã im lặng biến thành "không có vấn đề" ở đúng
+// cái guard của K2-9 (xem ghi chú dài ở `git` đầu file). Một cổng không đọc được đầu vào thì
+// phải nói là nó không đọc được, không được nói XANH.
+check("Đọc git không lỗi", () => {
+  // Repo chưa có `origin/main`: mọi lệnh so với nó đều hỏng, và đó là chuyện ĐÃ BIẾT — cổng
+  // in cảnh báo riêng ở phần báo cáo. Đếm lại chúng ở đây là chặn oan repo vừa dựng.
+  const thuc = gitLoi.filter((line) => originMainResolves || !line.includes("origin/main"));
+  if (thuc.length) {
+    return {
+      ok: false,
+      msg: `GIT_DOC_LOI: ${thuc.length} lệnh git thất bại, nên cổng đang suy luận trên dữ liệu THIẾU`
+        + ` — và thiếu ở đây im lặng thành "sạch", tức miễn oan cho lỗi của chính bạn.`
+        + ` ${thuc.join(" · ")}.`
+        + ` Sửa: chạy lại lệnh đó bằng tay xem nó nói gì, đừng chạy lại cổng và hy vọng.`
+    };
+  }
+  if (gitLoi.length) return { ok: true, msg: `${gitLoi.length} lệnh git hỏng, nhưng đều vì chưa có \`origin/main\` — xem cảnh báo ở đầu báo cáo.` };
+  return { ok: true, msg: "Mọi lệnh git đọc được." };
 });
 
 /* ---- chống tự tháo cổng ------------------------------------------------- */
@@ -714,7 +769,10 @@ check("Nhãn lane trong commit", () => {
 // công cụ đã quy một file về hai vùng khác nhau mà cổng vẫn xanh. Lý do ghi ở HANDOFF.md gốc.
 // 2026-09-02, phiên K2-3: 9 → 10. Thêm "Nhãn lane trong commit", vì quy commit theo chủ HIỆN
 // TẠI của vùng sai cả hai chiều — và chiều nguy hiểm là im lặng đẩy kèm việc người khác.
-const EXPECTED_CHECKS = 11;
+// 2026-09-03, phiên K2-vá-lỗi: 11 → 12. Thêm "Đọc git không lỗi", vì hàm đọc git nuốt mọi lỗi
+// thành chuỗi rỗng, và chuỗi rỗng đó im lặng biến thành "vùng của tôi sạch" ngay trong guard
+// của K2-9 — cổng tự miễn cho regression của chính lane. Audit GPT vòng 5 bắt được.
+const EXPECTED_CHECKS = 12;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

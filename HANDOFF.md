@@ -1770,3 +1770,50 @@ Phép ghim 14 dựng đúng ca đó: **đổi đồng hồ lên 99 ngày, bản 
 Cả bốn khoá tôi cần đều có chủ. Đức cho phép giành `_root`. Tôi **nhắn phiên đang giữ trước** — họ trả cả `_root` và `_code` ngay. Nhận bằng lệnh bình thường: không sửa tay, không vỡ dấu niêm phong, không ai mất quyền im lặng. **Nhắn một câu rẻ hơn giành.**
 
 Còn mở: `G-12` (soát nốt README gói Gemini) · hai câu hỏi cho phiên giữ `gg-flow-video` ở Log trước · C3 và bốn phát hiện của brief K1 · `Y-01` chờ Đức trả lời ba câu.
+
+---
+
+## 2026-09-03 · Phiên `claude-k2-vaLoi` — vá 3 lỗi audit GPT vòng 5 (Final Acceptance: REVISE)
+
+GPT chấm `28db3d4` là **REVISE**, không cho FREEZE Phase ①, kèm 3 lỗi. Tôi đọc lại code từng
+chỗ trước khi sửa: **cả ba đều thật**, không có cái nào phải phản biện.
+
+**1. `safe-push` cho commit thiếu nhãn `Lane:` lùi về quy theo chủ vùng.** Chính file đó tự ghi
+rằng quy theo vùng "sai được cả hai chiều", rồi vẫn dùng nó — chỉ in một dòng cảnh báo. Hậu quả:
+gọi thẳng `safe-push` là **né được phép kiểm #10** của cổng đóng phiên, và quay về đúng lỗi
+26/08. Nay bỏ hẳn đường lùi: thiếu nhãn hoặc nhãn hỏng thì TỪ CHỐI, và `--carry` **không** mở
+được cửa đó (`--carry` duyệt "đẩy kèm việc của X" — không nhãn thì không có X).
+
+Lý lẽ cũ của tôi ("509 commit lịch sử không có nhãn, chặn hết là khoá repo") **sai phạm vi**, và
+GPT đã sửa tôi đúng chỗ này một lần rồi ở phép kiểm #10: `safe-push` chỉ xét `origin/main..HEAD`.
+
+**2. K2-9 v2 chỉ bọc suite GỐC REPO.** Suite của package vẫn chạy thẳng trên cây làm việc dùng
+chung và đỏ là chặn ngay — nên một lane **chỉ giữ package** vẫn bị file sửa dở của lane khác chặn
+oan, đúng bệnh K2-9 sinh ra để chữa. Gốc bệnh là **cây dùng chung**, không phải suite nào, nên
+hai vòng lặp gộp thành một danh sách lệnh với một đường xử lỗi duy nhất. Ít code hơn bản cũ.
+
+**3. Hàm đọc git nuốt mọi lỗi thành chuỗi rỗng — fail-open NGAY TRONG K2-9.** Đường đi:
+`git status --porcelain` hỏng → `workingChanges` rỗng → guard own-dirty thấy vùng tôi "sạch" →
+chạy lại trên HEAD → HEAD xanh → `[BỎ]`. Cổng vừa **miễn cho regression của chính lane**, bằng
+đúng cái guard sinh ra để chặn nó. Nay mọi lỗi được ghi lại và **phép kiểm #12 mới** biến chúng
+thành ĐỎ. Ba lệnh mà lỗi là bình thường (dò `origin/main`, đọc `HANDOFF.md` ở origin/main) đi
+qua một hàm riêng không ghi — nếu không thì repo vừa dựng từ bộ khung bị chặn oan.
+
+**Chống tự tháo cổng: `EXPECTED_CHECKS` 11 → 12.** Lý do ghi ngay cạnh con số, theo luật.
+
+**Số đo:** suite `build-dashboard-smoke` 92 → **95** (3 fixture mới: 23l K2-3c · 23m K2-9c ·
+23n K2-10, mỗi khối đều có đối chứng chiều xanh). `check-bootstrap-smoke` 28/28.
+
+**Hai fixture cũ phải sửa theo, và đó là tin tốt:** khối K2-2b dựa vào commit KHÔNG nhãn để đi
+qua `safe-push` — tức nó đang ghim chính đường lùi vừa bỏ. Thêm nhãn vào là nó ghim lại đúng vế
+nó sinh ra để ghim (quy `docs/` về `_docs`, `scripts/` về `_root`).
+
+Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 ·
+`Y-01` chờ Đức.
+
+**Sửa thêm một sai thật, không phải của vòng audit này:** `AGENTS.md` dòng 66 vẫn ghi "**Ba**
+artifact máy sinh" trong khi `.repo-structure.json` nay khai **bốn** (`DASHBOARD.html` được một
+lane khác thêm). Dòng đó nói cho mọi AI biết chạm file nào thì khỏi nhận khoá — thiếu tên
+`DASHBOARD.html` là phiên sau sẽ nhận `_root` chỉ để sinh lại nó, đúng thứ **19% lượt nhận vô
+ích** mà K2-1 vừa xoá. Phiên trước tôi chỉ nhắn được vì `_root` là của người khác; nay `_root`
+là của tôi nên sửa luôn.

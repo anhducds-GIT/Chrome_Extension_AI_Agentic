@@ -649,7 +649,7 @@ const chay = (deps) => {
   // 2026-09-03, K2-4: 10 → 11. Thêm "Bảng quyền chưa bị sửa tay" — `claim.mjs` giữ đường ghi,
   // nhưng cùng ngày `claims.json` bị mở ra sửa tay đi vòng qua nó, lấy mất khoá của một phiên
   // đang làm dở, và KHÔNG phép kiểm nào kêu. Cổng là chỗ duy nhất nạn nhân chắc chắn chạy tới.
-  assert.match(gate, /const EXPECTED_CHECKS = 11;/, "thêm cổng con thì EXPECTED_CHECKS phải là 11 — lớp chống tự tháo cổng");
+  assert.match(gate, /const EXPECTED_CHECKS = 12;/, "thêm cổng con thì EXPECTED_CHECKS phải là 12 — lớp chống tự tháo cổng");
   // Và nó KHÔNG được biến nợ cấu trúc thành cổng đỏ ở phiên S4.
   // S7: cổng con nay PHẢI biến mã thoát 1 thành cổng đỏ, và phải TÁCH mã 1 (repo có nợ) khỏi
   // mã 2 (bộ kiểm hỏng). Đây là mắt nối duy nhất giữa check-bootstrap và cổng đóng phiên;
@@ -674,7 +674,7 @@ const chay = (deps) => {
   assert.ok(block.indexOf("error.status === 1") < block.indexOf("BOOTSTRAP_KHONG_CHAY_DUOC"),
     "nhánh mã 1 phải xét trước nhánh bộ kiểm hỏng");
   assert.match(block, /^\s*return \{ ok: true, msg: `\$\{tomTat\(stdout\)\}/m, "mã 0 mới được xanh");
-  ok("TÍCH HỢP · session-check.mjs biến mã thoát 1 thành cổng đỏ, EXPECTED_CHECKS = 11");
+  ok("TÍCH HỢP · session-check.mjs biến mã thoát 1 thành cổng đỏ, EXPECTED_CHECKS = 12");
 }
 
 /* ---- Mắt nối cuối: MÃ THOÁT THẬT CỦA MỘT TIẾN TRÌNH ---------------------- */

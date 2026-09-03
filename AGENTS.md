@@ -63,8 +63,8 @@ nên hai việc không hề chồng nhau vẫn chặn nhau:
 Nhận đúng vùng mình đụng, không nhận cả gốc repo. Cổng đóng phiên sẽ nói tên khoá còn thiếu.
 Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.json`.
 
-**Ba artifact máy sinh KHÔNG đòi khoá nào** (từ 03/09): `DASHBOARD.md` · `llms.txt` ·
-`repo-map.json`. Không có gì của ai trong đó để mất — chạy lại bộ sinh là ra y hệt, và đo ngày
+**Bốn artifact máy sinh KHÔNG đòi khoá nào** (từ 03/09): `DASHBOARD.md` · `llms.txt` ·
+`repo-map.json` · `DASHBOARD.html`. Không có gì của ai trong đó để mất — chạy lại bộ sinh là ra y hệt, và đo ngày
 02/09 thấy **19% lượt nhận `_root` tồn tại CHỈ để chạy một bộ sinh rồi trả ngay**. Danh sách khai
 ở khối `generated` của `.repo-structure.json`. `FEATURE-PARITY.md` **cố ý không** nằm trong đó:
 mục 2 của nó là chữ của người, nên chạm nó vẫn phải giữ `_root`.
@@ -102,7 +102,8 @@ Hai ngoại lệ vẫn phải hỏi: (a) safe-push từ chối vì sắp cuốn 
 vào `main`.
 
 **MỌI commit phải có dòng cuối `Lane: <tên-phiên>`** — đúng tên bạn đưa cho `--as`, một dòng,
-không dấu cách. Thiếu nhãn thì cổng đóng phiên ĐỎ (từ 03/09).
+không dấu cách. Thiếu nhãn thì cổng đóng phiên ĐỎ **và `safe-push` từ chối đẩy** (từ 03/09) —
+`--carry` không mở được cửa đó, vì nó duyệt "đẩy kèm việc của X" mà commit không nhãn thì không có X.
 
 Vì sao: nhiều phiên chung một nhánh, nên `safe-push` phải biết commit nào của ai. Không nhãn
 thì nó đoán theo **chủ vùng lúc chạy** — mà chủ đổi được sau lúc commit, nên nó quy sai **cả

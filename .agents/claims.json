@@ -23,10 +23,10 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-k2-design",
+      "owner": "claude-k2-vaLoi",
       "ai": "Claude",
-      "claimed_at": "2026-09-03T09:30",
-      "task": "K2-3b: day convention Lane vao AGENTS.md",
+      "claimed_at": "2026-09-03T12:16",
+      "task": "Ghi mot dong luat: thieu nhan Lane thi safe-push cung tu choi",
       "released_at": null
     },
     "_docs": {
@@ -37,12 +37,12 @@
       "released_at": null
     },
     "_code": {
-      "owner": "claude-k2-design",
+      "owner": "claude-k2-vaLoi",
       "ai": "Claude",
-      "claimed_at": "2026-09-03T10:53",
-      "task": "K2-9 v2 + K2-3b bat chan nhan lane — dong K2",
+      "claimed_at": "2026-09-03T12:16",
+      "task": "Va 3 loi audit GPT vong 5: safe-push thieu nhan Lane, suite package khong qua quyTrachNhiemSuite, git read fail-open",
       "released_at": null
     }
   },
-  "_fingerprint": "249f02d644ee234f"
+  "_fingerprint": "656635dcc84fbd72"
 }
