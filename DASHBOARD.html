@@ -47,8 +47,6 @@ p{margin:0}
   text-transform:uppercase;color:var(--ink);margin-bottom:11px}
 .stampbar{display:flex;justify-content:space-between;align-items:center;gap:12px;
   flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.04em}
-.stalebanner{background:var(--off-bg);border:1px solid var(--off);border-radius:10px;
-  padding:11px 15px;color:var(--off);font-weight:600;font-size:14px}
 .cu{display:none;background:var(--off-bg);border:1px solid var(--off);border-radius:10px;
   padding:11px 15px;color:var(--off);font-weight:600;font-size:14px}
 .cu[data-hien="1"]{display:block}
@@ -193,10 +191,10 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 
 <div class="wrap">
   <div class="stampbar">
-    <span>Sinh ngày 2026-09-03 · hôm nay</span>
+    <span>Sinh ngày 2026-09-04 · hôm nay</span>
     <span>Nguồn sự thật nằm trong repo</span>
   </div>
-  <div class="cu" id="cu" data-sinh="2026-09-03"></div>
+  <div class="cu" id="cu" data-sinh="2026-09-04"></div>
 
   <h1>Chrome_Extension_AI_Agentic</h1>
 
@@ -236,11 +234,11 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
     <div class="card">
       <div class="sect">Toàn bộ việc lớn — bấm tên để xem chi tiết</div>
       <div class="big">
-        <div class="br"><a href="#ext-extension-observer-v0" data-goto="extension">Extension Observer V0</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">extension</span></div>
-        <div class="br"><a href="#ext-duc-auto-chatgpt" data-goto="extension">Duc Auto ChatGPT</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">28 việc nợ</span></div>
-        <div class="br"><a href="#ext-duc-auto-gemini" data-goto="extension">Duc Auto Gemini</a><span class="chip s3">NGHỈ / THAY THẾ</span><span class="meta">extension</span></div>
-        <div class="br"><a href="#ext-duc-auto-gemini" data-goto="extension">Duc Auto Gemini (Platform)</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">12 việc nợ</span></div>
-        <div class="br"><a href="#ext-duc-auto-gg-flow-video" data-goto="extension">Duc Auto GG Flow Video</a><span class="chip s1">ĐANG XÂY</span><span class="meta">21 việc nợ</span></div>
+        <div class="br"><a href="#ext-root" data-goto="extension">Extension Observer V0</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">extension</span></div>
+        <div class="br"><a href="#ext-workers-duc-auto-chatgpt-v0-1-0" data-goto="extension">Duc Auto ChatGPT</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">28 việc nợ</span></div>
+        <div class="br"><a href="#ext-workers-duc-auto-gemini-v0-1-0" data-goto="extension">Duc Auto Gemini</a><span class="chip s3">NGHỈ / THAY THẾ</span><span class="meta">extension</span></div>
+        <div class="br"><a href="#ext-workers-duc-auto-gemini-v0-2-0" data-goto="extension">Duc Auto Gemini (Platform)</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">12 việc nợ</span></div>
+        <div class="br"><a href="#ext-workers-duc-auto-gg-flow-video-v0-1-0" data-goto="extension">Duc Auto GG Flow Video</a><span class="chip s1">ĐANG XÂY</span><span class="meta">21 việc nợ</span></div>
         <div class="br"><a href="#y-y-01" data-goto="y-tuong">Y-01 · MVP: dùng Claude Code điều phối GPT</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
         <div class="br"><a href="#y-y-02" data-goto="y-tuong">Y-02 · Protocol làm nhiều việc song song</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
         <div class="br"><a href="#y-y-03" data-goto="y-tuong">Y-03 · Trường &quot;Đức cần làm&quot; trong hồ sơ trạng thái</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
@@ -263,7 +261,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
     <div class="card">
       <div class="sect">Làm mới bảng</div>
       <div class="hint">Bảng không tự làm mới. Nó in ngày sinh ở đầu trang và <strong>tự bật dải đỏ khi Đức mở nó vào một ngày khác ngày sinh</strong>. Thấy dải đỏ thì dán câu dưới đây cho tôi.</div>
-      <pre class="cmd">Làm mới bảng trạng thái: sinh lại rồi đăng lại artifact.</pre>
+      <pre class="cmd">Làm mới bảng trạng thái: sinh lại rồi commit.</pre>
       <p class="note">Cách nó chạy, và lệnh chạy tay, nằm ở tab <strong>Vận hành</strong>.</p>
     </div>
   </div>
@@ -271,7 +269,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
   <div role="tabpanel" data-pane="extension" hidden>
     <div class="card">
       <div class="sect">Extension trong repo</div>
-      <details class="the" id="ext-extension-observer-v0">
+      <details class="the" id="ext-root">
         <summary>
           <span><span class="nm">Extension Observer V0</span><span class="sub">Mô tả chưa khai được — gói chưa có README</span></span>
           <span class="chip s0">Ý TƯỞNG</span>
@@ -288,7 +286,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
           <p class="note">Chưa có bảng tính năng cho extension này. Bảng đối chiếu trong repo hiện chỉ so hai nhánh GPT và Gemini.</p>
         </div>
       </details>
-      <details class="the" id="ext-duc-auto-chatgpt">
+      <details class="the" id="ext-workers-duc-auto-chatgpt-v0-1-0">
         <summary>
           <span><span class="nm">Duc Auto ChatGPT</span><span class="sub">Personal Chrome extension for local-only XLSX-backed text reasoning and image generation on ChatGPT.</span></span>
           <span class="chip s2">ĐÃ CHỨNG MINH</span>
@@ -325,7 +323,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
           </div>
         </div>
       </details>
-      <details class="the" id="ext-duc-auto-gemini">
+      <details class="the" id="ext-workers-duc-auto-gemini-v0-1-0">
         <summary>
           <span><span class="nm">Duc Auto Gemini</span><span class="sub">Local-only Manifest V3 Side Panel extension for sequential XLSX-driven image jobs on Gemini Images.</span></span>
           <span class="chip s3">NGHỈ / THAY THẾ</span>
@@ -362,7 +360,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
           </div>
         </div>
       </details>
-      <details class="the" id="ext-duc-auto-gemini">
+      <details class="the" id="ext-workers-duc-auto-gemini-v0-2-0">
         <summary>
           <span><span class="nm">Duc Auto Gemini (Platform)</span><span class="sub">Extension Chrome MV3 cá nhân, chạy kế hoạch XLSX để tạo ảnh trên Gemini … ngay trong trình duyệt của Đức, không gửi gì ra máy chủ lạ. Bản này là nhánh nền tảng: mang thêm Agent Bridge để AI gọi việc qua RPC cục bộ.</span></span>
           <span class="chip s2">ĐÃ CHỨNG MINH</span>
@@ -399,7 +397,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
           </div>
         </div>
       </details>
-      <details class="the" id="ext-duc-auto-gg-flow-video">
+      <details class="the" id="ext-workers-duc-auto-gg-flow-video-v0-1-0">
         <summary>
           <span><span class="nm">Duc Auto GG Flow Video</span><span class="sub">Extension Chrome MV3 cá nhân, chạy kế hoạch XLSX tạo video trên Google Flow … ngay trong trình duyệt của Đức, không gửi gì ra máy chủ lạ. Là fork từ … (nhánh ảnh Gemini) — kiến trúc, lớp an toàn, Bridge giữ nguyên; phần biết-về-trang (selector, timing) sẽ…</span></span>
           <span class="chip s1">ĐANG XÂY</span>
@@ -564,9 +562,9 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
       <div class="hint">Bảng là ảnh chụp, <strong>không tự cập nhật</strong>. Dải đỏ ở đầu trang tự bật khi Đức mở nó vào một ngày khác ngày sinh — nó tính lúc XEM, không lúc sinh, nên không cần sinh lại mới biết là cũ.</div>
       <details class="the">
         <summary><span><span class="nm">Câu để dán cho AI</span><span class="sub">cách nhanh nhất, không cần mở terminal</span></span></summary>
-        <div class="in"><pre class="cmd">Làm mới bảng trạng thái: sinh lại rồi đăng lại artifact.</pre></div>
+        <div class="in"><pre class="cmd">Làm mới bảng trạng thái: sinh lại rồi commit.</pre></div>
       </details>
-      <p class="note">Bản ra <strong>không commit</strong> vào repo, có chủ đích: nó sinh ra để đăng cho Đức xem, và chạy lại là ra y hệt. Lệnh chạy nằm trong repo — bảng cố ý không in đường dẫn nào, vì phép kiểm bất biến cấm.</p>
+      <p class="note">Bảng <strong>được commit vào repo</strong>, có chủ đích: nhờ vậy bất kỳ AI nào cũng sinh lại rồi commit được, không phải nhờ riêng một AI đăng hộ. Cổng đóng phiên so bảng đã commit với trạng thái repo mỗi phiên, nên bảng <strong>không thể âm thầm cũ</strong>. Nội dung bảng suy hoàn toàn từ lần commit gần nhất, không nhìn giờ đồng hồ — nếu nó nhìn đồng hồ thì sang ngày là mọi phiên bị chặn đẩy việc lên dù không dữ liệu nào đổi.</p>
     </div>
 
     <div class="card">

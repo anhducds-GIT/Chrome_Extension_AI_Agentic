@@ -1817,3 +1817,186 @@ lane khác thêm). Dòng đó nói cho mọi AI biết chạm file nào thì kh�
 `DASHBOARD.html` là phiên sau sẽ nhận `_root` chỉ để sinh lại nó, đúng thứ **19% lượt nhận vô
 ích** mà K2-1 vừa xoá. Phiên trước tôi chỉ nhắn được vì `_root` là của người khác; nay `_root`
 là của tôi nên sửa luôn.
+
+---
+
+## Log — 2026-09-04, `claude-dieu-phoi` · dựng vai AI điều phối: bản đồ việc + sổ tay + một luật của Đức
+
+**Đức hỏi một câu ngắn:** repo đã đủ bối cảnh để duy trì một AI điều phối chưa? Đo trước, và câu
+trả lời là **có nguyên liệu, chưa có vai**.
+
+### Đo được gì
+
+| Thành phần | Có sẵn | Kết luận |
+|---|---|---|
+| Luật | `AGENTS.md` 219 dòng, 5 luật vàng, 3 ADR | đủ |
+| Trí nhớ | `HANDOFF.md` 1.772 dòng + 4 HANDOFF gói + 3 `BACKLOG.md` + `IDEAS.md` | đủ |
+| Công cụ | 8 script | đủ |
+| Kênh cho Đức | `DASHBOARD.html` · `llms.txt` · `repo-map.json` · `PROMPTS.md` | đủ |
+| **Sổ tay cho vai điều phối** | **không có** | `docs/protocols/` rỗng — nhà dựng rồi, chưa ai ở |
+| **Trả lời "việc nào song song được"** | **không có** | dữ liệu xé ra 5 chỗ, không chỗ nào giao được với chỗ nào |
+
+`delegations/PLAYBOOK.md` là điều phối Claude→GPT ra ngoài; `PLATFORM-AI-ORCHESTRATOR-STUDY-V3`
+là điều phối *chạy job extension* và vẫn chưa implement (`stories/`, `ORCHESTRATOR.md`,
+`runs.json` đều không tồn tại). Cả hai đều **không** phải vai này.
+
+### Đã thêm
+
+- `scripts/what-next.mjs` — bản đồ việc. **Chỉ đọc, không đòi khoá nào**, nên chạy được cả khi
+  mọi vùng đã có chủ. Giao ba nguồn: bảng quyền × sổ nợ từng gói × sổ ý tưởng.
+- `tests/what-next-smoke.mjs` — 18 phép ghim, **14/14 thử phá đều bị bắt**.
+- `docs/protocols/ORCHESTRATOR.md` — sổ tay vai điều phối, gồm trần chống sa đà ở mục 4.
+- `PROMPTS.md` mục 0 và 0b — câu Đức dán để mở phiên điều phối và để chia luồng song song.
+
+**Luật song song, một câu:** hai việc chạy song song được KHI VÀ CHỈ KHI chúng thuộc hai khoá
+khác nhau và cả hai khoá đang trống. Vùng của một việc **suy từ đường dẫn** — `stewardOf()` đã
+biết làm điều đó cho cổng và safe-push, nên dùng lại. Bắt người khai `vùng:` cho 39 mục nợ là
+thêm một trường có thể khai sai để lấy về thông tin đã nằm trong đường dẫn.
+
+### Bốn lỗi thật, tự bắt được
+
+1. **`G-11` đã đóng 28/08 nhưng không gạch ngang** — bản đồ đầu tiên đem việc đã xong đi giao
+   lại. Nguyên nhân: `\b` trong regex JS dựa trên `[A-Za-z0-9_]`, nên `\bĐÓNG` **không bao giờ
+   khớp**. Cùng cái bẫy cắn lần thứ hai ở `\bĐức\b` (làm `Y-01` biến khỏi danh sách chờ Đức)
+   trong cùng một giờ. Trong repo mà mọi chữ đều tiếng Việt, `\b` là bẫy mặc định.
+2. **`gg-flow-video` có 0 mục nợ trong sổ** — F-25, việc ưu tiên #1 của cả repo, chỉ nằm ở
+   `next_step` của `STATUS.md`. Bản đồ chỉ đọc `BACKLOG.md` làm nó vô hình đúng lúc nó quan
+   trọng nhất. Vá: đọc cả hai nguồn, xếp theo `priority_rank`, và **không cộng hai con số**.
+3. **Con số "58 mục nợ" trong `IDEAS.md` đã lạc hậu** — đo lại: **39 mục mở** (28 ChatGPT · 11
+   Gemini · 0 Flow Video).
+4. **Một phép thử phá thoát** vì test chỉ đo giá trị `gio` mà không đo cờ ⚠ có in ra. Vá bằng
+   cách kiểm TỪNG DÒNG chứ không kiểm cả trang — kiểm cả trang thì một chữ ⚠ ở phần chú giải
+   cũng làm khẳng định xanh.
+
+### Luật mới Đức chốt 04/09: `IDEAS.md` được miễn khoá khi chỉ thêm dòng
+
+Lý do: vai điều phối là vai ghi ý tưởng nhiều nhất, mà sổ nằm ở gốc nên nó phải xếp hàng sau
+`_root` — khoá đông nhất (77% commit ngày 02/09 chạm gốc). Cùng lý lẽ với `HANDOFF.md`, nên cùng
+hình dạng luật.
+
+**Nhưng chỗ sửa không phải chỗ hiển nhiên.** Tập file miễn đang bị **gõ cứng ở HAI chỗ**:
+`session-check.mjs:253` và `safe-push.mjs:125`. Thêm `IDEAS.md` vào hai danh sách đó là gieo lại
+đúng con bug mà cả khối chú giải của `safe-push` đang kể — hai bản sao của một luật, và ngày
+02/09 chúng đã trả hai câu khác nhau cho cùng một file. Nên danh sách chuyển về **một nguồn**:
+`append_only_exempt` trong `.repo-structure.json`, đọc qua `appendOnlyExemptFrom()`.
+
+Giữ nguyên hai thứ, có chủ đích: **phạm vi git của hai bên vẫn khác nhau** (cổng so tới cây làm
+việc, safe-push so tới `HEAD` — audit Codex vòng 2 đã bác việc dùng chung phạm vi), và
+`.agents/claims.json` **không** vào danh sách này vì nó miễn *vô điều kiện* — trộn hai loại
+điều kiện vào một danh sách là mất mất điều kiện, theo chiều nới lỏng.
+
+### Chuyện lấy khoá — nói thẳng, vì nó ảnh hưởng phiên khác
+
+Cả ba khoá tôi cần (`_code` · `_docs` · `_root`) đều có chủ. Tôi nhắn **bốn** phiên hỏi khi nào
+trả, và phát hiện một điều về kênh này: **phiên tôi gửi được mà không nhận được trả lời**
+(`notify_when_idle` báo phiên này không mở kênh vào). Nên chờ ở đây là chờ mù — kênh phản hồi
+thật là chính bảng quyền, không phải tin nhắn.
+
+Đức chốt cho lấy cả ba. Vì `claim.mjs` **cố ý** không có cửa giành, tôi đi qua lối thoát tường
+minh của nó: sửa bảng rồi `--restamp`, đúng ca (b) mà chú thích của chính lệnh mô tả ("Đức đã
+phân xử xong… muốn chốt trạng thái hiện tại là đúng"). Ghi lại đủ để truy: `_code` và `_root`
+lấy từ `claude-k2-vaLoi` (họ đã commit xong `f326c11` trước đó), `_docs` từ `claude-gpt-kenh`;
+mỗi mục có `taken_from` + `taken_by_duc_decision`, và bản bảng trước khi đổi được giữ ngoài repo.
+Dấu niêm phong: `656635dc` → `991ec6bf`.
+
+**Còn mở:** `G-11` cần chủ của gói Gemini gạch ngang cho đúng quy ước (bản đồ đang nêu tên nó mỗi
+lần chạy). Sổ nợ đang có **bốn** cách viết "đã đóng" (`~~` · `ĐÓNG` · `XONG` · `ĐÃ VÁ`) — hợp
+nhất về `~~` sẽ bỏ được cái lưới hứng trong `parseBacklog`.
+
+---
+
+## Log — 2026-09-04, `claude-dashboard` · vá 4 lỗi GPT audit, và ba phép kiểm của tôi tự bịt mắt mình
+
+**Đức cho GPT audit bộ sinh bảng (commit `3b2d346`). GPT trả `REVISE`. Tôi kiểm chứng độc lập
+từng phát hiện trước khi sửa — và việc kiểm đó đáng làm: GPT chẩn sai 2 chỗ.**
+
+### Bốn lỗi đúng thật
+
+| Lỗi | Bằng chứng ĐO được | Hậu quả |
+|---|---|---|
+| DOM id trùng | `id="ext-duc-auto-gemini"` **2 lần** trong `DASHBOARD.html`; `r.id` duy nhất **4/5**, `r.key` duy nhất **5/5** | Đức bấm "Gemini (Platform)" → nhảy vào bản v0.1.0 đã nghỉ |
+| Văn xuôi lỗi thời | dòng 590 "đăng lại artifact"; dòng 819 "Bản ra **không** commit" | Trái chính commit `98200ba`. AI đọc bảng bị chỉ sai quy trình |
+| Cửa đồng hồ fail-OPEN | `Date.parse(headDate) \|\| Date.now()` | Mốc HEAD hỏng → bản commit nhìn đồng hồ → sang ngày **chặn push MỌI phiên** |
+| `stale` là code chết | cả hai đường `main()` đều qua `sinhTrang`, luôn `today:"head"` → `ageDays` luôn 0 | 4 phép kiểm xanh cho nhánh **chưa từng chạy một lần nào** |
+
+Nặng nhất là cửa đồng hồ. Tôi viết cả một đoạn ghi chú dài cảnh báo đúng cái bẫy đó, rồi để hở
+một cái `||` ngay bên cạnh. Ghi chú không phải là bảo vệ.
+
+### Hai chỗ GPT chẩn sai — và làm theo sẽ tệ hơn
+
+GPT báo "chữ tiếng Anh lọt UI", đề xuất thêm lớp `humanizeForOwner()`. Đọc lại thì ba chuyện
+khác nhau bị gộp:
+
+- `F-25 (vat can that cua chuoi dai...)` — **không phải tiếng Anh, là tiếng Việt MẤT DẤU.** Lớp
+  dịch không cứu được: không có cách nào suy lại "vật cản thật" từ "vat can that". Phải sửa ở
+  nguồn (`BACKLOG.md` gói ChatGPT). → **ghi vào backlog, không tự vá bằng lớp che.**
+- `DETECTION_BLIND` — là **mã lỗi**, và luật vàng 5 **cho phép** mã lỗi tiếng Anh. Không phải lỗi.
+- `tab.url || tab.pendingUrl` — từ mục 2 `FEATURE-PARITY.md`, mà mục đó luật ghi rõ là **chữ của
+  người, máy bị cấm đụng**. Thêm lớp dịch lên đó là **vi phạm luật**.
+
+GPT cũng gọi `tabs.length >= 7` là ghim hiện trạng. Không phải — thêm tab **không** làm nó đỏ;
+chính tôi đã đổi từ `=== 7` sang `>= 7` hôm trước đúng vì lý do đó.
+
+### Ba phép kiểm của tôi tự bịt mắt mình
+
+GPT đúng ở đây, và đây là phần đáng giá nhất của cả vòng audit:
+
+1. **`Set` ăn mất trùng lặp.** Phép kiểm 10 nhồi id vào `new Set(...)` **rồi mới** hỏi "đích có
+   tồn tại". Hai thẻ cùng id vẫn xanh. Nay kiểm trên **danh sách**, trước khi nhồi vào Set.
+2. **`links.length >= 5`** — không đỏ khi MỘT đơn vị rơi khỏi bảng tổng, mà rơi mới là cái đáng
+   sợ: Đức mở bảng, không thấy extension đó, tưởng nó không tồn tại. Nay `=== số đơn vị + số ý tưởng`.
+3. **`khoiMap.length > 400`** — 400 byte chỉ nói "có chữ", không nói "có đủ thư mục". Nay đếm
+   **một dòng cho mỗi vùng** khai trong bảng phân vùng.
+
+Cộng `d.total > 100` (đỏ oan khi sắp xếp lại thư mục, xanh giả khi bộ đọc hỏng) và ghim nguyên
+văn `nay > b.dataset.sinh` (đỏ oan khi viết lại đoạn JS cho gọn).
+
+### Đổi phép kiểm giả lấy phép kiểm thật
+
+**Xoá** phép kiểm 5 cũ (cờ cũ bật theo ngày — 4 khẳng định cho nhánh không ai chạm tới được).
+**Thêm** hai phép kiểm dựng được ca hỏng thật:
+
+- mốc HEAD hỏng **4 dạng** (`""` · chuỗi không phải ngày · `null` · `undefined`) đều phải NÉM,
+  kèm chứng minh mốc TỐT vẫn chạy — không có nửa sau thì "cái gì cũng ném" cũng xanh;
+- câu "làm mới bảng" phải **đọc từ `PROMPTS.md`**, và mất nguồn thì NÉM. Không có câu dự phòng
+  âm thầm — câu dự phòng âm thầm chính là con đường đã đi vào lỗi trên.
+
+### Chuyện quyền
+
+Cả bốn lỗi nằm ở `_code`. Lúc tôi bắt đầu, `_code` thuộc `claude-k2-vaLoi`; tôi nhắn xin. Kiểm
+lại thì bảng **đã đổi**: `_root`/`_docs`/`_code` sang `claude-dieu-phoi`, mang `taken_from` +
+`taken_by_duc_decision: 2026-09-04`. Tôi nhắn tiếp phiên đó, nhưng nó **không nhận tin vào**,
+nên không có đường phối hợp. Đức đã chốt cho giành, nên giành: sửa tay → dấu vỡ → `--restamp`.
+Ghi rõ `taken_from: claude-dieu-phoi` để không ai phải đoán.
+
+`claim.mjs` **cố ý không có `--force`** — nên đường duy nhất là làm vỡ dấu rồi đóng lại, và
+trong khoảng đó cổng ĐỎ với mọi phiên. Nếu chuyện giành trở nên thường xuyên thì nên có đường
+chính thức, chứ không để mỗi lần đều phải đi qua trạng thái vỡ.
+
+Còn mở: `G-12` · F-25 mất dấu (cần vùng ChatGPT) · hai câu hỏi cho phiên `gg-flow-video` ·
+`Y-01` chờ Đức trả lời ba câu.
+
+**Số thử phá: 6/6 ca thật bắt ĐÚNG khẳng định.** DB13 (`id` thay `key`) → *"id trong trang PHẢI
+duy nhất — đang trùng: ext-duc-auto-gemini"* · DB14 (trả lại `|| Date.now()`) → *"lỗi phải nói rõ
+tên nguyên nhân"* · DB15 (gõ cứng câu làm mới) → *"câu đọc từ PROMPTS.md PHẢI là câu in ra"* ·
+DB16 (bỏ một vùng) → *"7 vùng, đang vẽ 6 dòng"* · DB17c + DB19c (bỏ một đơn vị / một ý tưởng) →
+*"5+5, đang có 9"*.
+
+**Ba vòng mới xong, và hai vòng đầu trượt vì cùng một họ lỗi.** Vòng 1: neo sai chuỗi. Vòng 2:
+neo bằng chuỗi nhiều dòng dùng `\n` trong khi file trên đĩa là **CRLF**. Vòng 3: bắt đúng nhưng
+bộ so lý do của tôi khớp chữ thường `mot link` còn output in `MOT link`.
+
+Ba lần trong một ngày, cùng một họ: **ký tự vô hình phá chuỗi khớp** (heredoc ăn backslash ·
+`\|` thành `\|` · `\n` gặp `\r\n`). Luật rút ra: **neo bằng MỘT dòng**, và khi bộ thử phá báo
+"không dựng được ca hỏng" thì đó là **phép kiểm CHƯA được kiểm chứng**, không phải đã qua — đúng
+cái bẫy để ba phép kiểm giả sống tới hôm nay.
+
+**Và một ca tôi thiết kế sai, ghi lại để phiên sau đừng lặp:** DB18 sửa *phép kiểm* cho nó mù
+lại rồi mong suite đỏ. Nhưng bộ sinh đã vá nên không còn id trùng nào để bắt — xanh là ĐÚNG.
+Muốn chứng minh một phép kiểm thì phải phá **thứ nó canh** (bộ sinh), không phá chính nó.
+
+**Khoá vùng là thoả thuận, không phải cái khoá thật.** Lúc tôi giành `_code`, thư mục làm việc
+vẫn có **6 file đang sửa dở** của `claude-dieu-phoi` (`repo-structure.mjs` · `safe-push.mjs` ·
+`session-check.mjs` · `repo-structure-smoke.mjs` · `what-next.mjs` · `what-next-smoke.mjs`).
+Giành khoá **không** dừng việc họ đang làm — nó chỉ lấy đi cái nhãn quyền, còn chữ họ viết vẫn
+nằm đó. Nên phiên nào giành khoá thì phải tự tay tránh file của người trước; cổng không tránh hộ.
