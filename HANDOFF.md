@@ -1424,3 +1424,44 @@ không **phát hành** bộ khung nữa.
 
 **Số:** suite 286 → 265 (21 phép kiểm theo bộ khung sang nhà mới). Mục 6 của `AGENTS.md` nay trỏ
 thẳng sang repo mới cho ai đi tìm bộ khung.
+
+## 2026-09-03 — `claude-k2-design`: K2-1 nửa LUẬT · K2-4 dấu niêm phong · K2-5 tuổi khoá
+
+**Làm gì.** Đóng ba món cuối của K2 — bộ luật cho nhiều phiên AI chạy song song trên một thư mục.
+
+**K2-1 nửa LUẬT.** Nửa máy đã có từ 02/09. Nay repo khai `generated` trong
+`.repo-structure.json`: chạm `DASHBOARD.md` · `llms.txt` · `repo-map.json` **không đòi khoá nào**.
+Không có gì của ai trong đó để mất — chạy lại bộ sinh là ra y hệt. Đo 02/09: **19% lượt nhận
+`_root` tồn tại CHỈ để chạy một bộ sinh rồi trả ngay**. `FEATURE-PARITY.md` **cố ý để ngoài**: mục
+2 của nó là chữ của người, miễn nó là mở đường ghi vào nửa của người mà không phải giữ khoá.
+
+**K2-4 dấu niêm phong.** Lỗ còn lại sau `claim.mjs`: lệnh giữ *đường ghi*, nhưng không gì giữ
+chính `claims.json`. Hôm nay nó bị mở ra sửa tay, bốn khoá gốc đổi chủ một lượt đi vòng qua lệnh,
+và phiên đang làm dở (tôi) không hề biết. Nay bảng có dấu băm; sửa tay làm vỡ dấu → lệnh **từ chối
+ghi**, cổng **ĐỎ với mọi phiên** (cố ý: nạn nhân chỉ chạy cổng, không chạy lệnh). `--restamp` là
+lối thoát tường minh và cố ý ồn ào.
+
+> **Hướng chữa BỊ LOẠI, ghi lại để đừng ai làm lại:** so trạng thái cũ–mới rồi bắt lỗi "chủ đổi
+> thẳng người này sang người kia". Chính tôi chứng minh nó sai cùng ngày: `_root` đi từ chủ này
+> sang chủ kia trong **đúng một diff**, mà chuỗi thật là TRẢ rồi NHẬN — hai thao tác hợp lệ bị ép
+> phẳng. **Ảnh chụp không phân biệt được "trả rồi nhận" với "ghi đè".**
+
+**K2-5 tuổi khoá.** `claimed_at` nay có giờ; `--list` in tuổi và đánh dấu khoá giữ quá 6h. **Cố ý
+KHÔNG tự đòi lại** — `claimed_at` không được chạm lại trong lúc làm nên "cũ" ≠ "chết". Số liệu để
+HỎI, không phải giấy phép giành.
+
+**Số.** Suite 265 → 272. Cổng 10 → 11 phép kiểm, `EXPECTED_CHECKS` sửa tay ở cả hai chỗ.
+Thử phá: 4/4 mutation của K2-1 và 4/4 của phép kiểm #11 đều bắt được, kể cả **chứng âm** (sửa văn
+xuôi `_doc` PHẢI vẫn xanh).
+
+**Còn mở — ba việc, đều cần Đức chốt.**
+
+1. **Chưa push được.** `safe-push` từ chối vì tôi đang cuốn theo 2 commit của
+   `claude-bridge-multiprofile` (`c6e6f48`, `54160a2`). Đúng luật. Chờ họ đẩy, hoặc Đức cho `--carry`.
+2. **Cổng "Test xanh" chạy CẢ suite của gói phiên khác.** Ba lần trong phiên này tôi bị chặn vì
+   `workers/duc-auto-chatgpt` đang sửa dở — không phải việc của tôi, và lần thứ hai nó tự xanh lại
+   khi họ lưu xong. Trong cây làm việc chung, một phiên lưu file dở làm mọi phiên khác không đóng
+   được. Chữa được (quy suite đỏ về vùng của ai), **nhưng đổi cách quy trách nhiệm là luật an toàn
+   — mục 2 bắt hỏi Đức**.
+3. **Artifact tươi là điểm nghẽn nối tiếp.** Mỗi commit của bất kỳ phiên nào làm artifact của mọi
+   phiên khác thành cũ; chỉ phiên commit CUỐI mới xanh. Phiên này tôi phải sinh lại 3 lần.
