@@ -1681,3 +1681,46 @@ Gói Gemini từng chứa hai bộ script cài Bridge, cổng khác nhau: bộ G
 2. Nếu `gg-flow-video` dùng bộ Gemini thì nó **dùng chung cổng 32148 và chung gốc cài** với gói Gemini — cố ý, hay là chưa ai để ý?
 
 Cách kiểm bên đó giống hệt: `tests/bridge-install-static.mjs` có ghim lớp siết an toàn vào bộ nào? Nếu ghim vào bộ ChatGPT thì **đừng xoá trước khi chuyển chỗ ghim** — bên Gemini xoá thẳng là mất mười lăm lớp bảo vệ.
+
+### K2-9 v2 + K2-3b — hai món cuối, K2 đóng
+
+**K2-9 v2 — GPT bác đúng bản v1.** Quy theo đường dẫn file test là sai trục, và sai **cả hai chiều**:
+tôi commit vào `scripts/` dùng chung mà làm test gói khác đỏ → cổng **[BỎ] một regression thật**;
+một suite gốc dưới `tests/` đọc file sửa dở của lane khác → **vẫn chặn oan tôi**, vì chủ của file
+test đó là `_code`. Gốc bệnh không ở đường dẫn: nó ở chỗ suite chạy trên **cây làm việc dùng chung**.
+
+Câu hỏi đúng: **lỗi này có trong thứ đã commit không?** Trích HEAD ra thư mục tạm, chạy lại đúng
+suite đó ở đó.
+
+| tình huống | kết luận |
+|---|---|
+| suite xanh | PASS |
+| suite ĐỎ + vùng **tôi** giữ còn bẩn | **ĐỎ ngay** — không được dùng HEAD để miễn |
+| suite ĐỎ + vùng tôi sạch, HEAD đỏ | **ĐỎ** — regression đã commit |
+| suite ĐỎ + vùng tôi sạch, HEAD xanh | **[BỎ]** — nhiễm từ cây làm việc lane khác |
+
+Dòng thứ hai là **chốt GPT thêm vào**, và nó cần: nếu chính tôi còn sửa dở gây lỗi thì HEAD cũng
+xanh — tức tôi tự miễn cho mình. Quy được vì luật mục 1: chỉ tôi được ghi vào vùng tôi giữ.
+
+`git archive` chứ **không** `git worktree add` — không ghi vào `.git/worktrees` (state dùng chung),
+không phạm luật "KHÔNG worktree". Đo: 1.8s / 1249 file.
+
+**Bản vá này ÍT CODE HƠN bản sai** — xoá hẳn `suiteFileOf` và `keysCuaCommitToi`.
+
+**Hàm thuần phải chuyển sang `repo-structure.mjs`, và lý do là mutation:** khi nó còn trong
+`session-check.mjs` thì nhánh "không trích được HEAD" gỡ ra mà **suite vẫn xanh** — vì
+`session-check` là SCRIPT, nạp là nó chạy rồi `process.exit`, không import được thì không ghim
+được từng nhánh. **Lần thứ ba trong phiên này** mutation bắt được một chốt của tôi chỉ là bình luận.
+
+**K2-3b — đã bật chặn.** Nửa luật vào `AGENTS.md` mục 2 (`4f0cbab`) **trước**, rồi mới bật.
+GPT đính chính đúng: phạm vi chỉ là `origin/main..HEAD`, không quét lịch sử, nên lý lẽ "509 commit
+cũ đều không nhãn" của tôi không liên quan.
+
+**Một ca thật xuất hiện ngay lúc kiểm.** Lane khác thêm method Bridge thứ 23; `feature-parity-smoke`
+ghim cứng `22` → đỏ. K2-9 v2 phân loại đúng: `REGRESSION_DA_COMMIT`, không phải rác cây làm việc.
+Nhưng **sửa gốc chứ không đổi 22 thành 23**: con số method là thứ mọi lane đều làm nó đổi, nên ghim
+cứng là dựng bẫy chéo-lane. Nay giữ hai phép `deepEqual` (lớp bảo vệ thật, không mục) và thay con
+số bằng **ngưỡng sàn 15** — thứ duy nhất phép so hai bên không tự bắt được là ca cả hai cùng hỏng
+về 0. Thử phá: đổi tên `registryEntry` → đỏ.
+
+**Số.** Suite 275 → 286. Cổng 11 phép kiểm. Thử phá **8/8** (trước khi chuyển hàm thuần thì 1 thoát).

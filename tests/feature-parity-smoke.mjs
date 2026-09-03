@@ -269,18 +269,35 @@ function outsideMarkerBytes(text) {
   ok("thu thập và sinh lặp lại cho byte giống hệt");
 }
 
-/* 9. Ca repo thật: bộ trích phải khớp phép đo độc lập tại chỗ, gồm đúng 22/19 hiện hành. */
+/* 9. Ca repo thật: bộ trích phải khớp một phép đo ĐỘC LẬP tại chỗ.
+ *
+ * KHÔNG ghim con số chính xác nữa (trước đây là 22/19). Lý do rất cụ thể, xảy ra 03/09: một lane
+ * khác thêm method Bridge thứ 23 vào gói của họ, và khối này ĐỎ — chặn một phiên chẳng liên quan
+ * gì tới Bridge. Con số method là thứ mọi lane đều làm nó đổi, nên ghim cứng nó là dựng một cái
+ * bẫy chéo-lane, không phải một lớp bảo vệ.
+ *
+ * Lớp bảo vệ THẬT là hai dòng `deepEqual` dưới: bộ trích của bộ sinh phải khớp một phép đo bằng
+ * regex viết độc lập ngay tại đây. Nếu bộ trích hỏng thì hai bên lệch, và nó đỏ — bất kể có bao
+ * nhiêu method. Thêm một NGƯỠNG SÀN để bắt ca cả hai cùng hỏng về 0 (regex sai, đổi tên hàm
+ * `registryEntry`): đó là thứ duy nhất mà phép so hai bên không tự bắt được.
+ */
 {
   const directExtract = (text) => [...text.matchAll(/registryEntry\s*\(\s*\{\s*name\s*:\s*["']([^"']+)["']/gs)]
     .map((match) => match[1]).sort();
   const gptText = readFileSync(new URL(`../${GPT_DIR}/bridge-core.js`, import.meta.url), "utf8");
   const geminiText = readFileSync(new URL(`../${GEMINI_DIR}/bridge-core.js`, import.meta.url), "utf8");
   const independentlyMeasured = { gpt: directExtract(gptText), gemini: directExtract(geminiText) };
-  assert.equal(independentlyMeasured.gpt.length, 22, "repo thật phải đo lại được 22 method GPT");
-  assert.equal(independentlyMeasured.gemini.length, 19, "repo thật phải đo lại được 19 method Gemini");
+  // NGƯỠNG SÀN, không phải con số chính xác: bắt ca "cả hai phép đo cùng hỏng về gần 0" mà phép
+  // so hai bên không tự bắt được. 15 là sàn an toàn — hai nhánh đang ở 23 và 19 hôm nay.
+  const SAN = 15;
+  assert.ok(independentlyMeasured.gpt.length >= SAN,
+    `do lai duoc ${independentlyMeasured.gpt.length} method GPT — duoi san ${SAN} thi gan nhu chac la phep do hong, khong phai repo teo di`);
+  assert.ok(independentlyMeasured.gemini.length >= SAN,
+    `do lai duoc ${independentlyMeasured.gemini.length} method Gemini — duoi san ${SAN} thi gan nhu chac la phep do hong`);
+  // ĐÂY là lớp bảo vệ thật, và nó không mục theo thời gian.
   assert.deepEqual(extractRegistryMethods(gptText), independentlyMeasured.gpt);
   assert.deepEqual(extractRegistryMethods(geminiText), independentlyMeasured.gemini);
-  ok("repo thật được đo lại độc lập và khớp 22/19 method");
+  ok("repo thật: bộ trích khớp phép đo độc lập (ngưỡng sàn, không ghim con số dễ mục)");
 }
 
 /* 10. So sánh chỉ ra chính xác dòng đầu tiên trên file thực tế. */
