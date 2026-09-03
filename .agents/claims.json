@@ -23,20 +23,20 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-dashboard",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-03T18:47",
       "task": "Doi chieu FEATURE-PARITY sau khi chat.read len HEAD",
-      "released_at": null,
+      "released_at": "2026-09-03T18:48",
       "taken_from": "claude-k2-vaLoi",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-03T18:46",
       "task": "Sua lai luat tra khoa: cong doi dung ten vung co commit chua push",
-      "released_at": null,
+      "released_at": "2026-09-03T18:54",
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -50,5 +50,5 @@
       "taken_by_duc_decision": "2026-09-04 (lan hai)"
     }
   },
-  "_fingerprint": "015406ae8768317a"
+  "_fingerprint": "5b05fdba16806557"
 }
