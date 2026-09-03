@@ -3070,23 +3070,6 @@
     if (!workspace) return null;
     const tabId = Number(workspace.tab_id);
     const name = String(workspace.name || "").slice(0, 64);
-    // Route lease (GPT audit vòng 5, HIGH): the tab_id on the call is a
-    // SNAPSHOT from dispatch. If the owner re-attached this workspace to
-    // another tab while the rpc was in flight, acting on the snapshot would
-    // reload/bind/probe the OLD tab — the socket guard only suppresses the
-    // stale response, never the side effect. So verify at ACT time against
-    // the durable store the service worker writes BEFORE reconciling seats.
-    //
-    // Honest residual (Codex round 5, accepted): between this read and the
-    // action there is still one check-to-act window (a chrome.tabs.get round
-    // trip plus scheduling) — a re-attach persisted inside it can slip
-    // through. That window replaces the FULL rpc deadline (up to 30s) that
-    // was exposed before; closing it entirely would need an atomic
-    // compare-at-act the tabs API does not offer.
-    const stored = await chrome.storage.local.get(window.DacBridgeWorkspaceCore.STORAGE_KEY).catch(() => null);
-    if (!window.DacBridgeWorkspaceCore.leaseHolds(stored?.[window.DacBridgeWorkspaceCore.STORAGE_KEY], workspace.workspace_id, tabId)) {
-      throw new Error(`RECEIVER_LOST: phiên làm việc '${name}' không còn gắn vào tab này (đã gắn lại hoặc đã gỡ). Gọi lại để đi theo liên kết mới.`);
-    }
     let tab = null;
     if (Number.isInteger(tabId) && tabId > 0) {
       try { tab = await chrome.tabs.get(tabId); } catch (_) { tab = null; }
@@ -3094,6 +3077,21 @@
     const url = tab?.url || tab?.pendingUrl || "";
     if (!tab?.id || !isChatGPTTabUrl(url)) {
       throw new Error(`RECEIVER_LOST: tab của phiên làm việc '${name}' đã đóng hoặc không còn ở ChatGPT. Mở lại trang và gắn lại phiên trong side panel.`);
+    }
+    // Route lease (GPT audit vòng 5-6, HIGH): the tab_id on the call is a
+    // SNAPSHOT from dispatch. If the owner re-attached this workspace to
+    // another tab while the rpc was in flight, acting on the snapshot would
+    // reload/bind/probe the OLD tab — the socket guard only suppresses the
+    // stale response, never the side effect. So verify against the durable
+    // store the service worker writes BEFORE reconciling seats — and verify
+    // LAST, after every await this resolver performs (round 6): a lease read
+    // before tabs.get left the whole tabs.get round trip as a check-to-act
+    // window; checked here, the resolver returns synchronously into the
+    // caller's action, so a rebind can only slip in on the cross-process
+    // sliver between this read resolving and the action dispatching.
+    const stored = await chrome.storage.local.get(window.DacBridgeWorkspaceCore.STORAGE_KEY).catch(() => null);
+    if (!window.DacBridgeWorkspaceCore.leaseHolds(stored?.[window.DacBridgeWorkspaceCore.STORAGE_KEY], workspace.workspace_id, tabId)) {
+      throw new Error(`RECEIVER_LOST: phiên làm việc '${name}' không còn gắn vào tab này (đã gắn lại hoặc đã gỡ). Gọi lại để đi theo liên kết mới.`);
     }
     return tab;
   }
