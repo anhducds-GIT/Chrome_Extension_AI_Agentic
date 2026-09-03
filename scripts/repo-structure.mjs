@@ -162,6 +162,33 @@ export function stewardOf(relPath, parsed, prefixes = DEFAULT_CLAIM_PREFIXES) {
   return "_root";                                    // file ở tầng ngoài cùng, không thuộc vùng nào
 }
 
+/* DANH SÁCH FILE ĐƯỢC MIỄN KHOÁ KHI CHỈ THÊM DÒNG — một nguồn, hai bên đọc.
+
+   Trước bản này, tập file miễn được gõ CỨNG ở hai chỗ: `session-check.mjs` và `safe-push.mjs`,
+   mỗi bên một dòng `adminFile` riêng. Hai bản sao của cùng một luật, và ngày 02/09 hai bên đã
+   trả HAI CÂU KHÁC NHAU cho cùng một file — chính lý do `ownershipKeys` được gom về một cửa.
+   Thêm `IDEAS.md` vào hai danh sách gõ cứng là gieo lại đúng con bug đó, nên danh sách chuyển
+   vào `.repo-structure.json`.
+
+   `.agents/claims.json` **không** nằm ở đây, và đó là chủ ý: nó được miễn VÔ ĐIỀU KIỆN (trả
+   quyền là thao tác hành chính, không thể là "thêm dòng ở cuối"), còn danh sách này là những
+   file chỉ miễn KHI thêm ở cuối. Trộn hai loại vào một danh sách là mất mất điều kiện.
+
+   FAIL CLOSED: không có file cấu hình thì chỉ miễn `HANDOFF.md` như trước; khai sai kiểu thì NÉM
+   chứ không lặng lẽ lùi về mặc định — lùi lặng lẽ là cách một miễn trừ Đức đã chốt biến mất mà
+   cổng vẫn xanh. */
+export const DEFAULT_APPEND_ONLY_EXEMPT = Object.freeze(["HANDOFF.md"]);
+
+export function appendOnlyExemptFrom(parsed) {
+  if (parsed === null || parsed === undefined) return DEFAULT_APPEND_ONLY_EXEMPT;
+  const list = parsed.append_only_exempt;
+  if (list === undefined) return DEFAULT_APPEND_ONLY_EXEMPT;
+  if (!Array.isArray(list) || list.some((f) => typeof f !== "string" || !f.trim())) {
+    throw new Error("CAU_TRUC_HONG: `append_only_exempt` phải là mảng đường dẫn không rỗng (ví dụ [\"HANDOFF.md\", \"IDEAS.md\"]).");
+  }
+  return Object.freeze(list.map((f) => f.trim()));
+}
+
 /* "CHỈ THÊM DÒNG?" — quyết định thuần, tách khỏi việc gọi git để kiểm được mọi nhánh.
    Dùng cho miễn trừ `HANDOFF.md` ở gốc (A2): luật mục 7 bắt MỌI phiên ghi Log vào đó, nên bắt
    phải nhận thêm một khoá chỉ để tuân luật là tự chặn luật của mình. Nhưng miễn trừ chỉ đúng

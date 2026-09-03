@@ -143,5 +143,10 @@
       "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-17.jpg",
       "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-18.jpg"
     ]
-  }
+  },
+  "_append_only_exempt_doc": "File duoc MIEN luat khoa KHI CHI THEM DONG O CUOI. Doc chung boi session-check.mjs va safe-push.mjs — truoc 04/09 hai ben go cung tap file nay rieng, va hai ban sao cua mot luat da lech nhau that ngay 02/09. `.agents/claims.json` KHONG nam o day: no mien VO DIEU KIEN, tron hai loai vao mot danh sach la mat mat dieu kien.",
+  "append_only_exempt": [
+    "HANDOFF.md",
+    "IDEAS.md"
+  ]
 }

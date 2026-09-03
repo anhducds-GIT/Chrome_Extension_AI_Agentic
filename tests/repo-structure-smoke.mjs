@@ -23,6 +23,8 @@ import {
   ownershipKeys,
   ownershipInvariant,
   appendOnlyAtEof,
+  appendOnlyExemptFrom,
+  DEFAULT_APPEND_ONLY_EXEMPT,
   lineCountOf,
   laneFromMessage,
   generatedFrom,
@@ -402,6 +404,40 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   assert.equal(lineCountOf("a\nb\n"), 2);
   assert.equal(lineCountOf("a\nb"), 2, "khong co newline cuoi thi dong cuoi van tinh");
   ok("K2-2b · appendOnlyAtEof: chen giua file KHONG duoc mien; nhieu hunk / moc la deu FAIL CLOSED");
+}
+
+/* ---- DANH SACH FILE MIEN — mot nguon, hai ben doc ---------------------- */
+/* Vi sao ghim: truoc 04/09 tap file mien duoc go CUNG o ca `session-check.mjs` va
+   `safe-push.mjs`. Hai ban sao cua cung mot luat, va ngay 02/09 hai ben da tra HAI CAU KHAC
+   NHAU cho cung mot file — chinh ly do `ownershipKeys` phai gom ve mot cua. Duc chot them
+   `IDEAS.md` ngay 04/09; them vao hai danh sach go cung la gieo lai con bug do. */
+{
+  const f = appendOnlyExemptFrom;
+
+  assert.deepEqual(f(null), DEFAULT_APPEND_ONLY_EXEMPT, "khong co file cau hinh -> giu hinh dang cu");
+  assert.deepEqual(f({}), DEFAULT_APPEND_ONLY_EXEMPT, "co file ma khong khai truong -> giu hinh dang cu");
+  assert.deepEqual(f({ append_only_exempt: ["HANDOFF.md", "IDEAS.md"] }), ["HANDOFF.md", "IDEAS.md"]);
+  assert.deepEqual(f({ append_only_exempt: [] }), [], "khai rong la mot lua chon hop le: khong mien gi");
+  assert.deepEqual(f({ append_only_exempt: [" IDEAS.md "] }), ["IDEAS.md"], "cat khoang trang hai dau");
+
+  // KHAI SAI THI NEM. Lui lang le ve mac dinh la cach mot mien tru Duc DA CHOT bien mat ma
+  // cong van xanh — va nguoi phat hien se la nguoi bi cong chan oan, khong phai nguoi go sai.
+  for (const rac of [{ append_only_exempt: "HANDOFF.md" }, { append_only_exempt: [""] }, { append_only_exempt: ["a", 7] }, { append_only_exempt: {} }]) {
+    assert.throws(() => f(rac), /CAU_TRUC_HONG/, `khai sai phai nem: ${JSON.stringify(rac)}`);
+  }
+
+  // `.agents/claims.json` KHONG duoc nam trong danh sach nay. No mien VO DIEU KIEN (tra quyen
+  // khong the la "them dong o cuoi"), con danh sach nay chi mien KHI them o cuoi. Tron hai loai
+  // vao mot danh sach la mat mat dieu kien — va mat theo chieu NOI LONG.
+  assert.ok(!f({ append_only_exempt: ["HANDOFF.md", "IDEAS.md"] }).includes(".agents/claims.json"),
+    "claims.json phai duoc mien bang duong rieng, khong qua danh sach chi-them-o-cuoi");
+
+  // Doc chinh file cau hinh cua repo: luat Duc chot 04/09 phai CO THAT trong do, khong chi trong
+  // van xuoi cua AGENTS.md. Mot luat khong may nao doc thi som muon bi bo qua.
+  const thuc = f(JSON.parse(fsMod.readFileSync(new URL("../.repo-structure.json", import.meta.url), "utf8")));
+  assert.ok(thuc.includes("HANDOFF.md"), "HANDOFF.md phai con duoc mien");
+  assert.ok(thuc.includes("IDEAS.md"), "IDEAS.md phai duoc mien — Duc chot 04/09");
+  ok("mien tru: mot nguon o .repo-structure.json · khai sai thi nem · claims.json di duong rieng");
 }
 
 /* ---- K2-3 · nhan lane trong commit ------------------------------------- */

@@ -18,7 +18,7 @@ import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
-import { appendOnlyAtEof, areaOf, claimPrefixesFrom, generatorsFrom, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, claimPrefixesFrom, generatorsFrom, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -230,13 +230,16 @@ const orphanPackages = packagesToiPhaiTraLoi.filter((pkg) => !CLAIMS?.[pkg] || !
    KHÔNG chồng nhau mà một khoá chặn cả hai. Nay mỗi thư mục gốc có `steward` riêng trong
    `areas`, và mọi phép kiểm dưới đây xét THEO TỪNG KHOÁ.
 
-   HAI FILE ĐƯỢC MIỄN, và lý do khác nhau:
-   · `.agents/claims.json` — nhận và TRẢ quyền là thao tác hành chính. Không miễn thì không ai
-     trả lại được quyền, vì chính thao tác trả cũng bị coi là sửa file gốc.
-   · `HANDOFF.md` ở gốc — luật mục 7 bắt MỌI phiên ghi Log vào đây. Bắt phải nhận thêm một khoá
-     chỉ để tuân luật là tự chặn luật của mình. NHƯNG chỉ miễn khi **chỉ thêm dòng**: sửa hay
-     xoá dòng cũ là viết lại lịch sử của phiên khác, và cái đó thì không được miễn. */
-const ROOT_HANDOFF = "HANDOFF.md";
+   HAI LOẠI MIỄN TRỪ, và điều kiện khác nhau:
+   · `.agents/claims.json` — miễn VÔ ĐIỀU KIỆN. Nhận và TRẢ quyền là thao tác hành chính; không
+     miễn thì không ai trả lại được quyền, vì chính thao tác trả cũng bị coi là sửa file gốc.
+   · Các file khai ở `append_only_exempt` — miễn CÓ ĐIỀU KIỆN: chỉ khi **thêm ở cuối**. Sửa hay
+     xoá dòng cũ là viết lại lịch sử của phiên khác, và cái đó thì không được miễn.
+     `HANDOFF.md` ở gốc: luật mục 7 bắt MỌI phiên ghi Log vào đây, nên bắt phải nhận thêm một
+     khoá chỉ để tuân luật là tự chặn luật của mình.
+     `IDEAS.md` (Đức chốt 04/09): vai điều phối là vai ghi ý tưởng nhiều nhất, mà sổ nằm ở gốc
+     nên nó phải xếp hàng sau `_root` — khoá đông nhất, 77% commit ngày 02/09 chạm gốc. Cùng
+     một lý lẽ với `HANDOFF.md`, nên cùng một hình dạng luật. */
 // So với origin/main tới WORKING TREE, nên bắt được cả commit chưa push lẫn bản sửa dở. Đây là
 // phạm vi ĐÚNG cho cổng ("việc của phiên này"); `safe-push` cố ý dùng phạm vi khác (`origin/main`
 // … `HEAD` = "thứ tôi sắp công bố") — xem ghi chú ở đó. Dùng chung là HÀM QUYẾT ĐỊNH, không phải
@@ -246,11 +249,15 @@ const ROOT_HANDOFF = "HANDOFF.md";
 // dòng bịa vào GIỮA `HANDOFF.md` vẫn được miễn — một lỗ CẤP QUYỀN: ghi file luật ở gốc mà không
 // cần nhận khoá gốc. `appendOnlyAtEof` đòi thêm: đúng một hunk, và nó bắt đầu ngay sau dòng cuối
 // của bản cũ. Đây là SIẾT, không phải nới: thứ trước đây lọt thì nay đỏ, và đó là chủ ý.
-const handoffAppendOnly = appendOnlyAtEof(
-  gitLoiLaBinhThuong("diff", "-U0", "origin/main", "--", ROOT_HANDOFF),
-  gitLoiLaBinhThuong("show", `origin/main:${ROOT_HANDOFF}`)
-);
-const adminFile = (f) => f === ".agents/claims.json" || (f === ROOT_HANDOFF && handoffAppendOnly);
+// DANH SÁCH file miễn nay đọc từ `.repo-structure.json` (`append_only_exempt`) — trước đây gõ
+// cứng ở cả đây và `safe-push.mjs`, và hai bản sao của một luật đã lệch nhau thật ngày 02/09.
+// Điều kiện "chỉ thêm ở cuối" vẫn tính RIÊNG cho từng file, và vẫn bằng `appendOnlyAtEof`.
+const appendOnlyExempt = appendOnlyExemptFrom(structure);
+const chiThemOCuoi = new Map(appendOnlyExempt.map((f) => [f, appendOnlyAtEof(
+  gitLoiLaBinhThuong("diff", "-U0", "origin/main", "--", f),
+  gitLoiLaBinhThuong("show", `origin/main:${f}`)
+)]));
+const adminFile = (f) => f === ".agents/claims.json" || chiThemOCuoi.get(f) === true;
 
 const keyOf = (f) => stewardOf(f, structure, claimPrefixes);
 // MỘT CỬA DUY NHẤT (K2-2b): cả cổng này và `safe-push.mjs` đi qua `ownershipKeys`. Trước đó mỗi

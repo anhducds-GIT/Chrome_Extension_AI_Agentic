@@ -41,14 +41,14 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": "claude-dashboard",
+      "owner": "claude-dieu-phoi",
       "ai": "Claude",
-      "claimed_at": "2026-09-04T01:05",
-      "task": "Va 4 loi GPT audit trong build-overview.mjs + 3 phep kiem yeu (Duc chot 04/09)",
+      "claimed_at": "2026-09-04T00:40",
+      "task": "Vai dieu phoi: what-next.mjs + test ghim + gom danh sach mien tru ve mot nguon",
       "released_at": null,
-      "taken_from": "claude-dieu-phoi",
-      "taken_by_duc_decision": "2026-09-04"
+      "taken_from": "claude-dashboard",
+      "taken_by_duc_decision": "2026-09-04 (lan hai)"
     }
   },
-  "_fingerprint": "a1614337f0356321"
+  "_fingerprint": "341267bf8821fa99"
 }

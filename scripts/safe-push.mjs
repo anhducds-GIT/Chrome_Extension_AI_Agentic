@@ -18,7 +18,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyAtEof, claimPrefixesFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, claimPrefixesFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -96,7 +96,6 @@ const claims = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.jso
 const structure = readStructureFromDisk(ROOT);
 const claimPrefixes = claimPrefixesFrom(structure);
 
-const ROOT_HANDOFF = "HANDOFF.md";
 
 // MIỄN TRỪ CŨNG PHẢI GIỐNG CỔNG — đây là lệch thứ hai trong cùng bản vá, và nó nặng hơn.
 // `.agents/claims.json`: nhận/trả quyền là thao tác hành chính, ai cũng được đẩy kèm; không miễn
@@ -118,11 +117,17 @@ const ROOT_HANDOFF = "HANDOFF.md";
 // bản sửa dở CHƯA COMMIT có thể che một commit phá hoại ĐÃ nằm trong HEAD — safe-push sẽ đẩy nó
 // đi. Cái phải dùng chung là HÀM QUYẾT ĐỊNH, không phải phạm vi. Đúng đúng cách chia đã khai ở
 // đầu `repo-structure.mjs`: hàm suy ra thì thuần và dùng chung, việc đọc thì mỗi bên tự làm.
-const handoffAppendOnly = appendOnlyAtEof(
-  gitQuiet("diff", "-U0", "origin/main", "HEAD", "--", ROOT_HANDOFF),
-  gitQuiet("show", `origin/main:${ROOT_HANDOFF}`)
-);
-const adminFile = (file) => file === ".agents/claims.json" || (file === ROOT_HANDOFF && handoffAppendOnly);
+//
+// DANH SÁCH file miễn nay đọc từ `.repo-structure.json` (`append_only_exempt`), dùng chung với
+// cổng đóng phiên. Trước bản này mỗi bên gõ cứng tên file, tức hai bản sao của cùng một luật —
+// đúng loại lệch mà cả khối chú giải trên đang kể. Thêm `IDEAS.md` (Đức chốt 04/09) vào hai
+// danh sách gõ cứng là gieo lại con bug đó, nên danh sách chuyển về một nguồn.
+const appendOnlyExempt = appendOnlyExemptFrom(structure);
+const chiThemOCuoi = new Map(appendOnlyExempt.map((file) => [file, appendOnlyAtEof(
+  gitQuiet("diff", "-U0", "origin/main", "HEAD", "--", file),
+  gitQuiet("show", `origin/main:${file}`)
+)]));
+const adminFile = (file) => file === ".agents/claims.json" || chiThemOCuoi.get(file) === true;
 
 function ownersOf(sha) {
   const files = gitQuiet("show", "--name-only", "--format=", sha).split("\n").filter(Boolean).map(unquote);

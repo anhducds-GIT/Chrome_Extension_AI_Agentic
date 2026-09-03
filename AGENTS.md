@@ -69,10 +69,18 @@ Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.js
 ở khối `generated` của `.repo-structure.json`. `FEATURE-PARITY.md` **cố ý không** nằm trong đó:
 mục 2 của nó là chữ của người, nên chạm nó vẫn phải giữ `_root`.
 
-**Hai file được MIỄN, và lý do khác nhau:** `.agents/claims.json` (nhận/trả quyền là thao tác
-hành chính — không miễn thì không ai trả lại được quyền) và `HANDOFF.md` ở gốc (luật mục 7 bắt
-MỌI phiên ghi Log — nhưng **chỉ miễn khi chỉ thêm dòng**; sửa hay xoá dòng cũ là viết lại lịch
-sử của phiên khác).
+**File được MIỄN chia làm HAI LOẠI, và điều kiện khác nhau:**
+
+- **Miễn vô điều kiện:** `.agents/claims.json`. Nhận/trả quyền là thao tác hành chính — không
+  miễn thì không ai trả lại được quyền, vì chính thao tác trả cũng bị coi là sửa file gốc.
+- **Miễn KHI CHỈ THÊM DÒNG Ở CUỐI:** `HANDOFF.md` gốc (luật mục 7 bắt MỌI phiên ghi Log) và
+  `IDEAS.md` (Đức chốt 04/09 — vai điều phối là vai ghi ý tưởng nhiều nhất, mà sổ nằm ở gốc nên
+  nó phải xếp hàng sau `_root`, khoá đông nhất). Sửa hay xoá dòng cũ là viết lại chữ của phiên
+  khác, và cái đó **không** được miễn.
+
+Danh sách loại thứ hai khai ở `append_only_exempt` trong `.repo-structure.json` — **sửa ở đó,
+đừng sửa script**. Trước 04/09 nó bị gõ cứng ở cả `session-check.mjs` và `safe-push.mjs`, và hai
+bản sao của một luật đã trả hai câu khác nhau cho cùng một file ngày 02/09.
 
 Đây không phải hình thức. Ngày 25–26/08 đã suýt hỏng vì hai phiên AI cùng làm trên một repo, và
 ngày 02/09 đo được **98 trong 127 commit (77%) chạm gốc repo** — một khoá duy nhất là điểm nghẽn
@@ -165,6 +173,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Sửa code worker ChatGPT | `workers/duc-auto-chatgpt/v0.1.0/AGENTS.md` |
 | Xem lỗi thật đã gặp trên trang, đừng chẩn đoán lại từ đầu | bảng lỗi trong `AI-OPERATOR-GUIDE.md` |
 | Hiểu schema workbook XLSX | `DAC_XLSX_RUN_PLAN_V1.md` của package |
+| **Là phiên ĐIỀU PHỐI: Đức hỏi "đang có gì · làm gì tiếp · việc nào chạy song song được"** | `docs/protocols/ORCHESTRATOR.md` — sổ tay vai điều phối: đọc gì lúc mở phiên, luật song song, **trần chống sa đà** (quá hai vòng sửa–chạy–sửa thì dừng và giao đi), khi nào phải hỏi Đức. Công cụ đi kèm: `node scripts/what-next.mjs` — bản đồ việc, **chỉ đọc, không đòi khoá nào**, giao ba nguồn mà trước đây không giao được với nhau (bảng quyền × sổ nợ từng gói × sổ ý tưởng) |
 | **Biết Đức đã chốt gì, và vì sao** | **ADR** — mỗi quyết định một file bất biến. Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` · bản mẫu: `docs/_TEMPLATE-adr.md` · quyết định của cả repo ở `docs/adr/`, của một gói ở `workers/<gói>/<phiên-bản>/docs/adr/`. `decisions.md` của package nay là **mục lục** trỏ sang ADR. ADR đã `Accepted` là bất biến, phép kiểm B12 cưỡng chế |
 | Biết phiên trước làm tới đâu | `HANDOFF.md` của package (cuối file) · việc ở gốc repo: `HANDOFF.md` gốc |
 | **Biết nhánh mình đang thiếu tính năng gì so với nhánh kia** | `FEATURE-PARITY.md` ở gốc repo |

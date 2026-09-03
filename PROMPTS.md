@@ -32,6 +32,51 @@
 
 ---
 
+## 0. Mở một phiên ĐIỀU PHỐI
+
+**Dùng khi nào:** Đức muốn một AI cầm toàn cảnh — biết đang có gì, việc nào nên làm tiếp,
+việc nào chạy song song được. Đây là phiên Đức nói chuyện với, không phải phiên đi code.
+
+```text
+Bạn là phiên điều phối repo này. Đọc AGENTS.md ở gốc, rồi docs/protocols/ORCHESTRATOR.md,
+rồi chạy bản đồ việc. Nói lại cho tôi bốn điều, mỗi điều một câu ngắn: đang có gì · nên
+làm gì tiếp và vì sao là việc đó · việc nào chạy song song được ngay · tôi đang cần quyết gì.
+Đừng đưa tôi danh sách mười việc.
+```
+
+**AI sẽ chạy:** `node scripts/what-next.mjs` · `node scripts/claim.mjs --list`
+**Xong khi nào:** AI trả lời được cả bốn câu, và câu "làm gì tiếp" chỉ có **một** việc.
+
+> Bản đồ việc **chỉ đọc**, không đòi khoá nào — nên câu này chạy được kể cả lúc mọi vùng
+> đang có chủ, và không chặn phiên nào đang làm.
+
+**Muốn xem thẳng bản đồ, không cần AI diễn giải:**
+
+```text
+Cho tôi xem bản đồ việc.
+```
+
+---
+
+## 0b. Giao nhiều việc chạy cùng lúc
+
+**Dùng khi nào:** Đức muốn nhiều AI chạy song song mà không sợ chúng giẫm chân nhau.
+
+```text
+Chia việc cho tôi thành các luồng chạy song song được. Mỗi luồng nói rõ: làm gì · vùng
+nào · câu tôi dán cho AI của luồng đó. Luồng nào không thật sự song song được thì nói
+thẳng là phải xếp hàng, đừng hứa.
+```
+
+**AI sẽ chạy:** `node scripts/what-next.mjs` (mục A = số luồng an toàn tối đa)
+**Xong khi nào:** mỗi luồng có một vùng riêng, và không hai luồng nào cùng một vùng.
+
+> Luật chỉ một câu: **hai việc song song được khi và chỉ khi chúng thuộc hai khoá khác
+> nhau, và cả hai khoá đang trống.** Số luồng ở mục A là trần thật — hứa nhiều hơn là hứa
+> hai AI cùng ghi một chỗ, và chuyện đó đã xảy ra ngày 25–26/08.
+
+---
+
 ## 1. Mở phiên
 
 **Dùng khi nào:** mỗi lần bắt đầu nói chuyện với một AI trong repo này.
