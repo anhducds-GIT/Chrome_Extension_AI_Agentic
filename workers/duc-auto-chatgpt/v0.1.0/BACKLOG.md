@@ -704,7 +704,41 @@ service worker, không tạo file mới, không tác dụng phụ):
 | `patched: "function"`, `tickets: []` | phiếu ĐÃ bị tiêu → determiner có khớp, có đề xuất, **mà Chrome bỏ qua đề xuất**. Lớp lỗi hoàn toàn khác: nghi determiner của một extension khác (Gemini / Flow, cùng mã) thắng theo luật "extension cài sau thắng", hoặc Chrome không nhận đề xuất cho blob URL |
 | `patched: "function"`, `tickets` còn 1 dòng | determiner **chưa bao giờ khớp** → nó không được gọi cho download này |
 
-**Không vá tiếp trước khi có con số đó.** Vá mò lần nữa là thêm mã vào chỗ không hỏng.
+**ĐO XONG 2026-09-04 — Ô THỨ HAI: `{patched: 'function', tickets: []}`.**
+
+Mã đang chạy LÀ bản vá, và phiếu giữ tên **đã bị tiêu** trong khi file trên đĩa mang tên
+`16f87e2b-…`. Phiếu bị tiêu chỉ có thể nghĩa là determiner đã khớp và đã gọi
+`suggest({filename})`. Nên: **determiner được gọi, có đề xuất, và Chrome BỎ QUA đề xuất.**
+
+Lỗi không nằm trong logic khớp của extension. Nó nằm ngoài.
+
+**Một câu SAI trong mã là thứ đã nuôi bug này 8 tuần.** `background.js` ghi *"A filename
+determiner has final say"*. Số đo bác bỏ. Câu đó chỉ determiner ra làm chỗ sửa, nên một file
+GUID trên đĩa đọc thành *"determiner cần chỉnh"* thay vì *"determiner không được tuân"*. Đã
+thay bằng số đo, và ghi rõ lý do giữ nguyên đoạn đính chính: người sau thấy GUID không được
+phải suy lại từ đầu.
+
+**Ứng viên nguyên nhân còn lại, và phép đo phân biệt nó.** Blob được tạo ở **side panel**
+(`sidepanel.js:5221`) rồi CHUỖI url được truyền sang service worker, nơi `downloads.download`
+chạy. Blob URL gắn với ngữ cảnh tạo ra nó. Nội dung file vẫn đúng nên blob giải được — nhưng
+việc ĐẶT TÊN có thể không. Đo bằng cách tạo blob NGAY TRONG service worker (không trồng phiếu,
+để determiner nhường, cô lập đúng hành vi của tham số `filename`):
+
+```js
+const url = URL.createObjectURL(new Blob(["{}
+"], { type: "application/jsonl" }));
+const id = await chrome.downloads.download({ url, filename: "B36-probe__audit.jsonl", conflictAction: "overwrite", saveAs: false });
+await new Promise((r) => setTimeout(r, 1500));
+(await chrome.downloads.search({ id }))[0].filename
+```
+
+| Kết quả | Nghĩa | Việc phải làm |
+|---|---|---|
+| kết thúc bằng `B36-probe__audit.jsonl` | blob tạo TRONG service worker thì `filename` được tôn trọng | **Vá được, và hẹp:** truyền BYTES sang service worker thay vì chuỗi blob URL; tạo blob tại đó |
+| lại là GUID | `filename` bị bỏ qua cho mọi blob URL, và determiner cũng bị bỏ qua → **Chrome Downloads không đặt tên nổi artifact của extension này** | Thôi phụ thuộc Chrome Downloads cho artifact. Đường File System Access đã đo là chạy (`checkpoint.verified: true`). Nhưng đổi mặc định bootstrap (`sidepanel.js:1629`) là đổi một quyết định Đức chốt 25/08 → **hỏi Đức** |
+
+**Không vá tiếp trước khi có con số đó.** Vá mò lần nữa là thêm mã vào chỗ không hỏng — đã làm
+đúng chuyện đó một lần ở vòng này rồi.
 
 **Làm xong nghĩa là gì.** Một phép kiểm **hành vi** (không phải tĩnh) dựng nổi cả hai giả
 thuyết: fake `chrome.downloads` phát `onDeterminingFilename` với `byExtensionId` sai, và với

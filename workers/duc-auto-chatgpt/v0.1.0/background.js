@@ -23,11 +23,28 @@ chrome.runtime.onStartup.addListener(async () => {
 const DOWNLOAD_COMPLETE_TIMEOUT_MS = 120000;
 const EXPECTED_DOWNLOAD_NAME_TTL_MS = 120000;
 
-// Chrome on this machine ignores the `filename` suggestion for blob: URL
+// Chrome on this machine ignores the `filename` parameter for blob: URL
 // downloads (URL-derived GUID names, flat in the download directory — hit
-// live 2026-08-25 on BOTH the GPT and Gemini extensions). A filename
-// determiner has final say, so this extension names its OWN downloads here
-// and defers on everything else. Registered synchronously (MV3 rule).
+// live 2026-08-25 on BOTH the GPT and Gemini extensions).
+//
+// !! The sentence that used to stand here — "a filename determiner has final
+// say" — is FALSE, measured 2026-09-04 (B-36). The determiner runs, matches,
+// and calls suggest({filename}); Chrome still writes the GUID. Proof, read
+// out of the live service worker right after a failed run: the reservation was
+// CONSUMED (`expectedDownloadNames` empty) while the file on disk was named
+// `16f87e2b-…`. A consumed ticket can only mean the suggestion was made.
+//
+// That false sentence is why nobody looked further for eight weeks: it named
+// the determiner as the fix, so a GUID on disk read as "the determiner needs
+// tuning" instead of "the determiner is not being obeyed". Left in place, in
+// full, because the next person to see a GUID must not re-derive this.
+//
+// Still registered, and still correct to keep: it is the only naming control
+// this extension has, it costs nothing, and it is honoured on some paths. It
+// is NOT a guarantee. Anything that must land under a known name has to use
+// the File System Access branch (an authorized folder), which is measured
+// working — `checkpoint.verified: true`, 2026-09-04. Registered synchronously
+// (MV3 rule).
 const expectedDownloadNames = new Map();
 
 function rememberExpectedDownloadName(url, filename, conflictAction) {
