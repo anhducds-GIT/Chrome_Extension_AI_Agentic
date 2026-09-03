@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { buildOverview, humanWork, IDEA_STAGES, readIdeas, shorten } from "../scripts/build-overview.mjs";
+import { buildOverview, debtByUnit, humanWork, IDEA_STAGES, isDone, readIdeas, shorten } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -156,5 +156,69 @@ const ideasDeps = (text) => ({
   ok("Y-03 ba trang thai: co viec / da tra loi khong / chua ai tra loi — khong gop lan nhau");
 }
 
+
+/* ---- 7. Dấu ĐÓNG của sổ nợ — hai ca bẫy là lý do phép kiểm này tồn tại ---- */
+{
+  // ĐÓNG THẬT: dấu đứng ĐẦU tiêu đề.
+  assert.equal(isDone("**XONG 02/09** (`claude-f18-evidence`). Cổng tự động"), true, "XONG dau de la da dong");
+  assert.equal(isDone("ĐÃ XONG 01/09 — vá bằng cách đọc cấu trúc"), true, "DA XONG dau de la da dong");
+  assert.equal(isDone("ĐÃ VÁ XONG, có bằng chứng"), true, "DA VA XONG dau de la da dong");
+  assert.equal(isDone("**ĐÓNG 02/09** vì đo lại thấy không có lỗi"), true, "DONG dau de la da dong");
+
+  // HAI CA BẪY — nới thêm chữ vào biểu thức là đóng oan đúng hai mục này.
+  assert.equal(isDone("Gỡ khoá bootstrap Bridge sau khi F-02+F-04 xong (ghi decisions.md)."), false,
+    'F-05: chu "xong" nam trong mot DIEU KIEN o giua cau — VAN DANG MO');
+  assert.equal(isDone("**XONG một phần 02/09** (`claude-f18-evidence`): câu ở cổng gửi"), false,
+    'F-19: "XONG mot phan" khong phai xong — VAN DANG MO');
+
+  // Dấu đóng nằm giữa câu thì tính là còn mở: cố ý lệch về phía BÁO THỪA nợ.
+  assert.equal(isDone("Vá cổng gửi, phần này đã xong từ hôm trước"), false,
+    "dau dong giua cau khong tinh — le ve phia bao thua no, khong bao thieu");
+  assert.equal(isDone(""), false, "tieu de rong khong phai da dong");
+  assert.equal(isDone(null), false, "null khong duoc lam no nem");
+  ok("dau DONG neo vao dau tieu de: dong 4 ca that, GIU MO ca F-05 va F-19");
+}
+
+/* ---- 8. debtByUnit đếm đúng trên một sổ nợ có đủ cả bốn loại dòng ---- */
+{
+  const backlog = [
+    "# Sổ nợ",
+    "- **F-01** · Việc đang mở bình thường",
+    "- **F-02** · **XONG 02/09** đã vá và có bằng chứng",
+    "- **F-03** · Gỡ khoá sau khi F-01 xong",
+    "- **F-04** · **XONG một phần 02/09**",
+    "- **F-05** · ~~đã đóng bằng gạch ngang~~",
+    "## F-06 · Việc mở viết kiểu tiêu đề",
+    "## ~~F-07~~ · Đóng bằng gạch ở mã"
+  ].join("\n");
+  const deps = {
+    git: { trackedPaths: () => ["workers/goi-thu/v1/BACKLOG.md"] },
+    readFile: () => backlog
+  };
+  const rows = debtByUnit(deps, { rows: [] });
+  assert.equal(rows.length, 1, "mot so no thi mot dong");
+  // Mở: F-01, F-03, F-04, F-06 = 4.  Đóng: F-02, F-05, F-07 = 3.
+  assert.equal(rows[0].n, 4, "dem dung 4 muc con mo — F-03 va F-04 PHAI con nam trong do");
+  ok("debtByUnit: 4 mo / 3 dong tren so no co du bon loai dong");
+}
+
+/* ---- 9. Dòng tuổi bảng: sinh trong ngày thì phải là "hôm nay" ---- */
+{
+  const deps = createDefaultDeps(ROOT);
+  const headDate = buildOverview(deps).stats.stamp;
+  // 20:00 UTC cùng ngày với mốc HEAD. Bản cũ lấy `today` (có giờ) trừ nửa-đêm-UTC rồi làm
+  // tròn -> 20/24 tròn thành 1 -> "1 ngày trước" ngay trong ngày sinh. Fixture này dựng
+  // ĐÚNG ca đó; đặt giờ sớm hơn 12:00 thì phép kiểm xanh cả khi lỗi còn nguyên.
+  const { html, stats } = buildOverview(deps, { today: Date.parse(headDate + "T20:00:00Z") });
+  assert.equal(stats.ageDays, 0, "sinh trong ngay thi tuoi phai la 0, khong phai 1");
+  assert.equal(stats.stale, false, "0 ngay thi khong duoc bat co do");
+  assert.match(html, /hôm nay/, "bang phai in hom nay");
+
+  // Và vẫn phải đếm đúng khi thật sự đã cũ — nếu không thì phép kiểm trên là do luôn trả 0.
+  const cu = buildOverview(deps, { today: Date.parse(headDate + "T20:00:00Z") + 8 * 86400000 });
+  assert.equal(cu.stats.ageDays, 8, "qua 8 ngay thi phai dem ra 8");
+  assert.equal(cu.stats.stale, true, "qua 7 ngay thi PHAI bat co do");
+  ok("tuoi bang: 0 ngay trong ngay sinh, 8 ngay thi bat co do");
+}
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

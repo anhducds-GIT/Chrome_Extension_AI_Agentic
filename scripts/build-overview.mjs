@@ -109,6 +109,29 @@ export function readIdeas(deps) {
    job" — đúng thứ Đức nói KHÔNG muốn thấy. Một con số cho mỗi gói nói được cùng một điều
    ("gói nào đang nặng") mà không bắt Đức đọc mã lỗi.
    Ba gói dùng BA định dạng sổ nợ khác nhau nên vẫn phải đọc cả ba. */
+/* MỘT MỤC ĐÃ ĐÓNG — nhận bằng VỊ TRÍ, không tìm giữa câu.
+ *
+ * Bản cũ tìm ba cụm chữ `ĐÃ ĐÓNG|ĐÃ XONG|ĐÃ VÁ XONG` ở BẤT KỲ đâu trong tiêu đề. Đo ngày
+ * 03/09: ba cụm đó **chưa khớp một lần nào** trong cả ba sổ nợ, trong khi 5 mục đã xong thật
+ * của gg-flow-video viết `**XONG 02/09**` thì bị đếm là nợ. Bảng hiện 65, thật 60.
+ *
+ * Và đừng chữa bằng cách NỚI THÊM CHỮ vào biểu thức. Đã thử: trong 8 dòng có chữ "xong",
+ * hai dòng VẪN ĐANG MỞ —
+ *   F-05  "Gỡ khoá bootstrap Bridge sau khi F-02+F-04 xong"   ← "xong" trong một ĐIỀU KIỆN
+ *   F-19  "XONG một phần 02/09"                                ← xong một nửa không phải xong
+ * Nới chữ là đóng oan hai việc đang mở, tức bảng báo THIẾU nợ. Nặng hơn báo thừa.
+ *
+ * Nên luật là: dấu đóng phải là thứ ĐẦU TIÊN của tiêu đề, và "một phần" thì không tính.
+ * Mục nào viết dấu đóng ở giữa câu sẽ bị tính là còn mở — cố ý: lệch về phía BÁO THỪA nợ.
+ * Cách khai không nhập nhằng nhất vẫn là `~~gạch ngang~~`; luật này chỉ đỡ cho văn xuôi.
+ */
+const DAU_DONG = /^(?:\*\*)?\s*(?:ĐÃ\s+)?(?:XONG|ĐÓNG|VÁ\s+XONG)\b/i;
+const MOT_PHAN = /một\s+phần/i;
+export function isDone(title) {
+  const t = String(title ?? "");
+  return DAU_DONG.test(t) && !MOT_PHAN.test(t);
+}
+
 export function debtByUnit(deps, model) {
   const rows = [];
   for (const relPath of deps.git.trackedPaths().filter((p) => p.endsWith("/BACKLOG.md")).sort()) {
@@ -120,7 +143,7 @@ export function debtByUnit(deps, model) {
       const bullet = /^-\s+\*\*([A-Z]{1,3}-\d+)\*\*\s*[·:.\-]\s*(.+)$/.exec(line);
       if (!heading && !bullet) continue;
       const title = heading ? heading[3] : bullet[2];
-      if (Boolean(heading && heading[1]) || /~~/.test(title) || /ĐÃ ĐÓNG|ĐÃ XONG|ĐÃ VÁ XONG/i.test(title)) continue;
+      if (Boolean(heading && heading[1]) || /~~/.test(title) || isDone(title)) continue;
       open += 1;
     }
     const key = relPath.replace(/\/BACKLOG\.md$/, "");
@@ -285,8 +308,12 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const decisionCount = deps.git.trackedPaths()
     .filter((p) => /(^|\/)docs\/adr\/\d{4}-.*\.md$/.test(p)).length;
 
-  const stamp = model.headDate || new Date(today).toISOString().slice(0, 10);
-  const ageDays = Math.max(0, Math.round((today - Date.parse(stamp)) / 86400000));
+  /* So hai MỐC NGÀY, không so mốc thời điểm. Bản cũ lấy `Date.now()` (có giờ, phút) trừ
+     `Date.parse("2026-09-02")` (nửa đêm UTC) rồi làm tròn — sinh bảng sau trưa là ra
+     "1 ngày trước" NGAY TRONG NGÀY SINH. Cùng cơ chế đó bật cờ đỏ 7 ngày sớm nửa ngày. */
+  const todayStamp = new Date(today).toISOString().slice(0, 10);
+  const stamp = model.headDate || todayStamp;
+  const ageDays = Math.max(0, Math.round((Date.parse(todayStamp) - Date.parse(stamp)) / 86400000));
   const stale = ageDays > 7;
 
   const { actions: humanActions, undeclared: humanUndeclared } = humanWork(model.rows);
@@ -457,7 +484,9 @@ function main() {
     console.error("Dùng: node scripts/build-overview.mjs <file-ra.html>");
     process.exit(2);
   }
-  const { html, stats } = buildOverview(createDefaultDeps(ROOT));
+  // Tên bảng = tên repo, lấy từ thư mục gốc. Không viết tên cứng vào đây: bộ sinh này
+  // được mang sang repo khác, và một cái tên cứng sẽ theo sang đó mà không ai để ý.
+  const { html, stats } = buildOverview(createDefaultDeps(ROOT), { title: path.basename(ROOT) });
   fs.writeFileSync(out, html, "utf8");
   console.log(`Đã sinh ${out}`);
   console.log(`  ý tưởng: ${stats.ideas} · hướng đang chạy: ${stats.initiatives} · nợ kỹ thuật: ${stats.debt} · quyết định: ${stats.decisions} · đã thay thế: ${stats.superseded}`);
