@@ -30,11 +30,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T04:56",
-      "task": "Bo 2 ma trial opaque khoi IDEAS.md — chan cuoi cung truoc FREEZE",
-      "released_at": "2026-09-04T07:02",
+      "owner": "claude-exec-qdsync",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T07:09",
+      "task": "dong bo contract Query-driven vao PROMPTS.md muc 0 + Log HANDOFF",
+      "released_at": null,
       "taken_from": "claude-k2-freeze",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
       "taken_by": "claude-dieu-phoi",
@@ -42,11 +42,11 @@
       "duc_decision": "Duc chot 2026-09-04: giai phong _docs + _root khoi claude-k2-freeze de lam contract-sync Query-driven Assistant v0.1. Da kiem truoc khi gianh: cay lam viec SACH, khong commit nao chua push, nen phien do khong co viec do bi mat."
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T06:25",
-      "task": "Viet docs/protocols/MULTIFLOW.md — co che nhieu phien song song va cach bao tri",
-      "released_at": "2026-09-04T07:02",
+      "owner": "claude-exec-qdsync",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T07:09",
+      "task": "dong bo contract Query-driven Assistant v0.1 vao ORCHESTRATOR + ASSISTANT-V0.1",
+      "released_at": null,
       "taken_from": "claude-k2-freeze",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -63,5 +63,5 @@
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "0d410e09d605673a"
+  "_fingerprint": "5e429f38d8c2d83b"
 }
