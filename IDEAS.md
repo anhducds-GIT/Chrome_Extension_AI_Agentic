@@ -355,3 +355,14 @@ Hai cách hiểu, và chúng ra hai gói việc khác nhau:
 - **đo trước khi sửa:** đếm xem trong một ngày có bao nhiêu lần Assistant thật sự phải trả lời
   một câu **bắc qua hai repo**. Ngày 04/09 tôi đếm được **hai** lần. Hai lần chưa đủ để xây một
   cơ chế; nhưng nếu nhiều ngày đều thế thì đủ.
+
+**Y-13 · phần 3 ĐÃ CHỐT (Đức, 04/09):** cách **(A)** — Assistant làm chủ, executor làm tay,
+firewall giữ nguyên không sửa một dòng. Đức nói: *"có thể không trực tiếp làm, nhưng sẽ điều
+phối để các AI agent khác làm."* Kèm một điều Đức nêu mà bản Y-13 đầu chưa thấy: bộ khung
+**khác bản chất** — lõi code · rule · hook · lịch sử audit · lịch sử migrate — nên ở đó gần như
+mọi thứ là hạ tầng, **không có phần product để làm ranh giới**. Đó là lý lẽ làm cách (B) yếu đi
+chứ không mạnh lên: biên mất điểm tựa thì ngoại lệ "được sửa hạ tầng" ăn hết luật.
+Ghi thành quyết định bất biến: [`docs/adr/0003-assistant-dieu-phoi-ca-bo-khung.md`](docs/adr/0003-assistant-dieu-phoi-ca-bo-khung.md).
+Luật vận hành: `docs/protocols/ORCHESTRATOR.md` mục 0c.
+**Phần 1 và phần 2 vẫn mở** — phần 2 chờ pilot v0.1 đạt. Và mục 0c **chưa có phép kiểm máy**:
+cần sửa `tests/role-firewall-smoke.mjs`, tức khoá `_code`, một lượt khác.

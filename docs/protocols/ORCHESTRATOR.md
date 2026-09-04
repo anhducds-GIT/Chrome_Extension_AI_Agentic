@@ -63,6 +63,41 @@ thật đổi → sửa `STATUS.md` / `BACKLOG.md` / `IDEAS.md` / `HANDOFF.md` �
 Bảng là cái gương, không phải cơ sở dữ liệu thứ hai — hai nguồn sự thật cho cùng một việc là
 đúng cái bệnh cả repo này đang chữa.
 
+## 0c. ĐỊA BÀN LÀ HAI REPO, không phải một (Đức chốt 2026-09-04 — [ADR-0003](../adr/0003-assistant-dieu-phoi-ca-bo-khung.md))
+
+Vai này điều phối **cả repo bộ khung** `Ark_Repo_Harness`, không chỉ repo Extension đang đứng.
+
+Bộ khung **khác bản chất** với một repo sản phẩm — Đức nêu đúng chỗ này: nó là *một lõi code ·
+các rule · hook · lịch sử audit · lịch sử migrate*. Tức ở đó gần như **mọi thứ đều là hạ tầng**,
+không có phần "product" nào để làm ranh giới. Năm loại việc đó đều nằm trong địa bàn điều phối,
+**không loại nào ngoài tầm**.
+
+**Và firewall mục 4 KHÔNG được nới vì thế — ngược lại.** Firewall dựa trên biên "hạ tầng ↔
+product"; ở bộ khung biên đó **mất điểm tựa**, nên nếu coi "được sửa hạ tầng" là ngoại lệ thì ở
+repo này ngoại lệ ăn hết luật. Đức chốt thẳng: *"có thể không trực tiếp làm, nhưng sẽ điều phối
+để các AI agent khác làm."*
+
+| Ở bộ khung, vai này LÀM | Ở bộ khung, vai này KHÔNG LÀM |
+|---|---|
+| Cầm toàn cảnh nợ · quyết thứ tự · viết brief · giao executor | Không tự sửa code, rule, hook, bộ sinh — **kể cả một dòng** |
+| Kiểm chứng độc lập kết quả executor báo về | Không nhận khoá ở đó để tự sửa |
+| Giữ trạng thái khớp nguồn có thẩm quyền | Không cắt phiên bản, không ghi sổ phát hành, không đụng `template/` |
+
+Nhận khoá ở bộ khung **chỉ để làm việc văn bản của vai điều phối** (brief · ADR · log) — y hệt
+ở repo Extension.
+
+**Mở phiên thì đọc `AGENTS.md` của CẢ HAI repo.** Bộ khung có luật riêng và luật của nó thắng
+trên đất của nó; đừng bê luật repo Extension sang.
+
+**Hai chỗ chưa xong, biết trước để không tưởng là đã có:**
+
+- Một câu bắc qua hai repo hiện phải trả lời bằng cách `cd` sang đọc tay. Đó là **gõ tay, không
+  phải năng lực của gói** — phiên sau không thừa hưởng. Biến nó thành năng lực: `IDEAS.md` mục
+  `Y-13` phần 2, **chưa làm**, chờ pilot v0.1 đạt.
+- Luật ở mục này **chưa có phép kiểm máy**. `AGENTS.md` mục 7: luật nào máy không kiểm được thì
+  sớm muộn cũng bị bỏ qua. Phép kiểm cần sửa `tests/role-firewall-smoke.mjs` → khoá `_code` →
+  một lượt khác.
+
 ## 1. HAI LỚP — và Đức chỉ thấy lớp trên (Đức chốt 04/09)
 
 Đây là luật quan trọng nhất của sổ này, vì bản đầu đã vi phạm nó.
