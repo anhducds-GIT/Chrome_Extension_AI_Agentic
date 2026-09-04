@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Local-only Chrome extension workers. Tests are dependency-free Node scripts.",
   "scripts": {
-    "test": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs && node tests/repo-structure-smoke.mjs && node tests/observer-engine-smoke.mjs && node tests/session-check-utf8-paths.mjs && node tests/build-dashboard-smoke.mjs && node tests/feature-parity-smoke.mjs && node tests/check-bootstrap-smoke.mjs && node tests/build-overview-smoke.mjs && node tests/claim-smoke.mjs && node tests/harness-smoke.mjs && node tests/what-next-smoke.mjs && node tests/role-firewall-smoke.mjs",
+    "test": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs && node tests/repo-structure-smoke.mjs && node tests/observer-engine-smoke.mjs && node tests/session-check-utf8-paths.mjs && node tests/build-dashboard-smoke.mjs && node tests/feature-parity-smoke.mjs && node tests/check-bootstrap-smoke.mjs && node tests/build-overview-smoke.mjs && node tests/claim-smoke.mjs && node tests/harness-smoke.mjs && node tests/what-next-smoke.mjs && node tests/role-firewall-smoke.mjs && node tests/state-check-smoke.mjs",
     "test:worker": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs",
     "test:observer": "node tests/observer-engine-smoke.mjs",
     "test:gate-paths": "node tests/session-check-utf8-paths.mjs",
@@ -23,6 +23,8 @@
     "test:harness": "node tests/harness-smoke.mjs",
     "test:what-next": "node tests/what-next-smoke.mjs",
     "what-next": "node scripts/what-next.mjs",
-    "test:role-firewall": "node tests/role-firewall-smoke.mjs"
+    "test:role-firewall": "node tests/role-firewall-smoke.mjs",
+    "state-check": "node scripts/state-check.mjs",
+    "test:state-check": "node tests/state-check-smoke.mjs"
   }
 }

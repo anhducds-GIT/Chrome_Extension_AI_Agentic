@@ -2268,3 +2268,52 @@ Luật đã sửa ở hai chỗ của `AGENTS.md`: mục 1 (dòng "muốn giành
 lại) và hàng sổ tay `DAU_VO`.
 
 Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 · `Y-01`.
+
+## 2026-09-04 · Phiên `claude-exec-statedrift` — brief `STATE-DRIFT-01`: cổng nhất quán trạng thái
+
+**Việc:** thay câu văn xuôi "vai điều phối nhớ tự đối chiếu trạng thái" trong `ORCHESTRATOR.md`
+mục 6 bằng một lệnh máy chạy được. Đề bài: `docs/briefs/BRIEF-STATE-DRIFT-01.md`, Đức chốt 04/09.
+
+**Đã thêm `scripts/state-check.mjs`** — CHỈ ĐỌC, **không đòi khoá nào** (giống `what-next.mjs`).
+Đối chiếu đúng ba cặp, không hơn: bảng quyền trên máy ↔ trên `origin/main` · artifact máy sinh ↔
+HEAD · có commit nào chưa push không. Ba trạng thái `STATE OK` (mã 0) · `STATE MISMATCH` (mã 1,
+liệt kê **từng chỗ lệch, nói rõ bên nào nói gì**) · `STATE UNKNOWN` (mã 2, fetch hỏng / git lỗi).
+`UNKNOWN` **không** được gộp vào `OK` — gộp là fail-open, và mất mạng mà báo "mọi thứ khớp" đúng
+là kiểu hỏng repo này cấm.
+
+**Đây KHÔNG phải `session-check.mjs`.** Khác cả bốn chỗ: ai chạy (điều phối ↔ executor) · lúc nào
+(trước khi **báo cáo** ↔ trước khi **đóng phiên**) · hỏi gì · đỏ thì sao.
+
+**Cặp 2 TÁI DÙNG `--check-head` của chính các bộ sinh**, danh sách đọc từ `generatorsFrom()` —
+không nhân bản phép đo. Hai bản sao của một luật đã trả hai câu khác nhau cho cùng một file 02/09.
+
+**Luật KHÔNG-TỰ-SỬA ghim vào CẤU TRÚC, không ghim vào lời hứa.** Mọi lệnh git đi qua đúng một cửa
+`gitChiDoc()`, và cửa đó từ chối mọi lệnh ngoài danh sách chỉ-đọc (`fetch rev-parse show log
+status diff`). Ngoài cửa đó cả file sinh **đúng một** tiến trình con, và nó là `--check-head`.
+Nhập `node:fs` chỉ có `existsSync`. Phép ghim kiểm cả ba điều này bằng cách cắt đúng đoạn nguồn,
+không dùng regex vắt qua hai mốc. Lý do: cửa git chặn được `git push` nhưng KHÔNG chặn được
+`node scripts/claim.mjs --restamp` — nên phải đếm cả lối tiến-trình-con.
+
+**Số đo — báo số thật:** `tests/state-check-smoke.mjs` **31 khẳng định**, nối vào `npm test`.
+Phần so sánh là **hàm thuần** `danhGia({…})` nhận ba cặp làm tham số, nên mọi ca dựng bằng dữ
+liệu, không bằng repo thật. Ba hàm chạm git (`fetchMoi` · `khoaTaiRemote` · `commitChuaPush`)
+nhận `git` làm tham số tiêm — nếu không thì ca "fetch hỏng" chỉ kiểm được bằng cách rút dây mạng
+thật, tức là không bao giờ kiểm. **Thử phá 25 ca, bắt 25.** Không ca nào thoát ở vòng cuối; một
+khẳng định (bản đầu của phép kiểm `--restamp`) ĐỎ OAN trên chính nguồn đúng, đã thay bằng phép
+ghim cấu trúc đếm tiến trình con + một phép ghim văn bản rộng hơn.
+
+**Phép thử thật, không phải test:** chạy `state-check` ngay sau khi nhận `_code` và `_root` mà
+chưa push — nó ra `STATE MISMATCH`, mã thoát 1, và nêu đích danh hai khoá kèm cả hai bên nói gì.
+Đúng họ bệnh của ca số 1 trong brief (khoá trả trên máy mà `origin/main` vẫn ghi đang giữ).
+
+**Đã nối vào sổ tay:** `ORCHESTRATOR.md` mục 6 (câu văn xuôi → lệnh + bảng ba trạng thái) ·
+`PROMPTS.md` mục 9 (một câu Đức dán khi nghi trạng thái lệch) · `package.json` (`npm run
+state-check`, `npm run test:state-check`).
+
+**Ranh giới đã giữ:** không đụng `session-check.mjs` · `safe-push.mjs` · `claim.mjs` ·
+`what-next.mjs` · bộ sinh · code extension. Không hook, không cron — lệnh này do người/AI gọi.
+Không promote sang `Ark_Repo_Harness`.
+
+**Còn mở:** `Y-08` trong `IDEAS.md` — cặp đối chiếu **thứ tư** (`STATUS.md` ↔ Log của chính gói),
+tức ca số 2 của brief, cố ý CHƯA làm vì Đức chốt phạm vi hẹp và vì nó so văn xuôi với văn xuôi
+(hạng `[DÒ]`, dễ báo oan). Đức chốt có làm không.

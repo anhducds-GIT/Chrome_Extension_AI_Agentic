@@ -279,10 +279,35 @@ sách quyết định đang chờ Đức. Hết. Không kể số commit, không
 - **Sinh lại bảng nếu số đã đổi:** `node scripts/build-overview.mjs` rồi commit. Đức xem
   bảng, không xem chat — bảng cũ là Đức mù.
 
-**Và luật của chính vai này: tự soi sai lệch trạng thái, đừng để Đức soi.** Trước khi báo
-xong, đối chiếu ba cặp: khoá trên máy ↔ khoá trên `origin/main` · artifact ↔ HEAD · lời báo
-cáo ↔ điều lệnh thật sự in ra. Sai lệch nào thấy được bằng một lệnh thì Đức không phải là
-người tìm ra nó.
+**Và luật của chính vai này: tự soi sai lệch trạng thái, đừng để Đức soi.** Sai lệch nào
+thấy được bằng một lệnh thì Đức không phải là người tìm ra nó. Nên đây là lệnh đó — chạy nó
+**trước khi báo cáo**, không phải trước khi đóng phiên:
+
+```bash
+node scripts/state-check.mjs --as <tên-phiên>
+```
+
+Nó đối chiếu đúng ba cặp: bảng quyền trên máy ↔ trên `origin/main` · artifact máy sinh ↔ HEAD
+· có commit nào chưa push không. **Chỉ đọc, không đòi khoá nào** — giống `what-next.mjs`, nên
+chạy được cả khi mọi vùng đã có chủ.
+
+Ba trạng thái, và đọc chúng khác nhau:
+
+| In ra | Nghĩa | Bạn được làm gì |
+|---|---|---|
+| `STATE OK` | ba cặp đều khớp | báo cáo bình thường |
+| `STATE MISMATCH` | có mâu thuẫn, và nó liệt kê từng chỗ | **xử xong rồi mới báo**, hoặc báo kèm đúng chỗ lệch |
+| `STATE UNKNOWN` | không đối chiếu được (fetch hỏng, không remote, git lỗi) | **không được phát biểu trạng thái chắc chắn** |
+
+`UNKNOWN` **không phải** `OK`. Mất mạng mà báo "mọi thứ khớp" là fail-open, và repo này cấm.
+
+**Lệnh đó KHÔNG tự sửa gì** — nó in ra lệnh sửa để bạn tự quyết. Cố ý: một cổng tự dọn bằng
+chứng của chính thứ nó phải phát hiện là cổng vô dụng, và tệ hơn — nó tạo cảm giác an toàn.
+Cùng lý lẽ với `AGENTS.md` mục 6: *"đừng restamp cho xong việc."*
+
+Khác `session-check.mjs` ở bốn chỗ, đừng lẫn: ai chạy (điều phối ↔ executor) · lúc nào (trước
+khi **báo cáo** ↔ trước khi **đóng phiên**) · hỏi gì ("điều tôi sắp nói có đúng không" ↔ "việc
+tôi làm đủ điều kiện push chưa") · đỏ thì sao (không được phát biểu ↔ không được push).
 
 ## 7. Đã chốt — ghi sổ ý tưởng không còn đòi khoá `_root`
 

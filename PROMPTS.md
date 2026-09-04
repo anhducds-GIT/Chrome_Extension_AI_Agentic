@@ -249,6 +249,32 @@ Tôi chốt: <quyết định>. Ghi lại thành một bản ghi quyết định
 
 ---
 
+## 9. Đức nghi trạng thái đang lệch — "cái AI vừa nói có thật không?"
+
+**Dùng khi nào:** một AI vừa báo "đã trả khoá", "đã xong", "đã cập nhật bảng" — và Đức muốn
+biết điều đó có đúng ở chỗ NGƯỜI KHÁC nhìn thấy hay không, chứ không chỉ đúng trên máy nó.
+
+```text
+Trước khi tôi tin, hãy đối chiếu trạng thái bạn vừa báo với nguồn có thẩm quyền, rồi
+nói lại cho tôi đúng một trong ba câu: mọi thứ khớp · lệch ở những chỗ này (kể ra
+từng chỗ, bên nào nói gì) · không đối chiếu được vì lý do gì. Không đối chiếu được
+thì đừng nói là khớp. Và đừng tự sửa cho khớp — báo cho tôi trước.
+```
+
+**AI sẽ chạy:** `node scripts/state-check.mjs --as <tên-phiên>`
+**Xong khi nào:** AI trả lời đúng một trong ba câu, và nếu lệch thì kể ra **từng chỗ**,
+không phải một con số.
+
+> Vì sao có mục này: ngày 04/09 một phiên báo "đã trả ba khoá". Trên máy đúng là trống — nhưng
+> lượt trả **chưa được đẩy lên**, nên chỗ mà GPT và các AI khác nhìn vào vẫn ghi là đang bị giữ.
+> **Đức là người phát hiện.** Câu này để lần sau máy phát hiện trước.
+
+> Lệnh đó **chỉ đọc, không đòi khoá nào**, và **không tự sửa gì** — nó in ra lệnh sửa để
+> người chạy tự quyết. Cố ý: một cổng tự dọn dẹp bằng chứng của chính thứ nó phải phát hiện
+> là cổng vô dụng.
+
+---
+
 ## Việc chỉ Claude làm được — và cách làm thay
 
 | Việc | Vì sao | Làm thay bằng gì |

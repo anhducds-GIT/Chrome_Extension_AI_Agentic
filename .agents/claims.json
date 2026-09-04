@@ -26,10 +26,10 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-k2-restamp",
+      "owner": "claude-exec-statedrift",
       "ai": "Claude",
-      "claimed_at": "2026-09-04T02:57",
-      "task": "Ghi luat: chuyen chu khoa phai co cau chot cua Duc, ghi vao bang",
+      "claimed_at": "2026-09-04T03:09",
+      "task": "STATE-DRIFT-01: PROMPTS.md + package.json noi test moi",
       "released_at": null,
       "taken_from": "claude-k2-vaLoi",
       "taken_by_duc_decision": "2026-09-04"
@@ -44,14 +44,14 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": "claude-k2-restamp",
+      "owner": "claude-exec-statedrift",
       "ai": "Claude",
-      "claimed_at": "2026-09-04T02:53",
-      "task": "Va lo restamp: dong dau cho mot vu doi chu khoa khong duoc im lang",
+      "claimed_at": "2026-09-04T03:09",
+      "task": "STATE-DRIFT-01: them scripts/state-check.mjs + test ghim",
       "released_at": null,
       "taken_from": "claude-k2-snapshot",
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "4993ad63c5b7b218"
+  "_fingerprint": "66b1aa40fd0989e1"
 }
