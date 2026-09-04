@@ -43,16 +43,37 @@ hiển thị sai.
 
 ## Y-01 · MVP: dùng Claude Code điều phối GPT
 
-- **bậc:** ý tưởng
+- **bậc:** đang xây
 - **nguồn:** Đức nêu 2026-09-02
-- **việc kế:** Đức mô tả rõ hơn phạm vi thử — xem ba câu chưa rõ ở dưới
+- **chủ:** `claude-gpt-kenh`
+- **phạm vi:** gói `duc-auto-chatgpt` (Bridge + extension). **Cấm** đụng trần 90 giây và
+  cooldown 5 phút — đó là luật an toàn, đổi phải hỏi Đức.
+- **việc kế:** **một vòng chạy trên VIỆC THẬT của Đức.** Ứng viên đo được: chính vòng audit
+  Đức đang làm tay — ngày 04/09 Đức dán prompt cho GPT rồi dán kết quả về **ba lượt** trong
+  một phiên. Cần Đức bấm ba công tắc trước (xem dưới), và cần Đức duyệt vì là chạy trên trang
+  thật (luật mục 2).
 - **vì sao:** Hiện GPT làm việc qua GitHub connector và Đức phải tự chuyển tiếp giữa hai bên.
   Nếu Claude Code điều phối được GPT thì bớt được Đức khỏi vòng lặp.
-- **chưa rõ, cần Đức nói:** ① thử trên việc gì · ② Claude Code "điều phối" nghĩa là gọi GPT
-  qua đâu (Đức dán tay, hay có kênh khác) · ③ đo thế nào là MVP đạt
 
-> Tôi cố ý **không tự bịa chi tiết** cho ý tưởng này. Đức mới nêu một dòng, và ba câu trên là
-> ba thứ quyết định nó là việc một ngày hay việc một tuần.
+**Ba câu "chưa rõ" của bản 02/09 nay còn MỘT — hai câu kia đã có số đo live 04/09:**
+
+| Câu | Trạng thái |
+|---|---|
+| ② gọi GPT qua đâu? | **Đã trả lời.** `jobs.add` → `run.trial` → `chat.read`; `jobs.add` tự dựng workbook trong bộ nhớ nên **không cần XLSX**. Hai vòng khép kín: `trial-b5309b27` **41 giây**, `trial-12ca3fe3` **~49 giây**, đọc về 1.953 và 1.926 ký tự, không bị cắt |
+| ③ đo thế nào là đạt? | **Phần lớn đã trả lời** — hai vòng khép kín chính là mốc. Còn thiếu: một vòng trên việc thật |
+| ① thử trên việc gì? | **Vẫn cần Đức chốt.** Đề xuất: vòng audit nói trên |
+
+- **chặn thật, chỉ Đức mở được:** ba công tắc trên máy Đức — mở session · chọn thư mục đích ·
+  bật chế độ phát triển. Không AI nào làm hộ được.
+- **hai giới hạn đã đo, đừng hứa quá:** chờ **5 phút** giữa hai lượt thử (`TRIAL_COOLDOWN_ACTIVE`,
+  thật, không đi vòng được) · trần cứng **90 giây** mỗi lượt. Hai vòng vừa rồi **chưa chạm trần**,
+  nên câu hỏi đổi luật an toàn về cái trần đó **tự tan** — ai định mở lại phải có ca chạm trần thật.
+- **cùng gói, không thuộc Y-01:** `B-36` (P1, chưa vá) — 36 file tên-GUID trong thư mục Tải về
+  của Đức; nội dung luôn đúng, chỉ cái tên bị Chrome đặt. Ba phép kiểm canh nó đều tĩnh nên
+  không bắt được.
+
+> Bản 02/09 cố ý không bịa chi tiết vì Đức mới nêu một dòng. Bản này **không bịa thêm gì** —
+> mọi con số ở trên là đo live ngày 04/09, nguồn ở Log cuối `workers/duc-auto-chatgpt/v0.1.0/HANDOFF.md`.
 
 ## Y-02 · Protocol làm nhiều việc song song
 
@@ -97,10 +118,14 @@ hiển thị sai.
 - **chủ:** `claude-y03`
 - **phạm vi:** hồ sơ trạng thái, bộ sinh, bản mẫu, phép kiểm. **Cấm** đụng gói
   `duc-auto-gg-flow-video` — phiên khác đang giữ.
-- **việc kế:** GIAI ĐOẠN 2 — chuyển `human_action` thành **bắt buộc** cho đơn vị còn sống, khi
-  mọi đơn vị đã khai. **Hai gói còn thiếu, và cả hai đang do phiên khác giữ** nên chủ của
-  chúng phải tự điền: `duc-auto-gg-flow-video` (`claude-f18-evidence`) và `duc-auto-chatgpt`
-  (`claude-surface-fix`, Đức giao 02/09)
+- **việc kế:** GIAI ĐOẠN 2 — chuyển `human_action` thành **bắt buộc** cho đơn vị còn sống.
+  **Điều kiện tiên quyết ĐÃ ĐỦ** (đo 04/09): 4/5 đơn vị đã khai, và cái duy nhất còn thiếu là
+  `duc-auto-gemini/v0.1.0` — **bản đã nghỉ**, tức không thuộc diện "còn sống". Việc còn lại
+  thuần tuý là bật bắt buộc trong lược đồ + phép kiểm; chủ `claude-y03` chốt thời điểm.
+
+> **Bản 02/09 của dòng này nêu sai hai gói** (`duc-auto-gg-flow-video` và `duc-auto-chatgpt`)
+> là "còn thiếu". Đo lại ngày 04/09: **cả hai đã khai**. Sửa sau khi audit độc lập chỉ ra rằng
+> bảng đang bắt Đức chờ một chặn đã tự tan — mà Đức thì chỉ đọc bảng, không đọc lại từng hồ sơ.
 - **vì sao:** Ba việc đang chờ Đức nhưng chữ đó nằm lẫn trong câu mô tả. Bảng không được đoán
   từ chữ (luật vàng 1), nên ô "Đức cần làm" bỏ trống — trong khi nó đúng là ô Đức cần nhất.
 - **đã xong giai đoạn 1:** trường `human_action` có trong lược đồ và bản mẫu, ba đơn vị đã
@@ -118,8 +143,15 @@ hiển thị sai.
 - **bậc:** đã chứng minh
 - **nguồn:** Đức nêu 2026-09-02
 - **việc kế:** Không còn gì. Bộ sinh đã nằm trong repo, có lệnh chạy riêng và 6 phép kiểm
-- **kết quả:** Bản ra cố ý KHÔNG commit — nó để publish, và trang tự in ngày sinh rồi bật cờ
-  đỏ sau 7 ngày, nên cũ thì nhìn thấy là cũ
+- **kết quả:** `DASHBOARD.html` **được commit vào repo** (03/09) — nhờ vậy bất kỳ AI nào cũng
+  sinh lại rồi commit được, không phải nhờ riêng một AI đăng hộ. Cổng so bảng đã commit với
+  trạng thái repo mỗi phiên nên nó **không thể âm thầm cũ**. Trang tự bật dải đỏ khi Đức mở nó
+  vào **một ngày khác ngày sinh** — tính lúc XEM, không lúc sinh.
+
+> **Bản 02/09 của dòng này nói NGƯỢC** — nó ghi "cố ý KHÔNG commit, để publish" và "cờ đỏ sau
+> 7 ngày". Cả hai đã sai từ 03/09, và cờ 7 ngày bị xoá hẳn ngày 04/09 vì là code chết (bản
+> commit luôn có tuổi 0 nên nhánh đó chưa từng chạy). Sửa ngày 04/09 sau khi audit độc lập
+> chỉ ra rằng **một bảng tự mô tả hai kiểu vận hành khác nhau** thì Đức đọc cái nào cũng sai.
 - **vì sao:** Bản đầu đã chạy được và đang là artifact, nhưng bộ sinh **nằm ngoài repo** nên
   không đi theo template và không ai cưỡng chế được độ tươi.
 
@@ -166,42 +198,6 @@ hiển thị sai.
 > Đức chốt 04/09: mở vòng thiết kế đó **sau khi** bảng trạng thái ổn định. Số đo để dành:
 > khoá `_code` đổi chủ **ba lần trong dưới một tiếng** ngày 04/09, không lần nào bên bị lấy
 > được thông báo, và lúc bị lấy vẫn có **6 file đang sửa dở** của chủ cũ nằm trong thư mục.
-
-## Y-01 — cập nhật 2026-09-04: hai trong ba câu đã có câu trả lời ĐO ĐƯỢC
-
-> Phụ chú của vai điều phối. Y-01 ở trên vẫn ghi "chờ Đức trả lời ba câu" — **không còn đúng**.
-> Ghi nối ở cuối sổ vì `_root` đang có chủ; khi ai đó giữ `_root` thì gộp vào Y-01 rồi xoá khối này.
-
-**Câu ② — "Claude Code điều phối GPT nghĩa là gọi qua đâu" → ĐÃ TRẢ LỜI, có bằng chứng live.**
-Không cần kênh mới. Đường đi là `jobs.add` → `run.trial` → `chat.read`, và `jobs.add` tự dựng
-workbook trong bộ nhớ nên **không cần file XLSX nào**. Phiên `claude-gpt-kenh` đã chạy **hai
-vòng tự động khép kín** ngày 04/09: `trial-b5309b27` thành công **41 giây**, `trial-12ca3fe3`
-thành công **~49 giây**; cả hai đọc câu trả lời về máy bằng `chat.read`, 1.953 và 1.926 ký tự,
-`truncated: false`.
-
-**Câu ③ — "đo thế nào là MVP đạt" → phần lớn đã tự trả lời.** Hai vòng khép kín chính là mốc
-MVP mà câu hỏi định tìm. Cái còn thiếu không phải định nghĩa, mà là **một vòng chạy trên việc
-thật của Đức** thay vì việc thử.
-
-**Câu ① — "thử trên việc gì" → vẫn cần Đức, nhưng nay có ứng viên đo được.**
-Đề xuất: **chính vòng audit mà Đức đang làm tay.** Hôm nay Đức đã dán prompt cho GPT rồi dán
-kết quả về **ba lượt** trong một phiên. Đó là vòng lặp có thật, lặp lại được, và Đức đang đứng
-giữa nó — đúng thứ Y-01 sinh ra để bỏ đi.
-
-**Chặn thật, và chỉ Đức mở được — ba công tắc trên máy Đức:**
-mở session · chọn thư mục đích · bật chế độ phát triển. Đây không phải việc AI làm hộ được.
-
-**Hai giới hạn đã đo, để không ai hứa quá:**
-- `TRIAL_COOLDOWN_ACTIVE` **5 phút** giữa hai lượt trial — thật, phải chờ, không đi vòng.
-- Trần cứng **90 giây** mỗi lượt. Hai vòng vừa rồi 41s và 49s nên chưa chạm trần, và **câu hỏi
-  đổi luật an toàn vì thế tự tan** — đừng mở lại nó khi chưa có ca chạm trần thật.
-
-**Còn mở, không thuộc Y-01 nhưng cùng gói:** `B-36` (P1, chưa vá) — 36 file tên-GUID trong thư
-mục Tải về của Đức từ 09/07 tới 04/09, nội dung luôn đúng, chỉ cái tên bị Chrome đặt. Ba phép
-kiểm canh nó đều TĨNH nên không bắt được.
-
-**Bậc nên đổi:** từ `ý tưởng` sang `đang xây` — nhưng đổi trường của Y-01 cần `_root`, nên để
-chủ vùng làm cùng lúc với việc gộp khối này.
 
 ## Y-07 · Cổng đỏ giả vì suite chậm — độ tin của cổng, không phải lỗi của bảng
 

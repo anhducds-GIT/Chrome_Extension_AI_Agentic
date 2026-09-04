@@ -26,11 +26,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T03:09",
-      "task": "STATE-DRIFT-01: PROMPTS.md + package.json noi test moi",
-      "released_at": "2026-09-04T03:18",
+      "owner": "claude-dashboard",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T03:51",
+      "task": "Content Truth: gop Y-01, sua Y-04 noi nguoc kien truc",
+      "released_at": null,
       "taken_from": "claude-k2-vaLoi",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -44,14 +44,14 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": "claude-k2-baseline",
+      "owner": "claude-k2-bootstrap",
       "ai": "Claude",
-      "claimed_at": "2026-09-04T03:32",
-      "task": "Va 2 fail-open GPT vong 7: baseline phai la moc niem phong hop le gan nhat, va loi doc git phai fail-closed",
+      "claimed_at": "2026-09-04T03:52",
+      "task": "Va nhanh BOOTSTRAP nuot loi git: tach not-a-repo khoi unborn repo, sua CA D dang ghim nham",
       "released_at": null,
       "taken_from": "claude-k2-snapshot",
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "67450900aaa9c0b8"
+  "_fingerprint": "03d94894aa880489"
 }
