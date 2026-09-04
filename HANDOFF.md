@@ -2737,3 +2737,40 @@ Số defect MỞ trên bảng: 5 → 2 (`CONTENT-TRUTH-01` và `DASH-ORCH-V2`).
 - Brief phiên `S1`/`S3`/`S4`/`S5`/`S7` vẫn `status: active` dù đã xong từ lâu. Chúng không có
   mã trong nháy ngược nên không lọt vào khối defect, nên **không** sửa lượt này — nhưng chỉ số
   "tài liệu đang hoạt động" vẫn đếm chúng.
+
+## Lượt · Ghi lùi ba sự cố Assistant hôm nay, theo định dạng Đức vừa chốt
+
+**Phiên:** `claude-dieu-phoi` · 2026-09-04 · khoá `_docs` · `HANDOFF.md` miễn khoá khi chỉ thêm dòng
+
+Đức chốt định dạng đếm: mỗi sự cố của Assistant là **đúng một dòng** `AssistantEvent: <token>`
+trong file này, bộ từ vựng cố định bốn token, **không lập sổ mới**, và Assistant **không được tự
+ghi `ANSWERED`/`PASS`** — đây là bộ đếm lỗi, không phải điểm.
+
+Ba sự cố dưới đây đều **đã xảy ra thật hôm nay** và đều có câu của Đức trong lịch sử phiên làm
+bằng chứng, nên ghi lùi để bộ đếm khởi động với dữ liệu thật thay vì với số 0. Mỗi dòng kèm
+ngay câu Đức nói, để về sau kiểm lại được mà không phải tin bản ghi này.
+
+AssistantEvent: ROLE-DRIFT
+
+> Đức: *"chúng ta đang làm Assistant AI? sao bạn lại thành debug Extension?"* — phiên điều phối
+> đã đi code `run-liveness-core.js` qua ba vòng thử phá. Sinh ra defect `ROLE-DRIFT-01`.
+
+AssistantEvent: STATE-DRIFT-CAUGHT-BY-DUC
+
+> Đức: *"Đây chính là loại sai lệch trạng thái mà Assistant phải cảnh báo, không bắt Đức tự soi"*
+> — báo cáo nói đã trả khoá, bảng quyền vẫn ghi `claude-dieu-phoi` giữ cả ba. Sinh ra defect
+> `STATE-DRIFT-01`.
+
+AssistantEvent: DASHBOARD-STALE
+
+> Đức: *"Tôi chưa thấy mục AI assistant trên Artifact?"* — quyết định đã phát sinh, bảng chưa
+> phản ánh. Sinh ra brief `DASH-ORCH-01`.
+
+**Không ghi lùi gì khác.** Bug chuyển tab (`DASH-TAB-01`) là lỗi của bảng, không phải lỗi cách
+Assistant làm việc — bốn token này chỉ đếm sự cố của Assistant. Và ca thứ hai trong brief
+`STATE-DRIFT-01` (`STATUS.md` ↔ Log của gói) do chính tôi đo ra chứ không phải Đức bắt, nên
+theo đúng luật nhãn thì **không tính** — đó là cơ chế chạy đúng.
+
+**Chưa hoàn chỉnh, nói trước:** bộ đếm này chỉ đếm được cái đã có người ghi. `N = 0` nghĩa là
+**chưa ai ghi nhận**, không nghĩa là không có. Trang phải viết "đã ghi nhận", không được viết
+"0 lỗi" — Đức nêu riêng điều này khi chốt.

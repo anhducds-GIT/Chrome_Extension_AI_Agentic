@@ -98,17 +98,8 @@ Hai dòng có nguồn máy đọc được, làm ngay:
   cải tiến (`DASH-ORCH-V2`), mà gọi một đề bài cải tiến là "sai lệch" thì sai. Phân biệt được
   hai loại thì cần thêm trường — không làm, đổi tiêu đề là đủ đúng.
 
-**Ba dòng đếm trượt Đức nêu (`Role drift: 0` · `State drift Đức phải bắt: 0` ·
-`Dashboard stale: 0`) thì KHÔNG làm lượt này** — và đây không phải cắt bớt cho nhanh:
-
-`ASSISTANT-V0.1.md` mục 5 chốt rằng nhãn từng câu hỏi ghi vào dòng Log của `HANDOFF.md`, và
-**cấm lập sổ đếm riêng** ("một nguồn sự thật thứ hai cho cùng một việc là đúng cái bệnh cả repo
-này đang chữa"). Dòng Log là văn xuôi tự do, không có định dạng cố định để đếm. Nên hôm nay chỉ
-có hai đường, cả hai đều sai: dò văn xuôi (sẽ ra số sai, im lặng), hoặc lập sổ đếm (phạm luật).
-
-Thay vào đó in **một dòng nói thẳng**: pilot đang đếm trong Log từng phiên, bảng chưa đếm được.
-Nói ra chỗ thiếu tốt hơn in một số `0` mà không ai biết nó đúng hay chỉ là chưa ai đếm.
-Đường mở: một định dạng nhãn cố định trong dòng Log — **cần Đức chốt, không tự đặt.**
+**Ba dòng đếm trượt: Đức ĐÃ CHỐT định dạng — xem [mục 8](#8-hai-điều-đức-chốt-thêm-04-09).**
+Làm luôn lượt này, theo đúng bốn token ở đó, và đọc kỹ câu về chữ **"đã ghi nhận"**.
 
 ### Vùng 4 · HẠ TẦNG — gập lại, dưới cùng
 
@@ -176,3 +167,60 @@ tức là đã trượt ra ngoài đề bài: dừng và báo.
 ## 7. Câu hỏi thì hỏi Đức
 
 Brief thiếu gì thì hỏi Đức một câu ngắn. Phiên điều phối cố ý đứng ngoài.
+
+## 8. Hai điều Đức chốt thêm (04/09)
+
+Hai câu ở mục 2 và mục 3 đã có trả lời. Cả hai **thêm vào phạm vi lượt này**, không để vòng sau.
+
+### 8a · Gộp `CONTENT-TRUTH-01` — phạm vi CỰC HẸP
+
+Đức chốt gộp, lý do: *"dashboard phải giúp Đức ra quyết định đúng. Một chip `ĐÃ CHỨNG MINH`
+nhưng evidence đã cũ làm dashboard mới đẹp hơn nhưng vẫn nguy hiểm."* Và vì cùng
+`build-overview.mjs`, cùng khoá `_code` — chờ vòng hai chỉ thêm một lần bàn giao và một lần
+rủi ro phiên chết giữa chừng (hôm nay đã năm ca).
+
+Đề bài đầy đủ ở [`BRIEF-CONTENT-TRUTH-01.md`](BRIEF-CONTENT-TRUTH-01.md) — **đọc cả file**,
+nó đã hẹp sẵn và đã liệt kê hai cái bẫy ký tự vô hình đáng đọc. Ba điều cần nhấn:
+
+- **Được làm đúng defect 4:** đơn vị có `lastVerified` và `changedCount > 0` thì trang phải nói
+  rõ **bằng chứng thuộc bản cũ hơn N commit**, hiện **cùng chỗ với chip trạng thái**, không giấu
+  trong toggle. Chữ Đức muốn thấy: đại ý **"CHỨNG MINH CŨ · CẦN KIỂM LẠI"**.
+- **KHÔNG mở thành hệ provenance mới.** Đức nói thẳng câu này. Dữ liệu đã có ở `row.changedCount`
+  trong model hiện tại — không nối thêm nguồn nào, không thêm trường nào.
+- **Defect 5 và defect 6 của brief đó vẫn KHOÁ.** Mục 7 của nó ghi rõ Đức chỉ chốt defect 4.
+  Lượt này không đổi.
+
+Xong thì đổi frontmatter `BRIEF-CONTENT-TRUTH-01.md` sang `status: done` — nhưng file đó thuộc
+`_docs`, **không phải khoá của bạn**: báo lại, đừng tự sửa.
+
+### 8b · Định dạng Log để đếm được — bốn token, một bộ từ vựng
+
+Vẫn dùng chính `HANDOFF.md` ở gốc repo, **không lập sổ mới** (đúng luật `ASSISTANT-V0.1.md`
+mục 5). Mỗi sự cố của Assistant là **đúng một dòng máy đọc**:
+
+```text
+AssistantEvent: ROLE-DRIFT
+AssistantEvent: STATE-DRIFT-CAUGHT-BY-DUC
+AssistantEvent: DASHBOARD-STALE
+AssistantEvent: UNKNOWN
+```
+
+Luật Đức chốt, năm điều, **đủ cả năm mới đúng**:
+
+1. **Bộ từ vựng cố định, đúng bốn token trên.** Token lạ → **NÉM lỗi có tên**, đừng bỏ qua im
+   lặng: một token gõ sai mà bị bỏ qua thì đúng cái sự cố đó biến mất khỏi số đếm.
+2. **Đếm khớp token chính xác, KHÔNG dò văn xuôi.** Neo bằng **một dòng** (`^AssistantEvent: X$`),
+   đừng khớp nhiều dòng — repo này đã bị CRLF làm hỏng neo nhiều dòng bốn lần trong một ngày.
+3. **Assistant KHÔNG tự ghi `ANSWERED` / `PASS`.** Chỉ ghi sự cố. Đây là bộ đếm lỗi, **không
+   phải điểm** — cố ý, để Assistant không có đường nào tự làm đẹp số của mình.
+4. Bảng hiện đúng ba dòng: **`Trượt vai · N` · `Sai lệch Đức phải bắt · N` · `Bảng cũ · N`**
+   (chữ tiếng Việt có dấu; ba tên trên là gợi ý, giữ nghĩa là được). `UNKNOWN` đếm riêng nếu
+   muốn, nhưng **không** gộp vào ba dòng này.
+5. **Chữ phải là "đã ghi nhận", không được là "0 lỗi".** Đây là chỗ dễ sai nhất và Đức nêu
+   riêng: `N = 0` chỉ có nghĩa **chưa ai ghi nhận sự cố nào**, không có nghĩa không có sự cố.
+   Viết "0 lỗi" là biến một khoảng trống dữ liệu thành một lời tự khen — mà lời máy tự khen thì
+   trang này cấm sẵn.
+
+**Có dữ liệu thật để kiểm, không phải kiểm với số 0:** `HANDOFF.md` gốc đã có sẵn ba dòng
+`AssistantEvent:` ghi lùi cho ba sự cố thật hôm nay (một trượt vai, một sai lệch Đức bắt, một
+bảng cũ). Phép ghim của bạn phải đọc ra đúng ba cái đó, và phải **ĐỎ** khi bạn thử xoá một dòng.
