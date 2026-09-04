@@ -2607,3 +2607,8 @@ này vẫn chờ trong hàng, và `safe-push` quy commit theo nhãn `Lane:` ch�
 `Lane:` chỉ nói commit của ai; nó không thay được chỗ đứng tên. Đã **nhận lại `_code`**, và nó
 được giữ tới khi ba commit kia đẩy lên được. Kết luận đúng: **trả khoá là việc làm SAU khi push,
 không phải sau khi xong việc** — đúng như luật "trả khoá là lượt push riêng" đã nói.
+
+**Chốt lại `DASH-TAB-01` — đã lên remote.** Sáu commit của phiên này (`af032d4` `3465c27`
+`f92c4eb` `6e851d1` `9ebb65c` `99513f2`) đã có trên `origin/main`: phiên `claude-exec-qdsync`
+push và mang theo, đúng cơ chế một-nhánh-nhiều-phiên. Cổng đóng phiên XANH TOÀN BỘ trước lúc đó.
+Nay không còn commit nào của phiên này chưa push, nên `_code` đã **trả**, lần này đúng lúc.
