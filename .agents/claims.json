@@ -26,20 +26,20 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-03T23:59",
-      "task": "ROLE-DRIFT-01: sua con tro AGENTS.md + PROMPTS.md muc 0",
-      "released_at": "2026-09-04T02:38",
+      "owner": "claude-k2-restamp",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T02:57",
+      "task": "Ghi luat: chuyen chu khoa phai co cau chot cua Duc, ghi vao bang",
+      "released_at": null,
       "taken_from": "claude-k2-vaLoi",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T02:55",
-      "task": "Viet brief STATE-DRIFT-01 de giao executor",
-      "released_at": "2026-09-04T02:56",
+      "owner": "claude-exec-statedrift",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T03:00",
+      "task": "STATE-DRIFT-01: noi state-check vao ORCHESTRATOR muc 6",
+      "released_at": null,
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -53,5 +53,5 @@
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "f033177be3b04ca6"
+  "_fingerprint": "4993ad63c5b7b218"
 }

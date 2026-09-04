@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ageHours, ageLabel, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, readClaims } from "../scripts/claim.mjs";
+import { ageHours, ageLabel, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, khoaBiDoiChu, readClaims } from "../scripts/claim.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -281,6 +281,119 @@ const CLAIMS = () => ({
     ok("K2-5 · --list in tuoi va nhac dung khoa cu; khoa qua han VAN khong tu doi lai duoc");
   } finally {
     assert.ok(temp.startsWith(join(tmpdir(), "claim-tuoi-")), "chi don dung temp fixture cua phep kiem nay");
+    rmSync(temp, { recursive: true, force: true });
+  }
+}
+
+
+/* ---- K2-11. HÀM THUẦN: khoá nào vừa bị chuyển khỏi tay người khác ---- */
+{
+  const truoc = { _code: { owner: "A" }, _docs: { owner: "B" }, _root: { owner: null }, "workers/g": { owner: "C" } };
+
+  // Lấy khỏi tay A, sang mình → phải bị bắt. Đây là ca thật ngày 04/09.
+  assert.deepEqual(khoaBiDoiChu(truoc, { ...truoc, _code: { owner: "toi" } }, "toi"),
+    [{ key: "_code", tu: "A", sang: "toi" }], "lay khoa tu tay A ve minh PHAI bi bat");
+
+  // Lấy khỏi tay A, sang người thứ ba → cũng phải bị bắt. Bắt hộ người khác vẫn là bắt.
+  assert.deepEqual(khoaBiDoiChu(truoc, { ...truoc, _code: { owner: "D" } }, "toi"),
+    [{ key: "_code", tu: "A", sang: "D" }], "chuyen khoa cua A sang D cung PHAI bi bat");
+
+  // Xoá chủ hộ người khác → vẫn bắt. Trả hộ là xoá dấu vết một phiên đang làm dở.
+  assert.deepEqual(khoaBiDoiChu(truoc, { ...truoc, _docs: { owner: null } }, "toi"),
+    [{ key: "_docs", tu: "B", sang: null }], "tra quyen ho nguoi khac cung PHAI bi bat");
+
+  // BA ca KHÔNG được bắt — thiếu vế này thì một hàm "luôn báo" vẫn qua test.
+  assert.deepEqual(khoaBiDoiChu(truoc, { ...truoc, _root: { owner: "toi" } }, "toi"), [],
+    "nhan mot vung TRONG khong lay cua ai — khong duoc bao");
+  assert.deepEqual(khoaBiDoiChu(truoc, { ...truoc, _code: { owner: null } }, "A"), [],
+    "chinh chu tra khoa cua minh — khong duoc bao");
+  assert.deepEqual(khoaBiDoiChu(truoc, truoc, "toi"), [], "khong doi gi thi khong bao gi");
+
+  // Không có bảng cũ để so (repo chưa commit lần nào) → không có gì để kết luận.
+  assert.deepEqual(khoaBiDoiChu(null, { _code: { owner: "toi" } }, "toi"), [],
+    "khong co ban cu thi khong the ket luan ai lay cua ai");
+  ok("K2-11 · hàm thuần: bắt đúng ba hình dạng lấy khoá, và im với bốn ca hợp lệ");
+}
+
+/* ---- K2-11. Lệnh: `--restamp` KHÔNG được rửa sạch một vụ đổi chủ ----
+   Lỗ thật (04/09): `--take` từ chối cứng khi vùng có chủ khác, nhưng `--restamp` đóng dấu cho
+   BẤT KỲ nội dung nào trên đĩa. Nên đường lấy khoá trọn vẹn là: sửa tay → restamp → bảng có dấu
+   hợp lệ, cổng XANH với mọi phiên, và người vừa bị lấy khoá KHÔNG HỀ BIẾT. Đã xảy ra với phiên
+   `claude-k2-snapshot` giữa lúc nó đang sửa đúng vùng đó.
+
+   Bản cũ CÓ in một câu nhắc. Người đang cố ý làm thì đọc xong vẫn đi tiếp — một dòng chữ không
+   phải một chốt. */
+{
+  const temp = mkdtempSync(join(tmpdir(), "claim-restamp-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: temp, encoding: "utf8" });
+  try {
+    const claimsPath = join(temp, ".agents", "claims.json");
+    mkdirSync(dirname(claimsPath), { recursive: true });
+    mkdirSync(join(temp, "scripts"), { recursive: true });
+    const here = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "claim.mjs");
+    writeFileSync(join(temp, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+    const doc = () => JSON.parse(readFileSync(claimsPath, "utf8"));
+    const ghi = (claims) => writeFileSync(claimsPath, `${JSON.stringify({ claims }, null, 2)}\n`, "utf8");
+    const run = (...args) => {
+      const r = spawnSync(process.execPath, [join(temp, "scripts", "claim.mjs"), ...args], { encoding: "utf8" });
+      return { code: r.status, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
+    };
+
+    gitAt("init", "-q", "-b", "main");
+    gitAt("config", "user.name", "K2 Restamp");
+    gitAt("config", "user.email", "k2@example.invalid");
+    // Trạng thái ĐÃ COMMIT: `_code` của nạn nhân, `_docs` trống.
+    ghi({ _code: { owner: "nan-nhan", ai: "Claude", task: "dang lam do" }, _docs: { owner: null } });
+    run("--restamp", "--as", "nan-nhan");           // đóng dấu cho trạng thái gốc
+    gitAt("add", "-A"); gitAt("commit", "-q", "-m", "seed");
+
+    // VẾ 1 — sửa tay để lấy khoá, rồi restamp. PHẢI TỪ CHỐI.
+    const cuop = doc();
+    cuop.claims._code = { owner: "ke-lay", taken_from: "nan-nhan" };   // đúng hình dạng đã xảy ra
+    writeFileSync(claimsPath, `${JSON.stringify(cuop, null, 2)}\n`, "utf8");
+    const r1 = run("--restamp", "--as", "ke-lay");
+    assert.equal(r1.code, EXIT.REFUSED, `K2-11: restamp de gan dau cho mot vu lay khoa PHAI bi tu choi. Ra: ${r1.out}`);
+    assert.match(r1.out, /TU_CHOI_DONG_DAU/, "phai co ma loi doc duoc");
+    assert.match(r1.out, /_code: "nan-nhan" → "ke-lay"/, "phai noi RO khoa nao, cua ai, ve tay ai");
+    assert.match(r1.out, /--duc-duyet/, "phai chi ra duong hop le, khong chi noi khong");
+    // `taken_from` viết tay KHÔNG phải giấy phép — nó chỉ là chữ, công cụ chưa bao giờ sinh ra nó.
+    assert.notEqual(doc()[FINGERPRINT_FIELD], claimsFingerprint(doc().claims),
+      "tu choi thi KHONG duoc ghi dau moi — dau phai con vo, de cong con bao do");
+
+    // VẾ 2 — VẾ CHỊU LỰC: có câu chốt của Đức thì đi được, VÀ xuất xứ phải nằm TRONG FILE.
+    const r2 = run("--restamp", "--as", "ke-lay", "--duc-duyet", "Duc chot 04/09: chu cu da tat");
+    assert.equal(r2.code, EXIT.OK, `co cau chot cua Duc thi phai di duoc. Ra: ${r2.out}`);
+    const sau = doc();
+    assert.equal(sau[FINGERPRINT_FIELD], claimsFingerprint(sau.claims), "di duoc thi phai dong dau that");
+    assert.equal(sau.claims._code.taken_from, "nan-nhan", "xuat xu phai ghi VAO FILE");
+    assert.equal(sau.claims._code.taken_by, "ke-lay", "phai ghi ai la nguoi lay");
+    assert.equal(sau.claims._code.duc_decision, "Duc chot 04/09: chu cu da tat",
+      "cau chot cua Duc phai nam trong file — nguoi can doc no la nan nhan, ma ho khong chay lenh nay");
+
+    // VẾ 3 — cờ RỖNG không được coi là có chốt. Nếu không thì `--duc-duyet ""` là đường vòng.
+    gitAt("add", "-A"); gitAt("commit", "-q", "-m", "sau khi Duc chot");
+    const lai = doc();
+    lai.claims._docs = { owner: "ai-do" };
+    writeFileSync(claimsPath, `${JSON.stringify(lai, null, 2)}\n`, "utf8");
+    run("--restamp", "--as", "ai-do", "--duc-duyet", "Duc chot: nhan vung trong");
+    gitAt("add", "-A"); gitAt("commit", "-q", "-m", "docs co chu");
+    const cuop2 = doc();
+    cuop2.claims._docs = { owner: "ke-lay-2" };
+    writeFileSync(claimsPath, `${JSON.stringify(cuop2, null, 2)}\n`, "utf8");
+    const r3 = run("--restamp", "--as", "ke-lay-2", "--duc-duyet", "   ");
+    assert.equal(r3.code, EXIT.REFUSED, `co RONG khong duoc tinh la co chot. Ra: ${r3.out}`);
+
+    // VẾ 4 — đóng dấu sau khi CHỈ sửa văn xuôi thì vẫn phải chạy trơn. Không được biến một
+    // lệnh bảo trì bình thường thành thứ phải xin phép.
+    const vanXuoi = doc();
+    vanXuoi.claims._docs = { owner: "ai-do" };     // trả về đúng trạng thái đã commit
+    vanXuoi._doc = "doi loi giai thich";
+    writeFileSync(claimsPath, `${JSON.stringify(vanXuoi, null, 2)}\n`, "utf8");
+    const r4 = run("--restamp", "--as", "ai-do");
+    assert.equal(r4.code, EXIT.OK, `chi sua van xuoi thi restamp phai chay tron. Ra: ${r4.out}`);
+    ok("K2-11 · `--restamp` từ chối đóng dấu cho vụ đổi chủ; có câu chốt Đức thì đi được và ghi xuất xứ VÀO FILE; cờ rỗng không tính; sửa văn xuôi vẫn trơn");
+  } finally {
+    assert.ok(temp.startsWith(join(tmpdir(), "claim-restamp-")), "chi don dung temp fixture cua phep kiem nay");
     rmSync(temp, { recursive: true, force: true });
   }
 }

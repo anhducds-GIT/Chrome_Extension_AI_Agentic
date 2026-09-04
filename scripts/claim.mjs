@@ -21,6 +21,7 @@
  *
  * Mã thoát:  0 xong · 2 dùng sai · 3 TỪ CHỐI (đã có chủ khác / không phải chủ) · 4 bị ghi đè
  */
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -75,7 +76,9 @@ export const VO_DAU = "DAU_VO: `.agents/claims.json` đã bị sửa NGOÀI lệ
   + "và phiên đó không hề biết. ĐỪNG đóng lại dấu cho xong.\n"
   + "  1. xem đã đổi gì:  git diff .agents/claims.json\n"
   + "  2. khoá của bạn có bị đổi chủ không? nếu có thì hỏi Đức — luật mục 1: muốn giành thì hỏi.\n"
-  + "  3. chốt xong rồi mới đóng lại dấu: node scripts/claim.mjs --restamp --as <phiên>";
+  + "  3. chốt xong rồi mới đóng lại dấu: node scripts/claim.mjs --restamp --as <phiên>\n"
+  + "     (nếu lượt sửa đó CHUYỂN CHỦ một khoá thì lệnh sẽ đòi thêm --duc-duyet \"<câu chốt của Đức>\",\n"
+  + "      và câu đó được ghi VÀO bảng — để phiên vừa mất khoá đọc được, vì họ chỉ đọc bảng chứ không chạy lệnh)";
 
 const canon = (v) => {
   if (v === undefined) return "null";
@@ -134,6 +137,62 @@ export function ageLabel(hours) {
   if (hours < 1) return `${Math.round(hours * 60)} phút`;
   if (hours < 48) return `${Math.round(hours)}h`;
   return `${Math.round(hours / 24)} ngày`;
+}
+
+/* ---- ĐÓNG DẤU KHÔNG ĐƯỢC RỬA SẠCH MỘT VỤ ĐỔI CHỦ ------------------------
+ *
+ * Lỗ thật, đo được ngày 04/09: `--take` từ chối cứng khi vùng có chủ khác — nhưng `--restamp`
+ * thì đóng dấu cho BẤT KỲ nội dung nào đang nằm trên đĩa. Nên đường đi trọn vẹn của một vụ
+ * lấy khoá là: sửa tay `claims.json` → `--restamp` → bảng có dấu hợp lệ, cổng XANH với mọi
+ * phiên, và **người vừa bị lấy khoá không hề biết**.
+ *
+ * Đã xảy ra thật: `_code` bị lấy khỏi tay phiên `claude-k2-snapshot` GIỮA LÚC phiên đó đang
+ * sửa đúng vùng đó, kèm một trường `taken_from` viết tay. Trường đó KHÔNG do công cụ này sinh
+ * ra — `claim.mjs` chưa bao giờ ghi nó — nên nó không phải bằng chứng gì cả, nó chỉ là chữ.
+ * Phiên bị lấy chỉ phát hiện vì cổng in "Bạn chịu trách nhiệm: (không vùng nào)".
+ *
+ * Vì sao cảnh báo bằng chữ trên màn hình không đủ: bản cũ CÓ in "nếu bạn không cố ý thì vừa
+ * xoá dấu vết một vụ sửa tay". Người đang cố ý làm thì đọc câu đó rồi đi tiếp. Một dòng chữ
+ * không phải một chốt.
+ *
+ * KHÔNG cấm hẳn việc chuyển chủ. Có ca thật cần nó: chủ cũ đã tắt, Đức phân xử xong, phải có
+ * đường ghi lại kết quả. Nên luật là: chuyển chủ thì PHẢI có câu chốt của Đức, và câu đó được
+ * ghi VÀO FILE chứ không chỉ in ra màn hình — để phiên bị lấy đọc được, và để lần sau còn
+ * truy được. Im lặng là thứ bị cấm, không phải việc chuyển chủ.
+ *
+ * ĐỐI CHIẾU VỚI KHỐI "DẤU NIÊM PHONG" Ở TRÊN — nó nói thẳng rằng so hai ảnh chụp là hướng SAI,
+ * vì "trả rồi nhận" bị ép phẳng thành "ghi đè" và phép kiểm sẽ báo oan. Câu đó ĐÚNG, và tôi
+ * không lật nó. Khác biệt nằm ở CHỖ ĐẶT:
+ *   · ở đó, phép so chạy trên MỌI lượt nhận/trả — tức đường đi bình thường của cả repo, nên
+ *     báo oan là chi phí thường trực và nó sẽ bị bỏ qua như mọi cảnh báo hay kêu;
+ *   · ở đây, phép so chỉ chạy trong `--restamp` — một lệnh mà theo đúng tài liệu của nó chỉ
+ *     được dùng SAU khi đã có sửa tay và Đức đã phân xử. Nhận/trả bình thường không bao giờ
+ *     đi qua đây.
+ * Nên ca báo oan (trả-rồi-nhận rồi có người restamp) tốn đúng một cờ kèm một câu — trong một
+ * tình huống mà theo định nghĩa đã cần một câu của Đức rồi. So sánh không phải công cụ xấu;
+ * đặt nó lên đường đi thường ngày mới là cái xấu.
+ */
+export function claimsTaiHead(root = ROOT) {
+  try {
+    const raw = execFileSync("git", ["show", "HEAD:.agents/claims.json"], { cwd: root, encoding: "utf8" });
+    return JSON.parse(raw)?.claims ?? null;
+  } catch { return null; }        // chưa commit lần nào / không phải repo git → không có gì để so
+}
+
+/* Hàm THUẦN: khoá nào vừa bị chuyển khỏi tay một người ĐANG GIỮ, mà người đó không phải bạn.
+ *
+ * `cu === as` thì bỏ qua — bạn nhả hoặc giữ tiếp khoá của chính mình là chuyện bình thường.
+ * `cu === null` cũng bỏ qua — nhận một vùng trống không lấy của ai.
+ * Còn lại (`X → Y` và `X → trống`, với X không phải bạn) đều phải có Đức chốt: cả hai đều xoá
+ * quyền của một phiên có thể đang làm dở, và phiên đó không có cách nào tự biết. */
+export function khoaBiDoiChu(truoc, sau, as) {
+  const ra = [];
+  for (const [key, cur] of Object.entries(sau || {})) {
+    const cu = truoc?.[key]?.owner ?? null;
+    const moi = cur?.owner ?? null;
+    if (cu && cu !== as && cu !== moi) ra.push({ key, tu: cu, sang: moi });
+  }
+  return ra;
 }
 
 /* Quyết định THUẦN — tách khỏi việc đọc/ghi để kiểm được mọi nhánh mà không cần đĩa. */
@@ -225,8 +284,32 @@ function main() {
       console.error("Dùng: node scripts/claim.mjs --restamp --as <phiên>");
       process.exit(EXIT.MISUSE);
     }
+    // CHỐT, KHÔNG PHẢI CẢNH BÁO. Xem khối dài ở `khoaBiDoiChu` phía trên: bản cũ chỉ in một
+    // câu nhắc, mà người đang cố ý lấy khoá thì đọc xong vẫn đi tiếp.
+    const ducDuyet = flag("duc-duyet");
+    const coCauChot = typeof ducDuyet === "string" && ducDuyet.trim() !== "";
+    const doiChu = khoaBiDoiChu(claimsTaiHead(), parsed.claims, as);
+    if (doiChu.length && !coCauChot) {
+      console.error(`\nTU_CHOI_DONG_DAU: bảng này đang chuyển ${doiChu.length} khoá khỏi tay phiên khác:`);
+      for (const d of doiChu) console.error(`  ${d.key}: "${d.tu}" → ${d.sang ? `"${d.sang}"` : "(trống)"}`);
+      console.error("\nĐóng dấu bây giờ là biến một vụ sửa tay thành trạng thái hợp lệ — cổng sẽ XANH với mọi phiên,");
+      console.error("và phiên VỪA BỊ LẤY KHOÁ không có cách nào biết. Ngày 04/09 chuyện này đã xảy ra thật.");
+      console.error("\nLuật mục 1: muốn giành vùng người khác đang giữ thì HỎI ĐỨC. Đức chốt rồi thì ghi lại câu chốt đó:");
+      console.error(`  node scripts/claim.mjs --restamp --as ${as} --duc-duyet "Đức chốt <ngày>: <lý do một câu>"`);
+      console.error("Chỉ muốn đóng dấu sau khi sửa văn xuôi (_doc/_labels)? Thì đừng đổi chủ khoá nào — sửa lại rồi chạy lại.\n");
+      process.exit(EXIT.REFUSED);
+    }
     console.log(`Đang niêm phong trạng thái này (phiên "${as}"):`);
     bang();
+    if (doiChu.length) {
+      // GHI VÀO FILE, không chỉ in ra màn hình. Người cần biết nhất là phiên vừa mất khoá, mà
+      // họ không hề chạy lệnh này — họ chỉ đọc bảng. Chữ trên màn hình của tôi không tới được họ.
+      const luc = new Date().toISOString().slice(0, 16);
+      for (const d of doiChu) {
+        parsed.claims[d.key] = { ...parsed.claims[d.key], taken_from: d.tu, taken_by: as, taken_at: luc, duc_decision: ducDuyet };
+      }
+      console.log(`\nĐã ghi xuất xứ cho ${doiChu.length} khoá đổi chủ: ${doiChu.map((d) => d.key).join(", ")}`);
+    }
     parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims);
     fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
     console.log(`\ndấu cũ: ${seal.stamped ?? "(chưa có)"}  →  dấu mới: ${parsed[FINGERPRINT_FIELD]}`);

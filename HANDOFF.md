@@ -2223,3 +2223,48 @@ cho commit này dù tôi đang không giữ `_code`.
 
 Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 ·
 `Y-01` · và câu hỏi `taken_from` ở trên.
+
+---
+
+## 2026-09-04 · Phiên `claude-k2-restamp` — vá lỗ `--restamp` rửa sạch một vụ đổi chủ
+
+Đức chốt "`taken_from` là lỗ, vá đi". GPT cùng lúc chốt ngược lại: "`taken_from` CHO PHÉP,
+không phải lỗ". Đức là người chốt nên tôi làm theo Đức — nhưng trước hết đọc code để biết ai
+đúng ở chỗ nào, vì hai bên đang nói về hai thứ khác nhau.
+
+**Sự thật đo được:** `taken_from` **không hề tồn tại trong `claim.mjs`**. Công cụ chưa bao giờ
+ghi trường đó. Nó là **chữ viết tay**. Nên:
+
+- GPT ĐÚNG rằng `--take` vẫn từ chối cứng khi vùng có chủ khác — tôi đọc lại `decide()`, đúng vậy.
+- GPT SAI khi gọi `taken_from` là "provenance của một owner-approved takeover" do công cụ sinh.
+  Nó không chứng minh gì cả; ai gõ cũng được.
+- ĐỨC ĐÚNG rằng có lỗ. Nhưng lỗ không nằm ở cái tên trường — nó nằm ở **`--restamp`**.
+
+**Lỗ thật:** `--restamp` đóng dấu cho BẤT KỲ nội dung nào đang nằm trên đĩa. Nên đường lấy khoá
+trọn vẹn là: sửa tay `claims.json` → `--restamp` → bảng có dấu hợp lệ → cổng XANH với mọi phiên
+→ **người vừa bị lấy khoá không hề biết**. Đúng chuyện đã xảy ra với phiên `claude-k2-snapshot`
+cùng ngày, giữa lúc nó đang sửa đúng vùng đó.
+
+Bản cũ CÓ in một câu nhắc ("nếu bạn không cố ý thì vừa xoá dấu vết một vụ sửa tay"). Người đang
+cố ý làm thì đọc xong vẫn đi tiếp. **Một dòng chữ không phải một chốt.**
+
+**Bản vá — không cấm chuyển chủ, chỉ cấm im lặng:**
+`--restamp` so bảng trên đĩa với bảng ở HEAD. Khoá nào bị chuyển khỏi tay một người ĐANG GIỮ mà
+người đó không phải bạn thì lệnh **TỪ CHỐI** (mã 3), trừ khi có `--duc-duyet "<câu chốt>"`. Khi
+có, xuất xứ được ghi **VÀO FILE** (`taken_from` · `taken_by` · `taken_at` · `duc_decision`) —
+vì người cần đọc nó là phiên vừa mất khoá, mà họ chỉ đọc bảng chứ không chạy lệnh.
+
+**Đối chiếu với chính file đó:** khối "DẤU NIÊM PHONG" viết rằng so hai ảnh chụp là hướng SAI —
+"trả rồi nhận" bị ép phẳng thành "ghi đè" và sẽ báo oan. Câu đó ĐÚNG và tôi không lật nó. Khác
+biệt là **chỗ đặt**: ở đó phép so chạy trên mọi lượt nhận/trả (đường đi thường ngày, báo oan
+liên tục thì sẽ bị bỏ qua); ở đây nó chỉ chạy trong `--restamp`, lệnh mà theo đúng tài liệu của
+nó chỉ dùng SAU khi đã có sửa tay và Đức đã phân xử. Ca báo oan tốn đúng một cờ kèm một câu,
+trong tình huống vốn đã cần một câu của Đức. Đã ghi lập luận này vào chính khối code.
+
+**Số đo:** `claim-smoke` 9 → **11**. Mutation **4/4** bắt được: bỏ chốt từ chối · coi cờ rỗng là
+có chốt · không ghi xuất xứ vào file · bỏ qua ca lấy-thành-trống. Suite tổng **316**, 10/10 bước.
+
+Luật đã sửa ở hai chỗ của `AGENTS.md`: mục 1 (dòng "muốn giành thì hỏi Đức" nay kèm cách ghi
+lại) và hàng sổ tay `DAU_VO`.
+
+Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 · `Y-01`.
