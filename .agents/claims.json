@@ -26,32 +26,32 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-exec-statedrift",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T03:09",
       "task": "STATE-DRIFT-01: PROMPTS.md + package.json noi test moi",
-      "released_at": null,
+      "released_at": "2026-09-04T03:18",
       "taken_from": "claude-k2-vaLoi",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": "claude-exec-statedrift",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T03:00",
       "task": "STATE-DRIFT-01: noi state-check vao ORCHESTRATOR muc 6",
-      "released_at": null,
+      "released_at": "2026-09-04T03:18",
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": "claude-exec-statedrift",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T03:09",
       "task": "STATE-DRIFT-01: them scripts/state-check.mjs + test ghim",
-      "released_at": null,
+      "released_at": "2026-09-04T03:18",
       "taken_from": "claude-k2-snapshot",
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "66b1aa40fd0989e1"
+  "_fingerprint": "01a476a53b1810fd"
 }
