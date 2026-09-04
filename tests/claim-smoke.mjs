@@ -472,13 +472,28 @@ const CLAIMS = () => ({
       "quet het tam ma khong thay moc lanh thi phai la LOI — 'khong biet' KHONG duoc thanh 'khong sao'");
     assert.match(hepTam.ly_do, /không thấy mốc niêm phong lành nào/, "phai noi ro vi sao");
 
-    // CA D — repo không đọc được lịch sử: cũng phải TỪ CHỐI, không được lùi về BOOTSTRAP.
-    // (Thư mục có tồn tại nhưng không phải repo git và cũng không có commit — phân biệt được
-    // với ca A chỉ nhờ ca A có `git init`; ở đây kiểm đúng cái nhánh trả BOOTSTRAP là CÓ CHỦ Ý.)
+    // CA D — KHÔNG phải repo git thì phải TỪ CHỐI, không được lùi về BOOTSTRAP.
+    //
+    // Ca này TRƯỚC ĐÂY GHIM NGƯỢC (sửa 04/09, GPT audit vòng 8 chỉ ra): chú thích viết "phải
+    // TỪ CHỐI" mà khẳng định ngay dưới lại đòi BOOTSTRAP. Tức test đang xác nhận chính cái
+    // fail-open là hành vi đúng — tệ hơn không có test, vì nó làm cái lỗ trông như đã kiểm chứng.
+    //
+    // Phân biệt: "repo git chưa có commit" (ca A) là chưa từng có gì để mất → cho qua.
+    // "Không phải repo git / git hỏng" là KHÔNG BIẾT lịch sử có gì → từ chối.
     const troc = mkdtempSync(join(tmpdir(), "claim-khong-git-"));
     try {
-      assert.equal(baselineDaNiemPhong(troc).trangThai, BASELINE.BOOTSTRAP,
-        "thu muc chua tung co commit nao = chua tung co trang thai de mat");
+      assert.equal(baselineDaNiemPhong(troc).trangThai, BASELINE.LOI,
+        "khong phai repo git = KHONG BIET lich su co gi, khong phai 'chua tung co gi de mat'");
+      // Và qua ĐƯỜNG LỆNH nữa — bài học vòng trước: ghim hàm không thay được ghim đường đi.
+      mkdirSync(join(troc, ".agents"), { recursive: true });
+      mkdirSync(join(troc, "scripts"), { recursive: true });
+      writeFileSync(join(troc, ".agents", "claims.json"),
+        `${JSON.stringify({ claims: { _code: { owner: "ai-do" } } }, null, 2)}\n`, "utf8");
+      writeFileSync(join(troc, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+      const cliTroc = spawnSync(process.execPath, [join(troc, "scripts", "claim.mjs"), "--restamp", "--as", "ai-do"], { encoding: "utf8" });
+      assert.equal(cliTroc.status, EXIT.REFUSED,
+        `khong phai repo git thi LENH phai tu choi. Ra: ${cliTroc.stdout}${cliTroc.stderr}`);
+      assert.match(`${cliTroc.stdout}${cliTroc.stderr}`, /KHONG_CO_MOC_SO/, "phai co ma loi doc duoc");
     } finally { rmSync(troc, { recursive: true, force: true }); }
 
     // CA E — khôi phục hợp lệ: Đức chốt thì đi được, và xuất xứ ghi VÀO FILE.

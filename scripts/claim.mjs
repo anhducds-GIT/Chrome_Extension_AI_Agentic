@@ -201,11 +201,23 @@ const QUET_TOI_DA = 50;
 export function baselineDaNiemPhong(root = ROOT, capQuet = QUET_TOI_DA) {
   const chay = (...a) => execFileSync("git", a, { cwd: root, encoding: "utf8" });
 
-  // "Chưa có lịch sử" KHÁC "đọc lịch sử thất bại", và gộp hai thứ đó lại chính là cách sinh ra
-  // fail-open. Repo chưa commit lần nào thì chưa từng có trạng thái niêm phong nào để mà mất —
-  // đó là ngoại lệ bootstrap thật. Còn lại đều phải fail closed.
+  // HAI CÂU HỎI, KHÔNG PHẢI MỘT — audit GPT vòng 8, 04/09.
+  //
+  // Bản trước hỏi đúng một câu (`rev-parse --verify HEAD` có chạy không) rồi coi mọi thất bại
+  // là "repo mới, cho qua". Nhưng thất bại đó có HAI nguyên nhân hoàn toàn khác nhau:
+  //   · repo git hợp lệ mà chưa có commit nào → chưa từng có trạng thái niêm phong để mà mất.
+  //     Bootstrap thật, cho qua, nếu không thì khoá repo ngay commit đầu tiên.
+  //   · KHÔNG phải repo git / `.git` hỏng / git không chạy được → ta KHÔNG BIẾT lịch sử có gì.
+  //     "Không biết" phải là TỪ CHỐI. Đây đúng họ lỗi đã bị loại khỏi K2 nhiều lần rồi.
+  //
+  // Nên hỏi tách làm hai: đứng trong cây làm việc git đã, rồi mới hỏi HEAD.
+  let trongCayGit = "";
+  try { trongCayGit = chay("rev-parse", "--is-inside-work-tree").trim(); } catch { trongCayGit = ""; }
+  if (trongCayGit !== "true") {
+    return { trangThai: BASELINE.LOI, ly_do: "không đọc được git ở đây (không phải cây làm việc git, hoặc git không chạy được)" };
+  }
   try { chay("rev-parse", "--verify", "HEAD"); }
-  catch { return { trangThai: BASELINE.BOOTSTRAP, ly_do: "repo chưa có commit nào" }; }
+  catch { return { trangThai: BASELINE.BOOTSTRAP, ly_do: "repo git hợp lệ nhưng chưa có commit nào" }; }
 
   let shas;
   try {

@@ -26,20 +26,20 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-dashboard",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T03:51",
       "task": "Content Truth: gop Y-01, sua Y-04 noi nguoc kien truc",
-      "released_at": null,
+      "released_at": "2026-09-04T03:54",
       "taken_from": "claude-k2-vaLoi",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T03:32",
-      "task": "Viet brief ASSISTANT-PROMOTE-01",
-      "released_at": "2026-09-04T03:33",
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T03:59",
+      "task": "Park brief promote + dong goi nhan Assistant v0.1",
+      "released_at": null,
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -53,5 +53,5 @@
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "03d94894aa880489"
+  "_fingerprint": "9ef9c789b3b156f8"
 }

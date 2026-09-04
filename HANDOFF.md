@@ -2363,3 +2363,46 @@ lịch sử để đọc, nên fixture đó `git init` thật. Thư mục trần
 `claims.json` luôn nằm trong một repo.
 
 Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 · `Y-01`.
+
+---
+
+## 2026-09-04 · Phiên `claude-k2-bootstrap` — vá nhánh BOOTSTRAP nuốt lỗi git
+
+GPT audit vòng 8. Lỗ hẹp, nhưng chỗ tệ nhất không nằm ở code — **nằm ở test của tôi**.
+
+**Lỗ:** `baselineDaNiemPhong` hỏi đúng một câu (`git rev-parse --verify HEAD` có chạy không) rồi
+coi mọi thất bại là "repo mới, cho qua". Thất bại đó có HAI nguyên nhân khác hẳn nhau:
+repo git hợp lệ mà chưa commit (bootstrap thật) — và **không phải repo git / `.git` hỏng / git
+không chạy được** (tức KHÔNG BIẾT lịch sử có gì, phải TỪ CHỐI). Gộp lại là fail-open.
+
+**Và fixture CA D của tôi đang ghim chính cái fail-open đó thành hành vi ĐÚNG.** Tệ hơn không có
+test, vì nó làm cái lỗ trông như đã kiểm chứng. Đọc lại thì còn buồn cười hơn: chú thích tôi
+viết ngay trên nó là *"cũng phải TỪ CHỐI, không được lùi về BOOTSTRAP"* — rồi dòng khẳng định
+ngay dưới lại đòi `BOOTSTRAP`. Tôi viết ngược với chính lời mình và không ai (kể cả tôi) đọc lại.
+
+**Vá:** hỏi tách làm hai — `git rev-parse --is-inside-work-tree` trước; không phải cây làm việc
+git thì `LOI` ngay; đúng rồi mới hỏi `HEAD`, và chỉ khi ĐÓ thất bại mới là `BOOTSTRAP`.
+CA D sửa lại thành `LOI`, kèm cả đường lệnh (bài học vòng trước: ghim hàm không thay được ghim
+đường đi).
+
+**Mutation 2/2, và cố ý đi cả hai chiều:** gộp lại như bản cũ → CA D đỏ; chặn oan repo git chưa
+có commit → ca A đỏ. Chốt phải chặn đúng thứ cần chặn VÀ không chặn thứ hợp lệ; chỉ ghim một
+chiều thì một bản "luôn từ chối" vẫn qua được.
+
+`claim-smoke` 12/12. **Nhưng cổng ĐỎ, và không phải vì việc này** — xem dưới.
+
+### Chặn: một regression ĐÃ COMMIT của lane khác, chặn cổng của MỌI lane
+
+`tests/build-overview-smoke.mjs` đỏ: bảng cho Đức chứa chuỗi giống mã commit. Tôi chạy lại trên
+bản HEAD sạch (đúng cơ chế K2-9d vừa xây) để chắc **không phải do tôi**: đỏ y hệt ở HEAD.
+
+Nguồn: `IDEAS.md` có `trial-b5309b27` và `trial-12ca3fe3` — mã phiên chạy thử, trông y hệt mã
+commit, và bộ sinh đưa thẳng vào bảng. Vào theo commit `5659b61` (lane `claude-dashboard`).
+
+Phép kiểm ĐÚNG chứ không phải quá tay: luật của bảng là Đức đọc bảng chứ không đọc repo, mà
+`trial-b5309b27` với Đức cũng là một chuỗi hex vô nghĩa y như SHA. Chỗ sửa là `IDEAS.md`
+(vùng `_root`) hoặc bộ lọc trong bộ sinh. **Tôi không tự sửa:** `_root` không phải của tôi, và
+GPT đã dặn vòng này không đụng gì khác. Đã báo Đức và nhắn lane liên quan.
+
+Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 ·
+`Y-01` · và regression `IDEAS.md` ở trên.
