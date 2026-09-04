@@ -166,3 +166,39 @@ hiển thị sai.
 > Đức chốt 04/09: mở vòng thiết kế đó **sau khi** bảng trạng thái ổn định. Số đo để dành:
 > khoá `_code` đổi chủ **ba lần trong dưới một tiếng** ngày 04/09, không lần nào bên bị lấy
 > được thông báo, và lúc bị lấy vẫn có **6 file đang sửa dở** của chủ cũ nằm trong thư mục.
+
+## Y-01 — cập nhật 2026-09-04: hai trong ba câu đã có câu trả lời ĐO ĐƯỢC
+
+> Phụ chú của vai điều phối. Y-01 ở trên vẫn ghi "chờ Đức trả lời ba câu" — **không còn đúng**.
+> Ghi nối ở cuối sổ vì `_root` đang có chủ; khi ai đó giữ `_root` thì gộp vào Y-01 rồi xoá khối này.
+
+**Câu ② — "Claude Code điều phối GPT nghĩa là gọi qua đâu" → ĐÃ TRẢ LỜI, có bằng chứng live.**
+Không cần kênh mới. Đường đi là `jobs.add` → `run.trial` → `chat.read`, và `jobs.add` tự dựng
+workbook trong bộ nhớ nên **không cần file XLSX nào**. Phiên `claude-gpt-kenh` đã chạy **hai
+vòng tự động khép kín** ngày 04/09: `trial-b5309b27` thành công **41 giây**, `trial-12ca3fe3`
+thành công **~49 giây**; cả hai đọc câu trả lời về máy bằng `chat.read`, 1.953 và 1.926 ký tự,
+`truncated: false`.
+
+**Câu ③ — "đo thế nào là MVP đạt" → phần lớn đã tự trả lời.** Hai vòng khép kín chính là mốc
+MVP mà câu hỏi định tìm. Cái còn thiếu không phải định nghĩa, mà là **một vòng chạy trên việc
+thật của Đức** thay vì việc thử.
+
+**Câu ① — "thử trên việc gì" → vẫn cần Đức, nhưng nay có ứng viên đo được.**
+Đề xuất: **chính vòng audit mà Đức đang làm tay.** Hôm nay Đức đã dán prompt cho GPT rồi dán
+kết quả về **ba lượt** trong một phiên. Đó là vòng lặp có thật, lặp lại được, và Đức đang đứng
+giữa nó — đúng thứ Y-01 sinh ra để bỏ đi.
+
+**Chặn thật, và chỉ Đức mở được — ba công tắc trên máy Đức:**
+mở session · chọn thư mục đích · bật chế độ phát triển. Đây không phải việc AI làm hộ được.
+
+**Hai giới hạn đã đo, để không ai hứa quá:**
+- `TRIAL_COOLDOWN_ACTIVE` **5 phút** giữa hai lượt trial — thật, phải chờ, không đi vòng.
+- Trần cứng **90 giây** mỗi lượt. Hai vòng vừa rồi 41s và 49s nên chưa chạm trần, và **câu hỏi
+  đổi luật an toàn vì thế tự tan** — đừng mở lại nó khi chưa có ca chạm trần thật.
+
+**Còn mở, không thuộc Y-01 nhưng cùng gói:** `B-36` (P1, chưa vá) — 36 file tên-GUID trong thư
+mục Tải về của Đức từ 09/07 tới 04/09, nội dung luôn đúng, chỉ cái tên bị Chrome đặt. Ba phép
+kiểm canh nó đều TĨNH nên không bắt được.
+
+**Bậc nên đổi:** từ `ý tưởng` sang `đang xây` — nhưng đổi trường của Y-01 cần `_root`, nên để
+chủ vùng làm cùng lúc với việc gộp khối này.
