@@ -35,11 +35,11 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T03:32",
       "task": "Viet brief ASSISTANT-PROMOTE-01",
-      "released_at": null,
+      "released_at": "2026-09-04T03:33",
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -53,5 +53,5 @@
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "2c0b12ab4e634af5"
+  "_fingerprint": "67450900aaa9c0b8"
 }
