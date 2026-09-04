@@ -368,6 +368,154 @@ export function readOpenWhen(deps) {
   }
   return out;
 }
+/* ===== TAB "AI ĐIỀU PHỐI" — ba khối, brief DASH-ORCH-01 (Đức chốt 04/09) ==================
+ *
+ * Ba nguồn, cả ba đọc từ HEAD như phần còn lại của trang. KHÔNG khối nào nhìn giờ đồng hồ.
+ *
+ * VÌ SAO BẢNG KHOÁ CHỈ NÓI BẬN/MỞ, KHÔNG NÓI AI GIỮ: Đức chốt vậy. Tên chủ đổi liên tục,
+ * làm bảng mục, và Đức không cần nó để cân đối việc — cái cần biết là còn bao nhiêu chỗ
+ * trống để giao việc song song. Giờ giữ và cờ "quá 6h" cũng KHÔNG chép sang đây: đó là
+ * trạng thái sống, `what-next.mjs` đã lo, chép sang là đẻ ra nguồn sự thật thứ hai. */
+
+/* Chỉ lấy đoạn cuối của khoá gói. Bất biến của trang cấm đường dẫn lọt ra ngoài khối bản đồ,
+   mà khoá gói thì có dạng `<thư-mục>/<tên-gói>`. Cắt phần thư mục đi là đủ để Đức nhận ra
+   khoá, mà không kéo một đường dẫn lên trang. */
+export function tenKhoa(key) {
+  const s = String(key ?? "");
+  const i = s.lastIndexOf("/");
+  return i === -1 ? s : s.slice(i + 1);
+}
+
+/* FAIL CLOSED, cùng lý lẽ với `readClaims` của bộ sinh kia: một bảng chủ sở hữu thiếu hoặc
+   hỏng mà bị nuốt lỗi sẽ thành "không khoá nào bận" — tức Đức nhìn thấy sáu chỗ trống trong
+   khi thật ra có người đang làm. Bảng nói dối êm ru tệ hơn bảng không sinh ra được. */
+export function readKhoa(deps) {
+  if (!deps.fileExists(".agents/claims.json")) {
+    throw new Error("CLAIMS_THIEU_FILE: không thấy bảng chủ sở hữu. Không dựng khối khoá từ một bảng không tồn tại.");
+  }
+  let parsed;
+  try { parsed = JSON.parse(deps.readFile(".agents/claims.json")); }
+  catch (error) {
+    throw new Error(`CLAIMS_HONG: bảng chủ sở hữu không phải JSON đọc được (${error.message}).`);
+  }
+  const claims = parsed?.claims;
+  if (!claims || typeof claims !== "object" || Array.isArray(claims)) {
+    throw new Error("CLAIMS_THIEU_KHOI: bảng chủ sở hữu không có khối `claims`.");
+  }
+  return Object.entries(claims).map(([key, value]) => ({
+    ten: tenKhoa(key),
+    ban: String(value?.owner ?? "").trim() !== ""
+  }));
+}
+
+const MOC_FILE = "docs/protocols/ASSISTANT-V0.1.md";
+const GACH_DAI = String.fromCharCode(8212);   // — dấu gạch dài, ngăn tên mốc với phần giải thích
+
+const boDam = (s) => String(s ?? "").replaceAll("**", "").trim();
+
+/* Ba mốc của gói Assistant. ĐỌC LẠI từ hồ sơ mốc, không chép — chép là bản thứ hai, và bản
+   thứ hai luôn lệch (đã trả giá đúng bằng chuyện đó ở câu làm mới bảng, 03/09).
+   Không đọc được thì NÉM: khối rỗng nghĩa là Đức nhìn một tab thiếu mất một phần ba mà không
+   ai nói vì sao — đúng loại xanh giả mà trang này sinh ra để chặn. */
+export function readMoc(deps) {
+  if (!deps.fileExists(MOC_FILE)) {
+    throw new Error("THIEU_MOC_ASSISTANT: không thấy hồ sơ mốc của gói Assistant. Khối mốc phải đọc được từ đó, không được gõ cứng ở đây.");
+  }
+  const text = deps.readFile(MOC_FILE);
+  const bat = /^##\s+2\..*$/m.exec(text);
+  if (!bat) {
+    throw new Error("THIEU_MOC_ASSISTANT: hồ sơ mốc không còn mục \"## 2.\" — khối mốc lấy bảng trong mục đó.");
+  }
+  // CHẶN Ở MỤC KẾ. Cắt tới cuối file thì khi mục 2 mất bảng, nó lặng lẽ nhặt bảng của MỘT
+  // MỤC KHÁC rồi trả về như thật — fail-open đội lốt fail-closed.
+  const sau = text.slice(bat.index + bat[0].length);
+  const het = /^##\s/m.exec(sau);
+  const doan = het ? sau.slice(0, het.index) : sau;
+
+  const rows = [];
+  for (const line of doan.split(/\r?\n/)) {
+    if (!line.startsWith(chr_pipe)) continue;
+    const cells = line.split(chr_pipe).slice(1, -1).map((c) => c.trim());
+    if (cells.length < 2) continue;
+    if (/^-+$/.test(cells[0].replace(/[: ]/g, ""))) continue;   // dòng gạch ngăn của bảng
+    rows.push(cells);
+  }
+  // Dòng đầu còn lại LUÔN là dòng tiêu đề của bảng markdown (tiêu đề → gạch ngăn → dữ liệu).
+  // Bỏ nó theo CẤU TRÚC, không theo chữ trong ô — chữ đổi thì phép lọc theo chữ chết lặng.
+  rows.shift();
+  if (!rows.length) {
+    throw new Error("THIEU_MOC_ASSISTANT: mục \"## 2.\" của hồ sơ mốc không còn dòng mốc nào.");
+  }
+  return rows.map((cells) => {
+    const ten = boDam(cells[0]).split(GACH_DAI)[0].trim();
+    // Bỏ ký tự trang trí đứng đầu ô trạng thái (dấu tick, đồng hồ cát, biển cấm) — giữ chữ.
+    const trangThai = boDam(cells[1]).replace(/^[^\p{L}\p{N}]+/u, "").trim();
+    return { ten, trangThai, bac: bacMoc(trangThai) };
+  });
+}
+
+/* Màu của mốc suy từ chữ ĐẦU của trạng thái. Chữ lạ thì về màu trung tính — không đoán,
+   vì đoán sai màu là một lời khẳng định sai mà Đức không có cách nào kiểm. */
+export function bacMoc(trangThai) {
+  const s = String(trangThai ?? "").toLowerCase();
+  if (s.startsWith("xong")) return 2;
+  if (s.startsWith("đang")) return 1;
+  if (s.startsWith("khoá") || s.startsWith("khóa")) return 3;
+  return 0;
+}
+
+const DEFECT_H1 = new RegExp("^#\\s+BRIEF\\s+`([^`]+)`\\s*" + GACH_DAI + "\\s*(.+)$", "m");
+
+/* Defect của chính gói Assistant: mã · một câu triệu chứng · mở hay đóng.
+ *
+ * Máy đọc được ở HAI chỗ, và cả hai đều là trường có sẵn — không thêm trường mới:
+ *   • mã + triệu chứng: dòng tiêu đề dạng "# BRIEF `MÃ` — triệu chứng". Brief phiên (S1…S7)
+ *     không có mã trong nháy ngược nên tự rơi ra ngoài, không phải kê tay danh sách nào.
+ *   • mở/đóng: trường `status:` ở frontmatter. `active` = còn mở; mọi giá trị khác (kể cả
+ *     `parked`) = không còn là việc đang mở. Dò văn xuôi thì brief đã cấm, và đúng: cùng một
+ *     brief có thể viết chữ "đóng" trong một câu kể mà `status:` vẫn là `active`. */
+export function readDefects(deps) {
+  let names;
+  try { names = deps.listFiles("docs/briefs"); } catch { return []; }
+  const out = [];
+  for (const name of names) {
+    if (!name.startsWith("BRIEF-") || !name.endsWith(".md")) continue;
+    let text;
+    try { text = deps.readFile(`docs/briefs/${name}`); } catch { continue; }
+    const h1 = DEFECT_H1.exec(text);
+    if (!h1) continue;
+    const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+    const st = fm ? /^status:\s*(.+)$/m.exec(fm[1]) : null;
+    out.push({
+      ma: h1[1].trim(),
+      trieuChung: shorten(h1[2].replace(/\*\*/g, "").trim(), 108),
+      mo: String(st ? st[1] : "").trim() === "active"
+    });
+  }
+  return out.sort((a, b) => a.ma.localeCompare(b.ma));
+}
+
+/* DẤU DÒNG KHOÁ — đây là cách khối 1 không làm tê cả repo.
+ *
+ * `DASHBOARD.html` nằm trong khối `generators`, nên cổng đóng phiên và `safe-push` so nó với
+ * HEAD mỗi lượt. Bảng khoá là trạng thái sống: ĐO trên lịch sử thật, 146 trong 174 commit
+ * chạm bảng chủ sở hữu làm ĐỔI vector bận/mở (69 lượt riêng ngày 02/09, 20 lượt ngày 04/09).
+ * Bỏ tên chủ đi giảm được ít hơn nhiều so với hy vọng — nhận rồi trả là hai lượt lật.
+ * Nên đi đường (b) của brief: lọc đúng những dòng đó khỏi phép so độ tươi, y hệt cách
+ * `STAMP_PREFIX` được lọc trong bộ sinh kia. Đổi lại, trang PHẢI nói rõ khối đó là ảnh chụp
+ * lúc sinh — và nó có nói. */
+export const KHOA_PREFIX = "<!--khoa-->";
+
+export function compareOverview(expected, actual) {
+  const loc = (text) => String(text).replace(/\r\n?/g, "\n").split("\n")
+    .filter((line) => !line.startsWith(KHOA_PREFIX));
+  const a = loc(expected);
+  const b = loc(actual);
+  if (a.length !== b.length) return { matches: false };
+  for (let i = 0; i < a.length; i += 1) if (a[i] !== b[i]) return { matches: false };
+  return { matches: true };
+}
+
 const esc = (s) => String(s ?? "")
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -562,10 +710,25 @@ pre.cmd{background:var(--inset);border:1px solid var(--line-2);border-radius:8px
 .hint{background:var(--good-bg);border-left:3px solid var(--good);border-radius:8px;
   padding:11px 14px;font-size:13.2px;color:var(--ink-2);line-height:1.5}
 footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
+
+/* Tab AI điều phối — một dòng, một trạng thái. Không cột thứ ba: mọi thứ định thêm vào đây
+   đều là trạng thái sống, và trang này không phải chỗ chứa trạng thái sống. */
+.kr{display:grid;grid-template-columns:1fr auto;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--line);align-items:baseline}
+.kr:last-child{border-bottom:none}
+.kr .n{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink)}
+.kr .n em{font-family:var(--sans);font-size:12.5px;font-style:normal;color:var(--muted);font-weight:400}
+.badge{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.07em;
+  padding:2px 8px;border-radius:3px;white-space:nowrap}
+.badge.b0{background:var(--inset);color:var(--muted)}
+.badge.b1{background:var(--warn-bg);color:var(--warn)}
+.badge.b2{background:var(--good-bg);color:var(--good)}
+.badge.b3{background:var(--off-bg);color:var(--off)}
 </style>`;
 
 const TABS = [
   ["tong-quan", "Tổng quan"],
+  ["ai-dieu-phoi", "AI điều phối"],
   ["extension", "Extension"],
   ["y-tuong", "Ý tưởng"],
   ["van-hanh", "Vận hành"],
@@ -635,6 +798,9 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const areas = readAreas(deps);
   const rootFiles = readRootFiles(deps);
   const openWhen = readOpenWhen(deps);
+  const khoa = readKhoa(deps);
+  const moc = readMoc(deps);
+  const defects = readDefects(deps);
   const CAU_LAM_MOI = readRefreshLine(deps);
 
   const supersededCount = model.rows.filter((r) => r.lifecycle === "superseded").length;
@@ -777,6 +943,48 @@ ${STYLE}
       <div class="hint">Bảng không tự làm mới. Nó in ngày sinh ở đầu trang và <strong>tự bật dải đỏ khi Đức mở nó vào một ngày khác ngày sinh</strong>. Thấy dải đỏ thì dán câu dưới đây cho tôi.</div>
       <pre class="cmd">${esc(CAU_LAM_MOI)}</pre>
       <p class="note">Cách nó chạy, và lệnh chạy tay, nằm ở tab <strong>Vận hành</strong>.</p>
+    </div>
+  </div>`);
+
+  /* ===== TAB · AI ĐIỀU PHỐI — ba khối, không hơn (brief DASH-ORCH-01) ===== */
+  p.push(`
+  <div role="tabpanel" data-pane="ai-dieu-phoi" hidden>
+    <div class="card">
+      <div class="sect">Khoá làm việc — ${khoa.length} khoá</div>
+      <div class="kl">`);
+  for (const k of khoa) {
+    p.push(`${KHOA_PREFIX}        <div class="kr"><span class="n">${esc(k.ten)}</span>` +
+      `<span class="badge ${k.ban ? "b1" : "b2"}">${k.ban ? "BẬN" : "MỞ"}</span></div>`);
+  }
+  p.push(`      </div>
+      <div class="hint" style="margin-top:11px">Đây là <strong>ảnh chụp lúc sinh bảng</strong>, không phải trạng thái thời gian thực — nó theo lần ghi gần nhất vào repo. Khoá <strong>MỞ</strong> là chỗ giao được việc mới ngay; khoá <strong>BẬN</strong> thì chỉ đọc, đừng giao thêm.</div>
+      <p class="note">Bảng cố ý <strong>không nói ai đang giữ</strong>, cũng không nói giữ bao lâu. Đức cần biết còn mấy chỗ trống để giao việc song song, chứ không cần tên phiên — tên phiên đổi liên tục và làm bảng mục ngay. Muốn biết ai giữ thì hỏi tôi, tôi tra bảng chủ sở hữu. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Gói Assistant đang ở mốc nào</div>
+      <div class="kl">`);
+  for (const m of moc) {
+    p.push(`        <div class="kr"><span class="n">${esc(m.ten)}</span>` +
+      `<span class="badge b${m.bac}">${esc(m.trangThai)}</span></div>`);
+  }
+  p.push(`      </div>
+      <p class="note">Ba mốc đọc lại từ hồ sơ mốc của gói, không gõ tay ở đây — nên bảng không thể nói khác hồ sơ.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Sai lệch đã ghi nhận của chính tôi — ${defects.length} mục</div>
+      <div class="kl">`);
+  if (defects.length) {
+    for (const d of defects) {
+      p.push(`        <div class="kr"><span class="n">${esc(d.ma)} <em>${esc(d.trieuChung)}</em></span>` +
+        `<span class="badge ${d.mo ? "b1" : "b0"}">${d.mo ? "MỞ" : "ĐÓNG"}</span></div>`);
+    }
+  } else {
+    p.push(`        <div class="kr"><span class="n">Chưa ghi nhận sai lệch nào</span><span class="badge b2">SẠCH</span></div>`);
+  }
+  p.push(`      </div>
+      <p class="note">Đây là lỗi của <strong>chính cách tôi làm việc</strong>, không phải lỗi của extension nào. Trạng thái lấy từ trường máy đọc được trong từng đề bài, không dò văn xuôi. <strong>ĐÓNG</strong> gồm cả đề bài đã hoãn.</p>
     </div>
   </div>`);
 
@@ -1087,7 +1295,7 @@ function main() {
       process.exit(1);
     }
     const { html } = sinhTrang(deps);
-    if (html !== dangCo) {
+    if (!compareOverview(html, dangCo).matches) {
       console.error(`TRANG_CU: ${TRANG_FILE} đã commit không khớp với HEAD. Sinh lại rồi commit:`);
       console.error(`  node scripts/build-overview.mjs`);
       process.exit(1);
@@ -1100,6 +1308,12 @@ function main() {
   // muốn xem thử mà không chạm file trong repo.
   const out = args.find((a) => !a.startsWith("--")) || path.join(ROOT, TRANG_FILE);
   const { html, stats } = sinhTrang(createDefaultDeps(ROOT));
+  // GHI VÔ ĐIỀU KIỆN, và đây là chỗ khác với bộ sinh kia — có lý do, không phải bỏ sót.
+  // Bộ sinh kia bỏ qua lượt ghi khi chỉ có DẤU SINH TRANG đổi, vì dấu đó là tạp âm.
+  // Dòng khoá thì ngược lại: nó là NỘI DUNG Đức đọc. Bỏ qua lượt ghi ở đây nghĩa là bảng
+  // cứ hiện bận/mở của hôm kia cho tới khi tình cờ có thứ khác đổi — khối 1 thành một lời
+  // nói dối êm ru. Nên phép LỌC chỉ đặt ở phía SO (để cổng không chặn oan ai), không đặt ở
+  // phía GHI.
   fs.writeFileSync(out, html, "utf8");
   console.log(`Đã sinh ${out}`);
   console.log(`  ý tưởng: ${stats.ideas} · extension: ${stats.extensions} · nợ kỹ thuật: ${stats.debt} · quyết định: ${stats.decisions} · đã thay thế: ${stats.superseded}`);

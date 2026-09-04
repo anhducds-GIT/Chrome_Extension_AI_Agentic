@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { buildOverview, debtByUnit, humanWork, IDEA_STAGES, isDone, readBrief, readDecisions, readFeatures, readAreas, readIdeas, readRefreshLine, shorten, sinhTrang, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { bacMoc, buildOverview, compareOverview, debtByUnit, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readMoc, readRefreshLine, shorten, sinhTrang, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -531,4 +531,220 @@ const ideasDeps = (text) => ({
   assert.equal(TRANG_FILE, "DASHBOARD.html", "ten ban chuan cua repo");
   ok("ban commit TAT DINH: doi dong ho 99 ngay khong doi mot byte, bao cu do JS tinh luc mo");
 }
+/* ================= TAB "AI ĐIỀU PHỐI" — brief DASH-ORCH-01 =================
+ *
+ * Bốn thứ phải ghim, và mỗi thứ đều dựng được ca hỏng THẬT (sửa cho sai → đỏ):
+ *   · ba khối có mặt;
+ *   · bảng khoá ĐỌC từ bảng chủ sở hữu, không đóng cứng;
+ *   · KHÔNG rò tên chủ ra trang — đây là thứ Đức bỏ đi có chủ đích;
+ *   · số khoá đổi thì bảng đổi theo.
+ *
+ * Ba khối đọc bằng `fileExists` / `readFile` / `listFiles`, nên thay được nguồn bằng một lớp
+ * bọc mỏng quanh deps thật. Bọc chứ không dựng deps giả hoàn toàn: `buildOverview` còn đọc
+ * hàng chục file khác, và một fixture giả cho tất cả sẽ không bao giờ dựng lại được ca thật. */
+const bocFile = (deps, thay) => ({
+  ...deps,
+  fileExists: (p) => (p in thay ? thay[p] !== null : deps.fileExists(p)),
+  readFile: (p) => {
+    if (p in thay) {
+      if (thay[p] === null) throw new Error(`KHONG_CO: ${p}`);
+      return thay[p];
+    }
+    return deps.readFile(p);
+  }
+});
+
+const claimsJson = (obj) => JSON.stringify({ claims: obj });
+
+/* ---- T1. Bảng khoá đọc từ bảng chủ sở hữu, và chỉ nói bận/mở ---- */
+{
+  const deps = (obj) => bocFile(createDefaultDeps(ROOT), { ".agents/claims.json": claimsJson(obj) });
+
+  assert.deepEqual(
+    readKhoa(deps({ "_root": { owner: null }, "workers/goi-mot": { owner: "phien-x" } })),
+    [{ ten: "_root", ban: false }, { ten: "goi-mot", ban: true }],
+    "doc dung tap khoa, va owner co gia tri = BAN");
+
+  // Chuỗi rỗng KHÔNG phải là "có chủ". `claim.mjs` đặt owner về null khi trả quyền, nhưng một
+  // bản ghi cũ có thể còn "" — coi "" là bận thì Đức thấy một khoá bận vĩnh viễn không ai gỡ.
+  assert.deepEqual(readKhoa(deps({ "_a": { owner: "" }, "_b": { owner: "   " } })),
+    [{ ten: "_a", ban: false }, { ten: "_b", ban: false }],
+    "owner rong hoac toan dau cach = MO, khong phai BAN");
+
+  // FAIL CLOSED — bảng chủ sở hữu thiếu / hỏng / thiếu khối thì NÉM. Nuốt lỗi ở đây nghĩa là
+  // Đức nhìn thấy sáu chỗ trống trong khi thật ra có người đang làm.
+  assert.throws(() => readKhoa(bocFile(createDefaultDeps(ROOT), { ".agents/claims.json": null })),
+    /CLAIMS_THIEU_FILE/, "thieu bang chu so huu thi nem");
+  assert.throws(() => readKhoa(bocFile(createDefaultDeps(ROOT), { ".agents/claims.json": "{" })),
+    /CLAIMS_HONG/, "bang chu so huu hong thi nem");
+  assert.throws(() => readKhoa(bocFile(createDefaultDeps(ROOT), { ".agents/claims.json": "{\"claims\":[]}" })),
+    /CLAIMS_THIEU_KHOI/, "mang cung cho typeof object — phai bi tu choi");
+
+  assert.equal(tenKhoa("workers/duc-auto-gemini"), "duc-auto-gemini", "khoa goi bo phan thu muc");
+  assert.equal(tenKhoa("_root"), "_root", "khoa goc giu nguyen");
+  ok("khoi 1: bang khoa doc tu bang chu so huu, chi bien BAN/MO, va fail closed 3 dang");
+}
+
+/* ---- T2. Ba khối có mặt · KHÔNG rò tên chủ · số khoá đổi thì bảng đổi ---- */
+{
+  const CHU = "phien-bi-mat-khong-duoc-lo";
+  const sinh = (obj) => buildOverview(bocFile(createDefaultDeps(ROOT), {
+    ".agents/claims.json": claimsJson(obj)
+  })).html;
+
+  const sau = { "_root": { owner: CHU }, "_docs": { owner: null }, "_code": { owner: null },
+    "workers/goi-mot": { owner: CHU }, "workers/goi-hai": { owner: null },
+    "workers/goi-ba": { owner: null } };
+  const html = sinh(sau);
+
+  // Cắt ĐÚNG khung của tab rồi mới khẳng định. Khẳng định trên cả trang thì một chữ trùng ở
+  // tab khác cũng cho xanh giả — repo này đã bị cắn đúng kiểu đó.
+  const iTab = html.indexOf('data-pane="ai-dieu-phoi"');
+  assert.notEqual(iTab, -1, "phai co khung tab AI dieu phoi");
+  const jTab = html.indexOf('data-pane="extension"', iTab);
+  assert.notEqual(jTab, -1, "khung tab phai dong lai duoc, neu khong thi cat sai");
+  const tab = html.slice(iTab, jTab);
+
+  assert.ok(html.includes('data-tab="ai-dieu-phoi"'), "phai co nut tab tren thanh tab");
+
+  // Ba khối, không hơn không kém. Khối thứ tư là thứ brief cấm.
+  assert.equal([...tab.matchAll(/<div class="card">/g)].length, 3,
+    "tab phai co DUNG ba khoi — them khoi thu tu la trai brief, bot la thieu");
+
+  // KHỐI 1 — cắt RIÊNG khung khối một rồi mới đếm. Đếm trên cả tab thì huy hiệu MỞ của khối
+  // defect cũng bị đếm vào: đúng cái bẫy "regex chạy ra ngoài phạm vi" đã cắn repo này nhiều
+  // lần, và nó cắn thật ở lượt chạy đầu — hai khoá mà đếm ra sáu.
+  const khoiKhoa = (trang) => {
+    const i = trang.indexOf('data-pane="ai-dieu-phoi"');
+    const t = trang.slice(i, trang.indexOf('data-pane="extension"', i));
+    const a = t.indexOf('<div class="card">');
+    return t.slice(a, t.indexOf('<div class="card">', a + 1));
+  };
+  const k1 = khoiKhoa(html);
+
+  // Một dòng cho mỗi khoá, đúng bận/mở, và tuyệt đối không có tên chủ.
+  const dongKhoa = [...k1.matchAll(/<div class="kr"><span class="n">([^<]+)<\/span><span class="badge b\d">(BẬN|MỞ)<\/span><\/div>/g)]
+    .map((m) => [m[1], m[2]]);
+  assert.deepEqual(dongKhoa, [["_root", "BẬN"], ["_docs", "MỞ"], ["_code", "MỞ"],
+    ["goi-mot", "BẬN"], ["goi-hai", "MỞ"], ["goi-ba", "MỞ"]],
+  "moi khoa mot dong, dung thu tu bang chu so huu, dung bien");
+  assert.ok(!tab.includes(CHU), "TUYET DOI khong duoc lo ten phien dang giu khoa");
+  assert.ok(!html.includes(CHU), "va khong lo o bat ky tab nao khac");
+
+  // Số khoá đổi thì bảng đổi theo — bằng chứng nó không đóng cứng sáu dòng.
+  const k1It = khoiKhoa(sinh({ "_root": { owner: null }, "_docs": { owner: "ai-do" } }));
+  assert.equal([...k1It.matchAll(/class="badge b\d">(?:BẬN|MỞ)</g)].length, 2,
+    "hai khoa thi ve hai dong — bang khoa khong duoc dong cung");
+  assert.ok(k1It.includes("2 khoá"), "so dem tren tieu de khoi phai di theo tap khoa");
+  assert.ok(k1.includes("6 khoá"), "va bang sau khoa thi noi sau");
+
+  // Trang PHẢI nói rõ đây là ảnh chụp lúc sinh — điều kiện Đức đặt cho đường (b).
+  assert.ok(/ảnh chụp lúc sinh/.test(tab),
+    "chon duong loc thi PHAI noi ro khoi nay la anh chup luc sinh, khong phai thoi gian thuc");
+
+  // KHỐI 2 — ba mốc, đọc từ hồ sơ mốc.
+  for (const ten of ["V0.1 PACKAGE", "EXTENSION PILOT", "PORTABLE FREEZE"]) {
+    assert.ok(tab.includes(ten), `khoi moc phai co moc ${ten}`);
+  }
+  // KHỐI 3 — defect có mã và có biến mở/đóng.
+  assert.ok(/ROLE-DRIFT-01/.test(tab), "khoi defect phai co ma defect that");
+  assert.ok(/>ĐÓNG</.test(tab) && /class="badge b1">MỞ</.test(tab),
+    "khoi defect phai the hien duoc ca hai bien mo va dong");
+  ok("tab AI dieu phoi: ba khoi, khoa doc tu bang chu so huu, KHONG lo ten chu, so khoa doi thi bang doi");
+}
+
+/* ---- T3. Khối mốc: đọc lại từ hồ sơ, và fail closed ---- */
+{
+  const mocDeps = (text) => bocFile(createDefaultDeps(ROOT), { "docs/protocols/ASSISTANT-V0.1.md": text });
+  const G = String.fromCharCode(8212);
+  const bang = [
+    "---", "kind: protocol", "---", "# tiêu đề",
+    "## 1. Mục khác", "| Không phải mốc | x |",
+    "## 2. Mốc",
+    "| Mốc | Trạng thái |", "|---|---|",
+    `| **MỐC MỘT** ${G} giải thích dài | ✅ **xong** 2026-01-02 |`,
+    "| **MỐC HAI** | ⏳ **đang chạy** |",
+    "| **MỐC BA** | ⛔ **khoá**, chờ cái kia |",
+    "## 3. Mục sau", "| Bảng của mục khác | y |"
+  ].join(String.fromCharCode(10));
+
+  assert.deepEqual(readMoc(mocDeps(bang)), [
+    { ten: "MỐC MỘT", trangThai: "xong 2026-01-02", bac: 2 },
+    { ten: "MỐC HAI", trangThai: "đang chạy", bac: 1 },
+    { ten: "MỐC BA", trangThai: "khoá, chờ cái kia", bac: 3 }
+  ], "doc dung ba moc: bo dam, bo ky tu trang tri, cat phan giai thich sau gach dai");
+
+  // Không được liếm sang bảng của mục khác — đúng cái bẫy đã cắn `readRefreshLine` 04/09.
+  assert.equal(readMoc(mocDeps(bang)).length, 3, "chan o muc ke, khong nhat bang cua muc 1 hay muc 3");
+
+  assert.throws(() => readMoc(bocFile(createDefaultDeps(ROOT), { "docs/protocols/ASSISTANT-V0.1.md": null })),
+    /THIEU_MOC_ASSISTANT/, "mat ho so moc thi NEM, khong ve khoi rong");
+  assert.throws(() => readMoc(mocDeps("# chỉ có tiêu đề")), /THIEU_MOC_ASSISTANT/,
+    "mat muc 2 thi NEM");
+  assert.throws(() => readMoc(mocDeps("## 2. Mốc\n| Mốc | Trạng thái |\n|---|---|\n")),
+    /THIEU_MOC_ASSISTANT/, "muc 2 con bang nhung KHONG con dong moc nao thi NEM");
+
+  assert.equal(bacMoc("chưa biết"), 0, "chu la thi ve mau trung tinh, khong doan");
+  ok("khoi 2: ba moc doc lai tu ho so, chan o muc ke, va fail closed 3 dang");
+}
+
+/* ---- T4. Khối defect: đọc trường máy đọc được, không dò văn xuôi ---- */
+{
+  const G = String.fromCharCode(8212);
+  const briefs = {
+    "BRIEF-AAA-01.md": `---\nkind: brief\nstatus: active\n---\n\n# BRIEF \`AAA-01\` ${G} triệu chứng một`,
+    "BRIEF-BBB-02.md": `---\nkind: brief\nstatus: parked\n---\n\n# BRIEF \`BBB-02\` ${G} triệu chứng hai`,
+    // Brief phiên: không có mã trong nháy ngược → tự rơi ra ngoài, không phải kê tay danh sách.
+    "BRIEF-S9.md": `---\nkind: brief\nstatus: active\n---\n\n# BRIEF ${G} Phiên S9`,
+    // Chữ "đã đóng" nằm trong văn xuôi mà `status:` vẫn `active` — đây chính là ca brief cấm
+    // dò văn xuôi. Phải ra MỞ.
+    "BRIEF-CCC-03.md": `---\nkind: brief\nstatus: active\n---\n\n# BRIEF \`CCC-03\` ${G} triệu chứng ba\n\nViệc này đã đóng rồi.`
+  };
+  const deps = {
+    ...createDefaultDeps(ROOT),
+    listFiles: (p) => (p === "docs/briefs" ? Object.keys(briefs) : []),
+    readFile: (p) => {
+      const ten = p.startsWith("docs/briefs/") ? p.slice("docs/briefs/".length) : null;
+      return ten && ten in briefs ? briefs[ten] : createDefaultDeps(ROOT).readFile(p);
+    }
+  };
+  assert.deepEqual(readDefects(deps), [
+    { ma: "AAA-01", trieuChung: "triệu chứng một", mo: true },
+    { ma: "BBB-02", trieuChung: "triệu chứng hai", mo: false },
+    { ma: "CCC-03", trieuChung: "triệu chứng ba", mo: true }
+  ], "lay ma + trieu chung tu tieu de, mo/dong tu frontmatter, brief phien tu roi ra ngoai");
+
+  assert.deepEqual(readDefects({ ...deps, listFiles: () => { throw new Error("x"); } }), [],
+    "khong co thu muc brief thi tra rong, khong nem — day la khoi mo rong duoc");
+  ok("khoi 3: mo/dong lay tu truong may doc duoc, van xuoi noi nguoc lai KHONG lam doi ket qua");
+}
+
+/* ---- T5. Phép so độ tươi lọc đúng dòng khoá, và KHÔNG lọc gì khác ---- */
+{
+  const A = ["<html>", `${KHOA_PREFIX}  <div>_root MỞ</div>`, "<p>nội dung</p>"].join(String.fromCharCode(10));
+  const B = ["<html>", `${KHOA_PREFIX}  <div>_root BẬN</div>`, "<p>nội dung</p>"].join(String.fromCharCode(10));
+  const C = ["<html>", `${KHOA_PREFIX}  <div>_root MỞ</div>`, "<p>nội dung KHÁC</p>"].join(String.fromCharCode(10));
+
+  assert.ok(compareOverview(A, B).matches, "chi dong khoa doi thi KHONG duoc coi la lech HEAD");
+  assert.ok(!compareOverview(A, C).matches, "dong khac doi thi PHAI coi la lech — neu khong, cong mat rang");
+  assert.ok(!compareOverview(A, A + String.fromCharCode(10) + "<p>thêm</p>").matches,
+    "them dong thi phai lech");
+
+  // Và bằng chứng phép lọc ăn khớp với cái bộ sinh THẬT in ra: mọi dòng khoá của trang thật
+  // đều mang dấu. Không có khẳng định này thì phép lọc có thể đúng mà dấu in sai chỗ.
+  const html = buildOverview(createDefaultDeps(ROOT)).html;
+  const dong = html.split(String.fromCharCode(10));
+  const coDau = dong.filter((l) => l.startsWith(KHOA_PREFIX));
+  // Nhận dòng khoá theo ĐÚNG hình dạng của nó: ô tên chỉ có chữ, không thẻ con. Dòng defect
+  // cũng in chữ "MỞ" nhưng ô tên của nó bọc thêm một thẻ, nên rơi ra ngoài — và phải rơi ra:
+  // trạng thái defect là NỘI DUNG, lọc nó khỏi phép so là làm cổng mất răng.
+  // (Lượt chạy đầu bắt được đúng chỗ này: regex rộng quét luôn cả 4 dòng defect.)
+  const dongKhoaThat = dong.filter((l) => /<span class="n">[^<]+<\/span><span class="badge b\d">(?:BẬN|MỞ)</.test(l));
+  assert.ok(coDau.length > 0, "trang that phai co dong khoa mang dau");
+  assert.deepEqual(coDau, dongKhoaThat, "MOI dong khoa deu phai mang dau — sot mot dong la cong do oan");
+  assert.ok(dong.some((l) => !l.startsWith(KHOA_PREFIX) && /<em>[^<]*<\/em><\/span><span class="badge b\d">MỞ</.test(l)),
+    "dong defect MO tuyet doi KHONG duoc mang dau — trang thai defect la noi dung, phai lam cong do");
+  ok("do tuoi: dong khoa duoc loc, moi thu khac van chan, va dau in dung cho tren trang that");
+}
+
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
