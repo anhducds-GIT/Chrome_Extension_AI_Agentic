@@ -34,14 +34,19 @@
 
 ## 0. Mở một phiên ĐIỀU PHỐI
 
-**Dùng khi nào:** Đức muốn một AI cầm toàn cảnh — biết đang có gì, việc nào nên làm tiếp,
-việc nào chạy song song được. Đây là phiên Đức nói chuyện với, không phải phiên đi code.
+**Dùng khi nào:** Đức muốn một AI cầm toàn cảnh để **Đức hỏi gì nó trả lời được ngay** — đang
+có gì, một việc tới đâu, đang block gì, ai giữ vùng nào. Đây là phiên Đức nói chuyện với,
+không phải phiên đi code. **Đức mở topic, nó không tự mở.**
 
 ```text
 Bạn là phiên điều phối repo này. Đọc AGENTS.md ở gốc, rồi docs/protocols/ORCHESTRATOR.md,
-rồi chạy bản đồ việc. Nói lại cho tôi bốn điều, mỗi điều một câu ngắn: đang có gì · nên
-làm gì tiếp và vì sao là việc đó · việc nào chạy song song được ngay · tôi đang cần quyết gì.
-Đừng đưa tôi danh sách mười việc.
+rồi chạy bản đồ việc và cổng nhất quán trạng thái để tự kiểm. Xong thì nói lại cho tôi
+đúng một câu: trạng thái có khớp không, lệch ở đâu nếu có. Rồi CHỜ TÔI HỎI.
+
+Tôi là người mở topic, bạn không tự mở. Đừng tự đề xuất "việc kế", đừng kết lượt bằng
+câu hỏi tôi "làm gì tiếp?", đừng kéo tôi sang việc tôi chưa hỏi. Tôi hỏi gì thì trả lời
+đúng cái đó. Không chắc thì trả lời UNKNOWN, đừng đoán.
+Sự thật trong repo đổi thì bạn sửa nguồn rồi sinh lại bảng — đừng ghi câu trả lời vào bảng.
 
 Suốt phiên này bạn KHÔNG code, KHÔNG debug, KHÔNG đề xuất bản vá kỹ thuật — kể cả khi
 tôi bảo làm; lúc đó hãy nói ra rằng việc này thuộc executor, viết brief rồi giao đi.
@@ -50,11 +55,20 @@ DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK.
 BLOCKER ghi triệu chứng thôi, đừng chẩn đoán nguyên nhân.
 ```
 
-**AI sẽ chạy:** `node scripts/what-next.mjs` · `node scripts/claim.mjs --list`
-**Xong khi nào:** AI trả lời được cả bốn câu, và câu "làm gì tiếp" chỉ có **một** việc.
+**AI sẽ chạy:** `node scripts/what-next.mjs` · `node scripts/claim.mjs --list` ·
+`node scripts/state-check.mjs`
+**Xong khi nào:** AI báo trạng thái khớp (hoặc nói đúng chỗ lệch) rồi **dừng, chờ Đức hỏi** —
+không tự đưa ra việc kế.
 
 > Bản đồ việc **chỉ đọc**, không đòi khoá nào — nên câu này chạy được kể cả lúc mọi vùng
 > đang có chủ, và không chặn phiên nào đang làm.
+
+> **Vì sao câu dán không còn bắt AI tự báo "việc kế":** Đức chốt 04/09. Câu cũ bắt AI nói bốn
+> điều, trong đó có *"nên làm gì tiếp và vì sao là việc đó"* — nên mỗi lượt nó tự mở một topic
+> và kéo Đức sang việc Đức chưa hỏi. Đó là lấy attention của đúng người mà vai này tồn tại để
+> giữ rảnh. Đức vẫn hỏi được "làm gì tiếp?" bất cứ lúc nào, và sẽ nhận **một** việc kèm lý do
+> — nhưng đó là câu Đức mở, không phải việc AI tự làm. Luật đầy đủ: mục 0b của
+> `docs/protocols/ORCHESTRATOR.md`.
 
 > **Vì sao câu dán phải nói cả luật năm mục:** ngày 04/09 phiên điều phối trượt sang debug
 > extension đúng lúc Đức dán một báo cáo kỹ thuật vào. Câu dán cũ chỉ nói "không phải phiên
