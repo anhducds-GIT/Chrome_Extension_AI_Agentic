@@ -953,8 +953,13 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     "go dau cham cuoi cau KHONG phai la cat — them '…' o day la bang noi con nua trong khi khong con gi");
   assert.equal(gateNext("Câu đầu tiên nói đủ nghĩa rồi. Câu sau không cần lên bảng."),
     "Câu đầu tiên nói đủ nghĩa rồi…", "cat o dau cham, va co cat thi phai co dau ba cham");
-  assert.equal(gateNext(`Một nhãn khá dài đứng trước ${G} phần giải thích dài phía sau`),
-    "Một nhãn khá dài đứng trước…", "cat o dau gach dai khi no toi truoc");
+  /* Nhãn ở fixture này dài hơn ngưỡng `GATE_MIN` một cách CÓ Ý — ngắn hơn ngưỡng thì luật
+     ngoại lệ ngay dưới sẽ nhận việc, và khẳng định này không còn đo cái nó định đo.
+     Bắt được ở lượt chạy đầu: nhãn 27 ký tự, ngưỡng 28, và phép kiểm đỏ vì FIXTURE sai. */
+  const NHAN = "Một nhãn khá là dài đứng trước";
+  assert.ok(NHAN.length > GATE_MIN, "fixture phai dai hon nguong, neu khong thi no do luat khac");
+  assert.equal(gateNext(`${NHAN} ${G} phần giải thích dài phía sau`), `${NHAN}…`,
+    "cat o dau gach dai khi no toi truoc");
 
   /* NGOẠI LỆ đã khai trong bộ sinh: cắt ở gạch dài mà ra một mẩu quá ngắn để thành câu thì
      cắt lại ở dấu chấm. Đo trên hồ sơ thật: đơn vị hạng 1 khai "F-25 bước ③ — CẦN ĐỨC
