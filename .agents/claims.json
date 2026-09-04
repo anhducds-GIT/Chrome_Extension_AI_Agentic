@@ -35,11 +35,11 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T04:10",
       "task": "Viet brief tab AI dieu phoi cho bang",
-      "released_at": null,
+      "released_at": "2026-09-04T04:12",
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -53,5 +53,5 @@
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "4add763cf6612248"
+  "_fingerprint": "5d6c7a7adf84e569"
 }
