@@ -2612,3 +2612,88 @@ không phải sau khi xong việc** — đúng như luật "trả khoá là lư�
 `f92c4eb` `6e851d1` `9ebb65c` `99513f2`) đã có trên `origin/main`: phiên `claude-exec-qdsync`
 push và mang theo, đúng cơ chế một-nhánh-nhiều-phiên. Cổng đóng phiên XANH TOÀN BỘ trước lúc đó.
 Nay không còn commit nào của phiên này chưa push, nên `_code` đã **trả**, lần này đúng lúc.
+
+---
+
+## Lượt · `DASH-ROADMAP-01` — ý tưởng hiện dạng roadmap có bước, và ba chỗ tài liệu nói ngược luật `0b`
+
+**Phiên:** `claude-exec-roadmap` · 2026-09-04 · khoá `_docs` + `_code`
+
+**Đức yêu cầu:** *"ở trang đầu, tôi cần hiển thị các idea ở dạng roadmap, hiển thị rõ các bước,
+và đang ở bước nào → sẽ dễ hiểu hơn hiện tại."* Hình Đức chọn: **mỗi ý tưởng một thanh bước
+riêng**, một hàng một ý tưởng.
+
+**Đã dựng:** khối *"Ý tưởng đang ở bước nào"* trong tab **Tổng quan**. Mỗi ý tưởng một hàng: tên
+(bấm được, nhảy sang tab Ý tưởng) → thanh **ba bước** → nhãn bậc bằng chữ. Bước đang ở được tô
+đậm và có vòng sáng, bước đã qua tô đầy, bước chưa tới để rỗng. Hàng tiêu đề gọi tên ba bước.
+
+**BA bước, cố ý không phải bốn.** `IDEAS.md` quy định bốn bậc, nhưng bậc thứ tư — `nghỉ` — **không
+phải bước cuối của tiến trình**, nó là nhánh chết. Vẽ nó thành bước thứ tư thì thanh của một ý
+tưởng **đã bị bác** trông y hệt một ý tưởng **gần xong**: hai bước đầu tô đầy, bước cuối đang
+sáng. Đó là bảng nói dối đúng vào chỗ Đức đọc nhanh nhất. Nên `nghỉ` được vẽ là thanh **rỗng có
+gạch ngang**, màu dừng, không tô bước nào.
+
+**Ghi lại một chỗ đo sai trong đề bài, để phiên sau đừng tin số cũ:** đề bài nói *"toàn bảng
+không có thanh bậc nào"*. Thật ra **đã có** — `rail()` + `.railrow`, một thanh **bốn** nút, dùng
+trong tab Extension và tab Ý tưởng, nằm bên trong `<details>` nên gập lại và Đức không thấy.
+Thanh bốn nút đó **cũng đang vẽ `nghỉ` thành nút thứ tư**, tức cùng bệnh vừa mô tả. **Cố ý không
+sửa nó lượt này**: nó dùng chung với tab Extension (bậc lifecycle), sửa là mở rộng phạm vi ngoài
+điều Đức chốt. Ghi ra đây làm việc mở.
+
+**Ý tưởng đã ra khỏi danh sách phẳng** — khối cũ nay chỉ còn extension. Để ở cả hai chỗ là bảng
+đếm hai lần một việc. Tên trên hàng roadmap vẫn là link, nên phép ghim *"một link cho mỗi đơn vị
+và mỗi ý tưởng"* vẫn đúng, không phải nới.
+
+**Không thêm tab, không thêm khung.** Và phép ghim mới khẳng định lại luật ẩn khung, để không tái
+sinh `DASH-TAB-01` (bug hôm nay, vá ở `3465c27`).
+
+**Ba chỗ tài liệu — Đức chốt sửa cho khớp luật `0b` (Query-driven). Không đổi một chữ của `0b`:**
+
+1. `ORCHESTRATOR.md` mục 6 — **nặng nhất trong ba**, vì nó là mục *dạy cách kết mỗi lượt*. Tên
+   mục: *"Kết một vòng điều phối"* → *"Kết một lượt trả lời"*. Bỏ yêu cầu mỗi lượt phải kết bằng
+   *"một câu nói việc kế"* — chính là cái tật `0b` vừa bỏ. Thêm một câu vạch ranh với **chuỗi năm
+   mục** ở mục 4: chuỗi đó là **trần** cho lượt Đức dán đống kỹ thuật vào, không phải khuôn bắt
+   mọi lượt phải có `NEXT WORK`.
+2. `ASSISTANT-V0.1.md` mục 3 — *"nhiều vòng việc liên tiếp"* → *"nhiều câu hỏi thật liên tiếp"*.
+3. `ASSISTANT-V0.1.md` mục 2, dòng mốc — **`EXTENSION PILOT` → `ASSISTANT PILOT`**, và đơn vị đo
+   *"vận hành thật nhiều vòng"* → *"20–30 câu hỏi thật của Đức"*. Pilot này đo **Assistant**,
+   không đo extension. Tên mốc bị **ghim** ở `tests/build-overview-smoke.mjs`, nên sửa kèm trong
+   cùng một lượt; thêm một chỗ nhắc tên cũ ở `docs/briefs/BRIEF-DASHBOARD-ORCHESTRATOR-TAB.md`.
+
+**Chỗ thứ tư, cùng bệnh, cùng file — đã sửa luôn và khai ra đây:** `ORCHESTRATOR.md` mục 1 còn ví
+dụ *"hãy nói: F-25 đã giải, việc kế là X"*. Bỏ nửa sau. Sửa ba chỗ mà để chỗ thứ tư thì phiên sau
+lại báo lại đúng nó.
+
+**Một dòng ở Log cũ (`2544`) trích tên mốc `EXTENSION PILOT` — cố ý KHÔNG sửa.** Đó là bản ghi
+lịch sử, và `HANDOFF.md` chỉ được thêm dòng ở cuối.
+
+**Số đo:**
+
+- Phép ghim mới `T6`: **21 khẳng định**, dựng bốn ca hỏng — bậc vẽ sai chỗ · ý tưởng rơi khỏi
+  roadmap · `nghỉ` vẽ như bước cuối · cơ chế ẩn/hiện khung bị hỏng. Ca `nghỉ` **phải** dùng
+  fixture: sổ thật hôm nay chưa có ý tưởng nào ở bậc `nghỉ`, nên đo trên sổ thật thì nhánh đó
+  chưa từng chạy và khẳng định vô nghĩa.
+- Suite `build-overview-smoke`: **22 phép XANH, 0 đỏ**.
+- **Thử phá: 5 ca, bắt 5.** ① dấu đang-ở-đây lệch một bước → ĐỎ · ② một ý tưởng rơi khỏi
+  roadmap → ĐỎ · ③ `nghỉ` vẽ như đã đi hết đường → ĐỎ · ④ gỡ luật ẩn khung → ĐỎ · ⑤ nhãn bậc
+  bằng chữ lệch khỏi dấu tròn → ĐỎ. **Không có lượt thoát ban đầu nào.**
+- Sinh hai lần liên tiếp: **cùng một md5**. `--check-head`: khớp HEAD.
+- **Mở thật bằng `file://` trên Chrome:** 8 hàng roadmap, dấu đang-ở-đây đúng bậc của cả 8, thanh
+  hiện đủ. Và **9 tab vẫn chuyển được** — bấm lần lượt cả 9, mỗi lần **đúng một** khung có
+  `offsetHeight > 0`. `DASH-TAB-01` không tái sinh.
+
+**Một cái bẫy đã cắn ngay lượt đầu, ghi lại vì nó sẽ cắn tiếp:** khối CSS nằm trong một template
+literal, nên **dấu ngoặc ngược trong ghi chú CSS làm cả file không parse được**. Chính bản vá
+`DASH-TAB-01` đã cảnh báo đúng câu này ngay trên chỗ tôi gõ vào — và tôi vẫn gõ. Ghi chú mới nay
+mang lại câu cảnh báo đó.
+
+**Và một cái bẫy thứ hai, mất nhiều thời gian hơn:** bộ sinh đọc dữ liệu bằng `git show HEAD:`,
+không đọc cây làm việc. Nên **sửa `IDEAS.md` / `ASSISTANT-V0.1.md` xong mà chưa commit thì bộ
+sinh và phép ghim đều không thấy** — tôi tưởng phép ghim sai, thật ra nó đúng và HEAD chưa có
+chữ mới. Thứ tự đúng: **commit nguồn trước → sinh lại artifact → commit artifact.**
+
+**Còn mở:**
+
+- `rail()` (thanh bốn nút trong `<details>` của tab Extension và tab Ý tưởng) vẫn vẽ `nghỉ` thành
+  nút thứ tư. Cùng bệnh với cái vừa vá, nhưng dùng chung với bậc lifecycle của extension nên
+  không sửa lượt này.
