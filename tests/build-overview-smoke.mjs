@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { bacMoc, buildOverview, compareOverview, debtByUnit, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readMoc, readRefreshLine, shorten, sinhTrang, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { bacMoc, blockedIfSkipped, buildOverview, choDuc, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readMoc, readRefreshLine, shorten, sinhTrang, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -369,13 +369,20 @@ const ideasDeps = (text) => ({
      Đức mở bảng, không thấy extension đó, và tưởng nó không tồn tại. */
   const soDonVi = collectModelRows(createDefaultDeps(ROOT)).length;
   const soYTuong = readIdeas(createDefaultDeps(ROOT)).length;
-  assert.equal(links.length, soDonVi + soYTuong,
-    `bang tong phai co dung MOT link cho moi don vi va moi y tuong: ${soDonVi}+${soYTuong}, dang co ${links.length}`);
+  /* ĐẾM TRONG PHẠM VI TAB TỔNG QUAN, không đếm cả trang.
+     Bản trước đếm cả trang và ăn khớp vì chỉ tab Tổng quan có link. Từ DASH-ORCH-V2 tab AI
+     điều phối cũng có link nhảy sang tab Extension, nên con số cả trang không còn nói được
+     điều gì — mà điều PHẢI giữ răng vẫn là: không đơn vị nào, không ý tưởng nào rơi khỏi
+     bảng tổng. Rơi là Đức mở bảng, không thấy, rồi tưởng nó không tồn tại. */
+  const tabTong = html.slice(html.indexOf('data-pane="tong-quan"'), html.indexOf('data-pane="ai-dieu-phoi"'));
+  const linkTong = [...tabTong.matchAll(/href="#([^"]+)" data-goto="([a-z-]+)"/g)];
+  assert.equal(linkTong.length, soDonVi + soYTuong,
+    `bang tong phai co dung MOT link cho moi don vi va moi y tuong: ${soDonVi}+${soYTuong}, dang co ${linkTong.length}`);
   for (const [, target, goto] of links) {
     assert.ok(ids.has(target), `link "#${target}" khong co dich tren trang — bam vao khong co gi xay ra`);
     assert.ok(panes.includes(goto), `link tro sang tab "${goto}" khong ton tai`);
   }
-  ok(`${tabs.length} tab, ${an} khung an, va ca ${links.length} link o bang tong deu co dich that`);
+  ok(`${tabs.length} tab, ${an} khung an, ${linkTong.length} link o bang tong va ca ${links.length} link tren trang deu co dich that`);
 }
 
 /* ---- 10b. DASH-TAB-01 · `hidden` phải THẬT SỰ ẩn, không chỉ có mặt ----
@@ -709,72 +716,284 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   ok("khoi 1: bang khoa doc tu bang chu so huu, chi bien BAN/MO, va fail closed 3 dang");
 }
 
-/* ---- T2. Ba khối có mặt · KHÔNG rò tên chủ · số khoá đổi thì bảng đổi ---- */
+/* ---- T2. DASH-ORCH-V2 · tab AI điều phối = BỐN VÙNG, đúng thứ tự ----
+ *
+ * THỨ TỰ LÀ ĐỀ BÀI, nên nó phải được ghim: vùng CẦN ĐỨC đứng TRƯỚC vùng công việc trong HTML.
+ * Bản V1 đặt bảng khoá ở vị trí số 1, và chính bộ sinh phải lọc dòng khoá khỏi phép so độ
+ * tươi vì chúng đổi quá thường xuyên — tức nó tự thừa nhận đó là ảnh chụp. Đảo lại thứ tự là
+ * quay về đúng chỗ sai đó, mà không con số nào trên trang đổi, nên không gì khác bắt được.
+ *
+ * CẮT BẰNG CHỈ SỐ, chặn hai đầu. Không dùng biểu thức kiểu "mở [\s\S]*? đóng": phần lười đó
+ * chạy thẳng ra ngoài khối và cho xanh giả — ở repo này nó đã cắn bốn lần.
+ */
 {
   const CHU = "phien-bi-mat-khong-duoc-lo";
-  const sinh = (obj) => buildOverview(bocFile(createDefaultDeps(ROOT), {
-    ".agents/claims.json": claimsJson(obj)
-  })).html;
+  const goc = createDefaultDeps(ROOT);
+  const sinh = (thay) => buildOverview(bocFile(goc, thay)).html;
 
-  const sau = { "_root": { owner: CHU }, "_docs": { owner: null }, "_code": { owner: null },
+  const cuaTab = (trang) => {
+    const i = trang.indexOf('data-pane="ai-dieu-phoi"');
+    assert.notEqual(i, -1, "phai co khung tab AI dieu phoi");
+    const j = trang.indexOf('data-pane="extension"', i);
+    assert.ok(j > i, "khung tab phai dong lai duoc, neu khong thi cat sai");
+    return trang.slice(i, j);
+  };
+  /* Cắt tab thành từng vùng theo mốc mở khối, chặn dưới bằng mốc kế — không có khối nào lọt
+     sang khối khác, nên mọi khẳng định dưới đây đúng phạm vi của nó. */
+  const cuaVung = (tab) => {
+    const moc = [...tab.matchAll(/<div class="card">/g)].map((m) => m.index);
+    return moc.map((a, k) => tab.slice(a, k + 1 < moc.length ? moc[k + 1] : tab.length));
+  };
+  const vungCua = (trang) => cuaVung(cuaTab(trang));
+
+  const sauKhoa = { "_root": { owner: CHU }, "_docs": { owner: null }, "_code": { owner: null },
     "workers/goi-mot": { owner: CHU }, "workers/goi-hai": { owner: null },
     "workers/goi-ba": { owner: null } };
-  const html = sinh(sau);
-
-  // Cắt ĐÚNG khung của tab rồi mới khẳng định. Khẳng định trên cả trang thì một chữ trùng ở
-  // tab khác cũng cho xanh giả — repo này đã bị cắn đúng kiểu đó.
-  const iTab = html.indexOf('data-pane="ai-dieu-phoi"');
-  assert.notEqual(iTab, -1, "phai co khung tab AI dieu phoi");
-  const jTab = html.indexOf('data-pane="extension"', iTab);
-  assert.notEqual(jTab, -1, "khung tab phai dong lai duoc, neu khong thi cat sai");
-  const tab = html.slice(iTab, jTab);
-
+  const html = sinh({ ".agents/claims.json": claimsJson(sauKhoa) });
+  const tab = cuaTab(html);
   assert.ok(html.includes('data-tab="ai-dieu-phoi"'), "phai co nut tab tren thanh tab");
 
-  // Ba khối, không hơn không kém. Khối thứ tư là thứ brief cấm.
-  assert.equal([...tab.matchAll(/<div class="card">/g)].length, 3,
-    "tab phai co DUNG ba khoi — them khoi thu tu la trai brief, bot la thieu");
+  const vung = cuaVung(tab);
+  assert.equal(vung.length, 4,
+    "tab phai co DUNG bon vung — them vung thu nam la trai brief, bot la thieu mot cau Duc phai tra loi duoc");
 
-  // KHỐI 1 — cắt RIÊNG khung khối một rồi mới đếm. Đếm trên cả tab thì huy hiệu MỞ của khối
-  // defect cũng bị đếm vào: đúng cái bẫy "regex chạy ra ngoài phạm vi" đã cắn repo này nhiều
-  // lần, và nó cắn thật ở lượt chạy đầu — hai khoá mà đếm ra sáu.
-  const khoiKhoa = (trang) => {
-    const i = trang.indexOf('data-pane="ai-dieu-phoi"');
-    const t = trang.slice(i, trang.indexOf('data-pane="extension"', i));
-    const a = t.indexOf('<div class="card">');
-    return t.slice(a, t.indexOf('<div class="card">', a + 1));
-  };
-  const k1 = khoiKhoa(html);
+  /* --- (a) BỐN VÙNG, ĐÚNG THỨ TỰ --- */
+  const viTri = (s) => { const i = tab.indexOf(s); assert.notEqual(i, -1, `thieu vung: ${s}`); return i; };
+  const iDuc = viTri('<div class="sect">Cần Đức');
+  const iViec = viTri('<div class="sect">Công việc hiện tại');
+  const iKhoe = viTri('<div class="sect">Sức khoẻ Assistant');
+  const iHaTang = viTri('<span class="nm">Hạ tầng<');
+  assert.ok(iDuc < iViec,
+    "vung CAN DUC phai dung TRUOC vung cong viec — thu tu la mot phan de bai, khong phai so thich trinh bay");
+  assert.ok(iViec < iKhoe && iKhoe < iHaTang,
+    "bon vung phai theo dung thu tu: can Duc -> cong viec -> suc khoe -> ha tang");
 
-  // Một dòng cho mỗi khoá, đúng bận/mở, và tuyệt đối không có tên chủ.
-  const dongKhoa = [...k1.matchAll(/<div class="kr"><span class="n">([^<]+)<\/span><span class="badge b\d">(BẬN|MỞ)<\/span><\/div>/g)]
-    .map((m) => [m[1], m[2]]);
-  assert.deepEqual(dongKhoa, [["_root", "BẬN"], ["_docs", "MỞ"], ["_code", "MỞ"],
-    ["goi-mot", "BẬN"], ["goi-hai", "MỞ"], ["goi-ba", "MỞ"]],
-  "moi khoa mot dong, dung thu tu bang chu so huu, dung bien");
+  /* --- (b) VÙNG 4 GẬP LẠI, mặc định đóng --- */
+  const v4 = vung[3];
+  assert.ok(v4.includes('<details class="the">'), "vung ha tang phai boc trong khoi gap");
+  assert.ok(!/<details[^>]*\sopen/.test(v4),
+    "khoi gap phai DONG mac dinh — mo san la ha tang lai chiem cho cua viec Duc can lam");
+  assert.ok(!tab.includes("PORTABLE FREEZE"),
+    "ba moc goi phai thu lai thanh MOT chip — con ca ba dong la chua thu, va moc doi vai tuan mot lan thi khong dang mot khoi rieng");
+  assert.ok(v4.includes("ASSISTANT PILOT"),
+    "chip phai in ten moc DANG CHAY, doc lai tu ho so moc chu khong go tay");
+
+  /* --- (c) DẤU DÒNG KHOÁ VẪN Ở ĐẦU DÒNG sau khi bảng khoá vào khối gập ---
+     Đây là cái bẫy brief cảnh báo, và nó KHÔNG có phép kiểm nào khác: thụt lề trước dấu thì
+     mọi lượt đổi bận↔mở lại làm bảng lệch HEAD, và chuyện đó chỉ hiện ra lúc một phiên bị
+     cổng xuất bản từ chối mà không hiểu vì sao. */
+  const dongKhoa = v4.split(String.fromCharCode(10))
+    .filter((l) => /<span class="badge b\d">(?:BẬN|MỞ)</.test(l));
+  assert.equal(dongKhoa.length, 6, "sau khoa thi ve sau dong, va ca sau dong phai nam trong khoi gap");
+  for (const l of dongKhoa) {
+    assert.ok(l.startsWith(KHOA_PREFIX),
+      `dong khoa PHAI bat dau bang dau, khong duoc thut le truoc dau: ${l.slice(0, 40)}`);
+  }
+  assert.deepEqual(dongKhoa.map((l) => [/<span class="n">([^<]+)</.exec(l)[1], /badge b\d">([^<]+)</.exec(l)[1]]),
+    [["_root", "BẬN"], ["_docs", "MỞ"], ["_code", "MỞ"],
+      ["goi-mot", "BẬN"], ["goi-hai", "MỞ"], ["goi-ba", "MỞ"]],
+    "moi khoa mot dong, dung thu tu bang chu so huu, dung bien");
+
+  /* --- (d) KHÔNG rò tên phiên đang giữ khoá --- */
   assert.ok(!tab.includes(CHU), "TUYET DOI khong duoc lo ten phien dang giu khoa");
   assert.ok(!html.includes(CHU), "va khong lo o bat ky tab nao khac");
+  assert.ok(/ảnh chụp lúc sinh/.test(v4),
+    "phai con cau noi ro khoi khoa la anh chup luc sinh, khong phai trang thai thoi gian thuc");
 
   // Số khoá đổi thì bảng đổi theo — bằng chứng nó không đóng cứng sáu dòng.
-  const k1It = khoiKhoa(sinh({ "_root": { owner: null }, "_docs": { owner: "ai-do" } }));
-  assert.equal([...k1It.matchAll(/class="badge b\d">(?:BẬN|MỞ)</g)].length, 2,
+  const v4It = vungCua(sinh({ ".agents/claims.json": claimsJson({ "_root": { owner: null }, "_docs": { owner: "ai-do" } }) }))[3];
+  assert.equal([...v4It.matchAll(/class="badge b\d">(?:BẬN|MỞ)</g)].length, 2,
     "hai khoa thi ve hai dong — bang khoa khong duoc dong cung");
-  assert.ok(k1It.includes("2 khoá"), "so dem tren tieu de khoi phai di theo tap khoa");
-  assert.ok(k1.includes("6 khoá"), "va bang sau khoa thi noi sau");
+  assert.ok(v4It.includes("2 khoá") && v4.includes("6 khoá"), "so dem tren tieu de phai di theo tap khoa");
 
-  // Trang PHẢI nói rõ đây là ảnh chụp lúc sinh — điều kiện Đức đặt cho đường (b).
-  assert.ok(/ảnh chụp lúc sinh/.test(tab),
-    "chon duong loc thi PHAI noi ro khoi nay la anh chup luc sinh, khong phai thoi gian thuc");
-
-  // KHỐI 2 — ba mốc, đọc từ hồ sơ mốc.
-  for (const ten of ["V0.1 PACKAGE", "ASSISTANT PILOT", "PORTABLE FREEZE"]) {
-    assert.ok(tab.includes(ten), `khoi moc phai co moc ${ten}`);
+  /* --- (e) VÙNG 1 đọc từ `human_action`, và KHÔNG lẫn đơn vị không có việc --- */
+  const rows = collectModelRows(goc);
+  const dangCho = rows.filter((r) => trangThaiDonVi(r).chu === "CHỜ ĐỨC");
+  assert.ok(dangCho.length > 0, "ho so that phai co it nhat mot don vi cho Duc, neu khong thi (e) vo nghia");
+  const v1 = vung[0];
+  assert.equal([...v1.matchAll(/<div class="dr">/g)].length, dangCho.length,
+    "vung 1 phai co dung MOT dong cho moi don vi co viec cho Duc");
+  for (const r of dangCho) {
+    assert.ok(v1.includes(r.name), `${r.name} co viec cho Duc thi phai co mat o vung 1`);
+    assert.ok(v1.includes(String(r.humanAction).trim()),
+      `${r.name}: cau viec phai lay NGUYEN VAN tu truong don vi tu khai, khong viet lai`);
   }
-  // KHỐI 3 — defect có mã và có biến mở/đóng.
-  assert.ok(/ROLE-DRIFT-01/.test(tab), "khoi defect phai co ma defect that");
-  assert.ok(/>ĐÓNG</.test(tab) && /class="badge b1">MỞ</.test(tab),
-    "khoi defect phai the hien duoc ca hai bien mo va dong");
-  ok("tab AI dieu phoi: ba khoi, khoa doc tu bang chu so huu, KHONG lo ten chu, so khoa doi thi bang doi");
+  for (const r of rows.filter((x) => trangThaiDonVi(x).chu !== "CHỜ ĐỨC")) {
+    assert.ok(!v1.includes(`data-goto="extension">${r.name}</a>`),
+      `${r.name} khong co viec cho Duc thi KHONG duoc lan vao vung 1`);
+  }
+
+  /* --- (f) trường TUỲ CHỌN `blocked_if_skipped`: vắng thì không vẽ gì, có thì vẽ dòng phụ ---
+     Hôm nay trường này vắng ở CẢ BỐN đơn vị, nên nhánh "có khai" phải dựng bằng fixture —
+     đo trên hồ sơ thật thì nhánh đó chưa từng chạy và khẳng định vô nghĩa. */
+  assert.equal([...v1.matchAll(/class="w">/g)].length, 0,
+    "truong vang thi KHONG ve gi them — khong bia, cung khong de mot cho trong trong nhu loi");
+  const themFm = (text, dong) => text.replace(/^---\r?\n/, `---${String.fromCharCode(10)}${dong}${String.fromCharCode(10)}`);
+  const doiHang = (text, so) => text.replace(/^priority_rank:.*$/m, `priority_rank: ${so}`);
+  const CAU_CHAN = "quan sat nam im, khong ai biet no con song hay khong";
+  const gpt = rows.find((r) => r.name === "Duc Auto ChatGPT");
+  assert.ok(gpt && gpt.statusPath, "phai tim duoc ho so cua don vi GPT de dung fixture");
+  /* MỘT lượt sinh cho HAI nhánh fixture. Đo trên máy: một lượt `buildOverview` tốn khoảng
+     mười hai giây, nên mỗi fixture thêm là mười hai giây cộng vào cổng đóng phiên của MỌI
+     phiên sau. Hai nhánh này không đụng nhau (một thêm trường tuỳ chọn ở đơn vị gốc, một hạ
+     thứ hạng đơn vị GPT), nên gộp được mà không cái nào che cái nào. */
+  const vungFx = vungCua(sinh({
+    "STATUS.md": themFm(goc.readFile("STATUS.md"), `blocked_if_skipped: "${CAU_CHAN}"`),
+    [gpt.statusPath]: doiHang(goc.readFile(gpt.statusPath), 99)
+  }));
+  const v1Co = vungFx[0];
+  assert.ok(v1Co.includes(`Chưa làm thì: ${CAU_CHAN}`), "co khai truong tuy chon thi PHAI ve dong phu");
+  assert.equal([...v1Co.matchAll(/class="w">/g)].length, 1,
+    "CHI don vi co khai moi co dong phu — ba don vi kia khong duoc moc them dong rong");
+  assert.equal([...v1Co.matchAll(/<div class="dr">/g)].length, dangCho.length,
+    "them truong tuy chon KHONG duoc lam mat hay moc them dong viec nao");
+
+  /* --- (g) VÙNG 2 xếp theo thứ hạng tự khai --- */
+  const v2 = vung[1];
+  const tenV2 = [...v2.matchAll(/data-goto="extension">([^<]+)<\/a>/g)].map((m) => m[1]);
+  assert.equal(tenV2.length, rows.length, "vung 2 phai co dung MOT dong cho moi don vi — roi mot don vi la Duc tuong no khong ton tai");
+  const hang1 = rows.find((r) => r.priorityRank === 1);
+  assert.ok(hang1, "ho so that phai co dung mot don vi hang 1");
+  assert.equal(tenV2[0], hang1.name, "don vi hang 1 phai dung DAU vung cong viec");
+  const chuaHang = rows.filter((r) => !Number.isFinite(r.priorityRank)).map((r) => r.name);
+  assert.ok(chuaHang.length > 0, "ho so that phai co it nhat mot don vi chua khai hang");
+  for (const n of chuaHang) {
+    assert.ok(tenV2.indexOf(n) >= tenV2.length - chuaHang.length,
+      `${n} chua khai hang thi phai xuong CUOI — coi no la hang 0 la no nhay len dau bang`);
+  }
+  // Và thứ tự PHẢI đi theo thứ hạng, không theo tên: đổi hạng thì dòng phải đổi chỗ.
+  const tenDoi = [...vungFx[1].matchAll(/data-goto="extension">([^<]+)<\/a>/g)].map((m) => m[1]);
+  assert.ok(tenV2.indexOf(gpt.name) < tenDoi.indexOf(gpt.name),
+    "ha thu hang mot don vi thi dong cua no phai TUT XUONG — khong tut la bang khong doc thu hang");
+
+  /* --- (h) VÙNG 3: đổi tên khối, và nói thẳng chỗ bảng chưa đếm được --- */
+  const v3 = vung[2];
+  assert.ok(v3.includes("Đề bài đang mở của chính tôi"),
+    "phai doi ten khoi — goi mot de bai cai tien la 'sai lech' thi sai");
+  assert.ok(!tab.includes("Sai lệch đã ghi nhận"), "ten cu phai bien mat khoi tab");
+  const deBaiMo = readDefects(goc).filter((d) => d.mo);
+  assert.ok(v3.includes(`${deBaiMo.length} MỤC`), "so de bai dang mo phai dem tu truong may doc duoc");
+  for (const d of deBaiMo) assert.ok(v3.includes(d.ma), `ma de bai dang mo ${d.ma} phai co trong danh sach mot dong`);
+  assert.ok(v3.includes("ASSISTANT PILOT"), "moc pilot phai doc lai tu ho so moc");
+  assert.ok(/bảng chưa đếm được/.test(v3),
+    "ba con so chua dem duoc thi phai NOI THANG, khong duoc in mot so 0 ma khong ai biet no dung hay chi la chua ai dem");
+
+  /* --- (i) PHÉP THỬ CUỐI CỦA BRIEF, tự động hoá: bỏ hết `human_action` thì đơn vị phải RỜI
+     vùng 1 và huy hiệu ở vùng 2 phải đổi từ CHỜ ĐỨC sang ĐANG CHẠY. --- */
+  const xoaFm = (text, ten) => text.replace(new RegExp(`^${ten}:.*\\r?\\n`, "m"), "");
+  const boHet = {};
+  for (const r of rows) if (r.statusPath) boHet[r.statusPath] = xoaFm(goc.readFile(r.statusPath), "human_action");
+  assert.ok(Object.keys(boHet).length >= 4, "phai bo duoc truong o it nhat bon ho so, neu khong thi (i) vo nghia");
+  const vungTrong = vungCua(sinh(boHet));
+  assert.equal(vungTrong.length, 4, "vung 1 trong thi tab VAN du bon vung");
+  assert.ok(vungTrong[0].includes("Không có việc nào đang chờ Đức"),
+    "vung trong LA mot thong tin — phai in ra mot dong, khong duoc an ca vung");
+  /* KHỚP TRÊN HUY HIỆU, không khớp trên cả vùng: câu chú giải của vùng 2 có NHẮC chữ
+     "CHỜ ĐỨC" để giải thích luật, nên `includes` trên cả vùng luôn đúng và khẳng định này
+     sẽ không bao giờ đỏ. Bắt được đúng ở lượt chạy đầu — một xanh giả thật. */
+  const huyHieu = (v) => [...v.matchAll(/class="badge b\d">([^<]+)</g)].map((m) => m[1]);
+  assert.ok(!huyHieu(vungTrong[1]).includes("CHỜ ĐỨC"),
+    "bo het truong thi khong con huy hieu CHO DUC nao o vung 2");
+  assert.ok(huyHieu(vungTrong[1]).includes("ĐANG CHẠY"), "va don vi con song phai doi sang DANG CHAY");
+  assert.ok(huyHieu(vung[1]).includes("CHỜ ĐỨC"),
+    "va tren ho so THAT thi phai co huy hieu CHO DUC — neu khong thi khang dinh tren vo nghia");
+
+  ok("tab AI dieu phoi: bon vung dung thu tu, vung 1 doc human_action, truong tuy chon vang thi khong ve gi, vung 2 xep theo hang, dau dong khoa con nguyen trong khoi gap, KHONG lo ten chu");
+}
+
+/* ---- T2b. Ba trạng thái suy ra, và `human_action` THẮNG `lifecycle` ----
+ *
+ * Ghim trên bảng thật KHÔNG đủ: hôm nay cả bốn đơn vị còn sống đều có việc chờ Đức, nên
+ * nhánh ĐANG CHẠY chưa từng chạy trên hồ sơ thật. Ba trạng thái thì phải ghim cả ba, và ghim
+ * cả quan hệ giữa chúng — không thì một bản gộp hai trạng thái vẫn xanh.
+ */
+{
+  const tt = (row) => trangThaiDonVi(row).chu;
+
+  assert.equal(tt({ lifecycle: "active", humanAction: "nạp lại tiện ích" }), "CHỜ ĐỨC");
+  assert.equal(tt({ lifecycle: "building", humanAction: "chốt một câu" }), "CHỜ ĐỨC");
+  assert.equal(tt({ lifecycle: "active", humanAction: "không" }), "ĐANG CHẠY",
+    "'khong' la DA TRA LOI va khong co gi cho — khong duoc coi la co viec");
+  assert.equal(tt({ lifecycle: "building", humanAction: "" }), "ĐANG CHẠY");
+  assert.equal(tt({ lifecycle: "active", humanAction: "   " }), "ĐANG CHẠY",
+    "truong toan dau cach la CHUA AI TRA LOI, khong phai co viec");
+  assert.equal(tt({ lifecycle: "superseded", humanAction: "" }), "XONG");
+  assert.equal(tt({ lifecycle: "archived" }), "XONG");
+  assert.equal(tt({ lifecycle: "paused" }), "XONG",
+    "'paused' cung la mot gia tri nghi — de no thanh DANG CHAY thi bang noi khac thanh bac o tab Tong quan");
+
+  /* KHẲNG ĐỊNH QUAN TRỌNG NHẤT: cùng một `lifecycle` mà một cái có việc chờ Đức, một cái
+     không, thì HAI trạng thái phải KHÁC nhau. Không có dòng này thì một bản chỉ đọc
+     `lifecycle` và bỏ qua `human_action` vẫn xanh ở mọi khẳng định trên. */
+  assert.notEqual(tt({ lifecycle: "active", humanAction: "cần Đức chốt" }),
+    tt({ lifecycle: "active", humanAction: "không" }),
+    "human_action PHAI thang lifecycle — cung mot lifecycle phai ra hai trang thai khac nhau");
+
+  // Đơn vị đã nghỉ hưu thì ra khỏi cuộc đua, dù trường cũ còn chữ trong đó.
+  assert.equal(tt({ lifecycle: "superseded", humanAction: "chữ cũ còn sót lại" }), "XONG",
+    "don vi da nghi huu KHONG cho Duc nua — con hien la Duc lam mot viec da khong con y nghia");
+  assert.equal(choDuc({ lifecycle: "superseded", humanAction: "chữ cũ" }), false,
+    "va ba cho hoi cung mot cau phai tra cung mot cau tra loi");
+
+  // Ba trạng thái, không hai và không năm.
+  const bo = new Set(["active", "building", "superseded", "archived", "paused", "idea", "experimental"]
+    .flatMap((lc) => [tt({ lifecycle: lc }), tt({ lifecycle: lc, humanAction: "x" })]));
+  assert.equal(bo.size, 3, `phai la DUNG ba trang thai, dang co: ${[...bo].join(" · ")}`);
+  ok("trang thai luong: ba nhanh dung, human_action thang lifecycle, don vi nghi huu ra khoi cuoc dua");
+}
+
+/* ---- T2c. Gate tiếp theo: câu ĐẦU của việc kế, không phải cả trường ---- */
+{
+  const G = String.fromCharCode(8212);
+
+  assert.equal(gateNext(""), "", "khong khai viec ke thi tra rong, khong bia");
+  assert.equal(gateNext("Một câu ngắn thôi"), "Một câu ngắn thôi",
+    "cau da ngan va khong co dau ngat thi giu nguyen, KHONG them dau ba cham");
+  assert.equal(gateNext("Một câu ngắn thôi."), "Một câu ngắn thôi",
+    "go dau cham cuoi cau KHONG phai la cat — them '…' o day la bang noi con nua trong khi khong con gi");
+  assert.equal(gateNext("Câu đầu tiên nói đủ nghĩa rồi. Câu sau không cần lên bảng."),
+    "Câu đầu tiên nói đủ nghĩa rồi…", "cat o dau cham, va co cat thi phai co dau ba cham");
+  assert.equal(gateNext(`Một nhãn khá dài đứng trước ${G} phần giải thích dài phía sau`),
+    "Một nhãn khá dài đứng trước…", "cat o dau gach dai khi no toi truoc");
+
+  /* NGOẠI LỆ đã khai trong bộ sinh: cắt ở gạch dài mà ra một mẩu quá ngắn để thành câu thì
+     cắt lại ở dấu chấm. Đo trên hồ sơ thật: đơn vị hạng 1 khai "F-25 bước ③ — CẦN ĐỨC
+     CHỐT: …", và luật gạch-dài-trước cắt ra đúng bốn chữ. Luật vàng 5: Đức đọc không hiểu
+     là lỗi hệ thống. */
+  const ngan = gateNext(`F-25 bước ③ ${G} CẦN ĐỨC CHỐT: cho vòng chạy job sống ở service worker. Câu sau.`);
+  assert.ok(ngan.length >= GATE_MIN, `mau qua ngan thi phai cat lai o dau cham, dang ra: ${ngan}`);
+  assert.ok(ngan.includes("CẦN ĐỨC CHỐT"), "va phai giu duoc phan noi ra viec, khong chi giu cai nhan");
+
+  // Trần độ dài, và đường dẫn phải bị cắt — trang này cấm in đường dẫn.
+  const dai = gateNext("x".repeat(40) + " " + "y".repeat(40) + " " + "z".repeat(40));
+  assert.ok(dai.length <= 111, `gate phai co tran do dai, dang dai ${dai.length}`);
+  assert.ok(dai.endsWith("…"), "cat vi qua dai thi cung phai co dau ba cham");
+  assert.ok(!gateNext("chuyển vào workers/observer-v0/v0.1.0/ rồi khai lại").includes("/"),
+    "duong dan phai bi cat khoi gate — trang danh cho Duc cam in duong dan");
+  ok("gate tiep theo: cat cau dau, co tran do dai, cat duong dan, va khong them dau ba cham oan");
+}
+
+/* ---- T2d. `blocked_if_skipped` là trường TUỲ CHỌN, và đọc nó không được ném ---- */
+{
+  const fm = (than) => `---${String.fromCharCode(10)}${than}${String.fromCharCode(10)}---${String.fromCharCode(10)}# x`;
+  const d = (text) => ({ readFile: () => text });
+
+  assert.equal(blockedIfSkipped(d(fm('blocked_if_skipped: "chặn cả nhánh"')), { statusPath: "S.md" }),
+    "chặn cả nhánh", "doc duoc, va go cap nhay kep");
+  assert.equal(blockedIfSkipped(d(fm("blocked_if_skipped: chặn cả nhánh")), { statusPath: "S.md" }),
+    "chặn cả nhánh", "khong nhay kep thi cung doc duoc");
+  assert.equal(blockedIfSkipped(d(fm("lifecycle: active")), { statusPath: "S.md" }), "",
+    "truong VANG thi tra rong — day la trang thai binh thuong, khong phai loi");
+  assert.equal(blockedIfSkipped(d("# khong co frontmatter"), { statusPath: "S.md" }), "",
+    "khong co frontmatter thi tra rong");
+  assert.equal(blockedIfSkipped(d(fm("x: 1")), { statusPath: "" }), "",
+    "don vi chua khai ho so thi khong co gi de doc, va KHONG duoc nem");
+  assert.equal(blockedIfSkipped({ readFile: () => { throw new Error("KHONG_CO"); } }, { statusPath: "S.md" }), "",
+    "doc that bai thi tra rong — mot truong TUY CHON khong duoc lam chet ca bo sinh");
+  // Và trường của một đơn vị KHÁC không được lọt sang: chặn ở hết frontmatter.
+  assert.equal(blockedIfSkipped(d(`${fm("lifecycle: active")}${String.fromCharCode(10)}blocked_if_skipped: nam ngoai frontmatter`), { statusPath: "S.md" }),
+    "", "chi doc trong frontmatter — chu trong than file KHONG duoc tinh");
+  ok("blocked_if_skipped: truong tuy chon, vang thi tra rong, doc that bai thi khong nem, chan o het frontmatter");
 }
 
 /* ---- T3. Khối mốc: đọc lại từ hồ sơ, và fail closed ---- */

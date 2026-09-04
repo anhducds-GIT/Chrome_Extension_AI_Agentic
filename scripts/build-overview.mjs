@@ -173,15 +173,100 @@ export function debtByUnit(deps, model) {
    Đơn vị đã nghỉ hưu không tính — nó ra khỏi cuộc đua rồi. */
 export const RETIRED_LIFECYCLES = new Set(["superseded", "archived"]);
 
+/* MỘT chỗ duy nhất trả lời "đơn vị này có việc đang chờ Đức không".
+   BA chỗ hỏi cùng câu này: ô "Đức cần làm" ở tab Tổng quan, vùng CẦN ĐỨC và huy hiệu ở vùng
+   CÔNG VIỆC HIỆN TẠI của tab AI điều phối. Ba bản sao thì sẽ có ngày một vùng đếm 4 việc,
+   vùng kia đếm 3, và Đức không có cách nào biết bên nào đúng. */
+export const coViecDuc = (row) => {
+  const s = String(row?.humanAction ?? "").trim();
+  return Boolean(s) && s.toLowerCase() !== "không";
+};
+
+/* Đơn vị đã nghỉ hưu KHÔNG chờ Đức nữa, dù trường cũ còn chữ trong đó — nó ra khỏi cuộc đua
+   rồi. Tách riêng khỏi `coViecDuc` để tên hàm không nói dối: `coViecDuc` trả lời về TRƯỜNG,
+   `choDuc` trả lời về ĐƠN VỊ. */
+export const choDuc = (row) => !RETIRED_LIFECYCLES.has(row?.lifecycle) && coViecDuc(row);
+
 export function humanWork(rows) {
   const live = rows.filter((r) => !RETIRED_LIFECYCLES.has(r.lifecycle));
   // CẮT KHOẢNG TRẮNG TRƯỚC khi phân loại. Bản đầu lọc trên chuỗi thô, nên một trường khai
   // toàn dấu cách bị đếm CẢ là việc thật CẢ là chưa khai — cùng một đơn vị nằm ở hai nhóm
   // loại trừ nhau. Lược đồ đã chặn ca này, nhưng hàm hiển thị vẫn phải tự đúng.
-  const trimmed = live.map((r) => ({ unit: r.name, what: String(r.humanAction ?? "").trim() }));
-  const actions = trimmed.filter((a) => a.what && a.what.toLowerCase() !== "không");
-  const undeclared = trimmed.filter((a) => !a.what).length;
+  const actions = live.filter(coViecDuc)
+    .map((r) => ({ unit: r.name, what: String(r.humanAction).trim() }));
+  const undeclared = live.filter((r) => !String(r.humanAction ?? "").trim()).length;
   return { actions, undeclared };
+}
+
+/* Đơn vị đã nghỉ, theo cùng cách `stageOf` tô bậc "NGHỈ / THAY THẾ". Ba giá trị, không hai:
+   `paused` cũng là nghỉ, và nếu ở đây chỉ có hai giá trị thì một đơn vị `paused` sẽ mang
+   huy hiệu ĐANG CHẠY trong khi thanh bậc ở tab Tổng quan vẽ nó là đã nghỉ. */
+export const NGHI_LIFECYCLES = new Set(["superseded", "archived", "paused"]);
+
+/* TRẠNG THÁI MỘT LUỒNG — suy ra, không khai tay. Đúng BA giá trị (brief DASH-ORCH-V2 mục 2).
+   `BLOCKED` và `CHỜ EVIDENCE` cố ý CHƯA làm: hôm nay repo không có trường nào phân biệt được
+   chúng với ĐANG CHẠY, và dò văn xuôi `next_step` để đoán là đúng cái đã cho kết luận sai
+   bốn lần trong một ngày ở bảng đối chiếu hai nhánh.
+   `human_action` THẮNG `lifecycle`: một đơn vị đang chạy mà có việc chờ Đức thì thứ Đức cần
+   thấy là "chờ tôi", không phải "đang chạy". */
+export function trangThaiDonVi(row) {
+  if (choDuc(row)) return { chu: "CHỜ ĐỨC", bac: 1 };
+  if (NGHI_LIFECYCLES.has(row?.lifecycle)) return { chu: "XONG", bac: 0 };
+  return { chu: "ĐANG CHẠY", bac: 2 };
+}
+
+/* ẢNH HƯỞNG NẾU CHƯA LÀM — trường TUỲ CHỌN `blocked_if_skipped` trong hồ sơ trạng thái.
+   Vắng thì trả chuỗi rỗng và vùng CẦN ĐỨC không vẽ gì thêm: không bịa, cũng không để một
+   chỗ trống trông như lỗi. Hôm nay trường này vắng ở cả bốn đơn vị — đó là trạng thái BÌNH
+   THƯỜNG, không phải thiếu dữ liệu. Thêm trường là việc của chủ gói, không phải của bảng. */
+export function blockedIfSkipped(deps, row) {
+  const file = row?.statusPath;
+  if (!file) return "";
+  let text;
+  try { text = deps.readFile(file); } catch { return ""; }
+  const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  if (!fm) return "";
+  const hit = /^blocked_if_skipped:[ \t]*(.+)$/m.exec(fm[1]);
+  if (!hit) return "";
+  return hit[1].trim().replace(/^["']/, "").replace(/["']$/, "").trim();
+}
+
+/* GATE TIẾP THEO — câu ĐẦU của `next_step`, không phải cả trường.
+   Bản đầy đủ đã có ở tab Extension; dòng này chỉ là mồi để bấm sang. Cắt ở dấu chấm hoặc
+   dấu gạch dài, tuỳ cái nào tới trước. Chạy qua bộ rút gọn trước để đường dẫn và nhãn kỹ
+   thuật bị cắt — trang này cấm in đường dẫn. */
+export const GATE_MIN = 28;
+
+export function gateNext(text, max = 110) {
+  const s = shorten(text, 100000);
+  if (!s) return "";
+  const boCham = (x) => x.replace(/[.,;:]+$/, "").trim();
+  const catTai = (dau) => {
+    let i = -1;
+    for (const d of dau) {
+      const j = s.indexOf(d);
+      if (j > 0 && (i === -1 || j < i)) i = j;
+    }
+    return i === -1 ? s : s.slice(0, i);
+  };
+  const nguyen = boCham(s);
+  let out = boCham(catTai([". ", `${GACH_DAI} `]));
+  /* MỘT NGOẠI LỆ SO VỚI ĐỀ BÀI, khai ra ở đây để Đức bác được nếu không đồng ý.
+     Đề bài nói cắt ở dấu chấm HOẶC dấu gạch dài, tuỳ cái nào tới trước. Đo trên hồ sơ thật
+     hôm nay: đơn vị hạng 1 khai việc kế mở đầu bằng "F-25 bước ③ — CẦN ĐỨC CHỐT: …", nên
+     luật đó cắt ra đúng bốn chữ "F-25 bước ③" — Đức đọc không hiểu gì, và luật vàng 5 nói
+     Đức đọc không hiểu là lỗi hệ thống. Nên: cắt theo đề bài trước; ra một mẩu quá ngắn để
+     thành câu thì bỏ dấu gạch dài, cắt lại ở dấu chấm. Không đoán, không dò nghĩa văn xuôi —
+     chỉ là chọn dấu ngắt khác trên cùng một câu. */
+  if (out.length < GATE_MIN) out = boCham(catTai([". "]));
+  if (out.length > max) {
+    const tho = out.slice(0, max);
+    const cho = tho.lastIndexOf(" ");
+    out = (cho > max * 0.5 ? tho.slice(0, cho) : tho).trim();
+  }
+  // Dấu ba chấm chỉ được xuất hiện khi THẬT SỰ cắt bớt chữ. Một dấu chấm cuối câu bị gỡ
+  // không phải là cắt — thêm "…" ở đó là bảng nói còn nữa trong khi không còn gì.
+  return out === nguyen ? out : `${out}…`;
 }
 
 /* MÔ TẢ MỘT EXTENSION — đọc từ `README.md` của gói, KHÔNG tự viết.
@@ -793,6 +878,17 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 .badge.b1{background:var(--warn-bg);color:var(--warn)}
 .badge.b2{background:var(--good-bg);color:var(--good)}
 .badge.b3{background:var(--off-bg);color:var(--off)}
+
+/* Vùng CẦN ĐỨC và vùng CÔNG VIỆC HIỆN TẠI dùng CHUNG một hàng: dòng đầu là tên (có link) kèm
+   huy hiệu, dòng dưới là một câu. Một class cho cả hai vùng, vì hai vùng vẽ cùng một hình. */
+.dr{display:flex;flex-direction:column;gap:3px;padding:9px 0;border-bottom:1px solid var(--line)}
+.dr:last-child{border-bottom:none}
+.dr .h{display:flex;flex-wrap:wrap;gap:9px;align-items:baseline}
+.dr a{color:var(--ink);font-weight:600;font-size:13.8px;text-decoration:none;
+  border-bottom:1px solid var(--line-2)}
+.dr a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.dr .d{font-size:13.2px;color:var(--ink-2);line-height:1.45;min-width:0}
+.dr .w{font-size:12px;color:var(--muted);line-height:1.4}
 </style>`;
 
 const TABS = [
@@ -1028,45 +1124,112 @@ ${STYLE}
     </div>
   </div>`);
 
-  /* ===== TAB · AI ĐIỀU PHỐI — ba khối, không hơn (brief DASH-ORCH-01) ===== */
+  /* ===== TAB · AI ĐIỀU PHỐI — BỐN VÙNG, đúng thứ tự này (brief DASH-ORCH-V2) =====
+   *
+   * THỨ TỰ LÀ MỘT PHẦN ĐỀ BÀI, không phải sở thích trình bày. Bản V1 đặt bảng khoá ở vị trí
+   * số 1, và chính bộ sinh phải LỌC dòng khoá khỏi phép so độ tươi vì chúng đổi quá thường
+   * xuyên — tức nó tự thừa nhận đó là ảnh chụp, không phải trạng thái đáng tin nhất để ra
+   * quyết định. Đặt ảnh chụp lên đầu là sai thứ tự.
+   *
+   * Mở tab ra, Đức phải trả lời được đúng bốn câu, và bốn vùng trả lời đúng bốn câu đó:
+   *   1 · CẦN ĐỨC            → tôi cần làm gì?
+   *   2 · CÔNG VIỆC HIỆN TẠI → việc chính đang ở đâu?
+   *   3 · SỨC KHOẺ ASSISTANT → Assistant có đang làm tốt việc của nó?
+   *   4 · HẠ TẦNG (gập lại)  → chỗ còn trống để giao việc song song
+   *
+   * Bảng KHÔNG cố trả lời mọi câu hỏi. Bảng = trạng thái cần nhìn thường xuyên; hỏi sâu và
+   * kiểm chứng theo yêu cầu là việc của Assistant trong chat. Thấy đáng thêm vùng thứ năm
+   * thì ghi vào sổ ý tưởng, đừng thêm ở đây. */
+  const ducViec = model.rows
+    .filter(choDuc)
+    .map((r) => ({ row: r, viec: String(r.humanAction).trim(), chan: blockedIfSkipped(deps, r) }));
+
+  /* Xếp theo thứ hạng đơn vị tự khai. Chưa khai hạng thì xuống cuối — KHÔNG coi là hạng 0,
+     vì 0 là số nhỏ nhất và một trường bỏ trống sẽ nhảy lên đầu bảng. */
+  const luong = [...model.rows].sort((a, b) =>
+    (Number.isFinite(a.priorityRank) ? a.priorityRank : Infinity)
+    - (Number.isFinite(b.priorityRank) ? b.priorityRank : Infinity)
+    || a.key.localeCompare(b.key));
+
+  const mocPilot = moc.find((m) => m.ten.includes("PILOT")) || null;
+  const mocDangChay = moc.find((m) => m.bac === 1) || null;
+  const deBaiMo = defects.filter((d) => d.mo);
+
   p.push(`
   <div role="tabpanel" data-pane="ai-dieu-phoi" hidden>
     <div class="card">
-      <div class="sect">Khoá làm việc — ${khoa.length} khoá</div>
-      <div class="kl">`);
-  for (const k of khoa) {
-    p.push(`${KHOA_PREFIX}        <div class="kr"><span class="n">${esc(k.ten)}</span>` +
-      `<span class="badge ${k.ban ? "b1" : "b2"}">${k.ban ? "BẬN" : "MỞ"}</span></div>`);
-  }
-  p.push(`      </div>
-      <div class="hint" style="margin-top:11px">Đây là <strong>ảnh chụp lúc sinh bảng</strong>, không phải trạng thái thời gian thực — nó theo lần ghi gần nhất vào repo. Khoá <strong>MỞ</strong> là chỗ giao được việc mới ngay; khoá <strong>BẬN</strong> thì chỉ đọc, đừng giao thêm.</div>
-      <p class="note">Bảng cố ý <strong>không nói ai đang giữ</strong>, cũng không nói giữ bao lâu. Đức cần biết còn mấy chỗ trống để giao việc song song, chứ không cần tên phiên — tên phiên đổi liên tục và làm bảng mục ngay. Muốn biết ai giữ thì hỏi tôi, tôi tra bảng chủ sở hữu. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
-    </div>
-
-    <div class="card">
-      <div class="sect">Gói Assistant đang ở mốc nào</div>
-      <div class="kl">`);
-  for (const m of moc) {
-    p.push(`        <div class="kr"><span class="n">${esc(m.ten)}</span>` +
-      `<span class="badge b${m.bac}">${esc(m.trangThai)}</span></div>`);
-  }
-  p.push(`      </div>
-      <p class="note">Ba mốc đọc lại từ hồ sơ mốc của gói, không gõ tay ở đây — nên bảng không thể nói khác hồ sơ.</p>
-    </div>
-
-    <div class="card">
-      <div class="sect">Sai lệch đã ghi nhận của chính tôi — ${defects.length} mục</div>
-      <div class="kl">`);
-  if (defects.length) {
-    for (const d of defects) {
-      p.push(`        <div class="kr"><span class="n">${esc(d.ma)} <em>${esc(d.trieuChung)}</em></span>` +
-        `<span class="badge ${d.mo ? "b1" : "b0"}">${d.mo ? "MỞ" : "ĐÓNG"}</span></div>`);
+      <div class="sect">Cần Đức — ${ducViec.length ? esc(ducViec.length + " việc") : "không có việc nào"}</div>
+      <div class="bl">`);
+  if (ducViec.length) {
+    for (const v of ducViec) {
+      p.push(`        <div class="dr"><div class="h">`
+        + `<a href="#${esc(unitId(v.row))}" data-goto="extension">${esc(v.row.name)}</a></div>`
+        + `<span class="d">${esc(v.viec)}</span>`
+        + (v.chan ? `<span class="w">Chưa làm thì: ${esc(v.chan)}</span>` : "")
+        + `</div>`);
     }
   } else {
-    p.push(`        <div class="kr"><span class="n">Chưa ghi nhận sai lệch nào</span><span class="badge b2">SẠCH</span></div>`);
+    /* Vùng trống LÀ một thông tin. Ẩn cả vùng thì Đức không phân biệt được "không có việc
+       nào chờ tôi" với "bảng hỏng chỗ đó". */
+    p.push(`        <div class="dr"><span class="d">Không có việc nào đang chờ Đức.</span></div>`);
   }
   p.push(`      </div>
-      <p class="note">Đây là lỗi của <strong>chính cách tôi làm việc</strong>, không phải lỗi của extension nào. Trạng thái lấy từ trường máy đọc được trong từng đề bài, không dò văn xuôi. <strong>ĐÓNG</strong> gồm cả đề bài đã hoãn.</p>
+      <p class="note">Chỉ những thứ <strong>Đức phải làm hoặc phải quyết</strong>, đọc từ trường mỗi đơn vị tự khai trong hồ sơ trạng thái — việc AI tự làm được không lẫn vào đây. Bấm tên đơn vị để xem đầy đủ ở tab <strong>Extension</strong>. Dòng mờ <strong>Chưa làm thì</strong> chỉ hiện khi đơn vị đó có khai; không khai thì bảng để trơ, không đoán hộ.${humanUndeclared ? ` <strong>${humanUndeclared} đơn vị chưa trả lời câu này</strong>, nên danh sách trên có thể còn thiếu.` : ""}</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Công việc hiện tại — ${luong.length} luồng</div>
+      <div class="bl">`);
+  for (const r of luong) {
+    const tt = trangThaiDonVi(r);
+    const gate = gateNext(r.nextStep);
+    p.push(`        <div class="dr"><div class="h">`
+      + `<a href="#${esc(unitId(r))}" data-goto="extension">${esc(r.name)}</a>`
+      + `<span class="badge b${tt.bac}">${esc(tt.chu)}</span></div>`
+      + `<span class="d">${esc(gate || "chưa khai việc kế")}</span></div>`);
+  }
+  p.push(`      </div>
+      <p class="note">Xếp theo thứ hạng mỗi đơn vị tự khai, hạng 1 lên đầu; chưa khai hạng thì xuống cuối. Huy hiệu <strong>suy ra từ hồ sơ</strong>, không ai gõ tay: có việc chờ Đức thì thành <strong>CHỜ ĐỨC</strong>, và điều đó thắng mọi trạng thái khác. Đang chỉ có ba trạng thái — muốn phân biệt <strong>bị chặn</strong> hay <strong>chờ bằng chứng</strong> thì cần thêm một trường trong hồ sơ, đoán theo văn xuôi thì bảng sẽ nói sai mà không ai biết. Dòng dưới mỗi tên là <strong>câu đầu</strong> của việc kế; bản đầy đủ ở tab <strong>Extension</strong>.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Sức khoẻ Assistant</div>
+      <div class="kl">
+        <div class="kr"><span class="n">Mốc pilot <em>${esc(mocPilot ? mocPilot.ten : "hồ sơ mốc không còn dòng pilot nào")}</em></span><span class="badge b${mocPilot ? mocPilot.bac : 0}">${esc(mocPilot ? mocPilot.trangThai : "chưa đọc được")}</span></div>
+        <div class="kr"><span class="n">Đề bài đang mở của chính tôi</span><span class="badge ${deBaiMo.length ? "b1" : "b2"}">${deBaiMo.length} MỤC</span></div>
+      </div>
+      <p class="note">${deBaiMo.length ? `Đang mở: <strong>${esc(deBaiMo.map((d) => d.ma).join(" · "))}</strong>. ` : ""}Đếm từ trường máy đọc được trong từng đề bài, không dò văn xuôi. Khối này tên là <strong>đề bài đang mở</strong> chứ không phải "sai lệch": cùng một phép đếm gộp cả lỗi thật lẫn đề bài cải tiến, mà gọi một đề bài cải tiến là sai lệch thì sai.</p>
+      <div class="hint" style="margin-top:11px">Ba con số Đức muốn — trượt vai · trượt trạng thái · bảng để cũ — <strong>bảng chưa đếm được</strong>. Pilot đang đếm trong nhật ký từng phiên, mà nhật ký là văn xuôi tự do nên không có gì cố định để máy đếm; lập một sổ đếm riêng thì phạm luật một nguồn sự thật. Nói ra chỗ thiếu tốt hơn in một số 0 mà không ai biết nó đúng hay chỉ là chưa ai đếm. Muốn có ba con số đó thì cần <strong>Đức chốt một dạng nhãn cố định</strong> cho dòng nhật ký — tôi không tự đặt.</div>
+    </div>
+
+    <div class="card">
+      <details class="the">
+        <summary><span><span class="nm">Hạ tầng</span><span class="sub">khoá làm việc và mốc gói Assistant — mở ra khi cần giao việc song song</span></span></summary>
+        <div class="in">
+          <div>
+            <div class="sect">Khoá làm việc — ${khoa.length} khoá</div>
+            <div class="kl">`);
+  /* DẤU DÒNG KHOÁ PHẢI Ở ĐẦU DÒNG, kể cả sau khi bảng khoá đã vào trong khối gập.
+     `compareOverview` lọc bằng `line.startsWith(KHOA_PREFIX)`. Thụt lề trước dấu là mọi lượt
+     đổi bận↔mở lại làm bảng lệch HEAD, và KHÔNG test nào bắt được ở chỗ đó — nó chỉ hiện ra
+     lúc một phiên nào đó bị cổng xuất bản từ chối mà không hiểu vì sao. Giữ đúng dạng
+     `${KHOA_PREFIX}` rồi mới tới khoảng trắng và thẻ mở. */
+  for (const k of khoa) {
+    p.push(`${KHOA_PREFIX}              <div class="kr"><span class="n">${esc(k.ten)}</span>` +
+      `<span class="badge ${k.ban ? "b1" : "b2"}">${k.ban ? "BẬN" : "MỞ"}</span></div>`);
+  }
+  p.push(`            </div>
+            <div class="hint" style="margin-top:11px">Đây là <strong>ảnh chụp lúc sinh bảng</strong>, không phải trạng thái thời gian thực — nó theo lần ghi gần nhất vào repo. Khoá <strong>MỞ</strong> là chỗ giao được việc mới ngay; khoá <strong>BẬN</strong> thì chỉ đọc, đừng giao thêm.</div>
+            <p class="note">Bảng cố ý <strong>không nói ai đang giữ</strong>, cũng không nói giữ bao lâu. Đức cần biết còn mấy chỗ trống để giao việc song song, chứ không cần tên phiên — tên phiên đổi liên tục và làm bảng mục ngay. Muốn biết ai giữ thì hỏi tôi, tôi tra bảng chủ sở hữu. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
+          </div>
+          <div>
+            <div class="kl">
+              <div class="kr"><span class="n">Gói Assistant <em>mốc đang chạy</em></span><span class="badge b${mocDangChay ? mocDangChay.bac : 0}">${esc(mocDangChay ? mocDangChay.ten : "chưa có mốc nào đang chạy")}</span></div>
+            </div>
+            <p class="note">Ba mốc của gói thu lại thành một chip: tên mốc đang chạy, đọc lại từ hồ sơ mốc chứ không gõ tay ở đây. Mốc đổi vài tuần một lần nên nó không đáng một khối riêng mỗi ngày; cả ba mốc kèm trạng thái vẫn nằm trong hồ sơ.</p>
+          </div>
+        </div>
+      </details>
     </div>
   </div>`);
 
