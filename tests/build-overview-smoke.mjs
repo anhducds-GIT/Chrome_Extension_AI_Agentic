@@ -1090,8 +1090,18 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const dongKhoaThat = dong.filter((l) => /<span class="n">[^<]+<\/span><span class="badge b\d">(?:BẬN|MỞ)</.test(l));
   assert.ok(coDau.length > 0, "trang that phai co dong khoa mang dau");
   assert.deepEqual(coDau, dongKhoaThat, "MOI dong khoa deu phai mang dau — sot mot dong la cong do oan");
-  assert.ok(dong.some((l) => !l.startsWith(KHOA_PREFIX) && /<em>[^<]*<\/em><\/span><span class="badge b\d">MỞ</.test(l)),
-    "dong defect MO tuyet doi KHONG duoc mang dau — trang thai defect la noi dung, phai lam cong do");
+  /* HUY HIEU KHAC KHOA tuyệt đối KHÔNG được mang dấu — chúng là NỘI DUNG, lọc chúng khỏi phép
+     so là làm cổng mất răng. Trước DASH-ORCH-V2 ca này dựng bằng dòng defect mang huy hiệu
+     "MỞ"; từ khi mỗi đề bài không còn một dòng riêng thì dòng đó biến mất, nên khẳng định
+     phải neo vào cái CÒN LẠI: huy hiệu trạng thái luồng ở vùng công việc. */
+  const dongHuyHieuKhac = dong.filter((l) => /class="badge b\d">/.test(l)
+    && !/<span class="badge b\d">(?:BẬN|MỞ)</.test(l));
+  assert.ok(dongHuyHieuKhac.length > 0,
+    "trang that phai co huy hieu KHAC khoa, neu khong thi khang dinh duoi vo nghia");
+  for (const l of dongHuyHieuKhac) {
+    assert.ok(!l.startsWith(KHOA_PREFIX),
+      `huy hieu khac khoa KHONG duoc mang dau — do la noi dung, phai lam cong do: ${l.slice(0, 60)}`);
+  }
   ok("do tuoi: dong khoa duoc loc, moi thu khac van chan, va dau in dung cho tren trang that");
 }
 
