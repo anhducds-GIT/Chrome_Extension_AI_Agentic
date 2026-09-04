@@ -2697,3 +2697,43 @@ chữ mới. Thứ tự đúng: **commit nguồn trước → sinh lại artifac
 - `rail()` (thanh bốn nút trong `<details>` của tab Extension và tab Ý tưởng) vẫn vẽ `nghỉ` thành
   nút thứ tư. Cùng bệnh với cái vừa vá, nhưng dùng chung với bậc lifecycle của extension nên
   không sửa lượt này.
+
+## Lượt · `DASH-ORCH-V2` giao đi — và ba brief đã ship vẫn đang khai là MỞ
+
+**Phiên:** `claude-dieu-phoi` · 2026-09-04 · khoá `_docs` · vai điều phối, không triển khai
+
+**Đức tự audit tab "AI điều phối"** và kết luận đúng: tab đang hiện **hạ tầng của Assistant**
+chứ chưa hiện **thông tin giúp Đức điều hành**. Ba bằng chứng Đức đưa đều kiểm lại được: khối
+to nhất là bảng khoá — mà chính bộ sinh phải lọc nó khỏi phép so độ tươi vì nó đổi quá thường
+xuyên, tức tự thừa nhận là ảnh chụp; khối ba mốc đổi vài tuần một lần mà chiếm một card.
+
+**Đã viết brief** `docs/briefs/BRIEF-DASHBOARD-ORCHESTRATOR-TAB-V2.md` — bốn vùng theo thứ tự
+Đức đặt: CẦN ĐỨC · CÔNG VIỆC HIỆN TẠI · SỨC KHOẺ ASSISTANT · HẠ TẦNG (gập). Giao executor
+`claude-exec-orchv2`, khoá `_code`. Bản V1 chuyển `status: superseded` kèm `superseded_by`.
+
+**Ba chỗ brief nói thẳng là repo CHƯA có nguồn máy đọc được**, thay vì bịa dữ liệu cho đủ hình:
+
+1. Hai cột *"vì sao"* / *"ảnh hưởng nếu chưa làm"* → đọc trường **tuỳ chọn**
+   `blocked_if_skipped`; vắng thì không render gì. Hôm nay vắng ở cả bốn đơn vị.
+2. Trạng thái `BLOCKED` và `CHỜ EVIDENCE` → không trường nào phân biệt được với `ĐANG CHẠY`.
+   Làm 3 trong 5 trạng thái. Dò văn xuôi `next_step` để đoán là đúng cái đã sai bốn lần trong
+   một ngày ở `FEATURE-PARITY.md`.
+3. Ba dòng đếm trượt (`Role drift` · `State drift` · `Dashboard stale`) → `ASSISTANT-V0.1.md`
+   mục 5 **cấm lập sổ đếm riêng**, mà dòng Log là văn xuôi tự do. In một dòng nói thẳng là
+   chưa đếm được, thay vì in số `0` mà không ai biết nó đúng hay chỉ là chưa ai đếm.
+
+**Sai lệch tìm thấy lúc đọc dữ liệu nguồn — không phải Đức bắt:** ba brief đã ship xong vẫn
+mang `status: active`, nên khối defect trên bảng đang báo cả ba là **MỞ**. Đã đóng:
+`ROLE-DRIFT-01` → `done` · `STATE-DRIFT-01` → `done` · `DASH-ORCH-01` → `superseded`.
+Số defect MỞ trên bảng: 5 → 2 (`CONTENT-TRUTH-01` và `DASH-ORCH-V2`).
+
+**Còn mở:**
+
+- `CONTENT-TRUTH-01` mở và **thật**: bảng hiện chip `ĐÃ CHỨNG MINH` cho ChatGPT (bằng chứng
+  26/08) và Gemini (28/08), nhưng code đã đổi 23 và 10 commit kể từ đó, và trang Đức đọc không
+  có chỗ nào nói con số đó. Nó **cùng file** `build-overview.mjs` với `DASH-ORCH-V2` → cùng
+  khoá `_code` → **không chạy song song được**. Đang chờ Đức chốt: gộp hay chờ vòng hai.
+- Định dạng nhãn cố định cho dòng Log (để đếm được nhãn pilot) — chờ Đức chốt, không tự đặt.
+- Brief phiên `S1`/`S3`/`S4`/`S5`/`S7` vẫn `status: active` dù đã xong từ lâu. Chúng không có
+  mã trong nháy ngược nên không lọt vào khối defect, nên **không** sửa lượt này — nhưng chỉ số
+  "tài liệu đang hoạt động" vẫn đếm chúng.
