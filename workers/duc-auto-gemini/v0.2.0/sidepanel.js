@@ -116,7 +116,11 @@
     bridgeLastActivityAt: null,
     bridgeActivity: [],
     devMode: false,
-    devTrialContext: null
+    devTrialContext: null,
+    // G-02: tab + hội thoại mà run đang sống đã khoá. bindRunTab() đặt,
+    // releaseRunTab() xoá. null = chưa có run nào khoá.
+    boundTabId: null,
+    boundConversationId: null
   };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -2454,10 +2458,39 @@
     renderConfigProvenance(); renderNamingProvenance(); renderCheckpointMeta(); updateReviewPacketControl(); controls();
   }
 
-  async function activeTab() {
+  async function pickActiveGeminiTab() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id || !window.DacProviderAdapter.isProviderUrl(tab.url || "")) throw new Error("Open a normal Gemini conversation in the active tab.");
     return tab;
+  }
+
+  // G-02. Một run lấy MỘT tab, chọn đúng MỘT lần, ngay lúc nó bắt đầu.
+  // Trước bản vá này mọi message đều giải lại "tab đang hoạt động trong cửa sổ
+  // hiện tại", nên đổi tab giữa chừng là runner âm thầm gõ prompt sang tab
+  // khác. Idempotent: gọi lại không đổi tab đã khoá.
+  async function bindRunTab() {
+    if (state.boundTabId !== null) return state.boundTabId;
+    const tab = await pickActiveGeminiTab();
+    state.boundTabId = tab.id;
+    state.boundConversationId = window.DacTabLockCore.conversationIdOf(tab.url || "");
+    return tab.id;
+  }
+
+  function releaseRunTab() {
+    state.boundTabId = null;
+    state.boundConversationId = null;
+  }
+
+  async function activeTab() {
+    const resolved = await window.DacTabLockCore.resolveBoundTab({
+      boundTabId: state.boundTabId,
+      boundConversationId: state.boundConversationId,
+      getTab: (id) => chrome.tabs.get(id),
+      pickActiveTab: pickActiveGeminiTab,
+      isProviderUrl: (url) => window.DacProviderAdapter.isProviderUrl(url)
+    });
+    if (resolved.adoptConversationId) state.boundConversationId = resolved.adoptConversationId;
+    return resolved.tab;
   }
 
   async function send(message) {
@@ -4548,10 +4581,19 @@
     let effectiveOutput;
     let artifactPersistenceFailed = false;
     let completedNaturally = false;
-    try { effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" }); }
-    catch (error) { const reason = messageOf(error); state.runStarting = false; setStatus("ERROR"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
+    // G-02: khoá tab NGAY ĐÂY, trước authoritativeValidate. Đây là chỗ DUY
+    // NHẤT trong gói này cần khoá — nhánh ChatGPT phải khoá ở hai nơi vì
+    // bridgeRunTrial của nó có runner riêng, còn bridgeRunTrial của Gemini gọi
+    // thẳng run("selected"), cùng một đường với nút của người vận hành.
+    // Trước authoritativeValidate chứ không sau: validate có await (nó ping
+    // tab), và đó đúng là khoảng người vận hành hay đổi tab sau khi bấm Run.
+    // Khoá sau validate là để hở lại đúng cái khe cần bịt.
+    try {
+      await bindRunTab();
+      effectiveOutput = await authoritativeValidate({ allowRecreate: mode === "recreate" });
+    } catch (error) { const reason = messageOf(error); releaseRunTab(); state.runStarting = false; setStatus("ERROR"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
     const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, mode, mode === "selected" ? state.runSelection : state.selectedJobId);
-    if (!runQueue.length) { const reason = `No ${mode} jobs are eligible.`; state.runStarting = false; setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
+    if (!runQueue.length) { const reason = `No ${mode} jobs are eligible.`; releaseRunTab(); state.runStarting = false; setStatus("ERROR", "NOT READY"); progress(reason); log(reason, "error"); controls(); return { ok: false, reason }; }
     // Một run.stop rơi vào khoảng await ở trên đã đặt stopRequested=true và
     // KHÔNG bị xoá ở đây — vòng lặp job bên dưới sẽ thấy và dừng ngay.
     state.running = true; state.runStarting = false; state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
@@ -4677,6 +4719,9 @@
         renderResumePlan();
       }
       if (mode === "selected") state.runSelection.clear();
+      // G-02: run chết theo đường nào cũng phải NHẢ tab, nếu không run sau sẽ
+      // thừa kế khoá của run trước và gõ vào tab người vận hành đã bỏ đi.
+      releaseRunTab();
       state.running = false; state.stopRequested = false; renderQueue(); renderOutputScreen(); controls();
       stopRuntimeTicker();
       if (completedNaturally) {
