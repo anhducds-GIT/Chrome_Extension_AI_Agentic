@@ -230,6 +230,17 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 .badge.b1{background:var(--warn-bg);color:var(--warn)}
 .badge.b2{background:var(--good-bg);color:var(--good)}
 .badge.b3{background:var(--off-bg);color:var(--off)}
+
+/* Vùng CẦN ĐỨC và vùng CÔNG VIỆC HIỆN TẠI dùng CHUNG một hàng: dòng đầu là tên (có link) kèm
+   huy hiệu, dòng dưới là một câu. Một class cho cả hai vùng, vì hai vùng vẽ cùng một hình. */
+.dr{display:flex;flex-direction:column;gap:3px;padding:9px 0;border-bottom:1px solid var(--line)}
+.dr:last-child{border-bottom:none}
+.dr .h{display:flex;flex-wrap:wrap;gap:9px;align-items:baseline}
+.dr a{color:var(--ink);font-weight:600;font-size:13.8px;text-decoration:none;
+  border-bottom:1px solid var(--line-2)}
+.dr a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.dr .d{font-size:13.2px;color:var(--ink-2);line-height:1.45;min-width:0}
+.dr .w{font-size:12px;color:var(--muted);line-height:1.4}
 </style>
 
 <div class="wrap">
@@ -288,7 +299,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
     </div>
 
     <div class="card">
-      <div class="sect">Ý tưởng đang ở bước nào — 8 ý tưởng</div>
+      <div class="sect">Ý tưởng đang ở bước nào — 12 ý tưởng</div>
       <div class="rm">
         <div class="rmr rmh"><span>Ý tưởng</span><div class="rms">
           <span class="rml">Ý TƯỞNG</span>
@@ -298,6 +309,10 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         <div class="rmr"><a href="#y-y-06" data-goto="y-tuong">Y-06 · Luật nói &quot;dòng cuối&quot;, máy chỉ cần &quot;có mặt&quot;</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
         <div class="rmr"><a href="#y-y-07" data-goto="y-tuong">Y-07 · Cổng đỏ giả vì suite chậm — độ tin của cổng, không phải lỗi của bảng</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
         <div class="rmr"><a href="#y-y-08" data-goto="y-tuong">Y-08 · Cặp đối chiếu thứ tư cho `state-check`: `STATUS.md` ↔ Log của chính gói đó</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
+        <div class="rmr"><a href="#y-y-09" data-goto="y-tuong">Y-09 · Luật song song nói &quot;hai khoá khác nhau = chạy song song được&quot;, nhưng bộ sinh làm hai khoá dính nhau</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
+        <div class="rmr"><a href="#y-y-10" data-goto="y-tuong">Y-10 · Bảng chỉ nói được ba trạng thái luồng; &quot;bị chặn&quot; và &quot;chờ bằng chứng&quot; chưa có nguồn</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
+        <div class="rmr"><a href="#y-y-11" data-goto="y-tuong">Y-11 · Ba con số &quot;trượt&quot; của Assistant chưa đếm được, vì nhật ký là văn xuôi tự do</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
+        <div class="rmr"><a href="#y-y-12" data-goto="y-tuong">Y-12 · Suite gốc mất hơn hai phút, và gần hết thời gian nằm ở một hàm</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
         <div class="rmr"><a href="#y-y-01" data-goto="y-tuong">Y-01 · MVP: dùng Claude Code điều phối GPT</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s1">ĐANG XÂY</span></div>
         <div class="rmr"><a href="#y-y-02" data-goto="y-tuong">Y-02 · Protocol làm nhiều việc song song</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s1">ĐANG XÂY</span></div>
         <div class="rmr"><a href="#y-y-03" data-goto="y-tuong">Y-03 · Trường &quot;Đức cần làm&quot; trong hồ sơ trạng thái</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s1">ĐANG XÂY</span></div>
@@ -327,40 +342,63 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 
   <div role="tabpanel" data-pane="ai-dieu-phoi" hidden>
     <div class="card">
-      <div class="sect">Khoá làm việc — 6 khoá</div>
-      <div class="kl">
-<!--khoa-->        <div class="kr"><span class="n">duc-auto-gg-flow-video</span><span class="badge b2">MỞ</span></div>
-<!--khoa-->        <div class="kr"><span class="n">duc-auto-gemini</span><span class="badge b2">MỞ</span></div>
-<!--khoa-->        <div class="kr"><span class="n">duc-auto-chatgpt</span><span class="badge b1">BẬN</span></div>
-<!--khoa-->        <div class="kr"><span class="n">_root</span><span class="badge b2">MỞ</span></div>
-<!--khoa-->        <div class="kr"><span class="n">_docs</span><span class="badge b2">MỞ</span></div>
-<!--khoa-->        <div class="kr"><span class="n">_code</span><span class="badge b2">MỞ</span></div>
+      <div class="sect">Cần Đức — 4 việc</div>
+      <div class="bl">
+        <div class="dr"><div class="h"><a href="#ext-root" data-goto="extension">Extension Observer V0</a></div><span class="d">Quyết định Extension Observer V0: nuôi tiếp hay cho nghỉ. Chỉ Đức chốt được.</span></div>
+        <div class="dr"><div class="h"><a href="#ext-workers-duc-auto-chatgpt-v0-1-0" data-goto="extension">Duc Auto ChatGPT</a></div><span class="d">Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích; muốn chạy nhiều luồng song song thì mở tab BRIDGE, gõ tên và bấm Gắn tab đang mở cho từng tab.</span></div>
+        <div class="dr"><div class="h"><a href="#ext-workers-duc-auto-gemini-v0-2-0" data-goto="extension">Duc Auto Gemini (Platform)</a></div><span class="d">Mở từng hồ sơ Chrome đang dùng cho Gemini, nạp lại tiện ích, rồi điền tên hồ sơ vào ô trong bảng điều khiển.</span></div>
+        <div class="dr"><div class="h"><a href="#ext-workers-duc-auto-gg-flow-video-v0-1-0" data-goto="extension">Duc Auto GG Flow Video</a></div><span class="d">Nạp lại tiện ích trong Chrome, rồi chạy MỘT job ở chế độ Image với chip x3. Một lượt đó kiểm cả F-26 lẫn khối `loop` mới. Hỏng thì vẫn 0 credit. Và một câu cần Đức chốt: có cho chuyển vòng chạy job sang service worker không (F-25 bước ③) — đó là đổi lớn về kiến trúc nên AI không tự quyết.</span></div>
       </div>
-      <div class="hint" style="margin-top:11px">Đây là <strong>ảnh chụp lúc sinh bảng</strong>, không phải trạng thái thời gian thực — nó theo lần ghi gần nhất vào repo. Khoá <strong>MỞ</strong> là chỗ giao được việc mới ngay; khoá <strong>BẬN</strong> thì chỉ đọc, đừng giao thêm.</div>
-      <p class="note">Bảng cố ý <strong>không nói ai đang giữ</strong>, cũng không nói giữ bao lâu. Đức cần biết còn mấy chỗ trống để giao việc song song, chứ không cần tên phiên — tên phiên đổi liên tục và làm bảng mục ngay. Muốn biết ai giữ thì hỏi tôi, tôi tra bảng chủ sở hữu. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
+      <p class="note">Chỉ những thứ <strong>Đức phải làm hoặc phải quyết</strong>, đọc từ trường mỗi đơn vị tự khai trong hồ sơ trạng thái — việc AI tự làm được không lẫn vào đây. Bấm tên đơn vị để xem đầy đủ ở tab <strong>Extension</strong>. Dòng mờ <strong>Chưa làm thì</strong> chỉ hiện khi đơn vị đó có khai; không khai thì bảng để trơ, không đoán hộ.</p>
     </div>
 
     <div class="card">
-      <div class="sect">Gói Assistant đang ở mốc nào</div>
-      <div class="kl">
-        <div class="kr"><span class="n">V0.1 PACKAGE</span><span class="badge b2">xong 2026-09-04</span></div>
-        <div class="kr"><span class="n">ASSISTANT PILOT</span><span class="badge b1">đang chạy</span></div>
-        <div class="kr"><span class="n">PORTABLE FREEZE → TEMPLATE</span><span class="badge b3">khoá, chờ pilot đạt</span></div>
+      <div class="sect">Công việc hiện tại — 5 luồng</div>
+      <div class="bl">
+        <div class="dr"><div class="h"><a href="#ext-workers-duc-auto-gg-flow-video-v0-1-0" data-goto="extension">Duc Auto GG Flow Video</a><span class="badge b1">CHỜ ĐỨC</span></div><span class="d">F-25 bước ③ — CẦN ĐỨC CHỐT: cho vòng chạy job sống ở service worker thay vì side panel…</span></div>
+        <div class="dr"><div class="h"><a href="#ext-workers-duc-auto-chatgpt-v0-1-0" data-goto="extension">Duc Auto ChatGPT</a><span class="badge b1">CHỜ ĐỨC</span></div><span class="d">Pilot vận hành thật cho phiên-theo-tab (Đức duyệt rồi mới chạy): reload extension, gắn tên 2–3 tab, gọi…</span></div>
+        <div class="dr"><div class="h"><a href="#ext-workers-duc-auto-gemini-v0-2-0" data-goto="extension">Duc Auto Gemini (Platform)</a><span class="badge b1">CHỜ ĐỨC</span></div><span class="d">Sau khi Đức nạp lại tiện ích và đặt tên hồ sơ: gọi bridge.sessions để đối chiếu đủ tên…</span></div>
+        <div class="dr"><div class="h"><a href="#ext-root" data-goto="extension">Extension Observer V0</a><span class="badge b1">CHỜ ĐỨC</span></div><span class="d">Quyết định: nuôi tiếp hay cho nghỉ…</span></div>
+        <div class="dr"><div class="h"><a href="#ext-workers-duc-auto-gemini-v0-1-0" data-goto="extension">Duc Auto Gemini</a><span class="badge b0">XONG</span></div><span class="d">chưa khai việc kế</span></div>
       </div>
-      <p class="note">Ba mốc đọc lại từ hồ sơ mốc của gói, không gõ tay ở đây — nên bảng không thể nói khác hồ sơ.</p>
+      <p class="note">Xếp theo thứ hạng mỗi đơn vị tự khai, hạng 1 lên đầu; chưa khai hạng thì xuống cuối. Huy hiệu <strong>suy ra từ hồ sơ</strong>, không ai gõ tay: có việc chờ Đức thì thành <strong>CHỜ ĐỨC</strong>, và điều đó thắng mọi trạng thái khác. Đang chỉ có ba trạng thái — muốn phân biệt <strong>bị chặn</strong> hay <strong>chờ bằng chứng</strong> thì cần thêm một trường trong hồ sơ, đoán theo văn xuôi thì bảng sẽ nói sai mà không ai biết. Dòng dưới mỗi tên là <strong>câu đầu</strong> của việc kế; bản đầy đủ ở tab <strong>Extension</strong>.</p>
     </div>
 
     <div class="card">
-      <div class="sect">Sai lệch đã ghi nhận của chính tôi — 6 mục</div>
+      <div class="sect">Sức khoẻ Assistant</div>
       <div class="kl">
-        <div class="kr"><span class="n">ASSISTANT-PROMOTE-01 <em>đưa gói Assistant vào bộ khung</em></span><span class="badge b0">ĐÓNG</span></div>
-        <div class="kr"><span class="n">CONTENT-TRUTH-01 <em>Bảng nói &quot;đã chứng minh&quot; mà giấu mất việc code đã đổi</em></span><span class="badge b1">MỞ</span></div>
-        <div class="kr"><span class="n">DASH-ORCH-01 <em>tab &quot;AI điều phối&quot; trên bảng trạng thái</em></span><span class="badge b0">ĐÓNG</span></div>
-        <div class="kr"><span class="n">DASH-ORCH-V2 <em>tab &quot;AI điều phối&quot; đổi từ trạng thái hệ Assistant sang chỗ Đức điều hành</em></span><span class="badge b1">MỞ</span></div>
-        <div class="kr"><span class="n">ROLE-DRIFT-01 <em>Hard Role Firewall cho vai điều phối</em></span><span class="badge b0">ĐÓNG</span></div>
-        <div class="kr"><span class="n">STATE-DRIFT-01 <em>cổng nhất quán trạng thái trước khi báo cáo</em></span><span class="badge b0">ĐÓNG</span></div>
+        <div class="kr"><span class="n">Mốc pilot <em>ASSISTANT PILOT</em></span><span class="badge b1">đang chạy</span></div>
+        <div class="kr"><span class="n">Đề bài đang mở của chính tôi</span><span class="badge b1">2 MỤC</span></div>
       </div>
-      <p class="note">Đây là lỗi của <strong>chính cách tôi làm việc</strong>, không phải lỗi của extension nào. Trạng thái lấy từ trường máy đọc được trong từng đề bài, không dò văn xuôi. <strong>ĐÓNG</strong> gồm cả đề bài đã hoãn.</p>
+      <p class="note">Đang mở: <strong>CONTENT-TRUTH-01 · DASH-ORCH-V2</strong>. Đếm từ trường máy đọc được trong từng đề bài, không dò văn xuôi. Khối này tên là <strong>đề bài đang mở</strong> chứ không phải "sai lệch": cùng một phép đếm gộp cả lỗi thật lẫn đề bài cải tiến, mà gọi một đề bài cải tiến là sai lệch thì sai.</p>
+      <div class="hint" style="margin-top:11px">Ba con số Đức muốn — trượt vai · trượt trạng thái · bảng để cũ — <strong>bảng chưa đếm được</strong>. Pilot đang đếm trong nhật ký từng phiên, mà nhật ký là văn xuôi tự do nên không có gì cố định để máy đếm; lập một sổ đếm riêng thì phạm luật một nguồn sự thật. Nói ra chỗ thiếu tốt hơn in một số 0 mà không ai biết nó đúng hay chỉ là chưa ai đếm. Muốn có ba con số đó thì cần <strong>Đức chốt một dạng nhãn cố định</strong> cho dòng nhật ký — tôi không tự đặt.</div>
+    </div>
+
+    <div class="card">
+      <details class="the">
+        <summary><span><span class="nm">Hạ tầng</span><span class="sub">khoá làm việc và mốc gói Assistant — mở ra khi cần giao việc song song</span></span></summary>
+        <div class="in">
+          <div>
+            <div class="sect">Khoá làm việc — 6 khoá</div>
+            <div class="kl">
+<!--khoa-->              <div class="kr"><span class="n">duc-auto-gg-flow-video</span><span class="badge b2">MỞ</span></div>
+<!--khoa-->              <div class="kr"><span class="n">duc-auto-gemini</span><span class="badge b2">MỞ</span></div>
+<!--khoa-->              <div class="kr"><span class="n">duc-auto-chatgpt</span><span class="badge b1">BẬN</span></div>
+<!--khoa-->              <div class="kr"><span class="n">_root</span><span class="badge b2">MỞ</span></div>
+<!--khoa-->              <div class="kr"><span class="n">_docs</span><span class="badge b1">BẬN</span></div>
+<!--khoa-->              <div class="kr"><span class="n">_code</span><span class="badge b1">BẬN</span></div>
+            </div>
+            <div class="hint" style="margin-top:11px">Đây là <strong>ảnh chụp lúc sinh bảng</strong>, không phải trạng thái thời gian thực — nó theo lần ghi gần nhất vào repo. Khoá <strong>MỞ</strong> là chỗ giao được việc mới ngay; khoá <strong>BẬN</strong> thì chỉ đọc, đừng giao thêm.</div>
+            <p class="note">Bảng cố ý <strong>không nói ai đang giữ</strong>, cũng không nói giữ bao lâu. Đức cần biết còn mấy chỗ trống để giao việc song song, chứ không cần tên phiên — tên phiên đổi liên tục và làm bảng mục ngay. Muốn biết ai giữ thì hỏi tôi, tôi tra bảng chủ sở hữu. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
+          </div>
+          <div>
+            <div class="kl">
+              <div class="kr"><span class="n">Gói Assistant <em>mốc đang chạy</em></span><span class="badge b1">ASSISTANT PILOT</span></div>
+            </div>
+            <p class="note">Ba mốc của gói thu lại thành một chip: tên mốc đang chạy, đọc lại từ hồ sơ mốc chứ không gõ tay ở đây. Mốc đổi vài tuần một lần nên nó không đáng một khối riêng mỗi ngày; cả ba mốc kèm trạng thái vẫn nằm trong hồ sơ.</p>
+          </div>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -610,6 +648,110 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 <p>trong một ngày. Thêm một cặp hay báo oan vào một cổng đang tin được là cách nhanh nhất làm</p>
 <p>mất giá trị cả cổng — cùng lý lẽ với Y-07.</p>
 <p>Cấm đụng ba cặp đã có, và cấm biến lệnh này thành siêu-auditor — ranh giới ở brief mục 3.</p></div>
+        </div>
+      </details>
+      <details class="the" id="y-y-09">
+        <summary>
+          <span><span class="nm">Y-09 · Luật song song nói &quot;hai khoá khác nhau = chạy song song được&quot;, nhưng bộ sinh làm hai khoá dính nhau</span><span class="sub">Đức chốt có làm không; làm thì viết brief riêng</span></span>
+          <span class="chip s0">Ý TƯỞNG</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Đức chốt có làm không; làm thì viết brief riêng</dd>
+            <dt>Ai đang làm</dt><dd>chưa ai nhận</dd>
+            <dt>Phạm vi</dt><dd>chưa khai</dd>
+            <dt>nguồn</dt><dd>gặp thật 04/09, phiên claude-dieu-phoi — safe-push từ chối đúng luật</dd>
+            <dt>vì sao</dt><dd>hôm nay _docs (tôi, viết brief) và _code (executor, sửa bộ sinh) chạy song</dd>
+            <dt>vì sao chưa làm ngay</dt><dd>ba đường, cả ba đều có giá, chưa đo được cái nào rẻ hơn:</dd>
+            <dt>phạm vi khi làm</dt><dd>tuỳ đường chốt — (a) … (_docs) ·</dd>
+            <dt>đo trước khi sửa</dt><dd>đếm trong lịch sử thật xem đã có bao nhiêu lượt push bị từ chối đúng vì</dd>
+          </dl>
+          <div class="prose"><p>song — đúng luật, hai khoá khác nhau, không file nào chồng nhau. Nhưng safe-push của tôi</p>
+<p>bị TỪ CHỐI: … đang sửa dở chưa commit, mà nó là thứ phán xử</p>
+<p>độ tươi của artifact, nên cổng coi kết quả sinh ra không đáng tin. Từ chối đó là ĐÚNG — không</p>
+<p>phải bug. Nhưng nó có nghĩa: **ai giữ khoá chứa bộ sinh thì chặn đường xuất bản của mọi khoá</p>
+<p>khác**, suốt thời gian họ chưa commit. Luật mục 1 không nói điều này ở đâu cả.</p>
+<p>(a) ghi luật ra … và sống chung — phiên nào sắp push thì hỏi phiên giữ _code</p>
+<p>commit trước; rẻ nhất, nhưng thành một phép bắt tay bằng miệng, tức là loại luật máy không</p>
+<p>kiểm được và sớm muộn bị bỏ qua. (b) cho safe-push chỉ từ chối khi phần đang sửa dở **thật</p>
+<p>sự** ảnh hưởng artifact — nghe hợp lý nhưng phải hiểu được nội dung diff của bộ sinh, tức</p>
+<p>hạng , và nới một cổng đang tin được là cách nhanh nhất làm mất nó. (c) tách bộ sinh ra</p>
+<p>khoá riêng — làm 6 khoá thành 7, mà chính lý do tách _root thành ba khoá 02/09 là để giảm</p>
+<p>điểm nghẽn, không phải thêm.</p>
+<p>(b) … + test (_code, và đây là sửa cơ chế đa phiên nên bắt buộc</p>
+<p>có đột biến kiểm theo … · (c) … (_root).</p>
+<p>lý do này. Hôm nay là lượt đầu tiên tôi thấy — một ca không đủ để đổi cơ chế.</p></div>
+        </div>
+      </details>
+      <details class="the" id="y-y-10">
+        <summary>
+          <span><span class="nm">Y-10 · Bảng chỉ nói được ba trạng thái luồng; &quot;bị chặn&quot; và &quot;chờ bằng chứng&quot; chưa có nguồn</span><span class="sub">Đức chốt có thêm một trường vào hồ sơ trạng thái không; chốt rồi mới sửa bộ sinh</span></span>
+          <span class="chip s0">Ý TƯỞNG</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Đức chốt có thêm một trường vào hồ sơ trạng thái không; chốt rồi mới sửa bộ sinh</dd>
+            <dt>Ai đang làm</dt><dd>chưa ai nhận</dd>
+            <dt>Phạm vi</dt><dd>chưa khai</dd>
+            <dt>nguồn</dt><dd>gặp thật 04/09, phiên claude-exec-orchv2 khi làm vùng CÔNG VIỆC HIỆN TẠI</dd>
+            <dt>vì sao</dt><dd>Đức nêu năm trạng thái. Ba cái làm được ngay vì có nguồn máy đọc được</dd>
+            <dt>phạm vi khi làm</dt><dd>một trường mới trong … + hồ sơ từng gói (khoá của</dd>
+          </dl>
+          <div class="prose"><p>(CHỜ ĐỨC · ĐANG CHẠY · XONG). Hai cái còn lại — bị chặn và chờ bằng chứng —</p>
+<p>hôm nay repo không có trường nào phân biệt được chúng với &quot;đang chạy&quot;. Cách duy nhất</p>
+<p>không cần trường mới là dò văn xuôi việc kế, và dò theo chữ đúng là cái đã cho kết luận sai</p>
+<p>bốn lần trong một ngày ở bảng đối chiếu hai nhánh. Nên bảng cố ý dừng ở ba.</p>
+<p>từng chủ gói, và _root), rồi bộ sinh + phép ghim (_code). Hai bước, hai khoá — không</p>
+<p>làm chung một lượt được.</p></div>
+        </div>
+      </details>
+      <details class="the" id="y-y-11">
+        <summary>
+          <span><span class="nm">Y-11 · Ba con số &quot;trượt&quot; của Assistant chưa đếm được, vì nhật ký là văn xuôi tự do</span><span class="sub">Đức chốt một dạng nhãn cố định cho dòng nhật ký từng phiên</span></span>
+          <span class="chip s0">Ý TƯỞNG</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Đức chốt một dạng nhãn cố định cho dòng nhật ký từng phiên</dd>
+            <dt>Ai đang làm</dt><dd>chưa ai nhận</dd>
+            <dt>Phạm vi</dt><dd>chưa khai</dd>
+            <dt>nguồn</dt><dd>gặp thật 04/09, phiên claude-exec-orchv2 khi làm vùng SỨC KHOẺ ASSISTANT</dd>
+            <dt>vì sao</dt><dd>Đức muốn thấy ba con số: trượt vai · trượt trạng thái Đức phải bắt · bảng để cũ.</dd>
+            <dt>phạm vi khi làm</dt><dd>dạng nhãn khai ở hồ sơ gói Assistant (_docs), rồi bộ đếm + phép ghim</dd>
+          </dl>
+          <div class="prose"><p>Hồ sơ gói Assistant chốt rằng nhãn từng câu hỏi ghi vào dòng nhật ký, và **cấm lập sổ đếm</p>
+<p>riêng**. Dòng nhật ký là văn xuôi tự do, nên hôm nay chỉ có hai đường và cả hai đều sai: dò</p>
+<p>văn xuôi (ra số sai, im lặng) hoặc lập sổ đếm (phạm luật). Bảng vì thế **nói thẳng là chưa</p>
+<p>đếm được** thay vì in ba số 0 mà không ai biết là đúng hay chỉ là chưa ai đếm.</p>
+<p>(_code). Đức chốt dạng nhãn trước, không AI nào tự đặt.</p></div>
+        </div>
+      </details>
+      <details class="the" id="y-y-12">
+        <summary>
+          <span><span class="nm">Y-12 · Suite gốc mất hơn hai phút, và gần hết thời gian nằm ở một hàm</span><span class="sub">Đức chốt có đáng làm không; làm thì đo trước xem 12 giây đó nằm ở đâu</span></span>
+          <span class="chip s0">Ý TƯỞNG</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Đức chốt có đáng làm không; làm thì đo trước xem 12 giây đó nằm ở đâu</dd>
+            <dt>Ai đang làm</dt><dd>chưa ai nhận</dd>
+            <dt>Phạm vi</dt><dd>chưa khai</dd>
+            <dt>nguồn</dt><dd>đo thật 04/09, phiên claude-exec-orchv2 — một lượt sinh bảng tốn ~12 giây,</dd>
+            <dt>vì sao</dt><dd>mỗi phép ghim mới cần một bản bảng khác là **12 giây cộng thêm vào cổng đóng</dd>
+            <dt>vì sao chưa làm ngay</dt><dd>chưa đo được cái gì chậm. Thử tắt phép đếm commit trong bộ sinh</dd>
+            <dt>phạm vi khi làm</dt><dd>… + … (_code). Chạm bộ sinh bảng thì phải giữ đúng</dd>
+          </dl>
+          <div class="prose"><p>suite gọi nó hơn mười lần</p>
+<p>phiên của MỌI phiên sau**. Chuyện đó tạo áp lực ngược lên chất lượng: người viết test sẽ gộp</p>
+<p>fixture lại cho nhanh, và fixture gộp thì một ca có thể che ca khác. Đã phải gộp một lần</p>
+<p>trong chính phiên này.</p>
+<p>thì thời gian không giảm, nên nghi ngờ đầu tiên đã sai. Đoán tiếp mà không đo là đúng</p>
+<p>cái luật vàng cấm.</p>
+<p>tính tất định — sinh hai lần vẫn phải ra y hệt.</p></div>
         </div>
       </details>
       <details class="the" id="y-y-01">
