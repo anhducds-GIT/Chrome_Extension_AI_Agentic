@@ -378,6 +378,130 @@ const ideasDeps = (text) => ({
   ok(`${tabs.length} tab, ${an} khung an, va ca ${links.length} link o bang tong deu co dich that`);
 }
 
+/* ---- 10b. DASH-TAB-01 · `hidden` phải THẬT SỰ ẩn, không chỉ có mặt ----
+
+   Phép kiểm 10 ở trên hỏi "trang CÓ gì": có chín khung, tám khung mang `hidden`. Nó xanh suốt,
+   và bug vẫn sống từ commit 7-tab đầu tiên tới 04/09 — vì cả suite thiếu đúng MỘT loại khẳng
+   định: trang ẨN đúng những gì. Đoạn JS gán `pane.hidden = true` rất đúng; CSS mới là chỗ vỡ.
+   `[role="tabpanel"]{display:flex}` là luật của TÁC GIẢ, `[hidden]{display:none}` là luật mặc
+   định của TRÌNH DUYỆT, và luật tác giả thắng luật trình duyệt bất kể độ đặc hiệu. Kết quả:
+   Đức bấm tab, chín khung vẫn hiện chồng nhau, không thấy gì đổi.
+
+   Suite này KHÔNG có thư viện DOM (package.json: "dependency-free Node scripts"), nên đây là
+   một bộ suy cascade tí hon, chỉ trả lời đúng một câu: "một khung tabpanel mang `hidden` thì
+   `display` cuối cùng là gì". Nó KHÔNG ghim chữ của bản vá — mọi cách vá đúng đều xanh; đổi
+   `display:flex` sang `display:block` mà quên luật ẩn thì đỏ.
+
+   Hai ca tổng hợp ở dưới là BẰNG CHỨNG BỘ SUY CÓ RĂNG: nếu nó vốn luôn trả "none" thì khẳng
+   định trên trang thật xanh một cách vô nghĩa. ---- */
+{
+  const { html } = buildOverview(createDefaultDeps(ROOT));
+
+  /* Đọc `display` từ một bảng kiểu. Luật lồng trong `@media` bị làm phẳng — cố ý: làm phẳng
+     là NGHIÊM HƠN (một luật chỉ đúng ở màn hình hẹp cũng bị tính), và nghiêm quá thì đỏ, còn
+     lỏng quá thì im lặng cho qua. */
+  const docLuat = (sheetTho) => {
+    /* GHI CHÚ CSS PHẢI BỊ GỠ TRƯỚC. Bản đầu không gỡ, và văn xuôi trong ghi chú — chính ghi chú
+       giải thích bản vá này — bị đọc thành một luật, rồi "thắng" cascade và làm phép kiểm đỏ
+       oan. Chuyện đó xảy ra ngay lượt chạy đầu, nên nó không phải giả thuyết. */
+    const sheet = sheetTho.replace(/\/\*[\s\S]*?\*\//g, " ");
+    const luat = [];
+    let thuTu = 0;
+    for (const m of sheet.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const d = [...m[2].matchAll(/(?:^|;)\s*display\s*:\s*([^;!]+?)\s*(!important)?\s*(?=;|$)/g)].pop();
+      for (const sel of m[1].split(",")) {
+        const s = sel.trim();
+        thuTu += 1;
+        if (s && !s.startsWith("@") && d) luat.push({ sel: s, display: d[1].trim(), quan: Boolean(d[2]), thuTu });
+      }
+    }
+    return luat;
+  };
+
+  /* Chỉ compound CUỐI của selector mới quyết định nó có khớp chính element này hay không —
+     `.card .x` không khớp được nếu `.x` không khớp. Ngược lại, compound cuối khớp thì TÍNH LÀ
+     khớp dù còn tổ tiên chưa kiểm: đoán về phía nghiêm hơn, vì đoán về phía lỏng là đúng cách
+     bug này đã lọt. */
+  const khop = (sel, el) => {
+    const cuoi = sel.split(/[\s>+~]+/).filter(Boolean).pop() || "";
+    const dacTinh = [...cuoi.matchAll(/\[([\w-]+)(?:([~^$*|]?)="?([^\]"]*)"?)?\]/g)];
+    const tran = cuoi.replace(/\[[^\]]*\]/g, "").replace(/::?[\w-]+(\([^)]*\))?/g, "");
+    const the = (tran.match(/^[a-z][\w-]*/i) || [""])[0].toLowerCase();
+    if (the && the !== el.the) return false;
+    if ([...tran.matchAll(/\.([\w-]+)/g)].some((c) => !el.lop.includes(c[1]))) return false;
+    if ([...tran.matchAll(/#([\w-]+)/g)].some((i) => i[1] !== el.id)) return false;
+    for (const [, ten, op, giaTri] of dacTinh) {
+      if (!(ten in el.dacTinh)) return false;
+      if (giaTri !== undefined && op === "" && el.dacTinh[ten] !== giaTri) return false;
+    }
+    return true;
+  };
+
+  const dacHieu = (sel) => {
+    const tran = sel.replace(/\[[^\]]*\]/g, "@");
+    const id = (tran.match(/#[\w-]+/g) || []).length;
+    const giua = (tran.match(/\.[\w-]+|@|:(?!:)[\w-]+/g) || []).length;
+    const the = (tran.replace(/[.#][\w-]+/g, "").match(/(^|[\s>+~])[a-z][\w-]*/gi) || []).length;
+    return id * 10000 + giua * 100 + the;
+  };
+
+  /* Luật mặc định của TRÌNH DUYỆT là điểm khởi đầu, và mọi luật tác giả đều thắng nó. Đó chính
+     là cơ chế đã gây ra bug — nên nó phải nằm trong bộ suy, không được bỏ qua. */
+  const tinhDisplay = (luat, el) => {
+    let thang = { display: el.dacTinh.hidden !== undefined ? "none" : "block", quan: false, dh: -1, thuTu: -1, sel: "(trình duyệt)" };
+    for (const r of luat) {
+      if (!khop(r.sel, el)) continue;
+      const dh = dacHieu(r.sel);
+      const an = thang.thuTu === -1 ? true
+        : r.quan !== thang.quan ? r.quan
+          : dh !== thang.dh ? dh > thang.dh
+            : r.thuTu > thang.thuTu;
+      if (an) thang = { display: r.display, quan: r.quan, dh, thuTu: r.thuTu, sel: r.sel };
+    }
+    return thang;
+  };
+
+  // Element không bịa: đọc thẳng thẻ mở của từng khung trên trang thật.
+  const doc = (the) => {
+    const dacTinh = {};
+    for (const a of the.matchAll(/([\w-]+)(?:="([^"]*)")?/g)) if (a.index > 0) dacTinh[a[1]] = a[2] === undefined ? "" : a[2];
+    return { the: (the.match(/^<([a-z][\w-]*)/i) || ["", ""])[1].toLowerCase(), id: dacTinh.id || "", lop: (dacTinh.class || "").split(/\s+/).filter(Boolean), dacTinh };
+  };
+
+  const khung = [...html.matchAll(/<div [^>]*role="tabpanel"[^>]*>/g)].map((m) => doc(m[0]));
+  assert.ok(khung.length >= 8, `phai doc duoc it nhat 8 khung tabpanel, dang co ${khung.length}`);
+  const an = khung.filter((k) => k.dacTinh.hidden !== undefined);
+  const hien = khung.filter((k) => k.dacTinh.hidden === undefined);
+  assert.equal(hien.length, 1, "dung MOT khung khong mang hidden");
+  assert.equal(an.length, khung.length - 1, "moi khung con lai phai mang hidden");
+
+  /* RĂNG CỦA BỘ SUY — hai ca tổng hợp, dựng lại đúng ca hỏng lịch sử và ca đã vá.
+     Không dùng chữ của bản vá, nên vá kiểu nào đúng cũng qua được. */
+  const mauAn = an[0];
+  assert.equal(tinhDisplay(docLuat(`[role="tabpanel"]{display:flex}`), mauAn).display, "flex",
+    "BO SUY PHAI BAT DUOC ca hong: chi co luat tac gia display:flex thi khung mang hidden VAN hien — day dung la DASH-TAB-01");
+  assert.equal(tinhDisplay(docLuat(`[role="tabpanel"]{display:flex}[role="tabpanel"][hidden]{display:none}`), mauAn).display, "none",
+    "va PHAI cong nhan ban va dung — neu khong thi no chi biet noi 'do'");
+
+  // TRANG THẬT.
+  const iS = html.indexOf("<style>");
+  const jS = html.indexOf("</style>", iS);
+  assert.ok(iS !== -1 && jS !== -1, "trang phai co khoi <style> — khong co thi khong the ket luan gi");
+  const luat = docLuat(html.slice(iS + "<style>".length, jS));
+  assert.ok(luat.length > 0, "phai doc duoc luat display tu bang kieu — 0 la bo doc hong, khong phai bang kieu trong");
+
+  for (const k of an) {
+    const kq = tinhDisplay(luat, k);
+    assert.equal(kq.display, "none",
+      `khung "${k.dacTinh["data-pane"]}" mang hidden ma display = ${kq.display} (luat thang: ${kq.sel}) — Duc bam tab se khong thay gi doi`);
+  }
+  const kqHien = tinhDisplay(luat, hien[0]);
+  assert.notEqual(kqHien.display, "none",
+    `khung dang mo "${hien[0].dacTinh["data-pane"]}" bi an mat (luat thang: ${kqHien.sel}) — mo trang ra trang trong`);
+
+  ok(`DASH-TAB-01 · ${an.length} khung mang hidden deu that su an, 1 khung mo van hien`);
+}
+
 /* ---- 11. MÔ TẢ FAIL CLOSED — thà trống còn hơn khai sai tên ---- */
 {
   const deps = (h1) => ({ fileExists: () => true, readFile: () => `# ${h1}\n\nMột câu mô tả gói.\n\n## Mục sau` });
