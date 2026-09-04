@@ -35,23 +35,23 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-03T23:59",
-      "task": "ROLE-DRIFT-01: Hard Role Firewall cho ORCHESTRATOR.md",
-      "released_at": "2026-09-04T02:38",
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T02:55",
+      "task": "Viet brief STATE-DRIFT-01 de giao executor",
+      "released_at": null,
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T02:30",
-      "task": "dat regression smoke role firewall vao tests/",
-      "released_at": "2026-09-04T02:38",
+      "owner": "claude-k2-restamp",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T02:53",
+      "task": "Va lo restamp: dong dau cho mot vu doi chu khoa khong duoc im lang",
+      "released_at": null,
       "taken_from": "claude-k2-snapshot",
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "97dd5abe2d4558fd"
+  "_fingerprint": "a68f5debfe86abff"
 }
