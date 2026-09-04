@@ -85,7 +85,15 @@ assert.equal(adapter.surfaceAllowed("https://example.com/", { submittedInThisTab
 const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 assert.doesNotMatch(sidepanel, /chatgpt\\\.com/, "sidepanel.js does not contain a literal chatgpt\\.com regex");
 assert.doesNotMatch(sidepanel, /gemini\\\.google/, "sidepanel.js does not grow its own gemini origin regex either");
-assert.equal([...sidepanel.matchAll(/DacProviderAdapter\.isProviderUrl\(/g)].length, 2, "activeTab and isChatGPTUrl both delegate to the adapter predicate");
+// Ba chỗ, kể tên để lần sau con số này không còn là số ma. G-02 (04/09) thêm
+// chỗ thứ ba: activeTab() bơm predicate vào tab-lock-core thay vì để core tự
+// nghĩ ra luật địa chỉ Gemini của riêng nó. Cái thật sự được bảo vệ là HAI
+// dòng doesNotMatch ở trên — không nơi nào trong sidepanel.js được tự chế
+// regex origin. Con số này chỉ là chốt phụ, và nó phải TĂNG khi có thêm chỗ
+// ủy quyền hợp lệ, chứ không phải để yên rồi ai đó gỡ một chỗ đi.
+assert.equal([...sidepanel.matchAll(/DacProviderAdapter\.isProviderUrl\(/g)].length, 3, "ba chỗ ủy quyền cho adapter: pickActiveGeminiTab · activeTab (bơm vào tab-lock-core, G-02) · isChatGPTUrl");
+for (const site of ["pickActiveGeminiTab", "isChatGPTUrl"]) assert.ok(sidepanel.includes(site), `chỗ ủy quyền ${site} phải còn tồn tại`);
+assert.match(sidepanel, /isProviderUrl:\s*\(url\)\s*=>\s*window\.DacProviderAdapter\.isProviderUrl\(url\)/, "tab-lock-core phải NHẬN predicate từ adapter, không được tự nghĩ ra luật mặt Gemini của riêng nó");
 
 /* ---- content.js consumes the adapter instead of inline literals ---------- */
 
