@@ -42,11 +42,11 @@
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-qdsync da hoan tat va bao cao xong, nhung ket thuc truoc khi push nen khong tra duoc khoa. Da push ho 12 commit theo Duc duyet --carry; cay lam viec SACH nen khong co viec do bi mat."
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T07:09",
-      "task": "dong bo contract Query-driven Assistant v0.1 vao ORCHESTRATOR + ASSISTANT-V0.1",
-      "released_at": "2026-09-04T08:50",
+      "owner": "claude-exec-roadmap",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T08:53",
+      "task": "DASH-ROADMAP-01 phan tai lieu: sua 3 cho con noi theo luat cu (ASSISTANT-V0.1 x2, ORCHESTRATOR muc 6)",
+      "released_at": null,
       "taken_from": "claude-exec-qdsync",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -63,5 +63,5 @@
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "3082d180b751f98a"
+  "_fingerprint": "38be3b4533132eae"
 }
