@@ -2317,3 +2317,49 @@ Không promote sang `Ark_Repo_Harness`.
 **Còn mở:** `Y-08` trong `IDEAS.md` — cặp đối chiếu **thứ tư** (`STATUS.md` ↔ Log của chính gói),
 tức ca số 2 của brief, cố ý CHƯA làm vì Đức chốt phạm vi hẹp và vì nó so văn xuôi với văn xuôi
 (hạng `[DÒ]`, dễ báo oan). Đức chốt có làm không.
+
+---
+
+## 2026-09-04 · Phiên `claude-k2-baseline` — vá 2 fail-open TRONG chính chốt vừa dựng
+
+GPT audit vòng 7 tìm được hai lỗ trong bản vá K2-11 của tôi (chốt `--restamp`) — tức lỗ nằm
+trong chính thứ vừa sinh ra để bịt lỗ. Đọc lại code của mình: **cả hai đều thật.**
+
+**1. Vòng qua bằng một lượt commit.** Mốc so của tôi là `HEAD:.agents/claims.json`. Nên đường
+này vẫn lọt: sửa tay owner → `git commit` (dấu đang vỡ, nhưng `git commit` không hỏi ai) →
+`--restamp`. Lúc đó HEAD đã mang owner mới, file trên đĩa cũng owner mới → phép so thấy "không
+đổi gì" → không đòi câu chốt nào. **Chốt dựng buổi sáng, buổi chiều có cửa sau tốn đúng một lệnh.**
+
+**2. Lỗi đọc git thành "không có vấn đề".** `claimsTaiHead()` bắt mọi lỗi rồi trả `null`, và
+`khoaBiDoiChu(null, …)` trả mảng rỗng. Git hỏng → kết luận không ai bị lấy khoá → cho đóng dấu.
+Đúng họ lỗi mà cổng đóng phiên vừa loại bỏ sáng nay bằng phép kiểm #12 — tôi vá nó ở một file
+rồi tái tạo nó ở file bên cạnh trong cùng ngày.
+
+**3. Và một cái GPT không nêu, tôi tìm ra khi đọc lại vòng lặp của chính mình:** nếu MỌI bản
+trong lịch sử đều đọc hỏng, vòng lặp chỉ `continue` nên nó kết thúc êm, không bản nào "có dấu",
+và hàm trả BOOTSTRAP — tức CHO QUA. Nấp sâu hơn một tầng so với (2).
+
+**Bản vá:** mốc so không còn là "bản mới nhất" mà là **bản gần nhất có dấu còn khớp nội dung** —
+bản cuối cùng ta biết chắc chưa bị sửa tay. Một lượt sửa tay rồi commit tạo ra bản có dấu KHÔNG
+khớp; bản đó bị bỏ qua và phép so lùi tiếp về mốc lành. Cửa sau đóng lại.
+
+Ba trạng thái, cố ý không gộp — "chưa biết" không được đội lốt "không sao":
+`OK` (có mốc lành) · `BOOTSTRAP` (repo chưa từng commit / chưa từng đóng dấu — cho qua, vì đòi
+hỏi ở đây là khoá repo ngay từ commit đầu) · `LOI` (không đọc được, hoặc quét hết tầm mà không
+thấy mốc lành, hoặc có bản đọc hỏng → **TỪ CHỐI**).
+
+**Số đo:** `claim-smoke` 11 → **12** (khối K2-12: 6 ca A–F). Suite tổng **348**, 11/11 bước.
+Mutation **3/3**: lấy thẳng bản mới nhất làm mốc · biến `LOI` thành cho qua · bỏ qua số bản đọc
+hỏng.
+
+**Một bài học lặp lại lần thứ năm trong ngày, ghi ra vì nó là cách làm chứ không phải chi tiết
+vụn:** mutation đầu tiên cho `LOI` **không bị bắt** — vì ca của tôi thử thẳng hàm, chưa thử
+đường lệnh. Hàm trả `LOI` đúng, mà nơi gọi lờ đi thì cũng như không. Phải thêm một ca chạy thật
+`--restamp` trong repo không có mốc lành thì mutation mới đỏ. **Ghim hàm không thay được ghim
+đường đi.**
+
+Một fixture cũ phải sửa theo: khối K2-4 chạy `--restamp` trong thư mục trần. Từ nay lệnh cần
+lịch sử để đọc, nên fixture đó `git init` thật. Thư mục trần không phải hình dạng thật —
+`claims.json` luôn nằm trong một repo.
+
+Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 · `Y-01`.

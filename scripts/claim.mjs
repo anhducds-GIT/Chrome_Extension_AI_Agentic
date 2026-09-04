@@ -172,11 +172,80 @@ export function ageLabel(hours) {
  * tình huống mà theo định nghĩa đã cần một câu của Đức rồi. So sánh không phải công cụ xấu;
  * đặt nó lên đường đi thường ngày mới là cái xấu.
  */
-export function claimsTaiHead(root = ROOT) {
+/* MỐC SO PHẢI LÀ "BẢN NIÊM PHONG HỢP LỆ GẦN NHẤT", KHÔNG PHẢI HEAD — audit GPT vòng 7, 04/09.
+ *
+ * Bản đầu của tôi lấy thẳng `HEAD:.agents/claims.json` làm mốc. Hai lỗ, cả hai tôi tự tạo ra:
+ *
+ * 1. VÒNG QUA BẰNG MỘT LƯỢT COMMIT. Sửa tay owner → `git commit` (dấu đang vỡ, nhưng `git
+ *    commit` không hỏi ai) → `--restamp`. Lúc đó HEAD đã mang owner mới, file trên đĩa cũng
+ *    owner mới, nên phép so thấy "không đổi gì" và không đòi câu chốt nào. Chốt vừa dựng xong
+ *    đã có cửa sau, và cửa đó chỉ tốn thêm một lệnh.
+ * 2. LỖI ĐỌC GIT THÀNH "KHÔNG CÓ VẤN ĐỀ". `catch { return null; }` rồi `khoaBiDoiChu(null,…)`
+ *    trả mảng rỗng. Tức git hỏng → kết luận không ai bị lấy khoá → cho đóng dấu. Đúng họ lỗi
+ *    mà cổng đóng phiên vừa loại bỏ sáng nay bằng phép kiểm #12.
+ *
+ * Nên mốc so KHÔNG phải "bản mới nhất", mà là **bản gần nhất mà dấu còn khớp nội dung** — tức
+ * bản cuối cùng ta biết chắc chưa bị sửa tay. Một lượt sửa tay rồi commit sẽ tạo ra một bản có
+ * dấu KHÔNG khớp; bản đó bị bỏ qua, và phép so lùi tiếp về mốc lành. Cửa sau đóng lại.
+ *
+ * Ba trạng thái, cố ý không gộp — "chưa biết" không được đội lốt "không sao":
+ *   OK        → có mốc lành, so với nó.
+ *   BOOTSTRAP → repo chưa từng đóng dấu lần nào (thời trước khi có niêm phong, hoặc repo mới
+ *               dựng). Cho qua, vì đòi hỏi ở đây là khoá repo ngay từ commit đầu.
+ *   LOI       → không đọc được lịch sử, HOẶC quét hết mức cho phép mà không thấy mốc lành nào.
+ *               TỪ CHỐI. Không đoán.
+ */
+export const BASELINE = Object.freeze({ OK: "ok", BOOTSTRAP: "bootstrap", LOI: "loi" });
+const QUET_TOI_DA = 50;
+
+export function baselineDaNiemPhong(root = ROOT, capQuet = QUET_TOI_DA) {
+  const chay = (...a) => execFileSync("git", a, { cwd: root, encoding: "utf8" });
+
+  // "Chưa có lịch sử" KHÁC "đọc lịch sử thất bại", và gộp hai thứ đó lại chính là cách sinh ra
+  // fail-open. Repo chưa commit lần nào thì chưa từng có trạng thái niêm phong nào để mà mất —
+  // đó là ngoại lệ bootstrap thật. Còn lại đều phải fail closed.
+  try { chay("rev-parse", "--verify", "HEAD"); }
+  catch { return { trangThai: BASELINE.BOOTSTRAP, ly_do: "repo chưa có commit nào" }; }
+
+  let shas;
   try {
-    const raw = execFileSync("git", ["show", "HEAD:.agents/claims.json"], { cwd: root, encoding: "utf8" });
-    return JSON.parse(raw)?.claims ?? null;
-  } catch { return null; }        // chưa commit lần nào / không phải repo git → không có gì để so
+    shas = chay("log", `-n${capQuet}`, "--format=%H", "--", ".agents/claims.json")
+      .split("\n").map((s) => s.trim()).filter(Boolean);
+  } catch (error) {
+    return { trangThai: BASELINE.LOI, ly_do: `không đọc được lịch sử của bảng quyền: ${String(error.message).split("\n")[0]}` };
+  }
+  if (!shas.length) return { trangThai: BASELINE.BOOTSTRAP, ly_do: "bảng quyền chưa từng được commit" };
+
+  // ĐẾM CẢ SỐ BẢN ĐỌC HỎNG. Bản đầu của tôi chỉ `continue` — nên nếu MỌI bản đều đọc hỏng thì
+  // vòng lặp kết thúc êm, `thayDau` vẫn false, và hàm trả BOOTSTRAP tức CHO QUA. Đó là đúng
+  // fail-open mà bản vá này sinh ra để diệt, chỉ là nó nấp sâu hơn một tầng. GPT không nêu ca
+  // này; tôi tìm ra khi đọc lại vòng lặp của chính mình.
+  let thayDauBaoGioChua = false;
+  let soBanDocHong = 0;
+  for (const sha of shas) {
+    let parsed;
+    try { parsed = JSON.parse(chay("show", `${sha}:.agents/claims.json`)); }
+    catch { soBanDocHong += 1; continue; }
+    const stamped = parsed?.[FINGERPRINT_FIELD];
+    if (typeof stamped !== "string" || stamped === "") continue;   // bản thời chưa có dấu
+    thayDauBaoGioChua = true;
+    let actual;
+    try { actual = claimsFingerprint(parsed.claims); } catch { soBanDocHong += 1; continue; }
+    if (stamped === actual) return { trangThai: BASELINE.OK, claims: parsed.claims, sha };
+    // dấu KHÔNG khớp = bản này đã bị sửa tay rồi commit. Bỏ qua, lùi về mốc lành hơn.
+    // Chính chỗ này đóng cửa sau "sửa tay → commit → restamp": lượt commit đó không biến
+    // trạng thái bẩn thành mốc so được.
+  }
+  // Chỉ cho qua khi CHẮC CHẮN là repo thời trước niêm phong: không bản nào có dấu, không bản
+  // nào đọc hỏng, và đã quét hết lịch sử chứ không phải dừng vì chạm trần.
+  if (!thayDauBaoGioChua && soBanDocHong === 0 && shas.length < capQuet) {
+    return { trangThai: BASELINE.BOOTSTRAP, ly_do: "bảng quyền chưa bao giờ được đóng dấu" };
+  }
+  return {
+    trangThai: BASELINE.LOI,
+    ly_do: `quét ${shas.length} bản gần nhất của bảng quyền mà không thấy mốc niêm phong lành nào`
+      + (soBanDocHong ? ` (${soBanDocHong} bản không đọc được)` : "")
+  };
 }
 
 /* Hàm THUẦN: khoá nào vừa bị chuyển khỏi tay một người ĐANG GIỮ, mà người đó không phải bạn.
@@ -288,7 +357,17 @@ function main() {
     // câu nhắc, mà người đang cố ý lấy khoá thì đọc xong vẫn đi tiếp.
     const ducDuyet = flag("duc-duyet");
     const coCauChot = typeof ducDuyet === "string" && ducDuyet.trim() !== "";
-    const doiChu = khoaBiDoiChu(claimsTaiHead(), parsed.claims, as);
+    const moc = baselineDaNiemPhong();
+    if (moc.trangThai === BASELINE.LOI) {
+      // FAIL CLOSED. Không có mốc lành thì không biết ai vừa mất khoá — mà "không biết" đúng ra
+      // phải là ĐỎ, không phải "chắc không sao". Đây là lỗ GPT bắt được ở vòng 7.
+      console.error(`\nKHONG_CO_MOC_SO: ${moc.ly_do}.`);
+      console.error("Không có mốc niêm phong lành thì không kết luận được có ai vừa bị lấy khoá hay không,");
+      console.error("và đoán bừa ở đây nghĩa là đóng dấu hợp lệ cho một vụ lấy khoá mà không ai thấy.");
+      console.error("Kiểm: `git log -- .agents/claims.json` và `git diff .agents/claims.json`. Vướng thì hỏi Đức.\n");
+      process.exit(EXIT.REFUSED);
+    }
+    const doiChu = moc.trangThai === BASELINE.OK ? khoaBiDoiChu(moc.claims, parsed.claims, as) : [];
     if (doiChu.length && !coCauChot) {
       console.error(`\nTU_CHOI_DONG_DAU: bảng này đang chuyển ${doiChu.length} khoá khỏi tay phiên khác:`);
       for (const d of doiChu) console.error(`  ${d.key}: "${d.tu}" → ${d.sang ? `"${d.sang}"` : "(trống)"}`);

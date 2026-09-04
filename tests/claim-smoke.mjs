@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ageHours, ageLabel, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, khoaBiDoiChu, readClaims } from "../scripts/claim.mjs";
+import { ageHours, ageLabel, BASELINE, baselineDaNiemPhong, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, khoaBiDoiChu, readClaims } from "../scripts/claim.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -78,6 +78,11 @@ const CLAIMS = () => ({
     // pathname trả về "%20" và mọi phép cắt tay đều sai. Đo thật — bản đầu chết ở đúng chỗ đó.
     const here = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "claim.mjs");
     writeFileSync(join(temp, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+    // PHẢI là repo git thật (thêm 04/09): từ khi `--restamp` so với mốc niêm phong hợp lệ gần
+    // nhất trong LỊCH SỬ, nó cần lịch sử để đọc. Không đọc được thì nó TỪ CHỐI — cố ý, vì
+    // "không biết" mà cho qua chính là fail-open GPT bắt được ở vòng 7. Thư mục trần không
+    // phải hình dạng thật: `claims.json` luôn nằm trong một repo.
+    execFileSync("git", ["init", "-q", "-b", "main"], { cwd: temp, encoding: "utf8" });
 
     const run = (...args) => {
       try {
@@ -165,6 +170,11 @@ const CLAIMS = () => ({
     writeFileSync(claimsPath, `${JSON.stringify({ claims: CLAIMS() }, null, 2)}\n`, "utf8");
     const here = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "claim.mjs");
     writeFileSync(join(temp, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+    // PHẢI là repo git thật (thêm 04/09): từ khi `--restamp` so với mốc niêm phong hợp lệ gần
+    // nhất trong LỊCH SỬ, nó cần lịch sử để đọc. Không đọc được thì nó TỪ CHỐI — cố ý, vì
+    // "không biết" mà cho qua chính là fail-open GPT bắt được ở vòng 7. Thư mục trần không
+    // phải hình dạng thật: `claims.json` luôn nằm trong một repo.
+    execFileSync("git", ["init", "-q", "-b", "main"], { cwd: temp, encoding: "utf8" });
 
     const run = (...args) => {
       // spawnSync, KHONG execFileSync: `--list` kêu dấu vỡ ra STDERR mà vẫn thoát 0, nên nhánh
@@ -394,6 +404,118 @@ const CLAIMS = () => ({
     ok("K2-11 · `--restamp` từ chối đóng dấu cho vụ đổi chủ; có câu chốt Đức thì đi được và ghi xuất xứ VÀO FILE; cờ rỗng không tính; sửa văn xuôi vẫn trơn");
   } finally {
     assert.ok(temp.startsWith(join(tmpdir(), "claim-restamp-")), "chi don dung temp fixture cua phep kiem nay");
+    rmSync(temp, { recursive: true, force: true });
+  }
+}
+
+
+/* ---- K2-12. Mốc so phải là BẢN NIÊM PHONG HỢP LỆ GẦN NHẤT, không mù quáng là HEAD ----
+   Hai fail-open GPT bắt được ở vòng 7, cộng một cái tôi tìm ra khi đọc lại vòng lặp của mình:
+
+   1. VÒNG QUA BẰNG MỘT LƯỢT COMMIT: sửa tay owner → `git commit` → `--restamp`. Mốc cũ là HEAD,
+      mà HEAD giờ đã mang owner mới, nên phép so thấy "không đổi gì" và cho qua. Chốt vừa dựng
+      hôm nay đã có cửa sau, và cửa đó chỉ tốn thêm một lệnh.
+   2. LỖI ĐỌC GIT thành "không có vấn đề" — `catch → null → mảng rỗng → cho qua".
+   3. (tôi) MỌI BẢN ĐỌC HỎNG cũng từng lọt: vòng lặp chỉ `continue`, nên nó kết thúc êm rồi trả
+      BOOTSTRAP tức cho qua. Nấp sâu hơn một tầng so với (2). */
+{
+  const temp = mkdtempSync(join(tmpdir(), "claim-baseline-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: temp, encoding: "utf8" });
+  try {
+    const claimsPath = join(temp, ".agents", "claims.json");
+    mkdirSync(dirname(claimsPath), { recursive: true });
+    mkdirSync(join(temp, "scripts"), { recursive: true });
+    const here = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "claim.mjs");
+    writeFileSync(join(temp, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+    const doc = () => JSON.parse(readFileSync(claimsPath, "utf8"));
+    const ghiDoc = (p) => writeFileSync(claimsPath, `${JSON.stringify(p, null, 2)}\n`, "utf8");
+    const run = (...args) => {
+      const r = spawnSync(process.execPath, [join(temp, "scripts", "claim.mjs"), ...args], { encoding: "utf8" });
+      return { code: r.status, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
+    };
+
+    gitAt("init", "-q", "-b", "main");
+    gitAt("config", "user.name", "K2 Baseline");
+    gitAt("config", "user.email", "k2@example.invalid");
+
+    // CA A — repo chưa có commit nào: BOOTSTRAP thật, phải cho qua. Đòi hỏi ở đây là khoá repo
+    // ngay từ commit đầu tiên — đúng kiểu chặn oan mà cả K2 sinh ra để xoá.
+    ghiDoc({ claims: { _code: { owner: "nan-nhan", task: "dang lam do" }, _docs: { owner: null } } });
+    assert.equal(baselineDaNiemPhong(temp).trangThai, BASELINE.BOOTSTRAP,
+      "repo chua co commit nao thi chua tung co trang thai niem phong de mat — phai cho qua");
+    assert.equal(run("--restamp", "--as", "nan-nhan").code, EXIT.OK, "va restamp phai chay duoc o repo moi");
+    gitAt("add", "-A"); gitAt("commit", "-q", "-m", "seed da dong dau");
+
+    // Mốc lành có thật, và nó đúng là bản vừa commit.
+    const moc = baselineDaNiemPhong(temp);
+    assert.equal(moc.trangThai, BASELINE.OK, "co ban niem phong hop le thi phai tim ra");
+    assert.equal(moc.claims._code.owner, "nan-nhan", "moc phai mang trang thai LANH, khong phai trang thai hien tai");
+
+    // CA B — CRITICAL 1: sửa tay ĐỂ LẤY KHOÁ, rồi COMMIT, rồi restamp. Lượt commit KHÔNG được
+    // biến trạng thái bẩn thành mốc so — nếu không thì chốt hôm nay có cửa sau một lệnh.
+    const cuop = doc();
+    cuop.claims._code = { owner: "ke-lay", taken_from: "nan-nhan" };
+    ghiDoc(cuop);
+    gitAt("add", "-A"); gitAt("commit", "-q", "-m", "sua tay roi commit — dau dang vo");
+    const sauCommit = baselineDaNiemPhong(temp);
+    assert.equal(sauCommit.trangThai, BASELINE.OK, "van phai tim duoc moc lanh, bang cach LUI QUA ban vua bi sua tay");
+    assert.equal(sauCommit.claims._code.owner, "nan-nhan",
+      "moc phai van la ban LANH truoc do — neu no la HEAD thi vu lay khoa da tu hop thuc hoa");
+    const rB = run("--restamp", "--as", "ke-lay");
+    assert.equal(rB.code, EXIT.REFUSED, `CRITICAL 1: commit truoc roi restamp VAN phai bi tu choi. Ra: ${rB.out}`);
+    assert.match(rB.out, /_code: "nan-nhan" → "ke-lay"/, "phai chi dung khoa nao, cua ai, ve tay ai");
+
+    // CA C — CRITICAL 2 / fail-closed: không có mốc lành nào trong tầm quét thì TỪ CHỐI, không
+    // đoán. Ép bằng cách chỉ cho quét đúng 1 bản — bản đó chính là bản vừa bị sửa tay.
+    const hepTam = baselineDaNiemPhong(temp, 1);
+    assert.equal(hepTam.trangThai, BASELINE.LOI,
+      "quet het tam ma khong thay moc lanh thi phai la LOI — 'khong biet' KHONG duoc thanh 'khong sao'");
+    assert.match(hepTam.ly_do, /không thấy mốc niêm phong lành nào/, "phai noi ro vi sao");
+
+    // CA D — repo không đọc được lịch sử: cũng phải TỪ CHỐI, không được lùi về BOOTSTRAP.
+    // (Thư mục có tồn tại nhưng không phải repo git và cũng không có commit — phân biệt được
+    // với ca A chỉ nhờ ca A có `git init`; ở đây kiểm đúng cái nhánh trả BOOTSTRAP là CÓ CHỦ Ý.)
+    const troc = mkdtempSync(join(tmpdir(), "claim-khong-git-"));
+    try {
+      assert.equal(baselineDaNiemPhong(troc).trangThai, BASELINE.BOOTSTRAP,
+        "thu muc chua tung co commit nao = chua tung co trang thai de mat");
+    } finally { rmSync(troc, { recursive: true, force: true }); }
+
+    // CA E — khôi phục hợp lệ: Đức chốt thì đi được, và xuất xứ ghi VÀO FILE.
+    const rE = run("--restamp", "--as", "ke-lay", "--duc-duyet", "Duc chot 04/09: chu cu da tat that");
+    assert.equal(rE.code, EXIT.OK, `co cau chot cua Duc thi phai di duoc. Ra: ${rE.out}`);
+    assert.equal(doc().claims._code.duc_decision, "Duc chot 04/09: chu cu da tat that", "cau chot phai nam trong bang");
+    // CA F — nhánh tôi tự tìm ra: MỌI bản trong lịch sử đều đọc hỏng. Vòng lặp chỉ `continue`
+    // nên nó kết thúc êm, không bản nào "có dấu", và hàm suýt trả BOOTSTRAP tức CHO QUA. Nấp
+    // sâu hơn một tầng so với ca đọc-git-lỗi mà GPT nêu, và không ca nào ở trên chạm tới nó.
+    const hong = mkdtempSync(join(tmpdir(), "claim-ban-hong-"));
+    try {
+      const gh = (...a) => execFileSync("git", a, { cwd: hong, encoding: "utf8" });
+      gh("init", "-q", "-b", "main");
+      gh("config", "user.name", "K2"); gh("config", "user.email", "k2@example.invalid");
+      mkdirSync(join(hong, ".agents"), { recursive: true });
+      writeFileSync(join(hong, ".agents", "claims.json"), "{ khong-phai-json", "utf8");
+      gh("add", "-A"); gh("commit", "-q", "-m", "ban duy nhat trong lich su bi hong");
+      const r = baselineDaNiemPhong(hong);
+      assert.equal(r.trangThai, BASELINE.LOI,
+        "moi ban trong lich su doc hong thi phai LOI — 'khong doc duoc' KHONG duoc thanh 'chua tung dong dau'");
+      assert.match(r.ly_do, /không đọc được/, "phai noi ro co ban khong doc duoc, de nguoi doc biet di sua dau");
+
+      // VÀ QUA ĐƯỜNG LỆNH, không chỉ qua hàm. Mutation chỉ ra rằng ghim hàm thôi thì gỡ hẳn
+      // chốt trong `main()` vẫn không test nào đỏ — hàm trả LOI xong mà nơi gọi lờ đi thì cũng
+      // như không. Bảng trên đĩa để HỢP LỆ, chỉ lịch sử là hỏng, để `readClaims` không chặn trước.
+      mkdirSync(join(hong, "scripts"), { recursive: true });
+      writeFileSync(join(hong, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+      writeFileSync(join(hong, ".agents", "claims.json"),
+        `${JSON.stringify({ claims: { _code: { owner: "ai-do" } } }, null, 2)}\n`, "utf8");
+      const cli = spawnSync(process.execPath, [join(hong, "scripts", "claim.mjs"), "--restamp", "--as", "ai-do"], { encoding: "utf8" });
+      assert.equal(cli.status, EXIT.REFUSED,
+        `khong co moc lanh thi LENH phai tu choi, khong chi ham bao LOI. Ra: ${cli.stdout}${cli.stderr}`);
+      assert.match(`${cli.stdout}${cli.stderr}`, /KHONG_CO_MOC_SO/, "phai co ma loi doc duoc");
+    } finally { rmSync(hong, { recursive: true, force: true }); }
+    ok("K2-12 · mốc so là bản niêm phong LÀNH gần nhất: commit-rồi-restamp vẫn bị chặn · hết tầm quét thì TỪ CHỐI · bản đọc hỏng KHÔNG thành bootstrap · repo mới vẫn chạy");
+  } finally {
+    assert.ok(temp.startsWith(join(tmpdir(), "claim-baseline-")), "chi don dung temp fixture cua phep kiem nay");
     rmSync(temp, { recursive: true, force: true });
   }
 }
