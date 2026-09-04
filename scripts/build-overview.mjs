@@ -420,6 +420,63 @@ export function readDecisions(deps, limit = 14) {
  * câu kể. Ở tab này đường dẫn CHÍNH LÀ nội dung Đức yêu cầu. Nên nó được bọc trong
  * `<div class="map">`, và phép kiểm bất biến vừa bỏ qua khối đó, vừa THÊM một khẳng định:
  * đường dẫn chỉ được xuất hiện TRONG khối đó. Thu hẹp phạm vi, không khoét lỗ. */
+/* NHIỀU VIỆC CHẠY CÙNG LÚC — Đức yêu cầu 04/09: cách nó vận hành cũng là một tính năng,
+ * và bảng đang nhắc "song song" 13 chỗ mà không chỗ nào nói nó chạy thế nào.
+ *
+ * ĐỌC LẠI TỪ FILE, không gõ tay con số nào. Ba nguồn, ba bộ đọc dưới đây.
+ *
+ * VÀ ĐÂY LÀ LUẬT CỨNG CỦA CẢ BA: KHÔNG đọc trường `owner` của bảng quyền.
+ * Chỉ đọc DANH SÁCH KHOÁ. Lý do không phải thẩm mỹ — `owner` đổi mỗi lần ai nhận hoặc trả
+ * khoá (ngày 04/09 riêng `_code` đổi chủ BỐN lần), mà bảng này nằm trong khối `generators`
+ * nên cổng so nó với HEAD mỗi phiên. Nhúng `owner` vào là bảng lệch HEAD ngay lượt nhận khoá
+ * kế tiếp, và `safe-push` chặn ĐẨY VIỆC CỦA MỌI PHIÊN dù không một dữ liệu nào đổi.
+ * Đây đúng cái bẫy đã suýt xảy ra với dòng "hôm nay / N ngày trước", vá bằng `today: "head"`.
+ * Khoá thì ngược lại: nó là cấu trúc, chỉ đổi khi thêm hoặc bớt một gói. */
+export function demLuongSongSong(deps) {
+  let claims;
+  try { claims = JSON.parse(deps.readFile(".agents/claims.json"))?.claims; } catch { return 0; }
+  if (!claims || typeof claims !== "object") return 0;
+  return Object.keys(claims).length;
+}
+
+/* Bốn cơ chế — đọc lại cột đầu của bảng ở mục 2 `MULTIFLOW.md`. Chép sang đây là đẻ nguồn
+   sự thật thứ hai, và bản thứ hai luôn mục trước bản gốc. */
+export function readCoChe(deps) {
+  if (!deps.fileExists("docs/protocols/MULTIFLOW.md")) return [];
+  let t;
+  try { t = deps.readFile("docs/protocols/MULTIFLOW.md"); } catch { return []; }
+  const bat = /^##\s+2\..*$/m.exec(t);
+  if (!bat) return [];
+  const sau = t.slice(bat.index + bat[0].length);
+  const het = /^##\s/m.exec(sau);
+  const than = het ? sau.slice(0, het.index) : sau;
+  const out = [];
+  for (const line of than.split(/\r?\n/)) {
+    if (!line.startsWith(chr_pipe)) continue;
+    const o = line.split(chr_pipe).slice(1, -1).map((c) => c.trim());
+    if (o.length < 2) continue;
+    const m = /^\*\*(.+?)\*\*$/.exec(o[0]);   // bỏ hàng tiêu đề và hàng gạch
+    if (!m) continue;
+    out.push({ ten: m[1].replace(/`/g, ""), traLoi: o[1].replace(/^\*|\*$/g, "") });
+  }
+  return out;
+}
+
+/* Năm bất biến — đọc lại câu mở đầu mỗi bất biến ở mục 4. Chỉ lấy CÂU ĐẦU, phần giải thích
+   phía sau là chữ cho AI đọc: dài, đầy mã lỗi, đúng thứ Đức nói không muốn thấy. */
+export function readBatBien(deps) {
+  if (!deps.fileExists("docs/protocols/MULTIFLOW.md")) return [];
+  let t;
+  try { t = deps.readFile("docs/protocols/MULTIFLOW.md"); } catch { return []; }
+  const bat = /^##\s+4\..*$/m.exec(t);
+  if (!bat) return [];
+  const sau = t.slice(bat.index + bat[0].length);
+  const het = /^##\s/m.exec(sau);
+  const than = het ? sau.slice(0, het.index) : sau;
+  return [...than.matchAll(/\*\*([①-⑤])\s*([^*]+?)\*\*/g)]
+    .map((m) => ({ so: m[1], cau: m[2].trim() }));
+}
+
 export function readAreas(deps) {
   let parsed;
   try { parsed = JSON.parse(deps.readFile(".repo-structure.json")); } catch { return []; }
@@ -1047,6 +1104,9 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const areas = readAreas(deps);
   const rootFiles = readRootFiles(deps);
   const openWhen = readOpenWhen(deps);
+  const soLuong = demLuongSongSong(deps);
+  const coChe = readCoChe(deps);
+  const batBien = readBatBien(deps);
   const khoa = readKhoa(deps);
   const moc = readMoc(deps);
   const defects = readDefects(deps);
@@ -1419,6 +1479,36 @@ ${STYLE}
         <div class="in"><pre class="cmd">${esc(CAU_LAM_MOI)}</pre></div>
       </details>
       <p class="note">Bảng <strong>được commit vào repo</strong>, có chủ đích: nhờ vậy bất kỳ AI nào cũng sinh lại rồi commit được, không phải nhờ riêng một AI đăng hộ. Cổng đóng phiên so bảng đã commit với trạng thái repo mỗi phiên, nên bảng <strong>không thể âm thầm cũ</strong>. Nội dung bảng suy hoàn toàn từ lần commit gần nhất, không nhìn giờ đồng hồ — nếu nó nhìn đồng hồ thì sang ngày là mọi phiên bị chặn đẩy việc lên dù không dữ liệu nào đổi.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Nhiều việc chạy cùng lúc — cách nó chạy</div>
+      <div class="hint">Nhiều AI làm cùng lúc trong repo này mà không phá nhau, vì <strong>mỗi vùng chỉ một AI được ghi tại một thời điểm</strong>. Vùng của người khác thì chỉ được đọc. Hiện có <strong>${soLuong} vùng</strong>, nên tối đa <strong>${soLuong} việc</strong> chạy song song được — không nhiều hơn, vì việc thứ ${soLuong + 1} sẽ phải chờ một vùng nào đó được trả.</div>
+      <div class="bl">
+        <div class="bi"><span class="c">›</span><span class="d">Hai AI cùng muốn một vùng: <strong>người sau bị từ chối</strong>, không phải ghi đè. Muốn lấy vùng đang có chủ thì <strong>phải hỏi Đức</strong>, và câu chốt của Đức được ghi vào bảng quyền để phiên vừa mất vùng đọc được.</span></div>
+        <div class="bi"><span class="c">›</span><span class="d">Mỗi việc xong đều phải qua <strong>cổng đóng phiên</strong>. Cổng đỏ thì chưa xong — không AI nào được tự báo xong.</span></div>
+      </div>`);
+  if (coChe.length) {
+    p.push(`      <details class="the">
+        <summary><span><span class="nm">${coChe.length} cơ chế giữ cho không giẫm chân</span><span class="sub">mỗi cái trả lời đúng một câu</span></span></summary>
+        <div class="in"><div class="bl">`);
+    for (const c of coChe) {
+      p.push(`          <div class="bi"><span class="c">›</span><span class="d"><strong>${esc(c.ten)}</strong> — ${esc(c.traLoi)}</span></div>`);
+    }
+    p.push(`        </div></div>
+      </details>`);
+  }
+  if (batBien.length) {
+    p.push(`      <details class="the">
+        <summary><span><span class="nm">${batBien.length} điều không được phá</span><span class="sub">mỗi cái sinh ra từ một lần hỏng thật</span></span></summary>
+        <div class="in"><div class="bl">`);
+    for (const b of batBien) {
+      p.push(`          <div class="bi"><span class="c">${esc(b.so)}</span><span class="d">${esc(b.cau)}</span></div>`);
+    }
+    p.push(`        </div></div>
+      </details>`);
+  }
+  p.push(`      <p class="note">Số vùng và các mục trên <strong>đọc lại từ luật</strong>, không phải bản chép — nên bảng không thể nói khác luật. Bảng <strong>cố ý không hiện ai đang giữ vùng nào</strong>: chủ vùng đổi liên tục trong ngày, mà bảng được cổng so mỗi phiên, nên nhúng vào là mọi phiên bị chặn đẩy việc dù chẳng có gì đổi. Muốn biết ai đang giữ gì thì hỏi AI — đó là số liệu sống, không thuộc một ảnh chụp.</p>
     </div>
 
     <div class="card">

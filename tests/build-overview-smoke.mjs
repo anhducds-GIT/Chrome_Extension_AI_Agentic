@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { bacMoc, blockedIfSkipped, buildOverview, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readMoc, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readMoc, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -1385,6 +1385,142 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     "luat an khung PHAI con nguyen — thieu no la ca chin khung hien cung luc (DASH-TAB-01)");
 
   ok(`roadmap: ${hang.length} y tuong moi cai mot thanh 3 buoc, bac dung cho, 'nghi' ve la thanh chet`);
+}
+
+
+/* ================= MULTIFLOW-ON-BOARD-01 · mục "Nhiều việc chạy cùng lúc" =================
+ *
+ * Đề bài của Đức: đưa cách vận hành nhiều phiên song song lên tab Vận hành, và
+ * **TUYỆT ĐỐI không nhúng ai đang giữ vùng nào**.
+ *
+ * Câu cuối đó không phải yêu cầu trình bày — nó là một luật an toàn, và đây là phép ghim nó.
+ * `DASHBOARD.html` nằm trong khối `generators`, nên cổng so nó với HEAD MỖI PHIÊN và
+ * `safe-push` từ chối đẩy khi lệch. Chủ vùng đổi liên tục (ngày 04/09 riêng `_code` đổi chủ
+ * BỐN lần). Nên nếu tên chủ lọt vào trang thì bảng lệch HEAD ngay lượt nhận khoá kế tiếp, và
+ * MỌI phiên bị chặn đẩy việc dù không một dữ liệu nào đổi. Đúng cái bẫy đã suýt xảy ra với
+ * dòng "hôm nay / N ngày trước", vá bằng `today: "head"`.
+ *
+ * Bốn lượt sinh ở khối này (~9 giây một lượt, đo 03/09) — mỗi lượt dựng một ca hỏng khác
+ * nhau, không lượt nào lặp lượt nào.
+ */
+{
+  const goc = createDefaultDeps(ROOT);
+  const sinh = (thay) => buildOverview(thay ? bocFile(goc, thay) : goc).html;
+  const khoaThat = Object.keys(JSON.parse(goc.readFile(".agents/claims.json")).claims);
+
+  /* --- (a) Ba bộ đọc: quan hệ, KHÔNG ghim con số hiện tại ---
+     Ghim "4 cơ chế" / "5 bất biến" là ghim hiện trạng: thêm một cơ chế vào luật thì đỏ oan,
+     mà bộ đọc hỏng hoàn toàn thì vẫn xanh. Cái phải đúng là "đọc được, và đọc từ file". */
+  assert.equal(demLuongSongSong(goc), khoaThat.length,
+    "so viec song song duoc PHAI bang so khoa trong bang quyen");
+  assert.ok(demLuongSongSong(goc) >= 2,
+    "0 hoac 1 la bo doc hong, khong phai repo that — repo nay co nhieu vung");
+  assert.ok(readCoChe(goc).length >= 2, "phai doc duoc cac co che o muc 2 MULTIFLOW.md");
+  assert.ok(readBatBien(goc).length >= 2, "phai doc duoc cac bat bien o muc 4 MULTIFLOW.md");
+  assert.ok(readCoChe(goc).every((c) => c.ten && c.traLoi),
+    "moi co che phai co ca ten va cau tra loi — thieu mot nua la o trong tren bang");
+  assert.ok(readBatBien(goc).every((b) => /^[①-⑤]$/.test(b.so) && b.cau),
+    "moi bat bien phai co so vong tron va mot cau");
+
+  /* --- (b) Mục có thật trong tab Vận hành, và con số là con số đọc được --- */
+  const trangThat = sinh(null);
+  const iVH = trangThat.indexOf('data-pane="van-hanh"');
+  assert.notEqual(iVH, -1, "phai co khung tab Van hanh");
+  const jVH = trangThat.indexOf('data-pane="suc-khoe"', iVH);
+  assert.ok(jVH > iVH, "khung tab Van hanh phai dong lai duoc, neu khong thi cat sai");
+  const tabVH = trangThat.slice(iVH, jVH);
+
+  assert.ok(tabVH.includes("Nhiều việc chạy cùng lúc"),
+    "muc PHAI nam trong tab Van hanh — Duc chot cho no o day");
+  assert.ok(tabVH.includes(`<strong>${khoaThat.length} vùng</strong>`),
+    `so vung tren trang phai la ${khoaThat.length}, doc tu bang quyen chu khong go tay`);
+  assert.ok(tabVH.includes(`${readCoChe(goc).length} cơ chế`)
+    && tabVH.includes(`${readBatBien(goc).length} điều không được phá`),
+    "hai khoi gap phai in dung so muc doc duoc tu luat");
+  assert.ok(tabVH.includes("cố ý không hiện ai đang giữ vùng nào"),
+    "phai noi RO vi sao bang khong hien chu vung — thieu cau nay thi phien sau lai nhung vao");
+
+  /* --- (c) PHÉP GHIM NẶNG NHẤT: đổi HẾT chủ vùng, giữ nguyên khoá → bảng không đổi MỘT BYTE ---
+     Đây là ca hỏng thật: một phiên sau này thấy `owner` sẵn trong file và in nó lên bảng cho
+     "đủ thông tin". Không có phép này thì chuyện đó xanh, và cả repo bị chặn push hôm sau. */
+  const CHU_GIA = "phien-gia-khong-duoc-lo-len-bang";
+  const doiChu = {};
+  for (const k of khoaThat) doiChu[k] = { owner: CHU_GIA, task: "viec gia", since: "2000-01-01" };
+  const trangDoiChu = sinh({ ".agents/claims.json": claimsJson(doiChu) });
+
+  //  · Mục của tôi: không đổi một byte. Đây là phần thuộc phạm vi việc này.
+  const tabDoiChu = trangDoiChu.slice(trangDoiChu.indexOf('data-pane="van-hanh"'),
+    trangDoiChu.indexOf('data-pane="suc-khoe"'));
+  assert.equal(tabDoiChu, tabVH,
+    "doi HET chu vung ma tab Van hanh PHAI khong doi mot byte — lot `owner` vao la moi phien bi chan day viec");
+
+  //  · Và bất biến thật sự bảo vệ cả repo: cổng KHÔNG được đỏ vì ai đó nhận một khoá.
+  //    Bảng cố ý có in dấu bận/mở ở tab AI điều phối, nhưng những dòng đó mang tiền tố
+  //    `KHOA_PREFIX` nên `compareOverview` miễn. Khẳng định này là chỗ duy nhất kiểm rằng
+  //    mục mới KHÔNG đẻ thêm một dòng lệch nào ngoài tập được miễn đó.
+  assert.ok(compareOverview(trangThat, trangDoiChu).matches,
+    "doi chu vung KHONG duoc lam cong do — do la moi phien bi chan day viec du chang co gi doi");
+
+  //  · Nửa chứng minh cho khẳng định trên: mọi dòng KHÁC nhau phải nằm trong tập được miễn.
+  //    Thiếu nửa này thì `matches` xanh cũng có thể vì bộ so hỏng, chứ không vì trang đúng.
+  const dong = (s) => s.replace(/\r\n?/g, "\n").split("\n");
+  const A = dong(trangThat);
+  const B = dong(trangDoiChu);
+  assert.equal(A.length, B.length, "doi chu vung khong duoc lam doi SO DONG cua trang");
+  const lech = A.map((x, i) => (x === B[i] ? null : x)).filter(Boolean);
+  assert.ok(lech.length > 0,
+    "phai co it nhat mot dong lech — khong lech gi nghia la fixture khong toi duoc bo sinh");
+  assert.ok(lech.every((x) => x.startsWith(KHOA_PREFIX)),
+    "moi dong lech PHAI nam trong tap duoc mien; dong ngoai tap la mot lan chan push cho ca repo:\n  "
+    + lech.filter((x) => !x.startsWith(KHOA_PREFIX)).slice(0, 3).join("\n  "));
+
+  assert.ok(!trangThat.includes(CHU_GIA) && !trangDoiChu.includes(CHU_GIA),
+    "ten chu vung tuyet doi khong duoc co mat tren trang, ke ca khi bang quyen dang khai no");
+
+  /* --- (d) NỬA CÒN LẠI của phép (c): chứng minh fixture THẬT SỰ tới được bộ sinh ---
+     Thiếu nửa này thì (c) xanh một cách vô nghĩa: một lớp bọc hỏng, một đường đọc khác, hay
+     một bộ nhớ đệm đều làm hai trang giống nhau mà chẳng chứng minh điều gì. Bỏ MỘT khoá:
+     trang PHẢI đổi, và đổi đúng con số. Đã bị cắn đúng kiểu này ngày 04/09 (DB15). */
+  const botMot = {};
+  for (const k of khoaThat.slice(1)) botMot[k] = { owner: null };
+  const depsBot = bocFile(goc, { ".agents/claims.json": claimsJson(botMot) });
+  assert.equal(demLuongSongSong(depsBot), khoaThat.length - 1,
+    "bo mot khoa thi so viec song song duoc phai giam mot");
+  const trangBot = sinh({ ".agents/claims.json": claimsJson(botMot) });
+  assert.notEqual(trangBot, trangThat,
+    "bo mot khoa MA trang khong doi nghia la fixture khong toi duoc bo sinh — phep (c) vo nghia");
+  assert.ok(trangBot.includes(`<strong>${khoaThat.length - 1} vùng</strong>`),
+    "va con so tren trang phai giam theo — day la bang chung no doc song, khong phai go tay");
+
+  /* --- (e) Mất file luật: trả rỗng, và trang KHÔNG bịa ra mục ---
+     Fail closed kiểu nhẹ: không có luật thì không có gì để khoe, chứ không phải in một khối
+     rỗng hoặc giữ lại con số của lần trước. */
+  //  · Bộ đọc: mất file, hoặc đọc thất bại → trả rỗng, KHÔNG ném. Kiểm trực tiếp bằng deps
+  //    tối thiểu, vì fixture "mất hẳn file" không đi qua `buildOverview` được: `collectDocs`
+  //    của bộ sinh bảng cũng đọc file đó và nó ném trước.
+  for (const nhan of ["khong ton tai", "doc that bai"]) {
+    const d = nhan === "khong ton tai"
+      ? { fileExists: () => false, readFile: () => { throw new Error("khong duoc goi"); } }
+      : { fileExists: () => true, readFile: () => { throw new Error("IO"); } };
+    assert.deepEqual(readCoChe(d), [], `co che · ${nhan}: phai tra rong, khong nem`);
+    assert.deepEqual(readBatBien(d), [], `bat bien · ${nhan}: phai tra rong, khong nem`);
+  }
+
+  //  · Trang: file CÒN nhưng luật bị viết lại, không còn mục 2 / mục 4. Đây là ca thật —
+  //    luật được đánh số lại thì có, chứ không ai xoá hẳn file. Trang phải BỎ hai khối gấp,
+  //    không được in khối rỗng và không được giữ con số của lần trước.
+  const luatKhac = ["# MULTIFLOW", "", "## 1. Chuyện gì", "", "Luat da duoc viet lai.", ""].join("\n");
+  const depsKhac = bocFile(goc, { "docs/protocols/MULTIFLOW.md": luatKhac });
+  assert.deepEqual(readCoChe(depsKhac), [], "khong con muc 2 thi tra rong");
+  assert.deepEqual(readBatBien(depsKhac), [], "khong con muc 4 thi tra rong");
+  const trangKhac = sinh({ "docs/protocols/MULTIFLOW.md": luatKhac });
+  assert.ok(!trangKhac.includes("cơ chế giữ cho không giẫm chân")
+    && !trangKhac.includes("điều không được phá"),
+    "khong doc duoc muc nao thi KHONG duoc bia ra hai khoi gap");
+  assert.ok(trangKhac.includes(`<strong>${khoaThat.length} vùng</strong>`),
+    "nhung cau chinh van phai con — so vung khong den tu file luat");
+
+  ok(`nhieu viec cung luc: ${khoaThat.length} vung / ${readCoChe(goc).length} co che / ${readBatBien(goc).length} bat bien, doi HET chu vung khong doi mot byte`);
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

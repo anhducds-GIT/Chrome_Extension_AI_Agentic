@@ -42,11 +42,11 @@
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-qdsync da hoan tat va bao cao xong, nhung ket thuc truoc khi push nen khong tra duoc khoa. Da push ho 12 commit theo Duc duyet --carry; cay lam viec SACH nen khong co viec do bi mat."
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T13:46",
-      "task": "Viet brief DASH-ORCH-V2 — redesign tab AI dieu phoi thanh 4 vung",
-      "released_at": "2026-09-04T15:07",
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T15:13",
+      "task": "Mo lai ASSISTANT-PROMOTE-01 theo Duc chot + khai vao dashboard",
+      "released_at": null,
       "taken_from": "claude-exec-roadmap",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -54,17 +54,17 @@
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-roadmap da hoan tat DASH-ROADMAP-01 va bao cao xong, nhung khong tra duoc khoa vi bi chan push. Da push ho theo Duc duyet --carry; cay lam viec SACH nen khong viec do nao bi mat."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T13:55",
-      "task": "DASH-ORCH-V2 — doi tab AI dieu phoi thanh 4 vung",
-      "released_at": "2026-09-04T15:10",
-      "taken_from": "claude-exec-orchv2",
-      "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
+      "owner": "claude-dashboard",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T03:10",
+      "task": "MULTIFLOW-ON-BOARD-01: muc Nhieu viec chay cung luc o tab Van hanh (Duc doi vai + chot gianh 04/09)",
+      "released_at": null,
+      "taken_from": "claude-exec-orchv2b",
+      "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-04T15:08",
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-orchv2 chet giua chung (thong bao he thong: khong co ban ghi hoan tat), da lam xong bon vung cua DASH-ORCH-V2 va commit het — cay lam viec SACH nen khong viec do nao bi mat. Duc duyet ca hai: push kem --carry va giai phong khoa _code de giao vong hai."
     }
   },
-  "_fingerprint": "8be26edba1f0cf3f"
+  "_fingerprint": "e9059e75a920c680"
 }
