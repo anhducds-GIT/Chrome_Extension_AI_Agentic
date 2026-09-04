@@ -35,11 +35,11 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T02:55",
       "task": "Viet brief STATE-DRIFT-01 de giao executor",
-      "released_at": null,
+      "released_at": "2026-09-04T02:56",
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -53,5 +53,5 @@
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "a68f5debfe86abff"
+  "_fingerprint": "f033177be3b04ca6"
 }
