@@ -767,7 +767,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     "chon duong loc thi PHAI noi ro khoi nay la anh chup luc sinh, khong phai thoi gian thuc");
 
   // KHỐI 2 — ba mốc, đọc từ hồ sơ mốc.
-  for (const ten of ["V0.1 PACKAGE", "EXTENSION PILOT", "PORTABLE FREEZE"]) {
+  for (const ten of ["V0.1 PACKAGE", "ASSISTANT PILOT", "PORTABLE FREEZE"]) {
     assert.ok(tab.includes(ten), `khoi moc phai co moc ${ten}`);
   }
   // KHỐI 3 — defect có mã và có biến mở/đóng.
@@ -869,6 +869,118 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   assert.ok(dong.some((l) => !l.startsWith(KHOA_PREFIX) && /<em>[^<]*<\/em><\/span><span class="badge b\d">MỞ</.test(l)),
     "dong defect MO tuyet doi KHONG duoc mang dau — trang thai defect la noi dung, phai lam cong do");
   ok("do tuoi: dong khoa duoc loc, moi thu khac van chan, va dau in dung cho tren trang that");
+}
+
+/* ---- T6. DASH-ROADMAP-01 · roadmap ý tưởng ở tab Tổng quan ----
+ *
+ * Đức chốt hình: MỘT hàng cho mỗi ý tưởng, mỗi hàng một thanh bước, và đánh dấu rõ đang ở
+ * bước nào. Danh sách phẳng cũ nói được "có 8 ý tưởng" nhưng không nói được "đi tới đâu".
+ *
+ * Bốn thứ ghim ở đây, và cả bốn dựng được ca hỏng thật:
+ *   · bậc vẽ SAI CHỖ — dấu đang-ở-đây lệch khỏi bậc đã khai trong sổ;
+ *   · một ý tưởng RƠI khỏi roadmap — rơi là Đức mở bảng rồi tưởng nó không tồn tại;
+ *   · bậc `nghỉ` bị vẽ như BƯỚC CUỐI, tức thanh của một ý tưởng đã bị bác trông y như một
+ *     ý tưởng gần xong. Ca này PHẢI dựng bằng fixture: sổ thật hôm nay chưa có ý tưởng nào ở
+ *     bậc `nghỉ`, nên đo trên sổ thật thì nhánh đó chưa từng chạy và khẳng định vô nghĩa;
+ *   · khối mới KHÔNG được làm hỏng cơ chế ẩn/hiện khung — đó là bug DASH-TAB-01, và cách
+ *     nhanh nhất tái sinh nó là thêm một khung vào trang.
+ *
+ * CẮT ĐÚNG PHẠM VI, không dùng biểu thức kiểu "mở [\s\S]*? đóng": phần lười đó chạy thẳng ra
+ * ngoài khối và cho xanh giả. Ở repo này nó đã cắn bốn lần. Nên cắt bằng chỉ số, chặn hai đầu.
+ */
+{
+  const G = String.fromCharCode(10);
+  const soY = (danh) => bocFile(createDefaultDeps(ROOT), { "IDEAS.md": danh.join(G) });
+
+  /* Khối roadmap: chặn TRÊN bằng đầu tab Tổng quan, chặn DƯỚI bằng đầu tab kế tiếp. Trong
+     phạm vi đó mới cắt từ mở khối tới câu chú giải nằm ngay sau các hàng. */
+  const khoiRoadmap = (trang) => {
+    const dau = trang.indexOf('data-pane="tong-quan"');
+    const het = trang.indexOf('data-pane="ai-dieu-phoi"');
+    assert.ok(dau !== -1 && het > dau, "phai tim duoc dung pham vi tab Tong quan");
+    const tab = trang.slice(dau, het);
+    const a = tab.indexOf('<div class="rm">');
+    assert.notEqual(a, -1, "khoi roadmap PHAI nam trong tab Tong quan — Duc doc trang dau");
+    const b = tab.indexOf('<p class="note">', a);
+    assert.ok(b > a, "khoi roadmap phai ket bang mot cau chu giai");
+    return tab.slice(a, b);
+  };
+
+  const docHang = (trang) => khoiRoadmap(trang)
+    .split('<div class="rmr"').slice(1)
+    .filter((c) => !c.startsWith(" rmh"))          // bỏ hàng tiêu đề tên ba bước
+    .map((c) => ({
+      ma: (/href="#y-([a-z0-9-]+)"/.exec(c) || [, ""])[1],
+      chet: /<div class="rms dead">/.test(c),
+      nut: [...c.matchAll(/<div class="node([^"]*)">/g)].map((m) => m[1].trim()),
+      chip: Number((/<span class="chip s(\d)">/.exec(c) || [, -1])[1])
+    }));
+
+  /* --- (a) trên SỔ THẬT: không ý tưởng nào rơi, và bậc vẽ đúng chỗ --- */
+  const trangThat = buildOverview(createDefaultDeps(ROOT)).html;
+  const ideas = readIdeas(createDefaultDeps(ROOT));
+  const hang = docHang(trangThat);
+
+  /* GHIM QUAN HỆ, không ghim ngưỡng: ">= 8" sẽ KHÔNG đỏ khi một ý tưởng rơi khỏi bảng, mà
+     rơi đúng là cái đáng sợ. */
+  assert.deepEqual(hang.map((h) => h.ma), ideas.map((i) => i.code.toLowerCase()),
+    "roadmap phai co dung MOT hang cho moi y tuong trong so, va dung thu tu bac");
+
+  for (const i of ideas) {
+    const h = hang.find((x) => x.ma === i.code.toLowerCase());
+    assert.equal(h.nut.length, 3,
+      `${i.code}: thanh phai co dung BA buoc — 'nghi' KHONG phai buoc thu tu`);
+    assert.equal(h.chip, i.stage,
+      `${i.code}: nhan bac bang chu phai khop bac da khai trong IDEAS.md`);
+    if (i.stage < 3) {
+      assert.deepEqual(h.nut, [0, 1, 2].map((k) => (k === i.stage ? "on" : (k < i.stage ? "past" : ""))),
+        `${i.code}: dau 'dang o day' phai nam DUNG o buoc ${i.stage}, buoc truoc to day, buoc sau de trong`);
+      assert.ok(!h.chet, `${i.code}: y tuong con song KHONG duoc ve la thanh chet`);
+    }
+  }
+
+  /* --- (b) ý tưởng KHÔNG còn nằm trong danh sách phẳng nữa --- */
+  const tabDau = trangThat.slice(trangThat.indexOf('data-pane="tong-quan"'),
+    trangThat.indexOf('data-pane="ai-dieu-phoi"'));
+  const bigA = tabDau.indexOf('<div class="big">');
+  assert.notEqual(bigA, -1, "khoi danh sach extension phai con");
+  const khoiBig = tabDau.slice(bigA, tabDau.indexOf('<p class="note">', bigA));
+  assert.ok(!khoiBig.includes('data-goto="y-tuong"'),
+    "y tuong phai RA KHOI danh sach phang — con o ca hai cho la bang dem hai lan mot viec");
+
+  /* --- (c) bậc `nghỉ`: fixture, vì sổ thật chưa có ca này --- */
+  const trangNghi = buildOverview(soY([
+    "# Sổ ý tưởng",
+    "## Y-90 · Đang xây thật", "- **bậc:** đang xây", "- **việc kế:** làm tiếp",
+    "## Y-91 · Đã bị bác", "- **bậc:** nghỉ", "- **việc kế:** không làm nữa",
+    "## Y-92 · Đã chạy xong", "- **bậc:** đã chứng minh", "- **việc kế:** không còn gì"
+  ])).html;
+  const h2 = docHang(trangNghi);
+  assert.deepEqual(h2.map((x) => x.ma), ["y-90", "y-92", "y-91"],
+    "fixture phai vao duoc trang, xep theo bac — neu khong, moi khang dinh duoi vo nghia");
+
+  const nghi = h2.find((x) => x.ma === "y-91");
+  const xong = h2.find((x) => x.ma === "y-92");
+  assert.equal(nghi.nut.length, 3, "'nghi' KHONG duoc them mot buoc thu tu vao thanh");
+  assert.deepEqual(nghi.nut, ["", "", ""],
+    "thanh cua 'nghi' KHONG duoc to buoc nao — to la lam no trong nhu gan xong");
+  assert.ok(nghi.chet, "'nghi' phai duoc ve la thanh CHET, khong phai buoc cuoi");
+  assert.equal(nghi.chip, 3, "va nhan bang chu phai noi ro la bac nghi");
+
+  /* Khẳng định PHÂN BIỆT — cái thật sự quan trọng: 'nghỉ' và 'đã chứng minh' phải trông KHÁC
+     nhau. Không có hai dòng dưới thì một bản vẽ cả hai giống nhau vẫn xanh. */
+  assert.deepEqual(xong.nut, ["past", "past", "on"],
+    "'da chung minh' MOI la buoc cuoi cua duong di that");
+  assert.notDeepEqual(nghi.nut, xong.nut, "'nghi' va 'da chung minh' PHAI ve khac nhau");
+  assert.ok(!xong.chet, "'da chung minh' khong phai thanh chet");
+
+  /* --- (d) DASH-TAB-01 không được tái sinh --- */
+  assert.ok(!khoiRoadmap(trangThat).includes('role="tabpanel"'),
+    "khoi roadmap KHONG duoc dung them khung — them khung la lam lech quan he tab/khung (DASH-TAB-01)");
+  assert.ok(trangThat.includes('[role="tabpanel"][hidden]{display:none}'),
+    "luat an khung PHAI con nguyen — thieu no la ca chin khung hien cung luc (DASH-TAB-01)");
+
+  ok(`roadmap: ${hang.length} y tuong moi cai mot thanh 3 buoc, bac dung cho, 'nghi' ve la thanh chet`);
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

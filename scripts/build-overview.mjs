@@ -523,6 +523,33 @@ const rail = (stage) => STAGES.map((label, i) =>
   `<div class="node${i === stage ? " on" : ""}${i < stage ? " past" : ""}">` +
   `<span class="dot"></span><span class="lbl">${esc(label)}</span></div>`).join("");
 
+/* BA bước của một ý tưởng — CỐ Ý không phải bốn.
+ *
+ * `IDEAS.md` quy định đúng bốn bậc, nhưng bậc thứ tư (`nghỉ`) KHÔNG phải bước cuối của tiến
+ * trình — nó là nhánh chết. Vẽ nó thành bước thứ tư thì thanh của một ý tưởng đã bị bác trông
+ * y như một ý tưởng gần xong: hai bước đầu tô đầy, bước cuối đang sáng. Đó là bảng nói dối
+ * đúng vào chỗ Đức đọc nhanh nhất.
+ *
+ * Nên: ba bước là đường đi thật (ý tưởng → đang xây → đã chứng minh), còn `nghỉ` được vẽ là
+ * thanh RỖNG có gạch ngang, không tô bước nào. Nhãn bậc bằng chữ đi kèm ở cuối hàng — dấu
+ * tròn là thứ nhìn thấy trước, chữ là thứ đọc để chắc.
+ *
+ * Ai thêm bậc thứ năm vào `IDEAS.md` thì `readIdeas` đã NÉM từ trước khi tới được đây. */
+export const ROADMAP_STEPS = ["Ý TƯỞNG", "ĐANG XÂY", "ĐÃ CHỨNG MINH"];
+
+export const stepBar = (stage) => {
+  const chet = stage >= ROADMAP_STEPS.length;
+  return `<div class="rms${chet ? " dead" : ""}">` + ROADMAP_STEPS.map((label, i) => {
+    const cls = chet ? "" : (i === stage ? " on" : (i < stage ? " past" : ""));
+    return `<div class="node${cls}"><span class="dot"></span></div>`;
+  }).join("") + `</div>`;
+};
+
+/* Một hàng roadmap: tên có link nhảy sang tab Ý tưởng, thanh ba bước, rồi nhãn bậc bằng chữ. */
+const roadmapRow = (idea) =>
+  `        <div class="rmr"><a href="#y-${esc(slug(idea.code))}" data-goto="y-tuong">` +
+  `${esc(idea.code)} · ${esc(idea.name)}</a>${stepBar(idea.stage)}${chip(idea.stage)}</div>`;
+
 const NL = String.fromCharCode(10);
 
 const STYLE = `<style>
@@ -697,6 +724,34 @@ details.the .in{margin-top:11px;padding-top:11px;border-top:1px solid var(--line
 .node.past .dot{background:var(--line-2);border-color:var(--line-2)}
 .node.on .dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--good-bg)}
 .node.on .lbl{color:var(--accent)}
+
+/* ROADMAP Ý TƯỞNG — mỗi ý tưởng MỘT hàng, mỗi hàng một thanh BA bước. Hình này do Đức chốt
+   (DASH-ROADMAP-01): danh sách phẳng không nói được "đang ở bước nào".
+   Bậc "nghỉ" KHÔNG vẽ thành bước thứ tư — xem ghi chú ở stepBar() trong file này.
+   (Khối này nằm trong một template literal — đừng đặt dấu ngoặc ngược vào đây.) */
+.rm{display:flex;flex-direction:column}
+.rmr{display:grid;grid-template-columns:minmax(0,1fr) 208px 116px;gap:12px;align-items:center;
+  padding:9px 0;border-bottom:1px solid var(--line)}
+.rmr:last-child{border-bottom:0}
+.rmr>a{color:var(--ink);font-weight:600;font-size:12.5px;text-decoration:none;
+  border-bottom:1px solid var(--line-2)}
+.rmr>a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.rmh{border-bottom:1px solid var(--line-2);padding-bottom:6px}
+.rmh>span{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted)}
+.rms{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;position:relative}
+.rml{font-family:var(--mono);font-size:8px;font-weight:600;letter-spacing:.02em;
+  color:var(--muted);text-align:center;line-height:1.15}
+/* Bậc "nghỉ": ba bước đều RỖNG, đổi sang màu dừng, và một đường gạch ngang cả thanh. Cố ý
+   không tô bước nào — tô là làm nó trông "gần xong", đúng cái phải tránh. */
+.rms.dead .dot{border-color:var(--off);background:var(--off-bg);border-style:dashed}
+.rms.dead::after{content:"";position:absolute;top:5px;left:5%;right:5%;height:1px;
+  background:var(--off);z-index:2}
+@media (max-width:640px){
+  .rmr{grid-template-columns:minmax(0,1fr) auto;gap:7px 10px}
+  .rmr>.rms{grid-column:1 / -1}
+  .rmh{display:none}
+}
 
 /* Khối bản đồ — nơi DUY NHẤT trên bảng được phép in đường dẫn. */
 .map{display:flex;flex-direction:column;gap:13px}
@@ -923,19 +978,32 @@ ${STYLE}
     </div>
 
     <div class="card">
-      <div class="sect">Toàn bộ việc lớn — bấm tên để xem chi tiết</div>
+      <div class="sect">Extension trong repo — bấm tên để xem chi tiết</div>
       <div class="big">`);
   for (const r of model.rows) {
     const n = debtOf.get(r.name);
     p.push(bigRow("extension", unitId(r), r.name, stageOf(r),
       n === undefined ? "extension" : `${n} việc nợ`));
   }
-  for (const idea of ideas) {
-    p.push(bigRow("y-tuong", `y-${slug(idea.code)}`, `${idea.code} · ${idea.name}`, idea.stage,
-      idea.owner ? "đang có người làm" : "chưa ai nhận"));
+  p.push(`      </div>
+      <p class="note">${model.rows.length} extension. Chi tiết ở tab <strong>Extension</strong>.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Ý tưởng đang ở bước nào — ${ideas.length} ý tưởng</div>
+      <div class="rm">
+        <div class="rmr rmh"><span>Ý tưởng</span><div class="rms">`);
+  for (const label of ROADMAP_STEPS) p.push(`          <span class="rml">${esc(label)}</span>`);
+  p.push(`        </div><span>Đang ở bậc</span></div>`);
+  if (ideas.length) {
+    for (const idea of ideas) p.push(roadmapRow(idea));
+  } else {
+    /* Sổ trống thì KHÔNG dựng link — link không có đích là lỗi âm thầm: Đức bấm, không có gì
+       xảy ra. Phép kiểm link ghim đúng một link cho mỗi ý tưởng, nên hàng này phải trơ. */
+    p.push(`        <div class="rmr"><span class="meta">Sổ ý tưởng đang trống.</span></div>`);
   }
   p.push(`      </div>
-      <p class="note">${model.rows.length} extension và ${ideas.length} ý tưởng. Chi tiết extension ở tab <strong>Extension</strong>, chi tiết ý tưởng ở tab <strong>Ý tưởng</strong>.</p>
+      <p class="note">Ba bước là đường đi thật của một ý tưởng. <strong>Nghỉ</strong> không phải bước thứ tư — ý tưởng đã nghỉ hiện thanh <strong>rỗng có gạch ngang</strong>, để không ai đọc nhầm là gần xong. Bấm tên để xem chi tiết ở tab <strong>Ý tưởng</strong>.</p>
     </div>
 
     <div class="card">

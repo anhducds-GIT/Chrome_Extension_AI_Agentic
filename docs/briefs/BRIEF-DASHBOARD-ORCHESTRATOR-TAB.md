@@ -58,7 +58,7 @@ bộ giá trị của khối này — đừng thêm gì làm loãng nó.
 
 ### Khối 2 · Assistant đang ở mốc nào
 
-Ba mốc, lấy từ `docs/protocols/ASSISTANT-V0.1.md`: `V0.1 PACKAGE` · `EXTENSION PILOT` ·
+Ba mốc, lấy từ `docs/protocols/ASSISTANT-V0.1.md`: `V0.1 PACKAGE` · `ASSISTANT PILOT` ·
 `PORTABLE FREEZE → TEMPLATE`, kèm trạng thái xong/đang chạy/khoá.
 
 ### Khối 3 · Defect của chính Assistant

@@ -29,7 +29,7 @@ Hai lệnh đều **chỉ đọc, không đòi khoá nào** — nên phiên đi�
 | Mốc | Trạng thái |
 |---|---|
 | **V0.1 PACKAGE** — đóng nhãn bundle, không di chuyển file | ✅ **xong** 2026-09-04 |
-| **EXTENSION PILOT** — vận hành thật nhiều vòng trên chính repo này | ⏳ **đang chạy** |
+| **ASSISTANT PILOT** — 20–30 câu hỏi thật của Đức, trên chính repo này | ⏳ **đang chạy** |
 | **PORTABLE FREEZE → TEMPLATE** | ⛔ **khoá**, chờ pilot đạt |
 
 Brief promote đã **park**: [`../briefs/BRIEF-ASSISTANT-PROMOTE-01.md`](../briefs/BRIEF-ASSISTANT-PROMOTE-01.md).
