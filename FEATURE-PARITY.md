@@ -109,7 +109,7 @@ con số máy đo, và bị nuốt theo. Đúng kiểu mất mát âm thầm mà
 ## 3. Module — **[ĐO]**
 
 <!-- AUTO:MODULES START -->
-GPT 35 file `.js` · Gemini 33.
+GPT 35 file `.js` · Gemini 34.
 
 **7 file giống hệt sau khi chuẩn hoá CRLF/LF:**
 
@@ -124,13 +124,14 @@ GPT 35 file `.js` · Gemini 33.
 | `content-decision-core.js` | Gemini |
 | `dev-trial-core.js` | Gemini |
 | `interjob-delay-core.js` | GPT |
+| `tab-lock-core.js` | Gemini |
 | `text-output-core.js` | GPT |
 
 **24 file có ở cả hai nhưng khác nội dung** (xếp theo chênh lệch số dòng giảm dần):
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 6185 | 5058 | 1127 |
+| `sidepanel.js` | 6185 | 5103 | 1082 |
 | `bridge-transport-loopback.js` | 946 | 516 | 430 |
 | `bridge-core.js` | 980 | 799 | 181 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
