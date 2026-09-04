@@ -2599,3 +2599,11 @@ xen dưới 3 commit của phiên này, và đẩy hộ việc phiên khác khô
 **đã trả** — việc đã xong trọn vẹn nên giữ khoá chỉ chặn phiên khác vô ích. Ba commit của phiên
 này vẫn chờ trong hàng, và `safe-push` quy commit theo nhãn `Lane:` chứ không theo chủ khoá lúc
 đẩy, nên trả khoá không ảnh hưởng gì tới lượt đẩy sau.
+
+**Và đoạn sửa ngay trên lại SAI — cổng đóng phiên bắt được, ghi lại cả hai lượt sai cho phiên sau
+đỡ đi lại đường này.** Trả `_code` xong thì cổng ĐỎ ở mục *Phạm vi trách nhiệm*: `scripts/` và
+`tests/` **đã bị sửa trong commit chưa push**, nên vùng `_code` phải có người đứng tên — đứng tên
+ở đây nghĩa là *chịu trách nhiệm cho thay đổi chưa lên remote*, không phải *đang gõ tiếp*. Nhãn
+`Lane:` chỉ nói commit của ai; nó không thay được chỗ đứng tên. Đã **nhận lại `_code`**, và nó
+được giữ tới khi ba commit kia đẩy lên được. Kết luận đúng: **trả khoá là việc làm SAU khi push,
+không phải sau khi xong việc** — đúng như luật "trả khoá là lượt push riêng" đã nói.
