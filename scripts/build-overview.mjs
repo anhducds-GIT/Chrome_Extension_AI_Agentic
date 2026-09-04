@@ -585,14 +585,20 @@ p{margin:0}
   border-color:var(--line);border-bottom-color:var(--surface)}
 .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 [role="tabpanel"]{display:flex;flex-direction:column;gap:13px}
-/* DÒNG DƯỚI BẮT BUỘC PHẢI CÓ. display:flex ở trên là luật của TÁC GIẢ, còn
-   [hidden] display:none là luật mặc định của TRÌNH DUYỆT — và luật tác giả luôn thắng luật
-   trình duyệt, bất kể độ đặc hiệu. Thiếu dòng này thì đoạn JS vẫn gán pane.hidden = true
-   đúng, nhưng CSS bỏ qua, nên cả chín khung hiện cùng lúc và bấm tab không thấy gì đổi.
-   Đó là bug DASH-TAB-01: nó sống từ commit 7-tab đầu tiên tới 04/09 mà không ai thấy, vì suite
-   chỉ kiểm trang CÓ gì, không kiểm trang ẨN gì. Ghim ở tests/build-overview-smoke.mjs.
-   (Khối này nằm trong một template literal — đừng đặt dấu ngoặc ngược vào đây.) */
-[role="tabpanel"][hidden]{display:none}
+${/* DÒNG DƯỚI BẮT BUỘC PHẢI CÓ, và nó phải nằm SAU luật display ở trên.
+     display:flex ở trên là luật của TÁC GIẢ, còn [hidden] → display:none là luật mặc định của
+     TRÌNH DUYỆT — và luật tác giả thắng luật trình duyệt bất kể độ đặc hiệu. Thiếu dòng dưới
+     thì đoạn JS cuối trang vẫn gán pane.hidden = true rất đúng, nhưng CSS bỏ qua, nên cả chín
+     khung hiện chồng nhau và bấm tab không thấy gì đổi.
+
+     Đó là bug DASH-TAB-01. Nó sống từ commit đầu tiên dựng 7 tab tới 04/09 mà không ai thấy,
+     vì cả suite chỉ kiểm trang CÓ gì, không kiểm trang ẨN gì. Ghim đã thêm, ở khối 10b của
+     tests/build-overview-smoke.mjs — một bộ suy cascade tí hon; gỡ dòng dưới là nó ĐỎ.
+
+     Vì sao viết bằng ${/* … *\/ ""} chứ không phải ghi chú CSS: đây là ghi chú cho người sửa
+     BỘ SINH, không phải cho Đức. Ghi chú CSS sẽ đi thẳng vào trang Đức mở, kèm cả đường dẫn
+     file — mà luật của trang là không lộ đường dẫn. Cách này ship ra đúng một dòng trống. */
+  ""}[role="tabpanel"][hidden]{display:none}
 
 .now{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:11px}
 @media (max-width:640px){.now{grid-template-columns:1fr}}
