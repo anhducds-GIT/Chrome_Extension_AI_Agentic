@@ -162,6 +162,34 @@ details.the .in{margin-top:11px;padding-top:11px;border-top:1px solid var(--line
 .node.on .dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px var(--good-bg)}
 .node.on .lbl{color:var(--accent)}
 
+/* ROADMAP Ý TƯỞNG — mỗi ý tưởng MỘT hàng, mỗi hàng một thanh BA bước. Hình này do Đức chốt
+   (DASH-ROADMAP-01): danh sách phẳng không nói được "đang ở bước nào".
+   Bậc "nghỉ" KHÔNG vẽ thành bước thứ tư — xem ghi chú ở stepBar() trong file này.
+   (Khối này nằm trong một template literal — đừng đặt dấu ngoặc ngược vào đây.) */
+.rm{display:flex;flex-direction:column}
+.rmr{display:grid;grid-template-columns:minmax(0,1fr) 208px 116px;gap:12px;align-items:center;
+  padding:9px 0;border-bottom:1px solid var(--line)}
+.rmr:last-child{border-bottom:0}
+.rmr>a{color:var(--ink);font-weight:600;font-size:12.5px;text-decoration:none;
+  border-bottom:1px solid var(--line-2)}
+.rmr>a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.rmh{border-bottom:1px solid var(--line-2);padding-bottom:6px}
+.rmh>span{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted)}
+.rms{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;position:relative}
+.rml{font-family:var(--mono);font-size:8px;font-weight:600;letter-spacing:.02em;
+  color:var(--muted);text-align:center;line-height:1.15}
+/* Bậc "nghỉ": ba bước đều RỖNG, đổi sang màu dừng, và một đường gạch ngang cả thanh. Cố ý
+   không tô bước nào — tô là làm nó trông "gần xong", đúng cái phải tránh. */
+.rms.dead .dot{border-color:var(--off);background:var(--off-bg);border-style:dashed}
+.rms.dead::after{content:"";position:absolute;top:5px;left:5%;right:5%;height:1px;
+  background:var(--off);z-index:2}
+@media (max-width:640px){
+  .rmr{grid-template-columns:minmax(0,1fr) auto;gap:7px 10px}
+  .rmr>.rms{grid-column:1 / -1}
+  .rmh{display:none}
+}
+
 /* Khối bản đồ — nơi DUY NHẤT trên bảng được phép in đường dẫn. */
 .map{display:flex;flex-direction:column;gap:13px}
 .mono{font-family:var(--mono);font-size:12px;color:var(--ink)}
@@ -248,23 +276,35 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
     </div>
 
     <div class="card">
-      <div class="sect">Toàn bộ việc lớn — bấm tên để xem chi tiết</div>
+      <div class="sect">Extension trong repo — bấm tên để xem chi tiết</div>
       <div class="big">
         <div class="br"><a href="#ext-root" data-goto="extension">Extension Observer V0</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">extension</span></div>
         <div class="br"><a href="#ext-workers-duc-auto-chatgpt-v0-1-0" data-goto="extension">Duc Auto ChatGPT</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">29 việc nợ</span></div>
         <div class="br"><a href="#ext-workers-duc-auto-gemini-v0-1-0" data-goto="extension">Duc Auto Gemini</a><span class="chip s3">NGHỈ / THAY THẾ</span><span class="meta">extension</span></div>
         <div class="br"><a href="#ext-workers-duc-auto-gemini-v0-2-0" data-goto="extension">Duc Auto Gemini (Platform)</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">12 việc nợ</span></div>
         <div class="br"><a href="#ext-workers-duc-auto-gg-flow-video-v0-1-0" data-goto="extension">Duc Auto GG Flow Video</a><span class="chip s1">ĐANG XÂY</span><span class="meta">21 việc nợ</span></div>
-        <div class="br"><a href="#y-y-06" data-goto="y-tuong">Y-06 · Luật nói &quot;dòng cuối&quot;, máy chỉ cần &quot;có mặt&quot;</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
-        <div class="br"><a href="#y-y-07" data-goto="y-tuong">Y-07 · Cổng đỏ giả vì suite chậm — độ tin của cổng, không phải lỗi của bảng</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
-        <div class="br"><a href="#y-y-08" data-goto="y-tuong">Y-08 · Cặp đối chiếu thứ tư cho `state-check`: `STATUS.md` ↔ Log của chính gói đó</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
-        <div class="br"><a href="#y-y-01" data-goto="y-tuong">Y-01 · MVP: dùng Claude Code điều phối GPT</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
-        <div class="br"><a href="#y-y-02" data-goto="y-tuong">Y-02 · Protocol làm nhiều việc song song</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
-        <div class="br"><a href="#y-y-03" data-goto="y-tuong">Y-03 · Trường &quot;Đức cần làm&quot; trong hồ sơ trạng thái</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
-        <div class="br"><a href="#y-y-05" data-goto="y-tuong">Y-05 · Viết lại chữ trong hồ sơ cho mắt Đức đọc</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
-        <div class="br"><a href="#y-y-04" data-goto="y-tuong">Y-04 · Bảng trạng thái sinh ngay trong repo</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">chưa ai nhận</span></div>
       </div>
-      <p class="note">5 extension và 8 ý tưởng. Chi tiết extension ở tab <strong>Extension</strong>, chi tiết ý tưởng ở tab <strong>Ý tưởng</strong>.</p>
+      <p class="note">5 extension. Chi tiết ở tab <strong>Extension</strong>.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Ý tưởng đang ở bước nào — 8 ý tưởng</div>
+      <div class="rm">
+        <div class="rmr rmh"><span>Ý tưởng</span><div class="rms">
+          <span class="rml">Ý TƯỞNG</span>
+          <span class="rml">ĐANG XÂY</span>
+          <span class="rml">ĐÃ CHỨNG MINH</span>
+        </div><span>Đang ở bậc</span></div>
+        <div class="rmr"><a href="#y-y-06" data-goto="y-tuong">Y-06 · Luật nói &quot;dòng cuối&quot;, máy chỉ cần &quot;có mặt&quot;</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
+        <div class="rmr"><a href="#y-y-07" data-goto="y-tuong">Y-07 · Cổng đỏ giả vì suite chậm — độ tin của cổng, không phải lỗi của bảng</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
+        <div class="rmr"><a href="#y-y-08" data-goto="y-tuong">Y-08 · Cặp đối chiếu thứ tư cho `state-check`: `STATUS.md` ↔ Log của chính gói đó</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
+        <div class="rmr"><a href="#y-y-01" data-goto="y-tuong">Y-01 · MVP: dùng Claude Code điều phối GPT</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s1">ĐANG XÂY</span></div>
+        <div class="rmr"><a href="#y-y-02" data-goto="y-tuong">Y-02 · Protocol làm nhiều việc song song</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s1">ĐANG XÂY</span></div>
+        <div class="rmr"><a href="#y-y-03" data-goto="y-tuong">Y-03 · Trường &quot;Đức cần làm&quot; trong hồ sơ trạng thái</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s1">ĐANG XÂY</span></div>
+        <div class="rmr"><a href="#y-y-05" data-goto="y-tuong">Y-05 · Viết lại chữ trong hồ sơ cho mắt Đức đọc</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s1">ĐANG XÂY</span></div>
+        <div class="rmr"><a href="#y-y-04" data-goto="y-tuong">Y-04 · Bảng trạng thái sinh ngay trong repo</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div></div><span class="chip s2">ĐÃ CHỨNG MINH</span></div>
+      </div>
+      <p class="note">Ba bước là đường đi thật của một ý tưởng. <strong>Nghỉ</strong> không phải bước thứ tư — ý tưởng đã nghỉ hiện thanh <strong>rỗng có gạch ngang</strong>, để không ai đọc nhầm là gần xong. Bấm tên để xem chi tiết ở tab <strong>Ý tưởng</strong>.</p>
     </div>
 
     <div class="card">
@@ -292,7 +332,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 <!--khoa-->        <div class="kr"><span class="n">duc-auto-gg-flow-video</span><span class="badge b2">MỞ</span></div>
 <!--khoa-->        <div class="kr"><span class="n">duc-auto-gemini</span><span class="badge b2">MỞ</span></div>
 <!--khoa-->        <div class="kr"><span class="n">duc-auto-chatgpt</span><span class="badge b1">BẬN</span></div>
-<!--khoa-->        <div class="kr"><span class="n">_root</span><span class="badge b1">BẬN</span></div>
+<!--khoa-->        <div class="kr"><span class="n">_root</span><span class="badge b2">MỞ</span></div>
 <!--khoa-->        <div class="kr"><span class="n">_docs</span><span class="badge b1">BẬN</span></div>
 <!--khoa-->        <div class="kr"><span class="n">_code</span><span class="badge b1">BẬN</span></div>
       </div>
@@ -304,7 +344,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
       <div class="sect">Gói Assistant đang ở mốc nào</div>
       <div class="kl">
         <div class="kr"><span class="n">V0.1 PACKAGE</span><span class="badge b2">xong 2026-09-04</span></div>
-        <div class="kr"><span class="n">EXTENSION PILOT</span><span class="badge b1">đang chạy</span></div>
+        <div class="kr"><span class="n">ASSISTANT PILOT</span><span class="badge b1">đang chạy</span></div>
         <div class="kr"><span class="n">PORTABLE FREEZE → TEMPLATE</span><span class="badge b3">khoá, chờ pilot đạt</span></div>
       </div>
       <p class="note">Ba mốc đọc lại từ hồ sơ mốc của gói, không gõ tay ở đây — nên bảng không thể nói khác hồ sơ.</p>
