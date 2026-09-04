@@ -42,26 +42,29 @@
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-qdsync da hoan tat va bao cao xong, nhung ket thuc truoc khi push nen khong tra duoc khoa. Da push ho 12 commit theo Duc duyet --carry; cay lam viec SACH nen khong co viec do bi mat."
     },
     "_docs": {
-      "owner": "claude-exec-roadmap",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T08:53",
       "task": "DASH-ROADMAP-01 phan tai lieu: sua 3 cho con noi theo luat cu (ASSISTANT-V0.1 x2, ORCHESTRATOR muc 6)",
-      "released_at": null,
-      "taken_from": "claude-exec-qdsync",
+      "released_at": "2026-09-04T14:30",
+      "taken_from": "claude-exec-roadmap",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
-      "taken_at": "2026-09-04T08:49",
-      "duc_decision": "Duc chot 2026-09-04: phien claude-exec-qdsync da hoan tat va bao cao xong, nhung ket thuc truoc khi push nen khong tra duoc khoa. Da push ho 12 commit theo Duc duyet --carry; cay lam viec SACH nen khong co viec do bi mat."
+      "taken_at": "2026-09-04T13:10",
+      "duc_decision": "Duc chot 2026-09-04: phien claude-exec-roadmap da hoan tat DASH-ROADMAP-01 va bao cao xong, nhung khong tra duoc khoa vi bi chan push. Da push ho theo Duc duyet --carry; cay lam viec SACH nen khong viec do nao bi mat."
     },
     "_code": {
-      "owner": "claude-exec-roadmap",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T08:56",
       "task": "DASH-ROADMAP-01: y tuong dang roadmap co buoc o tab Tong quan + doi ten moc EXTENSION PILOT",
-      "released_at": null,
-      "taken_from": "claude-exec-dashtab",
-      "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
+      "released_at": "2026-09-04T14:30",
+      "taken_from": "claude-exec-roadmap",
+      "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
+      "taken_by": "claude-dieu-phoi",
+      "taken_at": "2026-09-04T13:10",
+      "duc_decision": "Duc chot 2026-09-04: phien claude-exec-roadmap da hoan tat DASH-ROADMAP-01 va bao cao xong, nhung khong tra duoc khoa vi bi chan push. Da push ho theo Duc duyet --carry; cay lam viec SACH nen khong viec do nao bi mat."
     }
   },
-  "_fingerprint": "62cb9ba90e4e6f2e"
+  "_fingerprint": "19b5d418e5d2d616"
 }
