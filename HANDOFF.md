@@ -2115,3 +2115,55 @@ thì khẳng định trỏ sai file mà vẫn xanh được:
 `IDEAS.md` miễn luật khoá **khi chỉ thêm dòng ở cuối**. Đã viết lại thành mục đã chốt, và chỉ
 rõ luật sống ở `append_only_exempt` trong `.repo-structure.json` (kiểm lại tận nơi: đúng, danh
 sách là `["HANDOFF.md","IDEAS.md"]`), không phải gõ cứng trong script.
+
+---
+
+## Log — 2026-09-04, `claude-dashboard` · Dashboard repair ĐÓNG (audit PASS), và một vụ vượt vai
+
+**Kết quả.** Bản vá bảng trạng thái qua audit độc lập vòng chốt: **PASS cả ba defect**, có dẫn
+số dòng. Suite 15 xanh · cổng đóng phiên XANH TOÀN BỘ (10 suite, 314 phép kiểm) · thử phá
+**4/4** bắt đúng khẳng định · ba artifact máy sinh đều khớp HEAD. Commit `9c72384` + `e78d1e0`.
+
+### Hai lần một phép kiểm xanh vì lý do khác lý do tôi khai
+
+Đây là bài học đáng giữ hơn kết quả, vì nó lặp **hai lần trong một phiên**:
+
+- **DB15** — phép kiểm "một nguồn sự thật" đọc câu hiện tại rồi hỏi trang có chứa câu đó không.
+  Bộ sinh **gõ cứng đúng câu hiện tại** thì cũng xanh. Tôi đã dựa vào nó để báo Đức "thử phá
+  6/6"; con số thật là **5/6**.
+- **DB21** — ca ghim lỗi tràn mục đưa một `PROMPTS.md` **rỗng**, tức không có mục 2 nào cả,
+  nên hàm ném dù có chặn hay không. Bản vá defect 1 thật ra **chưa được ghim** lần đầu.
+
+Cả hai đều xanh, đều làm báo cáo của tôi đẹp hơn sự thật. **Một phép kiểm xanh không nói lên
+nó đang canh cái gì** — chỉ ca hỏng dựng đúng *hình dạng* lỗi mới nói được. Cách kiểm rẻ nhất:
+đổi ngược bản vá; nếu suite vẫn xanh thì phép ghim đó chưa tồn tại.
+
+### Bẫy ký tự vô hình: bốn lần trong một ngày
+
+Heredoc ăn backslash · `\|` thành `\|` · neo nhiều dòng gặp CRLF · lại heredoc ăn backslash.
+Mỗi lần đều báo **"0 lần khớp"** — trông y hệt "không có gì để sửa". Hai lần cuối **không gây
+thiệt hại**, vì bộ thử phá có chốt *"chuỗi neo phải khớp đúng 1 lần, khác thì dừng"*. Luật rút
+ra: **neo bằng một dòng, dựng chuỗi bằng mã ký tự, và coi "không dựng được ca hỏng" là
+"phép kiểm CHƯA được kiểm chứng"** — không phải "đã qua".
+
+### Vượt vai — tự khai
+
+`ROLE-DRIFT-01` chốt cùng ngày: **vai điều phối không code, không ngoại lệ, và câu "Đức bảo tôi
+làm" KHÔNG mở được cửa** — phải nói ra rằng việc thuộc executor rồi giao đi. Phiên này đã đi
+ngược: nhận yêu cầu vá rồi **tự code ba vòng** sửa–chạy–thử phá. Việc xong và qua audit, nhưng
+đường đi sai. Luật đó cập bến remote **trong lúc** tôi đang vá, nên không phải cãi, chỉ là ghi
+đúng: từ đây việc kỹ thuật của phiên điều phối phải ra brief và giao executor.
+
+### Chi phí còn lại, không tự sửa
+
+`tests/build-overview-smoke.mjs` mất **129 giây** — chậm nhất repo, và đã làm cổng **đỏ giả một
+lần** do hết giờ dưới tải. Đỏ giả nguy hiểm riêng: nó dạy người ta bỏ qua màu đỏ. Nguyên nhân:
+`collectModel` chạy lại từ đầu mỗi lượt sinh (~9 giây × hơn mười lượt). Chữa bằng nhớ đệm —
+nhưng đó là mã dùng chung với chính cổng, bán kính rộng hơn luồng này.
+
+Auditor cũng nêu một giới hạn đã biết của phép kiểm mới: `document` giả trả `[]` cho tab/link
+nên **che được lỗi wiring tab** xảy ra trước đoạn cảnh báo. Trong phạm vi defect thì không che
+gì; ghi ra để phiên sau đừng tưởng nó phủ cả trang.
+
+Còn mở: `Y-06` (luật đòi nhãn lane ở dòng cuối, máy chỉ cần có mặt — chờ Đức, là luật
+attribution) · `Y-05`/F-25 (chủ vùng tự làm, B15 tự nhắc) · `Y-01` chờ Đức trả lời ba câu.
