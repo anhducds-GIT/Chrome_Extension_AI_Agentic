@@ -26,32 +26,32 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-exec-roledrift",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-03T23:59",
       "task": "ROLE-DRIFT-01: sua con tro AGENTS.md + PROMPTS.md muc 0",
-      "released_at": null,
+      "released_at": "2026-09-04T02:38",
       "taken_from": "claude-k2-vaLoi",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": "claude-exec-roledrift",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-03T23:59",
       "task": "ROLE-DRIFT-01: Hard Role Firewall cho ORCHESTRATOR.md",
-      "released_at": null,
+      "released_at": "2026-09-04T02:38",
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": "claude-dashboard",
-      "ai": "Claude",
-      "claimed_at": "2026-09-04T02:05",
-      "task": "Va 3 defect GPT audit vong 2 — chi dung build-overview.mjs + smoke cua no",
-      "released_at": null,
+      "owner": null,
+      "ai": null,
+      "claimed_at": "2026-09-04T02:30",
+      "task": "dat regression smoke role firewall vao tests/",
+      "released_at": "2026-09-04T02:38",
       "taken_from": "claude-k2-snapshot",
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "bb9f9e2e5fc7e2ce"
+  "_fingerprint": "97dd5abe2d4558fd"
 }
