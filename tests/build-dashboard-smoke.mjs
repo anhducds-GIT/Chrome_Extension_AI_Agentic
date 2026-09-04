@@ -1171,6 +1171,321 @@ function antiDrift(text, measurements = {}) {
   }
 }
 
+/* 23o. K2-9d · HÀNH VI: ảnh chụp HEAD phải BIẾT GIT, và phải đúng CẢ HAI mốc.
+   Bệnh (audit GPT vòng 6): `git archive` không mang `.git`, nên suite nào gọi git sẽ chết vì
+   `not a git repository` — và cái chết đó bị đọc thành `REGRESSION_DA_COMMIT`, tức quy oan cho
+   lane đang đóng phiên. Đúng bệnh K2-9 sinh ra để chữa.
+
+   Và bản sửa ĐẦU của tôi (`git clone` trần) CHƯA ĐỦ, chỗ thiếu thì im lặng: clone lấy
+   `origin/main` từ nhánh local của repo gốc, tức baseline bằng HEAD chứ không bằng mốc thật.
+   Suite vẫn chạy, vẫn xanh, chỉ so với mốc sai — không test nào đỏ.
+
+   NĂM CA, và ca 3 là ca mà bản sửa đầu của tôi trượt. Suite của fixture tự khai HEAD và
+   baseline nó NHÌN THẤY ra một file bằng chứng, nên hai mốc được ghim bằng số chứ không bằng
+   "suite xanh nên chắc là đúng". */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-9d-anh-chup-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  const bangChung = join(tempRoot, "bang-chung.txt");
+  const gate = () => spawnSync(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "toi"], {
+    cwd: tempRoot, encoding: "utf8", env: { ...process.env, BANG_CHUNG: bangChung }
+  });
+  const dongTest = (r) => {
+    const rows = r.stdout.split(String.fromCharCode(10));
+    const i = rows.findIndex((l) => l.includes("Test xanh"));
+    if (i < 0) return "";
+    const out = [rows[i]];
+    for (let k = i + 1; k < rows.length && /^\s{5,}\S/.test(rows[k]); k += 1) out.push(rows[k]);
+    return out.join(" ");
+  };
+  // Suite CẦN GIT — hình dạng thật của `feature-parity-smoke`, nó chạy `git show HEAD:...`.
+  // Nó khai ra file bằng chứng cả HAI mốc nó nhìn thấy, để test ghim được từng mốc.
+  const suiteGoiGit = [
+    'import { execFileSync } from "node:child_process";',
+    'import fs from "node:fs";',
+    'const g = (...a) => execFileSync("git", a, { encoding: "utf8" }).trim();',
+    // ĐỌC FILE TRÊN ĐĨA, không đọc `git show HEAD:` — bản đầu của tôi đọc từ HEAD nên nó
+    // MIỄN NHIỄM với cây làm việc, và fixture xanh một cách vô nghĩa (suite không hề đỏ).
+    // Đúng hình dạng thật: suite đọc file, VÀ gọi git cho việc khác.
+    'const marker = fs.readFileSync("marker.txt", "utf8").trim();',
+    // GỌI GIT KHÔNG BỌC try — đây là thứ khiến suite CHẾT trong bản `git archive`, y như
+    // `feature-parity-smoke` chạy `git show HEAD:FEATURE-PARITY.md`. Bọc nó lại là mất luôn ca 1.
+    'const headMarker = g("show", "HEAD:marker.txt");',
+    'let base = "KHONG_CO";',
+    'try { base = g("rev-parse", "origin/main"); } catch {}',
+    'if (process.env.BANG_CHUNG) fs.appendFileSync(process.env.BANG_CHUNG, `MARKER=${marker} HEAD_MARKER=${headMarker} BASE=${base}` + String.fromCharCode(10));',
+    'if (marker !== "ok") { console.log("0 passed, 1 failed, 1 total"); process.exit(1); }',
+    'console.log("1 passed, 0 failed, 1 total");',
+    ""
+  ].join("\n");
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2 Anh Chup");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1, repo: { name: "R", tagline: "t" },
+      units: { root_dir: "workers", marker: "manifest.json", depth: 2, ten: "E" },
+      areas: {
+        "scripts/": { steward: "_code", mutability: "rw", ownership_mode: "root" },
+        "tests/": { steward: "_code", mutability: "rw", ownership_mode: "root" }
+      }
+    }, null, 2));
+    // `marker.txt` ở tầng ngoài cùng → thuộc `_root`, mà `_root` là của LANE KHÁC.
+    // Nhờ vậy file sửa dở của nó KHÔNG tính là bẩn-trong-vùng-của-tôi.
+    put(".agents/claims.json", JSON.stringify({ claims: {
+      _root: { owner: "lane-khac" },
+      _code: { owner: "toi" }
+    } }, null, 2));
+    put("manifest.json", JSON.stringify({ name: "R", version: "0.0.1" }));
+    put("HANDOFF.md", "# Handoff\n");
+    put("marker.txt", "ok\n");
+    put("tests/git-suite.mjs", suiteGoiGit);
+    put("package.json", JSON.stringify({
+      name: "r", private: true, type: "module", scripts: { test: "node tests/git-suite.mjs" }
+    }, null, 2));
+    gitAt("add", "."); gitAt("commit", "-m", "seed");
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+    const shaBaseline = gitAt("rev-parse", "HEAD").trim();
+
+    // Việc của TÔI, đã commit, trong vùng tôi giữ.
+    put("scripts/viec-cua-toi.mjs", "export const x = 1;\n");
+    gitAt("add", "-A"); gitAt("commit", "-m", "viec cua toi\n\nLane: toi");
+    const shaHead = gitAt("rev-parse", "HEAD").trim();
+    assert.notEqual(shaBaseline, shaHead, "dung fixture: HEAD phai khac baseline, khong thi ca 3 vo nghia");
+
+    // LANE KHÁC sửa dở `marker.txt` → suite đỏ trên cây làm việc, nhưng HEAD thì lành.
+    put("marker.txt", "hong\n");
+    writeFileSync(bangChung, "", "utf8");
+    const r = gate();
+
+    // CA 1 — suite GỌI GIT phải sống được trong ảnh chụp, nên đỏ này được nhận ra là nhiễm
+    // từ cây làm việc. Trước bản vá: ảnh chụp không có `.git` → suite chết → quy oan REGRESSION.
+    const d = dongTest(r);
+    assert.doesNotMatch(d, /\[ĐỎ/, `CA1: suite goi git phai chay duoc trong anh chup, khong duoc quy oan REGRESSION. Khoi: ${d}`);
+    assert.doesNotMatch(r.stdout, /REGRESSION_DA_COMMIT/, "CA1: khong duoc ket luan regression — HEAD hoan toan lanh");
+    assert.match(r.stdout, /Thứ ĐÃ COMMIT xanh/, "CA1: phai noi ro da commit thi lanh, cay lam viec thi hong");
+
+    const dong = readFileSync(bangChung, "utf8").split(String.fromCharCode(10)).filter(Boolean);
+    assert.ok(dong.length >= 2, `dung fixture: phai co 2 luot chay (cay lam viec, roi anh chup). Nhan: ${JSON.stringify(dong)}`);
+    const [cayLamViec, anhChup] = [dong[0], dong[dong.length - 1]];
+    assert.match(cayLamViec, /MARKER=hong/, "dung fixture: luot dau phai chay tren CAY LAM VIEC");
+
+    // CA 2 — HEAD trong ảnh chụp phải là commit ĐANG XÉT, không phải cây làm việc.
+    assert.match(anhChup, /MARKER=ok/, `CA2: HEAD trong anh chup phai la thu DA COMMIT. Nhan: ${anhChup}`);
+
+    // CA 3 — CA MÀ BẢN SỬA ĐẦU CỦA TÔI TRƯỢT: baseline phải là `origin/main` THẬT, không phải
+    // HEAD. `git clone` trần đặt origin/main = nhánh local = HEAD, và không test nào đỏ vì suite
+    // vẫn chạy ngon — chỉ so với mốc sai.
+    assert.match(anhChup, new RegExp(`BASE=${shaBaseline}`),
+      `CA3: baseline trong anh chup phai la origin/main THAT (${shaBaseline.slice(0, 7)}), khong phai HEAD (${shaHead.slice(0, 7)}). Nhan: ${anhChup}`);
+    assert.doesNotMatch(anhChup, new RegExp(`BASE=${shaHead}`), "CA3: baseline BANG HEAD la dung benh cua clone tran");
+
+    // CA 4 — repo gốc KHÔNG được bị ghi gì. Đây là điều kiện K2-9 đặt ra khi cố ý tránh
+    // `git worktree add`; bản thay thế không được mang bệnh đó về.
+    // Chỉ xét file ĐƯỢC THEO DÕI mà bị sửa: file rác của chính fixture (bằng chứng) là untracked,
+    // không liên quan. Vế cần ghim là ảnh chụp không ĐỘNG vào thứ repo gốc đang theo dõi.
+    const suaTrongRepoGoc = gitAt("status", "--porcelain").trim().split(String.fromCharCode(10))
+      .filter((l) => /^\s*M/.test(l)).map((l) => l.trim().replace(/^M\s+/, ""));
+    assert.deepEqual(suaTrongRepoGoc, ["marker.txt"],
+      `CA4: repo goc chi duoc co dung file lane khac sua do. Nhan: ${JSON.stringify(suaTrongRepoGoc)}`);
+    assert.equal(gitAt("worktree", "list").trim().split(String.fromCharCode(10)).length, 1,
+      "CA4: khong duoc sinh worktree nao o repo goc — do la ly do K2-9 tranh `git worktree add`");
+    ok("K2-9d · CA 1–4: suite gọi git sống trong ảnh chụp · HEAD đúng commit · baseline đúng origin/main thật · repo gốc không bị ghi gì");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-9d-anh-chup-")), "chỉ dọn đúng temp fixture K2-9d");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+/* 23p. K2-9d CA 5 · repo CHƯA CÓ `origin/main` vẫn phải chụp được.
+   Không có baseline để viền, và đó là trạng thái HỢP LỆ của một repo vừa dựng từ bộ khung.
+   Nếu bước viền baseline mà bắt buộc thì cổng sập ở đúng repo đầu tiên — kiểu chặn oan mà cả
+   K2 sinh ra để xoá. Ghim riêng vì nó là nhánh `if (baseline)`, và nhánh không ai ghim thì
+   sớm muộn có người "dọn cho gọn". */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-9d-chua-co-remote-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2 Chua Co Remote");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1, repo: { name: "R", tagline: "t" },
+      units: { root_dir: "workers", marker: "manifest.json", depth: 2, ten: "E" },
+      areas: { "scripts/": { steward: "_code", mutability: "rw", ownership_mode: "root" } }
+    }, null, 2));
+    put(".agents/claims.json", JSON.stringify({ claims: { _root: { owner: "lane-khac" }, _code: { owner: "toi" } } }, null, 2));
+    put("manifest.json", JSON.stringify({ name: "R", version: "0.0.1" }));
+    put("HANDOFF.md", "# Handoff\n");
+    put("marker.txt", "ok\n");
+    // Suite phải ĐỎ ĐƯỢC và phải CẦN GIT — nếu không thì `chayLaiTrenHead` chẳng bao giờ chạy
+    // ở repo này, và nhánh "không có baseline" không hề được ghim. Bản đầu của tôi để suite
+    // luôn xanh, tức ca 5 chỉ chứng minh cổng không sập chứ không chứng minh ảnh chụp dựng được.
+    put("tests/mot-suite.mjs", [
+      'import { execFileSync } from "node:child_process";',
+      'import fs from "node:fs";',
+      'execFileSync("git", ["show", "HEAD:marker.txt"], { encoding: "utf8" });',
+      'if (fs.readFileSync("marker.txt", "utf8").trim() !== "ok") { console.log("0 passed, 1 failed, 1 total"); process.exit(1); }',
+      'console.log("1 passed, 0 failed, 1 total");',
+      ""
+    ].join("\n"));
+    put("package.json", JSON.stringify({
+      name: "r", private: true, type: "module", scripts: { test: "node tests/mot-suite.mjs" }
+    }, null, 2));
+    gitAt("add", "."); gitAt("commit", "-m", "seed");
+    // CỐ Ý không tạo `refs/remotes/origin/main`.
+    // Việc của tôi phải ĐÃ COMMIT: còn sửa dở trong vùng mình thì `TOI_CON_SUA_DO` chặn trước,
+    // và ca 5 không bao giờ chạm tới bước dựng ảnh chụp. Bản đầu của tôi vướng đúng chỗ này.
+    put("scripts/x.mjs", "export const x = 1;\n");
+    gitAt("add", "-A"); gitAt("commit", "-m", "viec cua toi\n\nLane: toi");
+    put("marker.txt", "hong\n");   // lane khác sửa dở → suite đỏ ở cây làm việc, HEAD thì lành
+
+    const r = spawnSync(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "toi"], { cwd: tempRoot, encoding: "utf8" });
+    assert.doesNotMatch(r.stdout + r.stderr, /Phép kiểm lỗi/, `CA5: cong khong duoc nem o repo chua co origin/main: ${r.stdout}${r.stderr}`);
+    assert.doesNotMatch(r.stderr, /CỔNG BỊ SỬA/, "CA5: so phep kiem van phai khop");
+    assert.match(r.stdout, /KHÔNG SO ĐƯỢC VỚI origin\/main/, "CA5: phai NOI RA la khong so duoc, khong im lang");
+    // Và phép kiểm "Đọc git không lỗi" KHÔNG được đỏ chỉ vì thiếu `origin/main` — mấy lệnh đó
+    // đi qua hàm khoan dung. Đây là chỗ dễ hỏng nhất khi ai đó đổi `gitLoiLaBinhThuong` thành `git`.
+    const rows = r.stdout.split(String.fromCharCode(10));
+    const i = rows.findIndex((l) => l.includes("Đọc git không lỗi"));
+    assert.ok(i >= 0, "CA5: phai con phep kiem #12");
+    assert.doesNotMatch(rows[i], /\[ĐỎ/, `CA5: thieu origin/main la HOP LE, khong duoc lam phep kiem #12 do: ${rows[i]} ${rows[i + 1]}`);
+    // Cổng KHÔNG ĐỎ, và không đỏ vì bất kỳ lý do nào — thiếu `origin/main` là trạng thái hợp lệ.
+    const j = rows.findIndex((l) => l.includes("Test xanh"));
+    assert.doesNotMatch([rows[j], rows[j + 1]].join(" "), /\[ĐỎ/, `CA5: thieu origin/main khong duoc lam cong do: ${rows[j + 1]}`);
+    // CỐ Ý không đòi cổng xanh toàn bộ: fixture này tối giản nên vài phép kiểm KHÁC đỏ vì lý do
+    // không liên quan (bootstrap B1–B14, dấu niêm phong bảng quyền do fixture ghi tay claims).
+    // Đòi `status === 0` ở đây là buộc fixture phải dựng một repo hợp lệ hoàn chỉnh chỉ để hỏi
+    // một câu về ảnh chụp — và một assert như thế sẽ đỏ vì đủ thứ chẳng dính gì tới điều đang thử.
+
+    /* GIỚI HẠN THẬT, ghi ra để người sau không mất công dựng lại:
+       nhánh `if (baseline)` trong `chayLaiTrenHead` KHÔNG lái được đầu-cuối từ đây. Lý do nằm ở
+       thiết kế cổng, không phải ở test: không có `origin/main` thì `unpushed` rỗng, nên vùng duy
+       nhất tôi "chịu trách nhiệm" phải đến từ một file CHƯA COMMIT trong vùng mình — mà đúng cái
+       đó lại kích `TOI_CON_SUA_DO` và chặn trước khi tới bước dựng ảnh chụp. Tức ở repo chưa có
+       remote, cổng vốn không chạy suite nào.
+       Nên nhánh đó là PHÒNG THỦ, và ca này ghim đúng thứ ghim được: cổng không sập, nói rõ là
+       không so được, phép kiểm #12 không đỏ oan. Đừng viết một assert giả vờ mạnh hơn thế. */
+    ok("K2-9d · CA 5: repo chưa có `origin/main` — cổng không sập, nói rõ là không so được, phép kiểm #12 không đỏ oan (giới hạn ghi trong khối)");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-9d-chua-co-remote-")), "chỉ dọn đúng temp fixture CA5");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
+/* 23q. K2-9d CA 6 · ảnh chụp phải ghim ĐÚNG COMMIT, không tin nhánh mặc định.
+   `git clone` lấy nhánh mặc định của repo gốc. Nếu repo gốc đang ở detached HEAD — hoặc nhánh
+   đã đi tiếp — thì bản clone sẽ chụp một commit KHÁC với commit đang xét, và không gì kêu lên:
+   suite vẫn chạy, chỉ là chạy trên mã sai. Đó là lý do có `checkout --detach <HEAD>`.
+   Ca này là ca duy nhất phân biệt được dòng đó, nên bỏ nó là dòng đó thành bình luận. */
+{
+  const tempRoot = mkdtempSync(join(tmpdir(), "k2-9d-ghim-commit-"));
+  const gitAt = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], { cwd: tempRoot, encoding: "utf8" });
+  const put = (relPath, text) => {
+    const target = join(tempRoot, ...relPath.split("/"));
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, "utf8");
+  };
+  const dongTest = (r) => {
+    const rows = r.stdout.split(String.fromCharCode(10));
+    const i = rows.findIndex((l) => l.includes("Test xanh"));
+    if (i < 0) return "";
+    const out = [rows[i]];
+    for (let k = i + 1; k < rows.length && /^\s{5,}\S/.test(rows[k]); k += 1) out.push(rows[k]);
+    return out.join(" ");
+  };
+  // Suite cần git (để chết nếu ảnh chụp không có `.git`) và đọc file trên đĩa (để nhiễm được
+  // từ cây làm việc, và để phân biệt được commit nào đang bị chụp).
+  const suite = [
+    'import { execFileSync } from "node:child_process";',
+    'import fs from "node:fs";',
+    'execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" });',
+    'const m = fs.readFileSync("marker.txt", "utf8").trim();',
+    'if (m !== "ok") { console.log(`0 passed, 1 failed, 1 total (marker=${m})`); process.exit(1); }',
+    'console.log("1 passed, 0 failed, 1 total");',
+    ""
+  ].join("\n");
+  try {
+    gitAt("init", "-b", "main");
+    gitAt("config", "user.name", "K2 Ghim Commit");
+    gitAt("config", "user.email", "k2@example.invalid");
+    mkdirSync(join(tempRoot, "scripts"), { recursive: true });
+    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+      copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
+    }
+    put(".repo-structure.json", JSON.stringify({
+      schema_version: 1, repo: { name: "R", tagline: "t" },
+      units: { root_dir: "workers", marker: "manifest.json", depth: 2, ten: "E" },
+      areas: {
+        "scripts/": { steward: "_code", mutability: "rw", ownership_mode: "root" },
+        "tests/": { steward: "_code", mutability: "rw", ownership_mode: "root" }
+      }
+    }, null, 2));
+    put(".agents/claims.json", JSON.stringify({ claims: {
+      _root: { owner: "lane-khac" }, _code: { owner: "toi" }
+    } }, null, 2));
+    put("manifest.json", JSON.stringify({ name: "R", version: "0.0.1" }));
+    put("HANDOFF.md", "# Handoff\n");
+    put("marker.txt", "ok\n");
+    put("tests/suite.mjs", suite);
+    put("package.json", JSON.stringify({
+      name: "r", private: true, type: "module", scripts: { test: "node tests/suite.mjs" }
+    }, null, 2));
+    gitAt("add", "."); gitAt("commit", "-m", "seed");
+    gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
+
+    // B = commit ĐANG XÉT. marker vẫn "ok" ở đây.
+    put("scripts/viec-cua-toi.mjs", "export const x = 1;\n");
+    gitAt("add", "-A"); gitAt("commit", "-m", "viec cua toi\n\nLane: toi");
+    const shaB = gitAt("rev-parse", "HEAD").trim();
+
+    // C = nhánh `main` ĐI TIẾP, và ở C thì marker KHÁC. Đây là chỗ hai cách chụp tách ra.
+    put("marker.txt", "commit-C\n");
+    gitAt("add", "-A"); gitAt("commit", "-m", "main di tiep\n\nLane: lane-khac");
+    const shaC = gitAt("rev-parse", "HEAD").trim();
+    assert.notEqual(shaB, shaC, "dung fixture: main phai di qua B");
+
+    // Quay về đứng ở B (detached). HEAD=B, còn `main` vẫn trỏ C.
+    gitAt("checkout", "-q", "--detach", shaB);
+    assert.equal(gitAt("rev-parse", "HEAD").trim(), shaB, "dung fixture: HEAD phai la B");
+    assert.equal(gitAt("rev-parse", "main").trim(), shaC, "dung fixture: main phai van la C");
+    assert.equal(gitAt("show", "HEAD:marker.txt").trim(), "ok", "dung fixture: o B thi marker = ok");
+
+    // Lane khác sửa dở marker → suite đỏ trên cây làm việc. Vùng tôi giữ thì sạch.
+    put("marker.txt", "dang-sua-do\n");
+    const r = spawnSync(process.execPath, [join(tempRoot, "scripts", "session-check.mjs"), "--as", "toi"], { cwd: tempRoot, encoding: "utf8" });
+    const d = dongTest(r);
+
+    // Chụp ĐÚNG B → marker "ok" → suite xanh → [BỎ].
+    // Chụp theo nhánh mặc định (C) → marker "commit-C" → suite đỏ → quy oan REGRESSION.
+    assert.doesNotMatch(d, /\[ĐỎ/, `CA6: anh chup phai ghim dung commit dang xet (B), khong lay nhanh mac dinh (C). Khoi: ${d}`);
+    assert.doesNotMatch(d, /marker=commit-C/, "CA6: dau hieu chup nham commit C — thieu `checkout --detach <HEAD>`");
+    assert.match(r.stdout, /Thứ ĐÃ COMMIT xanh/, "CA6: phai nhan ra do den tu cay lam viec");
+    ok("K2-9d · CA 6: ảnh chụp ghim đúng commit đang xét, không tin nhánh mặc định (repo ở detached HEAD, `main` đã đi tiếp)");
+  } finally {
+    assert.ok(tempRoot.startsWith(join(tmpdir(), "k2-9d-ghim-commit-")), "chỉ dọn đúng temp fixture CA6");
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+}
+
 /* 23j. K2-9 · HÀNH VI: suite của lane KHÁC đỏ thì không chặn tôi; của TÔI đỏ thì chặn.
    Bệnh (đo thật 03/09): `scripts.test` nối các suite bằng `&&`, và nó mở đầu bằng suite của
    `workers/duc-auto-chatgpt`. Nên một lane lưu file dở làm MỌI lane khác không đóng được phiên

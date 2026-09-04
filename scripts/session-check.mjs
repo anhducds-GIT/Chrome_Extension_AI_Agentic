@@ -187,17 +187,61 @@ const runOne = (cmd, cwd = ROOT) => execSync(cmd, { cwd, encoding: "utf8", timeo
  * Nên hỏi đúng câu: **lỗi này có trong thứ đã commit không?** Trích HEAD ra thư mục tạm, chạy
  * lại đúng suite đó ở đó. Đỏ ở đó = thật. Xanh ở đó = nhiễm từ cây làm việc.
  *
- * `git archive` chứ KHÔNG `git worktree add`: nó không ghi vào `.git/worktrees` — state dùng
- * chung mà hai lane chạy cùng lúc có thể giẫm nhau — và cũng không phạm luật "KHÔNG worktree".
- * Đo: 1.8s cho 1249 file. Ảnh chụp sống vài giây rồi xoá, không phải hộp cát thường trú (K2-6).
+ * Bản chụp là một bản `clone` tạm chứ KHÔNG `git worktree add`: worktree ghi vào
+ * `.git/worktrees` của repo gốc — state dùng chung mà hai lane chạy cùng lúc có thể giẫm nhau —
+ * và cũng phạm luật "KHÔNG worktree". Ảnh chụp sống vài giây rồi xoá, không phải hộp cát
+ * thường trú (K2-6). Cách chụp và giá của nó: xem khối ngay dưới.
+ */
+/* ẢNH CHỤP PHẢI BIẾT GIT, KHÔNG CHỈ BIẾT FILE — K2-9d, audit GPT vòng 6, 04/09.
+ *
+ * Bản `git archive` chép file mà KHÔNG mang `.git`. Nên suite nào gọi git — trong repo này là
+ * `feature-parity-smoke`, nó chạy `git show HEAD:FEATURE-PARITY.md` — sẽ chết vì
+ * `not a git repository`, và cái chết đó bị đọc thành "đỏ có thật trong HEAD" tức
+ * `REGRESSION_DA_COMMIT`. Quy oan cho lane đang đóng phiên, đúng bệnh K2-9 sinh ra để chữa.
+ * Fail-closed nên không nguy hiểm bằng fail-open, nhưng nó chặn oan — mà chặn oan chính là
+ * lý do tồn tại của cả K2-9.
+ *
+ * ĐỔI SANG `git clone` THÌ CHƯA ĐỦ, và chỗ thiếu thì IM LẶNG. Đây là gợi ý đầu của tôi, và
+ * audit bác đúng: bản clone lấy `refs/remotes/origin/main` từ NHÁNH LOCAL của repo gốc, tức nó
+ * bằng HEAD chứ không bằng baseline thật. Suite vẫn chạy, vẫn xanh, chỉ là so với một mốc sai.
+ * Đo trên repo dựng riêng (HEAD=B, baseline thật=A): clone trần cho suite thấy `CHUA_PUSH=0`
+ * trong khi sự thật là 1. Không test nào đỏ — loại lỗi tệ nhất.
+ *
+ * Nên phải đủ BA thứ, và cả ba đều có ca ghim:
+ *   1. `clone`      → có `.git`, suite gọi git sống được;
+ *   2. `--detach`   → ghim ĐÚNG commit đang xét. Đừng tin nhánh mặc định: repo gốc có thể đang
+ *                     ở nhánh khác, lúc đó clone lấy sai commit;
+ *   3. `update-ref` → viền lại baseline THẬT. Chỉ làm khi có baseline: repo mới dựng chưa có
+ *                     `origin/main` vẫn phải chụp được.
+ *
+ * Vẫn KHÔNG `git worktree add`: nó ghi vào `.git/worktrees` của repo gốc — state dùng chung mà
+ * hai lane chạy cùng lúc giẫm nhau. Đã đo: cách này không để lại gì ở repo gốc (cây sạch,
+ * `git worktree list` vẫn đúng một dòng), và có ca ghim.
+ *
+ * Giá: đo trên repo này (`.git` 203MB) clone hardlink 1.9s, còn `git archive` 2.6s. Bản ĐÚNG
+ * rẻ hơn bản sai — nên không có gì phải đánh đổi. Không dùng `--no-hardlinks`: chậm hơn (2.9s)
+ * mà không an toàn hơn, vì file object của git là bất biến, và xoá bản chụp chỉ xoá liên kết.
+ *
+ * Giới hạn đã biết: nếu repo gốc đang ở detached HEAD tại một commit không nhánh nào với tới,
+ * bản clone sẽ không có commit đó → `checkout` ném → trả `null` → cổng ĐỎ với
+ * `KHONG_TRICH_DUOC_HEAD`. Fail-closed, đúng ý; không chữa vì phiên AI ở repo này luôn làm
+ * trên `main`, và chữa nó là thêm một đường mà không ca thật nào đi qua.
  */
 const chayLaiTrenHead = (cmd) => {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), "gate-head-"));
   try {
-    runOne(`git archive HEAD | tar -x -C "${d}"`);
-    try { runOne(cmd, d); return true; }
+    const head = git("rev-parse", "HEAD").trim();
+    if (!head) return null;
+    // HÀM KHOAN DUNG, cố ý: repo chưa có `origin/main` là hợp lệ. Dùng `git` ở đây thì lỗi rơi
+    // vào `gitLoi` và phép kiểm #12 đỏ oan đúng cái repo vừa dựng từ bộ khung.
+    const baseline = gitLoiLaBinhThuong("rev-parse", "origin/main").trim();
+    const r = path.join(d, "r");
+    runOne(`git clone -q . "${r}"`);
+    runOne(`git -C "${r}" checkout -q --detach ${head}`);
+    if (baseline) runOne(`git -C "${r}" update-ref refs/remotes/origin/main ${baseline}`);
+    try { runOne(cmd, r); return true; }
     catch { return false; }
-  } catch { return null; }        // không trích được → KHÔNG biết → không được miễn
+  } catch { return null; }        // không dựng được ảnh chụp → KHÔNG biết → không được miễn
   finally { fs.rmSync(d, { recursive: true, force: true }); }
 };
 

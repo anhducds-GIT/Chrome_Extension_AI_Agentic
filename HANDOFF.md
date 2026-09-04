@@ -2167,3 +2167,59 @@ gì; ghi ra để phiên sau đừng tưởng nó phủ cả trang.
 
 Còn mở: `Y-06` (luật đòi nhãn lane ở dòng cuối, máy chỉ cần có mặt — chờ Đức, là luật
 attribution) · `Y-05`/F-25 (chủ vùng tự làm, B15 tự nhắc) · `Y-01` chờ Đức trả lời ba câu.
+
+---
+
+## 2026-09-04 · Phiên `claude-k2-snapshot` — blocker 2b: ảnh chụp HEAD phải BIẾT GIT
+
+GPT audit vòng 6 để lại đúng một blocker của Phase ①, và nó nằm trong chính bản vá vòng 5 của
+tôi. Tôi tự tìm ra nó bằng cách **dùng thử công cụ mình vừa viết**, không phải bằng đọc lại code.
+
+**Bệnh:** `chayLaiTrenHead()` trích HEAD bằng `git archive`, mà `git archive` không mang `.git`.
+Nên suite nào gọi git — ở repo này là `feature-parity-smoke`, nó chạy
+`git show HEAD:FEATURE-PARITY.md` — sẽ chết vì `not a git repository`, và cái chết đó bị đọc
+thành `REGRESSION_DA_COMMIT`. Tức quy oan cho lane đang đóng phiên: **đúng bệnh K2-9 sinh ra để
+chữa.** Fail-closed nên không nguy hiểm bằng fail-open, nhưng chặn oan chính là lý do K2-9 tồn tại.
+
+**Và bản sửa ĐẦU của tôi sai, theo kiểu im lặng.** Tôi đã nhắn hai phiên "đổi sang `git clone`,
+một dòng". GPT nghi chưa đủ. GPT đúng: bản clone lấy `refs/remotes/origin/main` từ NHÁNH LOCAL
+của repo gốc, tức baseline bằng HEAD chứ không bằng mốc thật. Suite vẫn chạy, vẫn xanh, chỉ so
+với mốc sai — **không test nào đỏ**. Tôi dựng repo thử riêng để trả lời bằng số:
+
+| Cách chụp | Suite gọi git | HEAD | baseline | Suite thấy |
+|---|---|---|---|---|
+| `git archive` | CHẾT | — | — | — |
+| `git clone` trần | chạy | B đúng | **B SAI** | `CHUA_PUSH=0`, thật là 1 |
+| clone + detach + `update-ref` | chạy | B đúng | A đúng | `CHUA_PUSH=1` đúng |
+
+Đã đính chính lại cho cả hai phiên đã nhận gợi ý sai.
+
+**Giá rẻ hơn bản sai:** đo trên repo này (`.git` 203MB) clone hardlink **1.9s**, `git archive`
+2.6s, `--no-hardlinks` 2.9s. Nên không có đánh đổi nào phải cân.
+
+**Số đo:** suite `build-dashboard-smoke` 95 → **98**. Sáu ca ghim mới (23o CA1–4 · 23p CA5 ·
+23q CA6). Mutation **3/3** bắt được: quay về `git archive` · đóng cứng nhánh `main` thay vì HEAD
+thật · bỏ bước viền baseline. `EXPECTED_CHECKS` giữ nguyên 12 — không thêm phép kiểm nào.
+
+**Hai chỗ tôi từ chối làm đẹp số liệu, ghi lại vì nó là cách làm chứ không phải chi tiết vụn:**
+
+1. CA 5 (repo chưa có `origin/main`) **không lái được đầu-cuối**: repo chưa có remote thì
+   `unpushed` rỗng, nên vùng duy nhất mình chịu trách nhiệm phải đến từ file CHƯA COMMIT trong
+   vùng mình — mà đúng cái đó kích `TOI_CON_SUA_DO` và chặn trước khi tới bước dựng ảnh chụp.
+   Nhánh `if (baseline)` là PHÒNG THỦ. Ghi giới hạn vào chính khối test thay vì viết một assert
+   giả vờ mạnh hơn thực tế.
+2. CA 6 ban đầu tôi định ghim "repo ở detached HEAD thì clone lấy nhầm nhánh". **Mutation cho
+   thấy giả định đó sai** — `git clone` vốn đã đi theo HEAD của repo gốc. Nên tôi sửa lại ca đó
+   cho đúng thứ nó thật sự chứng minh được: không được đóng cứng tên nhánh. Mutation
+   `--detach main` đỏ, `--detach HEAD` không đỏ, và tôi ghi cả hai kết quả.
+
+**Việc còn mở, và nó nặng hơn blocker vừa vá:** bảng quyền nay có đường
+`taken_from` — lấy khoá từ tay người đang giữ. `_code` bị lấy khỏi tay tôi GIỮA LÚC đang làm
+đúng vùng đó (`"_code": { "owner": "claude-dashboard", "taken_from": "claude-k2-snapshot" }`),
+dấu niêm phong vẫn nguyên nên nó đi qua công cụ. Luật mục 1 nói giành vùng người khác đang giữ
+thì PHẢI hỏi Đức. Nếu Đức đã duyệt thì không sao — nhưng nếu công cụ tự cho phép thì đây là
+**lỗ mới trong đúng lớp mà K2-4 sinh ra để bịt**. Đã báo Đức và đã nhắn lane liên quan. Đức chốt
+cho commit này dù tôi đang không giữ `_code`.
+
+Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 ·
+`Y-01` · và câu hỏi `taken_from` ở trên.
