@@ -241,12 +241,13 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         <div class="br"><a href="#ext-workers-duc-auto-gg-flow-video-v0-1-0" data-goto="extension">Duc Auto GG Flow Video</a><span class="chip s1">ĐANG XÂY</span><span class="meta">21 việc nợ</span></div>
         <div class="br"><a href="#y-y-01" data-goto="y-tuong">Y-01 · MVP: dùng Claude Code điều phối GPT</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
         <div class="br"><a href="#y-y-06" data-goto="y-tuong">Y-06 · Luật nói &quot;dòng cuối&quot;, máy chỉ cần &quot;có mặt&quot;</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
+        <div class="br"><a href="#y-y-07" data-goto="y-tuong">Y-07 · Cổng đỏ giả vì suite chậm — độ tin của cổng, không phải lỗi của bảng</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
         <div class="br"><a href="#y-y-02" data-goto="y-tuong">Y-02 · Protocol làm nhiều việc song song</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
         <div class="br"><a href="#y-y-03" data-goto="y-tuong">Y-03 · Trường &quot;Đức cần làm&quot; trong hồ sơ trạng thái</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
         <div class="br"><a href="#y-y-05" data-goto="y-tuong">Y-05 · Viết lại chữ trong hồ sơ cho mắt Đức đọc</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
         <div class="br"><a href="#y-y-04" data-goto="y-tuong">Y-04 · Bảng trạng thái sinh ngay trong repo</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">chưa ai nhận</span></div>
       </div>
-      <p class="note">5 extension và 6 ý tưởng. Chi tiết extension ở tab <strong>Extension</strong>, chi tiết ý tưởng ở tab <strong>Ý tưởng</strong>.</p>
+      <p class="note">5 extension và 7 ý tưởng. Chi tiết extension ở tab <strong>Extension</strong>, chi tiết ý tưởng ở tab <strong>Ý tưởng</strong>.</p>
     </div>
 
     <div class="card">
@@ -477,6 +478,36 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 <p>&gt; Đức chốt 04/09: mở vòng thiết kế đó sau khi bảng trạng thái ổn định. Số đo để dành:</p>
 <p>&gt; khoá _code đổi chủ ba lần trong dưới một tiếng ngày 04/09, không lần nào bên bị lấy</p>
 <p>&gt; được thông báo, và lúc bị lấy vẫn có 6 file đang sửa dở của chủ cũ nằm trong thư mục.</p></div>
+        </div>
+      </details>
+      <details class="the" id="y-y-07">
+        <summary>
+          <span><span class="nm">Y-07 · Cổng đỏ giả vì suite chậm — độ tin của cổng, không phải lỗi của bảng</span><span class="sub">giảm thời gian … hoặc nới hạn giờ mỗi suite</span></span>
+          <span class="chip s0">Ý TƯỞNG</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>giảm thời gian … hoặc nới hạn giờ mỗi suite</dd>
+            <dt>Ai đang làm</dt><dd>chưa ai nhận</dd>
+            <dt>Phạm vi</dt><dd>chưa khai</dd>
+            <dt>nguồn</dt><dd>đo được 2026-09-04 khi cổng đỏ một lần mà không ai sai gì</dd>
+            <dt>phạm vi khi làm</dt><dd>… (chỗ gọi collectModel) và/hoặc phần đặt</dd>
+            <dt>vì sao</dt><dd>ngày 04/09 cổng báo ĐỎ ở mục &quot;Test xanh&quot;. Chạy lại suite đó riêng: **15 xanh,</dd>
+            <dt>đây mới là chỗ đau, không phải 129 giây</dt><dd>một cổng đỏ giả dạy người ta bỏ qua màu đỏ.</dd>
+            <dt>nguyên nhân đã biết, chưa vá</dt><dd>collectModel chạy lại từ đầu mỗi lượt sinh (~9 giây),</dd>
+            <dt>đo trước khi sửa</dt><dd>đếm số lượt collectModel thật và hạn giờ mỗi suite mà cổng đang đặt.</dd>
+          </dl>
+          <div class="prose"><p>trong cổng — chọn đường nào là việc của executor sau khi đo, đừng chốt trước ở đây</p>
+<p>hạn giờ trong … Cấm đụng nội dung phép kiểm của bảng — bảng</p>
+<p>đã qua audit độc lập PASS ngày 04/09 và không mở lại chỉ vì cổng từng hết giờ</p>
+<p>0 đỏ, 129 giây. Tức đỏ vì hết giờ dưới tải**, không phải vì code sai. Cùng lượt đó có</p>
+<p>ETIMEDOUT ở một bộ sinh khác — dấu hiệu máy đang chạy nhiều phiên song song.</p>
+<p>Cổng chỉ có giá trị khi đỏ luôn có nghĩa. Mất niềm tin vào cổng thì mọi luật cưỡng chế bằng</p>
+<p>cổng đều mất theo — mà repo này cưỡng chế gần như mọi thứ bằng cổng.</p>
+<p>và suite gọi hơn mười lượt. Chữa bằng nhớ đệm. Không tự vá trong luồng Dashboard vì đó</p>
+<p>là mã dùng chung với chính cổng — bán kính rộng hơn, phải là việc riêng.</p>
+<p>Con số trong ghi chú này là đo ngày 04/09 trên một máy đang tải; số trên máy rảnh sẽ khác.</p></div>
         </div>
       </details>
       <details class="the" id="y-y-02">
