@@ -202,3 +202,24 @@ kiểm canh nó đều TĨNH nên không bắt được.
 
 **Bậc nên đổi:** từ `ý tưởng` sang `đang xây` — nhưng đổi trường của Y-01 cần `_root`, nên để
 chủ vùng làm cùng lúc với việc gộp khối này.
+
+## Y-07 · Cổng đỏ giả vì suite chậm — độ tin của cổng, không phải lỗi của bảng
+
+- **bậc:** ý tưởng
+- **nguồn:** đo được 2026-09-04 khi cổng đỏ một lần mà không ai sai gì
+- **việc kế:** giảm thời gian `tests/build-overview-smoke.mjs`, hoặc nới hạn giờ mỗi suite
+  trong cổng — chọn đường nào là việc của executor sau khi đo, đừng chốt trước ở đây
+- **phạm vi khi làm:** `scripts/build-overview.mjs` (chỗ gọi `collectModel`) và/hoặc phần đặt
+  hạn giờ trong `scripts/session-check.mjs`. **Cấm** đụng nội dung phép kiểm của bảng — bảng
+  đã qua audit độc lập PASS ngày 04/09 và **không mở lại chỉ vì cổng từng hết giờ**
+- **vì sao:** ngày 04/09 cổng báo ĐỎ ở mục "Test xanh". Chạy lại suite đó riêng: **15 xanh,
+  0 đỏ, 129 giây**. Tức đỏ vì **hết giờ dưới tải**, không phải vì code sai. Cùng lượt đó có
+  `ETIMEDOUT` ở một bộ sinh khác — dấu hiệu máy đang chạy nhiều phiên song song.
+- **đây mới là chỗ đau, không phải 129 giây:** một cổng **đỏ giả** dạy người ta bỏ qua màu đỏ.
+  Cổng chỉ có giá trị khi đỏ luôn có nghĩa. Mất niềm tin vào cổng thì mọi luật cưỡng chế bằng
+  cổng đều mất theo — mà repo này cưỡng chế gần như mọi thứ bằng cổng.
+- **nguyên nhân đã biết, chưa vá:** `collectModel` chạy lại từ đầu mỗi lượt sinh (~9 giây),
+  và suite gọi hơn mười lượt. Chữa bằng nhớ đệm. **Không tự vá trong luồng Dashboard** vì đó
+  là mã dùng chung với chính cổng — bán kính rộng hơn, phải là việc riêng.
+- **đo trước khi sửa:** đếm số lượt `collectModel` thật và hạn giờ mỗi suite mà cổng đang đặt.
+  Con số trong ghi chú này là đo ngày 04/09 trên một máy đang tải; số trên máy rảnh sẽ khác.
