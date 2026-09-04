@@ -37,9 +37,9 @@
     "_docs": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-04T03:00",
-      "task": "STATE-DRIFT-01: noi state-check vao ORCHESTRATOR muc 6",
-      "released_at": "2026-09-04T03:18",
+      "claimed_at": "2026-09-04T03:22",
+      "task": "Kiem chung doc lap state-check",
+      "released_at": "2026-09-04T03:22",
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -53,5 +53,5 @@
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "01a476a53b1810fd"
+  "_fingerprint": "b3c0987c7da9c962"
 }
