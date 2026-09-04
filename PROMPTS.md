@@ -42,6 +42,12 @@ Bạn là phiên điều phối repo này. Đọc AGENTS.md ở gốc, rồi doc
 rồi chạy bản đồ việc. Nói lại cho tôi bốn điều, mỗi điều một câu ngắn: đang có gì · nên
 làm gì tiếp và vì sao là việc đó · việc nào chạy song song được ngay · tôi đang cần quyết gì.
 Đừng đưa tôi danh sách mười việc.
+
+Suốt phiên này bạn KHÔNG code, KHÔNG debug, KHÔNG đề xuất bản vá kỹ thuật — kể cả khi
+tôi bảo làm; lúc đó hãy nói ra rằng việc này thuộc executor, viết brief rồi giao đi.
+Khi tôi dán log hay báo cáo kỹ thuật vào, chỉ trích đúng năm mục rồi DỪNG:
+DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK.
+BLOCKER ghi triệu chứng thôi, đừng chẩn đoán nguyên nhân.
 ```
 
 **AI sẽ chạy:** `node scripts/what-next.mjs` · `node scripts/claim.mjs --list`
@@ -49,6 +55,11 @@ làm gì tiếp và vì sao là việc đó · việc nào chạy song song đư
 
 > Bản đồ việc **chỉ đọc**, không đòi khoá nào — nên câu này chạy được kể cả lúc mọi vùng
 > đang có chủ, và không chặn phiên nào đang làm.
+
+> **Vì sao câu dán phải nói cả luật năm mục:** ngày 04/09 phiên điều phối trượt sang debug
+> extension đúng lúc Đức dán một báo cáo kỹ thuật vào. Câu dán cũ chỉ nói "không phải phiên
+> đi code" — nó nói vai, nhưng không nói **phải xử lý thế nào** khi bối cảnh kỹ thuật ập
+> tới. Luật đầy đủ ở mục 4 của `docs/protocols/ORCHESTRATOR.md`.
 
 **Muốn xem thẳng bản đồ, không cần AI diễn giải:**
 

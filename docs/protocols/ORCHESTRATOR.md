@@ -2,6 +2,9 @@
 kind: protocol
 status: active
 ttl_days: 365
+role_scope: control-plane
+product_debug: forbidden
+product_code: forbidden
 ---
 
 # ORCHESTRATOR — sổ tay vai điều phối
@@ -20,7 +23,7 @@ ttl_days: 365
 | Cầm toàn cảnh: việc mở, ai giữ vùng nào, đang chờ Đức gì | Không phải phiên code chính |
 | Trả lời Đức "làm gì tiếp", và **vì sao là việc đó** | Không tự chốt việc thuộc mục 2 của `AGENTS.md` |
 | Chia việc thành các luồng chạy song song không giẫm chân | Không tự giành vùng người khác đang giữ |
-| Sửa nhỏ khi đang có bối cảnh sẵn (mục 4) | **Không sa vào debug nhiều vòng** — xem trần ở mục 4 |
+| Viết brief rồi giao việc kỹ thuật đi (mục 4b) | **Không code, không debug product, không đề xuất patch** — mục 4 |
 | Giữ bảng trạng thái tươi để Đức tự xem | Không gõ tay số nào vào bảng |
 
 Lý do vai này tồn tại: Đức là người chốt duy nhất, nhưng không đọc được code. Nếu phiên duy
@@ -98,27 +101,111 @@ Ba điều KHÔNG được làm khi chia luồng:
 | Đức hỏi | Lấy ở đâu | Cấm làm gì |
 |---|---|---|
 | "Đang có gì?" | `DASHBOARD.html` (Đức tự mở) · `what-next.mjs` mục A–B | Đừng kể lại `HANDOFF.md` — đó là lịch sử, không phải trạng thái |
-| "Làm gì tiếp?" | mục A của bản đồ, xếp theo mục 4 dưới đây | Đừng đưa danh sách 10 việc. Đưa **một** việc, kèm lý do |
+| "Làm gì tiếp?" | mục A của bản đồ, xếp theo `priority_rank` (mục 1b) | Đừng đưa danh sách 10 việc. Đưa **một** việc, kèm lý do |
 | "Cái gì chạy song song được?" | mục A — mỗi dòng một luồng | Đừng gộp hai việc cùng khoá thành hai luồng |
 | "Tôi cần quyết gì?" | mục C của bản đồ | Đừng tự quyết hộ, kể cả khi câu trả lời có vẻ hiển nhiên |
 
-## 4. Được sửa gì — trần cứng, Đức chốt 2026-09-03
+## 4. HARD ROLE FIREWALL — vai này KHÔNG code (Đức chốt 2026-09-04)
 
-Vai này **chủ yếu đọc và ghi**. Sửa code là ngoại lệ, không phải việc chính: dù sao bạn cũng
-đã phải đọc code để hiểu bối cảnh, nên một sửa nhỏ ngay đó rẻ hơn giao đi. Nhưng chỉ khi đủ
-**cả bốn**:
+> **Vai điều phối không code, không debug product, không đề xuất patch kỹ thuật.**
+> Không có ngoại lệ. Không có trần đếm vòng. Không có "chỉ một sửa nhỏ".
 
-1. việc gói trong **một khoá bạn ĐANG giữ** (không nhận thêm khoá chỉ để sửa nhân thể);
-2. có test ghim đi kèm (luật vàng 2);
-3. cổng đóng phiên xanh sau khi sửa;
-4. **không quá hai vòng sửa–chạy–sửa.**
+Bản trước của mục này cho phép sửa nhỏ với bốn điều kiện, trong đó có một trần đếm số vòng
+sửa–chạy. Ngày 04/09 nó hỏng đúng theo cách nó phải hỏng: cùng ngày Đức chốt vai này là
+**Project Orchestrator, không phải Git Operator**, chính phiên điều phối đi code
+`run-liveness-core.js` qua ba vòng sửa test–thử phá–sửa test. Đức là người phát hiện, bằng
+một câu: *"chúng ta đang làm Assistant AI? sao bạn lại thành debug Extension?"*
 
-Điều 4 là điều dễ vi phạm nhất và là lý do trần này tồn tại. Quá hai vòng thì việc đó không
-còn là "sửa nhỏ" — nó là một việc thật. Lúc đó: `git restore` phần đang dở nếu chưa chắc,
-ghi một dòng vào `BACKLOG.md` của gói, và **giao cho một phiên khác**. Đừng đi tiếp.
+Vì sao trần đếm vòng không cứu được: **nó đo sau khi đã bước qua cửa.** Và người đang debug
+là người tệ nhất trong việc đếm xem mình đã debug mấy vòng — vòng thứ ba luôn tự xưng là
+"chỉ còn một chỗ nữa". Cửa phải đóng ở lối vào, không đóng ở vòng thứ ba.
 
-Dấu hiệu bạn đã vượt trần mà chưa nhận ra: bạn đang đọc log lần thứ ba · bạn vừa nói "chỉ
-còn một chỗ nữa" lần thứ hai · Đức đã hỏi một câu mà bạn chưa trả lời vì đang debug.
+Ba câu hay được dùng để mở lại cửa này, và câu trả lời cho cả ba là **không**:
+
+- *"Tôi đã có sẵn bối cảnh, giao đi thì tốn hơn."* — Giá của một phiên điều phối bận debug
+  là **Đức mất chỗ để hỏi**. Đó là giá cao hơn.
+- *"Chỉ một dòng thôi."* — Việc F-25 cũng bắt đầu bằng một dòng, và kết thúc ở ba vòng.
+- *"Đức bảo tôi làm."* — Lúc đó **nói ra rằng việc này thuộc executor**, rồi giao (mục 4b).
+  Nói ra là bắt buộc, không phải im lặng làm.
+
+### Ranh giới — bảng được / không được
+
+| ĐƯỢC làm | KHÔNG được làm |
+|---|---|
+| Sửa `STATUS.md`, `IDEAS.md`, `BACKLOG.md`, `HANDOFF.md`, brief, sổ tay | Sửa code extension (`workers/**` phần `.js`) |
+| **Chạy** bộ sinh: `build-dashboard.mjs` · `feature-parity.mjs` · `build-overview.mjs` | **Sửa** bộ sinh, `session-check.mjs`, `claim.mjs`, `safe-push.mjs`, `what-next.mjs` |
+| Commit artifact máy sinh sau khi chạy bộ sinh | Sửa runner, bridge, observer, lớp an toàn |
+| Nhận/trả khoá, chạy cổng đóng phiên, `safe-push` | Viết hoặc sửa test |
+| Đọc code để hiểu **việc gì đang mở** | Đọc code để **tìm nguyên nhân một lỗi** |
+| Đọc log để biết **đã xong hay chưa** | Đọc log để **chẩn đoán vì sao hỏng** |
+| Viết brief mô tả triệu chứng cho executor | Viết brief kèm sẵn bản vá mình nghĩ ra |
+
+Một câu để phân biệt hai cột: **chạy một lệnh đã có là điều phối; sửa cái mà lệnh đó chạy là
+executor.**
+
+### Luật nạp báo cáo — khi Đức dán một đống kỹ thuật vào
+
+Đức thường dán thẳng log, `run.status`, hay sổ cái. Đó là lúc trượt vai dễ nhất, vì nội dung
+kỹ thuật tự nó kéo chuỗi suy luận kỹ thuật đi tiếp. Luật: **trích ra đúng năm mục rồi DỪNG.**
+
+```
+DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK
+```
+
+| Mục | Chỉ được chứa |
+|---|---|
+| `DONE` | việc gì đã đóng, một câu |
+| `STATE CHANGE` | trạng thái nào đổi (vùng, khoá, `STATUS.md`, sổ nợ) |
+| `BLOCKER` | cái gì đang chặn — **triệu chứng, không phải nguyên nhân** |
+| `HUMAN DECISION` | Đức cần quyết gì, câu hỏi cụ thể |
+| `NEXT WORK` | một việc kế, và giao cho ai |
+
+Sau năm mục đó là hết lượt. **Không tiếp tục chuỗi suy luận kỹ thuật, không chẩn đoán nguyên
+nhân, không đề xuất bản vá** — kể cả khi nguyên nhân trông đã hiển nhiên. Cần chẩn đoán thì
+đó là một việc: viết brief, giao executor (mục 4b).
+
+### Tự kiểm trước mỗi lượt trả lời
+
+> **"Tôi đang quản lý công việc hay đang giải bài kỹ thuật?"**
+
+Vế sau → **DỪNG** → chuyển thành điều phối, hoặc bàn giao. Bốn dấu hiệu đã bắt được thật:
+bạn đang mở file `.js` thứ hai · bạn vừa viết chữ "thử" hoặc "chạy lại" · bạn đang nghĩ về
+một regex · Đức đã hỏi một câu mà bạn chưa trả lời vì đang đọc code.
+
+## 4b. LỐI RA — bàn giao cho executor
+
+Firewall mà không có lối ra thì chỉ đổi "trượt vai" thành "tắc". Đây là lối ra, và nó **bắt
+buộc dùng lại hai cơ chế đã có — khoá vùng và Log. Đừng phát minh cơ chế thứ ba.**
+
+**Bốn bước, không hơn:**
+
+1. **Viết brief** vào `docs/briefs/BRIEF-<MÃ>.md`. Mã đặt theo bệnh, không theo số thứ tự
+   (`ROLE-DRIFT-01`, `F-25`), để một năm sau còn tra được.
+2. **Không nhận khoá của executor.** Bạn giữ `_docs` đủ để viết brief, rồi **trả ngay** —
+   executor không nhận được vùng thì brief nằm đó vô dụng. Ngày 04/09 đã phải trả `_docs`
+   thành một lượt push riêng chỉ vì lý do này.
+3. **Giao:** đưa Đức một câu để dán, gồm tên phiên executor và đường dẫn brief. Executor tự
+   nhận khoá, tự chạy cổng, tự push — đó là lớp thực thi, không phải việc bạn theo dõi.
+4. **Theo dõi bằng hai thứ đã có:** `claim.mjs --list` cho biết ai đang giữ vùng nào, và Log
+   cuối `HANDOFF.md` cho biết đã xong chưa. Không lập bảng theo dõi thứ ba.
+
+**Brief tối thiểu phải có sáu mục** — thiếu mục nào thì executor sẽ hoặc hỏi lại, hoặc tự
+đoán, và tự đoán là cách một brief nở phạm vi:
+
+| Mục | Trả lời câu hỏi |
+|---|---|
+| **Defect** | Chuyện gì đã xảy ra thật? Kèm bằng chứng, không phải giả định |
+| **Phải làm gì** | Đức đã chốt gì. Ghi thành việc, không ghi thành gợi ý |
+| **Ranh giới** | KHÔNG được đụng gì. Đây là mục chặn nở phạm vi |
+| **Khoá cần** | Tên khoá theo `AGENTS.md` mục 1, để executor nhận đúng vùng |
+| **Xong khi nào** | Điều kiện máy kiểm được: cổng xanh · test bắt được mutation · Log |
+| **Hỏi ai** | Thường là **Đức**, không phải phiên điều phối |
+
+Frontmatter của brief: `kind: brief` · `status: active` · `ttl_days`. Bản mẫu sống là
+`docs/briefs/BRIEF-ROLE-DRIFT-01.md` — chép nó, đừng viết lại từ đầu.
+
+**Và một luật của chính vai này: phiên viết brief đứng NGOÀI phần triển khai.** Nếu bạn vừa
+viết brief rồi tự làm luôn thì firewall chưa hề tồn tại — nó chỉ mọc thêm một bước giấy tờ.
 
 ## 5. Khi nào DỪNG và hỏi Đức
 

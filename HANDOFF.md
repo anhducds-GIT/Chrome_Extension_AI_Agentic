@@ -2038,3 +2038,42 @@ ngoại lệ (a) của luật mục 2 — đẩy hộ việc người khác khô
 **Kênh tin nhắn giữa phiên là MỘT CHIỀU với phiên này** — gửi được, không nhận được trả lời
 (`notify_when_idle` báo phiên này không mở kênh vào). Nên kênh phản hồi thật giữa các phiên AI là
 **bảng quyền**, không phải tin nhắn. Phiên sau đừng chờ tin nhắn trả lời; hãy đọc `claims.json`.
+
+---
+
+## Log — 2026-09-04, `claude-exec-roledrift` · HARD ROLE FIREWALL (brief `ROLE-DRIFT-01`)
+
+**Việc:** thực thi brief `docs/briefs/BRIEF-ROLE-DRIFT-01.md` do Đức chốt 04/09. Đóng cái cửa
+đã làm phiên điều phối trượt sang debug extension trong chính ngày viết brief.
+
+**Đã sửa 3 file tài liệu:**
+
+- `docs/protocols/ORCHESTRATOR.md` — XOÁ toàn bộ mục 4 cũ (ngoại lệ "sửa nhỏ" + trần đếm vòng),
+  thay bằng **mục 4 HARD ROLE FIREWALL**: cấm tuyệt đối code/debug product/đề xuất patch, bảng
+  ranh giới ĐƯỢC/KHÔNG (7 dòng), luật nạp báo cáo năm mục
+  `DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` rồi DỪNG, và câu tự kiểm trước
+  mỗi lượt trả lời. Thêm **mục 4b LỐI RA** — bàn giao cho executor: brief đặt ở đâu, sáu mục
+  tối thiểu của brief, giao thế nào, theo dõi bằng hai cơ chế đã có (khoá + Log), không cơ chế
+  thứ ba. Frontmatter thêm hợp đồng máy đọc: `role_scope: control-plane` ·
+  `product_debug: forbidden` · `product_code: forbidden`.
+- `AGENTS.md` — con trỏ ở bảng "Sổ tay mở khi cần" đang **quảng bá đúng cái rule vừa bị bác**
+  ("trần chống sa đà, quá hai vòng sửa–chạy–sửa"). Sửa thành firewall + luật năm mục.
+- `PROMPTS.md` mục 0 — câu Đức dán để mở phiên điều phối trước đây chỉ nói "không phải phiên đi
+  code"; nay nói thẳng luật năm mục **ngay trong câu dán**, vì lúc trượt vai là lúc Đức dán log
+  kỹ thuật vào.
+
+**Regression smoke — VIẾT XONG, ĐANG CHỜ KHOÁ `_code`:** `tests/role-firewall-smoke.mjs`
+(`claude-k2-snapshot` đang giữ `_code`, nên file chưa đặt được vào `tests/` và chưa khai vào
+`package.json`). Nội dung đã chạy thật và đã thử phá đủ, chỉ thiếu chỗ đứng. **11 khẳng định**, ghim vào CẤU TRÚC
+(ba trường frontmatter · hình dạng mục 4 · sự tồn tại mục 4b) chứ không dò một chữ. Thử phá
+**21 ca, 21 ca bị bắt**. Vòng đầu **1 ca thoát** (ca 13: xoá chữ `DỪNG` khỏi luật nạp báo cáo)
+vì khẳng định đặt ở phạm vi cả mục 4, mà "DỪNG" còn xuất hiện ở mục con tự kiểm — đúng bệnh
+"phạm vi quá rộng thì xanh giả". Vá bằng hàm `mucCon()` cắt tới `### ` kế tiếp, rồi chạy lại:
+bắt.
+
+**Còn mở:**
+
+- **Mục 7 của `ORCHESTRATOR.md` đã lạc hậu.** Nó vẫn hỏi Đức chọn một trong hai đường cho
+  `IDEAS.md`, trong khi Đức đã chốt đường 1 ngày 04/09 (`append_only_exempt` trong
+  `.repo-structure.json` đã có `IDEAS.md`). Không sửa vì nằm ngoài brief — việc một dòng.
+- Brief `ROLE-DRIFT-01` mục 3 cấm promote sang `Ark_Repo_Harness`. Chưa promote, đúng ý.
