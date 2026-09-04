@@ -35,23 +35,23 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T03:59",
-      "task": "Park brief promote + dong goi nhan Assistant v0.1",
-      "released_at": "2026-09-04T04:01",
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T04:10",
+      "task": "Viet brief tab AI dieu phoi cho bang",
+      "released_at": null,
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": "claude-k2-bootstrap",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T03:52",
       "task": "Va nhanh BOOTSTRAP nuot loi git: tach not-a-repo khoi unborn repo, sua CA D dang ghim nham",
-      "released_at": null,
+      "released_at": "2026-09-04T04:07",
       "taken_from": "claude-k2-snapshot",
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "f822067cce5f2aea"
+  "_fingerprint": "4add763cf6612248"
 }
