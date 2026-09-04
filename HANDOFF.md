@@ -2554,3 +2554,43 @@ chốt chứ không phải executor tự quyết.
 
 Còn mở: ba chỗ trên chờ Đức chốt · pilot Assistant bắt đầu đếm câu hỏi theo mục 4 mới ·
 `EXEC-CRASH-01` chưa có brief riêng (cố ý — supporting defect).
+
+---
+
+## Log · 2026-09-04 · phiên `claude-exec-tabbug` — defect `DASH-TAB-01` ĐÃ VÁ
+
+**Triệu chứng Đức báo:** bấm qua lại giữa các tab trên `DASHBOARD.html` thì nội dung không đổi.
+
+**Đo được, trên Chrome thật, mở bằng `file://`** (không phải suy đoán): trước và sau khi bấm tab,
+cả **9/9 khung** đều có `display: flex` và chiều cao lớn hơn 0 — dù 8 khung đã được gán
+`hidden = true` đúng. Trang cao **15.005px** vì chín khung xếp chồng lên nhau. Sau khi vá:
+đúng **1 khung** hiện mỗi lượt, trang cao **943px** ở tab đầu, và cả 9 tab đổi đúng.
+
+**Nguyên nhân gốc — CSS, không phải JS.** `[role="tabpanel"]{display:flex}` là luật của *tác giả*,
+còn `[hidden] → display:none` là luật mặc định của *trình duyệt*; luật tác giả thắng luật trình
+duyệt bất kể độ đặc hiệu. Nên đoạn JS gán `hidden` rất đúng, mà CSS bỏ qua hoàn toàn.
+
+**Có từ trước, KHÔNG phải do lượt thêm tab hôm nay.** `git log -L` cho thấy dòng `display:flex`
+vào repo ở commit `d628430` — chính commit dựng 7 tab đầu tiên. Bản bộ sinh ngay trước
+`3d20576` (defect `DASH-ORCH-01`, thêm tab "AI điều phối") **đã mang sẵn** lỗi này. Tức **cả 8
+tab đã hỏng từ đầu và không ai phát hiện**; lượt thêm tab hôm nay chỉ làm nó thành 9.
+
+**Vá:** một dòng CSS `[role="tabpanel"][hidden]{display:none}` trong `scripts/build-overview.mjs`.
+
+**Vì sao cả suite không bắt được:** 21 phép kiểm cũ hỏi trang **CÓ** gì (có 9 khung, 8 khung mang
+`hidden`), không phép nào hỏi trang **ẨN** đúng những gì. Đã thêm khối `10b`: một bộ suy cascade
+tí hon (suite không có thư viện DOM), tính `display` cuối cùng của từng khung từ chính bảng kiểu
+của trang, có tính cả luật mặc định của trình duyệt và `!important`. Nó **không ghim chữ của bản
+vá** — mọi cách vá đúng đều xanh.
+
+**Thử phá: 10 ca, 10/10 đúng như mong đợi** — 6 ca hỏng thật đều ĐỎ (gỡ luật ẩn · đổi
+`flex→grid` rồi gỡ luật ẩn · luật ẩn bám class mà khung không có · `!important` đè lên · luật ẩn
+bị bọc trong ghi chú CSS · ẩn luôn khung đang mở), 4 ca vá đúng đều XANH. Một ca ban đầu tôi
+**dự đoán sai** (đảo thứ tự hai luật): bộ suy nói xanh, tôi tưởng phải đỏ — đem hỏi Chrome thì
+Chrome trả `none`, tức bộ suy đúng và tôi sai (hai đặc tính hơn một đặc tính, thứ tự không có
+tiếng nói). Ghi lại vì đó là lượt thoát-ban-đầu thật.
+
+**Còn mở:** `safe-push` từ chối đẩy — 5 commit chưa push thuộc phiên `claude-exec-qdsync` nằm
+xen dưới 3 commit của phiên này, và đẩy hộ việc phiên khác không nằm trong luật mục 2. Ba commit
+`af032d4` · `3465c27` · `f92c4eb` đang **chờ phiên kia push xong** (hoặc chờ Đức chốt). Khoá
+`_code` giữ tới lúc đẩy được.
