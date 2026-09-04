@@ -208,6 +208,22 @@ const ideasDeps = (text) => ({
   const mat = { ...deps, readFile: (f) => f === "PROMPTS.md" ? "# rong" : deps.readFile(f) };
   assert.throws(() => readRefreshLine(mat), /THIEU_CAU_LAM_MOI/,
     "mat muc 2 thi phai nem, khong duoc lang le dung cau go cung");
+
+  /* CA HỎNG THẬT của lỗi tràn mục — và ca này SUÝT không có.
+     Thử phá DB21 (bỏ chặn ở mục kế) để suite XANH, nghĩa là bản vá đó chưa được ghim.
+     Ca trên không dựng được nó: `"# rong"` KHÔNG có mục 2 nào cả, nên nó ném dù có chặn
+     hay không — xanh vì lý do khác.
+     Ca thật phải là: mục 2 CÒN ĐÓ nhưng MẤT khối, còn mục SAU thì CÓ khối. Không chặn ở
+     mục kế thì nó nhặt câu của mục 3 rồi trả về như thật — Đức dán nhầm câu mà không ai biết. */
+  const tranMuc = [
+    "# Sổ prompt", "", "## 2. Làm mới bảng trạng thái", "",
+    "Mục này mất khối lệnh.", "",
+    "## 3. Một việc hoàn toàn khác", "",
+    "```text", "Cau cua MUC KHAC, tuyet doi khong duoc lay", "```", ""
+  ].join("\n");
+  const tran = { ...deps, readFile: (f) => (f === "PROMPTS.md" ? tranMuc : deps.readFile(f)) };
+  assert.throws(() => readRefreshLine(tran), /THIEU_CAU_LAM_MOI/,
+    "muc 2 mat khoi thi phai NEM, tuyet doi khong duoc nhat khoi cua muc sau");
   ok("cau lam moi doc tu PROMPTS.md, va mat nguon thi nem chu khong doan");
 }
 
