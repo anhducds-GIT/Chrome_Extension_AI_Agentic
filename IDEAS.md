@@ -59,7 +59,7 @@ hiển thị sai.
 
 | Câu | Trạng thái |
 |---|---|
-| ② gọi GPT qua đâu? | **Đã trả lời.** `jobs.add` → `run.trial` → `chat.read`; `jobs.add` tự dựng workbook trong bộ nhớ nên **không cần XLSX**. Hai vòng khép kín: `trial-b5309b27` **41 giây**, `trial-12ca3fe3` **~49 giây**, đọc về 1.953 và 1.926 ký tự, không bị cắt |
+| ② gọi GPT qua đâu? | **Đã trả lời.** `jobs.add` → `run.trial` → `chat.read`; `jobs.add` tự dựng workbook trong bộ nhớ nên **không cần XLSX**. Hai vòng khép kín đo được **41 giây** và **~49 giây**, đọc về 1.953 và 1.926 ký tự, không bị cắt |
 | ③ đo thế nào là đạt? | **Phần lớn đã trả lời** — hai vòng khép kín chính là mốc. Còn thiếu: một vòng trên việc thật |
 | ① thử trên việc gì? | **Vẫn cần Đức chốt.** Đề xuất: vòng audit nói trên |
 
