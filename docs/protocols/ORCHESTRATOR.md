@@ -284,17 +284,17 @@ xong, đối chiếu ba cặp: khoá trên máy ↔ khoá trên `origin/main` ·
 cáo ↔ điều lệnh thật sự in ra. Sai lệch nào thấy được bằng một lệnh thì Đức không phải là
 người tìm ra nó.
 
-## 7. Còn mở — chưa chốt, đừng tự làm
+## 7. Đã chốt — ghi sổ ý tưởng không còn đòi khoá `_root`
 
-**Ghi sổ ý tưởng đòi khoá `_root`.** `IDEAS.md` nằm ở gốc repo nên chạm nó phải giữ `_root`
-— mà `_root` là khoá đông nhất (77% commit ngày 02/09 chạm gốc). Vai điều phối lại là vai
-ghi ý tưởng thường xuyên nhất, nên nó sẽ liên tục xếp hàng sau người đang code.
+**Đức chốt 2026-09-04: `IDEAS.md` được MIỄN luật khoá KHI CHỈ THÊM DÒNG Ở CUỐI.** Sửa hay xoá
+dòng cũ thì vẫn phải giữ `_root` — đó là viết lại chữ của phiên khác, và cái đó không được miễn.
 
-Hai đường ra, **cần Đức chốt một**:
+Vì sao cần: `IDEAS.md` nằm ở gốc repo nên trước đây chạm nó phải giữ `_root` — khoá đông nhất
+(77% commit ngày 02/09 chạm gốc). Mà vai điều phối lại là vai ghi ý tưởng thường xuyên nhất,
+nên nó liên tục xếp hàng sau người đang code. Đường đã chọn là cùng hình dạng với luật đang
+chạy cho `HANDOFF.md` gốc, và không thêm khoá thứ bảy để quản.
 
-1. Miễn `IDEAS.md` khỏi luật khoá **khi chỉ thêm dòng** — y hệt cách `HANDOFF.md` gốc đang
-   được miễn (`AGENTS.md` mục 1). Rẻ, và cùng một lý lẽ: thêm dòng thì không xoá chữ của ai.
-2. Cho `IDEAS.md` một khoá riêng. Sạch hơn về nguyên tắc, nhưng thêm một khoá thứ bảy để
-   quản.
-
-Khuyến nghị: **đường 1**. Cùng hình dạng với một luật đã chạy được, và không thêm khoá mới.
+**Luật này sống ở đâu:** khối `append_only_exempt` trong `.repo-structure.json` — **sửa ở đó,
+đừng sửa script**. `AGENTS.md` mục 1 nói cùng luật đó cho người đọc. Trước 04/09 danh sách bị
+gõ cứng ở cả `session-check.mjs` lẫn `safe-push.mjs`, và hai bản sao của một luật đã trả hai
+câu khác nhau cho cùng một file ngày 02/09.

@@ -2094,3 +2094,24 @@ việc · mặc định vẫn nên mở executor riêng).
 
 **Số sau bổ sung:** smoke **13 khẳng định** (hai nửa có hai khẳng định RIÊNG — gộp thì xoá mất
 một nửa vẫn xanh), thử phá **29 ca, 29 bị bắt**, vẫn đúng 1 ca thoát ở vòng đầu (ca 13, đã vá).
+
+### Đóng nốt `ROLE-DRIFT-01` — smoke đã vào suite, và mục 7 hết lạc hậu
+
+Hai chặn ở lượt trước đã tự gỡ: `claude-dashboard` trả `_code` và push kéo theo hai commit của
+tôi. Nhận `_code`, đặt `tests/role-firewall-smoke.mjs`, khai vào `package.json` (cả `test` lẫn
+`test:role-firewall`).
+
+**Kiểm lại trên bản TRONG repo, không tin kết quả chạy ở scratchpad** — đường dẫn tương đối đổi
+thì khẳng định trỏ sai file mà vẫn xanh được:
+
+- chạy từ `tests/` không tham số: **13 phép XANH**;
+- chạy với thư mục làm việc khác hẳn (`cd /`): vẫn **13 phép XANH** — tức nó bám gốc repo theo
+  `import.meta.url`, không bám `cwd`;
+- **đối chứng âm**: trỏ vào một thư mục rỗng thì **ĐỎ** (ném lỗi đọc file). Không có đối chứng
+  này thì một phép kiểm đọc hụt file vẫn có thể xanh;
+- thử phá lại toàn bộ trên bản trong repo: **29 ca, 29 bị bắt**.
+
+**Mục 7 của `ORCHESTRATOR.md`** không còn là "chưa chốt": Đức đã chọn đường 1 ngày 04/09 —
+`IDEAS.md` miễn luật khoá **khi chỉ thêm dòng ở cuối**. Đã viết lại thành mục đã chốt, và chỉ
+rõ luật sống ở `append_only_exempt` trong `.repo-structure.json` (kiểm lại tận nơi: đúng, danh
+sách là `["HANDOFF.md","IDEAS.md"]`), không phải gõ cứng trong script.
