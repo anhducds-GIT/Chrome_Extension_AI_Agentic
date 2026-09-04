@@ -2774,3 +2774,40 @@ theo đúng luật nhãn thì **không tính** — đó là cơ chế chạy đ�
 **Chưa hoàn chỉnh, nói trước:** bộ đếm này chỉ đếm được cái đã có người ghi. `N = 0` nghĩa là
 **chưa ai ghi nhận**, không nghĩa là không có. Trang phải viết "đã ghi nhận", không được viết
 "0 lỗi" — Đức nêu riêng điều này khi chốt.
+
+---
+
+## CHECKPOINT ĐỔI VAI — 2026-09-04, `claude-dashboard`: Assistant → Executor
+
+**Đức chốt đổi vai** ("Bạn chính là người làm, hãy làm đi" + giao thẳng câu executor).
+Theo `ORCHESTRATOR.md` mục 4, điều kiện 1: ghi lại control plane TRƯỚC khi đổi.
+
+**Từ lúc này phiên `claude-dashboard` KHÔNG CÒN là Assistant** cho tới khi xong hai việc dưới.
+Đức mất chỗ hỏi trong khoảng đó — ghi ra để Đức biết trước, không phải phát hiện lúc cần hỏi.
+
+### Khoá đang giữ lúc checkpoint
+Không giữ khoá nào. (`_root`, `_docs`, `_code` đều đã trả trước đó.)
+
+### Việc executor nhận
+1. `CONTENT-TRUTH-01` — bảng giấu việc code đã đổi sau mốc kiểm chứng
+   (`docs/briefs/BRIEF-CONTENT-TRUTH-01.md`). Đức chốt **chỉ defect 4**.
+2. `MULTIFLOW-ON-BOARD-01` — thêm mục "Nhiều việc chạy cùng lúc" vào tab Vận hành.
+   Làm **sau** việc 1: cùng file, cùng khoá.
+
+### Việc đang mở, KHÔNG thuộc executor này
+- `Y-06` — nhãn lane phải ở dòng cuối. Đã ra brief, giao `claude-exec-roledrift`.
+- Defect 5 + 6 của vòng Content Truth — **chưa được Đức duyệt**, đã ghi sẵn ở mục 7 của
+  `BRIEF-CONTENT-TRUTH-01.md`. Auditor muốn làm; Đức chốt chỉ defect 4.
+- `Y-08` · `Y-02` · `Y-05` cần re-baseline (`việc kế` đã vượt trạng thái hiện hành) —
+  thuộc chủ vùng của chúng, không phải việc tôi viết lại hộ.
+- `STATUS.md` gói Gemini vẫn nói README là bản copy ChatGPT, dù README đã sửa 03/09.
+- `Y-07` — cổng đỏ giả vì suite chậm 129 giây. Nợ riêng, không blocker.
+
+### Đang chờ Đức quyết
+- `Y-01` — ba công tắc trên máy Đức (mở session · chọn thư mục đích · bật chế độ phát triển),
+  rồi **một vòng audit tự động trên việc thật**. Đây là việc duy nhất trong danh sách
+  **bỏ được Đức ra khỏi vòng lặp**.
+- Defect 5 + 6: làm luôn hay để vòng sau.
+
+### Trở lại vai Assistant khi nào
+Xong hai việc executor ở trên, cổng xanh, đã push. Lúc đó ghi một dòng Log nữa để đóng.
