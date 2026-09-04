@@ -12,11 +12,15 @@
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-exec-g02",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T04:57",
       "task": "G-02 khoa tab va khoa hoi thoai",
-      "released_at": null
+      "released_at": "2026-09-04T06:20",
+      "taken_from": "claude-exec-g02",
+      "taken_by": "claude-dieu-phoi",
+      "taken_at": "2026-09-04T06:18",
+      "duc_decision": "Duc chot 2026-09-04: phien claude-exec-g02 da chet (stall watchdog), giai phong khoa va GIU viec do de executor moi doc roi tu quyet"
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-gpt-kenh",
@@ -53,5 +57,5 @@
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "fd4d8e403d88f1ad"
+  "_fingerprint": "3b21c779d019e80f"
 }
