@@ -54,14 +54,14 @@
       "duc_decision": "Duc chot 2026-09-04: giai phong _docs + _root khoi claude-k2-freeze de lam contract-sync Query-driven Assistant v0.1. Da kiem truoc khi gianh: cay lam viec SACH, khong commit nao chua push, nen phien do khong co viec do bi mat."
     },
     "_code": {
-      "owner": "claude-exec-tabbug",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T07:13",
       "task": "va bug DASH-TAB-01: tab tren DASHBOARD.html khong chuyen noi dung",
-      "released_at": null,
+      "released_at": "2026-09-04T08:41",
       "taken_from": "claude-exec-dashtab",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "9dfe3eaa6e86c469"
+  "_fingerprint": "9c7d869827ad49f2"
 }

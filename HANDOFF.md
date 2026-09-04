@@ -2594,3 +2594,8 @@ tiếng nói). Ghi lại vì đó là lượt thoát-ban-đầu thật.
 xen dưới 3 commit của phiên này, và đẩy hộ việc phiên khác không nằm trong luật mục 2. Ba commit
 `af032d4` · `3465c27` · `f92c4eb` đang **chờ phiên kia push xong** (hoặc chờ Đức chốt). Khoá
 `_code` giữ tới lúc đẩy được.
+
+**Sửa lại một câu ở Log ngay trên** (viết trước khi thử push, nay đã thử): khoá `_code`
+**đã trả** — việc đã xong trọn vẹn nên giữ khoá chỉ chặn phiên khác vô ích. Ba commit của phiên
+này vẫn chờ trong hàng, và `safe-push` quy commit theo nhãn `Lane:` chứ không theo chủ khoá lúc
+đẩy, nên trả khoá không ảnh hưởng gì tới lượt đẩy sau.
