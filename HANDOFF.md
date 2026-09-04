@@ -2447,3 +2447,40 @@ regex chạy ra ngoài phạm vi, đúng cái bẫy đã cắn repo này nhiều
 `status:` của hai đề bài, bảng tự đúng theo, không phải đụng code.
 
 Còn mở: hai đề bài trên chờ Đức chốt · các mục còn mở của những phiên trước.
+
+---
+
+## 2026-09-04 · Phiên `claude-k2-freeze` — carry-push chốt FREEZE + `docs/protocols/MULTIFLOW.md`
+
+**1. Chặn cuối của FREEZE đã sạch trên remote.** Đức duyệt carry. Nhưng lúc tôi chạy thì hàng đợi
+đã tự ngắn: lane khác đẩy trước, tôi đẩy commit cuối. `origin/main` = `725c9f3`, và kiểm lại trên
+remote: `IDEAS.md` **0** mã trial, `DASHBOARD.html` **0** mã trial, cả `f712566` (bản gỡ hai mã)
+và `1c05aad` (K2-13) đều có mặt. Cả bộ test xanh: 11/11 bước.
+
+Tôi nhận `_root` để tự sửa `IDEAS.md` thì mở file ra thấy lane `claude-exec-dashtab` đã sửa xong.
+Trả khoá ngay, không sửa chồng. Kiểm trước khi sửa rẻ hơn sửa rồi phát hiện trùng.
+
+**2. Đức yêu cầu một tài liệu về multiflow cho cả người và AI.** Viết `docs/protocols/MULTIFLOW.md`.
+
+**Quyết định về CHỖ ĐẶT, và nó là phần đáng tranh luận nhất:** Đức nói "artifact", tôi đặt nguồn
+sự thật **trong repo** và coi artifact chỉ là mặt đọc. Lý do: AI đọc repo chứ không đọc claude.ai,
+GPT audit qua GitHub connector, và chính `DASHBOARD.html` sinh ra để xoá **điểm phụ thuộc Claude
+duy nhất** của cả hệ. Đặt tài liệu bảo trì cơ chế vào artifact là dựng lại đúng chỗ nghẽn vừa xoá.
+Artifact vẫn có, nhưng nó là bản in ra để đọc, không phải bản để sửa.
+
+**Nội dung, và cái nó cố ý KHÔNG có:**
+- Mục 1–3 viết cho Đức: vấn đề bằng tiếng người · bốn cơ chế · một ngày làm việc 5 bước.
+- Mục 4: **năm bất biến, mỗi cái kèm lý do từ một lần hỏng thật.** Đây là phần chịu lực — luật
+  không có lý do thì phiên sau sẽ "dọn cho gọn".
+- Mục 5: quy trình đổi cơ chế, có **đột biến kiểm bắt buộc**, kèm ba cái bẫy tự cắn trong ngày:
+  ghim hàm không thay được ghim đường đi · test có thể ghim NGƯỢC · ghim một chiều là chưa đủ.
+- Mục 6: bảng tra 11 mã lỗi → làm gì.
+- Mục 7: "cố ý KHÔNG làm" — để đừng ai cải tiến vào đúng mấy chỗ đó.
+- **KHÔNG có một số đo nào.** Số mục ruỗng: đo hôm nay, sai sau ba ngày, không ai biết nó đã sai.
+  Thay vào đó là bốn câu lệnh để tự đo. Đây là bài học đã trả giá bốn lần.
+
+**Sửa thêm một sai có sẵn:** `docs/README.md` **không có mục `protocols/`** nào, dù thư mục đó đã
+tồn tại với hai file — mục lục tự nhận "bốn tầng" trong khi có năm. Đã thêm mục và sửa câu mở.
+Không khai thì không tồn tại, kể cả với chính mục lục.
+
+Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 · `Y-01`.

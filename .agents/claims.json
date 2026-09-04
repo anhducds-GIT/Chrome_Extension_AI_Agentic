@@ -39,11 +39,11 @@
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T04:10",
-      "task": "Viet brief tab AI dieu phoi cho bang",
-      "released_at": "2026-09-04T04:12",
+      "owner": "claude-k2-freeze",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T06:25",
+      "task": "Viet docs/protocols/MULTIFLOW.md — co che nhieu phien song song va cach bao tri",
+      "released_at": null,
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
@@ -57,5 +57,5 @@
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "2f5bdd4aeb1dc346"
+  "_fingerprint": "baace2a622f6ee13"
 }

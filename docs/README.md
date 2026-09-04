@@ -6,9 +6,12 @@ ttl_days: 365
 
 # Mục lục tài liệu
 
-> Bốn tầng: **studies** (nghiên cứu còn sống) · **briefs** (đề bài từng phiên) ·
-> **archive** (hồ sơ đã nghỉ) · **adr** (quyết định bất biến — xem
-> [0000-ghi-nhan-quyet-dinh-kien-truc.md](adr/0000-ghi-nhan-quyet-dinh-kien-truc.md)).
+> Năm tầng: **protocols** (cách làm việc, đọc khi sắp làm) · **studies** (nghiên cứu còn sống) ·
+> **briefs** (đề bài từng phiên) · **archive** (hồ sơ đã nghỉ) · **adr** (quyết định bất biến —
+> xem [0000-ghi-nhan-quyet-dinh-kien-truc.md](adr/0000-ghi-nhan-quyet-dinh-kien-truc.md)).
+>
+> `protocols/` đã tồn tại từ trước nhưng KHÔNG có trong mục lục này, nên mục lục tự nhận "bốn
+> tầng" trong khi có năm — sửa 04/09. Không khai thì không tồn tại, kể cả với chính mục lục.
 
 ## Thư mục `drafts/` ở gốc repo đã BIẾN MẤT (2026-09-02, phiên S6)
 
@@ -51,6 +54,19 @@ dẫn `drafts/…`. Bảng dưới là chỗ tra đường dẫn cũ → mới.
 | `drafts/PLATFORM-V02A-BRIEF.md` | [docs/archive/PLATFORM-V02A-BRIEF.md](archive/PLATFORM-V02A-BRIEF.md) | freshness gate đã có |
 | `drafts/PLATFORM-V02B-BRIEF.md` | [docs/archive/PLATFORM-V02B-BRIEF.md](archive/PLATFORM-V02B-BRIEF.md) | STATUS anti-drift đã có (detectStatusMachineOwnedFacts) |
 | `drafts/PLATFORM-V02C-BRIEF.md` | [docs/archive/PLATFORM-V02C-BRIEF.md](archive/PLATFORM-V02C-BRIEF.md) | scripts/feature-parity.mjs đã có |
+
+## `docs/protocols/` — cách làm việc
+
+Khác `studies/` ở chỗ: nghiên cứu để **hiểu**, protocol để **làm theo**. Mở khi sắp bắt tay,
+không phải khi tò mò.
+
+| Tài liệu | Đọc khi | Nói về gì |
+|---|---|---|
+| [MULTIFLOW.md](protocols/MULTIFLOW.md) | sắp làm cùng lúc với AI khác, hoặc sắp SỬA một trong bốn cơ chế đa phiên | Bốn cơ chế (bảng chủ sở hữu · nhãn `Lane:` · cổng đóng phiên · cổng xuất bản), một ngày làm việc 5 bước, **năm bất biến kèm lý do**, quy trình đổi cơ chế có **đột biến kiểm bắt buộc**, bảng tra mã lỗi, mục "cố ý KHÔNG làm". Mục 1–3 viết cho Đức đọc |
+| [ORCHESTRATOR.md](protocols/ORCHESTRATOR.md) | bạn là phiên điều phối | Đọc gì lúc mở phiên, luật song song, HARD ROLE FIREWALL, luật nạp báo cáo năm mục, lối ra bàn giao cho executor |
+| [ASSISTANT-V0.1.md](protocols/ASSISTANT-V0.1.md) | — | (khai để mục lục đủ; nội dung xem trong file) |
+
+---
 
 ## `docs/studies/` — nghiên cứu còn sống
 
