@@ -2811,3 +2811,32 @@ Không giữ khoá nào. (`_root`, `_docs`, `_code` đều đã trả trước �
 
 ### Trở lại vai Assistant khi nào
 Xong hai việc executor ở trên, cổng xanh, đã push. Lúc đó ghi một dòng Log nữa để đóng.
+
+## Lượt · DASH-ORCH-V2 mục 8 — cảnh báo chứng minh cũ + ba dòng đếm sự cố
+
+**Phiên:** `claude-exec-orchv2b` · 2026-09-04 · khoá `_code` · vòng hai của việc vòng một đã chết giữa chừng
+
+Vòng một đã dựng bốn vùng của tab và đã push. Lượt này làm phần còn lại, đúng mục 8 và chỉ mục 8.
+
+**8a · `CONTENT-TRUTH-01` defect 4.** Đơn vị nào có mốc kiểm chứng mà code đã đổi kể từ đó thì
+trang nói ngay cạnh chip trạng thái: *"CHỨNG MINH CŨ · CẦN KIỂM LẠI — bằng chứng thuộc bản cũ hơn
+N commit"*. Hiện ở hai chỗ Đức nhìn thấy mà không phải mở gì: bảng tổng, và dòng tóm tắt của
+đơn vị ở tab Extension. Đo trên HEAD: hai đơn vị bị cảnh báo (23 và 14 commit), ba đơn vị còn lại
+không bị bịa cảnh báo. Không thêm nguồn dữ liệu nào, không thêm trường nào — đọc đúng trường đã có
+trong mô hình. Defect 5 và 6 **vẫn khoá**, không chạm.
+
+**8b · Ba dòng đếm sự cố.** Đọc nhãn cố định trong chính nhật ký này, neo bằng một dòng, đúng bốn
+token. Ba sự cố ghi lùi hôm nay đọc ra `1 · 1 · 1`. Nhãn lạ thì bộ sinh **dừng và nói tên nguyên
+nhân** — `PASS` và `ANSWERED` rơi vào đúng cửa đó, nên không có đường nào để tôi tự ghi điểm cho
+mình. Chữ trên bảng là **"đã ghi nhận"**, huy hiệu số 0 để màu trung tính, và trang nói thẳng rằng
+0 nghĩa là *chưa ai ghi nhận*, không nghĩa là không có sự cố.
+
+**Số thật:** phép kiểm 25 → 27. Thử phá 9 lượt, cả 9 đỏ. Nhưng **4 lượt thoát lưới ở lần đầu**:
+3 lượt không sửa được code vì tôi neo bằng dấu xuống dòng kiểu Unix trong khi file là CRLF — đúng
+cái bẫy ký tự vô hình mà đề bài cảnh báo, và nó báo "không khớp" trông y hệt "không có gì để sửa";
+1 lượt (xoá một dòng nhật ký) xanh giả vì tôi sửa file trên đĩa trong khi bộ sinh đọc bản đã ghi
+vào repo — sửa lại đúng chỗ thì đỏ ngay, kèm một lượt đo riêng xác nhận xoá một dòng làm số đếm
+tụt về 0.
+
+**Còn mở:** frontmatter của đề bài `CONTENT-TRUTH-01` cần đổi sang đã xong — file đó thuộc khoá
+`_docs`, không phải khoá của lượt này, nên **không tự sửa**, để phiên giữ `_docs` làm.
