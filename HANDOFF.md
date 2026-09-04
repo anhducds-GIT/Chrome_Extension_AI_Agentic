@@ -2406,3 +2406,44 @@ GPT đã dặn vòng này không đụng gì khác. Đã báo Đức và nhắn 
 
 Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 ·
 `Y-01` · và regression `IDEAS.md` ở trên.
+
+---
+
+## 2026-09-04 · `claude-exec-dashtab2` · tab "AI điều phối" trên bảng trạng thái (DASH-ORCH-01)
+
+**Kế thừa việc dở của một phiên đã chết.** Phiên `claude-exec-dashtab` bắt đầu đúng việc này
+rồi thoát giữa chừng, để lại phần sửa chưa commit trong cây làm việc. Đức chốt giữ lại phần đó
+cho tôi tự quyết. Tôi **đọc hết rồi giữ** — phần đó đúng brief, fail-closed đúng chỗ, và cắt
+phạm vi cẩn thận. Viết lại từ đầu chỉ để mang tên mình thì tốn một buổi mà ra cùng một thứ.
+
+**Tab gồm đúng ba khối**, không hơn: bảng khoá **BẬN/MỞ** (đọc từ bảng chủ sở hữu, **không**
+hiện tên ai giữ) · ba mốc gói Assistant (đọc lại từ hồ sơ mốc) · sai lệch của chính Assistant
+(mã + triệu chứng lấy từ tiêu đề đề bài, mở/đóng lấy từ trường máy đọc được ở đầu file).
+
+**Chọn đường (b) của brief mục 2 — đo rồi mới chọn.** Tôi tự đếm lại trên toàn bộ lịch sử:
+**174** commit chạm bảng chủ sở hữu, và **146 trong 173** lượt so liền kề làm **đổi** vector
+bận/mở. Bỏ tên chủ đi giảm ít hơn nhiều so với hy vọng — nhận rồi trả vốn là hai lượt lật. Nên
+đường (a) sẽ làm bảng lệch gần như mỗi lần có người nhận hay trả quyền, tức chặn push cả những
+phiên không liên quan. Vì vậy lọc dòng khoá khỏi phép so độ tươi, y hệt cách bộ sinh kia đang
+lọc dấu sinh trang. Đổi lại, trang **nói rõ** khối đó là ảnh chụp lúc sinh. Phép lọc chỉ đặt ở
+phía **so**, không đặt ở phía **ghi** — bỏ qua lượt ghi thì bảng sẽ hiện bận/mở của hôm kia.
+
+**Hai lỗi thật bắt được lúc chạy, cả hai trong phần test kế thừa, cả hai cùng một loại** —
+regex chạy ra ngoài phạm vi, đúng cái bẫy đã cắn repo này nhiều lần:
+1. phép đếm huy hiệu quét cả tab nên vơ luôn huy hiệu "MỞ" của khối sai lệch — hai khoá mà
+   đếm ra sáu;
+2. phép kiểm "mọi dòng bận/mở đều phải mang dấu" cũng vơ nhầm bốn dòng sai lệch, đòi chúng
+   mang dấu. Sai hướng nguy hiểm hơn: trạng thái sai lệch là **nội dung**, mang dấu là làm cổng
+   mất răng. Đã siết lại theo đúng hình dạng dòng khoá, và ghim thêm một khẳng định ngược
+   (dòng sai lệch **không** được mang dấu).
+
+**Phép thử cuối đạt:** đổi `_code` từ mở sang bận bằng lệnh (không sửa tay), sinh lại — dòng đó
+đổi đúng, và không lộ tên phiên nào. Sinh hai lần liên tiếp ra y hệt từng byte.
+
+**Một sai lệch tôi KHÔNG tự sửa, cần Đức chốt.** Brief nói `ROLE-DRIFT-01` và `STATE-DRIFT-01`
+đã **đóng**, nhưng trường máy đọc được ở đầu hai đề bài đó vẫn ghi `active`. Brief lại bắt dùng
+đúng trường đó chứ đừng dò văn xuôi — nên bảng hiện chúng là **MỞ**. Một trong hai chỗ sai, và
+đó là chữ của người trong vùng `_docs` không phải của tôi. Đức chốt rồi thì chỉ cần sửa trường
+`status:` của hai đề bài, bảng tự đúng theo, không phải đụng code.
+
+Còn mở: hai đề bài trên chờ Đức chốt · các mục còn mở của những phiên trước.

@@ -187,6 +187,20 @@ pre.cmd{background:var(--inset);border:1px solid var(--line-2);border-radius:8px
 .hint{background:var(--good-bg);border-left:3px solid var(--good);border-radius:8px;
   padding:11px 14px;font-size:13.2px;color:var(--ink-2);line-height:1.5}
 footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
+
+/* Tab AI điều phối — một dòng, một trạng thái. Không cột thứ ba: mọi thứ định thêm vào đây
+   đều là trạng thái sống, và trang này không phải chỗ chứa trạng thái sống. */
+.kr{display:grid;grid-template-columns:1fr auto;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--line);align-items:baseline}
+.kr:last-child{border-bottom:none}
+.kr .n{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink)}
+.kr .n em{font-family:var(--sans);font-size:12.5px;font-style:normal;color:var(--muted);font-weight:400}
+.badge{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.07em;
+  padding:2px 8px;border-radius:3px;white-space:nowrap}
+.badge.b0{background:var(--inset);color:var(--muted)}
+.badge.b1{background:var(--warn-bg);color:var(--warn)}
+.badge.b2{background:var(--good-bg);color:var(--good)}
+.badge.b3{background:var(--off-bg);color:var(--off)}
 </style>
 
 <div class="wrap">
@@ -200,6 +214,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="tong-quan" aria-selected="true">Tổng quan</button>
+    <button class="tab" role="tab" data-tab="ai-dieu-phoi" aria-selected="false">AI điều phối</button>
     <button class="tab" role="tab" data-tab="extension" aria-selected="false">Extension</button>
     <button class="tab" role="tab" data-tab="y-tuong" aria-selected="false">Ý tưởng</button>
     <button class="tab" role="tab" data-tab="van-hanh" aria-selected="false">Vận hành</button>
@@ -266,6 +281,44 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
       <div class="hint">Bảng không tự làm mới. Nó in ngày sinh ở đầu trang và <strong>tự bật dải đỏ khi Đức mở nó vào một ngày khác ngày sinh</strong>. Thấy dải đỏ thì dán câu dưới đây cho tôi.</div>
       <pre class="cmd">Làm mới bảng trạng thái: sinh lại rồi commit.</pre>
       <p class="note">Cách nó chạy, và lệnh chạy tay, nằm ở tab <strong>Vận hành</strong>.</p>
+    </div>
+  </div>
+
+  <div role="tabpanel" data-pane="ai-dieu-phoi" hidden>
+    <div class="card">
+      <div class="sect">Khoá làm việc — 6 khoá</div>
+      <div class="kl">
+<!--khoa-->        <div class="kr"><span class="n">duc-auto-gg-flow-video</span><span class="badge b2">MỞ</span></div>
+<!--khoa-->        <div class="kr"><span class="n">duc-auto-gemini</span><span class="badge b2">MỞ</span></div>
+<!--khoa-->        <div class="kr"><span class="n">duc-auto-chatgpt</span><span class="badge b1">BẬN</span></div>
+<!--khoa-->        <div class="kr"><span class="n">_root</span><span class="badge b2">MỞ</span></div>
+<!--khoa-->        <div class="kr"><span class="n">_docs</span><span class="badge b2">MỞ</span></div>
+<!--khoa-->        <div class="kr"><span class="n">_code</span><span class="badge b1">BẬN</span></div>
+      </div>
+      <div class="hint" style="margin-top:11px">Đây là <strong>ảnh chụp lúc sinh bảng</strong>, không phải trạng thái thời gian thực — nó theo lần ghi gần nhất vào repo. Khoá <strong>MỞ</strong> là chỗ giao được việc mới ngay; khoá <strong>BẬN</strong> thì chỉ đọc, đừng giao thêm.</div>
+      <p class="note">Bảng cố ý <strong>không nói ai đang giữ</strong>, cũng không nói giữ bao lâu. Đức cần biết còn mấy chỗ trống để giao việc song song, chứ không cần tên phiên — tên phiên đổi liên tục và làm bảng mục ngay. Muốn biết ai giữ thì hỏi tôi, tôi tra bảng chủ sở hữu. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Gói Assistant đang ở mốc nào</div>
+      <div class="kl">
+        <div class="kr"><span class="n">V0.1 PACKAGE</span><span class="badge b2">xong 2026-09-04</span></div>
+        <div class="kr"><span class="n">EXTENSION PILOT</span><span class="badge b1">đang chạy</span></div>
+        <div class="kr"><span class="n">PORTABLE FREEZE → TEMPLATE</span><span class="badge b3">khoá, chờ pilot đạt</span></div>
+      </div>
+      <p class="note">Ba mốc đọc lại từ hồ sơ mốc của gói, không gõ tay ở đây — nên bảng không thể nói khác hồ sơ.</p>
+    </div>
+
+    <div class="card">
+      <div class="sect">Sai lệch đã ghi nhận của chính tôi — 5 mục</div>
+      <div class="kl">
+        <div class="kr"><span class="n">ASSISTANT-PROMOTE-01 <em>đưa gói Assistant vào bộ khung</em></span><span class="badge b0">ĐÓNG</span></div>
+        <div class="kr"><span class="n">CONTENT-TRUTH-01 <em>Bảng nói &quot;đã chứng minh&quot; mà giấu mất việc code đã đổi</em></span><span class="badge b1">MỞ</span></div>
+        <div class="kr"><span class="n">DASH-ORCH-01 <em>tab &quot;AI điều phối&quot; trên bảng trạng thái</em></span><span class="badge b1">MỞ</span></div>
+        <div class="kr"><span class="n">ROLE-DRIFT-01 <em>Hard Role Firewall cho vai điều phối</em></span><span class="badge b1">MỞ</span></div>
+        <div class="kr"><span class="n">STATE-DRIFT-01 <em>cổng nhất quán trạng thái trước khi báo cáo</em></span><span class="badge b1">MỞ</span></div>
+      </div>
+      <p class="note">Đây là lỗi của <strong>chính cách tôi làm việc</strong>, không phải lỗi của extension nào. Trạng thái lấy từ trường máy đọc được trong từng đề bài, không dò văn xuôi. <strong>ĐÓNG</strong> gồm cả đề bài đã hoãn.</p>
     </div>
   </div>
 
@@ -542,7 +595,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 <p>Ba câu &quot;chưa rõ&quot; của bản 02/09 nay còn MỘT — hai câu kia đã có số đo live 04/09:</p>
 <p>| Câu | Trạng thái |</p>
 <p>|---|---|</p>
-<p>| ② gọi GPT qua đâu? | Đã trả lời. jobs.add → run.trial → chat.read; jobs.add tự dựng workbook trong bộ nhớ nên không cần XLSX. Hai vòng khép kín: trial-b5309b27 41 giây, trial-12ca3fe3 ~49 giây, đọc về 1.953 và 1.926 ký tự,…</p>
+<p>| ② gọi GPT qua đâu? | Đã trả lời. jobs.add → run.trial → chat.read; jobs.add tự dựng workbook trong bộ nhớ nên không cần XLSX. Hai vòng khép kín đo được 41 giây và ~49 giây, đọc về 1.953 và 1.926 ký tự, không bị cắt |</p>
 <p>| ③ đo thế nào là đạt? | Phần lớn đã trả lời — hai vòng khép kín chính là mốc. Còn thiếu: một vòng trên việc thật |</p>
 <p>| ① thử trên việc gì? | Vẫn cần Đức chốt. Đề xuất: vòng audit nói trên |</p>
 <p>bật chế độ phát triển. Không AI nào làm hộ được.</p>
