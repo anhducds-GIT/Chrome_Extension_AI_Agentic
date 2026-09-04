@@ -28,11 +28,11 @@
     "_root": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-04T03:51",
-      "task": "Content Truth: gop Y-01, sua Y-04 noi nguoc kien truc",
-      "released_at": "2026-09-04T03:54",
-      "taken_from": "claude-k2-vaLoi",
-      "taken_by_duc_decision": "2026-09-04"
+      "claimed_at": "2026-09-04T04:23",
+      "task": "Go hai ma giong SHA trong so y tuong — chung lam do bat bien bang cua build-overview, cong dang DO cho moi phien",
+      "released_at": "2026-09-04T04:40",
+      "taken_from": "claude-exec-dashtab",
+      "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     },
     "_docs": {
       "owner": null,
@@ -44,14 +44,14 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T03:52",
-      "task": "Va nhanh BOOTSTRAP nuot loi git: tach not-a-repo khoi unborn repo, sua CA D dang ghim nham",
-      "released_at": "2026-09-04T04:07",
-      "taken_from": "claude-k2-snapshot",
-      "taken_by_duc_decision": "2026-09-04"
+      "owner": "claude-exec-dashtab2",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T04:42",
+      "task": "Them tab AI dieu phoi vao bo sinh DASHBOARD.html theo brief DASH-ORCH-01",
+      "released_at": null,
+      "taken_from": "claude-exec-dashtab",
+      "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "5d6c7a7adf84e569"
+  "_fingerprint": "48b2fecdad7d9653"
 }
