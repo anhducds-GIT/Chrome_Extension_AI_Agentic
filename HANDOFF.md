@@ -2077,3 +2077,20 @@ bắt.
   `IDEAS.md`, trong khi Đức đã chốt đường 1 ngày 04/09 (`append_only_exempt` trong
   `.repo-structure.json` đã có `IDEAS.md`). Không sửa vì nằm ngoài brief — việc một dòng.
 - Brief `ROLE-DRIFT-01` mục 3 cấm promote sang `Ark_Repo_Harness`. Chưa promote, đúng ý.
+
+### Bổ sung cùng phiên — `no in-session execution override` (Đức chốt thêm 04/09)
+
+Brief để ngỏ đúng một chỗ: Đức có được ghi đè firewall bằng một câu kiểu *"làm trực tiếp đi"*
+không? Đức trả lời **KHÔNG** — cho phép thì firewall tụt thành quy ước mềm, và `ROLE-DRIFT-01`
+sẽ quay lại **đúng lúc Đức đang gấp**, tức đúng lúc nó gây thiệt hại nhất.
+
+Đã thêm mục con `### Không có ghi đè trong phiên` vào mục 4 của `ORCHESTRATOR.md`, và cập nhật
+`docs/briefs/BRIEF-ROLE-DRIFT-01.md` cho khớp (brief là hợp đồng — để nó lạc hậu là gieo lại
+đúng bệnh sai lệch trạng thái repo này đang chữa). Luật có **hai nửa**: nửa CẤM (không câu nào
+biến phiên điều phối thành executor "lần này thôi", kể cả câu của Đức) và nửa CHO PHÉP (quyền
+tối cao của Đức là **ĐỔI VAI**, không phải ngoại lệ — một câu đổi vai tường minh, kèm ba điều
+kiện: checkpoint trạng thái Assistant TRƯỚC · phiên đó không còn là Assistant cho tới khi xong
+việc · mặc định vẫn nên mở executor riêng).
+
+**Số sau bổ sung:** smoke **13 khẳng định** (hai nửa có hai khẳng định RIÊNG — gộp thì xoá mất
+một nửa vẫn xanh), thử phá **29 ca, 29 bị bắt**, vẫn đúng 1 ca thoát ở vòng đầu (ca 13, đã vá).

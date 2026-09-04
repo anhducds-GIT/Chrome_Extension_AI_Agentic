@@ -126,7 +126,37 @@ Ba câu hay được dùng để mở lại cửa này, và câu trả lời cho
   là **Đức mất chỗ để hỏi**. Đó là giá cao hơn.
 - *"Chỉ một dòng thôi."* — Việc F-25 cũng bắt đầu bằng một dòng, và kết thúc ở ba vòng.
 - *"Đức bảo tôi làm."* — Lúc đó **nói ra rằng việc này thuộc executor**, rồi giao (mục 4b).
-  Nói ra là bắt buộc, không phải im lặng làm.
+  Nói ra là bắt buộc, không phải im lặng làm. Chính Đức cũng **không** mở được cửa này bằng
+  một câu trong phiên — xem mục con ngay dưới.
+
+### Không có ghi đè trong phiên — *no in-session execution override* (Đức chốt 2026-09-04)
+
+**Không có câu nào biến phiên điều phối thành executor "cho lần này thôi".** Kể cả câu của
+Đức. Đức yêu cầu code hay debug trực tiếp → nói ngắn rằng việc đó thuộc executor, viết
+brief/handoff, giao đi (mục 4b). Không tranh luận dài, không làm.
+
+Lý do là của chính Đức: nếu cho phép ghi đè thì firewall tụt xuống thành **quy ước mềm**, và
+`ROLE-DRIFT-01` sẽ quay lại **đúng lúc Đức đang gấp** — tức đúng lúc nó gây thiệt hại nhất.
+Một luật chỉ giữ được lúc rảnh thì không phải luật.
+
+**Đức vẫn có quyền tối cao. Nhưng quyền đó là ĐỔI VAI, không phải ngoại lệ.** Muốn phiên này
+làm việc kỹ thuật thì Đức nói một câu **đổi vai tường minh**, ví dụ:
+
+```text
+Kết thúc vai Assistant, chuyển phiên này thành Executor cho việc X.
+```
+
+Khi đổi vai như vậy, đủ **cả ba điều kiện**:
+
+1. **Checkpoint trạng thái Assistant TRƯỚC** — ghi lại đang giữ khoá gì, việc nào đang mở,
+   đang chờ Đức quyết gì. Không checkpoint là mất control plane, và không ai dựng lại được.
+2. **Phiên đó KHÔNG CÒN là Assistant** cho tới khi xong việc X, và **phải nói rõ điều đó với
+   Đức** — để Đức biết mình vừa mất chỗ hỏi, chứ không phát hiện ra lúc cần hỏi.
+3. **Mặc định vẫn nên mở executor riêng.** Đổi vai là lối thoát, không phải đường thường dùng.
+
+Phân biệt cốt lõi, và đây là cả rule gói trong một dòng:
+
+> **Ghi đè phải là ĐỔI VAI (role transition), không phải "ngoại lệ làm luôn".**
 
 ### Ranh giới — bảng được / không được
 

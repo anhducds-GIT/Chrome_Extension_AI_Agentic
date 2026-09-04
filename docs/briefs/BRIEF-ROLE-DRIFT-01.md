@@ -38,6 +38,16 @@ trong im lặng.
   vai điều phối **không code, không debug product, không đề xuất patch kỹ thuật** — kể cả
   "chỉ một sửa nhỏ", kể cả khi đã có sẵn bối cảnh, kể cả khi Đức bảo làm (lúc đó phải nói ra
   rằng việc này thuộc executor, rồi giao).
+- **Không có ghi đè trong phiên** — *no in-session execution override*. Đức chốt bổ sung
+  2026-09-04, sau khi câu trên để ngỏ đúng một chỗ: Đức có được ghi đè bằng một câu kiểu
+  "làm trực tiếp đi" không? **KHÔNG.** Cho phép thì firewall tụt thành quy ước mềm, và
+  `ROLE-DRIFT-01` sẽ quay lại **đúng lúc Đức đang gấp** — lúc nó gây thiệt hại nhất.
+  Quyền tối cao của Đức vẫn còn, nhưng nó là **ĐỔI VAI, không phải ngoại lệ**: phải có một
+  câu đổi vai tường minh (*"Kết thúc vai Assistant, chuyển phiên này thành Executor cho việc
+  X"*), và khi đó đủ **ba điều kiện** — checkpoint trạng thái Assistant TRƯỚC · phiên đó
+  không còn là Assistant cho tới khi xong X và phải nói rõ với Đức · mặc định vẫn nên mở
+  executor riêng. Viết cho rõ trong sổ tay: **ghi đè phải là role transition, không phải
+  "ngoại lệ làm luôn"**.
 - **Ranh giới dashboard:** được duy trì trạng thái dự án và trạng thái bảng
   (`STATUS.md` · `IDEAS.md` · Log · sinh lại artifact). **Sửa bộ sinh, runner, hay code
   extension = executor.** Ranh giới này phải viết thành một bảng "được / không được", không
@@ -90,7 +100,10 @@ Một phép kiểm chạy trong suite gốc repo, để **không ai vô tình m�
   thì cách viết thứ hai lọt; hãy ghim vào cấu trúc: sự tồn tại của ba trường + vắng mặt của
   một mục cho phép);
 - `AGENTS.md` gốc **không** còn quảng bá "hai vòng sửa–chạy–sửa";
-- `PROMPTS.md` có luật năm mục.
+- `PROMPTS.md` có luật năm mục;
+- **hai nửa của luật ghi đè phải có hai khẳng định RIÊNG** — nửa cấm (không có ngoại lệ
+  trong phiên, kể cả câu của Đức) và nửa cho phép (đổi vai tường minh + ba điều kiện). Một
+  khẳng định gộp sẽ vẫn xanh khi một nửa bị xoá.
 
 **Và phải thử phá phép kiểm đó.** Mỗi khẳng định phải dựng được ca hỏng thật: sửa file cho
 sai rồi chạy, phải ĐỎ. Trong repo này đã có ba phép kiểm xanh một cách vô nghĩa, và trong
