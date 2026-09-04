@@ -12,11 +12,11 @@
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-exec-g02b",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T06:21",
       "task": "G-02 khoa tab va khoa hoi thoai",
-      "released_at": null,
+      "released_at": "2026-09-04T06:37",
       "taken_from": "claude-exec-g02",
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-04T06:18",
@@ -57,5 +57,5 @@
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "baace2a622f6ee13"
+  "_fingerprint": "c8ab13257cef229e"
 }
