@@ -1,6 +1,7 @@
 ---
 kind: brief
-status: active
+status: superseded
+superseded_by: docs/briefs/BRIEF-DASHBOARD-ORCHESTRATOR-TAB-V2.md
 ttl_days: 90
 ---
 
