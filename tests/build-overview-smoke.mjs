@@ -163,14 +163,16 @@ const ideasDeps = (text) => ({
   const tot = buildOverview(deps, { today: "head" });
   assert.match(tot.stats.stamp, /^\d{4}-\d{2}-\d{2}$/, "moc HEAD that phai chay duoc, khong nem");
 
-  for (const hong of ["", "khong-phai-ngay", null, undefined]) {
+  // Hai dạng là đủ: cả bốn đều rơi vào cùng một nhánh `Number.isFinite`, mà mỗi ca tốn một
+  // lượt sinh đầy đủ (~9 giây). Giữ một chuỗi sai hình dạng + một giá trị rỗng.
+  for (const hong of ["khong-phai-ngay", null]) {
     const depsHong = { ...deps, git: { ...deps.git, headDate: () => hong } };
     let nem = null;
     try { buildOverview(depsHong, { today: "head" }); } catch (e) { nem = e; }
     assert.ok(nem, `moc HEAD = ${JSON.stringify(hong)} PHAI nem, khong duoc lui ve Date.now()`);
     assert.match(nem.message, /MOC_HEAD_HONG/, "loi phai noi ro ten nguyen nhan");
   }
-  ok("moc HEAD hong thi NEM (4 dang), moc tot van chay — het cua fail-open");
+  ok("moc HEAD hong thi NEM (2 dang), moc tot van chay — het cua fail-open");
 }
 
 /* ---- 5b. Câu "làm mới bảng" phải ĐỌC từ PROMPTS.md, không được gõ cứng.
@@ -181,9 +183,25 @@ const ideasDeps = (text) => ({
 {
   const deps = createDefaultDeps(ROOT);
   const cau = readRefreshLine(deps);
-  assert.ok(cau.length > 10, "cau lam moi phai doc ra duoc noi dung that");
-  assert.ok(buildOverview(deps, { today: "head" }).html.includes(cau),
-    "cau doc tu PROMPTS.md PHAI la cau in ra tren trang");
+
+  /* CA QUYẾT ĐỊNH: đưa một PROMPTS.md ĐÃ ĐỔI CÂU, rồi đòi TRANG đổi theo.
+
+     Bản trước chỉ hỏi "trang có chứa câu hiện tại không" — mà một bộ sinh GÕ CỨNG đúng câu
+     hiện tại thì cũng xanh. Tức nó KHÔNG chứng minh được điều nó tự nhận là chứng minh, và
+     tôi đã dựa vào nó để báo "thử phá 6/6". GPT audit vòng 2 bắt được 04/09; con số thật
+     lúc đó là 5/6.
+
+     Bỏ luôn `cau.length > 10`: một ngưỡng tuỳ ý, không nói gì về cơ chế, và ca dưới bao hàm nó. */
+  const CAU_LA = "Cau thu nghiem khong the go cung duoc 20260904";
+  const gocPrompts = deps.readFile("PROMPTS.md");
+  const doiNguon = {
+    ...deps,
+    readFile: (f) => (f === "PROMPTS.md" ? gocPrompts.split(cau).join(CAU_LA) : deps.readFile(f))
+  };
+  assert.equal(readRefreshLine(doiNguon), CAU_LA, "doi nguon thi cau DOC RA phai doi theo");
+  const htmlDoi = buildOverview(doiNguon, { today: "head" }).html;
+  assert.ok(htmlDoi.includes(CAU_LA), "doi nguon thi TRANG phai doi theo — con go cung thi khong");
+  assert.ok(!htmlDoi.includes(cau), "cau CU khong duoc con sot lai tren trang");
 
   // Ca hỏng: PROMPTS.md mất mục 2 thì phải NÉM, không được âm thầm dùng câu dự phòng —
   // câu dự phòng âm thầm chính là con đường đã đi vào lỗi trên.
@@ -415,7 +433,6 @@ const ideasDeps = (text) => ({
      cơ chế: sắp xếp lại thư mục quyết định thì nó đỏ oan, còn bộ đọc hỏng hoàn toàn thì nó
      vẫn xanh miễn còn hơn 100 file. Cái PHẢI đúng là quan hệ giữa tổng và danh sách hiển thị. */
   assert.ok(d.total > 0, "phai dem duoc quyet dinh — 0 la bo doc hong, khong phai repo trong");
-  assert.ok(d.top.length > 0, "phai lay ra duoc quyet dinh gan nhat de hien tren bang");
   assert.ok(d.total >= d.top.length, "tong khong the nho hon so dong dang hien");
   assert.equal(d.top.length, 6, "lay dung so luong xin");
   // Tên lấy từ tên file là slug không dấu — Đức đọc không hiểu. Phải đọc tiêu đề trong file.
@@ -466,10 +483,34 @@ const ideasDeps = (text) => ({
 
   // Báo cũ không mất đi: nó do JS trong trang tự tính lúc MỞ, từ mốc ngày nhúng sẵn.
   assert.match(a, /data-sinh="[0-9]{4}-[0-9]{2}-[0-9]{2}"/, "trang phai nhung moc ngay de JS tinh tuoi luc xem");
-  /* Ghim CƠ CHẾ: trang phải có đoạn JS ĐỌC mốc ngày đã nhúng. Bản cũ ghim nguyên văn
-     `nay > b.dataset.sinh` — viết lại đoạn đó cho gọn hơn là đỏ oan dù hành vi y nguyên.
-     GPT audit chỉ đúng chỗ này. */
-  assert.match(a, /dataset[.]sinh/, "trang phai co doan JS DOC moc ngay da nhung de tinh tuoi luc xem");
+  /* CHẠY THẬT đoạn JS, thay vì ghim cách nó được viết.
+
+     Bản đầu ghim nguyên văn `nay > b.dataset.sinh` — đỏ oan khi viết lại cho gọn. Tôi nới
+     xuống chỉ ghim `dataset.sinh`, và nới QUÁ TAY: một bộ sinh CÓ đọc mốc ngày nhưng KHÔNG
+     BAO GIỜ bật dải đỏ vẫn xanh — tức Đức mở bảng cũ mà không hề được cảnh báo, đúng thứ
+     Đức yêu cầu 03/09. GPT audit vòng 2 bắt được.
+
+     Chạy thật thì hết cả hai lo cùng lúc: không phụ thuộc cách viết, mà vẫn đòi đúng hành vi. */
+  const src = a.slice(a.lastIndexOf("<script>") + "<script>".length, a.lastIndexOf("</script>"));
+  const chay = (sinh) => {
+    const el = { dataset: { sinh }, textContent: "" };
+    new Function("document", src)({
+      getElementById: (id) => (id === "cu" ? el : null),
+      querySelectorAll: () => []
+    });
+    return el;
+  };
+  const nayISO = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const homQua = new Date(Date.parse(nayISO) - 86400000).toISOString().slice(0, 10);
+
+  const moi = chay(nayISO);
+  assert.notEqual(moi.dataset.hien, "1", "mo trong NGAY SINH thi KHONG duoc bat dai do");
+  assert.equal(moi.textContent, "", "khong cu thi khong duoc viet gi len dai do");
+
+  const cuRoi = chay(homQua);
+  assert.equal(cuRoi.dataset.hien, "1", "mo SANG NGAY KHAC thi PHAI bat dai do — Duc yeu cau 03/09");
+  assert.ok(cuRoi.textContent.includes(homQua), "loi bao phai noi ro ngay sinh");
+  assert.ok(cuRoi.textContent.includes(nayISO), "va noi ro hom nay la ngay nao");
 
   assert.equal(TRANG_FILE, "DASHBOARD.html", "ten ban chuan cua repo");
   ok("ban commit TAT DINH: doi dong ho 99 ngay khong doi mot byte, bao cu do JS tinh luc mo");

@@ -606,8 +606,16 @@ const bigRow = (tab, id, name, stage, meta) =>
  * có câu dự phòng, vì một câu dự phòng âm thầm chính là con đường vừa đi vào lỗi này. */
 export function readRefreshLine(deps) {
   const text = deps.readFile("PROMPTS.md");
-  const m = /^##\s+2\..*$([\s\S]*?)^```/m.exec(text);
-  const block = m && /^```text\r?\n([^\r\n]+)/m.exec(text.slice(m.index));
+  /* CHẶN Ở MỤC KẾ. Bản trước cắt từ mục 2 tới CUỐI FILE, nên khi mục 2 mất khối ```text nó
+     lặng lẽ nhặt khối của MỘT MỤC KHÁC rồi trả về như thật — fail-open đội lốt fail-closed,
+     đúng cái nó sinh ra để chặn. GPT audit vòng 2 bắt được 04/09. */
+  const bat = /^##\s+2\..*$/m.exec(text);
+  let block = null;
+  if (bat) {
+    const sau = text.slice(bat.index + bat[0].length);
+    const het = /^##\s/m.exec(sau);
+    block = /^```text\r?\n([^\r\n]+)/m.exec(het ? sau.slice(0, het.index) : sau);
+  }
   if (!block) {
     throw new Error("THIEU_CAU_LAM_MOI: PROMPTS.md không còn mục \"## 2.\" kèm khối ```text. "
       + "Câu làm mới bảng phải đọc được từ đó, không được gõ cứng ở đây — gõ cứng là hai bản, "

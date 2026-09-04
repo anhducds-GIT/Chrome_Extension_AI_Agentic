@@ -26,32 +26,32 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-03T18:47",
-      "task": "Doi chieu FEATURE-PARITY sau khi chat.read len HEAD",
-      "released_at": "2026-09-03T18:48",
+      "owner": "claude-exec-roledrift",
+      "ai": "Claude",
+      "claimed_at": "2026-09-03T23:59",
+      "task": "ROLE-DRIFT-01: sua con tro AGENTS.md + PROMPTS.md muc 0",
+      "released_at": null,
       "taken_from": "claude-k2-vaLoi",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-03T23:55",
-      "task": "Viet brief ROLE-DRIFT-01 de giao executor",
-      "released_at": "2026-09-03T23:56",
+      "owner": "claude-exec-roledrift",
+      "ai": "Claude",
+      "claimed_at": "2026-09-03T23:59",
+      "task": "ROLE-DRIFT-01: Hard Role Firewall cho ORCHESTRATOR.md",
+      "released_at": null,
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T00:40",
-      "task": "Vai dieu phoi: what-next.mjs + test ghim + gom danh sach mien tru ve mot nguon",
-      "released_at": "2026-09-03T18:38",
-      "taken_from": "claude-dashboard",
-      "taken_by_duc_decision": "2026-09-04 (lan hai)"
+      "owner": "claude-dashboard",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T02:05",
+      "task": "Va 3 defect GPT audit vong 2 — chi dung build-overview.mjs + smoke cua no",
+      "released_at": null,
+      "taken_from": "claude-k2-snapshot",
+      "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "18f5d8953f5be62b"
+  "_fingerprint": "bb9f9e2e5fc7e2ce"
 }
