@@ -2484,3 +2484,73 @@ tồn tại với hai file — mục lục tự nhận "bốn tầng" trong khi 
 Không khai thì không tồn tại, kể cả với chính mục lục.
 
 Còn mở: `G-12` · hai câu hỏi cho phiên giữ `gg-flow-video` · C3 và bốn phát hiện brief K1 · `Y-01`.
+
+---
+
+## 2026-09-04 · Phiên `claude-exec-qdsync` — đồng bộ contract **Query-driven Assistant v0.1**
+
+**Việc:** Đức chốt 04/09 đổi trọng tâm Assistant từ *"tự chọn việc tiếp theo"* sang *"phản hồi
+theo câu hỏi của Đức"*. Việc của phiên này là đưa contract đó vào repo — **chỉ văn xuôi, đúng ba
+file, không một dòng code**.
+
+Vòng duy nhất của v0.1: `ĐỨC HỎI → ASSISTANT KIỂM NGUỒN → TRẢ LỜI → CẬP NHẬT SSOT NẾU SỰ THẬT
+ĐỔI → SINH LẠI BẢNG`.
+
+**1. `docs/protocols/ORCHESTRATOR.md` — thêm mục `0b` QUERY-DRIVEN.** Đặt ngay sau mục 0 ("vai
+này là gì"), vì đây là luật **định nghĩa vai**, không phải luật thủ tục: nó phải đọc được trước
+khi người ta tới mục 1 (hai lớp) hay mục 4 (firewall). Chọn số `0b` thay vì chèn số mới để
+**không đánh số lại cả file** — phép ghim `tests/role-firewall-smoke.mjs` gọi mục theo số ("4",
+"4b", "0"), nên đánh số lại là làm vỡ ghim mà không hề sửa luật nào.
+
+Nội dung: bốn điều cấm (không tự đề xuất "việc kế" · không tự hỏi Đức "làm gì tiếp?" · không kéo
+Đức sang việc chưa hỏi · không chắc thì `UNKNOWN`, không đoán), kèm lối ra hợp lệ cho một topic
+thật — **ghi vào SSOT rồi để nó nổi lên bảng**, không nhét vào lượt trả lời câu khác. Và giữ
+nguyên nguyên tắc bảng: Assistant **không ghi câu trả lời vào bảng**, chỉ sửa nguồn rồi sinh lại.
+
+**Sửa cả mục 3 như brief yêu cầu:** "Bốn câu Đức hay hỏi" → **bảy loại câu** (đang có gì · X tới
+đâu · đang block gì · tôi cần quyết gì · chạy song song được gì · ai đang chạy việc gì · defect
+của Assistant thế nào). `"Làm gì tiếp?"` **rời khỏi bảng** và xuống thành ghi chú: vẫn trả lời
+được, một việc kèm lý do, **nhưng chỉ khi Đức hỏi**. Nó nằm trong bảng là chỗ luật cũ để ngỏ —
+một dòng trong bảng đọc như một việc Assistant làm.
+
+**2. `PROMPTS.md` mục 0 — câu dán bỏ yêu cầu tự báo "việc kế".** Câu cũ bắt AI nói bốn điều,
+trong đó có *"nên làm gì tiếp và vì sao là việc đó"* — tức chính câu dán dạy AI tự mở topic mỗi
+lượt. Câu mới: mở phiên thì kiểm trạng thái, báo một câu, rồi **CHỜ ĐỨC HỎI**. Giữ nguyên luật
+nạp báo cáo năm mục và lệnh cấm code. Mục 0b (chia luồng song song) **không đụng** — đó là việc
+Đức hỏi, không phải Assistant tự mở.
+
+**3. `docs/protocols/ASSISTANT-V0.1.md` mục 4 — đổi đơn vị đo pilot.** Bỏ "5–10 vòng việc" (đo
+cái không còn là trọng tâm). Thay bằng **20–30 câu hỏi thật của Đức** trong vài ngày, mỗi câu một
+nhãn: `ANSWERED` / `UNKNOWN` / `STATE-DRIFT` / `ROLE-DRIFT` / `DASHBOARD-STALE`. PASS khi đủ cả
+năm: ≥90% `ANSWERED` · không lần nào **Đức** phải bắt state sai · không `ROLE-DRIFT` · không
+`DASHBOARD-STALE` · không tự kéo Đức sang việc chưa hỏi.
+
+Ghim rõ hai chỗ đếm sai làm con số vô nghĩa: **`UNKNOWN` không phải thất bại** (repo không nói
+thì "không biết" là câu đúng) nhưng **đếm riêng, không gộp vào `ANSWERED`** — gộp là xoá đúng tín
+hiệu cho biết repo thiếu chỗ nào. Và **`STATE-DRIFT` chỉ tính khi ĐỨC bắt** — `state-check.mjs`
+bắt hoặc Assistant tự thấy thì không tính, vì đó là cơ chế chạy đúng.
+
+`EXEC-CRASH-01` (executor chết giữa chừng) hạ xuống **supporting defect**: chỉ sửa khi nó cản
+vòng hỏi–đáp. Cách sống chung đang dùng và đủ dùng — **commit ngay sau mỗi việc nhỏ**. Phiên này
+làm đúng thế: bốn lượt commit rời, không dồn.
+
+**Kết quả kiểm:** `node tests/role-firewall-smoke.mjs` **13/13 XANH** sau cả ba lượt sửa, **không
+phải nới một phép nào**. Đó là bằng chứng phép ghim viết đúng chỗ: nó ghim *hình dạng* firewall
+(frontmatter · bảng được/không được · chuỗi năm mục · lối ra 4b), nên thêm một luật mới và sửa
+lại một bảng không làm nó đỏ.
+
+**Ba chỗ còn mâu thuẫn với contract mới mà brief chưa nêu — KHÔNG tự sửa, để Đức chốt:**
+
+1. `ASSISTANT-V0.1.md` mục 2, dòng mốc: *"EXTENSION PILOT — vận hành thật **nhiều vòng** trên
+   chính repo này"*. Đơn vị đo đã thành câu hỏi, dòng này còn nói vòng. Cả cái tên "EXTENSION
+   PILOT" cũng lệch: pilot này đo Assistant, không đo extension.
+2. `ASSISTANT-V0.1.md` mục 3: *"Chưa cái nào chạy qua **nhiều vòng việc** liên tiếp"* — cùng một
+   chữ "vòng việc" đã bỏ ở mục 4.
+3. `ORCHESTRATOR.md` mục 6 tên là *"Kết một vòng điều phối"*, và mô tả lượt kết gồm "một câu nói
+   việc kế". Với luật 0b thì việc kế **chỉ nói khi Đức hỏi** — nên câu đó nay là mặc-định-sai.
+
+Ba chỗ này đều là **một chữ**, nhưng chúng là chữ Đức đọc, và đổi tên một mốc pilot là việc Đức
+chốt chứ không phải executor tự quyết.
+
+Còn mở: ba chỗ trên chờ Đức chốt · pilot Assistant bắt đầu đếm câu hỏi theo mục 4 mới ·
+`EXEC-CRASH-01` chưa có brief riêng (cố ý — supporting defect).
