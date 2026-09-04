@@ -242,12 +242,13 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         <div class="br"><a href="#y-y-01" data-goto="y-tuong">Y-01 · MVP: dùng Claude Code điều phối GPT</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
         <div class="br"><a href="#y-y-06" data-goto="y-tuong">Y-06 · Luật nói &quot;dòng cuối&quot;, máy chỉ cần &quot;có mặt&quot;</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
         <div class="br"><a href="#y-y-07" data-goto="y-tuong">Y-07 · Cổng đỏ giả vì suite chậm — độ tin của cổng, không phải lỗi của bảng</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
+        <div class="br"><a href="#y-y-08" data-goto="y-tuong">Y-08 · Cặp đối chiếu thứ tư cho `state-check`: `STATUS.md` ↔ Log của chính gói đó</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">chưa ai nhận</span></div>
         <div class="br"><a href="#y-y-02" data-goto="y-tuong">Y-02 · Protocol làm nhiều việc song song</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
         <div class="br"><a href="#y-y-03" data-goto="y-tuong">Y-03 · Trường &quot;Đức cần làm&quot; trong hồ sơ trạng thái</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
         <div class="br"><a href="#y-y-05" data-goto="y-tuong">Y-05 · Viết lại chữ trong hồ sơ cho mắt Đức đọc</a><span class="chip s1">ĐANG XÂY</span><span class="meta">đang có người làm</span></div>
         <div class="br"><a href="#y-y-04" data-goto="y-tuong">Y-04 · Bảng trạng thái sinh ngay trong repo</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">chưa ai nhận</span></div>
       </div>
-      <p class="note">5 extension và 7 ý tưởng. Chi tiết extension ở tab <strong>Extension</strong>, chi tiết ý tưởng ở tab <strong>Ý tưởng</strong>.</p>
+      <p class="note">5 extension và 8 ý tưởng. Chi tiết extension ở tab <strong>Extension</strong>, chi tiết ý tưởng ở tab <strong>Ý tưởng</strong>.</p>
     </div>
 
     <div class="card">
@@ -283,7 +284,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
             <dt>Đức cần làm</dt><dd class="warn">Quyết định Extension Observer V0: nuôi tiếp hay cho nghỉ. Chỉ Đức chốt được.</dd>
             <dt>Kiểm chứng cuối</dt><dd>chưa từng khai kiểm chứng</dd>
             <dt>Việc còn nợ</dt><dd>gói chưa có sổ nợ</dd>
-            <dt>Lệnh Bridge</dt><dd>0 lệnh · 11 file kiểm</dd>
+            <dt>Lệnh Bridge</dt><dd>0 lệnh · 12 file kiểm</dd>
           </dl>
           <p class="note">Chưa có bảng tính năng cho extension này. Bảng đối chiếu trong repo hiện chỉ so hai nhánh GPT và Gemini.</p>
         </div>
@@ -510,6 +511,33 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 <p>Con số trong ghi chú này là đo ngày 04/09 trên một máy đang tải; số trên máy rảnh sẽ khác.</p></div>
         </div>
       </details>
+      <details class="the" id="y-y-08">
+        <summary>
+          <span><span class="nm">Y-08 · Cặp đối chiếu thứ tư cho `state-check`: `STATUS.md` ↔ Log của chính gói đó</span><span class="sub">Đức chốt có làm không; làm thì viết brief riêng cho executor</span></span>
+          <span class="chip s0">Ý TƯỞNG</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Đức chốt có làm không; làm thì viết brief riêng cho executor</dd>
+            <dt>Ai đang làm</dt><dd>chưa ai nhận</dd>
+            <dt>Phạm vi</dt><dd>chưa khai</dd>
+            <dt>nguồn</dt><dd>brief STATE-DRIFT-01 mục 1, ca số 2 — đo được 04/09</dd>
+            <dt>vì sao</dt><dd>brief STATE-DRIFT-01 liệt kê HAI ca hỏng cùng họ, nhưng Đức cố ý chốt phạm vi</dd>
+            <dt>vì sao chưa làm ngay</dt><dd>hai cặp kia so máy với máy (file ↔ git), so được chính xác.</dd>
+            <dt>phạm vi khi làm</dt><dd>… + … (khoá _code).</dd>
+          </dl>
+          <div class="prose"><p>hẹp còn BA cặp — nên … (đã xong 04/09) bắt được ca 1 (khoá trên máy</p>
+<p>≠ trên origin/main) mà không bắt được ca 2: … của gói ưu tiên #1 ghi F-14</p>
+<p>&quot;chưa chứng minh&quot; và F-26 &quot;cần Đức chốt&quot;, trong khi Log của chính gói đó (lượt 18, 02/09)</p>
+<p>nói cả hai đã đóng. Bản đồ việc ở gốc repo đọc … nên hiển thị sai theo.</p>
+<p>Cặp này so văn xuôi với văn xuôi — Log là chữ người viết tự do, nên phép so sẽ phải dò</p>
+<p>theo tên mã việc, tức là hạng . Dò theo tên trong repo này đã cho kết luận sai bốn lần</p>
+<p>trong một ngày. Thêm một cặp hay báo oan vào một cổng đang tin được là cách nhanh nhất làm</p>
+<p>mất giá trị cả cổng — cùng lý lẽ với Y-07.</p>
+<p>Cấm đụng ba cặp đã có, và cấm biến lệnh này thành siêu-auditor — ranh giới ở brief mục 3.</p></div>
+        </div>
+      </details>
       <details class="the" id="y-y-02">
         <summary>
           <span><span class="nm">Y-02 · Protocol làm nhiều việc song song</span><span class="sub">Còn hai vấn đề chưa chốt phương án, cả hai cần Đức chọn một câu:</span></span>
@@ -697,8 +725,8 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
           <div class="tr"><span class="d">docs/</span><span class="o">_docs</span><span class="c">62 file</span></div>
           <div class="tr"><span class="d">evidence/</span><span class="o">_root</span><span class="c">12 file</span></div>
           <div class="tr"><span class="d">pilots/</span><span class="o">_root</span><span class="c">12 file</span></div>
-          <div class="tr"><span class="d">tests/</span><span class="o">_code</span><span class="c">11 file</span></div>
-          <div class="tr"><span class="d">scripts/</span><span class="o">_code</span><span class="c">9 file</span></div>
+          <div class="tr"><span class="d">tests/</span><span class="o">_code</span><span class="c">12 file</span></div>
+          <div class="tr"><span class="d">scripts/</span><span class="o">_code</span><span class="c">10 file</span></div>
           <div class="tr"><span class="d">delegations/</span><span class="o">_root</span><span class="c">7 file</span></div>
         </div>
         <p class="note">Cột giữa là <strong>ai được ghi vào đó</strong>. Một vùng chỉ một AI được ghi tại một thời điểm; vùng của người khác thì chỉ được đọc. <code class="mono">workers/</code> không có chủ chung — từng gói extension tự giữ riêng.</p>
