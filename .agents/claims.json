@@ -12,11 +12,11 @@
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-03T10:17",
-      "task": "Sua README+AGENTS goi Gemini v0.2.0 dang la ban copy cua goi ChatGPT",
-      "released_at": "2026-09-03T10:52"
+      "owner": "claude-exec-g02",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T04:57",
+      "task": "G-02 khoa tab va khoa hoi thoai",
+      "released_at": null
     },
     "workers/duc-auto-chatgpt": {
       "owner": "claude-gpt-kenh",
@@ -26,11 +26,11 @@
       "released_at": null
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T04:23",
-      "task": "Go hai ma giong SHA trong so y tuong — chung lam do bat bien bang cua build-overview, cong dang DO cho moi phien",
-      "released_at": "2026-09-04T04:40",
+      "owner": "claude-k2-freeze",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T04:56",
+      "task": "Bo 2 ma trial opaque khoi IDEAS.md — chan cuoi cung truoc FREEZE",
+      "released_at": null,
       "taken_from": "claude-exec-dashtab",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     },
@@ -44,14 +44,14 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": "claude-exec-dashtab2",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T04:42",
       "task": "Them tab AI dieu phoi vao bo sinh DASHBOARD.html theo brief DASH-ORCH-01",
-      "released_at": null,
+      "released_at": "2026-09-04T05:00",
       "taken_from": "claude-exec-dashtab",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "48b2fecdad7d9653"
+  "_fingerprint": "fd4d8e403d88f1ad"
 }
