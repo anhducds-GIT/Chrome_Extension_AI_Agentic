@@ -305,3 +305,53 @@ hiển thị sai.
   cái luật vàng cấm.
 - **phạm vi khi làm:** `scripts/` + `tests/` (`_code`). Chạm bộ sinh bảng thì phải giữ đúng
   tính tất định — sinh hai lần vẫn phải ra y hệt.
+
+## Y-13 · Assistant coi cả HAI repo là một địa bàn, và làm chủ sức khoẻ của bộ khung
+
+- **bậc:** ý tưởng
+- **nguồn:** Đức nêu 04/09: *"tôi muốn nó có thể nắm được cả các thông tin liên quan đến migrate
+  repo, nắm vững các protocol và sẽ là người điều phối, dọn dẹp, nâng cấp repo template đó."*
+- **việc kế:** Đức chốt **một câu** ở phần "chỗ vướng" dưới đây; chốt xong mới viết brief
+- **vì sao:** hôm nay Assistant chỉ biết MỘT repo. `state-check` và `what-next` đều đọc repo
+  chúng đang đứng, và `repo-map.json` — thứ được khai là "hợp đồng cross-repo" — **không có một
+  chữ nào về repo khác**, đã kiểm 04/09. Nên lúc hai repo cùng chạy (đúng tình huống chiều
+  04/09: gói Assistant port sang bộ khung trong khi bộ khung có phiên khác giữ cả bốn khoá),
+  Assistant phải `cd` sang đó đọc tay từng lệnh. Việc đó làm được, nhưng nó không phải năng lực
+  của gói — nó là tôi gõ tay, và cái gõ tay thì phiên sau không thừa hưởng.
+
+**Ba phần trong câu của Đức KHÔNG bằng nhau — đo rồi mới thấy:**
+
+1. **"nắm vững protocol"** — gần như xong sẵn. Bộ khung có `AGENTS.md` riêng và Assistant đã
+   đọc nó đúng cách khi làm chặng A. Không cần xây gì, chỉ cần ghi thành luật mở phiên.
+2. **"nắm thông tin migrate repo"** — đây là phần phải XÂY thật: một cặp đối chiếu **giữa hai
+   repo**, không phải trong một repo. Ví dụ cụ thể đã có ngay hôm nay: bộ khung phát hành bản
+   `1.2.20`, còn repo Extension **không có chỗ nào khai nó đang dùng bản nào** — nên câu "repo
+   này có tụt lại sau bộ khung không" hiện KHÔNG ai trả lời được bằng máy.
+3. **"điều phối, dọn dẹp, nâng cấp"** — chỗ vướng, xem dưới.
+
+**Chỗ vướng — CẦN ĐỨC CHỐT MỘT CÂU, không tự quyết được:**
+
+`ORCHESTRATOR.md` mục 4 (`HARD ROLE FIREWALL`) ghi: vai điều phối **KHÔNG code, KHÔNG debug,
+KHÔNG đề xuất patch**, không có ngoại lệ "sửa nhỏ". Luật đó ra đời vì defect `ROLE-DRIFT-01`
+mà **chính Đức bắt được** cùng ngày. Chữ *"dọn dẹp, nâng cấp"* nếu hiểu là Assistant tự sửa
+code bộ khung thì **mở lại đúng cánh cửa vừa đóng**.
+
+Hai cách hiểu, và chúng ra hai gói việc khác nhau:
+
+- **(A) Assistant làm CHỦ, executor làm TAY** — Assistant sở hữu sức khoẻ bộ khung: biết nó nợ
+  gì, quyết thứ tự, viết brief, kiểm chứng lại kết quả; **mọi lượt sửa code do executor làm**.
+  Firewall giữ nguyên, không sửa một dòng luật. Đây là cách hôm nay đã chạy thật với chặng A.
+- **(B) Assistant tự sửa bộ khung** — phải sửa firewall, và phải định nghĩa được một đường biên
+  máy kiểm được giữa "hạ tầng được sửa" và "product không được sửa". Chưa ai định nghĩa được
+  đường đó, và `role_scope: control-plane` trong hợp đồng máy đọc hiện **không** phân biệt hai
+  loại repo.
+
+- **vì sao chưa làm ngay:** mốc pilot của v0.1 **chưa đạt** (ba sự cố đã ghi nhận, mỗi tiêu chí
+  tương ứng đòi bằng không). Thêm địa bàn thứ hai vào một gói chưa trơn ở địa bàn thứ nhất là
+  nhân đôi chỗ vướng trước khi biết chỗ vướng ở đâu — đúng lý lẽ đã dựng ra mốc pilot.
+- **phạm vi khi làm:** phần (2) là `scripts/` + `tests/` ở **cả hai repo** (khoá `_code` mỗi bên)
+  cộng một trường khai phiên bản bộ khung ở repo Extension (`_root`). Phần (1) là
+  `docs/protocols/ORCHESTRATOR.md` (`_docs`). Phần (3) tuỳ câu Đức chốt.
+- **đo trước khi sửa:** đếm xem trong một ngày có bao nhiêu lần Assistant thật sự phải trả lời
+  một câu **bắc qua hai repo**. Ngày 04/09 tôi đếm được **hai** lần. Hai lần chưa đủ để xây một
+  cơ chế; nhưng nếu nhiều ngày đều thế thì đủ.
