@@ -35,23 +35,23 @@
       "taken_by_duc_decision": "2026-09-04"
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T03:22",
-      "task": "Kiem chung doc lap state-check",
-      "released_at": "2026-09-04T03:22",
+      "owner": "claude-dieu-phoi",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T03:32",
+      "task": "Viet brief ASSISTANT-PROMOTE-01",
+      "released_at": null,
       "taken_from": "claude-gpt-kenh",
       "taken_by_duc_decision": "2026-09-04"
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T03:09",
-      "task": "STATE-DRIFT-01: them scripts/state-check.mjs + test ghim",
-      "released_at": "2026-09-04T03:18",
+      "owner": "claude-k2-baseline",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T03:32",
+      "task": "Va 2 fail-open GPT vong 7: baseline phai la moc niem phong hop le gan nhat, va loi doc git phai fail-closed",
+      "released_at": null,
       "taken_from": "claude-k2-snapshot",
       "taken_by_duc_decision": "2026-09-04"
     }
   },
-  "_fingerprint": "b3c0987c7da9c962"
+  "_fingerprint": "2c0b12ab4e634af5"
 }
