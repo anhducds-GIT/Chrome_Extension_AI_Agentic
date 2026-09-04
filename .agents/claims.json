@@ -54,14 +54,14 @@
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-qdsync da hoan tat va bao cao xong, nhung ket thuc truoc khi push nen khong tra duoc khoa. Da push ho 12 commit theo Duc duyet --carry; cay lam viec SACH nen khong co viec do bi mat."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T08:47",
-      "task": "giu _code cho toi khi 3 commit DASH-TAB-01 duoc day len remote",
-      "released_at": "2026-09-04T08:54",
+      "owner": "claude-exec-roadmap",
+      "ai": "Claude",
+      "claimed_at": "2026-09-04T08:56",
+      "task": "DASH-ROADMAP-01: y tuong dang roadmap co buoc o tab Tong quan + doi ten moc EXTENSION PILOT",
+      "released_at": null,
       "taken_from": "claude-exec-dashtab",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "c24bd2d8fd0d2a15"
+  "_fingerprint": "62cb9ba90e4e6f2e"
 }
