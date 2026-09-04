@@ -4,7 +4,7 @@ status: active
 ttl_days: 90
 ---
 
-# BRIEF `DASH-ORCH-V2` — tab "AI điều phối" đổi từ *trạng thái hệ Assistant* sang *chỗ Đức điều hành*
+# BRIEF `DASH-ORCH-V2` — tab "AI điều phối" đổi từ trạng thái hệ Assistant sang chỗ Đức điều hành
 
 > **Cho executor.** Đề bài đã chốt (Đức, 2026-09-04, sau khi tự audit bản V1).
 > Bản V1 nằm ở [`BRIEF-DASHBOARD-ORCHESTRATOR-TAB.md`](BRIEF-DASHBOARD-ORCHESTRATOR-TAB.md) —
