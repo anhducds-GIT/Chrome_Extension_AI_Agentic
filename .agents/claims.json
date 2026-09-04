@@ -30,22 +30,28 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-k2-freeze",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T04:56",
       "task": "Bo 2 ma trial opaque khoi IDEAS.md — chan cuoi cung truoc FREEZE",
-      "released_at": null,
-      "taken_from": "claude-exec-dashtab",
-      "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
+      "released_at": "2026-09-04T07:02",
+      "taken_from": "claude-k2-freeze",
+      "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
+      "taken_by": "claude-dieu-phoi",
+      "taken_at": "2026-09-04T07:07",
+      "duc_decision": "Duc chot 2026-09-04: giai phong _docs + _root khoi claude-k2-freeze de lam contract-sync Query-driven Assistant v0.1. Da kiem truoc khi gianh: cay lam viec SACH, khong commit nao chua push, nen phien do khong co viec do bi mat."
     },
     "_docs": {
-      "owner": "claude-k2-freeze",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T06:25",
       "task": "Viet docs/protocols/MULTIFLOW.md — co che nhieu phien song song va cach bao tri",
-      "released_at": null,
-      "taken_from": "claude-gpt-kenh",
-      "taken_by_duc_decision": "2026-09-04"
+      "released_at": "2026-09-04T07:02",
+      "taken_from": "claude-k2-freeze",
+      "taken_by_duc_decision": "2026-09-04",
+      "taken_by": "claude-dieu-phoi",
+      "taken_at": "2026-09-04T07:07",
+      "duc_decision": "Duc chot 2026-09-04: giai phong _docs + _root khoi claude-k2-freeze de lam contract-sync Query-driven Assistant v0.1. Da kiem truoc khi gianh: cay lam viec SACH, khong commit nao chua push, nen phien do khong co viec do bi mat."
     },
     "_code": {
       "owner": null,
@@ -57,5 +63,5 @@
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "c8ab13257cef229e"
+  "_fingerprint": "0d410e09d605673a"
 }
