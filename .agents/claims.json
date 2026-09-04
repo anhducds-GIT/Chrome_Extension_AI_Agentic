@@ -30,28 +30,28 @@
       "released_at": null
     },
     "_root": {
-      "owner": "claude-exec-qdsync",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T07:09",
       "task": "dong bo contract Query-driven vao PROMPTS.md muc 0 + Log HANDOFF",
-      "released_at": null,
-      "taken_from": "claude-k2-freeze",
+      "released_at": "2026-09-04T08:50",
+      "taken_from": "claude-exec-qdsync",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
       "taken_by": "claude-dieu-phoi",
-      "taken_at": "2026-09-04T07:07",
-      "duc_decision": "Duc chot 2026-09-04: giai phong _docs + _root khoi claude-k2-freeze de lam contract-sync Query-driven Assistant v0.1. Da kiem truoc khi gianh: cay lam viec SACH, khong commit nao chua push, nen phien do khong co viec do bi mat."
+      "taken_at": "2026-09-04T08:49",
+      "duc_decision": "Duc chot 2026-09-04: phien claude-exec-qdsync da hoan tat va bao cao xong, nhung ket thuc truoc khi push nen khong tra duoc khoa. Da push ho 12 commit theo Duc duyet --carry; cay lam viec SACH nen khong co viec do bi mat."
     },
     "_docs": {
-      "owner": "claude-exec-qdsync",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-04T07:09",
       "task": "dong bo contract Query-driven Assistant v0.1 vao ORCHESTRATOR + ASSISTANT-V0.1",
-      "released_at": null,
-      "taken_from": "claude-k2-freeze",
+      "released_at": "2026-09-04T08:50",
+      "taken_from": "claude-exec-qdsync",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
-      "taken_at": "2026-09-04T07:07",
-      "duc_decision": "Duc chot 2026-09-04: giai phong _docs + _root khoi claude-k2-freeze de lam contract-sync Query-driven Assistant v0.1. Da kiem truoc khi gianh: cay lam viec SACH, khong commit nao chua push, nen phien do khong co viec do bi mat."
+      "taken_at": "2026-09-04T08:49",
+      "duc_decision": "Duc chot 2026-09-04: phien claude-exec-qdsync da hoan tat va bao cao xong, nhung ket thuc truoc khi push nen khong tra duoc khoa. Da push ho 12 commit theo Duc duyet --carry; cay lam viec SACH nen khong co viec do bi mat."
     },
     "_code": {
       "owner": "claude-exec-tabbug",
@@ -63,5 +63,5 @@
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do"
     }
   },
-  "_fingerprint": "5a6061e27b8afd23"
+  "_fingerprint": "3082d180b751f98a"
 }
