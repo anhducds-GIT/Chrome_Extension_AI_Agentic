@@ -1,10 +1,32 @@
 ---
 kind: brief
-status: active
+status: parked
 ttl_days: 90
 ---
 
 # BRIEF `ASSISTANT-PROMOTE-01` — đưa gói Assistant vào bộ khung
+
+> ## ⛔ HOÃN — ĐỪNG THỰC HIỆN BRIEF NÀY (Đức chốt 2026-09-04, sau khi brief đã viết)
+>
+> Điều kiện mở đã **đổi**. Trước: "chạy ổn ở repo Extension trước". Nay chặt hơn: phải qua
+> một **giai đoạn vận hành liền mạch** — mốc `ASSISTANT-V0.1 PILOT`, xem
+> [`../protocols/ASSISTANT-V0.1.md`](../protocols/ASSISTANT-V0.1.md).
+>
+> Vì sao đổi: bốn năng lực lõi mới được chứng minh **từng cái một**. Chưa cái nào chạy qua
+> nhiều vòng việc thật liên tiếp, nên chưa biết gói này có **trơn** hay không — mà trơn mới
+> là thứ quyết định nó đáng nhân bản sang repo khác. Nhân bản một thứ chưa trơn là nhân bản
+> cả chỗ vướng của nó, vào những repo mà không ai ở đó biết vì sao nó vướng.
+>
+> **Mở lại khi và chỉ khi** pilot đạt cả ba: không lần nào trượt vai · không sai lệch trạng
+> thái nào **Đức** phải là người bắt · Assistant chạy ổn qua nhiều vòng liên tiếp.
+>
+> Nội dung kỹ thuật dưới đây **vẫn còn giá trị** — giữ nguyên, không viết lại. Riêng một chỗ
+> đã biết là brief đoán sai, executor `claude-exec-promote` sửa đúng ngày 04/09: mục 2.1 bảo
+> lấy tên vùng dự phòng từ `.repo-structure.json`, nhưng `stewardOf()` **không bao giờ trả
+> rỗng** — nên `|| "_root"` là **mã chết**, không phải bug, và cách đúng là **xoá hai chỗ đó**
+> chứ không thêm một trường cấu hình (thêm là đẻ ra nguồn sự thật thứ hai). Ai mở lại brief
+> này thì đọc kỹ ghi chú đó trước.
+
 
 > **Cho executor.** Việc này làm ở **repo KHÁC**: `C:\WORKING ZONE\Ark_Repo_Harness`.
 > Đề bài đã chốt (Đức, 2026-09-04). Phiên điều phối đứng ngoài triển khai — luật `ROLE-DRIFT-01`.
