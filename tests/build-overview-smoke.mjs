@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { bacMoc, blockedIfSkipped, buildOverview, choDuc, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readMoc, readRefreshLine, shorten, sinhTrang, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { bacMoc, blockedIfSkipped, buildOverview, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readMoc, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -875,8 +875,13 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   assert.ok(v3.includes(`${deBaiMo.length} MỤC`), "so de bai dang mo phai dem tu truong may doc duoc");
   for (const d of deBaiMo) assert.ok(v3.includes(d.ma), `ma de bai dang mo ${d.ma} phai co trong danh sach mot dong`);
   assert.ok(v3.includes("ASSISTANT PILOT"), "moc pilot phai doc lai tu ho so moc");
-  assert.ok(/bảng chưa đếm được/.test(v3),
-    "ba con so chua dem duoc thi phai NOI THANG, khong duoc in mot so 0 ma khong ai biet no dung hay chi la chua ai dem");
+  /* Ba dòng đếm sự cố nay ĐÃ đếm được (Đức chốt định dạng 04/09), nên câu "bảng chưa đếm được"
+     phải biến mất — để lại là bảng nói mình không biết trong khi nó đang in ba con số. */
+  assert.ok(!tab.includes("bảng chưa đếm được"),
+    "cau 'chua dem duoc' phai bien mat khi ba dong da dem duoc — de lai la bang tu noi nguoc voi so no dang in");
+  for (const [, ten] of SU_CO_ASSISTANT) {
+    assert.ok(v3.includes(ten), `vung 3 phai co dong dem "${ten}"`);
+  }
 
   /* --- (i) PHÉP THỬ CUỐI CỦA BRIEF, tự động hoá: bỏ hết `human_action` thì đơn vị phải RỜI
      vùng 1 và huy hiệu ở vùng 2 phải đổi từ CHỜ ĐỨC sang ĐANG CHẠY. --- */
@@ -940,6 +945,171 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     .flatMap((lc) => [tt({ lifecycle: lc }), tt({ lifecycle: lc, humanAction: "x" })]));
   assert.equal(bo.size, 3, `phai la DUNG ba trang thai, dang co: ${[...bo].join(" · ")}`);
   ok("trang thai luong: ba nhanh dung, human_action thang lifecycle, don vi nghi huu ra khoi cuoc dua");
+}
+
+/* ---- T2b2. CONTENT-TRUTH-01 defect 4: chip "ĐÃ CHỨNG MINH" không được đứng một mình khi
+ * code đã đổi kể từ mốc kiểm chứng.
+ *
+ * GHIM QUAN HỆ, KHÔNG GHIM CON SỐ. Số commit đổi mỗi ngày (brief ghi 10, đo lại ra 14 chỉ sau
+ * một buổi), nên mọi khẳng định dưới đây lấy số TỪ MÔ HÌNH rồi đòi trang phải nói đúng số đó.
+ * Ghim `23` là ngày mai đỏ oan, và người sau sẽ sửa phép kiểm thay vì sửa bảng.
+ */
+{
+  const goc = createDefaultDeps(ROOT);
+  const rows = collectModelRows(goc);
+  const coMoc = (r) => Boolean(String(r.lastVerified ?? "").trim());
+  const cu = rows.filter((r) => coMoc(r) && r.changedCount > 0);
+  const tuoi = rows.filter((r) => !(coMoc(r) && r.changedCount > 0));
+  assert.ok(cu.length > 0,
+    "ho so that phai co it nhat mot don vi 'co moc kiem chung ma code da doi' — khong co thi ca khoi nay vo nghia");
+  assert.ok(tuoi.length > 0,
+    "va it nhat mot don vi KHONG thuoc ca do — khong co thi khang dinh 'khong bia canh bao' vo nghia");
+
+  // Hàm thuần trước: quan hệ hai điều kiện, cả bốn tổ hợp.
+  assert.equal(chungMinhCu({ lastVerified: "2026-08-26", changedCount: 7 }).includes("7 commit"), true);
+  assert.equal(chungMinhCu({ lastVerified: "2026-08-26", changedCount: 0 }), "",
+    "code chua doi ke tu moc thi bang chung DUNG la cua ban dang chay — canh bao la bia");
+  assert.equal(chungMinhCu({ lastVerified: "", changedCount: 9 }), "",
+    "chua tung khai kiem chung thi khong co khoang cach nao de noi");
+  assert.equal(chungMinhCu({ lastVerified: "   ", changedCount: 9 }), "",
+    "truong toan dau cach la CHUA KHAI, khong phai da khai");
+  assert.equal(chungMinhCu({}), "", "row trong thi tra rong, khong nem");
+  assert.ok(/CẦN KIỂM LẠI/.test(chungMinhCu({ lastVerified: "2026-08-26", changedCount: 1 })),
+    "chu Duc muon thay la 'can kiem lai' — khong duoc rut thanh mot con so tran");
+
+  const html = buildOverview(goc).html;
+
+  /* (a) BẢNG TỔNG — nơi Đức nhìn đầu tiên, và KHÔNG nằm trong khối gập. */
+  const tabTong = html.slice(html.indexOf('data-pane="tong-quan"'), html.indexOf('data-pane="ai-dieu-phoi"'));
+  const iBig = tabTong.indexOf('<div class="big">');
+  assert.notEqual(iBig, -1, "phai co khoi danh sach extension o tab tong quan");
+  const khoiBig = tabTong.slice(iBig, tabTong.indexOf('<p class="note">', iBig));
+  assert.ok(!khoiBig.includes("<details"),
+    "canh bao do tuoi KHONG duoc nam trong khoi gap — de bai noi ro: hien cung cho voi chip trang thai");
+
+  const dongCua = (khoi, ten) => {
+    const d = khoi.split('<div class="br">').filter((x) => x.includes(`>${ten}</a>`));
+    assert.equal(d.length, 1, `${ten}: phai co dung MOT dong trong bang tong`);
+    return d[0];
+  };
+  for (const r of cu) {
+    const d = dongCua(khoiBig, r.name);
+    assert.ok(d.includes('class="chip'), `${r.name}: dong phai co chip trang thai, neu khong thi cat sai`);
+    assert.ok(d.includes('class="stale"'),
+      `${r.name}: co moc kiem chung ma code da doi ${r.changedCount} commit — trang PHAI canh bao ngay canh chip, khong duoc de chip 'DA CHUNG MINH' dung mot minh`);
+    assert.ok(d.includes(`cũ hơn ${r.changedCount} commit`),
+      `${r.name}: canh bao phai noi dung so commit lay tu mo hinh, khong duoc go cung`);
+  }
+  for (const r of tuoi) {
+    assert.ok(!dongCua(khoiBig, r.name).includes('class="stale"'),
+      `${r.name}: khong thuoc ca hong thi KHONG duoc bia canh bao — bia canh bao lam mon chinh canh bao`);
+  }
+
+  /* (b) TAB EXTENSION — cảnh báo phải nằm trong phần TÓM TẮT, tức thấy được khi khối còn đóng.
+     Nhét vào thân khối là đúng cái "giấu trong toggle" mà đề bài cấm. */
+  const iExt = html.indexOf('data-pane="extension"');
+  const jExt = html.indexOf('data-pane="y-tuong"', iExt);
+  assert.ok(jExt > iExt, "khung tab Extension phai dong lai duoc — cat ho toi cuoi trang la an ca khoi gap cua tab khac");
+  const tabExt = html.slice(iExt, jExt);
+  const tomTat = new Map(tabExt.split('<details class="the" id="').slice(1).map((c) => {
+    const j = c.indexOf("</summary>");
+    assert.notEqual(j, -1, "moi khoi don vi phai co phan tom tat dong lai duoc");
+    const s = c.slice(0, j);
+    return [/<span class="nm">([^<]+)</.exec(s)[1], s];
+  }));
+  assert.equal(tomTat.size, rows.length, "phai cat duoc dung mot phan tom tat cho moi don vi");
+  for (const r of cu) {
+    assert.ok(tomTat.get(r.name).includes('class="stale"'),
+      `${r.name}: canh bao phai o phan TOM TAT — nam trong than khoi la giau trong toggle, de bai cam`);
+  }
+  for (const r of tuoi) {
+    assert.ok(!tomTat.get(r.name).includes('class="stale"'), `${r.name}: khong duoc bia canh bao o tom tat`);
+  }
+
+  ok(`chung minh cu: ${cu.length} don vi co moc ma code da doi deu duoc canh bao canh chip, ${tuoi.length} don vi con lai khong bi bia`);
+}
+
+/* ---- T2b3. Ba dòng đếm sự cố của chính Assistant — Đức chốt định dạng 04/09.
+ *
+ * NEO BẰNG MỘT DÒNG. Nhật ký gốc có một câu GIẢI THÍCH định dạng, trong đó nhãn nằm giữa câu
+ * và trong nháy ngược. Neo nhiều dòng hoặc dò văn xuôi là đếm cả câu giải thích đó — và ở repo
+ * này CRLF đã làm hỏng neo nhiều dòng bốn lần trong một ngày, lần nào cũng báo "0 lần khớp".
+ */
+{
+  const goc = createDefaultDeps(ROOT);
+  const CRLF = String.fromCharCode(13) + String.fromCharCode(10);
+  const nhatKy = (dong) => bocFile(goc, { "HANDOFF.md": dong.join(CRLF) });
+  const dem = (dong) => {
+    const r = readAssistantEvents(nhatKy(dong));
+    return new Map([...r.dong.map((s) => [s.token, s.n]), ["UNKNOWN", r.la]]);
+  };
+
+  /* (a) NHẬT KÝ THẬT: ba sự cố đã ghi lùi. Đây là chỗ đỏ khi ai đó xoá một dòng. */
+  const that = readAssistantEvents(goc);
+  assert.equal(that.dong.length, 3, "phai la DUNG ba dong dem — them dong thu tu la trai de bai");
+  for (const s of that.dong) {
+    assert.ok(s.n >= 1,
+      `${s.token}: nhat ky that co ghi lui su co nay, ma dem ra ${s.n} — hoac dong da bi xoa, hoac bo doc hong`);
+  }
+  assert.equal(that.la, 0, "nhat ky that khong co su co chua phan loai nao");
+
+  /* (b) ĐẾM KHỚP TOKEN, một dòng, và nhắc nhãn giữa câu KHÔNG được tính. */
+  let m = dem(["AssistantEvent: ROLE-DRIFT", "văn xuôi ở giữa", "AssistantEvent: ROLE-DRIFT",
+    "AssistantEvent: DASHBOARD-STALE"]);
+  assert.equal(m.get("ROLE-DRIFT"), 2, "hai dong thi dem hai — CRLF khong duoc lam mat dong nao");
+  assert.equal(m.get("DASHBOARD-STALE"), 1);
+  assert.equal(m.get("STATE-DRIFT-CAUGHT-BY-DUC"), 0, "token khong xuat hien thi la 0, khong phai bien mat");
+
+  m = dem(["Đức chốt: mỗi sự cố là một dòng `AssistantEvent: ROLE-DRIFT`",
+    "> Đức: AssistantEvent: ROLE-DRIFT"]);
+  assert.equal(m.get("ROLE-DRIFT"), 0,
+    "nhac nhan GIUA CAU khong phai mot su co — dem no la bang tu thoi phong so cua chinh no");
+
+  /* (c) TOKEN LẠ THÌ NÉM. Trong đó có `PASS` và `ANSWERED`: Assistant không có đường nào tự
+     ghi điểm cho mình, và luật token lạ là thứ cưỡng chế điều đó. */
+  for (const la of ["ROLEDRIFT", "role-drift", "PASS", "ANSWERED", "ROLE-DRIFT-01", ""]) {
+    assert.throws(() => readAssistantEvents(nhatKy([`AssistantEvent: ${la}`])),
+      /NHAN_SU_CO_LA/,
+      `token la "${la}" phai NEM co ten — bo qua im lang thi dung cai su co ay bien mat khoi so dem`);
+  }
+
+  /* (d) `UNKNOWN` đếm riêng, KHÔNG gộp vào ba dòng. */
+  m = dem(["AssistantEvent: UNKNOWN", "AssistantEvent: UNKNOWN"]);
+  assert.equal(m.get("UNKNOWN"), 2, "`UNKNOWN` la token hop le, phai dem duoc");
+  assert.equal(SU_CO_ASSISTANT.reduce((s, [t]) => s + m.get(t), 0), 0,
+    "`UNKNOWN` KHONG duoc gop vao ba dong — gop la mot su co chua phan loai bi tinh thanh mot loai cu the");
+
+  /* (e) TRÊN TRANG: chữ phải là "đã ghi nhận", TUYỆT ĐỐI không phải "0 lỗi".
+     Đây là chỗ Đức nêu riêng: `N = 0` chỉ nghĩa la chưa ai ghi nhận, không nghĩa là không có
+     sự cố. Viết "0 lỗi" là biến một khoảng trống dữ liệu thành lời tự khen. */
+  const trangKhong = buildOverview(nhatKy(["nhật ký chưa ghi sự cố nào"])).html;
+  const vung3 = (trang) => {
+    const i = trang.indexOf('<div class="sect">Sức khoẻ Assistant');
+    assert.notEqual(i, -1, "phai co vung suc khoe Assistant");
+    const j = trang.indexOf('<div class="card">', i);
+    assert.ok(j > i, "vung phai dong lai duoc, neu khong thi cat sai");
+    return trang.slice(i, j);
+  };
+  const v3Khong = vung3(trangKhong);
+  for (const [, ten] of SU_CO_ASSISTANT) {
+    assert.ok(new RegExp(`${ten}</span><span class="badge b0">0 ĐÃ GHI NHẬN<`).test(v3Khong),
+      `${ten}: chua ai ghi nhan thi in "0 ĐÃ GHI NHẬN" voi mau trung tinh — to xanh la khen mot khoang trong du lieu`);
+  }
+  assert.ok(/chưa ai ghi nhận/.test(v3Khong),
+    "trang phai NOI RA nghia cua so 0 — khong noi thi Duc hop ly ma hieu la 'khong co su co'");
+  for (const trang of [trangKhong, buildOverview(goc).html]) {
+    assert.ok(!/0 lỗi/.test(trang),
+      "TUYET DOI khong duoc viet '0 loi' — Duc neu rieng dieu nay khi chot dinh dang");
+  }
+
+  /* (f) SỐ TRÊN TRANG PHẢI ĐI THEO NHẬT KÝ, không gõ cứng. */
+  const v3Nhieu = vung3(buildOverview(nhatKy(["AssistantEvent: ROLE-DRIFT", "AssistantEvent: ROLE-DRIFT",
+    "AssistantEvent: ROLE-DRIFT"])).html);
+  assert.ok(/Trượt vai<\/span><span class="badge b1">3 ĐÃ GHI NHẬN</.test(v3Nhieu),
+    "ba dong nhat ky thi bang phai in 3 — in so khac la bang khong doc nhat ky");
+  assert.notEqual(v3Khong, v3Nhieu, "doi nhat ky thi vung 3 PHAI doi theo");
+
+  ok(`bo dem su co: nhat ky that ra ${that.dong.map((s) => s.n).join("/")}, token la thi nem, chu la 'da ghi nhan' chu khong phai '0 loi'`);
 }
 
 /* ---- T2c. Gate tiếp theo: câu ĐẦU của việc kế, không phải cả trường ---- */

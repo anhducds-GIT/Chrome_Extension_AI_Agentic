@@ -215,6 +215,27 @@ export function trangThaiDonVi(row) {
   return { chu: "ĐANG CHẠY", bac: 2 };
 }
 
+/* CHỨNG MINH CŨ — defect 4 của đề bài `CONTENT-TRUTH-01` (Đức chốt 04/09).
+ *
+ * Chip `ĐÃ CHỨNG MINH` nói đúng một thứ: có một lần kiểm chứng live đã xảy ra. Nó KHÔNG nói bản
+ * đang chạy là bản đã được kiểm chứng — và Đức hợp lý mà hiểu theo nghĩa thứ hai. Đo 04/09:
+ * hai đơn vị mang chip đó có bằng chứng thuộc bản cũ hơn 23 và 14 commit, và trang Đức đọc không
+ * có một chỗ nào nói con số đó. Đức là người chốt việc chạy pilot thật — quyết định ấy dựa
+ * trên niềm tin sai về độ tươi của bằng chứng là rủi ro thật.
+ *
+ * DỮ LIỆU ĐÃ CÓ SẴN, không nối thêm nguồn nào: `changedCount` nằm ngay trên row của cùng mô hình
+ * mà bộ sinh đang dùng. Đức nói thẳng: KHÔNG mở thành một hệ xuất xứ mới.
+ *
+ * Hai điều kiện, phải ĐỦ CẢ HAI. Chưa từng khai kiểm chứng thì không có khoảng cách nào để nói,
+ * và chip của nó vốn đã không phải `ĐÃ CHỨNG MINH`; `changedCount = 0` thì bằng chứng đúng là của
+ * bản đang chạy. Vẽ cảnh báo cho hai ca đó là bịa — và bịa cảnh báo làm mòn chính cảnh báo. */
+export function chungMinhCu(row) {
+  const moc = String(row?.lastVerified ?? "").trim();
+  const n = Number(row?.changedCount);
+  if (!moc || !Number.isFinite(n) || n <= 0) return "";
+  return `CHỨNG MINH CŨ · CẦN KIỂM LẠI — bằng chứng thuộc bản cũ hơn ${n} commit`;
+}
+
 /* ẢNH HƯỞNG NẾU CHƯA LÀM — trường TUỲ CHỌN `blocked_if_skipped` trong hồ sơ trạng thái.
    Vắng thì trả chuỗi rỗng và vùng CẦN ĐỨC không vẽ gì thêm: không bịa, cũng không để một
    chỗ trống trông như lỗi. Hôm nay trường này vắng ở cả bốn đơn vị — đó là trạng thái BÌNH
@@ -580,6 +601,50 @@ export function readDefects(deps) {
   return out.sort((a, b) => a.ma.localeCompare(b.ma));
 }
 
+/* BỘ ĐẾM SỰ CỐ CỦA CHÍNH ASSISTANT — Đức chốt định dạng 04/09 (đề bài `DASH-ORCH-V2` mục 8b).
+ *
+ * Vẫn dùng chính `HANDOFF.md` ở gốc repo, KHÔNG lập sổ mới — hồ sơ gói Assistant mục 5 cấm sổ
+ * đếm riêng, và một sổ thứ hai thì sớm muộn lệch với sổ thứ nhất. Mỗi sự cố là ĐÚNG MỘT DÒNG
+ * máy đọc được, neo bằng MỘT dòng: repo này CRLF, và neo nhiều dòng đã hỏng bốn lần trong một
+ * ngày, lần nào cũng báo "0 lần khớp" — trông y hệt "không có gì để đếm".
+ *
+ * BỐN token, không hơn. Token lạ thì NÉM kèm tên nguyên nhân, tuyệt đối không bỏ qua im lặng:
+ * một token gõ sai mà bị bỏ qua thì đúng cái sự cố đó biến mất khỏi số đếm, và bảng sẽ nói
+ * "ít sự cố hơn" trong khi thật ra là "đọc kém hơn".
+ *
+ * ĐÂY LÀ BỘ ĐẾM LỖI, KHÔNG PHẢI ĐIỂM. Cố ý không có token `ANSWERED` hay `PASS`: Assistant
+ * không được có đường nào tự làm đẹp số của mình. Hệ quả là ai ghi `AssistantEvent: PASS` sẽ
+ * bị luật token lạ ở trên NÉM ngay — đó là cơ chế chạy đúng, không phải lỗi. */
+export const SU_CO_ASSISTANT = [
+  ["ROLE-DRIFT", "Trượt vai"],
+  ["STATE-DRIFT-CAUGHT-BY-DUC", "Sai lệch Đức phải bắt"],
+  ["DASHBOARD-STALE", "Bảng cũ"]
+];
+
+const NHAN_SU_CO = "AssistantEvent:";
+const SU_CO_LA = "UNKNOWN";
+
+export function readAssistantEvents(deps) {
+  const dem = new Map(SU_CO_ASSISTANT.map(([token]) => [token, 0]));
+  dem.set(SU_CO_LA, 0);
+  let text;
+  try { text = deps.readFile("HANDOFF.md"); } catch { text = ""; }
+  for (const line of String(text).split(/\r\n|\r|\n/)) {
+    if (!line.startsWith(NHAN_SU_CO)) continue;
+    const token = line.slice(NHAN_SU_CO.length).trim();
+    if (!dem.has(token)) {
+      throw new Error(`NHAN_SU_CO_LA: dòng nhật ký khai token "${token}", không nằm trong bộ từ vựng`
+        + ` bốn token Đức đã chốt (${[...dem.keys()].join(" · ")}). Sửa dòng đó, đừng sửa bộ đếm —`
+        + " bỏ qua im lặng thì đúng cái sự cố ấy biến mất khỏi số đếm.");
+    }
+    dem.set(token, dem.get(token) + 1);
+  }
+  return {
+    dong: SU_CO_ASSISTANT.map(([token, ten]) => ({ token, ten, n: dem.get(token) })),
+    la: dem.get(SU_CO_LA)
+  };
+}
+
 /* DẤU DÒNG KHOÁ — đây là cách khối 1 không làm tê cả repo.
  *
  * `DASHBOARD.html` nằm trong khối `generators`, nên cổng đóng phiên và `safe-push` so nó với
@@ -740,6 +805,13 @@ ${/* DÒNG DƯỚI BẮT BUỘC PHẢI CÓ, và nó phải nằm SAU luật disp
 .chip.s1{background:var(--warn-bg);color:var(--warn)}
 .chip.s2{background:var(--good-bg);color:var(--good)}
 .chip.s3{background:var(--off-bg);color:var(--off)}
+/* CẢNH BÁO ĐỘ TƯƠI BẰNG CHỨNG — cố ý cùng hàng với chip trạng thái, không xuống dòng riêng và
+   không vào khối gập: Đức phải thấy nó CÙNG LÚC với chữ "ĐÃ CHỨNG MINH", nếu không thì chữ kia
+   một mình vẫn dẫn tới quyết định sai. Cho phép ngắt dòng ở màn hẹp — cắt chữ đi thì mất nghĩa. */
+.cw{display:inline-flex;gap:6px;align-items:baseline;flex-wrap:wrap;justify-content:flex-end}
+.stale{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;
+  padding:2px 7px;border-radius:3px;background:var(--warn-bg);color:var(--warn);
+  border:1px solid var(--warn)}
 .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
 .br .meta{white-space:nowrap}
 @media (max-width:560px){.br .meta{display:none}}
@@ -905,6 +977,18 @@ const TABS = [
 
 const chip = (stage) => `<span class="chip s${stage}">${esc(STAGES[stage])}</span>`;
 
+/* CHIP TRẠNG THÁI + CẢNH BÁO ĐỘ TƯƠI, dựng ở MỘT chỗ duy nhất.
+   Đề bài `CONTENT-TRUTH-01` đòi cảnh báo hiện CÙNG CHỖ với chip trạng thái, không giấu trong
+   khối gập. Ghép ở đây thay vì ở từng chỗ gọi, để không có ngày một chỗ có cảnh báo và chỗ kia
+   không — hai bản sao của một luật thì sẽ lệch. Bọc cả hai trong MỘT thẻ: bảng tổng là lưới ba
+   cột, thả thêm một thẻ con vào đó là làm lệch lưới. */
+const chipDonVi = (row) => {
+  const canh = chungMinhCu(row);
+  return `<span class="cw">${chip(stageOf(row))}`
+    + (canh ? `<span class="stale">${esc(canh)}</span>` : "")
+    + `</span>`;
+};
+
 const slug = (s) => String(s ?? "").toLowerCase()
   .replace(/[^a-z0-9]+/g, "-").replace(/^-+/, "").replace(/-+$/, "") || "x";
 
@@ -919,9 +1003,9 @@ const slug = (s) => String(s ?? "").toLowerCase()
 const unitId = (r) => `ext-${slug(r.key || r.id || r.name)}`;
 
 /* Một dòng trong bảng tổng: tên có link nhảy sang tab chi tiết và tự mở toggle ở đó. */
-const bigRow = (tab, id, name, stage, meta) =>
+const bigRow = (tab, id, name, chipHtml, meta) =>
   `        <div class="br"><a href="#${esc(id)}" data-goto="${esc(tab)}">${esc(name)}</a>` +
-  `${chip(stage)}<span class="meta">${esc(meta)}</span></div>`;
+  `${chipHtml}<span class="meta">${esc(meta)}</span></div>`;
 
 /* ĐỌC LẠI câu từ `PROMPTS.md`, không chép nó lần thứ hai.
  *
@@ -966,6 +1050,7 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const khoa = readKhoa(deps);
   const moc = readMoc(deps);
   const defects = readDefects(deps);
+  const suCo = readAssistantEvents(deps);
   const CAU_LAM_MOI = readRefreshLine(deps);
 
   const supersededCount = model.rows.filter((r) => r.lifecycle === "superseded").length;
@@ -1078,7 +1163,7 @@ ${STYLE}
       <div class="big">`);
   for (const r of model.rows) {
     const n = debtOf.get(r.name);
-    p.push(bigRow("extension", unitId(r), r.name, stageOf(r),
+    p.push(bigRow("extension", unitId(r), r.name, chipDonVi(r),
       n === undefined ? "extension" : `${n} việc nợ`));
   }
   p.push(`      </div>
@@ -1196,10 +1281,19 @@ ${STYLE}
       <div class="sect">Sức khoẻ Assistant</div>
       <div class="kl">
         <div class="kr"><span class="n">Mốc pilot <em>${esc(mocPilot ? mocPilot.ten : "hồ sơ mốc không còn dòng pilot nào")}</em></span><span class="badge b${mocPilot ? mocPilot.bac : 0}">${esc(mocPilot ? mocPilot.trangThai : "chưa đọc được")}</span></div>
-        <div class="kr"><span class="n">Đề bài đang mở của chính tôi</span><span class="badge ${deBaiMo.length ? "b1" : "b2"}">${deBaiMo.length} MỤC</span></div>
-      </div>
+        <div class="kr"><span class="n">Đề bài đang mở của chính tôi</span><span class="badge ${deBaiMo.length ? "b1" : "b2"}">${deBaiMo.length} MỤC</span></div>`);
+  /* BA DÒNG ĐẾM SỰ CỐ — Đức chốt định dạng 04/09, làm luôn lượt này.
+     HUY HIỆU MÀU: 0 thì để MÀU TRUNG TÍNH, không để màu xanh "tốt". `N = 0` chỉ nghĩa là chưa
+     ai ghi nhận sự cố nào — tô xanh cho nó là biến một khoảng trống dữ liệu thành lời tự khen,
+     mà lời máy tự khen thì trang này cấm sẵn. Cùng lý do, chữ trên huy hiệu là "ĐÃ GHI NHẬN",
+     tuyệt đối không phải "0 lỗi". */
+  for (const s of suCo.dong) {
+    p.push(`        <div class="kr"><span class="n">${esc(s.ten)}</span>`
+      + `<span class="badge ${s.n ? "b1" : "b0"}">${s.n} ĐÃ GHI NHẬN</span></div>`);
+  }
+  p.push(`      </div>
       <p class="note">${deBaiMo.length ? `Đang mở: <strong>${esc(deBaiMo.map((d) => d.ma).join(" · "))}</strong>. ` : ""}Đếm từ trường máy đọc được trong từng đề bài, không dò văn xuôi. Khối này tên là <strong>đề bài đang mở</strong> chứ không phải "sai lệch": cùng một phép đếm gộp cả lỗi thật lẫn đề bài cải tiến, mà gọi một đề bài cải tiến là sai lệch thì sai.</p>
-      <div class="hint" style="margin-top:11px">Ba con số Đức muốn — trượt vai · trượt trạng thái · bảng để cũ — <strong>bảng chưa đếm được</strong>. Pilot đang đếm trong nhật ký từng phiên, mà nhật ký là văn xuôi tự do nên không có gì cố định để máy đếm; lập một sổ đếm riêng thì phạm luật một nguồn sự thật. Nói ra chỗ thiếu tốt hơn in một số 0 mà không ai biết nó đúng hay chỉ là chưa ai đếm. Muốn có ba con số đó thì cần <strong>Đức chốt một dạng nhãn cố định</strong> cho dòng nhật ký — tôi không tự đặt.</div>
+      <div class="hint" style="margin-top:11px">Ba con số trên đếm bằng <strong>nhãn cố định trong nhật ký</strong>, mỗi sự cố đúng một dòng, vẫn nằm trong nhật ký chung chứ không có sổ riêng. Đọc đúng chữ: <strong>đã ghi nhận</strong>. Số <strong>0</strong> nghĩa là <strong>chưa ai ghi nhận sự cố nào</strong> — nó <strong>không</strong> có nghĩa là không có sự cố. Bộ đếm này chỉ đếm lỗi, cố ý <strong>không có mục nào để tôi tự ghi điểm cho mình</strong>; nhãn lạ thì bộ sinh dừng và nói tên nguyên nhân, chứ không lặng lẽ bỏ qua — bỏ qua là đúng cái sự cố ấy biến mất khỏi số đếm.${suCo.la ? ` Ngoài ba dòng trên còn <strong>${suCo.la} sự cố chưa phân loại</strong>, đếm riêng, cố ý không gộp vào.` : ""}</div>
     </div>
 
     <div class="card">
@@ -1246,7 +1340,7 @@ ${STYLE}
     p.push(`      <details class="the" id="${unitId(r)}">
         <summary>
           <span><span class="nm">${esc(r.name)}</span><span class="sub">${esc(brief.text || "Mô tả chưa khai được — " + brief.why)}</span></span>
-          ${chip(stageOf(r))}
+          ${chipDonVi(r)}
         </summary>
         <div class="in">
           <div class="railrow">${rail(stageOf(r))}</div>
