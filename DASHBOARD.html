@@ -92,6 +92,13 @@ p{margin:0}
 .chip.s1{background:var(--warn-bg);color:var(--warn)}
 .chip.s2{background:var(--good-bg);color:var(--good)}
 .chip.s3{background:var(--off-bg);color:var(--off)}
+/* CẢNH BÁO ĐỘ TƯƠI BẰNG CHỨNG — cố ý cùng hàng với chip trạng thái, không xuống dòng riêng và
+   không vào khối gập: Đức phải thấy nó CÙNG LÚC với chữ "ĐÃ CHỨNG MINH", nếu không thì chữ kia
+   một mình vẫn dẫn tới quyết định sai. Cho phép ngắt dòng ở màn hẹp — cắt chữ đi thì mất nghĩa. */
+.cw{display:inline-flex;gap:6px;align-items:baseline;flex-wrap:wrap;justify-content:flex-end}
+.stale{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;
+  padding:2px 7px;border-radius:3px;background:var(--warn-bg);color:var(--warn);
+  border:1px solid var(--warn)}
 .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
 .br .meta{white-space:nowrap}
 @media (max-width:560px){.br .meta{display:none}}
@@ -245,10 +252,10 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 
 <div class="wrap">
   <div class="stampbar">
-    <span>Sinh ngày 2026-09-04 · hôm nay</span>
+    <span>Sinh ngày 2026-09-05 · hôm nay</span>
     <span>Nguồn sự thật nằm trong repo</span>
   </div>
-  <div class="cu" id="cu" data-sinh="2026-09-04"></div>
+  <div class="cu" id="cu" data-sinh="2026-09-05"></div>
 
   <h1>Chrome_Extension_AI_Agentic</h1>
 
@@ -289,17 +296,17 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
     <div class="card">
       <div class="sect">Extension trong repo — bấm tên để xem chi tiết</div>
       <div class="big">
-        <div class="br"><a href="#ext-root" data-goto="extension">Extension Observer V0</a><span class="chip s0">Ý TƯỞNG</span><span class="meta">extension</span></div>
-        <div class="br"><a href="#ext-workers-duc-auto-chatgpt-v0-1-0" data-goto="extension">Duc Auto ChatGPT</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">29 việc nợ</span></div>
-        <div class="br"><a href="#ext-workers-duc-auto-gemini-v0-1-0" data-goto="extension">Duc Auto Gemini</a><span class="chip s3">NGHỈ / THAY THẾ</span><span class="meta">extension</span></div>
-        <div class="br"><a href="#ext-workers-duc-auto-gemini-v0-2-0" data-goto="extension">Duc Auto Gemini (Platform)</a><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="meta">12 việc nợ</span></div>
-        <div class="br"><a href="#ext-workers-duc-auto-gg-flow-video-v0-1-0" data-goto="extension">Duc Auto GG Flow Video</a><span class="chip s1">ĐANG XÂY</span><span class="meta">21 việc nợ</span></div>
+        <div class="br"><a href="#ext-root" data-goto="extension">Extension Observer V0</a><span class="cw"><span class="chip s0">Ý TƯỞNG</span></span><span class="meta">extension</span></div>
+        <div class="br"><a href="#ext-workers-duc-auto-chatgpt-v0-1-0" data-goto="extension">Duc Auto ChatGPT</a><span class="cw"><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="stale">CHỨNG MINH CŨ · CẦN KIỂM LẠI — bằng chứng thuộc bản cũ hơn 23 commit</span></span><span class="meta">29 việc nợ</span></div>
+        <div class="br"><a href="#ext-workers-duc-auto-gemini-v0-1-0" data-goto="extension">Duc Auto Gemini</a><span class="cw"><span class="chip s3">NGHỈ / THAY THẾ</span></span><span class="meta">extension</span></div>
+        <div class="br"><a href="#ext-workers-duc-auto-gemini-v0-2-0" data-goto="extension">Duc Auto Gemini (Platform)</a><span class="cw"><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="stale">CHỨNG MINH CŨ · CẦN KIỂM LẠI — bằng chứng thuộc bản cũ hơn 14 commit</span></span><span class="meta">12 việc nợ</span></div>
+        <div class="br"><a href="#ext-workers-duc-auto-gg-flow-video-v0-1-0" data-goto="extension">Duc Auto GG Flow Video</a><span class="cw"><span class="chip s1">ĐANG XÂY</span></span><span class="meta">21 việc nợ</span></div>
       </div>
       <p class="note">5 extension. Chi tiết ở tab <strong>Extension</strong>.</p>
     </div>
 
     <div class="card">
-      <div class="sect">Ý tưởng đang ở bước nào — 12 ý tưởng</div>
+      <div class="sect">Ý tưởng đang ở bước nào — 13 ý tưởng</div>
       <div class="rm">
         <div class="rmr rmh"><span>Ý tưởng</span><div class="rms">
           <span class="rml">Ý TƯỞNG</span>
@@ -313,6 +320,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         <div class="rmr"><a href="#y-y-10" data-goto="y-tuong">Y-10 · Bảng chỉ nói được ba trạng thái luồng; &quot;bị chặn&quot; và &quot;chờ bằng chứng&quot; chưa có nguồn</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
         <div class="rmr"><a href="#y-y-11" data-goto="y-tuong">Y-11 · Ba con số &quot;trượt&quot; của Assistant chưa đếm được, vì nhật ký là văn xuôi tự do</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
         <div class="rmr"><a href="#y-y-12" data-goto="y-tuong">Y-12 · Suite gốc mất hơn hai phút, và gần hết thời gian nằm ở một hàm</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
+        <div class="rmr"><a href="#y-y-13" data-goto="y-tuong">Y-13 · Assistant coi cả HAI repo là một địa bàn, và làm chủ sức khoẻ của bộ khung</a><div class="rms"><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s0">Ý TƯỞNG</span></div>
         <div class="rmr"><a href="#y-y-01" data-goto="y-tuong">Y-01 · MVP: dùng Claude Code điều phối GPT</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s1">ĐANG XÂY</span></div>
         <div class="rmr"><a href="#y-y-02" data-goto="y-tuong">Y-02 · Protocol làm nhiều việc song song</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s1">ĐANG XÂY</span></div>
         <div class="rmr"><a href="#y-y-03" data-goto="y-tuong">Y-03 · Trường &quot;Đức cần làm&quot; trong hồ sơ trạng thái</a><div class="rms"><div class="node past"><span class="dot"></span></div><div class="node on"><span class="dot"></span></div><div class="node"><span class="dot"></span></div></div><span class="chip s1">ĐANG XÂY</span></div>
@@ -369,9 +377,12 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
       <div class="kl">
         <div class="kr"><span class="n">Mốc pilot <em>ASSISTANT PILOT</em></span><span class="badge b1">đang chạy</span></div>
         <div class="kr"><span class="n">Đề bài đang mở của chính tôi</span><span class="badge b1">2 MỤC</span></div>
+        <div class="kr"><span class="n">Trượt vai</span><span class="badge b1">1 ĐÃ GHI NHẬN</span></div>
+        <div class="kr"><span class="n">Sai lệch Đức phải bắt</span><span class="badge b1">1 ĐÃ GHI NHẬN</span></div>
+        <div class="kr"><span class="n">Bảng cũ</span><span class="badge b1">1 ĐÃ GHI NHẬN</span></div>
       </div>
-      <p class="note">Đang mở: <strong>CONTENT-TRUTH-01 · DASH-ORCH-V2</strong>. Đếm từ trường máy đọc được trong từng đề bài, không dò văn xuôi. Khối này tên là <strong>đề bài đang mở</strong> chứ không phải "sai lệch": cùng một phép đếm gộp cả lỗi thật lẫn đề bài cải tiến, mà gọi một đề bài cải tiến là sai lệch thì sai.</p>
-      <div class="hint" style="margin-top:11px">Ba con số Đức muốn — trượt vai · trượt trạng thái · bảng để cũ — <strong>bảng chưa đếm được</strong>. Pilot đang đếm trong nhật ký từng phiên, mà nhật ký là văn xuôi tự do nên không có gì cố định để máy đếm; lập một sổ đếm riêng thì phạm luật một nguồn sự thật. Nói ra chỗ thiếu tốt hơn in một số 0 mà không ai biết nó đúng hay chỉ là chưa ai đếm. Muốn có ba con số đó thì cần <strong>Đức chốt một dạng nhãn cố định</strong> cho dòng nhật ký — tôi không tự đặt.</div>
+      <p class="note">Đang mở: <strong>ASSISTANT-PROMOTE-01 · DASH-ORCH-V2</strong>. Đếm từ trường máy đọc được trong từng đề bài, không dò văn xuôi. Khối này tên là <strong>đề bài đang mở</strong> chứ không phải "sai lệch": cùng một phép đếm gộp cả lỗi thật lẫn đề bài cải tiến, mà gọi một đề bài cải tiến là sai lệch thì sai.</p>
+      <div class="hint" style="margin-top:11px">Ba con số trên đếm bằng <strong>nhãn cố định trong nhật ký</strong>, mỗi sự cố đúng một dòng, vẫn nằm trong nhật ký chung chứ không có sổ riêng. Đọc đúng chữ: <strong>đã ghi nhận</strong>. Số <strong>0</strong> nghĩa là <strong>chưa ai ghi nhận sự cố nào</strong> — nó <strong>không</strong> có nghĩa là không có sự cố. Bộ đếm này chỉ đếm lỗi, cố ý <strong>không có mục nào để tôi tự ghi điểm cho mình</strong>; nhãn lạ thì bộ sinh dừng và nói tên nguyên nhân, chứ không lặng lẽ bỏ qua — bỏ qua là đúng cái sự cố ấy biến mất khỏi số đếm.</div>
     </div>
 
     <div class="card">
@@ -408,7 +419,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
       <details class="the" id="ext-root">
         <summary>
           <span><span class="nm">Extension Observer V0</span><span class="sub">Mô tả chưa khai được — gói chưa có README</span></span>
-          <span class="chip s0">Ý TƯỞNG</span>
+          <span class="cw"><span class="chip s0">Ý TƯỞNG</span></span>
         </summary>
         <div class="in">
           <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
@@ -425,7 +436,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
       <details class="the" id="ext-workers-duc-auto-chatgpt-v0-1-0">
         <summary>
           <span><span class="nm">Duc Auto ChatGPT</span><span class="sub">Personal Chrome extension for local-only XLSX-backed text reasoning and image generation on ChatGPT.</span></span>
-          <span class="chip s2">ĐÃ CHỨNG MINH</span>
+          <span class="cw"><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="stale">CHỨNG MINH CŨ · CẦN KIỂM LẠI — bằng chứng thuộc bản cũ hơn 23 commit</span></span>
         </summary>
         <div class="in">
           <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node past"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node on"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
@@ -462,7 +473,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
       <details class="the" id="ext-workers-duc-auto-gemini-v0-1-0">
         <summary>
           <span><span class="nm">Duc Auto Gemini</span><span class="sub">Local-only Manifest V3 Side Panel extension for sequential XLSX-driven image jobs on Gemini Images.</span></span>
-          <span class="chip s3">NGHỈ / THAY THẾ</span>
+          <span class="cw"><span class="chip s3">NGHỈ / THAY THẾ</span></span>
         </summary>
         <div class="in">
           <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node past"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node past"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node on"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
@@ -499,7 +510,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
       <details class="the" id="ext-workers-duc-auto-gemini-v0-2-0">
         <summary>
           <span><span class="nm">Duc Auto Gemini (Platform)</span><span class="sub">Extension Chrome MV3 cá nhân, chạy kế hoạch XLSX để tạo ảnh trên Gemini … ngay trong trình duyệt của Đức, không gửi gì ra máy chủ lạ. Bản này là nhánh nền tảng: mang thêm Agent Bridge để AI gọi việc qua RPC cục bộ.</span></span>
-          <span class="chip s2">ĐÃ CHỨNG MINH</span>
+          <span class="cw"><span class="chip s2">ĐÃ CHỨNG MINH</span><span class="stale">CHỨNG MINH CŨ · CẦN KIỂM LẠI — bằng chứng thuộc bản cũ hơn 14 commit</span></span>
         </summary>
         <div class="in">
           <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node past"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node on"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
@@ -536,7 +547,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
       <details class="the" id="ext-workers-duc-auto-gg-flow-video-v0-1-0">
         <summary>
           <span><span class="nm">Duc Auto GG Flow Video</span><span class="sub">Extension Chrome MV3 cá nhân, chạy kế hoạch XLSX tạo video trên Google Flow … ngay trong trình duyệt của Đức, không gửi gì ra máy chủ lạ. Là fork từ … (nhánh ảnh Gemini) — kiến trúc, lớp an toàn, Bridge giữ nguyên; phần biết-về-trang (selector, timing) sẽ…</span></span>
-          <span class="chip s1">ĐANG XÂY</span>
+          <span class="cw"><span class="chip s1">ĐANG XÂY</span></span>
         </summary>
         <div class="in">
           <div class="railrow"><div class="node past"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node on"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
@@ -754,6 +765,43 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 <p>tính tất định — sinh hai lần vẫn phải ra y hệt.</p></div>
         </div>
       </details>
+      <details class="the" id="y-y-13">
+        <summary>
+          <span><span class="nm">Y-13 · Assistant coi cả HAI repo là một địa bàn, và làm chủ sức khoẻ của bộ khung</span><span class="sub">Đức chốt một câu ở phần &quot;chỗ vướng&quot; dưới đây; chốt xong mới viết brief</span></span>
+          <span class="chip s0">Ý TƯỞNG</span>
+        </summary>
+        <div class="in">
+          <div class="railrow"><div class="node on"><span class="dot"></span><span class="lbl">Ý TƯỞNG</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐANG XÂY</span></div><div class="node"><span class="dot"></span><span class="lbl">ĐÃ CHỨNG MINH</span></div><div class="node"><span class="dot"></span><span class="lbl">NGHỈ / THAY THẾ</span></div></div>
+          <dl class="kv">
+            <dt>Việc kế</dt><dd>Đức chốt một câu ở phần &quot;chỗ vướng&quot; dưới đây; chốt xong mới viết brief</dd>
+            <dt>Ai đang làm</dt><dd>chưa ai nhận</dd>
+            <dt>Phạm vi</dt><dd>chưa khai</dd>
+            <dt>nguồn</dt><dd>Đức nêu 04/09: *&quot;tôi muốn nó có thể nắm được cả các thông tin liên quan đến migrate</dd>
+            <dt>vì sao</dt><dd>hôm nay Assistant chỉ biết MỘT repo. state-check và what-next đều đọc repo</dd>
+            <dt>vì sao chưa làm ngay</dt><dd>mốc pilot của v0.1 chưa đạt (ba sự cố đã ghi nhận, mỗi tiêu chí</dd>
+            <dt>phạm vi khi làm</dt><dd>phần (2) là … + … ở cả hai repo (khoá _code mỗi bên)</dd>
+            <dt>đo trước khi sửa</dt><dd>đếm xem trong một ngày có bao nhiêu lần Assistant thật sự phải trả lời</dd>
+          </dl>
+          <div class="prose"><p>repo, nắm vững các protocol và sẽ là người điều phối, dọn dẹp, nâng cấp repo template đó.&quot;*</p>
+<p>chúng đang đứng, và … — thứ được khai là &quot;hợp đồng cross-repo&quot; — **không có một</p>
+<p>chữ nào về repo khác**, đã kiểm 04/09. Nên lúc hai repo cùng chạy (đúng tình huống chiều</p>
+<p>04/09: gói Assistant port sang bộ khung trong khi bộ khung có phiên khác giữ cả bốn khoá),</p>
+<p>Assistant phải cd sang đó đọc tay từng lệnh. Việc đó làm được, nhưng nó không phải năng lực</p>
+<p>của gói — nó là tôi gõ tay, và cái gõ tay thì phiên sau không thừa hưởng.</p>
+<p>Ba phần trong câu của Đức KHÔNG bằng nhau — đo rồi mới thấy:</p>
+<p>1. &quot;nắm vững protocol&quot; — gần như xong sẵn. Bộ khung có … riêng và Assistant đã</p>
+<p>đọc nó đúng cách khi làm chặng A. Không cần xây gì, chỉ cần ghi thành luật mở phiên.</p>
+<p>2. &quot;nắm thông tin migrate repo&quot; — đây là phần phải XÂY thật: một cặp đối chiếu **giữa hai</p>
+<p>repo**, không phải trong một repo. Ví dụ cụ thể đã có ngay hôm nay: bộ khung phát hành bản</p>
+<p>1.2.20, còn repo Extension không có chỗ nào khai nó đang dùng bản nào — nên câu &quot;repo</p>
+<p>này có tụt lại sau bộ khung không&quot; hiện KHÔNG ai trả lời được bằng máy.</p>
+<p>3. &quot;điều phối, dọn dẹp, nâng cấp&quot; — chỗ vướng, xem dưới.</p>
+<p>Chỗ vướng — CẦN ĐỨC CHỐT MỘT CÂU, không tự quyết được:</p>
+<p>… mục 4 (HARD ROLE FIREWALL) ghi: vai điều phối **KHÔNG code, KHÔNG debug,</p>
+<p>KHÔNG đề xuất patch**, không có ngoại lệ &quot;sửa nhỏ&quot;. Luật đó ra đời vì defect ROLE-DRIFT-01</p>
+<p>mà chính Đức bắt được cùng ngày. Chữ *&quot;dọn dẹp, nâng cấp&quot;* nếu hiểu là Assistant tự sửa</p></div>
+        </div>
+      </details>
       <details class="the" id="y-y-01">
         <summary>
           <span><span class="nm">Y-01 · MVP: dùng Claude Code điều phối GPT</span><span class="sub">một vòng chạy trên VIỆC THẬT của Đức. Ứng viên đo được: chính vòng audit</span></span>
@@ -926,6 +974,35 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
     </div>
 
     <div class="card">
+      <div class="sect">Nhiều việc chạy cùng lúc — cách nó chạy</div>
+      <div class="hint">Nhiều AI làm cùng lúc trong repo này mà không phá nhau, vì <strong>mỗi vùng chỉ một AI được ghi tại một thời điểm</strong>. Vùng của người khác thì chỉ được đọc. Hiện có <strong>6 vùng</strong>, nên tối đa <strong>6 việc</strong> chạy song song được — không nhiều hơn, vì việc thứ 7 sẽ phải chờ một vùng nào đó được trả.</div>
+      <div class="bl">
+        <div class="bi"><span class="c">›</span><span class="d">Hai AI cùng muốn một vùng: <strong>người sau bị từ chối</strong>, không phải ghi đè. Muốn lấy vùng đang có chủ thì <strong>phải hỏi Đức</strong>, và câu chốt của Đức được ghi vào bảng quyền để phiên vừa mất vùng đọc được.</span></div>
+        <div class="bi"><span class="c">›</span><span class="d">Mỗi việc xong đều phải qua <strong>cổng đóng phiên</strong>. Cổng đỏ thì chưa xong — không AI nào được tự báo xong.</span></div>
+      </div>
+      <details class="the">
+        <summary><span><span class="nm">4 cơ chế giữ cho không giẫm chân</span><span class="sub">mỗi cái trả lời đúng một câu</span></span></summary>
+        <div class="in"><div class="bl">
+          <div class="bi"><span class="c">›</span><span class="d"><strong>Bảng chủ sở hữu</strong> — ai được sửa vùng nào?</span></div>
+          <div class="bi"><span class="c">›</span><span class="d"><strong>Nhãn Lane: trên commit</strong> — commit này của ai?</span></div>
+          <div class="bi"><span class="c">›</span><span class="d"><strong>Cổng đóng phiên</strong> — việc của tôi xong thật chưa?</span></div>
+          <div class="bi"><span class="c">›</span><span class="d"><strong>Cổng xuất bản</strong> — thứ tôi sắp đẩy có sạch không?</span></div>
+        </div></div>
+      </details>
+      <details class="the">
+        <summary><span><span class="nm">5 điều không được phá</span><span class="sub">mỗi cái sinh ra từ một lần hỏng thật</span></span></summary>
+        <div class="in"><div class="bl">
+          <div class="bi"><span class="c">①</span><span class="d">Một vùng, một chủ, tại một thời điểm.</span></div>
+          <div class="bi"><span class="c">②</span><span class="d">Đóng dấu, đừng so hai ảnh chụp.</span></div>
+          <div class="bi"><span class="c">③</span><span class="d">Mốc so phải là bản niêm phong LÀNH gần nhất, không phải bản mới nhất.</span></div>
+          <div class="bi"><span class="c">④</span><span class="d">&quot;Không biết&quot; phải là ĐỎ, không phải &quot;không sao&quot;.</span></div>
+          <div class="bi"><span class="c">⑤</span><span class="d">Đỏ của phiên khác không được chặn bạn; đỏ của bạn thì phải chặn.</span></div>
+        </div></div>
+      </details>
+      <p class="note">Số vùng và các mục trên <strong>đọc lại từ luật</strong>, không phải bản chép — nên bảng không thể nói khác luật. Bảng <strong>cố ý không hiện ai đang giữ vùng nào</strong>: chủ vùng đổi liên tục trong ngày, mà bảng được cổng so mỗi phiên, nên nhúng vào là mọi phiên bị chặn đẩy việc dù chẳng có gì đổi. Muốn biết ai đang giữ gì thì hỏi AI — đó là số liệu sống, không thuộc một ảnh chụp.</p>
+    </div>
+
+    <div class="card">
       <div class="sect">Bảng này lấy số ở đâu</div>
       <div class="prose"><p>Không một con số nào gõ tay. Tất cả đọc từ file trong repo, cùng nguồn với ba trang máy sinh khác — nên bốn trang không thể nói khác nhau.</p></div>
       <details class="the" style="margin-top:11px">
@@ -955,7 +1032,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         <div class="hc zero"><span class="n">0</span><span class="l">Đơn vị chưa khai hồ sơ</span><span class="w">đã dò cả 5 đơn vị có hồ sơ trạng thái</span></div>
         <div class="hc zero"><span class="n">0</span><span class="l">Liên kết chết</span><span class="w">đã mở thử 9 liên kết trong các file cổng vào</span></div>
         <div class="hc zero"><span class="n">0</span><span class="l">Thư mục chưa khai chủ</span><span class="w">đã đối chiếu 7 thư mục tầng ngoài cùng với bảng phân vùng</span></div>
-        <div class="hc bad"><span class="n">1</span><span class="l">Tài liệu quá hạn rà</span><span class="w">đã tính tuổi 68 tài liệu theo hạn rà mỗi file tự khai</span></div>
+        <div class="hc bad"><span class="n">1</span><span class="l">Tài liệu quá hạn rà</span><span class="w">đã tính tuổi 69 tài liệu theo hạn rà mỗi file tự khai</span></div>
       </div>
       <p class="note">Có phép chưa sạch. Số khác 0 là số việc thật đang thiếu, không phải cảnh báo chung.</p>
     </div>
@@ -984,7 +1061,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         <div class="sect">Thư mục ở tầng ngoài cùng — 7 vùng</div>
         <div class="tree">
           <div class="tr"><span class="d">workers/</span><span class="o">từng gói tự giữ</span><span class="c">1129 file</span></div>
-          <div class="tr"><span class="d">docs/</span><span class="o">_docs</span><span class="c">68 file</span></div>
+          <div class="tr"><span class="d">docs/</span><span class="o">_docs</span><span class="c">69 file</span></div>
           <div class="tr"><span class="d">evidence/</span><span class="o">_root</span><span class="c">12 file</span></div>
           <div class="tr"><span class="d">pilots/</span><span class="o">_root</span><span class="c">12 file</span></div>
           <div class="tr"><span class="d">tests/</span><span class="o">_code</span><span class="c">12 file</span></div>
@@ -1059,7 +1136,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 
   <div role="tabpanel" data-pane="nhat-ky" hidden>
     <div class="card">
-      <div class="sect">Quyết định đã chốt — 116 bản ghi</div>
+      <div class="sect">Quyết định đã chốt — 117 bản ghi</div>
       <div class="prose"><p>Mỗi quyết định là một file bất biến: đã chốt thì không sửa được, chỉ thay bằng bản mới. Bản bị thay vẫn giữ nguyên để tra lại được. Hiện có 1 đơn vị đã bị bản mới thay thế.</p></div>
       <details class="the" style="margin-top:11px" open>
         <summary><span><span class="nm">14 quyết định số cao nhất</span><span class="sub">số KHÔNG phải ngày — mỗi phạm vi đánh số riêng</span></span></summary>
