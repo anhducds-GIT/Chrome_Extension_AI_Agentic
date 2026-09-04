@@ -102,6 +102,8 @@ COMPANION (đọc khi cần):
 | `drafts/AGENT-BRIDGE-ROADMAP-AND-GUIDE-V1.md` | Roadmap + use case Bridge cho Đức (không kỹ thuật) — **một phần đã lỗi thời sau Tầng 1, xem audit 2026-08-24** |
 | `drafts/AGENT-BRIDGE-TIER1-HANDOFF.md` | Brief Tầng 1 (6 method ghi trực tiếp + tab BRIDGE) giao cho Codex |
 | `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md` | Audit độc lập toàn hệ thống + roadmap 5 giai đoạn tiến tới tự hành (chờ Đức chốt 5 điểm) |
+| `tab-lock-core.js` | **Khoá tab + khoá hội thoại cho một run (G-02, 04/09).** Giải ra tab mà run đã khoá thay vì hỏi lại "tab nào đang hoạt động" ở mỗi lần gửi. Là core riêng vì `sidepanel.js` không nạp nổi vào Node, mà ba ca thật (đổi tab · đổi hội thoại · tab biến mất) là ca HÀNH VI, phải chạy được mới ghim được. Tiền tố `RECEIVER_LOST:` trong thông điệp là CỐ Ý — `runner-core.classifyFailure()` dò chữ để quy nhãn, và `RECEIVER_LOST` là dừng cứng, không thử lại |
+| `tests/tab-lock-behavior.mjs` | Ghim G-02, cả hai nửa: **hành vi** (nạp `tab-lock-core` + `provider-adapter` + `runner-core` thật vào vm, chạy `resolveBoundTab` với tab giả) và **wiring** (soi mã nguồn — phiên trước đã viết đúng core mà quên nối, nên core đúng mà không ai gọi vẫn phải bị bắt). 17 khẳng định, 15/15 đột biến bị bắt |
 | `dev-trial-core.js` | Gate thuần cho `run.trial` (Chế độ phát triển): toggle owner, **≤30 job một chuỗi** (`MAX_TRIAL_JOBS`), khoảng cách ≥300s giữa 2 trial — quyết định 2026-08-25 (trần nâng 2→10→30 trong cùng ngày) |
 | `tests/blob-image-conversion-static.mjs` | Ghim: ảnh `blob:` phải nhận dạng theo BYTE rồi chuyển thành data URL background chấp nhận (lỗi live 26/08) |
 | `tests/attach-path-recorded-static.mjs` | Ghim: đường gắn ảnh tham chiếu phải được ghi lại kể cả khi THÀNH CÔNG (Pilot-REF-01) |

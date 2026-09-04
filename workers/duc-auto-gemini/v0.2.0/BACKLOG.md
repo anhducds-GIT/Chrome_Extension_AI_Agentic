@@ -51,14 +51,34 @@ attempt bị huỷ; kèm recheck cờ dừng sau `await gateNextJob` trong runne
 chứng minh không còn chuỗi `STOP_REQUESTED_BEFORE_SUBMIT → PROMPT_SUBMITTED`, ghi bằng chứng
 vào `evidence-stop-*/` rồi cập nhật `STATUS.md`. Cùng lỗi bên nhánh ChatGPT: **B-22**.
 
-### G-02 · Khoá tab và khoá hội thoại — Gemini chưa có — **[ĐỌC]**
+### G-02 · Khoá tab và khoá hội thoại — **ĐÃ VÁ TĨNH 2026-09-04**, chờ Đức reload để nghiệm thu — **[ĐỌC]**
 
-`sidepanel.js:2414` `activeTab()` vẫn gọi `chrome.tabs.query({active:true})` **mỗi lần gửi**,
-và chỉ kiểm origin chứ không ghim `/c/<id>`. Đổi tab hoặc đổi hội thoại giữa chừng là runner
-âm thầm gõ sang chỗ khác.
+Lỗi gốc: `activeTab()` gọi `chrome.tabs.query({active:true})` **mỗi lần gửi**, và chỉ kiểm
+origin. Đổi tab hoặc đổi hội thoại giữa chừng là runner âm thầm gõ sang chỗ khác.
 
-Nhánh ChatGPT đã có (B-01). Port sang, **đừng chép nguyên xi** — hai nhánh khác nhau ở chốt
-khởi động run, xem `HANDOFF.md` mục port `run.stop`/`chat.reload` để biết ba chỗ khác nhau.
+**Đã làm** (`claude-exec-g02b`, kế thừa việc dở của `claude-exec-g02`):
+`tab-lock-core.js` mới + `state.boundTabId` / `state.boundConversationId` +
+`bindRunTab()` / `releaseRunTab()` trong `sidepanel.js`.
+Ghim: `tests/tab-lock-behavior.mjs` — 17 khẳng định, 15/15 đột biến bị bắt.
+
+**Ba chỗ Gemini KHÁC nhánh ChatGPT** (đây là lý do không chép nguyên xi):
+
+| | ChatGPT (B-01) | Gemini (G-02) |
+|---|---|---|
+| Chỗ khoá | hai: `run()` **và** `bridgeRunTrial()` | **một**: chỉ `run()` — `bridgeRunTrial` của Gemini gọi thẳng `run("selected")`, không có runner riêng |
+| Id hội thoại | `/c/<id>` | `/app/<id>`, và phải bỏ tiền tố tài khoản `/u/<n>` |
+| Phép kiểm địa chỉ | chỉ origin | `isProviderUrl` (mặt + origin) — Gemini có HAI mặt hợp lệ (`/images`, `/app`), nên `gemini.google.com/settings` đúng origin mà vẫn phải là mất receiver |
+| Thông điệp lỗi | nhúng 80 ký tự đầu của địa chỉ | **chỉ nhúng origin** — `classifyFailure()` dò `/timeout/` TRƯỚC `/receiver/`, nên một đường dẫn lạ chứa chữ "timeout" sẽ lái lỗi sang nhãn TIMEOUT, mà TIMEOUT thì **được thử lại** |
+
+**Còn mở — chưa đóng được mục này:** Đức reload extension ở `chrome://extensions`, rồi chạy
+một run và giữa chừng bấm sang tab khác — prompt phải vẫn đi vào tab đã khoá. Đổi hội thoại
+hoặc đóng tab thì phải dừng cứng `RECEIVER_LOST`, không thử lại.
+
+**Nợ nhỏ còn lại (không chặn):** thông điệp lỗi vẫn nhúng *origin*. Một origin chứa đúng chữ
+bẫy (`timeout`, `captcha`, `ambiguous`…) vẫn lái được nhãn lỗi. Đã cân và bỏ qua: đường dẫn
+là thứ Google hay nhét chữ vào (`?continue=…`), origin thì không — không origin thật nào
+trong luồng này dính. Muốn bịt hẳn thì cho `classifyFailure()` đọc tiền tố `RECEIVER_LOST:`
+trước khi dò chữ, nhưng đó là sửa `runner-core.js` cho mọi loại lỗi, ngoài phạm vi G-02.
 
 ## P2 — Nên làm sớm
 

@@ -687,3 +687,58 @@ Nên test đang ghim **tên cũ đã sai**, không phải tôi làm hỏng nó. 
 Nên chuyển chỗ ghim sang bộ Gemini **trước**, rồi chạy thử: **bộ Gemini chịu được cả mười lăm**. Xoá xong suite vẫn 85/0.
 
 Điều đáng ghi hơn cả việc xoá: mười lăm lớp bảo vệ đó **trước đây kiểm trên một file không ai nên chạy**, còn script thật thì không ai kiểm. Nay chúng ghim vào script đang dùng — mạnh hơn trước, không phải nới lỏng. Kèm phép ghim chặn hai file mọc lại (đột biến: mang một file về → bắt được).
+
+---
+
+## Log — 2026-09-04, `claude-exec-g02b` · G-02 khoá tab và khoá hội thoại
+
+**Kế thừa việc dở của một phiên đã chết.** Phiên `claude-exec-g02` bắt đầu G-02 rồi chết giữa
+chừng (stall watchdog), để lại `tab-lock-core.js` (103 dòng, chưa commit) và một patch
+`sidepanel.js`. Đức chốt giữ việc dở. **Tôi đọc rồi GIỮ, không viết lại** — logic của nó đúng,
+và ba chỗ nó tách khỏi bản ChatGPT đều có lý do đúng (xem bảng trong `BACKLOG.md` mục G-02).
+
+**Nhưng nó mới xong một nửa, và nửa thiếu làm extension chết hẳn.** Hai lỗ, cùng một loại:
+
+1. `tab-lock-core.js` **không có thẻ `<script>` trong `sidepanel.html`**. Hậu quả không phải
+   "khoá tab không chạy" — mà là `window.DacTabLockCore` undefined, nên `activeTab()` ném
+   TypeError ở **mọi** lần gửi. Không gửi được job nào.
+2. `bindRunTab()` và `releaseRunTab()` được **định nghĩa nhưng không chỗ nào gọi**. Nên
+   `boundTabId` vĩnh viễn null, `resolveBoundTab` luôn rơi về nhánh "chưa khoá", và cái khoá
+   không tồn tại.
+
+Bài học đáng ghi: **core đúng mà không ai gọi thì bằng không có**, và không test nào trong gói
+này bắt được điều đó — vì test cũ chỉ soi hành vi của core. Nên nửa WIRING của test mới
+(`tests/tab-lock-behavior.mjs`, mục 12–16) tồn tại đúng để bắt loại lỗi này.
+
+**Đã nối:** thẻ script trước `sidepanel.js` · `bindRunTab()` trong `run()` **trước**
+`authoritativeValidate` (validate có await, và đó đúng là khoảng người vận hành hay đổi tab sau
+khi bấm Run) · `releaseRunTab()` trên **cả ba** đường thoát (validate hỏng · hàng đợi rỗng ·
+`finally`). Gỡ `boundTabUrl` và tham số `preferredTab` — không ai đọc chúng.
+
+**Chỉ MỘT chỗ khoá, khác nhánh ChatGPT (hai chỗ):** `bridgeRunTrial` của Gemini gọi thẳng
+`run("selected")`, cùng đường với nút của người vận hành, không có runner thứ hai. Đã ghim để
+không ai "port cho đủ" bằng cách dán thêm một lần khoá nữa.
+
+**Test: 17 khẳng định. Đột biến vòng 1: 10/15 bắt được — báo số thật.** Bốn lượt "SKIP" là lỗi
+của script đột biến chứ không phải của test (`git checkout` trả file về CRLF nên mọi mẫu có
+`\n` bị trượt từ lần restore đầu tiên). **Một lượt THOÁT THẬT:** thay `isProviderUrl` bằng phép
+kiểm origin trần vẫn xanh, vì ca "tab trôi sang `/settings`" có `boundConversationId` đã đặt
+nên phép kiểm hội thoại cũng chặn được. Thêm ca chạy với `boundConversationId = null` (run bắt
+đầu ở `/images`) — khi đó `isProviderUrl` là lớp **duy nhất** còn lại. Vòng 2: **15/15**.
+
+**Một test cũ đỏ theo, và nó đỏ ĐÚNG:** `tests/provider-adapter-static.mjs` đếm số chỗ ủy
+quyền `DacProviderAdapter.isProviderUrl` và đòi đúng 2; nay có 3 vì `activeTab()` bơm predicate
+vào core. Không nới: hai dòng `doesNotMatch` (cấm tự chế regex origin — đó mới là lớp bảo vệ
+thật) giữ nguyên, con số lên 3 kèm **tên ba chỗ** để lần sau nó thôi là số ma, và **thêm một
+khẳng định mới** ghim đúng hình dạng của chỗ bơm vào.
+
+**Suite gói này: 86 passed, 0 failed** (85 → 86, thêm `tab-lock-behavior.mjs`).
+
+**CẦN ĐỨC LÀM — chưa đóng được G-02 nếu thiếu:** reload extension ở `chrome://extensions`
+(có sửa `.js` và `.html`), rồi chạy một run và **giữa chừng bấm sang tab khác** — prompt phải
+vẫn đi vào tab đã khoá. Đổi hội thoại hoặc đóng tab thì phải dừng cứng `RECEIVER_LOST`, không
+thử lại. Chưa chạy live lần nào: luật mục 2 bắt hỏi Đức trước.
+
+**Còn mở:** nợ nhỏ đã cân và ghi trong `BACKLOG.md` mục G-02 — thông điệp lỗi vẫn nhúng
+*origin*, nên một origin chứa chữ bẫy vẫn lái được nhãn lỗi. Bịt hẳn thì phải sửa
+`runner-core.classifyFailure()` cho mọi loại lỗi, ngoài phạm vi G-02.
