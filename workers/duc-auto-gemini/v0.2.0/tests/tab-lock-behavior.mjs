@@ -139,7 +139,18 @@ for (const [name, opts] of [["tabs.get ném lỗi", { throws: true }], ["tabs.ge
   const w = world("https://gemini.google.com/settings");
   const error = await refuses({ boundTabId: 7, boundConversationId: "aaaa1111", ...w });
   assert.equal(classifyFailure(error), "RECEIVER_LOST", "cùng origin nhưng sai mặt vẫn phải là RECEIVER_LOST");
-  ok("tab trôi sang gemini.google.com/settings (đúng origin, sai mặt) → RECEIVER_LOST");
+
+  // Ca trên MỘT MÌNH nó không chứng minh được luật mặt: hội thoại đã khoá là
+  // 'aaaa1111' còn /settings không có hội thoại nào, nên phép kiểm hội thoại ở
+  // dưới cũng chặn được — thay isProviderUrl bằng phép kiểm origin trần vẫn
+  // xanh (đột biến M10 đã THOÁT đúng bằng đường đó). Ca dưới đây tách riêng
+  // luật mặt: run bắt đầu ở /images nên CHƯA có hội thoại nào để so, và khi đó
+  // isProviderUrl là lớp DUY NHẤT còn lại. Đây là tình huống thật: tab trôi
+  // sang /settings trước lần gửi đầu tiên.
+  const naked = world("https://gemini.google.com/settings");
+  const nakedError = await refuses({ boundTabId: 7, boundConversationId: null, ...naked });
+  assert.equal(classifyFailure(nakedError), "RECEIVER_LOST", "chưa khoá hội thoại thì luật mặt (isProviderUrl) là lớp duy nhất còn lại — kiểm origin trần sẽ cho gõ prompt vào /settings");
+  ok("tab trôi sang gemini.google.com/settings (đúng origin, sai mặt) → RECEIVER_LOST, kể cả khi chưa khoá hội thoại");
 }
 
 /* ---- 7. THÔNG ĐIỆP KHÔNG ĐƯỢC NHÚNG ĐƯỜNG DẪN LẠ ------------------------
