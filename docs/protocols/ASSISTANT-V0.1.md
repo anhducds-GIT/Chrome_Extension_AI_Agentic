@@ -30,10 +30,22 @@ Hai lệnh đều **chỉ đọc, không đòi khoá nào** — nên phiên đi�
 |---|---|
 | **V0.1 PACKAGE** — đóng nhãn bundle, không di chuyển file | ✅ **xong** 2026-09-04 |
 | **ASSISTANT PILOT** — 20–30 câu hỏi thật của Đức, trên chính repo này | ⏳ **đang chạy** |
-| **PORTABLE FREEZE → TEMPLATE** | ⛔ **khoá**, chờ pilot đạt |
+| **PORTABLE FREEZE → TEMPLATE** | ⏳ **đang chạy** — Đức mở sớm 04/09 |
 
-Brief promote đã **park**: [`../briefs/BRIEF-ASSISTANT-PROMOTE-01.md`](../briefs/BRIEF-ASSISTANT-PROMOTE-01.md).
-Nội dung kỹ thuật trong đó vẫn dùng được khi mở lại — đừng viết lại từ đầu.
+Brief promote đã **mở lại**: [`../briefs/BRIEF-ASSISTANT-PROMOTE-01.md`](../briefs/BRIEF-ASSISTANT-PROMOTE-01.md).
+
+**Hai mốc chạy song song là CỐ Ý, và điều kiện mở của mốc ba CHƯA đạt.** Đức chốt làm sớm ngày
+04/09. Ghi rõ ở đây vì trang này là nơi phiên sau đọc để biết mốc nào đạt kiểu gì — và nếu
+không ghi thì nửa năm sau sẽ có người tưởng mốc ba mở ra vì pilot đã đạt.
+
+Số thật lúc mở: pilot mới chạy **một buổi**, và `HANDOFF.md` gốc đã ghi nhận **ba sự cố** của
+chính Assistant (một trượt vai · một sai lệch Đức phải bắt · một lượt bảng để cũ) — cả ba tiêu
+chí tương ứng ở mục 4 đều đòi **bằng không**. Mốc ba được mở **bất chấp** điều đó, không phải
+vì điều đó đã hết.
+
+Mốc ba chia hai chặng: **chặng A** (bóc phần riêng của Extension, chứng minh trên fixture repo)
+làm ngay; **chặng B** (phát hành vào đường phiên bản của bộ khung, đổi quan hệ hai repo) **chờ
+Đức nói riêng** — đó là chặng hướng ra ngoài, repo khác bắt đầu tiêu thụ và khó rút lại.
 
 ## 3. Vì sao chưa promote, dù bốn năng lực đều chạy thật
 

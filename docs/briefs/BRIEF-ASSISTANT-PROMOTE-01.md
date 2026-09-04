@@ -1,31 +1,42 @@
 ---
 kind: brief
-status: parked
+status: active
 ttl_days: 90
 ---
 
 # BRIEF `ASSISTANT-PROMOTE-01` — đưa gói Assistant vào bộ khung
 
-> ## ⛔ HOÃN — ĐỪNG THỰC HIỆN BRIEF NÀY (Đức chốt 2026-09-04, sau khi brief đã viết)
+> ## ✅ ĐÃ MỞ LẠI — Đức chốt 2026-09-04 (lần thứ hai)
 >
-> Điều kiện mở đã **đổi**. Trước: "chạy ổn ở repo Extension trước". Nay chặt hơn: phải qua
-> một **giai đoạn vận hành liền mạch** — mốc `ASSISTANT-V0.1 PILOT`, xem
-> [`../protocols/ASSISTANT-V0.1.md`](../protocols/ASSISTANT-V0.1.md).
+> Brief này từng bị **hoãn** cùng ngày, và điều kiện mở là *pilot đạt*. **Đức chốt làm luôn**,
+> không chờ pilot. Ghi lại cả hai chiều để phiên sau không phải đoán:
 >
-> Vì sao đổi: bốn năng lực lõi mới được chứng minh **từng cái một**. Chưa cái nào chạy qua
-> nhiều vòng việc thật liên tiếp, nên chưa biết gói này có **trơn** hay không — mà trơn mới
-> là thứ quyết định nó đáng nhân bản sang repo khác. Nhân bản một thứ chưa trơn là nhân bản
-> cả chỗ vướng của nó, vào những repo mà không ai ở đó biết vì sao nó vướng.
+> **Điều kiện cũ CHƯA đạt, và đây là số thật lúc mở lại:** `HANDOFF.md` gốc đang ghi nhận
+> **ba sự cố** của chính Assistant trong ngày đầu pilot — một trượt vai, một sai lệch trạng
+> thái **Đức** phải là người bắt, một lượt bảng để cũ. Ba tiêu chí pilot tương ứng đều đòi
+> **bằng không**. Pilot cũng chỉ mới chạy **một buổi**, chưa "rải qua vài ngày" như hồ sơ mốc
+> quy định.
 >
-> **Mở lại khi và chỉ khi** pilot đạt cả ba: không lần nào trượt vai · không sai lệch trạng
-> thái nào **Đức** phải là người bắt · Assistant chạy ổn qua nhiều vòng liên tiếp.
+> **Giá của việc mở sớm, nói thẳng:** nhân bản một thứ chưa trơn là nhân bản cả chỗ vướng của
+> nó, sang những repo mà không ai ở đó biết vì sao nó vướng. Đó là lý lẽ đã dựng ra mốc pilot,
+> và nó không mất hiệu lực chỉ vì việc được mở sớm.
+>
+> **Cách giữ lợi mà bớt giá — CHIA HAI CHẶNG, và chặng hai cần Đức nói riêng:**
+>
+> - **Chặng A · làm ngay.** Toàn bộ phần kỹ thuật: bóc mã việc riêng của Extension, bỏ mọi tên
+>   vùng gõ cứng, dựng regression test, và **chứng minh trên fixture repo** (mục 3). Chặng này
+>   *không* đẩy chỗ vướng sang đâu cả — nó chỉ làm gói chạy được ở nơi khác, và phải làm dù
+>   pilot đạt hay không. Gần như toàn bộ công sức nằm ở đây.
+> - **Chặng B · CHỜ ĐỨC nói.** Phát hành vào đường phiên bản của bộ khung (`RELEASE-LEDGER.json`,
+>   `CHANGELOG.md`) và đổi quan hệ hai repo (mục 4). Đây là chặng **hướng ra ngoài**: repo khác
+>   bắt đầu tiêu thụ nó, và một bản đã phát hành thì khó rút lại. Xong chặng A thì **DỪNG, báo
+>   số, chờ Đức chốt** — đừng tự bước sang.
 >
 > Nội dung kỹ thuật dưới đây **vẫn còn giá trị** — giữ nguyên, không viết lại. Riêng một chỗ
 > đã biết là brief đoán sai, executor `claude-exec-promote` sửa đúng ngày 04/09: mục 2.1 bảo
 > lấy tên vùng dự phòng từ `.repo-structure.json`, nhưng `stewardOf()` **không bao giờ trả
 > rỗng** — nên `|| "_root"` là **mã chết**, không phải bug, và cách đúng là **xoá hai chỗ đó**
-> chứ không thêm một trường cấu hình (thêm là đẻ ra nguồn sự thật thứ hai). Ai mở lại brief
-> này thì đọc kỹ ghi chú đó trước.
+> chứ không thêm một trường cấu hình (thêm là đẻ ra nguồn sự thật thứ hai).
 
 
 > **Cho executor.** Việc này làm ở **repo KHÁC**: `C:\WORKING ZONE\Ark_Repo_Harness`.
@@ -140,3 +151,36 @@ chạy được ngay, không cần sửa gì. Không đạt thì việc chưa xo
 ## 7. Câu hỏi thì hỏi Đức
 
 Phiên điều phối cố ý đứng ngoài. Brief thiếu gì thì hỏi Đức một câu ngắn.
+
+## 8. Đức yêu cầu thêm: việc này phải NHÌN THẤY trên bảng
+
+*"nhớ đưa cả vào trong dashboard nhé"* (Đức, 04/09). Ba điều, ở **hai repo khác nhau** — đọc kỹ
+điều nào ở đâu, đừng làm lẫn.
+
+### 8a · Repo Extension — đã xong, không phải làm
+
+Brief này chuyển `status: parked` → `active`, nên khối **"Đề bài đang mở của chính tôi"** ở tab
+`AI điều phối` tự hiện `ASSISTANT-PROMOTE-01`. Không đổi một dòng code nào. **Đừng làm lại.**
+
+### 8b · Repo Extension, khoá `_code` — một defect nhỏ trong code vừa viết hôm nay
+
+Chip mốc ở vùng `Hạ tầng` lấy mốc đang chạy bằng cách **tìm cái ĐẦU TIÊN** có trạng thái đang
+chạy. Khi hai mốc cùng chạy — đúng tình huống từ hôm nay: `ASSISTANT PILOT` **và**
+`PORTABLE FREEZE` — nó hiện cái đầu và **im lặng bỏ mốc thứ hai**. Đức nhìn bảng sẽ không thấy
+việc promote.
+
+Sửa: chip phải hiện **mọi** mốc đang chạy, không phải cái đầu tiên. Kèm phép ghim: hai mốc cùng
+chạy thì **cả hai** phải ra chip, và thử phá phải ĐỎ.
+
+**Đây là việc của một lượt KHÁC**, không phải lượt này: nó ở repo Extension, cần khoá `_code`,
+mà `_code` đang có chủ. Ai làm chặng A của brief này thì **đừng nhận `_code`** — báo lại.
+
+### 8c · Repo bộ khung — bảng của chính nó
+
+Bộ khung có bảng riêng (`DASHBOARD-Ark-Repo-Harness.html`) và bộ sinh riêng. Gói Assistant vào
+`template/` thì bảng đó phải nói được là bộ khung **có** gói này và ở phiên bản nào — theo đúng
+cách bộ khung đang khai các thành phần khác, **không** bê cách của repo Extension sang.
+
+Nếu bảng của bộ khung không có chỗ nào khai được điều đó mà không phải sửa bộ sinh của nó →
+**DỪNG và báo**. Sửa bộ sinh của bộ khung để nhồi một gói vào là dấu hiệu gói chưa portable,
+đúng theo mục 5.
