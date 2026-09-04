@@ -38,7 +38,8 @@ Nội dung kỹ thuật trong đó vẫn dùng được khi mở lại — đừ
 ## 3. Vì sao chưa promote, dù bốn năng lực đều chạy thật
 
 Cả bốn mới được chứng minh **từng cái một**, mỗi cái đúng một lần. Chưa cái nào chạy qua nhiều
-vòng việc liên tiếp, nên chưa biết gói này có **trơn** hay không — và trơn mới là thứ quyết
+**câu hỏi thật liên tiếp** của Đức — đơn vị đo của mốc pilot là câu hỏi, không phải vòng việc
+(mục 4) — nên chưa biết gói này có **trơn** hay không, và trơn mới là thứ quyết
 định nó có đáng nhân bản sang repo khác. Nhân bản một thứ chưa trơn là nhân bản cả chỗ vướng
 của nó, sang những repo mà không ai ở đó biết vì sao nó vướng.
 

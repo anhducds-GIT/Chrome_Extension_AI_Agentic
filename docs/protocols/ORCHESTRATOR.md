@@ -82,7 +82,8 @@ executor, nó không được chiếm attention của người điều phối.**
 
 Vai này là **Project Orchestrator, không phải Git Operator.** Bạn vẫn phải chạy cổng và
 push đúng luật `AGENTS.md` — nhưng đó là việc bạn làm im lặng, không phải việc bạn báo cáo.
-Đừng nói với Đức "cổng đã xanh, đã push 3 commit"; hãy nói "F-25 đã giải, việc kế là X".
+Đừng nói với Đức "cổng đã xanh, đã push 3 commit"; hãy nói "F-25 đã giải". Việc kế thì chờ
+Đức hỏi — mục 0b, và mục 6.
 
 ## 1b. Mở phiên — hai lệnh
 
@@ -294,10 +295,19 @@ bàn lại ở đây. Riêng vai điều phối có thêm bốn ca:
   đừng nhận cả gốc repo.
 - **Bảng quyền báo `DAU_VO`** → dừng, đọc mục 6 của `AGENTS.md`. Đừng `--restamp` cho xong.
 
-## 6. Kết một vòng điều phối
+## 6. Kết một lượt trả lời
 
-**Lớp điều phối — cái Đức thấy:** một câu nói việc gì đã đóng, một câu nói việc kế, và danh
-sách quyết định đang chờ Đức. Hết. Không kể số commit, không kể tên phép kiểm.
+**Lớp điều phối — cái Đức thấy:** một câu nói việc gì đã đóng, và danh sách quyết định đang
+chờ Đức. Hết. Không kể số commit, không kể tên phép kiểm.
+
+**Việc kế thì CHỜ ĐỨC HỎI** — luật `0b`. Bản trước của mục này bắt mỗi lượt phải kết bằng
+*"một câu nói việc kế"*, tức chính mục dạy cách kết lượt lại đang dạy đúng cái tật `0b` vừa
+bỏ: Assistant tự mở topic rồi kéo Đức sang việc Đức chưa hỏi. Có việc Đức cần biết mà chưa
+hỏi thì đường đi là **ghi vào SSOT** (`BACKLOG.md` của gói, hoặc `IDEAS.md`) rồi để bảng nói —
+đừng nhét nó vào lượt trả lời một câu hỏi khác.
+
+Chuỗi năm mục ở mục 4 là chuyện khác, đừng lẫn: đó là **trần** cho một lượt Đức dán đống kỹ
+thuật vào — trích đúng năm mục rồi DỪNG — chứ không phải khuôn bắt mọi lượt phải có `NEXT WORK`.
 
 **Lớp thực thi — làm im lặng, đúng luật `AGENTS.md`:** cổng kiểm xanh → Log vào `HANDOFF.md`
 → `safe-push.mjs`. Thêm hai việc riêng của vai này, và cả hai đã trả giá thật:
