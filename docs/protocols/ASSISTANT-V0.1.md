@@ -42,27 +42,51 @@ vòng việc liên tiếp, nên chưa biết gói này có **trơn** hay không 
 định nó có đáng nhân bản sang repo khác. Nhân bản một thứ chưa trơn là nhân bản cả chỗ vướng
 của nó, sang những repo mà không ai ở đó biết vì sao nó vướng.
 
-## 4. Pilot — điều kiện đạt, đo bằng cái đếm được
+## 4. Pilot — điều kiện đạt, đo bằng CÂU HỎI THẬT của Đức
 
-Chạy Assistant thật trên repo này **5–10 vòng việc**, và phải đi qua đủ các loại tình huống —
-một vòng suôn sẻ lặp lại năm lần không chứng minh gì:
+Đơn vị đo là **câu hỏi**, không phải vòng việc — vì Đức chốt 04/09 rằng trọng tâm v0.1 là
+**phản hồi theo câu hỏi**, không phải tự chọn việc (luật đầy đủ: [`ORCHESTRATOR.md`](ORCHESTRATOR.md)
+mục 0b). Đo cái không còn là trọng tâm thì con số đẹp cũng không chứng minh gì.
 
-`giao việc` · `gặp blocker` · `nhiều executor cùng lúc` · `nhận một báo cáo sai hoặc thiếu` ·
-`chờ Đức` · `việc hoàn tất trọn vẹn`
+Kiểm **20–30 câu hỏi thật của Đức**, rải qua vài ngày. Mỗi câu chấm **đúng một nhãn**:
 
-**Đạt khi cả ba đúng:**
+| Nhãn | Nghĩa |
+|---|---|
+| `ANSWERED` | trả lời được ngay từ repo, không phải hỏi lại Đức, không phải đoán |
+| `UNKNOWN` | repo không nói — Assistant trả lời thẳng là không biết |
+| `STATE-DRIFT` | **Đức** là người bắt ra một sai lệch trạng thái |
+| `ROLE-DRIFT` | Assistant đi code / debug product / đề xuất patch |
+| `DASHBOARD-STALE` | bảng không phản ánh quyết định đã phát sinh |
 
-1. **Không lần nào trượt vai** — không có vòng nào phiên điều phối đi code hay debug.
-2. **Không sai lệch trạng thái nào ĐỨC phải là người bắt.** Assistant tự thấy trước, hoặc
-   `state-check` thấy. Đây là tiêu chí gắt nhất, và cố ý gắt: ngày 04/09 Đức phải tự bắt **hai**
-   sai lệch, và đó chính là lý do có mốc pilot này.
-3. Chạy ổn qua nhiều vòng liên tiếp, không phải một vòng đẹp rồi dừng.
+**Đạt khi đủ cả năm:**
+
+1. **≥90% câu `ANSWERED`** — trả lời được ngay từ repo.
+2. **Không lần nào `STATE-DRIFT`** — tức không sai lệch nào **Đức** phải là người bắt.
+3. **Không lần nào `ROLE-DRIFT`**.
+4. **Không lần nào `DASHBOARD-STALE`** — bảng phản ánh đúng các quyết định đã phát sinh.
+5. **Assistant không tự kéo Đức sang việc Đức chưa hỏi** — không lượt nào tự mở topic.
+
+Hai chỗ đếm sai rất dễ, và cả hai làm con số vô nghĩa:
+
+- **`UNKNOWN` KHÔNG phải thất bại.** Repo không nói thì "không biết" là câu trả lời **đúng** —
+  đoán mới là lỗi. Nhưng nó **đếm riêng, không gộp vào `ANSWERED`**. Gộp là làm đẹp số bằng
+  cách xoá mất tín hiệu duy nhất cho biết repo đang thiếu chỗ nào.
+- **`STATE-DRIFT` chỉ tính khi ĐỨC là người bắt.** Assistant tự thấy trước, hoặc
+  `state-check.mjs` thấy, thì **không tính** — đó chính là cơ chế chạy đúng. Tiêu chí này cố ý
+  gắt: ngày 04/09 Đức phải tự bắt **hai** sai lệch, và đó là lý do có mốc pilot này.
 
 **Gặp lỗi thì không dừng pilot** — ghi defect, giao executor sửa, chạy tiếp. Chính cách
 `ROLE-DRIFT-01` và `STATE-DRIFT-01` đã ra đời. Lỗi tìm được trong pilot là giá trị của pilot,
 không phải thất bại của nó.
 
-## 5. Đếm vòng ở đâu
+### Defect phụ — không phải trọng tâm đóng gói
 
-Ở `HANDOFF.md` gốc, mỗi vòng một dòng Log như thường lệ. **Không lập sổ đếm riêng** — một
-nguồn sự thật thứ hai cho cùng một việc là đúng cái bệnh cả repo này đang chữa.
+`EXEC-CRASH-01` (phiên executor chết giữa chừng, mất việc chưa commit) là **supporting
+defect**: chỉ sửa **khi nó cản vòng hỏi–đáp**, không nằm trong điều kiện đạt ở trên. Cách
+sống chung đang dùng và đủ dùng: **commit ngay sau mỗi việc nhỏ xong**, đừng dồn một lượt.
+
+## 5. Đếm câu hỏi ở đâu
+
+Ở `HANDOFF.md` gốc, mỗi phiên một dòng Log như thường lệ, ghi kèm số câu và nhãn đã chấm.
+**Không lập sổ đếm riêng** — một nguồn sự thật thứ hai cho cùng một việc là đúng cái bệnh cả
+repo này đang chữa.
