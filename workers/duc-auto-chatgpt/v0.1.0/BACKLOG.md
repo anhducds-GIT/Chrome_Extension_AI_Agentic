@@ -33,7 +33,29 @@ trên mọi đường thoát. Audit Antigravity moi thêm **hai lỗ nữa, đ�
   và chưa biết địa chỉ thì hoãn phán xét cho ping của content script.
 **Bên Gemini vẫn nguyên lỗi** (`sidepanel.js:2268`) → đã ghi vào B-07.
 
-### B-22 · Cùng race G-01 của Gemini: huỷ tới trước job bị `runPrompt()` xoá trắng — **[ĐỌC]**
+### ~~B-22 · Cùng race G-01 của Gemini: huỷ tới trước job bị `runPrompt()` xoá trắng~~ — **ĐÃ ĐÓNG 2026-09-05, commit `b8ce8ec`**
+
+**Đã vá theo hướng của Gemini nhưng viết lại cho nhánh này:** `STATE.abortedAttempt` nhớ
+attempt nào vừa bị dừng; dòng reset đầu `runPrompt()` nay giữ cờ CHỈ khi lệnh huỷ nhắm đúng
+attempt đó. Thêm một cửa huỷ ngay đầu khối `try` — huỷ trước là huỷ HẲN, chưa gõ chữ vào
+composer. `DAC_ABORT` trần giữ nguyên ngữ nghĩa cũ, và `abortRequested` vẫn dựng lên TOÀN
+CỤC nên lệnh dừng lệch danh tính VẪN dừng attempt đang bay (fail-closed). Side panel:
+`stop()` và `bridgeRunStop()` gửi kèm `job_id`+`attempt_id`; `run()` kiểm lại
+`state.stopRequested` ngay sau `await gateNextJob` và settle trung thực `USER_STOP`.
+
+**Không chép nguyên xi, đúng như cảnh báo cũ:** nhánh này có `flushRunCheckpoint` giữ chỗ
+trước khi gửi, nên bất biến "chỉ một `await` từ RUNNING tới send" của Gemini không áp được.
+Thay bằng bất biến THỨ TỰ: `attempt_id` + `setCurrent` phải xong trước khoảng flush, để một
+Stop rơi vào đó vẫn nêu tên ĐÚNG attempt sắp gửi.
+
+Ghim: `tests/content-abort-race-behavior.mjs` (nạp `content.js` thật trong `node:vm`, DOM giả
+dựng theo selector đọc từ chính `provider-adapter.js`, đếm `sendButton.click`, 6 ca) và
+`tests/sidepanel-stop-before-submit-static.mjs` (3 nhóm bất biến wiring). Đột biến **9/10 đỏ**.
+Ghi trung thực: mutation bỏ dòng dọn `abortedAttempt` trong `finally` **không đỏ** — `attempt_id`
+có phần ngẫu nhiên nên không bao giờ lặp, dòng đó là phòng xa và không quan sát được ở ranh
+giới này. Giữ lại cho khớp nhánh Gemini, không viết test giả cho nó.
+
+<details><summary>Đề bài gốc</summary>
 
 `content.js:703` mở đầu `runPrompt()` bằng `STATE.abortRequested = false` — **nguyên văn cái
 dòng đã gây ra vụ 26/08 bên Gemini** (sổ cái: `STOP_REQUESTED_BEFORE_SUBMIT` 14:20:36 →
@@ -49,6 +71,8 @@ Gemini đã vá 27/08 (hướng B-refined, Đức duyệt): huỷ theo attempt �
 **Đừng chép nguyên xi:** nhánh này có `createQueueRunLock`/`tryBeginRun` mà Gemini không có
 — chốt khởi động run khác nhau (xem bài học port B-04). Viết lại test race cho DOM ChatGPT
 trước, thấy đỏ rồi mới vá.
+
+</details>
 
 ### B-28 · Còn HAI đồng hồ nữa vẫn bị Chrome bóp: "Tiếp tục" và cooldown thử lại — **[ĐỌC]**
 
@@ -350,7 +374,34 @@ cần bản cũ không, hay chỉ cần bản version cao nhất — chưa kiể
 **CHƯA LÀM, và phải hỏi Đức trước** vì đụng đúng hai luật của chính Đức: (a) *"Đổi luật an toàn
 (… persistence …)"* — mục 2 `AGENTS.md` gốc; (b) *"Xóa file"* — luật gốc `CLAUDE.md`.
 
-### B-23 · `response_sha256` được GHI nhưng KHÔNG bao giờ được KIỂM — **[ĐỌC]**
+### ~~B-23 · `response_sha256` được GHI nhưng KHÔNG bao giờ được KIỂM~~ — **ĐÃ ĐÓNG 2026-09-05, commit `c9829f9`**
+
+**Đã vá, nhưng KHÔNG bằng cách đổi cả chuỗi hàm sang async** như mục này dự báo: `plan()` được
+gọi từ 14 chỗ trong `sidepanel.js`, đổi hết là một diện tích rủi ro lớn cho một phép so sánh nhỏ.
+Thay vào đó băm TRƯỚC một lượt (`DacResumeCore.verifyResponseHashes(workbook, hashText)`,
+bất đồng bộ), cất phán quyết vào một `WeakMap` khoá theo chính workbook, rồi
+`validSavedAttribution`/`classify` đồng bộ đọc lại phán quyết đó. Hash LỆCH luôn trượt, kèm mã
+riêng `RESUME_RESPONSE_HASH_MISMATCH`.
+
+**WeakMap chứ không phải một trường trên job, và đó là điểm mấu chốt:** trường trên job có thể bị
+codec ghi ngược ra XLSX, và lúc đó người sửa file chỉ cần thêm một cột để tự cấp cho mình dấu đạt.
+
+Cửa gánh nằm ở `authoritativeValidate()` — chỗ hẹp nhất mà MỌI đường chạy đi qua (nút Run **và**
+`run.trial` của Bridge), đặt TRƯỚC phép kiểm blocker nên một ô bị sửa rớt theo đúng đường
+`RESUME_BLOCKED` sẵn có, không thêm cổng thứ hai. Cùng phép băm ở Check Plan để bảng không nói
+"xanh" rồi nút Run mới nói "chặn".
+
+**Phạm vi nói thật:** khi CHƯA băm lại, nhánh text rơi về phép kiểm hình dạng cũ (đủ cho bảng hiển
+thị) — không run nào khởi động được trên hàng text chưa băm lại, vì cửa trên là bắt buộc. Nhánh
+**ảnh vẫn không** có kiểm toàn vẹn nội dung (nó chỉ so tên file xin với tên file nhận); đây không
+phải bước lùi, và cũng không phải việc của lượt này.
+
+Ghim: `tests/resume-response-hash-verification.mjs` — nạp `resume-core.js` **và** `bridge-core.js`
+thật vào `vm` với WebCrypto thật của Node, băm bằng CHÍNH `DacBridgeCore.hashText`. 6 nhóm, đột
+biến **7/7 đỏ**.
+
+<details><summary>Đề bài gốc</summary>
+
 Tìm ra bởi Pass B độc lập 2026-08-28 (F-1), đã kiểm chứng lại bằng mắt trong code.
 
 `resume-core.js` (nhánh `text_reasoning` của `validSavedAttribution`) chỉ kiểm **hình dạng**
@@ -368,6 +419,8 @@ xin với tên file nhận). Nên đây **không phải là bước lùi** so v�
 run 28/08 cũng chỉ yêu cầu *ghi* trường count/hash chứ không yêu cầu kiểm lúc resume.
 Tóm lại: `response_sha256` hiện là **dấu vân tay để đối chiếu về sau**, KHÔNG phải chốt chống sửa.
 Đừng viết tài liệu nào nói ngược lại.
+
+</details>
 
 ### B-24 · `resolveExistingOutput()` là code chết, và nếu nối lại sẽ phá hợp đồng text
 Pass B 2026-08-28 (F-7), đã tự kiểm: `grep` ra **đúng 1 lần** trong `sidepanel.js` (chính dòng
