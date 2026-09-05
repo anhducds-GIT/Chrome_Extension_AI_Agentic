@@ -498,7 +498,7 @@ mục 4 bất biến ⑤ và bảng mã lỗi.
 
 - **bậc:** nghỉ
 - **nguồn:** gặp thật 2026-09-05, lane `claude-moc-da-xong`, một lần đỏ rồi tự xanh lại
-- **việc kế:** không còn việc — đã vá 05/09 (`20a60f0`), đo: lệch 50 byte trước, 0 byte sau
+- **việc kế:** không còn việc — đã vá 05/09, đo: lệch 50 byte trước, 0 byte sau
 - **hiện tượng:** phép kiểm sinh trang **hai lần** rồi so từng byte, để bắt mọi chỗ lỡ dùng
   đồng hồ hệ thống. Nhưng trang suy từ **HEAD**, mà HEAD **di chuyển được giữa hai lượt sinh**
   khi lane khác commit xen vào. Lần gặp: lệch 46 byte, hai lane khác commit lúc 20:32 và 20:38.
