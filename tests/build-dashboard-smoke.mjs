@@ -2617,14 +2617,20 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
 }
 
 /* B3. GPT-4 — cổng kiểm không được tự kiểm mình bằng một bộ kiểm đang sửa dở.
-   Phép kiểm 7 chạy `scripts/build-dashboard.mjs` ở WORKING TREE để phán xem
-   artifact đã commit có khớp HEAD không. Một bản sửa dở của chính bộ sinh đó có
-   thể làm cổng nói dối. Ghim: bộ sinh phải khai được nó đang chạy bản nào. */
+   Khẳng định giữ nguyên; CÁCH ĐẠT đã đổi (PUSH-GATE-01, 05/09). Trước: phép kiểm 7 chạy bộ
+   sinh ở CÂY LÀM VIỆC rồi tự vệ bằng cách từ chối tin khi bộ sinh còn sửa dở — an toàn, nhưng
+   biến một phiên đang sửa bộ sinh thành cái khoá cửa của mọi phiên khác. Nay nó chạy bộ sinh
+   Ở HEAD trong một bản chụp HEAD (`kiemArtifactTuHead`), nên bản sửa dở KHÔNG còn là đầu vào
+   của phép kiểm — nỗi lo cũ hết theo cách khác.
+   Đây vẫn là ghim CHUỖI NGUỒN, tức loại yếu (`MULTIFLOW.md` mục 5). Vế HÀNH VI của cùng
+   khẳng định này nằm ở `tests/push-gate-artifact-smoke.mjs` và ở VẾ 3 phía trên. */
 {
   const text = readFileSync(new URL("../scripts/session-check.mjs", import.meta.url), "utf8");
-  assert.match(text, /verifierMatchesHead|GENERATOR_DIRTY/,
-    "session-check phải có bước kiểm chính bộ sinh trước khi tin kết quả của nó");
-  ok("SAU-GPT cổng kiểm có bước xác nhận bộ sinh chưa bị sửa dở trước khi tin nó");
+  assert.match(text, /kiemArtifactTuHead/,
+    "session-check phải đi qua bản chụp HEAD, không được tin bộ sinh ở cây làm việc");
+  assert.ok(!text.includes(String.raw`[path.join(ROOT, "scripts", script), "--check-head"]`),
+    "khong duoc chay lai bo sinh o CAY LAM VIEC de phan xu artifact");
+  ok("SAU-GPT cổng kiểm phán độ tươi artifact bằng bộ sinh Ở HEAD, không bằng bản ở cây làm việc");
 }
 
 /* ==========================================================================
@@ -3089,7 +3095,10 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
 
   // (c) Cong kiem khong duoc tra "on" khi khong hoi duoc git.
   const gate = readFileSync(new URL("../scripts/session-check.mjs", import.meta.url), "utf8");
-  assert.match(gate, /VERIFIER_UNKNOWN/, "git hong thi cong phai noi khong biet, khong duoc noi on");
+  // Mã đổi tên theo PUSH-GATE-01 (`VERIFIER_UNKNOWN` → `KHONG_DUNG_DUOC_ANH_CHUP_HEAD`), nhưng
+  // khẳng định thì y nguyên: không dựng được thứ để đối chiếu thì phải nói KHÔNG BIẾT, và ĐỎ.
+  assert.ok(gate.includes("artifact.ok === null"), "git hong thi cong phai noi khong biet, khong duoc noi on");
+  assert.ok(gate.includes("KHONG_DUNG_DUOC_ANH_CHUP_HEAD") || gate.includes("artifact.ly_do"), "phai co ma loi doc duoc cho ca khong biet");
   assert.ok(!gate.includes("return true; // không hỏi được git"), "khong duoc quay ve fail-open");
   ok("SAU-GPT superseded khong lam uu tien 1, ma commit phai dung hinh dang, cong fail-closed khi git hong");
 }

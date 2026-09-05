@@ -366,3 +366,30 @@ Ghi thành quyết định bất biến: [`docs/adr/0003-assistant-dieu-phoi-ca-
 Luật vận hành: `docs/protocols/ORCHESTRATOR.md` mục 0c.
 **Phần 1 và phần 2 vẫn mở** — phần 2 chờ pilot v0.1 đạt. Và mục 0c **chưa có phép kiểm máy**:
 cần sửa `tests/role-firewall-smoke.mjs`, tức khoá `_code`, một lượt khác.
+
+**Y-09 · ĐÃ CHỐT VÀ ĐÃ LÀM (Đức chốt 05/09, làm xong 05/09 — phiên `claude-exec-pushgate`).**
+Đức chọn **hướng (b)**: cho cổng xuất bản chỉ từ chối khi tình trạng cây làm việc **thật sự**
+làm sai thứ sắp công bố. Cách làm hoá ra không cần "hiểu nội dung diff của bộ sinh" như bản ghi
+cũ lo — thứ sắp công bố là **HEAD**, nên quan toà cũng phải là bộ sinh **ở HEAD**. Nay cả hai
+cổng chép HEAD ra một bản tạm rồi chạy bộ sinh ở đó, và cây làm việc thôi không còn là đầu vào
+của phép kiểm độ tươi nữa. Không thêm cờ bỏ qua, không thêm biến môi trường, không thêm khoá
+thứ bảy.
+
+**Phần chặn ĐÚNG giữ nguyên từng chữ:** artifact đã commit lệch với HEAD thì vẫn không ai đẩy
+được. Hai vế kéo ngược nhau đó nay đều có phép ghim chạy được, nằm cạnh nhau trong cùng một
+fixture — đạt vế này mà mất vế kia thì suite đỏ.
+
+**Đo lại sau khi sửa, số thật:**
+- Số chỗ trong bộ máy còn từ chối vì "bộ sinh đang sửa dở": **0** (trước là 2 — cổng đóng phiên
+  và cổng xuất bản, mỗi chỗ một bản sao của cùng một luật).
+- Ca dựng thật trên chính repo này: làm bẩn một bộ sinh rồi đẩy ba commit không liên quan →
+  **đẩy được**. Trước bản này là bị từ chối.
+- Đột biến kiểm: **5 lượt**, cả 5 đều làm suite ĐỎ đúng khẳng định của mình.
+- Một phép ghim **ngược** bị phát hiện và lật lại: suite cũ đang ghim đúng cái hành vi chặn oan
+  ("bộ sinh sửa dở thì PHẢI từ chối"). Không lật thì bản vá này không thể xanh — và nếu ai đó
+  lật bằng cách xoá phép ghim thì mất luôn vế đối chứng.
+- Còn nợ, ghi ra chứ không giấu: nhánh "không dựng được bản chụp HEAD → chặn" vẫn **chưa có
+  phép ghim** (nhánh cũ nó thay thế cũng chưa từng có).
+
+**Nhà:** `docs/briefs/BRIEF-PUSH-GATE-01.md` · luật vận hành: `docs/protocols/MULTIFLOW.md`
+mục 4 bất biến ⑤ và bảng mã lỗi.

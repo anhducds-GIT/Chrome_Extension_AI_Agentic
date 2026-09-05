@@ -94,6 +94,15 @@ gọi git sẽ chết vì thiếu git rồi bị quy oan thành "regression đã
 hai mốc** — HEAD là commit đang xét, `origin/main` là mốc thật của repo gốc. Bản clone trần đặt
 mốc thứ hai bằng HEAD, và cái sai đó **im lặng**: suite vẫn chạy, vẫn xanh, chỉ so với mốc sai.
 
+**Độ tươi artifact đi ĐÚNG con đường này từ 05/09 (PUSH-GATE-01), và nó KHÔNG có vế "đỏ của
+bạn thì chặn bạn".** Vì chủ thể của phép kiểm đó không phải cây làm việc mà là **HEAD** — thứ
+sắp công bố. Nên bộ sinh đang sửa dở của bất kỳ ai, kể cả của chính bạn, không còn là đầu vào:
+nó chỉ được kiểm sau khi đã commit, và lúc đó nó đã nằm trong HEAD. Trước 05/09 hai cổng đều
+xử ca này bằng cách TỪ CHỐI TIN, và đo được **4 lượt chặn oan trong một ngày** cho một lane
+không hề chạm bộ sinh — nặng nhất là lúc phiên kia chạy đột biến kiểm, vì mỗi vòng bẩn file vài
+chục giây. Một chi tiết đã trả giá lúc dựng: **thư mục ảnh chụp phải giữ nguyên tên thư mục
+repo**, vì bộ sinh suy danh tính repo từ tên thư mục khi cấu hình không khai.
+
 ## 5. Muốn ĐỔI cơ chế — đọc mục này trước
 
 **Luật một dòng: một chốt không có test ghim thì nó chỉ là bình luận.**
@@ -148,7 +157,7 @@ node scripts/what-next.mjs                    # bản đồ việc, chỉ đọc
 | `REGRESSION_DA_COMMIT` | đỏ này có thật trong HEAD | sửa; **không** phải nhiễm từ phiên khác |
 | `NHIEM_TU_CAY_LAM_VIEC` | đỏ đến từ file sửa dở của lane khác | không chặn bạn; ai commit nó thì cổng của họ chặn |
 | `KHONG_TRICH_DUOC_HEAD` | không dựng được ảnh chụp | fail-closed có chủ ý; xem git có lành không |
-| `GENERATOR_DIRTY` | bộ sinh đang sửa dở | nó là thứ phán xử, nên commit nó trước |
+| `KHONG_DUNG_DUOC_ANH_CHUP_HEAD` | không chép nổi HEAD ra chỗ tạm để kiểm artifact | không kiểm được thì không đẩy; xem git có lành không |
 | *từ chối push, "cuốn theo việc của phiên khác"* | commit người khác nằm dưới commit bạn | chờ họ push, **hoặc** hỏi Đức rồi `--carry` |
 
 ## 7. Cố ý KHÔNG làm

@@ -2931,3 +2931,43 @@ vừa thiếu một dòng. Chừng nào chưa có git hook nhắc tại chỗ, c
 
 Suite: 270 phép kiểm xanh. Cổng đóng phiên XANH TOÀN BỘ.
 **Việc cần Đức: không có.**
+
+## Log — 2026-09-05, `claude-exec-pushgate` · cổng xuất bản hết chặn oan lane không liên quan
+
+**Đề bài:** `docs/briefs/BRIEF-PUSH-GATE-01.md` — Đức chốt hướng (b) của `IDEAS.md` mục `Y-09`.
+
+**Triệu chứng đã sửa.** Một phiên đang sửa bộ sinh trong cây làm việc thì **mọi phiên khác**
+không đẩy được, dù việc của họ đã xong và không dính gì tới file đó. Cây làm việc là của chung,
+nên nó biến một người đang làm việc bình thường thành cái khoá cửa của cả nhà. Nặng nhất là lúc
+phiên kia chạy **thử phá** — mỗi vòng bẩn file vài chục giây, nên càng làm đúng kỷ luật càng
+khoá cửa người khác. Đo thật trong một ngày: **4 lượt** chặn oan cho một lane không hề chạm bộ
+sinh, và một vòng chờ-tới-khi-sạch trượt hai lần liên tiếp.
+
+**Cách sửa, nói cho dễ hiểu.** Thứ sắp công bố là bản đã commit, nên người chấm cũng phải là
+bản đã commit. Nay cả hai cổng chép bản đã commit ra một chỗ tạm rồi chạy bộ sinh **ở đó**. File
+ai đang sửa dở không còn là đầu vào của phép chấm nữa, nên nó không chặn được ai. Không thêm cờ
+bỏ qua, không thêm biến môi trường — cổng có cửa sau thì thôi là cổng.
+
+**Phần chặn ĐÚNG giữ nguyên.** Không ai đẩy được một nhánh mà bảng đã commit nói sai về chính
+nhánh đó. Hai vế kéo ngược nhau này nay có phép ghim chạy được, đứng cạnh nhau: đạt vế này mà
+mất vế kia thì suite đỏ ngay.
+
+**Số thật, kể cả số xấu:**
+- Ca dựng thật trên chính repo này: bẩn một bộ sinh, đẩy ba commit không liên quan → **đẩy được**.
+- Đột biến kiểm **5 lượt**, cả 5 đỏ đúng khẳng định của mình.
+- **Một phép ghim NGƯỢC** trong suite cũ: nó đang ghim chính cái hành vi chặn oan. Đã lật lại,
+  và đổi bản-sửa-dở trong ca thử thành **bản độc** — bản cũ dùng một dòng chú thích vô hại, nên
+  phép ghim đó vẫn xanh kể cả khi cổng chạy nhầm bản.
+- **Hai phép ghim khác đang ghim CHUỖI NGUỒN**, không ghim hành vi: chúng chỉ đọc chữ trong
+  `session-check.mjs`, nên sau bản vá chúng vẫn xanh **nhờ chú thích của tôi**. Đã chỉnh cho trỏ
+  đúng cơ chế mới, nhưng chúng vẫn thuộc loại yếu — ghi ra để phiên sau biết.
+- **Một nhánh chưa có phép ghim:** "không dựng được bản chụp → chặn". Nhánh cũ nó thay thế cũng
+  chưa từng có, nên đây là nợ cũ, không phải nợ mới.
+- Suite: **364 phép kiểm xanh, 0 đỏ** (thêm 3 phép ghim mới). Cổng đóng phiên XANH TOÀN BỘ.
+  Đếm lại bằng: `npm test` rồi cộng các dòng `N passed` — đừng tin con số này sau vài ngày.
+
+**Một chỗ hở thấy dọc đường, chưa sửa:** `.git/worktrees/c` còn sót trên máy và git báo
+`Permission denied` mỗi lần commit. `MULTIFLOW.md` mục 7 cấm `git worktree add` đúng vì lý do
+này. Chưa đụng vào vì xoá file thì phải hỏi Đức.
+
+**Việc cần Đức: không có.**
