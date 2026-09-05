@@ -4433,6 +4433,16 @@
     state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
     if (state.resumeMode && state.resumePlan) {
       await verifyResumeDirectoryLedger();
+      // B-23: cửa BẮT BUỘC đọc `response_sha256`. Băm lại mọi câu trả lời text đã lưu và
+      // dựng lại kế hoạch TRƯỚC phép kiểm blocker ngay dưới, nên một ô bị sửa tay thành
+      // BLOCKER và rớt theo đúng đường RESUME_BLOCKED sẵn có — không thêm cổng thứ hai.
+      //
+      // ĐẶT Ở ĐÂY vì đây là chỗ hẹp nhất mà MỌI đường chạy đều đi qua: nút Run của người
+      // vận hành (run()) và cả `run.trial` của Bridge đều gọi hàm này trước khi một job nào
+      // được bỏ qua hay phái đi. Băm bằng CHÍNH hàm đã ghi dấu lúc chạy, không phải hàm khác.
+      await window.DacResumeCore.verifyResponseHashes(state.workbook, window.DacBridgeCore.hashText);
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
+      renderResumePlan();
       if ((!state.resumePlan.ready || state.resumePlan.findings.some((item) => item.severity === "BLOCKER")) && !(allowRecreate && approvedRecreateIsOnlyResumeBlocker())) throw new Error("RESUME_BLOCKED: Resolve the Resume Plan diagnostics before continuing.");
       window.DacResumeCore.applyToQueue(state.prepared.queue, state.resumePlan.jobs);
     }
@@ -4730,6 +4740,11 @@
     });
     if (state.resumeMode && state.resumePlan) {
       await verifyResumeDirectoryLedger();
+      // B-23, cùng phép băm như cửa bắt buộc trong authoritativeValidate(). Có ở đây để
+      // bảng Check Plan không nói "xanh" rồi nút Run mới nói "chặn" — hai câu trả lời khác
+      // nhau cho cùng một câu hỏi là cách nhanh nhất để người ta thôi tin bảng.
+      await window.DacResumeCore.verifyResponseHashes(state.workbook, window.DacBridgeCore.hashText);
+      state.resumePlan = window.DacResumeCore.plan(state.workbook);
       state.diagnostics.findings.push(...state.resumePlan.findings);
       state.diagnostics.blockers = state.diagnostics.findings.filter((finding) => finding.severity === "BLOCKER");
       state.diagnostics.warnings = state.diagnostics.findings.filter((finding) => finding.severity === "WARNING");

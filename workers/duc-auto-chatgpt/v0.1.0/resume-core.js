@@ -28,9 +28,61 @@
     const phase = text(job.attempt_phase).toUpperCase();
     return Boolean(text(job.submitted_at)) || postSubmitPhases.has(phase) || ["running", "reconciling", "interrupted", "stopped"].includes(lower(job.status));
   }
-  function validSavedAttribution(job = {}) {
+  // B-23: `response_sha256` được GHI từ 28/08 nhưng KHÔNG bao giờ được KIỂM — nhánh
+  // `text_reasoning` của validSavedAttribution chỉ so HÌNH DẠNG chuỗi hash. Ai mở Result
+  // XLSX bằng Excel, sửa một chữ trong ô câu trả lời mà GIỮ NGUYÊN số ký tự, thì hàng đó
+  // vẫn được xếp SAFE_COMPLETE và bị bỏ qua khi chạy tiếp. Một trường bằng chứng không ai
+  // đọc thì nó là trang trí, không phải bằng chứng.
+  //
+  // VÌ SAO KHÔNG ĐỔI CẢ CHUỖI HÀM SANG ASYNC: SHA-256 trong trình duyệt là hàm bất đồng
+  // bộ, còn classify()/validSavedAttribution() là đồng bộ và plan() được gọi từ 14 chỗ
+  // trong sidepanel.js. Đổi hết là một diện tích rủi ro lớn cho một phép so sánh nhỏ.
+  // Thay vào đó: băm TRƯỚC (một lượt, bất đồng bộ), cất phán quyết vào một WeakMap khoá
+  // theo chính workbook, rồi các hàm đồng bộ đọc lại phán quyết đó.
+  //
+  // WeakMap chứ không phải một trường trên job, và đó là cố ý: một trường trên job có thể
+  // bị codec ghi ngược ra XLSX, và lúc đó người sửa file chỉ cần thêm một cột để tự cấp
+  // cho mình một dấu đạt — đúng cái việc phép kiểm này sinh ra để chặn.
+  const HASH_VERDICTS = new WeakMap();
+
+  function verdictFor(workbook, job) { return HASH_VERDICTS.get(workbook)?.get(lower(job?.id)); }
+
+  // Băm lại MỌI câu trả lời text đã lưu trong sổ và đối chiếu với dấu vân tay đã ghi.
+  // `hashText` được TIÊM VÀO, không gọi thẳng WebCrypto: module này phải thuần để test
+  // chạy được chính nó, và hàm băm thật là cái đã GHI dấu (DacBridgeCore.hashText) —
+  // băm bằng một hàm khác thì phép so là vô nghĩa.
+  //
+  // Chỉ băm hàng NÀO ĐÃ CÓ dấu và có câu trả lời: hàng thiếu dấu đã trượt phép kiểm hình
+  // dạng sẵn có rồi, không cần băm để biết.
+  async function verifyResponseHashes(workbook, hashText) {
+    if (typeof hashText !== "function") throw new TypeError("Response hash callback is required.");
+    const table = new Map();
+    let checked = 0;
+    let mismatched = 0;
+    for (const job of activeJobs(workbook)) {
+      if (lower(job.task_type) !== "text_reasoning") continue;
+      const recorded = text(job.response_sha256);
+      const response = String(job.response_text ?? "");
+      if (!recorded || !response) continue;
+      const actual = await hashText(response);
+      const match = actual === recorded;
+      table.set(lower(job.id), match);
+      checked += 1;
+      if (!match) mismatched += 1;
+    }
+    HASH_VERDICTS.set(workbook, table);
+    return { checked, mismatched, matched: checked - mismatched };
+  }
+
+  // `hashVerdict`: true = đã băm lại và KHỚP · false = đã băm lại và LỆCH · undefined = chưa
+  // băm lại lần nào. LỆCH luôn trượt. CHƯA BĂM thì rơi về phép kiểm hình dạng cũ — đủ cho
+  // bảng hiển thị, và KHÔNG phải chỗ gánh: cửa thật là authoritativeValidate(), nơi mọi
+  // đường chạy (nút Run lẫn run.trial của Bridge) đều BẮT BUỘC băm lại trước khi một job
+  // nào được bỏ qua. Không run nào khởi động được trên hàng text chưa băm lại.
+  function validSavedAttribution(job = {}, hashVerdict) {
     const taskType = lower(job.task_type) || "image_generation";
     if (taskType === "text_reasoning") {
+      if (hashVerdict === false) return false;
       const response = String(job.response_text ?? "");
       const charCount = Number(job.response_char_count);
       return bool(job.persistence_verified)
@@ -45,9 +97,13 @@
     const requested = leaf(job.requested_file);
     return !requested || requested === result;
   }
-  function classify(job = {}) {
+  function classify(job = {}, hashVerdict) {
     const status = lower(job.status);
-    if (["success", "done"].includes(status) && validSavedAttribution(job)) return { state: "SAFE_COMPLETE", code: "", message: "Verified persisted output; skip on continuation." };
+    if (["success", "done"].includes(status) && validSavedAttribution(job, hashVerdict)) return { state: "SAFE_COMPLETE", code: "", message: "Verified persisted output; skip on continuation." };
+    // Dấu vân tay lệch có mã RIÊNG: gộp chung vào AMBIGUOUS chung chung thì người đọc
+    // tưởng job bị ngắt giữa chừng, trong khi sự thật là ô câu trả lời trên đĩa đã KHÁC với
+    // cái ChatGPT trả về. Hai việc khác nhau, hai cách xử lý khác nhau.
+    if (hashVerdict === false) return { state: "AMBIGUOUS_SUBMITTED", code: "RESUME_RESPONSE_HASH_MISMATCH", message: "Câu trả lời đã lưu không còn khớp dấu vân tay response_sha256 ghi lúc chạy. Ô này đã bị sửa sau khi ghi." };
     if (bool(job.recreate_operator_approved)) return { state: "AMBIGUOUS_SUBMITTED", code: "RESUME_RECREATE_INCOMPLETE", message: "Operator-approved recreate has not produced a verified persisted output. Continue remains blocked." };
     // FAILED is only ever reached after the runner exhausted every retry on a
     // non-hard-stop failure (pre- or post-submit alike) and deliberately gave
@@ -104,7 +160,7 @@
     const run = identity(workbook);
     const findings = validateLedger(workbook);
     const active = activeJobs(workbook);
-    const jobs = active.map((job) => ({ job_id: text(job.id), ...classify(job) }));
+    const jobs = active.map((job) => ({ job_id: text(job.id), ...classify(job, verdictFor(workbook, job)) }));
     const count = (state) => jobs.filter((item) => item.state === state).length;
     const ambiguous = jobs.filter((item) => item.state === "AMBIGUOUS_SUBMITTED");
     for (const item of ambiguous) findings.push({ code: item.code, severity: "BLOCKER", scope: "resume", job_ids: [item.job_id], message: item.message, guidance: "Do not submit this job again. Review the prior ChatGPT outcome and persisted artifact manually." });
@@ -128,5 +184,5 @@
   }
   function summaryText(summary) { return `${summary.completed} completed · ${summary.safe_pending} safe pending · ${summary.failed} failed (skipped) · ${summary.ambiguous_submitted} need review`; }
 
-  (typeof window !== "undefined" ? window : globalThis).DacResumeCore = { createRunId, legacyRunId, identity, validSavedAttribution, classify, validateLedger, checkpointValidation, plan, applyToQueue, summaryText };
+  (typeof window !== "undefined" ? window : globalThis).DacResumeCore = { createRunId, legacyRunId, identity, verifyResponseHashes, validSavedAttribution, classify, validateLedger, checkpointValidation, plan, applyToQueue, summaryText };
 })();
