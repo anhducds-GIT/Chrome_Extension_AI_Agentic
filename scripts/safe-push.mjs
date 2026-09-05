@@ -18,8 +18,9 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyAtEof, appendOnlyExemptFrom, claimPrefixesFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, claimPrefixesFrom, generatorsFrom, kiemArtifactTuHead, laneFromMessage, LANE_TRAILER, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
 
+const NEWLINE = String.fromCharCode(10);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const asLabel = args[args.indexOf("--as") + 1];
@@ -258,37 +259,36 @@ if (declaredGenerators) {
   console.log("  Đây là \"chưa kiểm\", không phải \"đã đạt\". Repo có bộ sinh thì khai nó vào để cổng có răng.");
 }
 
-const artifactStale = [];
-for (const script of generators) {
-  const file = path.join(ROOT, "scripts", script);
-  // KHAI mà thiếu thì ĐỎ; MẶC ĐỊNH mà thiếu thì bỏ qua. Hai chuyện khác nhau, và fixture 23b
-  // bắt được đúng lúc tôi gộp chúng: một repo dựng từ bộ khung KHÔNG khai `generators` và cũng
-  // không mang mấy script đó theo — nó là repo không có bộ sinh, chặn nó là khoá repo vĩnh viễn.
-  // Còn khai rồi mà file biến mất thì là repo hỏng thật.
-  if (!fs.existsSync(file)) {
-    if (declaredGenerators) {
-      artifactStale.push(`scripts/${script} đã KHAI trong .repo-structure.json nhưng KHÔNG có trong repo — khai rồi mà thiếu là repo hỏng, không phải chuyện bỏ qua.`);
-    }
-    continue;
-  }
-  // Bộ sinh sửa dở thì chính nó không đáng tin để phán xử — nói ra, đừng lặng lẽ cho qua.
-  if (gitQuiet("status", "--porcelain", `scripts/${script}`).trim() !== "") {
-    artifactStale.push(`scripts/${script} đang sửa dở chưa commit — nó là thứ phán xử, nên kết quả không đáng tin.`);
-    continue;
-  }
-  try {
-    execFileSync(process.execPath, [file, "--check-head"], { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 120000 });
-  } catch (error) {
-    const detail = String(error.stderr || error.stdout || error.message).trim().split("\n").slice(-2).join(" | ");
-    artifactStale.push(`${script} không khớp với HEAD${detail ? ` → ${detail}` : ""}`);
-  }
+/* CHẠY TRÊN ẢNH CHỤP HEAD, KHÔNG TRÊN CÂY LÀM VIỆC — PUSH-GATE-01, Đức chốt 05/09.
+ *
+ * Bản trước có thêm một cửa từ chối nữa ngay tại đây: bộ sinh đang sửa dở trong cây làm việc
+ * thì từ chối đẩy, vì "nó là thứ phán xử, nên kết quả không đáng tin". Lý lẽ đúng, chỗ chặn
+ * sai. Cây làm việc là của CHUNG mọi phiên, nên câu đó biến bất kỳ phiên nào đang sửa bộ sinh
+ * thành cái khoá cửa xuất bản của MỌI phiên còn lại — kể cả những phiên không chạm gì tới nó.
+ * Đo thật 05/09: 4 lượt từ chối trong một ngày cho một lane, không lượt nào lane đó chạm bộ
+ * sinh; nặng nhất là lúc phiên kia chạy đột biến kiểm, vì mỗi vòng bẩn file vài chục giây nên
+ * một vòng chờ-tới-khi-sạch trượt hai lần liên tiếp.
+ *
+ * Nay quan toà là bộ sinh Ở HEAD, chạy trong một bản chụp HEAD (`kiemArtifactTuHead`). Thứ
+ * sắp công bố là HEAD, nên đó vốn là quan toà đúng ngay từ đầu. KHÔNG có cờ bỏ qua, KHÔNG có
+ * biến môi trường: bảo đảm "không ai đẩy được một nhánh mà artifact đã commit không khớp với
+ * HEAD" giữ nguyên từng chữ — chỉ có phần chặn OAN bị bỏ.
+ */
+const artifact = kiemArtifactTuHead(ROOT, generators, { thieuLaDo: declaredGenerators });
+if (artifact.ok === null) {
+  // KHÔNG BIẾT thì CHẶN — bất biến ④. Cổng không dựng được ảnh chụp mà vẫn cho qua thì nó
+  // không đỏ, nó chỉ biến thành không làm gì, và cái đó trông y hệt "đã đạt".
+  console.error(`${NEWLINE}TỪ CHỐI PUSH — không dựng được bản chụp HEAD để kiểm sự thật máy sinh:`);
+  console.error(`  ${artifact.ly_do}`);
+  console.error(`Không kiểm được thì không đẩy. Xem git có lành không: git status và git fsck.${NEWLINE}`);
+  process.exit(1);
 }
-if (artifactStale.length) {
-  console.error("\nTỪ CHỐI PUSH — sự thật máy sinh chưa khớp với thứ bạn sắp đẩy:");
-  for (const line of artifactStale) console.error(`  ${line}`);
-  console.error(`\nĐẩy lúc này là công bố một bảng nói sai về chính nhánh vừa đẩy.`);
+if (!artifact.ok) {
+  console.error(`${NEWLINE}TỪ CHỐI PUSH — sự thật máy sinh chưa khớp với thứ bạn sắp đẩy:`);
+  for (const line of artifact.lech) console.error(`  ${line}`);
+  console.error(`${NEWLINE}Đẩy lúc này là công bố một bảng nói sai về chính nhánh vừa đẩy.`);
   console.error(`Cách sửa: ${generators.map((s) => `node scripts/${s}`).join(" && ")}`);
-  console.error("Rồi commit phần vừa sinh (nếu có — nội dung không đổi thì nó KHÔNG ghi gì) và chạy lại lệnh này.\n");
+  console.error(`Rồi commit phần vừa sinh (nếu có — nội dung không đổi thì nó KHÔNG ghi gì) và chạy lại lệnh này.${NEWLINE}`);
   process.exit(1);
 }
 

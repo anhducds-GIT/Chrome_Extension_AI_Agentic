@@ -18,7 +18,7 @@ import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
-import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, claimPrefixesFrom, generatorsFrom, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, claimPrefixesFrom, generatorsFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -523,27 +523,17 @@ check("Test xanh", () => {
 // Phép kiểm này dựng và so hoàn toàn từ HEAD: chạy SAU commit, trước safe-push.
 // Nó không đọc hay ghi working tree, vì việc đang làm dở của bất kỳ phiên nào
 // cũng không được làm đỏ sự thật đã commit. --quick chỉ bỏ test, không bỏ phép này.
-// Bộ kiểm phải là bản ĐÃ COMMIT. Phép kiểm này chạy `scripts/*.mjs` ở WORKING TREE
-// để phán xem artifact đã commit có khớp HEAD không — nên một bản sửa dở của chính
-// bộ sinh có thể làm cổng nói dối về chính nó. Audit GPT 2026-09-02, mục 4.
-// Không sửa bằng cách chạy blob HEAD trong thư mục tạm: bộ sinh tự tính ROOT theo vị
-// trí file của nó, chạy ở chỗ khác là tính sai gốc repo. Cách đúng và rẻ: từ chối tin
-// kết quả khi bộ kiểm chưa commit. Đúng quy trình đã ghi (commit → cổng → push) thì
-// lúc chạy cổng cây làm việc vốn đã sạch, nên phép kiểm này không cản ai cả.
-function verifierMatchesHead(script) {
-  try {
-    const diff = execFileSync("git", ["-c", "core.quotepath=false", "diff", "HEAD", "--name-only", "--", `scripts/${script}`], {
-      cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"]
-    });
-    return diff.trim() === "";
-  } catch {
-    // FAIL CLOSED. Bản trước trả `true` với lý lẽ "không hỏi được git thì đừng bịa ra
-    // cáo buộc" — nghe hợp lý, nhưng hậu quả là: git hỏng → phép kiểm im lặng bỏ qua →
-    // cổng vẫn xanh dựa trên một điều nó KHÔNG kiểm được. Không biết thì phải nói là
-    // không biết, không được nói là ổn. Audit GPT 2026-09-02, mục 5.
-    return null;
-  }
-}
+// Bộ kiểm phải là bản ĐÃ COMMIT — nếu không thì một bản sửa dở của chính bộ sinh làm cổng
+// nói dối về chính nó (audit GPT 02/09, mục 4). Cho tới 05/09 cách xử là TỪ CHỐI TIN khi bộ
+// sinh còn sửa dở, kèm ghi chú "không chạy blob HEAD trong thư mục tạm được, vì bộ sinh tự
+// tính ROOT theo vị trí file của nó". Ghi chú đó đúng về blob, nhưng nó kết luận quá tay:
+// chép cả REPO ra chỗ tạm thì ROOT lại đúng, vì bộ sinh vẫn nằm trong `scripts/` của một
+// repo thật. `kiemArtifactTuHead` làm đúng thế (PUSH-GATE-01, 05/09) — xem khối chú thích
+// dài trong `repo-structure.mjs`, kể cả ba chi tiết đã trả giá.
+//
+// Vì sao phải đổi: "từ chối tin" nghe rẻ, nhưng cây làm việc là của CHUNG, nên nó biến một
+// phiên đang sửa bộ sinh thành cái khoá cửa của mọi phiên khác. Đo thật 05/09: 4 lượt chặn
+// oan trong một ngày cho một lane không hề chạm bộ sinh.
 
 /* K2-2 (thu hẹp bán kính của phép kiểm này) CỐ Ý CHƯA LÀM Ở ĐÂY — và lý do đáng ghi lại.
 
@@ -574,35 +564,27 @@ check("Sự thật máy sinh còn tươi", () => {
   // một repo dựng từ bộ khung chạy cổng này là hỏng ngay ở cổng của chính nó. Audit độc lập
   // bắt được; phép thử repo rỗng của tôi thì không, vì nó chỉ chạy cổng CẤU TRÚC.
   const scripts = generatorsFrom(structure);
-  const failures = [];
-  const verdicts = scripts.map((script) => ({ script, clean: verifierMatchesHead(script) }));
-  const unknown = verdicts.filter((entry) => entry.clean === null);
-  if (unknown.length) {
+  /* ĐO BẰNG HÀM DÙNG CHUNG — PUSH-GATE-01, 05/09.
+   *
+   * Trước bản này phép kiểm ở đây chạy bộ sinh Ở CÂY LÀM VIỆC, nên nó phải tự vệ bằng hai
+   * cửa từ chối riêng (`GENERATOR_DIRTY` và `VERIFIER_UNKNOWN`) — và cổng xuất bản có bản sao
+   * của đúng hai cửa đó. Hai bản sao của một luật là cái bẫy repo này đã sập đúng một lần rồi
+   * (`append_only_exempt`, 02/09: hai chỗ trả hai câu khác nhau cho cùng một file). Nay cả hai
+   * gọi `kiemArtifactTuHead`, chạy bộ sinh Ở HEAD trong một bản chụp HEAD — cây làm việc thôi
+   * không còn là đầu vào, nên hai cửa kia không còn lý do tồn tại.
+   *
+   * CHÍNH SÁCH thì vẫn được phép khác nhau, và cố ý khác: ở đây artifact lệch chỉ NÓI TO
+   * (K2-8 — artifact đo việc của MỌI lane nên đòi ở đây là đòi sai người), còn cổng xuất bản
+   * thì CHẶN. Khác chính sách thì được; khác CÁCH ĐO thì không. */
+  const artifact = kiemArtifactTuHead(ROOT, scripts);
+  if (artifact.ok === null) {
+    // KHÔNG BIẾT thì ĐỎ — bất biến ④. Giữ nguyên độ chặt của `VERIFIER_UNKNOWN` cũ.
     return {
       ok: false,
-      msg: `VERIFIER_UNKNOWN: không hỏi được git về ${unknown.map((entry) => `scripts/${entry.script}`).join(", ")}. Phép kiểm này dùng chính script đó để phán xử; không xác nhận được nó có sạch không thì kết quả không đáng tin. Không biết thì nói là không biết.`
+      msg: `${artifact.ly_do}. Phép kiểm này so artifact đã commit với bản sinh từ HEAD, và nó cần một bản chụp HEAD để chạy. Không dựng được thì không xác nhận được gì — không biết thì nói là không biết.`
     };
   }
-  const dirtyVerifiers = verdicts.filter((entry) => entry.clean === false).map((entry) => entry.script);
-  if (dirtyVerifiers.length) {
-    return {
-      ok: false,
-      msg: `GENERATOR_DIRTY: ${dirtyVerifiers.map((s) => `scripts/${s}`).join(", ")} đang sửa dở chưa commit. Phép kiểm này dùng chính script đó để phán xử, nên kết quả không đáng tin. Commit bộ sinh trước, rồi chạy lại cổng.`
-    };
-  }
-  for (const script of scripts) {
-    try {
-      execFileSync(process.execPath, [path.join(ROOT, "scripts", script), "--check-head"], {
-        cwd: ROOT,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-        timeout: 120000
-      });
-    } catch (error) {
-      const detail = String(error.stderr || error.stdout || error.message).trim().split("\n").slice(-4).join(" | ");
-      failures.push(`${script} không khớp với HEAD${detail ? ` → ${detail}` : ""}`);
-    }
-  }
+  const failures = artifact.lech;
   if (failures.length) {
     // KHÔNG CÒN ĐỎ Ở ĐÂY — chuyển sang cổng push (K2-8, 03/09, GPT duyệt).
     //

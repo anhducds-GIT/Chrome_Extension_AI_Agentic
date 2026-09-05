@@ -42,11 +42,11 @@
       "duc_decision": "Duc chot 2026-09-05: Duc da TU DUNG phien claude-rename-bang, va uy quyen cho phien dieu phoi giai phong khoa cua phien khong con chay KHI cay lam viec sach. Da kiem truoc khi giai phong: cay sach hoan toan, 4 commit cua no da duoc day len origin theo Duc duyet --carry, khong dong nao bi mat."
     },
     "_docs": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-05T08:19",
       "task": "ADR-0004 mo hinh mot cua + nhiem vu live report",
-      "released_at": null,
+      "released_at": "2026-09-05T08:21",
       "taken_from": "claude-rename-bang",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -54,11 +54,11 @@
       "duc_decision": "Duc chot 2026-09-05: Duc da TU DUNG phien claude-rename-bang, va uy quyen cho phien dieu phoi giai phong khoa cua phien khong con chay KHI cay lam viec sach. Da kiem truoc khi giai phong: cay sach hoan toan, 4 commit cua no da duoc day len origin theo Duc duyet --carry, khong dong nao bi mat."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-05T08:18",
-      "task": "dong luot doi ten bang",
-      "released_at": "2026-09-05T08:20",
+      "owner": "claude-exec-pushgate",
+      "ai": "Claude",
+      "claimed_at": "2026-09-05T08:22",
+      "task": "PUSH-GATE-01 — cong xuat ban chan oan lane khong lien quan",
+      "released_at": null,
       "taken_from": "claude-rename-bang",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -66,5 +66,5 @@
       "duc_decision": "Duc chot 2026-09-05: Duc da TU DUNG phien claude-rename-bang, va uy quyen cho phien dieu phoi giai phong khoa cua phien khong con chay KHI cay lam viec sach. Da kiem truoc khi giai phong: cay sach hoan toan, 4 commit cua no da duoc day len origin theo Duc duyet --carry, khong dong nao bi mat."
     }
   },
-  "_fingerprint": "24a82d1a638e1e2a"
+  "_fingerprint": "44f57ccf58d7ec56"
 }

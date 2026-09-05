@@ -18,7 +18,9 @@
  * quy commit cho SAI chủ. Không khai gì thì mới dùng mặc định (giữ tương thích ngược).
  */
 
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 export const STRUCTURE_FILE = ".repo-structure.json";
@@ -548,4 +550,88 @@ export function quyTrachNhiemSuite({ vungToiGiuConBan, ketQuaTrenHead }) {
   if (ketQuaTrenHead === null) return { ok: false, ly_do: "KHONG_TRICH_DUOC_HEAD" };
   if (ketQuaTrenHead === false) return { ok: false, ly_do: "REGRESSION_DA_COMMIT" };
   return { ok: true, bo_qua: true, ly_do: "NHIEM_TU_CAY_LAM_VIEC" };
+}
+
+/* ---- ẢNH CHỤP HEAD, và phép kiểm độ tươi artifact chạy TRÊN ĐÓ ------------
+ *
+ * VÌ SAO CÓ ĐOẠN NÀY (PUSH-GATE-01, 05/09). Trước bản này cả cổng đóng phiên lẫn cổng xuất
+ * bản đều chạy `node scripts/<bộ-sinh> --check-head` bằng bản bộ sinh Ở CÂY LÀM VIỆC. Cây
+ * làm việc là của CHUNG mọi phiên, nên một phiên khác đang sửa dở bộ sinh làm bản án không
+ * đáng tin — và cả hai chỗ xử bằng cách TỪ CHỐI. Hệ quả đo được ngày 05/09: một lane bị chặn
+ * xuất bản 4 lượt trong một ngày, không lượt nào lane đó chạm vào bộ sinh. Nặng nhất là lúc
+ * phiên kia chạy ĐỘT BIẾN KIỂM: mỗi vòng đột biến bẩn file vài chục giây, nên càng làm đúng
+ * kỷ luật càng khoá cửa xuất bản của người khác.
+ *
+ * Cách sửa KHÔNG phải là nới: thứ sắp công bố là HEAD, nên quan toà cũng phải là HEAD. Chép
+ * HEAD ra một repo tạm rồi chạy bộ sinh Ở ĐÓ. Cây làm việc thôi không còn là đầu vào của phép
+ * kiểm này, nên nó không chặn oan được nữa — mà phần chặn ĐÚNG thì y nguyên: artifact đã
+ * commit lệch với HEAD thì trong ảnh chụp nó vẫn lệch.
+ *
+ * BA CHI TIẾT ĐÃ TRẢ GIÁ, đừng "dọn" mất:
+ *   1. TÊN THƯ MỤC ẢNH CHỤP PHẢI GIỮ NGUYÊN tên thư mục repo. Bộ sinh suy danh tính repo từ
+ *      tên thư mục khi `.repo-structure.json` không khai; chụp vào thư mục tên `r` thì bảng
+ *      sinh ra mang tên `r` và `--check-head` báo lệch — ĐỎ OAN, và trông y hệt lệch thật.
+ *      Đo thật lúc dựng: đúng hai dòng khác nhau, cả hai là tên repo.
+ *   2. ẢNH CHỤP PHẢI BIẾT GIT (`git clone`, không phải chép file trần) và phải có cả mốc
+ *      `origin/main`. Bộ sinh đọc HEAD qua git; bản chép trần làm nó chết vì thiếu git rồi bị
+ *      quy oan thành "artifact lệch".
+ *   3. KHÔNG DỰNG ĐƯỢC ẢNH CHỤP = KHÔNG BIẾT, và không biết thì không được coi là đã đạt
+ *      (bất biến ④ của MULTIFLOW). Hàm trả `ok: null`; bên gọi tự quyết chặn hay báo.
+ *
+ * Đây là HÀM DÙNG CHUNG có chủ ý: cùng một luật độ tươi từng sống ở hai bản sao, và ngày
+ * 02/09 hai bản sao của `append_only_exempt` đã trả hai câu KHÁC NHAU cho cùng một file. Hai
+ * cổng vẫn được quyền có CHÍNH SÁCH khác nhau (cổng đóng phiên chỉ nói to, cổng xuất bản thì
+ * chặn) — nhưng CÁCH ĐO thì chỉ được có một. */
+export function anhChupHead(root) {
+  const at = (cwd, ...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  const head = at(root, "rev-parse", "HEAD").trim();
+  if (!head) throw new Error("khong doc duoc HEAD");
+  const box = fs.mkdtempSync(path.join(os.tmpdir(), "anh-chup-head-"));
+  // Giữ nguyên tên thư mục repo — xem chi tiết 1 ở khối chú thích trên.
+  const dir = path.join(box, path.basename(root));
+  try {
+    at(root, "clone", "-q", ".", dir);
+    at(dir, "checkout", "-q", "--detach", head);
+    let moc = "";
+    try { moc = at(root, "rev-parse", "origin/main").trim(); } catch { moc = ""; }
+    if (moc) at(dir, "update-ref", "refs/remotes/origin/main", moc);
+  } catch (error) {
+    fs.rmSync(box, { recursive: true, force: true });
+    throw error;
+  }
+  return { dir, dispose: () => fs.rmSync(box, { recursive: true, force: true }) };
+}
+
+/* Trả về một trong ba:
+     { ok: true,  lech: [] }        — mọi artifact đã commit đều khớp HEAD
+     { ok: false, lech: [...] }     — có artifact lệch (hoặc bộ sinh đã khai mà HEAD không có)
+     { ok: null,  ly_do }           — không dựng được ảnh chụp → KHÔNG BIẾT
+   `thieuLaDo`: bộ sinh không có ở HEAD thì tính là lệch hay bỏ qua. Khai rồi mà thiếu là repo
+   hỏng (ĐỎ); còn danh sách MẶC ĐỊNH mà thiếu là repo vốn không có bộ sinh (bỏ qua) — gộp hai
+   ca này lại là khoá vĩnh viễn một repo vừa dựng từ bộ khung. */
+export function kiemArtifactTuHead(root, scripts, { thieuLaDo = true, timeout = 120000 } = {}) {
+  if (!scripts.length) return { ok: true, lech: [] };
+  let anh;
+  try { anh = anhChupHead(root); }
+  catch (error) {
+    const detail = String(error.stderr || error.stdout || error.message).trim().split(String.fromCharCode(10)).slice(-2).join(" | ");
+    return { ok: null, ly_do: `KHONG_DUNG_DUOC_ANH_CHUP_HEAD: ${detail}` };
+  }
+  try {
+    const lech = [];
+    for (const script of scripts) {
+      const file = path.join(anh.dir, "scripts", script);
+      if (!fs.existsSync(file)) {
+        if (thieuLaDo) lech.push(`scripts/${script} đã KHAI trong ${STRUCTURE_FILE} nhưng KHÔNG có ở HEAD — khai rồi mà thiếu là repo hỏng, không phải chuyện bỏ qua.`);
+        continue;
+      }
+      try {
+        execFileSync(process.execPath, [file, "--check-head"], { cwd: anh.dir, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout });
+      } catch (error) {
+        const detail = String(error.stderr || error.stdout || error.message).trim().split(String.fromCharCode(10)).slice(-2).join(" | ");
+        lech.push(`${script} không khớp với HEAD${detail ? ` → ${detail}` : ""}`);
+      }
+    }
+    return { ok: lech.length === 0, lech };
+  } finally { anh.dispose(); }
 }
