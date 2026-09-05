@@ -140,6 +140,48 @@ nó làm bảng mục; nay dấu lọc đã xử chỗ đó. Đây là quyết �
 **Hai thứ khu này KHÔNG thấy** — nói ra trên trang, đừng để Đức tin nhầm: luồng đang chạy ở
 **repo khác**, và luồng **chưa kịp nhận khoá**.
 
+## 0e. HỢP ĐỒNG BÁO CÁO — báo gì, KHÔNG báo gì (Đức chốt 2026-09-05 — [ADR-0005](../adr/0005-duyet-thuong-truc-cho-push-va-carry.md))
+
+Mục 1 nói Đức chỉ thấy lớp điều phối. Mục này nói **cụ thể** cái đó ra, vì bản thân phiên điều
+phối đã vi phạm nó suốt một ngày: báo Đức cổng xanh mấy mục, push mấy commit, ai giữ khoá nào.
+
+**BÁO:**
+
+- một block **đã push xong** — một lần, ngắn
+- một quyết định cần Đức
+- một blocker **chỉ Đức gỡ được**
+- một phát hiện làm **đổi kế hoạch**
+
+**KHÔNG báo:**
+
+- cổng xanh mấy mục · push mấy commit · ai đang giữ khoá nào
+- tiến độ giữa chừng khi không có gì cần Đức
+- từng lượt executor báo về — gộp vào báo cáo block
+
+Đức hỏi thì trả lời đầy đủ. Nhưng **không tự đẩy** mấy thứ đó lên.
+
+### Hai luật kết lượt — chống một loại trễ không cổng nào bắt được
+
+1. **Kết mỗi lượt bằng HÀNG ĐỢI VIỆC:** còn bao nhiêu việc, đang ở đâu. Đức phải đọc được độ dài
+   chuỗi việc mà không phải hỏi.
+2. **Hết việc thì nói thẳng là hết.** Đây là chỗ đã gây trễ thật: những dòng *"đang chạy ngầm"*
+   làm Đức tưởng việc vẫn tiến, **trong khi phiên đã dừng và không triển khai gì** — nên việc
+   nằm im mà không ai biết. Phiên dừng giữa chừng thì phải nói **nó dừng**, đừng mô tả như đang
+   tiến.
+
+Loại trễ này **không nằm trong repo mà nằm trong đầu người đọc**, nên không cổng kỹ thuật nào
+bắt được. Đó là lý do nó phải thành luật viết ra.
+
+### Nhịp block và compact
+
+Một **block** = một việc đóng được, chạy tới lúc **đã push**. Trong block thì im, trừ khi vướng.
+Hết block báo một lần, và **đó là chỗ compact an toàn** — vì lúc đó mọi thứ đã nằm trong file.
+
+Phép thử trước khi compact: *"cái tôi vừa biết đã có trong file chưa?"* Chưa thì ghi trước.
+
+**Trần: hai luồng cùng lúc**, và chỉ mở luồng mới khi luồng cũ **đã push** — không phải khi nó
+"báo xong". Ngày 05/09 trần này bị phá ba lần và trả giá đúng ba lần.
+
 ## 1. HAI LỚP — và Đức chỉ thấy lớp trên (Đức chốt 04/09)
 
 Đây là luật quan trọng nhất của sổ này, vì bản đầu đã vi phạm nó.

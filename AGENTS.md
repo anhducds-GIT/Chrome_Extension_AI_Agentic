@@ -108,9 +108,13 @@ cả ba điều kiện:
 Lý do Đức đổi luật: Đức không đọc được code local; GPT audit qua GitHub connector, nên
 commit chưa push là **vô hình** với vòng kiểm tra chéo. Push sớm = được audit sớm.
 
-Hai ngoại lệ vẫn phải hỏi: (a) safe-push từ chối vì sắp cuốn theo commit của phiên khác —
-đẩy hộ việc người khác không nằm trong luật này; (b) force-push, sửa lịch sử, merge nhánh
-vào `main`.
+**Từ 05/09 `--carry` KHÔNG còn phải hỏi** — Đức duyệt thường trực
+([ADR-0005](docs/adr/0005-duyet-thuong-truc-cho-push-va-carry.md)): mô hình một cửa khiến các
+lane chưa push gần như luôn là executor do chính phiên điều phối giao, và đo trong hai ngày
+04–05/09 thì cửa đó **chặn 6 lượt mà lọc 0 lượt** — một cổng không lọc được gì thì nó là thuế,
+không phải cổng. Đổi lại, **mọi lượt `--carry` phải kể tên lane bị cuốn theo trong nhật ký
+phiên** — đó là thứ duy nhất còn lại để truy, vì lớp chắn cuối đã bỏ. Ba việc vẫn phải hỏi:
+**force-push, sửa lịch sử, merge nhánh vào `main`**.
 
 **MỌI commit phải có dòng cuối `Lane: <tên-phiên>`** — đúng tên bạn đưa cho `--as`, một dòng,
 không dấu cách. Thiếu nhãn thì cổng đóng phiên ĐỎ **và `safe-push` từ chối đẩy** (từ 03/09) —
