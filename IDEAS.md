@@ -393,3 +393,23 @@ fixture — đạt vế này mà mất vế kia thì suite đỏ.
 
 **Nhà:** `docs/briefs/BRIEF-PUSH-GATE-01.md` · luật vận hành: `docs/protocols/MULTIFLOW.md`
 mục 4 bất biến ⑤ và bảng mã lỗi.
+
+## Y-14 · Rà lại lõi và nội dung cả repo để AI không nạp phải rác
+
+- **bậc:** ý tưởng
+- **nguồn:** Đức nêu 2026-09-05
+- **việc kế:** **CHƯA LÀM** — Đức chốt để sau khi xong gói Assistant và nợ kỹ thuật
+- **vì sao:** mỗi phiên AI mở ra là nạp một lượng tài liệu cố định trước khi làm được gì. Tài
+  liệu chết, tài liệu trùng, tài liệu nói ngược nhau đều bị nạp y như tài liệu sống — và cái
+  nói ngược thì tệ hơn cái chết, vì AI tin nó. Đo được trong ngày 04–05/09: **bốn** chỗ tài
+  liệu nói theo luật cũ sau một lần đổi luật, và **ba brief đã ship xong vẫn khai `status:
+  active`** nên bảng báo chúng còn mở.
+- **vì sao chưa làm ngay:** rà nội dung khi gói Assistant còn đang đổi là rà một thứ đang động —
+  sẽ phải rà lại. Và nợ kỹ thuật (bảng đang đếm 62 mục) có thể tự xoá bớt một phần rác khi đóng.
+- **phạm vi khi làm:** chủ yếu `_docs` và `_root`. Có thể chạm `.repo-structure.json` (khai hạn
+  rà) nên cần `_root`.
+- **đo trước khi sửa:** đếm số tài liệu quá hạn rà mà cổng cấu trúc đang cảnh báo, và đếm số
+  file `status: active` mà thực tế đã xong. Hai con số đó là kích thước thật của đống rác;
+  đừng rà theo cảm giác.
+- **cẩn thận:** đây là loại việc rất dễ biến thành viết lại cả repo. Ranh giới nên đặt trước:
+  **xoá và gộp thì được, viết lại nội dung đang đúng thì không.**
