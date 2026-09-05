@@ -493,3 +493,25 @@ mục 4 bất biến ⑤ và bảng mã lỗi.
 - **chưa đo:** hai gói ChatGPT và Gemini có cùng quả mìn này không. Cách đo rẻ nhất: ép CRLF
   toàn gói rồi chạy suite của gói đó, xem có phép thử nào đỏ lên.
 - **phạm vi khi làm:** `.gitattributes` ở gốc repo (`_root`).
+
+## Y-18 · Phép kiểm "không phụ thuộc đồng hồ" báo đỏ oan khi hai lane commit cùng lúc
+
+- **bậc:** ý tưởng
+- **nguồn:** gặp thật 2026-09-05, lane `claude-moc-da-xong`, một lần đỏ rồi tự xanh lại
+- **việc kế:** đo xem nó đỏ oan bao nhiêu lần trong lịch sử thật, rồi mới quyết có sửa không
+- **hiện tượng:** phép kiểm sinh trang **hai lần** rồi so từng byte, để bắt mọi chỗ lỡ dùng
+  đồng hồ hệ thống. Nhưng trang suy từ **HEAD**, mà HEAD **di chuyển được giữa hai lượt sinh**
+  khi lane khác commit xen vào. Lần gặp: lệch 46 byte, hai lane khác commit lúc 20:32 và 20:38.
+  Chạy lại trên cây yên tĩnh thì xanh ngay.
+- **vì sao đáng ghi:** đây **không** phải bug của trang. Đó là một phép kiểm **đỏ oan đúng lúc
+  nhiều lane chạy song song** — tức đúng lúc nó gây thiệt hại nhất. Và nó đỏ theo kiểu khó bác
+  bỏ: chạy lại thì xanh, nên phiên gặp phải sẽ mất thời gian đi tìm một lỗi không tồn tại, hoặc
+  tệ hơn là **quen với việc chạy lại cho tới khi xanh** — mà đó chính là thói quen phép kiểm này
+  sinh ra để chặn.
+- **hướng nghĩ tới, chưa đo:** ghim HEAD một lần ở đầu phép kiểm rồi sinh cả hai lượt từ đúng
+  mã băm đó, thay vì đọc HEAD hai lần. Nếu đúng thì đây là sửa một dòng.
+- **phạm vi khi làm:** `tests/build-overview-smoke.mjs` (`_code`). **Là sửa cơ chế đa phiên**
+  (cổng xuất bản) → bắt buộc có đột biến kiểm.
+- **liên quan:** cùng họ với `Y-16` — cả hai đều là cơ chế đúng khi một lane chạy, và sai khi
+  nhiều lane chạy. Bốn cơ chế đa phiên được thiết kế cho **xung đột ghi**; hai mục này là
+  **xung đột đọc**, một loại chưa ai tính tới.
