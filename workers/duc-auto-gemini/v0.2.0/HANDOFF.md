@@ -787,3 +787,59 @@ Cổng đóng phiên vẫn bắt (`session-check` gọi thẳng `run-all.mjs` c�
 
 **Còn mở:** G-01 (trial live sau khi Đức reload — luật mục 2 bắt hỏi Đức trước) và G-10 (ba
 guard lớp hai chưa có phép ghim) chưa động tới trong lượt này.
+
+---
+
+## Log — 2026-09-06, `claude-gemini-b` · G-10 ghim ba guard lớp hai + G-11 ghi sai dấu đóng
+
+**Việc 1 — `G-11` bị đếm là còn mở dù đã đóng từ 28/08.** Tiêu đề viết
+`Đo live bản trần 5 giây — **ĐÓNG 28/08** ✅`, tức dấu đóng nằm **giữa câu**. Đọc thẳng `isDone`
+và `debtByUnit` trong `scripts/build-overview.mjs` (chỉ ĐỌC — `scripts/` là vùng `_code` của
+phiên khác): dấu đóng chỉ tính khi nó là chữ **đầu tiên** của tiêu đề, hoặc khi tiêu đề bị
+`~~gạch ngang~~`. Luật đó cố ý lệch về phía **báo thừa** nợ, nên không đụng vào nó — sửa chỗ ghi.
+Tiêu đề nay là `**ĐÓNG 28/08** ✅ — Đo live bản trần 5 giây`, mọi chữ giải thích giữ nguyên.
+
+**Nợ gói Gemini: 11 → 10.** (Rồi 10 → **9** sau khi đóng G-10 ở việc 2.) Một chỗ đáng ghi để
+phiên sau khỏi hoang mang: `debtByUnit` đọc qua `git show HEAD:<path>`, **không đọc thư mục làm
+việc** — nên con số chỉ nhúc nhích sau khi commit. Lúc chưa commit thì đo bằng cách đếm tiêu đề
+`OPEN` trực tiếp; hai cách cho cùng một số.
+
+**Không đụng `G-02`** — nó trông như đã đóng (`ĐÃ VÁ TĨNH 2026-09-04`) nhưng là việc **mở thật**,
+đang chờ Đức reload extension để nghiệm thu. Bộ đếm hiện vẫn tính nó là mở, và như thế là đúng.
+
+**Việc 2 — `G-10`: ba guard lớp hai của `bridge-transport-loopback.js` nay có phép ghim.**
+Ba guard: (a) `|| reconnectTimer` trong guard sớm của `scheduleReconnect` (dòng 215),
+(b) `if (socket !== targetSocket) return;` trong callback hạn chờ ACK (dòng 178),
+(c) `if (sequence !== statusSequence) return;` trong `publishStatus` (dòng 124).
+
+**Kiểm chứng lại lời phiên trước thay vì tin luôn (luật vàng 4).** Phiên trước nói cả ba
+"không còn đường nào tới được" nên test hành vi là bất khả. Đo thật: đem đúng ba đột biến đó
+chạy với `tests/bridge-transport-liveness-smoke.mjs` — suite **hành vi xanh cả 3/3**. Vậy lời
+đó đúng, và nó là **số đo**, không phải suy đoán. Đó là căn cứ để ghim ở **mức nguồn**.
+
+Phép ghim mới: `tests/bridge-transport-depth-guards-static.mjs`, 4 khẳng định. Nó cắt thân từng
+hàm bằng **đếm ngoặc** (thứ tự khai báo đổi được, cặp ngoặc thì không), rồi soi bằng `indexOf`
+chuỗi nguyên văn — **không một regex nào**. Lý do rất cụ thể, cả hai bẫy đều đã trả giá ở repo
+này: `\b` không khớp cạnh chữ tiếng Việt, và file này là **CRLF** nên neo `^`/`$` báo "không
+khớp" trông y hệt "không có gì để sửa". Ba guard được ghim cả **sự tồn tại** lẫn **vị trí**
+(kiểm danh tính phải đứng TRƯỚC `abandonSocket`; phép kiểm bản cũ phải nằm TRONG hàng đợi và
+TRƯỚC lượt ghi storage) — guard đúng chữ mà sai chỗ thì bằng không có.
+
+**Và một khẳng định thứ tư, đề phòng đúng cái bẫy mà bộ đo đột biến hay mắc:** file **đếm số
+neo khớp** và đòi đúng 12. Neo trượt hết thì số về 0, và một lượt chạy 0 neo mà vẫn xanh đọc
+gần y hệt một lượt xanh thật.
+
+**Đột biến kiểm: 3/3 đỏ.** Xoá `|| reconnectTimer` → đỏ. Xoá dòng guard (b) → đỏ. Xoá dòng
+guard (c) → đỏ. Mỗi lượt khôi phục lại từ bản sao ngoài repo (không dùng `git checkout` — nó sẽ
+cuốn theo việc chưa commit), và `git diff` của file sau cùng **rỗng**. Bộ đo đột biến tự nó
+cũng có chốt: nếu chuỗi cần sửa khớp **khác 1 dòng** thì nó **dừng hẳn**, không sửa bừa — chốt
+này đã nổ thật một lần, vì chuỗi guard (b) xuất hiện ở **hai** hàm khác nhau; phải khoanh theo
+tên hàm mới đúng chỗ.
+
+**Suite gói này: 87 → 88 file, 88 passed / 0 failed.**
+
+**Không đụng gì ngoài gói này** — `scripts/` chỉ đọc, không sửa; không sinh lại artifact máy
+(phiên điều phối giữ `_root` và sẽ sinh một lượt cho cả ba lane).
+
+**Còn mở:** G-01 (cần trial live sau khi Đức reload — luật mục 2 bắt hỏi Đức trước) và G-02
+(chờ Đức reload extension để nghiệm thu khoá tab / khoá hội thoại).

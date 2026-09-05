@@ -144,7 +144,18 @@ gọi suite **Gemini** khỏi `scripts.test` thì `npm test` không chạy tới
 vẫn bắt (`session-check` gọi thẳng `run-all.mjs` của gói), và ba dòng kia thì `npm test` bắt
 ngay. Chuyển về `tests/root-suite-covers-workers-static.mjs` khi có `_code` là đóng hẳn lỗ này.
 
-### G-10 · Ba guard lớp hai chưa có phép ghim — **[ĐỌC]**
+### ~~G-10~~ · **ĐÓNG 06/09** ✅ — Ba guard lớp hai chưa có phép ghim — **[ĐỌC]**
+
+**Đã ghim 06/09** bằng `tests/bridge-transport-depth-guards-static.mjs` — ghim ở **mức nguồn**,
+vì mức hành vi là bất khả (xem đoạn dưới). Đột biến kiểm **3/3 đỏ**: xoá `|| reconnectTimer`
+khỏi guard sớm của `scheduleReconnect` (dòng 215) → đỏ; xoá dòng `socket !== targetSocket`
+trong callback hạn chờ ACK (dòng 178) → đỏ; xoá dòng `sequence !== statusSequence` trong
+`publishStatus` (dòng 124) → đỏ.
+
+**Kiểm chứng lại lời của phiên trước, không tin luôn (luật vàng 4):** chạy đúng ba đột biến đó
+với `tests/bridge-transport-liveness-smoke.mjs` — suite **hành vi** xanh cả **3/3**. Tức câu
+"không còn đường nào tới được chúng" là đo được, không phải suy đoán, và đó chính là lý do phép
+ghim này phải soi mã nguồn.
 
 Trong `bridge-transport-loopback.js`: (a) điều kiện `reconnectTimer` trong `scheduleReconnect`,
 (b) phép kiểm danh tính `socket !== targetSocket` trong callback hạn chờ ACK, (c) phép kiểm
@@ -194,7 +205,7 @@ Rủi ro thật: hai script cài vào **hai thư mục khác nhau**, nên chạy
 
 ## Đã đóng
 
-### G-11 · Đo live bản trần 5 giây — **ĐÓNG 28/08** ✅
+### G-11 · **ĐÓNG 28/08** ✅ — Đo live bản trần 5 giây
 
 Đo được **1,0 giây** (bản trước: 22,5s và 27,7s). Bằng chứng:
 `evidence-transport-liveness-5s-20260828/`. Khớp dự đoán viết trước khi đo, lần thứ ba liên tiếp.
