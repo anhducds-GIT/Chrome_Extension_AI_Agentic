@@ -552,7 +552,7 @@ export function tenKhoa(key) {
 /* FAIL CLOSED, cùng lý lẽ với `readClaims` của bộ sinh kia: một bảng chủ sở hữu thiếu hoặc
    hỏng mà bị nuốt lỗi sẽ thành "không khoá nào bận" — tức Đức nhìn thấy sáu chỗ trống trong
    khi thật ra có người đang làm. Bảng nói dối êm ru tệ hơn bảng không sinh ra được. */
-export function readKhoa(deps) {
+function docClaims(deps) {
   if (!deps.fileExists(".agents/claims.json")) {
     throw new Error("CLAIMS_THIEU_FILE: không thấy bảng chủ sở hữu. Không dựng khối khoá từ một bảng không tồn tại.");
   }
@@ -565,10 +565,40 @@ export function readKhoa(deps) {
   if (!claims || typeof claims !== "object" || Array.isArray(claims)) {
     throw new Error("CLAIMS_THIEU_KHOI: bảng chủ sở hữu không có khối `claims`.");
   }
-  return Object.entries(claims).map(([key, value]) => ({
+  return Object.entries(claims);
+}
+
+export function readKhoa(deps) {
+  return docClaims(deps).map(([key, value]) => ({
     ten: tenKhoa(key),
     ban: String(value?.owner ?? "").trim() !== ""
   }));
+}
+
+/* KHỐI "ĐANG LÀM GÌ" — `LIVE-BLOCK-01`, hiện thực của `ADR-0004`.
+ *
+ * ĐẢO LẠI một quyết định của chính Đức ngày 04/09: tên lane quay lại bảng. Lý do bỏ đi hồi đó
+ * (tên đổi liên tục làm bảng mục) đã được xử bằng `KHOA_PREFIX`, nên nay hiện tên được mà cổng
+ * xuất bản không đỏ. Ghi ra đây để phiên sau không tưởng nó lọt vào do sơ ý.
+ *
+ * KHÔNG tạo nguồn dữ liệu mới: bảng chủ sở hữu đã có đủ bốn thứ Đức cần — ai, đang làm gì,
+ * vùng nào, từ lúc nào.
+ *
+ * MỘT DÒNG CHO MỖI KHOÁ ĐANG BẬN, không gộp theo lane: một lane giữ hai khoá thì hai khoá đó
+ * có thể mang hai câu việc và hai mốc nhận khác nhau — gộp lại là phải chọn bỏ một nửa sự thật.
+ *
+ * `tu` in NGUYÊN VĂN từ bảng, KHÔNG tính khoảng thời gian ở đây: bảng nằm trong khối
+ * `generators` nên mọi thứ phụ thuộc giờ đồng hồ sẽ chặn push của MỌI lane khi sang ngày mới.
+ * Việc hiện "bao lâu rồi" là của đoạn JS trong trang, tính lúc Đức MỞ trang. */
+export function readLuong(deps) {
+  return docClaims(deps)
+    .filter(([, v]) => String(v?.owner ?? "").trim() !== "")
+    .map(([key, v]) => ({
+      lane: String(v.owner).trim(),
+      viec: String(v?.task ?? "").trim(),
+      vung: tenKhoa(key),
+      tu: String(v?.claimed_at ?? "").trim()
+    }));
 }
 
 const MOC_FILE = "docs/protocols/ASSISTANT-V0.1.md";
@@ -1018,6 +1048,18 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 .dr a:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .dr .d{font-size:13.2px;color:var(--ink-2);line-height:1.45;min-width:0}
 .dr .w{font-size:12px;color:var(--muted);line-height:1.4}
+
+${/* Hàng của khối "đang làm gì". CỐ Ý không dùng lại lớp .dr: .dr là hàng có link sang tab
+     Extension, còn hàng này không link đi đâu — và phép ghim của vùng CẦN ĐỨC đếm đúng số
+     .dr, nên mượn class là làm hai vùng đếm lẫn vào nhau.
+     Viết bằng ${/* … *\/ ""} chứ không phải ghi chú CSS, cùng lý do với ghi chú tab ở trên:
+     ghi chú CSS sẽ đi thẳng vào trang Đức mở. */ ""}
+.lr{display:flex;flex-direction:column;gap:3px;padding:9px 0;border-bottom:1px solid var(--line)}
+.lr:last-child{border-bottom:none}
+.lr .h{display:flex;flex-wrap:wrap;gap:9px;align-items:baseline}
+.lr .ln{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink)}
+.lr .d{font-size:13.2px;color:var(--ink-2);line-height:1.45;min-width:0}
+.lr .w{font-size:12px;color:var(--muted);line-height:1.4}
 </style>`;
 
 const TABS = [
@@ -1031,6 +1073,19 @@ const TABS = [
   ["nhat-ky", "Nhật ký"],
   ["tra-cuu", "Tra cứu"]
 ];
+
+/* TAB MỞ SẴN — `LIVE-BLOCK-01`. Đức: "đây là trang tôi sẽ truy cập hàng ngày nhiều nhất."
+ *
+ * MỘT HẰNG SỐ CHO CẢ HAI CHỖ, cố ý. Nút tab được tô sáng và khung nội dung được mở là hai chỗ
+ * khác nhau trong HTML, và chúng lệch nhau thì trang mở ra với nút này sáng mà nội dung kia
+ * hiện — Đức không có cách nào biết mình đang nhìn nhầm tab. Suy cả hai từ đây thì không lệch
+ * được nữa.
+ *
+ * KHÔNG đụng tới `[role="tabpanel"][hidden]{display:none}`: đó là dòng đang giữ cho tab đổi
+ * được (bug `DASH-TAB-01`). Đổi tab mặc định là đổi CHỖ ĐẶT thuộc tính `hidden`, không phải
+ * thêm một luật `display` mới. */
+export const TAB_MAC_DINH = "ai-dieu-phoi";
+const anKhung = (id) => (id === TAB_MAC_DINH ? "" : " hidden");
 
 const chip = (stage) => `<span class="chip s${stage}">${esc(STAGES[stage])}</span>`;
 
@@ -1108,6 +1163,7 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const coChe = readCoChe(deps);
   const batBien = readBatBien(deps);
   const khoa = readKhoa(deps);
+  const luongChay = readLuong(deps);
   const moc = readMoc(deps);
   const defects = readDefects(deps);
   const suCo = readAssistantEvents(deps);
@@ -1190,13 +1246,13 @@ ${STYLE}
 
   <div class="tabs" role="tablist">`);
   for (const tab of TABS) {
-    p.push(`    <button class="tab" role="tab" data-tab="${tab[0]}" aria-selected="${tab[0] === "tong-quan" ? "true" : "false"}">${esc(tab[1])}</button>`);
+    p.push(`    <button class="tab" role="tab" data-tab="${tab[0]}" aria-selected="${tab[0] === TAB_MAC_DINH ? "true" : "false"}">${esc(tab[1])}</button>`);
   }
   p.push(`  </div>`);
 
   /* ===== TAB 1 · TỔNG QUAN ===== */
   p.push(`
-  <div role="tabpanel" data-pane="tong-quan">
+  <div role="tabpanel" data-pane="tong-quan"${anKhung("tong-quan")}>
     <div class="card">
       <div class="sect">Đang làm / Kế tiếp</div>
       <div class="now">
@@ -1301,9 +1357,52 @@ ${STYLE}
   const deBaiMo = defects.filter((d) => d.mo);
 
   p.push(`
-  <div role="tabpanel" data-pane="ai-dieu-phoi" hidden>
-    <div class="card">
-      <div class="sect">Cần Đức — ${ducViec.length ? esc(ducViec.length + " việc") : "không có việc nào"}</div>
+  <div role="tabpanel" data-pane="ai-dieu-phoi"${anKhung("ai-dieu-phoi")}>
+    <div class="card">`);
+
+  /* ===== KHỐI "ĐANG LÀM GÌ" — `LIVE-BLOCK-01` =====
+   *
+   * NẰM TRONG vùng CẦN ĐỨC, không phải vùng thứ năm: brief cấm vùng thứ năm, và Đức mở tab ra
+   * là thấy nó ngay vì nó đứng đầu vùng đầu.
+   *
+   * MỌI DÒNG DƯỚI ĐÂY MANG `KHOA_PREFIX` Ở ĐẦU DÒNG — kể cả dòng tiêu đề, dòng thẻ mở/đóng và
+   * dòng ghi chú. Đây là phép ghim quan trọng nhất của khối này, và sai chỗ này KHÔNG AI THẤY
+   * cho tới lúc một phiên bất kỳ bị `safe-push` từ chối mà không hiểu vì sao. Đo trên lịch sử
+   * thật: 146 trong 174 commit chạm bảng chủ sở hữu làm ĐỔI trạng thái bận/mở. Thụt lề trước
+   * dấu cũng là thiếu dấu — `compareOverview` lọc bằng `startsWith`.
+   *
+   * Nên phải đẩy TỪNG DÒNG MỘT: một `p.push` nhiều dòng thì chỉ dòng đầu có dấu, phần còn lại
+   * lọt ra ngoài phép lọc mà trông vẫn y hệt. */
+  const dongKhoi = [];
+  dongKhoi.push(`      <div class="sect">Đang làm gì — ${luongChay.length ? esc(luongChay.length + " luồng đang chạy") : "không có luồng nào đang chạy"}</div>`);
+  dongKhoi.push(`      <div class="bl">`);
+  if (luongChay.length) {
+    for (const l of luongChay) {
+      dongKhoi.push(`        <div class="lr"><div class="h">`
+        + `<span class="ln">${esc(l.lane)}</span>`
+        + `<span class="badge b1">${esc(l.vung)}</span></div>`
+        + `<span class="d">${esc(l.viec || "chưa khai đang làm gì")}</span>`
+        /* `data-tu` là mốc NGUYÊN VĂN từ bảng. Chữ "bao lâu rồi" do JS trong trang thêm vào
+           lúc Đức mở — ở đây mà tính là trang phụ thuộc giờ đồng hồ, và sang ngày mới thì
+           MỌI lane bị chặn push dù không dữ liệu nào đổi (suýt xảy ra 03/09). */
+        + `<span class="w">Nhận vùng lúc <span class="tu" data-tu="${esc(l.tu)}">${esc(l.tu || "bảng không ghi mốc nhận")}</span></span>`
+        + `</div>`);
+    }
+  } else {
+    /* KHỐI TRỐNG LÀ MỘT THÔNG TIN. Ẩn khối đi thì Đức không phân biệt được "không có gì chạy"
+       với "khối này hỏng" — và hai cái đó phải phân biệt được bằng mắt. */
+    dongKhoi.push(`        <div class="lr"><span class="d">Không có luồng nào đang chạy.</span></div>`);
+  }
+  dongKhoi.push(`      </div>`);
+  /* HAI CHỖ KHỐI NÀY KHÔNG THẤY, nói thẳng trên trang chứ không giấu trong ghi chú kỹ thuật.
+     Đức nhìn khối trống rồi tin là không có gì chạy — trong khi có thể đang có hai executor
+     chạy ở repo khác — thì sai kiểu đó TỆ HƠN không có khối này. */
+  dongKhoi.push(`      <p class="note">Đọc thẳng từ bảng chủ sở hữu trong repo: mỗi dòng là một vùng đang có người giữ. <strong>Khối này không thấy hai thứ.</strong> Một: <strong>luồng đang chạy ở repo khác</strong> — bảng của repo này chỉ thấy repo của nó, nên một luồng đang làm ở repo bộ khung sẽ không hiện ở đây. Hai: <strong>luồng vừa được giao mà chưa kịp nhận vùng</strong> — lúc đó nó chưa để lại dấu vết nào trong repo. Vậy nên dòng <strong>"không có luồng nào đang chạy"</strong> đọc đúng là <strong>"không có luồng nào đang giữ vùng trong repo này"</strong>, chứ không phải "không có gì đang chạy". Mốc nhận là giờ ghi trong bảng; phần "bao lâu rồi" được tính lúc Đức mở trang.</p>`);
+
+  for (const d of dongKhoi) p.push(KHOA_PREFIX + d);
+
+  p.push(`
+      <div class="sect" style="margin-top:15px">Cần Đức — ${ducViec.length ? esc(ducViec.length + " việc") : "không có việc nào"}</div>
       <div class="bl">`);
   if (ducViec.length) {
     for (const v of ducViec) {
@@ -1374,7 +1473,7 @@ ${STYLE}
   }
   p.push(`            </div>
             <div class="hint" style="margin-top:11px">Đây là <strong>ảnh chụp lúc sinh bảng</strong>, không phải trạng thái thời gian thực — nó theo lần ghi gần nhất vào repo. Khoá <strong>MỞ</strong> là chỗ giao được việc mới ngay; khoá <strong>BẬN</strong> thì chỉ đọc, đừng giao thêm.</div>
-            <p class="note">Bảng cố ý <strong>không nói ai đang giữ</strong>, cũng không nói giữ bao lâu. Đức cần biết còn mấy chỗ trống để giao việc song song, chứ không cần tên phiên — tên phiên đổi liên tục và làm bảng mục ngay. Muốn biết ai giữ thì hỏi tôi, tôi tra bảng chủ sở hữu. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
+            <p class="note">Bảng này trả lời đúng một câu: <strong>còn mấy chỗ trống để giao việc song song</strong>. Ai đang giữ và đang làm gì thì xem khối <strong>Đang làm gì</strong> ở đầu tab — trước đây khối đó chưa có nên chỗ này cố ý để trống tên. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
           </div>
           <div>
             <div class="kl">
@@ -1389,7 +1488,7 @@ ${STYLE}
 
   /* ===== TAB 2 · EXTENSION ===== */
   p.push(`
-  <div role="tabpanel" data-pane="extension" hidden>
+  <div role="tabpanel" data-pane="extension"${anKhung("extension")}>
     <div class="card">
       <div class="sect">Extension trong repo</div>`);
   for (const r of model.rows) {
@@ -1435,7 +1534,7 @@ ${STYLE}
 
   /* ===== TAB 3 · Ý TƯỞNG ===== */
   p.push(`
-  <div role="tabpanel" data-pane="y-tuong" hidden>
+  <div role="tabpanel" data-pane="y-tuong"${anKhung("y-tuong")}>
     <div class="card">
       <div class="sect">Sổ ý tưởng — phòng chờ của cả repo</div>`);
   for (const idea of ideas) {
@@ -1470,7 +1569,7 @@ ${STYLE}
 
   /* ===== TAB 4 · VẬN HÀNH ===== */
   p.push(`
-  <div role="tabpanel" data-pane="van-hanh" hidden>
+  <div role="tabpanel" data-pane="van-hanh"${anKhung("van-hanh")}>
     <div class="card">
       <div class="sect">Làm mới bảng này</div>
       <div class="hint">Bảng là ảnh chụp, <strong>không tự cập nhật</strong>. Dải đỏ ở đầu trang tự bật khi Đức mở nó vào một ngày khác ngày sinh — nó tính lúc XEM, không lúc sinh, nên không cần sinh lại mới biết là cũ.</div>
@@ -1536,7 +1635,7 @@ ${STYLE}
 
   /* ===== TAB 5 · SỨC KHOẺ & NỢ ===== */
   p.push(`
-  <div role="tabpanel" data-pane="suc-khoe" hidden>
+  <div role="tabpanel" data-pane="suc-khoe"${anKhung("suc-khoe")}>
     <div class="card">
       <div class="sect">Sức khoẻ — bốn phép dò, và mỗi phép đã dò bao nhiêu</div>
       <div class="hgrid">`);
@@ -1569,7 +1668,7 @@ ${STYLE}
 
   /* ===== TAB 6 · CẤU TRÚC — khối duy nhất được in đường dẫn ===== */
   p.push(`
-  <div role="tabpanel" data-pane="cau-truc" hidden>
+  <div role="tabpanel" data-pane="cau-truc"${anKhung("cau-truc")}>
     <div class="map">
       <div class="card">
         <div class="sect">Thư mục ở tầng ngoài cùng — ${areas.length} vùng</div>
@@ -1606,7 +1705,7 @@ ${STYLE}
 
   /* ===== TAB 6 · NHẬT KÝ ===== */
   p.push(`
-  <div role="tabpanel" data-pane="nhat-ky" hidden>
+  <div role="tabpanel" data-pane="nhat-ky"${anKhung("nhat-ky")}>
     <div class="card">
       <div class="sect">Quyết định đã chốt — ${decisionCount} bản ghi</div>
       <div class="prose"><p>Mỗi quyết định là một file bất biến: đã chốt thì không sửa được, chỉ thay bằng bản mới. Bản bị thay vẫn giữ nguyên để tra lại được. Hiện có ${supersededCount} đơn vị đã bị bản mới thay thế.</p></div>
@@ -1623,7 +1722,7 @@ ${STYLE}
 
   /* ===== TAB 7 · TRA CỨU ===== */
   p.push(`
-  <div role="tabpanel" data-pane="tra-cuu" hidden>
+  <div role="tabpanel" data-pane="tra-cuu"${anKhung("tra-cuu")}>
     <div class="card">
       <div class="sect">Tra cứu — chữ trên bảng nghĩa là gì</div>
       <dl class="kv">
@@ -1661,6 +1760,21 @@ ${STYLE}
       if (el.tagName === "DETAILS") el.open = true;
       el.scrollIntoView({ block: "start" });
     });
+  });
+
+  // "Bao lâu rồi" của khối đang-làm-gì: tính lúc XEM, y hệt dải đỏ dưới đây và vì đúng lý do
+  // đó — bản commit của trang không được phụ thuộc giờ đồng hồ, nếu không thì sang ngày mới
+  // là mọi lane bị chặn push dù chẳng dữ liệu nào đổi. Mốc nguyên văn đã in sẵn trong trang;
+  // đoạn này chỉ thêm phần trong ngoặc. Không đọc được mốc thì để nguyên, không đoán.
+  Array.prototype.slice.call(document.querySelectorAll(".tu[data-tu]")).forEach(function (el) {
+    var t = Date.parse(el.dataset.tu);
+    if (!el.dataset.tu || isNaN(t)) return;
+    var phut = Math.floor((Date.now() - t) / 60000);
+    if (phut < 0) return;
+    var chu = phut < 60 ? phut + " phút trước"
+      : phut < 1440 ? Math.floor(phut / 60) + " giờ trước"
+      : Math.floor(phut / 1440) + " ngày trước";
+    el.textContent = el.dataset.tu + " (" + chu + ")";
   });
 
   // Dải đỏ tính tuổi lúc XEM, không lúc sinh: trang tĩnh đem đăng thì lúc sinh nó luôn mới,
