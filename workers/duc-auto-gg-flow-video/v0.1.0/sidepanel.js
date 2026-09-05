@@ -128,7 +128,7 @@
     IDLE: "Đang chờ", ERROR: "Có lỗi", RUNNING: "Đang chạy", DONE: "Hoàn tất", PAUSED: "Đã tạm dừng", STOPPED: "Đã dừng", HALTED: "Dừng bảo vệ",
     "NOT VALIDATED": "Chưa được kiểm tra", "NEEDS INPUT": "Cần thêm thông tin", WARNING: "Có cảnh báo", "READY TO RUN": "Sẵn sàng chạy", "NOT READY": "Chưa sẵn sàng",
     "AUDIT GAP CHECKPOINTING": "Đang ghi checkpoint cho khoảng trống audit", "AUDIT GAP BLOCKED": "Khoảng trống audit đang chặn tiến trình",
-    "RECREATE CHECKPOINTING": "Đang ghi checkpoint cho lần tạo lại", "RECREATE SAVED · QUEUE BLOCKED": "Đã lưu ảnh tạo lại · Queue vẫn bị chặn", "RECREATE BLOCKED": "Lần tạo lại đang bị chặn",
+    "RECREATE CHECKPOINTING": "Đang ghi checkpoint cho lần tạo lại", "RECREATE SAVED · QUEUE BLOCKED": "Đã lưu video tạo lại · Queue vẫn bị chặn", "RECREATE BLOCKED": "Lần tạo lại đang bị chặn",
     "RERUN CHECKPOINTING": "Đang ghi checkpoint cho lần chạy lại", "RERUN BLOCKED": "Lần chạy lại đang bị chặn", "RESUME BLOCKED": "Tiếp tục lần chạy đang bị chặn",
     "OUTPUT PERSISTENCE FAILED": "Lưu hoặc xác minh artifact thất bại"
   });
@@ -1479,7 +1479,7 @@
       params: {
         if_ledger_etag: ledgerEtag,
         proposal_label: "Kiểm tra giao diện WP-2",
-        jobs: [{ client_job_id: "fixture-001", requested_job_id: null, prompt: "Fixture kiểm tra: tạo một ảnh minh hoạ đơn giản. Đây chỉ là đề xuất; không tự chạy.", reference_images: [], settings: {} }]
+        jobs: [{ client_job_id: "fixture-001", requested_job_id: null, prompt: "Fixture kiểm tra: tạo một video minh hoạ đơn giản. Đây chỉ là đề xuất; không tự chạy.", reference_images: [], settings: {} }]
       }
     }, { executor_epoch: state.bridgeExecutorEpoch, source: "built_in_fixture" });
     if (!response.ok) throw new Error(`${response.error.code}: ${response.error.message}`);
@@ -3084,10 +3084,10 @@
     const job = state.workbook?.jobs?.find((entry) => entry.id === jobId);
     if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED" || !job || (!window.DacRecreateCore.requiresNewApproval(job) && window.DacRecreateCore.isApproved(job))) return;
     state.pendingRecreateJobId = jobId;
-    if (els.recreateConfirmTitle) els.recreateConfirmTitle.textContent = `${jobId} image is not saved`;
-    if (els.recreateConfirmTitleVi) els.recreateConfirmTitleVi.textContent = `Ảnh của ${jobId} chưa được lưu và xác minh`;
-    if (els.recreateConfirmMessage) els.recreateConfirmMessage.textContent = `${jobId} has no verified saved image. Create it again? This sends one new request and may produce a duplicate image.`;
-    if (els.recreateConfirmMessageVi) els.recreateConfirmMessageVi.textContent = `${jobId} chưa có ảnh đã lưu được xác minh. Tạo lại sẽ gửi một yêu cầu mới và có thể tạo ảnh trùng.`;
+    if (els.recreateConfirmTitle) els.recreateConfirmTitle.textContent = `${jobId} video is not saved`;
+    if (els.recreateConfirmTitleVi) els.recreateConfirmTitleVi.textContent = `Video của ${jobId} chưa được lưu và xác minh`;
+    if (els.recreateConfirmMessage) els.recreateConfirmMessage.textContent = `${jobId} has no verified saved video. Create it again? This sends one new request and may produce a duplicate video.`;
+    if (els.recreateConfirmMessageVi) els.recreateConfirmMessageVi.textContent = `${jobId} chưa có video đã lưu được xác minh. Tạo lại sẽ gửi một yêu cầu mới và có thể tạo video trùng.`;
     els.recreateConfirmBtn.textContent = `Recreate ${jobId}`;
     if (typeof els.recreateConfirmDialog.showModal === "function") els.recreateConfirmDialog.showModal();
     else els.recreateConfirmDialog.setAttribute("open", "");
@@ -3325,7 +3325,7 @@
     const jobId = state.pendingRerunJobId;
     const actionName = jobId ? `Chạy lại ${jobId}` : "Chạy lại job";
     const overwrite = Boolean(els.rerunOverwritePolicyRadio?.checked);
-    progress(`${actionName}: đã nhận xác nhận, đang kiểm tra điều kiện trước khi tạo ảnh mới.`);
+    progress(`${actionName}: đã nhận xác nhận, đang kiểm tra điều kiện trước khi tạo video mới.`);
     log(`${actionName}: đã nhận xác nhận.`, "info");
     closeRerunDialog();
     try {
@@ -3334,7 +3334,7 @@
       if (!state.prepared) throw new Error("RERUN_CONFIRM_QUEUE_MISSING: Check Plan lại trước khi xác nhận chạy lại.");
       const item = state.prepared.queue.find((entry) => entry.job.id === jobId);
       if (!item) throw new Error(`RERUN_CONFIRM_JOB_MISSING: ${jobId} không có trong hàng đợi hiện tại.`);
-      if (item.status !== "SUCCESS" || !item.persistence_verified) throw new Error(`RERUN_CONFIRM_NOT_COMPLETE: ${jobId} chưa có ảnh đã xác minh lưu thành công.`);
+      if (item.status !== "SUCCESS" || !item.persistence_verified) throw new Error(`RERUN_CONFIRM_NOT_COMPLETE: ${jobId} chưa có video đã xác minh lưu thành công.`);
       const approval = window.DacRecreateCore.approval({ job: item.job, recoveryState: "SAFE_COMPLETE" });
       if (!approval.ok) throw new Error(`${approval.code}: ${approval.message}`);
       const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);
@@ -3345,22 +3345,22 @@
         state.auditChain = auditChain;
         if (!auditChain.ok) { renderResumePlan(); throw new Error(`${auditChain.code}: ${auditChain.message}`); }
       }
-      if (!effectiveOutput.saveImages || !effectiveOutput.saveResultXlsx) throw new Error("RERUN_PERSISTENCE_REQUIRED: phải bật lưu ảnh và lưu Result XLSX.");
+      if (!effectiveOutput.saveImages || !effectiveOutput.saveResultXlsx) throw new Error("RERUN_PERSISTENCE_REQUIRED: phải bật lưu video và lưu Result XLSX.");
       state.recreateRunning = true;
       setStatus("RUNNING", "RERUN CHECKPOINTING");
       progress(`${jobId}: đang lưu checkpoint xác nhận chạy lại.`);
       // The global collision policy stays whatever the operator configured
       // for the whole run; this one field overrides it for this one job's
-      // write only, so "giữ ảnh cũ" here can never be defeated by an
+      // write only, so "giữ video cũ" here can never be defeated by an
       // unrelated global "overwrite" setting, and vice versa.
       const approvalWithPolicy = { ...approval, fields: { ...approval.fields, rerun_collision_policy: overwrite ? "overwrite" : "uniquify" } };
       const checkpoint = await persistRecreateApproval(item, approvalWithPolicy, effectiveOutput);
-      progress(`${jobId}: checkpoint đã xác minh ${checkpoint}; bắt đầu tạo ảnh mới.`);
+      progress(`${jobId}: checkpoint đã xác minh ${checkpoint}; bắt đầu tạo video mới.`);
       log(`${jobId}: checkpoint xác nhận chạy lại đã xác minh; bắt đầu chạy lại.`, "done");
       renderResumePlan(); renderQueue(); renderOutput(); controls();
       const outcome = await run("recreate");
       if (!outcome?.ok) throw new Error(`RERUN_START_BLOCKED: ${outcome?.reason || "Không vào được trạng thái RUNNING."}`);
-      progress(`${jobId}: đã tạo ảnh mới và lưu xong.`);
+      progress(`${jobId}: đã tạo video mới và lưu xong.`);
       log(`${jobId}: chạy lại hoàn tất.`, "done");
       return outcome;
     } catch (error) {
@@ -3591,7 +3591,7 @@
     if (!hint || !els.folderPickDialog) { folderPickRunner(target)(); return; }
     state.pendingFolderPick = target;
     if (els.folderPickTitle) els.folderPickTitle.textContent = target === "result" ? "Choose the Result XLSX folder" : "Choose the generated-image folder";
-    if (els.folderPickTitleVi) els.folderPickTitleVi.textContent = target === "result" ? "Chọn thư mục lưu Result XLSX" : "Chọn thư mục lưu ảnh được tạo";
+    if (els.folderPickTitleVi) els.folderPickTitleVi.textContent = target === "result" ? "Chọn thư mục lưu Result XLSX" : "Chọn thư mục lưu video được tạo";
     if (els.folderPickPath) { els.folderPickPath.textContent = hint; els.folderPickPath.title = hint; }
     if (els.folderPickStatus) els.folderPickStatus.textContent = "";
     if (els.folderPickStatusVi) els.folderPickStatusVi.textContent = "";

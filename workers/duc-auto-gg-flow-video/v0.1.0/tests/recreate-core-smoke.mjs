@@ -75,12 +75,12 @@ assert.deepEqual(runner.selectQueue(completedPrepared.queue, "all").map((item) =
 
 const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 const html = fs.readFileSync(new URL("sidepanel.html", root), "utf8");
-assert.match(sidepanel, /no verified saved image\. Create it again\?/, "ambiguous blocker gives the operator one concise recovery decision");
+assert.match(sidepanel, /no verified saved video\. Create it again\?/, "ambiguous blocker gives the operator one concise recovery decision");
 assert.match(sidepanel, /Recreate \$\{recovery\.job_id\}/, "recreate action identifies the blocked job");
 assert.match(sidepanel, /requiresNewApproval/, "failed recreate renders explicit recovery again");
 const renderResumeSegment = sidepanel.slice(sidepanel.indexOf("function renderResumePlan"), sidepanel.indexOf("function reconciliationProof"));
 assert.doesNotMatch(renderResumeSegment, /Resolve Existing Output/, "missing-image recovery does not burden the operator with a second action");
-assert.match(html, /has no verified saved image\. Create it again\? This sends one new request and may produce a duplicate image\./, "confirmation explains the one deliberate recreate action");
+assert.match(html, /has no verified saved video\. Create it again\? This sends one new request and may produce a duplicate video\./, "confirmation explains the one deliberate recreate action");
 assert.match(sidepanel, /Recreate \$\{jobId\}/, "confirmation names the exact job");
 const openSegment = sidepanel.slice(sidepanel.indexOf("function openRecreateDialog"), sidepanel.indexOf("function closeRecreateDialog"));
 assert.doesNotMatch(openSegment, /run\(|DAC_RUN_IMAGE_JOB|send\(/, "opening confirmation never silently resubmits");

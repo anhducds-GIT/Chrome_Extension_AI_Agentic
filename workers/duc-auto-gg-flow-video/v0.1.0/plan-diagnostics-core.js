@@ -164,7 +164,7 @@
         // Plan rather than three words inside the Naming detail string.
         if (values.collisionPolicy === "overwrite") findings.push(makeFinding("OUTPUT_COLLISION_OVERWRITE_ACTIVE", "WARNING", "output", {
           message: "Collision policy is 'overwrite': a job that runs again will replace its previous saved image.",
-          guidance: "Chọn 'Keep both — add number' trong Naming nếu muốn giữ ảnh cũ, hoặc để nguyên nếu bạn thực sự muốn đè.", action: "Review naming settings"
+          guidance: "Chọn 'Keep both — add number' trong Naming nếu muốn giữ video cũ, hoặc để nguyên nếu bạn thực sự muốn đè.", action: "Review naming settings"
         }));
       } catch (_) {
         findings.push(makeFinding("OUTPUT_OK", "OK", "output", { message: "Output destination and naming are ready.", guidance: "Output preflight passed." }));

@@ -16,8 +16,8 @@
 > - **F-04 XONG** — `MAX_TRIAL_JOBS = 7` (trần 30 của nhánh ảnh đã bỏ; con số 7 nay tính theo
 >   ngân sách một tài khoản, xem F-22).
 > - **F-05 XONG** — không còn chỗ nào `bootstrap_locked` trong router.
-> - **F-06 XONG NỬA ĐẦU** (05/09) — nửa "Gemini → Flow" đã đóng và có phép kiểm canh;
->   nửa "ảnh → video" còn mở, đã đo. Xem chính mục F-06.
+> - **F-06 XONG CẢ HAI NỬA** (05/09 + 06/09) — nửa "Gemini → Flow" và nửa "ảnh → video"
+>   đều đã đóng, mỗi nửa có phép kiểm canh. Xem chính mục F-06.
 > - **F-03, F-07, F-08, F-10: CHƯA RÀ.**
 
 - **F-01** · **XONG 02/09** (9 file `evidence/F1-snapshot-*.json`) — Chụp bằng chứng DOM trang Flow (4 snapshot: nghỉ / đang sinh / có video /
@@ -38,7 +38,7 @@
   `FORBIDDEN/bootstrap_locked` (failure-semantics, loopback-integration,
   mv3-reconnect, references-add, router-smoke) — đặc biệt là coverage
   idempotent-retry của queue.propose trong loopback-integration [ĐỌC diff Codex 27/08].
-- **F-06** · **NỬA "Gemini → Flow": XONG 05/09** (`claude-flow-no`, `914643b`). Mọi chuỗi
+- **F-06** · **XONG CẢ HAI NỬA.** — **Nửa "Gemini → Flow": XONG 05/09** (`claude-flow-no`, `914643b`). Mọi chuỗi
   operator nhìn thấy đã hết chữ "Gemini" — 11 file nguồn + 7 file test. Chữ "Gemini" còn lại
   trong gói **chỉ nằm ở chú thích** (lịch sử nhánh, đúng chỗ của nó), và phép kiểm cố ý chỉ
   soi chuỗi chứ không soi chú thích.
@@ -47,14 +47,35 @@
   lại theo hướng **cấu trúc**: bản 02/09 tin rằng cụm `image generation limit` giữ phán quyết
   hết-credit, đọc lại từng chỗ ném thì **không phải** — cả 8 đường đều gắn tiền tố `LIMIT_STOP:`
   và đó mới là thứ chịu tải. Nay canh cả 8 đường, có đếm số. Suite 96/96, đột biến kiểm **6/6**.
-  **CÒN MỞ — nửa "ảnh → video".** [ĐO 05/09] còn **46 chuỗi JS** (`sidepanel.js` 13 ·
-  `operator-messages-core.js` 13 · `halt-instructions-core.js` 8 · `operator-glossary-core.js` 7 ·
-  `content.js` 3 · hai chỗ lẻ) và **10 lần trong `sidepanel.html`** còn nói "ảnh".
-  **Không phải tất cả đều là nợ:** ảnh **tham chiếu đầu vào** trên Flow vẫn đúng là ảnh
-  (`MAX_INPUT_IMAGES`, `MISSING_REFERENCES`, `DUPLICATE_REFERENCE`, `UNUSED_REFERENCES`) —
-  phải đọc từng chỗ, đừng thay hàng loạt. Chỉ chỗ nói về **đầu ra** mới phải thành "video".
-  Đo lại (đếm cả chú thích nên **cao hơn** con số trên, dùng để xem còn hay hết, không
-  dùng để báo cáo): `grep -c "ảnh" *.js sidepanel.html`.
+  **NỬA "ảnh → video": XONG 06/09** (`claude-flow-b`). Đọc từng chỗ một, không thay hàng loạt.
+  [ĐO 06/09] trong 8 file nguồn có chữ operator: **78 lần "ảnh" → còn 29**, tức **đổi 49**.
+  Kèm theo **22 chữ `image` tiếng Anh** nằm CÙNG MỘT CÂU song ngữ với chỗ vừa đổi
+  (`halt-instructions-core.js` 8 · `sidepanel.html` 11 · `sidepanel.js` 3) — để nửa Anh nói
+  "image" cạnh nửa Việt nói "video" trong đúng một câu là tự mâu thuẫn.
+  **29 lần CỐ Ý GIỮ "ảnh"**, chia hai loại: **16 chuỗi operator sống** đều nói về **ảnh tham
+  chiếu đầu vào** (gói này sinh video TỪ ảnh mẫu, nên đó là chữ đúng — `MAX_INPUT_IMAGES`,
+  `MISSING_REFERENCES`, `AMBIGUOUS_REFERENCES`, `DUPLICATE_REFERENCE`, `DUPLICATE_ALIASES`,
+  `UNUSED_REFERENCES`, mục "so sánh output với ảnh input/reference", nút "Thêm ảnh tham
+  chiếu"), và **13 lần trong chú thích** — lịch sử nhánh, đúng chỗ của nó.
+  **Canh bằng** phần thứ hai của `tests/error-strings-load-bearing.mjs`: một danh sách
+  **cụm đầu-vào được phép giữ chữ "ảnh"**, rồi cấm chữ "ảnh" ở mọi chỗ còn lại. Quét trên
+  **giá trị thật** của ba từ điển (`operator-messages` · `halt-instructions` ·
+  `operator-glossary`, 200 chuỗi) cộng cả `sidepanel.html` — không qua bộ tách chuỗi bằng
+  regex, vì bộ tách đó có điểm mù thật. Danh sách miễn còn bị canh ngược: **cụm miễn nào
+  không còn khớp chỗ nào thì ĐỎ**, để dòng miễn chết không nằm lại làm lỗ cho chữ cũ mọc lại
+  (phép kiểm này đã bắt thật một dòng như thế ngay trong lượt viết nó).
+  Suite 96/96 · chạy lại **cả hai chiều xuống dòng** (ép CRLF cả gói · ép LF cả gói) đều
+  96/96 · đột biến kiểm **8/8 bị bắt**.
+  **CÒN MỞ, nhỏ:** vùng quét-cấm **không phủ `sidepanel.js` và `content.js`** — hai file đó
+  trộn chú thích tiếng Việt (có chữ "ảnh" đúng chỗ) với chuỗi, mà bộ tách chuỗi bằng regex
+  thì có điểm mù. Chữ đã đổi ở hai file đó được giữ bằng **bảng ghim đếm số** từng câu, nên
+  hồi quy thì ĐỎ; nhưng **câu MỚI** thêm vào hai file đó nói "ảnh" về đầu ra thì chưa ai canh.
+  **CÒN MỞ, lớn hơn:** chữ **`image` tiếng Anh** ngoài các câu song ngữ trên vẫn còn khắp gói
+  (~540 lần), nhưng phần lớn là **tên định danh và mã lỗi** (`saveImages`, `imagePattern`,
+  `image_url`, `NO_NEW_IMAGE`, `MAX_INPUT_IMAGES`) chứ không phải chữ operator — đổi chúng là
+  đổi hợp đồng message/schema, việc riêng, cần tách nhãn "định danh" khỏi "văn xuôi" trước.
+  Nhãn tiếng Anh còn nói ảnh mà Đức nhìn thấy: `Download generated images`,
+  `Max input references`, `📁 Images folder`.
   **Đọc `F-20` trước khi chạm bất kỳ câu báo lỗi nào ở nửa này.**
 - **F-07** · Mở rộng schema XLSX cho video (duration, model, aspect ratio…) — sửa
   `DAC_XLSX_RUN_PLAN_V1.md` thành bản V2 có cột video, giữ tương thích cột cũ.

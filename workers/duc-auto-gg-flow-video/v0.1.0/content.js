@@ -1362,7 +1362,7 @@
     // vô dụng xuống dưới rồi để nó chết với thông điệp khó hiểu: dừng ngay ở
     // đây, nói rõ vì sao.
     if (String(verified.candidate.source || "").startsWith("blob:")) {
-      throw new Error("RECONCILE_BLOB_UNSUPPORTED: ảnh trên trang đang là blob: nên đường đối chiếu thủ công chưa tải được. Chờ Flow đổi sang link trực tiếp rồi thử lại, hoặc dùng Recreate.");
+      throw new Error("RECONCILE_BLOB_UNSUPPORTED: video trên trang đang là blob: nên đường đối chiếu thủ công chưa tải được. Chờ Flow đổi sang link trực tiếp rồi thử lại, hoặc dùng Recreate.");
     }
     return {
       type: "image",

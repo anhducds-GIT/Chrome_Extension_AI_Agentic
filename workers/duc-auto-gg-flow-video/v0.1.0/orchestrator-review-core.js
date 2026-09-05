@@ -30,7 +30,7 @@
     // rather than something the operator just picked. Surface it as a
     // visible WARNING at Check Plan time instead of a quiet detail string.
     const overwriteActive = values?.collisionPolicy === "overwrite";
-    add("naming", "Naming", outputFindings.filter((finding) => /NAMING|FILENAME|PATTERN|OUTPUT_PREFLIGHT_FAILED/.test(finding.code)), values ? (overwriteActive ? "WARNING" : "OK") : outputSettings ? "WARNING" : "BLOCKER", values ? `${values.imagePattern} · ${values.collisionPolicy}${overwriteActive ? " — sẽ ĐÈ LÊN file ảnh cũ trùng tên" : ""}` : "Check output configuration");
+    add("naming", "Naming", outputFindings.filter((finding) => /NAMING|FILENAME|PATTERN|OUTPUT_PREFLIGHT_FAILED/.test(finding.code)), values ? (overwriteActive ? "WARNING" : "OK") : outputSettings ? "WARNING" : "BLOCKER", values ? `${values.imagePattern} · ${values.collisionPolicy}${overwriteActive ? " — sẽ ĐÈ LÊN file video cũ trùng tên" : ""}` : "Check output configuration");
     const settingsFindings = findingsFor(diagnostics, (finding) => finding.scope === "settings");
     const effectiveSettings = prepared?.settings || settings;
     add("settings", "Run settings", settingsFindings.filter((finding) => finding.severity !== "OK"), effectiveSettings ? "OK" : workbook ? "WARNING" : "BLOCKER", effectiveSettings ? `timeout ${effectiveSettings.timeout_sec}s · retries ${effectiveSettings.max_retries} · cooldown ${effectiveSettings.safety_cooldown_sec}s` : "Check plan");

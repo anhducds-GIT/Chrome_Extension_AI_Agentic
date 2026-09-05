@@ -1199,3 +1199,97 @@ rồi chạy suite.
 
 **F-08** (đo và đặt lại timeout runner cho video — hiện kế thừa 90s/job của nhánh Gemini, video
 cần nhiều phút) **chưa động tới**. Vẫn nguyên trong `BACKLOG.md`.
+
+
+## 2026-09-06 — `claude-flow-b`: F-06 nửa sau đóng — "ảnh" thành "video", trừ chỗ đúng là ảnh
+
+**F-06 XONG TRỌN.** Nửa sau là đổi danh từ **đầu ra** từ "ảnh" sang "video". Nghe như sửa chính
+tả; không phải, vì gói này **sinh video TỪ ảnh mẫu** — nên chữ "ảnh" đúng ở một nửa số chỗ và sai
+ở nửa kia, và không có cách nào biết chỗ nào là chỗ nào ngoài đọc từng chỗ một.
+
+### Con số, đo được
+
+| Đo gì | Trước | Sau |
+|---|---|---|
+| Chữ "ảnh" đứng riêng, 8 file nguồn có chữ operator | 78 | 29 |
+| → trong đó: **đổi thành "video"** | — | **49** |
+| → **cố ý giữ "ảnh"** — chuỗi operator sống, đều nói về **ảnh tham chiếu đầu vào** | — | **16** |
+| → **cố ý giữ "ảnh"** — nằm trong chú thích (lịch sử nhánh) | — | **13** |
+| Chữ `image` tiếng Anh nằm CÙNG MỘT CÂU song ngữ với chỗ vừa đổi | 22 | 0 |
+
+16 chỗ giữ chữ "ảnh" là: `MAX_INPUT_IMAGES` · `MISSING_REFERENCES` · `AMBIGUOUS_REFERENCES` ·
+`DUPLICATE_REFERENCE` · `DUPLICATE_ALIASES` · `UNUSED_REFERENCES` · câu "so sánh output với ảnh
+input/reference" trong bảng hướng dẫn dừng · dòng từ điển "video cũ hoặc **ảnh tham chiếu** không
+được xem là đầu ra mới" · thông báo Bridge nạp ảnh tham chiếu · nút "Thêm ảnh tham chiếu".
+
+**Vì sao đụng cả chữ tiếng Anh:** các câu này song ngữ trong **đúng một chuỗi** (`"… (…)"`) hoặc
+**đúng một dòng giao diện** (`<span>English<span lang="vi">Việt</span></span>`). Để nửa Anh nói
+"image" cạnh nửa Việt nói "video" trong cùng một câu là tự mâu thuẫn ngay trước mắt người đọc.
+Chữ `image` **ngoài** các câu đó thì KHÔNG đụng — xem "Chưa làm".
+
+### Ghim thế nào — và nó khác gì phép kiểm cấm chữ "Gemini"
+
+Cấm sạch một từ thì dễ; ở đây không cấm sạch được. Nên phần thứ hai của
+`tests/error-strings-load-bearing.mjs` làm ngược lại: khai một danh sách **cụm đầu-vào được phép
+giữ chữ "ảnh"**, gỡ các cụm đó ra khỏi câu, rồi **cấm chữ "ảnh" ở phần còn lại**. Thêm một câu
+operator mới có chữ "ảnh" là ĐỎ, và người viết buộc phải tự quyết: đầu vào thì khai vào danh sách
+kèm lý do, đầu ra thì đổi thành "video". Im lặng trôi qua chính là thứ đã để lại 49 chỗ lần trước.
+
+Ba chỗ cố ý làm chặt hơn:
+
+1. **Đọc giá trị thật, không tách chuỗi bằng regex.** Ba từ điển (`operator-messages` ·
+   `halt-instructions` · `operator-glossary`) được **nạp module rồi duyệt giá trị** — 200 chuỗi.
+   Bộ tách chuỗi bằng regex của phép kiểm cũ **có điểm mù thật**: một chuỗi backtick nhiều dòng
+   nuốt luôn vùng sau nó, nên có chuỗi nó chưa bao giờ nhìn thấy.
+2. **Canh ngược danh sách miễn.** Cụm miễn nào không còn khớp chỗ nào thì ĐỎ — dòng miễn chết là
+   một lỗ mở sẵn cho chữ cũ mọc lại mà không ai để ý. **Phép kiểm này bắt thật ngay trong lượt
+   viết nó:** cụm `"ảnh trùng tên"` đã bị loại vì nó chỉ khớp trong `sidepanel.js`, mà file đó
+   không nằm trong vùng quét.
+3. **Ghim đếm số cho từng câu** ngoài ba từ điển (14 câu ở `sidepanel.js` · `content.js` ·
+   `orchestrator-review-core.js` · `plan-diagnostics-core.js`). Hỏi "còn nguyên", không hỏi
+   "có tồn tại".
+
+Và **ba câu ném thật** được ghim thêm phán quyết `classifyFailure` (luật F-20): đổi lời văn mà
+tuột sang nhánh khác là đổi hành vi retry, không phải sửa chính tả.
+
+### Đột biến kiểm: 8/8 bị bắt
+
+| # | Phá gì | Kết quả |
+|---|---|---|
+| M1 | Từ điển: `"phần tạo video"` → `"phần tạo ảnh"` | ĐỎ |
+| M2 | Từ điển: `"File video đã được ghi"` → `"File ảnh…"` | ĐỎ |
+| M3 | Từ điển: `"ĐÈ LÊN video cũ"` → `"ĐÈ LÊN ảnh cũ"` | ĐỎ |
+| M4 | `sidepanel.html`: `"Giữ video cũ — video mới"` → `"Giữ ảnh cũ — ảnh mới"` | ĐỎ |
+| M5 | Ghim đếm: `sidepanel.js` `"đã tạo video mới và lưu xong."` | ĐỎ |
+| M6 | Ghim đếm: `content.js` `"video trên trang đang là blob:"` | ĐỎ |
+| M7 | Ghim đếm ngoài `sources`: `orchestrator-review-core.js` | ĐỎ |
+| M8 | **F-20**: thêm chữ `download` vào câu ném `RERUN_PERSISTENCE_REQUIRED` | ĐỎ |
+
+M8 là lượt đáng giá nhất: nó chứng minh phần ghim phán quyết không phải trang trí — thêm đúng
+một từ tiếng Anh vào một câu tiếng Việt là đã đổi `OTHER` thành `DOWNLOAD_FAILED`.
+
+**Khôi phục bằng cách ghi lại đúng bytes gốc, KHÔNG dùng `git checkout`** — phiên 05/09 đã mất
+nửa buổi vì lệnh khôi phục đó âm thầm đổi xuống dòng LF → CRLF và làm đỏ một phép kiểm không liên
+quan. Đã đọc bài đó trước khi bắt đầu.
+
+### Xuống dòng: đo cả hai chiều, không tin một chiều
+
+Suite **96/96** ở bản trên đĩa. Rồi chép cả gói ra chỗ khác, **ép CRLF toàn bộ** → 96/96; **ép LF
+toàn bộ** → 96/96. Phép kiểm mới cố ý không dùng neo `^`/`$` và không đòi `
+` sát nhau, nên nó
+miễn nhiễm với chỗ này.
+
+### Chưa làm
+
+1. **Vùng quét-cấm không phủ `sidepanel.js` và `content.js`.** Hai file đó trộn chú thích tiếng
+   Việt (có chữ "ảnh" đúng chỗ, là lịch sử nhánh) với chuỗi, mà bộ tách chuỗi bằng regex thì có
+   điểm mù — quét bừa sẽ báo đỏ oan ở chú thích. Chữ đã đổi ở hai file đó **được giữ bằng bảng
+   ghim đếm số**, nên hồi quy thì đỏ; nhưng **câu MỚI** nói "ảnh" về đầu ra ở hai file đó thì chưa
+   ai canh. Ghi vào `BACKLOG.md`.
+2. **Chữ `image` tiếng Anh còn khắp gói (~540 lần)** — nhưng phần lớn là **tên định danh và mã
+   lỗi** (`saveImages`, `imagePattern`, `image_url`, `NO_NEW_IMAGE`, `MAX_INPUT_IMAGES`), đổi
+   chúng là đổi hợp đồng message/schema. Nhãn tiếng Anh **Đức nhìn thấy** mà còn nói ảnh:
+   `Download generated images` · `Max input references` · `📁 Images folder`. Việc riêng, cần tách
+   nhãn "định danh" khỏi "văn xuôi" trước khi đụng.
+3. **F-08** (timeout runner cho video, hiện kế thừa 90s/job của nhánh Gemini) — chưa động tới,
+   như phiên trước.

@@ -122,4 +122,122 @@ assert.ok(daQuet > 500, `chỉ quét được ${daQuet} chuỗi — bộ tách c
 const html = fs.readFileSync(new URL("../sidepanel.html", import.meta.url), "utf8");
 assert.ok(!html.includes("Gemini"), "sidepanel.html còn nói 'Gemini' — đây là chữ Đức nhìn thấy trực tiếp");
 
-console.log(`load-bearing error strings keep their verdicts (${PINNED.length}): PASS`);
+// ---------------------------------------------------------------------------
+// F-06 NỬA SAU (05/09): danh từ đầu ra là "video", không phải "ảnh".
+//
+// Gói này sinh VIDEO từ ẢNH MẪU. Nên chữ "ảnh" **không** sai ở mọi chỗ: ảnh
+// tham chiếu người dùng đính vào vẫn đúng là ảnh. Chỉ chỗ nói về **đầu ra**
+// mới phải là "video". Vì thế phép kiểm này KHÔNG cấm chữ "ảnh" — nó cấm chữ
+// "ảnh" ở mọi chỗ TRỪ một danh sách cụm đầu-vào khai tường minh dưới đây.
+//
+// Hướng hỏng là hướng đúng: thêm một câu operator mới có chữ "ảnh" thì phép
+// kiểm ĐỎ, và người viết phải tự quyết định đó là đầu vào (khai vào danh sách,
+// kèm lý do) hay đầu ra (đổi thành "video"). Im lặng trôi qua là thứ đã để lọt
+// 46 chuỗi lần trước.
+//
+// RANH GIỚI, nói thẳng để không ai tưởng nó rộng hơn thực tế: phép quét-cấm
+// dưới đây phủ BA TỪ ĐIỂN + `sidepanel.html` — những chỗ đọc được giá trị thật,
+// không cần đoán đâu là chuỗi đâu là chú thích. `sidepanel.js` và `content.js`
+// KHÔNG nằm trong vùng quét-cấm: hai file đó trộn chú thích tiếng Việt (có chữ
+// "ảnh" đúng chỗ, vì đó là lịch sử nhánh) với chuỗi, và bộ tách chuỗi bằng
+// regex ở trên có điểm mù thật — một chuỗi backtick nhiều dòng nuốt luôn vùng
+// sau nó. Nên chữ đã đổi ở hai file đó được giữ bằng bảng ghim ĐẾM SỐ ở cuối
+// file này, từng câu một. Nợ còn lại: câu MỚI thêm vào hai file đó không bị
+// canh — ghi ở F-06 của `BACKLOG.md`.
+
+// Cụm được phép giữ chữ "ảnh" — mỗi dòng phải là chuyện ĐẦU VÀO.
+const CUM_DAU_VAO_GIU_CHU_ANH = [
+  "ảnh tham chiếu",            // reference image người dùng đính kèm
+  "Ảnh tham chiếu",            // cùng nghĩa, đầu câu
+  "ảnh input/reference",       // bảng hướng dẫn dừng, đối chiếu output với input
+  "các file ảnh mà workbook yêu cầu",
+  "cùng một ảnh",              // một job gọi lặp cùng một file tham chiếu
+  "Mỗi ảnh cần một alias riêng",
+  "Có ảnh không được dùng",
+];
+
+// `\b` của JS KHÔNG khớp cạnh chữ tiếng Việt, nên biên trái phải tự viết:
+// "ảnh" đứng riêng, không phải phần đuôi của "cảnh" / "khoảnh" / "mảnh".
+const TU_ANH = /(?<![A-Za-zÀ-ỹĐđ])[Ảả]nh/;
+const demKhop = new Map(CUM_DAU_VAO_GIU_CHU_ANH.map((cum) => [cum, 0]));
+function conSotChuAnh(text) {
+  let rest = text;
+  for (const cum of CUM_DAU_VAO_GIU_CHU_ANH) {
+    const parts = rest.split(cum);
+    if (parts.length > 1) demKhop.set(cum, demKhop.get(cum) + parts.length - 1);
+    rest = parts.join(" ");
+  }
+  return TU_ANH.test(rest);
+}
+
+// Ba từ điển chữ operator được đọc từ GIÁ TRỊ THẬT sau khi nạp module, không
+// qua bộ tách chuỗi bằng regex. Bộ tách ở trên có thật một điểm mù (một chuỗi
+// backtick nhiều dòng nuốt luôn vùng sau nó), nên với nửa này thì đọc thẳng
+// dữ liệu — không có gì để nuốt.
+function moiChuoi(value, out = []) {
+  if (typeof value === "string") out.push(value);
+  else if (Array.isArray(value)) for (const item of value) moiChuoi(item, out);
+  else if (value && typeof value === "object") for (const item of Object.values(value)) moiChuoi(item, out);
+  return out;
+}
+const TU_DIEN = [
+  ["operator-messages-core.js", "DacOperatorMessages"],
+  ["halt-instructions-core.js", "DacHaltInstructions"],
+  ["operator-glossary-core.js", "DacOperatorGlossary"],
+];
+let chuoiTuDien = 0;
+for (const [file, globalName] of TU_DIEN) {
+  for (const chuoi of moiChuoi(load(file, globalName))) {
+    chuoiTuDien += 1;
+    assert.ok(!conSotChuAnh(chuoi),
+      `${file} còn nói "ảnh" ở một chỗ nói về ĐẦU RA — gói này sinh video. Nếu đây thật sự là ảnh đầu vào thì khai cụm đó vào CUM_DAU_VAO_GIU_CHU_ANH kèm lý do.\n  ${chuoi}`);
+  }
+}
+assert.ok(chuoiTuDien > 100, `chỉ đọc được ${chuoiTuDien} chuỗi từ ba từ điển — module không nạp được thì phép kiểm này xanh một cách vô nghĩa`);
+
+// `sidepanel.html` là chữ thẳng trên giao diện: quét cả file.
+assert.ok(!conSotChuAnh(html),
+  "sidepanel.html còn nói 'ảnh' ở một chỗ nói về đầu ra — đây là chữ Đức nhìn thấy trực tiếp trên panel");
+
+// Mọi cụm trong danh sách miễn phải THẬT SỰ còn được dùng. Một dòng miễn đã
+// chết là một lỗ mở sẵn cho chữ cũ mọc lại mà không ai để ý.
+for (const [cum, so] of demKhop) {
+  assert.ok(so > 0, `cụm "${cum}" không còn khớp chỗ nào — bỏ nó khỏi CUM_DAU_VAO_GIU_CHU_ANH, đừng để dòng miễn chết nằm lại`);
+}
+
+// Các câu đã đổi sang "video" nằm ngoài ba từ điển: ghim từng câu kèm SỐ LẦN,
+// đúng kiểu bảng PINNED ở trên. Số lần là bắt buộc — hỏi "có tồn tại" thay vì
+// "còn nguyên" đã để lọt một đột biến trong gói này rồi.
+const CAU_VIDEO = [
+  [sources, "RECONCILE_BLOB_UNSUPPORTED: video trên trang đang là blob:", 1],
+  [sources, "Đã lưu video tạo lại · Queue vẫn bị chặn", 1],
+  [sources, "Fixture kiểm tra: tạo một video minh hoạ đơn giản.", 1],
+  [sources, "chưa có video đã lưu được xác minh. Tạo lại sẽ gửi một yêu cầu mới và có thể tạo video trùng.", 1],
+  [sources, "đang kiểm tra điều kiện trước khi tạo video mới.", 1],
+  [sources, "chưa có video đã xác minh lưu thành công.", 1],
+  [sources, "RERUN_PERSISTENCE_REQUIRED: phải bật lưu video và lưu Result XLSX.", 1],
+  [sources, "bắt đầu tạo video mới.", 1],
+  [sources, "đã tạo video mới và lưu xong.", 1],
+  [sources, "Chọn thư mục lưu video được tạo", 1],
+  [sources, "video is not saved", 1],
+  [sources, "Video của ${jobId} chưa được lưu và xác minh", 1],
+  [fs.readFileSync(new URL("../orchestrator-review-core.js", import.meta.url), "utf8"), " — sẽ ĐÈ LÊN file video cũ trùng tên", 1],
+  [fs.readFileSync(new URL("../plan-diagnostics-core.js", import.meta.url), "utf8"), "nếu muốn giữ video cũ", 1],
+];
+for (const [haystack, text, times] of CAU_VIDEO) {
+  assert.equal(countOf(haystack, text), times,
+    `câu đầu ra phải xuất hiện đúng ${times} lần, đang thấy ${countOf(haystack, text)} — nếu đổi lời văn thì sửa cả dòng ghim này: "${text}"`);
+}
+
+// Hai câu trong bảng trên là câu NÉM THẬT, nên chúng đi qua `classifyFailure`.
+// Đổi lời văn mà rơi sang nhánh khác là đổi hành vi retry (F-20).
+for (const [text, phase, expected] of [
+  ["RECONCILE_BLOB_UNSUPPORTED: video trên trang đang là blob: nên đường đối chiếu thủ công chưa tải được.", "PRE_SUBMIT", "OTHER"],
+  ["RERUN_PERSISTENCE_REQUIRED: phải bật lưu video và lưu Result XLSX.", "PRE_SUBMIT", "OTHER"],
+  ["RERUN_CONFIRM_NOT_COMPLETE: Q001 chưa có video đã xác minh lưu thành công.", "PRE_SUBMIT", "OTHER"],
+]) {
+  assert.equal(CORE.classifyFailure(new Error(text), phase), expected,
+    `"${text}" đổi lời văn xong đã tuột khỏi nhánh ${expected} — sửa lại lời văn, đừng sửa phép kiểm`);
+}
+
+console.log(`load-bearing error strings keep their verdicts (${PINNED.length}) · output noun stays "video" (${CAU_VIDEO.length} câu, ${chuoiTuDien} chuỗi từ điển): PASS`);

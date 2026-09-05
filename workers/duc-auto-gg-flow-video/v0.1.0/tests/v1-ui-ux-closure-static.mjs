@@ -46,7 +46,7 @@ assert.match(html, /<option value="overwrite">Ghi đè file hiện có<\/option>
 assert.match(html, /<option value="uniquify" selected>Giữ cả hai — tự thêm số<\/option>/);
 assert.match(html, /<option value="fail">Dừng và báo trùng tên<\/option>/);
 assert.match(html, /ĐẶT TÊN/);
-assert.match(html, /Mẫu tên file ảnh/);
+assert.match(html, /Mẫu tên file video/);
 assert.match(html, /Khi tên file đã tồn tại/);
 assert.match(css, /\.naming-grid label \{ align-self: start; align-content: start;/, "advanced naming controls align at the top even when only one field has help text");
 assert.match(css, /\.naming-grid input, \.naming-grid select \{ min-height: 38px;[^}]*font-size: 13px;/, "Naming controls are larger and easier to read");
