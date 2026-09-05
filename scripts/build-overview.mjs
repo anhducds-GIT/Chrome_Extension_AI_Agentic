@@ -863,6 +863,7 @@ ${/* DÒNG DƯỚI BẮT BUỘC PHẢI CÓ, và nó phải nằm SAU luật disp
      BỘ SINH, không phải cho Đức. Ghi chú CSS sẽ đi thẳng vào trang Đức mở, kèm cả đường dẫn
      file — mà luật của trang là không lộ đường dẫn. Cách này ship ra đúng một dòng trống. */
   ""}[role="tabpanel"][hidden]{display:none}
+[role="tabpanel"].x{display:block}
 
 .now{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:11px}
 @media (max-width:640px){.now{grid-template-columns:1fr}}
