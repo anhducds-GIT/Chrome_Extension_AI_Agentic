@@ -613,6 +613,12 @@
     if (error instanceof window.DacBridgeProposalCore.ProposalError && Object.hasOwn(window.DacBridgeCore.ERROR_DEFINITIONS, error.code)) {
       return new window.DacBridgeCore.BridgeProtocolError(error.code, error.message, error.details);
     }
+    // Lỗi người sửa được mà prepare() ném ra dưới dạng Error trần — nhận diện
+    // TRƯỚC khi rơi vào nhánh giặt trắng bên dưới (B-16). Danh sách và lý do
+    // nằm ở classifyPlainFailure() trong bridge-core.js. Không nhận ra thì
+    // trả null và mọi thứ dưới đây chạy y như cũ.
+    const classified = window.DacBridgeCore.classifyPlainFailure(error);
+    if (classified) return classified;
     // Always visible in the panel's DevTools console; never on the wire.
     console.error("[bridge] unexpected handler failure", error);
     // Dev-mode diagnostics (owner toggle ON): surface the real failure to the

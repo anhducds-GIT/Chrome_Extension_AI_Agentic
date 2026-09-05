@@ -90,7 +90,7 @@ Cách vá đã có sẵn và đã kiểm: `interjob-delay-core.js` + `tests/inte
 Vòng "Tiếp tục" thì đúng hơn là **đánh thức bằng sự kiện** (nút bấm resolve một promise) chứ
 không phải hẹn giờ — vì thời điểm không đoán trước được.
 
-### B-29 · Đồng hồ chờ trong content script — **ĐÃ ĐO 28/08: KHÔNG bị bóp, không cần vá**
+### B-29 · **ĐÃ ĐÓNG 2026-08-28** — đồng hồ chờ trong content script: ĐÃ ĐO 28/08, KHÔNG bị bóp, không cần vá
 
 `content.js:679` — `if (safetyCooldownSec > 0) await sleep(safetyCooldownSec * 1000);` — nghỉ
 an toàn 6–9 giây nằm trong **content script của tab chatgpt.com**, không phải trong panel.
@@ -225,7 +225,7 @@ Hai khả năng cần phân biệt vì cách xử lý khác nhau:
 **Đừng viết code dựa trên nhóm này** cho tới khi phân biệt được. Hiện nó là niềm tin, không phải
 bằng chứng.
 
-### B-16 · `MISSING_REFERENCE` bị bọc thành `INTERNAL_ERROR`
+### B-16 · **ĐÃ ĐÓNG 2026-09-06** — `MISSING_REFERENCE` bị bọc thành `INTERNAL_ERROR`
 Bắt được live 2026-08-26: gọi `jobs.add` với token ảnh chưa có file trả về
 `INTERNAL_ERROR` / `retryable: false`, còn nguyên nhân thật
 (`MISSING_REFERENCE: Q001 requires 'REF-A-RED-CIRCLE.png'`) chỉ hiện trong `details.debug` —
@@ -235,7 +235,30 @@ mà debug chỉ bật khi Chế độ phát triển đang BẬT.
 kèm câu chỉ đường tới `references.add`. Cùng họ với **B-11** (`run.trial` không có workbook).
 Sửa chung một lượt thì hợp lý: cả hai đều là `prepare()` nổ bên trong mutation rồi bị bọc.
 
-### B-18 · `references.add` buộc gọi 3 bước — đã cân nhắc, CHỌN giữ nguyên
+**ĐÃ VÁ 2026-09-06 — một chỗ, không phải mỗi handler một chỗ.** Đo lại thì cả hai đúng là chung
+gốc: gốc là `bridgeError()` trong `sidepanel.js` chỉ nhận ra `BridgeProtocolError` và
+`ProposalError`, còn lại giặt hết thành `INTERNAL_ERROR`. Vá ở đúng chỗ đó —
+`classifyPlainFailure()` trong `bridge-core.js`, gọi TRƯỚC nhánh giặt trắng.
+
+**Vá cả họ, không vá mỗi cái backlog gọi tên.** `prepare()` ném ra SÁU lỗi cùng hình dạng và
+cùng đường đi: `MISSING_REFERENCE` · `AMBIGUOUS_REFERENCE` · `DUPLICATE_REFERENCE` ·
+`DUPLICATE_ALIAS` · `MAX_INPUT_IMAGES` · `INVALID_TASK_TYPE`. Vá đúng một cái là để năm anh em
+còn lại nguyên bệnh.
+
+**KHÔNG đụng `retryable`.** `INTERNAL_ERROR` và `VALIDATION_FAILED` đều `retryable:false`, nên
+bản vá chỉ đổi *mã và câu chỉ đường*. Danh sách sáu mã là **liệt kê từng cái**, cố ý: luật
+"cứ `CHỮ_HOA:` là lỗi người sửa được" sẽ gắn nhãn người-sửa-được cho một bug nội bộ thật và đẩy
+chữ nội bộ tuỳ ý ra dây.
+
+**Ghim:** `tests/bridge-plain-failure-classification-smoke.mjs` — **không grep mã**, nó CẮT chính
+hàm `bridgeError()` đã ship ra khỏi `sidepanel.js` rồi CHẠY trong `node:vm`, ở **cả hai** trạng
+thái công tắc Chế độ phát triển (vá mà chỉ chạy khi công tắc BẬT là không vá gì cả — người vận
+hành thật chạy với công tắc TẮT). Suite **108/108 xanh**. **8/8 đột biến đỏ**, gồm cả cái độc
+nhất: **dời lời gọi xuống SAU nhánh giặt trắng** — chữ còn nguyên, hành vi chết. Đột biến đầu tiên
+tôi thử (dời lên trên `console.error`) **lọt lưới**, và đúng: nó không phá gì cả. Ghi lại vì một
+lượt "đột biến xanh" đọc gần y hệt một lượt "ghim yếu".
+
+### B-18 · **ĐÃ ĐÓNG 2026-08-26** — `references.add` buộc gọi 3 bước: đã cân nhắc, CHỌN giữ nguyên
 Audit Antigravity 2026-08-26 nêu: trên GPT phải gọi `jobs.add` → `references.add` → `jobs.update`,
 trong khi Gemini cho `references.add` → `jobs.add`. Đã phân tích và **quyết định giữ nguyên**;
 audit vòng 2 đồng ý.
@@ -559,6 +582,27 @@ triển đang BẬT. Đây là **điều kiện người sửa được**, đún
 retryable như `run.status` đang làm. Cùng hạng với phát hiện cũ "RUN_ACTIVE bị gắn retryable
 cho trạng thái chỉ người sửa được". `jobs.add` đã có đường bootstrap nên không dính;
 `run.trial` thì chưa.
+
+**ĐO LẠI 2026-09-06 — CÙNG GỐC VỚI B-16 MỘT NỬA, VÀ CHỜ ĐỨC CHỐT NỬA CÒN LẠI.**
+
+*Cùng gốc:* đúng, cả hai đều là `Error` trần rơi vào **cùng một chỗ giặt trắng** —
+`bridgeError()` trong `sidepanel.js`. Chỗ đó **đã vá** cùng lượt với B-16, nên cơ chế nhận
+diện đã có sẵn, không phải dựng lại.
+
+*Không cùng gốc:* hai chỗ khác nhau ở hai điểm, nên **một dòng bảng không đóng được B-11**.
+1. Lỗi của B-16 mang tiền tố mã (`MISSING_REFERENCE:`); câu của B-11 là
+   `"Open an XLSX workbook first."` — **không có mã nào để nhận ra**, phải gắn mã ở chỗ ném
+   (`sidepanel.js:4432`, trong `authoritativeValidate` — mà hàm này còn phục vụ cả nút Chạy
+   của panel, không riêng Bridge).
+2. **Đây mới là chỗ chặn thật:** mã đúng theo chính mục này là `WORKBOOK_NOT_LOADED`, và mã đó
+   `retryable: true`. Hôm nay `run.trial` trả `retryable: false`. Nên vá B-11 là **lật
+   `retryable` false → true trên dây** — chạm **luật retry**, mà `AGENTS.md` gốc mục 2 bắt
+   **hỏi Đức trước**. B-16 không dính vì `VALIDATION_FAILED` và `INTERNAL_ERROR` cùng
+   `retryable: false`.
+
+Không tự lật. Câu cần Đức chốt, một câu: *`run.trial` gọi khi chưa nạp workbook thì agent được
+phép thử lại (`retryable: true`, giống `run.status` đang làm) — đúng hay không?* Chốt rồi thì
+phần code còn lại là nhỏ, cơ chế đã đứng sẵn.
 
 ### B-08 · Chuyển text anchor của poll A/B vào adapter
 `ab-poll-core.js` đang giữ cả *chính sách* (random/click_1/... — trung tính) lẫn

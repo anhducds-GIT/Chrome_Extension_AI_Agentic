@@ -70,6 +70,48 @@
     }
   }
 
+  // MỘT chỗ bọc, không phải mỗi handler một chỗ.
+  //
+  // DacRunnerCore.prepare() ném lỗi bằng `new Error("CODE: câu giải thích")` —
+  // Error trần, không phải BridgeProtocolError. Ra tới đường trả lời của Bridge
+  // nó rơi vào nhánh mặc định và thành INTERNAL_ERROR, nên thứ DUY NHẤT agent
+  // cần biết — người sửa được cái gì — chỉ còn nằm trong details.debug, mà debug
+  // chỉ bật khi Chế độ phát triển đang BẬT. Đo live 2026-08-26 (backlog B-16:
+  // jobs.add với token ảnh chưa có file trả INTERNAL_ERROR / retryable:false,
+  // còn "MISSING_REFERENCE: Q001 requires 'REF-A-RED-CIRCLE.png'" thì bị giấu).
+  //
+  // Cả SÁU mã dưới đây cùng một hình dạng và cùng một đường đi. Vá đúng mỗi
+  // MISSING_REFERENCE là để năm anh em còn lại nguyên bệnh.
+  //
+  // DANH SÁCH LÀ CỐ Ý LIỆT KÊ TỪNG CÁI. Luật kiểu "message mở đầu bằng
+  // CHỮ_HOA thì là lỗi người sửa được" sẽ gắn nhãn người-sửa-được cho một bug
+  // nội bộ thật, và đẩy chữ nội bộ tuỳ ý ra dây. Không có trong danh sách thì
+  // vẫn là INTERNAL_ERROR như cũ.
+  //
+  // KHÔNG đụng retryable: VALIDATION_FAILED và INTERNAL_ERROR đều
+  // retryable:false, nên bản vá này đổi *mã và câu chỉ đường*, không đổi luật
+  // retry (luật an toàn mục 2 của AGENTS.md gốc — đổi phải hỏi Đức).
+  const PREPARE_VALIDATION_GUIDANCE = deepFreeze(Object.assign(Object.create(null), {
+    MISSING_REFERENCE: "Nạp đúng file ảnh đó bằng references.add rồi gọi lại.",
+    AMBIGUOUS_REFERENCE: "Hai file cùng khớp một token — đặt alias riêng hoặc bỏ bớt một file.",
+    DUPLICATE_REFERENCE: "Job đang xin cùng một file nhiều lần — bỏ token trùng.",
+    DUPLICATE_ALIAS: "Hai file đang dùng chung một alias — đổi tên một cái.",
+    MAX_INPUT_IMAGES: "Giảm số ảnh tham chiếu của job xuống dưới trần max_input_images.",
+    INVALID_TASK_TYPE: "Đặt task_type là image_generation hoặc text_reasoning."
+  }));
+
+  // Trả về BridgeProtocolError nếu nhận ra, null nếu không. null = giữ nguyên
+  // hành vi cũ, cố ý: chỗ gọi quyết định làm gì với lỗi lạ.
+  function classifyPlainFailure(error) {
+    if (error instanceof BridgeProtocolError) return null;
+    const message = String(error?.message || error || "").slice(0, 300);
+    const marker = message.indexOf(":");
+    if (marker <= 0) return null;
+    const code = message.slice(0, marker);
+    if (!Object.hasOwn(PREPARE_VALIDATION_GUIDANCE, code)) return null;
+    return new BridgeProtocolError("VALIDATION_FAILED", `${message} ${PREPARE_VALIDATION_GUIDANCE[code]}`);
+  }
+
   function isPlainObject(value) {
     if (!value || Object.prototype.toString.call(value) !== "[object Object]") return false;
     const prototype = Object.getPrototypeOf(value);
@@ -956,6 +998,7 @@
     ERROR_DEFINITIONS,
     METHOD_REGISTRY,
     BridgeProtocolError,
+    classifyPlainFailure,
     canonicalJson,
     hashCanonical,
     hashText,
