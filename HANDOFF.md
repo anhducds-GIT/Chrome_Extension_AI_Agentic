@@ -2840,3 +2840,65 @@ tụt về 0.
 
 **Còn mở:** frontmatter của đề bài `CONTENT-TRUTH-01` cần đổi sang đã xong — file đó thuộc khoá
 `_docs`, không phải khoá của lượt này, nên **không tự sửa**, để phiên giữ `_docs` làm.
+
+---
+
+## 2026-09-05 · `claude-dashboard` — MULTIFLOW-ON-BOARD-01: bảng nói được cách nhiều việc chạy cùng lúc
+
+Đức chốt 04/09: đưa cách vận hành nhiều phiên song song lên bảng, coi nó là một tính năng, và
+**tuyệt đối không nhúng ai đang giữ vùng nào**. Đây là lượt executor, không phải lượt điều phối.
+
+**Làm gì.** Thêm mục *"Nhiều việc chạy cùng lúc — cách nó chạy"* vào tab Vận hành. Ba câu Đức
+cần đọc nằm ngay ngoài: mỗi vùng chỉ một AI được ghi · hiện 6 vùng nên tối đa 6 việc song song ·
+hai AI cùng muốn một vùng thì người sau **bị từ chối**, không phải ghi đè. Chi tiết cơ chế nằm
+trong hai khối gấp. Ba bộ đọc mới (`demLuongSongSong` · `readCoChe` · `readBatBien`) **đọc lại
+từ file**, không gõ tay con số nào — nên bảng không thể nói khác luật.
+
+**Luật cứng của cả ba bộ đọc: không đọc trường `owner`, chỉ đọc danh sách khoá.** Không phải
+thẩm mỹ. Bảng nằm trong khối `generators` nên cổng so nó với HEAD mỗi phiên; chủ vùng đổi liên
+tục (04/09 riêng `_code` đổi chủ bốn lần). Nhúng `owner` vào là bảng lệch HEAD ngay lượt nhận
+khoá kế tiếp, và **mọi phiên bị chặn đẩy việc** dù không một dữ liệu nào đổi.
+
+**Số thật.** Phép kiểm 27 → 28. Thử phá 4 lượt, **cả 4 đỏ**, nhưng chỉ **1 lượt đỏ đúng chỗ tôi
+đoán**:
+
+| Đột biến | Bắt bởi |
+|---|---|
+| gõ cứng số vùng | *"con số trên trang phải giảm theo"* — phép chứng minh số còn đọc sống |
+| bộ đếm đọc `owner` | *"số việc song song phải bằng số khoá"* — chặn sớm ở lớp quan hệ |
+| **in dấu bận/mở từng vùng lên mục** | **đúng phép byte-identity của tab Vận hành** |
+| bỏ chốt `if (coChe.length)` | một khẳng định KHÁC hẳn (`ten ban chuan cua repo`) |
+
+Lượt thứ tư **không chứng minh được gì** cho phép kiểm nó nhắm tới: nó đỏ vì một phiên khác
+đang đổi tên bảng giữa chừng, không phải vì chốt bị bỏ. Theo đúng luật đã ghi: *"không dựng
+được ca hỏng" nghĩa là phép kiểm CHƯA được kiểm chứng*, không phải "đã qua". Ghi lại ở đây để
+ai đụng chỗ đó lần sau biết mà dựng lại.
+
+**Một khẳng định tôi viết quá rộng và đã đỏ ngay lượt đầu.** "Đổi hết chủ vùng → bảng không đổi
+một byte" là SAI đề: bảng **cố ý** in dấu bận/mở của từng khoá ở tab AI điều phối, và những
+dòng đó mang tiền tố `KHOA_PREFIX` nên bộ so độ tươi miễn chúng. Chia lại đúng phạm vi làm ba:
+mục của tôi không đổi một byte · `compareOverview` vẫn khớp (cổng **không** được đỏ vì ai đó
+nhận một khoá) · **mọi dòng lệch phải nằm trong tập được miễn**, và phép kiểm in ra dòng nào
+lọt ra ngoài.
+
+**Một fixture không dựng được như dự định.** "Mất hẳn file luật" không đi qua bộ sinh —
+`collectDocs` cũng đọc file đó và nó ném trước. Thay bằng ca thật hơn: luật **còn** nhưng bị
+viết lại, mất mục 2 và mục 4. Đánh số lại luật thì có thật; xoá hẳn file thì không ai làm.
+
+**Tôi có thể đã làm mất việc của phiên khác — ghi lại để không tái diễn.** Bộ đo đột biến của
+tôi phục hồi file bằng `git checkout -- scripts/build-overview.mjs` sau mỗi lượt. Lượt cuối kết
+thúc gần đúng lúc `claude-rename-bang` nhận `_code` để đổi tên bảng. Ngay sau đó
+`tests/build-overview-smoke.mjs` đã mang tên mới ở cả ba chỗ, còn `scripts/build-overview.mjs`
+thì chưa — đúng file bộ đo của tôi vừa reset. Đã báo thẳng cho phiên đó kèm số dòng cụ thể.
+**Luật rút ra: bộ đo đột biến phải lưu nội dung nó đọc được rồi ghi trả lại chính nội dung đó,
+KHÔNG được gọi `git checkout`.** `git checkout` không phân biệt đột biến của tôi với sửa đổi
+của người khác vừa xuất hiện trong cùng file.
+
+**Trạng thái.** Cổng đóng phiên **XANH TOÀN BỘ**. Commit `7c1bd2e` đã lên `origin/main`. Bảng
+đã được `claude-dieu-phoi` sinh lại (`b76d5c7`) và có khối mới. `_code` nay do
+`claude-rename-bang` giữ — tôi không còn đụng vùng nào.
+
+**Còn mở, KHÔNG thuộc lượt này:** (a) việc đổi tên bảng của `claude-rename-bang` đang dở, cổng
+đã cảnh báo artifact lệch HEAD và `safe-push` sẽ từ chối cho tới khi họ sinh lại; (b) suite
+`build-overview-smoke` chậm thêm vì bốn lượt sinh trang mới — hai đột biến vượt 600 giây, đây
+là số đo cụ thể cho **Y-07**, và nếu cần thì gộp hai lượt sinh ở phần (d)/(e) làm một.
