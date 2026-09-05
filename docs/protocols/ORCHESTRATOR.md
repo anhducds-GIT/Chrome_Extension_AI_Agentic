@@ -98,6 +98,48 @@ trên đất của nó; đừng bê luật repo Extension sang.
   sớm muộn cũng bị bỏ qua. Phép kiểm cần sửa `tests/role-firewall-smoke.mjs` → khoá `_code` →
   một lượt khác.
 
+## 0d. MỘT CỬA — Đức hỏi một phiên, phiên đó rẽ nhánh (Đức chốt 2026-09-05 — [ADR-0004](../adr/0004-mot-cua-assistant-re-nhanh-va-giu-bao-cao-song.md))
+
+Đức làm việc qua **một phiên Assistant duy nhất** cho mỗi repo. Phiên này **tự rẽ nhánh** thành
+nhiều executor, điều phối chúng, và **giữ khu báo cáo sống trên bảng**.
+
+Đo được ngày 04–05/09 trên lịch sử thật: **9 executor do phiên điều phối tạo ra hỏi Đức 0 câu**
+về quyền hay khoá. Cùng ngày, các phiên Đức mở tay **chặn nhau 3 lần**, lần nào cũng phải Đức
+vào gỡ — lần cuối một phiên giữ cả ba khoá gốc và không nhận tin nhắn, nên Đức phải tự dừng nó.
+
+Bảng quyền **chặn được nhưng không quyết hộ ai nhường ai**. Người phải phân xử là Đức, mà Đức
+không có bản đồ việc trong tay. Mô hình một cửa chuyển việc phân xử sang chỗ có bản đồ.
+
+### Rẽ nhánh cho đúng
+
+- Rẽ theo **khoá**, không rẽ theo chủ đề. Hai việc cùng khoá thì **nối tiếp**, đừng giao song
+  song rồi để chúng chặn nhau.
+- Đề bài giao đi phải **đủ ràng buộc để executor không phải hỏi Đức** — đó là toàn bộ giá trị
+  của mô hình này. Executor phải hỏi Đức nghĩa là brief thiếu.
+- **Không nhắn được cho executor đang chạy** (build hiện tại một chiều). Nên brief thiếu thì
+  phải chờ nó xong rồi giao vòng hai — đã trả giá một lần 04/09. Giao đủ ngay từ đầu.
+- Executor chết giữa chừng đã xảy ra **sáu lần trong một ngày**. Phiên duy nhất không mất gì là
+  phiên được dặn **commit từng bước**. Câu đó phải có trong mọi brief.
+
+### Giữ khu báo cáo sống — và vì sao nó không phá luật "suy từ HEAD"
+
+Bảng **vẫn** suy hoàn toàn từ HEAD, **vẫn** cấm phụ thuộc giờ đồng hồ. Khu báo cáo không tự
+sống: **nó tươi vì Assistant vừa chạm vào.**
+
+> **Mỗi lượt báo cáo Đức mà sự thật có đổi = một lượt sinh lại bảng.**
+
+Nội dung không đổi thì bộ sinh không ghi gì, nên không đẻ ra commit rỗng.
+
+Dòng nào của khu này cũng phải mang **dấu lọc** như khối khoá đang mang — nếu không, mỗi lượt
+đổi trạng thái lại làm bảng lệch và **chặn push của mọi lane**. Cơ chế đã có sẵn, dùng lại,
+đừng dựng cái thứ hai.
+
+**Tên lane quay lại bảng** (Đức đảo lại quyết định 04/09 của chính mình). Hôm đó bỏ tên chủ vì
+nó làm bảng mục; nay dấu lọc đã xử chỗ đó. Đây là quyết định mới, không phải sơ ý.
+
+**Hai thứ khu này KHÔNG thấy** — nói ra trên trang, đừng để Đức tin nhầm: luồng đang chạy ở
+**repo khác**, và luồng **chưa kịp nhận khoá**.
+
 ## 1. HAI LỚP — và Đức chỉ thấy lớp trên (Đức chốt 04/09)
 
 Đây là luật quan trọng nhất của sổ này, vì bản đầu đã vi phạm nó.
