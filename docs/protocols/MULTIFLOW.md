@@ -56,6 +56,14 @@ Ba điều **không** được làm, và mỗi điều là một tai nạn thậ
   thấy "trống" sẽ cùng ghi tên mình. Dùng lệnh.
 - **Đừng `git push` trần.** Nó cuốn theo commit của mọi phiên khác.
 - **Đừng bỏ dòng `Lane:`.** Thiếu nhãn thì cả cổng đóng phiên và cổng xuất bản đều từ chối.
+- **Đẩy KHÔNG được thì GIỮ khoá, đừng trả.** Bước 5 viết "đẩy, rồi `--release`" — hai vế đó
+  theo đúng thứ tự đó, không phải hai việc rời. Cổng đóng phiên không soi cây làm việc, nó soi
+  **commit chưa đẩy**: commit của bạn còn nằm đó mà vùng đã không còn chủ thì cổng báo
+  *"vùng gốc repo bị sửa nhưng chưa ai đứng tên"* — **và nó báo với MỌI phiên**, kể cả phiên
+  chẳng liên quan. Ngày 06/09 ba lane cùng bị chặn đẩy vì lý do ngoài tầm với, cùng trả khoá cho
+  "sạch sẽ", và cả ba để lại đúng một mục đỏ cho phiên đến sau dọn.
+  Đẩy được rồi mới trả. Không đẩy được thì **giữ khoá và báo lại** — giữ một khoá là chuyện nhỏ,
+  để lại commit vô chủ mới là chuyện lớn.
 
 ## 4. Năm bất biến — và vì sao từng cái tồn tại
 
