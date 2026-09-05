@@ -920,6 +920,7 @@ ${/* DÒNG DƯỚI BẮT BUỘC PHẢI CÓ, và nó phải nằm SAU luật disp
   font-variant-numeric:tabular-nums;text-align:right}
 .bi .d{font-size:13.4px;color:var(--ink-2);line-height:1.4;min-width:0}
 .note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:9px}
+.note + .sect{margin-top:15px}
 
 /* TOGGLE — mục 9 của Đức: đọc lướt được, mở ra mới thấy chi tiết. */
 details.the{border:1px solid var(--line);border-radius:10px;background:var(--inset);
@@ -1059,7 +1060,7 @@ ${/* Hàng của khối "đang làm gì". CỐ Ý không dùng lại lớp .dr: 
 .lr .h{display:flex;flex-wrap:wrap;gap:9px;align-items:baseline}
 .lr .ln{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink)}
 .lr .d{font-size:13.2px;color:var(--ink-2);line-height:1.45;min-width:0}
-.lr .w{font-size:12px;color:var(--muted);line-height:1.4}
+.lr .mn{font-size:12px;color:var(--muted);line-height:1.4}
 </style>`;
 
 const TABS = [
@@ -1385,7 +1386,7 @@ ${STYLE}
         /* `data-tu` là mốc NGUYÊN VĂN từ bảng. Chữ "bao lâu rồi" do JS trong trang thêm vào
            lúc Đức mở — ở đây mà tính là trang phụ thuộc giờ đồng hồ, và sang ngày mới thì
            MỌI lane bị chặn push dù không dữ liệu nào đổi (suýt xảy ra 03/09). */
-        + `<span class="w">Nhận vùng lúc <span class="tu" data-tu="${esc(l.tu)}">${esc(l.tu || "bảng không ghi mốc nhận")}</span></span>`
+        + `<span class="mn">Nhận vùng lúc <span class="tu" data-tu="${esc(l.tu)}">${esc(l.tu || "bảng không ghi mốc nhận")}</span></span>`
         + `</div>`);
     }
   } else {
@@ -1401,8 +1402,7 @@ ${STYLE}
 
   for (const d of dongKhoi) p.push(KHOA_PREFIX + d);
 
-  p.push(`
-      <div class="sect" style="margin-top:15px">Cần Đức — ${ducViec.length ? esc(ducViec.length + " việc") : "không có việc nào"}</div>
+  p.push(`      <div class="sect">Cần Đức — ${ducViec.length ? esc(ducViec.length + " việc") : "không có việc nào"}</div>
       <div class="bl">`);
   if (ducViec.length) {
     for (const v of ducViec) {

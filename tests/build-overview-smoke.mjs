@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readMoc, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -794,9 +794,25 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
       ["goi-mot", "BẬN"], ["goi-hai", "MỞ"], ["goi-ba", "MỞ"]],
     "moi khoa mot dong, dung thu tu bang chu so huu, dung bien");
 
-  /* --- (d) KHÔNG rò tên phiên đang giữ khoá --- */
-  assert.ok(!tab.includes(CHU), "TUYET DOI khong duoc lo ten phien dang giu khoa");
-  assert.ok(!html.includes(CHU), "va khong lo o bat ky tab nao khac");
+  /* --- (d) TÊN PHIÊN GIỜ ĐƯỢC HIỆN — và CHỈ ở khối "đang làm gì" ---
+   *
+   * ĐÂY LÀ MỘT PHÉP GHIM BỊ LẬT NGƯỢC, ghi rõ ra để phiên sau không tưởng là lỗi. Trước
+   * 05/09 chỗ này ghim `!tab.includes(CHU)` — "tuyệt đối không lộ tên phiên". `ADR-0004` đảo
+   * lại chính quyết định đó của Đức: tên lane quay lại bảng, vì lý do bỏ đi hồi trước (tên
+   * đổi liên tục làm bảng mục) đã được xử bằng `KHOA_PREFIX`.
+   *
+   * Nhưng nửa sau của khẳng định KHÔNG được nới: tên lane chỉ được xuất hiện trên những dòng
+   * MANG DẤU. Một tên lane lọt ra dòng không dấu là mỗi lượt nhận/trả khoá lại chặn push của
+   * MỌI lane — đúng cái mà phép ghim cũ đang bảo vệ, và phần đó vẫn phải đứng. */
+  assert.ok(tab.includes(CHU), "ten lane dang giu vung PHAI hien o tab AI dieu phoi (ADR-0004)");
+  {
+    const dongCoTen = html.split(String.fromCharCode(10)).filter((l) => l.includes(CHU));
+    assert.ok(dongCoTen.length > 0, "fixture phai toi duoc bo sinh");
+    for (const l of dongCoTen) {
+      assert.ok(l.startsWith(KHOA_PREFIX),
+        `ten lane CHI duoc nam tren dong mang dau — dong nay khong mang: ${l.slice(0, 70)}`);
+    }
+  }
   assert.ok(/ảnh chụp lúc sinh/.test(v4),
     "phai con cau noi ro khoi khoa la anh chup luc sinh, khong phai trang thai thoi gian thuc");
 
@@ -1259,13 +1275,26 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   // (Lượt chạy đầu bắt được đúng chỗ này: regex rộng quét luôn cả 4 dòng defect.)
   const dongKhoaThat = dong.filter((l) => /<span class="n">[^<]+<\/span><span class="badge b\d">(?:BẬN|MỞ)</.test(l));
   assert.ok(coDau.length > 0, "trang that phai co dong khoa mang dau");
-  assert.deepEqual(coDau, dongKhoaThat, "MOI dong khoa deu phai mang dau — sot mot dong la cong do oan");
+  /* TỪ `LIVE-BLOCK-01` CÓ HAI KHỐI ĐƯỢC MIỄN, không còn một. Khối "đang làm gì" cũng đọc
+     thẳng từ bảng chủ sở hữu, nên nó đổi đúng những lúc bảng khoá đổi và phải được miễn cùng
+     một đường. Khẳng định giữ nguyên sức: tập dòng mang dấu phải bằng ĐÚNG hai khối đó —
+     thiếu một dòng là cổng đỏ oan, thừa một dòng là cổng mất răng ở chỗ đó. */
+  const iKhoi = dong.findIndex((l) => l.includes('class="sect">Đang làm gì'));
+  const jKhoi = dong.findIndex((l, k) => k > iKhoi && l.includes('class="sect">Cần Đức'));
+  assert.ok(iKhoi !== -1 && jKhoi > iKhoi, "phai tim duoc khoi 'Dang lam gi' de tach hai khoi duoc mien");
+  const dongKhoiLuong = dong.slice(iKhoi, jKhoi);
+  assert.deepEqual(coDau, [...dongKhoiLuong, ...dongKhoaThat],
+    "tap dong mang dau phai bang DUNG hai khoi doc tu bang chu so huu — thieu la cong do oan, thua la cong mat rang");
   /* HUY HIEU KHAC KHOA tuyệt đối KHÔNG được mang dấu — chúng là NỘI DUNG, lọc chúng khỏi phép
      so là làm cổng mất răng. Trước DASH-ORCH-V2 ca này dựng bằng dòng defect mang huy hiệu
      "MỞ"; từ khi mỗi đề bài không còn một dòng riêng thì dòng đó biến mất, nên khẳng định
      phải neo vào cái CÒN LẠI: huy hiệu trạng thái luồng ở vùng công việc. */
-  const dongHuyHieuKhac = dong.filter((l) => /class="badge b\d">/.test(l)
-    && !/<span class="badge b\d">(?:BẬN|MỞ)</.test(l));
+  const dongHuyHieuKhac = dong.filter((l, k) => /class="badge b\d">/.test(l)
+    && !/<span class="badge b\d">(?:BẬN|MỞ)</.test(l)
+    /* Huy hiệu tên vùng trong khối "đang làm gì" là NGOẠI LỆ có chủ đích: nó đọc từ bảng chủ
+       sở hữu nên nó phải được miễn, y như dòng khoá. Loại theo VỊ TRÍ chứ không theo hình
+       dạng — loại theo hình dạng là mở một lỗ mà bất kỳ huy hiệu nào sau này cũng chui lọt. */
+    && !(k >= iKhoi && k < jKhoi));
   assert.ok(dongHuyHieuKhac.length > 0,
     "trang that phai co huy hieu KHAC khoa, neu khong thi khang dinh duoi vo nghia");
   for (const l of dongHuyHieuKhac) {
@@ -1463,19 +1492,31 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
 
   //  · Nửa chứng minh cho khẳng định trên: mọi dòng KHÁC nhau phải nằm trong tập được miễn.
   //    Thiếu nửa này thì `matches` xanh cũng có thể vì bộ so hỏng, chứ không vì trang đúng.
+  /* SO THEO TẬP DÒNG, KHÔNG SO THEO CHỈ SỐ. Bản trước ghim thêm `A.length === B.length` và
+     so từng vị trí. Từ `LIVE-BLOCK-01` thì SỐ DÒNG đổi thật khi số vùng đang bận đổi — khối
+     "đang làm gì" vẽ một dòng cho mỗi vùng có chủ — nên phép so theo chỉ số vô nghĩa ở đây.
+     Cái phải đúng không đổi: mọi dòng CHỈ CÓ ở một bên đều phải mang dấu. */
   const dong = (s) => s.replace(/\r\n?/g, "\n").split("\n");
   const A = dong(trangThat);
   const B = dong(trangDoiChu);
-  assert.equal(A.length, B.length, "doi chu vung khong duoc lam doi SO DONG cua trang");
-  const lech = A.map((x, i) => (x === B[i] ? null : x)).filter(Boolean);
+  const tapB = new Set(B);
+  const tapA = new Set(A);
+  const lech = [...A.filter((x) => !tapB.has(x)), ...B.filter((x) => !tapA.has(x))];
   assert.ok(lech.length > 0,
     "phai co it nhat mot dong lech — khong lech gi nghia la fixture khong toi duoc bo sinh");
   assert.ok(lech.every((x) => x.startsWith(KHOA_PREFIX)),
     "moi dong lech PHAI nam trong tap duoc mien; dong ngoai tap la mot lan chan push cho ca repo:\n  "
     + lech.filter((x) => !x.startsWith(KHOA_PREFIX)).slice(0, 3).join("\n  "));
 
-  assert.ok(!trangThat.includes(CHU_GIA) && !trangDoiChu.includes(CHU_GIA),
-    "ten chu vung tuyet doi khong duoc co mat tren trang, ke ca khi bang quyen dang khai no");
+  /* PHÉP GHIM BỊ LẬT NGƯỢC — `ADR-0004` đảo lại quyết định 04/09 của Đức: tên lane quay lại
+     bảng. Trước 05/09 chỗ này ghim `!trangDoiChu.includes(CHU_GIA)`, và giữ nguyên nó là ghim
+     chính cái defect cần vá. Nửa PHẢI giữ: tên lane chỉ được nằm trên dòng mang dấu — lọt ra
+     dòng không dấu là mỗi lượt nhận/trả khoá lại chặn push của mọi lane. */
+  assert.ok(trangDoiChu.includes(CHU_GIA), "ten lane dang giu vung PHAI hien tren bang (ADR-0004)");
+  for (const l of B.filter((x) => x.includes(CHU_GIA))) {
+    assert.ok(l.startsWith(KHOA_PREFIX),
+      `ten lane CHI duoc nam tren dong mang dau: ${l.slice(0, 70)}`);
+  }
 
   /* --- (d) NỬA CÒN LẠI của phép (c): chứng minh fixture THẬT SỰ tới được bộ sinh ---
      Thiếu nửa này thì (c) xanh một cách vô nghĩa: một lớp bọc hỏng, một đường đọc khác, hay
@@ -1521,6 +1562,157 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     "nhung cau chinh van phai con — so vung khong den tu file luat");
 
   ok(`nhieu viec cung luc: ${khoaThat.length} vung / ${readCoChe(goc).length} co che / ${readBatBien(goc).length} bat bien, doi HET chu vung khong doi mot byte`);
+}
+
+/* ---- T9. LIVE-BLOCK-01 · khối "đang làm gì" và tab mở sẵn ----
+ *
+ * Bốn thứ được ghim ở đây, và cả bốn dựng được ca hỏng thật:
+ *   · khối ĐỌC từ bảng chủ sở hữu, không đóng cứng danh sách lane;
+ *   · không luồng nào chạy → VẪN in một dòng, không ẩn khối (khối trống và khối hỏng phải
+ *     phân biệt được bằng mắt);
+ *   · MỌI dòng của khối mang dấu lọc ở ĐẦU DÒNG — phép ghim quan trọng nhất, vì sai chỗ này
+ *     không ai thấy cho tới lúc một phiên bất kỳ bị cổng xuất bản từ chối;
+ *   · tab mặc định là AI điều phối, và NÚT TAB KHỚP VỚI KHUNG NỘI DUNG.
+ *
+ * HAI lượt sinh trang, không hơn: một lượt `buildOverview` tốn khoảng mười hai giây và cộng
+ * thẳng vào cổng đóng phiên của MỌI phiên sau. Phần đọc dữ liệu kiểm bằng `readLuong` (không
+ * dựng trang), phần tab dùng lại trang của ca thứ nhất — tab mặc định không phụ thuộc bảng
+ * chủ sở hữu, nên sinh riêng một trang nữa cho nó là mười hai giây mua về không gì cả. */
+{
+  const goc = createDefaultDeps(ROOT);
+  const sinh = (thay) => buildOverview(bocFile(goc, thay)).html;
+  const NL = String.fromCharCode(10);
+
+  /* --- (a) `readLuong` đọc đúng bốn trường, và bỏ đúng vùng trống chủ --- */
+  assert.deepEqual(readLuong(bocFile(goc, { ".agents/claims.json": claimsJson({
+    "_root": { owner: null, task: "khong duoc hien", claimed_at: "2020-01-01T00:00" },
+    "_code": { owner: "lane-mot", task: "viec mot", claimed_at: "2026-09-05T10:05" },
+    "workers/goi-mot": { owner: "  lane-hai  ", task: "viec hai", claimed_at: "2026-09-05T11:30" }
+  }) })), [
+    { lane: "lane-mot", viec: "viec mot", vung: "_code", tu: "2026-09-05T10:05" },
+    { lane: "lane-hai", viec: "viec hai", vung: "goi-mot", tu: "2026-09-05T11:30" }
+  ], "doc dung lane/viec/vung/moc, bo vung trong chu, cat khoang trang, va cat phan thu muc cua khoa goi");
+
+  /* Vùng đang giữ mà KHÔNG khai câu việc: vẫn phải ra một dòng, chỉ là câu việc rỗng. Bỏ dòng
+     đó đi là Đức nhìn thấy ít luồng hơn thực tế — sai nguy hiểm hơn một ô để trống. */
+  assert.deepEqual(readLuong(bocFile(goc, { ".agents/claims.json": claimsJson({
+    "_code": { owner: "lane-cau-that" }
+  }) })), [{ lane: "lane-cau-that", viec: "", vung: "_code", tu: "" }],
+  "thieu task/claimed_at thi van ra mot dong, khong bi loai");
+
+  /* Bảng hỏng thì NÉM, y hệt `readKhoa`: một khối rỗng đọc ra là "không có gì chạy", mà đó
+     đúng là câu nói dối tệ nhất khối này có thể nói. */
+  assert.throws(() => readLuong(bocFile(goc, { ".agents/claims.json": null })), /CLAIMS_THIEU_FILE/,
+    "mat bang chu so huu thi NEM, khong ve khoi rong");
+  assert.throws(() => readLuong(bocFile(goc, { ".agents/claims.json": "{" })), /CLAIMS_HONG/,
+    "bang khong doc duoc thi NEM");
+
+  /* --- (b) TRANG CÓ LUỒNG: tên lane, câu việc, vùng, mốc — và không đóng cứng --- */
+  const LANE_A = "lane-bia-mot-khong-co-trong-repo";
+  const LANE_B = "lane-bia-hai-khong-co-trong-repo";
+  const VIEC_A = "cau viec bia de nhan ra ngay tren trang";
+  const MOC_A = "2026-09-05T10:05";
+  const trangCo = sinh({ ".agents/claims.json": claimsJson({
+    "_root": { owner: null },
+    "_docs": { owner: LANE_A, task: VIEC_A, claimed_at: MOC_A },
+    "_code": { owner: LANE_B, task: "cau viec bia hai", claimed_at: "2026-09-05T11:30" }
+  }) });
+
+  const khoiCua = (trang) => {
+    const dong = trang.split(NL);
+    const i = dong.findIndex((l) => l.includes('class="sect">Đang làm gì'));
+    assert.notEqual(i, -1, "phai co khoi 'Dang lam gi' tren trang");
+    const j = dong.findIndex((l, k) => k > i && l.includes('class="sect">Cần Đức'));
+    assert.ok(j > i, "khoi 'Dang lam gi' phai dung TRUOC vung Can Duc — Duc mo tab ra la thay no ngay");
+    return dong.slice(i, j);
+  };
+
+  const khoiCo = khoiCua(trangCo);
+  assert.ok(khoiCo.some((l) => l.includes(LANE_A) && l.includes(VIEC_A) && l.includes("_docs")),
+    "mot dong phai co du ten lane + cau viec + ten vung");
+  assert.ok(khoiCo.some((l) => l.includes(LANE_B)), "lane thu hai cung phai co dong cua no");
+  assert.equal(khoiCo.filter((l) => l.includes('class="lr"')).length, 2,
+    "hai vung dang ban thi ve DUNG hai dong — bang doc duoc, khong dong cung danh sach lane");
+
+  /* Mốc thời gian in NGUYÊN VĂN từ bảng. Đây là nửa nhìn thấy được của luật "không tính
+     khoảng thời gian lúc sinh trang". */
+  assert.ok(khoiCo.some((l) => l.includes(`data-tu="${MOC_A}"`) && l.includes(`>${MOC_A}<`)),
+    "moc nhan phai in NGUYEN VAN tu bang, khong dinh dang lai");
+
+  /* --- (c) KHÔNG tính khoảng thời gian LÚC SINH TRANG ---
+     Nửa còn lại, và là nửa có răng: chữ "phút/giờ/ngày trước" chỉ được phép nằm trong đoạn JS
+     cuối trang. Lọt ra thân trang là bản commit phụ thuộc giờ đồng hồ, và sang ngày mới thì
+     MỌI lane bị chặn push dù không dữ liệu nào đổi (suýt xảy ra 03/09). */
+  assert.ok(trangCo.includes("<script>"), "phai co doan JS, neu khong thi khang dinh duoi vo nghia");
+  const than = trangCo.slice(0, trangCo.indexOf("<script>"));
+  for (const chu of ["phút trước", "giờ trước", "ngày trước"]) {
+    assert.ok(!than.includes(chu),
+      `chu "${chu}" KHONG duoc nam trong than trang — no phai do JS tinh luc Duc MO trang`);
+  }
+
+  /* --- (d) KHÔNG LUỒNG NÀO CHẠY → VẪN in một dòng, không ẩn khối --- */
+  const trangTrong = sinh({ ".agents/claims.json": claimsJson({
+    "_root": { owner: null }, "_docs": { owner: null }, "_code": { owner: null }
+  }) });
+  const khoiTrong = khoiCua(trangTrong);
+  assert.ok(khoiTrong.some((l) => l.includes("Không có luồng nào đang chạy")),
+    "khong luong nao chay thi PHAI in mot dong noi ro — khoi trong va khoi hong phai phan biet duoc bang mat");
+  assert.equal(khoiTrong.filter((l) => l.includes('class="lr"')).length, 1,
+    "dung MOT dong, khong an ca khoi");
+  assert.ok(!khoiTrong.some((l) => l.includes(LANE_A) || l.includes(LANE_B)),
+    "khong con lane nao giu vung thi tuyet doi khong duoc con ten lane sot lai");
+
+  /* --- (e) HAI CHỖ KHỐI NÀY KHÔNG THẤY, nói ra NGAY TRÊN TRANG ---
+     Đức nhìn khối trống rồi tin là không có gì chạy — trong khi có thể đang có executor chạy
+     ở repo khác — thì sai kiểu đó tệ hơn không có khối này. Nên câu cảnh báo phải có mặt ở
+     CẢ HAI trạng thái, nhất là trạng thái trống. */
+  for (const [ten, khoi] of [["co luong", khoiCo], ["khong luong", khoiTrong]]) {
+    const chu = khoi.join(NL);
+    assert.ok(chu.includes("repo khác"),
+      `${ten}: phai noi ro khoi nay khong thay luong o repo khac`);
+    assert.ok(chu.includes("chưa kịp nhận vùng"),
+      `${ten}: phai noi ro khoi nay khong thay luong chua kip nhan vung`);
+  }
+
+  /* --- (f) MỌI DÒNG CỦA KHỐI MANG DẤU LỌC Ở ĐẦU DÒNG ---
+     Phép ghim quan trọng nhất của việc này. Đo trên lịch sử thật: 146 trong 174 commit chạm
+     bảng chủ sở hữu làm ĐỔI trạng thái bận/mở. Thiếu dấu ở MỘT dòng là mỗi lượt nhận/trả khoá
+     lại chặn push của MỌI lane, và chuyện đó chỉ hiện ra lúc một phiên bị từ chối mà không
+     hiểu vì sao. Thụt lề trước dấu cũng tính là thiếu: phép lọc dùng `startsWith`. */
+  for (const [ten, khoi] of [["co luong", khoiCo], ["khong luong", khoiTrong]]) {
+    for (const l of khoi) {
+      assert.ok(l.startsWith(KHOA_PREFIX),
+        `${ten}: MOI dong cua khoi phai bat dau bang dau loc, khong duoc thut le truoc dau: ${l.slice(0, 60)}`);
+    }
+  }
+
+  /* Và bằng chứng cái dấu đó THẬT SỰ làm việc của nó: đổi hết chủ vùng thì cổng KHÔNG đỏ.
+     Không có khẳng định này thì (f) chỉ chứng minh có dấu, không chứng minh dấu ăn khớp với
+     phép so của cổng. */
+  assert.ok(compareOverview(trangCo, trangTrong).matches,
+    "doi het chu vung KHONG duoc lam cong do — do la moi lane bi chan day viec du chang co gi doi");
+  assert.notEqual(trangCo, trangTrong, "hai trang phai KHAC nhau, neu khong thi fixture chua toi duoc bo sinh");
+
+  /* --- (g) TAB MỞ SẴN là AI điều phối, và NÚT KHỚP KHUNG ---
+     Ghim CẢ HAI, không ghim một. Nút tab được tô sáng và khung được mở nằm ở hai chỗ khác
+     nhau trong HTML; lệch nhau là Đức mở trang ra thấy nút này sáng mà nội dung kia hiện, và
+     không có cách nào để Đức biết mình đang nhìn nhầm tab. */
+  assert.equal(TAB_MAC_DINH, "ai-dieu-phoi", "tab mo san phai la AI dieu phoi (Duc chot 05/09)");
+  const nutSang = [...trangCo.matchAll(/data-tab="([a-z-]+)" aria-selected="true"/g)].map((m) => m[1]);
+  const khungMo = [...trangCo.matchAll(/data-pane="([a-z-]+)"( hidden)?>/g)]
+    .filter((m) => !m[2]).map((m) => m[1]);
+  assert.deepEqual(nutSang, [TAB_MAC_DINH], "dung MOT nut tab duoc to sang, va phai la tab mo san");
+  assert.deepEqual(khungMo, [TAB_MAC_DINH], "dung MOT khung khong mang hidden, va phai la tab mo san");
+  assert.deepEqual(nutSang, khungMo, "nut tab duoc to sang PHAI la dung tab co khung dang mo");
+
+  /* Và KHÔNG được đụng vào dòng CSS đang giữ cho tab đổi được (bug DASH-TAB-01). Thêm một
+     luật `display` nữa cho khung là cả chín tab lại không đổi được, y như lần trước. */
+  assert.ok(trangCo.includes('[role="tabpanel"][hidden]{display:none}'),
+    "dong CSS giu cho tab doi duoc phai con nguyen — DASH-TAB-01");
+  assert.equal([...trangCo.matchAll(/\[role="tabpanel"\][^{]*\{[^}]*display:/g)].length, 2,
+    "chi duoc DUNG hai luat display cho khung tab (flex + none khi hidden) — them cai thu ba la tai sinh DASH-TAB-01");
+
+  ok(`khoi dang lam gi: ${khoiCo.filter((l) => l.includes('class="lr"')).length} luong doc tu bang, khoi trong van in mot dong, moi dong mang dau, tab mo san khop nut voi khung`);
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
