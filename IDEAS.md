@@ -413,3 +413,35 @@ mục 4 bất biến ⑤ và bảng mã lỗi.
   đừng rà theo cảm giác.
 - **cẩn thận:** đây là loại việc rất dễ biến thành viết lại cả repo. Ranh giới nên đặt trước:
   **xoá và gộp thì được, viết lại nội dung đang đúng thì không.**
+
+## Y-15 · Bảng chủ sở hữu nói ai ĐƯỢC PHÉP sửa, nhưng không giữ được file trên đĩa
+
+- **bậc:** ý tưởng
+- **nguồn:** sự cố thật 2026-09-05, do chính phiên điều phối gây ra
+- **việc kế:** Đức chốt có làm không; làm thì viết brief riêng
+- **vì sao:** bốn cơ chế đa phiên đều giả định mỗi phiên **chỉ chạm file của mình**. Không cơ
+  chế nào cưỡng chế điều đó — chúng kiểm ở **cổng**, tức lúc đóng phiên và lúc push, chứ không
+  kiểm lúc `git add`. Một lượt `git add -A` của phiên A gom trọn file đang sửa dở của phiên B,
+  và **cả bốn cơ chế đều không thấy gì bất thường**: nhãn lane vẫn đúng, khoá vẫn đúng chủ,
+  cổng vẫn xanh.
+- **đã xảy ra thật, không phải giả định:** ngày 05/09 một lượt `git add -A` của phiên điều phối
+  cuốn theo bản bộ sinh **đang bị làm hỏng cố ý** cho một lượt đột biến kiểm. Bảng sinh ra từ
+  bản hỏng đó mang một dòng CSS **tái sinh đúng loại bug đã vá**, và nằm trên remote một lúc
+  trước khi executor tự phát hiện.
+- **chỗ trớ trêu, và là lý do nó sẽ tái diễn:** **càng làm đúng kỷ luật thử phá thì cửa sổ bị
+  cuốn càng rộng** — thử phá bắt buộc để file hỏng trên đĩa vài chục giây mỗi vòng. Một phiên
+  chạy 16 lượt đột biến là mở cửa sổ đó 16 lần.
+- **đã vá phần rẻ nhất:** sổ tay vai điều phối nay cấm `git add -A`, bắt kê đường dẫn cụ thể.
+  Nhưng đó là **luật cho một vai**, không phải cơ chế — vai khác vẫn làm được, và luật nào máy
+  không kiểm được thì sớm muộn cũng bị bỏ qua.
+- **vì sao chưa làm ngay:** ba đường đều có giá, chưa đo được cái nào rẻ hơn. (a) một phép kiểm
+  lúc commit, canh xem commit có chạm file thuộc vùng người khác đang giữ không — đúng chỗ, đúng
+  lúc, nhưng phải chạy ở mọi commit và làm chậm mọi lượt. (b) executor làm việc trong cây riêng
+  — sạch nhất, nhưng `MULTIFLOW.md` mục 7 **cấm** `git worktree add` sau một tai nạn đã có, và
+  hôm nay còn sót `.git/worktrees/c` gây `Permission denied` mỗi lượt commit. (c) sống chung
+  bằng luật cho từng vai — rẻ nhất, và là thứ vừa làm, nhưng không cưỡng chế được.
+- **phạm vi khi làm:** tuỳ đường — (a) `scripts/` + `tests/` (`_code`, và là **sửa cơ chế đa
+  phiên** nên bắt buộc có đột biến kiểm) · (b) `docs/protocols/MULTIFLOW.md` (`_docs`) ·
+  (c) đã xong.
+- **đo trước khi sửa:** đếm trong lịch sử thật xem đã có bao nhiêu commit chạm file thuộc vùng
+  người khác đang giữ. Hôm nay biết chắc **một** ca; nếu chỉ có một thì luật vai là đủ.

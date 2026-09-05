@@ -172,6 +172,23 @@ phối đã vi phạm nó suốt một ngày: báo Đức cổng xanh mấy mụ
 Loại trễ này **không nằm trong repo mà nằm trong đầu người đọc**, nên không cổng kỹ thuật nào
 bắt được. Đó là lý do nó phải thành luật viết ra.
 
+### TUYỆT ĐỐI KHÔNG `git add -A` — kể cả khi cây trông sạch
+
+Vai điều phối làm việc **trong lúc executor đang chạy**. `git add -A` gom **mọi** file đang đổi
+trên đĩa, kể cả file của lane khác — mà bảng chủ sở hữu **chỉ nói ai được phép sửa, nó không
+giữ được file trên đĩa**.
+
+Chuyện đã xảy ra thật ngày 05/09, do chính phiên điều phối gây ra: giữa lúc một executor chạy
+đột biến kiểm, một lượt `git add -A` **cuốn theo bản đang bị làm hỏng cố ý** của bộ sinh. Lượt
+sinh bảng ngay sau đó dùng đúng bản hỏng, nên **bảng đã commit mang một dòng CSS tái sinh đúng
+loại bug đã vá** và **nằm trên remote một lúc**. Executor tự phát hiện và vá.
+
+Chỗ trớ trêu phải nhớ: **càng làm đúng kỷ luật thử phá thì cửa sổ bị cuốn càng rộng**, vì thử
+phá bắt buộc phải để file hỏng trên đĩa vài chục giây mỗi vòng.
+
+**Luật:** luôn `git add <đường-dẫn-cụ-thể>`. Cần nhiều file thì kê tên từng file. Không dùng
+`-A`, không dùng `.`, không dùng `-u`.
+
 ### BẢNG LÀ KÊNH CHÍNH, không phải ô chat (Đức chốt 2026-09-05)
 
 Đức nói thẳng: bảng *"là đường kết nối giữa Đức và Assistant hiệu quả nhất — hiển thị nhiều hơn
