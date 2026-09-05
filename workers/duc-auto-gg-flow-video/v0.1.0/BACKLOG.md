@@ -18,20 +18,20 @@
 > - **F-05 XONG** — không còn chỗ nào `bootstrap_locked` trong router.
 > - **F-03, F-06, F-07, F-08, F-10: CHƯA RÀ.** F-06 đã trả một phần (xem F-19, F-23).
 
-- **F-01** · Chụp bằng chứng DOM trang Flow (4 snapshot: nghỉ / đang sinh / có video /
+- **F-01** · **XONG 02/09** (9 file `evidence/F1-snapshot-*.json`) — Chụp bằng chứng DOM trang Flow (4 snapshot: nghỉ / đang sinh / có video /
   màn nhập prompt) qua `diagnostics.dom_probe`, lưu `evidence/`. [ĐỌC] — dom_probe là
   generic, không phụ thuộc selector Gemini (content.js, nhánh `DAC_DOM_PROBE`).
-- **F-02** · Viết lại `provider-adapter.js` từ bằng chứng F-01: SELECTORS, TIMING
+- **F-02** · **XONG 02/09** (`provider-adapter.js` trỏ `labs.google`, SELECTORS/TIMING là của Flow, đã chạy live nhiều lượt) — Viết lại `provider-adapter.js` từ bằng chứng F-01: SELECTORS, TIMING
   (video tính bằng phút), surface Flow thật, tín hiệu "video xong". Kèm test ghim.
 - **F-03** · Thay `image-evidence-core.js` bằng lớp bằng chứng video (URL, poster,
   duration; chính sách đề xuất: chỉ ghi URL + metadata, không tự tải file video).
-- **F-04** · Hạ trần `dev-trial-core.js` xuống **≤3 job** cho nhánh này (Đức chốt 27/08:
+- **F-04** · **XONG 02/09** (`MAX_TRIAL_JOBS = 7`; trần 30 của nhánh ảnh đã bỏ, con số 7 tính theo ngân sách một tài khoản — xem F-22) — Hạ trần `dev-trial-core.js` xuống **≤3 job** cho nhánh này (Đức chốt 27/08:
   3 video × 15 credit = 45, giới hạn free; hiện code còn trần 30 của nhánh ảnh [ĐỌC]) —
   làm TRƯỚC khi gỡ khoá bootstrap.
 
 ## P2 — trước pilot live
 
-- **F-05** · Gỡ khoá bootstrap Bridge sau khi F-02+F-04 xong (ghi decisions.md).
+- **F-05** · **XONG 02/09** (không còn chỗ nào `bootstrap_locked` trong router) — Gỡ khoá bootstrap Bridge sau khi F-02+F-04 xong (ghi decisions.md).
   **Kèm bắt buộc:** khôi phục kỳ vọng gốc của 5 test router đã đổi sang
   `FORBIDDEN/bootstrap_locked` (failure-semantics, loopback-integration,
   mv3-reconnect, references-add, router-smoke) — đặc biệt là coverage
@@ -270,7 +270,7 @@
   — đã có bằng chứng DOM) rồi suy ra trần thay vì khoá cứng. Cẩn thận: đọc `360p` từ nhãn chip
   là **selector mới**, phải có bằng chứng DOM trước, đúng luật vàng 1.
 
-- **F-24** · **BÁO ĐỘNG GIẢ — đã đo, đóng lại 02/09.** Tôi ghi mục này bằng **suy đoán**:
+- **F-24** · **ĐÓNG 02/09 — BÁO ĐỘNG GIẢ, đã đo lại.** Tôi ghi mục này bằng **suy đoán**:
   thấy `arrow_forward Create` bị dịch thành `arrow_forward Tạo` nên kết luận `videocam Video`
   "gần chắc" cũng bị dịch. **Sai.** Đo thật trên giao diện tiếng Việt: `videocam Video`
   **giữ nguyên** (vì "Video" trong tiếng Việt cũng là "Video"), và
@@ -348,16 +348,22 @@
   **CHƯA LÀM GÌ — cần Đức chốt.** Mỗi cú bấm vào các nút đó là **đổi cấu hình của Đức**; đó là
   quyết định của anh ấy chứ không phải việc AI tự tiện. Bằng chứng: `evidence/F14-KET-QUA.md`.
 
-- **F-20** · **LUẬT MỚI, đã ghim, đọc trước khi sửa BẤT KỲ chữ báo lỗi nào trong gói này.**
-  `classifyFailure` (`runner-core.js:88-103`) quyết định một thất bại có được thử lại hay dừng
-  cả mẻ, và nó **dò từ khoá trên TOÀN BỘ câu báo lỗi**, không phải trên tiền tố. Nên **sửa lời
-  văn là sửa hành vi runtime.** Phiên 02/09 đã dính: thêm chữ `composer` vào câu ở cổng gửi làm
-  `OTHER` (thử lại được) thành `RECEIVER_LOST` (dừng cứng cả mẻ) — audit độc lập bắt được trước
-  khi push. Từ khoá phải né: `receiver` · `composer` · `chatgpt tab` · `session integrity` ·
-  `limit` · `captcha` · `timed out`/`timeout` · `ambiguous` · `no attributable`/`no output` ·
-  `reference`/`attachment`/`upload` · `download`/`fetch`/`write` · `validation`/`invalid`.
-  Cổng gửi đã có `tests/send-gate-error-classification.mjs` canh; **các câu báo lỗi khác trong
-  gói thì CHƯA ai canh** — đó là phần còn mở của F-20.
+### LUẬT, KHÔNG PHẢI VIỆC — sửa chữ báo lỗi là sửa hành vi runtime (mã cũ: `F-20`)
+
+> Đây là một **luật đã ghim**, không phải một việc còn nợ. Trước 05/09 nó nằm lẫn trong danh
+> sách `F-xx` nên bộ đếm nợ tính nó là một việc chưa làm — chữ giữ nguyên, chỉ đổi chỗ đứng.
+> Code và test còn trỏ về mã cũ `F-20`, nên mã đó giữ lại ở đây để tra được.
+
+**Đọc trước khi sửa BẤT KỲ chữ báo lỗi nào trong gói này.**
+`classifyFailure` (`runner-core.js:88-103`) quyết định một thất bại có được thử lại hay dừng
+cả mẻ, và nó **dò từ khoá trên TOÀN BỘ câu báo lỗi**, không phải trên tiền tố. Nên **sửa lời
+văn là sửa hành vi runtime.** Phiên 02/09 đã dính: thêm chữ `composer` vào câu ở cổng gửi làm
+`OTHER` (thử lại được) thành `RECEIVER_LOST` (dừng cứng cả mẻ) — audit độc lập bắt được trước
+khi push. Từ khoá phải né: `receiver` · `composer` · `chatgpt tab` · `session integrity` ·
+`limit` · `captcha` · `timed out`/`timeout` · `ambiguous` · `no attributable`/`no output` ·
+`reference`/`attachment`/`upload` · `download`/`fetch`/`write` · `validation`/`invalid`.
+Cổng gửi đã có `tests/send-gate-error-classification.mjs` canh; **các câu báo lỗi khác trong
+gói thì CHƯA ai canh** — phần chưa canh đó nay là một phần của nợ rebrand **F-06**.
 
 - **F-19** · **XONG một phần 02/09** (`claude-f18-evidence`): câu ở cổng gửi — câu operator gặp
   nhiều nhất — đã đổi thành *"The prompt may never have been accepted by the page, or the Flow
