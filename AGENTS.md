@@ -50,7 +50,9 @@ Lệnh này **từ chối** nhận vùng đã có chủ khác, **từ chối** t
 - **Trả quyền SAU khi đẩy, không phải sau khi commit.** Đẩy không được thì **giữ khoá** và báo
   lại, đừng trả cho "sạch sẽ". Cổng đóng phiên không soi cây làm việc, nó soi **commit chưa
   đẩy**: commit của bạn còn nằm đó mà vùng đã trống chủ thì cổng báo *"vùng gốc repo bị sửa
-  nhưng chưa ai đứng tên"* — **và nó báo với MỌI phiên**, kể cả phiên chẳng liên quan. Ngày
+  nhưng chưa ai đứng tên"* — **đỏ với chính bạn ở lượt chạy sau**, và **đỏ với MỌI phiên nếu
+  commit thiếu nhãn `Lane:`** (phép kiểm K2-1b trừ đi file chỉ bị chạm bởi commit mang nhãn của
+  lane khác, nên phiên tên khác thì không đỏ). Ngày
   06/09 ba lane cùng bị chặn đẩy vì lý do ngoài tầm với, cùng trả khoá, và cả ba để lại đúng
   một mục đỏ cho phiên đến sau dọn. Giữ một khoá là chuyện nhỏ; để lại commit vô chủ là chuyện lớn.
 - Muốn giành vùng người khác đang giữ → **hỏi Đức**, không tự lấy. Đức chốt rồi thì ghi lại
