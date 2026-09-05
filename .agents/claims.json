@@ -48,9 +48,9 @@
     "_docs": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-05T11:40",
-      "task": "Dong brief da xong + luat bang la kenh chinh",
-      "released_at": "2026-09-05T11:41",
+      "claimed_at": "2026-09-05T11:51",
+      "task": "Ghi luat: khong git add -A + Y-15 bang quyen khong giu duoc file tren dia",
+      "released_at": "2026-09-05T11:52",
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -70,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "774769c6543ad1d0"
+  "_fingerprint": "c7f05c4bf0f3599d"
 }
