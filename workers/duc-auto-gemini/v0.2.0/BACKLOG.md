@@ -114,13 +114,35 @@ Cả bốn đều là **[DÒ]** — chỉ mới dò theo tên hằng số/thuộ
 trước khi kết luận là thiếu.** Nhánh Gemini đã hai lần bị báo oan "thiếu" trong khi nó **có**,
 chỉ là làm theo cách khác và đặt tên khác (`tryBeginRun`, `assertTrialDevMode`).
 
-### G-09 · `npm test` ở gốc repo KHÔNG chạy suite Gemini — **[ĐO]**
+### ~~G-09~~ · `npm test` ở gốc repo KHÔNG chạy suite Gemini — **ĐÓNG 05/09** ✅
 
-`package.json` gốc chạy `workers/duc-auto-chatgpt/.../run-all.mjs` rồi 4 test gốc. Suite Gemini
-(82 phép) **không nằm trong đó**. Cổng `session-check.mjs` thì có chạy, nên luật vẫn được canh —
+`package.json` gốc chạy `workers/duc-auto-chatgpt/.../run-all.mjs` rồi 13 test gốc. Suite Gemini
+**không nằm trong đó**. Cổng `session-check.mjs` thì có chạy, nên luật vẫn được canh —
 nhưng ai chỉ chạy `npm test` sẽ tưởng nhánh Gemini đã xanh mà thật ra chưa chạy dòng nào.
 
-`package.json` là file gốc repo → phải giữ `_root` mới sửa được. Ghi lại để không quên.
+**Đo trước khi vá (05/09, `claude-gemini-no`):** `npm test` chạy **120 trong 321 file test (37%)**
+— 107 của gói ChatGPT + 13 file test gốc. Ba suite worker **không chạy một dòng nào**:
+`duc-auto-gemini/v0.1.0` (19 file) · `duc-auto-gemini/v0.2.0` (**86 file**) ·
+`duc-auto-gg-flow-video/v0.1.0` (96 file). Cả ba đều đã xanh sẵn — tức đây thuần là **xanh giả**
+về mặt phủ, không phải nợ sửa code.
+
+**Gốc bệnh không phải "quên Gemini" mà là danh sách suite GÕ TAY** — thêm worker mới là nó lại
+lọt ra ngoài, im lặng, y hệt lần này. Nên vá cả hai lớp:
+
+1. `scripts.test` gốc nay gọi **cả bốn** suite worker.
+2. Phép ghim mới `tests/root-suite-covers-workers-static.mjs`: đọc hình dạng repo từ
+   `.repo-structure.json` (dùng lại `unitsFrom`/`unitDirsUnder`, **không tự chế `^workers/`**)
+   và đòi **mọi** thư mục đơn vị có `tests/run-all.mjs` phải có tên trong `scripts.test`.
+   Đột biến kiểm **3/3 bắt được**: bỏ dòng gg-flow-video · bỏ dòng gemini v0.2.0 ·
+   dựng một worker mới chưa nối.
+
+Sau vá: `npm test` chạy **322/322 file (100%), exit 0**, suite gói này 86 → **87**.
+
+**Nợ nhỏ còn lại (không chặn):** phép ghim đó **đáng lẽ nằm ở `tests/` gốc**, nhưng lúc vá,
+khoá `_code` do phiên khác giữ, nên nó tạm trú trong gói Gemini. Hệ quả: nếu ai xoá đúng dòng
+gọi suite **Gemini** khỏi `scripts.test` thì `npm test` không chạy tới nó nữa. Cổng đóng phiên
+vẫn bắt (`session-check` gọi thẳng `run-all.mjs` của gói), và ba dòng kia thì `npm test` bắt
+ngay. Chuyển về `tests/root-suite-covers-workers-static.mjs` khi có `_code` là đóng hẳn lỗ này.
 
 ### G-10 · Ba guard lớp hai chưa có phép ghim — **[ĐỌC]**
 

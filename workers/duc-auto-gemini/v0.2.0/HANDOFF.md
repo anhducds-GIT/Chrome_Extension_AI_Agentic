@@ -742,3 +742,48 @@ thử lại. Chưa chạy live lần nào: luật mục 2 bắt hỏi Đức tr�
 **Còn mở:** nợ nhỏ đã cân và ghi trong `BACKLOG.md` mục G-02 — thông điệp lỗi vẫn nhúng
 *origin*, nên một origin chứa chữ bẫy vẫn lái được nhãn lỗi. Bịt hẳn thì phải sửa
 `runner-core.classifyFailure()` cho mọi loại lỗi, ngoài phạm vi G-02.
+
+---
+
+## Log — 2026-09-05, `claude-gemini-no` · G-09 `npm test` ở gốc repo không chạy suite Gemini
+
+**Đo trước khi sửa, vì "xanh giả" phải chứng minh bằng số.** `npm test` ở gốc chạy **120 trong
+321 file test — 37%**: 107 file của gói ChatGPT, cộng 13 file test gốc dưới `tests/`. Ba suite
+worker còn lại **không chạy một dòng nào**: `duc-auto-gemini/v0.1.0` (19 file),
+`duc-auto-gemini/v0.2.0` (**86 file — của gói này**), `duc-auto-gg-flow-video/v0.1.0` (96 file).
+
+Chạy riêng cả ba thì **cả ba đã xanh sẵn** (19/0 · 86/0 · 96/0). Nên đây
+không phải nợ sửa code — nó thuần là **lỗ phủ**: bảng báo xanh mà chưa mở tới hai phần ba số
+file. Ai chỉ chạy `npm test` sẽ tin nhầm.
+
+**Gốc bệnh không phải "quên Gemini".** Danh sách suite trong `scripts.test` được **gõ tay**, gọi
+đích danh đúng một worker. Thêm worker mới là nó lại lọt ra ngoài, im lặng, y hệt lần này —
+và repo này đã có ba worker rồi. Nên vá hai lớp, không vá một:
+
+1. `scripts.test` nay gọi **cả bốn** suite worker (thêm 30 giây vào một lượt `npm test`).
+2. Phép ghim mới `tests/root-suite-covers-workers-static.mjs` — 3 khẳng định. Nó **không** giữ
+   một danh sách thứ hai: nó đọc hình dạng repo từ `.repo-structure.json` qua
+   `unitsFrom`/`unitDirsUnder` của `scripts/repo-structure.mjs`, rồi đòi **mọi** thư mục đơn vị
+   có `tests/run-all.mjs` phải có tên trong `scripts.test`. Đỏ thì in ra đúng dòng cần dán vào.
+
+**Cố ý dùng lại `repo-structure.mjs` chứ không tự chế `^workers/`** — repo này đã trả giá một
+lần vì ba script cùng "biết" hình dạng repo bằng ba đoạn code chép tay, và hai trong ba đã lệch
+nhau thật (26/08).
+
+**Đột biến kiểm: 3/3 bắt được.** ① bỏ dòng gg-flow-video khỏi `scripts.test` → đỏ. ② bỏ dòng
+gemini v0.2.0 → đỏ. ③ dựng một thư mục worker mới có `tests/run-all.mjs` mà không nối → đỏ.
+Khôi phục xong xanh lại cả ba khẳng định.
+
+**Suite gói này: 86 → 87 file.** `npm test` ở gốc: **120/321 (37%) → 322/322 (100%), exit 0**
+— số lấy thẳng từ dòng tổng của chính lượt chạy (107 · 19 · 87 · 96 · 13), không tự đếm.
+(Bản đo đầu phiên ghi 117/318; ba lane khác thêm test trong ngày nên đã đo lại lúc commit.)
+
+**Một chỗ phải nói thẳng, không giấu: phép ghim này ĐANG Ở SAI NHÀ.** Chỗ đúng của nó là
+`tests/` gốc. Lúc vá, khoá `_code` do phiên `claude-moc-da-xong` giữ, và luật mục 1 cấm ghi vào
+vùng người khác — nên nó tạm trú trong gói Gemini. Hệ quả đã cân: nếu ai xoá đúng dòng gọi suite
+**Gemini** khỏi `scripts.test` thì `npm test` không chạy tới file này nữa nên không bắt được.
+Cổng đóng phiên vẫn bắt (`session-check` gọi thẳng `run-all.mjs` của gói, không đi qua
+`scripts.test`), và ba dòng còn lại thì `npm test` bắt ngay. Đã ghi nợ vào `BACKLOG.md` mục G-09.
+
+**Còn mở:** G-01 (trial live sau khi Đức reload — luật mục 2 bắt hỏi Đức trước) và G-10 (ba
+guard lớp hai chưa có phép ghim) chưa động tới trong lượt này.
