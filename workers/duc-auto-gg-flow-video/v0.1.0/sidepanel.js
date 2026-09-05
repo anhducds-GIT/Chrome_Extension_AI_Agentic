@@ -1390,7 +1390,10 @@
       queue: prepared.queue,
       job_ids: params.job_ids,
       last_started_at_ms: window.DacDevTrialCore.lastStartedAtMs(stored?.[window.DacDevTrialCore.TRIAL_HISTORY_STORAGE_KEY]),
-      now_ms: nowMs
+      now_ms: nowMs,
+      // F-22: don gia moi job doc tu chip cau hinh cua CHINH luot probe o tren
+      // (cung mot lan doc, khong probe lai). Thieu -> tran than trong.
+      chip: runtimeProbe?.generation_mode?.credits || null
     });
     if (refusal) throw new window.DacBridgeCore.BridgeProtocolError(refusal.code, refusal.message, refusal.details);
     // Record the trial start BEFORE launching so a second run.trial can never

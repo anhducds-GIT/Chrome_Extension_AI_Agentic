@@ -22,9 +22,38 @@
   // THIS NUMBER IS TIED TO 360p. At 720p a video costs 15, so one account covers
   // only 3, and jobs 4-7 of a chain would meet the credit wall. That degrades
   // SAFELY -- the wall raises GENERATION_LIMIT_REACHED, a hard stop with no retry
-  // and no spend -- but the operator loses a chain's worth of planning. Deriving
-  // this ceiling from the resolution measured on the mode chip is F-22.
+  // and no spend -- but the operator loses a chain's worth of planning.
+  //
+  // F-22 (2026-09-05): this stays the ABSOLUTE ceiling -- nothing may ever raise
+  // it, because raising a spend guard is a safety-rule change and needs Duc.
+  // What F-22 adds is a SECOND, TIGHTER ceiling derived from the configuration
+  // chip actually on screen; see trialJobCeiling below. The effective cap is the
+  // smaller of the two, so the derived number can only ever LOWER the guard.
   const MAX_TRIAL_JOBS = 7;
+  // F-22 -- ngan sach mot tai khoan free, Duc chot 02/09. Chuoi trial dung khi
+  // tai khoan can tien; nguoi van hanh doi ho so Chrome truoc chuoi ke tiep.
+  const FREE_ACCOUNT_CREDITS = 50;
+  // Khong doc duoc chip -> gia dinh CAU HINH DAT NHAT da do (720p 10s = 15).
+  // Fail-closed ve phia TIEU IT: doan re la lap ke hoach 7 job roi cham tuong
+  // credit o job thu 4. Day la mot mac dinh than trong, KHONG phai mot phep do —
+  // gia that phai den tu videoCreditsFromSummary, co trich nguon bang chung.
+  const UNKNOWN_CONFIG_CREDITS_PER_OUTPUT = 15;
+
+  // Tran chuoi suy tu chip cau hinh. HAM THUAN: nhan so, tra so.
+  // `chip` = { credits_per_output, output_count } doc tu nhan chip, hoac null.
+  // Tra { jobs, credits_per_job, measured } — `measured: false` nghia la con so
+  // nay dung gia dinh dat nhat chu khong phai gia doc duoc.
+  function trialJobCeiling(chip) {
+    const perOutput = Number(chip?.credits_per_output);
+    const outputs = Number(chip?.output_count);
+    const measured = Number.isInteger(perOutput) && perOutput > 0 && Number.isInteger(outputs) && outputs > 0;
+    const perJob = measured ? perOutput * outputs : UNKNOWN_CONFIG_CREDITS_PER_OUTPUT;
+    // Toi thieu 1: mot cau hinh dat hon ca ngan sach van chay duoc DUNG MOT job,
+    // va Flow tu go nut gui neu khong du (F26R3) — tra 0 chi khoa cung mot duong
+    // ma trang da tu gac, khong them an toan nao.
+    const jobs = Math.max(1, Math.min(MAX_TRIAL_JOBS, Math.floor(FREE_ACCOUNT_CREDITS / perJob)));
+    return { jobs, credits_per_job: perJob, measured };
+  }
   const MIN_TRIAL_INTERVAL_SEC = 300;
   const TIMEOUT_BOUNDS = Object.freeze({ min: 15, max: 300, default: 180 });
   // Nhip giua hai job — DON BAY LON NHAT cho viec "chay tron mot flow khong bi
@@ -47,7 +76,7 @@
   // typed refusal { code, message, details } whose code is a registered
   // bridge error code. Order matters: the owner toggle is checked first so a
   // disabled panel never leaks queue or rate-limit detail.
-  function trialRefusal({ dev_mode, running, paused, queue, job_ids, last_started_at_ms, now_ms }) {
+  function trialRefusal({ dev_mode, running, paused, queue, job_ids, last_started_at_ms, now_ms, chip }) {
     if (dev_mode !== true) {
       return refusal("DEV_MODE_OFF", "Công tắc 'Chế độ phát triển' đang TẮT; run.trial bị từ chối. The owner must enable the development-mode toggle in the BRIDGE screen.", { storage_key: DEV_MODE_STORAGE_KEY });
     }
@@ -55,8 +84,18 @@
       return refusal("RUN_ACTIVE", "A run is already active or paused; run.trial never interrupts or queues behind it.", { lock_reason: paused ? "RUN_PAUSED" : "RUN_ACTIVE" });
     }
     const requested = Array.isArray(job_ids) ? job_ids : [];
-    if (!requested.length || requested.length > MAX_TRIAL_JOBS) {
-      return refusal("JOB_NOT_RUNNABLE", `A development trial runs 1-${MAX_TRIAL_JOBS} jobs.`, { job_ids: requested });
+    // F-22: tran hieu luc = min(tran tuyet doi, tran suy tu chip cau hinh).
+    // Chip dat hon -> tran nho hon. Chip khong doc duoc -> gia dinh dat nhat.
+    const ceiling = trialJobCeiling(chip);
+    if (!requested.length || requested.length > ceiling.jobs) {
+      const doThem = ceiling.measured
+        ? `Chip cấu hình đang là ${chip.resolution || "?"} · ${chip.duration || "?"} · x${chip.output_count} → ${ceiling.credits_per_job} credit mỗi job.`
+        : `Chưa đọc được chip cấu hình trên trang, nên trần lấy theo cấu hình đắt nhất đã đo (${ceiling.credits_per_job} credit mỗi job).`;
+      return refusal(
+        "JOB_NOT_RUNNABLE",
+        `A development trial runs 1-${ceiling.jobs} jobs. ${doThem} Ngân sách một tài khoản free là ${FREE_ACCOUNT_CREDITS} credit.`,
+        { job_ids: requested, max_jobs: ceiling.jobs, absolute_max_jobs: MAX_TRIAL_JOBS, credits_per_job: ceiling.credits_per_job, chip_measured: ceiling.measured, free_account_credits: FREE_ACCOUNT_CREDITS }
+      );
     }
     const runner = globalThis.DacRunnerCore || globalThis.window?.DacRunnerCore;
     const runnable = new Set(
@@ -101,6 +140,9 @@
     DEV_MODE_STORAGE_KEY,
     TRIAL_HISTORY_STORAGE_KEY,
     MAX_TRIAL_JOBS,
+    FREE_ACCOUNT_CREDITS,
+    UNKNOWN_CONFIG_CREDITS_PER_OUTPUT,
+    trialJobCeiling,
     MIN_TRIAL_INTERVAL_SEC,
     TIMEOUT_BOUNDS,
     DELAY_BOUNDS,

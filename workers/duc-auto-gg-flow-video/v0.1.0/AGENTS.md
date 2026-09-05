@@ -10,9 +10,12 @@ y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
 1. **Không đoán selector.** Mọi selector Flow phải có bằng chứng `dom_probe`
    trong `evidence/`. SELECTORS/TIMING đang là đồ thừa kế từ Gemini — KHÔNG
    được coi là đúng cho Flow.
-2. **Video trừ credits thật.** Trần trial dev: **≤3 video một chuỗi** (Đức chốt
-   27/08: 3 × 15 credits = ngân sách free — KHÔNG dùng trần 30 của nhánh ảnh). Không retry tự động
-   khi nghi ngờ đã trừ credits. Nới trần = đổi luật an toàn = hỏi Đức.
+2. **Video trừ credits thật.** Trần trial dev **suy từ chip cấu hình đang hiển thị**
+   (F-22, 05/09): ngân sách một tài khoản free là 50 credit, chia cho đơn giá đọc
+   được trên chip → 360p x1 được 7 job · 720p x1 chỉ 3 · 360p x3 chỉ 2. `MAX_TRIAL_JOBS = 7`
+   là **trần tuyệt đối**, chip chỉ được HẠ trần xuống, không bao giờ nâng. Không đọc được
+   chip thì lấy cấu hình đắt nhất đã đo. Không retry tự động khi nghi ngờ đã trừ credits.
+   **Nới trần tuyệt đối = đổi luật an toàn = hỏi Đức.**
 3. **Khoá bootstrap Bridge đã được gỡ ngày 2026-08-27** sau khi provider adapter được dựng
    từ bằng chứng thật, có test ghim và audit đối kháng PASS. Full method surface khả dụng,
    nhưng mọi gate an toàn riêng vẫn giữ nguyên. `diagnostics.evidence_submit` được giữ làm

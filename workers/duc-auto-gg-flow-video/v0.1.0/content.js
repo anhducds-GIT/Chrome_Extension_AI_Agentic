@@ -1669,6 +1669,13 @@
           attachmentPending: uploadIsPending(),
           securityBlocker: securityBlockerText(),
           generationLimitBlocker: generationLimitText(),
+          // F-22: chip cau hinh mang don gia moi job. CHI DOC, khong bam gi.
+          // Ban extension cu khong co truong nay -> ben goi coi la "khong doc
+          // duoc" va lay tran than trong, nen them truong nay khong doi hop dong.
+          generation_mode: (() => {
+            const seen = ADAPTER.generationMode(document);
+            return { mode: seen.mode, label: seen.label, credits: ADAPTER.videoCreditsFromSummary(seen.label) };
+          })(),
           busy: STATE.busy,
           selectorCounts, buttons, images, videos, textboxes, customTags, fileInputs,
           truncated: false,

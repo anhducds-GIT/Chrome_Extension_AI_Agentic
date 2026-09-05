@@ -346,6 +346,44 @@
     return Number.isInteger(count) && count > 0 ? count : null;
   }
 
+  // F-22: DON GIA MOI OUTPUT nam trong CUNG cai nhan chip do — o hai o dau.
+  //
+  // Bang chung DOM cho CAU TRUC nhan (do phan giai o o 2, thoi luong o o 3):
+  //   evidence/F1-snapshot-1-idle-20260827.json        `Video · 720p · 10s crop_16_9 x1`
+  //   evidence/F4-snapshot-1-baseline-20260828.json    `Video · 360p · 10s crop_16_9 x1`
+  //   evidence/F14-mode-probe-vi-20260902.json         `Video · 360p · 8s crop_16_9 x3`
+  //
+  // Bang chung cho GIA — do that, khong suy:
+  //   360p 8s  = 6  · evidence/F26R3-PHAT-HIEN-nut-Create-bien-mat-vi-gia.md
+  //                   (chip x3, so du 8, Flow GO nut gui vi 3 x 6 = 18 > 8;
+  //                    phep tinh nay khop dung hanh vi quan sat duoc)
+  //   360p 10s = 7  · F-22, Duc chot 02/09 (50 credit / 7 = 7 video)
+  //   720p 10s = 15 · decisions.md 27/08 (3 video x 15 credit = ngan sach free)
+  //
+  // KHONG noi suy sang to hop chua do (vi du 720p 8s). Luat vang 1: khong doan.
+  // Chua do thi tra `null`, va ben goi PHAI xu ly `null` theo huong dat hon —
+  // doan re la doan sai ve tien.
+  const VIDEO_CREDIT_PRICE = Object.freeze({
+    "360p|8s": 6,
+    "360p|10s": 7,
+    "720p|10s": 15,
+  });
+  const VIDEO_SUMMARY_CONFIG = /^Video · (\d{3,4}p) · (\d+s) crop_/;
+
+  // Tra { resolution, duration, credits_per_output, output_count } hoac `null`.
+  // `null` co nghia la "khong doc duoc", KHONG phai "re". Ba ca tra null:
+  // nhan rong / nhan che do Image / to hop chua co gia do that.
+  function videoCreditsFromSummary(label) {
+    const text = String(label || "");
+    const parts = VIDEO_SUMMARY_CONFIG.exec(text);
+    if (!parts) return null;
+    const credits = VIDEO_CREDIT_PRICE[`${parts[1]}|${parts[2]}`];
+    if (!Number.isInteger(credits) || credits <= 0) return null;
+    const outputs = outputCountFromSummary(text);
+    if (outputs === null) return null;
+    return Object.freeze({ resolution: parts[1], duration: parts[2], credits_per_output: credits, output_count: outputs });
+  }
+
   // The open settings panel exposes this exact semantic button with the
   // measured stable class token. Duplicate candidates are ambiguous and must
   // fail closed; no styled-component hash class is used.
@@ -497,6 +535,8 @@
     findCreateButton,
     generationMode,
     outputCountFromSummary,
+    VIDEO_CREDIT_PRICE,
+    videoCreditsFromSummary,
     findVideoModeOption,
     findOutputCountOption,
     settingsPanelOpen,

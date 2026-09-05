@@ -262,7 +262,20 @@
   lại `item.detection_diagnostics` đang có trước khi chồng trường video lên. Xác nhận thì cần
   một lượt live nữa (15 credit) → **hỏi Đức trước**. Bằng chứng: `evidence/F4R3-KET-QUA.md`.
 
-- **F-22** · [Đức chốt 02/09] **Trần chuỗi trial đang khoá cứng ở 7, mà 7 chỉ đúng với 360p.**
+- **F-22** · **XONG 05/09** (`claude-flow-no`). Trần chuỗi trial nay **suy từ chip cấu hình**:
+  `videoCreditsFromSummary()` trong `provider-adapter.js` đọc độ phân giải + thời lượng + số
+  lượng output từ đúng cái nhãn chip đã có bằng chứng DOM, tra bảng giá **đo thật**
+  (360p 8s = 6 · 360p 10s = 7 · 720p 10s = 15, mỗi ô kèm trích nguồn), rồi
+  `trialJobCeiling()` trong `dev-trial-core.js` chia ngân sách 50 credit ra trần.
+  Kết quả: 360p x1 → 7 · 720p x1 → **3** · 360p x3 → **2**.
+  **Trần chỉ được HẠ, không bao giờ nâng:** `MAX_TRIAL_JOBS = 7` vẫn là trần tuyệt đối và
+  phép kiểm quét toàn dải giá 1..100 × 1..4 output để cưỡng chế điều đó — nới một cổng chi
+  tiêu là đổi luật an toàn, phải hỏi Đức. **Tổ hợp chưa đo giá (ví dụ 720p 8s) trả `null`,
+  không nội suy**, và không đọc được chip thì lấy **cấu hình đắt nhất đã đo** (15) chứ không
+  lấy rẻ nhất — đoán rẻ là lập kế hoạch 7 job rồi chết ở job thứ 4.
+  Ghim: `tests/trial-cap-follows-config-chip.mjs` (8/8 đột biến bị bắt, gồm cả đột biến dựng
+  lại đúng lỗi cũ). **Chưa kiểm live** — con số 3 ở 720p suy từ giá đo được, chưa chạy thật.
+  Đề bài gốc: **Trần chuỗi trial đang khoá cứng ở 7, mà 7 chỉ đúng với 360p.**
   Phép tính: tài khoản free 50 credit ÷ 7 credit/video (360p) = 7 video (49/50). Ở **720p** một
   video tốn 15 → một tài khoản chỉ đủ **3**, và job thứ 4 trở đi của một chuỗi đầy sẽ chạm tường
   credit. Hỏng an toàn (`GENERATION_LIMIT_REACHED` = dừng cứng, 0 chi) nhưng mất công lập kế
