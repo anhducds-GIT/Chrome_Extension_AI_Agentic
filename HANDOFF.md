@@ -2914,16 +2914,20 @@ nguyên ở chỗ kể chuyện.* Giữ nguyên là 11 dòng Log cũ trong hai `
 là viết lại chữ của phiên khác) và 5 chỗ trong hai brief đã `done` / `superseded` — brief đóng
 rồi là một bản ghi, không phải chỉ dẫn. Brief còn `active` (TAB-V2) thì có đổi.
 
-**Một tai nạn đa phiên, ghi lại vì nó sẽ tái diễn.** Giữa lúc tôi đang sửa, một phiên khác
-`git add -A` rồi commit `d3eafb9` với message **`1`, không có nhãn `Lane:`** — cuốn 9 file
-đang sửa dở của tôi vào commit của họ. Tệ hơn: lượt đó **làm rơi mất `scripts/build-overview.mjs`**,
-nên repo rơi vào trạng thái đổi tên NỬA CHỪNG — file trên đĩa và `.repo-structure.json` mang tên
-mới, còn bộ sinh vẫn ghi ra tên cũ. Chạy `npm run overview` lúc đó là đẻ ra một file thứ hai
-mang tên cũ, và cổng đỏ vì artifact đã khai thì thiếu. Đã vá ở `a86efe6`.
+**Một lượt commit tay của Đức, ghi lại vì nó CHỈ RA MỘT CHỖ HỞ THẬT — không phải để trách ai.**
+Giữa lúc tôi đang sửa, Đức tự commit `d3eafb9` với message `1` (Đức nói: *"vì không biết viết nội
+dung gì nên tôi viết 1"*). Lượt đó gom 9 file đang sửa dở của tôi, và **thiếu mất
+`scripts/build-overview.mjs`** — nên repo rơi vào trạng thái đổi tên NỬA CHỪNG: file trên đĩa và
+`.repo-structure.json` mang tên mới, còn bộ sinh vẫn ghi ra tên cũ. Chạy `npm run overview` lúc đó
+là đẻ ra một file thứ hai mang tên cũ, và cổng đỏ vì artifact đã khai thì thiếu. Đã vá ở `a86efe6`.
 
-Hai điều rút ra: (1) `git add -A` trong repo nhiều phiên là cái bẫy — tôi đã chuyển sang liệt kê
-từng file và nhờ đó không cuốn ai; (2) commit `1` không nhãn **đã lên remote**, tức nó không đi
-qua `safe-push` — nếu đi qua thì đã bị chặn.
+**Bản ghi trước của chính dòng Log này viết sai**, đổ cho "một phiên AI khác" — tôi suy từ message
+`1` và việc thiếu nhãn `Lane:` mà không hỏi. Sửa lại ở đây cho đúng sự thật.
+
+Chỗ hở thật nằm ở đây, và nó là chỗ hở của HỆ THỐNG chứ không phải của người dùng: **luật bắt mọi
+commit có nhãn `Lane:`, nhưng không có gì nhắc lúc commit** — chỉ có `safe-push` chặn về sau, và
+`git push` trần thì đi vòng qua cả hai. Đức không đọc code, nên không có cách nào để Đức biết mình
+vừa thiếu một dòng. Chừng nào chưa có git hook nhắc tại chỗ, chuyện này còn lặp lại.
 
 Suite: 270 phép kiểm xanh. Cổng đóng phiên XANH TOÀN BỘ.
 **Việc cần Đức: không có.**
