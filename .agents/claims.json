@@ -48,9 +48,9 @@
     "_docs": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-05T09:51",
-      "task": "ADR-0005 + hop dong bao cao",
-      "released_at": "2026-09-05T09:54",
+      "claimed_at": "2026-09-05T10:05",
+      "task": "Sua tran luong: per-repo thay vi toan cuc",
+      "released_at": "2026-09-05T10:07",
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -58,11 +58,11 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-05T08:22",
-      "task": "PUSH-GATE-01 — cong xuat ban chan oan lane khong lien quan",
-      "released_at": "2026-09-05T17:05",
+      "owner": "claude-exec-liveblock",
+      "ai": "Claude",
+      "claimed_at": "2026-09-05T10:07",
+      "task": "LIVE-BLOCK-01 — khoi dang lam gi + tab mac dinh",
+      "released_at": null,
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -70,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "f31c47663b6bb6cf"
+  "_fingerprint": "20c4263a4c1d4fae"
 }
