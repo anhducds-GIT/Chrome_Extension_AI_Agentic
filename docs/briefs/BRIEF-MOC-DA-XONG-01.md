@@ -1,5 +1,7 @@
 ---
+kind: brief
 status: active
+ttl_days: 90
 ---
 
 # BRIEF `MOC-DA-XONG-01` — Đức muốn nhìn lại những việc lớn đã làm xong
