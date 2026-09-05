@@ -127,5 +127,9 @@ console.log("quota placeholder pins: PASS");
 // a real generated image — a verified generated candidate with a remote lh3
 // result URL counts as present; rendering is cosmetic.
 assert.match(source, /const remoteVerifiedResult = generated && \/\^https:\/i\.test\(source\) && ADAPTER\.SELECTORS\.generatedImageHostPattern\.test\(source\)/, "render-glitch tolerance is derived from the generated marker plus the verified result host");
-assert.match(source, /\|\| remoteVerifiedResult,\n\s+ready: \(image\.complete && image\.naturalWidth > 0\) \|\| remoteVerifiedResult/, "visible and ready both accept the remote-verified generated candidate");
+// `\r?\n` chứ không phải `\n`: blob của `content.js` trong git là CRLF, còn bản
+// trên đĩa của các phiên cũ là LF. Nên phép kiểm này XANH ở đây mà ĐỎ ngay sau
+// một `git checkout content.js` — hoặc trên một bản clone mới. Đo 05/09
+// (`claude-flow-no`): ép CRLF cả gói thì đúng MỘT phép kiểm đỏ, là dòng này.
+assert.match(source, /\|\| remoteVerifiedResult,\r?\n\s+ready: \(image\.complete && image\.naturalWidth > 0\) \|\| remoteVerifiedResult/, "visible and ready both accept the remote-verified generated candidate");
 console.log("render-glitch tolerance pins: PASS");
