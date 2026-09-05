@@ -2902,3 +2902,28 @@ của người khác vừa xuất hiện trong cùng file.
 đã cảnh báo artifact lệch HEAD và `safe-push` sẽ từ chối cho tới khi họ sinh lại; (b) suite
 `build-overview-smoke` chậm thêm vì bốn lượt sinh trang mới — hai đột biến vượt 600 giây, đây
 là số đo cụ thể cho **Y-07**, và nếu cần thì gộp hai lượt sinh ở phần (d)/(e) làm một.
+
+## Log — 2026-09-05, `claude-rename-bang` · đổi tên bảng mang tên dự án
+
+`DASHBOARD.html` → **`DASHBOARD-Chrome-Extension-AI-Agentic.html`**. Đức chốt: mỗi repo sinh
+một bảng, cả đống cùng rơi vào thư mục Tải về, ba file cùng tên thì mở cái nào cũng phải đoán.
+Bên bộ khung đã đổi trước đó thành `DASHBOARD-Ark-Repo-Harness.html`.
+
+**Đổi 18 chỗ, cố ý giữ nguyên 16 chỗ.** Luật tôi dùng để chia: *đổi ở chỗ dẫn đường, giữ
+nguyên ở chỗ kể chuyện.* Giữ nguyên là 11 dòng Log cũ trong hai `HANDOFF.md` (sửa dòng Log cũ
+là viết lại chữ của phiên khác) và 5 chỗ trong hai brief đã `done` / `superseded` — brief đóng
+rồi là một bản ghi, không phải chỉ dẫn. Brief còn `active` (TAB-V2) thì có đổi.
+
+**Một tai nạn đa phiên, ghi lại vì nó sẽ tái diễn.** Giữa lúc tôi đang sửa, một phiên khác
+`git add -A` rồi commit `d3eafb9` với message **`1`, không có nhãn `Lane:`** — cuốn 9 file
+đang sửa dở của tôi vào commit của họ. Tệ hơn: lượt đó **làm rơi mất `scripts/build-overview.mjs`**,
+nên repo rơi vào trạng thái đổi tên NỬA CHỪNG — file trên đĩa và `.repo-structure.json` mang tên
+mới, còn bộ sinh vẫn ghi ra tên cũ. Chạy `npm run overview` lúc đó là đẻ ra một file thứ hai
+mang tên cũ, và cổng đỏ vì artifact đã khai thì thiếu. Đã vá ở `a86efe6`.
+
+Hai điều rút ra: (1) `git add -A` trong repo nhiều phiên là cái bẫy — tôi đã chuyển sang liệt kê
+từng file và nhờ đó không cuốn ai; (2) commit `1` không nhãn **đã lên remote**, tức nó không đi
+qua `safe-push` — nếu đi qua thì đã bị chặn.
+
+Suite: 270 phép kiểm xanh. Cổng đóng phiên XANH TOÀN BỘ.
+**Việc cần Đức: không có.**
