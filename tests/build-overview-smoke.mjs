@@ -1622,11 +1622,15 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const LANE_A = "lane-bia-mot-khong-co-trong-repo";
   const LANE_B = "lane-bia-hai-khong-co-trong-repo";
   const VIEC_A = "cau viec bia de nhan ra ngay tren trang";
+  /* Câu việc thứ hai CỐ TÌNH bẩn: nó mang một đường dẫn + tên file mã, đúng thứ một lane
+     hay gõ vào `--task`. Không dựng thêm trang nào cho ca này — nó đi ké trang có luồng,
+     vì một lượt `buildOverview` tốn khoảng mười hai giây của MỌI phiên sau. */
+  const VIEC_B = "cau viec bia hai cham scripts/claim.mjs cho vui";
   const MOC_A = "2026-09-05T10:05";
   const trangCo = sinh({ ".agents/claims.json": claimsJson({
     "_root": { owner: null },
     "_docs": { owner: LANE_A, task: VIEC_A, claimed_at: MOC_A },
-    "_code": { owner: LANE_B, task: "cau viec bia hai", claimed_at: "2026-09-05T11:30" }
+    "_code": { owner: LANE_B, task: VIEC_B, claimed_at: "2026-09-05T11:30" }
   }) });
 
   const khoiCua = (trang) => {
@@ -1649,6 +1653,21 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
      khoảng thời gian lúc sinh trang". */
   assert.ok(khoiCo.some((l) => l.includes(`data-tu="${MOC_A}"`) && l.includes(`>${MOC_A}<`)),
     "moc nhan phai in NGUYEN VAN tu bang, khong dinh dang lai");
+
+  /* --- (b2) CÂU VIỆC CỦA LANE PHẢI QUA BỘ RÚT GỌN ---
+     Bất biến ở khối 4 đã cấm cả trang chứa tên file mã, nhưng nó đo trên bảng chủ sở hữu
+     THẬT — tức nó chỉ đỏ khi có một lane đang thật sự giữ vùng với một câu việc bẩn. Ngày
+     06/09 đúng chuyện đó xảy ra: một câu việc mang tên file mã vào HEAD và chặn cổng đóng
+     phiên của MỌI lane, mà không phép ghim nào chỉ ra chỗ hỏng nằm ở đâu.
+     Ca này dựng bằng bảng BỊA nên nó đỏ ổn định, không phụ thuộc hôm nay ai đang giữ gì.
+     Hai vế, và thiếu vế nào phép ghim cũng vô nghĩa: đường dẫn phải BIẾN MẤT, và phần chữ
+     người còn lại phải Ở LẠI (nếu không thì "cắt sạch cả câu" cũng xanh). */
+  const dongB = khoiCo.find((l) => l.includes(LANE_B));
+  assert.ok(dongB, "phai tim duoc dong cua lane thu hai");
+  assert.ok(!dongB.includes("claim.mjs") && !dongB.includes("scripts/"),
+    `cau viec cua lane PHAI qua bo rut gon: ten file ma / duong dan khong duoc len bang — ${dongB.slice(0, 160)}`);
+  assert.ok(dongB.includes("cau viec bia hai cham") && dongB.includes("cho vui"),
+    "chu cua nguoi phai o lai — cat sach ca cau thi phep ghim tren xanh mot cach vo nghia");
 
   /* --- (c) KHÔNG tính khoảng thời gian LÚC SINH TRANG ---
      Nửa còn lại, và là nửa có răng: chữ "phút/giờ/ngày trước" chỉ được phép nằm trong đoạn JS

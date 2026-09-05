@@ -1447,7 +1447,13 @@ ${STYLE}
       dongKhoi.push(`        <div class="lr"><div class="h">`
         + `<span class="ln">${esc(l.lane)}</span>`
         + `<span class="badge b1">${esc(l.vung)}</span></div>`
-        + `<span class="d">${esc(l.viec || "chưa khai đang làm gì")}</span>`
+        /* QUA BỘ RÚT GỌN, không in thô. Câu việc này là chữ TỰ DO một lane gõ vào
+           `claim.mjs --take --task "..."`, nên nó mang đúng thói quen của người gõ: tên
+           file, đường dẫn, nhãn kỹ thuật. Ngày 06/09 nó lọt thật — một câu việc chứa tên
+           một file mã lên thẳng bảng, và bất biến "bảng không lộ chi tiết kỹ thuật" đỏ,
+           chặn cổng đóng phiên của MỌI lane. Mọi chỗ khác trên trang đã đi qua bộ rút gọn
+           từ lâu; đúng dòng này là chỗ sót. */
+        + `<span class="d">${esc(shorten(l.viec) || "chưa khai đang làm gì")}</span>`
         /* `data-tu` là mốc NGUYÊN VĂN từ bảng. Chữ "bao lâu rồi" do JS trong trang thêm vào
            lúc Đức mở — ở đây mà tính là trang phụ thuộc giờ đồng hồ, và sang ngày mới thì
            MỌI lane bị chặn push dù không dữ liệu nào đổi (suýt xảy ra 03/09). */
@@ -1473,6 +1479,11 @@ ${STYLE}
     for (const v of ducViec) {
       p.push(`        <div class="dr"><div class="h">`
         + `<a href="#${esc(unitId(v.row))}" data-goto="extension">${esc(v.row.name)}</a></div>`
+        /* HAI DÒNG NÀY CỐ Ý IN THÔ, đừng "dọn" cho giống khối trên. `human_action` và
+           `blocked_if_skipped` bị GHIM NGUYÊN VĂN (suite: "cau viec phai lay NGUYEN VAN tu
+           truong don vi tu khai, khong viet lai"), vì đây là bản đầy đủ Đức đọc để hành động
+           — rút gọn ở đây là bảng nói khác hồ sơ. Đã thử rút gọn ngày 06/09 và phép ghim đó
+           bắt được ngay. Chỗ chặn đường dẫn của hai trường này là B15 ở cổng đóng phiên. */
         + `<span class="d">${esc(v.viec)}</span>`
         + (v.chan ? `<span class="w">Chưa làm thì: ${esc(v.chan)}</span>` : "")
         + `</div>`);
