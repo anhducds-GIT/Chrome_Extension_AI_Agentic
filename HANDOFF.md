@@ -3127,3 +3127,42 @@ gốc repo = khoá `_root`, lượt này của lane khác) — tạm nối bằn
 ⑶ **Chính sách che dữ liệu đang là ĐỀ XUẤT, Đức chưa chốt** — mặc định hiện tại: chỉ trả giá trị
 thuộc tính trong danh sách trắng, thuộc tính khác chỉ hiện tên; `href`/`src`/URL trang bị cắt
 query và fragment; không trả text node, không trả `outerHTML`, không trả giá trị ô nhập.
+
+## 2026-09-06 — đợt OBSERVER-WIRE-01 (lane `claude-observer-b`, khoá `_code` + `_root`)
+
+**Làm gì.** Nối lõi bốn phép dò vào `observer-engine.js`, và khai phép ghim của lõi vào suite gốc.
+
+**⑴ Phép ghim đã vào suite gốc.** `node tests/observer-probes-smoke.mjs` nay có tên trong
+`scripts.test`, đứng ngay cạnh `observer-engine-smoke.mjs`; khối `execFileSync` nối tạm ở cuối
+`tests/observer-engine-smoke.mjs` đã gỡ — để lại thì nó chạy hai lần, mà suite gốc đã hơn 10 phút.
+Số đo: **17 → 18 mục** trong `scripts.test`. Chạy `npm test` rồi đếm, dòng
+`observer-probes smoke tests: PASS` hiện **đúng 1 lần** — tức nó chạy thật, và không chạy đúp.
+
+**⑵ Nối dây.** `ObserverEngine.runProbe(target, tên, tham số)` — đường **THÊM VÀO**, `observe()`
+giữ nguyên từng dòng. Lớp nối bơm `chrome.debugger.sendCommand` vào `sendRaw` và
+`chrome.debugger.getTargets` vào `listTargets`, và **không tự gọi một method CDP nào**.
+**26 dòng mã thật** (48 dòng kể cả chú thích) — lượt trước ước "vài dòng", số thật lớn hơn thế.
+
+**⑶ Đột biến kiểm nay đo CẢ lớp nối dây.** Thêm mẻ hai: bốn con W1–W4 trên `observer-engine.js`,
+ghim bằng `tests/observer-engine-smoke.mjs`. **W1 — "lớp nối dây gọi thẳng
+`chrome.debugger.sendCommand`, đi vòng qua lõi" → ĐỎ.** Đó là câu hỏi phải trả lời cho lượt này:
+ba chốt còn nằm trên đường chạy sau khi nối. Phép ghim mới quan sát ở **biên `chrome`** chứ không
+ở biên lõi — biên lõi **không thể** thấy một lớp nối dây đi vòng qua chính nó.
+
+**⑷ Bộ đo đột biến trước đó đang mù 3/10 con.** Chạy lại nguyên trạng trước khi sửa gì:
+`M1 M2 M9` khớp **0 chỗ**. Nguyên nhân: mỏ neo nhiều dòng viết bằng `\n`, còn file bị đo là CRLF.
+M1 và M2 đúng là hai con **"nới danh sách method"** — nhóm quan trọng nhất trong cả bộ. Vá bằng
+`theoEol()`: đổi `\n` của mỏ neo sang đúng EOL của file đích trước khi tìm. Lượt trước báo
+10/10 và **lúc đó nhiều khả năng đúng**; con số ấy mục đi ngay khi git đụng vào file.
+
+**Số đo sau khi vá.** Đột biến kiểm **14 con · mỏ neo khớp 14/14 · giết được 14 · sống sót 0**.
+Suite gốc XANH. Cổng đóng phiên XANH TOÀN BỘ. Chưa chạy live. **Không đụng `manifest.json`.**
+
+**Đẩy kèm (`--carry`).** Lượt đẩy này cuốn theo commit chưa đẩy của lane `claude-assistant`
+(4 commit) và `claude-handoff-cat` (1 commit).
+
+**Còn mở.** Bản audit Codex `e1d1f55` nêu hai chỗ lượt trước không thấy, **chưa xử lý ở lượt này**:
+① kênh rò `input[value^="a"]` cộng `matchCount` — dò ngược được giá trị thuộc tính đã che, mà
+không phá một chốt nào; ② `targets.list` đi ngoài sender đã bọc. Điểm ② ở **lớp nối dây** nay đã
+có ghim: phép ghim ④ chứng minh nhánh đó không gửi một lệnh debugger nào. Điểm ① còn nguyên.
+Chính sách che dữ liệu vẫn là **ĐỀ XUẤT, Đức chưa chốt**.

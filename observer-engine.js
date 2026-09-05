@@ -1,3 +1,5 @@
+import { runProbe as runProbeCore, PROBE_NAMES } from "./scripts/observer-probes.mjs";
+
 const PROTOCOL_VERSION = "1.3";
 const EXTENSION_PREFIX = "chrome-extension://";
 const MAX_ELEMENTS = 100;
@@ -64,6 +66,47 @@ export class ObserverEngine {
     }
 
     return finalize(report);
+  }
+
+  /* ---- Nối dây: bốn phép dò read-only (scripts/observer-probes.mjs) -------
+   * ĐƯỜNG THÊM VÀO, không thay `observe()`. `observe()` giữ nguyên hành vi cũ.
+   *
+   * Lớp này CỐ Ý mỏng: nó chỉ bơm `chrome.debugger.sendCommand` và `chrome.debugger.getTargets`
+   * vào lõi rồi trả kết quả. Nó KHÔNG tự gọi một method CDP nào, KHÔNG tự thêm tham số nào.
+   *
+   * Lý do phải mỏng: ba chốt của lõi (PROBE_NAMES · READ_ONLY_CDP_METHODS · chốt hình dạng
+   * tham số) chỉ bảo vệ được những gì ĐI QUA lõi. Một lớp nối dây tự gọi thẳng `sendCommand`
+   * sẽ đi vòng qua cả ba, mà mọi phép ghim CỦA LÕI vẫn xanh — nên phép ghim của lớp này quan
+   * sát ở BIÊN `chrome`, không ở biên lõi. Xem mục "nối dây" trong
+   * tests/observer-engine-smoke.mjs, và bốn con W1..W4 trong scripts/observer-mutation-check.mjs.
+   */
+  async runProbe(target, name, params = {}) {
+    /* Tên lạ thì để LÕI từ chối, và từ chối TRƯỚC khi gắn debugger: gắn debugger vào một trang
+     * là thao tác mạnh nhất extension này làm được, đừng làm nó cho một yêu cầu sai. Gọi lại
+     * lõi với deps rỗng thay vì tự soạn câu từ chối — hai bản của một luật thì sớm muộn lệch. */
+    if (!PROBE_NAMES.includes(name)) return await runProbeCore(name, {}, params);
+
+    if (name === "targets.list") {
+      return await runProbeCore(name, { listTargets: () => chrome.debugger.getTargets() }, params);
+    }
+
+    if (target?.attached) {
+      return { ok: false, probe: name, code: "TARGET_ALREADY_ATTACHED", cdp: [],
+        detail: "Target đã có debugger khác gắn vào; Observer không cướp phiên của người khác." };
+    }
+
+    const debuggee = { targetId: target?.id ?? target?.targetId };
+    let attachedHere = false;
+    try {
+      await chrome.debugger.attach(debuggee, PROTOCOL_VERSION);
+      attachedHere = true;
+      const sendRaw = (method, cdpParams) => chrome.debugger.sendCommand(debuggee, method, cdpParams);
+      return await runProbeCore(name, { targetId: debuggee.targetId, sendRaw }, params);
+    } catch (error) {
+      return { ok: false, probe: name, code: "ATTACH_FAILED", detail: normaliseError(error), cdp: [] };
+    } finally {
+      if (attachedHere) await detachQuietly(debuggee);
+    }
   }
 
   async inspectRuntime(debuggee, report) {
@@ -161,6 +204,11 @@ function emptyElements() {
 
 function isExtensionUrl(url) {
   return typeof url === "string" && url.startsWith(EXTENSION_PREFIX);
+}
+
+async function detachQuietly(debuggee) {
+  /* Tháo hụt không được nuốt kết quả đã lấy được — nên nuốt lỗi ở đây, cố ý. */
+  try { await chrome.debugger.detach(debuggee); } catch { /* bỏ qua */ }
 }
 
 function normaliseError(error) {
