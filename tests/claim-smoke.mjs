@@ -11,10 +11,28 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ageHours, ageLabel, BASELINE, baselineDaNiemPhong, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, khoaBiDoiChu, readClaims } from "../scripts/claim.mjs";
+import { ageHours, ageLabel, BASELINE, baselineDaNiemPhong, canDayTruocKhiTra, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, khoaBiDoiChu, readClaims } from "../scripts/claim.mjs";
+import { CHUA_DAY } from "../scripts/repo-structure.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
+
+/* Chép lệnh sang repo tạm: ROOT của nó suy từ vị trí file, nên phải nằm trong `scripts/`.
+ * fileURLToPath, KHÔNG tự bóc `pathname` bằng regex: thư mục repo này có DẤU CÁCH nên pathname
+ * trả về "%20" và mọi phép cắt tay đều sai. Đo thật — bản đầu chết ở đúng chỗ đó.
+ *
+ * CHÉP CẢ HAI FILE (TRA-KHOA-01, 06/09): `claim.mjs` nay import `repo-structure.mjs` để dùng
+ * CHUNG phép đếm commit chưa đẩy với `safe-push.mjs` — chép một bản thứ hai của phép đếm đó
+ * chính là con bug ngày 02/09. Chép thiếu module thì fixture chết vì `ERR_MODULE_NOT_FOUND`,
+ * và cái chết đó trông y hệt một phép kiểm hỏng. */
+const SCRIPTS_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts");
+function chepLenh(dir) {
+  mkdirSync(join(dir, "scripts"), { recursive: true });
+  for (const ten of ["claim.mjs", "repo-structure.mjs"]) {
+    writeFileSync(join(dir, "scripts", ten), readFileSync(join(SCRIPTS_DIR, ten), "utf8"), "utf8");
+  }
+  return join(dir, "scripts", "claim.mjs");
+}
 
 const CLAIMS = () => ({
   "_root": { owner: "phien-A", ai: "Claude", task: "dang sua audit K1", released_at: null },
@@ -76,8 +94,7 @@ const CLAIMS = () => ({
     // Chép lệnh sang repo tạm: ROOT của nó suy từ vị trí file, nên phải nằm trong `scripts/`.
     // fileURLToPath, KHÔNG tự bóc `pathname` bằng regex: thư mục repo này có DẤU CÁCH nên
     // pathname trả về "%20" và mọi phép cắt tay đều sai. Đo thật — bản đầu chết ở đúng chỗ đó.
-    const here = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "claim.mjs");
-    writeFileSync(join(temp, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+    chepLenh(temp);
     // PHẢI là repo git thật (thêm 04/09): từ khi `--restamp` so với mốc niêm phong hợp lệ gần
     // nhất trong LỊCH SỬ, nó cần lịch sử để đọc. Không đọc được thì nó TỪ CHỐI — cố ý, vì
     // "không biết" mà cho qua chính là fail-open GPT bắt được ở vòng 7. Thư mục trần không
@@ -168,8 +185,7 @@ const CLAIMS = () => ({
     mkdirSync(dirname(claimsPath), { recursive: true });
     mkdirSync(join(temp, "scripts"), { recursive: true });
     writeFileSync(claimsPath, `${JSON.stringify({ claims: CLAIMS() }, null, 2)}\n`, "utf8");
-    const here = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "claim.mjs");
-    writeFileSync(join(temp, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+    chepLenh(temp);
     // PHẢI là repo git thật (thêm 04/09): từ khi `--restamp` so với mốc niêm phong hợp lệ gần
     // nhất trong LỊCH SỬ, nó cần lịch sử để đọc. Không đọc được thì nó TỪ CHỐI — cố ý, vì
     // "không biết" mà cho qua chính là fail-open GPT bắt được ở vòng 7. Thư mục trần không
@@ -257,8 +273,7 @@ const CLAIMS = () => ({
     const claimsPath = join(temp, ".agents", "claims.json");
     mkdirSync(dirname(claimsPath), { recursive: true });
     mkdirSync(join(temp, "scripts"), { recursive: true });
-    const here = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "claim.mjs");
-    writeFileSync(join(temp, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+    chepLenh(temp);
     const cu = new Date(Date.now() - (GIO_NHAC + 2) * 3600000).toISOString().slice(0, 16);
     const moi = new Date(Date.now() - 5 * 60000).toISOString().slice(0, 16);
     writeFileSync(claimsPath, `${JSON.stringify({ claims: {
@@ -340,8 +355,7 @@ const CLAIMS = () => ({
     const claimsPath = join(temp, ".agents", "claims.json");
     mkdirSync(dirname(claimsPath), { recursive: true });
     mkdirSync(join(temp, "scripts"), { recursive: true });
-    const here = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "claim.mjs");
-    writeFileSync(join(temp, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+    chepLenh(temp);
     const doc = () => JSON.parse(readFileSync(claimsPath, "utf8"));
     const ghi = (claims) => writeFileSync(claimsPath, `${JSON.stringify({ claims }, null, 2)}\n`, "utf8");
     const run = (...args) => {
@@ -425,8 +439,7 @@ const CLAIMS = () => ({
     const claimsPath = join(temp, ".agents", "claims.json");
     mkdirSync(dirname(claimsPath), { recursive: true });
     mkdirSync(join(temp, "scripts"), { recursive: true });
-    const here = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "claim.mjs");
-    writeFileSync(join(temp, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+    chepLenh(temp);
     const doc = () => JSON.parse(readFileSync(claimsPath, "utf8"));
     const ghiDoc = (p) => writeFileSync(claimsPath, `${JSON.stringify(p, null, 2)}\n`, "utf8");
     const run = (...args) => {
@@ -489,7 +502,7 @@ const CLAIMS = () => ({
       mkdirSync(join(troc, "scripts"), { recursive: true });
       writeFileSync(join(troc, ".agents", "claims.json"),
         `${JSON.stringify({ claims: { _code: { owner: "ai-do" } } }, null, 2)}\n`, "utf8");
-      writeFileSync(join(troc, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+      chepLenh(troc);
       const cliTroc = spawnSync(process.execPath, [join(troc, "scripts", "claim.mjs"), "--restamp", "--as", "ai-do"], { encoding: "utf8" });
       assert.equal(cliTroc.status, EXIT.REFUSED,
         `khong phai repo git thi LENH phai tu choi. Ra: ${cliTroc.stdout}${cliTroc.stderr}`);
@@ -520,7 +533,7 @@ const CLAIMS = () => ({
       // chốt trong `main()` vẫn không test nào đỏ — hàm trả LOI xong mà nơi gọi lờ đi thì cũng
       // như không. Bảng trên đĩa để HỢP LỆ, chỉ lịch sử là hỏng, để `readClaims` không chặn trước.
       mkdirSync(join(hong, "scripts"), { recursive: true });
-      writeFileSync(join(hong, "scripts", "claim.mjs"), readFileSync(here, "utf8"), "utf8");
+      chepLenh(hong);
       writeFileSync(join(hong, ".agents", "claims.json"),
         `${JSON.stringify({ claims: { _code: { owner: "ai-do" } } }, null, 2)}\n`, "utf8");
       const cli = spawnSync(process.execPath, [join(hong, "scripts", "claim.mjs"), "--restamp", "--as", "ai-do"], { encoding: "utf8" });
@@ -533,6 +546,169 @@ const CLAIMS = () => ({
     assert.ok(temp.startsWith(join(tmpdir(), "claim-baseline-")), "chi don dung temp fixture cua phep kiem nay");
     rmSync(temp, { recursive: true, force: true });
   }
+}
+
+/* ---- TRA-KHOA-01. TRẢ QUYỀN SAU KHI ĐẨY, KHÔNG PHẢI SAU KHI COMMIT --------
+ *
+ * Luật `AGENTS.md` mục 1. Trước 06/09 nó chỉ là chữ, và ngày 06/09 ba lane cùng vi phạm trong
+ * một buổi — cả ba đều thành thật: chúng đọc hiến pháp, không thấy luật, nên trả khoá cho sạch.
+ *
+ * BỐN CON ĐỘT BIẾN mà khối này phải bắt (MULTIFLOW mục 5 — chốt không có test ghim là bình luận):
+ *   ① gỡ hẳn phép chặn trong `main()`     → ca A, F
+ *   ② đảo điều kiện (chặn khi ĐÃ đẩy)     → ca B, C  (vế "KHÔNG chặn thứ hợp lệ", bẫy ③)
+ *   ③ bỏ nhánh "không có remote"          → ca D
+ *   ④ lối thoát bỏ qua mà KHÔNG ghi lý do → ca F
+ * Mọi ca đều đi qua ĐƯỜNG LỆNH, không chỉ qua hàm thuần — bẫy ① của mục 5: hàm trả đúng mà
+ * `main()` lờ đi thì cũng như không, và bài học đó đã trả giá một lần ở K2-12. */
+{
+  // Hàm thuần trước: ba nhánh, kiểm được mà không cần dựng remote.
+  const commit = (sha, areas) => ({ sha, subject: `viec ${sha}`, areas, lane: "ai-do", laneProblem: null });
+  assert.equal(canDayTruocKhiTra({ trangThai: CHUA_DAY.LOI, ly_do: "git chet" }, "_code").chan, true,
+    "khong doc duoc git = KHONG BIET, va khong biet phai la DO (bat bien 4)");
+  assert.equal(canDayTruocKhiTra(null, "_code").chan, true, "khong co ket qua do cung phai chan");
+  assert.equal(canDayTruocKhiTra({ trangThai: CHUA_DAY.KHONG_CO_MOC }, "_code").chan, false,
+    "chua co remote = bootstrap that, KHONG duoc chan — repo moi dung tu bo khung khong co origin");
+  assert.equal(canDayTruocKhiTra({ trangThai: CHUA_DAY.OK, commits: [commit("aaa", ["_docs"])] }, "_code").chan, false,
+    "commit chua day cua VUNG KHAC khong duoc chan vung nay");
+  const dinh = canDayTruocKhiTra({ trangThai: CHUA_DAY.OK, commits: [commit("aaa", ["_code", "_docs"])] }, "_code");
+  assert.equal(dinh.chan, true, "commit chua day cham dung vung nay thi phai chan");
+  assert.equal(dinh.commits.length, 1, "va phai keo theo commit de bao cho nguoi doc biet la cai nao");
+  ok("TRA-KHOA-01 · hàm thuần: git hỏng chặn · chưa có remote KHÔNG chặn · chỉ chặn khi đúng vùng còn commit chưa đẩy");
+}
+
+{
+  const temp = mkdtempSync(join(tmpdir(), "claim-tra-khoa-"));
+  try {
+    const remote = join(temp, "origin.git");
+    const work = join(temp, "lam-viec");
+    execFileSync("git", ["init", "-q", "--bare", "-b", "main", remote], { encoding: "utf8" });
+    execFileSync("git", ["clone", "-q", remote, work], { encoding: "utf8" });
+    const gw = (...a) => execFileSync("git", a, { cwd: work, encoding: "utf8" });
+    gw("config", "user.name", "TRA-KHOA"); gw("config", "user.email", "tra-khoa@example.invalid");
+
+    const claimsPath = join(work, ".agents", "claims.json");
+    const doc = () => JSON.parse(readFileSync(claimsPath, "utf8"));
+    const owner = (k) => doc().claims[k].owner;
+    const ghi = (p, noiDung) => { mkdirSync(dirname(join(work, p)), { recursive: true }); writeFileSync(join(work, p), noiDung, "utf8"); };
+    const NL = String.fromCharCode(10);
+
+    ghi(".repo-structure.json", `${JSON.stringify({ areas: { "scripts/": { steward: "_code" }, "docs/": { steward: "_docs" } } }, null, 2)}${NL}`);
+    ghi(".agents/claims.json", `${JSON.stringify({ claims: {
+      "_code": { owner: "phien-A", ai: "Claude", task: "sua cong tra khoa", released_at: null },
+      "_docs": { owner: "phien-A", ai: "Claude", task: "viet tai lieu", released_at: null }
+    } }, null, 2)}${NL}`);
+    ghi("docs/ghi-chu.md", `dong dau${NL}`);
+    const cli = chepLenh(work);
+    gw("add", "-A"); gw("commit", "-q", "-m", `nen ban dau${NL}${NL}Lane: phien-A`);
+    gw("push", "-q", "origin", "main");
+
+    const run = (...args) => {
+      const r = spawnSync(process.execPath, [cli, ...args], { encoding: "utf8" });
+      return { code: r.status, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
+    };
+
+    // Sạch: chưa có commit nào chưa đẩy → cả hai vùng phải trả được. Đây là vế "KHÔNG chặn thứ
+    // hợp lệ" (MULTIFLOW bẫy ③): thiếu nó thì một bản "luôn từ chối" vẫn qua sạch mọi phép kiểm.
+    assert.equal(run("--release", "_docs", "--as", "phien-A").code, EXIT.OK,
+      "day xong roi thi tra khoa phai TROI CHAY — thieu ve nay thi ban 'luon tu choi' cung qua sach");
+    assert.equal(owner("_docs"), null, "va bang phai ve trong that");
+    assert.equal(run("--take", "_docs", "--as", "phien-A", "--task", "nhan lai").code, EXIT.OK, "nhan lai de chay tiep");
+
+    // CA A — vùng còn commit CHƯA ĐẨY thì TỪ CHỐI, và TỪ CHỐI nghĩa là KHÔNG GHI GÌ.
+    ghi("scripts/moi.mjs", `// viec cua phien-A${NL}`);
+    gw("add", "-A"); gw("commit", "-q", "-m", `them mot script${NL}${NL}Lane: phien-A`);
+    const chan = run("--release", "_code", "--as", "phien-A");
+    assert.equal(chan.code, EXIT.REFUSED, `con commit chua day thi phai TU CHOI, thoat 3. Ra: ${chan.out}`);
+    assert.equal(owner("_code"), "phien-A", "TU CHOI nghia la KHONG GHI GI — day moi la diem chinh");
+    assert.match(chan.out, /TU_CHOI_TRA_KHOA/, "phai co ma loi doc duoc");
+    assert.match(chan.out, /_code/, "phai noi RO la vung nao");
+    assert.match(chan.out, /1 commit CHƯA ĐẨY/, "phai noi RO con bao nhieu commit chua day");
+    assert.match(chan.out, /safe-push\.mjs --as phien-A/, "phai chi duong di tiep DUNG: day truoc roi moi tra");
+    assert.match(chan.out, /--du-biet/, "phai neu LOI THOAT — chan cung khong loi thoat la dung mot cai ket moi thay cai cu");
+
+    // CA B — commit chưa đẩy đó KHÔNG chạm `_docs`, nên `_docs` vẫn phải trả được.
+    // Chặn cả vùng không liên quan là đúng lỗi "một khoá chặn mọi việc" mà A2 vừa gỡ.
+    assert.equal(run("--release", "_docs", "--as", "phien-A").code, EXIT.OK,
+      "commit chua day cua vung KHAC khong duoc chan vung nay");
+    assert.equal(owner("_docs"), null, "va no phai ve trong that");
+
+    // CA F — lối thoát mà KHÔNG ghi lý do thì KHÔNG phải lối thoát. Đây là đột biến ④.
+    const tran = run("--release", "_code", "--as", "phien-A", "--du-biet");
+    assert.notEqual(tran.code, EXIT.OK, `co tran khong ly do thi KHONG duoc mo cua. Ra: ${tran.out}`);
+    assert.match(tran.out, /THIEU_LY_DO/, "phai noi ro thieu cai gi");
+    assert.equal(owner("_code"), "phien-A", "va van KHONG duoc ghi gi");
+    const rong = run("--release", "_code", "--as", "phien-A", "--du-biet", "   ");
+    assert.notEqual(rong.code, EXIT.OK, "ly do toan dau cach cung khong tinh la ly do");
+    assert.equal(owner("_code"), "phien-A", "van khong ghi gi");
+
+    // CA E — lối thoát ĐÚNG: có câu lý do thì đi được, VÀ câu đó phải nằm TRONG BẢNG.
+    // Ghi vào bảng chứ không in ra màn hình: người cần đọc là phiên nhận vùng sau, mà họ chỉ
+    // đọc bảng — y hệt lý lẽ của `--duc-duyet` ở `--restamp`.
+    const thoat = run("--release", "_code", "--as", "phien-A", "--du-biet", "remote tu choi vi khoa 2FA, ban giao cho phien-B");
+    assert.equal(thoat.code, EXIT.OK, `co cau ly do thi phai di duoc. Ra: ${thoat.out}`);
+    assert.equal(owner("_code"), null, "va khoa phai ve trong that");
+    assert.equal(doc().claims._code.unpushed_reason, "remote tu choi vi khoa 2FA, ban giao cho phien-B",
+      "cau ly do phai nam TRONG BANG, khong phai chi in ra man hinh");
+    assert.equal(doc().claims._code.released_with_unpushed, 1, "va phai ghi con bao nhieu commit chua day");
+    assert.equal(fingerprintState(doc()).ok, true, "ghi xong van phai dong dau");
+
+    // CA G — dấu vết trả sớm KHÔNG được sống dai hơn lượt đó.
+    assert.equal(run("--take", "_code", "--as", "phien-B", "--task", "nhan ban giao").code, EXIT.OK, "phien sau nhan duoc vung");
+    assert.equal(doc().claims._code.unpushed_reason, undefined,
+      "nhan lai thi phai xoa dau vet tra som cu — de nguoi doc sau khong tuong van con commit vo chu");
+    assert.equal(doc().claims._code.released_with_unpushed, undefined, "ca hai truong phai bien mat");
+
+    // CA C — đẩy xong thì trả trơn, và KHÔNG còn trường trả sớm nào.
+    gw("push", "-q", "origin", "main");
+    const sach = run("--release", "_code", "--as", "phien-B");
+    assert.equal(sach.code, EXIT.OK, `day xong roi thi tra khoa phai troi chay. Ra: ${sach.out}`);
+    assert.equal(doc().claims._code.unpushed_reason, undefined, "tra binh thuong thi khong ghi truong tra som nao");
+    ok("TRA-KHOA-01 · lệnh: còn commit chưa đẩy thì TỪ CHỐI mà không ghi gì · vùng khác không bị vạ lây · --du-biet phải kèm lý do và lý do vào BẢNG · đẩy xong thì trơn");
+  } finally {
+    assert.ok(temp.startsWith(join(tmpdir(), "claim-tra-khoa-")), "chi don dung temp fixture cua phep kiem nay");
+    rmSync(temp, { recursive: true, force: true });
+  }
+}
+
+/* ---- TRA-KHOA-01. Hai ca không-đo-được, hai cách xử KHÁC NHAU -------------
+ * Ranh giới này là điểm chính của bản vá, và nó dễ bị "dọn" mất thành một nhánh chung. */
+{
+  const NL = String.fromCharCode(10);
+  // CA D — repo CHƯA CÓ REMOTE thì KHÔNG được chặn. Repo mới dựng từ bộ khung không có
+  // `origin`, và nó không bao giờ có commit chưa đẩy để mà mất — chưa có chỗ nào để đẩy tới.
+  const moi = mkdtempSync(join(tmpdir(), "claim-chua-remote-"));
+  try {
+    mkdirSync(join(moi, ".agents"), { recursive: true });
+    writeFileSync(join(moi, ".agents", "claims.json"),
+      `${JSON.stringify({ claims: { _code: { owner: "phien-A", task: "x" } } }, null, 2)}${NL}`, "utf8");
+    const cli = chepLenh(moi);
+    const g = (...a) => execFileSync("git", a, { cwd: moi, encoding: "utf8" });
+    g("init", "-q", "-b", "main");
+    g("config", "user.name", "TRA-KHOA"); g("config", "user.email", "tra-khoa@example.invalid");
+    g("add", "-A"); g("commit", "-q", "-m", `nen${NL}${NL}Lane: phien-A`);
+    const r = spawnSync(process.execPath, [cli, "--release", "_code", "--as", "phien-A"], { encoding: "utf8" });
+    assert.equal(r.status, EXIT.OK,
+      `repo chua co origin thi KHONG duoc chan — chan o day la khoa cung repo moi dung. Ra: ${r.stdout}${r.stderr}`);
+    assert.equal(JSON.parse(readFileSync(join(moi, ".agents", "claims.json"), "utf8")).claims._code.owner, null,
+      "va no phai ve trong that");
+  } finally { rmSync(moi, { recursive: true, force: true }); }
+
+  // CA H — KHÔNG phải repo git thì TỪ CHỐI. Đây là ca ĐỐI của ca D, và gộp hai ca này lại là
+  // đúng fail-open đã bị loại nhiều lần: "không đọc được git" bị đội lốt "repo mới, cho qua".
+  const troc = mkdtempSync(join(tmpdir(), "claim-khong-git-tra-"));
+  try {
+    mkdirSync(join(troc, ".agents"), { recursive: true });
+    writeFileSync(join(troc, ".agents", "claims.json"),
+      `${JSON.stringify({ claims: { _code: { owner: "phien-A", task: "x" } } }, null, 2)}${NL}`, "utf8");
+    const cli = chepLenh(troc);
+    const r = spawnSync(process.execPath, [cli, "--release", "_code", "--as", "phien-A"], { encoding: "utf8" });
+    assert.equal(r.status, EXIT.REFUSED,
+      `khong doc duoc git = KHONG BIET, va khong biet phai la DO. Ra: ${r.stdout}${r.stderr}`);
+    assert.match(`${r.stdout}${r.stderr}`, /KHONG_DEM_DUOC_COMMIT/, "phai co ma loi doc duoc");
+    assert.equal(JSON.parse(readFileSync(join(troc, ".agents", "claims.json"), "utf8")).claims._code.owner, "phien-A",
+      "TU CHOI nghia la KHONG GHI GI");
+  } finally { rmSync(troc, { recursive: true, force: true }); }
+  ok("TRA-KHOA-01 · chưa có remote thì KHÔNG chặn (bootstrap thật) · không đọc được git thì CHẶN (bất biến ④) — hai ca KHÔNG được gộp");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

@@ -19,13 +19,20 @@
  *   node scripts/claim.mjs --take <khoá> --as <phiên> --task "một câu"
  *   node scripts/claim.mjs --release <khoá> --as <phiên> [--task "một câu"]
  *
- * Mã thoát:  0 xong · 2 dùng sai · 3 TỪ CHỐI (đã có chủ khác / không phải chủ) · 4 bị ghi đè
+ * TRẢ QUYỀN SAU KHI ĐẨY, không phải sau khi commit (AGENTS.md mục 1). `--release` TỪ CHỐI khi
+ * vùng đó còn commit chưa đẩy. Thật sự phải bàn giao vùng lúc chưa đẩy được:
+ *   node scripts/claim.mjs --release <khoá> --as <phiên> --du-biet "vì sao chưa đẩy được"
+ *
+ * Mã thoát:  0 xong · 2 dùng sai · 3 TỪ CHỐI (đã có chủ khác / không phải chủ / còn commit
+ *            chưa đẩy) · 4 bị ghi đè
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { CHUA_DAY, commitChuaDay, readStructureFromDisk } from "./repo-structure.mjs";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(MODULE_FILE), "..");
@@ -316,6 +323,41 @@ export function decide(claims, { action, key, as, today }) {
   return { code: EXIT.MISUSE, message: `HANH_DONG_LA: "${action}"` };
 }
 
+/* ---- TRẢ QUYỀN SAU KHI ĐẨY, KHÔNG PHẢI SAU KHI COMMIT — TRA-KHOA-01, 06/09 --
+ *
+ * Luật này có từ 04/09, nhưng chỉ nằm trong sổ tay của vai ĐIỀU PHỐI — mà executor thì không
+ * đọc sổ đó. Ngày 06/09 ba lane cùng vi phạm trong một buổi, và cả ba đều thành thật: chúng
+ * đọc `AGENTS.md`, không thấy luật, nên trả khoá cho sạch. `AGENTS.md` mục 7: *luật nào không
+ * kiểm được bằng máy thì sớm muộn cũng bị bỏ qua*. Nên nay máy kiểm.
+ *
+ * Vì sao trả khoá sớm là chuyện lớn: cổng đóng phiên không soi cây làm việc, nó soi **commit
+ * chưa đẩy**. Commit của bạn còn nằm đó mà vùng đã trống chủ thì cổng báo *"Vùng gốc repo bị
+ * sửa nhưng chưa ai đứng tên"*, và phiên đến sau phải dọn một mục đỏ không phải của họ.
+ *
+ * HÀM THUẦN, tách khỏi việc gọi git — để kiểm được cả ba nhánh mà không cần dựng một remote.
+ * Nhưng test ghim PHẢI đi qua CLI, không chỉ qua hàm này: `MULTIFLOW.md` mục 5 bẫy ①, "ghim
+ * hàm không thay được ghim đường đi" — hàm trả đúng mà `main()` lờ đi thì cũng như không.
+ *
+ * BA NHÁNH, và ranh giới giữa chúng là điểm chính:
+ *   · LOI (không đọc được git)      → CHẶN. Bất biến ④: "không biết" phải là ĐỎ.
+ *   · KHONG_CO_MOC (chưa có remote) → KHÔNG chặn. Đây là bootstrap thật — repo mới dựng từ bộ
+ *     khung chưa có `origin`, và nó KHÔNG BAO GIỜ có commit chưa đẩy để mà mất, vì chưa có
+ *     chỗ nào để đẩy tới. Chặn ở đây là khoá cứng đúng đối tượng mà bộ khung nhắm tới, và đổi
+ *     lại chẳng bảo vệ được gì.
+ *   · OK                            → chặn KHI VÀ CHỈ KHI vùng này còn commit chưa đẩy.
+ *
+ * QUY THEO VÙNG, KHÔNG QUY THEO NHÃN LANE — cố ý. Thứ làm cổng phiên sau đỏ là "vùng bị chạm
+ * mà không ai đứng tên", và nó không hỏi ai gõ phím. Một commit của lane khác chạm vùng bạn
+ * đang giữ vẫn thành mồ côi y hệt lúc bạn trả khoá. */
+export function canDayTruocKhiTra(doc, key) {
+  if (!doc || doc.trangThai === CHUA_DAY.LOI) {
+    return { chan: true, ma: "KHONG_DEM_DUOC", ly_do: doc?.ly_do ?? "không có kết quả đo" };
+  }
+  if (doc.trangThai === CHUA_DAY.KHONG_CO_MOC) return { chan: false, ma: "KHONG_CO_MOC", commits: [] };
+  const commits = (doc.commits || []).filter((c) => Array.isArray(c.areas) && c.areas.includes(key));
+  return commits.length ? { chan: true, ma: "CON_COMMIT_CHUA_DAY", commits } : { chan: false, ma: "SACH", commits: [] };
+}
+
 function main() {
   const argv = process.argv.slice(2);
   const flag = (name) => {
@@ -418,6 +460,7 @@ function main() {
   if (!action || !key || typeof as !== "string") {
     console.error("Dùng: node scripts/claim.mjs --take|--release <khoá> --as <phiên> [--task \"một câu\"]");
     console.error("      node scripts/claim.mjs --list");
+    console.error("Trả quyền SAU khi đẩy. Chưa đẩy được mà buộc phải bàn giao: thêm --du-biet \"<một câu lý do>\".");
     process.exit(EXIT.MISUSE);
   }
   // Nhận quyền mà không nói làm gì là để lại một dòng vô nghĩa cho phiên sau đọc.
@@ -436,7 +479,71 @@ function main() {
   const verdict = decide(parsed.claims, { action, key, as, today });
   if (verdict.code !== EXIT.OK) { console.error(verdict.message); process.exit(verdict.code); }
 
-  parsed.claims[key] = typeof task === "string" ? { ...verdict.next, task } : verdict.next;
+  /* ---- CỔNG TRẢ KHOÁ: đẩy xong rồi mới trả (xem khối `canDayTruocKhiTra` ở trên) ----
+   *
+   * LỐI THOÁT `--du-biet` — hình dạng này được chọn có lý do, không phải cho nhanh.
+   * Có ca hợp lệ thật: lane bị chặn đẩy vì lý do ngoài tầm với và phải bàn giao vùng cho phiên
+   * khác. Chặn cứng không lối thoát là dựng một cái kẹt mới thay cho cái cũ.
+   * Nhưng lối thoát phải để lại DẤU VẾT ĐỌC ĐƯỢC, nếu không nó chỉ là cái nút "bỏ qua". Nên
+   * theo đúng khuôn `--duc-duyet` đã có ở `--restamp`: bắt kèm MỘT CÂU LÝ DO, và ghi câu đó
+   * **VÀO BẢNG**, không in ra màn hình. Người cần đọc nó là phiên nhận vùng sau bạn và phiên
+   * gặp mục đỏ ở cổng — cả hai đều chỉ đọc bảng, không ai chạy lại lệnh của bạn.
+   * Cố ý KHÔNG đòi Đức duyệt: Đức không phải vòng QA, và đây là chuyện bàn giao trong ngày.
+   * Cố ý KHÔNG cho cờ trần không lý do: cờ trần thì lần sau không ai truy được vì sao vùng đó
+   * trống chủ mà vẫn còn commit chưa đẩy — tức đúng cái tình trạng luật này sinh ra để chặn. */
+  const duBiet = flag("du-biet");
+  const coLyDo = typeof duBiet === "string" && duBiet.trim() !== "";
+  // Cờ trần `--du-biet` không kèm lý do = không có gì để ghi vào bảng = KHÔNG phải lối thoát.
+  // Chặn ở đây, TRƯỚC phép đo, để câu báo nói đúng chuyện đang thiếu.
+  if (duBiet !== null && !coLyDo) {
+    console.error(`THIEU_LY_DO: \`--du-biet\` phải kèm MỘT CÂU lý do — \`--du-biet "vì sao chưa đẩy được"\`.`);
+    console.error(`Cờ trần không ghi được gì vào bảng, nên nó chỉ là nút bỏ qua: lần sau không ai truy được`);
+    console.error(`vì sao vùng đó trống chủ mà vẫn còn commit chưa đẩy — đúng tình trạng luật này sinh ra để chặn.`);
+    process.exit(EXIT.MISUSE);
+  }
+  let boQua = null;
+  if (action === "release" && !verdict.already) {
+    let doc;
+    try { doc = commitChuaDay(ROOT, readStructureFromDisk(ROOT)); }
+    catch (error) { doc = { trangThai: CHUA_DAY.LOI, ly_do: String(error.message).split(String.fromCharCode(10))[0] }; }
+    const phan = canDayTruocKhiTra(doc, key);
+
+    if (phan.chan && !coLyDo) {
+      if (phan.ma === "KHONG_DEM_DUOC") {
+        console.error(`\nKHONG_DEM_DUOC_COMMIT: không đếm được commit chưa đẩy của "${key}" — ${phan.ly_do}.`);
+        console.error(`Không biết còn gì chưa đẩy thì không biết trả khoá bây giờ có để lại commit vô chủ hay không,`);
+        console.error(`và "không biết" ở đây phải là ĐỎ (MULTIFLOW bất biến ④), không phải "chắc không sao".`);
+        console.error(`Kiểm: \`git status\` và \`git log origin/main..HEAD\`.`);
+      } else {
+        console.error(`\nTU_CHOI_TRA_KHOA: "${key}" còn ${phan.commits.length} commit CHƯA ĐẨY lên origin/main.`);
+        for (const c of phan.commits) console.error(`  ${c.sha.slice(0, 7)}  ${String(c.subject).slice(0, 68)}`);
+        console.error(`\nLuật AGENTS.md mục 1: TRẢ QUYỀN SAU KHI ĐẨY, không phải sau khi commit.`);
+        console.error(`Trả bây giờ là để lại commit vô chủ — cổng đóng phiên sẽ báo "Vùng gốc repo bị sửa nhưng`);
+        console.error(`chưa ai đứng tên: ${key}", và phiên đến sau phải dọn một mục đỏ không phải của họ.`);
+      }
+      console.error(`\nĐi tiếp đúng cách:`);
+      console.error(`  1. node scripts/safe-push.mjs --as ${as}`);
+      console.error(`  2. đẩy xong rồi mới: node scripts/claim.mjs --release ${key} --as ${as}`);
+      console.error(`\nĐẩy KHÔNG được vì lý do ngoài tầm với, và phải bàn giao vùng này cho phiên khác?`);
+      console.error(`  node scripts/claim.mjs --release ${key} --as ${as} --du-biet "<một câu: vì sao chưa đẩy được>"`);
+      console.error(`Câu đó được ghi VÀO BẢNG chứ không in ra màn hình — phiên nhận vùng sau bạn chỉ đọc bảng.`);
+      console.error(`Đã đẩy rồi mà vẫn thấy dòng này? Con trỏ origin/main trên máy đang cũ: \`git fetch origin main\` rồi chạy lại.\n`);
+      process.exit(EXIT.REFUSED);
+    }
+    if (phan.chan && coLyDo) boQua = { so: phan.commits?.length ?? null, ly_do: duBiet.trim(), ma: phan.ma };
+  }
+
+  const ghi = typeof task === "string" ? { ...verdict.next, task } : { ...verdict.next };
+  // Dấu vết của lượt trả sớm KHÔNG được sống dai hơn lượt đó: mọi lượt nhận/trả đều xoá trước,
+  // rồi mới ghi lại nếu lượt NÀY là lượt trả sớm. Không xoá thì một khoá từng trả sớm sẽ mang
+  // câu lý do cũ đi mãi, và phiên sau đọc bảng tưởng vẫn còn commit vô chủ.
+  delete ghi.released_with_unpushed;
+  delete ghi.unpushed_reason;
+  if (boQua) {
+    ghi.released_with_unpushed = boQua.ma === "KHONG_DEM_DUOC" ? "khong-dem-duoc" : boQua.so;
+    ghi.unpushed_reason = boQua.ly_do;
+  }
+  parsed.claims[key] = ghi;
   parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims);
   fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
 

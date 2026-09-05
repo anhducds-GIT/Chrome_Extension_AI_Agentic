@@ -18,7 +18,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyAtEof, appendOnlyExemptFrom, claimPrefixesFrom, generatorsFrom, kiemArtifactTuHead, laneFromMessage, LANE_TRAILER, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
+import { CHUA_DAY, commitChuaDay, generatorsFrom, kiemArtifactTuHead, LANE_TRAILER, readStructureFromDisk } from "./repo-structure.mjs";
 
 const NEWLINE = String.fromCharCode(10);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -36,7 +36,6 @@ if (!args.includes("--as") || !asLabel || asLabel.startsWith("--")) {
 // Viet ve dang "áº¡..." va regex ^workers/ truot -> commit bi quy
 // nham cho "_root" thay vi dung package. Cung goc loi voi session-check 26/08.
 const git = (...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: ROOT, encoding: "utf8" });
-const unquote = (line) => line.replace(/^"|"$/g, "");
 const gitQuiet = (...a) => { try { return git(...a); } catch { return ""; } };
 
 // Đối chiếu với remote thật, không tin con trỏ cũ trên máy.
@@ -69,23 +68,6 @@ try {
   console.error(`\n⚠ KHONG_FETCH_DUOC: \`git fetch origin main\` thất bại → ${detail}`);
   console.error(`  Vẫn đi tiếp, nhưng mốc so sánh là bản origin/main CŨ trên máy. Nếu push bị từ chối vì không tiến thẳng thì đó là lý do.\n`);
 }
-if (!gitQuiet("rev-parse", "--verify", "origin/main").trim()) {
-  console.error(`\nKHONG_CO_ORIGIN_MAIN: không phân giải được \`origin/main\`.`);
-  console.error(`Không có mốc để so thì không đếm được commit nào chưa đẩy — và im lặng ở đây là báo "xong" cho một cú đẩy CHƯA HỀ XẢY RA.`);
-  console.error(`Kiểm: \`git remote -v\` và \`git branch -r\`. Repo mới thì chạy \`git fetch origin\` một lần.\n`);
-  process.exit(1);
-}
-
-const pending = gitQuiet("log", "--format=%H%x1f%s%x1f%an", "origin/main..HEAD").split("\n").filter(Boolean)
-  .map((line) => { const [sha, subject, author] = line.split("\x1f"); return { sha, subject, author }; });
-
-if (!pending.length) {
-  console.log("\nKhông có gì để push — máy đang bằng với remote.\n");
-  process.exit(0);
-}
-
-const claims = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.json"), "utf8")).claims || {};
-
 // Một commit thuộc về ai? Xét theo VÙNG QUYỀN mà nó đụng.
 //
 // K2-2b, 02/09: chú thích cũ ở đây khẳng định nó "dùng CHUNG hàm với cổng đóng phiên" — và câu
@@ -94,9 +76,12 @@ const claims = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.jso
 // cổng quy `_docs`, chỗ này quy `_root` → phiên giữ `_docs` làm xong, cổng XANH, rồi bị chính
 // safe-push từ chối đẩy việc của mình. Nay cả hai đi qua `ownershipKeys` — xem ghi chú dài trong
 // repo-structure.mjs về vì sao "tách hàm dùng chung" không đủ và phải là MỘT CỬA duy nhất.
+//
+// TRA-KHOA-01, 06/09: cả phép ĐẾM commit chưa đẩy lẫn phép quy nó về vùng nay nằm trong
+// `commitChuaDay` ở `repo-structure.mjs`, vì `claim.mjs --release` phải hỏi ĐÚNG câu đó để
+// cưỡng chế luật "trả quyền SAU khi đẩy". Chép sang bên kia là dựng lại đúng con bug mà cả
+// khối chú giải này đang kể. CHÍNH SÁCH thì vẫn của mỗi bên — xem ngay dưới.
 const structure = readStructureFromDisk(ROOT);
-const claimPrefixes = claimPrefixesFrom(structure);
-
 
 // MIỄN TRỪ CŨNG PHẢI GIỐNG CỔNG — đây là lệch thứ hai trong cùng bản vá, và nó nặng hơn.
 // `.agents/claims.json`: nhận/trả quyền là thao tác hành chính, ai cũng được đẩy kèm; không miễn
@@ -123,18 +108,32 @@ const claimPrefixes = claimPrefixesFrom(structure);
 // cổng đóng phiên. Trước bản này mỗi bên gõ cứng tên file, tức hai bản sao của cùng một luật —
 // đúng loại lệch mà cả khối chú giải trên đang kể. Thêm `IDEAS.md` (Đức chốt 04/09) vào hai
 // danh sách gõ cứng là gieo lại con bug đó, nên danh sách chuyển về một nguồn.
-const appendOnlyExempt = appendOnlyExemptFrom(structure);
-const chiThemOCuoi = new Map(appendOnlyExempt.map((file) => [file, appendOnlyAtEof(
-  gitQuiet("diff", "-U0", "origin/main", "HEAD", "--", file),
-  gitQuiet("show", `origin/main:${file}`)
-)]));
-const adminFile = (file) => file === ".agents/claims.json" || chiThemOCuoi.get(file) === true;
-
-function ownersOf(sha) {
-  const files = gitQuiet("show", "--name-only", "--format=", sha).split("\n").filter(Boolean).map(unquote);
-  const areas = ownershipKeys(files, structure, claimPrefixes, adminFile);
-  return areas.map((area) => ({ area, owner: claims[area]?.owner ?? null }));
+//
+// CHÍNH SÁCH CỦA RIÊNG CỔNG NÀY, hai ca không-đo-được xử khác `claim.mjs`:
+//   · git không đọc được  → CHẶN cả hai bên (bất biến ④: không biết thì đỏ).
+//   · không có origin/main → CHẶN Ở ĐÂY, vì cổng này sắp GHI LÊN REMOTE và không có mốc thì
+//     im lặng báo "xong" cho một cú đẩy chưa hề xảy ra. `claim.mjs` thì KHÔNG chặn ca này —
+//     trả một khoá trong repo chưa có remote là chuyện hoàn toàn bình thường.
+const doc = commitChuaDay(ROOT, structure);
+if (doc.trangThai === CHUA_DAY.LOI) {
+  console.error(`\nKHONG_DEM_DUOC_COMMIT: ${doc.ly_do}.`);
+  console.error(`Không đếm được commit chưa đẩy thì không biết sắp đẩy gì của ai — và không biết thì không đẩy.`);
+  console.error(`Kiểm: \`git status\` và \`git fsck\`.\n`);
+  process.exit(1);
 }
+if (doc.trangThai === CHUA_DAY.KHONG_CO_MOC) {
+  console.error(`\nKHONG_CO_ORIGIN_MAIN: ${doc.ly_do}.`);
+  console.error(`Không có mốc để so thì không đếm được commit nào chưa đẩy — và im lặng ở đây là báo "xong" cho một cú đẩy CHƯA HỀ XẢY RA.`);
+  console.error(`Kiểm: \`git remote -v\` và \`git branch -r\`. Repo mới thì chạy \`git fetch origin\` một lần.\n`);
+  process.exit(1);
+}
+const pending = doc.commits;
+if (!pending.length) {
+  console.log("\nKhông có gì để push — máy đang bằng với remote.\n");
+  process.exit(0);
+}
+
+const claims = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.json"), "utf8")).claims || {};
 
 /* QUY THEO AI ĐÃ LÀM, KHÔNG THEO AI ĐANG GIỮ VÙNG — K2-3.
    Bản cũ chỉ có một cách quy: xem chủ HIỆN TẠI của vùng mà commit chạm. Sai cả hai chiều, xem
@@ -152,13 +151,11 @@ function ownersOf(sha) {
    Lý do tôi từng viết đường lùi ("509 commit trong lịch sử không có nhãn") là SAI PHẠM VI, và
    GPT đã sửa tôi đúng chỗ này một lần rồi ở phép kiểm #10: `pending` chỉ là `origin/main..HEAD`
    — commit CHƯA push. Lịch sử cũ không bao giờ đi qua đây, nên chặn ở đây không khoá gì cả. */
-const laneOf = (sha) => laneFromMessage(gitQuiet("log", "-1", "--format=%B", sha));
-
 const rows = pending.map((commit) => {
-  const areas = ownersOf(commit.sha);
-  const { lane, problem } = laneOf(commit.sha);
+  const { lane, laneProblem: problem } = commit;
   return {
-    ...commit, areas, lane, laneProblem: problem,
+    ...commit,
+    areas: commit.areas.map((area) => ({ area, owner: claims[area]?.owner ?? null })),
     foreign: lane && !problem && lane !== asLabel ? [{ area: `lane ${lane}`, owner: lane }] : [],
     khongQuyDuoc: problem ? `nhãn HỎNG (${problem.split(":")[0]})` : lane ? null : "THIẾU nhãn"
   };

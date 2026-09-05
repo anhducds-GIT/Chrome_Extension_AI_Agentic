@@ -635,3 +635,72 @@ export function kiemArtifactTuHead(root, scripts, { thieuLaDo = true, timeout = 
     return { ok: lech.length === 0, lech };
   } finally { anh.dispose(); }
 }
+
+/* ---- COMMIT CHƯA ĐẨY, QUY VỀ VÙNG — một cách đo, hai cổng dùng -----------
+ *
+ * VÌ SAO HÀM NÀY Ở ĐÂY (TRA-KHOA-01, 06/09). Luật `AGENTS.md` mục 1: **trả quyền SAU khi đẩy,
+ * không phải sau khi commit**. Trước bản này chỉ `safe-push.mjs` biết đếm commit chưa đẩy và
+ * quy nó về vùng; `claim.mjs --release` thì không biết gì cả, nên nó cho trả khoá lúc commit
+ * còn nằm trên máy. Ngày 06/09 ba lane cùng bị chặn đẩy, cùng trả khoá cho "sạch sẽ", và cùng
+ * để lại commit vô chủ cho phiên đến sau dọn.
+ *
+ * Cách chữa KHÔNG phải là chép phép đếm sang `claim.mjs`. Hai bản của một luật đã trả hai câu
+ * khác nhau cho cùng một file ngày 02/09 (xem khối `ownershipKeys` phía trên, và `append_only_
+ * exempt`). Nên phép ĐO về đây, một bản; hai bên gọi giữ CHÍNH SÁCH riêng, y như `kiemArtifact
+ * TuHead`:
+ *   · `safe-push` sắp ghi lên remote → không có `origin/main` là CHẶN (không có mốc thì không
+ *     biết mình vừa đẩy gì).
+ *   · `claim.mjs --release` là sổ sách nội bộ → không có `origin/main` là KHÔNG CHẶN. Repo mới
+ *     dựng từ bộ khung chưa có remote, và chặn ở đó là khoá cứng đúng đối tượng mà bộ khung
+ *     nhắm tới. Đây là ngoại lệ "bootstrap thật" của bất biến ④, không phải một fail-open.
+ *
+ * CỐ Ý KHÔNG `git fetch` ở đây. Hàm này chỉ ĐỌC ref sẵn có trên máy: gọi mạng trong một phép
+ * đo là biến nó thành thứ chạy chậm và hỏng theo đường truyền, mà mọi lane ở repo này dùng
+ * CHUNG một thư mục git — nên chính cú `git push` của `safe-push` đã cập nhật `origin/main`
+ * ngay tại chỗ. Bên nào cần mốc tươi thì tự `fetch` trước khi gọi (safe-push có làm).
+ */
+export const CHUA_DAY = Object.freeze({ OK: "ok", KHONG_CO_MOC: "khong_co_moc", LOI: "loi" });
+
+/* Trả về một trong ba:
+     { trangThai: OK,           commits: [{ sha, subject, author, areas, lane, laneProblem }] }
+     { trangThai: KHONG_CO_MOC, ly_do }   — không phân giải được `origin/main`
+     { trangThai: LOI,          ly_do }   — không đọc được git → KHÔNG BIẾT, bên gọi phải chặn */
+export function commitChuaDay(root, structure) {
+  const git = (...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: root, encoding: "utf8" });
+  const quiet = (...a) => { try { return git(...a); } catch { return ""; } };
+  const unquote = (line) => line.replace(/^"|"$/g, "");
+
+  // HAI CÂU HỎI, KHÔNG PHẢI MỘT — cùng lý do như `baselineDaNiemPhong`: "git hỏng" và "repo
+  // chưa có remote" là hai chuyện khác nhau, và gộp chúng thành một là biến ca thứ nhất
+  // (KHÔNG BIẾT → phải đỏ) thành ca thứ hai (bootstrap → cho qua).
+  let trongCayGit = "";
+  try { trongCayGit = git("rev-parse", "--is-inside-work-tree").trim(); } catch { trongCayGit = ""; }
+  if (trongCayGit !== "true") {
+    return { trangThai: CHUA_DAY.LOI, ly_do: "không đọc được git ở đây (không phải cây làm việc git, hoặc git không chạy được)" };
+  }
+  if (!quiet("rev-parse", "--verify", "origin/main").trim()) {
+    return { trangThai: CHUA_DAY.KHONG_CO_MOC, ly_do: "không phân giải được `origin/main`" };
+  }
+
+  try {
+    const claimPrefixes = claimPrefixesFrom(structure);
+    // Miễn trừ phải GIỐNG cổng đóng phiên, và đo THEO CẢ LOẠT chứ không theo từng commit — xem
+    // khối chú giải dài trong `safe-push.mjs`, đây chính là đoạn dọn về từ đó.
+    const chiThemOCuoi = new Map(appendOnlyExemptFrom(structure).map((file) => [file, appendOnlyAtEof(
+      quiet("diff", "-U0", "origin/main", "HEAD", "--", file),
+      quiet("show", `origin/main:${file}`)
+    )]));
+    const adminFile = (file) => file === ".agents/claims.json" || chiThemOCuoi.get(file) === true;
+
+    const commits = git("log", "--format=%H%x1f%s%x1f%an", "origin/main..HEAD").split("\n").filter(Boolean)
+      .map((line) => {
+        const [sha, subject, author] = line.split(String.fromCharCode(31));
+        const files = quiet("show", "--name-only", "--format=", sha).split("\n").filter(Boolean).map(unquote);
+        const { lane, problem } = laneFromMessage(quiet("log", "-1", "--format=%B", sha));
+        return { sha, subject, author, areas: ownershipKeys(files, structure, claimPrefixes, adminFile), lane, laneProblem: problem };
+      });
+    return { trangThai: CHUA_DAY.OK, commits };
+  } catch (error) {
+    return { trangThai: CHUA_DAY.LOI, ly_do: String(error.message).split(String.fromCharCode(10))[0] };
+  }
+}
