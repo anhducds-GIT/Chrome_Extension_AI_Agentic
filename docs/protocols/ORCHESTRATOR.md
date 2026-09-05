@@ -179,8 +179,17 @@ Hết block báo một lần, và **đó là chỗ compact an toàn** — vì l�
 
 Phép thử trước khi compact: *"cái tôi vừa biết đã có trong file chưa?"* Chưa thì ghi trước.
 
-**Trần: hai luồng cùng lúc**, và chỉ mở luồng mới khi luồng cũ **đã push** — không phải khi nó
-"báo xong". Ngày 05/09 trần này bị phá ba lần và trả giá đúng ba lần.
+**Trần luồng đếm THEO TỪNG REPO, không đếm toàn cục** (Đức chốt 05/09). Hai repo có **bảng quyền
+riêng, cây làm việc riêng, cổng riêng** — nên một luồng ở repo này không thể chặn luồng ở repo
+kia. Gộp chúng vào một con số là tự trói mình mà không đổi lại được an toàn nào.
+
+Trong **một** repo: **tối đa hai luồng**, và chỉ mở luồng mới khi luồng cũ **đã push** — không
+phải khi nó "báo xong". Ngày 05/09 trần này bị phá ba lần và trả giá đúng ba lần.
+
+**Chạy song song hết mức — nhưng chỉ với việc ĐÃ SẴN SÀNG.** Bịa việc ra cho đủ chỗ trống là
+đúng cái Đức đã bác: *"làm chậm mà sạch còn hiệu quả hơn spam rồi tất cả đều dang dở."* Việc
+chưa được chia phạm vi thì chưa phải là luồng — chia phạm vi trước, đó là việc của vai điều
+phối và **làm được song song với các luồng đang chạy**.
 
 ## 1. HAI LỚP — và Đức chỉ thấy lớp trên (Đức chốt 04/09)
 
