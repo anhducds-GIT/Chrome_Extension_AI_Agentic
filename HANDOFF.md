@@ -3100,3 +3100,30 @@ Cổng vẫn tin được; **không có việc riêng nào phải giao thêm.**
 **Việc cần Đức: không có.** Còn mở: ô `bậc` của `Y-18` vẫn ghi `ý tưởng` — sửa giữa file
 `IDEAS.md` nên phải là phiên đang giữ `_root`.
 
+---
+
+## 2026-09-06 — đợt OBSERVER-PROBES-01 (lane `claude-observer-a`, khoá `_code`)
+
+**Làm gì.** Dựng **lõi bốn phép dò read-only** cho Observer V0 theo BRIEF-OBSERVER-V1 mục 3a:
+`scripts/observer-probes.mjs` (`targets.list` · `page.snapshot` có phân trang · `dom.query` ·
+`dom.tree`), phép ghim `tests/observer-probes-smoke.mjs`, bộ đo đột biến
+`scripts/observer-mutation-check.mjs`. Lõi **thuần logic, không biết `chrome` là gì** — nhận vào
+một hàm gửi lệnh CDP, nên phép ghim chạy được mà không cần Chrome.
+
+**Selector đi đường nào.** Qua `DOM.querySelectorAll` của CDP, làm **tham số giao thức**, không
+nối chuỗi ở bất kỳ đâu. Danh sách method cho phép **cố ý không có `Runtime.*`** — tức trong lõi
+này **không tồn tại** đường chạy JS trên trang, khác căn bản với `observer-engine.js` hôm nay
+(read-only nhờ đúng một chuỗi gõ cứng). Selector độc `'); doSomething(); ('` chết như một
+selector CSS sai, trả mã `SELECTOR_INVALID`.
+
+**Số đo.** Đột biến kiểm **10 con · mỏ neo khớp 10/10 · giết được 10 · sống sót 0**.
+Chưa chạy live trên Chrome thật. Không đụng `manifest.json`.
+
+**Còn mở.**
+⑴ `tests/observer-probes-smoke.mjs` chưa có tên trong `scripts.test` của `package.json` (file ở
+gốc repo = khoá `_root`, lượt này của lane khác) — tạm nối bằng một dòng tiến trình con ở cuối
+`tests/observer-engine-smoke.mjs`; khai thẳng vào `package.json` rồi xoá khối đó.
+⑵ Nối lõi vào `observer-engine.js` cần `_root`.
+⑶ **Chính sách che dữ liệu đang là ĐỀ XUẤT, Đức chưa chốt** — mặc định hiện tại: chỉ trả giá trị
+thuộc tính trong danh sách trắng, thuộc tính khác chỉ hiện tên; `href`/`src`/URL trang bị cắt
+query và fragment; không trả text node, không trả `outerHTML`, không trả giá trị ô nhập.

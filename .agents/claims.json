@@ -3,31 +3,31 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau. Gốc repo chia làm nhiều khoá (A2, 02/09): `_docs` cho docs/, `_code` cho scripts/ + tests/, `_template` cho template/, `_root` cho phần còn lại và các file ở tầng ngoài cùng. Chia vì 77% commit trong ngày 02/09 chạm gốc repo, và một khoá duy nhất chặn cả những việc không chồng nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-flow-b",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-05T17:34",
       "task": "F-06 nua sau: anh -> video",
-      "released_at": null,
+      "released_at": "2026-09-05T19:43",
       "taken_from": "claude-f18-evidence",
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-gemini-b",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-05T17:35",
       "task": "G-10 ghim ba guard lop hai + ghi lai dau dong G-11",
-      "released_at": null,
+      "released_at": "2026-09-05T19:43",
       "taken_from": "claude-exec-g02",
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-04T06:18",
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-g02 da chet (stall watchdog), giai phong khoa va GIU viec do de executor moi doc roi tu quyet"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-b",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-05T17:35",
       "task": "B-29 B-18 ghi lai dau dong + B-16 B-11 mot goc benh",
-      "released_at": null,
+      "released_at": "2026-09-05T19:43",
       "taken_from": "claude-gpt-kenh",
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-05T08:43",
@@ -46,10 +46,10 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_docs": {
-      "owner": "claude-assistant",
+      "owner": "claude-token-do",
       "ai": "Claude",
-      "claimed_at": "2026-09-05T17:23",
-      "task": "Giu den khi day xong 23 commit cham docs/",
+      "claimed_at": "2026-09-05T19:45",
+      "task": "Do chi phi token cua duong nap ngu canh",
       "released_at": null,
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
@@ -58,10 +58,10 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_code": {
-      "owner": "claude-tra-khoa",
+      "owner": "claude-observer-a",
       "ai": "Claude",
-      "claimed_at": "2026-09-05T17:45",
-      "task": "claim.mjs --release tu choi khi vung con commit chua day",
+      "claimed_at": "2026-09-05T19:46",
+      "task": "Bon phep do read-only cho Observer",
       "released_at": null,
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
@@ -70,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "74004ff521ce8eca"
+  "_fingerprint": "a7645021c00151c1"
 }

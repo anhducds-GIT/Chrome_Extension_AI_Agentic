@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const calls = [];
 let attachShouldFail = false;
@@ -55,3 +57,12 @@ assert.equal(blocked.access.detached, null);
 assert.deepEqual(calls, ["attach"]);
 
 console.log("observer-engine smoke tests: PASS");
+
+/* Phép ghim bốn phép dò (tests/observer-probes-smoke.mjs) CHƯA có tên trong `scripts.test` của
+ * package.json — file đó nằm ở gốc repo, tức khoá `_root`, và lượt này `_root` là của lane khác.
+ * Không nối vào đây thì cổng đóng phiên KHÔNG chạy nó, và một phép ghim không được chạy thì nó
+ * không ghim gì cả. Chạy ở TIẾN TRÌNH CON vì file trên vừa gắn một `globalThis.chrome` giả.
+ * VIỆC CẦN LÀM SAU: khi `_root` trống, khai thẳng file kia vào `scripts.test` rồi xoá khối này. */
+execFileSync(process.execPath, [fileURLToPath(new URL("./observer-probes-smoke.mjs", import.meta.url))], {
+  stdio: "inherit"
+});
