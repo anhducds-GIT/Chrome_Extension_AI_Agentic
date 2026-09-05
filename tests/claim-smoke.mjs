@@ -634,11 +634,13 @@ const CLAIMS = () => ({
 
     // CA F — lối thoát mà KHÔNG ghi lý do thì KHÔNG phải lối thoát. Đây là đột biến ④.
     const tran = run("--release", "_code", "--as", "phien-A", "--du-biet");
-    assert.notEqual(tran.code, EXIT.OK, `co tran khong ly do thi KHONG duoc mo cua. Ra: ${tran.out}`);
+    // MÃ THOÁT RIÊNG, không chỉ "khác 0": một con đột biến làm cờ trần "chạy được" thường chết
+    // bằng TypeError, tức vẫn khác 0 — nên `notEqual(0)` cho nó sống sót. Ghim đúng mã DUNG_SAI.
+    assert.equal(tran.code, EXIT.MISUSE, `co tran khong ly do thi KHONG duoc mo cua, va phai la DUNG SAI (2). Ra: ${tran.out}`);
     assert.match(tran.out, /THIEU_LY_DO/, "phai noi ro thieu cai gi");
     assert.equal(owner("_code"), "phien-A", "va van KHONG duoc ghi gi");
     const rong = run("--release", "_code", "--as", "phien-A", "--du-biet", "   ");
-    assert.notEqual(rong.code, EXIT.OK, "ly do toan dau cach cung khong tinh la ly do");
+    assert.equal(rong.code, EXIT.MISUSE, "ly do toan dau cach cung khong tinh la ly do");
     assert.equal(owner("_code"), "phien-A", "van khong ghi gi");
 
     // CA E — lối thoát ĐÚNG: có câu lý do thì đi được, VÀ câu đó phải nằm TRONG BẢNG.

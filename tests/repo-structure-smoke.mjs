@@ -305,13 +305,25 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
    `stewardOf` hoan toan dung — chi co `safe-push.mjs` la khong goi no. */
 {
   const readScript = (name) => fsMod.readFileSync(new URL(`../scripts/${name}`, import.meta.url), "utf8");
-  for (const name of ["session-check.mjs", "safe-push.mjs"]) {
-    assert.match(readScript(name), /ownershipKeys\(/,
-      `${name} phai goi ownershipKeys — day la dung cai day noi da dut 02/09`);
+  // TRA-KHOA-01, 06/09: `claim.mjs --release` nay cung phai quy commit ve vung (de cuong che
+  // luat "tra quyen SAU khi day"), nen no vao danh sach nay. Va `safe-push.mjs` khong con goi
+  // `ownershipKeys` THANG nua — no goi `commitChuaDay`, tuc VAN la cua chung, chi them mot
+  // tang. Chap nhan ca hai TEN, nhung dong ngay cua sau ben duoi: `commitChuaDay` bat buoc
+  // phai la ke goi `ownershipKeys`, neu khong thi "them mot tang" chinh la them mot cua thu hai.
+  for (const name of ["session-check.mjs", "safe-push.mjs", "claim.mjs"]) {
+    assert.match(readScript(name), /(ownershipKeys|commitChuaDay)\(/,
+      `${name} phai di qua cua chung (ownershipKeys, hoac commitChuaDay goi no) — day la dung cai day noi da dut 02/09`);
   }
-  assert.doesNotMatch(readScript("safe-push.mjs"), /\bareaOf\(/,
-    "safe-push.mjs KHONG duoc tu quy vung bang areaOf — do la cua thu hai, va no da lech mot lan");
-  ok("K2-2b · DAY NOI: ca hai script di qua cua chung, va safe-push khong con duong rieng");
+  const cauTruc = readScript("repo-structure.mjs");
+  const than = cauTruc.slice(cauTruc.indexOf("export function commitChuaDay("));
+  assert.notEqual(than, "", "khong tim thay commitChuaDay trong repo-structure.mjs");
+  assert.match(than, /ownershipKeys\(/,
+    "commitChuaDay PHAI goi ownershipKeys — neu khong thi no la cua quy vung thu hai, dung con bug 02/09");
+  for (const name of ["safe-push.mjs", "claim.mjs"]) {
+    assert.doesNotMatch(readScript(name), /\bareaOf\(/,
+      `${name} KHONG duoc tu quy vung bang areaOf — do la cua thu hai, va no da lech mot lan`);
+  }
+  ok("K2-2b · DAY NOI: ba script deu di qua cua chung; commitChuaDay khong duoc thanh cua thu hai; khong ai co duong rieng");
 }
 
 /* ---- K2-2b · bat bien ba tang (audit GPT 02/09) -------------------------- */
