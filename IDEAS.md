@@ -143,7 +143,7 @@ hiển thị sai.
 - **bậc:** đã chứng minh
 - **nguồn:** Đức nêu 2026-09-02
 - **việc kế:** Không còn gì. Bộ sinh đã nằm trong repo, có lệnh chạy riêng và 6 phép kiểm
-- **kết quả:** `DASHBOARD.html` **được commit vào repo** (03/09) — nhờ vậy bất kỳ AI nào cũng
+- **kết quả:** `DASHBOARD-Chrome-Extension-AI-Agentic.html` **được commit vào repo** (03/09) — nhờ vậy bất kỳ AI nào cũng
   sinh lại rồi commit được, không phải nhờ riêng một AI đăng hộ. Cổng so bảng đã commit với
   trạng thái repo mỗi phiên nên nó **không thể âm thầm cũ**. Trang tự bật dải đỏ khi Đức mở nó
   vào **một ngày khác ngày sinh** — tính lúc XEM, không lúc sinh.

@@ -129,7 +129,7 @@ Bọc trong `<details>`, **mặc định đóng**. Chứa:
 - **KHÔNG** thêm file dữ liệu mới, **KHÔNG** thêm trường vào `STATUS.md` của worker nào,
   **KHÔNG** sửa `STATUS.template.md`. Vùng 1 đọc trường tuỳ chọn và chịu được khi nó vắng.
 - **KHÔNG** thêm logic agent, không thêm vùng thứ năm. Thấy đáng thêm → `IDEAS.md`.
-- **KHÔNG** sửa `DASHBOARD.html` bằng tay. Nó là artifact máy sinh.
+- **KHÔNG** sửa `DASHBOARD-Chrome-Extension-AI-Agentic.html` bằng tay. Nó là artifact máy sinh.
 - **KHÔNG** sửa `session-check.mjs` · `safe-push.mjs` · `claim.mjs` · `what-next.mjs` ·
   `state-check.mjs` · `build-dashboard.mjs`.
 - **KHÔNG** đưa gì phụ thuộc **giờ đồng hồ lúc sinh** vào trang.
@@ -149,7 +149,7 @@ Bọc trong `<details>`, **mặc định đóng**. Chứa:
    - `KHOA_PREFIX` vẫn ở đầu mỗi dòng khoá **sau khi** đã vào `<details>`;
    - **không** rò tên phiên giữ khoá ra trang.
    Báo số thật, kể cả số lượt thoát ban đầu.
-4. Cổng đóng phiên XANH TOÀN BỘ. Sinh lại `DASHBOARD.html`.
+4. Cổng đóng phiên XANH TOÀN BỘ. Sinh lại `DASHBOARD-Chrome-Extension-AI-Agentic.html`.
 5. Log vào `HANDOFF.md` gốc, commit có nhãn `Lane:`, đẩy bằng `safe-push.mjs`. Bị từ chối vì
    cuốn theo việc phiên khác → **DỪNG và báo**, đừng tự `--carry`.
 6. Trả khoá — **lượt push riêng**, sau khi đã push việc.
@@ -160,7 +160,7 @@ lại, mở ra: đơn vị đó phải **rời** vùng `CẦN ĐỨC` và badge 
 
 ## 6. Khoá cần giữ
 
-Chỉ `_code` (`scripts/` + `tests/`). `DASHBOARD.html` là artifact miễn khoá; `HANDOFF.md` gốc
+Chỉ `_code` (`scripts/` + `tests/`). `DASHBOARD-Chrome-Extension-AI-Agentic.html` là artifact miễn khoá; `HANDOFF.md` gốc
 miễn khi chỉ thêm dòng ở cuối. **Không nhận `_root`, không nhận khoá gói nào** — nếu thấy cần,
 tức là đã trượt ra ngoài đề bài: dừng và báo.
 

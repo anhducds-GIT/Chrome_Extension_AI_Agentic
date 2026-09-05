@@ -592,7 +592,7 @@ const ideasDeps = (text) => ({
 
 /* ---- 14. BẢN COMMIT PHẢI TẤT ĐỊNH — phép kiểm quan trọng nhất của lần này ----
 
-   `DASHBOARD.html` nay nằm trong khối `generators`, nên cổng chạy `--check-head` mỗi phiên
+   `DASHBOARD-Chrome-Extension-AI-Agentic.html` nay nằm trong khối `generators`, nên cổng chạy `--check-head` mỗi phiên
    và `safe-push` TỪ CHỐI ĐẨY khi nó lệch. Nếu nội dung phụ thuộc GIỜ ĐỒNG HỒ thì sang ngày
    mới là nó lệch HEAD **dù không một dữ liệu nào đổi**, và MỌI phiên khác bị chặn push chỉ
    vì một ngày đã qua. Đó không phải lỗi của bảng — đó là lỗi làm tê cả repo.
@@ -659,7 +659,7 @@ const ideasDeps = (text) => ({
   assert.ok(cuRoi.textContent.includes(homQua), "loi bao phai noi ro ngay sinh");
   assert.ok(cuRoi.textContent.includes(nayISO), "va noi ro hom nay la ngay nao");
 
-  assert.equal(TRANG_FILE, "DASHBOARD.html", "ten ban chuan cua repo");
+  assert.equal(TRANG_FILE, "DASHBOARD-Chrome-Extension-AI-Agentic.html", "ten ban chuan cua repo");
   ok("ban commit TAT DINH: doi dong ho 99 ngay khong doi mot byte, bao cu do JS tinh luc mo");
 }
 /* ================= TAB "AI ĐIỀU PHỐI" — brief DASH-ORCH-01 =================
@@ -1394,7 +1394,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
  * **TUYỆT ĐỐI không nhúng ai đang giữ vùng nào**.
  *
  * Câu cuối đó không phải yêu cầu trình bày — nó là một luật an toàn, và đây là phép ghim nó.
- * `DASHBOARD.html` nằm trong khối `generators`, nên cổng so nó với HEAD MỖI PHIÊN và
+ * `DASHBOARD-Chrome-Extension-AI-Agentic.html` nằm trong khối `generators`, nên cổng so nó với HEAD MỖI PHIÊN và
  * `safe-push` từ chối đẩy khi lệch. Chủ vùng đổi liên tục (ngày 04/09 riêng `_code` đổi chủ
  * BỐN lần). Nên nếu tên chủ lọt vào trang thì bảng lệch HEAD ngay lượt nhận khoá kế tiếp, và
  * MỌI phiên bị chặn đẩy việc dù không một dữ liệu nào đổi. Đúng cái bẫy đã suýt xảy ra với

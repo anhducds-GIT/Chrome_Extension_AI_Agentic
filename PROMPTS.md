@@ -27,7 +27,7 @@
 (`ARTIFACT PERSISTENCE FAILED` là **mã lỗi của trang Gemini**, không phải công cụ Claude).
 
 **Hệ quả quan trọng:** việc đăng bảng lên claude.ai từng là điểm phụ thuộc Claude duy nhất. Từ
-03/09 bảng có bản trong repo là `DASHBOARD.html`, nên **bất kỳ AI nào cũng sinh lại rồi commit
+03/09 bảng có bản trong repo là `DASHBOARD-Chrome-Extension-AI-Agentic.html`, nên **bất kỳ AI nào cũng sinh lại rồi commit
 được**, và Đức mở file trực tiếp. Đăng lên claude.ai giờ chỉ là tiện thêm, không còn là đường duy nhất.
 
 ---
@@ -129,7 +129,7 @@ Làm mới bảng trạng thái: sinh lại rồi commit.
 ```
 
 **AI sẽ chạy:** `node scripts/build-overview.mjs`
-**Xong khi nào:** `DASHBOARD.html` được commit, và mốc ngày ở đầu trang là hôm nay.
+**Xong khi nào:** `DASHBOARD-Chrome-Extension-AI-Agentic.html` được commit, và mốc ngày ở đầu trang là hôm nay.
 
 **Muốn xem thử mà không chạm repo:**
 
@@ -293,7 +293,7 @@ không phải một con số.
 
 | Việc | Vì sao | Làm thay bằng gì |
 |---|---|---|
-| Đăng bảng lên claude.ai | Codex và Antigravity không có công cụ đó | Bất kỳ AI nào chạy `node scripts/build-overview.mjs` rồi commit; Đức mở `DASHBOARD.html` trực tiếp |
+| Đăng bảng lên claude.ai | Codex và Antigravity không có công cụ đó | Bất kỳ AI nào chạy `node scripts/build-overview.mjs` rồi commit; Đức mở `DASHBOARD-Chrome-Extension-AI-Agentic.html` trực tiếp |
 | Trả lời bình luận trên bảng | cùng lý do | Đức chép nội dung bình luận vào chat của AI đang mở |
 
 Đúng hai việc. Mọi thứ khác trong repo này là lệnh dòng, và lệnh thì cả ba AI chạy như nhau.

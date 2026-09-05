@@ -172,7 +172,7 @@ thì không có lượt nào (mục 0b).
 
 | Đức hỏi | Lấy ở đâu | Cấm làm gì |
 |---|---|---|
-| "Đang có gì?" | `DASHBOARD.html` (Đức tự mở) · `what-next.mjs` mục A–B | Đừng kể lại `HANDOFF.md` — đó là lịch sử, không phải trạng thái |
+| "Đang có gì?" | `DASHBOARD-Chrome-Extension-AI-Agentic.html` (Đức tự mở) · `what-next.mjs` mục A–B | Đừng kể lại `HANDOFF.md` — đó là lịch sử, không phải trạng thái |
 | "X tới đâu rồi?" | `STATUS.md` của gói X · `next_step` · Log cuối `HANDOFF.md` của gói đó | Đừng trả lời về gói khác. Đức hỏi X thì trả lời X |
 | "Đang block gì?" | mục B của bản đồ · `BLOCKER` trong Log gần nhất | Đừng chẩn đoán nguyên nhân — triệu chứng thôi (mục 4) |
 | "Tôi cần quyết gì?" | mục C của bản đồ | Đừng tự quyết hộ, kể cả khi câu trả lời có vẻ hiển nhiên |
