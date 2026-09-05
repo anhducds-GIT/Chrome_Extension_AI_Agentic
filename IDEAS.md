@@ -445,3 +445,51 @@ mục 4 bất biến ⑤ và bảng mã lỗi.
   (c) đã xong.
 - **đo trước khi sửa:** đếm trong lịch sử thật xem đã có bao nhiêu commit chạm file thuộc vùng
   người khác đang giữ. Hôm nay biết chắc **một** ca; nếu chỉ có một thì luật vai là đủ.
+
+## Y-16 · Cổng xuất bản khoá chéo: một lane giữ `_root` là mọi lane khác không đẩy được
+
+- **bậc:** ý tưởng
+- **nguồn:** đo thật 2026-09-05, hai lane độc lập cùng bị chặn trong một buổi
+- **việc kế:** Đức chốt có tách khối AUTO của `FEATURE-PARITY.md` thành artifact miễn khoá không
+- **hiện tượng:** lane `claude-gpt-no` và lane `claude-flow-no` đều làm xong, cổng đóng phiên
+  gần xanh, nhưng **cổng xuất bản từ chối** vì `FEATURE-PARITY.md` lạc hậu so với HEAD. Cả hai
+  đều **không tự sửa được**: file đó nằm ở gốc repo nên cần `_root`, mà `_root` đang do lane thứ
+  ba giữ. Hai lane không hề chạm gốc repo vẫn bị chặn bởi một lane thứ ba.
+- **vì sao nó là khoá chéo chứ không phải xui:** ba điều kiện gặp nhau. (1) Cổng xuất bản đòi
+  mọi artifact máy sinh phải tươi. (2) `FEATURE-PARITY.md` **cố ý KHÔNG** nằm trong danh sách
+  miễn khoá — vì mục 2 của nó là chữ của người. (3) Artifact đó **lạc hậu do commit của lane
+  khác**, không phải do lane bị chặn. Ba cái này đúng riêng lẻ; ghép lại thành một cửa mà lane
+  bị chặn không có đường nào tự mở.
+- **vì sao ba artifact kia không bị:** `DASHBOARD.md` · `llms.txt` · `repo-map.json` · bảng HTML
+  đã được miễn khoá từ 03/09, đúng vì lý do này. `FEATURE-PARITY.md` bị bỏ lại vì nó **trộn**
+  chữ người và số máy trong cùng một file.
+- **hướng nghĩ tới, chưa đo:** tách khối `<!-- AUTO:X -->` ra file riêng, để phần máy sinh vào
+  danh sách miễn khoá còn mục 2 (chữ người) ở lại `_root`. Giá phải trả: thêm một file, và
+  người đọc phải nhìn hai chỗ.
+- **đường vòng đang dùng:** phiên điều phối nhận `_root` sau cùng, chạy hết bộ sinh, rồi đẩy
+  một lượt cho mọi lane. Chạy được, nhưng nó biến phiên điều phối thành nút cổ chai bắt buộc —
+  đúng cái giá mà `ADR-0004` đã ghi ra là biết trước.
+- **phạm vi khi làm:** `scripts/feature-parity.mjs` + `.repo-structure.json` (`_code`) và
+  `FEATURE-PARITY.md` (`_root`). **Là sửa cơ chế đa phiên** → bắt buộc có đột biến kiểm.
+
+## Y-17 · Repo không có `.gitattributes`, nên test xanh trên máy này có thể đỏ trên máy khác
+
+- **bậc:** ý tưởng
+- **nguồn:** bug thật, bắt được 2026-09-05 trong lúc chạy đột biến kiểm cho `F-06`
+- **việc kế:** **Đức chốt** — bản vá gốc viết lại kiểu xuống dòng của mọi file trong repo
+- **bug thật đã bắt được:** `content.js` của gói Flow Video nằm trong git dưới dạng **CRLF**,
+  trong khi bản trên đĩa là **LF**. Phép thử `content-image-static.mjs` đòi `,\n` sát nhau nên
+  nó **xanh trên máy đang làm việc**, nhưng **đỏ ngay sau bất kỳ lượt `git checkout content.js`
+  nào, và đỏ với mọi người clone repo về**. Đã vá tại chỗ (nới thành `,\r?\n`) và đã kiểm cả
+  hai chiều — nhưng đó là vá một phép thử, không phải vá gốc bệnh.
+- **vì sao nó nguy hiểm hơn vẻ ngoài:** đây là loại xanh giả tệ nhất — nó xanh với người sửa
+  và đỏ với người kiểm. Cùng gốc với bẫy anchor `^`/`$` đã cắn nhiều lần, và cùng gốc với vụ
+  suite bộ khung xanh tại chỗ mà đỏ với người clone (đã vá ở bộ khung 05/09 bằng đúng cách này).
+- **bản vá gốc:** thêm `.gitattributes` ở gốc repo với `* text=auto eol=lf`. Bộ khung
+  `Ark_Repo_Harness` đã làm đúng thế và đo được: **75 LF / 21 CRLF trước → 97 LF / 0 CRLF sau**.
+- **vì sao phải hỏi Đức:** lượt đó **viết lại kiểu xuống dòng của mọi file trong repo** trong
+  một commit. Không mất dữ liệu, nhưng nó là một diff khổng lồ chạm mọi file, và mọi lane đang
+  có việc dở sẽ phải rebase. Chọn thời điểm là việc của Đức, không phải của AI.
+- **chưa đo:** hai gói ChatGPT và Gemini có cùng quả mìn này không. Cách đo rẻ nhất: ép CRLF
+  toàn gói rồi chạy suite của gói đó, xem có phép thử nào đỏ lên.
+- **phạm vi khi làm:** `.gitattributes` ở gốc repo (`_root`).
