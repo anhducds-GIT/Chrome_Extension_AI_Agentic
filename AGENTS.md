@@ -47,6 +47,12 @@ Lệnh này **từ chối** nhận vùng đã có chủ khác, **từ chối** t
 
 - Vùng đang có chủ, mà chủ không phải bạn → **chỉ được đọc, tuyệt đối không sửa**.
 - Vùng trống chủ → nhận rồi làm.
+- **Trả quyền SAU khi đẩy, không phải sau khi commit.** Đẩy không được thì **giữ khoá** và báo
+  lại, đừng trả cho "sạch sẽ". Cổng đóng phiên không soi cây làm việc, nó soi **commit chưa
+  đẩy**: commit của bạn còn nằm đó mà vùng đã trống chủ thì cổng báo *"vùng gốc repo bị sửa
+  nhưng chưa ai đứng tên"* — **và nó báo với MỌI phiên**, kể cả phiên chẳng liên quan. Ngày
+  06/09 ba lane cùng bị chặn đẩy vì lý do ngoài tầm với, cùng trả khoá, và cả ba để lại đúng
+  một mục đỏ cho phiên đến sau dọn. Giữ một khoá là chuyện nhỏ; để lại commit vô chủ là chuyện lớn.
 - Muốn giành vùng người khác đang giữ → **hỏi Đức**, không tự lấy. Đức chốt rồi thì ghi lại
   bằng `--restamp --as <phiên> --duc-duyet "<câu chốt>"`; không có câu chốt thì lệnh **từ chối**,
   kể cả khi bạn đã sửa tay xong (Đức chốt 04/09 — trước đó đây chỉ là lời khuyên, và một khoá
