@@ -29,6 +29,40 @@ nên phép đếm cũ trượt hết).
 
 Ba gói là **ba khoá khác nhau** → chạy song song được ba luồng mà không giẫm chân.
 
+### 1b. Bảng nói 62, tôi đọc ra 51 — cả hai đều đúng, và chỗ lệch là một việc phải làm
+
+Bộ sinh dashboard đếm **62**. Tôi đọc tay ra **51**. Không được để hai con số đứng cạnh nhau
+mà không ai giải thích, nên đây là chỗ lệch, đã đối chiếu từng mục:
+
+| Gói | Máy đếm | Tôi đọc | Lệch |
+|---|---|---|---|
+| ChatGPT | 29 | 26 | 3 |
+| Gemini | 12 | 11 | 1 |
+| Flow Video | 21 | 14 | 7 |
+
+**Máy không sai.** Luật của nó cố ý lệch về phía **báo thừa**: dấu đóng phải là chữ ĐẦU TIÊN
+của tiêu đề, tìm giữa câu là đóng oan một việc đang mở. Lệch về phía báo thừa là lựa chọn đúng.
+
+**Mười một mục lệch đó KHÔNG phải nợ kỹ thuật — chúng là nợ CÁCH GHI:**
+
+| Mục | Thực trạng | Máy thấy gì |
+|---|---|---|
+| `B-18` `B-27` `B-29` | đã cân, đã quyết không làm | tiêu đề không mở đầu bằng dấu đóng |
+| `G-11` | đóng 28/08 | chữ "ĐÓNG" nằm giữa câu |
+| `F-01` `F-02` `F-04` `F-05` | **đã xong**, nhưng chỉ được tuyên bố trong một đoạn ghi chú ở đầu mục P1 | dòng của chính bốn mục đó **chưa bao giờ được đánh dấu** |
+| `F-24` | báo động giả, đã đo và đóng lại | tiêu đề mở đầu bằng "BÁO ĐỘNG GIẢ" |
+| `F-20` | là một **luật**, không phải việc | nằm lẫn trong danh sách việc |
+
+Bốn mục `F-01` `F-02` `F-04` `F-05` là ví dụ rõ nhất: chính sổ nợ của nhánh Flow đã tự ghi
+*"backlog này đang nói dối"* ngày 02/09 và viết một đoạn rà soát ở đầu file — nhưng **đoạn rà
+soát đó không phải là đánh dấu**. Ai mở file hôm nay vẫn thấy bốn việc đang mở, và máy cũng vậy.
+
+Sửa cách ghi 11 mục này là việc **rẻ nhất trong toàn bộ danh sách**, và nó làm bảng bớt báo
+thừa 11 mục ngay lập tức. Đã xếp thành luồng riêng ở mục 3.
+
+`F-19` thì **máy đúng còn tôi sai lúc đọc lướt**: nó ghi "XONG một phần", mà xong một nửa
+không phải xong. Nó là việc còn mở thật.
+
 ## 2. Năm nhóm
 
 Phân theo **cái gì đang chặn**, không phân theo P1/P2/P3 — vì độ ưu tiên cũ được gán lúc chưa
@@ -96,7 +130,8 @@ cả hai đã tự hết.** Việc đầu tiên là đo lại, không phải s�
 | 1 | `workers/duc-auto-chatgpt` | Nhóm B phần ChatGPT, bắt đầu từ `B-22` `B-23` | có |
 | 2 | `workers/duc-auto-gemini` | `G-09` trước (xanh giả), rồi `G-01` `G-10` | có |
 | 3 | `workers/duc-auto-gg-flow-video` | `F-22` `F-06` `F-08` | có |
-| 4 | `_code` + `_docs` | Nhóm E: đo lại `B-12` `B-30` xem còn thật không | có |
+| 4 | `workers/duc-auto-gg-flow-video` | Sửa cách ghi 11 mục ở mục 1b, rồi `F-22` `F-06` `F-08` | có |
+| 5 | `_code` + `_docs` | Nhóm E: đo lại `B-12` `B-30` xem còn thật không | có |
 | — | — | Nhóm A: một buổi nghiệm thu live, bốn mục một lượt | **chờ Đức** |
 
 Ba luồng đầu **không chạm nhau** vì ba khoá khác nhau. Luồng 4 chạm gốc repo nên phải xếp
