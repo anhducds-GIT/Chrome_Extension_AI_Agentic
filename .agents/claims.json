@@ -60,9 +60,9 @@
     "_code": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-05T12:26",
-      "task": "Khoi moc da xong tren dashboard",
-      "released_at": "2026-09-05T13:52",
+      "claimed_at": "2026-09-05T14:14",
+      "task": "Va phep ghim dau loc khoa dang do",
+      "released_at": "2026-09-05T17:04",
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -70,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "d6ef002bc8aa825c"
+  "_fingerprint": "d6deb2539477a216"
 }
