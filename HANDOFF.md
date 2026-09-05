@@ -3023,3 +3023,41 @@ nó chỉ nói ai *được phép* sửa. Và cái làm nó nguy hiểm là đ�
 file vài chục giây mỗi vòng, nên **càng làm đúng kỷ luật thì cửa sổ bị cuốn càng rộng**.
 
 **Việc cần Đức: không có.**
+
+## Log — 2026-09-05, `claude-moc-da-xong` · thẻ "Việc lớn đã đóng" ở tab Nhật ký & mốc
+
+**Đề bài:** `docs/briefs/BRIEF-MOC-DA-XONG-01.md` (nay đã `status: done`).
+
+**Đức mở tab Nhật ký là nhìn lại được cả chặng đường.** Tab đổi nhãn thành **"Nhật ký & mốc"** và
+có thêm thẻ thứ hai: **Việc lớn đã đóng** — mỗi đề bài `status: done` trong `docs/briefs/` một
+dòng, mã việc · tên việc · ngày đóng, mới nhất lên đầu. Ở tab **AI điều phối** thêm **đúng một
+dòng** cuối vùng 2: số việc đã đóng, tên việc gần nhất, và câu trỏ sang tab Nhật ký — một dòng
+chứ không phải một vùng thứ năm, vì vùng đó là chỗ của việc đang chạy.
+
+**Hai ràng buộc cố ý, và lý do:**
+- **Thẻ mới không đọc quyết định (ADR).** Thẻ bên cạnh đã đọc rồi; đọc lần thứ hai là hai bản của
+  một danh sách, và hai bản thì sớm muộn đếm ra hai số khác nhau mà Đức không biết bên nào đúng.
+  Có phép ghim so từng dòng của hai thẻ: **0 dòng trùng**.
+- **Ngày lấy từ lịch sử git, không lấy từ đồng hồ.** Trang này nằm trong khối `generators` nên
+  cổng so nó với HEAD mỗi phiên; thứ gì phụ thuộc giờ chạy sẽ chặn push của MỌI luồng khi sang
+  ngày mới. Hỏng thì **ném lỗi kèm tên file**, không im lặng bỏ dòng — bỏ một dòng là làm ngắn
+  danh sách lịch sử mà không ai thấy.
+
+**Số đo:** 12 đề bài đã đóng đọc từ HEAD (13 sau khi commit lượt này) · suite gốc **30/30 xanh**
+(thêm 1 phép ghim mới) · sinh hai lượt trên cùng HEAD ra **hai file giống hệt nhau từng byte**
+(md5 `8ab651f6…`).
+
+**Đột biến kiểm — 3 lượt, cả 3 đều bắt được:**
+1. Làm hỏng dòng `# BRIEF` của một đề bài `done` thật trên đĩa (`BRIEF-S7.md`) → bộ sinh **ném**
+   `MOC_XONG_TIEU_DE_HONG: BRIEF-S7.md`, không im lặng bỏ dòng. Đã khôi phục file, `git status` sạch.
+2. Đổi `throw` thành `continue` ở nhánh tiêu đề hỏng → suite **ĐỎ**.
+3. Đổi ngày git thành `new Date()` → suite **ĐỎ**.
+
+**Một chuyện phải ghi, để lần sau khỏi mất công chẩn đoán lại.** Lượt chạy cổng đóng phiên lúc
+~20:35 báo đỏ ở phép kiểm "đổi đồng hồ lên 99 ngày mà bản commit phải không đổi một byte", lệch 46
+byte. Không phải lỗi của lượt làm này: **ba lane khác đang commit đúng lúc đó** (`20:32`, `20:38`),
+mà phép kiểm sinh trang hai lượt và so — HEAD nhảy giữa hai lượt thì hai bản khác nhau là đương
+nhiên. Chạy lại lúc cây đã lặng: **giống hệt nhau**. Đây là một **phép kiểm hay chớp đỏ oan khi
+nhiều lane cùng commit**, không phải một bug của bảng.
+
+**Việc cần Đức: không có.**

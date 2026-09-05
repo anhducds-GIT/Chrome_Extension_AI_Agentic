@@ -657,6 +657,72 @@ export function bacMoc(trangThai) {
   return 0;
 }
 
+/* MỘT phép đọc frontmatter cho cả hai khối brief bên dưới. Hai bản sao của cùng một luật thì
+   sớm muộn trả hai câu khác nhau cho cùng một file — repo này đã trả giá đúng chuyện đó với
+   danh sách file miễn khoá, xem AGENTS.md mục 1. */
+function briefStatus(text) {
+  const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  const st = fm ? /^status:\s*(.+)$/m.exec(fm[1]) : null;
+  return String(st ? st[1] : "").trim();
+}
+
+/* VIỆC LỚN ĐÃ ĐÓNG — đề bài `MOC-DA-XONG-01`. Đức: "để tôi có thể nhìn lại xem chúng ta đã
+ * làm qua những gì."
+ *
+ * NGUỒN LÀ ĐỀ BÀI, KHÔNG PHẢI ADR — đề bài chốt cấm điều đó. Thẻ bên cạnh (Quyết định đã
+ * chốt) đã đọc ADR rồi; đọc lần thứ hai là hai bản của một danh sách, và hai bản thì sớm muộn
+ * đếm ra hai số khác nhau mà không ai biết bên nào đúng. Ở đây: `status: done` = đã đóng.
+ *
+ * TIÊU ĐỀ CÓ HAI DẠNG HỢP LỆ, và cả hai đều đang tồn tại thật trong repo:
+ *   • "# BRIEF `MÃ` — tên"  → việc có mã (DASH-ORCH-V2, PUSH-GATE-01…)
+ *   • "# BRIEF — tên"       → đề bài phiên (S1…S7), không khai mã
+ * Dạng thứ ba thì NÉM kèm tên file. Đây là chỗ khác `readDefects`: khối kia cố ý để đề bài
+ * phiên rơi ra ngoài vì nó đếm defect đang mở, còn khối này phải liệt kê ĐỦ — bỏ qua im lặng
+ * một dòng là làm ngắn danh sách lịch sử mà không ai thấy.
+ *
+ * NGÀY LẤY TỪ GIT, KHÔNG LẤY TỪ ĐỒNG HỒ. Trang này nằm trong khối `generators` nên cổng so nó
+ * với HEAD mỗi phiên; bất cứ thứ gì phụ thuộc giờ chạy sẽ chặn push của MỌI luồng khi sang
+ * ngày mới. Git đọc từ HEAD nên cùng một HEAD luôn cho cùng một ngày. Không có ngày thì NÉM,
+ * tuyệt đối không điền ngày hôm nay thay thế. */
+const MOC_XONG_H1 = new RegExp("^#\\s+BRIEF\\s+(?:`([^`]+)`\\s*)?" + GACH_DAI + "\\s*(.+)$", "m");
+
+export function readMocDaXong(deps) {
+  let names;
+  try { names = deps.listFiles("docs/briefs"); }
+  catch {
+    throw new Error("THIEU_SO_DE_BAI: không đọc được thư mục đề bài. Khối việc lớn đã đóng phải"
+      + " đọc được từ đó — vẽ một thẻ rỗng thì Đức tưởng chúng ta chưa làm được gì.");
+  }
+  const out = [];
+  for (const name of names) {
+    if (!name.startsWith("BRIEF-") || !name.endsWith(".md")) continue;
+    const rel = `docs/briefs/${name}`;
+    let text;
+    try { text = deps.readFile(rel); } catch { continue; }
+    if (briefStatus(text) !== "done") continue;
+    const h1 = MOC_XONG_H1.exec(text);
+    if (!h1) {
+      throw new Error(`MOC_XONG_TIEU_DE_HONG: ${name} khai status: done nhưng dòng "# BRIEF" không`
+        + " đúng dạng, nên không rút được tên việc. Sửa dòng tiêu đề của file đó — bỏ qua im lặng"
+        + " là làm ngắn danh sách mà không ai biết.");
+    }
+    const ngay = String(deps.git.lastCommitDate(rel) ?? "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay)) {
+      throw new Error(`MOC_XONG_THIEU_NGAY: ${name} chưa có commit nào chạm tới, nên không có ngày`
+        + " đóng. Commit file đó trước rồi sinh lại — điền ngày hôm nay thay thế là gõ tay một con"
+        + " số mà Đức không có cách nào kiểm.");
+    }
+    out.push({ ma: String(h1[1] ?? "").trim(), ten: shorten(boDam(h1[2]).trim(), 108), ngay });
+  }
+  if (!out.length) {
+    throw new Error("MOC_XONG_RONG: không có đề bài nào khai status: done. Thẻ rỗng làm Đức tưởng"
+      + " chúng ta chưa làm xong việc gì, nên khối này dừng hẳn thay vì vẽ một danh sách trắng.");
+  }
+  // Ngày mới nhất lên đầu. `sort` của Node ổn định, nên cùng ngày thì giữ nguyên thứ tự tên
+  // file mà `listFiles` đã sắp — tất định, không cần thêm khoá phụ nào.
+  return out.sort((a, b) => b.ngay.localeCompare(a.ngay));
+}
+
 const DEFECT_H1 = new RegExp("^#\\s+BRIEF\\s+`([^`]+)`\\s*" + GACH_DAI + "\\s*(.+)$", "m");
 
 /* Defect của chính gói Assistant: mã · một câu triệu chứng · mở hay đóng.
@@ -677,12 +743,10 @@ export function readDefects(deps) {
     try { text = deps.readFile(`docs/briefs/${name}`); } catch { continue; }
     const h1 = DEFECT_H1.exec(text);
     if (!h1) continue;
-    const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
-    const st = fm ? /^status:\s*(.+)$/m.exec(fm[1]) : null;
     out.push({
       ma: h1[1].trim(),
       trieuChung: shorten(h1[2].replace(/\*\*/g, "").trim(), 108),
-      mo: String(st ? st[1] : "").trim() === "active"
+      mo: briefStatus(text) === "active"
     });
   }
   return out.sort((a, b) => a.ma.localeCompare(b.ma));
@@ -1071,7 +1135,7 @@ const TABS = [
   ["van-hanh", "Vận hành"],
   ["suc-khoe", "Sức khoẻ & nợ"],
   ["cau-truc", "Cấu trúc"],
-  ["nhat-ky", "Nhật ký"],
+  ["nhat-ky", "Nhật ký & mốc"],
   ["tra-cuu", "Tra cứu"]
 ];
 
@@ -1167,6 +1231,7 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const luongChay = readLuong(deps);
   const moc = readMoc(deps);
   const defects = readDefects(deps);
+  const mocDaXong = readMocDaXong(deps);
   const suCo = readAssistantEvents(deps);
   const CAU_LAM_MOI = readRefreshLine(deps);
 
@@ -1433,6 +1498,7 @@ ${STYLE}
       + `<span class="d">${esc(gate || "chưa khai việc kế")}</span></div>`);
   }
   p.push(`      </div>
+      <div class="hint" style="margin-top:11px">Đã đóng <strong>${mocDaXong.length} việc lớn</strong>, gần nhất là <strong>${esc(mocDaXong[0].ma || mocDaXong[0].ten)}</strong> (${esc(mocDaXong[0].ngay)}). Danh sách đầy đủ ở tab <strong>Nhật ký &amp; mốc</strong>.</div>
       <p class="note">Xếp theo thứ hạng mỗi đơn vị tự khai, hạng 1 lên đầu; chưa khai hạng thì xuống cuối. Huy hiệu <strong>suy ra từ hồ sơ</strong>, không ai gõ tay: có việc chờ Đức thì thành <strong>CHỜ ĐỨC</strong>, và điều đó thắng mọi trạng thái khác. Đang chỉ có ba trạng thái — muốn phân biệt <strong>bị chặn</strong> hay <strong>chờ bằng chứng</strong> thì cần thêm một trường trong hồ sơ, đoán theo văn xuôi thì bảng sẽ nói sai mà không ai biết. Dòng dưới mỗi tên là <strong>câu đầu</strong> của việc kế; bản đầy đủ ở tab <strong>Extension</strong>.</p>
     </div>
 
@@ -1717,6 +1783,25 @@ ${STYLE}
   }
   p.push(`        </div></div>
       </details>
+    </div>`);
+
+  /* THẺ THỨ HAI · VIỆC LỚN ĐÃ ĐÓNG — `MOC-DA-XONG-01`.
+     Đứng CẠNH thẻ quyết định, không trộn vào: thẻ trên trả lời "Đức đã chốt những gì" (đọc
+     ADR), thẻ này trả lời "đã làm xong những gì" (đọc đề bài `status: done`). Hai câu khác
+     nhau, hai nguồn khác nhau — nên không có dòng nào lặp ở cả hai chỗ. */
+  p.push(`
+    <div class="card">
+      <div class="sect">Việc lớn đã đóng — ${mocDaXong.length} việc</div>
+      <div class="prose"><p>Những việc lớn đã làm xong, mới nhất lên đầu. Ngày là <strong>lần cuối repo chạm tới đề bài đó</strong>, đọc từ lịch sử git chứ không gõ tay — nên nó không mục đi được.</p></div>
+      <div class="bl" style="margin-top:11px">`);
+  for (const m of mocDaXong) {
+    p.push(`        <div class="lr"><div class="h">`
+      + (m.ma ? `<span class="ln">${esc(m.ma)}</span>` : "")
+      + `<span class="mn">${esc(m.ngay)}</span></div>`
+      + `<span class="d">${esc(m.ten)}</span></div>`);
+  }
+  p.push(`      </div>
+      <p class="note">Đếm từ <strong>đề bài đã đóng</strong> trong repo, mỗi đề bài đúng một dòng. Thẻ này <strong>cố ý không đọc quyết định</strong>: thẻ trên đã đọc rồi, và hai bản của một danh sách thì sớm muộn đếm ra hai số khác nhau mà không ai biết bên nào đúng. Đề bài phiên không khai mã thì chỉ hiện tên — bảng để trơ chứ không đặt hộ mã.</p>
     </div>
   </div>`);
 

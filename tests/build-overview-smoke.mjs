@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readMocDaXong, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -1713,6 +1713,116 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     "chi duoc DUNG hai luat display cho khung tab (flex + none khi hidden) — them cai thu ba la tai sinh DASH-TAB-01");
 
   ok(`khoi dang lam gi: ${khoiCo.filter((l) => l.includes('class="lr"')).length} luong doc tu bang, khoi trong van in mot dong, moi dong mang dau, tab mo san khop nut voi khung`);
+}
+
+/* ---- T16. VIỆC LỚN ĐÃ ĐÓNG — đề bài `MOC-DA-XONG-01` ----
+ *
+ * Ghim HÀNH VI, không ghim chuỗi nguồn. Ba vế, và vế thứ hai là vế hay bị bỏ quên nhất:
+ *   • chặn đúng thứ cần chặn (tiêu đề hỏng ở một đề bài ĐÃ ĐÓNG → ném)
+ *   • KHÔNG chặn thứ hợp lệ (tiêu đề hỏng ở một đề bài CHƯA đóng → kệ, không phải việc của khối này)
+ *   • ngày đi theo git, không theo đồng hồ (đổi ngày git thì thứ tự đổi theo)
+ * Thiếu vế hai thì một bản "luôn từ chối" vẫn qua sạch — MULTIFLOW mục 5, bẫy số 3. */
+{
+  const G = String.fromCharCode(8212);
+  const NL = String.fromCharCode(10);
+  const goc = createDefaultDeps(ROOT);
+  const ten = (p) => (p.startsWith("docs/briefs/") ? p.slice("docs/briefs/".length) : null);
+  const soDeBai = (briefs, ngay) => ({
+    ...goc,
+    listFiles: (p) => (p === "docs/briefs" ? Object.keys(briefs) : goc.listFiles(p)),
+    readFile: (p) => (ten(p) && ten(p) in briefs ? briefs[ten(p)] : goc.readFile(p)),
+    git: { ...goc.git, lastCommitDate: (p) => (ten(p) in ngay ? ngay[ten(p)] : "") }
+  });
+  const fm = (st) => `---${NL}kind: brief${NL}status: ${st}${NL}---${NL}${NL}`;
+
+  const briefs = {
+    "BRIEF-AAA-01.md": fm("done") + `# BRIEF \`AAA-01\` ${G} việc có mã`,
+    "BRIEF-S9.md": fm("done") + `# BRIEF ${G} Phiên S9`,
+    "BRIEF-BBB-02.md": fm("active") + `# BRIEF \`BBB-02\` ${G} còn đang mở`,
+    "BRIEF-CCC-03.md": fm("superseded") + `# BRIEF \`CCC-03\` ${G} đã bị bản mới thay`
+  };
+  const ngay = {
+    "BRIEF-AAA-01.md": "2026-09-01", "BRIEF-S9.md": "2026-09-04",
+    "BRIEF-BBB-02.md": "2026-09-05", "BRIEF-CCC-03.md": "2026-09-05"
+  };
+
+  assert.deepEqual(readMocDaXong(soDeBai(briefs, ngay)), [
+    { ma: "", ten: "Phiên S9", ngay: "2026-09-04" },
+    { ma: "AAA-01", ten: "việc có mã", ngay: "2026-09-01" }
+  ], "chi lay status: done, doc CA HAI dang tieu de, ngay moi nhat len dau");
+
+  // Ngày ĐI THEO GIT. Đổi ngày git thì thứ tự đổi theo — bằng chứng khối này không nhìn đồng
+  // hồ: đồng hồ không đổi giữa hai lượt gọi mà kết quả vẫn đổi.
+  assert.deepEqual(
+    readMocDaXong(soDeBai(briefs, { ...ngay, "BRIEF-AAA-01.md": "2026-09-09" })).map((r) => r.ma),
+    ["AAA-01", ""], "ngay doc tu git: doi ngay git thi thu tu doi theo");
+
+  // (a) CHẶN ĐÚNG THỨ CẦN CHẶN.
+  assert.throws(() => readMocDaXong(soDeBai({ "BRIEF-BBB-02.md": briefs["BRIEF-BBB-02.md"] }, ngay)),
+    /MOC_XONG_RONG/, "khong co de bai nao da dong thi NEM, khong ve the rong");
+  assert.throws(
+    () => readMocDaXong(soDeBai({ ...briefs, "BRIEF-AAA-01.md": fm("done") + "# Tiêu đề không còn dạng brief" }, ngay)),
+    /MOC_XONG_TIEU_DE_HONG: BRIEF-AAA-01/,
+    "de bai DA DONG ma tieu de hong thi NEM KEM TEN FILE — bo qua im lang la lam ngan danh sach");
+  assert.throws(() => readMocDaXong(soDeBai(briefs, { ...ngay, "BRIEF-S9.md": "" })),
+    /MOC_XONG_THIEU_NGAY: BRIEF-S9/, "khong co commit nao cham file thi NEM, khong dien ngay hom nay");
+  assert.throws(() => readMocDaXong(soDeBai(briefs, { ...ngay, "BRIEF-S9.md": "hôm nay" })),
+    /MOC_XONG_THIEU_NGAY: BRIEF-S9/, "gia tri khong phai mot ngay thi cung NEM, khong doan");
+
+  // (b) KHÔNG CHẶN THỨ HỢP LỆ. Thiếu vế này thì một bản "luôn từ chối" vẫn qua sạch.
+  assert.equal(
+    readMocDaXong(soDeBai({ ...briefs, "BRIEF-BBB-02.md": fm("active") + "# Tiêu đề hỏng" }, ngay)).length, 2,
+    "tieu de hong o de bai CHUA dong thi KHONG chan — khoi nay chi noi ve viec da dong");
+  assert.equal(
+    readMocDaXong(soDeBai({ ...briefs, "GHI-CHU.md": fm("done") + "# Không phải brief" }, ngay)).length, 2,
+    "file khong mang tien to BRIEF- thi khong phai de bai, khong chan");
+
+  /* --- Trên trang thật --- */
+  const trang = buildOverview(goc).html;
+  const thatMoc = readMocDaXong(goc);
+  assert.ok(thatMoc.length > 0, "repo that phai co it nhat mot de bai da dong, neu khong thi phep duoi vo nghia");
+
+  assert.ok(/data-tab="nhat-ky"[^>]*>Nhật ký &amp; mốc</.test(trang),
+    "nhan tab phai la 'Nhat ky & moc' — de bai chot doi nhan cung luot them the");
+
+  const tabNhatKy = trang.slice(trang.indexOf(`data-pane="nhat-ky"`), trang.indexOf(`data-pane="tra-cuu"`));
+  const mocThe = [...tabNhatKy.matchAll(/<div class="card">/g)].map((m) => m.index);
+  assert.equal(mocThe.length, 2, "tab Nhat ky phai co DUNG hai the: quyet dinh da chot + viec lon da dong");
+
+  const theQuyetDinh = tabNhatKy.slice(mocThe[0], mocThe[1]);
+  const theMoc = tabNhatKy.slice(mocThe[1]);
+  assert.ok(theQuyetDinh.includes("Quyết định đã chốt"), "the DAU van phai la the quyet dinh — khong duoc dung vao no");
+  assert.equal([...theMoc.matchAll(/<div class="lr">/g)].length, thatMoc.length,
+    "the moi phai co DUNG mot dong cho moi de bai da dong");
+  for (const m of thatMoc) {
+    assert.ok(theMoc.includes(m.ngay), `${m.ngay}: ngay dong phai co mat tren the`);
+  }
+
+  /* KHÔNG TRÙNG THẺ BÊN CẠNH — ràng buộc bắt buộc của đề bài. Hai bản của một danh sách thì
+     sớm muộn đếm ra hai số khác nhau, và Đức không có cách nào biết bên nào đúng. */
+  const cauCua = (khoi) => new Set([...khoi.matchAll(/<span class="d">([^<]+)</g)].map((m) => m[1]));
+  const cauQuyetDinh = cauCua(theQuyetDinh);
+  assert.ok(cauQuyetDinh.size > 0, "the quyet dinh phai co dong nao do, neu khong thi phep so nay vo nghia");
+  for (const m of thatMoc) {
+    assert.ok(!cauQuyetDinh.has(m.ten), `"${m.ten}" xuat hien o CA HAI the — the moi bi cam chep lai the quyet dinh`);
+  }
+
+  /* MỘT DÒNG Ở VÙNG 2 CỦA TAB AI ĐIỀU PHỐI, không phải một vùng thứ năm. */
+  const tabDp = trang.slice(trang.indexOf(`data-pane="ai-dieu-phoi"`), trang.indexOf(`data-pane="extension"`));
+  const vungDp = [...tabDp.matchAll(/<div class="card">/g)].map((m) => m.index);
+  assert.equal(vungDp.length, 4, "tab AI dieu phoi van phai DUNG bon vung — dong moc la MOT DONG, khong phai vung thu nam");
+  const vung2 = tabDp.slice(vungDp[1], vungDp[2]);
+  assert.ok(vung2.includes("Công việc hiện tại"), "cat dung vung 2");
+  const TRO = "Danh sách đầy đủ ở tab <strong>Nhật ký &amp; mốc</strong>";
+  assert.equal(vung2.split(TRO).length - 1, 1, "vung 2 phai co DUNG MOT dong tro sang tab Nhat ky");
+  assert.equal(trang.split(TRO).length - 1, 1,
+    "ca trang chi duoc co MOT dong do — hai chuong la hai ban cua mot con so");
+  assert.ok(vung2.includes(`Đã đóng <strong>${thatMoc.length} việc lớn</strong>`),
+    "so tren dong do phai la so dem that, khong go tay");
+  assert.ok(vung2.includes(thatMoc[0].ma || thatMoc[0].ten),
+    "dong do phai keu ten viec dong gan nhat");
+
+  ok(`viec lon da dong: ${thatMoc.length} de bai doc tu status: done, ngay lay tu git, khong trung the quyet dinh, mot dong tro o vung 2`);
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
