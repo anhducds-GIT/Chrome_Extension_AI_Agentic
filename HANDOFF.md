@@ -2971,3 +2971,55 @@ mất vế kia thì suite đỏ ngay.
 này. Chưa đụng vào vì xoá file thì phải hỏi Đức.
 
 **Việc cần Đức: không có.**
+
+## Log — 2026-09-05, `claude-exec-liveblock` · khối "đang làm gì" trên bảng, và tab AI điều phối mở sẵn
+
+**Đề bài:** `docs/briefs/BRIEF-LIVE-BLOCK-01.md`, hiện thực của `ADR-0004`.
+
+**Đức mở bảng ra là thấy ngay ai đang làm gì.** Đầu tab AI điều phối nay có khối **Đang làm gì**:
+mỗi vùng đang có người giữ một dòng — tên lane, câu việc lane đó tự khai lúc nhận vùng, tên vùng,
+và mốc nhận. Không tạo dữ liệu mới: bảng chủ sở hữu đã có đủ bốn thứ đó. Và **tab AI điều phối
+nay là tab mở sẵn**, vì Đức nói đây là trang Đức mở hàng ngày nhiều nhất.
+
+**Ba chỗ cố ý làm khác cho khỏi hỏng về sau:**
+- **Không luồng nào chạy thì vẫn in một dòng** nói rõ điều đó, không ẩn khối. Khối trống là một
+  thông tin; ẩn đi thì Đức không phân biệt được "không có gì chạy" với "khối này hỏng".
+- **Khối tự nói ra hai chỗ nó KHÔNG thấy**, ngay trên trang: luồng đang chạy ở **repo khác**, và
+  luồng vừa được giao mà **chưa kịp nhận vùng**. Đúng lượt làm việc này đang có một executor chạy
+  ở repo bộ khung mà khối không thấy — Đức nhìn khối rồi tin là không có gì chạy thì tệ hơn không
+  có khối này.
+- **Mốc nhận in nguyên văn từ bảng, không tính "bao lâu rồi" lúc sinh trang.** Phần trong ngoặc
+  do đoạn JS trong trang tự tính lúc Đức mở. Trang phụ thuộc giờ đồng hồ là sang ngày mới mọi
+  lane bị chặn push dù chẳng dữ liệu nào đổi.
+
+**Số thật, kể cả số xấu:**
+- **5 lượt thoát ở vòng đầu** — suite bắt được cả 5: (1) khối chèn thêm một khoảng trắng làm mốc
+  cắt vùng lệch; (2) một phép ghim **ngược** đang ghim "tuyệt đối không lộ tên phiên" — tức ghim
+  đúng cái `ADR-0004` bảo phải đảo lại; (3) mượn nhầm tên lớp của vùng khác nên hai vùng đếm lẫn
+  vào nhau; (4) tập dòng được miễn khỏi phép so độ tươi chưa tính khối mới; (5) một phép ghim đòi
+  hai trang phải bằng nhau **số dòng** — không còn đúng khi số vùng đang bận đổi. Kèm 1 lỗi dựng
+  không phải test: ghi chú có nháy ngược nằm trong chuỗi mẫu làm gãy bộ sinh.
+- **Hai phép ghim bị LẬT NGƯỢC**, ghi rõ ra để phiên sau không tưởng là lỗi: cả hai đang ghim
+  "tên phiên tuyệt đối không được lên bảng". `ADR-0004` đảo lại chính quyết định đó. **Nửa phải
+  giữ vẫn giữ nguyên:** tên lane chỉ được nằm trên dòng mang dấu lọc.
+- **Đột biến kiểm 8 lượt, cả 8 đỏ đúng khẳng định của mình.** Trong đó có: bỏ dấu lọc ở khối,
+  ẩn khối lúc trống, đóng cứng danh sách lane, đổi tab mặc định, làm nút tab lệch khung nội dung,
+  tính khoảng thời gian lúc sinh trang, bỏ câu cảnh báo hai chỗ không thấy, và thêm một luật
+  `display` thứ ba cho khung tab (đúng đường tái sinh `DASH-TAB-01`).
+- Sinh hai lần liên tiếp ra file y hệt. Suite: **261 phép kiểm xanh, 0 đỏ** (khối mới thêm 1 mục,
+  đếm bằng `npm test` rồi cộng các dòng `N passed` — đừng tin con số này sau vài ngày).
+- Mở bằng trình duyệt kiểm thật: tab AI điều phối mở sẵn, khối ở trên cùng, nội dung khớp bảng
+  chủ sở hữu, phần "bao lâu rồi" hiện đúng, và bấm sang tab khác vẫn đổi được.
+
+**Một sự cố phải ghi lại, không phải để trách ai.** Giữa lúc tôi đang chạy đột biến kiểm, một
+commit của phiên `claude-dieu-phoi` (`chore(quyen): tra _root`) **cuốn theo bản đang bị làm hỏng
+cố ý** của `scripts/build-overview.mjs` — file thuộc vùng `_code` mà tôi đang giữ. Lượt sinh bảng
+ngay sau đó lấy đúng bản hỏng ấy, nên **bảng đã commit mang một dòng CSS tái sinh đúng loại bug
+`DASH-TAB-01`**. Đã vá trong lượt này (cây làm việc của tôi vốn đã sạch, chỉ cần commit lại).
+
+Chỗ hở là chỗ hở của **hệ thống**: cây làm việc là của chung, nên `git add` diện rộng của một
+phiên gom được cả file đang sửa dở của phiên khác — **bảng chủ sở hữu không chặn được chuyện đó**,
+nó chỉ nói ai *được phép* sửa. Và cái làm nó nguy hiểm là đột biến kiểm: kỷ luật test bắt phải bẩn
+file vài chục giây mỗi vòng, nên **càng làm đúng kỷ luật thì cửa sổ bị cuốn càng rộng**.
+
+**Việc cần Đức: không có.**
