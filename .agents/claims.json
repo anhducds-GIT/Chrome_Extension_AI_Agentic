@@ -5,29 +5,29 @@
     "workers/duc-auto-gg-flow-video": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-04T01:10",
-      "task": "F-25 buoc 2: run.status phan biet dang-cho-nhip voi khong-con-ai-chay",
-      "released_at": "2026-09-03T19:19",
+      "claimed_at": "2026-09-05T12:29",
+      "task": "Sua cach ghi dau dong + F-22 F-06 F-08",
+      "released_at": "2026-09-05T13:26",
       "taken_from": "claude-f18-evidence",
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-gemini-no",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-05T12:21",
       "task": "G-09 G-01 G-10",
-      "released_at": null,
+      "released_at": "2026-09-05T13:36",
       "taken_from": "claude-exec-g02",
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-04T06:18",
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-g02 da chet (stall watchdog), giai phong khoa va GIU viec do de executor moi doc roi tu quyet"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-no",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-05T12:21",
       "task": "B-22 B-23",
-      "released_at": null,
+      "released_at": "2026-09-05T13:18",
       "taken_from": "claude-gpt-kenh",
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-05T08:43",
@@ -36,9 +36,9 @@
     "_root": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-05T11:21",
-      "task": "Ghi quan he hai repo: bo khung phat hanh, repo nay tieu thu",
-      "released_at": "2026-09-05T11:22",
+      "claimed_at": "2026-09-05T12:43",
+      "task": "G-09: package.json scripts.test khong chay suite Gemini",
+      "released_at": "2026-09-05T13:32",
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
       "taken_by": "claude-dieu-phoi",
@@ -46,11 +46,11 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-05T12:15",
-      "task": "Phan loai 51 muc no ky thuat + brief moc-da-xong cho dashboard",
-      "released_at": "2026-09-05T12:20",
+      "owner": "claude-moc-da-xong",
+      "ai": "Claude",
+      "claimed_at": "2026-09-05T13:33",
+      "task": "dong de bai MOC-DA-XONG-01: status active -> done",
+      "released_at": null,
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -58,11 +58,11 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-05T10:07",
-      "task": "LIVE-BLOCK-01 — khoi dang lam gi + tab mac dinh",
-      "released_at": "2026-09-05T11:48",
+      "owner": "claude-moc-da-xong",
+      "ai": "Claude",
+      "claimed_at": "2026-09-05T12:26",
+      "task": "Khoi moc da xong tren dashboard",
+      "released_at": null,
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -70,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "9ffad4f26badc0ec"
+  "_fingerprint": "78b85730c875c74f"
 }
