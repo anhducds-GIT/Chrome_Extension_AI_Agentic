@@ -36,7 +36,8 @@ y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
 | `README.md` | Tổng quan, trạng thái Bridge, cài đặt |
 | `AGENTS.md` | File này |
 | `STATUS.md` | Trạng thái vận hành 1 trang (máy đọc frontmatter sinh DASHBOARD) |
-| `HANDOFF.md` | Trạng thái + Log (chỉ thêm dòng) |
+| `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất** (chỉ thêm dòng). Cắt đuôi 2026-09-06 theo ADR-0008 của gốc repo; lịch sử cũ hơn ở `HANDOFF-ARCHIVE-01.md` |
+| `HANDOFF-ARCHIVE-01.md` | **Đuôi đã cắt của `HANDOFF.md`** — 183 lượt Log cũ, nguyên văn, không sửa một chữ. Chỉ đọc; ghi Log mới thì ghi vào `HANDOFF.md`. Ghép lại dựng được bản gốc giống hệt từng byte (bất biến ⑴ của ADR-0008) |
 | `BACKLOG.md` | Việc còn mở, đánh số `F-xx` |
 | `decisions.md` | Quyết định Đức đã chốt cho nhánh này |
 | `AI-OPERATOR-GUIDE.md` | Vận hành/debug qua Bridge (trỏ về guide Gemini + khác biệt Flow) |

@@ -92,7 +92,8 @@ COMPANION (đọc khi cần):
 | `AGENTS.md` | File này |
 | `AI-OPERATOR-GUIDE.md` | **Sổ tay vận hành** — 3 việc phải làm trước khi bấm chạy, và bảng lỗi ĐÃ GẶP THẬT trên trang (kèm "thật ra là gì" và "KHÔNG phải gì"). Mở TRƯỚC khi chạy live, đừng chẩn đoán lại từ đầu |
 | `STATUS.md` | **Trạng thái vận hành, một trang, cho mắt Đức** — lifecycle, kiểm chứng lần cuối + bằng chứng, việc đang mở, con trỏ đọc sâu. Máy đọc phần frontmatter để sinh `DASHBOARD.md` ở gốc repo. Chỉ TRỎ sang file khác, không chép nội dung. Schema: `STATUS.template.md` ở gốc repo |
-| `HANDOFF.md` | Trạng thái + Log lịch sử đầy đủ |
+| `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất**. Cắt đuôi 2026-09-06 theo ADR-0008 của gốc repo; lịch sử cũ hơn ở `HANDOFF-ARCHIVE-01.md`, con trỏ nằm ngay đầu mục `## Log` |
+| `HANDOFF-ARCHIVE-01.md` | **Đuôi đã cắt của `HANDOFF.md`** — 124 lượt Log cũ, nguyên văn, không sửa một chữ. Chỉ đọc; ghi Log mới thì ghi vào `HANDOFF.md`. Ghép lại dựng được bản gốc giống hệt từng byte (bất biến ⑴ của ADR-0008) |
 | `decisions.md` | Mục lục trỏ sang 45 ADR (nội dung đã chuyển) |
 | `docs/adr/` | 45 ADR bất biến — quyết định của riêng gói này |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX |
