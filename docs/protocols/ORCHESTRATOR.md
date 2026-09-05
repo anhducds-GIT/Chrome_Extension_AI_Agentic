@@ -172,6 +172,27 @@ phối đã vi phạm nó suốt một ngày: báo Đức cổng xanh mấy mụ
 Loại trễ này **không nằm trong repo mà nằm trong đầu người đọc**, nên không cổng kỹ thuật nào
 bắt được. Đó là lý do nó phải thành luật viết ra.
 
+### BẢNG LÀ KÊNH CHÍNH, không phải ô chat (Đức chốt 2026-09-05)
+
+Đức nói thẳng: bảng *"là đường kết nối giữa Đức và Assistant hiệu quả nhất — hiển thị nhiều hơn
+ô chat, và thấy được toàn cảnh về tiến độ, hàng đợi, việc đang mở."*
+
+Nên: **sửa gì mà bảng đổi theo thì sinh lại bảng ngay lượt đó**, đừng để tới cuối. Bảng cũ mà
+Đức mở ra là Đức đọc một sự thật đã chết — và Đức không có cách nào biết nó đã chết.
+
+Đã xảy ra thật 05/09: code lên HEAD lúc 17 giờ, Đức F5 lúc 18 giờ vẫn thấy trang của 16 giờ 54,
+và tưởng bản vá hỏng. Trang không tự đọc code — nó là ảnh chụp, chỉ đổi khi có người chạy bộ
+sinh. Cổng xuất bản chặn được bảng cũ **lúc push**, nhưng Đức nhìn bảng **liên tục**, nên khoảng
+giữa "đã commit" và "đã push" là khoảng Đức bị đọc tin cũ.
+
+**Hàng đợi việc phải nằm TRÊN BẢNG, không nằm trong chat.** Nguồn đã có, không cần đẻ thêm:
+brief còn `status: active` = việc đang trong hàng đợi; bảng quyền = việc đang chạy; sổ ý tưởng =
+việc chờ quyết. Ba nguồn đó máy đọc được.
+
+**Điều kiện để hàng đợi trên bảng có nghĩa: đóng brief ngay khi việc xong.** Đo 05/09: **9 brief
+khai đang mở, thực tế chỉ 1** — tám cái đã xong từ lâu mà không ai đóng. Một hàng đợi sai thì tệ
+hơn không có hàng đợi, vì Đức sẽ tin nó.
+
 ### Nhịp block và compact
 
 Một **block** = một việc đóng được, chạy tới lúc **đã push**. Trong block thì im, trừ khi vướng.

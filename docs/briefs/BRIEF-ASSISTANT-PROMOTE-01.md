@@ -1,6 +1,6 @@
 ---
 kind: brief
-status: active
+status: done
 ttl_days: 90
 ---
 
