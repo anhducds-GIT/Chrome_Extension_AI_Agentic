@@ -23,11 +23,15 @@
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-g02 da chet (stall watchdog), giai phong khoa va GIU viec do de executor moi doc roi tu quyet"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-kenh",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-03T10:56",
       "task": "Cai thien kenh CC<->GPT: them chat.read doc tron van ban hoi thoai (read-only)",
-      "released_at": null
+      "released_at": "2026-09-05T16:22",
+      "taken_from": "claude-gpt-kenh",
+      "taken_by": "claude-dieu-phoi",
+      "taken_at": "2026-09-05T08:43",
+      "duc_decision": "Duc chot 2026-09-05: khoa workers/duc-auto-chatgpt bi giu 46 gio boi phien claude-gpt-kenh. Da kiem truoc khi giai phong: khong file nao trong goi do con sua do, khong commit nao cua lane do dang cho push. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay lam viec sach."
     },
     "_root": {
       "owner": null,
@@ -66,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: Duc da TU DUNG phien claude-rename-bang, va uy quyen cho phien dieu phoi giai phong khoa cua phien khong con chay KHI cay lam viec sach. Da kiem truoc khi giai phong: cay sach hoan toan, 4 commit cua no da duoc day len origin theo Duc duyet --carry, khong dong nao bi mat."
     }
   },
-  "_fingerprint": "44f57ccf58d7ec56"
+  "_fingerprint": "3e952e117b6e25c3"
 }

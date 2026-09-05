@@ -622,7 +622,7 @@ export function kiemArtifactTuHead(root, scripts, { thieuLaDo = true, timeout = 
     for (const script of scripts) {
       const file = path.join(anh.dir, "scripts", script);
       if (!fs.existsSync(file)) {
-        if (thieuLaDo) lech.push(`scripts/${script} đã KHAI trong ${STRUCTURE_FILE} nhưng KHÔNG có ở HEAD — khai rồi mà thiếu là repo hỏng, không phải chuyện bỏ qua.`);
+        if (thieuLaDo) lech.push(`scripts/${script} đã KHAI trong ${STRUCTURE_FILE} nhưng KHÔNG có trong repo ở HEAD — khai rồi mà thiếu là repo hỏng, không phải chuyện bỏ qua.`);
         continue;
       }
       try {

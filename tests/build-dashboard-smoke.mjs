@@ -1673,19 +1673,34 @@ function antiDrift(text, measurements = {}) {
     const push2 = chay("safe-push.mjs", "--dry-run");
     assert.doesNotMatch(push2.stderr, /sự thật máy sinh chưa khớp/, "sinh lai roi thi khong duoc chan nua");
 
-    // VẾ 3 — bộ sinh SỬA DỞ thì nó không đáng tin để tự phán xử.
+    // VẾ 3 — bộ sinh SỬA DỞ trong cây làm việc KHÔNG được chặn ai (PUSH-GATE-01, 05/09).
     //
-    // Thêm sau khi mutation bắt được lỗ của chính tôi: gỡ chốt này ra thì suite VẪN XANH. Chốt
-    // có mà không ai ghim thì nó chỉ là bình luận. Ca thật: một phiên đang sửa `build-dashboard`
-    // rồi push — bản sửa dở tự chấm chính nó "khớp", và một artifact sai lên remote.
+    // KHẲNG ĐỊNH NÀY ĐÃ BỊ LẬT NGƯỢC, và lý do đáng đọc. Bản trước ghim ngược lại: "bộ sinh
+    // sửa dở thì PHẢI từ chối", vì nó là thứ phán xử nên không thể vừa sửa vừa tự chấm. Lý lẽ
+    // đúng, nhưng chỗ chặn sai — cây làm việc là của CHUNG mọi phiên, nên câu đó biến một phiên
+    // đang sửa bộ sinh thành cái khoá cửa xuất bản của MỌI phiên còn lại. Đo thật 05/09: 4 lượt
+    // chặn oan trong một ngày cho một lane không hề chạm bộ sinh; nặng nhất là lúc phiên kia
+    // chạy đột biến kiểm, vì mỗi vòng bẩn file vài chục giây.
+    //
+    // Nỗi lo cũ KHÔNG bị bỏ qua, nó được xử đúng chỗ: quan toà nay là bộ sinh Ở HEAD, chạy
+    // trong một bản chụp HEAD. Bản sửa dở không còn tự chấm được chính nó, vì nó không còn là
+    // đầu vào của phép kiểm nữa. Vế "artifact cũ thì VẪN bị chặn" nằm ngay trên, và ở
+    // `tests/push-gate-artifact-smoke.mjs`.
+    //
+    // BẢN SỬA DỞ Ở ĐÂY LÀ BẢN ĐỘC, cố ý: nó thoát 1 ngay dòng đầu. Nếu cổng còn đụng tới bản ở
+    // cây làm việc — chạy nó, hay chỉ đọc trạng thái của nó — thì nó CHẮC CHẮN từ chối. Bản
+    // trước dùng một dòng chú thích vô hại, tức phép ghim vẫn xanh kể cả khi cổng chạy nhầm bản.
     const nguyenVan = readFileSync(join(tempRoot, "scripts", "build-dashboard.mjs"), "utf8");
-    writeFileSync(join(tempRoot, "scripts", "build-dashboard.mjs"), `${nguyenVan}\n// dang sua do\n`, "utf8");
+    writeFileSync(join(tempRoot, "scripts", "build-dashboard.mjs"),
+      `process.exit(1);\n${nguyenVan}`, "utf8");
     const push3 = chay("safe-push.mjs", "--dry-run");
-    assert.match(push3.stderr, /đang sửa dở chưa commit/,
-      "bo sinh sua do thi PHAI tu choi — no la thu phan xu, khong the vua sua vua tu cham");
-    assert.notEqual(push3.status, 0, "tu choi thi khong duoc thoat 0");
+    assert.doesNotMatch(push3.stderr, /đang sửa dở chưa commit/,
+      "khong duoc con cua tu choi bo-sinh-dang-sua-do — do la cho chan oan lane khong lien quan");
+    assert.doesNotMatch(push3.stderr, /TỪ CHỐI PUSH/,
+      "bo sinh ban trong cay lam viec KHONG duoc chan mot cu day hop le");
+    assert.equal(push3.status, 0, "artifact van khop HEAD thi phai day duoc, du bo sinh dang sua do");
     writeFileSync(join(tempRoot, "scripts", "build-dashboard.mjs"), nguyenVan, "utf8");
-    assert.equal(chay("safe-push.mjs", "--dry-run").status, 0, "tra bo sinh ve nguyen ven thi phai thong lai");
+    assert.equal(chay("safe-push.mjs", "--dry-run").status, 0, "tra bo sinh ve nguyen ven thi van phai thong");
 
     /* BA FAIL-OPEN TRONG CHÍNH HARD GATE — audit GPT 03/09 bắt được, tôi vá, và ghim ở đây.
        Cả ba cùng một hình dạng: cổng không đỏ, cổng biến thành KHÔNG LÀM GÌ. Loại đó tệ nhất,

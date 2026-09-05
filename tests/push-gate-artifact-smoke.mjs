@@ -17,10 +17,18 @@
  * PHẢI CHÉP SCRIPT SANG REPO TẠM, không được chỉ đổi thư mục đang đứng — `safe-push.mjs` suy
  * gốc repo từ vị trí file của chính nó. Cùng cái bẫy đã ghi trong `harness-smoke.mjs` khối 1.
  *
- * ĐỘT BIẾN KIỂM (bắt buộc theo `MULTIFLOW.md` mục 5, vì đây là một trong bốn cơ chế đa phiên):
- *   · Trả lại cửa "bộ sinh sửa dở thì từ chối" trong `safe-push.mjs`  → ① phải ĐỎ.
- *   · Bỏ nhánh `if (!artifact.ok)` trong `safe-push.mjs`               → ② phải ĐỎ.
- * Cả hai đã chạy thật lúc viết file này, và cả hai đỏ ĐÚNG khẳng định của mình.
+ * ĐỘT BIẾN KIỂM (bắt buộc theo `MULTIFLOW.md` mục 5, vì đây là một trong bốn cơ chế đa phiên).
+ * Năm lượt đã chạy thật lúc viết file này, mỗi lượt ĐỎ đúng khẳng định của mình:
+ *   1. Trả lại cửa "bộ sinh sửa dở thì từ chối" trong `safe-push.mjs`  → ① ĐỎ.
+ *   2. Bỏ nhánh `if (!artifact.ok)` trong `safe-push.mjs`               → ② ĐỎ (① vẫn xanh).
+ *   3. `kiemArtifactTuHead` chạy bộ sinh ở CÂY LÀM VIỆC thay vì ảnh chụp → ① ĐỎ.
+ *   4. Ảnh chụp đổi tên thư mục thành `r`                               → ① ĐỎ.
+ *   5. Đổi ngược CẢ bản vá (ba script về bản trước)                     → ① ĐỎ.
+ *
+ * MỘT NHÁNH CHƯA CÓ PHÉP GHIM, ghi ra chứ không giấu: nhánh `artifact.ok === null` (không dựng
+ * được ảnh chụp → CHẶN). Chưa dựng được ca thật cho nó, vì mọi cách làm hỏng `git clone` đều
+ * làm `safe-push` chết ở một cổng sớm hơn. Nhánh cũ nó thay thế (`VERIFIER_UNKNOWN`) cũng chưa
+ * bao giờ có phép ghim, nên đây là chỗ CŨ CÒN NỢ, không phải nợ mới.
  */
 
 import assert from "node:assert/strict";
@@ -48,7 +56,10 @@ const BO_SINH_GIA = [
   '',
   'const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");',
   'const oHead = (f) => execFileSync("git", ["show", `HEAD:${f}`], { cwd: ROOT, encoding: "utf8" });',
-  'const mong = `ART:${oHead("hat-giong.txt").trim()}`;',
+  // TÊN THƯ MỤC REPO nằm trong kết quả — cố ý. Bộ sinh thật cũng suy danh tính repo từ tên
+  // thư mục khi cấu hình không khai, và bản chụp đầu tiên tôi dựng đã chụp vào thư mục tên
+  // `r` rồi báo LỆCH OAN. Không có dòng này thì chi tiết đó không có phép ghim nào.
+  'const mong = `ART:${path.basename(ROOT)}:${oHead("hat-giong.txt").trim()}`;',
   '',
   'if (process.argv.includes("--check-head")) {',
   '  let daCommit = "";',
