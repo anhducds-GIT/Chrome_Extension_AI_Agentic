@@ -704,7 +704,7 @@ export function readAssistantEvents(deps) {
 
 /* DẤU DÒNG KHOÁ — đây là cách khối 1 không làm tê cả repo.
  *
- * `DASHBOARD.html` nằm trong khối `generators`, nên cổng đóng phiên và `safe-push` so nó với
+ * `DASHBOARD-Chrome-Extension-AI-Agentic.html` nằm trong khối `generators`, nên cổng đóng phiên và `safe-push` so nó với
  * HEAD mỗi lượt. Bảng khoá là trạng thái sống: ĐO trên lịch sử thật, 146 trong 174 commit
  * chạm bảng chủ sở hữu làm ĐỔI vector bận/mở (69 lượt riêng ngày 02/09, 20 lượt ngày 04/09).
  * Bỏ tên chủ đi giảm được ít hơn nhiều so với hy vọng — nhận rồi trả là hai lượt lật.
@@ -1688,11 +1688,11 @@ ${STYLE}
 }
 
 
-export const TRANG_FILE = "DASHBOARD.html";
+export const TRANG_FILE = "DASHBOARD-Chrome-Extension-AI-Agentic.html";
 
 /* MỐC THỜI GIAN CỦA BẢN COMMIT SUY TỪ HEAD, KHÔNG TỪ ĐỒNG HỒ.
  *
- * Vì sao đây là chỗ dễ làm hỏng cả repo: `DASHBOARD.html` nay nằm trong khối `generators`,
+ * Vì sao đây là chỗ dễ làm hỏng cả repo: `DASHBOARD-Chrome-Extension-AI-Agentic.html` nay nằm trong khối `generators`,
  * nên cổng chạy `--check-head` mỗi phiên và `safe-push` TỪ CHỐI ĐẨY khi nó lệch. Nếu nội
  * dung file phụ thuộc giờ đồng hồ (dòng "hôm nay" / "N ngày trước") thì sang ngày mới là
  * nó lệch HEAD **dù không một dữ liệu nào đổi** — và mọi phiên khác bị chặn push chỉ vì một
