@@ -870,7 +870,10 @@
       // INV-3: a stop while seat A's run is starting must never message seat
       // B's or the front tab). The local flag is the entire stop then.
       if (state.boundTabId !== null) {
-        try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop still holds */ }
+        // B-22: cùng danh tính attempt như nút Stop của người vận hành. `current` ở trên
+        // đã qua đúng cái guard state.running, nên nó là attempt thật sự đang bay hoặc null.
+        const scoped = current?.attempt_id ? { job_id: current.job.id, attempt_id: current.attempt_id } : {};
+        try { await send({ type: "DAC_ABORT", ...scoped }); } catch (_) { /* local stop still holds */ }
       }
       log("Bridge đã yêu cầu dừng run.", "error");
     }
@@ -5668,6 +5671,18 @@
         let completed = false;
         while (!completed && !state.stopRequested) {
           const gate = await gateNextJob(item);
+          // B-22, nửa thứ hai của race: một lệnh dừng có thể rơi đúng vào khoảng await của
+          // gateNextJob. Từ chỗ đó xuống tới lúc cấp attempt_id không có phép kiểm nào khác,
+          // nên thiếu dòng này thì attempt vẫn được phái đi và chỉ receiver mới cứu được.
+          //
+          // gateNextJob đã ghi RECONCILING vào sổ TRƯỚC khi await, nên một `break` trần ở đây
+          // bỏ rơi dòng sổ ở trạng thái đó. Settle trung thực trước: USER_STOP, chưa gửi gì.
+          if (state.stopRequested) {
+            update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "USER_STOP", last_error: "Stopped by user before submission.", error: "Stopped by user before submission.", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
+            audit("FAILURE", item, { message: "Stopped by user before submission." });
+            completed = true;
+            break;
+          }
           if (!gate.ok) {
             const outcome = await resolveJobFailure(item, gate.failureType, gate.message, settings);
             completed = outcome.completed; halted ||= outcome.halted;
@@ -5808,7 +5823,20 @@
     return false;
   });
 
-  async function stop() { state.stopRequested = true; progress("Stopping current operation…"); try { await send({ type: "DAC_ABORT" }); } catch (_) { /* local stop prevents further jobs */ } }
+  // B-22: lệnh huỷ phải kèm danh tính của attempt nó đang dừng. Không có danh tính thì
+  // receiver không phân biệt được "dừng attempt NÀY" với một cờ mồ côi, và một lệnh huỷ
+  // tới TRƯỚC khi job của nó tới sẽ bị dòng reset đầu runPrompt() xoá trắng — đúng vụ đo
+  // thật 26/08 bên nhánh Gemini (stop nhận 14:20:36, prompt vẫn bay 14:20:37).
+  //
+  // Cùng cái bẫy của bridgeRunStop: giữa hai run `state.currentItem` vẫn trỏ vào job cuối
+  // của run TRƯỚC, nên chỉ được tin nó khi run đang THẬT SỰ chạy.
+  async function stop() {
+    state.stopRequested = true;
+    progress("Stopping current operation…");
+    const current = state.running ? state.currentItem : null;
+    const scoped = current?.attempt_id ? { job_id: current.job.id, attempt_id: current.attempt_id } : {};
+    try { await send({ type: "DAC_ABORT", ...scoped }); } catch (_) { /* local stop prevents further jobs */ }
+  }
 
   // Pause never interrupts an in-flight attempt -- exact-once submission
   // means a job that has already been sent cannot be safely suspended mid

@@ -12,6 +12,10 @@
   const STATE = {
     busy: false,
     abortRequested: false,
+    // B-22: attempt mà một DAC_ABORT nhắm vào. Lệnh huỷ tới TRƯỚC khi job của nó
+    // tới (đúng cái race đo thật bên Gemini 26/08) phải sống qua dòng reset đầu
+    // runPrompt() — nhưng CHỈ cho đúng attempt đó; attempt sau không được thừa kế.
+    abortedAttempt: null,
     activeAttempt: null,
     answeredPolls: new Set(),
     pollAttempts: new Map(),
@@ -772,11 +776,21 @@
   async function runPrompt(prompt, timeoutMs, referenceImages = [], expectImage = false, requestAttempt = null, maxImages = 1) {
     if (STATE.busy) throw new Error("This ChatGPT tab is already running an automation prompt.");
     STATE.busy = true;
-    STATE.abortRequested = false;
+    // Huỷ theo phạm vi attempt (B-22). Trước đây dòng này là `= false` trần, và đó
+    // chính là dòng đã gây ra vụ 26/08 bên Gemini: sổ cái ghi
+    // STOP_REQUESTED_BEFORE_SUBMIT lúc 14:20:36 rồi PROMPT_SUBMITTED lúc 14:20:37.
+    // Một lệnh dừng nhắm ĐÚNG attempt này thì giữ nguyên cờ qua dòng này; mọi thứ
+    // khác (cờ mồ côi của attempt cũ đã tiêu) vẫn được xoá như trước, nên attempt
+    // kế tiếp không chết oan.
+    STATE.abortRequested = window.DacAttemptIdentity.same(STATE.abortedAttempt, requestAttempt);
     if (requestAttempt) STATE.activeAttempt = requestAttempt;
 
     try {
-      // CHẶN TRƯỚC KHI TIÊU BẤT CỨ THỨ GÌ. Phải đứng trước mọi thứ khác trong khối này:
+      // Cửa huỷ đứng đầu tiên, và nó cũng không tiêu gì: huỷ trước là huỷ HẴN —
+      // chưa gõ chữ vào composer, chưa đính kèm, chưa click. Không có dòng này thì cờ huỷ
+      // chỉ được đọc ở các chốt muộn hơn, mà trên đường đi đó prompt đã vào ô nhập rồi.
+      if (STATE.abortRequested) throw new Error("Automation stopped by user.");
+      // CHẶN TRƯỚC KHI TIÊU BẤT CỨ THỨ GÌ. Phải đứng trước mọi phép kiểm khác trong khối này:
       // trang chủ chatgpt.com CÓ composer và CÓ nút gửi, nên mọi phép kiểm phía dưới đều
       // xanh và không cái nào nhận ra vấn đề. Gửi từ đó thì trang điều hướng sang /c/<id>
       // và lượt sinh mất trắng kèm một lỗi hết-giờ không nói lên điều gì.
@@ -816,6 +830,10 @@
     } finally {
       STATE.busy = false;
       STATE.abortRequested = false;
+      // Lệnh huỷ được TIÊU bởi đúng attempt nó nhắm tới. attempt_id không bao giờ
+      // dùng lại, nên một phiếu chưa tiêu chỉ có thể khớp đúng attempt (chưa bao giờ
+      // chạy) của chính nó — nhưng vẫn dọn sạch khi nó đã làm xong việc.
+      if (window.DacAttemptIdentity.same(STATE.abortedAttempt, requestAttempt)) STATE.abortedAttempt = null;
     }
   }
 
@@ -1057,6 +1075,17 @@
 
     if (message.type === "DAC_ABORT") {
       STATE.abortRequested = true;
+      // B-22: nhớ AI vừa bị dừng. Có danh tính thì lệnh huỷ bám vào đúng attempt đó,
+      // kể cả khi nó tới trước job; lệnh huỷ trần (người gửi cũ) bám vào thứ đang bay
+      // ngay lúc này, giữ nguyên ngữ nghĩa cũ.
+      //
+      // CỐ Ý: abortRequested vẫn được dựng lên TOÀN CỤC, nên một lệnh huỷ có danh tính
+      // KHÔNG khớp attempt đang bay VẪN dừng attempt đó ở chốt ngắt gần nhất. Lệnh dừng
+      // của người vận hành không bao giờ được bỏ qua im lặng — danh tính tồn tại CHỈ để
+      // dòng reset đầu runPrompt() không xoá được lệnh huỷ tới trước job, không phải để
+      // một attempt sống sót qua một lệnh dừng. Fail-closed.
+      const scoped = window.DacAttemptIdentity.create(message);
+      STATE.abortedAttempt = window.DacAttemptIdentity.validContext(scoped) ? scoped : STATE.activeAttempt;
       sendResponse({ ok: true });
       return false;
     }

@@ -827,7 +827,11 @@ assert.match(handlerBody("async function bridgeRunTrial"), /bindRunTab\(await re
 // in flight in ANY tab, and send() would fall back to the ACTIVE tab — so the
 // best-effort abort may only be sent once a tab is bound (audit 03/09 round 4,
 // INV-3: a stop must never message the front tab or another seat's tab).
-assert.match(handlerBody("async function bridgeRunStop"), /if \(state\.boundTabId !== null\) \{\s*try \{ await send\(\{ type: "DAC_ABORT" \}\); \}/, "the abort message is gated on a BOUND tab; the local stop flag alone covers the startup window");
+// The payload gained an attempt identity in B-22 (…scoped), so this pins the
+// GATE and the message type, not the exact literal: the invariant here is
+// "only once a tab is bound", and a pin that also freezes the payload shape
+// turns every future field into a false failure.
+assert.match(handlerBody("async function bridgeRunStop"), /if \(state\.boundTabId !== null\) \{\s*(?:\/\/[^\n]*\n\s*)*const scoped = [^\n]*\n\s*try \{ await send\(\{ type: "DAC_ABORT", \.\.\.scoped \}\); \}/, "the abort message is gated on a BOUND tab and carries the attempt identity; the local stop flag alone covers the startup window");
 
 // The transport must load the workspace module in production.
 const background = fs.readFileSync(path.join(here, "..", "background.js"), "utf8");
