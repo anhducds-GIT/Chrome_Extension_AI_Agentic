@@ -12,22 +12,22 @@
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-04T06:21",
-      "task": "G-02 khoa tab va khoa hoi thoai",
-      "released_at": "2026-09-04T06:37",
+      "owner": "claude-gemini-no",
+      "ai": "Claude",
+      "claimed_at": "2026-09-05T12:21",
+      "task": "G-09 G-01 G-10",
+      "released_at": null,
       "taken_from": "claude-exec-g02",
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-04T06:18",
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-g02 da chet (stall watchdog), giai phong khoa va GIU viec do de executor moi doc roi tu quyet"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-03T10:56",
-      "task": "Cai thien kenh CC<->GPT: them chat.read doc tron van ban hoi thoai (read-only)",
-      "released_at": "2026-09-05T16:22",
+      "owner": "claude-gpt-no",
+      "ai": "Claude",
+      "claimed_at": "2026-09-05T12:21",
+      "task": "B-22 B-23",
+      "released_at": null,
       "taken_from": "claude-gpt-kenh",
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-05T08:43",
@@ -48,9 +48,9 @@
     "_docs": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-05T11:51",
-      "task": "Ghi luat: khong git add -A + Y-15 bang quyen khong giu duoc file tren dia",
-      "released_at": "2026-09-05T11:52",
+      "claimed_at": "2026-09-05T12:15",
+      "task": "Phan loai 51 muc no ky thuat + brief moc-da-xong cho dashboard",
+      "released_at": "2026-09-05T12:20",
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -70,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "c7f05c4bf0f3599d"
+  "_fingerprint": "9ffad4f26badc0ec"
 }
