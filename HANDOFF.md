@@ -3061,3 +3061,42 @@ nhiên. Chạy lại lúc cây đã lặng: **giống hệt nhau**. Đây là m�
 nhiều lane cùng commit**, không phải một bug của bảng.
 
 **Việc cần Đức: không có.**
+
+---
+
+## 2026-09-05 · lane `claude-ghim-do` · Y-18: hết đỏ oan khi hai lane commit cùng lúc
+
+**Làm gì.** Vá đúng gốc, không vá chỗ đau. Cái sai không nằm ở phép ghim mà ở **bộ đọc**:
+`createHeadDeps` (trong `scripts/build-dashboard.mjs`) phân giải chữ `HEAD` **lại từ đầu ở
+từng lệnh git**, mà một lượt sinh trang gọi git hàng trăm lượt. Lane khác commit xen vào giữa
+chừng là nửa trang đọc commit cũ, nửa trang đọc commit mới — trang sinh ra không ứng với bất
+kỳ commit nào từng tồn tại. Nay mốc đọc được **ghim một lần** (giải lười, ở lượt đọc đầu tiên)
+và dùng lại cho cả tám chỗ: `ls-tree` · `cat-file` · `show` · `rev-parse --short` ·
+`log --format=%cd` (hai chỗ) · `trackedPaths` · `gitlinksAtRoot` · `changedFilesSince`
+(hai bản, một ở mỗi bộ đọc). Kèm theo, `tests/build-overview-smoke.mjs` nay dùng **một** bộ
+đọc chung cho cả file thay vì dựng lại 31 lượt — mỗi lượt dựng là một mốc ghim khác nhau, nên
+hai khối vẫn so nhau trên hai commit.
+
+**Kết quả số.**
+- `node tests/build-overview-smoke.mjs`: **30 passed, 0 failed**.
+- Dựng lại đúng tình huống (sinh lượt một → commit rác vào HEAD → sinh lượt hai, cùng một bộ
+  đọc), chạy trong `git worktree` tách riêng: **có vá → lệch 0 byte, XANH**.
+
+**Đột biến kiểm — ba lượt, bắt buộc vì đây là cơ chế đa phiên.**
+1. Gỡ bản vá, chạy lại đúng kịch bản trên → **lệch 50 byte, ĐỎ**. Đỏ oan quay lại đúng như mô tả.
+2. Cho bộ sinh nhìn đồng hồ (`today: "head"` → `today: Date.now()`) → suite **ĐỎ** ở đúng câu
+   "đổi đồng hồ lên 99 ngày mà bản commit PHẢI không đổi một byte". Bản vá **không** làm yếu
+   phép ghim: nó vẫn bắt được bug thật.
+3. Cây làm việc sạch sau cả ba lượt (`git worktree` đã gỡ, `git status` không sót gì).
+
+**Phần B — `npm test` có nuốt mã lỗi không? KHÔNG.** Đo bằng cách cho
+`tests/repo-structure-smoke.mjs` ném ngay dòng đầu: chuỗi `&&` dừng đúng chỗ,
+bash `$?` = **1**, PowerShell `$LASTEXITCODE` = **1**, PowerShell `$?` = **False**. Đã khôi
+phục file, `git diff --quiet` xanh. Thứ thật sự nuốt là **`$?` của PowerShell**: nó nói về
+câu lệnh **liền trước**, nên chỉ cần chen một dòng in ra màn hình vào giữa là nó trả `True`
+dù npm vừa trả 1 — dựng lại được ca đó trong chính lượt đo. Ghi đầy đủ ở `Y-19` trong `IDEAS.md`.
+Cổng vẫn tin được; **không có việc riêng nào phải giao thêm.**
+
+**Việc cần Đức: không có.** Còn mở: ô `bậc` của `Y-18` vẫn ghi `ý tưởng` — sửa giữa file
+`IDEAS.md` nên phải là phiên đang giữ `_root`.
+

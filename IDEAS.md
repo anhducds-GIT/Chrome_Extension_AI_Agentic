@@ -515,3 +515,26 @@ mục 4 bất biến ⑤ và bảng mã lỗi.
 - **liên quan:** cùng họ với `Y-16` — cả hai đều là cơ chế đúng khi một lane chạy, và sai khi
   nhiều lane chạy. Bốn cơ chế đa phiên được thiết kế cho **xung đột ghi**; hai mục này là
   **xung đột đọc**, một loại chưa ai tính tới.
+
+## Y-19 · `npm test` KHÔNG nuốt mã lỗi — cái nuốt là `$?` trong PowerShell
+
+- **bậc:** nghỉ
+- **nguồn:** đo thật 2026-09-05, lane `claude-ghim-do`, phần B của đề bài Y-18
+- **việc kế:** không còn việc — mục này ghi lại số đo để lần sau không ai đi tìm lại
+- **nỗi lo ban đầu:** một lượt `npm test` đỏ (có file test ném AssertionError) lại được báo
+  là "exited with code 0". Nếu đúng thì mọi câu "cổng xanh" đều chưa đủ tin.
+- **cách đo:** cố tình cho `tests/repo-structure-smoke.mjs` ném ngay dòng đầu, chạy
+  `npm test`, đọc mã lỗi ở cả hai vỏ lệnh, rồi khôi phục file và xác nhận `git diff --quiet`.
+- **kết quả:** chuỗi `&&` dừng đúng chỗ file ném; **bash `$?` = 1**, **PowerShell
+  `$LASTEXITCODE` = 1**, **PowerShell `$?` = False**. Suite KHÔNG nuốt mã lỗi. Cổng vẫn tin được.
+- **thứ THẬT SỰ nuốt, và đây mới là chỗ đáng nhớ:** trong PowerShell, `$?` nói về **câu lệnh
+  liền trước**, không phải về lệnh ngoài gần nhất. Đo được ngay trong lượt này: viết
+  `npm test *> log; "LASTEXITCODE=$LASTEXITCODE"; "DOLLAR=$?"` thì `$?` trả **True** dù npm
+  vừa trả 1 — vì câu lệnh liền trước `$?` lúc đó là một chuỗi ký tự, và chuỗi thì luôn thành
+  công. Đúng một dòng chen vào giữa là mã lỗi biến mất khỏi tầm mắt.
+- **luật rút ra:** trong PowerShell đọc `$LASTEXITCODE` cho lệnh ngoài (npm, node, git), và
+  nếu buộc phải dùng `$?` thì chộp nó vào biến **ngay câu lệnh kế tiếp**, không chen gì vào giữa.
+- **liên quan:** `Y-18` đã vá xong cùng phiên — mốc đọc nay ghim một lần trong `createHeadDeps`,
+  nên HEAD nhích giữa hai lượt sinh không còn làm phép ghim đỏ oan (đo: lệch 50 byte trước khi
+  vá, 0 byte sau khi vá). Ô `bậc` của `Y-18` cần đổi sang `nghỉ`, nhưng đó là sửa giữa file
+  nên phiên giữ `_root` làm.

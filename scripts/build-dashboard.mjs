@@ -1386,7 +1386,7 @@ export function createDefaultDeps(root = ROOT) {
       // tài liệu nuốt mất — code biến mất khỏi package mà cột vẫn khai "KHÔNG đổi". Tắt
       // gộp đi thì nó thành xoá + thêm, và vế `.js` bị xoá được đếm đúng.
       // Auditor Codex dựng được ca này thật ở vòng 2, 2026-08-26.
-      changedFilesSince: (sha, dirRelPath) => parseChangedCommits(git("log", `${sha}..HEAD`, "--name-only", "--no-renames", "--pretty=format:%H", "--", dirRelPath)),
+      changedFilesSince: (sha, dirRelPath) => parseChangedCommits(git("log", `${sha}..${head.git.headSha()}`, "--name-only", "--no-renames", "--pretty=format:%H", "--", dirRelPath)),
       // Việc đang sửa dở trên đĩa: sửa, thêm mới, chưa track. `-uall` để thư mục mới không
       // bị gộp thành một dòng duy nhất và giấu mất file `.js` bên trong.
       // `--no-renames` cùng lý do như trên: `git status` mặc định gộp đổi tên thành
@@ -1403,17 +1403,38 @@ export function createHeadDeps(root = ROOT) {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"]
   });
-  const treeEntries = (relPath) => git("ls-tree", "-z", "--name-only", `HEAD:${relPath}`)
+  /* MỐC ĐỌC GHIM MỘT LẦN, không đọc lại `HEAD` ở từng lệnh.
+   *
+   * `HEAD` là một con trỏ DI ĐỘNG. Bộ đọc này gọi git hàng trăm lượt cho một lượt sinh, và
+   * mỗi lượt trước đây tự phân giải `HEAD` lại từ đầu — nên một lane khác commit xen vào
+   * GIỮA CHỪNG là nửa trang đọc commit cũ, nửa trang đọc commit mới. Trang sinh ra không
+   * ứng với bất kỳ commit nào từng tồn tại.
+   *
+   * Đo thật 2026-09-05, hai lần trong một buổi: phép ghim "không phụ thuộc đồng hồ" sinh
+   * trang hai lượt rồi so từng byte, và cả hai lần đều ĐỎ OAN vì HEAD nhích giữa hai lượt
+   * (lệch 46 byte lượt đầu; lượt sau ném AssertionError rồi chạy lại trên cây yên tĩnh thì
+   * xanh ngay). Lần thứ hai tốn hẳn một lane bị giao nhầm việc. Đỏ oan đúng lúc nhiều lane
+   * chạy song song là đỏ oan đúng lúc nó đắt nhất, và nó dạy người ta thói quen "chạy lại
+   * cho tới khi xanh" — đúng cái thói quen phép ghim này sinh ra để chặn.
+   *
+   * Ghim LƯỜI (giải một lần ở lượt đọc đầu tiên) chứ không giải lúc dựng deps: dựng deps
+   * trước đây không đụng git lần nào, và có fixture dựng deps trên repo vừa `git init` chưa
+   * có commit nào. Giải sớm là đổi chỗ ném lỗi sang một chỗ chưa ai chờ.
+   *
+   * Muốn đọc mốc mới thì dựng deps mới — đó là ý nghĩa của "một deps = một commit". */
+  let mocGhim = null;
+  const moc = () => (mocGhim ??= git("rev-parse", "HEAD").trim());
+  const treeEntries = (relPath) => git("ls-tree", "-z", "--name-only", `${moc()}:${relPath}`)
     .split("\0").filter(Boolean).sort(compareText);
   const objectType = (relPath) => {
-    try { return git("cat-file", "-t", `HEAD:${relPath}`).trim(); }
+    try { return git("cat-file", "-t", `${moc()}:${relPath}`).trim(); }
     catch { return null; }
   };
   return {
     root,
     fileExists: (relPath) => objectType(relPath) !== null,
     isFile: (relPath) => objectType(relPath) === "blob",
-    readFile: (relPath) => git("show", `HEAD:${relPath}`),
+    readFile: (relPath) => git("show", `${moc()}:${relPath}`),
     writeFile: () => { throw new Error("HEAD_READ_ONLY: --check-head không được ghi file."); },
     // `childPath` chứ không phải `${relPath}/${name}`: khi relPath là "" (thư mục gốc
     // repo, cần cho phép đếm top-level của S2) thì cách cũ sinh ra "/docs" và
@@ -1422,20 +1443,21 @@ export function createHeadDeps(root = ROOT) {
     listDirs: (relPath) => treeEntries(relPath).filter((name) => objectType(childPath(relPath, name)) === "tree"),
     listFiles: (relPath) => treeEntries(relPath).filter((name) => objectType(childPath(relPath, name)) === "blob"),
     git: {
-      shortHead: () => git("rev-parse", "--short", "HEAD").trim(),
-      headDate: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d").trim(),
+      headSha: moc,
+      shortHead: () => git("rev-parse", "--short", moc()).trim(),
+      headDate: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", moc()).trim(),
       // Ngày commit cuối chạm vào file. Dùng làm "lần rà gần nhất" để tính nợ tài
       // liệu quá hạn — vì frontmatter CỐ TÌNH không có trường `created`/`last_reviewed`:
       // ngày gõ tay sẽ mục, còn lịch sử git thì không nói dối được.
-      lastCommitDate: (relPath) => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", "--", relPath).trim(),
+      lastCommitDate: (relPath) => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", moc(), "--", relPath).trim(),
       // Danh sách file ĐÃ TRACK tại HEAD. Cả chế độ đĩa lẫn chế độ HEAD đều gọi
       // đúng lệnh này, nên hai chế độ không bao giờ nhìn thấy hai tập file khác
       // nhau. `-z` để tên có dấu cách / tiếng Việt không bị git bọc dấu nháy.
-      trackedPaths: () => git("ls-tree", "-r", "-z", "--name-only", "HEAD").split("\0").filter(Boolean),
+      trackedPaths: () => git("ls-tree", "-r", "-z", "--name-only", moc()).split("\0").filter(Boolean),
       // Submodule ở tầng gốc: `ls-tree` KHÔNG có `-r` mới khai kiểu đối tượng, và
       // gitlink có kiểu "commit". Với `-r --name-only` nó chỉ là một tên trơ, không
       // có dấu "/", nên bị xếp nhầm là file.
-      gitlinksAtRoot: () => git("ls-tree", "-z", "HEAD").split("\0").filter(Boolean)
+      gitlinksAtRoot: () => git("ls-tree", "-z", moc()).split("\0").filter(Boolean)
         .filter((entry) => entry.split(/\s+/)[1] === "commit")
         .map((entry) => entry.slice(entry.indexOf("\t") + 1)),
       verifyCommit: (sha) => {
@@ -1446,7 +1468,7 @@ export function createHeadDeps(root = ROOT) {
           return false;
         }
       },
-      changedFilesSince: (sha, dirRelPath) => parseChangedCommits(git("log", `${sha}..HEAD`, "--name-only", "--no-renames", "--pretty=format:%H", "--", dirRelPath))
+      changedFilesSince: (sha, dirRelPath) => parseChangedCommits(git("log", `${sha}..${moc()}`, "--name-only", "--no-renames", "--pretty=format:%H", "--", dirRelPath))
     }
   };
 }

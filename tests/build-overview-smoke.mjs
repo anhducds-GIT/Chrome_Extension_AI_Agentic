@@ -13,6 +13,17 @@ import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs"
 import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readMocDaXong, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+/* MỘT bộ đọc dùng chung cho CẢ file, không dựng lại ở từng khối.
+ *
+ * Bộ đọc ghim mốc commit ở lượt đọc đầu tiên (xem `createHeadDeps`), nên dựng một bộ là cả
+ * file nhìn ĐÚNG MỘT commit. Dựng lại ở từng khối thì mỗi bộ ghim một mốc khác nhau, và một
+ * lane khác commit xen giữa hai khối là hai khối so với nhau trên hai commit — đỏ oan.
+ *
+ * Đo thật 2026-09-05, hai lần trong một buổi. Bộ đọc không giữ trạng thái nào ngoài mốc đó
+ * (toàn hàm thuần đóng trên `root`), nên dùng chung là an toàn. Khối nào cần dữ liệu khác
+ * thì bọc bằng `bocFile`, thứ trả về bản mới chứ không sửa bản gốc. */
+const REAL = createDefaultDeps(ROOT);
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
 
@@ -85,7 +96,7 @@ const ideasDeps = (text) => ({
      Đo trên repo THẬT, vì cái hỏng ở đây đến từ nội dung hồ sơ trạng thái chứ không từ mã
      bộ sinh. Fixture giả sẽ không bao giờ dựng lại được ca hỏng thật. ---- */
 {
-  const { html, stats } = buildOverview(createDefaultDeps(ROOT));
+  const { html, stats } = buildOverview(REAL);
   const full = html.slice(html.indexOf(String.fromCharCode(60) + 'div class="wrap"' + String.fromCharCode(62)));
 
   /* KHỐI BẢN ĐỒ là ngoại lệ DUY NHẤT, và nó thu hẹp phạm vi chứ không khoét lỗ.
@@ -109,7 +120,7 @@ const ideasDeps = (text) => ({
      Bản cũ đo bằng `khoiMap.length > 400` — một ngưỡng byte, GPT audit chỉ đúng: 400 byte
      chỉ nói "có chữ", không nói "có đủ thư mục". Đếm theo QUAN HỆ với nguồn: bản đồ phải có
      đúng một dòng cho mỗi vùng khai trong bảng phân vùng. Rơi một thư mục là đỏ ngay. */
-  const soVung = readAreas(createDefaultDeps(ROOT)).length;
+  const soVung = readAreas(REAL).length;
   const soDong = [...khoiMap.matchAll(/<div class="tr">/g)].length;
   assert.ok(soVung > 0, "phai doc duoc bang phan vung — 0 la bo doc hong");
   assert.equal(soDong, soVung,
@@ -159,7 +170,7 @@ const ideasDeps = (text) => ({
  * Fixture phải dựng được ca hỏng: bốn dạng mốc hỏng, và phải chứng minh mốc TỐT vẫn chạy —
  * không có nửa sau thì "cái gì cũng ném" cũng xanh. */
 {
-  const deps = createDefaultDeps(ROOT);
+  const deps = REAL;
   const tot = buildOverview(deps, { today: "head" });
   assert.match(tot.stats.stamp, /^\d{4}-\d{2}-\d{2}$/, "moc HEAD that phai chay duoc, khong nem");
 
@@ -181,7 +192,7 @@ const ideasDeps = (text) => ({
  * chuỗi trong bộ sinh thì không — nên trang bảo AI làm một đằng, sổ prompt bảo một nẻo.
  * Chép là tạo bản thứ hai, và bản thứ hai luôn lệch. */
 {
-  const deps = createDefaultDeps(ROOT);
+  const deps = REAL;
   const cau = readRefreshLine(deps);
 
   /* CA QUYẾT ĐỊNH: đưa một PROMPTS.md ĐÃ ĐỔI CÂU, rồi đòi TRANG đổi theo.
@@ -259,7 +270,7 @@ const ideasDeps = (text) => ({
     'khai "khong" la DA tra loi — khong duoc dem la chua khai');
 
   // Và trên repo thật: cả ba trạng thái phải cùng xuất hiện, nếu không phép kiểm trên là lý thuyết.
-  const { html } = buildOverview(createDefaultDeps(ROOT));
+  const { html } = buildOverview(REAL);
   assert.match(html, /việc đang chờ|Không có việc nào chờ Đức/, "bang phai noi ro co bao nhieu viec cho Duc");
   ok("Y-03 ba trang thai: co viec / da tra loi khong / chua ai tra loi — khong gop lan nhau");
 }
@@ -312,7 +323,7 @@ const ideasDeps = (text) => ({
 
 /* ---- 9. Dòng tuổi bảng: sinh trong ngày thì phải là "hôm nay" ---- */
 {
-  const deps = createDefaultDeps(ROOT);
+  const deps = REAL;
   const headDate = buildOverview(deps).stats.stamp;
   // 20:00 UTC cùng ngày với mốc HEAD. Bản cũ lấy `today` (có giờ) trừ nửa-đêm-UTC rồi làm
   // tròn -> 20/24 tròn thành 1 -> "1 ngày trước" ngay trong ngày sinh. Fixture này dựng
@@ -329,7 +340,7 @@ const ideasDeps = (text) => ({
 
 /* ---- 10. TAB — mỗi link ở bảng tổng phải có đích thật ---- */
 {
-  const { html } = buildOverview(createDefaultDeps(ROOT));
+  const { html } = buildOverview(REAL);
   const tabs = [...html.matchAll(/role="tab" data-tab="([a-z-]+)" aria-selected="(true|false)"/g)];
   const panes = [...html.matchAll(/role="tabpanel" data-pane="([a-z-]+)"/g)].map((m) => m[1]);
   /* GHIM QUAN HỆ, KHÔNG GHIM CON SỐ.
@@ -367,8 +378,8 @@ const ideasDeps = (text) => ({
   /* GHIM QUAN HỆ chứ không ghim ngưỡng. Bản cũ viết `links.length >= 5` — một con số hiện
      trạng: nó KHÔNG đỏ khi một đơn vị bị rơi khỏi bảng tổng, mà rơi đúng là cái đáng sợ —
      Đức mở bảng, không thấy extension đó, và tưởng nó không tồn tại. */
-  const soDonVi = collectModelRows(createDefaultDeps(ROOT)).length;
-  const soYTuong = readIdeas(createDefaultDeps(ROOT)).length;
+  const soDonVi = collectModelRows(REAL).length;
+  const soYTuong = readIdeas(REAL).length;
   /* ĐẾM TRONG PHẠM VI TAB TỔNG QUAN, không đếm cả trang.
      Bản trước đếm cả trang và ăn khớp vì chỉ tab Tổng quan có link. Từ DASH-ORCH-V2 tab AI
      điều phối cũng có link nhảy sang tab Extension, nên con số cả trang không còn nói được
@@ -402,7 +413,7 @@ const ideasDeps = (text) => ({
    Hai ca tổng hợp ở dưới là BẰNG CHỨNG BỘ SUY CÓ RĂNG: nếu nó vốn luôn trả "none" thì khẳng
    định trên trang thật xanh một cách vô nghĩa. ---- */
 {
-  const { html } = buildOverview(createDefaultDeps(ROOT));
+  const { html } = buildOverview(REAL);
 
   /* Đọc `display` từ một bảng kiểu. Luật lồng trong `@media` bị làm phẳng — cố ý: làm phẳng
      là NGHIÊM HƠN (một luật chỉ đúng ở màn hình hẹp cũng bị tính), và nghiêm quá thì đỏ, còn
@@ -532,7 +543,7 @@ const ideasDeps = (text) => ({
      phép kiểm ĐỎ — tức nó ghim CON BUG chứ không ghim CƠ CHẾ, và nó chặn đường sửa.
      Bất biến đúng: mỗi đơn vị phải có ĐÚNG MỘT trong hai — một câu mô tả, HOẶC một lý do
      vì sao không có. Trống cả hai là lỗi âm thầm: bảng hiện một ô rỗng không ai giải thích. */
-  const real = createDefaultDeps(ROOT);
+  const real = REAL;
   for (const r of collectModelRows(real)) {
     const b = readBrief(real, r);
     assert.ok(Boolean(b.text) !== Boolean(b.why),
@@ -574,7 +585,7 @@ const ideasDeps = (text) => ({
 
 /* ---- 13. NHẬT KÝ — tên quyết định phải là chữ người viết, có dấu ---- */
 {
-  const real = createDefaultDeps(ROOT);
+  const real = REAL;
   const d = readDecisions(real, 6);
   /* Bản cũ viết `d.total > 100` — ngưỡng hiện trạng, GPT audit chỉ đúng. Nó không nói gì về
      cơ chế: sắp xếp lại thư mục quyết định thì nó đỏ oan, còn bộ đọc hỏng hoàn toàn thì nó
@@ -602,7 +613,7 @@ const ideasDeps = (text) => ({
    cơ chế cần kiểm là "có nhìn đồng hồ hay không", và nó không khác nhau giữa hai loại
    deps, nên deps đĩa là đủ. ---- */
 {
-  const deps = createDefaultDeps(ROOT);
+  const deps = REAL;
   const ten = path.basename(ROOT);
   const r1 = sinhTrang(deps);
   const a = r1.html;
@@ -689,7 +700,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
 
 /* ---- T1. Bảng khoá đọc từ bảng chủ sở hữu, và chỉ nói bận/mở ---- */
 {
-  const deps = (obj) => bocFile(createDefaultDeps(ROOT), { ".agents/claims.json": claimsJson(obj) });
+  const deps = (obj) => bocFile(REAL, { ".agents/claims.json": claimsJson(obj) });
 
   assert.deepEqual(
     readKhoa(deps({ "_root": { owner: null }, "workers/goi-mot": { owner: "phien-x" } })),
@@ -704,11 +715,11 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
 
   // FAIL CLOSED — bảng chủ sở hữu thiếu / hỏng / thiếu khối thì NÉM. Nuốt lỗi ở đây nghĩa là
   // Đức nhìn thấy sáu chỗ trống trong khi thật ra có người đang làm.
-  assert.throws(() => readKhoa(bocFile(createDefaultDeps(ROOT), { ".agents/claims.json": null })),
+  assert.throws(() => readKhoa(bocFile(REAL, { ".agents/claims.json": null })),
     /CLAIMS_THIEU_FILE/, "thieu bang chu so huu thi nem");
-  assert.throws(() => readKhoa(bocFile(createDefaultDeps(ROOT), { ".agents/claims.json": "{" })),
+  assert.throws(() => readKhoa(bocFile(REAL, { ".agents/claims.json": "{" })),
     /CLAIMS_HONG/, "bang chu so huu hong thi nem");
-  assert.throws(() => readKhoa(bocFile(createDefaultDeps(ROOT), { ".agents/claims.json": "{\"claims\":[]}" })),
+  assert.throws(() => readKhoa(bocFile(REAL, { ".agents/claims.json": "{\"claims\":[]}" })),
     /CLAIMS_THIEU_KHOI/, "mang cung cho typeof object — phai bi tu choi");
 
   assert.equal(tenKhoa("workers/duc-auto-gemini"), "duc-auto-gemini", "khoa goi bo phan thu muc");
@@ -728,7 +739,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
  */
 {
   const CHU = "phien-bi-mat-khong-duoc-lo";
-  const goc = createDefaultDeps(ROOT);
+  const goc = REAL;
   const sinh = (thay) => buildOverview(bocFile(goc, thay)).html;
 
   const cuaTab = (trang) => {
@@ -971,7 +982,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
  * Ghim `23` là ngày mai đỏ oan, và người sau sẽ sửa phép kiểm thay vì sửa bảng.
  */
 {
-  const goc = createDefaultDeps(ROOT);
+  const goc = REAL;
   const rows = collectModelRows(goc);
   const coMoc = (r) => Boolean(String(r.lastVerified ?? "").trim());
   const cu = rows.filter((r) => coMoc(r) && r.changedCount > 0);
@@ -1052,7 +1063,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
  * này CRLF đã làm hỏng neo nhiều dòng bốn lần trong một ngày, lần nào cũng báo "0 lần khớp".
  */
 {
-  const goc = createDefaultDeps(ROOT);
+  const goc = REAL;
   const CRLF = String.fromCharCode(13) + String.fromCharCode(10);
   const nhatKy = (dong) => bocFile(goc, { "HANDOFF.md": dong.join(CRLF) });
   const dem = (dong) => {
@@ -1189,7 +1200,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
 
 /* ---- T3. Khối mốc: đọc lại từ hồ sơ, và fail closed ---- */
 {
-  const mocDeps = (text) => bocFile(createDefaultDeps(ROOT), { "docs/protocols/ASSISTANT-V0.1.md": text });
+  const mocDeps = (text) => bocFile(REAL, { "docs/protocols/ASSISTANT-V0.1.md": text });
   const G = String.fromCharCode(8212);
   const bang = [
     "---", "kind: protocol", "---", "# tiêu đề",
@@ -1211,7 +1222,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   // Không được liếm sang bảng của mục khác — đúng cái bẫy đã cắn `readRefreshLine` 04/09.
   assert.equal(readMoc(mocDeps(bang)).length, 3, "chan o muc ke, khong nhat bang cua muc 1 hay muc 3");
 
-  assert.throws(() => readMoc(bocFile(createDefaultDeps(ROOT), { "docs/protocols/ASSISTANT-V0.1.md": null })),
+  assert.throws(() => readMoc(bocFile(REAL, { "docs/protocols/ASSISTANT-V0.1.md": null })),
     /THIEU_MOC_ASSISTANT/, "mat ho so moc thi NEM, khong ve khoi rong");
   assert.throws(() => readMoc(mocDeps("# chỉ có tiêu đề")), /THIEU_MOC_ASSISTANT/,
     "mat muc 2 thi NEM");
@@ -1235,11 +1246,11 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     "BRIEF-CCC-03.md": `---\nkind: brief\nstatus: active\n---\n\n# BRIEF \`CCC-03\` ${G} triệu chứng ba\n\nViệc này đã đóng rồi.`
   };
   const deps = {
-    ...createDefaultDeps(ROOT),
+    ...REAL,
     listFiles: (p) => (p === "docs/briefs" ? Object.keys(briefs) : []),
     readFile: (p) => {
       const ten = p.startsWith("docs/briefs/") ? p.slice("docs/briefs/".length) : null;
-      return ten && ten in briefs ? briefs[ten] : createDefaultDeps(ROOT).readFile(p);
+      return ten && ten in briefs ? briefs[ten] : REAL.readFile(p);
     }
   };
   assert.deepEqual(readDefects(deps), [
@@ -1266,7 +1277,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
 
   // Và bằng chứng phép lọc ăn khớp với cái bộ sinh THẬT in ra: mọi dòng khoá của trang thật
   // đều mang dấu. Không có khẳng định này thì phép lọc có thể đúng mà dấu in sai chỗ.
-  const html = buildOverview(createDefaultDeps(ROOT)).html;
+  const html = buildOverview(REAL).html;
   const dong = html.split(String.fromCharCode(10));
   const coDau = dong.filter((l) => l.startsWith(KHOA_PREFIX));
   // Nhận dòng khoá theo ĐÚNG hình dạng của nó: ô tên chỉ có chữ, không thẻ con. Dòng defect
@@ -1323,7 +1334,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
  */
 {
   const G = String.fromCharCode(10);
-  const soY = (danh) => bocFile(createDefaultDeps(ROOT), { "IDEAS.md": danh.join(G) });
+  const soY = (danh) => bocFile(REAL, { "IDEAS.md": danh.join(G) });
 
   /* Khối roadmap: chặn TRÊN bằng đầu tab Tổng quan, chặn DƯỚI bằng đầu tab kế tiếp. Trong
      phạm vi đó mới cắt từ mở khối tới câu chú giải nằm ngay sau các hàng. */
@@ -1350,8 +1361,8 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     }));
 
   /* --- (a) trên SỔ THẬT: không ý tưởng nào rơi, và bậc vẽ đúng chỗ --- */
-  const trangThat = buildOverview(createDefaultDeps(ROOT)).html;
-  const ideas = readIdeas(createDefaultDeps(ROOT));
+  const trangThat = buildOverview(REAL).html;
+  const ideas = readIdeas(REAL);
   const hang = docHang(trangThat);
 
   /* GHIM QUAN HỆ, không ghim ngưỡng: ">= 8" sẽ KHÔNG đỏ khi một ý tưởng rơi khỏi bảng, mà
@@ -1433,7 +1444,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
  * nhau, không lượt nào lặp lượt nào.
  */
 {
-  const goc = createDefaultDeps(ROOT);
+  const goc = REAL;
   const sinh = (thay) => buildOverview(thay ? bocFile(goc, thay) : goc).html;
   const khoaThat = Object.keys(JSON.parse(goc.readFile(".agents/claims.json")).claims);
 
@@ -1579,7 +1590,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
  * dựng trang), phần tab dùng lại trang của ca thứ nhất — tab mặc định không phụ thuộc bảng
  * chủ sở hữu, nên sinh riêng một trang nữa cho nó là mười hai giây mua về không gì cả. */
 {
-  const goc = createDefaultDeps(ROOT);
+  const goc = REAL;
   const sinh = (thay) => buildOverview(bocFile(goc, thay)).html;
   const NL = String.fromCharCode(10);
 
@@ -1725,7 +1736,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
 {
   const G = String.fromCharCode(8212);
   const NL = String.fromCharCode(10);
-  const goc = createDefaultDeps(ROOT);
+  const goc = REAL;
   const ten = (p) => (p.startsWith("docs/briefs/") ? p.slice("docs/briefs/".length) : null);
   const soDeBai = (briefs, ngay) => ({
     ...goc,
