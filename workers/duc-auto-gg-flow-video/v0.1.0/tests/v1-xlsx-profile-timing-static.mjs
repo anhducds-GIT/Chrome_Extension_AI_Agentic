@@ -18,7 +18,7 @@ assert.match(sidepanel, /Job elapsed|Elapsed \$\{formattedJobElapsed\}/);
 assert.match(uiSemantics, /Configured delay: fixed/);
 assert.match(uiSemantics, /Selected this transition/);
 assert.match(uiSemantics, /Next readiness check in/);
-assert.match(uiSemantics, /Awaiting Gemini readiness confirmation/);
+assert.match(uiSemantics, /Awaiting Flow readiness confirmation/);
 assert.match(sidepanel, /runtimeInfo\.nextTransition/);
 assert.doesNotMatch(sidepanel, /Earliest next readiness check/);
 assert.doesNotMatch(sidepanel, /Earliest next prompt/);

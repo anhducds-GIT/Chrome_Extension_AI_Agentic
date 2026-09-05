@@ -136,7 +136,7 @@ function computeOperatorTimer(state) {
     return { text: `Next readiness check in ${formatDuration(state.interJobCountdown)}`, mode: "cooldown", hidden: false };
   }
   if (state.currentStage === "WAITING_READY" || state.currentStage === "FINALIZING / WAITING_IDLE" || item?.runtime_stage === "WAITING_READY") {
-    return { text: "Awaiting Gemini readiness confirmation", mode: "waiting", hidden: false };
+    return { text: "Awaiting Flow readiness confirmation", mode: "waiting", hidden: false };
   }
   if (item && state.running) {
     return { text: `Operation timeout remaining ${formattedStageLeft}`, mode: "active", hidden: false };
@@ -180,7 +180,7 @@ const timerWaiting = computeOperatorTimer({
   now: 1015000, // 15s elapsed -> 45s left (00:45)
   interJobCountdown: null
 });
-assert.equal(timerWaiting.text, "Awaiting Gemini readiness confirmation");
+assert.equal(timerWaiting.text, "Awaiting Flow readiness confirmation");
 assert.equal(timerWaiting.mode, "waiting");
 
 // Test 3: Run Artifacts row status

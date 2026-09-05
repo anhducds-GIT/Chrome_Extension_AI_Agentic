@@ -297,7 +297,7 @@
         code: "HALT_UNKNOWN",
         retry: "Không xác định",
         meaning: "Extension đã dừng nhưng chưa xác định được nhóm nguyên nhân.",
-        action: "Giữ nguyên tab Gemini, không gửi lại job và mở Technical details để kiểm tra prompt/output trước khi tiếp tục."
+        action: "Giữ nguyên tab Flow, không gửi lại job và mở Technical details để kiểm tra prompt/output trước khi tiếp tục."
       };
       const visibleCode = instruction === window.DacHaltInstructions?.UNKNOWN_INSTRUCTION ? (code || instruction.code) : code;
       const technicalDetail = String(item?.last_error || item?.error || reason || "").trim();
@@ -3120,8 +3120,8 @@
     state.pendingRerunJobId = jobId;
     if (els.rerunConfirmTitle) els.rerunConfirmTitle.textContent = `Run ${jobId} again?`;
     if (els.rerunConfirmTitleVi) els.rerunConfirmTitleVi.textContent = `Chạy lại ${jobId}?`;
-    if (els.rerunConfirmMessage) els.rerunConfirmMessage.textContent = `${jobId} already has a verified saved image (${item.result_file || "unknown filename"}). Running it again sends a new request to Gemini and creates another image for this job.`;
-    if (els.rerunConfirmMessageVi) els.rerunConfirmMessageVi.textContent = `${jobId} đã có ảnh được lưu và xác minh (${item.result_file || "không rõ tên file"}). Chạy lại sẽ gửi một yêu cầu mới tới Gemini và tạo một ảnh khác cho job này.`;
+    if (els.rerunConfirmMessage) els.rerunConfirmMessage.textContent = `${jobId} already has a verified saved video (${item.result_file || "unknown filename"}). Running it again sends a new request to Flow and creates another video for this job.`;
+    if (els.rerunConfirmMessageVi) els.rerunConfirmMessageVi.textContent = `${jobId} đã có video được lưu và xác minh (${item.result_file || "không rõ tên file"}). Chạy lại sẽ gửi một yêu cầu mới tới Flow và tạo một video khác cho job này.`;
     if (els.rerunKeepPolicyRadio) els.rerunKeepPolicyRadio.checked = true;
     els.rerunConfirmBtn.textContent = `Chạy lại ${jobId}`;
     if (typeof els.rerunConfirmDialog.showModal === "function") els.rerunConfirmDialog.showModal();
@@ -3417,7 +3417,7 @@
       error: item.job.error || ""
     };
     audit("RECONCILIATION_STARTED", item, { message: "Operator requested read-only verification of existing output." });
-    setCurrent(item, "RECONCILING", "Inspecting the existing Gemini image; no prompt will be sent.", item.settings.timeout_sec);
+    setCurrent(item, "RECONCILING", "Inspecting the existing Flow video; no prompt will be sent.", item.settings.timeout_sec);
     renderQueue();
     let response;
     try {
@@ -3757,7 +3757,7 @@
     state.auditChain = auditChain;
     if (!auditChain.ok) throw new Error(`${auditChain.code}: ${auditChain.message}`);
     const ping = await send({ type: "DAC_PING" });
-    if (!ping?.composerFound || ping.generating || ping.busy || ping.securityBlocker || ping.generationLimitBlocker) throw new Error(ping.generationLimitBlocker ? `LIMIT_STOP: ${ping.generationLimitBlocker}` : ping.securityBlocker ? `HARD_STOP: ${ping.securityBlocker}` : "Gemini must be reachable, idle, and show its composer.");
+    if (!ping?.composerFound || ping.generating || ping.busy || ping.securityBlocker || ping.generationLimitBlocker) throw new Error(ping.generationLimitBlocker ? `LIMIT_STOP: ${ping.generationLimitBlocker}` : ping.securityBlocker ? `HARD_STOP: ${ping.securityBlocker}` : "Flow must be reachable, idle, and show its composer.");
     els.outputPermissionText.textContent = "Output-location preflight passed.";
     return locationPreflight.effective;
   }
@@ -3767,14 +3767,14 @@
       const tab = await activeTab();
       let ping;
       try { ping = await chrome.tabs.sendMessage(tab.id, { type: "DAC_PING" }); }
-      catch (_) { return { ok: false, code: "CHATGPT_RECEIVER_UNAVAILABLE", message: "Gemini receiver is unavailable.", guidance: "Reload the active normal Gemini conversation, then retry Check Plan." }; }
-      if (ping?.securityBlocker) return { ok: false, code: "CHATGPT_SECURITY_BLOCKER", message: `Security blocker: ${ping.securityBlocker}`, guidance: "Resolve the security warning in Gemini before running." };
-      if (ping?.generationLimitBlocker) return { ok: false, code: "CHATGPT_GENERATION_LIMIT", message: `Generation limit: ${ping.generationLimitBlocker}`, guidance: "Gemini has stopped generating images for now. Wait for the limit to reset (or upgrade/switch account), then retry Check Plan." };
+      catch (_) { return { ok: false, code: "CHATGPT_RECEIVER_UNAVAILABLE", message: "Flow receiver is unavailable.", guidance: "Reload the active Flow project tab, then retry Check Plan." }; }
+      if (ping?.securityBlocker) return { ok: false, code: "CHATGPT_SECURITY_BLOCKER", message: `Security blocker: ${ping.securityBlocker}`, guidance: "Resolve the security warning in Flow before running." };
+      if (ping?.generationLimitBlocker) return { ok: false, code: "CHATGPT_GENERATION_LIMIT", message: `Generation limit: ${ping.generationLimitBlocker}`, guidance: "Flow has stopped generating videos for now. Wait for the credit budget to reset (or upgrade/switch account), then retry Check Plan." };
       if (!ping?.composerFound) return { ok: false, code: "CHATGPT_COMPOSER_UNAVAILABLE", message: "Flow composer is not available.", guidance: "Open a normal conversation with a visible composer, then retry Check Plan." };
-      if (ping.generating || ping.busy) return { ok: false, code: "CHATGPT_BUSY", message: "Gemini is generating or busy.", guidance: "Wait until Gemini is idle, then retry Check Plan." };
+      if (ping.generating || ping.busy) return { ok: false, code: "CHATGPT_BUSY", message: "Flow is generating or busy.", guidance: "Wait until Flow is idle, then retry Check Plan." };
       return { ok: true, tabId: tab.id };
     } catch (error) {
-      return { ok: false, code: "CHATGPT_NOT_CONNECTED", message: error.message, guidance: "Open or activate a normal Gemini conversation, then retry Check Plan." };
+      return { ok: false, code: "CHATGPT_NOT_CONNECTED", message: error.message, guidance: "Open or activate a Flow project tab, then retry Check Plan." };
     }
   }
 
@@ -4575,14 +4575,14 @@
         update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), persistence_verified: true, detected_not_downloaded: false, result_file: accepted.filename, result_download_id: accepted.download_id ?? "", output_saved_at: outputSavedAt, write_outcome: accepted.write_outcome || "written", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
         state.verifiedImageFiles.push(accepted.filename);
         audit("OUTPUT_SAVED", item, { message: `write_outcome=${accepted.write_outcome || "written"}` });
-        item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image checkpoint recorded; waiting for Gemini to become idle.");
+        item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Video checkpoint recorded; waiting for Flow to become idle.");
         renderQueue(); progress(`SAVED ✓ ${accepted.filename}`);
       }
     } catch (error) {
       return resolveJobFailure(item, persistenceFailureType(error), messageOf(error), settings);
     }
     try {
-      item.runtime_stage = "FINALIZING / WAITING_IDLE"; setCurrent(item, item.runtime_stage, "No new prompt can start until Gemini is idle.", item.settings.timeout_sec);
+      item.runtime_stage = "FINALIZING / WAITING_IDLE"; setCurrent(item, item.runtime_stage, "No new prompt can start until Flow is idle.", item.settings.timeout_sec);
       await waitForChatReady(item);
       item.phase = "CHAT_READY"; audit("CHAT_READY", item);
       item.phase = "SUCCESS";
@@ -4625,13 +4625,13 @@
   async function gateNextJob(item) {
     item.status = "RECONCILING"; item.phase = "PRE_SUBMIT";
     item.runtime_stage = "WAITING_READY";
-    setCurrent(item, item.runtime_stage, "Checking Gemini readiness before prompt submission.", item.settings.timeout_sec);
-    nextTask(nextEligible(item.job.id), "Awaiting Gemini readiness confirmation.");
+    setCurrent(item, item.runtime_stage, "Checking Flow readiness before prompt submission.", item.settings.timeout_sec);
+    nextTask(nextEligible(item.job.id), "Awaiting Flow readiness confirmation.");
     update(item, { status: "RECONCILING", attempt_phase: item.phase, failure_type: "", last_error: "", error: "" });
-    audit("RECONCILE_START", item, { message: "Pre-submit Gemini readiness gate." }); renderQueue();
+    audit("RECONCILE_START", item, { message: "Pre-submit Flow readiness gate." }); renderQueue();
     try {
       await waitForChatReady(item);
-      audit("RECONCILE_RESULT", item, { message: "Gemini is idle and ready." });
+      audit("RECONCILE_RESULT", item, { message: "Flow is idle and ready." });
       return { ok: true };
     } catch (error) {
       return { ok: false, failureType: window.DacRunnerCore.classifyFailure(error, "PRE_SUBMIT"), message: messageOf(error) };
@@ -4815,7 +4815,7 @@
     const item = state.currentItem;
     if (!item || message.job_id !== item.job.id || message.attempt_id !== item.attempt_id) return false;
     item.runtime_stage = message.stage;
-    setCurrent(item, message.stage, message.stage === "GENERATING" ? "Gemini is generating; no next prompt will be sent." : "Live stage update from the Gemini receiver.", item.settings.timeout_sec);
+    setCurrent(item, message.stage, message.stage === "GENERATING" ? "Flow is generating; no next prompt will be sent." : "Live stage update from the Flow receiver.", item.settings.timeout_sec);
     renderQueue(); progress(`${item.job.id}: ${message.stage}.`);
     return false;
   });

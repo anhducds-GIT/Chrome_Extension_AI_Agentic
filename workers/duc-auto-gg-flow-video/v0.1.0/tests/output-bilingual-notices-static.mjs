@@ -14,7 +14,7 @@ for (const term of ["Artifact", "Jobs completed", "Persistence", "Persistence ve
   assert.ok(outputTerms.some((entry) => entry.term === term), `${term} has an Output-specific definition`);
 }
 assert.match(outputTerms.find((entry) => entry.term === "Jobs completed").detail, /không tự chứng minh các artifact đã được lưu/i);
-assert.match(outputTerms.find((entry) => entry.term === "Artifact persistence failed").detail, /phần tạo ảnh có thể đã hoàn tất/i);
+assert.match(outputTerms.find((entry) => entry.term === "Artifact persistence failed").detail, /phần tạo video có thể đã hoàn tất/i);
 assert.match(html, /id="outputConceptsCard"[\s\S]*?id="outputGlossary"/, "Output has a dedicated contextual glossary");
 assert.match(source, /function renderOutputGlossary\(\)/);
 

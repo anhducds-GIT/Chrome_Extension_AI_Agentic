@@ -20,8 +20,8 @@
       title: "Security hard stop",
       codes: Object.freeze(["SECURITY_HARD_STOP"]),
       retry: "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",
-      meaning: "Gemini is asking for a CAPTCHA, human verification, or has flagged unusual activity. (Gemini yêu cầu CAPTCHA, xác minh con người, hoặc báo hoạt động bất thường.)",
-      action: "Open the Gemini tab yourself, complete the CAPTCHA/verification, and wait until the composer works normally again. Then Check Plan and Continue Run. Do not try to bypass it, and do not resend the job before the warning clears. (Mở đúng tab Gemini, tự hoàn tất CAPTCHA/xác minh, chờ composer hoạt động bình thường trở lại. Sau đó Check Plan rồi Continue Run. Không cố bypass, không gửi lại job trước khi cảnh báo biến mất.)"
+      meaning: "Flow is asking for a CAPTCHA, human verification, or has flagged unusual activity. (Flow yêu cầu CAPTCHA, xác minh con người, hoặc báo hoạt động bất thường.)",
+      action: "Open the Flow tab yourself, complete the CAPTCHA/verification, and wait until the composer works normally again. Then Check Plan and Continue Run. Do not try to bypass it, and do not resend the job before the warning clears. (Mở đúng tab Flow, tự hoàn tất CAPTCHA/xác minh, chờ composer hoạt động bình thường trở lại. Sau đó Check Plan rồi Continue Run. Không cố bypass, không gửi lại job trước khi cảnh báo biến mất.)"
     }),
     Object.freeze({
       title: "Generation limit reached",
@@ -34,8 +34,8 @@
       title: "Receiver lost",
       codes: Object.freeze(["RECEIVER_LOST"]),
       retry: "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",
-      meaning: "The extension lost its connection to the Gemini tab, composer, or content receiver. (Extension mất kết nối với tab Gemini, composer, hoặc content receiver.)",
-      action: "Reload the correct Gemini tab, wait for the composer to become available, then Check Plan and Continue Run. This stays a hard stop on purpose: if the tab is genuinely gone, auto-retrying would just fail every remaining job in the queue back-to-back without producing anything. (Tải lại đúng tab Gemini, chờ composer sẵn sàng, rồi Check Plan và Continue Run. Đây vẫn là hard stop có chủ đích: nếu tab thật sự mất, tự động retry sẽ chỉ khiến mọi job còn lại trong queue fail liên tục mà không tạo được ảnh nào.)"
+      meaning: "The extension lost its connection to the Flow tab, composer, or content receiver. (Extension mất kết nối với tab Flow, composer, hoặc content receiver.)",
+      action: "Reload the correct Flow tab, wait for the composer to become available, then Check Plan and Continue Run. This stays a hard stop on purpose: if the tab is genuinely gone, auto-retrying would just fail every remaining job in the queue back-to-back without producing anything. (Tải lại đúng tab Flow, chờ composer sẵn sàng, rồi Check Plan và Continue Run. Đây vẫn là hard stop có chủ đích: nếu tab thật sự mất, tự động retry sẽ chỉ khiến mọi job còn lại trong queue fail liên tục mà không tạo được video nào.)"
     }),
     Object.freeze({
       title: "Attempt ID mismatch",
@@ -55,7 +55,7 @@
       title: "Readiness timeout after save",
       codes: Object.freeze(["READINESS_TIMEOUT_AFTER_SAVE"]),
       retry: "Yes, then skip if still stuck (Có, tự động thử lại; nếu vẫn kẹt thì bỏ qua)",
-      meaning: "The image was already saved, but Gemini didn't return to a ready state within the allowed time. (Ảnh đã được lưu nhưng Gemini không trở lại trạng thái sẵn sàng trong thời gian cho phép.)",
+      meaning: "The video was already saved, but Flow didn't return to a ready state within the allowed time. (Video đã được lưu nhưng Flow không trở lại trạng thái sẵn sàng trong thời gian cho phép.)",
       action: "The batch does not stop. Note this one retries the same way as every other code here -- by submitting a fresh prompt -- even though an image was already saved; if that retry also succeeds, its newly saved image becomes this job's recorded result and the earlier saved file is left on disk, just no longer the one tracked in the ledger. If you specifically want to keep the first saved image and only wait longer for readiness instead, say so and this can be special-cased. (Batch không dừng. Lưu ý case này vẫn retry theo đúng cơ chế chung -- gửi lại một prompt mới -- dù ảnh trước đó đã lưu; nếu lần thử lại cũng thành công, ảnh mới sẽ trở thành kết quả được ghi nhận cho job này, còn file ảnh cũ vẫn nằm trên ổ đĩa nhưng không còn được ledger theo dõi nữa. Nếu bạn muốn giữ đúng ảnh đầu tiên và chỉ chờ readiness lâu hơn thay vì gửi lại prompt, báo lại để xử lý riêng case này.)"
     }),
     Object.freeze({
@@ -69,7 +69,7 @@
       title: "Download failed",
       codes: Object.freeze(["DOWNLOAD_FAILED"]),
       retry: "Yes, then skip if still failing (Có, tự động thử lại; nếu vẫn lỗi thì bỏ qua)",
-      meaning: "An output was detected on Gemini, but downloading or writing the image file failed. (Đã phát hiện output nhưng tải hoặc ghi file ảnh thất bại.)",
+      meaning: "An output was detected on Flow, but downloading or writing the video file failed. (Đã phát hiện output nhưng tải hoặc ghi file video thất bại.)",
       action: "The batch does not stop. This retries with a fresh prompt submission, up to your configured retry limit; if saving keeps failing, the job is marked FAILED and skipped -- worth checking disk space, folder permissions, or Output destination afterward so the next attempt (Run Failed) actually lands. (Batch không dừng. Job được gửi lại prompt theo số lần cấu hình; nếu vẫn không lưu được, job bị đánh dấu FAILED và bỏ qua -- nên kiểm tra dung lượng ổ đĩa, quyền thư mục, hoặc Output destination sau đó để lần Run Failed tiếp theo lưu được.)"
     }),
     Object.freeze({
@@ -105,7 +105,7 @@
     code: "HALT_UNKNOWN",
     retry: "Unknown -- treat as a hard stop until reviewed (Không xác định -- coi như hard stop cho tới khi được kiểm tra)",
     meaning: "The extension stopped, but this state doesn't map to a known Halt code yet. (Extension đã dừng nhưng không ánh xạ được trạng thái này vào danh mục Halt hiện tại.)",
-    action: "Leave the Gemini tab as-is and do not resend the job. Open Technical details, note the exact error code and message, check whether the prompt was submitted / an output appeared, then decide whether to continue or Recreate. (Giữ nguyên tab Gemini và không gửi lại job. Mở Technical details, ghi lại mã lỗi cùng nội dung Chi tiết ghi nhận, kiểm tra prompt đã submit/output đã xuất hiện hay chưa, rồi mới quyết định tiếp tục hoặc Recreate.)"
+    action: "Leave the Flow tab as-is and do not resend the job. Open Technical details, note the exact error code and message, check whether the prompt was submitted / an output appeared, then decide whether to continue or Recreate. (Giữ nguyên tab Flow và không gửi lại job. Mở Technical details, ghi lại mã lỗi cùng nội dung Chi tiết ghi nhận, kiểm tra prompt đã submit/output đã xuất hiện hay chưa, rồi mới quyết định tiếp tục hoặc Recreate.)"
   });
 
   function coveredFailureCodes() {

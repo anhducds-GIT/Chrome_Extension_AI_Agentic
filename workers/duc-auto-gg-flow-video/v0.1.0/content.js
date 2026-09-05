@@ -176,7 +176,7 @@
 
   function securityBlockerText() {
     const text = (document.body?.innerText || "").toLowerCase();
-    return ADAPTER.securityBlockerPattern.test(text) ? "Gemini security/interstitial blocker detected." : null;
+    return ADAPTER.securityBlockerPattern.test(text) ? "Flow security/interstitial blocker detected." : null;
   }
 
   // Image-generation quotas gate submission the same way security blockers do,
@@ -225,8 +225,8 @@
   function generationLimitText() {
     const providerBlocker = ADAPTER.generationLimitBlocker?.(document);
     if (providerBlocker) return providerBlocker;
-    if (quotaAnchorPresent()) return "Gemini image generation quota reached (freemium quota disclaimer present).";
-    return matchesGenerationLimit(quotaPageText()) ? "Gemini image generation limit reached for now." : null;
+    if (quotaAnchorPresent()) return "Flow video generation quota reached (freemium quota disclaimer present).";
+    return matchesGenerationLimit(quotaPageText()) ? "Flow video generation limit reached for now." : null;
   }
 
   // Generating signal (evidence snapshot 2): Stop button visible OR
@@ -1036,8 +1036,8 @@
       // false-match): the freemium DOM anchor is unambiguous; the phrase
       // fallback runs only against the new message this attempt produced --
       // not the whole page, so an unrelated older turn can't trigger it.
-      if (!generating && quotaAnchorPresent()) throw new Error("LIMIT_STOP: Gemini image generation quota reached (freemium quota disclaimer present).");
-      if (resultMessage && !generating && matchesGenerationLimit(text)) throw new Error("LIMIT_STOP: Gemini image generation limit reached for now.");
+      if (!generating && quotaAnchorPresent()) throw new Error("LIMIT_STOP: Flow video generation quota reached (freemium quota disclaimer present).");
+      if (resultMessage && !generating && matchesGenerationLimit(text)) throw new Error("LIMIT_STOP: Flow video generation limit reached for now.");
 
       // Evaluate on every poll, including while generating, so a timeout can
       // explain whether generation state or attribution rejected the image.
@@ -1362,7 +1362,7 @@
     // vô dụng xuống dưới rồi để nó chết với thông điệp khó hiểu: dừng ngay ở
     // đây, nói rõ vì sao.
     if (String(verified.candidate.source || "").startsWith("blob:")) {
-      throw new Error("RECONCILE_BLOB_UNSUPPORTED: ảnh trên trang đang là blob: nên đường đối chiếu thủ công chưa tải được. Chờ Gemini đổi sang link lh3 rồi thử lại, hoặc dùng Recreate.");
+      throw new Error("RECONCILE_BLOB_UNSUPPORTED: ảnh trên trang đang là blob: nên đường đối chiếu thủ công chưa tải được. Chờ Flow đổi sang link trực tiếp rồi thử lại, hoặc dùng Recreate.");
     }
     return {
       type: "image",

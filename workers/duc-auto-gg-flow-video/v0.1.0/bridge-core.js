@@ -532,7 +532,7 @@
 
   const METHOD_ENTRIES = [
     registryEntry({ name: "session.hello", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Negotiate protocol version and report current layer availability.", params_schema: { supported_versions: "positive_integer[]" }, params_validator: validateSessionHello }),
-    registryEntry({ name: "system.ping", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Report fresh extension, executor, Gemini, and workbook availability.", params_schema: {}, params_validator: validateEmptyParams }),
+    registryEntry({ name: "system.ping", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Report fresh extension, executor, Flow, and workbook availability.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "system.capabilities", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Describe the immutable v1 method and policy surface.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "queue.list", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a page of active logical queue jobs.", params_schema: { cursor: "string|null", limit: "integer:1..100", statuses: "code[]", include_prompt: "boolean" }, params_validator: validateQueueList }),
     registryEntry({ name: "run.status", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read current run state without changing it.", params_schema: {}, params_validator: validateEmptyParams }),
@@ -567,7 +567,7 @@
     // giết content script và attempt đang bay, làm mất quota đã tiêu và có nguy
     // cơ gửi lại đúng prompt đó lần thứ hai. Cặp này dùng nối tiếp nhau, không
     // bao giờ chồng lên nhau.
-    registryEntry({ name: "chat.reload", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reload the Gemini tab (F5) and wait until its content script answers again before replying. Refused with RUN_ACTIVE while a run is live, because a reload would kill an in-flight attempt and risk resubmitting a prompt: call run.stop first. Reports ready plus the tab id and the URL before and after, since the tab is resolved as the active tab at call time.", params_schema: {}, params_validator: validateEmptyParams })
+    registryEntry({ name: "chat.reload", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reload the Flow tab (F5) and wait until its content script answers again before replying. Refused with RUN_ACTIVE while a run is live, because a reload would kill an in-flight attempt and risk resubmitting a prompt: call run.stop first. Reports ready plus the tab id and the URL before and after, since the tab is resolved as the active tab at call time.", params_schema: {}, params_validator: validateEmptyParams })
   ];
   const METHOD_REGISTRY = (() => {
     const registry = Object.create(null);
