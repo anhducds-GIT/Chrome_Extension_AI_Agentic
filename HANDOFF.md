@@ -3166,3 +3166,22 @@ Suite gốc XANH. Cổng đóng phiên XANH TOÀN BỘ. Chưa chạy live. **Kh�
 không phá một chốt nào; ② `targets.list` đi ngoài sender đã bọc. Điểm ② ở **lớp nối dây** nay đã
 có ghim: phép ghim ④ chứng minh nhánh đó không gửi một lệnh debugger nào. Điểm ① còn nguyên.
 Chính sách che dữ liệu vẫn là **ĐỀ XUẤT, Đức chưa chốt**.
+
+## 2026-09-06 — `claude-assistant` (điều phối) — đóng lượt: đẩy 7 commit, trả 6 khoá
+
+**Làm gì.** Chạy cổng đóng phiên (XANH TOÀN BỘ, 15 suite, 0 fail), đẩy **7 commit**, trả **6
+khoá**: `_docs` `_code` `_root` `workers/duc-auto-{chatgpt,gemini,gg-flow-video}`. Bảng quyền
+nay **trống hoàn toàn**.
+
+**Đẩy kèm (`--carry`) — kể tên theo luật ADR-0005.** Lượt này cuốn theo commit chưa đẩy của
+`claude-observer-b` (1 commit: `475cb2c` nối bốn phép dò vào observer-engine) và
+`claude-handoff-cat` (1 commit: `6733065` cắt đuôi ba HANDOFF worker).
+
+**Trả khoá SAU khi đẩy**, đúng luật mục 1 vừa sửa hôm nay — không lane nào để lại commit vô chủ.
+
+**Còn mở, xếp theo thứ tự làm.** ① Vá 6 phát hiện Codex trong `AUDIT-OBSERVER-PROBES-CODEX-01`,
+ưu tiên kênh rò tiền tố `input[value^="a"]` + `matchCount`. ② Cắt đuôi `HANDOFF.md` **gốc**
+(251 KB, 171 mục — file đắt nhất còn lại; ADR-0008 đã duyệt cơ chế). ③ Luật `git commit -o`
+vào hiến pháp. ④ Dựng lại lỗ cổng trả khoá lúc chặn lúc không. ⑤ **Chờ Đức 8 việc** — rẻ nhất
+là nghiệm thu `B-16` (miễn phí: reload extension, gọi `jobs.add` với token ảnh chưa nạp, kỳ
+vọng `VALIDATION_FAILED` chứ không phải `INTERNAL_ERROR`). ⑥ Còn **46 mục nợ**.
