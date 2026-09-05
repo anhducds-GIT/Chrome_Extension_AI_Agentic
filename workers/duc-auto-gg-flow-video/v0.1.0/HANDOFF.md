@@ -1137,3 +1137,65 @@ trường, có dấu (luật vàng 5), và thêm `human_action`.
   F-26 lẫn khối `loop` mới. Hỏng thì vẫn **0 credit**.
 - Khối `loop` **chưa được kiểm live** — mọi khẳng định trên đây là test + đọc code, chưa có bằng
   chứng từ trang thật.
+
+## 2026-09-05 — `claude-flow-no`: F-06 nửa đầu đóng, và đột biến kiểm bắt được một bẫy xuống dòng
+
+**Nối lại một phiên bị ngắt.** Phiên trước cùng tên để lại 18 file sửa dở cho F-06 (rebrand chữ
+hiển thị) kèm một câu: *"96/96 green. Now the mutation check for F-06."*
+
+**Câu đó sai.** Chạy lại suite: **95/96**. Chính phép kiểm quét-chuỗi mà phiên trước vừa viết đang
+đỏ, vì `halt-instructions-core.js` còn đúng một chỗ: nửa tiếng Anh của `SECURITY_HARD_STOP` đã đổi
+sang "Open the Flow tab" nhưng nửa tiếng Việt trong cùng chuỗi vẫn nói "Mở đúng tab Gemini". Sửa
+một chỗ, xanh 96/96. **Đây là lý do luật vàng 4 tồn tại** — báo cáo "xong" của một phiên AI khác
+(kể cả phiên trước của chính mình) không phải bằng chứng.
+
+### F-06 nửa "Gemini → Flow": XONG
+
+Commit `914643b`. 11 file nguồn + 7 file test. Chữ "Gemini" còn lại trong gói **chỉ ở chú thích** —
+đó là lịch sử nhánh và đúng chỗ của nó; phép kiểm cố ý chỉ soi chuỗi.
+
+Phần đáng đọc nhất không phải việc đổi chữ, mà là phiên trước **đã đọc lại và sửa một hiểu sai
+của bản 02/09**: bản cũ tin rằng cụm `image generation limit` là thứ giữ phán quyết hết-credit,
+nên ghim cứng nguyên câu tiếng Anh. Đọc lại từng chỗ ném thì **không phải** — cả 8 đường đều gắn
+tiền tố `LIMIT_STOP:`, và `LIMIT_STOP` là nhánh ĐẦU TIÊN của `classifyFailure`. Chuỗi trần chưa
+bao giờ tới bộ phân loại một mình. Phép kiểm nay canh **cả 8 đường ném**, có đếm số, thay vì canh
+một từ trong một câu mẫu. Chặt hơn bản cũ.
+
+**Còn mở: nửa "ảnh → video".** [ĐO 05/09] 46 chuỗi JS + 10 lần trong `sidepanel.html`. Không phải
+tất cả đều là nợ — ảnh **tham chiếu đầu vào** trên Flow vẫn đúng là ảnh, nên phải đọc từng chỗ,
+đừng thay hàng loạt. Chi tiết ở mục F-06 của `BACKLOG.md`.
+
+### Đột biến kiểm: 6/6 bị bắt
+
+| # | Phá gì | Kết quả |
+|---|---|---|
+| M1 | `sidepanel.js`: "Flow must be reachable" → "Gemini…" | ĐỎ |
+| M2 | `sidepanel.html`: nhãn "Flow connection" → "Gemini connection" | ĐỎ |
+| M3 | `content.js`: bỏ tiền tố `LIMIT_STOP:` ở một chỗ ném | ĐỎ |
+| M4 | Từ điển: "Waiting for Flow ready" → "…Gemini ready" | ĐỎ (3 phép kiểm) |
+| M5 | Từ điển: "phần tạo video" → "phần tạo ảnh" (nửa ảnh→video) | ĐỎ |
+| M6 | `content.js`: bỏ `\|\| remoteVerifiedResult` ở dòng `ready` | ĐỎ |
+
+### Cái bẫy mà đột biến kiểm lôi ra — và nó không liên quan gì tới F-06
+
+Bước khôi phục sau mỗi lượt phá là `git checkout -- <file>`. Sau lượt M3, suite **đỏ ở một phép
+kiểm tôi chưa hề chạm** (`content-image-static.mjs`), và `git diff` nói **không có gì đổi**.
+
+Gốc bệnh: blob của `content.js` trong git là **CRLF**, còn bản trên đĩa của các phiên cũ là **LF**.
+`git checkout` trả về CRLF. Phép kiểm đó đòi `,\n` sát nhau, nên nó **xanh ở máy đang làm dở** mà
+**đỏ ngay sau một `git checkout`** — hoặc trên một bản clone mới. Không dòng mã nào đổi, chỉ xuống
+dòng đổi.
+
+Đo cho hết: ép CRLF **cả gói** rồi chạy suite → đúng **một** phép kiểm đỏ. Đã nới thành `\r?\n`
+(commit `b5bf0e1`), chạy lại suite **cả hai chiều** — 96/96 mỗi chiều — rồi đột biến kiểm lại
+(M6 ở trên) để chắc việc nới không làm mất răng.
+
+**Còn mở, không phải việc của gói này:** repo không có `.gitattributes` cho `.js`, nên
+`core.autocrlf=true` quyết tất. Vá đúng chỗ là ở gốc repo (khoá `_root`) và nó viết lại xuống dòng
+của **mọi** file — **cần Đức chốt**. Hai gói kia chưa được soi; cách soi rẻ nhất là ép CRLF cả gói
+rồi chạy suite.
+
+### Chưa làm
+
+**F-08** (đo và đặt lại timeout runner cho video — hiện kế thừa 90s/job của nhánh Gemini, video
+cần nhiều phút) **chưa động tới**. Vẫn nguyên trong `BACKLOG.md`.

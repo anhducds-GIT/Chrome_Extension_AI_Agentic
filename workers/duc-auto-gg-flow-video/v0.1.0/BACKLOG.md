@@ -16,7 +16,9 @@
 > - **F-04 XONG** — `MAX_TRIAL_JOBS = 7` (trần 30 của nhánh ảnh đã bỏ; con số 7 nay tính theo
 >   ngân sách một tài khoản, xem F-22).
 > - **F-05 XONG** — không còn chỗ nào `bootstrap_locked` trong router.
-> - **F-03, F-06, F-07, F-08, F-10: CHƯA RÀ.** F-06 đã trả một phần (xem F-19, F-23).
+> - **F-06 XONG NỬA ĐẦU** (05/09) — nửa "Gemini → Flow" đã đóng và có phép kiểm canh;
+>   nửa "ảnh → video" còn mở, đã đo. Xem chính mục F-06.
+> - **F-03, F-07, F-08, F-10: CHƯA RÀ.**
 
 - **F-01** · **XONG 02/09** (9 file `evidence/F1-snapshot-*.json`) — Chụp bằng chứng DOM trang Flow (4 snapshot: nghỉ / đang sinh / có video /
   màn nhập prompt) qua `diagnostics.dom_probe`, lưu `evidence/`. [ĐỌC] — dom_probe là
@@ -36,8 +38,24 @@
   `FORBIDDEN/bootstrap_locked` (failure-semantics, loopback-integration,
   mv3-reconnect, references-add, router-smoke) — đặc biệt là coverage
   idempotent-retry của queue.propose trong loopback-integration [ĐỌC diff Codex 27/08].
-- **F-06** · Rebrand chữ hiển thị: sidepanel còn nói "Gemini" nhiều chỗ [DÒ]; lời nhắn
-  operator nhắc "ảnh" phải thành "video" ở các đường chạy thật.
+- **F-06** · **NỬA "Gemini → Flow": XONG 05/09** (`claude-flow-no`, `914643b`). Mọi chuỗi
+  operator nhìn thấy đã hết chữ "Gemini" — 11 file nguồn + 7 file test. Chữ "Gemini" còn lại
+  trong gói **chỉ nằm ở chú thích** (lịch sử nhánh, đúng chỗ của nó), và phép kiểm cố ý chỉ
+  soi chuỗi chứ không soi chú thích.
+  **Canh bằng** `tests/error-strings-load-bearing.mjs`: quét chuỗi ở 10 file mang chữ operator
+  cộng cả `sidepanel.html`; một chuỗi nói "Gemini" là ĐỎ. Cùng lượt đó phép kiểm này được viết
+  lại theo hướng **cấu trúc**: bản 02/09 tin rằng cụm `image generation limit` giữ phán quyết
+  hết-credit, đọc lại từng chỗ ném thì **không phải** — cả 8 đường đều gắn tiền tố `LIMIT_STOP:`
+  và đó mới là thứ chịu tải. Nay canh cả 8 đường, có đếm số. Suite 96/96, đột biến kiểm **6/6**.
+  **CÒN MỞ — nửa "ảnh → video".** [ĐO 05/09] còn **46 chuỗi JS** (`sidepanel.js` 13 ·
+  `operator-messages-core.js` 13 · `halt-instructions-core.js` 8 · `operator-glossary-core.js` 7 ·
+  `content.js` 3 · hai chỗ lẻ) và **10 lần trong `sidepanel.html`** còn nói "ảnh".
+  **Không phải tất cả đều là nợ:** ảnh **tham chiếu đầu vào** trên Flow vẫn đúng là ảnh
+  (`MAX_INPUT_IMAGES`, `MISSING_REFERENCES`, `DUPLICATE_REFERENCE`, `UNUSED_REFERENCES`) —
+  phải đọc từng chỗ, đừng thay hàng loạt. Chỉ chỗ nói về **đầu ra** mới phải thành "video".
+  Đo lại (đếm cả chú thích nên **cao hơn** con số trên, dùng để xem còn hay hết, không
+  dùng để báo cáo): `grep -c "ảnh" *.js sidepanel.html`.
+  **Đọc `F-20` trước khi chạm bất kỳ câu báo lỗi nào ở nửa này.**
 - **F-07** · Mở rộng schema XLSX cho video (duration, model, aspect ratio…) — sửa
   `DAC_XLSX_RUN_PLAN_V1.md` thành bản V2 có cột video, giữ tương thích cột cũ.
 - **F-08** · Đo và đặt lại timeout runner cho video (Gemini: 90s/job — video cần
@@ -422,3 +440,19 @@ Chỉ mở lại nếu có bằng chứng thật là extension nhường alarm q
 
   **Còn mở, nhỏ:** các worker khác (`duc-auto-gemini`, `duc-auto-chatgpt`) chưa được soi xem có
   dính cùng bẫy locale không — chưa gặp thật, và mỗi gói có chủ riêng.
+
+### Xuống dòng CRLF làm vỡ phép kiểm tĩnh — **[ĐO 05/09]**, đã vá ở gói này, còn mở ở gói khác
+
+Blob của `content.js` trong git là **CRLF**; bản trên đĩa của các phiên cũ là **LF**. Nên một
+phép kiểm tĩnh đòi `,\n` sát nhau sẽ **XANH ở máy đang làm dở** mà **ĐỎ ngay sau một
+`git checkout content.js`** — hoặc trên một bản clone mới. Không dòng mã nào đổi, chỉ xuống dòng.
+
+Gặp thật trong lượt đột biến kiểm F-06: câu lệnh khôi phục biến bốn file thành CRLF và suite đỏ.
+Ép CRLF cả gói thì đúng **một** phép kiểm đỏ — `content-image-static.mjs` dòng 130 — đã nới thành
+`\r?\n` và chạy lại suite **cả hai chiều**, 96/96 mỗi chiều.
+
+**Còn mở, không phải việc của gói này:** gốc bệnh là repo không có `.gitattributes` cho `.js`
+(chỉ có một dòng cho `DASHBOARD.md`), nên `core.autocrlf=true` quyết định tất cả. Vá đúng chỗ là
+thêm `* text=auto eol=lf` ở gốc — mà đó là khoá `_root`, và nó sẽ **viết lại xuống dòng của mọi
+file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemini`, `duc-auto-chatgpt`) chưa
+được soi xem có phép kiểm nào cùng bệnh không; cách soi rẻ nhất là ép CRLF cả gói rồi chạy suite.
