@@ -455,3 +455,32 @@ thu được video**. Đo được bằng `dom_probe` trên một dự án đã 
 **Chưa xong:** phải đo F-29 TRƯỚC lượt live, không phải sau.
 
 **Day kem `--carry`** (ADR-0005). Luot `86f150d..9d584da`, 15 commit, 2 cua toi; lane bi cuon theo: `claude-assistant` · `claude-gemini-hoan-thien` · `claude-hang-doi`.
+
+## 2026-09-06 — `claude-flow-active`: vào được nhà mới, và thấy đồ đạc đã dọn hết
+
+Đức nạp lại tiện ích, F5 tab, mở panel ở hồ sơ `kaito`. `dom_probe` thật, 0 credit.
+Bằng chứng: `evidence/F31-dom-probe-flow-google-com-20260906.json`.
+
+**Bản vá địa chỉ ăn:** `url` trả về `https://flow.google.com/project/575b20b1…`,
+`surface: CONVERSATION`, `runtime_contract` đủ. Content script đã vào được trang.
+
+**Nhưng phần biết-về-trang thì phần lớn đã trượt.** Nhà mới là Angular Material + web
+component riêng (`flow-prompt-box`, `flow-rich-text-editor`, `flow-video-tile`):
+ô nhập prompt đếm được **0**, trang **không còn thẻ `<video>` nào**, nút Create còn nhưng
+đổi nhãn thành `Start generation`. Chip cấu hình thì vẫn đọc tốt.
+
+Nên đây không phải sửa vài selector — đây là **làm lại F-02** trên bằng chứng mới. Đã mở
+**F-31 (P1)** kèm bảng cái gì còn / cái gì mất và thứ tự đo bốn bước.
+
+**Một con số được trang tự khai:** `credits_per_output: 6`. Trước nay 6 credit/video là thứ
+tôi suy từ log (42 credit / 7 job); nay không phải suy nữa. Sổ nợ F-22 khai 7 — sai thật.
+
+**F-29 có nửa bằng chứng và nó bác giả thiết của chính mục đó:** ảnh đại diện video nay ở
+`flow.google.com/asb/<mã>`, không còn UUID. Nhưng đó là `<img>`, không phải file video —
+và vì không còn thẻ `<video>`, `videoIdFromSrc` không sai địa chỉ, nó **không có gì để đọc**.
+
+**Nói thẳng về trạng thái gói:** sáng nay tôi tưởng cách `active` một lượt live. Không phải.
+Gói còn xa hơn thế, và mọi con số đo trước 06/09 đều là đo trên một giao diện đã biến mất.
+
+**Chưa làm:** ba phép đo còn lại của F-31 đều cần Đức mở đúng màn hình. Chưa đo xong thì
+chưa viết lại adapter — và tuyệt đối chưa chạy job.

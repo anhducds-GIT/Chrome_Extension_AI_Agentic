@@ -592,3 +592,41 @@ file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemi
   vụ dạng đó. Ngược lại cũng chưa biết nhà mới còn dùng `?hl=` hay đặt ngôn ngữ ở đâu khác.
   **Đóng khi:** một lượt `dom_probe` trên giao diện tiếng Việt của nhà mới cho thấy đường dẫn
   thật, và bộ khớp được ghim theo đúng dạng đo được (chứ không theo dạng chừa sẵn).
+
+- **F-31** · **P1, CHẶN MỌI THỨ — nhà mới không chỉ đổi địa chỉ, nó đổi cả giao diện.**
+  [ĐO 06/09, `dom_probe` thật trên `flow.google.com`, 0 credit — bằng chứng:
+  `evidence/F31-dom-probe-flow-google-com-20260906.json`]
+  Sau khi vá quyền, content script **đã vào được trang** (`surface: CONVERSATION`,
+  `runtime_contract` trả về đủ). Nhưng phần biết-về-trang thì phần lớn đã trượt:
+
+  | Phần | Trên nhà mới |
+  |---|---|
+  | Địa chỉ + quyền | **CHẠY** (vá 06/09) |
+  | `surface()` | **CHẠY** — trả `CONVERSATION` |
+  | Chip cấu hình `generation_mode` | **CHẠY** — đọc đúng `Video · 360p · 8s crop_16_9 x2`, kể cả `credits_per_output: 6` |
+  | Ô nhập prompt | **KHÔNG THẤY** — `[contenteditable="true"][role="textbox"]` đếm được **0** |
+  | Nút Create | Còn, nhưng **đổi nhãn**: `arrow_forward` + aria `Start generation` (cũ: `arrow_forward Create`) |
+  | Phát hiện video sinh ra | **HỎNG HẲN** — `video => 0`, trang không còn thẻ `<video>` nào |
+
+  **Giao diện mới là Angular Material + web component riêng.** `customTags` đo được:
+  `flow-prompt-box` · `flow-base-prompt-box` · `flow-rich-text-editor` · `flow-video-tile` ·
+  `flow-agent-mode-toggle-chip` · `mat-*`. Ô nhập nay là `flow-rich-text-editor`, không phải
+  một `[contenteditable]` trần.
+
+  **Con số đáng giá nhất:** chip cấu hình khai thẳng `credits_per_output: 6`. Trước nay con số
+  6 credit/video là thứ tôi **suy ra** từ log (42 credit / 7 job); nay trang tự nói. Và sổ nợ
+  F-22 khai 7 — sai thật, không phải sai làm tròn.
+
+  **Việc cần làm, theo thứ tự, KHÔNG đoán bước nào:** ① `dom_probe` khi Đức đang ở màn soạn
+  prompt để bắt `flow-rich-text-editor` lúc nó hiện · ② đo nhãn nút Create trên cả giao diện
+  tiếng Việt lẫn tiếng Anh · ③ đo cách nhận video sinh ra (không còn `<video>`) · ④ chỉ khi có
+  đủ ba mới viết lại `provider-adapter.js`. Đây thực chất là **làm lại F-02** trên bằng chứng mới.
+  **Đóng khi:** một job chạy trọn trên `flow.google.com` với bằng chứng trong `evidence/`.
+
+- **F-29 · CẬP NHẬT 06/09 — đã có nửa bằng chứng, và nó bác chính giả thiết của mục.**
+  Ảnh đại diện video trên nhà mới nằm ở `https://flow.google.com/asb/<mã>` (13 ảnh, alt
+  `Generated video thumbnail`) — khác hoàn toàn `labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=<uuid>`,
+  cả host, cả đường dẫn, cả **hình dạng mã** (không còn UUID).
+  Nhưng đó là ảnh `<img>`, **không phải file video**. Và vì trang mới không còn thẻ `<video>`
+  nào, `videoIdFromSrc` không chỉ sai địa chỉ — **nó không có gì để đọc**. Sửa host thôi là vô
+  ích. Mục này nay là một phần của F-31, giữ lại vì phần đo được vẫn đúng.

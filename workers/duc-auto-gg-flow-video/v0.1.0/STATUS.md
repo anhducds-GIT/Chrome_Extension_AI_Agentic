@@ -5,10 +5,10 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "F-29 — đo địa chỉ file video trên trang mới TRƯỚC khi chạy job. Đây là chỗ duy nhất còn trỏ về địa chỉ cũ, và nó chạy SAU cú bấm nên nếu sai thì credit đã tiêu mà không thu được video. Đo bằng một lượt đọc trang, 0 credit, không bấm gì. Cần Đức nạp lại tiện ích rồi mở một dự án đã có video sẵn."
+next_step: "F-31 — ba phép đo còn lại, đều 0 credit và đều cần Đức mở đúng màn hình: ô nhập prompt lúc nó hiện, nhãn nút tạo trên cả hai ngôn ngữ, và cách trang hiển thị video vừa sinh. Đủ ba mới viết lại. TUYỆT ĐỐI chưa chạy job."
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "Google đã dời Flow sang địa chỉ mới flow.google.com — phát hiện 06/09 từ chính nút CHAT ZOOM xám mà Đức báo. Trước khi vá, extension KHÔNG chạy được gì trên trang mới: Chrome không tiêm code vào trang, nên không gõ, không bấm, không đọc được. Đức duyệt thêm địa chỉ mới và giữ luôn địa chỉ cũ. Đã vá quyền, bộ khớp địa chỉ, và ba câu báo lỗi. Suite 98/98, thử phá 7/7 đều bị bắt. Còn đúng một chỗ chưa vá được vì thiếu bằng chứng: chỗ nhận diện file video (F-29)."
-human_action: "Nạp lại tiện ích trong Chrome (bắt buộc, quyền vừa đổi), rồi mở một dự án Flow ĐÃ CÓ video sẵn trên flow.google.com và báo lại. Tôi đọc địa chỉ file video qua Bridge, 0 credit, không bấm gì. Xong bước đó mới tới lượt chạy thật một job."
+current_focus: "Đã vào được trang Flow mới sau khi vá quyền — nhưng đo thật cho thấy Google không chỉ đổi địa chỉ, họ dựng lại cả giao diện. Ô nhập prompt không tìm thấy, trang không còn thẻ video nào, nút tạo đổi tên. Phần đọc cấu hình thì vẫn chạy, và trang tự khai mỗi video tốn 6 credit. Đây là làm lại phần biết-về-trang chứ không phải sửa vài dòng."
+human_action: "Cần Đức chốt một câu trước: có làm lại phần biết-về-trang cho giao diện Flow mới không. Đây là việc lớn, không phải sửa nhỏ, nên tôi không tự quyết. Chốt rồi thì việc của Đức chỉ là mở đúng màn hình cho tôi đo, mỗi lượt vài giây và không tốn credit."
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md
