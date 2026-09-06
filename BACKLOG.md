@@ -140,6 +140,7 @@ sau thì mới phải khai `đóng khi:`.
 - **việc kế:** cho bộ kiểm nhãn lane đòi **đúng dòng cuối**, kèm phép ghim dựng được ca hỏng:
   một commit có `Lane:` ở giữa lời commit thì phải ĐỎ. Cần Đức chốt trước khi sửa — nhãn lane
   là luật attribution, thuộc nhóm phải hỏi
+- @Đức:chốt Nhãn phiên có bắt buộc phải là dòng cuối của lời commit không — đây là luật quy trách nhiệm, thuộc nhóm phải hỏi Đức.
 - **phạm vi khi làm:** bộ kiểm nhãn trong `scripts/safe-push.mjs` + phép ghim của nó.
   **Cấm** sửa lịch sử commit cũ để làm đẹp — commit cũ nằm lẫn với commit của phiên khác,
   viết lại là viết lại việc của họ
@@ -187,6 +188,7 @@ sau thì mới phải khai `đóng khi:`.
 - **bậc:** ý tưởng
 - **nguồn:** brief `STATE-DRIFT-01` mục 1, ca số 2 — đo được 04/09
 - **việc kế:** Đức chốt có làm không; làm thì viết brief riêng cho executor
+- @Đức:chốt Có làm cặp đối chiếu thứ tư cho cổng nhất quán trạng thái không.
 - **vì sao:** brief `STATE-DRIFT-01` liệt kê HAI ca hỏng cùng họ, nhưng Đức cố ý chốt phạm vi
   hẹp còn BA cặp — nên `scripts/state-check.mjs` (đã xong 04/09) bắt được ca 1 (khoá trên máy
   ≠ trên `origin/main`) mà **không** bắt được ca 2: `STATUS.md` của gói ưu tiên #1 ghi F-14
@@ -230,6 +232,7 @@ sau thì mới phải khai `đóng khi:`.
 - **bậc:** ý tưởng
 - **nguồn:** gặp thật 04/09, phiên `claude-exec-orchv2` khi làm vùng CÔNG VIỆC HIỆN TẠI
 - **việc kế:** Đức chốt có thêm một trường vào hồ sơ trạng thái không; chốt rồi mới sửa bộ sinh
+- @Đức:chốt Có thêm một trường vào hồ sơ trạng thái để bảng nói được "bị chặn" và "chờ bằng chứng" không.
 - **vì sao:** Đức nêu năm trạng thái. Ba cái làm được ngay vì có nguồn máy đọc được
   (`CHỜ ĐỨC` · `ĐANG CHẠY` · `XONG`). Hai cái còn lại — **bị chặn** và **chờ bằng chứng** —
   hôm nay repo **không có trường nào** phân biệt được chúng với "đang chạy". Cách duy nhất
@@ -258,6 +261,7 @@ sau thì mới phải khai `đóng khi:`.
 - **nguồn:** đo thật 04/09, phiên `claude-exec-orchv2` — **một lượt sinh bảng tốn ~12 giây**,
   suite gọi nó hơn mười lần
 - **việc kế:** Đức chốt có đáng làm không; làm thì đo trước xem 12 giây đó nằm ở đâu
+- @Đức:chốt Có đáng bỏ công tăng tốc bộ kiểm không, hay chấp nhận cổng đóng phiên chạy hơn hai phút.
 - **vì sao:** mỗi phép ghim mới cần một bản bảng khác là **12 giây cộng thêm vào cổng đóng
   phiên của MỌI phiên sau**. Chuyện đó tạo áp lực ngược lên chất lượng: người viết test sẽ gộp
   fixture lại cho nhanh, và fixture gộp thì một ca có thể che ca khác. Đã phải gộp một lần
@@ -272,6 +276,7 @@ sau thì mới phải khai `đóng khi:`.
 
 - **bậc:** ý tưởng
 - **nguồn:** sự cố thật 2026-09-05, do chính phiên điều phối gây ra
+- @Đức:chốt Có làm cơ chế chặn một phiên gom nhầm file đang sửa dở của phiên khác không.
 - **việc kế:** Đức chốt có làm không; làm thì viết brief riêng
 - **vì sao:** bốn cơ chế đa phiên đều giả định mỗi phiên **chỉ chạm file của mình**. Không cơ
   chế nào cưỡng chế điều đó — chúng kiểm ở **cổng**, tức lúc đóng phiên và lúc push, chứ không
@@ -305,6 +310,7 @@ sau thì mới phải khai `đóng khi:`.
 - **bậc:** ý tưởng
 - **nguồn:** đo thật 2026-09-05, hai lane độc lập cùng bị chặn trong một buổi
 - **việc kế:** Đức chốt có tách khối AUTO của `FEATURE-PARITY.md` thành artifact miễn khoá không
+- @Đức:chốt Có tách phần máy sinh của bảng đối chiếu hai nhánh ra thành artifact miễn khoá không.
 - **hiện tượng:** lane `claude-gpt-no` và lane `claude-flow-no` đều làm xong, cổng đóng phiên
   gần xanh, nhưng **cổng xuất bản từ chối** vì `FEATURE-PARITY.md` lạc hậu so với HEAD. Cả hai
   đều **không tự sửa được**: file đó nằm ở gốc repo nên cần `_root`, mà `_root` đang do lane thứ
@@ -433,6 +439,7 @@ sau thì mới phải khai `đóng khi:`.
 ## N-02 · Đóng một mục là thêm dòng, nhưng chưa có gì gấp sổ lại để biết mục nào còn mở
 
 - **đóng khi:** đức: chốt có cần bảng đếm mục còn mở của sổ này không
+- @Đức:chốt(TACH-SO-Y-TUONG-01) Có cần một chỗ gấp sổ nợ lại để thấy ngay mục nào còn mở không.
 - **mở:** 2026-09-06 · lane `claude-tach-so`
 - **vùng:** `_code`
 - **vì sao:** luật mục 4 làm cửa ra rẻ ngang cửa vào bằng cách đóng mục bằng **một dòng thêm ở

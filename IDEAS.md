@@ -71,6 +71,8 @@ hiển thị sai.
 
 - **chặn thật, chỉ Đức mở được:** ba công tắc trên máy Đức — mở session · chọn thư mục đích ·
   bật chế độ phát triển. Không AI nào làm hộ được.
+- @Đức:bấm Bật ba công tắc trên máy Đức: mở session, chọn thư mục đích, bật chế độ phát triển.
+- @Đức:chốt Chọn việc thật để chạy thử một vòng, và duyệt lượt chạy đó vì nó chạy trên trang thật.
 - **hai giới hạn đã đo, đừng hứa quá:** chờ **5 phút** giữa hai lượt thử (`TRIAL_COOLDOWN_ACTIVE`,
   thật, không đi vòng được) · trần cứng **90 giây** mỗi lượt. Hai vòng vừa rồi **chưa chạm trần**,
   nên câu hỏi đổi luật an toàn về cái trần đó **tự tan** — ai định mở lại phải có ca chạm trần thật.

@@ -5,10 +5,10 @@ name: Extension Observer V0
 lifecycle: idea
 owner: claude
 priority_rank: 4
-next_step: "Quyết định: nuôi tiếp hay cho nghỉ. Nếu nuôi thì chuyển vào workers/observer-v0/v0.1.0/ theo phiên S8; nếu không thì khai archived."
-human_action: "Quyết định Extension Observer V0: nuôi tiếp hay cho nghỉ. Chỉ Đức chốt được."
+next_step: "Kiểm kê năng lực trước khi viết dòng code nào: ba worker đang dùng gì, và trình duyệt cho phép gì mà ta chưa dùng. Bảng kiểm kê đó là tiêu chuẩn nghiệm thu của bản nền."
+human_action: "Ba câu còn treo của Scouter, chỉ Đức chốt được: chính sách che dữ liệu khi ghi báo cáo xuống đĩa, chỗ đặt thư mục trong cây repo, và làm tới bản v0.1 hay đi tiếp lên v1."
 version_source: manifest.json
-current_focus: "Chưa từng chạy pilot nào. Đây là mã quan sát ở gốc repo, còn nằm ngoài cấu trúc workers/ — phiên S8 sẽ chuyển nó vào đúng chỗ."
+current_focus: "Chưa từng chạy pilot nào. Đức đã chốt ngày 06/09 là nuôi tiếp và đổi hướng: Observer thành Scouter, từ cửa quan sát chỉ đọc thành bộ khung tương tác tự hoàn thiện."
 ref_readme: README.md
 ref_handoff: HANDOFF.md
 ---
@@ -22,5 +22,12 @@ chứng vận hành, và không phiên nào đang phát triển nó. Khai `build
 
 **Vì sao không khai `last_verified`.** Không có gì để kiểm chứng — chưa chạy lần nào. Luật
 của repo: khai `last_verified` thì phải có `evidence_ref` trỏ tới bằng chứng thật.
+
+**Ba câu còn treo, chỉ Đức chốt được.** Cả ba đến từ quyết định đổi hướng ngày 06/09
+(`ADR-0009`), và chốt xong thì mở khoá chuỗi kiểm kê năng lực:
+
+- @Đức:chốt(SCOUTER-INVENTORY-01) Chính sách che dữ liệu khi Scouter ghi báo cáo xuống đĩa.
+- @Đức:chốt(SCOUTER-INVENTORY-01) Chỗ đặt thư mục Scouter trong cây repo.
+- @Đức:chốt(SCOUTER-INVENTORY-01) Nhìn bảng kiểm kê rồi quyết làm tới đâu: dừng ở bản v0.1 hay đi tiếp lên v1.
 
 Việc đang mở nằm ở `next_step` phía trên. Nó không chặn ai.
