@@ -149,5 +149,13 @@
     "HANDOFF.md",
     "IDEAS.md",
     "BACKLOG.md"
-  ]
+  ],
+  "_nhom_van_de_doc": "NHOM VAN DE — danh sach CO DINH, dung cho khoi 'Dang lam gi' o bang trang thai (BRIEF-BANG-DANG-LAM-01, Duc neu 06/09). Moi muc trong `BACKLOG.md` / `IDEAS.md` khai mot dong `- **nhom:** <ma>`; bang tra ma sang ten tieng Viet o day roi long cac luong dang chay theo nhom. Vi sao co dinh va vi sao o day: mot phan loai moc tu do thi sau ba tuan co 19 nhom cho 19 muc, tuc la khong phan loai gi ca. Ma la (khong nam trong danh sach) KHONG lang le thanh nhom moi — no roi ve 'Chua xep nhom', y het muc khong khai gi. Them mot nhom = sua o day, dung sua script.",
+  "nhom_van_de": {
+    "bang": "Bảng trạng thái nói sai hoặc nói thiếu",
+    "cong": "Cổng kiểm và phép ghim — độ tin của cổng",
+    "song-song": "Nhiều phiên chạy song song giẫm chân nhau",
+    "so-sach": "Sổ sách và chữ cho Đức đọc",
+    "nen": "Nền repo — môi trường, tốc độ, thói quen công cụ"
+  }
 }

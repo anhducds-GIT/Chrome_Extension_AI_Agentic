@@ -1446,6 +1446,14 @@ export function createHeadDeps(root = ROOT) {
       headSha: moc,
       shortHead: () => git("rev-parse", "--short", moc()).trim(),
       headDate: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", moc()).trim(),
+      /* MỐC SINH BẢNG, có GIỜ và PHÚT. Cùng nguồn với `headDate`, chỉ khác độ mịn.
+       *
+       * Vì sao cần độ mịn tới phút: khối "đang làm gì" phải nói được "ảnh chụp này cũ 8 tiếng
+       * rồi", mà `headDate` chỉ có ngày nên mọi thứ xảy ra trong ngày đều thành "hôm nay".
+       * Vì sao KHÔNG dùng `Date.now()`: mốc này đi vào một file nằm trong khối `generators`,
+       * nên bất cứ thứ gì phụ thuộc đồng hồ là sang phút sau đã lệch HEAD và MỌI lane bị chặn
+       * đẩy dù không dữ liệu nào đổi. Lấy từ HEAD thì cùng một HEAD luôn cho cùng một con số. */
+      headStamp: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%dT%H:%M", moc()).trim(),
       // Ngày commit cuối chạm vào file. Dùng làm "lần rà gần nhất" để tính nợ tài
       // liệu quá hạn — vì frontmatter CỐ TÌNH không có trường `created`/`last_reviewed`:
       // ngày gõ tay sẽ mục, còn lịch sử git thì không nói dối được.

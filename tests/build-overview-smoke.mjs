@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, readCanDuc, canDucDaDong, khoangNgay, SO_CAN_DUC, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readMocDaXong, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, readCanDuc, canDucDaDong, khoangNgay, SO_CAN_DUC, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, NHOM_CHUA_XEP, tuoiTuMoc, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readMocDaXong, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -1725,22 +1725,72 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const sinh = (thay) => buildOverview(bocFile(goc, thay)).html;
   const NL = String.fromCharCode(10);
 
-  /* --- (a) `readLuong` đọc đúng bốn trường, và bỏ đúng vùng trống chủ --- */
-  assert.deepEqual(readLuong(bocFile(goc, { ".agents/claims.json": claimsJson({
-    "_root": { owner: null, task: "khong duoc hien", claimed_at: "2020-01-01T00:00" },
-    "_code": { owner: "lane-mot", task: "viec mot", claimed_at: "2026-09-05T10:05" },
-    "workers/goi-mot": { owner: "  lane-hai  ", task: "viec hai", claimed_at: "2026-09-05T11:30" }
-  }) })), [
-    { lane: "lane-mot", viec: "viec mot", vung: "_code", tu: "2026-09-05T10:05" },
-    { lane: "lane-hai", viec: "viec hai", vung: "goi-mot", tu: "2026-09-05T11:30" }
-  ], "doc dung lane/viec/vung/moc, bo vung trong chu, cat khoang trang, va cat phan thu muc cua khoa goi");
+  /* SỔ BỊA + DANH SÁCH NHÓM BỊA — đề bài `BANG-DANG-LAM-01`, Đức nêu 06/09.
+     Bịa cả hai để ca này đỏ ổn định, không phụ thuộc hôm nay sổ thật có mã nào. Danh sách nhóm
+     ĐẮP LÊN cấu hình thật chứ không thay hẳn: `buildOverview` còn đọc `units`/`profile` ở cùng
+     file đó, và thay hẳn là hỏng cả trang vì một lý do không liên quan gì tới việc đang kiểm. */
+  const SO_BIA = [
+    "## N-90 · Cau viec bia lay TU SO, khong lay tu chuoi task",
+    "",
+    "- **nhóm:** bang",
+    "- **đóng khi:** đức: chốt",
+    "",
+    "## N-91 · Muc bia khong khai nhom nao ca",
+    "",
+    "- **đóng khi:** đức: chốt",
+    ""
+  ].join(NL);
+  const NHOM_BIA = "Nhom bia de nhan ra ngay tren trang";
+  const cauHinhBia = JSON.stringify({
+    ...JSON.parse(goc.readFile(".repo-structure.json")),
+    nhom_van_de: { bang: NHOM_BIA }
+  });
+  const soBia = (claims) => bocFile(goc, {
+    "BACKLOG.md": SO_BIA,
+    ".repo-structure.json": cauHinhBia,
+    ".agents/claims.json": claimsJson(claims)
+  });
 
-  /* Vùng đang giữ mà KHÔNG khai câu việc: vẫn phải ra một dòng, chỉ là câu việc rỗng. Bỏ dòng
-     đó đi là Đức nhìn thấy ít luồng hơn thực tế — sai nguy hiểm hơn một ô để trống. */
-  assert.deepEqual(readLuong(bocFile(goc, { ".agents/claims.json": claimsJson({
-    "_code": { owner: "lane-cau-that" }
-  }) })), [{ lane: "lane-cau-that", viec: "", vung: "_code", tu: "" }],
-  "thieu task/claimed_at thi van ra mot dong, khong bi loai");
+  /* --- (a) CÂU VIỆC LẤY TỪ SỔ, NHÓM LẤY TỪ FILE CẤU HÌNH ---
+     Chuỗi `--task` là tham số dòng lệnh trên PowerShell — chỗ chữ có dấu hay hỏng nhất — nên
+     nó sẽ MÃI không dấu và đầy từ kỹ thuật. Bảng phải tra mã sang sổ, không in chuỗi thô. */
+  const doc = readLuong(soBia({
+    "_root": { owner: null, task: "N-90", claimed_at: "2020-01-01T00:00" },
+    "_docs": { owner: "lane-mot", task: "N-90", claimed_at: "2026-09-05T10:05" },
+    "_code": { owner: "  lane-hai  ", task: "N-91", claimed_at: "2026-09-05T11:30" },
+    "workers/goi-mot": { owner: "lane-ba", task: "chuoi khong dau khong khai ma nao", claimed_at: "2026-09-05T12:00" }
+  }));
+  assert.deepEqual(doc.map((r) => ({ lane: r.lane, ma: r.ma, viec: r.viec, nhom: r.nhom })), [
+    { lane: "lane-mot", ma: "N-90", viec: "Cau viec bia lay TU SO, khong lay tu chuoi task", nhom: NHOM_BIA },
+    { lane: "lane-ba", ma: "", viec: "", nhom: NHOM_CHUA_XEP },
+    { lane: "lane-hai", ma: "N-91", viec: "Muc bia khong khai nhom nao ca", nhom: NHOM_CHUA_XEP }
+  ], "cau viec lay tu so theo ma; muc khong khai nhom va lane khong khai ma deu roi ve 'chua xep nhom', nhom do xuong CUOI, trong nhom thi xep theo ten lane");
+
+  /* Mã lạ KHÔNG được lặng lẽ thành nhóm mới — mở lại đúng cửa sau mà danh sách cố định đóng. */
+  assert.equal(readLuong(bocFile(goc, {
+    "BACKLOG.md": SO_BIA.replace("- **nhóm:** bang", "- **nhóm:** mot-nhom-tu-che"),
+    ".repo-structure.json": cauHinhBia,
+    ".agents/claims.json": claimsJson({ "_docs": { owner: "lane-mot", task: "N-90" } })
+  }))[0].nhom, NHOM_CHUA_XEP, "ma nhom ngoai danh sach co dinh thi KHONG duoc thanh nhom moi");
+
+  /* --- (a2) GỘP THEO LANE + CÂU VIỆC ---
+     Ngày 06/09 một lane giữ ba khoá worker cho cùng một việc và khối vẽ ba dòng y hệt nhau.
+     Gộp lại phải lấy mốc SỚM NHẤT: việc bắt đầu lúc ô đầu tiên bị giữ. */
+  const gop = readLuong(soBia({
+    "_docs": { owner: "lane-mot", task: "N-90", claimed_at: "2026-09-05T11:00" },
+    "_code": { owner: "lane-mot", task: "N-90", claimed_at: "2026-09-05T09:00" },
+    "workers/goi-mot": { owner: "lane-mot", task: "N-91", claimed_at: "2026-09-05T13:00" }
+  }));
+  assert.equal(gop.length, 2, "mot lane giu hai khoa cho CUNG mot viec ra MOT dong; viec khac thi van ra dong rieng");
+  assert.equal(gop.find((r) => r.ma === "N-90").tu, "2026-09-05T09:00",
+    "gop thi lay moc SOM NHAT — lay moc muon nhat la lam viec trong tre hon that");
+
+  /* Vùng đang giữ mà KHÔNG khai gì: vẫn phải ra một dòng. Bỏ dòng đó đi là Đức nhìn thấy ít
+     luồng hơn thực tế — sai nguy hiểm hơn một ô để trống. */
+  assert.deepEqual(readLuong(soBia({ "_code": { owner: "lane-cau-that" } }))
+    .map((r) => ({ lane: r.lane, ma: r.ma, viec: r.viec, tu: r.tu, tuoi: r.tuoi })),
+  [{ lane: "lane-cau-that", ma: "", viec: "", tu: "", tuoi: "" }],
+  "thieu task/claimed_at thi van ra mot dong, khong bi loai, va tuoi de rong chu khong bia");
 
   /* Bảng hỏng thì NÉM, y hệt `readKhoa`: một khối rỗng đọc ra là "không có gì chạy", mà đó
      đúng là câu nói dối tệ nhất khối này có thể nói. */
@@ -1749,20 +1799,48 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   assert.throws(() => readLuong(bocFile(goc, { ".agents/claims.json": "{" })), /CLAIMS_HONG/,
     "bang khong doc duoc thi NEM");
 
-  /* --- (b) TRANG CÓ LUỒNG: tên lane, câu việc, vùng, mốc — và không đóng cứng --- */
+  /* KHÔNG ĐƯỢC RƠI VỀ ĐỒNG HỒ HỆ THỐNG. Mốc sinh mất thì NÉM — lùi về `Date.now()` là đúng
+     cái bệnh đề bài này chữa: một ảnh chụp cũ đội lốt số liệu thời gian thực. */
+  const cutMoc = { ...goc, git: { ...goc.git } };
+  delete cutMoc.git.headStamp;
+  assert.throws(() => readLuong(cutMoc), /THIEU_MOC_SINH/,
+    "khong co moc sinh thi NEM, tuyet doi khong lui ve dong ho he thong");
+
+  /* --- (a3) TUỔI ĐO TỪ MỐC SINH, không từ đồng hồ người xem ---
+     Ghim CẢ DÂY NỐI, không chỉ ghim hàm tính. Ghim mình hàm thì ai đó thay `headStamp()` bằng
+     `Date.now()` ở chỗ gọi vẫn xanh — mà đó đúng là bệnh đề bài này chữa. Ép mốc sinh thành
+     một giờ cố định rồi đòi ĐÚNG con số: đồng hồ máy chạy tới đâu cũng không đổi được nó. */
+  const mocEp = { ...goc, git: { ...goc.git, headStamp: () => "2026-09-06T12:00" } };
+  assert.equal(readLuong(bocFile(mocEp, { ".agents/claims.json": claimsJson({
+    "_code": { owner: "lane-mot", task: "N-90", claimed_at: "2026-09-06T04:00" }
+  }) }))[0].tuoi, "8 giờ trước",
+  "tuoi PHAI tinh tu moc sinh cua HEAD — thay bang dong ho he thong la anh chup cu doi lot so lieu song");
+
+
+  assert.equal(tuoiTuMoc("2026-09-06T12:00", "2026-09-06T04:00"), "8 giờ trước",
+    "anh chup cu 8 tieng phai TRONG cu 8 tieng");
+  assert.equal(tuoiTuMoc("2026-09-06T12:00", "2026-09-06T11:30"), "dưới một giờ", "duoi mot gio thi noi vay");
+  assert.equal(tuoiTuMoc("2026-09-08T12:00", "2026-09-06T04:00"), "2 ngày trước", "qua mot ngay thi dem theo ngay");
+  assert.equal(tuoiTuMoc("2026-09-06T12:00", ""), "", "khong co moc nhan thi tra rong, khong bia mot con so");
+  assert.equal(tuoiTuMoc("", "2026-09-06T04:00"), "", "khong co moc sinh thi tra rong");
+
+  /* --- (b) TRANG CÓ LUỒNG: lồng theo nhóm, câu việc từ sổ, tuổi tính lúc sinh --- */
   const LANE_A = "lane-bia-mot-khong-co-trong-repo";
   const LANE_B = "lane-bia-hai-khong-co-trong-repo";
-  const VIEC_A = "cau viec bia de nhan ra ngay tren trang";
-  /* Câu việc thứ hai CỐ TÌNH bẩn: nó mang một đường dẫn + tên file mã, đúng thứ một lane
-     hay gõ vào `--task`. Không dựng thêm trang nào cho ca này — nó đi ké trang có luồng,
-     vì một lượt `buildOverview` tốn khoảng mười hai giây của MỌI phiên sau. */
+  /* Lane B CỐ TÌNH không khai mã, và chuỗi `--task` của nó CỐ TÌNH bẩn: nó mang một đường dẫn
+     + tên file mã, đúng thứ một lane hay gõ vào `--task`. Không dựng thêm trang nào cho ca
+     này — nó đi ké trang có luồng, vì một lượt `buildOverview` tốn khoảng mười hai giây. */
   const VIEC_B = "cau viec bia hai cham scripts/claim.mjs cho vui";
   const MOC_A = "2026-09-05T10:05";
-  const trangCo = sinh({ ".agents/claims.json": claimsJson({
-    "_root": { owner: null },
-    "_docs": { owner: LANE_A, task: VIEC_A, claimed_at: MOC_A },
-    "_code": { owner: LANE_B, task: VIEC_B, claimed_at: "2026-09-05T11:30" }
-  }) });
+  const trangCo = sinh({
+    "BACKLOG.md": SO_BIA,
+    ".repo-structure.json": cauHinhBia,
+    ".agents/claims.json": claimsJson({
+      "_root": { owner: null },
+      "_docs": { owner: LANE_A, task: "N-90", claimed_at: MOC_A },
+      "_code": { owner: LANE_B, task: VIEC_B, claimed_at: "2026-09-05T11:30" }
+    })
+  });
 
   const khoiCua = (trang) => {
     const dong = trang.split(NL);
@@ -1774,47 +1852,63 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   };
 
   const khoiCo = khoiCua(trangCo);
-  assert.ok(khoiCo.some((l) => l.includes(LANE_A) && l.includes(VIEC_A) && l.includes("_docs")),
-    "mot dong phai co du ten lane + cau viec + ten vung");
+  assert.ok(khoiCo.some((l) => l.includes("ảnh chụp lúc sinh bảng")),
+    "tieu de khoi PHAI noi thang day la anh chup — mot anh chup cu doi lot so lieu thoi gian thuc la kieu sai te nhat");
+  assert.ok(khoiCo.some((l) => l.includes(LANE_A) ), "lane thu nhat phai co dong cua no");
   assert.ok(khoiCo.some((l) => l.includes(LANE_B)), "lane thu hai cung phai co dong cua no");
   assert.equal(khoiCo.filter((l) => l.includes('class="lr"')).length, 2,
-    "hai vung dang ban thi ve DUNG hai dong — bang doc duoc, khong dong cung danh sach lane");
+    "hai viec dang chay thi ve DUNG hai dong — bang doc duoc, khong dong cung danh sach lane");
 
-  /* Mốc thời gian in NGUYÊN VĂN từ bảng. Đây là nửa nhìn thấy được của luật "không tính
-     khoảng thời gian lúc sinh trang". */
-  assert.ok(khoiCo.some((l) => l.includes(`data-tu="${MOC_A}"`) && l.includes(`>${MOC_A}<`)),
-    "moc nhan phai in NGUYEN VAN tu bang, khong dinh dang lai");
+  /* LỒNG THEO NHÓM VẤN ĐỀ, không theo khoá — đây là câu Đức hỏi: "việc này đang giải quyết
+     vấn đề gì". Tên nhóm phải là chữ trong FILE CẤU HÌNH, không phải mã. */
+  assert.ok(khoiCo.some((l) => l.includes("Nhóm vấn đề") && l.includes(NHOM_BIA)),
+    "phai co dong tieu de nhom, va ten nhom lay tu file cau hinh");
+  assert.ok(khoiCo.some((l) => l.includes("Nhóm vấn đề") && l.includes(NHOM_CHUA_XEP)),
+    "lane khong khai ma thi van phai co mot nhom de nam vao, khong duoc bien mat");
 
-  /* --- (b2) CÂU VIỆC CỦA LANE PHẢI QUA BỘ RÚT GỌN ---
-     Bất biến ở khối 4 đã cấm cả trang chứa tên file mã, nhưng nó đo trên bảng chủ sở hữu
-     THẬT — tức nó chỉ đỏ khi có một lane đang thật sự giữ vùng với một câu việc bẩn. Ngày
-     06/09 đúng chuyện đó xảy ra: một câu việc mang tên file mã vào HEAD và chặn cổng đóng
-     phiên của MỌI lane, mà không phép ghim nào chỉ ra chỗ hỏng nằm ở đâu.
-     Ca này dựng bằng bảng BỊA nên nó đỏ ổn định, không phụ thuộc hôm nay ai đang giữ gì.
-     Hai vế, và thiếu vế nào phép ghim cũng vô nghĩa: đường dẫn phải BIẾN MẤT, và phần chữ
-     người còn lại phải Ở LẠI (nếu không thì "cắt sạch cả câu" cũng xanh). */
+  /* CÂU VIỆC LẤY TỪ SỔ, và chuỗi `--task` KHÔNG được in nữa. Hai vế: câu của sổ phải LÊN, và
+     chuỗi thô phải BIẾN MẤT — thiếu vế nào phép ghim cũng vô nghĩa. */
+  const dongA = khoiCo.find((l) => l.includes(LANE_A));
+  assert.ok(dongA && dongA.includes("Cau viec bia lay TU SO"),
+    "cau viec phai lay TU SO theo ma lane khai, khong lay tu chuoi task");
+  assert.ok(!khoiCo.some((l) => l.includes("N-90")),
+    "ma viec la chu cho AI doc — no da lam xong viec cua no o buoc tra, khong can len bang");
+
+  /* --- (b2) LANE KHÔNG KHAI MÃ THÌ BẢNG NÓI THẲNG LÀ KHÔNG TRA ĐƯỢC ---
+     Im lặng in chuỗi thô thì không ai sửa thói quen đó — và chuỗi thô là chỗ chữ có dấu hỏng.
+     Ngày 06/09 một câu việc mang tên file mã vào HEAD và chặn cổng đóng phiên của MỌI lane. */
   const dongB = khoiCo.find((l) => l.includes(LANE_B));
   assert.ok(dongB, "phai tim duoc dong cua lane thu hai");
-  assert.ok(!dongB.includes("claim.mjs") && !dongB.includes("scripts/"),
-    `cau viec cua lane PHAI qua bo rut gon: ten file ma / duong dan khong duoc len bang — ${dongB.slice(0, 160)}`);
-  assert.ok(dongB.includes("cau viec bia hai cham") && dongB.includes("cho vui"),
-    "chu cua nguoi phai o lai — cat sach ca cau thi phep ghim tren xanh mot cach vo nghia");
+  assert.ok(dongB.includes("chưa khai mã việc"),
+    `lane khong khai ma thi phai NOI THANG la khong tra duoc — ${dongB.slice(0, 160)}`);
+  assert.ok(!dongB.includes("claim.mjs") && !dongB.includes("scripts/") && !dongB.includes("cau viec bia hai"),
+    `chuoi task tho KHONG duoc len bang nua — ${dongB.slice(0, 160)}`);
 
-  /* --- (c) KHÔNG tính khoảng thời gian LÚC SINH TRANG ---
-     Nửa còn lại, và là nửa có răng: chữ "phút/giờ/ngày trước" chỉ được phép nằm trong đoạn JS
-     cuối trang. Lọt ra thân trang là bản commit phụ thuộc giờ đồng hồ, và sang ngày mới thì
-     MỌI lane bị chặn push dù không dữ liệu nào đổi (suýt xảy ra 03/09). */
+  /* --- (c) TUỔI TÍNH LÚC SINH, KHÔNG TÍNH LÚC MỞ TRANG ---
+     ĐẢO NGƯỢC phép ghim cũ (03/09), có chủ đích. Bản cũ cấm chữ "giờ trước" trong thân trang
+     và đẩy việc tính sang đoạn JS chạy lúc MỞ trang, để bản commit không phụ thuộc đồng hồ.
+     Mục tiêu đó vẫn đúng, nhưng cách đạt được thì sai: nó lấy đồng hồ NGƯỜI XEM trừ đi một mốc
+     đã đóng băng, nên một khối cũ tám tiếng vẫn hiện ra như số liệu thời gian thực và Đức tin
+     hai luồng đã trả khoá vẫn đang chạy (06/09).
+     Nay tuổi tính lúc sinh, TỪ GIỜ COMMIT CỦA HEAD — không phải đồng hồ hệ thống — nên bản
+     commit vẫn tất định. Hai vế phải ghim cùng lúc, thiếu vế nào cũng cho phép quay lại bệnh cũ. */
+  assert.ok(khoiCo.some((l) => /Nhận vùng (dưới một giờ|\d+ (giờ|ngày) trước)/.test(l)),
+    "khoi PHAI in tuoi thanh chu ngay trong than trang — do la nua nhin thay duoc cua luat 'tinh luc sinh'");
   assert.ok(trangCo.includes("<script>"), "phai co doan JS, neu khong thi khang dinh duoi vo nghia");
-  const than = trangCo.slice(0, trangCo.indexOf("<script>"));
-  for (const chu of ["phút trước", "giờ trước", "ngày trước"]) {
-    assert.ok(!than.includes(chu),
-      `chu "${chu}" KHONG duoc nam trong than trang — no phai do JS tinh luc Duc MO trang`);
-  }
+  assert.ok(!trangCo.includes("data-tu"),
+    "doan JS tinh lai tuoi luc MO trang phai bien mat han — con moc neo la con duong quay lai");
 
   /* --- (d) KHÔNG LUỒNG NÀO CHẠY → VẪN in một dòng, không ẩn khối --- */
-  const trangTrong = sinh({ ".agents/claims.json": claimsJson({
-    "_root": { owner: null }, "_docs": { owner: null }, "_code": { owner: null }
-  }) });
+  /* CÙNG fixture sổ + cấu hình với trang trên, KHÁC ĐÚNG bảng chủ sở hữu. Khác thêm bất cứ
+     thứ gì là khẳng định (f) dưới đây mất nghĩa: nó phải chứng minh "đổi chủ vùng KHÔNG làm
+     cổng đỏ", chứ không phải "hai trang bịa khác nhau ở chỗ khác thì cổng đỏ". */
+  const trangTrong = sinh({
+    "BACKLOG.md": SO_BIA,
+    ".repo-structure.json": cauHinhBia,
+    ".agents/claims.json": claimsJson({
+      "_root": { owner: null }, "_docs": { owner: null }, "_code": { owner: null }
+    })
+  });
   const khoiTrong = khoiCua(trangTrong);
   assert.ok(khoiTrong.some((l) => l.includes("Không có luồng nào đang chạy")),
     "khong luong nao chay thi PHAI in mot dong noi ro — khoi trong va khoi hong phai phan biet duoc bang mat");

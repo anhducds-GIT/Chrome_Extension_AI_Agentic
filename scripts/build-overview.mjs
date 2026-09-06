@@ -171,6 +171,18 @@ const DONG_DA_DONG = /^-\s+\*\*ĐÓNG\s+([A-Z]{1,3}-\d+)\*\*/;
  * có một trường khai thẳng. `~~gạch ngang~~` vẫn tính, vì nó là dấu hình thức, không phải chữ. */
 const dungDauDeLamDauDong = (relPath) => !LA_SO_GOC(relPath);
 
+/* HÌNH DẠNG MỘT MỤC TRONG SỔ — MỘT bản, hai chỗ dùng.
+ *
+ * Hai chỗ đọc cùng một cuốn sổ: bộ đếm nợ ở đây, và bộ tra mã việc của khối "đang làm gì".
+ * Trước đây hai chỗ sẽ là hai bản biểu thức, và hai bản của một luật thì sớm muộn trả hai câu
+ * khác nhau cho cùng một dòng — đúng cái đã xảy ra với danh sách miễn khoá ngày 02/09.
+ *
+ * `\d+` cố ý: bản mẫu trong luật của sổ viết `## N-xx`, và nó KHÔNG phải một mục thật. */
+export const MUC_TIEU_DE = /^#{2,4}\s+(~~)?\s*([A-Z]{1,3}-\d+)\s*[·:.\-]\s*(.+)$/;
+export const MUC_GACH_DAU = /^-\s+\*\*([A-Z]{1,3}-\d+)\*\*\s*[·:.\-]\s*(.+)$/;
+/* Trường của một mục: `- **nhóm:** bang`. Cùng dạng với trường của sổ ý tưởng. */
+const MUC_TRUONG = /^-\s+\*\*([^:*]+):\*\*\s*(.+)$/;
+
 export function debtByUnit(deps, model) {
   const rows = [];
   for (const relPath of deps.git.trackedPaths().filter((p) => LA_SO_GOC(p) || p.endsWith("/BACKLOG.md")).sort()) {
@@ -184,8 +196,8 @@ export function debtByUnit(deps, model) {
     }
     let open = 0;
     for (const line of lines) {
-      const heading = /^#{2,4}\s+(~~)?\s*([A-Z]{1,3}-\d+)\s*[·:.\-]\s*(.+)$/.exec(line);
-      const bullet = /^-\s+\*\*([A-Z]{1,3}-\d+)\*\*\s*[·:.\-]\s*(.+)$/.exec(line);
+      const heading = MUC_TIEU_DE.exec(line);
+      const bullet = MUC_GACH_DAU.exec(line);
       if (!heading && !bullet) continue;
       const title = heading ? heading[3] : bullet[2];
       if (Boolean(heading && heading[1]) || /~~/.test(title)) continue;
@@ -735,6 +747,116 @@ export function readKhoa(deps) {
   }));
 }
 
+/* ===== NHÓM VẤN ĐỀ — danh sách CỐ ĐỊNH, khai ở file cấu hình hình dạng repo =====
+ *
+ * Vì sao cố định: một phân loại mọc tự do thì sau ba tuần có 19 nhóm cho 19 mục, tức là
+ * không phân loại gì cả. Khai ở file cấu hình thì thêm một nhóm là một lượt sửa có người
+ * đọc, không phải một lượt gõ chữ tuỳ hứng vào sổ.
+ *
+ * Mã lạ (không nằm trong danh sách) KHÔNG lặng lẽ thành nhóm mới — nó rơi về "chưa xếp
+ * nhóm", y hệt mục không khai gì. Nhận mã lạ là mở đúng cái cửa sau mà luật trên vừa đóng. */
+export const NHOM_FILE = ".repo-structure.json";
+export const NHOM_CHUA_XEP = "Chưa xếp nhóm";
+
+export function readNhom(deps) {
+  if (!deps.fileExists(NHOM_FILE)) return new Map();
+  let parsed;
+  try { parsed = JSON.parse(deps.readFile(NHOM_FILE)); }
+  catch (error) {
+    throw new Error(`NHOM_HONG: file cấu hình hình dạng repo không phải JSON đọc được (${error.message}).`);
+  }
+  const block = parsed?.nhom_van_de;
+  if (block === undefined) return new Map();
+  if (!block || typeof block !== "object" || Array.isArray(block)) {
+    throw new Error("NHOM_HONG: khối `nhom_van_de` phải là object dạng mã → tên tiếng Việt có dấu.");
+  }
+  return new Map(Object.entries(block)
+    .map(([ma, ten]) => [String(ma).trim().toLowerCase(), String(ten).trim()]));
+}
+
+/* ===== TRA MÃ VIỆC SANG SỔ =====
+ *
+ * ĐỀ BÀI `BANG-DANG-LAM-01`, Đức nêu 06/09: khối "đang làm gì" in nguyên chuỗi lane gõ vào
+ * `--task`, mà chuỗi đó là tham số dòng lệnh trên PowerShell — chỗ chữ có dấu hay hỏng nhất.
+ * Nên nó luôn không dấu và đầy từ kỹ thuật, và Đức đọc xong không biết nó chữa bệnh gì.
+ *
+ * Cách chữa KHÔNG phải bắt lane gõ đẹp hơn (gõ đẹp trên PowerShell là chuyện không sửa được),
+ * mà là: lane khai MÃ VIỆC, bảng tra sang sổ và lấy câu tiếng Việt CÓ DẤU đã viết sẵn ở đó.
+ * Không ai phải gõ lần thứ hai, và chuỗi `--task` tụt xuống thành thứ AI đọc.
+ *
+ * KHÔNG ĐẺ SỔ MỚI: hai cuốn đang có (`BACKLOG.md` · `IDEAS.md`) đã là nguồn duy nhất, cộng
+ * hồ sơ đề bài làm chỗ tra dự phòng. */
+export const SO_MUC_VIEC = ["BACKLOG.md", "IDEAS.md"];
+
+export function readMucSo(deps) {
+  const nhomHopLe = readNhom(deps);
+  const out = new Map();
+  const files = deps.git.trackedPaths()
+    .filter((p) => SO_MUC_VIEC.includes(p.split("/").pop()))
+    .sort();
+  for (const rel of files) {
+    let text;
+    try { text = deps.readFile(rel); } catch { continue; }
+    let cur = null;
+    // Mã trùng giữa hai sổ thì bản ĐẦU thắng, và danh sách file đã sắp — nên hai lượt sinh
+    // trên cùng HEAD không bao giờ chọn hai bản khác nhau.
+    const nop = () => { if (cur && !out.has(cur.ma)) out.set(cur.ma, cur); };
+    for (const line of text.split(/\r?\n/)) {
+      const h = MUC_TIEU_DE.exec(line);
+      if (h) { nop(); cur = { ma: h[2].toLowerCase(), cau: shorten(h[3], 108), nhom: "" }; continue; }
+      if (!cur) continue;
+      const f = MUC_TRUONG.exec(line);
+      if (!f || f[1].trim().toLowerCase() !== "nhóm") continue;
+      cur.nhom = nhomHopLe.get(f[2].replace(/`/g, "").trim().toLowerCase()) || "";
+    }
+    nop();
+  }
+  return out;
+}
+
+/* MÃ VIỆC LANE KHAI lúc nhận khoá: `--task "N-03"`, `--task "Y-17"`, `--task "BANG-DANG-LAM-01"`.
+   Chữ thường hoặc câu văn xuôi thì KHÔNG khớp — và lúc đó bảng nói thẳng là không tra được,
+   chứ không im lặng in chuỗi thô. Im lặng thì không ai sửa thói quen đó. */
+export const MA_VIEC = /^([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)(?![A-Za-z0-9-])/;
+
+export function traMaViec(task, mucSo, brief) {
+  const hit = MA_VIEC.exec(String(task ?? "").trim());
+  if (!hit) return { ma: "", cau: "", nhom: "" };
+  const ma = hit[1].toLowerCase();
+  const m = mucSo.get(ma);
+  if (m) return { ma: hit[1], cau: m.cau, nhom: m.nhom };
+  const d = brief?.get(ma);
+  if (d) return { ma: hit[1], cau: d.trieuChung, nhom: "" };
+  return { ma: hit[1], cau: "", nhom: "" };
+}
+
+/* TUỔI CỦA ẢNH CHỤP — đo từ MỐC SINH BẢNG, không từ đồng hồ người xem.
+ *
+ * Trước 06/09 con số này do đoạn JS trong trang tính lúc MỞ trang, nên một ảnh chụp cũ 8
+ * tiếng vẫn khoe "8 phút trước" nếu Đức mở lại sau đó — một ảnh chụp cũ đội lốt số liệu thời
+ * gian thực. Đó là kiểu sai tệ nhất: nó không trông giống lỗi.
+ *
+ * Hai đầu vào đều là mốc lấy từ repo (giờ commit của HEAD, và giờ ghi trong bảng chủ sở hữu),
+ * nên hàm này không đọc đồng hồ hệ thống — cùng một HEAD luôn cho cùng một con số. */
+const MOC_PHUT = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/;
+
+function mocPhutMs(text) {
+  const m = MOC_PHUT.exec(String(text ?? "").trim());
+  if (!m) return NaN;
+  return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]),
+    m[4] ? Number(m[4]) : 0, m[5] ? Number(m[5]) : 0);
+}
+
+export function tuoiTuMoc(mocSinh, mocNhan) {
+  const a = mocPhutMs(mocSinh);
+  const b = mocPhutMs(mocNhan);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return "";
+  const phut = Math.floor((a - b) / 60000);
+  if (phut < 60) return "dưới một giờ";
+  if (phut < 1440) return `${Math.floor(phut / 60)} giờ trước`;
+  return `${Math.floor(phut / 1440)} ngày trước`;
+}
+
 /* KHỐI "ĐANG LÀM GÌ" — `LIVE-BLOCK-01`, hiện thực của `ADR-0004`.
  *
  * ĐẢO LẠI một quyết định của chính Đức ngày 04/09: tên lane quay lại bảng. Lý do bỏ đi hồi đó
@@ -744,21 +866,49 @@ export function readKhoa(deps) {
  * KHÔNG tạo nguồn dữ liệu mới: bảng chủ sở hữu đã có đủ bốn thứ Đức cần — ai, đang làm gì,
  * vùng nào, từ lúc nào.
  *
- * MỘT DÒNG CHO MỖI KHOÁ ĐANG BẬN, không gộp theo lane: một lane giữ hai khoá thì hai khoá đó
- * có thể mang hai câu việc và hai mốc nhận khác nhau — gộp lại là phải chọn bỏ một nửa sự thật.
+ * GỘP THEO LANE + CÂU VIỆC, không một dòng cho mỗi khoá (đổi 06/09, đề bài `BANG-DANG-LAM-01`).
+ * Lý do cũ để không gộp là "hai khoá có thể mang hai câu việc khác nhau" — vẫn đúng, và đó
+ * chính là lý do khoá gộp là CẶP (lane, câu việc) chứ không phải mình tên lane. Hai khoá mang
+ * hai việc khác nhau vẫn ra hai dòng. Cùng một việc trải trên ba vùng thì ra MỘT dòng, vì Đức
+ * đọc bảng để biết đang có mấy việc chạy, không phải mấy ô bị giữ. Ngày 06/09 một lane giữ ba
+ * khoá worker cho cùng một việc và khối vẽ ba dòng y hệt nhau.
  *
- * `tu` in NGUYÊN VĂN từ bảng, KHÔNG tính khoảng thời gian ở đây: bảng nằm trong khối
- * `generators` nên mọi thứ phụ thuộc giờ đồng hồ sẽ chặn push của MỌI lane khi sang ngày mới.
- * Việc hiện "bao lâu rồi" là của đoạn JS trong trang, tính lúc Đức MỞ trang. */
+ * TÊN KHOÁ VÀ GIỜ NHẬN CHÍNH XÁC KHÔNG LÊN BẢNG NỮA: đó là chữ dành cho AI. Đức cần ba thứ —
+ * vấn đề gì · đang làm gì · bao lâu rồi. Ai giữ ô nào thì khối "Khoá làm việc" đã trả lời.
+ *
+ * Mốc nhận vẫn đọc, nhưng để TÍNH TUỔI Ở ĐÂY chứ không in nguyên văn: xem `tuoiTuMoc`. */
 export function readLuong(deps) {
-  return docClaims(deps)
-    .filter(([, v]) => String(v?.owner ?? "").trim() !== "")
-    .map(([key, v]) => ({
-      lane: String(v.owner).trim(),
-      viec: String(v?.task ?? "").trim(),
-      vung: tenKhoa(key),
-      tu: String(v?.claimed_at ?? "").trim()
-    }));
+  if (typeof deps?.git?.headStamp !== "function") {
+    throw new Error("THIEU_MOC_SINH: bộ đọc không có `git.headStamp`, nên không đo được ảnh chụp"
+      + " này cũ bao lâu. Không được rơi về đồng hồ hệ thống — đó là cách một ảnh chụp cũ đội"
+      + " lốt số liệu thời gian thực.");
+  }
+  const mocSinh = deps.git.headStamp();
+  const mucSo = readMucSo(deps);
+  const brief = new Map(readDefects(deps).map((d) => [d.ma.toLowerCase(), d]));
+  const gom = new Map();
+  for (const [, v] of docClaims(deps)) {
+    const lane = String(v?.owner ?? "").trim();
+    if (!lane) continue;
+    const task = String(v?.task ?? "").trim();
+    const tu = String(v?.claimed_at ?? "").trim();
+    const khoaGom = `${lane} ${task}`;
+    const cu = gom.get(khoaGom);
+    // Cùng một việc trải trên nhiều vùng thì lấy mốc SỚM NHẤT — việc bắt đầu lúc ô đầu tiên
+    // bị giữ, không phải lúc ô cuối cùng. Lấy mốc muộn nhất là làm việc trông trẻ hơn thật.
+    if (cu) { if (tu && (!cu.tu || tu < cu.tu)) cu.tu = tu; continue; }
+    const tra = traMaViec(task, mucSo, brief);
+    gom.set(khoaGom, { lane, ma: tra.ma, viec: tra.cau, nhom: tra.nhom || NHOM_CHUA_XEP, tu });
+  }
+  // "Chưa xếp nhóm" xuống CUỐI, phần còn lại theo tên nhóm. Nhóm chưa khai mà nằm lẫn giữa
+  // các nhóm thật thì Đức đọc nó như một nhóm thật.
+  const hang = (r) => (r.nhom === NHOM_CHUA_XEP ? 1 : 0);
+  return [...gom.values()]
+    .map((r) => ({ ...r, tuoi: tuoiTuMoc(mocSinh, r.tu) }))
+    .sort((a, b) => hang(a) - hang(b)
+      || a.nhom.localeCompare(b.nhom, "vi")
+      || a.lane.localeCompare(b.lane)
+      || a.viec.localeCompare(b.viec, "vi"));
 }
 
 const MOC_FILE = "docs/protocols/ASSISTANT-V0.1.md";
@@ -1624,24 +1774,34 @@ ${STYLE}
    * Nên phải đẩy TỪNG DÒNG MỘT: một `p.push` nhiều dòng thì chỉ dòng đầu có dấu, phần còn lại
    * lọt ra ngoài phép lọc mà trông vẫn y hệt. */
   const dongKhoi = [];
-  dongKhoi.push(`      <div class="sect">Đang làm gì — ${luongChay.length ? esc(luongChay.length + " luồng đang chạy") : "không có luồng nào đang chạy"}</div>`);
+  /* TIÊU ĐỀ NÓI THẲNG ĐÂY LÀ ẢNH CHỤP. Trước 06/09 nó chỉ nói "2 luồng đang chạy" ở thì hiện
+     tại, trong khi dữ liệu là ảnh chụp lúc sinh — và Đức đã nhìn thấy hai luồng đã trả khoá
+     từ tám tiếng trước. Ảnh chụp cũ phải TRÔNG cũ. */
+  dongKhoi.push(`      <div class="sect">Đang làm gì — ảnh chụp lúc sinh bảng · ${luongChay.length ? esc(luongChay.length + " luồng") : "không có luồng nào"}</div>`);
   dongKhoi.push(`      <div class="bl">`);
   if (luongChay.length) {
+    /* LỒNG THEO NHÓM VẤN ĐỀ, không theo khoá. Đức hỏi "ý tưởng đó đang giải quyết vấn đề gì" —
+       tên khoá không trả lời được câu đó, còn nhóm vấn đề thì có. */
+    let nhomHienTai = null;
     for (const l of luongChay) {
+      if (l.nhom !== nhomHienTai) {
+        nhomHienTai = l.nhom;
+        dongKhoi.push(`        <div class="cg">Nhóm vấn đề · ${esc(l.nhom)}</div>`);
+      }
+      /* CÂU VIỆC LẤY TỪ SỔ, không lấy từ chuỗi `--task`. Không tra được thì NÓI THẲNG — im
+         lặng in chuỗi thô là không ai sửa thói quen đó. Vẫn qua bộ rút gọn: câu trong sổ là
+         chữ của người, nhưng người viết sổ cũng gõ tên file vào câu như thường. */
+      const cau = l.viec
+        ? shorten(l.viec)
+        : (l.ma
+          ? `Lane khai mã ${l.ma} nhưng không sổ nào có mục mang mã đó — chưa tra được đang làm gì`
+          : "Lane chưa khai mã việc lúc nhận vùng, nên không tra sang sổ được");
       dongKhoi.push(`        <div class="lr"><div class="h">`
-        + `<span class="ln">${esc(l.lane)}</span>`
-        + `<span class="badge b1">${esc(l.vung)}</span></div>`
-        /* QUA BỘ RÚT GỌN, không in thô. Câu việc này là chữ TỰ DO một lane gõ vào
-           `claim.mjs --take --task "..."`, nên nó mang đúng thói quen của người gõ: tên
-           file, đường dẫn, nhãn kỹ thuật. Ngày 06/09 nó lọt thật — một câu việc chứa tên
-           một file mã lên thẳng bảng, và bất biến "bảng không lộ chi tiết kỹ thuật" đỏ,
-           chặn cổng đóng phiên của MỌI lane. Mọi chỗ khác trên trang đã đi qua bộ rút gọn
-           từ lâu; đúng dòng này là chỗ sót. */
-        + `<span class="d">${esc(shorten(l.viec) || "chưa khai đang làm gì")}</span>`
-        /* `data-tu` là mốc NGUYÊN VĂN từ bảng. Chữ "bao lâu rồi" do JS trong trang thêm vào
-           lúc Đức mở — ở đây mà tính là trang phụ thuộc giờ đồng hồ, và sang ngày mới thì
-           MỌI lane bị chặn push dù không dữ liệu nào đổi (suýt xảy ra 03/09). */
-        + `<span class="mn">Nhận vùng lúc <span class="tu" data-tu="${esc(l.tu)}">${esc(l.tu || "bảng không ghi mốc nhận")}</span></span>`
+        + `<span class="ln">${esc(l.lane)}</span></div>`
+        + `<span class="d">${esc(cau)}</span>`
+        /* "Bao lâu rồi" tính từ MỐC SINH BẢNG, không từ đồng hồ người xem — xem `tuoiTuMoc`.
+           Đây là nửa nhìn thấy được của việc gỡ bỏ con số giả thời gian thực. */
+        + `<span class="mn">Nhận vùng ${esc(l.tuoi || "từ lúc nào thì bảng không ghi")}</span>`
         + `</div>`);
     }
   } else {
@@ -1653,7 +1813,7 @@ ${STYLE}
   /* HAI CHỖ KHỐI NÀY KHÔNG THẤY, nói thẳng trên trang chứ không giấu trong ghi chú kỹ thuật.
      Đức nhìn khối trống rồi tin là không có gì chạy — trong khi có thể đang có hai executor
      chạy ở repo khác — thì sai kiểu đó TỆ HƠN không có khối này. */
-  dongKhoi.push(`      <p class="note">Đọc thẳng từ bảng chủ sở hữu trong repo: mỗi dòng là một vùng đang có người giữ. <strong>Khối này không thấy hai thứ.</strong> Một: <strong>luồng đang chạy ở repo khác</strong> — bảng của repo này chỉ thấy repo của nó, nên một luồng đang làm ở repo bộ khung sẽ không hiện ở đây. Hai: <strong>luồng vừa được giao mà chưa kịp nhận vùng</strong> — lúc đó nó chưa để lại dấu vết nào trong repo. Vậy nên dòng <strong>"không có luồng nào đang chạy"</strong> đọc đúng là <strong>"không có luồng nào đang giữ vùng trong repo này"</strong>, chứ không phải "không có gì đang chạy". Mốc nhận là giờ ghi trong bảng; phần "bao lâu rồi" được tính lúc Đức mở trang.</p>`);
+  dongKhoi.push(`      <p class="note">Đọc thẳng từ bảng chủ sở hữu trong repo: mỗi dòng là một vùng đang có người giữ. <strong>Khối này không thấy hai thứ.</strong> Một: <strong>luồng đang chạy ở repo khác</strong> — bảng của repo này chỉ thấy repo của nó, nên một luồng đang làm ở repo bộ khung sẽ không hiện ở đây. Hai: <strong>luồng vừa được giao mà chưa kịp nhận vùng</strong> — lúc đó nó chưa để lại dấu vết nào trong repo. Vậy nên dòng <strong>"không có luồng nào đang chạy"</strong> đọc đúng là <strong>"không có luồng nào đang giữ vùng trong repo này"</strong>, chứ không phải "không có gì đang chạy". <strong>Đây là ảnh chụp lúc sinh bảng, không phải số liệu thời gian thực</strong> — "bao lâu rồi" đo từ lúc sinh, nên bảng để lâu không mở thì mọi con số ở đây già đi theo chính nó, chứ không tự làm mới. Câu việc lấy từ sổ nợ và sổ ý tưởng theo mã lane khai lúc nhận vùng; lane không khai mã thì dòng của nó nói thẳng là chưa tra được.</p>`);
 
   for (const d of dongKhoi) p.push(KHOA_PREFIX + d);
 
@@ -2055,20 +2215,12 @@ ${STYLE}
     });
   });
 
-  // "Bao lâu rồi" của khối đang-làm-gì: tính lúc XEM, y hệt dải đỏ dưới đây và vì đúng lý do
-  // đó — bản commit của trang không được phụ thuộc giờ đồng hồ, nếu không thì sang ngày mới
-  // là mọi lane bị chặn push dù chẳng dữ liệu nào đổi. Mốc nguyên văn đã in sẵn trong trang;
-  // đoạn này chỉ thêm phần trong ngoặc. Không đọc được mốc thì để nguyên, không đoán.
-  Array.prototype.slice.call(document.querySelectorAll(".tu[data-tu]")).forEach(function (el) {
-    var t = Date.parse(el.dataset.tu);
-    if (!el.dataset.tu || isNaN(t)) return;
-    var phut = Math.floor((Date.now() - t) / 60000);
-    if (phut < 0) return;
-    var chu = phut < 60 ? phut + " phút trước"
-      : phut < 1440 ? Math.floor(phut / 60) + " giờ trước"
-      : Math.floor(phut / 1440) + " ngày trước";
-    el.textContent = el.dataset.tu + " (" + chu + ")";
-  });
+  // ĐÃ GỠ (06/09, theo đề bài BANG-DANG-LAM-01): đoạn JS tính "bao lâu rồi" cho khối đang-làm-gì
+  // lúc MỞ trang. Nó lấy đồng hồ của người xem trừ đi một mốc đã đóng băng trong ảnh chụp, nên
+  // một khối cũ tám tiếng vẫn hiện ra như số liệu thời gian thực — Đức nhìn thấy hai luồng đã
+  // trả khoá từ lâu mà vẫn tin chúng đang chạy. Nay tuổi được tính lúc SINH, từ giờ commit của
+  // HEAD, nên nó không đọc đồng hồ ai cả và ảnh chụp cũ trông đúng là cũ.
+  // Dải đỏ dưới đây thì NGƯỢC LẠI và cố ý: nó trả lời "hôm tôi mở, trang này còn mới không".
 
   // Dải đỏ tính tuổi lúc XEM, không lúc sinh: trang tĩnh đem đăng thì lúc sinh nó luôn mới,
   // mà cái Đức cần biết là "hôm tôi mở, nó còn mới không".
