@@ -3253,3 +3253,42 @@ vào vì `_docs` là của người khác.
 **Đính chính lúc đẩy.** Lane `claude-assistant` commit thêm `d08c6c3 docs(brief): BANG-CAN-DUC-01`
 trong lúc lượt này chạy cổng, nên `--carry` cuốn theo **2 commit của `claude-assistant`**
 (`a81fb72` + `d08c6c3`), không phải 1 như ghi ở trên.
+
+---
+
+## 2026-09-06 — `claude-scouter-kk` · SCOUTER-INVENTORY-01: kiểm kê năng lực hai trục
+
+**Làm gì.** Dựng `docs/studies/SCOUTER-CAPABILITY-INVENTORY-V1.md` theo
+[BRIEF-SCOUTER-INVENTORY-01](docs/briefs/BRIEF-SCOUTER-INVENTORY-01.md) — cổng kiểm kê mà
+[ADR-0009](docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md) mục ⑺ đặt ra trước khi được
+viết dòng code Scouter nào. Không đụng code, không đụng `manifest.json`. Chỉ giữ `_docs`.
+
+**Kết quả số — tự đo hôm nay, không chép từ tài liệu cũ.** 65 dòng năng lực xếp ô:
+`SEED v0.1` 25 · `SEED v1` 23 · `ADAPTER` 6 · `KHÔNG CẦN` 14 (3 dòng mang hai ô). Chia theo trục:
+trục A (repo đã có) 36 dòng, trục B (repo chưa có) 29 dòng. Trả lời câu Đức nêu: ba worker dùng
+**7/34 nhóm API Chrome liên quan (~21%)** và **3/27 miền CDP (~11%)**, với 7 câu lệnh CDP trong
+code sản phẩm. Sổ nợ đối trọng: 31 mục mở + 11 mục chờ Đức.
+
+**Phát hiện đáng chú ý nhất.** Ba worker chỉ biết **một** cách bấm nút — sự kiện giả lập trong
+trang (`element.click()`, `dispatchEvent`, `execCommand`), mang cờ `isTrusted:false`. Đường
+`Input.*` của CDP chưa từng xuất hiện ở code sản phẩm; ba chuỗi đó trong repo đều là **ca kiểm
+âm** ở `tests/` và `scripts/observer-mutation-check.mjs`. Kèm cảnh báo: EXP-14 (28/08) xếp
+`isTrusted === true` ở mức `MICRO-PROOF REQUIRED`, chưa ai trong repo đo tận mắt — file giữ
+nguyên mức đó, không nâng thành sự thật.
+
+**Ba lần công cụ đo của chính lượt này báo sai**, đã ghi vào đầu file để người sau không tin số
+mù: `chrome.alarms` đếm ra 0 (ba worker bơm qua tham số, không gọi thẳng) · hợp method Bridge ra
+21 trong khi một tập đã có 23 (ba file tạm trùng tên) · khoá tab nhánh ChatGPT dò ra 0 file (nó
+nằm thẳng trong `sidepanel.js` dưới tên `boundTabId`).
+
+**Đính chính một dòng của `FEATURE-PARITY.md`.** File đó ghi `duc-auto-gg-flow-video` chưa có lớp
+ổn định kết nối Bridge. Đo lại hôm nay: `armKeepaliveDeadline` có ở **cả ba** worker. Không sửa
+`FEATURE-PARITY.md` vì mục 2 là chữ của người và nó thuộc `_root` — để lại cho lane giữ `_root`.
+
+**Còn mở.** ⑴ `sidepanel.js` ba bản cộng lại **16.411 dòng chưa ai đọc hết** — khối nợ lớn nhất
+của trục A, cố ý không xếp ô. ⑵ `content.js` trộn năng lực chung với selector riêng của trang,
+cần một lượt bóc (việc code, ngoài phạm vi lượt này). ⑶ Chính sách che dữ liệu vẫn treo từ
+ADR-0007 (`observer-probes.mjs` tự khai `ĐỀ XUẤT — Đức chưa chốt`) và nó chặn 3 dòng `SEED v1`.
+
+**Việc kế — cần Đức, không ai làm thay.** Đức đọc PHẦN 1 của file rồi chốt Scouter làm tới đâu:
+dừng ở 25 mục `SEED v0.1`, hay đi tiếp `SEED v1`. Chốt xong mới viết brief cho lượt code đầu tiên.

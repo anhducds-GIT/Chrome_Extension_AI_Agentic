@@ -98,6 +98,7 @@ không phải khi tò mò.
 | [REPO-STRUCTURE-SPEC-V1.md](studies/REPO-STRUCTURE-SPEC-V1.md) | `?` | REPO-STRUCTURE-SPEC-V1 |
 | [RESTRUCTURE-PLAN-V1.md](studies/RESTRUCTURE-PLAN-V1.md) | `?` | RESTRUCTURE-PLAN-V1 |
 | [ROADMAP-CLEAN-AND-TEMPLATE-V1.md](studies/ROADMAP-CLEAN-AND-TEMPLATE-V1.md) | `?` | ROADMAP-CLEAN-AND-TEMPLATE-V1 |
+| [SCOUTER-CAPABILITY-INVENTORY-V1.md](studies/SCOUTER-CAPABILITY-INVENTORY-V1.md) | `active` | Kiểm kê năng lực hai trục trước khi xây Scouter — ba worker đang có gì · Chrome cho phép gì mà repo chưa dùng (ADR-0009 mục ⑺) |
 | [SEND-TO-OTHER-REPOS.md](studies/SEND-TO-OTHER-REPOS.md) | `active` | GỬI CHO REPO KHÁC — MỘT KHỐI DÁN DUY NHẤT |
 
 ## `docs/briefs/` — đề bài từng phiên
