@@ -711,3 +711,33 @@ file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemi
   nhau hoàn toàn**, nên đoán sai ở đây tốn hơn là chờ một lượt đo.
   **Đóng khi:** biết được chữ khớp là gì; nếu là khớp nhầm thì biểu thức được siết theo bằng
   chứng (kèm ca ghim cả hai chiều), nếu là thật thì Đức xử lý xác minh rồi cảnh báo tự hết.
+
+- **F-35** · **P1, CHẶN LƯỢT LIVE — Flow báo quá tải, và KHÔNG bộ dò nào của gói bắt được.**
+  [ĐO 2026-09-06/07, Đức đọc trên trang; kiểm bằng máy trên hai bộ dò hiện có]
+  Nguyên văn trên trang:
+  *"Flow is currently experiencing high demand, affecting video generation. Requests may need
+  to be retried at a later time."*
+
+  Chạy khớp câu đó với hai lớp chặn đang có:
+
+  | Bộ dò | Khớp? |
+  |---|---|
+  | `securityBlockerPattern` (CAPTCHA · hoạt động bất thường) | **không** |
+  | `matchesGenerationLimit` (hết credit · hết hạn mức) | **không** |
+
+  **Vì sao nó nguy hơn cả hai loại trên:** hai loại kia đều dừng runner TRƯỚC khi gõ, nên hỏng
+  thì 0 credit. Trạng thái này thì runner coi trang **hoàn toàn bình thường** — nó gõ, nó bấm
+  Create (**credit tiêu ngay tại đây**), rồi chờ hết trần 600 giây một video có thể không bao
+  giờ tới. Kết cục là `OUTPUT_DETECTION_TIMEOUT`: một chẩn đoán đúng mà vô dụng, vì nó chỉ nói
+  "không thấy đầu ra" chứ không nói "nhà cung cấp đang quá tải".
+
+  Đây là **loại trạng thái thứ ba** mà gói chưa có tên: không phải bảo mật, không phải hết
+  hạn mức, mà là **nhà cung cấp tạm không phục vụ được**. Và nó là loại duy nhất trong ba loại
+  mà việc "cứ thử đi" tốn tiền thật.
+
+  **CHƯA LÀM GÌ — cần Đức chốt hành vi**, vì thêm một loại dừng là đụng vào luật retry/halt
+  (AGENTS.md mục 2). Ba đường, tiền và công khác hẳn nhau: dừng cứng cả mẻ · dừng job rồi
+  chờ và tự thử lại · chỉ cảnh báo cho người quyết.
+  Bộ dò thì không phải chốt gì: nó chỉ đọc chữ trên trang trước khi gõ, y như F-15.
+  **Đóng khi:** có bộ dò khớp câu trên (ghim cả hai chiều: khớp câu thật, **từ chối** câu gần
+  giống), hành vi đúng theo Đức chốt, và một lượt live xác nhận nó dừng trước khi gõ, 0 credit.
