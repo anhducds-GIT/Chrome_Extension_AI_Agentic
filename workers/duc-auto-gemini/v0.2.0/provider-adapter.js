@@ -126,6 +126,28 @@
     return Boolean(url && ORIGIN.urlPattern.test(url));
   }
 
+  // TWO different questions, and conflating them is what broke the zoom control.
+  //
+  //   isProviderUrl  — "may a RUN submit into this tab?" Requires a surface a run
+  //                    understands (/app or /images). Getting this wrong types a
+  //                    prompt into the wrong place, so it is deliberately strict.
+  //   isProviderOrigin — "is this tab ON Gemini at all?" That is all a cosmetic,
+  //                    tab-level control such as Chrome zoom needs to know.
+  //
+  // Until 2026-09-06 the zoom control asked the STRICT question, so it greyed
+  // itself out on every Gemini page that is not /app or /images -- the bare root,
+  // a Gem, a shared conversation, settings. Zooming any of those is harmless; the
+  // control simply refused. The ChatGPT branch, where the same control works,
+  // asks the origin question.
+  function isProviderOrigin(url) {
+    try {
+      const parsed = new URL(String(url || ""));
+      return parsed.protocol === "https:" && ORIGIN.hosts.includes(parsed.hostname);
+    } catch (_) {
+      return false;
+    }
+  }
+
   function surface(url) {
     try {
       const parsed = new URL(url);
@@ -178,6 +200,7 @@
     ORIGIN,
     SURFACE,
     isProviderUrl,
+    isProviderOrigin,
     surface,
     surfaceAllowed,
     securityBlockerPattern,

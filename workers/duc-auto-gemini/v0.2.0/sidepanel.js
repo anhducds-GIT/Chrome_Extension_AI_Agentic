@@ -4837,8 +4837,15 @@
   const RUN_SPLIT_STORAGE_KEY = "dac_run_split_ratio";
   let runSplitRatio = 0.5;
 
+  // Cố ý dùng `isProviderOrigin`, KHÔNG phải `isProviderUrl`. Nút phóng to chỉ
+  // gọi `chrome.tabs.setZoom` trên tab đang xem — nó không gửi gì, không gõ gì,
+  // nên nó chỉ cần biết tab có nằm trên Gemini hay không. Hỏi câu chặt của
+  // runner ("có phải mặt /app hoặc /images không") làm nút tự xám trên mọi
+  // trang Gemini khác: trang gốc, một Gem, một hội thoại chia sẻ, trang cài đặt.
+  // Đo 06/09: 6 trên 10 hình dạng địa chỉ Gemini thường gặp bị chặn. Nhánh
+  // ChatGPT — nơi nút này chạy tốt — hỏi đúng câu origin.
   function isChatGPTUrl(url) {
-    return window.DacProviderAdapter.isProviderUrl(url);
+    return window.DacProviderAdapter.isProviderOrigin(url);
   }
 
   function matchesZoomLevel(actualZoom, targetLevel, epsilon = ZOOM_EPSILON) {
@@ -4846,13 +4853,42 @@
     return Math.abs(actualZoom - targetLevel) <= epsilon;
   }
 
+  const ZOOM_GROUP_TITLE = "Gemini Zoom";
+
+  // Nút CHAT ZOOM xám có BỐN nguyên nhân khác hẳn nhau, và tới 06/09 cả bốn cho
+  // ra đúng một kết quả câm: nút xám, không một chữ. Đó là lý do một báo lỗi
+  // "nút zoom hỏng" không chẩn đoán được từ xa — không có gì để đọc. Nay mỗi
+  // nguyên nhân tự khai vào tooltip của cụm nút. Đặt tooltip lên CẢ cụm lẫn
+  // từng nút: nút `disabled` không phát sự kiện chuột ở mọi trình duyệt, nên
+  // chỉ gắn lên cụm là có chỗ rê chuột vào mà không hiện gì.
+  function lockZoomButtons(buttons, reason) {
+    const label = reason ? `Chưa dùng được — ${reason}` : ZOOM_GROUP_TITLE;
+    buttons.forEach((btn) => { btn.disabled = true; btn.classList.remove("active"); btn.title = label; });
+    const group = document.getElementById("chatZoomControl");
+    if (group) group.title = label;
+  }
+
+  function unlockZoomButtons(buttons) {
+    buttons.forEach((btn) => { btn.disabled = false; btn.title = ZOOM_GROUP_TITLE; });
+    const group = document.getElementById("chatZoomControl");
+    if (group) group.title = ZOOM_GROUP_TITLE;
+  }
+
   async function getActiveChatGPTTab() {
-    if (typeof chrome === "undefined" || !chrome.tabs?.query) return null;
+    if (typeof chrome === "undefined" || !chrome.tabs?.query) {
+      return { tab: null, reason: "chưa gọi được API tab của Chrome, thử nạp lại tiện ích" };
+    }
+    let tab = null;
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id && isChatGPTUrl(tab.url)) return tab;
-    } catch (_) {}
-    return null;
+      [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    } catch (error) {
+      return { tab: null, reason: `không đọc được tab đang xem (${error?.message || error})` };
+    }
+    if (!tab?.id) return { tab: null, reason: "cửa sổ đang chứa bảng này không có tab nào đang mở" };
+    if (!isChatGPTUrl(tab.url)) {
+      return { tab: null, reason: `tab đang xem không phải trang Gemini, đang ở: ${tab.url || "(Chrome không trả về URL)"}` };
+    }
+    return { tab, reason: "" };
   }
 
   // Zoom action is initiated from the active Gemini tab; Chrome default zoom behavior
@@ -4860,36 +4896,35 @@
   async function syncZoomState() {
     const zoomButtons = document.querySelectorAll(".zoom-btn");
     if (!zoomButtons.length) return;
-    const tab = await getActiveChatGPTTab();
+    const { tab, reason } = await getActiveChatGPTTab();
     if (!tab?.id) {
-      zoomButtons.forEach((btn) => {
-        btn.disabled = true;
-        btn.classList.remove("active");
-      });
+      lockZoomButtons(zoomButtons, reason);
       return;
     }
     try {
       const currentZoom = await chrome.tabs.getZoom(tab.id);
+      unlockZoomButtons(zoomButtons);
       zoomButtons.forEach((btn) => {
-        btn.disabled = false;
         const targetZoom = Number(btn.dataset.zoom);
         btn.classList.toggle("active", matchesZoomLevel(currentZoom, targetZoom));
       });
-    } catch (_) {
-      zoomButtons.forEach((btn) => {
-        btn.disabled = true;
-        btn.classList.remove("active");
-      });
+    } catch (error) {
+      lockZoomButtons(zoomButtons, `Chrome từ chối đọc mức phóng to của tab (${error?.message || error})`);
     }
   }
 
   async function setChatZoom(targetLevel) {
-    const tab = await getActiveChatGPTTab();
-    if (!tab?.id) return;
+    const { tab, reason } = await getActiveChatGPTTab();
+    if (!tab?.id) {
+      lockZoomButtons(document.querySelectorAll(".zoom-btn"), reason);
+      return;
+    }
     try {
       await chrome.tabs.setZoom(tab.id, targetLevel);
       await syncZoomState();
-    } catch (_) {}
+    } catch (error) {
+      lockZoomButtons(document.querySelectorAll(".zoom-btn"), `đặt mức phóng to không thành (${error?.message || error})`);
+    }
   }
 
   function applyUiZoom(level) {

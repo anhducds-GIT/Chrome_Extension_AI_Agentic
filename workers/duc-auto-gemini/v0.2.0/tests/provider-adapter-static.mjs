@@ -85,14 +85,33 @@ assert.equal(adapter.surfaceAllowed("https://example.com/", { submittedInThisTab
 const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 assert.doesNotMatch(sidepanel, /chatgpt\\\.com/, "sidepanel.js does not contain a literal chatgpt\\.com regex");
 assert.doesNotMatch(sidepanel, /gemini\\\.google/, "sidepanel.js does not grow its own gemini origin regex either");
-// Ba chỗ, kể tên để lần sau con số này không còn là số ma. G-02 (04/09) thêm
-// chỗ thứ ba: activeTab() bơm predicate vào tab-lock-core thay vì để core tự
-// nghĩ ra luật địa chỉ Gemini của riêng nó. Cái thật sự được bảo vệ là HAI
-// dòng doesNotMatch ở trên — không nơi nào trong sidepanel.js được tự chế
-// regex origin. Con số này chỉ là chốt phụ, và nó phải TĂNG khi có thêm chỗ
-// ủy quyền hợp lệ, chứ không phải để yên rồi ai đó gỡ một chỗ đi.
-assert.equal([...sidepanel.matchAll(/DacProviderAdapter\.isProviderUrl\(/g)].length, 3, "ba chỗ ủy quyền cho adapter: pickActiveGeminiTab · activeTab (bơm vào tab-lock-core, G-02) · isChatGPTUrl");
+// Kể tên để con số không thành số ma. G-02 (04/09) thêm chỗ activeTab() bơm
+// predicate vào tab-lock-core thay vì để core tự nghĩ ra luật địa chỉ Gemini.
+// Cái thật sự được bảo vệ là HAI dòng doesNotMatch ở trên — không nơi nào
+// trong sidepanel.js được tự chế regex origin. Con số chỉ là chốt phụ, và nó
+// phải TĂNG khi có thêm chỗ ủy quyền hợp lệ, chứ không phải để yên rồi ai đó
+// gỡ một chỗ đi.
+//
+// HAI PREDICATE, HAI CÂU HỎI KHÁC NHAU — và gộp chúng lại chính là cái đã làm
+// hỏng nút phóng to (sửa 06/09). `isProviderUrl` hỏi "một run có được phép gõ
+// vào tab này không", nên nó đòi đúng mặt `/app` hoặc `/images`; sai chỗ này là
+// gõ prompt nhầm chỗ. `isProviderOrigin` hỏi "tab này có đang ở trên Gemini
+// không", và đó là tất cả những gì một nút chỉnh phóng to cần biết.
+//
+// Nút phóng to trước đây hỏi câu CHẶT, nên nó tự xám trên mọi trang Gemini
+// không phải /app hay /images — trang gốc, một Gem, hội thoại chia sẻ, trang
+// cài đặt. Phóng to mấy trang đó vô hại; nút chỉ đơn giản từ chối.
+assert.equal([...sidepanel.matchAll(/DacProviderAdapter\.isProviderUrl\(/g)].length, 2, "hai chỗ hỏi câu CHẶT (run có được gõ vào tab này không): pickActiveGeminiTab · activeTab bơm vào tab-lock-core (G-02)");
+assert.equal([...sidepanel.matchAll(/DacProviderAdapter\.isProviderOrigin\(/g)].length, 1, "đúng MỘT chỗ hỏi câu origin: nút phóng to, thứ không gửi gì và không gõ gì");
 for (const site of ["pickActiveGeminiTab", "isChatGPTUrl"]) assert.ok(sidepanel.includes(site), `chỗ ủy quyền ${site} phải còn tồn tại`);
+
+// Chốt hạ, và là thứ khiến phép kiểm này KHÔNG chỉ là đếm số: nút phóng to
+// không được phép quay về câu hỏi chặt. Trích đúng thân hàm rồi soi, chứ soi
+// cả file thì hai chỗ hợp lệ kia luôn làm nó xanh.
+const zoomGate = /function isChatGPTUrl\(url\) \{[\s\S]*?\n  \}/.exec(sidepanel);
+assert.ok(zoomGate, "hàm cổng của nút phóng to vẫn còn");
+assert.match(zoomGate[0], /isProviderOrigin\(url\)/, "cổng nút phóng to hỏi câu origin");
+assert.doesNotMatch(zoomGate[0], /isProviderUrl\(/, "cổng nút phóng to KHÔNG được đòi đúng mặt /app|/images — đó là câu hỏi của runner, và hỏi nhầm nó làm nút xám trên 6/10 hình dạng địa chỉ Gemini thường gặp");
 assert.match(sidepanel, /isProviderUrl:\s*\(url\)\s*=>\s*window\.DacProviderAdapter\.isProviderUrl\(url\)/, "tab-lock-core phải NHẬN predicate từ adapter, không được tự nghĩ ra luật mặt Gemini của riêng nó");
 
 /* ---- content.js consumes the adapter instead of inline literals ---------- */
