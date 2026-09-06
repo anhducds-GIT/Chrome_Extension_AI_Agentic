@@ -280,6 +280,78 @@ phải một năng lực chung**, nó là một may mắn. Scouter được ADR-
 bất kỳ" thì phải có cách ② — và **phép thử `isTrusted` mà EXP-14 gọi là MICRO-PROOF nên là việc
 code đầu tiên của Scouter**, vì nếu nó ra `false` thì cả dòng số 1 đổ, và đổ sớm thì rẻ.
 
+## 4.1.1 Phép đo đã chạy — ngày 06/09, và nó ĐẠT — [ĐO]
+
+> Mục 4.1 ở trên viết ngày 06/09 buổi sáng, lúc chỗ này còn là `MICRO-PROOF REQUIRED`.
+> Chiều cùng ngày phiên `claude-scouter-do` chạy phép đo. **Đoạn dưới là số đo thật, không
+> phải tài liệu.** Mục 4.1 giữ nguyên chữ cũ — nó là bản ghi của lúc chưa biết.
+
+**Câu trả lời: có.** Cú bấm đi qua đường điều khiển của trình duyệt được trang nhìn thấy y như
+cú bấm của tay người — trên Chrome 152.0.7977.76, đo ngày 06/09/2026.
+
+Chạy lại:
+
+```bash
+node scripts/scouter-input-trust-probe.mjs
+```
+
+Nó tự dựng trang thử và một hồ sơ Chrome trống trong thư mục tạm, đo, rồi xoá. **Không đụng
+trang thật, không tốn credit, không cần Đức duyệt.** Mã thoát: `0` đạt · `1` không đạt ·
+`2` phép đo không chạy được (khác hẳn "không đạt" — đừng ghi mã 2 vào bảng này).
+
+### Bốn đường bấm, đo trên cùng một nút
+
+| Đường bấm | `isTrusted` | Cổng hoạt động của trình duyệt mở không |
+|---|---|---|
+| Sự kiện giả lập trong trang (`dispatchEvent`) | **false** | không |
+| `HTMLElement.click()` — cách ba worker đang dùng | **false** | không |
+| Chuột thật của trình duyệt qua `chrome.debugger` | **true** | **có** |
+| Tay người thật | — | **CHƯA ĐO** — không tự động hoá được |
+
+Gõ phím cùng một kết quả: `Input.dispatchKeyEvent` cho `keydown` mang `isTrusted: true` **và**
+làm ô nhập dài thêm thật. `Input.insertText` (CDP đánh dấu THỬ NGHIỆM) cũng chạy được, nhưng
+**không tính điểm** — thử nghiệm thì có thể biến mất ở bản Chrome sau.
+
+### Chỗ phép đo này khác EXP-14, và vì sao chỗ đó đáng tiền
+
+EXP-14 dừng ở suy luận từ mã nguồn Chromium. Lặp lại suy luận đó thì không thêm được gì. Nên
+phép đo chạy **hai đường**, và chỉ đường thứ hai tính điểm:
+
+| Đường | Là gì | Vai |
+|---|---|---|
+| `cdp` | phiên CDP thẳng | đối chứng |
+| `ext` | `chrome.debugger` gọi từ **bên trong một extension thật** | **đường Scouter sẽ dùng — tính điểm** |
+
+Hai đường ra kết quả **giống hệt nhau**. Nhưng nếu chỉ đo đường `cdp` thì ta vẫn đang suy luận
+"chắc `chrome.debugger` cũng thế", và suy luận đúng là thứ EXP-14 đã có rồi.
+
+### Ba cái bẫy gặp thật, ghi ra để người sau khỏi mất buổi chiều
+
+⑴ **`--load-extension` đã CHẾT từ Chrome 137.** Trang extension trả `ERR_BLOCKED_BY_CLIENT`, và
+`--disable-features=DisableLoadExtensionCommandLineSwitch` **không** mở lại được. Đường còn lại
+mà Chrome hiện hành thừa nhận là lệnh CDP `Extensions.loadUnpacked`, và lệnh đó chỉ có khi chạy
+`--remote-debugging-pipe` kèm `--enable-unsafe-extension-debugging`. Hai cờ đó chỉ để **cài**
+được extension thử; chúng không đụng gì tới ngữ nghĩa của cú bấm.
+
+⑵ **Chrome chỉ cho MỘT khách gỡ lỗi cắm vào một tab.** Đường `cdp` phải rời tab trước, không thì
+`chrome.debugger.attach` của đường `ext` trả *"Another debugger is already attached"*. Đây cũng
+chính là lý do ADR-0009 mục ⑷ chốt "một Scouter một URL".
+
+⑶ **Service worker của extension ngủ ngay sau khi cài**, nên nó không có mặt trong danh sách
+target lúc ta đi tìm. Lượt chạy đầu của phép đo mắc đúng ở đây và báo "không tìm thấy extension"
+— trong khi extension vẫn ổn. Cách vòng qua: mở một **trang** của extension rồi gọi từ đó.
+
+### Nó có nghĩa gì với 24 mục còn lại
+
+Món đắt nhất trong danh sách là **thật**. Thứ tự `SEED v0.1` của ADR-0010 giữ nguyên, không phải
+xếp lại. Ba câu vẫn đúng và đừng ai bỏ qua:
+
+- `isTrusted: true` **không** đồng nghĩa với "trang không phát hiện được". Trang còn nhiều dấu
+  hiệu khác (dải băng cảnh báo của Chrome là một, và ADR-0009 đã ghi là không giấu được).
+- Đo trên **một** bản Chrome, **một** máy. Nó là số đo, không phải lời hứa của Google — chạy lại
+  lệnh trên khi lên bản Chrome mới.
+- Cú bấm **của tay người thật** vẫn CHƯA ĐO, vì không tự động hoá được. Ba đường còn lại đo rồi.
+
 ## 4.2 Miền CDP — Chrome mở 27, repo dùng 3 — [TL] + [ĐO]
 
 Chrome mở cho extension 27 miền: `Accessibility` `Audits` `CacheStorage` `Console` `CSS`
