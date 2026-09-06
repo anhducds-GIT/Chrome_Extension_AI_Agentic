@@ -1118,3 +1118,31 @@ có ghi tên lane nên quy thuộc được, cùng họ với `Y-16`. Gộp vào
 - **Đẩy:** `--carry` cuốn theo lane `claude-gemini-hoan-thien`. Trả `_root` + `_docs`.
 - **Còn mở:** chat `claude-scouter-seed` đang giữ `_code` và xây seed vào `scripts/` — **chưa biết
   ADR-0013**. Cần nhắc nó làm bước ⓪ trước.
+### 2026-09-06 · `claude-scouter-seed` · Scouter ra nhà riêng, và một lượt dọn làm gãy bộ sinh của mọi lane
+
+**Làm gì.** ADR-0013 bước ①: dọn Scouter khỏi gốc repo + `scripts/` + `tests/` về
+`workers/duc-scouter/v0.1.0/` bằng `git mv`, khoá riêng `workers/duc-scouter`. Rồi
+`BRIEF-SCOUTER-SEED-01` việc ②: khung seed làm được ba việc của ADR-0009 mục ⑸.
+
+**Kết quả số.** Gói: 5 phép ghim XANH · đột biến kiểm 24/24 khớp, giết 24, sống 0 · nối thử
+với máy chủ Bridge THẬT ĐẠT 5/5. Bộ ghim dashboard 99/99 sau khi thêm phép ghim E7b.
+
+**Việc tôi làm gãy, và ai phát hiện.** Lượt dọn xoá `manifest.json` ở gốc repo, mà
+`build-dashboard.mjs` vẫn đọc một **đơn vị GỐC cố định** rồi theo `version_source` sang file
+đó. Bộ sinh NÉM. Vì `safe-push` đòi bản sinh khớp HEAD, **không lane nào đẩy được**, kể cả
+lane không đụng gì tới Scouter. Lane `claude-flow-active` phát hiện khi bị từ chối đẩy, ghi
+`N-09`, **không tự sửa vùng của người khác, giữ khoá, báo lại** — đúng luật mục 1. Đã vá:
+mất marker thì không ném · không đếm thành nợ (đó là khoản nợ không ai đóng được) · không
+hiện trên bảng của Đức. Phép ghim E7b ghim cả hai chiều.
+
+**Bài học đáng ghi.** Bộ sinh đọc từ **HEAD**, không đọc cây làm việc. Tôi vấp đúng chỗ này
+hai lần trong một phiên: sửa `STATUS.md` rồi chạy bộ sinh và không hiểu sao nó vẫn báo giá
+trị cũ. Muốn thấy thay đổi thì phải commit trước.
+
+**Xin lỗi kèm bản ghi.** Tôi để hai file nháp `suite-tmp.sh` / `suite-tmp.log` ở gốc repo;
+Đức phát hiện chúng làm cổng đỏ với mọi phiên vì chưa khai vào Bản đồ file. Đã xoá. Đáng ra
+phải dựng ở thư mục tạm ngoài repo.
+
+**Còn gì mở.** Cổng đóng phiên chậm: `tests/build-overview-smoke.mjs` mất **392 giây**, vì
+một lượt `buildOverview` trên repo thật mất **21 giây** và phép ghim dựng lại **7 lần**.
+Chưa vá — đã giao Đức mở phiên riêng.
