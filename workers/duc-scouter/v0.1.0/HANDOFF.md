@@ -14,3 +14,4 @@
 
 ## Log
 
+<!-- HANDOFF-THANG: 2026-09 -->
