@@ -1,1 +1,24 @@
+# Y-17 — kiểu xuống dòng là LF, ở mọi máy.
+#
+# Vì sao: máy này đặt `core.autocrlf=true`, nên `git checkout` viết ra đĩa bản
+# CRLF trong khi trong git là LF. Phép thử nào dò `,\n` sát nhau sẽ XANH với
+# người vừa sửa file và ĐỎ ngay sau bất kỳ lượt `git checkout` nào — đúng loại
+# xanh giả tệ nhất. Dòng `eol=lf` dưới đây thắng `core.autocrlf`, nên bản trên
+# đĩa và bản trong git luôn giống nhau.
+#
+# Đo 2026-09-06 trước khi thêm file này: trong git 1084 LF / 0 CRLF (đã sạch),
+# nhưng trên đĩa 963 LF / 89 CRLF / 32 lẫn lộn. Bệnh nằm ở lượt checkout, không
+# nằm ở kho — nên file này KHÔNG viết lại một byte nào trong git.
+
+* text=auto eol=lf
+
+# Nhị phân: không đụng vào một byte nào, không diff.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.xlsx binary
+
+# Giữ lại dòng có từ V0.2-A (27/08) — nay là trường hợp riêng của luật trên,
+# để nguyên vì `PLATFORM.md` mục 161 và brief V0.2-A còn trỏ tới nó.
 DASHBOARD.md text eol=lf
