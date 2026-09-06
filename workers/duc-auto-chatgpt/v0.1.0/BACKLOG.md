@@ -953,7 +953,54 @@ thay vì chuyển chuỗi địa chỉ sang service worker rồi gọi ở đó.
 thất bại vì **một giả thuyết không tồn tại được**. Một bảng "nếu A thì…, nếu B thì…" không có
 hàng cho "A bất khả" thì nó sẽ đọc thành "phép đo hỏng" và người sau đi đo lại.
 
-- **Chờ Đức:** dán đoạn đo **ở console của SIDE PANEL** (đoạn ngay trên) rồi báo lại một dòng kết quả — không tạo job, không tốn credit. Đoạn đo cũ ở service worker **đã chạy và đã bị bác**, đừng chạy lại. @Đức:bấm
+**PHÉP ĐO SIDE PANEL ĐÃ CHẠY 2026-09-06 — CHẠY ĐƯỢC, nhưng BỊ NHIỄU. Đọc kỹ chỗ này.**
+
+Kết quả thô, console `/sidepanel.html`:
+
+```
+KET QUA: xin = B36-probe-panel__audit.jsonl
+         | Chrome dat = ...\Downloads\05a491ce-623c-4d7a-bb81-f677686cf7ec
+```
+
+**Nhưng phép đo này KHÔNG phân biệt được điều nó định phân biệt.** Nó **không trồng phiếu giữ
+tên**, nên determiner ở `background.js:89-92` không tìm thấy phiếu và rơi vào nhánh
+`if (!expected) { suggest(); return; }`. Chú thích ngay trên hàm đó **đã ghi sẵn** rằng
+`suggest()` trần nghĩa là "tôi không có ý kiến" nên Chrome dùng tên mặc định, và tên mặc định
+của một blob URL **LÀ** cái GUID.
+
+Nên nó đo lại đúng một nhánh **đã biết từ 04/09**. Đóng góp thật của nó chỉ là **mẫu GUID thứ ba**
+(`05a491ce-…`, sau `bd00d527-…` và `16f87e2b-…`) — ba mẫu đều đúng hình dạng đoạn cuối blob URL,
+nên quan sát [DÒ] cũ nay đủ mạnh để đọc là [ĐO]: **tên mặc định của blob URL là GUID của nó.**
+
+**Lỗi thiết kế phép đo, ghi ra để không lặp:** cả hai đoạn đo (service worker và side panel) được
+viết TRƯỚC khi đọc kỹ `background.js`. Ba dòng cần biết nằm ngay ở đó. Một phép đo đi xuyên qua
+determiner mà không khai là nó đi xuyên qua determiner thì **không cô lập gì cả** — nó chỉ đổi
+ngữ cảnh gọi, trong khi biến quyết định là **có phiếu hay không có phiếu**.
+
+**PHÉP ĐO ĐÚNG — đi bằng CHÍNH đường thật của mã, nên không còn chỗ nhiễu.**
+`DAC_DOWNLOAD_ARTIFACT` trồng phiếu rồi mới tải (`background.js:121-133`), nên determiner sẽ
+tìm thấy phiếu và gọi `suggest({filename})` — đúng nhánh mà kết luận 04/09 dựa vào, và lần này
+đọc kết quả **trực tiếp** thay vì suy từ việc phiếu đã bị tiêu.
+
+```js
+(async () => {
+  const want = "B36-probe-ticket__audit.jsonl";
+  const blob = new Blob(['{"probe":"B36-ticket"}'], { type: "application/jsonl" });
+  const url = URL.createObjectURL(blob);
+  const r = await chrome.runtime.sendMessage({
+    type: "DAC_DOWNLOAD_ARTIFACT",
+    url, filename: want, conflictAction: "overwrite", expectedBytes: blob.size
+  });
+  console.log("KET QUA:", JSON.stringify(r));
+})()
+```
+
+| `filename` trong kết quả | Nghĩa | Việc phải làm |
+|---|---|---|
+| kết thúc bằng `B36-probe-ticket__audit.jsonl` | `suggest({filename})` **ĐƯỢC tuân**. Kết luận 04/09 ("Chrome bỏ qua đề xuất") **SAI** — nó suy từ phiếu-đã-bị-tiêu chứ không đọc tên. Hỏng thật là **phiếu không khớp trong luồng thật** | Đo tiếp: vì sao phiếu trượt ở luồng thật mà khớp ở đây. So `item.url` Chrome báo lại với chuỗi dùng làm khoá. **Vá được, hẹp** |
+| lại là GUID | `suggest({filename})` **KHÔNG được tuân**, xác nhận trực tiếp lần đầu | Thôi phụ thuộc Chrome Downloads cho artifact. Đường File System Access đã đo chạy. Đổi mặc định bootstrap (`sidepanel.js:1629`) là đổi quyết định Đức chốt 25/08 → **hỏi Đức** |
+
+- **Chờ Đức:** dán đoạn **DAC_DOWNLOAD_ARTIFACT** ngay trên vào console `/sidepanel.html` rồi báo lại dòng `KET QUA:` — 0 credit, không tạo job. Hai đoạn đo trước **đã chạy và đều KHÔNG phân biệt được**; đừng chạy lại chúng. @Đức:bấm
 
 ## Đã đóng
 
