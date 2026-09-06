@@ -184,3 +184,51 @@ Khác biệt duy nhất phải biết khi vận hành:
    `run.trial` khoá tab + khoá hội thoại từ lúc bind, trôi hội thoại giữa run là
    `RECEIVER_LOST`. Operator cần "đúng cuộc hội thoại X" thì tự kiểm bằng `dom_probe`
    trước khi hành động, đừng suy từ tên phiên.
+
+## Protocol dọn rác tên-GUID — `node scripts/don-rac-tai-xuong.mjs`
+
+**Vì sao có mục này.** Chrome không đặt tên nổi artifact của gói này khi đích ghi rơi về thư mục
+Tải xuống ([`B-36`](BACKLOG.md), đo trực tiếp 06/09), nên nó đặt tên theo GUID của blob. Đo ngày
+06/09: **39 file tên GUID / 170 file** trong thư mục Tải xuống của Đức, rải từ 09/07. Đức chốt
+chúng là rác — *"nội dung đã đi vào và đi ra qua Claude Code rồi, giá trị của chúng là một lần và
+đã xong nhiệm vụ"* — và yêu cầu một protocol dọn, vì *"sau này tôi cũng không biết là gì rồi nó
+chất đống ở đấy."*
+
+**Câu để Đức dán.** Xem trước, không xoá gì:
+
+```
+node workers/duc-auto-chatgpt/v0.1.0/scripts/don-rac-tai-xuong.mjs
+```
+
+Chạy bao nhiêu lần cũng được, **mặc định không đụng file nào**. Nó in ba nhóm:
+
+| Nhóm | Là gì | Xoá bằng |
+|---|---|---|
+| **①** | Sổ audit và file đo — **chứng minh được là của gói** (nội dung mang cả `timestamp` lẫn `event`, hoặc khoá `probe`) | `--xoa` |
+| **②** | Ảnh `.png` và workbook `.xlsx` — đúng hình dạng đầu ra của gói, nhưng **không chứng minh được chủ**: ảnh PNG nào cũng là PNG. Có thể là đầu ra thật của một run cũ | `--xoa --ca-anh-va-workbook` |
+| **③** | **KHÔNG BAO GIỜ xoá.** Tên giống GUID mà không phải của gói này | không có cờ nào xoá được |
+
+**Luật số một của công cụ này: KHÔNG lọc theo hình dạng tên.** Trong 39 file tên GUID có **một
+`.pdf` và một `.jpg` là file THẬT của Đức** — trang web nào tải blob về cũng được Chrome đặt tên
+kiểu ấy. Một bộ lọc chỉ khớp tên sẽ xoá chúng, và xoá là không hoàn lại được. Nên mỗi ứng viên
+phải **tự chứng minh** nó là đầu ra của gói, bằng nội dung. Nhóm ③ vẫn **được in ra kèm lý do
+giữ** — đó là phần làm công cụ đáng tin: Đức thấy chính xác cái gì đã được bảo vệ, chứ không phải
+tin một lời hứa.
+
+**Ba loại nội dung, đừng gộp** (lý lẽ của Đức chỉ áp cho loại đầu):
+
+1. **Nội dung một lần** — sổ của phiên vừa dựng, file đo. Quên được.
+2. **Bản ghi trách nhiệm của một run thật** — phải bền và phải có tên. Ngữ cảnh một phiên Claude
+   Code **chết theo phiên**, còn GPT audit qua GitHub connector tức đọc **repo**. "CC đã thấy rồi"
+   không thay được một bản ghi bền.
+3. **Sản phẩm** — ảnh và workbook kết quả. Mất tên là Đức không dùng được.
+
+Vì (2) và (3) nằm ở nhóm ②, nhóm đó **đòi một cờ riêng** chứ không đi theo `--xoa`.
+
+**Không tự chạy theo lịch.** Tạo automation tự chạy vẫn là việc phải hỏi Đức, và một bộ xoá tự
+động trong thư mục Tải xuống là loại việc không nên chạy sau lưng ai. Muốn nó thành tự động thì
+hỏi Đức trước.
+
+**Phép ghim:** `tests/don-rac-tai-xuong-smoke.mjs` — 36 khẳng định, trong đó **ba lượt chạy công
+cụ thật** vào thư mục tạm rồi xem file nào còn trên đĩa. Thử phá **7/9 bị bắt**; hai lượt thoát là
+**tương đương hành vi** (mỗi cái bị lớp còn lại chặn), và **lượt gộp cả hai thì ĐỎ**.

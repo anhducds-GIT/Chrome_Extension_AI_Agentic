@@ -118,6 +118,7 @@ COMPANION (đọc khi cần):
 | `drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md` | Gói việc `run.stop` + `chat.reload` giao cho phiên kế tiếp |
 | `templates/Duc-Auto-ChatGPT-Template.xlsx` | Workbook trống chuẩn để bắt đầu pilot mới |
 | `scripts/create-pilot-NN.mjs` | Script tạo workbook cho từng pilot |
+| `scripts/don-rac-tai-xuong.mjs` | Dọn file rác tên-GUID Chrome đặt cho artifact (B-36). Mặc định CHỈ XEM; ba nhóm theo độ chắc của bằng chứng chủ sở hữu. Protocol: mục cùng tên trong `AI-OPERATOR-GUIDE.md` |
 | ~~`FEATURE-PARITY.md`~~ | **Đã dời về gốc repo** 2026-08-26 theo Đức chốt — xem `FEATURE-PARITY.md` ở gốc. Nó nói về cả hai nhánh nên không thuộc package nào |
 | `bridge-workspace-core.js` | **Phiên làm việc theo tab** (ADR-0046): module thuần giữ store `dac.bridge.workspaces.v1` — trần 3 phiên/profile, chống trùng tên (không phân hoa-thường) và trùng tab, sanitize tên cùng kỷ luật với nhãn hồ sơ, dẫn xuất danh tính ghế (instance_id = mã phiên, label = tên phiên). Transport mở MỘT socket riêng cho mỗi phiên; host không phân biệt phiên với profile |
 | `tests/bridge-workspace-seats-smoke.mjs` | Ghim lớp phiên làm việc: mỗi ghế đi TRỌN bắt tay challenge→proof→auth với danh tính riêng; tab đóng/rời ChatGPT → ghế ngắt ngay (fail-closed); rpc qua ghế phiên mang workspace trên port message để panel bind method chạm tab vào ĐÚNG tab của phiên; không đọc được danh tính → từ chối auth (không có ghế vô danh); pin tĩnh cho 4 handler chạm tab của panel. 13/13 mutation đỏ |

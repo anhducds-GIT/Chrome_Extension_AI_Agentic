@@ -69,6 +69,12 @@ ca("16f87e2b-3d75-4a5d-9cee-884f1c7b732a.png", ZIP, "khong-phai", "đuôi .png m
 ca("16f87e2b-3d75-4a5d-9cee-884f1c7b732a.xlsx", PNG, "khong-phai", "đuôi .xlsx mà nội dung là PNG");
 ca("16f87e2b-3d75-4a5d-9cee-884f1c7b732a.exe", B("MZ"), "khong-phai", "gói này không sinh .exe");
 
+/* Ca này ghim ĐỘT BIẾN M1, cái duy nhất thoát lưới ở lượt thử phá đầu (6/7).
+   M1 thêm `.pdf` vào `DUOI_CUA_GOI`. Bản đầu để nhánh xlsx làm catch-all, nên
+   `.pdf` lặng lẽ bị đối xử như workbook — và một `.pdf` mang chữ ký ZIP sẽ
+   thành "xoá được với cờ phụ". Bây giờ mỗi đuôi có nhánh riêng, còn lại GIỮ. */
+ca("2b6cb294-a4f7-4d96-b489-a5058474c683.pdf", ZIP, "khong-phai", "M1: .pdf mang chữ ký ZIP vẫn phải được GIỮ");
+
 /* ---- quét thật trên một thư mục tạm: phải phân đúng ba nhóm, không đi vào thư mục con ---- */
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "don-rac-"));
 try {

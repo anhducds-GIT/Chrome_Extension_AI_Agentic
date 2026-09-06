@@ -56,10 +56,20 @@ export function phanLoai(ten, docDauFile) {
       ? { bac: "can-mat", vi_sao: "PNG thật, nhưng ảnh nào cũng là PNG — không chứng minh được chủ" }
       : { bac: "khong-phai", vi_sao: "đuôi .png mà không phải PNG" };
   }
-  const ok = dau.length >= 4 && dau[0] === 0x50 && dau[1] === 0x4b && dau[2] === 0x03 && dau[3] === 0x04;
-  return ok
-    ? { bac: "can-mat", vi_sao: "workbook thật, nhưng không chứng minh được chủ" }
-    : { bac: "khong-phai", vi_sao: "đuôi .xlsx mà không phải workbook" };
+  if (duoi === ".xlsx") {
+    const ok = dau.length >= 4 && dau[0] === 0x50 && dau[1] === 0x4b && dau[2] === 0x03 && dau[3] === 0x04;
+    return ok
+      ? { bac: "can-mat", vi_sao: "workbook thật, nhưng không chứng minh được chủ" }
+      : { bac: "khong-phai", vi_sao: "đuôi .xlsx mà không phải workbook" };
+  }
+  /* Nhánh phòng xa, và nó KHÔNG phải trang trí. Bản đầu để nhánh xlsx làm
+     catch-all (`else` cho mọi đuôi còn lại), nên đột biến M1 — thêm `.pdf`
+     vào `DUOI_CUA_GOI` — không làm phép ghim đỏ: file `.pdf` lặng lẽ được
+     đối xử như workbook. Một `.pdf` thật thì mở đầu bằng `%PDF` nên vẫn bị
+     giữ, tức lần đó vô hại; nhưng luật thì đã hỏng, và lần sau ai thêm một
+     đuôi vào danh sách sẽ được đối xử như workbook mà không ai thấy.
+     Nay mỗi đuôi phải có nhánh của riêng nó, còn lại thì GIỮ. */
+  return { bac: "khong-phai", vi_sao: `đuôi ${duoi} có trong danh sách nhưng chưa có cách chứng minh chủ — giữ lại` };
 }
 
 function doc(thuMuc, ten) {
