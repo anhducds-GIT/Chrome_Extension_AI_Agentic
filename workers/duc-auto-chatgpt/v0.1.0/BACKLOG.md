@@ -1000,7 +1000,66 @@ tìm thấy phiếu và gọi `suggest({filename})` — đúng nhánh mà kết 
 | kết thúc bằng `B36-probe-ticket__audit.jsonl` | `suggest({filename})` **ĐƯỢC tuân**. Kết luận 04/09 ("Chrome bỏ qua đề xuất") **SAI** — nó suy từ phiếu-đã-bị-tiêu chứ không đọc tên. Hỏng thật là **phiếu không khớp trong luồng thật** | Đo tiếp: vì sao phiếu trượt ở luồng thật mà khớp ở đây. So `item.url` Chrome báo lại với chuỗi dùng làm khoá. **Vá được, hẹp** |
 | lại là GUID | `suggest({filename})` **KHÔNG được tuân**, xác nhận trực tiếp lần đầu | Thôi phụ thuộc Chrome Downloads cho artifact. Đường File System Access đã đo chạy. Đổi mặc định bootstrap (`sidepanel.js:1629`) là đổi quyết định Đức chốt 25/08 → **hỏi Đức** |
 
-- **Chờ Đức:** dán đoạn **DAC_DOWNLOAD_ARTIFACT** ngay trên vào console `/sidepanel.html` rồi báo lại dòng `KET QUA:` — 0 credit, không tạo job. Hai đoạn đo trước **đã chạy và đều KHÔNG phân biệt được**; đừng chạy lại chúng. @Đức:bấm
+**KẾT LUẬN 2026-09-06 — ĐO TRỰC TIẾP, ĐI BẰNG ĐƯỜNG THẬT CỦA MÃ. Hàng 2 xác nhận.**
+
+`DAC_DOWNLOAD_ARTIFACT` (trồng phiếu rồi tải — đúng đường mọi mutation Bridge đi), console
+`/sidepanel.html`:
+
+```
+{"ok":true,"download_id":658,
+ "filename":"...\Downloads\d31c629e-39e1-4a96-ae61-dde336b91792",
+ "requested_filename":"B36-probe-ticket__audit.jsonl",
+ "persisted_bytes":22}
+```
+
+Đức gửi kèm cả file. Nội dung: `{"probe":"B36-ticket"}` — **đúng nguyên vẹn, 22 byte**. Chỉ cái
+tên bị Chrome đặt.
+
+**Nên: Chrome Downloads KHÔNG đặt tên nổi artifact của gói này, và điều đó nay đo trực tiếp
+chứ không suy.** Kết luận 04/09 suy từ *phiếu đã bị tiêu*; lần này đọc thẳng cả tên xin lẫn tên
+Chrome đặt, trong cùng một phản hồi, trên đúng đường mã thật.
+
+**Một điều CHƯA phân biệt được, và nó không đổi việc phải làm.** Phản hồi trên không nói được
+determiner có nổ hay không:
+
+- (a) determiner nổ, gọi `suggest({filename})`, Chrome **bỏ qua đề xuất**; hoặc
+- (b) `onDeterminingFilename` **không nổ cho blob URL**, và `filename` truyền cho
+  `downloads.download` cũng bị bỏ qua.
+
+Cả hai đường dẫn tới **cùng một hành động**, nên đừng chặn việc để đo. Phép đo phân biệt rẻ và
+0 credit, gộp vào lượt sau: sau khi tải, đọc `expectedDownloadNames.size` trong console service
+worker — rỗng nghĩa là phiếu bị tiêu, tức (a). Đáng đo vì nếu là (b) thì **cả cơ chế determiner
+là mã chết** cho artifact, và một luật không bao giờ nổ vẫn tốn mọi phiên đọc nó về sau.
+
+**Vòng tròn kẹt, nay hiểu đủ để mô tả bằng bốn dòng mã.** `executeBridgeDirectMutation`
+(`sidepanel.js:1644`) mặc định phiên bootstrap về **chế độ Downloads** — quyết định của Đức
+25/08, và đúng vào lúc đó. Nhưng `DacApprovalPersistence.execute` ghi sổ audit **vô điều kiện**
+trước khi mutation có tác dụng, nên phiên bootstrap **luôn** đi qua đúng nhánh vừa được chứng
+minh là không đặt tên nổi → `verifyDownloadedFilename` ném → **mọi** mutation Bridge chết:
+`jobs.add` · `jobs.update` · `jobs.remove` · `queue.propose` · `output.configure`.
+
+Và cửa ra bị chặn bởi chính cửa vào: chọn thư mục đích cần một phiên, mà cửa dựng phiên qua
+Bridge (`jobs.add`) thì đang chết vì lỗi này.
+
+**Thêm một dữ kiện đo được, nó quyết định việc chọn phương án:** thư mục đã cấp quyền **KHÔNG
+được lưu bền**. `showDirectoryPicker` xuất hiện ở `sidepanel.js:4207/4231/4335`, không chỗ nào
+lưu handle vào IndexedDB. Nên handle chỉ sống trong bộ nhớ side panel — **đóng panel là mất**,
+và Đức phải chọn lại thư mục mỗi lần mở. Đó chính là lý do mặc định Downloads tồn tại; nó không
+phải sự lơ là.
+
+**CẦN ĐỨC CHỐT MỘT CÂU — bốn phương án, xếp theo khuyến nghị.**
+
+| | Phương án | Được | Mất |
+|---|---|---|---|
+| **(A)** ⭐ | Phiên bootstrap **không ghi sổ ra FILE** cho tới khi có thư mục đích thật; giữ sổ trong bộ nhớ bền rồi xả ra file ở lần ghi thật đầu tiên | Phá vòng tròn kẹt · **giữ được quyền tự chủ của AI** (đúng mục tiêu Y-01/Y-15) · không nới lớp bảo vệ nào: sổ **vẫn** được ghi trước khi mutation có tác dụng, chỉ chậm ra *file* | Sổ chưa ra file thì không sống qua việc đóng panel. Phải nói thẳng điều đó cho AI vận hành, không được im |
+| **(B)** | Bootstrap **từ chối** kèm câu chỉ đường "chọn thư mục đích trước" | Diff nhỏ nhất · fail-closed · không đụng gì | Đức phải bấm **một lần mỗi lần mở panel** (vì handle không lưu bền) · **AI mất quyền tự dựng phiên** |
+| **(D)** | Lưu bền handle thư mục vào IndexedDB → Đức chọn thư mục **một lần**, mở lại thì `queryPermission` xin lại êm | Chữa gốc: Downloads thôi cần thiết cho artifact · vòng tròn kẹt tan · giữ quyền tự chủ | Việc thật, cần brief riêng · Chrome có thể vẫn đòi một cú bấm sau khi khởi động lại máy |
+| **(C)** | Thôi kiểm tên, chấp nhận GUID | — | **Không nên.** Bằng chứng vận hành mất tên là bằng chứng không tra được. 36 file GUID trong máy Đức là hậu quả của đúng cái đó |
+
+Khuyến nghị: **(A) ngay bây giờ để mở đường, (D) là hướng đúng về sau.** (A) không mâu thuẫn (D)
+— làm (A) rồi làm (D) thì (A) thành nhánh dự phòng, không phải mã phải xoá.
+
+- **Chờ Đức chốt:** chọn (A), (B) hay (D) — đây là **đổi mặc định bootstrap** Đức chốt 25/08 nên AI không tự quyết. Chốt xong là vá được ngay, ba phép đo đã đủ. @Đức:chốt
 
 ## Đã đóng
 
