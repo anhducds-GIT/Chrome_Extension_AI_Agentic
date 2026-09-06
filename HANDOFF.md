@@ -991,3 +991,30 @@ không phải xếp lại.
 "trang không phát hiện được" — Chrome vẫn hiện dải băng cảnh báo, và ADR-0009 đã ghi là không giấu
 được. Đo trên **một** bản Chrome, **một** máy: chạy lại `node scripts/scouter-input-trust-probe.mjs`
 khi lên bản Chrome mới. Và cú bấm **của tay người thật** vẫn chưa đo.
+## 2026-09-06 — `claude-handoff-tran` · ADR-0011 việc ①②③: trần 2.600 byte một mục, xoay theo tháng
+
+**Trần 2.600 byte/mục**, khai ở `.repo-structure.json`, cưỡng chế bằng phép kiểm thứ 13 của cổng
+đóng phiên (số 12 → 13, đúng luật chống tự tháo cổng). Cổng chặn **đúng mục vừa thêm trong phiên**
+— so tiêu đề với `origin/main`; mục cũ không bị chặn. Nhắc xoay tháng chỉ với lane **giữ khoá**.
+
+**ADR-0011 sai điểm tựa — đã đính chính ở protocol mục 2.** Hai con số 1.158 / 5.193 là byte chia
+cho số **tiêu đề** (kể cả `###` con), không phải byte mỗi mục. Đo lại theo mục `##`: Flow Video
+**3.785 — cao nhất** ba gói, không phải thấp nhất; gọn nhất là Gemini (2.679). 42 mục hiện có:
+min 872 · trung vị 3.284 · max 41.879 · trung bình 4.303. Chọn 2.600 vì nó nằm ngay trên mục đầy
+đủ mà gọn nhất đang có (2.593) và rơi vào khoảng trống 2.593–2.831; áp ngược lại chặn 26/42 = 62%.
+
+**Xoay theo tháng:** `node scripts/handoff.mjs --rotate <file>` đọc mốc `HANDOFF-THANG`; khác
+tháng thì dời phần sau `## Log` sang `HANDOFF-ARCHIVE-NN.md` (NN = số lớn nhất trong thư mục + 1,
+nên nối tiếp `-01`) rồi để lại con trỏ. File này đã khai `2026-09`; ba `HANDOFF.md` của worker
+chưa khai — lane nào chạm trước sẽ được cổng nhắc bằng một lệnh.
+
+**Một lỗ vá kèm:** bộ đếm sự cố chỉ đi được **một bước** con trỏ. Xoay theo tháng làm chuỗi dài ra
+(`HANDOFF.md` → `-02` → `-01`), nên sang tháng sau mọi sự cố cũ hơn một tháng sẽ âm thầm biến mất
+— đúng con bug 06/09, chậm 30 ngày. Nay đi hết chuỗi; đếm trên repo thật vẫn `1 · 1 · 1`.
+
+**Số:** suite mới `tests/handoff-smoke.mjs` 10 khối · **12 đột biến, 12 bị bắt** — nhưng hai con
+thoát lưới ở vòng đầu, và cả hai đều dạy được một điều: một con lọt qua `endsWith` vì byte bị bớt
+trùng byte cuối phần trước (đã đổi sang đẳng thức), con kia báo "sống sót" hai lần rồi mới lộ ra
+là **bẫy của bộ đo**, ghi ở protocol mục 4.
+
+**Còn mở:** việc ④ (Codex viết ngắn các mục cũ) chưa làm, để lượt sau.

@@ -117,6 +117,12 @@ theo tháng thì chuỗi dài ra mãi (`HANDOFF.md` → `-02` → `-01` → …)
 cũ, chỉ chậm hơn 30 ngày. Nay bộ đếm đi **hết** chuỗi. Phép ghim: `tests/build-overview-smoke.mjs`
 khối (d2).
 
+> **Muốn thử phá bộ đếm thì phải COMMIT đột biến, sửa file trên đĩa là vô ích.** Bộ sinh đọc
+> `git show HEAD:<file>`, không đọc đĩa — cố ý, để bảng chỉ nói thứ đã commit. Nên xoá con trỏ
+> trong cây làm việc rồi chạy suite sẽ ra **XANH**, và cái xanh đó **không** chứng minh gì cả.
+> Ngày 06/09 nó báo "sống sót" hai lần trước khi lộ ra là bẫy của bộ đo. Cách đúng: commit đột
+> biến trong một **bản sao** repo rồi chạy — làm thế thì số đếm về 0 ngay và phép ghim (a) đỏ.
+
 ## 5. Cấm
 
 - Cấm xoá mục cũ. Dời thì được, xoá thì không.
