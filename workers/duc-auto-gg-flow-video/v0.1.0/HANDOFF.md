@@ -453,3 +453,5 @@ của gói: hàm này chạy **sau** cú bấm Create, nên nếu địa chỉ �
 thu được video**. Đo được bằng `dom_probe` trên một dự án đã có video sẵn, 0 credit.
 
 **Chưa xong:** phải đo F-29 TRƯỚC lượt live, không phải sau.
+
+**Day kem `--carry`** (ADR-0005). Luot `86f150d..9d584da`, 15 commit, 2 cua toi; lane bi cuon theo: `claude-assistant` · `claude-gemini-hoan-thien` · `claude-hang-doi`.
