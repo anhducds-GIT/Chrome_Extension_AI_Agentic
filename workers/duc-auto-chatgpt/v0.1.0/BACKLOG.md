@@ -294,6 +294,8 @@ không tự làm. Ghi ở đây để không trôi.
 Trong lúc chưa có: khi báo cáo một job chết ở mốc ~90 giây qua `run.trial`, phải nói rõ đó là
 **giới hạn đường trial**, đừng để nó bị đọc thành lỗi tính năng.
 
+- **Chờ Đức chốt:** có mở một đường cho AI tự khởi động run mà không bị trần 90 giây không — đây là đổi luật an toàn nên AI không tự quyết. @Đức:chốt
+
 ### ~~B-19 · "Thử lại" KHÔNG chỉ giới hạn ở lỗi trước lúc gửi — cần Đức chốt luật~~ — **ĐÃ ĐÓNG 2026-09-06**
 
 > **Đức chốt 06/09, nguyên văn:** *"Sau khi đã gửi, chỉ được gửi lại khi đối soát khẳng định
@@ -379,6 +381,8 @@ Khi đó làm phương án (C), KHÔNG phải (B): lưu đầy đủ ra một fi
 Lý do chọn (C) chứ không cắt bớt: một ô Excel nhìn như đầy đủ mà thiếu đuôi là đúng kiểu lỗi mà
 project này cấm — người đọc không có cách nào biết. Kèm theo: file `.txt` sinh thêm thì cần luật
 dọn giống B-26, đừng quên phần đó khi ước lượng công.
+
+- **Chờ Đức chốt:** có cần câu trả lời text dài quá một ô Excel không — cần thì mở lại mục này, không cần thì để nguyên. @Đức:chốt
 
 ### ~~B-26 · Mỗi job đẻ ra 3 file XLSX — cần luật DỌN, không phải bớt checkpoint~~ — **ĐÃ ĐÓNG 2026-08-28**
 
@@ -647,7 +651,7 @@ phần code còn lại là nhỏ, cơ chế đã đứng sẵn.
 `provider-adapter.js`, chính sách ở lại. Hoãn tới sau khi selector đã xác minh
 xong, để lần bóc tách này vẫn là "không đổi hành vi".
 
-### B-09 · Rác test trong thư mục output
+### B-09 · Rác test trong thư mục output @Đức:bấm
 `Downloads\Phai sinh\DucAuto_GPT-Output\Pilot-10_Trial-Tu-Hanh` còn checkpoint và
 audit của các phiên hỏng (`Bridge-2026-08-25T07-25*`, `Bridge-2026-08-26T01-56*`).
 Xoá là quyền của Đức — **AI không tự xoá file**.
@@ -878,6 +882,8 @@ await new Promise((r) => setTimeout(r, 1500));
 thuyết: fake `chrome.downloads` phát `onDeterminingFilename` với `byExtensionId` sai, và với
 `item.url` lệch — cả hai phải làm test ĐỎ trước khi vá. Harness đã có sẵn:
 `bridge-workspace-lease-race-smoke.mjs` chạy `sidepanel.js` thật trong vm.
+
+- **Chờ Đức:** dán đoạn đo blob-trong-service-worker ở trên vào console rồi báo lại một dòng kết quả — không tạo job, không tốn credit. @Đức:bấm
 
 ## Đã đóng
 

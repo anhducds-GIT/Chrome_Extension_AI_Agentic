@@ -87,6 +87,7 @@
 - **F-09** · [ĐO 28/08] Flow chưa lộ số dư số học trong probe, nhưng khi hết credit thì
   `Create` biến mất và có 2 nút `Upgrade` visible/enabled. Matcher + test đã ghim
   `GENERATION_LIMIT_REACHED`, zero click/retry; còn cần reload và live verify bản vá.
+  - **Chờ Đức:** nạp lại tiện ích rồi chạy một lượt để kiểm bản vá hết-credit — phải dừng hẳn, không bấm, không thử lại. @Đức:bấm
 - **F-10** · FEATURE-PARITY: nhánh này sẽ vào bảng parity khi có method Bridge chạy thật.
 - **F-11** · **XONG 02/09 — và nó nổ thật trước khi kịp vá.** Đức chuyển sang chế độ Image để
   kiểm F-14/F-26, và probe cho thấy nhãn thật là `🍌 Nano Banana 2 **Lite** crop_16_9 x3`:
@@ -376,6 +377,7 @@
   phối phát hiện trong một phút thay vì hai mươi; ③ cân nhắc cho vòng lặp sống ở service worker
   thay vì panel — **đổi lớn, cần Đức chốt**.
   Bằng chứng: `evidence/F4R8-KET-QUA.md`.
+  - **Chờ Đức chốt (bước ③):** có cho vòng chạy job sống ở service worker thay vì side panel không — đổi lớn về kiến trúc nên AI không tự quyết. @Đức:chốt
 
 - **F-26** · **XONG 02/09** (Đức chốt: *"cho runner tự đặt x1 và tự đọc cấu hình"*). Runner nay
   **tự mở bảng cấu hình, tự bấm `x1`, rồi ĐỌC LẠI CHIP để kết luận** — không tin cú bấm.
@@ -390,6 +392,7 @@
   Suite 94/94 · mutation **7/7**. Bằng chứng nhãn: `evidence/F14-mode-probe-vi-20260902.json`.
   **CÒN LẠI:** chưa kiểm live. Và F-22 (đọc độ phân giải để suy trần chuỗi) vẫn mở — nay đã có
   `findOutputCountOption` làm mẫu, cùng cách làm.
+  - **Chờ Đức:** nạp lại tiện ích rồi chạy MỘT job ở chế độ Image với chip x3 — lượt đó kiểm luôn khối nhịp tim mới; hỏng thì vẫn không mất credit. @Đức:bấm
   ~~[ĐO 02/09, kèm theo F-14] Bảng cấu hình LIỆT KÊ ĐƯỢC~~ — ba việc đang treo có
   đường đi rẻ hơn hẳn.** `diagnostics.mode_probe` cho thấy 17 nhãn, gồm **toàn bộ** nút cấu hình
   rời: `360p` `720p` · `4s` `6s` `8s` `10s` · `16:9` `9:16` · **`x1` `x2` `x3` `x4`**.

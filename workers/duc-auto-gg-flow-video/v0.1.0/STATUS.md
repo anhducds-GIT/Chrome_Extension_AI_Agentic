@@ -58,6 +58,7 @@ còn là hạ tầng. Cách vận hành trong [`AI-OPERATOR-GUIDE.md`](AI-OPERAT
    cùng lúc, mỗi hồ sơ có tên riêng, nhắm bằng `--target`; không nêu đích thì host **từ chối**
    chứ không đoán. Còn lại một ghế `legacy` ở profile thứ tư (không tên, id đổi khi service
    worker ngủ dậy) — **chờ Đức quyết đặt tên hay tắt.**
+   - Ghế không tên đó: đặt tên cho nó, hay tắt hẳn? @Đức:chốt
 3. Video **trừ credits thật** mỗi lần sinh → trần trial dev ≤3 video (3 × 15 credits), chặt
    hơn nhánh ảnh. Không tự nới.
 4. Nhãn Image mode trong adapter khớp chính xác đúng một chuỗi đã đo (F-11); ảnh tham chiếu

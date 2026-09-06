@@ -51,6 +51,8 @@ attempt bị huỷ; kèm recheck cờ dừng sau `await gateNextJob` trong runne
 chứng minh không còn chuỗi `STOP_REQUESTED_BEFORE_SUBMIT → PROMPT_SUBMITTED`, ghi bằng chứng
 vào `evidence-stop-*/` rồi cập nhật `STATUS.md`. Cùng lỗi bên nhánh ChatGPT: **B-22**.
 
+- **Chờ Đức:** nạp lại tiện ích rồi chạy một lượt thật, bấm dừng giữa chừng — sau lệnh dừng không được có prompt nào bay đi nữa. @Đức:bấm
+
 ### G-02 · Khoá tab và khoá hội thoại — **ĐÃ VÁ TĨNH 2026-09-04**, chờ Đức reload để nghiệm thu — **[ĐỌC]**
 
 Lỗi gốc: `activeTab()` gọi `chrome.tabs.query({active:true})` **mỗi lần gửi**, và chỉ kiểm
@@ -73,6 +75,8 @@ Ghim: `tests/tab-lock-behavior.mjs` — 17 khẳng định, 15/15 đột biến 
 **Còn mở — chưa đóng được mục này:** Đức reload extension ở `chrome://extensions`, rồi chạy
 một run và giữa chừng bấm sang tab khác — prompt phải vẫn đi vào tab đã khoá. Đổi hội thoại
 hoặc đóng tab thì phải dừng cứng `RECEIVER_LOST`, không thử lại.
+
+- **Chờ Đức:** nạp lại tiện ích và điền tên hồ sơ, rồi chạy một lượt và giữa chừng bấm sang tab khác — prompt phải vẫn đi đúng tab đã khoá. @Đức:bấm
 
 **Nợ nhỏ còn lại (không chặn):** thông điệp lỗi vẫn nhúng *origin*. Một origin chứa đúng chữ
 bẫy (`timeout`, `captcha`, `ambiguous`…) vẫn lái được nhãn lỗi. Đã cân và bỏ qua: đường dẫn
