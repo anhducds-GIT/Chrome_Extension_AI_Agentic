@@ -418,3 +418,6 @@ chính file test, nên đột biến vào `sidepanel.js` không làm nó đỏ. 
 
 **Chưa xong:** đây mới là bản vá CHẨN ĐOÁN, chưa phải bản vá gốc bệnh. Việc kế cần Đức: nạp lại
 tiện ích, rê chuột lên cụm nút CHAT ZOOM, đọc câu hiện ra rồi gửi lại. 0 credit, không cần Bridge.
+
+**Đẩy kèm `--carry`** (ADR-0005). Lượt `b0eb683..961c936`, 10 commit, 2 của tôi; ba lane bị
+cuốn theo: **`claude-assistant`** · **`claude-gemini-hoan-thien`** · **`claude-hang-doi`**.
