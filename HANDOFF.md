@@ -3557,3 +3557,36 @@ của phiên khác"* và không tính cho tôi. Thứ chặn tôi chỉ còn là
 đẩy sẽ cuốn theo **5 commit chưa đẩy của hai lane đang chạy**. Tôi không dùng `--carry`, và trả
 khoá bằng `--release _code --du-biet` kèm lý do ghi thẳng vào bảng quyền. Sáu commit của tôi đều
 mang nhãn `Lane: claude-bang-n03` nên vẫn quy thuộc được; ai đẩy sau thì đẩy cả cụm.
+
+## 2026-09-06 — `claude-assistant` (điều phối) — đẩy gộp 12 commit, dọn bảy file xuống dòng lẫn lộn
+
+**Dọn một mục đỏ chặn MỌI phiên.** `tests/eol-lf-smoke.mjs` báo bảy file trên đĩa mang xuống
+dòng lẫn lộn (`BACKLOG.md` + `HANDOFF.md` của ba gói worker, cộng `STATUS.md` của gg-flow-video).
+**Trong git thì sạch tuyệt đối — 1317 file, 0 CRLF, 0 lẫn lộn** — nên phục hồi bằng `rm` rồi
+`git checkout --` không mất một byte nào. Xanh lại ngay.
+
+**Đẩy gộp.** 12 commit của ba lane (`claude-bang-n03` 7 · `claude-dau-goc` 3 ·
+`claude-dau-worker` 2). `--carry` kể tên đủ ba lane theo luật ADR-0005. Trả nốt bốn khoá sau khi
+đẩy. **Sáu khoá nay TRỐNG.**
+
+**Con số nợ TĂNG, và nó tăng vì lý do đúng.** Bảng trước đây lọc `p.endsWith("/BACKLOG.md")` —
+dấu `/` ở đầu làm nó **chỉ thấy sổ nợ của gói**, không thấy sổ nợ ở gốc repo. Vá xong:
+**44 → 61 mục**, thêm đúng 17 mục đang mở của sổ gốc, khớp đếm tay. Đóng `N-01` và `N-03` thì
+còn **59**. Không việc nào thụt lùi — bảng chỉ mới bắt đầu đếm thật.
+
+**Một lỗi đếm phụ đáng ghi:** `N-02` mang tên *"Đóng một mục là thêm dòng…"* bị `isDone` tính là
+đã đóng **chỉ vì tiêu đề mở đầu bằng chữ "Đóng"**. Sổ gốc đóng mục bằng dòng `- **ĐÓNG N-xx**`
+thêm ở cuối, nên phép đếm nay đọc dòng đó thay vì đoán theo tiêu đề.
+
+**Đính chính hai mục tôi từng báo sai:** `F-14` **đã đóng 02/09** (văn mục vẫn viết như còn
+treo), và `B-36` **đã nghiệm thu live 04/09 và THẤT BẠI** — bản vá không giữ được, Chrome bỏ qua
+đề xuất của nó — trong khi tiêu đề vẫn ghi *"CHỜ NGHIỆM THU LIVE"*. Sổ đang nói sai về chính nó.
+Việc dọn: sửa hai chỗ văn bản đó, cần ba khoá worker, chưa làm.
+
+**Vế thiếu của `--du-biet`, ghi ra vì tôi đã khen nó hơi sớm.** Cửa bàn giao vùng đó chỉ an toàn
+khi **có người nhận và đẩy ngay**: trả xong mà không ai nhận thì cổng ĐỎ *"vùng có thay đổi
+nhưng chưa ai đứng tên"*. Lane `claude-dau-worker` gặp đúng thế và xử lý đúng — nhận lại khoá
+và giữ.
+
+**Còn mở:** `BRIEF-BANG-DANG-LAM-01` chưa động tới (khoá `_code`, nay trống) · dọn hai chỗ văn
+bản `B-36`/`F-14` · Đức chốt phạm vi Scouter sau khi đọc bảng kiểm kê.
