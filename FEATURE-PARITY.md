@@ -131,13 +131,13 @@ GPT 35 file `.js` · Gemini 34.
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 6234 | 5103 | 1131 |
+| `sidepanel.js` | 6265 | 5103 | 1162 |
 | `bridge-transport-loopback.js` | 946 | 516 | 430 |
 | `bridge-core.js` | 1023 | 799 | 224 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
 | `background.js` | 293 | 167 | 126 |
+| `runner-core.js` | 316 | 203 | 113 |
 | `content.js` | 1186 | 1079 | 107 |
-| `runner-core.js` | 289 | 203 | 86 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
 | `resume-core.js` | 189 | 122 | 67 |
 | `output-profile-core.js` | 96 | 45 | 51 |

@@ -23,21 +23,23 @@
       "duc_decision": "Duc chot 2026-09-04: phien claude-exec-g02 da chet (stall watchdog), giai phong khoa va GIU viec do de executor moi doc roi tu quyet"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-retry-law",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T02:14",
       "task": "B-19 luat gui lai + B-11 cho thu lai",
-      "released_at": null,
+      "released_at": "2026-09-06T03:18",
       "taken_from": "claude-gpt-kenh",
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-05T08:43",
-      "duc_decision": "Duc chot 2026-09-05: khoa workers/duc-auto-chatgpt bi giu 46 gio boi phien claude-gpt-kenh. Da kiem truoc khi giai phong: khong file nao trong goi do con sua do, khong commit nao cua lane do dang cho push. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay lam viec sach."
+      "duc_decision": "Duc chot 2026-09-05: khoa workers/duc-auto-chatgpt bi giu 46 gio boi phien claude-gpt-kenh. Da kiem truoc khi giai phong: khong file nao trong goi do con sua do, khong commit nao cua lane do dang cho push. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay lam viec sach.",
+      "released_with_unpushed": 1,
+      "unpushed_reason": "B-19 va B-11 dong tron, cong XANH, day bi chan boi commit cua ba lane khac. Ban giao cho phien dieu phoi."
     },
     "_root": {
-      "owner": "claude-tach-so",
+      "owner": "claude-assistant",
       "ai": "Claude",
-      "claimed_at": "2026-09-06T02:14",
-      "task": "tach so y tuong khoi no ha tang",
+      "claimed_at": "2026-09-06T03:18",
+      "task": "gop day cho bon lane roi sinh lai artifact",
       "released_at": null,
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
@@ -46,16 +48,18 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_docs": {
-      "owner": "claude-scouter-kk",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T02:13",
       "task": "kiem ke nang luc Scouter",
-      "released_at": null,
+      "released_at": "2026-09-06T03:18",
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-05T09:51",
-      "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
+      "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach.",
+      "released_with_unpushed": 3,
+      "unpushed_reason": "Xong viec, cong XANH, nhung day bi chan vi 8 commit cua ba lane khac nam xen. Ban giao cho phien dieu phoi day gop mot luot."
     },
     "_code": {
       "owner": "claude-bang-canduc",
@@ -70,5 +74,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "32bd298444c144c8"
+  "_fingerprint": "e9b8a74a00e4a5e6"
 }
