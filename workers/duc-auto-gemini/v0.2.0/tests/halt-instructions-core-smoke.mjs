@@ -10,8 +10,8 @@ for (const file of ["runner-core.js", "halt-instructions-core.js"]) {
 
 const guide = context.DacHaltInstructions;
 const runner = context.DacRunnerCore;
-assert.equal(guide.HALT_GROUPS.length, 10, "the operator guide exposes ten distinct Halt groups");
-assert.equal(new Set(guide.HALT_GROUPS.map((group) => group.title)).size, 10, "Halt group titles are unique");
+assert.equal(guide.HALT_GROUPS.length, 11, "the operator guide exposes eleven distinct Halt groups");
+assert.equal(new Set(guide.HALT_GROUPS.map((group) => group.title)).size, 11, "Halt group titles are unique");
 
 const covered = [...guide.coveredFailureCodes()].sort();
 const declared = [...runner.FAILURE_TYPES].sort();

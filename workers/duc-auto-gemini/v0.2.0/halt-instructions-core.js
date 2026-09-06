@@ -3,8 +3,8 @@
    after -- by request, so the operator learns the English terms while
    using the tool rather than reading a fully localized guide.
 
-   Only three codes are true Hard Stops: SECURITY_HARD_STOP,
-   GENERATION_LIMIT_REACHED, RECEIVER_LOST. Each means no further job can
+   Only four codes are true Hard Stops: SECURITY_HARD_STOP,
+   GENERATION_LIMIT_REACHED, RECEIVER_LOST, DETECTION_BLIND. Each means no further job can
    safely run at all -- the whole batch stops and needs a human to resolve
    the underlying block. Every other code here is Recoverable: the job is
    retried automatically (a fresh prompt submission, up to the configured
@@ -36,6 +36,13 @@
       retry: "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",
       meaning: "The extension lost its connection to the Gemini tab, composer, or content receiver. (Extension mất kết nối với tab Gemini, composer, hoặc content receiver.)",
       action: "Reload the correct Gemini tab, wait for the composer to become available, then Check Plan and Continue Run. This stays a hard stop on purpose: if the tab is genuinely gone, auto-retrying would just fail every remaining job in the queue back-to-back without producing anything. (Tải lại đúng tab Gemini, chờ composer sẵn sàng, rồi Check Plan và Continue Run. Đây vẫn là hard stop có chủ đích: nếu tab thật sự mất, tự động retry sẽ chỉ khiến mọi job còn lại trong queue fail liên tục mà không tạo được ảnh nào.)"
+    }),
+    Object.freeze({
+      title: "Detection blind",
+      codes: Object.freeze(["DETECTION_BLIND"]),
+      retry: "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",
+      meaning: "The prompt went out, but the page never showed a single Gemini response for the extension to read -- so it cannot tell whether an image was made. Either Gemini changed its page structure, or the tab is not on a conversation. (Prompt đã gửi đi, nhưng trang không hề hiện lấy một câu trả lời nào để extension đọc -- nên nó không biết được ảnh đã tạo hay chưa. Hoặc Gemini đã đổi cấu trúc trang, hoặc tab đang không ở trong một cuộc hội thoại.)",
+      action: "Stop and check the tab yourself: it must be an open Gemini conversation, not a launcher or settings page. If it already is a conversation and replies are clearly visible on screen, then Gemini has changed its page structure and the extension needs its selectors updated -- report it instead of rerunning. This is a hard stop on purpose: every retry sends the prompt again and spends real image quota while proving nothing. On 2026-08-26 this exact situation burned six generations on the ChatGPT branch before anyone noticed. (Dừng lại và tự kiểm tra tab: phải là một cuộc hội thoại Gemini đang mở, không phải trang chủ hay trang cài đặt. Nếu đúng là hội thoại và câu trả lời hiện rõ trên màn hình, thì Gemini đã đổi cấu trúc trang và extension cần cập nhật selector -- hãy báo lại thay vì chạy lại. Đây là hard stop có chủ đích: mỗi lần retry là gửi lại prompt và tốn quota ảnh thật mà không chứng minh được gì. Ngày 2026-08-26 đúng tình huống này đã đốt sáu lượt tạo ảnh ở nhánh ChatGPT trước khi có người phát hiện.)"
     }),
     Object.freeze({
       title: "Attempt ID mismatch",

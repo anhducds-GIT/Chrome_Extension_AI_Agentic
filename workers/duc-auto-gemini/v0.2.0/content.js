@@ -728,8 +728,22 @@
     }
 
     recordDetection(attempt, { ...lastDetection, timed_out: true });
-    const error = new Error(`OUTPUT_DETECTION_TIMEOUT: ${lastDetection.decision_reason || "NO_NEW_IMAGE"}; stop_visible=${lastDetection.stop_visible}.`);
-    error.detection = { ...lastDetection, timed_out: true };
+    // A whole timeout elapsed and the page holds NOT ONE model-response
+    // container -- not an empty one, not a streaming one. Every live run on
+    // this branch has had them (they are what newAssistantMessages() reads to
+    // decide which turn is new), so an empty page after the full wait is not
+    // "the image is slow": either the response selector has rotted, or this
+    // tab is not on a Gemini conversation at all. Both look identical to an
+    // ordinary timeout from the outside, and an ordinary timeout is RETRIED --
+    // which re-sends the prompt and spends real image quota per attempt while
+    // proving nothing. The ChatGPT branch learned this on 2026-08-26 by
+    // burning six generations before anyone noticed. Say which condition it
+    // is, and let the runner halt instead of paying to find out again.
+    const blind = expectImage && assistantMessages().length === 0;
+    const error = blind
+      ? new Error(`DETECTION_BLIND: no model response exists on ${location.href} after the full timeout — either the page structure changed or this tab is not on a Gemini conversation. Nothing was detected, so retrying would only spend more quota. Run diagnostics.dom_probe against this tab.`)
+      : new Error(`OUTPUT_DETECTION_TIMEOUT: ${lastDetection.decision_reason || "NO_NEW_IMAGE"}; stop_visible=${lastDetection.stop_visible}.`);
+    error.detection = { ...lastDetection, timed_out: true, detection_blind: blind };
     throw error;
   }
 
