@@ -919,19 +919,27 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
    * đó: một trường một hồ sơ nghĩa là trần cứng bốn dòng, chữ gõ tay thì mục, và việc BẤM bị
    * trộn với việc CHỐT. Nay nguồn là DẤU trong ba sổ, nên khẳng định phải neo vào dấu.
    *
-   * Lượt này CHƯA mục nào được đánh dấu (điền dấu là lượt sau, nó chạm năm khoá), nên trên sổ
-   * thật khối phải RỖNG — và phải tự khai vì sao nó rỗng. */
+   * LƯỢT ĐIỀN DẤU ĐÃ XẢY RA (06/09, hai lane `claude-dau-goc` và `claude-dau-worker`), nên
+   * khẳng định ở đây LẬT NGƯỢC: trên sổ thật khối phải CÓ DÒNG, và câu "chưa ai đánh dấu"
+   * phải biến mất. Bản trước ghim trạng thái rỗng và tự nói "điền dấu là lượt sau" — lượt sau
+   * đến rồi, dấu nằm ở `_docs`/`_root`, còn phép ghim nằm ở `_code`, nên hai lane điền dấu
+   * không với tới được nó và cổng đỏ với mọi phiên cho tới khi chủ `_code` dọn.
+   *
+   * Số ghim là số ĐẾM ĐƯỢC từ sổ, không gõ cứng: sổ còn mọc dấu, và số gõ cứng thì sẽ mục. */
   const rows = collectModelRows(goc);
   const v1 = vung[0];
-  assert.equal(readCanDuc(goc, collectModel(goc, { tolerant: true })).length,
+  const canDuc = readCanDuc(goc, collectModel(goc, { tolerant: true }));
+  assert.equal(canDuc.length,
     [...v1.matchAll(/<div class="dr"><div class="h">/g)].length,
     "so dong ve ra phai bang DUNG so muc co dau — khong tran, khong hut");
-  assert.ok(v1.includes("vì chưa ai đánh dấu"),
-    "khoi rong PHAI tu khai vi sao no rong — rong-vi-chua-danh-dau va rong-vi-het-viec la hai chuyen khac han");
-  const cachCu = rows.filter(choDuc).length;
-  assert.ok(cachCu > 0, "ho so that phai con don vi khai theo cach cu, neu khong thi khang dinh duoi vo nghia");
-  assert.ok(v1.includes(`Cách cũ vẫn còn ${cachCu} đơn vị`),
-    "khoi rong phai ke ra so don vi con khai theo cach cu — im lang la bang noi doi Duc");
+  assert.ok(canDuc.length > 0,
+    "so that phai con dau @Duc, neu khong thi moi khang dinh duoi day chi dang do nhanh RONG");
+  assert.ok(!v1.includes("vì chưa ai đánh dấu"),
+    "co dau roi ma van in cau 'chua ai danh dau' la bang noi hai dieu nguoc nhau");
+  assert.ok(!v1.includes("Cách cũ vẫn còn"),
+    "cau an ui cua nhanh RONG phai bien mat khi khoi da co dong");
+  assert.ok(rows.filter(choDuc).length > 0,
+    "ho so that phai con don vi khai theo cach cu — hai nguon con song song, chua cat nguon nao");
   assert.ok(v1.includes("@Đức:bấm") && v1.includes("@Đức:chốt"),
     "trang phai day du cach dat dau — nguoi viet so khong duoc phai tra tai lieu moi dat duoc");
 
@@ -939,8 +947,8 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
        trường TUỲ CHỌN `blocked_if_skipped` vẽ dòng phụ khi mục nằm trong hồ sơ trạng thái.
      MỘT lượt sinh cho cả cụm. Đo trên máy: một lượt `buildOverview` tốn khoảng mười hai giây,
      nên mỗi fixture thêm là mười hai giây cộng vào cổng đóng phiên của MỌI phiên sau. */
-  assert.equal([...v1.matchAll(/class="w">/g)].length, 0,
-    "chua muc nao co dau thi KHONG duoc ve dong phu nao");
+  assert.equal([...v1.matchAll(/class="w">/g)].length, canDuc.filter((v) => v.chan).length,
+    "dong phu chi moc o muc CO khai truong tuy chon — dem tren so that, khong go cung");
   const themFm = (text, dong) => text.replace(/^---\r?\n/, `---${String.fromCharCode(10)}${dong}${String.fromCharCode(10)}`);
   const doiHang = (text, so) => text.replace(/^priority_rank:.*$/m, `priority_rank: ${so}`);
   const CAU_CHAN = "quan sat nam im, khong ai biet no con song hay khong";
@@ -949,15 +957,24 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const VIEC_CHOT = "co cho doi pham vi cua goi nay khong";
   const gpt = rows.find((r) => r.name === "Duc Auto ChatGPT");
   assert.ok(gpt && gpt.statusPath, "phai tim duoc ho so cua don vi GPT de dung fixture");
-  const vungFx = vungCua(sinh({
+  /* Bản vá fixture tách ra thành BIẾN, để phép ghim đọc được cùng một thứ mà bộ sinh đọc.
+     Bản trước ghim thẳng số 2 vì lúc đó sổ thật chưa có dấu nào. Hai lane điền dấu 06/09 làm
+     con số đó sai, và cách chữa "cộng thêm số dấu thật" VẪN SAI: fixture cắm
+     `blocked_if_skipped` vào `STATUS.md` gốc, nên mọi dấu THẬT nằm trong file đó cũng mọc
+     dòng phụ theo. Nên số kỳ vọng phải đếm trên CHÍNH bộ đọc đã vá, không phải trên bộ gốc.
+     (`readCanDuc` chỉ dùng `model` để đoán tên chuỗi, nên truyền `null` là đủ và rẻ.) */
+  const thayFx = {
     "STATUS.md": themFm(goc.readFile("STATUS.md"), `blocked_if_skipped: "${CAU_CHAN}"`)
       + `${G}- ${VIEC_CHOT} @Đức:chốt${G}`,
     "IDEAS.md": `${goc.readFile("IDEAS.md")}${G}- ${VIEC_BAM} @Đức:bấm${G}`,
     [gpt.statusPath]: doiHang(goc.readFile(gpt.statusPath), 99)
-  }));
+  };
+  const canDucFx = readCanDuc(bocFile(goc, thayFx), null);
+  assert.equal(canDucFx.length, canDuc.length + 2, "fixture phai them DUNG hai dau, khong hon khong kem");
+  const vungFx = vungCua(sinh(thayFx));
   const v1Co = vungFx[0];
-  assert.equal([...v1Co.matchAll(/<div class="dr"><div class="h">/g)].length, 2,
-    "cam hai dau thi ve DUNG hai dong — day la bang chung khoi khong con tran so dong");
+  assert.equal([...v1Co.matchAll(/<div class="dr"><div class="h">/g)].length, canDucFx.length,
+    "cam hai dau thi ve them DUNG hai dong — day la bang chung khoi khong con tran so dong");
   assert.ok(v1Co.includes(VIEC_BAM) && v1Co.includes(VIEC_CHOT), "ca hai muc phai len bang");
   assert.ok(/<span class="badge b0">BẤM</.test(v1Co) && /<span class="badge b1">CHỐT</.test(v1Co),
     "BAM va CHOT phai tach ra, moi loai mot nhan — xep chung thi cai nao cung trong nhu nhau");
@@ -969,8 +986,10 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     "moi dong phai noi ro xong no thi mo khoa chuoi nao — do la ca ly do Duc chon hinh dang nay");
   assert.ok(v1Co.includes(`Chưa làm thì: ${CAU_CHAN}`),
     "muc nam trong ho so trang thai co khai truong tuy chon thi PHAI ve dong phu");
-  assert.equal([...v1Co.matchAll(/class="w">/g)].length, 1,
+  assert.equal([...v1Co.matchAll(/class="w">/g)].length, canDucFx.filter((v) => v.chan).length,
     "CHI muc co khai moi co dong phu — muc trong so y tuong khong duoc moc them dong rong");
+  assert.ok(canDucFx.some((v) => !v.chan),
+    "phai con muc KHONG co dong phu, neu khong thi khang dinh tren khong phan biet duoc gi");
   assert.ok(!v1Co.includes("vì chưa ai đánh dấu"),
     "co dau roi thi cau 'chua ai danh dau' phai BIEN MAT — con lai la bang noi hai dieu nguoc nhau");
 
@@ -1017,6 +1036,15 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const boHet = {};
   for (const r of rows) if (r.statusPath) boHet[r.statusPath] = xoaFm(goc.readFile(r.statusPath), "human_action");
   assert.ok(Object.keys(boHet).length >= 4, "phai bo duoc truong o it nhat bon ho so, neu khong thi (i) vo nghia");
+  /* GỠ CẢ DẤU, không chỉ trường cũ. Vùng 1 nay ăn DẤU chứ không ăn `human_action`, nên bỏ
+     mỗi trường cũ thì vùng 1 KHÔNG rỗng và nhánh "rỗng" không bao giờ được chạy thử. Bản
+     trước vẫn ghim câu "chưa ai đánh dấu" ở đây; nó chỉ còn xanh chừng nào sổ chưa có dấu
+     nào — tức nó xanh vì repo trống, không vì bộ sinh đúng. Cắt dấu ở đúng những file mà
+     `readCanDuc` đã đọc ra dấu, rồi kiểm lại là đã sạch trước khi khẳng định. */
+  const xoaDau = (text) => text.split(G).map((l) => l.replace(/@(?:Đức|Duc)\s*:\s*(?:chốt|chot|bấm|bam)/giu, "")).join(G);
+  for (const rel of new Set(canDuc.map((v) => v.nguon))) boHet[rel] = xoaDau(boHet[rel] ?? goc.readFile(rel));
+  assert.equal(readCanDuc(bocFile(goc, boHet), null).length, 0,
+    "fixture phai go SACH dau, neu khong thi khang dinh 'vung rong' duoi day do sai nhanh");
   const vungTrong = vungCua(sinh(boHet));
   assert.equal(vungTrong.length, 4, "vung 1 trong thi tab VAN du bon vung");
   assert.ok(vungTrong[0].includes("vì chưa ai đánh dấu"),
@@ -1956,6 +1984,63 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     "dong do phai keu ten viec dong gan nhat");
 
   ok(`viec lon da dong: ${thatMoc.length} de bai doc tu status: done, ngay lay tu git, khong trung the quyet dinh, mot dong tro o vung 2`);
+}
+
+/* ---- T17. N-03 · SỔ NỢ Ở GỐC REPO PHẢI LÊN BẢNG ----
+ *
+ * Bộ lọc cũ là `p.endsWith("/BACKLOG.md")` — có dấu `/` ở đầu, nên nó chỉ thấy sổ nợ CỦA GÓI.
+ * Ngày 06/09 mười bốn mục dời từ `IDEAS.md` sang `BACKLOG.md` ở gốc repo, và cả mười bốn
+ * biến mất khỏi bảng: đo được 19 ý tưởng trước khi tách, 5 sau khi tách, không mục nào đóng.
+ * Đức đọc bảng để ra quyết định, nên một con số làm repo NHẸ ĐI là loại sai nguy hiểm nhất.
+ *
+ * Ghim cả hai chiều: sổ gốc phải có mặt VÀ dòng `- **ĐÓNG N-xx**` phải trừ ra được. Cửa ra
+ * của sổ gốc là thêm một dòng ở cuối (luật mục 4 của chính sổ đó), không phải sửa khối cũ —
+ * nếu bảng không đọc dòng đó thì số nợ chỉ tăng, không bao giờ giảm. */
+{
+  const soGoc = [
+    "# Sổ nợ hạ tầng repo",
+    "```",
+    "## N-xx · bản mẫu nằm trong khối mã, KHÔNG được đếm",
+    "- **ĐÓNG N-xx** · bản mẫu của dòng đóng",
+    "```",
+    "## Y-03 · việc chuyển từ sổ ý tưởng",
+    "## N-01 · việc đang mở",
+    "## N-02 · việc đã đóng bằng dòng thêm ở cuối",
+    "## N-03 · Đóng một mục là thêm dòng, nhưng chưa có gì gấp sổ lại",
+    "- **ĐÓNG N-02** · 2026-09-07 · lane `x` · lệnh đã xanh"
+  ].join("\n");
+  const soGoi = ["# Sổ nợ gói", "- **F-01** · việc mở", "- **F-02** · **XONG 02/09**"].join("\n");
+  const deps = {
+    git: { trackedPaths: () => ["BACKLOG.md", "workers/goi-thu/v1/BACKLOG.md"] },
+    readFile: (p) => (p === "BACKLOG.md" ? soGoc : soGoi)
+  };
+  const rows = debtByUnit(deps, { rows: [] });
+  assert.equal(rows.length, 2, "phai co CA so goc LAN so no cua goi — bo loc cu chi thay mot");
+
+  const goc = rows.find((r) => r.name === "nợ hạ tầng repo");
+  assert.ok(goc, "so no goc repo phai co nhan rieng, khong duoc mang ten mot goi worker");
+  // Mở: Y-03, N-01, N-03 = 3.  Đóng bằng dòng thêm ở cuối: N-02.  Bản mẫu trong khối mã: 0.
+  // N-03 mở đầu bằng chữ "Đóng" mà VẪN ĐANG MỞ — sổ gốc không đặt dấu đóng vào tiêu đề,
+  // nên đọc tiêu đề của nó bằng `isDone` là hỏi sai câu. Ca thật, đo 06/09: bảng in 16 / sổ 17.
+  assert.equal(goc.n, 3, "dem 3 muc con mo — N-02 dong bang dong them o cuoi, N-03 mo dau bang chu Dong nhung VAN MO");
+
+  const goi = rows.find((r) => r.name !== "nợ hạ tầng repo");
+  assert.equal(goi.n, 1, "so no cua goi van dem nhu cu — ban va nay khong duoc lam lech con so goc");
+
+  /* Chiều thứ hai, trên FILE THẬT: con số bảng in ra phải khớp phép đếm tay trong sổ.
+     Không gõ cứng con số — sổ này còn mọc thêm mục, và số gõ cứng thì sẽ mục nát. */
+  const vanBan = REAL.readFile("BACKLOG.md");
+  const daDong = new Set([...vanBan.matchAll(/^-\s+\*\*ĐÓNG\s+([A-Z]{1,3}-\d+)\*\*/gm)].map((m) => m[1]));
+  const dangMo = [...vanBan.matchAll(/^#{2}\s+([A-Z]{1,3}-\d+)\s+·/gm)]
+    .map((m) => m[1]).filter((ma) => !daDong.has(ma));
+  assert.ok(dangMo.length >= 14, `so goc phai con it nhat 14 muc mo, dem duoc ${dangMo.length}`);
+
+  const thatSu = debtByUnit(REAL, { rows: [] }).find((r) => r.name === "nợ hạ tầng repo");
+  assert.ok(thatSu, "tren repo THAT, so no goc cung phai len bang");
+  assert.equal(thatSu.n, dangMo.length,
+    `bang in ${thatSu?.n} muc, dem tay trong so duoc ${dangMo.length} — hai so nay khong duoc lech`);
+
+  ok(`so no goc repo len bang: ${dangMo.length} muc mo, dong "ĐÓNG" tru duoc, so cua goi khong doi`);
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

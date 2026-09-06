@@ -142,20 +142,58 @@ export function isDone(title) {
   return DAU_DONG.test(t) && !MOT_PHAN.test(t);
 }
 
+/* SỔ NỢ Ở GỐC REPO CŨNG LÀ MỘT SỔ NỢ (N-03, vá 06/09).
+ *
+ * Bộ lọc cũ viết `p.endsWith("/BACKLOG.md")` — dấu `/` ở đầu làm nó chỉ thấy sổ nợ CỦA GÓI.
+ * Ngày 06/09 mười bốn mục dời từ `IDEAS.md` sang `BACKLOG.md` ở gốc repo và cả mười bốn biến
+ * mất khỏi bảng: 19 ý tưởng trước khi tách, 5 sau, không mục nào được đóng. Bảng làm repo
+ * trông NHẸ ĐI 14 việc — loại số sai nguy hiểm nhất, vì Đức đọc bảng để ra quyết định. */
+const LA_SO_GOC = (p) => p === "BACKLOG.md";
+export const NHAN_SO_GOC = "nợ hạ tầng repo";
+
+/* CỬA RA CỦA SỔ GỐC LÀ MỘT DÒNG THÊM Ở CUỐI, không phải sửa khối cũ.
+ * Luật mục 4 của chính sổ đó: đóng một mục = thêm `- **ĐÓNG N-xx** · ...` ở cuối file, để cửa
+ * ra rẻ ngang cửa vào (thêm ở cuối thì miễn khoá `_root`, sửa dòng cũ thì không). Bảng không
+ * đọc dòng đó thì số nợ chỉ biết tăng, không bao giờ giảm. `\d+` cố ý: bản mẫu viết `N-xx`
+ * nằm trong khối mã của sổ và KHÔNG được tính là một lần đóng thật. */
+const DONG_DA_DONG = /^-\s+\*\*ĐÓNG\s+([A-Z]{1,3}-\d+)\*\*/;
+
+/* VÀ SỔ GỐC KHÔNG DÙNG DẤU ĐÓNG TRONG TIÊU ĐỀ — cố ý tắt `isDone` cho riêng nó.
+ *
+ * Sổ của gói viết trạng thái vào chính tiêu đề (`**XONG 02/09**`), nên `isDone` là đúng ở đó.
+ * Sổ gốc thì luật mục 4 cấm sửa khối cũ, nên tiêu đề của nó KHÔNG BAO GIỜ mang dấu đóng —
+ * dấu đóng duy nhất là dòng `ĐÓNG` thêm ở cuối. Đọc tiêu đề của sổ gốc bằng `isDone` là hỏi
+ * sai câu, và nó đã trả lời sai ngay lần đo đầu tiên: `N-02` mang tên *"Đóng một mục là thêm
+ * dòng, nhưng chưa có gì gấp sổ lại…"* — một việc ĐANG MỞ, bị đếm là đã đóng chỉ vì tiêu đề
+ * mở đầu bằng chữ "Đóng". Bảng in 16 trong khi sổ có 17.
+ *
+ * Đây đúng cái bẫy mà chú thích của `isDone` đã cảnh báo: đừng đọc trạng thái từ văn xuôi khi
+ * có một trường khai thẳng. `~~gạch ngang~~` vẫn tính, vì nó là dấu hình thức, không phải chữ. */
+const dungDauDeLamDauDong = (relPath) => !LA_SO_GOC(relPath);
+
 export function debtByUnit(deps, model) {
   const rows = [];
-  for (const relPath of deps.git.trackedPaths().filter((p) => p.endsWith("/BACKLOG.md")).sort()) {
+  for (const relPath of deps.git.trackedPaths().filter((p) => LA_SO_GOC(p) || p.endsWith("/BACKLOG.md")).sort()) {
     let text;
     try { text = deps.readFile(relPath); } catch { continue; }
+    const lines = text.split(/\r?\n/);
+    const daDong = new Set();
+    for (const line of lines) {
+      const m = DONG_DA_DONG.exec(line);
+      if (m) daDong.add(m[1]);
+    }
     let open = 0;
-    for (const line of text.split(/\r?\n/)) {
+    for (const line of lines) {
       const heading = /^#{2,4}\s+(~~)?\s*([A-Z]{1,3}-\d+)\s*[·:.\-]\s*(.+)$/.exec(line);
       const bullet = /^-\s+\*\*([A-Z]{1,3}-\d+)\*\*\s*[·:.\-]\s*(.+)$/.exec(line);
       if (!heading && !bullet) continue;
       const title = heading ? heading[3] : bullet[2];
-      if (Boolean(heading && heading[1]) || /~~/.test(title) || isDone(title)) continue;
+      if (Boolean(heading && heading[1]) || /~~/.test(title)) continue;
+      if (dungDauDeLamDauDong(relPath) && isDone(title)) continue;
+      if (daDong.has(heading ? heading[2] : bullet[1])) continue;
       open += 1;
     }
+    if (LA_SO_GOC(relPath)) { rows.push({ name: NHAN_SO_GOC, n: open }); continue; }
     const key = relPath.replace(/\/BACKLOG\.md$/, "");
     const found = model.rows.find((r) => r.key === key);
     rows.push({ name: found ? found.name : key.split("/").slice(-2, -1)[0], n: open });
@@ -1893,7 +1931,8 @@ ${STYLE}
       <details class="the" style="margin-top:11px">
         <summary><span><span class="nm">Con số này đếm thế nào</span><span class="sub">và vì sao nó thà đếm thừa hơn đếm thiếu</span></span></summary>
         <div class="in"><div class="prose">
-          <p>Đếm số mục chưa đóng trong sổ nợ của từng gói. Một mục tính là đã đóng khi nó bị gạch ngang, hoặc khi dòng của nó <strong>mở đầu</strong> bằng chữ xong.</p>
+          <p>Đếm số mục chưa đóng trong sổ nợ của từng gói, <strong>và trong sổ nợ hạ tầng ở gốc repo</strong>. Một mục tính là đã đóng khi nó bị gạch ngang, hoặc khi dòng của nó <strong>mở đầu</strong> bằng chữ xong.</p>
+          <p>Sổ ở gốc repo đóng mục theo cách khác: thêm một dòng "đóng" ở cuối sổ, không sửa lại khối cũ. Nên ở riêng sổ đó, tiêu đề không bao giờ là dấu đóng — chỉ dòng thêm ở cuối mới là.</p>
           <p>Dấu đóng phải nằm ở đầu dòng, không tìm giữa câu — vì có mục viết "gỡ khoá sau khi việc kia xong", chữ xong ở đó là một điều kiện chứ không phải trạng thái. Tìm giữa câu là đóng oan một việc đang mở, tức bảng báo <em>thiếu</em> nợ. Mục nào viết dấu đóng ở giữa câu sẽ bị tính là còn mở: cố ý lệch về phía báo thừa.</p>
         </div></div>
       </details>
