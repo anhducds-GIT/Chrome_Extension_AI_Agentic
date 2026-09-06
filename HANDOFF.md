@@ -3590,3 +3590,48 @@ và giữ.
 
 **Còn mở:** `BRIEF-BANG-DANG-LAM-01` chưa động tới (khoá `_code`, nay trống) · dọn hai chỗ văn
 bản `B-36`/`F-14` · Đức chốt phạm vi Scouter sau khi đọc bảng kiểm kê.
+
+---
+
+## Lượt `claude-dang-lam` — 2026-09-06 · đề bài `BANG-DANG-LAM-01`
+
+**Khối "Đang làm gì" thôi nói bằng ngôn ngữ máy, và thôi giả vờ là số liệu thời gian thực.**
+Đức nêu 06/09: khối đó in tên lane · tên khoá · chuỗi `--task` không dấu · giờ nhận, và dòng
+*"8 giờ trước"* do đoạn JS trong trang tự tính lúc mở — nên một ảnh chụp cũ trông y như dữ liệu
+sống. Bốn việc của đề bài đã làm hết:
+
+1. **Lồng theo nhóm vấn đề, không theo khoá.** Danh sách nhóm **cố định**, khai ở khối
+   `nhom_van_de` của file cấu hình hình dạng repo (5 nhóm). Mỗi mục trong sổ khai một dòng
+   `- **nhóm:** <mã>`; 17 mục đang mở của sổ nợ gốc đã điền, và bản mẫu của sổ nay có sẵn dòng đó.
+   **Mã lạ không thành nhóm mới** — nó rơi về *"Chưa xếp nhóm"*, y hệt mục không khai.
+2. **Câu việc lấy TỪ SỔ theo mã lane khai**, không lấy từ chuỗi `--task`. Lane không khai mã thì
+   dòng của nó **nói thẳng là không tra được** — đo ngay trên bảng vừa sinh: một lane khai mã
+   không có trong sổ nào, và bảng nói đúng như vậy thay vì im lặng in chuỗi thô.
+3. **Tuổi tính lúc SINH bảng**, từ giờ commit của HEAD (`git.headStamp` mới) chứ không từ đồng hồ
+   người xem. Đoạn JS tính lại lúc mở trang **đã gỡ hẳn**. Vẫn tất định: cùng một HEAD luôn ra
+   cùng một con số, nên không lane nào bị chặn đẩy vì sang ngày mới.
+4. **Bỏ tên khoá và giờ nhận chính xác** (chữ dành cho AI), và **gộp theo lane + câu việc**: trước
+   đó một lane giữ ba khoá cho cùng một việc thì khối vẽ ba dòng y hệt nhau.
+
+**Hai lỗi do ĐỘT BIẾN KIỂM tìm ra, không phải do đọc lại diff** — ghi ra vì cả hai đều thuộc loại
+"xanh giả":
+
+- **Một byte NUL lọt vào mã nguồn** (dấu ngăn của khoá gộp). Hậu quả: git coi bộ sinh là file
+  **nhị phân** — `grep` trả về *"Binary file matches"*, và diff của nó biến mất vĩnh viễn. Sổ nợ
+  đã cảnh báo đúng chuyện này từ trước. Đột biến kiểm là thứ phát hiện: mỏ neo báo *"0 lần khớp"*.
+  Nay khoá gộp không còn ký tự điều khiển nào.
+- **Một phép ghim khớp nhầm dòng.** Nó tìm chữ *"ảnh chụp lúc sinh bảng"* trong CẢ KHỐI, mà chữ đó
+  cũng nằm trong đoạn ghi chú cuối khối — nên xoá sạch nó khỏi **dòng tiêu đề** vẫn xanh. Đã siết
+  lại cho ghim đúng dòng tiêu đề.
+
+**Số đo:** đột biến kiểm **6/6 bị bắt** (sáu hành vi của khối, mỗi hành vi một đột biến). Suite
+gốc của bộ sinh: 32/32 xanh. Cổng đóng phiên: **XANH TOÀN BỘ**.
+
+**Một lượt sửa của tôi bị lane khác cuốn theo.** Phần sửa `BACKLOG.md` (17 dòng `nhóm:` + mục luật
+số 7) đang nằm dở trên cây làm việc thì lane `claude-assistant` commit chính file đó và cuốn luôn.
+Nội dung vào HEAD nguyên vẹn, không mất gì — nhưng nó mang nhãn lane của họ, nên ghi ra đây để
+người đọc lịch sử sau này không truy sai chủ.
+
+**Còn mở:** hồ sơ đề bài (`docs/briefs/`) **chưa khai nhóm** được — chỉ mục trong hai sổ mới có
+trường `nhóm:`. Nên lane nào khai mã đề bài thay vì mã sổ sẽ rơi vào *"Chưa xếp nhóm"* dù tra được
+câu việc. Sửa chỗ đó cần khoá `_docs`.
