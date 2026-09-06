@@ -360,3 +360,20 @@ của ba phiên khác, đúng luật ngoại lệ (a) ở mục 2 của `AGENTS.
   `if (hardStop || mayHaveSubmitted) {`; bất biến của nó không đổi).
   **Không chạy live trên trang thật.** Cần Đức **reload extension** ở `chrome://extensions` trước lần chạy tới.
   Không đụng `scripts/`, `docs/`, `HANDOFF.md` gốc repo; không sinh lại artifact máy.
+
+
+## 2026-09-06 — `claude-dau-worker`: đặt dấu @Đức cho khối "Cần Đức" trên bảng
+
+Lượt 2 của đề bài `BANG-CAN-DUC-01`. Khối "Cần Đức" trên bảng nay **suy từ một dấu đặt ngay
+trên dòng của mục** (`@Đức:bấm` / `@Đức:chốt`), không đọc trường `human_action` nữa. Chưa có
+dấu thì mục không lên bảng, nên lượt này chỉ đi điền dấu — **không sửa code, không sửa hành vi**.
+
+**Đã đánh dấu trong gói này:** B-09 (bấm) · B-36 (bấm) · B-17 (chốt) · B-27 (chốt).
+
+- B-36: nghiệm thu live 04/09 ĐÃ CHẠY và THẤT BẠI, nên dấu không đặt cho "chạy nghiệm thu" mà cho phép đo trong console service worker — đó mới là thứ đang chờ Đức. Tiêu đề mục B-36 vẫn ghi "CHỜ NGHIỆM THU LIVE", đã lạc hậu; để nguyên vì sửa văn mục là việc khác.
+- B-19 đã đóng 06/09 nên KHÔNG đánh dấu.
+
+**Kiểm chứng:** sinh lại bảng, khối "Cần Đức" đếm **10 việc · 6 bấm · 4 chốt** trên cả ba gói —
+khớp đúng 10 dấu đã đặt. Đóng mục thì dấu mất theo, không phải nhớ đi xoá.
+
+**Còn mở:** không đụng `scripts/`, `docs/`, `HANDOFF.md` gốc repo; không sinh lại artifact máy.

@@ -292,3 +292,19 @@ trong file này dựng lại bản gốc **giống hệt từng byte** — SHA-2
 **không sinh lại artifact máy** (phiên điều phối sinh một lượt cho cả ba lane).
 
 **Còn mở:** F-06 phần nhãn tiếng Anh, F-08 — như lượt trước, lượt này không đụng code.
+
+
+## 2026-09-06 — `claude-dau-worker`: đặt dấu @Đức cho khối "Cần Đức" trên bảng
+
+Lượt 2 của đề bài `BANG-CAN-DUC-01`. Khối "Cần Đức" trên bảng nay **suy từ một dấu đặt ngay
+trên dòng của mục** (`@Đức:bấm` / `@Đức:chốt`), không đọc trường `human_action` nữa. Chưa có
+dấu thì mục không lên bảng, nên lượt này chỉ đi điền dấu — **không sửa code, không sửa hành vi**.
+
+**Đã đánh dấu trong gói này:** F-09 (bấm) · F-26 (bấm) · F-25 bước ③ (chốt) trong sổ nợ, và ghế legacy không tên (chốt) trong hồ sơ trạng thái.
+
+- F-14 KHÔNG đánh dấu: Log lượt 18 (02/09) nói nó đóng hoàn toàn. Mục F-14 trong sổ nợ vẫn viết như còn treo — đã lạc hậu, để nguyên vì sửa văn mục là việc khác.
+
+**Kiểm chứng:** sinh lại bảng, khối "Cần Đức" đếm **10 việc · 6 bấm · 4 chốt** trên cả ba gói —
+khớp đúng 10 dấu đã đặt. Đóng mục thì dấu mất theo, không phải nhớ đi xoá.
+
+**Còn mở:** không đụng `scripts/`, `docs/`, `HANDOFF.md` gốc repo; không sinh lại artifact máy.
