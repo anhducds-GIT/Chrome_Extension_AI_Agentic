@@ -446,7 +446,9 @@ export function checkB11(model) {
 
    Luật: đi xuôi lịch sử của từng file ADR, tìm commit ĐẦU TIÊN mà `status` thành Accepted.
    Sau mốc đó, mọi commit làm đổi PHẦN THÂN (ngoài frontmatter) là vi phạm — sửa frontmatter
-   thì được, vì `superseded_by`/`status` chính là cách một ADR được thay thế đúng luật. */
+   thì được, vì `superseded_by`/`status` chính là cách một ADR được thay thế đúng luật.
+   Mục `## Trạng thái` ở thân cũng là lời khai đó, nên nó được miễn y hệt — xem
+   `stripStatusSection` ngay dưới đây. */
 /* ADR sống ở HAI TẦNG (ADR-0000, luật 3): `docs/adr/` ở gốc cho quyết định của cả repo, và
    `workers/<gói>/<phiên-bản>/docs/adr/` cho quyết định của một package. Bản S4 chỉ so
    `startsWith(ADR_DIR)` nên nó chỉ thấy tầng gốc — làm đúng roadmap (ADR trong package) thì
@@ -455,6 +457,40 @@ export function checkB11(model) {
 export function isAdrPath(relPath) {
   return isMarkdown(relPath) && (relPath.startsWith(ADR_DIR) || relPath.includes(`/${ADR_DIR}`));
 }
+
+/* TRẠNG THÁI ĐƯỢC KHAI Ở HAI CHỖ, NÊN PHẢI MIỄN CẢ HAI.
+   Bản mẫu ADR (`docs/_TEMPLATE-adr.md`) bắt mọi ADR có mục `## Trạng thái` ở phần thân, và
+   mục đó chép lại đúng giá trị của `status` ở frontmatter. Nên một lượt thay thế đúng luật —
+   ADR-0000 luật 2: *"ADR cũ chuyển sang `Superseded by ADR-NNNN`"* — buộc phải sửa CẢ HAI chỗ.
+   B12 chỉ miễn frontmatter, nên nó ĐỎ đúng vào thao tác mà chính lời khuyên của nó hướng dẫn.
+   Gặp thật 06/09 với ADR-0007 khi ADR-0009 ra đời thay nó: khác biệt duy nhất là hai dòng
+   trạng thái, không một ký tự quyết định nào đổi, mà cổng vẫn chặn.
+   Cắt mục trạng thái ra trước khi so. Đây KHÔNG phải nới lỏng: nó là cùng một lời khai với
+   frontmatter, thứ vốn đã được miễn từ đầu. Mọi mục khác của phần thân — Bối cảnh, Quyết định,
+   Hệ quả — vẫn bị canh nguyên như cũ. */
+const STATUS_HEADINGS = new Set(["trạng thái", "status"]);
+
+export function stripStatusSection(body) {
+  const lines = String(body).replace(/\r\n?/g, "\n").split("\n");
+  const out = [];
+  let skipLevel = 0;
+  for (const line of lines) {
+    const heading = /^(#{1,6})[ \t]+(.*)$/.exec(line);
+    if (heading) {
+      const level = heading[1].length;
+      // Tiêu đề sâu hơn thì vẫn thuộc mục đang cắt; ngang hoặc cạn hơn là hết mục.
+      if (skipLevel && level <= skipLevel) skipLevel = 0;
+      if (!skipLevel && STATUS_HEADINGS.has(heading[2].trim().toLowerCase())) {
+        skipLevel = level;
+        continue;
+      }
+    }
+    if (!skipLevel) out.push(line);
+  }
+  return out.join("\n");
+}
+
+const adrBody = (text) => normalizeForCompare(stripStatusSection(parseStatus(text).body));
 
 export function checkB12(deps) {
   const files = deps.git.trackedPaths().filter(isAdrPath).sort(compareText);
@@ -475,13 +511,13 @@ export function checkB12(deps) {
     for (let index = 0; index < history.length; index += 1) {
       const text = deps.git.showAt(history[index], relPath);
       if (text === null) continue;
-      const { frontmatter, body } = parseStatus(text);
+      const { frontmatter } = parseStatus(text);
       const accepted = String(frontmatter.status ?? "").trim().toLowerCase() === "accepted";
       if (acceptedAt < 0) {
-        if (accepted) { acceptedAt = index; acceptedBody = normalizeForCompare(body); }
+        if (accepted) { acceptedAt = index; acceptedBody = adrBody(text); }
         continue;
       }
-      if (lechTai === null && normalizeForCompare(body) !== acceptedBody) lechTai = history[index];
+      if (lechTai === null && adrBody(text) !== acceptedBody) lechTai = history[index];
     }
     if (acceptedAt < 0) continue;
     /* SO TRẠNG THÁI HIỆN TẠI, không so "đã từng bị sửa" — và đây không phải nới lỏng.
@@ -493,7 +529,7 @@ export function checkB12(deps) {
        bẫy khoá cả repo, đúng thứ BRIEF-S7 cảnh báo ở mục điều kiện mở.
        Nay: hỏi "nội dung ADR HIỆN TẠI có còn đúng bản đã Accepted không". Sửa rồi hoàn nguyên
        thì xanh lại — và lịch sử git vẫn giữ nguyên dấu vết, không ai xoá được nó. */
-    const hienTai = normalizeForCompare(parseStatus(deps.readFile(relPath)).body);
+    const hienTai = adrBody(deps.readFile(relPath));
     if (hienTai === acceptedBody) continue;
     findings.push({
       tag: "ADR-EDITED",

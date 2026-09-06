@@ -24,7 +24,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   ADR_DIR, checkB1, checkB3, checkB4, checkB6, checkB9, checkB10, checkB11, checkB12, checkB14, checkB15,
   blockingFailures, checkGeneratedFreshness, checkStatusCode, collectChecks, DOC_LINE_LIMIT, grandfatheredNote, isAdrPath,
-  NAV_DEPTH_LIMIT, parseLastCommitTimes, renderChecks, ruleBearingLines, runBootstrapCheck
+  NAV_DEPTH_LIMIT, parseLastCommitTimes, renderChecks, ruleBearingLines, runBootstrapCheck, stripStatusSection
 } from "../scripts/check-bootstrap.mjs";
 import { collectModel } from "../scripts/build-dashboard.mjs";
 
@@ -456,6 +456,73 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   assert.equal(brokenGoi.state, "fail", "ADR trong package bị sửa thân cũng phải bị bắt");
   assert.match(brokenGoi.findings[0].where, /workers\/demo\/v1\/docs\/adr/);
   ok("B12 · quét CẢ HAI tầng ADR, bắt được ca 2 commit, và sửa frontmatter thì không sao");
+}
+
+/* ---- B12 · mục `## Trạng thái` là lời khai trạng thái, không phải nội dung ---
+   Gặp thật 06/09: ADR-0009 ra đời thay ADR-0007, phiên làm đúng ADR-0000 luật 2 — đổi
+   `status` ở frontmatter VÀ mục `## Trạng thái` ở thân, vì bản mẫu ADR bắt khai ở cả hai.
+   B12 chỉ miễn frontmatter nên nó ĐỎ đúng vào thao tác mà chính lời khuyên của nó hướng dẫn
+   ("đặt `status: superseded` cho bản cũ"). Ba vế dưới ghim cả hai chiều — không có vế ĐỎ thì
+   một bản vá kiểu "bỏ luôn phép so thân" cũng qua được. */
+{
+  const adr = `${ADR_DIR}0007-quan-sat.md`;
+  const than = [
+    "# ADR-0007 — Quan sát là cửa bằng chứng",
+    "",
+    "## Bối cảnh",
+    "",
+    "Extension nằm im ba tuần.",
+    "",
+    "## Quyết định",
+    "",
+    "Dùng Bridge làm đường ra.",
+    "",
+    "## Trạng thái",
+    ""
+  ].join("\n");
+  const banAccepted = fm({ status: "Accepted", adr: "0007" }) + `${than}Accepted\n`;
+  const banSuperseded = fm({ status: "Superseded by ADR-0009", adr: "0007" })
+    + `${than}Superseded by ADR-0009 — Đức mở rộng phạm vi 06/09: Scouter tương tác đầy đủ quyền.\n`;
+
+  // ⑵ CHIỀU XANH — chỉ đổi lời khai trạng thái ở CẢ HAI chỗ, thân quyết định không đổi.
+  const daThayThe = fixture({
+    files: { [adr]: banSuperseded },
+    history: { [adr]: ["sha1", "sha2"] },
+    blobs: { [`sha1:${adr}`]: banAccepted, [`sha2:${adr}`]: banSuperseded }
+  });
+  assert.equal(checkB12(daThayThe).state, "ok",
+    "thay thế đúng luật (frontmatter + mục `## Trạng thái`) mà thân không đổi thì B12 phải XANH");
+
+  // ⑴ CHIỀU ĐỎ — sửa thân thật, mục trạng thái giữ nguyên.
+  const suaThan = fixture({
+    files: { [adr]: banAccepted.replace("Dùng Bridge làm đường ra.", "Đổi ý, bỏ Bridge.") },
+    history: { [adr]: ["sha1", "sha2"] },
+    blobs: {
+      [`sha1:${adr}`]: banAccepted,
+      [`sha2:${adr}`]: banAccepted.replace("Dùng Bridge làm đường ra.", "Đổi ý, bỏ Bridge.")
+    }
+  });
+  assert.equal(checkB12(suaThan).state, "fail",
+    "cắt mục trạng thái KHÔNG được làm mù phép so thân — sửa Quyết định vẫn phải ĐỎ");
+
+  // ⑴b CHIỀU ĐỎ — sửa thân NÚP dưới một lượt thay thế trông hợp lệ. Đây là ca một bản vá
+  // kiểu "hễ status đổi thì tha cả file" sẽ lọt.
+  const nupBongThayThe = banSuperseded.replace("Dùng Bridge làm đường ra.", "Đổi ý, bỏ Bridge.");
+  const nupBong = fixture({
+    files: { [adr]: nupBongThayThe },
+    history: { [adr]: ["sha1", "sha2"] },
+    blobs: { [`sha1:${adr}`]: banAccepted, [`sha2:${adr}`]: nupBongThayThe }
+  });
+  assert.equal(checkB12(nupBong).state, "fail",
+    "đổi status mà tiện tay sửa luôn Quyết định thì vẫn phải ĐỎ — miễn trừ chỉ dành cho mục trạng thái");
+
+  // Cắt đúng một mục, không cắt lố: nội dung SAU mục trạng thái (nếu ADR nào để thế) vẫn được so.
+  assert.equal(
+    stripStatusSection("## Quyết định\n\nA\n\n## Trạng thái\n\nAccepted\n\n## Phụ lục\n\nB\n"),
+    "## Quyết định\n\nA\n\n## Phụ lục\n\nB\n",
+    "chỉ cắt mục trạng thái, mục sau nó phải còn nguyên"
+  );
+  ok("B12 · mục `## Trạng thái` được miễn như frontmatter, nhưng thân vẫn bị canh (2 chiều)");
 }
 
 /* ---- B12 ở TẦNG TÍCH HỢP -------------------------------------------------- */
