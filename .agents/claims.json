@@ -34,10 +34,10 @@
       "duc_decision": "Duc chot 2026-09-06: Toi cho ban khoa luon. Duc giao truc tiep B-36 va B-27."
     },
     "_root": {
-      "owner": "claude-assistant",
+      "owner": "claude-gemini-hoan-thien",
       "ai": "Claude",
-      "claimed_at": "2026-09-06T15:10",
-      "task": "N-10: them mot cau vao AGENTS.md muc 1 — cam nha khoa ho lane khac dua tren phep do",
+      "claimed_at": "2026-09-06T15:57",
+      "task": "sinh lai FEATURE-PARITY sau 2 lenh Bridge moi",
       "released_at": null,
       "taken_from": "claude-n07",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
@@ -48,8 +48,8 @@
     "_docs": {
       "owner": "claude-assistant",
       "ai": "Claude",
-      "claimed_at": "2026-09-06T15:01",
-      "task": "Sua BRIEF-K2 theo N-10: doi ten tin hieu, them luat cam nha khoa ho lane khac",
+      "claimed_at": "2026-09-06T15:56",
+      "task": "Ghi luat Duc chot 06/09: vai dieu phoi khong bao gio dung lai vi chuyen commit",
       "released_at": null,
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
@@ -58,11 +58,11 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-06T13:59",
-      "task": "N-07",
-      "released_at": "2026-09-06T14:42",
+      "owner": "claude-scouter-seed",
+      "ai": "Claude",
+      "claimed_at": "2026-09-06T15:17",
+      "task": "SCOUTER-SEED-01 viec 2: khung seed (bridge core, transport, phep ghim)",
+      "released_at": null,
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -70,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "848e931f0a1c1f56"
+  "_fingerprint": "b5a5d566f5cc89c4"
 }
