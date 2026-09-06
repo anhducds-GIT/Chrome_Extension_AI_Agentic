@@ -553,6 +553,11 @@ thật sự tới nơi không" chứ không phải vì đọc lại. Đã ghim r
 
 **Số.** Nợ gói **7 → 5**. Suite 93/93. Thử phá **5/5** bị bắt.
 
+**Đẩy kèm — kể tên đủ, theo luật `--carry` (ADR-0005).** Lượt đẩy cuối cuốn theo **11 commit của
+hai lane khác**: `claude-flow-active` (7 — gói Flow Video) và `claude-scouter-seed` (4 — chuyển
+Scouter ra gói riêng, chạm `_root`/`_docs`/`_code`). Cả 11 đều có nhãn `Lane:`, không commit nào
+vô chủ.
+
 **Còn mở.** Hai lệnh Bridge cuối (dựng một phần hệ hồ sơ đầu ra, không phải chép code) là việc
 lớn nhất tôi tự làm được. Hai mục P1 chờ **một buổi Đức ngồi bấm**. Một mục cần khoá gốc repo.
 
