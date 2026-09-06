@@ -3534,3 +3534,19 @@ nay là "số dấu thật + 2" thay vì "2".
 
 **Còn mở:** `BRIEF-BANG-DANG-LAM-01` (khối "Đang làm gì" in dữ liệu thô bảng quyền, và hiện ảnh
 chụp cũ như số liệu sống) — **chưa động tới**, đúng thứ tự đề bài dặn.
+
+**BỔ SUNG — lượt này KHÔNG ĐẨY ĐƯỢC, và giữ khoá `_code`.** Cổng đóng phiên ĐỎ ở
+`tests/eol-lf-smoke.mjs`, không phải ở việc của tôi: **7 file trên ĐĨA** mang kiểu xuống dòng
+lẫn lộn — `BACKLOG.md` + `HANDOFF.md` của ba gói worker, cộng `STATUS.md` của gg-flow-video.
+Trong git thì sạch (phép kiểm phần kho XANH); chỉ bản trên đĩa lệch. Cả bảy đều do lane
+`claude-dau-worker` chạm gần nhất, và lane đó **đang giữ đúng ba khoá worker** — nên đây là
+việc của họ, tôi không vá vùng của người đang làm dở. Chạy lại một lần nữa: vẫn đỏ.
+
+Cách sửa cho chủ ba khoá đó: xoá bảy file rồi `git checkout --` lại (chính câu mà phép kiểm in
+ra). `.gitattributes` sẽ ghi lại bằng LF.
+
+Việc của tôi thì xanh hết: `node tests/build-overview-smoke.mjs` 32/32 · `node
+tests/backlog-check-smoke.mjs` 8/8 · `node scripts/backlog-check.mjs` sạch · hai lượt sinh bảng
+trên cùng HEAD giống hệt từng byte. **5 commit của tôi còn nằm lại chưa đẩy** — cùng chỗ với 5
+commit chưa đẩy của hai lane kia. Tôi **không dùng `--carry`**: hai lane đó đang chạy, cuốn
+commit đang bay của họ lên remote là đúng cái tai nạn 26/08. Ai đẩy sau thì đẩy cả cụm.
