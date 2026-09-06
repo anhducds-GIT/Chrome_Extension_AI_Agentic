@@ -5,10 +5,10 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "Lượt live MỘT job trên trang mới — kiểm chứng đầu tiên, và là thứ đưa gói lên active. CẦN ĐỨC BẤM. Lưu ý tiền: chip cấu hình đang để x2, mà trang tự khai mỗi video 6 credit, nên nếu runner không tự hạ về x1 thì một job là 12 credit chứ không phải 6. Runner có bước tự hạ và tự đọc lại chip để kết luận; lượt này kiểm luôn bước đó."
+next_step: "Chờ Flow hết quá tải rồi chạy MỘT job — kiểm chứng đầu tiên, và là thứ đưa gói lên active. Job Q001 đã nằm sẵn trong hàng đợi, chưa bấm chạy. Lưu ý tiền: chip đang để x2 mà trang tự khai mỗi video 6 credit, nên nếu runner không tự hạ về x1 thì một job là 12 credit chứ không phải 6."
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "Đã đi hết đường trên trang Flow mới: thấy ô nhập prompt, dựng được cụm nút, thấy nút tạo, và nhận diện được video vừa sinh. Chỗ suýt sai nhất đã chặn được: ảnh Đức tải lên dùng đúng cùng dạng địa chỉ với video máy sinh, chỉ khác thẻ bọc — nhận theo địa chỉ là ghi ảnh đầu vào thành video đầu ra, sai sổ mà không báo lỗi. Suite 99/99, thử phá 8/8 đều bị bắt. Chưa job nào chạy trọn trên trang mới."
-human_action: "Hai việc. Một: nhìn số credit còn lại trên hồ sơ kaito rồi báo tôi — trang không cho máy đọc số dư, chỉ mắt người thấy. Hai: duyệt cho chạy MỘT job. Hỏng thì dừng trước khi gõ và không mất credit; chạy trọn thì khoảng 6 credit."
+current_focus: "Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật. Thêm một lớp chặn mới: Flow báo quá tải. Đây là loại trạng thái thứ ba, khác hẳn hai loại cũ, và là loại DUY NHẤT mà cứ thử đi thì tốn tiền thật, vì hai loại kia đều dừng trước khi gõ. Đức chốt dừng hẳn cả mẻ, không tự thử lại. Suite 101/101, thử phá 10/10."
+human_action: "Mở tab Flow xem thông báo quá tải còn không. Hết rồi thì báo tôi, tôi chạy một job. Còn thì chờ — máy sẽ tự dừng trước khi gõ nên không mất credit, nhưng cũng không chạy được gì. @Đức:bấm"
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md
