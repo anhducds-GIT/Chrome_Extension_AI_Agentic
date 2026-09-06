@@ -3185,3 +3185,33 @@ nay **trống hoàn toàn**.
 vào hiến pháp. ④ Dựng lại lỗ cổng trả khoá lúc chặn lúc không. ⑤ **Chờ Đức 8 việc** — rẻ nhất
 là nghiệm thu `B-16` (miễn phí: reload extension, gọi `jobs.add` với token ảnh chưa nạp, kỳ
 vọng `VALIDATION_FAILED` chứ không phải `INTERNAL_ERROR`). ⑥ Còn **46 mục nợ**.
+
+## 2026-09-06 — `claude-eol` — đóng `Y-17`: `.gitattributes`, kiểu xuống dòng về LF
+
+**Làm gì.** Thêm `.gitattributes` ở gốc repo với nền `* text=auto eol=lf`, cộng `binary` cho
+năm đuôi ảnh/bảng tính (`png` `jpg` `jpeg` `webp` `xlsx`). Giữ nguyên dòng `DASHBOARD.md text
+eol=lf` có từ V0.2-A vì `PLATFORM.md` còn trỏ tới nó.
+
+**Đo trước → sau.** Trong git: **1084 LF / 0 CRLF / 218 nhị phân → không đổi một byte nào**.
+Trên đĩa: **963 LF / 89 CRLF / 32 lẫn lộn → 1084 LF / 0 CRLF / 0 lẫn lộn**. `npm test` XANH cả
+trước lẫn sau (mã thoát 0, 18 suite).
+
+**Chiều của bug ngược với mô tả trong `IDEAS.md`, đã đính chính tại chỗ.** Kho git vốn đã sạch;
+thủ phạm là `core.autocrlf=true` đặt trên máy này, nên `git checkout` viết ra đĩa bản CRLF từ
+một blob LF. Hệ quả: `git add --renormalize .` viết lại **0 file** — không có diff khổng lồ,
+không lane nào phải rebase.
+
+**Vùng bằng chứng không bị chạm:** `git diff --cached --name-only` sau renormalize trả đúng
+**2 file** (`.gitattributes` + `.agents/claims.json`), trong đó **0/453** file thuộc
+`evidence/` · `pilots/` · `Pilot-*` · `Batch-*`. Bộ lọc đã được thử ngược: nó khớp 453 đường dẫn
+thật, nên con số 0 là kết quả đo chứ không phải bộ lọc câm.
+
+**Kiểm chiều ngược (bằng chứng đã chữa được bệnh).** `rm content.js && git checkout -- content.js`
+trên gói Flow Video: trước khi vá đĩa ra **CR=1781**, sau khi vá **CR=0**, `git status` sạch.
+
+**Một bài học đắt.** Phép đo đầu tiên báo **0 CRLF ở cả hai phía** — sai. `perl` đọc STDIN ở
+chế độ text trên Windows nên nó nuốt sạch CR trước khi mình kịp đếm. Chỉ tin số sau khi đếm
+từng byte bằng Node. Đây đúng là loại "đếm ra 0 nghĩa là thước hỏng" mà hiến pháp đã cảnh báo.
+
+**Còn mở.** Không có việc nối tiếp của `Y-17`. `core.autocrlf=true` vẫn nằm trong git config
+của máy Đức — nay vô hại vì `.gitattributes` thắng nó, nên cố ý **không** đụng vào.

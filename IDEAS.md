@@ -474,10 +474,25 @@ mục 4 bất biến ⑤ và bảng mã lỗi.
 
 ## Y-17 · Repo không có `.gitattributes`, nên test xanh trên máy này có thể đỏ trên máy khác
 
-- **bậc:** ý tưởng
+- **bậc:** nghỉ
 - **nguồn:** bug thật, bắt được 2026-09-05 trong lúc chạy đột biến kiểm cho `F-06`
-- **việc kế:** **Đức chốt** — bản vá gốc viết lại kiểu xuống dòng của mọi file trong repo
-- **bug thật đã bắt được:** `content.js` của gói Flow Video nằm trong git dưới dạng **CRLF**,
+- **việc kế:** không còn việc — Đức chốt 06/09, làm xong cùng ngày, lane `claude-eol`
+- **ĐÍNH CHÍNH sau khi đo thật 06/09 — chiều của bug ngược với mô tả bên dưới.** Trong git
+  **không có file CRLF nào**: đo được **1084 LF / 0 CRLF / 218 nhị phân**. Thủ phạm là
+  `core.autocrlf=true` **đặt trên máy này**, nên `git checkout` **viết ra đĩa** bản CRLF từ một
+  blob LF. Trên đĩa lúc đó: **963 LF / 89 CRLF / 32 lẫn lộn** — tức 120 file trên đĩa khác với
+  chính bản của chúng trong git. Triệu chứng mô tả bên dưới thì đúng nguyên văn (checkout xong
+  là đỏ), chỉ có nguyên nhân là ngược. Bài học đi kèm: phép đo đầu tiên **nói dối** — `perl`
+  đọc STDIN ở chế độ text trên Windows nên nó nuốt sạch `\r` và báo 0 CRLF ở cả hai phía; con
+  số chỉ tin được sau khi đếm byte bằng Node.
+- **hệ quả tốt:** vì kho đã sạch, `git add --renormalize .` viết lại **0 file**. Không có diff
+  khổng lồ, không lane nào phải rebase, và **0/453 file vùng bằng chứng** bị chạm — nỗi lo lớn
+  nhất của mục này hoá ra không tồn tại.
+- **kiểm chiều ngược (bằng chứng đã chữa được bệnh):** `rm content.js && git checkout -- content.js`
+  → trước khi vá đĩa ra **CR=1781**, sau khi vá **CR=0**. Sau đó đưa cả 120 file lệch về LF:
+  đĩa nay **1084 LF / 0 CRLF / 0 lẫn lộn**, `git status` sạch — tức không một byte nào trong
+  git thay đổi.
+- **mô tả gốc, giữ nguyên để đối chiếu:** `content.js` của gói Flow Video nằm trong git dưới dạng **CRLF**,
   trong khi bản trên đĩa là **LF**. Phép thử `content-image-static.mjs` đòi `,\n` sát nhau nên
   nó **xanh trên máy đang làm việc**, nhưng **đỏ ngay sau bất kỳ lượt `git checkout content.js`
   nào, và đỏ với mọi người clone repo về**. Đã vá tại chỗ (nới thành `,\r?\n`) và đã kiểm cả
@@ -487,12 +502,12 @@ mục 4 bất biến ⑤ và bảng mã lỗi.
   suite bộ khung xanh tại chỗ mà đỏ với người clone (đã vá ở bộ khung 05/09 bằng đúng cách này).
 - **bản vá gốc:** thêm `.gitattributes` ở gốc repo với `* text=auto eol=lf`. Bộ khung
   `Ark_Repo_Harness` đã làm đúng thế và đo được: **75 LF / 21 CRLF trước → 97 LF / 0 CRLF sau**.
-- **vì sao phải hỏi Đức:** lượt đó **viết lại kiểu xuống dòng của mọi file trong repo** trong
-  một commit. Không mất dữ liệu, nhưng nó là một diff khổng lồ chạm mọi file, và mọi lane đang
-  có việc dở sẽ phải rebase. Chọn thời điểm là việc của Đức, không phải của AI.
-- **chưa đo:** hai gói ChatGPT và Gemini có cùng quả mìn này không. Cách đo rẻ nhất: ép CRLF
-  toàn gói rồi chạy suite của gói đó, xem có phép thử nào đỏ lên.
-- **phạm vi khi làm:** `.gitattributes` ở gốc repo (`_root`).
+- **~~vì sao phải hỏi Đức~~ — lo hão, đã đo:** dự đoán là "diff khổng lồ chạm mọi file, mọi lane
+  phải rebase". Thực tế commit chạm **đúng 1 file** (`.gitattributes`, 23 dòng thêm). Đức đã
+  chốt 06/09 lúc bảng khoá trống hoàn toàn.
+- **~~chưa đo~~:** hai gói ChatGPT và Gemini **không** có quả mìn này — không gói nào có, vì
+  trong git không có file CRLF nào cả.
+- **phạm vi đã làm:** `.gitattributes` ở gốc repo (`_root`).
 
 ## Y-18 · Phép kiểm "không phụ thuộc đồng hồ" báo đỏ oan khi hai lane commit cùng lúc
 
