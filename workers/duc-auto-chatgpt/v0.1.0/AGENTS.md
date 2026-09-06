@@ -94,6 +94,7 @@ COMPANION (đọc khi cần):
 | `STATUS.md` | **Trạng thái vận hành, một trang, cho mắt Đức** — lifecycle, kiểm chứng lần cuối + bằng chứng, việc đang mở, con trỏ đọc sâu. Máy đọc phần frontmatter để sinh `DASHBOARD.md` ở gốc repo. Chỉ TRỎ sang file khác, không chép nội dung. Schema: `STATUS.template.md` ở gốc repo |
 | `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất**. Cắt đuôi 2026-09-06 theo ADR-0008 của gốc repo; lịch sử cũ hơn ở `HANDOFF-ARCHIVE-01.md`, con trỏ nằm ngay đầu mục `## Log` |
 | `HANDOFF-ARCHIVE-01.md` | **Đuôi đã cắt của `HANDOFF.md`** — 124 lượt Log cũ, nguyên văn, không sửa một chữ. Chỉ đọc; ghi Log mới thì ghi vào `HANDOFF.md`. Ghép lại dựng được bản gốc giống hệt từng byte (bất biến ⑴ của ADR-0008) |
+| `HANDOFF-ARCHIVE-02.md` | **Bản dài nguyên văn của 3 mục đã được viết ngắn trong `HANDOFF.md`** (2026-09-06, ADR-0011 mục ⑶ + ADR-0012). Viết ngắn là **đổi chỗ chi tiết, không phải xoá** — mọi số đo và mọi vòng audit ở đây. Chỉ đọc. Ghép lại dựng được bản gốc giống hệt từng byte, SHA-256 in ngay đầu file |
 | `decisions.md` | Mục lục trỏ sang 48 ADR (nội dung đã chuyển) |
 | `docs/adr/` | 48 ADR bất biến — quyết định của riêng gói này |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX |
