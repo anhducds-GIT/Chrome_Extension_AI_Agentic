@@ -3215,3 +3215,37 @@ từng byte bằng Node. Đây đúng là loại "đếm ra 0 nghĩa là thướ
 
 **Còn mở.** Không có việc nối tiếp của `Y-17`. `core.autocrlf=true` vẫn nằm trong git config
 của máy Đức — nay vô hại vì `.gitattributes` thắng nó, nên cố ý **không** đụng vào.
+
+---
+
+## 2026-09-06 · `claude-eol` · B12 chặn đúng thao tác mà chính nó hướng dẫn
+
+**Việc.** Cổng đóng phiên đỏ ở `B12`: `docs/adr/0007-observer-la-cua-bang-chung-cho-ai.md`
+bị báo `ADR-EDITED`, dù lượt sửa đó là đúng luật — `ADR-0009` vừa ra đời thay nó, và ADR-0000
+luật 2 bắt bản cũ chuyển sang `Superseded by ADR-NNNN`.
+
+**Nguyên nhân gốc — trạng thái được khai ở HAI chỗ, B12 chỉ miễn một.** Bản mẫu ADR bắt mọi
+ADR có mục `## Trạng thái` ở phần thân, chép lại đúng giá trị `status` của frontmatter. Nên một
+lượt thay thế đúng luật buộc phải sửa cả hai dòng. B12 miễn frontmatter nhưng so cả phần thân,
+nên nó đỏ đúng vào thao tác mà lời khuyên của chính nó bảo làm ("đặt `status: superseded` cho
+bản cũ"). **Không phải chỉ một dòng frontmatter như báo cáo ban đầu ghi — là hai dòng.**
+
+**Bản vá.** `stripStatusSection()` trong `scripts/check-bootstrap.mjs` cắt mục trạng thái khỏi
+phần thân trước khi so. Không nới lỏng: đó là cùng một lời khai với frontmatter, thứ vốn đã
+được miễn từ đầu; Bối cảnh · Quyết định · Hệ quả vẫn bị canh nguyên.
+
+**Số tự đo.** Mỏ neo `export function stripStatusSection(body) {` khớp **1** chỗ (không phải 0).
+**122/123** ADR trong repo có mục `## Trạng thái`. Đột biến **mã**: strip thành no-op → vế XANH
+của test mới ĐỎ; strip cắt sạch → vế ĐỎ của test mới ĐỎ — cả hai chiều đều tựa lên bản vá.
+Đột biến **dữ liệu** trên chính ADR-0007: bản HEAD → `B12 = ok`; chèn một câu vào mục Bối cảnh
+→ `B12 = fail`. `check-bootstrap-smoke` 29/29, `harness-smoke` 4/4, `check-bootstrap --all`
+0 chỗ đỏ.
+
+**Đẩy kèm (`--carry`).** Lượt đẩy này cuốn theo **1 commit của lane `claude-assistant`**
+(`a81fb72 docs(ADR-0009)`), ngoài 3 commit `Y-17` + 2 commit của lượt này.
+
+**Còn mở — cho lane giữ `_docs`.** Cây làm việc đang có một sửa đổi CHƯA COMMIT của
+`claude-assistant` hoàn nguyên mục `## Trạng thái` của ADR-0007 về `Accepted`, trong khi
+frontmatter vẫn ghi `Superseded by ADR-0009`. Đó là vá triệu chứng để né B12, và nó làm ADR tự
+mâu thuẫn. Nay B12 xanh mà không cần nó — **bỏ sửa đổi đó đi**. Lane `claude-eol` không đụng
+vào vì `_docs` là của người khác.
