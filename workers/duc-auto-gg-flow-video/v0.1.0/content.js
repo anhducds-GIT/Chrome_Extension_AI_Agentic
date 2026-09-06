@@ -179,6 +179,29 @@
     return ADAPTER.securityBlockerPattern.test(text) ? "Flow security/interstitial blocker detected." : null;
   }
 
+  // CHI DE CHAN DOAN — khong tham gia vao quyet dinh chan. Lop chan o tren giu
+  // nguyen tung chu.
+  //
+  // Vi sao can: bo do quet TOAN BO chu tren trang bang mot bieu thuc, roi chi
+  // tra ve "co". Ngay 06/09 tren giao dien Flow moi no bao SECURITY_HARD_STOP
+  // trong khi o nhap va nut tao deu binh thuong, va KHONG CACH NAO biet no thay
+  // chu gi — bao dong that va khop nham trong y het nhau. Mot lop an toan cam
+  // thi nguoi van hanh chi con hai lua chon deu toi: tin mu, hoac go lop chan.
+  //
+  // Chi tra doan NGAN quanh cho khop, khong do ca trang: du de chan doan, va
+  // khong bien mot phep chan doan thanh duong ro ri noi dung trang cua Duc.
+  const SEC_CONTEXT_CHARS = 60;
+  function securityBlockerMatch() {
+    const text = String(document.body?.innerText || "");
+    const m = ADAPTER.securityBlockerPattern.exec(text);
+    if (!m) return null;
+    const i = m.index;
+    return {
+      matched: m[0],
+      context: text.slice(Math.max(0, i - SEC_CONTEXT_CHARS), i + m[0].length + SEC_CONTEXT_CHARS).replace(/s+/g, " ").trim(),
+    };
+  }
+
   // Image-generation quotas gate submission the same way security blockers do,
   // but the detection is two-tier:
   //  1. DOM anchor: the freemium quota-exceeded disclaimer custom element
@@ -1681,6 +1704,7 @@
           })(),
           busy: STATE.busy,
           selectorCounts, buttons, images, videos, textboxes, customTags, fileInputs,
+          securityBlockerMatch: securityBlockerMatch(),
           truncated: false,
         };
         // Payload cap ~64KB: shrink the bulky arrays first rather than fail.

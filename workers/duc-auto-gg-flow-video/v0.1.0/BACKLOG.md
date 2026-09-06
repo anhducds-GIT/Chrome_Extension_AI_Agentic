@@ -685,3 +685,29 @@ file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemi
   vi nào** — nó mới chỉ được canh bằng test tĩnh.
   **Đóng khi:** harness dựng được cả tile `<flow-video-tile img>` của nhà mới, và một đột biến
   vào đường quy kết của nhà mới làm test hành vi đỏ.
+
+- **F-34** · **P1, CHẶN LƯỢT LIVE — `SECURITY_HARD_STOP` trên nhà mới, chưa biết vì sao.**
+  [ĐO 06/09, `system.ping` + `dom_probe` trên `flow.google.com`, 0 credit]
+  Đức duyệt chạy job và báo còn 50 credit. Trước khi chạy, `system.ping` trả
+  `state: HARD_STOP`, `failure_type: SECURITY_HARD_STOP` — Flow đang bị coi là hỏi CAPTCHA
+  hoặc báo hoạt động bất thường. **Không chạy job, và không tìm cách vòng qua.** Cùng lúc đó
+  `composer_found: true`, `sendFound: true`, `generating: false` — trang trông hoàn toàn bình
+  thường ở mọi chỗ khác.
+
+  **Vấn đề thật không phải cảnh báo, mà là nó CÂM.** `securityBlockerText()` quét
+  `document.body.innerText` bằng một biểu thức rồi trả đúng một câu cố định. Báo động thật và
+  khớp nhầm trông y hệt nhau. Giao diện mới là Angular đầy chữ trong menu và bảng ẩn, nên khả
+  năng khớp nhầm là có thật — nhưng **suy đoán không thay được phép đo**.
+
+  **Đã vá phần chẩn đoán, KHÔNG đụng lớp chặn:** `dom_probe` nay trả thêm
+  `securityBlockerMatch` gồm chữ đã khớp và một đoạn ngắn quanh nó (trần 60 ký tự mỗi bên —
+  đủ để chẩn đoán, và không biến một phép chẩn đoán thành đường rò nội dung trang của Đức).
+  Phần chẩn đoán dùng **chính** biểu thức của lớp chặn: dùng biểu thức khác là hai lớp trả lời
+  khác nhau về cùng một trang. Ghim: `tests/security-blocker-evidence.mjs`, đột biến **5/5**,
+  trong đó có lượt phá "gỡ lớp quyết định chặn" và lượt "đổ cả trang thay vì đoạn ngắn".
+
+  **Việc kế:** Đức nạp lại tiện ích rồi tôi `dom_probe` một lượt (0 credit) để đọc chữ đã khớp.
+  Chỉ khi đó mới biết đây là cảnh báo thật hay khớp nhầm — và **cách xử lý hai ca đó ngược
+  nhau hoàn toàn**, nên đoán sai ở đây tốn hơn là chờ một lượt đo.
+  **Đóng khi:** biết được chữ khớp là gì; nếu là khớp nhầm thì biểu thức được siết theo bằng
+  chứng (kèm ca ghim cả hai chiều), nếu là thật thì Đức xử lý xác minh rồi cảnh báo tự hết.

@@ -535,3 +535,27 @@ nhánh — ba test đỏ vì harness sai, không phải code sai. Đã sửa har
 chưa dựng được tile của nhà mới, nên đường đó mới chỉ có test tĩnh canh.
 
 **Còn lại trước khi dám chạy job:** F-32 — nhãn nút tạo khi giao diện để tiếng Việt.
+
+## 2026-09-06 — `claude-flow-active`: Đức duyệt chạy, nhưng lớp an toàn nói dừng — và nó câm
+
+Đức báo còn 50 credit và duyệt chạy. Trước khi gõ một chữ nào, `system.ping` trả
+`state: HARD_STOP` / `SECURITY_HARD_STOP`. **Không chạy job, không tìm cách vòng qua.**
+
+Cùng lúc đó trang trông bình thường ở mọi chỗ khác: ô nhập thấy, nút tạo thấy, không đang sinh.
+
+**Vấn đề thật không phải cảnh báo, mà là nó câm.** Bộ dò quét toàn bộ chữ trên trang bằng một
+biểu thức rồi trả đúng một câu cố định, nên **báo động thật và khớp nhầm trông y hệt nhau**.
+Giao diện mới đầy chữ trong menu và bảng ẩn nên khớp nhầm là khả năng có thật — nhưng suy đoán
+không thay được phép đo, và hai ca đó xử lý ngược nhau hoàn toàn.
+
+**Vá phần chẩn đoán, không đụng lớp chặn.** `dom_probe` nay trả chữ đã khớp kèm đoạn ngắn
+quanh nó, trần 60 ký tự mỗi bên: đủ chẩn đoán, không biến phép chẩn đoán thành đường rò nội
+dung trang. Phần chẩn đoán dùng **chính** biểu thức của lớp chặn — dùng biểu thức khác là hai
+lớp trả lời khác nhau về cùng một trang.
+
+Suite **100/100**, đột biến **5/5**, gồm lượt phá "gỡ lớp quyết định chặn" và "đổ cả trang".
+
+**Chưa xong:** cần Đức nạp lại tiện ích, rồi một lượt `dom_probe` 0 credit để đọc chữ đã khớp.
+Đây là lần thứ ba trong ngày một lớp câm làm mất thời gian — nút zoom, rồi ô nhập prompt, giờ
+là lớp an toàn. Mẫu chung: bộ phận nào chỉ trả `true/false` về trạng thái trang thì sớm muộn
+cũng chặn ai đó mà không nói được vì sao.
