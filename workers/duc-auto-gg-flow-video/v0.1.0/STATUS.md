@@ -5,10 +5,10 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "F-31 — ba phép đo còn lại, đều 0 credit và đều cần Đức mở đúng màn hình: ô nhập prompt lúc nó hiện, nhãn nút tạo trên cả hai ngôn ngữ, và cách trang hiển thị video vừa sinh. Đủ ba mới viết lại. TUYỆT ĐỐI chưa chạy job."
+next_step: "Lượt live MỘT job trên trang mới — kiểm chứng đầu tiên, và là thứ đưa gói lên active. CẦN ĐỨC BẤM. Lưu ý tiền: chip cấu hình đang để x2, mà trang tự khai mỗi video 6 credit, nên nếu runner không tự hạ về x1 thì một job là 12 credit chứ không phải 6. Runner có bước tự hạ và tự đọc lại chip để kết luận; lượt này kiểm luôn bước đó."
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "Đã vào được trang Flow mới sau khi vá quyền — nhưng đo thật cho thấy Google không chỉ đổi địa chỉ, họ dựng lại cả giao diện. Ô nhập prompt không tìm thấy, trang không còn thẻ video nào, nút tạo đổi tên. Phần đọc cấu hình thì vẫn chạy, và trang tự khai mỗi video tốn 6 credit. Đây là làm lại phần biết-về-trang chứ không phải sửa vài dòng."
-human_action: "Cần Đức chốt một câu trước: có làm lại phần biết-về-trang cho giao diện Flow mới không. Đây là việc lớn, không phải sửa nhỏ, nên tôi không tự quyết. Chốt rồi thì việc của Đức chỉ là mở đúng màn hình cho tôi đo, mỗi lượt vài giây và không tốn credit."
+current_focus: "Đã đi hết đường trên trang Flow mới: thấy ô nhập prompt, dựng được cụm nút, thấy nút tạo, và nhận diện được video vừa sinh. Chỗ suýt sai nhất đã chặn được: ảnh Đức tải lên dùng đúng cùng dạng địa chỉ với video máy sinh, chỉ khác thẻ bọc — nhận theo địa chỉ là ghi ảnh đầu vào thành video đầu ra, sai sổ mà không báo lỗi. Suite 99/99, thử phá 8/8 đều bị bắt. Chưa job nào chạy trọn trên trang mới."
+human_action: "Hai việc. Một: nhìn số credit còn lại trên hồ sơ kaito rồi báo tôi — trang không cho máy đọc số dư, chỉ mắt người thấy. Hai: duyệt cho chạy MỘT job. Hỏng thì dừng trước khi gõ và không mất credit; chạy trọn thì khoảng 6 credit."
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md
