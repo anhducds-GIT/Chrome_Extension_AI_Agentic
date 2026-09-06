@@ -36,9 +36,9 @@
     "_root": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-06T08:24",
-      "task": "SCOUTER-SEED-01: khung seed + va cong dem su co doc file luu tru",
-      "released_at": "2026-09-06T09:00",
+      "claimed_at": "2026-09-06T10:56",
+      "task": "HANDOFF-TRAN-01: khai tran o .repo-structure.json + moc thang o HANDOFF.md goc",
+      "released_at": "2026-09-06T12:11",
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
       "taken_by": "claude-dieu-phoi",
@@ -46,11 +46,11 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_docs": {
-      "owner": "claude-assistant",
-      "ai": "Claude",
-      "claimed_at": "2026-09-06T10:34",
-      "task": "ADR-0011 + protocol HANDOFF",
-      "released_at": null,
+      "owner": null,
+      "ai": null,
+      "claimed_at": "2026-09-06T11:06",
+      "task": "HANDOFF-TRAN-01: cap nhat protocol HANDOFF voi con so tran da do",
+      "released_at": "2026-09-06T12:11",
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -60,9 +60,9 @@
     "_code": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-06T07:52",
-      "task": "SCOUTER-SEED-01: phep do isTrusted + suite ghim",
-      "released_at": "2026-09-06T09:00",
+      "claimed_at": "2026-09-06T10:56",
+      "task": "HANDOFF-TRAN-01: tran do dai muc nhat ky + xoay file theo thang",
+      "released_at": "2026-09-06T12:11",
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -70,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "68cf35a6a8724ba7"
+  "_fingerprint": "8c5d52af15b0a794"
 }
