@@ -248,4 +248,13 @@ chốt** ai giữ khoá đó.
 - Ba bug bị bắt trước khi Đức chạy, cùng họ với bài học `B-36` (kiểm **tĩnh** không phân biệt được
   hai nhánh). Chi tiết ở mục `B-09`.
 
+- 2026-09-07 · Claude (`claude-gpt-don-no`) · **Dọn 4 mục nợ: một phép kiểm không ghim gì, hai chỗ code chết, một câu lỗi sai ngôn ngữ.**
+  - **N-14 (phần gói ChatGPT) — ĐÓNG.** Gói này có đúng cùng phép kiểm chết như gói Gemini: nửa hành vi của `tests/chatgpt-zoom-control-smoke.mjs` tự định nghĩa lại `isChatGPTUrl` / `simulateZoomSync` / `simulateSetZoom` ngay trong file test. Thay bằng `tests/zoom-control-smoke.mjs` — trích thân hàm thật từ `sidepanel.js` rồi chạy trong `node:vm`. **13/13 đột biến đỏ**, 0 mỏ neo hỏng. Cái bẫy N-14 dặn đã dính thật: 2 đột biến lọt lưới vòng đầu vì sân khấu thiếu ca "nút ĐANG BẬT rồi mới rời sang tab lạ". File chết **chưa xoá** — chờ Đức duyệt, đầu file đã ghi rõ.
+  - **B-25 — ĐÓNG.** 9 câu lỗi trong `confirmRecreate()` + 5 câu `detail:` của `output-location-core.js` (đuôi của `OUTPUT_LOCATION:` nằm ở đó, dịch ở `sidepanel.js` là dịch hụt) nay tiếng Việt có dấu, mã lỗi giữ tiếng Anh.
+  - **B-24 — ĐÓNG bằng đường thứ hai của chính mục đó** (chốt `RECONCILE_IMAGE_ONLY` đứng trước mọi tác dụng phụ), **không xoá hàm**: mục tự ghi xoá là quyền của Đức, và hàm đang bị hai phép ghim neo vào — `post-submit-no-resend-smoke.mjs` đếm cửa đối soát phải bằng đúng 1 (phép đo đứng sau ADR-0047) và `recreate-core-smoke.mjs` dùng tên hàm làm mỏ neo cắt đoạn.
+  - **B-20 — ĐÓNG nửa "làm code nói thật", không gỡ nhánh alias.** Xác nhận alias chết bằng đọc code; sửa 3 dòng `README.md` + 1 dòng `DAC_XLSX_RUN_PLAN_V1.md`. Không gỡ vì logic khớp alias có **ba bản sao song song**, và gỡ cả ba là phải bỏ `DUPLICATE_ALIAS` — một trong sáu mã `bridge-plain-failure-classification-smoke.mjs` ghim cho B-16.
+  - **B-21 — ĐÓNG.** Kiểm code trước khi sửa chữ: 0 nút cho Resolve Existing Output. Hợp đồng schema nay đánh dấu đường thứ hai là NOT WIRED.
+  - **Số đo:** suite gói **114/114 xanh**. Ba phép ghim mới, **28/28 đột biến bị bắt** (13 + 7 + 8).
+  - **Chờ Đức quyết:** ⑴ xoá `tests/chatgpt-zoom-control-smoke.mjs`; ⑵ xoá hẳn `resolveExistingOutput()` hay giữ kèm chốt; ⑶ alias — bỏ hẳn khỏi ba module hay nối thật một ô nhập.
+
 <!-- HANDOFF-THANG: 2026-09 -->

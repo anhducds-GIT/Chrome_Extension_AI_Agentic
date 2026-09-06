@@ -54,7 +54,10 @@ const revoked = directory("Revoked", "denied");
 settings.image = output.directoryLocation(revoked, revoked.name);
 const denied = await output.preflight(settings);
 assert.equal(denied.ok, false, "revoked permission fails preflight");
-assert.match(denied.error, /permission is denied/i);
+// Cau nay Duc doc, nen no la tieng Viet (luat vang 4); rieng chu `denied` la
+// trang thai tho cua Permissions API nen giu nguyen tieng Anh.
+assert.match(denied.error, /Quyền ghi/);
+assert.match(denied.error, /denied/);
 assert.equal(denied.effective.image.kind, "directory", "permission failure never silently changes the destination to Downloads");
 settings.result = output.downloadsLocation("Text Results");
 const textOnly = await output.preflight(settings, { requireImage: false });

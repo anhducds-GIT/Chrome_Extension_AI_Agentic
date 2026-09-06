@@ -236,17 +236,17 @@
   }
 
   async function permission(location) {
-    if (location?.kind === "downloads") return { ok: true, location, detail: "Chrome Downloads permission is available." };
+    if (location?.kind === "downloads") return { ok: true, location, detail: "Quyền tải xuống của Chrome đang dùng được." };
     if (location?.kind !== "directory" || !location.handle || typeof location.handle.queryPermission !== "function") {
-      return { ok: false, location, detail: "This folder is no longer authorized. Choose it again before Run." };
+      return { ok: false, location, detail: "Thư mục này không còn được cấp quyền. Chọn lại nó trước khi Chạy." };
     }
     try {
       const state = await location.handle.queryPermission({ mode: "readwrite" });
       return state === "granted"
-        ? { ok: true, location, detail: "Write permission granted." }
-        : { ok: false, location, detail: `Write permission is ${state}. Choose the folder again before Run.` };
+        ? { ok: true, location, detail: "Đã có quyền ghi." }
+        : { ok: false, location, detail: `Quyền ghi đang ở trạng thái ${state}. Chọn lại thư mục trước khi Chạy.` };
     } catch (error) {
-      return { ok: false, location, detail: `Could not verify folder permission: ${error?.message || String(error)}` };
+      return { ok: false, location, detail: `Không kiểm được quyền của thư mục: ${error?.message || String(error)}` };
     }
   }
 

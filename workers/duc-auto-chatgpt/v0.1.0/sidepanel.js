@@ -3936,14 +3936,14 @@
     log(`${actionName}: confirmation received.`, "info");
     closeRecreateDialog();
     try {
-      if (!jobId) throw new Error("RECREATE_CONFIRM_MISSING_JOB: Select Recreate Image again from the blocked job.");
-      if (state.running || state.manualReconciliationRunning || state.recreateRunning) throw new Error("RECREATE_CONFIRM_BUSY: Another run or operator recovery is active.");
-      if (!state.resumePlan) throw new Error("RECREATE_CONFIRM_RESUME_PLAN_MISSING: Reopen the continued run and review its Resume Plan.");
-      if (!state.prepared) throw new Error("RECREATE_CONFIRM_QUEUE_MISSING: Check Plan again before confirming recreate.");
+      if (!jobId) throw new Error("RECREATE_CONFIRM_MISSING_JOB: Bấm lại nút tạo lại ở đúng job đang bị chặn.");
+      if (state.running || state.manualReconciliationRunning || state.recreateRunning) throw new Error("RECREATE_CONFIRM_BUSY: Đang có một lượt chạy hoặc một lượt cứu khác chạy dở.");
+      if (!state.resumePlan) throw new Error("RECREATE_CONFIRM_RESUME_PLAN_MISSING: Mở lại lượt chạy tiếp và xem lại Kế hoạch chạy tiếp trước đã.");
+      if (!state.prepared) throw new Error("RECREATE_CONFIRM_QUEUE_MISSING: Bấm Kiểm tra kế hoạch lại trước khi xác nhận tạo lại.");
       const recovery = state.resumePlan.jobs.find((entry) => entry.job_id === jobId);
       const item = state.prepared.queue.find((entry) => entry.job.id === jobId);
-      if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED") throw new Error(`RECREATE_CONFIRM_NOT_AMBIGUOUS: ${jobId} is no longer an ambiguous submitted job.`);
-      if (!item) throw new Error(`RECREATE_CONFIRM_JOB_MISSING: ${jobId} is absent from the prepared queue.`);
+      if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED") throw new Error(`RECREATE_CONFIRM_NOT_AMBIGUOUS: ${jobId} không còn là job gửi rồi mà không rõ kết quả nữa.`);
+      if (!item) throw new Error(`RECREATE_CONFIRM_JOB_MISSING: ${jobId} không có trong hàng đợi đã dựng.`);
       const approval = window.DacRecreateCore.approval({ job: item.job, recoveryState: recovery.state });
       if (!approval.ok) throw new Error(`${approval.code}: ${approval.message}`);
       // The recreate DIALOG became task-aware; this action had not, so a
@@ -3956,7 +3956,7 @@
       const auditChain = await auditChainPreflight(effectiveOutput);
       state.auditChain = auditChain;
       if (!auditChain.ok) { renderResumePlan(); throw new Error(`${auditChain.code}: ${auditChain.message}`); }
-      if ((!recreateTextReasoning && !effectiveOutput.saveImages) || !effectiveOutput.saveResultXlsx) throw new Error(recreateTextReasoning ? "RECREATE_PERSISTENCE_REQUIRED: Result XLSX saving must be enabled." : "RECREATE_PERSISTENCE_REQUIRED: generated-image and Result XLSX saving must both be enabled.");
+      if ((!recreateTextReasoning && !effectiveOutput.saveImages) || !effectiveOutput.saveResultXlsx) throw new Error(recreateTextReasoning ? "RECREATE_PERSISTENCE_REQUIRED: Phải bật lưu Result XLSX." : "RECREATE_PERSISTENCE_REQUIRED: Phải bật CẢ HAI: lưu ảnh sinh ra và lưu Result XLSX.");
       state.recreateRunning = true;
       setStatus("RUNNING", "RECREATE CHECKPOINTING");
       progress(`${jobId}: saving the operator-approved recreate checkpoint.`);
@@ -3965,9 +3965,9 @@
       log(`${jobId}: recreate approval checkpoint verified; starting recreate run.`, "done");
       renderResumePlan(); renderQueue(); renderOutput(); controls();
       const outcome = await run("recreate");
-      if (!outcome?.ok) throw new Error(`RECREATE_START_BLOCKED: ${outcome?.reason || "The recreate run did not enter RUNNING state."}`);
+      if (!outcome?.ok) throw new Error(`RECREATE_START_BLOCKED: ${outcome?.reason || "Lượt tạo lại không vào được trạng thái ĐANG CHẠY."}`);
       const completed = state.resumePlan?.jobs?.find((entry) => entry.job_id === jobId)?.state === "SAFE_COMPLETE";
-      if (!completed) throw new Error(`RECREATE_COMPLETION_UNVERIFIED: ${jobId} was not checkpointed as a verified saved ${recreateTextReasoning ? "text response" : "image"}.`);
+      if (!completed) throw new Error(`RECREATE_COMPLETION_UNVERIFIED: ${jobId} chưa được ghi mốc như một ${recreateTextReasoning ? "câu trả lời text" : "ảnh"} đã lưu và đã kiểm chứng.`);
       const remaining = window.DacRunnerCore.selectQueue(state.prepared?.queue || [], "all");
       if (!remaining.length) return outcome;
       progress(`${jobId}: ${recreateTextReasoning ? "text response" : "image"} saved and checkpointed. Continuing with ${remaining[0].job.id}.`);
@@ -4070,7 +4070,16 @@
     if (!state.resumeMode || state.running || state.manualReconciliationRunning || !state.resumePlan || !state.prepared) return;
     const recovery = state.resumePlan.jobs.find((entry) => entry.job_id === jobId);
     const item = state.prepared.queue.find((entry) => entry.job.id === jobId);
-    if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED" || !item) throw new Error("RESUME_AMBIGUOUS_SUBMISSION: this job is not eligible for manual reconciliation.");
+    if (!recovery || recovery.state !== "AMBIGUOUS_SUBMITTED" || !item) throw new Error("RESUME_AMBIGUOUS_SUBMISSION: Job này không thuộc diện đối soát thủ công.");
+    // B-24. Hàm này là đường đối soát ẢNH: nó gọi `saveGeneratedImage` và
+    // cửa đối soát thủ công của content script, rồi ghi `result_file` là tên file
+    // ảnh. Hôm nay nó là code chết — `sidepanel.html` có 0 nút cho nó — nên
+    // chốt này chưa từng chạy. Nó đứng đây cho NGÀY ai đó nối lại nút: thiếu
+    // nó, một job text sẽ được đánh dấu SUCCESS kèm một `result_file` ảnh, phá
+    // đúng luật định tuyến text/ảnh mà bản vá 28/08 dựng lên.
+    // Xoá hẳn hàm là quyền của Đức (B-24) — xem `tests/recreate-core-smoke.mjs`
+    // và `tests/post-submit-no-resend-smoke.mjs`, cả hai đang neo vào nó.
+    if (window.DacRunnerCore.taskType(item.job) !== "image_generation") throw new Error("RECONCILE_IMAGE_ONLY: Đường đối soát này chỉ dùng được cho job tạo ảnh, không dùng cho job trả lời bằng text.");
     const proofResult = reconciliationProof(item);
     if (!proofResult.ok) throw new Error(`${proofResult.code}: ${proofResult.message}`);
     const outputCheck = await window.DacOutputLocation.preflight(state.outputSettings);

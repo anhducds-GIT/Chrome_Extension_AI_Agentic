@@ -1,3 +1,17 @@
+// ============================================================================
+// FILE CHẾT — CHỜ ĐỨC CHO XOÁ (N-14, sổ nợ gốc repo).
+//
+// Nửa hành vi của file này tự định nghĩa lại `isChatGPTUrl`, `simulateZoomSync`
+// và `simulateSetZoom` ngay bên dưới, nên nó kiểm một BẢN SAO của logic chứ
+// không kiểm logic đang ship trong `sidepanel.js`. Đo bằng máy ở gói Gemini:
+// 9 đột biến vào `sidepanel.js`, XANH cả 9.
+//
+// Bản thay thế đã có: `tests/zoom-control-smoke.mjs` — trích thân hàm thật ra
+// khỏi `sidepanel.js` rồi chạy trong `node:vm`; 13/13 đột biến bị bắt.
+//
+// KHÔNG tự xoá file này: xoá file cần Đức duyệt (luật gốc của Đức).
+// ============================================================================
+
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
