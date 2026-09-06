@@ -857,3 +857,29 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
   cứng vào một gói, mang một cái tên nghe như dùng chung, và **không lớp nào canh nó**.
 - **đã làm ở gói Gemini:** README nay đưa lệnh chạy thẳng và nói rõ `test:worker` KHÔNG chạy gói
   này. Đó là vá phần chữ — cái tên vẫn còn gây hiểu nhầm cho tới khi ai giữ `_root` xử lý.
+
+## N-09 · Bộ sinh bảng gãy vì đơn vị GỐC bị dọn đi mà chỗ khai chưa theo — chặn push MỌI lane
+
+**Đo 06/09** (`claude-flow-active`, phát hiện khi bị `safe-push` từ chối):
+`node scripts/build-dashboard.mjs` **không sinh được**, báo
+`DASHBOARD_READ_FAILED` với nguyên văn:
+`fatal: path 'manifest.json' does not exist in <HEAD>`.
+
+Nguyên nhân: commit `6a4f9b6` (*feat(scouter): nhà riêng theo ADR-0013*) dọn Scouter ra
+`workers/duc-scouter/v0.1.0/` và **xoá `STATUS.md` + `manifest.json` ở gốc repo**. Nhưng bộ
+sinh vẫn đọc một **đơn vị GỐC** cố định (`statusPath = "STATUS.md"` trong
+`scripts/build-dashboard.mjs`), rồi theo `version_source` của nó sang `manifest.json` gốc —
+file nay đã không còn.
+
+**Vì sao nó không chỉ là chuyện của một lane:** `safe-push` từ chối đẩy khi bản sinh không
+khớp HEAD. Bộ sinh không chạy được thì **không lane nào đẩy được**, kể cả lane không đụng gì
+tới Scouter. Lúc ghi mục này commit `6a4f9b6` **chưa lên origin**, nên hỏng mới ở local — đẩy
+nó lên trước khi vá là mang cái chặn đó cho mọi phiên.
+
+Không tự sửa: `scripts/` là `_code` và gốc repo là `_root`, cả hai đều có chủ khác. Lane
+`claude-flow-active` **giữ khoá gói mình và giữ commit chưa đẩy**, đúng luật mục 1.
+
+**Đóng khi:** `node scripts/build-dashboard.mjs` chạy trọn trên một cây sạch không có
+`STATUS.md`/`manifest.json` ở gốc, và có phép ghim canh trường hợp repo **không có** đơn vị
+gốc — `.repo-structure.json` đã lường trước chuyện này (`root_dir null = repo không có đơn vị
+con`), nên đường ngược lại cũng cần được khai chứ không gõ cứng.
