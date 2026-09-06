@@ -4,11 +4,11 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `b72b5f3` (2026-09-06).
+Trang được sinh tại commit `39f8cec` (2026-09-07).
 
 ## Việc ưu tiên #1
 
-- **workers/duc-auto-gg-flow-video/v0.1.0** — Lượt live MỘT job trên trang mới — kiểm chứng đầu tiên, và là thứ đưa gói lên active. CẦN ĐỨC BẤM. Lưu ý tiền: chip cấu hình đang để x2, mà trang tự khai mỗi video 6 credit, nên nếu runner không tự hạ về x1 thì một job là 12 credit chứ không phải 6. Runner có bước tự hạ và tự đọc lại chip để kết luận; lượt này kiểm luôn bước đó.
+- **workers/duc-auto-gg-flow-video/v0.1.0** — Chờ Flow hết quá tải rồi chạy MỘT job — kiểm chứng đầu tiên, và là thứ đưa gói lên active. Job Q001 đã nằm sẵn trong hàng đợi, chưa bấm chạy. Lưu ý tiền: chip đang để x2 mà trang tự khai mỗi video 6 credit, nên nếu runner không tự hạ về x1 thì một job là 12 credit chứ không phải 6.
 
 ## Đọc theo thứ tự này
 
@@ -22,7 +22,7 @@ Trang được sinh tại commit `b72b5f3` (2026-09-06).
 - [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — Phiên làm việc theo tab (ADR-0046) — bước 1 ĐÓNG BĂNG với phán quyết PASS của GPT sau 6 vòng audit, 32 mutation đỏ, suite 102/102
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Nợ gói 9 -> 3 trong ngày 06/09
-- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Đã đi hết đường trên trang Flow mới: thấy ô nhập prompt, dựng được cụm nút, thấy nút tạo, và nhận diện được video vừa sinh
+- [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật
 - [Duc Scouter (seed v0.1)](workers/duc-scouter/v0.1.0/STATUS.md): building — Khung nền đã xong và đo được: quan sát, báo cáo qua Bridge, tự nạp lại mình
 
 ## Luật bắt buộc trước khi sửa gì
