@@ -123,7 +123,21 @@
   và lời nhắn cho Đức đã viết ở dạng "nhiều khả năng", không khẳng định. **Việc cần làm:** đo
   thật độ trễ mount qua vài lần gõ (dom_probe liên tiếp, đếm ms tới khi nút hiện), rồi đặt
   ngưỡng từ số đo. Trước khi có số, đừng nới/siết ngưỡng theo cảm tính.
-- **F-14** · **RÀ LẠI 02/09 — mục này đang mô tả sai thực trạng.** Nó viết như thể bản vá chưa
+- **F-14** · **XONG 02/09** (`claude-f18-evidence`, lượt 18) — **cả hai nửa đã chứng minh trên
+  trang thật, tổng cộng 0 credit.** *Nửa đầu:* bảng cấu hình **mở được** bằng chuỗi sự kiện tổng
+  hợp — `diagnostics.mode_probe` trả `opened: true`, 17 nhãn, `panel_closed_again: true`.
+  *Nửa sau:* một job khởi đầu ở chế độ **Image** với chip `x3` đã ghi vào sổ cái
+  `output_chip.label_before: "Video · 360p · 8s crop_16_9 x3"` — nhãn **Video**, tức
+  `pressFlowControl` bấm được `videocam Video` và **mode đổi thật**. Đường chuyển mode **tự động
+  được**; Đức thôi phải đặt Video mode bằng tay mỗi phiên.
+  Bằng chứng: [`evidence/F26-KET-QUA-luot1.md`](evidence/F26-KET-QUA-luot1.md) ·
+  [`evidence/F14-KET-QUA.md`](evidence/F14-KET-QUA.md) ·
+  `evidence/F14-mode-probe-vi-20260902.json`.
+  *Dấu đóng này ghi ngày 06/09 (`claude-don-so`). Nhật ký lượt 18 đã viết "F-14 đóng hoàn toàn"
+  từ 02/09, nhưng tiêu đề mục vẫn đọc như còn treo suốt bốn ngày — bộ đếm nợ tính nó là một việc
+  chưa làm. Không xoá dòng nào phía dưới: cả đường đi lẫn hai lần kết luận sai đều giữ nguyên.*
+
+  ~~**RÀ LẠI 02/09 — mục này đang mô tả sai thực trạng.**~~ Nó viết như thể bản vá chưa
   tồn tại và đề xuất "thêm một lệnh chẩn đoán bắn `pointerdown`+`mousedown`+…". **Bản vá ĐÃ CÓ:**
   `pressFlowControl()` trong `content.js:575` bắn đủ chuỗi `pointerdown` → `mousedown` →
   `pointerup` → `mouseup` → `click`, có dựng `PointerEvent` thật và lùi về `Event` khi không
@@ -152,9 +166,11 @@
   nghe sự kiện pointer tổng hợp; giả thuyết `isTrusted` **sai**. Trang trả về nguyên trạng
   (`panel_closed_again: true`). Kết luận cũ *"`element.click()` không tác dụng nên chuyển mode
   phải do người"* **đã hết hạn** — `pressFlowControl` làm được việc mà `click()` trần không làm được.
-  ⚠️ **Nửa còn lại chưa chứng minh:** phép đo này chứng minh **mở được bảng**, chưa chứng minh
-  **bấm `videocam Video` sẽ đổi mode** — đó là cú bấm khác, và lệnh probe **cố ý không bấm**.
-  Kiểm nốt bằng cách rẻ nhất: Đức đặt chip về Image rồi chạy **một** job.
+  ⚠️ ~~**Nửa còn lại chưa chứng minh:**~~ — **ĐÃ CHỨNG MINH ngay sau đó, cùng ngày, lượt 18.
+  Xem dấu đóng ở đầu mục.** Lúc viết dòng này thì phép đo mới chứng minh **mở được bảng**, chưa
+  chứng minh **bấm `videocam Video` sẽ đổi mode** — đó là cú bấm khác, và lệnh probe **cố ý
+  không bấm**. Cách kiểm rẻ nhất đề xuất khi đó — Đức đặt chip về Image rồi chạy **một** job —
+  **đã chạy**, và nó trả lời dứt khoát.
   Bằng chứng: `evidence/F14-KET-QUA.md` · `evidence/F14-mode-probe-vi-20260902.json`.
   ~~[ĐO 28/08, hai lần] **`element.click()` KHÔNG có tác dụng lên nhóm nút cấu hình~~
   của Flow.** Chứng minh hai lượt, cả hai 0 credit: (Q001) bấm chip mode → bảng không mở;
@@ -275,10 +291,42 @@
   `composer_len_before_typing` (bản vá `be17e75`) sẽ nói ngay ô có sạch trước khi gõ hay không.
   Bằng chứng: `evidence/F4R3-KET-QUA.md`.
 
-  **Việc kế tiếp của F-18 (vẫn chờ Đức bật panel + Dev Mode + Video mode trên `kaito`):** chạy
-  `run.trial` **x1**, có lưu `dom_probe` TRƯỚC khi chạy. Hỏng thì vẫn 0 credit, nhưng sổ cái
+  ~~**Việc kế tiếp của F-18 (vẫn chờ Đức bật panel + Dev Mode + Video mode trên `kaito`):** chạy~~
+  ~~`run.trial` **x1**, có lưu `dom_probe` TRƯỚC khi chạy.~~ Hỏng thì vẫn 0 credit, nhưng sổ cái
   lần này có `typing_path` + `composer_len_before/after` → kết luận được ngay, không cần lượt
   thứ ba. Bảng đọc kết quả ở mục 5 của file phân tích. **Nhớ reload extension** — đã sửa `.js`.
+
+  **CẬP NHẬT 06/09 (`claude-don-so`) — lượt đó đã chạy, và chạy tới 12 lần.** Mục này dừng chữ ở
+  lượt F4R3 và vẫn đang xin "một lượt nữa để kết luận"; thực tế trong ngày 02/09 đã có thêm bốn
+  chuỗi live, tất cả đều lưu `composer_len_before/after`. Số:
+
+  | Lượt | Số job | `before` | `after − prompt_len` | Kết cục |
+  |---|---:|---:|---:|---|
+  | F4R3 | 1 | — | — | SUCCESS, `typing_path: input_events`, `create_button: enabled` |
+  | F4R4 | 1 | **28** | **0** | SUCCESS |
+  | F4R5 | 3 | **28** ×3 | **0** ×3 | 3/3 SUCCESS — ba prompt dài khác hẳn nhau (129/208/122) |
+  | F4R8+F4R9 | 7 | **17** ×7 | **0** ×7 | 7/7 SUCCESS, 42/50 credit |
+
+  Hai điều mục này chưa ghi, và cả hai đổi việc phải làm tiếp:
+
+  1. **Giả thuyết "chuỗi nhiều job gây trạng thái lai" — BỊ BÁC.** Đó là giả thuyết mạnh nhất
+     còn lại lúc viết F4R3: F4R2 và hai lượt sau đều chỉ có MỘT job, nên chưa lần nào chạm điều
+     kiện "gõ vào ô mà job trước vừa dùng". F4R5 dựng đúng điều kiện đó bằng ba prompt dài khác
+     hẳn nhau để `composer_len_after_typing` tự tố job nào lai — **job 2 và 3 vẫn `before = 28`.**
+     Ô sạch. Chuỗi nhiều job **không** phải cơ chế. Bằng chứng:
+     [`evidence/F4R5-KET-QUA.md`](evidence/F4R5-KET-QUA.md).
+  2. **Tổng cộng 12 lượt gõ sạch liên tiếp, `lệch 0` mọi lượt.** Kể cả chuỗi 7 job nối nhau.
+     Trạng thái lai của F4R2 (dôi 27 ký tự) **không tái hiện một lần nào**. Bằng chứng:
+     [`evidence/F4R9-KET-QUA.md`](evidence/F4R9-KET-QUA.md).
+
+  **Nên việc kế tiếp KHÔNG còn là "chạy thêm một lượt".** Lượt thứ mười ba sẽ cho đúng con số
+  như mười hai lượt trước. Ứng viên duy nhất còn sống là ứng viên **hoàn cảnh**: F4R2 chạy lúc
+  06:28 ngày 02/09, mà quanh 06:06 cùng ngày có đợt reload/pair lại nhiều hồ sơ
+  (`evidence/MP-01-live-routing-and-audit-20260902.md`) — một content script mồ côi sau reload
+  mà tab chưa F5 là ứng viên họ hàng đã gặp thật cùng ngày. **Việc đúng là chờ nó tái hiện, chứ
+  không đi tìm nó**; bản vá `be17e75` đã cài sẵn `composer_len_before_typing` nên lượt nào lai
+  sẽ tự tố ngay dòng đầu sổ cái. F-18 **giữ mở** ở mức thấp: chưa có lời giải, nhưng cũng không
+  có gì để làm cho tới khi có một lượt lệch.
 - **F-21** · **XONG 02/09, đã xác nhận trên trang thật (lượt F4R4).** Vá: thêm
   `mergeDetection()` vào `attempt-telemetry-core.js`, nhánh video gọi nó thay cho
   `JSON.stringify` thẳng. Sổ cái lượt F4R4 nay có đủ `typing_path="input_events"`,

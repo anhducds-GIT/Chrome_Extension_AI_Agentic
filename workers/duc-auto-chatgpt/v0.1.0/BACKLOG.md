@@ -722,7 +722,20 @@ riêng (đúng ghi chú trong chính ADR). Gồm: mỗi phiên một RUN_ACTIVE 
 attribution gắn theo tab, GPT invariant "page-scoped vs session-scoped" (mục 6 sổ tay) sẽ
 đổi nghĩa khi đó. Làm xong trên GPT rồi mới nghĩ tới migrate.
 
-### B-36 · (P1) `PERSISTENCE_FILENAME_MISMATCH` chặn MỌI mutation Bridge khi đích ghi là Chrome Downloads — **[ĐO] live 2026-09-03 · ĐÃ VÁ 2026-09-04, CHỜ NGHIỆM THU LIVE**
+### B-36 · (P1) `PERSISTENCE_FILENAME_MISMATCH` chặn MỌI mutation Bridge khi đích ghi là Chrome Downloads — **[ĐO] live 2026-09-03 · vá 2026-09-04, NGHIỆM THU LIVE ĐÃ CHẠY VÀ THẤT BẠI · chẩn đoán đã lật: Chrome BỎ QUA đề xuất của determiner · còn nợ một phép đo trong console**
+
+> **Đọc một dòng cho nhanh (viết 06/09, `claude-don-so`).** Mục này **vẫn mở, vẫn P1.** Đã thử vá
+> 04/09, đã nghiệm thu live 04/09, và **bản vá không giữ được** — file thứ 37 vẫn ra tên GUID.
+> Rồi một phép đo trong console service worker cùng ngày lật ngược chẩn đoán: phiếu giữ tên **đã
+> bị tiêu**, tức determiner có khớp và có đề xuất, mà **Chrome bỏ qua đề xuất**. Lỗi nằm **ngoài**
+> logic khớp của extension. Bản vá **giữ lại** (nó bịt hai đường mất tên thật có trong mã, 8/8
+> mutation ghim) nhưng **đừng đọc nó thành đã sửa B-36**. Việc còn lại: **một phép đo đọc-thuần**
+> mô tả ở cuối mục — tạo blob ngay trong service worker để biết `filename` có được tôn trọng
+> không. **Không vá tiếp trước khi có con số đó.**
+>
+> *Tiêu đề mục này ghi "ĐÃ VÁ … CHỜ NGHIỆM THU LIVE" cho tới 06/09, tức đọc lướt là tưởng chưa ai
+> thử. Nghiệm thu đã chạy hai ngày trước đó và đã hỏng. Thân mục bên dưới giữ nguyên toàn bộ —
+> cả bản vá, cả hai giả thuyết đã bị bác, cả lần tôi kết luận sai.*
 
 **Triệu chứng.** `jobs.add` qua Bridge trả `INTERNAL_ERROR`, stack:
 

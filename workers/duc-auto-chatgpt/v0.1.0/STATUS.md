@@ -12,7 +12,7 @@ last_verified: 2026-08-26
 last_verified_commit: 00d1f99b44bd490cac079da5e803917346571a26
 last_verified_how: "Pilot-14 live 3/3 job ảnh tham chiếu đầu-cuối + xác minh live idempotency 5/5 phép đo"
 evidence_ref: workers/duc-auto-chatgpt/v0.1.0/Pilot-14_RefFeatureTest/evidence/idempotency-fix-live-proof.md
-current_focus: "Phiên làm việc theo tab (ADR-0046) — bước 1 ĐÓNG BĂNG với phán quyết PASS của GPT sau 6 vòng audit, 32 mutation đỏ, suite 102/102. Chờ pilot vận hành thật (cần Đức duyệt). Việc cũ vẫn mở: B-14…B-21, B-34, B-35, audit độc lập gói khoảng-nghỉ-giữa-job"
+current_focus: "Phiên làm việc theo tab (ADR-0046) — bước 1 ĐÓNG BĂNG với phán quyết PASS của GPT sau 6 vòng audit, 32 mutation đỏ, suite 102/102. Chờ pilot vận hành thật (cần Đức duyệt). Việc cũ vẫn mở: B-14…B-21, B-34, B-35, audit độc lập gói khoảng-nghỉ-giữa-job. Và một mục P1 mà ô này bỏ sót cho tới 06/09: B-36 — mọi mutation Bridge chết khi đích ghi rơi về Chrome Downloads. Đã thử vá 04/09, nghiệm thu live cùng ngày và bản vá KHÔNG giữ được; chẩn đoán nay đã lật: determiner có đề xuất tên, Chrome bỏ qua đề xuất. Đường đi vòng vẫn dùng được: chọn một thư mục đích trong Side Panel thì đường ghi không qua Chrome Downloads nữa"
 ref_readme: workers/duc-auto-chatgpt/v0.1.0/README.md
 ref_handoff: workers/duc-auto-chatgpt/v0.1.0/HANDOFF.md
 ref_backlog: workers/duc-auto-chatgpt/v0.1.0/BACKLOG.md
