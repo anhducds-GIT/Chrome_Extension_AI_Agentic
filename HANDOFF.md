@@ -3550,3 +3550,10 @@ tests/backlog-check-smoke.mjs` 8/8 · `node scripts/backlog-check.mjs` sạch ·
 trên cùng HEAD giống hệt từng byte. **5 commit của tôi còn nằm lại chưa đẩy** — cùng chỗ với 5
 commit chưa đẩy của hai lane kia. Tôi **không dùng `--carry`**: hai lane đó đang chạy, cuốn
 commit đang bay của họ lên remote là đúng cái tai nạn 26/08. Ai đẩy sau thì đẩy cả cụm.
+
+**ĐÍNH CHÍNH ĐOẠN NGAY TRÊN — tôi TRẢ khoá `_code`, không giữ.** Đoạn trên viết lúc tôi tưởng
+cổng đỏ; chạy đủ cổng thì nó **XANH TOÀN BỘ**: phép kiểm test tự quy chỗ đỏ EOL về *"file sửa dở
+của phiên khác"* và không tính cho tôi. Thứ chặn tôi chỉ còn là `safe-push` — nó từ chối vì lượt
+đẩy sẽ cuốn theo **5 commit chưa đẩy của hai lane đang chạy**. Tôi không dùng `--carry`, và trả
+khoá bằng `--release _code --du-biet` kèm lý do ghi thẳng vào bảng quyền. Sáu commit của tôi đều
+mang nhãn `Lane: claude-bang-n03` nên vẫn quy thuộc được; ai đẩy sau thì đẩy cả cụm.
