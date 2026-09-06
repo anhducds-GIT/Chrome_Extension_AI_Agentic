@@ -33,16 +33,32 @@ const ADAPTER = ctx.window.DacProviderAdapter;
 
 const PLAIN = "https://labs.google/fx/tools/flow/*";
 const LOCALE = "https://labs.google/fx/*/tools/flow/*";
+// Nhà thứ hai, đo thật 2026-09-06: Google dời Flow sang domain riêng
+// https://flow.google.com/project/<id>. Đức duyệt cùng ngày, nguyên văn:
+// "thêm domain mới, GIỮ luôn domain cũ" — vì chưa ai đo được Google còn phục
+// vụ song song bao lâu, và bỏ domain cũ là tự chuốc rủi ro đổi lấy gọn gàng.
+const NEW_HOME = "https://flow.google.com/*";
 const matches = manifest.content_scripts.flatMap((entry) => entry.matches);
-for (const pattern of [PLAIN, LOCALE]) {
+for (const pattern of [PLAIN, LOCALE, NEW_HOME]) {
   assert.ok(matches.includes(pattern), `content_scripts thiếu ${pattern} — thiếu nó thì content script không được tiêm và triệu chứng sẽ là RECEIVER_LOST`);
   assert.ok(manifest.host_permissions.includes(pattern), `host_permissions thiếu ${pattern}`);
 }
 
 // Không được nới rộng hơn mức Đức đã duyệt (2026-09-02): vẫn phải nằm dưới
 // labs.google và vẫn phải kết thúc bằng /tools/flow/*.
+// Hai muc duyet, hai ngay, ke rieng ra chu KHONG gop thanh mot bieu thuc rong
+// hon ca hai - gop la danh mat dung cai ranh gioi ma dong nay ton tai de giu.
+const DUOC_DUYET = [
+  /^https:\/\/labs\.google\/fx\/(?:\*\/)?tools\/flow\/\*$/,   // Duc duyet 02/09
+  /^https:\/\/flow\.google\.com\/\*$/,                        // Duc duyet 06/09
+];
 for (const pattern of matches) {
-  assert.match(pattern, /^https:\/\/labs\.google\/fx\/(?:\*\/)?tools\/flow\/\*$/, `match pattern quá rộng so với mức đã duyệt: ${pattern}`);
+  assert.ok(DUOC_DUYET.some((duyet) => duyet.test(pattern)), `match pattern qua rong so voi muc da duyet: ${pattern}`);
+}
+// Va chieu nguoc lai: moi muc da duyet phai con khop mot pattern that. Mot
+// dong duyet chet la mot cua mo san ma khong ai con nho vi sao no mo.
+for (const duyet of DUOC_DUYET) {
+  assert.ok(matches.some((pattern) => duyet.test(pattern)), `muc duyet khong con khop match pattern nao: ${duyet}`);
 }
 
 /* ---- 2. adapter phải SIẾT hơn manifest ------------------------------------ */
@@ -52,6 +68,11 @@ const ACCEPT = [
   "https://labs.google/fx/vi/tools/flow/project/e20b7325",
   "https://labs.google/fx/pt-BR/tools/flow/project/x",
   "https://labs.google/fx/tools/flow",
+  // Nhà mới (06/09). Đoạn locale chưa có bằng chứng trên domain này, nhưng chừa
+  // sẵn chỗ cho nó là miễn phí, còn thiếu nó thì lặp lại đúng lỗi 02/09.
+  "https://flow.google.com/project/575b20b1-e19c-4e33-b3ab-bedb5dc9e880",
+  "https://flow.google.com/vi/project/e20b7325",
+  "https://flow.google.com/",
 ];
 const REJECT = [
   // Đúng thứ manifest KHÔNG chặn nổi mà adapter phải chặn: nhiều đoạn ở giữa.
@@ -63,6 +84,12 @@ const REJECT = [
   // Host khác.
   "https://evil.com/fx/vi/tools/flow/project/x",
   "https://labs.google.evil.com/fx/tools/flow/x",
+  // Nhà mới: manifest buộc phải cho lọt CẢ DOMAIN (match pattern của Chrome
+  // không nói được "chỉ /project/"), nên adapter là lớp duy nhất chặn được.
+  "https://flow.google.com/settings",
+  "https://flow.google.com/evil/path/project/x",
+  "https://flow.google.com.evil.com/project/x",
+  "https://notflow.google.com/project/x",
 ];
 
 for (const url of ACCEPT) {
@@ -80,6 +107,13 @@ for (const url of REJECT) {
 const manifestWouldAllow = "https://labs.google/fx/evil/path/tools/flow/x";
 assert.equal(ADAPTER.isProviderUrl(manifestWouldAllow), false,
   "adapter phải chặn được đường mà match pattern của manifest buộc phải cho lọt — nếu không, nới manifest là nới thật");
+
+// Domain mới làm khoảng cách giữa hai lớp RỘNG HẲN, nên chỗ này nay đáng giá
+// hơn trước: mẫu "https://flow.google.com/*" cho lọt MỌI đường dẫn trên domain
+// đó. Adapter là thứ duy nhất nói được "chỉ trang chủ và /project/".
+assert.equal(ADAPTER.isProviderUrl("https://flow.google.com/settings"), false,
+  "manifest cho lọt cả domain mới, nên adapter phải là lớp nói được chỉ trang chủ và /project/");
+assert.equal(ADAPTER.surface("https://flow.google.com/settings"), "WRONG");
 
 /* ---- 3. NHÃN NÚT cũng bị dịch, và đó là bẫy nguy hiểm hơn URL ------------- */
 
@@ -111,3 +145,35 @@ const matcher = adapterSource.slice(adapterSource.indexOf("function isCreateButt
 assert.match(matcher, /CREATE_BUTTON_LABELS\.includes\(/, "so khớp phải là so bằng CHÍNH XÁC với danh sách đã đo");
 
 console.log(`flow locale URLs accepted, adapter still stricter than manifest (${ACCEPT.length} nhận / ${REJECT.length} từ chối): PASS`);
+
+/* ---- 4. Ba câu báo lỗi cũng phải chỉ về nhà mới ------------------------- */
+
+// Ba câu này là thứ người vận hành đọc khi lạc trang. Để chúng chỉ về một
+// địa chỉ không còn tồn tại thì đúng lúc cần nhất chúng lại dẫn đi sai chỗ —
+// và đó là kiểu hỏng không phép kiểm nào khác bắt được, vì code vẫn chạy.
+// Cố ý so chuỗi thẳng, không regex: câu báo lỗi là chữ nguyên văn, và một
+// biểu thức khớp lỏng sẽ vẫn xanh khi câu đã bị viết lại nửa vời.
+const contentSource = fs.readFileSync(new URL("../content.js", import.meta.url), "utf8");
+const CAU_NHA_MOI = "https://flow.google.com/project/";
+const CAU_COMPOSER = "Flow composer not found. Open a Flow project on flow.google.com and retry.";
+const CAU_CU = "Open a labs.google Flow project";
+assert.ok(contentSource.includes(CAU_NHA_MOI), "câu WRONG_SURFACE phải chỉ về nhà mới");
+assert.equal(contentSource.split(CAU_COMPOSER).length - 1, 2,
+  "cả hai câu 'không tìm thấy ô nhập' phải chỉ về nhà mới");
+assert.ok(!contentSource.includes(CAU_CU),
+  "câu cũ chỉ về labs.google vẫn còn — nó dẫn người vận hành tới một trang đã dời");
+
+// LUẬT F-20: `classifyFailure` dò từ khoá trên TOÀN BỘ câu báo lỗi, nên sửa
+// lời văn LÀ sửa hành vi retry. Đổi địa chỉ mà tuột sang nhánh phán quyết
+// khác là đổi cả cách hệ thống xử lý thất bại, không phải sửa chính tả.
+const runnerCtx = { window: {}, URL };
+vm.createContext(runnerCtx);
+vm.runInContext(fs.readFileSync(new URL("../runner-core.js", import.meta.url), "utf8"), runnerCtx);
+const RUNNER = runnerCtx.window.DacRunnerCore;
+for (const cau of [
+  "WRONG_SURFACE: the Flow receiver tab must be on https://flow.google.com/project/ (or the older https://labs.google/fx/tools/flow/).",
+  CAU_COMPOSER,
+]) {
+  assert.equal(RUNNER.classifyFailure(cau), "RECEIVER_LOST",
+    `phán quyết đổi sau khi đổi địa chỉ — đó là đổi hành vi retry, không phải sửa chữ: ${cau}`);
+}

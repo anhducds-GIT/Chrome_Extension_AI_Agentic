@@ -8,6 +8,7 @@
   "host_permissions": [
     "https://labs.google/fx/tools/flow/*",
       "https://labs.google/fx/*/tools/flow/*",
+    "https://flow.google.com/*",
     "http://127.0.0.1/*"
   ],
   "background": {
@@ -35,7 +36,8 @@
     {
       "matches": [
         "https://labs.google/fx/tools/flow/*",
-      "https://labs.google/fx/*/tools/flow/*"
+        "https://labs.google/fx/*/tools/flow/*",
+        "https://flow.google.com/*"
       ],
       "js": ["provider-adapter.js", "image-evidence-core.js", "attempt-identity-core.js", "reconciliation-core.js", "chat-readiness-core.js", "content-decision-core.js", "content.js"],
       "run_at": "document_idle"

@@ -1201,7 +1201,7 @@
     try {
       if (STATE.abortRequested) throw new Error("Automation stopped by user.");
       if (!surfaceAllowedNow()) {
-        throw new Error("WRONG_SURFACE: the Flow receiver tab must be on https://labs.google/fx/tools/flow/.");
+        throw new Error("WRONG_SURFACE: the Flow receiver tab must be on https://flow.google.com/project/ (or the older https://labs.google/fx/tools/flow/).");
       }
       if (generatingSignal()) {
         throw new Error("Flow is already generating. Wait for it to finish before starting the queue.");
@@ -1209,7 +1209,7 @@
 
       const composer = findComposer();
       if (!composer) {
-        throw new Error("Flow composer not found. Open a labs.google Flow project and retry.");
+        throw new Error("Flow composer not found. Open a Flow project on flow.google.com and retry.");
       }
 
       await ensureFlowVideoMode(requestAttempt);
@@ -1235,7 +1235,7 @@
       const pausedBeforeCompose = await humanPause("preComposeMs");
       const activeComposer = findComposer();
       if (!activeComposer) {
-        throw new Error("Flow composer not found. Open a labs.google Flow project and retry.");
+        throw new Error("Flow composer not found. Open a Flow project on flow.google.com and retry.");
       }
       const composerLenBeforeTyping = composerTextLength(activeComposer);
       // Audit độc lập vòng 1 (02/09) nêu đúng một lỗ còn lại: chính

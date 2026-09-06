@@ -22,11 +22,19 @@ assert.deepEqual(contentScripts, ["provider-adapter.js", "image-evidence-core.js
 // Chrome khong tiem content script tren giao dien tieng Viet, va trieu chung
 // noi len la RECEIVER_LOST — mot ma loi chi thang vao cho khong he sai.
 // Chi tiet + ranh gioi "adapter phai siet hon manifest": tests/flow-locale-url-static.mjs
+// Domain moi them 2026-09-06 (Duc duyet tuong minh: "them domain moi, GIU luon
+// domain cu"). Google doi Flow tu labs.google/fx/tools/flow sang flow.google.com,
+// khac ca ten mien lan duong dan. Thieu no thi Chrome khong tiem content script
+// tren trang moi va extension chet han — trieu chung dau tien Duc thay lai la
+// nut CHAT ZOOM xam, mot cho khong lien quan.
 assert.deepEqual(manifest.content_scripts[0].matches, [
   "https://labs.google/fx/tools/flow/*",
   "https://labs.google/fx/*/tools/flow/*",
+  "https://flow.google.com/*",
 ]);
-assert.deepEqual([...adapter.ORIGIN.hosts], ["labs.google"]);
+assert.deepEqual([...adapter.ORIGIN.hosts], ["labs.google", "flow.google.com"]);
+assert.equal(adapter.isProviderUrl("https://flow.google.com/project/abc"), true);
+assert.equal(adapter.isProviderUrl("https://flow.google.com/settings"), false);
 assert.equal(adapter.isProviderUrl("https://labs.google/fx/tools/flow/project/abc"), true);
 assert.equal(adapter.isProviderUrl("https://labs.google/fx/tools/flow?hl=vi"), true);
 assert.equal(adapter.isProviderUrl("https://labs.google/fx/tools/flowx"), false);

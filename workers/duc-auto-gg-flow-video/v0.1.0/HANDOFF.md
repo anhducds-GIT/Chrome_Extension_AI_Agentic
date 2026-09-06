@@ -421,3 +421,35 @@ tiện ích, rê chuột lên cụm nút CHAT ZOOM, đọc câu hiện ra rồi 
 
 **Đẩy kèm `--carry`** (ADR-0005). Lượt `b0eb683..961c936`, 10 commit, 2 của tôi; ba lane bị
 cuốn theo: **`claude-assistant`** · **`claude-gemini-hoan-thien`** · **`claude-hang-doi`**.
+
+## 2026-09-06 — `claude-flow-active`: Google dời Flow sang domain riêng, extension đang chết hẳn
+
+Đức báo nút CHAT ZOOM xám. Bản vá chẩn đoán lượt trước bắt nó tự khai lý do, và câu nó khai là
+*"tab đang xem không phải trang Flow"* kèm địa chỉ thật. Địa chỉ đó là **`flow.google.com/project/<id>`**.
+
+Khác **cả tên miền lẫn đường dẫn** so với `labs.google/fx/tools/flow/project/<id>`. Nút zoom chỉ
+là triệu chứng nhìn thấy đầu tiên: `content_scripts.matches` cũng trượt, nên **Chrome không tiêm
+content script** — không gõ được, không bấm được, không đọc được gì. Lượt live một job mà tôi
+định xin Đức bấm hôm nay sẽ hỏng ngay bước đầu.
+
+**Đức duyệt 06/09, nguyên văn:** *"thêm domain mới, GIỮ luôn domain cũ"*. Thêm quyền cho
+extension là việc phải hỏi, nên tôi dừng lại hỏi trước khi sửa.
+
+**Vá:** `manifest.json` thêm `https://flow.google.com/*` (quyền + tiêm script) · `ORIGIN` nay
+hai nhánh · `surface()` nhận cả hai nhà · ba câu báo lỗi chỉ về nhà mới.
+
+**Ranh giới hai lớp của F-23 giữ nguyên và nay đáng giá hơn hẳn** — mẫu mới buộc phải cho lọt
+cả domain, nên adapter là lớp duy nhất chặn được. Lý lẽ đầy đủ nằm trong chính phép kiểm:
+`tests/flow-locale-url-static.mjs`.
+
+Suite **98/98**, đột biến **7/7 bị bắt** (bỏ domain khỏi hai chỗ trong manifest · nới manifest
+rộng hơn mức duyệt · bỏ khỏi `ORIGIN.hosts` · adapter thôi siết · `surface()` quên nhà mới ·
+câu báo lỗi tụt về địa chỉ cũ). Ba câu báo lỗi ghim thêm phán quyết `classifyFailure` theo luật
+F-20: cả trước lẫn sau đều `RECEIVER_LOST`, tức đổi địa chỉ không đổi hành vi retry.
+
+**Mở F-29 (P1) và F-30.** F-29 là chỗ duy nhất còn gắn cứng địa chỉ cũ: `videoIdFromSrc` chỉ
+nhận file video ở `labs.google/fx/api/trpc/...`. Cố ý không đoán. Nó khác mọi cửa từ chối khác
+của gói: hàm này chạy **sau** cú bấm Create, nên nếu địa chỉ đã đổi thì **credit tiêu mà không
+thu được video**. Đo được bằng `dom_probe` trên một dự án đã có video sẵn, 0 credit.
+
+**Chưa xong:** phải đo F-29 TRƯỚC lượt live, không phải sau.

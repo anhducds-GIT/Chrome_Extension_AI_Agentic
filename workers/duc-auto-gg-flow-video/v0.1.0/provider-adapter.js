@@ -90,20 +90,43 @@
   // hon. Day la co y: manifest quyet dinh script CO DUOC NAP khong, con file
   // nay moi la cong quyet dinh trang do CO PHAI Flow that khong.
   const LOCALE_SEGMENT = "(?:[a-z]{2}(?:-[a-zA-Z]{2,4})?/)?";
+
+  // HAI NHA, do that 2026-09-06: Google da doi Flow sang mot domain rieng.
+  //   cu:  https://labs.google/fx/tools/flow/project/<id>       (do 02/09)
+  //   moi: https://flow.google.com/project/<id>                 (Duc gui 06/09)
+  // Khac CA ten mien LAN duong dan, nen bo khop cu truot sach — va vi
+  // `content_scripts.matches` cung truot, Chrome KHONG TIEM content script:
+  // extension chet han tren trang moi chu khong chi hong mot nut. Trieu chung
+  // Duc nhin thay dau tien lai la nut CHAT ZOOM xam, mot cho khong lien quan.
+  //
+  // Duc duyet 2026-09-06: them domain moi va GIU LUON domain cu — chua ai do
+  // duoc Google con phuc vu song song bao lau, va bo domain cu la tu chuoc rui
+  // ro doi lay mot chut gon gang.
+  //
+  // Doan locale giu nguyen luat cu (F-23): dung MOT doan, va doan do phai co
+  // dang ma ngon ngu. Chua co bang chung domain moi dung locale, nhung cho no
+  // cho san la mien phi, con thieu no thi lap lai dung loi 02/09.
   const ORIGIN = Object.freeze({
-    hosts: Object.freeze(["labs.google"]),
-    urlPattern: new RegExp(`^https://labs\.google/fx/${LOCALE_SEGMENT}tools/flow(?:/|[?#]|$)`, "i"),
+    hosts: Object.freeze(["labs.google", "flow.google.com"]),
+    urlPatterns: Object.freeze([
+      new RegExp(`^https://labs\.google/fx/${LOCALE_SEGMENT}tools/flow(?:/|[?#]|$)`, "i"),
+      new RegExp(`^https://flow\.google\.com(?:[?#]|$|/${LOCALE_SEGMENT}(?:project(?:/|[?#]|$)|[?#]|$))`, "i"),
+    ]),
   });
 
   function isProviderUrl(url) {
-    return Boolean(url && ORIGIN.urlPattern.test(url));
+    return Boolean(url && ORIGIN.urlPatterns.some((pattern) => pattern.test(url)));
   }
 
   function surface(url) {
     try {
       const parsed = new URL(url);
-      if (parsed.origin !== "https://labs.google") return SURFACE.WRONG;
-      if (new RegExp(`^/fx/${LOCALE_SEGMENT}tools/flow(?:/|$)`, "i").test(parsed.pathname)) return SURFACE.CONVERSATION;
+      if (parsed.origin === "https://labs.google") {
+        return new RegExp(`^/fx/${LOCALE_SEGMENT}tools/flow(?:/|$)`, "i").test(parsed.pathname) ? SURFACE.CONVERSATION : SURFACE.WRONG;
+      }
+      if (parsed.origin === "https://flow.google.com") {
+        return new RegExp(`^/${LOCALE_SEGMENT}(?:project(?:/|$)|$)`, "i").test(parsed.pathname) ? SURFACE.CONVERSATION : SURFACE.WRONG;
+      }
       return SURFACE.WRONG;
     } catch (_) {
       return SURFACE.WRONG;

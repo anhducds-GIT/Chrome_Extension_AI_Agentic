@@ -571,3 +571,24 @@ file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemi
   `tests/flow-zoom-control-reason.mjs`), rồi đổi tên file cho khớp nhánh.
   **Đóng khi:** không còn chuỗi `chatgpt.com` nào trong test của gói này, và một đột biến vào
   `syncZoomState` của `sidepanel.js` làm phép kiểm zoom đỏ.
+
+- **F-29** · **P1, CHẶN LƯỢT LIVE ĐẦU — và nó tốn tiền chứ không hỏng miễn phí.** [ĐỌC 06/09]
+  Sau khi dời sang `flow.google.com`, chỗ **duy nhất** trong code còn gắn cứng địa chỉ cũ là
+  `videoIdFromSrc` (`provider-adapter.js`): nó chỉ nhận file video có địa chỉ
+  `https://labs.google/fx/api/trpc/media.getMediaUrlRedirect`. Cố ý **không sửa** — chưa ai đo
+  được địa chỉ file video trên nhà mới, và đoán ở đây là đoán vào lớp quy kết đầu ra.
+  **Vì sao nó tốn tiền:** hàm này chạy SAU cú bấm Create. Nếu địa chỉ đã đổi thì nó trả `null`,
+  runner không thấy video mới, job kết thúc bằng `OUTPUT_DETECTION_TIMEOUT` — **credit đã tiêu
+  mà không thu được gì**. Khác hẳn mọi cửa từ chối khác của gói này, vốn đều dừng trước khi gõ.
+  **Cách đo, 0 credit, không cần chạy job:** Đức nạp lại tiện ích rồi mở một dự án Flow **đã có
+  video sẵn**; gọi `diagnostics.dom_probe` đọc thuộc tính `src` của thẻ `<video>`. Một lượt đọc,
+  không bấm gì, không sinh gì.
+  **Đóng khi:** có bằng chứng thật về địa chỉ file video trên `flow.google.com` (lưu vào
+  `evidence/`), `videoIdFromSrc` nhận đúng địa chỉ đó và vẫn **từ chối** host lạ, và có phép
+  ghim canh cả hai chiều.
+
+- **F-30** · [ĐỌC 06/09] Đoạn locale trên nhà mới **chưa có bằng chứng**. Bộ khớp đã chừa sẵn
+  chỗ cho `flow.google.com/vi/project/...` vì chừa là miễn phí, nhưng chưa ai thấy Google phục
+  vụ dạng đó. Ngược lại cũng chưa biết nhà mới còn dùng `?hl=` hay đặt ngôn ngữ ở đâu khác.
+  **Đóng khi:** một lượt `dom_probe` trên giao diện tiếng Việt của nhà mới cho thấy đường dẫn
+  thật, và bộ khớp được ghim theo đúng dạng đo được (chứ không theo dạng chừa sẵn).

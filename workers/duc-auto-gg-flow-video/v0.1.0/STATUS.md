@@ -5,10 +5,10 @@ name: Duc Auto GG Flow Video
 lifecycle: building
 owner: claude
 priority_rank: 1
-next_step: "Lượt live MỘT job (chế độ Image + chip x3) để khai kiểm chứng đầu tiên — CẦN ĐỨC BẤM. Một lượt đó kiểm cả bản vá F-26 (runner tự đặt x1 rồi đọc lại chip) lẫn khối nhịp tim của F-25 bước ②. Hỏng thì 0 credit; chạy trọn thì khoảng 6 credit. Sau lượt đó mới khai được last_verified và đưa gói lên active. Vẫn chờ Đức chốt riêng: F-25 bước ③ — cho vòng chạy job sống ở service worker thay vì side panel."
+next_step: "F-29 — đo địa chỉ file video trên trang mới TRƯỚC khi chạy job. Đây là chỗ duy nhất còn trỏ về địa chỉ cũ, và nó chạy SAU cú bấm nên nếu sai thì credit đã tiêu mà không thu được video. Đo bằng một lượt đọc trang, 0 credit, không bấm gì. Cần Đức nạp lại tiện ích rồi mở một dự án đã có video sẵn."
 version_source: workers/duc-auto-gg-flow-video/v0.1.0/manifest.json
-current_focus: "F-08 ĐÓNG 06/09 và nó gần nổ thật: trần chờ sinh video mặc định là 180 giây, còn ca xấu nhất đo được trên 9 job live là 175 giây — biên năm giây. Chín lượt vừa qua thoát chỉ vì workbook có khai 300. Trần này áp lên giai đoạn SAU khi credit đã tiêu, nên hết trần sớm là vứt một video đã trả tiền và dừng cả mẻ. Nay 600 giây, ghim bằng phép kiểm suy từ số đo. Suite 99/99, thử phá 4/4 bị bắt. Mở F-27: giai đoạn chuẩn bị trước cú bấm mất 51–144 giây mà chỉ ~25 giây có tên."
-human_action: "Nạp lại tiện ích trong Chrome, rồi chạy MỘT job ở chế độ Image với chip x3. Một lượt đó kiểm cả F-26 lẫn khối `loop` mới. Hỏng thì vẫn 0 credit. Và một câu cần Đức chốt: có cho chuyển vòng chạy job sang service worker không (F-25 bước ③) — đó là đổi lớn về kiến trúc nên AI không tự quyết."
+current_focus: "Google đã dời Flow sang địa chỉ mới flow.google.com — phát hiện 06/09 từ chính nút CHAT ZOOM xám mà Đức báo. Trước khi vá, extension KHÔNG chạy được gì trên trang mới: Chrome không tiêm code vào trang, nên không gõ, không bấm, không đọc được. Đức duyệt thêm địa chỉ mới và giữ luôn địa chỉ cũ. Đã vá quyền, bộ khớp địa chỉ, và ba câu báo lỗi. Suite 98/98, thử phá 7/7 đều bị bắt. Còn đúng một chỗ chưa vá được vì thiếu bằng chứng: chỗ nhận diện file video (F-29)."
+human_action: "Nạp lại tiện ích trong Chrome (bắt buộc, quyền vừa đổi), rồi mở một dự án Flow ĐÃ CÓ video sẵn trên flow.google.com và báo lại. Tôi đọc địa chỉ file video qua Bridge, 0 credit, không bấm gì. Xong bước đó mới tới lượt chạy thật một job."
 ref_readme: workers/duc-auto-gg-flow-video/v0.1.0/README.md
 ref_handoff: workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gg-flow-video/v0.1.0/AI-OPERATOR-GUIDE.md
