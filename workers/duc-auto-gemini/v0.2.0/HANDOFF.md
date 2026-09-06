@@ -414,8 +414,8 @@ vẫn đọc "written".
 **Số.** Suite 88 → **90**, 90/90 xanh. Thử phá **13/13** bị bắt. Một phép kiểm tôi tự viết đã **bị
 bỏ**: đột biến chứng minh nó không bao giờ đỏ được.
 
-**Còn mở.** Việc ③ (nhiều ảnh một job) chưa làm. Hai việc P1 chờ **tay Đức**, gộp được một lượt.
-Chưa đẩy được: `FEATURE-PARITY.md` lệch vì tôi sửa `sidepanel.js`, sinh lại phải giữ `_root` —
-lane `claude-n07` đang giữ.
+**Còn mở.** Việc ③ (nhiều ảnh một job) chưa làm — chi tiết và điều kiện đóng ở `G-05`. Hai việc
+P1 chờ **tay Đức**, gộp được một lượt. Lưới hứng bắt oan trong `what-next.mjs` vẫn còn: vá nó cần
+khoá `_code`, đã ghi ra `BACKLOG.md` gốc repo.
 
 <!-- HANDOFF-THANG: 2026-09 -->
