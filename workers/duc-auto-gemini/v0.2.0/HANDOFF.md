@@ -592,10 +592,8 @@ bấm** — bấm dừng giữa chừng, và bấm sang tab khác giữa chừng
 
 ## 2026-09-07 — `claude-gemini-g08`: sổ nói "tám", máy đếm "bảy" — và cái thứ tám đã trôi dạt mười ngày trước
 
-**Việc đầu là ĐO LẠI, không phải sửa.** G-08 gắn nhãn **[ĐO]**, nhưng nhãn đó chỉ nói con số từng
-được máy đếm — nó không nói đếm hôm nào. Đếm lại md5 từng file `.js` giữa hai nhánh:
-**bảy** module còn giống hệt, không phải tám. 24 file trùng tên đã khác nội dung, 7 file chỉ một
-bên có.
+**Việc đầu là ĐO LẠI, không phải sửa.** Nhãn **[ĐO]** chỉ nói con số từng được máy đếm — không
+nói đếm hôm nào. Đếm lại md5 từng file `.js`: **bảy** module còn giống hệt, không phải tám.
 
 **Cái thứ tám là `xlsx-codec.js`, và nó trôi dạt ngày 28/08.** Truy bằng lịch sử khối máy sinh
 trong `FEATURE-PARITY.md`: bản 27/08 ghi 8 và kể tên nó, bản 28/08 ghi 7 và tên nó biến mất. Nay
