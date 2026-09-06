@@ -50,8 +50,19 @@ node scripts/session-check.mjs --as <phiên>                     # 4. cổng đ�
 node scripts/safe-push.mjs --as <phiên>                         # 5. đẩy, rồi --release vùng
 ```
 
-Ba điều **không** được làm, và mỗi điều là một tai nạn thật:
+**Bước 2 nằm ngay TRƯỚC lượt ghi đầu tiên, không phải lúc mở phiên.** Đọc hiến pháp, đọc brief,
+đọc sổ nợ, đọc code, đo — **không việc nào cần khoá**, mà lane nào cũng mất 5–20 phút đầu để làm
+đúng những việc đó. Mọi bản giao việc ngày 06/09 mở đầu bằng *"nhận khoá trước"*, nên khoá nằm
+không **do hình dạng bản giao việc**, không phải do lane lười. Cần khoá thứ hai giữa chừng thì
+**nhận thêm lúc cần**; đừng gom sẵn. **Một lane, một khoá worker** — việc văn bản trải ba nhánh
+thì làm ba lượt (06/09 một lane ôm ba khoá worker cho một việc sửa chữ và chặn một phiên khác).
 
+Năm điều **không** được làm, và mỗi điều là một tai nạn thật:
+
+- **Đừng nối `claim.mjs` vào ống.** Mã thoát của một đường ống là mã thoát của lệnh **cuối**, nên
+  `--take … | tail -3 && git commit …` chạy tiếp cả khi lệnh nhận khoá đã **TỪ CHỐI**. Xảy ra
+  06/09; lượt commit đó ghi vào vùng của lane khác. Lớp bảo vệ chạy hoàn hảo rồi bị một ký tự
+  nuốt mất. Chạy riêng, xem kết quả, rồi mới chạy lệnh sau.
 - **Đừng sửa `.agents/claims.json` bằng tay.** Sửa tay là đọc-sửa-ghi, và hai phiên cùng đọc
   thấy "trống" sẽ cùng ghi tên mình. Dùng lệnh.
 - **Đừng `git push` trần.** Nó cuốn theo commit của mọi phiên khác.
@@ -67,7 +78,7 @@ Ba điều **không** được làm, và mỗi điều là một tai nạn thậ
   Đẩy được rồi mới trả. Không đẩy được thì **giữ khoá và báo lại** — giữ một khoá là chuyện nhỏ,
   để lại commit vô chủ mới là chuyện lớn.
 
-## 4. Năm bất biến — và vì sao từng cái tồn tại
+## 4. Sáu bất biến — và vì sao từng cái tồn tại
 
 Đây là phần **phải đọc trước khi sửa bất cứ thứ gì** ở mục 2. Mỗi bất biến sinh ra từ một lần
 hỏng thật; gỡ nó ra là mời lại đúng lần hỏng đó.
@@ -113,6 +124,31 @@ không hề chạm bộ sinh — nặng nhất là lúc phiên kia chạy đột
 chục giây. Một chi tiết đã trả giá lúc dựng: **thư mục ảnh chụp phải giữ nguyên tên thư mục
 repo**, vì bộ sinh suy danh tính repo từ tên thư mục khi cấu hình không khai.
 
+**⑥ Máy HIỆN RA, người HỎI — máy không bao giờ tự nhả khoá.** Từ 07/09 ba chỗ chỉ ra vùng bạn
+đang giữ mà **chưa thấy dấu vết trong repo** (không commit nào chạm vùng đó kể từ mốc nhận, và
+không file nào trong vùng bị sửa trên đĩa): `claim.mjs --list` · `what-next.mjs` mục B · cổng
+đóng phiên. Ba ràng buộc, và cả ba là **hợp đồng**, không phải chi tiết cài đặt:
+
+- **Chữ.** Nó nói *repo chưa thấy gì*. Nó **không** nói lane đó rảnh — repo chỉ thấy được thứ đã
+  chạm repo, mà một lane cẩn thận dựng thử ngoài repo rồi mới ghi vào. Ngày 06/09 phiên điều phối
+  đo đúng hai vế trên, đọc thành "lane rảnh", nhả hộ một khoá, và lane kia phải hoàn nguyên việc
+  đã xong. Gọi tín hiệu này là "rảnh" · "nhàn" · "không làm gì" thì phép ghim ĐỎ.
+- **Mức: VÀNG, không bao giờ ĐỎ.** Một lane đọc kỹ 30 phút trước khi sửa một dòng là lane **tốt**.
+  Chặn nó là dạy mọi lane ghi bừa một byte để giữ khoá cho hợp lệ — lúc đó phép kiểm thành thứ
+  ngược lại chính nó. Câu nhắc ở cổng nói với **chính lane đang giữ khoá**, người duy nhất biết
+  mình có đang làm hay không; nó không nói với ai khác.
+- **Ba đường hợp lệ để một khoá được trả, và chỉ ba:** chính lane đó trả (sau khi đẩy) · lane đó
+  báo đã xong · Đức chốt chuyển (`--restamp --duc-duyet`). Không có đường thứ tư, và **không phép
+  đo nào là đường thứ tư**. Thấy tín hiệu vàng thì **hỏi**, đừng nhả.
+
+Và một hệ quả của ④ ở đây: git đọc không được thì tín hiệu trả **"không đo được"**, không rơi về
+"chưa thấy" — vì "chưa thấy" là lời mời đi hỏi một lane có thể đang rất bận.
+
+**Bảng HTML cố ý KHÔNG mang tín hiệu này.** Bảng bị cổng xuất bản so với bản sinh từ HEAD, mà
+chính lượt commit bảng lại chạm gốc repo — nó tự đổi đầu vào của mình và chặn mọi lane. Đó đúng
+là bệnh `N-20`/`N-21` trong `BACKLOG.md`, và bảng đã chốt y như vậy cho khối "Khoá làm việc".
+`what-next.mjs` giữ chỗ đó: sống, chỉ đọc, không đòi khoá nào.
+
 ## 5. Muốn ĐỔI cơ chế — đọc mục này trước
 
 **Luật một dòng: một chốt không có test ghim thì nó chỉ là bình luận.**
@@ -130,6 +166,10 @@ Ba cái bẫy đã tự cắn, ghi ra để đừng ai mất công đạp lại:
    trông như đã kiểm chứng.
 3. **Ghim một chiều là chưa đủ.** Phải có cả vế "chặn đúng thứ cần chặn" và vế "KHÔNG chặn thứ
    hợp lệ". Thiếu vế hai thì một bản "luôn từ chối" vẫn qua sạch.
+4. **Nền của repo thử phải XANH trước, nếu không phép so rỗng nghĩa.** Đo 07/09: một đột biến
+   *"đổi vàng thành đỏ"* thoát sạch vì phép ghim so mã thoát của cổng ở hai lượt, mà repo thử
+   vốn đã đỏ sẵn vì một lý do chẳng liên quan — hai con số bằng nhau, đột biến vô hình. Vá bằng
+   một dòng: đòi lượt nền phải bằng 0 trước khi đem so.
 
 **Quy trình khi sửa một cơ chế:**
 

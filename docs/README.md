@@ -62,7 +62,7 @@ không phải khi tò mò.
 
 | Tài liệu | Đọc khi | Nói về gì |
 |---|---|---|
-| [MULTIFLOW.md](protocols/MULTIFLOW.md) | sắp làm cùng lúc với AI khác, hoặc sắp SỬA một trong bốn cơ chế đa phiên | Bốn cơ chế (bảng chủ sở hữu · nhãn `Lane:` · cổng đóng phiên · cổng xuất bản), một ngày làm việc 5 bước, **năm bất biến kèm lý do**, quy trình đổi cơ chế có **đột biến kiểm bắt buộc**, bảng tra mã lỗi, mục "cố ý KHÔNG làm". Mục 1–3 viết cho Đức đọc |
+| [MULTIFLOW.md](protocols/MULTIFLOW.md) | sắp làm cùng lúc với AI khác, hoặc sắp SỬA một trong bốn cơ chế đa phiên | Bốn cơ chế (bảng chủ sở hữu · nhãn `Lane:` · cổng đóng phiên · cổng xuất bản), một ngày làm việc 5 bước, **sáu bất biến kèm lý do**, quy trình đổi cơ chế có **đột biến kiểm bắt buộc**, bảng tra mã lỗi, mục "cố ý KHÔNG làm". Mục 1–3 viết cho Đức đọc |
 | [ORCHESTRATOR.md](protocols/ORCHESTRATOR.md) | bạn là phiên điều phối | Đọc gì lúc mở phiên, luật song song, HARD ROLE FIREWALL, luật nạp báo cáo năm mục, lối ra bàn giao cho executor |
 | [HANDOFF.md](protocols/HANDOFF.md) | sắp ghi một mục nhật ký, hoặc bị cổng chặn vì mục quá dài | Một mục `HANDOFF.md` chứa gì và KHÔNG chứa gì, **trần 2.600 byte/mục** (khai ở `.repo-structure.json`, cổng chỉ chặn mục VỪA THÊM), xoay file theo tháng bằng `node scripts/handoff.mjs --rotate`, ba bất biến của lược đồ lưu trữ, và vì sao bộ đếm sự cố phải đi hết chuỗi con trỏ |
 | [ASSISTANT-V0.1.md](protocols/ASSISTANT-V0.1.md) | — | (khai để mục lục đủ; nội dung xem trong file) |
