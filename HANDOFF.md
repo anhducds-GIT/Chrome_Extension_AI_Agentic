@@ -3494,3 +3494,43 @@ thêm hai dấu rồi đòi **đúng hai dòng**, mà nay sổ thật đã có 1
 ở khoá `_code`, đang có chủ. Lane này **không đụng vào**.
 
 
+
+## 2026-09-06 — `claude-bang-n03` · sổ nợ gốc lên bảng (`N-03`), lệnh kiểm `đóng khi:` có nhà riêng (`N-01`)
+
+**`N-03` — bảng đang báo repo nhẹ đi 17 việc mà không việc nào đóng.** Bộ sinh gom sổ nợ bằng
+`endsWith("/BACKLOG.md")` — dấu `/` ở đầu làm nó chỉ thấy sổ nợ *của gói*, không thấy sổ nợ hạ
+tầng ở gốc repo. Số đo: **trước 44 mục nợ · sau 61**, thêm đúng 17 mục đang mở của sổ gốc (14
+mục `Y-` vừa chuyển từ sổ ý tưởng hôm nay, cộng 3 mục `N-`).
+
+**Bắt thêm một lỗi phụ trong cùng lượt, và nó đáng ghi lại.** Lượt đo đầu tiên ra **16**, không
+phải 17. Thủ phạm: `N-02` mang tên *"Đóng một mục là thêm dòng, nhưng chưa có gì gấp sổ lại…"*
+— một việc **đang mở**, bị đếm là đã đóng chỉ vì tiêu đề **mở đầu bằng chữ "Đóng"**. Sổ của gói
+viết trạng thái vào chính tiêu đề (`**XONG 02/09**`) nên đọc tiêu đề ở đó là đúng; sổ gốc thì
+luật mục 4 của nó **cấm sửa khối cũ**, nên tiêu đề của nó không bao giờ mang dấu đóng — dấu
+đóng duy nhất là dòng `ĐÓNG` thêm ở cuối. Nay bảng đọc đúng dòng đó, và trừ ra được.
+
+**`N-01` — một luật sống bằng một dòng trong `package.json` thì gỡ nó đi không ai biết.** Lệnh
+kiểm trường `đóng khi:` nay là `scripts/backlog-check.mjs`, có `tests/backlog-check-smoke.mjs`
+ghim **cả hai chiều** (thiếu trường thì đỏ · đủ trường thì xanh), ghim **mã thoát** (in ra chữ
+"thiếu" mà vẫn thoát 0 là không chặn gì cả), và ghim **chính `package.json`** — gỡ bộ kiểm hoặc
+gỡ phép ghim ra khỏi cổng thì cổng đỏ.
+
+**Đột biến kiểm:** `N-03` 4/4 bị bắt · `N-01` 6/6 bị bắt. Mọi mỏ neo đếm ra đúng 1. Một mỏ neo
+lượt đầu ra **0**, và đó là **lỗi trích dẫn của tôi trong shell**, không phải "không có gì phải
+sửa" — viết lại bằng `String.raw` trong một file thì ra 1 và đột biến bị bắt ngay.
+
+**Dọn một mục đỏ không phải của mình, xin ghi rõ vì sao tôi dọn.** Cổng đang ĐỎ với **mọi phiên**
+ở hai phép ghim trong `tests/build-overview-smoke.mjs`. Chúng chốt trạng thái *"khối Cần Đức
+phải RỖNG vì chưa ai đánh dấu"* và tự viết trong chú thích rằng *"điền dấu là lượt sau"*. Lượt
+sau đã tới trong cùng ngày: `claude-dau-goc` và `claude-dau-worker` điền **22 dấu** vào ba sổ.
+Dấu nằm ở `_docs` / `_root`; phép ghim nằm ở `_code`. Hai lane đó vẫn đang chạy và vẫn giữ khoá
+của họ, nhưng phép ghim này thì **ngoài tầm tay họ**. Tôi giữ `_code` nên tôi dọn: lật khẳng
+định sang nhánh CÓ DÒNG, và mọi số trong đó **đếm từ sổ**, không gõ cứng — kể cả ca fixture,
+nay là "số dấu thật + 2" thay vì "2".
+
+**Bài học:** một mục đỏ ở khoá A do dữ liệu ở khoá B gây ra thì **không lane nào tự dọn được**
+— phải là lane giữ khoá A. Ai điền dữ liệu mà làm lệch một phép ghim ở khoá khác thì nên nói ra,
+đừng để phiên sau tự dò.
+
+**Còn mở:** `BRIEF-BANG-DANG-LAM-01` (khối "Đang làm gì" in dữ liệu thô bảng quyền, và hiện ảnh
+chụp cũ như số liệu sống) — **chưa động tới**, đúng thứ tự đề bài dặn.
