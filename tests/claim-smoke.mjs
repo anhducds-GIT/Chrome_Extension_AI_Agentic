@@ -713,4 +713,63 @@ const CLAIMS = () => ({
   ok("TRA-KHOA-01 · chưa có remote thì KHÔNG chặn (bootstrap thật) · không đọc được git thì CHẶN (bất biến ④) — hai ca KHÔNG được gộp");
 }
 
+/* ---- N-15 · NỐI `claim.mjs` VÀO MỘT ỐNG LÀM CÚ TỪ CHỐI CỦA NÓ BIẾN MẤT --------------------
+ *
+ * Ca thật 06/09 (`claude-gemini-hoan-thien`):
+ *
+ *     node scripts/claim.mjs --take _root --as <phiên> ... | tail -3 && git commit ...
+ *
+ * Lệnh nhận khoá TỪ CHỐI đúng như phải thế (`_root` vừa bị lane khác nhận). Nhưng mã thoát của
+ * một đường ống là mã thoát của lệnh CUỐI — tức `tail`, luôn là 0. Nên `&&` vẫn chạy, và
+ * `git commit` ghi vào một vùng lane đó KHÔNG có quyền.
+ *
+ * Vì sao nó nguy hiểm hơn vẻ ngoài: `claim.mjs` được thiết kế rất cẩn thận để từ chối đúng lúc,
+ * và nó ĐÃ từ chối đúng. Lớp bảo vệ chạy hoàn hảo rồi bị MỘT KÝ TỰ ống NUỐT MẤT. Ai nhìn màn
+ * hình cũng thấy chữ `TU_CHOI` — nhưng vào lúc đó lệnh sau đã chạy xong rồi.
+ *
+ * KHÔNG CÓ ĐƯỜNG SỬA TRONG SCRIPT. Mã thoát bị nuốt ở tầng shell, ngoài tầm với của tiến trình
+ * node; còn bắt `claim.mjs` từ chối chạy khi stdout không phải màn hình thì giết mọi lượt gọi
+ * trong test và trong công cụ khác. Nên chốt nằm ở LUẬT (`AGENTS.md` mục 1), và phép ghim này
+ * giữ hai vế:
+ *   ⑴ chứng minh cái bẫy CÓ THẬT và vẫn còn nguyên — shell nào đó đổi nết thì phép này đỏ, và
+ *     lúc đó ta biết dòng luật kia đã thành thừa;
+ *   ⑵ canh chính dòng luật đó trong `AGENTS.md` mục 1 — một luật không ai canh thì nó biến mất
+ *     trong im lặng, đúng bài học của N-01.
+ */
+{
+  const temp = mkdtempSync(join(tmpdir(), "claim-ong-"));
+  try {
+    execFileSync("git", ["init", "-q", "-b", "main"], { cwd: temp, encoding: "utf8" });
+    mkdirSync(join(temp, ".agents"), { recursive: true });
+    writeFileSync(join(temp, ".agents", "claims.json"),
+      `${JSON.stringify({ claims: { _root: { owner: "lane-khac", task: "dang lam" } } }, null, 2)}`, "utf8");
+    const cli = chepLenh(temp);
+
+    // Chạy TRẦN: từ chối, mã thoát 3. Đây là hành vi đúng, và nó vẫn đúng.
+    const tran = spawnSync(process.execPath, [cli, "--take", "_root", "--as", "toi", "--task", "x"], { cwd: temp, encoding: "utf8" });
+    assert.equal(tran.status, EXIT.REFUSED, "chay tran: phai TU CHOI voi ma thoat 3");
+
+    // Chạy QUA ỐNG: cùng cú từ chối đó, nhưng mã thoát của cả chuỗi là 0. Cái bẫy.
+    const ONG = String.fromCharCode(124);
+    const lenh = `"${process.execPath}" "${cli}" --take _root --as toi --task x ${ONG} tail -3`;
+    const ong = spawnSync(lenh, { cwd: temp, encoding: "utf8", shell: true });
+    assert.equal(ong.status, 0,
+      "BAY CUA N-15: ma thoat cua mot duong ong la ma thoat cua lenh CUOI, nen cu TU CHOI bien mat."
+      + ` Ca nay doi thanh khac 0 nghia la cai bay het, va dong luat trong AGENTS.md muc 1 thanh thua. Ra: ${ong.status}`);
+    assert.equal(JSON.parse(readFileSync(join(temp, ".agents", "claims.json"), "utf8")).claims._root.owner, "lane-khac",
+      "du bi nuot ma thoat, ban quyen KHONG duoc doi chu — TU CHOI van la KHONG GHI GI");
+
+    // Vế ⑵. Ghim vào MỤC 1, không phải cả file: một dòng cấm nằm lạc ở mục khác thì người đang
+    // đọc luật khoá không gặp nó.
+    const agents = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "AGENTS.md"), "utf8");
+    const bat = agents.indexOf("## 1. Ai giữ package nào");
+    const het = agents.indexOf("## 2. Ba việc PHẢI hỏi Đức trước");
+    assert.ok(bat >= 0 && het > bat, "khong cat duoc muc 1 cua AGENTS.md — tieu de da doi ten?");
+    const muc1 = agents.slice(bat, het);
+    assert.ok(muc1.includes("vào ống") && muc1.includes("claim.mjs"),
+      "AGENTS.md muc 1 phai co dong cam noi claim.mjs vao ong — N-15. Do la chot duy nhat cho cai bay tren.");
+    ok("N-15 · cu TU CHOI cua claim.mjs bien mat khi noi ong (bay con nguyen), va AGENTS.md muc 1 co dong cam");
+  } finally { rmSync(temp, { recursive: true, force: true }); }
+}
+
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

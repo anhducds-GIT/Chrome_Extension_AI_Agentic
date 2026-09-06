@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 
 import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
 import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
-import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, claimPrefixesFrom, generatorsFrom, handoffCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, claimPrefixesFrom, DAU_VET, dauVetTheoVung, generatorsFrom, handoffCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -907,6 +907,33 @@ for (const r of results) {
   console.log(`  [${mark}] ${r.name}`);
   console.log(`         ${r.msg}`);
 }
+/* ---- VÀNG: vùng BẠN đang giữ mà repo chưa thấy dấu vết — N-09 -------------
+ *
+ * CỐ Ý KHÔNG PHẢI MỘT PHÉP KIỂM. Nó không vào `results`, không đụng `EXPECTED_CHECKS`, và
+ * không đổi mã thoát. Mức nghiêm trọng là PHẦN CỦA HỢP ĐỒNG, không phải chi tiết cài đặt:
+ * một lane đọc kỹ 30 phút trước khi sửa một dòng là lane TỐT, và chặn nó là dạy mọi lane ghi
+ * bừa một byte để giữ khoá cho hợp lệ — lúc đó phép kiểm thành thứ ngược lại chính nó.
+ *
+ * VÀ NÓ CHỈ NÓI VỚI CHÍNH LANE ĐANG GIỮ KHOÁ — người duy nhất biết mình có đang làm hay
+ * không. Nó không nói với ai khác, và nó không bao giờ là giấy phép để một phiên khác nhả
+ * khoá hộ (BRIEF-K2-KHOA-RANH-01 mục 2b: ba đường hợp lệ, không có đường thứ tư). */
+if (CLAIMS) {
+  const cuaToi = Object.fromEntries(Object.entries(CLAIMS)
+    .filter(([, v]) => v?.owner === asLabel)
+    .map(([k, v]) => [k, v.claimed_at]));
+  let vet = new Map();
+  try { vet = dauVetTheoVung(ROOT, structure, cuaToi); } catch { vet = new Map(); }
+  const im = [...vet.entries()].filter(([, v]) => v.trangThai === DAU_VET.CHUA_THAY).map(([k]) => k);
+  if (im.length) {
+    console.log(`⚠ VÀNG (không chặn) — ${im.length} vùng bạn đang giữ mà ${CHUA_THAY_DAU_VET}: ${im.join(", ")}`);
+    console.log("  Không commit nào chạm vùng đó kể từ lúc bạn nhận, và không file nào trong vùng bị sửa trên đĩa.");
+    console.log("  Chỉ BẠN biết mình có đang làm hay không: đang dựng thử ngoài repo thì cứ giữ, câu này không");
+    console.log("  chặn gì cả. Còn nếu chưa cần tới thì TỰ TRẢ để phiên khác vào được:");
+    for (const k of im) console.log(`      node scripts/claim.mjs --release ${k} --as ${asLabel}`);
+    console.log("");
+  }
+}
+
 const failed = results.filter((r) => !r.ok);
 console.log(failed.length ? `\nCHƯA XONG — ${failed.length} mục đỏ, sửa rồi chạy lại.\n` : `\nXANH TOÀN BỘ — được phép báo xong.\n`);
 process.exit(failed.length ? 1 : 0);

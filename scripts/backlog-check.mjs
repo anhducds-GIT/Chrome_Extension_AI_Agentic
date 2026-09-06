@@ -45,11 +45,84 @@ export function docMuc(text) {
   return muc;
 }
 
+/* ---- TRÙNG MÃ — N-12 -----------------------------------------------------
+ *
+ * Ca thật, HAI LẦN TRONG MỘT NGÀY (06/09): hai lane cùng ghi mục `N-08`, rồi hai lane cùng
+ * ghi mục `N-13`. Cả hai lượt đều vào HEAD, và không lớp nào kêu. Bộ kiểm này thì còn làm
+ * người đọc đi sửa nhầm khối: nó gộp hai khối thành một mã rồi báo mã đó thiếu trường.
+ *
+ * VÌ SAO NÓ SẼ CÒN XẢY RA, VÀ VÌ SAO KHÔNG SỬA BẰNG CÁCH CẤP SỐ TẬP TRUNG: ba sổ ở gốc repo
+ * cố ý MIỄN KHOÁ cho thao tác thêm dòng — không có miễn trừ đó thì không lane nào ghi được
+ * Log. Miễn khoá nghĩa là nhiều lane cùng ghi hợp lệ, và cả hai cùng đọc thấy "số kế tiếp là
+ * 08". Dựng một bộ cấp số tập trung là dựng một cái KHOÁ THỨ HAI cho đúng thứ vừa được miễn
+ * khoá. Rẻ nhất: phát hiện trùng rồi báo đỏ, người sửa mất 30 giây.
+ *
+ * CỬA RA PHẢI RẺ NGANG CỬA VÀO — và đây là chỗ dễ làm sai nhất. Sổ này miễn khoá KHI CHỈ
+ * THÊM DÒNG Ở CUỐI; sửa tiêu đề một khối cũ là viết lại chữ của lane khác VÀ đòi khoá
+ * `_root`. Nếu lối gỡ trùng bắt phải sửa tiêu đề thì bộ kiểm này thành một cái chặn mà người
+ * bị chặn KHÔNG CÓ QUYỀN gỡ. Nên lối gỡ cũng là MỘT DÒNG THÊM Ở CUỐI:
+ *
+ *   - **ĐỔI MÃ N-09 → N-19** · 2026-09-07 · lane `x` · vài chữ nhận ra khối · **đóng khi:** ...
+ *
+ * Chữ khối cũ giữ nguyên (luật mục 1 của sổ). Một dòng gỡ đúng MỘT lượt trùng, và nó mang
+ * luôn `đóng khi:` cho mã mới — vì khối cũ thường chính là khối chưa khai trường đó, mà thêm
+ * trường vào giữa khối là sửa chữ người khác, đúng thứ vừa cấm.
+ *
+ * AI ĐỔI SỐ: khối ĐẦU TIÊN giữ mã — nó có trước. Khối thứ hai, thứ ba… nhận mã mới theo đúng
+ * thứ tự các dòng `ĐỔI MÃ` cùng mã cũ. Luật này phải CỐ ĐỊNH, không "đoán khối nào mới hơn":
+ * một quy tắc gỡ mà đọc hai lần ra hai kết quả thì nó không gỡ được gì cả.
+ *
+ * Mã ĐÍCH cũng bị đếm như mọi mã khác, nên đổi sang một mã đang có người dùng vẫn ĐỎ — đó chỉ
+ * là dời chỗ va chạm. */
+export const DONG_DOI_MA = "- **ĐỔI MÃ";
+
+export function doiMa(text) {
+  const ra = [];
+  for (const line of String(text ?? "").split(/\r?\n/)) {
+    const m = /^-\s+\*\*ĐỔI\s+MÃ\s+(N-\d+)\s*(?:->|\u2192)\s*(N-\d+)\*\*(.*)$/.exec(line);
+    if (!m) continue;
+    const k = m[3].indexOf(TRUONG_DONG_KHI.replace(/^-\s*/, ""));
+    ra.push({
+      tu: m[1],
+      sang: m[2],
+      dongKhi: k === -1 ? "" : m[3].slice(k + TRUONG_DONG_KHI.replace(/^-\s*/, "").length).trim()
+    });
+  }
+  return ra;
+}
+
+/** Mục sau khi áp các dòng đổi mã. Khối đầu giữ mã cũ; khối thứ n nhận mã của dòng đổi thứ n-1. */
+export function docMucDaGo(text) {
+  const hang = new Map();
+  for (const d of doiMa(text)) {
+    if (!hang.has(d.tu)) hang.set(d.tu, []);
+    hang.get(d.tu).push(d);
+  }
+  const daGap = new Map();
+  return docMuc(text).map((m) => {
+    const n = daGap.get(m.ma) ?? 0;
+    daGap.set(m.ma, n + 1);
+    if (n === 0) return m;
+    const d = (hang.get(m.ma) || [])[n - 1];
+    return d ? { ...m, ma: d.sang, doiTu: m.ma, dongKhiNgoai: d.dongKhi } : m;
+  });
+}
+
+/** Mã nào vẫn còn hai khối trở lên sau khi gỡ. */
+export function trungMa(text) {
+  const dem = new Map();
+  for (const m of docMucDaGo(text)) dem.set(m.ma, (dem.get(m.ma) ?? 0) + 1);
+  return [...dem.entries()].filter(([, lan]) => lan > 1)
+    .map(([ma, lan]) => ({ ma, lan })).sort((a, b) => a.ma.localeCompare(b.ma));
+}
+
 /* Khai = có dòng `- **đóng khi:**` VÀ có chữ đứng sau nó. Một dòng để trống là chưa khai:
-   trường rỗng trông như đã khai với máy đếm dòng, mà với mắt người thì không nói gì cả. */
+   trường rỗng trông như đã khai với máy đếm dòng, mà với mắt người thì không nói gì cả.
+   Dòng `ĐỔI MÃ` mang `đóng khi:` cũng tính — cùng một cửa append-only, xem khối trên. */
 export function thieuDongKhi(text) {
-  return docMuc(text)
+  return docMucDaGo(text)
     .filter((m) => {
+      if (String(m.dongKhiNgoai ?? "").trim() !== "") return false;
       const dong = m.than.find((l) => l.trimStart().startsWith(TRUONG_DONG_KHI));
       return dong === undefined || dong.trimStart().slice(TRUONG_DONG_KHI.length).trim() === "";
     })
@@ -57,9 +130,9 @@ export function thieuDongKhi(text) {
 }
 
 export function kiemSo(text) {
-  const tong = docMuc(text).length;
+  const tong = docMucDaGo(text).length;
   const thieu = thieuDongKhi(text);
-  return { tong, thieu };
+  return { tong, thieu, trung: trungMa(text) };
 }
 
 function main(argv) {
@@ -71,14 +144,21 @@ function main(argv) {
     console.error(`KHONG_DOC_DUOC_SO: không mở được ${duongDan}. Sổ nợ hạ tầng phải nằm ở gốc repo.`);
     return 2;
   }
-  const { tong, thieu } = kiemSo(text);
-  console.log(`BACKLOG: ${tong} muc, ${thieu.length} thieu truong dong-khi`);
-  if (thieu.length === 0) return 0;
+  const { tong, thieu, trung } = kiemSo(text);
+  console.log(`BACKLOG: ${tong} muc, ${thieu.length} thieu truong dong-khi, ${trung.length} ma bi trung`);
   for (const ma of thieu) {
     console.error(`  ${ma}: thiếu "${TRUONG_DONG_KHI} lệnh: <lệnh chạy được>" hoặc "${TRUONG_DONG_KHI} đức: <câu Đức phải chốt>"`);
   }
-  console.error("Luật mục 2 của BACKLOG.md: không khai được điều kiện đóng thì mục đó chưa đủ chín để ghi vào sổ.");
-  return 1;
+  if (thieu.length) console.error("Luật mục 2 của BACKLOG.md: không khai được điều kiện đóng thì mục đó chưa đủ chín để ghi vào sổ.");
+  for (const t of trung) {
+    console.error(`  ${t.ma}: ${t.lan} khối cùng mang mã này${t.daGo ? ` (đã gỡ ${t.daGo})` : ""} — hai lane đã chọn trùng số.`);
+  }
+  if (trung.length) {
+    console.error(`Sổ này miễn khoá KHI CHỈ THÊM DÒNG Ở CUỐI, nên cửa ra cũng là một dòng thêm ở cuối — đừng sửa tiêu đề khối cũ:`);
+    console.error(`  ${DONG_DOI_MA} <mã cũ> → <mã mới chưa ai dùng>** · <ngày> · lane \`<tên>\` · khối "<vài chữ đầu của tiêu đề>" đọc là <mã mới> từ nay`);
+    console.error("Mỗi dòng gỡ đúng một lượt trùng. Chữ khối cũ giữ nguyên — luật mục 1 của sổ.");
+  }
+  return thieu.length || trung.length ? 1 : 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === MODULE_FILE) process.exit(main(process.argv.slice(2)));

@@ -12,11 +12,11 @@
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-gemini-g08",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T17:44",
       "task": "G-08 do lai tam module giong het giua hai nhanh, dung phep ghim chong troi dat",
-      "released_at": null,
+      "released_at": "2026-09-06T17:56",
       "taken_from": "claude-codex-ngan",
       "taken_by": "claude-gemini-hoan-thien",
       "taken_at": "2026-09-06T14:24",
@@ -34,11 +34,11 @@
       "duc_decision": "Duc chot 2026-09-06: Toi cho ban khoa luon. Duc giao truc tiep B-36 va B-27."
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-06T22:20",
-      "task": "ADR-0013 buoc 1: chuyen Scouter ra workers/duc-scouter + SCOUTER-SEED-01 viec 2",
-      "released_at": "2026-09-06T17:44",
+      "owner": "claude-k2-vung-mien-khoa",
+      "ai": "Claude",
+      "claimed_at": "2026-09-06T17:55",
+      "task": "N-15 mot dong cam noi claim.mjs vao ong o AGENTS.md muc 1 + dang ky phep ghim vao package.json",
+      "released_at": null,
       "taken_from": "claude-assistant",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
       "taken_by": "claude-scouter-seed",
@@ -77,5 +77,5 @@
       "released_at": "2026-09-06T17:44"
     }
   },
-  "_fingerprint": "978afb7a55ac7e89"
+  "_fingerprint": "16ad958633394376"
 }

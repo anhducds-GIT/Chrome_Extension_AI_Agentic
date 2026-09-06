@@ -15,7 +15,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { docMuc, kiemSo, thieuDongKhi, TRUONG_DONG_KHI } from "../scripts/backlog-check.mjs";
+import { docMuc, docMucDaGo, DONG_DOI_MA, kiemSo, thieuDongKhi, trungMa, TRUONG_DONG_KHI } from "../scripts/backlog-check.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BO_KIEM = path.join(ROOT, "scripts", "backlog-check.mjs");
@@ -102,10 +102,11 @@ const muc = (ma, dongKhi) => so(
 
 /* ---- 7. Sổ THẬT ở gốc repo phải xanh ---- */
 {
-  const { tong, thieu } = kiemSo(fs.readFileSync(path.join(ROOT, "BACKLOG.md"), "utf8"));
+  const { tong, thieu, trung } = kiemSo(fs.readFileSync(path.join(ROOT, "BACKLOG.md"), "utf8"));
   assert.ok(tong >= 3, `so that phai co it nhat 3 muc N-, dem duoc ${tong}`);
   assert.deepEqual(thieu, [], `so that dang thieu truong dong-khi o: ${thieu.join(" ")}`);
-  ok(`so that o goc repo: ${tong} muc N-, khong muc nao thieu truong dong-khi`);
+  assert.deepEqual(trung, [], `so that dang co ma bi trung o: ${trung.map((t) => t.ma).join(" ")}`);
+  ok(`so that o goc repo: ${tong} muc N-, khong muc nao thieu truong dong-khi, khong ma nao trung`);
 }
 
 /* ---- 8. `package.json` PHẢI còn gọi bộ kiểm này ----
@@ -122,6 +123,74 @@ const muc = (ma, dongKhi) => so(
   assert.ok(String(pkg.scripts.test).includes("tests/backlog-check-smoke.mjs"),
     "scripts.test phai chay ca phep ghim nay — mot phep ghim khong ai chay thi cung chi la binh luan");
   ok("package.json con goi bo kiem VA phep ghim cua no");
+}
+
+/* ---- 9. TRÙNG MÃ — N-12 --------------------------------------------------
+ *
+ * Ca thật HAI LẦN TRONG MỘT NGÀY (06/09): hai lane cùng chọn `N-08`, rồi hai lane cùng chọn
+ * `N-13`. Sổ miễn khoá không có ai cấp số, nên chuyện này còn xảy ra; bộ kiểm phải ĐỎ.
+ *
+ * GHIM CẢ HAI CHIỀU: trùng thì đỏ · không trùng thì không được báo oan. Và ghim cả CỬA RA —
+ * một cái chặn mà người bị chặn không có quyền gỡ thì nó tệ hơn không chặn. */
+{
+  const hai = so(muc("N-01", "lệnh: x"), muc("N-02", "lệnh: y"), muc("N-01", "lệnh: z"));
+  assert.deepEqual(trungMa(hai).map((t) => t.ma), ["N-01"], "hai khoi cung ma thi phai keu dung ma do");
+  assert.deepEqual(trungMa(so(muc("N-01", "lệnh: x"), muc("N-02", "lệnh: y"))), [],
+    "khong trung thi khong duoc bao oan");
+  assert.equal(trungMa(hai)[0].lan, 2, "phai noi ro co may khoi cung mang ma do");
+  ok("N-12 · hai khoi cung ma thi keu dung ma do, khong trung thi khong bao oan");
+}
+
+/* ---- 10. CỬA RA CHỈ LÀ MỘT DÒNG THÊM Ở CUỐI ---- */
+{
+  const hai = so(muc("N-01", "lệnh: x"), muc("N-01", "lệnh: z"));
+  const daGo = hai + DONG_DOI_MA + " N-01 " + String.fromCharCode(8594) + " N-09** · 2026-09-07 · lane `x` · khoi thu hai doc la N-09";
+  assert.deepEqual(trungMa(daGo), [], "mot dong doi ma o cuoi phai go duoc mot luot trung");
+  assert.deepEqual(docMucDaGo(daGo).map((m) => m.ma), ["N-01", "N-09"],
+    "khoi DAU giu ma cu — no co truoc; khoi thu hai nhan ma moi");
+
+  // Đổi sang một mã ĐANG CÓ NGƯỜI DÙNG chỉ là dời chỗ va chạm, và phải VẪN đỏ.
+  const doiVaoChoDaCo = so(muc("N-01", "lệnh: x"), muc("N-01", "lệnh: z"), muc("N-09", "lệnh: w"))
+    + DONG_DOI_MA + " N-01 " + String.fromCharCode(8594) + " N-09** · 2026-09-07 · lane `x` · doi vao cho da co nguoi";
+  assert.deepEqual(trungMa(doiVaoChoDaCo).map((t) => t.ma), ["N-09"],
+    "doi sang mot ma dang dung chi la doi cho va cham — van phai DO");
+  ok("N-12 · cua ra la mot dong them o cuoi, va doi vao cho da co nguoi thi van DO");
+}
+
+/* ---- 11. DÒNG ĐỔI MÃ MANG LUÔN `đóng khi:` CHO MÃ MỚI ----
+ *
+ * Khối bị đổi số thường CHÍNH LÀ khối chưa khai `đóng khi:` (đo 07/09: 5 trong 6 khối trùng ở
+ * sổ thật). Thêm trường vào giữa khối cũ là sửa chữ lane khác VÀ đòi khoá `_root` — nên trường
+ * đó đi theo dòng đổi mã, cùng một cửa append-only. */
+{
+  const chuaKhai = so(muc("N-01", "lệnh: x"), muc("N-01", null));
+  assert.deepEqual(thieuDongKhi(chuaKhai), ["N-01"], "khoi thu hai chua khai thi phai keu");
+  const co = chuaKhai + DONG_DOI_MA + " N-01 " + String.fromCharCode(8594)
+    + " N-09** · 2026-09-07 · lane `x` · " + TRUONG_DONG_KHI.replace("- ", "") + " lệnh: node tests/x.mjs xanh";
+  assert.deepEqual(thieuDongKhi(co), [], "dong doi ma co `dong khi:` thi ma moi coi nhu da khai");
+  const rong = chuaKhai + DONG_DOI_MA + " N-01 " + String.fromCharCode(8594)
+    + " N-09** · 2026-09-07 · lane `x` · " + TRUONG_DONG_KHI.replace("- ", "") + "   ";
+  assert.deepEqual(thieuDongKhi(rong), ["N-09"],
+    "truong de trong tren dong doi ma cung la CHUA KHAI — y het trong than khoi");
+  ok("N-12 · dong doi ma mang duoc `dong khi:` cho ma moi, va de trong thi van la chua khai");
+}
+
+/* ---- 12. MÃ THOÁT: trùng mã cũng phải ĐỎ ----
+ * Cổng đóng phiên đọc MÃ THOÁT, không đọc chữ in ra. */
+{
+  const thu = fs.mkdtempSync(path.join(os.tmpdir(), "backlog-trung-"));
+  const chay = (text) => {
+    const f = path.join(thu, "BACKLOG.md");
+    fs.writeFileSync(f, text, "utf8");
+    try { execFileSync(process.execPath, [BO_KIEM, f], { encoding: "utf8", stdio: "pipe" }); return 0; }
+    catch (e) { return e.status; }
+  };
+  assert.equal(chay(so(muc("N-01", "lệnh: x"), muc("N-01", "lệnh: z"))), 1,
+    "trung ma thi ma thoat phai la 1 — khong thi cong khong chan gi");
+  assert.equal(chay(so(muc("N-01", "lệnh: x"), muc("N-02", "lệnh: z"))), 0,
+    "khong trung thi van phai 0");
+  fs.rmSync(thu, { recursive: true, force: true });
+  ok("N-12 · ma thoat 1 khi trung ma, 0 khi khong trung");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

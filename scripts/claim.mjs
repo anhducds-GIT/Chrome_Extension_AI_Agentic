@@ -32,7 +32,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { CHUA_DAY, commitChuaDay, readStructureFromDisk } from "./repo-structure.mjs";
+import { CHUA_DAY, CHUA_THAY_DAU_VET, commitChuaDay, DAU_VET, dauVetTheoVung, mocMs, readStructureFromDisk } from "./repo-structure.mjs";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(MODULE_FILE), "..");
@@ -132,10 +132,11 @@ export const GIO_NHAC = 6;
 /* Chấp nhận cả dạng cũ chỉ có ngày ("2026-09-02") lẫn dạng mới có giờ. Không đọc được thì trả
  * null — đoán bừa một con số giờ còn tệ hơn không nói gì. */
 export function ageHours(stamp, now = new Date()) {
-  if (typeof stamp !== "string" || stamp === "") return null;
-  const iso = /^\d{4}-\d{2}-\d{2}$/.test(stamp) ? `${stamp}T00:00Z` : stamp;
-  const t = Date.parse(/[Zz]|[+-]\d{2}:?\d{2}$/.test(iso) ? iso : `${iso}Z`);
-  if (!Number.isFinite(t)) return null;
+  /* MỘT bản của luật đọc mốc nhận, dùng chung với phép đo dấu vết (`mocMs` trong
+     `repo-structure.mjs`). Hai bản của một luật đã trả hai câu khác nhau cho cùng một file
+     ngày 02/09 — xem `append_only_exempt` trong AGENTS.md mục 1. */
+  const t = mocMs(stamp);
+  if (t === null) return null;
   return Math.max(0, (now.getTime() - t) / 3600000);
 }
 
@@ -372,6 +373,13 @@ function main() {
   const seal = fingerprintState(parsed);
   const bang = () => {
     let coCu = false;
+    /* CỘT DẤU VẾT — N-09. Đọc git một lượt cho cả bảng. Git hỏng thì cột này im, KHÔNG in
+       "chưa thấy": không đo được mà nói "chưa thấy" là mời người ta đi giành một khoá đang bận. */
+    let dauVet = new Map();
+    try { dauVet = dauVetTheoVung(ROOT, readStructureFromDisk(ROOT), Object.fromEntries(
+      Object.entries(parsed.claims).filter(([, v]) => v?.owner).map(([k, v]) => [k, v.claimed_at])
+    )); } catch { dauVet = new Map(); }
+    let coVet = false;
     for (const [key, value] of Object.entries(parsed.claims)) {
       const owner = value.owner || "";
       let duoi = "";
@@ -381,8 +389,17 @@ function main() {
           duoi = `  (giữ ${ageLabel(gio)})`;
           if (gio >= GIO_NHAC) { duoi += "  ⚠"; coCu = true; }
         }
+        if (dauVet.get(key)?.trangThai === DAU_VET.CHUA_THAY) { duoi += `  · ${CHUA_THAY_DAU_VET}`; coVet = true; }
       }
       console.log(`${owner ? "GIU  " : "TRỐNG"} ${key.padEnd(34)}${owner}${duoi}`);
+    }
+    if (coVet) {
+      console.log(`
+"${CHUA_THAY_DAU_VET}" = không commit nào chạm vùng đó kể từ lúc nhận, và không file nào trong vùng`);
+      console.log("  bị sửa trên đĩa. Nó nói REPO CHƯA THẤY GÌ — nó KHÔNG nói lane đó đang rảnh. Một lane cẩn thận");
+      console.log("  dựng thử ngoài repo rồi mới ghi vào, và ngày 06/09 một khoá đã bị nhả hộ đúng vì đọc nhầm chỗ này.");
+      console.log("  Thấy dòng này thì HỎI lane đó hoặc hỏi Đức. Ba đường hợp lệ để một khoá được trả: chính lane đó");
+      console.log("  trả · lane đó báo đã xong · Đức chốt chuyển (--restamp --duc-duyet). Không có đường thứ tư.");
     }
     if (coCu) {
       console.log(`\n⚠ = giữ đã quá ${GIO_NHAC}h. CŨ KHÔNG CÓ NGHĨA LÀ CHẾT — phiên chạy dài là bình thường,`);

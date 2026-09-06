@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 
 import { parseStatus } from "./build-dashboard.mjs";
 import { ageHours, ageLabel, fingerprintState, GIO_NHAC, readClaims } from "./claim.mjs";
-import { claimPrefixesFrom, readStructureFromDisk, stewardOf, unitsFrom } from "./repo-structure.mjs";
+import { claimPrefixesFrom, CHUA_THAY_DAU_VET, DAU_VET, dauVetTheoVung, readStructureFromDisk, stewardOf, unitsFrom } from "./repo-structure.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -124,7 +124,7 @@ export function tieuDiemTuStatus(text) {
 /* --- Ghép việc vào khoá, rồi cắt theo trạng thái khoá ------------------------- */
 
 /** Trung tâm của file: nhóm việc theo khoá, đánh dấu khoá nào trống. */
-export function banDoVung({ viecTheoFile, tieuDiemTheoFile = [], claims, structure, prefixes, now = new Date() }) {
+export function banDoVung({ viecTheoFile, tieuDiemTheoFile = [], claims, structure, prefixes, dauVet = new Map(), now = new Date() }) {
   const vungs = new Map();
   const lay = (khoa) => {
     if (!vungs.has(khoa)) {
@@ -135,6 +135,8 @@ export function banDoVung({ viecTheoFile, tieuDiemTheoFile = [], claims, structu
         chu,
         gio: chu && o.claimed_at ? ageHours(o.claimed_at, now) : null,
         viecChu: chu ? lamSach(o.task) : "",
+        // N-09: chỉ đánh dấu khi ĐO ĐƯỢC và kết quả là "chưa thấy". "Không đo được" phải im.
+        chuaThayDauVet: !!chu && dauVet.get(khoa)?.trangThai === DAU_VET.CHUA_THAY,
         viec: [],
         tieuDiem: [],
       });
@@ -211,11 +213,13 @@ export function render({ vungs, ideas, now, dauNiemPhong, khaiSai = [] }) {
   }
 
   const chan = dangBiChan(vungs);
+  let coVet = false;
   d.push("");
   d.push("B · ĐANG CÓ CHỦ — " + chan.length + " vùng, chỉ được ĐỌC");
   for (const v of chan) {
     const tuoi = v.gio == null ? "" : "  (" + ageLabel(v.gio) + (v.gio >= GIO_NHAC ? " ⚠" : "") + ")";
     d.push("  ▸ " + v.khoa + "  ← " + v.chu + tuoi + nhanHang(v));
+    if (v.chuaThayDauVet) { d.push("      · " + CHUA_THAY_DAU_VET); coVet = true; }
     if (v.viecChu) d.push("      đang làm: " + catNgan(v.viecChu, 84));
     for (const t of v.tieuDiem) d.push("      tiêu điểm (STATUS): " + catNgan(t.nextStep, 80));
     if (v.viec.length) d.push("      " + v.viec.length + " việc mở trong vùng này — KHÔNG giao cho phiên khác");
@@ -223,6 +227,14 @@ export function render({ vungs, ideas, now, dauNiemPhong, khaiSai = [] }) {
   d.push("");
   d.push("  ⚠ = giữ quá " + GIO_NHAC + "h. Cũ KHÔNG có nghĩa là chết. Đây là số liệu để HỎI,");
   d.push("    không phải giấy phép để giành. Nhắn phiên đang giữ trước — rẻ hơn giành.");
+  if (coVet) {
+    d.push("");
+    d.push("  \"" + CHUA_THAY_DAU_VET + "\" = không commit nào chạm vùng đó kể từ lúc nhận, và");
+    d.push("    không file nào trong vùng bị sửa trên đĩa. Nó nói REPO CHƯA THẤY GÌ — nó KHÔNG nói lane");
+    d.push("    đó đang rảnh, và nó KHÔNG BAO GIỜ đủ để nhả khoá hộ. Một lane cẩn thận dựng thử ngoài");
+    d.push("    repo rồi mới ghi vào; ngày 06/09 một khoá đã bị nhả hộ đúng vì đọc nhầm chỗ này, và lane");
+    d.push("    kia phải hoàn nguyên việc đã xong. Thấy dòng này thì HỎI, đừng nhả.");
+  }
 
   const cho = locChoDuc(ideas);
   d.push("");
@@ -316,7 +328,15 @@ function main() {
   const ideasFile = path.join(ROOT, "IDEAS.md");
   const ideas = fs.existsSync(ideasFile) ? parseIdeas(fs.readFileSync(ideasFile, "utf8")) : [];
 
-  const vungs = banDoVung({ viecTheoFile, tieuDiemTheoFile, claims, structure, prefixes });
+  /* N-09: đo một lượt cho cả bảng. Git hỏng thì bản đồ rỗng và cột im — xem `dauVetTheoVung`. */
+  let dauVet = new Map();
+  try {
+    dauVet = dauVetTheoVung(ROOT, structure, Object.fromEntries(
+      Object.entries(claims?.claims || {}).filter(([, v]) => v?.owner).map(([k, v]) => [k, v.claimed_at])
+    ));
+  } catch { dauVet = new Map(); }
+
+  const vungs = banDoVung({ viecTheoFile, tieuDiemTheoFile, claims, structure, prefixes, dauVet });
   process.stdout.write(render({ vungs, ideas, now: new Date(), dauNiemPhong: canhBao, khaiSai }) + "\n");
 }
 

@@ -47,6 +47,12 @@ Lệnh này **từ chối** nhận vùng đã có chủ khác, **từ chối** t
 
 - Vùng đang có chủ, mà chủ không phải bạn → **chỉ được đọc, tuyệt đối không sửa**.
 - Vùng trống chủ → nhận rồi làm.
+- **Nhận ngay TRƯỚC lượt ghi đầu tiên, không phải lúc mở phiên.** Đọc và đo thì không cần khoá,
+  mà lane nào cũng mất 5–20 phút đầu để đọc. Cần khoá thứ hai giữa chừng thì **nhận thêm lúc
+  cần** — đừng gom sẵn. Một lane, **một khoá worker**: việc trải ba nhánh thì làm ba lượt.
+- Công cụ chỉ ra vùng bạn giữ mà **chưa thấy dấu vết trong repo** (`claim.mjs --list` ·
+  `what-next.mjs` · cổng đóng phiên, mức **vàng**, không chặn). Câu đó nói **repo chưa thấy gì**
+  — nó **không** nói lane đó rảnh, và nó **không bao giờ** đủ để nhả khoá hộ ai.
 - **Trả quyền SAU khi đẩy, không phải sau khi commit.** Đẩy không được thì **giữ khoá** và báo
   lại, đừng trả cho "sạch sẽ". Cổng đóng phiên không soi cây làm việc, nó soi **commit chưa
   đẩy**: commit của bạn còn nằm đó mà vùng đã trống chủ thì cổng báo *"vùng gốc repo bị sửa
@@ -61,6 +67,10 @@ Lệnh này **từ chối** nhận vùng đã có chủ khác, **từ chối** t
   khoá, và lane kia phải hoàn nguyên việc đã xong. Ba đường hợp lệ để một khoá được trả: **chính
   lane đó trả** · **lane đó báo đã xong** · **Đức chốt chuyển** (`--restamp --duc-duyet`). Thấy
   khoá nằm lâu thì **hỏi**, đừng nhả.
+- **Đừng nối `claim.mjs` vào ống.** Mã thoát của một đường ống là mã thoát của lệnh **cuối**,
+  nên `claim.mjs --take … | tail -3 && git commit …` chạy tiếp cả khi lệnh nhận khoá đã **TỪ
+  CHỐI** — đã xảy ra 06/09, và lượt commit đó ghi vào vùng của lane khác. Muốn cắt bớt chữ thì
+  **chạy riêng, xem kết quả, rồi mới chạy lệnh sau**.
 - Muốn giành vùng người khác đang giữ → **hỏi Đức**, không tự lấy. Đức chốt rồi thì ghi lại
   bằng `--restamp --as <phiên> --duc-duyet "<câu chốt>"`; không có câu chốt thì lệnh **từ chối**,
   kể cả khi bạn đã sửa tay xong (Đức chốt 04/09 — trước đó đây chỉ là lời khuyên, và một khoá

@@ -728,3 +728,106 @@ export function commitChuaDay(root, structure) {
     return { trangThai: CHUA_DAY.LOI, ly_do: String(error.message).split(String.fromCharCode(10))[0] };
   }
 }
+
+/* ---- CHƯA THẤY DẤU VẾT TRONG REPO — N-09, BRIEF-K2-KHOA-RANH-01 ----------
+ *
+ * Câu hỏi: vùng này đang có chủ, mà từ lúc nhận tới giờ repo đã thấy gì chưa?
+ * Hai vế, cả hai đã có sẵn, không dựng nguồn dữ liệu mới:
+ *   · không commit nào chạm vùng đó kể từ mốc nhận (đọc `git log`), VÀ
+ *   · không file nào trong vùng bị sửa trên đĩa (đọc `git status`).
+ *
+ * TÊN CỦA TÍN HIỆU LÀ PHẦN CỦA HỢP ĐỒNG, KHÔNG PHẢI CHUYỆN CHỮ NGHĨA. Nó nói **repo chưa
+ * thấy gì**. Nó KHÔNG nói lane đang rảnh, và nó KHÔNG BAO GIỜ đủ để nhả khoá của lane khác.
+ * Ngày 06/09 phiên điều phối đo đúng hai vế trên, đọc thành "lane rảnh", nhả hộ một khoá, và
+ * lane kia — đang dựng thật trong một thư mục tạm NGOÀI repo — phải hoàn nguyên việc đã xong.
+ * Repo chỉ thấy được thứ đã chạm repo. Đo thêm bao nhiêu cũng không đóng được lỗ đó.
+ * Vì thế: cấm gọi tín hiệu này là "rảnh" · "nhàn" · "không làm gì" ở bất cứ đâu người hoặc AI
+ * đọc được, và cấm máy tự nhả khoá. Máy HIỆN RA, người HỎI.
+ *
+ * VÀNG, KHÔNG BAO GIỜ ĐỎ. Một lane đọc kỹ 30 phút trước khi sửa một dòng là lane TỐT. Chặn nó
+ * là dạy mọi lane ghi bừa một byte để giữ khoá cho hợp lệ — lúc đó phép kiểm thành thứ ngược
+ * lại chính nó.
+ *
+ * BA TRẠNG THÁI, CỐ Ý KHÔNG GỘP: "không đo được" (git hỏng, mốc nhận không đọc được) KHÔNG
+ * được đội lốt "chưa thấy dấu vết". Không biết thì im, đừng đoán — vì ở đây đoán sai một chiều
+ * là mời người ta đi hỏi một lane đang bận, còn đoán sai chiều kia là im lặng.
+ *
+ * `.agents/claims.json` KHÔNG tính là dấu vết: chính cú `--take` sửa nó, nên tính nó vào thì
+ * mọi khoá vừa nhận đều "đã có dấu vết" và tín hiệu chết ngay lúc sinh ra.
+ */
+export const DAU_VET = Object.freeze({ THAY: "thay", CHUA_THAY: "chua_thay", KHONG_DO_DUOC: "khong_do_duoc" });
+
+/** Chữ hợp tuyển duy nhất được phép hiện ra cho người và AI đọc. */
+export const CHUA_THAY_DAU_VET = "chưa thấy dấu vết trong repo";
+
+/* Mốc nhận → mili-giây. Nhận cả dạng cũ chỉ có ngày lẫn dạng mới có giờ; không đọc được thì
+   trả null, vì đoán bừa một con số giờ còn tệ hơn không nói gì. MỘT bản của luật này —
+   `claim.mjs` gọi lại đúng hàm này cho `ageHours`. */
+export function mocMs(stamp) {
+  if (typeof stamp !== "string" || stamp === "") return null;
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(stamp) ? `${stamp}T00:00Z` : stamp;
+  const t = Date.parse(/[Zz]|[+-]\d{2}:?\d{2}$/.test(iso) ? iso : `${iso}Z`);
+  return Number.isFinite(t) ? t : null;
+}
+
+/* HÀM THUẦN — nhận sẵn dữ liệu đã đọc, để phép ghim đo được mọi nhánh mà không cần dựng repo.
+   `commits`: [{ ms, areas: [khoá] }] · `suaTrenDia`: [khoá] · `mocTheoKhoa`: { khoá: chuỗi mốc }. */
+export function dauVetThuan(mocTheoKhoa, commits, suaTrenDia) {
+  const ket = new Map();
+  const dia = new Set(suaTrenDia || []);
+  for (const [khoa, moc] of Object.entries(mocTheoKhoa || {})) {
+    const ms = mocMs(moc);
+    if (ms === null) {
+      ket.set(khoa, { trangThai: DAU_VET.KHONG_DO_DUOC, ly_do: "mốc nhận không đọc được", soCommit: 0, soFileSua: 0 });
+      continue;
+    }
+    const soCommit = (commits || []).filter((c) => c.ms >= ms && c.areas.includes(khoa)).length;
+    const soFileSua = dia.has(khoa) ? 1 : 0;
+    ket.set(khoa, {
+      trangThai: soCommit === 0 && soFileSua === 0 ? DAU_VET.CHUA_THAY : DAU_VET.THAY,
+      soCommit,
+      soFileSua
+    });
+  }
+  return ket;
+}
+
+/* Đọc git rồi gọi hàm thuần trên. Git hỏng → MỌI khoá về `KHONG_DO_DUOC`, không về `CHUA_THAY`.
+   Đây đúng họ lỗi đã bị loại khỏi cổng đóng phiên nhiều lần: lỗi đọc biến thành "sạch". */
+export function dauVetTheoVung(root, structure, mocTheoKhoa) {
+  const khoas = Object.entries(mocTheoKhoa || {}).filter(([, v]) => typeof v === "string" && v !== "");
+  if (!khoas.length) return new Map();
+  const som = khoas.map(([, v]) => mocMs(v)).filter((v) => v !== null).sort((a, b) => a - b)[0];
+  const hong = (ly_do) => new Map(khoas.map(([k]) => [k, { trangThai: DAU_VET.KHONG_DO_DUOC, ly_do, soCommit: 0, soFileSua: 0 }]));
+  if (som === undefined) return hong("không mốc nhận nào đọc được");
+
+  const git = (...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  const prefixes = claimPrefixesFrom(structure);
+  const laHanhChinh = (file) => file === ".agents/claims.json";
+  const boNhay = (line) => line.replace(/^"|"$/g, "");
+  const US = String.fromCharCode(31);
+  const NL = String.fromCharCode(10);
+
+  let commits;
+  let suaTrenDia;
+  try {
+    // `--since` nhận mốc SỚM NHẤT trong cả loạt; lọc theo từng khoá làm ở hàm thuần. Một lượt
+    // đọc git cho cả bảng, không một lượt cho mỗi khoá.
+    const raw = git("log", `--since=${new Date(som).toISOString()}`, "--name-only", `--format=${US}%ct`, "HEAD");
+    commits = raw.split(US).map((khoi) => khoi.split(NL).filter(Boolean)).filter((d) => d.length)
+      .map((dong) => ({
+        ms: Number.parseInt(dong[0], 10) * 1000,
+        areas: ownershipKeys(dong.slice(1).map(boNhay), structure, prefixes, laHanhChinh)
+      }))
+      .filter((c) => Number.isFinite(c.ms));
+    // `git status --porcelain` — ` M duong/dan`, `?? duong/dan`, `R  cu -> moi`. Lấy vế SAU của
+    // dấu mũi tên: đó là chỗ file đang nằm.
+    const files = git("status", "--porcelain").split(NL).filter(Boolean)
+      .map((l) => l.slice(3))
+      .map((p) => { const i = p.indexOf(" -> "); return boNhay(i === -1 ? p : p.slice(i + 4)); });
+    suaTrenDia = ownershipKeys(files, structure, prefixes, laHanhChinh);
+  } catch (error) {
+    return hong(`không đọc được git: ${String(error.message).split(NL)[0]}`);
+  }
+  return dauVetThuan(Object.fromEntries(khoas), commits, suaTrenDia);
+}
