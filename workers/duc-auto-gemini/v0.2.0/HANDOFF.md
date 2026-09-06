@@ -474,4 +474,29 @@ lane khác**:
 Cả bảy đều **có nhãn `Lane:`** nên quy thuộc được; không commit nào vô chủ. Đức duyệt tường minh
 06/09 dù luật đã miễn hỏi từ 05/09 — tôi vẫn hỏi vì lần này đông bất thường.
 
+## 2026-09-06 — `claude-gemini-hoan-thien`: hai lệnh Bridge, và một lỗ trong chính phép ghim của tôi
+
+**`queue.proposal.withdraw`** — agent rút lại đề xuất của chính nó khi Đức chưa bấm duyệt. Không
+phải chép thẳng: bảng trạng thái gói này **chưa biết** trạng thái "đã rút" nên `transition()` sẽ
+ném. Hai chốt, và **thứ tự của chúng là load-bearing**: chốt chủ sở hữu phải chạy **trước** chốt
+trạng thái — đảo lại thì một agent lạ dò được đề xuất của agent khác đang ở trạng thái nào, chỉ
+bằng cách đọc mã lỗi khác nhau. `"APPROVING"` cố ý **không** rút được: lúc đó một lượt ghi
+checkpoint đang bay.
+
+**`chat.read`** — AI vận hành tự đọc được hội thoại thay vì nhờ mắt Đức. Ba trạng thái trả về
+phải phân biệt được, và đó là chỗ đáng canh nhất: *selector đã chết* khác hẳn *hội thoại trống* —
+một cái bảo chờ thêm, một cái bảo đi sửa selector. Lấy **ĐUÔI** chứ không phải đầu: `slice(0, n)`
+bỏ mất đúng câu vừa tới trong khi payload **vẫn trông đầy đủ**, đủ trường, đủ số lượt, không lỗi.
+
+**Lỗ trong phép ghim của tôi, đo được và đã vá.** Bỏ dòng ghi *"ai đã rút"* mà test vẫn **xanh** —
+vì tôi chỉ kiểm ở tầng lõi, mà lõi thì giữ đúng thứ được đưa vào; chỗ quên đưa nằm ở tầng xử lý.
+Phát hiện nhờ chạy đột biến, không nhờ đọc lại. Đây là lần thứ hai trong ngày một phép kiểm tôi
+vừa viết bị chính đột biến bắt lỗi.
+
+**Số.** Suite 90 → **92**, xanh hết. Thử phá **19/19** bị bắt (10 + 9).
+
+**Còn mở.** Hai lệnh cuối (`output.set_folder_hint`, `profiles.remove`) **không phải port**: gói
+này thiếu hẳn lớp dưới — `DacOutputProfiles` không có `list`/`setHint`/`remove`, và `sidepanel.js`
+không có hai hàm mà cả hai lệnh đều gọi. Đã ghi rõ vào `G-04`.
+
 <!-- HANDOFF-THANG: 2026-09 -->

@@ -106,9 +106,24 @@ tên **ngay dòng đầu**. So hai file thì chúng chỉ khác đúng một m�
 
 Đây là lỗi tài liệu rẻ nhất trong sổ này và cũng dễ gây hiểu nhầm nhất cho người mới.
 
-### G-04 · Nợ ba method Bridge — **[ĐO]**
+### G-04 · Nợ method Bridge — **[ĐO]** · 2/4 XONG 06/09
 
-`output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`.
+**Sổ này ghi BA, máy đếm được BỐN.** Khối `AUTO:DEBT-METHODS` của `FEATURE-PARITY.md` liệt kê
+`chat.read` · `output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`. Chữ ở đây
+lạc hậu, con số máy sinh mới đúng — đúng như dòng cảnh báo ngay dưới đã dặn.
+
+- ~~`queue.proposal.withdraw`~~ **XONG 06/09** ✅ — không phải chép thẳng: bảng trạng thái của gói
+  này chưa biết trạng thái "đã rút" nên `transition()` sẽ ném. Ghim:
+  `tests/proposal-withdraw-behavior.mjs`, thử phá 10/10 bị bắt.
+- ~~`chat.read`~~ **XONG 06/09** ✅ — `readTurns()` port sang, giữ nguyên tính thuần nên phép ghim
+  chạy chính đoạn mã thật. Ghim: `tests/chat-read-turns.mjs`, thử phá 9/9 bị bắt.
+- **`output.set_folder_hint` và `profiles.remove` CÒN MỞ, và chúng KHÔNG phải port.** Gói này
+  thiếu hẳn lớp dưới: `DacOutputProfiles` chỉ xuất `{ DB_NAME, STORE, profileId, get, bind,
+  resolve }` — **không có `list`, không có `setHint`, không có `remove`**. Và `sidepanel.js`
+  không có `probeBridgePersistence` lẫn `renderBridgeAttention`, hai thứ cả hai lệnh đều gọi.
+  Tức đây là dựng một phần hệ hồ sơ đầu ra, không phải chép hai hàm.
+- **đóng khi:** `node scripts/feature-parity.mjs --check` xanh và khối `AUTO:DEBT-METHODS` khai
+  "Gemini nợ GPT (0)".
 
 **Đừng gõ lại con số vào đây** — số hiện tại luôn nằm ở khối `AUTO:DEBT-METHODS` trong
 [`FEATURE-PARITY.md`](../../../FEATURE-PARITY.md), do máy sinh. Dòng này chỉ để biết *có nợ*.
