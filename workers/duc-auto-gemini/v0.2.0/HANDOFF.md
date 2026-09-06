@@ -418,4 +418,32 @@ bỏ**: đột biến chứng minh nó không bao giờ đỏ được.
 P1 chờ **tay Đức**, gộp được một lượt. Lưới hứng bắt oan trong `what-next.mjs` vẫn còn: vá nó cần
 khoá `_code`, đã ghi ra `BACKLOG.md` gốc repo.
 
+## 2026-09-06 — `claude-gemini-hoan-thien`: nút CHAT ZOOM hỏi nhầm câu hỏi
+
+Đức báo nút phóng to hỏng. Lane `claude-flow-active` đã vá **phần chẩn đoán** ở gói Flow cùng ngày
+và ghi rõ *"chưa phải bản vá gốc bệnh"*. Đọc lại ở gói này thì **tìm ra gốc bệnh**, và nó là di
+sản fork, đúng một dòng.
+
+**Cổng của nút phóng to hỏi câu hỏi của RUNNER.** `isProviderUrl` trả lời *"một run có được phép
+gõ vào tab này không"*, nên nó đòi đúng mặt `/app` hoặc `/images` — chặt là đúng, vì sai chỗ đó là
+gõ prompt nhầm chỗ. Nhưng nút phóng to chỉ gọi `chrome.tabs.setZoom`: **không gửi gì, không gõ
+gì.** Hỏi nhầm câu làm nó tự xám trên mọi trang Gemini khác.
+
+**Đo được: 6 trên 10** hình dạng địa chỉ Gemini thường gặp bị chặn — trang gốc, một Gem, hội thoại
+chia sẻ, trang cài đặt. Nhánh ChatGPT, nơi nút này chạy tốt, hỏi đúng câu origin. Vá: thêm
+`isProviderOrigin` vào adapter (danh sách host ở **một** chỗ, không gõ cứng regex vào
+`sidepanel.js`) rồi cho cổng hỏi câu đó. Vẫn đòi `https` + đúng host.
+
+**Bệnh thứ hai, port từ lane kia:** nút xám có **bốn** nguyên nhân khác hẳn nhau, cả bốn chui qua
+`catch (_) {}` rồi cho ra một kết quả câm — đó là lý do không ai chẩn đoán được từ xa. Nay mỗi
+nguyên nhân tự khai vào tooltip, gắn lên **cả cụm lẫn từng nút**.
+
+**Phép kiểm zoom cũ là đồ chết, chứng minh bằng máy:** nó tự viết lại logic bằng regex của
+**ChatGPT** ngay trong file test, và **xanh cả 9** lượt đột biến vào `sidepanel.js`. Thay bằng
+`tests/zoom-control-smoke.mjs` — trích thân hàm thật rồi chạy; đột biến **11/11** bị bắt. Chi tiết
+và cái bẫy tự dính lúc viết nó: `N-14` ở `BACKLOG.md` gốc repo.
+
+**Còn mở.** File test chết **chưa xoá** — xoá file cần Đức duyệt. Gói Flow Video gần như chắc chắn
+dính **cùng gốc bệnh**; không phải vùng tôi, đã ghi ra `N-13` ở `BACKLOG.md` gốc repo.
+
 <!-- HANDOFF-THANG: 2026-09 -->
