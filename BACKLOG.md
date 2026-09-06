@@ -45,6 +45,7 @@ không**; hai dạng trên là để **mắt người** đọc ra được ai m�
 ```
 ## N-xx · <một câu nói vấn đề, không nói giải pháp>
 
+- **nhóm:** <một mã trong danh sách cố định — xem mục 7>
 - **đóng khi:** lệnh: <lệnh chạy được>        (hoặc)  đức: <câu Đức phải chốt>
 - **mở:** 2026-09-06 · lane `<tên-lane>`
 - **vùng:** `_code` / `_root` / `_docs` / `workers/<gói>`
@@ -83,6 +84,26 @@ Phép kiểm chỉ soi mục `## N-`. **14 mục `## Y-` chuyển từ `IDEAS.md
 trước luật này, và sửa chúng là sửa chữ của phiên khác (mục 1). Mục `Y-` nào được đụng tới lần
 sau thì mới phải khai `đóng khi:`.
 
+### 7. Trường `nhóm:` — mục này đang chữa bệnh gì
+
+Bảng trạng thái lồng các luồng đang chạy **theo nhóm vấn đề**, để Đức đọc ra ngay "việc này
+đang giải quyết chuyện gì" mà không phải đọc tên khoá. Lane khai **mã việc** lúc nhận vùng
+(`--task "N-05"`), bảng tra sang sổ này, lấy câu tiếng Việt có dấu ở tiêu đề và nhóm ở đây.
+
+Danh sách nhóm là **cố định**, khai ở khối `nhom_van_de` của `.repo-structure.json`:
+
+| Mã | Nhóm |
+|---|---|
+| `bang` | Bảng trạng thái nói sai hoặc nói thiếu |
+| `cong` | Cổng kiểm và phép ghim — độ tin của cổng |
+| `song-song` | Nhiều phiên chạy song song giẫm chân nhau |
+| `so-sach` | Sổ sách và chữ cho Đức đọc |
+| `nen` | Nền repo — môi trường, tốc độ, thói quen công cụ |
+
+**Đừng gõ một mã ngoài danh sách** — bảng không nhận, mục rơi về *"Chưa xếp nhóm"*. Thấy thiếu
+một nhóm thật thì thêm vào file cấu hình, đừng thêm vào sổ: phân loại mọc tự do thì sau ba
+tuần có 19 nhóm cho 19 mục, tức là không phân loại gì cả.
+
 ---
 
 ## Mục chuyển từ `IDEAS.md` — 2026-09-06, 14 mục, nguyên văn
@@ -92,6 +113,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-03 · Trường "Đức cần làm" trong hồ sơ trạng thái
 
+- **nhóm:** bang
 - **bậc:** đang xây
 - **nguồn:** phát hiện khi dựng bảng trạng thái 2026-09-02
 - **chủ:** `claude-y03`
@@ -119,6 +141,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-05 · Viết lại chữ trong hồ sơ cho mắt Đức đọc
 
+- **nhóm:** so-sach
 - **bậc:** đang xây
 - **nguồn:** phát hiện khi dựng bảng trạng thái 2026-09-02
 - **chủ:** `claude-y05`
@@ -135,6 +158,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-06 · Luật nói "dòng cuối", máy chỉ cần "có mặt"
 
+- **nhóm:** cong
 - **bậc:** ý tưởng
 - **nguồn:** bắt được 2026-09-04 khi phiên `claude-dashboard` tự vi phạm chính luật đó
 - **việc kế:** cho bộ kiểm nhãn lane đòi **đúng dòng cuối**, kèm phép ghim dựng được ca hỏng:
@@ -164,6 +188,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-07 · Cổng đỏ giả vì suite chậm — độ tin của cổng, không phải lỗi của bảng
 
+- **nhóm:** cong
 - **bậc:** ý tưởng
 - **nguồn:** đo được 2026-09-04 khi cổng đỏ một lần mà không ai sai gì
 - **việc kế:** giảm thời gian `tests/build-overview-smoke.mjs`, hoặc nới hạn giờ mỗi suite
@@ -185,6 +210,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-08 · Cặp đối chiếu thứ tư cho `state-check`: `STATUS.md` ↔ Log của chính gói đó
 
+- **nhóm:** cong
 - **bậc:** ý tưởng
 - **nguồn:** brief `STATE-DRIFT-01` mục 1, ca số 2 — đo được 04/09
 - **việc kế:** Đức chốt có làm không; làm thì viết brief riêng cho executor
@@ -204,6 +230,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-09 · Luật song song nói "hai khoá khác nhau = chạy song song được", nhưng bộ sinh làm hai khoá dính nhau
 
+- **nhóm:** song-song
 - **bậc:** ý tưởng
 - **nguồn:** gặp thật 04/09, phiên `claude-dieu-phoi` — `safe-push` từ chối đúng luật
 - **việc kế:** Đức chốt có làm không; làm thì viết brief riêng
@@ -229,6 +256,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-10 · Bảng chỉ nói được ba trạng thái luồng; "bị chặn" và "chờ bằng chứng" chưa có nguồn
 
+- **nhóm:** bang
 - **bậc:** ý tưởng
 - **nguồn:** gặp thật 04/09, phiên `claude-exec-orchv2` khi làm vùng CÔNG VIỆC HIỆN TẠI
 - **việc kế:** Đức chốt có thêm một trường vào hồ sơ trạng thái không; chốt rồi mới sửa bộ sinh
@@ -244,6 +272,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-11 · Ba con số "trượt" của Assistant chưa đếm được, vì nhật ký là văn xuôi tự do
 
+- **nhóm:** bang
 - **bậc:** ý tưởng
 - **nguồn:** gặp thật 04/09, phiên `claude-exec-orchv2` khi làm vùng SỨC KHOẺ ASSISTANT
 - **việc kế:** Đức chốt một **dạng nhãn cố định** cho dòng nhật ký từng phiên
@@ -257,6 +286,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-12 · Suite gốc mất hơn hai phút, và gần hết thời gian nằm ở một hàm
 
+- **nhóm:** nen
 - **bậc:** ý tưởng
 - **nguồn:** đo thật 04/09, phiên `claude-exec-orchv2` — **một lượt sinh bảng tốn ~12 giây**,
   suite gọi nó hơn mười lần
@@ -274,6 +304,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-15 · Bảng chủ sở hữu nói ai ĐƯỢC PHÉP sửa, nhưng không giữ được file trên đĩa
 
+- **nhóm:** song-song
 - **bậc:** ý tưởng
 - **nguồn:** sự cố thật 2026-09-05, do chính phiên điều phối gây ra
 - @Đức:chốt Có làm cơ chế chặn một phiên gom nhầm file đang sửa dở của phiên khác không.
@@ -307,6 +338,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-16 · Cổng xuất bản khoá chéo: một lane giữ `_root` là mọi lane khác không đẩy được
 
+- **nhóm:** song-song
 - **bậc:** ý tưởng
 - **nguồn:** đo thật 2026-09-05, hai lane độc lập cùng bị chặn trong một buổi
 - **việc kế:** Đức chốt có tách khối AUTO của `FEATURE-PARITY.md` thành artifact miễn khoá không
@@ -334,6 +366,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-17 · Repo không có `.gitattributes`, nên test xanh trên máy này có thể đỏ trên máy khác
 
+- **nhóm:** nen
 - **bậc:** nghỉ
 - **nguồn:** bug thật, bắt được 2026-09-05 trong lúc chạy đột biến kiểm cho `F-06`
 - **việc kế:** không còn việc — Đức chốt 06/09, làm xong cùng ngày, lane `claude-eol`
@@ -371,6 +404,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-18 · Phép kiểm "không phụ thuộc đồng hồ" báo đỏ oan khi hai lane commit cùng lúc
 
+- **nhóm:** song-song
 - **bậc:** nghỉ
 - **nguồn:** gặp thật 2026-09-05, lane `claude-moc-da-xong`, một lần đỏ rồi tự xanh lại
 - **việc kế:** không còn việc — đã vá 05/09, đo: lệch 50 byte trước, 0 byte sau
@@ -393,6 +427,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## Y-19 · `npm test` KHÔNG nuốt mã lỗi — cái nuốt là `$?` trong PowerShell
 
+- **nhóm:** nen
 - **bậc:** nghỉ
 - **nguồn:** đo thật 2026-09-05, lane `claude-ghim-do`, phần B của đề bài Y-18
 - **việc kế:** không còn việc — mục này ghi lại số đo để lần sau không ai đi tìm lại
@@ -423,6 +458,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## N-01 · Phép kiểm `đóng khi:` chưa có test ghim, nên nó có thể bị gỡ mà không ai biết
 
+- **nhóm:** cong
 - **đóng khi:** lệnh: node tests/backlog-check-smoke.mjs xanh
 - **mở:** 2026-09-06 · lane `claude-tach-so`
 - **vùng:** `_code`
@@ -438,6 +474,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## N-02 · Đóng một mục là thêm dòng, nhưng chưa có gì gấp sổ lại để biết mục nào còn mở
 
+- **nhóm:** so-sach
 - **đóng khi:** đức: chốt có cần bảng đếm mục còn mở của sổ này không
 - @Đức:chốt(TACH-SO-Y-TUONG-01) Có cần một chỗ gấp sổ nợ lại để thấy ngay mục nào còn mở không.
 - **mở:** 2026-09-06 · lane `claude-tach-so`
@@ -451,6 +488,7 @@ sau thì mới phải khai `đóng khi:`.
 
 ## N-03 · Bảng trạng thái không đọc `BACKLOG.md` ở gốc repo, nên 14 mục vừa biến khỏi bảng
 
+- **nhóm:** bang
 - **đóng khi:** lệnh: node scripts/build-overview.mjs xanh và trang có khối sổ nợ gốc repo
 - **mở:** 2026-09-06 · lane `claude-tach-so`
 - **vùng:** `_code`
@@ -468,3 +506,19 @@ sau thì mới phải khai `đóng khi:`.
 
 - **ĐÓNG N-03** · 2026-09-06 · lane `claude-bang-n03` · `node tests/build-overview-smoke.mjs` xanh, có phép ghim T17. Bảng trước bản vá đếm 44 mục nợ và **không thấy sổ này**; sau bản vá đếm 61 — thêm đúng 17 mục đang mở của sổ gốc. Bắt thêm một lỗi phụ trong cùng lượt: `N-02` mang tên *"Đóng một mục là thêm dòng…"* bị đếm là đã đóng chỉ vì tiêu đề mở đầu bằng chữ "Đóng" (bảng in 16, sổ có 17) — sổ gốc nay đóng mục **chỉ** bằng dòng `ĐÓNG` thêm ở cuối, đúng luật mục 4 của chính nó. Đột biến kiểm: 4/4 bị bắt.
 - **ĐÓNG N-01** · 2026-09-06 · lane `claude-bang-n03` · `node tests/backlog-check-smoke.mjs` xanh (8 phép). Lệnh một dòng trong `package.json` nay là `scripts/backlog-check.mjs`; phép ghim canh **cả hai chiều** (thiếu trường thì đỏ · đủ thì xanh) **và canh chính `package.json`** — gỡ bộ kiểm khỏi cổng thì phép ghim đỏ. Đột biến kiểm: 6/6 bị bắt, gồm cả hai đột biến "gỡ khỏi cổng".
+
+## N-04 · Bộ sinh bảng lấy tiêu đề trang từ TÊN THƯ MỤC, nên sinh trong worktree là đóng dấu sai
+
+- **nhóm:** bang
+- **đóng khi:** lệnh: node scripts/build-overview.mjs chạy trong một worktree tên bất kỳ vẫn ra tiêu đề đúng, và có phép ghim canh điều đó
+- **mở:** 2026-09-06 · lane `claude-assistant`
+- **vùng:** `_code`
+- **vì sao:** gặp thật 06/09. Lane `claude-don-so` phải sinh bảng trong một worktree riêng (vì
+  lane khác đang sửa dở bộ sinh, sinh tại chỗ sẽ nuốt việc chưa xong của họ vào artifact). Bộ
+  sinh suy tiêu đề trang từ tên thư mục đang đứng, nên nó đóng `<title>w1</title>` vào file đã
+  commit. Lane tự bắt được khi đối chiếu và amend.
+- **vì sao nó đáng vá chứ không phải chuyện lẻ:** sinh trong worktree là **cách đúng** khi nhiều
+  lane cùng chạy — nó chính là thứ tránh được ca `Y-15` (hai lane ghi đè bản trên đĩa của nhau).
+  Một bộ sinh phạt người làm đúng thì sớm muộn sẽ có người làm sai để cho nhanh.
+- **cách đo:** sinh hai lần, một lần trong repo chính một lần trong worktree đặt tên khác, rồi
+  so hai file. Khác nhau ở đâu ngoài tiêu đề cũng là phát hiện.
