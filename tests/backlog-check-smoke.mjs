@@ -193,4 +193,41 @@ const muc = (ma, dongKhi) => so(
   ok("N-12 · ma thoat 1 khi trung ma, 0 khi khong trung");
 }
 
+/* ---- 13. MÃ ĐÍCH VA CHẠM THÌ VẪN GỠ ĐƯỢC BẰNG MỘT DÒNG THÊM Ở CUỐI ----
+ *
+ * Ca thật 07/09, và nó là ca ĐẦU TIÊN bộ kiểm trùng mã tự bắt được: một khối đã được đổi SANG
+ * `N-19` va vào một tiêu đề vốn là `N-19`. Bản đầu của `docMucDaGo` đánh số theo mã GỐC của
+ * tiêu đề, nên khối "vốn là N-19" luôn ở lần gặp thứ nhất và **không dòng đổi mã nào chạm tới
+ * được** — cửa append-only bịt kín, người bị chặn buộc phải sửa tiêu đề (tức phải xin khoá
+ * `_root`). Nay đánh số theo mã ĐÃ GIẢI, nên các lượt đổi nối đuôi được. */
+const MUI = String.fromCharCode(8594);   // dấu mũi tên của dòng đổi mã
+{
+  const va = so(muc("N-01", "lệnh: x"), muc("N-01", "lệnh: y"), muc("N-09", "lệnh: z"))
+    + DONG_DOI_MA + " N-01 " + MUI + " N-09** · lane `a` · khoi thu hai doc la N-09";
+  assert.deepEqual(trungMa(va).map((t) => t.ma), ["N-09"],
+    "ma DICH va cham thi phai keu — day chinh la ca that 07/09");
+
+  const noiDuoi = va + String.fromCharCode(10)
+    + DONG_DOI_MA + " N-09 " + MUI + " N-20** · lane `b` · khoi den sau doc la N-20";
+  assert.deepEqual(trungMa(noiDuoi), [],
+    "noi duoi mot dong nua o CUOI phai go duoc — khong duoc bat ai di sua tieu de khoi cu");
+  assert.deepEqual(docMucDaGo(noiDuoi).map((m) => m.ma), ["N-01", "N-09", "N-20"],
+    "khoi vao truoc giu ma; khoi den sau di tiep mot nac");
+  ok("N-12 · ma DICH va cham van go duoc bang mot dong them o cuoi (day doi noi duoi nhau)");
+}
+
+/* ---- 14. DÂY ĐỔI VÒNG TRÒN KHÔNG ĐƯỢC TREO BỘ KIỂM ----
+ * Mỗi dòng đổi dùng đúng một lần, nên hàng đợi cạn rồi dừng. Một bộ kiểm treo là một cổng
+ * không bao giờ xanh, và nó sẽ bị gỡ khỏi `npm test` trong vòng một ngày. */
+{
+  const vong = so(muc("N-01", "lệnh: x"), muc("N-01", "lệnh: y"))
+    + DONG_DOI_MA + " N-01 " + MUI + " N-02** · lane `a` · di" + String.fromCharCode(10)
+    + DONG_DOI_MA + " N-02 " + MUI + " N-01** · lane `a` · quay lai";
+  const bat = Date.now();
+  const r = trungMa(vong);
+  assert.ok(Date.now() - bat < 5000, "day doi vong tron KHONG duoc treo bo kiem");
+  assert.ok(Array.isArray(r), "van phai tra ve mot ket qua doc duoc");
+  ok("N-12 · day doi vong tron khong treo bo kiem");
+}
+
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

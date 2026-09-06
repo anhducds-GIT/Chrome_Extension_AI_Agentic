@@ -91,7 +91,20 @@ export function doiMa(text) {
   return ra;
 }
 
-/** Mục sau khi áp các dòng đổi mã. Khối đầu giữ mã cũ; khối thứ n nhận mã của dòng đổi thứ n-1. */
+/* Mục sau khi áp các dòng đổi mã.
+ *
+ * ĐÁNH SỐ THEO MÃ ĐÃ GIẢI, KHÔNG THEO MÃ GỐC CỦA TIÊU ĐỀ. Bản đầu đánh số theo mã gốc, và
+ * `claude-assistant` tìm ra lỗ ngay trong ngày: va chạm có thể nằm giữa ⑴ một khối đã được đổi
+ * SANG `N-19` và ⑵ một tiêu đề vốn là `N-19`. Khối ⑵ là khối ĐẦU TIÊN mang mã đó trong tiêu đề
+ * nên nó luôn ở lần gặp thứ nhất, và không dòng đổi mã nào chạm tới được — tức **mã ĐÍCH của
+ * một lượt đổi có thể va chạm mà cửa append-only không gỡ nổi**, đúng thứ cơ chế này sinh ra
+ * để tránh. Đánh số theo mã đã giải thì các lượt đổi NỐI ĐUÔI được: `N-09 → N-19`, rồi
+ * `N-19 → N-20`, rồi `N-20 → N-26`. Mỗi dòng đổi dùng đúng một lần (`shift`), nên một dây đổi
+ * vòng tròn cũng cạn hàng đợi rồi dừng; trần 32 vòng là dây bảo hiểm, không phải luật.
+ *
+ * Khối đầu tiên nhận một mã thì GIỮ mã đó — nó có trước. Khối đến sau mới phải đổi. */
+export const TRAN_NOI_DUOI = 32;
+
 export function docMucDaGo(text) {
   const hang = new Map();
   for (const d of doiMa(text)) {
@@ -100,11 +113,19 @@ export function docMucDaGo(text) {
   }
   const daGap = new Map();
   return docMuc(text).map((m) => {
-    const n = daGap.get(m.ma) ?? 0;
-    daGap.set(m.ma, n + 1);
-    if (n === 0) return m;
-    const d = (hang.get(m.ma) || [])[n - 1];
-    return d ? { ...m, ma: d.sang, doiTu: m.ma, dongKhiNgoai: d.dongKhi } : m;
+    let ma = m.ma;
+    let doiTu;
+    let dongKhiNgoai;
+    for (let i = 0; i < TRAN_NOI_DUOI; i += 1) {
+      if ((daGap.get(ma) ?? 0) === 0) break;          // mã này chưa ai dùng — nhận
+      const d = (hang.get(ma) || []).shift();
+      if (!d) break;                                   // hết dòng đổi — để trùng, `trungMa` sẽ kêu
+      doiTu = ma;
+      ma = d.sang;
+      dongKhiNgoai = d.dongKhi;
+    }
+    daGap.set(ma, (daGap.get(ma) ?? 0) + 1);
+    return doiTu === undefined ? m : { ...m, ma, doiTu, dongKhiNgoai };
   });
 }
 

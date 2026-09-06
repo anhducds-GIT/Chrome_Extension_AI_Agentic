@@ -133,6 +133,9 @@ const CHU_CAM = ["rảnh", "nhàn", "không làm gì", "khong lam gi", "ranh roi
     }
     put(".repo-structure.json", JSON.stringify({
       schema_version: 1,
+      // Không phép kiểm cấu trúc nào CHẶN trong repo tạm: repo này cố ý thiếu gần hết bộ khung,
+      // nên để trống danh sách chặn thì mã thoát của cổng chỉ còn nói về thứ ta đang đo.
+      bootstrap: { blocking: [] },
       areas: {
         "docs/": { steward: "_docs", mutability: "rw", ownership_mode: "root" },
         "scripts/": { steward: "_code", mutability: "rw", ownership_mode: "root" },
@@ -218,6 +221,12 @@ const CHU_CAM = ["rảnh", "nhàn", "không làm gì", "khong lam gi", "ranh roi
       { cwd: temp, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
     const khongVang = chayCong();
     assert.ok(!khongVang.stdout.includes(CHUA_THAY_DAU_VET), "vung khong co chu thi khong co gi de bao");
+
+    /* NỀN PHẢI XANH, nếu không thì phép so ở dưới rỗng nghĩa. Đo thật lúc viết: repo tạm thiếu
+       `bootstrap.blocking` nên CẢ HAI lượt đều ra 1, hai con số bằng nhau, và đột biến "đổi vàng
+       thành đỏ" THOÁT SẠCH qua phép so. Ghim nền xanh chính là chỗ bịt lỗ đó. */
+    assert.equal(khongVang.status, 0,
+      `nen phai XANH thi phep so moi noi len dieu gi. Ra ${khongVang.status}:\n${khongVang.stdout}`);
     assert.equal(coVang.status, khongVang.status,
       `MUC NGHIEM TRONG LA PHAN CUA HOP DONG: tin hieu nay VANG, khong bao gio DO — co vang ${coVang.status}`
       + ` vs khong vang ${khongVang.status}\n${coVang.stdout}`);
