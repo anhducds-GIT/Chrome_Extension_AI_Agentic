@@ -1450,6 +1450,28 @@ export function createHeadDeps(root = ROOT) {
       // liệu quá hạn — vì frontmatter CỐ TÌNH không có trường `created`/`last_reviewed`:
       // ngày gõ tay sẽ mục, còn lịch sử git thì không nói dối được.
       lastCommitDate: (relPath) => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", moc(), "--", relPath).trim(),
+      /* Ngày commit gần nhất chạm vào ĐÚNG MỘT DÒNG của một file. Dùng để đo "mục này treo
+       * bao lâu rồi" mà không đọc đồng hồ hệ thống: cả mốc này lẫn `headDate()` đều lấy từ
+       * git, nên cùng một HEAD luôn cho cùng một con số. Đọc đồng hồ ở đây là sang ngày mới
+       * thì MỌI lane bị chặn đẩy dù không dữ liệu nào đổi.
+       *
+       * `lastCommitDate` KHÔNG thay được: nó là ngày của cả file, nên một lượt sửa bất kỳ ở
+       * cuối sổ nợ sẽ làm mọi mục trong sổ trông như vừa mới nêu.
+       *
+       * Số dòng đếm từ 1 và phải khớp nội dung TẠI HEAD — đúng thứ `readFile` trả về, vì
+       * `readFile` cũng là `git show <HEAD>:path`. Không phân giải được (dòng vừa thêm chưa
+       * commit, file mới, git bản cũ) thì trả chuỗi rỗng để chỗ gọi nói "chưa đo được", chứ
+       * không bịa một ngày. */
+      lineDate: (relPath, lineNo) => {
+        const n = Number(lineNo);
+        if (!Number.isInteger(n) || n < 1) return "";
+        try {
+          const out = git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d",
+            "-L", `${n},${n}:${relPath}`, moc());
+          const hit = out.split(/\r?\n/).map((l) => l.trim()).find((l) => /^\d{4}-\d{2}-\d{2}$/.test(l));
+          return hit || "";
+        } catch { return ""; }
+      },
       // Danh sách file ĐÃ TRACK tại HEAD. Cả chế độ đĩa lẫn chế độ HEAD đều gọi
       // đúng lệnh này, nên hai chế độ không bao giờ nhìn thấy hai tập file khác
       // nhau. `-z` để tên có dấu cách / tiếng Việt không bị git bọc dấu nháy.

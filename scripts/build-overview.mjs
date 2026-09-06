@@ -252,6 +252,128 @@ export function blockedIfSkipped(deps, row) {
   return hit[1].trim().replace(/^["']/, "").replace(/["']$/, "").trim();
 }
 
+/* ===================== KHỐI "CẦN ĐỨC" — SUY TỪ DẤU TRONG SỔ =====================
+ *
+ * Đề bài `BANG-CAN-DUC-01` (Đức chốt 06/09). Bản cũ đọc ĐÚNG MỘT trường `human_action` trong
+ * mỗi hồ sơ trạng thái, và bốn chỗ hỏng của nó đều là hỏng thiết kế:
+ *   ⑴ số dòng = số hồ sơ (4), nên việc thứ năm không có chỗ chứa;
+ *   ⑵ chữ gõ tay thì mục — bảng còn hỏi lại một câu Đức đã chốt sáng cùng ngày;
+ *   ⑶ trộn việc BẤM (30 giây) với việc CHỐT (cần nghĩ), xếp chung thì trông như nhau;
+ *   ⑷ việc chờ Đức thật thì nằm trong sổ nợ và sổ ý tưởng, không có đường lên bảng.
+ *
+ * DẤU LÀ HỢP ĐỒNG DỮ LIỆU, không phải bản vá. Người viết sổ đặt nó ngay trên DÒNG CỦA MỤC:
+ *
+ *     @Đức:bấm          việc bấm tay — nạp lại tiện ích, chạy một lượt nghiệm thu
+ *     @Đức:chốt         việc cần Đức nghĩ — đổi luật, thêm quyền, chọn phạm vi
+ *     @Đức:chốt(MÃ)     kèm mã đề bài, để bảng nói được "chốt xong thì mở khoá chuỗi nào"
+ *
+ * Viết không dấu (`@Duc:chot`) cũng nhận — người gõ vội không phải nhớ bỏ dấu ở đâu.
+ *
+ * BA TÍNH CHẤT, và cả ba là lý do dấu nằm TRÊN DÒNG CỦA MỤC chứ không ở một trường riêng:
+ *   · **Không cần đọc tài liệu để đặt.** Nhìn tên khối trên bảng là đoán ra cách viết.
+ *   · **Đóng mục thì dấu đi theo.** Gạch ngang mục, hoặc mở đầu bằng `XONG`, hoặc xoá hẳn
+ *     dòng — cả ba đều làm mục rời bảng mà không ai phải nhớ đi xoá dấu. Đây là ràng buộc
+ *     Đức nêu thẳng, và nó là thứ giết bản cũ: một trường riêng thì phải nhớ dọn.
+ *   · **Không có sổ mới.** Ba sổ đã có sẵn (`BACKLOG.md` · `IDEAS.md` · `STATUS.md`) là nguồn
+ *     duy nhất. Đẻ thêm một "danh sách chuỗi việc" nuôi bằng tay là tái phát đúng bệnh trên.
+ */
+export const SO_CAN_DUC = ["BACKLOG.md", "IDEAS.md", "STATUS.md"];
+
+/* Một biểu thức, một dòng. KHÔNG dùng `\b`: ở repo này `\b` không bao giờ khớp cạnh `Đ`/`ế`
+   nên biểu thức im lặng khớp rỗng — đã cắn hai lần trong một giờ. Cờ `u` để `Đ` ↔ `đ` khớp
+   đúng dưới cờ `i`. */
+export const DAU_CAN_DUC = new RegExp(
+  "@(?:Đức|Duc)\\s*:\\s*(chốt|chot|bấm|bam)(?:\\s*\\(\\s*([^)]*?)\\s*\\))?", "iu");
+
+/* MỤC ĐÃ ĐÓNG THÌ DẤU HẾT HIỆU LỰC. Dùng lại đúng `isDone` mà sổ nợ đang dùng, cộng dấu gạch
+   ngang — hai cách đóng mục duy nhất đang chạy thật trong repo. Có bản sao thứ hai của luật
+   "thế nào là đóng" thì sớm muộn hai bản trả hai câu khác nhau cho cùng một dòng. */
+export function canDucDaDong(line) {
+  const s = String(line ?? "");
+  if (s.includes("~~")) return true;
+  const t = s.replace(/^\s*#{1,6}\s*/, "").replace(/^\s*[-*+]\s*/, "")
+    .replace(/^\*\*([A-Z]{1,3}-\d+)\*\*\s*[·:.\-]\s*/, "")
+    .replace(/^([A-Z]{1,3}-\d+)\s*[·:.\-]\s*/, "").trim();
+  return isDone(t);
+}
+
+/* KHOẢNG NGÀY GIỮA HAI MỐC GIT. Cả hai đầu vào đều là ngày commit, nên hàm này không đọc đồng
+   hồ hệ thống — đó là toàn bộ lý do nó tồn tại thay vì một phép trừ `Date.now()`. */
+export function khoangNgay(sau, truoc) {
+  const ms = (d) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d ?? "").trim());
+    return m ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : NaN;
+  };
+  const a = ms(sau); const b = ms(truoc);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  return Math.max(0, Math.round((a - b) / 86400000));
+}
+
+/* Tên chuỗi việc của một mục KHÔNG khai mã: suy từ chỗ mục nằm, không hỏi ai.
+   Sổ ở gốc repo thì chuỗi là việc chung; sổ trong một gói thì chuỗi là gói đó. */
+function chuoiTheoCho(relPath, model) {
+  const key = relPath.replace(/\/[^/]+$/, "");
+  if (!relPath.includes("/")) return "Việc chung của cả repo";
+  const found = model?.rows?.find((r) => r.key === key);
+  return found ? found.name : key.split("/").slice(-2, -1)[0];
+}
+
+/* Quét ba sổ, trả về danh sách mục có dấu. TẤT ĐỊNH: đường dẫn đã sắp, dòng đọc theo thứ tự.
+ *
+ * KHÔNG NÉM khi mã chuỗi không tra được. Cả ba sổ này lane nào cũng ghi, nên ném ở đây là một
+ * lỗi gõ trong sổ nợ của một gói chặn cổng đóng phiên của MỌI lane. Thay vào đó mục vẫn lên
+ * bảng, kèm chữ nói rõ mã đó không tra được — hiện ra để sửa, không chặn để phạt. */
+export function readCanDuc(deps, model) {
+  if (typeof deps?.git?.lineDate !== "function") {
+    throw new Error("THIEU_LINE_DATE: bộ đọc không có `git.lineDate`, nên không đo được mục treo"
+      + " bao lâu. Không được rơi về đồng hồ hệ thống — đó là cách bảng bắt đầu phụ thuộc giờ chạy.");
+  }
+  const brief = new Map(readDefects(deps).map((d) => [d.ma.toLowerCase(), d]));
+  const mocHead = deps.git.headDate();
+  const out = [];
+  const files = deps.git.trackedPaths()
+    .filter((p) => SO_CAN_DUC.includes(p.split("/").pop()))
+    .sort();
+  for (const rel of files) {
+    let text;
+    try { text = deps.readFile(rel); } catch { continue; }
+    const lines = text.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i];
+      const hit = DAU_CAN_DUC.exec(line);
+      if (!hit) continue;
+      if (canDucDaDong(line)) continue;
+      const loai = /^ch/i.test(hit[1]) ? "CHỐT" : "BẤM";
+      const ma = String(hit[2] ?? "").trim();
+      const d = ma ? brief.get(ma.toLowerCase()) : null;
+      const viec = shorten(line.replace(DAU_CAN_DUC, " ")
+        .replace(/^\s*#{1,6}\s*/, "").replace(/^\s*[-*+]\s*/, "").trim(), 150);
+      out.push({
+        loai,
+        viec: viec || "mục có dấu nhưng không có chữ mô tả",
+        chuoi: d ? d.trieuChung : (ma || chuoiTheoCho(rel, model)),
+        khaiChuoi: Boolean(ma),
+        chuoiLa: Boolean(ma) && !d,
+        chuoiDong: Boolean(d) && !d.mo,
+        treo: khoangNgay(mocHead, deps.git.lineDate(rel, i + 1)),
+        /* Trường TUỲ CHỌN `blocked_if_skipped` chỉ sống trong hồ sơ trạng thái, nên chỉ mục
+           nằm trong hồ sơ đó mới có dòng "Chưa làm thì". Vắng thì để trơ — không bịa, cũng
+           không để một chỗ trống trông như lỗi. */
+        chan: rel.endsWith("STATUS.md") ? blockedIfSkipped(deps, { statusPath: rel }) : "",
+        nguon: rel
+      });
+    }
+  }
+  /* Chuỗi xếp theo tên; trong một chuỗi thì BẤM trước CHỐT — cụm bấm gom được thành một buổi,
+     nên để nó lên trên là để Đức đóng cả cụm rồi mới ngồi nghĩ. Rồi tới đường dẫn nguồn để
+     hai lượt sinh trên cùng HEAD không bao giờ đảo thứ tự. */
+  const thuTuLoai = (l) => (l === "BẤM" ? 0 : 1);
+  return out.sort((a, b) => a.chuoi.localeCompare(b.chuoi, "vi")
+    || thuTuLoai(a.loai) - thuTuLoai(b.loai)
+    || a.nguon.localeCompare(b.nguon)
+    || a.viec.localeCompare(b.viec, "vi"));
+}
+
 /* GATE TIẾP THEO — câu ĐẦU của `next_step`, không phải cả trường.
    Bản đầy đủ đã có ở tab Extension; dòng này chỉ là mồi để bấm sang. Cắt ở dấu chấm hoặc
    dấu gạch dài, tuỳ cái nào tới trước. Chạy qua bộ rút gọn trước để đường dẫn và nhãn kỹ
@@ -1112,7 +1234,16 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
   border-bottom:1px solid var(--line-2)}
 .dr a:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .dr .d{font-size:13.2px;color:var(--ink-2);line-height:1.45;min-width:0}
+.dr .h .d{flex:1 1 240px}
 .dr .w{font-size:12px;color:var(--muted);line-height:1.4}
+.dr .mn{font-size:12px;color:var(--muted);line-height:1.4}
+
+${/* Tiêu đề một chuỗi việc trong vùng CẦN ĐỨC. Đức chốt 06/09: gom theo chuỗi, trong mỗi
+     chuỗi tách BẤM và CHỐT. Một hàng tiêu đề mảnh là đủ — không dựng thêm khung, vì mỗi
+     khung mới trong tab này là một lần nữa đụng vào cơ chế ẩn/hiện (bug DASH-TAB-01). */ ""}
+.cg{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.07em;
+  color:var(--muted);text-transform:uppercase;padding:13px 0 3px;border-top:1px solid var(--line)}
+.cg:first-child{border-top:none;padding-top:2px}
 
 ${/* Hàng của khối "đang làm gì". CỐ Ý không dùng lại lớp .dr: .dr là hàng có link sang tab
      Extension, còn hàng này không link đi đâu — và phép ghim của vùng CẦN ĐỨC đếm đúng số
@@ -1407,9 +1538,24 @@ ${STYLE}
    * Bảng KHÔNG cố trả lời mọi câu hỏi. Bảng = trạng thái cần nhìn thường xuyên; hỏi sâu và
    * kiểm chứng theo yêu cầu là việc của Assistant trong chat. Thấy đáng thêm vùng thứ năm
    * thì ghi vào sổ ý tưởng, đừng thêm ở đây. */
-  const ducViec = model.rows
-    .filter(choDuc)
-    .map((r) => ({ row: r, viec: String(r.humanAction).trim(), chan: blockedIfSkipped(deps, r) }));
+  /* NGUỒN CỦA VÙNG 1 ĐÃ ĐỔI (đề bài `BANG-CAN-DUC-01`, Đức chốt 06/09): quét dấu trong ba sổ,
+     không đọc `human_action` nữa. Lý do đầy đủ nằm ở ghi chú của `readCanDuc`.
+
+     `human_action` vẫn còn nuôi huy hiệu CHỜ ĐỨC ở vùng 2 và ô đếm ở tab Tổng quan — cố ý,
+     lượt này chỉ làm cơ chế, chưa mục nào được đánh dấu. Nên hai chỗ đó có thể đếm khác vùng
+     này trong một thời gian, và trang PHẢI nói ra điều đó chứ không để Đức tự đoán. */
+  const ducViec = readCanDuc(deps, model);
+  const ducChuoi = [];
+  for (const v of ducViec) {
+    const cuoi = ducChuoi[ducChuoi.length - 1];
+    if (cuoi && cuoi.ten === v.chuoi) cuoi.muc.push(v);
+    else ducChuoi.push({ ten: v.chuoi, muc: [v] });
+  }
+  const ducBam = ducViec.filter((v) => v.loai === "BẤM").length;
+  const ducChot = ducViec.length - ducBam;
+  /* Số đơn vị còn khai việc chờ Đức theo CÁCH CŨ. Không hiện nó thì khối rỗng của lượt này
+     nói dối: Đức đọc "không có việc nào" trong khi bốn hồ sơ vẫn đang khai có. */
+  const ducCachCu = model.rows.filter(choDuc).length;
 
   /* Xếp theo thứ hạng đơn vị tự khai. Chưa khai hạng thì xuống cuối — KHÔNG coi là hạng 0,
      vì 0 là số nhỏ nhất và một trường bỏ trống sẽ nhảy lên đầu bảng. */
@@ -1473,28 +1619,40 @@ ${STYLE}
 
   for (const d of dongKhoi) p.push(KHOA_PREFIX + d);
 
-  p.push(`      <div class="sect">Cần Đức — ${ducViec.length ? esc(ducViec.length + " việc") : "không có việc nào"}</div>
+  p.push(`      <div class="sect">Cần Đức — ${ducViec.length ? esc(`${ducViec.length} việc · ${ducBam} bấm · ${ducChot} chốt`) : "chưa mục nào được đánh dấu"}</div>
       <div class="bl">`);
-  if (ducViec.length) {
-    for (const v of ducViec) {
-      p.push(`        <div class="dr"><div class="h">`
-        + `<a href="#${esc(unitId(v.row))}" data-goto="extension">${esc(v.row.name)}</a></div>`
-        /* HAI DÒNG NÀY CỐ Ý IN THÔ, đừng "dọn" cho giống khối trên. `human_action` và
-           `blocked_if_skipped` bị GHIM NGUYÊN VĂN (suite: "cau viec phai lay NGUYEN VAN tu
-           truong don vi tu khai, khong viet lai"), vì đây là bản đầy đủ Đức đọc để hành động
-           — rút gọn ở đây là bảng nói khác hồ sơ. Đã thử rút gọn ngày 06/09 và phép ghim đó
-           bắt được ngay. Chỗ chặn đường dẫn của hai trường này là B15 ở cổng đóng phiên. */
-        + `<span class="d">${esc(v.viec)}</span>`
-        + (v.chan ? `<span class="w">Chưa làm thì: ${esc(v.chan)}</span>` : "")
-        + `</div>`);
+  if (ducChuoi.length) {
+    for (const c of ducChuoi) {
+      p.push(`        <div class="cg">Chuỗi việc · ${esc(c.ten)}</div>`);
+      for (const v of c.muc) {
+        /* Câu việc QUA BỘ RÚT GỌN. Khác bản cũ, và đổi có chủ đích: bản cũ in nguyên văn một
+           trường được viết riêng cho bảng, còn ở đây chữ đến từ sổ nợ và sổ ý tưởng — nơi
+           lane nào cũng gõ tên file và đường dẫn. Ngày 06/09 một câu việc mang tên file mã
+           lọt lên bảng và chặn cổng đóng phiên của MỌI lane. */
+        p.push(`        <div class="dr"><div class="h">`
+          + `<span class="badge ${v.loai === "CHỐT" ? "b1" : "b0"}">${esc(v.loai)}</span>`
+          + `<span class="d">${esc(v.viec)}</span></div>`
+          + `<span class="mn">${esc(v.treo === null ? "chưa đo được mục này treo bao lâu"
+            : v.treo === 0 ? "vừa nêu ở bản mới nhất" : `treo ${v.treo} ngày`)}`
+          + ` · xong thì mở khoá chuỗi ${esc(v.chuoi)}`
+          + (v.chuoiLa ? " · mã chuỗi này không tra được trong sổ đề bài" : "")
+          + (v.chuoiDong ? " · chuỗi này đã khai đóng" : "")
+          + (v.khaiChuoi ? "" : " · mục chưa khai thuộc chuỗi nào, bảng suy theo chỗ nó nằm")
+          + `</span>`
+          + (v.chan ? `<span class="w">Chưa làm thì: ${esc(v.chan)}</span>` : "")
+          + `</div>`);
+      }
     }
   } else {
-    /* Vùng trống LÀ một thông tin. Ẩn cả vùng thì Đức không phân biệt được "không có việc
-       nào chờ tôi" với "bảng hỏng chỗ đó". */
-    p.push(`        <div class="dr"><span class="d">Không có việc nào đang chờ Đức.</span></div>`);
+    /* KHỐI RỖNG PHẢI TỰ KHAI VÌ SAO NÓ RỖNG. Rỗng-vì-chưa-đánh-dấu và rỗng-vì-hết-việc là hai
+       chuyện khác hẳn nhau, mà Đức không có cách nào phân biệt nếu bảng im lặng. Đây là điều
+       kiện nghiệm thu của đề bài `BANG-CAN-DUC-01`, không phải lời tô điểm. */
+    p.push(`        <div class="dr"><span class="d">Chưa mục nào trong sổ được đánh dấu, nên khối này rỗng <strong>vì chưa ai đánh dấu</strong> — không phải vì hết việc.</span>`
+      + (ducCachCu ? `<span class="mn">Cách cũ vẫn còn ${esc(String(ducCachCu))} đơn vị khai có việc chờ Đức; xem ở tab Extension. Chúng sẽ được đánh dấu ở lượt sau.</span>` : "")
+      + `</div>`);
   }
   p.push(`      </div>
-      <p class="note">Chỉ những thứ <strong>Đức phải làm hoặc phải quyết</strong>, đọc từ trường mỗi đơn vị tự khai trong hồ sơ trạng thái — việc AI tự làm được không lẫn vào đây. Bấm tên đơn vị để xem đầy đủ ở tab <strong>Extension</strong>. Dòng mờ <strong>Chưa làm thì</strong> chỉ hiện khi đơn vị đó có khai; không khai thì bảng để trơ, không đoán hộ.${humanUndeclared ? ` <strong>${humanUndeclared} đơn vị chưa trả lời câu này</strong>, nên danh sách trên có thể còn thiếu.` : ""}</p>
+      <p class="note">Chỉ những thứ <strong>Đức phải làm hoặc phải quyết</strong>. Bảng <strong>không giữ danh sách này</strong>: nó quét dấu <strong>@Đức:bấm</strong> và <strong>@Đức:chốt</strong> ngay trên dòng của mục trong sổ nợ, sổ ý tưởng và hồ sơ trạng thái. Muốn thêm một việc thì đặt dấu vào dòng của mục đó; đóng mục thì dấu mất theo, không phải nhớ đi xoá. <strong>BẤM</strong> là việc tay vài phút, gom được thành một buổi; <strong>CHỐT</strong> là việc cần Đức nghĩ, mỗi cái một lượt. Số ngày treo <strong>đo bằng lịch sử kho mã</strong>, không đọc đồng hồ. Không có trần số dòng: bao nhiêu mục có dấu thì hiện bấy nhiêu.</p>
     </div>
 
     <div class="card">
