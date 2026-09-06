@@ -243,3 +243,45 @@ mục 4 bất biến ⑤ và bảng mã lỗi.
   đừng rà theo cảm giác.
 - **cẩn thận:** đây là loại việc rất dễ biến thành viết lại cả repo. Ranh giới nên đặt trước:
   **xoá và gộp thì được, viết lại nội dung đang đúng thì không.**
+
+## Y-15 · Vòng Claude Code ↔ GPT dùng được thật: tính năng, vòng debug, và luật riêng cho CC
+
+- **bậc:** ý tưởng
+- **nguồn:** Đức nêu 2026-09-06
+- **việc kế:** **CHƯA BẮT ĐẦU — Đức đã chốt thứ tự:** đóng nợ kỹ thuật gói GPT trước, rồi mới
+  tới mục này. Kiện việc đóng nợ đã gói xong cùng ngày: 22 mục còn mở, chia làm bốn rổ
+  (7 làm được ngay · 4 chờ Đức · 3 cần mở trang thật 0 credit · 8 có nhà ở chỗ khác), mỗi mục
+  kèm một điều kiện đóng. Mục P1 đang chặn là `B-36`.
+- **quan hệ với [[Y-01]] — đọc trước, đừng chép:** Y-01 hỏi *"Claude Code nối được sang GPT
+  không"* và câu đó **đã trả lời**: hai vòng khép kín đo được 41 giây và ~49 giây, đọc về
+  1.953 và 1.926 ký tự, không bị cắt. Y-15 hỏi câu tiếp theo và là câu khác hẳn: *"vòng đó
+  đã dùng được cho việc thật chưa, và khi nó hỏng thì biết hỏng ở đâu bằng cách nào."*
+  Nối được ≠ dùng được.
+- **ba phần việc, Đức nêu cả ba:**
+  1. **Hoàn thiện tính năng** — cái gì còn thiếu để một vòng chạy trên việc thật của Đức,
+     không phải trên bài thử. Ứng viên đã đề xuất ở Y-01: chính vòng audit Đức đang làm tay.
+  2. **Vòng debug** — khi vòng CC ↔ GPT hỏng thì làm sao biết hỏng ở đâu. Repo đã trả giá hai
+     lần cho đúng chỗ này: `B-36` sống tám tuần vì ba phép kiểm chỉ chứng minh *mã có chứa*
+     đoạn đăng ký chứ không chứng minh nó chạy; `F-25` để một chuỗi chết im lặng 22 phút vì
+     không có nhịp tim nào đập. Vòng này phải tự nói được nó còn sống hay đã chết.
+  3. **Rules + protocol riêng cho Claude Code** — phần mới, chưa ai làm. Hiện repo có luật cho
+     *người* điều phối (`docs/protocols/ORCHESTRATOR.md`) và luật cho nhiều phiên chạy song
+     song (`MULTIFLOW.md`), nhưng **không có** luật cho trường hợp một phiên CC điều khiển một
+     AI khác qua Bridge — ai chịu trách nhiệm lượt gọi đó, ghi vào sổ nào, hỏng thì dừng ở đâu.
+- **vì sao:** hôm nay **Đức chính là dây nối**. Ngày 04/09 Đức dán prompt cho GPT rồi dán kết
+  quả về, **ba lượt trong một phiên**. Mỗi lượt như thế là một chỗ Đức không làm được việc khác.
+- **phạm vi khi làm — CHƯA CHỐT ĐƯỢC, và luật số 4 của sổ này bắt phải chốt trước khi bắt đầu:**
+  phần ① nằm trong gói `duc-auto-chatgpt`; phần ② có thể chạm cả gói đó lẫn `_code`; phần ③ là
+  `docs/protocols/` (`_docs`) cộng một phép kiểm ở `_code`. Ba khoá khác nhau, nên **rất dễ
+  thành ba phiên giẫm chân** — phải chia vùng trước khi giao, không phải giao rồi mới chia.
+- **đo trước khi sửa:** đếm số lượt Đức phải dán tay qua lại trong một phiên làm việc.
+  Ngày 04/09 đếm được **ba**. Đó là con số phải giảm; nếu sau khi làm nó không giảm thì mục này
+  chưa đạt, dù mọi test đều xanh.
+- **hai giới hạn đã đo, đừng hứa quá:** chờ **5 phút** giữa hai lượt thử (thật, không đi vòng
+  được) và trần cứng **90 giây** mỗi lượt. Hai vòng khép kín vừa rồi **chưa chạm trần** — nên
+  ai định xin bỏ trần phải có một ca chạm trần thật trước, xem `B-17`.
+- **cẩn thận:** phần ③ là loại việc rất dễ phình thành viết lại protocol cả repo. Ranh giới nên
+  đặt trước, giống Y-14: **thêm một mục cho ca CC-điều-khiển-AI-khác thì được, viết lại luật
+  đang đúng thì không.**
+- **Đức nói thêm:** *"ta sẽ làm việc không dừng"* — ghi lại như một câu về nhịp làm việc, **không
+  đọc thành lệnh dựng automation tự chạy**. Tạo automation chạy tự động vẫn là việc phải hỏi Đức.
