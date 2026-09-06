@@ -1872,6 +1872,34 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   assert.equal(tuoiTuMoc("2026-09-06T12:00", ""), "", "khong co moc nhan thi tra rong, khong bia mot con so");
   assert.equal(tuoiTuMoc("", "2026-09-06T04:00"), "", "khong co moc sinh thi tra rong");
 
+  /* N-10 — PHEP GHIM DANG LE DA CHAN DUOC LOI NAY.
+
+     `tuoiTuMoc` deterministic, va cac khang dinh ngay tren van dung. Cho sai nam mot tang
+     cao hon: NUONG chuoi tuoi vao trang lam trang phu thuoc GIO COMMIT CUA HEAD — ma chinh
+     viec commit trang lai de ra mot HEAD moi. Tu tham chieu.
+
+     Do that 06/09: khoa nhan luc 15:33, HEAD nhich qua moc mot gio, chuoi doi tu
+     "duoi mot gio" sang "1 gio truoc" tuy KHONG du lieu nao doi. `safe-push` chan MOI lane,
+     va luot sinh lai chinh no lai de ra HEAD moi. Ba luot lien tiep khong luot nao qua.
+
+     Nen phep kiem phai hoi cau nay: CUNG DU LIEU + MOC SINH KHAC NHAU => KET QUA GIONG HET. */
+  const CLAIMS_N10 = { "_code": { owner: "lane-n10", task: "N-90", claimed_at: "2026-09-05T10:00" } };
+  const depsN10 = (stamp) => {
+    const d = soBia(CLAIMS_N10);
+    return { ...d, git: { ...d.git, headStamp: () => stamp } };
+  };
+  const n10Som = readLuong(depsN10("2026-09-05T10:30"));   // 30 phut sau khi nhan
+  const n10Muon = readLuong(depsN10("2026-09-07T12:00"));  // 26 gio sau khi nhan
+  assert.ok(n10Som.length > 0, "phai dung duoc it nhat mot dong luong de so");
+  assert.deepEqual(n10Som, n10Muon,
+    "khoi luong doi khi CHI moc sinh doi — do la thu nuong dong ho vao artifact va chan push moi lane (N-10)");
+  for (const r of n10Som) {
+    assert.ok(!/gio truoc|ngay truoc|duoi mot gio/.test(JSON.stringify(r)),
+      "dong luong khong duoc mang chuoi tuoi da nuong san: " + JSON.stringify(r));
+    assert.equal(r.moc, "2026-09-05T10:00", "phai giu MOC NHAN nguyen van tu bang chu so huu");
+  }
+  ok("N-10: khoi luong giu nguyen khi chi moc sinh doi (30 phut vs 26 gio)");
+
   /* --- (b) TRANG CÓ LUỒNG: lồng theo nhóm, câu việc từ sổ, tuổi tính lúc sinh --- */
   const LANE_A = "lane-bia-mot-khong-co-trong-repo";
   const LANE_B = "lane-bia-hai-khong-co-trong-repo";

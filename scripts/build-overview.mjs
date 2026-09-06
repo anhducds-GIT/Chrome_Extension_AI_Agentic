@@ -904,7 +904,11 @@ export function readLuong(deps) {
   // các nhóm thật thì Đức đọc nó như một nhóm thật.
   const hang = (r) => (r.nhom === NHOM_CHUA_XEP ? 1 : 0);
   return [...gom.values()]
-    .map((r) => ({ ...r, tuoi: tuoiTuMoc(mocSinh, r.tu) }))
+    // `moc` là MỐC NHẬN nguyên văn từ bảng chủ sở hữu — dữ liệu thuần, không nhảy mốc.
+    // Trước 06/09 chỗ này nướng sẵn chuỗi tuổi (`tuoiTuMoc`), và vì tuổi đo từ giờ commit
+    // của HEAD nên mỗi commit mới có thể đẩy nó qua một mốc: file lệch tuy không dữ liệu nào
+    // đổi, `safe-push` chặn mọi lane, mà lượt sinh lại chính nó lại đẻ ra HEAD mới. Xem N-10.
+    .map((r) => ({ ...r, moc: r.tu }))
     .sort((a, b) => hang(a) - hang(b)
       || a.nhom.localeCompare(b.nhom, "vi")
       || a.lane.localeCompare(b.lane)
@@ -1806,9 +1810,21 @@ ${STYLE}
       dongKhoi.push(`        <div class="lr"><div class="h">`
         + `<span class="ln">${esc(l.lane)}</span></div>`
         + `<span class="d">${esc(cau)}</span>`
-        /* "Bao lâu rồi" tính từ MỐC SINH BẢNG, không từ đồng hồ người xem — xem `tuoiTuMoc`.
-           Đây là nửa nhìn thấy được của việc gỡ bỏ con số giả thời gian thực. */
-        + `<span class="mn">Nhận vùng ${esc(l.tuoi || "từ lúc nào thì bảng không ghi")}</span>`
+        /* MỐC NHẬN TUYỆT ĐỐI, không phải tuổi đã nướng sẵn. Xem N-10 trong `BACKLOG.md`.
+
+           Chốt cũ vẫn đúng và giữ nguyên: con số này KHÔNG được tính từ đồng hồ người xem,
+           vì thế thì một ảnh chụp cũ tám tiếng vẫn khoe "8 phút trước". Chỗ sai nằm ở chỗ
+           khác, và tinh hơn: nướng chuỗi tuổi vào file làm file phụ thuộc GIỜ COMMIT CỦA
+           HEAD — mà chính việc commit file này lại sinh ra một HEAD mới. Tự tham chiếu.
+           Đo 06/09: khoá nhận lúc 15:33, HEAD nhích qua mốc một giờ, chuỗi đổi từ
+           "dưới một giờ" sang "1 giờ trước" tuy KHÔNG dữ liệu nào đổi — và `safe-push`
+           chặn MỌI lane cho tới khi sinh lại, rồi lượt sinh lại đẻ ra HEAD mới. Ba lượt
+           liên tiếp không lượt nào qua.
+
+           Nay file chỉ chứa MỐC, thứ suy thẳng từ bảng chủ sở hữu và không nhảy mốc. Đức
+           đọc mốc sinh bảng ở đầu trang rồi tự so — hoặc để đoạn JS cuối trang tính hộ, đúng
+           cách trang này vốn làm với `data-sinh`. */
+        + `<span class="mn" data-nhan="${esc(l.moc || "")}">Nhận vùng ${esc(l.moc ? "lúc " + l.moc.replace("T", " ") : "từ lúc nào thì bảng không ghi")}</span>`
         + `</div>`);
     }
   } else {

@@ -919,3 +919,40 @@ trang này đang làm với ngày sinh, chứ không nướng sẵn vào file.
 (06/09), nhưng lúc kiểm thì lane `claude-scouter-seed` **đang sửa dở** `scripts/build-dashboard.mjs`
 và `tests/build-dashboard-smoke.mjs` trong chính vùng đó. Nhận khoá lúc ấy là giẫm chân thật,
 nên lane này dừng lại và báo Đức thay vì dùng quyền vừa được cho.
+
+## N-10 · ĐÍNH CHÍNH + ĐÃ VÁ 06/09 (`claude-flow-active`, Đức chốt cho mượn `_code`)
+
+**Chẩn đoán ban đầu của mục N-10 ở trên là SAI, và sai theo hướng đổ lỗi nhầm chỗ.** Tôi viết
+*"trang phụ thuộc đồng hồ"*. Đọc code thì `tuoiTuMoc` **không** đọc đồng hồ hệ thống — nó lấy
+giờ commit của HEAD trừ giờ nhận khoá, và chú thích dài ngay trên nó giải thích rõ vì sao cố ý
+làm vậy. Chốt đó **đúng** và tôi giữ nguyên.
+
+Chỗ sai nằm cao hơn một tầng và tinh hơn: **nướng chuỗi tuổi vào file** làm file phụ thuộc
+**giờ commit của HEAD** — mà chính việc commit file đó lại sinh ra một HEAD mới. Tự tham chiếu.
+Nó chỉ nổ khi tuổi vừa vượt một mốc (60 phút / 24 giờ), nên nó im lặng phần lớn thời gian rồi
+chặn mọi lane đúng lúc không ai ngờ.
+
+**Vá:** khối luồng nay mang **mốc nhận nguyên văn** từ bảng chủ sở hữu, không mang chuỗi tuổi.
+Trang hiện *"Nhận vùng lúc 2026-09-06 14:10"*. Hàm `tuoiTuMoc` và mọi khẳng định của nó
+**giữ nguyên** — không gỡ lớp bảo vệ nào, chỉ thôi nướng kết quả vào file.
+
+**Ghim:** `tests/build-overview-smoke.mjs` — cùng dữ liệu, hai mốc sinh cách nhau **26 giờ**,
+khối luồng phải **giống hệt**; và không dòng luồng nào được mang chuỗi tuổi đã nướng sẵn.
+Đây đúng là câu hỏi mà bộ ghim cũ chưa từng hỏi: nó kiểm hàm deterministic, không kiểm
+**artifact** deterministic.
+
+## N-11 · Đường dẫn thư mục lọt lên bảng qua ô "việc cho Đức"
+
+**Đo 06/09** (`claude-flow-active`, gặp khi chạy suite gốc sau lúc mượn `_code`):
+`tests/build-overview-smoke.mjs` **ĐỎ** với
+`bang KHONG duoc chua duong dan thu muc (khop /workers//)`.
+
+Nguồn: trường `human_action` của `workers/duc-scouter/v0.1.0/STATUS.md` viết nguyên một đường
+dẫn thư mục vào câu dành cho Đức đọc. Bộ sinh chép thẳng câu đó lên bảng, và phép kiểm bắt.
+Luật vàng 5 nói chữ Đức đọc phải là chữ cho người; đường dẫn kho mã thì không phải.
+
+**Không tự sửa:** `workers/duc-scouter` là vùng của lane `claude-scouter-seed`, đang có chủ.
+Lỗi này có TRƯỚC lượt mượn `_code`, nên nó cũng đang đỏ với chính lane đang giữ vùng đó.
+
+**Đóng khi:** `human_action` của gói Scouter nói việc bằng chữ cho người ("nạp lại tiện ích từ
+thư mục mới"), không kèm đường dẫn; và `node tests/build-overview-smoke.mjs` xanh.

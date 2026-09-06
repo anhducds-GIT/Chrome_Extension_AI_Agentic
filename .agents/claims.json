@@ -58,16 +58,16 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_code": {
-      "owner": "claude-scouter-seed",
+      "owner": "claude-flow-active",
       "ai": "Claude",
-      "claimed_at": "2026-09-06T15:17",
-      "task": "SCOUTER-SEED-01 viec 2: khung seed (bridge core, transport, phep ghim)",
+      "claimed_at": "2026-09-06T16:35",
+      "task": "N-10: trang bang phu thuoc dong ho, chan push moi lane",
       "released_at": null,
-      "taken_from": "claude-exec-pushgate",
+      "taken_from": "claude-scouter-seed",
       "taken_by_duc_decision": "2026-09-04",
-      "taken_by": "claude-dieu-phoi",
-      "taken_at": "2026-09-05T09:51",
-      "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
+      "taken_by": "claude-flow-active",
+      "taken_at": "2026-09-06T16:28",
+      "duc_decision": "Duc chot 2026-09-06: cho claude-flow-active muon _code de va N-10; da kiem cay lam viec scripts/ tests/ sach"
     },
     "workers/duc-scouter": {
       "owner": "claude-scouter-seed",
@@ -77,5 +77,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "0be0b2fea529d6a9"
+  "_fingerprint": "6f6dcb4366e629c8"
 }
