@@ -3377,3 +3377,55 @@ mà chính sách đứng của repo là *không cuốn theo commit của ngườ
 HEAD **do commit của lane khác**, không phải của tôi — `node scripts/build-dashboard.mjs && node
 scripts/feature-parity.mjs && node scripts/build-overview.mjs` rồi commit, sau đó push. Đây đúng
 là ca `Y-16` (cổng xuất bản khoá chéo) đang mô tả.
+
+---
+
+## 2026-09-06 · `claude-bang-canduc` — khối "Cần Đức" suy từ dấu trong sổ (đề bài `BANG-CAN-DUC-01`, lượt 1: **cơ chế**)
+
+**Làm gì.** Khối *Cần Đức* trên bảng không còn đọc trường `human_action` nữa. Nó **quét dấu**
+trong ba sổ đã có sẵn — `BACKLOG.md` của từng gói, `IDEAS.md`, `STATUS.md` — gom theo **chuỗi
+việc**, và trong mỗi chuỗi tách **BẤM** với **CHỐT**.
+
+**Dấu, cho người viết sổ.** Đặt ngay trên **dòng của mục**, không có trường mới, không có sổ mới:
+
+```
+@Đức:bấm          việc bấm tay: nạp lại tiện ích, chạy một lượt nghiệm thu
+@Đức:chốt         việc cần Đức nghĩ: đổi luật, thêm quyền, chọn phạm vi
+@Đức:chốt(MÃ)     kèm mã đề bài, để bảng nói được "xong thì mở khoá chuỗi nào"
+```
+
+Viết không dấu (`@Duc:chot`) cũng nhận. **Đóng mục thì dấu đi theo** — gạch ngang, hoặc mở đầu
+tiêu đề bằng `XONG`, hoặc xoá hẳn dòng; cả ba đều làm mục rời bảng mà không ai phải nhớ đi xoá
+dấu. Đó là ràng buộc Đức nêu thẳng, và nó là thứ giết bản cũ.
+
+**Treo bao lâu đo bằng git, không đọc đồng hồ.** Thêm `git.lineDate` vào bộ đọc: ngày commit gần
+nhất chạm **đúng một dòng**. Số ngày treo = hiệu giữa nó và ngày HEAD, cả hai lấy từ git. Bộ đọc
+thiếu đường đo đó thì **NÉM** (`THIEU_LINE_DATE`), không rơi về đồng hồ hệ thống — phụ thuộc giờ
+là sang ngày mới thì mọi lane bị chặn đẩy dù không dữ liệu nào đổi.
+
+**Đo được.** Mỏ neo khớp **10 sổ** trên repo thật (ra 0 là bộ đo hỏng, không phải "không có gì").
+Mục có dấu hôm nay: **0** — đúng như đề bài mô tả cho lượt 1, nên khối hiện rỗng **và tự khai vì
+sao nó rỗng**, kèm số đơn vị còn khai theo cách cũ. Hai lượt sinh trên cùng HEAD giống hệt từng
+byte. Suite bộ sinh 29/29. **Bốn đột biến, cả bốn bị bắt:** bỏ `BACKLOG.md` khỏi tập sổ quét · bỏ
+phép kiểm mục đã đóng · bỏ fail-closed khi thiếu đường đo git · gộp BẤM vào CHỐT.
+
+**Cổng đóng phiên XANH TOÀN BỘ.**
+
+**KHÔNG PUSH ĐƯỢC — và tôi GIỮ khoá `_code`.** `safe-push` từ chối: 10 commit chưa đẩy là của
+**bốn lane khác đang làm dở** (`claude-tach-so` · `claude-scouter-kk` · `claude-retry-law` ·
+`claude-assistant`). Không dùng `--carry`: cả bốn đang giữ khoá và đang chạy, đẩy là khoá cứng
+lịch sử của họ. Ngoài ra `DASHBOARD.md` và `FEATURE-PARITY.md` đang lệch HEAD **do commit của lane
+khác** — `FEATURE-PARITY.md` đòi `_root`, mà `_root` do `claude-tach-so` giữ, nên tôi không sửa
+được chỗ đó. Hai commit của tôi (`87a123d` `73b7463`) đều mang nhãn `Lane: claude-bang-canduc`,
+không để lại commit vô chủ nào.
+
+**Còn mở — lượt 2, brief riêng.** Điền dấu vào các mục đang chờ Đức: `B-19` · `B-11` · `Y-16` ·
+`Y-17` · ba câu về Scouter, cộng bốn trường `human_action` hiện có. Việc đó chạm **năm khoá**
+(ba `BACKLOG.md` của gói + `IDEAS.md` + `STATUS.md` gốc), nên cố ý không gộp vào lượt này.
+
+**Còn mở — hai chỗ nhỏ, đều ngoài khoá `_code`.** Cách đặt dấu hiện chỉ được nói ở **trên chính
+trang bảng** và trong ghi chú mã. Muốn nó vào sổ tay thì phải thêm một dòng vào `AGENTS.md` mục 6
+(`_root`) và `docs/protocols/ORCHESTRATOR.md` (`_docs`) — hai khoá tôi không giữ. Và huy hiệu
+**CHỜ ĐỨC** ở vùng *Công việc hiện tại* cùng ô đếm ở tab *Tổng quan* vẫn đọc `human_action`, nên
+trong thời gian chuyển tiếp chúng có thể đếm khác vùng *Cần Đức*; trang đã nói ra điều đó chứ
+không để Đức tự đoán.
