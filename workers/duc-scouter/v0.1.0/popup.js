@@ -1,4 +1,5 @@
 import { ObserverEngine } from "./observer-engine.js";
+import { validatePairing, TRANSPORT_CONSTANTS } from "./scripts/scouter-transport-loopback.mjs";
 
 const engine = new ObserverEngine();
 const scanButton = document.querySelector("#scan");
@@ -98,6 +99,46 @@ async function copyReport() {
   } catch (error) {
     status.textContent = `Copy failed: ${error.message || error}`;
   }
+}
+
+/* ---- Cửa Bridge: nhận tệp ghép cặp -------------------------------------
+ * Popup KHÔNG tự nối socket. Nó chỉ ghi tệp ghép cặp ĐÃ KIỂM vào kho lưu; service worker theo
+ * dõi kho lưu và nối. Lý do: popup đóng lại là chết, còn service worker thì sống tiếp — một
+ * kết nối mở từ popup sẽ đứt ngay khi Đức bấm ra chỗ khác.
+ * Kiểm ngay tại đây bằng CHÍNH hàm mà transport dùng, nên kho lưu không bao giờ chứa một tệp
+ * ghép cặp hỏng. */
+const pairingInput = document.querySelector("#pairing-file");
+const bridgeState = document.querySelector("#bridge-state");
+
+const BRIDGE_TEXT = {
+  connected: "Đã nối Bridge.",
+  disconnected: "Chưa nối được máy chủ Bridge. Bật máy chủ rồi thử lại.",
+  unpaired: "Chưa ghép cặp. Chọn tệp ghép cặp bên dưới."
+};
+
+pairingInput.addEventListener("change", savePairing);
+renderBridgeState();
+
+async function renderBridgeState() {
+  const stored = await chrome.storage.local.get([TRANSPORT_CONSTANTS.STATUS_STORAGE_KEY]);
+  const status = stored?.[TRANSPORT_CONSTANTS.STATUS_STORAGE_KEY];
+  bridgeState.textContent = BRIDGE_TEXT[status?.status] || BRIDGE_TEXT.unpaired;
+}
+
+async function savePairing() {
+  const file = pairingInput.files?.[0];
+  if (!file) return;
+  let pairing;
+  try {
+    pairing = validatePairing(JSON.parse(await file.text()));
+  } catch (error) {
+    /* Mã lỗi tiếng Anh, câu cho người đọc tiếng Việt — luật vàng 5. */
+    bridgeState.textContent = `Tệp ghép cặp không dùng được (${String(error?.message || error).split(":")[0]}).`;
+    return;
+  }
+  await chrome.storage.local.set({ [TRANSPORT_CONSTANTS.PAIRING_STORAGE_KEY]: pairing });
+  bridgeState.textContent = `Đã lưu ghép cặp cho 127.0.0.1:${pairing.port}. Đang nối…`;
+  window.setTimeout(renderBridgeState, 1500);
 }
 
 function setBusy(isBusy, message) {

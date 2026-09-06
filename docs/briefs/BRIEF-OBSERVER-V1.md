@@ -11,8 +11,8 @@ Chỗ đặt, mục đích và bất biến số một đã quyết — executor
 
 ## 1. Đang có gì — đo thật, không phỏng đoán
 
-`manifest.json` · `popup.html` · `popup.css` · `popup.js` · `observer-engine.js` ở **gốc repo**,
-tổng ~13KB, **không ai sửa từ 18/08**. Một phép ghim: `tests/observer-engine-smoke.mjs`.
+`manifest.json` · `popup.html` · `popup.css` · `popup.js` · `observer-engine.js` — lúc viết brief này ở **gốc repo**, từ 06/09 đã dọn về `workers/duc-scouter/v0.1.0/` (ADR-0013) —
+tổng ~13KB, **không ai sửa từ 18/08**. Một phép ghim: `workers/duc-scouter/v0.1.0/tests/observer-engine-smoke.mjs`.
 Quyền: `["debugger"]`, không có `host_permissions`.
 
 `ObserverEngine` làm được bốn việc:

@@ -50,7 +50,7 @@ chuyển vẫn ra lịch sử cũ · không còn file `observer-*` hay `scouter-
 
 ## 1. Việc ① — PHÉP ĐO, và nó đi trước mọi thứ
 
-> **XONG 06/09 — ĐẠT. Đừng làm lại.** Công cụ: `node scripts/scouter-input-trust-probe.mjs`
+> **XONG 06/09 — ĐẠT. Đừng làm lại.** Công cụ: `node workers/duc-scouter/v0.1.0/scripts/scouter-input-trust-probe.mjs`
 > (tự dựng trang thử trong thư mục tạm, không đụng trang thật). Kết quả trên Chrome 152: bấm qua
 > `chrome.debugger` cho `isTrusted: true` và mở được cổng hoạt động; `element.click()` — cách
 > **cả ba worker đang dùng** — thì không. Số đo đầy đủ kèm ba cái bẫy gặp thật: mục 4.1.1 của
@@ -86,7 +86,7 @@ Ghi kết quả thành một mục ngắn trong bảng kiểm kê (mục 4.1), k
 
 `ADR-0009` mục ⑸ định nghĩa seed là bộ nhỏ nhất biết **ba việc**:
 
-1. **quan sát** — đã có, bốn phép dò trong `scripts/observer-probes.mjs`;
+1. **quan sát** — đã có, bốn phép dò trong `workers/duc-scouter/v0.1.0/scripts/observer-probes.mjs`;
 2. **báo cáo qua Bridge** — **chưa có, đây là lỗ lớn nhất**;
 3. **tự nạp lại mình** — chưa có, gần như miễn phí.
 

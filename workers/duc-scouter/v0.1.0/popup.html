@@ -3,16 +3,24 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Extension Observer V0</title>
+    <title>Duc Scouter (seed v0.1)</title>
     <link rel="stylesheet" href="popup.css">
   </head>
   <body>
     <main>
       <header>
-        <h1>Extension Observer V0</h1>
-        <p>Read-only debug-target discovery.</p>
+        <h1>Duc Scouter</h1>
+        <p>Quan sát trang · báo cáo qua Bridge · tự nạp lại mình.</p>
       </header>
 
+      <section aria-labelledby="bridge-heading">
+        <h2 id="bridge-heading">Cửa Bridge</h2>
+        <p id="bridge-state" role="status">Đang đọc trạng thái…</p>
+        <input id="pairing-file" type="file" accept=".json,application/json">
+        <p class="meta">Chọn tệp ghép cặp do bộ cài Bridge V1 tạo. Token chỉ nằm trong extension trên máy này, không gửi đi đâu.</p>
+      </section>
+
+      <h2>Quan sát</h2>
       <button id="scan" type="button">Scan Targets</button>
       <p id="status" role="status">Ready.</p>
 

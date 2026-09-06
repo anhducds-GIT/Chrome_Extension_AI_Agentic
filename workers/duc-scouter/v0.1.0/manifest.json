@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Duc Scouter (seed v0.1)",
+  "version": "0.1.0",
+  "description": "Bo khung tuong tac tu hoan thien: quan sat trang, bao cao qua Bridge, va tu nap lai chinh no.",
+  "minimum_chrome_version": "120",
+  "permissions": ["debugger", "storage"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "background": {
+    "service_worker": "scouter-background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Duc Scouter",
+    "default_popup": "popup.html"
+  }
+}

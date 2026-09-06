@@ -1242,7 +1242,7 @@ tabs.getZoom · .setZoom · .onZoomChange
 | Read-only DOM diagnostics without the owner's eyes | **PROVEN** | `diagnostics.dom_probe` — `bridge-core.js:524` |
 | Zoom control as a viewport lever | **PROVEN** | `tabs.setZoom` / `getZoom` / `onZoomChange` |
 | **`chrome.debugger` / any CDP in a worker** | **NOT YET IMPLEMENTED** | zero hits in `workers/` |
-| CDP read-only probe (getTargets → attach → `Runtime.evaluate` → `DOM.getDocument` → detach) | **PARTIAL** | root `observer-engine.js` — "Extension Observer V0", `permissions: ["debugger"]`, protocol `"1.3"`. Deliberately read-only; never dispatches input. |
+| CDP read-only probe (getTargets → attach → `Runtime.evaluate` → `DOM.getDocument` → detach) | **PARTIAL** | `workers/duc-scouter/v0.1.0/observer-engine.js` (lúc đo ở gốc repo) — "Extension Observer V0", `permissions: ["debugger"]`, protocol `"1.3"`. Deliberately read-only; never dispatches input. |
 | Local filesystem / subprocess / DB / scheduler / watcher / Git | **NOT YET IMPLEMENTED** | host does 3 × `readFileSync` of its own pairing file, nothing else |
 | Native Messaging | **NOT USED AT ALL** | zero hits repo-wide |
 | `userScripts`, `offscreen`, `dNR`, `webRequest`, `tabCapture`, `cookies`, `webNavigation` | **NOT YET IMPLEMENTED** | not in any manifest |

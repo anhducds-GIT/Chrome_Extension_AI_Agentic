@@ -5,11 +5,11 @@
   "type": "module",
   "description": "Local-only Chrome extension workers. Tests are dependency-free Node scripts.",
   "scripts": {
-    "test": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs && node workers/duc-auto-gemini/v0.1.0/tests/run-all.mjs && node workers/duc-auto-gemini/v0.2.0/tests/run-all.mjs && node workers/duc-auto-gg-flow-video/v0.1.0/tests/run-all.mjs && node tests/repo-structure-smoke.mjs && node tests/observer-engine-smoke.mjs && node tests/observer-probes-smoke.mjs && node tests/scouter-input-trust-smoke.mjs && node tests/session-check-utf8-paths.mjs && node tests/build-dashboard-smoke.mjs && node tests/feature-parity-smoke.mjs && node tests/check-bootstrap-smoke.mjs && node tests/build-overview-smoke.mjs && node tests/claim-smoke.mjs && node tests/harness-smoke.mjs && node tests/what-next-smoke.mjs && node tests/role-firewall-smoke.mjs && node tests/state-check-smoke.mjs && node tests/push-gate-artifact-smoke.mjs && node tests/eol-lf-smoke.mjs && node tests/handoff-smoke.mjs && node tests/bang-ba-cua-smoke.mjs && node scripts/backlog-check.mjs && node tests/backlog-check-smoke.mjs",
+    "test": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs && node workers/duc-auto-gemini/v0.1.0/tests/run-all.mjs && node workers/duc-auto-gemini/v0.2.0/tests/run-all.mjs && node workers/duc-auto-gg-flow-video/v0.1.0/tests/run-all.mjs && node tests/repo-structure-smoke.mjs && node workers/duc-scouter/v0.1.0/tests/run-all.mjs && node tests/session-check-utf8-paths.mjs && node tests/build-dashboard-smoke.mjs && node tests/feature-parity-smoke.mjs && node tests/check-bootstrap-smoke.mjs && node tests/build-overview-smoke.mjs && node tests/claim-smoke.mjs && node tests/harness-smoke.mjs && node tests/what-next-smoke.mjs && node tests/role-firewall-smoke.mjs && node tests/state-check-smoke.mjs && node tests/push-gate-artifact-smoke.mjs && node tests/eol-lf-smoke.mjs && node tests/handoff-smoke.mjs && node tests/bang-ba-cua-smoke.mjs && node scripts/backlog-check.mjs && node tests/backlog-check-smoke.mjs",
     "test:worker": "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs",
-    "test:observer": "node tests/observer-engine-smoke.mjs && node tests/observer-probes-smoke.mjs",
-    "test:scouter": "node tests/scouter-input-trust-smoke.mjs",
-    "scouter:input-probe": "node scripts/scouter-input-trust-probe.mjs",
+    "test:observer": "node workers/duc-scouter/v0.1.0/tests/run-all.mjs",
+    "test:scouter": "node workers/duc-scouter/v0.1.0/tests/run-all.mjs",
+    "scouter:input-probe": "node workers/duc-scouter/v0.1.0/scripts/scouter-input-trust-probe.mjs",
     "test:gate-paths": "node tests/session-check-utf8-paths.mjs",
     "dashboard": "node scripts/build-dashboard.mjs",
     "test:dashboard": "node tests/build-dashboard-smoke.mjs",
@@ -33,6 +33,8 @@
     "test:backlog": "node scripts/backlog-check.mjs",
     "bang": "node bang-trang-thai/loi.mjs",
     "bang:may-chu": "node bang-trang-thai/may-chu.mjs",
-    "test:bang": "node tests/bang-ba-cua-smoke.mjs"
+    "test:bang": "node tests/bang-ba-cua-smoke.mjs",
+    "scouter:mutation": "node workers/duc-scouter/v0.1.0/scripts/scouter-mutation-check.mjs",
+    "scouter:bridge-live": "node workers/duc-scouter/v0.1.0/scripts/scouter-bridge-live-check.mjs"
   }
 }

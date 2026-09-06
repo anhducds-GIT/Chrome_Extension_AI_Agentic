@@ -125,7 +125,7 @@ vàng phiền, thì mười năng lực trên rút xuống còn ba.
 
 **⑵ Món số 10 đọc được mọi tab đang mở, gồm mọi trang Đức đang đăng nhập.** ADR-0009 đã ghi
 thẳng cái mất này. Tôi chỉ thêm một điều đo được: **chính sách che dữ liệu vẫn đang treo** —
-`scripts/observer-probes.mjs` tự khai `status: "ĐỀ XUẤT — Đức chưa chốt"` **[ĐỌC]**. Xây tới
+`workers/duc-scouter/v0.1.0/scripts/observer-probes.mjs` tự khai `status: "ĐỀ XUẤT — Đức chưa chốt"` **[ĐỌC]**. Xây tới
 món 10 mà chưa gỡ treo là ghi dữ liệu đăng nhập xuống đĩa theo một luật chưa ai duyệt.
 
 **⑶ Kiểm kê này KHÔNG nói Scouter đáng làm hơn 31 mục nợ đang mở.** Nó chỉ nói Scouter *làm được
@@ -172,7 +172,7 @@ Nguồn tài liệu Chrome đã tra (bắt buộc theo mục 7 của brief):
 | `duc-auto-chatgpt/v0.1.0` | 35 | 13.719 | 23 |
 | `duc-auto-gemini/v0.2.0` | 34 | 10.837 | 19 |
 | `duc-auto-gg-flow-video/v0.1.0` | 34 | 12.111 | 21 |
-| Observer ở gốc repo (`observer-engine.js` + `popup.js` + `scripts/observer-probes.mjs`) | 3 | 727 | — |
+| Observer ở gốc repo (`observer-engine.js` + `popup.js` + `workers/duc-scouter/v0.1.0/scripts/observer-probes.mjs`) | 3 | 727 | — |
 
 Hợp của ba tập method Bridge: **25**.
 
@@ -264,7 +264,7 @@ hôm nay không làm được?"*. Không trả lời được → `KHÔNG CẦN`
 | Cách | Chuyện gì xảy ra | Trang biết được không | Repo dùng chưa |
 |---|---|---|---|
 | **① Sự kiện giả lập trong trang** | `element.click()`, `new KeyboardEvent(...)`, `document.execCommand("insertText")` | **Biết.** Sự kiện mang cờ `isTrusted: false`. Trang chỉ cần một dòng là lọc sạch. | **Đang dùng, và chỉ dùng cái này** — **[ĐỌC]** `content.js` nhánh Gemini dòng 188 · 196 · 413 · 426 · 831 |
-| **② Chuột và bàn phím thật của trình duyệt** | `Input.dispatchMouseEvent` · `Input.dispatchKeyEvent` · `Input.insertText` qua `chrome.debugger` | Sự kiện sinh ra từ tầng trình duyệt chứ không từ trong trang. Tài liệu nói `isTrusted: true`, **nhưng xem cảnh báo bên dưới**. | **CHƯA — [ĐO]** ba chuỗi này chỉ xuất hiện ở `tests/observer-probes-smoke.mjs` và `scripts/observer-mutation-check.mjs`, đều là **ca kiểm âm** (kiểm rằng lệnh ghi bị TỪ CHỐI). Không có ở code sản phẩm. |
+| **② Chuột và bàn phím thật của trình duyệt** | `Input.dispatchMouseEvent` · `Input.dispatchKeyEvent` · `Input.insertText` qua `chrome.debugger` | Sự kiện sinh ra từ tầng trình duyệt chứ không từ trong trang. Tài liệu nói `isTrusted: true`, **nhưng xem cảnh báo bên dưới**. | **CHƯA — [ĐO]** ba chuỗi này chỉ xuất hiện ở `workers/duc-scouter/v0.1.0/tests/observer-probes-smoke.mjs` và `workers/duc-scouter/v0.1.0/scripts/observer-mutation-check.mjs`, đều là **ca kiểm âm** (kiểm rằng lệnh ghi bị TỪ CHỐI). Không có ở code sản phẩm. |
 | **③ Người thật bấm** | — | — | Đây là cái Scouter tồn tại để thay |
 
 **Cảnh báo, và nó quan trọng:** repo này **đã nghiên cứu đúng câu hỏi này** ngày 28/08 —
@@ -292,7 +292,7 @@ cú bấm của tay người — trên Chrome 152.0.7977.76, đo ngày 06/09/202
 Chạy lại:
 
 ```bash
-node scripts/scouter-input-trust-probe.mjs
+node workers/duc-scouter/v0.1.0/scripts/scouter-input-trust-probe.mjs
 ```
 
 Nó tự dựng trang thử và một hồ sơ Chrome trống trong thư mục tạm, đo, rồi xoá. **Không đụng
@@ -457,7 +457,7 @@ trong này có **năng lực thật chưa được bóc ra core**.
 
 ## 5.3 Chính sách che dữ liệu — treo từ ADR-0007, chặn ba dòng của trục B
 
-`scripts/observer-probes.mjs` tự khai `status: "ĐỀ XUẤT — Đức chưa chốt"` **[ĐỌC]**. Ba dòng
+`workers/duc-scouter/v0.1.0/scripts/observer-probes.mjs` tự khai `status: "ĐỀ XUẤT — Đức chưa chốt"` **[ĐỌC]**. Ba dòng
 trục B phụ thuộc vào nó: `Storage`/`CacheStorage`/`Database` của CDP, và `cookies` của extension.
 
 Xếp `SEED v1` thì hàm ý sẽ làm; xếp `KHÔNG CẦN` thì sai vì nó có giá trị thật. Nên: **`SEED v1`
