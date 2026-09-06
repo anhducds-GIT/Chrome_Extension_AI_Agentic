@@ -816,3 +816,23 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
 - **ĐÓNG N-06** · 2026-09-06 · lane `claude-assistant` · `BRIEF-SCOUTER-SEED-01` mục 2 nay là **bảng đo `md5sum` thật của năm file `bridge-*.js`** thay cho câu "6 file giống hệt nhau", kèm câu lệnh để lượt sau tự đo lại và một câu dặn thẳng rằng chép bản Gemini là đẻ ra bản trôi dạt thứ tư. Đo lại 06/09: đúng **một** file (`bridge-pairing-core.js`) giống hệt cả ba worker.
 - **ĐÓNG N-10** · 2026-09-06 · lane `claude-assistant` · cả hai điều kiện đạt. ⑴ `BRIEF-K2-KHOA-RANH-01`: tín hiệu đổi tên thành **"chưa thấy dấu vết trong repo"**, mục 2b mới **cấm nhả khoá hộ lane khác dựa trên phép đo** (ba đường hợp lệ), ca `claude-codex-ngan` đánh dấu là **dương giả**, nghiệm thu ghim đúng chữ — in ra "rảnh" thì phép ghim ĐỎ. ⑵ `AGENTS.md` mục 1 có gạch đầu dòng cùng luật đó, đặt cạnh luật "muốn giành vùng thì hỏi Đức".
 - **GHI CHÚ SỔ** · 2026-09-06 · lane `claude-assistant` · ba khối tiêu đề tôi vừa thêm cho `N-06` và `N-10` (*"tiến độ"*, *"đóng"*, *"ĐÓNG"*) là **sai hình dạng** — luật mục 4 của sổ này nói đóng mục là **một dòng `- **ĐÓNG N-xx**` ở cuối**, không phải một khối `##` mới. Khối `##` mới mang lại mã cũ nên bảng đếm nó thành mục đang mở, và bảng đã báo thừa 2 mục nợ trước khi có hai dòng trên. Không sửa khối cũ (luật mục 1) — để lại làm bản ghi. **Đây đúng là ca mà `N-12` nói tới**: sổ miễn khoá không có ai canh hình dạng lúc ghi.
+
+## N-13 · cập nhật 2026-09-06 · HẠ MỨC — có thật, nhưng KHÔNG phải cái Đức gặp
+
+- **đóng khi:** lệnh: đóng cùng lúc với mục `N-13` gốc ở trên — `git grep -n "isProviderUrl" workers/duc-auto-gg-flow-video/v0.1.0/sidepanel.js` không còn trỏ vào cổng của nút phóng to.
+- **Đức báo 06/09:** nút phóng to ở gói Flow Video **đã dùng được**. Nên mục `N-13` ở trên
+  **nói quá**: nó viết như một lỗi đang cắn, thực ra là một lỗi **nằm chờ**.
+- **Đo lại trên `origin/main` cùng ngày, không tin báo cáo:** gói Flow **chỉ có bản vá chẩn
+  đoán** (`7506264`). Cổng vẫn `return window.DacProviderAdapter.isProviderUrl(url)`, và
+  `ORIGIN.urlPatterns` vẫn đòi `^https://labs.google/fx/<locale>tools/flow`. **Không dòng nào
+  của gốc bệnh được sửa.**
+- **Ghép hai điều đó lại thì ra kết luận đúng:** cổng chặt vẫn còn, nhưng nó **cho qua** đúng
+  trang Đức thật sự dùng — trang công cụ Flow. Nó chỉ cắn khi tab đang xem là một trang
+  `labs.google` KHÁC. Nên đây là nợ **mức thấp**, không phải việc chặn đường.
+- **Vì sao vẫn giữ mở thay vì đóng:** `labs.google` là miền chứa nhiều công cụ FX; đứng ở bất kỳ
+  cái nào khác là nút xám không lý do rõ ràng. Cách sửa đã có sẵn và đã chạy ở gói Gemini —
+  thêm `isProviderOrigin` vào adapter rồi cho cổng hỏi câu đó. Điều kiện đóng ở mục gốc giữ nguyên.
+- **Bài học cho chính tôi:** tôi suy ra "gần như chắc chắn dính" từ việc đọc code, và phần đọc
+  code thì **đúng** — cổng đúng là hỏi nhầm câu. Cái tôi suy sai là **mức độ**: từ "code có lỗi"
+  nhảy sang "Đức đang gặp lỗi này" mà không có một phép đo nào nối hai chỗ đó. Đúng loại suy diễn
+  mà nhãn **[DÒ]** ở sổ các gói sinh ra để cảnh báo.

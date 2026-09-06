@@ -443,8 +443,13 @@ nguyên nhân tự khai vào tooltip, gắn lên **cả cụm lẫn từng nút*
 `tests/zoom-control-smoke.mjs` — trích thân hàm thật rồi chạy; đột biến **11/11** bị bắt. Chi tiết
 và cái bẫy tự dính lúc viết nó: `N-14` ở `BACKLOG.md` gốc repo.
 
-**Còn mở.** File test chết **chưa xoá** — xoá file cần Đức duyệt. Gói Flow Video gần như chắc chắn
-dính **cùng gốc bệnh**; không phải vùng tôi, đã ghi ra `N-13` ở `BACKLOG.md` gốc repo.
+**NGHIỆM THU 06/09:** Đức nạp lại tiện ích và xác nhận **nút bấm được**. Đây là phép đo duy nhất
+kết luận được chuyện này — suite không chạm Chrome thật. File test chết **đã xoá**, Đức duyệt cùng
+lượt; suite 91 → 90.
+
+**Gói Flow Video:** Đức báo nút bên đó **cũng dùng được**. Đo lại `origin/main` thì gốc bệnh vẫn
+còn nguyên (chỉ có bản vá chẩn đoán) — nó cho qua đúng trang công cụ Flow mà Đức dùng, và chỉ cắn
+ở trang `labs.google` khác. Đã **hạ mức** `N-13` ở `BACKLOG.md` gốc repo kèm số đo.
 
 ## 2026-09-06 — `claude-gemini-hoan-thien`: đẩy kèm, và một lượt ghi lấn vùng đã được Đức duyệt
 
