@@ -921,3 +921,71 @@ Một lưu ý cho cả ba: đà tăng đo theo **lượt đóng phiên**, không
 
 **Còn mở:** chưa có phép kiểm nào ngăn file phình lại. Nếu Đức không chốt (A)/(B)/(C) thì khoảng
 **5 ngày nữa phải cắt tay lần nữa**, và lần đó cũng sẽ tốn đúng một lượt phiên như lượt này.
+
+## 2026-09-06 — `claude-scouter-do` · `SCOUTER-SEED-01` việc ①: phép đo bấm-như-tay-người ĐẠT
+
+**Làm gì.** Chạy phép đo mà ADR-0010 gọi là *"dòng code đầu tiên của Scouter"*, và EXP-14 (28/08)
+để ngỏ ở mức `MICRO-PROOF REQUIRED`. Câu hỏi một câu: **cú bấm đi qua đường điều khiển của trình
+duyệt có được trang nhìn như cú bấm của người thật không?**
+
+**Kết quả: ĐẠT.** Chrome 152.0.7977.76, đo 06/09 trên trang thử tự sinh trong thư mục tạm —
+không đụng trang thật, không tốn credit.
+
+| Đường bấm | `isTrusted` | Cổng hoạt động (popup) |
+|---|---|---|
+| `dispatchEvent` giả lập trong trang | false | không |
+| `element.click()` — **cách ba worker đang dùng** | false | không |
+| Chuột trình duyệt qua `chrome.debugger` | **true** | **mở được** |
+| Tay người thật | — | **CHƯA ĐO**, không tự động hoá được |
+
+Gõ phím cùng kết quả: `Input.dispatchKeyEvent` cho `keydown` trusted **và** làm ô nhập dài thêm
+thật. `Input.insertText` chạy được nhưng CDP đánh dấu THỬ NGHIỆM nên **không tính điểm**.
+
+**Chỗ đắt nhất của lượt này: đo HAI đường, và chỉ đường thứ hai tính điểm.** Đo bằng phiên CDP
+thẳng là đường dễ, nhưng Scouter không dùng đường đó — nó dùng `chrome.debugger` từ trong một
+extension. Nếu chỉ đo đường dễ thì ta vẫn đang **suy luận** "chắc hai đường giống nhau", mà suy
+luận đúng là thứ EXP-14 đã có sẵn. Nên phép đo dựng hẳn một extension thật, cài vào một hồ sơ
+Chrome trống, rồi bấm từ bên trong nó. Hai đường ra **giống hệt nhau** — giờ đó là số đo, không
+phải suy luận.
+
+**Ba cái bẫy gặp thật** (chi tiết ở mục 4.1.1 của bảng kiểm kê, ghi để người sau khỏi mất buổi
+chiều): ⑴ `--load-extension` đã **chết từ Chrome 137**, phải đi đường `Extensions.loadUnpacked`
+qua `--remote-debugging-pipe`; ⑵ Chrome chỉ cho **một** khách gỡ lỗi trên một tab, nên đường đo
+trước phải rời tab — đây cũng chính là lý do ADR-0009 mục ⑷ chốt "một Scouter một URL"; ⑶ service
+worker của extension **ngủ ngay sau khi cài** nên không có trong danh sách target, phải mở một
+trang của extension mà gọi.
+
+**Số đo.** Đột biến kiểm phần chấm điểm: **7 mỏ neo khớp, 7/7 con bị bắt, 0 con sống sót.** Hai
+con sống sót ở vòng đầu và cả hai đều dạy được một điều:
+
+- Nới `isTrusted === true` thành `!== false` **sống sót toàn bộ mục ②** của phép ghim, vì một
+  tiêu chí bên cạnh đỏ hộ nó. Bản nới lỏng đó chấm **ĐẠT cho một trang không hề thấy cú bấm nào**.
+  Chữa bằng cách soi **từng tiêu chí riêng**, không chỉ soi tổng — chấm theo tổng che mất tiêu
+  chí hỏng, vì chỉ cần một tiêu chí đỏ là tổng đã đỏ.
+- Con thứ hai hoá ra là **đột biến giả** (một `else {}` rỗng). Đột biến không đổi hành vi thì
+  không chứng minh gì cả; đã thay bằng con thật.
+
+**Sự cố ngoài phạm vi, đã vá.** `origin/main` đang **ĐỎ với mọi lane** khi tôi mở phiên. Nguyên
+nhân: commit `c2e5a2d` (lane `claude-cat-goc`, ADR-0008) dời 62 mục cũ của `HANDOFF.md` sang
+`HANDOFF-ARCHIVE-01.md`, mà **bộ đếm sự cố Assistant chỉ đọc `HANDOFF.md`** — nên cả 4 dòng sự cố
+biến mất, số đếm về 0, `tests/build-overview-smoke.mjs` đỏ, và vì bảng nằm trong khối `generators`
+nên cổng đóng phiên đỏ theo. Lane đó đã trả khoá và đẩy xong, để lại vùng đỏ.
+
+Vá tại **gốc**, không vá triệu chứng: bộ đếm là bộ **cộng dồn** nên nó phải đọc cả phần đã dời đi,
+và nó **đi theo con trỏ** ADR-0008 bất biến ⑶ bắt để lại trong `HANDOFF.md` thay vì gõ cứng tên
+file — nên lần cắt sau (`-02`, `-03`…) không phải sửa lại chỗ này. Kèm 4 phép ghim mới, trong đó
+một phép ghim đúng cái "không có con trỏ thì KHÔNG được tự đoán tên file lưu trữ".
+
+Đây là ca "đếm ra 0" thứ n của repo, và lần này nó **nguy hiểm hơn thường lệ**: `0 sự cố` đọc y
+hệt `sạch sẽ`. Bộ đếm mù trông giống hệt một repo khoẻ mạnh.
+
+**Còn mở — việc ② CHƯA LÀM.** Khung seed (quan sát · báo cáo qua Bridge · tự nạp lại mình) chưa
+động tới. Cửa Bridge ở nhánh Gemini là **1.798 dòng** trong 5 file, và mục 5 của brief đòi mỗi
+khả năng một phép ghim riêng cộng một đột biến kiểm — đó là một lượt phiên riêng, không phải phần
+đuôi của lượt này. Phạm vi `SEED v0.1` không đổi: ① ĐẠT nên **thứ tự 24 mục còn lại giữ nguyên**,
+không phải xếp lại.
+
+**Ba câu đừng ai bỏ qua khi đọc kết quả ĐẠT ở trên:** `isTrusted: true` **không** đồng nghĩa
+"trang không phát hiện được" — Chrome vẫn hiện dải băng cảnh báo, và ADR-0009 đã ghi là không giấu
+được. Đo trên **một** bản Chrome, **một** máy: chạy lại `node scripts/scouter-input-trust-probe.mjs`
+khi lên bản Chrome mới. Và cú bấm **của tay người thật** vẫn chưa đo.

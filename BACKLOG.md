@@ -545,3 +545,47 @@ tuần có 19 nhóm cho 19 mục, tức là không phân loại gì cả.
 - **KHÔNG phải cách sửa:** bỏ miễn khoá cho ba file đó. Miễn khoá tồn tại vì không có nó thì
   không lane nào ghi Log được — đo ngày 02/09: 19% lượt nhận `_root` chỉ để làm một việc hành
   chính rồi trả ngay.
+
+## N-06 · Bốn trong năm file `bridge-*.js` KHÔNG giống nhau giữa ba worker — đề bài Scouter đang tin ngược lại
+
+- **nhóm:** so-sach
+- **đóng khi:** `BRIEF-SCOUTER-SEED-01.md` mục 2 sửa lại câu về sáu file, hoặc có một dòng đo trong bảng kiểm kê nói rõ file `bridge-*.js` nào bóc sạch được
+- **mở:** 2026-09-06 · lane `claude-scouter-do`
+- **vùng:** `_docs`
+- **vì sao:** `BRIEF-SCOUTER-SEED-01.md` mục 2 dặn lane làm việc ② *"đọc `bridge-*.js` trước,
+  đừng phát minh lại"*, rồi đưa lý do: *"Bảng kiểm kê đo được 6 file **giống hệt nhau từng byte**
+  ở cả ba worker — đó là bằng chứng đọc được rằng chúng không dính nhà cung cấp."* Hai câu đó
+  đứng cạnh nhau nên đọc ra thành *"năm file `bridge-*.js` bóc sang dùng lại được"*. **Không phải
+  vậy.**
+- **đo được, `md5sum` 06/09** — trong năm file `bridge-*.js`, **đúng một** file giống hệt cả ba:
+
+  | file | giống hệt cả ba? |
+  |---|---|
+  | `bridge-pairing-core.js` (43 dòng) | **có** |
+  | `bridge-core.js` (798–1022 dòng) | không — **ba bản khác nhau** |
+  | `bridge-transport-loopback.js` (498–945 dòng) | không — **ba bản khác nhau** |
+  | `bridge-router-core.js` | không — ChatGPT lệch |
+  | `bridge-proposal-core.js` | không — ChatGPT lệch |
+
+  Chạy lại:
+
+  ```bash
+  cd workers && for f in bridge-core.js bridge-pairing-core.js bridge-proposal-core.js \
+      bridge-router-core.js bridge-transport-loopback.js; do
+    md5sum duc-auto-gemini/v0.2.0/$f duc-auto-chatgpt/v0.1.0/$f duc-auto-gg-flow-video/v0.1.0/$f
+  done
+  ```
+
+- **bảng kiểm kê KHÔNG sai — brief đọc gộp hai bảng.** Sáu file giống hệt nhau nằm ở mục 3.3, và
+  chỉ **một** trong sáu là `bridge-*` (`bridge-pairing-core.js`); năm cái kia là
+  `attempt-identity-core.js` · `audit-chain-core.js` · `reconciliation-core.js` ·
+  `recreate-core.js` · `run-state-core.js`. Bốn file `bridge-*` còn lại nằm ở mục **3.4** —
+  bảng có tiêu đề là *"năng lực có ở cả ba nhưng ba bản đã trôi khác nhau"*, và mục đó tự gọi
+  mình là **"danh sách đắt nhất"**.
+- **vì sao nó đáng vá chứ không phải chuyện chữ nghĩa:** lane làm việc ② sẽ mở `bridge-core.js`
+  mong thấy một file trung tính bóc sang là chạy, và gặp **ba bản đã trôi khác nhau** — đúng cái
+  bệnh ADR-0009 mục ⑵ dựng ra để tránh. Chọn nhầm một bản rồi chép, là Scouter thành **bản trôi
+  thứ tư**. Việc thật ở đây là **bóc lấy phần khung** (mục 3.4 ghi: `registryEntry` giống nhau,
+  nội dung từng method dính nhà cung cấp), không phải chép file.
+- **KHÔNG phải cách sửa:** đi hợp nhất ba bản `bridge-core.js` trong lượt này. Đó là việc lớn,
+  chưa ai chốt, và nó không nằm trong `SEED v0.1`.
