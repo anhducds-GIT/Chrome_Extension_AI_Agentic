@@ -139,6 +139,28 @@
     return Boolean(url && ORIGIN.urlPatterns.some((pattern) => pattern.test(url)));
   }
 
+  // HAI CAU HOI KHAC NHAU, va gop chung lam hong nut phong to (N-13).
+  //
+  //   isProviderUrl    — "mot RUN co duoc phep go vao tab nay khong?" Doi dung
+  //                      MAT trang cong cu Flow. Hoi sai la go prompt vao cho
+  //                      khong phai Flow, nen no co y chat.
+  //   isProviderOrigin — "tab nay co dang o tren Flow khong?" Do la tat ca thu
+  //                      mot nut trang tri o tang tab nhu Chrome zoom can biet.
+  //
+  // Nut phong to chi goi `chrome.tabs.setZoom`: khong gui gi, khong go gi. Truoc
+  // ban nay no hoi cau CHAT cua runner, nen no tu xam tren moi trang khac trong
+  // `labs.google` — mot mien con chua nhieu cong cu FX khac. Nhanh ChatGPT, noi
+  // nut nay chay tot, hoi dung cau origin. Van doi `https` + dung host, nen no
+  // KHONG mo duong zoom nham cua so.
+  function isProviderOrigin(url) {
+    try {
+      const parsed = new URL(String(url || ""));
+      return parsed.protocol === "https:" && ORIGIN.hosts.includes(parsed.hostname);
+    } catch (_) {
+      return false;
+    }
+  }
+
   function surface(url) {
     try {
       const parsed = new URL(url);
@@ -619,6 +641,7 @@
     ORIGIN,
     SURFACE,
     isProviderUrl,
+    isProviderOrigin,
     surface,
     surfaceAllowed,
     composerScope,

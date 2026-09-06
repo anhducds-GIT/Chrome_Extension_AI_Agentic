@@ -221,7 +221,22 @@ for (const list of [adapter.SELECTORS.composer, adapter.SELECTORS.send, adapter.
 assert.ok(adapter.securityBlockerPattern.test("verify you are human"));
 
 const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
-assert.equal([...sidepanel.matchAll(/DacProviderAdapter\.isProviderUrl\(/g)].length, 2);
+// N-13: HAI cau hoi khac nhau, va so dem tach doi tu 2026-09-07.
+//   isProviderUrl    — cong cua RUNNER ("mot run co duoc go vao tab nay khong").
+//                      Con DUNG MOT cho goi: cho dong tab truoc khi chay.
+//   isProviderOrigin — cong cua NUT PHONG TO ("tab nay co dang o tren Flow
+//                      khong"). Nut do chi goi chrome.tabs.setZoom.
+// Truoc ban nay ca hai cho cung hoi cau chat cua runner, nen nut phong to tu
+// xam tren moi trang labs.google khac. Hanh vi day du ghim o
+// tests/zoom-control-smoke.mjs; hai con so nay chi giu cho khong ai lang le
+// gop hai cau hoi lai lan nua.
+assert.equal([...sidepanel.matchAll(/DacProviderAdapter\.isProviderUrl\(/g)].length, 1, "chi con cong cua runner duoc hoi isProviderUrl");
+assert.equal([...sidepanel.matchAll(/DacProviderAdapter\.isProviderOrigin\(/g)].length, 1, "cong cua nut phong to phai hoi isProviderOrigin");
+assert.equal(adapter.isProviderOrigin("https://labs.google/fx/tools/whisk"), true, "mot cong cu FX khac van la host Flow");
+assert.equal(adapter.isProviderOrigin("https://flow.google.com/settings"), true);
+assert.equal(adapter.isProviderOrigin("https://labs.google.evil.com/fx/tools/flow"), false, "host gia phai bi tu choi");
+assert.equal(adapter.isProviderOrigin("http://labs.google/fx/tools/flow"), false, "http khong phai https");
+assert.equal(adapter.isProviderOrigin(""), false);
 const html = fs.readFileSync(new URL("sidepanel.html", root), "utf8");
 assert.ok(html.indexOf('<script src="provider-adapter.js"></script>') < html.indexOf('src="sidepanel.js"'));
 

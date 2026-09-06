@@ -4903,8 +4903,15 @@
   const RUN_SPLIT_STORAGE_KEY = "dac_run_split_ratio";
   let runSplitRatio = 0.5;
 
+  // Cố ý dùng `isProviderOrigin`, KHÔNG phải `isProviderUrl` (N-13). Nút phóng
+  // to chỉ gọi `chrome.tabs.setZoom` — không gửi gì, không gõ gì — nên nó chỉ
+  // cần biết tab có đang ở trên Flow hay không. `isProviderUrl` là câu hỏi của
+  // runner ("một run có được phép gõ vào tab này không") nên nó đòi đúng mặt
+  // trang công cụ; hỏi nhầm câu làm nút tự xám trên mọi trang `labs.google`
+  // khác, mà miền đó còn chứa nhiều công cụ FX. Đổi dòng này về `isProviderUrl`
+  // thì `tests/zoom-control-smoke.mjs` ĐỎ.
   function isChatGPTUrl(url) {
-    return window.DacProviderAdapter.isProviderUrl(url);
+    return window.DacProviderAdapter.isProviderOrigin(url);
   }
 
   function matchesZoomLevel(actualZoom, targetLevel, epsilon = ZOOM_EPSILON) {
