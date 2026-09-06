@@ -1085,11 +1085,27 @@ export const SU_CO_ASSISTANT = [
 const NHAN_SU_CO = "AssistantEvent:";
 const SU_CO_LA = "UNKNOWN";
 
+/* Con trỏ sang file lưu trữ. ADR-0008 cắt đuôi `HANDOFF.md` ngày 06/09 và dời phần cũ sang
+ * `HANDOFF-ARCHIVE-01.md`; bất biến ⑶ của nó bắt để lại một con trỏ đọc được ngay trong
+ * `HANDOFF.md`. Bộ đếm này đi theo đúng con trỏ đó thay vì gõ cứng tên file, nên lần cắt sau
+ * (`-02`, `-03`…) không phải sửa lại chỗ này. */
+const CON_TRO_LUU_TRU = /HANDOFF-ARCHIVE-\d+\.md/g;
+
 export function readAssistantEvents(deps) {
   const dem = new Map(SU_CO_ASSISTANT.map(([token]) => [token, 0]));
   dem.set(SU_CO_LA, 0);
   let text;
   try { text = deps.readFile("HANDOFF.md"); } catch { text = ""; }
+  /* ĐÂY LÀ BỘ ĐẾM CỘNG DỒN, nên nó phải đọc CẢ phần đã dời đi. Không đọc thì cắt đuôi
+   * `HANDOFF.md` sẽ ÂM THẦM đưa mọi số đếm về 0 — và "0 sự cố" đọc y hệt "sạch sẽ" trong khi
+   * thật ra là "mù". Đúng chuyện đó xảy ra ngày 06/09: commit c2e5a2d dời 4 dòng sự cố sang
+   * file lưu trữ, bộ đếm ra 0, và cổng đóng phiên ĐỎ với MỌI lane trên `origin/main`. */
+  const daDoc = new Set(["HANDOFF.md"]);
+  for (const ten of String(text).match(CON_TRO_LUU_TRU) ?? []) {
+    if (daDoc.has(ten)) continue;
+    daDoc.add(ten);
+    try { text += "\n" + deps.readFile(ten); } catch { /* con trỏ trỏ vào chỗ trống — kệ */ }
+  }
   for (const line of String(text).split(/\r\n|\r|\n/)) {
     if (!line.startsWith(NHAN_SU_CO)) continue;
     const token = line.slice(NHAN_SU_CO.length).trim();

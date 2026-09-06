@@ -1237,6 +1237,44 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   assert.equal(SU_CO_ASSISTANT.reduce((s, [t]) => s + m.get(t), 0), 0,
     "`UNKNOWN` KHONG duoc gop vao ba dong — gop la mot su co chua phan loai bi tinh thanh mot loai cu the");
 
+  /* (d2) CẮT ĐUÔI `HANDOFF.md` KHÔNG ĐƯỢC LÀM SỐ ĐẾM VỀ 0 — sự cố thật, 06/09.
+     ADR-0008 dời 62 mục cũ sang `HANDOFF-ARCHIVE-01.md` (commit c2e5a2d). Bộ đếm này khi đó
+     chỉ đọc `HANDOFF.md`, nên cả bốn dòng sự cố biến mất, mục (a) ở trên ĐỎ, và vì bảng nằm
+     trong khối `generators` nên cổng đóng phiên ĐỎ với MỌI lane trên `origin/main`.
+     Đây là bộ đếm CỘNG DỒN: "0 sự cố" đọc y hệt "sạch sẽ" trong khi thật ra là "mù" — đúng
+     cái bẫy mục (e) bên dưới cảnh báo, chỉ khác là nó tới từ phía dữ liệu. */
+  {
+    const luuTru = "HANDOFF-ARCHIVE-01.md";
+    const conTro = `> Lịch sử cũ hơn đã dời sang [\`${luuTru}\`](${luuTru}) — cùng thư mục.`;
+    const cu = ["AssistantEvent: ROLE-DRIFT", "AssistantEvent: DASHBOARD-STALE"].join(CRLF);
+
+    const coConTro = readAssistantEvents(bocFile(goc, {
+      "HANDOFF.md": [conTro, "AssistantEvent: ROLE-DRIFT"].join(CRLF),
+      [luuTru]: cu
+    }));
+    const dongCua2 = new Map(coConTro.dong.map((s) => [s.token, s.n]));
+    assert.equal(dongCua2.get("ROLE-DRIFT"), 2,
+      "cat duoi roi thi phai dem CA phan da doi di — khong thi mot lan cat lam moi so ve 0 trong im lang");
+    assert.equal(dongCua2.get("DASHBOARD-STALE"), 1, "su co chi con o file luu tru van phai duoc dem");
+
+    /* Đi theo CON TRỎ, không gõ cứng tên file: không có con trỏ thì không đọc gì thêm. Đây là
+       thứ khiến lần cắt sau (`-02`, `-03`…) không phải sửa lại bộ đếm. */
+    const khongConTro = readAssistantEvents(bocFile(goc, {
+      "HANDOFF.md": "AssistantEvent: ROLE-DRIFT",
+      [luuTru]: cu
+    }));
+    assert.equal(new Map(khongConTro.dong.map((s) => [s.token, s.n])).get("ROLE-DRIFT"), 1,
+      "khong co con tro thi KHONG duoc tu doan ten file luu tru — go cung ten la no chet o lan cat sau");
+
+    /* Con trỏ trỏ vào chỗ trống thì đếm phần đọc được, không được ném cả bảng. */
+    assert.equal(
+      new Map(readAssistantEvents(bocFile(goc, {
+        "HANDOFF.md": [conTro, "AssistantEvent: ROLE-DRIFT"].join(CRLF),
+        [luuTru]: null
+      })).dong.map((s) => [s.token, s.n])).get("ROLE-DRIFT"), 1,
+      "con tro tro vao file khong co thi dem phan doc duoc, khong duoc lam sap ca trang");
+  }
+
   /* (e) TRÊN TRANG: chữ phải là "đã ghi nhận", TUYỆT ĐỐI không phải "0 lỗi".
      Đây là chỗ Đức nêu riêng: `N = 0` chỉ nghĩa la chưa ai ghi nhận, không nghĩa là không có
      sự cố. Viết "0 lỗi" là biến một khoảng trống dữ liệu thành lời tự khen. */
