@@ -390,4 +390,5 @@ nợ hạ tầng vào `BACKLOG.md` gốc repo.
 <!-- HANDOFF-THANG: 2026-09 -->
 
 **Đẩy kèm `--carry`** (ADR-0005, Đức duyệt thường trực). Ba commit của lane khác bị cuốn theo,
-kể tên đủ: `797bb7e` + `46626e2` của **`claude-n07`** · `25b8515` của **`claude-codex-ngan`**.
+kể tên đủ: **`claude-n07`** · **`claude-codex-ngan`** · **`claude-assistant`**. Lượt đẩy cuối gồm 8
+commit, 4 của tôi, 4 của ba lane trên (`373b325..9dd4cbd`).
