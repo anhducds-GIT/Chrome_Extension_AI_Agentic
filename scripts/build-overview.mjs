@@ -892,7 +892,7 @@ export function readLuong(deps) {
     if (!lane) continue;
     const task = String(v?.task ?? "").trim();
     const tu = String(v?.claimed_at ?? "").trim();
-    const khoaGom = `${lane} ${task}`;
+    const khoaGom = JSON.stringify([lane, task]);
     const cu = gom.get(khoaGom);
     // Cùng một việc trải trên nhiều vùng thì lấy mốc SỚM NHẤT — việc bắt đầu lúc ô đầu tiên
     // bị giữ, không phải lúc ô cuối cùng. Lấy mốc muộn nhất là làm việc trông trẻ hơn thật.

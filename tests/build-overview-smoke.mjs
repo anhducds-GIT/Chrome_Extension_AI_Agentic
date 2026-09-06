@@ -1852,8 +1852,12 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   };
 
   const khoiCo = khoiCua(trangCo);
-  assert.ok(khoiCo.some((l) => l.includes("ảnh chụp lúc sinh bảng")),
-    "tieu de khoi PHAI noi thang day la anh chup — mot anh chup cu doi lot so lieu thoi gian thuc la kieu sai te nhat");
+  /* Ghim ĐÚNG DÒNG TIÊU ĐỀ, không ghim cả khối. Bản đầu viết `khoiCo.some(...)` và đột biến
+     kiểm cho thấy nó VÔ NGHĨA: chữ đó cũng nằm trong đoạn ghi chú cuối khối, nên xoá sạch nó
+     khỏi tiêu đề vẫn xanh. Một phép ghim khớp nhầm dòng là một phép ghim không có răng. */
+  const dongTieuDe = khoiCo.find((l) => l.includes('class="sect">Đang làm gì'));
+  assert.ok(dongTieuDe && dongTieuDe.includes("ảnh chụp lúc sinh bảng"),
+    "DONG TIEU DE cua khoi PHAI noi thang day la anh chup — mot anh chup cu doi lot so lieu thoi gian thuc la kieu sai te nhat");
   assert.ok(khoiCo.some((l) => l.includes(LANE_A) ), "lane thu nhat phai co dong cua no");
   assert.ok(khoiCo.some((l) => l.includes(LANE_B)), "lane thu hai cung phai co dong cua no");
   assert.equal(khoiCo.filter((l) => l.includes('class="lr"')).length, 2,
