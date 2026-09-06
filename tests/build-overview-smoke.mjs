@@ -949,8 +949,16 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
      `blocked_if_skipped` vào `STATUS.md` gốc, nên mọi dấu THẬT nằm trong file đó cũng mọc
      dòng phụ theo. Nên số kỳ vọng phải đếm trên CHÍNH bộ đọc đã vá, không phải trên bộ gốc.
      (`readCanDuc` chỉ dùng `model` để đoán tên chuỗi, nên truyền `null` là đủ và rẻ.) */
+  /* ADR-0013: gốc repo KHÔNG còn `STATUS.md` — Scouter đã dọn vào `workers/`. Fixture cũ cắm
+     dấu vào đúng file đó, nên nó chết bằng `fatal: path 'STATUS.md' does not exist in <HEAD>`.
+     Chọn một đơn vị THẬT bất kỳ khác GPT (GPT đã bị fixture kia đổi thứ hạng, cắm chung một
+     file là hai bản vá giẫm lên nhau). Chọn theo thứ tự đường dẫn để lượt nào cũng ra một
+     file, không phụ thuộc thứ tự bảng. */
+  const chuNha = rows.filter((r) => r.statusPath && r.statusPath !== gpt.statusPath)
+    .sort((a, b) => String(a.statusPath).localeCompare(String(b.statusPath)))[0];
+  assert.ok(chuNha, "phai tim duoc mot don vi khac GPT de cam dau — khong con thi fixture nay do nghia");
   const thayFx = {
-    "STATUS.md": themFm(goc.readFile("STATUS.md"), `blocked_if_skipped: "${CAU_CHAN}"`)
+    [chuNha.statusPath]: themFm(goc.readFile(chuNha.statusPath), `blocked_if_skipped: "${CAU_CHAN}"`)
       + `${G}- ${VIEC_CHOT} @Đức:chốt${G}`,
     "IDEAS.md": `${goc.readFile("IDEAS.md")}${G}- ${VIEC_BAM} @Đức:bấm${G}`,
     [gpt.statusPath]: doiHang(goc.readFile(gpt.statusPath), 99)
