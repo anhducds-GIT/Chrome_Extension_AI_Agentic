@@ -40,11 +40,11 @@ bảng này bằng máy thay vì gõ tay.
 Đếm trực tiếp từ `registryEntry({ name: ... })` trong `bridge-core.js` hai bên.
 
 <!-- AUTO:BRIDGE START -->
-**GPT 23 · Gemini 19.**
+**GPT 23 · Gemini 21.**
 
 | Method | GPT | Gemini |
 |---|---:|---:|
-| `chat.read` | ✅ | ❌ |
+| `chat.read` | ✅ | ✅ |
 | `chat.reload` | ✅ | ✅ |
 | `diagnostics.dom_probe` | ✅ | ✅ |
 | `jobs.add` | ✅ | ✅ |
@@ -57,7 +57,7 @@ bảng này bằng máy thay vì gõ tay.
 | `profiles.remove` | ✅ | ❌ |
 | `queue.list` | ✅ | ✅ |
 | `queue.proposal.get` | ✅ | ✅ |
-| `queue.proposal.withdraw` | ✅ | ❌ |
+| `queue.proposal.withdraw` | ✅ | ✅ |
 | `queue.propose` | ✅ | ✅ |
 | `references.add` | ✅ | ✅ |
 | `run.status` | ✅ | ✅ |
@@ -68,7 +68,7 @@ bảng này bằng máy thay vì gõ tay.
 | `system.capabilities` | ✅ | ✅ |
 | `system.ping` | ✅ | ✅ |
 
-**Chỉ GPT có (4):** `chat.read` · `output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`.
+**Chỉ GPT có (2):** `output.set_folder_hint` · `profiles.remove`.
 
 **Chỉ Gemini có (0):** không có.
 <!-- AUTO:BRIDGE END -->
@@ -131,11 +131,10 @@ GPT 35 file `.js` · Gemini 34.
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 6265 | 5145 | 1120 |
+| `sidepanel.js` | 6265 | 5187 | 1078 |
 | `bridge-transport-loopback.js` | 946 | 516 | 430 |
-| `bridge-core.js` | 1023 | 799 | 224 |
+| `bridge-core.js` | 1023 | 829 | 194 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
-| `content.js` | 1186 | 1093 | 93 |
 | `runner-core.js` | 316 | 223 | 93 |
 | `background.js` | 293 | 202 | 91 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
@@ -144,9 +143,10 @@ GPT 35 file `.js` · Gemini 34.
 | `approval-persistence-core.js` | 61 | 25 | 36 |
 | `provider-adapter.js` | 228 | 210 | 18 |
 | `output-location-core.js` | 389 | 373 | 16 |
+| `content.js` | 1186 | 1174 | 12 |
+| `bridge-proposal-core.js` | 380 | 387 | 7 |
 | `halt-instructions-core.js` | 147 | 140 | 7 |
 | `xlsx-codec.js` | 371 | 364 | 7 |
-| `bridge-proposal-core.js` | 380 | 374 | 6 |
 | `chat-readiness-core.js` | 26 | 20 | 6 |
 | `bridge-router-core.js` | 68 | 70 | 2 |
 | `operator-glossary-core.js` | 28 | 28 | 0 |
@@ -171,7 +171,7 @@ Chênh lệch ở đây đáng lo hơn chênh lệch ở UI.
 <!-- AUTO:DEBT-METHODS START -->
 **Nợ method Bridge — [ĐO]:**
 
-- **Gemini nợ GPT (4):** `chat.read` · `output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`.
+- **Gemini nợ GPT (2):** `output.set_folder_hint` · `profiles.remove`.
 - **GPT nợ Gemini (0):** không có.
 <!-- AUTO:DEBT-METHODS END -->
 
