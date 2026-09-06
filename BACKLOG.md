@@ -956,3 +956,27 @@ Lỗi này có TRƯỚC lượt mượn `_code`, nên nó cũng đang đỏ vớ
 
 **Đóng khi:** `human_action` của gói Scouter nói việc bằng chữ cho người ("nạp lại tiện ích từ
 thư mục mới"), không kèm đường dẫn; và `node tests/build-overview-smoke.mjs` xanh.
+
+## N-18 · Sửa code trong một gói worker làm `FEATURE-PARITY.md` lệch — mà sinh lại nó cần `_root`
+
+- **mở:** 2026-09-06 · lane `claude-gemini-hoan-thien`
+- **vùng:** `_root` (`.repo-structure.json` hoặc `scripts/feature-parity.mjs`)
+- **đóng khi:** lệnh: một lane chỉ giữ khoá gói worker của mình **đẩy được** sau khi sửa code làm
+  đổi các con số trong khối `AUTO:` — không phải mượn `_root`, và không phải nhờ lane khác.
+- **thế kẹt, đã gặp HAI LẦN trong ngày 06/09:** sửa code trong `workers/duc-auto-gemini` làm các
+  khối `AUTO:` của `FEATURE-PARITY.md` lệch (số dòng file, số method Bridge). Cổng xuất bản
+  **từ chối đẩy** cho tới khi sinh lại. Nhưng `FEATURE-PARITY.md` **cố ý không** nằm trong danh
+  sách bốn artifact miễn khoá, nên sinh lại nó phải giữ `_root` — mà `_root` là khoá đông nhất
+  repo. Kết quả: **một lane worker không tự đẩy được việc của chính mình.**
+- **vì sao lý do loại trừ nó vẫn ĐÚNG:** mục 2 của file đó là chữ của người, và luật hiện tại bảo
+  vệ đúng chỗ đó. Vấn đề không phải luật sai, mà là luật đang khoá **cả file** trong khi thứ bộ
+  sinh chạm tới chỉ là các khối `AUTO:`.
+- **hai đường, chưa chọn:**
+  ① Cho `feature-parity.mjs` một chế độ **chỉ ghi trong khối `AUTO:`** và khai nó vào danh sách
+    miễn khoá theo chế độ đó. Đúng bản chất, nhưng phải chứng minh nó **không thể** chạm mục 2 —
+    cần một phép ghim đột biến, không chỉ một lời hứa.
+  ② Tách các khối `AUTO:` ra một file riêng và `FEATURE-PARITY.md` chỉ trỏ sang. Đơn giản hơn về
+    cưỡng chế, nhưng làm người đọc phải mở hai file để thấy một bức tranh.
+- **cách chữa cháy hiện tại, và vì sao nó không đủ:** hỏi Đức từng lượt. Đức đã chốt một lượt
+  ngày 06/09 (giữ lần ghi đó, vì gỡ ra thì chặn đẩy CẢ REPO kể cả lane đang giữ `_root`). Nhưng
+  hỏi từng lượt là một cái thuế lặp lại, và nó rơi đúng vào Đức — người bận nhất.
