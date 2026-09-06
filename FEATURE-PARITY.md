@@ -131,20 +131,20 @@ GPT 35 file `.js` · Gemini 34.
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 6265 | 5103 | 1162 |
+| `sidepanel.js` | 6265 | 5110 | 1155 |
 | `bridge-transport-loopback.js` | 946 | 516 | 430 |
 | `bridge-core.js` | 1023 | 799 | 224 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
-| `background.js` | 293 | 167 | 126 |
-| `runner-core.js` | 316 | 203 | 113 |
-| `content.js` | 1186 | 1079 | 107 |
+| `content.js` | 1186 | 1093 | 93 |
+| `runner-core.js` | 316 | 223 | 93 |
+| `background.js` | 293 | 202 | 91 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
 | `resume-core.js` | 189 | 122 | 67 |
 | `output-profile-core.js` | 96 | 45 | 51 |
 | `provider-adapter.js` | 228 | 187 | 41 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
 | `output-location-core.js` | 389 | 373 | 16 |
-| `halt-instructions-core.js` | 147 | 133 | 14 |
+| `halt-instructions-core.js` | 147 | 140 | 7 |
 | `xlsx-codec.js` | 371 | 364 | 7 |
 | `bridge-proposal-core.js` | 380 | 374 | 6 |
 | `chat-readiness-core.js` | 26 | 20 | 6 |

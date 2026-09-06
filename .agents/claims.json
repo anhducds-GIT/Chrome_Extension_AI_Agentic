@@ -23,27 +23,27 @@
       "duc_decision": "Duc chot 2026-09-06: Duc chot cho phien claude-gemini-hoan-thien lay khoa workers/duc-auto-gemini de dua goi Gemini ve khong con viec mo. Duc se phoi hop chay extension de nghiem thu live."
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-codex-ngan",
+      "owner": "claude-hang-doi",
       "ai": "Claude",
-      "claimed_at": "2026-09-06T13:56",
-      "task": "Codex viet ngan muc nhat ky cu",
+      "claimed_at": "2026-09-06T14:46",
+      "task": "B-36 phep do console + B-27 chot, dong no ky thuat goi GPT",
       "released_at": null,
-      "taken_from": "claude-gpt-kenh",
-      "taken_by": "claude-dieu-phoi",
-      "taken_at": "2026-09-05T08:43",
-      "duc_decision": "Duc chot 2026-09-05: khoa workers/duc-auto-chatgpt bi giu 46 gio boi phien claude-gpt-kenh. Da kiem truoc khi giai phong: khong file nao trong goi do con sua do, khong commit nao cua lane do dang cho push. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay lam viec sach."
+      "taken_from": "claude-codex-ngan",
+      "taken_by": "claude-hang-doi",
+      "taken_at": "2026-09-06T14:46",
+      "duc_decision": "Duc chot 2026-09-06: Toi cho ban khoa luon. Duc giao truc tiep B-36 va B-27."
     },
     "_root": {
-      "owner": "claude-n07",
+      "owner": "claude-assistant",
       "ai": "Claude",
-      "claimed_at": "2026-09-06T13:59",
-      "task": "N-07",
+      "claimed_at": "2026-09-06T14:45",
+      "task": "day gop + sinh lai artifact",
       "released_at": null,
-      "taken_from": "claude-exec-pushgate",
+      "taken_from": "claude-n07",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
-      "taken_by": "claude-dieu-phoi",
-      "taken_at": "2026-09-05T09:51",
-      "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
+      "taken_by": "claude-hang-doi",
+      "taken_at": "2026-09-06T14:46",
+      "duc_decision": "Duc chot 2026-09-06: Toi cho ban khoa luon. Duc giao truc tiep B-36 va B-27."
     },
     "_docs": {
       "owner": "claude-assistant",
@@ -58,17 +58,17 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_code": {
-      "owner": "claude-n07",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T13:59",
       "task": "N-07",
-      "released_at": null,
-      "taken_from": "claude-exec-pushgate",
+      "released_at": "2026-09-06T14:42",
+      "taken_from": "claude-n07",
       "taken_by_duc_decision": "2026-09-04",
-      "taken_by": "claude-dieu-phoi",
-      "taken_at": "2026-09-05T09:51",
-      "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
+      "taken_by": "claude-hang-doi",
+      "taken_at": "2026-09-06T14:46",
+      "duc_decision": "Duc chot 2026-09-06: Toi cho ban khoa luon. Duc giao truc tiep B-36 va B-27."
     }
   },
-  "_fingerprint": "b261a07951219c11"
+  "_fingerprint": "1523633ca982ea49"
 }
