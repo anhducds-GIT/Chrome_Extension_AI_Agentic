@@ -53,7 +53,15 @@ vào `evidence-stop-*/` rồi cập nhật `STATUS.md`. Cùng lỗi bên nhánh 
 
 - **Chờ Đức:** nạp lại tiện ích rồi chạy một lượt thật, bấm dừng giữa chừng — sau lệnh dừng không được có prompt nào bay đi nữa. @Đức:bấm
 
-### G-02 · Khoá tab và khoá hội thoại — **ĐÃ VÁ TĨNH 2026-09-04**, chờ Đức reload để nghiệm thu — **[ĐỌC]**
+### G-02 · Khoá tab và khoá hội thoại — **CÒN MỞ**, chờ Đức reload để nghiệm thu — **[ĐỌC]**
+
+> **Tiêu đề mục này từng bắt đầu bằng "ĐÃ VÁ TĨNH 2026-09-04", và cụm đó làm bảng đếm SAI.**
+> `scripts/what-next.mjs` có một lưới hứng mục-đóng-mà-quên-gạch-ngang
+> (`/(ĐÃ ĐÓNG|ĐÓNG|ĐÃ XONG|XONG|ĐÃ VÁ)/`, dựng ra để hứng `G-11`). Cụm đó trúng lưới, nên mục
+> **P1 duy nhất còn hành vi chưa nghiệm thu** bị **gỡ khỏi danh sách việc mở**: bảng báo gói này
+> có 8 việc trong khi thật ra là 9. Đức đọc bảng để quyết việc. Đã đổi chữ ở đây để bảng đếm
+> đúng. **Lưới hứng bắt oan vẫn còn** — vá nó là sửa `scripts/`, cần khoá `_code`, đã ghi vào
+> `BACKLOG.md` gốc repo.
 
 Lỗi gốc: `activeTab()` gọi `chrome.tabs.query({active:true})` **mỗi lần gửi**, và chỉ kiểm
 origin. Đổi tab hoặc đổi hội thoại giữa chừng là runner âm thầm gõ sang chỗ khác.
@@ -78,11 +86,16 @@ hoặc đóng tab thì phải dừng cứng `RECEIVER_LOST`, không thử lại.
 
 - **Chờ Đức:** nạp lại tiện ích và điền tên hồ sơ, rồi chạy một lượt và giữa chừng bấm sang tab khác — prompt phải vẫn đi đúng tab đã khoá. @Đức:bấm
 
-**Nợ nhỏ còn lại (không chặn):** thông điệp lỗi vẫn nhúng *origin*. Một origin chứa đúng chữ
-bẫy (`timeout`, `captcha`, `ambiguous`…) vẫn lái được nhãn lỗi. Đã cân và bỏ qua: đường dẫn
-là thứ Google hay nhét chữ vào (`?continue=…`), origin thì không — không origin thật nào
-trong luồng này dính. Muốn bịt hẳn thì cho `classifyFailure()` đọc tiền tố `RECEIVER_LOST:`
-trước khi dò chữ, nhưng đó là sửa `runner-core.js` cho mọi loại lỗi, ngoài phạm vi G-02.
+~~**Nợ nhỏ còn lại (không chặn):** thông điệp lỗi vẫn nhúng *origin*…~~ — **ĐÓNG 2026-09-06**
+(`claude-gemini-hoan-thien`). Đúng cái cách mục này đã chỉ ra: `classifyFailure()` nay đọc
+**tiền tố** `RECEIVER_LOST:` trước khi dò từ khoá. Làm được rẻ vì cùng lượt đã phải thêm một
+luật tiền tố y hệt cho `DETECTION_BLIND` (xem G-06) — cùng một hàm, cùng một dòng.
+
+Lượt đó cũng đo lại và **kết luận cũ hơi nhẹ tay**: mục này viết "không origin thật nào trong
+luồng này dính", nhưng luật `/timed out|timeout/` đứng **trên** luật `/receiver/`, nên chỉ cần
+chữ `timeout` xuất hiện **bất kỳ đâu** trong câu là nhãn tuột — mà cả câu, không riêng origin,
+là thứ bị dò. Ghim: `tests/detection-blind-hard-stop.mjs` (nửa cuối), đột biến xoá dòng tiền
+tố → ĐỎ.
 
 ## P2 — Nên làm sớm
 
@@ -105,18 +118,50 @@ tên **ngay dòng đầu**. So hai file thì chúng chỉ khác đúng một m�
 145 dòng bên ChatGPT, 66 bên Gemini. Đây là **lớp quy ảnh về job** — tức là lớp **an toàn**,
 không phải UI. Chênh lệch ở đây đáng lo hơn chênh lệch ở giao diện.
 
-Chưa ai đọc để biết 79 dòng đó làm gì. **Việc đầu tiên là ĐỌC, không phải port.**
+~~Chưa ai đọc để biết 79 dòng đó làm gì.~~ **ĐÃ ĐỌC 2026-09-06** (`claude-gemini-hoan-thien`).
 
-### G-06 · Bốn hành vi nhánh ChatGPT có mà Gemini chưa — **[DÒ], phải kiểm lại**
+**79 dòng đó không phải 79 việc — nó là ĐÚNG MỘT tính năng: nhiều ảnh trong một job.** Cụ thể:
+`selectAttributableImages` (bản nhiều ảnh) + `sameTurn` + trần `maxImages` + mã
+`TOO_MANY_NEW_IMAGES`, cộng `settledForImages` + `imageSignature` (đồng hồ chờ, để một lượt
+trả ảnh nhỏ giọt không bị cắt ngang khi mới có ảnh đầu). Ngoài chỗ đó ra, hai file **giống
+nhau về hành vi** — kể cả `completionForImage` từng chữ.
 
-- `DETECTION_BLIND` — mù thì dừng cứng, không thử lại (chốt dựng ra sau khi đốt 6 lượt quota ngày 25/08)
-- Ledger khai thật `landed_as_requested`
-- Nhiều ảnh một job
-- Đọc `tab.url || tab.pendingUrl`
+Tức mục này và gạch đầu dòng "Nhiều ảnh một job" của **G-06 là CÙNG MỘT VIỆC**, không phải hai.
 
-Cả bốn đều là **[DÒ]** — chỉ mới dò theo tên hằng số/thuộc tính. **Kiểm lại bằng cách đọc code
-trước khi kết luận là thiếu.** Nhánh Gemini đã hai lần bị báo oan "thiếu" trong khi nó **có**,
-chỉ là làm theo cách khác và đặt tên khác (`tryBeginRun`, `assertTrialDevMode`).
+**Và port thẳng vào sẽ ra code chết trông như tính năng.** `sameTurn()` đọc `candidate.turn_id`;
+`content.js` của nhánh này **không hề gán `turn_id`** cho ứng viên ảnh nào. Chép nguyên xi thì
+`turns` luôn là `Set([""])` → `sameTurn` luôn `false` → nhánh nhiều-ảnh **không bao giờ nhận**,
+im lặng, mà suite vẫn xanh. Đúng cái bệnh dòng **[DÒ]** ở đầu sổ này cảnh báo.
+
+**Việc kế, và nó KHÔNG cần bằng chứng DOM mới:** nhánh này đã sẵn có `responseKey(container)`
+làm danh tính lượt, và nó **đang gánh việc thật** — `newAssistantMessages()` dùng chính nó để
+quyết lượt nào là mới. `imageDecision()` cũng đã duyệt qua từng khối phản hồi rồi mới gộp ảnh
+lại, nên chỗ đóng dấu danh tính lượt lên ứng viên là có sẵn, không phải đi dò selector mới.
+- **đóng khi:** `selectAttributableImages` + `settledForImages` chạy được ở nhánh này với
+  `turn_id` thật, có phép ghim canh **cả hai chiều** (nhận đúng một lượt · từ chối ảnh rải
+  trên hai lượt khác nhau), và đột biến xoá `sameTurn` làm suite ĐỎ.
+
+### G-06 · Bốn hành vi nhánh ChatGPT có mà Gemini chưa — **ĐÃ KIỂM LẠI 2026-09-06, còn 1**
+
+Cả bốn từng là **[DÒ]** — chỉ dò theo tên hằng số/thuộc tính. Đã mở code đọc từng cái
+(`claude-gemini-hoan-thien`), nên bốn dòng dưới nay là **[ĐỌC]**. **Một trong bốn là báo oan** —
+lần thứ ba nhánh này bị báo oan "thiếu", đúng như cảnh báo ở đầu sổ.
+
+- ~~`DETECTION_BLIND` — mù thì dừng cứng, không thử lại~~ **XONG 06/09** ✅ — thiếu thật, đã port.
+  Hết giờ mà **không còn một khối phản hồi nào** → dừng cứng. Luật tiền tố phải đứng **trên**
+  luật `/timed out|timeout/`: câu báo lỗi tự nó chứa chữ "timeout", đặt sai chỗ là mã này thành
+  TIMEOUT, **mà TIMEOUT thì được thử lại** — tức lớp bảo vệ im lặng không chạy.
+  Ghim: `tests/detection-blind-hard-stop.mjs`, thử phá 7/7 bị bắt.
+- ~~Ledger khai thật `landed_as_requested`~~ **XONG 06/09** ✅ — thiếu thật, đã port, và lượt đọc
+  còn lòi ra một lỗi nặng hơn ở ngay cạnh: `write_outcome` so đường dẫn **tuyệt đối** với đường
+  dẫn **tương đối** nên **không bao giờ đúng một lần nào**, và dưới chính sách ghi đè thì nó khai
+  `overwritten` — tức nói với nhật ký kiểm toán rằng bằng chứng cũ của Đức **đã bị thay thế**,
+  trên những lần ghi đầu tiên, mọi lần. Ghim: `tests/landed-as-requested.mjs`, thử phá 6/6 bị bắt.
+- **Nhiều ảnh một job** — thiếu thật, **CÒN MỞ**. Đây **cùng một việc** với `G-05`, không phải hai:
+  79 dòng chênh của `image-evidence-core.js` chính là tính năng này. Chi tiết và điều kiện đóng
+  ghi ở `G-05`, đừng làm hai lần.
+- ~~Đọc `tab.url || tab.pendingUrl`~~ **BÁO OAN** — nhánh này **ĐÃ CÓ**, ở `tab-lock-core.js`, do
+  đợt khoá tab 04/09 (`G-02`) mang vào. Mục này viết trước đợt đó và không ai rà lại.
 
 ### ~~G-09~~ · `npm test` ở gốc repo KHÔNG chạy suite Gemini — **ĐÓNG 05/09** ✅
 
@@ -209,7 +254,7 @@ Rủi ro thật: hai script cài vào **hai thư mục khác nhau**, nên chạy
 
 ## Đã đóng
 
-### G-11 · **ĐÓNG 28/08** ✅ — Đo live bản trần 5 giây
+### ~~G-11~~ · **ĐÓNG 28/08** ✅ — Đo live bản trần 5 giây
 
 Đo được **1,0 giây** (bản trước: 22,5s và 27,7s). Bằng chứng:
 `evidence-transport-liveness-5s-20260828/`. Khớp dự đoán viết trước khi đo, lần thứ ba liên tiếp.

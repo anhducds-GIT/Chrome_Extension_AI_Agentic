@@ -390,4 +390,32 @@ không phải lời hứa. Mỏ neo khớp **5/5** mục, không lượt nào ra
 có chủ khác thì chỉ được đọc). Bản đã làm giữ ngoài repo, áp lại được bằng một lệnh — **cần Đức
 chốt** ai giữ khoá đó.
 
+## 2026-09-06 — `claude-gemini-hoan-thien`: hai lớp an toàn nhánh kia có, nhánh này không
+
+Đức chốt đích: gói này về **không còn việc mở**. Việc đầu là **đọc để bớt việc** — một trong "bốn hành vi
+nghi thiếu" **đã có sẵn** (đọc địa chỉ tab lúc đang tải, do đợt khoá tab 04/09), và "79 dòng chênh" của lớp bằng chứng ảnh là **một tính năng**, trùng khít với một hành vi
+khác trong cùng danh sách. Chín việc thật ra ít hơn chín.
+
+**① Mù thì dừng cứng** (`DETECTION_BLIND`, port từ nhánh ChatGPT). Hết giờ mà **không còn một khối
+phản hồi nào** → dừng cứng, không thử lại, kèm hướng dẫn tiếng Việt. Nhánh kia thêm lớp này ngày
+26/08 sau khi một lượt live **đốt 6 lượt tạo ảnh thật**; nhánh này chưa có.
+
+Bẫy: câu báo lỗi **tự nó chứa chữ "timeout"** nên thứ tự luật là load-bearing. Cùng lượt đóng lỗ
+**cùng loại** đã ghi sẵn trong thân G-02 — chi tiết cả hai ở mục G-02 của `BACKLOG.md`.
+
+**② Sổ cái thôi nói đã ghi đè lên bằng chứng cũ của Đức.** Đường Downloads so đường dẫn **tuyệt
+đối** với đường dẫn **tương đối**, nên phép so **không bao giờ đúng một lần nào**: mọi lượt lưu bị
+ghi `uniquified`, và dưới chính sách ghi đè thì ghi **`overwritten`** — khai với nhật ký kiểm toán
+rằng bằng chứng cũ đã bị thay thế, trên những lần ghi đầu tiên, mọi lần. Nhánh này đã chốt đúng
+nguyên tắc đó từ trước nhưng **chỉ cho bộ ghi thư mục** (nó dò được trước khi ghi). Thêm
+`landed_as_requested`: file bị Chrome đẩy ra Downloads gốc **vẫn giữ nguyên tên**, nên trường cũ
+vẫn đọc "written".
+
+**Số.** Suite 88 → **90**, 90/90 xanh. Thử phá **13/13** bị bắt. Một phép kiểm tôi tự viết đã **bị
+bỏ**: đột biến chứng minh nó không bao giờ đỏ được.
+
+**Còn mở.** Việc ③ (nhiều ảnh một job) chưa làm. Hai việc P1 chờ **tay Đức**, gộp được một lượt.
+Chưa đẩy được: `FEATURE-PARITY.md` lệch vì tôi sửa `sidepanel.js`, sinh lại phải giữ `_root` —
+lane `claude-n07` đang giữ.
+
 <!-- HANDOFF-THANG: 2026-09 -->
