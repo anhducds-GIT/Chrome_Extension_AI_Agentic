@@ -466,7 +466,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
             <dt>Đức cần làm</dt><dd class="warn">Ba câu còn treo của Scouter, chỉ Đức chốt được: chính sách che dữ liệu khi ghi báo cáo xuống đĩa, chỗ đặt thư mục trong cây repo, và làm tới bản v0.1 hay đi tiếp lên v1.</dd>
             <dt>Kiểm chứng cuối</dt><dd>chưa từng khai kiểm chứng</dd>
             <dt>Việc còn nợ</dt><dd>gói chưa có sổ nợ</dd>
-            <dt>Lệnh Bridge</dt><dd>0 lệnh · 15 file kiểm</dd>
+            <dt>Lệnh Bridge</dt><dd>0 lệnh · 16 file kiểm</dd>
           </dl>
           <p class="note">Chưa có bảng tính năng cho extension này. Bảng đối chiếu trong repo hiện chỉ so hai nhánh GPT và Gemini.</p>
         </div>
@@ -852,16 +852,18 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
     </div>
 
     <div class="card">
-      <div class="sect">Việc còn nợ — 44 mục đang mở</div>
+      <div class="sect">Việc còn nợ — 59 mục đang mở</div>
       <div class="bl">
         <div class="bi"><span class="c">22</span><span class="d">Duc Auto ChatGPT</span></div>
+        <div class="bi"><span class="c">15</span><span class="d">nợ hạ tầng repo</span></div>
         <div class="bi"><span class="c">13</span><span class="d">Duc Auto GG Flow Video</span></div>
         <div class="bi"><span class="c">9</span><span class="d">Duc Auto Gemini (Platform)</span></div>
       </div>
       <details class="the" style="margin-top:11px">
         <summary><span><span class="nm">Con số này đếm thế nào</span><span class="sub">và vì sao nó thà đếm thừa hơn đếm thiếu</span></span></summary>
         <div class="in"><div class="prose">
-          <p>Đếm số mục chưa đóng trong sổ nợ của từng gói. Một mục tính là đã đóng khi nó bị gạch ngang, hoặc khi dòng của nó <strong>mở đầu</strong> bằng chữ xong.</p>
+          <p>Đếm số mục chưa đóng trong sổ nợ của từng gói, <strong>và trong sổ nợ hạ tầng ở gốc repo</strong>. Một mục tính là đã đóng khi nó bị gạch ngang, hoặc khi dòng của nó <strong>mở đầu</strong> bằng chữ xong.</p>
+          <p>Sổ ở gốc repo đóng mục theo cách khác: thêm một dòng "đóng" ở cuối sổ, không sửa lại khối cũ. Nên ở riêng sổ đó, tiêu đề không bao giờ là dấu đóng — chỉ dòng thêm ở cuối mới là.</p>
           <p>Dấu đóng phải nằm ở đầu dòng, không tìm giữa câu — vì có mục viết "gỡ khoá sau khi việc kia xong", chữ xong ở đó là một điều kiện chứ không phải trạng thái. Tìm giữa câu là đóng oan một việc đang mở, tức bảng báo <em>thiếu</em> nợ. Mục nào viết dấu đóng ở giữa câu sẽ bị tính là còn mở: cố ý lệch về phía báo thừa.</p>
         </div></div>
       </details>
@@ -876,10 +878,10 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         <div class="tree">
           <div class="tr"><span class="d">workers/</span><span class="o">từng gói tự giữ</span><span class="c">1143 file</span></div>
           <div class="tr"><span class="d">docs/</span><span class="o">_docs</span><span class="c">89 file</span></div>
-          <div class="tr"><span class="d">tests/</span><span class="o">_code</span><span class="c">15 file</span></div>
+          <div class="tr"><span class="d">tests/</span><span class="o">_code</span><span class="c">16 file</span></div>
+          <div class="tr"><span class="d">scripts/</span><span class="o">_code</span><span class="c">13 file</span></div>
           <div class="tr"><span class="d">evidence/</span><span class="o">_root</span><span class="c">12 file</span></div>
           <div class="tr"><span class="d">pilots/</span><span class="o">_root</span><span class="c">12 file</span></div>
-          <div class="tr"><span class="d">scripts/</span><span class="o">_code</span><span class="c">12 file</span></div>
           <div class="tr"><span class="d">delegations/</span><span class="o">_root</span><span class="c">7 file</span></div>
         </div>
         <p class="note">Cột giữa là <strong>ai được ghi vào đó</strong>. Một vùng chỉ một AI được ghi tại một thời điểm; vùng của người khác thì chỉ được đọc. <code class="mono">workers/</code> không có chủ chung — từng gói extension tự giữ riêng.</p>
