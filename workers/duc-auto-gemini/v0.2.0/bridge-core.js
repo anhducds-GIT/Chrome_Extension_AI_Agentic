@@ -481,6 +481,27 @@
   // Cung hinh dang tham so voi `queue.proposal.get`, va CO Y uy quyen thang thay vi
   // chep lai luat: hai lenh nhan cung mot thu (mot proposal_id), nen hai ban sao cua
   // cung mot luat la hai cho de lech nhau.
+  const CHAT_READ_TOTAL_CHAR_BUDGET = 200000;
+
+  function validateChatRead(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["limit", "max_chars_per_turn"], "params");
+    const value = {
+      limit: params.limit === undefined ? 10 : integerValue(params.limit, "params.limit", 1, 50),
+      max_chars_per_turn: params.max_chars_per_turn === undefined ? 8000 : integerValue(params.max_chars_per_turn, "params.max_chars_per_turn", 200, 40000)
+    };
+    // Moi nap rieng le thi an toan, nhan len thi chet: 50 luot x 40000 ky tu la
+    // khoang 2 MB chu, ma tran envelope la 1 MB - nen khung se bi tu choi TREN
+    // DUONG VE thay vi loi goi bi tu choi tren duong di, va nguoi goi se thay mot
+    // loi duong truyen roi do cho ket noi. Tu choi to hop ngay o cua. Va TU CHOI
+    // chu khong am tham cat bot luot: mot cau tra loi ngan ma trong nhu du la te
+    // hon mot loi noi thang "xin it lai".
+    if (value.limit * value.max_chars_per_turn > CHAT_READ_TOTAL_CHAR_BUDGET) {
+      invalidParams("params", `limit x max_chars_per_turn must not exceed ${CHAT_READ_TOTAL_CHAR_BUDGET} characters in total (asked for ${value.limit * value.max_chars_per_turn})`);
+    }
+    return value;
+  }
+
   function validateProposalWithdraw(raw) {
     return validateProposalGet(raw);
   }
@@ -519,6 +540,7 @@
     registryEntry({ name: "session.hello", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Negotiate protocol version and report current layer availability.", params_schema: { supported_versions: "positive_integer[]" }, params_validator: validateSessionHello }),
     registryEntry({ name: "system.ping", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Report fresh extension, executor, Gemini, and workbook availability.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "system.capabilities", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Describe the immutable v1 method and policy surface.", params_schema: {}, params_validator: validateEmptyParams }),
+    registryEntry({ name: "chat.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read the newest conversation turns on the Gemini tab as text, oldest first inside the returned slice, each with role, id, character count and its own truncation flag. Strictly read-only: never clicks, types, or moves focus, and allowed while a run is live because reading disturbs nothing. Refused with WRONG_SURFACE off a conversation page, since reading a launcher page returns zero turns and looks exactly like an empty conversation. Reports NO_TURNS_MATCHED plus the data-attribute names actually present when the turn selector has rotted, so a dead selector is rebuilt from evidence instead of guessed. The two caps are also bounded together: limit x max_chars_per_turn may not exceed 200000 characters, because either cap at its own maximum is fine and the product would overflow the 1 MB envelope.", params_schema: { limit: "integer:1..50", max_chars_per_turn: "integer:200..40000", _total: "limit * max_chars_per_turn <= 200000" }, params_validator: validateChatRead }),
     registryEntry({ name: "queue.list", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a page of active logical queue jobs.", params_schema: { cursor: "string|null", limit: "integer:1..100", statuses: "code[]", include_prompt: "boolean" }, params_validator: validateQueueList }),
     registryEntry({ name: "run.status", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read current run state without changing it.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "ledger.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a sanitized page of physical XLSX ledger rows.", params_schema: { cursor: "string|null", limit: "integer:1..100", include_prompt: "boolean", include_removed: "boolean" }, params_validator: validateLedgerRead }),

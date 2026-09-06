@@ -937,6 +937,7 @@
     replay_store: createBridgeReplayStore(),
     handlers: {
       "system.ping": withBridgeErrors(bridgeSystemPing),
+      "chat.read": withBridgeErrors(bridgeChatRead),
       "queue.list": withBridgeErrors(bridgeQueueList),
       "run.status": withBridgeErrors(async () => bridgeRunStatus()),
       "ledger.read": withBridgeErrors(bridgeLedgerRead),
@@ -960,6 +961,15 @@
   // Read-only remote eyes for the AI operator: forwards DAC_DOM_PROBE to the
   // provider tab's content script and returns its snapshot verbatim. Never
   // clicks, types, or changes focus — the content side enforces that too.
+  async function bridgeChatRead(params) {
+    // CỐ Ý KHÔNG lấy khoá mutation (khác `chat.reload`): đọc không click, không gõ, không đổi
+    // focus, nên nó không thể giết một attempt đang bay. Chặn nó trong lúc run chạy sẽ bỏ mất
+    // đúng lúc người ta cần đọc nhất — lúc đang chẩn đoán một run.
+    const response = await send({ type: "DAC_CHAT_READ", limit: params.limit, maxCharsPerTurn: params.max_chars_per_turn });
+    if (!response?.ok) throw new Error(response?.error || "chat.read failed in the content script.");
+    return response.read;
+  }
+
   async function bridgeDomProbe() {
     const response = await send({ type: "DAC_DOM_PROBE" });
     if (!response?.ok) throw new Error(response?.error || "DOM probe failed in the content script.");
@@ -5152,6 +5162,7 @@
   (typeof window !== "undefined" ? window : globalThis).DacBridgeExecutorTestHooks = Object.freeze({
     dispatch: bridgeExecutorDispatch,
     handlers: Object.freeze({
+      "chat.read": bridgeChatRead,
       "queue.list": bridgeQueueList,
       "run.status": bridgeRunStatus,
       "ledger.read": bridgeLedgerRead,

@@ -9,7 +9,7 @@ await import(pathToFileURL(sourcePath));
 const bridge = globalThis.DacBridgeCore;
 
 const expectedMethods = [
-  "session.hello", "system.ping", "system.capabilities", "queue.list",
+  "session.hello", "system.ping", "system.capabilities", "chat.read", "queue.list",
   "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
   "jobs.reorder", "references.add", "diagnostics.dom_probe", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw", "run.trial", "run.stop", "chat.reload"
 ];
@@ -96,6 +96,7 @@ const validByMethod = {
       settings: { timeout_sec: 180, max_retries: 2, safety_cooldown_sec: "6-9", output_folder: "Duc Auto ChatGPT" }
     }]
   },
+  "chat.read": { limit: 10, max_chars_per_turn: 8000 },
   "queue.proposal.get": { proposal_id: "proposal-uuid" },
   "queue.proposal.withdraw": { proposal_id: "proposal-uuid" },
   "run.stop": {},
@@ -122,6 +123,9 @@ const invalidByMethod = {
   "output.configure": { collision_policy: "replace" },
   "run_settings.configure": { delay_min_sec: 25, delay_max_sec: 12 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [] },
+  // Moi nap rieng le hop le (50 va 40000), nhung TICH cua chung ~2MB - vuot tran
+  // envelope 1MB. Tu choi to hop ngay o cua, khong de no vo tren duong ve.
+  "chat.read": { limit: 50, max_chars_per_turn: 40000 },
   "queue.proposal.get": { proposal_id: "" },
   "queue.proposal.withdraw": { proposal_id: "" },
   // Lệnh dừng không nhận tham số nào cả: không có "dừng job X" để có thể bị
