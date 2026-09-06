@@ -1843,10 +1843,18 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
 
   /* Vùng đang giữ mà KHÔNG khai gì: vẫn phải ra một dòng. Bỏ dòng đó đi là Đức nhìn thấy ít
      luồng hơn thực tế — sai nguy hiểm hơn một ô để trống. */
-  assert.deepEqual(readLuong(soBia({ "_code": { owner: "lane-cau-that" } }))
-    .map((r) => ({ lane: r.lane, ma: r.ma, viec: r.viec, tu: r.tu, tuoi: r.tuoi })),
-  [{ lane: "lane-cau-that", ma: "", viec: "", tu: "", tuoi: "" }],
-  "thieu task/claimed_at thi van ra mot dong, khong bi loai, va tuoi de rong chu khong bia");
+  /* `tuoi` KHÔNG còn là một trường của dòng luồng kể từ bản vá N-21 (`ĐỔI MÃ` từ `N-10`):
+     nướng chuỗi tuổi vào file làm artifact phụ thuộc giờ commit của HEAD, mà chính lượt commit
+     file đó lại sinh ra một HEAD mới — tự tham chiếu, và nó chặn mọi lane. Khẳng định cũ chờ
+     `tuoi: ""` nên nó **không thể đúng** từ commit `1c296ec`, và cả file chết sớm hơn ở khối 6
+     nên chưa ai thấy. Ghim lại đúng thứ bản vá đó hứa: dòng vẫn ra, mốc để RỖNG chứ không bịa,
+     và KHÔNG có chuỗi tuổi nướng sẵn nào. */
+  const dongThieu = readLuong(soBia({ "_code": { owner: "lane-cau-that" } }));
+  assert.deepEqual(dongThieu.map((r) => ({ lane: r.lane, ma: r.ma, viec: r.viec, tu: r.tu, moc: r.moc })),
+    [{ lane: "lane-cau-that", ma: "", viec: "", tu: "", moc: "" }],
+    "thieu task/claimed_at thi van ra mot dong, khong bi loai, va moc de rong chu khong bia");
+  assert.equal(dongThieu[0].tuoi, undefined,
+    "N-21: dong luong KHONG duoc mang chuoi tuoi nuong san — artifact phai deterministic");
 
   /* Bảng hỏng thì NÉM, y hệt `readKhoa`: một khối rỗng đọc ra là "không có gì chạy", mà đó
      đúng là câu nói dối tệ nhất khối này có thể nói. */
@@ -1862,15 +1870,21 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   assert.throws(() => readLuong(cutMoc), /THIEU_MOC_SINH/,
     "khong co moc sinh thi NEM, tuyet doi khong lui ve dong ho he thong");
 
-  /* --- (a3) TUỔI ĐO TỪ MỐC SINH, không từ đồng hồ người xem ---
-     Ghim CẢ DÂY NỐI, không chỉ ghim hàm tính. Ghim mình hàm thì ai đó thay `headStamp()` bằng
-     `Date.now()` ở chỗ gọi vẫn xanh — mà đó đúng là bệnh đề bài này chữa. Ép mốc sinh thành
-     một giờ cố định rồi đòi ĐÚNG con số: đồng hồ máy chạy tới đâu cũng không đổi được nó. */
+  /* --- (a3) DÒNG LUỒNG MANG MỐC NHẬN NGUYÊN VĂN, KHÔNG MANG TUỔI NƯỚNG SẴN ---
+     Khẳng định cũ ở đây đòi `[0].tuoi === "8 giờ trước"`. Bản vá N-21 (`ĐỔI MÃ` từ `N-10`,
+     xem khối ngay dưới) đã BỎ hẳn trường đó khỏi dòng luồng, nên khẳng định ấy **không thể
+     đúng** kể từ `1c296ec` — và cả file chết sớm hơn ở khối 6 nên chưa lượt chạy nào tới đây.
+     Ghim lại đúng thứ bản vá hứa: dù ép mốc sinh sang một giờ khác hẳn, dòng vẫn mang **mốc
+     nhận nguyên văn** và không mang một chuỗi tuổi nào. Vế "không rơi về đồng hồ hệ thống"
+     vẫn được ghim ngay phía trên bằng `THIEU_MOC_SINH`, và `tuoiTuMoc` vẫn được ghim ngay dưới. */
   const mocEp = { ...goc, git: { ...goc.git, headStamp: () => "2026-09-06T12:00" } };
-  assert.equal(readLuong(bocFile(mocEp, { ".agents/claims.json": claimsJson({
+  const dongEp = readLuong(bocFile(mocEp, { ".agents/claims.json": claimsJson({
     "_code": { owner: "lane-mot", task: "N-90", claimed_at: "2026-09-06T04:00" }
-  }) }))[0].tuoi, "8 giờ trước",
-  "tuoi PHAI tinh tu moc sinh cua HEAD — thay bang dong ho he thong la anh chup cu doi lot so lieu song");
+  }) }))[0];
+  assert.equal(dongEp.moc, "2026-09-06T04:00",
+    "dong luong mang MOC NHAN nguyen van tu bang chu so huu, khong mang thu gi suy ra tu moc sinh");
+  assert.equal(dongEp.tuoi, undefined,
+    "N-21: KHONG nuong chuoi tuoi vao dong luong — no lam artifact phu thuoc gio commit cua HEAD");
 
 
   assert.equal(tuoiTuMoc("2026-09-06T12:00", "2026-09-06T04:00"), "8 giờ trước",
@@ -1980,10 +1994,19 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
      hai luồng đã trả khoá vẫn đang chạy (06/09).
      Nay tuổi tính lúc sinh, TỪ GIỜ COMMIT CỦA HEAD — không phải đồng hồ hệ thống — nên bản
      commit vẫn tất định. Hai vế phải ghim cùng lúc, thiếu vế nào cũng cho phép quay lại bệnh cũ. */
-  assert.ok(khoiCo.some((l) => /Nhận vùng (dưới một giờ|\d+ (giờ|ngày) trước)/.test(l)),
-    "khoi PHAI in tuoi thanh chu ngay trong than trang — do la nua nhin thay duoc cua luat 'tinh luc sinh'");
+  /* ĐẢO NGƯỢC LẦN THỨ HAI, và lần này là lần đứng vững — bản vá N-21 (`ĐỔI MÃ` từ `N-10`).
+     Khối ⑵ ở trên mô tả đúng bệnh, nhưng cách chữa của nó (nướng chuỗi tuổi vào thân trang)
+     lại làm trang phụ thuộc GIỜ COMMIT CỦA HEAD — mà chính lượt commit trang lại đẻ ra một
+     HEAD mới. Tự tham chiếu, và ngày 06/09 nó chặn ba lượt đẩy liên tiếp của mọi lane.
+     Nay thân trang mang **mốc nhận nguyên văn** ("Nhận vùng lúc 2026-09-06 14:10"), không
+     mang chuỗi tuổi nào. Ba khẳng định cũ ở đây chờ đúng thứ vừa bị bỏ, nên chúng không thể
+     đúng kể từ `1c296ec`; cả file khi ấy chết sớm hơn ở khối 6 nên chưa lượt chạy nào tới. */
+  assert.ok(khoiCo.some((l) => /Nhận vùng (lúc \d{4}-\d{2}-\d{2}|từ lúc nào thì bảng không ghi)/.test(l)),
+    "than trang PHAI mang moc nhan nguyen van — day la nua nhin thay duoc cua luat 'artifact suy tu HEAD'");
+  assert.ok(!khoiCo.some((l) => /Nhận vùng (dưới một giờ|\d+ (giờ|ngày) trước)/.test(l)),
+    "N-21: chuoi tuoi nuong san KHONG duoc quay lai than trang — no lam trang tu tham chieu vao HEAD");
   assert.ok(trangCo.includes("<script>"), "phai co doan JS, neu khong thi khang dinh duoi vo nghia");
-  assert.ok(!trangCo.includes("data-tu"),
+  assert.ok(!trangCo.includes("data-tu\""),
     "doan JS tinh lai tuoi luc MO trang phai bien mat han — con moc neo la con duong quay lai");
 
   /* --- (d) KHÔNG LUỒNG NÀO CHẠY → VẪN in một dòng, không ẩn khối --- */
