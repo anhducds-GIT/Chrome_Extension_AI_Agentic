@@ -34,28 +34,28 @@
       "duc_decision": "Duc chot 2026-09-06: Toi cho ban khoa luon. Duc giao truc tiep B-36 va B-27."
     },
     "_root": {
-      "owner": "claude-gemini-hoan-thien",
+      "owner": "claude-scouter-seed",
       "ai": "Claude",
-      "claimed_at": "2026-09-06T15:57",
-      "task": "sinh lai FEATURE-PARITY sau 2 lenh Bridge moi",
+      "claimed_at": "2026-09-06T22:20",
+      "task": "ADR-0013 buoc 1: chuyen Scouter ra workers/duc-scouter + SCOUTER-SEED-01 viec 2",
       "released_at": null,
-      "taken_from": "claude-n07",
+      "taken_from": "claude-gemini-hoan-thien",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
-      "taken_by": "claude-assistant",
-      "taken_at": "2026-09-06T14:45",
-      "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
+      "taken_by": "claude-scouter-seed",
+      "taken_at": "2026-09-06T16:00",
+      "duc_decision": "Duc chot 2026-09-06: toi chot cho phien claude-scouter-seed lay khoa _root de chuyen Scouter ra nha rieng theo ADR-0013 va xay khung seed v0.1."
     },
     "_docs": {
-      "owner": "claude-assistant",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T15:56",
       "task": "Ghi luat Duc chot 06/09: vai dieu phoi khong bao gio dung lai vi chuyen commit",
-      "released_at": null,
-      "taken_from": "claude-exec-pushgate",
+      "released_at": "2026-09-06T15:58",
+      "taken_from": "claude-assistant",
       "taken_by_duc_decision": "2026-09-04",
-      "taken_by": "claude-dieu-phoi",
-      "taken_at": "2026-09-05T09:51",
-      "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
+      "taken_by": "claude-scouter-seed",
+      "taken_at": "2026-09-06T16:00",
+      "duc_decision": "Duc chot 2026-09-06: toi chot cho phien claude-scouter-seed lay khoa _root de chuyen Scouter ra nha rieng theo ADR-0013 va xay khung seed v0.1."
     },
     "_code": {
       "owner": "claude-scouter-seed",
@@ -68,7 +68,14 @@
       "taken_by": "claude-dieu-phoi",
       "taken_at": "2026-09-05T09:51",
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
+    },
+    "workers/duc-scouter": {
+      "owner": "claude-scouter-seed",
+      "ai": "Claude",
+      "claimed_at": "2026-09-06T22:20",
+      "task": "Nha rieng cua Scouter theo ADR-0013 + khung seed v0.1",
+      "released_at": null
     }
   },
-  "_fingerprint": "b5a5d566f5cc89c4"
+  "_fingerprint": "ec4f320ceadb8385"
 }
