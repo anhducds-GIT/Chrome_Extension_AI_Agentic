@@ -1053,3 +1053,4 @@ fixture chọn một đơn vị THẬT khác GPT, chọn theo thứ tự đườ
   Một dòng trong `AGENTS.md`, và nếu rẻ thì một phép kiểm ở cổng.
 - **đừng nhầm với `N-08`:** `N-08` là `git checkout` xoá **trạng thái sống**; mục này là `--amend`
   viết đè **lịch sử**. Hai lệnh khác nhau, cùng một gốc: lane không kiểm quyền sở hữu trước khi ghi.
+- **ĐỔI MÃ N-19 → N-20** · 2026-09-07 · lane `claude-assistant` · khối *"`git commit --amend` sửa nhầm lịch sử của lane khác"* trùng mã với lượt đổi mã mà `claude-k2-vung-mien-khoa` vừa ghi ở dòng trên. Từ nay đọc khối đó là `N-20`. Ghi chú cho người sau: bộ kiểm trùng mã **vừa bắt đúng lượt ghi này, trong vòng vài phút** kể từ lúc nó được dựng — mã `N-19` bị chọn trùng vì tôi đếm tiêu đề `##` mà **lượt đổi mã không phải tiêu đề**. Đó là ca thật thứ năm của `N-12` trong hai ngày, và là ca đầu tiên bị máy bắt thay vì người phát hiện sau.
