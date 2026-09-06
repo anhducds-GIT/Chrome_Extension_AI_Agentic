@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, readCanDuc, canDucDaDong, khoangNgay, SO_CAN_DUC, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, NHOM_CHUA_XEP, tuoiTuMoc, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readMocDaXong, readRefreshLine, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, readCanDuc, canDucDaDong, khoangNgay, SO_CAN_DUC, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, NHOM_CHUA_XEP, tuoiTuMoc, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readMocDaXong, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -186,56 +186,42 @@ const ideasDeps = (text) => ({
   ok("moc HEAD hong thi NEM (2 dang), moc tot van chay — het cua fail-open");
 }
 
-/* ---- 5b. Câu "làm mới bảng" phải ĐỌC từ PROMPTS.md, không được gõ cứng.
+/* ---- 5b. N-07 · Trang KHÔNG được bảo Đức đi nhờ AI làm mới bảng.
  *
- * Bản cũ gõ cứng "sinh lại rồi ĐĂNG LẠI ARTIFACT". Rồi bảng vào repo, PROMPTS.md sửa theo,
- * chuỗi trong bộ sinh thì không — nên trang bảo AI làm một đằng, sổ prompt bảo một nẻo.
- * Chép là tạo bản thứ hai, và bản thứ hai luôn lệch. */
+ * Trước 06/09 trang có ĐÚNG BA chỗ dạy Đức đi nhờ AI: dải đỏ ở đầu trang, thẻ "Làm mới bảng"
+ * ở tab đầu, và một khối prompt ở tab Vận hành. Cả ba đọc chung một câu từ PROMPTS.md — cơ
+ * chế đó đúng vào lúc chỉ có một cách làm mới, và câu ấy là "nhờ AI".
+ *
+ * Từ 06/09 Đức tự làm được: ba cửa nhấp đúp trong thư mục `bang-trang-thai`. Một dòng chữ
+ * bảo Đức đi nhờ AI trong khi Đức tự làm được là dòng chữ DẠY SAI THÓI QUEN — Đức nói thẳng:
+ * mỗi lần muốn xem số mới lại phải cắt ngang một luồng việc khác.
+ *
+ * GHIM CẢ HAI CHIỀU, cố ý. Chỉ chặn câu cũ thì xoá trắng cả thẻ cũng xanh, và Đức mất luôn
+ * chỗ duy nhất trên bảng nói cho biết cách tự làm — tức lại quay về đi hỏi AI, đúng cái bệnh
+ * vừa chữa. */
 {
-  const deps = REAL;
-  const cau = readRefreshLine(deps);
+  const html = buildOverview(REAL, { today: "head" }).html;
 
-  /* CA QUYẾT ĐỊNH: đưa một PROMPTS.md ĐÃ ĐỔI CÂU, rồi đòi TRANG đổi theo.
+  for (const [pattern, why] of [
+    [/Nhờ AI: Làm mới/, "dai do o dau trang bao Duc di nho AI"],
+    [/dán câu dưới đây/, "the Lam moi bang bao Duc dan prompt cho AI"],
+    [/Câu để dán cho AI/, "khoi prompt o tab Van hanh"]
+  ]) {
+    assert.ok(!pattern.test(html),
+      `trang KHONG duoc con ${why} — tu 06/09 Duc tu lam moi bang duoc, cau do day sai thoi quen`);
+  }
 
-     Bản trước chỉ hỏi "trang có chứa câu hiện tại không" — mà một bộ sinh GÕ CỨNG đúng câu
-     hiện tại thì cũng xanh. Tức nó KHÔNG chứng minh được điều nó tự nhận là chứng minh, và
-     tôi đã dựa vào nó để báo "thử phá 6/6". GPT audit vòng 2 bắt được 04/09; con số thật
-     lúc đó là 5/6.
+  for (const [chuoi, why] of [
+    ["bang-trang-thai", "ten thu muc ba cua"],
+    ["Xem-bang.cmd", "cua xem ngay mot lan"],
+    ["Mo-may-chu.cmd", "cua co nut Lam moi ngay"],
+    ["Bat-tu-chay.cmd", "cua tu chay luc bat may"]
+  ]) {
+    assert.ok(html.includes(chuoi),
+      `trang PHAI chi ra ${why} — khong noi cach tu lam thi Duc lai di hoi AI`);
+  }
 
-     Bỏ luôn `cau.length > 10`: một ngưỡng tuỳ ý, không nói gì về cơ chế, và ca dưới bao hàm nó. */
-  const CAU_LA = "Cau thu nghiem khong the go cung duoc 20260904";
-  const gocPrompts = deps.readFile("PROMPTS.md");
-  const doiNguon = {
-    ...deps,
-    readFile: (f) => (f === "PROMPTS.md" ? gocPrompts.split(cau).join(CAU_LA) : deps.readFile(f))
-  };
-  assert.equal(readRefreshLine(doiNguon), CAU_LA, "doi nguon thi cau DOC RA phai doi theo");
-  const htmlDoi = buildOverview(doiNguon, { today: "head" }).html;
-  assert.ok(htmlDoi.includes(CAU_LA), "doi nguon thi TRANG phai doi theo — con go cung thi khong");
-  assert.ok(!htmlDoi.includes(cau), "cau CU khong duoc con sot lai tren trang");
-
-  // Ca hỏng: PROMPTS.md mất mục 2 thì phải NÉM, không được âm thầm dùng câu dự phòng —
-  // câu dự phòng âm thầm chính là con đường đã đi vào lỗi trên.
-  const mat = { ...deps, readFile: (f) => f === "PROMPTS.md" ? "# rong" : deps.readFile(f) };
-  assert.throws(() => readRefreshLine(mat), /THIEU_CAU_LAM_MOI/,
-    "mat muc 2 thi phai nem, khong duoc lang le dung cau go cung");
-
-  /* CA HỎNG THẬT của lỗi tràn mục — và ca này SUÝT không có.
-     Thử phá DB21 (bỏ chặn ở mục kế) để suite XANH, nghĩa là bản vá đó chưa được ghim.
-     Ca trên không dựng được nó: `"# rong"` KHÔNG có mục 2 nào cả, nên nó ném dù có chặn
-     hay không — xanh vì lý do khác.
-     Ca thật phải là: mục 2 CÒN ĐÓ nhưng MẤT khối, còn mục SAU thì CÓ khối. Không chặn ở
-     mục kế thì nó nhặt câu của mục 3 rồi trả về như thật — Đức dán nhầm câu mà không ai biết. */
-  const tranMuc = [
-    "# Sổ prompt", "", "## 2. Làm mới bảng trạng thái", "",
-    "Mục này mất khối lệnh.", "",
-    "## 3. Một việc hoàn toàn khác", "",
-    "```text", "Cau cua MUC KHAC, tuyet doi khong duoc lay", "```", ""
-  ].join("\n");
-  const tran = { ...deps, readFile: (f) => (f === "PROMPTS.md" ? tranMuc : deps.readFile(f)) };
-  assert.throws(() => readRefreshLine(tran), /THIEU_CAU_LAM_MOI/,
-    "muc 2 mat khoi thi phai NEM, tuyet doi khong duoc nhat khoi cua muc sau");
-  ok("cau lam moi doc tu PROMPTS.md, va mat nguon thi nem chu khong doan");
+  ok("N-07: trang chi cach Duc tu lam moi bang, khong con cau bao di nho AI");
 }
 
 /* ---- 6. Y-03 · VIỆC CHỜ TAY ĐỨC — ba trạng thái phải phân biệt được.

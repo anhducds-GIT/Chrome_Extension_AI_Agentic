@@ -608,3 +608,51 @@ tuần có 19 nhóm cho 19 mục, tức là không phân loại gì cả.
   không đổi và không phiên nào bị chặn đẩy oan.
 - **đỡ tạm ở đâu:** băng thông báo mà ba cửa chèn nằm NGAY TRÊN cờ đó và nói mốc sinh thật, nên
   Đức không bị dẫn sai — chỉ là có hai câu nói về cùng một chuyện.
+
+## N-08 · Hai bảng trạng thái, Đức không biết mở cái nào
+
+- **nhóm:** bang
+- **đóng khi:** mở bản chụp ở gốc repo thì dòng đầu nói ngay nó là bản chụp và chỉ đường sang bản sống, và có phép ghim canh dòng đó
+- **mở:** 2026-09-06 · lane `claude-assistant`
+- **vùng:** `_code`
+- **vì sao:** Đức báo thẳng 06/09: *"tôi thấy có 2 dashboard nên bị confuse."* Sau khi dựng
+  `bang-trang-thai/`, repo có hai file HTML nội dung gần như giống nhau:
+  `DASHBOARD-Chrome-Extension-AI-Agentic.html` ở gốc (đã commit) và `bang-trang-thai/BANG.html`
+  (sinh tại chỗ, không commit).
+- **lỗi ở bản giao việc, không phải ở lane:** `BRIEF-BANG-BA-CUA-01` viết *"gom vào một thư mục"*
+  nhưng **không nói file nào là bảng chính**. Lane sinh file thứ hai để tránh làm bẩn artifact đã
+  commit — đúng với ràng buộc được giao.
+- **KHÔNG gộp làm một được, và đây là lý do:** hai file có ràng buộc ngược nhau. Bản ở gốc phải
+  **nằm yên trong git** để GPT audit qua GitHub và AI phiên khác đọc được mà không chạy gì. Bản
+  sống phải **được ghi đè liên tục** — mà ghi đè vào file đã commit thì mỗi cú nhấp của Đức làm
+  bẩn cây làm việc của mọi lane đang chạy, và với chế độ tự chạy thì nó bẩn liên tục.
+- **cách làm khi tới lượt:** bản chụp ở gốc tự khai ngay dòng đầu rằng nó là bản chụp, kèm đường
+  nhấp đúp sang bản sống. Bản sống khai nó là bản sống kèm mốc sinh. **Đừng trông cậy vào việc
+  Đức nhớ** — link cũ còn nằm trong lịch sử trình duyệt và trong tin nhắn cũ.
+- **liên quan:** cùng họ với `N-07` (trang vẫn bảo Đức đi nhờ AI làm mới). Cả hai là *trang nói
+  sai cách Đức dùng nó*.
+
+## N-09 · Khoá bị giữ mà vùng chưa bị chạm — chặn phiên khác mà không ai thấy
+
+- **nhóm:** dephien
+- **đóng khi:** `claim.mjs --list`, khối "Đang làm gì" trên bảng, và cổng đóng phiên đều nói được "đang giữ mà chưa chạm vùng", có phép ghim và đột biến kiểm
+- **mở:** 2026-09-06 · lane `claude-assistant`
+- **vùng:** `_code` + `_docs` + `_root`
+- **đề bài:** `docs/briefs/BRIEF-K2-KHOA-RANH-01.md`
+- **vì sao:** Đức nêu 06/09 sau khi một phiên khác phải đứng chờ. Đo được: lane
+  `claude-codex-ngan` giữ **ba** khoá worker **14 phút** với **0 commit và 0 file bị sửa** trong
+  cả ba vùng.
+- **nguyên nhân là bản giao việc, không phải lane:** mọi brief ngày 06/09 mở đầu bằng *"Nhận
+  khoá trước"*, trong khi lane dành 5–20 phút đầu chỉ để ĐỌC — mà đọc thì không cần khoá.
+- **cố ý KHÔNG sửa:** luật *trả khoá sau khi đẩy*. Bốn lane giữ khoá gần một tiếng sáng 06/09 là
+  vì bị chặn đẩy, và đó là hành xử ĐÚNG. Bệnh thật ở đó là `Y-16`.
+- **cấm khi làm:** máy tự nhả khoá của lane khác · để phép kiểm này ĐỎ (lane đọc kỹ 30 phút là
+  lane tốt; chặn nó là dạy mọi lane ghi bừa một byte để giữ khoá cho hợp lệ).
+
+- **ĐÓNG N-07** · 2026-09-06 · lane `claude-n07` · `node scripts/build-overview.mjs` sinh ra trang
+  **không còn một câu nào bảo Đức đi nhờ AI** — quét cả trang, tìm được ba chỗ và sửa cả ba: dải đỏ
+  ở đầu trang, thẻ *Làm mới bảng* ở tab đầu, khối *Câu để dán cho AI* ở tab Vận hành. Chữ mới chỉ ra
+  ba cửa nhấp đúp trong `bang-trang-thai/`. Gỡ luôn `readRefreshLine` — không còn chỗ nào dùng.
+  Phép ghim: khối 5b của `tests/build-overview-smoke.mjs`, ghim **cả hai chiều** (ba câu cũ phải mất,
+  bốn tên cửa phải có), ĐỎ trước khi vá và XANH sau khi vá; hai lượt sinh trên cùng HEAD ra giống hệt
+  từng byte.

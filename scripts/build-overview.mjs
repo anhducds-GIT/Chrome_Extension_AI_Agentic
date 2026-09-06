@@ -1530,34 +1530,13 @@ const bigRow = (tab, id, name, chipHtml, meta) =>
   `        <div class="br"><a href="#${esc(id)}" data-goto="${esc(tab)}">${esc(name)}</a>` +
   `${chipHtml}<span class="meta">${esc(meta)}</span></div>`;
 
-/* ĐỌC LẠI câu từ `PROMPTS.md`, không chép nó lần thứ hai.
+/* ĐÃ GỠ (06/09, sổ nợ N-07): `readRefreshLine` — bộ đọc lấy câu "làm mới bảng" từ mục 2 của
+ * `PROMPTS.md` để trang không giữ bản chép thứ hai của câu đó.
  *
- * Bản cũ gõ cứng "sinh lại rồi ĐĂNG LẠI ARTIFACT" — đúng vào lúc bảng chỉ sống trên claude.ai.
- * Rồi 03/09 `DASHBOARD.html` vào repo, `PROMPTS.md` được sửa theo, còn chuỗi ở đây thì không.
- * Kết quả: trang bảo AI làm một đằng, sổ prompt bảo một nẻo, và trang là thứ AI đọc trước.
- * GPT audit bắt được 04/09.
- *
- * Chép là tạo bản thứ hai, và bản thứ hai luôn lệch. Nên đọc. Không tìm thấy thì NÉM — không
- * có câu dự phòng, vì một câu dự phòng âm thầm chính là con đường vừa đi vào lỗi này. */
-export function readRefreshLine(deps) {
-  const text = deps.readFile("PROMPTS.md");
-  /* CHẶN Ở MỤC KẾ. Bản trước cắt từ mục 2 tới CUỐI FILE, nên khi mục 2 mất khối ```text nó
-     lặng lẽ nhặt khối của MỘT MỤC KHÁC rồi trả về như thật — fail-open đội lốt fail-closed,
-     đúng cái nó sinh ra để chặn. GPT audit vòng 2 bắt được 04/09. */
-  const bat = /^##\s+2\..*$/m.exec(text);
-  let block = null;
-  if (bat) {
-    const sau = text.slice(bat.index + bat[0].length);
-    const het = /^##\s/m.exec(sau);
-    block = /^```text\r?\n([^\r\n]+)/m.exec(het ? sau.slice(0, het.index) : sau);
-  }
-  if (!block) {
-    throw new Error("THIEU_CAU_LAM_MOI: PROMPTS.md không còn mục \"## 2.\" kèm khối ```text. "
-      + "Câu làm mới bảng phải đọc được từ đó, không được gõ cứng ở đây — gõ cứng là hai bản, "
-      + "và hai bản thì sẽ lệch (đã lệch một lần 03/09).");
-  }
-  return block[1].trim();
-}
+ * Nó đúng khi trang còn in một câu cho Đức dán cho AI. Nay trang không in câu nào như thế
+ * nữa: Đức tự làm mới bảng bằng ba cửa nhấp đúp trong `bang-trang-thai/`, nên chỗ duy nhất
+ * dùng tới bộ đọc này đã biến mất. Giữ lại là giữ một phép kiểm không bao giờ nổ, mà vẫn bắt
+ * `PROMPTS.md` phải khoá cứng hình dạng mục 2 mãi mãi. */
 
 export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = Date.now() } = {}) {
   const model = collectModel(deps, { tolerant: true });
@@ -1579,7 +1558,6 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const defects = readDefects(deps);
   const mocDaXong = readMocDaXong(deps);
   const suCo = readAssistantEvents(deps);
-  const CAU_LAM_MOI = readRefreshLine(deps);
 
   const supersededCount = model.rows.filter((r) => r.lifecycle === "superseded").length;
   const decisionCount = decisions.total;
@@ -1731,9 +1709,11 @@ ${STYLE}
 
     <div class="card">
       <div class="sect">Làm mới bảng</div>
-      <div class="hint">Bảng không tự làm mới. Nó in ngày sinh ở đầu trang và <strong>tự bật dải đỏ khi Đức mở nó vào một ngày khác ngày sinh</strong>. Thấy dải đỏ thì dán câu dưới đây cho tôi.</div>
-      <pre class="cmd">${esc(CAU_LAM_MOI)}</pre>
-      <p class="note">Cách nó chạy, và lệnh chạy tay, nằm ở tab <strong>Vận hành</strong>.</p>
+      <div class="hint">Bảng không tự làm mới. Nó in ngày sinh ở đầu trang và <strong>tự bật dải đỏ khi Đức mở nó vào một ngày khác ngày sinh</strong>. Thấy dải đỏ thì <strong>Đức tự làm mới được, không phải nhờ ai và không phải chờ ai</strong>.</div>
+      <div class="bl">
+        <div class="bi"><span class="c">›</span><span class="d">Mở thư mục <strong>bang-trang-thai</strong> ở gốc repo, nhấp đúp <strong>Xem-bang.cmd</strong> — bảng được dựng lại rồi tự mở bằng trình duyệt.</span></div>
+      </div>
+      <p class="note">Hai cách còn lại — mở bảng có sẵn <strong>nút Làm mới ngay</strong>, và bật cho bảng tự dựng lại mỗi lần bật máy — nằm ở tab <strong>Vận hành</strong>.</p>
     </div>
   </div>`);
 
@@ -2032,12 +2012,13 @@ ${STYLE}
   <div role="tabpanel" data-pane="van-hanh"${anKhung("van-hanh")}>
     <div class="card">
       <div class="sect">Làm mới bảng này</div>
-      <div class="hint">Bảng là ảnh chụp, <strong>không tự cập nhật</strong>. Dải đỏ ở đầu trang tự bật khi Đức mở nó vào một ngày khác ngày sinh — nó tính lúc XEM, không lúc sinh, nên không cần sinh lại mới biết là cũ.</div>
-      <details class="the">
-        <summary><span><span class="nm">Câu để dán cho AI</span><span class="sub">cách nhanh nhất, không cần mở terminal</span></span></summary>
-        <div class="in"><pre class="cmd">${esc(CAU_LAM_MOI)}</pre></div>
-      </details>
-      <p class="note">Bảng <strong>được commit vào repo</strong>, có chủ đích: nhờ vậy bất kỳ AI nào cũng sinh lại rồi commit được, không phải nhờ riêng một AI đăng hộ. Cổng đóng phiên so bảng đã commit với trạng thái repo mỗi phiên, nên bảng <strong>không thể âm thầm cũ</strong>. Nội dung bảng suy hoàn toàn từ lần commit gần nhất, không nhìn giờ đồng hồ — nếu nó nhìn đồng hồ thì sang ngày là mọi phiên bị chặn đẩy việc lên dù không dữ liệu nào đổi.</p>
+      <div class="hint">Bảng là ảnh chụp, <strong>không tự cập nhật</strong>. Dải đỏ ở đầu trang tự bật khi Đức mở nó vào một ngày khác ngày sinh — nó tính lúc XEM, không lúc sinh, nên không cần dựng lại mới biết là cũ. <strong>Cả ba cách làm mới đều là nhấp đúp một file trong thư mục bang-trang-thai ở gốc repo</strong> — không cần gõ lệnh, không cần chờ ai.</div>
+      <div class="bl">
+        <div class="bi"><span class="c">›</span><span class="d"><strong>Xem-bang.cmd</strong> — xem ngay một lần: bảng được dựng lại rồi tự mở bằng trình duyệt.</span></div>
+        <div class="bi"><span class="c">›</span><span class="d"><strong>Mo-may-chu.cmd</strong> — mở bảng có sẵn <strong>nút Làm mới ngay</strong> ngay trong trang, bấm bao nhiêu lần cũng được. Tắt bằng cách đóng cửa sổ đen tên "Bang trang thai".</span></div>
+        <div class="bi"><span class="c">›</span><span class="d"><strong>Bat-tu-chay.cmd</strong> — bật cho bảng tự dựng lại mỗi lần bật máy; Đức chỉ mở trang rồi bấm F5. Gỡ bằng <strong>Tat-tu-chay.cmd</strong>.</span></div>
+      </div>
+      <p class="note">Có đúng một lúc bảng <strong>cố ý ngừng dựng lại</strong>: khi một phiên đang sửa dở chính bộ dựng bảng. Lúc đó trang nói thẳng lý do, thay vì lặng lẽ đưa Đức bản cũ trông y như bản mới. Bản nằm trong repo thì mỗi phiên đóng lại đều bị đối chiếu với trạng thái repo, nên nó <strong>không thể âm thầm cũ</strong>. Nội dung bảng suy hoàn toàn từ lần commit gần nhất, không nhìn giờ đồng hồ — nếu nó nhìn đồng hồ thì sang ngày là mọi phiên bị chặn đẩy việc lên dù không dữ liệu nào đổi.</p>
     </div>
 
     <div class="card">
@@ -2258,7 +2239,8 @@ ${STYLE}
     if (nay > b.dataset.sinh) {
       b.dataset.hien = "1";
       b.textContent = "Bảng sinh ngày " + b.dataset.sinh + ", hôm nay " + nay
-        + " — số liệu có thể đã cũ. Nhờ AI: Làm mới bảng trạng thái.";
+        + " — số liệu có thể đã cũ. Mở thư mục bang-trang-thai ở gốc repo rồi nhấp đúp"
+        + " Xem-bang.cmd để có bản mới.";
     }
   }
 })();

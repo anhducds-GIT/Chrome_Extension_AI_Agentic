@@ -1050,3 +1050,31 @@ giữ nguyên từng byte.
 
 **Còn mở:** `N-07` — trang vẫn in "Nhờ AI: Làm mới bảng trạng thái", nay đã sai. Cần sửa bộ sinh
 rồi sinh lại artifact, không nằm trong brief này.
+
+## 2026-09-06 — `claude-n07` · N-07: bảng thôi bảo Đức đi nhờ AI, chỉ ra ba cửa Đức tự mở
+
+**Vấn đề:** trang bảng có ĐÚNG BA chỗ dạy Đức đi nhờ AI làm mới bảng — dải đỏ ở đầu trang
+("Nhờ AI: Làm mới bảng trạng thái"), thẻ *Làm mới bảng* ở tab đầu ("dán câu dưới đây cho tôi"),
+và khối *Câu để dán cho AI* ở tab Vận hành. Từ 06/09 Đức tự làm được bằng ba cửa nhấp đúp trong
+`bang-trang-thai/`, nên cả ba dòng đó dẫn Đức đúng vào con đường vừa bị xoá bỏ.
+
+**Sửa cả ba, quét cả trang chứ không sửa một dòng.** Chữ mới nói cách tự làm: dải đỏ chỉ
+`Xem-bang.cmd`; thẻ ở tab đầu chỉ một cửa rồi trỏ hai cửa còn lại sang tab Vận hành; thẻ ở tab
+Vận hành liệt kê đủ ba cửa kèm cách tắt.
+
+**Gỡ luôn `readRefreshLine`** — bộ đọc lấy câu prompt từ mục 2 của `PROMPTS.md` để trang không
+giữ bản chép thứ hai. Nó đúng khi trang còn in một câu cho Đức dán; nay không chỗ nào dùng, mà
+giữ lại thì vẫn bắt `PROMPTS.md` khoá cứng hình dạng mục 2 mãi mãi — một phép kiểm không bao
+giờ nổ vẫn thu thuế mọi phiên sau.
+
+**Phép ghim ghim CẢ HAI CHIỀU, cố ý:** ba câu cũ không được còn, VÀ bốn tên cửa phải có mặt.
+Chỉ chặn câu cũ thì xoá trắng cả thẻ cũng xanh — Đức mất chỗ duy nhất nói cho biết cách tự làm,
+tức lại quay về đi hỏi AI, đúng cái bệnh vừa chữa.
+
+**Số:** mỏ neo đếm được 3, không lượt nào ra 0 · phép ghim ĐỎ trước khi vá, XANH sau khi vá ·
+suite xanh toàn bộ · artifact sinh lại rồi commit kèm.
+
+**Không chạm, và nói rõ vì sao:** mục 2 của `PROMPTS.md` giữ nguyên — nó vẫn là câu đúng cho AI
+lúc đóng phiên. Một chỗ khác trên trang vẫn nói *"muốn biết ai đang giữ vùng nào thì hỏi AI"*:
+đó không phải việc làm mới bảng, và bảng cố ý không in tên chủ vùng, nên chưa có cửa tự làm nào
+thay được câu đó.
