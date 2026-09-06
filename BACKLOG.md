@@ -717,7 +717,7 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
 - **cách rẻ nhất:** đừng cấp số tập trung — chỉ cần **phát hiện trùng** rồi báo đỏ, người sửa mất
   30 giây. Cấp số tập trung là dựng một cái khoá thứ hai cho đúng thứ vừa được miễn khoá.
 
-## N-10 · tiến độ 2026-09-06 · nửa đầu XONG
+**Ghi chú N-10 · tiến độ 2026-09-06 · nửa đầu XONG** (không phải một mục mới — xem dòng ĐÓNG ở cuối sổ)
 
 - `BRIEF-K2-KHOA-RANH-01` đã sửa: tín hiệu đổi tên thành **"chưa thấy dấu vết trong repo"**, thêm
   mục 2b **cấm nhả khoá hộ lane khác dựa trên phép đo** (ba đường hợp lệ, không có đường thứ tư),
@@ -726,7 +726,7 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
 - **Còn nợ để đóng hẳn:** câu cấm đó phải vào `AGENTS.md` mục 1 (vùng `_root`), vì đó là chỗ phiên
   điều phối đọc và cũng là chỗ nó đã làm sai. Việc này đi kèm lượt làm `K2` chứ không tách riêng.
 
-## N-06 · đóng 2026-09-06
+**Ghi chú N-06 · 2026-09-06** (không phải một mục mới — xem dòng ĐÓNG ở cuối sổ)
 
 - `BRIEF-SCOUTER-SEED-01` mục 2 đã sửa: bỏ câu "6 file giống hệt nhau", thay bằng **bảng đo thật
   năm file** (một file trùng cả ba · hai file Gemini = Flow Video nhưng ChatGPT khác · hai file
@@ -774,7 +774,7 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
   **TẮT**, đúng như `sidepanel.html` ship. Cho nó khởi đầu BẬT thì đột biến xoá lệnh bật nút vẫn
   XANH — đã dính đúng lượt viết phép kiểm mới, phát hiện được nhờ chạy đột biến chứ không nhờ đọc.
 
-## N-10 · ĐÓNG 2026-09-06
+**Ghi chú N-10 · 2026-09-06** (không phải một mục mới — xem dòng ĐÓNG ở cuối sổ)
 
 - Nửa sau đã xong: `AGENTS.md` mục 1 nay có một gạch đầu dòng **cấm nhả khoá hộ lane khác dựa
   trên phép đo**, kèm ba đường hợp lệ để một khoá được trả và một câu kể ca thật 06/09. Đặt ngay
@@ -799,7 +799,7 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
   `claim.mjs` vào ống; muốn cắt bớt chữ thì chạy riêng rồi mới chạy lệnh sau"* — là đủ, vì chỗ
   hỏng nằm ở thói quen gõ lệnh chứ không nằm trong script.
 
-## N-13 · Scouter rải trên hai khoá đông nhất repo — đã có ADR, chờ lượt chuyển
+## N-16 · Scouter rải trên hai khoá đông nhất repo — đã có ADR, chờ lượt chuyển
 
 - **nhóm:** dephien
 - **đóng khi:** lệnh: node scripts/claim.mjs --list hiện `workers/duc-scouter`, và không còn file `observer-*` / `scouter-*` nào ở gốc repo, `scripts/` hay `tests/`
@@ -836,3 +836,5 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
   code thì **đúng** — cổng đúng là hỏi nhầm câu. Cái tôi suy sai là **mức độ**: từ "code có lỗi"
   nhảy sang "Đức đang gặp lỗi này" mà không có một phép đo nào nối hai chỗ đó. Đúng loại suy diễn
   mà nhãn **[DÒ]** ở sổ các gói sinh ra để cảnh báo.
+
+- **GHI CHÚ SỔ** · 2026-09-06 · lane `claude-assistant` · `N-12` vừa xảy ra **lần thứ hai trong một ngày**: tôi ghi một mục `N-13`, mà lane `claude-gemini-hoan-thien` đã dùng số đó trước. Mục của tôi đổi thành `N-16`. Trong cùng lượt, ba khối `##` sai hình dạng tôi thêm cho `N-06`/`N-10` đã **đỏ cổng đóng phiên với mọi phiên** (`backlog-check`: 4 mục thiếu `đóng khi:`) — nên chúng được hạ khỏi cấp tiêu đề thành dòng ghi chú, chữ giữ nguyên. Bài học: *"để lại làm bản ghi"* không phải một lựa chọn khi cái để lại **chặn người khác đóng phiên**.
