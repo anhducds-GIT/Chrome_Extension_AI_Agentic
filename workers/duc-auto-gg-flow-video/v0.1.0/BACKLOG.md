@@ -755,3 +755,18 @@ file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemi
   canh**, vì mọi ca thử đều bị nhánh thứ nhất bắt trước. Đã thêm ca nằm ngoài tầm nhánh một,
   phá lại thì đỏ. Một nhánh không ai canh chỉ lộ ra đúng hôm cần nó nhất.
   **Còn nợ:** chưa có bằng chứng câu này bằng tiếng Việt — cố ý không đoán, cùng lý do F-32.
+
+- **F-28 · nửa sau đã xong 2026-09-07, nửa đầu CHỜ ĐỨC DUYỆT XOÁ FILE** (lane `claude-flow-zoom`).
+  Điều kiện thứ hai của `Đóng khi:` đã đạt: `tests/zoom-control-smoke.mjs` mới nạp adapter THẬT vào
+  `vm` rồi trích đúng thân hàm zoom ra khỏi `sidepanel.js` và chạy. Đo bằng đột biến, 16 con phá vào
+  `sidepanel.js` + `provider-adapter.js`: phép ghim mới bắt **16/16**.
+  **Cùng 16 con đó, `tests/chatgpt-zoom-control-smoke.mjs` bắt 0/16** — số đo tại chính gói này, không
+  còn là suy từ gói Gemini nữa. Nó là **đồ chết**, và nó vẫn khẳng định `https://chatgpt.com/` là địa
+  chỉ hợp lệ trong một gói Flow.
+  **Điều kiện thứ nhất chưa đạt và tôi không tự làm:** xoá file cần Đức duyệt (luật gốc của Đức).
+  Nên chuỗi `chatgpt.com` vẫn còn trong `tests/`. **Việc còn lại đúng một câu:** Đức cho xoá
+  `tests/chatgpt-zoom-control-smoke.mjs` thì F-28 đóng — mấy khẳng định HTML/CSS của nó đã được chép
+  sang phần "nửa tĩnh" của phép ghim mới, nên xoá đi không mất phép kiểm nào.
+  Ghi chú cho phiên sau: `tests/flow-zoom-control-reason.mjs` **không** chết — nó trích thân hàm thật
+  (bắt 5/16). Nhưng nó tiêm một `isChatGPTUrl` GIẢ dựng lại từ regex trong chính file test, nên đúng
+  cái cổng của N-13 thì nó không canh được. Hai file bổ nhau, giữ cả hai.

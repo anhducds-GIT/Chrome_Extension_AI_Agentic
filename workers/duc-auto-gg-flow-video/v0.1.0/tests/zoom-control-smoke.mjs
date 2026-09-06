@@ -114,8 +114,9 @@ function stage({ tabs } = {}) {
 const okTabs = (url, zoom = 1.0) => {
   const state = {
     zoom,
+    url,
     lastSet: undefined,
-    query: async () => [{ id: 101, url }],
+    query: async () => [{ id: 101, url: state.url }],
     getZoom: async () => state.zoom,
     setZoom: async (tabId, factor) => { state.lastSet = { tabId, factor }; state.zoom = factor; },
   };
@@ -277,6 +278,27 @@ assert.doesNotMatch(
   assert.equal(adapter.isProviderOrigin("https://labs.google/fx/tools/whisk"), true);
   assert.equal(adapter.isProviderUrl("https://labs.google/fx/tools/whisk"), false, "cổng của runner vẫn phải TỪ CHỐI một công cụ FX khác");
   assert.equal(adapter.isProviderUrl("https://labs.google/fx/tools/flow/project/abc"), true, "và vẫn phải nhận đúng trang công cụ Flow");
+}
+
+/* --- Ca J: ĐỔI TAB — đường khoá phải TẮT được nút đang bật ---------------- */
+//
+// Mọi ca trên đều bắt đầu từ trạng thái nút đã TẮT (đúng như `sidepanel.html`
+// ship), nên chúng khẳng định "nút xám" ở một chỗ vốn đã xám sẵn. Đo bằng đột
+// biến: bỏ hẳn `btn.disabled = true` khỏi `lockZoomButtons` mà suite vẫn XANH.
+// Ca này là ca duy nhất đi từ trạng thái ĐANG BẬT — Đức mở trang Flow (nút
+// sáng) rồi chuyển sang tab khác, và nút phải tắt lại. Không có ca này thì
+// đường khoá không hề được canh.
+{
+  const tabs = okTabs("https://labs.google/fx/tools/flow/project/abc", 0.9);
+  const s = stage({ tabs });
+  await s.context.syncZoomState();
+  assert.ok(s.buttons.every((b) => !b.disabled), "tiền đề: đang ở trang Flow thì nút phải bật");
+  assert.ok(s.buttons.some((b) => b.active), "tiền đề: phải có một nút đang sáng để còn thấy nó bị dọn");
+
+  tabs.url = "https://example.com/";
+  await s.context.syncZoomState();
+  assert.ok(s.buttons.every((b) => b.disabled), "đổi sang tab lạ thì nút đang bật phải TẮT lại");
+  assert.ok(s.buttons.every((b) => !b.active), "và không nút nào còn sáng");
 }
 
 console.log("zoom control smoke: PASS");

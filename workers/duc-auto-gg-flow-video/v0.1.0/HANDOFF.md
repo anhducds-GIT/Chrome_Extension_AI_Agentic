@@ -584,3 +584,33 @@ thử đều bị nhánh thứ nhất bắt trước. Đã thêm ca nằm ngoài
 
 **Đóng phiên tại đây, trả khoá.** Job `Q001` vẫn nằm trong hàng đợi, **chưa bấm chạy**. Gói vẫn
 `building`: chưa job nào chạy trọn trên nhà mới, nên chưa khai được `last_verified`.
+
+## 2026-09-07 — `claude-flow-zoom`: nút zoom hỏi nhầm câu, và phép kiểm canh nó là đồ chết
+
+Hai mục cùng một chỗ, nên làm một lượt.
+
+**N-13 — đọc code trước, không tin sổ.** Sổ nợ ghi *"gần như chắc chắn dính"* và suy từ gói
+Gemini. Đọc ra **đúng y hệt**: `isChatGPTUrl` của gói này uỷ quyền cho `isProviderUrl`, mà
+predicate đó đòi đúng **mặt** trang công cụ Flow. Đó là câu hỏi của runner — *"một run có
+được phép gõ vào tab này không"* — và nó chặt vì hỏi sai là gõ prompt vào chỗ không phải Flow.
+Nút phóng to thì chỉ gọi `chrome.tabs.setZoom`: không gửi gì, không gõ gì. Nó chỉ cần hỏi
+**origin**. Adapter nay có `isProviderOrigin` (https + đúng host); `isProviderUrl` **giữ
+nguyên** — nó đang đúng việc của nó, và có ca ghim riêng để không ai nới nó theo.
+
+**N-14 — số đo tại chính gói này, không còn là suy từ gói khác.** Thêm
+`tests/zoom-control-smoke.mjs`: nạp adapter THẬT vào `vm`, trích đúng thân hàm zoom ra khỏi
+`sidepanel.js`, rồi chạy. Đột biến **16 con** vào `sidepanel.js` + `provider-adapter.js`:
+phép ghim mới bắt **16/16**; `tests/chatgpt-zoom-control-smoke.mjs` bắt **0/16**.
+
+**Một con thoát ở lượt đầu, và nó chỉ đúng vào chỗ hổng.** Bỏ hẳn `btn.disabled = true` khỏi
+`lockZoomButtons` mà suite vẫn XANH — vì mọi ca đều khởi đầu từ trạng thái nút đã TẮT, nên
+"nút xám" đúng sẵn mà không cần ai tắt. Đã thêm ca đi từ trạng thái **ĐANG BẬT** (Đức đứng ở
+trang Flow rồi chuyển tab), phá lại thì đỏ. Đây là bẫy anh em với bẫy đã ghi trong sổ: sân
+khấu sai trạng thái đầu làm phép kiểm mất răng ở đúng chỗ nó phải cắn — chỉ khác chiều.
+
+**Cố ý KHÔNG xoá file chết** (xoá file cần Đức duyệt). Ghi vào `BACKLOG.md`: F-28 xong nửa
+sau, nửa đầu chờ đúng một câu duyệt của Đức. Khẳng định HTML/CSS của file chết đã được chép
+sang phần "nửa tĩnh" của phép ghim mới, nên xoá đi không mất phép kiểm nào.
+
+Suite gói **102/102**. `flow-zoom-control-reason.mjs` giữ nguyên, nó không chết (bắt 5/16) —
+nhưng nó tiêm `isChatGPTUrl` giả nên đúng cổng của N-13 thì nó không canh được. Hai file bổ nhau.
