@@ -132,8 +132,9 @@ này chết.
 - **Cấm chạy trên trang thật** (`AGENTS.md` mục 2). Trang thử tự tạo thì được.
 - Cấm xin quyền ngoài danh sách ở mục 2.
 - Cấm làm bất cứ mục `SEED v1` nào.
-- Cấm chuyển thư mục Scouter trong lượt này — chỗ đặt chưa quyết, và chuyển chỗ giữa lúc đang
-  xây làm mọi diff sau đó không đọc được.
+- ~~Cấm chuyển thư mục Scouter trong lượt này~~ — **HẾT HIỆU LỰC 06/09.** Lý do của lệnh cấm
+  là *"chỗ đặt chưa quyết"*; nay đã quyết ở [ADR-0013](../adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md),
+  và việc chuyển đã LÀM XONG trong chính lượt này. Scouter nay ở `workers/duc-scouter/v0.1.0/`.
 
 ## 5. Nghiệm thu
 
@@ -147,7 +148,13 @@ này chết.
 
 ## 6. Khoá và đóng phiên
 
-Mã Scouter nằm ở **gốc repo** → khoá `_root`. Chạm `tests/` hay `scripts/` thì thêm `_code`.
+**ĐÃ ĐỔI 06/09 — đừng đọc câu cũ rồi đi nhận nhầm khoá.** Mã Scouter nay nằm gọn trong
+`workers/duc-scouter/v0.1.0/` → khoá **`workers/duc-scouter`**, và chỉ khoá đó. Không cần
+`_root`, không cần `_code`, kể cả khi sửa phép ghim hay bộ đo — chúng đã theo gói về nhà mới.
+
+> Câu cũ: *"Mã Scouter nằm ở gốc repo → khoá `_root`. Chạm `tests/` hay `scripts/` thì thêm
+> `_code`."* Đúng cho tới lúc [ADR-0013](../adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md)
+> được chốt và thực thi; giữ lại đây để ai đọc bản cũ nhận ra mình đang đọc câu đã chết.
 
 ```
 node scripts/claim.mjs --take _root --as <tên-phiên> --task "SCOUTER-SEED-01"
