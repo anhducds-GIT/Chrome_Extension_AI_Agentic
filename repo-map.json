@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-06",
-  "generated_commit": "ef92011",
+  "generated_commit": "f814ef8",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -9,6 +9,10 @@
     "CLAUDE.md"
   ],
   "top_level": [
+    {
+      "path": "bang-trang-thai/",
+      "owner_declared": true
+    },
     {
       "path": "delegations/",
       "owner_declared": true
