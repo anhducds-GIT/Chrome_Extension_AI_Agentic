@@ -217,4 +217,35 @@ không phải lời hứa. Mỏ neo khớp **3/3** mục, không lượt nào ra
 có chủ khác thì chỉ được đọc). Bản đã làm giữ ngoài repo, áp lại được bằng một lệnh — **cần Đức
 chốt** ai giữ khoá đó.
 
+
+## 2026-09-06 — `claude-hang-doi`: B-36 đo dứt điểm sau 8 tuần, B-27 đóng, protocol dọn rác
+
+**Làm gì.** Ba phép đo 0 credit trên máy Đức (Đức dán vào console, tôi đọc kết quả) đóng lại chẩn
+đoán `B-36`. Đóng `B-27` theo câu chốt của Đức. Dựng protocol dọn rác theo yêu cầu của Đức.
+
+**Kết quả số.**
+
+- **`B-36` — đo trực tiếp, không còn suy.** Phép đo quyết định đi bằng đường thật của mã
+  (`DAC_DOWNLOAD_ARTIFACT`, có trồng phiếu): xin `B36-probe-ticket__audit.jsonl`, Chrome đặt
+  `d31c629e-…`, nội dung **đúng nguyên vẹn 22 byte**. Nên **Chrome Downloads không đặt tên nổi
+  artifact của gói**. Kết luận 04/09 chỉ suy từ phiếu-đã-bị-tiêu.
+- Hai phép đo trước **không phân biệt được** — một bất khả (service worker MV3 không có
+  `URL.createObjectURL`), một bị nhiễu vì không trồng phiếu. Lý do đầy đủ trong mục `B-36`.
+- Đức chốt **(D) kèm (A)** → [ADR-0049](docs/adr/0049-luu-ben-thu-muc-da-cap-quyen-thay-cho-mac-dinh-downloads.md), đã khai vào `decisions.md`.
+- **`B-27` đóng**, **không viết một dòng code nào** — đóng vì chưa từng xảy ra (trần 32.767 ký tự,
+  câu trả lời thật 177–180). Nợ gói **22 → 21**, đo bằng predicate của chính bộ đếm.
+- **`B-09` có protocol:** `scripts/don-rac-tai-xuong.mjs` + phép ghim **36 khẳng định** (gồm 3 lượt
+  chạy công cụ thật vào thư mục tạm). Đo thật **39 file tên GUID / 170**: ① 16 chứng minh được ·
+  ② 21 không chứng minh được chủ · ③ **đúng 2 được bảo vệ** — một `.pdf` và một `.jpg` **là file
+  THẬT của Đức**. Thử phá **7/9**; hai lượt thoát tương đương hành vi, **lượt gộp thì ĐỎ**.
+
+**Còn gì mở.**
+
+- `B-36` **chưa vá**. Thứ tự: (A) trước, (D) sau, **đừng gộp**. (A) không được đọc thành đã sửa B-36.
+- Phép đo còn nợ, 0 credit: đọc `expectedDownloadNames.size` sau một lượt tải → determiner **có nổ**
+  hay **không nổ cho blob URL**. Không chặn việc; nếu "không nổ" thì cả cơ chế đó là mã chết.
+- `B-09` chờ **tay Đức bấm xoá** — AI không tự xoá file. Công cụ mặc định chỉ xem.
+- Ba bug bị bắt trước khi Đức chạy, cùng họ với bài học `B-36` (kiểm **tĩnh** không phân biệt được
+  hai nhánh). Chi tiết ở mục `B-09`.
+
 <!-- HANDOFF-THANG: 2026-09 -->
