@@ -308,3 +308,57 @@ dấu thì mục không lên bảng, nên lượt này chỉ đi điền dấu �
 khớp đúng 10 dấu đã đặt. Đóng mục thì dấu mất theo, không phải nhớ đi xoá.
 
 **Còn mở:** không đụng `scripts/`, `docs/`, `HANDOFF.md` gốc repo; không sinh lại artifact máy.
+
+## 2026-09-06 — `claude-don-so`: ba chỗ sổ nói sai về chính nó, hai chỗ trong gói này
+
+**Việc của lượt này không phải sửa code.** Là làm cho sổ khớp sự thật — vì Đức đọc bảng để ra
+quyết định, mà bảng chỉ chiếu lại thứ sổ viết. Sổ sai thì bảng sai theo một cách **không ai bắt
+được**: nó vẫn xanh, vẫn đủ cột, chỉ nói nhầm.
+
+**① `F-14` — đóng, bốn ngày sau khi nhật ký đã nói nó đóng.** Log lượt 18 (02/09) viết đúng chữ
+*"F-14 đóng hoàn toàn"*, và `STATUS.md` cũng đã sửa theo từ 04/09. Nhưng **tiêu đề mục trong
+`BACKLOG.md` vẫn đọc như còn treo** (`RÀ LẠI 02/09 — mục này đang mô tả sai thực trạng`), nên bộ
+đếm nợ vẫn tính nó là một việc chưa làm. Kiểm lại bằng bằng chứng chứ không tin nhật ký: nửa đầu
+ở `evidence/F14-KET-QUA.md` (`opened: true`, 17 nhãn, `panel_closed_again: true`), nửa sau ở
+`evidence/F26-KET-QUA-luot1.md` (`output_chip.label_before: "Video · 360p · 8s crop_16_9 x3"` —
+nhãn **Video** sau khi job khởi đầu ở chế độ Image, tức `pressFlowControl` bấm được
+`videocam Video` và mode **đổi thật**). Cả hai 0 credit. Viết lại tiêu đề thành `XONG 02/09`,
+**giữ nguyên toàn bộ thân mục** kể cả đoạn cảnh báo *"nửa còn lại chưa chứng minh"* — đoạn đó nay
+gạch ngang kèm câu chỉ sang bằng chứng, chứ không xoá: một mục đã hai lần kết luận sai rồi tự
+sửa thì chính chỗ sai là phần đáng đọc nhất.
+
+**② `F-18` — mục xin "một lượt nữa để kết luận", trong khi lượt đó đã chạy 12 lần.** Đây là chỗ
+tự quét ra, không có trong đề bài. Chữ của mục dừng ở lượt F4R3 (02/09) và kết bằng *"chạy
+`run.trial` x1 … không cần lượt thứ ba"*. Đọc `git log --grep F-18` và thư mục `evidence/` thì
+trong **cùng ngày 02/09** còn bốn chuỗi live nữa mà mục không hề ghi: F4R4 (1 job) · F4R5
+(3 job) · F4R8+F4R9 (7 job). Hai điều bị bỏ sót, và cả hai **đổi việc phải làm tiếp**:
+
+- **Giả thuyết mạnh nhất còn lại đã BỊ BÁC.** F4R5 dựng đúng điều kiện "job sau gõ vào ô job
+  trước vừa dùng" bằng ba prompt dài khác hẳn nhau (129/208/122) — job 2 và 3 vẫn `before = 28`.
+  Chuỗi nhiều job **không** phải cơ chế gây trạng thái lai.
+- **12 lượt gõ sạch liên tiếp, `after − prompt_len = 0` mọi lượt**, kể cả chuỗi 7 job nối nhau.
+  Trạng thái lai của F4R2 không tái hiện một lần nào.
+
+Nên việc kế tiếp của F-18 **không còn là "chạy thêm một lượt"** — lượt thứ mười ba sẽ cho đúng
+con số như mười hai lượt trước. Đã viết lại phần việc kế: giữ mục **mở** nhưng ở mức thấp, chờ nó
+tái hiện, và `composer_len_before_typing` (bản vá `be17e75`) sẽ tự tố ngay dòng đầu sổ cái.
+
+**③ `AI-OPERATOR-GUIDE.md` — hai dòng bảng lỗi vẫn sai việc Đức phải làm.** Bảng lỗi là thứ AI
+vận hành đọc trước khi hỏi Đức, nên sai ở đây tốn **thời gian của người**, không phải của máy.
+Hai dòng đã hết hạn từ 02/09 mà vẫn còn:
+
+- Dòng `WRONG_GENERATION_MODE` bảo *"nhờ Đức tự đặt Video mode bằng tay"* — F-14 đã chứng minh
+  runner tự chuyển được. Sửa thành: runner tự làm; còn gặp lỗi thì nghi **F-11** (nhãn Image
+  biến thể) hoặc chưa reload, chẩn đoán bằng `diagnostics.mode_probe` 0 credit.
+- Dòng chip `x2`/`x3`/`x4` bảo *"Runner chưa tự kiểm việc này (F-15)"* — F-15 **XONG** (từ chối
+  trước khi gõ, 0 credit) và F-26 **XONG** (tự đặt `x1` rồi đọc lại chip). Sửa thành đúng thế.
+
+**Kiểm chứng.** Nợ gói GG Flow Video **13 → 12**, đúng bằng một mục đóng, đo bằng chính
+`debtByUnit` của bộ sinh bảng. Không đóng F-18 (vẫn là việc mở thật), không đụng F-24 — thân nó
+cũng nhắc lại kết luận `.click()` cũ, nhưng đó là **lịch sử của một mục đã đóng**, sửa vào đấy là
+viết lại chữ cũ chứ không phải đính chính.
+
+**Còn mở, cố ý không đụng:** `F-10` nói *"nhánh này sẽ vào bảng parity khi có method Bridge chạy
+thật"* — điều kiện đó **nay đã đủ** (nhánh chạy live nhiều lượt), nhưng đưa nhánh ba vào
+`FEATURE-PARITY.md` là một việc thật, phải giữ khoá `_root`, và mục 2 của file đó là chữ của
+người. Để nguyên, ghi ra đây để không trôi.

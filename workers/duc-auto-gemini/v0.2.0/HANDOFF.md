@@ -467,3 +467,24 @@ dấu thì mục không lên bảng, nên lượt này chỉ đi điền dấu �
 khớp đúng 10 dấu đã đặt. Đóng mục thì dấu mất theo, không phải nhớ đi xoá.
 
 **Còn mở:** không đụng `scripts/`, `docs/`, `HANDOFF.md` gốc repo; không sinh lại artifact máy.
+
+## 2026-09-06 — `claude-don-so`: quét sổ nợ gói này tìm chỗ "sổ nói sai về chính nó" — **không tìm được chỗ nào**
+
+**Không sửa gì trong gói này.** Ghi lại để phiên sau khỏi quét lại.
+
+Lượt này đi dọn ba chỗ mà văn xuôi trong sổ nợ mâu thuẫn với nhật ký hoặc git (hai chỗ ở
+`gg-flow-video`, một ở `chatgpt`). Gói Gemini nằm trong phạm vi quét. **Chín mục đang mở** —
+`G-01` `G-02` `G-03` `G-04` `G-05` `G-06` `G-07` `G-08` `G-12` — đối chiếu từng mục với
+`HANDOFF.md` của gói và với `git log --grep`:
+
+- `G-01` và `G-02` **khớp**: cả tiêu đề lẫn thân đều nói *chờ Đức reload để nghiệm thu*, và Log
+  hai lượt gần nhất nói đúng chữ đó. `G-02` còn được một phiên trước cảnh báo sẵn ngay trong Log
+  (*"trông như đã đóng (`ĐÃ VÁ TĨNH 2026-09-04`) nhưng là việc mở thật"*) — đúng loại bẫy mà lượt
+  này đi tìm, và ở đây nó **đã được xử lý rồi**.
+- `G-04` và `G-08` **cố ý không gõ số vào sổ** mà trỏ sang khối máy sinh trong
+  `FEATURE-PARITY.md`. Đó là cách duy nhất một con số trong văn xuôi không bị lạc hậu.
+- `G-03` `G-05` `G-06` `G-07` `G-12`: không có commit nào và không có dòng Log nào nói chúng đã
+  xong hay đã đổi trạng thái.
+
+**Không mục nào bị đếm sai, không tiêu đề nào lạc hậu.** Nợ gói giữ nguyên **9**, đo bằng chính
+`debtByUnit` của bộ sinh bảng. Nói thẳng là không tìm được, chứ không bịa thêm cho đủ số.

@@ -377,3 +377,43 @@ dấu thì mục không lên bảng, nên lượt này chỉ đi điền dấu �
 khớp đúng 10 dấu đã đặt. Đóng mục thì dấu mất theo, không phải nhớ đi xoá.
 
 **Còn mở:** không đụng `scripts/`, `docs/`, `HANDOFF.md` gốc repo; không sinh lại artifact máy.
+
+## 2026-09-06 — `claude-don-so`: `B-36` — tiêu đề nói "chờ nghiệm thu", nghiệm thu đã chạy và đã hỏng
+
+**Không sửa một dòng mã nào.** Lượt này chỉ làm cho sổ khớp sự thật.
+
+**Vấn đề, gọn một câu:** tiêu đề `B-36` ghi *"ĐÃ VÁ 2026-09-04, CHỜ NGHIỆM THU LIVE"*, nên **đọc
+lướt là tưởng chưa ai thử**. Thực tế nghiệm thu **đã chạy đúng ngày 04/09 và THẤT BẠI**, rồi một
+phép đo trong console cùng ngày còn **lật ngược chẩn đoán**. Thân mục ghi đủ cả hai chuyện; chỉ
+tiêu đề là lạc hậu. Và tiêu đề là thứ duy nhất lọt lên bảng.
+
+**Kiểm lại bằng nhật ký trước khi sửa, không tin đề bài.** Ba dòng Log ngày 04/09 của
+`claude-gpt-kenh` nói liền mạch: (a) bản vá đổi bằng chứng sở hữu từ `item.byExtensionId` sang
+**phiếu giữ tên**, suite 104/104, 8/8 mutation đỏ; (b) Đức reload rồi chạy — vẫn
+`PERSISTENCE_FILENAME_MISMATCH`, số file GUID trong Downloads **36 → 37**, nên hai giả thuyết đã
+mô hình hoá **không phải nguyên nhân**; (c) đo trong console service worker ra
+`{patched: 'function', tickets: []}` — mã đang chạy **là** bản vá và phiếu **đã bị tiêu**, tức
+determiner có khớp, có gọi `suggest({filename})`, mà **Chrome bỏ qua đề xuất**. Lỗi nằm **ngoài**
+logic khớp của extension.
+
+**Sửa gì.** Viết lại tiêu đề cho khớp cả bốn sự kiện (đo → vá → nghiệm thu hỏng → chẩn đoán lật),
+và thêm ngay dưới nó một khối *"đọc một dòng cho nhanh"*: mục **vẫn mở, vẫn P1**; bản vá **giữ
+lại** vì nó bịt hai đường mất tên thật có trong mã, nhưng **đừng đọc nó thành đã sửa B-36**; việc
+còn lại là **một phép đo đọc-thuần** (tạo blob ngay trong service worker) và **không vá tiếp
+trước khi có con số đó**. Toàn bộ thân mục giữ nguyên — cả bản vá, cả hai giả thuyết đã bị bác,
+cả lần tác giả tự khai kết luận sai. Đó là phần đắt nhất của mục này.
+
+**Dấu `@Đức` — kiểm lại loại, và nó vốn đã đúng.** Dấu **BẤM** của `B-36` đặt cho *phép đo trong
+console service worker*, **không** cho lượt nghiệm thu. Nghiệm thu đã chạy xong rồi, nên nếu dấu
+gắn vào đó thì nó đang mời Đức làm lại một việc đã làm. Không đổi dấu.
+
+**`STATUS.md`: một chỗ nữa quét ra.** Ô `current_focus` liệt kê việc còn mở là *"B-14…B-21, B-34,
+B-35"* — **thiếu hẳn B-36**, đúng cái mục P1 chặn mọi mutation Bridge khi đích ghi rơi về Chrome
+Downloads. Bảng đọc thẳng ô này, nên gói trông nhẹ hơn thực tế. Đã thêm B-36 vào ô đó kèm đường
+đi vòng vẫn dùng được (chọn một thư mục đích trong Side Panel thì đường ghi không qua Chrome
+Downloads nữa). Không đụng `next_step` và `human_action` — hai ô đó nói về pilot phiên-theo-tab,
+vẫn đúng.
+
+**Không đóng mục nào ở gói này**, nên nợ ChatGPT giữ nguyên **22** — đo bằng chính `debtByUnit`.
+Không đụng `B-19` · `B-27` · `B-07`: lượt `claude-gpt-b` ngày 06/09 đã soi ba mục đó và kết luận
+chúng **trông giống đã đóng nhưng là việc mở thật**; tôi đọc lại và xác nhận, không lật.
