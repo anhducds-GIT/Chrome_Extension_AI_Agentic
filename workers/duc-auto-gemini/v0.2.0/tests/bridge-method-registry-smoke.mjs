@@ -11,7 +11,7 @@ const bridge = globalThis.DacBridgeCore;
 const expectedMethods = [
   "session.hello", "system.ping", "system.capabilities", "queue.list",
   "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
-  "jobs.reorder", "references.add", "diagnostics.dom_probe", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "run.trial", "run.stop", "chat.reload"
+  "jobs.reorder", "references.add", "diagnostics.dom_probe", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw", "run.trial", "run.stop", "chat.reload"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
@@ -34,9 +34,16 @@ for (const method of expectedMethods) {
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].read_only, false);
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].approval, "owner_click");
 assert.equal(bridge.METHOD_REGISTRY["queue.propose"].idempotent, true);
-// Gọi lại ba lệnh này lần thứ hai phải vô hại: dừng một run đã dừng, hoặc F5
+// Gọi lại bốn lệnh này lần thứ hai phải vô hại: dừng một run đã dừng, hoặc F5
 // một tab vừa F5, đều không tạo thêm việc. Mọi lệnh còn lại thì không.
-const idempotentMutations = ["queue.propose", "run.stop", "chat.reload"];
+//
+// Nhãn này KHÔNG phải trang trí — `bridge-core.js` dùng nó để bật kho lưu phản
+// hồi: một lượt gửi lại y hệt (cùng khoá, cùng vân tay tham số) nhận về **phản
+// hồi đã lưu** thay vì chạy lại. Đó chính là thứ `queue.proposal.withdraw` cần:
+// nếu đường truyền đứt SAU khi lệnh rút đã ăn, lượt gửi lại phải nhận về đúng
+// kết quả thành công cũ — chứ không phải `PROPOSAL_NOT_PENDING`, thứ khiến agent
+// tưởng lệnh của nó hỏng trong khi nó đã chạy xong.
+const idempotentMutations = ["queue.propose", "queue.proposal.withdraw", "run.stop", "chat.reload"];
 assert(idempotentMutations.every((name) => bridge.METHOD_REGISTRY[name].idempotent === true));
 assert(expectedMethods.filter((name) => !idempotentMutations.includes(name)).every((name) => bridge.METHOD_REGISTRY[name].idempotent === false));
 // run.stop cố ý KHÔNG nằm trong danh sách cấm: nó chỉ kết thúc được việc, không
@@ -90,6 +97,7 @@ const validByMethod = {
     }]
   },
   "queue.proposal.get": { proposal_id: "proposal-uuid" },
+  "queue.proposal.withdraw": { proposal_id: "proposal-uuid" },
   "run.stop": {},
   "chat.reload": {},
   "run.trial": { job_ids: ["P09-01", "P09-02"], timeout_sec: 90, delay_sec: 25 },
@@ -115,6 +123,7 @@ const invalidByMethod = {
   "run_settings.configure": { delay_min_sec: 25, delay_max_sec: 12 },
   "queue.propose": { if_ledger_etag: "etag", jobs: [] },
   "queue.proposal.get": { proposal_id: "" },
+  "queue.proposal.withdraw": { proposal_id: "" },
   // Lệnh dừng không nhận tham số nào cả: không có "dừng job X" để có thể bị
   // hiểu nhầm thành "dừng tất cả" trên một run đang sống.
   "run.stop": { job_id: "Q001" },

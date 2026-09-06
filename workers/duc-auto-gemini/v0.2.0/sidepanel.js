@@ -888,6 +888,35 @@
     });
   }
 
+  async function bridgeProposalWithdraw(params, call) {
+    return serializeBridgeProposalStore(async () => {
+      const store = await readBridgeProposalStoreUnlocked();
+      const index = store.records.findIndex((item) => item.proposal_id === params.proposal_id);
+      if (index < 0) throw new window.DacBridgeCore.BridgeProtocolError("PROPOSAL_NOT_FOUND", undefined, { proposal_id: params.proposal_id });
+      const record = store.records[index];
+      // Chỉ được rút đề xuất do CHÍNH client_id của mình tạo. Không có dòng này thì
+      // một agent rút được đề xuất của agent khác — mà đề xuất là thứ đang chờ Đức
+      // bấm duyệt, nên rút hộ là xoá một việc khỏi bàn của Đức mà không ai biết.
+      if (record.client?.client_id !== call.request.client.client_id) {
+        throw new window.DacBridgeCore.BridgeProtocolError("FORBIDDEN", "PROPOSAL_OWNER_MISMATCH: Agent chỉ được rút đề xuất do chính client_id của mình tạo.");
+      }
+      if (!window.DacBridgeProposalCore.WITHDRAWABLE_STATUSES.has(record.status)) {
+        throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `PROPOSAL_NOT_PENDING: Không thể rút proposal ở trạng thái ${record.status}.`);
+      }
+      const withdrawnAt = new Date().toISOString();
+      const withdrawn = window.DacBridgeProposalCore.transition(record, "WITHDRAWN", { withdrawn_at: withdrawnAt, withdrawn_by_client_id: call.request.client.client_id }, withdrawnAt);
+      store.records[index] = withdrawn;
+      // Xoá luôn khoá chống-gửi-trùng, không đợi lượt dọn định kỳ: giữ lại thì một
+      // lượt gửi lại cùng idempotency_key sẽ nhận về bản ghi ĐÃ RÚT như thể nó vừa
+      // được tạo mới.
+      delete store.replays[record.idempotency_key];
+      await writeBridgeProposalStoreUnlocked(store);
+      renderBridgeProposals();
+      log(`Agent đã rút đề xuất ${record.proposal_id}; workbook và Queue không thay đổi.`, "info");
+      return window.DacBridgeProposalCore.publicRecord(withdrawn);
+    });
+  }
+
   async function bridgeProposalGet(params) {
     const store = await readBridgeProposalStore();
     const record = store.records.find((item) => item.proposal_id === params.proposal_id);
@@ -920,6 +949,7 @@
       "run_settings.configure": withBridgeErrors(bridgeRunSettingsConfigure),
       "queue.propose": withBridgeErrors(bridgeQueuePropose),
       "queue.proposal.get": withBridgeErrors(bridgeProposalGet),
+      "queue.proposal.withdraw": withBridgeErrors(bridgeProposalWithdraw),
       "run.trial": withBridgeErrors(bridgeRunTrial),
       "run.stop": withBridgeErrors(bridgeRunStop),
       "chat.reload": withBridgeErrors(bridgeChatReload),
@@ -5134,6 +5164,7 @@
       "run_settings.configure": bridgeRunSettingsConfigure,
       "queue.propose": bridgeQueuePropose,
       "queue.proposal.get": bridgeProposalGet,
+      "queue.proposal.withdraw": bridgeProposalWithdraw,
       "diagnostics.dom_probe": bridgeDomProbe,
       "run.trial": bridgeRunTrial,
       "run.stop": bridgeRunStop,

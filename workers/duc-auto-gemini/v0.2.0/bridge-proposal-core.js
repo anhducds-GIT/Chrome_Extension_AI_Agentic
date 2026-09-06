@@ -7,7 +7,16 @@
   const MAX_PENDING_RECORDS = 20;
   const MAX_PENDING_JOBS = 100;
   const PENDING_STATUSES = new Set(["AWAITING_OWNER_APPROVAL", "NEEDS_REVIEW", "APPROVING", "APPROVAL_FAILED"]);
-  const TERMINAL_STATUSES = new Set(["APPROVED_CHECKPOINTED", "REJECTED", "EXPIRED"]);
+  // "WITHDRAWN" la trang thai cuoi, khong phai trang thai cho. Xep no vao day co
+  // hai he qua CO Y: `transition()` se `redact()` ban ghi (dung - de xuat da rut
+  // thi khong con ly do giu prompt), va `publicRecord()` thoi kem prompt theo mac
+  // dinh. Thieu no thi `transition(record, "WITHDRAWN")` NEM: dong 277 tu choi moi
+  // trang thai khong nam trong hai tap nay.
+  const TERMINAL_STATUSES = new Set(["APPROVED_CHECKPOINTED", "REJECTED", "EXPIRED", "WITHDRAWN"]);
+  // Rut duoc thi phai la de xuat CHUA duoc dinh doat. "APPROVING" CO Y khong nam
+  // day: luc do mot luot ghi checkpoint dang bay, va rut giua chung la de lai mot
+  // ban ghi noi "da rut" trong khi cong viec van di tiep.
+  const WITHDRAWABLE_STATUSES = new Set(["AWAITING_OWNER_APPROVAL", "NEEDS_REVIEW", "APPROVAL_FAILED"]);
   const PROVENANCE_FIELDS = Object.freeze([
     "input_origin", "bridge_protocol_version", "bridge_transport", "bridge_proposal_id",
     "bridge_request_id", "bridge_client_id", "bridge_client_job_id", "bridge_received_at",
@@ -278,7 +287,11 @@
     const updatedAt = iso(now);
     const eventByStatus = {
       REJECTED: "BRIDGE_PROPOSAL_REJECTED",
-      EXPIRED: "BRIDGE_PROPOSAL_EXPIRED"
+      EXPIRED: "BRIDGE_PROPOSAL_EXPIRED",
+      // Thiếu dòng này thì rút một đề xuất KHÔNG để lại dấu nào trong vết kiểm
+      // toán của chính nó: bản ghi đổi trạng thái, mà không có sự kiện nào nói
+      // ai làm và lúc nào. Ba trạng thái cuối thì cả ba đều phải ghi.
+      WITHDRAWN: "BRIDGE_PROPOSAL_WITHDRAWN"
     };
     const updated = { ...clone(record), ...clone(values), status, updated_at: updatedAt };
     if (eventByStatus[status]) {
@@ -364,7 +377,7 @@
 
   const api = {
     STORAGE_SCHEMA_VERSION, PENDING_TTL_MS, HISTORY_TTL_MS, MAX_PENDING_RECORDS, MAX_PENDING_JOBS,
-    PENDING_STATUSES, TERMINAL_STATUSES, PROVENANCE_FIELDS, ProposalError, ledgerMaterial, ledgerEtag,
+    PENDING_STATUSES, TERMINAL_STATUSES, WITHDRAWABLE_STATUSES, PROVENANCE_FIELDS, ProposalError, ledgerMaterial, ledgerEtag,
     sanitizeLedgerJob, assignFinalIds, buildPreview, createRecord, publicRecord, redact, transition,
     maintainRecords, assertCapacity, findByIdempotency, idempotencyKey, bridgeFields, approvalLockReason, page,
     createSerialExecutor

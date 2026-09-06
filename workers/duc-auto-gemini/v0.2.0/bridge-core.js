@@ -478,6 +478,13 @@
     };
   }
 
+  // Cung hinh dang tham so voi `queue.proposal.get`, va CO Y uy quyen thang thay vi
+  // chep lai luat: hai lenh nhan cung mot thu (mot proposal_id), nen hai ban sao cua
+  // cung mot luat la hai cho de lech nhau.
+  function validateProposalWithdraw(raw) {
+    return validateProposalGet(raw);
+  }
+
   function validateProposalGet(raw) {
     const params = assertPlainObject(raw, "params");
     rejectUnknown(params, ["proposal_id"], "params");
@@ -525,6 +532,7 @@
     registryEntry({ name: "run_settings.configure", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Configure the same current-run overrides exposed on the Setup tab.", params_schema: { timeout_sec: "integer?", max_retries: "integer?", delay_min_sec: "integer?", delay_max_sec: "integer?", safety_cooldown_sec: "integer|range?", max_input_images: "integer?", continue_on_error: "boolean?", rerun_done: "boolean?" }, params_validator: validateRunSettingsConfigure }),
     registryEntry({ name: "queue.propose", context: "executor", read_only: false, approval: "owner_click", idempotent: true, deadline_ms: 30000, description: "Stage a quarantined queue proposal; never execute it automatically.", params_schema: { if_ledger_etag: "string", proposal_label: "string?", jobs: "proposal_job[1..100]" }, params_validator: validateQueuePropose }),
     registryEntry({ name: "queue.proposal.get", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a quarantined proposal decision and checkpoint evidence.", params_schema: { proposal_id: "string" }, params_validator: validateProposalGet }),
+    registryEntry({ name: "queue.proposal.withdraw", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Withdraw the caller's own pending quarantined proposal.", params_schema: { proposal_id: "string" }, params_validator: validateProposalWithdraw }),
     registryEntry({ name: "run.trial", context: "executor", read_only: false, approval: "none", deadline_ms: 30000, description: "Start one owner-gated development trial run of at most 30 runnable jobs (one continuous chain); refused unless the side-panel development-mode toggle is ON, no run is active, and 300 seconds have passed since the previous trial. Larger production runs stay owner-only.", params_schema: { job_ids: "job_id[1..30]", timeout_sec: "integer:15..90?", delay_sec: "integer:20..30?" }, params_validator: validateRunTrial }),
     // run.stop là lệnh ghi DUY NHẤT cố ý đi vòng qua khoá RUN_ACTIVE. Mọi lệnh
     // ghi khác bị từ chối khi đang chạy vì chúng có thể đổi thứ run sắp làm;
