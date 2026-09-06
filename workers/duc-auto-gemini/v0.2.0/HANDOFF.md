@@ -446,4 +446,27 @@ và cái bẫy tự dính lúc viết nó: `N-14` ở `BACKLOG.md` gốc repo.
 **Còn mở.** File test chết **chưa xoá** — xoá file cần Đức duyệt. Gói Flow Video gần như chắc chắn
 dính **cùng gốc bệnh**; không phải vùng tôi, đã ghi ra `N-13` ở `BACKLOG.md` gốc repo.
 
+## 2026-09-06 — `claude-gemini-hoan-thien`: đẩy kèm, và một lượt ghi lấn vùng đã được Đức duyệt
+
+**Ghi lấn vùng — Đức duyệt giữ.** Tôi ghi hai dòng đếm số máy sinh vào `FEATURE-PARITY.md` trong
+khi `claude-assistant` giữ `_root`. Lệnh `claim.mjs --take` **đã từ chối đúng**, nhưng tôi nối nó
+vào một ống, mà mã thoát của ống là mã thoát của lệnh cuối (`tail`) — luôn 0 — nên `&&` phía sau
+vẫn chạy. Lớp bảo vệ chạy hoàn hảo rồi bị **một ký tự `|` nuốt mất**. Đã ghi thành `N-15` ở
+`BACKLOG.md` gốc repo.
+
+Đức chốt 06/09: **giữ**, vì nội dung nằm trọn trong khối máy sở hữu (không chạm chữ của người,
+không ai mất việc), còn gỡ ra thì bảng đối chiếu lệch với code và cổng xuất bản chặn **mọi** phiên
+— kể cả phiên đang giữ chính khoá đó.
+
+**Đẩy kèm — kể tên đủ, theo luật `--carry` (ADR-0005).** Lượt đẩy này cuốn theo **7 commit của hai
+lane khác**:
+
+| Lane | Số commit | Việc |
+|---|---|---|
+| `claude-hang-doi` | 4 | `B-36` đo đường ghi Chrome Downloads · đóng `B-27` · `Y-15` |
+| `claude-assistant` | 3 | `N-10` cấm nhả khoá hộ lane khác · `N-06` sửa brief Scouter |
+
+Cả bảy đều **có nhãn `Lane:`** nên quy thuộc được; không commit nào vô chủ. Đức duyệt tường minh
+06/09 dù luật đã miễn hỏi từ 05/09 — tôi vẫn hỏi vì lần này đông bất thường.
+
 <!-- HANDOFF-THANG: 2026-09 -->

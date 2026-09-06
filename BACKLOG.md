@@ -780,3 +780,21 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
   trên phép đo**, kèm ba đường hợp lệ để một khoá được trả và một câu kể ca thật 06/09. Đặt ngay
   trước dòng *"muốn giành vùng người khác đang giữ → hỏi Đức"* vì hai luật đó cùng một họ.
 - Cả hai điều kiện trong `đóng khi:` đã đạt → mục này đóng.
+
+## N-15 · Nối `claim.mjs` vào một ống làm cú TỪ CHỐI của nó biến mất
+
+- **mở:** 2026-09-06 · lane `claude-gemini-hoan-thien`
+- **vùng:** `_code`
+- **đóng khi:** lệnh: có phép ghim chứng minh một lượt `--take` bị từ chối vẫn làm hỏng cả chuỗi
+  lệnh khi được nối ống — hoặc `AGENTS.md` mục 1 có một dòng cấm nối `claim.mjs` vào ống.
+- **ca thật, tôi vừa dính:** chạy
+  `node scripts/claim.mjs --take _root --as <phiên> ... | tail -3 && git commit ...`.
+  Lệnh nhận khoá **TỪ CHỐI** đúng như phải thế (`_root` vừa bị lane khác nhận). Nhưng mã thoát
+  của một đường ống là mã thoát của lệnh **CUỐI** — tức `tail`, luôn là 0. Nên `&&` vẫn chạy, và
+  `git commit` ghi vào một file thuộc vùng tôi **không** có quyền.
+- **vì sao nó nguy hiểm hơn vẻ ngoài:** `claim.mjs` được thiết kế rất cẩn thận để từ chối đúng
+  lúc, và nó đã từ chối đúng. Lớp bảo vệ chạy hoàn hảo rồi bị **một ký tự `|` nuốt mất**. Ai đọc
+  màn hình cũng thấy chữ `TU_CHOI` — nhưng vào lúc đó lệnh sau đã chạy xong rồi.
+- **cách rẻ nhất:** không phải sửa `claim.mjs`. Một dòng luật ở `AGENTS.md` mục 1 — *"đừng nối
+  `claim.mjs` vào ống; muốn cắt bớt chữ thì chạy riêng rồi mới chạy lệnh sau"* — là đủ, vì chỗ
+  hỏng nằm ở thói quen gõ lệnh chứ không nằm trong script.
