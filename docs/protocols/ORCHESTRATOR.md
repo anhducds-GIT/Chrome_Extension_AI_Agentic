@@ -461,6 +461,30 @@ bàn lại ở đây. Riêng vai điều phối có thêm bốn ca:
   đừng nhận cả gốc repo.
 - **Bảng quyền báo `DAU_VO`** → dừng, đọc mục 6 của `AGENTS.md`. Đừng `--restamp` cho xong.
 
+### 5b. Và KHÔNG BAO GIỜ dừng vì chuyện commit (Đức chốt 2026-09-06)
+
+> *"Từ lần sau đừng bao giờ dừng lại hỏi tôi khi commit nhé… đặc biệt là AI Assistant lại càng
+> không được dừng lại → bị block việc."*
+
+Bốn ca trên là **hết** danh sách. Commit, push, và cổng đóng phiên **không** nằm trong đó.
+
+**"Dừng lại" ở đây rộng hơn "hỏi xin phép".** Ngày 06/09 vai điều phối không hỏi phép — nó
+**đứng chờ cổng đóng phiên chạy xong** rồi mới commit, và nhắn cho Đức đúng một câu *"chờ cổng
+xong rồi tôi đẩy"*. Với Đức đó **là** dừng: từ phía ông, luồng việc đứng im và không có gì để đọc.
+
+- Xong một mẩu thì **commit ngay**. Commit là chuyện của mình; cổng là chuyện của lượt đẩy.
+- Cổng chạy lâu → **cho chạy nền rồi làm việc tiếp**. Không bao giờ gửi Đức một tin chỉ để nói
+  "đang chờ" — tin đó không có gì để đọc, và nó đúng bằng một lượt Đức tưởng việc đang chạy.
+- Cổng đỏ ở đúng một phép kiểm mình vừa sửa và **tự chạy lại được** → chạy phép đó trực tiếp lấy
+  bằng chứng rồi đi tiếp, đừng chờ cả suite chạy lại để xác nhận thứ đã biết.
+- `--carry` không phải hỏi ([ADR-0005](../adr/0005-duyet-thuong-truc-cho-push-va-carry.md)) —
+  chỉ phải **kể tên lane bị cuốn theo**.
+
+**Vì sao vai này nghiêm hơn mọi vai khác:** mô hình **một cửa** (`0d`) nghĩa là mọi việc đi qua
+đây. Executor dừng thì một lane dừng; **điều phối dừng thì cả hàng dừng**.
+
+Không đổi: việc **dở dang** thì vẫn không push, và vẫn `safe-push.mjs` chứ không `git push` trần.
+
 ## 6. Kết một lượt trả lời
 
 **Lớp điều phối — cái Đức thấy:** một câu nói việc gì đã đóng, và danh sách quyết định đang

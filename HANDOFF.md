@@ -1100,3 +1100,21 @@ không vỡ vì lượt đó đi qua git; ③ hai lane cùng đánh số `N-08`,
 
 **Còn mở:** trần độ dài mục nhật ký làm cổng đỏ với MỌI lane khi chỉ một lane vượt — mục nhật ký
 có ghi tên lane nên quy thuộc được, cùng họ với `Y-16`. Gộp vào lượt sửa `K2`.
+
+## 2026-09-06 · claude-assistant · K2 theo N-10, ADR-0013 Scouter ra nhà riêng, luật không-dừng
+
+- **Đã đóng:** `N-06` (câu sai về `bridge-*.js` trong brief Scouter — đo lại `md5sum`, chỉ **1/5**
+  file giống hệt cả ba worker) · `N-10` (tín hiệu đổi tên thành **"chưa thấy dấu vết trong repo"**,
+  `BRIEF-K2` mục 2b mới cấm nhả khoá hộ lane khác dựa trên phép đo, và câu đó đã vào `AGENTS.md`
+  mục 1).
+- **Đức chốt 2 việc:** ⑴ Scouter ra nhà riêng `workers/duc-scouter/v0.1.0/` có khoá riêng
+  ([ADR-0013](docs/adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md)) — đo ra nó đang **rải trên
+  `_root` VÀ `_code`**, hai khoá đông nhất; chuyển là **bước ⓪** của `BRIEF-SCOUTER-SEED-01`.
+  ⑵ Vai điều phối **không bao giờ dừng vì chuyện commit** — ghi vào `ORCHESTRATOR.md` mục 5b.
+- **Sổ nợ:** mở `N-16` (lượt chuyển Scouter). Nợ hạ tầng 28 → 25.
+- **Tự nhận hai lỗi cùng họ, cả hai là `N-12` tái diễn:** tôi ghi `N-13` trùng số với lane
+  `claude-gemini-hoan-thien` (đổi thành `N-16`), và ba khối `##` tôi cố ý *"để lại làm bản ghi"*
+  đã **đỏ cổng với mọi phiên** vì thiếu `đóng khi:` — đã hạ xuống dòng ghi chú, chữ giữ nguyên.
+- **Đẩy:** `--carry` cuốn theo lane `claude-gemini-hoan-thien`. Trả `_root` + `_docs`.
+- **Còn mở:** chat `claude-scouter-seed` đang giữ `_code` và xây seed vào `scripts/` — **chưa biết
+  ADR-0013**. Cần nhắc nó làm bước ⓪ trước.
