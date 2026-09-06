@@ -1146,3 +1146,36 @@ phải dựng ở thư mục tạm ngoài repo.
 **Còn gì mở.** Cổng đóng phiên chậm: `tests/build-overview-smoke.mjs` mất **392 giây**, vì
 một lượt `buildOverview` trên repo thật mất **21 giây** và phép ghim dựng lại **7 lần**.
 Chưa vá — đã giao Đức mở phiên riêng.
+
+### 2026-09-07 · `claude-k2-vung-mien-khoa` · Vùng miễn khoá là vùng không ai canh — vá ba lỗ
+
+**Làm gì.** N-09 + N-12 + N-15 là ba mặt của một chỗ: ba sổ ở gốc repo cố ý miễn khoá cho
+thao tác thêm dòng, mà mọi lớp bảo vệ của repo đều dừng ở cửa khoá.
+
+**N-09 · tín hiệu "chưa thấy dấu vết trong repo"** — không commit nào chạm vùng kể từ mốc
+nhận, và không file nào trong vùng bị sửa trên đĩa. Một phép đo, ba chỗ hiện: `claim.mjs
+--list` · `what-next.mjs` mục B · cổng đóng phiên (**VÀNG, không chặn**, nói với chính lane
+đang giữ khoá). Chữ là hợp đồng: phép ghim ĐỎ nếu tín hiệu bị gọi là "rảnh" · "nhàn" ·
+"không làm gì". Git hỏng → `KHONG_DO_DUOC`, không rơi về "chưa thấy". Máy **không** tự nhả khoá.
+
+**Bảng HTML cố ý KHÔNG mang tín hiệu này** — khác brief mục 2, đổi hướng có chủ ý. Bảng bị
+`safe-push` so với bản sinh từ HEAD, mà chính lượt commit bảng lại chạm gốc repo → nó tự đổi
+đầu vào của chính nó và chặn mọi lane. Đúng bệnh `N-20`, và bảng đã chốt y vậy cho khối "Khoá
+làm việc". `what-next.mjs` thay chỗ: sống, chỉ đọc, không đòi khoá nào.
+
+**N-12 · `backlog-check.mjs` nay ĐỎ khi hai khối cùng mã.** Cửa ra chỉ là **một dòng thêm ở
+cuối** (`ĐỔI MÃ N-xx → N-yy`, mang luôn `đóng khi:`) — sổ miễn khoá khi chỉ thêm dòng, nên một
+cái chặn mà người bị chặn không có quyền gỡ thì tệ hơn không chặn.
+
+**N-15 · `AGENTS.md` mục 1 cấm nối `claim.mjs` vào ống**, kèm phép ghim chứng minh bẫy còn
+nguyên: mã thoát của một đường ống là mã thoát của lệnh cuối.
+
+**Số, tự đo.** `npm test` XANH. Đột biến kiểm **14/14 bị bắt**; lượt đầu 13/14 — con thoát là
+"đổi vàng thành đỏ", thoát vì nền repo tạm vốn đã đỏ nên phép so rỗng nghĩa. Phép ghim mới
+`tests/dau-vet-vung-smoke.mjs`, 9 mục.
+
+**Cổng đã ĐỎ SẴN ở HEAD với MỌI lane trước khi tôi chạm vào.** Sổ nợ gốc có **24 khối `## N-`
+nhưng chỉ 18 mã**; 5 khối trùng chưa khai `đóng khi:` nên `npm test` hỏng với mọi phiên, và
+không ai báo. Đã gỡ bằng 6 dòng `ĐỔI MÃ` (N-19…N-24), không sửa chữ cũ.
+
+**Còn mở.** `MULTIFLOW.md` chưa cập nhật: `_docs` có chủ khác, và tôi **không nhả khoá hộ**.
