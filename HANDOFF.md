@@ -3459,3 +3459,38 @@ báo thiếu 14 việc mà không mục nào được đóng. Đức mở bảng
 Khoá `_code`. Kế đó: `N-01` (lệnh kiểm `đóng khi:` chưa có phép ghim nào) và một lỗi nhỏ mới —
 `claim.mjs` in `fatal: path 'BACKLOG.md' exists on disk, but not in 'origin/main'` mỗi lượt
 chạy; vô hại nhưng dạy phiên sau bỏ qua cảnh báo.
+
+---
+
+## Lượt `claude-dau-goc` — 2026-09-06 · điền dấu "Cần Đức" vào ba sổ ở gốc repo
+
+**Làm gì.** Lượt 2 của đề bài `BANG-CAN-DUC-01`: cơ chế đã có từ lượt 1, nhưng chưa mục nào
+được đánh dấu nên khối "Cần Đức" hiện rỗng. Quét ba sổ ở gốc repo và đặt **12 dấu**:
+`BACKLOG.md` 7 dấu CHỐT (`Y-06` `Y-08` `Y-10` `Y-12` `Y-15` `Y-16` `N-02`) · `IDEAS.md`
+1 dấu BẤM + 1 dấu CHỐT (`Y-01`) · `STATUS.md` gốc 3 dấu CHỐT cho ba câu còn treo của Scouter,
+kèm mã chuỗi `SCOUTER-INVENTORY-01`.
+
+**Sửa một câu bảng đang hỏi lại.** Ba trường `human_action` · `next_step` · `current_focus`
+của `STATUS.md` gốc vẫn hỏi *"Observer nuôi tiếp hay cho nghỉ"* — Đức đã chốt sáng 06/09
+(`ADR-0009`). Viết lại theo hướng đã chốt.
+
+**Kiểm chứng, số thật.** Đếm trước 12 dấu, đếm sau trên bảng đúng 12 dòng của lượt này; cả
+khối hiện **22 việc · 7 bấm · 15 chốt** (10 dòng còn lại do lane `claude-dau-worker` đặt ở ba
+gói worker). Gom đúng theo chuỗi, BẤM đứng trước CHỐT. Bốn mục có mã chuỗi tra được;
+tám mục còn lại hiện chuỗi suy theo chỗ nằm, kèm chữ nói rõ là suy chứ không phải khai.
+
+**Không đánh dấu 5 mục dù văn xuôi còn chữ "Đức chốt":** `Y-09` `Y-11` `Y-17` `Y-18` `Y-19` —
+kiểm lại thì cả năm đã chốt xong, chữ trong sổ mới là chữ cũ.
+
+**Một sự cố do chính tôi gây ra, ghi thẳng.** Lượt sinh artifact đầu tiên bị **cuốn theo bản
+bảng do lane khác vừa ghi đè lên đĩa** giữa lúc tôi chép về và lúc tôi commit — đúng ca `Y-15`
+đã mô tả. Bắt được vì `--check-head` chạy trên bản chụp HEAD báo lệch 215 dòng. Đã sinh lại từ
+bản chụp HEAD và chép-về-rồi-commit trong **một lệnh duy nhất**, nay khớp HEAD.
+
+**CHẶN, và không phải việc của lane này.** `tests/build-overview-smoke.mjs` **ĐỎ**: phép ghim
+của lượt 1 khẳng định *"trên sổ thật chưa mục nào được đánh dấu"* — đúng cái mà lượt 2 sinh ra
+để lật. Bản trong cây làm việc của `claude-bang-n03` đã lật vế đó, nhưng fixture của nó cắm
+thêm hai dấu rồi đòi **đúng hai dòng**, mà nay sổ thật đã có 12 dấu nên nó đếm ra 24. Sửa nằm
+ở khoá `_code`, đang có chủ. Lane này **không đụng vào**.
+
+
