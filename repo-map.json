@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-06",
-  "generated_commit": "f7f4009",
+  "generated_commit": "9b2966d",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -44,18 +44,18 @@
   ],
   "units": [
     {
-      "id": "extension-observer-v0",
+      "id": "_root",
       "path": ".",
-      "lifecycle": "idea",
-      "status_md": "STATUS.md",
-      "owner": "claude",
-      "next_step": "Kiểm kê năng lực trước khi viết dòng code nào: ba worker đang dùng gì, và trình duyệt cho phép gì mà ta chưa dùng. Bảng kiểm kê đó là tiêu chuẩn nghiệm thu của bản nền.",
-      "human_action": "Ba câu còn treo của Scouter, chỉ Đức chốt được: chính sách che dữ liệu khi ghi báo cáo xuống đĩa, chỗ đặt thư mục trong cây repo, và làm tới bản v0.1 hay đi tiếp lên v1.",
-      "priority_rank": 4,
+      "lifecycle": "unclassified",
+      "status_md": null,
+      "owner": null,
+      "next_step": null,
+      "human_action": null,
+      "priority_rank": null,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Chưa từng chạy pilot nào. Đức đã chốt ngày 06/09 là nuôi tiếp và đổi hướng: Observer thành Scouter, từ cửa quan sát chỉ đọc thành bộ khung tương tác tự hoàn thiện."
+      "open_item": "Chưa khai STATUS; đây là một việc đang mở."
     },
     {
       "id": "duc-auto-chatgpt",
@@ -112,6 +112,20 @@
       "last_verified": null,
       "last_verified_commit": null,
       "open_item": "Đã vào được trang Flow mới sau khi vá quyền — nhưng đo thật cho thấy Google không chỉ đổi địa chỉ, họ dựng lại cả giao diện. Ô nhập prompt không tìm thấy, trang không còn thẻ video nào, nút tạo đổi tên. Phần đọc cấu hình thì vẫn chạy, và trang tự khai mỗi video tốn 6 credit. Đây là làm lại phần biết-về-trang chứ không phải sửa vài dòng."
+    },
+    {
+      "id": "duc-scouter",
+      "path": "workers/duc-scouter/v0.1.0",
+      "lifecycle": "building",
+      "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
+      "owner": "claude",
+      "next_step": "Cho Scouter bấm và gõ được như tay người: mở nhóm lệnh Input của giao thức debug, đúng thứ tự bảng kiểm kê đã xếp. Phép đo ① ngày 06/09 đã chứng minh đường đó dùng được.",
+      "human_action": "Nạp lại extension trong Chrome từ đường dẫn MỚI workers/duc-scouter/v0.1.0 (bản cũ ở gốc repo không còn), rồi chọn tệp ghép cặp Bridge trong popup để mở cửa Bridge.",
+      "priority_rank": 4,
+      "superseded_by": null,
+      "last_verified": null,
+      "last_verified_commit": null,
+      "open_item": "Khung nền đã xong và đo được: quan sát, báo cáo qua Bridge, tự nạp lại mình. Cửa Bridge đã nói chuyện trót lọt với máy chủ Bridge thật, không phải máy chủ giả."
     }
   ],
   "active_work": [
@@ -137,9 +151,9 @@
       "claim": null
     },
     {
-      "id": "_root",
-      "unit": "_root",
-      "title": "Kiểm kê năng lực trước khi viết dòng code nào: ba worker đang dùng gì, và trình duyệt cho phép gì mà ta chưa dùng. Bảng kiểm kê đó là tiêu chuẩn nghiệm thu của bản nền.",
+      "id": "workers/duc-scouter/v0.1.0",
+      "unit": "workers/duc-scouter/v0.1.0",
+      "title": "Cho Scouter bấm và gõ được như tay người: mở nhóm lệnh Input của giao thức debug, đúng thứ tự bảng kiểm kê đã xếp. Phép đo ① ngày 06/09 đã chứng minh đường đó dùng được.",
       "rank": 4,
       "claim": null
     }
