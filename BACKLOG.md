@@ -609,10 +609,10 @@ tuần có 19 nhóm cho 19 mục, tức là không phân loại gì cả.
 - **đỡ tạm ở đâu:** băng thông báo mà ba cửa chèn nằm NGAY TRÊN cờ đó và nói mốc sinh thật, nên
   Đức không bị dẫn sai — chỉ là có hai câu nói về cùng một chuyện.
 
-## N-08 · Hai bảng trạng thái, Đức không biết mở cái nào
+## N-11 · Hai bảng trạng thái, Đức không biết mở cái nào
 
 - **nhóm:** bang
-- **đóng khi:** mở bản chụp ở gốc repo thì dòng đầu nói ngay nó là bản chụp và chỉ đường sang bản sống, và có phép ghim canh dòng đó
+- **đóng khi:** lệnh: node tests/build-overview-smoke.mjs xanh, và phép ghim canh được dòng đầu của bản chụp ở gốc repo có câu tự khai là bản chụp kèm đường sang bản sống
 - **mở:** 2026-09-06 · lane `claude-assistant`
 - **vùng:** `_code`
 - **vì sao:** Đức báo thẳng 06/09: *"tôi thấy có 2 dashboard nên bị confuse."* Sau khi dựng
@@ -659,6 +659,9 @@ tuần có 19 nhóm cho 19 mục, tức là không phân loại gì cả.
 
 ## N-08 · `git checkout` một file trạng thái sống xoá khoá của phiên khác, và không lớp nào chặn
 
+- **nhóm:** dephien
+- **đóng khi:** lệnh: node tests/claims-checkout-smoke.mjs xanh — có lớp chặn hoặc phát hiện được lượt `git checkout` ghi đè bảng quyền đang sống
+
 **Xảy ra thật 06/09** (`claude-flow-active`): chạy `git checkout .agents/claims.json` để bỏ một
 bản sửa tay của chính mình. Bản đã commit không mang các lượt nhận khoá **chưa commit** của hai
 phiên đang chạy, nên một lệnh xoá trắng **bốn khoá** (`workers/duc-auto-gemini`,
@@ -671,3 +674,45 @@ nên dấu vẫn khớp với bản commit và không gì kêu. Hai phiên kia s
 **Đóng khi:** cổng đóng phiên (hoặc `claim.mjs`) phát hiện được trường hợp bảng quyền trên đĩa
 **mất** một chủ so với lượt đọc gần nhất mà không có bản ghi `--release` tương ứng — và nói ra
 tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bản trên: nhận khoá, `git checkout`, chạy cổng.
+
+## N-10 · "Vùng chưa bị chạm" KHÔNG chứng minh được lane đang rảnh
+
+- **nhóm:** dephien
+- **đóng khi:** `BRIEF-K2-KHOA-RANH-01` sửa xong định nghĩa tín hiệu, và luật nói rõ điều kiện được phép nhả khoá hộ lane khác
+- **mở:** 2026-09-06 · lane `claude-assistant`
+- **vùng:** `_docs` (sửa brief) + `_code` (khi làm)
+- **ca thật, và phiên điều phối là người gây ra:** 06/09, lane `claude-codex-ngan` giữ khoá
+  `workers/duc-auto-gg-flow-video` 14 phút. Phiên điều phối đo `git log` + `git status` thấy
+  **0 commit, 0 file bị sửa trong vùng**, kết luận khoá rảnh, và **nhả hộ**. Lane đó **đang làm
+  thật**: nó dựng bản viết ngắn 4 mục trong một thư mục tạm NGOÀI repo và chỉ ghi vào repo ở
+  bước cuối. Nó phải hoàn nguyên phần đã xong.
+- **vì sao nó phá chính thiết kế đang chờ làm:** `BRIEF-K2-KHOA-RANH-01` định nghĩa "khoá rảnh"
+  đúng bằng hai vế vừa đo sai. Một lane làm nghiêm túc suốt 14 phút vẫn cho ra chữ ký "rảnh" —
+  **tín hiệu này báo dương giả với đúng loại lane cẩn thận nhất**: loại dựng thử ngoài repo, đo,
+  rồi mới ghi.
+- **hai chỗ phải sửa trong brief:**
+  ① Tín hiệu chỉ được gọi là *"chưa thấy dấu vết trong repo"*, KHÔNG được gọi là *"đang rảnh"*.
+  Chữ dùng trên bảng phải nói đúng thứ đo được, không nói thứ suy ra.
+  ② **Cấm nhả khoá hộ một lane còn đang chạy, dù đo thấy gì.** Chỉ được nhả khi lane đó đã báo
+  xong, hoặc Đức chốt. Repo không có cách nào nhìn thấy việc lane làm ngoài repo, nên mọi suy
+  luận "nó rảnh" đều là đoán.
+- **cái giá của hai chiều, để cân cho đúng:** giữ khoá thừa làm một phiên khác chờ — thấy được,
+  sửa được. Nhả nhầm làm mất việc đang dở — **không thấy được cho tới khi lane báo về**.
+
+## N-12 · Sổ miễn khoá không có ai cấp số, nên hai lane cùng chọn một mã
+
+- **nhóm:** dephien
+- **đóng khi:** lệnh: node scripts/backlog-check.mjs xanh và nó BÁO ĐỎ khi có hai mục trùng mã
+- **mở:** 2026-09-06 · lane `claude-assistant`
+- **vùng:** `_code`
+- **ca thật:** 06/09 hai lane cùng ghi mục `N-08` vào `BACKLOG.md` gốc trong vòng vài phút —
+  một mục của phiên điều phối, một của `claude-flow-active`. Cả hai đều **đã vào HEAD**. Không
+  lớp nào báo, và `backlog-check` chỉ đếm mục thiếu trường, không đếm mục trùng mã: nó gộp hai
+  khối thành một mã rồi báo mã đó thiếu trường, làm người đọc đi sửa nhầm khối.
+- **vì sao nó sẽ còn xảy ra:** ba sổ ở gốc repo (`IDEAS.md`, `BACKLOG.md`, `HANDOFF.md`) **cố ý**
+  miễn khoá cho thao tác thêm dòng — không có nó thì không lane nào ghi được Log. Miễn khoá
+  nghĩa là **nhiều lane cùng ghi hợp lệ**, và cả hai cùng đọc thấy "số kế tiếp là 08".
+- **KHÔNG phải cách sửa:** bỏ miễn khoá. Đo 02/09: 19% lượt nhận khoá gốc chỉ để làm một việc
+  hành chính rồi trả ngay.
+- **cách rẻ nhất:** đừng cấp số tập trung — chỉ cần **phát hiện trùng** rồi báo đỏ, người sửa mất
+  30 giây. Cấp số tập trung là dựng một cái khoá thứ hai cho đúng thứ vừa được miễn khoá.
