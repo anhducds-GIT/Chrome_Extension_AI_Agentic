@@ -144,9 +144,10 @@
       "workers/duc-auto-gemini/v0.2.0/Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/ref-18.jpg"
     ]
   },
-  "_append_only_exempt_doc": "File duoc MIEN luat khoa KHI CHI THEM DONG O CUOI. Doc chung boi session-check.mjs va safe-push.mjs — truoc 04/09 hai ben go cung tap file nay rieng, va hai ban sao cua mot luat da lech nhau that ngay 02/09. `.agents/claims.json` KHONG nam o day: no mien VO DIEU KIEN, tron hai loai vao mot danh sach la mat mat dieu kien.",
+  "_append_only_exempt_doc": "File duoc MIEN luat khoa KHI CHI THEM DONG O CUOI. `BACKLOG.md` (goc repo, them 06/09 theo BRIEF-TACH-SO-Y-TUONG-01): so no ha tang cua AI, tach khoi `IDEAS.md` la so y tuong cua Duc. No PHAI duoc mien y het `IDEAS.md` — neu ghi vao no phai xin khoa `_root` thi AI se lach ve `IDEAS.md`, va ta chi doi cho cai benh chu khong chua no. Doc chung boi session-check.mjs va safe-push.mjs — truoc 04/09 hai ben go cung tap file nay rieng, va hai ban sao cua mot luat da lech nhau that ngay 02/09. `.agents/claims.json` KHONG nam o day: no mien VO DIEU KIEN, tron hai loai vao mot danh sach la mat mat dieu kien.",
   "append_only_exempt": [
     "HANDOFF.md",
-    "IDEAS.md"
+    "IDEAS.md",
+    "BACKLOG.md"
   ]
 }

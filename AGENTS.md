@@ -84,10 +84,17 @@ mục 2 của nó là chữ của người, nên chạm nó vẫn phải giữ `
 
 - **Miễn vô điều kiện:** `.agents/claims.json`. Nhận/trả quyền là thao tác hành chính — không
   miễn thì không ai trả lại được quyền, vì chính thao tác trả cũng bị coi là sửa file gốc.
-- **Miễn KHI CHỈ THÊM DÒNG Ở CUỐI:** `HANDOFF.md` gốc (luật mục 7 bắt MỌI phiên ghi Log) và
+- **Miễn KHI CHỈ THÊM DÒNG Ở CUỐI:** `HANDOFF.md` gốc (luật mục 7 bắt MỌI phiên ghi Log),
   `IDEAS.md` (Đức chốt 04/09 — vai điều phối là vai ghi ý tưởng nhiều nhất, mà sổ nằm ở gốc nên
-  nó phải xếp hàng sau `_root`, khoá đông nhất). Sửa hay xoá dòng cũ là viết lại chữ của phiên
-  khác, và cái đó **không** được miễn.
+  nó phải xếp hàng sau `_root`, khoá đông nhất), và `BACKLOG.md` gốc (Đức chốt 06/09 — sổ nợ hạ
+  tầng của AI, tách khỏi `IDEAS.md` là sổ ý tưởng của Đức). Sửa hay xoá dòng cũ là viết lại chữ
+  của phiên khác, và cái đó **không** được miễn.
+
+  **`BACKLOG.md` phải được miễn y hệt `IDEAS.md`, không kém một chút nào.** Đo 06/09: `IDEAS.md`
+  có 19 mục thì 14 là AI tự ghi, vì gốc repo không có sổ nợ nào và `IDEAS.md` là quyển duy nhất ở
+  gốc ghi được không cần khoá. Nếu sổ mới đòi khoá `_root` thì AI sẽ lách về `IDEAS.md` và ta chỉ
+  **đổi chỗ** cái bệnh. Kèm theo: sổ đó **đóng mục bằng cách thêm một dòng ở cuối**, không sửa
+  khối cũ — để cửa ra rẻ ngang cửa vào (ở `IDEAS.md` cửa vào dùng 20 lần, cửa ra 1 lần).
 
 Danh sách loại thứ hai khai ở `append_only_exempt` trong `.repo-structure.json` — **sửa ở đó,
 đừng sửa script**. Trước 04/09 nó bị gõ cứng ở cả `session-check.mjs` và `safe-push.mjs`, và hai
@@ -211,6 +218,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | **Hiểu vì sao nhiều phiên hay va nhau, và các phương án đã cân** | `docs/studies/PARALLEL-WORK-DESIGN-V0.md` — đo thật ngày 02/09: 127 commit/ngày, 77% chạm `_root`, 63 lần ghi bảng quyền. Tách **hai vấn đề khác nhau**: quyền bị ghi đè (bug, đã vá bằng lệnh trên) và push cuốn theo commit người khác (hệ quả của một nhánh, chưa chốt phương án) |
 | **Đức cần một câu để dán cho AI, không muốn nhớ lệnh** | `PROMPTS.md` ở gốc repo — mỗi flow một khối: *dùng khi nào · câu để dán · AI sẽ chạy lệnh gì · xong khi nào*. **Luật của file đó: mỗi câu phải chạy được với CẢ BA AI**, nên câu nào cũng chỉ nói mục tiêu, không nói tên công cụ. Câu nào chỉ một AI làm được thì phải xuống mục cuối kèm cách làm thay. Đầu file có bảng **đo thật 03/09** về việc ba AI làm được gì |
 | **Xem bảng trạng thái mà không cần AI đăng hộ** | `DASHBOARD-Chrome-Extension-AI-Agentic.html` ở gốc repo — **SINH TỰ ĐỘNG, đừng sửa tay**. Mở trực tiếp bằng trình duyệt. Sinh lại: `node scripts/build-overview.mjs`. Nội dung **suy hoàn toàn từ HEAD**, cố ý: nó nằm trong khối `generators` nên cổng kiểm nó mỗi phiên, và nếu nó phụ thuộc giờ đồng hồ thì sang ngày mới là **mọi phiên bị chặn push** dù không dữ liệu nào đổi. Việc báo cũ do đoạn JS trong trang tự tính lúc MỞ trang. Trước 03/09 bảng chỉ tồn tại dạng artifact trên claude.ai — tức là điểm phụ thuộc Claude duy nhất của cả hệ; file này xoá bỏ chỗ đó |
+| **AI vấp một chỗ hỏng về HẠ TẦNG repo khi đang làm việc khác** | `BACKLOG.md` ở gốc repo — **sổ nợ hạ tầng của AI**, tách khỏi `IDEAS.md` ngày 06/09. Miễn khoá y như `IDEAS.md`, và **cửa ra cũng chỉ là thêm một dòng ở cuối**. Trường `đóng khi:` là **bắt buộc** và cổng đếm nó (`npm run test:backlog`): không khai được điều kiện đóng thì mục đó chưa đủ chín để ghi. Nợ của MỘT gói worker thì vẫn về `BACKLOG.md` của gói đó |
 | **Đức có một ý tưởng, hoặc muốn biết đang có những hướng nào chờ làm** | `IDEAS.md` ở gốc repo — **phòng chờ**, không phải roadmap thứ hai. Hai trường bắt buộc: `bậc` và `việc kế`. Đang xây thì PHẢI khai `chủ` + `phạm vi` — đó là thứ cho phép nhiều phiên chạy song song mà không giẫm chân. Ý tưởng có nhà rồi thì rời sổ (điền `nhà:`), đừng chép lại |
 | **Sinh bảng trạng thái cho Đức xem** | `node scripts/build-overview.mjs <file-ra.html>` — trang trực quan, sinh từ cùng nguồn với `DASHBOARD.md` nên ba trang không thể nói khác nhau. **Bản ra KHÔNG commit**: nó để publish, và tự in ngày sinh + bật cờ đỏ khi quá 7 ngày. Cấm trong trang: SHA · đường dẫn · phần trăm · lời máy tự khen |
 
