@@ -3292,3 +3292,72 @@ ADR-0007 (`observer-probes.mjs` tự khai `ĐỀ XUẤT — Đức chưa chốt`
 
 **Việc kế — cần Đức, không ai làm thay.** Đức đọc PHẦN 1 của file rồi chốt Scouter làm tới đâu:
 dừng ở 25 mục `SEED v0.1`, hay đi tiếp `SEED v1`. Chốt xong mới viết brief cho lượt code đầu tiên.
+
+## 2026-09-06 — `claude-tach-so` · TACH-SO-Y-TUONG-01: hai quyển riêng, cửa ra rẻ ngang cửa vào
+
+**Làm gì.** `IDEAS.md` đo 06/09 có 19 mục, **14 là AI tự ghi**. Nguyên nhân là cấu trúc chứ
+không phải thói quen: gốc repo không có sổ nợ nào, và `IDEAS.md` là quyển duy nhất ở gốc ghi
+được **không cần khoá**. Nó là chỗ duy nhất đi được. Đức chốt 06/09: hai quyển riêng.
+
+**Kết quả số.**
+
+| | |
+|---|---|
+| `IDEAS.md` trước → sau | **19 → 5** mục (giữ đúng 5 mục Đức nêu: Y-01 Y-02 Y-04 Y-13 Y-14) |
+| `BACKLOG.md` mới ở gốc | **14** mục AI dời sang + **3** mục mới mở trong chính lượt này |
+| Đếm trước/sau | 19 = 5 + 14. Đối chiếu từng khối với `git show HEAD:IDEAS.md`: **0 khối lệch một byte** |
+| `append_only_exempt` | 2 → **3** file (`HANDOFF.md` · `IDEAS.md` · `BACKLOG.md`) |
+
+**Bốn yêu cầu của brief.**
+
+⑴ **Miễn khoá y hệt `IDEAS.md`** — khai vào `append_only_exempt` của `.repo-structure.json`.
+Không miễn thì AI lách về `IDEAS.md` và ta chỉ đổi chỗ cái bệnh.
+
+⑵ **`đóng khi:` bắt buộc, và cổng đếm nó.** Cưỡng chế bằng **một lệnh thêm vào `scripts.test`**
+của `package.json` — `session-check` cắt chuỗi đó ra chạy từng lệnh, nên thiếu trường là cổng
+ĐỎ. Đo thật: gỡ trường khỏi `N-01` → mã lỗi **1** (*"3 muc, 1 thieu truong dong-khi"*); khôi
+phục → mã lỗi **0**. Chọn một lệnh thay vì một file script vì `scripts/` và `tests/` là khoá
+`_code`, đang có chủ khác. Cái giá của lựa chọn đó đã ghi thành **N-01**, không giấu.
+
+⑶ **Cửa ra rẻ ngang cửa vào — làm được mà không nới một chút miễn trừ nào.** Sổ này là **sổ
+cái**: mở một mục là thêm khối ở cuối, **đóng một mục cũng là thêm một dòng ở cuối**
+(`- **ĐÓNG N-xx** · ngày · lane · bằng chứng`), không sửa khối cũ. Hai cửa cùng đi qua đúng một
+miễn trừ đã có. Cái giá: phải trừ hai tập mới biết mục nào còn mở — ghi thành **N-02**.
+
+⑷ **Dời nguyên văn**, giữ nguyên số hiệu `Y-nn` vì chúng trỏ chéo lẫn nhau và được `HANDOFF.md`
+nhắc tên.
+
+**Đột biến kiểm (bắt buộc, brief mục 5).** Chạy trên đúng hàm quyết định mà **cả hai cổng** gọi
+(`appendOnlyExemptFrom` → `appendOnlyAtEof` → `ownershipKeys` trong `repo-structure.mjs`), với
+diff `-U0` thật do git sinh:
+
+| Ca | Mong đợi | Kết quả |
+|---|---|---|
+| thêm dòng ở CUỐI + miễn CÓ | không đòi khoá | `khoá=[]` ĐẠT |
+| sửa dòng GIỮA file + miễn CÓ | đòi `_root` | `khoá=[_root]` ĐẠT |
+| thêm dòng ở CUỐI + **gỡ miễn** | đòi `_root` | `khoá=[_root]` ĐẠT |
+| gỡ trường `đóng khi:` | lệnh kiểm đỏ | mã lỗi 1 ĐẠT |
+
+**Bộ đếm mỏ neo bắt được một điểm mù của chính nó**, đúng cảnh báo trong brief: hai mỏ neo đầu
+đếm ra **0** vì tôi tưởng `safe-push.mjs` gọi thẳng `appendOnlyExemptFrom`. Nó không — nó đi qua
+`commitChuaDay()` trong `repo-structure.mjs`. Sửa mỏ neo rồi mới đo: 7 mỏ neo, thấp nhất 1, không
+cái nào 0.
+
+**Việc phát sinh, đã ghi vào sổ mới thay vì tự làm.**
+
+- **N-01** — lệnh kiểm `đóng khi:` **chưa có phép ghim** (đếm trong `tests/`: **0** phép ghim
+  canh nó). Xoá nó khỏi `package.json` là luật biến mất trong im lặng. Cần khoá `_code`.
+- **N-02** — đóng mục bằng cách thêm dòng thì phải trừ hai tập mới biết mục nào còn mở.
+- **N-03** — **bảng trạng thái không đọc `BACKLOG.md` ở gốc**: `build-overview.mjs` lọc
+  `endsWith("/BACKLOG.md")` nên chỉ thấy sổ nợ *của gói*. Đo: sinh lại trang ở HEAD trước khi
+  tách ra **127.557 byte / 19 ý tưởng**, sau khi tách còn **86.673 byte / 5 ý tưởng** — 14 mục
+  rời bảng mà không mục nào đóng. Đây là việc khoá `_code`, và brief mục 6+8 cấm gộp vào lượt này.
+
+**Một chuyện phải nói rõ vì nó chạm việc lane khác.** Bảng HTML đã commit lệch với HEAD sau khi
+tách sổ, mà cây làm việc đang giữ bản sinh dở của lane `claude-bang-canduc`. Tôi **không** dùng
+bộ sinh đang sửa dở của họ: sinh lại trong một bản clone ở đúng HEAD rồi chép về. Bản sinh dở
+của họ bị ghi đè — artifact máy sinh 100%, khai ở khối `generated`, chạy lại là ra y hệt — và
+**nguồn của họ (`scripts/build-overview.mjs`) không bị chạm một byte nào**. Bản cũ đã lưu ra
+ngoài repo trước khi ghi đè. Ba artifact còn lại và `FEATURE-PARITY.md` không đổi.
+
+**Còn mở.** N-01 · N-02 · N-03, cả ba đều cần khoá `_code`.
