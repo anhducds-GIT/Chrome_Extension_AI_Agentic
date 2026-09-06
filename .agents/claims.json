@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau. Gốc repo chia làm nhiều khoá (A2, 02/09): `_docs` cho docs/, `_code` cho scripts/ + tests/, `_template` cho template/, `_root` cho phần còn lại và các file ở tầng ngoài cùng. Chia vì 77% commit trong ngày 02/09 chạm gốc repo, và một khoá duy nhất chặn cả những việc không chồng nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-flow-active",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T14:10",
       "task": "Dua goi GG Flow Video tu building len active: F-08 truoc, roi mot luot kiem chung live",
-      "released_at": null,
+      "released_at": "2026-09-06T17:31",
       "taken_from": "claude-f18-evidence",
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
@@ -58,11 +58,11 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-06T16:35",
-      "task": "N-10: trang bang phu thuoc dong ho, chan push moi lane",
-      "released_at": "2026-09-06T16:37",
+      "owner": "claude-k2-vung-mien-khoa",
+      "ai": "Claude",
+      "claimed_at": "2026-09-06T17:24",
+      "task": "N-09 K2 hien khoa chua thay dau vet + N-12 trung ma + N-15 claim.mjs mat cu tu choi",
+      "released_at": null,
       "taken_from": "claude-scouter-seed",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-flow-active",
@@ -77,5 +77,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "dbfd6e93f60d087a"
+  "_fingerprint": "9ae028ae141493d1"
 }
