@@ -195,7 +195,7 @@ for (const src of ["", "blob:abc", "https://labs.google/fx/api/trpc/media.getMed
   assert.equal(adapter.videoIdFromSrc(src), null, `reject non-result src: ${src}`);
 }
 
-assert.deepEqual({ ...adapter.TIMING }, { perJobTimeoutMs: 300000, postTypeSettleMs: 150, postSendSettleMs: 2000, completionPollMs: 5000, stableTextDwellMs: 1500, referenceReadyTimeoutMs: 15000, sendReadyTimeoutMs: 5000, menuSettleMs: 0 });
+assert.deepEqual({ ...adapter.TIMING }, { perJobTimeoutMs: 600000, postTypeSettleMs: 150, postSendSettleMs: 2000, completionPollMs: 5000, stableTextDwellMs: 1500, referenceReadyTimeoutMs: 15000, sendReadyTimeoutMs: 5000, menuSettleMs: 0 });
 for (const list of [adapter.SELECTORS.composer, adapter.SELECTORS.send, adapter.SELECTORS.stop, adapter.SELECTORS.fileInput]) assert.ok(Object.isFrozen(list));
 assert.ok(adapter.securityBlockerPattern.test("verify you are human"));
 

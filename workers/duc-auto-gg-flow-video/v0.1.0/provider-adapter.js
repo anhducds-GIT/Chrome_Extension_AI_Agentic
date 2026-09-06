@@ -36,7 +36,7 @@
   });
 
   const TIMING = Object.freeze({
-    perJobTimeoutMs: 300000, // F1: measured ~70s for 720p x 10s; allow 300s
+    perJobTimeoutMs: 600000, // F-08: GENERATING measured 31-175s across 9 live jobs (02/09 F4R5/6/8/9); 3x the 175s worst case
     postTypeSettleMs: 150,
     postSendSettleMs: 2000,
     completionPollMs: 5000,

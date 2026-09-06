@@ -656,3 +656,18 @@ tuần có 19 nhóm cho 19 mục, tức là không phân loại gì cả.
   Phép ghim: khối 5b của `tests/build-overview-smoke.mjs`, ghim **cả hai chiều** (ba câu cũ phải mất,
   bốn tên cửa phải có), ĐỎ trước khi vá và XANH sau khi vá; hai lượt sinh trên cùng HEAD ra giống hệt
   từng byte.
+
+## N-08 · `git checkout` một file trạng thái sống xoá khoá của phiên khác, và không lớp nào chặn
+
+**Xảy ra thật 06/09** (`claude-flow-active`): chạy `git checkout .agents/claims.json` để bỏ một
+bản sửa tay của chính mình. Bản đã commit không mang các lượt nhận khoá **chưa commit** của hai
+phiên đang chạy, nên một lệnh xoá trắng **bốn khoá** (`workers/duc-auto-gemini`,
+`workers/duc-auto-chatgpt` của `claude-codex-ngan`; `_root`, `_code` của `claude-n07`).
+Đã khôi phục trong một phút và đóng lại dấu niêm phong — nhưng chỉ vì tôi tình cờ kiểm lại.
+
+`claim.mjs` giữ *đường ghi* và dấu niêm phong bắt được *sửa tay*, nhưng lượt này **đi qua git**,
+nên dấu vẫn khớp với bản commit và không gì kêu. Hai phiên kia sẽ không bao giờ được báo.
+
+**Đóng khi:** cổng đóng phiên (hoặc `claim.mjs`) phát hiện được trường hợp bảng quyền trên đĩa
+**mất** một chủ so với lượt đọc gần nhất mà không có bản ghi `--release` tương ứng — và nói ra
+tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bản trên: nhận khoá, `git checkout`, chạy cổng.

@@ -362,3 +362,29 @@ viết lại chữ cũ chứ không phải đính chính.
 thật"* — điều kiện đó **nay đã đủ** (nhánh chạy live nhiều lượt), nhưng đưa nhánh ba vào
 `FEATURE-PARITY.md` là một việc thật, phải giữ khoá `_root`, và mục 2 của file đó là chữ của
 người. Để nguyên, ghi ra đây để không trôi.
+
+## 2026-09-06 — `claude-flow-active`: F-08 đóng — trần chờ video chỉ còn biên 5 giây
+
+F-08 xin đo lại trần chờ, lý do ghi là *"Gemini 90s/job"*. Con số đó **không tồn tại ở đâu**;
+nhưng mục vẫn đúng ở chỗ nặng hơn: `DEFAULTS.timeout_sec` là **180 giây**, còn ca xấu nhất đo
+được trên 9 job live là **175 giây**. Biên năm giây. Chín lượt vừa qua không nổ chỉ vì workbook
+có khai `timeout_sec: 300`.
+
+Trần này áp lên giai đoạn sau cú bấm Create, tức credit **đã tiêu** — nên hết trần sớm là vứt
+một video đã trả tiền, và `TIMEOUT_AFTER_SUBMIT` dừng cả mẻ. Hướng đúng là nới.
+
+**Vá:** `timeout_sec` 180 → 600 · `perJobTimeoutMs` 300000 → 600000. **Ghim:**
+`tests/flow-video-timeout-budget.mjs`. Suite **99/99**, đột biến **4/4 bị bắt**.
+Số đo từng job, cách đo, và lý do chọn 600 → **F-08** trong `BACKLOG.md`.
+
+**Mở F-27:** giai đoạn `SENDING` đo 51–144 giây trong khi hai khoảng nghỉ có trần cộng lại tối
+đa ~25 giây — còn 60–120 giây mỗi job không có tên và không trần nào canh. Chi tiết ở `BACKLOG.md`.
+
+**Một lỗi của tôi:** `git checkout .agents/claims.json` xoá trắng bốn khoá chưa commit của hai
+phiên khác. Khôi phục đủ trong một phút, dấu niêm phong đóng lại, `--list` khớp bản cũ. Đã ghi
+nợ hạ tầng vào `BACKLOG.md` gốc repo.
+
+**Chưa làm:** gói vẫn `building`, chưa khai `last_verified`. Việc kế là lượt live một job
+(Image + chip x3) kiểm F-26 — **cần Đức bấm**.
+
+<!-- HANDOFF-THANG: 2026-09 -->

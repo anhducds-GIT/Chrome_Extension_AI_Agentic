@@ -79,8 +79,39 @@
   **Đọc `F-20` trước khi chạm bất kỳ câu báo lỗi nào ở nửa này.**
 - **F-07** · Mở rộng schema XLSX cho video (duration, model, aspect ratio…) — sửa
   `DAC_XLSX_RUN_PLAN_V1.md` thành bản V2 có cột video, giữ tương thích cột cũ.
-- **F-08** · Đo và đặt lại timeout runner cho video (Gemini: 90s/job — video cần
-  nhiều phút [ĐỌC comment TIMING]).
+- **F-08** · **XONG 06/09** (`claude-flow-active`) — **và tiền đề của mục này sai, còn kết luận thì đúng.**
+  Mục cũ viết *"Gemini: 90s/job"*. Đọc code thì **không có con số 90 giây ở bất kỳ đâu**:
+  nhánh Gemini cũng là `timeout_sec: 180`, và adapter Flow đã có `perJobTimeoutMs` riêng.
+  Nhưng phần *"video cần nhiều phút"* thì đúng, và nó gần nổ thật.
+  **[ĐO] 9 job live 02/09** (F4R5 · F4R6 · F4R8 · F4R9), đo khoảng `GENERATING` →
+  `FINALIZING` trong `evidence/*-run-status-poll-*.log` — tức đúng khoảng mà trần áp lên:
+  **31 · 32 · 38 · 44 · 45 · 144 · 175 · 175 · 175 giây.** Ca xấu nhất **175 giây**.
+  Chú thích trong adapter khai *"F1: measured ~70s"* — **lạc hậu 2,5 lần**, và chính con số
+  lạc hậu đó đã đẻ ra trần 300s.
+  **Chỗ gần nổ:** `DEFAULTS.timeout_sec` là **180 giây**, còn ca xấu nhất đo được là **175**.
+  Biên **5 giây**. Chín lượt live vừa qua không nổ chỉ vì workbook có khai `timeout_sec: 300`
+  (`effective_timeout_sec: 300` trong sổ cái); một workbook **không khai** thì rơi về 180 và
+  job 175 giây đứng ngay bên bờ.
+  **Vì sao trần chật ở đây là rủi ro TIỀN, không phải thời gian:** trần áp lên giai đoạn sau
+  cú bấm Create — credit **đã tiêu**. Hết trần sớm không tiết kiệm được gì, nó vứt một video
+  đã trả tiền, và `TIMEOUT_AFTER_SUBMIT` nằm trong `HARD_STOP_FAILURE_TYPES` nên nó **dừng cả
+  mẻ**. Nên hướng đúng là nới, không phải siết.
+  **Vá:** `DEFAULTS.timeout_sec` 180 → **600** · `perJobTimeoutMs` 300000 → **600000** (3,4 lần
+  ca xấu nhất, dưới trần 900s mà `whole()` chấp nhận) · chú thích mang số đo thật thay số cũ.
+  **Ghim:** `tests/flow-video-timeout-budget.mjs` — khẳng định cả hai hằng số ≥ 3× ca xấu nhất,
+  ≤ 900s, và chú thích còn nhắc F-08 + con số 175. Suite **99/99**, đột biến **4/4 bị bắt**
+  (trả trần về 300s · trả `timeout_sec` về 180 · trả chú thích `~70s` · đặt 1200s vượt trần).
+
+- **F-27** · [ĐO 06/09, phát sinh khi làm F-08 — **chưa giải thích được, đừng đoán**] Giai đoạn
+  `SENDING` (từ lúc mở job tới lúc bấm Create) đo được **83 · 51 · 133 · 144 giây** trên chuỗi
+  F4R8/F4R9, trong khi hai khoảng nghỉ có khai trần chỉ cộng lại tối đa ~25 giây
+  (`pre_compose` 3–14s + `post_type` 2,5–11s, số đo thật 5–11s và 3–9s). Tức **còn 60–120 giây
+  mỗi job không có tên**. Không có trần nào canh khoảng này, nên nếu nó dài ra thì không ai
+  biết. Có thể liên quan tới **F-25** (vòng lặp treo không dấu hiệu) — khối `loop` của F-25
+  bước ② nay đã khai trần theo từng giai đoạn, nên đây là chỗ đọc số đầu tiên.
+  **Việc cần làm:** một lượt live có ghi mốc thời gian từng bước bên trong `SENDING`; đừng chẻ
+  nhỏ trần trước khi có số. **Đóng khi:** khai được 60–120 giây đó là bước nào, và khoảng này
+  có trần riêng hoặc có lời giải thích ghim lại.
 
 ## P3 — sau khi chạy được
 
