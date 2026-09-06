@@ -3429,3 +3429,33 @@ trang bảng** và trong ghi chú mã. Muốn nó vào sổ tay thì phải thê
 **CHỜ ĐỨC** ở vùng *Công việc hiện tại* cùng ô đếm ở tab *Tổng quan* vẫn đọc `human_action`, nên
 trong thời gian chuyển tiếp chúng có thể đếm khác vùng *Cần Đức*; trang đã nói ra điều đó chứ
 không để Đức tự đoán.
+
+## 2026-09-06 — `claude-assistant` (điều phối) — gỡ nút Y-16, đẩy gộp 13 commit của bốn lane
+
+**Bối cảnh.** Bốn lane chạy song song trên bốn khoá khác nhau, cả bốn làm xong và cổng XANH,
+nhưng **không lane nào đẩy được**: commit của chúng nằm xen nhau nên lane nào đẩy cũng cuốn
+theo việc đang dở của ba lane kia. Cả bốn đều giữ khoá và từ chối `--carry`. Đây đúng là ca
+`Y-16` (cổng xuất bản khoá chéo) đã ghi trong sổ.
+
+**Cách gỡ — đúng lối công cụ đã có sẵn, không phá luật nào.** Ba lane đã xong bàn giao vùng
+bằng `claim.mjs --release ... --du-biet "<vì sao chưa đẩy được>"`; câu đó ghi VÀO BẢNG nên phiên
+nhận vùng sau đọc được. Rồi phiên điều phối nhận `_root` sau cùng, sinh lại
+`DASHBOARD.md` + `FEATURE-PARITY.md` + bảng HTML theo HEAD, chạy cổng, và đẩy một lượt.
+
+**Đẩy kèm (`--carry`) — kể tên theo luật ADR-0005.** Lượt này cuốn theo commit chưa đẩy của
+`claude-bang-canduc` (3), `claude-scouter-kk` (3), `claude-tach-so` (5), `claude-retry-law` (1).
+
+**Đính chính một kết luận sai của chính phiên này.** Lượt trước tôi ghi "cổng trả khoá lúc chặn
+lúc không, chưa giải thích được" và xếp nó vào nợ. Sai: nó chặn đúng luật *trả khoá sau khi
+đẩy*, và nó có sẵn cửa `--du-biet` cho đúng tình huống hôm nay. Tôi kết luận "hỏng" khi chưa
+đọc hết thứ công cụ in ra. **Gạch mục đó khỏi danh sách nợ.**
+
+**Việc đóng trong lượt bốn lane:** `Y-17` (`.gitattributes`) · `B12` (phép kiểm chặn đúng thao
+tác nó hướng dẫn) · `B-19` + `B-11` (luật gửi lại) · tách sổ ý tưởng khỏi sổ nợ hạ tầng · khối
+"Cần Đức" suy từ nguồn · bảng kiểm kê năng lực Scouter.
+
+**Còn mở, ưu tiên cao nhất:** `N-03` — bảng **chưa biết đọc `BACKLOG.md` ở gốc**, nên nó đang
+báo thiếu 14 việc mà không mục nào được đóng. Đức mở bảng sẽ thấy repo nhẹ đi một cách giả.
+Khoá `_code`. Kế đó: `N-01` (lệnh kiểm `đóng khi:` chưa có phép ghim nào) và một lỗi nhỏ mới —
+`claim.mjs` in `fatal: path 'BACKLOG.md' exists on disk, but not in 'origin/main'` mỗi lượt
+chạy; vô hại nhưng dạy phiên sau bỏ qua cảnh báo.
