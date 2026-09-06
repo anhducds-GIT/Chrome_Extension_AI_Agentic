@@ -630,3 +630,29 @@ file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemi
   Nhưng đó là ảnh `<img>`, **không phải file video**. Và vì trang mới không còn thẻ `<video>`
   nào, `videoIdFromSrc` không chỉ sai địa chỉ — **nó không có gì để đọc**. Sửa host thôi là vô
   ích. Mục này nay là một phần của F-31, giữ lại vì phần đo được vẫn đúng.
+
+- **F-31 · TIẾN ĐỘ 06/09 — hai trong bốn bước đã đóng, bằng bằng chứng chứ không bằng đoán.**
+  ① **Ô nhập prompt: XONG.** Nguyên nhân hoá ra là **một thuộc tính**. Nhà mới vẫn để
+  `contenteditable="true"` nhưng **bỏ `role="textbox"`**, mà selector cũ đòi cả hai nên đếm
+  được 0. Ô nhập nằm trong `<flow-rich-text-editor>` và `dom_probe` đã thấy nó suốt — ở mục
+  `textboxes[2]`, `editable: true`, `valueLen: 27`. Selector mới **có neo** vào
+  `flow-rich-text-editor`, cố ý không dùng `[contenteditable="true"]` trần: trần thì nuốt cả ô
+  tìm kiếm lẫn ô đổi tên dự án, mà `findComposer` chỉ trả về khi có **đúng một** ứng viên.
+  ② **Nhãn nút tạo: XONG cho tiếng Anh.** Nhà mới bỏ hết chữ khỏi nút; phần chữ chạy sang
+  nhãn trợ năng `Start generation`, `innerText` chỉ còn ligature icon. Nhận nó **đòi CẢ HAI vế**
+  (icon khớp VÀ nhãn trợ năng nằm trong danh sách đã đo) — siết chứ không nới, vì đây đúng là
+  chỗ mà một cách so khớp lỏng tay đã làm mất credit ngày 28/08.
+  **Đột biến 6/6 bị bắt**, trong đó lượt thứ sáu **thoát ở vòng đầu**: bỏ việc chuyền nhãn trợ
+  năng xuống chỗ gọi thì luật "đòi cả hai" vẫn còn nguyên chữ mà hết tác dụng, và suite vẫn
+  xanh. Đã ghim riêng chỗ gọi.
+  **Còn ③ và ④:** cách nhận video sinh ra (nhà mới không còn thẻ `<video>`) — chưa đo; và một
+  lượt `dom_probe` sau khi Đức nạp lại tiện ích để xác nhận `composer_found` nay là `true`.
+
+- **F-32** · [ĐỌC 06/09] **Nhãn nút tạo trên nhà mới mới chỉ đo được tiếng Anh.** Danh sách
+  nhãn trợ năng hiện có đúng một mục `Start generation`, nguồn là bản đo trên hồ sơ `kaito`
+  đang để giao diện tiếng Anh. Nhà cũ **có** dịch nhãn nút (`arrow_forward Create` →
+  `arrow_forward Tạo`, đo 02/09), nên khả năng nhà mới cũng dịch là cao — và nếu Đức đổi ngôn
+  ngữ thì runner **dừng trước khi gõ**, 0 credit, nhưng dừng.
+  Cố ý **không đoán** chuỗi tiếng Việt: đoán sai ở đây là bấm nhầm nút.
+  **Đóng khi:** có bản `dom_probe` trên giao diện tiếng Việt của `flow.google.com` lưu trong
+  `evidence/`, và nhãn đo được đã vào danh sách kèm trích nguồn.

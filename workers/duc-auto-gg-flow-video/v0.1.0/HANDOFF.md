@@ -484,3 +484,30 @@ Gói còn xa hơn thế, và mọi con số đo trước 06/09 đều là đo tr
 
 **Chưa làm:** ba phép đo còn lại của F-31 đều cần Đức mở đúng màn hình. Chưa đo xong thì
 chưa viết lại adapter — và tuyệt đối chưa chạy job.
+
+## 2026-09-06 — `claude-flow-active`: ô nhập prompt mất tích vì đúng MỘT thuộc tính
+
+Đọc hết `textboxes` trong bản đo thay vì chỉ nhìn `composer_found: false`. Ô nhập vẫn nằm đó,
+ở mục thứ ba: `editable: true`, `valueLen: 27`, trong `<flow-rich-text-editor>`.
+
+Nhà mới giữ `contenteditable="true"` nhưng **bỏ `role="textbox"`**. Selector cũ đòi cả hai,
+nên đếm được 0. Một thuộc tính, và triệu chứng là cả đường gõ prompt biến mất.
+
+**Vá ①:** selector mới **có neo** vào `flow-rich-text-editor` — cố ý không dùng
+`[contenteditable="true"]` trần, vì trần thì nuốt cả ô tìm kiếm lẫn ô đổi tên dự án, mà
+`findComposer` chỉ trả về khi có đúng một ứng viên.
+
+**Vá ②:** nút tạo nhà mới bỏ hết chữ, phần chữ chạy sang nhãn trợ năng `Start generation`.
+Nhận nó **đòi CẢ HAI vế** (icon VÀ nhãn trợ năng đã đo) — siết chứ không nới, vì đây đúng chỗ
+một cách so khớp lỏng tay đã làm mất credit 28/08.
+
+**Đột biến 6/6 bị bắt — và lượt thứ sáu thoát ở vòng đầu.** Bỏ việc chuyền nhãn trợ năng
+xuống chỗ gọi thì luật "đòi cả hai" còn nguyên chữ mà hết tác dụng, và suite vẫn xanh. Đúng
+kiểu chốt vừa viết ra đã vô tác dụng mà `MULTIFLOW.md` cảnh báo. Đã ghim riêng chỗ gọi.
+
+**Một lời khai bị chính phép kiểm bắt:** tôi ghi nguồn nhãn là `en+vi` trong khi chưa hề đo
+giao diện tiếng Việt trên nhà mới. Phép kiểm "mỗi nhãn phải trích nguồn" chặn lại. Đã sửa
+thành `en` và mở **F-32** cho phần chưa đo — sửa lời khai, không nới phép kiểm.
+
+**Chưa xong:** còn cách nhận video sinh ra (nhà mới không còn thẻ `<video>`), và một lượt đo
+lại sau khi Đức nạp tiện ích để xác nhận `composer_found` nay là `true`.

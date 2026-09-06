@@ -141,8 +141,27 @@ for (const line of labelBlock.split(String.fromCharCode(10)).filter((l) => l.inc
 // CHÍNH XÁC — tôi đã thử quy tắc tiền tố ngày 02/09 và bỏ nó vì đúng lý do này.
 assert.match(labelBlock, /Object\.freeze\(\[/, "danh sách nhãn phải là danh sách đóng băng, không phải một quy tắc so khớp mờ");
 assert.ok(!/\^arrow_forward\s/.test(adapterSource), "không được quay lại so khớp theo tiền tố ligature: nó nuốt cả 'arrow_forward Recreate'");
-const matcher = adapterSource.slice(adapterSource.indexOf("function isCreateButtonLabel"), adapterSource.indexOf("function isCreateButtonLabel") + 200);
+const matcher = adapterSource.slice(adapterSource.indexOf("function isCreateButtonLabel"), adapterSource.indexOf("function isCreateButtonLabel") + 400);
 assert.match(matcher, /CREATE_BUTTON_LABELS\.includes\(/, "so khớp phải là so bằng CHÍNH XÁC với danh sách đã đo");
+
+// Nhà mới (06/09): nút bỏ hết chữ, phần chữ chạy sang aria-label. Nhận nó thì
+// phải đòi CẢ HAI — icon khớp VÀ aria nằm trong danh sách đã đo. Nhận theo một
+// vế thôi là quay lại đúng kiểu so khớp lỏng đã làm mất credit 28/08.
+const ariaBlock = adapterSource.slice(adapterSource.indexOf("const CREATE_BUTTON_ICON"), adapterSource.indexOf("function isCreateButtonLabel"));
+assert.ok(ariaBlock.includes("Start generation"), "thiếu nhãn trợ năng đã đo của nút tạo trên nhà mới");
+for (const line of ariaBlock.split(String.fromCharCode(10)).filter((l) => l.includes("Start generation") || l.includes("CREATE_BUTTON_ICON ="))) {
+  assert.match(line, /\/\/\s*[\w+]+\s*—\s*evidence\//, `nhãn nút nhà mới phải trích nguồn bằng chứng: ${line.trim()}`);
+}
+assert.match(matcher, /CREATE_BUTTON_ICON\s*&&\s*CREATE_BUTTON_ARIA\.includes\(/,
+  "nhãn nhà mới phải đòi CẢ HAI vế (icon VÀ aria); nhận theo một vế là so khớp lỏng");
+
+// Và chỗ GỌI cũng phải chuyền nhãn trợ năng xuống. Bỏ vế thứ hai ở chỗ gọi thì
+// luật 'đòi cả hai' ở trên vẫn còn nguyên chữ mà không còn tác dụng: nút tạo
+// trên nhà mới không bao giờ được nhận, và suite vẫn xanh. Đo được bằng đột
+// biến 06/09 — đây đúng là lượt phá duy nhất thoát qua được vòng ghim đầu.
+const scopeBlock = adapterSource.slice(adapterSource.indexOf("function composerScope"), adapterSource.indexOf("function composerScope") + 1200);
+assert.ok(scopeBlock.includes("isCreateButtonLabel(buttonLabel(button), buttonAria(button))"),
+  "composerScope phải chuyền CẢ nhãn chữ lẫn nhãn trợ năng xuống; thiếu vế sau là nút tạo nhà mới không bao giờ khớp");
 
 console.log(`flow locale URLs accepted, adapter still stricter than manifest (${ACCEPT.length} nhận / ${REJECT.length} từ chối): PASS`);
 

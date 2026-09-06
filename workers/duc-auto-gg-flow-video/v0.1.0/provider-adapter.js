@@ -6,7 +6,18 @@
 
   const SELECTORS = Object.freeze({
     // F1 conclusion 1: exactly one durable prompt surface on the measured page.
-    composer: Object.freeze(['[contenteditable="true"][role="textbox"]']),
+    // Nha moi (do that 06/09, evidence/F31-dom-probe-flow-google-com-20260906.json):
+    // o nhap VAN la contenteditable="true", nhung KHONG con role="textbox" —
+    // no nam trong <flow-rich-text-editor> cua giao dien Angular moi. Selector cu
+    // doi CA HAI thuoc tinh nen dem duoc 0, va trieu chung la composer_found:false.
+    // Selector moi CO NEO vao <flow-rich-text-editor>, khong dung
+    // [contenteditable="true"] tran: tran thi no se nuot moi o soan thao khac tren
+    // trang, va findComposer chi tra ve khi co DUNG MOT ung vien — nuot them mot
+    // cai la ca duong go prompt dung han.
+    composer: Object.freeze([
+      '[contenteditable="true"][role="textbox"]',            // nha cu
+      'flow-rich-text-editor [contenteditable="true"]',      // nha moi, 06/09
+    ]),
     // Flow exposes no stable Send/Stop aria labels. Consumers use the
     // evidence-backed findCreateButton helper; generation has no Stop control.
     send: Object.freeze([]),
@@ -137,6 +148,10 @@
     return surface(url) === SURFACE.CONVERSATION;
   }
 
+  function buttonAria(button) {
+    return (button?.getAttribute?.("aria-label") || "").replace(/s+/g, " ").trim();
+  }
+
   function buttonLabel(button) {
     return (button?.innerText || button?.textContent || "").replace(/\s+/g, " ").trim();
   }
@@ -216,8 +231,22 @@
     "arrow_forward Create", // en — evidence/F1-EVIDENCE-NOTES.md (2026-08-27)
     "arrow_forward Tạo",  // vi — evidence/F4R7-probe-BEFORE-trial-20260902.json
   ]);
-  function isCreateButtonLabel(label) {
-    return CREATE_BUTTON_LABELS.includes(String(label || ""));
+
+  // Nha moi (do that 06/09): nut KHONG con mang chu. Phan chu chay het sang
+  // aria-label, innerText chi con lai dung ligature icon.
+  //
+  // Cho nay noi long la nguy hiem nhat trong ca file — 28/08 mot cach so khop
+  // long tay da bam nham nut mo bang media va lam mat credit. Nen huong di la
+  // SIET, khong phai noi: nhan moi chi duoc nhan khi CA HAI dieu cung dung —
+  // icon khop VA aria nam trong danh sach. Rieng icon khong du, rieng aria
+  // cung khong du.
+  const CREATE_BUTTON_ICON = "arrow_forward"; // en — evidence/F31-dom-probe-flow-google-com-20260906.json
+  const CREATE_BUTTON_ARIA = Object.freeze([
+    "Start generation", // en — evidence/F31-dom-probe-flow-google-com-20260906.json
+  ]);
+  function isCreateButtonLabel(label, aria) {
+    if (CREATE_BUTTON_LABELS.includes(String(label || ""))) return true;
+    return String(label || "") === CREATE_BUTTON_ICON && CREATE_BUTTON_ARIA.includes(String(aria || ""));
   }
 
   // MEASURED 2026-08-28: the live page carries four text-entry surfaces — the
@@ -279,7 +308,7 @@
       if (overshotComposerArea(container, composer)) return null;
       const buttons = visibleButtonsIn(root, container);
       if (buttons.length === 0) { container = container.parentElement; continue; }
-      const creates = buttons.filter((button) => isCreateButtonLabel(buttonLabel(button)));
+      const creates = buttons.filter((button) => isCreateButtonLabel(buttonLabel(button), buttonAria(button)));
       if (creates.length > 1) return null;
       if (creates.length === 1) return Object.freeze({ composer, container, create: creates[0], hops: hop });
       const upgrades = buttons.filter((button) => buttonLabel(button) === "Upgrade" && enabledButton(button));

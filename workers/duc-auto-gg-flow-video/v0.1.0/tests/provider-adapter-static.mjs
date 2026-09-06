@@ -43,7 +43,16 @@ assert.equal(adapter.surfaceAllowed("https://labs.google/fx/tools/flow/project/a
 assert.equal(adapter.surfaceAllowed("https://evil.example/fx/tools/flow/project/abc"), false);
 
 // F1 selector set: attributes/text/structure only; no styled-components sc-*.
-assert.deepEqual([...adapter.SELECTORS.composer], ['[contenteditable="true"][role="textbox"]']);
+// Nha moi (06/09): o nhap van contenteditable nhung KHONG con role="textbox".
+// Selector moi CO NEO vao <flow-rich-text-editor>; mot [contenteditable="true"]
+// tran se nuot moi o soan thao khac tren trang, va findComposer chi tra ve khi
+// co DUNG MOT ung vien — nuot them mot cai la dut han duong go prompt.
+assert.deepEqual([...adapter.SELECTORS.composer], [
+  '[contenteditable="true"][role="textbox"]',
+  'flow-rich-text-editor [contenteditable="true"]',
+]);
+assert.ok(!adapter.SELECTORS.composer.includes('[contenteditable="true"]'),
+  "khong duoc dung [contenteditable=true] tran: no nuot ca o tim kiem va o doi ten du an");
 assert.deepEqual([...adapter.SELECTORS.send], [], "dead Gemini Send aria selectors are explicit empty arrays");
 assert.deepEqual([...adapter.SELECTORS.stop], [], "Flow has no Stop button during generation");
 assert.deepEqual([...adapter.SELECTORS.fileInput], ['input[type="file"][accept*="image"]']);
