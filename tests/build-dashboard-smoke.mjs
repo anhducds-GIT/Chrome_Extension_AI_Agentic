@@ -688,7 +688,9 @@ function antiDrift(text, measurements = {}) {
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
     // `repo-structure.mjs` PHẢI có mặt: từ K1 nó là nguồn sự thật chung về hình dạng repo,
     // và cả ba script kia đều import nó. Thiếu nó thì repo tạm chết ngay lúc nạp module.
-    for (const name of ["repo-structure.mjs", "build-dashboard.mjs", "feature-parity.mjs", "session-check.mjs", "claim.mjs"]) {
+    // `handoff.mjs` thêm 06/09: `session-check.mjs` import nó, nên thiếu nó thì repo tạm chết ngay
+    // lúc nạp module và Gate 7 đỏ với một thông báo không liên quan gì tới Gate 7.
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "build-dashboard.mjs", "feature-parity.mjs", "session-check.mjs", "claim.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".agents/claims.json", JSON.stringify({ claims: {

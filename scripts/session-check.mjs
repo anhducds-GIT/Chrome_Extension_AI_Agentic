@@ -18,7 +18,7 @@ import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
-import { CAU_CHI_DUONG, docMucTuFile, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
+import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
 import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, claimPrefixesFrom, generatorsFrom, handoffCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
@@ -793,9 +793,14 @@ check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
   const canXoay = [];
   const chuaKhai = [];
   let neo = 0;                              // số mục bổ được — ra 0 là BỘ ĐO HỎNG, xem dưới
+  let nhatKy = 0;                           // số quyển nhật ký THẬT đã soi
   for (const f of files) {
     const hienTai = doc(f);
     if (hienTai === null) continue;         // file vừa bị xoá khỏi cây làm việc
+    /* Hỏi NỘI DUNG, không hỏi TÊN FILE: `docs/protocols/HANDOFF.md` là sổ tay luật, không phải
+     * nhật ký, mà tên nó cũng kết thúc bằng `HANDOFF.md`. Xem ghi chú ở `laNhatKy`. */
+    if (!laNhatKy(hienTai)) continue;
+    nhatKy += 1;
     /* BẢN GỐC ĐỌC HỎNG THÌ MỌI MỤC THÀNH "MỤC MỚI" — tức cổng chặn lane này bằng chữ của lane
      * khác, đúng thứ brief cấm. Nên hỏi trước: file có trên `origin/main` không?
      *  · KHÔNG có (gói mới, `HANDOFF.md` vừa lập) → bản gốc rỗng là ĐÚNG, mọi mục đều mới thật.
@@ -817,7 +822,7 @@ check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
   /* ĐẾM MỎ NEO. `mucMoi` trả rỗng đọc y hệt "mọi mục đều vừa trần" — và ngày 06/09 đúng cái
    * nhầm này (công cụ không khớp gì, bị đọc thành "không có gì phải sửa") xảy ra với NĂM lane
    * khác nhau trong repo. Nên: bổ ra 0 mục trên một file có thật là ĐỎ, không phải xanh. */
-  if (neo === 0 && files.some((f) => doc(f) !== null)) {
+  if (nhatKy > 0 && neo === 0) {
     return { ok: false, msg: "HANDOFF_KHONG_KHOP: chạm HANDOFF.md nhưng không bổ được MỤC nào."
       + " Đây là bộ đo HỎNG, không phải 'không có gì phải sửa' — kiểm dòng `## Log` của file." };
   }
@@ -835,7 +840,8 @@ check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
       + ` Sửa: \`node scripts/handoff.mjs --rotate <file>\` (lượt đầu chỉ khai tháng, không xoay gì).`);
   }
   if (loi.length) return { ok: false, msg: loi.join(" ") };
-  return { ok: true, msg: `${files.length} file HANDOFF.md, mọi mục mới đều dưới trần ${tran} byte và đúng tháng.` };
+  if (nhatKy === 0) return { ok: true, msg: `${files.length} file tên HANDOFF.md nhưng không quyển nào có phần \`## Log\` — không phải nhật ký, không kiểm.` };
+  return { ok: true, msg: `${nhatKy} quyển nhật ký, ${neo} mục, mọi mục mới đều dưới trần ${tran} byte và đúng tháng.` };
 });
 
 /* ---- 13. Đọc git có lỗi nào không -------------------------------------- */

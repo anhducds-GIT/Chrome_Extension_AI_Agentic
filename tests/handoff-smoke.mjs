@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  datThang, docMuc, docMucTuFile, mucMoi, soLuuTruTiepTheo, tachThan, tenLuuTru,
+  datThang, docMuc, docMucTuFile, laNhatKy, mucMoi, soLuuTruTiepTheo, tachThan, tenLuuTru,
   thangCua, thangHienTai, vuotTran, xoay
 } from "../scripts/handoff.mjs";
 import { handoffCapFrom } from "../scripts/repo-structure.mjs";
@@ -40,6 +40,19 @@ const mucCo = (tieuDe, byte) => `## ${tieuDe}\n${"x".repeat(Math.max(0, byte - t
     tong += n;
   }
   assert.ok(tong >= 30, `chi bo duoc ${tong} muc tren toan repo, qua it — mo neo dang truot`);
+}
+
+/* (1b) "LÀ NHẬT KÝ" HỎI THEO NỘI DUNG, KHÔNG HỎI THEO TÊN FILE.
+   Sự cố thật 06/09, ngay lượt chạy cổng đầu tiên của cơ chế này: `docs/protocols/HANDOFF.md` —
+   sổ tay LUẬT — cũng có tên kết thúc bằng `HANDOFF.md`, nên nó bị đòi khai mốc tháng và cổng ĐỎ
+   với một file không hề là nhật ký. */
+{
+  for (const f of CAC_FILE) assert.ok(laNhatKy(doc(f)), `${f} phai duoc nhan ra la nhat ky`);
+  assert.equal(laNhatKy(doc("docs/protocols/HANDOFF.md")), false,
+    "so tay luat KHONG phai nhat ky — loc theo ten file la chan oan mot file khong co muc nao");
+  assert.equal(laNhatKy(""), false);
+  assert.equal(laNhatKy("## Log của tôi"), false, "phai dung dong `## Log`, khong phai chua chu Log");
+  assert.equal(laNhatKy("# H\n## Log\n"), true);
 }
 
 /* (2) BẤT BIẾN ⑴ CỦA PROTOCOL: KHÔNG MẤT MỘT BYTE.

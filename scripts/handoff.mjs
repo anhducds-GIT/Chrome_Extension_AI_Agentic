@@ -70,6 +70,14 @@ export function docMuc(than) {
 
 export const docMucTuFile = (text) => docMuc(tachThan(text).than);
 
+/* CÓ PHẢI MỘT QUYỂN NHẬT KÝ KHÔNG — hỏi NỘI DUNG, đừng hỏi TÊN FILE.
+ *
+ * Đo thật 06/09, ngay lượt chạy cổng đầu tiên: `docs/protocols/HANDOFF.md` — **sổ tay luật**, không
+ * phải nhật ký — cũng có tên kết thúc bằng `HANDOFF.md`, nên nó bị đòi khai mốc tháng và cổng ĐỎ.
+ * Lọc theo đường dẫn (`không nằm trong docs/`) thì lần sau lại có một chỗ khác. Dấu hiệu đúng là
+ * dòng `## Log`: quyển nào có nó thì có mục nhật ký, quyển nào không có thì không có gì để đếm. */
+export const laNhatKy = (text) => String(text ?? "").split("\n").some((l) => RE_MO_LOG.test(l));
+
 /* MỤC NÀO LÀ MỤC PHIÊN NÀY VỪA THÊM.
  *
  * So theo TIÊU ĐỀ, không so theo nội dung — và đây là chỗ dễ làm sai nhất của cả bài:
