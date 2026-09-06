@@ -661,7 +661,42 @@ phần code còn lại là nhỏ, cơ chế đã đứng sẵn.
 `provider-adapter.js`, chính sách ở lại. Hoãn tới sau khi selector đã xác minh
 xong, để lần bóc tách này vẫn là "không đổi hành vi".
 
-### B-09 · Rác test trong thư mục output @Đức:bấm
+### B-09 · Rác test trong thư mục output — **ĐÃ CÓ PROTOCOL 2026-09-06**, chờ tay Đức bấm @Đức:bấm
+
+**Đức yêu cầu 06/09:** *"bạn cứ lập protocol xoá cho tôi, sau này tôi cũng không biết là gì rồi nó
+chất đống ở đấy."* Đã làm: `scripts/don-rac-tai-xuong.mjs` + `tests/don-rac-tai-xuong-smoke.mjs`.
+Luật vận hành: mục **Protocol dọn rác tên-GUID** trong [`AI-OPERATOR-GUIDE.md`](AI-OPERATOR-GUIDE.md).
+
+**Đo thật 06/09** trên thư mục Tải xuống của Đức — **39 file tên GUID / 170 file**, chia ba nhóm
+theo **độ chắc của bằng chứng chủ sở hữu**, không theo hình dạng tên:
+
+| Nhóm | Số | Là gì |
+|---|---:|---|
+| ① chứng minh được là của gói | **16** (187,8 KB) | sổ audit và file đo — nội dung mang cả `timestamp` lẫn `event`, hoặc khoá `probe` |
+| ② không chứng minh được chủ | **21** (27,0 MB) | ảnh `.png` và workbook `.xlsx` — đúng hình dạng đầu ra, nhưng ảnh PNG nào cũng là PNG. Đòi một cờ riêng |
+| ③ được bảo vệ, không cờ nào xoá được | **2** | một `.pdf` và một `.jpg` — **là file THẬT của Đức** |
+
+Hai file ở nhóm ③ là **lý do công cụ này không lọc theo tên**: trang web nào tải blob về cũng được
+Chrome đặt tên GUID, nên một bộ lọc khớp tên sẽ xoá chúng, và xoá là không hoàn lại được.
+
+**Còn chờ Đức:** chính lúc bấm xoá. AI không tự xoá file — luật gốc của Đức. Công cụ **mặc định
+chỉ xem**, chạy bao nhiêu lần cũng không đụng file nào.
+
+**Ba bug thật bị bắt trước khi Đức chạy**, ghi ra vì cả ba cùng một họ với bài học `B-36`:
+
+1. Bốn khẳng định **tĩnh** trên mã nguồn báo **ĐỎ OAN** — chúng thấy chữ `khong-phai` nằm gần
+   `unlinkSync` và kết luận nhóm ③ ở trong đường xoá, trong khi đó là dòng *báo cáo*. Đã đổi sang
+   kiểm **hành vi**: chạy công cụ thật vào thư mục tạm rồi xem file nào còn trên đĩa.
+2. Phép ghim hành vi bắt được ngay: `main()` **không bao giờ chạy** từ dòng lệnh, vì mốc
+   `import.meta.url` ghép chuỗi tay mà đường dẫn repo có **dấu cách** (`%20` so với dấu cách thật).
+   Bốn khẳng định tĩnh vừa bị thay thế thì không thấy gì cả.
+3. Lượt chạy thật đầu tiên bắt được: dòng đầu của một sổ audit **dài hơn** đoạn đầu file được đọc,
+   nên `JSON.parse` ném và **12 sổ audit thật** bị xếp vào nhóm được bảo vệ — nhóm ① chỉ còn 4 thay
+   vì 16. Hỏng an toàn, nhưng nó vô hiệu hoá cả công cụ. Đã đổi sang nhận theo **chữ ký**, miễn
+   nhiễm với việc chuỗi bị cắt.
+
+**Thử phá: 7/9 bị bắt.** Hai lượt thoát là **tương đương hành vi** — mỗi cái bị lớp còn lại chặn —
+và **lượt gộp cả hai thì ĐỎ**. Ghi trung thực thay vì làm tròn thành 9/9.
 `Downloads\Phai sinh\DucAuto_GPT-Output\Pilot-10_Trial-Tu-Hanh` còn checkpoint và
 audit của các phiên hỏng (`Bridge-2026-08-25T07-25*`, `Bridge-2026-08-26T01-56*`).
 Xoá là quyền của Đức — **AI không tự xoá file**.
