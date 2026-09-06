@@ -527,4 +527,33 @@ lỗi đó **chỉ nổ khi người dùng gõ đúng thứ tài liệu bảo h�
 chung nhưng trỏ cứng vào một gói. Đo phạm vi rồi mới ghi: chỉ **hai** README nhắc tới nó, và với
 gói ChatGPT thì câu đó **đúng**. Lỗ hẹp, không phải bốn chỗ hỏng. Sửa `package.json` cần `_root`.
 
+## 2026-09-06 — `claude-gemini-hoan-thien`: không xây tính năng, đặt một cái bẫy
+
+Đức trả lời câu hỏi chặn hai việc lớn nhất: **Gemini chưa bao giờ trả hai ảnh trong một câu trả
+lời, và chưa bao giờ hỏi lại "thích ảnh nào hơn"** — *"case này tôi chưa gặp, bao giờ gặp ta sẽ
+capture và vá."*
+
+**Hai mục cùng MỘT tiền đề, nên một câu trả lời đóng cả hai.** Chú thích đầu `ab-poll-core.js`
+của nhánh kia nói thẳng: ChatGPT đôi khi trả một prompt ảnh bằng **hai ảnh cộng một câu hỏi
+chọn**, và câu hỏi chưa trả lời thì **khoá ô soạn** làm job sau treo vĩnh viễn. Tức "nhiều ảnh
+một job" và "poll A/B" là **cùng một hành vi trang nhìn từ hai phía**. Gemini không làm thế thì
+cả hai đều không có đối tượng — xây cho một tình huống chưa ai thấy bao giờ là **tự thêm nợ**.
+
+**Nhưng "bao giờ gặp ta sẽ vá" chỉ đúng nếu có thứ gì đó BÁO ĐƯỢC là đã gặp — và không có.**
+Nếu Gemini trả hai ảnh trong một lượt, job dừng an toàn với `AMBIGUOUS_POST_TURN_IMAGE`; nhưng
+mã đó **cũng** nổ khi có hai lượt riêng mỗi lượt một ảnh, và sổ cái ghi `fresh.eligible: 2` ở
+**cả hai ca**. Hai nguyên nhân khác hẳn nhau mà nhìn giống hệt.
+
+**Đặt bẫy thay vì xây tính năng.** Sổ cái nay ghi số ảnh **của từng lượt**: `[2]` là ca đang chờ
+bắt, `[1, 1]` là chuyện khác. Đúng hai dòng, không đổi một hành vi nào.
+
+**Và cái bẫy suýt thành đồ trang trí.** Bản đầu đếm đúng nhưng **không tới được sổ cái** — dòng
+ghi nhận liệt kê từng trường một, nên trường mới không tự đi theo. Bắt được vì tôi hỏi "nó có
+thật sự tới nơi không" chứ không phải vì đọc lại. Đã ghim riêng một khẳng định cho đúng chỗ đó.
+
+**Số.** Nợ gói **7 → 5**. Suite 93/93. Thử phá **5/5** bị bắt.
+
+**Còn mở.** Hai lệnh Bridge cuối (dựng một phần hệ hồ sơ đầu ra, không phải chép code) là việc
+lớn nhất tôi tự làm được. Hai mục P1 chờ **một buổi Đức ngồi bấm**. Một mục cần khoá gốc repo.
+
 <!-- HANDOFF-THANG: 2026-09 -->

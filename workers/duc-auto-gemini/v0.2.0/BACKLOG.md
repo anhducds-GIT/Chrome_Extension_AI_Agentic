@@ -127,7 +127,29 @@ lạc hậu, con số máy sinh mới đúng — đúng như dòng cảnh báo n
 **Đừng gõ lại con số vào đây** — số hiện tại luôn nằm ở khối `AUTO:DEBT-METHODS` trong
 [`FEATURE-PARITY.md`](../../../FEATURE-PARITY.md), do máy sinh. Dòng này chỉ để biết *có nợ*.
 
-### G-05 · `image-evidence-core.js` nhỏ hơn nhánh kia hơn hai lần — **[ĐO]**
+### ~~G-05~~ · Nhiều ảnh một job — **NGỦ ĐÔNG 06/09, Đức chốt** · có BẪY canh ✅
+
+> **Đức chốt 06/09:** *"case này tôi chưa gặp, bao giờ gặp ta sẽ capture và vá."* Đức đã chạy
+> Gemini hàng trăm lượt qua Pilot-04, Pilot-07, Batch-SX-01 — **chưa lần nào** thấy Gemini trả
+> hai ảnh trong một câu trả lời. Nên **không xây tính năng**: bên nhánh ChatGPT nó sinh ra vì
+> ChatGPT thật sự làm thế, còn xây cho một tình huống chưa ai thấy bao giờ là **tự thêm nợ, không
+> phải trả nợ**. Mục này gộp luôn gạch đầu dòng "Nhiều ảnh một job" của `G-06` — một việc, không
+> phải hai.
+>
+> **Nhưng "bao giờ gặp ta sẽ vá" chỉ đúng nếu có thứ gì đó BÁO ĐƯỢC là đã gặp — và trước 06/09
+> thì không.** Nếu Gemini trả hai ảnh trong một lượt, job dừng an toàn với
+> `AMBIGUOUS_POST_TURN_IMAGE`; nhưng mã đó **cũng** nổ khi có hai lượt riêng, mỗi lượt một ảnh.
+> Sổ cái ghi `fresh.eligible: 2` ở **cả hai ca**. Hai nguyên nhân khác hẳn nhau mà nhìn giống
+> hệt, nên ca đầu có xảy ra cũng **trôi qua không ai nhận ra**.
+>
+> **Đã đặt bẫy (06/09):** sổ cái nay ghi thêm `new_assistant_image_counts` — số ảnh **của từng
+> lượt**. `[2]` là ca đang chờ bắt · `[1, 1]` là chuyện khác. Ghim:
+> `tests/multi-image-tripwire.mjs`, đột biến 5/5 bị bắt. Fail-closed giữ nguyên: mờ thì dừng.
+>
+> - **mở lại khi:** một file trong `evidence/` có `new_assistant_image_counts` chứa số ≥ 2.
+>   Lúc đó mới đọc tiếp phần đo bên dưới — nó vẫn đúng và vẫn dùng được.
+
+**Phần đo cũ, giữ nguyên để lúc mở lại khỏi đo lại từ đầu:**
 
 145 dòng bên ChatGPT, 66 bên Gemini. Đây là **lớp quy ảnh về job** — tức là lớp **an toàn**,
 không phải UI. Chênh lệch ở đây đáng lo hơn chênh lệch ở giao diện.
@@ -171,9 +193,9 @@ lần thứ ba nhánh này bị báo oan "thiếu", đúng như cảnh báo ở 
   dẫn **tương đối** nên **không bao giờ đúng một lần nào**, và dưới chính sách ghi đè thì nó khai
   `overwritten` — tức nói với nhật ký kiểm toán rằng bằng chứng cũ của Đức **đã bị thay thế**,
   trên những lần ghi đầu tiên, mọi lần. Ghim: `tests/landed-as-requested.mjs`, thử phá 6/6 bị bắt.
-- **Nhiều ảnh một job** — thiếu thật, **CÒN MỞ**. Đây **cùng một việc** với `G-05`, không phải hai:
-  79 dòng chênh của `image-evidence-core.js` chính là tính năng này. Chi tiết và điều kiện đóng
-  ghi ở `G-05`, đừng làm hai lần.
+- ~~**Nhiều ảnh một job**~~ **NGỦ ĐÔNG 06/09, Đức chốt** — thiếu thật, nhưng Gemini **chưa bao
+  giờ** làm thế. Đây **cùng một việc** với `G-05`, không phải hai. Đã đặt bẫy để lúc nó xảy ra
+  thì sổ cái tự khai; chi tiết và điều kiện mở lại ghi ở `G-05`, đừng làm hai lần.
 - ~~Đọc `tab.url || tab.pendingUrl`~~ **BÁO OAN** — nhánh này **ĐÃ CÓ**, ở `tab-lock-core.js`, do
   đợt khoá tab 04/09 (`G-02`) mang vào. Mục này viết trước đợt đó và không ai rà lại.
 
@@ -232,9 +254,20 @@ thấy test không đụng tới**.
 
 ## P3 — Khi rảnh
 
-### G-07 · Poll A/B "thích ảnh nào hơn" — **[ĐO]**
+### ~~G-07~~ · Poll A/B "thích ảnh nào hơn" — **NGỦ ĐÔNG 06/09, cùng lý do với `G-05`**
 
-`ab-poll-core.js` chỉ có ở nhánh ChatGPT. Không phải lớp an toàn, nên xếp P3.
+`ab-poll-core.js` chỉ có ở nhánh ChatGPT. **Đức chốt 06/09: chưa bao giờ thấy Gemini hỏi lại
+kiểu đó.**
+
+**Hai mục này cùng MỘT tiền đề, và đó là lý do một câu trả lời đóng được cả hai.** Chú thích đầu
+`ab-poll-core.js` nói thẳng: *ChatGPT đôi khi trả lời MỘT prompt ảnh bằng HAI ảnh cộng một câu
+hỏi "bạn thích ảnh nào hơn"; câu hỏi chưa trả lời thì KHOÁ ô soạn, nên job sau treo vĩnh viễn
+trong `WAITING_READY`.* Tức "nhiều ảnh một job" và "poll A/B" là **cùng một hành vi trang nhìn từ
+hai phía**. Gemini không làm thế thì cả hai đều không có đối tượng.
+
+- **mở lại khi:** hoặc bẫy của `G-05` bắt được `new_assistant_image_counts` ≥ 2, hoặc một job
+  treo ở `WAITING_READY` mà `diagnostics.dom_probe` cho thấy nút bấm lạ trong khối `buttons`.
+  Cả hai đường đều **0 credit** và đều tự khai — không phải ngồi canh.
 
 ### G-08 · Tám module giống hệt từng byte giữa hai nhánh — **[ĐO]**
 

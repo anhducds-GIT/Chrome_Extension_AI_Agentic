@@ -343,7 +343,30 @@
   }
   function imageDecision(boundary, inputEvidence) {
     const postTurnMessages = newAssistantMessages(boundary);
-    return { decision: window.DacImageEvidence.selectAttributableImage({ postTurn: postTurnMessages.flatMap((message) => outputCandidates(message, inputEvidence)), visible: outputCandidates(document, inputEvidence), baseline: boundary?.images || [] }), assistant_count_after: assistantMessages().length, new_assistant_fingerprints: postTurnMessages.map(assistantFingerprint) };
+    // Đếm ảnh THEO TỪNG LƯỢT, không chỉ đếm tổng. Đây là một cái BẪY, không phải
+    // một tính năng — và nó tồn tại vì Đức chốt 06/09: *"case này tôi chưa gặp,
+    // bao giờ gặp ta sẽ capture và vá."* Câu đó chỉ đúng nếu có thứ gì đó BÁO
+    // được là đã gặp.
+    //
+    // Lỗ trước 06/09: nếu Gemini trả HAI ảnh trong MỘT lượt, job dừng an toàn với
+    // `AMBIGUOUS_POST_TURN_IMAGE` — nhưng mã đó **cũng** nổ khi có HAI LƯỢT riêng
+    // mỗi lượt một ảnh. Sổ cái ghi `fresh.eligible: 2` ở cả hai ca. Hai nguyên
+    // nhân khác hẳn nhau mà nhìn giống hệt, nên không ai nhận ra ca đầu đã xảy ra.
+    //
+    // Một dãy số là đủ để tách chúng: `[2]` = một lượt trả hai ảnh (ca Đức đang
+    // chờ bắt) · `[1, 1]` = hai lượt riêng biệt (chuyện khác hẳn).
+    //
+    // CỐ Ý KHÔNG tự xử lý ca đó. Nhánh ChatGPT xử lý được, nhưng cái giá là một
+    // tuỳ chọn cấu hình gói này chưa có — tức đụng cả file kế hoạch XLSX lẫn giao
+    // diện. Xây một tính năng cho tình huống chưa ai thấy bao giờ là tự thêm nợ.
+    // Fail-closed vẫn giữ nguyên: mờ thì dừng, không đoán.
+    const perTurn = postTurnMessages.map((message) => outputCandidates(message, inputEvidence));
+    return {
+      decision: window.DacImageEvidence.selectAttributableImage({ postTurn: perTurn.flat(), visible: outputCandidates(document, inputEvidence), baseline: boundary?.images || [] }),
+      assistant_count_after: assistantMessages().length,
+      new_assistant_fingerprints: postTurnMessages.map(assistantFingerprint),
+      new_assistant_image_counts: perTurn.map((candidates) => candidates.length)
+    };
   }
   function boundaryTelemetry(boundary) {
     return { assistant_count_before: boundary?.assistant_count || 0, assistant_node_ids: boundary?.assistant_node_ids || [], assistant_fingerprints: boundary?.assistant_fingerprints || [], baseline_image_count: boundary?.images?.length || 0, baseline_source_ids: boundary?.image_source_ids || [], baseline_image_node_ids: boundary?.image_node_ids || [] };
@@ -688,7 +711,7 @@
         const evaluated = imageDecision(boundary, inputEvidence);
         const decision = evaluated.decision;
         const diagnostics = decision.diagnostics || {};
-        lastDetection = { ...boundaryTelemetry(boundary), assistant_count_after: evaluated.assistant_count_after, new_assistant_fingerprints: evaluated.new_assistant_fingerprints, stop_visible: Boolean(stopButton), generating, candidate_counts: { post_turn: diagnostics.post_turn || null, fresh: diagnostics.fresh || null }, baseline_vs_fresh: { baseline: diagnostics.baseline_count ?? boundary?.images?.length ?? 0, fresh: diagnostics.fresh?.total ?? 0 }, chosen_attribution: decision.attribution || null, decision_reason: decision.ok ? null : decision.reason || "NO_NEW_IMAGE", decision: diagnostics };
+        lastDetection = { ...boundaryTelemetry(boundary), assistant_count_after: evaluated.assistant_count_after, new_assistant_fingerprints: evaluated.new_assistant_fingerprints, new_assistant_image_counts: evaluated.new_assistant_image_counts, stop_visible: Boolean(stopButton), generating, candidate_counts: { post_turn: diagnostics.post_turn || null, fresh: diagnostics.fresh || null }, baseline_vs_fresh: { baseline: diagnostics.baseline_count ?? boundary?.images?.length ?? 0, fresh: diagnostics.fresh?.total ?? 0 }, chosen_attribution: decision.attribution || null, decision_reason: decision.ok ? null : decision.reason || "NO_NEW_IMAGE", decision: diagnostics };
         recordDetection(attempt, lastDetection);
         // Gemini streams the finished image into the new model-response while
         // the generating signals are still clearing; completion additionally
