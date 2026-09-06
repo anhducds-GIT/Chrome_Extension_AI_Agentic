@@ -143,7 +143,7 @@ GPT 35 file `.js` · Gemini 34.
 | `approval-persistence-core.js` | 61 | 25 | 36 |
 | `provider-adapter.js` | 228 | 210 | 18 |
 | `output-location-core.js` | 389 | 373 | 16 |
-| `content.js` | 1186 | 1174 | 12 |
+| `content.js` | 1186 | 1197 | 11 |
 | `bridge-proposal-core.js` | 380 | 387 | 7 |
 | `halt-instructions-core.js` | 147 | 140 | 7 |
 | `xlsx-codec.js` | 371 | 364 | 7 |
