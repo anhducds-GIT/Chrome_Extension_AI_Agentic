@@ -96,7 +96,42 @@ async function downloadGeneratedImage(message) {
   // classifies this identically to a directory-write verification failure.
   if (item.exists === false) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete but the file no longer exists.`);
   if (reportedBytes.length && persistedBytes <= 0) return failure("PERSISTENCE_VERIFICATION_FAILED", `PERSISTENCE_VERIFICATION_FAILED: Chrome reported '${item.filename}' as complete with zero bytes received.`);
-  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename, collision_policy: collisionPolicy, persisted_bytes: persistedBytes, write_outcome: item.filename === requestedFilename ? "written" : collisionPolicy === "overwrite" ? "overwritten" : "uniquified" };
+  // `item.filename` is Chrome's ABSOLUTE local path; `requestedFilename` is the
+  // relative, forward-slash path we asked for. This file already knows that --
+  // the collisionPolicy "fail" branch above converts slashes and compares with
+  // endsWith() for exactly this reason. So `item.filename === requestedFilename`
+  // could never once be true, and until 2026-09-06 that meant this path was
+  // structurally incapable of reporting "written": every Downloads save was
+  // filed as "uniquified", or, under an overwrite policy, as "overwritten".
+  //
+  // "overwritten" is the damaging half. It told the ledger and the audit trail
+  // that prior operator evidence had been replaced -- on first-ever writes,
+  // every time. And it is not merely mis-thresholded, it is unknowable here: a
+  // completed download under conflictAction:"overwrite" proves Chrome was
+  // ALLOWED to replace a file, not that one existed to replace. The directory
+  // writer CAN probe before writing and does, which is why
+  // v1-output-controls-core.mjs already pins "a first write reports written,
+  // not overwritten" for that path. This path cannot probe, so it states only
+  // what it observed, and collision_policy travels alongside so what was ASKED
+  // FOR stays visible without the ledger pretending to know what HAPPENED.
+  const writeOutcome = downloadLeaf(item.filename) === downloadLeaf(requestedFilename) ? "written" : "uniquified";
+  return { ok: true, download_id: downloadId, filename: item.filename, requested_filename: requestedFilename, collision_policy: collisionPolicy, persisted_bytes: persistedBytes, write_outcome: writeOutcome, landed_as_requested: pathTailMatches(item.filename, requestedFilename) };
+}
+
+// Whether the file actually landed where it was asked to land. The leaf test
+// above answers "did Chrome keep the NAME"; this answers "did it keep the
+// whole relative PATH", which is the one that catches a save silently
+// redirected out of its subfolder into the Downloads root.
+function downloadLeaf(value) {
+  return String(value || "").split(/[\\/]/).pop() || "";
+}
+
+function pathTailMatches(absolutePath, requestedRelative) {
+  const normalise = (value) => String(value || "").replace(/\\/g, "/").toLowerCase();
+  const actual = normalise(absolutePath);
+  const requested = normalise(requestedRelative).replace(/^\/+/, "");
+  if (!actual || !requested) return false;
+  return actual === requested || actual.endsWith(`/${requested}`);
 }
 
 function safeRequestedFilename(value, folder, fallback) {

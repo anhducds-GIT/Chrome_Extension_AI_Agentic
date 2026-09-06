@@ -4488,7 +4488,14 @@
         const outputSavedAt = new Date().toISOString();
         update(item, { status: "RUNNING", attempt_phase: item.phase, requested_file: window.DacOutputLocation.renderImageFilename(effectiveOutput.imagePattern, { job_id: item.job.id, attempt: item.attempt_count, index: item.number }, imageExtensionFromUrl(result.image_url)), persistence_verified: true, detected_not_downloaded: false, result_file: accepted.filename, result_download_id: accepted.download_id ?? "", output_saved_at: outputSavedAt, write_outcome: accepted.write_outcome || "written", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
         state.verifiedImageFiles.push(accepted.filename);
-        audit("OUTPUT_SAVED", item, { message: `write_outcome=${accepted.write_outcome || "written"}` });
+        // landed_as_requested is reported separately from write_outcome on purpose: they
+        // answer different questions and can disagree. write_outcome asks "did the NAME
+        // survive"; landed_as_requested asks "did the whole relative PATH survive". A save
+        // that Chrome quietly redirects out of its subfolder into the Downloads root keeps
+        // its name, so write_outcome alone still reads "written" while the file is not
+        // where the plan said it would be. "unknown" means the write path did not report
+        // the field at all (the directory writer does not), which is not the same as false.
+        audit("OUTPUT_SAVED", item, { message: `write_outcome=${accepted.write_outcome || "written"}; landed_as_requested=${accepted.landed_as_requested === undefined ? "unknown" : String(Boolean(accepted.landed_as_requested))}` });
         item.runtime_stage = "OUTPUT_SAVED"; setCurrent(item, item.runtime_stage, "Image checkpoint recorded; waiting for Gemini to become idle.");
         renderQueue(); progress(`SAVED ✓ ${accepted.filename}`);
       }
