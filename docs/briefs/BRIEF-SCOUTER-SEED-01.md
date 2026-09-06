@@ -16,6 +16,16 @@ nằm ở đâu).
 
 ## 1. Việc ① — PHÉP ĐO, và nó đi trước mọi thứ
 
+> **XONG 06/09 — ĐẠT. Đừng làm lại.** Công cụ: `node scripts/scouter-input-trust-probe.mjs`
+> (tự dựng trang thử trong thư mục tạm, không đụng trang thật). Kết quả trên Chrome 152: bấm qua
+> `chrome.debugger` cho `isTrusted: true` và mở được cổng hoạt động; `element.click()` — cách
+> **cả ba worker đang dùng** — thì không. Số đo đầy đủ kèm ba cái bẫy gặp thật: mục 4.1.1 của
+> bảng kiểm kê. Mã thoát 2 nghĩa là phép đo **không chạy được**, khác hẳn "không đạt".
+>
+> Nghĩa là: món đắt nhất trong 25 mục là **thật**. Việc ② được phép bắt đầu.
+
+Phần dưới giữ nguyên làm bản ghi vì sao phép đo này đi trước.
+
 Năng lực xếp hạng **số một** của bảng kiểm kê là *bấm và gõ như tay người*. Nó nằm trong
 `SEED v0.1`. Và **chưa ai đo tận mắt** — bảng kiểm kê tự đánh dấu chỗ này là cần chứng minh.
 
@@ -50,9 +60,30 @@ Quyền đã được Đức duyệt ở `ADR-0009`: `<all_urls>` · `debugger` 
 `storage` · nối `127.0.0.1`. **Đây là lần duy nhất trong repo một extension được mở tới mức
 này — đừng xin thêm gì ngoài danh sách đó.**
 
-Cửa Bridge: **đọc `workers/duc-auto-gemini/v0.2.0/bridge-*.js` trước, đừng phát minh lại.** Bảng
-kiểm kê đã đo: 6 file **giống hệt nhau từng byte** ở cả ba worker — đó là bằng chứng đọc được
-rằng chúng không dính nhà cung cấp, nên bóc sang dùng lại được.
+Cửa Bridge: **đọc `workers/duc-auto-gemini/v0.2.0/bridge-*.js` trước, đừng phát minh lại.**
+
+> **SỬA MỘT CÂU SAI TRONG CHÍNH BRIEF NÀY (06/09, mục `N-06`).** Bản đầu viết *"6 file giống hệt
+> nhau từng byte ở cả ba worker, nên bóc sang dùng lại được"*. Đo lại bằng `md5sum` thì **không
+> phải vậy** — trong năm file `bridge-*.js`, chỉ **một** file giống hệt cả ba:
+
+| File | Ba worker |
+|---|---|
+| `bridge-pairing-core.js` | **giống hệt cả ba** — bóc sạch được |
+| `bridge-proposal-core.js` | Gemini = Flow Video · ChatGPT **khác** |
+| `bridge-router-core.js` | Gemini = Flow Video · ChatGPT **khác** |
+| `bridge-core.js` | **cả ba khác nhau** |
+| `bridge-transport-loopback.js` | **cả ba khác nhau** |
+
+Nên việc của bạn ở cửa Bridge **không phải chép**, mà là **đọc rồi quyết từng file**: chỗ nào
+đã trùng thì dùng lại, chỗ nào ba bản đã trôi dạt thì phải **đọc cả ba** rồi viết một bản cho
+seed. Chép bản Gemini vì nó gần tay nhất là đẻ ra **bản trôi dạt thứ tư** — và lần này là bản
+mà 25 mục `SEED v0.1` sẽ ngồi lên.
+
+Đo lại trước khi tin bảng trên (nó đúng lúc 06/09, không hứa gì cho hôm sau):
+
+```bash
+for f in workers/duc-auto-gemini/v0.2.0/bridge-*.js; do b=$(basename "$f"); md5sum "$f" workers/duc-auto-chatgpt/v0.1.0/$b workers/duc-auto-gg-flow-video/v0.1.0/$b; done
+```
 
 ## 3. Ranh giới seed / adapter — chốt ở ADR-0009, đừng quyết lại
 

@@ -725,3 +725,12 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
   **đúng chữ** — chỗ nào in ra "rảnh" thì phép ghim ĐỎ.
 - **Còn nợ để đóng hẳn:** câu cấm đó phải vào `AGENTS.md` mục 1 (vùng `_root`), vì đó là chỗ phiên
   điều phối đọc và cũng là chỗ nó đã làm sai. Việc này đi kèm lượt làm `K2` chứ không tách riêng.
+
+## N-06 · đóng 2026-09-06
+
+- `BRIEF-SCOUTER-SEED-01` mục 2 đã sửa: bỏ câu "6 file giống hệt nhau", thay bằng **bảng đo thật
+  năm file** (một file trùng cả ba · hai file Gemini = Flow Video nhưng ChatGPT khác · hai file
+  cả ba khác nhau), kèm câu lệnh để lượt sau tự đo lại, và một câu dặn thẳng: chép bản Gemini vì
+  nó gần tay nhất là **đẻ ra bản trôi dạt thứ tư**.
+- Mục 1 của brief cũng được đóng dấu **XONG — ĐẠT** cho phép đo `isTrusted`, để lượt sau không
+  chạy lại phép đo đã có kết quả.
