@@ -3249,3 +3249,7 @@ của test mới ĐỎ; strip cắt sạch → vế ĐỎ của test mới ĐỎ
 frontmatter vẫn ghi `Superseded by ADR-0009`. Đó là vá triệu chứng để né B12, và nó làm ADR tự
 mâu thuẫn. Nay B12 xanh mà không cần nó — **bỏ sửa đổi đó đi**. Lane `claude-eol` không đụng
 vào vì `_docs` là của người khác.
+
+**Đính chính lúc đẩy.** Lane `claude-assistant` commit thêm `d08c6c3 docs(brief): BANG-CAN-DUC-01`
+trong lúc lượt này chạy cổng, nên `--carry` cuốn theo **2 commit của `claude-assistant`**
+(`a81fb72` + `d08c6c3`), không phải 1 như ghi ở trên.
