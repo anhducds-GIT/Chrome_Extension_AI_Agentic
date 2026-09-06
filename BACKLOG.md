@@ -1032,3 +1032,24 @@ fixture chọn một đơn vị THẬT khác GPT, chọn theo thứ tự đườ
 - **ĐÓNG N-13** · 2026-09-07 · lane `claude-flow-zoom` · cả ba điều kiện đạt, và **đọc code xác nhận trước khi sửa** chứ không tin suy luận trong sổ — gói Flow dính đúng y hệt gói Gemini. ⑴ cổng nút phóng to trong `sidepanel.js` nay hỏi `isProviderOrigin` (https + đúng host), `isProviderUrl` **giữ nguyên** cho runner và có ca ghim riêng chống nới nó theo; ⑵ phép ghim canh đúng chỗ đó: `workers/duc-auto-gg-flow-video/v0.1.0/tests/zoom-control-smoke.mjs` — nạp adapter THẬT vào `vm` rồi trích thân hàm thật ra khỏi `sidepanel.js`; ⑶ đột biến đổi cổng về `isProviderUrl` làm suite gói **ĐỎ** (con M01 trong bảng 16 con). Suite gói 102/102.
 - **ĐÓNG N-24** · 2026-09-07 · lane `claude-flow-zoom` · cùng lượt với `N-13` như `đóng khi:` của nó đòi. `git grep -n "isProviderUrl" workers/duc-auto-gg-flow-video/v0.1.0/sidepanel.js` nay chỉ còn trỏ vào **cổng của runner** (dòng 2552) và ba dòng chú thích giải thích vì sao hai câu hỏi phải tách nhau — không dòng nào là cổng của nút phóng to.
 - **TIẾN N-14 (chưa đóng)** · 2026-09-07 · lane `claude-flow-zoom` · gói Flow Video đã có phép kiểm trích thân hàm thật: đột biến 16 con vào `sidepanel.js` + `provider-adapter.js`, phép ghim mới bắt **16/16**, còn `tests/chatgpt-zoom-control-smoke.mjs` bắt **0/16** — **số đo tại chính gói Flow**, không còn là suy từ gói Gemini. **Chưa đóng vì hai lẽ:** ⑴ file chết ở gói Flow **chưa xoá** — xoá file cần Đức duyệt, đã ghi thành một câu hỏi duy nhất trong `BACKLOG.md` của gói (mục `F-28`); ⑵ gói `workers/duc-auto-chatgpt` chưa ai soi. Một con thoát ở lượt đầu và nó đáng: bỏ `btn.disabled = true` khỏi `lockZoomButtons` mà suite vẫn xanh, vì **mọi** ca đều khởi đầu từ nút đã TẮT nên đường khoá không hề được canh — bẫy anh em với bẫy đã ghi trong mục này, chỉ khác chiều. Đã thêm ca đi từ trạng thái ĐANG BẬT; phiên nào làm gói ChatGPT thì chép cả hai ca.
+
+## N-19 · `git commit --amend` sửa nhầm lịch sử của lane khác — HEAD đổi chủ giữa hai lệnh
+
+- **nhóm:** dephien
+- **đóng khi:** lệnh: `node scripts/session-check.mjs` có một phép kiểm cảnh báo khi HEAD mang nhãn `Lane:` của phiên khác, hoặc `AGENTS.md` mục 1 có một câu cấm `--amend` khi HEAD không phải commit của mình
+- **mở:** 2026-09-07 · lane `claude-assistant`
+- **vùng:** `_code` + `_root`
+- **ca thật, tự lane đó báo về:** 07/09 lane `claude-gemini-g08` chạy `git commit --amend` để sửa
+  commit của chính nó. Nhưng giữa lúc nó soạn commit và lúc nó gõ lệnh, lane `claude-flow-zoom`
+  đã commit — nên **HEAD lúc đó là `54ca40e`, commit của lane kia**, và `--amend` viết đè lên
+  lịch sử của họ. Lane phát hiện ngay, `git reset --mixed 54ca40e` khôi phục **đúng SHA gốc**,
+  bản bị sửa chưa từng ra remote. Đã kiểm chứng độc lập: `54ca40e` còn nguyên trên remote.
+- **vì sao nó sẽ còn xảy ra:** `--amend` không hỏi commit đó của ai, nó chỉ sửa **HEAD**. Trong
+  repo một nhánh nhiều lane, **HEAD đổi chủ bất cứ lúc nào** — không có gì báo, và lệnh vẫn chạy
+  thành công. Đây là cùng một họ với `N-15`: một thao tác nguy hiểm đi qua trót lọt vì không ai
+  hỏi câu "cái này của ai".
+- **cách rẻ nhất:** không cấm `--amend` (nó hữu ích thật, và luật đã bắt sửa nhãn `Lane:` hỏng
+  bằng đúng lệnh đó). Chỉ cần **hỏi một câu trước khi chạy**: HEAD có mang nhãn của mình không.
+  Một dòng trong `AGENTS.md`, và nếu rẻ thì một phép kiểm ở cổng.
+- **đừng nhầm với `N-08`:** `N-08` là `git checkout` xoá **trạng thái sống**; mục này là `--amend`
+  viết đè **lịch sử**. Hai lệnh khác nhau, cùng một gốc: lane không kiểm quyền sở hữu trước khi ghi.
