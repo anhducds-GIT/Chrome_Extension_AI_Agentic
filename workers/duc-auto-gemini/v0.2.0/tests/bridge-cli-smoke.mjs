@@ -16,6 +16,32 @@ assert.deepEqual(commandRequest("ledger-read", { "include-removed": true }), {
   params: { cursor: null, limit: 50, include_prompt: false, include_removed: true }
 });
 assert.throws(() => commandRequest("proposal-get", {}), /proposal-id/);
+
+/* --- hai lệnh thêm 06/09 -------------------------------------------------- */
+
+// Gọi trần phải chạy được: hai nắp đều có mặc định, và tích của chúng
+// (10 x 8000) nằm gọn dưới trần 200000 mà Bridge cưỡng chế.
+assert.deepEqual(commandRequest("chat-read"), { method: "chat.read", params: { limit: 10, max_chars_per_turn: 8000 } });
+assert.deepEqual(commandRequest("chat-read", { limit: "5", "max-chars": "20000" }), {
+  method: "chat.read",
+  params: { limit: 5, max_chars_per_turn: 20000 }
+});
+// CA HỒI QUY, và nó suýt lọt: bộ đọc số dùng chung chặn cứng ở 100, nên gõ
+// TƯỜNG MINH đúng con số mặc định (8000) bị từ chối OAN — trong khi gọi trần vẫn
+// chạy vì giá trị đó đi qua nhánh `fallback`. Một lỗi chỉ nổ khi người dùng gõ
+// ra thứ tài liệu bảo họ gõ.
+assert.doesNotThrow(() => commandRequest("chat-read", { "max-chars": "8000" }), "gõ tường minh đúng giá trị mặc định phải chạy được");
+assert.throws(() => commandRequest("chat-read", { "max-chars": "50000" }), /200 to 40000/, "vượt trần thì từ chối ngay ở CLI, không tốn một vòng đi-về");
+assert.throws(() => commandRequest("chat-read", { "max-chars": "199" }), /200 to 40000/);
+assert.throws(() => commandRequest("chat-read", { limit: "60" }), /1 to 50/);
+
+assert.deepEqual(commandRequest("proposal-withdraw", { "proposal-id": "prop-9" }), {
+  method: "queue.proposal.withdraw",
+  params: { proposal_id: "prop-9" }
+});
+// Thiếu tham số thì câu lỗi phải kể ĐÚNG TÊN lệnh vừa gõ. Hai lệnh dùng chung một
+// nhánh xử lý, nên một câu lỗi đóng cứng "proposal-get" sẽ chỉ sai chỗ.
+assert.throws(() => commandRequest("proposal-withdraw", {}), /proposal-withdraw requires --proposal-id/);
 assert.throws(() => commandRequest("run-start", {}), /Unknown command/);
 const envelope = buildEnvelope("system.ping", {}, new Date("2026-08-24T10:00:00.000Z"), "cli-request-0001");
 assert.equal(envelope.method, "system.ping");

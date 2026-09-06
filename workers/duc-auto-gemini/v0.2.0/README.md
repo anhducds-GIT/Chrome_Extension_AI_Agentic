@@ -17,8 +17,9 @@
 > (đồ thừa kế lúc fork, tên file đúng là vậy), cộng câu miễn trừ bản quyền ở cuối file.
 > Find-replace mù sẽ làm sai chính những câu đang đúng — đã thử và bắt được.
 >
-> Việc còn lại: soát phần dưới mục cài đặt từng dòng, và dọn hai script ChatGPT còn nằm
-> trong `scripts/`. Ghi ở `BACKLOG.md`. Tin `STATUS.md` trước file này.
+> **SOÁT XONG 06/09.** Phần dưới mục cài đặt đã đọc từng dòng và đối chiếu với code — tám
+> giá trị cấu hình dưới đây đều khớp `runner-core.js`, và mọi lệnh CLI đều tồn tại thật. Hai
+> script ChatGPT thừa trong `scripts/` **đã xoá 03/09**. Tin `STATUS.md` trước file này.
 
 Before touching this project, read [AGENTS.md](AGENTS.md) (roles, golden rules, file map) and [HANDOFF.md](HANDOFF.md) (current state, Log).
 
@@ -76,7 +77,7 @@ The workbook must have a worksheet named `jobs` with these header columns:
 
 An optional `config` worksheet may contain `key` / `value` rows. Supported keys: `timeout_sec` (15–900, default 180), legacy `delay_sec`, `delay_min_sec`, `delay_max_sec` (1–120; defaults 12 and 24), `continue_on_error` (default true), `output_folder` (default `Duc Auto Gemini`), `max_input_images` (default 5), and `rerun_done` (default false).
 
-V0.3 also accepts `max_retries` (0–5, default 2) and `safety_cooldown_sec` (0–120). `safety_cooldown_sec` accepts either one fixed integer (`8`) or an inclusive integer range (`6-9`, the default); one value is selected from the range for each readiness gate, then READY is checked again after that cooldown. `max_input_images` now defaults to **5** (hard maximum 10). Optional per-job `timeout_sec`, `max_retries`, `safety_cooldown_sec`, and `output_folder` override the effective current-run setting for that job. Explicit workbook values remain authoritative; the Side Panel exposes local runtime overrides for both inter-job bounds and the safety-cooldown value/range.
+This branch also accepts `max_retries` (0–5, default 2) and `safety_cooldown_sec` (0–120). `safety_cooldown_sec` accepts either one fixed integer (`8`) or an inclusive integer range (`6-9`, the default); one value is selected from the range for each readiness gate, then READY is checked again after that cooldown. `max_input_images` now defaults to **5** (hard maximum 10). Optional per-job `timeout_sec`, `max_retries`, `safety_cooldown_sec`, and `output_folder` override the effective current-run setting for that job. Explicit workbook values remain authoritative; the Side Panel exposes local runtime overrides for both inter-job bounds and the safety-cooldown value/range.
 
 ## Operational controls
 
@@ -137,7 +138,17 @@ From the repository root:
 npm test
 ```
 
-Every test is a dependency-free Node script. `npm test` runs all worker tests plus the root observer smoke test and prints one pass/fail summary. `npm run test:worker` runs only this worker. There is nothing to install, and the suite uses no shell builtins, so it behaves identically in PowerShell and Git Bash.
+To run **only this worker**:
+
+```bash
+node workers/duc-auto-gemini/v0.2.0/tests/run-all.mjs
+```
+
+Every test is a dependency-free Node script. `npm test` runs all four worker suites plus the root tests and prints one pass/fail summary. There is nothing to install, and the suite uses no shell builtins, so it behaves identically in PowerShell and Git Bash.
+
+> **`npm run test:worker` KHÔNG chạy gói này** — nó trỏ vào suite của gói ChatGPT. Câu cũ ở đây
+> nói ngược lại, và tin nó là chạy nhầm suite rồi kết luận nhánh Gemini xanh trong khi nó chưa
+> chạy dòng nào. Cùng một con bệnh với `G-09`. Đã ghi ra `BACKLOG.md` gốc repo (`N-17`).
 
 ## Quick validation
 
@@ -201,7 +212,9 @@ node (Join-Path $bridgeRoot 'bridge-cli.mjs') ping
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') capabilities
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') queue-list --limit 25
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') ledger-read --limit 25 --include-removed
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') chat-read --limit 10 --max-chars 8000
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') proposal-get --proposal-id proposal-id-from-response
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') proposal-withdraw --proposal-id proposal-id-from-response
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') propose --params-file .\proposal-params.json
 ```
 

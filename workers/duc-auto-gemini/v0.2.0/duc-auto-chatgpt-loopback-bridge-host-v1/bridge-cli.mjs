@@ -11,6 +11,11 @@ const COMMANDS = Object.freeze({
   "run-status": "run.status",
   "ledger-read": "ledger.read",
   "proposal-get": "queue.proposal.get",
+  "proposal-withdraw": "queue.proposal.withdraw",
+  // chat-read CHỈ ĐỌC: không click, không gõ, không đổi focus. Cố ý KHÔNG bị
+  // khoá RUN_ACTIVE chặn như chat-reload — đọc không giết được attempt đang bay,
+  // mà lúc cần đọc nhất chính là lúc đang chẩn đoán một run đang chạy.
+  "chat-read": "chat.read",
   propose: "queue.propose",
   "run-trial": "run.trial",
   // Cặp lệnh điều khiển. run-stop đi vòng qua khoá RUN_ACTIVE (dừng chỉ bớt
@@ -47,6 +52,18 @@ function parseFlags(argv) {
   return flags;
 }
 
+// Bien the co tran/san RIENG. `positiveInteger` chan cung o 100, dung cho moi co
+// dem-so-luong hien co - nhung `--max-chars` cua chat-read chay toi 40000, nen
+// dung lai no la tu choi OAN mot gia tri hop le. Da suyt dinh: mac dinh 8000 di
+// qua nhanh `fallback` nen `chat-read` tran van chay, va chi vo khi ai do go
+// tuong minh dung con so mac dinh.
+function boundedInteger(value, name, fallback, min, max) {
+  if (value === undefined) return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) throw new Error(`--${name} must be an integer from ${min} to ${max}.`);
+  return parsed;
+}
+
 function positiveInteger(value, name, fallback) {
   if (value === undefined) return fallback;
   const parsed = Number(value);
@@ -72,9 +89,17 @@ export function commandRequest(command, flags = {}) {
       include_prompt: Boolean(flags["include-prompt"]),
       include_removed: Boolean(flags["include-removed"])
     };
-  } else if (command === "proposal-get") {
-    if (!flags["proposal-id"]) throw new Error("proposal-get requires --proposal-id <id>.");
+  } else if (command === "proposal-get" || command === "proposal-withdraw") {
+    if (!flags["proposal-id"]) throw new Error(`${command} requires --proposal-id <id>.`);
     params = { proposal_id: flags["proposal-id"] };
+  } else if (command === "chat-read") {
+    // Hai nắp đi CÙNG NHAU và cùng có mặc định: gọi trần `chat-read` phải chạy
+    // được. Bridge từ chối tích hai nắp vượt 200000 ký tự, nên mặc định ở đây
+    // (10 x 8000) nằm gọn trong ngưỡng đó.
+    params = {
+      limit: boundedInteger(flags.limit, "limit", 10, 1, 50),
+      max_chars_per_turn: boundedInteger(flags["max-chars"], "max-chars", 8000, 200, 40000)
+    };
   } else if (command === "propose") {
     if (!flags["params-file"]) throw new Error("propose requires --params-file <json>.");
     params = JSON.parse(fs.readFileSync(path.resolve(flags["params-file"]), "utf8"));
@@ -117,7 +142,7 @@ export function applyTarget(envelope, flags = {}) {
 export async function main(argv = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr, fetch: globalThis.fetch }) {
   const [command, ...rest] = argv;
   if (!command || command === "help" || command === "--help") {
-    io.stdout.write("Usage: node bridge-cli.mjs <ping|capabilities|queue-list|run-status|ledger-read|proposal-get|propose|run-trial|run-stop|chat-reload|sessions> [options] [--target <label|instance_id>]\n");
+    io.stdout.write("Usage: node bridge-cli.mjs <ping|capabilities|queue-list|run-status|ledger-read|chat-read|proposal-get|proposal-withdraw|propose|run-trial|run-stop|chat-reload|sessions> [options] [--target <label|instance_id>]\n");
     return 0;
   }
   const flags = parseFlags(rest);

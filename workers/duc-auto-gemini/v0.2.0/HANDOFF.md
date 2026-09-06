@@ -499,4 +499,32 @@ vừa viết bị chính đột biến bắt lỗi.
 này thiếu hẳn lớp dưới — `DacOutputProfiles` không có `list`/`setHint`/`remove`, và `sidepanel.js`
 không có hai hàm mà cả hai lệnh đều gọi. Đã ghi rõ vào `G-04`.
 
+## 2026-09-06 — `claude-gemini-hoan-thien`: soát README bằng cách đối chiếu code, không đọc suông
+
+Hai mục README đóng cùng lượt. Một trong hai **đã xong từ 03/09 mà không ai đánh dấu**, nên bộ
+đếm nợ tính dư một việc suốt ba ngày.
+
+**Ba chỗ sai thật.** Nặng nhất: README viết *"`npm run test:worker` runs only this worker"* —
+lệnh đó trỏ vào suite gói **ChatGPT**. Tin nó là chạy nhầm suite rồi kết luận nhánh Gemini xanh
+**trong khi nó chưa chạy một dòng nào**; cùng con bệnh *xanh giả về mặt phủ* của `G-09`. Hai chỗ
+kia nhẹ hơn: một số phiên bản của nhánh khác (`V0.3` — gói này là `0.2.0`), và một câu đòi dọn
+hai script đã bị xoá từ 03/09.
+
+**Ba chỗ nghi sai mà hoá ra ĐÚNG — và đây mới là phần đáng kể.** Tên hai file mẫu mang chữ
+"ChatGPT" là **tên thật** của chúng. Tám giá trị cấu hình **khớp `runner-core.js` từng cái một**.
+Và các lệnh CLI viết bằng gạch nối là **đúng** — đó là tên lệnh CLI, khác tên method Bridge viết
+bằng dấu chấm. Cả ba đều suýt bị tôi "sửa" thành sai. Phân biệt được chỉ vì đo trước khi sửa.
+
+**Việc phát sinh, làm luôn.** Hai lệnh Bridge tôi thêm sáng nay **chưa có trong CLI** — thêm rồi
+mà không gọi được từ dòng lệnh thì Đức và AI vận hành không dùng tới. Đã thêm, kèm một bộ đọc số
+có trần riêng: bộ dùng chung chặn cứng ở **100**, nên `--max-chars 8000` bị từ chối **oan** — và
+lỗi đó **chỉ nổ khi người dùng gõ đúng thứ tài liệu bảo họ gõ**, vì gọi trần thì giá trị mặc định
+đi qua nhánh khác. Đã ghim riêng một ca cho đúng chỗ đó.
+
+**Số.** Nợ gói **9 → 7**. Suite 92/92 xanh. Thử phá **7/7** bị bắt.
+
+**Còn mở, ghi ra `BACKLOG.md` gốc repo:** `N-17` — `npm run test:worker` mang tên nghe như dùng
+chung nhưng trỏ cứng vào một gói. Đo phạm vi rồi mới ghi: chỉ **hai** README nhắc tới nó, và với
+gói ChatGPT thì câu đó **đúng**. Lỗ hẹp, không phải bốn chỗ hỏng. Sửa `package.json` cần `_root`.
+
 <!-- HANDOFF-THANG: 2026-09 -->

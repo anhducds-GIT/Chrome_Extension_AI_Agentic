@@ -838,3 +838,22 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
   mà nhãn **[DÒ]** ở sổ các gói sinh ra để cảnh báo.
 
 - **GHI CHÚ SỔ** · 2026-09-06 · lane `claude-assistant` · `N-12` vừa xảy ra **lần thứ hai trong một ngày**: tôi ghi một mục `N-13`, mà lane `claude-gemini-hoan-thien` đã dùng số đó trước. Mục của tôi đổi thành `N-16`. Trong cùng lượt, ba khối `##` sai hình dạng tôi thêm cho `N-06`/`N-10` đã **đỏ cổng đóng phiên với mọi phiên** (`backlog-check`: 4 mục thiếu `đóng khi:`) — nên chúng được hạ khỏi cấp tiêu đề thành dòng ghi chú, chữ giữ nguyên. Bài học: *"để lại làm bản ghi"* không phải một lựa chọn khi cái để lại **chặn người khác đóng phiên**.
+
+## N-17 · `npm run test:worker` mang tên chung nhưng trỏ cứng vào MỘT gói
+
+- **mở:** 2026-09-06 · lane `claude-gemini-hoan-thien`
+- **vùng:** `_root` (`package.json`)
+- **đóng khi:** lệnh: `npm run test:worker` bị xoá hẳn (và README nào nhắc nó thì trỏ thẳng vào
+  `run-all.mjs` của gói mình) — hoặc nó nhận tên gói làm tham số thay vì đóng cứng một đường dẫn.
+- **ca thật, đã đo:** `README.md` của gói **Gemini** viết *"`npm run test:worker` runs only this
+  worker"*. Đọc `package.json`: lệnh đó là `node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs`
+  — **gói ChatGPT**. Ai tin câu đó sẽ chạy nhầm suite rồi kết luận nhánh Gemini xanh **trong khi
+  nó chưa chạy một dòng nào**.
+- **phạm vi đã đo, không đoán:** `grep -rn "test:worker" workers/*/*/README.md` → chỉ **hai** chỗ
+  nhắc tới nó. README gói ChatGPT nói câu y hệt và với gói đó thì câu ấy **ĐÚNG**. Hai gói còn
+  lại không nhắc. Nên đây là một lỗ **hẹp**, không phải bốn chỗ hỏng.
+- **vì sao vẫn đáng ghi:** đúng con bệnh mà `G-09` đã đóng ở tầng `npm test` — *xanh giả về mặt
+  phủ*. `G-09` vá được lớp đó và có phép ghim canh, nhưng `test:worker` là lệnh **thứ hai** trỏ
+  cứng vào một gói, mang một cái tên nghe như dùng chung, và **không lớp nào canh nó**.
+- **đã làm ở gói Gemini:** README nay đưa lệnh chạy thẳng và nói rõ `test:worker` KHÔNG chạy gói
+  này. Đó là vá phần chữ — cái tên vẫn còn gây hiểu nhầm cho tới khi ai giữ `_root` xử lý.

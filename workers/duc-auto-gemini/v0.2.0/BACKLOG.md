@@ -99,12 +99,11 @@ tố → ĐỎ.
 
 ## P2 — Nên làm sớm
 
-### G-03 · `README.md` của package này là bản chép từ nhánh ChatGPT — **[ĐỌC]**
+### ~~G-03~~ · Dòng tiêu đề README dẫn sai tên nhánh — **ĐÓNG 03/09** ✅
 
-Dòng tiêu đề vẫn ghi *"Duc Auto ChatGPT V0.3"*. Ai đọc README để hiểu nhánh Gemini bị dẫn sai
-tên **ngay dòng đầu**. So hai file thì chúng chỉ khác đúng một mục (`references.add`).
-
-Đây là lỗi tài liệu rẻ nhất trong sổ này và cũng dễ gây hiểu nhầm nhất cho người mới.
+Dòng đầu từng ghi *"Duc Auto ChatGPT V0.3"*. Phiên `claude-dashboard` sửa ngày 03/09; nay nó
+ghi `# Duc Auto Gemini (Platform) V0.2.0`. **Mục này để ngỏ thêm ba ngày sau khi đã xong** —
+rà lại 06/09 mới phát hiện, nên bộ đếm nợ tính dư một việc suốt thời gian đó.
 
 ### G-04 · Nợ method Bridge — **[ĐO]** · 2/4 XONG 06/09
 
@@ -255,7 +254,32 @@ này, ghi lại để không quên.
 
 Chỗ nặng nhất đã sửa: README ghi thư mục tải về mặc định là `Duc Auto ChatGPT`, còn mã nguồn ghi `Duc Auto Gemini` (đo 4 chỗ) — Đức đọc README là đi tìm sai chỗ.
 
-**Còn nợ:** phần README từ mục cài đặt trở xuống chưa soát từng dòng.
+~~**Còn nợ:** phần README từ mục cài đặt trở xuống chưa soát từng dòng.~~ **XONG 06/09**
+(`claude-gemini-hoan-thien`) — soát từng dòng và **đối chiếu với code**, không đọc suông.
+
+**Ba chỗ sai thật, đã sửa:**
+1. *"V0.3 also accepts `max_retries`…"* — `V0.3` là số phiên bản của **nhánh ChatGPT**; gói này
+   là `0.2.0`. Người đọc sẽ đi tìm một bản Gemini không tồn tại.
+2. *"`npm run test:worker` runs only this worker"* — **SAI**. Lệnh đó trỏ vào suite gói ChatGPT.
+   Tin nó là chạy nhầm suite rồi kết luận nhánh Gemini xanh trong khi nó chưa chạy dòng nào —
+   cùng con bệnh *xanh giả về mặt phủ* của `G-09`. Ghi ra `N-17` ở `BACKLOG.md` gốc repo.
+3. Câu *"còn phải dọn hai script ChatGPT trong `scripts/`"* — lạc hậu, `G-13` đã xoá chúng 03/09.
+
+**Ba chỗ nghi sai mà hoá ra ĐÚNG, cố ý không đụng** (đo rồi mới kết luận):
+- Tên `templates/Duc-Auto-ChatGPT-Template.xlsx` và `pilot-04/Duc-Auto-ChatGPT-Pilot-04.xlsx` —
+  hai file đó **thật sự tên như vậy**, đã `ls` để kiểm.
+- Tám giá trị cấu hình (`timeout_sec` 15–900 mặc định 180 · `delay_*` 1–120 mặc định 12/24 ·
+  `max_retries` 0–5 mặc định 2 · `safety_cooldown_sec` 0–120 mặc định `6-9` · `max_input_images`
+  mặc định 5 trần 10 · `output_folder` mặc định `Duc Auto Gemini` · `continue_on_error` true ·
+  `rerun_done` false) — **khớp `runner-core.js` từng cái một.**
+- Lệnh CLI viết bằng gạch nối (`queue-list`, `ledger-read`…) — đúng, đó là tên **lệnh CLI**, khác
+  tên method Bridge viết bằng dấu chấm. Suýt "sửa" một câu đang đúng.
+
+**Việc phát sinh, đã làm luôn:** hai lệnh Bridge thêm hôm nay (`chat.read`,
+`queue.proposal.withdraw`) **chưa có trong CLI**, nên không gọi được từ dòng lệnh. Đã thêm, kèm
+một bộ đọc số có trần riêng — bộ dùng chung chặn cứng ở 100 nên `--max-chars 8000` bị từ chối
+oan, mà lỗi đó **chỉ nổ khi người dùng gõ đúng thứ tài liệu bảo họ gõ**. Ghim thêm vào
+`tests/bridge-cli-smoke.mjs`, đột biến 7/7 bị bắt.
 
 **Một cái bẫy, ghi lại để phiên sau đừng mắc:** ĐỪNG find-replace `ChatGPT` thành `Gemini`. Gói này **thật sự chứa** `templates/Duc-Auto-ChatGPT-Template.xlsx` và `pilot-04/Duc-Auto-ChatGPT-Pilot-04.xlsx` — tên file đúng là vậy, thay là làm sai một câu đang đúng. Hai khối prompt `#01` / `#02` ở cuối `AGENTS.md` cũng cố ý giữ: đó là bản ghi lịch sử của dự án ChatGPT, sửa là viết lại lịch sử. Đã dán nhãn tại chỗ.
 
