@@ -12,22 +12,22 @@
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
     "workers/duc-auto-gemini": {
-      "owner": "claude-gemini-hoan-thien",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T21:24",
       "task": "Dua goi Gemini ve khong con viec mo",
-      "released_at": null,
+      "released_at": "2026-09-06T17:18",
       "taken_from": "claude-codex-ngan",
       "taken_by": "claude-gemini-hoan-thien",
       "taken_at": "2026-09-06T14:24",
       "duc_decision": "Duc chot 2026-09-06: Duc chot cho phien claude-gemini-hoan-thien lay khoa workers/duc-auto-gemini de dua goi Gemini ve khong con viec mo. Duc se phoi hop chay extension de nghiem thu live."
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-hang-doi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T14:46",
       "task": "B-36 phep do console + B-27 chot, dong no ky thuat goi GPT",
-      "released_at": null,
+      "released_at": "2026-09-06T17:20",
       "taken_from": "claude-codex-ngan",
       "taken_by": "claude-hang-doi",
       "taken_at": "2026-09-06T14:46",
@@ -77,5 +77,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "1a43c386024fc0c4"
+  "_fingerprint": "dbfd6e93f60d087a"
 }
