@@ -441,3 +441,19 @@ sau thì mới phải khai `đóng khi:`.
   đủ; tới khoảng chục mục thì không. Việc gấp sổ đúng chỗ là bộ sinh bảng (`_code`), và
   `BRIEF-TACH-SO-Y-TUONG-01` mục 6 đã cố ý xếp nó sang lượt khác.
 - **đo trước khi làm:** đếm số mục `## N-` chưa có dòng `ĐÓNG` tương ứng. Dưới 10 thì chưa cần xây.
+
+## N-03 · Bảng trạng thái không đọc `BACKLOG.md` ở gốc repo, nên 14 mục vừa biến khỏi bảng
+
+- **đóng khi:** lệnh: node scripts/build-overview.mjs xanh và trang có khối sổ nợ gốc repo
+- **mở:** 2026-09-06 · lane `claude-tach-so`
+- **vùng:** `_code`
+- **vì sao:** đo ngay trong lượt tách sổ. `scripts/build-overview.mjs` gom sổ nợ bằng
+  `trackedPaths().filter(p => p.endsWith("/BACKLOG.md"))` — có dấu `/` ở đầu, nên nó chỉ thấy sổ
+  nợ **của từng gói worker**, không thấy `BACKLOG.md` ở gốc repo. Hệ quả đo được: sinh lại trang
+  ở HEAD trước khi tách là **127.557 byte, 19 ý tưởng**; sau khi tách là **86.673 byte, 5 ý
+  tưởng** — 14 mục rời `IDEAS.md` và **không xuất hiện lại ở đâu trên bảng**. Đức mở bảng sẽ
+  thấy repo bỗng nhẹ đi 14 việc, mà thật ra không việc nào đóng cả.
+- **cách làm khi tới lượt:** bỏ dấu `/` trong bộ lọc, hoặc thêm `BACKLOG.md` gốc thành một nguồn
+  riêng có nhãn *"nợ hạ tầng repo"*. Kèm phép ghim: sổ nợ gốc có N mục thì bảng phải hiện N.
+- **KHÔNG gộp vào lượt tách sổ:** `BRIEF-TACH-SO-Y-TUONG-01` mục 6 và mục 8 cấm đúng chuyện này —
+  sửa bộ sinh là khoá `_code`, và khoá đó đang có chủ khác.
