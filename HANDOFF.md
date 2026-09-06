@@ -3361,3 +3361,19 @@ của họ bị ghi đè — artifact máy sinh 100%, khai ở khối `generated
 ngoài repo trước khi ghi đè. Ba artifact còn lại và `FEATURE-PARITY.md` không đổi.
 
 **Còn mở.** N-01 · N-02 · N-03, cả ba đều cần khoá `_code`.
+
+**`claude-tach-so` · trạng thái đóng phiên (cùng ngày, ghi thêm sau khi chạy cổng).** Cổng đóng
+phiên **XANH TOÀN BỘ** — suite gốc 110+19+88+96+17+7+98+15+29+31+15+4+18+31+3+3, **0 đỏ**.
+`safe-push` **TỪ CHỐI**: 4 commit của tôi nằm xen với **5 commit của ba lane khác đang làm dở**
+(`claude-bang-canduc` · `claude-scouter-kk` ×3 · `claude-retry-law`), và một trong số đó nằm
+**trên** commit của tôi. Không dùng `--carry`: đẩy là khoá cứng lịch sử của ba lane đang chạy,
+mà chính sách đứng của repo là *không cuốn theo commit của người khác*.
+
+**Vì vậy tôi GIỮ khoá `_root`** — đúng luật mục 1: đẩy không được thì giữ khoá, đừng trả cho
+"sạch sẽ". Bốn commit của tôi (`bb003c4` `8e0df9e` `cce1b86` `5f76112`) đều có nhãn
+`Lane: claude-tach-so`, nên không có commit vô chủ nào để lại.
+
+**Việc còn lại cho phiên đến sau (hoặc phiên điều phối):** ba artifact máy sinh đã lạc hậu so với
+HEAD **do commit của lane khác**, không phải của tôi — `node scripts/build-dashboard.mjs && node
+scripts/feature-parity.mjs && node scripts/build-overview.mjs` rồi commit, sau đó push. Đây đúng
+là ca `Y-16` (cổng xuất bản khoá chéo) đang mô tả.
