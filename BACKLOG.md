@@ -464,3 +464,7 @@ sau thì mới phải khai `đóng khi:`.
   riêng có nhãn *"nợ hạ tầng repo"*. Kèm phép ghim: sổ nợ gốc có N mục thì bảng phải hiện N.
 - **KHÔNG gộp vào lượt tách sổ:** `BRIEF-TACH-SO-Y-TUONG-01` mục 6 và mục 8 cấm đúng chuyện này —
   sửa bộ sinh là khoá `_code`, và khoá đó đang có chủ khác.
+
+
+- **ĐÓNG N-03** · 2026-09-06 · lane `claude-bang-n03` · `node tests/build-overview-smoke.mjs` xanh, có phép ghim T17. Bảng trước bản vá đếm 44 mục nợ và **không thấy sổ này**; sau bản vá đếm 61 — thêm đúng 17 mục đang mở của sổ gốc. Bắt thêm một lỗi phụ trong cùng lượt: `N-02` mang tên *"Đóng một mục là thêm dòng…"* bị đếm là đã đóng chỉ vì tiêu đề mở đầu bằng chữ "Đóng" (bảng in 16, sổ có 17) — sổ gốc nay đóng mục **chỉ** bằng dòng `ĐÓNG` thêm ở cuối, đúng luật mục 4 của chính nó. Đột biến kiểm: 4/4 bị bắt.
+- **ĐÓNG N-01** · 2026-09-06 · lane `claude-bang-n03` · `node tests/backlog-check-smoke.mjs` xanh (8 phép). Lệnh một dòng trong `package.json` nay là `scripts/backlog-check.mjs`; phép ghim canh **cả hai chiều** (thiếu trường thì đỏ · đủ thì xanh) **và canh chính `package.json`** — gỡ bộ kiểm khỏi cổng thì phép ghim đỏ. Đột biến kiểm: 6/6 bị bắt, gồm cả hai đột biến "gỡ khỏi cổng".
