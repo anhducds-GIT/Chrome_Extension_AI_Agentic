@@ -10,8 +10,21 @@ for (const file of ["runner-core.js", "halt-instructions-core.js"]) {
 
 const guide = context.DacHaltInstructions;
 const runner = context.DacRunnerCore;
-assert.equal(guide.HALT_GROUPS.length, 10, "the operator guide exposes ten distinct Halt groups");
-assert.equal(new Set(guide.HALT_GROUPS.map((group) => group.title)).size, 10, "Halt group titles are unique");
+// 11 tu 2026-09-07: them PROVIDER_OVERLOADED (F-35). Con so nay co y ghim cung —
+// mat mot nhom la mat mot trang huong dan ma Duc doc luc dang ket, va khong gi
+// khac trong suite phat hien ra.
+assert.equal(guide.HALT_GROUPS.length, 11, "the operator guide exposes eleven distinct Halt groups");
+assert.equal(new Set(guide.HALT_GROUPS.map((group) => group.title)).size, 11, "Halt group titles are unique");
+
+// F-35: nha cung cap qua tai la mot loai RIENG. Gop no vao SECURITY_HARD_STOP la
+// chi Duc di hoan tat CAPTCHA cho mot su co khong lien quan gi toi CAPTCHA.
+const quaTai = guide.HALT_GROUPS.find((group) => group.codes.includes("PROVIDER_OVERLOADED"));
+assert.ok(quaTai, "thieu nhom huong dan cho PROVIDER_OVERLOADED");
+assert.deepEqual([...quaTai.codes], ["PROVIDER_OVERLOADED"], "nhom nay chi duoc mang dung ma cua no");
+assert.match(quaTai.retry, /hard stop/i, "Duc chot 2026-09-07: dung han ca me, khong tu thu lai");
+assert.match(quaTai.action, /KHÔNG bị trừ credit/, "phai noi ro job dung o day khong ton credit — do la cau Duc can nhat");
+assert.match(quaTai.action, /KHÔNG tự thử lại|KHÔNG tự thử/, "phai noi ro may khong tu thu lai, va vi sao");
+assert.doesNotMatch(quaTai.meaning, /CAPTCHA.*yêu cầu|hết credit(?!.*KHÔNG)/, "khong duoc mo ta nham sang hai loai kia");
 
 const covered = [...guide.coveredFailureCodes()].sort();
 const declared = [...runner.FAILURE_TYPES].sort();

@@ -179,6 +179,17 @@
     return ADAPTER.securityBlockerPattern.test(text) ? "Flow security/interstitial blocker detected." : null;
   }
 
+  // NHA CUNG CAP TAM KHONG PHUC VU DUOC (F-35). Doc chu tren trang TRUOC khi go,
+  // y het F-15: khong bam gi, khong ton gi.
+  //
+  // Vi sao no dung thanh mot loai rieng chu khong gop vao bao mat: bang huong dan
+  // dung cho SECURITY_HARD_STOP bao Duc di hoan tat CAPTCHA. Gop vao do la chi
+  // Duc lam mot viec khong lien quan gi toi su co that.
+  function providerOverloadText() {
+    const text = String(document.body?.innerText || "");
+    return ADAPTER.matchesProviderOverload(text) ? "Flow provider overload notice detected." : null;
+  }
+
   // CHI DE CHAN DOAN — khong tham gia vao quyet dinh chan. Lop chan o tren giu
   // nguyen tung chu.
   //
@@ -437,6 +448,11 @@
       if (blocker) throw new Error(`HARD_STOP: ${blocker}`);
       const limitBlocker = generationLimitText();
       if (limitBlocker) throw new Error(`LIMIT_STOP: ${limitBlocker}`);
+      // F-35: credit da tieu roi, nen day khong con la chuyen tiet kiem tien —
+      // no la chuyen noi dung SU THAT thay vi ngoi het tran roi bao "khong thay
+      // dau ra", mot chan doan dung ma vo dung.
+      const overloadBlocker = providerOverloadText();
+      if (overloadBlocker) throw new Error(`OVERLOAD_STOP: ${overloadBlocker}`);
       const candidates = videoCandidates();
       const currentIds = [...new Set(candidates.map((candidate) => candidate.id))];
       const fresh = [...new Map(candidates.filter((candidate) => !known.has(candidate.id)).map((candidate) => [candidate.id, candidate])).values()];
@@ -1193,6 +1209,10 @@
       observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["disabled", "aria-disabled", "aria-busy"] });
       while (Date.now() < deadline) {
         if (STATE.abortRequested) throw new Error("Automation stopped by user.");
+        // F-35: Duc chot 2026-09-07 — nha cung cap qua tai thi DUNG HAN CA ME,
+        // khong tu thu lai. Kiem o day vi day la cho credit CHUA tieu.
+        const overloadBlocker = providerOverloadText();
+        if (overloadBlocker) throw new Error(`OVERLOAD_STOP: ${overloadBlocker}`);
         const composer = findComposer();
         const sendButton = findSendButton();
         const blocker = securityBlockerText();
@@ -1705,6 +1725,7 @@
           busy: STATE.busy,
           selectorCounts, buttons, images, videos, textboxes, customTags, fileInputs,
           securityBlockerMatch: securityBlockerMatch(),
+          providerOverloadBlocker: providerOverloadText(),
           truncated: false,
         };
         // Payload cap ~64KB: shrink the bulky arrays first rather than fail.

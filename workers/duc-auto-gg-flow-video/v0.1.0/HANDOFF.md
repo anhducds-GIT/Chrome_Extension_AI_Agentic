@@ -559,3 +559,28 @@ Suite **100/100**, đột biến **5/5**, gồm lượt phá "gỡ lớp quyết
 Đây là lần thứ ba trong ngày một lớp câm làm mất thời gian — nút zoom, rồi ô nhập prompt, giờ
 là lớp an toàn. Mẫu chung: bộ phận nào chỉ trả `true/false` về trạng thái trang thì sớm muộn
 cũng chặn ai đó mà không nói được vì sao.
+
+## 2026-09-07 — `claude-flow-active`: Flow quá tải — loại trạng thái thứ ba, và là loại tốn tiền
+
+Đức duyệt chạy và còn 50 credit. Trước khi bấm, Đức đọc trên trang: *"Flow is currently
+experiencing high demand, affecting video generation."* **Dừng lượt chạy.**
+
+Kiểm bằng máy: **không bộ dò nào của gói bắt được câu đó** — bảo mật không, hết hạn mức không.
+Nên runner sẽ coi trang bình thường, gõ, bấm Create (**credit tiêu ngay tại đó**), rồi chờ hết
+trần một video có thể không bao giờ tới. Hai loại chặn cũ đều dừng **trước** khi gõ nên hỏng
+thì 0 credit; loại này là loại duy nhất mà "cứ thử đi" tốn tiền thật.
+
+**Đức chốt:** dừng hẳn cả mẻ, không tự thử lại. Thêm quyền/luật halt là việc phải hỏi, nên tôi
+hỏi trước khi viết dòng nào.
+
+Loại mới `PROVIDER_OVERLOADED`, **không gộp** vào bảo mật — bảng hướng dẫn của mã đó bảo Đức đi
+làm CAPTCHA, gộp vào là chỉ Đức làm một việc không liên quan. Cổng đọc chữ ở hai chỗ, và trang
+hướng dẫn nói rõ job dừng ở đây **không bị trừ credit nào**.
+
+Suite **101/101**, đột biến **10/10** — nhưng hai lượt đầu **thoát**, và cả hai đều đáng:
+một lượt thay nhầm chữ trong chú thích chứ không phải trong biểu thức (đột biến không áp dụng
+được thì nó không chứng minh gì); và nhánh dự phòng của biểu thức **không ai canh**, vì mọi ca
+thử đều bị nhánh thứ nhất bắt trước. Đã thêm ca nằm ngoài tầm nhánh một rồi phá lại — đỏ.
+
+**Đóng phiên tại đây, trả khoá.** Job `Q001` vẫn nằm trong hàng đợi, **chưa bấm chạy**. Gói vẫn
+`building`: chưa job nào chạy trọn trên nhà mới, nên chưa khai được `last_verified`.

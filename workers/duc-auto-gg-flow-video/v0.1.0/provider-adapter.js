@@ -581,6 +581,25 @@
   // Page-wide interstitial blockers remain provider-independent safety gates.
   const securityBlockerPattern = /(captcha|verify you are human|unusual activity|suspicious activity|security check|xác minh.*con người|hoạt động bất thường)/i;
 
+  // NHA CUNG CAP TAM KHONG PHUC VU DUOC — loai trang thai thu BA, khac han hai
+  // loai tren, va la loai duy nhat ma "cu thu di" ton tien that.
+  //
+  // Do that 2026-09-07 tren flow.google.com, nguyen van:
+  //   "Flow is currently experiencing high demand, affecting video generation.
+  //    Requests may need to be retried at a later time."
+  // Kiem bang may cung ngay: securityBlockerPattern KHONG khop, va
+  // matchesGenerationLimit cung KHONG khop. Nen truoc ban nay runner coi trang
+  // hoan toan binh thuong: no go, no bam Create (CREDIT TIEU NGAY TAI DAY), roi
+  // cho het tran mot video co the khong bao gio toi.
+  //
+  // So khop theo CUM DAC TRUNG chu khong theo ca cau: bai hoc F-11 la khop chinh
+  // xac ca chuoi thi mot chu doi la truot sach. Nhung cung khong lay "high demand"
+  // tran — hai chu do qua thuong, va bao dong gia o day thi Duc mat mot me chay.
+  const providerOverloadPattern = /(experiencing high demand|high demand[^.]{0,40}affecting (?:video|image) generation)/i;
+  function matchesProviderOverload(text) {
+    const value = String(text || "");
+    return Boolean(value) && providerOverloadPattern.test(value);
+  }
   // Flow quota message text is UNMEASURED: there is no DOM evidence yet.
   // The generic visible-page scan is deliberately broad until F-09 captures
   // the real message; content.js excludes composer/input surfaces from it.
@@ -617,5 +636,7 @@
     videoIdFromSrc,
     securityBlockerPattern,
     matchesGenerationLimit,
+    providerOverloadPattern,
+    matchesProviderOverload,
   });
 })();

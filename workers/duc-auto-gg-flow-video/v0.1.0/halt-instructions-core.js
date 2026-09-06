@@ -24,6 +24,13 @@
       action: "Open the Flow tab yourself, complete the CAPTCHA/verification, and wait until the composer works normally again. Then Check Plan and Continue Run. Do not try to bypass it, and do not resend the job before the warning clears. (Mở đúng tab Flow, tự hoàn tất CAPTCHA/xác minh, chờ composer hoạt động bình thường trở lại. Sau đó Check Plan rồi Continue Run. Không cố bypass, không gửi lại job trước khi cảnh báo biến mất.)"
     }),
     Object.freeze({
+      title: "Provider overloaded",
+      codes: Object.freeze(["PROVIDER_OVERLOADED"]),
+      retry: "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",
+      meaning: "Flow says it is under heavy load and video generation may fail. This is NOT a credit problem and NOT a security check -- the service itself is temporarily unable to serve. (Flow báo đang quá tải và việc tạo video có thể hỏng. Đây KHÔNG phải hết credit, cũng KHÔNG phải kiểm tra bảo mật -- chính dịch vụ tạm thời không phục vụ được.)",
+      action: "Wait, then open the Flow tab yourself and check whether the notice is gone. When it clears, Check Plan and Continue Run. Nothing was charged for the job that stopped here: the notice is read before the one guarded Create click. The run does NOT retry on its own -- that is deliberate, because every retry would go through that click, and nobody has measured how long this state lasts. (Chờ, rồi tự mở tab Flow xem thông báo còn không. Hết thì Check Plan rồi Continue Run. Job dừng ở đây KHÔNG bị trừ credit nào: thông báo được đọc trước cú bấm Create duy nhất. Máy KHÔNG tự thử lại -- cố ý như vậy, vì mỗi lượt thử lại đều đi qua cú bấm đó, mà chưa ai đo được trạng thái này kéo dài bao lâu.)"
+    }),
+    Object.freeze({
       title: "Generation limit reached",
       codes: Object.freeze(["GENERATION_LIMIT_REACHED"]),
       retry: "No -- hard stop, whole batch stops (Không -- dừng cứng, dừng toàn bộ batch)",

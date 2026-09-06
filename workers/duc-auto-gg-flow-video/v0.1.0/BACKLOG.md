@@ -741,3 +741,17 @@ file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemi
   Bộ dò thì không phải chốt gì: nó chỉ đọc chữ trên trang trước khi gõ, y như F-15.
   **Đóng khi:** có bộ dò khớp câu trên (ghim cả hai chiều: khớp câu thật, **từ chối** câu gần
   giống), hành vi đúng theo Đức chốt, và một lượt live xác nhận nó dừng trước khi gõ, 0 credit.
+
+- **F-35 · XONG 2026-09-07** (Đức chốt: *"dừng hẳn cả mẻ, không tự thử lại"*).
+  Loại thất bại mới `PROVIDER_OVERLOADED`, **không gộp** vào `SECURITY_HARD_STOP` — bảng hướng
+  dẫn của mã đó bảo Đức đi hoàn tất CAPTCHA, gộp vào là chỉ Đức làm một việc không liên quan.
+  Cổng đọc chữ trên trang ở **hai chỗ**: trước khi gõ (nơi credit chưa tiêu) và trong vòng chờ
+  video (credit tiêu rồi, nên việc còn lại là nói đúng sự thật thay vì ngồi hết trần rồi báo
+  *"không thấy đầu ra"* — một chẩn đoán đúng mà vô dụng). `dom_probe` khai thêm trạng thái này.
+  Trang hướng dẫn cho Đức nói rõ **job dừng ở đây không bị trừ credit nào**.
+  Suite **101/101**, đột biến **10/10**. Hai lượt phá đầu **thoát** và cả hai đều chỉ ra lỗ thật:
+  ① một lượt thay nhầm chữ trong chú thích chứ không phải trong biểu thức — đột biến không áp
+  dụng được thì nó **không** là bằng chứng gì cả; ② nhánh dự phòng của biểu thức **không ai
+  canh**, vì mọi ca thử đều bị nhánh thứ nhất bắt trước. Đã thêm ca nằm ngoài tầm nhánh một,
+  phá lại thì đỏ. Một nhánh không ai canh chỉ lộ ra đúng hôm cần nó nhất.
+  **Còn nợ:** chưa có bằng chứng câu này bằng tiếng Việt — cố ý không đoán, cùng lý do F-32.

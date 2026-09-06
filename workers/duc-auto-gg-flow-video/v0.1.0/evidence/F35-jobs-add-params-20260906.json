@@ -1,0 +1,12 @@
+{
+  "jobs": [
+    {
+      "prompt": "FLOW06A: A paper windmill spinning slowly on a balcony railing at dusk, city lights switching on one by one behind it, static shot, no text.",
+      "reference_images": [],
+      "settings": {
+        "timeout_sec": 600,
+        "max_retries": 0
+      }
+    }
+  ]
+}

@@ -7,10 +7,14 @@
   const DEFAULTS = { timeout_sec: 600, delay_min_sec: 12, delay_max_sec: 24, safety_cooldown_sec: "6-9", max_retries: 2, continue_on_error: true, output_folder: "Duc Auto GG Flow", max_input_images: 5, rerun_done: false };
   const ATTEMPT_PHASES = Object.freeze(["PRE_SUBMIT", "SUBMITTED", "OUTPUT_DETECTED", "OUTPUT_SAVED", "CHAT_READY", "SUCCESS"]);
   const POST_SUBMIT_PHASES = new Set(ATTEMPT_PHASES.slice(1));
-  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
+  const FAILURE_TYPES = new Set(["TIMEOUT_PRE_SUBMIT", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "READINESS_TIMEOUT_AFTER_SAVE", "OUTPUT_AMBIGUOUS", "ATTACHMENT_FAILED", "DOWNLOAD_FAILED", "PERSISTENCE_VERIFICATION_FAILED", "VALIDATION_FAILED", "RECEIVER_LOST", "SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "PROVIDER_OVERLOADED", "USER_STOP", "ATTEMPT_ID_MISMATCH", "INTERRUPTED", "OTHER"]);
   // Video submission spends credits. Unknown or ambiguous post-submit output
   // is a human-decision state, never an automatic resubmission.
-  const HARD_STOP_FAILURE_TYPES = new Set(["SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "RECEIVER_LOST", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "OUTPUT_AMBIGUOUS"]);
+  // PROVIDER_OVERLOADED vao day theo dung chot cua Duc 2026-09-07: "dung han ca
+  // me, khong tu thu lai". Huong bao thu vi chua ai do duoc trang thai nay keo
+  // dai bao lau, ma moi luot thu lai deu di qua cu bam Create — noi sau thi de,
+  // thu hoi mot me da tieu credit thi khong.
+  const HARD_STOP_FAILURE_TYPES = new Set(["SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED", "RECEIVER_LOST", "TIMEOUT_AFTER_SUBMIT", "POST_SUBMIT_UNCERTAIN", "OUTPUT_AMBIGUOUS", "PROVIDER_OVERLOADED"]);
   const imageExtension = /\.(avif|gif|jpe?g|png|webp)$/i;
   const normalise = (value) => String(value || "").trim().toLowerCase();
   const basename = (value) => normalise(value).replace(/^.*[\\/]/, "").replace(imageExtension, "");
@@ -91,6 +95,10 @@
   function classifyFailure(error, phase = "PRE_SUBMIT") {
     const text = String(error?.message || error || "");
     if (/LIMIT_STOP|image generation limit/i.test(text)) return "GENERATION_LIMIT_REACHED";
+    // F-35 (Duc chot 2026-09-07): nha cung cap tam khong phuc vu duoc. Mot loai
+    // RIENG, khong gop vao SECURITY_HARD_STOP — bang huong dan dung cua ma do bao
+    // Duc di hoan tat CAPTCHA, gop vao la chi Duc lam mot viec khong lien quan.
+    if (/OVERLOAD_STOP|experiencing high demand/i.test(text)) return "PROVIDER_OVERLOADED";
     if (/HARD_STOP|captcha|unusual activity|security\/interstitial/i.test(text)) return "SECURITY_HARD_STOP";
     if (/stopped by user|automation stopped/i.test(text)) return "USER_STOP";
     if (/ambiguous|INPUT_IMAGE_FALSE_POSITIVE/i.test(text)) return "OUTPUT_AMBIGUOUS";
