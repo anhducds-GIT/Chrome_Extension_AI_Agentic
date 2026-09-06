@@ -1,5 +1,5 @@
 ---
-status: Accepted
+status: Superseded in part by ADR-0012
 adr: 0011
 date: 2026-09-06
 deciders: Đức
@@ -74,4 +74,4 @@ giữ chuỗi con trỏ đi được** — "0 sự cố" đọc y hệt "sạch 
 
 ## Trạng thái
 
-Accepted
+Superseded in part by ADR-0012 — phần ⑵ (xoay file theo tháng) bị thay bằng lọc theo nội dung. Ba phần còn lại giữ nguyên.
