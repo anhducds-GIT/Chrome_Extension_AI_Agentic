@@ -1059,7 +1059,65 @@ phải sự lơ là.
 Khuyến nghị: **(A) ngay bây giờ để mở đường, (D) là hướng đúng về sau.** (A) không mâu thuẫn (D)
 — làm (A) rồi làm (D) thì (A) thành nhánh dự phòng, không phải mã phải xoá.
 
-- **Chờ Đức chốt:** chọn (A), (B) hay (D) — đây là **đổi mặc định bootstrap** Đức chốt 25/08 nên AI không tự quyết. Chốt xong là vá được ngay, ba phép đo đã đủ. @Đức:chốt
+**ĐỨC ĐÃ CHỐT 2026-09-06 — phương án (D), kèm (A) làm miếng nhỏ.**
+Quyết định bất biến: [ADR-0049](docs/adr/0049-luu-ben-thu-muc-da-cap-quyen-thay-cho-mac-dinh-downloads.md).
+
+Tiêu chí Đức nêu, nguyên văn: *"phương án nào thì có thể làm cho AI prompt code làm việc smoothly
+và xuyên suốt với ChatGPT thì tôi sẽ làm phương án đó."* Đức uỷ quyền chọn theo đúng tiêu chí đó.
+
+Chiếu tiêu chí: **(A) một mình là trơn GIẢ** — nó mở cửa bootstrap nhưng AI vẫn ghi vào chỗ không
+đặt tên nổi, nên chỉ đẩy chỗ vấp ra xa: vấp lại ở ảnh `.png`, ở checkpoint `.xlsx`, ở lần xả sổ
+đầu tiên. **(B) trái tiêu chí** — AI mất quyền tự dựng phiên. **(C) bị loại.** **(D)** là đường
+duy nhất: đường ghi đặt tên đúng **đã có và đã đo là chạy**, cái thiếu chỉ là giữ được quyền qua
+các lần mở panel.
+
+**Trần cứng, ghi ra để không hứa quá:** không phải "một cú bấm mãi mãi". Sau khi khởi động lại
+máy, Chrome có thể xin xác nhận lại quyền (`requestPermission` cần cử chỉ người dùng). Chính xác
+là **một cú bấm mỗi lần khởi động lại máy** — trần của trình duyệt, không nới được bằng mã.
+
+**Việc, theo thứ tự, và ĐỪNG gộp:**
+
+- **(A) trước** — phiên bootstrap qua Bridge thôi mặc định về Downloads; chưa có thư mục thật thì
+  giữ sổ trong bộ nhớ, xả ra file ở lần ghi thật đầu tiên. Diff nhỏ, mở được vòng tròn kẹt.
+  **(A) KHÔNG được đọc thành đã sửa B-36** — nó chỉ mở đường.
+- **(D) sau, brief riêng, audit riêng** — lưu bền handle vào IndexedDB, `queryPermission` lúc mở
+  lại panel, và đường xin lại quyền khi mất. Cần phép ghim cho ca **handle còn đó mà quyền đã
+  mất** — đó là ca sẽ gặp thật sau mỗi lần khởi động lại máy, không phải ca lý thuyết.
+
+**ĐỨC NÊU THÊM 2026-09-06, và nó LÀM NHẸ hệ quả ④ của [ADR-0049](docs/adr/0049-luu-ben-thu-muc-da-cap-quyen-thay-cho-mac-dinh-downloads.md).**
+Không sửa ADR — ADR đã `Accepted` là bất biến (phép kiểm B12). Ghi ở đây, trỏ về đó.
+
+Đức nói: trong lúc AI vận hành, nội dung **đã đi vào và đi ra qua Claude Code rồi**, nên mấy file
+tên-GUID đó *"có thể quên ngay lập tức… giá trị của chúng là một lần và đã được full fill nhiệm vụ."*
+
+**Đúng, và nó đúng ở đâu:** hệ quả ④ của ADR-0049 lo rằng sổ audit của phiên bootstrap giữ trong
+bộ nhớ thì không sống qua việc đóng panel. Lý lẽ của Đức làm cái lo đó **nhỏ hẳn lại**, vì nội
+dung ở *đúng thời điểm đó* gần như vô giá trị: một phiên vừa được dựng, chưa job nào chạy. Nên
+(A) không phải là đánh đổi độ bền lấy sự tiện — nó là **thôi đánh nhau để đặt tên cho một file
+không đáng có tên**. Đó là lý do mạnh hơn lý do tôi viết trong ADR.
+
+**Nhưng KHÔNG suy rộng ra được, và đây là chỗ phải giữ:** lý lẽ đó **chỉ áp cho phần nội dung
+một-lần**, không áp cho:
+
+1. **Sổ audit và sổ cái của một run thật** — đó là lớp **quy trách nhiệm**, thứ chứng minh job
+   nào đã chạy, chạy mấy lần, kết quả ở đâu. Ngữ cảnh của một phiên Claude Code **chết theo
+   phiên**; còn GPT audit qua GitHub connector, tức đọc **repo**, không đọc ngữ cảnh CC. Nên
+   "CC đã thấy rồi" không thay thế được một bản ghi bền. Luật vàng 3 cấm nới lớp này.
+2. **Sản phẩm thật** — ảnh `.png` và workbook kết quả. Mất tên là Đức không dùng được, và đó
+   chính là thứ Đức đặt hàng.
+
+Nên phân biệt **ba loại**, đừng gộp: nội dung một-lần (quên được) · bản ghi trách nhiệm (phải
+bền, phải có tên) · sản phẩm (phải có tên). `B-36` chặn cả ba, và (D) vẫn cần đúng như đã chốt.
+
+**36 file GUID đang nằm trong `Downloads` của Đức: Đức xác nhận là rác, quên được.** AI không tự
+xoá file (luật gốc của Đức) — nên việc xoá vẫn thuộc `B-09`, chờ tay Đức. Ghi thêm ở đây rằng
+Đức **đã xác nhận chúng vô giá trị**, để phiên sau không phải hỏi lại câu đó.
+
+**Phép đo còn nợ, rẻ và 0 credit, gộp vào lượt sau:** đọc `expectedDownloadNames.size` trong
+console service worker ngay sau một lượt tải, để biết determiner **có nổ** (phiếu bị tiêu) hay
+**không nổ cho blob URL**. Không chặn việc — cả hai đường dẫn tới cùng một hành động. Nhưng nếu
+là "không nổ" thì **cả cơ chế determiner là mã chết** cho artifact, và một luật không bao giờ nổ
+vẫn tốn mọi phiên đọc nó về sau.
 
 ## Đã đóng
 
