@@ -55,6 +55,12 @@ Lệnh này **từ chối** nhận vùng đã có chủ khác, **từ chối** t
   lane khác, nên phiên tên khác thì không đỏ). Ngày
   06/09 ba lane cùng bị chặn đẩy vì lý do ngoài tầm với, cùng trả khoá, và cả ba để lại đúng
   một mục đỏ cho phiên đến sau dọn. Giữ một khoá là chuyện nhỏ; để lại commit vô chủ là chuyện lớn.
+- **Đừng nhả khoá HỘ lane khác vì đo thấy vùng "chưa bị chạm".** Repo chỉ thấy được thứ đã chạm
+  repo, mà một lane cẩn thận thì dựng thử ngoài repo rồi mới ghi vào — nên `0 commit, 0 file sửa`
+  **không** chứng minh lane đó đang rảnh. Ngày 06/09 phiên điều phối đo đúng như thế, nhả một
+  khoá, và lane kia phải hoàn nguyên việc đã xong. Ba đường hợp lệ để một khoá được trả: **chính
+  lane đó trả** · **lane đó báo đã xong** · **Đức chốt chuyển** (`--restamp --duc-duyet`). Thấy
+  khoá nằm lâu thì **hỏi**, đừng nhả.
 - Muốn giành vùng người khác đang giữ → **hỏi Đức**, không tự lấy. Đức chốt rồi thì ghi lại
   bằng `--restamp --as <phiên> --duc-duyet "<câu chốt>"`; không có câu chốt thì lệnh **từ chối**,
   kể cả khi bạn đã sửa tay xong (Đức chốt 04/09 — trước đó đây chỉ là lời khuyên, và một khoá

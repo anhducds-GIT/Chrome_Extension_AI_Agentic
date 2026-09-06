@@ -734,3 +734,49 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
   nó gần tay nhất là **đẻ ra bản trôi dạt thứ tư**.
 - Mục 1 của brief cũng được đóng dấu **XONG — ĐẠT** cho phép đo `isTrusted`, để lượt sau không
   chạy lại phép đo đã có kết quả.
+
+## N-13 · Nút CHAT ZOOM ở gói Flow Video hỏi câu hỏi của runner, nên tự xám trên trang Flow hợp lệ
+
+- **mở:** 2026-09-06 · lane `claude-gemini-hoan-thien`
+- **vùng:** `workers/duc-auto-gg-flow-video` (KHÔNG phải vùng tôi — chỉ ghi, không tự sửa)
+- **đóng khi:** cổng của nút phóng to trong `sidepanel.js` của gói Flow Video hỏi origin thay vì
+  hỏi đúng đường dẫn công cụ, có phép ghim canh đúng chỗ đó, và đột biến đổi nó về
+  `isProviderUrl` làm suite gói đó ĐỎ.
+- **ca thật:** Đức báo "chat zoom bị lỗi" 06/09. Lane `claude-flow-active` đã vá **phần chẩn
+  đoán** ở gói Flow (`7506264`) và ghi rõ *"đây mới là bản vá chẩn đoán, chưa phải bản vá gốc
+  bệnh"*. Tôi vá gói Gemini cùng ngày và **tìm ra gốc bệnh**: cổng nút phóng to gọi
+  `isProviderUrl` — câu hỏi của runner, *"một run có được phép gõ vào tab này không"* — nên nó
+  đòi đúng **mặt** trang. Nút phóng to chỉ gọi `chrome.tabs.setZoom`: không gửi gì, không gõ gì.
+- **vì sao gói Flow gần như chắc chắn dính y hệt:** `isChatGPTUrl` của nó cũng ủy quyền cho
+  `isProviderUrl`, mà predicate đó đòi `^https://labs.google/fx/<locale>tools/flow`. Miền
+  `labs.google` còn chứa nhiều trang khác; đứng ở bất kỳ trang nào trong đó là nút xám.
+- **số đo bên Gemini, để lượng hoá:** 6 trên 10 hình dạng địa chỉ Gemini thường gặp bị chặn —
+  trang gốc, một Gem, hội thoại chia sẻ, trang cài đặt. Nhánh ChatGPT hỏi câu origin và chạy tốt.
+- **cách sửa đã dùng ở Gemini, chép sang được:** thêm `isProviderOrigin` vào adapter (giữ danh
+  sách host ở MỘT chỗ, không gõ cứng regex vào `sidepanel.js`) rồi cho cổng nút phóng to hỏi câu
+  đó. Vẫn đòi `https` + đúng host, nên không mở đường zoom nhầm cửa sổ.
+
+## N-14 · Phép kiểm zoom di sản fork là đồ chết ở CẢ BA gói — đã đo, không phải nghi
+
+- **mở:** 2026-09-06 · lane `claude-gemini-hoan-thien`
+- **vùng:** `workers/duc-auto-chatgpt` + `workers/duc-auto-gg-flow-video` (gói Gemini đã xử lý)
+- **đóng khi:** không gói nào còn một phép kiểm zoom tự định nghĩa lại logic trong chính file
+  test; mỗi gói có một phép kiểm trích thân hàm thật từ `sidepanel.js` rồi chạy, và đột biến vào
+  `sidepanel.js` làm nó ĐỎ.
+- **ca thật:** `tests/chatgpt-zoom-control-smoke.mjs` **nằm trong gói Gemini** tự định nghĩa lại
+  `isChatGPTUrl` bằng regex của **ChatGPT**, rồi tự viết lại `simulateZoomSync` và
+  `simulateSetZoom` ngay trong file test. Nó khẳng định `https://chatgpt.com/` là địa chỉ hợp lệ —
+  trong gói Gemini. **Đo bằng máy:** chạy 9 đột biến vào `sidepanel.js` của gói Gemini, nó XANH
+  cả 9. Lane `claude-flow-active` tìm ra cùng chuyện ở gói Flow và mở `F-28` bên đó.
+- **đã làm ở gói Gemini:** thay bằng `tests/zoom-control-smoke.mjs` — trích thân hàm thật rồi
+  chạy trong sandbox; đột biến **11/11** bị bắt. File chết **chưa xoá**: xoá file cần Đức duyệt.
+- **một cái bẫy để phiên sau khỏi mất giờ:** sân khấu giả phải cho nút khởi đầu ở trạng thái
+  **TẮT**, đúng như `sidepanel.html` ship. Cho nó khởi đầu BẬT thì đột biến xoá lệnh bật nút vẫn
+  XANH — đã dính đúng lượt viết phép kiểm mới, phát hiện được nhờ chạy đột biến chứ không nhờ đọc.
+
+## N-10 · ĐÓNG 2026-09-06
+
+- Nửa sau đã xong: `AGENTS.md` mục 1 nay có một gạch đầu dòng **cấm nhả khoá hộ lane khác dựa
+  trên phép đo**, kèm ba đường hợp lệ để một khoá được trả và một câu kể ca thật 06/09. Đặt ngay
+  trước dòng *"muốn giành vùng người khác đang giữ → hỏi Đức"* vì hai luật đó cùng một họ.
+- Cả hai điều kiện trong `đóng khi:` đã đạt → mục này đóng.
