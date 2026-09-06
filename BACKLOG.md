@@ -798,3 +798,17 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
 - **cách rẻ nhất:** không phải sửa `claim.mjs`. Một dòng luật ở `AGENTS.md` mục 1 — *"đừng nối
   `claim.mjs` vào ống; muốn cắt bớt chữ thì chạy riêng rồi mới chạy lệnh sau"* — là đủ, vì chỗ
   hỏng nằm ở thói quen gõ lệnh chứ không nằm trong script.
+
+## N-13 · Scouter rải trên hai khoá đông nhất repo — đã có ADR, chờ lượt chuyển
+
+- **nhóm:** dephien
+- **đóng khi:** lệnh: node scripts/claim.mjs --list hiện `workers/duc-scouter`, và không còn file `observer-*` / `scouter-*` nào ở gốc repo, `scripts/` hay `tests/`
+- **mở:** 2026-09-06 · lane `claude-assistant`
+- **vùng:** `_root` + `_code` (lượt chuyển) — sau đó là `workers/duc-scouter`
+- **đo được 06/09:** sáu file extension ở gốc repo thuộc `_root`; ba phép dò trong `scripts/` và
+  ba phép ghim trong `tests/` thuộc `_code`. Nghĩa là **xây Scouter chiếm cả hai khoá đông nhất
+  cùng lúc** — `_root` (77% commit chạm) và `_code` (khoá của cổng kiểm, bộ sinh, và `bang-trang-thai/`).
+- **Đức chốt:** tách khoá như mọi extension khác → [ADR-0013](docs/adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md).
+  Chỗ đặt `workers/duc-scouter/v0.1.0/`, khoá `workers/duc-scouter`.
+- **cách làm đã viết sẵn:** mục 0 của `BRIEF-SCOUTER-SEED-01` — sáu bước, `git mv` chứ không
+  copy-rồi-xoá, và **trả `_root` + `_code` ngay sau khi chuyển** trước khi sang việc xây.

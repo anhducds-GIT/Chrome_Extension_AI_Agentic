@@ -14,6 +14,40 @@ nằm ở đâu).
 **Phạm vi đã chốt. Executor không mở rộng.** Thấy một mục `SEED v1` hay ho thì ghi vào
 `BACKLOG.md` gốc, đừng làm.
 
+## 0. Việc ⓪ — DỌN NHÀ TRƯỚC, rồi mới xây (Đức chốt 06/09)
+
+Quyết định ở [ADR-0013](../adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md). Đọc nó trước, nó
+liệt kê đủ bốn cái giá.
+
+Scouter hôm nay **rải trên hai khoá đông nhất repo**: sáu file extension ở gốc repo thuộc
+`_root`, còn ba phép dò và ba phép ghim thuộc `_code`. Xây theo hình dạng đó là chiếm cả hai
+khoá cùng lúc, và chặn cả việc hạ tầng lẫn bảng trạng thái.
+
+**Chuyển hết vào `workers/duc-scouter/v0.1.0/`**, theo sáu bước "Thêm Extension" của
+`PLATFORM.md` mục 6. Khoá mới sinh ra theo `claim_prefix`: **`workers/duc-scouter`**.
+
+Thứ tự bắt buộc, và nó là cả điểm của việc này:
+
+1. Nhận `_root` + `_code`. Chỉ cho bước chuyển, không cho việc xây.
+2. `git mv` — **không phải copy rồi xoá**. Copy-rồi-xoá làm git mất dấu đổi tên, và mọi
+   `git log --follow` sau đó vô dụng.
+3. Sửa `package.json` ở **cả hai chỗ** (`test` và `test:observer`), sửa **sáu tài liệu** ở mục 2
+   phần Hệ quả của ADR-0013. **Đừng đụng `HANDOFF.md` và hai `HANDOFF-ARCHIVE-01.md`** — chữ cũ
+   của phiên khác, và file lưu trữ là bất biến.
+4. Khai khoá mới vào `.agents/claims.json` **bằng lệnh `claim.mjs`, đừng sửa tay** (sửa tay làm
+   vỡ dấu niêm phong và đỏ cổng với MỌI phiên).
+5. Chạy `node scripts/build-dashboard.mjs` → gói mới phải hiện ra thành một Extension.
+6. Suite gốc XANH → commit → đẩy → **trả `_root` và `_code` ngay**, giữ lại
+   `workers/duc-scouter`.
+
+Chỉ sau khi trả xong hai khoá đó mới sang việc ②. Đây không phải hình thức: việc ② dài, và giữ
+`_root` suốt lượt đó là đúng cái bệnh `BRIEF-K2-KHOA-RANH-01` đang chữa.
+
+**Nghiệm thu việc ⓪:** `npm test` xanh · `node scripts/session-check.mjs` XANH TOÀN BỘ ·
+`node scripts/claim.mjs --list` hiện `workers/duc-scouter` · `git log --follow` trên một file vừa
+chuyển vẫn ra lịch sử cũ · không còn file `observer-*` hay `scouter-*` nào ở gốc repo, trong
+`scripts/` hay `tests/`.
+
 ## 1. Việc ① — PHÉP ĐO, và nó đi trước mọi thứ
 
 > **XONG 06/09 — ĐẠT. Đừng làm lại.** Công cụ: `node scripts/scouter-input-trust-probe.mjs`

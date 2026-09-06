@@ -111,5 +111,9 @@ Xanh khi cả sáu điều sau đúng:
 - Cấm nối chuỗi để dựng biểu thức `Runtime.evaluate`.
 - Cấm gỡ hay nới bất kỳ lớp bảo vệ read-only nào đang có để test xanh.
 - Cấm chạy live trên trang thật.
-- Cấm chuyển thư mục Observer trong lượt này — chỗ đặt chưa quyết, và chuyển chỗ giữa lúc đang
-  xây làm mọi diff sau đó không đọc được.
+- ~~Cấm chuyển thư mục Observer trong lượt này — chỗ đặt chưa quyết, và chuyển chỗ giữa lúc đang
+  xây làm mọi diff sau đó không đọc được.~~ **GỠ 06/09 — Đức đã quyết chỗ đặt**
+  ([ADR-0013](../adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md)): `workers/duc-scouter/v0.1.0/`,
+  khoá riêng `workers/duc-scouter`. Lý do của lệnh cấm cũ là *"chỗ đặt chưa quyết"*, nay đã quyết;
+  và vế *"đang xây"* cũng không còn — việc ② chưa có dòng code nào. Chuyển là **bước ⓪** của
+  `BRIEF-SCOUTER-SEED-01`.
