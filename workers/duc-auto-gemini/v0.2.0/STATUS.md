@@ -5,7 +5,7 @@ name: Duc Auto Gemini (Platform)
 lifecycle: active
 owner: claude
 priority_rank: 3
-next_step: "Gói này chỉ còn BA việc mở, và không việc nào AI làm tiếp được. Hai việc chờ Đức bấm — và gộp được vào MỘT lượt chạy: bấm dừng giữa chừng (sau lệnh dừng không prompt nào được bay đi nữa), rồi bấm sang tab khác giữa chừng (prompt phải vẫn vào tab đã khoá). Cả hai đã vá tĩnh và có phép kiểm tái hiện, chỉ thiếu một lượt nghiệm thu thật. Việc thứ ba (gộp 8 module trùng nhau sang thư mục chung) cần khoá gốc repo nên không thuộc gói này."
+next_step: "Gói này chỉ còn BA việc mở, và không việc nào AI làm tiếp được. Hai việc chờ Đức bấm — và gộp được vào MỘT lượt chạy: bấm dừng giữa chừng (sau lệnh dừng không prompt nào được bay đi nữa), rồi bấm sang tab khác giữa chừng (prompt phải vẫn vào tab đã khoá). Cả hai đã vá tĩnh và có phép kiểm tái hiện, chỉ thiếu một lượt nghiệm thu thật. Việc thứ ba (gộp BẢY module còn giống hệt nhau sang thư mục chung — đo lại 07/09, không phải tám: cái thứ tám đã trôi dạt 28/08) cần khoá gốc repo nên không thuộc gói này. Trôi dạt tiếp thì nay có chuông: phép ghim `tests/shared-modules-no-drift-static.mjs`."
 human_action: "Nạp lại tiện ích ở chrome://extensions, chạy MỘT lượt thật, rồi làm hai việc giữa chừng: bấm Dừng, và bấm sang tab khác. Một lượt đó nghiệm thu cả hai mục P1 còn lại của gói."
 version_source: workers/duc-auto-gemini/v0.2.0/manifest.json
 last_verified: 2026-08-28

@@ -590,4 +590,36 @@ một khẳng định cấm byte thô** trong mã nguồn.
 bấm** — bấm dừng giữa chừng, và bấm sang tab khác giữa chừng; gộp được vào một lượt. Việc thứ ba
 (gộp 8 module trùng nhau) cần khoá gốc repo. `STATUS.md` đã viết lại theo đúng thực trạng này.
 
+## 2026-09-07 — `claude-gemini-g08`: sổ nói "tám", máy đếm "bảy" — và cái thứ tám đã trôi dạt mười ngày trước
+
+**Việc đầu là ĐO LẠI, không phải sửa.** G-08 gắn nhãn **[ĐO]**, nhưng nhãn đó chỉ nói con số từng
+được máy đếm — nó không nói đếm hôm nào. Đếm lại md5 từng file `.js` giữa hai nhánh:
+**bảy** module còn giống hệt, không phải tám. 24 file trùng tên đã khác nội dung, 7 file chỉ một
+bên có.
+
+**Cái thứ tám là `xlsx-codec.js`, và nó trôi dạt ngày 28/08.** Truy bằng lịch sử khối máy sinh
+trong `FEATURE-PARITY.md`: bản 27/08 ghi 8 và kể tên nó, bản 28/08 ghi 7 và tên nó biến mất. Nay
+lệch 7 dòng (371 GPT / 364 Gemini). **Bộ sinh làm đúng việc của nó** — ghi lại sự trôi dạt, ngay
+hôm sau. Chỉ là không ai đọc. Một con số trong tài liệu không phải cái chuông.
+
+**Nên tôi dựng cái chuông:** `tests/shared-modules-no-drift-static.mjs`. Bảy module lệch một byte
+là ĐỎ ngay. **Không gộp file nào** — đó là quyết định kiến trúc,
+không phải một lượt dọn dẹp, và chép bản này đè bản kia chính là cách bản trôi dạt ra đời.
+
+**Ba chọn lựa đã cân, ghi lại để phiên sau khỏi cân lại:**
+① *Ghim mọi file trùng tên* — không. 24 file khác nhau **có chủ đích** (hai nhà cung cấp, hai
+DOM), ghim hết là đỏ vĩnh viễn, mà đỏ vĩnh viễn thì người ta tắt.
+② *So byte trần* — không. Máy đặt `core.autocrlf=true`, nên một lượt `git checkout` đổi kiểu
+xuống dòng là đỏ oan dù không dòng code nào đổi. So sau khi chuẩn hoá CRLF→LF, cùng cách bộ sinh đo.
+③ *Ghi test vào gói ChatGPT* — không, gói đó đang do `claude-gpt-don-no` giữ; phép ghim **chỉ đọc** sang đó.
+
+**Đếm mỏ neo, vì "không tìm thấy" phải ĐỎ chứ không được thành SKIP:** đếm số cặp mở được, thiếu
+một cặp là đỏ. Thư mục phiên bản nhánh kia đọc từ đĩa, không gõ cứng `v0.1.0`.
+
+**Thử phá 4/4 đúng như thiết kế:** đổi một byte ở hai file khác nhau → ĐỎ · xoá một file một bên →
+ĐỎ · **chuyển sang CRLF → vẫn XANH**, cố ý, đó là nhiễu chứ không phải trôi dạt.
+
+**Số.** Suite gói 95/95. Nửa *chống trôi dạt* của G-08 đã xong; nửa *gộp vào `workers/_shared/`*
+vẫn mở — cần khoá `_root` và cần Đức chốt.
+
 <!-- HANDOFF-THANG: 2026-09 -->

@@ -3,42 +3,42 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau. Gốc repo chia làm nhiều khoá (A2, 02/09): `_docs` cho docs/, `_code` cho scripts/ + tests/, `_template` cho template/, `_root` cho phần còn lại và các file ở tầng ngoài cùng. Chia vì 77% commit trong ngày 02/09 chạm gốc repo, và một khoá duy nhất chặn cả những việc không chồng nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-06T14:10",
-      "task": "Dua goi GG Flow Video tu building len active: F-08 truoc, roi mot luot kiem chung live",
-      "released_at": "2026-09-06T17:31",
+      "owner": "claude-flow-zoom",
+      "ai": "Claude",
+      "claimed_at": "2026-09-06T17:43",
+      "task": "N-13 nut CHAT ZOOM hoi origin + N-14 thay phep kiem zoom di san bang ban trich than ham that",
+      "released_at": null,
       "taken_from": "claude-f18-evidence",
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
     },
     "workers/duc-auto-gemini": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-06T21:24",
-      "task": "Dua goi Gemini ve khong con viec mo",
-      "released_at": "2026-09-06T17:18",
+      "owner": "claude-gemini-g08",
+      "ai": "Claude",
+      "claimed_at": "2026-09-06T17:44",
+      "task": "G-08 do lai tam module giong het giua hai nhanh, dung phep ghim chong troi dat",
+      "released_at": null,
       "taken_from": "claude-codex-ngan",
       "taken_by": "claude-gemini-hoan-thien",
       "taken_at": "2026-09-06T14:24",
       "duc_decision": "Duc chot 2026-09-06: Duc chot cho phien claude-gemini-hoan-thien lay khoa workers/duc-auto-gemini de dua goi Gemini ve khong con viec mo. Duc se phoi hop chay extension de nghiem thu live."
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-06T14:46",
-      "task": "B-36 phep do console + B-27 chot, dong no ky thuat goi GPT",
-      "released_at": "2026-09-06T17:20",
+      "owner": "claude-gpt-don-no",
+      "ai": "Claude",
+      "claimed_at": "2026-09-06T17:44",
+      "task": "N-14 phan goi GPT + B-20 B-24 code chet + B-25 cau loi tieng Viet + B-21 tai lieu ta sai duong cuu",
+      "released_at": null,
       "taken_from": "claude-codex-ngan",
       "taken_by": "claude-hang-doi",
       "taken_at": "2026-09-06T14:46",
       "duc_decision": "Duc chot 2026-09-06: Toi cho ban khoa luon. Duc giao truc tiep B-36 va B-27."
     },
     "_root": {
-      "owner": "claude-scouter-seed",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T22:20",
       "task": "ADR-0013 buoc 1: chuyen Scouter ra workers/duc-scouter + SCOUTER-SEED-01 viec 2",
-      "released_at": null,
+      "released_at": "2026-09-06T17:44",
       "taken_from": "claude-assistant",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
       "taken_by": "claude-scouter-seed",
@@ -46,11 +46,11 @@
       "duc_decision": "Duc chot 2026-09-06: toi chot cho phien claude-scouter-seed lay khoa _root de chuyen Scouter ra nha rieng theo ADR-0013 va xay khung seed v0.1."
     },
     "_docs": {
-      "owner": "claude-scouter-seed",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T16:02",
       "task": "ADR-0013: sua 6 tai lieu tro duong dan Scouter cu",
-      "released_at": null,
+      "released_at": "2026-09-06T17:44",
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-dieu-phoi",
@@ -70,12 +70,12 @@
       "duc_decision": "Duc chot 2026-09-06: cho claude-flow-active muon _code de va N-10; da kiem cay lam viec scripts/ tests/ sach"
     },
     "workers/duc-scouter": {
-      "owner": "claude-scouter-seed",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-06T22:20",
       "task": "Nha rieng cua Scouter theo ADR-0013 + khung seed v0.1",
-      "released_at": null
+      "released_at": "2026-09-06T17:44"
     }
   },
-  "_fingerprint": "9ae028ae141493d1"
+  "_fingerprint": "978afb7a55ac7e89"
 }

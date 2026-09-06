@@ -287,6 +287,8 @@ hai phía**. Gemini không làm thế thì cả hai đều không có đối tư
 
 ### G-08 · Tám module giống hệt từng byte giữa hai nhánh — **[ĐO]**
 
+> **SỬA 07/09 (`claude-gemini-g08`): con số đúng là BẢY, không phải tám.** Đo lại bằng máy — xem dòng đóng ở cuối sổ này.
+
 Danh sách hiện tại ở khối `AUTO:MODULES` trong `FEATURE-PARITY.md`. Dời chúng vào
 `workers/_shared/` thì **rủi ro bằng không** và hết cảnh sửa một chỗ quên chỗ kia.
 
@@ -349,3 +351,5 @@ Rủi ro thật: hai script cài vào **hai thư mục khác nhau**, nên chạy
 
 Còn một nhánh **chưa đo thật**, ghi lại để không tưởng là đã phủ: tắt host **quá 2 phút** thì
 thang bỏ cuộc và alarm 30 giây lo tiếp. Hiện chỉ ghim bằng test.
+
+- **G-08 · 07/09 (`claude-gemini-g08`) — nửa CHỐNG TRÔI DẠT đã xong, nửa GỘP VÀO `workers/_shared/` vẫn mở.** Đo lại bằng máy: chỉ còn **bảy** module giống hệt (không phải tám) — `xlsx-codec.js` đã **trôi dạt ngày 28/08** và mười ngày không ai hay, đúng cái bệnh mục này nói tới. Đã dựng phép ghim `tests/shared-modules-no-drift-static.mjs`: bảy module lệch một byte là ĐỎ ngay (đột biến 3/3 bị bắt; đổi kiểu xuống dòng CRLF/LF **cố ý** không bị coi là trôi dạt). Việc gộp vào `workers/_shared/` là quyết định kiến trúc chạm cả hai nhánh, cần khoá `_root` và cần Đức chốt — **chưa làm**.
