@@ -82,6 +82,8 @@ từ `0046`. **Đừng thêm dòng vào file này nữa** — nó là mục lụ
 | [0044](docs/adr/0044-quick-prompt-mac-dinh-la-reasoning-bang-text-khong.md) | Quick Prompt mặc định là "Reasoning bằng text", KHÔNG phải "Tạo ảnh" | Đức | 2026-08-28 |
 | [0045](docs/adr/0045-cau-tra-loi-text-dai-qua-32-767-ky-tu-thi-dung-va.md) | Câu trả lời text dài quá 32.767 ký tự thì DỪNG và KHÔNG lưu gì cả | Đức | 2026-08-28 |
 | [0046](docs/adr/0046-nhieu-phien-lam-viec-co-ten-trong-mot-profile-huong-a.md) | Nhiều phiên làm việc có tên trong một profile: hướng A, trần 3, cả hai chiều, ChatGPT trước | Đức | 2026-09-03 |
+| [0047](docs/adr/0047-sau-khi-da-gui-thi-khong-gui-lai-tru-khi-doi-soat-khang-dinh-duoc.md) | Sau khi đã gửi thì không gửi lại, trừ khi đối soát khẳng định được là lượt gửi đó không tạo ra kết quả nào | Đức | 2026-09-06 |
+| [0048](docs/adr/0048-run-trial-thieu-workbook-la-loi-thu-lai-duoc.md) | `run.trial` gọi khi chưa nạp workbook là lỗi agent ĐƯỢC thử lại | Đức | 2026-09-06 |
 
 ## 2026-09-02 — Port multi-profile Bridge (Đức chỉ thị trong chat)
 

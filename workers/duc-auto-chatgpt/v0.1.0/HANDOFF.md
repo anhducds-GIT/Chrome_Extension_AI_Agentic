@@ -325,3 +325,38 @@ của ba phiên khác, đúng luật ngoại lệ (a) ở mục 2 của `AGENTS.
   chuẩn hoá về LF thì hai băm bằng nhau (`16dbbe96…`). Chênh đó là bộ lọc của git, có từ trước, không phải chữ mất.
   Đã khai `HANDOFF-ARCHIVE-01.md` vào Bản đồ file của `AGENTS.md` (bất biến ⑷). `STATUS.md` `ref_handoff` **vẫn đúng** — file này vẫn là nơi giữ trạng thái.
   Không đụng `scripts/`, `docs/`, `HANDOFF.md` gốc repo; **không sinh lại artifact máy** (phiên điều phối sinh một lượt cho cả ba lane).
+- 2026-09-06 · `claude-retry-law` · **B-19 + B-11 đóng trọn — luật gửi lại sau khi đã gửi, và `run.trial` thiếu workbook**
+  (brief `docs/briefs/BRIEF-RETRY-LAW-01.md`; ADR-0047 + ADR-0048; Đức chốt cả hai ngày 06/09).
+  **ĐO TRƯỚC, VÁ SAU** — đúng thứ `B-19` để ngỏ: lớp đối soát trong run
+  (`reconcileSubmittedAttempt` → `DAC_RECONCILE_IMAGE_JOB` → `waitForCompletion` lần hai) có **đúng một**
+  phán quyết dương, *"có ảnh quy được về attempt này"*, và phán quyết đó rẽ thẳng sang `finishDetectedOutput()`
+  chứ không bao giờ tới đường thử lại. Ba lối ra còn lại đều là "không chứng minh được": transport chết
+  (đối soát **không chạy**) · lệch danh tính (đối soát **từ chối** chạy) · hết giờ không thấy gì.
+  `verifyExistingOutput()` — hàm DUY NHẤT phán được *"ảnh này thuộc lượt gửi kia"* — có **0** chỗ gọi trên
+  đường chạy tự động; nó chỉ chạy khi người vận hành bấm nút. **Số ca đối soát khẳng định được *"lượt gửi đó
+  không tạo ra kết quả nào"*: 0** → luật của Đức tự thu về "chặn hẳn sau khi đã gửi", đúng tình huống brief
+  đã ghi trước, nên không hỏi lại.
+  **Vá:** `submissionMayExist()` trong `runner-core.js` là chỗ DUY NHẤT trả lời *"lượt gửi này có thể đã bay
+  chưa"* — phase đã sau lúc gửi, **hoặc** cờ `submission_uncertain` còn bật. `canRetry()` từ chối khi nó đúng;
+  `resolveJobFailure()` cho những ca đó vào nhánh `markInterrupted` + dừng batch, **không** phải `FAILED`
+  (resume-core đọc `FAILED` là `SAFE_FAILED` = "bỏ qua an toàn", mà một prompt đã bay thì chưa an toàn để bỏ
+  qua; `INTERRUPTED` xếp job vào `AMBIGUOUS_SUBMITTED`, nơi có nút đối soát thủ công và nút tạo lại).
+  Vòng chạy **bật** cờ ở mốc đặt chỗ gửi — ghi TRƯỚC khi prompt có thể bay — và chỉ **tắt** khi receiver trả
+  lời ĐÚNG danh tính attempt này và nói nó chưa gửi. Đó là chỗ đảo mặc định: từ "không biết thì gửi lại" sang
+  "không biết thì DỪNG". `interruptedStatus()` đổi `&&` thành `||` cho khớp hành vi thật của funnel.
+  **Không đụng đường thử lại trước lúc gửi** (cổng sẵn sàng, đính ảnh tham chiếu hỏng) — đó là phần lớn lượt
+  thử lại thật, và chặn cả chỗ đó là làm hỏng tính năng chứ không phải siết an toàn.
+  **B-11:** một lời gọi `requireBridgeWorkbook()` (helper có sẵn) đặt ngay TRƯỚC `authoritativeValidate()`
+  trong `bridgeRunTrial()` → `WORKBOOK_NOT_LOADED` / `retryable: true` thay cho `INTERNAL_ERROR` giấu nguyên
+  nhân sau công tắc Chế độ phát triển. Đặt SAU `bindRunTab(...)` là **cố ý**: cửa lease của phiên-theo-tab
+  (ADR-0046) phải trả lời trước, và `bridge-workspace-lease-race-smoke.mjs` chứng minh chỗ đó.
+  **Kiểm hai chiều:** hai phép ghim mới ĐỎ trên code trước khi vá, XANH sau khi vá; **10/10 đột biến đỏ**
+  (gồm "tắt cờ vô điều kiện", "bật cờ sau lời gọi gửi", và "dời `requireBridgeWorkbook` xuống sau
+  `authoritativeValidate` — chữ còn nguyên, hành vi chết"). Vòng thử phá đầu để lọt 1 đột biến vì phép kiểm
+  đọc theo VÙNG chứ không theo DÒNG; đã siết lại rồi mới tính. Suite gói: **110/110 xanh**.
+  Ba phép ghim cũ phải sửa vì chúng ghi **luật đã bị đảo**, không phải vì chúng chặt: `p1-attempt-state-smoke`
+  (dòng *"Đức chose smooth-to-completion over avoiding a possible duplicate image"* — đúng quyết định bị đảo),
+  `v03-operational-core-smoke`, và một dòng grep tĩnh trong `generation-limit-smoke` (`if (hardStop) {` →
+  `if (hardStop || mayHaveSubmitted) {`; bất biến của nó không đổi).
+  **Không chạy live trên trang thật.** Cần Đức **reload extension** ở `chrome://extensions` trước lần chạy tới.
+  Không đụng `scripts/`, `docs/`, `HANDOFF.md` gốc repo; không sinh lại artifact máy.

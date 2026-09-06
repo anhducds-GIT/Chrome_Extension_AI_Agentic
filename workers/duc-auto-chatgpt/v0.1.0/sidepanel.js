@@ -803,6 +803,15 @@
       // run to the WORKSPACE's tab, not the front one; the one-run-at-a-time
       // lock above is untouched, so three workspaces still mean one run.
       await bindRunTab(await resolveWorkspaceTab(call));
+      // B-11 (Đức chốt 06/09: CHO thử lại). Không có dòng này thì
+      // authoritativeValidate() ngay dưới ném "Open an XLSX workbook first."
+      // dưới dạng Error TRẦN, bridgeError() giặt nó thành INTERNAL_ERROR /
+      // retryable:false, và nguyên nhân thật chỉ hiện trong details.debug sau
+      // công tắc Chế độ phát triển. Mà mở workbook là việc người làm trong năm
+      // giây, nên agent phải được thử lại — WORKBOOK_NOT_LOADED sẵn có
+      // retryable:true, đúng như run.status. Phải đứng TRƯỚC lời gọi ngay dưới:
+      // dời xuống sau là bản vá còn nguyên chữ mà chết hẳn về hành vi.
+      requireBridgeWorkbook();
       const effectiveOutput = await authoritativeValidate();
       state.runSelection = new Set(params.job_ids);
       const runQueue = window.DacRunnerCore.selectQueue(state.prepared.queue, "selected", state.runSelection);
@@ -5404,6 +5413,13 @@
   // moving to the next job instead of stopping the batch.
   async function resolveJobFailure(item, failureType, message, settings) {
     const hardStop = window.DacRunnerCore.HARD_STOP_FAILURE_TYPES.has(failureType);
+    // B-19 (Đức chốt 06/09): sau khi đã gửi -- hoặc khi không khẳng định được
+    // là CHƯA gửi -- không bao giờ gửi lại. DỪNG và hỏi người: INTERRUPTED để
+    // Resume Plan xếp job vào AMBIGUOUS_SUBMITTED, nơi người vận hành có nút
+    // đối soát thủ công và nút tạo lại. Đừng "cho hàng đợi chạy tiếp" bằng
+    // FAILED: resume-core đọc FAILED là SAFE_FAILED = bỏ qua an toàn, mà một
+    // prompt đã bay thì chưa an toàn để bỏ qua.
+    const mayHaveSubmitted = window.DacRunnerCore.submissionMayExist(item);
     if (!hardStop && window.DacRunnerCore.canRetry(item, failureType)) {
       item.retry_count += 1;
       update(item, { status: "PENDING", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message });
@@ -5414,7 +5430,7 @@
       state.retryResumeAt = null; renderRuntime();
       return { completed: false, halted: false };
     }
-    if (hardStop) {
+    if (hardStop || mayHaveSubmitted) {
       markInterrupted(item, failureType, message);
       return { completed: true, halted: true };
     }
@@ -5691,6 +5707,11 @@
         if (state.stopRequested) break;
         let completed = false;
         while (!completed && !state.stopRequested) {
+          // B-19: mỗi lượt thử là một lượt gửi mới, nên cờ "có thể đã gửi" của
+          // lượt trước không được nói thay cho lượt này. (Lượt trước mà đã bay
+          // thì đã DỪNG ở resolveJobFailure, không quay lại đây được -- dòng
+          // này là để một item dùng lại từ run TRƯỚC không mang cờ cũ sang.)
+          item.submission_uncertain = false;
           const gate = await gateNextJob(item);
           // B-22, nửa thứ hai của race: một lệnh dừng có thể rơi đúng vào khoảng await của
           // gateNextJob. Từ chỗ đó xuống tới lúc cấp attempt_id không có phép kiểm nào khác,
@@ -5714,6 +5735,10 @@
           item.attempt_id = nextAttemptId();
           const rerunReset = item.deliberate_rerun ? { result_file: "", result_download_id: "", output_saved_at: "", response_text: "", response_char_count: "", response_sha256: "", output_type: "" } : {};
           const reservation = window.DacRunnerCore.submissionReservation(item);
+          // B-19: mốc "từ đây trở đi prompt CÓ THỂ đã bay". Bật cùng chỗ với
+          // dấu rủi ro đã ghi vào sổ, tức TRƯỚC lời gọi gửi. Bật muộn hơn là
+          // để hở đúng cửa "send() ném, không ai biết prompt đã bay chưa".
+          item.submission_uncertain = true;
           update(item, { ...rerunReset, ...reservation, task_type: item.task_type, attempt_id: item.attempt_id, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "", ...(item.operator_recreate ? { recreate_attempt_id: item.attempt_id, recreate_status: "RUNNING" } : {}) });
           item.deliberate_rerun = false;
           audit(item.operator_recreate ? "RECREATE_ATTEMPT_STARTED" : "JOB_START", item, item.operator_recreate ? { message: "Starting one operator-approved deliberate recreate attempt." } : {}); setCurrent(item, item.runtime_stage, item.references.length ? `Preparing ${item.references.length} reference image(s).` : "Preparing prompt submission."); renderQueue(); nextTask(nextEligible(item.job.id), "Waiting for current job to finish."); progress(`Running ${item.job.id}…`);
@@ -5741,6 +5766,12 @@
             if (completed) break; else continue;
           }
           applyAttemptTelemetry(item, response.attempt);
+          // B-19: bằng chứng DUY NHẤT được nhận để tắt cờ "có thể đã gửi" là
+          // một câu trả lời đã qua cửa matchesAttempt (tức đúng attempt này)
+          // và nói rõ nó chưa gửi -- ví dụ đính ảnh tham chiếu hỏng. Lúc đó
+          // lượt thử lại tiếp theo là thử lại một prompt CHƯA bay, thứ luật
+          // của Đức không cấm. Không có câu trả lời khớp thì cờ ở nguyên.
+          if (!response.attempt.submittedAt && !window.DacRunnerCore.submissionMayExist({ phase: response.attempt.phase })) item.submission_uncertain = false;
           if (response?.attempt?.submittedAt || response?.attempt?.phase === "SUBMITTED" || response?.attempt?.phase === "OUTPUT_DETECTED") {
             item.phase = "SUBMITTED";
             if (item.references.length) audit("ATTACHMENTS_READY", item);

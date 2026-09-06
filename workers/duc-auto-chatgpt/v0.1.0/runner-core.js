@@ -154,16 +154,43 @@
     if (/receiver|composer|chatgpt tab|session integrity/i.test(text)) return "RECEIVER_LOST";
     return POST_SUBMIT_PHASES.has(phase) ? "POST_SUBMIT_UNCERTAIN" : "OTHER";
   }
+  // B-19 -- Đức chốt 2026-09-06, nguyên văn: "Sau khi đã gửi, chỉ được gửi lại
+  // khi đối soát khẳng định được là lượt gửi đó không tạo ra kết quả nào.
+  // Không khẳng định được thì DỪNG và hỏi người." Trước ngày đó mặc định
+  // ngược lại: không biết thì cứ gửi lại.
+  //
+  // ĐO 06/09 TRƯỚC KHI VÁ, vì luật xoay quanh đúng chữ "khẳng định được":
+  // lớp đối soát trong run (reconcileSubmittedAttempt -> DAC_RECONCILE_IMAGE_
+  // JOB -> waitForCompletion lần hai) có ĐÚNG MỘT phán quyết dương -- "có ảnh
+  // quy được về attempt này" -- và phán quyết đó rẽ thẳng sang
+  // finishDetectedOutput, không bao giờ tới đường thử lại. Ba lối ra còn lại
+  // (transport chết · lệch danh tính · hết giờ không thấy gì) đều là "KHÔNG
+  // chứng minh được", không cái nào là "khẳng định không có kết quả". Số ca nó
+  // khẳng định được: 0. verifyExistingOutput() -- hàm duy nhất trong gói phán
+  // được "ảnh này thuộc lượt gửi kia" -- có 0 chỗ gọi trên đường chạy tự động;
+  // nó chỉ chạy khi người vận hành bấm nút. Vì đo ra 0, luật của Đức thu về
+  // đúng "chặn hẳn sau khi đã gửi".
+  //
+  // `submission_uncertain` là cờ do vòng chạy đặt: BẬT ở mốc đặt chỗ gửi (ghi
+  // TRƯỚC khi prompt có thể bay), và chỉ TẮT khi receiver trả lời ĐÚNG danh
+  // tính attempt này và nói nó chưa gửi. Không nghe được câu trả lời khớp danh
+  // tính thì cờ ở nguyên -- đó chính là mặc định "không biết thì DỪNG".
+  function submissionMayExist(item = {}) {
+    return POST_SUBMIT_PHASES.has(item?.phase) || item?.submission_uncertain === true;
+  }
   function canRetry(item, failureType) {
-    return !HARD_STOP_FAILURE_TYPES.has(failureType) && failureType !== "USER_STOP" && item.retry_count < item.settings.max_retries;
+    return !HARD_STOP_FAILURE_TYPES.has(failureType) && failureType !== "USER_STOP" && !submissionMayExist(item) && item.retry_count < item.settings.max_retries;
   }
   function needsReconciliation(phase) { return POST_SUBMIT_PHASES.has(phase) && phase !== "SUCCESS"; }
   // INTERRUPTED means "genuinely unresolved -- a human must look before this
-  // run continues" and is reserved for the three hard stops. Everything else
-  // that exhausts its retries settles as FAILED: safe to skip, safe to leave
-  // behind on continuation, and still available for a deliberate Run Failed.
+  // run continues". Từ B-19 (Đức chốt 06/09) nó phủ HAI trường hợp, không còn
+  // một: mọi hard stop, VÀ mọi lượt đã gửi mà chưa giải quyết xong. Lý do vế
+  // thứ hai: FAILED được resume-core xếp là SAFE_FAILED = "bỏ qua an toàn" --
+  // mà một prompt đã bay thì chưa an toàn để bỏ qua. Chỉ lỗi TRƯỚC lúc gửi,
+  // hết lượt thử, mới settle FAILED: bỏ qua được, để lại được, và vẫn gọi lại
+  // được bằng Run Failed.
   function interruptedStatus(phase, failureType) {
-    return needsReconciliation(phase) && HARD_STOP_FAILURE_TYPES.has(failureType) ? "INTERRUPTED" : "FAILED";
+    return needsReconciliation(phase) || HARD_STOP_FAILURE_TYPES.has(failureType) ? "INTERRUPTED" : "FAILED";
   }
   function canStartNextJob(signal, queue = []) {
     return readinessState(signal) === "CHAT_READY" && !queue.some((item) => ["RUNNING", "RECONCILING"].includes(item.status));
@@ -283,6 +310,6 @@
     if (!signal?.composerFound) return "OUTPUT_READY";
     return "CHAT_READY";
   }
-  const api = { DEFAULTS, ATTEMPT_PHASES, TASK_TYPES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, basename, referenceTokens, taskType, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
+  const api = { DEFAULTS, ATTEMPT_PHASES, TASK_TYPES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, basename, referenceTokens, taskType, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, submissionMayExist, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
   (typeof window !== "undefined" ? window : globalThis).DacRunnerCore = api;
 })();

@@ -294,7 +294,34 @@ không tự làm. Ghi ở đây để không trôi.
 Trong lúc chưa có: khi báo cáo một job chết ở mốc ~90 giây qua `run.trial`, phải nói rõ đó là
 **giới hạn đường trial**, đừng để nó bị đọc thành lỗi tính năng.
 
-### B-19 · "Thử lại" KHÔNG chỉ giới hạn ở lỗi trước lúc gửi — cần Đức chốt luật
+### ~~B-19 · "Thử lại" KHÔNG chỉ giới hạn ở lỗi trước lúc gửi — cần Đức chốt luật~~ — **ĐÃ ĐÓNG 2026-09-06**
+
+> **Đức chốt 06/09, nguyên văn:** *"Sau khi đã gửi, chỉ được gửi lại khi đối soát khẳng định
+> được là lượt gửi đó không tạo ra kết quả nào. Không khẳng định được thì DỪNG và hỏi người."*
+> Đức bác cả hai phương án cũ trong sổ ("giữ nguyên" và "chặn hẳn") vì cả hai hành động mà
+> không cần biết sự thật.
+>
+> **ĐÃ ĐO trước khi vá** — chính chỗ mục này để ngỏ: lớp đối soát trong run
+> (`reconcileSubmittedAttempt` → `DAC_RECONCILE_IMAGE_JOB` → `waitForCompletion` lần hai) có
+> **đúng một** phán quyết dương, *"có ảnh quy được về attempt này"*, và phán quyết đó rẽ thẳng
+> sang `finishDetectedOutput()` chứ không bao giờ tới đường thử lại. Ba lối ra còn lại —
+> transport chết (đối soát **không chạy**) · lệch danh tính (đối soát **từ chối** chạy) · hết
+> giờ không thấy gì — đều là "không chứng minh được". `verifyExistingOutput()`, hàm duy nhất
+> phán được *"ảnh này thuộc lượt gửi kia"*, có **0** chỗ gọi trên đường chạy tự động; nó chỉ
+> chạy khi người vận hành bấm nút. **Số ca đối soát khẳng định được: 0** → luật của Đức thu
+> về đúng "chặn hẳn sau khi đã gửi", và brief đã ghi sẵn tình huống này nên không hỏi lại.
+>
+> **Đã làm:** `submissionMayExist()` trong `runner-core.js` là chỗ duy nhất trả lời *"lượt gửi
+> này có thể đã bay chưa"* (phase đã sau lúc gửi, **hoặc** cờ `submission_uncertain` còn bật);
+> `canRetry()` từ chối khi nó đúng; `resolveJobFailure()` cho những ca đó vào nhánh
+> `markInterrupted` + dừng batch, **không** phải `FAILED` (resume-core đọc `FAILED` là
+> `SAFE_FAILED` = bỏ qua an toàn). Vòng chạy **bật** cờ ở mốc đặt chỗ gửi — ghi trước khi
+> prompt có thể bay — và chỉ **tắt** khi receiver trả lời đúng danh tính attempt này và nói
+> nó chưa gửi: đó là chỗ đảo mặc định từ "không biết thì gửi lại" sang "không biết thì DỪNG".
+> Lỗi **trước** lúc gửi không đổi một chữ. Ghim:
+> `tests/post-submit-no-resend-smoke.mjs`, 8/8 đột biến đỏ. Quyết định: ADR-0047.
+
+### B-19 (nguyên văn mục cũ, giữ để tra bối cảnh)
 Phát hiện 2026-08-26 khi đối chiếu bảng tính năng trên dashboard với code.
 
 Dashboard (và cả cảm nhận chung) ghi: *"sau khi gửi thì không bao giờ tự gửi lại"*.
@@ -574,7 +601,17 @@ checkpoint riêng**, không phải phần phụ của một fix nhỏ — dựng
 Giá trị: đo được khoảng nghỉ + cooldown + phát hiện kết quả trên đường chạy thật mà không
 tốn lượt ChatGPT và không cần tay Đức.
 
-### B-11 · `run.trial` không có workbook bị bọc thành `INTERNAL_ERROR`
+### ~~B-11 · `run.trial` không có workbook bị bọc thành `INTERNAL_ERROR`~~ — **ĐÃ ĐÓNG 2026-09-06**
+
+> **Đức chốt 06/09: CHO thử lại.** `run.trial` gọi khi chưa nạp workbook thì agent được phép
+> thử lại (`retryable: true`, giống `run.status`) — vì đây là lỗi người sửa trong năm giây.
+> **Đã làm:** một lời gọi `requireBridgeWorkbook()` (helper có sẵn) đặt ngay TRƯỚC
+> `authoritativeValidate()` trong `bridgeRunTrial()`. `WORKBOOK_NOT_LOADED` vốn đã khai
+> `retryable: true`, nên không mã mới, không luật mới. Đặt SAU `bindRunTab(...)` là cố ý: cửa
+> lease của phiên-theo-tab phải trả lời trước. Câu chữ người vận hành thấy ở nút Chạy không
+> đổi. Ghim: `tests/run-trial-workbook-not-loaded-smoke.mjs`, 2/2 đột biến đỏ. ADR-0048.
+
+### B-11 (nguyên văn mục cũ, giữ để tra bối cảnh)
 Đo 2026-08-26: gọi `run.trial` khi chưa nạp workbook trả về `INTERNAL_ERROR` /
 `retryable: false`, còn nguyên nhân thật ("Open an XLSX workbook first" từ
 `authoritativeValidate`) chỉ hiện trong `details.debug` — mà debug chỉ bật khi Chế độ phát

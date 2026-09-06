@@ -138,7 +138,11 @@ assert.equal(runner.interruptedStatus("SUBMITTED", "GENERATION_LIMIT_REACHED"), 
 /* ---- sidepanel.js: the batch actually halts, nothing sent "on top" ------- */
 
 assert.match(sidepanel, /const hardStop = window\.DacRunnerCore\.HARD_STOP_FAILURE_TYPES\.has\(failureType\);/, "resolveJobFailure gates the whole retry/skip decision on the three hard stops");
-assert.match(sidepanel, /if \(hardStop\) \{/, "a generation-limit failure still routes to the markInterrupted+halt branch, same as a security hard stop");
+// B-19 (Đức chốt 06/09) thêm vế thứ hai vào chính nhánh này — mọi lượt ĐÃ GỬI
+// cũng halt. Bất biến của file này không đổi: một generation-limit vẫn đi vào
+// nhánh markInterrupted+halt. Ghim hành vi (không phải chữ) ở
+// tests/post-submit-no-resend-smoke.mjs, phần (d).
+assert.match(sidepanel, /if \(hardStop \|\| mayHaveSubmitted\) \{/, "a generation-limit failure still routes to the markInterrupted+halt branch, same as a security hard stop");
 assert.match(sidepanel, /markInterrupted\(item, failureType, message\);\s*return \{ completed: true, halted: true \};/, "a hard stop halts the whole run instead of retrying or skipping");
 assert.match(sidepanel, /if \(!ping\?\.composerFound \|\| ping\.generating \|\| ping\.busy \|\| ping\.securityBlocker \|\| ping\.generationLimitBlocker\) throw new Error\(ping\.generationLimitBlocker \? `LIMIT_STOP: \$\{ping\.generationLimitBlocker\}` : ping\.securityBlocker \? `HARD_STOP: \$\{ping\.securityBlocker\}` : "ChatGPT must be reachable, idle, and show its composer\."\);/, "a limit already in effect blocks authoritativeValidate() before a run even starts, not only mid-run");
 assert.match(sidepanel, /if \(ping\?\.generationLimitBlocker\) return \{ ok: false, code: "CHATGPT_GENERATION_LIMIT"/, "Check Plan surfaces the same block as its own finding, distinct from the security one");
