@@ -896,7 +896,54 @@ thuyết: fake `chrome.downloads` phát `onDeterminingFilename` với `byExtensi
 `item.url` lệch — cả hai phải làm test ĐỎ trước khi vá. Harness đã có sẵn:
 `bridge-workspace-lease-race-smoke.mjs` chạy `sidepanel.js` thật trong vm.
 
-- **Chờ Đức:** dán đoạn đo blob-trong-service-worker ở trên vào console rồi báo lại một dòng kết quả — không tạo job, không tốn credit. @Đức:bấm
+**PHÉP ĐO ĐÃ CHẠY 2026-09-06 — và nó BÁC hàng thứ nhất của bảng trên. Đọc trước khi vá.**
+
+Đức dán đoạn đo vào console service worker. Kết quả:
+
+```
+TypeError: URL.createObjectURL is not a function
+```
+
+**Không phải gõ sai, không phải phép đo hỏng.** Service worker của Manifest V3 **không có**
+`URL.createObjectURL`. Nên hàng thứ nhất của bảng ngay trên — *"truyền BYTES sang service
+worker thay vì chuỗi blob URL; tạo blob tại đó"* — **không thực hiện được**, không phải "chưa
+làm". Giữ nguyên bảng đó ở trên để thấy tôi đã dự đoán sai chỗ nào; đừng đi theo hàng một.
+
+Hệ quả: `sidepanel.js:5254` tạo blob ở side panel **vì đó là chỗ duy nhất tạo được**, không
+phải vì ai chọn sai chỗ. Kiến trúc hiện tại bị ép, không phải bị lơ là.
+
+**Một quan sát khớp với triệu chứng, chưa phải kết luận** — hai tên rác đã ghi nhận
+(`bd00d527-e43a-4806-bb1b-df5c59f6aa19` và `16f87e2b-3d75-4a5d-9cee-884f1c7b732a`) có **đúng
+hình dạng đoạn cuối của một blob URL**. Tức Chrome có thể đang lấy đoạn cuối địa chỉ blob làm
+tên file, thay vì dùng `filename`. [DÒ] — phải kiểm lại trước khi hành động.
+
+**Phép đo kế, thay cho phép đo đã bị bác — cùng đoạn mã, chạy ở CONSOLE CỦA SIDE PANEL.**
+Chỗ đó có DOM nên `URL.createObjectURL` tồn tại. Nó phân biệt được điều mà phép đo cũ định
+phân biệt, bằng một trục khác: **gọi `downloads.download` từ CHÍNH ngữ cảnh tạo ra blob**,
+thay vì chuyển chuỗi địa chỉ sang service worker rồi gọi ở đó.
+
+```js
+(async () => {
+  const want = "B36-probe-panel__audit.jsonl";
+  const url = URL.createObjectURL(new Blob(['{"probe":"B36-panel"}'], { type: "application/jsonl" }));
+  const id = await chrome.downloads.download({ url, filename: want, conflictAction: "overwrite", saveAs: false });
+  await new Promise((r) => setTimeout(r, 1500));
+  const item = (await chrome.downloads.search({ id }))[0];
+  console.log("KET QUA: xin =", want, "| Chrome dat =", item.filename);
+  return item.filename;
+})()
+```
+
+| Kết quả | Nghĩa | Việc phải làm |
+|---|---|---|
+| tên đúng như đã xin | `filename` **được tôn trọng khi gọi từ cùng ngữ cảnh** với blob. Đường chuyển-chuỗi-sang-service-worker mới là chỗ hỏng | **Vá được và hẹp:** gọi `downloads.download` ngay trong side panel, bỏ chặng chuyển tiếp `DAC_DOWNLOAD_ARTIFACT`. Cẩn thận: determiner vẫn phải trồng phiếu như cũ, và `waitForCompletedDownload` đang ở service worker |
+| lại là tên rác | `filename` bị bỏ qua cho **mọi** blob URL của extension, ở mọi ngữ cảnh → **thư mục Tải xuống không đặt tên nổi artifact của gói này** | Thôi phụ thuộc Chrome Downloads cho artifact. Đường File System Access đã đo là chạy (`checkpoint.verified: true`). Đổi mặc định bootstrap (`sidepanel.js:1629`) là đổi quyết định Đức chốt 25/08 → **hỏi Đức** |
+
+**Bài học đáng giữ hơn cả số đo:** phép đo cũ được thiết kế để phân biệt hai giả thuyết, và nó
+thất bại vì **một giả thuyết không tồn tại được**. Một bảng "nếu A thì…, nếu B thì…" không có
+hàng cho "A bất khả" thì nó sẽ đọc thành "phép đo hỏng" và người sau đi đo lại.
+
+- **Chờ Đức:** dán đoạn đo **ở console của SIDE PANEL** (đoạn ngay trên) rồi báo lại một dòng kết quả — không tạo job, không tốn credit. Đoạn đo cũ ở service worker **đã chạy và đã bị bác**, đừng chạy lại. @Đức:bấm
 
 ## Đã đóng
 
