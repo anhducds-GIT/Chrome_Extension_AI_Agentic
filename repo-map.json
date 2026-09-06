@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-06",
-  "generated_commit": "14c5401",
+  "generated_commit": "f7f4009",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -105,20 +105,20 @@
       "lifecycle": "building",
       "status_md": "workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "F-29 — đo địa chỉ file video trên trang mới TRƯỚC khi chạy job. Đây là chỗ duy nhất còn trỏ về địa chỉ cũ, và nó chạy SAU cú bấm nên nếu sai thì credit đã tiêu mà không thu được video. Đo bằng một lượt đọc trang, 0 credit, không bấm gì. Cần Đức nạp lại tiện ích rồi mở một dự án đã có video sẵn.",
-      "human_action": "Nạp lại tiện ích trong Chrome (bắt buộc, quyền vừa đổi), rồi mở một dự án Flow ĐÃ CÓ video sẵn trên flow.google.com và báo lại. Tôi đọc địa chỉ file video qua Bridge, 0 credit, không bấm gì. Xong bước đó mới tới lượt chạy thật một job.",
+      "next_step": "F-31 — ba phép đo còn lại, đều 0 credit và đều cần Đức mở đúng màn hình: ô nhập prompt lúc nó hiện, nhãn nút tạo trên cả hai ngôn ngữ, và cách trang hiển thị video vừa sinh. Đủ ba mới viết lại. TUYỆT ĐỐI chưa chạy job.",
+      "human_action": "Cần Đức chốt một câu trước: có làm lại phần biết-về-trang cho giao diện Flow mới không. Đây là việc lớn, không phải sửa nhỏ, nên tôi không tự quyết. Chốt rồi thì việc của Đức chỉ là mở đúng màn hình cho tôi đo, mỗi lượt vài giây và không tốn credit.",
       "priority_rank": 1,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Google đã dời Flow sang địa chỉ mới flow.google.com — phát hiện 06/09 từ chính nút CHAT ZOOM xám mà Đức báo. Trước khi vá, extension KHÔNG chạy được gì trên trang mới: Chrome không tiêm code vào trang, nên không gõ, không bấm, không đọc được. Đức duyệt thêm địa chỉ mới và giữ luôn địa chỉ cũ. Đã vá quyền, bộ khớp địa chỉ, và ba câu báo lỗi. Suite 98/98, thử phá 7/7 đều bị bắt. Còn đúng một chỗ chưa vá được vì thiếu bằng chứng: chỗ nhận diện file video (F-29)."
+      "open_item": "Đã vào được trang Flow mới sau khi vá quyền — nhưng đo thật cho thấy Google không chỉ đổi địa chỉ, họ dựng lại cả giao diện. Ô nhập prompt không tìm thấy, trang không còn thẻ video nào, nút tạo đổi tên. Phần đọc cấu hình thì vẫn chạy, và trang tự khai mỗi video tốn 6 credit. Đây là làm lại phần biết-về-trang chứ không phải sửa vài dòng."
     }
   ],
   "active_work": [
     {
       "id": "workers/duc-auto-gg-flow-video/v0.1.0",
       "unit": "workers/duc-auto-gg-flow-video/v0.1.0",
-      "title": "F-29 — đo địa chỉ file video trên trang mới TRƯỚC khi chạy job. Đây là chỗ duy nhất còn trỏ về địa chỉ cũ, và nó chạy SAU cú bấm nên nếu sai thì credit đã tiêu mà không thu được video. Đo bằng một lượt đọc trang, 0 credit, không bấm gì. Cần Đức nạp lại tiện ích rồi mở một dự án đã có video sẵn.",
+      "title": "F-31 — ba phép đo còn lại, đều 0 credit và đều cần Đức mở đúng màn hình: ô nhập prompt lúc nó hiện, nhãn nút tạo trên cả hai ngôn ngữ, và cách trang hiển thị video vừa sinh. Đủ ba mới viết lại. TUYỆT ĐỐI chưa chạy job.",
       "rank": 1,
       "claim": null
     },
