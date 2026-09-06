@@ -305,7 +305,7 @@ Repo dùng 3, tất cả nằm ở Observer gốc: `DOM` · `Runtime` · `Target
 | **`Fetch`** | Chặn và sửa request giữa đường. Mạnh, nhưng là **sửa hành vi trang**, không phải học trang. | `KHÔNG CẦN` — vượt xa việc "học một trang", và mở ra cửa hỏng khó lần |
 | **`Overlay`** | Vẽ khung highlight lên phần tử. Đẹp khi quay video minh hoạ, không giúp Scouter làm được việc gì mới. | `KHÔNG CẦN` |
 | **`CSS`** | Đọc kiểu dáng đã tính. Phần lớn việc cần thì `DOMSnapshot` đã trả kèm. | `KHÔNG CẦN` ở v0.1 |
-| **`Debugger`** · **`Profiler`** · **`HeapProfiler`** · **`Tracing`** · **`Performance`** | Đặt breakpoint, đo hiệu năng, dựng hồ sơ bộ nhớ. Dành cho người sửa lỗi trang, không dành cho tác nhân dùng trang. | `KHÔNG CẦN` |
+| **`Debugger`** · **`Profiler`** · **`Tracing`** · **`Performance`** | Đặt breakpoint, đo hiệu năng, dựng hồ sơ CPU. Dành cho người sửa lỗi trang, không dành cho tác nhân dùng trang. | `KHÔNG CẦN` |
 | **`WebAudio`** · **`WebAuthn`** · **`Audits`** · **`Inspector`** · **`IO`** · **`DOMDebugger`** | Không dính việc "học và điều khiển một trang". | `KHÔNG CẦN` |
 
 ## 4.3 API extension — 85 nhóm, repo dùng 7 — [TL] + [ĐO]
