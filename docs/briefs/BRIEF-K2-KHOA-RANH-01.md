@@ -18,7 +18,16 @@ lane dành **5–20 phút đầu để ĐỌC** — hiến pháp, brief, sổ n�
 khoá nằm rảnh **do cấu trúc bản giao việc**, không phải do lane lười.
 
 Ca đo được: lane `claude-codex-ngan` giữ **ba** khoá worker **14 phút** với **0 commit và 0 file
-bị sửa** trong cả ba vùng. Nó đang đọc, đúng như được bảo.
+bị sửa** trong cả ba vùng.
+
+> **Ca đó về sau hoá ra là DƯƠNG GIẢ, và nó là bằng chứng gốc của mục 2b bên dưới.** Lane ấy
+> không đọc — nó **đang làm thật**, dựng bản viết ngắn trong một thư mục tạm **ngoài repo** và
+> chỉ định ghi vào repo ở bước cuối. Phiên điều phối tin con số, nhả khoá hộ, và lane phải hoàn
+> nguyên phần đã xong. Xem `N-10` trong `BACKLOG.md`.
+>
+> Nguyên nhân ① vẫn có thật — mọi bản giao việc ngày 06/09 vẫn mở đầu bằng *"nhận khoá trước"*,
+> và đó vẫn là chỗ phải sửa. Nhưng **ca này không còn được dùng làm bằng chứng cho nó**, vì
+> chính nó chứng minh điều ngược lại.
 
 **② Giữ khoá khi bị chặn đẩy — cái này ĐÚNG, đừng sửa.** Luật *trả khoá sau khi đẩy* tồn tại vì
 trả sớm để lại commit vô chủ. Sáng 06/09 bốn lane cùng giữ khoá gần một tiếng vì đúng lý do đó.
@@ -37,24 +46,52 @@ của lane khác — không làm gì được, nhưng trên bảng trông y hệ
 
 Thêm một tín hiệu, và nó rẻ vì cả hai vế đều có sẵn:
 
-> **Khoá đang giữ mà VÙNG CHƯA BỊ CHẠM** — không commit nào chạm vùng đó kể từ lúc nhận khoá,
-> **và** không file nào trong vùng bị sửa trên đĩa.
+> **CHƯA THẤY DẤU VẾT TRONG REPO** — không commit nào chạm vùng đó kể từ lúc nhận khoá, **và**
+> không file nào trong vùng bị sửa trên đĩa.
 
-Hiện ở **ba chỗ**, vì ba người đọc khác nhau:
+**Tên của tín hiệu là phần của hợp đồng, không phải chuyện chữ nghĩa.** Bản đầu của brief này
+gọi nó là *"vùng chưa bị chạm"*, và người đọc — kể cả chính phiên điều phối viết ra nó — đọc
+thành *"lane đang rảnh"*. Hai câu đó khác nhau: repo **chỉ thấy được thứ đã chạm repo**, mà một
+lane cẩn thận thì dựng thử ở ngoài rồi mới ghi vào. Nên câu đúng là:
+
+> Tín hiệu này nói **repo chưa thấy gì**. Nó **không** nói lane đang rảnh, và nó **không bao giờ
+> đủ** để nhả khoá của lane khác.
+
+Hiện ở **ba chỗ**, vì ba người đọc khác nhau. **Cả ba chỗ phải dùng đúng chữ này** — không chỗ
+nào được rút gọn thành "rảnh", "nhàn", hay "không làm gì":
 
 | Chỗ | Ai đọc | Phải nói gì |
 |---|---|---|
-| `claim.mjs --list` | mọi AI | thêm một cột: đã chạm vùng chưa |
-| Khối "Đang làm gì" trên bảng | **Đức** | *"giữ 14 phút · CHƯA CHẠM VÙNG"* thay vì chỉ *"giữ 14 phút"* |
-| Cổng đóng phiên | lane đang chạy | **VÀNG**, kèm câu nhắc trả khoá nếu chưa cần |
+| `claim.mjs --list` | mọi AI | thêm một cột: **chưa thấy dấu vết trong repo** |
+| Khối "Đang làm gì" trên bảng | **Đức** | *"giữ 14 phút · repo chưa thấy dấu vết"* thay vì chỉ *"giữ 14 phút"* |
+| Cổng đóng phiên | lane đang chạy | **VÀNG**, kèm câu nhắc **tự** trả khoá nếu chưa cần |
+
+Câu nhắc ở cổng đóng phiên nói với **chính lane đang giữ khoá** — người duy nhất biết mình có
+đang làm hay không. Nó không nói với ai khác.
+
+### 2b. Cấm nhả khoá hộ lane khác dựa trên phép đo
+
+**Không lượt đo nào cho phép một phiên nhả khoá của phiên khác đang chạy.** Không phải "đo kỹ
+hơn thì được" — con số này **về nguyên tắc** không thấy được việc làm ngoài repo, nên đo thêm
+bao nhiêu cũng không đóng được lỗ đó.
+
+Ba đường hợp lệ để một khoá được trả, và chỉ ba:
+
+1. **Chính lane đó trả** — sau khi đẩy (luật mục 1).
+2. **Lane đó đã kết thúc** và Đức xác nhận, hoặc lane tự báo là đã xong.
+3. **Đức chốt chuyển khoá** — ghi bằng `--restamp --duc-duyet "<câu chốt>"`, đúng luật mục 1.
+
+Phiên điều phối thấy tín hiệu vàng thì **hỏi**, không nhả. Hỏi lane đó, hoặc hỏi Đức. Một câu
+hỏi tốn 30 giây; nhả nhầm khoá làm lane kia mất việc đã xong — ngày 06/09 đã trả giá đúng bằng
+cách đó.
 
 **VÀNG, không ĐỎ. Đây là ràng buộc, không phải gợi ý.** Có ca hợp lệ: một lane đọc kỹ 30 phút
 trước khi sửa một dòng là lane **tốt**. Chặn nó là dạy mọi lane **ghi bừa một byte để giữ khoá
 cho hợp lệ** — và lúc đó phép kiểm biến thành thứ ngược lại chính nó.
 
 **Cấm tự nhả khoá bằng máy.** Một lane sắp ghi mà bị rút khoá thì mất việc. Máy **hiện ra**,
-người điều phối **quyết** — cách đó đã chạy thật ngày 06/09: đo thấy 0 commit 0 sửa đổi, nhả một
-khoá, phiên đang chờ đi tiếp được ngay.
+người điều phối **hỏi** — không phải "người điều phối quyết". Bản đầu của brief này viết chữ
+"quyết", và đúng ngày hôm đó phiên điều phối đã quyết một lần, sai. Xem mục 2b.
 
 ## 3. Việc thứ hai — sửa luật nhận khoá
 
@@ -66,6 +103,8 @@ khoá, phiên đang chờ đi tiếp được ngay.
   ôm ba khoá worker cho một việc sửa văn bản và chặn một phiên khác — **lỗi ở bản giao việc, do
   phiên điều phối viết**.
 - Cần khoá thứ hai giữa lượt thì **nhận thêm lúc cần**, đừng gom sẵn từ đầu.
+- **Không nhả khoá hộ lane khác vì đo thấy vùng chưa bị chạm.** Ba đường hợp lệ ở mục 2b. Câu
+  này phải vào `AGENTS.md` mục 1 — đây là chỗ phiên điều phối đọc, và cũng là chỗ nó đã làm sai.
 
 Chữ này phải ngắn. `AGENTS.md` đang là 27 KB và mục 6 chiếm hơn nửa — thêm một đoạn dài vào đó
 là đổi một bệnh lấy một bệnh khác.
@@ -85,7 +124,9 @@ phải sửa". Ngày 06/09 chuyện này xảy ra với **sáu lane khác nhau**
 
 ## 5. Nghiệm thu
 
-1. Dựng ca thật: nhận một khoá, không sửa gì → cả ba chỗ ở mục 2 đều nói "chưa chạm vùng".
+1. Dựng ca thật: nhận một khoá, không sửa gì → cả ba chỗ ở mục 2 đều nói **"repo chưa thấy dấu
+   vết"**. Phép ghim kiểm **đúng chữ đó**: chỗ nào in ra "rảnh" · "nhàn" · "không làm gì" thì
+   phép ghim **ĐỎ**. Chữ là hợp đồng (mục 2), nên nó phải được ghim như hợp đồng.
 2. Sửa một file trong vùng đó → cả ba chỗ thôi báo.
 3. Bảng **suy hoàn toàn từ HEAD** cho phần commit, đọc đĩa cho phần sửa đổi — **cấm phụ thuộc
    đồng hồ hệ thống**. Hai lượt sinh trên cùng HEAD ra giống hệt từng byte.
@@ -107,5 +148,8 @@ lại artifact rồi commit trước khi đẩy · đẩy bằng `safe-push.mjs`
 
 - Cấm để phép kiểm này ĐỎ.
 - Cấm máy tự nhả khoá của lane khác.
+- **Cấm một phiên nhả khoá của phiên khác dựa trên phép đo** — ba đường hợp lệ ở mục 2b, không
+  có đường thứ tư.
+- **Cấm gọi tín hiệu này là "rảnh"** ở bất cứ đâu người hoặc AI đọc được.
 - Cấm đụng luật "trả khoá sau khi đẩy" (nguyên nhân ②).
 - Cấm viết một đoạn dài vào `AGENTS.md`.

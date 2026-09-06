@@ -716,3 +716,12 @@ tên khoá bị mất. Đo được bằng cách dựng lại đúng kịch bả
   hành chính rồi trả ngay.
 - **cách rẻ nhất:** đừng cấp số tập trung — chỉ cần **phát hiện trùng** rồi báo đỏ, người sửa mất
   30 giây. Cấp số tập trung là dựng một cái khoá thứ hai cho đúng thứ vừa được miễn khoá.
+
+## N-10 · tiến độ 2026-09-06 · nửa đầu XONG
+
+- `BRIEF-K2-KHOA-RANH-01` đã sửa: tín hiệu đổi tên thành **"chưa thấy dấu vết trong repo"**, thêm
+  mục 2b **cấm nhả khoá hộ lane khác dựa trên phép đo** (ba đường hợp lệ, không có đường thứ tư),
+  ca `claude-codex-ngan` được đánh dấu là **dương giả** thay vì bằng chứng, và nghiệm thu nay ghim
+  **đúng chữ** — chỗ nào in ra "rảnh" thì phép ghim ĐỎ.
+- **Còn nợ để đóng hẳn:** câu cấm đó phải vào `AGENTS.md` mục 1 (vùng `_root`), vì đó là chỗ phiên
+  điều phối đọc và cũng là chỗ nó đã làm sai. Việc này đi kèm lượt làm `K2` chứ không tách riêng.
