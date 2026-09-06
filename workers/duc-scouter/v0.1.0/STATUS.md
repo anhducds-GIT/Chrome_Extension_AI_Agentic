@@ -7,7 +7,7 @@ owner: claude
 priority_rank: 4
 next_step: "Cho Scouter bấm và gõ được như tay người: mở nhóm lệnh Input của giao thức debug, đúng thứ tự bảng kiểm kê đã xếp. Phép đo ① ngày 06/09 đã chứng minh đường đó dùng được."
 human_action: "Nạp lại extension trong Chrome từ đường dẫn MỚI workers/duc-scouter/v0.1.0 (bản cũ ở gốc repo không còn), rồi chọn tệp ghép cặp Bridge trong popup để mở cửa Bridge."
-version_source: manifest.json
+version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Khung nền đã xong và đo được: quan sát, báo cáo qua Bridge, tự nạp lại mình. Cửa Bridge đã nói chuyện trót lọt với máy chủ Bridge thật, không phải máy chủ giả."
 ref_readme: README.md
 ref_handoff: HANDOFF.md
