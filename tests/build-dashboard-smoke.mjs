@@ -789,7 +789,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 One Door");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "safe-push.mjs", "session-check.mjs", "build-dashboard.mjs", "feature-parity.mjs", "claim.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "safe-push.mjs", "session-check.mjs", "build-dashboard.mjs", "feature-parity.mjs", "claim.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     // `docs/` có steward RIÊNG. Đây là điều kiện của cả phép kiểm: nếu `docs/` vẫn về `_root`
@@ -889,7 +889,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 Bat Chan");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
@@ -1054,7 +1054,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 Suite Goi");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
@@ -1141,7 +1141,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 Git Loi");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
@@ -1230,7 +1230,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 Anh Chup");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
@@ -1326,7 +1326,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 Chua Co Remote");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
@@ -1430,7 +1430,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 Ghim Commit");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
@@ -1522,7 +1522,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 Test Cua Ai");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "check-bootstrap.mjs", "claim.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
@@ -1621,7 +1621,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 Tach Cong");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "build-dashboard.mjs", "session-check.mjs", "safe-push.mjs", "check-bootstrap.mjs", "claim.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "build-dashboard.mjs", "session-check.mjs", "safe-push.mjs", "check-bootstrap.mjs", "claim.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
@@ -1876,7 +1876,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2 Dau");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "session-check.mjs", "build-dashboard.mjs", "feature-parity.mjs", "claim.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "build-dashboard.mjs", "feature-parity.mjs", "claim.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     mkdirSync(join(tempRoot, ".agents"), { recursive: true });
@@ -2145,7 +2145,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("config", "user.name", "K2-1b Orphan");
     gitAt("config", "user.email", "k2@example.invalid");
     mkdirSync(join(tempRoot, "scripts"), { recursive: true });
-    for (const name of ["repo-structure.mjs", "session-check.mjs", "build-dashboard.mjs", "check-bootstrap.mjs", "claim.mjs"]) {
+    for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "build-dashboard.mjs", "check-bootstrap.mjs", "claim.mjs"]) {
       copyFileSync(new URL(`../scripts/${name}`, import.meta.url), join(tempRoot, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
