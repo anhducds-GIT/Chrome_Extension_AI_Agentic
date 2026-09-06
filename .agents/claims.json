@@ -39,23 +39,23 @@
       "claimed_at": "2026-09-06T22:20",
       "task": "ADR-0013 buoc 1: chuyen Scouter ra workers/duc-scouter + SCOUTER-SEED-01 viec 2",
       "released_at": null,
-      "taken_from": "claude-gemini-hoan-thien",
+      "taken_from": "claude-assistant",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
       "taken_by": "claude-scouter-seed",
       "taken_at": "2026-09-06T16:00",
       "duc_decision": "Duc chot 2026-09-06: toi chot cho phien claude-scouter-seed lay khoa _root de chuyen Scouter ra nha rieng theo ADR-0013 va xay khung seed v0.1."
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-06T15:56",
-      "task": "Ghi luat Duc chot 06/09: vai dieu phoi khong bao gio dung lai vi chuyen commit",
-      "released_at": "2026-09-06T15:58",
-      "taken_from": "claude-assistant",
+      "owner": "claude-scouter-seed",
+      "ai": "Claude",
+      "claimed_at": "2026-09-06T16:02",
+      "task": "ADR-0013: sua 6 tai lieu tro duong dan Scouter cu",
+      "released_at": null,
+      "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
-      "taken_by": "claude-scouter-seed",
-      "taken_at": "2026-09-06T16:00",
-      "duc_decision": "Duc chot 2026-09-06: toi chot cho phien claude-scouter-seed lay khoa _root de chuyen Scouter ra nha rieng theo ADR-0013 va xay khung seed v0.1."
+      "taken_by": "claude-dieu-phoi",
+      "taken_at": "2026-09-05T09:51",
+      "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     },
     "_code": {
       "owner": "claude-scouter-seed",
@@ -77,5 +77,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "ec4f320ceadb8385"
+  "_fingerprint": "0be0b2fea529d6a9"
 }
