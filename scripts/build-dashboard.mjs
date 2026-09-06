@@ -568,13 +568,31 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
   // Cùng luật như đơn vị trong `workers/`: STATUS sai thì KHÔNG tin `version_source` của nó
   // nữa, lùi về `manifest.json` ở gốc. Không có nhánh này thì ở chế độ tolerant một
   // `version_source` bịa ra sẽ làm cả lượt chạy chết — đúng thứ tolerant sinh ra để tránh.
-  const rootMeasured = measure("", rootErrors.length === 0 ? (rootFm?.version_source ?? units.marker) : units.marker);
+  // Gốc repo KHÔNG còn là một extension từ 2026-09-06: Scouter dọn vào `workers/` theo
+  // ADR-0013, và `manifest.json` ở tầng ngoài cùng biến mất cùng nó. Trước đó ở gốc LUÔN có
+  // một marker, nên chỗ này đọc thẳng nó và không ai nghĩ tới ngày nó không còn — lúc đó
+  // xảy ra thật thì `readJson` ném và CẢ bộ sinh chết, chứ không phải một ô trống.
+  //
+  // Hàng `_root` vẫn ở lại, cố ý: nó chở các cột KHÔNG phải version (STATUS, nợ, việc kế),
+  // và phép ghim E7 đòi hàng đó tồn tại. Chỉ phần ĐO version là bỏ trống.
+  const rootHasMarker = deps.fileExists(units.marker);
+  const rootMeasured = rootHasMarker
+    ? measure("", rootErrors.length === 0 ? (rootFm?.version_source ?? units.marker) : units.marker)
+    : { name: "KHÔNG PHẢI ĐƠN VỊ", version: "", bridgeMethods: 0, testFiles: 0 };
   rows.push({
     key: "_root",
     id: rootFm?.id ?? "_root",   // K1: bỏ tên riêng của repo Chrome ra khỏi bộ máy
     ...rootMeasured,
     lifecycle: rootFm?.lifecycle ?? "unclassified",
-    missingStatus: !rootFm,
+    // "Thiếu STATUS" chỉ có nghĩa với một thứ ĐÁNG có STATUS. Gốc repo không còn marker
+    // nghĩa là nó không còn là đơn vị nào cả (ADR-0013), và tính nó vào nợ là dựng ra một
+    // khoản nợ KHÔNG AI ĐÓNG ĐƯỢC: không có gì ở đó để khai. Còn marker mà thiếu STATUS thì
+    // vẫn là nợ thật, y như cũ.
+    missingStatus: rootHasMarker && !rootFm,
+    // Hàng vẫn nằm trong MÔ HÌNH (phép ghim E7 đòi thế), nhưng bảng người đọc thì bỏ nó đi:
+    // một dòng "KHÔNG PHẢI ĐƠN VỊ · đây là một việc đang mở" trên bảng của Đức là một câu
+    // nói dối về một việc không tồn tại.
+    notAUnit: !rootHasMarker,
     lastVerified: rootFm?.last_verified ?? "",
     lastVerifiedCommit: rootFm?.last_verified_commit ?? "",
     lastVerifiedHow: rootFm?.last_verified_how ?? "",
@@ -946,6 +964,7 @@ export function buildDashboard(model) {
   ];
 
   for (const row of [...model.rows].sort((a, b) => compareText(String(a.key ?? a.id), String(b.key ?? b.id)))) {
+    if (row.notAUnit) continue;
     const lifecycle = row.missingStatus ? `${row.lifecycle} · CHƯA KHAI STATUS` : row.lifecycle;
     const verified = row.lastVerified
       ? `${row.lastVerified} @ \`${String(row.lastVerifiedCommit || "không khai").slice(0, 7)}\`${row.lastVerifiedHow ? ` — ${row.lastVerifiedHow}` : ""}${row.evidenceRef ? ` (${link("bằng chứng", row.evidenceRef)})` : ""}`
@@ -1032,14 +1051,18 @@ function blockD(model) {
 export function buildLlmsTxt(model) {
   const units = model.gatewayLinks.filter((entry) => entry.unit);
   const core = model.gatewayLinks.filter((entry) => !entry.unit);
-  const alive = model.rows.filter((row) => !row.missingStatus).length;
+  /* Mẫu số phải là số ĐƠN VỊ, không phải số hàng: từ ADR-0013 gốc repo có thể không còn là
+   * đơn vị nào, và đếm nó vào mẫu số làm mọi tỉ lệ trên cổng vào lệch đi một, vĩnh viễn. */
+  const units_ = model.rows.filter((row) => !row.notAUnit);
+  const alive = units_.filter((row) => !row.missingStatus).length;
+  const tongDonVi = units_.length;
 
   const lines = [
     `# ${model.repo.name}`,
     "",
     model.repo.tagline
-      ? `> ${model.repo.tagline} ${alive}/${model.rows.length} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`
-      : `> ${alive}/${model.rows.length} trên ${model.rows.length} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`,
+      ? `> ${model.repo.tagline} ${alive}/${tongDonVi} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`
+      : `> ${alive}/${tongDonVi} trên ${tongDonVi} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`,
     "",
     `> **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng \`node scripts/build-dashboard.mjs\`.`,
     "",

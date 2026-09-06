@@ -3028,6 +3028,55 @@ function s2Repo({ claims = null, generatedOnDisk = true, dirty = [], statusOverr
   ok("SAU-VONG3 đơn vị gốc repo đọc được STATUS.md, khai xong là nợ giảm thật");
 }
 
+/* E7b. ADR-0013 — GỐC REPO CÓ THỂ KHÔNG CÒN LÀ ĐƠN VỊ NÀO CẢ.
+   Trước 06/09 ở gốc luôn có `manifest.json` (extension Observer), nên bộ sinh đọc thẳng nó và
+   không có nhánh nào cho ngày nó biến mất. Ngày Scouter dọn vào `workers/` thì nó biến mất
+   thật, và CẢ bộ sinh chết ở `git show HEAD:manifest.json` — không phải một ô trống, mà là
+   không sinh được DASHBOARD, llms.txt lẫn repo-map.
+
+   Ghim CẢ HAI CHIỀU: mất marker thì không được ném, không được đếm thành nợ, và không được
+   hiện trên bảng của Đức. Còn marker thì mọi thứ y như cũ — một bản "luôn bỏ qua gốc repo"
+   phải ĐỎ ở khối này. */
+{
+  const khongMarker = (deps) => ({
+    ...deps,
+    fileExists: (relPath) => (relPath === "manifest.json" ? false : deps.fileExists(relPath)),
+    isFile: (relPath) => (relPath === "manifest.json" ? false : deps.isFile(relPath)),
+    readFile: (relPath) => {
+      if (relPath === "manifest.json") throw new Error("fatal: path 'manifest.json' does not exist in 'HEAD'");
+      return deps.readFile(relPath);
+    }
+  });
+
+  const model = collectModel(khongMarker(s2Repo()));
+  const rootRow = model.rows.find((row) => row.key === "_root");
+  assert.ok(rootRow, "hàng gốc repo phải còn trong mô hình (E7 dựa vào nó)");
+  assert.equal(rootRow.notAUnit, true, "không có marker thì gốc repo không phải một đơn vị");
+  assert.equal(rootRow.missingStatus, false,
+    "đếm gốc-repo-không-phải-đơn-vị thành 'thiếu STATUS' là dựng ra một khoản nợ KHÔNG AI ĐÓNG ĐƯỢC");
+
+  const bang = buildDashboard(model);
+  assert.doesNotMatch(bang, /KHÔNG PHẢI ĐƠN VỊ/,
+    "bảng của Đức không được có dòng cho một thứ không phải đơn vị");
+
+  const cong = buildLlmsTxt(model);
+  const donVi = model.rows.filter((row) => !row.notAUnit).length;
+  /* Hai khuôn câu (có tagline / không), nên đọc MẪU SỐ ra rồi so, đừng ghim cả câu. */
+  const mauSo = Number((cong.match(/(\d+)\/(\d+)/) || [])[2]);
+  assert.equal(mauSo, donVi,
+    "mẫu số phải là số đơn vị thật, không phải số hàng — lệch một là lệch vĩnh viễn");
+
+  /* Chiều NGƯỢC: còn marker thì gốc repo vẫn là đơn vị, vẫn lên bảng, vẫn tính nợ như cũ. */
+  const coMarker = collectModel(s2Repo());
+  const rootCoMarker = coMarker.rows.find((row) => row.key === "_root");
+  assert.equal(Boolean(rootCoMarker.notAUnit), false, "còn marker mà lại coi gốc repo không phải đơn vị");
+  assert.equal(rootCoMarker.missingStatus, true, "còn marker mà thiếu STATUS thì vẫn là nợ thật");
+  assert.match(buildDashboard(coMarker), /Extension Observer V0/,
+    "còn marker thì hàng gốc repo vẫn phải lên bảng");
+
+  ok("ADR-0013 gốc repo mất marker: không ném, không đếm nợ ma, không lên bảng — còn marker thì y như cũ");
+}
+
 /* E8. VÒNG 3 MỤC 4.3 + 4.4 — `lifecycle: superseded` phải hợp lệ, và khai nó mà không
    nói thay bằng bản nào thì phải ĐỎ. BRIEF-S3 bảo khai `superseded`; nếu bộ kiểm từ
    chối thì đề bài và bộ kiểm đánh nhau. */
