@@ -980,3 +980,21 @@ thư mục mới"), không kèm đường dẫn; và `node tests/build-overview-
 - **cách chữa cháy hiện tại, và vì sao nó không đủ:** hỏi Đức từng lượt. Đức đã chốt một lượt
   ngày 06/09 (giữ lần ghi đó, vì gỡ ra thì chặn đẩy CẢ REPO kể cả lane đang giữ `_root`). Nhưng
   hỏi từng lượt là một cái thuế lặp lại, và nó rơi đúng vào Đức — người bận nhất.
+
+## N-12 · Cổng xuất bản chặn lane A vì artifact của lane B — và lane A không được phép sửa
+
+**Đo 06/09** (`claude-flow-active`). `safe-push` từ chối: `FEATURE-PARITY.md` lệch vì lane
+Gemini vừa đổi code, nên bảng đối chiếu tính năng cần sinh lại. Nhưng file đó **đòi khoá
+`_root`** (mục 2 của nó là chữ của người), mà `_root` đang có chủ khác. Lane đang muốn đẩy
+không sửa được, và cũng không nên giành.
+
+Khác N-10 ở chỗ: N-10 là artifact **tự** bất ổn, vá được. Đây là artifact ổn định nhưng nằm
+**sau một khoá mà lane bị chặn không giữ**. Không lane nào làm gì sai cả.
+
+Cách đi vòng hiện tại: giữ khoá, giữ commit, chờ lane kia đẩy — đúng luật mục 1, nhưng nó
+biến thứ tự đẩy thành thứ tự ngẫu nhiên giữa các lane.
+
+**Đóng khi:** hoặc bộ sinh đối chiếu tính năng vào danh sách miễn khoá như bốn artifact kia
+(cần tách mục 2 ra file riêng trước — mục 2 là lý do duy nhất nó chưa được miễn), hoặc
+`safe-push` phân biệt được "artifact lệch vì việc CỦA BẠN" với "lệch vì việc của lane khác"
+và chỉ chặn ở ca thứ nhất.
