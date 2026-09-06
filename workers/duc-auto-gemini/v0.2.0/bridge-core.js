@@ -481,6 +481,39 @@
   // Cung hinh dang tham so voi `queue.proposal.get`, va CO Y uy quyen thang thay vi
   // chep lai luat: hai lenh nhan cung mot thu (mot proposal_id), nen hai ban sao cua
   // cung mot luat la hai cho de lech nhau.
+  const PROFILE_SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+  function validateSetFolderHint(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["folder_hint", "profile_id"], "params");
+    // folder_hint la SIEU DU LIEU DE HIEN THI (mot duong dan tuyet doi de Duc
+    // copy), khong bao gio duoc dung de mo hay ghi bat cu thu gi - nen duong dan
+    // Windows tuyet doi chinh la thu no cho. Ky tu dieu khien van bi tu choi.
+    const hint = stringValue(params.folder_hint, "params.folder_hint", { min: 1, max: 500 });
+    if (/[\u0000-\u001f\u007f-\u009f]/.test(hint)) invalidParams("params.folder_hint", "must not contain control characters");
+    // Ky tu dinh huong / do rong bang khong lam mot duong dan HIEN RA khac han
+    // duong dan duoc COPY - mot duong lua nguoi tren dung cai truong ma ca cong
+    // viec cua no la de Duc copy-paste.
+    if (/[\u061c\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\u206a-\u206f\ufeff]/.test(hint)) invalidParams("params.folder_hint", "must not contain invisible or directional formatting characters");
+    // Hop dong khai duong dan TUYET DOI: co o dia (C:\\...) hoac UNC (\\\\srv\\...).
+    if (!/^(?:[A-Za-z]:\\|\\\\[^\\]+\\[^\\]+(?:\\|$))/.test(hint)) invalidParams("params.folder_hint", "expected an absolute Windows path (drive-rooted or UNC)");
+    const normalized = { folder_hint: hint };
+    if (params.profile_id !== undefined) {
+      const profileId = stringValue(params.profile_id, "params.profile_id", { min: 1, max: 64 });
+      if (!PROFILE_SLUG.test(profileId)) invalidParams("params.profile_id", "expected a lowercase slug such as pilot-09");
+      normalized.profile_id = profileId;
+    }
+    return normalized;
+  }
+
+  function validateProfilesRemove(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["profile_id"], "params");
+    const profileId = stringValue(params.profile_id, "params.profile_id", { min: 1, max: 64 });
+    if (!PROFILE_SLUG.test(profileId)) invalidParams("params.profile_id", "expected a lowercase slug such as pilot-09");
+    return { profile_id: profileId };
+  }
+
   const CHAT_READ_TOTAL_CHAR_BUDGET = 200000;
 
   function validateChatRead(raw) {
@@ -541,6 +574,8 @@
     registryEntry({ name: "system.ping", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Report fresh extension, executor, Gemini, and workbook availability.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "system.capabilities", context: "router", read_only: true, approval: "none", deadline_ms: 10000, description: "Describe the immutable v1 method and policy surface.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "chat.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read the newest conversation turns on the Gemini tab as text, oldest first inside the returned slice, each with role, id, character count and its own truncation flag. Strictly read-only: never clicks, types, or moves focus, and allowed while a run is live because reading disturbs nothing. Refused with WRONG_SURFACE off a conversation page, since reading a launcher page returns zero turns and looks exactly like an empty conversation. Reports NO_TURNS_MATCHED plus the data-attribute names actually present when the turn selector has rotted, so a dead selector is rebuilt from evidence instead of guessed. The two caps are also bounded together: limit x max_chars_per_turn may not exceed 200000 characters, because either cap at its own maximum is fine and the product would overflow the 1 MB envelope.", params_schema: { limit: "integer:1..50", max_chars_per_turn: "integer:200..40000", _total: "limit * max_chars_per_turn <= 200000" }, params_validator: validateChatRead }),
+    registryEntry({ name: "output.set_folder_hint", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Record the absolute folder path the agent is targeting, as operator-copyable display metadata on a stored output profile. Metadata only: writes no workbook data, no checkpoint, and never opens or binds a folder.", params_schema: { folder_hint: "string:1..500", profile_id: "slug?" }, params_validator: validateSetFolderHint }),
+    registryEntry({ name: "profiles.remove", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 10000, description: "Remove one stale extension-local output-profile metadata record. Never deletes a file or folder on disk.", params_schema: { profile_id: "slug" }, params_validator: validateProfilesRemove }),
     registryEntry({ name: "queue.list", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a page of active logical queue jobs.", params_schema: { cursor: "string|null", limit: "integer:1..100", statuses: "code[]", include_prompt: "boolean" }, params_validator: validateQueueList }),
     registryEntry({ name: "run.status", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read current run state without changing it.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "ledger.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read a sanitized page of physical XLSX ledger rows.", params_schema: { cursor: "string|null", limit: "integer:1..100", include_prompt: "boolean", include_removed: "boolean" }, params_validator: validateLedgerRead }),

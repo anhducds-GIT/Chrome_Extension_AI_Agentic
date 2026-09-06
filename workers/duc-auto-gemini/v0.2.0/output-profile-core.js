@@ -23,12 +23,67 @@
     }); } finally { database.close(); }
   }
   async function get(id) { return transaction("readonly", (store) => store.get(profileId(id))); }
+  async function list() { return transaction("readonly", (store) => store.getAll()); }
   async function bind(id, handle, displayName = "") {
     if (!handle || typeof handle.queryPermission !== "function") throw new Error("The selected folder handle cannot be persisted by this browser.");
     const profile = { profile_id: profileId(id), display_name: String(displayName || id), directory_handle: handle, last_known_handle_name: String(handle.name || "Authorized folder") };
     try { await transaction("readwrite", (store) => store.put(profile)); }
     catch (error) { throw new Error(`OUTPUT_PROFILE_PERSISTENCE_UNSUPPORTED: Folder-handle persistence failed (${error?.message || String(error)}). This browser cannot reuse this profile after reload.`); }
     return profile;
+  }
+  // The File System Access API never reveals a handle's absolute path, but
+  // workbooks carry output_folder_hint (authored full path). Persisting that
+  // hint onto the profile lets the UI hand the operator a copyable real path
+  // even after a reload, when no workbook is open yet.
+  async function setHint(id, hint) {
+    const clean = String(hint || "").trim();
+    if (!clean) return null;
+    const key = profileId(id);
+    // Read-modify-write inside ONE readwrite transaction -- a get()+put() pair
+    // in separate transactions could resurrect a stale handle over a
+    // concurrent bind() (Codex cross-audit finding, ported with the code).
+    const database = await open();
+    try {
+      return await new Promise((resolve, reject) => {
+        const txn = database.transaction(STORE, "readwrite");
+        const store = txn.objectStore(STORE);
+        const read = store.get(key);
+        let updated = null;
+        read.onsuccess = () => {
+          const profile = read.result;
+          if (!profile) return;
+          profile.last_known_folder_hint = clean;
+          updated = profile;
+          store.put(profile);
+        };
+        txn.oncomplete = () => resolve(updated);
+        txn.onerror = () => reject(txn.error || new Error("Output-profile storage failed."));
+        txn.onabort = () => reject(txn.error || new Error("Output-profile storage aborted."));
+      });
+    } finally { database.close(); }
+  }
+  // Xoá BẢN GHI SIÊU DỮ LIỆU trong extension, KHÔNG động tới một file hay thư
+  // mục nào trên đĩa. Trả về `true`/`false` theo việc bản ghi có tồn tại hay
+  // không, chứ KHÔNG ném khi vắng mặt: người gọi cần phân biệt "vừa xoá" với
+  // "vốn không có", và một cú xoá lặp lại phải vô hại.
+  async function remove(id) {
+    const key = profileId(id);
+    const database = await open();
+    try {
+      return await new Promise((resolve, reject) => {
+        const txn = database.transaction(STORE, "readwrite");
+        const store = txn.objectStore(STORE);
+        const read = store.get(key);
+        let existed = false;
+        read.onsuccess = () => {
+          existed = Boolean(read.result);
+          if (existed) store.delete(key);
+        };
+        txn.oncomplete = () => resolve(existed);
+        txn.onerror = () => reject(txn.error || new Error("Output-profile storage failed."));
+        txn.onabort = () => reject(txn.error || new Error("Output-profile storage aborted."));
+      });
+    } finally { database.close(); }
   }
   async function resolve(id) {
     const profile = await get(id);
@@ -40,5 +95,5 @@
       return { state: "unavailable", profile, permission };
     } catch (error) { return { state: "unavailable", profile, permission: "error", error: error?.message || String(error) }; }
   }
-  (typeof window !== "undefined" ? window : globalThis).DacOutputProfiles = { DB_NAME, STORE, profileId, get, bind, resolve };
+  (typeof window !== "undefined" ? window : globalThis).DacOutputProfiles = { DB_NAME, STORE, profileId, get, list, bind, setHint, remove, resolve };
 })();

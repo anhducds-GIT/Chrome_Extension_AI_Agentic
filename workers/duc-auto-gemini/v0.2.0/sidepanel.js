@@ -938,6 +938,8 @@
     handlers: {
       "system.ping": withBridgeErrors(bridgeSystemPing),
       "chat.read": withBridgeErrors(bridgeChatRead),
+      "output.set_folder_hint": withBridgeErrors(bridgeOutputSetFolderHint),
+      "profiles.remove": withBridgeErrors(bridgeProfilesRemove),
       "queue.list": withBridgeErrors(bridgeQueueList),
       "run.status": withBridgeErrors(async () => bridgeRunStatus()),
       "ledger.read": withBridgeErrors(bridgeLedgerRead),
@@ -961,6 +963,45 @@
   // Read-only remote eyes for the AI operator: forwards DAC_DOM_PROBE to the
   // provider tab's content script and returns its snapshot verbatim. Never
   // clicks, types, or changes focus — the content side enforces that too.
+  async function bridgeOutputSetFolderHint(params) {
+    let profileId = params.profile_id || "";
+    const stored = await window.DacOutputProfiles.list();
+    if (!profileId) {
+      if (!stored.length) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", "NO_OUTPUT_PROFILE: Chưa có output profile nào được bind — Đức phải chọn folder một lần trước.");
+      // KHÔNG tự chọn khi có nhiều hồ sơ. Đoán ở đây là ghi ghi chú đường dẫn của
+      // pilot này lên pilot khác, và Đức sẽ copy nhầm đường dẫn mà không biết.
+      if (stored.length > 1) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `PROFILE_AMBIGUOUS: Nhiều profile đang tồn tại (${stored.map((profile) => profile.profile_id).join(", ")}) — truyền profile_id.`);
+      profileId = stored[0].profile_id;
+    }
+    const updated = await window.DacOutputProfiles.setHint(profileId, params.folder_hint);
+    if (!updated) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `PROFILE_NOT_FOUND: Không có profile '${profileId}'.`);
+    // Phiên vừa nạp lại thì chưa có workbook nào, nên `state.outputSettings` chưa
+    // tồn tại. Dựng một bản rỗng thay vì bỏ qua: không có nó thì ghi chú vào được
+    // kho mà thẻ đầu ra trên màn hình vẫn trống, và Đức không thấy gì đổi.
+    if (!state.outputSettings) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, "phien-chua-mo-workbook.xlsx");
+    state.outputSettings.folderHint = params.folder_hint;
+    renderOutput();
+    return { profile_id: profileId, folder_hint: params.folder_hint };
+  }
+
+  async function bridgeProfilesRemove(params) {
+    // Từ chối gỡ hồ sơ ĐANG được dùng trong phiên này. Gỡ nó đi là để lại
+    // `state.outputSettings` trỏ vào một hồ sơ không còn tồn tại, và lỗi sẽ nổ ở
+    // giữa một lượt ghi ảnh chứ không nổ ở đây.
+    const imageProfileId = String(state.outputSettings?.image?.profileId || "");
+    const resultProfileId = String(state.outputSettings?.result?.profileId || "");
+    if (params.profile_id === imageProfileId || params.profile_id === resultProfileId) {
+      throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `PROFILE_IN_USE: Profile '${params.profile_id}' đang được bind cho image/result trong phiên hiện tại.`);
+    }
+    const removed = await window.DacOutputProfiles.remove(params.profile_id);
+    if (!removed) throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `PROFILE_NOT_FOUND: Không có profile '${params.profile_id}'.`);
+    renderOutput();
+    // Khai TƯỜNG MINH phạm vi: đây là xoá siêu dữ liệu trong extension, KHÔNG
+    // xoá file hay thư mục nào trên đĩa. Một lệnh tên là "remove" mà không nói rõ
+    // nó xoá cái gì là chỗ dễ hiểu nhầm nhất trong cả bộ lệnh.
+    return { profile_id: params.profile_id, removed: true, scope: "extension_local_metadata_only", disk_files_deleted: false };
+  }
+
   async function bridgeChatRead(params) {
     // CỐ Ý KHÔNG lấy khoá mutation (khác `chat.reload`): đọc không click, không gõ, không đổi
     // focus, nên nó không thể giết một attempt đang bay. Chặn nó trong lúc run chạy sẽ bỏ mất
@@ -5163,6 +5204,8 @@
     dispatch: bridgeExecutorDispatch,
     handlers: Object.freeze({
       "chat.read": bridgeChatRead,
+      "output.set_folder_hint": bridgeOutputSetFolderHint,
+      "profiles.remove": bridgeProfilesRemove,
       "queue.list": bridgeQueueList,
       "run.status": bridgeRunStatus,
       "ledger.read": bridgeLedgerRead,

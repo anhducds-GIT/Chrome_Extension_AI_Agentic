@@ -35,6 +35,19 @@ assert.throws(() => commandRequest("chat-read", { "max-chars": "50000" }), /200 
 assert.throws(() => commandRequest("chat-read", { "max-chars": "199" }), /200 to 40000/);
 assert.throws(() => commandRequest("chat-read", { limit: "60" }), /1 to 50/);
 
+assert.deepEqual(commandRequest("set-folder-hint", { hint: "C:\\Anh\\Pilot-09" }), {
+  method: "output.set_folder_hint",
+  params: { folder_hint: "C:\\Anh\\Pilot-09" }
+});
+// `--profile` KHONG duoc co mac dinh: khi chi co MOT ho so thi extension tu suy
+// ra, khi co NHIEU thi no TU CHOI va ke ten chung. Mot mac dinh o CLI se go bo
+// dung cai cho tu choi do, va ghi duong dan cua pilot nay len pilot khac.
+assert.equal(Object.hasOwn(commandRequest("set-folder-hint", { hint: "C:\\Anh" }).params, "profile_id"), false, "khong tu dien profile_id");
+assert.deepEqual(commandRequest("set-folder-hint", { hint: "C:\\Anh", profile: "pilot-09" }).params.profile_id, "pilot-09");
+assert.throws(() => commandRequest("set-folder-hint", {}), /set-folder-hint requires --hint/);
+assert.deepEqual(commandRequest("profiles-remove", { profile: "pilot-cu" }), { method: "profiles.remove", params: { profile_id: "pilot-cu" } });
+assert.throws(() => commandRequest("profiles-remove", {}), /profiles-remove requires --profile/);
+
 assert.deepEqual(commandRequest("proposal-withdraw", { "proposal-id": "prop-9" }), {
   method: "queue.proposal.withdraw",
   params: { proposal_id: "prop-9" }

@@ -105,7 +105,7 @@ Dòng đầu từng ghi *"Duc Auto ChatGPT V0.3"*. Phiên `claude-dashboard` s�
 ghi `# Duc Auto Gemini (Platform) V0.2.0`. **Mục này để ngỏ thêm ba ngày sau khi đã xong** —
 rà lại 06/09 mới phát hiện, nên bộ đếm nợ tính dư một việc suốt thời gian đó.
 
-### G-04 · Nợ method Bridge — **[ĐO]** · 2/4 XONG 06/09
+### ~~G-04~~ · Nợ method Bridge — **ĐÓNG 06/09** ✅ · 4/4
 
 **Sổ này ghi BA, máy đếm được BỐN.** Khối `AUTO:DEBT-METHODS` của `FEATURE-PARITY.md` liệt kê
 `chat.read` · `output.set_folder_hint` · `profiles.remove` · `queue.proposal.withdraw`. Chữ ở đây
@@ -116,11 +116,24 @@ lạc hậu, con số máy sinh mới đúng — đúng như dòng cảnh báo n
   `tests/proposal-withdraw-behavior.mjs`, thử phá 10/10 bị bắt.
 - ~~`chat.read`~~ **XONG 06/09** ✅ — `readTurns()` port sang, giữ nguyên tính thuần nên phép ghim
   chạy chính đoạn mã thật. Ghim: `tests/chat-read-turns.mjs`, thử phá 9/9 bị bắt.
-- **`output.set_folder_hint` và `profiles.remove` CÒN MỞ, và chúng KHÔNG phải port.** Gói này
-  thiếu hẳn lớp dưới: `DacOutputProfiles` chỉ xuất `{ DB_NAME, STORE, profileId, get, bind,
-  resolve }` — **không có `list`, không có `setHint`, không có `remove`**. Và `sidepanel.js`
-  không có `probeBridgePersistence` lẫn `renderBridgeAttention`, hai thứ cả hai lệnh đều gọi.
-  Tức đây là dựng một phần hệ hồ sơ đầu ra, không phải chép hai hàm.
+- ~~`output.set_folder_hint`~~ và ~~`profiles.remove`~~ **XONG 06/09** ✅ — và đúng như dự đoán,
+  **không phải port**: phải thêm `list` / `setHint` / `remove` vào `output-profile-core.js` trước.
+  Hai hàm sau dùng **đọc-sửa-ghi trong MỘT giao dịch** — một phát hiện audit của Codex, port kèm
+  code: tách ra hai giao dịch riêng có thể **hồi sinh một handle cũ** đè lên một `bind()` chạy
+  song song.
+
+  **Hai thứ nhánh kia gọi mà gói này không có** (`probeBridgePersistence`, `renderBridgeAttention`)
+  là cửa vào **cả một hệ giao diện "việc cần chú ý"**. Cố ý **không** port: hai lệnh này chỉ cần
+  vẽ lại thẻ đầu ra, và gói này đã có `renderOutput()` làm đúng việc đó. Kéo cả một hệ giao diện
+  sang chỉ để gọi một dòng là vượt xa đề bài.
+
+  Ba chốt từ chối được ghim riêng: **nhiều hồ sơ mà không nêu tên thì TỪ CHỐI** (đoán ở đây là ghi
+  đường dẫn của pilot này lên pilot khác) · **hồ sơ đang dùng thì không gỡ được** (gỡ là để lỗi nổ
+  giữa một lượt ghi ảnh) · **câu trả lời tự khai `disk_files_deleted: false`** — một lệnh tên
+  `remove` phải nói rõ nó xoá cái gì. Ghim: `tests/output-profile-commands.mjs`, đột biến 10/10.
+
+  Cả hai đã có mặt trong CLI (`set-folder-hint`, `profiles-remove`) — thêm lệnh mà không gọi được
+  từ dòng lệnh thì bằng không. Đột biến CLI 5/5.
 - **đóng khi:** `node scripts/feature-parity.mjs --check` xanh và khối `AUTO:DEBT-METHODS` khai
   "Gemini nợ GPT (0)".
 
@@ -177,7 +190,10 @@ lại, nên chỗ đóng dấu danh tính lượt lên ứng viên là có sẵn
   `turn_id` thật, có phép ghim canh **cả hai chiều** (nhận đúng một lượt · từ chối ảnh rải
   trên hai lượt khác nhau), và đột biến xoá `sameTurn` làm suite ĐỎ.
 
-### G-06 · Bốn hành vi nhánh ChatGPT có mà Gemini chưa — **ĐÃ KIỂM LẠI 2026-09-06, còn 1**
+### ~~G-06~~ · Bốn hành vi nhánh ChatGPT có mà Gemini chưa — **ĐÓNG 06/09** ✅
+
+> Hai cái thiếu thật đã port · một cái **báo oan** (gói này đã có sẵn) · một cái **ngủ đông** theo
+> chốt của Đức và nằm ở `G-05`. Không còn gạch đầu dòng nào chờ việc.
 
 Cả bốn từng là **[DÒ]** — chỉ dò theo tên hằng số/thuộc tính. Đã mở code đọc từng cái
 (`claude-gemini-hoan-thien`), nên bốn dòng dưới nay là **[ĐỌC]**. **Một trong bốn là báo oan** —
@@ -281,7 +297,7 @@ này, ghi lại để không quên.
 
 ## P2 — Dọn nợ fork (mở 03/09)
 
-### G-12 · Soát nốt README từ mục cài đặt trở xuống — **[ĐỌC]**
+### ~~G-12~~ · Soát nốt README từ mục cài đặt trở xuống — **ĐÓNG 06/09** ✅
 
 `README.md` và `AGENTS.md` của gói này là **bản chép nguyên từ gói ChatGPT** lúc fork. Ngày 03/09 phiên `claude-dashboard` sửa những chỗ **có bằng chứng**: tên lấy từ `manifest.json`, tên miền từ mã nguồn, tên script từ `scripts/`, đường dẫn pairing đọc thẳng trong script cài.
 

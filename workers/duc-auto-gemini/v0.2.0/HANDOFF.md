@@ -561,4 +561,33 @@ vô chủ.
 **Còn mở.** Hai lệnh Bridge cuối (dựng một phần hệ hồ sơ đầu ra, không phải chép code) là việc
 lớn nhất tôi tự làm được. Hai mục P1 chờ **một buổi Đức ngồi bấm**. Một mục cần khoá gốc repo.
 
+## 2026-09-06 — `claude-gemini-hoan-thien`: hai lệnh Bridge cuối; gói còn ba việc, không việc nào AI làm được
+
+`G-04` đóng — 4/4 lệnh. Và đúng như dự đoán, hai lệnh cuối **không phải port**: phải thêm `list` /
+`setHint` / `remove` vào lớp kho hồ sơ đầu ra trước. Hai hàm sau dùng **đọc-sửa-ghi trong MỘT giao
+dịch** — một phát hiện audit của Codex, port kèm code: tách ra hai giao dịch riêng có thể **hồi
+sinh một handle cũ** đè lên một `bind()` chạy song song.
+
+**Cố ý KHÔNG port hai thứ nhánh kia gọi:** chúng là cửa vào **cả một hệ giao diện "việc cần chú
+ý"** mà gói này không có. Hai lệnh này chỉ cần vẽ lại thẻ đầu ra, và `renderOutput()` đã làm đúng
+việc đó.
+
+**Ba chốt TỪ CHỐI được ghim riêng, vì cả ba đều dính tới nơi ảnh của Đức được ghi xuống:** nhiều
+hồ sơ mà không nêu tên thì **từ chối và kể tên chúng ra** (đoán ở đây là ghi đường dẫn của pilot
+này lên pilot khác, và cái sai chỉ lộ ra lúc ảnh đã nằm sai chỗ) · **hồ sơ đang dùng thì không gỡ
+được** (gỡ là để lỗi nổ giữa một lượt ghi ảnh chứ không nổ ở đây) · câu trả lời **tự khai**
+`disk_files_deleted: false` — một lệnh tên `remove` phải nói rõ nó xoá cái gì.
+
+**Tôi tự dính đúng cái mình đang đi cấm.** Bộ kiểm đường dẫn chặn ký tự vô hình và ký tự đổi
+chiều — thứ làm một đường dẫn **hiện ra khác hẳn đường dẫn được copy**. Nhưng heredoc nuốt mất dấu
+thoát, nên các mã `\uXXXX` **biến thành ký tự thô nằm trong mã nguồn**: git sẽ coi file là nhị
+phân và giấu diff vĩnh viễn. Rồi tôi lặp lại y hệt trong chính file test. Đã sửa cả hai và **ghim
+một khẳng định cấm byte thô** trong mã nguồn.
+
+**Số.** Nợ gói **5 → 3**. Suite 94/94. Thử phá lượt này **15/15** bị bắt (10 lệnh + 5 CLI).
+
+**Còn lại đúng ba việc, và không việc nào tôi làm tiếp được.** Hai mục P1 chờ **một lượt Đức ngồi
+bấm** — bấm dừng giữa chừng, và bấm sang tab khác giữa chừng; gộp được vào một lượt. Việc thứ ba
+(gộp 8 module trùng nhau) cần khoá gốc repo. `STATUS.md` đã viết lại theo đúng thực trạng này.
+
 <!-- HANDOFF-THANG: 2026-09 -->

@@ -5,14 +5,14 @@ name: Duc Auto Gemini (Platform)
 lifecycle: active
 owner: claude
 priority_rank: 3
-next_step: "Sau khi Đức nạp lại tiện ích và đặt tên hồ sơ: gọi `bridge.sessions` để đối chiếu đủ tên. Nợ cũ còn lại: đo thật nhánh tắt máy chủ quá hai phút."
-human_action: "Mở từng hồ sơ Chrome đang dùng cho Gemini, nạp lại tiện ích, rồi điền tên hồ sơ vào ô trong bảng điều khiển."
+next_step: "Gói này chỉ còn BA việc mở, và không việc nào AI làm tiếp được. Hai việc chờ Đức bấm — và gộp được vào MỘT lượt chạy: bấm dừng giữa chừng (sau lệnh dừng không prompt nào được bay đi nữa), rồi bấm sang tab khác giữa chừng (prompt phải vẫn vào tab đã khoá). Cả hai đã vá tĩnh và có phép kiểm tái hiện, chỉ thiếu một lượt nghiệm thu thật. Việc thứ ba (gộp 8 module trùng nhau sang thư mục chung) cần khoá gốc repo nên không thuộc gói này."
+human_action: "Nạp lại tiện ích ở chrome://extensions, chạy MỘT lượt thật, rồi làm hai việc giữa chừng: bấm Dừng, và bấm sang tab khác. Một lượt đó nghiệm thu cả hai mục P1 còn lại của gói."
 version_source: workers/duc-auto-gemini/v0.2.0/manifest.json
 last_verified: 2026-08-28
 last_verified_commit: 4789754b2ad57121fe94d97e1ebd86fc5d4d2148
 last_verified_how: "Live sau khi hạ trần chờ xuống 5 giây: tắt/bật host, nối lại sau 1,0 giây (bản trước đo 22,5s và 27,7s). Khớp dự đoán viết trước khi đo, lần thứ ba liên tiếp"
 evidence_ref: workers/duc-auto-gemini/v0.2.0/evidence-transport-liveness-5s-20260828/README.md
-current_focus: "Lớp nối nhiều hồ sơ Chrome đã chuyển xong sang nhánh này (02/09), theo mẫu đã qua kiểm chéo của nhánh Flow Video: máy chủ chịu được nhiều kết nối và dừng an toàn khi nhập nhằng, bảng điều khiển có ô đặt tên hồ sơ, 83/83 phép kiểm xanh, 10/10 phép thử phá hoại đều bị bắt. Máy chủ mới đã chạy và thấy một kết nối kiểu cũ — đang chờ Đức nạp lại tiện ích rồi đặt tên. Hai nợ cũ giữ nguyên: đo thật nhánh tắt máy chủ quá hai phút, và G-01 chờ một lượt chạy thật."
+current_focus: "Nợ gói 9 -> 3 trong ngày 06/09. Đóng xong: dừng cứng khi extension bị mù (nhánh kia thêm lớp này sau khi một lượt live đốt sáu lượt tạo ảnh; gói này chưa có) - sổ cái thôi khai sai là đã ghi đè lên bằng chứng cũ (phép so đường dẫn cũ không bao giờ đúng được một lần nào) - nút CHAT ZOOM hỏi nhầm câu hỏi của runner nên tự xám trên 6/10 trang Gemini, Đức đã nghiệm thu - bốn lệnh Bridge còn nợ nay đủ cả bốn, gồm cả CLI - soát README bằng cách đối chiếu từng con số với code. Hai việc lớn nhất (nhiều ảnh một job, poll A/B) NGỦ ĐÔNG theo chốt của Đức vì Gemini chưa bao giờ làm thế; đã đặt bẫy để lúc nó xảy ra thì sổ cái tự khai. Suite 88 -> 94, thử phá 61/61 đều bị bắt."
 ref_readme: workers/duc-auto-gemini/v0.2.0/README.md
 ref_handoff: workers/duc-auto-gemini/v0.2.0/HANDOFF.md
 ref_runbook: workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md

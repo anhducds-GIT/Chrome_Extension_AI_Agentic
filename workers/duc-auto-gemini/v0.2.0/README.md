@@ -215,6 +215,8 @@ node (Join-Path $bridgeRoot 'bridge-cli.mjs') ledger-read --limit 25 --include-r
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') chat-read --limit 10 --max-chars 8000
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') proposal-get --proposal-id proposal-id-from-response
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') proposal-withdraw --proposal-id proposal-id-from-response
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') set-folder-hint --hint 'C:\Anh\Pilot-09'
+node (Join-Path $bridgeRoot 'bridge-cli.mjs') profiles-remove --profile pilot-cu
 node (Join-Path $bridgeRoot 'bridge-cli.mjs') propose --params-file .\proposal-params.json
 ```
 

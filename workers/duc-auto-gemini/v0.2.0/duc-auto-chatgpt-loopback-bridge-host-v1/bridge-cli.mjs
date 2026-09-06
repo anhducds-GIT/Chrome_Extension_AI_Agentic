@@ -17,6 +17,8 @@ const COMMANDS = Object.freeze({
   // mà lúc cần đọc nhất chính là lúc đang chẩn đoán một run đang chạy.
   "chat-read": "chat.read",
   propose: "queue.propose",
+  "set-folder-hint": "output.set_folder_hint",
+  "profiles-remove": "profiles.remove",
   "run-trial": "run.trial",
   // Cặp lệnh điều khiển. run-stop đi vòng qua khoá RUN_ACTIVE (dừng chỉ bớt
   // việc), chat-reload thì bị khoá đó chặn (F5 giữa chừng giết attempt đang
@@ -92,6 +94,16 @@ export function commandRequest(command, flags = {}) {
   } else if (command === "proposal-get" || command === "proposal-withdraw") {
     if (!flags["proposal-id"]) throw new Error(`${command} requires --proposal-id <id>.`);
     params = { proposal_id: flags["proposal-id"] };
+  } else if (command === "set-folder-hint") {
+    if (!flags.hint) throw new Error("set-folder-hint requires --hint <duong-dan-tuyet-doi>.");
+    params = { folder_hint: String(flags.hint) };
+    // `--profile` CO Y khong co mac dinh. Khi chi co MOT ho so thi extension tu
+    // suy ra; khi co NHIEU thi no TU CHOI va ke ten chung. Dat mot mac dinh o
+    // day la go bo dung cai cho tu choi do.
+    if (flags.profile !== undefined) params.profile_id = String(flags.profile);
+  } else if (command === "profiles-remove") {
+    if (!flags.profile) throw new Error("profiles-remove requires --profile <slug>.");
+    params = { profile_id: String(flags.profile) };
   } else if (command === "chat-read") {
     // Hai nắp đi CÙNG NHAU và cùng có mặc định: gọi trần `chat-read` phải chạy
     // được. Bridge từ chối tích hai nắp vượt 200000 ký tự, nên mặc định ở đây
@@ -142,7 +154,7 @@ export function applyTarget(envelope, flags = {}) {
 export async function main(argv = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr, fetch: globalThis.fetch }) {
   const [command, ...rest] = argv;
   if (!command || command === "help" || command === "--help") {
-    io.stdout.write("Usage: node bridge-cli.mjs <ping|capabilities|queue-list|run-status|ledger-read|chat-read|proposal-get|proposal-withdraw|propose|run-trial|run-stop|chat-reload|sessions> [options] [--target <label|instance_id>]\n");
+    io.stdout.write("Usage: node bridge-cli.mjs <ping|capabilities|queue-list|run-status|ledger-read|chat-read|proposal-get|proposal-withdraw|propose|set-folder-hint|profiles-remove|run-trial|run-stop|chat-reload|sessions> [options] [--target <label|instance_id>]\n");
     return 0;
   }
   const flags = parseFlags(rest);

@@ -9,7 +9,7 @@ await import(pathToFileURL(sourcePath));
 const bridge = globalThis.DacBridgeCore;
 
 const expectedMethods = [
-  "session.hello", "system.ping", "system.capabilities", "chat.read", "queue.list",
+  "session.hello", "system.ping", "system.capabilities", "chat.read", "output.set_folder_hint", "profiles.remove", "queue.list",
   "run.status", "ledger.read", "jobs.add", "jobs.update", "jobs.remove",
   "jobs.reorder", "references.add", "diagnostics.dom_probe", "output.configure", "run_settings.configure", "queue.propose", "queue.proposal.get", "queue.proposal.withdraw", "run.trial", "run.stop", "chat.reload"
 ];
@@ -43,7 +43,7 @@ assert.equal(bridge.METHOD_REGISTRY["queue.propose"].idempotent, true);
 // nếu đường truyền đứt SAU khi lệnh rút đã ăn, lượt gửi lại phải nhận về đúng
 // kết quả thành công cũ — chứ không phải `PROPOSAL_NOT_PENDING`, thứ khiến agent
 // tưởng lệnh của nó hỏng trong khi nó đã chạy xong.
-const idempotentMutations = ["queue.propose", "queue.proposal.withdraw", "run.stop", "chat.reload"];
+const idempotentMutations = ["queue.propose", "queue.proposal.withdraw", "output.set_folder_hint", "profiles.remove", "run.stop", "chat.reload"];
 assert(idempotentMutations.every((name) => bridge.METHOD_REGISTRY[name].idempotent === true));
 assert(expectedMethods.filter((name) => !idempotentMutations.includes(name)).every((name) => bridge.METHOD_REGISTRY[name].idempotent === false));
 // run.stop cố ý KHÔNG nằm trong danh sách cấm: nó chỉ kết thúc được việc, không
@@ -97,6 +97,8 @@ const validByMethod = {
     }]
   },
   "chat.read": { limit: 10, max_chars_per_turn: 8000 },
+  "output.set_folder_hint": { folder_hint: "C:\\Anh\\Pilot-09", profile_id: "pilot-09" },
+  "profiles.remove": { profile_id: "pilot-09" },
   "queue.proposal.get": { proposal_id: "proposal-uuid" },
   "queue.proposal.withdraw": { proposal_id: "proposal-uuid" },
   "run.stop": {},
@@ -126,6 +128,10 @@ const invalidByMethod = {
   // Moi nap rieng le hop le (50 va 40000), nhung TICH cua chung ~2MB - vuot tran
   // envelope 1MB. Tu choi to hop ngay o cua, khong de no vo tren duong ve.
   "chat.read": { limit: 50, max_chars_per_turn: 40000 },
+  // Duong dan TUONG DOI: truong nay la sieu du lieu de Duc COPY, nen no phai la
+  // duong dan tuyet doi that, khong phai mot manh duong dan.
+  "output.set_folder_hint": { folder_hint: "Anh/Pilot-09" },
+  "profiles.remove": { profile_id: "Pilot_09" },
   "queue.proposal.get": { proposal_id: "" },
   "queue.proposal.withdraw": { proposal_id: "" },
   // Lệnh dừng không nhận tham số nào cả: không có "dừng job X" để có thể bị
