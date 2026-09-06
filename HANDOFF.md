@@ -1078,3 +1078,25 @@ suite xanh toàn bộ · artifact sinh lại rồi commit kèm.
 lúc đóng phiên. Một chỗ khác trên trang vẫn nói *"muốn biết ai đang giữ vùng nào thì hỏi AI"*:
 đó không phải việc làm mới bảng, và bảng cố ý không in tên chủ vùng, nên chưa có cửa tự làm nào
 thay được câu đó.
+
+## 2026-09-06 — `claude-assistant` (điều phối) — đẩy gộp 10 commit, Đức duyệt đẩy khi cổng còn một mục đỏ
+
+**Đẩy kèm (`--carry`), kể tên theo ADR-0005:** `claude-flow-active` · `claude-gemini-hoan-thien` ·
+`claude-codex-ngan` · `claude-n07`.
+
+**Cổng còn MỘT mục đỏ lúc đẩy, và Đức duyệt đẩy:** mục nhật ký của `claude-gemini-hoan-thien`
+trong `workers/duc-auto-gemini/v0.2.0/HANDOFF.md` dài **2.628 byte**, vượt trần 2.600 đúng 28
+byte. Mục đó **chưa commit** nên lượt đẩy này không mang nó lên remote — nó vẫn nằm trên cây
+làm việc chờ chính lane đó viết ngắn.
+
+**Ba lỗ ở vùng miễn khoá, phát hiện trong một buổi** — ghi thành `N-10` `N-11` `N-12`:
+① phiên điều phối nhả khoá của một lane **đang làm thật** sau khi đo thấy "0 commit, 0 file bị
+sửa" — lane đó dựng bản thử ngoài repo nên phép đo mù; ② `claude-flow-active` chạy
+`git checkout .agents/claims.json` và **xoá trắng bốn khoá của hai phiên khác**, dấu niêm phong
+không vỡ vì lượt đó đi qua git; ③ hai lane cùng đánh số `N-08`, cả hai vào HEAD, không lớp nào báo.
+
+**Sợi chỉ chung:** ba sổ ở gốc repo cố ý miễn khoá cho thao tác thêm dòng, mà **mọi lớp bảo vệ
+đều dừng ở cửa khoá**. Vùng miễn khoá là vùng không ai canh.
+
+**Còn mở:** trần độ dài mục nhật ký làm cổng đỏ với MỌI lane khi chỉ một lane vượt — mục nhật ký
+có ghi tên lane nên quy thuộc được, cùng họ với `Y-16`. Gộp vào lượt sửa `K2`.
