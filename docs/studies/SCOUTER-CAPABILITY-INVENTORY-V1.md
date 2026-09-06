@@ -209,7 +209,7 @@ nói phải tránh khi làm Scouter.
 
 | Năng lực | File | Ghi chú đọc được | Ô |
 |---|---|---|---|
-| Cửa Bridge (bảng method + kiểm tham số) | `bridge-core.js` | 798–1022 dòng, ba bản khác nhau. 25 method hợp lại, chỉ **17 method có ở cả ba**. Khung `registryEntry` giống nhau; nội dung từng method dính nhà cung cấp. | `SEED v0.1` (khung) · `ADAPTER` (từng method) |
+| Cửa Bridge (bảng method + kiểm tham số) | `bridge-core.js` | 798–1022 dòng, ba bản khác nhau. 25 method hợp lại, **19 method có ở cả ba** (đúng bằng toàn bộ tập của Gemini — nhánh đó không có method nào riêng). Khung `registryEntry` giống nhau; nội dung từng method dính nhà cung cấp. | `SEED v0.1` (khung) · `ADAPTER` (từng method) |
 | Vận chuyển Bridge qua WebSocket `127.0.0.1` | `bridge-transport-loopback.js` | 498–945 dòng. Cả ba đã có lớp ổn định kết nối (`armKeepaliveDeadline` có ở cả ba — **[ĐO]**, và đây là chỗ `FEATURE-PARITY.md` đã lạc hậu: nó ghi Flow chưa có). Nối lại bằng `chrome.alarms`, không bằng `setTimeout` — vì service worker ngủ. | `SEED v0.1` |
 | Định tuyến lệnh Bridge | `bridge-router-core.js` | Gemini và Flow giống hệt nhau; ChatGPT khác. | `SEED v0.1` |
 | Đề xuất hàng đợi chờ người duyệt | `bridge-proposal-core.js` | Gemini và Flow giống hệt; ChatGPT khác. AI đề xuất → người bấm duyệt → mới chạy. | `SEED v1` |
