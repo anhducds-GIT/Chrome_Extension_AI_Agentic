@@ -372,7 +372,7 @@ Nên `DAC_XLSX_RUN_PLAN_V1.md` là **hợp đồng schema đang nói sai** — n
 nó là file mà `AGENTS.md` chỉ AI đọc để hiểu schema. Sửa: hoặc ghi rõ đường thứ hai chưa nối,
 hoặc bỏ khỏi hợp đồng.
 
-### B-27 · Câu trả lời text dài hơn một ô Excel — CHỜ, chỉ làm khi Đức cần
+### ~~B-27 · Câu trả lời text dài hơn một ô Excel~~ — **ĐÃ ĐÓNG 2026-09-06, Đức chốt KHÔNG CẦN**
 Đức đã chốt (A) giữ nguyên ngày 2026-08-28: vượt 32.767 ký tự thì dừng batch và **không lưu gì**.
 Đo được: trial live dài 180/178/177 ký tự — **dưới 1%** giới hạn, vì prompt của Đức có `BUDGET: 35 w`.
 
@@ -382,7 +382,17 @@ Lý do chọn (C) chứ không cắt bớt: một ô Excel nhìn như đầy đ�
 project này cấm — người đọc không có cách nào biết. Kèm theo: file `.txt` sinh thêm thì cần luật
 dọn giống B-26, đừng quên phần đó khi ước lượng công.
 
-- **Chờ Đức chốt:** có cần câu trả lời text dài quá một ô Excel không — cần thì mở lại mục này, không cần thì để nguyên. @Đức:chốt
+**ĐÓNG 2026-09-06.** Hỏi Đức đúng câu ở trên. Đức trả lời: **"không cần"** — không có ý định bỏ
+dòng giới hạn số từ trong prompt. Nên hành vi hiện tại (vượt trần thì dừng cả mẻ, không lưu gì)
+**giữ nguyên**, và mục này đóng **không viết một dòng code nào**.
+
+Đóng vì **chưa từng xảy ra**, không phải vì đã sửa: giới hạn 32.767 ký tự, câu trả lời thật đo được
+177–180 ký tự — cách xa **180 lần**. Làm phương án (C) lúc này là viết mã cho một ca chưa tồn tại.
+
+Toàn bộ thân mục ở trên **giữ nguyên từng chữ**, kể cả lý do chọn (C) chứ không chọn (B). Ngày nào
+Đức bỏ dòng giới hạn số từ thì mở lại mục này — chữ đã có sẵn, không phải nghĩ lại từ đầu. Điều kiện
+mở lại, viết ra để đo được: **prompt của Đức không còn dòng giới hạn số từ**, hoặc một lượt chạy thật
+gặp câu trả lời vượt 32.767 ký tự.
 
 ### ~~B-26 · Mỗi job đẻ ra 3 file XLSX — cần luật DỌN, không phải bớt checkpoint~~ — **ĐÃ ĐÓNG 2026-08-28**
 

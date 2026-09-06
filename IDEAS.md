@@ -285,3 +285,24 @@ mục 4 bất biến ⑤ và bảng mã lỗi.
   đang đúng thì không.**
 - **Đức nói thêm:** *"ta sẽ làm việc không dừng"* — ghi lại như một câu về nhịp làm việc, **không
   đọc thành lệnh dựng automation tự chạy**. Tạo automation chạy tự động vẫn là việc phải hỏi Đức.
+
+**Y-15 · Đức thêm một luật 2026-09-06 — ép ngân sách chữ khi CC gửi prompt cho GPT.**
+Mọi prompt Claude Code gửi sang GPT phải **kèm một dòng giới hạn số chữ**, và bắt GPT trả lời
+trong giới hạn đó. Lý do Đức nêu: **tiết kiệm usage đầu vào lẫn đầu ra của CC** — câu trả lời
+dài của GPT quay về chính là *đầu vào* của CC, nên một lượt hỏi không có ngân sách thì tốn tiền
+ở cả hai đầu.
+
+Đây **không phải ý tưởng mới**, và đó là điểm mạnh của nó: nó chính là cơ chế `BUDGET: 35 w` mà
+Đức đã dùng sẵn trong prompt XLSX. `B-27` đóng được ngày 06/09 **nhờ đúng dòng đó** — trần một ô
+Excel là 32.767 ký tự, mà câu trả lời thật đo được **177–180 ký tự**, cách xa 180 lần. Một dòng
+trong prompt đã làm cả một mục nợ thành chuyện chưa từng xảy ra. Nay áp cùng cơ chế cho vòng
+CC ↔ GPT.
+
+**Đo trước, đừng hứa:** hai vòng khép kín ngày 04/09 đọc về **1.953** và **1.926 ký tự**, và
+**không lượt nào có dòng ngân sách**. Đó là con số phải giảm, và là mốc đối chứng — nếu sau khi
+ép luật mà số ký tự trả về không giảm thì luật chưa ăn, dù prompt trông đã có dòng đó.
+
+**đóng khi:** ⑴ có một chỗ **duy nhất** dựng prompt CC → GPT, và ngân sách được ghép vào ở chỗ đó
+chứ không phải nhớ gõ tay từng lượt — nhớ gõ tay thì sớm muộn có lượt quên; ⑵ một phép ghim làm
+ĐỎ khi prompt đi ra mà thiếu dòng ngân sách; ⑶ đo lại số ký tự trả về và nó thấp hơn mốc
+1.926–1.953 ở trên.
