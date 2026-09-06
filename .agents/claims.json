@@ -36,8 +36,8 @@
     "_root": {
       "owner": "claude-assistant",
       "ai": "Claude",
-      "claimed_at": "2026-09-06T14:45",
-      "task": "day gop + sinh lai artifact",
+      "claimed_at": "2026-09-06T15:10",
+      "task": "N-10: them mot cau vao AGENTS.md muc 1 — cam nha khoa ho lane khac dua tren phep do",
       "released_at": null,
       "taken_from": "claude-n07",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
@@ -48,8 +48,8 @@
     "_docs": {
       "owner": "claude-assistant",
       "ai": "Claude",
-      "claimed_at": "2026-09-06T14:12",
-      "task": "brief K2 khoa ranh",
+      "claimed_at": "2026-09-06T15:01",
+      "task": "Sua BRIEF-K2 theo N-10: doi ten tin hieu, them luat cam nha khoa ho lane khac",
       "released_at": null,
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
@@ -70,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "366158b55b7ab2e5"
+  "_fingerprint": "848e931f0a1c1f56"
 }
