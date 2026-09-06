@@ -392,3 +392,29 @@ nợ hạ tầng vào `BACKLOG.md` gốc repo.
 **Đẩy kèm `--carry`** (ADR-0005, Đức duyệt thường trực). Ba commit của lane khác bị cuốn theo,
 kể tên đủ: **`claude-n07`** · **`claude-codex-ngan`** · **`claude-assistant`**. Lượt đẩy cuối gồm 8
 commit, 4 của tôi, 4 của ba lane trên (`373b325..9dd4cbd`).
+
+## 2026-09-06 — `claude-flow-active`: nút CHAT ZOOM xám — chưa biết vì sao, nên bắt nó tự khai
+
+Đức báo nút **CHAT ZOOM** xám không bấm được. Đã loại bằng cách đọc code, không đoán: quyền
+`tabs` **có** trong manifest · `syncZoomState` **có** chạy lúc mở panel · ba sự kiện
+(`onActivated`, `onUpdated`, `onZoomChange`) **đều có** · bộ khớp URL **khớp cả 5 URL Flow thật**
+lấy từ `evidence/` (kể cả bản có locale `/vi/`). Và hàm dò tab **giống hệt từng chữ** ở cả ba gói,
+trong đó hai gói kia đang dùng tốt.
+
+**Nên gốc bệnh không nằm trong thứ đọc được từ code — và đó chính là bệnh thứ hai.** Nút xám có
+**bốn** nguyên nhân khác hẳn nhau, mà cả bốn đều đi qua `catch (_) {}` rồi cho ra đúng một kết
+quả câm. Không có gì để đọc, nên không ai chẩn đoán được từ xa.
+
+**Vá:** mỗi nguyên nhân tự khai vào tooltip của cụm nút — chưa có API tab · đọc tab lỗi · tab
+đang xem không phải trang Flow (**kèm URL thật**) · Chrome từ chối đọc mức phóng to (kèm câu lỗi).
+Đường tốt thì dọn lý do cũ đi, để Đức không đọc phải một câu đã hết hạn.
+
+**Ghim:** `tests/flow-zoom-control-reason.mjs`, 6 ca. Nó **trích hàm thật** ra khỏi `sidepanel.js`
+rồi chạy, chứ không chép logic sang test. Suite **98/98**, đột biến **5/5 bị bắt**.
+
+**Mở F-28:** phép kiểm zoom cũ là di sản fork — nó kiểm một bản sao logic ChatGPT viết trong
+chính file test, nên đột biến vào `sidepanel.js` không làm nó đỏ. Neo chú thích của nó còn ghi
+*"Gemini origin"* tới hôm nay; đã sửa thành `Flow origin`, phần còn lại ghi vào sổ nợ.
+
+**Chưa xong:** đây mới là bản vá CHẨN ĐOÁN, chưa phải bản vá gốc bệnh. Việc kế cần Đức: nạp lại
+tiện ích, rê chuột lên cụm nút CHAT ZOOM, đọc câu hiện ra rồi gửi lại. 0 credit, không cần Bridge.

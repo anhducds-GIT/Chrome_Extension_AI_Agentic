@@ -559,3 +559,15 @@ Gặp thật trong lượt đột biến kiểm F-06: câu lệnh khôi phục b
 thêm `* text=auto eol=lf` ở gốc — mà đó là khoá `_root`, và nó sẽ **viết lại xuống dòng của mọi
 file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemini`, `duc-auto-chatgpt`) chưa
 được soi xem có phép kiểm nào cùng bệnh không; cách soi rẻ nhất là ép CRLF cả gói rồi chạy suite.
+
+- **F-28** · [ĐỌC 06/09, phát sinh khi vá nút zoom] `tests/chatgpt-zoom-control-smoke.mjs` là **di sản
+  fork chưa rebrand**, và phần lớn nó **không canh gì của gói này**: nó tự viết lại `isChatGPTUrl`
+  khớp `chatgpt.com`, tự dựng lại `syncZoomState`/`setChatZoom` trong chính file test, rồi kiểm
+  bản sao đó. Đột biến vào `sidepanel.js` **không** làm nó đỏ. Phần thật sự có răng chỉ là mấy
+  khẳng định HTML/CSS đầu file và một neo chú thích — neo đó còn ghi *"Gemini origin"* tới 06/09,
+  tức nó ghim sai tên nhánh suốt từ lúc fork.
+  Chưa xoá vì luật cấm gỡ lớp bảo vệ, và mấy khẳng định HTML/CSS vẫn dùng được.
+  **Việc cần làm:** chuyển phần hành vi sang cách trích hàm thật (mẫu có sẵn ở
+  `tests/flow-zoom-control-reason.mjs`), rồi đổi tên file cho khớp nhánh.
+  **Đóng khi:** không còn chuỗi `chatgpt.com` nào trong test của gói này, và một đột biến vào
+  `syncZoomState` của `sidepanel.js` làm phép kiểm zoom đỏ.

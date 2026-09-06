@@ -4912,50 +4912,72 @@
     return Math.abs(actualZoom - targetLevel) <= epsilon;
   }
 
-  async function getActiveChatGPTTab() {
-    if (typeof chrome === "undefined" || !chrome.tabs?.query) return null;
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id && isChatGPTUrl(tab.url)) return tab;
-    } catch (_) {}
-    return null;
+  const ZOOM_GROUP_TITLE = "Flow Zoom";
+
+  // Nút CHAT ZOOM xám có BỐN nguyên nhân khác hẳn nhau, và tới 06/09 cả bốn
+  // cho ra đúng một kết quả câm: nút xám, không một chữ. Đó là lý do một báo
+  // lỗi "nút zoom hỏng" không chẩn đoán được từ code — không có gì để đọc.
+  // Nay mỗi nguyên nhân tự khai vào tooltip của cụm nút: rê chuột là thấy,
+  // không phải nhờ ai mở code ra đoán.
+  function lockZoomButtons(buttons, reason) {
+    buttons.forEach((btn) => { btn.disabled = true; btn.classList.remove("active"); });
+    const group = document.getElementById("chatZoomControl");
+    if (group) group.title = reason ? `Chưa dùng được — ${reason}` : ZOOM_GROUP_TITLE;
   }
 
-  // Zoom action is initiated from the active Gemini tab; Chrome default zoom behavior
-  // applies and may persist across the same Gemini origin.
+  async function getActiveChatGPTTab() {
+    if (typeof chrome === "undefined" || !chrome.tabs?.query) {
+      return { tab: null, reason: "chưa gọi được API tab của Chrome, thử nạp lại tiện ích" };
+    }
+    let tab = null;
+    try {
+      [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    } catch (error) {
+      return { tab: null, reason: `không đọc được tab đang xem (${error?.message || error})` };
+    }
+    if (!tab?.id) return { tab: null, reason: "cửa sổ đang chứa bảng này không có tab nào đang mở" };
+    if (!isChatGPTUrl(tab.url)) {
+      return { tab: null, reason: `tab đang xem không phải trang Flow, đang ở: ${tab.url || "(Chrome không trả về URL)"}` };
+    }
+    return { tab, reason: "" };
+  }
+
+  // Zoom action is initiated from the active Flow tab; Chrome default zoom behavior
+  // applies and may persist across the same Flow origin.
   async function syncZoomState() {
     const zoomButtons = document.querySelectorAll(".zoom-btn");
     if (!zoomButtons.length) return;
-    const tab = await getActiveChatGPTTab();
+    const { tab, reason } = await getActiveChatGPTTab();
     if (!tab?.id) {
-      zoomButtons.forEach((btn) => {
-        btn.disabled = true;
-        btn.classList.remove("active");
-      });
+      lockZoomButtons(zoomButtons, reason);
       return;
     }
     try {
       const currentZoom = await chrome.tabs.getZoom(tab.id);
+      const group = document.getElementById("chatZoomControl");
+      if (group) group.title = ZOOM_GROUP_TITLE;
       zoomButtons.forEach((btn) => {
         btn.disabled = false;
         const targetZoom = Number(btn.dataset.zoom);
         btn.classList.toggle("active", matchesZoomLevel(currentZoom, targetZoom));
       });
-    } catch (_) {
-      zoomButtons.forEach((btn) => {
-        btn.disabled = true;
-        btn.classList.remove("active");
-      });
+    } catch (error) {
+      lockZoomButtons(zoomButtons, `Chrome từ chối đọc mức phóng to của tab (${error?.message || error})`);
     }
   }
 
   async function setChatZoom(targetLevel) {
-    const tab = await getActiveChatGPTTab();
-    if (!tab?.id) return;
+    const { tab, reason } = await getActiveChatGPTTab();
+    if (!tab?.id) {
+      lockZoomButtons(document.querySelectorAll(".zoom-btn"), reason);
+      return;
+    }
     try {
       await chrome.tabs.setZoom(tab.id, targetLevel);
       await syncZoomState();
-    } catch (_) {}
+    } catch (error) {
+      lockZoomButtons(document.querySelectorAll(".zoom-btn"), `đặt mức phóng to không thành (${error?.message || error})`);
+    }
   }
 
   function applyUiZoom(level) {
