@@ -27,17 +27,36 @@ mới là **có trần và có máy kiểm**.
 **Viết một mục dài không phải chăm chỉ — nó là đẩy chi phí sang mọi phiên sau.** Mọi phiên mở
 `HANDOFF.md` đều trả tiền cho chữ bạn viết, kể cả phiên chỉ cần biết một câu.
 
-## 2. Trần độ dài một mục
+## 2. Trần độ dài một mục — **2.600 byte**
 
-Trần khai ở `.repo-structure.json`, **không gõ cứng trong script**. Cổng đóng phiên chặn khi
-vượt.
+Trần khai ở `.repo-structure.json` (`handoff.tran_byte_moi_muc`), **không gõ cứng trong script**.
+Đổi số ở đó thì hành vi đổi theo. Cổng đóng phiên chặn khi vượt.
 
-**Con số phải ĐO rồi chốt, không đoán.** Số đo ngày 06/09 làm điểm tựa: gói Flow Video trung
-bình **1.158 byte mỗi mục** cho cùng loại việc mà gói ChatGPT tốn **5.193** — tức mức thấp
-**đã có người làm được**, không phải lý thuyết.
+**Cổng chỉ chặn mục bạn VỪA THÊM trong phiên này.** Mục cũ không bị chặn — chặn cả file là mọi
+lane đỏ ngay lập tức vì chữ của người khác.
 
 Vượt trần thì **không phải cắt bớt chữ cho vừa** — phải hỏi: phần thừa đó **thuộc về file nào**?
 Gần như luôn là ADR, sổ nợ, hoặc brief. Chuyển nó sang đó rồi để lại một con trỏ.
+
+Tự đo lại bất cứ lúc nào:
+
+```bash
+node scripts/handoff.mjs --check HANDOFF.md workers/*/*/HANDOFF.md
+```
+
+**Vì sao 2.600.** Đo ngày 06/09 trên 42 mục đang có trong bốn `HANDOFF.md`: ngắn nhất **872**,
+trung vị **3.284**, dài nhất **41.879**, trung bình **4.303** byte. 2.600 nằm ngay trên mục
+**đầy đủ mà gọn nhất** đang có (2.593 byte — một mục điều phối đẩy 12 commit của bốn lane), và
+nó rơi vào một **khoảng trống** của phân bố: không mục nào nằm giữa 2.593 và 2.831, nên xê dịch
+±200 byte không đổi kết quả. Áp ngược lại thì nó chặn **26/42 = 62%** mục hiện có — và không mục
+nào trong số đó bị chặn thật.
+
+> **HAI CON SỐ TRONG `ADR-0011` LÀ BYTE CHIA CHO SỐ TIÊU ĐỀ, KHÔNG PHẢI BYTE MỖI MỤC NHẬT KÝ.**
+> Đo lại theo mục `##` ngày 06/09: gói Flow Video **3.785 byte/mục** — **cao nhất** trong ba gói,
+> không phải thấp nhất; gói gọn nhất thật sự là Gemini (**2.679**). Con số 1.158 thấp vì gói đó
+> chẻ một mục ra nhiều tiêu đề `###` con, tức ngược hẳn với "viết gọn". ADR đã `Accepted` nên
+> bất biến — đừng sửa nó, và cũng **đừng đem 1.158 / 5.193 ra biện luận** cho một lần đổi trần.
+
 
 ## 3. Xoay file theo tháng
 
@@ -59,6 +78,27 @@ nào cả.
    sang file trước nữa. **Đừng gõ cứng tên file lưu trữ ở bất kỳ đâu.**
 3. **File lưu trữ khai vào Bản đồ file** (`AGENTS.md` mục 4). Không khai = không tồn tại.
 
+**Làm thế nào — một lệnh:**
+
+```bash
+node scripts/handoff.mjs --rotate HANDOFF.md
+```
+
+Nó đọc mốc `<!-- HANDOFF-THANG: YYYY-MM -->` trong file. Cùng tháng thì không làm gì. Khác tháng
+thì dời **toàn bộ phần sau dòng `## Log`** sang `HANDOFF-ARCHIVE-NN.md` (`NN` = số lớn nhất đang
+có trong thư mục, cộng một) và mở lại file với mốc tháng mới + một con trỏ. File chưa từng khai
+tháng thì lượt đầu **chỉ khai, không xoay** — cố ý: đoán tháng từ ngày trong tiêu đề là câu máy
+không xác định được.
+
+**Vì sao đánh SỐ chứ không đặt tên theo tháng** (`HANDOFF-ARCHIVE-2026-09.md`): bộ đếm sự cố ở
+`build-overview.mjs` dò đúng hình dạng `HANDOFF-ARCHIVE-\d+\.md`. Đặt tên theo tháng là bộ đếm
+**mù ngay lượt xoay đầu tiên** — xem mục 4. Đánh số cũng là cái nối tiếp được với
+`HANDOFF-ARCHIVE-01.md` sinh sáng 06/09 theo ADR-0008.
+
+**Cổng đóng phiên nhắc ai:** chỉ lane đang **giữ khoá** của file đó, và chỉ khi lane đó chạm file
+trong phiên này. Xoay là viết lại đầu file, tức không còn là "chỉ thêm ở cuối" nên miễn trừ hành
+chính không che nó — bắt một lane không giữ `_root` phải xoay là bắt họ làm việc luật cấm họ làm.
+
 ## 4. Cỗ máy đọc GỘP — đừng làm nó mù
 
 Người và AI đọc `HANDOFF.md` theo kiểu **đọc đuôi**. Nhưng **bộ đếm sự cố** của bảng trạng thái
@@ -70,6 +110,12 @@ Ngày 06/09 một lượt cắt làm bốn dòng sự cố biến mất khỏi f
 > **"0 sự cố" đọc y hệt "sạch sẽ", trong khi thật ra là "mù".**
 
 Mọi thay đổi về lưu trữ phải kiểm lại: bộ đếm còn đọc được qua chuỗi con trỏ không.
+
+**Vá lần hai, 06/09 (ADR-0011):** bản vá đầu chỉ đi được **một bước** (`HANDOFF.md` → `-01`). Xoay
+theo tháng thì chuỗi dài ra mãi (`HANDOFF.md` → `-02` → `-01` → …) và con trỏ sang `-01` nằm
+**trong** `-02`, nên đi một bước là mọi sự cố cũ hơn một tháng âm thầm biến mất — đúng lại con bug
+cũ, chỉ chậm hơn 30 ngày. Nay bộ đếm đi **hết** chuỗi. Phép ghim: `tests/build-overview-smoke.mjs`
+khối (d2).
 
 ## 5. Cấm
 

@@ -716,7 +716,9 @@ const chay = (deps) => {
   // 2026-09-03, K2-4: 10 → 11. Thêm "Bảng quyền chưa bị sửa tay" — `claim.mjs` giữ đường ghi,
   // nhưng cùng ngày `claims.json` bị mở ra sửa tay đi vòng qua nó, lấy mất khoá của một phiên
   // đang làm dở, và KHÔNG phép kiểm nào kêu. Cổng là chỗ duy nhất nạn nhân chắc chắn chạy tới.
-  assert.match(gate, /const EXPECTED_CHECKS = 12;/, "thêm cổng con thì EXPECTED_CHECKS phải là 12 — lớp chống tự tháo cổng");
+  // 2026-09-06, claude-handoff-tran: 12 → 13. Thêm "HANDOFF: mục mới trong trần, file đúng
+  // tháng" (ADR-0011) — trần độ dài một mục nhật ký, chặn ở ĐẦU VÀO.
+  assert.match(gate, /const EXPECTED_CHECKS = 13;/, "thêm cổng con thì EXPECTED_CHECKS phải là 13 — lớp chống tự tháo cổng");
   // Và nó KHÔNG được biến nợ cấu trúc thành cổng đỏ ở phiên S4.
   // S7: cổng con nay PHẢI biến mã thoát 1 thành cổng đỏ, và phải TÁCH mã 1 (repo có nợ) khỏi
   // mã 2 (bộ kiểm hỏng). Đây là mắt nối duy nhất giữa check-bootstrap và cổng đóng phiên;

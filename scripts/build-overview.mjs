@@ -1100,11 +1100,22 @@ export function readAssistantEvents(deps) {
    * `HANDOFF.md` sẽ ÂM THẦM đưa mọi số đếm về 0 — và "0 sự cố" đọc y hệt "sạch sẽ" trong khi
    * thật ra là "mù". Đúng chuyện đó xảy ra ngày 06/09: commit c2e5a2d dời 4 dòng sự cố sang
    * file lưu trữ, bộ đếm ra 0, và cổng đóng phiên ĐỎ với MỌI lane trên `origin/main`. */
+  /* ĐI HẾT CHUỖI, KHÔNG PHẢI MỘT BƯỚC. Bản đầu lấy danh sách con trỏ MỘT LẦN từ `HANDOFF.md`
+   * rồi mới vào vòng lặp, nên nó đi được đúng một bước: `HANDOFF.md` → `-01`. Từ ADR-0011 file
+   * xoay theo THÁNG, tức chuỗi dài ra mãi (`HANDOFF.md` → `-02` → `-01` → …) và con trỏ sang
+   * `-01` nằm TRONG `-02`. Đi một bước thì mọi sự cố cũ hơn một tháng biến mất khỏi số đếm —
+   * đúng lại con bug 06/09, chỉ chậm hơn 30 ngày. Nên: hàng đợi, và nạp gì thì soi tiếp cái đó. */
   const daDoc = new Set(["HANDOFF.md"]);
-  for (const ten of String(text).match(CON_TRO_LUU_TRU) ?? []) {
+  const hangDoi = String(text).match(CON_TRO_LUU_TRU) ?? [];
+  while (hangDoi.length) {
+    const ten = hangDoi.shift();
     if (daDoc.has(ten)) continue;
     daDoc.add(ten);
-    try { text += "\n" + deps.readFile(ten); } catch { /* con trỏ trỏ vào chỗ trống — kệ */ }
+    try {
+      const them = deps.readFile(ten);
+      text += "\n" + them;
+      hangDoi.push(...(String(them).match(CON_TRO_LUU_TRU) ?? []));
+    } catch { /* con trỏ trỏ vào chỗ trống — kệ */ }
   }
   for (const line of String(text).split(/\r\n|\r|\n/)) {
     if (!line.startsWith(NHAN_SU_CO)) continue;

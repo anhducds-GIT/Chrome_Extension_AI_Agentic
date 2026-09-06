@@ -191,6 +191,30 @@ export function appendOnlyExemptFrom(parsed) {
   return Object.freeze(list.map((f) => f.trim()));
 }
 
+/* TRẦN ĐỘ DÀI MỘT MỤC `HANDOFF.md` — ADR-0011, Đức chốt 06/09.
+   Khai ở `.repo-structure.json` (`handoff.tran_byte_moi_muc`), KHÔNG gõ cứng trong script:
+   brief `HANDOFF-TRAN-01` mục 1 cấm, vì hai bản sao của một luật đã trả hai câu khác nhau cho
+   cùng một file ngày 02/09.
+
+   FAIL CLOSED HAI CHIỀU, và hai chiều đó KHÁC NHAU:
+   · KHÔNG khai gì → trả `null`, và bên gọi coi là "chưa chốt trần" rồi BỎ QUA. Cố ý: bộ khung
+     nhân ra repo mới chưa đo được gì, chặn ở đó là khoá repo ngay phiên đầu.
+   · Khai SAI KIỂU (chuỗi, số âm, số thực, 0) → NÉM. Lùi lặng lẽ về mặc định là cách một con số
+     Đức đã chốt biến mất mà cổng vẫn xanh. */
+export function handoffCapFrom(parsed) {
+  const khoi = parsed?.handoff;
+  if (khoi === null || khoi === undefined) return null;
+  if (typeof khoi !== "object" || Array.isArray(khoi)) {
+    throw new Error("CAU_TRUC_HONG: `handoff` phải là một object, ví dụ { \"tran_byte_moi_muc\": 2600 }.");
+  }
+  const tran = khoi.tran_byte_moi_muc;
+  if (tran === undefined) return null;
+  if (!Number.isInteger(tran) || tran <= 0) {
+    throw new Error(`CAU_TRUC_HONG: \`handoff.tran_byte_moi_muc\` phải là số nguyên dương (byte), nhận "${tran}".`);
+  }
+  return tran;
+}
+
 /* "CHỈ THÊM DÒNG?" — quyết định thuần, tách khỏi việc gọi git để kiểm được mọi nhánh.
    Dùng cho miễn trừ `HANDOFF.md` ở gốc (A2): luật mục 7 bắt MỌI phiên ghi Log vào đó, nên bắt
    phải nhận thêm một khoá chỉ để tuân luật là tự chặn luật của mình. Nhưng miễn trừ chỉ đúng

@@ -6,6 +6,8 @@
 
 ## Log
 
+<!-- HANDOFF-THANG: 2026-09 -->
+
 <!-- HANDOFF-CUT-POINTER: ADR-0008 -->
 > **Lịch sử cũ hơn đã dời sang [`HANDOFF-ARCHIVE-01.md`](HANDOFF-ARCHIVE-01.md)** — cùng thư mục
 > này, nguyên văn, không mất chữ nào. Cắt 2026-09-06 theo ADR-0008 (lane `claude-cat-goc`):

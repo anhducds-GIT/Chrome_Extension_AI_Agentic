@@ -1266,6 +1266,30 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     assert.equal(new Map(khongConTro.dong.map((s) => [s.token, s.n])).get("ROLE-DRIFT"), 1,
       "khong co con tro thi KHONG duoc tu doan ten file luu tru — go cung ten la no chet o lan cat sau");
 
+    /* CHUỖI DÀI HƠN MỘT BƯỚC — ADR-0011 xoay `HANDOFF.md` theo THÁNG, nên chuỗi dài ra mãi:
+       `HANDOFF.md` → `-02` → `-01` → … Con trỏ sang `-01` nằm TRONG `-02`, không nằm trong
+       `HANDOFF.md`. Bản đầu của bộ đếm lấy danh sách con trỏ MỘT LẦN rồi mới vào vòng lặp, nên
+       nó đi được đúng một bước và mọi sự cố cũ hơn một tháng biến mất khỏi số đếm — đúng lại
+       con bug 06/09, chỉ chậm hơn 30 ngày. */
+    {
+      const troToi = (t) => `> Lịch sử cũ hơn đã dời sang [\`${t}\`](${t}) — cùng thư mục.`;
+      const chuoi = readAssistantEvents(bocFile(goc, {
+        "HANDOFF.md": [troToi("HANDOFF-ARCHIVE-02.md"), "AssistantEvent: ROLE-DRIFT"].join(CRLF),
+        "HANDOFF-ARCHIVE-02.md": [troToi(luuTru), "AssistantEvent: ROLE-DRIFT"].join(CRLF),
+        [luuTru]: "AssistantEvent: ROLE-DRIFT"
+      }));
+      assert.equal(new Map(chuoi.dong.map((s) => [s.token, s.n])).get("ROLE-DRIFT"), 3,
+        "phai di HET chuoi con tro, khong phai mot buoc — di mot buoc thi thang thu hai tro di am tham bien mat");
+
+      /* Chuỗi vòng lại chính nó KHÔNG được làm treo bộ đếm. */
+      const vong = readAssistantEvents(bocFile(goc, {
+        "HANDOFF.md": [troToi("HANDOFF-ARCHIVE-02.md"), "AssistantEvent: ROLE-DRIFT"].join(CRLF),
+        "HANDOFF-ARCHIVE-02.md": [troToi("HANDOFF-ARCHIVE-02.md"), "AssistantEvent: ROLE-DRIFT"].join(CRLF)
+      }));
+      assert.equal(new Map(vong.dong.map((s) => [s.token, s.n])).get("ROLE-DRIFT"), 2,
+        "con tro vong lai chinh no thi doc mot lan, khong treo va khong dem hai lan");
+    }
+
     /* Con trỏ trỏ vào chỗ trống thì đếm phần đọc được, không được ném cả bảng. */
     assert.equal(
       new Map(readAssistantEvents(bocFile(goc, {

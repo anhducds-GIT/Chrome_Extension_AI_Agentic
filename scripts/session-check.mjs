@@ -18,7 +18,8 @@ import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
-import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, claimPrefixesFrom, generatorsFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { CAU_CHI_DUONG, docMucTuFile, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, claimPrefixesFrom, generatorsFrom, handoffCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -767,7 +768,77 @@ check("Nhãn lane trong commit", () => {
   return { ok: true, msg: `${shas.length} commit chưa push đều quy thuộc được: ${ke.join(" · ")}.` };
 });
 
-/* ---- 12. Đọc git có lỗi nào không -------------------------------------- */
+/* ---- 12. HANDOFF: trần độ dài mục MỚI, và xoay file theo tháng — ADR-0011 */
+// Đức chốt 06/09: chặn ở ĐẦU VÀO, không chặn ở đầu ra. `HANDOFF.md` gốc tăng ~44 KB/ngày và
+// không tăng vì nhiều mục mà vì mỗi mục béo lên 60% — nên trần nằm ở MỘT MỤC, không ở cả file.
+//
+// HAI PHẠM VI KHÁC NHAU, và trộn chúng vào một là hỏng cả hai:
+// · TRẦN xét MỌI file `HANDOFF.md` phiên này chạm, bất kể ai giữ khoá — mục bạn vừa thêm luôn
+//   là chữ của bạn, không cần bảng quyền để biết điều đó.
+// · XOAY THÁNG chỉ xét file bạn ĐANG GIỮ KHOÁ. Xoay là viết lại đầu file, tức KHÔNG còn là
+//   "chỉ thêm ở cuối" nên miễn trừ hành chính không che nó; bắt một lane không giữ `_root` phải
+//   xoay là bắt họ làm một việc luật cấm họ làm. Ngày 1 hàng tháng mà đỏ với mọi lane thì cổng
+//   này thành thuế, đúng thứ ADR-0005 vừa gỡ.
+//
+// CHỈ CHẶN MỤC VỪA THÊM. Mục cũ là việc của lượt viết ngắn (ADR-0011 mục ⑶) — chặn cả file là
+// mọi lane đỏ ngay lập tức vì chữ của người khác, brief `HANDOFF-TRAN-01` mục 2 cấm.
+check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
+  const files = touched.filter((f) => /(^|\/)HANDOFF\.md$/.test(f));
+  if (!files.length) return { ok: true, msg: "Phiên này không chạm HANDOFF.md nào." };
+  const tran = handoffCapFrom(structure);
+  if (tran === null) return { ok: true, skipped: true, msg: "Chưa khai `handoff.tran_byte_moi_muc` trong .repo-structure.json — CHƯA KIỂM ĐƯỢC GÌ." };
+
+  const doc = (f) => { try { return fs.readFileSync(path.join(ROOT, f), "utf8"); } catch { return null; } };
+  const beo = [];
+  const canXoay = [];
+  const chuaKhai = [];
+  let neo = 0;                              // số mục bổ được — ra 0 là BỘ ĐO HỎNG, xem dưới
+  for (const f of files) {
+    const hienTai = doc(f);
+    if (hienTai === null) continue;         // file vừa bị xoá khỏi cây làm việc
+    /* BẢN GỐC ĐỌC HỎNG THÌ MỌI MỤC THÀNH "MỤC MỚI" — tức cổng chặn lane này bằng chữ của lane
+     * khác, đúng thứ brief cấm. Nên hỏi trước: file có trên `origin/main` không?
+     *  · KHÔNG có (gói mới, `HANDOFF.md` vừa lập) → bản gốc rỗng là ĐÚNG, mọi mục đều mới thật.
+     *  · CÓ mà đọc hỏng → dùng `git()` chứ không phải bản nuốt lỗi, để phép kiểm cuối biến nó
+     *    thành ĐỎ kèm tên nguyên nhân. Không biết thì phải nói là không biết. */
+    const coTrenRemote = originMainResolves
+      && gitLoiLaBinhThuong("ls-tree", "--name-only", "origin/main", "--", f).trim() !== "";
+    const goc = coTrenRemote ? git("show", `origin/main:${f}`) : "";
+    neo += docMucTuFile(hienTai).length;
+    for (const m of vuotTran(mucMoi(hienTai, goc), tran)) {
+      beo.push(`${f} · "${m.tieuDe.replace(/^#+\s*/, "").slice(0, 48)}…" = ${m.byte} byte`);
+    }
+    if (!mine(f)) continue;                 // xoay là việc của người đang giữ khoá
+    const thang = thangCua(hienTai);
+    if (thang === null) chuaKhai.push(f);
+    else if (thang !== thangHienTai()) canXoay.push(`${f} (đang khai ${thang})`);
+  }
+
+  /* ĐẾM MỎ NEO. `mucMoi` trả rỗng đọc y hệt "mọi mục đều vừa trần" — và ngày 06/09 đúng cái
+   * nhầm này (công cụ không khớp gì, bị đọc thành "không có gì phải sửa") xảy ra với NĂM lane
+   * khác nhau trong repo. Nên: bổ ra 0 mục trên một file có thật là ĐỎ, không phải xanh. */
+  if (neo === 0 && files.some((f) => doc(f) !== null)) {
+    return { ok: false, msg: "HANDOFF_KHONG_KHOP: chạm HANDOFF.md nhưng không bổ được MỤC nào."
+      + " Đây là bộ đo HỎNG, không phải 'không có gì phải sửa' — kiểm dòng `## Log` của file." };
+  }
+
+  const loi = [];
+  if (beo.length) {
+    loi.push(`HANDOFF_MUC_QUA_DAI: ${beo.length} mục MỚI vượt trần ${tran} byte — ${beo.join(" · ")}. ${CAU_CHI_DUONG}`);
+  }
+  if (canXoay.length) {
+    loi.push(`HANDOFF_QUA_THANG: ${canXoay.join(", ")} còn chứa tháng cũ, nay là ${thangHienTai()}.`
+      + ` Sửa bằng một lệnh: \`node scripts/handoff.mjs --rotate <file>\` rồi khai file lưu trữ vừa sinh vào Bản đồ file.`);
+  }
+  if (chuaKhai.length) {
+    loi.push(`HANDOFF_CHUA_KHAI_THANG: ${chuaKhai.join(", ")} chưa khai tháng, nên chưa vào được lược đồ xoay.`
+      + ` Sửa: \`node scripts/handoff.mjs --rotate <file>\` (lượt đầu chỉ khai tháng, không xoay gì).`);
+  }
+  if (loi.length) return { ok: false, msg: loi.join(" ") };
+  return { ok: true, msg: `${files.length} file HANDOFF.md, mọi mục mới đều dưới trần ${tran} byte và đúng tháng.` };
+});
+
+/* ---- 13. Đọc git có lỗi nào không -------------------------------------- */
 // PHẢI LÀ PHÉP KIỂM CUỐI. Nó phán về thứ mà mười một phép kiểm trên vừa đọc, nên đặt sớm hơn
 // là phán trên một danh sách chưa đầy.
 //
@@ -805,7 +876,9 @@ check("Đọc git không lỗi", () => {
 // 2026-09-03, phiên K2-vá-lỗi: 11 → 12. Thêm "Đọc git không lỗi", vì hàm đọc git nuốt mọi lỗi
 // thành chuỗi rỗng, và chuỗi rỗng đó im lặng biến thành "vùng của tôi sạch" ngay trong guard
 // của K2-9 — cổng tự miễn cho regression của chính lane. Audit GPT vòng 5 bắt được.
-const EXPECTED_CHECKS = 12;
+// 2026-09-06, lane claude-handoff-tran: 12 -> 13. Them "HANDOFF: muc moi trong tran, file dung
+// thang" (ADR-0011). Ly do ghi mot dong vao HANDOFF.md goc repo, dung luat chong tu thao cong.
+const EXPECTED_CHECKS = 13;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");
