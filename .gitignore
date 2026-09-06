@@ -30,3 +30,9 @@ nul
 
 # bản ra của trang bộ khung — để publish, không commit
 *.template-overview.html
+
+# Bản ra của ba cửa vào bảng trạng thái (bang-trang-thai/). Sinh lại là ra y hệt, và
+# tiến trình nền ghi vào đó liên tục — commit thì mọi phiên khác thấy cây làm việc bẩn.
+bang-trang-thai/BANG.html
+bang-trang-thai/trang-thai.json
+bang-trang-thai/DUNG.txt

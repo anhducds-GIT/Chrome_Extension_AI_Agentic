@@ -289,6 +289,35 @@ không phải một con số.
 
 ---
 
+## 10. Đức tự xem bảng — KHÔNG dán câu nào cho ai cả
+
+**Dùng khi nào:** Đức muốn xem thông tin mới nhất mà không phải bảo AI làm, không phải chờ, và
+không phải cắt ngang một luồng việc khác. Đây là mục **duy nhất** trong file này không có câu
+để dán — vì không cần AI. Tất cả nằm trong thư mục `bang-trang-thai/` ở gốc repo.
+
+| Muốn gì | Nhấp đúp file nào | Sau đó |
+|---|---|---|
+| Xem ngay một lần | `Xem-bang.cmd` | bảng tự mở bằng trình duyệt |
+| Có nút Làm mới ngay trong trang | `Mo-may-chu.cmd` | bảng mở ở `http://127.0.0.1:4747/`; bấm **Làm mới ngay** bao nhiêu lần cũng được. Tắt: đóng cửa sổ đen tên "Bang trang thai" |
+| **Bật** tự chạy mỗi lần bật máy | `Bat-tu-chay.cmd` | từ đó repo đổi là bảng tự sinh lại; Đức chỉ mở trang rồi F5 |
+| **Tắt** tự chạy | `Tat-tu-chay.cmd` | gỡ khỏi khởi động; bản đang chạy tự dừng trong ~30 giây |
+
+**Bảng tự nói ba điều, ngay dòng đầu** — không phải hỏi ai:
+
+- sinh lúc mấy giờ;
+- **việc AI đang làm mà chưa commit thì KHÔNG hiện ở đây** (bảng quyền thì luôn mới);
+- cái chạy nền đang sống hay đã tắt.
+
+Và khi một phiên AI đang giữ khoá `_code` — tức là đang sửa dở chính bộ sinh bảng — thì bảng
+**ngừng sinh lại** và **nói ra câu đó**, thay vì lặng lẽ đưa Đức một bảng cũ trông y như bảng mới.
+
+> Không cần quyền quản trị, không cài dịch vụ hệ thống. Máy chủ chỉ nghe trong máy
+> (`127.0.0.1`) và **không có đường ghi nào** — nó không sửa được gì trong repo. Máy chưa cài
+> Node.js thì `Xem-bang.cmd` nói ra bằng tiếng Việt trong một cửa sổ chờ Đức đọc, không nháy
+> rồi tắt.
+
+---
+
 ## Việc chỉ Claude làm được — và cách làm thay
 
 | Việc | Vì sao | Làm thay bằng gì |

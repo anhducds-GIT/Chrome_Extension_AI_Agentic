@@ -1018,3 +1018,35 @@ trùng byte cuối phần trước (đã đổi sang đẳng thức), con kia b�
 là **bẫy của bộ đo**, ghi ở protocol mục 4.
 
 **Còn mở:** việc ④ (Codex viết ngắn các mục cũ) chưa làm, để lượt sau.
+## 2026-09-06 — `claude-ba-cua` · BANG-BA-CUA-01: ba cửa Đức tự mở bảng, một thư mục, một lõi
+
+Thư mục mới `bang-trang-thai/`. Cửa ① `Xem-bang.cmd` (nhấp đúp) · ② `Mo-may-chu.cmd` (máy chủ
+`127.0.0.1:4747`, nút Làm mới trong trang) · ③ `Bat-tu-chay.cmd` / `Tat-tu-chay.cmd` (mục Startup
+của người dùng, không cần quyền quản trị). Lõi chung `loi.mjs` — cả ba gọi đúng một hàm.
+
+**Bốn chốt của brief mục 2, và cách chúng được cài, không phải hứa:** ⑴ có phiên giữ `_code` thì
+KHÔNG `import` bộ sinh — chốt nằm ở đường nạp, và trang nói ra câu đó thay vì đưa bảng cũ trông
+như mới; ⑵ chỉ sinh bảng HTML; ⑶ cả thư mục không nạp mô-đun chạy tiến trình con nào, nên không
+commit / đẩy / nhận khoá được; ⑷ nhịp 30 giây so dấu vân tay repo (đọc `.git/HEAD` + mốc bảng
+quyền bằng hệ thống file), không sinh theo sự kiện file.
+
+**Bản ra không nằm trong repo:** `BANG.html` + `trang-thai.json` vào `.gitignore`, và ba cửa không
+chạm byte nào của bốn artifact đã commit — chạy cả ba trong lúc một lane giữ cả ba khoá thì
+`git status` trước = sau.
+
+**Chạy thật, không suy luận.** Cửa ① sinh bảng 108 KB và mở trình duyệt; cửa ② trả `200 /` ·
+`303 /lam-moi` · `405 POST` · `404` đường lạ; cửa ③ cài xong chạy nền ẩn, `/lam-moi` lúc đang giữ
+`_code` cho ra đúng băng "ĐANG NGỪNG SINH LẠI" mà vẫn giữ nguyên nội dung bảng cũ; gỡ xong mục
+Startup biến mất và tiến trình tự dừng trong 30 giây. Chết im lặng: trỏ vào repo không tồn tại →
+thoát sạch, không cửa sổ lỗi.
+
+**Số:** `tests/bang-ba-cua-smoke.mjs` 14 khối · **4 đột biến, 4 bị bắt** (gỡ chốt ⑴ · cho chạy bộ
+sinh đối chiếu tính năng · thêm một đường ghi vào máy chủ · bỏ câu trang tự nói giới hạn). Mỏ neo
+đếm được **1** ở cả bốn lượt, không lượt nào ra 0.
+
+**Ba chỗ vấp, đã vá, lý do ghi ngay tại chỗ sửa trong mã:** gọi trần `timeout` và `wscript` thì
+hỏng; bộ sinh không in `<meta charset>` nên lõi tự thêm — **không sửa bộ sinh**, để bản đã commit
+giữ nguyên từng byte.
+
+**Còn mở:** `N-07` — trang vẫn in "Nhờ AI: Làm mới bảng trạng thái", nay đã sai. Cần sửa bộ sinh
+rồi sinh lại artifact, không nằm trong brief này.

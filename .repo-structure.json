@@ -51,6 +51,12 @@
       "ownership_mode": "root",
       "note": "giao thức uỷ thác MVP"
     },
+    "bang-trang-thai/": {
+      "steward": "_root",
+      "mutability": "rw",
+      "ownership_mode": "root",
+      "note": "ba cửa Đức tự mở bảng trạng thái: nhấp đúp · máy chủ tại chỗ · canh nền"
+    },
     "docs/": {
       "steward": "_docs",
       "mutability": "rw",

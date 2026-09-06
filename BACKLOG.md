@@ -589,3 +589,22 @@ tuần có 19 nhóm cho 19 mục, tức là không phân loại gì cả.
   nội dung từng method dính nhà cung cấp), không phải chép file.
 - **KHÔNG phải cách sửa:** đi hợp nhất ba bản `bridge-core.js` trong lượt này. Đó là việc lớn,
   chưa ai chốt, và nó không nằm trong `SEED v0.1`.
+
+---
+
+## N-07 · Trang bảng vẫn bảo Đức "Nhờ AI làm mới bảng" — nay Đức tự làm được, câu đó thành sai
+
+- **nhóm:** bang
+- **đóng khi:** lệnh: `node scripts/build-overview.mjs` sinh ra trang không còn câu bảo Đức đi nhờ
+  AI, mà chỉ ra thư mục `bang-trang-thai/`
+- **mở:** 2026-09-06 · lane `claude-ba-cua`
+- **vùng:** `_code` (bộ sinh) + sinh lại artifact ở `_root`
+- **vì sao:** đoạn JS trong trang bật cờ khi bảng quá 7 ngày và in *"Nhờ AI: Làm mới bảng trạng
+  thái."* Từ hôm nay Đức có ba cửa tự làm, nên câu đó chỉ dẫn Đức đi đúng cái đường mà lượt này
+  vừa xoá bỏ — và nó là chữ Đức đọc, không phải chữ máy.
+- **vì sao KHÔNG sửa trong lượt này:** sửa bộ sinh thì bản HTML đã commit ở gốc repo lệch HEAD
+  ngay, nên phải sinh lại và commit kèm. Việc đó không nằm trong `BRIEF-BANG-BA-CUA-01`, và
+  lượt này cố ý không chạm một byte nào của bộ sinh — chính vì thế mà bốn artifact đã commit
+  không đổi và không phiên nào bị chặn đẩy oan.
+- **đỡ tạm ở đâu:** băng thông báo mà ba cửa chèn nằm NGAY TRÊN cờ đó và nói mốc sinh thật, nên
+  Đức không bị dẫn sai — chỉ là có hai câu nói về cùng một chuyện.
