@@ -770,3 +770,5 @@ file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemi
   Ghi chú cho phiên sau: `tests/flow-zoom-control-reason.mjs` **không** chết — nó trích thân hàm thật
   (bắt 5/16). Nhưng nó tiêm một `isChatGPTUrl` GIẢ dựng lại từ regex trong chính file test, nên đúng
   cái cổng của N-13 thì nó không canh được. Hai file bổ nhau, giữ cả hai.
+
+- **ĐÓNG F-28** · 2026-09-07 · lane `claude-assistant` · **Đức duyệt xoá** (07/09, nguyên văn: *"ok, cho xoá file chết đó đi"*). Đã `git rm tests/chatgpt-zoom-control-smoke.mjs`. Suite gói **102 → 101** — file đó đóng góp đúng **một** phép kiểm, và phép kiểm đó bắt **0/16** đột biến, tức nó chưa bao giờ canh gì. Mấy khẳng định HTML/CSS còn sống đã được chép sang phần "nửa tĩnh" của `tests/zoom-control-smoke.mjs` (bắt 16/16) trước khi xoá, nên không mất khẳng định nào. Chuỗi `chatgpt.com` cũng rời khỏi `tests/` của gói Flow theo. `tests/flow-zoom-control-reason.mjs` **giữ nguyên** — nó không chết, bắt 5/16, và bổ cho bản mới.
