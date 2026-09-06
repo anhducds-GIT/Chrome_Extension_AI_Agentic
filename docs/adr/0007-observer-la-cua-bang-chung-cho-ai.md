@@ -1,5 +1,5 @@
 ---
-status: Accepted
+status: Superseded by ADR-0009
 adr: 0007
 date: 2026-09-06
 deciders: Đức
@@ -67,4 +67,4 @@ Nên bất biến số một, ghi ở đây để mọi phiên sau đọc trư�
 
 ## Trạng thái
 
-Accepted
+Superseded by ADR-0009 — Đức mở rộng phạm vi 06/09: Scouter tương tác đầy đủ quyền.
