@@ -883,3 +883,39 @@ Không tự sửa: `scripts/` là `_code` và gốc repo là `_root`, cả hai �
 `STATUS.md`/`manifest.json` ở gốc, và có phép ghim canh trường hợp repo **không có** đơn vị
 gốc — `.repo-structure.json` đã lường trước chuyện này (`root_dir null = repo không có đơn vị
 con`), nên đường ngược lại cũng cần được khai chứ không gõ cứng.
+
+## N-10 · Trang bảng phụ thuộc ĐỒNG HỒ — đúng cái bệnh `AGENTS.md` viết ra để cấm
+
+**Đo 06/09** (`claude-flow-active`). Sinh lại `DASHBOARD-Chrome-Extension-AI-Agentic.html`
+hai lần cách nhau ít phút, **không dữ liệu nào đổi**, mà file vẫn khác đúng 2 dòng:
+
+```
+cũ : <span class="mn">Nhận vùng dưới một giờ</span>
+mới: <span class="mn">Nhận vùng 1 giờ trước</span>
+```
+
+Trang nhúng **tuổi của lượt nhận khoá tính theo đồng hồ**. Chính `AGENTS.md` đã viết về file
+này: *"Nội dung suy hoàn toàn từ HEAD, cố ý … nếu nó phụ thuộc giờ đồng hồ thì sang ngày mới
+là mọi phiên bị chặn push dù không dữ liệu nào đổi."* Luật đúng, nhưng thực tế không theo —
+và nó nổ ở quy mô **giờ**, không phải ngày, nên nó nổ thường xuyên hơn nhiều.
+
+**Hậu quả đo được:** `safe-push` đòi bản sinh khớp HEAD. Sinh xong, commit, chạy `safe-push`
+— nếu đồng hồ vượt một mốc trong khoảng đó thì **lại lệch**. Ngày 06/09 lane này thử đúng ba
+lượt liên tiếp và không lượt nào qua. Không lane nào đẩy được một cách tin cậy, và không ai
+làm gì sai cả.
+
+**Nặng thêm vì hai chuyện cộng dồn cùng lúc:**
+① `feature-parity.mjs` đếm số dòng từ **cây làm việc**, nên nó lệch ngay khi một lane khác
+đang sửa dở một file — kể cả file chẳng liên quan gì tới lane đang đẩy.
+② nhiều lane commit liên tục, nên HEAD là mục tiêu di động: sinh theo HEAD xong thì HEAD đã
+khác. Ba thứ này chồng lên nhau biến cổng xuất bản thành một cuộc đua mà ai cũng thua.
+
+**Đóng khi:** sinh trang hai lần cách nhau vài giờ trên cùng một HEAD cho ra file **giống hệt
+từng byte**, và có phép ghim canh điều đó (sinh hai lần với đồng hồ giả cách nhau 26 giờ, so
+băm). Tuổi tương đối muốn hiện thì để đoạn JS trong trang tự tính lúc MỞ trang — đúng cách
+trang này đang làm với ngày sinh, chứ không nướng sẵn vào file.
+
+**Chưa tự sửa:** `scripts/` là `_code`. Đức đã chốt cho `claude-flow-active` mượn `_code`
+(06/09), nhưng lúc kiểm thì lane `claude-scouter-seed` **đang sửa dở** `scripts/build-dashboard.mjs`
+và `tests/build-dashboard-smoke.mjs` trong chính vùng đó. Nhận khoá lúc ấy là giẫm chân thật,
+nên lane này dừng lại và báo Đức thay vì dùng quyền vừa được cho.
