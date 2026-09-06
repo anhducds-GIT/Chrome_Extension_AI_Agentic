@@ -511,3 +511,27 @@ thành `en` và mở **F-32** cho phần chưa đo — sửa lời khai, không 
 
 **Chưa xong:** còn cách nhận video sinh ra (nhà mới không còn thẻ `<video>`), và một lượt đo
 lại sau khi Đức nạp tiện ích để xác nhận `composer_found` nay là `true`.
+
+## 2026-09-06 — `claude-flow-active`: nhận diện video nhà mới — suýt ghi ảnh đầu vào thành đầu ra
+
+Đo lại sau khi Đức nạp tiện ích: `composer_found: true`, cụm nút dựng được, nút tạo tìm thấy.
+Hai vá trước ăn. Bằng chứng: `evidence/F31-dom-probe-sau-va-20260906.json`.
+
+**Bước ③.** Nhà mới không còn thẻ `<video>`; video hiện bằng ảnh đại diện trong
+`<flow-video-tile>`. Nhưng **ảnh Đức tải lên dùng đúng cùng dạng địa chỉ** và cũng nằm trong
+một tile — chỉ khác thẻ bọc `<flow-image-tile>`. Nhận theo địa chỉ là ghi ảnh đầu vào thành
+video đầu ra: không báo lỗi, không hỏng gì thấy được, **chỉ sai sổ**.
+
+Nên selector **neo vào thẻ bọc**, và cố ý không dùng `alt` — alt bị dịch theo ngôn ngữ, đúng
+bẫy F-32. Phép ghim đọc thẳng file bằng chứng để tự chứng minh cái bẫy còn đó, và **tự báo hết
+lý do tồn tại** nếu Google tách hai dạng địa chỉ. Đột biến **8/8**, suite **99/99**.
+
+**Một kết luận vội, đã tự bác trước khi kịp ghi vào sổ.** Thấy 5/13 mã ảnh đổi sau khi tải lại
+trang, tôi định kết luận mã không dùng làm định danh được. Giả thuyết thứ hai giải thích cùng
+dữ liệu: trang dùng danh sách cuộn ảo. Đo thêm một lượt không tải lại → **13/13 giống nhau**.
+
+**Mở F-33:** harness hành vi so selector **bằng chữ** nên im lặng trả rỗng khi adapter có hai
+nhánh — ba test đỏ vì harness sai, không phải code sai. Đã sửa harness; còn nợ là harness vẫn
+chưa dựng được tile của nhà mới, nên đường đó mới chỉ có test tĩnh canh.
+
+**Còn lại trước khi dám chạy job:** F-32 — nhãn nút tạo khi giao diện để tiếng Việt.

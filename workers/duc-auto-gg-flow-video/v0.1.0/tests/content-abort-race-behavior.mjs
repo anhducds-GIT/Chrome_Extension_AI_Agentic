@@ -35,7 +35,11 @@ const document = {
   querySelectorAll(selector) {
     if (selector === "button") return [videoModeSummary, createButton];
     if (selector.includes("contenteditable")) return [composer];
-    if (selector === "video") return videos;
+    // Trinh duyet that hieu danh sach selector ngan bang dau phay; harness nay
+    // truoc 06/09 so BANG cho nen no im lang tra [] ngay khi adapter them mot
+    // nhanh thu hai (nha moi dung <flow-video-tile img>). Harness co diem mu la
+    // harness noi doi — cung dung cai bay da gap o F-26.
+    if (String(selector).split(",").some((phan) => phan.trim() === "video")) return videos;
     return [];
   },
   querySelector: () => null,

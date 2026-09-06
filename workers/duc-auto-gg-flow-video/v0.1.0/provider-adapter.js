@@ -43,7 +43,17 @@
     quotaExceededAnchor: null,
     // F1 conclusions 1 and 6: completion is a new stable media id, not a
     // styled-components class, progressbar, busy flag, or Stop button.
-    videoSelector: "video",
+    // Nha moi (do that 06/09, evidence/F31-dom-probe-sau-va-20260906.json):
+    // trang KHONG con the <video> nao (dem duoc 0). Video hien ra bang anh dai
+    // dien <img> nam trong <flow-video-tile>.
+    //
+    // VA DAY LA CHO SUYT SAI: anh Duc TAI LEN cung dung y het dang dia chi
+    // (flow.google.com/asb/<ma>) va cung nam trong mot tile — chi khac the boc:
+    // <flow-image-tile>. Nhan dien theo DIA CHI la ghi nham anh dau vao thanh
+    // video dau ra. Nen selector NEO vao <flow-video-tile>, va co y KHONG dung
+    // thuoc tinh alt ("Generated video thumbnail") lam dieu kien: alt la chu cho
+    // nguoi doc nen no bi dich theo ngon ngu, y het cai bay nhan nut o F-32.
+    videoSelector: "video, flow-video-tile img",
   });
 
   const TIMING = Object.freeze({
@@ -549,9 +559,20 @@
   function videoIdFromSrc(src) {
     try {
       const parsed = new URL(String(src || ""));
-      if (parsed.origin !== "https://labs.google" || parsed.pathname !== "/fx/api/trpc/media.getMediaUrlRedirect") return null;
-      const values = parsed.searchParams.getAll("name");
-      return values.length === 1 && values[0] ? values[0] : null;
+      // Nha cu: id nam o tham so ?name= cua duong chuyen huong media.
+      if (parsed.origin === "https://labs.google" && parsed.pathname === "/fx/api/trpc/media.getMediaUrlRedirect") {
+        const values = parsed.searchParams.getAll("name");
+        return values.length === 1 && values[0] ? values[0] : null;
+      }
+      // Nha moi (06/09): id nam ngay trong duong dan /asb/<ma>. Doi DUNG MOT
+      // doan sau /asb/ va doan do phai khong rong — mot duong dan nhieu doan
+      // la thu khac, khong phai anh dai dien.
+      if (parsed.origin === "https://flow.google.com") {
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        if (parts.length === 2 && parts[0] === "asb" && parts[1]) return parts[1];
+        return null;
+      }
+      return null;
     } catch (_) {
       return null;
     }

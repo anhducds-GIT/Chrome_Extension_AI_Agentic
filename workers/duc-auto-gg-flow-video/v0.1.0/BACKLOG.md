@@ -656,3 +656,32 @@ file trong repo**, nên phải để Đức chốt. Hai gói kia (`duc-auto-gemi
   Cố ý **không đoán** chuỗi tiếng Việt: đoán sai ở đây là bấm nhầm nút.
   **Đóng khi:** có bản `dom_probe` trên giao diện tiếng Việt của `flow.google.com` lưu trong
   `evidence/`, và nhãn đo được đã vào danh sách kèm trích nguồn.
+
+- **F-31 · BƯỚC ③ XONG 06/09 — và nó suýt thành lỗi ghi sai sổ, không phải lỗi hỏng.**
+  Nhà mới không còn thẻ `<video>` nào; video hiện ra bằng ảnh đại diện `<img>` trong
+  `<flow-video-tile>`. **Ảnh Đức TẢI LÊN dùng đúng cùng dạng địa chỉ** (`flow.google.com/asb/<mã>`)
+  và cũng nằm trong một tile — chỉ khác thẻ bọc là `<flow-image-tile>`. Nhận theo địa chỉ,
+  cách tự nhiên nhất khi nhìn dữ liệu, là **ghi ảnh đầu vào thành video đầu ra**: không báo
+  lỗi, không hỏng gì thấy được, chỉ sai sổ.
+  **Vá:** selector **neo vào thẻ bọc** (`video, flow-video-tile img`), giữ nhánh `<video>` của
+  nhà cũ; hàm lấy id thêm nhánh `/asb/<mã>` đòi **đúng một đoạn** sau `/asb/`.
+  Cố ý **không** dùng thuộc tính `alt` làm điều kiện — alt là chữ cho người đọc nên bị dịch
+  theo ngôn ngữ, y hệt cái bẫy của F-32.
+  **Ghim:** `tests/flow-video-detection-new-home.mjs` đọc THẲNG file bằng chứng, khẳng định hai
+  loại ảnh vẫn cùng dạng địa chỉ — nếu Google tách chúng ra thì phép kiểm tự nói nó hết lý do
+  tồn tại, thay vì âm thầm canh một chuyện không còn đúng. Đột biến **8/8 bị bắt**.
+  **Một kết luận vội đã tự bác:** thấy 5/13 mã ảnh đổi sau khi tải lại trang, suýt kết luận
+  "mã không dùng làm định danh được". Giả thuyết thứ hai giải thích cùng dữ liệu — trang dùng
+  danh sách cuộn ảo (`cdk-virtual-scroll-viewport`) nên tập ảnh được vẽ đổi theo chỗ cuộn. Đo
+  thêm một lượt **không** tải lại: **13/13 giống nhau**. Mã ổn định trong một phiên.
+
+- **F-33** · [ĐO 06/09] **Harness hành vi có điểm mù, và harness nói dối thì tệ hơn không có.**
+  `flow-video-safety-behavior.mjs` và `content-abort-race-behavior.mjs` giả lập
+  `querySelectorAll` bằng cách so **BẰNG CHỮ** với `"video"`, nên chúng im lặng trả rỗng ngay
+  khi adapter thêm nhánh thứ hai — trong khi trình duyệt thật hiểu danh sách ngăn bằng dấu
+  phẩy. Ba test đỏ vì lý do này chứ không phải vì code sai. Đã sửa harness cho khớp cách
+  trình duyệt hiểu (cùng cái bẫy đã gặp ở F-26).
+  **Còn nợ:** harness vẫn chỉ dựng `<video>` của nhà cũ, nên **đường nhà mới chưa có test hành
+  vi nào** — nó mới chỉ được canh bằng test tĩnh.
+  **Đóng khi:** harness dựng được cả tile `<flow-video-tile img>` của nhà mới, và một đột biến
+  vào đường quy kết của nhà mới làm test hành vi đỏ.

@@ -56,7 +56,11 @@ assert.ok(!adapter.SELECTORS.composer.includes('[contenteditable="true"]'),
 assert.deepEqual([...adapter.SELECTORS.send], [], "dead Gemini Send aria selectors are explicit empty arrays");
 assert.deepEqual([...adapter.SELECTORS.stop], [], "Flow has no Stop button during generation");
 assert.deepEqual([...adapter.SELECTORS.fileInput], ['input[type="file"][accept*="image"]']);
-assert.equal(adapter.SELECTORS.videoSelector, "video");
+// Nha moi (06/09): trang khong con the <video> nao; video hien bang <img> trong
+// <flow-video-tile>. Anh Duc TAI LEN cung dang dia chi va cung nam trong tile,
+// chi khac the boc <flow-image-tile> — nen selector phai NEO vao the boc.
+// Ly le day du + bang chung: tests/flow-video-detection-new-home.mjs
+assert.equal(adapter.SELECTORS.videoSelector, "video, flow-video-tile img");
 assert.doesNotMatch(adapterSource, /[.#]sc-[a-z0-9]/i, "adapter never binds to styled-components classes");
 
 // FLOW-04, after the live ancestry trace of 2026-08-28 corrected two wrong

@@ -1,0 +1,557 @@
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-441f7255-6cdf-45c4-824f-bb5b828647e4",
+  "ok": true,
+  "result": {
+    "attachmentPending": false,
+    "busy": false,
+    "buttons": [
+      {
+        "aria": "Back button to go to previous page",
+        "chain": "nav > flow-navigation-header > div > div > header",
+        "cls": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-tooltip-trigger ",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "arrow_back"
+      },
+      {
+        "aria": "More options for the project",
+        "chain": "div > div > header > flow-tile-view-header > div",
+        "cls": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-menu-trigger mat",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "more_vert"
+      },
+      {
+        "aria": "Search",
+        "chain": "div > div > flow-search-bar > div > div",
+        "cls": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-tooltip-trigger ",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "search"
+      },
+      {
+        "aria": "Filtering and sorting options",
+        "chain": "div > flow-search-bar > div > div > header",
+        "cls": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-tooltip-trigger ",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "filter_list"
+      },
+      {
+        "aria": "Add media menu",
+        "chain": "div > div > div > div > header",
+        "cls": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-menu-trigger mat",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "add"
+      },
+      {
+        "aria": "Product help",
+        "chain": "div > div > div > div > header",
+        "cls": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-tooltip-trigger ",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "help"
+      },
+      {
+        "aria": "Tile grid settings",
+        "chain": "div > div > div > div > header",
+        "cls": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-menu-trigger mat",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "settings_2"
+      },
+      {
+        "aria": "More options",
+        "chain": "flow-more-options-menu > div > div > div > div",
+        "cls": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-menu-trigger mat",
+        "disabled": false,
+        "in_composer_cluster": false,
+        "testid": "",
+        "txt": "more_vert"
+      },
+      {
+        "aria": "Add ingredients to the prompt box",
+        "chain": "div > flow-add-menu > div > div > flow-base-prompt-box",
+        "cls": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-tooltip-trigger ",
+        "disabled": false,
+        "in_composer_cluster": true,
+        "testid": "",
+        "txt": "add"
+      },
+      {
+        "aria": "",
+        "chain": "flow-agent-mode-toggle-chip > div > div > flow-base-prompt-box > div",
+        "cls": "agent-mode-chip",
+        "disabled": false,
+        "in_composer_cluster": true,
+        "testid": "",
+        "txt": "Agent"
+      },
+      {
+        "aria": "Settings trigger",
+        "chain": "div > div > div > flow-base-prompt-box > div",
+        "cls": "mdc-button mat-mdc-button-base settings-trigger-button mdc-button--unelevated ma",
+        "disabled": false,
+        "in_composer_cluster": true,
+        "testid": "",
+        "txt": "Video · 360p · 8s crop_16_9 x2"
+      },
+      {
+        "aria": "Start generation",
+        "chain": "flow-generate-icon-button > div > div > div > flow-base-prompt-box",
+        "cls": "mdc-icon-button mat-mdc-icon-button mat-mdc-button-base generate-icon-button mat",
+        "disabled": true,
+        "in_composer_cluster": true,
+        "testid": "",
+        "txt": "arrow_forward"
+      }
+    ],
+    "captured_at": "2026-09-06T16:00:56.251Z",
+    "composerFound": true,
+    "composer_scope_hops": 4,
+    "composer_scope_resolved": true,
+    "composer_scope_trace": [
+      {
+        "buttons": 0,
+        "hop": 1,
+        "labels": [],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 0,
+        "hop": 2,
+        "labels": [],
+        "tag": "flow-rich-text-editor",
+        "text_entries": 1
+      },
+      {
+        "buttons": 0,
+        "hop": 3,
+        "labels": [],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 4,
+        "labels": [
+          "add",
+          "Agent",
+          "Video · 360p · 8s crop_16_",
+          "arrow_forward"
+        ],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 5,
+        "labels": [
+          "add",
+          "Agent",
+          "Video · 360p · 8s crop_16_",
+          "arrow_forward"
+        ],
+        "tag": "flow-base-prompt-box",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 6,
+        "labels": [
+          "add",
+          "Agent",
+          "Video · 360p · 8s crop_16_",
+          "arrow_forward"
+        ],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 7,
+        "labels": [
+          "add",
+          "Agent",
+          "Video · 360p · 8s crop_16_",
+          "arrow_forward"
+        ],
+        "tag": "div",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 8,
+        "labels": [
+          "add",
+          "Agent",
+          "Video · 360p · 8s crop_16_",
+          "arrow_forward"
+        ],
+        "tag": "flow-prompt-box-instruction-card-wrapper",
+        "text_entries": 1
+      },
+      {
+        "buttons": 4,
+        "hop": 9,
+        "labels": [
+          "add",
+          "Agent",
+          "Video · 360p · 8s crop_16_",
+          "arrow_forward"
+        ],
+        "tag": "flow-prompt-box",
+        "text_entries": 1
+      },
+      {
+        "buttons": 12,
+        "hop": 10,
+        "labels": [
+          "arrow_back",
+          "more_vert",
+          "search",
+          "filter_list",
+          "add",
+          "help",
+          "settings_2",
+          "more_vert"
+        ],
+        "tag": "flow-project-page",
+        "text_entries": 3
+      }
+    ],
+    "customTags": [
+      "aisandbox-root",
+      "flow-banner",
+      "router-outlet",
+      "flow-project-shell",
+      "flow-project-page",
+      "flow-hats-survey",
+      "mat-menu",
+      "flow-media-trash-context-menu",
+      "flow-loading-page",
+      "flow-tile-view-header",
+      "flow-navigation-header",
+      "mat-icon",
+      "flow-editable-text",
+      "flow-search-bar",
+      "flow-more-options-menu",
+      "flow-header-user-icon",
+      "flow-user-tier-chip",
+      "flow-project-sidenav-container",
+      "mat-sidenav-container",
+      "mat-sidenav",
+      "flow-project-nav-list",
+      "mat-nav-list",
+      "mat-list-item",
+      "mat-divider",
+      "mat-sidenav-content",
+      "flow-credit-banner",
+      "cdk-virtual-scroll-viewport",
+      "flow-grid-tile-container",
+      "flow-tile-container",
+      "flow-video-tile",
+      "flow-video-hotbar",
+      "flow-hotbar-container",
+      "flow-tile-hover-footer",
+      "flow-image-tile",
+      "flow-image-hotbar",
+      "flow-prompt-box",
+      "flow-prompt-box-instruction-card-wrapper",
+      "flow-base-prompt-box",
+      "flow-border-glow",
+      "flow-rich-text-editor",
+      "flow-add-menu",
+      "flow-agent-mode-toggle-chip",
+      "flow-generate-icon-button",
+      "flow-media-upload",
+      "flow-applet-keep-alive",
+      "flow-footer-disclaimer"
+    ],
+    "fileInputs": [],
+    "generating": false,
+    "generationLimitBlocker": null,
+    "generation_mode": {
+      "credits": {
+        "credits_per_output": 6,
+        "duration": "8s",
+        "output_count": 2,
+        "resolution": "360p"
+      },
+      "label": "Video · 360p · 8s crop_16_9 x2",
+      "mode": "video"
+    },
+    "images": [
+      {
+        "alt": "",
+        "chain": "span > a > div > div > div",
+        "generated": false,
+        "rect": {
+          "h": 32,
+          "w": 32
+        },
+        "scheme": "https:",
+        "srcHead": "https://lh3.googleusercontent.com/ogw/AF2bZyg5H4XYHSS4c9fsMaZKo4GfZMp9"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUbEJg6fKSZorFpDSyqJpi0OXVB-yY0he8Lr_1"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUaq5i0hpBCkIrIsEEajw9TTmy9x3AZ8AKKTsK"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUacrlgJXM5AfRJplj3gOz3CmzYVifHpwVJNuE"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUaWftmd7Gqcl6WchczJrHBo6LQ5Ty7j7LzXiw"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUZbjPfeREli4fWHKzDBakSvjWfgl_kkdmeCVR"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUaeUjcLy-mF1Uibxx6xVD7QsYrD9rOTSBNbZR"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUblYxgWgN1SuJtG03_w3j__f0TDXdDd54d-ld"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUZKZLeq4fCGWa4rkJWGuY7WxX07kNGyh1FE-P"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUa4Z5ugF4uzquaxkSM1bD-kqf9vCrdoFp_nE9"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUb86oZf1Tsk1dQtvCcDJ3RDpSkO-7QR-uLCJQ"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUa3kwVf8jK8gOzVANybraRAJeIztshF0CnhPY"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 333,
+          "w": 592
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUbfrnulUyIQENEq2Sf5GYnemkJiII56SdqGa7"
+      },
+      {
+        "alt": "Generated video thumbnail",
+        "chain": "div > flow-video-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 286,
+          "w": 509
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUYUZ2TUuGm2ff7jpFHaGwNWtTSfJHlUgBl4ua"
+      },
+      {
+        "alt": "Tile displaying a user's image",
+        "chain": "div > flow-image-tile > div > flow-tile-container > flow-grid-tile-container",
+        "generated": false,
+        "rect": {
+          "h": 286,
+          "w": 430
+        },
+        "scheme": "https:",
+        "srcHead": "https://flow.google.com/asb/AB-nOUZXSbRHkbCk8r_SGegYvg_UMlO1nAEgn5ux8c"
+      }
+    ],
+    "runtime_contract": "flow04-composer-cluster-submit-v2",
+    "securityBlocker": null,
+    "selectorCounts": {
+      "attachmentPreview": [],
+      "composer": [
+        "[contenteditable=\"true\"][role=\"textbox\"] => 0",
+        "flow-rich-text-editor [contenteditable=\"true\"] => 1"
+      ],
+      "fileInput": [
+        "input[type=\"file\"][accept*=\"image\"] => 0"
+      ],
+      "generatedImageAltMarker": " => (not a selector)",
+      "responseContainer": [],
+      "send": [],
+      "stop": [],
+      "uploadMenuButton": [],
+      "uploadPending": [],
+      "videoSelector": "video => 0"
+    },
+    "sendFound": true,
+    "stopFound": false,
+    "surface": "CONVERSATION",
+    "surface_allowed": true,
+    "textboxes": [
+      {
+        "aria": "Editable text",
+        "chain": "div > flow-editable-text > span > nav > flow-navigation-header",
+        "cls": "editable-text-input",
+        "editable": false,
+        "placeholder": "",
+        "rect": {
+          "h": 32,
+          "w": 239
+        },
+        "role": "",
+        "tag": "input",
+        "valueLen": 15,
+        "visible": true
+      },
+      {
+        "aria": "Search",
+        "chain": "div > div > flow-search-bar > div > div",
+        "cls": "search-input",
+        "editable": false,
+        "placeholder": "",
+        "rect": {
+          "h": 32,
+          "w": 478
+        },
+        "role": "",
+        "tag": "input",
+        "valueLen": 0,
+        "visible": true
+      },
+      {
+        "aria": "",
+        "chain": "div > flow-rich-text-editor > div > div > flow-base-prompt-box",
+        "cls": "ProseMirror",
+        "editable": true,
+        "placeholder": "",
+        "rect": {
+          "h": 25,
+          "w": 701
+        },
+        "role": "",
+        "tag": "div",
+        "valueLen": 27,
+        "visible": true
+      },
+      {
+        "aria": "",
+        "chain": "div > div > body > html",
+        "cls": "g-recaptcha-response",
+        "editable": false,
+        "placeholder": "",
+        "rect": {
+          "h": 0,
+          "w": 0
+        },
+        "role": "",
+        "tag": "textarea",
+        "valueLen": 0,
+        "visible": false
+      }
+    ],
+    "truncated": false,
+    "url": "https://flow.google.com/project/575b20b1-e19c-4e33-b3ab-bedb5dc9e880",
+    "videos": []
+  },
+  "responded_at": "2026-09-06T16:00:56.257Z",
+  "served_by": {
+    "instance_id": "d8c543ee-1cb0-4363-98b0-cdffe687af47",
+    "label": "kaito"
+  }
+}

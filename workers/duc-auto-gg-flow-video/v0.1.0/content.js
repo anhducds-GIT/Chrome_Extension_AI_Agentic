@@ -382,6 +382,9 @@
     });
   }
 
+  // Nha cu tra ve mot <video>; nha moi tra ve <img> anh dai dien trong
+  // <flow-video-tile>. Ca hai deu doc duoc bang currentSrc/src, nen cho nay
+  // khong can re nhanh — nhung ten bien giu nguyen de khong dung hop dong.
   function videoSource(video) {
     return video?.currentSrc || video?.src || video?.querySelector?.("source")?.src || "";
   }
