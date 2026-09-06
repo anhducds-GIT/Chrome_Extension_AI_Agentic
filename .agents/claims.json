@@ -48,8 +48,8 @@
     "_docs": {
       "owner": "claude-assistant",
       "ai": "Claude",
-      "claimed_at": "2026-09-06T06:41",
-      "task": "ADR-0010 chot pham vi Scouter v0.1 + brief lot xay dau",
+      "claimed_at": "2026-09-06T07:35",
+      "task": "day gop roi tra",
       "released_at": null,
       "taken_from": "claude-exec-pushgate",
       "taken_by_duc_decision": "2026-09-04",
@@ -70,5 +70,5 @@
       "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
     }
   },
-  "_fingerprint": "d3805d70bafa1ac3"
+  "_fingerprint": "e2b32e1b58d40c0f"
 }
