@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-06",
-  "generated_commit": "9b2966d",
+  "generated_commit": "1c296ec",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -120,7 +120,7 @@
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
       "next_step": "Cho Scouter bấm và gõ được như tay người: mở nhóm lệnh Input của giao thức debug, đúng thứ tự bảng kiểm kê đã xếp. Phép đo ① ngày 06/09 đã chứng minh đường đó dùng được.",
-      "human_action": "Nạp lại extension trong Chrome từ đường dẫn MỚI workers/duc-scouter/v0.1.0 (bản cũ ở gốc repo không còn), rồi chọn tệp ghép cặp Bridge trong popup để mở cửa Bridge.",
+      "human_action": "Scouter đã đổi chỗ nên bản đang nạp trong Chrome không còn dùng được: gỡ nó ra rồi nạp lại từ thư mục mới của gói. Xong thì mở popup, chọn tệp ghép cặp Bridge. Đường dẫn đầy đủ và các bước ở đầu README của gói.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
