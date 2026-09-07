@@ -1225,3 +1225,30 @@ tôi commit; tôi không sửa file nào của họ.
 - **Còn mở:** `build-dashboard-smoke` nay là suite lớn nhất (77 giây), gần hết nằm ở khối Gate 7
   gọi lại `session-check` bằng tiến trình con. Đó **không phải việc lặp** — mỗi lượt một ca khác
   — nên bỏ nó là bỏ phép kiểm, và việc đó là quyết định của Đức, không phải của tôi.
+
+## 2026-09-07 · `claude-scouter-s05` — Scouter: đường ghi có phanh, Bridge có lưới đỡ
+
+**Việc.** Đóng `S-05` và `S-02` của gói `workers/duc-scouter`. Cả hai chờ Đức chốt từ 07/09,
+và Đức chốt cả hai trong một lượt: cái phanh theo đúng khuôn ba gói `duc-auto-*` (công tắc chế
+độ phát triển, mặc định TẮT, trần 50 lượt ghi mỗi lần mở khoá), và duyệt thêm quyền `alarms`.
+
+**Vì sao đáng làm ngay.** Từ 06/09 Scouter bấm được nút thật. Cho tới lượt này, thứ duy nhất
+đứng giữa một AI và một cú bấm là MỘT CÂU VĂN trong `AGENTS.md` của gói — luật viết cho người
+vận hành, không phải chốt trong mã.
+
+**Đo.** Đột biến kiểm mỏ neo khớp **58/58, giết 58, sống sót 0** (trước: 42/42). Phép ghim gói
+**7/7 PASS** (thêm `scouter-write-gate-smoke.mjs`, 14 khối). Live check với máy chủ Bridge
+**THẬT: ĐẠT 8/8** (trước 7/7). Cổng đóng phiên **XANH TOÀN BỘ**.
+
+**Quyết định ghi ở đâu.** `workers/duc-scouter/v0.1.0/docs/adr/0001-...` — ADR đầu tiên của gói
+này, vì cả hai câu chốt chỉ áp cho một gói chứ không cho cả repo.
+
+**Đẩy kèm ai (ADR-0005).** Không cuốn theo lane nào — 6 commit chưa đẩy đều mang nhãn
+`claude-scouter-s05`.
+
+**Việc kế cho phiên sau.** `S-06`: ba lệnh ghi **chưa từng chạm một nút thật**, và đó cũng là
+lượt hiệu chỉnh trần 50 — con số hiện là ước lượng chưa đo lần nào.
+
+**Một chỗ đo sai của công cụ, chưa sửa.** `scripts/what-next.mjs` báo gói Scouter "0 việc mở"
+trong khi sổ có 2, vì nó chỉ đếm mục trong khối `P1`/`P2`, không đếm mục dạng `## MỞ · S-xx`.
+Đã ghi vào `BACKLOG.md` gốc. Bảng nói sai thì phiên sau tưởng gói đó rảnh.

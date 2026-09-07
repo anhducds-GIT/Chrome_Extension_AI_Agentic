@@ -1086,3 +1086,12 @@ fixture chọn một đơn vị THẬT khác GPT, chọn theo thứ tự đườ
   mọi mục trong cây đều đúng loại — fixture giả cho hai ca này phải dựng một cây git nhỏ riêng.
 - **cách đo lại:** chép mỏ neo trong mục này vào một bộ đột biến (thay chuỗi, chạy suite, hoàn
   nguyên), và **đếm số chỗ mỏ neo khớp — ra 0 là công cụ đo hỏng, không phải "không có gì để sửa"**.
+
+- **N-10** · `scripts/what-next.mjs` đếm hụt việc mở của một gói: nó chỉ đọc mục trong khối
+  `P1`/`P2` của `BACKLOG.md`, nên mục đóng-mở dạng `## MỞ · S-xx` (kiểu mà `duc-scouter` đang
+  dùng theo luật "đóng mục bằng cách thêm một dòng ở cuối") **không được đếm**. Đo 07/09: bản
+  đồ báo `workers/duc-scouter — 0 việc mở` trong khi sổ có 2 mục `MỞ`. Hệ quả: phiên điều phối
+  đọc bảng sẽ tưởng gói đó rảnh và đi giao việc khác. **[ĐO]** `node scripts/what-next.mjs`
+  đối chiếu `grep -c "^## MỞ" workers/duc-scouter/v0.1.0/BACKLOG.md`.
+  · **đóng khi:** `what-next.mjs` đếm cả hai dạng mục, và có một phép ghim dựng một sổ nợ chứa
+  cả hai dạng rồi kiểm con số ra đúng. Khoá cần: `_code`.
