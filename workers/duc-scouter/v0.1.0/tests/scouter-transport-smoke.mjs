@@ -17,6 +17,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { PROTOCOL } from "../scripts/scouter-bridge-core.mjs";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -137,7 +138,7 @@ function makeRig(overrides = {}) {
     timers,
     dispatch: async (envelope) => {
       dispatched.push(envelope);
-      return { protocol: "duc-auto-chatgpt.bridge", version: 1, kind: "response", request_id: envelope.request_id, ok: true, result: {}, responded_at: "2026-09-06T10:00:00.000Z" };
+      return { protocol: PROTOCOL, version: 1, kind: "response", request_id: envelope.request_id, ok: true, result: {}, responded_at: "2026-09-06T10:00:00.000Z" };
     },
     ...overrides.options
   });

@@ -16,6 +16,7 @@
 import assert from "node:assert/strict";
 
 const core = await import("../scripts/scouter-bridge-core.mjs");
+const { PROTOCOL } = core;
 const { createSeedHandlers, SEED_CONSTANTS } = await import("../scripts/scouter-seed-core.mjs");
 
 /* Bản khai ĐỘC LẬP của test. Đừng đồng bộ nó với module — lệch nhau là tín hiệu, không phải lỗi. */
@@ -140,7 +141,7 @@ let requestCounter = 0;
 function request(method, params) {
   requestCounter += 1;
   return {
-    protocol: "duc-auto-chatgpt.bridge",
+    protocol: PROTOCOL,
     version: 1,
     kind: "request",
     request_id: `req-${String(requestCounter).padStart(6, "0")}`,
@@ -186,7 +187,7 @@ function request(method, params) {
   ];
   for (const response of ok) {
     assert.equal(response.ok, true, `việc hợp lệ bị chặn: ${JSON.stringify(response.error || {})}`);
-    assert.equal(response.protocol, "duc-auto-chatgpt.bridge");
+    assert.equal(response.protocol, PROTOCOL);
     assert.equal(response.kind, "response");
     assert.ok(response.responded_at.endsWith("Z"));
   }
@@ -223,7 +224,7 @@ function request(method, params) {
     const response = await dispatch(envelope);
     assert.equal(response.ok, false, `phong bì hỏng lọt qua: ${JSON.stringify(envelope)}`);
     assert.ok(["INVALID_ENVELOPE", "UNSUPPORTED_VERSION"].includes(response.error.code), response.error.code);
-    assert.equal(response.protocol, "duc-auto-chatgpt.bridge");
+    assert.equal(response.protocol, PROTOCOL);
     assert.ok("error" in response && !("result" in response));
   }
 }

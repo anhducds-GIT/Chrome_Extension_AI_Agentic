@@ -19,15 +19,25 @@ const files = fs.readdirSync(here).filter((name) => name.endsWith(".mjs") && !sk
  * Quét theo HÌNH DẠNG, không theo tên: `pilots/<bất kỳ>/tests/*.mjs`. Gõ cứng tên pilot vào đây
  * là đưa hiểu biết về một trang cụ thể vào seed, đúng thứ `seed-purity-smoke.mjs` canh. Pilot
  * thứ hai ra đời thì dòng này không phải sửa. */
+/* Suite của LÕI DÙNG CHUNG cũng chạy ở đây (07/09). Cùng lý do với pilot: cái gì phải nhớ mới
+ * chạy thì sẽ có lúc quên. Quét theo HÌNH DẠNG `_shared/<bất kỳ>/tests/*.mjs`, không gõ cứng
+ * tên module nào — lõi thứ hai ra đời thì dòng này không phải sửa.
+ *
+ * Scouter là NGƯỜI TIÊU THỤ duy nhất của lõi hôm nay, nên nó gánh việc chạy. Có người tiêu thụ
+ * thứ hai thì việc này phải chuyển lên suite gốc — ghi vào `BACKLOG.md` khi tới lúc, đừng dựng
+ * sẵn một tầng cho một người dùng tưởng tượng. */
+const thuMucChung = path.resolve(here, "..", "..", "..", "_shared");   /* workers/_shared — CẠNH gói, không trong gói */
 const thuMucPilot = path.resolve(here, "..", "..", "pilots");
-if (fs.existsSync(thuMucPilot)) {
-  for (const ten of fs.readdirSync(thuMucPilot).sort()) {
-    const tests = path.join(thuMucPilot, ten, "tests");
+for (const goc of [thuMucChung, thuMucPilot]) {
+if (fs.existsSync(goc)) {
+  for (const ten of fs.readdirSync(goc).sort()) {
+    const tests = path.join(goc, ten, "tests");
     if (!fs.existsSync(tests)) continue;
     for (const f of fs.readdirSync(tests).sort()) {
       if (f.endsWith(".mjs") && !skip.has(f)) files.push(path.join(tests, f));
     }
   }
+}
 }
 
 let passed = 0;

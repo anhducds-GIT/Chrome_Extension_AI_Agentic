@@ -205,3 +205,22 @@ liệu nào (đo: 192 ô với 0 ô) — nên "200 OK" không bao giờ đủ đ
 · **đóng khi:** lệnh: một lượt chạy lấy đủ **5 ngày giao dịch liên tiếp**, ghi ra 5 file qua
 Bridge, chạy lại lượt hai KHÔNG tải lại ngày đã có, và đứt giữa chừng thì chạy tiếp được từ
 ngày còn thiếu — có phép ghim dựng máy chủ giả cho cả ba tính chất đó.
+
+## MỞ · S-11 (2026-09-07, `claude-scouter-s06`) — hai Bridge cũ vẫn nhận token trần
+
+**[ĐO 07/09]** `bridge-host.mjs` có ba bản chép trong repo, **khác nhau cả ba** (461/451/450
+dòng, ba mã băm). 11 dòng mà bản `duc-auto-chatgpt` có mà hai bản kia không có **chính là cái
+bắt tay hai chiều**: máy chủ phải chứng minh nó biết token TRƯỚC khi extension đưa token ra.
+
+Nghĩa là `duc-auto-gemini` và `duc-auto-gg-flow-video` tới hôm nay **vẫn đưa token ra ngay khi
+socket mở**. Trên loopback, một tiến trình chiếm được cổng trước là lấy được token.
+
+**KHÔNG tự sửa.** Cả hai gói đang ĐÓNG BĂNG (`.repo-structure.json` khối `frozen`), và luật
+mục 1 chỉ cho đọc. Ghi ra vì nó thật và đang nằm trên máy Đức, không phải để ai đó đi vá lén.
+
+Lõi dùng chung `workers/_shared/bridge-host/` nay **có** cái bắt tay đó, kèm phép ghim nối
+thật qua socket (`bat-tay-hai-chieu.mjs`) và hai con đột biến `X3` `X4` canh nó.
+
+· **đóng khi:** Đức chốt một trong hai — hoặc **mở băng** hai gói đó đủ lâu để chúng chuyển
+sang lõi chung (rồi đóng băng lại), hoặc **ghi một dòng lý do chấp nhận rủi ro** vì cả hai chỉ
+chạy trên loopback máy cá nhân. Không chốt thì mục này ở lại sổ — nó không tự hết.

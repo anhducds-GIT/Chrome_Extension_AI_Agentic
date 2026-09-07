@@ -642,10 +642,18 @@ BATCHES.push({
 /* ---- LỚP ĐỨNG TRƯỚC — ba chốt của tầng HTTP ------------------------------
  * `file-core.mjs` đã được canh ở trên. Bộ này canh thứ CHỈ tồn tại ở tầng HTTP, tức thứ mà một
  * phép ghim gọi thẳng hàm sẽ không bao giờ chạm tới. */
+/* ---- LÕI DÙNG CHUNG — ba chốt đã CHUYỂN NHÀ 07/09 -------------------------
+ * Ba con này trước nhắm vào `bridge/scouter-bridge-host.mjs` hồi nó còn là một lớp đứng
+ * trước. Đức chốt Scouter phải có host riêng, chốt chuyển sang `workers/_shared/`, và bộ đo
+ * lập tức báo BA MỎ NEO HỎNG — nó từ chối bỏ qua im lặng, đúng việc của nó.
+ *
+ * Lượt sửa mỏ neo lộ ra một lỗ thật: cái BẮT TAY HAI CHIỀU — 11 dòng mà hai gói kia không
+ * có, lý do chính khiến lõi được tách ra — **không có phép ghim hành vi nào**. Con `X3` sinh
+ * ra để canh nó, và `bat-tay-hai-chieu.mjs` sinh ra để giết `X3`. */
 BATCHES.push({
-  ten: "LỚP ĐỨNG TRƯỚC — ba chốt chỉ có ở tầng HTTP",
-  target: path.join(ROOT, "bridge", "scouter-bridge-host.mjs"),
-  pin: PIN_HOST,
+  ten: "LÕI DÙNG CHUNG — hai cổng vào của tầng HTTP",
+  target: path.join(ROOT, "..", "..", "_shared", "bridge-host", "bridge-host-core.mjs"),
+  pin: path.join(ROOT, "tests", "scouter-bridge-host-smoke.mjs"),
   mutants: [
     {
       ma: "X1",
@@ -657,24 +665,34 @@ BATCHES.push({
     {
       ma: "X2",
       ten: "Bỏ kiểm token ghép cặp — ai gõ đúng cổng cũng ghi được",
-      tim: '    if (!auth.startsWith("Bearer ") || !cungToken(pairing.token, auth.slice(7))) {',
-      thay: "    if (false) {",
-      soLan: 1
-    },
-    {
-      ma: "X3",
-      ten: "Tự nhận mọi method — thôi chuyển tiếp, extension thành người vô hình",
-      tim: "    if (!Object.hasOwn(METHOD_TAI_CHO, String(method))) {",
+      tim: "    if (!authorization.startsWith(" + Q + "Bearer " + Q + ") || !sameToken(pairing.token, authorization.slice(7))) {",
       thay: "    if (false) {",
       soLan: 1
     }
   ]
 });
 
-/* ---- NHÌN RÕ HƠN — ba phép dò mở thêm 07/09 ------------------------------
- * Đức chốt "add thêm tính năng" sau khi đối chiếu với hồ sơ năng lực. Ba con dưới đây canh
- * chỗ dễ hỏng nhất của chúng, và cả ba đều là kiểu hỏng IM LẶNG: cắt bớt mà không nói,
- * trả về rác thay vì thông tin, hoặc mặc định một định dạng luôn vượt trần. */
+BATCHES.push({
+  ten: "LÕI DÙNG CHUNG — bắt tay hai chiều",
+  target: path.join(ROOT, "..", "..", "_shared", "bridge-host", "bridge-host-core.mjs"),
+  pin: path.join(ROOT, "..", "..", "_shared", "bridge-host", "tests", "bat-tay-hai-chieu.mjs"),
+  mutants: [
+    {
+      ma: "X3",
+      ten: "QUAY VỀ BẢN GEMINI/FLOW: nhận token mà KHÔNG đòi máy chủ chứng minh trước",
+      tim: "        if (!challengeAccepted || message?.type !== " + Q + "auth" + Q + " || message?.role !== " + Q + "extension" + Q + " || !sameToken(pairing.token, message?.token)) {",
+      thay: "        if (message?.type !== " + Q + "auth" + Q + " || message?.role !== " + Q + "extension" + Q + " || !sameToken(pairing.token, message?.token)) {",
+      soLan: 1
+    },
+    {
+      ma: "X4",
+      ten: "Nhận nonce hình gì cũng được — rác cũng thành một lượt bắt tay",
+      tim: "          && /^[A-Za-z0-9_-]{43}$/.test(String(message?.nonce || " + Q + Q + "))) {",
+      thay: "          && String(message?.nonce) !== undefined) {",
+      soLan: 1
+    }
+  ]
+});
 BATCHES.push({
   ten: "NHÌN RÕ HƠN — ba phép dò quan sát",
   target: path.join(ROOT, "scripts", "observer-probes.mjs"),

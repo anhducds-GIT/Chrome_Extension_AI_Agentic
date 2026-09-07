@@ -14,19 +14,24 @@
  * "khung giống nhau; nội dung từng method dính nhà cung cấp") và **hợp đồng phong bì trên
  * dây** — cái sau không phải lựa chọn thẩm mỹ, xem khối dưới.
  *
- * ─── VÌ SAO PROTOCOL VẪN LÀ "duc-auto-chatgpt.bridge" ───────────────────────
- * Tên đó đọc như tên sai. Nó KHÔNG phải tên sản phẩm, nó là HẰNG SỐ TRÊN DÂY: máy chủ Bridge
- * (`workers/duc-auto-chatgpt/v0.1.0/duc-auto-chatgpt-loopback-bridge-host-v1/bridge-host.mjs`
- * dòng 145 và 207) so sánh CHÍNH XÁC chuỗi này ở cả chiều vào lẫn chiều ra. Cả Gemini lẫn
- * Flow Video cũng dùng đúng chuỗi này, dù chúng là sản phẩm khác. Đổi nó = Scouter không nối
- * được vào máy chủ đang có. Đây là thứ phải đổi CÙNG LÚC ở host, không phải đổi một mình.
+ * ─── TÊN GIAO THỨC LÀ CỦA CHÍNH SCOUTER (đổi 07/09) ────────────────────────
+ * Trước 07/09 chuỗi này là `"duc-auto-chatgpt.bridge"`, vì Scouter nối vào máy chủ của gói
+ * kia và máy chủ đó so sánh CHÍNH XÁC chuỗi đó ở cả hai chiều. Lý do đúng ở thời điểm ấy.
+ *
+ * Đức chốt 07/09: Scouter phải có host RIÊNG, để sau này nhân bản seed sang nhiều extension.
+ * Hai chỗ hỏng của cách cũ: Scouter phụ thuộc lúc chạy vào một gói ĐÃ ĐÓNG BĂNG, và mỗi bản
+ * clone lại mang tên một sản phẩm khác. Nay host của Scouter dựng trên lõi dùng chung
+ * `workers/_shared/bridge-host/`, và lõi đó NHẬN tên giao thức qua tham số.
+ *
+ * HAI ĐẦU MỘT SỢI DÂY: chuỗi dưới đây phải khớp `PROTOCOL` trong
+ * `bridge/scouter-bridge-host.mjs`. Nhân bản seed sang extension khác thì đổi cả hai.
  */
 
 import { NAMED_KEY_NAMES } from "./scouter-actions-core.mjs";
 
 /* ---- Hằng số trên dây (khớp bridge-host.mjs) ----------------------------- */
 
-export const PROTOCOL = "duc-auto-chatgpt.bridge";
+export const PROTOCOL = "duc-scouter.bridge";
 export const SUPPORTED_VERSIONS = Object.freeze([1]);
 export const MAX_ENVELOPE_BYTES = 1024 * 1024;
 

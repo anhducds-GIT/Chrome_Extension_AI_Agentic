@@ -10,6 +10,7 @@
  * KHÔNG có token nào trong repo — nó đọc từ tệp ghép cặp Đức chỉ ra. Luật gốc của Đức.
  */
 import fs from "node:fs";
+import { PROTOCOL } from "../../v0.1.0/scripts/scouter-bridge-core.mjs";
 import { createNguonHnx, LOAI_SAN_PHAM } from "./nguon-hnx.mjs";
 import { createVongLay, KET_QUA } from "./vong-lay.mjs";
 
@@ -36,8 +37,9 @@ if (!duongDanGhepCap) {
   process.exit(2);
 }
 const ghepCap = JSON.parse(fs.readFileSync(duongDanGhepCap, "utf8"));
-/* Lớp Scouter đứng TRƯỚC host cũ và nghe ở cổng kế tiếp — xem `bridge/scouter-bridge-host.mjs`. */
-const cong = Number(docCo("cong", ghepCap.port + 1));
+/* Scouter nay CÓ HOST RIÊNG (Đức chốt 07/09), nên nó nghe ở ĐÚNG cổng trong tệp ghép cặp.
+ * Bản trước cộng thêm 1 vì lúc đó có hai máy chủ chồng nhau — nay chỉ còn một. */
+const cong = Number(docCo("cong", ghepCap.port));
 const diaChi = `http://127.0.0.1:${cong}/v1/rpc`;
 
 let dem = 0;
@@ -47,7 +49,7 @@ async function goi(method, params) {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${ghepCap.token}` },
     body: JSON.stringify({
-      protocol: "duc-auto-chatgpt.bridge",
+      protocol: PROTOCOL,
       version: 1,
       kind: "request",
       request_id: `hnx-${Date.now()}-${dem}`,
