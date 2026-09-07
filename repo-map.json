@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-07",
-  "generated_commit": "d4f233d",
+  "generated_commit": "757de4e",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -119,13 +119,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Đo bấm và gõ trên một trang thử tự dựng: ba lệnh mới mới chỉ chạy trên trang giả trong phép ghim, chưa lần nào chạm một nút thật.",
-      "human_action": "Hai câu chờ Đức chốt: cái phanh cho đường ghi nên có hình dạng gì, và có cho thêm quyền hẹn giờ để Bridge tự nối lại khi máy chủ tắt lâu không. Ngoài ra: nạp lại extension trong Chrome, các bước ở đầu README của gói.",
+      "next_step": "S-06 — đo bấm và gõ trên một trang thử tự dựng: ba lệnh ghi mới chỉ chạy trên trang giả trong phép ghim, chưa lần nào chạm một nút thật. Đây cũng là lượt hiệu chỉnh trần 50, con số hiện là ước lượng.",
+      "human_action": "Nạp lại extension trong Chrome — manifest đổi (thêm quyền hẹn giờ) nên bản đang chạy không tự cập nhật. Muốn Scouter bấm thì mở popup, bật Chế độ phát triển; tắt thì nó chỉ nhìn.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Scouter nay bấm và gõ được như tay người, không chỉ nhìn. Đường ghi là một lõi riêng nên phần chỉ-đọc vẫn chứng minh được là chỉ đọc. Chưa có phanh nào cho đường ghi, và chưa lần nào bấm trên trang thật."
+      "open_item": "Scouter bấm và gõ được như tay người, và từ 07/09 đường ghi đã có phanh: công tắc trong popup, mặc định tắt, trần 50 lượt mỗi lần mở khoá, không method nào tự mở khoá được. Bridge cũng tự nối lại sau khi service worker ngủ. Còn thiếu đúng một thứ: chưa lần nào bấm trên một trang thật."
     }
   ],
   "active_work": [
@@ -153,7 +153,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "Đo bấm và gõ trên một trang thử tự dựng: ba lệnh mới mới chỉ chạy trên trang giả trong phép ghim, chưa lần nào chạm một nút thật.",
+      "title": "S-06 — đo bấm và gõ trên một trang thử tự dựng: ba lệnh ghi mới chỉ chạy trên trang giả trong phép ghim, chưa lần nào chạm một nút thật. Đây cũng là lượt hiệu chỉnh trần 50, con số hiện là ước lượng.",
       "rank": 4,
       "claim": null
     }
