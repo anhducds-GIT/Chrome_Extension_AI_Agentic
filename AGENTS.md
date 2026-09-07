@@ -85,11 +85,6 @@ nên hai việc không hề chồng nhau vẫn chặn nhau:
 | `_code` | `scripts/` + `tests/` |
 | `_root` | phần còn lại và các file ở tầng ngoài cùng |
 
-(`_template` đã bỏ ngày 03/09 — bộ khung dọn ra nhà riêng theo ADR-0001, không còn `template/`.)
-
-(Scouter đã rời `_root` + `_code` ngày 06/09 theo ADR-0013 — nay là gói riêng
-`workers/duc-scouter`, không còn chiếm hai khoá đông nhất repo cho một việc không liên quan.)
-
 Nhận đúng vùng mình đụng, không nhận cả gốc repo. Cổng đóng phiên sẽ nói tên khoá còn thiếu.
 Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.json`.
 
@@ -99,12 +94,8 @@ Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.js
 02/09 thấy **19% lượt nhận `_root` tồn tại CHỈ để chạy một bộ sinh rồi trả ngay**. Danh sách khai
 ở khối `generated` của `.repo-structure.json`.
 
-`FEATURE-PARITY.md` **cố ý không** nằm trong đó, và câu đó vẫn đúng: mục 2 của nó là chữ của
-người, nên chạm nó vẫn phải giữ `_root`. **Nhưng từ 07/09 nửa máy sinh của nó đã ra file riêng**
-— `FEATURE-PARITY-AUTO.md` — **và file riêng đó thì được miễn**
-([ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)). Nên một lane chỉ giữ khoá
-gói của mình vẫn sinh lại được bảng số và đẩy được; trước đó nó phải xin `_root`, và ngày 05/09
-hai lane bị chặn đẩy đúng vì thế.
+`FEATURE-PARITY.md` **cố ý không** nằm trong đó — mục 2 của nó là chữ của người, nên chạm nó
+vẫn phải giữ `_root`. Chi tiết ở mục 6.
 
 **File được MIỄN chia làm HAI LOẠI, và điều kiện khác nhau:**
 
@@ -170,24 +161,34 @@ Nhãn hỏng (rỗng · có dấu cách · hai nhãn trong một commit) thì Đ
 
 ## 3. Năm luật vàng — và bảy giới hạn cứng
 
-**Bảy giới hạn Đức chốt 2026-09-07.** Lý do: đo bảy ngày ra **400/725 commit (55%) chạm tài
-liệu + sổ nợ** và **68 (9%) chạm mã extension**; hạ tầng **44.239 dòng** lớn hơn mã sản phẩm
-**38.136 dòng**. Giàn giáo lớn hơn toà nhà, nên từ nay **xoá là thắng, thêm là thua**.
+**Bảy giới hạn Đức chốt 2026-09-07.** Lý do, **đo lại bảy ngày** (`--since=2026-08-31`, phân
+loại ưu tiên mã extension trước): trong **738 commit** chỉ **78 (11%)** chạm mã extension chạy
+thật, còn **468 (63%)** chạm tài liệu + sổ nợ và **142 (19%)** chạm artifact + bảng quyền. Hệ
+đang tự bảo trì chính nó, nên từ nay **xoá là thắng, thêm là thua**.
+
+> **Đừng dẫn lại câu *"hạ tầng lớn hơn mã sản phẩm"*** của bản giao việc gốc (44.239 > 38.136):
+> đếm lại bằng Node ra hạ tầng **45.200** dòng, mã `workers/` **89.262** — sản phẩm **hơn gấp
+> đôi**. Con số cũ sinh ra vì `wc -l` với hàng trăm đường dẫn **vượt trần đối số** rồi trả tổng
+> của mẻ cuối. Bảy giới hạn dưới đây đứng trên **tỉ lệ commit**, không trên số dòng.
 
 1. **Một gói sống một lúc.** Gói sống: `workers/duc-scouter`. Ba gói còn lại đóng băng (khai ở
    khối `frozen` của `.repo-structure.json`) — chỉ đọc, mã ở lại trên đĩa.
 2. **Cấm cài một tính năng hai lần.** Cần ở hai gói → vào `workers/_shared/` trước. Bằng chứng:
-   ba gói là fork của nhau, **37.601 dòng**, và mỗi lỗi phải sửa ba lần — 07/09 đúng ba lần.
+   ba gói `duc-auto-*` là fork của nhau, **82.252 dòng** (không phải 37.601 như bản giao việc
+   ghi), ba file `sidepanel.js` riêng dài **6.451 · 5.230 · 5.206** dòng — nên mỗi lỗi phải sửa
+   ba lần, và 07/09 đúng ba lần (phép kiểm zoom di sản, `N-14`).
 3. **`docs/` ≤ 8.000 dòng.** Nay **24.732** (`git ls-files 'docs/*' | xargs wc -l`). Cắt docs
    cần khoá `_docs`.
 4. **Sổ nợ hạ tầng ≤ 10 mục.** Nay **8** (`node scripts/backlog-check.mjs`).
 5. **File test bắt 0 đột biến thì XOÁ.** Một phép kiểm không bắt được gì vẫn thu thuế mọi phiên.
-6. **Tối đa 2 lane song song.** Bảy khoá được dựng cho sáu lane; với hai lane thì bảng khoá
-   phải co lại (`N-36` trong `BACKLOG.md`).
+6. **Song song thì tối đa 2 chat** — Đức nói rõ 07/09: *"lane ở đây tôi hiểu là 2 phiên chat với
+   AI; trong 1 chat mà bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn
+   ok"*. Nên **số tác vụ ngầm TRONG một chat không bị giới hạn**; bảng quyền chỉ để điều phối
+   những bên **không nói được với nhau**. Bảy khoá dựng cho sáu chat → phải co lại (`N-36`).
 7. **Một luật vào thì một luật ra.** Thêm luật vào file này phải **kể tên luật nó thay**, hoặc
    **đo được nó đã nổ mấy lần**. Mục này đổi lấy **chín dòng sổ tay** của ba gói đóng băng và
    **một khối bảng đối chiếu bị chép hai lần** (nó nói lại đúng điều dòng sổ tay đã nói) —
-   `wc -l AGENTS.md`: **296 → 290**.
+   `wc -l AGENTS.md`: **296 → 291**.
 
 ### Năm luật vàng
 
