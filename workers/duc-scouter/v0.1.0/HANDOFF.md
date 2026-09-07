@@ -314,3 +314,16 @@ cuối là *dạy seed được gì*. Playbook thì **chưa mở**: chưa thuầ
 playbook là văn tưởng tượng.
 
 **Đo.** Ghim gói **13/13**. Việc kế vẫn là `S-10`.
+
+**Ghi cho rõ vì nó là sự cố đa phiên thật, không phải chuyện vặt.** Sáu file của lượt này —
+ADR-0020, `TRIALS.md`, `seed-purity-smoke.mjs`, AGENTS/HANDOFF/ROADMAP của gói — **nằm trong
+commit `27a88ce7` của lane `claude-dong-bang-2`**, không phải commit của tôi. Tôi `git add` xong,
+lane kia commit bằng `-a`/`add -A` và cuốn cả phần đã dàn của tôi vào commit của họ.
+
+**KHÔNG sửa lịch sử** — đó là một trong ba việc phải hỏi Đức. Nội dung an toàn và đúng; cái sai
+là dòng `Lane:`, tức là **truy vết nguồn gốc**. Luật hiện có chặn *push* cuốn theo người khác
+(`safe-push --carry`), nhưng **không chặn *commit* cuốn theo người khác** — đây là lỗ đó, và nó
+vừa nổ. Đã ghi vào `BACKLOG.md` gốc.
+
+**Lượt đẩy này dùng `--carry`, lane bị cuốn theo: `claude-dong-bang-2`** (ADR-0005 duyệt thường
+trực, đổi lại phải kể tên).

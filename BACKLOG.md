@@ -454,3 +454,12 @@ Rủi ro của cách vá: một ADR nằm mãi ở `Proposed` thì nó là quy�
 như đã chốt. Nên nếu làm thì phải kèm phép đếm: ADR ở `Proposed` quá N ngày thì báo VÀNG.
 
 - **đóng khi:** lệnh: grep -c "status: Proposed" docs/_TEMPLATE-adr.md ra 1
+
+ - **A-01** · `git commit -a` cua mot lane cuon theo file DA DAN cua lane khac.
+  Luat hien co chan *push* cuon theo commit nguoi khac (`safe-push --carry`) nhung KHONG chan
+  *commit* cuon theo file da dan. Da no that 07/09: commit `27a88ce7` cua `claude-dong-bang-2`
+  chua 6 file cua `claude-scouter-s06`, nen dong `Lane:` quy sai nguon goc — dung loai sai ma
+  nhan `Lane:` sinh ra de chan. Khong sua lich su duoc (phai hoi Duc), nen ban ghi do o lai.
+  · **dong khi:** hoac co mot chot khien `git add` cua lane nay khong bi lane kia commit ho
+  (vi du: cong doc phien canh `git diff --cached` co file ngoai vung minh giu), hoac Duc chot
+  la chap nhan rui ro nay va ghi mot dong ly do.
