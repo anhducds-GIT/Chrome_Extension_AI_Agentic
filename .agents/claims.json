@@ -3,79 +3,82 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau. Gốc repo chia làm nhiều khoá (A2, 02/09): `_docs` cho docs/, `_code` cho scripts/ + tests/, `_template` cho template/, `_root` cho phần còn lại và các file ở tầng ngoài cùng. Chia vì 77% commit trong ngày 02/09 chạm gốc repo, và một khoá duy nhất chặn cả những việc không chồng nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-flow-zoom",
-      "ai": "Claude",
-      "claimed_at": "2026-09-06T17:43",
-      "task": "N-13 nut CHAT ZOOM hoi origin + N-14 thay phep kiem zoom di san bang ban trich than ham that",
-      "released_at": null,
-      "taken_from": "claude-f18-evidence",
-      "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)"
+      "owner": null,
+      "ai": null,
+      "claimed_at": "2026-09-06T18:11",
+      "task": "Duc duyet xoa file phep kiem chet chatgpt-zoom-control-smoke.mjs o goi Flow Video",
+      "released_at": "2026-09-06T18:14",
+      "taken_from": "claude-flow-zoom",
+      "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)",
+      "taken_by": "claude-assistant",
+      "taken_at": "2026-09-07T02:08",
+      "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "workers/duc-auto-gemini": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-06T17:44",
-      "task": "G-08 do lai tam module giong het giua hai nhanh, dung phep ghim chong troi dat",
-      "released_at": "2026-09-06T17:56",
+      "claimed_at": "2026-09-07T01:54",
+      "task": "G-02 nghiem thu bridge.sessions chi doc + G-01 mot luot live toi da 2 job, prompt moi",
+      "released_at": "2026-09-07T02:14",
       "taken_from": "claude-codex-ngan",
       "taken_by": "claude-gemini-hoan-thien",
       "taken_at": "2026-09-06T14:24",
       "duc_decision": "Duc chot 2026-09-06: Duc chot cho phien claude-gemini-hoan-thien lay khoa workers/duc-auto-gemini de dua goi Gemini ve khong con viec mo. Duc se phoi hop chay extension de nghiem thu live."
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-don-no",
-      "ai": "Claude",
-      "claimed_at": "2026-09-06T17:44",
-      "task": "N-14 phan goi GPT + B-20 B-24 code chet + B-25 cau loi tieng Viet + B-21 tai lieu ta sai duong cuu",
-      "released_at": null,
-      "taken_from": "claude-codex-ngan",
-      "taken_by": "claude-hang-doi",
-      "taken_at": "2026-09-06T14:46",
-      "duc_decision": "Duc chot 2026-09-06: Toi cho ban khoa luon. Duc giao truc tiep B-36 va B-27."
+      "owner": null,
+      "ai": null,
+      "claimed_at": "2026-09-07T01:36",
+      "task": "ADR-0015 nang tran run.trial len 900 giay, run.start van cam",
+      "released_at": "2026-09-07T08:30",
+      "taken_from": "claude-gpt-don-no",
+      "taken_by": "claude-assistant",
+      "taken_at": "2026-09-07T02:08",
+      "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "_root": {
-      "owner": "claude-k2-vung-mien-khoa",
-      "ai": "Claude",
-      "claimed_at": "2026-09-06T17:55",
-      "task": "N-15 mot dong cam noi claim.mjs vao ong o AGENTS.md muc 1 + dang ky phep ghim vao package.json",
-      "released_at": null,
-      "taken_from": "claude-assistant",
+      "owner": null,
+      "ai": null,
+      "claimed_at": "2026-09-07T02:05",
+      "task": "Sinh lai FEATURE-PARITY de mo cua day cho lane claude-tran-900",
+      "released_at": "2026-09-07T02:08",
+      "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
-      "taken_by": "claude-scouter-seed",
-      "taken_at": "2026-09-06T16:00",
-      "duc_decision": "Duc chot 2026-09-06: toi chot cho phien claude-scouter-seed lay khoa _root de chuyen Scouter ra nha rieng theo ADR-0013 va xay khung seed v0.1."
+      "taken_by": "claude-assistant",
+      "taken_at": "2026-09-07T02:08",
+      "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "_docs": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-06T16:02",
-      "task": "ADR-0013: sua 6 tai lieu tro duong dan Scouter cu",
-      "released_at": "2026-09-06T17:44",
-      "taken_from": "claude-exec-pushgate",
+      "claimed_at": "2026-09-06T19:13",
+      "task": "N-09: MULTIFLOW.md - luat nhan khoa truoc luot ghi dau + tin hieu chua thay dau vet la VANG",
+      "released_at": "2026-09-07T01:00",
+      "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
-      "taken_by": "claude-dieu-phoi",
-      "taken_at": "2026-09-05T09:51",
-      "duc_decision": "Duc chot 2026-09-05: phien claude-exec-pushgate da bao cao xong va khong con chay. Da kiem truoc khi giai phong: cay lam viec sach, 7 commit cua no da len origin theo Duc duyet carry, cong dong phien XANH TOAN BO. Duc uy quyen phien dieu phoi giai phong khoa cua phien khong con chay khi cay sach."
+      "taken_by": "claude-assistant",
+      "taken_at": "2026-09-07T01:00",
+      "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": "claude-k2-vung-mien-khoa",
-      "ai": "Claude",
-      "claimed_at": "2026-09-06T17:24",
-      "task": "N-09 K2 hien khoa chua thay dau vet + N-12 trung ma + N-15 claim.mjs mat cu tu choi",
-      "released_at": null,
-      "taken_from": "claude-scouter-seed",
-      "taken_by_duc_decision": "2026-09-04",
-      "taken_by": "claude-flow-active",
-      "taken_at": "2026-09-06T16:28",
-      "duc_decision": "Duc chot 2026-09-06: cho claude-flow-active muon _code de va N-10; da kiem cay lam viec scripts/ tests/ sach"
-    },
-    "workers/duc-scouter": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-06T22:20",
-      "task": "Nha rieng cua Scouter theo ADR-0013 + khung seed v0.1",
-      "released_at": "2026-09-06T17:44"
+      "claimed_at": "2026-09-07T01:21",
+      "task": "Tang toc cong dong phien: build-overview-smoke 640 giay, build-dashboard-smoke 78 giay",
+      "released_at": "2026-09-07T04:33",
+      "taken_from": "claude-k2-vung-mien-khoa",
+      "taken_by_duc_decision": "2026-09-04",
+      "taken_by": "claude-assistant",
+      "taken_at": "2026-09-07T02:08",
+      "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
+    },
+    "workers/duc-scouter": {
+      "owner": "claude-scouter-s05",
+      "ai": "Claude",
+      "claimed_at": "2026-09-07T04:37",
+      "task": "S-05 phanh cho duong ghi (cong tac che do phat trien + tran luot bam) va S-02 quyen alarms lam luoi do noi lai",
+      "released_at": null
     }
   },
-  "_fingerprint": "16ad958633394376"
+  "_fingerprint": "86d855aec961fe9f"
 }
