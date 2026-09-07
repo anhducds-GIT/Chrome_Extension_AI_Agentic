@@ -1284,3 +1284,31 @@ báo về phiên điều phối. Sổ nợ: `N-11` (lane kia mở) + một dòng
 **Cổng đóng phiên:** 1 mục ĐỎ — `tests/repo-structure-smoke.mjs`, và nó đỏ vì **đúng cái đang
 thiếu**: một phép ghim có sẵn từ trước bắt "bộ sinh ghi ra file không khai trong `generated`".
 Phép ghim đó làm đúng việc của nó.
+
+## 2026-09-07 · `claude-scouter-s06` — icon Scouter, và một lượt DỪNG vì cổng đỏ sai
+
+**Việc.** Icon extension Scouter theo yêu cầu Đức: chữ **S tối trên nền vàng**, sinh bằng
+`workers/duc-scouter/v0.1.0/scripts/make-icons.mjs` (tự viết bộ đóng gói PNG trên `zlib`, không
+thêm phụ thuộc). Kèm đóng `S-06` (phép đo ②) và `S-07`. Chi tiết ở `HANDOFF.md` của gói.
+
+**Một việc ngoài Scouter, cố ý và tối thiểu.** `tests/repo-structure-smoke.mjs` ĐỎ với MỌI phiên
+vì nửa `_code` của ADR-0014 đã vào HEAD (`0b42daf`) mà `FEATURE-PARITY-AUTO.md` chưa được khai
+vào khối `generated`. Nửa còn thiếu cần đúng khoá `_root` mà lúc đó **tôi đang giữ**, nên tôi
+land nó (`daa276c`). Không quyết gì thay ai: ADR-0014 đã viết sẵn câu đó. **Cố ý DỪNG ở đây** —
+phần gỡ ba khối AUTO khỏi `FEATURE-PARITY.md` đụng vào mục 2, là chữ của người. Ghi thành `N-12`.
+
+**Ngay sau đó `_root` được chuyển khỏi tay tôi** sang lane `claude-root-adr0014`, kèm câu chốt
+của Đức ghi trong bảng. Hợp lệ. **Nhưng lane đó cần biết:** phần khai vào `generated` ĐÃ XONG ở
+`daa276c` — đừng làm lại, hãy dựng tiếp lên nó.
+
+**Vì sao tôi KHÔNG đẩy.** Cổng đóng phiên đỏ, và cái đỏ đó **sai**: chạy năm lượt thì số mục đỏ
+nhấp nháy giữa 1 và 2, mà phép kiểm nào cũng xanh khi chạy riêng. Nguyên nhân: 6 lane cùng ghi
+file gốc repo, cổng đọc trúng lúc file đang bị ghi. Ghi thành `N-13` kèm ba câu báo lỗi sai sự
+thật đo được. Luật là luật: cổng chưa xanh thì không đẩy và không báo xong — nên tôi **giữ khoá**
+`workers/duc-scouter` và `_docs`, và báo lại.
+
+**Việc của tôi thì xanh hết, đo riêng từng thứ:** suite gói 8/8 · đột biến 58/58 sống sót 0 ·
+`repo-structure-smoke` 17/17 · `check-bootstrap` 0 đỏ, nhóm CHẶN đạt hết · phép đo ② ĐẠT 11/11.
+
+**Đức làm được ngay, không cần chờ đẩy:** nạp lại extension trong Chrome từ thư mục
+`workers/duc-scouter/v0.1.0` — icon đã nằm trên đĩa và đã commit.
