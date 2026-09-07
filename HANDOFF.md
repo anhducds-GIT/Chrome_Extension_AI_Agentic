@@ -1252,3 +1252,35 @@ lượt hiệu chỉnh trần 50 — con số hiện là ước lượng chưa �
 **Một chỗ đo sai của công cụ, chưa sửa.** `scripts/what-next.mjs` báo gói Scouter "0 việc mở"
 trong khi sổ có 2, vì nó chỉ đếm mục trong khối `P1`/`P2`, không đếm mục dạng `## MỞ · S-xx`.
 Đã ghi vào `BACKLOG.md` gốc. Bảng nói sai thì phiên sau tưởng gói đó rảnh.
+
+## 2026-09-07 · `claude-bang-vung-chac` — bốn đột biến lọt lưới nay bị bắt; ADR-0014 land nửa
+
+**Việc ① — `N-27`, XONG.** Bốn đột biến vào bộ đọc HEAD: **trước bắt 0/4, sau bắt 4/4.**
+
+**Phép đo đầu của tôi SAI, và đây là bài học đáng ghi.** Lượt đầu chạy cả `npm test` và báo
+"bắt 3/4" — cả ba đều **giả**: bốn suite worker đang đỏ vì một lane khác sửa dở
+`workers/duc-auto-chatgpt`, nên mọi đột biến đều "bị bắt" bởi lỗi của người khác. Bốn suite đó
+**không import `scripts/build-*.mjs` một lần nào**, nên chúng không thể bắt được gì ở đó. Đo lại
+chỉ trên **18 suite ở gốc repo** thì ra **0/4** — khớp đúng con số `N-27` ghi. *Một bộ đột biến
+chạy trên suite đang đỏ vì lý do khác thì nó đo được số 0.*
+
+**⑴⑵ không cần cây git riêng như `N-27` lo.** Khối 23 của `tests/build-dashboard-smoke.mjs` đã
+dựng sẵn một cây git tạm — sân khấu duy nhất trong suite mà câu "file hay thư mục" có hai đáp án
+biết trước. Ghim ⑴⑵⑶ ở đó, thêm 0 giây chạy. ⑷ ghim ở khối 4 của `build-overview-smoke`.
+
+**Không làm yếu gì, đếm được:** phép kiểm **99+33 → 100+34**, khẳng định **456+393 → 466+396**.
+Mỏ neo cả bốn con khớp **đúng 1 chỗ**.
+
+**Việc ② — ADR-0014, LAND NỬA, và nửa đã land đang CHẶN MỌI LANE.** Nửa `_code` xong: bộ sinh
+chỉ ghi `FEATURE-PARITY-AUTO.md`, khung là hằng số trong script nên `FEATURE-PARITY.md` ra ngoài
+tầm với của máy. Bốn phép ghim mới; `12` (máy ghi vào mục 2 thì ĐỎ) và `15` (deterministic, chạy
+được khi cấm `Date.now`) **XANH**, `13`/`14` **ĐỎ đúng chỗ phải đỏ**.
+
+**Chỗ kẹt.** Nửa còn lại cần `_root`: sinh file vào HEAD · khai vào `generated` · gỡ ba khối
+`AUTO:` khỏi `FEATURE-PARITY.md` · sửa `AGENTS.md`. `_root` do `claude-scouter-s06` giữ, đo được
+**54 phút**. Tôi **không tự lấy** (luật mục 1), **giữ `_code`**, **giữ 4 commit chưa đẩy**, và
+báo về phiên điều phối. Sổ nợ: `N-11` (lane kia mở) + một dòng xác nhận của tôi.
+
+**Cổng đóng phiên:** 1 mục ĐỎ — `tests/repo-structure-smoke.mjs`, và nó đỏ vì **đúng cái đang
+thiếu**: một phép ghim có sẵn từ trước bắt "bộ sinh ghi ra file không khai trong `generated`".
+Phép ghim đó làm đúng việc của nó.

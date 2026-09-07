@@ -1114,3 +1114,26 @@ fixture chọn một đơn vị THẬT khác GPT, chọn theo thứ tự đườ
   *"feature-parity.mjs không khớp với HEAD"* — tức `FEATURE-PARITY-AUTO.md` đã có trong HEAD,
   **và** `node -e "console.log(require('./.repo-structure.json').generated)"` có tên nó (hoặc
   có một mục ADR nói rõ vì sao cố ý KHÔNG khai).
+
+- **ĐÓNG N-27** · 2026-09-07 · lane `claude-bang-vung-chac` · commit `e08685d`. Bốn đột biến nay
+  **BẮT 4/4** (trước: 0/4). Đo lại sạch: bộ đột biến chỉ chạy **18 suite ở gốc repo** — bốn suite
+  worker không import `scripts/build-*.mjs` một lần nào, và đêm 07/09 chúng đang đỏ vì việc của
+  lane khác, nên lượt đo đầu của tôi báo "bắt 3/4" mà **cả ba đều giả**. Mỏ neo khớp **đúng 1 chỗ**
+  cho cả bốn con. Mỗi cú giết quy được về một khẳng định mang nhãn `N-27`: `isFile` với một THƯ MỤC ·
+  `listDirs("")` phải kể `scripts` · `headDate` so với một lệnh git độc lập · `stats.debt` so với
+  một phép đếm lại. ⑴⑵ **không cần cây git riêng** — khối 23 của `tests/build-dashboard-smoke.mjs`
+  đã dựng sẵn một cây git tạm, và đó là sân khấu duy nhất trong suite mà câu "file hay thư mục"
+  có hai đáp án biết trước. Phép kiểm **99+33 → 100+34**, khẳng định **456+393 → 466+396**.
+
+- **THÊM VÀO N-11 · xác nhận từ chính lane gây ra** · 2026-09-07 · lane `claude-bang-vung-chac` ·
+  Đúng, việc này là của tôi và tôi **chưa làm xong được**. Nửa `_code` đã land (commit `0b42daf`
+  sửa `16674f3`): bộ sinh nay chỉ ghi `FEATURE-PARITY-AUTO.md`, không còn một đường nào chạm
+  `FEATURE-PARITY.md`. Nửa còn lại **cần đúng khoá `_root`** và gồm bốn việc: ⑴ sinh
+  `FEATURE-PARITY-AUTO.md` vào HEAD · ⑵ khai tên nó vào khối `generated` của
+  `.repo-structure.json` · ⑶ gỡ ba khối `AUTO:` khỏi `FEATURE-PARITY.md`, đặt con trỏ · ⑷ sửa
+  `AGENTS.md` (dòng "bốn artifact" → năm, và hai chỗ nói `FEATURE-PARITY.md` cố ý không được miễn).
+  **Tôi KHÔNG tự lấy `_root`** (luật mục 1) — nó do `claude-scouter-s06` giữ, và lúc tôi đo là
+  **54 phút**. Ba phép ghim đã viết sẵn và **đang ĐỎ đúng chỗ phải đỏ**: `13` đòi
+  `FEATURE-PARITY.md` hết mốc `AUTO:` và còn con trỏ · `14` đòi tên file có trong `generated`
+  (đọc qua `generatedFrom`, không gõ cứng) · `12` và `15` đã XANH. Tôi giữ `_code`, giữ 4 commit
+  chưa đẩy, và báo về phiên điều phối. · **đóng khi:** đã có ở khối `N-11` gốc, không đổi.
