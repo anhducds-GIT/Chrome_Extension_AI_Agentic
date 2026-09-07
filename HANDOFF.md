@@ -1343,3 +1343,37 @@ Gốc bệnh một dòng: dòng 720 dựng sổ mẫu rồi commit đúng **bố
 
 **Lớp chặn artifact ĐÃ MỞ** — cổng mục *"Sự thật máy sinh còn tươi"* nay **XANH**. Còn đúng một
 cửa: một dòng trong `tests/`, rồi 30 commit của 6 lane đi được.
+
+## 2026-09-07 · `claude-tinh-gon` — tinh gọn: đóng băng ba gói, cắt sổ nợ 32 → 8
+
+**Đức đo bảy ngày và chốt cắt thật.** 400/725 commit (55%) chạm tài liệu + sổ nợ, 68 (9%) chạm
+mã extension; hạ tầng 44.239 dòng > mã sản phẩm 38.136 dòng.
+
+**① Đóng băng.** Khối `frozen` trong `.repo-structure.json` khai ba gói `duc-auto-*`; gói sống
+là `workers/duc-scouter`. `AGENTS.md` mục 6: chín dòng sổ tay của chúng gộp thành **một** dòng
+*"đừng đụng"*. **[ĐO]** `grep -rl frozen scripts/ tests/` ra **0** — cờ chưa cưỡng chế được,
+nên đột biến kiểm bắt **0/0**: không phải đo hỏng, mà chưa có gì để đo. Cưỡng chế ở `_code` của
+lane khác → `N-35`.
+
+**② Sổ nợ.** **Số trong bản giao việc SAI:** nói 59, đếm thật **32 mục mở** (20 `N-` + 12 `Y-`)
+trong 47 khối. Giữ **6** mục chặn thật hôm nay (`N-05` `N-11` `N-29` `N-30` `N-31` `N-33`),
+thêm **2** nợ do chính lượt này đẻ ra (`N-35` `N-36`), xoá **26**. Sáu khối giữ lại **nguyên
+văn, 6/6 khớp từng byte**. **[ĐO]** 1.377 → 372 dòng · `backlog-check` 8 mục, 0 thiếu
+`đóng khi:`, 0 mã trùng · `backlog-check-smoke` 14/14.
+
+**③ Gộp khoá: CỐ Ý CHƯA BẬT.** `_docs` và `_code` đang có chủ và hai lane đó đang chạy — khai
+ba khoá vào `areas` lúc này là lấy khoá khỏi tay người đang làm, và một bảng khai ba khoá mà
+vận hành bảy khoá là hai nguồn sự thật về quyền ghi. Hình dạng + ba điều kiện bật ở `N-36`.
+
+**Bảy giới hạn của Đức vào `AGENTS.md` mục 3**, mỗi cái có số. Giới hạn ⑦ áp cho chính tôi: đổi
+lấy chín dòng sổ tay gói đóng băng + một khối bảng đối chiếu **bị chép hai lần**. **[ĐO]**
+`wc -l AGENTS.md` **296 → 290**.
+
+**Không đẩy bảng HTML.** Sinh lại ở cây làm việc hôm nay cho ra bản refactor IA **chưa xong**
+của `claude-bang-ia` (9 tab → 3 tầng), mà phép ghim của chính họ đang ĐỎ — đúng ca `Y-15`
+05/09. Đã hoàn nguyên về HEAD. `DASHBOARD.md` + `repo-map.json` thì sinh và commit, hai lượt
+trên cùng HEAD **giống hệt từng byte**.
+
+**Cuốn theo một dòng của lane khác:** commit `8e98318` chứa một dòng `ĐÓNG N-30` do
+`claude-bang-ia` viết — ca `N-05`. Sau lượt cắt, `N-30` là khối `--restamp` **vẫn mở**, nên tôi
+thêm một dòng làm rõ ở cuối sổ chứ không sửa chữ của họ.
