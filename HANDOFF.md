@@ -1118,7 +1118,7 @@ có ghi tên lane nên quy thuộc được, cùng họ với `Y-16`. Gộp vào
 - **Đẩy:** `--carry` cuốn theo lane `claude-gemini-hoan-thien`. Trả `_root` + `_docs`.
 - **Còn mở:** chat `claude-scouter-seed` đang giữ `_code` và xây seed vào `scripts/` — **chưa biết
   ADR-0013**. Cần nhắc nó làm bước ⓪ trước.
-### 2026-09-06 · `claude-scouter-seed` · Scouter ra nhà riêng, và một lượt dọn làm gãy bộ sinh của mọi lane
+## 2026-09-06 · `claude-scouter-seed` · Scouter ra nhà riêng, và một lượt dọn làm gãy bộ sinh của mọi lane
 
 **Làm gì.** ADR-0013 bước ①: dọn Scouter khỏi gốc repo + `scripts/` + `tests/` về
 `workers/duc-scouter/v0.1.0/` bằng `git mv`, khoá riêng `workers/duc-scouter`. Rồi
@@ -1147,7 +1147,7 @@ phải dựng ở thư mục tạm ngoài repo.
 một lượt `buildOverview` trên repo thật mất **21 giây** và phép ghim dựng lại **7 lần**.
 Chưa vá — đã giao Đức mở phiên riêng.
 
-### 2026-09-07 · `claude-k2-vung-mien-khoa` · Vùng miễn khoá là vùng không ai canh — vá ba lỗ
+## 2026-09-07 · `claude-k2-vung-mien-khoa` · Vùng miễn khoá là vùng không ai canh — vá ba lỗ
 
 **Làm gì.** N-09 + N-12 + N-15 là ba mặt của một chỗ: ba sổ ở gốc repo cố ý miễn khoá cho
 thao tác thêm dòng, mà mọi lớp bảo vệ của repo đều dừng ở cửa khoá.
@@ -1180,7 +1180,7 @@ không ai báo. Đã gỡ bằng 6 dòng `ĐỔI MÃ` (N-19…N-24), không sử
 
 **Còn mở.** `MULTIFLOW.md` chưa cập nhật: `_docs` có chủ khác, và tôi **không nhả khoá hộ**.
 
-### 2026-09-07 · `claude-scouter-s01` · S-01 xong — Scouter bấm và gõ được, và lượt `--carry` này cuốn theo ai
+## 2026-09-07 · `claude-scouter-s01` · S-01 xong — Scouter bấm và gõ được, và lượt `--carry` này cuốn theo ai
 
 **Làm gì.** Mở đường GHI cho Scouter: `scout.click` · `scout.type` · `scout.key`. Chi tiết kỹ
 thuật ở nhật ký của gói (`workers/duc-scouter/v0.1.0/HANDOFF.md`); ở đây chỉ ghi phần cả repo
@@ -1313,7 +1313,7 @@ thật đo được. Luật là luật: cổng chưa xanh thì không đẩy và
 **Đức làm được ngay, không cần chờ đẩy:** nạp lại extension trong Chrome từ thư mục
 `workers/duc-scouter/v0.1.0` — icon đã nằm trên đĩa và đã commit.
 
-### 2026-09-07 · `claude-root-adr0014` — nửa `_root` của ADR-0014: bảng đối chiếu tách làm hai
+## 2026-09-07 · `claude-root-adr0014` — nửa `_root` của ADR-0014: bảng đối chiếu tách làm hai
 
 **Xong, kèm số.** `FEATURE-PARITY.md` không còn mốc `AUTO:` nào — `grep -c "AUTO:.* START"` đi
 từ **3 → 0** — và mỗi chỗ ba khối từng nằm nay là **một con trỏ** sang `FEATURE-PARITY-AUTO.md`
@@ -1378,7 +1378,7 @@ trên cùng HEAD **giống hệt từng byte**.
 `claude-bang-ia` viết — ca `N-05`. Sau lượt cắt, `N-30` là khối `--restamp` **vẫn mở**, nên tôi
 thêm một dòng làm rõ ở cuối sổ chứ không sửa chữ của họ.
 
-### 2026-09-07 · `claude-bang-ia` — mở cửa cho sáu lane, rồi refactor IA của bảng
+## 2026-09-07 · `claude-bang-ia` — mở cửa cho sáu lane, rồi refactor IA của bảng
 
 **Việc ⓪ — mở cửa, đi trước một mình.** `tests/build-dashboard-smoke.mjs` dựng sổ mẫu rồi commit
 đúng **bốn** artifact cũ, thiếu artifact thứ năm, nên chính sổ mẫu đó báo *"does not exist in
