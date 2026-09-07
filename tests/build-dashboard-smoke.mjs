@@ -5,6 +5,13 @@ import { tmpdir } from "node:os";
 import { dirname, join, sep } from "node:path";
 
 import { buildDashboard, buildLlmsTxt, buildRepoMap, collectModel, compareRepoMap, createDefaultDeps, createHeadDeps, DEFAULT_UNITS, detectStatusMachineOwnedFacts, parsePorcelain, parseStatus, priorityFrom, rankOf, readUnits, runDashboard, STAMP_PREFIX, validateStatus } from "../scripts/build-dashboard.mjs";
+/* N-30 · TÊN ARTIFACT ĐỌC TỪ HẰNG SỐ CỦA BỘ SINH, KHÔNG GÕ CỨNG.
+ *
+ * Sổ mẫu của Gate 7 phải commit ĐỦ mọi artifact máy sinh, nếu không chính sổ mẫu đó báo
+ * "does not exist in HEAD" và phép khẳng định vỡ — đúng chuyện đã xảy ra khi ADR-0014 thêm
+ * artifact thứ năm (`FEATURE-PARITY-AUTO.md`) mà danh sách ở đây vẫn là bốn tên gõ tay.
+ * Nhập từ bộ sinh thì lần đổi tên sau không cần ai nhớ sửa hai chỗ. */
+import { PARITY_AUTO_FILE } from "../scripts/feature-parity.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -717,7 +724,7 @@ function antiDrift(text, measurements = {}) {
     gitAt("commit", "-m", "seed gate fixture");
     execFileSync(process.execPath, [join(tempRoot, "scripts", "build-dashboard.mjs")], { cwd: tempRoot, encoding: "utf8" });
     execFileSync(process.execPath, [join(tempRoot, "scripts", "feature-parity.mjs")], { cwd: tempRoot, encoding: "utf8" });
-    gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md", "llms.txt", "repo-map.json");
+    gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md", PARITY_AUTO_FILE, "llms.txt", "repo-map.json");
     gitAt("commit", "-m", "commit generated truth");
     gitAt("update-ref", "refs/remotes/origin/main", "HEAD");
 
@@ -785,10 +792,13 @@ function antiDrift(text, measurements = {}) {
     rmSync(join(tempRoot, "workers", "duc-auto-chatgpt", "v0.1.0", "own-dirty.js"));
     gitAt("restore", "workers/duc-auto-chatgpt/v0.1.0/HANDOFF.md");
     put("DASHBOARD.md", `${readFileSync(join(tempRoot, "DASHBOARD.md"), "utf8")}\nSTALE COMMITTED LINE\n`);
-    const parityBefore = readFileSync(join(tempRoot, "FEATURE-PARITY.md"), "utf8");
+    // ADR-0014: file MÁY là `FEATURE-PARITY-AUTO.md`, và bộ sinh không đọc file của người một
+    // lần nào. Nên muốn dựng ca "artifact cũ đã commit" thì phải làm cũ ĐÚNG file máy — làm cũ
+    // `FEATURE-PARITY.md` từ nay không còn khiến `--check` lệch, tức khối này sẽ ghim rỗng.
+    const parityBefore = readFileSync(join(tempRoot, PARITY_AUTO_FILE), "utf8");
     assert.ok(parityBefore.includes("**GPT 1 · Gemini 1.**"), "fixture parity phải có dòng sắp làm cũ");
-    put("FEATURE-PARITY.md", parityBefore.replace("**GPT 1 · Gemini 1.**", "**GPT 999 · Gemini 1.**"));
-    gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md", "llms.txt", "repo-map.json");
+    put(PARITY_AUTO_FILE, parityBefore.replace("**GPT 1 · Gemini 1.**", "**GPT 999 · Gemini 1.**"));
+    gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md", PARITY_AUTO_FILE, "llms.txt", "repo-map.json");
     gitAt("commit", "-m", "make committed artifacts stale");
     const stale = runSession();
     // SỬA CÓ Ý THỨC, 03/09 (K2-8). Trước đây khối này ghim "artifact cũ ⇒ cổng lane ĐỎ". Nay
