@@ -17,7 +17,7 @@ awk -F'|' '/^\|/ && NF>2 {c=$(NF-1); gsub(/^ +| +$/,"",c); if (c ~ /SEED v0\.1/)
 | Mục | Xong bằng gì | Đã chứng minh tới đâu |
 |---|---|---|
 | Bắt tay Bridge | `scouter-transport-loopback.mjs` | Máy chủ Bridge **thật**, bắt tay hai chiều |
-| Cửa Bridge — bảng method + kiểm tham số | `scouter-bridge-core.mjs` | 11 method, từ vựng đóng |
+| Cửa Bridge — bảng method + kiểm tham số | `scouter-bridge-core.mjs` | **15 method** (07/09), từ vựng đóng. Đừng tin con số này — đếm lại: `node -e "import('./scripts/scouter-bridge-core.mjs').then(m=>console.log(m.capabilities().methods.length))"` |
 | Vận chuyển qua WebSocket `127.0.0.1` | `scouter-transport-loopback.mjs` | (bảng kiểm kê đếm dòng này **hai lần**) |
 | Định tuyến lệnh Bridge | `createDispatcher` | Live check ĐẠT 8/8 |
 | Bấm và gõ như tay người (`Input`) | `scouter-actions-core.mjs` | **Trang thật, ĐẠT 11/11** (phép đo ②, 07/09) |
@@ -28,7 +28,7 @@ awk -F'|' '/^\|/ && NF>2 {c=$(NF-1); gsub(/^ +| +$/,"",c); if (c ~ /SEED v0\.1/)
 
 | Nhóm | Mấy mục | Là gì | Thái độ |
 |---|---:|---|---|
-| **A — nhìn rõ hơn** | 4 | Đọc trang theo *vai trò + tên* · biết trang tải xong lúc nào · chụp màn hình · chụp cả cây DOM một lượt | **Làm.** Đây là thứ quyết định AI ở đầu dây có hiểu trang không |
+| **A — nhìn rõ hơn** | ~~4~~ **còn 1** | ~~Đọc trang theo *vai trò + tên*~~ · **biết trang tải xong lúc nào** · ~~chụp màn hình~~ · ~~chụp cả cây DOM một lượt~~ | **Ba mục XONG 07/09** (`scout.a11y` · `scout.shot` · `scout.snapshot`). Còn `webNavigation` |
 | **B — máy móc của một vòng chạy có hàng đợi** | 7 | Danh tính lượt thử · trạng thái vòng chạy · không làm hai lần · luật thử lại · nhịp tim · khoảng nghỉ giữa job · sẵn sàng nhận việc | **LÀM — đã đảo lời khuyên 07/09.** Xem dưới |
 | **C — an toàn và vận hành** | 4 | Chuỗi bằng chứng · bảng mã lỗi cho người vận hành · khoá tab và hội thoại · quyết định thao tác fail-closed | Làm sau nhóm A |
 | **D — năng lực Chrome còn lại** | 3 | `scripting` · `offscreen` · `commands` | Làm khi có việc cần tới, không làm trước |
@@ -98,15 +98,15 @@ từ một endpoint POST. **Pilot này không cần bấm một nút nào** — 
 `scout.key` không dùng tới. Chi tiết hợp đồng endpoint và cái bẫy "200 OK mà sai" ở `S-10`
 trong `BACKLOG.md`.
 
-### Bước 3 — nhóm A, đúng hai mục trước
+### Bước 3 — nhóm A, nay chỉ còn MỘT mục
 
 1. **Biết trang tải xong lúc nào** (`webNavigation`). Không có nó thì mọi phép dò là **đoán về
    thời điểm**: dò sớm một nhịp là đọc phải trang chưa dựng xong, và triệu chứng nhìn ra ngoài
    giống hệt "selector sai".
-2. **Đọc trang theo vai trò + tên** (`Accessibility`). Hôm nay `scout.page` trả về phần tử theo
+2. ~~**Đọc trang theo vai trò + tên** (`Accessibility`)~~ — **XONG 07/09**, là `scout.a11y`. Lý do nó cần thì vẫn đúng nguyên: `scout.page` trả về phần tử theo
    DOM; cái AI thật sự cần để chọn đích là *"nút tên Gửi"*, không phải `div > div > button:nth-child(3)`.
 
-Hai mục còn lại của nhóm A (chụp màn hình · chụp cây DOM một lượt) làm sau. Chụp màn hình từng
+~~Hai mục còn lại của nhóm A (chụp màn hình · chụp cây DOM một lượt) làm sau.~~ **Cả hai XONG 07/09** (`scout.shot` · `scout.snapshot`). Chụp màn hình từng
 vướng chính sách che dữ liệu; [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md)
 gỡ chỗ đó ngày 07/09.
 
