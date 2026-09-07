@@ -50,6 +50,9 @@
     files: [],
     prepared: null,
     outputSettings: null,
+    // True chỉ khi `outputSettings` là bộ mặc định do MÁY tự dựng cho một
+    // phiên bootstrap, không phải cấu hình Đức chọn. Xem bridgeAuditHeld().
+    outputAutoDefaulted: false,
     runtimeOverrides: {},
     selectedJobId: null,
     running: false,
@@ -1540,6 +1543,7 @@
       // wholesale via splice(), never mutated in place.
       files: [...state.files],
       outputSettings: cloneBridgeOutputSettings(state.outputSettings),
+      outputAutoDefaulted: state.outputAutoDefaulted,
       runtimeOverrides: { ...state.runtimeOverrides },
       importedConfig: state.importedConfig,
       configFindings: [...state.configFindings],
@@ -1575,6 +1579,7 @@
       renderReferenceGallery();
     }
     state.outputSettings = snapshot.outputSettings;
+    state.outputAutoDefaulted = snapshot.outputAutoDefaulted;
     state.runtimeOverrides = snapshot.runtimeOverrides;
     state.importedConfig = snapshot.importedConfig;
     state.configFindings = snapshot.configFindings;
@@ -1594,6 +1599,36 @@
     state.selectedJobId = snapshot.selectedJobId;
     state.quickPromptCounter = snapshot.quickPromptCounter;
     state.validated = snapshot.validated;
+  }
+
+  /* ---- B-36 (A), ADR-0049 ------------------------------------------------
+     Chrome Downloads KHÔNG đặt tên nổi artifact của gói này. Đo trực tiếp
+     2026-09-06, đi bằng `DAC_DOWNLOAD_ARTIFACT` — đúng đường mọi mutation
+     Bridge đi: xin `B36-probe-ticket__audit.jsonl`, Chrome đặt
+     `d31c629e-39e1-4a96-ae61-dde336b91792`, nội dung đúng nguyên vẹn 22 byte.
+     Trước đó kết luận này chỉ được SUY ra từ một phiếu giữ tên đã bị tiêu.
+
+     Nên một phiên bootstrap — phiên máy tự dựng, chưa có thư mục nào Đức cấp
+     quyền — mà ghi artifact qua Chrome Downloads thì sinh ra bằng chứng vận
+     hành KHÔNG TRA ĐƯỢC (36 file tên-GUID trong máy Đức, rải từ 09/07) rồi
+     chết ở `verifyDownloadedFilename`. Đó là B-36, và nó chặn MỌI mutation
+     Bridge vì luật quy trách nhiệm bắt ghi sổ trước khi có tác dụng.
+
+     Cách xử: giữ sổ trong `state.auditEvents`. Luật quy trách nhiệm KHÔNG bị
+     nới — sổ VẪN được ghi trước khi mutation có tác dụng, chỉ chậm ra *file*.
+     `saveAuditLog` dựng lại TOÀN BỘ payload từ mảng đó ở mỗi lượt ghi, nên
+     lần ghi đầu vào thư mục thật xả hết những gì đã giữ; không cần bộ đệm
+     thứ hai. Cái giá phải nói thẳng ra dây: đóng panel trước lần xả đầu là
+     mất sổ (ADR-0049, hệ quả 4) — nên mutation trả kèm `audit_durable: false`.
+
+     Chỉ che ca bootstrap. Đức cấu hình chế độ Downloads thì vẫn đi đường tải
+     và vẫn kiểm tên: bỏ kiểm tên là phương án (C), thứ ADR-0049 đã LOẠI. */
+  const AUDIT_HELD_NOTE = "Sổ audit đang được giữ trong bộ nhớ phiên, CHƯA ra file: phiên này chưa có thư mục nào Đức cấp quyền, mà thư mục Tải xuống của Chrome thì không đặt tên nổi artifact của gói (B-36). Chọn một thư mục đích để xả sổ ra file; đóng panel trước lúc đó là mất sổ.";
+
+  function bridgeAuditHeld() {
+    if (!state.outputAutoDefaulted) return false;
+    const image = state.outputSettings?.image;
+    return !(image?.kind === "directory" && image.handle);
   }
 
   function bridgeDirectAuditEvent(event, method, mutation) {
@@ -1663,24 +1698,41 @@
           // workbook — so the agent can immediately retarget the subfolder via
           // output.configure (owner decision 2026-08-25). Before this, mutate
           // reached preflight(null) and laundered to INTERNAL_ERROR.
-          if (!state.outputSettings && state.workbook) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
+          //
+          // Cái shape đó vẫn giữ (labels, preflight, tên artifact đều đọc từ
+          // nó), nhưng từ ADR-0049 nó bị ĐÁNH DẤU là máy tự dựng: đường GHI
+          // của nó không dùng được, xem bridgeAuditHeld().
+          if (!state.outputSettings && state.workbook) {
+            state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
+            state.outputAutoDefaulted = true;
+          }
           const mutation = await mutate();
           if (!state.workbook) throw new window.DacBridgeCore.BridgeProtocolError("WORKBOOK_NOT_LOADED");
-          if (!state.outputSettings) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
+          if (!state.outputSettings) {
+            state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
+            state.outputAutoDefaulted = true;
+          }
           state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName);
           state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
           const preflight = await preflightCurrentOutputs();
           if (!preflight.ok) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", preflight.error);
           const auditEvent = bridgeDirectAuditEvent(event, method, mutation);
           state.auditEvents.push(auditEvent);
-          return { mutation, candidate: state.workbook, auditEvent, output: preflight.effective };
+          // Đọc MỘT LẦN, ở đây: cả hai chặng ghi bên dưới và cả câu trả về
+          // dây phải nói cùng một chuyện. Đọc lại ở từng chặng thì một lượt
+          // bind xen giữa sẽ làm chặng sau ghi mà chặng trước đã bỏ.
+          const heldAudit = bridgeAuditHeld();
+          return { mutation, candidate: state.workbook, auditEvent, output: preflight.effective, heldAudit };
         },
         persist_audit: async (applied) => {
+          // Giữ trong bộ nhớ, không ném: xem khối AUDIT_HELD_NOTE ở trên.
+          if (applied.heldAudit) { state.auditFile = ""; return ""; }
           state.auditFile = await saveAuditLog(applied.output.result, { appendExisting: true, force: true });
           if (!state.auditFile) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", "BRIDGE_DIRECT_AUDIT_PERSISTENCE_FAILED: Audit JSONL was not verified.");
           return state.auditFile;
         },
         persist_checkpoint: async (applied, auditFile) => {
+          if (applied.heldAudit) return await heldLedgerCandidate(applied.candidate, auditFile);
           const checkpoint = await persistLedgerCandidate(applied.candidate, applied.output.result, auditFile, { force: true });
           if (!checkpoint) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", "BRIDGE_DIRECT_CHECKPOINT_FAILED: Result checkpoint was not verified.");
           // An agent editing Setup 20 times writes 20 checkpoints; without this
@@ -1706,7 +1758,14 @@
           // authorization are all unblocked — retire every attention row.
           clearBridgeAttention();
           refreshBridgeScreen().catch(() => {});
-          return { ...applied.mutation, audit_event: event, checkpoint: { version: checkpoint.version, filename: checkpoint.filename, verified: true } };
+          return {
+            ...applied.mutation,
+            audit_event: event,
+            checkpoint: { version: checkpoint.version, filename: checkpoint.filename, verified: checkpoint.storage !== "held" },
+            // Nói thẳng, không im: sổ đã ghi nhưng chưa ra file. AI vận hành
+            // cần biết để chọn thư mục trước khi làm việc gì đáng giữ.
+            ...(applied.heldAudit ? { audit_durable: false, audit_note: AUDIT_HELD_NOTE } : {})
+          };
         },
         rollback: async ({ snapshot, applied, audit, checkpoint, error }) => {
           if (checkpoint) {
@@ -1731,8 +1790,9 @@
         return {
           ...recoveredForward.applied.mutation,
           audit_event: event,
-          checkpoint: { version: recoveredForward.checkpoint.version, filename: recoveredForward.checkpoint.filename, verified: true },
-          recovered_forward: true
+          checkpoint: { version: recoveredForward.checkpoint.version, filename: recoveredForward.checkpoint.filename, verified: recoveredForward.checkpoint.storage !== "held" },
+          recovered_forward: true,
+          ...(recoveredForward.applied.heldAudit ? { audit_durable: false, audit_note: AUDIT_HELD_NOTE } : {})
         };
       }
       // A version conflict is a plain Error from the checkpoint writer; left
@@ -2965,6 +3025,9 @@
     state.localOverrides.clear();
     try { state.outputSettings = window.DacOutputLocation.fromWorkbook(state.workbook.config, state.workbook.fileName); }
     catch (_) { state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName); }
+    // Cau hinh nay den TU WORKBOOK, tuc tu Duc — khong phai bo mac dinh may
+    // tu dung cho phien bootstrap. Duong ghi cua no khong bi giu lai.
+    state.outputAutoDefaulted = false;
     state.destinationMode = imported.effective.output.mode;
     state.separateResultDestination = imported.effective.output.separateResultDestination;
     renderConfigProvenance();
@@ -3311,6 +3374,12 @@
       // picker gesture is the most expensive thing in the whole loop.
       const previouslyBound = state.outputSettings;
       applyWorkbookConfig();
+      // Workbook này do MÁY dựng, config của nó rỗng — nên bộ outputSettings
+      // applyWorkbookConfig() vừa dựng là bộ mặc định, không phải lựa chọn
+      // của Đức. Đánh dấu SAU lời gọi đó, vì chính nó xoá cờ (đúng cho đường
+      // Đức mở một XLSX thật). Nhánh `previouslyBound` bên dưới an toàn với
+      // cờ này: có handle thật thì bridgeAuditHeld() trả false bất kể cờ.
+      state.outputAutoDefaulted = true;
       if (previouslyBound?.image?.kind === "directory" && previouslyBound.image.handle) {
         state.outputSettings.image = previouslyBound.image;
         state.outputSettings.result = previouslyBound.result;
@@ -5030,6 +5099,19 @@
     if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw new Error(`CHECKPOINT_VERSION_CONFLICT: '${filename}' already exists in Chrome Downloads history. No Result checkpoint was written.`);
   }
 
+  /* Checkpoint của một phiên bootstrap: dựng đủ, KHÔNG ghi ra đâu cả.
+     Cùng lý do như sổ audit (B-36 / ADR-0049) — chỗ duy nhất ghi được lúc này
+     là thư mục Tải xuống, mà nó đặt tên GUID. Trả về đúng hình dạng
+     `persistLedgerCandidate` trả, với `storage: "held"` để `commit` và lớp
+     dọn checkpoint phân biệt được: `recordAndPruneCheckpoint` chỉ dọn nhánh
+     `"downloads"`, nên "held" không tạo rác để dọn. */
+  async function heldLedgerCandidate(sourceWorkbook, auditFilename = state.auditFile) {
+    const version = window.DacCheckpointCore.nextVersion(state.checkpointVersion || sourceWorkbook.config.checkpoint_version);
+    const filename = window.DacOutputLocation.renderCheckpointFilename(sourceWorkbook.fileName, state.outputSettings, version);
+    const candidate = await checkpointWorkbook(filename, version, sourceWorkbook, auditFilename);
+    return { ...candidate, actual: "", version, filename, storage: "held" };
+  }
+
   async function persistLedgerCandidate(sourceWorkbook, location, auditFilename = state.auditFile, { force = false } = {}) {
     const values = window.DacOutputLocation.effective(state.outputSettings);
     if (!values.saveResultXlsx && !force) return null;
@@ -6265,6 +6347,13 @@
 
   (typeof window !== "undefined" ? window : globalThis).DacBridgeExecutorTestHooks = Object.freeze({
     dispatch: bridgeExecutorDispatch,
+    // Cùng họ với `handlers`, và nó tồn tại vì một lý do đo được: đường DUY
+    // NHẤT bind một thư mục đã cấp quyền là cú bấm `showDirectoryPicker` của
+    // người, nên không có mối nối này thì KHÔNG phép kiểm hành vi nào chạm
+    // được nhánh "đã có thư mục thật" — mà đó chính là nhánh B-36 phải chứng
+    // minh là còn chạy. Không mở thêm bề mặt: các handler kề bên vốn đã sửa
+    // trọn state này.
+    state,
     handlers: Object.freeze({
       "queue.list": bridgeQueueList,
       "run.status": bridgeRunStatus,

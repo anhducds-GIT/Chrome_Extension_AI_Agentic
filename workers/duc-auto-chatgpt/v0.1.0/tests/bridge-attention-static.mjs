@@ -54,7 +54,19 @@ assert.match(js, /BRIDGE_ATTENTION_DEFS[\s\S]*?CHECKPOINT_CONFLICT/, "CHECKPOINT
 // output.configure — never reaching preflight(null)/INTERNAL_ERROR (owner
 // decision 2026-08-25, Gemini-session discovery).
 const applyRegion = segment(js, "apply: async () => {", "persist_audit", "mutation apply");
-assert.match(applyRegion, /if \(!state\.outputSettings( && state\.workbook)?\) state\.outputSettings = window\.DacOutputLocation\.fromWorkbook\(\{\}, state\.workbook\.fileName\)/, "null outputSettings must initialize Downloads defaults");
+// Ghim BẤT BIẾN, không ghim cú pháp một dòng. Bản trước đòi đúng một câu
+// `if (…) state.outputSettings = fromWorkbook({}, …)` viết trên MỘT dòng, và
+// nó đỏ ngay khi B-36 (A) đổi câu đó thành một khối có thêm cờ — tức nó chặn
+// đường sửa đúng bằng cái cách `download-name-determiner-static.mjs` đã chặn
+// một lần (xem B-36: "một phép kiểm khẳng định sự tồn tại của bug là một bức
+// tường chặn đường sửa bug"). Cái phải giữ là: outputSettings rỗng thì được
+// dựng từ config RỖNG, nên preflight(null) không bao giờ tới.
+assert.match(applyRegion, /if \(!state\.outputSettings/, "bootstrap phải có nhánh xử outputSettings rỗng");
+assert.match(applyRegion, /state\.outputSettings = window\.DacOutputLocation\.fromWorkbook\(\{\}, state\.workbook\.fileName\)/, "và nhánh đó dựng settings từ config rỗng — không rơi vào preflight(null)");
+// Bất biến MỚI của ADR-0049: bộ vừa dựng đó là của MÁY, và nó phải tự khai
+// ra như vậy. Không có dấu đó thì đường ghi của một phiên bootstrap lại rơi
+// về thư mục Tải xuống — nơi Chrome đặt tên GUID, tức đúng B-36.
+assert.match(applyRegion, /state\.outputAutoDefaulted = true/, "bộ mặc định máy tự dựng phải được đánh dấu (ADR-0049)");
 // The agent-settable output location is Downloads-relative ONLY: the handler
 // routes output_downloads_subfolder through downloadsLocation (safeRelativeFolder
 // rejects traversal/absolute), and only skips the bound-profile assert when
