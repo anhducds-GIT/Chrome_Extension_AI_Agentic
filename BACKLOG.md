@@ -107,10 +107,18 @@ tuần có 19 nhóm cho 19 mục, tức là không phân loại gì cả.
 
 ## Lượt cắt 2026-09-07 — sổ nợ 32 mục mở → 8, Đức chốt tường minh
 
-Đức đo bảy ngày và thấy hệ thống đang tự bảo trì chính nó thay vì làm sản phẩm: **400 trong
-725 commit (55%)** chạm tài liệu + sổ nợ, **68 (9%)** chạm mã extension; hạ tầng **44.239
-dòng** lớn hơn mã sản phẩm **38.136 dòng**. Nên Đức chốt cắt thật, và ở lượt này **xoá là
-thắng, thêm là thua**.
+Đức đo bảy ngày và thấy hệ thống đang tự bảo trì chính nó thay vì làm sản phẩm. **Đo lại bằng
+máy trước khi cắt** (`--since=2026-08-31`, phân loại ưu tiên mã extension trước): trong **738
+commit** chỉ **78 (11%)** chạm mã extension chạy thật, **468 (63%)** chạm tài liệu + sổ nợ,
+**142 (19%)** chạm artifact + bảng quyền. Kết luận của Đức đứng vững, và nặng hơn bản giao việc.
+
+**Nhưng một con số của bản giao việc thì SAI, đừng dẫn lại:** câu *"hạ tầng 44.239 dòng lớn hơn
+mã sản phẩm 38.136 dòng"*. Đếm lại bằng Node: hạ tầng (`scripts/ tests/ docs/ bang-trang-thai/`)
+**45.200 dòng**; mã trong `workers/` (`.js .mjs .html .css`) **89.262 dòng**, trong đó **52.609
+là mã chạy thật** và **36.653 là suite của chính các gói**. Sản phẩm **hơn gấp đôi** hạ tầng.
+Con số cũ sinh ra vì `wc -l` với hàng trăm đường dẫn **vượt trần đối số** rồi trả tổng của mẻ
+cuối — đúng cái bẫy đã cắn tôi một lượt trong phiên này. Nên lượt cắt này **đứng trên tỉ lệ
+commit**, không đứng trên số dòng; và ở lượt này **xoá là thắng, thêm là thua**.
 
 **Luật cắt đã áp cho từng mục một:** mục không chặn một lane nào hôm nay thì **xoá**, không
 hoãn, không "để lại làm bản ghi" — vì một mục vô hại vẫn thu thuế đọc của mọi phiên sau.
@@ -384,3 +392,44 @@ Khác `N-30`: `N-30` là một phép ghim hỏng thật, đỏ ổn định. M�
   `ĐỔI MÃ` chỉ áp được cho khối **thứ hai trở đi** mang một mã, mà khối restamp nay là khối
   **đầu tiên** — đúng cái lỗ đã ghi trong `scripts/backlog-check.mjs`. Một dòng làm rõ là cửa
   rẻ nhất còn mở.
+
+## N-35 · ADR-0017 đã viết xong nhưng CHƯA vào repo — vì đúng cái bệnh nó chữa
+
+**[2026-09-07]** · Đức chốt kiến trúc *"không ai phải chờ ai"*. Vai điều phối viết xong nội dung
+ADR-0017 (ba vế: khoá hết hạn khi có người chờ · vai điều phối không thể bị chặn · khoá thuộc về
+CHAT chứ không thuộc từng tác vụ ngầm), nhưng **không ghi được vào `docs/adr/`**: khoá `_docs` do
+chat Scouter giữ 4 giờ và chat đó **đang làm thật** (commit gần nhất cách 4 phút), nên lấy khoá
+là lấy khỏi tay người đang làm.
+
+**Đây là bằng chứng sống của chính vấn đề, không phải một sự cố.** Vế ⑵(a) của ADR đó nói *"tạo
+file MỚI trong `docs/adr/` không cần khoá, vì tạo file không bao giờ đụng nhau — chỉ SỬA file mới
+đụng"*. Nếu vế đó đã có hiệu lực thì lượt ghi này không bị chặn một giây nào.
+
+Nội dung đang nằm ngoài repo, ở thư mục tạm của phiên điều phối. Chủ khoá `_docs` tiếp theo chép
+vào `docs/adr/0017-khong-ai-phai-cho-ai.md` — **kiểm lại số 0017 chưa ai dùng trước khi chép**,
+vì chính ADR đó cảnh báo trùng số là rủi ro đã đo được (mã sổ nợ trùng hai lần trong một ngày).
+
+- **đóng khi:** lệnh: test -f docs/adr/0017-khong-ai-phai-cho-ai.md
+
+## N-36 · Giới hạn "tối đa 2 lane" đo SAI đơn vị — Đức tính theo CHAT, không theo tác vụ ngầm
+
+**[Đức làm rõ 2026-09-07]** · Nguyên văn: *"lane ở đây tôi hiểu là 2 phiên chat với AI, ví dụ
+trong 1 chat với bạn, mà bạn có khả năng manage cùng lúc 5 task chạy ngầm mà không dẫm chân nhau
+thì tôi vẫn ok, ko vấn đề gì."*
+
+Nên giới hạn đúng là **tối đa 2 CHAT song song**, và trong một chat thì số tác vụ ngầm **không bị
+giới hạn** miễn chúng không giẫm chân nhau.
+
+**Chỗ này đổi kiến trúc, không chỉ đổi con số:** mọi đau ngày 07/09 là đau **giữa các chat** (chat
+Scouter giữ `_docs` 4 giờ · một chat đã tắt còn cầm khoá 3 giờ), **không** phải giữa các tác vụ
+ngầm của một chat. Bảng quyền tồn tại để điều phối những bên **không nói được với nhau**; một chat
+và tác vụ ngầm của chính nó thì nói được, nên khoá ở đó là chi phí thuần. Vế ⑶ của ADR-0017 chốt
+theo hướng này.
+
+Hệ quả cần sửa ở `AGENTS.md` khi cắt luật: câu giới hạn phải nói **chat**, đừng nói **lane** — hai
+chữ đó đã được dùng lẫn nhau và vai điều phối đã tự hãm sai chỗ vì đọc theo nghĩa hẹp.
+
+- **đóng khi:** lệnh: grep -c "tối đa 2 chat" AGENTS.md ra 1
+
+- **ĐỔI MÃ N-35 → N-37** · 2026-09-07 · lane `claude-assistant` · khối "ADR-0017 đã viết xong nhưng CHƯA vào repo" đọc là **N-37** từ nay — lane `claude-tinh-gon` dùng `N-35` cùng lúc trong lượt cắt sổ, khối đó tới trước nên giữ mã · **đóng khi:** lệnh: test -f docs/adr/0017-khong-ai-phai-cho-ai.md
+- **ĐỔI MÃ N-36 → N-38** · 2026-09-07 · lane `claude-assistant` · khối "Giới hạn tối đa 2 lane đo SAI đơn vị" đọc là **N-38** từ nay — cùng lý do · **đóng khi:** lệnh: grep -c "tối đa 2 chat" AGENTS.md ra 1
