@@ -1137,3 +1137,17 @@ fixture chọn một đơn vị THẬT khác GPT, chọn theo thứ tự đườ
   `FEATURE-PARITY.md` hết mốc `AUTO:` và còn con trỏ · `14` đòi tên file có trong `generated`
   (đọc qua `generatedFrom`, không gõ cứng) · `12` và `15` đã XANH. Tôi giữ `_code`, giữ 4 commit
   chưa đẩy, và báo về phiên điều phối. · **đóng khi:** đã có ở khối `N-11` gốc, không đổi.
+
+- **N-12** · ADR-0014 mới land được MỘT NỬA, và nửa còn lại để repo ở đúng trạng thái mà chính
+  ADR đó gọi là sai. Lane `claude-bang-vung-chac` đã land nửa `_code` (`0b42daf`): bộ sinh nay
+  chỉ ghi ra `FEATURE-PARITY-AUTO.md`. Nửa `_root` thì chưa: `FEATURE-PARITY.md` **vẫn còn 3
+  khối `<!-- AUTO:X START -->`** và **không có con trỏ** sang file mới. Tức là cùng một con số
+  nằm ở hai chỗ, và bản trong `FEATURE-PARITY.md` nay là bản CHẾT — không bộ sinh nào cập nhật
+  nó nữa. ADR-0014 ghi thẳng: *"Bản trong `FEATURE-PARITY.md` phải BIẾN MẤT, chỉ còn con trỏ."*
+  Phiên `claude-scouter-s06` đã làm phần cơ học đang chặn mọi lane (khai file vào khối
+  `generated` của `.repo-structure.json`) vì nó cần đúng khoá `_root` đang giữ, nhưng **cố ý
+  KHÔNG đụng mục 2** — đó là chữ của người và là ADR của lane khác.
+  **[ĐO]** `grep -c "AUTO:.* START" FEATURE-PARITY.md` ra 3, `grep -c FEATURE-PARITY-AUTO
+  FEATURE-PARITY.md` ra 0.
+  · **đóng khi:** ba khối AUTO biến khỏi `FEATURE-PARITY.md`, chỗ đó còn một con trỏ sang
+  `FEATURE-PARITY-AUTO.md`, và hai lệnh đo trên ra `0` và `>=1`. Khoá cần: `_root`.
