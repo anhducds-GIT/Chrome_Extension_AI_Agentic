@@ -52,8 +52,16 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
    Bridge liên quan Queue/workbook trả `EXECUTOR_UNAVAILABLE`, không có runner
    nền nào thay thế. *Exception duy nhất (Đức chốt 2026-08-25, xem
    `decisions.md`): một method **trial run** riêng, có nắp cứng (dev-toggle
-   BẬT, ≤2 job, cách nhau ≥5–6 phút, nhãn audit `bridge_dev`) — chưa
-   implement trong package này; `run.start` thật vẫn cấm vĩnh viễn.*
+   BẬT, ≤30 job, timeout ≤ `LIMITS.trial_timeout_cap_sec`, cách nhau ≥5–6
+   phút, nhãn audit `bridge_dev`) — `run.start` thật vẫn cấm vĩnh viễn.*
+   **Hai con số của nắp đã đổi, `run.start` thì KHÔNG:** số job 2 → 30 (Đức
+   chốt 2026-08-25, việc thật là 20–30 ảnh) và trần timeout 90 → **900 giây**
+   (Đức chốt 2026-09-07,
+   [ADR-0015](../../../docs/adr/0015-nang-tran-duong-thu-len-900-giay.md) ở gốc
+   repo). Trần khai ở **đúng một chỗ** — `LIMITS.trial_timeout_cap_sec` trong
+   `bridge-core.js` — nên đừng gõ con số vào đâu khác. Nới đường thử cho khớp
+   việc thật **không** phải trao cho AI khả năng tự tiêu credit: nếu bạn thấy
+   mình đang gỡ `run.start` khỏi `POLICY.prohibited_methods` thì dừng lại.
 8. **In-app preview pane vẫn cấm dùng để "xem" UI** (chặn script, bỏ
    stylesheet — xem `README.md`/`NEXT-SESSION-BRIEF.md`). **Nhưng từ
    2026-08-24, harness bằng Chrome THẬT được phép** (quyết định của Đức trong
