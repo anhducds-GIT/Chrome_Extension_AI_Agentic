@@ -651,3 +651,38 @@ duy nhất soi nó là `run.trial` — chính là lệnh tiêu tiền.
 `G-01`/`G-02` vẫn MỞ — gộp được vào **một** lượt Đức bấm.
 
 <!-- HANDOFF-THANG: 2026-09 -->
+
+## 2026-09-07 — `claude-gemini-crlf`: soi bệnh CRLF cả gói, đúng hai phép kiểm đỏ, đã nới
+
+**Đo trước khi vá.** Đếm trước: suite **95/95**. Trên đĩa **229/229** file text là LF, trong git
+**251/251** LF — đĩa và kho đều sạch, nên ở gói này bệnh là *tiềm ẩn*, không phải đang phát.
+
+**Ép CRLF cả gói thì đúng HAI phép kiểm đỏ**, cùng một lý do: mỏ neo viết `
+` trần.
+`content-image-static.mjs:127` (`\|\| remoteVerifiedResult,
+\s+ready:`) và
+`landed-as-requested.mjs:38` (`function downloadLeaf[\s\S]*?
+}
+
+function pathTailMatches`).
+Nới thành `?
+`, **không nới rộng hơn**. Suite **95/95 mỗi chiều**.
+
+**Đột biến 8/8 bị bắt, và chạy LẠI ĐỦ 8 con ở CHIỀU CRLF** — cái phải chứng minh không phải "mỏ
+neo còn răng ở LF" mà "nới xong vẫn còn răng ở chiều mới nhận". Con quan trọng nhất là con thử
+nới quá tay: chèn một hàm lạ giữa `downloadLeaf` và `pathTailMatches` — **vẫn ĐỎ**.
+
+**Hoàn nguyên cố ý KHÔNG dùng `git checkout`:** chụp sha256 cả gói, ép, ép ngược, đối chiếu —
+**229/229 khớp từng byte**. `git checkout` xoá việc chưa commit của lane khác.
+
+**Một bẫy đã mắc thật:** bộ đột biến hoàn nguyên bằng `git checkout`, và **một lượt không ăn** —
+con M7 (`pathTailMatches` luôn `return true`) nằm lại, làm suite đỏ *sau khi đã xong*. Nhìn tưởng
+bản vá hỏng. Bài học: **`git status` ngay trước lượt chạy kết luận**.
+
+**Phát hiện phụ, có giá:** gốc bệnh **ĐÃ VÁ 06/09** — gốc repo nay có `.gitattributes` với
+`* text=auto eol=lf` (khối `Y-17`). Mục `F-27` của gói Flow (viết 05/09) vẫn ghi gốc bệnh là
+*còn mở, cần Đức chốt*; nó **lạc hậu**.
+
+**Số.** Suite 95/95 → 95/95. Hai file test sửa, không file mã nguồn nào.
+**Còn mở:** gói `duc-auto-chatgpt` **chưa soi** — khoá do `claude-b36-vaA` giữ; câu lệnh soi và
+điều kiện đóng ở `G-14` của `BACKLOG.md`.
