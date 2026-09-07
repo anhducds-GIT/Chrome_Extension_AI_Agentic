@@ -50,9 +50,9 @@
     "_docs": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-07T05:50",
-      "task": "ADR sua muc chan ghi xuong dia cua ADR-0010 theo chot cua Duc 07/09",
-      "released_at": "2026-09-07T09:47",
+      "claimed_at": "2026-09-07T11:14",
+      "task": "Brief lat cat kien truc hai vai",
+      "released_at": "2026-09-07T11:16",
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -78,5 +78,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "d0c7a4f38bc0b04b"
+  "_fingerprint": "c24acdcf7c44d070"
 }
