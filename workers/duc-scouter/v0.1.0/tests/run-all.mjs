@@ -8,18 +8,38 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skip = new Set(["run-all.mjs", "xlsx-test-utils.mjs"]);
-const files = fs.readdirSync(here).filter((name) => name.endsWith(".mjs") && !skip.has(name)).sort();
+const files = fs.readdirSync(here).filter((name) => name.endsWith(".mjs") && !skip.has(name)).sort()
+  .map((name) => path.join(here, name));
+
+/* ---- Suite của PILOT cũng chạy ở đây (07/09) ------------------------------
+ * Pilot đứng ngoài thư mục phiên bản ([ADR-0020](../../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md)
+ * mục ⑶a), nên nó không rơi vào lượt quét trên. Không nối thì phép ghim của pilot chỉ chạy khi
+ * có người nhớ chạy tay — và cái gì phải nhớ thì sẽ có lúc quên.
+ *
+ * Quét theo HÌNH DẠNG, không theo tên: `pilots/<bất kỳ>/tests/*.mjs`. Gõ cứng tên pilot vào đây
+ * là đưa hiểu biết về một trang cụ thể vào seed, đúng thứ `seed-purity-smoke.mjs` canh. Pilot
+ * thứ hai ra đời thì dòng này không phải sửa. */
+const thuMucPilot = path.resolve(here, "..", "..", "pilots");
+if (fs.existsSync(thuMucPilot)) {
+  for (const ten of fs.readdirSync(thuMucPilot).sort()) {
+    const tests = path.join(thuMucPilot, ten, "tests");
+    if (!fs.existsSync(tests)) continue;
+    for (const f of fs.readdirSync(tests).sort()) {
+      if (f.endsWith(".mjs") && !skip.has(f)) files.push(path.join(tests, f));
+    }
+  }
+}
 
 let passed = 0;
 const failed = [];
 for (const file of files) {
   try {
-    execFileSync(process.execPath, [path.join(here, file)], { stdio: "pipe", encoding: "utf8" });
+    execFileSync(process.execPath, [file], { stdio: "pipe", encoding: "utf8" });
     passed += 1;
-    console.log(`PASS  ${file}`);
+    console.log(`PASS  ${path.relative(here, file)}`);
   } catch (error) {
-    failed.push(file);
-    console.log(`FAIL  ${file}`);
+    failed.push(path.relative(here, file));
+    console.log(`FAIL  ${path.relative(here, file)}`);
     const detail = `${error.stdout || ""}${error.stderr || ""}`.trim().split("\n").slice(0, 15);
     for (const line of detail) console.log(`      ${line}`);
   }
