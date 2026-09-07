@@ -356,3 +356,13 @@ nay nằm trong `nguon-hnx.mjs`, không nằm trong trí nhớ ai.
 
 **Đo.** Ghim 17 khối · đột biến **17/17, sống sót 0** · **0 lượt gọi mạng** trong toàn bộ suite.
 Còn lại của `S-10`: **lượt chạy thật** — cần Bridge chạy, extension nạp lại, công tắc BẬT.
+
+## 2026-09-07 · `claude-scouter-s06` — ghi tên lượt `--carry` thứ hai
+
+Lượt đẩy `S-10` dùng `--carry`, **lane bị cuốn theo: `claude-noi-qua`** (commit `8ed66f8`,
+vùng `_code`). ADR-0005 duyệt thường trực cho `--carry`, đổi lại phải kể tên trong nhật ký —
+đó là thứ DUY NHẤT còn lại để truy, vì lớp chắn cuối đã bỏ.
+
+Đây là lượt carry **thứ hai** trong cùng một phiên (trước đó: `claude-dong-bang-2`). Hai lượt
+trong một buổi là số liệu đáng để ý: mô hình một nhánh chung khiến người đẩy sau luôn phải
+gánh người commit trước. Không đề xuất gì ở đây — chỉ ghi để lần sau đếm được.
