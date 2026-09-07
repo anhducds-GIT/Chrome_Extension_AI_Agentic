@@ -1488,3 +1488,39 @@ Repo Extension thì **không có lớp nào** (`protection` 404 · `rulesets` r�
 
 **Chưa làm, cố ý** (brief mục 6): chưa nối `quyen.mjs` vào `claim.mjs`, chưa vào `template/`, chưa
 thêm bước kiểm quyền vào `cong-kiem.yml` — bước đó chỉ có nghĩa sau khi lõi thành đường ghi thật.
+
+## 2026-09-07 · claude-bo-sinh — cắt thời gian bộ sinh bảng, 9,7s → 3,6s
+
+**Vì sao làm việc này trước.** Đức hỏi *"cổng kiểm cost nhiều thời gian, có cách improve không"*,
+và một phiên trước đó chạy hết một tiếng. Đo ra: **~40 phút của tiếng đó là ngồi chờ máy**, và
+gốc là bộ sinh bảng chậm — nó chạy trong cổng đóng phiên, trong phép kiểm của chính nó, và trong
+`bang-trang-thai/`, nên mỗi giây ở đây bị nhân lên nhiều lần mỗi phiên. Đức chốt: sửa bộ sinh trước.
+
+**Chẩn đoán bằng đồng hồ, không bằng phỏng đoán.** 277 lượt gọi git / 8.922ms một lượt sinh. Hai
+nhóm ăn **58%**, cả hai vì cùng một lý do — **một tiến trình git cho MỖI đường dẫn**:
+`log -1` **107 lượt / 4.139ms** · `cat-file -t` **40 lượt / 1.098ms**.
+
+**Vá.** Hai bản đồ gộp, dựng lười, neo vào cùng mốc `moc()` đã ghim: một lượt
+`git log --name-only` cả lịch sử (**152ms**) và một lượt `ls-tree -r -t` (**75ms**).
+
+| | Trước | Sau |
+|---|---|---|
+| bộ sinh một lượt | 9.746ms | **3.584ms** |
+| `build-dashboard-smoke` | 88s | **66s** |
+| `bang-ba-cua-smoke` | 27s | **16s** |
+| `harness-smoke` | 25s | **16s** |
+| `check-bootstrap-smoke` | 22s | **16s** |
+| `build-overview-smoke` | 20s | **11s** |
+| `npm test` cả repo | 240s | **192s** |
+
+**Bằng chứng không đổi hành vi:** ra **giống từng byte** cả ba file máy sinh (`cmp`), `npm test`
+xanh toàn bộ.
+
+**Đường dự phòng đã được KIỂM, không phải để trang trí.** Repo có 2 commit merge, mà
+`git log --name-only` mặc định không liệt kê file của commit merge — nên bản đồ có thể thiếu, và
+chỗ thiếu thì vẫn gọi git cho đúng đường dẫn đó. Kiểm bằng cách **làm hỏng cả hai bản đồ**: chạy
+mất 8,4s (đúng tốc độ cũ) và ra vẫn giống từng byte.
+
+**Chưa làm, và vì sao.** Phần còn lại (~280 lượt `git show`, ~30ms mỗi lượt) là phí khởi động tiến
+trình **rải mỏng**, không chỗ nào trội — `lineDate` chỉ 13 lượt / 514ms. Gộp tiếp cần một tiến
+trình git **thường trú** (`cat-file --batch`), tức thêm máy móc và thêm một kiểu hỏng mới. Chưa đáng.
