@@ -74,7 +74,9 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 | `scripts/observer-mutation-check.mjs` | 14 con đột biến cho bốn phép dò |
 | `scripts/scouter-mutation-check.mjs` | 58 con đột biến cho khung seed, đường ghi, cái phanh và bề mặt quyền |
 | `scripts/scouter-input-trust-probe.mjs` | **Phép đo ①** (06/09, ĐẠT): cú bấm qua `chrome.debugger` có `isTrusted: true` |
+| `scripts/scouter-action-reality-probe.mjs` | **Phép đo ②** (07/09, ĐẠT 11/11 trên Chrome 152): nạp CHÍNH lõi hành động thật vào một extension thử rồi bấm trên trang tự dựng. Khác ① ở chỗ ① đo *đường đi*, còn cái này đo *code của Scouter*. Mã thoát 2 = phép đo KHÔNG CHẠY được |
 | `scripts/scouter-bridge-live-check.mjs` | Nối thử với **máy chủ Bridge THẬT**, không phải bản giả. Mã thoát 2 = không chạy được, khác hẳn "không đạt" |
+| `tests/scouter-action-reality-smoke.mjs` | Ghim LUẬT CHẤM của phép đo ②, không cần trình duyệt. 15 ca hỏng, mỗi ca phải đỏ ĐÚNG tiêu chí của nó |
 | `tests/scouter-write-gate-smoke.mjs` | Ghim CÁI PHANH (S-05) và bề mặt quyền manifest (S-02). Ghim cả hai chiều — khối ② là chiều "mở khoá thì bấm được thật" |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này. ADR đã `Accepted` là bất biến |
 | `tests/run-all.mjs` | Chạy hết phép ghim của gói. `package.json` gốc chỉ gọi file này — thêm phép ghim mới **không cần khoá `_root`** |

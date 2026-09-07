@@ -101,3 +101,38 @@ phanh trước. Sửa kho lưu giả thành đã-mở-khoá, không nới phanh:
 chỉnh trần 50, con số hiện là **ước lượng chưa đo**. `S-03` tên file · `S-04` chờ xác nhận đã
 gửi. Nợ mới không mở mục riêng vì đã ghi vào ADR: phanh chặn theo **số lượt**, không theo
 **trang** — bật rồi thì bấm được trên bất kỳ tab nào có `target_id`.
+
+## 2026-09-07 · `claude-scouter-s06` — có bản đồ, và cú bấm đã chạy trên trang thật
+
+**Hai việc.** ⑴ Dựng `ROADMAP.md` cho gói. ⑵ Đóng `S-06` bằng **phép đo ②**.
+
+**Vì sao có ROADMAP.** Đức báo mất dấu, và đúng: brief `SCOUTER-SEED-01` chỉ phủ lượt xây đầu
+tiên, 25 mục của ADR-0010 **chưa ai xếp thành đường đi**. Đếm ra **7/25 xong**; trong 18 dòng
+còn lại có **7 dòng là máy móc của một cỗ chạy JOB HÀNG LOẠT** — thứ Scouter không có. Khuyến
+nghị hoãn cả 7 ghi ở ROADMAP; chốt xong thì còn 11 mục.
+
+**Phép đo ② khác ① chỗ nào.** ① hỏi *đường đi* có dùng được không — có. Nhưng nó tự gõ khung
+chuột bằng tay và tự lấy toạ độ, tức là **không chạy dòng nào của Scouter**. ② nạp CHÍNH
+`scouter-actions-core.mjs` (chép từ đĩa, in mã băm) vào extension thử rồi gọi `runAction()` thật.
+
+**ĐẠT 11/11 trên Chrome 152.** Ba ca trang giả không thể có, cả ba xanh: bấm nút THỨ HAI trong
+hai nút chữ giống hệt → đúng nút thứ hai kêu · nút dưới 1800px khoảng trống → cuộn 1288px rồi
+trúng · bấm ngược lên nút đã trôi khỏi màn hình → trúng. Hai hệ toạ độ của `DOM.getBoxModel` và
+`Input.dispatchMouseEvent` **không lệch** — đó là câu hỏi mở lớn nhất, nay đã đóng.
+
+**Phép đo phải tự chứng minh nó biết đỏ.** Xanh hết ngay lượt đầu thì chưa đáng tin. Bẻ lõi ba
+kiểu (lệch toạ độ y · bỏ cuộn tới · bỏ chốt khớp-đúng-một): mỏ neo khớp **3/3**, giết **3/3**,
+mỗi con đỏ ĐÚNG tiêu chí của nó.
+
+**Một chỗ mất một lượt chạy.** Trang extension của phép đo dùng `<script type="module">` **nội
+tuyến**, mà CSP mặc định của MV3 chặn hẳn script có thân trong HTML. Trang lên bình thường,
+không lỗi nào hiện ra, mã chỉ không bao giờ chạy — nhìn ra ngoài giống "chờ quá hạn". Tách ra
+file `.js` riêng thì xong.
+
+**Một lỗi thứ tự của tôi.** Sửa `package.json` **trước khi** nhận `_root`. Lúc đó khoá trống
+chủ nên không ai mất gì, nhưng luật là nhận trước lượt ghi đầu tiên.
+
+**Đo.** Phép ghim gói **8/8**. Đột biến 58/58 giữ nguyên.
+
+**Việc kế: bước 2 của ROADMAP** — đóng vòng tự cải tiến MỘT lần. Trần 50 hiệu chỉnh ở đó: phép
+đo ② chỉ tốn 6 lượt ghi nên nó không nói gì về con số 50.

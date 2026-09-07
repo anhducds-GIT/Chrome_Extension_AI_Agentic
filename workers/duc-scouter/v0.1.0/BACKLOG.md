@@ -95,3 +95,24 @@ THẬT ĐẠT 8/8, trong đó khối ⑥ là chiều từ chối qua dây thật
 thật nào — `S-06` là lượt đo nó. Và cái phanh chặn theo **số lượt**, không chặn theo **trang**:
 bật rồi thì Scouter bấm được trên bất kỳ tab nào có `target_id`. Luật "cấm chạy trên trang
 thật" vẫn chưa có chốt nào trong mã cưỡng chế.
+
+## ĐÓNG · S-06 (2026-09-07, `claude-scouter-s06`) — ba lệnh ghi đã chạy trên trang thật
+
+`scripts/scouter-action-reality-probe.mjs` — **phép đo ②**. Nó nạp CHÍNH
+`scouter-actions-core.mjs` (chép từ đĩa, in mã băm vào bản báo cáo) vào một extension thử rồi
+gọi `runAction()` thật trên một trang tự dựng. **ĐẠT 11/11 trên Chrome 152.**
+
+Ba ca một trang giả không thể có, và cả ba đều xanh: bấm nút THỨ HAI trong hai nút chữ giống
+hệt nhau → đúng nút thứ hai kêu · nút dưới 1800px khoảng trống → cuộn 1288px rồi bấm trúng ·
+bấm ngược lên nút đã trôi khỏi màn hình → cuộn lên, bấm trúng. Đây là chỗ hệ toạ độ của
+`DOM.getBoxModel` và của `Input.dispatchMouseEvent` có thể lệch nhau, và nó **không lệch**.
+
+**Phép đo tự chứng minh nó biết đỏ.** Bẻ lõi ba kiểu (lệch toạ độ y 52px · bỏ cuộn tới · bỏ chốt
+khớp-đúng-một): mỏ neo khớp 3/3, giết được 3/3, và mỗi con đỏ ĐÚNG tiêu chí của nó. Không có
+bước này thì "ĐẠT 11/11" chỉ chứng minh phép đo chạy xong, không chứng minh nó đo gì.
+
+Luật chấm có phép ghim riêng không cần trình duyệt: `tests/scouter-action-reality-smoke.mjs`,
+11 tiêu chí + 15 ca hỏng, mỗi ca phải đỏ đúng tiêu chí của nó.
+· **còn nợ lại:** ba thứ CHƯA đo, ghi thẳng trong bản báo cáo của phép đo — trang có khung lồng
+(iframe) · trang đổi tỉ lệ hiển thị · trang thật của nhà cung cấp. Và **trần 50 vẫn chưa hiệu
+chỉnh**: phép đo này chỉ tốn 6 lượt ghi, nên nó không nói được gì về con số 50.

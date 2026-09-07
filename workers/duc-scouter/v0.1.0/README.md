@@ -58,10 +58,11 @@ lọt vào giữa chuỗi là một lượt gửi biểu mẫu mà không ai yê
 ## Tự kiểm
 
 ```bash
-npm run test:scouter          # 7 phép ghim
+npm run test:scouter          # 8 phép ghim
 npm run scouter:mutation      # 58 con đột biến
 npm run scouter:bridge-live   # nối thử với máy chủ Bridge THẬT
 npm run scouter:input-probe   # phép đo ①: cú bấm của máy có được coi là của người không
+npm run scouter:action-probe  # phép đo ②: ba lệnh ghi có làm đúng việc trên trang thật không
 ```
 
 Luật của gói: `AGENTS.md`. Trạng thái: `STATUS.md`. Nhật ký: `HANDOFF.md`. Việc còn mở: `BACKLOG.md`.

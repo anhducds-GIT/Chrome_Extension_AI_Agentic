@@ -5,10 +5,10 @@ name: Duc Scouter
 lifecycle: building
 owner: claude
 priority_rank: 4
-next_step: "S-06 — đo bấm và gõ trên một trang thử tự dựng: ba lệnh ghi mới chỉ chạy trên trang giả trong phép ghim, chưa lần nào chạm một nút thật. Đây cũng là lượt hiệu chỉnh trần 50, con số hiện là ước lượng."
+next_step: "Bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào."
 human_action: "Nạp lại extension trong Chrome — manifest đổi (thêm quyền hẹn giờ) nên bản đang chạy không tự cập nhật. Muốn Scouter bấm thì mở popup, bật Chế độ phát triển; tắt thì nó chỉ nhìn."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
-current_focus: "Scouter bấm và gõ được như tay người, và từ 07/09 đường ghi đã có phanh: công tắc trong popup, mặc định tắt, trần 50 lượt mỗi lần mở khoá, không method nào tự mở khoá được. Bridge cũng tự nối lại sau khi service worker ngủ. Còn thiếu đúng một thứ: chưa lần nào bấm trên một trang thật."
+current_focus: "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong popup, mặc định tắt, trần 50 lượt). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
 ref_readme: README.md
 ref_handoff: HANDOFF.md
 ---
@@ -29,10 +29,13 @@ thì phải có `evidence_ref` trỏ tới bằng chứng vận hành thật.
 ## Ba khả năng của bản nền, và cách tự kiểm lại
 
 ```bash
-npm run test:scouter          # 7 phép ghim của gói
+npm run test:scouter          # 8 phép ghim của gói
 npm run scouter:mutation      # đột biến kiểm: 58 con, con nào sống sót là chốt rỗng
 npm run scouter:bridge-live   # nối thử với máy chủ Bridge THẬT, không phải bản giả
+npm run scouter:action-probe  # phép đo ②: ba lệnh ghi trên một trang thật (cần Chrome)
 ```
+
+Đi tới đâu tiếp theo: **`ROADMAP.md`**.
 
 ## Câu còn treo, chỉ Đức chốt được
 

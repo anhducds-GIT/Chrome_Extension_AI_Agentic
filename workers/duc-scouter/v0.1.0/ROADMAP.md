@@ -20,7 +20,7 @@ awk -F'|' '/^\|/ && NF>2 {c=$(NF-1); gsub(/^ +| +$/,"",c); if (c ~ /SEED v0\.1/)
 | Cửa Bridge — bảng method + kiểm tham số | `scouter-bridge-core.mjs` | 11 method, từ vựng đóng |
 | Vận chuyển qua WebSocket `127.0.0.1` | `scouter-transport-loopback.mjs` | (bảng kiểm kê đếm dòng này **hai lần**) |
 | Định tuyến lệnh Bridge | `createDispatcher` | Live check ĐẠT 8/8 |
-| Bấm và gõ như tay người (`Input`) | `scouter-actions-core.mjs` | Trang **giả** — xem *Bước 1* |
+| Bấm và gõ như tay người (`Input`) | `scouter-actions-core.mjs` | **Trang thật, ĐẠT 11/11** (phép đo ②, 07/09) |
 | Chế độ phát triển + trần chạy thử | công tắc popup + trần 50 | 12 con đột biến, live check |
 | *(quan sát — 4 phép dò)* | `observer-probes.mjs` | Trang **giả** |
 
@@ -47,7 +47,7 @@ Chốt câu này rồi thì phạm vi còn lại là **11 mục**, không phải
 
 ## Đường đi — bốn bước, theo đúng thứ tự
 
-### Bước 1 — `S-06`: chứng minh cú bấm chạy trên trang THẬT ⟵ *đang làm*
+### Bước 1 — `S-06`: chứng minh cú bấm chạy trên trang THẬT ✅ **XONG 07/09 — ĐẠT 11/11**
 
 Mọi thứ đã xây đều mới chỉ chạy trên **trang giả trong phép ghim**. Phép đo ① ngày 06/09 chứng
 minh *đường đi* dùng được, **không** chứng minh ba lệnh của Scouter viết đúng.
@@ -57,9 +57,17 @@ phần tử. Trên trang giả thì hộp là con số ta tự đặt. Trên tra
 khung nhìn, tỉ lệ hiển thị — và một sai lệch ở đây nghĩa là **bấm trúng phần tử bên cạnh**, thứ
 không phép ghim nào hiện có bắt được.
 
-Bước này cũng là lượt **hiệu chỉnh trần 50** — con số hiện tại là ước lượng chưa đo lần nào.
+**Kết quả:** `npm run scouter:action-probe` — ĐẠT 11/11 trên Chrome 152. Hai hệ toạ độ **không
+lệch**: nút dưới 1800px khoảng trống thì lõi cuộn 1288px rồi bấm trúng, và bấm ngược lên cũng
+trúng. Phép đo tự chứng minh nó biết đỏ: bẻ lõi ba kiểu thì giết được 3/3, mỗi con đỏ đúng chỗ.
 
-### Bước 2 — đóng vòng tự cải tiến MỘT lần
+**Trần 50 vẫn CHƯA hiệu chỉnh** — phép đo chỉ tốn 6 lượt ghi nên nó không nói gì về con số 50.
+Việc đó lùi sang bước 2, nơi có một vòng chạy đủ dài để đếm.
+
+**Ba thứ chưa đo, in ngay trong bản báo cáo của phép đo:** trang có khung lồng (iframe) · trang
+đổi tỉ lệ hiển thị · trang thật của nhà cung cấp.
+
+### Bước 2 — đóng vòng tự cải tiến MỘT lần ⟵ *việc kế*
 
 Đây là mục đích của cả gói ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md)):
 Scouter dò trang → báo cáo cho AI → AI viết adapter xuống đĩa → `scout.reload` → adapter chạy.

@@ -10,6 +10,7 @@
     "test:observer": "node workers/duc-scouter/v0.1.0/tests/run-all.mjs",
     "test:scouter": "node workers/duc-scouter/v0.1.0/tests/run-all.mjs",
     "scouter:input-probe": "node workers/duc-scouter/v0.1.0/scripts/scouter-input-trust-probe.mjs",
+    "scouter:action-probe": "node workers/duc-scouter/v0.1.0/scripts/scouter-action-reality-probe.mjs",
     "test:gate-paths": "node tests/session-check-utf8-paths.mjs",
     "dashboard": "node scripts/build-dashboard.mjs",
     "test:dashboard": "node tests/build-dashboard-smoke.mjs",
