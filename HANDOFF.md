@@ -1458,3 +1458,33 @@ commit đều quy thuộc được về lane, 85 mục nhật ký đều dưới
 Bridge riêng dạng lớp đứng trước (ADR-0004) · nhật ký phiên · sinh lại hai artifact.
 
 Cổng đóng phiên **XANH TOÀN BỘ** trước lượt đẩy. Ghim gói 10/10, đột biến 75/75 sống sót 0.
+
+## 2026-09-07 · claude-dieu-phoi — lõi hai vai đã vượt sáu ca; một cờ chờ Đức
+
+**Lõi đã xong ở bộ khung** (đẩy rồi, `Ark_Repo_Harness` @ `b3bbfc5`): `scripts/quyen.mjs` +
+`tests/quyen-sau-ca.mjs`. **41 phép kiểm xanh · 10/10 đột biến bị bắt** · `npm test` xanh · cổng
+đóng phiên XANH TOÀN BỘ. Chín ca, kể cả ca ④ chịu tải và một ca hợp lệ đi hết được.
+
+**Đổi một chốt của ADR-0019 ⑵.** Sổ quyền đặt trên **ref riêng** `refs/ark/quyen`, ngoài lịch sử
+`main` — nên rebase `main` không chạm được nó, và ca *"quyền cũ sau fetch + rebase"* thành **không
+thể xảy ra về cấu trúc**, không cần soi khoảng lịch sử. Lượt tích hợp cũng là sự kiện trên chính
+ref đó, nên lượt kiểm và lượt ghi là **một lượt đẩy** — đóng lỗ TOCTOU.
+
+**Đo được, và nó bác vế ⑴ của ADR-0019 lần thứ hai** — lần này theo chiều ngược với brief §0.
+Brief đo repo Extension rồi tôi khái quát cho cả hai; **sai**. Repo bộ khung
+(`Ark_Repo_Harness_Template`) **ĐANG có** branch protection cổ điển trên `main`:
+`required_status_checks: ["cong-kiem"]`, `strict: true`, `allow_force_pushes: false`. Workflow
+`.github/workflows/cong-kiem.yml` đã chạy **87 lượt**. Tức **bên thứ ba độc lập không phải xây
+mới — nó đã có sẵn.**
+
+Chỗ hở là **một cờ**: `enforce_admins: false`. Lượt đẩy hôm nay in ra
+`remote: Bypassed rule violations for refs/heads/main` — nghĩa là hàng rào có thật nhưng tài khoản
+admin đi vòng qua được, và mọi phiên AI đều đẩy bằng tài khoản đó. Nên hiện tại nó là **trang trí**.
+
+**CHỜ ĐỨC — một quyết định, và ĐỪNG tự bật.** Bật `enforce_admins` sẽ **chặn mọi lượt đẩy** cho tới
+khi `cong-kiem` báo xong (nay đang `pending`), nên bật sai lúc là tự khoá cả hai vai ra ngoài.
+Repo Extension thì **không có lớp nào** (`protection` 404 · `rulesets` rỗng) — hai repo khác nhau,
+đừng suy từ cái này sang cái kia.
+
+**Chưa làm, cố ý** (brief mục 6): chưa nối `quyen.mjs` vào `claim.mjs`, chưa vào `template/`, chưa
+thêm bước kiểm quyền vào `cong-kiem.yml` — bước đó chỉ có nghĩa sau khi lõi thành đường ghi thật.
