@@ -463,3 +463,16 @@ như đã chốt. Nên nếu làm thì phải kèm phép đếm: ADR ở `Propos
   · **dong khi:** hoac co mot chot khien `git add` cua lane nay khong bi lane kia commit ho
   (vi du: cong doc phien canh `git diff --cached` co file ngoai vung minh giu), hoac Duc chot
   la chap nhan rui ro nay va ghi mot dong ly do.
+
+ - **A-02** · Mo mot vung dung chung (`workers/_shared/`) hien CHI lam duoc bang duong dang
+  ngo nhat: sua tay `claims.json` roi `--restamp`. Da di het ba cua va ca ba deu dong:
+  `claim.mjs --take` tu choi khoa la va bao "khai o .repo-structure.json truoc"; khai vao khoi
+  `areas` VAN do, vi `areaOf()` coi moi thu muc duoi `workers/` la mot package can khoa rieng
+  trong `claims.json`; va khong co lenh nao tao khoa do. Nen nguoi dau tien di duong nay (07-08/09,
+  lane `claude-scouter-s06`) phai lam dung thao tac ma luat canh bao nang nhat.
+  No CHAY duoc — da chup chu so huu truoc/sau, khong khoa nao bi doi chu — nhung no khong nen
+  la cach chinh thuc: mot duong hop le ma trong giong het mot vu cuop khoa thi lan sau khong
+  ai phan biet duoc hai thu do.
+  · **dong khi:** `claim.mjs` co mot duong TAO khoa moi (vi du `--khai-vung <khoa>`) chi chay
+  duoc khi khoa do da duoc khai trong `.repo-structure.json`, va no dong dau lai luon — hoac
+  Duc chot rang mo vung moi la viec hiem den muc khong dang tu dong hoa, va ghi mot dong ly do.

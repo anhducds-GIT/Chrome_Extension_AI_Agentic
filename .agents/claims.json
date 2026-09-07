@@ -37,22 +37,22 @@
       "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-07T15:38",
-      "task": "nang tran so no ha tang, Duc chot 07/09",
-      "released_at": "2026-09-07T15:44",
+      "owner": "claude-scouter-s06",
+      "ai": "Claude",
+      "claimed_at": "2026-09-07T16:30",
+      "task": "dung workers/_shared/bridge-host: loi dung chung cho host Bridge",
+      "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
       "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\". Lay tu lane claude-tinh-gon (dang giu, 7 commit chua day) de sua dong 1316 HANDOFF.md: ### -> ## - muc 4794 byte dang chan cong dong phien voi MOI lane. Sua dung mot ky tu, khong xoa chu cua ai. Toi da nhan thang cho lane do truoc khi lay."
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-07T15:11",
-      "task": "ADR-0020: thang phien ban Scouter v1/v2 va ranh gioi seed-pilot",
-      "released_at": "2026-09-07T15:44",
+      "owner": "claude-cua-kiem",
+      "ai": "Claude",
+      "claimed_at": "2026-09-07T16:16",
+      "task": "ADR-0019: them chot to xac nhan phai la su kien lien truoc",
+      "released_at": null,
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -76,7 +76,14 @@
       "claimed_at": "2026-09-07T05:36",
       "task": "Dung ROADMAP cua goi va dong S-06: do bam-go tren trang thu tu dung",
       "released_at": null
+    },
+    "workers/_shared": {
+      "owner": "claude-scouter-s06",
+      "ai": "Claude",
+      "claimed_at": "2026-09-07T16:58",
+      "task": "dung loi Bridge dung chung (workers/_shared/bridge-host), host rieng cho Scouter",
+      "released_at": null
     }
   },
-  "_fingerprint": "81eff9886ff7bf80"
+  "_fingerprint": "1e70953beb1c74e0"
 }
