@@ -136,3 +136,32 @@ chủ nên không ai mất gì, nhưng luật là nhận trước lượt ghi đ
 
 **Việc kế: bước 2 của ROADMAP** — đóng vòng tự cải tiến MỘT lần. Trần 50 hiệu chỉnh ở đó: phép
 đo ② chỉ tốn 6 lượt ghi nên nó không nói gì về con số 50.
+
+## 2026-09-07 · `claude-scouter-s06` — Đức gỡ chỗ chặn cuối: Scouter được ghi xuống đĩa
+
+**Chốt.** Đức, 07/09: *"Scouter hoàn toàn được ghi chứ. Vì Scouter chính là bản phát triển đầu
+tiên của bất kỳ extension nào."* → [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md).
+
+**Nó gỡ đúng cái gì.** ADR-0010 từng viết *"chừng nào chưa chốt thì Scouter không được ghi nội
+dung trang xuống đĩa"*, và điều đó cắt **tầng thứ ba** trong ba tầng của ADR-0009 — *ghi chép,
+mỗi lượt một cái, nguyên liệu để sinh ra adapter*. Không nguyên liệu thì không sinh được
+adapter, tức là **vòng tự cải tiến không khép được** — thứ cả gói tồn tại để làm. Đây là mục
+chặn cuối cùng; sau ADR này gói **không còn câu nào chờ Đức**.
+
+**Lý do của Đức phân định phạm vi, không chỉ cho phép.** Scouter không phải extension chạy sản
+xuất, nó là bộ đồ nghề dựng ra extension khác. Bắt một bộ đồ nghề quan sát mà cấm nó ghi lại
+thứ quan sát được là bỏ đi công dụng của nó.
+
+**Ba giới hạn giữ nguyên, cả ba là luật có sẵn:** không ghi vào `evidence/` · `pilot-*/` ·
+`Batch-*/` (bằng chứng vận hành, không phải đồ làm việc) · không bao giờ để token / mật khẩu /
+tệp ghép cặp vào repo · **chạy trên trang thật vẫn phải hỏi Đức** — ADR-0016 gỡ chỗ chặn về
+*ghi*, không gỡ chỗ chặn về *chạy ở đâu*.
+
+**Chỗ sẽ phải quay lại, ghi để lượt đó khỏi quên.** Hôm nay Scouter chỉ chạm trang thử do chính
+nó dựng trong thư mục tạm, nên thứ rơi xuống đĩa là nội dung thử. Ngày nó được cho chạy trên
+một trang thật đã đăng nhập, "nội dung trang xuống đĩa" đổi nghĩa: dữ liệu phiên, thông tin cá
+nhân, có thể cả token nằm sẵn trong DOM. Không phải lý do chặn hôm nay — là thứ phải cân lại tại
+đúng cái cổng đã có: lượt Đức duyệt cho chạy trang thật.
+
+**Chưa làm trong lượt này, và cố ý.** Hình dạng ghi chép — ghi vào đâu, tên gì, chứa gì — thuộc
+bước 2 của `ROADMAP.md`, nơi có việc thật để đo xem cần gì. Quyết trước khi có việc thật là đoán.

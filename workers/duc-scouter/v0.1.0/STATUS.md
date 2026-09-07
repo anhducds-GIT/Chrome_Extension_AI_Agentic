@@ -39,8 +39,10 @@ npm run scouter:action-probe  # phép đo ②: ba lệnh ghi trên một trang t
 
 ## Câu còn treo, chỉ Đức chốt được
 
-- @Đức:chốt(SCOUTER-INVENTORY-01) Chính sách che dữ liệu khi Scouter ghi báo cáo xuống đĩa.
-  Chừng nào chưa chốt thì Scouter **không được ghi nội dung trang xuống đĩa** (ADR-0010).
+**Không còn câu nào chờ Đức.** Câu cuối cùng — chính sách che dữ liệu khi ghi báo cáo xuống
+đĩa — Đức chốt ngày 07/09: Scouter **được** ghi
+([ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md)).
 
-Bốn câu treo cũ đã được chốt: chỗ đặt thư mục (ADR-0013) · làm tới đâu (ADR-0010, dừng ở
-`SEED v0.1`) · hình dạng cái phanh cho đường ghi và quyền `alarms` (ADR-0001 của gói, 07/09).
+Năm câu treo cũ đã chốt hết: chỗ đặt thư mục (ADR-0013) · làm tới đâu (ADR-0010, dừng ở
+`SEED v0.1`) · hình dạng cái phanh cho đường ghi và quyền `alarms` (ADR-0001 của gói, 07/09) ·
+ghi xuống đĩa (ADR-0016, 07/09).

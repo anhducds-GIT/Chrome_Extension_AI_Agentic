@@ -76,6 +76,12 @@ Từng mảnh đã có; **cả vòng thì chưa ai chạy một lần nào**.
 Cho tới khi vòng đó khép một lần trên một trang tự dựng, ta đang xây các bộ phận mà chưa biết
 chúng lắp vào nhau có chạy không.
 
+**Đức vừa gỡ chỗ chặn của bước này ngày 07/09** ([ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md)):
+Scouter được ghi ghi chép xuống đĩa. Đó chính là **tầng thứ ba** trong ba tầng của ADR-0009 —
+*nguyên liệu để sinh ra adapter*. Không có nó thì vòng không khép được, nên bước 2 bắt đầu bằng
+đúng việc đó. Hình dạng ghi chép (ghi vào đâu · tên gì · chứa gì) **chưa quyết**, và cố ý: quyết
+trước khi có việc thật để đo là đoán.
+
 ### Bước 3 — nhóm A, đúng hai mục trước
 
 1. **Biết trang tải xong lúc nào** (`webNavigation`). Không có nó thì mọi phép dò là **đoán về
@@ -84,8 +90,9 @@ chúng lắp vào nhau có chạy không.
 2. **Đọc trang theo vai trò + tên** (`Accessibility`). Hôm nay `scout.page` trả về phần tử theo
    DOM; cái AI thật sự cần để chọn đích là *"nút tên Gửi"*, không phải `div > div > button:nth-child(3)`.
 
-Hai mục còn lại của nhóm A (chụp màn hình · chụp cây DOM một lượt) làm sau, và **chụp màn hình
-vướng một câu Đức chưa chốt** — xem dưới.
+Hai mục còn lại của nhóm A (chụp màn hình · chụp cây DOM một lượt) làm sau. Chụp màn hình từng
+vướng chính sách che dữ liệu; [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md)
+gỡ chỗ đó ngày 07/09.
 
 ### Bước 4 — dừng lại, đếm lại, rồi mới đi tiếp
 
@@ -96,7 +103,7 @@ Sau bước 3, đo lại còn bao nhiêu mục và mục nào còn đáng làm. 
 
 | Chặn gì | Ai gỡ | Ghi ở đâu |
 |---|---|---|
-| **Chính sách che dữ liệu** — Scouter chưa được ghi nội dung trang xuống đĩa. Chặn *chụp màn hình* ở nhóm A. **Không** chặn bước 1–3, vì báo cáo đi qua Bridge chứ không qua đĩa | **Đức** | [ADR-0007](../../../docs/adr/0007-observer-la-cua-bang-chung-cho-ai.md), treo từ 06/09 |
+| ~~Chính sách che dữ liệu~~ **ĐÃ GỠ 07/09** — Scouter được ghi ghi chép xuống đĩa | *xong* | [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md) |
 | **Nhóm B — 7 mục làm hay hoãn** | **Đức** | Khuyến nghị ở trên |
 | Chạy trên trang thật (không phải trang tự dựng) | **Đức** | `AGENTS.md` gốc mục 2 |
 

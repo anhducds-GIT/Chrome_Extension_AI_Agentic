@@ -29,8 +29,14 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 2. **Đừng clone seed rồi sửa bản clone.** [ADR-0006](../../../docs/adr/0006-goi-assistant-phat-hanh-tu-bo-khung.md)
    đã ghi cái giá: năm bản trôi khác nhau, và lần "đồng bộ ngược" không bao giờ xảy ra. Adapter
    nào sửa ra thứ **không riêng của trang nào** thì thứ đó phải được đưa lên seed.
-3. **Cấm ghi nội dung trang xuống đĩa.** Chính sách che dữ liệu treo từ
-   [ADR-0007](../../../docs/adr/0007-observer-la-cua-bang-chung-cho-ai.md), Đức chưa chốt.
+3. **ĐƯỢC ghi ghi chép xuống đĩa** — Đức chốt 07/09,
+   [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md), gỡ điều chặn của
+   ADR-0010. Lý do của Đức phân định phạm vi chứ không chỉ cho phép: Scouter **không phải một
+   extension chạy sản xuất**, nó là bộ đồ nghề dựng ra extension khác. Ba giới hạn giữ nguyên,
+   và cả ba đều là luật có sẵn: không ghi vào `evidence/` · `pilot-*/` · `Batch-*/` (đó là bằng
+   chứng vận hành, không phải đồ làm việc) · không bao giờ để token / mật khẩu / tệp ghép cặp
+   vào repo · **chạy trên trang thật vẫn phải hỏi Đức** — ADR-0016 gỡ chỗ chặn về *ghi*, không
+   gỡ chỗ chặn về *chạy ở đâu*.
 4. **Cấm chạy trên trang thật** khi chưa hỏi Đức (`AGENTS.md` gốc mục 2). Trang thử tự tạo thì được.
 5. **Từ vựng cố định.** Cửa Bridge nhận một bộ tên method đóng, không bao giờ nhận biểu thức tự
    do từ ngoài dây. Thêm một method là **đổi luật an toàn** → hỏi Đức.
