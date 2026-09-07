@@ -20,6 +20,16 @@
         <p class="meta">Chọn tệp ghép cặp do bộ cài Bridge V1 tạo. Token chỉ nằm trong extension trên máy này, không gửi đi đâu.</p>
       </section>
 
+      <section aria-labelledby="write-heading" class="write-gate">
+        <h2 id="write-heading">Cho phép bấm và gõ</h2>
+        <label class="switch">
+          <input id="write-gate" type="checkbox">
+          <span>Chế độ phát triển</span>
+        </label>
+        <p id="write-gate-state" role="status">Đang đọc trạng thái…</p>
+        <p class="meta">Tắt thì Scouter chỉ NHÌN được, mọi lệnh bấm và gõ bị từ chối. Bật một lần được 50 lượt; hết thì tắt rồi bật lại. Đóng popup không tắt công tắc.</p>
+      </section>
+
       <h2>Quan sát</h2>
       <button id="scan" type="button">Scan Targets</button>
       <p id="status" role="status">Ready.</p>

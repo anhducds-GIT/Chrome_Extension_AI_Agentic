@@ -42,6 +42,39 @@ const ACTION_BY_METHOD = Object.freeze({
  * `scout.reload` ngay khi thấy kết nối trở lại thì vòng đó quay tít và Scouter không bao giờ
  * đứng yên đủ lâu để làm việc gì. Mười giây đủ cắt vòng, và đủ ngắn để không cản một lượt
  * sửa-rồi-nạp thật. Trần GÕ CỨNG, không nhận từ tham số — nới nó là đổi luật an toàn. */
+/* ---- PHANH CHO ĐƯỜNG GHI (S-05 · Đức chốt 2026-09-07) ---------------------
+ * Từ 06/09 Scouter bấm được nút thật. Cho tới lúc có khối này, thứ duy nhất đứng giữa một AI
+ * và một cú bấm là MỘT CÂU VĂN trong `AGENTS.md` ("cấm chạy trên trang thật") — luật viết cho
+ * người vận hành đọc, không phải chốt trong code. Một AI đọc hụt câu đó thì không gì chặn nó.
+ *
+ * Đức chọn đúng khuôn ba gói `duc-auto-*` đang dùng: một CÔNG TẮC, mặc định TẮT, chỉ người mở
+ * được — cộng thêm một TRẦN SỐ LƯỢT. Không đẻ khái niệm mới.
+ *
+ * Bốn điều đã cân, và lý do chọn:
+ *
+ * ⑴ Chặn ở `runAction()`, không chặn ở từng method. Ba `scout.click/type/key` đều chui qua đây,
+ *   nên một cửa là đủ — và lệnh ghi thứ TƯ mai sau cũng bị chặn mà không ai phải nhớ đi thêm
+ *   một dòng. Chặn ở ba chỗ là ba chỗ để quên một chỗ.
+ *
+ * ⑵ HỎNG THÌ ĐÓNG, ngược hẳn với trần nạp lại ở dưới. Trần nạp lại đọc storage lỗi thì cho
+ *   qua, vì nó chỉ chống bão và từ chối nạp lại là tự khoá mình ra khỏi vòng tự sửa. Cái này
+ *   thì khác: đọc không ra trạng thái công tắc nghĩa là KHÔNG BIẾT Đức đã mở chưa, và "không
+ *   biết" phải được xử như "chưa mở". Một cái phanh mở ra khi hỏng không phải là phanh.
+ *
+ * ⑶ TRỪ TRƯỚC, BẤM SAU. Cùng lý do với việc ghi mốc trước `runtime.reload()`: một lượt đã bấm
+ *   mà chưa trừ là một trần chưa từng tồn tại. Lượt bấm hỏng vẫn bị trừ — lệch về phía an toàn,
+ *   và một vòng lặp hỏng vẫn tiêu hết ngân sách chứ không quay mãi.
+ *
+ * ⑷ Trần đếm theo MỖI LẦN MỞ KHOÁ, không theo giờ và không theo đời service worker. Đếm theo
+ *   đời service worker là trần giả: Chrome cho worker ngủ vài phút một lần, và mỗi lần tỉnh là
+ *   một bộ đếm mới tinh. Đếm theo lần mở khoá thì cửa tự đóng lại sau 50 lượt và phải chính
+ *   Đức bật lại — tức là cái phanh luôn quay về tay người.
+ *
+ * 50 là gì: đủ cho một lượt dò một trang thật (ADR-0009 đặt mục tiêu ~20–40 thao tác cho một
+ * adapter), và đủ nhỏ để một vòng lặp hỏng dừng trước khi kịp làm gì đáng kể. */
+const WRITE_GATE_STORAGE_KEY = "scouter.write.gate.v1";
+const WRITE_CAP_PER_UNLOCK = 50;
+
 const RELOAD_MIN_GAP_MS = 10000;
 const RELOAD_STORAGE_KEY = "scouter.reload.last.v1";
 /* Trả lời TRƯỚC rồi mới khởi động lại. `chrome.runtime.reload()` giết service worker ngay,
@@ -84,8 +117,63 @@ export function createSeedHandlers(deps = {}) {
     return { id: found.targetId, targetId: found.targetId, attached: Boolean(found.attached) };
   }
 
+  /* Đọc công tắc. Mọi đường ra khỏi hàm này đều là "mở" hoặc một lỗi — cố ý không có đường thứ
+   * ba trả về một giá trị mặc định hiền lành. Xem ⑵ ở khối đầu file. */
+  async function readWriteGate() {
+    let stored;
+    try {
+      stored = await chromeApi.storage.local.get([WRITE_GATE_STORAGE_KEY]);
+    } catch (error) {
+      throw new BridgeProtocolError("WRITE_BLOCKED",
+        "DEV_MODE_UNREADABLE: khong doc duoc trang thai cong tac, nen coi nhu DANG TAT.", {
+          write_code: "DEV_MODE_UNREADABLE", detail: String(error?.message || error)
+        });
+    }
+    const gate = stored?.[WRITE_GATE_STORAGE_KEY];
+    if (!gate || typeof gate !== "object" || gate.enabled !== true) {
+      throw new BridgeProtocolError("WRITE_BLOCKED",
+        "DEV_MODE_OFF: Che do phat trien dang TAT. Chi Duc bat duoc cong tac nay trong popup cua Scouter.", {
+          write_code: "DEV_MODE_OFF", cap_per_unlock: WRITE_CAP_PER_UNLOCK
+        });
+    }
+    /* Bộ đếm hỏng cũng là "không biết". Bản ghi méo thì đóng, đừng đoán là 0 — đoán 0 là tặng
+     * thêm 50 lượt cho đúng cái bản ghi đáng ngờ nhất. */
+    if (!Number.isInteger(gate.used) || gate.used < 0) {
+      throw new BridgeProtocolError("WRITE_BLOCKED",
+        "GATE_CORRUPT: ban ghi cong tac bi meo. Tat roi bat lai cong tac trong popup.", {
+          write_code: "GATE_CORRUPT"
+        });
+    }
+    return gate;
+  }
+
+  /* Trừ MỘT lượt khỏi ngân sách, và chỉ trả về khi đã trừ XONG. Xem ⑶. */
+  async function spendWriteBudget() {
+    const gate = await readWriteGate();
+    if (gate.used >= WRITE_CAP_PER_UNLOCK) {
+      throw new BridgeProtocolError("WRITE_BLOCKED",
+        `WRITE_CAP_REACHED: da dung het ${WRITE_CAP_PER_UNLOCK} luot ghi cua lan mo khoa nay. Tat roi bat lai cong tac trong popup.`, {
+          write_code: "WRITE_CAP_REACHED", used: gate.used, cap_per_unlock: WRITE_CAP_PER_UNLOCK
+        });
+    }
+    const used = gate.used + 1;
+    try {
+      await chromeApi.storage.local.set({ [WRITE_GATE_STORAGE_KEY]: { ...gate, used } });
+    } catch (error) {
+      /* Ghi hụt thì KHÔNG bấm. Bấm mà không trừ được là cái trần không tồn tại. */
+      throw new BridgeProtocolError("WRITE_BLOCKED",
+        "GATE_NOT_RECORDED: khong ghi duoc luot vao ngan sach, nen khong bam.", {
+          write_code: "GATE_NOT_RECORDED", detail: String(error?.message || error)
+        });
+    }
+    return { used, cap_per_unlock: WRITE_CAP_PER_UNLOCK, remaining: WRITE_CAP_PER_UNLOCK - used };
+  }
+
   async function runAction(method, target, params) {
     const name = ACTION_BY_METHOD[method];
+    /* Cái phanh đứng TRƯỚC `engine.runAction`, tức là trước cả lượt gắn debugger. Đặt nó sau
+     * thì mỗi lượt bị chặn vẫn kịp dựng dải băng "đang gỡ lỗi trình duyệt này" trên tab. */
+    const budget = await spendWriteBudget();
     const result = await engine.runAction(target, name, params);
     /* Hành động hỏng KHÔNG được mặc vỏ thành công, cùng lý do với phép dò: một phong bì
      * `ok: true` chở một thất bại là thứ người gọi phải nhớ mà bóc, và sẽ có người quên.
@@ -95,7 +183,9 @@ export function createSeedHandlers(deps = {}) {
         action: name, action_code: result?.code || "ACTION_FAILED"
       });
     }
-    return { action: name, data: result.data, cdp: result.cdp || [] };
+    /* Trả ngân sách còn lại về theo mỗi lượt: người ở đầu dây kia thấy mình sắp hết trước khi
+     * hết, thay vì đâm vào tường ở lượt thứ 51 mà không hiểu vì sao. */
+    return { action: name, data: result.data, cdp: result.cdp || [], write_budget: budget };
   }
 
   async function runProbe(method, target, params) {
@@ -201,10 +291,40 @@ export function createSeedHandlers(deps = {}) {
   };
 }
 
+/* Bật/tắt công tắc bằng MỘT hàm dùng chung, để popup và phép ghim không tự dựng lấy hình dạng
+ * bản ghi. Hai bản của một luật thì sớm muộn trả hai câu khác nhau — ADR-0006 đã ghi cái giá.
+ * Bật là ĐẶT LẠI bộ đếm về 0: đó chính là chỗ ngân sách được nạp, xem ⑷ ở khối đầu file. */
+export async function setWriteGate(chromeApi, enabled, at = Date.now()) {
+  const gate = enabled === true
+    ? { enabled: true, enabled_at: at, used: 0 }
+    : { enabled: false, enabled_at: null, used: 0 };
+  await chromeApi.storage.local.set({ [WRITE_GATE_STORAGE_KEY]: gate });
+  return gate;
+}
+
+export async function readWriteGateState(chromeApi) {
+  try {
+    const stored = await chromeApi.storage.local.get([WRITE_GATE_STORAGE_KEY]);
+    const gate = stored?.[WRITE_GATE_STORAGE_KEY];
+    if (!gate || gate.enabled !== true || !Number.isInteger(gate.used) || gate.used < 0) {
+      return { enabled: false, used: 0, remaining: 0, cap_per_unlock: WRITE_CAP_PER_UNLOCK };
+    }
+    return {
+      enabled: true, used: gate.used, cap_per_unlock: WRITE_CAP_PER_UNLOCK,
+      remaining: Math.max(0, WRITE_CAP_PER_UNLOCK - gate.used)
+    };
+  } catch (_error) {
+    /* Đọc hụt thì BÁO LÀ TẮT, khớp với ⑵: cái mà popup hiện phải là cái mà đường ghi sẽ làm. */
+    return { enabled: false, used: 0, remaining: 0, cap_per_unlock: WRITE_CAP_PER_UNLOCK };
+  }
+}
+
 export const SEED_CONSTANTS = Object.freeze({
   RELOAD_MIN_GAP_MS,
   RELOAD_DELAY_MS,
   RELOAD_STORAGE_KEY,
+  WRITE_GATE_STORAGE_KEY,
+  WRITE_CAP_PER_UNLOCK,
   PROBE_BY_METHOD,
   ACTION_BY_METHOD
 });

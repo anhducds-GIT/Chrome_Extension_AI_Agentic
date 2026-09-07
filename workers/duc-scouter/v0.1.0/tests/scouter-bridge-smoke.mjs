@@ -65,8 +65,12 @@ function makeEngine(overrides = {}) {
   };
 }
 
+/* Kho lưu giả MỞ SẴN cái phanh của đường ghi (S-05). File này ghim GIAO THỨC — phong bì, mã
+ * lỗi, đường đi của tham số — nên nó phải dựng một Scouter đã được chủ mở khoá, đúng như lúc
+ * chạy thật. Cái phanh có phép ghim riêng ở `tests/scouter-write-gate-smoke.mjs`, và để nó
+ * cũng chặn ở đây thì mọi khối hành động của file này chỉ còn ghim đúng một thứ: cái phanh. */
 function makeChrome() {
-  const store = {};
+  const store = { "scouter.write.gate.v1": { enabled: true, enabled_at: 1, used: 0 } };
   const reloads = [];
   return {
     reloads,

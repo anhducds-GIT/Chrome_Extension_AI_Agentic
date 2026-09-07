@@ -1,5 +1,6 @@
 import { ObserverEngine } from "./observer-engine.js";
 import { validatePairing, TRANSPORT_CONSTANTS } from "./scripts/scouter-transport-loopback.mjs";
+import { setWriteGate, readWriteGateState, SEED_CONSTANTS } from "./scripts/scouter-seed-core.mjs";
 
 const engine = new ObserverEngine();
 const scanButton = document.querySelector("#scan");
@@ -145,3 +146,33 @@ function setBusy(isBusy, message) {
   scanButton.disabled = isBusy;
   status.textContent = message;
 }
+
+/* ---- Công tắc cho đường ghi (S-05) --------------------------------------
+ * Popup là chỗ DUY NHẤT bật được công tắc này, và đó là cả ý nghĩa của nó: không có method
+ * Bridge nào bật được nó, nên một AI ở đầu dây không tự mở khoá cho chính mình được.
+ * Trạng thái đọc bằng CHÍNH hàm mà đường ghi dùng, nên cái popup hiện không bao giờ lệch với
+ * cái đường ghi làm. */
+const writeGateInput = document.querySelector("#write-gate");
+const writeGateState = document.querySelector("#write-gate-state");
+
+writeGateInput.addEventListener("change", async () => {
+  writeGateInput.disabled = true;
+  try {
+    await setWriteGate(chrome, writeGateInput.checked);
+  } catch (error) {
+    writeGateState.textContent = `Không đổi được công tắc (${String(error?.message || error).split(":")[0]}).`;
+  } finally {
+    writeGateInput.disabled = false;
+    await renderWriteGate();
+  }
+});
+
+async function renderWriteGate() {
+  const gate = await readWriteGateState(chrome);
+  writeGateInput.checked = gate.enabled;
+  writeGateState.textContent = gate.enabled
+    ? `ĐANG BẬT — còn ${gate.remaining}/${gate.cap_per_unlock} lượt bấm.`
+    : `ĐANG TẮT — Scouter chỉ nhìn, không bấm được. Trần mỗi lần bật: ${SEED_CONSTANTS.WRITE_CAP_PER_UNLOCK} lượt.`;
+}
+
+renderWriteGate();

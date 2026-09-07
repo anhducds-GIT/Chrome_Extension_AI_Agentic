@@ -41,6 +41,10 @@ export const ERROR_DEFINITIONS = Object.freeze({
   INVALID_PARAMS: { retryable: false, message: "The method parameters are invalid." },
   PROBE_FAILED: { retryable: false, message: "The read-only probe could not complete." },
   ACTION_FAILED: { retryable: false, message: "The input action could not complete." },
+  /* Khác ACTION_FAILED một cách CỐ Ý: `ACTION_FAILED` nghĩa là đã thử và không xong,
+   * `WRITE_BLOCKED` nghĩa là CHƯA HỀ THỬ vì cái phanh đóng. Gộp hai mã lại thì người ở đầu dây
+   * kia không phân biệt được "nút không bấm được" với "anh chưa mở khoá", và sẽ đi sửa nhầm chỗ. */
+  WRITE_BLOCKED: { retryable: false, message: "The write path is closed; no input was dispatched." },
   RELOAD_RATE_LIMIT: { retryable: false, message: "The previous self-reload was too recent." },
   INTERNAL_ERROR: { retryable: false, message: "The scouter could not complete the request." }
 });

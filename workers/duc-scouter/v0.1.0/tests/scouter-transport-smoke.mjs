@@ -366,4 +366,26 @@ async function handshake(rig) {
     "bằng chứng ĐÚNG bị từ chối: hàm này chặn oan mọi máy chủ hợp lệ");
 }
 
+/* ---- ⑭ `connect()` bỏ qua lượt gọi trùng --------------------------------
+ * Đây là ĐIỀU KIỆN để lưới đỡ `chrome.alarms` ở `scouter-background.js` vô hại (S-02): cái
+ * lưới gọi `connect()` mỗi phút, kể cả lúc đang nối tốt. Nếu `connect()` mở thêm socket ở lượt
+ * gọi thứ hai thì mỗi phút Scouter tự cướp chỗ kết nối của chính nó — và triệu chứng nhìn ra
+ * ngoài là "Bridge cứ chập chờn", không ai lần ra được là do cái lưới.
+ * Bất biến này sống ở đây, không ở background: background cố ý không có phép ghim riêng. */
+{
+  const rig = makeRig();
+  const socket = await handshake(rig);
+  const before = FakeSocket.last;
+  assert.equal(await rig.transport.connect(), null, "đang nối tốt mà connect() vẫn mở lượt mới");
+  assert.equal(FakeSocket.last, before, "connect() lúc đã xác thực đã mở thêm một socket");
+  assert.equal(socket.closed, null, "lượt connect() trùng đã đóng socket đang sống");
+  assert.equal(socket.readyState, FakeSocket.OPEN, "socket đang sống bị lượt connect() trùng làm hỏng");
+
+  /* Chiều ngược lại: mất kết nối rồi thì connect() PHẢI mở lại được, nếu không thì cái lưới
+   * đỡ chẳng đỡ gì. Ghim một chiều thì `connect(){ return null }` vẫn xanh. */
+  rig.transport.disconnect();
+  await rig.transport.connect();
+  assert.notEqual(FakeSocket.last, before, "mất kết nối rồi mà connect() không mở lại");
+}
+
 console.log("scouter-transport smoke tests: PASS");

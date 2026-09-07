@@ -23,12 +23,11 @@
  * ─── THỨ CỐ Ý KHÔNG MANG SANG ───────────────────────────────────────────────
  * · Cổng executor (`chrome.runtime.Port` tới bảng bên): seed không có bảng bên. ADR-0009 ⑷.
  * · Danh tính đa profile / workspace: ADR-0009 ⑷ hoãn đa profile tới khi có thứ thật để nhân bản.
- * · `chrome.alarms` làm lưới đỡ nối lại: quyền `alarms` KHÔNG nằm trong danh sách ADR-0009
- *   duyệt, mà thêm quyền là việc phải hỏi Đức (AGENTS.md mục 2). Nên nối lại ở đây chạy bằng
- *   `setTimeout` trong service worker.
- *   ponytail: TRẦN THẬT — service worker ngủ thì hẹn giờ chết theo, nên khi máy chủ tắt lâu,
- *   Scouter chỉ tỉnh lại lúc có việc khác đánh thức nó. Cách chữa đúng là `chrome.alarms`;
- *   nâng khi Đức duyệt thêm quyền đó. Đường nâng đã chừa sẵn: tiêm `options.schedule`.
+ * · `chrome.alarms` làm lưới đỡ nối lại: KHÔNG nằm trong file này, và cố ý. Đức duyệt quyền
+ *   `alarms` ngày 07/09 (S-02), nhưng Chrome ép sàn 30 giây một lượt hẹn còn tầng thử-lại ở
+ *   đây chạy 1s/2s/5s — nên alarm không thay được nó, alarm chỉ ĐÁNH THỨC service worker đã
+ *   ngủ. Hai việc khác nhau, để ở hai chỗ: lưới đỡ nằm ở `scouter-background.js`.
+ *   `options.schedule` vẫn chừa đó cho phép ghim tiêm đồng hồ giả, không phải cho alarm.
  */
 
 const PAIRING_STORAGE_KEY = "dac.bridge.pairing.v1";

@@ -44,6 +44,32 @@ function connectQuietly() {
 chrome.runtime.onInstalled.addListener(connectQuietly);
 chrome.runtime.onStartup.addListener(connectQuietly);
 
+/* ---- Lưới đỡ nối lại (S-02 · Đức duyệt quyền `alarms` 2026-09-07) --------
+ * Tầng thử-lại của transport chạy bằng `setTimeout`, và `setTimeout` chết theo service worker
+ * khi Chrome cho nó ngủ. Hệ quả đo được: máy chủ Bridge tắt lâu thì Scouter chỉ tỉnh lại lúc
+ * TÌNH CỜ có việc khác đánh thức nó — nhìn ra ngoài giống hệt "extension hỏng".
+ *
+ * `chrome.alarms` KHÔNG thay được tầng kia: Chrome ép sàn 30 giây một lượt hẹn, mà tầng kia
+ * thử lại sau 1s/2s/5s. Hai thứ khác việc — cái nhanh vá lúc worker còn thức, cái này đánh
+ * thức worker đã ngủ. Nên giữ cả hai, đừng gộp.
+ *
+ * `connect()` tự bỏ qua lượt gọi trùng (`if (connecting || authenticated || socket) return null`),
+ * nên nhịp một phút này vô hại lúc đang nối tốt. Đó là điều kiện để khối này đúng, và
+ * `tests/scouter-transport-smoke.mjs` ghim nó.
+ *
+ * Tạo có ĐIỀU KIỆN, không tạo mù: `alarms.create` cùng tên thì ĐẶT LẠI đồng hồ từ đầu, mà
+ * đoạn này chạy lại mỗi lần worker tỉnh. Tạo mù thì một worker hay bị đánh thức sẽ đẩy lượt
+ * hẹn ra xa mãi và cái lưới không bao giờ rơi. */
+const RECONNECT_ALARM = "scouter.reconnect.v1";
+
+chrome.alarms.get(RECONNECT_ALARM, (existing) => {
+  if (!existing) chrome.alarms.create(RECONNECT_ALARM, { periodInMinutes: 1 });
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === RECONNECT_ALARM) connectQuietly();
+});
+
 /* Chủ vừa dán tệp ghép cặp vào popup thì nối NGAY, đừng bắt họ nạp lại extension. Đọc lại từ
  * kho lưu thay vì tin giá trị trong sự kiện: `loadPairing()` là chỗ duy nhất kiểm tính hợp lệ. */
 chrome.storage.onChanged.addListener((changes, area) => {
