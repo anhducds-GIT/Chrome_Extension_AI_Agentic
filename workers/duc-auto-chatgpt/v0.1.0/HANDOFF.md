@@ -266,4 +266,13 @@ chốt** ai giữ khoá đó.
   - **Số đo:** suite gói **115/115 xanh**. **10/10 đột biến bị bắt**, gồm gỡ `run.start` khỏi danh sách cấm, đổi 900→200, gõ con số lại vào chỗ gọi, và "đồng hồ còn chữ mà số đứng yên".
   - **Trần tuyên bố: TĨNH + suite, CHƯA chạy live.** Nghiệm thu thật cần **Đức reload extension** ở `chrome://extensions` rồi chạy một trial với job dài hơn 90 giây.
 
+- 2026-09-07 · Claude (`claude-b36-vaA`) · **B-36: vá cả (A) và (D) theo ADR-0049. Mục VẪN MỞ — chưa nghiệm thu live, và điều kiện đóng LÀ lượt live đó.**
+  - **Một phép đo BÁC một câu trong bối cảnh ADR-0049.** ADR ghi *"không chỗ nào lưu handle vào IndexedDB"* — sai, `output-profile-core.js` lưu từ đầu. Nên **(D) nhỏ hơn ADR hình dung nhiều**: chỗ thiếu là `resolveOutputProfile()` cần `profile_id` từ config workbook, mà workbook bootstrap có config **rỗng**. ADR bất biến nên không sửa; đính chính + bài học ở mục `B-36` của `BACKLOG.md`.
+  - **(A):** settings do máy dựng mang dấu `autoDefaulted`; đường ghi giữ sổ trong `state.auditEvents`. Luật quy trách nhiệm **không bị nới** — sổ vẫn ghi trước khi mutation có tác dụng, chỉ chậm ra file. Dây nhận `audit_durable: false` kèm câu tiếng Việt; luật vận hành ở `AI-OPERATOR-GUIDE.md`.
+  - **(D):** nhận lại thư mục đã cấp quyền khi có **đúng MỘT** cái. Nhiều hơn một thì KHÔNG chọn hộ — chọn hộ là đem bằng chứng run này ghi vào hồ sơ run khác. Không nhận thì phiên vẫn chạy, vì (A) đỡ.
+  - **Ghim:** `tests/b36-bootstrap-audit-held-smoke.mjs` — HÀNH VI, chạy `sidepanel.js` thật trong `node:vm`, stub download trả GUID **đúng như đã đo live**. Mười bất biến. `bridge-attention-static.mjs` phải viết lại **lần thứ hai** vì nó ghim cú pháp một dòng của chính chỗ phải sửa.
+  - **Số đo:** suite **115/115** · thử phá **15/17**, hai con lọt đều tương đương hành vi và được ghi lại thay vì bày phép ghim giả. Thử phá còn lộ ra một dòng **mã chết** và một **lỗi thứ tự thật** — cả hai ở `BACKLOG.md`.
+  - **KHÔNG sinh lại bảng:** cây làm việc đang mang việc chưa commit của lane Scouter, mà bộ sinh đọc STATUS ở cây làm việc. Để lane sau sinh.
+  - **Trần tuyên bố: SUITE, CHƯA LIVE.** Đóng khi: Đức chọn một thư mục → đóng/mở panel → `jobs.add` qua Bridge → không có `audit_durable: false`, tên file đúng → **và số file tên-GUID trong `Downloads` KHÔNG TĂNG** (mốc 39). Bước cuối mới là bước chốt: 04/09 bốn bước trên đã xanh mà file rác vẫn tăng.
+
 <!-- HANDOFF-THANG: 2026-09 -->
