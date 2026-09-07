@@ -43,9 +43,9 @@
       "task": "ADR-0014 nua _root: sinh FEATURE-PARITY-AUTO.md, khai vao generated, go khoi AUTO, sua AGENTS.md",
       "released_at": null,
       "taken_from": "claude-scouter-s06",
-      "taken_by": "claude-bang-ia",
-      "taken_at": "2026-09-07T08:36",
-      "duc_decision": "2026-09-07: Duc chot \"cho chuyen _root\" — nua _code cua ADR-0014 da vao HEAD nen cong xuat ban chan 26 commit cua 5 lane; chuyen khoa cho lane land not nua _root"
+      "taken_by": "claude-assistant",
+      "taken_at": "2026-09-07T08:37",
+      "duc_decision": "2026-09-07, Duc chot hai luot: (a) _root — \"cho chuyen _root\", de land not nua con lai cua ADR-0014 dang chan 26 commit cua 5 lane; (b) _code — \"ban trien khai cong viec luon di ... Toi cho ban khoa de trien khai\", lane claude-bang-vung-chac da bao xong tu 3h truoc, chuyen cho lane refactor IA cua bang"
     },
     "_docs": {
       "owner": "claude-scouter-s06",
@@ -66,9 +66,9 @@
       "task": "Refactor IA bang trang thai: 9 tab -> 3 tang HOME/WORK/SYSTEM, bo trung lap",
       "released_at": null,
       "taken_from": "claude-bang-vung-chac",
-      "taken_by": "claude-bang-ia",
-      "taken_at": "2026-09-07T08:36",
-      "duc_decision": "2026-09-07: Duc chot \"ban trien khai cong viec luon di ... Toi cho ban khoa de trien khai\" — lane claude-bang-vung-chac da bao xong tu 3h truoc, chuyen _code cho lane refactor IA cua bang"
+      "taken_by": "claude-assistant",
+      "taken_at": "2026-09-07T08:37",
+      "duc_decision": "2026-09-07, Duc chot hai luot: (a) _root — \"cho chuyen _root\", de land not nua con lai cua ADR-0014 dang chan 26 commit cua 5 lane; (b) _code — \"ban trien khai cong viec luon di ... Toi cho ban khoa de trien khai\", lane claude-bang-vung-chac da bao xong tu 3h truoc, chuyen cho lane refactor IA cua bang"
     },
     "workers/duc-scouter": {
       "owner": "claude-scouter-s06",
@@ -78,5 +78,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "b19dadbedb1e9c40"
+  "_fingerprint": "6717362cf54a1a85"
 }
