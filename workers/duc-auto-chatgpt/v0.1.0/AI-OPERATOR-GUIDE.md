@@ -235,3 +235,38 @@ hỏi Đức trước.
 **Phép ghim:** `tests/don-rac-tai-xuong-smoke.mjs` — 36 khẳng định, trong đó **ba lượt chạy công
 cụ thật** vào thư mục tạm rồi xem file nào còn trên đĩa. Thử phá **7/9 bị bắt**; hai lượt thoát là
 **tương đương hành vi** (mỗi cái bị lớp còn lại chặn), và **lượt gộp cả hai thì ĐỎ**.
+
+## `audit_durable: false` trong câu trả về — sổ đã ghi, nhưng CHƯA ra file
+
+Từ 2026-09-07 ([ADR-0049](docs/adr/0049-luu-ben-thu-muc-da-cap-quyen-thay-cho-mac-dinh-downloads.md),
+`B-36`). Một mutation Bridge có thể trả về kèm hai trường này:
+
+```json
+{ "audit_durable": false, "audit_note": "Sổ audit đang được giữ trong bộ nhớ phiên, CHƯA ra file: …" }
+```
+
+**Nghĩa đúng:** mutation **đã thành công**, sổ audit **đã được ghi** (luật quy trách nhiệm còn
+nguyên) — nhưng nó đang nằm trong bộ nhớ phiên, chưa ra file. Đóng Side Panel trước lần ghi thật
+đầu tiên là **mất sổ đó**.
+
+**Vì sao có trạng thái này:** phiên đó chưa có thư mục nào Đức cấp quyền, mà thư mục Tải xuống của
+Chrome **không đặt tên nổi** artifact của gói này — đo trực tiếp 06/09: xin
+`B36-probe-ticket__audit.jsonl`, Chrome đặt `d31c629e-39e1-4a96-ae61-dde336b91792`, nội dung đúng
+nguyên vẹn. Ghi vào đó là sinh bằng chứng không tra được rồi chết ở lớp kiểm tên.
+
+**Bạn phải làm gì:**
+
+| Hoàn cảnh | Việc |
+|---|---|
+| Đang dựng phiên, chưa chạy job nào | **Không cần làm gì.** Cứ tiếp tục — nội dung lúc này là một-lần, quên được (Đức chốt 06/09) |
+| Sắp chạy một job thật, hoặc sắp lưu kết quả | **Dừng, xin Đức chọn một thư mục đích.** Một cú bấm trong Side Panel. Sau đó lần ghi đầu tiên xả TOÀN BỘ sổ đã giữ ra file |
+| Trường này **không** xuất hiện | Sổ ra file ngay ở lượt đó. Không việc gì phải làm |
+
+**Đã bấm một lần rồi thì lần sau tự nhận lại.** Thư mục Đức cấp quyền được lưu bền (IndexedDB),
+nên phiên bootstrap sau đó tự nhận lại nó và `audit_durable` không còn xuất hiện. Hai ngoại lệ,
+cả hai là trần cứng của trình duyệt hoặc chốt an toàn:
+
+- **Sau khi khởi động lại máy** Chrome có thể xin xác nhận lại quyền, và `requestPermission` cần
+  cử chỉ của người. Một cú bấm mỗi lần khởi động lại máy — không nới được bằng mã.
+- **Có NHIỀU hơn một thư mục đã cấp quyền** thì gói **cố ý không chọn hộ**: chọn hộ là đem bằng
+  chứng của run này ghi vào hồ sơ run khác. Chỉ định thẳng bằng `output.configure`.

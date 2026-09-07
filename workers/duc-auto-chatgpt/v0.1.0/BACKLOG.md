@@ -767,7 +767,7 @@ riêng (đúng ghi chú trong chính ADR). Gồm: mỗi phiên một RUN_ACTIVE 
 attribution gắn theo tab, GPT invariant "page-scoped vs session-scoped" (mục 6 sổ tay) sẽ
 đổi nghĩa khi đó. Làm xong trên GPT rồi mới nghĩ tới migrate.
 
-### B-36 · (P1) `PERSISTENCE_FILENAME_MISMATCH` chặn MỌI mutation Bridge khi đích ghi là Chrome Downloads — **[ĐO] live 2026-09-03 · vá 2026-09-04, NGHIỆM THU LIVE ĐÃ CHẠY VÀ THẤT BẠI · chẩn đoán đã lật: Chrome BỎ QUA đề xuất của determiner · còn nợ một phép đo trong console**
+### B-36 · (P1) `PERSISTENCE_FILENAME_MISMATCH` chặn MỌI mutation Bridge khi đích ghi là Chrome Downloads — **VẪN MỞ. Đã vá cả (A) và (D) ngày 07/09 theo ADR-0049 (suite 115/115, thử phá 15/17) · CHƯA NGHIỆM THU LIVE, và điều kiện đóng là lượt live đó · lần vá 04/09 đã nghiệm thu và THẤT BẠI, đừng đọc lần này thành xong**
 
 > **Đọc một dòng cho nhanh (viết 06/09, `claude-don-so`).** Mục này **vẫn mở, vẫn P1.** Đã thử vá
 > 04/09, đã nghiệm thu live 04/09, và **bản vá không giữ được** — file thứ 37 vẫn ra tên GUID.
@@ -1147,6 +1147,101 @@ bền, phải có tên) · sản phẩm (phải có tên). `B-36` chặn cả ba
 **36 file GUID đang nằm trong `Downloads` của Đức: Đức xác nhận là rác, quên được.** AI không tự
 xoá file (luật gốc của Đức) — nên việc xoá vẫn thuộc `B-09`, chờ tay Đức. Ghi thêm ở đây rằng
 Đức **đã xác nhận chúng vô giá trị**, để phiên sau không phải hỏi lại câu đó.
+
+---
+
+## ĐÃ VÁ CẢ (A) VÀ (D) — 2026-09-07, `claude-b36-vaA`. **Chưa nghiệm thu live.**
+
+**Đọc dòng này trước:** mục vẫn **MỞ**. Mã đã vá theo đúng chẩn đoán mới, suite 115/115, thử phá
+15/17 — nhưng **chưa ai chạy nó trên máy Đức**. Ngày 04/09 mục này từng ghi *"ĐÃ VÁ … CHỜ NGHIỆM
+THU"* và đọc lướt thành "xong", trong khi nghiệm thu đã chạy và đã **hỏng**. Đừng để lặp: dưới
+đây là *đã vá*, không phải *đã hết*.
+
+### Một phép đo của tôi BÁC một câu trong bối cảnh ADR-0049
+
+Bối cảnh ADR ghi: *"`showDirectoryPicker` gọi ở `sidepanel.js:4207/4231/4335`, không chỗ nào lưu
+handle vào IndexedDB."* Đo lại 07/09: **sai**. `output-profile-core.js` lưu handle vào IndexedDB
+từ đầu (`bind()` ghi `directory_handle`), `resolve()` đã gọi `queryPermission` rồi trả bốn trạng
+thái, và đường dò lúc mở panel đã đọc lại kho đó rồi báo `FOLDER_REAUTH_NEEDED` kèm đường dẫn dán
+được. Phép đo cũ chỉ soi **ba lời gọi picker** mà không lần xem chúng làm gì tiếp.
+
+Nên (D) **nhỏ hơn ADR hình dung nhiều**. Chỗ thật sự thiếu, hẹp: `resolveOutputProfile()` cần một
+`profile_id`, mà id đó đến từ config của workbook — phiên bootstrap dùng workbook **do máy dựng
+với config RỖNG**, nên nó không có id, không gọi `resolve`, và **không lối nào nhận lại** thư mục
+Đức đã cấp quyền. Đó là toàn bộ chỗ hỏng của (D).
+
+ADR-0049 đã `Accepted` nên **không sửa** (phép kiểm B12). Đính chính nằm ở đây, và bài học chung:
+*một phép đo soi chỗ GỌI mà không lần theo chỗ nó gọi tới thì kết luận "không có" là kết luận
+"tôi chưa nhìn tới đó".*
+
+### (A) — phiên bootstrap thôi ghi artifact qua Chrome Downloads
+
+Bộ settings mặc định do máy dựng nay mang dấu `autoDefaulted`, và đường ghi của nó **giữ sổ trong
+`state.auditEvents`** thay vì tải xuống. `saveAuditLog` dựng lại TOÀN BỘ payload từ mảng đó ở mỗi
+lượt, nên lần ghi đầu vào thư mục thật **xả hết** — không cần bộ đệm thứ hai.
+
+Luật quy trách nhiệm **không bị nới**: sổ VẪN được ghi trước khi mutation có tác dụng, chỉ chậm
+ra *file*. Cái giá nói thẳng ra dây: `audit_durable: false` + một câu tiếng Việt giải thích.
+
+Dấu nằm **trên object settings**, không trên `state` — chỗ đặt là phần của quyết định: thử phá vòng
+đầu cho 4/9, và **hai con thoát lưới đều là hệ quả của việc đặt cờ trên `state`** ("không xoá khi
+Đức mở workbook thật" và "rollback làm mất dấu"). Chuyển lên settings thì cả hai lớp lỗi **không
+còn xảy ra được** thay vì được canh bằng hai phép ghim nữa.
+
+### (D) — phiên bootstrap nhận lại thư mục đã cấp quyền
+
+`adoptAuthorizedOutputProfile()` đọc kho profile, `resolve` từng cái, và nhận **khi có đúng MỘT**
+cái còn quyền. Nhiều hơn một thì **KHÔNG chọn hộ** — cùng luật với bộ đặt tên download (nhiều hơn
+một phiếu còn hạn thì NHƯỜNG) và cùng lý do: chọn hộ một trong mấy thư mục pilot của Đức là đem
+bằng chứng run này ghi vào hồ sơ run khác. Không nhận thì phiên **vẫn chạy** — đó chính là việc
+(A) làm, và là lý do ADR bắt làm (A) trước.
+
+### Phép ghim: `tests/b36-bootstrap-audit-held-smoke.mjs`
+
+HÀNH VI, không tĩnh — chạy `sidepanel.js` thật trong `node:vm`, stub download trả **GUID đúng như
+đã đo live**. Mười bất biến, sáu cho (A) và bốn cho (D); danh sách đầy đủ ở `AGENTS.md`.
+
+**Một phép kiểm cũ phải viết lại, và đó là lần thứ hai chuyện này xảy ra.**
+`bridge-attention-static.mjs` khẳng định `state.outputSettings = fromWorkbook({}, …)` phải viết
+trên **đúng một dòng** — nên vá là nó đỏ. Ý định của nó vẫn đúng (bootstrap phải dựng được
+settings, không rơi vào `preflight(null)`); chỉ cái regex ghim **cú pháp**. Đã viết lại thành bất
+biến và **thêm** bất biến mới. Đúng câu mục này đã ghi hồi 04/09: *một phép kiểm khẳng định sự
+tồn tại của bug là một bức tường chặn đường sửa bug.* Nó vừa dựng bức tường thứ hai.
+
+### Thử phá lộ ra hai thứ phép ghim không lộ được
+
+1. `delete state.outputSettings.autoDefaulted` là **mã chết** — dấu chỉ được đặt khi nhận **thất
+   bại**, nên lúc nhận thành công chẳng có gì để xoá. Gỡ, không viết phép ghim canh một dòng vô
+   tác dụng.
+2. Một **lỗi thứ tự thật**: tôi gọi `bindBootstrapOutput()` **trước** lượt phục hồi
+   `previouslyBound`, nên chốt "đã có thư mục thật" không bao giờ nổ và lượt phục hồi luôn thắng.
+   Hậu quả: `image` là thư mục Đức bind trong khi `outputProfileState` trỏ vào profile vừa nhận —
+   **hai trường nói hai chuyện**. Đảo thứ tự, và ca ⑩ + một khẳng định thứ tự ghim lại.
+
+Hai con lọt lưới (15/17) đều **tương đương hành vi**, ghi lại thay vì bày phép ghim giả: đọc
+predicate lại ở từng chặng cần một lượt bind xen vào giữa `apply` và `persist_audit` — không mối
+nối nào cho phép; còn gọi `bindBootstrapOutput()` thêm một lần trước lượt phục hồi thì lần gọi sau
+chỉnh lại.
+
+### ĐÓNG KHI — và đây là điều kiện duy nhất
+
+**Một lượt nghiệm thu live trên máy Đức, 0 credit** (không cần prompt ChatGPT nào):
+
+1. Đức mở Side Panel, chọn **một** thư mục đích (đường profile). Một cú bấm.
+2. Đóng panel, mở lại.
+3. AI gọi `jobs.add` qua Bridge — phiên bootstrap, không workbook.
+4. Đòi: mutation **thành công**, **không** có `audit_durable: false` trong câu trả về, và sổ
+   audit + checkpoint nằm trong **thư mục Đức chọn** với **tên đúng** (không GUID).
+5. Đếm lại số file tên-GUID trong `Downloads`: phải **không tăng**. Mốc đối chứng: 37 (04/09) →
+   39 (06/09, gồm hai file của phép đo). Lệnh đếm: `node scripts/don-rac-tai-xuong.mjs`.
+
+Bước 5 là bước thật sự chốt. Bốn bước trên có thể xanh mà file rác vẫn tăng nếu còn một đường ghi
+nào lọt về Downloads — và **chính xác chuyện đó đã xảy ra ngày 04/09**.
+
+**Còn nợ một phép đo, 0 credit, KHÔNG chặn việc gì** — gộp vào lượt nghiệm thu trên: đọc
+`expectedDownloadNames.size` trong console service worker ngay sau một lượt tải, để biết determiner
+**có nổ** hay **không nổ cho blob URL**. Hai kết quả dẫn tới cùng một hành động nên nó không chặn;
+nhưng nếu "không nổ" thì cả cơ chế determiner là **mã chết** và nên gỡ — và cái đó thì đáng biết.
 
 **Phép đo còn nợ, rẻ và 0 credit, gộp vào lượt sau:** đọc `expectedDownloadNames.size` trong
 console service worker ngay sau một lượt tải, để biết determiner **có nổ** (phiếu bị tiêu) hay
