@@ -53,6 +53,28 @@ vào `evidence-stop-*/` rồi cập nhật `STATUS.md`. Cùng lỗi bên nhánh 
 
 - **Chờ Đức:** nạp lại tiện ích rồi chạy một lượt thật, bấm dừng giữa chừng — sau lệnh dừng không được có prompt nào bay đi nữa. @Đức:bấm
 
+**ĐO 07/09 (`claude-gemini-nghiem-thu`) — nạp lại tiện ích là CHƯA ĐỦ, cần BỐN thứ trên CÙNG
+một hồ sơ Chrome.** Phiên đó mở được Bridge, nhưng không hồ sơ nào hội đủ điều kiện nên
+**không mở lượt live nào** (0 credit). Đo được: `anhducds` panel ĐÓNG + còn ôm code trước 06/09
+trong RAM (19 method, thiếu 4 method của 06/09); `kaito` code mới (23 method) + panel MỞ nhưng
+**không có tab hội thoại Gemini đang hoạt động** để `bindRunTab()` khoá vào.
+
+Bốn điều kiện, phải đủ cả bốn trên **một** hồ sơ: ⑴ nạp lại tiện ích ở `chrome://extensions`
+· ⑵ mở tab `gemini.google.com/app` (hoặc `/images`) và **để nó là tab đang hoạt động**
+· ⑶ mở side panel · ⑷ bật công tắc **"Chế độ phát triển"**.
+
+Điều kiện ⑷ **không kiểm được từ xa**: lệnh duy nhất soi được nó là `run.trial`, mà `run.trial`
+chính là lệnh tiêu tiền — không dùng nó làm phép thử. Ba điều kiện đầu thì kiểm được miễn phí:
+`ledger.read` (`WORKBOOK_NOT_LOADED` = panel mở · `EXECUTOR_UNAVAILABLE` = panel đóng) ·
+`diagnostics.dom_probe` (báo `"Open a normal Gemini conversation in the active tab."` = chưa có tab)
+· `capabilities` **đếm method** (19 = code cũ, 23 = code HEAD; **đừng đọc cờ `legacy`** — cả hai
+hồ sơ đều `legacy:false`). Bằng chứng: `evidence-multiprofile-nghiem-thu-20260907/`.
+
+Cùng lượt đó đã loại được một nghi ngờ tưởng là chặn: `run.status` timeout 5/6 lượt liên tiếp,
+nhìn như hỏng riêng — nhưng xen kẽ ba method thì lỗi đóng theo THỜI GIAN (cửa sổ đánh thức
+service worker), không theo method. **Không chặn `G-01`:** vòng poll 10 giây lúc chạy tự giữ
+kênh ấm, nên lúc cần canh để bấm dừng thì `run.status` tin được.
+
 ### G-02 · Khoá tab và khoá hội thoại — **CÒN MỞ**, chờ Đức reload để nghiệm thu — **[ĐỌC]**
 
 > **Tiêu đề mục này từng bắt đầu bằng "ĐÃ VÁ TĨNH 2026-09-04", và cụm đó làm bảng đếm SAI.**
@@ -85,6 +107,11 @@ một run và giữa chừng bấm sang tab khác — prompt phải vẫn đi v�
 hoặc đóng tab thì phải dừng cứng `RECEIVER_LOST`, không thử lại.
 
 - **Chờ Đức:** nạp lại tiện ích và điền tên hồ sơ, rồi chạy một lượt và giữa chừng bấm sang tab khác — prompt phải vẫn đi đúng tab đã khoá. @Đức:bấm
+
+**ĐO 07/09 — nửa "điền tên hồ sơ" ĐÃ XONG, nửa "chạy một lượt" vẫn chờ.** Đức đã đặt tên cả hai
+hồ sơ (`anhducds`, `kaito`) và `bridge.sessions` đọc ra đúng, `count: 2`. Bốn điều kiện còn lại
+cho lượt chạy giống hệt `G-01` ở trên — **gộp được vào MỘT lượt Đức bấm**: cùng một run, bấm
+sang tab khác giữa chừng (nghiệm thu `G-02`) rồi bấm dừng (nghiệm thu `G-01`).
 
 ~~**Nợ nhỏ còn lại (không chặn):** thông điệp lỗi vẫn nhúng *origin*…~~ — **ĐÓNG 2026-09-06**
 (`claude-gemini-hoan-thien`). Đúng cái cách mục này đã chỉ ra: `classifyFailure()` nay đọc
