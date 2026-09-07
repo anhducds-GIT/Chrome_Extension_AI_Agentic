@@ -48,11 +48,11 @@
       "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\". Lay tu lane claude-tinh-gon (dang giu, 7 commit chua day) de sua dong 1316 HANDOFF.md: ### -> ## - muc 4794 byte dang chan cong dong phien voi MOI lane. Sua dung mot ky tu, khong xoa chu cua ai. Toi da nhan thang cho lane do truoc khi lay."
     },
     "_docs": {
-      "owner": "claude-dieu-phoi",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-07T14:00",
       "task": "sua ADR-0019 (Proposed): hai ve da sai sau khi do lai",
-      "released_at": null,
+      "released_at": "2026-09-07T14:08",
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -78,5 +78,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "83e4ba2b37d1906d"
+  "_fingerprint": "e74b917714893996"
 }
