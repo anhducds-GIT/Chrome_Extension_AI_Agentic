@@ -26,26 +26,26 @@
       "duc_decision": "Duc chot 2026-09-06: Duc chot cho phien claude-gemini-hoan-thien lay khoa workers/duc-auto-gemini de dua goi Gemini ve khong con viec mo. Duc se phoi hop chay extension de nghiem thu live."
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-b36-vaA",
-      "ai": "Claude",
-      "claimed_at": "2026-09-07T05:38",
-      "task": "B-36 (A) theo ADR-0049: bootstrap thoi mac dinh Chrome Downloads, giu so audit trong bo nho",
-      "released_at": null,
-      "taken_from": "claude-gpt-don-no",
-      "taken_by": "claude-assistant",
-      "taken_at": "2026-09-07T02:08",
-      "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
+      "owner": null,
+      "ai": null,
+      "claimed_at": null,
+      "task": null,
+      "released_at": "2026-09-07T08:50",
+      "taken_from": "claude-b36-vaA",
+      "taken_by": "claude-scouter-s06",
+      "taken_at": "2026-09-07T09:33",
+      "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\" - go cong dong phien dang do voi MOI lane"
     },
     "_root": {
-      "owner": "claude-root-adr0014",
+      "owner": "claude-scouter-s06",
       "ai": "Claude",
-      "claimed_at": "2026-09-07T08:17",
-      "task": "ADR-0014 nua _root: sinh FEATURE-PARITY-AUTO.md, khai vao generated, go khoi AUTO, sua AGENTS.md",
+      "claimed_at": "2026-09-07T09:33",
+      "task": "Sua dong 1316 HANDOFF.md goc: ### -> ## de tach hai muc bi dinh nhau",
       "released_at": null,
-      "taken_from": "claude-scouter-s06",
-      "taken_by": "claude-assistant",
-      "taken_at": "2026-09-07T08:37",
-      "duc_decision": "2026-09-07, Duc chot hai luot: (a) _root — \"cho chuyen _root\", de land not nua con lai cua ADR-0014 dang chan 26 commit cua 5 lane; (b) _code — \"ban trien khai cong viec luon di ... Toi cho ban khoa de trien khai\", lane claude-bang-vung-chac da bao xong tu 3h truoc, chuyen cho lane refactor IA cua bang"
+      "taken_from": "claude-root-adr0014",
+      "taken_by": "claude-scouter-s06",
+      "taken_at": "2026-09-07T09:33",
+      "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\" - go cong dong phien dang do voi MOI lane"
     },
     "_docs": {
       "owner": "claude-scouter-s06",
@@ -78,5 +78,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "6717362cf54a1a85"
+  "_fingerprint": "6c8050db8d44bc31"
 }
