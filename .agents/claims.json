@@ -37,11 +37,11 @@
       "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-07T09:33",
-      "task": "Sua dong 1316 HANDOFF.md goc: ### -> ## de tach hai muc bi dinh nhau",
-      "released_at": "2026-09-07T09:46",
+      "owner": "claude-dong-bang",
+      "ai": "Claude",
+      "claimed_at": "2026-09-07T14:45",
+      "task": "package.json: noi phep ghim frozen vao npm test",
+      "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -60,11 +60,11 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-07T14:16",
-      "task": "cat thoi gian bo sinh bang — 9.7s/luot",
-      "released_at": "2026-09-07T14:31",
+      "owner": "claude-dong-bang",
+      "ai": "Claude",
+      "claimed_at": "2026-09-07T14:39",
+      "task": "cong doc co frozen, chon dung suite — gioi han 1",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -78,5 +78,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "968f9ab675fb8feb"
+  "_fingerprint": "d6304bcc95cd3fa4"
 }

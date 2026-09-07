@@ -1524,3 +1524,28 @@ mất 8,4s (đúng tốc độ cũ) và ra vẫn giống từng byte.
 **Chưa làm, và vì sao.** Phần còn lại (~280 lượt `git show`, ~30ms mỗi lượt) là phí khởi động tiến
 trình **rải mỏng**, không chỗ nào trội — `lineDate` chỉ 13 lượt / 514ms. Gộp tiếp cần một tiến
 trình git **thường trú** (`cat-file --batch`), tức thêm máy móc và thêm một kiểu hỏng mới. Chưa đáng.
+
+## 2026-09-07 · claude-dong-bang — cưỡng chế cờ `frozen`, cổng bỏ suite ba gói đóng băng
+
+**Làm gì.** Giới hạn ① Đức chốt 07/09. Cờ `frozen` khai từ hôm nay mà chính
+`.repo-structure.json` tự khai *"chưa cổng nào đọc nó"* — nên gỡ cờ đi thì không test nào đỏ.
+Nay cổng đọc nó qua `frozenFrom()` + `chonSuiteBoDongBang()` trong `scripts/repo-structure.mjs`.
+
+**Số đo.** Suite bốn đơn vị của ba gói đóng băng **41,1 giây** mỗi phiên (chatgpt 17,4 ·
+gemini v0.2.0 12,5 · flow 9,7 · gemini v0.1.0 1,6); gói **SỐNG** `duc-scouter` **1,5 giây**.
+Cổng giữ `_code` + `_root`: **188 giây**, không có cờ thì **~229 giây**.
+Ghim: `tests/frozen-suite-smoke.mjs` 11 phép kiểm · đột biến **7/7 bị bắt**.
+
+**Hai vế giữ lại bảo vệ** — phạm vi là *chọn đúng suite*, không phải *bỏ ba suite*:
+chạm vào gói đóng băng thì suite của nó **chạy lại ngay**, và **fail-closed** khi không đo chắc
+được ai chạm gì (`origin/main` không phân giải thì danh sách commit chưa đẩy rỗng oan).
+
+**Kiểm chứ không giả định:** phép chống trôi dạt ba gói nằm trong suite của **chính Scouter**
+(`scouter-transport-smoke.mjs` mục ⑫, đọc `HEAD:` cả ba `bridge-pairing-core.js`) — gói SỐNG, vẫn
+chạy mọi lượt. `scripts.test` **giữ nguyên** cả bốn suite: cổng đọc chính danh sách đó rồi mới
+chọn, xoá khỏi đó là xoá luôn đường "chạm thì chạy lại". Ghim ở file RIÊNG vì lượt sửa này sửa
+chính cổng — ADR-0019 ⑸.
+
+**Một con số tôi báo SAI, sửa lại:** tôi nói cổng *"55s → 36s"* sau khi cắt bộ sinh. Cả hai lượt
+đo đó **không giữ khoá gốc**, nên cổng **không chạy suite gốc repo** — không so được với lượt có
+giữ khoá. Cắt bộ sinh là thật (9,7s → 3,6s, ra giống từng byte), nhưng con số 36 giây thì sai.
