@@ -585,6 +585,91 @@ BATCHES.push({
   ]
 });
 
+const BS = String.fromCharCode(92);   // dau gach nguoc, viet bang ma de khong phai thoat ba tang
+const Q = String.fromCharCode(34);    // dau nhay kep
+const PIN_FILE = path.join(ROOT, "tests", "scouter-file-core-smoke.mjs");
+const PIN_HOST = path.join(ROOT, "tests", "scouter-bridge-host-smoke.mjs");
+
+/* ---- VÙNG GHI — chốt đắt nhất của Bridge mới (07/09) ---------------------
+ * Đức chốt dựng Bridge riêng cho Scouter, "mở thông luồng cho tất cả các tính năng". Cái đi
+ * kèm là một chương trình nghe trên socket và GHI LÊN ĐĨA của Đức. Sáu con dưới đây canh đúng
+ * một câu hỏi — *"đường nào ra được khỏi vùng ghi?"* — và mỗi con là một lối vào khác nhau,
+ * vì bịt lối này mà hở lối kia thì vùng ghi vẫn thủng y như chưa bịt gì. */
+BATCHES.push({
+  ten: "VÙNG GHI — sáu lối ra khỏi gốc",
+  target: path.join(ROOT, "bridge", "file-core.mjs"),
+  pin: PIN_FILE,
+  mutants: [
+    {
+      ma: "G1",
+      ten: "Bỏ chốt liên kết mềm — một liên kết trong gốc trỏ ra ngoài là ghi lọt ra ngoài",
+      tim: "  if (raNgoaiGoc(gocThat, neoThat)) {",
+      thay: "  if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "G2",
+      ten: "So bằng startsWith thay vì relative — thư mục anh em /goc-khac lọt vì chỉ so chuỗi",
+      tim: "  const buoc = path.relative(gocThat, diem);",
+      thay: "  const buoc = diem.startsWith(gocThat) ? " + Q + Q + " : " + Q + ".." + Q + ";",
+      soLan: 1
+    },
+    {
+      ma: "G3",
+      ten: "Bỏ chặn đường theo ổ đĩa (C:x.txt) — path.isAbsolute trả false nên nó lọt",
+      tim: '  if (/^[A-Za-z]:/.test(rel)) loi("PATH_OUTSIDE_ROOT", "Đường dẫn theo ổ đĩa không phải đường tương đối.", { path: rel });',
+      thay: "  /* da bo */",
+      soLan: 1
+    },
+    {
+      ma: "G5",
+      ten: "Đo trần bằng số KÝ TỰ thay vì BYTE — tiếng Việt có dấu vượt trần thật 50%",
+      tim: "  if (bytes.length > MAX_FILE_BYTES) {",
+      thay: "  if (noiDung.length > MAX_FILE_BYTES) {",
+      soLan: 1
+    },
+    {
+      ma: "G6",
+      ten: "Nhận gốc TƯƠNG ĐỐI — vùng ghi trôi theo thư mục hiện tại của tiến trình",
+      tim: '  if (typeof root !== "string" || !path.isAbsolute(root)) {',
+      thay: '  if (typeof root !== "string" && false) {',
+      soLan: 1
+    }
+  ]
+});
+
+/* ---- LỚP ĐỨNG TRƯỚC — ba chốt của tầng HTTP ------------------------------
+ * `file-core.mjs` đã được canh ở trên. Bộ này canh thứ CHỈ tồn tại ở tầng HTTP, tức thứ mà một
+ * phép ghim gọi thẳng hàm sẽ không bao giờ chạm tới. */
+BATCHES.push({
+  ten: "LỚP ĐỨNG TRƯỚC — ba chốt chỉ có ở tầng HTTP",
+  target: path.join(ROOT, "bridge", "scouter-bridge-host.mjs"),
+  pin: PIN_HOST,
+  mutants: [
+    {
+      ma: "H1",
+      ten: "Bỏ chặn Origin — một TRANG WEB sai khiến được máy chủ ghi đĩa",
+      tim: "    if (request.headers.origin !== undefined) {",
+      thay: "    if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "H2",
+      ten: "Bỏ kiểm token ghép cặp — ai gõ đúng cổng cũng ghi được",
+      tim: '    if (!auth.startsWith("Bearer ") || !cungToken(pairing.token, auth.slice(7))) {',
+      thay: "    if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "H3",
+      ten: "Tự nhận mọi method — thôi chuyển tiếp, extension thành người vô hình",
+      tim: "    if (!Object.hasOwn(METHOD_TAI_CHO, String(method))) {",
+      thay: "    if (false) {",
+      soLan: 1
+    }
+  ]
+});
+
 BATCHES.push({
   ten: "LƯỚI ĐỠ — nối lại bằng alarms",
   target: path.join(ROOT, "scouter-background.js"),

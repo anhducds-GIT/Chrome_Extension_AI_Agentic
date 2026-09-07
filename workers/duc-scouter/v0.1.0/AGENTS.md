@@ -79,14 +79,18 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 | `scripts/scouter-seed-core.mjs` | Ba khả năng nối vào từ vựng: quan sát · báo cáo · tự nạp lại · **và ba hành động ghi (S-01)** |
 | `scripts/scouter-actions-core.mjs` | **Đường GHI**: bấm và gõ như tay người. Danh sách method CDP RIÊNG, bốn chốt riêng. Đọc khối đầu file trước khi sửa |
 | `scripts/scouter-transport-loopback.mjs` | Dây WebSocket tới `127.0.0.1`, **bắt tay hai chiều**. Đọc khối đầu file trước khi sửa |
-| `scripts/mutation-runner.mjs` | Bộ máy đột biến kiểm, dùng chung. Ba cái bẫy đã trả giá ghi ở đầu file |
+| `scripts/mutation-runner.mjs` | Bộ máy đột biến kiểm, dùng chung. Các cái bẫy đã trả giá ghi ở đầu file. **Hai lớp chống nhiễm độc mã nguồn (07/09)**: một **khóa file** chống hai lượt chạy cùng lúc (tự nhận lại khi chủ cũ đã chết), và một **nhật ký hồi phục trên đĩa** cứu lượt bị chém ngang. Bắt tín hiệu KHÔNG đủ — Windows không có tín hiệu thật, đã đo |
 | `scripts/observer-mutation-check.mjs` | 14 con đột biến cho bốn phép dò |
-| `scripts/scouter-mutation-check.mjs` | 58 con đột biến cho khung seed, đường ghi, cái phanh và bề mặt quyền |
+| `scripts/scouter-mutation-check.mjs` | 75 con đột biến: khung seed, đường ghi, cái phanh, bề mặt quyền, lệnh gọi mạng (`F1..F6`) và **vùng ghi** (`G1..G3`, `H1..H3`). Con số này mục theo code — đếm lại bằng chính bộ đo, đừng tin dòng này |
 | `scripts/scouter-input-trust-probe.mjs` | **Phép đo ①** (06/09, ĐẠT): cú bấm qua `chrome.debugger` có `isTrusted: true` |
 | `scripts/scouter-action-reality-probe.mjs` | **Phép đo ②** (07/09, ĐẠT 11/11 trên Chrome 152): nạp CHÍNH lõi hành động thật vào một extension thử rồi bấm trên trang tự dựng. Khác ① ở chỗ ① đo *đường đi*, còn cái này đo *code của Scouter*. Mã thoát 2 = phép đo KHÔNG CHẠY được |
 | `scripts/scouter-bridge-live-check.mjs` | Nối thử với **máy chủ Bridge THẬT**, không phải bản giả. Mã thoát 2 = không chạy được, khác hẳn "không đạt" |
 | `tests/scouter-action-reality-smoke.mjs` | Ghim LUẬT CHẤM của phép đo ②, không cần trình duyệt. 15 ca hỏng, mỗi ca phải đỏ ĐÚNG tiêu chí của nó |
 | `tests/scouter-write-gate-smoke.mjs` | Ghim CÁI PHANH (S-05) và bề mặt quyền manifest (S-02). Ghim cả hai chiều — khối ② là chiều "mở khoá thì bấm được thật" |
+| `bridge/file-core.mjs` | **Tầng thứ ba của ADR-0009**: ghi ghi chép xuống đĩa. Thuần, không mở cổng, không đọc `argv`. **Chỗ nguy hiểm nhất của cả gói** — đọc khối đầu file trước khi sửa một ký tự. Cố ý KHÔNG có đường xoá/đổi tên, và khối ‑ của phép ghim cưỡng chế điều đó |
+| `bridge/scouter-bridge-host.mjs` | **LỚP ĐỨNG TRƯỚC, không phải bản thứ tư** ([ADR-0004](docs/adr/0004-bridge-rieng-cho-scouter-la-mot-lop-dung-truoc.md)): `file.*`/`host.*` xử lý tại chỗ, mọi method còn lại **chuyển tiếp nguyên văn** sang host cũ (chạy trong cùng tiến trình). Đừng thêm bảng method vào đây — bảng thật ở extension |
+| `tests/scouter-file-core-smoke.mjs` | Ghim **vùng ghi**: `..`, đường tuyệt đối ba dạng, thư mục anh em trùng tiền tố, và liên kết mềm trỏ ra ngoài. Chạy trên thư mục tạm THẬT, không giả `fs` |
+| `tests/scouter-bridge-host-smoke.mjs` | Ghim lớp đứng trước: bốn method đĩa, hai cổng vào (Origin, token), và **chuyển tiếp nguyên văn**. Máy chủ THẬT trên loopback, host cũ là đồ giả |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này. ADR đã `Accepted` là bất biến |
 | `tests/run-all.mjs` | Chạy hết phép ghim của gói. `package.json` gốc chỉ gọi file này — thêm phép ghim mới **không cần khoá `_root`** |
 | `ROADMAP.md` | **Đi tới đâu, đang ở đâu, thứ tự nào** — 25 mục `SEED v0.1` xếp thành bốn bước. Đọc file này TRƯỚC khi hỏi "việc kế là gì". Không chép danh sách 25 mục, chỉ xếp thứ tự |
