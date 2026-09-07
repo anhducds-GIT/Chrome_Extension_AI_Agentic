@@ -212,16 +212,40 @@ thật, còn **468 (63%)** chạm tài liệu + sổ nợ và **142 (19%)** ch�
 - Không bao giờ để token / mật khẩu / file pairing vào repo.
 - Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.
 
-## 5. Vai từng AI
+## 5. Vai từng AI — chia theo VIỆC, không chia theo hãng
 
-| AI | Việc chính | Không được |
-|---|---|---|
-| **Đức** | Chốt mọi thứ | — |
-| **Claude** | Kiến trúc, phản biện, audit độc lập, điều phối, vận hành Bridge | Push khi cổng kiểm chưa xanh |
-| **Codex** | Code theo brief, audit độc lập | Tự mở rộng phạm vi ngoài brief |
-| **Antigravity** | Dựng UI, tạo giao diện | Sửa lớp an toàn / runner / bridge |
+**Đức chốt 08/09.** Bảng cũ chia việc theo tên hãng (Claude / Codex / Antigravity) — **đi ra**, vì
+đo được nó phân việc cho hai bên **chưa từng ghi một dòng nào**. Đếm nhãn `Lane:` của mọi commit
+14 ngày (`git log --since=2026-08-25 --format=%B | grep -oE "^Lane: \S+" | sort -u`): tất cả là
+`claude-*`; `claude-codex-*` và `claude-gpt-*` là **phiên Claude làm việc với** Codex/GPT, không
+phải Codex tự ghi. **Antigravity 0 · Codex 0.**
 
-Ba AI có thể cùng lúc trong repo, nhưng **khác package** (mục 1).
+Thay bằng **HAI VAI, chia theo hướng đi của việc**. Vai là của **PHIÊN**, không của hãng: hãng nào
+cũng đóng được vai nào, và một phiên đóng **đúng một vai** cho tới khi đóng phiên.
+
+| Vai | Giữ gì | Việc chính | KHÔNG được |
+|---|---|---|---|
+| **Đức** | — | Chốt mọi thứ | — |
+| **① Giữ lõi** | luật · bộ máy · trạng thái của repo này | mỗi bản vá kèm **một phép kiểm ghim** · xoá luật không nổ lần nào · giữ cổng kiểm còn răng | nới một lớp bảo vệ cho cổng xanh · **tự ký nghiệm thu việc của chính mình** |
+| **② Phát & thu** | cửa duy nhất giữa repo này và bên ngoài | thi hành quy trình lên repo/gói khác · **mang chỗ vấp về** thành mục sổ nợ · tối ưu chính quy trình đó | sửa lõi để việc bên ngoài chạy được — chỗ vấp phải **về Vai ①** · báo một quy trình ĐẠT khi chưa chạy thật |
+
+**Ranh giới chịu tải, một câu: Vai ② được *phát hiện*, Vai ① được *sửa*.** Gộp hai vai lại thì
+người tìm ra lỗi cũng là người tự chấm bản sửa của mình — và một tờ nghiệm thu do bên bị kiểm ký
+là **lời tự khai, không phải hàng rào**. Đây đúng là luật mà `SELF_ATTESTATION` cưỡng chế trong lõi
+quyền, nên đừng đọc nó thành lời khuyên.
+
+**Bàn giao giữa hai vai chỉ có một hình dạng:** Vai ② ghi chỗ vấp vào `BACKLOG.md` (kèm trường
+`đóng khi:`), Vai ① biến nó thành **bản vá cộng một phép kiểm ghim**. Không có đường nào khác —
+Vai ② nhắn thẳng cho Vai ① *"sửa hộ tôi"* là mất dấu vết, và người đến sau không đọc được tin
+nhắn. Đây là **vế duy nhất máy kiểm được** (`npm run test:backlog` đếm trường `đóng khi:`); phần
+*"② phát hiện · ① sửa"* là **chữ, không phải luật** — nói thẳng ra để không ai tin nó đang được
+cưỡng chế, và mục 7 vốn đã cảnh báo luật máy không kiểm được thì sớm muộn cũng bị bỏ qua.
+
+**Hai vai có thể cùng lúc trong repo, nhưng KHÁC VÙNG** (mục 1). Trần song song vẫn là **2 chat**
+(giới hạn ⑥) — hai vai vừa khớp trần đó, không phải trùng hợp.
+
+> **Cố ý KHÔNG thêm:** một quy ước đặt tên `--as` theo vai. Không máy nào kiểm được nó, và mục 7
+> nói luật máy không kiểm được thì sớm muộn cũng bị bỏ qua — thêm vào chỉ để có thêm một dòng.
 
 **Cửa vào của từng AI** — cách file này đến được tay bạn:
 
