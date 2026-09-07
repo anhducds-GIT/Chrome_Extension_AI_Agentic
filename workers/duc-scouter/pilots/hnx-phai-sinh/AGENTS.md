@@ -28,12 +28,14 @@ nhầm chúng với mục đích của cả gói.
 | `vong-lay.mjs` | **Vòng lặp, KHÔNG biết trang nào.** Ba tính chất: không làm hai lần · chạy tiếp khi đứt · thử lại đúng loại lỗi. Ứng viên đẩy lên seed **sau khi chạy thật một lần** |
 | `nguon-hnx.mjs` | **Hiểu biết về trang** — địa chỉ, tham số, cách nhận ra trả lời đúng. Mọi thứ riêng của trang chỉ được nằm ở đây |
 | `tests/vong-lay-smoke.mjs` | Ghim ba điều kiện đóng của `S-10` trên **máy chủ giả** — không tiêu một lượt gọi thật nào |
-| `scripts/pilot-mutation-check.mjs` | 9 con đột biến. Dùng chung bộ máy với seed, không chép bản thứ hai |
+| `tests/nguon-hnx-smoke.mjs` | Ghim hợp đồng trang: bảy tham số, ba cửa của `kiemTra`, và **cái bẫy 200-OK-trang-khác** |
+| `chay.mjs` | Lệnh chạy thật, nối `vong-lay` với Bridge. **Không token nào trong repo** — đọc từ tệp ghép cặp Đức chỉ ra |
+| `scripts/pilot-mutation-check.mjs` | **17 con đột biến** (`V1..V9` vòng lặp · `N1..N8` hợp đồng trang). Dùng chung bộ máy với seed, không chép bản thứ hai |
 
 ## Hai ràng buộc vận hành, đo được, đừng quên
 
-1. **`scout.fetch` trần 512 KiB một lượt.** Một ngày `hnx.vn` là **~231 KB** — lọt, nhưng không
-   rộng. Ngày nào phình quá trần thì lệnh ĐỎ chứ không cắt bớt (cắt bớt là nói dối), và lúc đó
+1. **`scout.fetch` trần 512 KiB một lượt.** Một ngày `hnx.vn` đo được là **~46 KB** — rộng gấp mười.
+   (Con số 231 KB trong `S-10` là sai; đã đo lại 07/09.) Ngày nào phình quá trần thì lệnh ĐỎ chứ không cắt bớt (cắt bớt là nói dối), và lúc đó
    phải chia nhỏ theo loại sản phẩm.
 2. **`scout.fetch` TIÊU NGÂN SÁCH GHI** — nó không phải lệnh đọc. Cái phanh cho **50 lượt một
    lần bật**. Một tuần 5 ngày thì thoải mái; một tháng thì phải bật lại giữa chừng. Vòng lặp
@@ -51,8 +53,15 @@ Khối ⑥ của phép ghim canh đúng chỗ này.
 ## Chạy
 
 ```bash
-node tests/vong-lay-smoke.mjs          # ghim, không cần mạng
+node tests/vong-lay-smoke.mjs          # ghim vòng lặp, không cần mạng
+node tests/nguon-hnx-smoke.mjs         # ghim hợp đồng trang, không cần mạng
 node scripts/pilot-mutation-check.mjs  # đột biến kiểm
+```
+
+### Chạy THẬT (cần Bridge đang chạy và công tắc trong bảng bên ĐANG BẬT)
+
+```bash
+node chay.mjs --pairing <tệp-ghép-cặp> --tu 2026-09-01 --den 2026-09-07
 ```
 
 Suite này cũng chạy trong `../../v0.1.0/tests/run-all.mjs` — nó quét `pilots/*/tests/*.mjs`

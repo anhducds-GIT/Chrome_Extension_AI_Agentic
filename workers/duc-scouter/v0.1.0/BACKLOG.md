@@ -194,6 +194,14 @@ lý do đó nay sai.
 endpoint trả **200 OK kèm cả một trang HTML 43KB**, trông y hệt thành công. Ở trang này, sai
 tham số không ra lỗi — nó ra một trang khác.
 
+**[ĐO LẠI 07/09 — hai con số trên SAI, giữ nguyên bản ghi cũ để thấy nó sai ở đâu]**
+Bảy tham số nay đã đo và ghi vào file (`pilots/hnx-phai-sinh/nguon-hnx.mjs`), không còn nằm
+trong trí nhớ: `p_date` · `p_keysearch` · `p_orderby` · `p_ordertype` · `p_currentpage` ·
+`p_type_sanpham` · `p_record_on_page`. Một ngày là **~46 KB**, KHÔNG phải 231 KB — khác biệt
+này đổi kết luận, vì 231 KB nghe như sắp chạm trần 512 KiB của `scout.fetch` còn 46 KB thì
+rộng gấp mười. Và ngày nghỉ **vẫn trả 200 OK + JSON hợp lệ**, chỉ khác ở chỗ không có ô dữ
+liệu nào (đo: 192 ô với 0 ô) — nên "200 OK" không bao giờ đủ để kết luận đã có dữ liệu.
+
 · **đóng khi:** lệnh: một lượt chạy lấy đủ **5 ngày giao dịch liên tiếp**, ghi ra 5 file qua
 Bridge, chạy lại lượt hai KHÔNG tải lại ngày đã có, và đứt giữa chừng thì chạy tiếp được từ
 ngày còn thiếu — có phép ghim dựng máy chủ giả cho cả ba tính chất đó.
