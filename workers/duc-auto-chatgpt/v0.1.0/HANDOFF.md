@@ -257,4 +257,13 @@ chốt** ai giữ khoá đó.
   - **Số đo:** suite gói **114/114 xanh**. Ba phép ghim mới, **28/28 đột biến bị bắt** (13 + 7 + 8).
   - **Chờ Đức quyết:** ⑴ xoá `tests/chatgpt-zoom-control-smoke.mjs`; ⑵ xoá hẳn `resolveExistingOutput()` hay giữ kèm chốt; ⑶ alias — bỏ hẳn khỏi ba module hay nối thật một ô nhập.
 
+- 2026-09-07 · Claude (`claude-tran-900`) · **Trần `run.trial` lên 900 giây — Đức chốt (ADR-0015). `run.start` VẪN CẤM, không đổi một chữ. B-17 đóng.**
+  - **Vì sao 900:** đó là `timeout` của chính workbook Pilot-08 Đức đang dùng thật, không phải số tròn chọn cho đẹp. Đo live 26/08: gửi → phát hiện ảnh mất 40s (1 ảnh) · 61s (2 ảnh) · **68s (4 ảnh)** với prompt *ngắn*; job thật là 4 ảnh + prompt 3.825 ký tự. Trần 90 giây không bảo vệ ai khỏi cái gì — nó chỉ đẩy đúng những job thật sang tay Đức.
+  - **Vế thứ hai, quan trọng ngang vế thứ nhất:** `POLICY.prohibited_methods` nguyên vẹn. Công tắc Chế độ phát triển, nắp 30 job, cooldown 5 phút, sàn 15 giây: nguyên.
+  - **Điều kiện ① — trần khai ở ĐÚNG MỘT CHỖ:** `LIMITS.trial_timeout_cap_sec` trong `bridge-core.js`. Trước lượt này con số 90 nằm rải ở **bốn** nơi (mặc định `capTrialTimeouts`, chỗ gọi ở `sidepanel.js`, trường audit, trường reservation). Nay cả bốn dẫn xuất; phép ghim **từ chối mọi chữ số** ở những chỗ đó.
+  - **Điều kiện ② — ĐO TRƯỚC KHI XÂY: đường báo đã có sẵn.** `run.trial` vốn trả reservation ngay rồi chỉ sang `run.status`. Thiếu là **đồng hồ** — nó chỉ trả tên chặng, nên hai lần hỏi cách nhau 5 phút cùng trả "GENERATING" thì không phân biệt được đang-chạy với đã-treo. Vá bằng ba con số panel **vốn đã đếm** cho đồng hồ trên màn hình: `job_elapsed_sec` · `stage_elapsed_sec` · `stage_budget_sec`. Không cơ chế mới.
+  - **Ghim:** `tests/trial-timeout-cap-adr0015-smoke.mjs` — canh **cả hai chiều** (900 nhận **và 901 từ chối**; thiếu vế sau là bỏ trần, không phải nới trần). Vế ② **không grep chữ**: cắt `elapsedSecSince` + `bridgeRunStatus` đã ship ra và **chạy** trong `node:vm`, đòi `stage_elapsed_sec` **bò lên**.
+  - **Số đo:** suite gói **115/115 xanh**. **10/10 đột biến bị bắt**, gồm gỡ `run.start` khỏi danh sách cấm, đổi 900→200, gõ con số lại vào chỗ gọi, và "đồng hồ còn chữ mà số đứng yên".
+  - **Trần tuyên bố: TĨNH + suite, CHƯA chạy live.** Nghiệm thu thật cần **Đức reload extension** ở `chrome://extensions` rồi chạy một trial với job dài hơn 90 giây.
+
 <!-- HANDOFF-THANG: 2026-09 -->

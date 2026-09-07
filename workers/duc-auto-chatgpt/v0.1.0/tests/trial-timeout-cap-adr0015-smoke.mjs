@@ -165,9 +165,22 @@ const runStatus = statusContext.__runStatus;
   assert.ok(overdue.current.stage_elapsed_sec > overdue.current.stage_budget_sec, "quá hạn phải suy được từ chính payload");
 }
 
-/* Mép ngược: không có job nào đang chạy thì đồng hồ là null, không phải 0.
-   0 giây đọc như "vừa mới bắt đầu" — đúng câu trả lời sai lúc không có gì
-   đang chạy cả. */
+/* Mép ngược ①: có job đang chạy nhưng CHƯA có mốc thời gian (đường phục hồi
+   sau khi panel mở lại đọc `currentItem` từ storage) thì đồng hồ phải là
+   `null`, không phải `0`. `0` đọc như "vừa mới bắt đầu" — đúng câu trả lời
+   sai, và nó khiến agent kết luận job đang tiến triển trong khi không ai biết
+   nó bắt đầu từ lúc nào. */
+{
+  panelState.currentStartedAt = null;
+  panelState.stageStartedAt = null;
+  panelState.stageBudgetSec = null;
+  const unknown = runStatus();
+  assert.equal(unknown.current.stage_elapsed_sec, null, "chưa có mốc thì phải nói KHÔNG BIẾT, không được nói 0 giây");
+  assert.equal(unknown.current.job_elapsed_sec, null, "chưa có mốc thì phải nói KHÔNG BIẾT, không được nói 0 giây");
+  assert.equal(unknown.current.stage_budget_sec, CAP, "hạn vẫn suy được từ settings của job");
+}
+
+/* Mép ngược ②: không có job nào đang chạy thì cả khối `current` là null. */
 {
   panelState.currentItem = null;
   panelState.currentStartedAt = null;
