@@ -1152,7 +1152,7 @@ fixture chọn một đơn vị THẬT khác GPT, chọn theo thứ tự đườ
   · **đóng khi:** ba khối AUTO biến khỏi `FEATURE-PARITY.md`, chỗ đó còn một con trỏ sang
   `FEATURE-PARITY-AUTO.md`, và hai lệnh đo trên ra `0` và `>=1`. Khoá cần: `_root`.
 
-## MỞ · N-28 · Mục sổ nợ KHÔNG CÓ MÃ thì không ai trỏ tới được, và người trỏ sẽ trỏ nhầm
+## N-28 · Mục sổ nợ KHÔNG CÓ MÃ thì không ai trỏ tới được, và người trỏ sẽ trỏ nhầm
 
 **[ĐO 2026-09-07, xảy ra thật trong cùng ngày mở mục này]** · lane `claude-gemini-crlf` làm xong
 một việc tốt, kiểm chứng lại thì đúng — nhưng nó gọi mục nguồn là **`F-27`**, và `F-27` là một
@@ -1201,3 +1201,44 @@ luật không kiểm được bằng máy.
   `\r?\n`, suite **95/95 ở CẢ HAI chiều**, đột biến **8/8 bị bắt** và chạy lại đủ 8 con ở chiều
   CRLF nữa cũng 8/8 — trong đó có một con thử *nới quá tay* (chèn hàm lạ vào giữa hai hàm phải kề
   nhau) và nó vẫn ĐỎ, nên tính kề nhau chưa bị mất.
+
+
+- **đóng khi:** lệnh: grep -rn "^### " --include=BACKLOG.md . | grep -vcE "[A-Z]-[0-9]+" ra 0
+
+## N-29 · Gộp "Đức cần làm" về một nguồn sẽ LÀM MẤT việc của Scouter nếu gộp ngay
+
+**[ĐO 2026-09-07, trước khi refactor IA của bảng]** · Đề bài refactor bảng (Đức chuyển 07/09) yêu
+cầu *"NEEDS ĐỨC: một SSOT duy nhất, dùng cơ chế `@Đức:bấm` / `@Đức:chốt`"*. Đích đúng. Nhưng
+**làm ngay hôm nay là mất dữ liệu**, và đây là số đo:
+
+| Cơ chế | Đếm được |
+|---|---|
+| Dấu `@Đức:bấm` / `@Đức:chốt` trong ba sổ | **17** (7 bấm · 10 chốt) |
+| `human_action` khác rỗng trong `STATUS.md` | **4 trong 5 gói** |
+
+Bốn `human_action` đó đối chiếu từng cái với dấu trong sổ:
+
+- `duc-auto-gg-flow-video` — có dấu ngay trong `STATUS.md`. **An toàn.**
+- `duc-auto-gemini` — không có dấu ở `STATUS.md`, nhưng `BACKLOG.md` của gói có **2** dấu trỏ đúng
+  việc đó (bốn điều kiện một hồ sơ). **An toàn.**
+- `duc-auto-chatgpt` — `BACKLOG.md` có **1** dấu (`B-09`). Nhưng `human_action` nói việc KHÁC (nạp
+  lại tiện ích trên từng hồ sơ + gắn tab BRIDGE). **MẤT MỘT PHẦN.**
+- `duc-scouter` — **KHÔNG một dấu `@Đức` nào trong cả gói.** `human_action` của nó là một việc
+  thật và còn hiệu lực: *"nạp lại extension — manifest đổi (thêm quyền hẹn giờ) nên bản đang chạy
+  không tự cập nhật"*. Gộp ngay là **việc này biến mất khỏi bảng, im lặng**.
+
+Chú thích trong `scripts/build-overview.mjs` (dòng ~1741) đã lường đúng chuyện này và nói thẳng
+rằng hai chỗ *"có thể đếm khác vùng này trong một thời gian"* — nhưng nó viết lúc **chưa mục nào
+được đánh dấu**. Nay 17 mục đã có dấu, nên giai đoạn chuyển tiếp **đóng được** — chỉ là phải
+chuyển trước, đừng cắt trước.
+
+**Thứ tự bắt buộc:** ⑴ đặt dấu `@Đức:bấm` vào dòng mục thật cho hai việc còn thiếu (Scouter · nửa
+còn thiếu của ChatGPT) → ⑵ đo lại, hai cơ chế phải đếm **bằng nhau** → ⑶ mới bỏ `human_action`
+khỏi đường nuôi bảng. Cắt trước bước ⑵ là làm ra một SSOT **thiếu**, mà một nguồn duy nhất nói
+thiếu thì tệ hơn hai nguồn nói lệch: hai nguồn lệch thì thấy được, một nguồn thiếu thì không.
+
+**đóng khi:** ⑴ hai cơ chế đếm bằng nhau, có số in ra · ⑵ `human_action` không còn nuôi ô đếm nào
+trên bảng · ⑶ có một phép ghim ĐỎ khi một `STATUS.md` có `human_action` khác rỗng mà gói đó không
+có dấu `@Đức` nào — tức phép ghim canh đúng cái lỗ vừa đo được, chứ không chỉ canh số.
+
+- **đóng khi:** lệnh: node scripts/backlog-check.mjs --can-duc ra 0 goi co human_action khac rong ma khong co dau @Duc
