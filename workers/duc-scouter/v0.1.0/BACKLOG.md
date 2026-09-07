@@ -224,3 +224,31 @@ thật qua socket (`bat-tay-hai-chieu.mjs`) và hai con đột biến `X3` `X4` 
 · **đóng khi:** Đức chốt một trong hai — hoặc **mở băng** hai gói đó đủ lâu để chúng chuyển
 sang lõi chung (rồi đóng băng lại), hoặc **ghi một dòng lý do chấp nhận rủi ro** vì cả hai chỉ
 chạy trên loopback máy cá nhân. Không chốt thì mục này ở lại sổ — nó không tự hết.
+
+## S-12 · Ngày không có phiên bị lấy lại mỗi lượt chạy
+
+Đo được lúc chạy S-10 thật (08/09): lượt 2 báo `0 lấy mới · 7 đã có` — đúng — nhưng **ba ngày
+trống vẫn bị gọi lại**, vì cơ chế nhớ là *file đã ghi*, mà ngày trống thì không sinh file nào.
+
+Nên chạy lại cùng một khoảng ngày thì mỗi ngày lễ và ngày nghỉ đều tốn một lượt gọi, mãi mãi.
+Với hai tuần là 3 lượt; với một năm sẽ là vài chục. `scout.fetch` tính vào hạn mức ghi.
+
+**Chưa chắc là bug.** Một ngày trống hôm nay có thể được trang bổ sung dữ liệu sau, và lúc đó
+lấy lại là ĐÚNG. Nên đừng vội ghi một tệp rỗng để đánh dấu — làm thế là đổi một phiền toái
+nhỏ lấy một lỗi im lặng lớn hơn.
+
+· **đóng khi:** hoặc đo được rằng HNX không bao giờ bổ sung dữ liệu cho ngày đã trống (rồi mới
+ghi dấu ngày trống), hoặc Đức chốt rằng lấy lại vài lượt mỗi phiên là chấp nhận được và ghi
+một dòng lý do.
+
+## S-13 · Gọi sai tên method trả lỗi nội bộ thay vì `METHOD_NOT_FOUND`
+
+Đo 08/09 trên Bridge đang chạy thật: gọi `khong.co.that` → `METHOD_NOT_FOUND`, gọn và đúng.
+Nhưng gọi `capabilities` (thiếu tiền tố `system.`) → `INTERNAL_ERROR` với
+`details.reason = uncorrelated_extension_response`. Lặp lại 3 lần, ổn định — không phải đua.
+
+**Đã kiểm là KHÔNG nguy hiểm:** bắn đồng thời một lệnh sai tên với hai lệnh đúng thì cả hai
+lệnh đúng vẫn OK. Nên phản hồi lạc không phá được lượt khác đang bay. Nó xấu mặt, không hở.
+
+· **đóng khi:** tên method không có trong bảng trả về `METHOD_NOT_FOUND` cho MỌI tên (kèm một
+phép ghim), hoặc đo được rằng `capabilities` là bí danh cũ có thật và khai nó ra cho tử tế.

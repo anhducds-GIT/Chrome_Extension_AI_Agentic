@@ -393,3 +393,32 @@ nào**. Nay có `bat-tay-hai-chieu.mjs` (nối THẬT qua socket, 5 khối) và 
 
 **Đo.** Ghim 17 file · đột biến **93/93, sống sót 0**. Bridge đã chạy thật trên máy Đức:
 ghi/đọc file OK, và thử `file.read` lên tệp ghép cặp thì **bị chặn** (`PATH_OUTSIDE_ROOT`).
+
+## 2026-09-08 · `claude-scouter-s06` — S-10 CHẠY THẬT, đạt; hai tuần dữ liệu HNX
+
+**Đức chốt chạy live lúc 00:40 (08/09)** và tự tay nối Bridge. Phạm vi Đức đổi: 5 ngày →
+**hai tuần** = 10 ngày làm việc (2026-08-25 → 2026-09-07).
+
+| Lượt | lấy mới | đã có | không có dữ liệu | hỏng |
+|---|---|---|---|---|
+| 1 | 7 | 0 | 3 | 0 |
+| 2 | **0** | **7** | 3 | 0 |
+
+Lượt 2 là phép thử thật: `0 lấy mới · 7 đã có` chứng minh **file đã ghi CHÍNH LÀ trạng
+thái** — không có sổ ghi riêng, và chạy lại không lấy lại.
+
+**Dữ liệu thật, không phải trang lỗi.** Soi `2026-08-25-HDTLCSCP.json`: 192 ô dữ liệu, ISIN
+`VN41I2G90000`, chỉ số cơ sở `VN100`, hợp đồng tương lai đáo hạn `2609`, đủ giá và khối lượng.
+
+**Ba ngày trống (31/08 · 01/09 · 02/09) là trống THẬT** — đo thẳng bằng một lượt gọi riêng:
+HTTP 200, JSON hợp lệ, **8791 byte, 0 ô dữ liệu**, đúng hình dạng đã đo trước cho ngày không có
+phiên. Ngày có giao dịch đo cùng lúc: 46194 byte, 192 ô. Không phải đọc hụt.
+
+**Chốt an toàn giữ được trên máy thật.** Thử lấy trộm chính tệp ghép cặp bằng HAI đường (tương
+đối + tuyệt đối) → cả hai `PATH_OUTSIDE_ROOT`. `file.delete` cố ý không tồn tại.
+`system.capabilities` khai 15 method: 10 chỉ đọc, 5 có ghi.
+
+**Trong cả lượt chạy không sửa một dòng mã nào** — chỉ chạy và đọc.
+
+Chạy lại: `node chay.mjs --pairing <tệp> --tu 2026-08-25 --den 2026-09-07` trong
+`pilots/hnx-phai-sinh/`.
