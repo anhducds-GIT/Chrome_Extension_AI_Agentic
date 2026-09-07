@@ -1373,3 +1373,5 @@ Khác `N-30`: `N-30` là một phép ghim hỏng thật, đỏ ổn định. M�
   kiểm cổng KHÔNG báo đỏ. Khoá cần: `_code`.
 
 - **ĐỔI MÃ N-31 → N-34** · 2026-09-07 · lane `claude-scouter-s06` · khối "`what-next.mjs` đếm hụt việc mở của một gói" đọc là **N-34** từ nay — lane `claude-assistant` ghi `ĐỔI MÃ N-30 → N-31` cùng lúc và tới trước, nên giữ mã · **đóng khi:** lệnh: node scripts/what-next.mjs dem ca hai dang muc, va co mot phep ghim dung so no chua ca hai dang roi kiem con so ra dung
+
+- **ĐÓNG N-30** · 2026-09-07 · claude-bang-ia · Sổ mẫu Gate 7 nay commit đủ **năm** artifact, và tên artifact thứ năm **nhập từ hằng số `PARITY_AUTO_FILE` của bộ sinh** chứ không gõ cứng. Kèm theo: khối "artifact cũ đã commit" trước đây làm cũ `FEATURE-PARITY.md` — từ ADR-0014 bộ sinh không đọc file đó một lần nào, nên khối ấy sẽ ghim rỗng; nay nó làm cũ đúng file máy. **[ĐO]** `node tests/build-dashboard-smoke.mjs`: thoát mã **1 → 0**, **100/100 PASS**. Số phép kiểm **100 → 100**, số vế khẳng định **463 → 463** — không gỡ một lớp canh nào. Commit `15d4d43`.
