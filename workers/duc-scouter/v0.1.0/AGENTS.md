@@ -95,6 +95,8 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 | `tests/scouter-file-core-smoke.mjs` | Ghim **vùng ghi**: `..`, đường tuyệt đối ba dạng, thư mục anh em trùng tiền tố, và liên kết mềm trỏ ra ngoài. Chạy trên thư mục tạm THẬT, không giả `fs` |
 | `tests/scouter-bridge-host-smoke.mjs` | Ghim lớp đứng trước: bốn method đĩa, hai cổng vào (Origin, token), và **chuyển tiếp nguyên văn**. Máy chủ THẬT trên loopback, host cũ là đồ giả |
 | `docs/PROMPT-thiet-ke-bang-ben.md` | **Câu Đức dán cho GPT web** để brainstorm bố cục bảng bên (07/09). Chứa bản khai **sự thật về năng lực** — Scouter đổi thì **sửa mục đó trước khi dán**, không thì GPT thiết kế cho một giói đồ không tồn tại |
+| `docs/TRIALS.md` | **Sổ các trang đã thử** — trang nào · thử gì · kết quả · **dạy seed được gì**. Cột cuối là lý do nó tồn tại: nó là đường ray của luật chiều-ngược ở ADR-0009 mục ⑵. Đây là SỔ, không phải hàng rào |
+| `tests/seed-purity-smoke.mjs` | Canh **mã CHẠY** của seed không chứa tên trang thật (hằng số · mặc định · nhánh rẽ theo hostname). **Cố ý KHÔNG canh** `tests/` `docs/` `pilots/` — Đức chốt 07/09 *"nhiễm cũng được… trừ khi nó ảnh hưởng quá"*. Bản đầu siết cả `tests/` và đỏ 9 chỗ vô hại; hàng rào hẹp mà sống lâu hơn hàng rào rộng mà bị gỡ |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này. ADR đã `Accepted` là bất biến |
 | `tests/run-all.mjs` | Chạy hết phép ghim của gói. `package.json` gốc chỉ gọi file này — thêm phép ghim mới **không cần khoá `_root`** |
 | `ROADMAP.md` | **Đi tới đâu, đang ở đâu, thứ tự nào** — 25 mục `SEED v0.1` xếp thành bốn bước. Đọc file này TRƯỚC khi hỏi "việc kế là gì". Không chép danh sách 25 mục, chỉ xếp thứ tự |

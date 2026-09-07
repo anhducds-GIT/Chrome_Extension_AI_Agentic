@@ -12,6 +12,20 @@ awk -F'|' '/^\|/ && NF>2 {c=$(NF-1); gsub(/^ +| +$/,"",c); if (c ~ /SEED v0\.1/)
   docs/studies/SCOUTER-CAPABILITY-INVENTORY-V1.md | wc -l
 ```
 
+## Thang phiên bản — Đức chốt 07/09 ([ADR-0020](../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md))
+
+| Nấc | Đóng khi | Việc thật kéo nó |
+|---|---|---|
+| **v1** | seed đủ dùng để người ngoài lấy về dùng được | pilot `hnx.vn` (`S-10`) |
+| **v2** | v1 chạy trọn một job **lớn hơn**, và cái học được đã vào seed | job Đức chọn sau |
+| **v3+** | mỗi trang mới một lượt; thứ không riêng của trang thì đẩy ngược lên seed | trang mới |
+
+**Hai chữ "v1" khác nghĩa nhau, đừng lẫn:** `SEED v1` của ADR-0010 là **23 mục năng lực còn
+lại** và nó **vẫn đóng**; **Scouter v1** ở bảng trên là **bản đóng gói phát hành được** của seed
+đang có. Đọc nhầm là mở một phạm vi Đức chưa duyệt.
+
+**Sổ trang đã thử:** [`docs/TRIALS.md`](docs/TRIALS.md) — trang nào · thử gì · **dạy seed được gì**.
+
 ## Đang ở đâu — 7 dòng trên 25 đã xong
 
 | Mục | Xong bằng gì | Đã chứng minh tới đâu |
@@ -120,7 +134,7 @@ Sau bước 3, đo lại còn bao nhiêu mục và mục nào còn đáng làm. 
 | Chặn gì | Ai gỡ | Ghi ở đâu |
 |---|---|---|
 | ~~Chính sách che dữ liệu~~ **ĐÃ GỠ 07/09** — Scouter được ghi ghi chép xuống đĩa | *xong* | [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md) |
-| **Nhóm B — 7 mục làm hay hoãn** | **Đức** | Khuyến nghị ở trên |
+| ~~Nhóm B — 7 mục làm hay hoãn~~ **ĐÃ CHỐT 07/09**: làm 4 mục pilot cần, hoãn 3 mục của cỗ chạy job nhà cung cấp | *xong* | [ADR-0020](../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md) mục ⑸ |
 | Chạy trên trang thật (không phải trang tự dựng) | **Đức** | `AGENTS.md` gốc mục 2 |
 
 ## Cái file này KHÔNG làm

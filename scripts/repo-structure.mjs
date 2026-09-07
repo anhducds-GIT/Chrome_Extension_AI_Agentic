@@ -556,12 +556,37 @@ export function frozenFrom(parsed) {
  * suite của CHÍNH `duc-scouter` (`scouter-transport-smoke.mjs` mục ⑫, đọc `HEAD:` của cả ba
  * `bridge-pairing-core.js`), tức trong gói SỐNG — nên nó vẫn chạy mọi lượt. Bỏ suite ba gói kia
  * không lấy đi lớp đó. */
-export function chonSuiteBoDongBang({ menhLenh, frozen, daCham, chacChanDoDuocCham }) {
+export const PHU_THUOC_CHUNG_DONG_BANG = Object.freeze([
+  "scripts/",
+  "package.json",
+  ".repo-structure.json"
+]);
+
+export function chonSuiteBoDongBang({ menhLenh, frozen, daCham, chacChanDoDuocCham, phuThuocChung }) {
   const ds = Array.isArray(menhLenh) ? menhLenh : [];
   const vung = Array.isArray(frozen) ? frozen.filter(Boolean) : [];
   if (!vung.length || chacChanDoDuocCham !== true) {
     return { chay: ds, boQua: [] };
   }
+
+  /* VÙNG CHUNG BỊ CHẠM → CHẠY HẾT, kể cả suite gói đóng băng.
+   *
+   * Phiên Codex bác đúng một câu tôi viết quá mạnh: *"gói không đổi thì suite chỉ có thể xanh"*.
+   * Sai — thứ ngoài gói vẫn đổi được. Và nó không phải rủi ro lý thuyết, đo 07/09:
+   * `workers/duc-auto-gemini/v0.2.0/tests/root-suite-covers-workers-static.mjs` **import**
+   * `scripts/repo-structure.mjs`, và phép kiểm đó canh đúng việc *"danh sách suite gốc có phủ hết
+   * worker"*. Lượt sửa cờ `frozen` hôm nay **sửa chính danh sách đó** trong khi cổng **bỏ qua**
+   * phép kiểm ấy. Nó xanh — nhưng vì may, không vì thiết kế.
+   *
+   * Danh sách này là HẰNG SỐ chứ không phải cấu hình gõ tay, và nó KHÔNG mục được: phép ghim
+   * `frozen-suite-smoke.mjs` dò import của cả ba gói đóng băng và ĐỎ nếu có gói nào dẫn ra một
+   * chỗ ngoài danh sách này. Thêm một đường dẫn ra ngoài mà quên khai thì cổng nói ngay. */
+  const chung = Array.isArray(phuThuocChung) ? phuThuocChung : PHU_THUOC_CHUNG_DONG_BANG;
+  const chamVungChung = (Array.isArray(daCham) ? daCham : []).some((f) => {
+    const p = String(f).replaceAll("\\", "/");
+    return chung.some((c) => (c.endsWith("/") ? p.startsWith(c) : p === c));
+  });
+  if (chamVungChung) return { chay: ds, boQua: [] };
   const cham = new Set(Array.isArray(daCham) ? daCham.map((f) => String(f).replaceAll("\\", "/")) : []);
   const goiBiCham = new Set(
     vung.filter((g) => [...cham].some((f) => f === g || f.startsWith(`${g}/`)))

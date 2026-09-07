@@ -13,7 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { chonSuiteBoDongBang, frozenFrom } from "../scripts/repo-structure.mjs";
+import { chonSuiteBoDongBang, frozenFrom, PHU_THUOC_CHUNG_DONG_BANG } from "../scripts/repo-structure.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -55,7 +55,9 @@ ok("cấu hình hỏng thì NỔ, không lặng lẽ coi như rỗng", () => {
 /* ---- chọn suite: bỏ đúng cái cần bỏ, giữ đúng cái cần giữ ---- */
 
 ok("gói đóng băng KHÔNG ai chạm thì suite của nó bị bỏ qua", () => {
-  const r = chon({ menhLenh: BA_LENH, frozen: DONG_BANG, daCham: ["scripts/session-check.mjs"] });
+  // `daCham` phải là chỗ NGOÀI vùng chung — `scripts/` nay là vùng chung, nên dùng nó ở đây
+  // sẽ làm phép kiểm này đo sai thứ nó muốn đo.
+  const r = chon({ menhLenh: BA_LENH, frozen: DONG_BANG, daCham: ["docs/README.md"] });
   assert.equal(r.boQua.length, 1);
   assert.equal(r.boQua[0].goi, "workers/duc-auto-chatgpt");
   assert.deepEqual(r.chay, [LENH_SONG, LENH_GOC]);
@@ -119,6 +121,61 @@ ok("khối `frozen` thật trỏ vào gói CÓ TỒN TẠI, và không chứa g�
   // là phép kiểm đắt giá nhất chứ không phải phép kiểm bỏ được.
   assert.ok(!dongBang.includes("workers/duc-scouter"),
     "gói SỐNG bị khai đóng băng — suite của nó sẽ không chạy nữa");
+});
+
+/* ---- Vùng chung: chạm vào là chạy hết, và danh sách vùng chung KHÔNG được mục ---- */
+
+ok("chạm VÙNG CHUNG thì suite gói đóng băng chạy lại, dù gói không đổi", () => {
+  // Phiên Codex bác đúng câu "gói không đổi thì suite chỉ có thể xanh": thứ NGOÀI gói vẫn đổi
+  // được. Đo 07/09: một gói đóng băng import `scripts/repo-structure.mjs`.
+  for (const f of ["scripts/repo-structure.mjs", "package.json", ".repo-structure.json"]) {
+    const r = chon({ menhLenh: BA_LENH, frozen: DONG_BANG, daCham: [f] });
+    assert.deepEqual(r.boQua, [], `chạm '${f}' mà vẫn bỏ suite gói đóng băng`);
+    assert.deepEqual(r.chay, BA_LENH);
+  }
+});
+
+ok("chạm chỗ KHÔNG phải vùng chung thì vẫn bỏ được", () => {
+  // Không có vế này thì "chạy hết cho chắc" sẽ ăn hết phần tiết kiệm mà không ai thấy.
+  const r = chon({ menhLenh: BA_LENH, frozen: DONG_BANG, daCham: ["docs/README.md", "HANDOFF.md"] });
+  assert.equal(r.boQua.length, 1);
+});
+
+ok("gói đóng băng KHÔNG được dẫn ra chỗ ngoài danh sách vùng chung", () => {
+  /* Phép ghim CHỐNG MỤC. `PHU_THUOC_CHUNG_DONG_BANG` là hằng số, nên nếu mai một gói đóng băng
+   * import thêm một chỗ khác thì hằng số đó lặng lẽ thiếu — và suite của gói ấy bị bỏ qua đúng
+   * lúc thứ nó phụ thuộc vừa đổi. Vế này biến "mục âm thầm" thành "cổng đỏ". */
+  const cauHinh = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
+  const dongBang = frozenFrom(cauHinh);
+  const RE = /(?:from|import|require\()\s*["']([^"']+)["']/g;
+
+  const lechRaNgoai = [];
+  const diTung = (thuMuc) => {
+    for (const e of fs.readdirSync(thuMuc, { withFileTypes: true })) {
+      const day = path.join(thuMuc, e.name);
+      if (e.isDirectory()) { if (e.name !== "node_modules") diTung(day); continue; }
+      if (!/\.(mjs|js|cjs)$/.test(e.name)) continue;
+      const nguon = fs.readFileSync(day, "utf8");
+      for (const m of nguon.matchAll(RE)) {
+        const dich = m[1];
+        if (!dich.startsWith(".")) continue; // gói node hoặc `node:` — không phải file trong repo
+        const tuyetDoi = path.resolve(path.dirname(day), dich);
+        const tuongDoi = path.relative(ROOT, tuyetDoi).replaceAll("\\", "/");
+        const goi = dongBang.find((g) => tuongDoi === g || tuongDoi.startsWith(`${g}/`));
+        if (goi) continue; // vẫn trong gói đóng băng nào đó — không phải dẫn ra ngoài
+        const daKhai = PHU_THUOC_CHUNG_DONG_BANG.some((c) =>
+          (c.endsWith("/") ? tuongDoi.startsWith(c) : tuongDoi === c));
+        if (!daKhai) {
+          lechRaNgoai.push(`${path.relative(ROOT, day).replaceAll("\\", "/")} → ${tuongDoi}`);
+        }
+      }
+    }
+  };
+  for (const g of dongBang) diTung(path.join(ROOT, g));
+
+  assert.deepEqual(lechRaNgoai, [],
+    "gói đóng băng dẫn ra chỗ chưa khai trong PHU_THUOC_CHUNG_DONG_BANG — "
+    + "suite của nó sẽ bị bỏ qua đúng lúc thứ nó phụ thuộc vừa đổi. Khai thêm chỗ đó vào hằng số.");
 });
 
 ok("`session-check.mjs` thật sự GỌI phép chọn này", () => {
