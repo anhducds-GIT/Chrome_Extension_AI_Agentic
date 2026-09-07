@@ -1450,3 +1450,11 @@ commit đều quy thuộc được về lane, 85 mục nhật ký đều dưới
 
 Đẩy vì cả chín lane đã bị chặn từ sáng bởi một mục nhật ký quá trần — nay đã gỡ. Đẩy sớm là
 được GPT soi sớm qua connector; commit chưa đẩy thì vòng kiểm chéo không nhìn thấy.
+
+## 2026-09-07 · `claude-scouter-s06` — đẩy Bridge riêng của Scouter, cuốn theo 2 commit
+
+**Lượt `--carry` này cuốn theo ai** (ADR-0005 bắt kể tên): **2 commit của `claude-assistant`**
+(`a2c4964`, `24e61ef`). Cộng 4 commit của tôi: `scout.fetch` + `<all_urls>` (ADR-0003 của gói) ·
+Bridge riêng dạng lớp đứng trước (ADR-0004) · nhật ký phiên · sinh lại hai artifact.
+
+Cổng đóng phiên **XANH TOÀN BỘ** trước lượt đẩy. Ghim gói 10/10, đột biến 75/75 sống sót 0.
