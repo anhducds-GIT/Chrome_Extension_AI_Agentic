@@ -16,7 +16,7 @@
    Nội dung file đúng nguyên vẹn; chỉ cái tên bị Chrome đặt. Nên stub download
    dưới đây trả GUID, và đó không phải bịa: đó là hành vi đã đo của Chrome 152.
 
-   SÁU bất biến:
+   MƯỜI bất biến — sáu cho (A), bốn cho (D):
 
      ① phiên bootstrap (Đức chưa cấp quyền thư mục nào) KHÔNG phát một lượt
        tải nào qua Chrome Downloads;
@@ -27,7 +27,13 @@
        VẪN đi đường tải và VẪN kiểm tên — (A) chỉ che ca bootstrap, nó không
        phải công tắc tắt lớp kiểm tên;
      ⑥ một mutation hỏng giữa đường rồi rollback thì dấu "máy tự dựng" phải
-       sống sót — không thì lượt kế tiếp lại rơi về Chrome Downloads.
+       sống sót — không thì lượt kế tiếp lại rơi về Chrome Downloads;
+     ⑦ (D) đúng MỘT thư mục đã cấp quyền → phiên bootstrap NHẬN nó và ghi
+       ngay vào đó, sổ hết "chưa bền";
+     ⑧ (D) HAI thư mục đã cấp quyền → KHÔNG chọn hộ, không ghi vào thư mục
+       nào: đem bằng chứng run này vào hồ sơ run khác nặng hơn chậm ra file;
+     ⑨ (D) handle còn đó mà quyền đã mất → không nhận (ADR-0049 hệ quả 3);
+     ⑩ (D) Đức đã bind một thư mục → lượt nhận KHÔNG được ghi đè lên nó.
 
    ① mà không có ④ và ⑤ thì (A) chỉ là "tắt phần ghi", và tắt lớp bảo vệ để
    test xanh là việc luật vàng 3 cấm.  */
@@ -348,4 +354,106 @@ const afterRollback = await jobsAdd(1);
 assert.deepEqual(downloads, [], "⑥ sau rollback vẫn KHÔNG được tải: dấu 'máy tự dựng' phải sống sót qua clone");
 assert.equal(afterRollback.audit_durable, false, "⑥ và dây vẫn phải nghe 'chưa bền'");
 
-console.log("b36 bootstrap audit held smoke tests: PASS (6 bất biến)");
+/* ==========================================================================
+   ⑦ ⑧ ⑨ — (D) của ADR-0049: phiên bootstrap NHẬN LẠI thư mục đã cấp quyền
+
+   TRẦN TUYÊN BỐ, đọc trước khi tin: ba ca này thay `DacOutputProfiles` bằng
+   một kho giả, vì Node không có IndexedDB. Nên chúng ghim LOGIC NHẬN của
+   panel — không ghim lớp IndexedDB. Lớp đó vốn đã có và đã chạy: `bind()`
+   ghi `directory_handle`, `resolve()` gọi `queryPermission` rồi trả bốn
+   trạng thái, và đường workbook đã dùng nó từ trước. Chỗ (D) phải vá là chỗ
+   phiên bootstrap KHÔNG có `profile_id` để gọi resolve.
+   ========================================================================== */
+function fakeProfiles(rows) {
+  const shape = (row) => ({ profile_id: row.id, directory_handle: row.handle, last_known_handle_name: row.name });
+  return {
+    async list() { return rows.map((row) => ({ profile_id: row.id, last_known_handle_name: row.name })); },
+    async get(id) { const row = rows.find((entry) => entry.id === id); return row ? shape(row) : undefined; },
+    async resolve(id) {
+      const row = rows.find((entry) => entry.id === id);
+      if (!row) return { state: "unbound", profile: null };
+      if (row.permission === "granted") return { state: "authorized", profile: shape(row), permission: "granted" };
+      return { state: "permission_required", profile: shape(row), permission: row.permission };
+    },
+    async setHint() { return null; },
+    async bind() { throw new Error("kho giả không nhận bind"); },
+    async remove() { return null; }
+  };
+}
+function resetSession() {
+  state.outputSettings = null;
+  state.workbook = null;
+  state.auditEvents.length = 0;
+  state.separateResultDestination = false;
+  state.outputProfileState = null;
+  state.destinationMode = "downloads";
+  downloads.length = 0;
+}
+
+/* -- ⑦ đúng MỘT thư mục đã cấp quyền → nhận, và ghi vào đó ----------------- */
+{
+  const pilot = fakeDirectory("Pilot-20");
+  context.DacOutputProfiles = fakeProfiles([{ id: "pilot-20", name: "Pilot-20", handle: pilot.handle, permission: "granted" }]);
+  resetSession();
+  const nhan = await jobsAdd(1);
+  assert.deepEqual(downloads, [], "⑦ nhận được thư mục thật thì KHÔNG đi qua Chrome Downloads");
+  assert.notEqual(nhan.audit_durable, false, "⑦ đã nhận thư mục đã cấp quyền thì sổ ra file ngay — hết 'chưa bền'");
+  assert.equal(nhan.checkpoint?.verified, true, "⑦ và checkpoint ra file thật, nghiệm thu được");
+  const leaf = auditLeaf();
+  assert.ok(pilot.files.get(leaf), `⑦ sổ audit phải nằm trong thư mục đã nhận, tên '${leaf}'`);
+  assert.equal(state.outputSettings.image.profileId, "pilot-20", "⑦ và phiên phải khai đúng profile nó đã nhận");
+}
+
+/* -- ⑧ HAI thư mục đã cấp quyền → KHÔNG ĐOÁN ------------------------------- */
+{
+  const a = fakeDirectory("Pilot-20");
+  const b = fakeDirectory("Pilot-21");
+  context.DacOutputProfiles = fakeProfiles([
+    { id: "pilot-20", name: "Pilot-20", handle: a.handle, permission: "granted" },
+    { id: "pilot-21", name: "Pilot-21", handle: b.handle, permission: "granted" }
+  ]);
+  resetSession();
+  const mo_ho = await jobsAdd(1);
+  assert.equal(mo_ho.audit_durable, false, "⑧ hai ứng viên thì KHÔNG chọn hộ — giữ sổ trong bộ nhớ, để Đức/AI chỉ định");
+  assert.deepEqual(downloads, [], "⑧ và tuyệt đối không rơi về Chrome Downloads");
+  assert.equal(a.files.size + b.files.size, 0, "⑧ không ghi vào thư mục nào cả: đem bằng chứng run này vào hồ sơ run khác là lỗi nặng hơn chậm ra file");
+}
+
+/* -- ⑨ handle CÒN ĐÓ mà quyền ĐÃ MẤT → không nhận ------------------------- */
+{
+  const cu = fakeDirectory("Pilot-20");
+  context.DacOutputProfiles = fakeProfiles([{ id: "pilot-20", name: "Pilot-20", handle: cu.handle, permission: "prompt" }]);
+  resetSession();
+  const mat_quyen = await jobsAdd(1);
+  assert.equal(mat_quyen.audit_durable, false, "⑨ quyền đã mất thì không được coi như đã nhận (ADR-0049 hệ quả 3)");
+  assert.deepEqual(downloads, [], "⑨ và cũng không rơi về Chrome Downloads");
+  assert.equal(cu.files.size, 0, "⑨ không ghi vào thư mục chưa được cấp quyền lại");
+}
+
+/* -- ⑩ Đức đã bind một thư mục → lượt NHẬN không được ghi đè lên nó --------
+   Cú bấm picker là thứ đắt nhất trong cả vòng làm việc, nên một profile lưu
+   trong IndexedDB không được phép hất thư mục Đức vừa chọn. Thử phá D5 lọt
+   lưới đúng vì thiếu ca này — và nó không chỉ lộ ra một chốt chết: lúc đó
+   `bindBootstrapOutput()` chạy TRƯỚC lượt phục hồi, nên `image` là của Đức mà
+   `outputProfileState` lại trỏ vào profile đã nhận. Hai trường nói hai chuyện.
+   ------------------------------------------------------------------------- */
+{
+  const cuaDuc = fakeDirectory("Thu-muc-Duc-vua-chon");
+  const trongKho = fakeDirectory("Pilot-20");
+  context.DacOutputProfiles = fakeProfiles([{ id: "pilot-20", name: "Pilot-20", handle: trongKho.handle, permission: "granted" }]);
+  resetSession();
+  // Đức bind bằng tay, y như đường picker làm.
+  state.outputSettings = context.DacOutputLocation.fromWorkbook({}, "phien-chua-mo-workbook.xlsx");
+  state.outputSettings.image = context.DacOutputLocation.directoryLocation(cuaDuc.handle, cuaDuc.handle.name);
+  state.outputSettings.result = { kind: "same_as_image" };
+
+  const giuNguyen = await jobsAdd(1);
+  assert.equal(giuNguyen.audit_durable, undefined, "⑩ thư mục Đức bind thì ghi ngay, không giữ sổ");
+  assert.deepEqual(downloads, [], "⑩ và không rơi về Chrome Downloads");
+  assert.ok(cuaDuc.files.get(auditLeaf()), "⑩ sổ phải nằm trong thư mục ĐỨC chọn");
+  assert.equal(trongKho.files.size, 0, "⑩ TUYỆT ĐỐI không ghi vào thư mục lấy từ kho — cú bấm picker của Đức là thứ đắt nhất trong vòng làm việc");
+  assert.equal(state.outputSettings.image.handle, cuaDuc.handle, "⑩ handle trong settings vẫn là của Đức");
+  assert.notEqual(state.outputProfileState?.profile_id, "pilot-20", "⑩ và không trường nào được khai một profile phiên này không dùng");
+}
+
+console.log("b36 bootstrap audit held smoke tests: PASS (10 bất biến — (A) ①-⑥, (D) ⑦-⑩)");

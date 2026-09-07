@@ -63,15 +63,30 @@ const applyRegion = segment(js, "apply: async () => {", "persist_audit", "mutati
 // dựng từ config RỖNG, nên preflight(null) không bao giờ tới.
 assert.match(applyRegion, /if \(!state\.outputSettings/, "bootstrap phải có nhánh xử outputSettings rỗng");
 assert.match(applyRegion, /state\.outputSettings = window\.DacOutputLocation\.fromWorkbook\(\{\}, state\.workbook\.fileName\)/, "và nhánh đó dựng settings từ config rỗng — không rơi vào preflight(null)");
-// Bất biến MỚI của ADR-0049: bộ vừa dựng đó là của MÁY, và nó phải tự khai
-// ra như vậy. Không có dấu đó thì đường ghi của một phiên bootstrap lại rơi
-// về thư mục Tải xuống — nơi Chrome đặt tên GUID, tức đúng B-36.
-// Dấu nằm TRÊN object settings, không trên `state` — chỗ đặt là phần của
-// quyết định, không phải chi tiết: `applyWorkbookConfig` gán một settings MỚI
-// từ `fromWorkbook`, nên dấu tự rụng khi Đức mở workbook thật, và nó đi theo
-// settings qua snapshot/rollback. Cờ trên `state` phải xoá bằng tay ở mọi
-// nhánh, và thử phá cho thấy cả hai lớp lỗi đó đều lọt lưới ở bản đầu.
-assert.match(applyRegion, /state\.outputSettings\.autoDefaulted = true/, "bộ mặc định máy tự dựng phải được đánh dấu, và đánh dấu TRÊN settings (ADR-0049)");
+// Bất biến MỚI của ADR-0049: bộ settings vừa dựng đó là của MÁY, và nó phải
+// tự khai ra như vậy — không thì đường ghi của một phiên bootstrap lại rơi về
+// thư mục Tải xuống, nơi Chrome đặt tên GUID, tức đúng B-36.
+//
+// Dấu nằm TRÊN object settings, không trên `state`. Chỗ đặt là phần của quyết
+// định, không phải chi tiết: `applyWorkbookConfig` gán một settings MỚI từ
+// `fromWorkbook`, nên dấu tự rụng khi Đức mở workbook thật, và nó đi theo
+// settings qua snapshot/rollback. Cờ trên `state` thì phải xoá bằng tay ở mọi
+// nhánh — thử phá cho thấy cả hai lớp lỗi đó đều lọt lưới ở bản đầu.
+//
+// Và tất cả đi qua MỘT cửa: `bindBootstrapOutput()`.
+// Cửa đó làm hai việc không tách rời — nhận lại thư mục đã cấp quyền nếu có
+// đúng một cái ((D)), còn không thì đánh dấu settings là của máy để đường ghi
+// giữ sổ trong bộ nhớ ((A)). Bỏ lời gọi ở một chỗ là B-36 quay lại đúng ở đó.
+assert.match(applyRegion, /await bindBootstrapOutput\(\)/, "nhánh bootstrap phải đi qua bindBootstrapOutput() (ADR-0049)");
+const bindGate = segment(js, "async function bindBootstrapOutput", "function bridgeDirectAuditEvent", "bindBootstrapOutput");
+assert.match(bindGate, /adoptAuthorizedOutputProfile\(\)/, "cửa đó phải thử NHẬN lại thư mục đã cấp quyền — (D)");
+assert.match(bindGate, /state\.outputSettings\.autoDefaulted = true/, "và nhận không được thì phải đánh dấu 'máy tự dựng' — (A)");
+// Không đoán khi nhiều hơn một ứng viên. Cùng luật với bộ đặt tên download
+// (nhiều hơn một phiếu còn hạn thì NHƯỜNG), và cùng lý do: chọn hộ một trong
+// mấy thư mục pilot là đem bằng chứng run này ghi vào hồ sơ run khác.
+const adopt = segment(js, "async function adoptAuthorizedOutputProfile", "async function bindBootstrapOutput", "adoptAuthorizedOutputProfile");
+assert.match(adopt, /authorized\.length !== 1/, "nhiều hơn một thư mục đã cấp quyền thì KHÔNG chọn hộ Đức");
+assert.match(adopt, /state === "authorized"/, "và chỉ nhận thư mục thật sự còn quyền, không nhận handle đã mất quyền");
 // The agent-settable output location is Downloads-relative ONLY: the handler
 // routes output_downloads_subfolder through downloadsLocation (safeRelativeFolder
 // rejects traversal/absolute), and only skips the bound-profile assert when
@@ -83,6 +98,13 @@ const bootstrapAdd = segment(js, "async function applyBridgeJobsAdd", "function 
 assert.match(bootstrapAdd, /const previouslyBound = state\.outputSettings/, "bootstrap must capture the pre-existing binding");
 assert.ok(bootstrapAdd.indexOf("const previouslyBound") < bootstrapAdd.indexOf("applyWorkbookConfig();"), "capture must precede the config rebuild");
 assert.match(bootstrapAdd, /previouslyBound\?\.image\?\.kind === "directory" && previouslyBound\.image\.handle/, "restore only a real bound directory");
+// Và lượt NHẬN phải đứng SAU lượt phục hồi đó. Gọi trước thì lượt phục hồi
+// ghi đè lên `image` nhưng `outputProfileState` vẫn trỏ vào profile đã nhận —
+// hai trường nói hai chuyện. Thử phá bắt được đúng cái này.
+assert.ok(
+  bootstrapAdd.indexOf("previouslyBound?.image?.kind") < bootstrapAdd.indexOf("await bindBootstrapOutput();"),
+  "lượt nhận thư mục từ kho phải đứng SAU lượt phục hồi binding của Đức"
+);
 const outputConfigure = segment(js, "async function bridgeOutputConfigure", "async function bridgeRunSettingsConfigure", "bridgeOutputConfigure");
 assert.match(outputConfigure, /if \(downloadsSubfolder === undefined\) await assertBridgeOutputBound\(\)/, "unbound profile must still fail closed without a subfolder");
 assert.match(outputConfigure, /downloadsLocation\(downloadsSubfolder\)/, "subfolder must route through downloadsLocation validation");

@@ -1638,6 +1638,65 @@
     return !(image?.kind === "directory" && image.handle);
   }
 
+  /* ---- B-36 (D), ADR-0049 ------------------------------------------------
+     ĐO LẠI 2026-09-07, và nó BÁC một câu trong bối cảnh ADR-0049. Câu đó ghi
+     *"showDirectoryPicker gọi ở ba chỗ, không chỗ nào lưu handle vào
+     IndexedDB"*. Sai: `output-profile-core.js` lưu handle vào IndexedDB từ
+     đầu (`bind()` ghi `directory_handle`), `resolve()` đã `queryPermission`
+     và trả bốn trạng thái, và panel mở đã dò lại rồi báo `FOLDER_REAUTH_NEEDED`
+     kèm đường dẫn dán được. Phép đo cũ chỉ soi ba lời gọi picker mà không lần
+     xem chúng làm gì tiếp.
+
+     Chỗ THẬT SỰ thiếu, hẹp hơn nhiều: `resolveOutputProfile()` cần một
+     `profile_id`, và id đó đến từ config của workbook. Phiên bootstrap dùng
+     workbook do máy dựng với config RỖNG — nên nó không có id, không gọi
+     resolve, và không lối nào nhận lại thư mục Đức đã cấp quyền. Hàm này là
+     lối đó.
+
+     KHÔNG ĐOÁN khi có nhiều hơn một ứng viên. Cùng một luật với bộ đặt tên
+     download (`background.js`: nhiều hơn một phiếu còn hạn thì NHƯỜNG), và
+     cùng một lý do: chọn hộ một trong mấy thư mục pilot của Đức là đem bằng
+     chứng của run này ghi vào hồ sơ của run khác. Không nhận thì phiên vẫn
+     chạy được — đó chính là việc (A) làm, và là lý do ADR-0049 bắt làm (A)
+     trước. Đức hoặc AI chỉ định thẳng bằng `output.configure`. */
+  async function adoptAuthorizedOutputProfile() {
+    if (!state.outputSettings) return null;
+    let profiles = [];
+    // IndexedDB không có (hoặc hỏng) thì đây là "chưa nhận được", không phải
+    // lỗi phải ném: đường giữ-sổ-trong-bộ-nhớ của (A) vẫn đỡ được.
+    try { profiles = (await window.DacOutputProfiles.list()) || []; } catch (_) { return null; }
+    const authorized = [];
+    for (const profile of profiles) {
+      let resolved = null;
+      try { resolved = await window.DacOutputProfiles.resolve(profile.profile_id); } catch (_) { continue; }
+      if (resolved?.state === "authorized" && resolved.profile?.directory_handle) authorized.push(resolved.profile);
+    }
+    if (authorized.length !== 1) return null;
+    const chosen = authorized[0];
+    state.outputSettings.image = window.DacOutputLocation.directoryLocation(chosen.directory_handle, chosen.last_known_handle_name);
+    state.outputSettings.image.profileId = chosen.profile_id;
+    if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
+    state.outputProfileState = { state: "authorized", profile: chosen, permission: "granted", profile_id: chosen.profile_id };
+    state.destinationMode = "profile";
+    // KHONG can `delete state.outputSettings.autoDefaulted` o day: dau chi
+    // duoc dat khi nhan THAT BAI (xem bindBootstrapOutput), nen luc nhan
+    // thanh cong chua bao gio co dau de xoa. Thu pha D4 chung minh dieu do
+    // - go dong `delete` khong lam phep ghim nao do. Ma chet thi go, dung
+    // giu roi viet mot phep ghim canh no.
+    return chosen.profile_id;
+  }
+
+  /* Gọi ở MỌI chỗ vừa dựng một bộ settings mặc định cho phiên bootstrap.
+     Một cửa duy nhất, vì ba chỗ gọi có logic xung quanh khác nhau và bỏ dấu
+     ở một chỗ là B-36 quay lại đúng ở đó. */
+  async function bindBootstrapOutput() {
+    const image = state.outputSettings?.image;
+    if (image?.kind === "directory" && image.handle) return null;   // đã có thư mục thật
+    const adopted = await adoptAuthorizedOutputProfile();
+    if (!adopted) state.outputSettings.autoDefaulted = true;
+    return adopted;
+  }
+
   function bridgeDirectAuditEvent(event, method, mutation) {
     const output = window.DacOutputLocation.effective(state.outputSettings);
     return {
@@ -1711,13 +1770,13 @@
           // của nó không dùng được, xem bridgeAuditHeld().
           if (!state.outputSettings && state.workbook) {
             state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
-            state.outputSettings.autoDefaulted = true;
+            await bindBootstrapOutput();
           }
           const mutation = await mutate();
           if (!state.workbook) throw new window.DacBridgeCore.BridgeProtocolError("WORKBOOK_NOT_LOADED");
           if (!state.outputSettings) {
             state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
-            state.outputSettings.autoDefaulted = true;
+            await bindBootstrapOutput();
           }
           state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName);
           state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
@@ -3383,13 +3442,19 @@
       // của Đức. Đánh dấu SAU lời gọi đó, vì chính nó vừa gán một object mới.
       // Nhánh `previouslyBound` bên dưới an toàn với dấu này: có handle thật
       // thì bridgeAuditHeld() trả false bất kể dấu.
-      state.outputSettings.autoDefaulted = true;
       if (previouslyBound?.image?.kind === "directory" && previouslyBound.image.handle) {
         state.outputSettings.image = previouslyBound.image;
         state.outputSettings.result = previouslyBound.result;
         state.outputSettings.folderHint = previouslyBound.folderHint || state.outputSettings.folderHint;
         state.destinationMode = "profile";
       }
+      // SAU luot phuc hoi, khong truoc. Ban dau toi goi truoc, va thu pha
+      // cho thay chot "da co thu muc that" trong bindBootstrapOutput khong
+      // bao gio no - vi luot phuc hoi luon ghi de len ket qua nhan. Do la
+      // mot loi thu tu that, khong chi la chot chet: nhan truoc roi bi ghi de
+      // de lai `state.outputProfileState` tro vao profile da nhan trong khi
+      // `image` la thu muc Duc bind - hai truong noi hai chuyen khac nhau.
+      await bindBootstrapOutput();
       rows.forEach((row, index) => {
         const workbookJob = state.workbook.jobs[index];
         const values = directJobValues(jobs[index]);
