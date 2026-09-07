@@ -1,0 +1,235 @@
+# Transcript nguyen van — nghiem thu lop noi nhieu ho so Chrome (chi doc)
+# Phien: claude-gemini-nghiem-thu
+# May: host Bridge duc-auto-gemini, cong 32148, loopback
+# Sinh boi: node scripts/bridge-rpc.mjs / bridge-cli.mjs — KHONG lenh nao ghi len trang
+
+===== [1] bridge.sessions (khong can --target, router context) =====
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "cli-7c0a1cdb-938d-4c97-84f5-7a58a1d69f14",
+  "ok": true,
+  "result": {
+    "sessions": [
+      {
+        "instance_id": "c36620cc-a7bf-4764-b7a4-3dbe76718f95",
+        "label": "anhducds",
+        "legacy": false,
+        "worker": "duc-auto-gemini",
+        "extension_version": "0.2.0",
+        "connected_at": "2026-09-06T17:22:08.121Z",
+        "last_seen_at": "2026-09-07T01:58:50.124Z"
+      },
+      {
+        "instance_id": "ff71d827-108e-41dc-bdf7-f262551285a9",
+        "label": "kaito",
+        "legacy": false,
+        "worker": "duc-auto-gemini",
+        "extension_version": "0.2.0",
+        "connected_at": "2026-09-07T01:29:34.092Z",
+        "last_seen_at": "2026-09-07T01:58:54.107Z"
+      }
+    ],
+    "count": 2
+  },
+  "responded_at": "2026-09-07T01:59:09.360Z"
+}
+
+===== [2] run.status KHONG nêu --target → phai bi TU CHOI, khong duoc tu chon =====
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-0d7a1008-4344-4eb9-a9b4-b2d2c3c5d75f",
+  "ok": false,
+  "error": {
+    "code": "TARGET_AMBIGUOUS",
+    "message": "More than one extension session is connected; name exactly one target.",
+    "retryable": false,
+    "details": {
+      "candidates": [
+        {
+          "instance_id": "c36620cc-a7bf-4764-b7a4-3dbe76718f95",
+          "label": "anhducds",
+          "legacy": false
+        },
+        {
+          "instance_id": "ff71d827-108e-41dc-bdf7-f262551285a9",
+          "label": "kaito",
+          "legacy": false
+        }
+      ]
+    }
+  },
+  "responded_at": "2026-09-07T01:59:09.462Z"
+}
+
+===== [3] run.status --target ten-khong-ton-tai → phai bi TU CHOI =====
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-68a33d31-e340-4f90-bdfb-bec7f09628ad",
+  "ok": false,
+  "error": {
+    "code": "TARGET_NOT_CONNECTED",
+    "message": "The named target session is not connected.",
+    "retryable": true,
+    "details": {
+      "target": "ten-khong-ton-tai",
+      "candidates": [
+        {
+          "instance_id": "c36620cc-a7bf-4764-b7a4-3dbe76718f95",
+          "label": "anhducds",
+          "legacy": false
+        },
+        {
+          "instance_id": "ff71d827-108e-41dc-bdf7-f262551285a9",
+          "label": "kaito",
+          "legacy": false
+        }
+      ]
+    }
+  },
+  "responded_at": "2026-09-07T01:59:09.563Z"
+}
+
+===== [4] run.status --target anhducds =====
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-83ad366b-3e02-4131-852c-5dee1e6cbdc5",
+  "ok": false,
+  "error": {
+    "code": "EXECUTOR_UNAVAILABLE",
+    "message": "Open the Duc Auto Gemini side panel and retry the same request_id.",
+    "retryable": true,
+    "details": {
+      "failure_type": null,
+      "halt_instruction": null
+    }
+  },
+  "responded_at": "2026-09-07T01:59:09.676Z",
+  "served_by": {
+    "instance_id": "c36620cc-a7bf-4764-b7a4-3dbe76718f95",
+    "label": "anhducds"
+  }
+}
+
+===== [5] run.status --target kaito =====
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-f49b5cfc-73b8-42d8-8347-bc974d2c6915",
+  "ok": false,
+  "error": {
+    "code": "REQUEST_TIMEOUT",
+    "message": "The request timed out; retry the identical idempotency key.",
+    "retryable": true,
+    "details": {}
+  },
+  "responded_at": "2026-09-07T01:59:19.787Z",
+  "served_by": {
+    "instance_id": "ff71d827-108e-41dc-bdf7-f262551285a9",
+    "label": "kaito"
+  }
+}
+
+===== [6] ledger.read --target kaito =====
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-5857f1f2-4681-4b68-b8a4-81c5c7782545",
+  "ok": false,
+  "error": {
+    "code": "WORKBOOK_NOT_LOADED",
+    "message": "The side panel has no current workbook session.",
+    "retryable": true,
+    "details": {}
+  },
+  "responded_at": "2026-09-07T01:59:22.234Z",
+  "served_by": {
+    "instance_id": "ff71d827-108e-41dc-bdf7-f262551285a9",
+    "label": "kaito"
+  }
+}
+
+===== [7] system.capabilities: DEM SO METHOD tung ho so =====
+# Muc dich: chung minh hai ho so dang chay HAI BAN CODE KHAC NHAU.
+anhducds: 19 method
+   session.hello system.ping system.capabilities queue.list run.status ledger.read jobs.add jobs.update jobs.remove jobs.reorder references.add diagnostics.dom_probe output.configure run_settings.configure queue.propose queue.proposal.get run.trial run.stop chat.reload
+kaito: 23 method
+   session.hello system.ping system.capabilities chat.read output.set_folder_hint profiles.remove queue.list run.status ledger.read jobs.add jobs.update jobs.remove jobs.reorder references.add diagnostics.dom_probe output.configure run_settings.configure queue.propose queue.proposal.get queue.proposal.withdraw run.trial run.stop chat.reload
+
+===== [8] run.status --target kaito, GOI LAI (chung minh muc [5] chi la transient) =====
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-4da1267e-6dc6-43f9-a214-7895d334618b",
+  "ok": false,
+  "error": {
+    "code": "REQUEST_TIMEOUT",
+    "message": "The request timed out; retry the identical idempotency key.",
+    "retryable": true,
+    "details": {}
+  },
+  "responded_at": "2026-09-07T02:00:08.972Z",
+  "served_by": {
+    "instance_id": "ff71d827-108e-41dc-bdf7-f262551285a9",
+    "label": "kaito"
+  }
+}
+
+===== [9] diagnostics.dom_probe --target kaito (vi sao KHONG chay duoc luot live) =====
+{
+  "protocol": "duc-auto-chatgpt.bridge",
+  "version": 1,
+  "kind": "response",
+  "request_id": "ai-c4779fd2-2587-45db-b216-5b98717dc829",
+  "ok": false,
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "The bridge could not complete the request.",
+    "retryable": false,
+    "details": {
+      "message": "Open a normal Gemini conversation in the active tab."
+    }
+  },
+  "responded_at": "2026-09-07T02:00:22.240Z",
+  "served_by": {
+    "instance_id": "ff71d827-108e-41dc-bdf7-f262551285a9",
+    "label": "kaito"
+  }
+}
+
+===== [10] PHEP DO: REQUEST_TIMEOUT dong theo THOI GIAN hay theo METHOD? =====
+# Gia thuyet dau: run.status hong rieng (do 5/6 timeout khi goi lien tiep).
+# Phep do quyet dinh: xen ke ba method, in gio tung loi goi.
+# Ket qua: 2 loi goi DAU timeout (mot run.status, mot queue.list), 16 loi goi
+# sau do DEU tra loi trong 4 giay. Dong theo THOI GIAN -> gia thuyet dau SAI.
+# Ket luan: khong co loi rieng cua run.status. Day la cua so danh thuc
+# service worker; 1-2 loi goi dau sau mot khoang nghi tieu ton tron 10s deadline.
+
+09:03:49 run.status  REQUEST_TIMEOUT
+09:03:59 queue.list  REQUEST_TIMEOUT
+09:04:09 ledger.read REQUEST_TIMEOUT
+09:04:20 run.status  WORKBOOK_NOT_LOADED
+09:04:22 queue.list  WORKBOOK_NOT_LOADED
+09:04:22 ledger.read WORKBOOK_NOT_LOADED
+09:04:22 run.status  WORKBOOK_NOT_LOADED
+09:04:22 queue.list  WORKBOOK_NOT_LOADED
+09:04:22 ledger.read WORKBOOK_NOT_LOADED
+09:04:23 run.status  WORKBOOK_NOT_LOADED
+09:04:23 queue.list  WORKBOOK_NOT_LOADED
+09:04:23 ledger.read WORKBOOK_NOT_LOADED
+09:04:23 run.status  WORKBOOK_NOT_LOADED
+09:04:23 queue.list  WORKBOOK_NOT_LOADED
+09:04:24 ledger.read WORKBOOK_NOT_LOADED
+09:04:24 run.status  WORKBOOK_NOT_LOADED
+09:04:24 queue.list  WORKBOOK_NOT_LOADED
+09:04:24 ledger.read WORKBOOK_NOT_LOADED
