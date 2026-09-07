@@ -60,11 +60,11 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": "claude-noi-qua",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-07T16:07",
       "task": "sua cau noi qua: phep do import chi thay import tinh",
-      "released_at": null,
+      "released_at": "2026-09-07T16:15",
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -78,5 +78,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "7ac94181f3399020"
+  "_fingerprint": "81eff9886ff7bf80"
 }
