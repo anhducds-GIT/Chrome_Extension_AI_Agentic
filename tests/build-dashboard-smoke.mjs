@@ -724,6 +724,48 @@ function antiDrift(text, measurements = {}) {
     const headDeps = createHeadDeps(tempRoot);
     assert.equal(headDeps.readFile("DASHBOARD.md"), gitAt("show", "HEAD:DASHBOARD.md"));
 
+    /* N-27 · BỘ ĐỌC HEAD PHẢI TỰ ĐÚNG, không chỉ đúng khi được nuôi bằng deps GIẢ.
+     *
+     * Đo 07/09 (lane `claude-cong-nhanh`, ghi ở `N-27`): ba đột biến vào thân `createHeadDeps`
+     * chạy hết cả suite mà KHÔNG phép kiểm nào đỏ — `isFile` luôn trả `true`, bộ lọc của
+     * `listDirs` bị đảo, và `headDate` trả một ngày cứng. Lỗ này có lý do rất cụ thể: mọi khối
+     * khác nuôi bộ sinh bằng deps giả, nên THÂN HÀM của bộ đọc thật chưa từng bị một khẳng
+     * định nào chạm tới.
+     *
+     * Hỏi ngay ở đây, không dựng thêm fixture: cây git tạm của khối này là sân khấu duy nhất
+     * trong suite mà câu "đường dẫn này là FILE hay THƯ MỤC" có hai đáp án khác nhau và cả hai
+     * đều biết trước. Thêm một khối riêng là thêm một `git init` nữa cho cùng một câu hỏi.
+     *
+     * Vì sao ba con này đáng ghim: `isFile` là thứ phân biệt "có file" với "có thư mục trùng
+     * tên" (phép kiểm hồ sơ trạng thái dựa vào nó), `listDirs` là thứ đếm gói, và `headDate` là
+     * mốc MỌI phép tính tuổi trên bảng dựa vào — sai nó thì bảng nói dối mà cổng vẫn xanh, tức
+     * loại lỗi tệ nhất vì nó không có triệu chứng. */
+    assert.equal(headDeps.isFile("DASHBOARD.md"), true,
+      "N-27: `isFile` phải nói CÓ với một blob đã commit");
+    assert.equal(headDeps.isFile("scripts"), false,
+      "N-27: `isFile` phải nói KHÔNG với một THƯ MỤC — luôn trả `true` thì phép kiểm hồ sơ trạng thái nhận cả thư mục trùng tên là file");
+    assert.equal(headDeps.fileExists("scripts"), true,
+      "N-27: nhưng thư mục vẫn TỒN TẠI — `isFile` và `fileExists` là hai câu hỏi khác nhau, và đây là chỗ chứng minh chúng chưa bị gộp");
+    const dirsGoc = headDeps.listDirs("");
+    const filesGoc = headDeps.listFiles("");
+    for (const ten of ["scripts", "workers"]) {
+      assert.ok(dirsGoc.includes(ten), `N-27: listDirs("") phải kể ra thư mục \`${ten}\``);
+      assert.ok(!filesGoc.includes(ten), `N-27: listFiles("") KHÔNG được kể thư mục \`${ten}\``);
+    }
+    for (const ten of ["DASHBOARD.md", "manifest.json"]) {
+      assert.ok(filesGoc.includes(ten), `N-27: listFiles("") phải kể ra file \`${ten}\``);
+      assert.ok(!dirsGoc.includes(ten),
+        `N-27: listDirs("") KHÔNG được kể file \`${ten}\` — bộ lọc bị đảo thì đây là chỗ đỏ`);
+    }
+    const ngayThat = gitAt("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", "HEAD").trim();
+    assert.match(ngayThat, /^\d{4}-\d{2}-\d{2}$/,
+      "N-27: phép đo ĐỘC LẬP phải tự đọc được ngày — ra rỗng thì khẳng định dưới vô nghĩa");
+    assert.equal(headDeps.git.headDate(), ngayThat,
+      "N-27: `headDate` phải là ngày commit của HEAD, đo lại bằng một lệnh git độc lập — trả ngày cứng thì mọi phép tính tuổi trên bảng sai mà cổng vẫn xanh");
+    assert.ok(headDeps.git.headStamp().startsWith(`${ngayThat}T`),
+      "N-27: `headStamp` và `headDate` phải cùng một nguồn — lệch nhau là một trong hai đã bị gõ cứng");
+    ok("N-27 · bộ đọc HEAD tự đúng: blob khác tree, listDirs không trả file, headDate đến từ git");
+
     // Foreign dirty file: Gate 7 sees only HEAD and stays green.
     put("workers/duc-auto-gemini/v0.2.0/foreign-dirty.js", "foreign\n");
     assertGateGreen(runSession(), "foreign dirty");

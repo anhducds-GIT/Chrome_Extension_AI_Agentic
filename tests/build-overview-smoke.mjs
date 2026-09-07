@@ -149,6 +149,25 @@ const ideasDeps = (text) => ({
   assert.ok(stats.extensions > 0, "phai co it nhat mot extension");
   assert.ok(stats.decisions > 0, "phai dem duoc quyet dinh da chot");
   assert.match(stats.stamp, /^\d{4}-\d{2}-\d{2}$/, "ngay sinh phai co that va dung hinh dang");
+
+  /* N-27 · CON SỐ NỢ LÀ CON SỐ ĐỨC ĐỌC, nên nó phải được đo lại độc lập.
+   *
+   * Đo 07/09: ghim `debtTotal` về `0` chạy hết cả suite mà không phép kiểm nào đỏ. Khối này vốn
+   * đã kiểm `stats.extensions` và `stats.decisions` nhưng bỏ trống `stats.debt` — nên bảng báo
+   * "hết nợ" trong khi sổ còn đầy là một lời nói dối KHÔNG có triệu chứng.
+   *
+   * Ba vế, và cần cả ba: SÀN (bắt ca cả hai phép đo cùng hỏng về 0) · KHỚP một phép đếm lại
+   * độc lập · và con số đó phải THẬT SỰ hiện trên trang, không chỉ đúng trong `stats`. */
+  const noDoLai = debtByUnit(REAL, { rows: collectModelRows(REAL) });
+  const tongNo = noDoLai.reduce((tong, muc) => tong + muc.n, 0);
+  assert.ok(tongNo > 0,
+    "N-27 san: so no cua repo khong the trong — ra 0 o day la phep do hong, khong phai repo het no");
+  assert.equal(stats.debt, tongNo,
+    "N-27: `stats.debt` phai bang tong dem lai doc lap — ghim no ve 0 thi bang noi doi ma cong van xanh");
+  assert.ok(html.includes(`Việc còn nợ — ${tongNo} mục đang mở`),
+    "N-27: con so no phai hien dung tren trang Duc doc, khong chi dung trong `stats`");
+  ok("N-27 · so no tren bang khop phep dem lai doc lap, va hien dung tren trang");
+
   ok("BAT BIEN tren repo that: bang khong lo duong dan / ten file / ma commit");
 }
 
