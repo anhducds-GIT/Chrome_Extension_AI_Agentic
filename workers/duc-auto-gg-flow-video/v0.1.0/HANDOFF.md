@@ -614,3 +614,32 @@ sang phần "nửa tĩnh" của phép ghim mới, nên xoá đi không mất ph�
 
 Suite gói **102/102**. `flow-zoom-control-reason.mjs` giữ nguyên, nó không chết (bắt 5/16) —
 nhưng nó tiêm `isChatGPTUrl` giả nên đúng cổng của N-13 thì nó không canh được. Hai file bổ nhau.
+
+## 2026-09-07 — `claude-flow-f28-f33`: đóng F-28 (sửa sổ) và F-33 (harness thấy nhà mới)
+
+**F-28 — sổ ghi sai đúng câu chốt.** Dòng đóng hôm nay ghi *"chuỗi `chatgpt.com` đã rời khỏi
+`tests/`"*. Đo lại: còn **3 file, 6 lượt**. Xoá file chết chỉ dọn được một chỗ. Vế còn lại thì
+ĐẠT thật — đột biến vào `syncZoomState`, **4/4 bị bắt**. Ba chỗ, đọc từng chỗ rồi phân loại — **một** là di sản fork thật (đã đổi), **một** là bản ghi
+lịch sử nơi lỗi được ĐO (giữ, gắn nhãn cấm rebrand), **một** là cố ý và nay có răng (thêm 2 ca
+CẤM; đột biến nhét `chatgpt.com` vào `ORIGIN.hosts` nay bị bắt, trước phiên này không ai canh).
+Phân loại từng chỗ kèm số đo: `BACKLOG.md`, hai dòng cuối của F-28.
+
+Điều kiện đóng viết **quá rộng**: một phép kiểm cấm-chuỗi buộc phải chứa chuỗi bị cấm. Đã viết
+lại trong `BACKLOG.md`. Còn 6 lượt / 2 file, **0 lượt là fixture tuỳ ý**.
+
+**F-33 — harness không nói dối nữa.** Cả hai harness bỏ cách giả lập `querySelectorAll` bằng
+**so bằng chữ** — cách đó im lặng trả rỗng ngay khi adapter thêm nhánh thứ hai, nên đường nhà
+mới **chưa bao giờ được chạy**. Thay bằng bộ đọc selector thật (tách theo dấu phẩy, mỗi phần
+đọc như chuỗi thẻ-tổ-hậu-duệ), nên nó phân biệt hai loại tile bằng **thẻ bọc** — chỗ duy nhất
+phân biệt ảnh đầu vào với video đầu ra. Sân khấu dựng theo hình dạng đã ĐO trong
+`evidence/F31-dom-probe-flow-google-com-20260906.json`.
+
+Bốn ca hành vi mới; `content-abort-race-behavior.mjs` sang nhà mới (nhà cũ vẫn được canh ở file
+kia, có ca hồi quy riêng). **Đột biến 10/10 bị bắt.** Một con thoát lượt đầu — bỏ lọc
+`candidate.id` mà suite vẫn xanh, vì sân khấu không có tile nào không quy gán được. Thêm ca đó
+rồi phá lại: đỏ.
+
+**Suite 101/101, số phép kiểm 101 → 101** (không thêm file).
+
+**Còn mở:** một mục phát sinh đã ghi vào `BACKLOG.md` — bộ đọc selector của harness chỉ hiểu
+tên thẻ, nên nhánh dạng `.class` sẽ làm nó im lặng trả rỗng, đúng lại bệnh vừa chữa.
