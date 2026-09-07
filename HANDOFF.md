@@ -1549,3 +1549,30 @@ chính cổng — ADR-0019 ⑸.
 **Một con số tôi báo SAI, sửa lại:** tôi nói cổng *"55s → 36s"* sau khi cắt bộ sinh. Cả hai lượt
 đo đó **không giữ khoá gốc**, nên cổng **không chạy suite gốc repo** — không so được với lượt có
 giữ khoá. Cắt bộ sinh là thật (9,7s → 3,6s, ra giống từng byte), nhưng con số 36 giây thì sai.
+
+## 2026-09-07 · claude-dong-bang-2 — vá lỗ Codex #19: gói đóng băng dẫn ra `scripts/`
+
+**Codex bác đúng.** Tôi viết *"gói không đổi thì suite chỉ có thể xanh"* — quá mạnh. Thứ NGOÀI
+gói vẫn đổi được, và **không phải rủi ro lý thuyết**: đo 07/09,
+`workers/duc-auto-gemini/v0.2.0/tests/root-suite-covers-workers-static.mjs` **import**
+`scripts/repo-structure.mjs`, và nó canh đúng việc *"danh sách suite gốc có phủ hết worker"*.
+Lượt sửa cờ `frozen` hôm nay **sửa chính danh sách đó** trong khi cổng **bỏ qua** phép kiểm ấy.
+Chạy tay: 95/95 xanh — **xanh vì may, không vì thiết kế.**
+
+**Vá.** `PHU_THUOC_CHUNG_DONG_BANG` = `scripts/` · `package.json` · `.repo-structure.json`. Chạm
+bất kỳ chỗ nào trong đó thì **chạy hết**, kể cả suite gói đóng băng. Chạm chỗ khác (docs, worker
+khác) thì vẫn bỏ được — có phép kiểm riêng cho vế này, vì *"chạy hết cho chắc"* sẽ ăn hết phần
+tiết kiệm mà không ai thấy.
+
+**Và một phép ghim CHỐNG MỤC**, vì hằng số thì mục được: phép kiểm dò import của cả ba gói đóng
+băng và **ĐỎ** nếu có gói nào dẫn ra chỗ chưa khai. Biến *"mục âm thầm"* thành *"cổng đỏ"*.
+
+**Số đo.** Ghim 11 → **14 phép kiểm**. Đột biến 7/7 → **10/10 bị bắt**. Cổng lượt này **không in
+dòng "bỏ qua"** — vì tôi chạm `scripts/` nên bốn suite đóng băng đã chạy lại, đúng hành vi mới.
+
+**Hai chỗ vấp, ghi để lượt sau đỡ mất thời gian.** ⑴ Một phép kiểm cũ của tôi dùng
+`scripts/session-check.mjs` làm *"chạm chỗ khác"* — chỗ đó nay **là** vùng chung, nên nó đo sai
+thứ nó muốn đo; đã sửa dữ liệu thử. ⑵ Cổng đỏ `eol-lf-smoke` vì **bốn file CRLF trong
+`workers/duc-scouter/`** — cây làm việc của phiên khác, không phải của tôi. Cổng chặn tôi vì tôi
+còn file sửa dở nên nó **không quy trách nhiệm được**; commit xong là nó tự quy đúng người và cho
+qua. **Đừng đi sửa file của lane khác** — chỉ cần commit phần mình.
