@@ -35,48 +35,22 @@ bảng này bằng máy thay vì gõ tay.
 
 ---
 
-## 1. Method của Bridge — **[ĐO]**
+## 1. Method của Bridge — số đã dọn sang file máy
 
-Đếm trực tiếp từ `registryEntry({ name: ... })` trong `bridge-core.js` hai bên.
+> **Bảng đếm method nay nằm ở [`FEATURE-PARITY-AUTO.md`](FEATURE-PARITY-AUTO.md), cũng ở mục 1.**
+> Sinh lại: `node scripts/feature-parity.mjs` · chỉ kiểm: `node scripts/feature-parity.mjs --check`.
+>
+> **Số liệu không biến mất, nó chỉ đổi nhà.** Vì sao tách:
+> [ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md) — file máy được **miễn khoá**,
+> nên lane nào cũng sinh lại được và đẩy được; còn file bạn đang đọc là **chữ của người** nên vẫn
+> đòi khoá `_root`. Máy đếm bằng cách dò `registryEntry({ name: ... })` trong `bridge-core.js`
+> hai bên.
 
-<!-- AUTO:BRIDGE START -->
-**GPT 23 · Gemini 23.**
-
-| Method | GPT | Gemini |
-|---|---:|---:|
-| `chat.read` | ✅ | ✅ |
-| `chat.reload` | ✅ | ✅ |
-| `diagnostics.dom_probe` | ✅ | ✅ |
-| `jobs.add` | ✅ | ✅ |
-| `jobs.remove` | ✅ | ✅ |
-| `jobs.reorder` | ✅ | ✅ |
-| `jobs.update` | ✅ | ✅ |
-| `ledger.read` | ✅ | ✅ |
-| `output.configure` | ✅ | ✅ |
-| `output.set_folder_hint` | ✅ | ✅ |
-| `profiles.remove` | ✅ | ✅ |
-| `queue.list` | ✅ | ✅ |
-| `queue.proposal.get` | ✅ | ✅ |
-| `queue.proposal.withdraw` | ✅ | ✅ |
-| `queue.propose` | ✅ | ✅ |
-| `references.add` | ✅ | ✅ |
-| `run.status` | ✅ | ✅ |
-| `run.stop` | ✅ | ✅ |
-| `run.trial` | ✅ | ✅ |
-| `run_settings.configure` | ✅ | ✅ |
-| `session.hello` | ✅ | ✅ |
-| `system.capabilities` | ✅ | ✅ |
-| `system.ping` | ✅ | ✅ |
-
-**Chỉ GPT có (0):** không có.
-
-**Chỉ Gemini có (0):** không có.
-<!-- AUTO:BRIDGE END -->
-
-**GPT đang đi trước ở method Bridge** — đó là *diễn giải* của người về bảng trên, nên nó nằm
-ngoài khối AUTO. Câu này từng bị mất một lần: lúc đặt marker ngày 27/08 nó nằm chung dòng với
+**GPT đang đi trước ở method Bridge** — đó là *diễn giải* của người về bảng đếm bên file máy,
+nên nó ở lại đây. Câu này từng bị mất một lần: lúc đặt marker ngày 27/08 nó nằm chung dòng với
 con số máy đo, và bị nuốt theo. Đúng kiểu mất mát âm thầm mà marker sinh ra để chống — nên
-**đừng viết văn của người chung dòng với số của máy.**
+**đừng viết văn của người chung dòng với số của máy.** Từ 07/09 hai loại chữ ở hai file khác
+nhau, nên cái bẫy đó không còn chỗ đặt.
 
 > **Đính chính 26/08 (phiên `claude-gemini-4`):** câu "Gemini có mà GPT thiếu đã rỗng" chỉ đúng cho
 > *method Bridge*. Ở bảng **hành vi** (mục 2) thì không rỗng — Gemini có **nhận dạng ảnh theo byte**
@@ -106,58 +80,14 @@ con số máy đo, và bị nuốt theo. Đúng kiểu mất mát âm thầm mà
 | Lớp ổn định kết nối Bridge (hạn chờ ACK · backoff trần 5s · hạn bắt tay) | ✅ | ✅ | **[ĐỌC]** | Gemini vá 28/08 (`3514aa5`), GPT port 02/09 (`ab8ab2a`). **Cùng thiết kế nhưng KHÔNG chép đè** — đắp lên bắt tay riêng của từng nhánh (GPT có thêm `auth_challenge`/`auth_proof` HMAC). Trước đó cả hai gửi `keepalive` mà không bao giờ kiểm host có trả lời không, nên kết nối đứt vẫn hiện **Connected**. **`duc-auto-gg-flow-video` CHƯA có** — `grep armKeepaliveDeadline` ở đó ra 0. Port sang nhánh ba còn nợ: ngày 02/09 package đó đang chạy trial live FLOW-04 nên không đụng vào |
 | Nhận dạng ảnh theo BYTE, không tin nhãn MIME | ❌ | ✅ | **[ĐỌC]** | Gemini `content.js` có `sniffImageType` đọc byte đầu file thật (PNG `89 50 4E 47`, JPEG `FF D8 FF`, GIF, WebP, AVIF). GPT: quét `content.js` + `background.js` tìm mọi dấu hiệu đọc byte (`0x89`, `ffd8`, `Uint8Array`, `sniff`, `magic`) → **0 kết quả**. Đây là món **Gemini có mà GPT thiếu** |
 
-## 3. Module — **[ĐO]**
+## 3. Module — số đã dọn sang file máy
 
-<!-- AUTO:MODULES START -->
-GPT 35 file `.js` · Gemini 34.
+> **Bảng so module nay nằm ở [`FEATURE-PARITY-AUTO.md`](FEATURE-PARITY-AUTO.md), cũng ở mục 3:**
+> số file `.js` mỗi bên, danh sách file giống hệt, file chỉ một bên có, và bảng chênh lệch số dòng.
+> Sinh lại: `node scripts/feature-parity.mjs`.
+> Vì sao tách: [ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md).
 
-**7 file giống hệt sau khi chuẩn hoá CRLF/LF:**
-
-`attempt-identity-core.js` · `attempt-telemetry-core.js` · `audit-chain-core.js` · `bridge-pairing-core.js` · `reconciliation-core.js` · `recreate-core.js` · `run-state-core.js`
-
-**Chỉ một bên có:**
-
-| File | Bên nào |
-|---|---|
-| `ab-poll-core.js` | GPT |
-| `bridge-workspace-core.js` | GPT |
-| `content-decision-core.js` | Gemini |
-| `dev-trial-core.js` | Gemini |
-| `interjob-delay-core.js` | GPT |
-| `tab-lock-core.js` | Gemini |
-| `text-output-core.js` | GPT |
-
-**24 file có ở cả hai nhưng khác nội dung** (xếp theo chênh lệch số dòng giảm dần):
-
-| File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
-|---|---:|---:|---:|
-| `sidepanel.js` | 6293 | 5230 | 1063 |
-| `bridge-transport-loopback.js` | 946 | 516 | 430 |
-| `bridge-core.js` | 1038 | 864 | 174 |
-| `checkpoint-core.js` | 226 | 69 | 157 |
-| `runner-core.js` | 316 | 223 | 93 |
-| `background.js` | 293 | 202 | 91 |
-| `image-evidence-core.js` | 145 | 66 | 79 |
-| `resume-core.js` | 189 | 122 | 67 |
-| `approval-persistence-core.js` | 61 | 25 | 36 |
-| `provider-adapter.js` | 228 | 210 | 18 |
-| `output-location-core.js` | 389 | 373 | 16 |
-| `content.js` | 1186 | 1197 | 11 |
-| `bridge-proposal-core.js` | 380 | 387 | 7 |
-| `halt-instructions-core.js` | 147 | 140 | 7 |
-| `xlsx-codec.js` | 371 | 364 | 7 |
-| `chat-readiness-core.js` | 26 | 20 | 6 |
-| `output-profile-core.js` | 96 | 100 | 4 |
-| `bridge-router-core.js` | 68 | 70 | 2 |
-| `operator-glossary-core.js` | 28 | 28 | 0 |
-| `operator-messages-core.js` | 80 | 80 | 0 |
-| `orchestrator-review-core.js` | 120 | 120 | 0 |
-| `plan-diagnostics-core.js` | 195 | 195 | 0 |
-| `sidepanel-ui-semantics.js` | 128 | 128 | 0 |
-| `xlsx-run-plan-core.js` | 60 | 60 | 0 |
-<!-- AUTO:MODULES END -->
-
-**Ghi chú mô tả do người giữ — không nằm trong khối AUTO:**
+**Mô tả do người giữ** — máy đếm được số dòng của một module, nhưng không đọc được nó dùng làm gì:
 
 - `ab-poll-core.js` — chính sách trả lời poll A/B.
 - `content-decision-core.js` — chưa đọc, chưa dám mô tả.
@@ -168,12 +98,12 @@ Chênh lệch ở đây đáng lo hơn chênh lệch ở UI.
 
 ## 4. Tóm cho Đức: ai nợ ai
 
-<!-- AUTO:DEBT-METHODS START -->
-**Nợ method Bridge — [ĐO]:**
-
-- **Gemini nợ GPT (0):** không có.
-- **GPT nợ Gemini (0):** không có.
-<!-- AUTO:DEBT-METHODS END -->
+> **Nợ *method Bridge* nay nằm ở [`FEATURE-PARITY-AUTO.md`](FEATURE-PARITY-AUTO.md), mục 4** —
+> máy đếm, nên nó không lạc hậu được. Sinh lại: `node scripts/feature-parity.mjs`.
+> Vì sao tách: [ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md).
+>
+> **Nợ *hành vi* thì ở lại đây** — ngay dưới. Đó là loại nợ Đức thật sự cần đọc, và không máy
+> nào đếm được nó.
 
 **Nợ hành vi — [KHAI]:** Gemini nợ GPT (nhiều): khoá tab + khoá hội thoại,
 `DETECTION_BLIND`, ledger khai thật, latch dừng, nhiều ảnh một job và poll A/B (xem bằng
@@ -206,10 +136,17 @@ là dòng chưa đáng tin.
 
 Đây đúng là bước 1 và bước 2 của **B-06**, nay đã có số liệu thật để làm.
 
+> **XONG — 2026-09-07.** Đề xuất trên đã thành `scripts/feature-parity.mjs`, và từ
+> [ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md) bản ra của nó ở hẳn một file
+> riêng: [`FEATURE-PARITY-AUTO.md`](FEATURE-PARITY-AUTO.md), được **miễn khoá** nên lane nào cũng
+> sinh lại được. File bạn đang đọc từ nay **thuần chữ của người**, và bộ sinh không còn một đường
+> nào ghi vào nó.
+
 ## 6. Việc cần Đức quyết
 
 1. ~~Dời file này về gốc repo~~ — **XONG 2026-08-26**, Đức chốt.
 2. **Gemini chưa có `BACKLOG.md`.** Nên B-06/B-07 chỉ tồn tại ở phía GPT — một chiều, đúng
    vấn đề Đức đang muốn giải. Cần phiên nào giữ package Gemini dựng sổ riêng cho nó.
-3. **Có xây `scripts/feature-parity.mjs` không** (mục 5) — biến mục 1 và 3 thành số máy tự
-   đếm, gắn vào cổng kiểm. Đây là bước 1–2 của B-06, nay đã có số thật để làm.
+3. ~~**Có xây `scripts/feature-parity.mjs` không** (mục 5)~~ — **XONG.** Script đã có và gắn vào
+   cổng kiểm; ngày 2026-09-07 Đức chốt tách bản ra thành file riêng
+   ([ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)).
