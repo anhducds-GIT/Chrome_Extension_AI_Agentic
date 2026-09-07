@@ -101,6 +101,12 @@
       "ownership_mode": "per-package",
       "claim_prefix": "workers/",
       "note": "chủ khai theo từng package trong .agents/claims.json"
+    },
+    "workers/_shared/": {
+      "steward": "_root",
+      "mutability": "rw",
+      "ownership_mode": "root",
+      "note": "ma dung chung cho nhieu extension (AGENTS.md muc 3 luat 2). Steward la _root vi no khong phai mot Extension (khong co manifest.json) nen khong thanh mot unit. Doi steward khi no doi thay du thuong xuyen den muc thanh diem nghen."
     }
   },
   "grandfathered": {

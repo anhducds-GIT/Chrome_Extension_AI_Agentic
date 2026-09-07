@@ -366,3 +366,30 @@ vùng `_code`). ADR-0005 duyệt thường trực cho `--carry`, đổi lại ph
 Đây là lượt carry **thứ hai** trong cùng một phiên (trước đó: `claude-dong-bang-2`). Hai lượt
 trong một buổi là số liệu đáng để ý: mô hình một nhánh chung khiến người đẩy sau luôn phải
 gánh người commit trước. Không đề xuất gì ở đây — chỉ ghi để lần sau đếm được.
+
+## 2026-09-07 · `claude-scouter-s06` — Scouter có host riêng, dựng trên lõi dùng chung
+
+**Đức bác thiết kế của tôi, và bác đúng.** Tôi cho Scouter *mượn* host của `duc-auto-chatgpt`
+(ADR-0004) để né fork. Hai chỗ hỏng: Scouter phụ thuộc **lúc chạy** vào một gói ĐÃ ĐÓNG BĂNG,
+và tên giao thức là `"duc-auto-chatgpt.bridge"` — một seed sắp nhân bản mà mang tên sản phẩm khác.
+
+**Nhưng "chép một bản như ba gói kia" cũng sai, và có số.** Đo trong repo:
+`websocket-core.mjs` 3 bản **giống hệt**; `bridge-host.mjs` 3 bản **khác nhau cả ba**
+(461/451/450, ba mã băm). Và 11 dòng khác biệt **chính là cái bắt tay hai chiều** — một bản vá
+an toàn làm ở một bản chép, không bao giờ tới hai bản kia. Ghi thành `S-11`, KHÔNG tự sửa.
+
+**Đường thứ ba là luật sẵn có mà chưa ai dùng** (`AGENTS.md` mục 3 luật 2): lõi vào
+`workers/_shared/`, mỗi extension một host MỎNG. Giao thức nay là `duc-scouter.bridge`, và
+phong bì mang tên cũ **bị từ chối** — đổi tên mà vẫn nhận tên cũ thì chỉ là trang trí.
+
+**Phép ghim đáng nói nhất:** tách lõi thì câu hỏi không phải *"code mới có chạy không"* mà
+*"tách ra có làm rơi hành vi nào không"*. Nên `tuong-duong-voi-ban-goc.mjs` hỏi **cả bản gốc lẫn
+bản mới cùng một câu, 29 ca**, rồi so đáp án — kể cả ký tự điều khiển trong nhãn, emoji bị cắt
+đôi ở đúng ranh giới 64, nửa cặp thay thế lạc. Khớp hết. Bản gốc đóng băng nên nó là mốc tốt.
+
+**Bộ đo tự tìm ra một lỗ.** Ba mỏ neo báo hỏng vì chốt chuyển file; lượt đi sửa mỏ neo lộ ra
+rằng **cái bắt tay hai chiều — lý do chính khiến lõi được tách — không có phép ghim hành vi
+nào**. Nay có `bat-tay-hai-chieu.mjs` (nối THẬT qua socket, 5 khối) và hai con `X3` `X4`.
+
+**Đo.** Ghim 17 file · đột biến **93/93, sống sót 0**. Bridge đã chạy thật trên máy Đức:
+ghi/đọc file OK, và thử `file.read` lên tệp ghép cặp thì **bị chặn** (`PATH_OUTSIDE_ROOT`).
