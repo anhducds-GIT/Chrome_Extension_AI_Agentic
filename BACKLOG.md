@@ -1095,3 +1095,22 @@ fixture chọn một đơn vị THẬT khác GPT, chọn theo thứ tự đườ
   đối chiếu `grep -c "^## MỞ" workers/duc-scouter/v0.1.0/BACKLOG.md`.
   · **đóng khi:** `what-next.mjs` đếm cả hai dạng mục, và có một phép ghim dựng một sổ nợ chứa
   cả hai dạng rồi kiểm con số ra đúng. Khoá cần: `_code`.
+
+- **N-11** · `FEATURE-PARITY-AUTO.md` chưa land làm **cổng xuất bản chặn MỌI lane**. Commit
+  `16674f3` (ADR-0014) đổi `scripts/feature-parity.mjs` sang ghi ra `FEATURE-PARITY-AUTO.md`,
+  nhưng ⑴ file đó **chưa có trong HEAD** và ⑵ nó **không** nằm trong khối `generated` của
+  `.repo-structure.json` (khối đó vẫn chỉ có bốn tên cũ). Nên `safe-push.mjs` từ chối mọi lượt
+  đẩy với đúng một dòng: *"feature-parity.mjs không khớp với HEAD → Không thể xử lý
+  FEATURE-PARITY-AUTO.md … does not exist in 'HEAD'"*. **[ĐO] 2026-09-07:** 12 commit chưa đẩy
+  của **ba** phiên (`claude-b36-vaA` 5 · `claude-bang-vung-chac` 2 · `claude-scouter-s06` 4),
+  và cả ba đều không đẩy được. Lệnh đo lại: `node scripts/safe-push.mjs --as <phiên> --carry`.
+  · **ai làm:** việc này thuộc `claude-bang-vung-chac` — tạo file đó cần khoá `_root` và nó là
+  phần chưa xong của chính thay đổi của họ. Phiên tôi **không** tự làm (luật mục 1: vùng có chủ
+  khác thì chỉ đọc; và Đức đã dặn riêng: cần sửa thứ ngoài gói mình thì DỪNG, ghi vào sổ, báo lại).
+  · **chú ý một bậc nữa, đừng bỏ:** nếu `FEATURE-PARITY-AUTO.md` thật là artifact máy sinh thì
+  nó **phải** được khai vào khối `generated`. Không khai thì mỗi lượt sinh lại đòi khoá `_root`
+  — mà đó đúng là điểm nghẽn ADR-0014 định gỡ, nên land nửa vời sẽ dựng lại cái nghẽn nó vừa phá.
+  · **đóng khi:** `node scripts/safe-push.mjs --as <phiên> --carry` không còn dòng
+  *"feature-parity.mjs không khớp với HEAD"* — tức `FEATURE-PARITY-AUTO.md` đã có trong HEAD,
+  **và** `node -e "console.log(require('./.repo-structure.json').generated)"` có tên nó (hoặc
+  có một mục ADR nói rõ vì sao cố ý KHÔNG khai).
