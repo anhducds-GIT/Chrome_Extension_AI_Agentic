@@ -68,6 +68,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 | File / thư mục | Vai trò |
 |---|---|
 | `manifest.json` | MV3. Service worker là `scouter-background.js`, kiểu `module` |
+| `icons/` · `scripts/make-icons.mjs` | Icon extension: chữ **S tối trên nền vàng**. Bốn file PNG là **máy sinh** — sửa màu ở hai hằng số đầu bộ sinh rồi chạy `node scripts/make-icons.mjs`, đừng sửa PNG bằng tay. Chrome KHÔNG nhận SVG làm icon, đừng đổi. `--preview` in hình ra màn hình để xem trước |
 | `scouter-background.js` | **Dây thật**: bơm `chrome` vào ba lõi, và giữ lưới đỡ `chrome.alarms` (S-02). CỐ Ý mỏng và cố ý không có phép ghim riêng — thêm một dòng logic vào đây là thêm một dòng không ai canh |
 | `observer-engine.js` | Gắn/tháo `chrome.debugger`, gọi lõi phép dò **và lõi hành động**. Tám con `W1..W4` + `A1..A5` canh đúng file này |
 | `popup.html` · `popup.css` · `popup.js` | Popup: chọn tệp ghép cặp Bridge, quét/quan sát thủ công, và **công tắc cho đường ghi** — chỗ DUY NHẤT bật được nó |

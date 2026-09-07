@@ -14,6 +14,7 @@
  */
 
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -337,14 +338,30 @@ async function handshake(rig) {
  * luật thì sớm muộn nói hai câu khác nhau — nên ghim chúng vào nhau tại đây. Đỏ ở đây nghĩa
  * là hợp đồng ghép cặp vừa đổi ở đâu đó, và Scouter phải đi theo. */
 {
-  /* Ba gói kia là HÀNG XÓM của gói này trong `workers/` (ADR-0013). Chỉ đọc — vùng của lane khác. */
+  /* Ba gói kia là HÀNG XÓM của gói này trong `workers/` (ADR-0013). Chỉ đọc — vùng của lane khác.
+   *
+   * Đọc từ HEAD, KHÔNG đọc từ đĩa (`S-07`, sửa 07/09). Hợp đồng ghép cặp là thứ đã COMMIT, không
+   * phải thứ đang nằm dở trong cây làm việc của người khác. Bản cũ đọc đĩa, nên hễ một lane đang
+   * sửa gói của họ là suite của Scouter đỏ vì lý do ngoài Scouter — gặp thật hai lần trong một
+   * giờ ngày 07/09, và một phiên Scouter gặp nó sẽ đi tìm lỗi trong vùng mình mà không thấy gì. */
   const workers = [
-    "duc-auto-gemini/v0.2.0/bridge-pairing-core.js",
-    "duc-auto-chatgpt/v0.1.0/bridge-pairing-core.js",
-    "duc-auto-gg-flow-video/v0.1.0/bridge-pairing-core.js"
-  ].map((relative) => path.join(ROOT, "..", "..", relative));
+    "workers/duc-auto-gemini/v0.2.0/bridge-pairing-core.js",
+    "workers/duc-auto-chatgpt/v0.1.0/bridge-pairing-core.js",
+    "workers/duc-auto-gg-flow-video/v0.1.0/bridge-pairing-core.js"
+  ];
+  const repoRoot = path.resolve(ROOT, "..", "..", "..");
 
-  const bodies = workers.map((file) => fs.readFileSync(file, "utf8"));
+  const bodies = workers.map((relative) => {
+    try {
+      return execFileSync("git", ["show", `HEAD:${relative}`],
+        { cwd: repoRoot, encoding: "utf8", maxBuffer: 4 * 1024 * 1024 });
+    } catch (error) {
+      /* Nổ to, đừng lặng lẽ quay về đọc đĩa: một bản dự phòng đổi ngữ nghĩa mà không nói gì là
+       * đúng cách phép ghim này mất tác dụng lần nữa. */
+      throw new Error(`không đọc được '${relative}' từ HEAD (${error?.message || error}). ` +
+        `Phép ghim này CỐ Ý đọc HEAD chứ không đọc đĩa — xem S-07.`);
+    }
+  });
   assert.equal(new Set(bodies).size, 1, "ba bản bridge-pairing-core.js đã trôi khỏi nhau — đọc lại cả ba trước khi tin bản nào");
 
   const shared = bodies[0];

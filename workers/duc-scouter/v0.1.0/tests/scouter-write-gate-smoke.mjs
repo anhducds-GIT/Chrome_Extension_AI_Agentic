@@ -268,4 +268,27 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
   assert.match(background, /chrome\.alarms\.get\(/, "phai tao alarm co dieu kien, khong tao mu moi lan worker tinh");
 }
 
-console.log("scouter-write-gate-smoke: 14 khoi, tat ca DAT");
+/* ---- ⑮ Icon khai trong manifest phải CÓ THẬT ---------------------------
+ * Ở nhờ file này, và nói rõ vì sao: khối ⑭ đã mở và đọc `manifest.json` rồi, nên dựng hẳn một
+ * file phép ghim thứ hai chỉ để `assert` bốn đường dẫn thì phần khung tốn hơn phần đo.
+ * Đáng canh vì đây là hỏng IM LẶNG: manifest trỏ hụt một file icon thì Chrome không báo gì, nó
+ * chỉ lặng lẽ quay về mảnh ghép xám mặc định — và người ta sẽ đi sửa nhầm chỗ khác. */
+{
+  const manifest = JSON.parse(fs.readFileSync(path.join(here, "..", "manifest.json"), "utf8"));
+  const duongDan = new Set([
+    ...Object.values(manifest.icons || {}),
+    ...Object.values(manifest.action?.default_icon || {})
+  ]);
+  assert.ok(duongDan.size > 0, "manifest khong khai icon nao — Chrome se hien manh ghep xam");
+  for (const duong of duongDan) {
+    assert.ok(fs.existsSync(path.join(here, "..", duong)), `manifest tro toi '${duong}' nhung file khong co that`);
+  }
+  /* Bốn cỡ Chrome thật sự dùng: 16 thanh công cụ · 32 Windows · 48 trang quản lý · 128 cửa hàng.
+   * Thiếu cỡ nào thì Chrome tự phóng cỡ khác lên, và chữ S sẽ nhoè đúng ở chỗ hay nhìn nhất. */
+  for (const co of ["16", "32", "48", "128"]) {
+    assert.ok(manifest.icons?.[co], `thieu icon co ${co}`);
+    assert.ok(manifest.action?.default_icon?.[co], `thieu default_icon co ${co}`);
+  }
+}
+
+console.log("scouter-write-gate-smoke: 15 khoi, tat ca DAT");

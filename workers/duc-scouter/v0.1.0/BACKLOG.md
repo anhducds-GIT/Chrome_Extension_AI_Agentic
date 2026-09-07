@@ -116,3 +116,40 @@ Luật chấm có phép ghim riêng không cần trình duyệt: `tests/scouter-
 · **còn nợ lại:** ba thứ CHƯA đo, ghi thẳng trong bản báo cáo của phép đo — trang có khung lồng
 (iframe) · trang đổi tỉ lệ hiển thị · trang thật của nhà cung cấp. Và **trần 50 vẫn chưa hiệu
 chỉnh**: phép đo này chỉ tốn 6 lượt ghi, nên nó không nói được gì về con số 50.
+
+## MỞ · S-07 (2026-09-07, `claude-scouter-s05`) — suite của gói đỏ vì CÂY LÀM VIỆC của lane khác
+
+Khối ⑫ của `tests/scouter-transport-smoke.mjs` đọc `bridge-pairing-core.js` ở **cả ba gói hàng
+xóm** và đòi ba bản giống hệt từng byte. Chốt đó đúng và đáng giữ — nó bắt được lúc hợp đồng
+ghép cặp trôi. Nhưng nó đọc **cây làm việc**, không đọc HEAD, nên hễ một lane đang sửa dở gói
+của họ là suite của Scouter đỏ vì lý do ngoài Scouter. Gặp thật 07/09: đỏ một lượt, chạy lại
+ba lượt xanh cả ba, và nguyên nhân là lane `claude-b36-vaA` đang sửa gói ChatGPT.
+
+Cái giá: một phiên Scouter gặp đỏ này sẽ đi tìm lỗi trong vùng của mình và không thấy gì.
+**[ĐO]** `git stash list` trống mà `node tests/scouter-transport-smoke.mjs` lúc đỏ lúc xanh.
+· **đóng khi:** khối ⑫ đọc ba file đó từ **HEAD** (`git show HEAD:<đường dẫn>`) thay vì từ đĩa —
+hoặc, nếu quyết giữ nguyên, thì câu báo lỗi phải nói thẳng "có thể là lane khác đang sửa dở,
+chạy lại trước khi đi tìm lỗi" để phiên sau không mất buổi chiều.
+
+## ĐÓNG · S-07 (2026-09-07, `claude-scouter-s06`) — đọc HEAD, không đọc đĩa
+
+Mở rồi đóng trong cùng ngày vì nó chặn chính lượt làm việc đang chạy: đột biến kiểm không khởi
+động được, báo *"phép ghim đã đỏ sẵn khi CHƯA đột biến"*. Khối ⑫ nay lấy ba file qua
+`git show HEAD:<đường dẫn>`. Ngữ nghĩa vì thế cũng ĐÚNG hơn bản cũ: hợp đồng ghép cặp là thứ đã
+**commit**, không phải thứ đang nằm dở trong cây làm việc của người khác.
+
+Không có bản dự phòng đọc đĩa khi `git` hỏng — nó ném lỗi kèm câu chỉ thẳng về mục này. Một bản
+dự phòng lặng lẽ đổi ngữ nghĩa là đúng cách phép ghim này mất tác dụng lần nữa.
+Đo: chạy 3 lượt liên tiếp lúc lane khác đang sửa dở → xanh cả 3 (trước đó đỏ).
+
+## MỞ · S-08 (2026-09-07, `claude-scouter-s06`) — icon mới chưa ai nhìn thấy trong Chrome thật
+
+`manifest.json` khai bốn cỡ icon (chữ S tối trên nền vàng, sinh bằng `scripts/make-icons.mjs`).
+Phép ghim ⑮ của `tests/scouter-write-gate-smoke.mjs` chỉ chứng minh **manifest trỏ tới file có
+thật và đủ bốn cỡ** — nó không mở Chrome, nên không nói được là Chrome chịu nạp bốn file PNG đó.
+Bốn file do một bộ đóng gói PNG tự viết sinh ra (không dùng thư viện), nên khả năng sai nằm ở
+chỗ khác thường: một khối PNG hỏng thì Chrome lặng lẽ quay về mảnh ghép xám chứ không báo lỗi.
+**[ĐỌC]** `scripts/make-icons.mjs`, phần `dongGoiPng`.
+· **đóng khi:** Đức nạp lại extension và xác nhận thấy chữ S vàng trên thanh công cụ — hoặc một
+phép đo tự dựng nạp extension qua `Extensions.loadUnpacked` (kiểu phép đo ②) rồi đọc `icons`
+trong `chrome.management.getSelf()` và xác nhận Chrome không rơi về icon mặc định.

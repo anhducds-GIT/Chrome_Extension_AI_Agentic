@@ -163,3 +163,34 @@ nhân, có thể cả token nằm sẵn trong DOM. Không phải lý do chặn h
 
 **Chưa làm trong lượt này, và cố ý.** Hình dạng ghi chép — ghi vào đâu, tên gì, chứa gì — thuộc
 bước 2 của `ROADMAP.md`, nơi có việc thật để đo xem cần gì. Quyết trước khi có việc thật là đoán.
+
+## 2026-09-07 · `claude-scouter-s06` — icon chữ S nền vàng, và một nợ mở-rồi-đóng trong ngày
+
+**Icon.** Đức xin chữ S màu vàng, rồi chốt lại: **nền vàng**. Nên chữ S phải TỐI — vàng trên
+vàng thì không còn chữ nào. Cách này còn hơn ở chỗ đo được: ô vàng đặc nổi trên CẢ thanh công
+cụ sáng lẫn tối, trong khi chữ vàng trên nền trong suốt gần biến mất ở chế độ sáng.
+
+**Bộ sinh, không phải bốn file PNG dán vào.** `scripts/make-icons.mjs` vẽ chữ S bằng **hai vành
+khuyên bị cắt cung**, không dùng phông chữ — phông có ở máy này chưa chắc có ở máy khác, và một
+icon đổi hình theo máy là icon không kiểm được. Kèm bộ đóng gói PNG tự viết trên `zlib`. Đổi màu
+thì sửa hai hằng số đầu file rồi chạy lại. Chrome **không nhận SVG** làm icon extension.
+
+**Phép ghim ⑮ mới:** manifest phải trỏ tới file icon **có thật**, đủ bốn cỡ. Đáng canh vì đây là
+hỏng IM LẶNG — trỏ hụt thì Chrome không báo gì, chỉ lặng lẽ quay về mảnh ghép xám.
+
+**`S-07` mở và đóng trong cùng ngày, vì nó chặn chính lượt đang chạy.** Khối ⑫ của
+`scouter-transport-smoke.mjs` đọc `bridge-pairing-core.js` ở ba gói hàng xóm từ **đĩa**, nên hễ
+một lane đang sửa dở gói của họ là suite Scouter đỏ vì lý do ngoài Scouter. Gặp **hai lần trong
+một giờ** hôm nay; lần thứ hai làm đột biến kiểm không khởi động được. Nay đọc qua
+`git show HEAD:` — và ngữ nghĩa cũng đúng hơn: hợp đồng là thứ đã commit, không phải thứ đang
+nằm dở của người khác. Không có bản dự phòng đọc đĩa: một bản dự phòng lặng lẽ đổi ngữ nghĩa là
+đúng cách phép ghim này mất tác dụng lần nữa.
+
+**Một lượt đỏ KHÔNG phải của tôi:** `bridge-attention-static.mjs` của gói ChatGPT, mỏ neo mục
+theo lượt refactor `B-36` của lane `claude-b36-vaA`. Không sửa vùng họ; họ đã tự sửa.
+
+**Đo.** Phép ghim gói **8/8** (khối ⑮ mới). Đột biến **58/58, sống sót 0**.
+
+**Còn mở:** `S-08` — icon mới **chưa ai nhìn thấy trong Chrome thật**. Phép ghim chỉ chứng minh
+manifest trỏ đúng chỗ, không chứng minh Chrome chịu nạp bốn file PNG do bộ đóng gói tự viết sinh
+ra. Đóng bằng một câu xác nhận của Đức sau khi nạp lại extension.
