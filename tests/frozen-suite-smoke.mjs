@@ -141,10 +141,14 @@ ok("chạm chỗ KHÔNG phải vùng chung thì vẫn bỏ được", () => {
   assert.equal(r.boQua.length, 1);
 });
 
-ok("gói đóng băng KHÔNG được dẫn ra chỗ ngoài danh sách vùng chung", () => {
-  /* Phép ghim CHỐNG MỤC. `PHU_THUOC_CHUNG_DONG_BANG` là hằng số, nên nếu mai một gói đóng băng
-   * import thêm một chỗ khác thì hằng số đó lặng lẽ thiếu — và suite của gói ấy bị bỏ qua đúng
-   * lúc thứ nó phụ thuộc vừa đổi. Vế này biến "mục âm thầm" thành "cổng đỏ". */
+ok("gói đóng băng không dẫn ra chỗ ngoài danh sách — trong phạm vi IMPORT NHẬN DIỆN ĐƯỢC", () => {
+  /* Phép ghim này thu hẹp một chỗ mục, KHÔNG khoá hết. Phiên Codex (#20) chỉ đúng giới hạn của nó
+   * và tôi nhận: nó dò bằng **biểu thức tìm chuỗi trên `import` / `require` tĩnh**, nên nó KHÔNG
+   * thấy `import()` động, cũng không thấy file được đọc bằng `fs`. Nên gọi nó là *"kiểm các import
+   * nhận diện được"* — đừng đọc thành *"danh sách không thể mục"*.
+   *
+   * Vẫn đáng có: đường phụ thuộc đã tìm được thật hôm nay là một `import` tĩnh, và loại đó thì
+   * phép này bắt. Chưa dựng bộ phân tích phụ thuộc đầy đủ — Codex cũng nói chưa cần. */
   const cauHinh = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
   const dongBang = frozenFrom(cauHinh);
   const RE = /(?:from|import|require\()\s*["']([^"']+)["']/g;
@@ -174,7 +178,7 @@ ok("gói đóng băng KHÔNG được dẫn ra chỗ ngoài danh sách vùng chu
   for (const g of dongBang) diTung(path.join(ROOT, g));
 
   assert.deepEqual(lechRaNgoai, [],
-    "gói đóng băng dẫn ra chỗ chưa khai trong PHU_THUOC_CHUNG_DONG_BANG — "
+    "gói đóng băng có một IMPORT TĨNH dẫn ra chỗ chưa khai trong PHU_THUOC_CHUNG_DONG_BANG — "
     + "suite của nó sẽ bị bỏ qua đúng lúc thứ nó phụ thuộc vừa đổi. Khai thêm chỗ đó vào hằng số.");
 });
 
