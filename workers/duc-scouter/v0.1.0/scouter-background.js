@@ -19,6 +19,7 @@ import {
   createDispatcher,
   negotiateVersion
 } from "./scripts/scouter-bridge-core.mjs";
+import { createJournal } from "./scripts/scouter-journal-core.mjs";
 import { createSeedHandlers, setWriteGate } from "./scripts/scouter-seed-core.mjs";
 import { createTransport } from "./scripts/scouter-transport-loopback.mjs";
 
@@ -30,8 +31,28 @@ const handlers = createSeedHandlers({
   capabilities
 });
 
+/* ---- SỔ CÔNG VIỆC — cửa sổ của Đức nhìn vào việc AI đang làm (07/09) ------
+ * Bọc `dispatch` chứ không sửa nó: sổ đứng NGOÀI đường đi của phong bì, nên một cuốn sổ hỏng
+ * không đổi được một byte nào của thứ AI nhận về. Lý do đầy đủ ở đầu `scouter-journal-core.mjs`.
+ *
+ * `traUrl` phải tra tên miền LÚC GHI, không phải lúc bảng bên vẽ: `target_id` chỉ sống bằng
+ * tuổi cái tab, nên tra ngược lúc vẽ thì mọi việc làm hôm qua đều thành vô chủ. Dùng
+ * `chrome.debugger.getTargets` — đọc thuần, không gắn vào tab nào, không dựng dải băng
+ * "đang gỡ lỗi" nào. */
+const journal = createJournal({
+  chromeApi: chrome,
+  async traUrl(targetId) {
+    try {
+      const targets = await chrome.debugger.getTargets();
+      return targets.find((t) => t.id === targetId)?.url ?? null;
+    } catch (_error) {
+      return null;
+    }
+  }
+});
+
 const transport = createTransport({
-  dispatch: createDispatcher({ handlers }),
+  dispatch: journal.boc(createDispatcher({ handlers })),
   max_envelope_bytes: MAX_ENVELOPE_BYTES
 });
 

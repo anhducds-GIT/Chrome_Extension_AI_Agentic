@@ -256,3 +256,32 @@ lần** và hai bản **che nhau** — trùng lặp ở đây là chỗ mù, đ�
 
 **Đo.** Ghim gói **10/10** · đột biến **75/75, sống sót 0**. **Chưa chạy thật lần nào** — còn
 lại của `S-10`: script phía gọi, ba mảnh nhóm B, rồi pilot một tuần.
+
+## 2026-09-07 · `claude-scouter-s06` — bảng bên dựng lại, và một cuốn sổ để nó không nói dối
+
+**Việc.** GPT web trả về bản vẽ v1 ba tab. Bố cục đúng hướng, nhưng đối chiếu với code thì có
+**năm chỗ sai thật**, và ba trong số đó là màn hình **tự mâu thuẫn với chính nó**:
+⑴ đếm 14 lệnh (thật là 15 — nhóm Quan sát ghi 6, thật là 7);
+⑵ thanh tiến độ ghi `6 / 8` trên một danh sách có **4** dấu tích;
+⑶ dòng *“Phanh: TẮT — Không cho phép ghi”* tự phủ định trong một dòng;
+⑷ thẻ công tắc tô **đỏ ở trạng thái AN TOÀN**, nên lúc thật sự nguy hiểm không còn màu để leo;
+⑸ khối “Trang hiện tại” chỉ tab **Đức đang xem**, mà AI chọn tab bằng `target_id` — hai cái
+lệch nhau được, và chúng lệch đúng vào lúc lệch là đắt nhất.
+
+**Gốc của ⑴ và ⑵ là một: con số được GÕ, không được ĐỌC.** Nên việc chính của phiên không phải
+vẽ lại — mà là dựng cái nguồn để đọc. `scripts/scouter-journal-core.mjs` bọc `dispatch`, đứng
+NGOÀI đường đi của phong bì. Ba bất biến: chỉ ghi lệnh **đã xong và đã thành công** · tên miền
+chốt **lúc ghi** (đóng tab không mất tiến độ) · **sổ hỏng thì im**, không giết lượt gọi của AI.
+Số lệnh trên bảng nay đếm từ `capabilities()` — cùng hàm mà AI hỏi, nên hai bên không khai
+khác nhau được.
+
+**Hai lần phép ghim tự bắt được chính nó, ghi ra vì cả hai tổng quát hơn lượt này.**
+⑴ Con `J5` **sống sót**: tôi đo trần nhật ký qua `doc()`, mà `doc()` cũng cắt — nên bài kiểm
+không phân biệt được *chặn lúc ghi* với *chặn lúc đọc*. Sửa phép ghim, không sửa đột biến.
+⑵ `sidepanel-dom-smoke` báo oan hai lần vì đọc cả **chú thích**. Chiều báo oan chỉ phiền;
+chiều ngược lại mới nguy — một `id` chỉ có trong chú thích sẽ được tính là CÓ trong DOM, tức
+phép ghim gật đầu cho đúng cái lỗi nó sinh ra để bắt.
+
+**Đo.** Ghim gói **12/12** · đột biến **91/91, sống sót 0** (thêm `J1..J10`). Bảng bên tự đếm
+ra 15 lệnh · Quan sát 7. **Đức phải nạp lại extension** — cả ba file giao diện đã đổi.
+Còn mở: `S-10` chưa chạy thật lần nào (script phía gọi, ba mảnh nhóm B).

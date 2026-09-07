@@ -765,4 +765,88 @@ BATCHES.push({
   ]
 });
 
+/* ---- SỔ CÔNG VIỆC — mười con canh nguồn sự thật của bảng bên (07/09) -----
+ * Sổ này là thứ DUY NHẤT khối "tiến độ thuần hoá" đọc. Một cuốn sổ sai tệ hơn không có sổ, vì
+ * nó sai một cách có thẩm quyền — Đức sẽ tin con số trên bảng hơn tin mắt mình. Mười con dưới
+ * đây nhắm vào ba bất biến ở đầu `scouter-journal-core.mjs`, chứ không nhắm vào cú pháp. */
+const PIN_JOURNAL = path.join(ROOT, "tests", "scouter-journal-smoke.mjs");
+
+BATCHES.push({
+  ten: "SỔ CÔNG VIỆC — tiến độ phải là bằng chứng",
+  target: path.join(ROOT, "scripts", "scouter-journal-core.mjs"),
+  pin: PIN_JOURNAL,
+  mutants: [
+    {
+      ma: "J1",
+      ten: "Lệnh HỎNG cũng tích mốc — bảng khoe một năng lực Scouter không có",
+      tim: "    if (ok && METHOD_CUA_MOC.has(method) && targetId) {",
+      thay: "    if (METHOD_CUA_MOC.has(method) && targetId) {",
+      soLan: 1
+    },
+    {
+      ma: "J2",
+      ten: "Sổ hỏng thì ném ra ngoài — cuốn sổ của Đức giết lượt gọi của AI",
+      tim: "    return xepHang(() => ghiThat(method, targetId, ok, maLoi)).then((so) => so, () => null);",
+      thay: "    return xepHang(() => ghiThat(method, targetId, ok, maLoi));",
+      soLan: 1
+    },
+    {
+      ma: "J3",
+      ten: "Lọc quá tay: giấu luôn session.hello — việc AI làm mà Đức không thấy",
+      tim: "const KHONG_GHI = new Set([" + Q + "system.ping" + Q + "]);",
+      thay: "const KHONG_GHI = new Set([" + Q + "system.ping" + Q + ", " + Q + "session.hello" + Q + "]);",
+      soLan: 1
+    },
+    {
+      ma: "J4",
+      ten: "Bỏ lọc ping — nhật ký 100% là nhịp tim, 0% là việc thật",
+      tim: "const KHONG_GHI = new Set([" + Q + "system.ping" + Q + "]);",
+      thay: "const KHONG_GHI = new Set([]);",
+      soLan: 1
+    },
+    {
+      ma: "J5",
+      ten: "Bỏ trần dòng nhật ký — kho lưu extension phình vô hạn",
+      tim: "    if (so.hoatDong.length > RING_TOI_DA) so.hoatDong.length = RING_TOI_DA;",
+      thay: "    if (false) so.hoatDong.length = RING_TOI_DA;",
+      soLan: 1
+    },
+    {
+      ma: "J6",
+      ten: "Bỏ hàng đợi — hai lượt ghi cùng lúc nuốt nhau, im lặng",
+      tim: "    const ket = hangDoi.then(viec, viec);",
+      thay: "    const ket = viec();",
+      soLan: 1
+    },
+    {
+      ma: "J7",
+      ten: "Khoá tiến độ theo cả địa chỉ — mỗi cuộc trò chuyện mới là một trang lạ",
+      tim: "    return u.origin;",
+      thay: "    return u.href;",
+      soLan: 1
+    },
+    {
+      ma: "J8",
+      ten: "Nhận cả method lạ từ sổ cũ — một mốc đã bỏ vẫn tích được",
+      tim: "      if (!METHOD_CUA_MOC.has(ten) || !o || typeof o !== " + Q + "object" + Q + ") continue;",
+      thay: "      if (!o || typeof o !== " + Q + "object" + Q + ") continue;",
+      soLan: 1
+    },
+    {
+      ma: "J9",
+      ten: "Sổ chép lại phong bì — AI nhận một bản sao, không phải vật gốc",
+      tim: "        return phongBi;",
+      thay: "        return { ...phongBi };",
+      soLan: 1
+    },
+    {
+      ma: "J10",
+      ten: "Hết chỗ thì bỏ trang MỚI thay vì trang cũ — xoá đúng thứ Đức đang nhìn",
+      tim: "        if (theoTuoi.length > TRANG_TOI_DA) so.trang = Object.fromEntries(theoTuoi.slice(0, TRANG_TOI_DA));",
+      thay: "        if (theoTuoi.length > TRANG_TOI_DA) so.trang = Object.fromEntries(theoTuoi.slice(-TRANG_TOI_DA));",
+      soLan: 1
+    }
+  ]
+});
+
 process.exit(chayDotBien(BATCHES, ROOT));

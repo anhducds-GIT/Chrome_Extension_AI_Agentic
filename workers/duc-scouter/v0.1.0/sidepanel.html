@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,46 +7,139 @@
     <link rel="stylesheet" href="sidepanel.css">
   </head>
   <body>
+    <!-- Không có <script> nội tuyến ở đâu trong file này. MV3 chặn mã nội tuyến trong trang
+         extension, và nó hỏng IM LẶNG: trang vẫn tải, chỉ có mã là không chạy. -->
     <main>
-      <header>
-        <h1>Duc Scouter</h1>
-        <p>Quan sát trang · báo cáo qua Bridge · tự nạp lại mình.</p>
+      <header class="dinh">
+        <div class="dinh-hang">
+          <h1>Duc Scouter</h1>
+          <span id="bridge-badge" class="huy-hieu">Đang đọc…</span>
+        </div>
+        <p class="mo">Quan sát trang · báo cáo qua Bridge · tự nạp lại mình.</p>
       </header>
 
-      <section aria-labelledby="bridge-heading">
-        <h2 id="bridge-heading">Cửa Bridge</h2>
-        <p id="bridge-state" role="status">Đang đọc trạng thái…</p>
-        <input id="pairing-file" type="file" accept=".json,application/json">
-        <p class="meta">Chọn tệp ghép cặp do bộ cài Bridge V1 tạo. Token chỉ nằm trong extension trên máy này, không gửi đi đâu.</p>
-      </section>
-
-      <section aria-labelledby="write-heading" class="write-gate">
-        <h2 id="write-heading">Cho phép bấm và gõ</h2>
-        <label class="switch">
-          <input id="write-gate" type="checkbox">
-          <span>Chế độ phát triển</span>
-        </label>
-        <p id="write-gate-state" role="status">Đang đọc trạng thái…</p>
-        <p class="meta">Tắt thì Scouter chỉ NHÌN được, mọi lệnh bấm và gõ bị từ chối. Bật một lần được 50 lượt; hết thì tắt rồi bật lại. Đóng bảng bên không tắt công tắc.</p>
-      </section>
-
-      <h2>Quan sát</h2>
-      <button id="scan" type="button">Scan Targets</button>
-      <p id="status" role="status">Ready.</p>
-
-      <section aria-labelledby="targets-heading">
-        <h2 id="targets-heading">Targets</h2>
-        <div id="target-list" class="target-list" aria-live="polite">
-          <p class="empty">Scan to list Chrome debug targets.</p>
+      <!-- CÔNG TẮC. Cố ý KHÔNG gọi là "phanh": công tắc này BẬT thì Scouter được ghi, nên
+           "phanh bật" và "phanh tắt" lộn cực với trực giác, và bản vẽ v1 đã dính đúng chỗ đó
+           ("Phanh: TẮT — Không cho phép ghi", tự phủ định trong một dòng). Tên hiện tại nói
+           thẳng cái nó làm. -->
+      <section id="gate-card" class="the cong-tac" aria-labelledby="gate-heading">
+        <div class="cong-tac-hang">
+          <label class="switch">
+            <input id="write-gate" type="checkbox">
+            <span class="switch-nut" aria-hidden="true"></span>
+            <span id="gate-heading" class="switch-chu">Cho phép bấm và gõ</span>
+          </label>
+          <span id="gate-badge" class="huy-hieu">…</span>
+        </div>
+        <p id="gate-note" class="mo">Đang đọc trạng thái công tắc…</p>
+        <div class="cong-tac-day">
+          <span class="phim">Ctrl + Shift + X</span>
+          <span class="mo">Dừng khẩn — chỉ tắt được, không bật được</span>
         </div>
       </section>
 
-      <section aria-labelledby="report-heading">
-        <div class="report-heading">
-          <h2 id="report-heading">Observation Report</h2>
-          <button id="copy-report" type="button" disabled>Copy JSON</button>
+      <div class="tabs" role="tablist" aria-label="Khu vực">
+        <button class="tab" role="tab" id="tab-tiendo" aria-controls="panel-tiendo" aria-selected="true">Tiến độ</button>
+        <button class="tab" role="tab" id="tab-hoatdong" aria-controls="panel-hoatdong" aria-selected="false">Hoạt động</button>
+        <button class="tab" role="tab" id="tab-hethong" aria-controls="panel-hethong" aria-selected="false">Hệ thống</button>
+      </div>
+
+      <!-- ================= TIẾN ĐỘ ================= -->
+      <section id="panel-tiendo" role="tabpanel" aria-labelledby="tab-tiendo">
+        <div class="the">
+          <h2>Thuần hoá trang web</h2>
+          <p class="mo">Mốc chỉ được tích khi lệnh tương ứng đã CHẠY XONG và THÀNH CÔNG trên trang này.</p>
+
+          <label class="chon-hang" for="chon-mien">
+            <span class="mo">Trang</span>
+            <select id="chon-mien"></select>
+          </label>
+
+          <div class="tiendo-so">
+            <span id="tiendo-dem" class="tiendo-dem">– / 8</span>
+            <span id="tiendo-pct" class="mo">–</span>
+          </div>
+          <div class="thanh" role="img" aria-labelledby="tiendo-dem">
+            <div id="tiendo-bar" class="thanh-day"></div>
+          </div>
+
+          <ul id="tiendo-list" class="moc-list"></ul>
         </div>
-        <pre id="report" tabindex="0">No observation yet.</pre>
+
+        <p class="ghi-chu">Không có nút nào tự đánh dấu. Muốn tích một mốc thì bảo AI chạy lệnh đó.</p>
+      </section>
+
+      <!-- ================= HOẠT ĐỘNG ================= -->
+      <section id="panel-hoatdong" role="tabpanel" aria-labelledby="tab-hoatdong" hidden>
+        <div class="the">
+          <div class="dinh-hang">
+            <h2>AI đang làm gì?</h2>
+            <span id="dang-lam-badge" class="huy-hieu">…</span>
+          </div>
+          <p id="dang-lam" class="mo">Đang đọc sổ…</p>
+        </div>
+
+        <!-- Trang AI ĐANG CHẠM, không phải trang Đức đang xem. Bản vẽ v1 hiện tab người dùng
+             đang mở, mà AI chọn tab của nó bằng `target_id` — nên hai cái lệch nhau được, và
+             chúng lệch đúng vào lúc lệch là đắt nhất. -->
+        <div class="the">
+          <h2>Trang AI đang chạm</h2>
+          <p id="muc-tieu-ten" class="dam">—</p>
+          <p id="muc-tieu-url" class="url mo">Chưa có lệnh nào nhắm vào một tab.</p>
+        </div>
+
+        <div class="the">
+          <div class="dinh-hang">
+            <h2>Hoạt động gần nhất</h2>
+            <span id="hoat-dong-dem" class="mo"></span>
+          </div>
+          <ul id="hoat-dong-list" class="viec-list"></ul>
+        </div>
+      </section>
+
+      <!-- ================= HỆ THỐNG ================= -->
+      <section id="panel-hethong" role="tabpanel" aria-labelledby="tab-hethong" hidden>
+        <div class="the">
+          <h2>Kết nối Bridge</h2>
+          <p id="bridge-state" class="mo">Đang đọc trạng thái…</p>
+          <input id="pairing-file" type="file" accept=".json,application/json">
+          <p class="mo">Chọn tệp ghép cặp do bộ cài Bridge tạo. Token chỉ nằm trong extension trên máy này, không gửi đi đâu.</p>
+        </div>
+
+        <div class="the">
+          <div class="dinh-hang">
+            <h2>Năng lực</h2>
+            <span id="nangluc-tong" class="mo"></span>
+          </div>
+          <!-- Con số ở đây ĐẾM TỪ BẢNG LỆNH THẬT, không gõ tay. Bản vẽ v1 ghi 14 method trong
+               khi thật là 15, vì nó chép một con số tôi đưa và con số đó cũ mất một ngày. -->
+          <ul id="nangluc-list" class="nangluc-list"></ul>
+        </div>
+
+        <div class="the">
+          <div class="dinh-hang">
+            <h2>Tab đang mở</h2>
+            <button id="scan" type="button">Quét lại</button>
+          </div>
+          <p id="status" class="mo">Chưa quét.</p>
+          <div id="target-list" class="target-list" aria-live="polite"></div>
+        </div>
+
+        <details class="the">
+          <summary>Báo cáo quan sát (JSON)</summary>
+          <button id="copy-report" type="button" disabled>Chép JSON</button>
+          <pre id="report" tabindex="0">Chưa quan sát lần nào.</pre>
+        </details>
+
+        <details class="the">
+          <summary>Hướng dẫn nhanh</summary>
+          <ol class="huong-dan">
+            <li>Bật máy chủ Bridge trên máy, rồi chọn tệp ghép cặp ở khối trên cùng.</li>
+            <li>Mở trang web muốn thuần hoá. Để AI gửi lệnh xuống qua Bridge.</li>
+            <li>Muốn AI <strong>bấm hoặc gõ</strong> thì bật công tắc ở đầu bảng. Mỗi lần bật được 50 lượt.</li>
+            <li>Thấy AI làm gì lạ thì nhấn <strong>Ctrl + Shift + X</strong> — tắt ngay, kể cả khi bảng này đã đóng.</li>
+          </ol>
+        </details>
       </section>
     </main>
     <script type="module" src="sidepanel.js"></script>
