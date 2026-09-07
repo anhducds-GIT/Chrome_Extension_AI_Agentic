@@ -315,7 +315,9 @@ playbook là văn tưởng tượng.
 
 **Đo.** Ghim gói **13/13**. Việc kế vẫn là `S-10`.
 
-**Ghi cho rõ vì nó là sự cố đa phiên thật, không phải chuyện vặt.** Sáu file của lượt này —
+## 2026-09-07 · `claude-scouter-s06` — việc của tôi bị commit vào tên lane khác
+
+**Sự cố đa phiên thật, không phải chuyện vặt.** Sáu file của lượt này —
 ADR-0020, `TRIALS.md`, `seed-purity-smoke.mjs`, AGENTS/HANDOFF/ROADMAP của gói — **nằm trong
 commit `27a88ce7` của lane `claude-dong-bang-2`**, không phải commit của tôi. Tôi `git add` xong,
 lane kia commit bằng `-a`/`add -A` và cuốn cả phần đã dàn của tôi vào commit của họ.
