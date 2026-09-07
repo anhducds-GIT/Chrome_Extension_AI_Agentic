@@ -1200,3 +1200,28 @@ dạng cái phanh đó.
 `claude-assistant` (3 commit) · `claude-tran-900` (5) · `claude-gemini-nghiem-thu` (1) ·
 `claude-cong-nhanh` (1). Tất cả đều đã có nhãn `Lane:` và đều nằm sẵn trên nhánh trước khi
 tôi commit; tôi không sửa file nào của họ.
+
+## 2026-09-07 · claude-cong-nhanh · Y-12 + Y-07: cổng đóng phiên bớt hơn mười phút bằng một bộ đệm
+
+- **Đo lại trước khi sửa, và số trong sổ SAI:** sổ ghi `build-overview-smoke` **392 giây**; đo
+  trên máy này (node v24.18.0, HEAD `fc66d38`) ra **640 giây**. `build-dashboard-smoke` **78**
+  (sổ ghi 99). Một lượt `buildOverview` **11,5 giây** (sổ ghi 21).
+- **Chỗ tốn, đo chứ không đoán:** `build-overview-smoke` **không tự chạy một tiến trình con nào**
+  — toàn bộ thời gian là lệnh `git` trong `createHeadDeps`, mỗi lệnh một tiến trình mới. Suite
+  dựng lại trang hơn hai chục lượt trên CÙNG một bộ đọc đã ghim một commit, tức hỏi git y hệt
+  nhau hơn hai chục lần. Nghi ngờ ⑴ của sổ đúng; hướng "phép đếm commit" của lượt trước sai.
+- **Sửa:** đệm lệnh git theo bộ đọc trong `createHeadDeps`, đệm **cả cú ném** (`objectType` hỏi
+  đường dẫn không tồn tại rất nhiều lượt). KHÔNG đệm bộ đọc riêng của `createDefaultDeps` vì
+  `dirtyFiles` đọc cây làm việc. `bang-trang-thai/` vốn dựng bộ đọc mới mỗi nhịp nên không cũ.
+- **Trước → sau:** overview **640 → 17 giây** · dashboard **78 → 77** · lượt sinh thứ hai trên
+  cùng bộ đọc **11,5 → 0,087 giây**.
+- **Không làm yếu gì, đếm được:** overview **33 phép kiểm / 393 khẳng định**, dashboard **99/456**
+  — y nguyên, vì **không file nào dưới `tests/` bị chạm**. Đột biến kiểm **8 con, cả 8 mỏ neo
+  khớp đúng 1 chỗ**, chạy trên bản CŨ (bản sao repo tại `fc66d38`, control 33/33 + 99/99 xanh)
+  và bản MỚI: **tập bị bắt giống hệt** — bắt `M1 M4 M5 M7`, sót `M2 M3 M6 M8`.
+- **Bốn con SÓT là lỗ có từ trước, không do lượt này:** cả hai bản đều sót y nhau. Ghi `N-27`.
+- **Ba artifact máy sinh vẫn khớp HEAD**, và hai bộ đọc mới dựng cho ra trang giống hệt từng
+  byte → không dính đồng hồ hệ thống.
+- **Còn mở:** `build-dashboard-smoke` nay là suite lớn nhất (77 giây), gần hết nằm ở khối Gate 7
+  gọi lại `session-check` bằng tiến trình con. Đó **không phải việc lặp** — mỗi lượt một ca khác
+  — nên bỏ nó là bỏ phép kiểm, và việc đó là quyết định của Đức, không phải của tôi.
