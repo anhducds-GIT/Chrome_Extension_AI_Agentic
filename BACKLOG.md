@@ -1151,3 +1151,53 @@ fixture chọn một đơn vị THẬT khác GPT, chọn theo thứ tự đườ
   FEATURE-PARITY.md` ra 0.
   · **đóng khi:** ba khối AUTO biến khỏi `FEATURE-PARITY.md`, chỗ đó còn một con trỏ sang
   `FEATURE-PARITY-AUTO.md`, và hai lệnh đo trên ra `0` và `>=1`. Khoá cần: `_root`.
+
+## MỞ · N-28 · Mục sổ nợ KHÔNG CÓ MÃ thì không ai trỏ tới được, và người trỏ sẽ trỏ nhầm
+
+**[ĐO 2026-09-07, xảy ra thật trong cùng ngày mở mục này]** · lane `claude-gemini-crlf` làm xong
+một việc tốt, kiểm chứng lại thì đúng — nhưng nó gọi mục nguồn là **`F-27`**, và `F-27` là một
+mục **hoàn toàn khác**.
+
+Mục nguồn thật là một `###` heading **không có mã** trong `workers/duc-auto-gg-flow-video/v0.1.0/BACKLOG.md`:
+`### Xuống dòng CRLF làm vỡ phép kiểm tĩnh — **[ĐO 05/09]**, đã vá ở gói này, còn mở ở gói khác`.
+`F-27` thật là giai đoạn `SENDING` đo được 83 · 51 · 133 · 144 giây mà chỉ ~25 giây có trần khai.
+Không liên quan gì tới xuống dòng.
+
+**Đây không phải lỗi cẩu thả của một lane, nó là lỗ của định dạng sổ.** Một mục không mã thì
+người muốn trỏ tới nó có đúng hai lựa chọn: chép cả tiêu đề dài, hoặc gán tạm một mã gần đó.
+Lane chọn cách thứ hai — cách tự nhiên hơn — và sai. Lane sau mở `F-27`, thấy nó nói về đồng hồ
+chứ không nói về xuống dòng, và **không cách nào biết chỗ nào sai: mã hay lời**. Đó là loại nợ
+đắt nhất mà rẻ nhất để chặn.
+
+Bốn chỗ sai đã vào commit của lane đó (`workers/duc-auto-gemini/v0.2.0/BACKLOG.md` dòng 386, 405,
+407, 409) cộng một chỗ trong `HANDOFF.md` cùng gói. **Chưa sửa được:** lane đã báo xong và phiên
+điều phối không có đường gọi lại nó, còn khoá `workers/duc-auto-gemini` thì lane vẫn giữ (đúng
+luật — ba commit của nó chưa đẩy). Chủ khoá tiếp theo của gói đó sửa, trỏ theo **tiêu đề** chứ
+đừng gán mã cho mục của gói khác.
+
+Việc kèm theo, cho chủ khoá `workers/duc-auto-gg-flow-video`: **gán một mã `F-xx` cho mục CRLF đó**.
+
+**đóng khi:** ⑴ mục CRLF của gói Flow có mã · ⑵ năm chỗ trỏ sai trong gói Gemini đã trỏ theo mã
+mới hoặc theo tiêu đề · ⑶ có một phép kiểm đếm được số `###` heading trong các `BACKLOG.md` mà
+không mang mã, và ĐỎ khi con số đó tăng — không có phép kiểm thì luật này sẽ bị bỏ qua như mọi
+luật không kiểm được bằng máy.
+
+- **THÊM VÀO N-11 · xác nhận độc lập từ phiên điều phối** · 2026-09-07 · lane `claude-assistant` ·
+  Đo lại lúc `claude-gemini-crlf` đóng phiên: `FEATURE-PARITY-AUTO.md` **vẫn không có trong HEAD**,
+  `_root` vẫn do `claude-scouter-s06` giữ (nay **2 giờ**), và số commit treo đã lên **20 của 4 lane**.
+  Cửa chặn có **hai lớp**, không phải một — lane CRLF đo được lớp thứ hai mà mục gốc chưa ghi:
+  `DASHBOARD-Chrome-Extension-AI-Agentic.html` đã commit cũng không khớp HEAD. Nên `--carry`
+  vô ích ở đây: qua được cửa "cuốn theo commit lane khác" thì đụng ngay cửa artifact lạc hậu, và
+  **cả hai đều cần `_root`**. · **đóng khi:** đã có ở khối `N-11` gốc, không đổi.
+
+- **ĐÓNG một nửa của mục CRLF gói Flow** · 2026-09-07 · lane `claude-gemini-crlf`, phiên điều phối
+  kiểm chứng độc lập · Mục đó khai *"gốc bệnh là repo không có `.gitattributes` cho `.js` … phải để
+  Đức chốt"*. **Câu đó đã lạc hậu:** gốc repo có `* text=auto eol=lf` từ 06/09 (khối `Y-17`), và
+  chú thích trong chính file đó mang số đo — trong git 1084 LF / 0 CRLF, trên đĩa 963 LF / 89 CRLF
+  / 32 lẫn lộn, tức bệnh nằm ở lượt checkout chứ không nằm ở kho. **Không còn gì để Đức chốt ở vế
+  này.** Vế còn mở là soi gói `duc-auto-chatgpt` (chưa ai soi) — câu lệnh soi ghi ở `G-14` của gói
+  Gemini. Gói `duc-auto-gemini` đã soi: ép CRLF cả gói làm **2 phép kiểm đỏ**
+  (`content-image-static.mjs:127`, `landed-as-requested.mjs:38`), đã nới đúng hai mỏ neo thành
+  `\r?\n`, suite **95/95 ở CẢ HAI chiều**, đột biến **8/8 bị bắt** và chạy lại đủ 8 con ở chiều
+  CRLF nữa cũng 8/8 — trong đó có một con thử *nới quá tay* (chèn hàm lạ vào giữa hai hàm phải kề
+  nhau) và nó vẫn ĐỎ, nên tính kề nhau chưa bị mất.
