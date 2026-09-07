@@ -93,11 +93,18 @@ nên hai việc không hề chồng nhau vẫn chặn nhau:
 Nhận đúng vùng mình đụng, không nhận cả gốc repo. Cổng đóng phiên sẽ nói tên khoá còn thiếu.
 Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.json`.
 
-**Bốn artifact máy sinh KHÔNG đòi khoá nào** (từ 03/09): `DASHBOARD.md` · `llms.txt` ·
-`repo-map.json` · `DASHBOARD-Chrome-Extension-AI-Agentic.html`. Không có gì của ai trong đó để mất — chạy lại bộ sinh là ra y hệt, và đo ngày
+**Năm artifact máy sinh KHÔNG đòi khoá nào** (bốn từ 03/09, cái thứ năm từ 07/09):
+`DASHBOARD.md` · `llms.txt` · `repo-map.json` · `DASHBOARD-Chrome-Extension-AI-Agentic.html` ·
+`FEATURE-PARITY-AUTO.md`. Không có gì của ai trong đó để mất — chạy lại bộ sinh là ra y hệt, và đo ngày
 02/09 thấy **19% lượt nhận `_root` tồn tại CHỈ để chạy một bộ sinh rồi trả ngay**. Danh sách khai
-ở khối `generated` của `.repo-structure.json`. `FEATURE-PARITY.md` **cố ý không** nằm trong đó:
-mục 2 của nó là chữ của người, nên chạm nó vẫn phải giữ `_root`.
+ở khối `generated` của `.repo-structure.json`.
+
+`FEATURE-PARITY.md` **cố ý không** nằm trong đó, và câu đó vẫn đúng: mục 2 của nó là chữ của
+người, nên chạm nó vẫn phải giữ `_root`. **Nhưng từ 07/09 nửa máy sinh của nó đã ra file riêng**
+— `FEATURE-PARITY-AUTO.md` — **và file riêng đó thì được miễn**
+([ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)). Nên một lane chỉ giữ khoá
+gói của mình vẫn sinh lại được bảng số và đẩy được; trước đó nó phải xin `_root`, và ngày 05/09
+hai lane bị chặn đẩy đúng vì thế.
 
 **File được MIỄN chia làm HAI LOẠI, và điều kiện khác nhau:**
 
@@ -219,7 +226,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | **Sắp ghi một mục nhật ký, hoặc bị cổng chặn vì mục quá dài** | `docs/protocols/HANDOFF.md` — một mục chứa gì và KHÔNG chứa gì (lý do → ADR · việc còn nợ → `BACKLOG.md` · cách làm → brief), **trần 2.600 byte một mục** khai ở `.repo-structure.json` và cổng đóng phiên chặn **đúng mục bạn vừa thêm**, và cách xoay file theo tháng. Quyết định gốc: [ADR-0011](docs/adr/0011-handoff-chan-o-dau-vao-va-xoay-theo-thang.md). Công cụ: `node scripts/handoff.mjs --check` (đo) · `--rotate <file>` (xoay sang tháng mới) |
 | Biết phiên trước làm tới đâu | `HANDOFF.md` của package (cuối file) · việc ở gốc repo: `HANDOFF.md` gốc — **cả bốn file nay chỉ giữ 20 mục cuối** (ADR-0008) |
 | **Cần đào lịch sử xa hơn 20 mục** | `HANDOFF-ARCHIVE-01.md` **cạnh chính file `HANDOFF.md` đó** — gốc repo có `HANDOFF-ARCHIVE-01.md` giữ 62 mục cũ, ba worker mỗi gói một file cùng tên. **Nguyên văn, không sửa một chữ; chỉ đọc.** Ghép lại dựng được bản gốc giống hệt từng byte (bất biến ⑴ của ADR-0008, có SHA-256 in ngay đầu file lưu trữ). Ghi Log mới thì vẫn ghi vào cuối `HANDOFF.md` |
-| **Biết nhánh mình đang thiếu tính năng gì so với nhánh kia** | `FEATURE-PARITY.md` ở gốc repo |
+| **Biết nhánh mình đang thiếu tính năng gì so với nhánh kia** | **HAI file, đọc cùng nhau** ([ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)): `FEATURE-PARITY.md` ở gốc repo là **chữ của người** — mục 2 (tính năng hành vi, có bằng chứng **[ĐỌC]**) và phần diễn giải; sửa nó thì phải giữ `_root`. `FEATURE-PARITY-AUTO.md` là **số của máy** — method Bridge, so module, nợ *method*; **SINH TỰ ĐỘNG, miễn khoá**, sinh lại: `node scripts/feature-parity.mjs` |
 | **Mở phiên AI mới và cần hiểu repo trong một lần đọc** | `llms.txt` ở gốc repo — cổng vào chuẩn llmstxt.org, **SINH TỰ ĐỘNG**; bản đồ máy đọc đi kèm: `repo-map.json` (hợp đồng cross-repo, có `schema_version`). Sinh lại: `node scripts/build-dashboard.mjs` |
 | **Muốn biết repo có extension nào, cái nào dùng được, đã kiểm chứng chưa** | `DASHBOARD.md` ở gốc repo — **SINH TỰ ĐỘNG, đừng sửa tay**; sinh lại: `node scripts/build-dashboard.mjs` |
 | Hiểu cách vận hành nhiều extension trong một repo, hoặc thêm extension mới | `PLATFORM.md` ở gốc repo |
@@ -246,26 +253,37 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | **Đức muốn tự xem bảng mà KHÔNG phải nhờ AI** | `bang-trang-thai/` ở gốc repo — **ba cửa, một thư mục, một lõi** (`BRIEF-BANG-BA-CUA-01`, Đức nêu 06/09): ① nhấp đúp `Xem-bang.cmd` · ② `Mo-may-chu.cmd` mở máy chủ tại chỗ (chỉ nghe `127.0.0.1`, **không có đường ghi nào**), trong trang có nút Làm mới · ③ `Bat-tu-chay.cmd` / `Tat-tu-chay.cmd` cài–gỡ mục tự chạy lúc khởi động Windows (thư mục Startup của người dùng, **không cần quyền quản trị** — Đức duyệt tường minh 06/09). Lõi chung: `bang-trang-thai/loi.mjs`. **Bốn chốt an toàn, phép ghim `tests/bang-ba-cua-smoke.mjs` cưỡng chế cả bốn:** phiên nào đang giữ `_code` thì NGỪNG sinh và **trang nói rõ vì sao** (bộ sinh nằm trong vùng đó, có thể đang sửa dở) · chỉ sinh bảng HTML, **cấm** chạy bộ sinh đối chiếu tính năng · không commit / đẩy / nhận khoá — cả thư mục không chạy một lệnh hệ điều hành nào · gộp nhịp 30 giây, không sinh theo từng sự kiện file. Bản ra `BANG.html` **không commit** (đã cho vào `.gitignore`); bản đã commit ở gốc repo vẫn là việc của phiên AI lúc đóng phiên. Câu để dán cho Đức: mục cùng tên trong `PROMPTS.md` |
 | **Sinh bảng trạng thái cho Đức xem** | `node scripts/build-overview.mjs <file-ra.html>` — trang trực quan, sinh từ cùng nguồn với `DASHBOARD.md` nên ba trang không thể nói khác nhau. **Bản ra KHÔNG commit**: nó để publish, và tự in ngày sinh + bật cờ đỏ khi quá 7 ngày. Cấm trong trang: SHA · đường dẫn · phần trăm · lời máy tự khen |
 
-**Về `FEATURE-PARITY.md`:** bảng tính năng GPT ↔ Gemini. Nó ở **gốc repo** vì nói về cả hai
-nhánh — sửa nó thì phải đang giữ `_root`.
+**Về bảng đối chiếu GPT ↔ Gemini — nay là HAI file, đừng tìm số ở file chữ:**
 
-> **NỬA FILE NÀY DO MÁY SỞ HỮU (từ 2026-08-27).** Mọi thứ nằm giữa `<!-- AUTO:X START -->` và
-> `<!-- AUTO:X END -->` là **máy sinh** — mục 1 (method Bridge), mục 3 (module), và nợ *method*
-> ở mục 4. **Sửa tay trong đó sẽ mất trắng ở lần sinh sau.** Sinh lại / kiểm:
+| File | Của ai | Chứa gì | Khoá |
+|---|---|---|---|
+| `FEATURE-PARITY.md` | **NGƯỜI** | mục 2 (tính năng hành vi, bằng chứng **[ĐỌC]**), ghi chú module, diễn giải "ai nợ ai" | phải giữ `_root` |
+| `FEATURE-PARITY-AUTO.md` | **MÁY, toàn bộ** | mục 1 method Bridge · mục 3 so module · mục 4 nợ *method* | **miễn khoá** |
+
+Cả hai ở **gốc repo** vì nói về cả hai nhánh, không thuộc package nào.
+
+> **CẢ FILE `FEATURE-PARITY-AUTO.md` DO MÁY SỞ HỮU (từ 07/09,
+> [ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)).** **Sửa tay là mất trắng
+> ở lần sinh sau.** Sinh lại / kiểm:
 > ```bash
 > node scripts/feature-parity.mjs           # sinh
 > node scripts/feature-parity.mjs --check    # chỉ kiểm, không ghi
 > ```
-> **Mục 2 (hành vi) thì ngược lại: của NGƯỜI, và máy bị cấm đụng vào.** Dò theo tên hàm đã cho
-> kết luận sai bốn lần trong một ngày. Muốn thêm dòng hành vi thì phải mở code đọc, gắn nhãn
-> **[ĐỌC]**, kèm bằng chứng.
+> **Trước 07/09 hai loại chữ ở chung một file**, ngăn nhau bằng mốc `<!-- AUTO:X START -->` /
+> `<!-- AUTO:X END -->`. Nay `FEATURE-PARITY.md` **không còn một mốc AUTO nào** — chỗ chúng từng
+> nằm là một **con trỏ** sang file máy. Thấy mốc AUTO quay lại trong đó thì đó là bug: phép ghim
+> khối 13 của `tests/feature-parity-smoke.mjs` canh đúng chuyện này.
+>
+> **Mục 2 (hành vi) vẫn của NGƯỜI, và máy vẫn bị cấm đụng vào** — luật này không đổi một chữ.
+> Dò theo tên hàm đã cho kết luận sai bốn lần trong một ngày. Muốn thêm dòng hành vi thì phải mở
+> code đọc, gắn nhãn **[ĐỌC]**, kèm bằng chứng.
 >
 > Và một luật nhỏ nhưng đã trả giá: **đừng viết văn của người chung dòng với số của máy** —
 > một câu diễn giải đã bị nuốt mất đúng vì nằm chung dòng với con số. Mỗi dòng ghi rõ được xác lập
 bằng cách nào (**[ĐO]** máy đếm · **[ĐỌC]** đọc thẳng code · **[DÒ]** tìm theo tên), vì ba loại
 đó tin được khác nhau: dò theo tên đã cho hai kết quả sai trong một buổi. **Dòng [DÒ] phải kiểm
-lại trước khi hành động.** Port tính năng sang nhánh kia thì đọc file này trước, đừng đọc
-`BACKLOG.md` — danh sách port trong backlog đã lạc hậu một lần (ghi Gemini thiếu `run.stop`
+lại trước khi hành động.** Port tính năng sang nhánh kia thì đọc **hai file trên** trước, đừng
+đọc `BACKLOG.md` — danh sách port trong backlog đã lạc hậu một lần (ghi Gemini thiếu `run.stop`
 trong khi nó đã có).
 
 ## 7. Đóng phiên — ghi lại 3 thứ
