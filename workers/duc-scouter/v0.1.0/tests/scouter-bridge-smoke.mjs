@@ -30,11 +30,19 @@ const EXPECTED_METHODS = [
   "scout.click",
   "scout.type",
   "scout.key",
+  "scout.fetch",
   "scout.reload"
 ];
-/* Bốn method GHI. `scout.reload` nạp lại chính extension; ba `scout.*` kia chạm TRANG — đó là
- * chỗ Scouter thôi làm người quan sát (ADR-0009). Cờ `read_only` phải nói đúng điều đó. */
-const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.type", "scout.key"]);
+/* Năm method GHI. `scout.reload` nạp lại chính extension; ba `scout.*` kia chạm TRANG — đó là
+ * chỗ Scouter thôi làm người quan sát (ADR-0009). Cờ `read_only` phải nói đúng điều đó.
+ *
+ * `scout.fetch` là cái thứ năm, và nó là ca DUY NHẤT mà cờ này không đọc theo nghĩa đen: lượt
+ * gọi đó chỉ ĐỌC dữ liệu, không sửa trang nào. Nó ở đây vì cờ `read_only` quyết định một việc
+ * khác — có phải chui qua phanh hay không. Từ khi Đức mở `<all_urls>` (07/09, ADR-0003 của
+ * gói) thì một lượt gọi mạng chạm được mọi trang đang đăng nhập, nên nó phải trả đúng cái giá
+ * mà `scout.click` trả. Đổi dòng này thành `read_only: true` là mở cho nó chạy tự do đúng lúc
+ * nó nguy hiểm nhất. */
+const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.type", "scout.key", "scout.fetch"]);
 /* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ObserverEngine.runAction`. */
 const EXPECTED_ACTIONS = new Set(["input.click", "input.type", "input.key"]);
 /* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ObserverEngine.runProbe`. */
@@ -380,6 +388,49 @@ function request(method, params) {
 {
   assert.deepEqual(new Set(Object.values(SEED_CONSTANTS.PROBE_BY_METHOD)), EXPECTED_PROBES);
   assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 4);
+}
+
+/* ---- Trạm gác tham số của `scout.fetch` (S-10) ---------------------------
+ * Đức mở `<all_urls>` ngày 07/09, nên hàng rào theo từng TRANG không còn. Cái thay thế nó là
+ * hàng rào theo HÌNH DẠNG, và nó nằm đúng ở hàm này. Bốn chốt, mỗi chốt một cách hỏng thật:
+ *
+ *   · `file:` — `fetch()` trong service worker nuốt luôn lược đồ này. Không chặn thì một lệnh
+ *     Bridge đọc được file trên đĩa của Đức, và nhật ký chỉ ghi "một lượt gọi mạng".
+ *   · `cookie` / `authorization` từ người gọi — trình duyệt đã tự gắn cookie khi
+ *     `with_credentials` bật, nên người gọi KHÔNG bao giờ cần tự gõ. Cho gõ thì method này
+ *     thành công cụ mượn danh tính bất kỳ ai.
+ *   · GET kèm thân — `fetch()` NÉM chứ không bỏ qua, nên bắt ở đây để đổi một TypeError trần
+ *     trong service worker lấy một câu người đọc được.
+ *
+ * Header KHÁC thì để mở, cố ý: cái Đức bảo bỏ là giới hạn theo từng ca, không phải chốt an toàn. */
+{
+  const entry = core.METHOD_REGISTRY["scout.fetch"];
+  const chuan = { url: "https://vi-du.test/x" };
+  const tuChoi = (params, viTri) => {
+    try { entry.params_validator(params); }
+    catch (error) {
+      assert.equal(error.code, "INVALID_PARAMS", `mong doi INVALID_PARAMS o ${viTri}`);
+      return error;
+    }
+    assert.fail(`tham so xau van lot: ${viTri}`);
+  };
+
+  for (const xau of ["file:///C:/Windows/win.ini", "chrome-extension://abc/x", "data:text/plain,x", "khong-phai-url"]) {
+    tuChoi({ ...chuan, url: xau }, xau);
+  }
+  tuChoi({ ...chuan, headers: { Cookie: "session=1" } }, "header Cookie");
+  tuChoi({ ...chuan, headers: { authorization: "Bearer x" } }, "header authorization");
+  tuChoi({ ...chuan, method: "GET", body: "a=1" }, "GET kem than");
+  tuChoi({ ...chuan, method: "DELETE" }, "method ngoai bang");
+
+  /* Đường ĐÚNG vẫn phải đi lọt — một trạm gác chặn tất cả thì không ai phát hiện nó hỏng. */
+  const ok = entry.params_validator({
+    url: "https://hnx.vn/x", method: "POST", body: "p_date=05%2F09%2F2026",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" }
+  });
+  assert.equal(ok.method, "POST");
+  assert.equal(ok.with_credentials, false, "khong khai thi phai la false, khong phai undefined");
+  assert.deepEqual(Object.keys(ok).sort(), ["body", "headers", "method", "url", "with_credentials"]);
 }
 
 console.log("scouter-bridge smoke tests: PASS");

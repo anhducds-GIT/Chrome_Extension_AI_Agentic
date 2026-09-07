@@ -133,6 +133,74 @@ function requiredKeyName(value) {
   return value;
 }
 
+/* ---- BỐN PHÉP KIỂM CHO `scout.fetch` (S-10) ------------------------------
+ * Đây là method đầu tiên của Scouter đi ra INTERNET, nên chỗ kiểm tham số ở đây là trạm gác
+ * thật, không phải thủ tục. Đức mở `<all_urls>` ngày 07/09 để không phải xin quyền theo từng
+ * trang — mở vùng ĐÍCH thì phải siết vùng HÌNH DẠNG, nếu không thì không còn lớp nào.
+ *
+ * `requiredHttpUrl` CHỈ nhận http/https. Cấm `file:` (đọc đĩa của Đức), `chrome-extension:`
+ * (đọc chính gói này), `data:`/`blob:` (không phải mạng, chỉ làm rối nhật ký). Đây không phải
+ * lo xa: `fetch()` trong service worker nuốt cả `file:` mà không kêu một tiếng.
+ *
+ * `optionalHeaders` cấm `cookie` và `authorization` — HAI cái tên đó, không phải cả bảng.
+ * Trình duyệt tự gắn cookie khi `with_credentials` bật, nên người gọi KHÔNG bao giờ cần tự gõ
+ * chúng; mà cho gõ thì method này thành công cụ mượn danh tính của bất kỳ ai. Các header khác
+ * để mở, vì đó đúng là thứ Đức bảo đừng giới hạn theo từng ca. */
+function requiredHttpUrl(value) {
+  if (typeof value !== "string" || value.trim() === "") invalidParams("params.url", "expected a non-empty string");
+  if (value.length > 2048) invalidParams("params.url", "expected at most 2048 characters");
+  let parsed;
+  try { parsed = new URL(value); }
+  catch { return invalidParams("params.url", "expected an absolute URL"); }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    invalidParams("params.url", `expected an http: or https: URL, got '${parsed.protocol}'`);
+  }
+  return parsed.toString();
+}
+
+const FETCH_METHODS = Object.freeze(["GET", "POST"]);
+
+function optionalHttpMethod(value) {
+  if (value === undefined || value === null) return "GET";
+  if (typeof value !== "string" || !FETCH_METHODS.includes(value)) {
+    invalidParams("params.method", `expected one of: ${FETCH_METHODS.join(", ")}`);
+  }
+  return value;
+}
+
+const FORBIDDEN_HEADERS = Object.freeze(["cookie", "authorization"]);
+
+function optionalHeaders(value) {
+  if (value === undefined || value === null) return {};
+  if (!isPlainObject(value)) invalidParams("params.headers", "expected an object of string to string");
+  const entries = Object.entries(value);
+  if (entries.length > 20) invalidParams("params.headers", "expected at most 20 headers");
+  const out = {};
+  for (const [name, headerValue] of entries) {
+    if (typeof name !== "string" || name.trim() === "") invalidParams("params.headers", "expected non-empty header names");
+    if (FORBIDDEN_HEADERS.includes(name.toLowerCase())) {
+      invalidParams(`params.headers.${name}`, "cookie and authorization are never accepted from the caller; use with_credentials instead");
+    }
+    if (typeof headerValue !== "string") invalidParams(`params.headers.${name}`, "expected a string value");
+    if (headerValue.length > 1024) invalidParams(`params.headers.${name}`, "expected at most 1024 characters");
+    out[name] = headerValue;
+  }
+  return out;
+}
+
+function optionalBodyText(value) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") invalidParams("params.body", "expected a string");
+  if (value.length > 65536) invalidParams("params.body", "expected at most 65536 characters");
+  return value;
+}
+
+function optionalFlag(value, path) {
+  if (value === undefined || value === null) return false;
+  if (typeof value !== "boolean") invalidParams(path, "expected true or false");
+  return value;
+}
+
 function noParams(raw) {
   objectParams(raw, []);
   return {};
@@ -267,6 +335,43 @@ const METHOD_ENTRIES = [
         target_id: requiredTargetId(params.target_id),
         selector: requiredSelector(params.selector),
         key: requiredKeyName(params.key)
+      };
+    }
+  }),
+  registryEntry({
+    /* ---- LỆNH GỌI MẠNG (S-10, Đức chốt 07/09) ----------------------------
+     * Method đầu tiên của Scouter đi ra ngoài trình duyệt. Nó tồn tại vì một phép đo, không vì
+     * một ý thích: `hnx.vn` gửi chuỗi chứng chỉ THIẾU (chỉ lá, không có trung gian
+     * "GlobalSign GCC R3 EV TLS CA 2025"). Chrome tự đi lấy phần thiếu nên vào được; Node thì
+     * ném `UNABLE_TO_VERIFY_LEAF_SIGNATURE`. Nên đi vòng qua trình duyệt KHÔNG phải cho đẹp
+     * kiến trúc — ở máy này nó là đường DUY NHẤT không phải tắt kiểm chứng chỉ.
+     *
+     * `read_only: false` DÙ nó chỉ đọc dữ liệu. Cố ý, và đây là chỗ dễ cãi nhất của method này:
+     * cờ đó không hỏi "có sửa trang không", nó hỏi "có phải đi qua phanh không". Với
+     * `<all_urls>` thì một lượt gọi chạm được mọi trang Đức đang đăng nhập, nên nó phải chui
+     * qua đúng cái phanh mà `scout.click` chui qua. Xếp nó `read_only: true` là để nó chạy tự
+     * do đúng lúc nó nguy hiểm nhất.
+     *
+     * KHÔNG dùng `Runtime.*` cũng KHÔNG dùng `Network.*`/`Fetch.*` — hai cửa đó đóng từ
+     * ADR-0007 và lượt này không mở. Đây là `fetch()` của chính service worker. */
+    name: "scout.fetch", read_only: false, deadline_ms: 60000,
+    description: "Fetch one http(s) URL with the browser's own network stack and return the response as text. Credentials are omitted unless with_credentials is set. Refuses cookie and authorization headers from the caller.",
+    params_schema: {
+      url: "string", method: "GET|POST?", headers: "object?", body: "string?", with_credentials: "boolean?"
+    },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["url", "method", "headers", "body", "with_credentials"]);
+      const method = optionalHttpMethod(params.method);
+      const body = optionalBodyText(params.body);
+      /* GET kèm thân là thứ `fetch()` NÉM chứ không bỏ qua — bắt ở đây thì người gọi đọc được
+       * câu tiếng người, thay vì một TypeError trần từ trong service worker. */
+      if (method === "GET" && body !== null) invalidParams("params.body", "a GET request takes no body");
+      return {
+        url: requiredHttpUrl(params.url),
+        method,
+        headers: optionalHeaders(params.headers),
+        body,
+        with_credentials: optionalFlag(params.with_credentials, "params.with_credentials")
       };
     }
   }),

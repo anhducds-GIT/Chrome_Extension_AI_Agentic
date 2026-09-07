@@ -387,11 +387,15 @@ BATCHES.push({
   pin: PIN_GATE,
   mutants: [
     {
+      /* `soLan: 2` từ 07/09, KHÔNG phải nới lỏng: `scout.fetch` (S-10) gọi cùng một hàm phanh,
+       * nên chuỗi này nay có mặt ở HAI đường vào. Đột biến thay cả hai một lượt — tức nó gỡ
+       * phanh khỏi CẢ hai, đúng thứ cần ghim. Để `soLan: 1` thì bộ đo ĐỎ (nó đã đỏ thật ở lượt
+       * chạy 07/09), và đó là lý do trường này tồn tại. */
       ma: "P1",
-      ten: "Gỡ hẳn cái phanh: bấm thẳng, không hỏi công tắc",
+      ten: "Gỡ hẳn cái phanh khỏi CẢ HAI đường vào: bấm và gọi mạng thẳng, không hỏi công tắc",
       tim: "    const budget = await spendWriteBudget();",
       thay: "    const budget = { used: 0, cap_per_unlock: WRITE_CAP_PER_UNLOCK, remaining: WRITE_CAP_PER_UNLOCK };",
-      soLan: 1
+      soLan: 2
     },
     {
       ma: "P2",
@@ -504,10 +508,78 @@ BATCHES.push({
       soLan: 1
     },
     {
+      /* Q2 ĐỔI Ý ĐỊNH 07/09. Bản cũ ghim "không được nới host_permissions ra cả Internet" —
+       * Đức chốt nới thật, nên con đó không còn thứ gì để canh và mỏ neo của nó khớp 0 lần
+       * (bộ đo đã ĐỎ đúng chỗ đó). Thay vì xoá, nó chuyển sang canh cái CÒN LẠI: cửa Bridge.
+       * `<all_urls>` KHÔNG phủ `ws:`, nên bỏ dòng 127.0.0.1 là cắt đường về của cả gói — và
+       * hỏng đó im lặng, nhìn ra ngoài giống hệt "máy chủ Bridge chưa bật". */
       ma: "Q2",
-      ten: "Nới host_permissions ra cả Internet",
-      tim: '  "host_permissions": ["http://127.0.0.1/*"],',
+      ten: "Gộp host_permissions về mỗi <all_urls> — cửa Bridge (ws://127.0.0.1) mất đường",
+      tim: '  "host_permissions": ["<all_urls>", "http://127.0.0.1/*"],',
       thay: '  "host_permissions": ["<all_urls>"],',
+      soLan: 1
+    }
+  ]
+});
+
+/* ---- GỌI MẠNG — trạm gác của `scout.fetch` (S-10, 07/09) -----------------
+ * Đức mở `<all_urls>` ngày 07/09, và lượt chốt đó xoá hàng rào theo từng TRANG. Cái còn lại là
+ * bốn chốt hình dạng dưới đây — nên chúng KHÔNG phải chi tiết cài đặt: gỡ con nào cũng là gỡ
+ * một lớp, không phải dọn code. Con `Q2` cũ từng canh "đừng nới quyền"; nó chết theo lượt chốt
+ * đó, và bộ này là thứ thay chỗ nó. */
+BATCHES.push({
+  ten: "GỌI MẠNG — bốn chốt còn lại sau khi <all_urls> bỏ hàng rào theo trang",
+  target: path.join(ROOT, "scripts", "scouter-bridge-core.mjs"),
+  pin: PIN_BRIDGE,
+  mutants: [
+    {
+      ma: "F1",
+      ten: "Xếp scout.fetch thành read_only — nó thôi chui qua phanh, đúng lúc nguy nhất",
+      tim: '    name: "scout.fetch", read_only: false, deadline_ms: 60000,',
+      thay: '    name: "scout.fetch", read_only: true, deadline_ms: 60000,',
+      soLan: 1
+    },
+    {
+      ma: "F2",
+      ten: "Bỏ kiểm lược đồ URL — một lệnh Bridge đọc được file trên đĩa của Đức qua file://",
+      tim: '  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {',
+      thay: "  if (false) {",
+      soLan: 1
+    },
+    {
+      ma: "F3",
+      ten: "Cho người gọi tự gõ Cookie/Authorization — method thành công cụ mượn danh tính",
+      tim: 'const FORBIDDEN_HEADERS = Object.freeze(["cookie", "authorization"]);',
+      thay: "const FORBIDDEN_HEADERS = Object.freeze([]);",
+      soLan: 1
+    },
+    {
+      ma: "F4",
+      ten: "Bỏ chặn GET kèm thân — đổi một câu tiếng người lấy một TypeError trần trong worker",
+      tim: '      if (method === "GET" && body !== null) invalidParams("params.body", "a GET request takes no body");',
+      thay: "      if (false) invalidParams(\"params.body\", \"a GET request takes no body\");",
+      soLan: 1
+    }
+  ]
+});
+
+BATCHES.push({
+  ten: "GỌI MẠNG — hai chốt nằm ở lõi seed",
+  target: path.join(ROOT, "scripts", "scouter-seed-core.mjs"),
+  pin: PIN_GATE,
+  mutants: [
+    {
+      ma: "F5",
+      ten: "Luôn kèm danh tính — một lượt gọi bất kỳ đọc được trang sau đăng nhập bất kỳ",
+      tim: '          credentials: params.with_credentials ? "include" : "omit",',
+      thay: '          credentials: "include",',
+      soLan: 1
+    },
+    {
+      ma: "F6",
+      ten: "Cắt thân cho vừa trần thay vì báo đỏ — người gọi nhận nửa file mà tưởng đủ",
+      tim: "      if (bytes > FETCH_MAX_BODY_BYTES) {",
+      thay: "      if (false) {",
       soLan: 1
     }
   ]

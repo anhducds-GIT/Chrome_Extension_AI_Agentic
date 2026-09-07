@@ -74,6 +74,10 @@ const ACTION_BY_METHOD = Object.freeze({
  * adapter), và đủ nhỏ để một vòng lặp hỏng dừng trước khi kịp làm gì đáng kể. */
 const WRITE_GATE_STORAGE_KEY = "scouter.write.gate.v1";
 const WRITE_CAP_PER_UNLOCK = 50;
+/* Trần thân trả về của `scout.fetch`. Đặt ở 512 KiB chứ không phải 1 MiB của phong bì: phần vỏ
+ * (JSON escape, các trường khác) phình thêm được đáng kể, và chạm trần phong bì thì cả lượt
+ * chết ở tầng vận chuyển với một câu khó hiểu, thay vì chết ở đây với một câu nói rõ vì sao. */
+const FETCH_MAX_BODY_BYTES = 512 * 1024;
 
 const RELOAD_MIN_GAP_MS = 10000;
 const RELOAD_STORAGE_KEY = "scouter.reload.last.v1";
@@ -96,6 +100,10 @@ export function createSeedHandlers(deps = {}) {
   const engine = deps.engine;
   const chromeApi = deps.chromeApi;
   const timers = deps.timers || globalThis;
+  /* Bơm `fetch` vào thay vì gọi thẳng globalThis — đúng quy ước của file này (`chromeApi`,
+   * `timers` đều bơm). Không bơm thì phép ghim phải thay một hàm toàn cục rồi nhớ trả lại, và
+   * cái "nhớ trả lại" đó là chỗ một suite rò rỉ sang suite khác. */
+  const doFetch = typeof deps.fetch === "function" ? deps.fetch : ((...args) => globalThis.fetch(...args));
   const now = typeof deps.now === "function" ? deps.now : () => new Date();
   const BridgeProtocolError = deps.BridgeProtocolError;
   const negotiateVersion = deps.negotiateVersion;
@@ -268,6 +276,60 @@ export function createSeedHandlers(deps = {}) {
       return await runAction("scout.key", target, { selector: params.selector, key: params.key });
     },
 
+    /* ---- LỆNH GỌI MẠNG (S-10) ------------------------------------------
+     * KHÔNG đi qua `runAction()`: chỗ đó bơm việc cho `ObserverEngine`, mà lượt gọi này không
+     * chạm một tab nào. Nhưng nó PHẢI trả đúng cái giá kia — nên nó gọi thẳng
+     * `spendWriteBudget()`, tức vẫn là cái phanh đó, chỉ khác đường vào.
+     *
+     * TRỪ NGÂN SÁCH TRƯỚC KHI GỌI, giống ⑶ ở đầu file: một lượt gọi hỏng vẫn tốn một lượt.
+     * Ngược lại thì một vòng lặp gọi hỏng liên tục sẽ quay mãi mà trần không bao giờ chạm.
+     *
+     * `credentials` mặc định `omit`. Đây là chốt an toàn thật, không phải mặc định cho có: với
+     * `<all_urls>`, một lượt gọi kèm cookie đọc được nội dung sau đăng nhập của BẤT KỲ trang
+     * nào Đức đang mở. Pilot `hnx.vn` là dữ liệu công khai nên không cần cookie — và thứ không
+     * cần thì đừng bật sẵn. Ai thật sự cần thì khai `with_credentials: true`, và lúc đó nó nằm
+     * trong nhật ký lệnh gọi chứ không nằm trong một mặc định không ai đọc. */
+    async "scout.fetch"(params) {
+      const budget = await spendWriteBudget();
+      let response;
+      try {
+        response = await doFetch(params.url, {
+          method: params.method,
+          headers: params.headers,
+          body: params.body === null ? undefined : params.body,
+          credentials: params.with_credentials ? "include" : "omit",
+          redirect: "follow"
+        });
+      } catch (error) {
+        /* Mạng hỏng KHÔNG phải `ok:false` — nó là một lượt chưa bao giờ tới nơi. Dùng lại
+         * `ACTION_FAILED` thay vì đẻ mã mới: bảng lỗi cố ý nhỏ (xem đầu `scouter-bridge-core`). */
+        throw new BridgeProtocolError("ACTION_FAILED", `Không gọi được '${params.url}': ${String(error?.message || error)}`, {
+          action: "fetch", action_code: "FETCH_FAILED", url: params.url
+        });
+      }
+      const text = await response.text();
+      /* CẮT BỚT LÀ NÓI DỐI. Phong bì Bridge trần 1 MiB, nên một thân dài hơn phải làm ĐỎ chứ
+       * không được cắt rồi trả về im lặng: người gọi đọc phải nửa file JSON sẽ đi tìm bug ở
+       * chỗ không có bug. Trần đặt dưới trần phong bì để chừa chỗ cho phần vỏ. */
+      const bytes = new TextEncoder().encode(text).length;
+      if (bytes > FETCH_MAX_BODY_BYTES) {
+        throw new BridgeProtocolError("ACTION_FAILED",
+          `Thân trả về ${bytes} byte, quá trần ${FETCH_MAX_BODY_BYTES} byte của một phong bì.`, {
+            action: "fetch", action_code: "FETCH_BODY_TOO_LARGE", bytes, max_bytes: FETCH_MAX_BODY_BYTES
+          });
+      }
+      return {
+        action: "fetch",
+        status: response.status,
+        ok: response.ok,
+        url: response.url,
+        content_type: response.headers.get("content-type"),
+        bytes,
+        body: text,
+        write_budget: budget
+      };
+    },
+
     async "scout.reload"() {
       const at = now().getTime();
       const previous = await lastReloadAt();
@@ -324,6 +386,7 @@ export const SEED_CONSTANTS = Object.freeze({
   RELOAD_DELAY_MS,
   RELOAD_STORAGE_KEY,
   WRITE_GATE_STORAGE_KEY,
+  FETCH_MAX_BODY_BYTES,
   WRITE_CAP_PER_UNLOCK,
   PROBE_BY_METHOD,
   ACTION_BY_METHOD

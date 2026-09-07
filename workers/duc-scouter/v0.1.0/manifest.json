@@ -5,7 +5,7 @@
   "description": "Bo khung tuong tac tu hoan thien: quan sat trang, bao cao qua Bridge, va tu nap lai chinh no.",
   "minimum_chrome_version": "120",
   "permissions": ["debugger", "storage", "alarms", "sidePanel"],
-  "host_permissions": ["http://127.0.0.1/*"],
+  "host_permissions": ["<all_urls>", "http://127.0.0.1/*"],
   "background": {
     "service_worker": "scouter-background.js",
     "type": "module"

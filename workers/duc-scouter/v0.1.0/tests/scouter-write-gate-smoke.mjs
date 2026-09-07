@@ -24,7 +24,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 const { createSeedHandlers, setWriteGate, readWriteGateState, SEED_CONSTANTS } =
   await import("../scripts/scouter-seed-core.mjs");
-const { BridgeProtocolError, negotiateVersion, capabilities } =
+const { BridgeProtocolError, negotiateVersion, capabilities, MAX_ENVELOPE_BYTES } =
   await import("../scripts/scouter-bridge-core.mjs");
 
 /* Khai LẠI tại đây, cố ý không import. Import khoá lưu trữ từ module là để cái được ghim tự
@@ -80,11 +80,25 @@ function makeEngine(options = {}) {
 function makeHandlers(gate, options = {}) {
   const chromeApi = makeChrome(gate, options);
   const engine = makeEngine(options);
+  /* Ghi lại MỌI lượt gọi mạng, kể cả lượt bị chặn — vì thứ đáng ghim nhất ở đây là lượt gọi
+   * KHÔNG xảy ra. Mặc định trả 200 rỗng; test nào cần khác thì đưa `fetchImpl`. */
+  const fetchCalls = [];
+  const doFetch = options.fetchImpl || (async (url, init) => {
+    fetchCalls.push({ url, init });
+    return {
+      status: 200, ok: true, url, headers: new Map([["content-type", "application/json"]]),
+      text: async () => "{}"
+    };
+  });
+  const wrapped = async (url, init) => {
+    if (options.fetchImpl) fetchCalls.push({ url, init });
+    return await doFetch(url, init);
+  };
   const handlers = createSeedHandlers({
     engine, chromeApi, BridgeProtocolError, negotiateVersion, capabilities,
-    timers: { setTimeout: () => 0 }
+    timers: { setTimeout: () => 0 }, fetch: wrapped
   });
-  return { handlers, engine, chromeApi };
+  return { handlers, engine, chromeApi, fetchCalls };
 }
 
 async function refusal(fn) {
@@ -256,7 +270,25 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
 {
   const manifest = JSON.parse(fs.readFileSync(path.join(here, "..", "manifest.json"), "utf8"));
   assert.deepEqual([...manifest.permissions].sort(), ["alarms", "debugger", "sidePanel", "storage"]);
-  assert.deepEqual(manifest.host_permissions, ["http://127.0.0.1/*"]);
+  /* `<all_urls>` — Đức chốt 07/09: *"tôi muốn mở tất cả quyền cho seed & Scouter & bridge ...
+   * để không bị giới hạn case by case của các web khác nhau"*. Ghi ở ADR-0003 của gói.
+   * `http://127.0.0.1/*` GIỮ LẠI dù trông như đã bị `<all_urls>` phủ: `<all_urls>` không phủ
+   * `ws:`, mà cửa Bridge là WebSocket tới 127.0.0.1. Gộp cho gọn là đánh cược vào một chi tiết
+   * của Chrome mà không ai ở đây đo được. */
+  assert.deepEqual(manifest.host_permissions, ["<all_urls>", "http://127.0.0.1/*"]);
+  /* MỞ VÙNG ĐÍCH THÌ PHẢI SIẾT VÙNG HÌNH DẠNG — nếu không, lượt chốt trên là lớp cuối cùng.
+   * Ba thứ dưới đây là cái còn lại sau khi `<all_urls>` bỏ hàng rào theo từng trang, nên chúng
+   * KHÔNG phải chi tiết cài đặt: gỡ cái nào cũng là gỡ một chốt, không phải dọn code. */
+  {
+    const bridge = fs.readFileSync(path.join(here, "..", "scripts", "scouter-bridge-core.mjs"), "utf8");
+    const seed = fs.readFileSync(path.join(here, "..", "scripts", "scouter-seed-core.mjs"), "utf8");
+    assert.match(bridge, /name: "scout\.fetch", read_only: false/,
+      "scout.fetch phai read_only:false — do la thu bat no chui qua phanh");
+    assert.match(seed, /credentials: params\.with_credentials \? "include" : "omit"/,
+      "mac dinh phai la omit: mot luot goi kem cookie doc duoc moi trang Duc dang dang nhap");
+    assert.match(bridge, /FORBIDDEN_HEADERS = Object\.freeze\(\["cookie", "authorization"\]\)/,
+      "khong duoc nhan hai header nay tu nguoi goi");
+  }
   /* Quyền ADR-0009 CHƯA duyệt: không được xuất hiện, dù có tiện tới đâu. */
   const never = ["cookies", "history", "webRequest", "declarativeNetRequest", "nativeMessaging", "management", "proxy"];
   for (const permission of never) {
@@ -333,4 +365,77 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
   }
 }
 
-console.log("scouter-write-gate-smoke: 16 khoi, tat ca DAT");
+/* ---- ⑰ `scout.fetch` trả đúng cái giá của một lệnh GHI (S-10) -----------
+ * Đức mở `<all_urls>` ngày 07/09 (ADR-0003 của gói). Từ lúc đó, phanh KHÔNG còn là lớp phụ —
+ * nó là thứ duy nhất đứng giữa một lượt gọi sai và mọi trang Đức đang đăng nhập. Nên năm chốt
+ * dưới đây canh HÀNH VI, không canh khai báo: khối ⑭ đã ghim rằng cờ và mặc định được VIẾT
+ * đúng, khối này ghim rằng chúng CHẠY đúng. Hai câu hỏi khác nhau, và câu thứ hai mới là câu
+ * người dùng gặp.
+ *
+ * FETCH_ERR: mạng hỏng. Dựng riêng vì đây là đường mà lượt trừ ngân sách dễ bị bỏ quên nhất. */
+{
+  const URL_OK = "https://vi-du.test/du-lieu";
+
+  /* ⒜ Công tắc TẮT thì không gọi mạng — và "không gọi" phải đo bằng số lượt gọi thật, không
+   * đo bằng việc có ném lỗi hay không. Một bản vá chặn SAU lượt gọi vẫn ném đúng lỗi đó. */
+  {
+    const { handlers, fetchCalls } = makeHandlers(undefined);
+    const error = await refusal(() => handlers["scout.fetch"]({
+      url: URL_OK, method: "GET", headers: {}, body: null, with_credentials: false
+    }));
+    assert.equal(error.code, "WRITE_BLOCKED");
+    assert.equal(error.details.write_code, "DEV_MODE_OFF");
+    assert.equal(fetchCalls.length, 0, "bi chan roi ma van goi ra mang");
+  }
+
+  /* ⒝ GỌI HỤT VẪN TỐN MỘT LƯỢT. Nếu không, một vòng lặp gọi vào một tên miền chết sẽ quay mãi
+   * mà trần 50 không bao giờ chạm — tức cái trần không tồn tại. Cùng lý do với chốt ⑶ của lõi. */
+  {
+    const { handlers, chromeApi } = makeHandlers({ enabled: true, enabled_at: 1, used: 0 }, {
+      fetchImpl: async () => { throw new TypeError("fetch failed"); }
+    });
+    const error = await refusal(() => handlers["scout.fetch"]({
+      url: URL_OK, method: "GET", headers: {}, body: null, with_credentials: false
+    }));
+    assert.equal(error.code, "ACTION_FAILED");
+    assert.equal(error.details.action_code, "FETCH_FAILED");
+    assert.equal(chromeApi.store[GATE_KEY].used, 1, "goi hut ma khong tru ngan sach");
+  }
+
+  /* ⒞ MẶC ĐỊNH KHÔNG KÈM DANH TÍNH. Đây là chốt đắt nhất của cả method: `include` mặc định
+   * nghĩa là một lượt gọi bất kỳ đọc được nội dung sau đăng nhập của trang bất kỳ. */
+  {
+    const { handlers, fetchCalls } = makeHandlers({ enabled: true, enabled_at: 1, used: 0 });
+    await handlers["scout.fetch"]({ url: URL_OK, method: "GET", headers: {}, body: null, with_credentials: false });
+    assert.equal(fetchCalls[0].init.credentials, "omit", "mac dinh phai la omit");
+
+    const xin = makeHandlers({ enabled: true, enabled_at: 1, used: 0 });
+    await xin.handlers["scout.fetch"]({ url: URL_OK, method: "GET", headers: {}, body: null, with_credentials: true });
+    assert.equal(xin.fetchCalls[0].init.credentials, "include", "xin tuong minh thi phai duoc kem danh tinh");
+  }
+
+  /* ⒟ THÂN QUÁ TRẦN THÌ ĐỎ, KHÔNG CẮT. Cắt rồi trả về im lặng là đưa người gọi nửa file JSON
+   * và để họ đi tìm bug ở chỗ không có bug. Đo bằng byte UTF-8, không đo bằng `length`: một
+   * trang tiếng Việt có dấu nặng gấp rưỡi số ký tự, và trần phong bì tính theo byte. */
+  {
+    const qua = "đ".repeat(400 * 1024);            // 400k ký tự → 800k byte UTF-8
+    const { handlers } = makeHandlers({ enabled: true, enabled_at: 1, used: 0 }, {
+      fetchImpl: async (url) => ({
+        status: 200, ok: true, url, headers: new Map(), text: async () => qua
+      })
+    });
+    const error = await refusal(() => handlers["scout.fetch"]({
+      url: URL_OK, method: "GET", headers: {}, body: null, with_credentials: false
+    }));
+    assert.equal(error.details.action_code, "FETCH_BODY_TOO_LARGE");
+    assert.ok(error.details.bytes > SEED_CONSTANTS.FETCH_MAX_BODY_BYTES, "phai bao so byte that");
+  }
+
+  /* ⒠ TRẦN THÂN PHẢI DƯỚI TRẦN PHONG BÌ. Hai hằng số ở hai file, và chúng chỉ đúng khi đứng
+   * cạnh nhau — bằng nhau là chạm trần vận chuyển, và lúc đó lượt gọi chết ở tầng dưới với một
+   * câu không ai lần ra được. */
+  assert.ok(SEED_CONSTANTS.FETCH_MAX_BODY_BYTES < MAX_ENVELOPE_BYTES,
+    "tran than phai NHO HON tran phong bi, de con cho cho phan vo");
+}
+
+console.log("scouter-write-gate-smoke: 17 khoi, tat ca DAT");

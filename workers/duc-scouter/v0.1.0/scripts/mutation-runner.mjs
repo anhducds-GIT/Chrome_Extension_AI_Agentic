@@ -24,6 +24,7 @@
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 
@@ -57,7 +58,48 @@ function chayPin(pin, root) {
  * @param {string} root    thư mục chạy phép ghim
  * @returns {number}       mã thoát: 0 sạch · 1 có con sống sót · 2 bộ đo hỏng
  */
+/* ---- MỘT LƯỢT MỘT LÚC, VÀ ĐÂY KHÔNG PHẢI LO XA ---------------------------
+ * Xảy ra thật 07/09: hai lượt chạy chồng nhau trên cùng thư mục. Lượt A ghi bản đột biến; lượt
+ * B đọc **bản đã đột biến đó** và lưu làm "bản gốc" của mình; A hoàn nguyên đúng; rồi B hoàn
+ * nguyên bản gốc GIẢ của nó — và một con đột biến ở lại trong mã nguồn.
+ *
+ * Vì sao đó là hạng nặng chứ không phải phiền: mã bị nhiễm KHÔNG kêu. Lượt đó `read_only: true`
+ * còn bị phép ghim bắt, nhưng một con đột biến tinh hơn thì suite vẫn xanh và thứ ở lại trong
+ * repo là một chốt an toàn đã bị gỡ. Bộ đo dựng ra để canh chốt lại thành đường gỡ chốt.
+ *
+ * Khoá là một FILE, không phải một biến trong tiến trình: hai lượt là hai tiến trình Node khác
+ * nhau, biến chung không thấy được nhau. `wx` là thao tác tạo-nếu-chưa-có nguyên tử của hệ điều
+ * hành — đúng thứ cần, và không cần thư viện nào. Khoá mồ côi (máy sập giữa chừng) thì câu báo
+ * chỉ thẳng đường dọn, vì một cái khoá không tự gỡ được cũng là một cái kẹt. */
+const KHOA = path.join(os.tmpdir(), "scouter-dot-bien.lock");
+
+function nhanKhoa() {
+  try {
+    fs.writeFileSync(KHOA, `${process.pid} ${new Date().toISOString()}
+`, { flag: "wx" });
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+    let chu = "(không đọc được)";
+    try { chu = fs.readFileSync(KHOA, "utf8").trim(); } catch { /* khoá vừa bị gỡ, kệ */ }
+    console.error("DANG_CHAY_ROI: một lượt đột biến khác đang chạy trên thư mục này.");
+    console.error(`  khoá: ${KHOA}
+  của:  ${chu}`);
+    console.error("Hai lượt cùng ghi–hoàn nguyên một file sẽ BỎ LẠI đột biến trong mã nguồn.");
+    console.error("Đợi lượt kia xong. Chắc chắn không còn lượt nào chạy thì xoá file khoá trên.");
+    process.exit(2);
+  }
+}
+
 export function chayDotBien(batches, root) {
+  nhanKhoa();
+  try {
+    return chayDotBienDaKhoa(batches, root);
+  } finally {
+    try { fs.unlinkSync(KHOA); } catch { /* đã bị gỡ rồi thì thôi */ }
+  }
+}
+
+function chayDotBienDaKhoa(batches, root) {
   let soKhop = 0;
   let soDo = 0;
   let soSong = 0;
