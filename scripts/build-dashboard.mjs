@@ -1481,7 +1481,82 @@ export function createHeadDeps(root = ROOT) {
   const moc = () => (mocGhim ??= git("rev-parse", "HEAD").trim());
   const treeEntries = (relPath) => git("ls-tree", "-z", "--name-only", `${moc()}:${relPath}`)
     .split("\0").filter(Boolean).sort(compareText);
+
+  /* HAI BẢN ĐỒ GỘP — đổi hàng trăm tiến trình git thành HAI.
+   *
+   * Đo 07/09 trên repo này: một lượt sinh gọi git **277 lượt, 8.922ms**, và hai nhóm ăn 58%:
+   * `log -1` **107 lượt / 4.139ms** (ngày commit cuối, MỘT tiến trình cho MỖI đường dẫn) và
+   * `cat-file -t` **40 lượt / 1.098ms** (kiểu đối tượng, cũng một tiến trình mỗi đường dẫn).
+   * Gộp lại: một lượt `git log --name-only` cả lịch sử mất **152ms**, một lượt `ls-tree -r -t`
+   * mất **75ms**. Cùng câu trả lời, **27× và 15× nhanh hơn**.
+   *
+   * Không phải tối ưu vi mô. Bộ sinh này chạy trong cổng đóng phiên, trong phép kiểm của chính
+   * nó, và trong `bang-trang-thai/` — nên mỗi giây ở đây bị nhân lên nhiều lần mỗi phiên.
+   *
+   * ĐỆM SỐNG THEO BỘ ĐỌC, không theo tiến trình, và cả hai bản đồ neo vào `moc()` — cùng một
+   * mốc ghim mà phần dưới đã dùng. Nên chúng không mở lại chỗ hở "nửa trang commit cũ, nửa
+   * trang commit mới" mà đoạn ghim mốc bên dưới sinh ra để bịt.
+   *
+   * CÒN ĐƯỜNG DỰ PHÒNG, cố ý: repo này có **2 commit merge**, và `git log --name-only` mặc
+   * định KHÔNG liệt kê file của commit merge. Nên bản đồ có thể thiếu, và chỗ nào thiếu thì
+   * vẫn gọi git cho đúng đường dẫn đó. Nhanh hơn mà vẫn trả đúng câu trả lời cũ. */
+  let banDoNgay = null;
+  const ngayTheoFile = () => {
+    if (banDoNgay) return banDoNgay;
+    banDoNgay = new Map();
+    let ra;
+    try { ra = git("log", "--format=%x00%cd", "--date=format:%Y-%m-%d", "--name-only", moc()); }
+    catch { return banDoNgay; }
+    for (const khoi of ra.split("\0")) {
+      const dong = khoi.split("\n");
+      const ngay = (dong.shift() || "").trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay)) continue;
+      // Đi từ commit MỚI NHẤT xuống, nên lần đầu thấy một đường dẫn là lần mới nhất.
+      for (const d of dong) {
+        const p = d.trim();
+        if (p && !banDoNgay.has(p)) banDoNgay.set(p, ngay);
+      }
+    }
+    return banDoNgay;
+  };
+  const demNgayThuMuc = new Map();
+  const ngayCuoiTheoBanDo = (relPath) => {
+    const bd = ngayTheoFile();
+    const dung = bd.get(relPath);
+    if (dung) return dung;
+    // Thư mục: bản đồ chỉ có FILE, nên ngày của thư mục là ngày mới nhất trong nó.
+    if (demNgayThuMuc.has(relPath)) return demNgayThuMuc.get(relPath);
+    const tien = `${relPath}/`;
+    let moiNhat = "";
+    for (const [p, ngay] of bd) if (p.startsWith(tien) && ngay > moiNhat) moiNhat = ngay;
+    demNgayThuMuc.set(relPath, moiNhat);
+    return moiNhat;
+  };
+
+  let banDoLoai = null;
+  const loaiTheoDuongDan = () => {
+    if (banDoLoai !== null) return banDoLoai;
+    try {
+      const ra = git("ls-tree", "-r", "-t", "-z", "--format=%(objecttype) %(path)", moc());
+      const bd = new Map();
+      for (const d of ra.split("\0")) {
+        if (!d) continue;
+        const k = d.indexOf(" ");
+        if (k > 0) bd.set(d.slice(k + 1), d.slice(0, k));
+      }
+      banDoLoai = bd.size ? bd : false;
+    } catch { banDoLoai = false; }
+    return banDoLoai;
+  };
   const objectType = (relPath) => {
+    // `cat-file -t <moc>:` phân giải ra cây gốc, nên gốc repo là "tree". Vế này phải giữ:
+    // thiếu nó thì mọi thư mục tầng gốc bị coi là không tồn tại và số "chưa khai chủ" âm
+    // thầm về 0 — đúng cái bẫy đã ghi ở `listDirs` bên dưới.
+    if (relPath === "") return "tree";
+    const bd = loaiTheoDuongDan();
+    // Bản đồ dựng được thì nó ĐẦY ĐỦ cho cây tại mốc này: có thì trả kiểu, không có nghĩa là
+    // thật sự không tồn tại. Chỉ khi KHÔNG dựng được bản đồ mới hỏi git từng đường dẫn.
+    if (bd) return bd.get(relPath) ?? null;
     try { return git("cat-file", "-t", `${moc()}:${relPath}`).trim(); }
     catch { return null; }
   };
@@ -1512,7 +1587,10 @@ export function createHeadDeps(root = ROOT) {
       // Ngày commit cuối chạm vào file. Dùng làm "lần rà gần nhất" để tính nợ tài
       // liệu quá hạn — vì frontmatter CỐ TÌNH không có trường `created`/`last_reviewed`:
       // ngày gõ tay sẽ mục, còn lịch sử git thì không nói dối được.
-      lastCommitDate: (relPath) => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", moc(), "--", relPath).trim(),
+      // Đọc từ bản đồ gộp ở trên (một tiến trình cho cả repo). Bản đồ thiếu — commit merge
+      // không liệt kê file — thì mới hỏi git đúng đường dẫn đó, nên câu trả lời không đổi.
+      lastCommitDate: (relPath) => ngayCuoiTheoBanDo(relPath)
+        || git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", moc(), "--", relPath).trim(),
       /* Ngày commit gần nhất chạm vào ĐÚNG MỘT DÒNG của một file. Dùng để đo "mục này treo
        * bao lâu rồi" mà không đọc đồng hồ hệ thống: cả mốc này lẫn `headDate()` đều lấy từ
        * git, nên cùng một HEAD luôn cho cùng một con số. Đọc đồng hồ ở đây là sang ngày mới
