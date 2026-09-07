@@ -26,11 +26,11 @@
       "duc_decision": "Duc chot 2026-09-06: Duc chot cho phien claude-gemini-hoan-thien lay khoa workers/duc-auto-gemini de dua goi Gemini ve khong con viec mo. Duc se phoi hop chay extension de nghiem thu live."
     },
     "workers/duc-auto-chatgpt": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-07T01:36",
-      "task": "ADR-0015 nang tran run.trial len 900 giay, run.start van cam",
-      "released_at": "2026-09-07T08:30",
+      "owner": "claude-b36-vaA",
+      "ai": "Claude",
+      "claimed_at": "2026-09-07T05:38",
+      "task": "B-36 (A) theo ADR-0049: bootstrap thoi mac dinh Chrome Downloads, giu so audit trong bo nho",
+      "released_at": null,
       "taken_from": "claude-gpt-don-no",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T02:08",
@@ -61,11 +61,11 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-07T01:21",
-      "task": "Tang toc cong dong phien: build-overview-smoke 640 giay, build-dashboard-smoke 78 giay",
-      "released_at": "2026-09-07T04:33",
+      "owner": "claude-bang-vung-chac",
+      "ai": "Claude",
+      "claimed_at": "2026-09-07T05:34",
+      "task": "N-27 ghim bon dot bien lot luoi bo doc HEAD",
+      "released_at": null,
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -73,12 +73,12 @@
       "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "workers/duc-scouter": {
-      "owner": "claude-scouter-s05",
+      "owner": "claude-scouter-s06",
       "ai": "Claude",
-      "claimed_at": "2026-09-07T04:37",
-      "task": "S-05 phanh cho duong ghi (cong tac che do phat trien + tran luot bam) va S-02 quyen alarms lam luoi do noi lai",
+      "claimed_at": "2026-09-07T05:36",
+      "task": "Dung ROADMAP cua goi va dong S-06: do bam-go tren trang thu tu dung",
       "released_at": null
     }
   },
-  "_fingerprint": "86d855aec961fe9f"
+  "_fingerprint": "6939981f86e179d0"
 }
