@@ -1377,3 +1377,31 @@ trên cùng HEAD **giống hệt từng byte**.
 **Cuốn theo một dòng của lane khác:** commit `8e98318` chứa một dòng `ĐÓNG N-30` do
 `claude-bang-ia` viết — ca `N-05`. Sau lượt cắt, `N-30` là khối `--restamp` **vẫn mở**, nên tôi
 thêm một dòng làm rõ ở cuối sổ chứ không sửa chữ của họ.
+
+### 2026-09-07 · `claude-bang-ia` — mở cửa cho sáu lane, rồi refactor IA của bảng
+
+**Việc ⓪ — mở cửa, đi trước một mình.** `tests/build-dashboard-smoke.mjs` dựng sổ mẫu rồi commit
+đúng **bốn** artifact cũ, thiếu artifact thứ năm, nên chính sổ mẫu đó báo *"does not exist in
+HEAD"* và cổng quy `REGRESSION_DA_COMMIT` — chặn MỌI phiên. **[ĐO]** thoát mã **1 → 0**,
+**100/100 PASS**, phép kiểm **100 → 100**, vế khẳng định **463 → 463**. Tên artifact **nhập từ
+hằng số của bộ sinh**, không gõ cứng. Đóng `N-30`.
+
+**Việc ① — bảng đi từ CHÍN tab xuống BA TẦNG.** HOME (mở mặc định, thay góc nhìn hệ thống):
+*đang làm gì trước · cần Đức · đang chạy*. WORK: extension · ý tưởng. SYSTEM: bảy khối còn lại.
+Xoá phần nhân bản: **"Đức cần làm" từ BA chỗ về MỘT**; bảng chỉ mục extension và thanh bậc ý
+tưởng rời trang chủ về đúng khối của chúng; bản cắt ngắn của hướng dẫn làm mới bảng bị bỏ. Chỉ số
+kỹ thuật xuống SYSTEM — **chuyển tầng, không xoá**, và phép ghim đòi chúng vẫn còn trên trang.
+
+**`NEEDS ĐỨC` đi đường (a) của `N-29`, không cắt `human_action`.** Hai cơ chế cùng nuôi một danh
+sách hiển thị, trang nói thẳng là hai nguồn. Bỏ trùng CHỈ ở ca chứng minh được (hồ sơ tự nó mang
+dấu). Cắt hôm nay là mất việc thật của Scouter và một nửa của ChatGPT. **[ĐO] số brief lệch:**
+dấu `@Đức` nay **20** (10 bấm · 10 chốt), không phải 17.
+
+**Nghiệm thu.** Suite bảng **34 → 35** phép kiểm, **395 → 429** vế khẳng định — không gỡ lớp canh
+nào; thời lượng **22,2s → 22,3s**. **Đột biến 9/9 BỊ BẮT**, mỏ neo con nào cũng khớp đúng 1: chỉ
+số kỹ thuật lên HOME · "Đức cần làm" hai chỗ · HOME thiếu khối · khối HOME rỗng ruột · rơi một
+dòng `NEEDS ĐỨC` (hai chiều) · bộ sinh đọc đồng hồ (phép ghim CÓ TRƯỚC, không phải của tôi) · ô
+đếm luồng mất dấu miễn. Bộ sinh chạy hai lượt trên cùng HEAD ra giống hệt từng byte.
+
+**Cổng còn MỘT mục đỏ, KHÔNG phải của tôi:** `HANDOFF_MUC_QUA_DAI` — mục 07/09 của
+`claude-scouter-s06` dài 4794 byte, trần 2600. Sửa là viết lại chữ lane khác. **Tôi giữ `_code`.**
