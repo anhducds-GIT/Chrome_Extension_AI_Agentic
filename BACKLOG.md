@@ -1265,7 +1265,7 @@ commit của tôi — nó đã ĐỎ ở `daa276c`. Phép ghim này cũng không
 (luật mục 1: vùng có chủ khác thì chỉ đọc). Đây cũng là nửa chưa xong của chính thay đổi của lane
 đó. Nới phép ghim để cổng xanh là việc bị cấm thẳng (luật vàng 3).
 
-· **đóng khi:** `tests/build-dashboard-smoke.mjs:720` thêm `"FEATURE-PARITY-AUTO.md"` vào danh
+- **đóng khi:** `tests/build-dashboard-smoke.mjs:720` thêm `"FEATURE-PARITY-AUTO.md"` vào danh
 sách `gitAt("add", …)` — đọc tên từ hằng số bộ sinh thì tốt hơn gõ cứng — và
 `node tests/build-dashboard-smoke.mjs` thoát mã **0**. Khoá cần: `_code`.
 

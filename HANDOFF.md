@@ -1312,3 +1312,34 @@ thật đo được. Luật là luật: cổng chưa xanh thì không đẩy và
 
 **Đức làm được ngay, không cần chờ đẩy:** nạp lại extension trong Chrome từ thư mục
 `workers/duc-scouter/v0.1.0` — icon đã nằm trên đĩa và đã commit.
+
+### 2026-09-07 · `claude-root-adr0014` — nửa `_root` của ADR-0014: bảng đối chiếu tách làm hai
+
+**Xong, kèm số.** `FEATURE-PARITY.md` không còn mốc `AUTO:` nào — `grep -c "AUTO:.* START"` đi
+từ **3 → 0** — và mỗi chỗ ba khối từng nằm nay là **một con trỏ** sang `FEATURE-PARITY-AUTO.md`
+kèm lệnh sinh lại và link ADR (`grep -c FEATURE-PARITY-AUTO`: **0 → 4**). Mục 2, chữ của người,
+**không đổi một byte**. `AGENTS.md` sửa đúng ba chỗ: bốn artifact miễn khoá → **năm**; câu
+"`FEATURE-PARITY.md` cố ý không miễn" giữ nguyên vì vẫn đúng, thêm đoạn nói nửa máy đã ra file
+riêng và file riêng ĐÓ thì miễn; khối "nửa file do máy sở hữu" thành một bảng hai dòng.
+
+Việc ⑴ và ⑵ của brief đã có người land trước tôi (`daa276c`, `claude-scouter-s06`). Kiểm lại
+chứ không tin brief: bộ sinh chạy hai lượt trên cùng HEAD ra **giống hệt từng byte**.
+
+**Hai chiều bất biến ADR-0014, đo cả hai.** Chiều một: file máy lạc hậu một chữ →
+`feature-parity.mjs --check` **thoát mã 1**. Chiều hai (vế bảo vệ chữ người): hai đột biến gỡ
+chốt ghi — `laFileMayDuocGhi` luôn `true`, và bộ sinh chủ động ghi vào `FEATURE-PARITY.md` —
+**cả hai BỊ BẮT**. Chạy trên **bản sao ngoài repo** vì `scripts/` là `_code` của lane khác.
+
+**Đóng `N-11` phải đổi mã trước.** Ba mục chung mã `N-11`, bộ đếm quy theo mã — một dòng
+`ĐÓNG N-11` sẽ **xoá hai món nợ thật**. Tôi đổi mã tại khối (`N-11 → N-25`) rồi đóng `N-25`.
+`backlog-check`: **30 mục, 0 thiếu `đóng khi:`, 0 mã trùng**. Việc này chữa luôn
+`build-overview-smoke` (đang ĐỎ 27≠26) → **34/34 XANH**.
+
+**Vì sao KHÔNG đẩy.** `tests/build-dashboard-smoke.mjs` ĐỎ, cổng quy `REGRESSION_DA_COMMIT`.
+Gốc bệnh một dòng: dòng 720 dựng sổ mẫu rồi commit đúng **bốn** artifact cũ, thiếu
+`FEATURE-PARITY-AUTO.md`. **ĐỎ trước ba commit của tôi** —
+`git diff daa276c..HEAD --name-only -- scripts/ tests/` ra **rỗng**. `tests/` là `_code` của
+`claude-bang-vung-chac` nên tôi **không sửa**. Ghi thành `N-30`. **Tôi giữ `_root`.**
+
+**Lớp chặn artifact ĐÃ MỞ** — cổng mục *"Sự thật máy sinh còn tươi"* nay **XANH**. Còn đúng một
+cửa: một dòng trong `tests/`, rồi 30 commit của 6 lane đi được.
