@@ -31,10 +31,10 @@
       "claimed_at": null,
       "task": null,
       "released_at": "2026-09-07T08:50",
-      "taken_from": "claude-b36-vaA",
-      "taken_by": "claude-scouter-s06",
-      "taken_at": "2026-09-07T09:33",
-      "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\" - go cong dong phien dang do voi MOI lane"
+      "taken_from": "claude-gpt-don-no",
+      "taken_by": "claude-assistant",
+      "taken_at": "2026-09-07T02:08",
+      "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "_root": {
       "owner": "claude-scouter-s06",
@@ -42,10 +42,10 @@
       "claimed_at": "2026-09-07T09:33",
       "task": "Sua dong 1316 HANDOFF.md goc: ### -> ## de tach hai muc bi dinh nhau",
       "released_at": null,
-      "taken_from": "claude-root-adr0014",
+      "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
-      "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\" - go cong dong phien dang do voi MOI lane"
+      "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\". Lay tu lane claude-tinh-gon (dang giu, 7 commit chua day) de sua dong 1316 HANDOFF.md: ### -> ## - muc 4794 byte dang chan cong dong phien voi MOI lane. Sua dung mot ky tu, khong xoa chu cua ai. Toi da nhan thang cho lane do truoc khi lay."
     },
     "_docs": {
       "owner": "claude-scouter-s06",
@@ -78,5 +78,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "6c8050db8d44bc31"
+  "_fingerprint": "56b3f4cce2be1847"
 }
