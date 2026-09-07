@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 
 const calls = [];
 let attachShouldFail = false;
+/* Đường đọc muốn ba khớp (để kiểm phân trang); đường GHI đòi đúng một. Một biến, hai vế. */
+let soKhopQuery = [11, 12, 13];
 
 globalThis.chrome = {
   debugger: {
@@ -31,7 +33,8 @@ globalThis.chrome = {
       if (method === "Target.getTargetInfo") {
         return { targetInfo: { title: "Extension surface", url: "chrome-extension://abc/ui.html?tok=SECRET-DO-NOT-LEAK" } };
       }
-      if (method === "DOM.querySelectorAll") return { nodeIds: [11, 12, 13] };
+      if (method === "DOM.querySelectorAll") return { nodeIds: soKhopQuery };
+      if (method === "DOM.getBoxModel") return { model: { content: [10, 20, 110, 20, 110, 60, 10, 60] } };
       if (method === "DOM.describeNode") {
         return { node: { nodeId: params.nodeId, nodeType: 1, nodeName: "BUTTON", localName: "button", childNodeCount: 0,
           attributes: ["id", `b${params.nodeId}`, "data-secret", "SECRET-DO-NOT-LEAK"] } };
@@ -128,6 +131,75 @@ const ban = await engine.runProbe({ id: "x", attached: true }, "dom.query", { se
 assert.equal(ban.ok, false);
 assert.equal(ban.code, "TARGET_ALREADY_ATTACHED");
 assert.deepEqual(calls, []);
+
+/* ---- Nối dây ĐƯỜNG GHI: ba hành động đi qua chrome.debugger (S-01) -------
+ *
+ * Cùng lý do với khối trên, và ở đây nó nặng hơn: bốn chốt của lõi hành động chỉ bảo vệ được
+ * thứ ĐI QUA lõi. Một lớp nối dây tự gọi thẳng `Input.dispatchMouseEvent` sẽ bấm được vào bất
+ * kỳ toạ độ nào mà mọi phép ghim CỦA LÕI vẫn xanh trọn. Nên ở đây ta hỏi `chrome` đã bị gọi
+ * những gì, không hỏi lõi trả về gì.
+ *
+ * Khai lại tại chỗ, cố ý không import. */
+const WRITE_AT_CHROME = new Set([
+  "DOM.enable",
+  "DOM.getDocument",
+  "DOM.querySelectorAll",
+  "DOM.scrollIntoViewIfNeeded",
+  "DOM.getBoxModel",
+  "DOM.focus",
+  "Input.dispatchMouseEvent",
+  "Input.dispatchKeyEvent"
+]);
+
+soKhopQuery = [11];
+
+/* ⑥ Đường vui: bấm chạy được, và mọi method chạm tới chrome đều nằm trong bộ ghi. */
+calls.length = 0;
+const bam = await engine.runAction(targets[0], "input.click", { selector: "button" });
+assert.equal(bam.ok, true, `input.click phải chạy được: ${JSON.stringify(bam)}`);
+assert.deepEqual(bam.data.clickedAt, { x: 60, y: 40 }, "toạ độ phải do lõi tính từ hộp, không phải số bịa");
+
+const chamGhi = calls.filter((c) => c !== "attach" && c !== "detach");
+assert.ok(chamGhi.length > 0, "không lệnh CDP nào tới chrome — lớp nối dây đường ghi không chạy thật");
+for (const method of chamGhi) {
+  assert.ok(WRITE_AT_CHROME.has(method), `lọt method ngoài bộ ghi tới chrome: ${method}`);
+}
+assert.equal(calls.filter((c) => c === "Input.dispatchMouseEvent").length, 3, "phải đủ ba khung chuột");
+assert.ok(Array.isArray(bam.cdp) && bam.cdp.length > 0, "nhật ký cdp rỗng — lõi hành động không nằm trên đường chạy");
+assert.ok(calls.includes("attach") && calls.includes("detach"), "đường ghi cũng phải gắn rồi THÁO debugger");
+
+/* ⑦ Tên hành động lạ: từ chối, và KHÔNG gắn debugger vào trang nào cả.
+ * Gắn debugger là thao tác mạnh nhất extension này làm được — đừng làm nó cho một yêu cầu sai. */
+calls.length = 0;
+const laGhi = await engine.runAction(targets[0], "input.drag", { selector: "button" });
+assert.equal(laGhi.ok, false);
+assert.equal(laGhi.code, "ACTION_UNKNOWN");
+assert.deepEqual(calls, [], "tên hành động lạ mà vẫn đụng tới debugger");
+
+/* ⑧ Yêu cầu mang toạ độ: từ chối SAU khi gắn, nhưng KHÔNG một khung chuột nào rời đi. */
+calls.length = 0;
+const toaDo = await engine.runAction(targets[0], "input.click", { selector: "button", x: 5, y: 5 });
+assert.equal(toaDo.ok, false);
+assert.equal(toaDo.code, "COORDINATE_NOT_ACCEPTED");
+assert.deepEqual(calls.filter((c) => c.startsWith("Input.")), [], "yêu cầu mang toạ độ mà vẫn có khung chuột rời đi");
+
+/* ⑨ Selector khớp nhiều: không bấm gì cả. */
+calls.length = 0;
+soKhopQuery = [11, 12];
+const nhieu = await engine.runAction(targets[0], "input.click", { selector: "button" });
+assert.equal(nhieu.ok, false);
+assert.equal(nhieu.code, "SELECTOR_AMBIGUOUS");
+assert.deepEqual(calls.filter((c) => c.startsWith("Input.")), [], "khớp nhiều mà vẫn bấm");
+soKhopQuery = [11];
+
+/* ⑩ Không cướp phiên debug của người khác — kỷ luật giữ nguyên ở đường ghi. */
+calls.length = 0;
+const banGhi = await engine.runAction({ id: "x", attached: true }, "input.click", { selector: "button" });
+assert.equal(banGhi.ok, false);
+assert.equal(banGhi.code, "TARGET_ALREADY_ATTACHED");
+assert.deepEqual(calls, []);
+
+console.log("scouter-actions wiring pins: PASS");
 
 console.log("observer-engine wiring pins: PASS");
 

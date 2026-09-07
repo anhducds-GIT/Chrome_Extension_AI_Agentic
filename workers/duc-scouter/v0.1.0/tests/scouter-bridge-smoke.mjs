@@ -255,6 +255,38 @@ function request(method, params) {
   assert.equal(response.error.details.probe_code, "SELECTOR_INVALID");
 }
 
+/* ---- ⑥b S-01: HÀNH ĐỘNG hỏng cũng KHÔNG được mặc vỏ thành công ---------
+ * Ở đường đọc, một thất bại bị bỏ qua nghĩa là đọc hụt. Ở đường GHI, nó nghĩa là AI ở đầu dây
+ * tưởng đã bấm được trong khi chưa bấm gì, rồi đi tiếp bước sau — đắt hơn hẳn. */
+{
+  const { dispatch, engine } = makeSeed({ failAction: true });
+  for (const [method, params] of [
+    ["scout.click", { target_id: TARGET_ID, selector: "button" }],
+    ["scout.type", { target_id: TARGET_ID, selector: "#txt", text: "abc" }],
+    ["scout.key", { target_id: TARGET_ID, selector: "#txt", key: "Enter" }]
+  ]) {
+    const response = await dispatch(request(method, params));
+    assert.equal(response.ok, false, `${method}: hành động hỏng mà phong bì vẫn ok:true`);
+    assert.equal(response.error.code, "ACTION_FAILED");
+    assert.equal(response.error.details.action_code, "SELECTOR_AMBIGUOUS");
+  }
+  /* Chiều NGƯỢC LẠI: hành động chạy được thì phải ra ok:true, và đúng ba tên hành động tới lõi. */
+  const good = makeSeed();
+  const ok = [
+    await good.dispatch(request("scout.click", { target_id: TARGET_ID, selector: "button" })),
+    await good.dispatch(request("scout.type", { target_id: TARGET_ID, selector: "#txt", text: "abc" })),
+    await good.dispatch(request("scout.key", { target_id: TARGET_ID, selector: "#txt", key: "Enter" }))
+  ];
+  for (const response of ok) assert.equal(response.ok, true, `hành động hợp lệ bị chặn: ${JSON.stringify(response.error || {})}`);
+  const ghi = good.engine.calls.filter((call) => call.ghi);
+  assert.deepEqual(ghi.map((call) => call.name), ["input.click", "input.type", "input.key"]);
+  for (const call of ghi) assert.ok(EXPECTED_ACTIONS.has(call.name), `tên hành động lạ: ${call.name}`);
+  /* Tham số đi tới nơi nguyên vẹn, không bị nuốt. */
+  assert.deepEqual(ghi[1].params, { selector: "#txt", text: "abc" });
+  assert.deepEqual(ghi[2].params, { selector: "#txt", key: "Enter" });
+  assert.equal(engine.calls.length, 3, "mỗi lượt hỏng vẫn phải gọi đúng một lượt tới lõi");
+}
+
 /* ---- ⑦ Target không có thì nói thẳng, không dò bừa ---------------------- */
 {
   const { dispatch, engine } = makeSeed();
