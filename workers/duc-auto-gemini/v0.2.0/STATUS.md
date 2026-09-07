@@ -50,10 +50,11 @@ diễn biến phiên ở cuối [`HANDOFF.md`](HANDOFF.md), bảng lỗi thật 
 ## Giới hạn đã biết
 
 1. **Hai bản vá chưa live** — lời nhắn (26/08) và hành vi G-01 (27/08) đều nằm trong code.
-   **Đo 07/09: một hồ sơ đã nạp code mới, một hồ sơ CHƯA.** Đếm method qua `capabilities`:
-   `kaito` 23 method (bản HEAD), `anhducds` 19 method (còn ôm bản trước 06/09 trong RAM) —
-   dù **cả hai** đều báo `legacy: false` và `extension_version: 0.2.0`. Nên đừng tin hai
-   trường đó: **muốn biết hồ sơ nào chạy code mới thì đếm method.** Bằng chứng:
+   **Đo 07/09: một hồ sơ đã nạp code mới, một hồ sơ CHƯA.** Hồ sơ `kaito` trả về đủ bộ lệnh
+   Bridge của HEAD; hồ sơ `anhducds` **thiếu bốn lệnh thêm ngày 06/09**, tức nó còn ôm bản
+   extension cũ trong RAM — dù **cả hai** đều báo `legacy: false` và cùng
+   `extension_version: 0.2.0`. Nên đừng tin hai trường đó: **muốn biết hồ sơ nào chạy code mới
+   thì đối chiếu bộ lệnh `capabilities` của nó với bộ lệnh của HEAD.** Bằng chứng:
    [`evidence-multiprofile-nghiem-thu-20260907/`](evidence-multiprofile-nghiem-thu-20260907/README.md).
 2. **G-01 đã vá TĨNH, chưa kiểm chứng LIVE** — race "dừng nhận trước lúc gửi mà prompt vẫn
    bay" (đo thật 26/08) đã tái hiện được bằng test, vá theo hướng huỷ-theo-attempt (Đức Go
