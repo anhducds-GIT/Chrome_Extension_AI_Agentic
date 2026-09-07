@@ -435,3 +435,22 @@ chữ đó đã được dùng lẫn nhau và vai điều phối đã tự hãm 
 - **ĐỔI MÃ N-36 → N-38** · 2026-09-07 · lane `claude-assistant` · khối "Giới hạn tối đa 2 lane đo SAI đơn vị" đọc là **N-38** từ nay — cùng lý do · **đóng khi:** lệnh: grep -c "tối đa 2 chat" AGENTS.md ra 1
 - **ĐÓNG N-38** · 2026-09-07 · lane `claude-tinh-gon` · `grep -c "tối đa 2 chat" AGENTS.md` ra **1**. Giới hạn ⑥ ở mục 3 nay nói **chat**, dẫn nguyên văn câu Đức nói 07/09, và nói thẳng rằng số tác vụ ngầm trong một chat **không bị giới hạn** — kèm lý do: bảng quyền chỉ để điều phối những bên không nói được với nhau. `claude-assistant` bắt được đúng chỗ: tôi viết "lane" theo nghĩa hẹp trong khi Đức đo theo chat, và đó là đổi kiến trúc chứ không đổi con số.
 - **ĐO THÊM CHO N-35** · 2026-09-07 · lane `claude-tinh-gon` · **cái giá thật của việc đóng băng chưa được cưỡng chế, đo trên máy này**: chuỗi `npm test` mà cổng đóng phiên chạy gọi suite của cả bốn bản gói đã đóng băng, mất **52,4 giây** mỗi lượt (`duc-auto-chatgpt/v0.1.0` 22,9s/115 phép · `duc-auto-gemini/v0.2.0` 15,3s/95 · `duc-auto-gg-flow-video/v0.1.0` 12,8s/101 · `duc-auto-gemini/v0.1.0` 1,4s/19) — trong khi gói **SỐNG** `duc-scouter` chỉ mất **2,3 giây / 8 phép**. Tức **330 trong 338 phép kiểm gói** và **96% thời gian** của phần đó là của mã không lane nào được sửa. Cả bốn đang XANH, nên đây là **thuế thời gian, chưa phải cửa chặn** — nhưng một phép kiểm mục ruỗng trong đó sẽ thành cửa chặn cho gói sống. Đo lại: `for p in ...; do node workers/$p/tests/run-all.mjs; done`. **Cấm gỡ suite khỏi đĩa** (mục 4 của `AGENTS.md`) — việc cần làm là cho cổng đọc khối `frozen` rồi bỏ qua, không phải xoá.
+
+## N-39 · ADR sinh ra đã `Accepted` thì bất biến từ lúc chào đời — lỗi chính tả thành vĩnh viễn
+
+**[gặp thật 2026-09-07 với ADR-0018]** · B12 chốt mốc bất biến ở **commit ĐẦU TIÊN** mà `status`
+thành `Accepted`. Viết ADR với `status: Accepted` ngay từ commit đầu thì **không còn lượt nào để
+sửa chữ**: mọi lượt sửa phần thân sau đó làm B12 ĐỎ với MỌI phiên.
+
+Xảy ra: ADR-0018 lọt một chữ sai (`Codey` thay vì `Codex`) trong commit đầu. Không đổi quyết định
+nào, nhưng **không sửa được nữa** — và cách duy nhất "đúng luật" là viết thêm một ADR để đính chính
+một chữ, tức đẻ ra rác để dọn rác.
+
+**Vá đúng chỗ, và nó rẻ:** ADR viết ở `status: Proposed`, soát, rồi mới đổi sang `Accepted`. B12
+**đã miễn** cả frontmatter lẫn mục `## Trạng thái`, nên lượt đổi đó hợp luật sẵn — chỉ là chưa ai
+khai rằng phải đi qua `Proposed`. Bản mẫu `docs/_TEMPLATE-adr.md` nên đặt sẵn `Proposed`.
+
+Rủi ro của cách vá: một ADR nằm mãi ở `Proposed` thì nó là quyết định chưa chốt mà người sau đọc
+như đã chốt. Nên nếu làm thì phải kèm phép đếm: ADR ở `Proposed` quá N ngày thì báo VÀNG.
+
+- **đóng khi:** lệnh: grep -c "status: Proposed" docs/_TEMPLATE-adr.md ra 1
