@@ -37,16 +37,15 @@
       "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "_root": {
-      "owner": "claude-scouter-s06",
+      "owner": "claude-root-adr0014",
       "ai": "Claude",
-      "claimed_at": "2026-09-07T05:47",
-      "task": "Them mot dong npm script scouter:action-probe vao package.json",
+      "claimed_at": "2026-09-07T08:17",
+      "task": "ADR-0014 nua _root: sinh FEATURE-PARITY-AUTO.md, khai vao generated, go khoi AUTO, sua AGENTS.md",
       "released_at": null,
-      "taken_from": "claude-k2-vung-mien-khoa",
-      "taken_by_duc_decision": "2026-09-04: phien claude-exec-dashtab da chet giua chung (thong bao he thong), Duc chot giai phong khoa va giu viec do",
-      "taken_by": "claude-assistant",
-      "taken_at": "2026-09-07T02:08",
-      "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
+      "taken_from": "claude-scouter-s06",
+      "taken_by": "claude-bang-ia",
+      "taken_at": "2026-09-07T08:36",
+      "duc_decision": "2026-09-07: Duc chot \"cho chuyen _root\" — nua _code cua ADR-0014 da vao HEAD nen cong xuat ban chan 26 commit cua 5 lane; chuyen khoa cho lane land not nua _root"
     },
     "_docs": {
       "owner": "claude-scouter-s06",
@@ -61,16 +60,15 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": "claude-bang-vung-chac",
+      "owner": "claude-bang-ia",
       "ai": "Claude",
-      "claimed_at": "2026-09-07T05:34",
-      "task": "N-27 ghim bon dot bien lot luoi bo doc HEAD",
+      "claimed_at": "2026-09-07T08:36",
+      "task": "Refactor IA bang trang thai: 9 tab -> 3 tang HOME/WORK/SYSTEM, bo trung lap",
       "released_at": null,
-      "taken_from": "claude-k2-vung-mien-khoa",
-      "taken_by_duc_decision": "2026-09-04",
-      "taken_by": "claude-assistant",
-      "taken_at": "2026-09-07T02:08",
-      "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
+      "taken_from": "claude-bang-vung-chac",
+      "taken_by": "claude-bang-ia",
+      "taken_at": "2026-09-07T08:36",
+      "duc_decision": "2026-09-07: Duc chot \"ban trien khai cong viec luon di ... Toi cho ban khoa de trien khai\" — lane claude-bang-vung-chac da bao xong tu 3h truoc, chuyen _code cho lane refactor IA cua bang"
     },
     "workers/duc-scouter": {
       "owner": "claude-scouter-s06",
@@ -80,5 +78,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "497c7b773d2f173b"
+  "_fingerprint": "b19dadbedb1e9c40"
 }
