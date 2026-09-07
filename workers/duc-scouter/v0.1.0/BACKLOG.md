@@ -73,3 +73,25 @@ thật, và chuỗi ba khung chuột chưa lần nào chạm một nút thật. 
 dựng trang giả; `scripts/scouter-bridge-live-check.mjs` dùng engine giả.
 · **đóng khi:** lệnh: một phép đo tự dựng trang thử tại chỗ (kiểu `scouter-input-trust-probe.mjs`)
 bấm và gõ qua ĐÚNG ba method mới rồi đọc lại DOM để xác nhận, chạy được và ĐẠT.
+
+## ĐÓNG · S-02 (2026-09-07, `claude-scouter-s05`) — Đức duyệt quyền `alarms`
+
+Đức chốt 07/09: cho thêm. `manifest.json` khai `alarms`; lưới đỡ ở `scouter-background.js` gọi
+`connect()` mỗi phút. **Điều kiện đóng có sửa một chỗ so với lúc mở:** mục này viết là "bộ hẹn
+giờ nối lại đi qua `chrome.alarms`", và điều đó **không làm được** — Chrome ép sàn 30 giây một
+lượt hẹn, còn tầng thử-lại chạy 1s/2s/5s. Nên giữ cả hai: `setTimeout` vá lúc worker còn thức,
+alarm đánh thức worker đã ngủ. Chỗ lệch này ghi vào ADR chứ không lặng lẽ coi là đã làm đúng đề.
+Canh bởi: khối ⑭ của `tests/scouter-write-gate-smoke.mjs`, khối ⑭ của `tests/scouter-transport-smoke.mjs`,
+con `Q1` `Q2` `R1` `R2`. Quyết định: [ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md).
+
+## ĐÓNG · S-05 (2026-09-07, `claude-scouter-s05`) — đường ghi có phanh
+
+Đức chốt 07/09: đúng khuôn ba gói `duc-auto-*` — công tắc chế độ phát triển mặc định TẮT, kèm
+trần 50 lượt mỗi lần mở khoá. Chặn ở `runAction()`, cửa duy nhất ba lệnh ghi đi qua. Công tắc
+chỉ bật được từ popup; không method Bridge nào bật được nó, và khối ⑩ của phép ghim đo đúng
+điều đó. Đo: 12 con `P1..P12` đều bị giết · phép ghim 14 khối · live check với máy chủ Bridge
+THẬT ĐẠT 8/8, trong đó khối ⑥ là chiều từ chối qua dây thật.
+· **còn nợ lại, đã ghi vào ADR:** trần 50 là **con số đoán**, chưa hiệu chỉnh bằng lượt chạy
+thật nào — `S-06` là lượt đo nó. Và cái phanh chặn theo **số lượt**, không chặn theo **trang**:
+bật rồi thì Scouter bấm được trên bất kỳ tab nào có `target_id`. Luật "cấm chạy trên trang
+thật" vẫn chưa có chốt nào trong mã cưỡng chế.

@@ -71,3 +71,33 @@ một chốt cùng hình dạng. Cả hai đã vá.
 trần, Scouter thì chưa; lệnh cấm chạy trên trang thật là luật cho người, không phải chốt trong
 code. `S-06` ba method mới **chưa từng chạm một nút thật**. `S-02` quyền hẹn giờ · `S-03` tên
 file · `S-04` chờ xác nhận đã gửi.
+
+## 2026-09-07 · `claude-scouter-s05` — đường ghi có phanh, Bridge có lưới đỡ
+
+**Làm gì.** Đóng `S-05` và `S-02`, cả hai chờ Đức chốt và Đức chốt cả hai trong cùng một lượt.
+
+**Cái phanh.** Công tắc *Chế độ phát triển* trong popup, **mặc định TẮT**, trần **50 lượt ghi
+mỗi lần mở khoá**. Chặn ở `runAction()` — cửa duy nhất ba lệnh ghi đi qua, nên lệnh ghi thứ tư
+mai sau bị chặn mà không ai phải nhớ. **Không method Bridge nào bật được công tắc.**
+
+**Hai chốt ngược trực giác, cố ý.** ⑴ *Hỏng thì ĐÓNG* — đọc kho lưu lỗi nghĩa là không biết Đức
+đã mở chưa, và không biết phải xử như chưa mở. Ngược hẳn trần nạp lại nằm ngay bên cạnh cùng
+file, cái đó hỏng thì mở. ⑵ *Trừ trước, bấm sau* — lượt bấm hỏng vẫn tốn ngân sách; chỉ trừ khi
+thành công thì một vòng lặp gõ sai selector quay vô hạn mà trần không bao giờ chạm tới.
+
+**`alarms`: điều kiện đóng phải sửa lại, không lặng lẽ coi là xong.** Mục `S-02` viết "bộ hẹn
+giờ nối lại đi qua `chrome.alarms`". Làm không được: Chrome ép sàn 30 giây một lượt hẹn, tầng
+thử-lại chạy 1s/2s/5s. Nên giữ CẢ HAI ở hai chỗ — `setTimeout` vá lúc worker còn thức, alarm
+đánh thức worker đã ngủ. Chỗ lệch ghi vào ADR-0001 của gói.
+
+**Đo.** Đột biến: mỏ neo khớp **58/58, giết 58, sống sót 0** (trước: 42/42). Phép ghim gói
+**7/7 PASS**. Live check với máy chủ Bridge **THẬT: ĐẠT 8/8** (trước 7/7) — khối ⑥ mới là chiều
+TỪ CHỐI qua dây thật, chiều đáng tin hơn: nó đo đúng vị trí của kẻ đáng lo.
+
+**Một phép ghim cũ phải sửa.** `scouter-bridge-smoke.mjs` dựng Scouter chưa mở khoá nên chạm
+phanh trước. Sửa kho lưu giả thành đã-mở-khoá, không nới phanh: file đó ghim GIAO THỨC.
+
+**Còn gì mở.** `S-06` ba method ghi **chưa từng chạm một nút thật** — và đó cũng là lượt hiệu
+chỉnh trần 50, con số hiện là **ước lượng chưa đo**. `S-03` tên file · `S-04` chờ xác nhận đã
+gửi. Nợ mới không mở mục riêng vì đã ghi vào ADR: phanh chặn theo **số lượt**, không theo
+**trang** — bật rồi thì bấm được trên bất kỳ tab nào có `target_id`.
