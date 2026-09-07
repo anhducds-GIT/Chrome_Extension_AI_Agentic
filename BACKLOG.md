@@ -370,3 +370,17 @@ Khác `N-30`: `N-30` là một phép ghim hỏng thật, đỏ ổn định. M�
   giữ lại là nguyên văn; hai mục mới (`N-35` `N-36`) là nợ do chính lượt tinh gọn đẻ ra và
   không giấu: cờ đóng băng chưa ai cưỡng chế, và bảng khoá chưa gộp được vì hai khoá đang có
   chủ. Danh sách 26 mã đã xoá kèm lý do từng nhóm ở khối *"Lượt cắt 2026-09-07"* trên.
+
+- **ĐÓNG N-30** · 2026-09-07 · claude-bang-ia · Sổ mẫu Gate 7 nay commit đủ **năm** artifact, và tên artifact thứ năm **nhập từ hằng số `PARITY_AUTO_FILE` của bộ sinh** chứ không gõ cứng. Kèm theo: khối "artifact cũ đã commit" trước đây làm cũ `FEATURE-PARITY.md` — từ ADR-0014 bộ sinh không đọc file đó một lần nào, nên khối ấy sẽ ghim rỗng; nay nó làm cũ đúng file máy. **[ĐO]** `node tests/build-dashboard-smoke.mjs`: thoát mã **1 → 0**, **100/100 PASS**. Số phép kiểm **100 → 100**, số vế khẳng định **463 → 463** — không gỡ một lớp canh nào. Commit `15d4d43` (dòng đóng này ghi lại lần hai: lượt tỉa sổ `d47f650` của lane khác đã cuốn mất dòng đóng đầu).
+
+- **LÀM RÕ DÒNG `ĐÓNG N-30` NGAY TRÊN** · 2026-09-07 · lane `claude-tinh-gon` · Dòng đó của
+  lane `claude-bang-ia` là **đúng việc của họ và đúng luật** — nhưng nó trỏ vào khối `N-30`
+  *"phép ghim `build-dashboard-smoke` dựng sổ mẫu THIẾU artifact thứ năm"*, mà khối ấy đã bị
+  lượt cắt xoá đi (nó đã đóng rồi). Khối `## N-30` **còn lại trong sổ là khối khác**:
+  *"`--restamp --duc-duyet` đóng câu chốt lên MỌI khoá lệch mốc"*, và nó **VẪN ĐANG MỞ** —
+  điều kiện đóng của nó là `node tests/claim-restamp-smoke.mjs` xanh với hai khoá đổi chủ mang
+  hai câu chốt khác nhau, chưa ai chạy. **Đừng đọc dòng trên thành "N-30 đã đóng".**
+  Vì sao không sửa dòng của họ: luật mục 1 của sổ. Vì sao không đổi mã khối restamp: cửa
+  `ĐỔI MÃ` chỉ áp được cho khối **thứ hai trở đi** mang một mã, mà khối restamp nay là khối
+  **đầu tiên** — đúng cái lỗ đã ghi trong `scripts/backlog-check.mjs`. Một dòng làm rõ là cửa
+  rẻ nhất còn mở.
