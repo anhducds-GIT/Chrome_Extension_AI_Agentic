@@ -10,12 +10,15 @@ import {
   countLines,
   createHeadDeps,
   extractRegistryMethods,
+  laFileMayDuocGhi,
   normalizedHash,
+  PARITY_AUTO_FILE,
   renderAutoBlocks,
   replaceAutoBlocks,
   runFeatureParity,
   subtractSets
 } from "../scripts/feature-parity.mjs";
+import { generatedFrom } from "../scripts/repo-structure.mjs";
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -38,9 +41,31 @@ function markedDocument(overrides = {}) {
   ].join("\r\n");
 }
 
-function fakeRepo({ parity = markedDocument() } = {}) {
+/* BẢN CỦA NGƯỜI trong fixture, và nó CỐ Ý còn mang mốc AUTO.
+ *
+ * Nếu bộ sinh còn bất kỳ đường ghi nào vào `FEATURE-PARITY.md` thì nó sẽ thấy đủ ba mốc ở đây
+ * và ghi được — tức fixture này dựng được đúng ca hỏng. Khối 12 đo chỗ đó bằng cách so hash
+ * trước/sau. Để một bản KHÔNG có mốc thì phép ghim sẽ xanh vì lý do sai (bộ sinh không tìm
+ * thấy mốc), chứ không phải vì đường ghi đã bị bịt. */
+const NGUOI_VIET = [
+  "# Bảng của NGƯỜI",
+  "## 2. Hành vi — chữ người, máy tuyệt đối không đụng",
+  "Nhận dạng ảnh theo BYTE | ❌ | ✅ | [ĐỌC]",
+  "<!-- AUTO:BRIDGE START -->",
+  "bản cũ còn nằm lại — máy KHÔNG được phép ghi vào đây",
+  "<!-- AUTO:BRIDGE END -->",
+  "<!-- AUTO:MODULES START -->",
+  "bản cũ",
+  "<!-- AUTO:MODULES END -->",
+  "<!-- AUTO:DEBT-METHODS START -->",
+  "bản cũ",
+  "<!-- AUTO:DEBT-METHODS END -->"
+].join("\n");
+
+function fakeRepo({ auto = markedDocument() } = {}) {
   const files = new Map([
-    ["FEATURE-PARITY.md", parity],
+    [PARITY_AUTO_FILE, auto],
+    ["FEATURE-PARITY.md", NGUOI_VIET],
     [`${GPT_DIR}/bridge-core.js`, 'registryEntry({ name: "alpha" });\nregistryEntry({ name: "shared" });\n'],
     [`${GEMINI_DIR}/bridge-core.js`, 'registryEntry({ name: "beta" });\r\nregistryEntry({ name: "shared" });\r\n'],
     [`${GPT_DIR}/same.js`, "const x = 1;\n"],
@@ -137,9 +162,9 @@ function outsideMarkerBytes(text) {
       () => replaceAutoBlocks(missing, { BRIDGE: "a", MODULES: "b", "DEBT-METHODS": "c" }),
       (error) => error.message.includes(`AUTO:${name} END`) && error.message.includes("Không ghi file")
     );
-    const repo = fakeRepo({ parity: missing });
+    const repo = fakeRepo();
     const capture = captureOutput();
-    assert.equal(runFeatureParity({ deps: repo.deps, output: capture.output }), 1);
+    assert.equal(runFeatureParity({ deps: repo.deps, khung: missing, output: capture.output }), 1);
     assert.deepEqual(repo.writes, []);
   }
   ok("thiếu marker nêu đúng marker và không ghi gì");
@@ -160,9 +185,9 @@ function outsideMarkerBytes(text) {
         (error) => error.message.includes(`AUTO:${name} ${edge}`) && error.message.includes("Không ghi file"),
         `thiếu ${token} phải ném lỗi nêu đúng marker`
       );
-      const repo = fakeRepo({ parity: missing });
+      const repo = fakeRepo();
       const capture = captureOutput();
-      assert.equal(runFeatureParity({ deps: repo.deps, output: capture.output }), 1);
+      assert.equal(runFeatureParity({ deps: repo.deps, khung: missing, output: capture.output }), 1);
       assert.deepEqual(repo.writes, [], "thiếu marker thì tuyệt đối không được ghi gì");
     }
   }
@@ -177,9 +202,9 @@ function outsideMarkerBytes(text) {
     const token = `<!-- AUTO:${name} START -->`;
     const doubled = markedDocument().replace(token, `${token}\n${token}`);
     assert.notEqual(doubled, markedDocument(), `fixture phải thật sự nhân đôi ${token}`);
-    const repo = fakeRepo({ parity: doubled });
+    const repo = fakeRepo();
     const capture = captureOutput();
-    assert.equal(runFeatureParity({ deps: repo.deps, output: capture.output }), 1);
+    assert.equal(runFeatureParity({ deps: repo.deps, khung: doubled, output: capture.output }), 1);
     assert.deepEqual(repo.writes, [], "marker trùng lặp thì không được ghi gì");
   }
   ok("marker xuất hiện hai lần bị chặn và không ghi gì");
@@ -199,9 +224,9 @@ function outsideMarkerBytes(text) {
       .replace(" TMP ", endToken);
     assert.ok(swapped.indexOf(endToken) < swapped.indexOf(startToken),
       `fixture phải thật sự đảo được thứ tự marker ${name}`);
-    const repo = fakeRepo({ parity: swapped });
+    const repo = fakeRepo();
     const capture = captureOutput();
-    assert.equal(runFeatureParity({ deps: repo.deps, output: capture.output }), 1);
+    assert.equal(runFeatureParity({ deps: repo.deps, khung: swapped, output: capture.output }), 1);
     assert.deepEqual(repo.writes, [], "marker sai thứ tự thì không được ghi gì");
   }
   ok("marker sai thứ tự bị chặn và không ghi gì");
@@ -223,19 +248,20 @@ function outsideMarkerBytes(text) {
 /* 6. --check PASS khi khớp; FAIL nêu dòng thật, hai phía và lệnh sửa. */
 {
   const repo = fakeRepo();
-  const expected = replaceAutoBlocks(repo.files.get("FEATURE-PARITY.md"), renderAutoBlocks(collectParityModel(repo.deps)));
-  repo.files.set("FEATURE-PARITY.md", expected);
+  const khung = markedDocument();
+  const expected = replaceAutoBlocks(khung, renderAutoBlocks(collectParityModel(repo.deps)));
+  repo.files.set(PARITY_AUTO_FILE, expected);
   const pass = captureOutput();
-  assert.equal(runFeatureParity({ check: true, deps: repo.deps, output: pass.output }), 0);
+  assert.equal(runFeatureParity({ check: true, deps: repo.deps, khung, output: pass.output }), 0);
   assert.ok(pass.logs.some((message) => message.includes("đang khớp")));
 
   const needle = "**GPT 2 · Gemini 2.**";
   assert.ok(expected.includes(needle), "fixture phải có đúng dòng định làm cũ");
   const stale = expected.replace(needle, "**GPT 999 · Gemini 2.**");
-  repo.files.set("FEATURE-PARITY.md", stale);
+  repo.files.set(PARITY_AUTO_FILE, stale);
   const realLine = stale.replace(/\r\n?/g, "\n").split("\n").findIndex((line) => line.includes("GPT 999")) + 1;
   const fail = captureOutput();
-  assert.equal(runFeatureParity({ check: true, deps: repo.deps, output: fail.output }), 1);
+  assert.equal(runFeatureParity({ check: true, deps: repo.deps, khung, output: fail.output }), 1);
   assert.ok(fail.errors.some((message) => message.includes(`lệch tại dòng ${realLine}.`)));
   assert.ok(fail.errors.some((message) => message.includes("Đang có:")));
   assert.ok(fail.errors.some((message) => message.includes("Cần có:")));
@@ -246,12 +272,13 @@ function outsideMarkerBytes(text) {
 /* 7. --check tuyệt đối không ghi ở cả PASS và FAIL, chứng minh bằng hash. */
 {
   const repo = fakeRepo();
-  const expected = replaceAutoBlocks(repo.files.get("FEATURE-PARITY.md"), renderAutoBlocks(collectParityModel(repo.deps)));
+  const khung = markedDocument();
+  const expected = replaceAutoBlocks(khung, renderAutoBlocks(collectParityModel(repo.deps)));
   for (const content of [expected, expected.replace("**GPT 2", "**GPT 999")]) {
-    repo.files.set("FEATURE-PARITY.md", content);
+    repo.files.set(PARITY_AUTO_FILE, content);
     const beforeHash = sha(content);
-    runFeatureParity({ check: true, deps: repo.deps, output: captureOutput().output });
-    assert.equal(sha(repo.files.get("FEATURE-PARITY.md")), beforeHash);
+    runFeatureParity({ check: true, deps: repo.deps, khung, output: captureOutput().output });
+    assert.equal(sha(repo.files.get(PARITY_AUTO_FILE)), beforeHash);
   }
   assert.deepEqual(repo.writes, []);
   ok("--check không ghi file ở cả PASS lẫn FAIL");
@@ -318,6 +345,109 @@ function outsideMarkerBytes(text) {
   assert.ok(deps.listFiles(GPT_DIR).includes("bridge-core.js"));
   assert.throws(() => deps.writeFile("FEATURE-PARITY.md", "không được ghi"), /HEAD_READ_ONLY/);
   ok("HEAD deps đọc git blob/listing và từ chối ghi");
+}
+
+/* 12. ADR-0014 · VẾ BẢO VỆ CHỮ CỦA NGƯỜI: máy ghi vào `FEATURE-PARITY.md` thì ĐỎ.
+ *
+ * Đây là vế khiến lượt tách khác hẳn với "miễn khoá cả file". Vế kia — file máy lạc hậu thì
+ * cổng đỏ — đã có ở khối 6. Không có vế này thì ta vừa mở đường cho một lượt sinh máy đè lên
+ * mục 2, thứ người viết tay và có bằng chứng [ĐỌC].
+ *
+ * Đo bằng HAI đường, cố ý: hỏi thẳng cái chốt, và đo hành vi của cả lượt sinh. Một đường thì
+ * gỡ chốt vẫn có thể xanh — bản của `FEATURE-PARITY.md` trong fixture CÒN mang đủ ba mốc AUTO,
+ * nên nếu đường ghi chưa bị bịt thì bộ sinh ghi được vào đó thật. */
+{
+  assert.equal(laFileMayDuocGhi(PARITY_AUTO_FILE), true, "file máy là file DUY NHẤT được ghi");
+  for (const ngoaiVung of ["FEATURE-PARITY.md", "AGENTS.md", "DASHBOARD.md", "", "feature-parity-auto.md"]) {
+    assert.equal(laFileMayDuocGhi(ngoaiVung), false,
+      `bộ sinh KHÔNG được ghi ${JSON.stringify(ngoaiVung)} — chỉ ${PARITY_AUTO_FILE}`);
+  }
+
+  const repo = fakeRepo();
+  const truoc = sha(repo.files.get("FEATURE-PARITY.md"));
+  assert.ok(repo.files.get("FEATURE-PARITY.md").includes("<!-- AUTO:BRIDGE START -->"),
+    "fixture phải dựng được ca hỏng: bản của người CÒN mốc AUTO, nên đường ghi chưa bịt là ghi được thật");
+  const capture = captureOutput();
+  assert.equal(runFeatureParity({ deps: repo.deps, output: capture.output }), 0);
+  assert.deepEqual(repo.writes.map((w) => w.relPath), [PARITY_AUTO_FILE],
+    `một lượt sinh chỉ được ghi ĐÚNG ${PARITY_AUTO_FILE}, không ghi gì khác`);
+  assert.equal(sha(repo.files.get("FEATURE-PARITY.md")), truoc,
+    "bản của NGƯỜI không được đổi một byte nào sau một lượt sinh — kể cả khi nó còn mốc AUTO");
+  assert.ok(repo.files.get(PARITY_AUTO_FILE).includes("**GPT 2 · Gemini 2.**"),
+    "và số đo phải thật sự vào file máy, nếu không thì khẳng định trên xanh vì bộ sinh không làm gì cả");
+  ok("ADR-0014: máy chỉ ghi file máy — bản của NGƯỜI không đổi một byte, kể cả khi còn mốc AUTO");
+}
+
+/* 13. ADR-0014 · KHÔNG CÓ NGUỒN SỰ THẬT THỨ HAI, và có con trỏ.
+ *
+ * Chỗ dễ làm sai mà chính ADR ghi ra: chép khối AUTO sang file mới rồi để bản cũ nằm lại. Hai
+ * bản của cùng một con số là hai nguồn sự thật, và repo này đã có ca một luật nằm ở hai chỗ
+ * trả hai câu khác nhau. Nên đo trên repo THẬT, không trên fixture. */
+{
+  const nguoi = readFileSync(new URL("../FEATURE-PARITY.md", import.meta.url), "utf8");
+  for (const name of AUTO_BLOCKS) {
+    for (const edge of ["START", "END"]) {
+      assert.ok(!nguoi.includes(`<!-- AUTO:${name} ${edge} -->`),
+        `FEATURE-PARITY.md KHÔNG được còn mốc AUTO:${name} ${edge} — bản cũ nằm lại là nguồn sự thật thứ hai (ADR-0014)`);
+    }
+  }
+  assert.ok(nguoi.includes(PARITY_AUTO_FILE),
+    `FEATURE-PARITY.md phải giữ một CON TRỎ sang ${PARITY_AUTO_FILE} — không có nó thì người đọc mục 2 tưởng số liệu biến mất`);
+  assert.ok(/^##\s+2\./m.test(nguoi),
+    "và mục 2 — chữ của người — phải còn nguyên ở đó; đó là thứ cả lượt tách này sinh ra để bảo vệ");
+  ok("ADR-0014 repo thật: FEATURE-PARITY.md hết mốc AUTO, còn con trỏ, còn mục 2");
+}
+
+/* 14. ADR-0014 · MIỄN KHOÁ PHẢI KHAI Ở CẤU HÌNH, không gõ cứng vào script.
+ *
+ * Luật này đã trả giá một lần: trước 04/09 danh sách miễn trừ bị gõ cứng ở hai chỗ, và hai bản
+ * sao của một luật trả hai câu khác nhau cho cùng một file. Đọc bằng `generatedFrom` — đúng
+ * hàm mà cả cổng đóng phiên lẫn `safe-push` đi qua — chứ không tự đọc JSON ở đây, để phép ghim
+ * này không thành bản sao thứ ba. */
+{
+  const cauHinh = JSON.parse(readFileSync(new URL("../.repo-structure.json", import.meta.url), "utf8"));
+  const mienKhoa = generatedFrom(cauHinh);
+  assert.ok(mienKhoa.includes(PARITY_AUTO_FILE),
+    `${PARITY_AUTO_FILE} phải nằm trong khối \`generated\` của .repo-structure.json — đó là chỗ DUY NHẤT cấp miễn khoá, và không có nó thì cả lượt tách vô ích`);
+  assert.ok(!mienKhoa.includes("FEATURE-PARITY.md"),
+    "còn FEATURE-PARITY.md thì KHÔNG được miễn — nó là chữ của người, chạm nó vẫn phải giữ `_root`");
+  ok("ADR-0014: miễn khoá khai ở `generated`, và bản của người vẫn KHÔNG được miễn");
+}
+
+/* 15. ADR-0014 · BỘ SINH DETERMINISTIC VÀ KHÔNG ĐỌC ĐỒNG HỒ.
+ *
+ * File máy nằm trong khối `generators`, nên cổng kiểm nó mỗi phiên và `safe-push` từ chối đẩy
+ * khi nó lệch. Nếu nội dung phụ thuộc giờ đồng hồ thì sang ngày mới là MỌI lane bị chặn đẩy dù
+ * không dữ liệu nào đổi. Mục `N-21` vừa vá đúng bệnh đó ở một artifact khác.
+ *
+ * Ba vế: hai lượt trên cùng cây ra giống hệt từng byte · không có một mốc ngày nào trong bản
+ * ra · và bộ sinh chạy được khi `Date.now` bị làm cho NÉM. Vế thứ ba là vế chứng minh, hai vế
+ * đầu chỉ là dấu hiệu: một bộ sinh đọc đồng hồ rồi làm tròn về tháng vẫn qua được hai vế đầu. */
+{
+  const lan1 = fakeRepo();
+  const lan2 = fakeRepo();
+  runFeatureParity({ deps: lan1.deps, output: captureOutput().output });
+  runFeatureParity({ deps: lan2.deps, output: captureOutput().output });
+  assert.equal(lan1.writes.length, 1, "một lượt sinh, một lượt ghi");
+  assert.equal(sha(lan1.writes[0].text), sha(lan2.writes[0].text),
+    "hai lượt sinh trên cùng một cây phải ra giống hệt TỪNG BYTE");
+  assert.doesNotMatch(lan1.writes[0].text, /\d{4}-\d{2}-\d{2}/,
+    "bản ra KHÔNG được chứa một mốc ngày nào — có mốc là sang ngày mới mọi lane bị chặn đẩy");
+
+  const nowGoc = Date.now;
+  let ketQua;
+  try {
+    Date.now = () => { throw new Error("DONG_HO_BI_CAM: bộ sinh không được đọc đồng hồ hệ thống."); };
+    const lan3 = fakeRepo();
+    assert.equal(runFeatureParity({ deps: lan3.deps, output: captureOutput().output }), 0,
+      "bộ sinh phải chạy được khi đồng hồ hệ thống bị cấm — đọc đồng hồ là ném ngay tại đây");
+    ketQua = lan3.writes[0].text;
+  } finally {
+    Date.now = nowGoc;
+  }
+  assert.equal(sha(ketQua), sha(lan1.writes[0].text),
+    "và ra đúng cùng một byte như khi đồng hồ còn dùng được");
+  ok("ADR-0014: hai lượt sinh giống hệt từng byte, không mốc ngày, chạy được khi cấm đọc đồng hồ");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

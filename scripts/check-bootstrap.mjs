@@ -43,8 +43,11 @@ const WARN = "VÀNG";
 // build-dashboard.mjs dùng để lọc "file đổi hành vi" — giữ chung một định nghĩa.
 const EVIDENCE_ZONE = /(^|\/)(evidence[^/]*|pilot-[^/]*|batch-[^/]*)\//i;
 const BEHAVIOUR_EXTENSIONS = new Set([".js", ".mjs", ".json", ".html", ".css"]);
-// File máy sinh: độ tươi của chúng do B8/B13 lo, không phải B14.
-const GENERATED_FILES = new Set(["DASHBOARD.md", "llms.txt", "repo-map.json", "FEATURE-PARITY.md"]);
+/* File máy sinh: độ tươi của chúng do B8/B13 lo, không phải B14.
+ * `FEATURE-PARITY-AUTO.md` thêm 07/09 (ADR-0014) — nửa máy sinh của bảng đối chiếu tách ra
+ * thành file riêng. `FEATURE-PARITY.md` VẪN ở đây dù nay là chữ của người: B14 đo "tài liệu có
+ * theo kịp code không", và bảng đối chiếu chưa bao giờ là loại tài liệu đó. */
+const GENERATED_FILES = new Set(["DASHBOARD.md", "llms.txt", "repo-map.json", "FEATURE-PARITY.md", "FEATURE-PARITY-AUTO.md"]);
 
 const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
 const isMarkdown = (relPath) => relPath.toLowerCase().endsWith(".md");

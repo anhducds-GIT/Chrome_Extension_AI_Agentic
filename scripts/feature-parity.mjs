@@ -6,10 +6,74 @@ import { fileURLToPath } from "node:url";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const PARITY_FILE = "FEATURE-PARITY.md";
+/* HAI FILE, HAI CHỦ — ADR-0014, Đức chốt 07/09.
+ *
+ * `FEATURE-PARITY.md` là của NGƯỜI: mục 2 (tính năng hành vi) viết tay, có bằng chứng [ĐỌC].
+ * Bộ sinh này KHÔNG BAO GIỜ ghi vào nó — xem `laFileMayDuocGhi` bên dưới.
+ *
+ * `FEATURE-PARITY-AUTO.md` là của MÁY, sinh toàn bộ, và được khai vào khối `generated` của
+ * `.repo-structure.json` nên **chạm nó không đòi khoá nào**. Đó là cả mục đích của lượt tách:
+ * trước đây sửa code trong một gói worker làm bảng lệch, mà sinh lại nó phải giữ `_root` —
+ * khoá đông nhất repo. Đêm 06–07/09 chuyện đó chặn BA lượt đẩy, lần cuối chặn một lane vì
+ * chính việc của lane đó. */
+const PARITY_HUMAN_FILE = "FEATURE-PARITY.md";
+export const PARITY_AUTO_FILE = "FEATURE-PARITY-AUTO.md";
 const GPT_DIR = "workers/duc-auto-chatgpt/v0.1.0";
 const GEMINI_DIR = "workers/duc-auto-gemini/v0.2.0";
 export const AUTO_BLOCKS = ["BRIDGE", "MODULES", "DEBT-METHODS"];
+
+/* KHUNG CỦA FILE MÁY SINH — HẰNG SỐ TRONG SCRIPT, không đọc từ đĩa.
+ *
+ * Vì sao không đọc từ đĩa: luật của khối `generated` là "artifact MÁY SINH TOÀN BỘ — chạy lại
+ * bộ sinh là ra y hệt, không có gì của ai trong đó để mất". Nếu khung đọc từ chính file cũ thì
+ * điều đó thôi đúng: một dòng ai gõ tay ở ngoài mốc AUTO sẽ sống mãi trong một file miễn khoá,
+ * tức đúng thứ mà miễn trừ này không được phép che.
+ *
+ * Hai mốc AUTO vẫn ở đây và KHÔNG phải trang trí: `replaceAutoBlocks` vẫn kiểm thiếu mốc /
+ * trùng mốc / sai thứ tự trên chính khung này ở MỌI lượt sinh, nên gõ sai khung là chết ngay
+ * tại chỗ kèm tên mốc chứ không ghi ra một file rác. Tiêm được qua tham số `khung` của
+ * `runFeatureParity` để phép ghim dựng được ca khung hỏng.
+ *
+ * KHÔNG có mốc thời gian, KHÔNG đọc đồng hồ: file này nằm trong khối `generators` nên cổng
+ * kiểm nó mỗi phiên, và bất cứ thứ gì phụ thuộc giờ là sang ngày mới MỌI lane bị chặn đẩy dù
+ * không dữ liệu nào đổi (mục `N-21` vừa vá đúng bệnh đó ở một artifact khác). Cùng một HEAD
+ * phải luôn cho cùng một byte.
+ *
+ * Số mục giữ NGUYÊN 1 · 3 · 4 như trong `FEATURE-PARITY.md` cũ, cố ý: mọi tài liệu và mọi mục
+ * nhật ký đang trỏ tới "mục 1" và "mục 3" của bảng này. Đánh số lại là làm hỏng những con trỏ
+ * đó mà không được gì. */
+const KHUNG_AUTO = [
+  "# Bảng đối chiếu hai nhánh — phần MÁY SINH",
+  "",
+  "> **File này do máy sinh TOÀN BỘ. Đừng sửa tay — lần sinh sau mất trắng.**",
+  "> Sinh lại: `node scripts/feature-parity.mjs` · chỉ kiểm: `node scripts/feature-parity.mjs --check`",
+  ">",
+  "> **Chữ của NGƯỜI nằm ở `FEATURE-PARITY.md`** — mục 2 (tính năng hành vi, có bằng chứng",
+  "> **[ĐỌC]**), các ghi chú mô tả module, và phần \"ai nợ ai\" viết tay. Đọc hai file cùng nhau",
+  "> mới đủ bức tranh; file này chỉ chứa số máy đếm được, tức toàn bộ là dòng **[ĐO]**.",
+  ">",
+  "> **Vì sao tách ([ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)):** file",
+  "> này **miễn khoá**, nên một lane chỉ giữ khoá gói của mình vẫn sinh lại được và đẩy được.",
+  "> `FEATURE-PARITY.md` vẫn đòi `_root` vì nó là chữ của người.",
+  "",
+  "## 1. Method của Bridge — **[ĐO]**",
+  "",
+  "Đếm trực tiếp từ `registryEntry({ name: ... })` trong `bridge-core.js` hai bên.",
+  "",
+  "<!-- AUTO:BRIDGE START -->",
+  "<!-- AUTO:BRIDGE END -->",
+  "",
+  "## 3. Module — **[ĐO]**",
+  "",
+  "<!-- AUTO:MODULES START -->",
+  "<!-- AUTO:MODULES END -->",
+  "",
+  "## 4. Nợ method Bridge — **[ĐO]**",
+  "",
+  "<!-- AUTO:DEBT-METHODS START -->",
+  "<!-- AUTO:DEBT-METHODS END -->",
+  ""
+].join("\n");
 const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
 
 export function normalizeNewlines(text) {
@@ -183,28 +247,53 @@ export function compareParity(expected, actual) {
   return { matches: true };
 }
 
-export function runFeatureParity({ check = false, deps = createDefaultDeps(), output = console } = {}) {
+/* CỬA GHI DUY NHẤT — vế bảo vệ chữ của NGƯỜI (ADR-0014).
+ *
+ * Bộ sinh chỉ được ghi đúng MỘT file. Vế này khác hẳn vế "file máy lạc hậu thì cổng đỏ", và nó
+ * là lý do duy nhất khiến lượt tách này không đồng nghĩa với "miễn khoá cả `FEATURE-PARITY.md`":
+ * không có nó thì một lượt sinh máy đè lên mục 2 — chữ người viết tay, có bằng chứng — và mất
+ * trắng mà không ai biết.
+ *
+ * Là hàm XUẤT RA để phép ghim hỏi thẳng được, chứ không chỉ hỏi qua hành vi: hai đường đo một
+ * chốt thì gỡ chốt không còn cách nào xanh. */
+export function laFileMayDuocGhi(relPath) {
+  return relPath === PARITY_AUTO_FILE;
+}
+
+function ghiFileMay(deps, relPath, text) {
+  if (!laFileMayDuocGhi(relPath)) {
+    throw new Error(`PARITY_WRITE_OUT_OF_BOUNDS: bộ sinh chỉ được ghi ${PARITY_AUTO_FILE}, `
+      + `bị gọi với ${JSON.stringify(relPath)}. Mục 2 của ${PARITY_HUMAN_FILE} là chữ của NGƯỜI — `
+      + "máy ghi vào đó là mất chữ thật (ADR-0014).");
+  }
+  deps.writeFile(relPath, text);
+}
+
+export function runFeatureParity({ check = false, deps = createDefaultDeps(), output = console, khung = KHUNG_AUTO } = {}) {
   try {
-    const current = deps.readFile(PARITY_FILE);
-    const generated = replaceAutoBlocks(current, renderAutoBlocks(collectParityModel(deps)));
+    // KHÔNG đọc `FEATURE-PARITY.md` một lần nào. Bản trước lấy chính nó làm khung, nên đường
+    // đọc và đường ghi cùng trỏ vào file của người — đó là chỗ mà một lượt sinh máy đè được
+    // lên mục 2. Nay khung là hằng số, nên file của người ở NGOÀI tầm với của bộ sinh.
+    const generated = replaceAutoBlocks(khung, renderAutoBlocks(collectParityModel(deps)));
     if (!check) {
-      deps.writeFile(PARITY_FILE, generated);
-      output.log("Đã cập nhật các khối tự động trong FEATURE-PARITY.md.");
+      ghiFileMay(deps, PARITY_AUTO_FILE, generated);
+      output.log(`Đã sinh lại ${PARITY_AUTO_FILE}.`);
       return 0;
     }
 
+    const current = deps.readFile(PARITY_AUTO_FILE);
     const comparison = compareParity(generated, current);
     if (comparison.matches) {
-      output.log("FEATURE-PARITY.md đang khớp với số đo trong repo.");
+      output.log(`${PARITY_AUTO_FILE} đang khớp với số đo trong repo.`);
       return 0;
     }
-    output.error(`FEATURE-PARITY.md lệch tại dòng ${comparison.line}.`);
+    output.error(`${PARITY_AUTO_FILE} lệch tại dòng ${comparison.line}.`);
     output.error(`- Đang có: ${comparison.actual}`);
     output.error(`- Cần có: ${comparison.expected}`);
     output.error("Hãy sửa bằng lệnh: node scripts/feature-parity.mjs");
     return 1;
   } catch (error) {
-    output.error(`Không thể xử lý FEATURE-PARITY.md: ${error.message}`);
+    output.error(`Không thể xử lý ${PARITY_AUTO_FILE}: ${error.message}`);
     return 1;
   }
 }
