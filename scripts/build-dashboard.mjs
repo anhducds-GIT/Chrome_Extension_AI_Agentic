@@ -1421,11 +1421,43 @@ export function createDefaultDeps(root = ROOT) {
 }
 
 export function createHeadDeps(root = ROOT) {
-  const git = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], {
+  /* BỘ NHỚ ĐỆM CHO LỆNH GIT — bỏ VIỆC LẶP, không bỏ một phép kiểm nào.
+   *
+   * Mọi lệnh dưới đây đọc ĐÚNG MỘT commit đã ghim (`moc()`), và kho đối tượng của git chỉ
+   * được THÊM chứ không sửa — nên cùng một dòng lệnh luôn trả cùng một kết quả suốt đời bộ
+   * đọc này. Không đệm thì một lượt sinh trang gọi git hàng trăm lượt, mà mỗi lượt trên
+   * Windows là một tiến trình mới.
+   *
+   * Đo thật 2026-09-07 (phiên `claude-cong-nhanh`): `tests/build-overview-smoke.mjs` KHÔNG tự
+   * chạy một tiến trình con nào, vậy mà mất 640 giây — toàn bộ nằm ở chỗ này. Phép thử đó
+   * dựng lại trang hơn hai chục lượt trên CÙNG một bộ đọc, tức hỏi git y hệt nhau hơn hai
+   * chục lần cho cùng một commit.
+   *
+   * ĐỆM CẢ CÚ NÉM, không chỉ nhánh xanh. `objectType` hỏi kiểu của đường dẫn KHÔNG tồn tại
+   * rất nhiều lượt, và mỗi lượt hỏng đó cũng là một tiến trình. Bỏ nửa này là bỏ đúng nửa đắt.
+   *
+   * KHÔNG đệm bộ đọc riêng của `createDefaultDeps`: `dirtyFiles` đọc CÂY LÀM VIỆC, thứ đổi
+   * được giữa hai lượt gọi. Đệm nó là ghim một ảnh chụp cũ của việc đang sửa dở.
+   *
+   * Đệm sống theo BỘ ĐỌC, không phải theo tiến trình: muốn đọc mốc mới thì dựng bộ đọc mới —
+   * đúng luật "một deps = một commit" ghi ngay dưới đây, và đó cũng là thứ `bang-trang-thai/`
+   * vốn đã làm ở mỗi nhịp sinh lại. */
+  const dem = new Map();
+  const chay = (args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"]
   });
+  const git = (...args) => {
+    const khoa = JSON.stringify(args);
+    let o = dem.get(khoa);
+    if (o === undefined) {
+      try { o = { ra: chay(args) }; } catch (loi) { o = { loi }; }
+      dem.set(khoa, o);
+    }
+    if (o.loi) throw o.loi;
+    return o.ra;
+  };
   /* MỐC ĐỌC GHIM MỘT LẦN, không đọc lại `HEAD` ở từng lệnh.
    *
    * `HEAD` là một con trỏ DI ĐỘNG. Bộ đọc này gọi git hàng trăm lượt cho một lượt sinh, và
