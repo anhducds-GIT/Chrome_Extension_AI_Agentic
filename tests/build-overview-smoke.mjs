@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, readCanDuc, canDucDaDong, khoangNgay, SO_CAN_DUC, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, NHOM_CHUA_XEP, tuoiTuMoc, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readMocDaXong, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, readCanDuc, canDucDaDong, khoangNgay, SO_CAN_DUC, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, NHOM_CHUA_XEP, tuoiTuMoc, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readMocDaXong, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, TANG, CHI_SO_KY_THUAT, kiemHopDongTang, kiemChiSoHome, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -26,6 +26,21 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const REAL = createDefaultDeps(ROOT);
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
+
+/* CẮT MỘT KHỐI `data-sect` — thay cho lối cắt theo `data-pane` của bản chín-tab.
+ *
+ * Từ refactor IA 07/09 một TẦNG chứa nhiều KHỐI, nên lối cũ ("cắt từ mốc tab này tới mốc tab
+ * kế") bao luôn khối của việc khác và mọi khẳng định trong đó thành xanh giả. Chặn dưới bằng
+ * mốc mở KHỐI kế hoặc TẦNG kế, cái nào tới trước — cắt bằng chỉ số, chặn hai đầu, đúng lối đã
+ * ghi ở khối 15 (biểu thức lười "mở [\s\S]*? đóng" đã cắn bốn lần ở repo này). */
+const cuaKhoi = (trang, id) => {
+  const moc = `data-sect="${id}"`;
+  const i = trang.indexOf(moc);
+  assert.notEqual(i, -1, `trang phai co khoi "${id}"`);
+  const con = trang.slice(i + moc.length);
+  const m = /data-sect="|data-pane="/.exec(con);
+  return trang.slice(i, m ? i + moc.length + m.index : trang.length);
+};
 
 const collectModelRows = (deps) => collectModel(deps, { tolerant: true }).rows;
 
@@ -436,7 +451,14 @@ const ideasDeps = (text) => ({
      Cái PHẢI đúng là quan hệ: mỗi tab có đúng một khung, tên khớp nhau, đúng một tab được
      chọn sẵn, và tất cả khung còn lại mang `hidden` — hỏng cái cuối là mở trang ra thấy mọi
      khung chồng nhau, đúng bệnh cuộn-quá-nhiều mà tab sinh ra để chữa. */
-  assert.ok(tabs.length >= 7, `phai co it nhat 7 tab, dang co ${tabs.length}`);
+  /* SÀN HẠ TỪ 7 XUỐNG 3, cố ý và có lý do — không phải nới tay.
+     Đức chốt 07/09: bảng đi từ chín tab xuống BA TẦNG (HOME · WORK · SYSTEM). Sàn 7 cũ là một
+     con số hiện trạng của bản chín-tab; giữ nó là chặn đúng quyết định vừa chốt. Cái thay chỗ
+     nó KHÔNG yếu hơn mà mạnh hơn: khẳng định ngay dưới ghim tên tab PHẢI khớp hợp đồng `TANG`
+     của bộ sinh, tức số tab và tên tab không còn đoán được nữa. */
+  assert.ok(tabs.length >= 3, `phai co it nhat 3 tang, dang co ${tabs.length}`);
+  assert.deepEqual(tabs.map((t) => t[1]), TANG.map(([id]) => id),
+    "ten tab phai khop DUNG hop dong TANG cua bo sinh, dung thu tu — hai ban cua mot danh sach thi se lech");
   assert.equal(panes.length, tabs.length, "moi tab phai co dung mot khung noi dung");
   assert.equal(tabs.filter((t) => t[2] === "true").length, 1, "dung MOT tab duoc chon san");
   assert.deepEqual(tabs.map((t) => t[1]).sort(), [...panes].sort(), "ten tab va ten khung phai khop");
@@ -469,7 +491,10 @@ const ideasDeps = (text) => ({
      điều phối cũng có link nhảy sang tab Extension, nên con số cả trang không còn nói được
      điều gì — mà điều PHẢI giữ răng vẫn là: không đơn vị nào, không ý tưởng nào rơi khỏi
      bảng tổng. Rơi là Đức mở bảng, không thấy, rồi tưởng nó không tồn tại. */
-  const tabTong = html.slice(html.indexOf('data-pane="tong-quan"'), html.indexOf('data-pane="ai-dieu-phoi"'));
+  /* BẢNG CHỈ MỤC NAY Ở TẦNG `work`, không còn ở trang chủ (refactor IA 07/09): nó vốn là bản
+     sao thứ hai của danh sách extension, và luật IA của Đức cấm nhân bản. Điều PHẢI giữ răng
+     thì không đổi một chữ: không đơn vị nào, không ý tưởng nào rơi khỏi bảng chỉ mục. */
+  const tabTong = cuaKhoi(html, "extension") + cuaKhoi(html, "y-tuong");
   const linkTong = [...tabTong.matchAll(/href="#([^"]+)" data-goto="([a-z-]+)"/g)];
   assert.equal(linkTong.length, soDonVi + soYTuong,
     `bang tong phai co dung MOT link cho moi don vi va moi y tuong: ${soDonVi}+${soYTuong}, dang co ${linkTong.length}`);
@@ -571,7 +596,12 @@ const ideasDeps = (text) => ({
   };
 
   const khung = [...html.matchAll(/<div [^>]*role="tabpanel"[^>]*>/g)].map((m) => doc(m[0]));
-  assert.ok(khung.length >= 8, `phai doc duoc it nhat 8 khung tabpanel, dang co ${khung.length}`);
+  /* SÀN HẠ TỪ 8 XUỐNG 2, cùng lý do với khối 10: bảng đi từ chín tab xuống BA TẦNG (Đức chuyển
+     07/09), nên "ít nhất 8 khung" là một con số hiện trạng của bản cũ. Điều bộ suy này ghim thì
+     KHÔNG đổi một chữ: mọi khung mang `hidden` phải thật sự `display:none`. Cần ít nhất 2 khung
+     để ca đó tồn tại — một khung thì không có khung nào bị ẩn để đo. */
+  assert.ok(khung.length >= 2, `phai doc duoc it nhat 2 khung tabpanel, dang co ${khung.length}`);
+  assert.equal(khung.length, TANG.length, "so khung phai bang so tang khai o hop dong TANG");
   const an = khung.filter((k) => k.dacTinh.hidden !== undefined);
   const hien = khung.filter((k) => k.dacTinh.hidden === undefined);
   assert.equal(hien.length, 1, "dung MOT khung khong mang hidden");
@@ -826,42 +856,43 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const goc = REAL;
   const sinh = (thay) => buildOverview(bocFile(goc, thay)).html;
 
-  const cuaTab = (trang) => {
-    const i = trang.indexOf('data-pane="ai-dieu-phoi"');
-    assert.notEqual(i, -1, "phai co khung tab AI dieu phoi");
-    const j = trang.indexOf('data-pane="extension"', i);
-    assert.ok(j > i, "khung tab phai dong lai duoc, neu khong thi cat sai");
-    return trang.slice(i, j);
-  };
-  /* Cắt tab thành từng vùng theo mốc mở khối, chặn dưới bằng mốc kế — không có khối nào lọt
-     sang khối khác, nên mọi khẳng định dưới đây đúng phạm vi của nó. */
-  const cuaVung = (tab) => {
-    const moc = [...tab.matchAll(/<div class="card">/g)].map((m) => m.index);
-    return moc.map((a, k) => tab.slice(a, k + 1 < moc.length ? moc[k + 1] : tab.length));
-  };
-  const vungCua = (trang) => cuaVung(cuaTab(trang));
+  /* BỐN VÙNG CỦA BRIEF `DASH-ORCH-V2` VẪN CÒN NGUYÊN, nhưng từ refactor IA 07/09 chúng KHÔNG
+     còn ở cùng một tab: hai vùng đầu là câu Đức hỏi mỗi ngày nên chúng lên tầng HOME, hai vùng
+     sau là chỉ số kỹ thuật nên chúng xuống tầng SYSTEM. Cắt theo KHỐI thay vì theo card:
+     `in-motion` nay có hai card (ảnh chụp lane, rồi từng đơn vị), nên lối cắt cũ theo mốc
+     `<div class="card">` sẽ đếm ra năm vùng và mọi `vung[k]` lệch một bậc. */
+  const vungCua = (trang) => ["needs-duc", "in-motion", "suc-khoe-assistant", "ha-tang"]
+    .map((id) => cuaKhoi(trang, id));
+  const cuaTab = (trang) => vungCua(trang).join("");
 
   const sauKhoa = { "_root": { owner: CHU }, "_docs": { owner: null }, "_code": { owner: null },
     "workers/goi-mot": { owner: CHU }, "workers/goi-hai": { owner: null },
     "workers/goi-ba": { owner: null } };
   const html = sinh({ ".agents/claims.json": claimsJson(sauKhoa) });
   const tab = cuaTab(html);
-  assert.ok(html.includes('data-tab="ai-dieu-phoi"'), "phai co nut tab tren thanh tab");
+  assert.ok(html.includes('data-tab="home"'), "phai co nut tab cua tang mo san tren thanh tab");
 
-  const vung = cuaVung(tab);
+  const vung = vungCua(html);
   assert.equal(vung.length, 4,
-    "tab phai co DUNG bon vung — them vung thu nam la trai brief, bot la thieu mot cau Duc phai tra loi duoc");
+    "bon vung cua brief phai con DU BON — them vung thu nam la trai brief, bot la thieu mot cau Duc phai tra loi duoc");
 
-  /* --- (a) BỐN VÙNG, ĐÚNG THỨ TỰ --- */
-  const viTri = (s) => { const i = tab.indexOf(s); assert.notEqual(i, -1, `thieu vung: ${s}`); return i; };
-  const iDuc = viTri('<div class="sect">Cần Đức');
-  const iViec = viTri('<div class="sect">Công việc hiện tại');
-  const iKhoe = viTri('<div class="sect">Sức khoẻ Assistant');
-  const iHaTang = viTri('<span class="nm">Hạ tầng<');
-  assert.ok(iDuc < iViec,
-    "vung CAN DUC phai dung TRUOC vung cong viec — thu tu la mot phan de bai, khong phai so thich trinh bay");
-  assert.ok(iViec < iKhoe && iKhoe < iHaTang,
-    "bon vung phai theo dung thu tu: can Duc -> cong viec -> suc khoe -> ha tang");
+  /* --- (a) BỐN VÙNG, ĐÚNG TẦNG VÀ ĐÚNG THỨ TỰ ---
+     ĐO TRÊN CẢ TRANG, không trên chuỗi vừa nối: `cuaTab` nối bốn vùng theo đúng thứ tự đó, nên
+     hỏi thứ tự trên chuỗi đã nối là hỏi lại chính mình. Câu phải đúng là câu về TRANG. */
+  const viTri = (s) => { const i = html.indexOf(s); assert.notEqual(i, -1, `thieu vung: ${s}`); return i; };
+  const iHome = viTri('data-pane="home"');
+  const iSystem = viTri('data-pane="system"');
+  const iDuc = viTri('data-sect="needs-duc"');
+  const iViec = viTri('data-sect="in-motion"');
+  const iKhoe = viTri('data-sect="suc-khoe-assistant"');
+  const iHaTang = viTri('data-sect="ha-tang"');
+  assert.ok(iHome < iDuc && iDuc < iViec && iViec < iSystem,
+    "CAN DUC va DANG CHAY phai nam trong tang mo san, va can Duc dung TRUOC — thu tu la mot phan de bai");
+  assert.ok(iSystem < iKhoe && iKhoe < iHaTang,
+    "suc khoe Assistant va ha tang la CHI SO KY THUAT: chung phai nam o tang He thong, khong duoc len HOME");
+  assert.ok(tab.includes("Cần Đức") && tab.includes("Từng việc đang ở đâu")
+    && tab.includes("Sức khoẻ Assistant") && tab.includes("Hạ tầng"),
+    "bon vung phai con du TIEU DE — doi ten mot vung ma khong ai thay la mat mot cau Duc hoi moi ngay");
 
   /* --- (b) VÙNG 4 GẬP LẠI, mặc định đóng --- */
   const v4 = vung[3];
@@ -934,17 +965,49 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const rows = collectModelRows(goc);
   const v1 = vung[0];
   const canDuc = readCanDuc(goc, collectModel(goc, { tolerant: true }));
-  assert.equal(canDuc.length,
-    [...v1.matchAll(/<div class="dr"><div class="h">/g)].length,
-    "so dong ve ra phai bang DUNG so muc co dau — khong tran, khong hut");
+
+  /* ===== MỘT DANH SÁCH, HAI NGUỒN — đường (a) của mục `N-29` =====
+   *
+   * Đề bài Đức: "NEEDS ĐỨC một SSOT duy nhất, dùng cơ chế `@Đức`". Đích đúng, nhưng CẮT
+   * `human_action` hôm nay là MẤT DỮ LIỆU: Scouter không có một dấu nào trong cả gói mà
+   * `human_action` của nó là việc thật còn hiệu lực, và ChatGPT thì `human_action` nói việc
+   * KHÁC với dấu đang có. Nên lượt này gộp cả hai vào MỘT danh sách hiển thị.
+   *
+   * PHÉP GHIM PHẢI CANH CẢ HAI CHIỀU, và đây là chỗ dễ mất nhất khi dọn IA:
+   *   · tổng số dòng = số dấu + số hồ sơ còn lại  → rơi một dòng là ĐỎ
+   *   · số nhãn BẤM/CHỐT = số dấu                 → nuốt nguồn dấu là ĐỎ
+   *   · số nhãn HỒ SƠ    = số hồ sơ còn lại       → nuốt nguồn hồ sơ là ĐỎ
+   * Ba con số riêng, vì một con tổng có thể xanh khi hai nguồn bù trừ cho nhau.
+   *
+   * Luật bỏ trùng tính LẠI ở đây từ hai bộ đọc, không đọc lại của bộ sinh: hồ sơ nào TỰ NÓ đã
+   * mang dấu thì dòng đó hiện rồi. Ngoài ca đó thì KHÔNG bỏ — lệch về phía hiện THỪA. */
+  const hoSoCoDau = new Set(canDuc.map((v) => v.nguon).filter((n) => n.endsWith("STATUS.md")));
+  const canDucHoSo = humanWork(rows).actions.filter((a) => !hoSoCoDau.has(a.statusPath));
+  const demDr = (khoi) => [...khoi.matchAll(/<div class="dr"><div class="h">/g)].length;
+  assert.equal(demDr(v1), canDuc.length + canDucHoSo.length,
+    "so dong ve ra phai bang so dau CONG so ho so con lai — khong tran, khong hut");
+  assert.equal([...v1.matchAll(/<span class="badge b[01]">(?:BẤM|CHỐT)</g)].length, canDuc.length,
+    "moi muc co dau phai co dung mot nhan BAM hoac CHOT — hut la mot viec cua Duc bien mat im lang");
+  assert.equal([...v1.matchAll(/<span class="badge b0">HỒ SƠ</g)].length, canDucHoSo.length,
+    "moi ho so con khai viec cho tay Duc phai co dung mot nhan HO SO — day dung la cai lo N-29 do duoc");
   assert.ok(canDuc.length > 0,
     "so that phai con dau @Duc, neu khong thi moi khang dinh duoi day chi dang do nhanh RONG");
+  assert.ok(canDucHoSo.length > 0,
+    "ho so that phai con don vi khai theo cach cu, neu khong thi duong (a) khong con gi de bao ve");
+  assert.ok(hoSoCoDau.size > 0,
+    "phai con it nhat mot ho so TU NO mang dau, neu khong thi luat bo trung chua tung chay");
   assert.ok(!v1.includes("vì chưa ai đánh dấu"),
     "co dau roi ma van in cau 'chua ai danh dau' la bang noi hai dieu nguoc nhau");
-  assert.ok(!v1.includes("Cách cũ vẫn còn"),
-    "cau an ui cua nhanh RONG phai bien mat khi khoi da co dong");
-  assert.ok(rows.filter(choDuc).length > 0,
-    "ho so that phai con don vi khai theo cach cu — hai nguon con song song, chua cat nguon nao");
+  assert.ok(!v1.includes("Không có việc nào chờ Đức: "),
+    "cau cua nhanh RONG phai bien mat khi khoi da co dong");
+  assert.ok(v1.includes("Hai cơ chế đang cùng nuôi khối này"),
+    "trang PHAI noi thang la dang co hai nguon — de Duc khong tu doan tai sao hai con so lech nhau");
+
+  /* MỘT NƠI AUTHORITATIVE, ĐO TRÊN CẢ TRANG. Luật IA của Đức: "Đức cần làm" chỉ có ĐÚNG MỘT
+     chỗ, nơi khác chỉ trỏ tới. Trước refactor nó có ba: một ô đếm và một danh sách ở tab Tổng
+     quan, cộng vùng CẦN ĐỨC ở tab AI điều phối — và chúng đếm bằng hai cơ chế khác nhau. */
+  assert.equal([...html.matchAll(/<div class="sect">(?:Cần Đức|Đức cần làm)/g)].length, 1,
+    "danh sach viec cua Duc chi duoc co DUNG MOT khoi tren ca trang — hai khoi la hai nguon su that");
   assert.ok(v1.includes("@Đức:bấm") && v1.includes("@Đức:chốt"),
     "trang phai day du cach dat dau — nguoi viet so khong duoc phai tra tai lieu moi dat duoc");
 
@@ -973,9 +1036,14 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
      Chọn một đơn vị THẬT bất kỳ khác GPT (GPT đã bị fixture kia đổi thứ hạng, cắm chung một
      file là hai bản vá giẫm lên nhau). Chọn theo thứ tự đường dẫn để lượt nào cũng ra một
      file, không phụ thuộc thứ tự bảng. */
-  const chuNha = rows.filter((r) => r.statusPath && r.statusPath !== gpt.statusPath)
-    .sort((a, b) => String(a.statusPath).localeCompare(String(b.statusPath)))[0];
+  const ungVien = rows.filter((r) => r.statusPath && r.statusPath !== gpt.statusPath)
+    .sort((a, b) => String(a.statusPath).localeCompare(String(b.statusPath)));
+  /* ƯU TIÊN ĐƠN VỊ CÓ KHAI `human_action`. Cắm dấu vào chính hồ sơ của nó thì luật bỏ trùng
+     phải nuốt đúng MỘT dòng — nên fixture này ghim luôn cả luật bỏ trùng, không chỉ ghim số. */
+  const chuNha = ungVien.find(choDuc) || ungVien[0];
   assert.ok(chuNha, "phai tim duoc mot don vi khac GPT de cam dau — khong con thi fixture nay do nghia");
+  assert.ok(choDuc(chuNha),
+    "fixture phai cam dau vao mot ho so DANG khai viec cho tay Duc, neu khong thi luat bo trung khong bi do o day");
   const thayFx = {
     [chuNha.statusPath]: themFm(goc.readFile(chuNha.statusPath), `blocked_if_skipped: "${CAU_CHAN}"`)
       + `${G}- ${VIEC_CHOT} @Đức:chốt${G}`,
@@ -986,8 +1054,13 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   assert.equal(canDucFx.length, canDuc.length + 2, "fixture phai them DUNG hai dau, khong hon khong kem");
   const vungFx = vungCua(sinh(thayFx));
   const v1Co = vungFx[0];
-  assert.equal([...v1Co.matchAll(/<div class="dr"><div class="h">/g)].length, canDucFx.length,
-    "cam hai dau thi ve them DUNG hai dong — day la bang chung khoi khong con tran so dong");
+  /* Cắm một dấu vào `STATUS.md` của `chuNha` nên dòng `human_action` của chính nó phải BIẾN
+     MẤT — hai cơ chế cùng nói về một việc thì bảng chỉ được in một lần. */
+  const hoSoFx = canDucHoSo.filter((a) => a.statusPath !== chuNha.statusPath);
+  assert.equal(hoSoFx.length, canDucHoSo.length - 1,
+    "cam dau vao ho so dang khai viec thi dong HO SO cua chinh no phai bien mat — do la luat bo trung");
+  assert.equal(demDr(v1Co), canDucFx.length + hoSoFx.length,
+    "cam hai dau thi ve them DUNG hai dong va nuot DUNG mot dong trung — bang chung khoi khong tran so dong");
   assert.ok(v1Co.includes(VIEC_BAM) && v1Co.includes(VIEC_CHOT), "ca hai muc phai len bang");
   assert.ok(/<span class="badge b0">BẤM</.test(v1Co) && /<span class="badge b1">CHỐT</.test(v1Co),
     "BAM va CHOT phai tach ra, moi loai mot nhan — xep chung thi cai nao cung trong nhu nhau");
@@ -1008,7 +1081,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
 
   /* --- (g) VÙNG 2 xếp theo thứ hạng tự khai --- */
   const v2 = vung[1];
-  const tenV2 = [...v2.matchAll(/data-goto="extension">([^<]+)<\/a>/g)].map((m) => m[1]);
+  const tenV2 = [...v2.matchAll(/data-goto="work">([^<]+)<\/a>/g)].map((m) => m[1]);
   assert.equal(tenV2.length, rows.length, "vung 2 phai co dung MOT dong cho moi don vi — roi mot don vi la Duc tuong no khong ton tai");
   const hang1 = rows.find((r) => r.priorityRank === 1);
   assert.ok(hang1, "ho so that phai co dung mot don vi hang 1");
@@ -1020,7 +1093,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
       `${n} chua khai hang thi phai xuong CUOI — coi no la hang 0 la no nhay len dau bang`);
   }
   // Và thứ tự PHẢI đi theo thứ hạng, không theo tên: đổi hạng thì dòng phải đổi chỗ.
-  const tenDoi = [...vungFx[1].matchAll(/data-goto="extension">([^<]+)<\/a>/g)].map((m) => m[1]);
+  const tenDoi = [...vungFx[1].matchAll(/data-goto="work">([^<]+)<\/a>/g)].map((m) => m[1]);
   assert.ok(tenV2.indexOf(gpt.name) < tenDoi.indexOf(gpt.name),
     "ha thu hang mot don vi thi dong cua no phai TUT XUONG — khong tut la bang khong doc thu hang");
 
@@ -1060,10 +1133,18 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     "fixture phai go SACH dau, neu khong thi khang dinh 'vung rong' duoi day do sai nhanh");
   const vungTrong = vungCua(sinh(boHet));
   assert.equal(vungTrong.length, 4, "vung 1 trong thi tab VAN du bon vung");
-  assert.ok(vungTrong[0].includes("vì chưa ai đánh dấu"),
-    "vung trong LA mot thong tin — phai in ra mot dong noi ro vi sao trong, khong duoc an ca vung");
-  assert.ok(!vungTrong[0].includes("Cách cũ vẫn còn"),
-    "khong con don vi nao khai theo cach cu thi cau ke ve cach cu phai BIEN MAT — de lai la bang dem mot con so khong con dung");
+  /* KHỐI RỖNG NAY MẠNH HƠN BẢN CŨ: nó chỉ rỗng khi CẢ HAI cơ chế rỗng, nên câu nó in ra phải
+     kể cả hai — không phải chỉ "chưa ai đánh dấu". Rỗng-vì-chưa-đánh-dấu và rỗng-vì-hết-việc
+     là hai chuyện khác nhau, và với hai nguồn thì còn một ca thứ ba (một nguồn rỗng, nguồn kia
+     không) mà bảng KHÔNG được đọc thành rỗng. */
+  assert.equal(demDr(vungTrong[0]), 0, "ca hai nguon rong thi khong duoc ve dong viec nao");
+  assert.ok(vungTrong[0].includes("Hai cơ chế cùng rỗng"),
+    "vung trong LA mot thong tin — phai in ra mot dong noi ro CA HAI nguon deu rong, khong duoc an ca vung");
+  assert.ok(vungTrong[0].includes("không mục nào trong sổ được đánh dấu")
+    && vungTrong[0].includes("không hồ sơ nào khai việc chờ tay Đức"),
+    "cau do phai ke DUNG hai nguon — ke mot nguon la Duc khong biet nguon kia da duoc hoi chua");
+  assert.equal([...vungTrong[0].matchAll(/<span class="badge b0">HỒ SƠ</g)].length, 0,
+    "bo het truong thi khong con nhan HO SO nao");
   /* KHỚP TRÊN HUY HIỆU, không khớp trên cả vùng: câu chú giải của vùng 2 có NHẮC chữ
      "CHỜ ĐỨC" để giải thích luật, nên `includes` trên cả vùng luôn đúng và khẳng định này
      sẽ không bao giờ đỏ. Bắt được đúng ở lượt chạy đầu — một xanh giả thật. */
@@ -1151,9 +1232,9 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const html = buildOverview(goc).html;
 
   /* (a) BẢNG TỔNG — nơi Đức nhìn đầu tiên, và KHÔNG nằm trong khối gập. */
-  const tabTong = html.slice(html.indexOf('data-pane="tong-quan"'), html.indexOf('data-pane="ai-dieu-phoi"'));
+  const tabTong = cuaKhoi(html, "extension");
   const iBig = tabTong.indexOf('<div class="big">');
-  assert.notEqual(iBig, -1, "phai co khoi danh sach extension o tab tong quan");
+  assert.notEqual(iBig, -1, "phai co khoi danh sach extension o khoi Extension");
   const khoiBig = tabTong.slice(iBig, tabTong.indexOf('<p class="note">', iBig));
   assert.ok(!khoiBig.includes("<details"),
     "canh bao do tuoi KHONG duoc nam trong khoi gap — de bai noi ro: hien cung cho voi chip trang thai");
@@ -1178,10 +1259,7 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
 
   /* (b) TAB EXTENSION — cảnh báo phải nằm trong phần TÓM TẮT, tức thấy được khi khối còn đóng.
      Nhét vào thân khối là đúng cái "giấu trong toggle" mà đề bài cấm. */
-  const iExt = html.indexOf('data-pane="extension"');
-  const jExt = html.indexOf('data-pane="y-tuong"', iExt);
-  assert.ok(jExt > iExt, "khung tab Extension phai dong lai duoc — cat ho toi cuoi trang la an ca khoi gap cua tab khac");
-  const tabExt = html.slice(iExt, jExt);
+  const tabExt = cuaKhoi(html, "extension");
   const tomTat = new Map(tabExt.split('<details class="the" id="').slice(1).map((c) => {
     const j = c.indexOf("</summary>");
     assert.notEqual(j, -1, "moi khoi don vi phai co phan tom tat dong lai duoc");
@@ -1492,16 +1570,37 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   // (Lượt chạy đầu bắt được đúng chỗ này: regex rộng quét luôn cả 4 dòng defect.)
   const dongKhoaThat = dong.filter((l) => /<span class="n">[^<]+<\/span><span class="badge b\d">(?:BẬN|MỞ)</.test(l));
   assert.ok(coDau.length > 0, "trang that phai co dong khoa mang dau");
-  /* TỪ `LIVE-BLOCK-01` CÓ HAI KHỐI ĐƯỢC MIỄN, không còn một. Khối "đang làm gì" cũng đọc
-     thẳng từ bảng chủ sở hữu, nên nó đổi đúng những lúc bảng khoá đổi và phải được miễn cùng
-     một đường. Khẳng định giữ nguyên sức: tập dòng mang dấu phải bằng ĐÚNG hai khối đó —
-     thiếu một dòng là cổng đỏ oan, thừa một dòng là cổng mất răng ở chỗ đó. */
-  const iKhoi = dong.findIndex((l) => l.includes('class="sect">Đang làm gì'));
-  const jKhoi = dong.findIndex((l, k) => k > iKhoi && l.includes('class="sect">Cần Đức'));
-  assert.ok(iKhoi !== -1 && jKhoi > iKhoi, "phai tim duoc khoi 'Dang lam gi' de tach hai khoi duoc mien");
-  const dongKhoiLuong = dong.slice(iKhoi, jKhoi);
-  assert.deepEqual(coDau, [...dongKhoiLuong, ...dongKhoaThat],
-    "tap dong mang dau phai bang DUNG hai khoi doc tu bang chu so huu — thieu la cong do oan, thua la cong mat rang");
+  /* BA KHỐI ĐƯỢC MIỄN, không còn hai (refactor IA 07/09 thêm ô "chạy song song" trên tầng
+     HOME — nó đếm luồng, tức nó suy từ bảng chủ sở hữu). Khẳng định giữ nguyên sức: tập dòng
+     mang dấu phải bằng ĐÚNG ba khối đó — thiếu một dòng là cổng đỏ oan với MỌI phiên mỗi lần
+     ai đó nhận một vùng (mục `N-10` đã làm tê cả repo đúng bằng lỗi đó), thừa một dòng là cổng
+     mất răng ở chỗ đó. */
+  const iO = dong.findIndex((l) => l.startsWith(KHOA_PREFIX) && l.includes('class="k">Chạy song song'));
+  assert.notEqual(iO, -1, "phai tim duoc o dem luong tren tang HOME, va no PHAI mang dau");
+  const dongO = dong.slice(iO, iO + 3);
+  assert.ok(dongO.every((l) => l.startsWith(KHOA_PREFIX)),
+    "ca ba dong cua o dem luong phai mang dau — mot dong khong dau la moi phien bi chan day khi co ai nhan khoa");
+  assert.ok(dongO.some((l) => /luồng<\/span>|không có luồng nào/.test(l)),
+    "o dem luong phai that su in con so luong — khong thi khang dinh tren dang do mot o rong");
+  /* MỎ NEO ĐỔI THEO REFACTOR IA: khối ảnh chụp lane nay tên "Đang chạy" và nằm ở nửa đầu khối
+     `in-motion`, chặn dưới bằng tiêu đề nửa sau. Mỏ neo cũ ("Đang làm gì" → "Cần Đức") nay
+     khớp vào ô focus ở khối đầu tiên và cắt ra một vùng hoàn toàn khác — đúng loại xanh giả mà
+     luật "cắt bằng chỉ số, chặn hai đầu" của file này sinh ra để chặn. */
+  /* MỎ NEO NEO VÀO CHÍNH DẤU, không neo vào tiêu đề. Khối ảnh chụp lane nay là một card riêng
+     mà CẢ thẻ mở lẫn thẻ đóng đều mang dấu, nên hai dòng đó là mốc không lẫn được (card của
+     khối khác không mang dấu). Neo vào tiêu đề thì đổi một chữ tiêu đề là cắt sai vùng, và mỏ
+     neo cũ ("Đang làm gì" → "Cần Đức") đã cắt sai đúng như thế sau lượt refactor. */
+  const MOC_MO = `${KHOA_PREFIX}    <div class="card">`;
+  const MOC_DONG = `${KHOA_PREFIX}    </div>`;
+  const iKhoi = dong.indexOf(MOC_MO);
+  const jKhoi = dong.indexOf(MOC_DONG, iKhoi + 1);
+  assert.ok(iKhoi !== -1 && jKhoi > iKhoi, "phai tim duoc card 'Dang chay' de tach hai khoi duoc mien");
+  assert.equal(dong.indexOf(MOC_MO, iKhoi + 1), -1, "chi duoc co MOT card mang dau — hai card la mo neo lan");
+  assert.ok(dong.slice(iKhoi, jKhoi + 1).some((l) => l.includes('class="sect">Đang chạy')),
+    "vung vua cat PHAI la card anh chup lane, khong phai mot card nao khac");
+  const dongKhoiLuong = dong.slice(iKhoi, jKhoi + 1);
+  assert.deepEqual(coDau, [...dongO, ...dongKhoiLuong, ...dongKhoaThat],
+    "tap dong mang dau phai bang DUNG ba khoi doc tu bang chu so huu — thieu la cong do oan, thua la cong mat rang");
   /* HUY HIEU KHAC KHOA tuyệt đối KHÔNG được mang dấu — chúng là NỘI DUNG, lọc chúng khỏi phép
      so là làm cổng mất răng. Trước DASH-ORCH-V2 ca này dựng bằng dòng defect mang huy hiệu
      "MỞ"; từ khi mỗi đề bài không còn một dòng riêng thì dòng đó biến mất, nên khẳng định
@@ -1545,12 +1644,9 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   /* Khối roadmap: chặn TRÊN bằng đầu tab Tổng quan, chặn DƯỚI bằng đầu tab kế tiếp. Trong
      phạm vi đó mới cắt từ mở khối tới câu chú giải nằm ngay sau các hàng. */
   const khoiRoadmap = (trang) => {
-    const dau = trang.indexOf('data-pane="tong-quan"');
-    const het = trang.indexOf('data-pane="ai-dieu-phoi"');
-    assert.ok(dau !== -1 && het > dau, "phai tim duoc dung pham vi tab Tong quan");
-    const tab = trang.slice(dau, het);
+    const tab = cuaKhoi(trang, "y-tuong");
     const a = tab.indexOf('<div class="rm">');
-    assert.notEqual(a, -1, "khoi roadmap PHAI nam trong tab Tong quan — Duc doc trang dau");
+    assert.notEqual(a, -1, "khoi roadmap PHAI nam ngay tren chi tiet y tuong — cung mot khoi, khong hai cho");
     const b = tab.indexOf('<p class="note">', a);
     assert.ok(b > a, "khoi roadmap phai ket bang mot cau chu giai");
     return tab.slice(a, b);
@@ -1590,13 +1686,17 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   }
 
   /* --- (b) ý tưởng KHÔNG còn nằm trong danh sách phẳng nữa --- */
-  const tabDau = trangThat.slice(trangThat.indexOf('data-pane="tong-quan"'),
-    trangThat.indexOf('data-pane="ai-dieu-phoi"'));
+  const tabDau = cuaKhoi(trangThat, "extension");
   const bigA = tabDau.indexOf('<div class="big">');
   assert.notEqual(bigA, -1, "khoi danh sach extension phai con");
   const khoiBig = tabDau.slice(bigA, tabDau.indexOf('<p class="note">', bigA));
-  assert.ok(!khoiBig.includes('data-goto="y-tuong"'),
-    "y tuong phai RA KHOI danh sach phang — con o ca hai cho la bang dem hai lan mot viec");
+  /* Ý tưởng phải RA KHỎI danh sách phẳng của extension. Không hỏi `data-goto` nữa: từ refactor
+     IA cả hai khối nằm chung tầng `work` nên `data-goto` của chúng giống nhau, và câu hỏi đó
+     thành xanh giả. Hỏi thẳng đích: hàng ý tưởng trỏ tới `#y-…`, hàng extension trỏ `#ext-…`. */
+  assert.ok(!/href="#y-/.test(khoiBig),
+    "y tuong phai RA KHOI danh sach phang cua extension — con o ca hai cho la bang dem hai lan mot viec");
+  assert.ok(/href="#ext-/.test(khoiBig),
+    "fixture phai toi duoc: danh sach phang phai dang tro toi cac don vi extension");
 
   /* --- (c) bậc `nghỉ`: fixture, vì sổ thật chưa có ca này --- */
   const trangNghi = buildOverview(soY([
@@ -1670,14 +1770,10 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
 
   /* --- (b) Mục có thật trong tab Vận hành, và con số là con số đọc được --- */
   const trangThat = sinh(null);
-  const iVH = trangThat.indexOf('data-pane="van-hanh"');
-  assert.notEqual(iVH, -1, "phai co khung tab Van hanh");
-  const jVH = trangThat.indexOf('data-pane="suc-khoe"', iVH);
-  assert.ok(jVH > iVH, "khung tab Van hanh phai dong lai duoc, neu khong thi cat sai");
-  const tabVH = trangThat.slice(iVH, jVH);
+  const tabVH = cuaKhoi(trangThat, "van-hanh");
 
   assert.ok(tabVH.includes("Nhiều việc chạy cùng lúc"),
-    "muc PHAI nam trong tab Van hanh — Duc chot cho no o day");
+    "muc PHAI nam trong khoi Van hanh — Duc chot cho no o day");
   assert.ok(tabVH.includes(`<strong>${khoaThat.length} vùng</strong>`),
     `so vung tren trang phai la ${khoaThat.length}, doc tu bang quyen chu khong go tay`);
   assert.ok(tabVH.includes(`${readCoChe(goc).length} cơ chế`)
@@ -1695,10 +1791,9 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const trangDoiChu = sinh({ ".agents/claims.json": claimsJson(doiChu) });
 
   //  · Mục của tôi: không đổi một byte. Đây là phần thuộc phạm vi việc này.
-  const tabDoiChu = trangDoiChu.slice(trangDoiChu.indexOf('data-pane="van-hanh"'),
-    trangDoiChu.indexOf('data-pane="suc-khoe"'));
+  const tabDoiChu = cuaKhoi(trangDoiChu, "van-hanh");
   assert.equal(tabDoiChu, tabVH,
-    "doi HET chu vung ma tab Van hanh PHAI khong doi mot byte — lot `owner` vao la moi phien bi chan day viec");
+    "doi HET chu vung ma khoi Van hanh PHAI khong doi mot byte — lot `owner` vao la moi phien bi chan day viec");
 
   //  · Và bất biến thật sự bảo vệ cả repo: cổng KHÔNG được đỏ vì ai đó nhận một khoá.
   //    Bảng cố ý có in dấu bận/mở ở tab AI điều phối, nhưng những dòng đó mang tiền tố
@@ -1959,20 +2054,28 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     })
   });
 
+  /* MỎ NEO ĐỔI THEO REFACTOR IA 07/09: khối này nay tên "Đang chạy" và là nửa đầu của khối
+     `in-motion` trên tầng HOME, chặn dưới bằng tiêu đề nửa sau. Mỏ neo cũ ("Đang làm gì" →
+     "Cần Đức") khớp vào ô focus ở khối đầu tiên và cắt ra một vùng khác hẳn — mỏ neo ra 0 hoặc
+     ra sai vùng thì phép ghim đo một thứ không phải thứ nó tưởng. */
   const khoiCua = (trang) => {
     const dong = trang.split(NL);
-    const i = dong.findIndex((l) => l.includes('class="sect">Đang làm gì'));
-    assert.notEqual(i, -1, "phai co khoi 'Dang lam gi' tren trang");
-    const j = dong.findIndex((l, k) => k > i && l.includes('class="sect">Cần Đức'));
-    assert.ok(j > i, "khoi 'Dang lam gi' phai dung TRUOC vung Can Duc — Duc mo tab ra la thay no ngay");
-    return dong.slice(i, j);
+    const i = dong.findIndex((l) => l.includes('class="sect">Đang chạy'));
+    assert.notEqual(i, -1, "phai co khoi 'Dang chay' tren trang");
+    /* Chặn dưới bằng THẺ ĐÓNG MANG DẤU của chính card này, không bằng tiêu đề card kế: card kế
+       mở bằng một dòng KHÔNG mang dấu, và kéo dòng đó vào là phép ghim (f) dưới đây đỏ oan. */
+    const j = dong.findIndex((l, k) => k > i && l === `${KHOA_PREFIX}    </div>`);
+    assert.ok(j > i, "card 'Dang chay' phai dong lai bang mot the dong mang dau");
+    const sau = dong.findIndex((l, k) => k > j && l.includes('class="sect">Từng việc đang ở đâu'));
+    assert.ok(sau > j, "khoi 'Dang chay' phai dung TRUOC danh sach tung viec — do la thu tu trong khoi in-motion");
+    return dong.slice(i, j + 1);
   };
 
   const khoiCo = khoiCua(trangCo);
   /* Ghim ĐÚNG DÒNG TIÊU ĐỀ, không ghim cả khối. Bản đầu viết `khoiCo.some(...)` và đột biến
      kiểm cho thấy nó VÔ NGHĨA: chữ đó cũng nằm trong đoạn ghi chú cuối khối, nên xoá sạch nó
      khỏi tiêu đề vẫn xanh. Một phép ghim khớp nhầm dòng là một phép ghim không có răng. */
-  const dongTieuDe = khoiCo.find((l) => l.includes('class="sect">Đang làm gì'));
+  const dongTieuDe = khoiCo.find((l) => l.includes('class="sect">Đang chạy'));
   assert.ok(dongTieuDe && dongTieuDe.includes("ảnh chụp lúc sinh bảng"),
     "DONG TIEU DE cua khoi PHAI noi thang day la anh chup — mot anh chup cu doi lot so lieu thoi gian thuc la kieu sai te nhat");
   assert.ok(khoiCo.some((l) => l.includes(LANE_A) ), "lane thu nhat phai co dong cua no");
@@ -2082,7 +2185,8 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
      Ghim CẢ HAI, không ghim một. Nút tab được tô sáng và khung được mở nằm ở hai chỗ khác
      nhau trong HTML; lệch nhau là Đức mở trang ra thấy nút này sáng mà nội dung kia hiện, và
      không có cách nào để Đức biết mình đang nhìn nhầm tab. */
-  assert.equal(TAB_MAC_DINH, "ai-dieu-phoi", "tab mo san phai la AI dieu phoi (Duc chot 05/09)");
+  assert.equal(TAB_MAC_DINH, "home",
+    "tang mo san phai la HOME — goc nhin nguoi quyet dinh, khong phai goc nhin he thong (Duc chuyen 07/09)");
   const nutSang = [...trangCo.matchAll(/data-tab="([a-z-]+)" aria-selected="true"/g)].map((m) => m[1]);
   const khungMo = [...trangCo.matchAll(/data-pane="([a-z-]+)"( hidden)?>/g)]
     .filter((m) => !m[2]).map((m) => m[1]);
@@ -2167,10 +2271,13 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const thatMoc = readMocDaXong(goc);
   assert.ok(thatMoc.length > 0, "repo that phai co it nhat mot de bai da dong, neu khong thi phep duoi vo nghia");
 
-  assert.ok(/data-tab="nhat-ky"[^>]*>Nhật ký &amp; mốc</.test(trang),
-    "nhan tab phai la 'Nhat ky & moc' — de bai chot doi nhan cung luot them the");
-
-  const tabNhatKy = trang.slice(trang.indexOf(`data-pane="nhat-ky"`), trang.indexOf(`data-pane="tra-cuu"`));
+  /* NHÃN "Nhật ký & mốc" ĐỔI CHỖ, KHÔNG ĐỔI CHỮ. Đức chốt chính nhãn đó cùng lượt thêm thẻ
+     việc-lớn-đã-đóng. Refactor IA 07/09 gỡ thanh tab chín mục, nên nhãn không còn là nhãn tab —
+     nhưng nó PHẢI còn hiện, và hiện trong đúng khối của nó. Bỏ khẳng định này thay vì chuyển nó
+     là mất đúng một chốt của Đức mà không ai thấy. */
+  const tabNhatKy = cuaKhoi(trang, "nhat-ky");
+  assert.ok(/<div class="sect">Nhật ký &amp; mốc/.test(tabNhatKy),
+    "nhan 'Nhat ky & moc' phai con hien, va phai nam trong khoi nhat ky — de bai chot doi nhan cung luot them the");
   const mocThe = [...tabNhatKy.matchAll(/<div class="card">/g)].map((m) => m.index);
   assert.equal(mocThe.length, 2, "tab Nhat ky phai co DUNG hai the: quyet dinh da chot + viec lon da dong");
 
@@ -2192,14 +2299,16 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     assert.ok(!cauQuyetDinh.has(m.ten), `"${m.ten}" xuat hien o CA HAI the — the moi bi cam chep lai the quyet dinh`);
   }
 
-  /* MỘT DÒNG Ở VÙNG 2 CỦA TAB AI ĐIỀU PHỐI, không phải một vùng thứ năm. */
-  const tabDp = trang.slice(trang.indexOf(`data-pane="ai-dieu-phoi"`), trang.indexOf(`data-pane="extension"`));
+  /* MỘT DÒNG TRỎ Ở NỬA SAU CỦA KHỐI `in-motion`, không phải một khối riêng. Khối đó nay có
+     ĐÚNG HAI card (ảnh chụp lane, rồi từng việc), nên đếm card ở đây vẫn là phép ghim thật:
+     mọc thêm một card là mốc đã tự phình thành một khối, và đó là điều bị cấm. */
+  const tabDp = cuaKhoi(trang, "in-motion");
   const vungDp = [...tabDp.matchAll(/<div class="card">/g)].map((m) => m.index);
-  assert.equal(vungDp.length, 4, "tab AI dieu phoi van phai DUNG bon vung — dong moc la MOT DONG, khong phai vung thu nam");
-  const vung2 = tabDp.slice(vungDp[1], vungDp[2]);
-  assert.ok(vung2.includes("Công việc hiện tại"), "cat dung vung 2");
-  const TRO = "Danh sách đầy đủ ở tab <strong>Nhật ký &amp; mốc</strong>";
-  assert.equal(vung2.split(TRO).length - 1, 1, "vung 2 phai co DUNG MOT dong tro sang tab Nhat ky");
+  assert.equal(vungDp.length, 2, "khoi in-motion phai co DUNG hai card — dong moc la MOT DONG, khong phai mot card rieng");
+  const vung2 = tabDp.slice(vungDp[1]);
+  assert.ok(vung2.includes("Từng việc đang ở đâu"), "cat dung nua sau cua khoi in-motion");
+  const TRO = "Danh sách đầy đủ ở khối <strong>Nhật ký &amp; mốc</strong>";
+  assert.equal(vung2.split(TRO).length - 1, 1, "nua sau phai co DUNG MOT dong tro sang khoi Nhat ky");
   assert.equal(trang.split(TRO).length - 1, 1,
     "ca trang chi duoc co MOT dong do — hai chuong la hai ban cua mot con so");
   assert.ok(vung2.includes(`Đã đóng <strong>${thatMoc.length} việc lớn</strong>`),
@@ -2257,7 +2366,12 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   const daDong = new Set([...vanBan.matchAll(/^-\s+\*\*ĐÓNG\s+([A-Z]{1,3}-\d+)\*\*/gm)].map((m) => m[1]));
   const dangMo = [...vanBan.matchAll(/^#{2}\s+([A-Z]{1,3}-\d+)\s+·/gm)]
     .map((m) => m[1]).filter((ma) => !daDong.has(ma));
-  assert.ok(dangMo.length >= 14, `so goc phai con it nhat 14 muc mo, dem duoc ${dangMo.length}`);
+  /* SÀN HẠ TỪ 14 XUỐNG 1, và đây là một con số HIỆN TRẠNG đã mục — đúng cái bệnh mà chính
+     file này bắt hai lần trong ngày 03/09. Sổ nợ gốc bị tỉa từ 32 mục mở xuống 8 (commit
+     `d47f650`, lane khác, cùng ngày), nên "ít nhất 14" chặn một lượt dọn dẹp hợp lệ.
+     Khẳng định CHỊU LỰC nằm ngay dưới và không đổi một chữ: con số bảng in ra phải bằng phép
+     đếm tay độc lập trong sổ. Sàn ở đây chỉ để chứng minh fixture tới được bộ sinh. */
+  assert.ok(dangMo.length >= 1, `so goc phai con it nhat 1 muc mo, dem duoc ${dangMo.length}`);
 
   const thatSu = debtByUnit(REAL, { rows: [] }).find((r) => r.name === "nợ hạ tầng repo");
   assert.ok(thatSu, "tren repo THAT, so no goc cung phai len bang");
@@ -2265,6 +2379,98 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     `bang in ${thatSu?.n} muc, dem tay trong so duoc ${dangMo.length} — hai so nay khong duoc lech`);
 
   ok(`so no goc repo len bang: ${dangMo.length} muc mo, dong "ĐÓNG" tru duoc, so cua goi khong doi`);
+}
+
+/* ---- T18. HỢP ĐỒNG BA TẦNG — refactor IA, Đức chuyển 07/09 ----
+ *
+ * Bảng đi từ CHÍN tab xuống BA TẦNG, và tab mở sẵn đi từ góc nhìn hệ thống về góc nhìn người
+ * quyết định. Luật IA của Đức, bốn câu, mỗi câu một khẳng định dưới đây:
+ *   ⑴ HOME có ĐÚNG ba khối: focus · việc của Đức · cái gì đang chạy. Thiếu một khối là ĐỎ.
+ *   ⑵ KHÔNG NHÂN BẢN: mỗi thứ có đúng MỘT nơi authoritative, nơi khác chỉ trỏ tới.
+ *   ⑶ Chỉ số kỹ thuật KHÔNG lên HOME — chúng xuống tầng Hệ thống.
+ *   ⑷ Mọi khối đã khai phải có mặt, và khối lạ không được lặng lẽ biến mất.
+ *
+ * HỎI THẲNG HAI HÀM CANH, không chỉ hỏi qua trang. Hỏi qua trang thì muốn dựng ca hỏng phải
+ * sửa chính bộ sinh, nên chốt chỉ có mặt mà không có răng — đúng loại xanh giả mà file này
+ * bắt bốn lần trong một ngày.
+ */
+{
+  const html = buildOverview(REAL).html;
+
+  /* --- ⑴ HOME có ĐÚNG ba khối, đúng thứ tự, và không khối nào khác --- */
+  const tang = [...html.matchAll(/data-pane="([a-z-]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(tang, TANG.map(([id]) => id), "trang phai co dung cac tang khai o TANG, dung thu tu");
+  const khoiCuaTang = (ten) => {
+    const k = tang.indexOf(ten);
+    assert.notEqual(k, -1, `phai co tang ${ten}`);
+    const i = html.indexOf(`data-pane="${ten}"`);
+    const j = k + 1 < tang.length ? html.indexOf(`data-pane="${tang[k + 1]}"`) : html.length;
+    return [...html.slice(i, j).matchAll(/data-sect="([a-z-]+)"/g)].map((m) => m[1]);
+  };
+  for (const [ten, , ids] of TANG) {
+    assert.deepEqual(khoiCuaTang(ten), ids,
+      `tang "${ten}" phai chua DUNG cac khoi khai o TANG, dung thu tu — thieu mot khoi la Duc mo bang ra khong thay viec cua minh`);
+  }
+  assert.deepEqual(TANG[0][2], ["focus-now", "needs-duc", "in-motion"],
+    "HOME phai la DUNG ba khoi: dang lam gi truoc / can Duc / dang chay (Duc chuyen 07/09)");
+  const home = html.slice(html.indexOf('data-pane="home"'), html.indexOf('data-pane="work"'));
+  for (const id of TANG[0][2]) {
+    const k = cuaKhoi(home, id);
+    assert.ok(k.replace(/<[^>]*>/g, "").trim().length > 40,
+      `khoi HOME "${id}" gan nhu rong — mot khoang trong tren trang chu doc ra la "khong co gi", tuc bang noi doi`);
+  }
+
+  /* --- ⑵ KHÔNG NHÂN BẢN: năm chỗ, mỗi chỗ đúng một bản --- */
+  const demKhoi = (bieu) => [...html.matchAll(bieu)].length;
+  assert.equal(demKhoi(/<div class="sect">(?:Cần Đức|Đức cần làm)/g), 1,
+    "danh sach viec cua Duc chi duoc co DUNG MOT khoi — truoc refactor no co ba, va chung dem bang hai co che khac nhau");
+  assert.equal(demKhoi(/<span class="k">Đang tập trung</g), 1,
+    "focus hien tai chi duoc khai o DUNG MOT cho");
+  assert.equal(demKhoi(/<div class="big">/g), 1,
+    "bang chi muc extension chi duoc co MOT ban — truoc refactor no o ca trang chu va tab Extension");
+  assert.equal(demKhoi(/<div class="rm">/g), 1, "thanh bac y tuong chi duoc co MOT ban");
+  assert.equal(demKhoi(/<div class="sect">Làm mới bảng/g), 1,
+    "huong dan lam moi bang chi duoc co MOT ban — ban o trang chu von la ban cat ngan cua ban day du");
+
+  /* --- ⑶ CHỈ SỐ KỸ THUẬT KHÔNG LÊN HOME, nhưng phải CÒN ở đâu đó --- */
+  for (const nhan of CHI_SO_KY_THUAT) {
+    assert.ok(!home.includes(nhan), `"${nhan}" la chi so ky thuat, khong duoc nam tren tang mo san`);
+    assert.ok(html.includes(nhan), `"${nhan}" phai con o dau do tren trang — canh bao va chi so thi CHUYEN TANG, khong xoa`);
+  }
+  const iHome = html.indexOf('data-pane="home"');
+  const iSys = html.indexOf('data-pane="system"');
+  for (const id of ["ha-tang", "cau-truc", "suc-khoe", "suc-khoe-assistant", "tra-cuu"]) {
+    assert.ok(html.indexOf(`data-sect="${id}"`) > iSys && iSys > iHome,
+      `khoi "${id}" phai nam o tang He thong, khong duoc len HOME`);
+  }
+
+  /* --- ⑷ HAI HÀM CANH PHẢI THẬT SỰ NÉM. Dựng ca hỏng bằng một lượt gọi, không sửa bộ sinh. --- */
+  const soDay = () => new Map(TANG.flatMap(([, , ids]) => ids).map((id) => [id, ["x"]]));
+  assert.doesNotThrow(() => kiemHopDongTang(soDay()), "so khoi day du thi KHONG duoc nem");
+  for (const thieu of TANG[0][2]) {
+    const so = soDay(); so.delete(thieu);
+    assert.throws(() => kiemHopDongTang(so), /KHOI_THIEU/,
+      `bo khoi "${thieu}" khoi HOME thi PHAI nem KHOI_THIEU — im lang la tang thieu mot phan ma khong ai thay`);
+  }
+  for (const rong of TANG[0][2]) {
+    const so = soDay(); so.set(rong, ["   ", ""]);
+    assert.throws(() => kiemHopDongTang(so), /KHOI_HOME_RONG/,
+      `khoi HOME "${rong}" rong ruot thi PHAI nem — mot khoang trong doc ra la "khong co gi"`);
+  }
+  {
+    const so = soDay(); so.set("khoi-la", ["x"]);
+    assert.throws(() => kiemHopDongTang(so), /KHOI_KHONG_KHAI/,
+      "khoi khong khai o TANG thi PHAI nem — no khong hien tren trang ma cung khong bao loi");
+  }
+  assert.doesNotThrow(() => kiemChiSoHome("Đang tập trung · Cần Đức · Đang chạy"),
+    "chu HOME sach thi KHONG duoc nem");
+  assert.ok(CHI_SO_KY_THUAT.length >= 4, "danh sach chi so ky thuat phai co it nhat bon nhan de canh");
+  for (const nhan of CHI_SO_KY_THUAT) {
+    assert.throws(() => kiemChiSoHome(`... ${nhan} ...`), /CHI_SO_KY_THUAT_TREN_HOME/,
+      `"${nhan}" lot len HOME thi PHAI nem — do la luat IA cua Duc, khong phai so thich trinh bay`);
+  }
+
+  ok(`hop dong ba tang: ${TANG.length} tang / ${TANG.flatMap(([, , i]) => i).length} khoi, HOME dung 3 khoi, khong nhan ban 5 cho, ${CHI_SO_KY_THUAT.length} nhan ky thuat deu bi chan khoi HOME, hai ham canh nem du ${TANG[0][2].length * 2 + 1 + CHI_SO_KY_THUAT.length} ca hong`);
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

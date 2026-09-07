@@ -242,8 +242,12 @@ export function humanWork(rows) {
   // CẮT KHOẢNG TRẮNG TRƯỚC khi phân loại. Bản đầu lọc trên chuỗi thô, nên một trường khai
   // toàn dấu cách bị đếm CẢ là việc thật CẢ là chưa khai — cùng một đơn vị nằm ở hai nhóm
   // loại trừ nhau. Lược đồ đã chặn ca này, nhưng hàm hiển thị vẫn phải tự đúng.
+  /* `statusPath` đi kèm để khối `needs-duc` biết dòng này đến từ hồ sơ NÀO. Cần đúng một
+     việc: hồ sơ nào TỰ NÓ đã mang dấu `@Đức` thì dòng `human_action` của nó là bản chép của
+     dòng vừa hiện, và chỉ ca đó mới được bỏ. Không có trường này thì phép bỏ trùng phải đoán
+     theo văn xuôi — mà đoán ở đây là làm mất một việc thật của Đức. */
   const actions = live.filter(coViecDuc)
-    .map((r) => ({ unit: r.name, what: String(r.humanAction).trim() }));
+    .map((r) => ({ unit: r.name, what: String(r.humanAction).trim(), statusPath: r.statusPath || "" }));
   const undeclared = live.filter((r) => !String(r.humanAction ?? "").trim()).length;
   return { actions, undeclared };
 }
@@ -1187,9 +1191,12 @@ export const stepBar = (stage) => {
   }).join("") + `</div>`;
 };
 
-/* Một hàng roadmap: tên có link nhảy sang tab Ý tưởng, thanh ba bước, rồi nhãn bậc bằng chữ. */
+/* Một hàng roadmap: tên có link nhảy tới chi tiết ý tưởng, thanh ba bước, rồi nhãn bậc.
+   `data-goto` phải là tên MỘT TẦNG, không phải tên khối: đoạn JS cuối trang gọi `show()` với
+   giá trị đó, và `show()` chỉ biết tầng. Từ lượt refactor IA, khối `y-tuong` nằm trong tầng
+   `work` — trỏ sang "y-tuong" là bấm vào không có gì xảy ra. */
 const roadmapRow = (idea) =>
-  `        <div class="rmr"><a href="#y-${esc(slug(idea.code))}" data-goto="y-tuong">` +
+  `        <div class="rmr"><a href="#y-${esc(slug(idea.code))}" data-goto="work">` +
   `${esc(idea.code)} · ${esc(idea.name)}</a>${stepBar(idea.stage)}${chip(idea.stage)}</div>`;
 
 const NL = String.fromCharCode(10);
@@ -1243,8 +1250,8 @@ p{margin:0}
   padding:11px 15px;color:var(--off);font-weight:600;font-size:14px}
 .cu[data-hien="1"]{display:block}
 
-/* TAB — Đức nói trang cũ phải cuộn quá nhiều. Bảy tab, và mỗi tab lại dùng toggle bên trong,
-   nên mặc định trang chỉ cao bằng một màn hình. */
+/* TAB — Đức nói trang cũ phải cuộn quá nhiều. Ba tầng, và mỗi tầng lại dùng toggle bên trong,
+   nên mặc định trang chỉ cao bằng một màn hình. Số tầng khai ở hằng số TANG của bộ sinh. */
 .tabs{display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
 .tab{font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--muted);
   background:none;border:1px solid transparent;border-bottom:none;cursor:pointer;
@@ -1254,13 +1261,19 @@ p{margin:0}
   border-color:var(--line);border-bottom-color:var(--surface)}
 .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 [role="tabpanel"]{display:flex;flex-direction:column;gap:13px}
+${/* KHỐI `data-sect` PHẢI LẶP LẠI LUẬT FLEX Ở TRÊN.
+     Từ lượt refactor IA, thẻ con trực tiếp của một khung không còn là `.card` mà là khối
+     `data-sect` gói nhiều card. Thiếu dòng dưới thì khoảng cách 13px chỉ còn GIỮA các khối,
+     còn các card trong cùng một khối dính liền nhau. Đây là dòng CSS duy nhất lượt refactor
+     này thêm — cấu trúc mới bắt buộc, không phải làm đẹp thêm. */
+  ""}[data-sect]{display:flex;flex-direction:column;gap:13px}
 ${/* DÒNG DƯỚI BẮT BUỘC PHẢI CÓ, và nó phải nằm SAU luật display ở trên.
      display:flex ở trên là luật của TÁC GIẢ, còn [hidden] → display:none là luật mặc định của
      TRÌNH DUYỆT — và luật tác giả thắng luật trình duyệt bất kể độ đặc hiệu. Thiếu dòng dưới
-     thì đoạn JS cuối trang vẫn gán pane.hidden = true rất đúng, nhưng CSS bỏ qua, nên cả chín
+     thì đoạn JS cuối trang vẫn gán pane.hidden = true rất đúng, nhưng CSS bỏ qua, nên MỌI
      khung hiện chồng nhau và bấm tab không thấy gì đổi.
 
-     Đó là bug DASH-TAB-01. Nó sống từ commit đầu tiên dựng 7 tab tới 04/09 mà không ai thấy,
+     Đó là bug DASH-TAB-01. Nó sống từ commit đầu tiên dựng tab tới 04/09 mà không ai thấy,
      vì cả suite chỉ kiểm trang CÓ gì, không kiểm trang ẨN gì. Ghim đã thêm, ở khối 10b của
      tests/build-overview-smoke.mjs — một bộ suy cascade tí hon; gỡ dòng dưới là nó ĐỎ.
 
@@ -1477,19 +1490,88 @@ ${/* Hàng của khối "đang làm gì". CỐ Ý không dùng lại lớp .dr: 
 .lr .mn{font-size:12px;color:var(--muted);line-height:1.4}
 </style>`;
 
-const TABS = [
-  ["tong-quan", "Tổng quan"],
-  ["ai-dieu-phoi", "AI điều phối"],
-  ["extension", "Extension"],
-  ["y-tuong", "Ý tưởng"],
-  ["van-hanh", "Vận hành"],
-  ["suc-khoe", "Sức khoẻ & nợ"],
-  ["cau-truc", "Cấu trúc"],
-  ["nhat-ky", "Nhật ký & mốc"],
-  ["tra-cuu", "Tra cứu"]
+/* ===== BA TẦNG — HOME · WORK · SYSTEM. Refactor IA, Đức chuyển 07/09 =====
+ *
+ * VÌ SAO ĐỔI: bảng đã phình lên **chín** tab, và tab mở sẵn là góc nhìn hệ thống chứ không
+ * phải góc nhìn người quyết định. Đức mở bảng ra là gặp bảng khoá, mốc gói, đếm sự cố — trong
+ * khi câu Đức cần trả lời chỉ có ba: *đang tập trung vào gì · tôi cần làm gì · cái gì đang
+ * chạy*. Chín cửa cho ba câu là bắt người đọc học cấu trúc repo trước khi đọc được trạng thái.
+ *
+ * BA TẦNG, KHÔNG PHẢI BA TAB ĐƠN THUẦN. Mỗi tầng là một khung nội dung, và trong khung đó là
+ * các KHỐI mang `data-sect`. Khối là đơn vị của luật IA dưới đây, tab chỉ là cái vỏ:
+ *   HOME   → chỉ ba khối, đúng ba câu trên. Người không biết cấu trúc repo dùng được.
+ *   WORK   → extension và ý tưởng: từng việc đang đi tới đâu.
+ *   SYSTEM → vận hành, sức khoẻ, khoá, cấu trúc, nhật ký, tra cứu. Chỉ số kỹ thuật ở đây.
+ *
+ * DANH SÁCH NÀY LÀ HỢP ĐỒNG, KHÔNG PHẢI GỢI Ý. Bộ dựng khối ở cuối `buildOverview` NÉM khi
+ * một khối được sinh mà không khai ở đây, khi một khối đã khai mà không được sinh, và khi
+ * một chỉ số kỹ thuật lọt vào tầng HOME. Fail-closed, cùng lý lẽ với `MOC_HEAD_HONG`: một
+ * tầng HOME lặng lẽ thiếu khối là Đức mở bảng ra, không thấy việc của mình, rồi tin là không
+ * có việc nào — sai kiểu đó tệ hơn bộ sinh chết kèm tên nguyên nhân. */
+export const TANG = [
+  ["home", "Trang chính", ["focus-now", "needs-duc", "in-motion"]],
+  ["work", "Việc", ["extension", "y-tuong"]],
+  ["system", "Hệ thống", ["van-hanh", "suc-khoe", "suc-khoe-assistant", "ha-tang", "cau-truc", "nhat-ky", "tra-cuu"]]
 ];
 
-/* TAB MỞ SẴN — `LIVE-BLOCK-01`. Đức: "đây là trang tôi sẽ truy cập hàng ngày nhiều nhất."
+/* CHỈ SỐ KỸ THUẬT — cấm có mặt trong tầng HOME (luật IA của Đức: *"Bridge methods, số file
+ * test, khoá, cấu trúc repo — xuống SYSTEM"*).
+ *
+ * Ghim bằng TIÊU ĐỀ KHỐI, không bằng con số. Con số đổi mỗi phiên; tiêu đề khối là thứ ổn
+ * định, và nó là đúng cái Đức nhìn thấy khi một khối kỹ thuật bị đặt sai tầng. Ai chuyển một
+ * trong các khối này lên HOME thì bộ sinh chết ngay tại chỗ kèm tên khối — chứ không phải để
+ * tới lượt Đức mở bảng mới phát hiện. */
+export const CHI_SO_KY_THUAT = [
+  "Khoá làm việc",
+  "Lệnh Bridge",
+  "File kiểm",
+  "Sức khoẻ Assistant",
+  "Thư mục ở tầng ngoài cùng",
+  "File ở gốc repo"
+];
+
+/* HAI PHÉP CANH HỢP ĐỒNG `TANG`, TÁCH RA THÀNH HÀM XUẤT RA — cố ý.
+ *
+ * Chúng nằm trong `buildOverview` thì phép ghim chỉ hỏi được qua hành vi, tức muốn thử ca hỏng
+ * phải sửa chính bộ sinh. Là hàm riêng thì suite dựng được ca hỏng bằng một lượt gọi, nên hai
+ * chốt này có RĂNG THẬT chứ không chỉ có mặt. Cùng lối với `laFileMayDuocGhi` của bộ sinh bảng
+ * đối chiếu: hai đường đo một chốt thì gỡ chốt không còn cách nào xanh. */
+export function kiemHopDongTang(khoiTang) {
+  const daKhai = new Set(TANG.flatMap(([, , ids]) => ids));
+  for (const id of khoiTang.keys()) {
+    if (!daKhai.has(id)) {
+      throw new Error(`KHOI_KHONG_KHAI: khối "${id}" được sinh ra nhưng không khai ở TANG, nên nó `
+        + "KHÔNG hiện trên trang mà cũng không báo lỗi. Khai nó vào đúng tầng, hoặc bỏ nó đi.");
+    }
+  }
+  for (const [tab, , ids] of TANG) {
+    for (const id of ids) {
+      const dong = khoiTang.get(id);
+      if (!dong) {
+        throw new Error(`KHOI_THIEU: tầng "${tab}" khai khối "${id}" mà không khối nào được sinh ra. `
+          + "Tầng thiếu một phần thì Đức không có cách nào biết — nên bộ sinh dừng ở đây.");
+      }
+      if (tab === TANG[0][0] && dong.join("").trim() === "") {
+        throw new Error(`KHOI_HOME_RONG: khối "${id}" của tầng mở sẵn không có nội dung nào. `
+          + "Đức mở bảng ra sẽ thấy một khoảng trống và tin là không có gì — đó là nói dối.");
+      }
+    }
+  }
+}
+
+export function kiemChiSoHome(chuHome) {
+  for (const nhan of CHI_SO_KY_THUAT) {
+    if (String(chuHome ?? "").includes(nhan)) {
+      throw new Error(`CHI_SO_KY_THUAT_TREN_HOME: tầng mở sẵn đang chứa "${nhan}". Luật IA của Đức: `
+        + "Bridge, số file test, khoá và cấu trúc repo xuống tầng Hệ thống. HOME nói HỆ QUẢ, "
+        + "không nói chỉ số.");
+    }
+  }
+}
+
+const TABS = TANG.map(([id, ten]) => [id, ten]);
+
+/* TAB MỞ SẴN — nay là tầng HOME, không còn là góc nhìn hệ thống (Đức chuyển 07/09).
  *
  * MỘT HẰNG SỐ CHO CẢ HAI CHỖ, cố ý. Nút tab được tô sáng và khung nội dung được mở là hai chỗ
  * khác nhau trong HTML, và chúng lệch nhau thì trang mở ra với nút này sáng mà nội dung kia
@@ -1499,7 +1581,7 @@ const TABS = [
  * KHÔNG đụng tới `[role="tabpanel"][hidden]{display:none}`: đó là dòng đang giữ cho tab đổi
  * được (bug `DASH-TAB-01`). Đổi tab mặc định là đổi CHỖ ĐẶT thuộc tính `hidden`, không phải
  * thêm một luật `display` mới. */
-export const TAB_MAC_DINH = "ai-dieu-phoi";
+export const TAB_MAC_DINH = TANG[0][0];
 const anKhung = (id) => (id === TAB_MAC_DINH ? "" : " hidden");
 
 const chip = (stage) => `<span class="chip s${stage}">${esc(STAGES[stage])}</span>`;
@@ -1623,6 +1705,17 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
   const allClean = checks.every((c) => c[1] === 0);
 
   const p = [];
+
+  /* KHỐI ĐI VÀO SỔ RIÊNG, TẦNG DỰNG SAU. Bộ sinh vẫn viết các khối theo thứ tự nào cũng được;
+     thứ tự Đức NHÌN THẤY do `TANG` quyết. Nhờ vậy dời một khối sang tầng khác là sửa một dòng
+     ở `TANG`, không phải cắt dán vài trăm dòng HTML — và đó là chỗ mà bản chín-tab đã mục:
+     mỗi lần đổi ý là một lượt cắt dán, nên không ai đổi, nên IA phình dần. */
+  const khoiTang = new Map();
+  let cur = p;
+  const batDau = (id) => {
+    if (!khoiTang.has(id)) khoiTang.set(id, []);
+    cur = khoiTang.get(id);
+  };
   p.push(`<title>${esc(title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1644,11 +1737,19 @@ ${STYLE}
   }
   p.push(`  </div>`);
 
-  /* ===== TAB 1 · TỔNG QUAN ===== */
-  p.push(`
-  <div role="tabpanel" data-pane="tong-quan"${anKhung("tong-quan")}>
-    <div class="card">
-      <div class="sect">Đang làm / Kế tiếp</div>
+  /* ===== HOME · KHỐI 1 · FOCUS NOW =====
+   *
+   * MỘT FOCUS **CỘNG MỘT CON SỐ LUỒNG**, không phải một focus trơ. Đề bài Đức viết "đúng 1
+   * focus chính"; đúng ở ý, nhưng một focus duy nhất NÓI DỐI vào đúng những ngày đáng đọc
+   * nhất — hôm nay repo có nhiều lane chạy song song, và một dòng "đang tập trung: X" đọc ra
+   * là "chỉ có X đang chạy". Cắt bớt trong im lặng là biến bảng thành nguồn sai, nên con số
+   * luồng đứng cạnh focus.
+   *
+   * Ô thứ ba KHÔNG còn là "Đức cần làm" — nó đã dời sang khối `needs-duc` ngay dưới, là nơi
+   * authoritative duy nhất. Ba bản sao của cùng một danh sách là đúng cái Đức phàn nàn. */
+  batDau("focus-now");
+  cur.push(`    <div class="card">
+      <div class="sect">Đang làm gì trước</div>
       <div class="now">
         <div class="nb focus">
           <span class="k">Đang tập trung</span>
@@ -1656,93 +1757,58 @@ ${STYLE}
           <span class="s">${esc(top ? shorten(top.currentFocus || top.nextStep) : "Chưa có đơn vị nào khai việc kế.")}</span>
         </div>
         <div class="nb next">
-          <span class="k">Kế tiếp</span>
-          <span class="t">${esc(top ? shorten(top.nextStep, 58) : "—")}</span>
+          <span class="k">Cổng kế tiếp</span>
+          <span class="t">${esc(top ? (gateNext(top.nextStep, 58) || shorten(top.nextStep, 58)) : "—")}</span>
           <span class="s">${esc(second ? "Sau đó: " + second.name + " — " + shorten(second.nextStep, 68) : "Không còn việc nào xếp sau.")}</span>
         </div>
-        <div class="nb duc">
-          <span class="k">Đức cần làm</span>
-          <span class="t">${humanActions.length ? humanActions.length + " việc đang chờ" : "Không có việc nào chờ Đức"}</span>
-          <span class="s">${esc(humanActions.length ? shorten(humanActions[0].what) : "Mọi đơn vị đã khai là không cần Đức làm gì.")}</span>
-        </div>
+        <div class="nb">`);
+  /* Ô NÀY SUY TỪ BẢNG CHỦ SỞ HỮU, NÊN NÓ PHẢI MANG DẤU — kể cả thẻ mở và thẻ đóng.
+     Đây là cái bẫy đã làm tê cả repo một lần (mục `N-10`): số luồng đổi mỗi lượt nhận/trả
+     khoá, mà bảng bị cổng xuất bản so với HEAD mỗi phiên. Một dòng không dấu suy từ bảng khoá
+     nghĩa là MỌI phiên bị chặn đẩy mỗi lần bất kỳ ai nhận một vùng — dù không dữ liệu nào của
+     họ đổi. Từng dòng một, dấu ở ĐẦU dòng: `compareOverview` lọc bằng `startsWith`. */
+  for (const d of [
+    `          <span class="k">Chạy song song</span>`,
+    `          <span class="t">${luongChay.length ? esc(luongChay.length + " luồng") : "không có luồng nào"}</span>`,
+    `          <span class="s">${luongChay.length
+      ? "Việc không chỉ nằm ở một chỗ. Từng luồng liệt kê ở khối Đang chạy ngay dưới."
+      : "Không luồng nào đang giữ vùng trong repo này."}</span>`
+  ]) cur.push(KHOA_PREFIX + d);
+  cur.push(`        </div>
       </div>
-    </div>
+      <p class="note">Ô đầu là đơn vị hạng 1 tự khai, không phải bảng chọn hộ. <strong>Cổng kế tiếp</strong> là câu đầu của việc kế — bản đầy đủ ở tầng <strong>Việc</strong>. Con số luồng đứng cạnh focus có lý do: có ngày nhiều việc chạy cùng lúc, và một dòng focus trơ sẽ đọc ra là chỉ có một việc.</p>
+    </div>`);
 
-    <div class="card">
-      <div class="sect">Extension trong repo — bấm tên để xem chi tiết</div>
-      <div class="big">`);
-  for (const r of model.rows) {
-    const n = debtOf.get(r.name);
-    p.push(bigRow("extension", unitId(r), r.name, chipDonVi(r),
-      n === undefined ? "extension" : `${n} việc nợ`));
-  }
-  p.push(`      </div>
-      <p class="note">${model.rows.length} extension. Chi tiết ở tab <strong>Extension</strong>.</p>
-    </div>
-
-    <div class="card">
-      <div class="sect">Ý tưởng đang ở bước nào — ${ideas.length} ý tưởng</div>
-      <div class="rm">
-        <div class="rmr rmh"><span>Ý tưởng</span><div class="rms">`);
-  for (const label of ROADMAP_STEPS) p.push(`          <span class="rml">${esc(label)}</span>`);
-  p.push(`        </div><span>Đang ở bậc</span></div>`);
-  if (ideas.length) {
-    for (const idea of ideas) p.push(roadmapRow(idea));
-  } else {
-    /* Sổ trống thì KHÔNG dựng link — link không có đích là lỗi âm thầm: Đức bấm, không có gì
-       xảy ra. Phép kiểm link ghim đúng một link cho mỗi ý tưởng, nên hàng này phải trơ. */
-    p.push(`        <div class="rmr"><span class="meta">Sổ ý tưởng đang trống.</span></div>`);
-  }
-  p.push(`      </div>
-      <p class="note">Ba bước là đường đi thật của một ý tưởng. <strong>Nghỉ</strong> không phải bước thứ tư — ý tưởng đã nghỉ hiện thanh <strong>rỗng có gạch ngang</strong>, để không ai đọc nhầm là gần xong. Bấm tên để xem chi tiết ở tab <strong>Ý tưởng</strong>.</p>
-    </div>
-
-    <div class="card">
-      <div class="sect">Đức cần làm</div>
-      <div class="bl">`);
-  if (humanActions.length) {
-    for (const a of humanActions) {
-      p.push(`        <div class="bi"><span class="c">›</span><span class="d"><strong>${esc(a.unit)}</strong> — ${esc(a.what)}</span></div>`);
-    }
-  } else {
-    p.push(`        <div class="bi"><span class="c">✓</span><span class="d">Không có việc nào đang chờ Đức.</span></div>`);
-  }
-  p.push(`      </div>${humanUndeclared ? `
-      <p class="note"><strong>${humanUndeclared} đơn vị chưa khai trường này</strong> — nên danh sách trên có thể còn thiếu.</p>` : ""}
-    </div>
-
-    <div class="card">
-      <div class="sect">Làm mới bảng</div>
-      <div class="hint">Bảng không tự làm mới. Nó in ngày sinh ở đầu trang và <strong>tự bật dải đỏ khi Đức mở nó vào một ngày khác ngày sinh</strong>. Thấy dải đỏ thì <strong>Đức tự làm mới được, không phải nhờ ai và không phải chờ ai</strong>.</div>
-      <div class="bl">
-        <div class="bi"><span class="c">›</span><span class="d">Mở thư mục <strong>bang-trang-thai</strong> ở gốc repo, nhấp đúp <strong>Xem-bang.cmd</strong> — bảng được dựng lại rồi tự mở bằng trình duyệt.</span></div>
-      </div>
-      <p class="note">Hai cách còn lại — mở bảng có sẵn <strong>nút Làm mới ngay</strong>, và bật cho bảng tự dựng lại mỗi lần bật máy — nằm ở tab <strong>Vận hành</strong>.</p>
-    </div>
-  </div>`);
-
-  /* ===== TAB · AI ĐIỀU PHỐI — BỐN VÙNG, đúng thứ tự này (brief DASH-ORCH-V2) =====
+  /* ===== TỪ MỘT TAB "AI ĐIỀU PHỐI" THÀNH BỐN KHỐI Ở BA TẦNG (refactor IA 07/09) =====
    *
-   * THỨ TỰ LÀ MỘT PHẦN ĐỀ BÀI, không phải sở thích trình bày. Bản V1 đặt bảng khoá ở vị trí
-   * số 1, và chính bộ sinh phải LỌC dòng khoá khỏi phép so độ tươi vì chúng đổi quá thường
-   * xuyên — tức nó tự thừa nhận đó là ảnh chụp, không phải trạng thái đáng tin nhất để ra
-   * quyết định. Đặt ảnh chụp lên đầu là sai thứ tự.
+   * Bốn vùng của brief `DASH-ORCH-V2` vẫn còn nguyên, nhưng chúng KHÔNG còn ở cùng một chỗ:
+   *   CẦN ĐỨC            → HOME, khối `needs-duc`   · tôi cần làm gì?
+   *   CÔNG VIỆC HIỆN TẠI → HOME, khối `in-motion`   · cái gì đang chạy, cổng kế là gì?
+   *   SỨC KHOẺ ASSISTANT → SYSTEM                   · chỉ số, không phải việc phải làm
+   *   HẠ TẦNG (khoá)     → SYSTEM                   · chỗ trống để giao việc song song
    *
-   * Mở tab ra, Đức phải trả lời được đúng bốn câu, và bốn vùng trả lời đúng bốn câu đó:
-   *   1 · CẦN ĐỨC            → tôi cần làm gì?
-   *   2 · CÔNG VIỆC HIỆN TẠI → việc chính đang ở đâu?
-   *   3 · SỨC KHOẺ ASSISTANT → Assistant có đang làm tốt việc của nó?
-   *   4 · HẠ TẦNG (gập lại)  → chỗ còn trống để giao việc song song
+   * Vì sao tách: hai vùng đầu là câu Đức hỏi mỗi ngày, hai vùng sau là chỉ số kỹ thuật. Trộn
+   * chúng vào một tab thì tab đó phải mở mặc định, và Đức mở bảng ra là gặp bảng khoá trước
+   * khi gặp việc của mình. Luật IA của Đức nói thẳng: chỉ số kỹ thuật không lên HOME.
    *
    * Bảng KHÔNG cố trả lời mọi câu hỏi. Bảng = trạng thái cần nhìn thường xuyên; hỏi sâu và
-   * kiểm chứng theo yêu cầu là việc của Assistant trong chat. Thấy đáng thêm vùng thứ năm
-   * thì ghi vào sổ ý tưởng, đừng thêm ở đây. */
-  /* NGUỒN CỦA VÙNG 1 ĐÃ ĐỔI (đề bài `BANG-CAN-DUC-01`, Đức chốt 06/09): quét dấu trong ba sổ,
-     không đọc `human_action` nữa. Lý do đầy đủ nằm ở ghi chú của `readCanDuc`.
+   * kiểm chứng theo yêu cầu là việc của Assistant trong chat. */
 
-     `human_action` vẫn còn nuôi huy hiệu CHỜ ĐỨC ở vùng 2 và ô đếm ở tab Tổng quan — cố ý,
-     lượt này chỉ làm cơ chế, chưa mục nào được đánh dấu. Nên hai chỗ đó có thể đếm khác vùng
-     này trong một thời gian, và trang PHẢI nói ra điều đó chứ không để Đức tự đoán. */
+  /* ===== NEEDS ĐỨC — MỘT DANH SÁCH, HAI NGUỒN, NÓI THẲNG LÀ HAI =====
+   *
+   * Đề bài Đức: *"một SSOT duy nhất, dùng cơ chế `@Đức:bấm`/`@Đức:chốt`"*. Đích đúng. Nhưng
+   * CẮT `human_action` NGAY HÔM NAY LÀ MẤT DỮ LIỆU, và đây là số đo (mục `N-29` của sổ nợ
+   * gốc repo, đo 07/09): 17 dấu trong ba sổ, `human_action` khác rỗng ở 4 trong 5 gói — mà
+   * **Scouter không có một dấu nào trong cả gói** trong khi `human_action` của nó là việc
+   * thật còn hiệu lực, và ChatGPT thì `human_action` nói việc KHÁC với dấu đang có.
+   *
+   * NÊN LƯỢT NÀY ĐI ĐƯỜNG (a): giữ CẢ HAI cơ chế nuôi khối, gộp thành MỘT danh sách hiển thị
+   * duy nhất, và trang nói thẳng là hai nguồn đang song song. Đạt được "một nơi authoritative"
+   * mà không mất một dòng nào. Đường (b) — chỉ đọc dấu, kèm một phép ghim ĐỎ khi một hồ sơ có
+   * `human_action` mà gói đó không có dấu — để lượt sau, khi hai cơ chế đã đếm bằng nhau.
+   *
+   * Một nguồn duy nhất nói THIẾU thì tệ hơn hai nguồn nói LỆCH: hai nguồn lệch thì thấy được,
+   * một nguồn thiếu thì không. */
   const ducViec = readCanDuc(deps, model);
   const ducChuoi = [];
   for (const v of ducViec) {
@@ -1752,9 +1818,16 @@ ${STYLE}
   }
   const ducBam = ducViec.filter((v) => v.loai === "BẤM").length;
   const ducChot = ducViec.length - ducBam;
-  /* Số đơn vị còn khai việc chờ Đức theo CÁCH CŨ. Không hiện nó thì khối rỗng của lượt này
-     nói dối: Đức đọc "không có việc nào" trong khi bốn hồ sơ vẫn đang khai có. */
-  const ducCachCu = model.rows.filter(choDuc).length;
+
+  /* BỎ TRÙNG CHỈ Ở CA CHỨNG MINH ĐƯỢC LÀ TRÙNG.
+     Hồ sơ trạng thái nằm trong danh sách sổ mà `readCanDuc` quét, nên một hồ sơ TỰ NÓ mang
+     dấu thì dòng đó đã hiện ở trên — thêm `human_action` của cùng hồ sơ ấy là in hai lần.
+     Ngoài ca đó thì KHÔNG bỏ: gói có dấu trong sổ nợ riêng mà `human_action` nói việc khác là
+     ca đã đo được thật (ChatGPT, 07/09), và bỏ theo gói sẽ xoá đúng việc đó khỏi bảng. Lệch
+     về phía hiện THỪA, không bao giờ về phía hiện THIẾU. */
+  const hoSoCoDau = new Set(ducViec.map((v) => v.nguon).filter((n) => n.endsWith("STATUS.md")));
+  const ducHoSo = humanActions.filter((a) => !hoSoCoDau.has(a.statusPath));
+  const ducTong = ducViec.length + ducHoSo.length;
 
   /* Xếp theo thứ hạng đơn vị tự khai. Chưa khai hạng thì xuống cuối — KHÔNG coi là hạng 0,
      vì 0 là số nhỏ nhất và một trường bỏ trống sẽ nhảy lên đầu bảng. */
@@ -1767,14 +1840,20 @@ ${STYLE}
   const mocDangChay = moc.find((m) => m.bac === 1) || null;
   const deBaiMo = defects.filter((d) => d.mo);
 
-  p.push(`
-  <div role="tabpanel" data-pane="ai-dieu-phoi"${anKhung("ai-dieu-phoi")}>
-    <div class="card">`);
+  batDau("in-motion");
+  /* THẺ MỞ VÀ THẺ ĐÓNG CỦA CARD NÀY CŨNG MANG DẤU, dù chúng là chữ tĩnh không bao giờ đổi.
+     Lý do là phép ghim, không phải phép so: phép ghim ở khối 21 của suite khẳng định "tập dòng
+     mang dấu bằng ĐÚNG hai khối đọc từ bảng chủ sở hữu". Để một dòng không dấu lọt vào giữa
+     khối thì khẳng định đó phải nới thành "lọc lấy dòng có dấu rồi mới so" — và nới thế là mất
+     đúng cái răng của nó: một dòng lane BỊ MẤT DẤU sẽ biến mất khỏi cả hai vế và cho xanh giả.
+     Dấu trên hai dòng tĩnh không tốn gì; `compareOverview` chỉ bỏ qua chúng. */
+  cur.push(`${KHOA_PREFIX}    <div class="card">`);
 
   /* ===== KHỐI "ĐANG LÀM GÌ" — `LIVE-BLOCK-01` =====
    *
-   * NẰM TRONG vùng CẦN ĐỨC, không phải vùng thứ năm: brief cấm vùng thứ năm, và Đức mở tab ra
-   * là thấy nó ngay vì nó đứng đầu vùng đầu.
+   * NAY LÀ NỬA ĐẦU CỦA KHỐI `in-motion` trên tầng HOME. Nửa sau là danh sách từng đơn vị kèm
+   * cổng kế. Hai nửa cùng trả lời "cái gì đang chạy", nên chúng ở cùng một khối; trước lượt
+   * refactor chúng nằm cách nhau hai card trong cùng một tab dài.
    *
    * MỌI DÒNG DƯỚI ĐÂY MANG `KHOA_PREFIX` Ở ĐẦU DÒNG — kể cả dòng tiêu đề, dòng thẻ mở/đóng và
    * dòng ghi chú. Đây là phép ghim quan trọng nhất của khối này, và sai chỗ này KHÔNG AI THẤY
@@ -1788,7 +1867,7 @@ ${STYLE}
   /* TIÊU ĐỀ NÓI THẲNG ĐÂY LÀ ẢNH CHỤP. Trước 06/09 nó chỉ nói "2 luồng đang chạy" ở thì hiện
      tại, trong khi dữ liệu là ảnh chụp lúc sinh — và Đức đã nhìn thấy hai luồng đã trả khoá
      từ tám tiếng trước. Ảnh chụp cũ phải TRÔNG cũ. */
-  dongKhoi.push(`      <div class="sect">Đang làm gì — ảnh chụp lúc sinh bảng · ${luongChay.length ? esc(luongChay.length + " luồng") : "không có luồng nào"}</div>`);
+  dongKhoi.push(`      <div class="sect">Đang chạy — ảnh chụp lúc sinh bảng · ${luongChay.length ? esc(luongChay.length + " luồng") : "không có luồng nào"}</div>`);
   dongKhoi.push(`      <div class="bl">`);
   if (luongChay.length) {
     /* LỒNG THEO NHÓM VẤN ĐỀ, không theo khoá. Đức hỏi "ý tưởng đó đang giải quyết vấn đề gì" —
@@ -1838,19 +1917,22 @@ ${STYLE}
      chạy ở repo khác — thì sai kiểu đó TỆ HƠN không có khối này. */
   dongKhoi.push(`      <p class="note">Đọc thẳng từ bảng chủ sở hữu trong repo: mỗi dòng là một vùng đang có người giữ. <strong>Khối này không thấy hai thứ.</strong> Một: <strong>luồng đang chạy ở repo khác</strong> — bảng của repo này chỉ thấy repo của nó, nên một luồng đang làm ở repo bộ khung sẽ không hiện ở đây. Hai: <strong>luồng vừa được giao mà chưa kịp nhận vùng</strong> — lúc đó nó chưa để lại dấu vết nào trong repo. Vậy nên dòng <strong>"không có luồng nào đang chạy"</strong> đọc đúng là <strong>"không có luồng nào đang giữ vùng trong repo này"</strong>, chứ không phải "không có gì đang chạy". <strong>Đây là ảnh chụp lúc sinh bảng, không phải số liệu thời gian thực</strong> — "bao lâu rồi" đo từ lúc sinh, nên bảng để lâu không mở thì mọi con số ở đây già đi theo chính nó, chứ không tự làm mới. Câu việc lấy từ sổ nợ và sổ ý tưởng theo mã lane khai lúc nhận vùng; lane không khai mã thì dòng của nó nói thẳng là chưa tra được.</p>`);
 
-  for (const d of dongKhoi) p.push(KHOA_PREFIX + d);
+  for (const d of dongKhoi) cur.push(KHOA_PREFIX + d);
+  cur.push(`${KHOA_PREFIX}    </div>`);
 
-  p.push(`      <div class="sect">Cần Đức — ${ducViec.length ? esc(`${ducViec.length} việc · ${ducBam} bấm · ${ducChot} chốt`) : "chưa mục nào được đánh dấu"}</div>
+  batDau("needs-duc");
+  cur.push(`    <div class="card">
+      <div class="sect">Cần Đức — ${ducTong ? esc(`${ducTong} việc đang chờ · ${ducBam} bấm · ${ducChot} chốt · ${ducHoSo.length} từ hồ sơ`) : "Không có việc nào chờ Đức"}</div>
       <div class="bl">`);
   if (ducChuoi.length) {
     for (const c of ducChuoi) {
-      p.push(`        <div class="cg">Chuỗi việc · ${esc(c.ten)}</div>`);
+      cur.push(`        <div class="cg">Chuỗi việc · ${esc(c.ten)}</div>`);
       for (const v of c.muc) {
         /* Câu việc QUA BỘ RÚT GỌN. Khác bản cũ, và đổi có chủ đích: bản cũ in nguyên văn một
            trường được viết riêng cho bảng, còn ở đây chữ đến từ sổ nợ và sổ ý tưởng — nơi
            lane nào cũng gõ tên file và đường dẫn. Ngày 06/09 một câu việc mang tên file mã
            lọt lên bảng và chặn cổng đóng phiên của MỌI lane. */
-        p.push(`        <div class="dr"><div class="h">`
+        cur.push(`        <div class="dr"><div class="h">`
           + `<span class="badge ${v.loai === "CHỐT" ? "b1" : "b0"}">${esc(v.loai)}</span>`
           + `<span class="d">${esc(v.viec)}</span></div>`
           + `<span class="mn">${esc(v.treo === null ? "chưa đo được mục này treo bao lâu"
@@ -1864,35 +1946,57 @@ ${STYLE}
           + `</div>`);
       }
     }
-  } else {
+  }
+  /* NGUỒN THỨ HAI, TRONG CÙNG MỘT DANH SÁCH. Không phải một khối riêng: một khối riêng là hai
+     nơi authoritative, tức đúng cái luật IA cấm. Huy hiệu `HỒ SƠ` nói rõ dòng này đến từ cơ
+     chế nào — Đức thấy được hai cơ chế đang song song mà vẫn chỉ đọc một danh sách. */
+  if (ducHoSo.length) {
+    cur.push(`        <div class="cg">Chuỗi việc · từ hồ sơ trạng thái, chưa được đánh dấu</div>`);
+    for (const a of ducHoSo) {
+      cur.push(`        <div class="dr"><div class="h">`
+        + `<span class="badge b0">HỒ SƠ</span>`
+        + `<span class="d"><strong>${esc(a.unit)}</strong> — ${esc(a.what)}</span></div>`
+        + `<span class="mn">mục này chưa có dấu trong sổ nào, nên chưa đo được treo bao lâu`
+        + ` · đặt dấu vào dòng của mục thì nó đo được và tự rời bảng khi đóng</span>`
+        + `</div>`);
+    }
+  }
+  if (!ducChuoi.length && !ducHoSo.length) {
     /* KHỐI RỖNG PHẢI TỰ KHAI VÌ SAO NÓ RỖNG. Rỗng-vì-chưa-đánh-dấu và rỗng-vì-hết-việc là hai
        chuyện khác hẳn nhau, mà Đức không có cách nào phân biệt nếu bảng im lặng. Đây là điều
-       kiện nghiệm thu của đề bài `BANG-CAN-DUC-01`, không phải lời tô điểm. */
-    p.push(`        <div class="dr"><span class="d">Chưa mục nào trong sổ được đánh dấu, nên khối này rỗng <strong>vì chưa ai đánh dấu</strong> — không phải vì hết việc.</span>`
-      + (ducCachCu ? `<span class="mn">Cách cũ vẫn còn ${esc(String(ducCachCu))} đơn vị khai có việc chờ Đức; xem ở tab Extension. Chúng sẽ được đánh dấu ở lượt sau.</span>` : "")
-      + `</div>`);
+       kiện nghiệm thu của đề bài `BANG-CAN-DUC-01`, không phải lời tô điểm.
+       Nay khối chỉ rỗng khi CẢ HAI nguồn rỗng, nên câu này nói được điều mạnh hơn bản cũ. */
+    cur.push(`        <div class="dr"><span class="d">Không có việc nào chờ Đức: <strong>không mục nào trong sổ được đánh dấu</strong>, và <strong>không hồ sơ nào khai việc chờ tay Đức</strong>. Hai cơ chế cùng rỗng.</span></div>`);
   }
-  p.push(`      </div>
-      <p class="note">Chỉ những thứ <strong>Đức phải làm hoặc phải quyết</strong>. Bảng <strong>không giữ danh sách này</strong>: nó quét dấu <strong>@Đức:bấm</strong> và <strong>@Đức:chốt</strong> ngay trên dòng của mục trong sổ nợ, sổ ý tưởng và hồ sơ trạng thái. Muốn thêm một việc thì đặt dấu vào dòng của mục đó; đóng mục thì dấu mất theo, không phải nhớ đi xoá. <strong>BẤM</strong> là việc tay vài phút, gom được thành một buổi; <strong>CHỐT</strong> là việc cần Đức nghĩ, mỗi cái một lượt. Số ngày treo <strong>đo bằng lịch sử kho mã</strong>, không đọc đồng hồ. Không có trần số dòng: bao nhiêu mục có dấu thì hiện bấy nhiêu.</p>
-    </div>
+  cur.push(`      </div>
+      <p class="note">Chỉ những thứ <strong>Đức phải làm hoặc phải quyết</strong>, và đây là <strong>chỗ duy nhất</strong> trên bảng giữ danh sách đó — nơi khác chỉ trỏ tới. <strong>Hai cơ chế đang cùng nuôi khối này, và trang nói thẳng chứ không để Đức tự đoán.</strong> Một: dấu <strong>@Đức:bấm</strong> / <strong>@Đức:chốt</strong> đặt ngay trên dòng của mục trong sổ nợ, sổ ý tưởng và hồ sơ trạng thái — đóng mục thì dấu mất theo, không phải nhớ đi xoá. Hai: trường <strong>việc chờ tay Đức</strong> trong hồ sơ trạng thái, hiện với huy hiệu <strong>HỒ SƠ</strong> — cơ chế cũ, còn giữ vì có gói chưa được đánh dấu và cắt ngay là mất việc thật. Dòng nào đã có dấu ngay trong hồ sơ của nó thì chỉ hiện một lần. <strong>BẤM</strong> là việc tay vài phút, gom được thành một buổi; <strong>CHỐT</strong> là việc cần Đức nghĩ, mỗi cái một lượt. Số ngày treo <strong>đo bằng lịch sử kho mã</strong>, không đọc đồng hồ. Không có trần số dòng.</p>
+    </div>`);
+  if (humanUndeclared) {
+    cur.push(`    <div class="card">
+      <p class="note"><strong>${humanUndeclared} đơn vị chưa trả lời câu "có việc nào chờ Đức không"</strong> — nên danh sách trên có thể còn thiếu. Chưa trả lời khác với trả lời là không: bảng cố ý không gộp hai cái đó.</p>
+    </div>`);
+  }
 
-    <div class="card">
-      <div class="sect">Công việc hiện tại — ${luong.length} luồng</div>
+  /* ===== NỬA SAU CỦA `in-motion` — từng đơn vị, một dòng, kèm cổng kế ===== */
+  batDau("in-motion");
+  cur.push(`    <div class="card">
+      <div class="sect">Từng việc đang ở đâu — ${luong.length} luồng</div>
       <div class="bl">`);
   for (const r of luong) {
     const tt = trangThaiDonVi(r);
     const gate = gateNext(r.nextStep);
-    p.push(`        <div class="dr"><div class="h">`
-      + `<a href="#${esc(unitId(r))}" data-goto="extension">${esc(r.name)}</a>`
+    cur.push(`        <div class="dr"><div class="h">`
+      + `<a href="#${esc(unitId(r))}" data-goto="work">${esc(r.name)}</a>`
       + `<span class="badge b${tt.bac}">${esc(tt.chu)}</span></div>`
       + `<span class="d">${esc(gate || "chưa khai việc kế")}</span></div>`);
   }
-  p.push(`      </div>
-      <div class="hint" style="margin-top:11px">Đã đóng <strong>${mocDaXong.length} việc lớn</strong>, gần nhất là <strong>${esc(mocDaXong[0].ma || mocDaXong[0].ten)}</strong> (${esc(mocDaXong[0].ngay)}). Danh sách đầy đủ ở tab <strong>Nhật ký &amp; mốc</strong>.</div>
-      <p class="note">Xếp theo thứ hạng mỗi đơn vị tự khai, hạng 1 lên đầu; chưa khai hạng thì xuống cuối. Huy hiệu <strong>suy ra từ hồ sơ</strong>, không ai gõ tay: có việc chờ Đức thì thành <strong>CHỜ ĐỨC</strong>, và điều đó thắng mọi trạng thái khác. Đang chỉ có ba trạng thái — muốn phân biệt <strong>bị chặn</strong> hay <strong>chờ bằng chứng</strong> thì cần thêm một trường trong hồ sơ, đoán theo văn xuôi thì bảng sẽ nói sai mà không ai biết. Dòng dưới mỗi tên là <strong>câu đầu</strong> của việc kế; bản đầy đủ ở tab <strong>Extension</strong>.</p>
-    </div>
+  cur.push(`      </div>
+      <div class="hint" style="margin-top:11px">Đã đóng <strong>${mocDaXong.length} việc lớn</strong>, gần nhất là <strong>${esc(mocDaXong[0].ma || mocDaXong[0].ten)}</strong> (${esc(mocDaXong[0].ngay)}). Danh sách đầy đủ ở khối <strong>Nhật ký &amp; mốc</strong>, tầng <strong>Hệ thống</strong>.</div>
+      <p class="note">Mỗi việc <strong>đúng một dòng</strong>: trạng thái, rồi cổng kế tiếp. Xếp theo thứ hạng mỗi đơn vị tự khai, hạng 1 lên đầu; chưa khai hạng thì xuống cuối. Huy hiệu <strong>suy ra từ hồ sơ</strong>, không ai gõ tay: có việc chờ Đức thì thành <strong>CHỜ ĐỨC</strong>, và điều đó thắng mọi trạng thái khác — chi tiết việc đó nằm ở khối <strong>Cần Đức</strong>, không chép lại ở đây. Đang chỉ có ba trạng thái; muốn phân biệt <strong>bị chặn</strong> hay <strong>chờ bằng chứng</strong> thì cần thêm một trường trong hồ sơ, đoán theo văn xuôi thì bảng sẽ nói sai mà không ai biết. Bản đầy đủ của việc kế ở tầng <strong>Việc</strong>.</p>
+    </div>`);
 
-    <div class="card">
+  batDau("suc-khoe-assistant");
+  cur.push(`    <div class="card">
       <div class="sect">Sức khoẻ Assistant</div>
       <div class="kl">
         <div class="kr"><span class="n">Mốc pilot <em>${esc(mocPilot ? mocPilot.ten : "hồ sơ mốc không còn dòng pilot nào")}</em></span><span class="badge b${mocPilot ? mocPilot.bac : 0}">${esc(mocPilot ? mocPilot.trangThai : "chưa đọc được")}</span></div>
@@ -1903,15 +2007,16 @@ ${STYLE}
      mà lời máy tự khen thì trang này cấm sẵn. Cùng lý do, chữ trên huy hiệu là "ĐÃ GHI NHẬN",
      tuyệt đối không phải "0 lỗi". */
   for (const s of suCo.dong) {
-    p.push(`        <div class="kr"><span class="n">${esc(s.ten)}</span>`
+    cur.push(`        <div class="kr"><span class="n">${esc(s.ten)}</span>`
       + `<span class="badge ${s.n ? "b1" : "b0"}">${s.n} ĐÃ GHI NHẬN</span></div>`);
   }
-  p.push(`      </div>
+  cur.push(`      </div>
       <p class="note">${deBaiMo.length ? `Đang mở: <strong>${esc(deBaiMo.map((d) => d.ma).join(" · "))}</strong>. ` : ""}Đếm từ trường máy đọc được trong từng đề bài, không dò văn xuôi. Khối này tên là <strong>đề bài đang mở</strong> chứ không phải "sai lệch": cùng một phép đếm gộp cả lỗi thật lẫn đề bài cải tiến, mà gọi một đề bài cải tiến là sai lệch thì sai.</p>
       <div class="hint" style="margin-top:11px">Ba con số trên đếm bằng <strong>nhãn cố định trong nhật ký</strong>, mỗi sự cố đúng một dòng, vẫn nằm trong nhật ký chung chứ không có sổ riêng. Đọc đúng chữ: <strong>đã ghi nhận</strong>. Số <strong>0</strong> nghĩa là <strong>chưa ai ghi nhận sự cố nào</strong> — nó <strong>không</strong> có nghĩa là không có sự cố. Bộ đếm này chỉ đếm lỗi, cố ý <strong>không có mục nào để tôi tự ghi điểm cho mình</strong>; nhãn lạ thì bộ sinh dừng và nói tên nguyên nhân, chứ không lặng lẽ bỏ qua — bỏ qua là đúng cái sự cố ấy biến mất khỏi số đếm.${suCo.la ? ` Ngoài ba dòng trên còn <strong>${suCo.la} sự cố chưa phân loại</strong>, đếm riêng, cố ý không gộp vào.` : ""}</div>
-    </div>
+    </div>`);
 
-    <div class="card">
+  batDau("ha-tang");
+  cur.push(`    <div class="card">
       <details class="the">
         <summary><span><span class="nm">Hạ tầng</span><span class="sub">khoá làm việc và mốc gói Assistant — mở ra khi cần giao việc song song</span></span></summary>
         <div class="in">
@@ -1924,12 +2029,12 @@ ${STYLE}
      lúc một phiên nào đó bị cổng xuất bản từ chối mà không hiểu vì sao. Giữ đúng dạng
      `${KHOA_PREFIX}` rồi mới tới khoảng trắng và thẻ mở. */
   for (const k of khoa) {
-    p.push(`${KHOA_PREFIX}              <div class="kr"><span class="n">${esc(k.ten)}</span>` +
+    cur.push(`${KHOA_PREFIX}              <div class="kr"><span class="n">${esc(k.ten)}</span>` +
       `<span class="badge ${k.ban ? "b1" : "b2"}">${k.ban ? "BẬN" : "MỞ"}</span></div>`);
   }
-  p.push(`            </div>
+  cur.push(`            </div>
             <div class="hint" style="margin-top:11px">Đây là <strong>ảnh chụp lúc sinh bảng</strong>, không phải trạng thái thời gian thực — nó theo lần ghi gần nhất vào repo. Khoá <strong>MỞ</strong> là chỗ giao được việc mới ngay; khoá <strong>BẬN</strong> thì chỉ đọc, đừng giao thêm.</div>
-            <p class="note">Bảng này trả lời đúng một câu: <strong>còn mấy chỗ trống để giao việc song song</strong>. Ai đang giữ và đang làm gì thì xem khối <strong>Đang làm gì</strong> ở đầu tab — trước đây khối đó chưa có nên chỗ này cố ý để trống tên. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
+            <p class="note">Bảng này trả lời đúng một câu: <strong>còn mấy chỗ trống để giao việc song song</strong>. Ai đang giữ và đang làm gì thì xem khối <strong>Đang chạy</strong> ở tầng <strong>Trang chính</strong> — chỗ này cố ý để trống tên. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
           </div>
           <div>
             <div class="kl">
@@ -1939,20 +2044,34 @@ ${STYLE}
           </div>
         </div>
       </details>
-    </div>
-  </div>`);
+    </div>`);
 
-  /* ===== TAB 2 · EXTENSION ===== */
-  p.push(`
-  <div role="tabpanel" data-pane="extension"${anKhung("extension")}>
+  /* ===== WORK · KHỐI `extension` =====
+   * Bảng chỉ mục (trước ở tab Tổng quan) và phần chi tiết nay CÙNG MỘT KHỐI. Trước lượt
+   * refactor chúng nằm ở hai tab khác nhau, nên bảng chỉ mục là một bản sao thứ hai của danh
+   * sách extension đặt trên trang chủ — đúng cái Đức phàn nàn. Nay nó là mục lục của chính
+   * khối nó nằm trong. */
+  batDau("extension");
+  cur.push(`    <div class="card">
+      <div class="sect">Extension trong repo — bấm tên để xem chi tiết</div>
+      <div class="big">`);
+  for (const r of model.rows) {
+    const n = debtOf.get(r.name);
+    cur.push(bigRow("work", unitId(r), r.name, chipDonVi(r),
+      n === undefined ? "extension" : `${n} việc nợ`));
+  }
+  cur.push(`      </div>
+      <p class="note">${model.rows.length} extension. Chi tiết ngay dưới.</p>
+    </div>
+
     <div class="card">
-      <div class="sect">Extension trong repo</div>`);
+      <div class="sect">Chi tiết từng extension</div>`);
   for (const r of model.rows) {
     const brief = readBrief(deps, r);
     const n = debtOf.get(r.name);
     const twoBranch = /chatgpt|gemini/i.test(r.id || r.name);
     const duc = String(r.humanAction ?? "").trim();
-    p.push(`      <details class="the" id="${unitId(r)}">
+    cur.push(`      <details class="the" id="${unitId(r)}">
         <summary>
           <span><span class="nm">${esc(r.name)}</span><span class="sub">${esc(brief.text || "Mô tả chưa khai được — " + brief.why)}</span></span>
           ${chipDonVi(r)}
@@ -1967,34 +2086,49 @@ ${STYLE}
             <dt>Lệnh Bridge</dt><dd>${r.bridgeMethods} lệnh · ${r.testFiles} file kiểm</dd>
           </dl>`);
     if (twoBranch && features.length) {
-      p.push(`          <div>
+      cur.push(`          <div>
             <h2>Tính năng đã đo</h2>
             <div class="feat">
               <div class="fr fh"><span>Tính năng</span><span>GPT</span><span>Gemini</span></div>`);
       for (const f of features) {
         const cell = (v) => v === true ? `<span class="y">có</span>` : v === false ? `<span class="x">không</span>` : `<span class="q">?</span>`;
-        p.push(`              <div class="fr"><span>${esc(f.name)}</span>${cell(f.gpt)}${cell(f.gemini)}</div>`);
+        cur.push(`              <div class="fr"><span>${esc(f.name)}</span>${cell(f.gpt)}${cell(f.gemini)}</div>`);
       }
-      p.push(`            </div>
+      cur.push(`            </div>
             <p class="note">Lấy từ bảng đối chiếu hai nhánh trong repo, phần đã đo. Bảng đó chỉ so GPT với Gemini nên extension khác không có cột.</p>
           </div>`);
     } else {
-      p.push(`          <p class="note">Chưa có bảng tính năng cho extension này. Bảng đối chiếu trong repo hiện chỉ so hai nhánh GPT và Gemini.</p>`);
+      cur.push(`          <p class="note">Chưa có bảng tính năng cho extension này. Bảng đối chiếu trong repo hiện chỉ so hai nhánh GPT và Gemini.</p>`);
     }
-    p.push(`        </div>
+    cur.push(`        </div>
       </details>`);
   }
-  p.push(`      <p class="note">Mô tả lấy từ file giới thiệu của từng gói. Gói nào tiêu đề không khớp tên đơn vị thì bảng <strong>để trống và nói rõ lý do</strong>, không hiện chữ sai.</p>
-    </div>
-  </div>`);
+  cur.push(`      <p class="note">Mô tả lấy từ file giới thiệu của từng gói. Gói nào tiêu đề không khớp tên đơn vị thì bảng <strong>để trống và nói rõ lý do</strong>, không hiện chữ sai.</p>
+    </div>`);
 
-  /* ===== TAB 3 · Ý TƯỞNG ===== */
-  p.push(`
-  <div role="tabpanel" data-pane="y-tuong"${anKhung("y-tuong")}>
+  /* ===== WORK · KHỐI `y-tuong` — thanh bậc (trước ở tab Tổng quan) rồi tới chi tiết ===== */
+  batDau("y-tuong");
+  cur.push(`    <div class="card">
+      <div class="sect">Ý tưởng đang ở bước nào — ${ideas.length} ý tưởng</div>
+      <div class="rm">
+        <div class="rmr rmh"><span>Ý tưởng</span><div class="rms">`);
+  for (const label of ROADMAP_STEPS) cur.push(`          <span class="rml">${esc(label)}</span>`);
+  cur.push(`        </div><span>Đang ở bậc</span></div>`);
+  if (ideas.length) {
+    for (const idea of ideas) cur.push(roadmapRow(idea));
+  } else {
+    /* Sổ trống thì KHÔNG dựng link — link không có đích là lỗi âm thầm: Đức bấm, không có gì
+       xảy ra. Phép kiểm link ghim đúng một link cho mỗi ý tưởng, nên hàng này phải trơ. */
+    cur.push(`        <div class="rmr"><span class="meta">Sổ ý tưởng đang trống.</span></div>`);
+  }
+  cur.push(`      </div>
+      <p class="note">Ba bước là đường đi thật của một ý tưởng. <strong>Nghỉ</strong> không phải bước thứ tư — ý tưởng đã nghỉ hiện thanh <strong>rỗng có gạch ngang</strong>, để không ai đọc nhầm là gần xong. Bấm tên để nhảy xuống chi tiết ngay dưới.</p>
+    </div>
+
     <div class="card">
       <div class="sect">Sổ ý tưởng — phòng chờ của cả repo</div>`);
   for (const idea of ideas) {
-    p.push(`      <details class="the" id="y-${slug(idea.code)}">
+    cur.push(`      <details class="the" id="y-${slug(idea.code)}">
         <summary>
           <span><span class="nm">${esc(idea.code)} · ${esc(idea.name)}</span><span class="sub">${esc(shorten(idea.next, 140) || "chưa khai việc kế")}</span></span>
           ${chip(idea.stage)}
@@ -2006,27 +2140,25 @@ ${STYLE}
             <dt>Ai đang làm</dt><dd>${esc(idea.owner || "chưa ai nhận")}</dd>
             <dt>Phạm vi</dt><dd>${esc(shorten(idea.scope, 180) || "chưa khai")}</dd>`);
     for (const kv of idea.extra) {
-      p.push(`            <dt>${esc(kv[0])}</dt><dd>${esc(shorten(kv[1], 200))}</dd>`);
+      cur.push(`            <dt>${esc(kv[0])}</dt><dd>${esc(shorten(kv[1], 200))}</dd>`);
     }
-    p.push(`          </dl>`);
+    cur.push(`          </dl>`);
     if (idea.body.length) {
       const items = idea.body.slice(0, 18).map((line) => {
         const bullet = /^[-*]\s+(.+)$/.exec(line);
         return bullet ? `<li>${esc(shorten(bullet[1], 200))}</li>` : `<p>${esc(shorten(line, 230))}</p>`;
       });
-      p.push(`          <div class="prose">${items.join(NL)}</div>`);
+      cur.push(`          <div class="prose">${items.join(NL)}</div>`);
     }
-    p.push(`        </div>
+    cur.push(`        </div>
       </details>`);
   }
-  p.push(`      <p class="note">Ý tưởng nào đã có nhà thì rời sổ nên không hiện ở đây nữa. Đức cứ viết một câu, tôi chuẩn hoá lại.</p>
-    </div>
-  </div>`);
+  cur.push(`      <p class="note">Ý tưởng nào đã có nhà thì rời sổ nên không hiện ở đây nữa. Đức cứ viết một câu, tôi chuẩn hoá lại.</p>
+    </div>`);
 
-  /* ===== TAB 4 · VẬN HÀNH ===== */
-  p.push(`
-  <div role="tabpanel" data-pane="van-hanh"${anKhung("van-hanh")}>
-    <div class="card">
+  /* ===== SYSTEM · KHỐI `van-hanh` ===== */
+  batDau("van-hanh");
+  cur.push(`    <div class="card">
       <div class="sect">Làm mới bảng này</div>
       <div class="hint">Bảng là ảnh chụp, <strong>không tự cập nhật</strong>. Dải đỏ ở đầu trang tự bật khi Đức mở nó vào một ngày khác ngày sinh — nó tính lúc XEM, không lúc sinh, nên không cần dựng lại mới biết là cũ. <strong>Cả ba cách làm mới đều là nhấp đúp một file trong thư mục bang-trang-thai ở gốc repo</strong> — không cần gõ lệnh, không cần chờ ai.</div>
       <div class="bl">
@@ -2045,26 +2177,26 @@ ${STYLE}
         <div class="bi"><span class="c">›</span><span class="d">Mỗi việc xong đều phải qua <strong>cổng đóng phiên</strong>. Cổng đỏ thì chưa xong — không AI nào được tự báo xong.</span></div>
       </div>`);
   if (coChe.length) {
-    p.push(`      <details class="the">
+    cur.push(`      <details class="the">
         <summary><span><span class="nm">${coChe.length} cơ chế giữ cho không giẫm chân</span><span class="sub">mỗi cái trả lời đúng một câu</span></span></summary>
         <div class="in"><div class="bl">`);
     for (const c of coChe) {
-      p.push(`          <div class="bi"><span class="c">›</span><span class="d"><strong>${esc(c.ten)}</strong> — ${esc(c.traLoi)}</span></div>`);
+      cur.push(`          <div class="bi"><span class="c">›</span><span class="d"><strong>${esc(c.ten)}</strong> — ${esc(c.traLoi)}</span></div>`);
     }
-    p.push(`        </div></div>
+    cur.push(`        </div></div>
       </details>`);
   }
   if (batBien.length) {
-    p.push(`      <details class="the">
+    cur.push(`      <details class="the">
         <summary><span><span class="nm">${batBien.length} điều không được phá</span><span class="sub">mỗi cái sinh ra từ một lần hỏng thật</span></span></summary>
         <div class="in"><div class="bl">`);
     for (const b of batBien) {
-      p.push(`          <div class="bi"><span class="c">${esc(b.so)}</span><span class="d">${esc(b.cau)}</span></div>`);
+      cur.push(`          <div class="bi"><span class="c">${esc(b.so)}</span><span class="d">${esc(b.cau)}</span></div>`);
     }
-    p.push(`        </div></div>
+    cur.push(`        </div></div>
       </details>`);
   }
-  p.push(`      <p class="note">Số vùng và các mục trên <strong>đọc lại từ luật</strong>, không phải bản chép — nên bảng không thể nói khác luật. Bảng <strong>cố ý không hiện ai đang giữ vùng nào</strong>: chủ vùng đổi liên tục trong ngày, mà bảng được cổng so mỗi phiên, nên nhúng vào là mọi phiên bị chặn đẩy việc dù chẳng có gì đổi. Muốn biết ai đang giữ gì thì hỏi AI — đó là số liệu sống, không thuộc một ảnh chụp.</p>
+  cur.push(`      <p class="note">Số vùng và các mục trên <strong>đọc lại từ luật</strong>, không phải bản chép — nên bảng không thể nói khác luật. Bảng <strong>cố ý không hiện ai đang giữ vùng nào</strong>: chủ vùng đổi liên tục trong ngày, mà bảng được cổng so mỗi phiên, nên nhúng vào là mọi phiên bị chặn đẩy việc dù chẳng có gì đổi. Muốn biết ai đang giữ gì thì hỏi AI — đó là số liệu sống, không thuộc một ảnh chụp.</p>
     </div>
 
     <div class="card">
@@ -2088,18 +2220,17 @@ ${STYLE}
       <div class="hint">Bôi đen bất kỳ dòng nào rồi <strong>để lại bình luận</strong> — bình luận gắn đúng vào khối đó, nên tôi biết Đức đang nói về mục nào mà không cần Đức mô tả lại. Muốn tôi trả lời thì gửi bình luận cho Claude.</div>
       <p class="note">Đây là cách nhanh nhất để sửa một mô tả viết chưa rõ: Đức bình luận vào đúng chỗ, tôi viết lại vào file trong repo rồi sinh lại bảng.</p>
     </div>
-  </div>`);
+  `);
 
-  /* ===== TAB 5 · SỨC KHOẺ & NỢ ===== */
-  p.push(`
-  <div role="tabpanel" data-pane="suc-khoe"${anKhung("suc-khoe")}>
-    <div class="card">
+  /* ===== SYSTEM · KHỐI `suc-khoe` ===== */
+  batDau("suc-khoe");
+  cur.push(`    <div class="card">
       <div class="sect">Sức khoẻ — bốn phép dò, và mỗi phép đã dò bao nhiêu</div>
       <div class="hgrid">`);
   for (const c of checks) {
-    p.push(`        <div class="hc ${c[1] === 0 ? "zero" : "bad"}"><span class="n">${c[1]}</span><span class="l">${esc(c[0])}</span><span class="w">${esc(c[2])}</span></div>`);
+    cur.push(`        <div class="hc ${c[1] === 0 ? "zero" : "bad"}"><span class="n">${c[1]}</span><span class="l">${esc(c[0])}</span><span class="w">${esc(c[2])}</span></div>`);
   }
-  p.push(`      </div>
+  cur.push(`      </div>
       <p class="note">${allClean
     ? "Cả bốn phép đều sạch. Con số 0 ở đây là 0 <em>trên mẫu đã dò ghi ngay dưới nó</em> — không phải 0 vì chưa dò gì."
     : "Có phép chưa sạch. Số khác 0 là số việc thật đang thiếu, không phải cảnh báo chung."}</p>
@@ -2109,9 +2240,9 @@ ${STYLE}
       <div class="sect">Việc còn nợ — ${debtTotal} mục đang mở</div>
       <div class="bl">`);
   for (const d of debt) {
-    p.push(`        <div class="bi"><span class="c">${d.n}</span><span class="d">${esc(d.name)}</span></div>`);
+    cur.push(`        <div class="bi"><span class="c">${d.n}</span><span class="d">${esc(d.name)}</span></div>`);
   }
-  p.push(`      </div>
+  cur.push(`      </div>
       <details class="the" style="margin-top:11px">
         <summary><span><span class="nm">Con số này đếm thế nào</span><span class="sub">và vì sao nó thà đếm thừa hơn đếm thiếu</span></span></summary>
         <div class="in"><div class="prose">
@@ -2122,21 +2253,20 @@ ${STYLE}
       </details>
       <p class="note">Bảng cố ý KHÔNG liệt kê mã lỗi. Chi tiết nằm trong sổ nợ của từng gói.</p>
     </div>
-  </div>`);
+  `);
 
-  /* ===== TAB 6 · CẤU TRÚC — khối duy nhất được in đường dẫn ===== */
-  p.push(`
-  <div role="tabpanel" data-pane="cau-truc"${anKhung("cau-truc")}>
-    <div class="map">
+  /* ===== SYSTEM · KHỐI `cau-truc` — khối duy nhất được in đường dẫn ===== */
+  batDau("cau-truc");
+  cur.push(`    <div class="map">
       <div class="card">
         <div class="sect">Thư mục ở tầng ngoài cùng — ${areas.length} vùng</div>
         <div class="tree">`);
   for (const a of areas) {
     const chu = a.steward === null ? "từng gói tự giữ" : a.steward;
-    p.push(`          <div class="tr"><span class="d">${esc(a.dir)}</span>` +
+    cur.push(`          <div class="tr"><span class="d">${esc(a.dir)}</span>` +
       `<span class="o">${esc(chu)}</span><span class="c">${a.files} file</span></div>`);
   }
-  p.push(`        </div>
+  cur.push(`        </div>
         <p class="note">Cột giữa là <strong>ai được ghi vào đó</strong>. Một vùng chỉ một AI được ghi tại một thời điểm; vùng của người khác thì chỉ được đọc. <code class="mono">workers/</code> không có chủ chung — từng gói extension tự giữ riêng.</p>
       </div>
 
@@ -2144,36 +2274,38 @@ ${STYLE}
         <div class="sect">File ở gốc repo — ${rootFiles.length} file</div>
         <div class="fl">`);
   for (const f of rootFiles) {
-    p.push(`          <span class="${f.maySinh ? "g" : ""}">${esc(f.file)}</span>`);
+    cur.push(`          <span class="${f.maySinh ? "g" : ""}">${esc(f.file)}</span>`);
   }
-  p.push(`        </div>
+  cur.push(`        </div>
         <p class="note">Ô <strong>xanh</strong> là file <strong>máy sinh</strong> — đừng sửa tay, sửa là mất ở lần sinh sau. Số còn lại là chữ của người.</p>
       </div>
 
       <div class="card">
         <div class="sect">Khi cần gì thì mở file nào — ${openWhen.length} lối</div>`);
   for (const r of openWhen) {
-    p.push(`        <div class="ow"><span>${esc(r.when)}</span>` +
+    cur.push(`        <div class="ow"><span>${esc(r.when)}</span>` +
       `<span class="t">${esc(r.target)}</span></div>`);
   }
-  p.push(`        <p class="note">Bảng này <strong>đọc lại từ luật gốc</strong>, không phải bản chép — nên nó không thể nói khác luật. Dòng có lệnh là việc chạy được, không phải file để mở.</p>
+  cur.push(`        <p class="note">Bảng này <strong>đọc lại từ luật gốc</strong>, không phải bản chép — nên nó không thể nói khác luật. Dòng có lệnh là việc chạy được, không phải file để mở.</p>
       </div>
     </div>
-  </div>`);
+  `);
 
-  /* ===== TAB 6 · NHẬT KÝ ===== */
-  p.push(`
-  <div role="tabpanel" data-pane="nhat-ky"${anKhung("nhat-ky")}>
-    <div class="card">
-      <div class="sect">Quyết định đã chốt — ${decisionCount} bản ghi</div>
+  /* ===== SYSTEM · KHỐI `nhat-ky` ===== */
+  batDau("nhat-ky");
+  cur.push(`    <div class="card">
+      ${/* NHÃN "Nhật ký & mốc" GIỮ NGUYÊN, chuyển chỗ chứ không xoá. Đức chốt chính nhãn đó
+           cùng lượt thêm thẻ việc-lớn-đã-đóng; refactor IA gỡ thanh tab chín mục nên nhãn phải
+           về đúng chỗ khối, không được biến mất — cảnh báo và nhãn thì chuyển tầng, không xoá. */ ""}
+      <div class="sect">Nhật ký &amp; mốc · Quyết định đã chốt — ${decisionCount} bản ghi</div>
       <div class="prose"><p>Mỗi quyết định là một file bất biến: đã chốt thì không sửa được, chỉ thay bằng bản mới. Bản bị thay vẫn giữ nguyên để tra lại được. Hiện có ${supersededCount} đơn vị đã bị bản mới thay thế.</p></div>
       <details class="the" style="margin-top:11px" open>
         <summary><span><span class="nm">${decisions.top.length} quyết định số cao nhất</span><span class="sub">số KHÔNG phải ngày — mỗi phạm vi đánh số riêng</span></span></summary>
         <div class="in"><div class="bl">`);
   for (const d of decisions.top) {
-    p.push(`          <div class="bi"><span class="c">${esc(d.num)}</span><span class="d">${esc(d.name)}<br><span class="meta">${esc(d.where)}${d.state ? " · " + esc(d.state) : ""}</span></span></div>`);
+    cur.push(`          <div class="bi"><span class="c">${esc(d.num)}</span><span class="d">${esc(d.name)}<br><span class="meta">${esc(d.where)}${d.state ? " · " + esc(d.state) : ""}</span></span></div>`);
   }
-  p.push(`        </div></div>
+  cur.push(`        </div></div>
       </details>
     </div>`);
 
@@ -2181,26 +2313,25 @@ ${STYLE}
      Đứng CẠNH thẻ quyết định, không trộn vào: thẻ trên trả lời "Đức đã chốt những gì" (đọc
      ADR), thẻ này trả lời "đã làm xong những gì" (đọc đề bài `status: done`). Hai câu khác
      nhau, hai nguồn khác nhau — nên không có dòng nào lặp ở cả hai chỗ. */
-  p.push(`
+  cur.push(`
     <div class="card">
       <div class="sect">Việc lớn đã đóng — ${mocDaXong.length} việc</div>
       <div class="prose"><p>Những việc lớn đã làm xong, mới nhất lên đầu. Ngày là <strong>lần cuối repo chạm tới đề bài đó</strong>, đọc từ lịch sử git chứ không gõ tay — nên nó không mục đi được.</p></div>
       <div class="bl" style="margin-top:11px">`);
   for (const m of mocDaXong) {
-    p.push(`        <div class="lr"><div class="h">`
+    cur.push(`        <div class="lr"><div class="h">`
       + (m.ma ? `<span class="ln">${esc(m.ma)}</span>` : "")
       + `<span class="mn">${esc(m.ngay)}</span></div>`
       + `<span class="d">${esc(m.ten)}</span></div>`);
   }
-  p.push(`      </div>
+  cur.push(`      </div>
       <p class="note">Đếm từ <strong>đề bài đã đóng</strong> trong repo, mỗi đề bài đúng một dòng. Thẻ này <strong>cố ý không đọc quyết định</strong>: thẻ trên đã đọc rồi, và hai bản của một danh sách thì sớm muộn đếm ra hai số khác nhau mà không ai biết bên nào đúng. Đề bài phiên không khai mã thì chỉ hiện tên — bảng để trơ chứ không đặt hộ mã.</p>
     </div>
-  </div>`);
+  `);
 
-  /* ===== TAB 7 · TRA CỨU ===== */
-  p.push(`
-  <div role="tabpanel" data-pane="tra-cuu"${anKhung("tra-cuu")}>
-    <div class="card">
+  /* ===== SYSTEM · KHỐI `tra-cuu` ===== */
+  batDau("tra-cuu");
+  cur.push(`    <div class="card">
       <div class="sect">Tra cứu — chữ trên bảng nghĩa là gì</div>
       <dl class="kv">
         <dt>Ý tưởng</dt><dd>đã ghi nhận, chưa ai bắt tay làm.</dd>
@@ -2212,9 +2343,35 @@ ${STYLE}
         <dt>Lệnh Bridge</dt><dd>số việc AI có thể nhờ extension làm hộ qua kênh điều khiển.</dd>
         <dt>File kiểm</dt><dd>số file phép thử tự động của gói đó.</dd>
       </dl>
-    </div>
-  </div>
+    </div>`);
 
+  /* ===== DỰNG BA TẦNG, VÀ CANH HỢP ĐỒNG `TANG` — fail-closed =====
+   *
+   * Bốn phép canh, và mỗi phép sinh ra từ một cách bảng NÓI DỐI mà không ai thấy:
+   *   ⑴ khối sinh ra mà không khai ở `TANG`  → nó không hiện trên trang, im lặng.
+   *   ⑵ khối khai ở `TANG` mà không sinh ra  → tầng thiếu một phần, im lặng.
+   *   ⑶ khối HOME rỗng                       → Đức mở bảng, thấy khoảng trống, tin là hết việc.
+   *   ⑷ chỉ số kỹ thuật lọt vào HOME         → đúng cái luật IA của Đức cấm.
+   *
+   * NÉM chứ không cảnh báo. Trang này là thứ Đức đọc để ra quyết định, và ba trong bốn ca trên
+   * đều khiến trang trông BÌNH THƯỜNG trong khi nó đã thiếu — cùng lý lẽ với `MOC_HEAD_HONG`:
+   * chết sớm kèm tên nguyên nhân tốt hơn xanh giả. */
+  kiemHopDongTang(khoiTang);
+  for (const [tab, , ids] of TANG) {
+    p.push(`
+  <div role="tabpanel" data-pane="${tab}"${anKhung(tab)}>`);
+    for (const id of ids) {
+      p.push(`    <div data-sect="${id}">`);
+      for (const dong of khoiTang.get(id)) p.push(dong);
+      p.push(`    </div>`);
+    }
+    p.push(`  </div>`);
+  }
+  /* Canh ⑷ đo trên CHÍNH CHỮ ĐÃ DỰNG, không đo trên ý định. Một khối bị khai sang tầng khác
+     thì hai vòng trên vẫn xanh — chỉ chữ trong tầng HOME mới nói được sự thật đó. */
+  kiemChiSoHome(TANG[0][2].flatMap((id) => khoiTang.get(id)).join(NL));
+
+  p.push(`
   <footer>Bảng này là bản chiếu sinh tự động. Nguồn sự thật nằm trong repo.</footer>
 </div>
 
