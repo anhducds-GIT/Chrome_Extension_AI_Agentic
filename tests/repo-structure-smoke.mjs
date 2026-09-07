@@ -569,8 +569,12 @@ const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
   const boSinhGhi = [...nguon.matchAll(/^(?:export )?const \w*(?:FILE|_FILE) = "([^"]+)";$/gm)].map((m) => m[1]);
   assert.ok(boSinhGhi.length >= 4, "khong doc duoc hang so ten artifact tu ma nguon bo sinh — sua regex, dung bo qua");
 
-  // CỐ Ý để ngoài: nửa file là chữ của người, có bằng chứng [ĐỌC]. Miễn nó = mở đường ghi vào
-  // nửa của người mà không phải giữ khoá. Đây không phải sót — đổi thì phải đổi cả dòng này.
+  /* CỐ Ý để ngoài, và từ 07/09 lý do MẠNH HƠN trước (ADR-0014): bộ sinh KHÔNG CÒN GHI vào
+   * `FEATURE-PARITY.md` một lần nào. Hằng số đó còn trong mã nguồn chỉ để `laFileMayDuocGhi`
+   * TỪ CHỐI đúng cái tên ấy, nên nó lọt vào phép dò trên mà không phải là một artifact.
+   * Trước 07/09 lý do là "nửa file là chữ của người nên không miễn khoá" — nay nửa máy đã ra
+   * `FEATURE-PARITY-AUTO.md` (được khai và được miễn), còn file này thuần chữ người và vẫn
+   * đòi `_root`. Đây không phải sót; đổi thì phải đổi cả đoạn này. */
   const coYDeNgoai = new Set(["FEATURE-PARITY.md"]);
   const sot = boSinhGhi.filter((t) => !khai.includes(t) && !coYDeNgoai.has(t));
   assert.deepEqual(sot, [],
