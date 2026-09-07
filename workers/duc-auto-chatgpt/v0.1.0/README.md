@@ -242,7 +242,7 @@ Mọi file truyền qua `--params-file` chứa đúng object `params` của meth
 
 Bridge có thể đọc `output_type`, `response_char_count`, và `response_sha256` để kiểm tra kết quả, nhưng cố ý không trả toàn bộ `response_text`; nội dung đầy đủ nằm trong Result XLSX đã xác minh.
 
-`propose` chỉ đưa đề xuất vào vùng cách ly. Đức phải xem đúng prompt/tham chiếu trong thẻ **ĐỀ XUẤT TỪ AGENT** và bấm **Duyệt & ghi checkpoint**. Duyệt chỉ thêm vào Queue và ghi checkpoint; **không bắt đầu Run, không gửi prompt tới ChatGPT**. `run-trial` là ngoại lệ dev có nắp riêng: Đức phải bật **Chế độ phát triển**, chỉ 1–2 job, timeout tối đa 90 giây và cách trial trước ít nhất 5 phút; lệnh trả reservation ngay và agent theo dõi bằng `run-status`. V1 vẫn cố ý không có `run.start`, `run.pause`, hay `run.resume`.
+`propose` chỉ đưa đề xuất vào vùng cách ly. Đức phải xem đúng prompt/tham chiếu trong thẻ **ĐỀ XUẤT TỪ AGENT** và bấm **Duyệt & ghi checkpoint**. Duyệt chỉ thêm vào Queue và ghi checkpoint; **không bắt đầu Run, không gửi prompt tới ChatGPT**. `run-trial` là ngoại lệ dev có nắp riêng: Đức phải bật **Chế độ phát triển**, tối đa 30 job, timeout tối đa **900 giây** (`LIMITS.trial_timeout_cap_sec` trong `bridge-core.js` — khai đúng một chỗ, [ADR-0015](../../../docs/adr/0015-nang-tran-duong-thu-len-900-giay.md)) và cách trial trước ít nhất 5 phút; lệnh trả reservation ngay và agent theo dõi bằng `run-status` (`current.stage_elapsed_sec` / `stage_budget_sec` là đồng hồ để phân biệt đang-chạy với đã-treo). V1 vẫn cố ý không có `run.start`, `run.pause`, hay `run.resume`.
 
 ### Xoay token, gỡ và cài lại
 

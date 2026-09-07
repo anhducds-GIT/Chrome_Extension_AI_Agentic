@@ -44,8 +44,10 @@ assert.ok(handler.indexOf("queueRunLock.tryBeginRun()") < handler.indexOf("await
 assert.match(handler, /selectQueue\(state\.prepared\.queue, "selected", state\.runSelection\)/);
 assert.match(handler, /eligibleIds\.length !== params\.job_ids\.length/);
 assert.match(handler, /BRIDGE_TRIAL_MIN_INTERVAL_MS/);
-assert.match(handler, /capTrialTimeouts\(state\.prepared\.settings, runQueue, 90\)/);
-assert.match(handler, /state\.prepared\.settings = trialTimeoutPlan\.prepared_settings/, "persisted effective settings must use the same 90-second cap");
+// ADR-0015: the cap is READ FROM CONFIG, never typed here. Asserting the
+// literal 90 was itself a second copy of the number.
+assert.match(handler, /capTrialTimeouts\(state\.prepared\.settings, runQueue, window\.DacBridgeCore\.LIMITS\.trial_timeout_cap_sec\)/);
+assert.match(handler, /state\.prepared\.settings = trialTimeoutPlan\.prepared_settings/, "persisted effective settings must use the same configured cap");
 assert.ok(handler.indexOf("await chrome.storage.local.set") < handler.indexOf("capTrialTimeouts("), "a rejected timestamp write must occur before and therefore cannot leak timeout mutations");
 assert.ok(handler.indexOf("capTrialTimeouts(") < handler.indexOf('void run("selected")'), "timeout cap must be installed before the existing runner starts");
 assert.ok(handler.indexOf("chrome.storage.local.set") < handler.indexOf('void run("selected")'), "accepted timestamp must persist before async run begins");
@@ -56,15 +58,16 @@ const restore = sidepanel.slice(restoreStart, runStart);
 assert.match(restore, /restoreTrialTimeouts\(state\.prepared, options\.trialTimeoutPlan\)/, "owner effective settings must be restored after trial");
 const snapshot = sidepanel.slice(sidepanel.indexOf("function snapshotOutputSettings"), sidepanel.indexOf("async function saveAuditLog"));
 assert.match(snapshot, /effective_timeout_sec: settings\.timeout_sec/, "persisted provenance reads the temporarily capped prepared settings");
-const preparedSettings = { timeout_sec: 180, max_retries: 2 };
-const runQueue = [{ settings: { timeout_sec: 240 } }, { settings: { timeout_sec: 60 } }];
-const timeoutPlan = core.capTrialTimeouts(preparedSettings, runQueue, 90);
-assert.equal(timeoutPlan.prepared_settings.timeout_sec, 90, "persisted global effective timeout is capped");
-assert.deepEqual(runQueue.map((item) => item.settings.timeout_sec), [90, 60], "actual per-job budgets are capped without increasing shorter timeouts");
+const preparedSettings = { timeout_sec: 1800, max_retries: 2 };
+const runQueue = [{ settings: { timeout_sec: 2400 } }, { settings: { timeout_sec: 60 } }];
+const cap = core.LIMITS.trial_timeout_cap_sec;
+const timeoutPlan = core.capTrialTimeouts(preparedSettings, runQueue, cap);
+assert.equal(timeoutPlan.prepared_settings.timeout_sec, cap, "persisted global effective timeout is capped");
+assert.deepEqual(runQueue.map((item) => item.settings.timeout_sec), [cap, 60], "actual per-job budgets are capped without increasing shorter timeouts");
 const prepared = { settings: timeoutPlan.prepared_settings };
 core.restoreTrialTimeouts(prepared, timeoutPlan);
 assert.equal(prepared.settings, preparedSettings, "owner prepared settings object is restored");
-assert.deepEqual(runQueue.map((item) => item.settings.timeout_sec), [240, 60], "owner per-job settings are restored");
+assert.deepEqual(runQueue.map((item) => item.settings.timeout_sec), [2400, 60], "owner per-job settings are restored");
 assert.deepEqual(Array.from(core.POLICY.prohibited_methods), ["run.start", "run.pause", "run.resume"]);
 assert.equal(Object.values(core.METHOD_REGISTRY).some((item) => /dev.*mode/i.test(item.name)), false, "no Bridge method may flip the panel toggle");
 

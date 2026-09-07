@@ -15,7 +15,22 @@
     // the JSON framing; a larger source image must be downscaled by the
     // caller rather than silently truncated here.
     max_references_per_add: 5,
-    max_reference_data_url_bytes: 700 * 1024
+    max_reference_data_url_bytes: 700 * 1024,
+    // ADR-0015 (Đức chốt 2026-09-07): trần timeout của MỘT job trên đường
+    // run.trial. 900 là con số workbook thật của Pilot-08, không phải số tròn
+    // chọn cho đẹp — đo live 26/08 cho thấy gửi → phát hiện ảnh mất 68 giây
+    // với 4 ảnh và prompt NGẮN, còn job thật là 4 ảnh + prompt 3.825 ký tự.
+    //
+    // KHAI Ở ĐÚNG MỘT CHỖ, và đây là chỗ đó. Trước ADR-0015 con số 90 nằm
+    // rải ở bốn nơi (mặc định của capTrialTimeouts, chỗ gọi trong
+    // sidepanel.js, trường audit, và trường reservation trả về) — bốn bản sao
+    // của một luật là bốn cơ hội để chúng nói khác nhau. Mọi chỗ đọc từ đây.
+    //
+    // Trần này KHÔNG phải cái chặn AI tiêu credit — thứ chặn đó là
+    // POLICY.prohibited_methods (run.start) cộng công tắc Chế độ phát triển,
+    // và cả hai vẫn nguyên. Trần này chỉ là cái phanh thời gian cho một vòng
+    // lặp hỏng. Bỏ nó đi là bỏ phanh, không phải nới phanh.
+    trial_timeout_cap_sec: 900
   });
   const POLICY = deepFreeze({
     executor_model: "side_panel_only",
@@ -674,9 +689,9 @@
     return true;
   }
 
-  function capTrialTimeouts(preparedSettings, runQueue, capSec = 90) {
-    if (!isPlainObject(preparedSettings) || !Array.isArray(runQueue) || !Number.isInteger(capSec) || capSec < 15 || capSec > 90) {
-      throw new TypeError("Trial timeout capping requires prepared settings, a run queue, and a 15-90 second cap.");
+  function capTrialTimeouts(preparedSettings, runQueue, capSec = LIMITS.trial_timeout_cap_sec) {
+    if (!isPlainObject(preparedSettings) || !Array.isArray(runQueue) || !Number.isInteger(capSec) || capSec < 15 || capSec > LIMITS.trial_timeout_cap_sec) {
+      throw new TypeError(`Trial timeout capping requires prepared settings, a run queue, and a 15-${LIMITS.trial_timeout_cap_sec} second cap.`);
     }
     const timeoutOriginals = runQueue.map((item) => ({ item, timeout_sec: item?.settings?.timeout_sec }));
     for (const { item } of timeoutOriginals) item.settings.timeout_sec = Math.min(Number(item.settings.timeout_sec) || capSec, capSec);

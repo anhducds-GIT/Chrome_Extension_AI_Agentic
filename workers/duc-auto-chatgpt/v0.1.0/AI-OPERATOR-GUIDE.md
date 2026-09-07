@@ -60,14 +60,17 @@ Mỗi dòng dưới đây là **lỗi đã gặp thật**, có bằng chứng. �
 | **Điều kiện lúc đo** | Đức xác nhận **cửa sổ Chrome bị che suốt từ trước khi chạy tới hết run** — tức đo ĐÚNG điều kiện sinh ra bug, không phải điều kiện dễ. Nguồn: lời Đức, không phải suy luận từ artifact. |
 | **Vì sao bug này ẩn được lâu** | Cùng lúc đó, nghỉ an toàn 6 giây **trong content script** đo được **6,3 giây — không bị bóp**. Không mâu thuẫn: Chrome bóp nặng **chuỗi timer nối nhau** (đúng hình dạng vòng 12 nhịp cũ), chứ không bóp một `sleep()` đơn lẻ. Nên mọi lớp cooldown vẫn trông bình thường trong khi khoảng nghỉ đã phồng lên gấp hàng chục lần. Đừng dùng "cooldown vẫn đúng giờ" để kết luận "không bị bóp". |
 
-### #4 · Trần cứng 90 giây của `run.trial`
+### #4 · Trần timeout của `run.trial` — **NAY LÀ 900 GIÂY** (Đức chốt 2026-09-07)
 
 | | |
 |---|---|
-| **Triệu chứng** | Job dài hơn 90 giây luôn `TIMEOUT_AFTER_SUBMIT` khi chạy qua Bridge. |
-| **Thật ra là gì** | `capTrialTimeouts` ép mọi `timeout_sec` xuống ≤90 cho đường dev-trial. Đây là **nắp an toàn**, không phải lỗi. Chỉ chặn `timeout_sec`, không đụng khoảng nghỉ giữa job. |
-| **Làm gì** | Việc thật cần lâu hơn → **Đức tự bấm Run** trong panel. AI không được nới nắp này. |
-| **Chi tiết** | B-17 trong `BACKLOG.md`. |
+| **Triệu chứng cũ** | Job dài hơn 90 giây luôn `TIMEOUT_AFTER_SUBMIT` khi chạy qua Bridge. **Không còn nữa** kể từ ADR-0015. |
+| **Thật ra là gì** | `capTrialTimeouts` ép mọi `timeout_sec` xuống ≤ trần cho đường dev-trial. Đây là **nắp an toàn**, không phải lỗi. Chỉ chặn `timeout_sec`, không đụng khoảng nghỉ giữa job. |
+| **Trần đọc từ đâu** | `LIMITS.trial_timeout_cap_sec` trong `bridge-core.js` — **đúng một chỗ khai**. Đừng gõ con số vào chỗ nào khác; ba chỗ gọi trong `sidepanel.js` đều đọc từ đây. |
+| **Vì sao 900, không phải một số tròn** | 900 là `timeout` của chính workbook Pilot-08 Đức đang dùng. Đo live 26/08: gửi → phát hiện ảnh mất 40s (1 ảnh) · 61s (2 ảnh) · **68s (4 ảnh)** với prompt *ngắn*; job thật là 4 ảnh + prompt 3.825 ký tự. |
+| **Làm gì** | Việc thật chạy được qua `run.trial` rồi. Nhưng **theo dõi tiến độ, đừng ngồi im 15 phút**: hỏi lại `run.status` và đọc `current.stage_elapsed_sec` — bò lên là đang chạy, đứng yên hoặc vượt `current.stage_budget_sec` là có chuyện. |
+| **Vẫn cấm** | `run.start` / `run.pause` / `run.resume` — trong `POLICY.prohibited_methods`, không đổi. Nới đường thử **không** phải trao cho AI khả năng tự tiêu credit. Công tắc Chế độ phát triển, nắp 30 job và cooldown 5 phút giữa hai trial cũng nguyên. |
+| **Chi tiết** | [ADR-0015](../../../docs/adr/0015-nang-tran-duong-thu-len-900-giay.md) ở gốc repo; B-17 trong `BACKLOG.md` đã đóng. |
 
 ### #5 · `dom_probe` không bao giờ trả chữ trên trang — **[ĐO] live 2026-09-02**
 
@@ -114,7 +117,7 @@ ngắn có chủ đích. Bắt nó chở nội dung là bắt một trường l�
 | **Số đo thật** | Hội thoại 5 lượt, nắp 50/4000: envelope **14.340 byte** trên trần 1 MB. Nắp 50/40000 trên hội thoại này ra 15.926 byte — *trông* vô hại, và chính vì trông vô hại nên phải chặn bằng luật chứ không bằng cảm giác. |
 | **Bằng chứng** | `tests/chat-read-smoke.mjs` — cắt **chính đoạn mã đã ship** ra khỏi `content.js` và **chạy** trên DOM giả dựng theo số đo live; cộng `validateParams` thật của `bridge-core.js`. 7/7 rồi 4/4 đột biến bị bắt. Live: `evidence-chat-read-20260903/`. |
 | **CHƯA nghiệm thu live** | Riêng **nắp tổ hợp**: bản trong RAM lúc chụp bằng chứng là bản trước khi có nắp, nên file `02-…-cho-qua.json` là bằng chứng của **lỗ**, không phải của tính năng. Cần một lần reload extension nữa mới ghi được là đã nghiệm thu. |
-| **Không giải quyết chuyện GỬI** | `chat.read` chỉ đọc. Đường gửi duy nhất vẫn là `run.trial`, và nó có trần cứng 90 giây (lỗi #4). |
+| **Không giải quyết chuyện GỬI** | `chat.read` chỉ đọc. Đường gửi duy nhất vẫn là `run.trial`, và nó có trần timeout **900 giây** (lỗi #4). |
 
 ## Chạy tính năng có xoá file — bắt buộc đặt bẫy
 

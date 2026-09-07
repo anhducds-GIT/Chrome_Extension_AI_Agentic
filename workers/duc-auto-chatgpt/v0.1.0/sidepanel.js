@@ -222,7 +222,7 @@
       bridge_approved_at: item.job.bridge_approved_at || null,
       bridge_payload_sha256: item.job.bridge_payload_sha256 || null
     } : {};
-    const trial = state.bridgeRunOrigin === "bridge_dev" ? { input_origin: "bridge_dev", bridge_trial_id: state.bridgeTrialId, bridge_trial_timeout_cap_sec: 90 } : {};
+    const trial = state.bridgeRunOrigin === "bridge_dev" ? { input_origin: "bridge_dev", bridge_trial_id: state.bridgeTrialId, bridge_trial_timeout_cap_sec: window.DacBridgeCore.LIMITS.trial_timeout_cap_sec } : {};
     state.auditEvents.push({ timestamp: new Date().toISOString(), run_id: state.runId, job_id: item?.job?.id || null, attempt_id: item?.attempt_id || null, event, attempt: item?.attempt_count ?? null, phase: item?.phase || null, status: item?.status || null, failure_type: item?.failure_type || null, message: values.message || null, elapsed_ms: values.elapsed_ms ?? null, task_type: item?.task_type || item?.job?.task_type || null, output_type: values.output_type || item?.output_type || item?.job?.output_type || null, response_char_count: values.response_char_count ?? (item?.response_char_count || item?.job?.response_char_count ? Number(item?.response_char_count || item.job.response_char_count) : null), response_sha256: values.response_sha256 || item?.response_sha256 || item?.job?.response_sha256 || null, references: item ? item.references.map((file) => file.alias || file.fileName || file.name) : [], requested_filename: item?.requested_file || null, result_file: item?.result_file || null, result_files: item?.result_files || null, image_count: item?.image_count ? Number(item.image_count) : null, result_download_id: item?.result_download_id || null, persistence_verified: Boolean(item?.persistence_verified), write_outcome: item?.write_outcome || null, detected_not_downloaded: Boolean(item?.detected_not_downloaded), collision_policy: output?.collisionPolicy || null, prompt_fingerprint: item ? promptFingerprint(item.job.prompt) : null, target_url: values.target_url || null, submitted_at: telemetry.submitted_at || null, detection: telemetry.detection || null, ...bridge, ...trial, ...(values.input_origin ? { input_origin: values.input_origin } : {}) });
   }
   function nextTask(item = null, detail = "—") { els.nextTaskCard.hidden = false; els.nextTaskId.textContent = item?.job?.id || "—"; els.nextTaskCountdown.textContent = detail; }
@@ -705,6 +705,25 @@
     return { ledger_etag: await currentLedgerEtag(workbook), run_id: state.runId || workbook.config.run_id || null, checkpoint: checkpointSummary(), jobs, next_cursor: paged.next_cursor };
   }
 
+  function elapsedSecSince(startedAt) {
+    return startedAt ? Math.max(0, Math.floor((Date.now() - startedAt) / 1000)) : null;
+  }
+
+  // ADR-0015 điều kiện ⑵: đường thử 900 giây phải BÁO TIẾN ĐỘ, không im tới
+  // lúc hết giờ. Đường báo đã có sẵn — `run.trial` trả reservation ngay rồi
+  // agent hỏi lại bằng `run.status` — nhưng trước ADR-0015 nó chỉ trả TÊN
+  // chặng (`phase`, `runtime_stage`), không trả ĐỒNG HỒ. Với trần 90 giây thì
+  // thiếu đồng hồ vẫn sống được: chặng nào cũng ngắn hơn khoảng hỏi lại. Với
+  // trần 900 thì không: hai lần hỏi cách nhau 5 phút trả về cùng một chữ
+  // "GENERATING" là câu trả lời KHÔNG PHÂN BIỆT ĐƯỢC "đang chạy" với "đã
+  // treo" — đúng cái bệnh Đức chỉ ra.
+  //
+  // Nên trả thêm ba con số mà panel VỐN ĐÃ đếm cho đồng hồ trên màn hình
+  // (`state.currentStartedAt` / `stageStartedAt` / `stageBudgetSec`, xem
+  // `setCurrent()` và `renderRuntime()`). Không dựng cơ chế mới, không đẩy
+  // sự kiện, không thêm nhịp hẹn giờ: đọc lại đúng thứ đã có. Đủ để agent
+  // phân biệt — `stage_elapsed_sec` bò lên giữa hai lần hỏi thì nó đang
+  // chạy; đứng yên, hoặc vượt `stage_budget_sec`, thì có chuyện.
   function bridgeRunStatus() {
     const workbook = requireBridgeWorkbook();
     const queue = state.prepared?.queue || window.DacXlsx.activeJobs(workbook).map((job) => ({
@@ -719,7 +738,7 @@
       state: state.running ? state.paused ? "PAUSED" : "RUNNING" : halted ? "HALTED" : "IDLE",
       paused: state.paused,
       pause_requested: state.pauseRequested,
-      current: state.currentItem ? { job_id: state.currentItem.job.id, attempt_id: state.currentItem.attempt_id || null, phase: state.currentItem.phase, runtime_stage: state.currentItem.runtime_stage || null } : null,
+      current: state.currentItem ? { job_id: state.currentItem.job.id, attempt_id: state.currentItem.attempt_id || null, phase: state.currentItem.phase, runtime_stage: state.currentItem.runtime_stage || null, job_elapsed_sec: elapsedSecSince(state.currentStartedAt), stage_elapsed_sec: elapsedSecSince(state.stageStartedAt), stage_budget_sec: state.stageBudgetSec || state.currentItem.settings?.timeout_sec || null } : null,
       counts: { total: queue.length, pending: count(["PENDING"]), running: count(["RUNNING", "RECONCILING"]), success: count(["SUCCESS", "DONE"]), failed: count(["FAILED"]), interrupted: count(["INTERRUPTED", "STOPPED"]) },
       halt: halted ? { failure_type: halted.failure_type, instruction: window.DacHaltInstructions?.findInstruction?.(halted.failure_type) || null } : null,
       artifact_persistence_failed: state.artifactErrors.length > 0,
@@ -825,7 +844,7 @@
       // Do not mutate effective settings until the acceptance timestamp is
       // durably stored. A storage failure must reject without leaving the
       // owner's settings capped in memory.
-      const trialTimeoutPlan = window.DacBridgeCore.capTrialTimeouts(state.prepared.settings, runQueue, 90);
+      const trialTimeoutPlan = window.DacBridgeCore.capTrialTimeouts(state.prepared.settings, runQueue, window.DacBridgeCore.LIMITS.trial_timeout_cap_sec);
       state.prepared.settings = trialTimeoutPlan.prepared_settings;
       state.bridgeTrialId = trialId;
       state.bridgeRunOrigin = "bridge_dev";
@@ -837,7 +856,7 @@
       return {
         accepted: true,
         trial_id: trialId,
-        reservation: { job_ids: [...params.job_ids], accepted_at: new Date(acceptedAt).toISOString(), timeout_cap_sec: 90, poll_method: "run.status" }
+        reservation: { job_ids: [...params.job_ids], accepted_at: new Date(acceptedAt).toISOString(), timeout_cap_sec: trialTimeoutPlan.cap_sec, poll_method: "run.status" }
       };
     } finally {
       if (!accepted) {

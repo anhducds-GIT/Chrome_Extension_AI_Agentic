@@ -50,7 +50,10 @@ diễn biến phiên ở cuối [`HANDOFF.md`](HANDOFF.md).
 
 Ba điều Đức nên biết trước khi tin tưởng chạy việc lớn. Chi tiết ở [`BACKLOG.md`](BACKLOG.md):
 
-1. Việc thật **không chạy được qua `run.trial`** — trần 90 giây quá ngắn (**B-17**).
+1. ~~Việc thật **không chạy được qua `run.trial`** — trần 90 giây quá ngắn (**B-17**).~~
+   **ĐÃ ĐÓNG 2026-09-07** — Đức chốt nâng trần lên **900 giây** ([ADR-0015](../../../docs/adr/0015-nang-tran-duong-thu-len-900-giay.md)).
+   `run.start` vẫn cấm. Đổi lại, đường 900 giây phải theo dõi bằng `run.status`
+   (`current.stage_elapsed_sec` / `stage_budget_sec`), đừng ngồi im chờ hết giờ.
 2. Hai selector **chưa từng khớp lần nào** trên trang thật (**B-14**, **B-15**).
 3. **"Thử lại" rộng hơn tên gọi** — lỗi sau khi đã gửi vẫn có thể gửi lại lần hai. Đổi việc
    này là *đổi luật an toàn* → chờ Đức chốt (**B-19**).
