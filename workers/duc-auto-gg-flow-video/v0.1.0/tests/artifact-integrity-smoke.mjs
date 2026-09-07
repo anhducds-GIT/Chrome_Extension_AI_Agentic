@@ -3,6 +3,9 @@
    1. artifact filenames were lower-cased into recorded provenance,
    2. already-persisted audit events were written a second time,
    3. chatgpt.com-sourced URLs reached the side panel through innerHTML,
+      -- the host name here is a HISTORICAL RECORD of where the defect was
+      measured (Pilot-05/06 ran on ChatGPT, hence the fixture names below).
+      Do not rebrand it to a Flow host: that would falsify the provenance.
    4. two checkpoints could claim one version and resume silently took the
       older one,
    5. the folder picker must stay inside the click that opens it. */

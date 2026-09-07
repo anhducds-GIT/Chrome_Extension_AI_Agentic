@@ -58,6 +58,9 @@ vm.runInNewContext(source, {
 assert.equal(transportCreates, 1, "the authenticated Agent Bridge transport remains active");
 assert.ok(privateListener, "private extension-only download listener remains registered");
 
+// Dia chi anh duoi day CHI la fixture: cong duy nhat cua downloadGeneratedImage la
+// SCHEME (https: hoac data:image/) — host khong bao gio duoc doc. Tren dung host
+// cua nhanh nay cho khoi gay hieu nham, chu day KHONG phai mot dia chi da do.
 function privateCall(message) {
   return new Promise((resolve) => {
     assert.equal(privateListener(message, {}, resolve), true);
@@ -65,7 +68,7 @@ function privateCall(message) {
 }
 
 assert.equal(privateListener({ type: "UNRELATED" }, {}, () => {}), false);
-const imageDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:001", url: "https://chatgpt.com/generated.png" });
+const imageDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:001", url: "https://flow.google.com/generated.png" });
 assert.equal(imageDownload.ok, true);
 assert.equal(imageDownload.download_id, 77);
 assert.equal(imageDownload.requested_filename, "Duc Auto GG Flow/image_001.png");
@@ -73,17 +76,17 @@ assert.equal(imageDownload.filename, "C:\\Users\\Duc\\Downloads\\Duc Auto GG Flo
 assert.equal(downloads.length, 1);
 
 assert.equal((await privateCall({ type: "DAC_DOWNLOAD_IMAGE", url: "file:///not-allowed" })).code, "INVALID_IMAGE_URL");
-const invalidOutputFolder = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:002", url: "https://chatgpt.com/generated.png", outputFolder: "../outside" });
+const invalidOutputFolder = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:002", url: "https://flow.google.com/generated.png", outputFolder: "../outside" });
 assert.equal(invalidOutputFolder.code, "DOWNLOAD_FAILED");
 assert.equal(downloads.length, 1, "unsafe output folders fail before Chrome receives a download");
 
 downloadPersistence = { fileSize: 0, bytesReceived: 0, exists: true };
-const emptyDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:003", url: "https://chatgpt.com/generated.png" });
+const emptyDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:003", url: "https://flow.google.com/generated.png" });
 assert.equal(emptyDownload.code, "PERSISTENCE_VERIFICATION_FAILED");
 assert.match(emptyDownload.error, /^PERSISTENCE_VERIFICATION_FAILED:/);
 
 downloadPersistence = { fileSize: 2048, bytesReceived: 2048, exists: false };
-const vanishedDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:004", url: "https://chatgpt.com/generated.png" });
+const vanishedDownload = await privateCall({ type: "DAC_DOWNLOAD_IMAGE", jobId: "image:004", url: "https://flow.google.com/generated.png" });
 assert.equal(vanishedDownload.code, "PERSISTENCE_VERIFICATION_FAILED");
 
 console.log("worker API migration closure smoke tests: PASS");

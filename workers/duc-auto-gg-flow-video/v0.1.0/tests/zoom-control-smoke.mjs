@@ -6,7 +6,10 @@
 // là nó kiểm một bản sao logic của nhánh KHÁC, nằm trong gói này: phá
 // `sidepanel.js` kiểu gì nó cũng xanh. Nó khẳng định `https://chatgpt.com/` là
 // địa chỉ hợp lệ — trong gói Flow Video. Đo bằng máy ở gói Gemini: 9 đột biến,
-// nó xanh cả 9. File chết CHƯA XOÁ (xoá file cần Đức duyệt) — xem `BACKLOG.md`.
+// nó xanh cả 9. File chết ĐÃ XOÁ 07/09 (Đức duyệt) — commit `b7b877b`. Chữ
+// `chatgpt.com` còn lại trong file này KHÔNG phải di sản: nó là ca cấm ở "Ca E",
+// canh đúng cái khẳng định sai mà file chết từng đưa ra. Xoá chuỗi đó đi là bỏ
+// phép canh.
 //
 // Nay: nạp adapter THẬT rồi TRÍCH ĐÚNG THÂN HÀM ra khỏi `sidepanel.js` và CHẠY.
 // Đột biến vào `sidepanel.js` hoặc `provider-adapter.js` làm file này đỏ, đó là
@@ -177,6 +180,10 @@ for (const url of trangCungMien) {
 // là Đức phóng to nhầm cửa sổ rồi tưởng tiện ích hỏng.
 const phaiXam = [
   "https://google.com/",
+  // Ca hồi quy của chính file chết: nó khẳng định `https://chatgpt.com/` là địa
+  // chỉ HỢP LỆ — trong gói Flow Video. Ghim chiều ngược lại ngay tại đây.
+  "https://chatgpt.com/",
+  "https://chatgpt.com/c/abc-123",
   "https://labs.google.evil.com/fx/tools/flow",
   "https://evil.com/?next=https://labs.google/fx/tools/flow",
   "http://labs.google/fx/tools/flow",
