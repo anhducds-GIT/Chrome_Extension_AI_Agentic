@@ -29,21 +29,29 @@ awk -F'|' '/^\|/ && NF>2 {c=$(NF-1); gsub(/^ +| +$/,"",c); if (c ~ /SEED v0\.1/)
 | Nhóm | Mấy mục | Là gì | Thái độ |
 |---|---:|---|---|
 | **A — nhìn rõ hơn** | 4 | Đọc trang theo *vai trò + tên* · biết trang tải xong lúc nào · chụp màn hình · chụp cả cây DOM một lượt | **Làm.** Đây là thứ quyết định AI ở đầu dây có hiểu trang không |
-| **B — máy móc của một vòng chạy có hàng đợi** | 7 | Danh tính lượt thử · trạng thái vòng chạy · không làm hai lần · luật thử lại · nhịp tim · khoảng nghỉ giữa job · sẵn sàng nhận việc | **Hoãn, và hỏi Đức.** Xem dưới |
+| **B — máy móc của một vòng chạy có hàng đợi** | 7 | Danh tính lượt thử · trạng thái vòng chạy · không làm hai lần · luật thử lại · nhịp tim · khoảng nghỉ giữa job · sẵn sàng nhận việc | **LÀM — đã đảo lời khuyên 07/09.** Xem dưới |
 | **C — an toàn và vận hành** | 4 | Chuỗi bằng chứng · bảng mã lỗi cho người vận hành · khoá tab và hội thoại · quyết định thao tác fail-closed | Làm sau nhóm A |
 | **D — năng lực Chrome còn lại** | 3 | `scripting` · `offscreen` · `commands` | Làm khi có việc cần tới, không làm trước |
 
-### Câu cần Đức chốt, và tôi khuyến nghị sẵn
+### Nhóm B: tôi đã khuyên hoãn, và tôi rút lại — 07/09
 
-**Nhóm B (7 mục) là máy móc của một cỗ chạy JOB HÀNG LOẠT — mà Scouter không có hàng đợi job
-nào.** Bảy dòng đó vào danh sách vì kiểm kê ngày 06/09 đo *ba worker đang có gì*, và ba worker
-đó chạy workbook XLSX. Scouter thì khác việc: nó dò một trang rồi báo cáo.
+**Lời khuyên cũ, giữ nguyên để đọc được vì sao nó sai:** *"Nhóm B là máy móc của một cỗ chạy job
+hàng loạt, mà Scouter không có hàng đợi job nào → hoãn cả 7."* Lý do đó dựa trên một giả định:
+Scouter sẽ không có hàng đợi.
 
-**Khuyến nghị: hoãn cả 7, đừng xoá.** Xây trước một cỗ máy chạy job cho thứ chưa có job nào là
-đúng loại phình mà ADR-0010 sinh ra để chặn. Khi nào Scouter thật sự có hàng đợi thì mở lại;
-nếu tới cuối `SEED v0.1` vẫn không có, thì đóng 7 dòng đó bằng một dòng ghi lý do.
+**Giả định đó sai, và Đức là người bác nó.** Ngày 07/09 Đức nêu pilot thật đầu tiên: lấy dữ liệu
+hai trang phái sinh `hnx.vn` **theo ngày, đầy đủ**. Đó **chính là** một hàng đợi — mỗi ngày một
+việc, phải biết ngày nào đã lấy, phải chạy tiếp được khi đứt, phải thử lại khi hụt. Bốn trong
+bảy mục nhóm B mô tả đúng những thứ đó.
 
-Chốt câu này rồi thì phạm vi còn lại là **11 mục**, không phải 18.
+Nên nhóm B **không còn là suy đoán**. Nó là việc kế, và nó vào bước 2 chứ không đợi tới bước 4.
+
+**Ba mục nhóm B vẫn hoãn** vì chúng thuộc về một cỗ chạy job của *nhà cung cấp*, không phải của
+một vòng lấy dữ liệu: nhịp tim vòng chạy · khoảng nghỉ giữa job · sẵn sàng nhận việc mới.
+
+**Bài học ghi lại, vì nó sẽ lặp:** tôi xếp thứ tự 25 mục dựa trên *"gói này là gì"*, trong khi
+thứ quyết định thứ tự là *"việc thật đầu tiên là gì"*. Hỏi Đức việc thật trước khi xếp bảng thì
+đã không phải đảo.
 
 ## Đường đi — bốn bước, theo đúng thứ tự
 
@@ -78,9 +86,17 @@ chúng lắp vào nhau có chạy không.
 
 **Đức vừa gỡ chỗ chặn của bước này ngày 07/09** ([ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md)):
 Scouter được ghi ghi chép xuống đĩa. Đó chính là **tầng thứ ba** trong ba tầng của ADR-0009 —
-*nguyên liệu để sinh ra adapter*. Không có nó thì vòng không khép được, nên bước 2 bắt đầu bằng
-đúng việc đó. Hình dạng ghi chép (ghi vào đâu · tên gì · chứa gì) **chưa quyết**, và cố ý: quyết
-trước khi có việc thật để đo là đoán.
+*nguyên liệu để sinh ra adapter*.
+
+**Và việc thật để đo nay đã có: `S-10`, pilot `hnx.vn` một tuần.** Nên bước 2 không còn là một
+bài tập tự dựng — nó chạy trên việc Đức cần thật. Ba thứ pilot đó bắt phải có, và cả ba đều là
+nhóm B: biết ngày nào đã lấy (*không làm hai lần*) · chạy tiếp được khi đứt (*trạng thái vòng
+chạy*) · thử lại khi hụt (*luật thử lại*).
+
+**Một điều đã đo và nó đổi hình dạng bước này:** dữ liệu `hnx.vn` không nằm trong trang, nó tới
+từ một endpoint POST. **Pilot này không cần bấm một nút nào** — `scout.click` / `scout.type` /
+`scout.key` không dùng tới. Chi tiết hợp đồng endpoint và cái bẫy "200 OK mà sai" ở `S-10`
+trong `BACKLOG.md`.
 
 ### Bước 3 — nhóm A, đúng hai mục trước
 
