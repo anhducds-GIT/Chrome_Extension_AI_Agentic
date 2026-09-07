@@ -102,14 +102,105 @@ danh sách rỗng khi không đọc được, nên một ref tồn tại mà thi
 **Vắng ref và sổ hỏng là hai chuyện khác nhau; chỉ quyền thật sự chưa khởi tạo mới được bắt đầu từ
 trống.**
 
-### ⑵c Còn hở, khai ra thay vì hứa: lõi KHÔNG kiểm đường dẫn
+### ⑵d Tờ xác nhận của bên thứ ba phải là SỰ KIỆN LIỀN TRƯỚC lượt tích hợp
 
-Phiên Codex khai vùng `wrong-area` cho một thay đổi ở `product.txt` và **đi qua được**. Nên tên
-vùng trong sự kiện là **lời khai**, không phải điều đã kiểm.
+Phiên Codex bác một câu tôi kết luận sớm ở vế ⑴: *"bật `enforce_admins` cộng một bước Actions là
+bịt được khe quyền/main."* **Chưa chứng minh, và Codex chỉ đúng lý do:**
 
-Bịt chỗ này cần bản đồ **vùng → đường dẫn**, mà bản đồ đó nằm ở `.repo-structure.json` của **từng
-repo**, còn lõi thì cố ý không biết repo nào. Nên nó là **việc kế tiếp**, không phải một dòng thêm
-vào lõi. Và nó phải trả lời thêm một câu bản đầu chưa hỏi: **kết quả chạm nhiều vùng thì ai duyệt.**
+> **Một required status check gắn vào COMMIT.** Nó xanh cho `C` thì nó xanh **mãi** cho `C`, còn
+> nguồn quyền thì đổi **độc lập** sau đó. Không gì chấm lại vào lúc tích hợp.
+
+Chốt: **không đòi GitHub chấm lại** — đổi **câu hỏi**. Cửa tích hợp không hỏi *"có tờ xác nhận nào
+không"*; nó hỏi:
+
+> **"Tờ xác nhận có phải là điều CUỐI CÙNG xảy ra với vùng này không?"**
+
+Vế đó đủ, và đây là lý do: sổ quyền là một hàng đợi **có thứ tự**, và mọi lượt ghi đi qua đúng một
+phép so-và-đổi. Nên một lượt thu hồi chen giữa xác nhận và tích hợp **buộc phải** nằm **sau** tờ
+xác nhận trong sổ — và lúc đó tờ xác nhận **không còn là sự kiện liền trước**. Cửa từ chối mà
+không cần biết lượt thu hồi ấy nói gì.
+
+Hai vế bắt buộc đi kèm:
+
+1. **Bên xác nhận KHÔNG được là bên đang bị kiểm** (`SELF_ATTESTATION`). Đây là vế làm cho tờ xác
+   nhận có nghĩa gì cả — hai vai tự gửi *"đạt"* cho chính mình là **tự khai**, không phải hàng rào.
+2. **Xét trong PHẠM VI MỘT VÙNG, không trên cả sổ.** Xét cả sổ thì hai vai chạy song song sẽ liên
+   tục làm hết hiệu lực tờ xác nhận của nhau — đúng thứ kiến trúc này sinh ra để tránh.
+
+**Vẫn CHƯA bịt hết. Ba chỗ, khai hết ra thay vì để lượt sau tin sai:**
+
+**⒜ KHÁC TÊN CHƯA CHỨNG MINH KHÁC BÊN KIỂM.** Phiên Codex (#21) chỉ đúng, và đây là giới hạn nặng
+nhất của bản hiện tại: mã chỉ so tham số `--as` với tên lane đang giữ vùng. **Cùng một Assistant
+gọi lại bằng một cái tên khác là xong** — nó tự xác nhận cho chính mình mà cửa không thấy.
+
+Nên `SELF_ATTESTATION` hiện là **giao thức mô phỏng**, không phải danh tính. Nó chứng minh được
+*hình dạng* của luật (tờ xác nhận phải mang tên một bên khác, và cửa cưỡng chế điều đó), **không**
+chứng minh *"đã có bên thứ ba thật"*. Khi nối vào Actions, danh tính bên xác nhận **phải đến từ
+nguồn được xác thực** — token của workflow chạy trên máy GitHub — chứ không từ một tham số tự khai.
+**Đây là điều kiện TRƯỚC KHI kích hoạt dùng thật**, không phải lý do dừng xây.
+
+**⒝ Chưa kiểm việc cập nhật `main`.** Mọi ca tới đây kiểm **việc ghi sổ**. Điều kiện *"xác nhận
+cuối cùng của vùng"* có ích **trong sổ quyền**; nó chưa nói gì về `main`. Bài nghiệm thu tiếp theo
+phải quan sát **SHA thật của `main`**: xác nhận → ghi nhận tích hợp → thu hồi → thử đưa mã vào
+`main`. **Mã vẫn vào được thì khoảng trống cũ còn nguyên.**
+
+**⒞ Đẩy `main` bỏ qua cửa** vẫn chưa bị chặn. Và câu chữa mà ADR này viết hai lần —
+*"cần cờ `enforce_admins` cộng một bước đọc sổ quyền trong `cong-kiem.yml`"* — **KHÔNG ĐÚNG.**
+Sửa lại 08/09, và đây là lần thứ ba tôi phải sửa cùng một câu theo cùng một hướng:
+
+**Hai thứ đó không đóng được khe, vì cùng một lý do đã bác vế ⑴ của bản đầu: một required status
+check gắn vào một COMMIT.** Nó xanh cho `C` thì xanh **mãi** cho `C`, còn nguồn quyền đổi **độc
+lập** sau đó — và **một lượt thu hồi không làm `main` nhích một li**, nên không có gì kích cho
+cổng chạy lại. Cổng vẫn xanh, mã vẫn vào. `enforce_admins` chỉ làm những cờ ĐANG CÓ có hiệu lực
+thật (nay nó là `false`, tức quản trị viên đi vòng qua tất cả); nó không thêm một lượt chấm nào.
+
+Thứ đóng được khe phải **chạy lại lúc GỘP**, không phải lúc đẩy nhánh. Ứng viên: **merge queue**
+của GitHub, vì nó chạy lại phép kiểm trên một nhánh gộp tạm. **CHƯA ĐO** — nên nó là ứng viên,
+không phải kết luận. Chuỗi phải chạy được, bốn bước, và không được suy ra bước nào:
+đẩy `C` → `cong-kiem` xanh cho `C` → **thu hồi quyền** → thử gộp `C`. Bị chặn = ĐẠT.
+
+Trạng thái GitHub đo 08/09 (`gh api repos/…/branches/main/protection`), để lượt sau không phải
+đoán: `required_status_checks.contexts=["cong-kiem"]` · `strict=true` · `allow_force_pushes=false`
+· **`enforce_admins=false`** · không bắt buộc pull request. Repo Extension: **không có lớp bảo vệ
+nào** (`404`, ruleset rỗng).
+
+Bản xem được cho cả ba phần, **chưa bật gì**, nằm ngoài cả hai repo:
+`_run-qua-dem-20260907/DE-XUAT-CO-GITHUB--CHO-DUC-DUYET.md`.
+
+### ⑵c Tên vùng phải khớp đường dẫn thật — ĐÃ ĐÓNG 08/09
+
+Phiên Codex khai vùng `wrong-area` cho một thay đổi ở `product.txt` và **đi qua được**. Tên vùng
+khi ấy là **lời khai**, không phải điều đã kiểm.
+
+Nay `--tich-hop` và `--xac-nhan` **bắt buộc** hai cờ: `--ban-do <.repo-structure.json>` và
+`--con-lai <khoá>`. Lõi quy **mọi đường dẫn trong khoảng `coSo..sha`** về một khoá quyền theo
+khối `areas`, và từ chối nếu có đường dẫn nào quy về vùng khác. Bản đồ được **truyền vào**, không
+gõ vào lõi — lõi vẫn cố ý không biết nó chạy trong repo nào. Không phải đổi lược đồ: khối `areas`
+đã có sẵn ở cả hai repo.
+
+Bốn mã mới: `AREA_MISMATCH` · `UNMAPPED_PATH` · `MISSING_MAP` (mã 2) · `MAP_UNREADABLE` (mã 2).
+**Thiếu bản đồ thì cửa DỪNG**, không chạy ở chế độ không kiểm — nếu thiếu cờ mà vẫn đi qua thì
+mọi ca kiểm lớp này chỉ chứng minh *"cờ có tác dụng khi được đưa"*.
+
+**Câu bản đầu chưa hỏi — "kết quả chạm NHIỀU vùng thì ai duyệt": KHÔNG AI.** Một kết quả, một
+vùng; chạm hai vùng thì tách hai lượt. Lý do, không phải sở thích: một tờ xác nhận ký cho MỘT
+vùng và một lượt thu hồi cũng thu hồi MỘT vùng — cho một kết quả trải hai vùng đi qua bằng một tờ
+xác nhận là để bên kiểm của vùng A ký thay cho vùng B, mà nó không đọc và không bị thu hồi cùng.
+Luật này **chặt hơn bảng khoá** (bảng cho một lane giữ hai khoá cùng lúc); cố ý — giữ hai khoá là
+chuyện điều phối, ký nhận một kết quả là chuyện thẩm quyền.
+
+**Thứ tự phép kiểm là chuyện đo được, không phải chuyện gu.** Bản đầu đặt phép kiểm này lên trên
+cùng, lý lẽ *"sai vùng thì chẳng cần hỏi remote"*. Lý lẽ đó sai, và ca ⑤ chỉ ra: phép kiểm đo
+khoảng `coSo..sha`, nên **một nền khai sai làm khoảng đó phình ra và cuốn theo commit của lane
+khác** — cửa từ chối đúng nhưng nói sai lý do, và `STALE_BASE` thành mã **không bao giờ chạy**.
+Nay nó đặt **SAU** `STALE_BASE`: vế đó buộc `coSo` phải chứa lượt tích hợp gần nhất của vùng, nên
+khoảng đo mới đúng là *"những gì vùng này đổi kể từ lần nhận trước"*.
+
+**Và một cái bẫy khi VIẾT ca cho lớp này.** Ba mục đỏ đầu tiên của ca ⑫ trượt vì
+`AUTHORITY_REVOKED`: lane giữ `goi-aa` mà khai `goi-t`, nên phép kiểm *"còn là chủ không"* bắt
+trước và phép kiểm đường dẫn **không bao giờ chạy** — ca đo lại lớp cũ mà vẫn trông như đang đo
+lớp mới. Ca đúng là **lane giữ CẢ HAI vùng** và đưa việc của vùng này qua tờ xác nhận của vùng
+kia; lúc đó thứ duy nhất chặn được là bản đồ đường dẫn.
 
 ### ⑶ Ca thứ năm — sửa điều kiện từ chối cho đúng
 
@@ -178,6 +269,14 @@ Sân thử là hai checkout + một remote git cục bộ trong thư mục tạm
 | ⑦ | Thông tin kết quả phải khớp commit thật (ba đường của Codex) |
 | ⑧ | Sổ **hỏng** làm hệ thống dừng, không thành sổ **trống** |
 | ⑨ | Hai lượt nhận quyền **cạnh tranh thật** |
+| ⑩ | **Xác nhận đã xanh, rồi quyền bị thu hồi trước lúc tích hợp** ⬅ chuỗi Codex |
+| ⑩b | Tờ xác nhận **không còn là điều cuối cùng** xảy ra với vùng |
+| ⑩c | **Tự xác nhận cho chính mình** → từ chối; bên khác xác nhận → đi được |
+| ⑩d | Việc ở **vùng khác** không làm hết hiệu lực tờ xác nhận (chống chặn quá rộng) |
+| ⑪ | **Thu hồi sau khi đã ghi nhận, rồi thử đưa mã vào `main`** — quan sát SHA thật, cả hai chiều |
+| ⑫ | **Tên vùng phải khớp đường dẫn thật** — lane giữ CẢ HAI vùng, nên khoá duy nhất chặn được là bản đồ |
+| ⑫b | Chia chủ theo gói · tiền tố dài nhất thắng · đổi tên file qua vùng khác không bị che |
+| Fail-closed | mất remote · sổ hỏng · thiếu dữ liệu · **thiếu bản đồ** → DỪNG, không đoán |
 
 Ca ④ là ca chịu tải: nó là ca duy nhất đã bác được một thiết kế đã viết ra.
 
@@ -190,9 +289,16 @@ Ca ④ là ca chịu tải: nó là ca duy nhất đã bác được một thi�
   trong lõi: git bảo vệ **hai** cửa sổ khác nhau, và `--force` chỉ phá được cửa sổ thứ hai. Không
   có ca ③c thì lớp chịu toàn bộ việc phân xử **không có gì canh**.
 
-**Ngoài phạm vi bộ kiểm này, chưa đạt:** chuỗi A-ghi-nhận → B-thu-hồi → A-đẩy-`main` (xem ⑵) và
-ranh giới vùng → đường dẫn (xem ⑵c). Hai chỗ đó **chưa được nghiệm thu**, nên chưa được nối vào
-`claim.mjs` để thay quy trình đang dùng.
+**Ranh giới vùng → đường dẫn: ĐẠT 08/09** (ca ⑫, ⑫b — xem ⑵c).
+
+**Ngoài phạm vi bộ kiểm này, VẪN chưa đạt — hai chỗ, và đừng đọc hẹp hơn:**
+
+- **Đẩy `main` bỏ qua cửa.** Ca ⑪ đo cả hai chiều: đi qua cửa thì `main` không đổi, bỏ qua cửa thì
+  mã **VẪN vào**. Phát hiện được, chưa ngăn được — và câu chữa mà ADR này từng viết
+  (`enforce_admins` + một bước đọc sổ trong CI) **không đúng**, xem ⒞.
+- **Danh tính bên xác nhận.** `--as` vẫn là tên tự khai, xem ⒜.
+
+Nên chưa được nối vào `claim.mjs` để thay quy trình đang dùng.
 
 **Nơi xây và nơi thử tách nhau** (phiên Codex đề xuất, nhận): mã dùng chung ở `Ark_Repo_Harness`
 (ADR-0006); **hai checkout của chính repo này** là nơi hai vai vận hành thử; nghiệm thu cuối ở đây.
