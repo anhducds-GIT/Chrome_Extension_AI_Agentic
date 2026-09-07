@@ -35,7 +35,7 @@ const sidepanel = fs.readFileSync(new URL("sidepanel.js", root), "utf8");
 
 /* ---- Hai ham thuan, chay that chu khong doc chuoi ------------------------- */
 
-const picked = /function downloadLeaf[\s\S]*?\n}\n\nfunction pathTailMatches[\s\S]*?\n}/.exec(background);
+const picked = /function downloadLeaf[\s\S]*?\r?\n}\r?\n\r?\nfunction pathTailMatches[\s\S]*?\r?\n}/.exec(background);
 assert.ok(picked, "background.js con dung mot cho hai ham nay, ke nhau");
 const scope = {};
 new Function("exports", `${picked[0]}\nexports.downloadLeaf = downloadLeaf; exports.pathTailMatches = pathTailMatches;`)(scope);
