@@ -274,5 +274,6 @@ chốt** ai giữ khoá đó.
   - **Số đo:** suite **115/115** · thử phá **15/17**, hai con lọt đều tương đương hành vi và được ghi lại thay vì bày phép ghim giả. Thử phá còn lộ ra một dòng **mã chết** và một **lỗi thứ tự thật** — cả hai ở `BACKLOG.md`.
   - **KHÔNG sinh lại bảng:** cây làm việc đang mang việc chưa commit của lane Scouter, mà bộ sinh đọc STATUS ở cây làm việc. Để lane sau sinh.
   - **Trần tuyên bố: SUITE, CHƯA LIVE.** Đóng khi: Đức chọn một thư mục → đóng/mở panel → `jobs.add` qua Bridge → không có `audit_durable: false`, tên file đúng → **và số file tên-GUID trong `Downloads` KHÔNG TĂNG** (mốc 39). Bước cuối mới là bước chốt: 04/09 bốn bước trên đã xanh mà file rác vẫn tăng.
+  - **Đẩy bằng `--carry`, và đây là tên hai lane bị cuốn theo** (ADR-0005 bắt kể tên): `claude-bang-vung-chac` (2 commit — `_code`, bộ sinh đối chiếu) và `claude-scouter-s06` (4 commit — gói Scouter). Tôi **không** thực hiện việc của họ và không biết họ đã xong chưa; commit của họ đã nằm sẵn trong nhánh lúc tôi đẩy.
 
 <!-- HANDOFF-THANG: 2026-09 -->
