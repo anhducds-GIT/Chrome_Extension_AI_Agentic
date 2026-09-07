@@ -226,3 +226,33 @@ với lý do *"Scouter không có hàng đợi job"*. **Lý do đó nay sai**, v
 
 **Đo.** Ghim gói **8/8** · đột biến **61/61, sống sót 0** · live check Bridge THẬT **ĐẠT 8/8**.
 Đóng `S-08` (Đức xác nhận icon) và `S-09` (đổi vỏ).
+
+## 2026-09-07 · `claude-scouter-s06` — lệnh gọi mạng, Bridge riêng, và mã nguồn bị nhiễm độc
+
+**Đức chốt hai lượt, cả hai rộng hơn câu tôi hỏi** — lý do, cái giá và các chốt ở
+[ADR-0003](docs/adr/0003-mo-het-quyen-truy-cap-va-cai-gi-thay-cho-hang-rao-cu.md) (mở
+`<all_urls>`, và **năm chốt hình dạng** đứng thay hàng rào theo-từng-trang vừa bỏ) và
+[ADR-0004](docs/adr/0004-bridge-rieng-cho-scouter-la-mot-lop-dung-truoc.md) (Bridge riêng là một
+**lớp đứng trước**, không phải bản thứ tư).
+
+**Ba chỗ chặn đo được, cả ba nằm ngoài dự đoán của ADR-0009** — chi tiết ở ADR-0003 mục Bối
+cảnh. Cái đáng nhớ nhất: câu *"Bridge ghi code mới xuống đĩa"* của **ADR-0009 ⑸ tả một thứ chưa
+bao giờ tồn tại**. Ai đọc mục ⑸ mà tưởng vòng tự cải tiến đã có đủ mảnh thì đọc nhầm.
+
+**Ba lần bộ đo đột biến BỎ LẠI con đột biến trong mã nguồn, trong đúng một buổi.** Lần đầu phép
+ghim bắt được; một con tinh hơn thì suite vẫn xanh và thứ nằm lại là **một chốt an toàn đã bị
+gỡ**. Vá hai lớp vì là hai bệnh: **khoá file** chống hai lượt chạy cùng lúc · **nhật ký hồi phục
+trên đĩa** cứu lượt bị chém ngang.
+
+**Hai chỗ tôi làm sai trong lúc vá, ghi ra vì cả hai đều tổng quát hơn lượt này:**
+⑴ khoá bản đầu **không tự gỡ được**, nên một lượt bị giết để lại khoá mồ côi **chặn mọi lượt
+sau** — tôi biến một rủi ro hiếm thành một cái kẹt thường trực. Nay khoá ghi PID và tự nhận lại
+khi chủ cũ đã chết. ⑵ **bắt tín hiệu KHÔNG đủ**: Windows không có tín hiệu thật, `kill("SIGINT")`
+giết thẳng tiến trình và handler không bao giờ nổ. Tôi thử chính cái chốt vừa dựng và **nó
+trượt** — nên mới có nhật ký. Một chốt chưa thử là một chốt chưa biết có chạy.
+
+**Hai con đột biến phơi ra lỗi thật.** `G2` sống sót vì phép kiểm "nằm trong gốc" bị viết **hai
+lần** và hai bản **che nhau** — trùng lặp ở đây là chỗ mù, đã gộp. `G4` **bỏ hẳn**: mã chết.
+
+**Đo.** Ghim gói **10/10** · đột biến **75/75, sống sót 0**. **Chưa chạy thật lần nào** — còn
+lại của `S-10`: script phía gọi, ba mảnh nhóm B, rồi pilot một tuần.
