@@ -1437,3 +1437,16 @@ Không đụng dấu niêm phong bằng tay.
 từ mốc đã commit; và chỉ đóng dấu **khoá người chạy thật sự đụng**, không rải câu chốt lên khoá
 khác. Chưa ghi vào `BACKLOG.md` vì sổ đang **đúng 10 mục** — chạm trần cứng Đức chốt sáng nay
 (giới hạn ④). Thêm một mục để chữa lỗi này là phá đúng cái luật vừa dựng.
+
+## 2026-09-07 · `claude-scouter-s06` — đóng lượt: đẩy 60 commit của chín lane
+
+**Lượt `--carry` này cuốn theo ai** (ADR-0005 bắt kể tên): 47 commit của **tám lane** —
+`claude-assistant` (7) · `claude-b36-vaA` (8) · `claude-bang-ia` (5) · `claude-bang-vung-chac` (5)
+· `claude-flow-f28-f33` (3) · `claude-gemini-crlf` (3) · `claude-root-adr0014` (6) ·
+`claude-tinh-gon` (10). Cộng 13 commit của tôi.
+
+Cổng đóng phiên **XANH TOÀN BỘ** trước lượt đẩy: 20 suite xanh sạch, dấu niêm phong khớp, 60
+commit đều quy thuộc được về lane, 85 mục nhật ký đều dưới trần.
+
+Đẩy vì cả chín lane đã bị chặn từ sáng bởi một mục nhật ký quá trần — nay đã gỡ. Đẩy sớm là
+được GPT soi sớm qua connector; commit chưa đẩy thì vòng kiểm chéo không nhìn thấy.
