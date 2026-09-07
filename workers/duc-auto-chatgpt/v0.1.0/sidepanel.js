@@ -50,9 +50,6 @@
     files: [],
     prepared: null,
     outputSettings: null,
-    // True chỉ khi `outputSettings` là bộ mặc định do MÁY tự dựng cho một
-    // phiên bootstrap, không phải cấu hình Đức chọn. Xem bridgeAuditHeld().
-    outputAutoDefaulted: false,
     runtimeOverrides: {},
     selectedJobId: null,
     running: false,
@@ -1543,7 +1540,6 @@
       // wholesale via splice(), never mutated in place.
       files: [...state.files],
       outputSettings: cloneBridgeOutputSettings(state.outputSettings),
-      outputAutoDefaulted: state.outputAutoDefaulted,
       runtimeOverrides: { ...state.runtimeOverrides },
       importedConfig: state.importedConfig,
       configFindings: [...state.configFindings],
@@ -1579,7 +1575,6 @@
       renderReferenceGallery();
     }
     state.outputSettings = snapshot.outputSettings;
-    state.outputAutoDefaulted = snapshot.outputAutoDefaulted;
     state.runtimeOverrides = snapshot.runtimeOverrides;
     state.importedConfig = snapshot.importedConfig;
     state.configFindings = snapshot.configFindings;
@@ -1625,8 +1620,20 @@
      và vẫn kiểm tên: bỏ kiểm tên là phương án (C), thứ ADR-0049 đã LOẠI. */
   const AUDIT_HELD_NOTE = "Sổ audit đang được giữ trong bộ nhớ phiên, CHƯA ra file: phiên này chưa có thư mục nào Đức cấp quyền, mà thư mục Tải xuống của Chrome thì không đặt tên nổi artifact của gói (B-36). Chọn một thư mục đích để xả sổ ra file; đóng panel trước lúc đó là mất sổ.";
 
+  /* Dấu `autoDefaulted` nằm TRÊN CHÍNH object settings, không nằm trên
+     `state`. Đó là chỗ khác biệt duy nhất, và nó xoá hẳn hai lớp lỗi thay vì
+     canh chúng bằng hai phép ghim nữa (đo bằng thử phá: cả hai con thoát lưới
+     ở vòng đầu đều thuộc hai lớp này):
+
+       · "cờ không được xoá khi Đức mở workbook thật" — `applyWorkbookConfig`
+         gán một object MỚI từ `fromWorkbook`, mà `fromWorkbook` không bao giờ
+         đặt dấu này. Dấu tự rụng, không ai phải nhớ xoá. Cờ trên `state` thì
+         phải xoá bằng tay, và bỏ một chỗ là phiên của Đức lặng lẽ ngừng ghi —
+         tức phương án (C) đi cửa sau, thứ ADR-0049 đã LOẠI.
+       · "rollback làm mất dấu" — dấu đi theo settings, mà settings đã nằm
+         trong snapshot và `cloneBridgeOutputSettings` là spread nên giữ trọn. */
   function bridgeAuditHeld() {
-    if (!state.outputAutoDefaulted) return false;
+    if (!state.outputSettings?.autoDefaulted) return false;
     const image = state.outputSettings?.image;
     return !(image?.kind === "directory" && image.handle);
   }
@@ -1704,13 +1711,13 @@
           // của nó không dùng được, xem bridgeAuditHeld().
           if (!state.outputSettings && state.workbook) {
             state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
-            state.outputAutoDefaulted = true;
+            state.outputSettings.autoDefaulted = true;
           }
           const mutation = await mutate();
           if (!state.workbook) throw new window.DacBridgeCore.BridgeProtocolError("WORKBOOK_NOT_LOADED");
           if (!state.outputSettings) {
             state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName);
-            state.outputAutoDefaulted = true;
+            state.outputSettings.autoDefaulted = true;
           }
           state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName);
           state.prepared = window.DacRunnerCore.prepare(state.workbook, state.files, state.runtimeOverrides);
@@ -3025,9 +3032,6 @@
     state.localOverrides.clear();
     try { state.outputSettings = window.DacOutputLocation.fromWorkbook(state.workbook.config, state.workbook.fileName); }
     catch (_) { state.outputSettings = window.DacOutputLocation.fromWorkbook({}, state.workbook.fileName); }
-    // Cau hinh nay den TU WORKBOOK, tuc tu Duc — khong phai bo mac dinh may
-    // tu dung cho phien bootstrap. Duong ghi cua no khong bi giu lai.
-    state.outputAutoDefaulted = false;
     state.destinationMode = imported.effective.output.mode;
     state.separateResultDestination = imported.effective.output.separateResultDestination;
     renderConfigProvenance();
@@ -3376,10 +3380,10 @@
       applyWorkbookConfig();
       // Workbook này do MÁY dựng, config của nó rỗng — nên bộ outputSettings
       // applyWorkbookConfig() vừa dựng là bộ mặc định, không phải lựa chọn
-      // của Đức. Đánh dấu SAU lời gọi đó, vì chính nó xoá cờ (đúng cho đường
-      // Đức mở một XLSX thật). Nhánh `previouslyBound` bên dưới an toàn với
-      // cờ này: có handle thật thì bridgeAuditHeld() trả false bất kể cờ.
-      state.outputAutoDefaulted = true;
+      // của Đức. Đánh dấu SAU lời gọi đó, vì chính nó vừa gán một object mới.
+      // Nhánh `previouslyBound` bên dưới an toàn với dấu này: có handle thật
+      // thì bridgeAuditHeld() trả false bất kể dấu.
+      state.outputSettings.autoDefaulted = true;
       if (previouslyBound?.image?.kind === "directory" && previouslyBound.image.handle) {
         state.outputSettings.image = previouslyBound.image;
         state.outputSettings.result = previouslyBound.result;

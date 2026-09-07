@@ -16,7 +16,7 @@
    Nội dung file đúng nguyên vẹn; chỉ cái tên bị Chrome đặt. Nên stub download
    dưới đây trả GUID, và đó không phải bịa: đó là hành vi đã đo của Chrome 152.
 
-   NĂM bất biến:
+   SÁU bất biến:
 
      ① phiên bootstrap (Đức chưa cấp quyền thư mục nào) KHÔNG phát một lượt
        tải nào qua Chrome Downloads;
@@ -25,7 +25,9 @@
      ④ mép ngược: thư mục thật đã bind thì ghi ngay, `audit_durable` hết false;
      ⑤ mép ngược quan trọng nhất: phiên do ĐỨC cấu hình chế độ Downloads thì
        VẪN đi đường tải và VẪN kiểm tên — (A) chỉ che ca bootstrap, nó không
-       phải công tắc tắt lớp kiểm tên.
+       phải công tắc tắt lớp kiểm tên;
+     ⑥ một mutation hỏng giữa đường rồi rollback thì dấu "máy tự dựng" phải
+       sống sót — không thì lượt kế tiếp lại rơi về Chrome Downloads.
 
    ① mà không có ④ và ⑤ thì (A) chỉ là "tắt phần ghi", và tắt lớp bảo vệ để
    test xanh là việc luật vàng 3 cấm.  */
@@ -255,6 +257,11 @@ assert.deepEqual(
   "① khong mot luot tai nao o phien bootstrap: Chrome Downloads khong dat ten noi artifact cua goi nay"
 );
 assert.equal(bootstrap.audit_durable, false, "② dây phải biết sổ CHƯA ra file — không được im");
+// Checkpoint cũng chưa ra file, nên nó KHÔNG được tự khai là đã nghiệm thu.
+// Con `storage: "held"` đổi thành `"downloads"` lọt lưới ở vòng thử phá đầu
+// đúng vì thiếu dòng này — và hậu quả là dây nghe "verified: true" cho một
+// file không nằm ở đâu cả.
+assert.equal(bootstrap.checkpoint?.verified, false, "② checkpoint chưa ra file thì không được khai là đã nghiệm thu");
 assert.match(String(bootstrap.audit_note || ""), /\S/, "② phải kèm một câu nói vì sao chưa bền");
 assert.match(String(bootstrap.audit_note || ""), /[ạảãàáâậầấẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i, "② câu đó là chữ operator đọc → tiếng Việt CÓ DẤU (luật vàng 5)");
 
@@ -291,11 +298,16 @@ for (const line of lines) assert.doesNotThrow(() => JSON.parse(line), "③ mỗi
    là bằng chứng không tra được.
    ========================================================================== */
 downloads.length = 0;
+// KHÔNG đặt dấu bằng tay ở đây. Dựng settings đúng cách Đức mở một workbook
+// thật dựng nó — qua `fromWorkbook` với config có nội dung — và để chính việc
+// object này KHÔNG mang dấu `autoDefaulted` là thứ quyết định. Bản trước của
+// ca này gán `outputAutoDefaulted = false` bằng tay, nên đột biến "không bao
+// giờ xoá cờ" lọt lưới: test đã tự dọn hộ đúng cái nó phải bắt.
 state.outputSettings = context.DacOutputLocation.fromWorkbook(
   { output_destination_mode: "downloads", output_downloads_subfolder: "Duc chon tay" },
   state.workbook.fileName
 );
-state.outputAutoDefaulted = false;
+assert.equal(state.outputSettings.autoDefaulted, undefined, "⑤ settings dựng từ config THẬT không được mang dấu 'máy tự dựng'");
 
 let ducFailure = null;
 try { await jobsAdd(1); } catch (error) { ducFailure = error; }
@@ -307,4 +319,33 @@ assert.match(
   "⑤ và nó kêu ĐÚNG chỗ: lệch tên / không nghiệm thu được, chứ không phải một lỗi khác"
 );
 
-console.log("b36 bootstrap audit held smoke tests: PASS (5 bất biến)");
+/* ==========================================================================
+   ⑥ — mép ngược thứ ba: một mutation HỎNG GIỮA ĐƯỜNG rồi rollback thì dấu
+   "máy tự dựng" phải sống sót. Dấu nằm trên object settings, mà rollback
+   phục hồi settings từ một bản clone — nên nếu bản clone đó đổi sang danh
+   sách trắng, dấu rụng và lượt mutation KẾ TIẾP lại ghi vào thư mục Tải
+   xuống, tức B-36 quay lại đúng như trước. Đột biến "clone → whitelist" lọt
+   lưới ở vòng thử phá thứ hai đúng vì thiếu ca này.
+
+   Cách buộc rollback mà không sửa mã: một job trỏ vào ảnh mẫu không tồn tại
+   → `prepare()` trong `apply` ném MISSING_REFERENCE.
+   ========================================================================== */
+state.outputSettings = null;
+state.workbook = null;
+state.auditEvents.length = 0;
+downloads.length = 0;
+
+const reborn = await jobsAdd(1);
+assert.equal(reborn.audit_durable, false, "⑥ dựng lại phiên bootstrap: vẫn phải là 'chưa bền'");
+
+let rolledBack = null;
+try {
+  await hooks.handlers["jobs.add"]({ jobs: [{ prompt: "Job tro vao anh khong ton tai", reference_images: ["khong-he-co-file-nay.png"], settings: { timeout_sec: 180 } }] }, call);
+} catch (error) { rolledBack = error; }
+assert.ok(rolledBack, "⑥ job trỏ vào ảnh không tồn tại phải hỏng — nếu không thì ca này chưa hề chạm rollback");
+
+const afterRollback = await jobsAdd(1);
+assert.deepEqual(downloads, [], "⑥ sau rollback vẫn KHÔNG được tải: dấu 'máy tự dựng' phải sống sót qua clone");
+assert.equal(afterRollback.audit_durable, false, "⑥ và dây vẫn phải nghe 'chưa bền'");
+
+console.log("b36 bootstrap audit held smoke tests: PASS (6 bất biến)");

@@ -66,7 +66,12 @@ assert.match(applyRegion, /state\.outputSettings = window\.DacOutputLocation\.fr
 // Bất biến MỚI của ADR-0049: bộ vừa dựng đó là của MÁY, và nó phải tự khai
 // ra như vậy. Không có dấu đó thì đường ghi của một phiên bootstrap lại rơi
 // về thư mục Tải xuống — nơi Chrome đặt tên GUID, tức đúng B-36.
-assert.match(applyRegion, /state\.outputAutoDefaulted = true/, "bộ mặc định máy tự dựng phải được đánh dấu (ADR-0049)");
+// Dấu nằm TRÊN object settings, không trên `state` — chỗ đặt là phần của
+// quyết định, không phải chi tiết: `applyWorkbookConfig` gán một settings MỚI
+// từ `fromWorkbook`, nên dấu tự rụng khi Đức mở workbook thật, và nó đi theo
+// settings qua snapshot/rollback. Cờ trên `state` phải xoá bằng tay ở mọi
+// nhánh, và thử phá cho thấy cả hai lớp lỗi đó đều lọt lưới ở bản đầu.
+assert.match(applyRegion, /state\.outputSettings\.autoDefaulted = true/, "bộ mặc định máy tự dựng phải được đánh dấu, và đánh dấu TRÊN settings (ADR-0049)");
 // The agent-settable output location is Downloads-relative ONLY: the handler
 // routes output_downloads_subfolder through downloadsLocation (safeRelativeFolder
 // rejects traversal/absolute), and only skips the bound-profile assert when
