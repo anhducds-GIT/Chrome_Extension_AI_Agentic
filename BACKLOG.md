@@ -455,24 +455,46 @@ như đã chốt. Nên nếu làm thì phải kèm phép đếm: ADR ở `Propos
 
 - **đóng khi:** lệnh: grep -c "status: Proposed" docs/_TEMPLATE-adr.md ra 1
 
- - **A-01** · `git commit -a` cua mot lane cuon theo file DA DAN cua lane khac.
-  Luat hien co chan *push* cuon theo commit nguoi khac (`safe-push --carry`) nhung KHONG chan
-  *commit* cuon theo file da dan. Da no that 07/09: commit `27a88ce7` cua `claude-dong-bang-2`
-  chua 6 file cua `claude-scouter-s06`, nen dong `Lane:` quy sai nguon goc — dung loai sai ma
-  nhan `Lane:` sinh ra de chan. Khong sua lich su duoc (phai hoi Duc), nen ban ghi do o lai.
-  · **dong khi:** hoac co mot chot khien `git add` cua lane nay khong bi lane kia commit ho
-  (vi du: cong doc phien canh `git diff --cached` co file ngoai vung minh giu), hoac Duc chot
-  la chap nhan rui ro nay va ghi mot dong ly do.
+## N-40 · `git commit -a` của một lane cuốn theo file ĐÃ DÀN của lane khác
 
- - **A-02** · Mo mot vung dung chung (`workers/_shared/`) hien CHI lam duoc bang duong dang
-  ngo nhat: sua tay `claims.json` roi `--restamp`. Da di het ba cua va ca ba deu dong:
-  `claim.mjs --take` tu choi khoa la va bao "khai o .repo-structure.json truoc"; khai vao khoi
-  `areas` VAN do, vi `areaOf()` coi moi thu muc duoi `workers/` la mot package can khoa rieng
-  trong `claims.json`; va khong co lenh nao tao khoa do. Nen nguoi dau tien di duong nay (07-08/09,
-  lane `claude-scouter-s06`) phai lam dung thao tac ma luat canh bao nang nhat.
-  No CHAY duoc — da chup chu so huu truoc/sau, khong khoa nao bi doi chu — nhung no khong nen
-  la cach chinh thuc: mot duong hop le ma trong giong het mot vu cuop khoa thi lan sau khong
-  ai phan biet duoc hai thu do.
-  · **dong khi:** `claim.mjs` co mot duong TAO khoa moi (vi du `--khai-vung <khoa>`) chi chay
-  duoc khi khoa do da duoc khai trong `.repo-structure.json`, va no dong dau lai luon — hoac
-  Duc chot rang mo vung moi la viec hiem den muc khong dang tu dong hoa, va ghi mot dong ly do.
+Luật hiện có chặn *push* cuốn theo commit người khác (`safe-push --carry`) nhưng **không chặn
+*commit* cuốn theo file đã dàn**. Đã nổ thật 07/09: commit `27a88ce7` của `claude-dong-bang-2`
+chứa 6 file của `claude-scouter-s06` — đúng loại sai mà nhãn `Lane:` sinh ra để chặn.
+
+Không sửa lịch sử được (phải hỏi Đức), nên bản ghi đó ở lại sai vĩnh viễn.
+
+- **đóng khi:** hoặc có một chốt khiến `git add` của lane này không bị lane kia commit hộ (ví
+  dụ: cổng đóng phiên cảnh báo khi `git diff --cached` có file ngoài vùng mình giữ), hoặc Đức
+  chốt chấp nhận rủi ro này và ghi một dòng lý do.
+
+## N-41 · Mở một vùng dùng chung chỉ làm được bằng đường đáng ngờ nhất
+
+Đã đi hết ba cửa khi mở `workers/_shared/` (07-08/09) và cả ba đều đóng: `claim.mjs --take` từ
+chối khoá lạ và bảo *"khai ở .repo-structure.json trước"*; khai vào khối `areas` **vẫn đỏ**, vì
+`areaOf()` coi mọi thư mục dưới `workers/` là một package cần khoá riêng trong `claims.json`;
+và không lệnh nào tạo được khoá đó.
+
+Nên người đầu tiên đi đường này phải **sửa tay `claims.json` rồi `--restamp`** — đúng thao tác
+mà luật cảnh báo nặng nhất. Nó chạy được (đã chụp chủ sở hữu trước/sau, không khoá nào bị đổi
+chủ), nhưng một đường hợp lệ mà **trông giống hệt một vụ cướp khoá** thì lần sau không ai phân
+biệt được hai thứ đó.
+
+- **đóng khi:** `claim.mjs` có một đường TẠO khoá mới (ví dụ `--khai-vung <khoá>`) chỉ chạy
+  được khi khoá đó đã khai trong `.repo-structure.json`, và nó đóng dấu lại luôn — hoặc Đức
+  chốt rằng mở vùng mới là việc hiếm đến mức không đáng tự động hoá, và ghi một dòng lý do.
+
+## N-42 · Hai mục sổ nợ viết sai định dạng đã VÔ HÌNH với công cụ
+
+Ghi lại vì nó là một chỗ mù của chính cuốn sổ, không phải một lỗi đánh máy.
+
+Ngày 07/09 lane `claude-scouter-s06` ghi hai mục dạng gạch đầu dòng (`- **A-01**`) thay vì tiêu
+đề `## N-<số>`. `backlog-check.mjs` cắt sổ theo tiêu đề, nên **không đếm, không kiểm trường
+`đóng khi`, không báo gì cả** — số mục vẫn y nguyên sau khi thêm hai mục.
+
+Hệ quả thật: dựa trên con số sai đó, lane này báo Đức rằng sổ *"nay 11 mục, vượt trần 10"* và
+Đức nâng trần lên 15. Trần nâng thì vô hại, nhưng **lý do đưa ra là sai**. Một cuốn sổ im lặng
+nuốt mục mới thì mọi quyết định dựa trên số mục của nó đều đáng ngờ.
+
+- **đóng khi:** `backlog-check.mjs` ĐỎ khi thấy một dòng trông như mục nợ (`**X-NN**` ở đầu
+  dòng, ngoài khối mã) mà không nằm dưới một tiêu đề `## N-<số>` nào — hoặc Đức chốt rằng chỉ
+  cần một dòng nhắc trong luật của sổ là đủ.

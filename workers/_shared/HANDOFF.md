@@ -28,13 +28,11 @@ một câu, 29 ca**, rồi so đáp án. Bản gốc **đóng băng** — chính
 **Bộ đo đột biến tự tìm ra một lỗ:** cái bắt tay hai chiều — lý do chính khiến lõi được tách —
 **không có phép ghim hành vi nào**. Nay có `bat-tay-hai-chieu.mjs`, nối THẬT qua socket.
 
-**Ba chỗ BỘ KHUNG vấp khi mở một vùng dùng chung lần đầu, ghi ra vì người sau sẽ vấp lại:**
-⑴ `claim.mjs` từ chối khoá lạ, bảo khai `.repo-structure.json` trước;
-⑵ khai vào `areas` **vẫn đỏ**, vì `areaOf()` coi mọi thư mục dưới `workers/` là một package cần
-khoá trong `claims.json`;
-⑶ đường duy nhất còn lại là **sửa tay rồi `--restamp`** — đúng thao tác mà luật cảnh báo nặng
-nhất. Đã làm, và đã chụp chủ sở hữu trước/sau để chứng minh không khoá nào bị đổi chủ. Ghi thành
-`A-02` ở `BACKLOG.md` gốc; không tự vá vì `scripts/` thuộc `_code`.
+**Bộ khung chưa lường trước một vùng dùng chung.** Mở nó phải đi qua đường sửa tay `claims.json`
+rồi `--restamp` — đúng thao tác luật cảnh báo nặng nhất. Đã chụp chủ sở hữu trước/sau: không
+khoá nào bị đổi chủ. Chi tiết ba cửa đã đóng và điều kiện đóng: `N-41` ở `BACKLOG.md` gốc.
 
 **Đo.** Suite của vùng chạy trong `workers/duc-scouter/v0.1.0/tests/run-all.mjs` (quét theo hình
 dạng `_shared/*/tests/*.mjs`). Đột biến: `X1..X4` trong `scouter-mutation-check.mjs`, giết 4/4.
+
+<!-- HANDOFF-THANG: 2026-09 -->
