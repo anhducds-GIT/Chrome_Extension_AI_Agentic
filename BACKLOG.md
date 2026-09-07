@@ -1096,7 +1096,7 @@ fixture chọn một đơn vị THẬT khác GPT, chọn theo thứ tự đườ
   · **đóng khi:** `what-next.mjs` đếm cả hai dạng mục, và có một phép ghim dựng một sổ nợ chứa
   cả hai dạng rồi kiểm con số ra đúng. Khoá cần: `_code`.
 
-- **N-11** · `FEATURE-PARITY-AUTO.md` chưa land làm **cổng xuất bản chặn MỌI lane**. Commit
+- **N-25** · `FEATURE-PARITY-AUTO.md` chưa land làm **cổng xuất bản chặn MỌI lane**. Commit
   `16674f3` (ADR-0014) đổi `scripts/feature-parity.mjs` sang ghi ra `FEATURE-PARITY-AUTO.md`,
   nhưng ⑴ file đó **chưa có trong HEAD** và ⑵ nó **không** nằm trong khối `generated` của
   `.repo-structure.json` (khối đó vẫn chỉ có bốn tên cũ). Nên `safe-push.mjs` từ chối mọi lượt
@@ -1242,3 +1242,77 @@ trên bảng · ⑶ có một phép ghim ĐỎ khi một `STATUS.md` có `human_
 có dấu `@Đức` nào — tức phép ghim canh đúng cái lỗ vừa đo được, chứ không chỉ canh số.
 
 - **đóng khi:** lệnh: node scripts/backlog-check.mjs --can-duc ra 0 goi co human_action khac rong ma khong co dau @Duc
+- **ĐỔI MÃ N-11 → N-25** · 2026-09-07 · lane `claude-root-adr0014` · khối gạch đầu dòng *"`FEATURE-PARITY-AUTO.md` chưa land làm cổng xuất bản chặn MỌI lane"* trùng mã với `N-11` *"Hai bảng trạng thái, Đức không biết mở cái nào"* (dòng 612) **và** với khối đã đổi thành `N-22`. Ba mục một mã thì **một dòng `ĐÓNG` đóng cả ba** — tức đóng mục này sẽ xoá luôn hai món nợ thật khỏi bảng. Nên tôi sửa mã **ngay tại khối đó** chứ không chỉ ghi một dòng chú thích: dòng chú thích không đổi được con số máy đếm, và đó là lý do hai lượt `ĐỔI MÃ` ngày 07/09 chưa chữa được bệnh. Từ nay đọc khối đó là `N-25`. · **đóng khi:** dòng `ĐÓNG N-25` ngay dưới — cùng lượt, cùng lane.
+- **ĐÓNG N-25** · 2026-09-07 · claude-root-adr0014 · Nửa `_root` của ADR-0014 đã land. **[ĐO]** `grep -c "AUTO:.* START" FEATURE-PARITY.md`: 3 → **0** · `grep -c FEATURE-PARITY-AUTO FEATURE-PARITY.md`: 0 → **4** (ba con trỏ + một ghi chú ở mục 5) · `tests/feature-parity-smoke.mjs` **19/19 PASS** (trước: ĐỎ ở khối 13) · `tests/repo-structure-smoke.mjs` 17/17 · bộ sinh chạy hai lượt trên cùng HEAD ra **giống hệt từng byte** (sha1 `69813066…`) · cổng đóng phiên: mục *"Sự thật máy sinh còn tươi"* **XANH** — đây là lớp chặn mà mục này mở. Hai chiều bất biến ADR-0014 đo được: chiều một `feature-parity.mjs --check` trên file lạc hậu **thoát mã 1** · chiều hai hai đột biến gỡ chốt ghi (`laFileMayDuocGhi` luôn `true`, và máy chủ động ghi vào `FEATURE-PARITY.md`) **cả hai đều BỊ BẮT**, đo trên bản sao ngoài repo để không chạm khoá `_code` của lane khác.
+
+## N-30 · Phép ghim `build-dashboard-smoke` dựng sổ mẫu THIẾU artifact thứ năm, nên nó ĐỎ với mọi lane
+
+**[ĐO 2026-09-07]** · `node tests/build-dashboard-smoke.mjs` **thoát mã 1**, và cổng đóng phiên
+quy nó là `REGRESSION_DA_COMMIT` — tức **chặn thật, chặn mọi phiên**, không phải cảnh báo.
+
+Gốc bệnh, một dòng: `tests/build-dashboard-smoke.mjs:720` dựng một repo mẫu rồi commit đúng bốn
+artifact cũ — `gitAt("add", "DASHBOARD.md", "FEATURE-PARITY.md", "llms.txt", "repo-map.json")`.
+Từ khi `16674f3` / `0b42daf` đổi bộ sinh sang ghi ra `FEATURE-PARITY-AUTO.md`, sổ mẫu đó không
+còn artifact thứ năm trong HEAD của chính nó, nên Gate 7 trong sổ mẫu báo
+*"does not exist in HEAD"* và phép khẳng định `/[XANH] Sự thật máy sinh còn tươi/` vỡ.
+
+**Không phải tôi gây ra, và đã kiểm chứng chứ không đoán:** `git diff daa276c..HEAD --name-only
+-- scripts/ tests/` ra **rỗng**, tức cả bộ sinh lẫn phép ghim không đổi một byte nào từ trước ba
+commit của tôi — nó đã ĐỎ ở `daa276c`. Phép ghim này cũng không đọc file nào tôi sửa: nó chỉ chép
+`scripts/*.mjs` vào một thư mục tạm.
+
+**Tôi KHÔNG sửa, và cố ý:** `tests/` thuộc khoá `_code`, đang do `claude-bang-vung-chac` giữ
+(luật mục 1: vùng có chủ khác thì chỉ đọc). Đây cũng là nửa chưa xong của chính thay đổi của lane
+đó. Nới phép ghim để cổng xanh là việc bị cấm thẳng (luật vàng 3).
+
+· **đóng khi:** `tests/build-dashboard-smoke.mjs:720` thêm `"FEATURE-PARITY-AUTO.md"` vào danh
+sách `gitAt("add", …)` — đọc tên từ hằng số bộ sinh thì tốt hơn gõ cứng — và
+`node tests/build-dashboard-smoke.mjs` thoát mã **0**. Khoá cần: `_code`.
+
+
+## N-30 · `--restamp --duc-duyet` đóng câu chốt lên MỌI khoá lệch mốc, không chỉ khoá vừa đổi
+
+**[ĐO 2026-09-07, gặp HAI lần trong một phiên]** · Lệnh nhận **một** câu `--duc-duyet` rồi ghi câu
+đó vào `duc_decision` của **từng** khoá mà nó thấy đổi chủ so với bản niêm phong lành gần nhất
+(vòng `for (const d of doiChu)` trong `scripts/claim.mjs`). Nên khi hai khoá được chuyển ở hai
+lượt khác nhau, vì hai lý do khác nhau, mà lượt đầu chưa kịp thành mốc lành thì **câu chốt của
+lượt sau đè lên xuất xứ của lượt trước**.
+
+Xảy ra thật: chuyển `_root` (lý do: land nốt ADR-0014 đang chặn 26 commit) rồi chuyển `_code`
+(lý do: Đức cho khoá để refactor bảng). Sau lượt hai, `_root.duc_decision` **nói về `_code`**.
+
+**Vì sao nó đắt chứ không chỉ lệch chữ:** trường đó tồn tại đúng để **phiên vừa mất khoá đọc
+được lý do**, vì họ chỉ đọc bảng chứ không chạy lệnh — chú thích trong chính script nói thế. Một
+câu chốt sai chỗ khiến phiên mất `_root` đọc được một lý do **không liên quan tới mình**, và đó
+tệ hơn không có câu nào: không có thì họ đi hỏi, có mà sai thì họ tin.
+
+Vòng ngoài cũng không cứu được: mốc so sánh là **bản niêm phong lành gần nhất**, nên sửa tay rồi
+commit **không** hạ số khoá "đổi chủ" về 0 — phải đóng dấu lại, và lượt đóng dấu lại chính là lượt
+ghi đè. Cách duy nhất đi qua hôm nay là viết một câu phủ **cả hai** lượt, tức chấp nhận cả hai
+khoá mang chung một câu.
+
+**Hướng sửa (đề xuất, chưa làm — script nằm ở `_code`):** cho `--duc-duyet` nhận dạng
+`<khoá>=<câu>` lặp được, và **từ chối** khi số câu không khớp số khoá đổi chủ. Fail-closed đúng
+tinh thần chỗ này: thà bắt gõ thêm còn hơn ghi một xuất xứ sai vào bảng.
+
+- **đóng khi:** lệnh: node tests/claim-restamp-smoke.mjs xanh voi ca hai khoa doi chu mang hai cau chot khac nhau
+
+- **ĐỔI MÃ N-30 → N-31** · 2026-09-07 · lane `claude-assistant` · khối "`--restamp --duc-duyet` đóng câu chốt lên MỌI khoá lệch mốc" đọc là **N-31** từ nay — lane `claude-root-adr0014` ghi mã `N-30` cho khối phép ghim `build-dashboard-smoke` cùng lúc, khối đó tới trước nên giữ mã · **đóng khi:** lệnh: node tests/claim-restamp-smoke.mjs xanh voi ca hai khoa doi chu mang hai cau chot khac nhau
+
+- **N-13** · Cổng đóng phiên trả **kết quả đỏ SAI** khi nhiều lane cùng ghi file gốc repo. Đo
+  07/09 (`claude-scouter-s06`, lúc có **6 lane** cùng chạy): chạy `session-check.mjs` năm lượt
+  liên tiếp, số mục đỏ **nhấp nháy giữa 1 và 2**, và mỗi phép kiểm đỏ đều XANH khi chạy riêng
+  ngay sau đó. Ba câu báo lỗi quan sát được, cả ba đều sai sự thật tại thời điểm đọc:
+  `CHUA_DONG_DAU: .agents/claims.json thiếu trường _fingerprint` (đọc trực tiếp 5 lượt đều thấy
+  `6f1d02faa74caa28`) · `Repo chưa có .repo-structure.json` (file có, và
+  `tests/repo-structure-smoke.mjs` xanh 17/17) · `git show HEAD:FEATURE-PARITY-AUTO.md does not
+  exist in HEAD` (có trong HEAD, commit `daa276c`).
+  **Vì sao đắt:** cổng đỏ thì luật cấm báo xong và cấm đẩy, nên một lượt đỏ sai **giam commit
+  của cả repo**. Đúng lúc đo có **20+ commit của 6 lane** chưa đẩy. Và nó dạy sai: phiên gặp nó
+  sẽ đi sửa một thứ không hỏng, hoặc tệ hơn — `--restamp` cho xong việc, đúng cái mà `AGENTS.md`
+  cấm.
+  **[ĐO]** `for i in 1 2 3 4 5; do node scripts/session-check.mjs --as thu; done` khi có lane
+  khác đang giữ `_root`, rồi so với chạy riêng từng phép kiểm.
+  · **đóng khi:** cổng đọc mỗi file gốc **một lần vào đầu lượt** rồi dùng lại bản đã đọc (thay
+  vì đọc lại ở từng phép kiểm), hoặc thử lại có giới hạn khi đọc hụt — và có một phép ghim dựng
+  cảnh file bị ghi giữa chừng rồi kiểm cổng KHÔNG báo đỏ. Khoá cần: `_code`.
