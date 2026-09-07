@@ -148,6 +148,34 @@ export async function createScouterBridge({ pairing, root, port, hostCu, relayFe
     throw new Error("`--root` phải là một đường dẫn TUYỆT ĐỐI: vùng ghi do người khởi động khai, không do lệnh trên dây khai.");
   }
   if (!fs.existsSync(root)) throw new Error(`Thư mục gốc không tồn tại: ${root}`);
+
+  /* ---- VÙNG GHI KHÔNG ĐƯỢC CHỨA TỆP GHÉP CẶP (07/09) ----------------------
+   * `file.read` đọc được MỌI file nằm dưới `--root`, không trừ cái nào — đó là thiết kế, vì một
+   * danh sách trừ thì sớm muộn sót. Hệ quả: nếu `--root` trỏ vào thư mục đang chứa tệp ghép cặp
+   * thì một lệnh `file.read` trên dây **lấy được chính cái token** đang bảo vệ cửa Bridge. Kẻ
+   * gọi đã có token mới gọi được, nên đây không phải đường leo thang từ số không — nhưng nó
+   * biến một token đang nằm trên đĩa của Đức thành một thứ **đọc qua dây được**, và từ đó nó đi
+   * xa tuỳ ý người ở đầu dây.
+   *
+   * Đây KHÔNG phải rủi ro lý thuyết: quy ước có sẵn trên máy Đức là
+   * `Chrome Extension Bridge/<tên>/` chứa **cả** `bridge-host.mjs` **lẫn** `<tên>-pairing-v1.json`,
+   * và trỏ `--root` vào đúng thư mục đó là điều tự nhiên nhất để làm. Đức hỏi đúng câu đó
+   * ngày 07/09, và câu trả lời phải là một cái chặn chứ không phải một lời dặn.
+   *
+   * Chặn ở LÚC KHỞI ĐỘNG, không phải lúc đọc: hỏng lúc khởi động thì người bật thấy ngay và
+   * sửa được; hỏng lúc đọc thì nó im cho tới đúng lượt gọi lấy mất token. */
+  const goiThat = fs.realpathSync(root);
+  for (const ten of fs.readdirSync(goiThat)) {
+    if (!/pairing.*\.json$/i.test(ten)) continue;
+    throw new Error([
+      `Vùng ghi chứa tệp ghép cặp: ${path.join(root, ten)}`,
+      "",
+      "`file.read` đọc được mọi file dưới `--root`, nên để tệp ghép cặp trong đó nghĩa là TOKEN",
+      "đọc được qua dây. Trỏ `--root` vào một thư mục con chỉ chứa dữ liệu, ví dụ:",
+      `  --root "${path.join(root, "du-lieu")}"`
+    ].join("\n"));
+  }
+
   const congToi = Number.isInteger(port) ? port : pairing.port + 1;
   if (congToi === pairing.port) throw new Error("Cổng của lớp này phải khác cổng host cũ.");
 

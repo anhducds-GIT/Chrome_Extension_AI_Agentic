@@ -648,21 +648,21 @@ BATCHES.push({
   pin: PIN_HOST,
   mutants: [
     {
-      ma: "H1",
+      ma: "X1",
       ten: "Bỏ chặn Origin — một TRANG WEB sai khiến được máy chủ ghi đĩa",
       tim: "    if (request.headers.origin !== undefined) {",
       thay: "    if (false) {",
       soLan: 1
     },
     {
-      ma: "H2",
+      ma: "X2",
       ten: "Bỏ kiểm token ghép cặp — ai gõ đúng cổng cũng ghi được",
       tim: '    if (!auth.startsWith("Bearer ") || !cungToken(pairing.token, auth.slice(7))) {',
       thay: "    if (false) {",
       soLan: 1
     },
     {
-      ma: "H3",
+      ma: "X3",
       ten: "Tự nhận mọi method — thôi chuyển tiếp, extension thành người vô hình",
       tim: "    if (!Object.hasOwn(METHOD_TAI_CHO, String(method))) {",
       thay: "    if (false) {",
@@ -844,6 +844,24 @@ BATCHES.push({
       ten: "Hết chỗ thì bỏ trang MỚI thay vì trang cũ — xoá đúng thứ Đức đang nhìn",
       tim: "        if (theoTuoi.length > TRANG_TOI_DA) so.trang = Object.fromEntries(theoTuoi.slice(0, TRANG_TOI_DA));",
       thay: "        if (theoTuoi.length > TRANG_TOI_DA) so.trang = Object.fromEntries(theoTuoi.slice(-TRANG_TOI_DA));",
+      soLan: 1
+    }
+  ]
+});
+
+/* ---- TOKEN KHÔNG ĐƯỢC NẰM TRONG VÙNG ĐỌC (07/09) ------------------------
+ * Đức hỏi ngày 07/09: đặt vùng ghi của Scouter cạnh ba Bridge kia được không? Được — nhưng
+ * ngăn của mỗi Bridge CHỨA tệp ghép cặp, và `file.read` đọc được mọi file dưới `--root`. */
+BATCHES.push({
+  ten: "VÙNG GHI — không được chứa tệp ghép cặp",
+  target: path.join(ROOT, "bridge", "scouter-bridge-host.mjs"),
+  pin: path.join(ROOT, "tests", "scouter-bridge-host-smoke.mjs"),
+  mutants: [
+    {
+      ma: "T1",
+      ten: "Gỡ cái chặn — token đọc được qua dây bằng một lệnh file.read",
+      tim: ".test(ten)) continue;",
+      thay: ".test(ten)) { /* chan da bi go */ } continue;",
       soLan: 1
     }
   ]

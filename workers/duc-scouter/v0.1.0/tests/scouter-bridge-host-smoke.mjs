@@ -162,6 +162,37 @@ try {
     await assert.rejects(() => createScouterBridge({ pairing, root: path.join(TAM, "khong-co"), hostCu }), /không tồn tại/);
     await assert.rejects(() => createScouterBridge({ pairing, root: GOC, port: CONG_HOST_CU, hostCu }), /khác cổng/);
   });
+
+  /* ---- ⑨ VÙNG GHI KHÔNG ĐƯỢC CHỨA TỆP GHÉP CẶP (07/09) --------------------
+   * `file.read` đọc được MỌI file dưới `--root` — đó là thiết kế, vì một danh sách trừ thì sớm
+   * muộn sót. Hệ quả: `--root` trỏ vào thư mục đang giữ tệp ghép cặp nghĩa là **token đọc được
+   * qua dây**.
+   *
+   * Không phải rủi ro lý thuyết. Quy ước sẵn có trên máy Đức là
+   * `Chrome Extension Bridge/<tên>/` chứa CẢ `bridge-host.mjs` LẪN `<tên>-pairing-v1.json`, nên
+   * trỏ `--root` vào đúng thư mục đó là việc tự nhiên nhất để làm — Đức hỏi đúng câu đó 07/09.
+   * Cái bẫy mà người ta rơi vào một cách tự nhiên thì phải CHẶN, không phải dặn. */
+  await khoi("vung ghi khong duoc chua tep ghep cap", async () => {
+    const gocBan = fs.mkdtempSync(path.join(os.tmpdir(), "scouter-ban-"));
+    fs.writeFileSync(path.join(gocBan, "duc-scouter-bridge-pairing-v1.json"), JSON.stringify({ port: 1, token: "x" }));
+    await assert.rejects(
+      () => createScouterBridge({ pairing, root: gocBan, hostCu }),
+      /chứa tệp ghép cặp/,
+      "root chua tep ghep cap ma van khoi dong duoc"
+    );
+
+    /* Cái chặn phải HẸP: một thư mục con sạch thì vẫn khởi động được. Chặn cả đường đúng thì
+     * người ta sẽ tắt cái chặn đi, và mất luôn phần nó canh đúng. */
+    const con = path.join(gocBan, "du-lieu");
+    fs.mkdirSync(con);
+    /* Host giả RIÊNG cho lượt này. Dùng chung `hostCu` thì bộ đếm `stopped` lệch, và phép
+     * ghim ở cuối file — canh đúng việc "dừng lớp trước thì dừng cả host cũ" — sẽ đỏ oan. */
+    const hostRieng = { started: 0, stopped: 0, async start() { this.started += 1; }, async stop() { this.stopped += 1; } };
+    const may = await createScouterBridge({ pairing, root: con, port: CONG_HOST_CU + 7, hostCu: hostRieng });
+    assert.ok(may, "thu muc con sach thi phai khoi dong duoc");
+    await may.stop();
+    fs.rmSync(gocBan, { recursive: true, force: true });
+  });
 } finally {
   await bridge.stop();
   fs.rmSync(TAM, { recursive: true, force: true });

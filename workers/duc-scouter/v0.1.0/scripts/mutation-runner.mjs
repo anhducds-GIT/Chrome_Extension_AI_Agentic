@@ -81,11 +81,59 @@ function chayPin(pin, root) {
  * lượt bị chém giữa chừng. Hai bệnh khác nhau, cần hai thuốc. */
 let dangSuaDo = null;
 
+/* ---- GHI LÌ — Windows khoá file trong chớp mắt (07/09) --------------------
+ * Đo thật ngày 07/09: một lượt chạy đầy đủ nổ giữa chừng với `UNKNOWN: unknown error, open`
+ * (`errno -4094`) trên một file vừa ghi xong lượt trước. Trên Windows mã đó nghĩa là **một tiến
+ * trình khác đang giữ file** — chương trình quét virus, bộ đánh chỉ mục, hoặc một phiên AI khác
+ * đang đọc cùng thư mục. Nó là chớp nhoáng: thử lại sau vài chục mili giây là qua.
+ *
+ * Vì sao đây KHÔNG phải chuyện nhỏ: lượt nổ đó **để lại `if (false)` trong lõi vận chuyển** —
+ * một chốt xác thực bị tắt nằm trong cây làm việc. Nhật ký hồi phục cứu được ở lượt chạy SAU,
+ * nhưng giữa hai lượt thì mã hỏng vẫn nằm đó, và ai commit trong khoảng đó là commit nó đi.
+ *
+ * `Atomics.wait` để ngủ ĐỒNG BỘ: cả đường ghi này nằm trong mã đồng bộ, và một `await` ở đây
+ * sẽ mở cửa cho lượt khác chen vào giữa lúc file đang mang đột biến. */
+/* ---- MÃ CON KHÔNG ĐƯỢC TRÙNG (07/09) -------------------------------------
+ * Phát hiện lúc thêm một con mới: `H1` `H2` `H3` đã trùng sẵn giữa hai mẻ, và tôi suýt thêm
+ * một `H4` thứ hai nữa. Hại thật, không phải chuyện thẩm mỹ: mã con là thứ người ta dẫn lại
+ * trong nhật ký, trong commit, trong báo cáo cho Đức — *"con H2 sống sót"* mà có hai con H2 thì
+ * câu đó không chỉ được vào đâu cả.
+ *
+ * Chặn ở LÚC DỰNG chứ không lúc chạy: một mã trùng là lỗi của người viết bộ đo, và phát hiện nó
+ * trước khi chạy 92 con rẻ hơn nhiều so với phát hiện nó trong bản báo cáo. */
+export function chanMaTrung(batches) {
+  const daThay = new Map();
+  const trung = [];
+  for (const me of batches) {
+    for (const con of me?.mutants || []) {
+      if (daThay.has(con.ma)) trung.push(`${con.ma} (ở "${daThay.get(con.ma)}" và "${me.ten}")`);
+      else daThay.set(con.ma, me.ten);
+    }
+  }
+  if (trung.length) throw new Error(`Mã con đột biến bị trùng: ${trung.join(" · ")}`);
+  return daThay.size;
+}
+
+const NGU_LAI = [30, 80, 200, 500, 1200];
+
+function ghiLi(duongDan, noiDung) {
+  for (let lan = 0; ; lan += 1) {
+    try {
+      fs.writeFileSync(duongDan, noiDung);
+      return;
+    } catch (error) {
+      const chopNhoang = ["UNKNOWN", "EBUSY", "EPERM", "EACCES"].includes(String(error?.code));
+      if (!chopNhoang || lan >= NGU_LAI.length) throw error;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, NGU_LAI[lan]);
+    }
+  }
+}
+
 function hoanNguyenNgay(vi_sao) {
   if (!dangSuaDo) return;
   const ten = path.basename(dangSuaDo.target);
   try {
-    fs.writeFileSync(dangSuaDo.target, dangSuaDo.bytes);
+    ghiLi(dangSuaDo.target, dangSuaDo.bytes);
     process.stderr.write(`\n[HOÀN NGUYÊN] ${vi_sao}: đã trả ${ten} về bản gốc.\n`);
   } catch (error) {
     /* Không ghi lại được thì PHẢI hét lên — im lặng ở đây nghĩa là để lại mã nhiễm độc. */
@@ -129,7 +177,7 @@ function cuuLuotTruoc() {
     console.error("Chạy `git diff` để tự kiểm, trả file về bản gốc, rồi xoá file nhật ký trên.");
     process.exit(2);
   }
-  fs.writeFileSync(ban.target, Buffer.from(ban.base64, "base64"));
+  ghiLi(ban.target, Buffer.from(ban.base64, "base64"));
   xoaNhatKy();
   return ban.target;
 }
@@ -174,6 +222,9 @@ function nhanKhoa() {
 }
 
 export function chayDotBien(batches, root) {
+  /* Kiểm TRƯỚC khi nhận khoá: một mã trùng là lỗi lập trình, và không đáng để cả bộ đo xếp
+   * hàng sau nó. */
+  chanMaTrung(batches);
   nhanKhoa();
   const daCuu = cuuLuotTruoc();
   if (daCuu) console.error("[CUU LUOT TRUOC] " + path.basename(daCuu) + " con mang dot bien cua mot luot bi chem ngang - da tra ve ban goc.");
@@ -224,9 +275,9 @@ function chayDotBienDaKhoa(batches, root) {
           continue;
         }
         soKhop += 1;
-        fs.writeFileSync(me.target, NGUON_GOC.split(tim).join(thay), "utf8");
+        ghiLi(me.target, NGUON_GOC.split(tim).join(thay));
         const ketQua = chayPin(me.pin, root);
-        fs.writeFileSync(me.target, BYTES_GOC);
+        ghiLi(me.target, BYTES_GOC);
         if (ketQua.do) {
           soDo += 1;
           console.log(`[GIẾT ĐƯỢC] ${con.ma} — ${con.ten}`);
@@ -237,7 +288,7 @@ function chayDotBienDaKhoa(batches, root) {
         }
       }
     } finally {
-      fs.writeFileSync(me.target, BYTES_GOC);              // khôi phục bytes gốc, không git checkout
+      ghiLi(me.target, BYTES_GOC);                        // khôi phục bytes gốc, không git checkout
       dangSuaDo = null;
       xoaNhatKy();
     }
