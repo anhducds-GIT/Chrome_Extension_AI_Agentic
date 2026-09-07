@@ -6,9 +6,9 @@ lifecycle: building
 owner: claude
 priority_rank: 4
 next_step: "Bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào."
-human_action: "Nạp lại extension trong Chrome — manifest đổi (thêm quyền hẹn giờ) nên bản đang chạy không tự cập nhật. Muốn Scouter bấm thì mở popup, bật Chế độ phát triển; tắt thì nó chỉ nhìn."
+human_action: "Nạp lại extension trong Chrome — manifest đổi (đổi sang bảng bên, thêm quyền hẹn giờ) nên bản đang chạy không tự cập nhật. Bấm icon nay mở bảng bên ở cạnh phải, không còn popup. Muốn Scouter bấm thì bật Chế độ phát triển trong bảng đó."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
-current_focus: "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong popup, mặc định tắt, trần 50 lượt). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
+current_focus: "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 50 lượt). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
 ref_readme: README.md
 ref_handoff: HANDOFF.md
 ---
@@ -43,6 +43,6 @@ npm run scouter:action-probe  # phép đo ②: ba lệnh ghi trên một trang t
 đĩa — Đức chốt ngày 07/09: Scouter **được** ghi
 ([ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md)).
 
-Năm câu treo cũ đã chốt hết: chỗ đặt thư mục (ADR-0013) · làm tới đâu (ADR-0010, dừng ở
+Sáu câu treo cũ đã chốt hết: vỏ giao diện là bảng bên (ADR-0002 của gói, 07/09) · chỗ đặt thư mục (ADR-0013) · làm tới đâu (ADR-0010, dừng ở
 `SEED v0.1`) · hình dạng cái phanh cho đường ghi và quyền `alarms` (ADR-0001 của gói, 07/09) ·
 ghi xuống đĩa (ADR-0016, 07/09).

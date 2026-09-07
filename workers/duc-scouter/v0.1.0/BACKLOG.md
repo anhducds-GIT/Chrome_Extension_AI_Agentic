@@ -153,3 +153,47 @@ chỗ khác thường: một khối PNG hỏng thì Chrome lặng lẽ quay về
 · **đóng khi:** Đức nạp lại extension và xác nhận thấy chữ S vàng trên thanh công cụ — hoặc một
 phép đo tự dựng nạp extension qua `Extensions.loadUnpacked` (kiểu phép đo ②) rồi đọc `icons`
 trong `chrome.management.getSelf()` và xác nhận Chrome không rơi về icon mặc định.
+
+## ĐÓNG · S-08 (2026-09-07, `claude-scouter-s06`) — Đức xác nhận thấy icon
+
+Đức xem và báo *"Icon mới đã ok, tôi thấy ko có issue gì lớn."* Bốn file PNG do bộ đóng gói tự
+viết sinh ra được Chrome nạp bình thường — đó là điều kiện đóng đã khai.
+
+## ĐÓNG · S-09 (2026-09-07, `claude-scouter-s06`) — vỏ giao diện đổi sang bảng bên
+
+Mở và đóng trong cùng lượt vì Đức hỏi thẳng và chốt luôn. Quyết định + lý do đầy đủ:
+[ADR-0002](docs/adr/0002-vo-giao-dien-la-bang-ben-khong-phai-popup.md). Ba file `popup.*` đổi tên
+bằng `git mv`; manifest khai `side_panel`, bỏ `default_popup`, thêm quyền `sidePanel`.
+Đo: phép ghim gói 8/8 · đột biến **61/61, sống sót 0** (thêm `Q3` `Q4` `R3`) · live check ĐẠT 8/8.
+
+**Một bài học ghi ra vì nó tổng quát hơn lượt này:** con `R3` sống sót lượt đầu — nó không xoá
+lời gọi `setPanelBehavior` mà **bọc `if (false)` quanh nó**, nên phép ghim soi "chuỗi có mặt
+không" thì mù. Cách vá không phải chữa con đột biến mà là đổi luật ghim: **dây thật không có
+nhánh chết**, và phép ghim nay từ chối mọi `if (false)` / `if (0)` / `&& false` trong
+`scouter-background.js`.
+
+## MỞ · S-10 (2026-09-07, `claude-scouter-s06`) — pilot hnx.vn: lấy dữ liệu theo ngày qua Bridge
+
+Đức chốt 07/09: pilot thật đầu tiên là hai trang phái sinh của `hnx.vn`
+(`ket-qua-giao-dich.html` · `thong-ke.html`), lấy dữ liệu **theo ngày**, ghi file xuống máy.
+Phạm vi lượt đầu Đức chốt: **một tuần**. Đường ghi file: **qua Bridge**, KHÔNG thêm quyền
+`downloads`.
+
+**[ĐO 07/09]** Dữ liệu không nằm trong trang. Nó tới từ
+`POST /ModulePhaiSinh/KetQuaGiaoDichV2/ListSearch_Datas` với bảy tham số, trong đó `p_date`
+dạng `dd/MM/yyyy` và `p_type_sanpham` là loại sản phẩm; gọi đúng tham số thì trả về **JSON**
+`{"SumTable":…,"Content":"<mảnh bảng HTML>"}`, ~231KB cho một ngày.
+
+**Hệ quả phải nói ra: pilot này KHÔNG cần bấm một nút nào.** Năng lực đắt nhất của gói —
+`scout.click` / `scout.type` / `scout.key` — không dùng tới ở đây. Cái nó cần là máy móc của
+**nhóm B** trong `ROADMAP.md` (trạng thái vòng chạy · không làm hai lần · luật thử lại · danh
+tính lượt), thứ tôi đã khuyến nghị hoãn hôm 07/09 với lý do *"Scouter không có hàng đợi job"* —
+lý do đó nay sai.
+
+**Một cái bẫy gặp ngay lúc đo, ghi để không ai mất buổi chiều:** đoán sai tên tham số thì
+endpoint trả **200 OK kèm cả một trang HTML 43KB**, trông y hệt thành công. Ở trang này, sai
+tham số không ra lỗi — nó ra một trang khác.
+
+· **đóng khi:** lệnh: một lượt chạy lấy đủ **5 ngày giao dịch liên tiếp**, ghi ra 5 file qua
+Bridge, chạy lại lượt hai KHÔNG tải lại ngày đã có, và đứt giữa chừng thì chạy tiếp được từ
+ngày còn thiếu — có phép ghim dựng máy chủ giả cho cả ba tính chất đó.

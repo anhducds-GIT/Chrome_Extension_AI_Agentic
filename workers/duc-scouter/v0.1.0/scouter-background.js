@@ -41,8 +41,21 @@ function connectQuietly() {
   transport.connect().catch(() => {});
 }
 
-chrome.runtime.onInstalled.addListener(connectQuietly);
-chrome.runtime.onStartup.addListener(connectQuietly);
+/* ---- Bấm icon thì MỞ BẢNG BÊN (07/09) -----------------------------------
+ * Bỏ `default_popup` khỏi manifest là bỏ luôn hành vi mặc định của nút icon: không có dòng
+ * dưới đây thì bấm icon KHÔNG mở gì cả, và nhìn ra ngoài giống hệt "extension chết". Ba gói
+ * `duc-auto-*` đều có đúng cặp này; đây là chỗ Scouter từng lệch chuẩn mà không ai giải trình.
+ *
+ * Bọc `try` vì `chrome.sidePanel` chỉ có từ Chrome 114, mà `minimum_chrome_version` của gói là
+ * 120 — nên nó luôn có. Bọc là để một lượt gọi hỏng KHÔNG kéo theo cả lượt nối Bridge bên dưới:
+ * mất bảng bên thì còn dùng được qua Bridge, mất Bridge thì mất cả gói. */
+async function moBangBenKhiBamIcon() {
+  try { await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }); }
+  catch (error) { console.warn("Không đặt được hành vi bảng bên", error); }
+}
+
+chrome.runtime.onInstalled.addListener(() => { moBangBenKhiBamIcon(); connectQuietly(); });
+chrome.runtime.onStartup.addListener(() => { moBangBenKhiBamIcon(); connectQuietly(); });
 
 /* ---- Lưới đỡ nối lại (S-02 · Đức duyệt quyền `alarms` 2026-09-07) --------
  * Tầng thử-lại của transport chạy bằng `setTimeout`, và `setTimeout` chết theo service worker

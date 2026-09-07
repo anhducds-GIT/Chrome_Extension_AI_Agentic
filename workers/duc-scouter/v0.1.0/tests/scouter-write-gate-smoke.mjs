@@ -251,10 +251,11 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
  * AGENTS.md của gói, luật 6: "quyền đã duyệt là TRẦN, không phải sàn". ADR-0009 duyệt tới sáu
  * thứ; hôm nay khai bốn. Khai thêm ngoài danh sách này là việc phải hỏi Đức, nên phép ghim
  * này ĐỎ chính là lời nhắc đi hỏi — không phải lỗi để sửa cho xanh.
- * `alarms` vào ngày 07/09 theo chốt S-02: lưới đỡ đánh thức service worker đã ngủ. */
+ * `alarms` vào ngày 07/09 theo chốt S-02 (lưới đỡ đánh thức service worker đã ngủ);
+ * `sidePanel` cùng ngày theo chốt của Đức: gói đổi vỏ từ popup sang bảng bên (S-09). */
 {
   const manifest = JSON.parse(fs.readFileSync(path.join(here, "..", "manifest.json"), "utf8"));
-  assert.deepEqual([...manifest.permissions].sort(), ["alarms", "debugger", "storage"]);
+  assert.deepEqual([...manifest.permissions].sort(), ["alarms", "debugger", "sidePanel", "storage"]);
   assert.deepEqual(manifest.host_permissions, ["http://127.0.0.1/*"]);
   /* Quyền ADR-0009 CHƯA duyệt: không được xuất hiện, dù có tiện tới đâu. */
   const never = ["cookies", "history", "webRequest", "declarativeNetRequest", "nativeMessaging", "management", "proxy"];
@@ -291,4 +292,45 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
   }
 }
 
-console.log("scouter-write-gate-smoke: 15 khoi, tat ca DAT");
+/* ---- (16) Vo giao dien la BANG BEN, va ca ba manh phai co mat cung luc ----
+ * Hỏng im lặng y như khối ⑮, nhưng tệ hơn một bậc: bỏ `default_popup` khỏi manifest là bỏ luôn
+ * hành vi mặc định của nút icon. Thiếu `setPanelBehavior` trong dây thật thì bấm icon KHÔNG mở
+ * gì cả — không lỗi, không thông báo, nhìn ra ngoài giống hệt "extension chết".
+ *
+ * Ghim CẢ BA mảnh vì thiếu mảnh nào cũng ra một kiểu hỏng khác nhau:
+ *   thiếu khai `side_panel`  → Chrome không biết mở trang nào
+ *   thiếu `setPanelBehavior` → bấm icon không phản ứng
+ *   còn `default_popup`      → popup thắng, bảng bên không bao giờ mở, và cái phanh lại chết
+ *                              theo tiêu điểm — đúng lỗi mà lượt đổi vỏ này sinh ra để sửa */
+{
+  const manifest = JSON.parse(fs.readFileSync(path.join(here, "..", "manifest.json"), "utf8"));
+  assert.equal(manifest.side_panel?.default_path, "sidepanel.html", "manifest chua khai trang bang ben");
+  assert.ok(fs.existsSync(path.join(here, "..", "sidepanel.html")), "trang bang ben khong co that");
+  assert.equal(manifest.action?.default_popup, undefined,
+    "con default_popup thi popup thang, bang ben khong bao gio mo");
+
+  const background = fs.readFileSync(path.join(here, "..", "scouter-background.js"), "utf8");
+  assert.match(background, /sidePanel\.setPanelBehavior/,
+    "thieu setPanelBehavior — bam icon se KHONG mo gi ca");
+  assert.match(background, /openPanelOnActionClick:\s*true/);
+
+  /* DÂY THẬT KHÔNG CÓ NHÁNH CHẾT. Con `R3` sống sót lượt đầu vì nó không xoá lời gọi — nó bọc
+   * `if (false)` quanh lời gọi, và một phép ghim chỉ soi "chuỗi có mặt không" thì mù trước
+   * kiểu sửa đó. Đây là kiểu sửa THẬT: người ta tắt một đường lúc gỡ lỗi rồi quên bật lại.
+   * `scouter-background.js` cố ý chỉ là nối dây, nên một nhánh luôn-sai trong đây LUÔN là dấu
+   * vết của một đường bị tắt mà không xoá. Bắt cả lớp đó, đừng vá từng con.
+   * Nó KHÔNG bắt được: xoá hẳn lời gọi (hai phép khẳng định trên bắt) · đổi tên hàm rồi không
+   * gọi (chưa ai canh — nếu tới lượt đó thì cần một phép đo mở Chrome thật). */
+  for (const nhanhChet of [/if\s*\(\s*false/, /if\s*\(\s*0\s*\)/, /&&\s*false/, /false\s*&&/]) {
+    assert.ok(!nhanhChet.test(background),
+      `scouter-background.js co nhanh chet ${nhanhChet} — day that khong duoc co nhanh`);
+  }
+
+  /* Không còn file `popup.*` nào sót lại: hai vỏ cùng tồn tại là hai chỗ để sửa và một chỗ để
+   * quên. Lượt đổi vỏ dùng `git mv`, nên sót lại nghĩa là ai đó đã copy-rồi-xoá. */
+  for (const cu of ["popup.html", "popup.js", "popup.css"]) {
+    assert.ok(!fs.existsSync(path.join(here, "..", cu)), `con sot ${cu} — hai vo cung ton tai`);
+  }
+}
+
+console.log("scouter-write-gate-smoke: 16 khoi, tat ca DAT");

@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Bo khung tuong tac tu hoan thien: quan sat trang, bao cao qua Bridge, va tu nap lai chinh no.",
   "minimum_chrome_version": "120",
-  "permissions": ["debugger", "storage", "alarms"],
+  "permissions": ["debugger", "storage", "alarms", "sidePanel"],
   "host_permissions": ["http://127.0.0.1/*"],
   "background": {
     "service_worker": "scouter-background.js",
@@ -16,9 +16,11 @@
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "action": {
     "default_title": "Duc Scouter",
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",

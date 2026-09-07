@@ -41,10 +41,12 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 5. **Từ vựng cố định.** Cửa Bridge nhận một bộ tên method đóng, không bao giờ nhận biểu thức tự
    do từ ngoài dây. Thêm một method là **đổi luật an toàn** → hỏi Đức.
 6. **Quyền đã duyệt là TRẦN, không phải sàn.** ADR-0009 duyệt tới `<all_urls>` · `debugger` ·
-   `scripting` · `tabs` · `storage` · nối `127.0.0.1`; Đức duyệt thêm `alarms` ngày 07/09
-   ([ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md) của gói). `manifest.json`
-   hôm nay khai **`debugger` · `storage` · `alarms` · `http://127.0.0.1/*`** — đúng thứ đang
-   dùng. Khai thêm khi thật sự dùng tới, đừng khai trước. Xin ra ngoài danh sách trên thì phải
+   `scripting` · `tabs` · `storage` · nối `127.0.0.1`; Đức duyệt thêm `alarms` và `sidePanel`
+   ngày 07/09 ([ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md) ·
+   [ADR-0002](docs/adr/0002-vo-giao-dien-la-bang-ben-khong-phai-popup.md)). `manifest.json`
+   hôm nay khai **`debugger` · `storage` · `alarms` · `sidePanel` · `http://127.0.0.1/*`** —
+   đúng thứ đang dùng. **`downloads` thì KHÔNG**: Đức chốt 07/09 rằng file đi qua Bridge, không
+   qua Chrome Downloads. Khai thêm khi thật sự dùng tới, đừng khai trước. Xin ra ngoài danh sách trên thì phải
    hỏi Đức. Con `Q1` `Q2` canh đúng dòng đó trong manifest.
 7. **Đọc và GHI đi qua hai lõi khác nhau, và đừng gộp chúng.** `scripts/observer-probes.mjs`
    chứng minh được là read-only vì kênh ghi **không có mặt trong file đó** — không phải vì ai
@@ -55,7 +57,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
    đã khớp, và selector phải khớp **đúng một**. Đây là chốt đắt nhất của gói; con `H4` và `H5`
    canh nó.
 9. **Đường ghi ĐÓNG MẶC ĐỊNH, và cái phanh chỉ mở được bằng tay người.** Công tắc chế độ phát
-   triển nằm trong popup, và **không method Bridge nào bật được nó** — đó là cả ý nghĩa của
+   triển nằm trong bảng bên, và **không method Bridge nào bật được nó** — đó là cả ý nghĩa của
    nó. Trần 50 lượt mỗi lần mở khoá, gõ cứng trong mã. Hai chỗ đừng đảo lại vì cả hai đều
    trông thừa cho tới lúc cần: **hỏng thì ĐÓNG** (đọc không ra công tắc ≠ được bấm — khác hẳn
    trần nạp lại nằm ngay bên cạnh, cái đó hỏng thì mở) và **trừ trước, bấm sau** (lượt bấm
@@ -69,9 +71,9 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 |---|---|
 | `manifest.json` | MV3. Service worker là `scouter-background.js`, kiểu `module` |
 | `icons/` · `scripts/make-icons.mjs` | Icon extension: chữ **S tối trên nền vàng**. Bốn file PNG là **máy sinh** — sửa màu ở hai hằng số đầu bộ sinh rồi chạy `node scripts/make-icons.mjs`, đừng sửa PNG bằng tay. Chrome KHÔNG nhận SVG làm icon, đừng đổi. `--preview` in hình ra màn hình để xem trước |
-| `scouter-background.js` | **Dây thật**: bơm `chrome` vào ba lõi, và giữ lưới đỡ `chrome.alarms` (S-02). CỐ Ý mỏng và cố ý không có phép ghim riêng — thêm một dòng logic vào đây là thêm một dòng không ai canh |
+| `scouter-background.js` | **Dây thật**: bơm `chrome` vào ba lõi, giữ lưới đỡ `chrome.alarms` (S-02), và mở bảng bên khi bấm icon (ADR-0002). **Không được có nhánh chết** — khối ⑯ của phép ghim từ chối mọi `if (false)` trong file này. CỐ Ý mỏng và cố ý không có phép ghim riêng — thêm một dòng logic vào đây là thêm một dòng không ai canh |
 | `observer-engine.js` | Gắn/tháo `chrome.debugger`, gọi lõi phép dò **và lõi hành động**. Tám con `W1..W4` + `A1..A5` canh đúng file này |
-| `popup.html` · `popup.css` · `popup.js` | Popup: chọn tệp ghép cặp Bridge, quét/quan sát thủ công, và **công tắc cho đường ghi** — chỗ DUY NHẤT bật được nó |
+| `sidepanel.html` · `sidepanel.css` · `sidepanel.js` | **Bảng bên** (đổi từ popup 07/09, [ADR-0002](docs/adr/0002-vo-giao-dien-la-bang-ben-khong-phai-popup.md)): chọn tệp ghép cặp Bridge, quét/quan sát thủ công, và **công tắc cho đường ghi** — chỗ DUY NHẤT bật được nó |
 | `scripts/observer-probes.mjs` | **Bốn phép dò read-only**, thuần logic. Ba chốt bất biến ghi ở đầu file |
 | `scripts/scouter-bridge-core.mjs` | Giao thức + **từ vựng method cố định** + bộ điều phối. Không biết `chrome` là gì |
 | `scripts/scouter-seed-core.mjs` | Ba khả năng nối vào từ vựng: quan sát · báo cáo · tự nạp lại · **và ba hành động ghi (S-01)** |

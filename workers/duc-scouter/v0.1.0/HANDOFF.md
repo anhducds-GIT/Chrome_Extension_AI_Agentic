@@ -194,3 +194,35 @@ theo lượt refactor `B-36` của lane `claude-b36-vaA`. Không sửa vùng h�
 **Còn mở:** `S-08` — icon mới **chưa ai nhìn thấy trong Chrome thật**. Phép ghim chỉ chứng minh
 manifest trỏ đúng chỗ, không chứng minh Chrome chịu nạp bốn file PNG do bộ đóng gói tự viết sinh
 ra. Đóng bằng một câu xác nhận của Đức sau khi nạp lại extension.
+
+## 2026-09-07 · `claude-scouter-s06` — vỏ đổi sang bảng bên, và pilot hnx.vn đã đo được
+
+**Đức hỏi vì sao Scouter là popup. Câu trả lời: chưa ai quyết cả.** Chú thích trong code viện
+dẫn *"ADR-0009 ⑷"*, nhưng ⑷ nói về *"một Scouter một URL"* — không chữ nào về bảng bên. Một
+**mặc định được mặc áo quyết định**, và loại đó nguy hơn quyết định sai: quyết định sai có
+người phản biện, cái này thì ai đọc vào cũng tưởng đã có người cân.
+
+**Popup thua ở đúng chỗ gói này cần: nó CHẾT khi mất tiêu điểm.** Bấm vào trang là nó đóng, mà
+việc của Scouter là nhìn một trang trong lúc có người tương tác. Cụ thể hơn: công tắc chế độ
+phát triển và bộ đếm *"còn N/50 lượt"* nằm trong đó — không xem được ngân sách tụt trong lúc nó
+tụt thì cái phanh chỉ còn một nửa công dụng. Đổi vỏ: [ADR-0002](docs/adr/0002-vo-giao-dien-la-bang-ben-khong-phai-popup.md).
+
+**Sửa một suy luận đi quá tay:** *"Scouter không phải worker tự động hoá"* (vẫn đúng) không
+kéo theo *"phải khác vỏ"*. Bảng bên là cái **vỏ**, không phải cái **máy**.
+
+**Bài học ghim.** Con `R3` sống sót lượt đầu: nó không xoá lời gọi `setPanelBehavior` mà bọc
+`if (false)` quanh nó — phép ghim soi "chuỗi có mặt không" thì mù. Vá bằng cách đổi luật ghim
+chứ không chữa con: **dây thật không có nhánh chết**.
+
+**Pilot hnx.vn — đo thật, và nó lật kế hoạch.** Dữ liệu không nằm trong trang: nó tới từ
+`POST …/ListSearch_Datas`, `p_date` dạng `dd/MM/yyyy`, trả về JSON chứa mảnh bảng HTML.
+**Pilot này không cần bấm một nút nào** — năng lực đắt nhất của gói không dùng tới. Cái nó cần
+là nhóm B (trạng thái vòng chạy · không làm hai lần · thử lại), thứ tôi vừa khuyến nghị hoãn
+với lý do *"Scouter không có hàng đợi job"*. **Lý do đó nay sai**, và tôi rút lại. Ghi thành
+`S-10` kèm hợp đồng endpoint và một cái bẫy: đoán sai tham số thì nó trả 200 OK kèm cả trang.
+
+**Đức chốt hai câu:** file đi **qua Bridge**, không thêm quyền `downloads` · pilot lượt đầu
+**một tuần**.
+
+**Đo.** Ghim gói **8/8** · đột biến **61/61, sống sót 0** · live check Bridge THẬT **ĐẠT 8/8**.
+Đóng `S-08` (Đức xác nhận icon) và `S-09` (đổi vỏ).

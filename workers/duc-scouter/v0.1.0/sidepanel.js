@@ -103,9 +103,9 @@ async function copyReport() {
 }
 
 /* ---- Cửa Bridge: nhận tệp ghép cặp -------------------------------------
- * Popup KHÔNG tự nối socket. Nó chỉ ghi tệp ghép cặp ĐÃ KIỂM vào kho lưu; service worker theo
- * dõi kho lưu và nối. Lý do: popup đóng lại là chết, còn service worker thì sống tiếp — một
- * kết nối mở từ popup sẽ đứt ngay khi Đức bấm ra chỗ khác.
+ * Bảng bên KHÔNG tự nối socket. Nó chỉ ghi tệp ghép cặp ĐÃ KIỂM vào kho lưu; service worker
+ * theo dõi kho lưu và nối. Lý do vẫn đúng nguyên sau khi đổi vỏ: bảng bên đóng lại là chết,
+ * còn service worker thì sống tiếp — một kết nối mở từ tầng giao diện sẽ đứt khi Đức đóng bảng.
  * Kiểm ngay tại đây bằng CHÍNH hàm mà transport dùng, nên kho lưu không bao giờ chứa một tệp
  * ghép cặp hỏng. */
 const pairingInput = document.querySelector("#pairing-file");
@@ -148,10 +148,14 @@ function setBusy(isBusy, message) {
 }
 
 /* ---- Công tắc cho đường ghi (S-05) --------------------------------------
- * Popup là chỗ DUY NHẤT bật được công tắc này, và đó là cả ý nghĩa của nó: không có method
+ * Bảng bên là chỗ DUY NHẤT bật được công tắc này, và đó là cả ý nghĩa của nó: không có method
  * Bridge nào bật được nó, nên một AI ở đầu dây không tự mở khoá cho chính mình được.
- * Trạng thái đọc bằng CHÍNH hàm mà đường ghi dùng, nên cái popup hiện không bao giờ lệch với
- * cái đường ghi làm. */
+ * Trạng thái đọc bằng CHÍNH hàm mà đường ghi dùng, nên cái bảng hiện không bao giờ lệch với
+ * cái đường ghi làm.
+ *
+ * VÌ SAO ĐÂY LÀ BẢNG BÊN, KHÔNG PHẢI POPUP (07/09): popup CHẾT khi mất tiêu điểm. Bấm vào
+ * trang một cái là nó đóng — mà đúng lúc đó mới là lúc cần nhìn bộ đếm ngân sách tụt. Cái
+ * phanh mà không xem được trong lúc nó đang trừ thì chỉ còn một nửa công dụng. */
 const writeGateInput = document.querySelector("#write-gate");
 const writeGateState = document.querySelector("#write-gate-state");
 

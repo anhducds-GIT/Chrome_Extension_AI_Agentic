@@ -14,9 +14,9 @@ chưa có một ADR mới.
    `workers/duc-scouter/v0.1.0`.
    *Nếu trước đây đã nạp bản ở gốc repo thì gỡ bản đó đi — nó không còn nữa (ADR-0013).*
 2. Bật máy chủ Bridge (bản trong `workers/duc-auto-chatgpt/v0.1.0/duc-auto-chatgpt-loopback-bridge-host-v1/`).
-3. Bấm biểu tượng extension → mục **Cửa Bridge** → chọn tệp ghép cặp do bộ cài Bridge tạo.
-   Dòng trạng thái đổi thành *Đã nối Bridge.*
-4. **Muốn Scouter bấm và gõ thì bật *Chế độ phát triển* trong popup.** Tắt thì nó chỉ nhìn
+3. Bấm biểu tượng extension → **bảng bên mở ra ở cạnh phải** → mục **Cửa Bridge** → chọn tệp
+   ghép cặp do bộ cài Bridge tạo. Dòng trạng thái đổi thành *Đã nối Bridge.*
+4. **Muốn Scouter bấm và gõ thì bật *Chế độ phát triển* trong bảng bên.** Tắt thì nó chỉ nhìn
    được. Mỗi lần bật cho 50 lượt; hết thì tắt rồi bật lại.
 
 Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở tab nào Scouter cắm vào. Không giấu
@@ -42,7 +42,7 @@ tham số — đó là câu trả lời có thẩm quyền, đừng chép danh s
 Mọi method chạm trang **bắt buộc** có `target_id` — lấy từ `scout.targets`. Không có đường
 "tab đang mở": nhánh Flow đã trả giá cho đường đó.
 
-**Ba method ghi ĐÓNG MẶC ĐỊNH.** Chưa bật *Chế độ phát triển* trong popup thì chúng trả về
+**Ba method ghi ĐÓNG MẶC ĐỊNH.** Chưa bật *Chế độ phát triển* trong bảng bên thì chúng trả về
 `WRITE_BLOCKED` và **không hề chạm tới trang** — không gắn debugger, không gửi khung nào. Bật
 một lần được 50 lượt, hết thì tắt rồi bật lại. Không method Bridge nào bật được công tắc đó, nên
 AI ở đầu dây không tự mở khoá cho chính nó. Lý do từng chốt:

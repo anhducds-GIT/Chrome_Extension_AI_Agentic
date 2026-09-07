@@ -485,8 +485,22 @@ BATCHES.push({
     {
       ma: "Q1",
       ten: "Thêm một quyền ADR-0009 chưa duyệt (cookies) và không ai phải giải trình",
-      tim: '  "permissions": ["debugger", "storage", "alarms"],',
-      thay: '  "permissions": ["debugger", "storage", "alarms", "cookies"],',
+      tim: '  "permissions": ["debugger", "storage", "alarms", "sidePanel"],',
+      thay: '  "permissions": ["debugger", "storage", "alarms", "sidePanel", "cookies"],',
+      soLan: 1
+    },
+    {
+      ma: "Q3",
+      ten: "Trả lại default_popup — popup thắng, bảng bên không bao giờ mở",
+      tim: '  "action": {' + NL + '    "default_title": "Duc Scouter",',
+      thay: '  "action": {' + NL + '    "default_popup": "sidepanel.html",' + NL + '    "default_title": "Duc Scouter",',
+      soLan: 1
+    },
+    {
+      ma: "Q4",
+      ten: "Gỡ khai side_panel — Chrome không biết mở trang nào",
+      tim: '  "side_panel": {' + NL + '    "default_path": "sidepanel.html"' + NL + '  },' + NL,
+      thay: "",
       soLan: 1
     },
     {
@@ -509,6 +523,13 @@ BATCHES.push({
       ten: "Quyền alarms khai rồi nhưng không ai nghe — quyền thừa, lưới không rơi",
       tim: "chrome.alarms.onAlarm.addListener((alarm) => {",
       thay: "const unusedAlarmListener = ((alarm) => {",
+      soLan: 1
+    },
+    {
+      ma: "R3",
+      ten: "Gỡ setPanelBehavior — bấm icon KHÔNG mở gì cả, và không lỗi nào hiện ra",
+      tim: '  try { await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }); }',
+      thay: '  try { if (false) await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }); }',
       soLan: 1
     },
     {
