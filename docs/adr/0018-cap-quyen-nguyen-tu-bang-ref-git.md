@@ -4,6 +4,7 @@ adr: 0018
 date: 2026-09-07
 deciders: Đức
 amends: 0017
+superseded_by: 0019
 ---
 
 # ADR-0018 — Đính chính ADR-0017: chỉ-thêm không cấp được quyền độc quyền; dùng ref git làm nguyên thuỷ nguyên tử
