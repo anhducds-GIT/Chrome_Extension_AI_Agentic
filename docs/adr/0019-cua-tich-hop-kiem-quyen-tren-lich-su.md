@@ -37,38 +37,79 @@ cách nó được dựng, vì đó là cách duy nhất đã bác được thi�
 
 ## Quyết định
 
-### ⑴ Không có NGĂN thật ở cửa tích hợp, và ADR này khai điều đó thay vì hứa
+### ⑴ Ngăn thật thì CÓ ĐƯỜNG — vế cũ của mục này đã sai, và nó sai theo hướng bi quan
 
-Ba đường ngăn thật, cả ba không dùng được ở đây:
+> **Sửa 07/09, sau khi xây và đo thật.** Bản đầu của mục này viết *"không có ngăn thật trên git
+> đặt ở GitHub"*, và dựng một bảng ba dòng để chứng minh. **Dòng thứ hai của bảng đó sai.** ADR
+> này còn `Proposed` đúng để sửa được những chỗ như thế.
 
-| Đường | Vì sao không |
+| Đường | Sự thật, đo bằng `gh api` ngày 07/09 |
 |---|---|
-| Hook `pre-receive` phía máy chủ | GitHub thường không cho hook tuỳ ý (chỉ bản Enterprise) |
-| Branch protection + required status check | **Có** trên GitHub, nhưng cần CI mỗi lượt push — repo này **cố ý không có** |
-| Một tiến trình điều phối thường trú | hạ tầng mới, ngược hướng tinh gọn Đức chốt 07/09 |
+| Hook `pre-receive` phía máy chủ | Vẫn đúng: GitHub không cho hook tuỳ ý (chỉ bản Enterprise) |
+| Branch protection + required status check | **CÓ, VÀ ĐÃ BẬT SẴN Ở REPO BỘ KHUNG.** `Ark_Repo_Harness_Template` có `required_status_checks: ["cong-kiem"]`, `strict: true`, cấm force-push; workflow `.github/workflows/cong-kiem.yml` đã chạy **87 lượt**. Câu *"repo này cố ý không có CI"* đúng với **repo Extension**, và tôi đã khái quát nó cho cả hai — sai |
+| Một tiến trình điều phối thường trú | Vẫn đúng: hạ tầng mới, ngược hướng tinh gọn |
 
-Nên vế *"ngăn tại cửa tích hợp"* của ADR-0018 bị **rút**. Thứ đạt được thật:
+**Vế quyết định mà bản đầu chưa nêu:** một status check **chỉ là hàng rào thật nếu thứ GỬI trạng
+thái không phải thứ ĐANG BỊ kiểm.** Hai vai tự gửi "đạt" cho chính mình là tự khai. Bên thứ ba ở
+đây là workflow chạy trên máy GitHub — **không phải xây mới, nó đã có.**
 
-> **Phát hiện ở mọi nơi, và đúng MỘT đường đẩy mà mọi phiên buộc phải đi.**
+**Chỗ hở là đúng MỘT cờ: `enforce_admins: false`.** Lượt đẩy 07/09 in ra
+`remote: Bypassed rule violations for refs/heads/main` — hàng rào có thật, nhưng tài khoản admin
+đi vòng qua được, và mọi phiên AI đẩy bằng tài khoản đó. Nên **hiện tại nó là trang trí.**
 
-`AGENTS.md` mục 0 đã cấm `git push` trần và bắt dùng `safe-push.mjs`. Nên chỗ cắm phép kiểm là
-**trong `safe-push`**. Cưỡng chế ở đây là **luật cộng cổng, không phải mật mã**: một phiên cố ý đi
-vòng thì vẫn đi vòng được. Khai ra chứ không che — vì một thiết kế tự nhận là "ngăn" mà thực ra chỉ
-"phát hiện" sẽ khiến lượt sau tin sai chỗ.
+Bật cờ đó là **quyền của Đức, không phải của ADR này**, và bật sai nhịp thì **chặn mọi lượt đẩy**
+cho tới khi `cong-kiem` báo xong. Thứ tự đúng: nối lõi thành đường ghi thật → thêm bước kiểm quyền
+vào `cong-kiem.yml` → **rồi** Đức bật cờ.
 
-### ⑵ Phép kiểm bắt ca của Codex: soi LỊCH SỬ SỰ KIỆN giữa hai mốc
+Cho tới lúc đó, thứ đạt được vẫn là: **phát hiện ở mọi nơi, và đúng MỘT đường đẩy mà mọi phiên
+buộc phải đi** (`safe-push.mjs`, `AGENTS.md` mục 0). Đó là **luật cộng cổng, không phải mật mã**.
 
-Mỗi lần cấp quyền, sổ sự kiện ghi **SHA tại thời điểm cấp**. Kết quả của A mang theo SHA đó.
+### ⑵ Không soi khoảng lịch sử nữa — SỔ QUYỀN RA REF RIÊNG
 
-Cửa tích hợp hỏi đúng một câu: **giữa SHA cấp quyền và HEAD, có sự kiện thu hồi nào cho vùng này
-không?**
+> **Thay bản đầu của mục này.** Bản đầu dựng phép kiểm *"giữa SHA cấp quyền và HEAD có sự kiện thu
+> hồi nào không"*. Nó chạy được, nhưng có cách rẻ hơn và mạnh hơn, tìm ra lúc xây.
 
-A rebase thì sự kiện thu hồi của B **nằm giữa hai mốc** — bị bắt. **Rebase không xoá được sự kiện,
-nó chỉ đổi chỗ sự kiện.** Đó là lý do phép kiểm phải soi *khoảng lịch sử*, không soi *quan hệ
-fast-forward*.
+Sổ quyền nằm trên **một ref riêng**, `refs/ark/quyen`, **ngoài lịch sử `main`**. Hai hệ quả:
 
-Điều kiện bắt buộc kèm theo: **phép kiểm phải chạy lại sau MỌI lượt rebase**, trên gốc mới. Chạy
-một lần rồi rebase là quay lại đúng lỗ này.
+1. **Rebase `main` không chạm được sổ quyền.** Nên ca ④ — ca duy nhất từng bác được một thiết kế
+   đã viết ra — **không thể xảy ra về cấu trúc**, thay vì phải bắt bằng cách soi khoảng lịch sử.
+   Không cần điều kiện *"phải chạy lại sau mọi lượt rebase"* nữa: không có gì để chạy lại.
+2. **Lượt tích hợp cũng là một sự kiện trên chính ref đó.** Nên lượt kiểm quyền và lượt ghi kết
+   quả là **một lượt đẩy** — git tuần tự hoá chúng, không có khe ở giữa.
+
+**Đọc HẸP vế 2.** Nó đóng khe **trong phạm vi sổ**, không đóng khe giữa sổ và `main`. Phiên Codex
+chạy được chuỗi này ngày 07/09 và cả ba lượt đều thành công: **A được ghi nhận kết quả → B thu hồi
+quyền A → A đẩy mã vào `main`.** Bản đầu của phiên điều phối viết *"đóng lỗ TOCTOU"* không kèm giới
+hạn, và câu đó **rộng hơn bằng chứng**.
+
+> **Được ghi nhận KHÁC đã tích hợp.** Ghi nhận là chữ trong sổ; `main` là mã chạy thật. Chỗ đóng
+> khe cuối cùng là vế ⑴ — cờ `enforce_admins` cộng một bước kiểm quyền trong `cong-kiem.yml`.
+
+### ⑵b Bắt buộc điền là CHƯA ĐỦ — phải kiểm điều đã điền
+
+Audit độc lập của phiên Codex (07/09, `44f0680`) tìm được ba đường đưa kết quả **không hợp lệ** qua
+cửa, và cả ba đã tái hiện được bằng phép kiểm trước khi vá:
+
+| Đường đi qua được | Vì sao | Vá bằng |
+|---|---|---|
+| Kết quả cũ, **bỏ trống** nền | nền là tuỳ chọn, thiếu thì hết kiểm | nền **bắt buộc** |
+| Kết quả cũ, **khai một nền mà chính nó không chứa** | nền chỉ được so với lượt tích hợp trước | nền phải là **tổ tiên của chính commit kết quả** (`BASE_NOT_IN_RESULT`) |
+| **SHA bịa ra** (`deadbeef…`) | không ai hỏi commit đó có thật không | kiểm cả hai SHA là commit thật (`UNKNOWN_COMMIT`) |
+
+Và một chỗ **fail-open** khác: sổ quyền **hỏng** bị hiểu thành sổ **trống** — hàm đọc sổ trả về
+danh sách rỗng khi không đọc được, nên một ref tồn tại mà thiếu file sổ làm công cụ vừa in lỗi vừa
+**cấp quyền** ở thế hệ 1. Nay là `LEDGER_UNREADABLE`, mã thoát riêng, fail-closed.
+**Vắng ref và sổ hỏng là hai chuyện khác nhau; chỉ quyền thật sự chưa khởi tạo mới được bắt đầu từ
+trống.**
+
+### ⑵c Còn hở, khai ra thay vì hứa: lõi KHÔNG kiểm đường dẫn
+
+Phiên Codex khai vùng `wrong-area` cho một thay đổi ở `product.txt` và **đi qua được**. Nên tên
+vùng trong sự kiện là **lời khai**, không phải điều đã kiểm.
+
+Bịt chỗ này cần bản đồ **vùng → đường dẫn**, mà bản đồ đó nằm ở `.repo-structure.json` của **từng
+repo**, còn lõi thì cố ý không biết repo nào. Nên nó là **việc kế tiếp**, không phải một dòng thêm
+vào lõi. Và nó phải trả lời thêm một câu bản đầu chưa hỏi: **kết quả chạm nhiều vùng thì ai duyệt.**
 
 ### ⑶ Ca thứ năm — sửa điều kiện từ chối cho đúng
 
@@ -118,16 +159,40 @@ git), không cần máy chủ mới.
 
 ## Nghiệm thu
 
-Năm ca. Ba ca đầu từ ADR-0018, ca ④ là ca Codex vừa bác được, ca ⑤ là chỗ mù chéo.
+**Đã chạy, 07/09** — `Ark_Repo_Harness`, `tests/quyen-sau-ca.mjs`:
+**52 phép kiểm xanh · 14/14 đột biến bị bắt · 9 ca.**
+Sân thử là hai checkout + một remote git cục bộ trong thư mục tạm, ngoài cả hai repo.
 
-1. Hai bên xin đồng thời → đúng một bên nhận, bên kia **nhận từ chối**.
-2. Phiên cũ quay lại ghi bằng quyền cũ → bị từ chối, kèm lý do đọc được.
-3. Thu hồi xảy ra đúng lúc tích hợp → không lọt kết quả cũ.
-4. **Quyền cũ SAU KHI REBASE** → bị bắt bằng phép soi khoảng lịch sử, không bằng fast-forward.
-5. Trạng thái tích hợp đã đổi khiến kết quả của A không còn tương thích → **không được nhận mà
-   không kiểm lại**.
+| Ca | Kiểm gì |
+|---|---|
+| ① | Hai bên xin quyền → đúng một bên nhận, bên kia **nhận từ chối** |
+| ①b | Đẩy bản sổ **cũ** → git từ chối (chốt so-và-đổi) |
+| ② | Phiên **mất quyền** quay lại ghi → từ chối, kèm lúc nào · ai · câu chốt của Đức |
+| ③ | Thu hồi chen giữa lượt kiểm và lượt ghi → không lọt |
+| ③b | Chen **trong một kết nối đẩy** → server từ chối, `--force` không tắt được |
+| ③c | Chen **sau `fetch`, trước lúc mở kết nối** → chỗ duy nhất `--force` phá được |
+| ④ | **Quyền cũ sau `fetch` + `rebase`** → vẫn từ chối, vì sổ ở ref riêng |
+| ④b | Cùng lane, **thế hệ cũ** → từ chối (chốt "còn là chủ" không bắt được ca này) |
+| ⑤ | Đích đã đổi → từ chối; **và** checkout khác đang làm dở thì **KHÔNG** chặn |
+| ⑥ | **Một ca hợp lệ đi hết được** |
+| ⑦ | Thông tin kết quả phải khớp commit thật (ba đường của Codex) |
+| ⑧ | Sổ **hỏng** làm hệ thống dừng, không thành sổ **trống** |
+| ⑨ | Hai lượt nhận quyền **cạnh tranh thật** |
 
 Ca ④ là ca chịu tải: nó là ca duy nhất đã bác được một thiết kế đã viết ra.
+
+**Hai chỗ phép kiểm tự nó dạy lại, ghi ra vì cả hai đều là dạng "xanh mà không canh gì":**
+
+- Ca ① ban đầu **mang tên sai**: nó gọi A rồi mới gọi B, nên nhãn *"đồng thời"* không đúng sự
+  thật. Cơ chế vốn đúng — phép kiểm mới là thứ chưa chứng minh được điều nó nói. Ca ⑨ mới chen
+  thật bằng hook `reference-transaction`.
+- Đột biến `--force` **xanh cả 37 phép kiểm** ở lượt đầu, và điều đó bắt được một câu viết sai
+  trong lõi: git bảo vệ **hai** cửa sổ khác nhau, và `--force` chỉ phá được cửa sổ thứ hai. Không
+  có ca ③c thì lớp chịu toàn bộ việc phân xử **không có gì canh**.
+
+**Ngoài phạm vi bộ kiểm này, chưa đạt:** chuỗi A-ghi-nhận → B-thu-hồi → A-đẩy-`main` (xem ⑵) và
+ranh giới vùng → đường dẫn (xem ⑵c). Hai chỗ đó **chưa được nghiệm thu**, nên chưa được nối vào
+`claim.mjs` để thay quy trình đang dùng.
 
 **Nơi xây và nơi thử tách nhau** (phiên Codex đề xuất, nhận): mã dùng chung ở `Ark_Repo_Harness`
 (ADR-0006); **hai checkout của chính repo này** là nơi hai vai vận hành thử; nghiệm thu cuối ở đây.
