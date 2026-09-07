@@ -1179,3 +1179,24 @@ nhưng chỉ 18 mã**; 5 khối trùng chưa khai `đóng khi:` nên `npm test` 
 không ai báo. Đã gỡ bằng 6 dòng `ĐỔI MÃ` (N-19…N-24), không sửa chữ cũ.
 
 **Còn mở.** `MULTIFLOW.md` chưa cập nhật: `_docs` có chủ khác, và tôi **không nhả khoá hộ**.
+
+### 2026-09-07 · `claude-scouter-s01` · S-01 xong — Scouter bấm và gõ được, và lượt `--carry` này cuốn theo ai
+
+**Làm gì.** Mở đường GHI cho Scouter: `scout.click` · `scout.type` · `scout.key`. Chi tiết kỹ
+thuật ở nhật ký của gói (`workers/duc-scouter/v0.1.0/HANDOFF.md`); ở đây chỉ ghi phần cả repo
+cần biết.
+
+**Kết quả số.** Đột biến kiểm của gói **42/42 mỏ neo khớp, giết 42, sống sót 0** (trước lượt
+này 24/24) · suite gói 6/6 · nối thật với máy chủ Bridge ĐẠT 7/7 · cổng đóng phiên **XANH
+TOÀN BỘ 13/13**.
+
+**Điều cả repo nên biết:** từ hôm nay Scouter **bấm được nút**. Nó là extension đầu tiên trong
+repo có `debugger` và không có bảng bên nào để người bấm nút Dừng. Đường ghi được đóng trong
+một lõi riêng với danh sách lệnh riêng, nên phần chỉ-đọc vẫn chứng minh được là chỉ đọc — nhưng
+**chưa có cái phanh nào** giữa AI và một lượt bấm. Đã ghi thành `S-05` và cần Đức chốt hình
+dạng cái phanh đó.
+
+**Lượt `--carry` này cuốn theo bốn lane** (ADR-0005 duyệt thường trực, đổi lại phải kể tên):
+`claude-assistant` (3 commit) · `claude-tran-900` (5) · `claude-gemini-nghiem-thu` (1) ·
+`claude-cong-nhanh` (1). Tất cả đều đã có nhãn `Lane:` và đều nằm sẵn trên nhánh trước khi
+tôi commit; tôi không sửa file nào của họ.
