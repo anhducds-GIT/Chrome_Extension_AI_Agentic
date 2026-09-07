@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-07",
-  "generated_commit": "54ca40e",
+  "generated_commit": "c33e378",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -119,13 +119,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Cho Scouter bấm và gõ được như tay người: mở nhóm lệnh Input của giao thức debug, đúng thứ tự bảng kiểm kê đã xếp. Phép đo ① ngày 06/09 đã chứng minh đường đó dùng được.",
-      "human_action": "Scouter đã đổi chỗ nên bản đang nạp trong Chrome không còn dùng được: gỡ nó ra rồi nạp lại từ thư mục mới của gói. Xong thì mở popup, chọn tệp ghép cặp Bridge. Đường dẫn đầy đủ và các bước ở đầu README của gói.",
+      "next_step": "Đo bấm và gõ trên một trang thử tự dựng: ba lệnh mới mới chỉ chạy trên trang giả trong phép ghim, chưa lần nào chạm một nút thật.",
+      "human_action": "Hai câu chờ Đức chốt: cái phanh cho đường ghi nên có hình dạng gì, và có cho thêm quyền hẹn giờ để Bridge tự nối lại khi máy chủ tắt lâu không. Ngoài ra: nạp lại extension trong Chrome, các bước ở đầu README của gói.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Khung nền đã xong và đo được: quan sát, báo cáo qua Bridge, tự nạp lại mình. Cửa Bridge đã nói chuyện trót lọt với máy chủ Bridge thật, không phải máy chủ giả."
+      "open_item": "Scouter nay bấm và gõ được như tay người, không chỉ nhìn. Đường ghi là một lõi riêng nên phần chỉ-đọc vẫn chứng minh được là chỉ đọc. Chưa có phanh nào cho đường ghi, và chưa lần nào bấm trên trang thật."
     }
   ],
   "active_work": [
@@ -153,7 +153,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "Cho Scouter bấm và gõ được như tay người: mở nhóm lệnh Input của giao thức debug, đúng thứ tự bảng kiểm kê đã xếp. Phép đo ① ngày 06/09 đã chứng minh đường đó dùng được.",
+      "title": "Đo bấm và gõ trên một trang thử tự dựng: ba lệnh mới mới chỉ chạy trên trang giả trong phép ghim, chưa lần nào chạm một nút thật.",
       "rank": 4,
       "claim": null
     }

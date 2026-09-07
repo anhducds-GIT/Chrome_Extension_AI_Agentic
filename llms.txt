@@ -4,7 +4,7 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `39f8cec` (2026-09-07).
+Trang được sinh tại commit `c33e378` (2026-09-07).
 
 ## Việc ưu tiên #1
 
@@ -23,7 +23,7 @@ Trang được sinh tại commit `39f8cec` (2026-09-07).
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Nợ gói 9 -> 3 trong ngày 06/09
 - [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật
-- [Duc Scouter (seed v0.1)](workers/duc-scouter/v0.1.0/STATUS.md): building — Khung nền đã xong và đo được: quan sát, báo cáo qua Bridge, tự nạp lại mình
+- [Duc Scouter (seed v0.1)](workers/duc-scouter/v0.1.0/STATUS.md): building — Scouter nay bấm và gõ được như tay người, không chỉ nhìn
 
 ## Luật bắt buộc trước khi sửa gì
 
