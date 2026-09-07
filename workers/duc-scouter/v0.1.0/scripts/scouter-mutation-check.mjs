@@ -587,6 +587,7 @@ BATCHES.push({
 
 const BS = String.fromCharCode(92);   // dau gach nguoc, viet bang ma de khong phai thoat ba tang
 const Q = String.fromCharCode(34);    // dau nhay kep
+const PIN_PROBES = path.join(ROOT, "tests", "observer-probes-smoke.mjs");
 const PIN_FILE = path.join(ROOT, "tests", "scouter-file-core-smoke.mjs");
 const PIN_HOST = path.join(ROOT, "tests", "scouter-bridge-host-smoke.mjs");
 
@@ -665,6 +666,71 @@ BATCHES.push({
       ten: "Tự nhận mọi method — thôi chuyển tiếp, extension thành người vô hình",
       tim: "    if (!Object.hasOwn(METHOD_TAI_CHO, String(method))) {",
       thay: "    if (false) {",
+      soLan: 1
+    }
+  ]
+});
+
+/* ---- NHÌN RÕ HƠN — ba phép dò mở thêm 07/09 ------------------------------
+ * Đức chốt "add thêm tính năng" sau khi đối chiếu với hồ sơ năng lực. Ba con dưới đây canh
+ * chỗ dễ hỏng nhất của chúng, và cả ba đều là kiểu hỏng IM LẶNG: cắt bớt mà không nói,
+ * trả về rác thay vì thông tin, hoặc mặc định một định dạng luôn vượt trần. */
+BATCHES.push({
+  ten: "NHÌN RÕ HƠN — ba phép dò quan sát",
+  target: path.join(ROOT, "scripts", "observer-probes.mjs"),
+  pin: PIN_PROBES,
+  mutants: [
+    {
+      ma: "N1",
+      ten: "Cắt cây a11y mà báo truncated:false — người gọi tưởng đã có cả trang",
+      tim: "      truncated: coIch.length > limit,",
+      thay: "      truncated: false,",
+      soLan: 1
+    },
+    {
+      ma: "N2",
+      ten: "Thôi lọc nút vô nghĩa — phong bì đầy rác rồi chạm trần vì rác",
+      tim: "      if (n?.ignored === true) return false;",
+      thay: "      if (false) return false;",
+      soLan: 1
+    },
+    {
+      ma: "N3",
+      ten: "Mặc định ảnh thành PNG — vượt trần phong bì ở đúng ca hay gặp nhất",
+      tim: "    const format = params.format === " + Q + "png" + Q + " ? " + Q + "png" + Q + " : " + Q + "jpeg" + Q + ";",
+      thay: "    const format = " + Q + "png" + Q + ";",
+      soLan: 1
+    },
+    {
+      ma: "N4",
+      ten: "Ảnh quá trần thì cắt thay vì đỏ — người nhận có một file ảnh hỏng",
+      tim: "    if (bytes > MAX_SHOT_BYTES) {",
+      thay: "    if (false) {",
+      soLan: 1
+    }
+  ]
+});
+
+/* ---- PHANH KHẨN — mục 9 của hồ sơ năng lực, nay là nghĩa vụ --------------
+ * Từ khi Đức mở `<all_urls>` (ADR-0003), công tắc trong bảng bên là cái phanh DUY NHẤT —
+ * và bảng đóng thì không với tới được. Hai con này canh đúng chỗ đó. */
+BATCHES.push({
+  ten: "PHANH KHẨN — phím tắt tắt được đường ghi",
+  target: path.join(ROOT, "scouter-background.js"),
+  pin: PIN_GATE,
+  mutants: [
+    {
+      ma: "N5",
+      ten: "Gỡ người nghe phím tắt — khai phím trong manifest mà không ai nghe",
+      tim: "chrome.commands.onCommand.addListener((lenh) => {",
+      thay: "const unusedCommandListener = ((lenh) => {",
+      soLan: 1
+    },
+    {
+      ma: "N6",
+      ten: "Phanh khẩn BẬT công tắc thay vì tắt — bấm phanh hoá ra đạp ga",
+      tim: "  setWriteGate(chrome, false)",
+      thay: "  setWriteGate(chrome, true)",
       soLan: 1
     }
   ]

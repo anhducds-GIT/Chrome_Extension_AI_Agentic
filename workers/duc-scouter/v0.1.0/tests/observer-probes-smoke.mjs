@@ -23,7 +23,14 @@ const READ_ONLY_EXPECTED = new Set([
   "DOM.getDocument",
   "DOM.querySelectorAll",
   "DOM.describeNode",
-  "Target.getTargetInfo"
+  "Target.getTargetInfo",
+  /* Bốn miền mở thêm 07/09. Vẫn là getter thuần — đó là điều kiện để vào danh sách này.
+   * `Page.captureScreenshot` CÓ vào; `Page.navigate` thì KHÔNG, và khoảng cách giữa hai
+   * cái đó chính là ranh giới đọc/điều-khiển mà file này canh. */
+  "Accessibility.enable",
+  "Accessibility.getFullAXTree",
+  "DOMSnapshot.captureSnapshot",
+  "Page.captureScreenshot"
 ]);
 
 /* Method GHI — không cái nào được lọt qua cổng. */
@@ -284,7 +291,7 @@ const FAKE_TARGETS = [
 
 /* ---- ⑥ Từ vựng CỐ ĐỊNH -------------------------------------------------- */
 {
-  assert.deepEqual([...PROBE_NAMES], ["targets.list", "page.snapshot", "dom.query", "dom.tree"]);
+  assert.deepEqual([...PROBE_NAMES], ["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "dom.snapshot", "page.shot"]);
   for (const bogus of ["dom.eval", "runtime.evaluate", "page.click", ""]) {
     const res = await runProbe(bogus, { sendRaw: async () => ({}) }, {});
     assert.equal(res.ok, false, `tên lạ phải bị từ chối: ${bogus}`);
@@ -297,6 +304,103 @@ console.log("observer-probes smoke tests: PASS");
 /* ---- Bộ đo đột biến ------------------------------------------------------
  * Chạy ở tiến trình con, chỉ khi được gọi với --with-mutation (mặc định TẮT: nó bẩn file
  * nguồn vài chục giây, mà suite gốc chạy chung một cây làm việc với lane khác). */
+/* ---- a11y.tree — ĐỌC THEO VAI TRÒ VÀ TÊN (07/09) -------------------------
+ * Ba chốt, và cả ba là kiểu hỏng IM LẶNG — thứ suite vẫn xanh trong khi phép dò đã vô dụng.
+ * Con `N1` `N2` canh đúng ba chốt này. */
+{
+  const axNodes = [
+    { role: { value: "button" }, name: { value: "Gửi" }, backendDOMNodeId: 11,
+      properties: [{ name: "focusable", value: { value: true } }] },
+    { role: { value: "textbox" }, name: { value: "Lời nhắc" }, value: { value: "xin chào" }, backendDOMNodeId: 12,
+      properties: [{ name: "disabled", value: { value: true } }] },
+    /* Ba nút dưới đây KHÔNG mang thông tin. Trên trang thật chúng chiếm phần lớn cây. */
+    { role: { value: "generic" }, name: { value: "" }, backendDOMNodeId: 13 },
+    { role: { value: "none" }, name: { value: "" }, backendDOMNodeId: 14 },
+    { role: { value: "button" }, name: { value: "ẩn" }, ignored: true, backendDOMNodeId: 15 }
+  ];
+  const send = async (method) => {
+    if (method === "Accessibility.getFullAXTree") return { nodes: axNodes };
+    return {};
+  };
+  const res = await runProbe("a11y.tree", { sendRaw: send });
+  assert.equal(res.ok, true, JSON.stringify(res));
+
+  /* ① LỌC. Năm nút vào, hai nút có ích ra. Không lọc thì phong bì đầy rác rồi chạm trần vì rác. */
+  assert.equal(res.data.total_nodes, 5);
+  assert.equal(res.data.useful_nodes, 2, "phai bo nut ignored va nut generic/none khong ten");
+  assert.deepEqual(res.data.nodes.map((n) => n.name), ["Gửi", "Lời nhắc"]);
+
+  /* ② TÊN KHÔNG BỊ CHE. Mọi chỗ khác trong lõi che thuộc tính; ở đây `name` chính là thứ cần,
+   *   và che nó là trả về một cây rỗng rọt. ADR-0016 cho phép điều này từ 07/09. */
+  assert.equal(res.data.nodes[0].role, "button");
+  assert.equal(res.data.nodes[1].value, "xin chào", "gia tri o nhap phai di theo");
+  assert.equal(res.data.nodes[0].focusable, true);
+  assert.equal(res.data.nodes[1].disabled, true);
+
+  /* ③ CẮT THÌ PHẢI NÓI. `getFullAXTree` không phân trang được ở tầng CDP nên lõi phải cắt —
+   *   và cắt im lặng là nói dối. Con `N1` mutant hoá đúng dòng này. */
+  const cat = await runProbe("a11y.tree", { sendRaw: send }, { limit: 1 });
+  assert.equal(cat.data.returned, 1);
+  assert.equal(cat.data.truncated, true, "cat bot ma bao truncated:false la noi doi");
+  const du = await runProbe("a11y.tree", { sendRaw: send }, { limit: 50 });
+  assert.equal(du.data.truncated, false, "khong cat gi ma bao da cat cung sai");
+}
+
+/* ---- page.shot — ẢNH, và hai chốt về TRẦN (07/09) ------------------------
+ * Con `N3` `N4` canh đúng hai chốt này. */
+{
+  const anhNho = Buffer.alloc(1000).toString("base64");
+  const daGoi = [];
+  const send = async (method, params) => {
+    daGoi.push({ method, params });
+    return { data: anhNho };
+  };
+
+  /* ① MẶC ĐỊNH LÀ JPEG, không phải PNG. Một PNG toàn trang thường vượt trần phong bì, nên
+   *   để PNG làm mặc định là để phép dò hỏng ở đúng ca hay gặp nhất. */
+  const mac = await runProbe("page.shot", { sendRaw: send });
+  assert.equal(mac.data.format, "jpeg", "mac dinh phai la jpeg");
+  assert.equal(daGoi.at(-1).params.format, "jpeg");
+  assert.equal(daGoi.at(-1).params.quality, 60);
+  const png = await runProbe("page.shot", { sendRaw: send }, { format: "png" });
+  assert.equal(png.data.format, "png");
+  assert.equal(daGoi.at(-1).params.quality, undefined, "png khong duoc kem quality");
+
+  /* ② QUÁ TRẦN THÌ ĐỎ, KHÔNG CẮT. Một ảnh bị cắt là một file hỏng, và người nhận sẽ đi tìm
+   *   bug ở chỗ không có bug. Cùng luật với `scout.fetch`. */
+  const anhTo = Buffer.alloc(900 * 1024).toString("base64");
+  const to = await runProbe("page.shot", { sendRaw: async () => ({ data: anhTo }) });
+  assert.equal(to.ok, false, "anh qua tran ma van bao thanh cong");
+  assert.equal(to.code, "SHOT_TOO_LARGE");
+
+  const rong = await runProbe("page.shot", { sendRaw: async () => ({}) });
+  assert.equal(rong.ok, false);
+  assert.equal(rong.code, "NO_SCREENSHOT");
+}
+
+/* ---- dom.snapshot — MỘT lượt thay cho hàng trăm (07/09) ------------------
+ * Chốt duy nhất đáng ghim ở đây: nó KHÔNG giải nén bảng chuỗi của Chrome. Giải ra là phồng
+ * gấp nhiều lần và phong bì không chở nổi — mà tệ hơn, là dựng bản sao thứ hai của một lược
+ * đồ mà Chrome mới là người định nghĩa. */
+{
+  const raw = {
+    documents: [{ nodes: { nodeName: [1, 2, 3] } }],
+    strings: ["", "HTML", "BODY", "DIV"]
+  };
+  const daGoi = [];
+  const send = async (method, params) => { daGoi.push({ method, params }); return raw; };
+  const res = await runProbe("dom.snapshot", { sendRaw: send });
+  assert.equal(res.ok, true, JSON.stringify(res));
+  assert.equal(res.data.documents, 1);
+  assert.equal(res.data.strings, 4);
+  assert.equal(res.data.nodes, 3);
+  assert.deepEqual(res.data.snapshot.strings, raw.strings, "phai tra NGUYEN BAN bang chuoi cua Chrome");
+  assert.equal(daGoi.at(-1).params.includeDOMRects, false, "mac dinh khong lay hinh chu nhat");
+  const coRect = await runProbe("dom.snapshot", { sendRaw: send }, { rects: true });
+  assert.equal(coRect.ok, true);
+  assert.equal(daGoi.at(-1).params.includeDOMRects, true);
+}
+
 if (process.argv.includes("--with-mutation")) {
   const here = path.dirname(fileURLToPath(import.meta.url));
   execFileSync(process.execPath, [path.join(here, "..", "scripts", "observer-mutation-check.mjs")], { stdio: "inherit" });

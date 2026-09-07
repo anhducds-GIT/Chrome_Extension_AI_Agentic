@@ -27,6 +27,9 @@ const EXPECTED_METHODS = [
   "scout.page",
   "scout.query",
   "scout.tree",
+  "scout.a11y",
+  "scout.snapshot",
+  "scout.shot",
   "scout.click",
   "scout.type",
   "scout.key",
@@ -46,7 +49,7 @@ const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.ty
 /* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ObserverEngine.runAction`. */
 const EXPECTED_ACTIONS = new Set(["input.click", "input.type", "input.key"]);
 /* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ObserverEngine.runProbe`. */
-const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.tree"]);
+const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "dom.snapshot", "page.shot"]);
 
 const POISON = "'); doSomething(); ('";
 const TARGET_ID = "TARGET-1";
@@ -384,10 +387,13 @@ function request(method, params) {
   assert.ok(response.error.details.message.includes("bể trong ruột"));
 }
 
-/* ---- ⑩ Ánh xạ method → phép dò là DỮ LIỆU, phủ đủ bốn ------------------- */
+/* ---- ⑩ Ánh xạ method → phép dò là DỮ LIỆU, phủ đủ BẢY -------------------
+ * Bốn → bảy ngày 07/09: `scout.a11y` · `scout.snapshot` · `scout.shot`. Con số này KHÔNG
+ * được viết là `Object.keys(...).length` — làm thế là so một thứ với chính nó và phép ghim
+ * luôn xanh dù có ai lặng lẽ thêm một ánh xạ. Con số gõ tay ở đây chính là cái chốt. */
 {
   assert.deepEqual(new Set(Object.values(SEED_CONSTANTS.PROBE_BY_METHOD)), EXPECTED_PROBES);
-  assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 4);
+  assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 7);
 }
 
 /* ---- Trạm gác tham số của `scout.fetch` (S-10) ---------------------------
@@ -431,6 +437,47 @@ function request(method, params) {
   assert.equal(ok.method, "POST");
   assert.equal(ok.with_credentials, false, "khong khai thi phai la false, khong phai undefined");
   assert.deepEqual(Object.keys(ok).sort(), ["body", "headers", "method", "url", "with_credentials"]);
+}
+
+/* ---- Trạm gác tham số của ba phép dò mở thêm 07/09 -----------------------
+ * Ba cái này `read_only: true`, tức chúng KHÔNG đi qua phanh. Nên trạm gác tham số là chốt
+ * duy nhất của chúng, và nó phải nói được cả hai chiều: chặn cái xấu, cho cái đúng đi lọt. */
+{
+  const a11y = core.METHOD_REGISTRY["scout.a11y"];
+  const shot = core.METHOD_REGISTRY["scout.shot"];
+  const snap = core.METHOD_REGISTRY["scout.snapshot"];
+  const chan = (entry, params, viTri) => {
+    try { entry.params_validator(params); }
+    catch (error) {
+      assert.equal(error.code, "INVALID_PARAMS", viTri);
+      return;
+    }
+    assert.fail(`tham so xau van lot: ${viTri}`);
+  };
+
+  /* Trần `limit` phải là TRẦN. Không có nó thì một trang lớn trả về cả cây và vỡ phong bì. */
+  chan(a11y, { target_id: "T1", limit: 0 }, "limit = 0");
+  chan(a11y, { target_id: "T1", limit: 9999 }, "limit vuot tran");
+  chan(a11y, { target_id: "T1", them: 1 }, "truong la");
+  /* `optionalInt` trả `undefined` khi không khai — giống `scout.page`/`scout.tree`, để lõi
+   * phép dò tự áp mặc định của nó. Ghim ở đây để ai đổi sang `null` thì biết là đã đổi
+   * hợp đồng cho CẢ bốn method đang dùng chung hàm này. */
+  assert.equal(a11y.params_validator({ target_id: "T1" }).limit, undefined, "khong khai limit thi de lo i tu ap mac dinh");
+
+  /* PNG bỏ qua `quality` IM LẶNG ở tầng CDP — nên bắt ở đây, để người gọi không tưởng mình
+   * vừa chỉnh được một thứ họ không chỉnh được. */
+  chan(shot, { target_id: "T1", format: "png", quality: 50 }, "png kem quality");
+  chan(shot, { target_id: "T1", format: "webp" }, "format ngoai bang");
+  chan(shot, { target_id: "T1", quality: 0 }, "quality = 0");
+  assert.equal(shot.params_validator({ target_id: "T1" }).format, "jpeg", "mac dinh phai la jpeg, khong phai png");
+
+  chan(snap, { target_id: "T1", rects: "co" }, "rects khong phai boolean");
+  assert.equal(snap.params_validator({ target_id: "T1" }).rects, false, "khong khai rects thi phai la false");
+
+  /* Cả ba là ĐỌC, nên chúng KHÔNG được nằm trong nhóm phải trả giá của phanh. */
+  for (const ten of ["scout.a11y", "scout.snapshot", "scout.shot"]) {
+    assert.equal(core.METHOD_REGISTRY[ten].read_only, true, `${ten} phai la read_only`);
+  }
 }
 
 console.log("scouter-bridge smoke tests: PASS");

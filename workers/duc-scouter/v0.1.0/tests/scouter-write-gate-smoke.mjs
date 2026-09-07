@@ -438,4 +438,34 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
     "tran than phai NHO HON tran phong bi, de con cho cho phan vo");
 }
 
-console.log("scouter-write-gate-smoke: 17 khoi, tat ca DAT");
+/* ---- ⑧ PHANH KHẨN — cái phanh phải với tới được khi bảng đã đóng ---------
+ * Mục 9 của `docs/studies/SCOUTER-CAPABILITY-INVENTORY-V1.md`. Ở đó nó là một điều NÊN có;
+ * từ khi Đức mở `<all_urls>` (ADR-0003) nó là NGHĨA VỤ — công tắc trong bảng bên là cái
+ * phanh DUY NHẤT, mà bảng đóng thì không có đường nào tắt nó.
+ *
+ * Ghim CẢ BA mảnh, vì thiếu mảnh nào thì cả cái phanh là giả và nó hỏng IM LẶNG: khai
+ * phím trong manifest · có người nghe trong dây thật · và người nghe đó gọi `false`.
+ * Con `N5` `N6` canh đúng ba mảnh này. */
+{
+  const manifest = JSON.parse(fs.readFileSync(path.join(here, "..", "manifest.json"), "utf8"));
+  const lenh = manifest.commands?.["dung-khan"];
+  assert.ok(lenh, "manifest chua khai phim tat dung-khan");
+  assert.ok(lenh.suggested_key?.default, "phim tat khong co phim mac dinh thi Duc phai tu di dat");
+
+  const background = fs.readFileSync(path.join(here, "..", "scouter-background.js"), "utf8");
+  assert.match(background, /chrome\.commands\.onCommand\.addListener/,
+    "khai phim trong manifest ma khong ai nghe = quyen thua, phanh khong ton tai");
+  assert.match(background, /setWriteGate\(chrome, false\)/,
+    "phanh phai TAT cong tac; goi true la bam phanh hoa ra dap ga");
+  assert.ok(!/setWriteGate\(chrome, true\)/.test(background),
+    "day that KHONG duoc co duong BAT cong tac tu phim tat");
+
+  /* Dùng CHÍNH hàm mà bảng bên dùng, không tự dựng bản thứ hai: hai bản của một luật thì
+   * sớm muộn trả hai câu khác nhau (ADR-0006 đã ghi cái giá). */
+  const chrome = makeChrome({ enabled: true, enabled_at: 1, used: 7 });
+  await setWriteGate(chrome, false);
+  const sau = await readWriteGateState(chrome);
+  assert.equal(sau.enabled, false, "tat roi ma van bao dang bat");
+}
+
+console.log("scouter-write-gate-smoke: 18 khoi, tat ca DAT");

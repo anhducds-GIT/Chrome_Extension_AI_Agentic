@@ -19,7 +19,7 @@ import {
   createDispatcher,
   negotiateVersion
 } from "./scripts/scouter-bridge-core.mjs";
-import { createSeedHandlers } from "./scripts/scouter-seed-core.mjs";
+import { createSeedHandlers, setWriteGate } from "./scripts/scouter-seed-core.mjs";
 import { createTransport } from "./scripts/scouter-transport-loopback.mjs";
 
 const handlers = createSeedHandlers({
@@ -56,6 +56,25 @@ async function moBangBenKhiBamIcon() {
 
 chrome.runtime.onInstalled.addListener(() => { moBangBenKhiBamIcon(); connectQuietly(); });
 chrome.runtime.onStartup.addListener(() => { moBangBenKhiBamIcon(); connectQuietly(); });
+
+/* ---- PHANH KHẨN — phím tắt, dùng được cả khi bảng bên đã đóng --------------
+ * Mục 9 trong mười năng lực còn thiếu của `docs/studies/SCOUTER-CAPABILITY-INVENTORY-V1.md`.
+ * Ở đó nó là một điều nên có. Từ 07/09 nó là **nghĩa vụ**: Đức mở `<all_urls>` (ADR-0003),
+ * nên Scouter chạm được mọi trang — mà cái phanh DUY NHẤT lại là một công tắc nằm trong
+ * bảng bên. Bảng đóng thì không có đường nào tắt nó.
+ *
+ * `Ctrl+Shift+X` gọi thẳng `setWriteGate(false)` — cùng một hàm mà bảng bên gọi, cố ý: hai
+ * bản của một luật thì sớm muộn trả hai câu khác nhau (ADR-0006 đã ghi cái giá).
+ *
+ * KHÔNG cần khai quyền nào: khoá `commands` trong manifest là đủ. Và phím tắt chỉ TẮT chứ
+ * không bật được — một cái phanh mà bấm nhầm thành ga thì không phải phanh.
+ */
+chrome.commands.onCommand.addListener((lenh) => {
+  if (lenh !== "dung-khan") return;
+  setWriteGate(chrome, false)
+    .then(() => console.warn("PHANH KHẨN: đã TẮT công tắc đường ghi của Scouter."))
+    .catch((error) => console.error("PHANH KHẨN HỎNG — công tắc CÓ THỂ VẪN ĐANG BẬT:", error));
+});
 
 /* ---- Lưới đỡ nối lại (S-02 · Đức duyệt quyền `alarms` 2026-09-07) --------
  * Tầng thử-lại của transport chạy bằng `setTimeout`, và `setTimeout` chết theo service worker

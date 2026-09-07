@@ -46,7 +46,10 @@ export const PROBE_NAMES = Object.freeze([
   "targets.list",
   "page.snapshot",
   "dom.query",
-  "dom.tree"
+  "dom.tree",
+  "a11y.tree",
+  "dom.snapshot",
+  "page.shot"
 ]);
 
 /* Method CDP được phép. CỐ Ý không có `Runtime.*`, không có `Input.*`, không có
@@ -57,7 +60,25 @@ export const READ_ONLY_CDP_METHODS = Object.freeze([
   "DOM.getDocument",
   "DOM.querySelectorAll",
   "DOM.describeNode",
-  "Target.getTargetInfo"
+  "Target.getTargetInfo",
+  /* ---- BA MIỀN MỞ THÊM 07/09 (Đức chốt "add thêm tính năng") ------------------
+   * Cả ba vẫn là getter thuần: không cái nào sửa trang, không cái nào chạy mã của người
+   * gọi. Đó là điều kiện để chúng vào được danh sách này — không phải vì chúng tiện.
+   *
+   * `Accessibility.*` là thuốc cho luật vàng 1 ("không đoán selector"): nó trả về
+   * *"nút tên Gửi"* thay vì `div > div > button:nth-child(3)`. Trang đổi giao diện thì
+   * class đổi, nhưng vai trò và tên thì ở lại.
+   *
+   * `DOMSnapshot.captureSnapshot` làm trong MỘT lượt cái mà `dom.tree` làm bằng
+   * hàng trăm lượt gọi trên trang lớn.
+   *
+   * `Page.captureScreenshot` — bằng chứng NHÌN THẤY ĐƯỢC, thay cho việc mượn mắt
+   * Đức. Nó mở được vì ADR-0016 gỡ chính sách che dữ liệu và nay đã có đường ghi đĩa.
+   * CỐ Ý không mở `Page.navigate` — cái đó điều khiển trang, không phải đọc trang. */
+  "Accessibility.enable",
+  "Accessibility.getFullAXTree",
+  "DOMSnapshot.captureSnapshot",
+  "Page.captureScreenshot"
 ]);
 
 /* Khoá tham số CHỞ MÃ hoặc CHỞ THAO TÁC GHI. Không method hợp lệ nào ở trên dùng tới một
@@ -90,6 +111,14 @@ const DEFAULT_PAGE_LIMIT = 100;
 const MAX_TREE_DEPTH = 10;
 const DEFAULT_TREE_DEPTH = 3;
 const MAX_TREE_NODES = 500;
+
+/* Trần cho ba phép dò mới. Đặt THẤP HƠN trần phong bì Bridge (1 MiB) khá nhiều, cố ý: cả
+ * ba đều trả về thứ LỚN theo trang, mà chạm trần phong bì thì cả lượt chết ở tầng vận
+ * chuyển với một câu khó hiểu, thay vì chết ở đây với một câu nói rõ vì sao. */
+const MAX_AX_NODES = 1500;
+const DEFAULT_AX_NODES = 400;
+const MAX_SHOT_BYTES = 700 * 1024;
+const DEFAULT_SHOT_QUALITY = 60;
 const MAX_ATTR_LENGTH = 200;
 
 /* ---- Chính sách che dữ liệu — ĐỀ XUẤT, CHƯA ĐƯỢC ĐỨC CHỐT ---------------
@@ -292,6 +321,101 @@ const PROBES = {
       tree,
       redaction: redactionNote()
     };
+  }
+,
+
+  /* ⑤ a11y.tree — ĐỌC TRANG THEO VAI TRÒ VÀ TÊN, không theo class CSS.
+   *
+   * Đây là thuốc thật cho luật vàng 1. Ba điều đáng biết trước khi sửa:
+   *
+   * ① KHÔNG che `name`. Mọi chỗ khác trong file này che thuộc tính, nhưng ở đây
+   *   `name` CHÍNH LÀ thứ cần — che nó là trả về một cây rỗng và phép dò thành vô dụng.
+   *   ADR-0016 gỡ chính sách che dữ liệu, nên điều này hợp lệ từ 07/09.
+   * ② Bỏ nút KHÔNG mang thông tin — `ignored`, hoặc vai trò `none`/`generic` mà
+   *   không có tên. Trên trang thật chúng chiếm phần lớn cây; giữ lại là đổ rác vào phong
+   *   bì rồi chạm trần vì rác.
+   * ③ `getFullAXTree` trả cả cây một lượt — CDP không phân trang được, nên ta phải cắt
+   *   ở đây và NÓI RÕ là đã cắt. Cắt im lặng là nói dối. */
+  async "a11y.tree"(ctx, params) {
+    const send = requireSend(ctx);
+    const limit = readIndex(params.limit, DEFAULT_AX_NODES, "limit", 1, MAX_AX_NODES);
+    await send("DOM.enable", {});
+    await send("Accessibility.enable", {});
+    const raw = await send("Accessibility.getFullAXTree", {});
+    const all = Array.isArray(raw?.nodes) ? raw.nodes : [];
+    const coIch = all.filter((n) => {
+      if (n?.ignored === true) return false;
+      const role = n?.role?.value ?? null;
+      const name = cap(n?.name?.value ?? "");
+      if (!role) return false;
+      if ((role === "none" || role === "generic" || role === "InlineTextBox") && name === "") return false;
+      return true;
+    });
+    const co = (n, ten) => Boolean((n.properties || []).find((x) => x.name === ten)?.value?.value);
+    return {
+      total_nodes: all.length,
+      useful_nodes: coIch.length,
+      returned: Math.min(coIch.length, limit),
+      truncated: coIch.length > limit,
+      nodes: coIch.slice(0, limit).map((n) => ({
+        role: n.role?.value ?? null,
+        name: cap(n.name?.value ?? ""),
+        value: cap(n.value?.value ?? ""),
+        focusable: co(n, "focusable"),
+        disabled: co(n, "disabled"),
+        backend_node_id: n.backendDOMNodeId ?? null
+      }))
+    };
+  },
+
+  /* ⑥ dom.snapshot — cả cấu trúc trang trong MỘT lượt gọi.
+   * `dom.tree` gọi `DOM.describeNode` cho từng nút; trên trang lớn đó là hàng trăm
+   * lượt qua dây CDP. Cái này một lượt. Đổi lại: nó trả về dạng BẢNG CHUỖI — chuỗi nằm
+   * một mảng, nút trỏ vào mảng đó bằng chỉ số. KHÔNG giải nén ở đây, cố ý: giải ra là
+   * phồng gấp nhiều lần và phong bì không chở nổi. AI ở đầu dây giải được. */
+  async "dom.snapshot"(ctx, params) {
+    const send = requireSend(ctx);
+    await send("DOM.enable", {});
+    const raw = await send("DOMSnapshot.captureSnapshot", {
+      computedStyles: [],
+      includeDOMRects: params.rects === true,
+      includePaintOrder: false
+    });
+    const documents = Array.isArray(raw?.documents) ? raw.documents : [];
+    const strings = Array.isArray(raw?.strings) ? raw.strings : [];
+    return {
+      documents: documents.length,
+      strings: strings.length,
+      nodes: documents.reduce((tong, d) => tong + (d?.nodes?.nodeName?.length || 0), 0),
+      /* Trả nguyên bản của Chrome. Viết lại cho "đẹp" là dựng bản sao thứ hai của một
+       * lược đồ mà Chrome mới là người định nghĩa, và hai bản sẽ lệch nhau. */
+      snapshot: { documents, strings }
+    };
+  },
+
+  /* ⑦ page.shot — ẢNH, tức bằng chứng Đức nhìn được bằng mắt.
+   *
+   * MẶC ĐỊNH JPEG chất lượng 60, KHÔNG phải PNG. Lý do là số: một ảnh PNG thường vượt
+   * trần phong bì 1 MiB, nên để PNG làm mặc định là để phép dò này hỏng ở đúng trường
+   * hợp hay gặp nhất. Ai cần PNG thì khai tường minh và tự chịu trần.
+   *
+   * QUÁ TRẦN THÌ ĐỎ, KHÔNG CẮT — cùng luật với `scout.fetch`: một ảnh bị cắt là một
+   * file hỏng, và người nhận sẽ đi tìm bug ở chỗ không có bug. */
+  async "page.shot"(ctx, params) {
+    const send = requireSend(ctx);
+    const format = params.format === "png" ? "png" : "jpeg";
+    const quality = readIndex(params.quality, DEFAULT_SHOT_QUALITY, "quality", 1, 100);
+    const raw = await send("Page.captureScreenshot", format === "png"
+      ? { format: "png", captureBeyondViewport: false }
+      : { format: "jpeg", quality, captureBeyondViewport: false });
+    const data = typeof raw?.data === "string" ? raw.data : "";
+    if (data === "") throw new ProbeError("NO_SCREENSHOT", "Chrome không trả về ảnh nào.");
+    const bytes = Math.floor(data.length * 3 / 4);
+    if (bytes > MAX_SHOT_BYTES) {
+      throw new ProbeError("SHOT_TOO_LARGE",
+        "Ảnh " + bytes + " byte, quá trần " + MAX_SHOT_BYTES + " byte. Hạ quality, hoặc dùng jpeg thay vì png.");
+    }
+    return { format, quality: format === "jpeg" ? quality : null, bytes, base64: data };
   }
 };
 

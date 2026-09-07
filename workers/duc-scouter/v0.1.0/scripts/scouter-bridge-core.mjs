@@ -296,6 +296,60 @@ const METHOD_ENTRIES = [
       };
     }
   }),
+  /* ---- BA PHÉP DÒ QUAN SÁT MỞ THÊM 07/09 --------------------------------
+   * Đức chốt: *"đối chiếu xem còn có thể add thêm gì vào seed & Scouter thì add thêm"*.
+   * Hồ sơ `docs/studies/SCOUTER-CAPABILITY-INVENTORY-V1.md` mục 1.2 liệt kê mười năng lực
+   * còn thiếu; ba cái dưới đây là số 3, 7 và 4 của danh sách đó.
+   *
+   * Cả ba `read_only: true` — khác hẳn `scout.fetch`. Chúng KHÔNG chạm mạng, KHÔNG sửa
+   * trang, và KHÔNG chạy mã của người gọi: chúng đọc thứ Chrome đã tính sẵn. Nên chúng
+   * không phải trả giá của cái phanh, và điều đó là đúng chứ không phải nới lỏng. */
+  registryEntry({
+    name: "scout.a11y", read_only: true, deadline_ms: 30000,
+    description: "Read the page the way a screen reader does: roles and names instead of CSS classes. This is the cure for guessing selectors.",
+    params_schema: { target_id: "string", limit: "integer:1..1500?" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "limit"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        limit: optionalInt(params.limit, "params.limit", 1, 1500)
+      };
+    }
+  }),
+  registryEntry({
+    name: "scout.snapshot", read_only: true, deadline_ms: 30000,
+    description: "Capture the whole page structure in ONE call instead of hundreds. Returns Chrome's string-table form verbatim; the caller expands it.",
+    params_schema: { target_id: "string", rects: "boolean?" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "rects"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        rects: optionalFlag(params.rects, "params.rects")
+      };
+    }
+  }),
+  registryEntry({
+    name: "scout.shot", read_only: true, deadline_ms: 30000,
+    description: "Screenshot the visible page as base64. Defaults to jpeg quality 60 because a full png usually exceeds the envelope. Refuses rather than truncating.",
+    params_schema: { target_id: "string", format: "jpeg|png?", quality: "integer:1..100?" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "format", "quality"]);
+      if (params.format !== undefined && params.format !== null
+        && params.format !== "jpeg" && params.format !== "png") {
+        invalidParams("params.format", "expected jpeg or png");
+      }
+      /* PNG không nhận `quality` — CDP bỏ qua nó im lặng, và một tham số bị bỏ qua im lặng
+       * là chỗ người gọi tưởng mình đã chỉnh được thứ họ không chỉnh được. */
+      if (params.format === "png" && params.quality !== undefined && params.quality !== null) {
+        invalidParams("params.quality", "png ignores quality; drop it or use jpeg");
+      }
+      return {
+        target_id: requiredTargetId(params.target_id),
+        format: params.format === "png" ? "png" : "jpeg",
+        quality: optionalInt(params.quality, "params.quality", 1, 100)
+      };
+    }
+  }),
   /* ---- BA HÀNH ĐỘNG GHI (S-01) --------------------------------------------
    * Đây là chỗ Scouter thôi làm người quan sát và thành kẻ hành động (ADR-0009). Cả ba đều
    * `read_only: false`, và cả ba đều bắt buộc `selector` — không có method nào bấm theo toạ độ,

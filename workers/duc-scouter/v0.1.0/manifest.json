@@ -16,6 +16,12 @@
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
+  "commands": {
+    "dung-khan": {
+      "suggested_key": { "default": "Ctrl+Shift+X", "mac": "Command+Shift+X" },
+      "description": "Dung khan: tat cong tac duong ghi cua Scouter"
+    }
+  },
   "side_panel": {
     "default_path": "sidepanel.html"
   },
