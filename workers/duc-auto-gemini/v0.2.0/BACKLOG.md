@@ -380,3 +380,39 @@ Còn một nhánh **chưa đo thật**, ghi lại để không tưởng là đã
 thang bỏ cuộc và alarm 30 giây lo tiếp. Hiện chỉ ghim bằng test.
 
 - **G-08 · 07/09 (`claude-gemini-g08`) — nửa CHỐNG TRÔI DẠT đã xong, nửa GỘP VÀO `workers/_shared/` vẫn mở.** Đo lại bằng máy: chỉ còn **bảy** module giống hệt (không phải tám) — `xlsx-codec.js` đã **trôi dạt ngày 28/08** và mười ngày không ai hay, đúng cái bệnh mục này nói tới. Đã dựng phép ghim `tests/shared-modules-no-drift-static.mjs`: bảy module lệch một byte là ĐỎ ngay (đột biến 3/3 bị bắt; đổi kiểu xuống dòng CRLF/LF **cố ý** không bị coi là trôi dạt). Việc gộp vào `workers/_shared/` là quyết định kiến trúc chạm cả hai nhánh, cần khoá `_root` và cần Đức chốt — **chưa làm**.
+
+### G-14 · Xuống dòng CRLF làm vỡ phép kiểm tĩnh — **ĐO + VÁ XONG cho gói này 07/09** ✅ · còn nợ ở gói ChatGPT
+
+Bệnh (mượn từ `F-27` của gói Flow): một phép kiểm tĩnh đòi `,\n` hoặc `\n}` sát nhau sẽ **XANH ở
+máy đang làm dở** mà **ĐỎ ngay sau một `git checkout`** hoặc trên bản clone mới — không dòng mã
+nào đổi, chỉ xuống dòng.
+
+**[ĐO 07/09] Đã soi gói này bằng cách rẻ nhất: ép CRLF cả gói rồi chạy suite.** Trước khi ép:
+229/229 file text trên đĩa là LF, trong git cũng 251/251 LF — đĩa và kho đều sạch. Ép CRLF thì
+**đúng hai** phép kiểm đỏ:
+- `tests/content-image-static.mjs:127` — mỏ neo `\|\| remoteVerifiedResult,\n\s+ready:`
+- `tests/landed-as-requested.mjs:38` — mỏ neo `function downloadLeaf[\s\S]*?\n}\n\nfunction pathTailMatches`
+
+Cả hai đã nới thành `\r?\n`, **không nới rộng hơn**. Suite **95/95 cả hai chiều** (ép CRLF cả gói ·
+ép LF cả gói). Đột biến kiểm **8/8 bị bắt ở MỖI chiều** — trong đó có con thử chính việc nới quá
+tay: chèn một hàm lạ vào giữa `downloadLeaf` và `pathTailMatches` **vẫn bị bắt**, nên tính kề nhau
+chưa bị mất.
+
+**Cách soi lại, để phiên sau khỏi nghĩ lại:** chụp sha256 cả gói → ép CRLF → chạy suite → ép LF →
+chạy suite → đối chiếu sha256 (phải khớp từng byte). Ép xuống dòng là thao tác trên **bản đĩa**,
+đừng dùng `git checkout` để hoàn nguyên vì nó xoá việc chưa commit của phiên khác.
+
+**Phát hiện phụ, đáng đọc: gốc bệnh ĐÃ ĐƯỢC VÁ ngày 06/09, mà mục `F-27` của gói Flow vẫn ghi là
+còn mở.** Gốc repo nay có `.gitattributes` với `* text=auto eol=lf` (khối `Y-17`), tức `git
+checkout` không còn viết ra CRLF nữa. Mục `F-27` viết 05/09, trước bản vá đó một ngày. Việc nới
+mỏ neo vẫn đáng làm — nó chống người soạn thảo ghi CRLF và chống máy khác cấu hình khác — nhưng
+**đừng đọc `F-27` như là gốc bệnh còn nguyên**.
+
+**CÒN NỢ: gói `duc-auto-chatgpt` chưa được soi.** Khoá `workers/duc-auto-chatgpt` do
+`claude-b36-vaA` giữ lúc 07/09, nên phiên này chỉ đọc. Câu lệnh soi, chạy từ gói đó:
+chụp sha256 → ép mọi file `.js`/`.mjs`/`.json`/`.html`/`.css` sang CRLF (bỏ qua `evidence*/`,
+`Pilot*/`, `Batch*/`) → `node tests/run-all.mjs` → ghi từng phép kiểm đỏ kèm số dòng → ép LF →
+chạy lại → đối chiếu sha256.
+
+**đóng khi:** gói `duc-auto-chatgpt` đã chạy đúng phép soi trên, suite của nó XANH **cả hai chiều
+xuống dòng**, và mọi mỏ neo bị đỏ đã nới thành `\r?\n` kèm đột biến kiểm chứng minh còn răng.
