@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-07",
-  "generated_commit": "5199680",
+  "generated_commit": "be0a999e",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -120,12 +120,12 @@
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
       "next_step": "Bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào.",
-      "human_action": "Nạp lại extension trong Chrome — manifest đổi (thêm quyền hẹn giờ) nên bản đang chạy không tự cập nhật. Muốn Scouter bấm thì mở popup, bật Chế độ phát triển; tắt thì nó chỉ nhìn.",
+      "human_action": "Nạp lại extension trong Chrome — manifest đổi (đổi sang bảng bên, thêm quyền hẹn giờ) nên bản đang chạy không tự cập nhật. Bấm icon nay mở bảng bên ở cạnh phải, không còn popup. Muốn Scouter bấm thì bật Chế độ phát triển trong bảng đó.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong popup, mặc định tắt, trần 50 lượt). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
+      "open_item": "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 50 lượt). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
     }
   ],
   "active_work": [
