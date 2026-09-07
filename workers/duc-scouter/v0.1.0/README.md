@@ -22,7 +22,7 @@ Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở 
 
 ## AI ở đầu dây gọi được gì
 
-Tám method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
+Mười một method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
 tham số — đó là câu trả lời có thẩm quyền, đừng chép danh sách ra chỗ khác.
 
 | Method | Ghi | Làm gì |
@@ -32,16 +32,26 @@ tham số — đó là câu trả lời có thẩm quyền, đừng chép danh s
 | `scout.page` | không | metadata trang + kiểm kê phần tử tương tác, có phân trang |
 | `scout.query` | không | một selector khớp mấy phần tử, và chúng là gì |
 | `scout.tree` | không | cây DOM tới độ sâu N, thuộc tính đã che |
+| `scout.click` | **có** | bấm một phần tử bằng **chuột thật của trình duyệt** (trang thấy `isTrusted: true`) |
+| `scout.type` | **có** | gõ một chuỗi bằng **bàn phím thật**, từng phím một. Không xoá nội dung cũ |
+| `scout.key` | **có** | gõ một phím có tên: Enter · Tab · Escape · Backspace · Delete · bốn mũi tên · Home · End |
 | `scout.reload` | **có** | nạp lại chính extension. Trả lời trước, khởi động lại sau. Trần 10 giây một lượt |
 
-`scout.page` · `scout.query` · `scout.tree` **bắt buộc** có `target_id` — lấy từ `scout.targets`.
-Không có đường "tab đang mở": nhánh Flow đã trả giá cho đường đó.
+Mọi method chạm trang **bắt buộc** có `target_id` — lấy từ `scout.targets`. Không có đường
+"tab đang mở": nhánh Flow đã trả giá cho đường đó.
+
+**Ba method ghi không nhận toạ độ.** Chúng nhận một `selector`, và **từ chối nếu selector không
+khớp đúng một phần tử**. Toạ độ do Scouter tự tính từ hộp của phần tử đó. Nhận toạ độ từ ngoài
+là bấm được vào bất kỳ đâu trên màn hình, và cổng selector thành đồ trang trí.
+
+`scout.type` **từ chối ký tự điều khiển**: Enter và Tab đi qua `scout.key`. Một ký tự xuống dòng
+lọt vào giữa chuỗi là một lượt gửi biểu mẫu mà không ai yêu cầu.
 
 ## Tự kiểm
 
 ```bash
-npm run test:scouter          # 5 phép ghim
-npm run scouter:mutation      # 24 con đột biến
+npm run test:scouter          # 6 phép ghim
+npm run scouter:mutation      # 42 con đột biến
 npm run scouter:bridge-live   # nối thử với máy chủ Bridge THẬT
 npm run scouter:input-probe   # phép đo ①: cú bấm của máy có được coi là của người không
 ```

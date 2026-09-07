@@ -163,6 +163,9 @@ const fakeEngine = {
   },
   async runProbe(_target, name) {
     return { ok: true, probe: name, data: { stub: true }, cdp: [] };
+  },
+  async runAction(_target, name, params) {
+    return { ok: true, action: name, data: { stub: true, params }, cdp: [] };
   }
 };
 
@@ -253,7 +256,7 @@ try {
     assert.equal(targets.result.probe, "targets.list");
     console.log("③ một phép dò đi trọn vòng qua dây: ĐẠT (engine là bản giả — xem đầu file)");
 
-    const unknown = await rpc("scout.click", { x: 1 });
+    const unknown = await rpc("scout.drag", { x: 1 });
     assert.equal(unknown.ok, false);
     assert.equal(unknown.error.code, "METHOD_NOT_FOUND");
     console.log("④ method ngoài từ vựng bị từ chối qua dây thật: ĐẠT");
@@ -262,6 +265,28 @@ try {
     assert.equal(badParams.ok, false);
     assert.equal(badParams.error.code, "INVALID_PARAMS");
     console.log("⑤ tham số thiếu bị từ chối qua dây thật: ĐẠT");
+
+    /* S-01: ba method GHI cũng phải đi trọn vòng qua dây thật — và quan trọng hơn: một yêu cầu
+     * mang TOẠ ĐỘ phải chết ngay ở cổng phong bì, trước khi chạm tới Chrome. */
+    const click = await rpc("scout.click", { target_id: "LIVE-TARGET", selector: "button" });
+    assert.equal(click.ok, true, `scout.click: ${JSON.stringify(click.error || {})}`);
+    assert.equal(click.result.action, "input.click");
+
+    const type = await rpc("scout.type", { target_id: "LIVE-TARGET", selector: "#txt", text: "xin chao" });
+    assert.equal(type.ok, true, `scout.type: ${JSON.stringify(type.error || {})}`);
+
+    const key = await rpc("scout.key", { target_id: "LIVE-TARGET", selector: "#txt", key: "Enter" });
+    assert.equal(key.ok, true, `scout.key: ${JSON.stringify(key.error || {})}`);
+    console.log("⑥ ba hành động ghi đi trọn vòng qua dây: ĐẠT (engine là bản giả — xem đầu file)");
+
+    const toaDo = await rpc("scout.click", { target_id: "LIVE-TARGET", selector: "button", x: 10, y: 10 });
+    assert.equal(toaDo.ok, false, "yêu cầu mang toạ độ lọt qua dây thật");
+    assert.equal(toaDo.error.code, "INVALID_PARAMS");
+
+    const phimLa = await rpc("scout.key", { target_id: "LIVE-TARGET", selector: "#txt", key: "F5" });
+    assert.equal(phimLa.ok, false, "phím ngoài bảng lọt qua dây thật");
+    assert.equal(phimLa.error.code, "INVALID_PARAMS");
+    console.log("⑦ toạ độ và phím ngoài bảng bị chặn ngay ở cổng phong bì: ĐẠT");
 
     console.log("\nscouter-bridge live check: ĐẠT — seed nói đúng giao thức của máy chủ Bridge thật.");
   }

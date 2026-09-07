@@ -5,10 +5,10 @@ name: Duc Scouter
 lifecycle: building
 owner: claude
 priority_rank: 4
-next_step: "Cho Scouter bấm và gõ được như tay người: mở nhóm lệnh Input của giao thức debug, đúng thứ tự bảng kiểm kê đã xếp. Phép đo ① ngày 06/09 đã chứng minh đường đó dùng được."
-human_action: "Scouter đã đổi chỗ nên bản đang nạp trong Chrome không còn dùng được: gỡ nó ra rồi nạp lại từ thư mục mới của gói. Xong thì mở popup, chọn tệp ghép cặp Bridge. Đường dẫn đầy đủ và các bước ở đầu README của gói."
+next_step: "Đo bấm và gõ trên một trang thử tự dựng: ba lệnh mới mới chỉ chạy trên trang giả trong phép ghim, chưa lần nào chạm một nút thật."
+human_action: "Hai câu chờ Đức chốt: cái phanh cho đường ghi nên có hình dạng gì, và có cho thêm quyền hẹn giờ để Bridge tự nối lại khi máy chủ tắt lâu không. Ngoài ra: nạp lại extension trong Chrome, các bước ở đầu README của gói."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
-current_focus: "Khung nền đã xong và đo được: quan sát, báo cáo qua Bridge, tự nạp lại mình. Cửa Bridge đã nói chuyện trót lọt với máy chủ Bridge thật, không phải máy chủ giả."
+current_focus: "Scouter nay bấm và gõ được như tay người, không chỉ nhìn. Đường ghi là một lõi riêng nên phần chỉ-đọc vẫn chứng minh được là chỉ đọc. Chưa có phanh nào cho đường ghi, và chưa lần nào bấm trên trang thật."
 ref_readme: README.md
 ref_handoff: HANDOFF.md
 ---
