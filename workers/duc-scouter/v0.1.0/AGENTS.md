@@ -91,6 +91,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 | `bridge/scouter-bridge-host.mjs` | **LỚP ĐỨNG TRƯỚC, không phải bản thứ tư** ([ADR-0004](docs/adr/0004-bridge-rieng-cho-scouter-la-mot-lop-dung-truoc.md)): `file.*`/`host.*` xử lý tại chỗ, mọi method còn lại **chuyển tiếp nguyên văn** sang host cũ (chạy trong cùng tiến trình). Đừng thêm bảng method vào đây — bảng thật ở extension |
 | `tests/scouter-file-core-smoke.mjs` | Ghim **vùng ghi**: `..`, đường tuyệt đối ba dạng, thư mục anh em trùng tiền tố, và liên kết mềm trỏ ra ngoài. Chạy trên thư mục tạm THẬT, không giả `fs` |
 | `tests/scouter-bridge-host-smoke.mjs` | Ghim lớp đứng trước: bốn method đĩa, hai cổng vào (Origin, token), và **chuyển tiếp nguyên văn**. Máy chủ THẬT trên loopback, host cũ là đồ giả |
+| `docs/PROMPT-thiet-ke-bang-ben.md` | **Câu Đức dán cho GPT web** để brainstorm bố cục bảng bên (07/09). Chứa bản khai **sự thật về năng lực** — Scouter đổi thì **sửa mục đó trước khi dán**, không thì GPT thiết kế cho một giói đồ không tồn tại |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này. ADR đã `Accepted` là bất biến |
 | `tests/run-all.mjs` | Chạy hết phép ghim của gói. `package.json` gốc chỉ gọi file này — thêm phép ghim mới **không cần khoá `_root`** |
 | `ROADMAP.md` | **Đi tới đâu, đang ở đâu, thứ tự nào** — 25 mục `SEED v0.1` xếp thành bốn bước. Đọc file này TRƯỚC khi hỏi "việc kế là gì". Không chép danh sách 25 mục, chỉ xếp thứ tự |
