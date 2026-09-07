@@ -187,7 +187,7 @@ liệu + sổ nợ** và **68 (9%) chạm mã extension**; hạ tầng **44.239 
 7. **Một luật vào thì một luật ra.** Thêm luật vào file này phải **kể tên luật nó thay**, hoặc
    **đo được nó đã nổ mấy lần**. Mục này đổi lấy **chín dòng sổ tay** của ba gói đóng băng và
    **một khối bảng đối chiếu bị chép hai lần** (nó nói lại đúng điều dòng sổ tay đã nói) —
-   `wc -l AGENTS.md`: **296 → 289**.
+   `wc -l AGENTS.md`: **296 → 290**.
 
 ### Năm luật vàng
 
