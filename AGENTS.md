@@ -168,7 +168,28 @@ hai chiều**: chặn oan việc bạn, hoặc **im lặng cuốn việc ngườ
 Nhãn hỏng (rỗng · có dấu cách · hai nhãn trong một commit) thì ĐỎ, không đoán; sửa bằng
 `git commit --amend`.
 
-## 3. Năm luật vàng
+## 3. Năm luật vàng — và bảy giới hạn cứng
+
+**Bảy giới hạn Đức chốt 2026-09-07.** Lý do: đo bảy ngày ra **400/725 commit (55%) chạm tài
+liệu + sổ nợ** và **68 (9%) chạm mã extension**; hạ tầng **44.239 dòng** lớn hơn mã sản phẩm
+**38.136 dòng**. Giàn giáo lớn hơn toà nhà, nên từ nay **xoá là thắng, thêm là thua**.
+
+1. **Một gói sống một lúc.** Gói sống: `workers/duc-scouter`. Ba gói còn lại đóng băng (khai ở
+   khối `frozen` của `.repo-structure.json`) — chỉ đọc, mã ở lại trên đĩa.
+2. **Cấm cài một tính năng hai lần.** Cần ở hai gói → vào `workers/_shared/` trước. Bằng chứng:
+   ba gói là fork của nhau, **37.601 dòng**, và mỗi lỗi phải sửa ba lần — 07/09 đúng ba lần.
+3. **`docs/` ≤ 8.000 dòng.** Nay **24.732** (`git ls-files 'docs/*' | xargs wc -l`). Cắt docs
+   cần khoá `_docs`.
+4. **Sổ nợ hạ tầng ≤ 10 mục.** Nay **8** (`node scripts/backlog-check.mjs`).
+5. **File test bắt 0 đột biến thì XOÁ.** Một phép kiểm không bắt được gì vẫn thu thuế mọi phiên.
+6. **Tối đa 2 lane song song.** Bảy khoá được dựng cho sáu lane; với hai lane thì bảng khoá
+   phải co lại (`N-36` trong `BACKLOG.md`).
+7. **Một luật vào thì một luật ra.** Thêm luật vào file này phải **kể tên luật nó thay**, hoặc
+   **đo được nó đã nổ mấy lần**. Mục này đổi lấy **chín dòng sổ tay** của ba gói đóng băng và
+   **một khối bảng đối chiếu bị chép hai lần** (nó nói lại đúng điều dòng sổ tay đã nói) —
+   `wc -l AGENTS.md`: **296 → 289**.
+
+### Năm luật vàng
 
 1. **Không đoán selector.** Mọi selector phải có bằng chứng DOM thật. Cần bằng chứng mới →
    gọi `diagnostics.dom_probe` qua Bridge, đừng mượn mắt Đức.
@@ -216,11 +237,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 
 | Khi bạn sắp… | Mở file |
 |---|---|
-| Vận hành / debug extension Gemini qua Bridge | `workers/duc-auto-gemini/v0.2.0/AI-OPERATOR-GUIDE.md` |
-| Sửa code worker Gemini | `workers/duc-auto-gemini/v0.2.0/AGENTS.md` |
-| Sửa code worker ChatGPT | `workers/duc-auto-chatgpt/v0.1.0/AGENTS.md` |
-| Xem lỗi thật đã gặp trên trang, đừng chẩn đoán lại từ đầu | bảng lỗi trong `AI-OPERATOR-GUIDE.md` |
-| Hiểu schema workbook XLSX | `DAC_XLSX_RUN_PLAN_V1.md` của package |
+| **Đụng ba gói ĐÃ ĐÓNG BĂNG** (`duc-auto-chatgpt` · `duc-auto-gemini` · `duc-auto-gg-flow-video`) | **Đừng đụng.** Đức chốt 07/09: một gói sống một lúc, và gói sống là `workers/duc-scouter`. Ba gói này chỉ được ĐỌC — mã ở lại trên đĩa (bằng chứng vận hành, mục 4 cấm xoá), sổ nợ và tài liệu của chúng **không cần mở nữa**. Sổ tay từng gói vẫn nằm trong gói. Danh sách khai ở khối `frozen` của `.repo-structure.json` |
 | **Là phiên ĐIỀU PHỐI: Đức hỏi "đang có gì · làm gì tiếp · việc nào chạy song song được"** | `docs/protocols/ORCHESTRATOR.md` — sổ tay vai điều phối: đọc gì lúc mở phiên, luật song song, **HARD ROLE FIREWALL** (Đức chốt 04/09 — vai điều phối KHÔNG code, KHÔNG debug product, KHÔNG đề xuất patch; không có ngoại lệ "sửa nhỏ"), **luật nạp báo cáo năm mục** (`DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` rồi DỪNG), **lối ra bàn giao cho executor**, khi nào phải hỏi Đức. Công cụ đi kèm: `node scripts/what-next.mjs` — bản đồ việc, **chỉ đọc, không đòi khoá nào**, giao ba nguồn mà trước đây không giao được với nhau (bảng quyền × sổ nợ từng gói × sổ ý tưởng) |
 | **Biết Đức đã chốt gì, và vì sao** | **ADR** — mỗi quyết định một file bất biến. Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` · bản mẫu: `docs/_TEMPLATE-adr.md` · quyết định của cả repo ở `docs/adr/`, của một gói ở `workers/<gói>/<phiên-bản>/docs/adr/`. `decisions.md` của package nay là **mục lục** trỏ sang ADR. ADR đã `Accepted` là bất biến, phép kiểm B12 cưỡng chế |
 | **Sắp ghi một mục nhật ký, hoặc bị cổng chặn vì mục quá dài** | `docs/protocols/HANDOFF.md` — một mục chứa gì và KHÔNG chứa gì (lý do → ADR · việc còn nợ → `BACKLOG.md` · cách làm → brief), **trần 2.600 byte một mục** khai ở `.repo-structure.json` và cổng đóng phiên chặn **đúng mục bạn vừa thêm**, và cách xoay file theo tháng. Quyết định gốc: [ADR-0011](docs/adr/0011-handoff-chan-o-dau-vao-va-xoay-theo-thang.md). Công cụ: `node scripts/handoff.mjs --check` (đo) · `--rotate <file>` (xoay sang tháng mới) |
@@ -232,11 +249,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Hiểu cách vận hành nhiều extension trong một repo, hoặc thêm extension mới | `PLATFORM.md` ở gốc repo |
 | Khai trạng thái cho một extension (mới hoặc cũ) | `STATUS.template.md` ở gốc repo → chép thành `STATUS.md` đặt cạnh `manifest.json` |
 | **Muốn biết repo đang nợ gì về cấu trúc điều hướng** | `node scripts/check-bootstrap.mjs` — 15 phép kiểm B1…B15, mỗi dòng nói cả chỗ sai lẫn cách sửa. Thêm `--all` để xem hết. **Từ phiên S7 (2026-09-02) tám phép kiểm CHẶN THẬT:** `B1 B2 B3 B4 B5 B7 B10 B12` đỏ thì cổng đóng phiên đỏ theo, không được báo xong. Bảy phép kiểm còn lại (`B6 B8 B9 B11 B13 B14 B15`) vẫn chỉ cảnh báo. **B15 cưỡng chế luật vàng 5:** ba trường `current_focus` · `next_step` · `human_action` là chữ Đức đọc trên bảng, viết không dấu thì báo vàng. Danh sách chặn khai ở `bootstrap.blocking` trong `.repo-structure.json` — sửa ở đó, đừng sửa script |
-| Sắp code Extension Operation Platform V0.1 (STATUS/DASHBOARD) | `docs/archive/PLATFORM-V01-IMPLEMENTATION-BRIEF.md` — đề bài đã chốt, không tự mở rộng · prompt mở phiên: `docs/archive/PLATFORM-V01-ONBOARDING-PROMPT.md` (đã thực thi xong, giữ làm bản ghi) |
-| Sắp triển khai Extension Google Flow (video) | `docs/studies/FLOW-EXT-COORDINATION-PLAN.md` — kế hoạch điều phối 5 checkpoint (FLOW-00 đã chốt 27/08) |
-| Vận hành / sửa worker GG Flow Video | `workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md` · vận hành Bridge: `AI-OPERATOR-GUIDE.md` cùng thư mục |
 | **Sửa hoặc vận hành Scouter** (dò trang · báo cáo qua Bridge · tự nạp lại mình) | `workers/duc-scouter/v0.1.0/AGENTS.md` — gói riêng từ 06/09 ([ADR-0013](docs/adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md)), khoá `workers/duc-scouter`. Nó **không** mang tiền tố `duc-auto-` vì nó không tự động hoá nhà cung cấp nào. Hai chỗ dễ vấp, đọc trước khi sửa: **selector không bao giờ được gõ vào seed** (ranh giới seed/adapter, ADR-0009 mục ⑵), và **cửa Bridge của nó bắt tay HAI CHIỀU** nên chỉ nối được với máy chủ bản ChatGPT — hai bản host cũ nhận token trần |
-| Vận hành Bridge khi NHIỀU profile Chrome cùng nối (`bridge.sessions`, `--target`, `served_by`) | Thiết kế: `drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` (Đức duyệt hướng A 28/08) · đã thành code Ở CẢ BA worker 02/09 (gg-flow-video → gemini → chatgpt, mỗi nhánh có audit + mutation riêng) — luật vận hành: mục "Nhiều profile" trong `AI-OPERATOR-GUIDE.md` của từng worker |
 | **Tìm một tài liệu, hoặc tra đường dẫn `drafts/…` cũ nay nằm đâu** | `docs/README.md` — mục lục bốn tầng (studies · briefs · archive · adr), kèm bản đồ 33 đường dẫn cũ → mới. Thư mục `drafts/` ở gốc repo **đã biến mất** từ phiên S6 (2026-09-02) |
 | Viết một file nghiên cứu mới trong `docs/studies/` | `docs/_TEMPLATE-study.md` — bản mẫu: frontmatter 3 trường (`kind`/`status`/`ttl_days`), số liệu lấy từ nguồn máy sinh · hồ sơ đã nghỉ nằm ở `docs/archive/`; mục lục: `docs/README.md` |
 | **Lấy bộ chuẩn về dùng cho repo khác, hoặc sửa bộ chuẩn** | **KHÔNG CÒN Ở REPO NÀY.** Bộ khung đã dọn ra nhà riêng 03/09 theo ADR-0001: `https://github.com/anhducds-GIT/Ark_Repo_Harness`. Repo này nay là một **người dùng** của bộ khung, không phải nơi phát hành nó — sửa bộ khung thì sửa ở đó |
@@ -253,38 +266,19 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | **Đức muốn tự xem bảng mà KHÔNG phải nhờ AI** | `bang-trang-thai/` ở gốc repo — **ba cửa, một thư mục, một lõi** (`BRIEF-BANG-BA-CUA-01`, Đức nêu 06/09): ① nhấp đúp `Xem-bang.cmd` · ② `Mo-may-chu.cmd` mở máy chủ tại chỗ (chỉ nghe `127.0.0.1`, **không có đường ghi nào**), trong trang có nút Làm mới · ③ `Bat-tu-chay.cmd` / `Tat-tu-chay.cmd` cài–gỡ mục tự chạy lúc khởi động Windows (thư mục Startup của người dùng, **không cần quyền quản trị** — Đức duyệt tường minh 06/09). Lõi chung: `bang-trang-thai/loi.mjs`. **Bốn chốt an toàn, phép ghim `tests/bang-ba-cua-smoke.mjs` cưỡng chế cả bốn:** phiên nào đang giữ `_code` thì NGỪNG sinh và **trang nói rõ vì sao** (bộ sinh nằm trong vùng đó, có thể đang sửa dở) · chỉ sinh bảng HTML, **cấm** chạy bộ sinh đối chiếu tính năng · không commit / đẩy / nhận khoá — cả thư mục không chạy một lệnh hệ điều hành nào · gộp nhịp 30 giây, không sinh theo từng sự kiện file. Bản ra `BANG.html` **không commit** (đã cho vào `.gitignore`); bản đã commit ở gốc repo vẫn là việc của phiên AI lúc đóng phiên. Câu để dán cho Đức: mục cùng tên trong `PROMPTS.md` |
 | **Sinh bảng trạng thái cho Đức xem** | `node scripts/build-overview.mjs <file-ra.html>` — trang trực quan, sinh từ cùng nguồn với `DASHBOARD.md` nên ba trang không thể nói khác nhau. **Bản ra KHÔNG commit**: nó để publish, và tự in ngày sinh + bật cờ đỏ khi quá 7 ngày. Cấm trong trang: SHA · đường dẫn · phần trăm · lời máy tự khen |
 
-**Về bảng đối chiếu GPT ↔ Gemini — nay là HAI file, đừng tìm số ở file chữ:**
+**Về bảng đối chiếu GPT ↔ Gemini — HAI file, đừng tìm số ở file chữ** ([ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)):
+`FEATURE-PARITY.md` là chữ của **NGƯỜI** (mục 2 hành vi, có bằng chứng **[ĐỌC]**) → phải giữ
+`_root`. `FEATURE-PARITY-AUTO.md` là số của **MÁY, toàn bộ** → **miễn khoá**, sinh lại bằng
+`node scripts/feature-parity.mjs` (`--check` chỉ kiểm, không ghi). Sửa tay file máy là mất trắng
+ở lần sinh sau. Cả hai ở gốc repo vì nói về cả hai nhánh.
 
-| File | Của ai | Chứa gì | Khoá |
-|---|---|---|---|
-| `FEATURE-PARITY.md` | **NGƯỜI** | mục 2 (tính năng hành vi, bằng chứng **[ĐỌC]**), ghi chú module, diễn giải "ai nợ ai" | phải giữ `_root` |
-| `FEATURE-PARITY-AUTO.md` | **MÁY, toàn bộ** | mục 1 method Bridge · mục 3 so module · mục 4 nợ *method* | **miễn khoá** |
-
-Cả hai ở **gốc repo** vì nói về cả hai nhánh, không thuộc package nào.
-
-> **CẢ FILE `FEATURE-PARITY-AUTO.md` DO MÁY SỞ HỮU (từ 07/09,
-> [ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)).** **Sửa tay là mất trắng
-> ở lần sinh sau.** Sinh lại / kiểm:
-> ```bash
-> node scripts/feature-parity.mjs           # sinh
-> node scripts/feature-parity.mjs --check    # chỉ kiểm, không ghi
-> ```
-> **Trước 07/09 hai loại chữ ở chung một file**, ngăn nhau bằng mốc `<!-- AUTO:X START -->` /
-> `<!-- AUTO:X END -->`. Nay `FEATURE-PARITY.md` **không còn một mốc AUTO nào** — chỗ chúng từng
-> nằm là một **con trỏ** sang file máy. Thấy mốc AUTO quay lại trong đó thì đó là bug: phép ghim
-> khối 13 của `tests/feature-parity-smoke.mjs` canh đúng chuyện này.
->
-> **Mục 2 (hành vi) vẫn của NGƯỜI, và máy vẫn bị cấm đụng vào** — luật này không đổi một chữ.
-> Dò theo tên hàm đã cho kết luận sai bốn lần trong một ngày. Muốn thêm dòng hành vi thì phải mở
-> code đọc, gắn nhãn **[ĐỌC]**, kèm bằng chứng.
->
-> Và một luật nhỏ nhưng đã trả giá: **đừng viết văn của người chung dòng với số của máy** —
-> một câu diễn giải đã bị nuốt mất đúng vì nằm chung dòng với con số. Mỗi dòng ghi rõ được xác lập
-bằng cách nào (**[ĐO]** máy đếm · **[ĐỌC]** đọc thẳng code · **[DÒ]** tìm theo tên), vì ba loại
-đó tin được khác nhau: dò theo tên đã cho hai kết quả sai trong một buổi. **Dòng [DÒ] phải kiểm
-lại trước khi hành động.** Port tính năng sang nhánh kia thì đọc **hai file trên** trước, đừng
-đọc `BACKLOG.md` — danh sách port trong backlog đã lạc hậu một lần (ghi Gemini thiếu `run.stop`
-trong khi nó đã có).
+> **Máy bị cấm đụng mục 2.** Dò theo tên hàm đã cho kết luận sai bốn lần trong một ngày, nên
+> thêm dòng hành vi thì phải mở code đọc, gắn nhãn **[ĐỌC]**, kèm bằng chứng. Mỗi dòng khai rõ
+> được xác lập bằng cách nào — **[ĐO]** máy đếm · **[ĐỌC]** đọc thẳng code · **[DÒ]** tìm theo
+> tên — vì ba loại đó tin được khác nhau; **dòng [DÒ] phải kiểm lại trước khi hành động**. Và
+> **đừng viết văn của người chung dòng với số của máy**: một câu diễn giải đã bị nuốt mất đúng
+> vì nằm chung dòng với con số. Port tính năng sang nhánh kia thì đọc hai file trên, đừng đọc
+> `BACKLOG.md` — danh sách port trong backlog đã lạc hậu một lần.
 
 ## 7. Đóng phiên — ghi lại 3 thứ
 
