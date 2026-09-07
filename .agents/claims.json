@@ -60,11 +60,11 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": "claude-bang-ia",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-07T08:36",
       "task": "Refactor IA bang trang thai: 9 tab -> 3 tang HOME/WORK/SYSTEM, bo trung lap",
-      "released_at": null,
+      "released_at": "2026-09-07T09:52",
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -78,5 +78,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "85355671e6932f57"
+  "_fingerprint": "d0c7a4f38bc0b04b"
 }
