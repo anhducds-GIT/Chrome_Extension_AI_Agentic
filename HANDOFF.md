@@ -1405,3 +1405,35 @@ dòng `NEEDS ĐỨC` (hai chiều) · bộ sinh đọc đồng hồ (phép ghim 
 
 **Cổng còn MỘT mục đỏ, KHÔNG phải của tôi:** `HANDOFF_MUC_QUA_DAI` — mục 07/09 của
 `claude-scouter-s06` dài 4794 byte, trần 2600. Sửa là viết lại chữ lane khác. **Tôi giữ `_code`.**
+
+## 2026-09-07 · `claude-scouter-s06` — `--restamp` kể sai tên người bị lấy khoá
+
+**Việc**: cổng đỏ với MỌI lane vì một mục nhật ký 4.794 byte. Đo ra nguyên nhân không phải mục
+dài: dòng 1316 mở đầu bằng `###` nên `docMuc()` không coi là mục mới và **nuốt khối của
+`claude-root-adr0014` vào mục ngay trên nó**. Sửa đúng một ký tự thì 4.794 → 2.272 + 2.520.
+
+**Kết quả**: lane `claude-assistant` sửa cả năm tiêu đề (`66135b3f`) sau khi tôi nhắn thẳng cho
+phiên đó. Tôi không phải sửa gì. **Đường "hỏi lane đang giữ" rẻ hơn đường lấy khoá** — ghi ra vì
+tôi đã làm cả hai và chỉ một cái cần thiết.
+
+**Lỗi tôi gây ra, và nó là lỗi của công cụ chứ không riêng tôi.** Đức chốt *"lấy `_root` đi, sửa
+luôn"*, tôi sửa tay rồi `--restamp --duc-duyet`. Lệnh đó ghi đè `taken_from`/`taken_by`/
+`taken_at`/`duc_decision` lên **MỌI khoá lệch chủ so với mốc niêm phong ĐÃ COMMIT**. Hai bản ghi
+thành sai sự thật:
+
+⑴ `_root` ghi `taken_from: claude-root-adr0014`. Tôi lấy từ **`claude-tinh-gon`** — lượt nhận của
+họ nằm trên đĩa **chưa commit**, nên phép so không thấy và nó kể tên người đã rời vùng từ trước.
+Đúng cái trường này sinh ra để lane vừa mất khoá đọc thấy tên mình, và nó chỉ vào nhầm người.
+
+⑵ `workers/duc-auto-chatgpt`: một lượt **TRẢ** khoá bình thường của `claude-b36-vaA` lúc 08:50 bị
+ghi thành lượt **LẤY** của tôi, kèm câu chốt của Đức về `_root` dán sang — câu đó không nói một
+chữ nào về gói ChatGPT.
+
+**Cách vá**: commit trạng thái sai làm mốc niêm phong mới (`5f0324c4`), rồi sửa tay đúng bốn
+trường và restamp lại — lúc này chủ không đổi so với mốc nên lệnh thôi ghi đè (`2f37e776`).
+Không đụng dấu niêm phong bằng tay.
+
+**Còn nợ**: `--restamp` phải đọc chủ cũ từ **bảng đang nằm trên đĩa trước lượt sửa**, không phải
+từ mốc đã commit; và chỉ đóng dấu **khoá người chạy thật sự đụng**, không rải câu chốt lên khoá
+khác. Chưa ghi vào `BACKLOG.md` vì sổ đang **đúng 10 mục** — chạm trần cứng Đức chốt sáng nay
+(giới hạn ④). Thêm một mục để chữa lỗi này là phá đúng cái luật vừa dựng.
