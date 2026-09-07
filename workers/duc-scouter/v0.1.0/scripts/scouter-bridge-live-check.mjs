@@ -266,6 +266,21 @@ try {
     assert.equal(badParams.error.code, "INVALID_PARAMS");
     console.log("⑤ tham số thiếu bị từ chối qua dây thật: ĐẠT");
 
+    /* S-05: cái phanh phải chặn được QUA DÂY THẬT, không chỉ trong phép ghim chạy trong bộ nhớ.
+     * Đây là chiều quan trọng hơn của hai chiều: nó là thứ chứng minh một AI ở đầu dây bên kia
+     * — đúng vị trí của kẻ đáng lo — không bấm được gì khi Đức chưa mở khoá. */
+    const chanTruoc = await rpc("scout.click", { target_id: "LIVE-TARGET", selector: "button" });
+    assert.equal(chanTruoc.ok, false, "công tắc TẮT mà lệnh bấm vẫn lọt qua dây thật");
+    assert.equal(chanTruoc.error.code, "WRITE_BLOCKED");
+    assert.equal(chanTruoc.error.details.write_code, "DEV_MODE_OFF");
+    /* Và không method nào của từ vựng mở được cái khoá đó hộ người gọi. */
+    assert.equal(store["scouter.write.gate.v1"], undefined, "một method qua dây đã tự mở khoá cho nó");
+    console.log("⑥ công tắc TẮT: ba lệnh ghi bị chặn qua dây thật: ĐẠT");
+
+    /* Mở khoá đúng cách người mở: ghi thẳng vào kho lưu, như popup làm. Không có đường nào từ
+     * phía máy chủ làm được việc này, và đó chính là điều khối trên vừa đo. */
+    store["scouter.write.gate.v1"] = { enabled: true, enabled_at: 1, used: 0 };
+
     /* S-01: ba method GHI cũng phải đi trọn vòng qua dây thật — và quan trọng hơn: một yêu cầu
      * mang TOẠ ĐỘ phải chết ngay ở cổng phong bì, trước khi chạm tới Chrome. */
     const click = await rpc("scout.click", { target_id: "LIVE-TARGET", selector: "button" });
@@ -277,7 +292,10 @@ try {
 
     const key = await rpc("scout.key", { target_id: "LIVE-TARGET", selector: "#txt", key: "Enter" });
     assert.equal(key.ok, true, `scout.key: ${JSON.stringify(key.error || {})}`);
-    console.log("⑥ ba hành động ghi đi trọn vòng qua dây: ĐẠT (engine là bản giả — xem đầu file)");
+    /* Ngân sách phải trừ THẬT qua dây, không chỉ trong bộ nhớ của lõi. */
+    assert.equal(store["scouter.write.gate.v1"].used, 3, "ba lượt bấm mà ngân sách không trừ đủ");
+    assert.equal(key.result.write_budget.remaining, 47);
+    console.log("⑦ mở khoá rồi: ba hành động ghi đi trọn vòng, ngân sách trừ đúng: ĐẠT (engine là bản giả — xem đầu file)");
 
     const toaDo = await rpc("scout.click", { target_id: "LIVE-TARGET", selector: "button", x: 10, y: 10 });
     assert.equal(toaDo.ok, false, "yêu cầu mang toạ độ lọt qua dây thật");
@@ -286,7 +304,7 @@ try {
     const phimLa = await rpc("scout.key", { target_id: "LIVE-TARGET", selector: "#txt", key: "F5" });
     assert.equal(phimLa.ok, false, "phím ngoài bảng lọt qua dây thật");
     assert.equal(phimLa.error.code, "INVALID_PARAMS");
-    console.log("⑦ toạ độ và phím ngoài bảng bị chặn ngay ở cổng phong bì: ĐẠT");
+    console.log("⑧ toạ độ và phím ngoài bảng bị chặn ngay ở cổng phong bì: ĐẠT");
 
     console.log("\nscouter-bridge live check: ĐẠT — seed nói đúng giao thức của máy chủ Bridge thật.");
   }
