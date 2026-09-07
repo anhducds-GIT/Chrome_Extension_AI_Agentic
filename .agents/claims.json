@@ -37,22 +37,22 @@
       "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "_root": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-07T09:33",
       "task": "Sua dong 1316 HANDOFF.md goc: ### -> ## de tach hai muc bi dinh nhau",
-      "released_at": null,
+      "released_at": "2026-09-07T09:46",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
       "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\". Lay tu lane claude-tinh-gon (dang giu, 7 commit chua day) de sua dong 1316 HANDOFF.md: ### -> ## - muc 4794 byte dang chan cong dong phien voi MOI lane. Sua dung mot ky tu, khong xoa chu cua ai. Toi da nhan thang cho lane do truoc khi lay."
     },
     "_docs": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-07T05:50",
       "task": "ADR sua muc chan ghi xuong dia cua ADR-0010 theo chot cua Duc 07/09",
-      "released_at": null,
+      "released_at": "2026-09-07T09:47",
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -78,5 +78,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "56b3f4cce2be1847"
+  "_fingerprint": "85355671e6932f57"
 }
