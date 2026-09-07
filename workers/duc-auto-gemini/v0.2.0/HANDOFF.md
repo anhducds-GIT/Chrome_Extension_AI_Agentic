@@ -620,4 +620,34 @@ một cặp là đỏ. Thư mục phiên bản nhánh kia đọc từ đĩa, kh�
 **Số.** Suite gói 95/95. Nửa *chống trôi dạt* của G-08 đã xong; nửa *gộp vào `workers/_shared/`*
 vẫn mở — cần khoá `_root` và cần Đức chốt.
 
+## 2026-09-07 — `claude-gemini-nghiem-thu`: lớp nhiều hồ sơ ĐẠT bằng 0 credit; lượt live G-01 dừng trước khi tiêu đồng nào
+
+**Việc miễn phí xong trọn.** Bốn bảo đảm của lớp nối nhiều hồ sơ đều ĐẠT, đo qua Bridge thật với
+hai hồ sơ thật: kể đúng hồ sơ kèm tên Đức đặt · quên `--target` thì `TARGET_AMBIGUOUS` chứ
+**không tự chọn** · đích lạ thì `TARGET_NOT_CONNECTED` · `served_by` đúng đích ở **mọi** lượt.
+
+**`legacy: false` KHÔNG có nghĩa "đang chạy code mới nhất".** Hai hồ sơ cùng `legacy:false`,
+cùng `extension_version: 0.2.0`, mà một cái thiếu đúng bốn lệnh thêm 06/09 — nó còn ôm bản cũ
+trong RAM. Muốn biết thì **đối chiếu bộ lệnh `capabilities`**.
+
+**Một phép đo suýt thành báo cáo sai — phần đắt nhất của phiên.** `run.status` timeout **5 trong
+6** lượt liên tiếp trong khi `ledger.read` cùng hồ sơ trả lời 6/6 — cùng context, cùng deadline,
+cùng đường dispatch. Kết luận gọn: *"`run.status` hỏng riêng"* — mà đó là camera canh lúc bấm
+dừng, nên nếu đúng thì nó **chặn cả G-01**. Nó sai. Phép đo tách được là **xen kẽ ba method và
+in giờ từng lượt**: lỗi đóng theo **THỜI GIAN**, không theo **METHOD** — ba lượt đầu timeout
+(mỗi method đúng một lượt) rồi 15 lượt sau xanh trong 4 giây. Cửa sổ đánh thức service worker.
+Gọi liên tiếp MỘT method thì hai nguyên nhân nhìn giống hệt nhau.
+
+**Lượt live KHÔNG chạy, và đó là quyết định chứ không phải sự cố.** Không hồ sơ nào hội đủ điều
+kiện: một cái panel đóng + code cũ; cái kia code mới + panel mở nhưng **không có tab hội thoại
+Gemini đang hoạt động** để `bindRunTab()` khoá vào. Giao thức **cố ý không có** lệnh mở tab, nên
+đây là việc Đức bấm. Đã dừng, **0 credit**, không sửa một dòng code nào.
+
+**Cần BỐN thứ trên MỘT hồ sơ:** nạp lại tiện ích · mở tab `/app` và **để nó là tab đang hoạt
+động** · mở side panel · bật **Chế độ phát triển**. Cái thứ tư **không kiểm được từ xa**: lệnh
+duy nhất soi nó là `run.trial` — chính là lệnh tiêu tiền.
+
+**Số.** Suite gói 95/95. Bằng chứng: `evidence-multiprofile-nghiem-thu-20260907/`.
+`G-01`/`G-02` vẫn MỞ — gộp được vào **một** lượt Đức bấm.
+
 <!-- HANDOFF-THANG: 2026-09 -->
