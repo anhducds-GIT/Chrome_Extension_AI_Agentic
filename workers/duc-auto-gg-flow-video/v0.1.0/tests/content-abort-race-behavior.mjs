@@ -21,7 +21,16 @@ const createButton = {
   getAttribute: () => null, getBoundingClientRect: () => ({ width: 80, height: 32 }),
   click() {
     createClicks += 1;
-    videos = [{ currentSrc: `https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=created-${createClicks}`, getBoundingClientRect: () => ({ width: 320, height: 180 }) }];
+    // F-33: san khau nay dung NHA MOI — do 06/09, nha moi khong con the <video>
+    // nao, video hien bang <img> trong <flow-video-tile>
+    // (evidence/F31-dom-probe-flow-google-com-20260906.json). Nha cu van duoc
+    // canh o tests/flow-video-safety-behavior.mjs.
+    videos = [{
+      __tag: "img", __tile: "flow-video-tile",
+      currentSrc: `https://flow.google.com/asb/created-${createClicks}`,
+      getBoundingClientRect: () => ({ width: 320, height: 180 }),
+      closest: () => null, alt: "", getAttribute: () => null,
+    }];
   },
 };
 composerArea = { tagName: "DIV", parentElement: null, querySelectorAll: (selector) => selector === "button" ? [createButton] : [] };
@@ -35,12 +44,15 @@ const document = {
   querySelectorAll(selector) {
     if (selector === "button") return [videoModeSummary, createButton];
     if (selector.includes("contenteditable")) return [composer];
-    // Trinh duyet that hieu danh sach selector ngan bang dau phay; harness nay
-    // truoc 06/09 so BANG cho nen no im lang tra [] ngay khi adapter them mot
-    // nhanh thu hai (nha moi dung <flow-video-tile img>). Harness co diem mu la
-    // harness noi doi — cung dung cai bay da gap o F-26.
-    if (String(selector).split(",").some((phan) => phan.trim() === "video")) return videos;
-    return [];
+    // F-33: giai selector bang bo do THAT — tach danh sach bang dau phay (trinh
+    // duyet hieu the), roi doc moi phan nhu chuoi the-to-hau-due. So BANG CHU
+    // nhu truoc 06/09 la harness noi doi: no im lang tra [] ngay khi adapter
+    // them nhanh thu hai, ma nhanh thu hai chinh la duong nha moi.
+    return videos.filter((node) => String(selector).split(",").some((phan) => {
+      const tu = phan.trim().split(/\s+/).filter(Boolean);
+      if (!tu.length || tu[tu.length - 1] !== node.__tag) return false;
+      return tu.slice(0, -1).every((toTien) => toTien === node.__tile);
+    }));
   },
   querySelector: () => null,
   createTreeWalker: () => ({ nextNode: () => null }),
@@ -77,7 +89,8 @@ assert.equal(createClicks, 0, "abort(X) before run(X) produces zero Create click
 
 const later = await deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V001", attempt_id: "attempt-y", prompt: "later attempt", timeoutMs: 15000 });
 assert.equal(later.ok, true, "abort of X must not block later attempt Y");
-assert.equal(later.result.video_id, "created-1");
+assert.equal(later.result.video_id, "created-1", "quy ket tren NHA MOI: id la ma sau /asb/");
+assert.ok(later.result.video_url.startsWith("https://flow.google.com/asb/"));
 assert.equal(createClicks, 1);
 
 console.log("content abort race behavior: PASS");

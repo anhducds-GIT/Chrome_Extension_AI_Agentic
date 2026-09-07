@@ -3,7 +3,29 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
-const media = (id) => ({ currentSrc: `https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=${id}`, getBoundingClientRect: () => ({ width: 320, height: 180 }), querySelector: () => null });
+// Nha CU: mot the <video> that, khong the boc nao dang ke.
+const media = (id) => ({ __tag: "video", __tile: null, currentSrc: `https://labs.google/fx/api/trpc/media.getMediaUrlRedirect?name=${id}`, getBoundingClientRect: () => ({ width: 320, height: 180 }), querySelector: () => null });
+// Nha MOI (do 06/09, evidence/F31-dom-probe-flow-google-com-20260906.json):
+// khong con the <video> nao. Video hien bang <img> trong <flow-video-tile>, va
+// anh Duc TAI LEN dung DUNG CUNG DANG dia chi (flow.google.com/asb/<ma>) trong
+// <flow-image-tile>. Nen the boc la thu DUY NHAT phan biet dau vao voi dau ra.
+const tile = (id, wrapper = "flow-video-tile") => ({ __tag: "img", __tile: wrapper, currentSrc: `https://flow.google.com/asb/${id}`, getBoundingClientRect: () => ({ width: 320, height: 180 }),
+  querySelector: () => null,
+  // Tile cua nha moi la <img> THAT, nen bo do anh (`imageCandidates`) cung nhin
+  // thay no — dung nhu trinh duyet. Ba mon duoi day la thu bo do do goi tren moi
+  // <img>; tra rong/null la dung voi nha moi: tile khong nam trong container
+  // "anh sinh ra" nao cua nhanh Gemini, va `alt` la chu bi DICH nen co y khong
+  // duoc dung lam dieu kien (cung cai bay cua F-32).
+  closest: () => null, alt: "", getAttribute: () => null });
+// Bo do selector THAT cua harness: tach danh sach bang dau phay (trinh duyet
+// hieu the), roi moi phan doc nhu mot chuoi the-to-hau-due ("flow-video-tile
+// img"). Truoc 06/09 harness so BANG CHU voi "video", nen no im lang tra [] ngay
+// khi adapter them nhanh thu hai — harness noi doi tham hon harness khong co.
+const khopSelector = (node, selector) => String(selector).split(",").some((phan) => {
+  const tu = phan.trim().split(/\s+/).filter(Boolean);
+  if (!tu.length || tu[tu.length - 1] !== node.__tag) return false;
+  return tu.slice(0, -1).every((toTien) => toTien === node.__tile);
+});
 const VIDEO_MODE_SUMMARY = "Video · 360p · 10s crop_16_9 x1";
 const IMAGE_MODE_SUMMARY = "🍌 Nano Banana 2 crop_9_16 x2";
 
@@ -33,6 +55,20 @@ function harness({
   settingsOpenAtStart = false,
   outputFixSilentlyFails = false,
   videoSummaryAfterSwitch = VIDEO_MODE_SUMMARY,
+  // newHome: dung tile <flow-video-tile img> cua nha moi thay cho the <video>.
+  // uploadTileAfterClick: mot tile ANH TAI LEN hien ra SAU cu bam. Co that:
+  // trang dung cdk-virtual-scroll-viewport nen tap tile duoc ve doi theo cho
+  // cuon (do 06/09). Neo sai the boc thi day la luc anh dau vao bi ghi thanh
+  // video dau ra.
+  newHome = false,
+  uploadTileAfterClick = false,
+  // unattributableTileAfterClick: mot tile <flow-video-tile img> dung the boc
+  // nhung dia chi CHUA doc ra id nao (src rong). Day KHONG phai mot trang thai
+  // da do cua Flow — no la ca ghim cho chinh cai loc `filter(candidate.id)`
+  // trong content.js: mot node khop selector ma khong quy gan duoc thi khong
+  // duoc thanh ung vien. Bo loc do di ma khong ai do la mot ket qua bi bo phieu
+  // bang mot o trong.
+  unattributableTileAfterClick = false,
 } = {}) {
   let clicks = 0;
   let remountClicks = 0;
@@ -46,7 +82,13 @@ function harness({
   let settingsOpen = settingsOpenAtStart;
   let outputOptionPresses = 0;
   let currentModeSummary = modeSummaryLabel;
-  let videos = [media("old")];
+  const dungMedia = newHome ? (id) => tile(id) : (id) => media(id);
+  const mediaSauBam = () => [
+    ...afterClick.map(dungMedia),
+    ...(uploadTileAfterClick ? [tile("anh-tai-len", "flow-image-tile")] : []),
+    ...(unattributableTileAfterClick ? [{ ...tile("", "flow-video-tile"), currentSrc: "" }] : []),
+  ];
+  let videos = [dungMedia("old")];
   // Measured: settings controls react to the pointer sequence, not to a bare
   // .click(). Fixtures that respond to .click() would let the old code pass.
   const buttonNode = (label, { className = "", disabled = () => false, click = () => {}, onPointerDown = null } = {}) => ({
@@ -90,7 +132,7 @@ function harness({
   const remountComposer = makeComposer("remount", () => remountArea);
   const createButtons = Array.from({ length: duplicateCreateCount }, () => buttonNode(createLabel, {
     disabled: () => createAlwaysDisabled || (createDisabledUntilTyped && !typed),
-    click() { clicks += 1; videos = [...afterClick.map(media), ...videos]; },
+    click() { clicks += 1; videos = [...mediaSauBam(), ...videos]; },
   }));
   const globalCreateButton = globalCreateLabel == null ? null : buttonNode(globalCreateLabel, { click() { globalCreateClicks += 1; } });
   const summaryButton = () => {
@@ -117,7 +159,7 @@ function harness({
     },
   });
   const remountCreate = buttonNode(createLabel, {
-    click() { remountClicks += 1; videos = [...afterClick.map(media), ...videos]; },
+    click() { remountClicks += 1; videos = [...mediaSauBam(), ...videos]; },
   });
   const videoOption = buttonNode(videoOptionLabel, {
     className: "flow_tab_slider_trigger",
@@ -183,17 +225,15 @@ function harness({
         return [...buttons, ...composerButtons()];
       }
       if (selector.includes("contenteditable")) return remounted ? [remountComposer] : composers;
-      // Trinh duyet that hieu danh sach selector ngan bang dau phay; harness nay
-      // truoc 06/09 so BANG cho nen no im lang tra [] ngay khi adapter them mot
-      // nhanh thu hai (nha moi dung <flow-video-tile img>). Harness co diem mu la
-      // harness noi doi — cung dung cai bay da gap o F-26.
-      if (String(selector).split(",").some((phan) => phan.trim() === "video")) return videos;
-      return [];
+      // F-33: giai selector bang bo do THAT (xem `khopSelector`), khong so bang
+      // chu nua. Giu thu tu DOM: ket qua moi duoc chen len dau, nen id quy gan
+      // duoc dau tien luon la ket qua moi nhat.
+      return videos.filter((node) => khopSelector(node, selector));
     },
     querySelector: () => null,
     createTreeWalker: () => ({ nextNode: () => null }),
     createRange: () => ({ selectNodeContents() {} }),
-    execCommand() { typed = true; videos = [...duringTyping.map(media), ...videos]; return true; },
+    execCommand() { typed = true; videos = [...duringTyping.map(dungMedia), ...videos]; return true; },
   };
   class FastDate extends Date {
     static now() { tick += 1000; return tick; }
@@ -680,6 +720,64 @@ let flowQuotaError;
   const reconciled = await h.deliver({ type: "DAC_RECONCILE_IMAGE_JOB", job_id: "V-TIMEOUT", attempt_id: "attempt-timeout", timeoutMs: 300000 });
   assert.equal(reconciled.ok, false);
   assert.equal(h.clicks(), 1, "reconciliation cannot issue a second Create click");
+}
+
+// ---- F-33: DUONG NHA MOI, ghim bang HANH VI chu khong bang test tinh ------
+//
+// Toi 06/09 nha moi chi duoc canh bang test tinh (doc file bang chung, doc chuoi
+// selector). Nghia la: doi `videoSelector` di thi test tinh do, nhung khong ai
+// chung minh duoc rang RUNNER van quy gan dung tren nha moi. Ba ca duoi day chay
+// tron duong that — deliver -> go -> bam Create -> quy gan — tren tile
+// <flow-video-tile img>, khong con the <video> nao trong san khau.
+
+// (a) Duong tot: nha moi quy gan dung MOT id, va id do la ma sau /asb/.
+{
+  const h = harness({ newHome: true, afterClick: ["AB-nOUZXSbRHkbCk8r"] });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-NEWHOME", attempt_id: "attempt-newhome", prompt: "nha moi", timeoutMs: 15000 });
+  assert.equal(response.ok, true, "nha moi khong con the <video> nao — runner van phai thay ket qua");
+  assert.equal(response.result.video_id, "AB-nOUZXSbRHkbCk8r");
+  assert.ok(response.result.video_url.startsWith("https://flow.google.com/asb/"), "dia chi ghi vao so phai la dang cua nha moi");
+  assert.deepEqual([...response.result.detection.baseline_video_ids], ["old"], "tile co san truoc cu bam la duong co so, khong phai ket qua");
+  assert.equal(h.clicks(), 1);
+}
+
+// (b) CAI BAY, va day la ly do F-33 ton tai: anh Duc TAI LEN dung cung dang dia
+//     chi, chi khac the boc. Neo dung thi no bi loai va khong lam nhiem gi;
+//     neo long tay (`video, img`) thi no thanh ung vien thu hai -> OUTPUT_AMBIGUOUS,
+//     hoac te hon, thanh ket qua duoc ghi vao so.
+{
+  const h = harness({ newHome: true, afterClick: ["AB-nOUaWftmd7Gqcl6"], uploadTileAfterClick: true });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-UPLOAD", attempt_id: "attempt-upload", prompt: "co anh tai len hien ra giua duong", timeoutMs: 15000 });
+  assert.equal(response.ok, true, "mot tile ANH TAI LEN hien ra khong duoc lam do mot lan chay dung");
+  assert.equal(response.result.video_id, "AB-nOUaWftmd7Gqcl6", "chi tile <flow-video-tile> moi duoc quy gan");
+  assert.deepEqual([...response.result.detection.candidate_video_ids], ["AB-nOUaWftmd7Gqcl6"], "anh-tai-len KHONG duoc lot vao danh sach ung vien");
+  assert.ok(
+    !response.result.detection.current_video_ids.includes("anh-tai-len"),
+    "id cua anh tai len khong duoc xuat hien o BAT KY cho nao trong so cai — lot vao day la sai so, khong phai hong",
+  );
+}
+
+// (d) Mot tile dung the boc ma KHONG doc ra id thi khong duoc dem la ung vien.
+{
+  const h = harness({ newHome: true, afterClick: ["AB-nOUbEJg6fKSZor"], unattributableTileAfterClick: true });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-EMPTY", attempt_id: "attempt-empty", prompt: "co tile khong quy gan duoc", timeoutMs: 15000 });
+  assert.equal(response.ok, true, "mot tile khong quy gan duoc khong duoc lam do mot lan chay dung");
+  assert.equal(response.result.video_id, "AB-nOUbEJg6fKSZor");
+  assert.deepEqual([...response.result.detection.candidate_video_ids], ["AB-nOUbEJg6fKSZor"], "tile khong co id phai bi loai TRUOC khi dem ung vien");
+  assert.ok(
+    response.result.detection.current_video_ids.every((id) => id),
+    "so cai khong duoc chua mot id rong — do la mot ket qua duoc bo phieu bang o trong",
+  );
+}
+
+// (c) Nha moi cung phai giu duoc luat "hai id moi thi khong nhan cai nao".
+{
+  const h = harness({ newHome: true, afterClick: ["AB-canhA", "AB-canhB"] });
+  const response = await h.deliver({ type: "DAC_RUN_IMAGE_JOB", job_id: "V-NEWMULTI", attempt_id: "attempt-newmulti", prompt: "hai tile moi", timeoutMs: 15000 });
+  assert.equal(response.ok, false);
+  assert.match(response.error, /OUTPUT_AMBIGUOUS/);
+  assert.deepEqual([...response.attempt.detection.candidate_video_ids], ["AB-canhA", "AB-canhB"]);
+  assert.equal(response.result, undefined);
 }
 
 const runnerContext = { window: {}, globalThis: null };
