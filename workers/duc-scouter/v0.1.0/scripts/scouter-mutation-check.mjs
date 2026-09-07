@@ -373,4 +373,152 @@ BATCHES.push({
   ]
 });
 
+/* ---- MẺ NĂM: PHANH CỦA ĐƯỜNG GHI (S-05) --------------------------------
+ * Mẻ HÀNH ĐỘNG ở trên hỏi "bấm có ĐÚNG chỗ không". Mẻ này hỏi câu đắt hơn: "có được bấm
+ * KHÔNG". Bốn mẻ kia đều xanh trọn với một bản Scouter bấm bất cứ lúc nào nó muốn.
+ *
+ * Con nào ở đây sống sót cũng có nghĩa như nhau: cái phanh chỗ đó là văn bản, không phải chốt.
+ * Và luật vàng 3 của repo áp đúng vào đây — con sống thì sửa PHÉP GHIM, đừng sửa con. */
+const PIN_GATE = path.join(ROOT, "tests", "scouter-write-gate-smoke.mjs");
+
+BATCHES.push({
+  ten: "PHANH — công tắc và trần của đường ghi",
+  target: path.join(ROOT, "scripts", "scouter-seed-core.mjs"),
+  pin: PIN_GATE,
+  mutants: [
+    {
+      ma: "P1",
+      ten: "Gỡ hẳn cái phanh: bấm thẳng, không hỏi công tắc",
+      tim: "    const budget = await spendWriteBudget();",
+      thay: "    const budget = { used: 0, cap_per_unlock: WRITE_CAP_PER_UNLOCK, remaining: WRITE_CAP_PER_UNLOCK };",
+      soLan: 1
+    },
+    {
+      ma: "P2",
+      ten: "HỎNG THÌ MỞ: đọc kho lưu lỗi thì coi như đã mở khoá",
+      tim: "    } catch (error) {" + NL + '      throw new BridgeProtocolError("WRITE_BLOCKED",' + NL + '        "DEV_MODE_UNREADABLE: khong doc duoc trang thai cong tac, nen coi nhu DANG TAT.", {',
+      thay: "    } catch (error) {" + NL + "      return { enabled: true, enabled_at: 0, used: 0 };" + NL + '      throw new BridgeProtocolError("WRITE_BLOCKED",' + NL + '        "DEV_MODE_UNREADABLE: khong doc duoc trang thai cong tac, nen coi nhu DANG TAT.", {',
+      soLan: 1
+    },
+    {
+      ma: "P3",
+      ten: "Công tắc TẮT vẫn cho bấm (mặc định mở thay vì mặc định đóng)",
+      tim: '    if (!gate || typeof gate !== "object" || gate.enabled !== true) {',
+      thay: '    if (false && (!gate || typeof gate !== "object" || gate.enabled !== true)) {',
+      soLan: 1
+    },
+    {
+      ma: "P4",
+      ten: "Bản ghi méo được đoán thành 0, tức là tặng thêm cả một ngân sách",
+      tim: "    if (!Number.isInteger(gate.used) || gate.used < 0) {",
+      thay: "    if (false && (!Number.isInteger(gate.used) || gate.used < 0)) { gate.used = 0;",
+      soLan: 1
+    },
+    {
+      ma: "P5",
+      ten: "Bỏ trần: hết ngân sách vẫn bấm tiếp",
+      tim: "    if (gate.used >= WRITE_CAP_PER_UNLOCK) {",
+      thay: "    if (false && gate.used >= WRITE_CAP_PER_UNLOCK) {",
+      soLan: 1
+    },
+    {
+      ma: "P6",
+      ten: "Nới trần lên 100000 — trần còn đó nhưng không còn chặn gì",
+      tim: "const WRITE_CAP_PER_UNLOCK = 50;",
+      thay: "const WRITE_CAP_PER_UNLOCK = 100000;",
+      soLan: 1
+    },
+    {
+      ma: "P7",
+      ten: "Trần đọc từ chính bản ghi trong kho lưu — kẻ bị chặn tự đặt trần cho mình",
+      tim: "    if (gate.used >= WRITE_CAP_PER_UNLOCK) {",
+      thay: "    if (gate.used >= (gate.cap_per_unlock || WRITE_CAP_PER_UNLOCK)) {",
+      soLan: 1
+    },
+    {
+      ma: "P8",
+      ten: "Không trừ ngân sách: trần đứng yên nên không bao giờ chạm tới",
+      tim: "      await chromeApi.storage.local.set({ [WRITE_GATE_STORAGE_KEY]: { ...gate, used } });",
+      thay: "      if (false) await chromeApi.storage.local.set({ [WRITE_GATE_STORAGE_KEY]: { ...gate, used } });",
+      soLan: 1
+    },
+    {
+      ma: "P9",
+      ten: "Ghi hụt ngân sách vẫn bấm (nuốt lỗi thay vì đóng)",
+      tim: "    } catch (error) {" + NL + "      /* Ghi hụt thì KHÔNG bấm. Bấm mà không trừ được là cái trần không tồn tại. */",
+      thay: "    } catch (error) {" + NL + "      return { used, cap_per_unlock: WRITE_CAP_PER_UNLOCK, remaining: WRITE_CAP_PER_UNLOCK - used };",
+      soLan: 1
+    },
+    {
+      ma: "P10",
+      ten: "Bật lại công tắc mà KHÔNG nạp lại ngân sách",
+      tim: "    ? { enabled: true, enabled_at: at, used: 0 }",
+      thay: "    ? { enabled: true, enabled_at: at, used: WRITE_CAP_PER_UNLOCK }",
+      soLan: 1
+    },
+    {
+      ma: "P11",
+      ten: "Popup nói dối: kho lưu hỏng mà vẫn báo ĐANG BẬT",
+      tim: "    if (!gate || gate.enabled !== true || !Number.isInteger(gate.used) || gate.used < 0) {",
+      thay: "    if (false && (!gate || gate.enabled !== true || !Number.isInteger(gate.used) || gate.used < 0)) {",
+      soLan: 1
+    },
+    {
+      ma: "P12",
+      ten: "Trừ SAU khi bấm: một lượt bấm hỏng không tốn gì, nên vòng lặp hỏng quay mãi",
+      tim: "    const budget = await spendWriteBudget();" + NL + "    const result = await engine.runAction(target, name, params);",
+      thay: "    const result = await engine.runAction(target, name, params);" + NL + "    const budget = await spendWriteBudget();",
+      soLan: 1
+    }
+  ]
+});
+
+/* ---- MẺ SÁU: BỀ MẶT QUYỀN (S-02) ---------------------------------------
+ * `manifest.json` và `scouter-background.js` không có lõi nào canh — cả hai cố ý mỏng. Nhưng
+ * "mỏng" không có nghĩa là "không đáng canh": một dòng quyền thêm vào manifest là một dòng
+ * không ai phải giải trình, và AGENTS.md luật 6 nói quyền đã duyệt là TRẦN chứ không phải sàn. */
+BATCHES.push({
+  ten: "QUYỀN — bề mặt manifest",
+  target: path.join(ROOT, "manifest.json"),
+  pin: PIN_GATE,
+  mutants: [
+    {
+      ma: "Q1",
+      ten: "Thêm một quyền ADR-0009 chưa duyệt (cookies) và không ai phải giải trình",
+      tim: '  "permissions": ["debugger", "storage", "alarms"],',
+      thay: '  "permissions": ["debugger", "storage", "alarms", "cookies"],',
+      soLan: 1
+    },
+    {
+      ma: "Q2",
+      ten: "Nới host_permissions ra cả Internet",
+      tim: '  "host_permissions": ["http://127.0.0.1/*"],',
+      thay: '  "host_permissions": ["<all_urls>"],',
+      soLan: 1
+    }
+  ]
+});
+
+BATCHES.push({
+  ten: "LƯỚI ĐỠ — nối lại bằng alarms",
+  target: path.join(ROOT, "scouter-background.js"),
+  pin: PIN_GATE,
+  mutants: [
+    {
+      ma: "R1",
+      ten: "Quyền alarms khai rồi nhưng không ai nghe — quyền thừa, lưới không rơi",
+      tim: "chrome.alarms.onAlarm.addListener((alarm) => {",
+      thay: "const unusedAlarmListener = ((alarm) => {",
+      soLan: 1
+    },
+    {
+      ma: "R2",
+      ten: "Tạo alarm mù mỗi lần worker tỉnh — đồng hồ bị đặt lại mãi nên lưới không bao giờ rơi",
+      tim: "chrome.alarms.get(RECONNECT_ALARM, (existing) => {" + NL + "  if (!existing) chrome.alarms.create(RECONNECT_ALARM, { periodInMinutes: 1 });" + NL + "});",
+      thay: "chrome.alarms.create(RECONNECT_ALARM, { periodInMinutes: 1 });",
+      soLan: 1
+    }
+  ]
+});
+
 process.exit(chayDotBien(BATCHES, ROOT));
