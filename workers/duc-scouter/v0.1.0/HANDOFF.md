@@ -124,10 +124,8 @@ trúng · bấm ngược lên nút đã trôi khỏi màn hình → trúng. Hai 
 kiểu (lệch toạ độ y · bỏ cuộn tới · bỏ chốt khớp-đúng-một): mỏ neo khớp **3/3**, giết **3/3**,
 mỗi con đỏ ĐÚNG tiêu chí của nó.
 
-**Một chỗ mất một lượt chạy.** Trang extension của phép đo dùng `<script type="module">` **nội
-tuyến**, mà CSP mặc định của MV3 chặn hẳn script có thân trong HTML. Trang lên bình thường,
-không lỗi nào hiện ra, mã chỉ không bao giờ chạy — nhìn ra ngoài giống "chờ quá hạn". Tách ra
-file `.js` riêng thì xong.
+**Một chỗ mất một lượt chạy**, đã chuyển sang `AGENTS.md` mục "hai chỗ đã trả giá" ⑴: CSP của
+MV3 chặn script nội tuyến trong trang extension, im lặng.
 
 **Một lỗi thứ tự của tôi.** Sửa `package.json` **trước khi** nhận `_root`. Lúc đó khoá trống
 chủ nên không ai mất gì, nhưng luật là nhận trước lượt ghi đầu tiên.

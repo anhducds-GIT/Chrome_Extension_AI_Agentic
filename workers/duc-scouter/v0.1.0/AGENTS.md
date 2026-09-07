@@ -91,9 +91,19 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 | `HANDOFF.md` | Trạng thái + Log (chỉ thêm dòng ở cuối) |
 | `BACKLOG.md` | Việc còn mở, đánh số `S-xx` |
 
-## Một chỗ đã trả giá, đừng làm lại
+## Hai chỗ đã trả giá, đừng làm lại
 
-Ba worker có **năm file `bridge-*.js`**, và chỉ **một** file giống hệt cả ba (`bridge-pairing-core.js`).
+### ⑴ Trang extension KHÔNG chạy được script nội tuyến
+
+CSP mặc định của MV3 là `script-src 'self'`, và nó chặn hẳn mọi `<script>` có thân ngay trong
+HTML — kể cả `type="module"`. Trang lên bình thường, **không lỗi nào hiện ra ngoài**, mã chỉ
+đơn giản không bao giờ chạy; triệu chứng nhìn từ ngoài giống hệt "chờ quá hạn". Mất một lượt
+chạy vì chỗ này ngày 07/09 khi dựng phép đo ②. Script phải nằm ở **file `.js` riêng**.
+(Phép đo ① không vấp vì trang extension của nó không có script nào.)
+
+### ⑵ Ba worker có năm file `bridge-*.js`, và chỉ MỘT file giống hệt cả ba
+
+Chỉ `bridge-pairing-core.js` giống hệt ở cả ba worker.
 Quan trọng hơn: **chỉ nhánh ChatGPT bắt tay hai chiều** — máy chủ phải chứng minh nó biết token
 trước, rồi extension mới đưa token ra. Gemini và Flow đưa token ngay khi socket mở, tức là đưa
 cho bất kỳ tiến trình nào chiếm cổng trước. Seed dùng bản ChatGPT.
