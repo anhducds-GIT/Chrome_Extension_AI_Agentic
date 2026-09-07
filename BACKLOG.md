@@ -1316,3 +1316,60 @@ tinh thần chỗ này: thà bắt gõ thêm còn hơn ghi một xuất xứ sai
   · **đóng khi:** cổng đọc mỗi file gốc **một lần vào đầu lượt** rồi dùng lại bản đã đọc (thay
   vì đọc lại ở từng phép kiểm), hoặc thử lại có giới hạn khi đọc hụt — và có một phép ghim dựng
   cảnh file bị ghi giữa chừng rồi kiểm cổng KHÔNG báo đỏ. Khoá cần: `_code`.
+
+- **GHI CHÚ SỔ** · 2026-09-07 · lane `claude-scouter-s06` · ba mục tôi thêm hôm nay dạng gạch
+  đầu dòng `- **N-10**` · `- **N-12**` · `- **N-13**` **SAI CẢ MÃ LẪN HÌNH DẠNG**: cả ba mã đó
+  đã có chủ từ trước, và sổ này dùng tiêu đề `## N-xx`, nên bộ đếm không nhìn thấy chúng — tức
+  là tôi ghi ba mục nợ mà máy coi như không tồn tại. Không sửa dòng cũ (luật mục 1); ba mục
+  được ghi lại đúng hình dạng ngay dưới đây thành `N-31` · `N-32` · `N-33`. **Đây đúng là ca mà
+  `N-12` (bản gốc) nói tới:** sổ không có ai cấp số, nên tôi đọc mã cao nhất rồi đoán — và đoán
+  sai vì tôi đọc trước khi hai lane khác kịp thêm mục của họ.
+
+## N-31 · `what-next.mjs` đếm hụt việc mở của một gói, nên bảng báo gói đó rảnh
+
+**[ĐO 2026-09-07]** `node scripts/what-next.mjs` báo `workers/duc-scouter — 0 việc mở` trong khi
+`grep -c "^## MỞ" workers/duc-scouter/v0.1.0/BACKLOG.md` ra **2**. Nó chỉ đọc mục nằm trong khối
+`P1`/`P2`, nên mục dạng `## MỞ · S-xx` — hình dạng mà luật *"đóng mục bằng cách thêm một dòng ở
+cuối"* đẻ ra — không được đếm.
+
+Cái giá: phiên điều phối đọc bảng sẽ tưởng gói đó rảnh và đi giao việc khác.
+
+- **đóng khi:** lệnh: `node scripts/what-next.mjs` đếm cả hai dạng mục, và có một phép ghim dựng
+  một sổ nợ chứa cả hai dạng rồi kiểm con số ra đúng. Khoá cần: `_code`.
+
+## N-32 · ADR-0014 mới land một nửa, nửa còn lại để hai bản của cùng một con số
+
+Nửa `_code` đã vào HEAD (`0b42daf`): bộ sinh nay chỉ ghi ra `FEATURE-PARITY-AUTO.md`. Phần khai
+file vào khối `generated` đã xong (`daa276c`, lane `claude-scouter-s06`). Nhưng
+`FEATURE-PARITY.md` **vẫn còn 3 khối `<!-- AUTO:X START -->`** và **không có con trỏ** sang file
+mới — nên cùng một con số nằm ở hai chỗ, và bản trong `FEATURE-PARITY.md` nay là bản **CHẾT**:
+không bộ sinh nào cập nhật nó nữa. ADR-0014 ghi thẳng: *"Bản trong `FEATURE-PARITY.md` phải
+BIẾN MẤT, chỉ còn con trỏ."*
+
+**[ĐO]** `grep -c "AUTO:.* START" FEATURE-PARITY.md` ra **3** · `grep -c FEATURE-PARITY-AUTO
+FEATURE-PARITY.md` ra **0**.
+
+- **đóng khi:** lệnh: hai lệnh đo trên ra `0` và `>=1`. Khoá cần: `_root`.
+
+## N-33 · Cổng đóng phiên trả kết quả ĐỎ SAI khi nhiều lane cùng ghi file gốc repo
+
+**[ĐO 2026-09-07, lúc có 6 lane cùng chạy]** Chạy `session-check.mjs` năm lượt liên tiếp: số mục
+đỏ **nhấp nháy giữa 1 và 2**, và phép kiểm đỏ nào cũng XANH khi chạy riêng ngay sau đó. Ba câu
+báo lỗi quan sát được, cả ba sai sự thật tại thời điểm đọc:
+
+- `CHUA_DONG_DAU: .agents/claims.json thiếu trường _fingerprint` — đọc trực tiếp 5 lượt đều thấy
+  `6f1d02faa74caa28`;
+- `Repo chưa có .repo-structure.json` — file có, và `tests/repo-structure-smoke.mjs` xanh 17/17;
+- `git show HEAD:FEATURE-PARITY-AUTO.md does not exist in HEAD` — có trong HEAD, commit `daa276c`.
+
+**Vì sao đắt:** cổng đỏ thì luật cấm báo xong và cấm đẩy, nên một lượt đỏ SAI **giam commit của
+cả repo** — đúng lúc đo có 20+ commit của 6 lane chưa đẩy. Và nó dạy sai: phiên gặp nó sẽ đi sửa
+một thứ không hỏng, hoặc tệ hơn — `--restamp` cho xong việc, đúng cái `AGENTS.md` cấm.
+
+Khác `N-30`: `N-30` là một phép ghim hỏng thật, đỏ ổn định. Mục này là đỏ **không lặp lại được**.
+
+- **đóng khi:** lệnh: cổng đọc mỗi file gốc một lần vào đầu lượt rồi dùng lại bản đã đọc, hoặc
+  thử lại có giới hạn khi đọc hụt — và có một phép ghim dựng cảnh file bị ghi giữa chừng rồi
+  kiểm cổng KHÔNG báo đỏ. Khoá cần: `_code`.
+
+- **ĐỔI MÃ N-31 → N-34** · 2026-09-07 · lane `claude-scouter-s06` · khối "`what-next.mjs` đếm hụt việc mở của một gói" đọc là **N-34** từ nay — lane `claude-assistant` ghi `ĐỔI MÃ N-30 → N-31` cùng lúc và tới trước, nên giữ mã · **đóng khi:** lệnh: node scripts/what-next.mjs dem ca hai dang muc, va co mot phep ghim dung so no chua ca hai dang roi kiem con so ra dung
