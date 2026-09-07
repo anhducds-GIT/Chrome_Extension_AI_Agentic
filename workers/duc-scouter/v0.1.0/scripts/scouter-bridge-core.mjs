@@ -22,6 +22,8 @@
  * được vào máy chủ đang có. Đây là thứ phải đổi CÙNG LÚC ở host, không phải đổi một mình.
  */
 
+import { NAMED_KEY_NAMES } from "./scouter-actions-core.mjs";
+
 /* ---- Hằng số trên dây (khớp bridge-host.mjs) ----------------------------- */
 
 export const PROTOCOL = "duc-auto-chatgpt.bridge";
@@ -38,6 +40,7 @@ export const ERROR_DEFINITIONS = Object.freeze({
   METHOD_NOT_FOUND: { retryable: false, message: "The requested method is not registered." },
   INVALID_PARAMS: { retryable: false, message: "The method parameters are invalid." },
   PROBE_FAILED: { retryable: false, message: "The read-only probe could not complete." },
+  ACTION_FAILED: { retryable: false, message: "The input action could not complete." },
   RELOAD_RATE_LIMIT: { retryable: false, message: "The previous self-reload was too recent." },
   INTERNAL_ERROR: { retryable: false, message: "The scouter could not complete the request." }
 });
@@ -100,6 +103,29 @@ function requiredSelector(value) {
    * `observer-probes.mjs` đã trả `SELECTOR_INVALID` cho selector sai. Selector đi làm THAM SỐ
    * giao thức, không bao giờ đi qua một parser JavaScript nào — xem khối "SELECTOR ĐI ĐƯỜNG
    * NÀO" ở đầu `scripts/observer-probes.mjs`. */
+  return value;
+}
+
+/* Chuỗi gõ: cấm ký tự điều khiển ngay tại cổng phong bì, KHÔNG chỉ ở lõi. Hai lớp, cố ý —
+ * lớp này cho người gọi một câu lỗi rõ ràng trước khi ta gắn debugger vào trang. */
+function requiredTypedText(value) {
+  if (typeof value !== "string" || value === "") invalidParams("params.text", "expected a non-empty string");
+  if (value.length > 2000) invalidParams("params.text", "expected at most 2000 characters");
+  for (const character of value) {
+    const point = character.codePointAt(0);
+    if (point < 0x20 || point === 0x7f) {
+      invalidParams("params.text", "control characters go through scout.key, not scout.type");
+    }
+  }
+  return value;
+}
+
+/* Tên phím phải nằm trong bảng cố định của lõi hành động. Khai lại danh sách ở đây thì hai bản
+ * sẽ lệch, nên đọc thẳng bảng của lõi — nó là nguồn duy nhất. */
+function requiredKeyName(value) {
+  if (typeof value !== "string" || !NAMED_KEY_NAMES.includes(value)) {
+    invalidParams("params.key", `expected one of: ${NAMED_KEY_NAMES.join(", ")}`);
+  }
   return value;
 }
 
@@ -195,6 +221,48 @@ const METHOD_ENTRIES = [
         target_id: requiredTargetId(params.target_id),
         depth: optionalInt(params.depth, "params.depth", 1, 10),
         max_nodes: optionalInt(params.max_nodes, "params.max_nodes", 1, 500)
+      };
+    }
+  }),
+  /* ---- BA HÀNH ĐỘNG GHI (S-01) --------------------------------------------
+   * Đây là chỗ Scouter thôi làm người quan sát và thành kẻ hành động (ADR-0009). Cả ba đều
+   * `read_only: false`, và cả ba đều bắt buộc `selector` — không có method nào bấm theo toạ độ,
+   * cố ý: xem chốt ⑶ ở đầu `scripts/scouter-actions-core.mjs`.
+   *
+   * `deadline_ms` rộng hơn phép dò: một lượt bấm phải cuộn phần tử vào tầm nhìn, đo hộp, rồi
+   * gửi ba khung chuột; một lượt gõ gửi hai khung cho MỖI ký tự. */
+  registryEntry({
+    name: "scout.click", read_only: false, deadline_ms: 30000,
+    description: "Click one element with the browser's real mouse, so the page sees isTrusted:true. Refuses unless the selector matches exactly one visible element. Coordinates are computed from the element box, never accepted from the caller.",
+    params_schema: { target_id: "string", selector: "string" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "selector"]);
+      return { target_id: requiredTargetId(params.target_id), selector: requiredSelector(params.selector) };
+    }
+  }),
+  registryEntry({
+    name: "scout.type", read_only: false, deadline_ms: 60000,
+    description: "Type a string into one element with the browser's real keyboard, one key at a time. Refuses control characters: Enter and Tab go through scout.key. Does not clear the field first.",
+    params_schema: { target_id: "string", selector: "string", text: "string" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "selector", "text"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        selector: requiredSelector(params.selector),
+        text: requiredTypedText(params.text)
+      };
+    }
+  }),
+  registryEntry({
+    name: "scout.key", read_only: false, deadline_ms: 30000,
+    description: "Press one named key (Enter, Tab, Escape, Backspace, Delete, arrows, Home, End) on one element. The caller picks a NAME from the fixed table and never supplies a key code.",
+    params_schema: { target_id: "string", selector: "string", key: "named_key" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "selector", "key"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        selector: requiredSelector(params.selector),
+        key: requiredKeyName(params.key)
       };
     }
   }),

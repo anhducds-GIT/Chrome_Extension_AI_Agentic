@@ -28,6 +28,15 @@ const PROBE_BY_METHOD = Object.freeze({
   "scout.tree": "dom.tree"
 });
 
+/* Ba hành động GHI, ánh xạ sang tên của `scripts/scouter-actions-core.mjs`. Bảng riêng, cố ý:
+ * đọc và ghi đi qua hai lõi khác nhau với hai danh sách method CDP khác nhau, và gộp hai bảng
+ * này lại là bước đầu tiên để hai danh sách kia cũng bị gộp. */
+const ACTION_BY_METHOD = Object.freeze({
+  "scout.click": "input.click",
+  "scout.type": "input.type",
+  "scout.key": "input.key"
+});
+
 /* Trần chống bão nạp lại. Vòng tự cải tiến của ADR-0009 là: AI ghi code → gọi `scout.reload`
  * → extension khởi động lại → nối lại Bridge. Nếu máy chủ (hoặc một AI đang lặp) gửi lại
  * `scout.reload` ngay khi thấy kết nối trở lại thì vòng đó quay tít và Scouter không bao giờ
@@ -73,6 +82,20 @@ export function createSeedHandlers(deps = {}) {
     /* `ObserverEngine.runProbe` đọc `target.id ?? target.targetId` và `target.attached`.
      * `scanTargets()` trả về dạng đã mô tả (`targetId`), nên dựng lại đúng hai trường đó. */
     return { id: found.targetId, targetId: found.targetId, attached: Boolean(found.attached) };
+  }
+
+  async function runAction(method, target, params) {
+    const name = ACTION_BY_METHOD[method];
+    const result = await engine.runAction(target, name, params);
+    /* Hành động hỏng KHÔNG được mặc vỏ thành công, cùng lý do với phép dò: một phong bì
+     * `ok: true` chở một thất bại là thứ người gọi phải nhớ mà bóc, và sẽ có người quên.
+     * Ở đường GHI thì quên nghĩa là tưởng đã bấm được trong khi chưa bấm gì. */
+    if (!result || result.ok !== true) {
+      throw new BridgeProtocolError("ACTION_FAILED", result?.detail || `Hành động '${name}' không chạy được.`, {
+        action: name, action_code: result?.code || "ACTION_FAILED"
+      });
+    }
+    return { action: name, data: result.data, cdp: result.cdp || [] };
   }
 
   async function runProbe(method, target, params) {
@@ -140,6 +163,21 @@ export function createSeedHandlers(deps = {}) {
       return await runProbe("scout.tree", target, { depth: params.depth, maxNodes: params.max_nodes });
     },
 
+    async "scout.click"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runAction("scout.click", target, { selector: params.selector });
+    },
+
+    async "scout.type"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runAction("scout.type", target, { selector: params.selector, text: params.text });
+    },
+
+    async "scout.key"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runAction("scout.key", target, { selector: params.selector, key: params.key });
+    },
+
     async "scout.reload"() {
       const at = now().getTime();
       const previous = await lastReloadAt();
@@ -167,6 +205,7 @@ export const SEED_CONSTANTS = Object.freeze({
   RELOAD_MIN_GAP_MS,
   RELOAD_DELAY_MS,
   RELOAD_STORAGE_KEY,
-  PROBE_BY_METHOD
+  PROBE_BY_METHOD,
+  ACTION_BY_METHOD
 });
 

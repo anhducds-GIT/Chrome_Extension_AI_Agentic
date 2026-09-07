@@ -27,9 +27,16 @@ const EXPECTED_METHODS = [
   "scout.page",
   "scout.query",
   "scout.tree",
+  "scout.click",
+  "scout.type",
+  "scout.key",
   "scout.reload"
 ];
-const EXPECTED_WRITE_METHODS = new Set(["scout.reload"]);
+/* Bốn method GHI. `scout.reload` nạp lại chính extension; ba `scout.*` kia chạm TRANG — đó là
+ * chỗ Scouter thôi làm người quan sát (ADR-0009). Cờ `read_only` phải nói đúng điều đó. */
+const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.type", "scout.key"]);
+/* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ObserverEngine.runAction`. */
+const EXPECTED_ACTIONS = new Set(["input.click", "input.type", "input.key"]);
 /* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ObserverEngine.runProbe`. */
 const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.tree"]);
 
@@ -49,6 +56,11 @@ function makeEngine(overrides = {}) {
       calls.push({ target, name, params });
       if (overrides.fail) return { ok: false, probe: name, code: "SELECTOR_INVALID", detail: "Chrome từ chối selector", cdp: [] };
       return { ok: true, probe: name, data: { echoed: params ?? null }, cdp: [{ method: "DOM.enable", params: {} }] };
+    },
+    async runAction(target, name, params) {
+      calls.push({ target, name, params, ghi: true });
+      if (overrides.failAction) return { ok: false, action: name, code: "SELECTOR_AMBIGUOUS", detail: "khớp 7 phần tử", cdp: [] };
+      return { ok: true, action: name, data: { echoed: params ?? null }, cdp: [{ method: "Input.dispatchMouseEvent", params: {} }] };
     }
   };
 }
@@ -134,7 +146,9 @@ function request(method, params) {
   }
 
   const { dispatch, engine } = makeSeed();
-  for (const bogus of ["scout.click", "runtime.evaluate", "scout.probe", "dom.query"]) {
+  /* `input.click` là tên của LÕI hành động, không phải tên method Bridge — nó phải bị từ chối
+   * y như một tên bịa. Hai từ vựng, hai bảng; lẫn chúng vào nhau là mở một cửa thứ hai. */
+  for (const bogus of ["scout.drag", "input.click", "runtime.evaluate", "scout.probe", "dom.query"]) {
     const response = await dispatch(request(bogus));
     assert.equal(response.ok, false, `method lạ phải bị từ chối: ${bogus}`);
     assert.equal(response.error.code, "METHOD_NOT_FOUND");

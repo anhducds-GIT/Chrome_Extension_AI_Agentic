@@ -1,4 +1,5 @@
 import { runProbe as runProbeCore, PROBE_NAMES } from "./scripts/observer-probes.mjs";
+import { runAction as runActionCore, ACTION_NAMES } from "./scripts/scouter-actions-core.mjs";
 
 const PROTOCOL_VERSION = "1.3";
 const EXTENSION_PREFIX = "chrome-extension://";
@@ -104,6 +105,43 @@ export class ObserverEngine {
       return await runProbeCore(name, { targetId: debuggee.targetId, sendRaw }, params);
     } catch (error) {
       return { ok: false, probe: name, code: "ATTACH_FAILED", detail: normaliseError(error), cdp: [] };
+    } finally {
+      if (attachedHere) await detachQuietly(debuggee);
+    }
+  }
+
+  /* ---- Nối dây: BA HÀNH ĐỘNG GHI (scripts/scouter-actions-core.mjs) -------
+   * Song song với `runProbe`, và CỐ Ý mỏng y như nó: lớp này chỉ bơm
+   * `chrome.debugger.sendCommand` vào lõi hành động rồi trả kết quả. Nó KHÔNG tự gọi một
+   * method CDP nào, KHÔNG tự tính một toạ độ nào.
+   *
+   * Vì sao phải mỏng, ở đây còn quan trọng hơn ở `runProbe`: bốn chốt của lõi hành động
+   * (ACTION_NAMES · WRITE_CDP_METHODS · cấm toạ độ từ ngoài · selector khớp đúng một) chỉ
+   * bảo vệ được những gì ĐI QUA lõi. Một lớp nối dây tự gọi thẳng `Input.dispatchMouseEvent`
+   * sẽ đi vòng qua cả bốn, mà mọi phép ghim CỦA LÕI vẫn xanh. Xem bốn con A1..A4 trong
+   * scripts/scouter-mutation-check.mjs — chúng quan sát ở BIÊN `chrome`, không ở biên lõi.
+   *
+   * KHÁC `runProbe` một chỗ, cố ý: hành động KHÔNG có nhánh nào chạy mà không gắn debugger.
+   * `targets.list` đọc được từ metadata nên nó có đường tắt; bấm và gõ thì không. */
+  async runAction(target, name, params = {}) {
+    /* Tên lạ thì để LÕI từ chối, và từ chối TRƯỚC khi gắn debugger: gắn debugger vào một trang
+     * là thao tác mạnh nhất extension này làm được, đừng làm nó cho một yêu cầu sai. */
+    if (!ACTION_NAMES.includes(name)) return await runActionCore(name, {}, params);
+
+    if (target?.attached) {
+      return { ok: false, action: name, code: "TARGET_ALREADY_ATTACHED", cdp: [],
+        detail: "Target đã có debugger khác gắn vào; Scouter không cướp phiên của người khác." };
+    }
+
+    const debuggee = { targetId: target?.id ?? target?.targetId };
+    let attachedHere = false;
+    try {
+      await chrome.debugger.attach(debuggee, PROTOCOL_VERSION);
+      attachedHere = true;
+      const sendRaw = (method, cdpParams) => chrome.debugger.sendCommand(debuggee, method, cdpParams);
+      return await runActionCore(name, { sendRaw }, params);
+    } catch (error) {
+      return { ok: false, action: name, code: "ATTACH_FAILED", detail: normaliseError(error), cdp: [] };
     } finally {
       if (attachedHere) await detachQuietly(debuggee);
     }
