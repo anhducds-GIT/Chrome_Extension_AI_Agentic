@@ -329,3 +329,30 @@ vừa nổ. Đã ghi vào `BACKLOG.md` gốc.
 
 **Lượt đẩy này dùng `--carry`, lane bị cuốn theo: `claude-dong-bang-2`** (ADR-0005 duyệt thường
 trực, đổi lại phải kể tên).
+
+## 2026-09-07 · `claude-scouter-s06` — `S-10`: bộ máy xong, và ba con số cũ hoá ra sai
+
+**Hai tầng tách hẳn.** `pilots/hnx-phai-sinh/vong-lay.mjs` KHÔNG biết `hnx.vn` là gì — nó lặp,
+bỏ qua thứ đã có, thử lại đúng loại lỗi. Mọi hiểu biết về trang ở `nguon-hnx.mjs`. Nên vòng lặp
+là **ứng viên đẩy lên seed**, nhưng chỉ SAU khi chạy thật một lần: đẩy code chưa chứng minh lên
+seed là nhân bản một giả định.
+
+**Một quyết định đỡ cả ba tính chất: FILE ĐÃ GHI CHÍNH LÀ TRẠNG THÁI.** Không sổ tiến độ riêng.
+Sổ riêng thì lệch được với đĩa, và chiều lệch "bỏ sót một ngày" thì im lặng — không ai thấy một
+cái lỗ giữa tuần.
+
+**Chỗ đắt nhất là PHÂN LOẠI LỖI**, vì `scout.fetch` tiêu ngân sách ghi: "cứ thử lại cho chắc"
+không miễn phí. 200-OK-trang-khác thì **dừng cả lượt** — yêu cầu sai thì sai với MỌI ngày.
+
+**Năm trong bảy tham số đã MẤT khỏi mọi bản ghi.** Đo lại bằng cách đọc chính mã trang, không
+đoán. Ba con số đổi kết luận: ⑴ một ngày **~46 KB** chứ không phải 231 KB — 231 nghe như sắp
+chạm trần 512 KiB của `scout.fetch`, 46 thì rộng gấp mười. ⑵ **ngày nghỉ vẫn trả 200 OK + JSON
+hợp lệ**, chỉ khác 0 ô dữ liệu (đo 192 với 0) — nên "200 OK" không bao giờ đủ để kết luận đã có
+dữ liệu. ⑶ máy chủ gửi **thiếu mắt xích chứng chỉ**: Chrome tự lấy qua AIA, Node từ chối. Cả ba
+vào `docs/TRIALS.md`, cột *dạy seed được gì*.
+
+**Bài học tổng quát:** một số đo không ghi vào file là số đo phải trả tiền hai lần. Bảy tham số
+nay nằm trong `nguon-hnx.mjs`, không nằm trong trí nhớ ai.
+
+**Đo.** Ghim 17 khối · đột biến **17/17, sống sót 0** · **0 lượt gọi mạng** trong toàn bộ suite.
+Còn lại của `S-10`: **lượt chạy thật** — cần Bridge chạy, extension nạp lại, công tắc BẬT.
