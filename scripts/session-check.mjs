@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 
 import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
 import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
-import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, claimPrefixesFrom, DAU_VET, dauVetTheoVung, generatorsFrom, handoffCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, chonSuiteBoDongBang, claimPrefixesFrom, DAU_VET, dauVetTheoVung, frozenFrom, generatorsFrom, handoffCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -486,10 +486,20 @@ check("Test xanh", () => {
    * Bệnh ở cây thì thuốc phải áp cho mọi thứ chạy trên cây đó. Nên hai vòng lặp gộp thành
    * một danh sách lệnh, và một đường xử lý lỗi duy nhất — ít code hơn bản cũ.
    */
-  const menhLenh = [
+  const menhLenhDay = [
     ...(rootSuite ? rootSuiteParts().map((cmd) => ({ cmd, nhan: null })) : []),
     ...suites.map((suite) => ({ cmd: `node "${suite}"`, nhan: suite }))
   ];
+  /* GÓI ĐÓNG BĂNG: bỏ suite của chúng khi không ai chạm — giới hạn ① Đức chốt 07/09.
+   * Luật và lý do ở `chonSuiteBoDongBang`. `originMainResolves` là vế fail-closed: không đo
+   * chắc được gói nào bị chạm thì chạy hết, vì bỏ suite dựa trên một phép đo rỗng oan là đúng
+   * cách mất một phép kiểm mà không ai biết. */
+  const { chay: menhLenh, boQua: suiteDongBang } = chonSuiteBoDongBang({
+    menhLenh: menhLenhDay,
+    frozen: frozenFrom(readStructureFromDisk(ROOT)),
+    daCham: touched,
+    chacChanDoDuocCham: originMainResolves
+  });
   const totals = [];
   for (const { cmd, nhan } of menhLenh) {
     let out;
@@ -508,6 +518,11 @@ check("Test xanh", () => {
     else totals.push(...out.split(NEWLINE).filter((line) => /[0-9]+ passed, [0-9]+ failed/.test(line)));
   }
   if (rootSuite) lines.unshift(`suite gốc repo: ${totals.length ? totals.join(" · ") : "chạy xong"}`);
+  if (suiteDongBang.length) {
+    const goi = [...new Set(suiteDongBang.map((m) => m.goi))];
+    lines.push(`bỏ qua ${suiteDongBang.length} suite của ${goi.length} gói ĐÃ ĐÓNG BĂNG (${goi.join(" · ")})`
+      + " — chỉ-đọc, không ai chạm. Chạm vào là suite của gói đó chạy lại ngay.");
+  }
   // Đỏ ở cây làm việc nhưng XANH ở HEAD: không chặn tôi, nhưng cũng KHÔNG được in ra XANH.
   // Thứ đã commit thì lành thật, cây làm việc thì đang hỏng thật — hai sự thật, nói cả hai.
   if (doCuaLaneKhac.length) {

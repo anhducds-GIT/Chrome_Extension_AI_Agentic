@@ -508,6 +508,75 @@ export function profileFrom(parsed) {
    cổng cấu trúc. */
 export const DEFAULT_GENERATORS = Object.freeze(["build-dashboard.mjs", "feature-parity.mjs"]);
 
+/* GÓI ĐÃ ĐÓNG BĂNG — đọc khối `frozen`, và ĐÂY là chỗ cưỡng chế nó.
+ *
+ * Trước 07/09 cờ này chỉ là chữ: `.repo-structure.json` tự khai
+ * *"cờ này HIỆN CHƯA CÓ PHÉP GHIM NÀO CANH, và chưa cổng nào đọc nó"*. Nên gỡ cờ đi thì không
+ * test nào đỏ — đúng hình dạng một luật-là-chữ.
+ *
+ * Đo 07/09, vì sao đáng cưỡng chế: suite bốn đơn vị của ba gói đóng băng chạy **41,1 giây**
+ * mỗi phiên (chatgpt 17,4 · gemini v0.2.0 12,5 · flow 9,7 · gemini v0.1.0 1,6), còn gói SỐNG
+ * `duc-scouter` chạy **1,5 giây**. Ba gói không ai được ghi thu 27 lần thời gian của gói đang
+ * làm thật — và chính khối `_frozen_doc` khai vế đắt nhất: *"chúng KHÔNG được làm phiên khác
+ * ĐỎ hay CHẬM."* */
+export function frozenFrom(parsed) {
+  const value = parsed?.frozen;
+  if (value === undefined) return Object.freeze([]);
+  if (!Array.isArray(value)) {
+    throw new Error("FROZEN_HONG: `frozen` phải là mảng đường dẫn gói đã đóng băng (hoặc bỏ hẳn).");
+  }
+  const ra = [];
+  for (const p of value) {
+    if (typeof p !== "string" || p === "") {
+      throw new Error(`FROZEN_HONG: mỗi phần tử phải là một đường dẫn gói. Đang là: ${JSON.stringify(p)}`);
+    }
+    const chuan = p.replaceAll("\\", "/").replace(/\/+$/, "");
+    if (chuan === "" || chuan.startsWith("/") || chuan.split("/").includes("..")) {
+      throw new Error(`FROZEN_HONG: đường dẫn phải tương đối và không chứa "..". Đang là: ${JSON.stringify(p)}`);
+    }
+    ra.push(chuan);
+  }
+  return Object.freeze(ra);
+}
+
+/* CHỌN SUITE: BỎ suite của gói đóng băng — nhưng CHỈ KHI KHÔNG AI CHẠM GÓI ĐÓ.
+ *
+ * Đây là phần dễ làm sai, nên nói rõ ranh giới. Phạm vi KHÔNG phải *"bỏ được ba suite"*, mà là
+ * *"chọn đúng suite mà VẪN GIỮ bảo vệ cần thiết"*. Hai vế:
+ *
+ * ⑴ Gói đóng băng là chỉ-đọc, nên suite của nó chỉ có thể đỏ nếu **có người vừa chạm vào nó** —
+ *    và đúng lúc đó thì nó là phép kiểm CẦN NHẤT, không phải phép kiểm thừa. Nên: chạm thì chạy.
+ *    `daCham` là hợp của cây làm việc và commit chưa đẩy, tức "mọi thứ chưa có trên origin/main".
+ *
+ * ⑵ `chacChanDoDuocCham` là vế FAIL-CLOSED: không đo chắc được gói nào bị chạm (ví dụ
+ *    `origin/main` không phân giải được, nên danh sách commit chưa đẩy rỗng oan) thì **chạy hết**.
+ *    Bỏ suite dựa trên một phép đo có thể rỗng oan là đúng cách bỏ mất phép kiểm mà không ai biết.
+ *
+ * Và một vế đã KIỂM chứ không phải giả định: phép chống trôi dạt giữa ba gói kia nằm trong
+ * suite của CHÍNH `duc-scouter` (`scouter-transport-smoke.mjs` mục ⑫, đọc `HEAD:` của cả ba
+ * `bridge-pairing-core.js`), tức trong gói SỐNG — nên nó vẫn chạy mọi lượt. Bỏ suite ba gói kia
+ * không lấy đi lớp đó. */
+export function chonSuiteBoDongBang({ menhLenh, frozen, daCham, chacChanDoDuocCham }) {
+  const ds = Array.isArray(menhLenh) ? menhLenh : [];
+  const vung = Array.isArray(frozen) ? frozen.filter(Boolean) : [];
+  if (!vung.length || chacChanDoDuocCham !== true) {
+    return { chay: ds, boQua: [] };
+  }
+  const cham = new Set(Array.isArray(daCham) ? daCham.map((f) => String(f).replaceAll("\\", "/")) : []);
+  const goiBiCham = new Set(
+    vung.filter((g) => [...cham].some((f) => f === g || f.startsWith(`${g}/`)))
+  );
+
+  const chay = [];
+  const boQua = [];
+  for (const m of ds) {
+    const trong = vung.find((g) => String(m?.cmd ?? "").replaceAll("\\", "/").includes(`${g}/`));
+    if (trong && !goiBiCham.has(trong)) boQua.push({ ...m, goi: trong });
+    else chay.push(m);
+  }
+  return { chay, boQua };
+}
+
 export function generatorsFrom(parsed) {
   const value = parsed?.generators;
   if (value === undefined) return DEFAULT_GENERATORS;

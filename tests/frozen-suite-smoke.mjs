@@ -1,0 +1,134 @@
+#!/usr/bin/env node
+/* frozen-suite-smoke.mjs — ghim cờ `frozen` và phép chọn suite.
+ *
+ * Vì sao file này nằm RIÊNG, không nằm trong `session-check.mjs`: việc sửa lần này SỬA CHÍNH CỔNG
+ * KIỂM, nên nếu tiêu chuẩn chấm nó cũng nằm trong cổng thì bản sửa tự chấm mình (ADR-0019 ⑸).
+ *
+ * Trước 07/09 cờ `frozen` chỉ là chữ — `.repo-structure.json` tự khai *"cờ này HIỆN CHƯA CÓ PHÉP
+ * GHIM NÀO CANH"*. Nên gỡ cờ đi thì không test nào đỏ. File này là phép ghim đó.
+ */
+
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { chonSuiteBoDongBang, frozenFrom } from "../scripts/repo-structure.mjs";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+let dat = 0;
+const ok = (ten, fn) => {
+  fn();
+  dat += 1;
+  console.log(`  ok   ${ten}`);
+};
+
+const LENH_DONG_BANG = { cmd: "node workers/duc-auto-chatgpt/v0.1.0/tests/run-all.mjs", nhan: null };
+const LENH_SONG = { cmd: "node workers/duc-scouter/v0.1.0/tests/run-all.mjs", nhan: null };
+const LENH_GOC = { cmd: "node tests/build-dashboard-smoke.mjs", nhan: null };
+const BA_LENH = [LENH_DONG_BANG, LENH_SONG, LENH_GOC];
+const DONG_BANG = ["workers/duc-auto-chatgpt"];
+
+const chon = (o) => chonSuiteBoDongBang({ chacChanDoDuocCham: true, ...o });
+
+/* ---- frozenFrom: đọc cấu hình, và TỪ CHỐI cấu hình hỏng thay vì đoán ---- */
+
+ok("không khai `frozen` thì không gói nào đóng băng", () => {
+  assert.deepEqual(frozenFrom({}), []);
+  assert.deepEqual(frozenFrom(undefined), []);
+});
+
+ok("chuẩn hoá dấu gạch chéo và bỏ dấu gạch cuối", () => {
+  assert.deepEqual(frozenFrom({ frozen: ["workers\\a\\", "workers/b/"] }), ["workers/a", "workers/b"]);
+});
+
+ok("cấu hình hỏng thì NỔ, không lặng lẽ coi như rỗng", () => {
+  // Coi cấu hình hỏng là "rỗng" nghĩa là một lỗi gõ tay làm cờ mất tác dụng mà không ai biết.
+  assert.throws(() => frozenFrom({ frozen: "workers/a" }), /FROZEN_HONG/);
+  assert.throws(() => frozenFrom({ frozen: [""] }), /FROZEN_HONG/);
+  assert.throws(() => frozenFrom({ frozen: [123] }), /FROZEN_HONG/);
+  assert.throws(() => frozenFrom({ frozen: ["/tuyet/doi"] }), /FROZEN_HONG/);
+  assert.throws(() => frozenFrom({ frozen: ["workers/../ra-ngoai"] }), /FROZEN_HONG/);
+});
+
+/* ---- chọn suite: bỏ đúng cái cần bỏ, giữ đúng cái cần giữ ---- */
+
+ok("gói đóng băng KHÔNG ai chạm thì suite của nó bị bỏ qua", () => {
+  const r = chon({ menhLenh: BA_LENH, frozen: DONG_BANG, daCham: ["scripts/session-check.mjs"] });
+  assert.equal(r.boQua.length, 1);
+  assert.equal(r.boQua[0].goi, "workers/duc-auto-chatgpt");
+  assert.deepEqual(r.chay, [LENH_SONG, LENH_GOC]);
+});
+
+ok("CHẠM vào gói đóng băng thì suite của nó CHẠY LẠI ngay", () => {
+  // Vế chịu tải. Gói đóng băng là chỉ-đọc, nên suite của nó chỉ đỏ được khi có người vừa chạm —
+  // và đúng lúc đó nó là phép kiểm CẦN NHẤT, không phải phép kiểm thừa.
+  const r = chon({
+    menhLenh: BA_LENH,
+    frozen: DONG_BANG,
+    daCham: ["workers/duc-auto-chatgpt/v0.1.0/sidepanel.js"]
+  });
+  assert.deepEqual(r.boQua, []);
+  assert.deepEqual(r.chay, BA_LENH);
+});
+
+ok("suite của gói SỐNG không bao giờ bị bỏ", () => {
+  const r = chon({ menhLenh: BA_LENH, frozen: ["workers/duc-scouter", ...DONG_BANG], daCham: [] });
+  assert.ok(r.boQua.some((m) => m.cmd === LENH_SONG.cmd), "khai đóng băng thì mới được bỏ");
+  const r2 = chon({ menhLenh: BA_LENH, frozen: DONG_BANG, daCham: [] });
+  assert.ok(r2.chay.includes(LENH_SONG), "không khai đóng băng thì phải chạy");
+});
+
+ok("FAIL-CLOSED: không đo chắc được ai chạm gì thì CHẠY HẾT", () => {
+  // `origin/main` không phân giải được thì danh sách commit chưa đẩy RỖNG OAN. Bỏ suite dựa trên
+  // một phép đo rỗng oan là đúng cách mất một phép kiểm mà không ai biết.
+  const r = chonSuiteBoDongBang({
+    menhLenh: BA_LENH, frozen: DONG_BANG, daCham: [], chacChanDoDuocCham: false
+  });
+  assert.deepEqual(r.boQua, []);
+  assert.deepEqual(r.chay, BA_LENH);
+});
+
+ok("khớp theo RANH GIỚI thư mục, không khớp theo tiền tố chuỗi", () => {
+  // `workers/duc-auto-chatgptX/` KHÔNG phải là chạm vào `workers/duc-auto-chatgpt`.
+  const r = chon({
+    menhLenh: BA_LENH, frozen: DONG_BANG,
+    daCham: ["workers/duc-auto-chatgptX/a.js", "workers/duc-auto-chatgpt-cu/b.js"]
+  });
+  assert.equal(r.boQua.length, 1, "hai đường dẫn na ná không được tính là chạm");
+});
+
+ok("không khai gói đóng băng nào thì không bỏ gì", () => {
+  const r = chon({ menhLenh: BA_LENH, frozen: [], daCham: [] });
+  assert.deepEqual(r.boQua, []);
+  assert.deepEqual(r.chay, BA_LENH);
+});
+
+/* ---- Cấu hình THẬT của repo này phải còn đúng ---- */
+
+ok("khối `frozen` thật trỏ vào gói CÓ TỒN TẠI, và không chứa gói sống", () => {
+  const cauHinh = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
+  const dongBang = frozenFrom(cauHinh);
+  assert.ok(dongBang.length > 0, "repo này đang có gói đóng băng, khối `frozen` không được rỗng");
+  for (const g of dongBang) {
+    assert.ok(fs.existsSync(path.join(ROOT, g)),
+      `khai đóng băng '${g}' mà thư mục không tồn tại — cờ trỏ vào chỗ trống thì nó không bỏ được gì`);
+  }
+  // Gói sống KHÔNG được nằm trong danh sách: đó là gói duy nhất đang được ghi, nên suite của nó
+  // là phép kiểm đắt giá nhất chứ không phải phép kiểm bỏ được.
+  assert.ok(!dongBang.includes("workers/duc-scouter"),
+    "gói SỐNG bị khai đóng băng — suite của nó sẽ không chạy nữa");
+});
+
+ok("`session-check.mjs` thật sự GỌI phép chọn này", () => {
+  // Không có vế này thì hàm trên có thể đúng hoàn hảo mà cổng không hề dùng nó — đúng dạng
+  // "gỡ chỗ gọi thì mọi test vẫn xanh" đã ghi trong bộ nhớ dài hạn.
+  const nguon = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
+  assert.match(nguon, /chonSuiteBoDongBang\(\{/, "cổng phải gọi chonSuiteBoDongBang");
+  assert.match(nguon, /frozenFrom\(/, "cổng phải đọc khối `frozen` từ cấu hình");
+  assert.match(nguon, /chacChanDoDuocCham:\s*originMainResolves/,
+    "vế fail-closed phải nối vào `originMainResolves`, không phải hằng `true`");
+});
+
+console.log(`\n${dat} passed, 0 failed, ${dat} total`);
