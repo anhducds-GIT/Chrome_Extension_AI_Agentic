@@ -1576,3 +1576,28 @@ thứ nó muốn đo; đã sửa dữ liệu thử. ⑵ Cổng đỏ `eol-lf-smo
 `workers/duc-scouter/`** — cây làm việc của phiên khác, không phải của tôi. Cổng chặn tôi vì tôi
 còn file sửa dở nên nó **không quy trách nhiệm được**; commit xong là nó tự quy đúng người và cho
 qua. **Đừng đi sửa file của lane khác** — chỉ cần commit phần mình.
+
+---
+
+## 2026-09-08 · `claude-cua-kiem` — ADR-0019: ranh giới vùng↔đường dẫn ĐÓNG, và một câu chữa bị sửa
+
+**Làm gì.** Cập nhật ADR-0019 theo việc đã chạy ở bộ khung, không phải theo dự định. Chi tiết đầy
+đủ ở `docs/adr/0019-cua-tich-hop-kiem-quyen-tren-lich-su.md`; đây chỉ là con trỏ:
+
+- **Mục ⑵c: "còn hở" → ĐÃ ĐÓNG.** Lõi quyền bắt buộc `--ban-do` + `--con-lai`, quy mọi đường dẫn
+  trong khoảng `coSo..sha` về một khoá theo khối `areas`, từ chối nếu có đường dẫn thuộc vùng khác.
+  Trước đó phiên Codex khai vùng `wrong-area` cho một thay đổi ở `product.txt` và **đi qua được**.
+- **Câu treo đã trả lời: kết quả chạm NHIỀU vùng thì ai duyệt — KHÔNG AI.** Một kết quả, một vùng.
+- **Mục ⒞: sửa một câu ADR này viết HAI LẦN và sai cả hai lần.** `enforce_admins` cộng một bước đọc
+  sổ quyền trong CI **không** đóng được khe đẩy `main`. Ứng viên còn lại là merge queue, **chưa đo**.
+
+**Số đo.** Ở bộ khung: `node tests/quyen-sau-ca.mjs` → **97 đạt · 0 sai** (trước 79), 15 ca. Bộ đột
+biến 27 cái đang chạy lúc ghi dòng này; số cuối vào nhật ký bộ khung, không vào đây.
+
+**Lượt đẩy.** Tôi **không** đẩy: phiên `claude-scouter-s06` đẩy trước và **cuốn theo commit
+`b0f12f59` của tôi** lên `fd2d941f`. Ghi ra vì ADR-0005 bắt kể tên lane bị cuốn theo — lần này tôi
+là bên **bị** cuốn, không phải bên cuốn.
+
+**Còn mở, đừng đọc hẹp hơn.** `--as` vẫn là tên tự khai · đẩy `main` bỏ qua cửa thì mã VẪN vào ·
+chưa bật cờ GitHub nào. Bản xem được chờ Đức duyệt:
+`_run-qua-dem-20260907/DE-XUAT-CO-GITHUB--CHO-DUC-DUYET.md`.
