@@ -716,3 +716,35 @@ thời **giảm 1.798 dòng** nhưng thước cố ý không đếm ADR nên ph�
 **Mở hai mục sổ nợ ở vùng lane khác giữ:** `N-55` (`gg-flow-video/decisions.md` — 142 dòng, 8
 quyết định **không số hiệu**, B12 không thấy) và `N-56` (`chatgpt/STATUS.md` trích ADR gói bằng
 đường dẫn gốc → liên kết chết trên bảng).
+
+## 2026-09-09 · `claude-luat-rasoat` — BỘ BIÊN DỊCH LUẬT, và 15/18 nơi chứa luật đã rà
+
+Đức chốt: *"cần một bộ rule compiler… mọi rule mới được append vào ledger, nhưng KHÔNG append
+trực tiếp vào active rules"* → [ADR-0027](docs/adr/0027-bo-bien-dich-luat.md) ·
+`docs/protocols/RULE-COMPILER.md` · `scripts/rule-compile.mjs` · cổng phép kiểm 17 · ghim 19 ca.
+
+**Repo đã có HAI NỬA mà không có mối nối:** sổ cái chỉ-thêm (B12 canh) và bản hiệu lực có thước
+cóc — không gì kiểm bản hiệu lực **đúng với** sổ cái. Bốn phép, chỉ `TRICH_VE_CHET` là ĐỎ; ba
+phép kia là *mùi*, và một cổng đỏ vì mùi là một cổng sẽ bị tắt.
+
+**Lượt chạy đầu bắt ngay hai chỗ đang dạy mô hình CHẾT từ 07/09** (*một cửa*, 0004 bị 0017 thay):
+`AGENTS.md` mục 7 và `ORCHESTRATOR.md` mục 0d.
+
+**Rà tay 15/18 nơi** (còn 3 gói `duc-auto-*`, lane khác giữ khoá → `N-57`). Máy không thấy, mắt
+thấy: `_shared` còn dạy *"cấm sửa gói đóng băng"* (chết 08/09) · `PROMPTS.md` §3 còn dạy khoá
+VÙNG là mặc định (đổi sang khoá FILE 08/09) · `PLATFORM.md` khai **3 extension** trong khi repo
+có **6**, kèm Observer V0 đã ngừng tồn tại 06/09 · `ASSISTANT-V0.1.md` khai hai mốc sai.
+
+**Lượt gộp ADR hôm qua ĐÁNH RƠI BA VẾ** (`0020 ⑶` `0020 ⑷` `0019 ⑷⑸`) mà B12 vẫn xanh tuyệt đối
+— **nó canh SỐ HIỆU, không canh NỘI DUNG VẾ**. Đã khôi phục; cách chữa là một bước NGƯỜI.
+
+**Cắt AGENTS.md 402 → 252 làm hỏng 8 lượt trỏ theo SỐ MỤC.** Từ nay trỏ tới `AGENTS.md` phải kèm
+**TÊN** mục: số hiệu ADR là danh tính, số mục chỉ là vị trí.
+
+**Tôi commit một file test RỖNG 0 byte và mọi lớp đều xanh** — lệnh Python mở file để GHI trước
+khi đọc. Đã khôi phục; `chay-test.mjs` nay **từ chối chạy** suite dưới 200 byte.
+
+**Xoá 3 hồ sơ đã chết** (1.006 dòng): `TOKEN-DIET-V0` · `SEND-TO-OTHER-REPOS` ·
+`BRIEF-OBSERVER-V1`. `PLATFORM.md` 231 → 101. **Thước cóc `docs/` 9.803 → 9.185.**
+
+**Kho nhớ của phiên cũng đi qua sáu bước đó** (ADR-0027 ⑸): 39 → 38 mục.
