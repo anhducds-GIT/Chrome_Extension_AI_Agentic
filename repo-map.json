@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-08",
-  "generated_commit": "5504122d",
+  "generated_commit": "62d0841f",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -64,7 +64,7 @@
       "status_md": "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
       "owner": "claude",
       "next_step": "Pilot vận hành thật cho phiên-theo-tab (Đức duyệt rồi mới chạy): reload extension, gắn tên 2–3 tab, gọi bridge.sessions + dom_probe --target từng phiên, thử gắn lại sau khi đóng Chrome",
-      "human_action": "Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích; muốn chạy nhiều luồng song song thì mở tab BRIDGE, gõ tên và bấm Gắn tab đang mở cho từng tab.",
+      "human_action": "Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích; muốn chạy nhiều luồng song song thì mở tab BRIDGE, gõ tên và bấm Gắn tab đang mở cho từng tab. @Đức:bấm",
       "priority_rank": 2,
       "superseded_by": null,
       "last_verified": "2026-08-26",
@@ -119,8 +119,8 @@
       "lifecycle": "paused",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "TẠM DỪNG từ 08/09 theo chốt của Đức — không ai đang làm gói này. Quay lại thì việc đầu tiên là trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào.",
-      "human_action": "Không có việc gì chờ Đức — gói đang tạm dừng. Một điều cần nhớ cho lúc quay lại: bản Scouter đang cài trong Chrome là bản CŨ, khối phanh vá ngày 08/09 chưa vào; dùng lại thì nạp lại extension trước.",
+      "next_step": "TẠM DỪNG từ 08/09 theo chốt của Đức — không ai đang làm gói này. Quay lại thì việc đầu tiên là trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào. Nhớ cho lúc quay lại: bản Scouter đang cài trong Chrome là bản CŨ, khối phanh vá ngày 08/09 chưa vào — dùng lại thì NẠP LẠI extension trước.",
+      "human_action": "không",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
@@ -134,7 +134,7 @@
       "status_md": "workers/hnx-fetch/v0.1.0/STATUS.md",
       "owner": "claude-scouter-s06",
       "next_step": "Chạy lại lượt lấy dữ liệu cuối ngày 08/09 — HNX chưa công bố lúc chiều, cả hai đường cùng xác nhận. Rồi mỗi ngày một lượt.",
-      "human_action": "Một việc nhỏ còn lại: tạo một tệp ghép cặp riêng cho HNX Fetch, cổng riêng — dùng chung với Scouter thì mỗi lệnh phải mang thêm một chuỗi dài. Phím tắt phanh khẩn Ctrl+Shift+H đã bấm thử 08/09 và ĂN THẬT.",
+      "human_action": "Một việc nhỏ còn lại: tạo một tệp ghép cặp riêng cho HNX Fetch, cổng riêng — dùng chung với Scouter thì mỗi lệnh phải mang thêm một chuỗi dài. Phím tắt phanh khẩn Ctrl+Shift+H đã bấm thử 08/09 và ĂN THẬT. @Đức:bấm",
       "priority_rank": 1,
       "superseded_by": null,
       "last_verified": "2026-09-08",
@@ -174,7 +174,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "TẠM DỪNG từ 08/09 theo chốt của Đức — không ai đang làm gói này. Quay lại thì việc đầu tiên là trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào.",
+      "title": "TẠM DỪNG từ 08/09 theo chốt của Đức — không ai đang làm gói này. Quay lại thì việc đầu tiên là trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào. Nhớ cho lúc quay lại: bản Scouter đang cài trong Chrome là bản CŨ, khối phanh vá ngày 08/09 chưa vào — dùng lại thì NẠP LẠI extension trước.",
       "rank": 4,
       "claim": null
     }

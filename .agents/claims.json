@@ -92,41 +92,16 @@
       "released_at": "2026-09-08T11:40"
     }
   },
-  "_fingerprint": "b7abd326d15b66c9",
+  "_fingerprint": "7426420f6fc07213",
   "tam": {
-    "workers/hnx-fetch/v0.1.0/STATUS.md": {
-      "owner": "claude-ext-n29",
-      "luc": "2026-09-08T12:18",
+    "scripts/claim.mjs": {
+      "owner": "claude-ext-n05",
+      "luc": "2026-09-08T12:27",
       "viec": null
     },
-    "workers/duc-auto-chatgpt/v0.1.0/STATUS.md": {
-      "owner": "claude-ext-n29",
-      "luc": "2026-09-08T12:18",
-      "viec": null
-    },
-    "workers/duc-scouter/v0.1.0/STATUS.md": {
-      "owner": "claude-ext-n29",
-      "luc": "2026-09-08T12:18",
-      "viec": null
-    },
-    "scripts/build-overview.mjs": {
-      "owner": "claude-ext-n29",
-      "luc": "2026-09-08T12:20",
-      "viec": null
-    },
-    "tests/build-overview-smoke.mjs": {
-      "owner": "claude-ext-n29",
-      "luc": "2026-09-08T12:20",
-      "viec": null
-    },
-    "scripts/backlog-check.mjs": {
-      "owner": "claude-ext-n29",
-      "luc": "2026-09-08T12:21",
-      "viec": null
-    },
-    "tests/backlog-check-smoke.mjs": {
-      "owner": "claude-ext-n29",
-      "luc": "2026-09-08T12:21",
+    "tests/claim-smoke.mjs": {
+      "owner": "claude-ext-n05",
+      "luc": "2026-09-08T12:27",
       "viec": null
     }
   }
