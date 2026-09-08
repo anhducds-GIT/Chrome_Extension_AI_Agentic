@@ -456,3 +456,87 @@ dòng nào nhắc tên trang**. Thử phá: thêm một hằng số `"https://hn
 **Rủi ro còn lại, và phép kiểm trên KHÔNG bắt được nó:** seed mới chỉ thử trên **một trang**
 (`TRIALS.md` liệt kê đúng `hnx.vn`). Một hàm sạch tên trang vẫn có thể chỉ đúng cho một
 hình dạng trang. Nên *"năng lực chung"* hiện là **lời khai**, chưa phải điều đã đo.
+
+## 2026-09-08 · `claude-scouter-s06` — bỏ `scout.snapshot`, thêm `scout.navigate`, thử THẬT
+
+Đức chốt hai việc trong một lượt nạp lại: **bỏ** `scout.snapshot` và **thêm** điều hướng.
+
+**Bỏ `scout.snapshot`.** Sau khi nạp lại bản có trần, nó VẪN giết service worker trên 2/3 trang
+thử. Trang rất lớn thì worker chết ngay trong lúc Chrome trả dữ liệu — trước khi bất kỳ dòng
+nào của ta kịp chạy, nên không còn chỗ đặt hàng rào. Gỡ sạch cả chuỗi: method → phép dò → hằng
+trần → **và cửa CDP `DOMSnapshot.captureSnapshot`**, cửa duy nhất từng mở mà nay không ai gọi.
+
+**Thêm `scout.navigate`.** Mở `Page.navigate` ở đường GHI. **Không cần thêm quyền Chrome nào** —
+Scouter đã có `debugger` + `<all_urls>`, nên đây là đổi một luật an toàn CỦA CHÍNH TA. Đường
+ĐỌC vẫn không có `Page.navigate`. `Page.reload` ở lại danh sách cấm.
+
+### Thử THẬT trên hnx.vn — mọi vế đạt
+
+| Phép thử | Kết quả |
+|---|---|
+| `javascript:` · `file:` · chuỗi không phải url | cả ba `INVALID_PARAMS`, **0 lệnh CDP** được gửi |
+| thống-kê → kết-quả-giao-dịch (cùng site) | tới nơi **289 ms**, không chuyển hướng |
+| `scout.page` ngay sau đó | *"Kết quả giao dịch"* — đọc được, đúng trang |
+| **hnx.vn → example.com (KHÁC site thật)** | tới nơi **261 ms**, id cũ **vẫn đọc được** |
+
+### Câu hỏi kiến trúc đã có câu trả lời, và nó miễn phí
+
+Tôi từng định đo riêng: *`target_id` có sống sót qua lần đổi trang không?* — vì nếu vỡ thì thiết
+kế **trọn gói** sụp và phải dựng máy trạng thái. Lượt thử thật trả lời luôn: **id sống sót**, kể
+cả khi đổi sang site khác eTLD+1 (Chrome đổi tiến trình). Nên *đi* và *làm tiếp* ở lại là hai
+lượt gọi riêng, không có trạng thái nào cần sống xuyên qua navigation.
+
+> **Một phép đo của tôi đã sai và tôi tự bắt được.** Lượt đầu tôi thử `hnx.vn → owa.hnx.vn`
+> rồi định kết luận "khác tên miền vẫn giữ id". Sai: hai cái đó **cùng một site** theo cách
+> Chrome chia tiến trình, nên phép thử ấy chưa hề chạm điều nó định chứng minh. Phải đi
+> `example.com` mới là phép thử thật. Đúng lớp lỗi tôi vừa bắt phiên Hệ thống sáng nay.
+
+### Ba quyết định, ghi để lượt sau khỏi cãi lại
+
+⑴ **Method GHI, không phải đọc.** Đổi trang là điều khiển trang, nên nó chui qua phanh và trả
+giá hạn mức y như `scout.click`. Phép ghim phanh có ca riêng cho nó — thêm một hành động ghi
+mà quên dòng đó là mở một cửa đi vòng qua phanh.
+
+⑵ **Không khẳng định đã tới đúng url đã xin.** Chuyển hướng là bình thường; so bằng sẽ báo hỏng
+cho một lượt đi thành công. Nó trả url **thật** đã tới kèm cờ `redirected`.
+
+⑶ **"Tới nơi" = url đã đổi VÀ đọc được tài liệu.** Thiếu vế sau thì một trang mới bắt đầu tải
+cũng tính là xong, và lượt `scout.page` ngay sau đọc phải trang rỗng.
+
+**Kèm:** gỡ 2 byte điều khiển THÔ khỏi `scouter-actions-smoke.mjs` — git coi cả file là binary vì
+chúng, nên diff của nó vô hình vĩnh viễn. Và S-14 (câu báo lỗi chỉ sai cửa) đã đóng.
+
+**Đo.** Method 15 → 14 → **15**. Suite **18/18**.
+
+## 2026-09-08 · `claude-scouter-s06` — bỏ `scout.snapshot`, thêm `scout.navigate`
+
+Đức chốt hai việc trong một lượt nạp lại.
+
+**Bỏ `scout.snapshot`.** Nạp lại bản có trần rồi nó VẪN giết service worker trên 2/3 trang thử:
+trang rất lớn thì worker chết ngay lúc Chrome trả dữ liệu, tức trước khi dòng nào của ta kịp
+chạy. Gỡ sạch cả chuỗi, kể cả cửa CDP `DOMSnapshot.captureSnapshot` nay không ai gọi.
+
+**Thêm `scout.navigate`.** Mở `Page.navigate` ở đường GHI. **Không cần thêm quyền Chrome nào** —
+đây là đổi luật an toàn của chính ta. Đường ĐỌC vẫn không có nó. Lý do đầy đủ: chú thích tại
+chỗ trong `scouter-actions-core.mjs`.
+
+### Thử THẬT trên hnx.vn
+
+| Phép thử | Kết quả |
+|---|---|
+| `javascript:` · `file:` · chuỗi không phải url | cả ba bị chặn, **0 lệnh CDP** được gửi |
+| thống-kê → kết-quả-giao-dịch | tới nơi **289 ms** |
+| `scout.page` ngay sau | *"Kết quả giao dịch"* — đúng trang |
+| **hnx.vn → example.com (KHÁC site)** | **261 ms**, id cũ **vẫn đọc được** |
+
+### Một câu hỏi kiến trúc được trả lời miễn phí
+
+Tôi định đo riêng: *`target_id` có sống sót qua lần đổi trang không?* — vỡ thì thiết kế **trọn
+gói** sụp và phải dựng máy trạng thái. Lượt thử thật trả lời luôn: **sống sót**, kể cả khác
+eTLD+1. Nên *đi* và *làm tiếp* ở lại là hai lượt gọi riêng.
+
+> **Một phép đo của tôi đã sai, tự bắt được.** Lượt đầu thử `hnx.vn → owa.hnx.vn` rồi định kết
+> luận "khác tên miền vẫn giữ id". Sai: hai cái đó **cùng một site** theo cách Chrome chia tiến
+> trình, nên nó chưa hề chạm điều nó định chứng minh. Phải đi `example.com` mới là phép thử thật.
+
+**Đo.** Method 15 → 14 → **15**. Suite **18/18**. S-14 đã đóng.
