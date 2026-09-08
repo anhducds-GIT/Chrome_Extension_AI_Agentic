@@ -671,12 +671,11 @@ từ ba gói `duc-auto-*`**, vùng tôi không sửa được liên kết. **C�
 `HANDOFF-ARCHIVE-*` và `evidence/`: chúng kể chuyện quá khứ, lúc đó tên file đúng là tên đó.
 
 **Một chỗ tôi KHÔNG tự hoà giải:** ADR-0004 chia vai *Hệ thống / Sản phẩm*, còn `AGENTS.md` mục 6
-chạy cặp *Giữ lõi / Phát & thu*. Hai cách chia **khác nhau**, và lần đổi 08/09 không có quyết định
-nào ghi lại. Ghi cả hai kèm cảnh báo ở cả hai chỗ — **chờ Đức chốt cặp nào đứng.**
+chạy cặp *Giữ lõi / Phát & thu* — hai cách chia khác nhau, và lần đổi 08/09 không có quyết định
+nào ghi lại. **Chờ Đức chốt cặp nào đứng.**
 
 **Sửa một chỗ tôi đánh dấu sai lượt trước:** ADR-0023 bị tôi ghi là bác bỏ toàn bộ, nhưng vế ⑶
-(*"khoá thuộc về CHAT, không thuộc từng tác vụ ngầm"*) **vẫn sống** — nó chính là giới hạn ⑦ của
-`AGENTS.md`. Chỉ vế ⑴ chết.
+(*"khoá thuộc về CHAT"*) **vẫn sống** — nó chính là giới hạn ⑦. Chỉ vế ⑴ chết.
 
 **Ngôn ngữ: Đức đảo lại trong ngày.** Sáng chốt tiếng Anh cho rẻ token, chiều chốt lại tiếng Việt
 *"để tôi cùng đọc bản cuối"*. Lý do sau nặng hơn: **một bộ luật Đức không đọc được là một bộ luật
@@ -685,3 +684,5 @@ phân nhóm**, không phụ thuộc ngôn ngữ — **402 → 252 dòng, 30.520 
 Bài học: **hỏi ai sẽ ĐỌC một tài liệu trước khi tối ưu nó cho ai sẽ NẠP nó.**
 
 Sổ nợ còn **1 mục mở**: `N-45`.
+
+> **Lượt đẩy dùng `--carry`, cuốn theo 5 commit của lane `claude-gpt-chay-het-job`** — ADR-0005 vế ⑶ duyệt thường trực; đổi lại phải kể tên lane bị cuốn theo, đây là dòng đó.
