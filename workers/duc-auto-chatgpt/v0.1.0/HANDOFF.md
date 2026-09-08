@@ -444,3 +444,36 @@ kiện đóng: `BACKLOG.md`.
 
 **Việc Đức.** Nạp lại tiện ích để bản này có hiệu lực, rồi chạy một loạt job và thử đóng tab ChatGPT
 giữa chừng — đúng ca `RECEIVER_LOST` mà bản vá này nhắm tới.
+
+## 2026-09-09 (tiếp) · `claude-gpt-chay-het-job` — ADR-0051: vòng chat 0 cú bấm chạy được
+
+**Đức đặt lại hướng giữa phiên:** *"tôi ko muốn chọn thư mục, cũng ko muốn mở workbook… tôi muốn
+UX đơn giản nhất với người dùng phải vận hành được trước."* Đọc lại luồng thì **hai trong ba yêu
+cầu đã chạy được sẵn**: `jobs.add` là cửa mồi tự dựng phiên trong bộ nhớ, và Downloads là đích
+mặc định. Chỗ tắc chỉ có một — Chrome bỏ qua tên tệp, `verifyDownloadedFilename()` so tên rồi ném.
+
+**[ADR-0051](docs/adr/0051-nhan-ten-chrome-dat-thay-vi-doi-ten-phai-khop.md)** (Đức chốt sau khi
+đọc cả cái giá): nhận tên Chrome đặt. Nó **lật một điểm** của ADR-0049 — ADR đó đã cân đúng
+phương án này và **loại** nó; lý do vẫn đúng, Đức đổi ưu tiên. Ghi thẳng ra trong ADR mới.
+
+**Chỗ làm quyết định rẻ hơn nó trông, đầy đủ ở ADR:** `verifyCompletedDownload()` đã kiểm ba thứ
+độc lập với tên, và cả ba còn nguyên. Ca `ket-qua (1).xlsx` **vẫn bị chặn**.
+
+**Nghiệm thu live: vòng lặp Đức mô tả chạy được, 0 cú bấm, 2 lượt qua lại.** Không workbook,
+không chọn thư mục, prompt giữ nguyên dấu (235 ký tự), đọc câu trả lời về, phân tích, gửi tiếp.
+
+**Nhưng lượt live đó bắt được `B-43`, và nó nặng hơn thứ vừa vá.** Máy ghi **6 ký tự** vào sổ
+trong khi trang giữ **237**, và báo `SUCCESS`. Báo-thành-công-giả, vô hiệu hoá case 2. **Cố ý
+chưa vá:** hai giả thuyết đòi hai bản vá khác hẳn, cần một phép đo `dom_probe` tách chúng. Số đo
+và điều kiện đóng ở `BACKLOG.md`.
+
+**Hai phát hiện khác của cùng lượt chạy, cả hai đã ghi lại:**
+- Hội thoại thuộc **Project** (`/g/g-p-…/c/<id>`) bị `conversationIdOf` đọc thành `null` trong
+  khi adapter nói đó LÀ hội thoại → `boundConversationId` rỗng → cửa chống trôi-hội-thoại **tắt
+  lặng lẽ** trên mọi phiên Project, tức mọi phiên Đức thật sự dùng. Đã vá tận gốc: một luật, một
+  bản, ở adapter.
+- Chrome bỏ qua **cả thư mục**, không chỉ tên: artifact rơi vào `Downloads/Phai sinh` (105 tệp).
+  Mà `don-rac-tai-xuong.mjs` **chỉ quét tầng ngoài cùng**, nên nó sẽ không bao giờ dọn đống đó.
+
+**Kết quả số.** Suite **121/121**. Thử phá: ADR-0051 **9/9** · hội thoại Project **5/5** ·
+ADR-0050 ⒝ **12/12**. Sổ nợ gói thêm `B-43` (P0).
