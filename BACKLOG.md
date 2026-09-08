@@ -783,3 +783,48 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
   brief là **nhà** của một ý tưởng. Xoá chúng là làm hỏng thứ đang chạy, không phải dọn rác.
 - **đóng khi:** đức: chốt con số của giới hạn ③ theo sàn đo được (đề nghị: **9.600**, kèm một
   dòng lý do trong `AGENTS.md`) — hoặc chốt rằng repo sẽ rút gọn văn để về 8.000 và giao việc đó.
+
+- **ĐO LẠI CHO N-51 — trần 8.000 đang đo SAI THỨ, và đây là số** · 2026-09-09 · lane `claude-ext-don2` · Đức từ chối nâng trần (*"nâng trần tôi sợ làm AI khó triển khai công việc, ta cần tìm cách optimize"*) — đúng, và đo lại thì **con số đó không đo thứ làm AI chậm**. `docs/` là **12.396 dòng / 65 file**, nhưng một phiên chỉ mở **1–3 file** trong đó theo việc. Thứ **mọi phiên bắt buộc nạp**, dù muốn hay không, là: `AGENTS.md` **402 dòng** + `CLAUDE.md` 7 + phần cuối `HANDOFF.md` (**2.001 dòng**, 60 mục). Cắt `docs/` từ 26.104 xuống 12.396 **không giảm một dòng nào** của cái phải nạp. Đây đúng bài học *"đo đúng cái người ta than, đừng đo cái dễ đếm"*.
+
+## N-52 · `AGENTS.md` phình 45% trong hai ngày, và chính giới hạn ⑦ của nó cấm điều đó
+
+- **nhóm:** cong
+- **mở:** 2026-09-09 · lane `claude-ext-don2`
+- **vùng:** `_root`
+- **[ĐO]** `git show <sha 07/09>:AGENTS.md | wc -l` = **278** · `wc -l AGENTS.md` = **402**.
+  Tăng **+124 dòng (+45%)**, và **phần lớn là do chính tôi viết trong ngày 08/09** (khối khoá
+  mức file, khối hook, ba lượt viết lại giới hạn ①③④).
+- **giới hạn ⑦ của chính file đó nói:** *"Một luật vào thì một luật ra… Mục này đổi lấy chín
+  dòng sổ tay… `wc -l AGENTS.md`: 296 → 291"*. Tôi thêm luật mà **không lấy luật nào ra**, và
+  con số trong chính dòng đó nay sai gấp rưỡi.
+- **vì sao nó đắt hơn `docs/`:** file này **mọi AI nạp mọi phiên**, trước cả khi biết mình
+  sắp làm gì. Một dòng ở đây tốn hơn một trăm dòng trong `docs/studies/`.
+- **chỗ cắt được, đã soi:** ba khối tôi thêm hôm qua đều có **ADR đầy đủ** kèm theo
+  ([ADR-0025] khoá mức file · `N-49` hook · [ADR-0024] mở băng). Hiến pháp chỉ cần **câu lệnh
+  và một dòng vì sao**; phần *đo được bao nhiêu, vấp ở đâu, cân những gì* thuộc về ADR — và
+  mục 6 vốn đã có cột "mở sổ tay nào" để trỏ sang.
+- **đóng khi:** lệnh: `wc -l AGENTS.md` ≤ **300**, và có một phép kiểm ĐỎ khi nó vượt — cùng
+  kiểu thước cóc như `docs.tran_dong_khong_ke_adr` (B9 hiện chỉ cảnh báo VÀNG ở mốc 200, tức
+  nó đã kêu suốt và không ai nghe; thay bằng thước cóc đặt ở con số HÔM NAY thì nó chỉ chặn
+  PHÌNH, và đó là thứ người ta chịu nghe).
+
+## N-53 · `HANDOFF.md` giữ 60 mục trong khi ADR-0008 bắt giữ 20 — không gì cưỡng chế
+
+- **nhóm:** cong
+- **mở:** 2026-09-09 · lane `claude-ext-don2`
+- **vùng:** `_root` + `_code`
+- **[ĐO]** `grep -c '^## ' HANDOFF.md` = **60 mục / 2.001 dòng**. ADR-0008 chốt **20 lượt**.
+  Vượt **gấp ba**, và **không phép kiểm nào kêu** — đúng hình dạng *luật không máy nào canh*
+  mà mục 7 của `AGENTS.md` cảnh báo, và là lần thứ ba trong repo này (trước đó: trần sổ nợ
+  vỡ ở mục 11, và cờ đóng băng khai mà không cổng nào đọc).
+- **công cụ hiện có KHÔNG làm được việc này:** `handoff.mjs --rotate` xoay theo **THÁNG**
+  (ADR-0011), mà cả 60 mục đều là `2026-09` — nên nó dời **0 dòng**. Hai ADR, hai cơ chế
+  khác nhau, và cái của ADR-0008 chưa bao giờ được cài.
+- **cái giá:** 2.001 dòng này nằm trong nhóm **mọi phiên phải đọc** (phần cuối, nhưng phiên
+  nào cũng cuộn ngược để hiểu bối cảnh). Cắt còn 20 mục là giảm khoảng **1.400 dòng** khỏi
+  đúng chỗ đắt nhất — nhiều hơn cả lượt xoá 18 hồ sơ mồ côi, mà rủi ro thấp hơn hẳn.
+- **đóng khi:** lệnh: `handoff.mjs` có đường cắt theo SỐ MỤC (không chỉ theo tháng), `HANDOFF.md`
+  gốc còn ≤ 20 mục, phần cũ nguyên văn trong `HANDOFF-ARCHIVE-*.md`, và có phép ghim đối chứng
+  **ghép lại dựng được bản gốc giống hệt từng byte** (bất biến ⑴ của ADR-0008).
+
+- **ĐỨC CHO PHÉP MỞ KHOÁ `workers/duc-auto-gg-flow-video`, NHƯNG CHƯA LÀM** · 2026-09-09 · nguyên văn: *"tôi cho phép mở khóa gg flow, nhưng chưa triển khai, vì đang triển khai GPT extension"*. Ghi lại để phiên sau khỏi hỏi lại, và ghi rõ **hai vế**: ⑴ khoá đó **được phép chuyển** (lane `claude-flow-f28-f33` giữ 33h) — dùng `--restamp --duc-duyet` kèm chính câu trên; ⑵ **chưa nhận khoá lúc này**, vì nhận rồi ngồi lên nó là đúng thói quen mà khoá mức file vừa bỏ (ADR-0025: nhận NGAY TRƯỚC lượt ghi). Việc `N-45` chờ tới khi gói GPT xong.

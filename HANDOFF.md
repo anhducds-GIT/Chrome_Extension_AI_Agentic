@@ -1999,3 +1999,35 @@ Còn ~2.800 dòng cắt được mà **không** chạm sàn, nhưng vài hồ s�
 của một ý tưởng. Xoá chúng là làm hỏng thứ đang chạy. Mở `N-51` để Đức chốt con số.
 
 > **Lượt đẩy dùng `--carry`, cuốn theo 1 commit của lane `claude-gpt-chay-het-job`** (ADR-0005 duyệt thường trực; đổi lại phải kể tên lane bị cuốn — đây là dòng đó).
+
+## 2026-09-09 · `claude-ext-don2` — trần `docs/` đang ĐO SAI THỨ, và số chỉ vào việc của chính tôi
+
+Đức từ chối nâng trần: *"nâng trần tôi sợ làm AI khó triển khai công việc, ta cần tìm cách
+optimize."* Đo lại thì đúng — nhưng chỗ tối ưu **không nằm ở `docs/`**.
+
+| Nhóm | Dòng | Ai đọc |
+|---|---|---|
+| `docs/` | 12.396 / 65 file | mở **1–3 file** theo việc |
+| `AGENTS.md` | **402** | **mọi AI, mọi phiên** |
+| `HANDOFF.md` | **2.001** (60 mục) | **mọi phiên** |
+
+Cắt `docs/` từ 26.104 → 12.396 hôm qua **không giảm một dòng nào** của cái phải nạp. Đúng bài học
+*"đo đúng cái người ta than, đừng đo cái dễ đếm"*.
+
+**Và số chỉ thẳng vào việc tôi vừa làm.** `AGENTS.md` **278 → 402 dòng (+45%)** trong hai ngày,
+phần lớn do chính tôi viết 08/09 — trong khi **giới hạn ⑦ của chính file đó** cấm: *"một luật vào
+thì một luật ra"*, và ví dụ nó nêu là `296 → 291`. Tôi thêm luật mà không lấy luật nào ra. Ba khối
+tôi thêm **đều đã có ADR đầy đủ**, nên hiến pháp chỉ cần câu lệnh + một dòng vì sao.
+
+**Chỗ rẻ nhất chưa ai đụng:** `HANDOFF.md` giữ **60 mục** trong khi ADR-0008 chốt **20** — vượt gấp
+ba, **không phép kiểm nào kêu**. Bẫy: `handoff.mjs --rotate` xoay theo **THÁNG** (ADR-0011), mà cả
+60 mục đều `2026-09` nên nó dời **0 dòng**; cơ chế của ADR-0008 **chưa bao giờ được cài**. Cắt còn
+20 mục gỡ ~**1.400 dòng** khỏi đúng chỗ đắt nhất.
+
+Mở `N-52` (AGENTS phình) và `N-53` (HANDOFF 60 mục). Sổ nợ **4 mục**.
+
+**Đức chốt 09/09:** cho phép mở khoá `duc-auto-gg-flow-video`, **nhưng chưa triển khai** — đang làm
+gói GPT. Ghi rõ hai vế: khoá **được phép chuyển**, nhưng **chưa nhận lúc này** — nhận rồi ngồi lên
+nó là đúng thói quen mà khoá mức file vừa bỏ.
+
+Roadmap cho phiên sau: `_run-qua-dem-20260907/ROADMAP-EXTENSION-09-09-v2.md`.
