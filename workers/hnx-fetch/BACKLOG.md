@@ -203,3 +203,22 @@ một extension khác giành mất tổ hợp.
   do tiến trình Node làm. Nên câu *"đọc từ chính tệp SSOT"* trong điều kiện đóng là thứ **không
   làm được từ bảng bên**; muốn có nó phải dựng một bộ đếm thứ hai, mà mục này đã nói rõ là không.
   Và con số *"hôm nay lấy được mấy ngày"* vốn đã hiện ở chỗ người vận hành nhìn: đầu ra của lệnh.
+
+- **THU HẸP LẦN 2 · H-06** (2026-09-08, `claude-scouter-s06`) · Đức chốt giao việc này cho Codex
+  CLI. Codex **không chạy được** trên máy này (sandbox hỏng: `apply deny-read ACLs` — đúng lỗi đã
+  ghi trong sổ tay), nên chuyển sang **đọc mã**: nạp thẳng nội dung qua stdin, chế độ chỉ-đọc.
+  Nó trả `FAIL` kèm 5 chỗ. Tôi kiểm lại từng cái bằng cách chạy thật — **cả 5 đều có thật**, và
+  một trong số đó là lỗ **đã lọt**: đường dẫn mở rộng `\?\C:\...` đưa được một tệp có token vào
+  gốc repo. Đã vá hết; 12 đường tấn công nay chặn 12.
+
+  Đáng nhớ nhất: một lỗ nằm trong **chính phép ghim** — nó lùi sai số cấp nên chỉ bảo vệ
+  `workers/`, không phải gốc repo. Nó **không đỏ**, nó chỉ **đo ít hơn nó tự khai**. Đó là lý do
+  bên kiểm chứng phải là bên khác với bên sửa.
+
+  **Tệp ghép cặp đã sinh sẵn** cho Đức tại `C:\Users\MAYTEST_12\HNX-Bridge\hnx-pairing.json`
+  (ngoài kho mã, ổ đĩa nội bộ — cố ý không đặt trên Drive để token không đồng bộ lên mây), và
+  máy chủ đã bật thật với nó: `HTTP 200 · EXTENSION_OFFLINE`, đúng như phải thế khi chưa có
+  extension nào cắm.
+
+  **Còn đúng một việc, và chỉ tay Đức làm được:** mở bảng bên của HNX Fetch, chọn tệp đó thay cho
+  tệp của Scouter. Xong thì chạy một lượt `--thu-xem` **không kèm** `--target` là mục này đóng.
