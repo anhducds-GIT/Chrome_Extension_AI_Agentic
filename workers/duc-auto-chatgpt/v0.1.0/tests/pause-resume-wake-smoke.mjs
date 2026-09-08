@@ -50,11 +50,11 @@ const waitSource = cut("  async function waitWhilePaused() {", "\n  function sho
 assert.match(waitSource, /raceControlWake\(250\)/, "vòng chờ phải đua chuông với lưới đỡ 250ms");
 
 /** Dựng sân khấu. `sleep` do người gọi quyết định — mép ①–③ cho nó chết hẳn. */
-function stage({ pauseRequested = true, stopRequested = false, sleep } = {}) {
+function stage({ pauseRequested = true, stopRequested = false, sleep, PromiseImpl } = {}) {
   const audits = [];
   const state = { pauseRequested, stopRequested, paused: false };
   const ctx = {
-    console, Promise, Date, Set, Math,
+    console, Promise: PromiseImpl || Promise, Date, Set, Math,
     state,
     sleep: sleep || (() => new Promise(() => {})),   // hẹn giờ chết — đúng cảnh panel bị che
     setStatus: () => {}, progress: () => {}, log: () => {},
@@ -170,4 +170,42 @@ const daXong = async (p) => {
   await p;
 }
 
-console.log("B-28① Tiếp tục ăn ngay bằng chuông, không qua hẹn giờ (5 mép): PASS");
+/* ⁶ ĐO TRỮC TIẾP CÁI RÒ RỈ, không đo một dấu hiệu của nó.
+   Vòng audit độc lập thứ hai 08/09 chỉ đúng một lỗ còn lại trong chính phép ghim này:
+   mép ⁴ đo **số tên trong tập**, mà cái rò rỉ thật là **số reaction đính vào một promise
+   chưa settle**. Hai thứ đó khác nhau: một bản vừa giữ sổ bằng `Set` đúng luật vừa dùng
+   chung một bell sẽ có `size ≤ 1` **và vẫn rò rỉ**. Nên mép này đếm thẳng số lần `then`
+   đính vào mỗi promise, rồi đòi con số lớn nhất bị chặn — không bò theo số vòng lặp.
+   Bản rò rỉ của vòng 1 đạt ~400 ở đây; bản hiện tại đạt 1. */
+{
+  let maxReaction = 0;
+  class TrackedPromise extends Promise {
+    constructor(executor) { super(executor); this.__reactions = 0; }
+    then(...args) {
+      this.__reactions = (this.__reactions || 0) + 1;
+      if (this.__reactions > maxReaction) maxReaction = this.__reactions;
+      return super.then(...args);
+    }
+  }
+
+  let ticks = 0;
+  const s = stage({
+    PromiseImpl: TrackedPromise,
+    sleep: () => {
+      ticks += 1;
+      if (ticks >= 400) s.state.pauseRequested = false;
+      return TrackedPromise.resolve();
+    }
+  });
+  await s.wait();
+  assert.ok(ticks >= 400, `vòng lặp phải quay đủ nhiều lượt để đo được (đo ${ticks})`);
+  assert.ok(
+    maxReaction <= 4,
+    `một promise chỉ được mang vài reaction, không được mang một reaction cho MỖI vòng lặp — ` +
+    `đo được ${maxReaction} sau ${ticks} lượt. Con số bò theo số vòng lặp nghĩa là ` +
+    `đang dùng chung một promise và tích luỹ reaction trên nó — đúng con rò rỉ audit đã bắt ` +
+    `ở vòng 1, và là con mà mép ⁴ (đếm tên trong tập) KHÔNG thấy được`
+  );
+}
+
+console.log("B-28① Tiếp tục ăn ngay bằng chuông, không qua hẹn giờ (6 mép, mép ⑥ đo thẳng số reaction): PASS");
