@@ -30,6 +30,23 @@ không · phím tắt `Ctrl+Shift+H` có ăn không. Đừng đóng mục này b
 
 ---
 
+## MỞ · H-05 (2026-09-08, `claude-scouter-s06`) — không có cờ chia theo loại sản phẩm
+
+`tai-ket-qua.mjs` gõ cứng `LOAI_SAN_PHAM.CHI_SO_CO_PHIEU` (dòng 50). `nguon-hnx.mjs` có khai
+bảng loại, nhưng **không có cờ dòng lệnh nào chọn được**.
+
+Hệ quả đã thành lỗi tài liệu: `PROTOCOL.md` từng khuyên *"gặp `FETCH_BODY_TOO_LARGE` thì chia
+nhỏ theo loại sản phẩm"* — một lời khuyên **không làm theo được**. Audit nội dung độc lập 08/09
+bắt được. Câu đó nay đã sửa thành *một ngày một lượt*, nhưng cái cờ vẫn chưa có.
+
+**Chưa gấp:** một ngày đo được **46 KB**, trần là **512 KiB** — rộng gấp hơn mười lần. Mã lỗi
+đó gần như chỉ nổ khi có gì khác đã sai.
+
+**đóng khi:** hoặc `tai-ket-qua.mjs` nhận `--loai <mã>` và có một phép ghim cho nó, hoặc Đức
+chốt là không cần và câu ở `PROTOCOL.md` bỏ hẳn nhánh đó.
+
+---
+
 ## MỞ · H-02 (2026-09-08, `claude-scouter-s06`) — sổ hoạt động mất phần "trang đang chạm"
 
 `journal-core.mjs` chép nguyên văn từ Scouter, và phần tiến độ của nó buộc vào **tám mốc thuần

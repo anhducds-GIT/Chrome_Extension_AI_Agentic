@@ -21,6 +21,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chayDotBien } from "./mutation-runner.mjs";
 
+/* Xuong dong, khong go thang: mot ky tu xuong dong THAT trong nguon lam git coi tep la nhi
+ * phan va giau mat dien di. */
+const NL = String.fromCharCode(10);
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PIN = path.join(ROOT, "tests", "be-mat-hep-smoke.mjs");
 
@@ -161,6 +165,13 @@ const BATCHES = [
         ten: "Khai lại quyền debugger — Chrome dựng dải băng, và extension bấm được",
         tim: '  "permissions": ["storage", "alarms", "sidePanel"],',
         thay: '  "permissions": ["storage", "alarms", "sidePanel", "debugger"],',
+        soLan: 1
+      },
+      {
+        ma: "N22",
+        ten: "Tiem ma thang vao trang bang content_scripts — duong nay KHONG qua permissions",
+        tim: '  "permissions": ["storage", "alarms", "sidePanel"],',
+        thay: '  "permissions": ["storage", "alarms", "sidePanel"],' + NL + '  "content_scripts": [{ "matches": ["https://hnx.vn/*"], "js": ["background.js"] }],',
         soLan: 1
       },
       {

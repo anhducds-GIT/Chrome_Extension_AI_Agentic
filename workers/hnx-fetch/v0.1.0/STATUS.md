@@ -8,7 +8,7 @@ priority_rank: 1
 next_step: "Chạy MỘT lượt lấy dữ liệu thật qua chính extension HNX Fetch, thay vì qua Scouter. Toàn bộ mã đã tách xong và phép ghim xanh, nhưng chưa lượt nào đi qua nó."
 human_action: "Nạp extension HNX Fetch vào Chrome bằng Load unpacked — README của gói ghi rõ chọn thư mục nào. Rồi bấm icon, chọn tệp ghép cặp, bật công tắc Cho phép lấy dữ liệu."
 version_source: workers/hnx-fetch/v0.1.0/manifest.json
-current_focus: "Tách khỏi Scouter xong: extension riêng, tên giao thức riêng, và bỏ hẳn quyền debugger. Việc còn lại lớn nhất là chạy thật một lượt qua chính nó."
+current_focus: "Tách khỏi Scouter xong, đã qua một lượt audit độc lập về cả mã lẫn tài liệu và vá hết. Việc còn lại lớn nhất là nạp vào Chrome rồi chạy thật một lượt qua chính nó."
 ref_readme: workers/hnx-fetch/README.md
 ref_handoff: workers/hnx-fetch/HANDOFF.md
 ref_runbook: workers/hnx-fetch/PROTOCOL.md
@@ -36,19 +36,25 @@ phần đối chiếu và kiểm tra tính toàn vẹn là lý do việc này gi
 
 ## Đã kiểm chứng tới đâu
 
-**Chưa chạy thật qua chính extension này** — nói thẳng ra, đừng để ai suy ra từ chỗ khác.
+**Chưa nạp vào Chrome và chạy một lượt thật qua chính extension này** — nói thẳng ra, đừng để
+ai suy ra từ chỗ khác. Mã lấy dữ liệu đã chạy thật ngày 08/09, nhưng lúc đó nó đi qua Scouter.
 
-Cái đã có: toàn bộ mã lấy dữ liệu đã chạy thật trong ngày 08/09, nhưng lúc đó nó đi qua
-Scouter. Sau khi tách, phần được kiểm là:
+Sau khi tách, phần đã kiểm được:
 
-- suite lấy dữ liệu: **5/5 khối ĐẠT** ở vị trí mới
-- phép ghim bề mặt hẹp: **4/4 khối ĐẠT** — từ vựng đúng bốn lệnh, manifest không có `debugger`,
-  cái phanh còn nguyên, hai tệp lõi chép từ Scouter còn khớp từng byte
+- **cả sợi dây, qua socket thật**: máy chủ thật ↔ transport thật ↔ lõi thật — bắt tay hai chiều,
+  lệnh đi trọn vòng, lệnh không tồn tại bị từ chối, cái phanh chặn thật qua dây, vùng ghi nhốt được
+- **suite của gói ĐẠT toàn bộ**, gồm bộ soi tệp SSOT và phép ghim bề mặt hẹp
+- **đột biến kiểm: 0 con sống sót** — mọi chốt an toàn đều có phép ghim đứng sau
+- **audit độc lập** (Codex, 08/09): 6 lỗi mã + 11 chỗ tài liệu, đã vá hết, mỗi lỗi một phép ghim
+
+Con số cụ thể thì chạy mà lấy, đừng tin dòng này: `node v0.1.0/tests/run-all.mjs` ·
+`node v0.1.0/scripts/mutation-check.mjs`.
 
 ## Giới hạn đã biết
 
-1. **Chưa nạp vào Chrome lần nào.** Mọi thứ trên đây kiểm bằng đồ giả, không phải bằng
-   trình duyệt thật.
+1. **Chưa nạp vào Chrome lần nào.** Phần Chrome đọc `manifest.json`, vẽ bảng bên, và phím tắt
+   phanh khẩn — **không có cách nào đo từ Node**, nên chúng chưa được chứng minh. Đừng suy ra
+   từ việc suite xanh.
 2. **Không bấm, không gõ, không đọc DOM.** Cố ý. Trang nào cần bấm mới ra dữ liệu thì
    extension này không làm được — đó là việc của Scouter.
 3. **Cần máy chủ Bridge đang chạy.** Không có nó thì không lệnh nào đi được.

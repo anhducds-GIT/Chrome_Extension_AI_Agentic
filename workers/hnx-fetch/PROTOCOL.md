@@ -14,7 +14,7 @@ Mỗi ngày, Sở Giao dịch Chứng khoán Hà Nội công bố dữ liệu ph
 
 | Trang | Ra cái gì |
 |---|---|
-| `https://hnx.vn/vi-vn/phai-sinh/ket-qua-giao-dich.html` | **kết quả giao dịch** từng hợp đồng — 24 cột số |
+| `https://hnx.vn/vi-vn/phai-sinh/ket-qua-giao-dich.html` | **kết quả giao dịch** từng hợp đồng — bảng 24 cột (23 cột chữ và số, cột đầu là **ảnh** mũi tên tăng/giảm — xem bẫy ⑶ mục 4.1) |
 | `https://hnx.vn/vi-vn/phai-sinh/thong-ke.html` | **báo cáo thống kê** dạng tệp PDF |
 
 Việc của bạn: lấy cả hai về thư mục dữ liệu của Đức, **không làm hỏng thứ đã có**, và **nói
@@ -52,10 +52,19 @@ trước khi định làm gì khác:
 | `system.capabilities` | không | **tự khai năng lực** — nguồn có thẩm quyền, đừng chép ra chỗ khác |
 | `scout.fetch` | **có** | gọi một URL bằng chồng mạng của **chính trình duyệt** |
 
-**Nó KHÔNG bấm, KHÔNG gõ, KHÔNG mở tab, KHÔNG đọc DOM, KHÔNG chụp màn hình.** Đây không phải
-lời hứa suông — extension **không khai quyền `debugger`** trong `manifest.json`, nên Chrome từ
-chối những việc đó ở tầng hệ thống, kể cả khi có ai đó viết lại mã. Phép ghim
-`v0.1.0/tests/be-mat-hep-smoke.mjs` canh cả bốn cách lời hứa này có thể chết.
+**Nó KHÔNG bấm, KHÔNG gõ, KHÔNG mở tab, KHÔNG đọc DOM, KHÔNG chụp màn hình.**
+
+Lời hứa đó đứng được là nhờ **BA thứ cùng vắng mặt** trong `manifest.json`, không phải một:
+
+| Vắng mặt | Nếu có thì mở lại đường gì |
+|---|---|
+| quyền `debugger` | gắn vào tab và gửi sự kiện chuột/bàn phím thật |
+| khối `content_scripts` | tiêm mã thẳng vào trang — **đường này KHÔNG đi qua danh sách `permissions`** |
+| quyền `scripting` / `tabs` | tiêm mã lúc chạy |
+
+Nói đủ ba vì bỏ mỗi `debugger` thì lời hứa **chưa đứng** — audit nội dung độc lập 08/09 chỉ
+đúng chỗ này, và bản trước của tệp này nói thiếu. Phép ghim `v0.1.0/tests/be-mat-hep-smoke.mjs`
+khối ⑵ khẳng định cả ba, và con đột biến `N22` chứng minh nó bắt được.
 
 Hệ quả thực tế: **không có dải băng *"đang gỡ lỗi trình duyệt này"*** trên tab của Đức.
 
@@ -80,7 +89,32 @@ trên máy Đức — mới là thứ đặt tệp xuống.
 
 ---
 
-## 2. Chuẩn bị: ba việc, làm một lần mỗi phiên
+## 2. Chuẩn bị
+
+### ⓪ Bắt đầu từ số không — bốn thứ bạn phải CÓ trước khi làm gì
+
+Ba trong bốn thứ này **chỉ Đức đưa được**. Thiếu chúng thì không có cách nào tự tìm ra, và
+đoán bừa là hỏng. Hỏi một lần, ghi lại, dùng cho mọi phiên sau.
+
+| Cần | Ai đưa | Ghi chú |
+|---|---|---|
+| **Đường dẫn kho mã** — thư mục chứa `workers/hnx-fetch/` | Đức | mọi đường dẫn trong tệp này tính từ đây, gọi là **gốc kho** |
+| **Tệp ghép cặp** (`.json`, chứa cổng và token) | Đức | do bộ cài Bridge tạo. **Không có trong kho mã**, và không được đặt vào thư mục dữ liệu |
+| **Thư mục dữ liệu** trên Drive | Đức | mục 0 ghi đường dẫn Đức đang dùng — xác nhận lại, đừng gõ theo trí nhớ |
+| **Node.js ≥ 20** | tự kiểm | `node --version`. Mã dùng `node:` prefix và `Object.hasOwn`, nên bản cũ hơn sẽ hỏng |
+
+**Quy ước thư mục làm việc trong cả tệp này** — audit chỉ đúng rằng bản trước trộn hai gốc:
+
+| Khối lệnh ghi | thì `cd` về |
+|---|---|
+| bắt đầu bằng `workers/hnx-fetch/…` | **gốc kho** |
+| bắt đầu bằng `node tai-…` hoặc `node kiem-…` | `workers/hnx-fetch/du-lieu/` |
+| bắt đầu bằng `node v0.1.0/…` hoặc `node du-lieu/…` | `workers/hnx-fetch/` |
+
+Shell: các câu lệnh dưới đây viết cho **PowerShell hoặc Git Bash trên Windows**. Đường dẫn có
+dấu cách và dấu tiếng Việt, nên **luôn bọc trong dấu nháy kép**.
+
+### Rồi ba việc này, làm một lần mỗi phiên
 
 ### ① Máy chủ Bridge **CỦA CHÍNH GÓI NÀY** phải đang chạy
 
@@ -137,17 +171,36 @@ Mỗi lần bật cho **200 lượt gọi**. Hết thì tắt rồi bật lại.
 
 ---
 
-## 3. Việc hằng ngày — hai lệnh
+## 3. Việc hằng ngày
 
-Chạy trong `workers/hnx-fetch/du-lieu/`.
+`cd` về `workers/hnx-fetch/du-lieu/` trước.
 
-### Lệnh ① — kết quả giao dịch, nối vào tệp SSOT
+### Bước 0 — HỎI TỆP SSOT xem phải lấy từ ngày nào
+
+Đừng gõ một khoảng ngày theo trí nhớ. **Tệp chính là trạng thái**, nên hỏi nó:
+
+```bash
+node kiem-ssot.mjs "<đường dẫn SSOT>"
+```
+
+Nó in ra `ngày CUỐI`. **Luật chọn khoảng: `--tu` là ngày SAU ngày đó, `--den` là hôm nay.**
+Cả hai đầu đều TÍNH VÀO. Cuối tuần cứ để trong khoảng — mã tự bỏ qua thứ Bảy và Chủ nhật.
+
+Lấy thừa về quá khứ cũng **vô hại** (ngày đã có thì bỏ qua, không tốn lượt gọi nào), nên khi
+phân vân thì lấy rộng ra.
+
+**HNX công bố trong ngày, không phải ngay lúc đóng cửa.** Chạy quá sớm thì ngày hôm nay ra
+*không có phiên* — và lượt đó **không** đánh dấu gì cả, nên chạy lại sau vẫn lấy được. Đó là
+lý do `S-12` (ngày lễ bị gọi lại) cố ý chưa vá: đánh dấu là đổi một phiền toái nhỏ lấy một
+lỗi im lặng lớn.
+
+### Bước 1 — kết quả giao dịch, nối vào tệp SSOT
 
 ```bash
 node tai-ket-qua.mjs --pairing <tệp-ghép-cặp> --master "G:\My Drive\WORKING AI CONTENT\Chứng khoán_AI\Phái Sinh daily Fetch\HNX_PS_Ket_qua_giao_dich_SSOT.csv" --tu 2026-09-01 --den 2026-09-08
 ```
 
-### Lệnh ② — báo cáo PDF
+### Bước 2 — báo cáo PDF
 
 ```bash
 node tai-pdf.mjs --pairing <tệp-ghép-cặp> --thu-muc "G:\My Drive\WORKING AI CONTENT\Chứng khoán_AI\Phái Sinh daily Fetch" --thang 09/2026
@@ -156,12 +209,29 @@ node tai-pdf.mjs --pairing <tệp-ghép-cặp> --thu-muc "G:\My Drive\WORKING AI
 **Thêm `--thu-xem` vào bất kỳ lệnh nào để CHỈ LIỆT KÊ, không ghi gì.** Chạy lượt xem trước khi
 chạy thật là thói quen tốt: nó tốn lượt gọi, nhưng nó không bao giờ chạm đĩa.
 
-### Ba tính chất khiến hai lệnh này an toàn khi chạy lại
+### Bước 3 — soi lại tệp trước khi nói xong
+
+```bash
+node kiem-ssot.mjs "<đường dẫn SSOT>"
+```
+
+**Xong một lượt nghĩa là:** `dòng lệch cột: không` · `khoá trùng: không` · và mọi ngày mà nó
+báo *thiếu hẳn* hoặc *khác 8 hàng* đều đã được giải thích bằng mục 4.3 ⑶ (đối chiếu chéo).
+Còn một ngày chưa giải thích được thì **lượt đó chưa xong** — báo Đức, đừng tự kết luận.
+
+### Bốn tính chất khiến hai lệnh trên an toàn khi chạy lại
 
 1. **Ngày đã có thì KHÔNG lấy lại.** Tệp SSOT chính là trạng thái — không có sổ tiến độ riêng
-   nào để lệch với nó. Chạy lại cùng một khoảng ngày là vô hại.
-2. **Chỉ NỐI vào cuối, không bao giờ sửa dòng cũ.** Dữ liệu Đức gom từ 07/2026 không bị đụng.
-3. **Không bao giờ ghi đè tệp PDF đã có**, kể cả khi nội dung khác. Ghi đè là việc phải hỏi.
+   nào để lệch với nó.
+2. **MỘT NGÀY VÀO TỆP TRỌN VẸN HOẶC KHÔNG VÀO GÌ.** Cả 8 hàng của một ngày đi trong **một**
+   lượt ghi, và lượt ghi đó đi qua tệp tạm rồi mới đổi tên. Nên không có chuyện *"ngày này đã có một nửa"*: cắt điện giữa chừng thì ngày đó vắng hẳn, và lượt sau lấy lại từ
+   đầu. Đây là điều khiến tính chất ⑴ an toàn — nếu thiếu nó, *"đã có"* sẽ là một câu nói dối.
+3. **Chỉ NỐI vào cuối, không bao giờ sửa dòng cũ.** Dữ liệu Đức gom từ 07/2026 không bị đụng.
+4. **Không bao giờ ghi đè tệp PDF đã có**, kể cả khi nội dung khác. Ghi đè là việc phải hỏi.
+
+> **Đừng chạy hai lượt cùng lúc trên cùng một tệp SSOT.** Hai tiến trình Node không xếp hàng
+> với nhau, và tính chất ⑵ chỉ bảo đảm cho MỘT lượt ghi, không bảo đảm cho hai lượt chồng nhau.
+> Chạy tuần tự — mỗi lượt vài giây.
 
 ---
 
@@ -217,8 +287,8 @@ Chúng đã nằm trong mã. Việc của bạn là **đọc mã lỗi khi nó �
 | Hàng sắp ghi đủ 25 ô | `HANG_SAI_CO` — không chạm đĩa |
 | Bảng nguồn đúng 24 cột | `SO_COT_LA` |
 
-Với PDF, mỗi tệp qua **ba phép kiểm trước khi chạm đĩa**: số byte khớp con số máy chủ khai ·
-mở đầu bằng `%PDF-` · 2048 byte cuối có `%%EOF`, và tệp phải ≥ 1024 byte. Lượt ghi đi qua tên
+Với PDF, mỗi tệp qua **bốn điều kiện trước khi chạm đĩa**: số byte khớp con số máy chủ khai ·
+tệp ≥ 1024 byte · mở đầu bằng `%PDF-` · 2048 byte cuối có `%%EOF`. Lượt ghi đi qua tên
 tạm `.dang-tai` rồi mới đổi tên — **chết giữa chừng để lại một tệp `.dang-tai` mà lượt sau bỏ
 qua, KHÔNG để lại một tệp mang tên thật nhưng thiếu nửa sau.**
 
@@ -226,26 +296,72 @@ qua, KHÔNG để lại một tệp mang tên thật nhưng thiếu nửa sau.**
 
 Đây là phần máy không làm thay được, và là lý do Đức giữ việc này cho AI.
 
-**⑴ Đếm hàng mỗi ngày.** Một phiên đủ phải có **8 hàng** (VN30 và VN100, mỗi loại 4 hợp đồng).
-Ngày nào ra 6 hay 10 hàng là **tín hiệu đỏ** — báo Đức, đừng tự giải thích.
+**⑴ Chạy bộ soi, đừng tự đếm.**
+
+```bash
+node kiem-ssot.mjs "<đường dẫn SSOT>"
+```
+
+Nó trả lời bốn câu, và **hai câu cuối là hai chỗ mù mà cách đếm thủ công không thấy** (audit
+nội dung độc lập 08/09 chỉ ra):
+
+| Nó đo gì | Vì sao đếm tay không đủ |
+|---|---|
+| dòng lệch cột | — |
+| **khoá trùng** — khoá là **ngày + ISIN**, không phải chỉ ngày | cùng một hợp đồng ghi hai lần trong một ngày thì **tổng vẫn đúng 8 hàng**, mà một hợp đồng khác đã biến mất |
+| ngày khác 8 hàng | một phiên đủ có 8 hàng: VN30 và VN100, mỗi loại 4 hợp đồng |
+| **ngày trong tuần thiếu hẳn** | ngày không có dòng nào thì **không có gì để đếm** — nó vô hình với mọi phép đếm, chỉ dò bằng lịch mới thấy |
+
+`dòng lệch cột` hoặc `khoá trùng` khác `không` → **dừng, báo Đức.** Hai dòng còn lại là **câu
+hỏi**, không phải kết luận — đưa chúng sang ⑶.
 
 ```bash
 node -e "const s=require('fs').readFileSync(process.argv[1],'utf8').replace(/^\uFEFF/,'').trim().split('\r\n').slice(1);const d={};for(const l of s){const n=l.split(',')[0].replace(/\"/g,'');d[n]=(d[n]||0)+1;}const la=Object.entries(d).filter(([,c])=>c!==8);console.log('ngày:',Object.keys(d).length,'· hàng:',s.length,'· ngày KHÁC 8 hàng:',la.length?JSON.stringify(la):'không');" "<đường-dẫn-SSOT>"
 ```
 
-**⑵ Không được có ngày trùng.** Lệnh trên đã đếm theo ngày; hai bản ghi cùng ngày sẽ hiện ra
-thành 16 hàng.
+**⑵ Cột số phải là số, và ô rỗng phải ở lại rỗng.** Bộ soi không đọc nội dung số — nó soi
+*hình dạng* tệp. Phần số do `luoc-do-master.mjs` canh lúc GHI và nó ném `SO_LA` với thứ không
+phải số, nên tới được tệp là đã qua cửa đó. Việc của bạn là **liếc vài dòng mới nhất bằng mắt**
+sau mỗi lượt: một cột giá bỗng nhỏ đi 1000 lần là dấu hiệu số kiểu Việt bị đọc nhầm (bẫy ⑴).
 
-**⑶ Đối chiếu chéo giữa HAI ĐƯỜNG.** Đây là phép kiểm mạnh nhất bạn có, và nó miễn phí: đường
-PDF và đường kết quả giao dịch là hai nguồn độc lập. Nếu một ngày **cả hai** cùng báo không có
-dữ liệu thì đó là ngày HNX không có phiên — kết luận vững. Nếu **chỉ một** đường báo trống thì
-**có gì đó sai ở phía ta**, không phải phía HNX. Ngày 08/09, ba ngày 31/08 · 01/09 · 02/09 đều
-được hai đường xác nhận là không có phiên.
+**⑶ Đối chiếu chéo giữa HAI ĐƯỜNG — và biết chính xác nó chứng minh được gì.**
 
-**⑷ Khi nghi ngờ, lấy lại một ngày và so từng ô.** Ngày 08/09 đã làm đúng thế để nghiệm thu
-lược đồ: lấy lại 12/08 từ HNX rồi so từng ô với hàng `VN41I1G80003` có sẵn trong tệp của Đức —
-**25/25 khớp**. Đó là cách chứng minh "lấy lại từ nguồn là an toàn", chứ không phải tin lời
-mình.
+Với mỗi ngày mà ⑴ báo *thiếu hẳn* hoặc *khác 8 hàng*, chạy đường PDF ở chế độ chỉ xem cho
+đúng tháng đó:
+
+```bash
+node tai-pdf.mjs --pairing "<tệp>" --thu-muc "<thư mục>" --thang MM/YYYY --thu-xem
+```
+
+| Hai đường nói gì | Kết luận ĐƯỢC PHÉP rút |
+|---|---|
+| **cả hai** cùng trống | rất nhiều khả năng HNX không có phiên hôm đó — **nhưng vẫn chỉ là khả năng**, xem cảnh báo dưới |
+| **chỉ một** đường trống | **có gì đó sai ở phía TA.** Đừng ghi ngày đó là ngày nghỉ |
+
+> **Đừng đọc thành "hai nguồn độc lập".** Chúng là hai ĐƯỜNG LẤY khác nhau (khác địa chỉ,
+> khác định dạng, khác cách dựng), nhưng **cùng một nhà công bố là HNX**. Nên chúng loại trừ
+> được **lỗi của ta**, và **không** loại trừ được HNX công bố muộn hay HNX hỏng. Ngày nghỉ
+> thật thì lượt chạy hôm sau vẫn thấy trống; HNX công bố muộn thì hôm sau có dữ liệu — nên
+> **cách phân biệt duy nhất là đợi một lượt chạy nữa**, không phải suy từ hai đường.
+
+Đo thật 08/09: ba ngày 31/08 · 01/09 · 02/09 được hai đường cùng báo trống, và các lượt chạy
+sau đó vẫn trống — đó mới là đủ để gọi chúng là ngày không có phiên.
+
+**⑷ Khi nghi ngờ một ngày, LẤY LẠI NÓ VÀO MỘT TỆP KHÁC rồi so.**
+
+Đây là chỗ bản trước của tệp này nói một việc **không làm theo được**: ngày đã có trong SSOT
+thì lượt lấy bỏ qua, nên không có cách nào "lấy lại" vào chính tệp đó. Cách đúng là lấy vào
+một tệp trắng ở thư mục tạm — SSOT thật **không bị chạm một byte nào**:
+
+```bash
+node tai-ket-qua.mjs --pairing "<tệp>" --master "<thư-mục-tạm>/doi-chieu.csv" --tu 2026-08-12 --den 2026-08-12
+```
+
+Rồi so dòng của ngày đó ở hai tệp. Giống nhau từng ô thì cả hai đều tin được; khác nhau thì
+**dừng và báo Đức** — đừng tự sửa tệp thật.
+
+Đo thật 08/09, làm đúng cách này để nghiệm thu lược đồ: lấy lại 12/08 rồi so từng ô với hàng
+`VN41I1G80003` có sẵn trong tệp của Đức — **25/25 khớp**.
 
 ### 4.4 Bốn điều KHÔNG BAO GIỜ được làm với dữ liệu
 
@@ -253,7 +369,8 @@ mình.
 2. **Không tự sửa tiêu đề** của tệp SSOT cho hết lỗi. Tiêu đề lệch nghĩa là có gì đó sai ở
    chỗ khác; sửa tiêu đề là làm mọi cột lệch tên mà không ai biết.
 3. **Không cắt bớt dữ liệu cho vừa trần.** Thân trả về quá 512 KiB thì lệnh báo đỏ
-   (`FETCH_BODY_TOO_LARGE`) chứ không cắt — cắt bớt là nói dối. Gặp thì chia nhỏ theo loại sản phẩm.
+   (`FETCH_BODY_TOO_LARGE`) chứ không cắt — cắt bớt là nói dối. Cách chia nhỏ: **hạ khoảng ngày
+   xuống từng ngày một** (`--tu` và `--den` cùng một ngày). Xem mục 5 nếu vẫn vượt.
 4. **Không xoá tệp nào.** Xoá là việc phải hỏi Đức.
 
 ---
@@ -270,11 +387,22 @@ mình.
 | `SO_COT_LA` | bảng nguồn không đúng 24 cột | HNX đổi cấu trúc bảng. Dừng, báo Đức, xem mục 6 |
 | `TIEU_DE_LECH` · `HANG_LECH` | tệp SSOT hỏng hoặc không phải tệp mong đợi | **dừng hẳn.** Kiểm đúng đường dẫn chưa. Đừng ghi tiếp |
 | `SO_LA` · `THAY_DOI_LA` | một ô chứa thứ không phải số | câu lỗi có kèm ISIN của hàng hỏng — mở trang, đọc thật |
-| `FETCH_BODY_TOO_LARGE` | một ngày phình quá 512 KiB | chia nhỏ theo loại sản phẩm. Đừng cắt bớt |
+| `FETCH_BODY_TOO_LARGE` | một ngày phình quá 512 KiB | hạ khoảng ngày xuống **một ngày một lượt**. Đừng cắt bớt. Xem ghi chú dưới bảng |
 | `LAY_MOI` · lỗi mạng | trục trặc nhất thời | thử lại được, có giới hạn |
 
 **Luật chung:** lỗi *hình dạng* (trang trả sai thứ) thì **không thử lại** — yêu cầu sai thì sai
-với mọi ngày, chạy tiếp chỉ đốt sạch ngân sách rồi báo "hỏng hết". Lỗi *mạng* thì thử lại được.
+với mọi ngày, chạy tiếp chỉ đốt sạch ngân sách rồi báo "hỏng hết". Lỗi *mạng* thì thử lại được;
+vòng lặp tự thử lại vài lượt rồi bỏ, và lượt chạy sau lấy nốt ngày còn thiếu — nên **cách xử
+lý đúng với lỗi mạng là chạy lại cả lệnh**, không phải can thiệp gì.
+
+> **Về `FETCH_BODY_TOO_LARGE`:** hôm nay **KHÔNG có cờ nào chia theo loại sản phẩm** —
+> `tai-ket-qua.mjs` gõ cứng `CHI_SO_CO_PHIEU`. Bản trước của tệp này khuyên "chia nhỏ theo
+> loại sản phẩm", và đó là một lời khuyên **không làm theo được** (audit nội dung 08/09 bắt
+> được). Cách thật: một ngày một lượt. Còn vượt nữa thì đó là việc phải mở mã, và nó nằm ở
+> `BACKLOG.md` mục `H-05` — báo Đức, đừng tự nới trần.
+
+**Một ngày đo được: 46 KB.** Trần 512 KiB rộng gấp hơn mười lần, nên mã lỗi này gần như chỉ
+nổ khi có gì đó khác đã sai.
 
 ---
 
@@ -282,7 +410,10 @@ với mọi ngày, chạy tiếp chỉ đốt sạch ngân sách rồi báo "h�
 
 Sẽ có ngày HNX đổi. Lúc đó:
 
-1. **Đừng đoán selector hay tên tham số.** Mở trang thật, xem lượt gọi mạng thật, rồi mới sửa.
+1. **Đừng đoán selector hay tên tham số.** Mở trang thật trong Chrome, bật **DevTools → tab
+   Network**, thao tác trên trang, rồi đọc lượt gọi thật. Việc này bạn làm **bằng tay trong
+   trình duyệt**, không qua extension: HNX Fetch cố ý không có đường đọc DOM hay đọc mạng của
+   trang (mục 1). Cần Đức mở máy giúp thì hỏi — đó là việc một câu.
 2. **Mọi hiểu biết về trang chỉ được nằm ở hai tệp:** `nguon-hnx.mjs` (kết quả giao dịch) và
    `nguon-thong-ke.mjs` (thống kê/PDF). Đừng rắc địa chỉ hay tên tham số ra chỗ khác.
 3. **Mỗi lần sửa kèm một phép ghim.** Suite trong `du-lieu/tests/` không chạm mạng thật — nó
@@ -290,8 +421,18 @@ Sẽ có ngày HNX đổi. Lúc đó:
 4. **Chạy lại toàn bộ suite trước khi đụng dữ liệu thật:**
 
 ```bash
-node du-lieu/tests/bang-ket-qua-smoke.mjs && node du-lieu/tests/master-smoke.mjs && node du-lieu/tests/nguon-hnx-smoke.mjs && node du-lieu/tests/nguon-thong-ke-smoke.mjs && node du-lieu/tests/vong-lay-smoke.mjs && node v0.1.0/tests/be-mat-hep-smoke.mjs
+node v0.1.0/tests/run-all.mjs
 ```
+
+(`cd` về `workers/hnx-fetch/` trước.) Nó quét theo hình dạng thư mục, nên một phép ghim mới
+không phải khai vào đâu cả. Và nếu bạn vừa sửa một **chốt an toàn**, chạy thêm:
+
+```bash
+node v0.1.0/scripts/mutation-check.mjs
+```
+
+Bộ này cố tình làm hỏng từng chốt rồi xem phép ghim có đỏ lên không. **Con nào SỐNG SÓT nghĩa
+là chốt đó đang không ai canh** — sửa cho tới khi 0 sống sót.
 
 **Một chỗ đã biết là chưa xong:** trang thống kê nhận `p_report_type` là `D` (ngày) hoặc `M`
 (tháng). Giá trị `Y` **cố ý không có** — nó trả về *"Không tìm thấy dữ liệu"*. Đừng thêm lại.

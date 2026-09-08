@@ -113,3 +113,33 @@ không còn khai thác được qua lối đó; ghim lại đúng tính chất n
 lời khai to hơn sự thật.
 
 **Đo.** Đột biến **21/21 khớp · 21 giết · 0 sống sót** · suite gói **7/7** · gốc repo **377**.
+
+## 2026-09-08 · `claude-scouter-s06` — audit NỘI DUNG: protocol có chỗ không làm theo được
+
+Lượt audit thứ hai, lần này soi tài liệu với câu hỏi: *một AI khác, ngày đầu, chỉ đọc
+`PROTOCOL.md`, có chạy được việc hằng ngày không?* Câu trả lời là **chưa**. Bốn chỗ đáng ghi:
+
+**⑴ Một lời khuyên KHÔNG LÀM THEO ĐƯỢC.** Protocol viết *"gặp thân quá khổ thì chia nhỏ theo
+loại sản phẩm"* — mà `tai-ket-qua.mjs` **gõ cứng** một loại, không có cờ nào chọn. Sửa câu đó
+thành *một ngày một lượt*, và mở `H-05` cho cái cờ.
+
+**⑵ Cách nghiệm thu không chạy được như đã viết.** Protocol bảo *"nghi ngờ thì lấy lại một ngày
+và so từng ô"* — nhưng ngày đã có thì lượt lấy **bỏ qua**, nên không có đường "lấy lại". Cách
+đúng: lấy vào **một tệp khác ở thư mục tạm** rồi so; tệp thật không bị chạm một byte.
+
+**⑶ Cách kiểm dữ liệu có HAI chỗ mù.** Câu lệnh đếm cũ lấy **ngày** làm khoá, nên cùng một hợp
+đồng ghi hai lần vẫn ra đúng 8 hàng; và một ngày **thiếu hẳn** thì không có gì để đếm nên nó vô
+hình. Thay bằng `du-lieu/kiem-ssot.mjs` — khoá là **ngày + ISIN**, và dò ngày thiếu bằng LỊCH.
+Chạy trên tệp thật ngay: nó chỉ ra **4 ngày trong tuần thiếu hẳn** mà cách cũ không hề thấy.
+
+**⑷ Lời hứa "không bấm được" nói THIẾU.** Bỏ `debugger` không tự nó đủ: còn `content_scripts`
+(khai ở tầng ngoài cùng, **không đi qua** danh sách `permissions`) và `scripting`/`tabs`. Manifest
+vốn đã không có cả ba — nhưng phép ghim chỉ soi một, nên nó **bỏ lọt hoàn toàn** đường thứ hai.
+Nay khẳng định cả ba, con `N22` chứng minh nó bắt được.
+
+Kèm: thêm mục *Bắt đầu từ số không* (bốn thứ phải hỏi Đức, và quy ước thư mục làm việc — bản
+trước trộn hai gốc đường dẫn), luật chọn khoảng ngày (hỏi tệp, đừng gõ theo trí nhớ), và bảo
+đảm **một ngày vào tệp trọn vẹn hoặc không vào gì** — thứ khiến câu *"ngày đã có thì bỏ qua"*
+an toàn, mà bản trước không hề nói ra.
+
+**Đo.** Suite gói **8/8** · gốc repo **378** · đột biến **22/22 khớp, 0 sống sót**.

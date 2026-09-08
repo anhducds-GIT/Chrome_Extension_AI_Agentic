@@ -117,6 +117,18 @@ async function tuChoi(fn) {
   /* `http://127.0.0.1/*` GIỮ LẠI dù trông thừa: cửa Bridge là WebSocket (`ws:`), mà `ws:` không
    * nằm trong vùng của một mục `https:` nào. Gộp cho gọn là đánh cược vào một chi tiết của
    * Chrome mà không ai ở đây đo được. */
+  /* KHÔNG CHỈ `debugger`. Audit nội dung 08/09 chỉ đúng một chỗ tôi nói quá: bỏ `debugger`
+   * KHÔNG tự nó chứng minh extension không bấm được — một extension còn hai đường khác để chạm
+   * DOM, và cả hai đều KHÔNG đi qua danh sách `permissions`:
+   *   · `content_scripts` — khai ở TẦNG NGOÀI CÙNG của manifest, tiêm thẳng mã vào trang;
+   *   · `scripting` + `tabs` — tiêm mã lúc chạy.
+   * Lời hứa chỉ đứng được khi **cả ba đều vắng**, nên phải khẳng định cả ba. Bản trước chỉ so
+   * `permissions`, tức nó bỏ lọt đường thứ nhất hoàn toàn. */
+  assert.ok(!("content_scripts" in manifest),
+    "khai `content_scripts` là tiêm mã thẳng vào trang — đường đó KHÔNG đi qua danh sách permissions");
+  for (const cam of ["scripting", "tabs", "activeTab", "webRequest", "declarativeNetRequest"]) {
+    assert.ok(!manifest.permissions.includes(cam), `quyền ${cam} mở lại một đường chạm trang`);
+  }
   assert.equal(manifest.background.service_worker, "background.js");
   assert.equal(manifest.side_panel.default_path, "sidepanel.html");
 }
