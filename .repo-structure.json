@@ -261,6 +261,16 @@
       "workers/duc-auto-chatgpt/v0.1.0/AGENTS.md": null,
       "workers/duc-auto-gemini/v0.2.0/AGENTS.md": null,
       "workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md": null
+    },
+    "_mo_coi_co_y_doc": "Quyet dinh CON SONG ma co y KHONG co dong luat nao mang. Khoa la <pham vi><so hieu>, gia tri la LY DO. Phep (2) cua rule-compile.mjs tru chung ra. Chi khai khi da doc va CHAC no khong phai mot luat bi mat — luot gop 09/09 danh roi ba ve that, va chung tung trong y het mo coi co y.",
+    "mo_coi_co_y": {
+      "docs/adr/0002": "Gop vao 0001-ranh-gioi-bo-khung.md. Cau luat song di ra tu do duoc trich duoi so 0001 (AGENTS muc 7, hai dong). So 0002 la mot ve anh em da hoa vao cung mot cau.",
+      "docs/adr/0018": "Thiet ke cua tich hop, nay la 0005 ve (4) — DA DUYET, CHUA XAY. Chua xay thi chua co dong luat nao mang duoc no; mo coi o day dung la trang thai that.",
+      "docs/adr/0019": "Cung cua tich hop voi 0018, nay la 0005 ve (5), con status Proposed cho Duc. Ngưỡng nghiem thu cua no da duoc khoi phuc 09/09 vao chinh file do.",
+      "docs/adr/0022": "Chap nhan rui ro token tran o hai Bridge cu — mot LUA CHON da chot, khong phai mot luat phai tuan. S-11 da roi so no theo chot cua Duc. Ly le day du o 0021 ve (3).",
+      "docs/adr/0024": "Mo bang toan bo nam goi. Cau luat song di ra tu no la gioi han (1) cua AGENTS, va dong do trich [ADR-0021] (1) — tuc no DA duoc mang, chi la duoi so cua file gop.",
+      "docs/adr/0026": "ADR sua duoc, gop vao 0000 ve (2). AGENTS trich 0000 (4) va (5); ve (2) la luat cua chinh so ADR nen no song trong docs/README.md va ADR-0000, khong can mot dong o ban hieu luc.",
+      "workers/duc-scouter/v0.1.0/docs/adr/0003": "Ba cho chan cua pilot hnx.vn. Tu 08/09 HNX Fetch tach thanh goi rieng (ADR-0021 ve 2), nen luat van hanh di ra tu quyet dinh nay song o workers/hnx-fetch/PROTOCOL.md muc 1 — mot goi KHAC. Quyet dinh o lai so cai cua Scouter vi no la lich su cua Scouter."
     }
   }
 }

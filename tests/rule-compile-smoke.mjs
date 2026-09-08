@@ -14,7 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { bienDich, docFileADR, dongLuat, phamViCuaNguoiTrich, trichDan, vanTay, VE } from "../scripts/rule-compile.mjs";
+import { bienDich, docFileADR, dongLuat, phamViCuaMotLuot, phamViCuaNguoiTrich, trichDan, vanTay, VE } from "../scripts/rule-compile.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -24,6 +24,7 @@ const ok = (name) => {
 };
 
 const [VE1, VE2, VE3] = VE;
+const NL = String.fromCharCode(10);
 
 /* Sổ cái mẫu. Hình dạng thật sau lượt gộp 09/09: một file chủ đề gánh ba số hiệu, có vế đang
    sống của RIÊNG FILE (`### ⑴`, `### ⑶`), một vế cũ đã chết, và một quyết định chết TRỌN. */
@@ -78,11 +79,26 @@ const soCai = [
 {
   const t = trichDan("xem [ADR-0001](x.md) " + VE2 + " và ADR-0003 ở dòng này");
   assert.deepEqual(t, [
-    { so: "0001", ve: VE2, dong: 1 },
-    { so: "0003", ve: null, dong: 1 },
+    { so: "0001", lienKet: "x.md", ve: VE2, dong: 1 },
+    { so: "0003", lienKet: null, ve: null, dong: 1 },
   ]);
   ok("trichDan bắt được vế viết SAU đuôi liên kết — hình dạng thật trong AGENTS.md");
 }
+
+{
+  /* MỘT FILE TRONG GÓI VẪN TRÍCH ĐƯỢC SỔ GỐC, và cái đuôi liên kết là thứ nói ra điều đó.
+     Chỗ mô hình sai thứ hai của ngày 09/09: chỉ suy phạm vi theo thư mục thì lượt trích
+     `[ADR-0016](../../../docs/adr/0007-scouter.md)` trong AGENTS của Scouter rơi vào sổ của
+     GÓI, và ADR-0016 của gốc bị báo mồ côi oan. */
+  const pv = ["docs/adr/", "workers/goi-x/v1/docs/adr/"];
+  const trongGoi = "workers/goi-x/v1/AGENTS.md";
+  assert.equal(phamViCuaMotLuot(trongGoi, "../../../docs/adr/0007-x.md", pv), "docs/adr/");
+  assert.equal(phamViCuaMotLuot(trongGoi, "docs/adr/0001-x.md", pv), "workers/goi-x/v1/docs/adr/");
+  assert.equal(phamViCuaMotLuot(trongGoi, null, pv), "workers/goi-x/v1/docs/adr/");
+  assert.equal(phamViCuaMotLuot(trongGoi, "https://vi.dụ/khong-phai-so-cai", pv), "workers/goi-x/v1/docs/adr/");
+  ok("phạm vi của MỘT lượt trích suy từ đuôi liên kết khi có, từ thư mục khi không");
+}
+
 
 {
   /* PHẠM VI LÀ THEO THƯ MỤC. Bài học của B12, ngày 09/09: `docs/adr/0001` và
@@ -133,6 +149,23 @@ const soi = (noiDung, duongDan = "AGENTS.md", so = soCai) =>
 }
 
 {
+  /* Chiều ĐỎ của cùng cơ chế đuôi-liên-kết: file trong gói trích một vế đã chết CỦA SỔ GỐC
+     thì vẫn phải bắt — nếu không, dời một câu luật vào gói là cách gỡ phép kiểm. */
+  const soCaiHaiTang = [
+    docFileADR(SO_CAI_GOC, "docs/adr/0001-thu.md"),
+    docFileADR(["---", "adr: 0001", "decides: [0001]", "---", "# x", ""].join(NL), "workers/goi-x/v1/docs/adr/0001-x.md"),
+  ];
+  const kq = bienDich({
+    soCai: soCaiHaiTang,
+    banHieuLuc: [{ duongDan: "workers/goi-x/v1/AGENTS.md", noiDung: "theo [ADR-0001](../../../docs/adr/0001-thu.md) " + VE2 }],
+    dangKy: dangKySach,
+    homNay: HOM_NAY,
+  });
+  assert.equal(kq.veChetConTrich.length, 1, "vế chết của sổ GỐC vẫn phải bắt khi file trong gói trỏ thẳng vào đó");
+  ok("① đi theo đuôi liên kết sang sổ gốc, không dừng ở sổ của gói");
+}
+
+{
   /* Chiều nguy hiểm nhất: một file TRONG GÓI trích `ADR-0001 ⑵` của GÓI mình. Vế đó chết ở sổ
      gốc, nhưng ở đây nó là sổ của gói — trộn hai phạm vi thì bộ biên dịch báo đỏ oan. */
   const soCaiGoiSach = [
@@ -145,6 +178,19 @@ const soi = (noiDung, duongDan = "AGENTS.md", so = soCai) =>
 }
 
 /* ---- ② mồ côi, gộp theo sổ ------------------------------------------------ */
+
+{
+  /* MỒ CÔI CỐ Ý — khai ở `luat.mo_coi_co_y` thì phép ② thôi đếm nó. Không có cửa này thì ②
+     báo một con số không bao giờ về 0, và phép kiểm nào không bao giờ về 0 thì thôi được đọc. */
+  const kq = bienDich({
+    soCai: [docFileADR(SO_CAI_GOC, "docs/adr/0001-thu.md")],
+    banHieuLuc: [{ duongDan: "AGENTS.md", noiDung: "chỉ nhắc ADR-0001 thôi" }],
+    dangKy: { ...dangKySach, mo_coi_co_y: { "docs/adr/0003": "gộp vào 0001, trích dưới số đó" } },
+    homNay: HOM_NAY,
+  });
+  assert.equal(kq.moCoi.length, 0, "mồ côi đã khai lý do thì không được đếm nữa");
+  ok("② trừ ra mồ côi CỐ Ý đã khai lý do");
+}
 
 {
   const kq = soi("chỉ nhắc ADR-0001 thôi", "AGENTS.md", [docFileADR(SO_CAI_GOC, "docs/adr/0001-thu.md")]);
@@ -251,7 +297,7 @@ const CAU = "- Không bao giờ nới một lớp bảo vệ để cổng kiểm
  * Nên phép cuối là phép tự soi: đếm số khẳng định đã chạy. Cùng bệnh với `MUTATION_SKIP` —
  * một bộ kiểm không khẳng định gì thì im lặng, và im lặng đọc y hệt một lượt xanh.
  */
-const TOI_THIEU = 15;
+const TOI_THIEU = 20;
 if (passed < TOI_THIEU) {
   console.error(`\nPHEP_GHIM_RONG: chỉ chạy ${passed} khẳng định, phải có ít nhất ${TOI_THIEU}.`);
   console.error("File này đã bị cắt hoặc rút ruột. Một phép ghim không khẳng định gì thì thoát 0 và đọc y hệt một lượt xanh.\n");

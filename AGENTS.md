@@ -10,10 +10,10 @@
 
 ## 0. Một phiên, từ đầu đến cuối
 
-1. **Mở phiên:** đọc file này → `AGENTS.md` của gói mình sắp đụng → phần cuối `HANDOFF.md` của gói đó.
+1. **Mở phiên:** đọc file này → `AGENTS.md` của gói mình sắp đụng → cuối `HANDOFF.md` của gói đó.
 2. **Làm việc:** một việc một lúc. Phát sinh ngoài phạm vi → ghi vào `BACKLOG.md`, đừng tự làm.
-3. **Đóng phiên:** chạy cổng kiểm. Đỏ là chưa xong. Không được báo "xong" khi cổng đỏ, và không
-   được sửa cổng cho nó xanh.
+3. **Đóng phiên:** chạy cổng kiểm. Đỏ là chưa xong. Không báo "xong" khi cổng đỏ, và không sửa
+   cổng cho nó xanh.
 
 ```bash
 node scripts/session-check.mjs --as <tên-phiên-của-bạn>
@@ -27,8 +27,8 @@ node scripts/session-check.mjs --as <tên-phiên-của-bạn>
 ```
 
 - **Chạy đủ bộ SAU commit cuối, đúng MỘT lần.** Bộ chạy để lại một *dấu xác nhận* buộc vào HEAD
-  + băm cây làm việc; commit sau đó là làm hỏng dấu (đo ở bộ khung: **1.095 → 278 giây**). Trong
-  lúc làm chỉ chạy một suite: `node scripts/chay-test.mjs --chi <tên>`, cố ý KHÔNG ghi dấu.
+  + băm cây; commit sau đó làm hỏng dấu (đo ở bộ khung: **1.095 → 278 giây**). Lúc đang làm chỉ
+  chạy một suite: `node scripts/chay-test.mjs --chi <tên>`, cố ý KHÔNG ghi dấu.
 - **Đừng đổi `scripts.test`** — nó là chuỗi tuần tự có chủ ý: một phép ghim trong `duc-auto-*` đọc
   thẳng trường đó để bắt "xanh giả".
 - **Bộ sinh nào ghi vào một sổ CÓ RÀNG BUỘC thì chạy MỘT LẦN, sau khi suite xanh.**
@@ -151,25 +151,25 @@ automation tự chạy — nếu chưa hỏi.
    viết sai mẫu thì nó không đóng gì mà đọc y hệt dòng đúng. Trần khai ở `backlog.tran`; **hỏi Đức
    trước khi đổi.**
 6. **File test bắt 0 đột biến thì XOÁ.** Một phép kiểm không bắt được gì vẫn thu thuế mọi phiên.
-7. **Song song tối đa 2 chat.** Đức nói rõ 07/09: *"lane ở đây tôi hiểu là 2 phiên chat với AI;
-   trong 1 chat mà bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn ok"* —
-   nên **số tác vụ ngầm TRONG một chat không bị giới hạn**, và **chủ khoá là tên CHAT**.
+7. **Song song tối đa 2 chat** ([ADR-0023](docs/adr/0005-lam-viec-song-song.md) ⑵). Đức nói rõ
+   07/09: *"lane ở đây tôi hiểu là 2 phiên chat với AI; trong 1 chat mà bạn manage cùng lúc 5
+   task chạy ngầm không giẫm chân nhau thì tôi vẫn ok"* — nên **số tác vụ ngầm TRONG một chat
+   không bị giới hạn**, và **chủ khoá là tên CHAT**.
 8. **Một luật vào thì một luật ra.** Thêm luật vào file này phải kể tên luật nó thay, hoặc đo được
    nó đã nổ mấy lần. Chỗ để kể chuyện là ADR, không phải đây.
-9. **Luật mới vào SỔ CÁI trước, đừng viết thẳng vào đây.** `docs/adr/` là sổ cái (chỉ thêm, B12
-   canh); file này là **bản hiệu lực** biên dịch từ đó, rà **HẰNG TUẦN** bằng
-   `node scripts/rule-compile.mjs` ([ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑸).
-   Cổng ĐỎ khi một nơi chứa luật còn **trích một vế đã chết**. Sáu bước: `docs/protocols/RULE-COMPILER.md`.
+9. **Luật mới vào SỔ CÁI trước, đừng viết thẳng vào đây** —
+   [ADR-0027](docs/adr/0027-bo-bien-dich-luat.md). `docs/adr/` là sổ cái; file này là **bản hiệu
+   lực** biên dịch từ đó, rà **HẰNG TUẦN** bằng `rule-compile.mjs`
+   ([ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑸); cổng ĐỎ khi còn chỗ **trích
+   một vế đã chết**. Sáu bước: `docs/protocols/RULE-COMPILER.md`.
 
 ## 5. Không bao giờ
 
-- `pilot-*/`, `Pilot-*/`, `Batch-*/`, `evidence/` là **bằng chứng vận hành**: chỉ được THÊM —
-  không sửa, không xoá, không tạo lại.
+- `pilot-*/`, `Pilot-*/`, `Batch-*/`, `evidence/` là **bằng chứng vận hành**: chỉ được THÊM.
 - Không bao giờ để token, mật khẩu, hay tệp ghép cặp lọt vào repo. **Repo này PUBLIC.**
 - Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.
 - Không bao giờ nới một lớp bảo vệ để cổng xanh. Sửa bug thì được; gỡ bảo vệ thì không.
-- Không bao giờ đoán selector. Mọi selector phải có bằng chứng DOM thật — gọi
-  `diagnostics.dom_probe` qua Bridge, đừng mượn mắt Đức.
+- Không bao giờ đoán selector — phải có bằng chứng DOM thật từ `diagnostics.dom_probe` qua Bridge.
 - Không bao giờ tin báo cáo của AI khác. Tự chạy lại test, tự đọc lại diff. Agent phụ báo "xong"
   không phải bằng chứng.
 - Không bao giờ `git checkout`, `reset` hay `stash` file trạng thái sống. `.agents/claims.json`

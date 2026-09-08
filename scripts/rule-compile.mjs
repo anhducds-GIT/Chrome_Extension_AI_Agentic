@@ -113,14 +113,30 @@ export function phamViCuaNguoiTrich(rel, cacPhamVi) {
    ghim `tests/rule-compile-smoke.mjs` bắt được ngay lượt chạy đầu tiên. */
 export function trichDan(text) {
   const out = [];
-  const re = new RegExp("ADR-(\\d{4})(?:\\]\\([^)]*\\))?\\s*([" + LOP_VE + "])?", "g");
+  const re = new RegExp("ADR-(\\d{4})(?:\\]\\(([^)]*)\\))?\\s*([" + LOP_VE + "])?", "g");
   const dong = String(text ?? "").split(/\r?\n/);
   for (let i = 0; i < dong.length; i++) {
     let m;
     re.lastIndex = 0;
-    while ((m = re.exec(dong[i]))) out.push({ so: m[1], ve: m[2] ?? null, dong: i + 1 });
+    while ((m = re.exec(dong[i]))) out.push({ so: m[1], lienKet: m[2] ?? null, ve: m[3] ?? null, dong: i + 1 });
   }
   return out;
+}
+
+/* Phạm vi của MỘT lượt trích. Cái đuôi liên kết nói thẳng nó trỏ vào sổ nào, nên khi có liên
+   kết thì tin liên kết; không có thì rơi về sổ gần nhất phía trên file đang đọc.
+   VÌ SAO CẦN, và đây là chỗ mô hình sai thứ hai trong ngày 09/09: một file TRONG GÓI vẫn trích
+   quyết định của sổ GỐC — `workers/duc-scouter/v0.1.0/AGENTS.md` trỏ
+   `[ADR-0016](../../../docs/adr/0007-scouter.md)`. Chỉ suy theo thư mục thì lượt trích đó rơi
+   vào sổ của gói, và ADR-0016 của gốc bị báo **mồ côi oan**. */
+export function phamViCuaMotLuot(relFile, lienKet, cacPhamVi) {
+  if (lienKet && lienKet.includes("docs/adr/")) {
+    const goc = relFile.slice(0, relFile.lastIndexOf("/") + 1);
+    const chuan = new URL(lienKet, "file:///" + goc).pathname.slice(1);
+    const pv = chuan.slice(0, chuan.lastIndexOf("/") + 1);
+    if (cacPhamVi.includes(pv)) return pv;
+  }
+  return phamViCuaNguoiTrich(relFile, cacPhamVi);
 }
 
 /* DẤU VÂN TAY của một dòng luật — bước `normalize` + `deduplicate` của bộ biên dịch.
@@ -191,18 +207,23 @@ export function bienDich({ soCai, banHieuLuc, dangKy, homNay }) {
   const veChetConTrich = [];
   const daTrich = new Set();
   for (const f of banHieuLuc) {
-    const pv = phamViCuaNguoiTrich(f.duongDan, cacPhamVi);
-    const dc = chet.get(pv) ?? new Set();
     for (const t of trichDan(f.noiDung)) {
+      const pv = phamViCuaMotLuot(f.duongDan, t.lienKet, cacPhamVi);
       daTrich.add(pv + "|" + t.so);
       const khoa = t.ve ? t.so + " " + t.ve : t.so;
-      if (dc.has(khoa)) veChetConTrich.push({ file: f.duongDan, dong: t.dong, so: t.so, ve: t.ve, so_cai: pv });
+      if ((chet.get(pv) ?? new Set()).has(khoa)) {
+        veChetConTrich.push({ file: f.duongDan, dong: t.dong, so: t.so, ve: t.ve, so_cai: pv });
+      }
     }
   }
 
   /* Mồ côi gộp theo PHẠM VI, không đổ thành một danh sách phẳng. Một sổ cái của gói mà KHÔNG
      một số hiệu nào được trích là **một** vấn đề (gói đó không có thói quen trích số), không
      phải năm mươi. Đổ phẳng là biến một câu thành năm mươi dòng và người đọc tắt phép kiểm. */
+  /* Mồ côi CỐ Ý — khai ở `luat.mo_coi_co_y`, khoá là `<phạm vi><số>`, giá trị là LÝ DO.
+     Không có khối này thì ② báo một con số không bao giờ về 0, và một phép kiểm không bao giờ
+     về 0 là một phép kiểm người ta thôi đọc. Có nó thì con số còn lại là con số THẬT. */
+  const coY = dangKy.mo_coi_co_y ?? {};
   const moCoi = [];
   for (const [pv, bo] of song) {
     const dc = chet.get(pv) ?? new Set();
@@ -211,6 +232,7 @@ export function bienDich({ soCai, banHieuLuc, dangKy, homNay }) {
     for (const so of [...bo].sort()) {
       if (dc.has(so)) continue; /* chết cả quyết định thì không tính là mồ côi */
       tong++;
+      if (coY[pv + so]) continue;
       if (!daTrich.has(pv + "|" + so)) cai.push({ so, o: nha.get(pv + "|" + so) });
     }
     if (cai.length) moCoi.push({ so_cai: pv, cai, tong, imLang: cai.length === tong });
