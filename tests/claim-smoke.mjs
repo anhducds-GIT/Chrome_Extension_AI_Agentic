@@ -943,6 +943,17 @@ const CLAIMS = () => ({
     "chi neu ten file KHONG thuoc quyen ghi: file minh khoa thi qua, so mien khoa thi qua");
   assert.equal(la[0].chuFile, "p2", "phai noi ro ai dang giu, de nguoi doc biet nhan ai");
 
+  /* ARTIFACT MÁY SINH KHÔNG ĐÒI KHOÁ NÀO (AGENTS.md mục 1) — và bỏ sót danh sách này làm phép
+     soát BÁO OAN ngay lượt dùng thật đầu tiên 08/09: nó chặn ba artifact mà không ai sở hữu.
+     Một cỗ máy dựng ra để chống chặn oan mà tự chặn oan thì nó bị bỏ qua trong một ngày. */
+  const daySinh = soatDanHang({
+    ...chung, as: "p1", maySinh: ["DASHBOARD.md", "llms.txt"],
+    daDan: ["DASHBOARD.md", "llms.txt", "AGENTS.md"],
+  });
+  assert.deepEqual(daySinh.la.map((x) => x.duongDan), ["AGENTS.md"],
+    "artifact may sinh khong duoc coi la file LA — khong co gi cua ai trong do de mat");
+  assert.deepEqual(daySinh.soChung, [],
+    "va cung KHONG phai so: bo sinh viet lai ca file moi luot, soi append-only la bao oan lan hai");
   assert.deepEqual(soatDanHang({ ...chung, as: "p2", daDan: ["AGENTS.md"] }).la, [],
     "p2 giu ca vung _root nen AGENTS.md la cua ho — khong duoc bao oan");
   ok("soat da dan: bat dung file khong thuoc quyen, tha so mien khoa va vung minh giu");

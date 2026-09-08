@@ -32,7 +32,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyAtEof, appendOnlyExemptFrom, CHUA_DAY, CHUA_THAY_DAU_VET, claimPrefixesFrom, commitChuaDay, DAU_VET, dauVetTheoVung, mocMs, readStructureFromDisk, stewardOf } from "./repo-structure.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, CHUA_DAY, generatedFrom, CHUA_THAY_DAU_VET, claimPrefixesFrom, commitChuaDay, DAU_VET, dauVetTheoVung, mocMs, readStructureFromDisk, stewardOf } from "./repo-structure.mjs";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(MODULE_FILE), "..");
@@ -512,7 +512,12 @@ export function khoaFileQuaHan(bang, phut, now = Date.now()) {
  *
  * KHÔNG chặn được từ trong máy: cổng đóng phiên chạy lúc index đã rỗng, nên nó không nhìn thấy
  * gì. Đây là một LỆNH phải gọi, và mục 0b của `AGENTS.md` xếp nó vào đúng chỗ trong chuỗi. */
-export function soatDanHang({ daDan, tam, claims, as, mienKhoa, vungCua }) {
+export function soatDanHang({ daDan, tam, claims, as, mienKhoa, maySinh, vungCua }) {
+  /* HAI DANH SÁCH MIỄN, và bỏ sót cái thứ hai làm phép soát BÁO OAN ngay lượt dùng thật đầu
+     tiên (08/09): nó chặn ba artifact máy sinh mà luật mục 1 khai rõ là **không đòi khoá nào**
+     — không có gì của ai trong đó để mất, chạy lại bộ sinh là ra y hệt. Một cỗ máy dựng ra để
+     chống chặn oan mà tự chặn oan thì nó sẽ bị bỏ qua trong một ngày. */
+  const sinh = new Set(maySinh || []);
   const mien = new Set(mienKhoa || []);
   const la = [];
   const soChung = [];
@@ -527,6 +532,9 @@ export function soatDanHang({ daDan, tam, claims, as, mienKhoa, vungCua }) {
        Không chặn được (ghi vào đó là hợp lệ), nên trả về riêng để bên gọi soi tiếp: phần bạn
        dàn có đúng là CHỈ THÊM Ở CUỐI không. Sửa dòng cũ thì hoặc bạn phạm luật miễn khoá, hoặc
        bạn đang cuốn chữ của người khác — cả hai đều đáng dừng lại. */
+    // Artifact máy sinh: bỏ qua HẲN. Nó không phải sổ, nên không soi append-only — bộ sinh
+    // viết lại cả file mỗi lượt, và đó là hành vi đúng của nó.
+    if (sinh.has(d)) continue;
     if (mien.has(d)) { soChung.push(d); continue; }
     if ((tam || {})[d]?.owner === as) continue;                   // tôi đang khoá đúng file này
     const vung = vungCua(d);
@@ -768,6 +776,7 @@ function main() {
     const { la, soChung } = soatDanHang({
       daDan, tam: parsed.tam, claims: parsed.claims, as,
       mienKhoa: appendOnlyExemptFrom(structure),
+      maySinh: generatedFrom(structure),
       vungCua: (d) => vungBaoNgoai(d, structure, prefixes),
     });
 
