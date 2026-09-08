@@ -545,3 +545,22 @@ mở**, hoặc Đức chốt rằng ba gói đóng băng không cần đọc dif
 
 - **ĐÓNG N-43** · 2026-09-08 · lane `claude-cua-kiem` · Bộ chạy song song + dấu xác nhận đã cài. **[ĐO]** chuỗi suite `241,7s → 93s`; cổng `~280s → 33s`; cả vòng `521s → 126s` (**nhanh 76
 - **ĐÓNG N-43** · 2026-09-08 · lane `claude-cua-kiem` · Bộ chạy song song + dấu xác nhận đã cài. **[ĐO]** chuỗi suite 241,7s → 93s; cổng ~280s → 33s; cả vòng 521s → 126s (**nhanh 76%**). `node tests/dau-suite-smoke.mjs` xanh 7/7 với **11 cửa từ chối**, và cổng in `suite gốc repo: DÙNG LẠI DẤU`. Khác bản bộ khung ĐÚNG MỘT CHỖ: đường nhanh mang tên `npm run test:song-song`, còn `npm test` giữ nguyên chuỗi tuần tự — một phép ghim trong gói ĐÃ ĐÓNG BĂNG đọc thẳng `scripts.test` để bắt xanh giả, mà gói đóng băng thì chỉ-đọc.
+
+- **ĐÓNG N-35** · 2026-09-08 · lane `claude-ext-dot0` · Cờ đóng băng nay có RĂNG ở CẢ HAI cửa. Nửa cổng đã có từ trước (`chonSuiteBoDongBang` + `tests/frozen-suite-smoke.mjs`); nửa còn thiếu là **bản đồ việc**, và đó mới là cửa nguy hiểm hơn — cổng chặn lúc đóng phiên, còn bản đồ là thứ AI đọc để CHỌN việc lúc MỞ phiên. **[ĐO 08/09]** trước bản vá: `node scripts/what-next.mjs` xếp `workers/duc-auto-chatgpt` vào *"CHẠY SONG SONG ĐƯỢC NGAY — ưu tiên #2, 22 việc mở"*, `grep -c frozen scripts/what-next.mjs` ra `0`. Sau bản vá: gói đó nằm ở mục riêng `B2 · ĐÃ ĐÓNG BĂNG — chỉ được ĐỌC dù KHÔNG có chủ`, mục A còn 2 luồng đều là gói sống. **Không ẩn gói đi** — ẩn hẳn thì nợ của nó vô hình. Kèm theo: cảnh báo *"đã đóng nhưng KHÔNG gạch ngang"* thôi trỏ vào gói đóng băng, vì **[ĐO]** cả bốn mã nó nhắc (`B-29` `B-16` `B-18` `G-14`) đều nằm trong gói đóng băng — 4/4 là lời mời đi sửa file không ai được sửa. Ghim: `tests/what-next-smoke.mjs` (đối chứng chưa khai · rời mục A · vẫn hiện · không nuốt gói cùng tiền tố · bản in phải NÓI ra). Đột biến: gỡ `!v.dongBang` thì suite đỏ.
+
+- **ĐÓNG N-31** · 2026-09-08 · lane `claude-ext-dot0` · **Rộng hơn mô tả gốc, và đây là phần đáng ghi lại.** Mục gốc nói *"đếm hụt việc mở của MỘT gói"*; đo lại thì bộ đọc chỉ nhận tiêu đề `###`, nên **MỌI quyển sổ viết cấp `##` bị đọc thành RỖNG**. **[ĐO 08/09]** `workers/hnx-fetch` báo `0 việc mở` trong khi sổ có **3** mục thật (`H-02` `H-03` `H-06`) — bảng báo rỗng thì phiên điều phối đi tìm việc ở nơi khác trong khi việc nằm ngay đó. Bản vá: nhận cả `##` và `###`; hiểu quy ước *cửa ra rẻ ngang cửa vào* (`- **ĐÓNG X**` ở cuối sổ và tiêu đề `## ĐÓNG · X` đều là đóng, và **đúng luật nên không bị báo là khai sai**); đọc **hai lượt** vì dòng đóng nằm cuối sổ còn tiêu đề nằm đầu; một mã chỉ đếm một lần. Kiểm chéo: sổ Scouter có 7 tiêu đề `## MỞ` mà **0 mục còn mở** — khớp đúng câu cuối sổ đó tự khai *"Sổ nợ Scouter nay RỖNG"*. Ghim: 4 phép mới trong `tests/what-next-smoke.mjs` (20 → 24).
+
+## N-44 · Sổ nợ gốc repo KHÔNG có mặt trên bản đồ việc
+
+- **nhóm:** cong
+- **mở:** 2026-09-08 · lane `claude-ext-dot0`
+- **vùng:** `_code`
+- **vì sao:** Phát hiện lúc đóng `N-31`. `what-next.mjs` chỉ quét sổ nợ nằm trong các **đơn vị**
+  (gói có `manifest.json`), nên **[ĐO 08/09]** 11 mục nợ hạ tầng đang mở ở gốc repo **không hiện
+  ở mục nào** của bảng — kể cả khi `_root` / `_code` trống chủ. Phiên điều phối đọc bảng sẽ thấy
+  repo chỉ còn việc của gói, trong khi phần lớn nợ nằm ở gốc.
+- **chỗ dễ vấp:** sổ gốc dùng quy ước `ĐỔI MÃ` mà `backlog-check.mjs` xử lý còn `what-next.mjs`
+  thì không, nên hai bộ đếm ra **11 và 12** trên cùng một file. Nối vào thì phải dùng CHUNG một
+  bộ đọc — hai bộ đọc cho một quyển sổ là cách chắc chắn để chúng nói khác nhau.
+- **đóng khi:** lệnh: `node scripts/what-next.mjs` hiện mục nợ của `BACKLOG.md` gốc dưới đúng
+  khoá của nó, và có một phép ghim dựng sổ có `ĐỔI MÃ` rồi kiểm con số khớp với `backlog-check.mjs`.
