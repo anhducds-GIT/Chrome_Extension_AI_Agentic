@@ -70,6 +70,18 @@ node scripts/claim.mjs --soat --as <phiên>                            # trướ
 node scripts/claim.mjs --xong --het --as <phiên>                      # ngay sau khi ghi xong
 ```
 
+Một lượt cài, xong cho MỌI lane (tất cả dùng chung một cây làm việc) — cổng đóng phiên ĐỎ
+nếu chưa cài:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Chốt `commit-msg` chạy `--soat` NGAY TRONG lượt commit, tức chỗ duy nhất bịt được cửa sổ giữa
+`--soat` và `git commit` (`N-49`). Nó **fail-open** ba chỗ (không có `node` · không thấy nhãn
+`Lane:` · lỗi lạ) và chỉ chặn khi vi phạm thật; kẹt thì `git commit --no-verify` rồi nói ra
+trong nhật ký phiên.
+
 Vì sao: **[ĐO 7 ngày]** 2.628 cặp commit khác lane, cách nhau ≤ 1 giờ, cùng vùng — trong đó
 **1.839 cặp (70%) không đụng file nào chung**. Bảy phần mười lượt chặn hôm nay là chặn oan.
 Ghi ở [ADR-0025](docs/adr/0025-khoa-muc-file-giu-ngan-tra-ngay.md).

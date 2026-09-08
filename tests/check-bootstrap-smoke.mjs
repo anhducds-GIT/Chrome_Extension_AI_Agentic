@@ -897,4 +897,48 @@ const chay = (deps) => {
     "repo nay dang dung thuoc coc nen phai khai con so — bo di la tat den bao");
   ok("thuoc coc kho chu: con so o cau hinh, tru ADR, co ma loi rieng");
 }
+/* ---- CHỐT commit-msg: NỬA CÒN LẠI CỦA N-40 — N-49 -------------------------
+ *
+ * `--soat` đo đúng nhưng chạy TRƯỚC `git commit`, và ngày 08/09 đo được cửa sổ giữa hai lệnh:
+ * `--soat` trả "tất cả thuộc quyền ghi", rồi `git commit` trả mã 1 "no changes added" vì lane
+ * thứ ba đã mang file đã dàn đi trong đúng khoảng đó. Bản vá phải nằm TRONG lượt commit.
+ *
+ * Ghim hai thứ, và thứ hai quan trọng hơn: hook TỒN TẠI, và hook được CÀI. `core.hooksPath`
+ * nằm ở `.git/config` — không đi theo git — nên một hook không được cài là một file nằm im
+ * mà ai cũng tưởng đang canh. */
+{
+  const hook = path.join(ROOT, ".githooks", "commit-msg");
+  assert.ok(fs.existsSync(hook), "repo phai co .githooks/commit-msg");
+  const ma = fs.readFileSync(hook, "utf8");
+
+  // BA CHỐT FAIL-OPEN. Hook chạy trên MỌI lượt commit của MỌI lane; một hook hỏng là cả repo
+  // không commit được, và cái giá đó lớn hơn cái nó canh.
+  assert.match(ma, /command -v node/, "khong co node tren PATH thi phai CHO QUA");
+  assert.match(ma, /\[ -z "\$lane" \] && exit 0/, "khong tim thay nhan Lane thi phai CHO QUA (merge, revert)");
+  assert.match(ma, /\[ "\$ma" -eq 3 \]/, "CHI ma 3 (vi pham that) moi chan — moi loi la khac phai cho qua");
+  assert.match(ma, /--no-verify/, "phai chi ra cua thoat: mot chot khong the vuot se bi go han");
+
+  // Và cổng phải canh việc hook ĐƯỢC CÀI — nhưng CHỈ khi repo có hook, nếu không thì mọi repo
+  // tạm mà fixture dựng lên đều đỏ (bẫy "cổng nhận thêm phụ thuộc" đã cắn bốn lần 08/09).
+  const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
+  assert.match(gate, /HOOK_CHUA_CAI/, "cong phai co ma loi rieng cho viec hook chua duoc cai");
+  assert.match(gate, /coHook && hooksPath !== "\.githooks"/,
+    "chi doi hooksPath KHI repo co hook — khong thi moi fixture chay cong deu do");
+  ok("chot commit-msg: co that, fail-open ba cho, va cong canh viec no duoc cai (N-49)");
+}
+
+/* ---- N-48 · commit CÓ NHÃN thì không còn là mồ côi -------------------------
+ *
+ * Bản cũ chỉ miễn file mà mọi commit chạm nó mang nhãn của NGƯỜI KHÁC, nên commit của chính
+ * bạn — nhãn đầy đủ — vẫn bắt giữ khoá VÙNG tới lúc đẩy. Với khoá mức file (trả ngay sau mỗi
+ * lượt ghi) điều đó kéo ngược cả cơ chế về khoá vùng; gặp thật ngay lượt đầu dùng. */
+{
+  const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
+  assert.match(gate, /const daQuyThuocDuoc = /, "phep loc phai hoi 'da quy thuoc duoc chua'");
+  assert.doesNotMatch(gate, /nhan !== asLabel/,
+    "khong duoc con dieu kien 'nhan phai la cua NGUOI KHAC' — do la cho keo nguoc ve khoa vung");
+  assert.match(gate, /every\(\(nhan\) => Boolean\(nhan\)\)/,
+    "mien khi MOI nguon deu co nhan; mot nguon khong nhan la du de KHONG mien");
+  ok("N-48 · commit mang nhan cua chinh minh khong con bi doi khoa vung");
+}
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

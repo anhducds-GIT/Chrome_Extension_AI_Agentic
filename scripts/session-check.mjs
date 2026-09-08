@@ -117,14 +117,26 @@ if (originMainResolves) {
     }
   }
 }
-// "Của lane khác" chỉ đúng khi: không nằm trong cây làm việc của tôi, VÀ mọi nguồn đã chạm nó
-// đều là commit mang nhãn của người khác. Một nguồn không nhãn là đủ để KHÔNG miễn.
-const cuaLaneKhac = (file) => !workingFiles.has(file)
+/* ĐÃ QUY THUỘC ĐƯỢC — N-48, nới từ "của lane khác" thành "của MỘT lane nào đó".
+ *
+ * Bản cũ chỉ miễn file mà mọi commit chạm nó mang nhãn của NGƯỜI KHÁC. Hệ quả: commit của
+ * CHÍNH BẠN, mang nhãn đầy đủ, vẫn bắt bạn giữ khoá VÙNG cho tới lúc đẩy. Với khoá mức file
+ * (ADR-0025) — thứ trả ngay sau mỗi lượt ghi — điều đó kéo ngược cả cơ chế về khoá vùng:
+ * gặp thật ngay lượt đầu dùng, phải nhận lại `_code` chỉ để đẩy.
+ *
+ * Vì sao nới được: câu hỏi của phép kiểm này là *"commit chưa đẩy có ai chịu trách nhiệm
+ * không"*, và từ 03/09 thứ trả lời câu đó là **nhãn `Lane:`**, không phải khoá. Một commit
+ * mang nhãn của bạn thì nó KHÔNG mồ côi — `safe-push` cũng quy thuộc nó bằng đúng cái nhãn ấy.
+ *
+ * Và nó KHÔNG rỗng sau khi nới — hai đường đỏ còn nguyên, cả hai đều là mồ côi thật:
+ *   ⑴ file bạn đang sửa trong CÂY LÀM VIỆC (chưa commit, nên chưa có nhãn nào);
+ *   ⑵ commit chưa đẩy KHÔNG NHÃN hoặc nhãn hỏng — không quy thuộc được cho ai. */
+const daQuyThuocDuoc = (file) => !workingFiles.has(file)
   && nhanCuaFile.has(file)
-  && [...nhanCuaFile.get(file)].every((nhan) => nhan && nhan !== asLabel);
+  && [...nhanCuaFile.get(file)].every((nhan) => Boolean(nhan));
 // Chỉ dùng cho việc dò MỒ CÔI. Các phép kiểm khác vẫn thấy `touched` đầy đủ — thu hẹp phạm vi
 // của chúng là một bản vá khác, và trộn hai việc vào một là cách làm mất dấu cái nào gây ra gì.
-const touchedToiPhaiTraLoi = touched.filter((f) => !cuaLaneKhac(f));
+const touchedToiPhaiTraLoi = touched.filter((f) => !daQuyThuocDuoc(f));
 
 // CÙNG HỌ VỚI FAIL-OPEN VỪA VÁ Ở `safe-push`, khác chỗ. `git()` nuốt lỗi, nên nếu `origin/main`
 // không phân giải được (repo mới dựng từ bộ khung chưa có remote, nhánh mặc định tên khác) thì
@@ -351,6 +363,28 @@ const mine = (file) => myPackages.some((pkg) => file.startsWith(`${pkg}/`))
 /* ---- 1. Chủ sở hữu ------------------------------------------------------ */
 check("Phạm vi trách nhiệm", () => {
   if (!CLAIMS) return { ok: false, msg: "Thiếu (hoặc hỏng) .agents/claims.json — xem AGENTS.md mục 1." };
+  /* HOOK PHẢI ĐƯỢC CÀI, và đây là chỗ canh nó — N-49.
+     `core.hooksPath` nằm ở `.git/config`, thứ KHÔNG đi theo git. Không ai canh thì hook là một
+     file nằm im trong `.githooks/` mà chưa chắc chạy, tức đúng loại chốt-không-có-răng mà mục 7
+     của `AGENTS.md` cảnh báo. May là mọi lane ở đây dùng CHUNG một cây làm việc, nên một lượt
+     `git config` là xong cho tất cả.
+     Đặt trong phép kiểm này chứ không thêm phép thứ 17: cùng một câu hỏi — *ai chịu trách nhiệm
+     cho lượt ghi này* — chỉ khác một đằng canh lúc commit, một đằng canh lúc đóng phiên. */
+  /* CHỈ ĐÒI KHI REPO CÓ HOOK. Repo tạm mà các kho thử dựng lên không chép `.githooks/` sang,
+     nên đòi vô điều kiện là làm đỏ mọi fixture chạy cổng — đúng cái bẫy "cổng nhận thêm một
+     phụ thuộc thì MỌI kho thử phải biết", thứ đã cắn bốn lần trong ngày 08/09. Câu đúng là:
+     repo nào PHÁT một cái hook thì phải CÀI nó. */
+  const coHook = fs.existsSync(path.join(ROOT, ".githooks", "commit-msg"));
+  const hooksPath = gitLoiLaBinhThuong("config", "--get", "core.hooksPath").trim();
+  if (coHook && hooksPath !== ".githooks") {
+    return {
+      ok: false,
+      msg: `HOOK_CHUA_CAI: \`core.hooksPath\` đang là "${hooksPath || "(chưa đặt)"}", phải là ".githooks". `
+        + "Không có nó thì chốt `commit-msg` (nửa còn lại của N-40) KHÔNG chạy, và một chốt không "
+        + "chạy thì tệ hơn không có chốt — vì ai cũng tưởng nó đang canh. Cài một lần, xong cho "
+        + "MỌI lane vì tất cả dùng chung một cây làm việc: git config core.hooksPath .githooks",
+    };
+  }
   // Package chưa khai chủ mà có thay đổi = việc mồ côi, không ai chịu trách
   // nhiệm. Đây mới là thứ cổng chặn được thật.
   if (orphanPackages.length) {
