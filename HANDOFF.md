@@ -1821,3 +1821,33 @@ luật của chính mình.
 không cắt được) · `docs/studies/` **15.378 dòng / 31 file**, và **31/31 khai `status: active`** —
 tức chưa hồ sơ nào từng được khai là xong. Riêng 14 file `EXP-*` (~8.300 dòng, cùng ngày 02/09)
 đã được gộp vào `PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md`. **Cắt thật là XOÁ FILE, nên chờ Đức.**
+
+## 2026-09-08 · `claude-ext-mobang` — Đức mở băng, dọn kho chữ, và protocol dọn là một PHÉP KIỂM
+
+**Làm gì:** năm việc Đức chốt trong một lượt.
+
+⑴ **MỞ BĂNG TOÀN BỘ** ([ADR-0024]). Cả năm gói sống trở lại; giới hạn ① của `AGENTS.md` đi ra.
+Khối `frozen` để **rỗng, không gỡ** — đóng băng là công tắc Đức bật lại được, và cái đắt là
+*cách làm* (đã ghim, đã vào bản đồ việc mục B2), không phải danh sách.
+
+⑵ **Gạch ba mã** `B-29 B-16 B-18` trong `duc-auto-chatgpt` — việc bị chặn từ sáng vì gói đóng
+băng. Còn `G-14` ở gói `gemini`: lane `claude-gemini-crlf` đang giữ khoá, **không đụng**.
+
+⑶ **Xoá 14 hồ sơ `EXP-*`** (8.310 dòng, Đức duyệt). `docs/` **26.104 → 17.838**. Chúng **không
+rời git** — mục lục và file tổng hợp đều mang câu lệnh đọc lại: `git show 96a241ef743e:<đường-dẫn>`.
+
+⑷ **Protocol dọn = phép kiểm, KHÔNG phải tài liệu mới.** Đức hỏi *"nếu chưa có ta nên xây dựng
+đúng không?"* — có, nhưng một tài liệu dạy cách dọn tài liệu cộng vào đúng con số nó định cắt.
+Cổng **14 → 15 phép kiểm**: *"Kho chữ không phình"*, thước cóc `docs.tran_dong_khong_ke_adr`
+= **15.265** (không kể ADR). Nó **không đòi ai dọn, chỉ chặn phình**; dọn thêm thì hạ con số,
+và cổng tự nhắc khi đã dưới thước ≥ 50 dòng.
+
+**Vì sao không để máy canh thẳng đích 8.000:** một phép kiểm đỏ với MỌI phiên nhiều tuần liền
+là một phép kiểm sẽ bị gỡ. Chính giới hạn ④ của repo này đã phải nâng trần **sau khi** vỡ.
+
+⑸ **ADR-0024 sinh ở `Proposed` rồi đổi sang `Accepted` ở lượt commit RIÊNG** — lần đầu luật
+`N-39` (lập chiều nay) được dùng thật. Gộp hai lượt là khoá luôn đường sửa chữ.
+
+**Cái mất, ghi ra để bảy ngày nữa còn kiểm được:** trần số gói là thứ duy nhất chặn số mặt phải
+bảo trì, và nó vừa biến mất. Số 07/09 vẫn đúng: **63% commit** là tài liệu + sổ nợ. Nếu tỉ lệ đó
+không giảm thì phanh phải quay lại — và lần đó phải kèm số, không kèm cảm giác.

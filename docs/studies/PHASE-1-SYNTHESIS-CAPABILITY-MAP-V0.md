@@ -6,6 +6,13 @@ ttl_days: 180
 
 # Phase 1 Synthesis — Browser Runtime Capability Map V0
 
+> **14 hồ sơ EXP gốc đã XOÁ khỏi cây làm việc ngày 2026-09-08** (8.310 dòng). File này giữ
+> **kết luận**; chúng giữ **số đo thô và cách đo**. Chúng không rời git — lấy lại một file:
+> ```bash
+> git show 96a241ef743e:docs/studies/EXP-07-AUTHENTICATED-SESSION-COOKIE-STORAGE-IDB-REACH-STUDY-V0.md
+> ```
+> Cả loạt: `git show --stat 96a241ef743e -- docs/studies/`. Cần dựng lại một thí nghiệm thì đọc
+> lại file gốc trước, đừng đo lại từ đầu.
 **Status:** Phase 1 synthesis  
 **Date:** 2026-08-28  
 **Inputs:** `CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md`, factual corrections, EXP-02 → EXP-15, repo evidence.  

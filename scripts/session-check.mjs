@@ -926,6 +926,50 @@ check("Đọc git không lỗi", () => {
  * NẠP MODULE, tức không in ra một dòng nào, và test báo *"không thấy mục [XANH] …"* — một câu
  * trỏ sai hoàn toàn chỗ hỏng. Thêm kho thử mới mà chép `session-check.mjs` thì chép cả
  * `backlog-check.mjs`. */
+/* THƯỚC CÓC CHO KHO CHỮ — Đức hỏi 08/09: *"về protocol clean: nếu chưa có ta nên xây dựng
+ * đúng không?"* Có, nhưng KHÔNG phải một tài liệu mới — một tài liệu dạy cách dọn tài liệu là
+ * món tự trào, và nó cộng vào đúng con số nó định cắt. Protocol dọn kho chữ là **phép kiểm này**.
+ *
+ * THƯỚC CÓC KHÁC TRẦN LÝ TƯỞNG, và chỗ này là cả thiết kế. Giới hạn ③ của `AGENTS.md` đặt ĐÍCH
+ * 8.000 dòng; hôm nay còn 15.265 (đã cắt 8.266 sáng nay). Một phép kiểm đỏ với MỌI phiên trong
+ * nhiều tuần liền là một phép kiểm sẽ bị gỡ — repo này đã tự đo đúng chuyện đó ở giới hạn ④,
+ * nơi một trần phải nâng SAU KHI đã vỡ. Nên máy canh con số của HÔM QUA, không canh cái đích:
+ * nó không đòi ai dọn, nó chỉ chặn PHÌNH. Ai dọn thêm thì HẠ con số xuống, và chỗ đã hạ không
+ * quay lại được.
+ *
+ * TRỪ `docs/adr/`: ADR đã Accepted là bất biến (ADR-0000), nên thư mục đó chỉ có thể to lên.
+ * Tính nó vào thước thì mỗi quyết định mới làm cộng dồn, và người ta sẽ nới con số cho xong. */
+check("Kho chữ không phình", () => {
+  const tran = structure?.docs?.tran_dong_khong_ke_adr;
+  if (typeof tran !== "number") {
+    return { ok: true, msg: "Repo chưa khai `docs.tran_dong_khong_ke_adr` — không có thước thì không đo." };
+  }
+  const ds = gitLoiLaBinhThuong("ls-files", "docs").split(String.fromCharCode(10))
+    .map((d) => d.trim()).filter((d) => d && !d.startsWith("docs/adr/"));
+  if (!ds.length) return { ok: true, msg: "Không có file `docs/` nào ngoài ADR." };
+  let dong = 0;
+  for (const f of ds) {
+    // File vừa bị xoá khỏi cây làm việc thì bỏ qua, không ném: lượt sau `git ls-files` cũng
+    // không còn kể nó, và một lượt dọn dở dang không đáng làm cổng đỏ vì lý do khác.
+    try { dong += fs.readFileSync(path.join(ROOT, f), "utf8").split(String.fromCharCode(10)).length - 1; }
+    catch { /* bỏ qua, xem trên */ }
+  }
+  if (dong <= tran) {
+    const du = tran - dong;
+    return {
+      ok: true,
+      msg: `${dong}/${tran} dòng (${ds.length} file, không kể ADR).`
+        + (du >= 50 ? ` Đã dưới thước ${du} dòng — HẠ \`docs.tran_dong_khong_ke_adr\` xuống ${dong} để giữ phần đã dọn.` : ""),
+    };
+  }
+  return {
+    ok: false,
+    msg: `KHO_CHU_PHINH: ${dong} dòng trong \`docs/\` (không kể ADR), thước cóc là ${tran} — thêm ${dong - tran}. `
+      + "Đây KHÔNG phải trần lý tưởng, nó là con số của ngày hôm qua: phiên này đang làm kho chữ TO RA. "
+      + "Ba cửa ra: xoá/gộp cho về dưới thước · chuyển phần dài sang một ADR (ADR không tính vào thước) · "
+      + "phần thêm cần thiết thật thì nâng `docs.tran_dong_khong_ke_adr` VÀ nói vì sao trong nhật ký phiên.",
+  };
+});
 check("Sổ nợ dưới trần", () => {
   const tran = structure?.backlog?.tran;
   if (typeof tran !== "number") {
@@ -958,7 +1002,11 @@ check("Sổ nợ dưới trần", () => {
 // 2026-09-08, lane claude-cua-kiem: 13 -> 14. Them "So no duoi tran". Duc chot tran 15 co hieu
 // luc that; truoc do gioi han (4) cua AGENTS.md tu khai la KHONG co may cuong che, va no da vo
 // trong im lang dung mot lan. Ly do ghi mot dong vao HANDOFF.md goc repo.
-const EXPECTED_CHECKS = 14;
+// 2026-09-08, lane claude-ext-mobang: 14 -> 15. Them "Kho chu khong phinh" — THUOC COC cho
+// docs/ (tru ADR, vi ADR bat bien nen chi co the to len). Duc hoi "protocol clean, neu chua co
+// ta nen xay dung dung khong?" — co, nhung la PHEP KIEM chu khong phai mot tai lieu moi: mot
+// tai lieu day cach don tai lieu cong vao dung con so no dinh cat. Ly do ghi vao HANDOFF.md goc.
+const EXPECTED_CHECKS = 15;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

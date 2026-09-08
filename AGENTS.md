@@ -208,8 +208,14 @@ thật, còn **468 (63%)** chạm tài liệu + sổ nợ và **142 (19%)** ch�
    ba gói `duc-auto-*` là fork của nhau, **82.252 dòng** (không phải 37.601 như bản giao việc
    ghi), ba file `sidepanel.js` riêng dài **6.451 · 5.230 · 5.206** dòng — nên mỗi lỗi phải sửa
    ba lần, và 07/09 đúng ba lần (phép kiểm zoom di sản, `N-14`).
-3. **`docs/` ≤ 8.000 dòng.** Nay **24.732** (`git ls-files 'docs/*' | xargs wc -l`). Cắt docs
-   cần khoá `_docs`.
+3. **`docs/` ≤ 8.000 dòng — ĐÍCH, và một THƯỚC CÓC canh đường đi.** Nay **17.838** (kể ADR),
+   xuống từ 26.104 sáng 08/09 sau lượt xoá 14 hồ sơ `EXP-*` Đức duyệt ([ADR-0024] cùng phiên).
+   Đích 8.000 là chữ; thứ **máy canh** là `docs.tran_dong_khong_ke_adr` trong
+   `.repo-structure.json` — con số của HÔM NAY, không kể ADR. Phép kiểm *"Kho chữ không
+   phình"* của cổng đóng phiên ĐỎ khi vượt. **Dọn thêm thì HẠ con số đó xuống**; cổng tự nhắc
+   khi bạn đã dưới thước ≥ 50 dòng. Vì sao không để máy canh thẳng 8.000: một phép kiểm đỏ với
+   MỌI phiên trong nhiều tuần là một phép kiểm sẽ bị gỡ — chính giới hạn ④ dưới đây đã phải
+   nâng trần SAU KHI vỡ. Cắt docs cần khoá `_docs`.
 4. **Sổ nợ hạ tầng ≤ 15 mục — từ 08/09 CỔNG CANH THẬT.** Đếm lại, đừng tin dòng này:
    `node scripts/backlog-check.mjs`. Vượt trần thì phép kiểm *"Sổ nợ dưới trần"* của cổng đóng
    phiên **ĐỎ**, và cửa ra là **đóng một mục**: thêm dòng `- **ĐÓNG <mã>** · …` ở CUỐI sổ, đừng

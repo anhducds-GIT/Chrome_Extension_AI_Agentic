@@ -718,7 +718,7 @@ const chay = (deps) => {
   // đang làm dở, và KHÔNG phép kiểm nào kêu. Cổng là chỗ duy nhất nạn nhân chắc chắn chạy tới.
   // 2026-09-06, claude-handoff-tran: 12 → 13. Thêm "HANDOFF: mục mới trong trần, file đúng
   // tháng" (ADR-0011) — trần độ dài một mục nhật ký, chặn ở ĐẦU VÀO.
-  assert.match(gate, /const EXPECTED_CHECKS = 14;/, "thêm cổng con thì EXPECTED_CHECKS phải là 14 — lớp chống tự tháo cổng");
+  assert.match(gate, /const EXPECTED_CHECKS = 15;/, "thêm cổng con thì EXPECTED_CHECKS phải là 15 — lớp chống tự tháo cổng");
   // Và nó KHÔNG được biến nợ cấu trúc thành cổng đỏ ở phiên S4.
   // S7: cổng con nay PHẢI biến mã thoát 1 thành cổng đỏ, và phải TÁCH mã 1 (repo có nợ) khỏi
   // mã 2 (bộ kiểm hỏng). Đây là mắt nối duy nhất giữa check-bootstrap và cổng đóng phiên;
@@ -875,5 +875,26 @@ const chay = (deps) => {
   assert.match(mau, /B12 chốt mốc bất biến ở \*\*commit ĐẦU TIÊN\*\*/,
     "phai giai thich VI SAO, khong thi nguoi sau se sua gia tri nay cho gon");
   ok("ban mau ADR chao doi o Proposed, kem ly do (N-39)");
+}
+/* ---- THƯỚC CÓC KHO CHỮ: con số phải ở CẤU HÌNH, không gõ cứng ------------
+ *
+ * Cả giá trị của thước nằm ở chỗ HẠ ĐƯỢC: mỗi lượt dọn thì kéo con số xuống, và chỗ đã hạ
+ * không quay lại. Gõ cứng vào script thì hạ nó là sửa mã, mà sửa mã cần khoá `_code` — nên
+ * người dọn `docs/` (khoá `_docs`) sẽ bỏ qua, và thước đứng yên mãi ở con số đầu tiên.
+ *
+ * Repo này đã đo đúng cái bệnh đó một lần: trước 04/09 danh sách miễn append-only bị gõ cứng
+ * ở HAI script, và hai bản sao trả hai câu khác nhau cho cùng một file. */
+{
+  const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
+  assert.match(gate, /structure\?\.docs\?\.tran_dong_khong_ke_adr/,
+    "thuoc phai doc tu .repo-structure.json, khong duoc go cung vao script");
+  assert.match(gate, /KHO_CHU_PHINH/, "phai co ma loi rieng de tra duoc");
+  assert.match(gate, /startsWith\("docs\/adr\/"\)/,
+    "phai TRU docs/adr — ADR bat bien nen chi co the to len, tinh vao thuoc la cong don vinh vien");
+
+  const ct = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
+  assert.equal(typeof ct.docs?.tran_dong_khong_ke_adr, "number",
+    "repo nay dang dung thuoc coc nen phai khai con so — bo di la tat den bao");
+  ok("thuoc coc kho chu: con so o cau hinh, tru ADR, co ma loi rieng");
 }
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
