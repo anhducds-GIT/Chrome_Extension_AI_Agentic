@@ -9,8 +9,10 @@
 
 # One-off local exports and legacy ad-hoc Pilot workbooks.
 _to_delete_audit_head_export_tmp/
-# pilots/v0-trial/ — BỎ dòng chặn 09/09: git đã theo dõi 12 file trong đó từ 18/08,
-# mà .gitignore không có tác dụng với file đã theo dõi. Dòng đó chỉ làm người đọc tin nhầm.
+# 12 file trong pilots/v0-trial/ ĐÃ được git theo dõi từ 18/08 (bản nền đã nghiệm thu) —
+# .gitignore không có tác dụng với file đã theo dõi, nên dòng dưới chỉ chặn file MỚI thả vào
+# thư mục đó. Đừng đọc nó thành "thư mục này không nằm trong repo": nó nằm.
+pilots/v0-trial/
 
 # Pilot 03 keeps only its reproducible inputs in Git (workbook, references, README).
 workers/duc-auto-chatgpt/v0.1.0/pilot-03/Duc-Auto-ChatGPT-Pilot-03-Fixture.zip
