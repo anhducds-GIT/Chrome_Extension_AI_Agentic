@@ -1597,3 +1597,23 @@ nhiều bước tới kết luận cuối).
 - **đóng khi:** có brief riêng được Đức duyệt (khai rõ ba chỗ trên), rồi mới tới mã + ghim + audit
   độc lập. **Đừng gộp vào `B-41`** — một cái là sửa luật hỏng trên đường có sẵn, một cái là mở
   đường mới.
+
+- **TIẾN ĐỘ B-41 ⑴ (09/09)** · Phần ⑴ đã vá và đã ghim: `RECEIVER_LOST` và `WRONG_SURFACE` nay là
+  điều kiện chữa được, cửa `mayRepair()` đứng **trước** `canRetry()` trong `runner-core.js`, nắp 3
+  lần **theo từng loại trong một run**, `canRetry()` và `submissionMayExist()` không đổi một chữ.
+  Ghim `tests/workspace-repair-adr0050b-smoke.mjs` (10 mép, chạy hàm đã ship) và phần 2b mở rộng
+  của `tests/post-submit-no-resend-smoke.mjs`; thử phá **12/12 đỏ**. Suite gói 120 → 121.
+  **Một chỗ tôi cố ý LỆCH khỏi chữ của ADR-0050 ⒝, và lệch theo hướng chặt hơn:** ADR viết hai
+  loại này "xảy ra trước khi gửi", nhưng `activeTab()` ném `RECEIVER_LOST` ở **bất kỳ** đâu, kể cả
+  sau khi prompt đã bay — chữa lúc đó là F5 đè lên một lượt đang chạy, đúng cái `chat.reload` từ
+  chối làm. Nên cửa chữa đòi `submissionMayExist()` phải là false, không có ngoại lệ.
+  **Một số đo ngược với kỳ vọng, ghi ra để không ai đọc bảng rồi tưởng loại đó tự khỏi:**
+  `WRONG_SURFACE` **trên thực tế phần lớn vẫn dừng hẳn**. Nó chỉ tới được cổng khi
+  `boundConversationId` là null (run bắt đầu ngay trên trang phóng), và lúc đó **không có đích để
+  về** — đoán lấy một hội thoại là đúng cái `bindRunTab()` sinh ra để chặn. Ca chữa được chỉ là ca
+  hiếm "tab đang điều hướng dở lúc cổng chạy". Muốn chữa thật thì phải cho phép **mở hội thoại
+  mới**, và đó là một quyết định khác, cần Đức.
+  **Còn lại của B-41:** ⑵ `DETECTION_BLIND` (đối soát trước, không gửi lại) và ⑶ lời nhà cung cấp
+  tự khẳng định là nguồn đối soát. Điều kiện đóng ở khối B-41 giữ nguyên; con số "0 nguồn khẳng
+  định" trong `post-submit-no-resend-smoke.mjs` **vẫn đúng cho tới khi làm ⑶** — phần ⑴ không nối
+  thêm nguồn đối soát nào.

@@ -59,7 +59,7 @@ assert.ok(urlGuard, "mỏ neo hỏng: không thấy phép kiểm địa chỉ Ch
  * tiêu 20 giây thật. `sleep` đẩy đồng hồ, nên vòng chờ kết thúc đúng theo số vòng chứ
  * không theo thời gian tường.
  */
-function sanKhau({ tab, boundTabId = 7, boundTabUrl = "", boundConversationId = null, pingAnswers = true }) {
+function sanKhau({ tab, boundTabId = 7, boundTabUrl = "", boundConversationId = null, pingAnswers = true, composerAfter = 1 }) {
   let clock = 1_000_000;
   const did = { reload: 0, update: 0, create: 0, ping: 0, updatedTo: null };
   const sandbox = {
@@ -78,7 +78,10 @@ function sanKhau({ tab, boundTabId = 7, boundTabUrl = "", boundConversationId = 
         sendMessage: async () => {
           did.ping += 1;
           if (!pingAnswers) throw new Error("Receiving end does not exist.");
-          return { composerFound: true };
+          // Trang TRẢ LỜI không bằng trang DÙNG ĐƯỢC: ngay sau một lượt tải, content
+          // script sống lại trước khi ô soạn được dựng. `composerAfter` là số vòng hỏi
+          // trước khi ô soạn xuất hiện.
+          return { composerFound: did.ping >= composerAfter };
         }
       }
     }
@@ -167,7 +170,24 @@ const PHONG = "https://chatgpt.com/";
   assert.ok(did.ping >= 2, `phải hỏi lại nhiều vòng chứ không bỏ cuộc sau một lần — đếm được ${did.ping}`);
 }
 
-/* ⑻ Vòng chờ có TRẦN thật. Thiếu mép này thì một vòng chờ vô hạn cũng làm ⑺ "xanh" —
+/* ⑻ Trang TRẢ LỜI không bằng trang DÙNG ĐƯỢC. Ngay sau một lượt tải, content script
+   sống lại trước khi ô soạn được dựng — báo sẵn sàng ở vòng hỏi đầu tiên là đẩy vòng
+   chạy đi gõ prompt vào một trang chưa có chỗ để gõ. Mép này chống đúng một đột biến
+   một dòng: bỏ điều kiện `composerFound` và thoát vòng chờ ngay khi trang ừ hử. Mọi mép
+   khác của file này vẫn xanh với bản đó, vì ở chúng ô soạn có sẵn từ vòng đầu. */
+{
+  const { sandbox, did } = sanKhau({ tab: { id: 7, url: BOUND }, boundConversationId: "abc-123", boundTabUrl: BOUND, composerAfter: 4 });
+  const ket = await sandbox.repairWorkspaceSurface();
+  assert.equal(ket.ok, true, "ô soạn hiện muộn thì vẫn là chữa được — chỉ là phải chờ");
+  assert.equal(did.ping, 4, `phải chờ tới khi ô soạn có mặt, không dừng ở lời ừ hử đầu tiên — đếm được ${did.ping} vòng hỏi`);
+}
+{
+  const { sandbox } = sanKhau({ tab: { id: 7, url: BOUND }, boundConversationId: "abc-123", boundTabUrl: BOUND, composerAfter: Infinity });
+  const ket = await sandbox.repairWorkspaceSurface();
+  assert.equal(ket.ok, false, "trang trả lời đều đặn mà ô soạn không bao giờ hiện thì đó KHÔNG phải chữa xong");
+}
+
+/* ⑼ Vòng chờ có TRẦN thật. Thiếu mép này thì một vòng chờ vô hạn cũng làm ⑺ "xanh" —
    nó chỉ không bao giờ trả về. */
 {
   const { sandbox } = sanKhau({ tab: { id: 7, url: BOUND }, boundConversationId: "abc-123", boundTabUrl: BOUND, pingAnswers: false });
@@ -176,4 +196,4 @@ const PHONG = "https://chatgpt.com/";
   assert.ok(waited.waitedMs > 0 && waited.waitedMs <= 21000, `vòng chờ phải dừng trong khoảng trần đã khai — đo được ${waited.waitedMs}ms`);
 }
 
-console.log("ADR-0050⒝ tự chữa phiên làm việc, chạy thật (8 mép): PASS");
+console.log("ADR-0050⒝ tự chữa phiên làm việc, chạy thật (10 mép): PASS");
