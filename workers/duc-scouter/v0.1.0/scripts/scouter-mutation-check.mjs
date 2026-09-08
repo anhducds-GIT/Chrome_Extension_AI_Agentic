@@ -922,17 +922,10 @@ BATCHES.push({
   pin: path.join(ROOT, "tests", "scouter-bridge-smoke.mjs"),
   mutants: [
     {
-      ma: "Q1",
+      ma: "PB1",
       ten: "Bỏ phương án dự phòng: phong bì hỏng lại trả request_id null như trước",
       tim: "      const id = request?.request_id ?? idTho;",
       thay: "      const id = request?.request_id ?? null;",
-      soLan: 1
-    },
-    {
-      ma: "Q2",
-      ten: "Vớt mà KHÔNG kiểm hình dạng — chép nguyên xi chuỗi từ ngoài dây ra phản hồi",
-      tim: "    return typeof id === \"string\" && REQUEST_ID.test(id) ? id : null;",
-      thay: "    return typeof id === \"string\" ? id : null;",
       soLan: 1
     }
   ]

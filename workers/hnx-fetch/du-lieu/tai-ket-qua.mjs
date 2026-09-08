@@ -37,12 +37,37 @@ const duongMaster = co("master");
 const tu = co("tu");
 const den = co("den");
 const chiXem = process.argv.includes("--thu-xem");
+const loaiGo = co("loai");
 
 if (!duongGhepCap || !duongMaster || !tu || !den) {
   process.stderr.write("Thiếu tham số. Dùng:\n");
   process.stderr.write('  node tai-ket-qua.mjs --pairing <tệp> --master "<đường dẫn .csv>" --tu 2026-08-25 --den 2026-09-07\n');
   process.exit(2);
 }
+/* ---- `--loai`: chọn loại sản phẩm phái sinh (H-05) -------------------------
+ * Nhận CẢ HAI cách gọi — tên dễ đọc (`CHI_SO_CO_PHIEU`) lẫn mã trang dùng (`HDTLCSCP`) — vì
+ * người vận hành đọc tên trong tài liệu còn máy thấy mã trong URL, và bắt họ nhớ đúng một
+ * trong hai là bắt nhầm.
+ *
+ * TỰ SINH từ `LOAI_SAN_PHAM`, không gõ lại danh sách: gõ lại là dựng bản sao thứ hai của một
+ * bảng, rồi thêm loại thứ ba ở nguồn mà quên ở đây thì cờ này im lặng từ chối nó.
+ *
+ * Gõ sai thì DỪNG, không lặng lẽ dùng mặc định. Trang HNX trả 200 OK kèm cả một trang HTML khi
+ * tham số sai (đo 07/09), nên "chạy tiếp với mặc định" nghĩa là ghi dữ liệu của loại khác vào
+ * SSOT mà không ai biết — và SSOT thì chỉ nối thêm, không sửa lại được. */
+const loaiSanPham = (() => {
+  if (loaiGo === undefined || loaiGo === null || loaiGo === "") return LOAI_SAN_PHAM.CHI_SO_CO_PHIEU;
+  const khoa = String(loaiGo).trim().toUpperCase();
+  if (Object.hasOwn(LOAI_SAN_PHAM, khoa)) return LOAI_SAN_PHAM[khoa];
+  const ma = Object.values(LOAI_SAN_PHAM).find((x) => x.toUpperCase() === khoa);
+  if (ma) return ma;
+  process.stderr.write("Không có loại sản phẩm '" + loaiGo + "'. Chọn một trong:" + String.fromCharCode(10));
+  for (const [ten, x] of Object.entries(LOAI_SAN_PHAM)) {
+    process.stderr.write("  --loai " + ten + "   (mã trang: " + x + ")" + String.fromCharCode(10));
+  }
+  process.exit(2);
+})();
+
 /* Thư mục chứa phải có sẵn. CỐ Ý không tự tạo: gõ nhầm một ký tự là dựng một SSOT thứ hai ở
  * chỗ không ai nhìn, mà "một tệp duy nhất" là chính điều Đức muốn. */
 const thuMuc = duongMaster.replace(/[\\/][^\\/]*$/, "");
@@ -53,7 +78,7 @@ if (thuMuc && !fs.existsSync(thuMuc)) {
 
 const ghepCap = JSON.parse(fs.readFileSync(duongGhepCap, "utf8"));
 const diaChi = `http://127.0.0.1:${ghepCap.port}/v1/rpc`;
-const nguon = createNguonHnx({ loaiSanPham: LOAI_SAN_PHAM.CHI_SO_CO_PHIEU });
+const nguon = createNguonHnx({ loaiSanPham });
 
 let dem = 0;
 async function goi(method, params) {

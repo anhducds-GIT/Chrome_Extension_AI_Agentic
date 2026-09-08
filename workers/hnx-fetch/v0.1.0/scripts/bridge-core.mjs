@@ -357,13 +357,15 @@ export function successResponse(request, result, now) {
  * thời gian, thiếu `client_id`, phong bì quá khổ — người gọi chỉ thấy "lỗi nội bộ" và không có
  * đường nào tự sửa. Đo 08/09 trên Bridge chạy thật, lặp lại 3 lần, ổn định.
  *
- * Hàm này KHÔNG được ném và KHÔNG tin dữ liệu vào: nó chỉ vớt một chuỗi, còn hình dạng thì
- * `failureResponse` kiểm lại bằng `REQUEST_ID` trước khi cho vào phản hồi. */
+ * Hàm này KHÔNG được ném và KHÔNG tin dữ liệu vào. Nó CỐ Ý **không tự kiểm hình dạng**:
+ * `failureResponse` đã kiểm `REQUEST_ID` ở cửa ra, và cửa ra là đường DUY NHẤT phản hồi đi qua.
+ * Bản đầu có thêm một lượt kiểm ở đây; đột biến kiểm 08/09 cho thấy **hoàn nguyên nó mà phép
+ * ghim vẫn xanh** — tức nó là bình luận, không phải chốt. Hai bản của một luật thì bản nào
+ * hỏng cũng không ai biết, nên giữ đúng một bản, ở cửa ra. */
 function requestIdTho(input) {
   try {
     const o = typeof input === "string" ? JSON.parse(input) : input;
-    const id = o?.request_id;
-    return typeof id === "string" && REQUEST_ID.test(id) ? id : null;
+    return typeof o?.request_id === "string" ? o.request_id : null;
   } catch (_error) {
     return null;   /* không đọc nổi JSON thì không có gì để vớt — đúng là `null` */
   }

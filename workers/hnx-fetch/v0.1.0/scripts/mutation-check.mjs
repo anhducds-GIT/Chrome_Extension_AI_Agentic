@@ -245,13 +245,6 @@ BATCHES.push({
       tim: "      const id = request?.request_id ?? idTho;",
       thay: "      const id = request?.request_id ?? null;",
       soLan: 1
-    },
-    {
-      ma: "Q2",
-      ten: "Vớt mà KHÔNG kiểm hình dạng — chép nguyên xi chuỗi từ ngoài dây ra phản hồi",
-      tim: "    return typeof id === \"string\" && REQUEST_ID.test(id) ? id : null;",
-      thay: "    return typeof id === \"string\" ? id : null;",
-      soLan: 1
     }
   ]
 });
