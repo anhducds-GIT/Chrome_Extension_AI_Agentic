@@ -1701,3 +1701,37 @@ hai chiều: gõ tay số máy-đo thì **bị bắt**, còn số kiểm chứng
 
 **Đo.** Suite gốc repo **379** · dashboard smoke **102** (trước 100) · overview smoke **36**
 (trước 35) · `check-bootstrap` 0 đỏ.
+
+## 2026-09-08 (tối) · claude-cua-kiem · N-43 đóng: một vòng 8,5 phút → dưới 2,5
+
+**Đo trước, không đoán.** Chuỗi suite repo này **241,7s / 16 bước**, và cổng đóng phiên **chạy
+lại toàn bộ chuỗi đó** — một vòng bình thường ≈ **8,5 phút**, nửa sau không kiểm thêm gì.
+
+| | Trước | Sau |
+|---|---|---|
+| chuỗi suite | 241,7s | **93s** (song song, 21 luồng + 5 chạy riêng) |
+| cổng đóng phiên | ~280s | **33s** (đọc dấu, không chạy lại) |
+| **cả vòng** | **521s** | **126s — nhanh 76%** |
+
+**Dấu xác nhận KHÔNG phải cửa sau.** Buộc vào HEAD + băm `git status --porcelain -uall` + danh
+sách suite + môi trường (bản Node) + hạn 30 phút. Sửa một byte ở bất kỳ file nào, kể cả file chưa
+track, là dấu hết hiệu lực. Suite đỏ thì bộ chạy **xoá dấu**. Dấu trong `.gitignore` nên không
+mượn được của máy khác. Đường chạy đầy đủ còn nguyên. Ghim: `tests/dau-suite-smoke.mjs`, **11 cửa
+từ chối** + soi rằng cổng thật sự gọi và rẽ nhánh.
+
+**`npm test` VẪN là chuỗi tuần tự — cố ý, và đây là chỗ tôi phải đổi cách làm.** Ban đầu tôi trỏ
+`test` sang bộ chạy. Một phép ghim **trong gói ĐÃ ĐÓNG BĂNG** đọc thẳng `scripts.test` để bắt
+"xanh giả" liền đỏ. Gói đóng băng thì **chỉ-đọc** — nên tôi đổi cách của mình, không đổi luật của
+nó: đường nhanh mang tên riêng `npm run test:song-song`.
+
+**Bẫy phụ thuộc, lần thứ tư trong ngày:** cổng nhận thêm `chay-test.mjs`, nên **13 danh sách kho
+thử** phải chép thêm file đó — và **hai danh sách KHẲNG ĐỊNH trông y hệt**
+(`repo-structure-smoke:313` đòi script đi qua cửa quy vùng chung · `dau-vet-vung-smoke:50` đòi
+dùng hằng `CHUA_THAY_DAU_VET`) **không được đụng**. Chèn nhầm vào đó là biến khẳng định đúng thành
+**khẳng định sai được đóng dấu hợp lệ**. Soát bằng máy: mọi chỗ chèn phải có `copyFileSync` ngay
+dưới.
+
+**Lượt đẩy này dùng `--carry`, cuốn theo 1 commit của lane `claude-scouter-s06`** (`733840a`).
+Đức xác nhận lane đó đã xong và họ đã tự trả hết khoá trước lúc tôi nhận.
+
+**Còn mở:** không có gì của phiên này.

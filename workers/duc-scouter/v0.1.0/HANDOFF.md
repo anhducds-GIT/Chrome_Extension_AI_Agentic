@@ -675,3 +675,32 @@ trong việc thật. Khuyên **HOSE `hsx.vn`**. Bước đầu là **một phép
 phải viết mã.
 
 **Việc kế:** Đức chọn trang, rồi chạy phép đo đó.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — TẠM DỪNG Scouter, dừng ở chỗ sạch
+
+Đức chuyển hướng sang ba gói `duc-auto-*`. Câu của Đức: *"tôi muốn tạm dừng thôi"* — nên đây
+**không** phải đóng gói v1, và tôi đã bỏ hẳn việc đó khỏi phiên này.
+
+**`lifecycle: building` → `paused`.** Một gói khai `building` mà không ai xây là một dòng nói
+dối trên bảng của Đức. `human_action` nay rỗng việc, chỉ giữ một câu nhắc: bản Scouter **đang
+cài trong Chrome là bản CŨ**, khối phanh vá 08/09 chưa vào.
+
+**Kết sổ trước khi dừng — và sổ đang nói sai.** Nhìn qua tưởng còn 4 mục nợ; đo ra chỉ còn 2:
+
+- `S-10` (pilot hnx) — **đã xong từ trước, không ai đóng sổ.** Điều kiện đòi 5 ngày liên tiếp;
+  thực tế 46 ngày liền mạch, 216 PDF + 368 hàng, 0 lỗi, ba tính chất đều có phép ghim
+  (`vong-lay-smoke` khối ①②③). Việc này nay **thuộc `workers/hnx-fetch`**.
+- `S-14` (câu báo lỗi nói "popup" trong khi giao diện là bảng bên) — **mã đã sửa từ trước**,
+  khối ⑲ đọc nhãn thật từ `sidepanel.html`. Chỉ thiếu dòng đóng sổ.
+
+Còn lại đúng hai: `S-12` (thuộc HNX, chờ Đức chốt) · `S-13` (xấu mặt, đã kiểm là không hở).
+
+**Bài học đáng giữ:** hai mục trên nằm im ở trạng thái MỞ suốt vì **cửa ra của sổ rẻ hơn cửa
+vào không đủ** — ghi một mục nợ mất một phút, còn đóng nó đòi người ghi phải quay lại đúng
+quyển sổ đó sau khi việc đã xong. Chỗ này hỏng lặng lẽ: không gì đỏ lên, và bảng của Đức chỉ
+hiện một con số nợ **cao hơn sự thật**.
+
+**Việc kế:** không có. Quay lại thì đọc `ROADMAP.md` mục ① — trang thử thứ hai, ba ứng viên,
+khuyên `hsx.vn`, và bước đầu là một phép đo chứ không phải viết mã.

@@ -2,13 +2,13 @@
 schema: extension-status/v2
 id: duc-scouter
 name: Duc Scouter
-lifecycle: building
+lifecycle: paused
 owner: claude
 priority_rank: 4
-next_step: "Trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào."
-human_action: "Nạp lại extension trong Chrome — khối phanh vừa được vá 08/09 (mục S-15), bản đang chạy KHÔNG tự cập nhật. Rồi chọn trang thử thứ hai: ROADMAP.md mục ① có ba ứng viên, tôi khuyên HOSE hsx.vn."
+next_step: "TẠM DỪNG từ 08/09 theo chốt của Đức — không ai đang làm gói này. Quay lại thì việc đầu tiên là trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào."
+human_action: "Không có việc gì chờ Đức — gói đang tạm dừng. Một điều cần nhớ cho lúc quay lại: bản Scouter đang cài trong Chrome là bản CŨ, khối phanh vá ngày 08/09 chưa vào; dùng lại thì nạp lại extension trước."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
-current_focus: "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Khối phanh vừa được vá 08/09 theo chốt của Đức: hai lỗi chỉ nổ khi nhiều lượt chồng nhau — phanh khẩn bị bật lại, và trần 200 bị vượt — nay đã đóng, có phép ghim tái hiện được và đột biến giết được. Hai việc lớn còn lại: chọn trang thử THỨ HAI, và cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
+current_focus: "TẠM DỪNG 08/09 — Đức chuyển sang ba gói duc-auto-*. Gói dừng ở chỗ SẠCH: sổ nợ còn đúng hai mục nhỏ, suite xanh, đột biến 0 sống sót, không việc gì dở dang. Ba lệnh bấm và gõ đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Khối phanh vừa được vá 08/09 theo chốt của Đức: hai lỗi chỉ nổ khi nhiều lượt chồng nhau — phanh khẩn bị bật lại, và trần 200 bị vượt — nay đã đóng, có phép ghim tái hiện được và đột biến giết được. Hai việc lớn còn lại: chọn trang thử THỨ HAI, và cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
 lam_duoc: "Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới."
 khong_lam_duoc: "Không tự chạy. Mọi lệnh bấm và gõ đóng mặc định, chỉ tay Đức mở được, và mỗi lần mở có trần lượt. Không ghi tệp — việc đó ở máy chủ Bridge. Không biết trang nào cả: hiểu biết về một trang cụ thể phải nằm ở tầng adapter bên ngoài."
 dung_the_nao: "Nạp thư mục v0.1.0 vào Chrome, bật máy chủ Bridge của Scouter, chọn tệp ghép cặp trong bảng bên. Muốn nó bấm hay gõ thì bật công tắc Cho phép bấm và gõ — Chrome sẽ hiện dải băng đang gỡ lỗi trình duyệt trên tab nó cắm vào. Phanh khẩn: Ctrl+Shift+X."
@@ -23,12 +23,19 @@ Gói riêng trong `workers/` từ ngày 06/09 theo [ADR-0013](../../../docs/adr/
 Trước đó nó nằm rải ở gốc repo và `scripts/` + `tests/` — tức là chiếm hai khoá đông nhất repo
 cho một việc không liên quan tới khoá nào trong hai.
 
-**Vì sao `lifecycle: building`, không còn là `idea`.** Nó đã có code chạy được, có phép ghim,
-và có một phép đo với máy chủ thật. Nhưng nó **chưa từng chạy trên một trang thật**, nên chưa
-lên được mức cao hơn.
+**Vì sao `lifecycle: paused`, từ 08/09.** Không phải vì nó hỏng, cũng không phải vì nó xong.
+Đức chuyển hướng sang ba gói `duc-auto-*`, nên gói này **không có ai đang làm** — và một gói
+khai `building` mà không ai xây là một dòng nói dối trên bảng của Đức.
 
-**Vì sao không khai `last_verified`.** Chưa có pilot nào. Luật của repo: khai `last_verified`
-thì phải có `evidence_ref` trỏ tới bằng chứng vận hành thật.
+**Nó dừng ở chỗ nào.** Ba lệnh bấm và gõ đã chạy trên một trang thật (11/11, Chrome 152), đường
+ghi có phanh, và một pilot thật đã chạy qua nó 46 ngày liền mạch. **Chưa chứng minh được:** seed
+mới thử **đúng MỘT trang** (`hnx.vn`), nên câu "năng lực chung" vẫn là lời khai chưa được đo.
+Đó là lý do trang thử thứ hai đứng đầu `ROADMAP.md` lúc quay lại.
+
+**Vì sao không khai `last_verified`.** Pilot 46 ngày ấy nay **thuộc gói khác**: nó đã chuyển nhà
+sang `workers/hnx-fetch` ngày 08/09, và bằng chứng vận hành đi theo nhà mới. Luật của repo:
+khai `last_verified` thì phải có `evidence_ref` trỏ tới bằng chứng **của chính gói này** — mà
+bằng chứng chứng minh Scouter *dùng chung được* thì chỉ trang thử thứ hai mới sinh ra.
 
 ## Ba khả năng của bản nền, và cách tự kiểm lại
 

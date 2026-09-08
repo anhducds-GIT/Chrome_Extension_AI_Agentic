@@ -542,3 +542,6 @@ mở**, hoặc Đức chốt rằng ba gói đóng băng không cần đọc dif
 - **vì sao lane mở mục này không tự làm nốt:** `_code` và `_docs` do lane `claude-scouter-s06`
   giữ và đang làm dở (nhận 7 phút trước lúc ghi mục này). Luật mục 1: chỉ được đọc.
 
+
+- **ĐÓNG N-43** · 2026-09-08 · lane `claude-cua-kiem` · Bộ chạy song song + dấu xác nhận đã cài. **[ĐO]** chuỗi suite `241,7s → 93s`; cổng `~280s → 33s`; cả vòng `521s → 126s` (**nhanh 76
+- **ĐÓNG N-43** · 2026-09-08 · lane `claude-cua-kiem` · Bộ chạy song song + dấu xác nhận đã cài. **[ĐO]** chuỗi suite 241,7s → 93s; cổng ~280s → 33s; cả vòng 521s → 126s (**nhanh 76%**). `node tests/dau-suite-smoke.mjs` xanh 7/7 với **11 cửa từ chối**, và cổng in `suite gốc repo: DÙNG LẠI DẤU`. Khác bản bộ khung ĐÚNG MỘT CHỖ: đường nhanh mang tên `npm run test:song-song`, còn `npm test` giữ nguyên chuỗi tuần tự — một phép ghim trong gói ĐÃ ĐÓNG BĂNG đọc thẳng `scripts.test` để bắt xanh giả, mà gói đóng băng thì chỉ-đọc.

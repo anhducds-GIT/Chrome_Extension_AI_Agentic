@@ -137,3 +137,12 @@ một extension khác giành mất tổ hợp.
   ăn thật trên máy Đức, không extension nào giành mất tổ hợp, và bảng bên đổi sang `ĐANG TẮT`.
   Cái phanh cuối cùng — thứ với tới được khi bảng bên đã đóng — nay đã được chứng minh bằng tay
   người, không phải bằng suy luận từ suite.
+
+- **ĐÓNG H-01** (2026-09-08, `claude-scouter-s06`) · Đóng lại cho **đúng chỗ**: dòng đóng của mục
+  này đã được viết 08/09 nhưng nằm lạc sang khối `H-04`, nên máy đếm sổ vẫn tính nó là đang mở.
+  Nội dung không đổi — lượt chạy thật đã đi trọn vòng qua chính extension `HNX Fetch`:
+  `system.ping` trả `seed: hnx-fetch-v0.1`, bảng năng lực nhìn từ ngoài dây đúng bốn lệnh,
+  `scout.fetch` lấy `hnx.vn` status 200, ngân sách trừ đúng 199/200, và một lượt `tai-ket-qua.mjs`
+  đầy đủ 0 hỏng. Bằng chứng: `v0.1.0/evidence/2026-09-08-chay-that-lan-dau.md`.
+  Bài học nhỏ nhưng thật: **đóng sổ mà đặt sai khối thì máy đếm không thấy** — cửa ra của sổ này
+  là *thêm một dòng ở CUỐI*, không phải viết vào giữa mục khác.
