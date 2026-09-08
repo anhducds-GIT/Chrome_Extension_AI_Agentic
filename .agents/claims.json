@@ -37,11 +37,11 @@
       "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "_root": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T12:18",
       "task": "N-46: khai luat NHA CHUNG cua Bridge vao .repo-structure.json va AGENTS.md goc",
-      "released_at": null,
+      "released_at": "2026-09-08T12:32",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -78,11 +78,11 @@
       "released_at": "2026-09-08T11:40"
     },
     "workers/_shared": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T12:19",
       "task": "N-46: bo sinh doc duong dan tu .repo-structure.json thay vi go cung",
-      "released_at": null
+      "released_at": "2026-09-08T12:32"
     },
     "workers/hnx-fetch": {
       "owner": null,
@@ -92,7 +92,7 @@
       "released_at": "2026-09-08T11:40"
     }
   },
-  "_fingerprint": "7426420f6fc07213",
+  "_fingerprint": "1acf8bd64920dcc9",
   "tam": {
     "scripts/claim.mjs": {
       "owner": "claude-ext-n05",
