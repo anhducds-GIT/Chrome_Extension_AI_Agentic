@@ -116,17 +116,40 @@
     // than output; a false negative here can attribute a reference image to a
     // job as if the model had produced it.
     attachmentContainer: 'form, [data-testid*="attachment"], [data-testid*="upload-preview"], [data-testid*="file-upload"]',
+    // B-14 · ĐO LIVE 2026-08-26 (Pilot-14, 976 lần dò DOM, `evidence/watch-run-20260826-1411.jsonl`):
+    // nhóm này TRÔNG như năm lớp bảo vệ, thật ra chỉ có MỘT lớp còn sống.
+    //   ✔ `button[aria-label*="Remove file"]` — khớp `=> 2` ở job 2 ảnh và `=> 4` ở job 4 ảnh.
+    //     Số khớp ĐÚNG BẰNG số ảnh, nên là tín hiệu thật, không phải khớp bừa.
+    //   ✘ bốn mục `data-testid` + `Remove attachment` — **CHƯA TỪNG KHỚP MỘT LẦN NÀO** trên
+    //     trang thật, qua cả 976 lượt dò. Là di sản kế thừa, KHÔNG phải bằng chứng.
+    // Giữ bốn mục chết làm dự phòng thì vô hại, nhưng đừng đọc chúng thành lớp bảo vệ: nếu
+    // ChatGPT đổi nhãn, hoặc Đức đổi ngôn ngữ giao diện, thì nhóm này MÙ HẲN — mục duy nhất
+    // còn sống neo vào `aria-label` **tiếng Anh**. Đã có tiền lệ y hệt trong repo này:
+    // `button[aria-label="Stop generating"]` từng chết và phải đổi sang `data-testid`.
+    // Việc còn nợ (cần Đức chạy `dom_probe` GIỮA LÚC gắn ảnh): tìm một mục neo theo CẤU TRÚC
+    // rồi thêm vào nhóm. **Đừng xoá mục đang chạy được**, và đừng đoán một selector mới —
+    // luật vàng 1. Giảm nhẹ: lớp chặn "ảnh tham chiếu bị nhận nhầm thành ảnh sinh" KHÔNG chỉ
+    // dựa vào nhóm này — `content.js:237` còn hai tín hiệu độc lập (`role === "user"`, khớp
+    // theo tên file), và `attachmentContainer` dùng `form` trần nên miễn nhiễm với đổi nhãn.
+    // Nên đây là rủi ro CHẨN ĐOÁN, không phải rủi ro AN TOÀN.
     attachmentPreview: Object.freeze([
-      '[data-testid*="attachment"]',
-      '[data-testid*="file-upload"]',
-      '[data-testid*="upload-preview"]',
-      'button[aria-label*="Remove attachment"]',
-      'button[aria-label*="Remove file"]',
+      '[data-testid*="attachment"]',        // CHƯA TỪNG KHỚP (đo 26/08, 976 lượt dò)
+      '[data-testid*="file-upload"]',       // CHƯA TỪNG KHỚP
+      '[data-testid*="upload-preview"]',    // CHƯA TỪNG KHỚP
+      'button[aria-label*="Remove attachment"]', // CHƯA TỪNG KHỚP
+      'button[aria-label*="Remove file"]',  // ✔ mục DUY NHẤT còn sống — nhãn tiếng Anh
     ]),
+    // B-15 · ĐO LIVE 2026-08-26: cả BA mục **chưa từng khớp lần nào** qua 52 lượt dò có ảnh
+    // đính kèm đang hiện trên trang. Chưa phân biệt được "selector chết" với "ChatGPT không
+    // có dấu hiệu upload-đang-chạy" — hai khả năng đó xử lý khác nhau, nên **đừng viết code
+    // dựa vào nhóm này** cho tới khi phân biệt được. Hiện nó là NIỀM TIN, không phải bằng
+    // chứng. Phép đo để phân biệt (cần Đức): gắn một ảnh ~2MB như ảnh thật của Pilot-08 —
+    // cửa sổ upload dài hơn thì dò kịp. Kịp thì là selector sống, không kịp thì bỏ nhóm này
+    // và chỗ nào dựa vào nó phải đổi sang chờ `attachmentPreview` đủ số ảnh.
     uploadPending: Object.freeze([
-      '[data-testid*="uploading"]',
-      '[aria-busy="true"]',
-      '[role="progressbar"]',
+      '[data-testid*="uploading"]',  // CHƯA TỪNG KHỚP (đo 26/08, 52 lượt dò có ảnh đính kèm)
+      '[aria-busy="true"]',          // CHƯA TỪNG KHỚP
+      '[role="progressbar"]',        // CHƯA TỪNG KHỚP
     ]),
     fileInput: 'form input[type="file"]',
     // Controls the A/B image poll may expose. The poll's TEXT anchors stay in
