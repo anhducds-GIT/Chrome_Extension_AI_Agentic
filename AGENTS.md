@@ -26,9 +26,10 @@ Không được báo "xong" khi cổng kiểm chưa xanh. Không được tự s
   suite**. Commit sau khi chạy là đổi cây → dấu hỏng → cổng chạy lại từ đầu.
 - **Trong lúc làm đừng chạy đủ bộ** — `node scripts/chay-test.mjs --chi <tên-suite>`, cố ý KHÔNG
   ghi dấu. Đủ bộ chạy **một lần**, ở cuối.
-- **`npm test` vẫn là chuỗi TUẦN TỰ, cố ý.** Một phép ghim trong gói đã đóng băng đọc thẳng
-  `scripts.test` để bắt "xanh giả", và gói đóng băng thì chỉ-đọc — nên đường nhanh mang tên
-  riêng thay vì chiếm chỗ của `test`.
+- **`npm test` vẫn là chuỗi TUẦN TỰ, cố ý.** Một phép ghim trong `duc-auto-*` đọc thẳng
+  `scripts.test` để bắt "xanh giả". Từ 08/09 gói đó **sửa được** (hết đóng băng), nhưng đường
+  nhanh vẫn mang tên riêng: đổi `test` là làm một phép kiểm chống-xanh-giả nhìn vào chỗ khác,
+  và cái giá đó lớn hơn cái tiện của một cái tên ngắn.
 - **Bộ sinh nào ghi vào một sổ CÓ RÀNG BUỘC thì chạy MỘT LẦN, sau khi suite xanh.**
 
 Đo 08/09 ở bộ khung, cùng cơ chế: một vòng **1.095 giây → 278 giây**. Đây là luật, không phải lời
@@ -194,14 +195,15 @@ thật, còn **468 (63%)** chạm tài liệu + sổ nợ và **142 (19%)** ch�
 > đôi**. Con số cũ sinh ra vì `wc -l` với hàng trăm đường dẫn **vượt trần đối số** rồi trả tổng
 > của mẻ cuối. Bảy giới hạn dưới đây đứng trên **tỉ lệ commit**, không trên số dòng.
 
-1. **HAI gói sống, không phải một** — Đức nâng 08/09, trước là một. Gói sống: `workers/duc-scouter`
-   (bộ dò trang đa năng) và `workers/hnx-fetch` (lấy dữ liệu HNX hằng ngày). Ba gói `duc-auto-*`
-   vẫn đóng băng (khối `frozen` của `.repo-structure.json`) — chỉ đọc, mã ở lại trên đĩa.
-   Vì sao nâng: hai gói làm **hai việc khác nhau**, chạy ở hai nhịp khác nhau — HNX Fetch chạy
-   mỗi ngày vào dữ liệu thật của Đức, Scouter là việc phát triển. Và gói mới **không phải fork**:
-   nó bỏ hẳn quyền `debugger`, giữ 4 lệnh trên 15. Ghi ở [ADR-0021](docs/adr/0021-hnx-fetch-tach-thanh-extension-rieng.md).
-   **Đừng đọc thành "trần nay là hai".** Trần là *số gói CÓ LÝ DO sống*, và lý do phải viết ra
-   được thành một ADR. Gói thứ ba phải hỏi Đức.
+1. **KHÔNG CÒN TRẦN SỐ GÓI — Đức mở băng toàn bộ 2026-09-08.** Nguyên văn: *"tôi mở băng để
+   chuẩn bị làm các extension đó."* Cả năm gói đều SỐNG: `duc-scouter` · `hnx-fetch` ·
+   `duc-auto-chatgpt` · `duc-auto-gemini` · `duc-auto-gg-flow-video`. Ghi ở
+   [ADR-0024](docs/adr/0024-mo-bang-toan-bo-nam-goi.md).
+   **Cơ chế đóng băng KHÔNG bị gỡ** — khối `frozen` để rỗng, không xoá. Nó là công tắc Đức bật
+   lại được, và cái đắt là *cách làm* (đã ghim, đã vào bản đồ việc mục B2), không phải danh sách.
+   **Cái mất khi mở băng, biết trước:** trần này là thứ duy nhất chặn số gói phình. Nay chặn nằm
+   ở **giới hạn ⑥ (tối đa 2 chat)** và ở **giới hạn ② (cấm fork)** — hai cái đó phải gánh thay,
+   nên đừng nới tiếp cái nào trong hai.
 2. **Cấm cài một tính năng hai lần.** Cần ở hai gói → vào `workers/_shared/` trước. Bằng chứng:
    ba gói `duc-auto-*` là fork của nhau, **82.252 dòng** (không phải 37.601 như bản giao việc
    ghi), ba file `sidepanel.js` riêng dài **6.451 · 5.230 · 5.206** dòng — nên mỗi lỗi phải sửa
@@ -300,7 +302,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 
 | Khi bạn sắp… | Mở file |
 |---|---|
-| **Đụng ba gói ĐÃ ĐÓNG BĂNG** (`duc-auto-chatgpt` · `duc-auto-gemini` · `duc-auto-gg-flow-video`) | **Đừng đụng.** Đức chốt 07/09, nâng lên hai gói sống 08/09: gói sống là `workers/duc-scouter` và `workers/hnx-fetch`. Ba gói này chỉ được ĐỌC — mã ở lại trên đĩa (bằng chứng vận hành, mục 4 cấm xoá), sổ nợ và tài liệu của chúng **không cần mở nữa**. Sổ tay từng gói vẫn nằm trong gói. Danh sách khai ở khối `frozen` của `.repo-structure.json` |
+| **Đụng ba gói `duc-auto-*`** (`chatgpt` · `gemini` · `gg-flow-video`) | **Làm được, từ 08/09** — Đức mở băng ([ADR-0024](docs/adr/0024-mo-bang-toan-bo-nam-goi.md)). Sổ tay từng gói nằm TRONG gói: `workers/<gói>/<phiên-bản>/AGENTS.md`, sổ nợ và `HANDOFF.md` cạnh nó. Đọc trước khi sửa — ba gói là **fork của nhau** (giới hạn ②), nên một lỗi thường có ba bản sao, và vá một bản là để lại hai. Còn ai đang đóng băng gói nào không thì xem khối `frozen` của `.repo-structure.json`, đừng tin dòng này |
 | **Là phiên ĐIỀU PHỐI: Đức hỏi "đang có gì · làm gì tiếp · việc nào chạy song song được"** | `docs/protocols/ORCHESTRATOR.md` — sổ tay vai điều phối: đọc gì lúc mở phiên, luật song song, **HARD ROLE FIREWALL** (Đức chốt 04/09 — vai điều phối KHÔNG code, KHÔNG debug product, KHÔNG đề xuất patch; không có ngoại lệ "sửa nhỏ"), **luật nạp báo cáo năm mục** (`DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` rồi DỪNG), **lối ra bàn giao cho executor**, khi nào phải hỏi Đức. Công cụ đi kèm: `node scripts/what-next.mjs` — bản đồ việc, **chỉ đọc, không đòi khoá nào**, giao ba nguồn mà trước đây không giao được với nhau (bảng quyền × sổ nợ từng gói × sổ ý tưởng) |
 | **Biết Đức đã chốt gì, và vì sao** | **ADR** — mỗi quyết định một file bất biến. Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` · bản mẫu: `docs/_TEMPLATE-adr.md` · quyết định của cả repo ở `docs/adr/`, của một gói ở `workers/<gói>/<phiên-bản>/docs/adr/`. `decisions.md` của package nay là **mục lục** trỏ sang ADR. ADR đã `Accepted` là bất biến, phép kiểm B12 cưỡng chế |
 | **Sắp ghi một mục nhật ký, hoặc bị cổng chặn vì mục quá dài** | `docs/protocols/HANDOFF.md` — một mục chứa gì và KHÔNG chứa gì (lý do → ADR · việc còn nợ → `BACKLOG.md` · cách làm → brief), **trần 2.600 byte một mục** khai ở `.repo-structure.json` và cổng đóng phiên chặn **đúng mục bạn vừa thêm**, và cách xoay file theo tháng. Quyết định gốc: [ADR-0011](docs/adr/0011-handoff-chan-o-dau-vao-va-xoay-theo-thang.md). Công cụ: `node scripts/handoff.mjs --check` (đo) · `--rotate <file>` (xoay sang tháng mới) |

@@ -109,18 +109,33 @@ ok("không khai gói đóng băng nào thì không bỏ gì", () => {
 
 /* ---- Cấu hình THẬT của repo này phải còn đúng ---- */
 
-ok("khối `frozen` thật trỏ vào gói CÓ TỒN TẠI, và không chứa gói sống", () => {
+/* KHÔNG CÒN ĐÒI `length > 0` — Đức mở băng toàn bộ 2026-09-08 (ADR-0024), nên danh sách nay
+   RỖNG một cách hợp lệ. Đây KHÔNG phải nới lỏng để cổng xanh (luật vàng 3): sự thật đổi, nên
+   phép kiểm phải hỏi lại câu đúng.
+
+   Câu cũ *"danh sách không được rỗng"* trói phép kiểm vào một trạng thái NHẤT THỜI của repo —
+   cùng cái bẫy đã cắn ở bộ khung, nơi ba phép ghim đỏ oan trong một repo mới sinh vì chúng đòi
+   nhật ký phải có mục. Câu đúng là câu còn nghĩa ở CẢ HAI trạng thái: **khoá `frozen` phải còn
+   được KHAI**, và **mọi mục trong đó phải nhất quán**.
+
+   Cơ chế vẫn được ghim đầy đủ — bởi các ca dựng bằng dữ liệu tổng hợp ở trên, thứ không mục
+   theo việc hôm nay Đức đóng băng gói nào. */
+ok("khối `frozen` thật: còn được khai, trỏ vào gói CÓ TỒN TẠI, và không chứa gói sống", () => {
   const cauHinh = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
+  assert.ok(Array.isArray(cauHinh.frozen),
+    "khoá `frozen` phải còn được khai (mảng, rỗng cũng được) — gỡ hẳn nó đi là gỡ cả công tắc, "
+    + "và lần sau Đức muốn đóng băng lại thì phải dựng lại từ đầu");
   const dongBang = frozenFrom(cauHinh);
-  assert.ok(dongBang.length > 0, "repo này đang có gói đóng băng, khối `frozen` không được rỗng");
   for (const g of dongBang) {
     assert.ok(fs.existsSync(path.join(ROOT, g)),
       `khai đóng băng '${g}' mà thư mục không tồn tại — cờ trỏ vào chỗ trống thì nó không bỏ được gì`);
   }
   // Gói sống KHÔNG được nằm trong danh sách: đó là gói duy nhất đang được ghi, nên suite của nó
   // là phép kiểm đắt giá nhất chứ không phải phép kiểm bỏ được.
-  assert.ok(!dongBang.includes("workers/duc-scouter"),
-    "gói SỐNG bị khai đóng băng — suite của nó sẽ không chạy nữa");
+  for (const song of ["workers/duc-scouter", "workers/hnx-fetch"]) {
+    assert.ok(!dongBang.includes(song),
+      `gói SỐNG "${song}" bị khai đóng băng — suite của nó sẽ không chạy nữa`);
+  }
 });
 
 /* ---- Vùng chung: chạm vào là chạy hết, và danh sách vùng chung KHÔNG được mục ---- */
