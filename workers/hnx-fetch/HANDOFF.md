@@ -292,3 +292,36 @@ thư mục**. Phiên `claude-cua-kiem` chạy `git add -A` và **cuốn theo** p
 `workers/duc-scouter` và `workers/hnx-fetch` vào commit `c7580447` mang nhãn của họ. Không mất
 gì — nội dung nguyên vẹn — nhưng nhãn `Lane:` của hai lượt sửa đó nay chỉ sai người. Cách tránh:
 `git add <đường dẫn của mình>`, đừng `-A`.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — đóng nốt: S-13 · H-05 · thu hẹp H-06
+
+Đức yêu cầu đóng nốt sổ nợ. Ba việc làm được, hai việc còn chờ Đức.
+
+**`S-13` — chẩn đoán cũ SAI, và chỗ sai đáng giữ.** Sổ tưởng đây là lỗi định tuyến tên method.
+Thật ra `capabilities` không lọt nổi tới bảng method: nó hỏng **hình dạng phong bì**
+(`METHOD_SHAPE` bắt buộc có dấu chấm), nên `parseRequest` ném TRƯỚC khi biến `request` được gán,
+và phản hồi ra đi với `request_id: null`. Máy chủ khớp bằng đúng trường đó, khớp hụt, rồi thay
+cả phản hồi bằng `INTERNAL_ERROR`.
+
+Hậu quả **rộng hơn** sổ mô tả: mọi lý do từ chối ở tầng phong bì đều bị nuốt. Với gói này còn
+nặng hơn — `vong-lay.mjs` xếp `INTERNAL_ERROR` là **không thử lại được**, nên một lượt chạy dài
+chết ở một phong bì gõ sai với câu không nói được sai ở đâu. Vá ở **cửa vào**, không nới
+`METHOD_SHAPE` (gỡ chốt giao thức cho test xanh là luật vàng ③ cấm).
+
+**`H-05` — có `--loai`.** Nhận cả tên lẫn mã trang, danh sách tự sinh từ bảng. Gõ sai thì DỪNG:
+trang HNX trả 200 OK kèm một trang HTML khi tham số sai, nên chạy tiếp với mặc định là ghi dữ
+liệu loại khác vào SSOT. `PROTOCOL.md` sửa theo — mục `FETCH_BODY_TOO_LARGE` nay là ba bước thử.
+
+**`H-06` — gỡ được chỗ chặn.** Trước lượt này **không có đường nào TẠO một tệp ghép cặp**: hai
+gói sống chỉ biết ĐỌC, bộ sinh thì nằm trong ba gói đóng băng. Nay có
+`_shared/bridge-host/tao-tep-ghep-cap.mjs`, tự kiểm bằng chính `validatePairing()`.
+
+**Chốt an toàn của chính tôi đã hỏng CÂM ở lượt thử đầu** — nó đặt một tệp CÓ TOKEN thẳng vào
+gốc repo (chưa từng track, đã xoá). Gốc repo tính bằng cách tự gỡ `URL.pathname`, mà trên Windows
+chuỗi đó giữ dấu cách ở dạng `%20`. Đã dùng `fileURLToPath` và ghim bằng phép chạy thật có đường
+dẫn chứa dấu cách. **Một chốt hỏng câm tệ hơn không có chốt.**
+
+**Còn chờ Đức, hai câu:** `H-03` ngày lễ gọi lại mỗi lượt — chịu, hay đánh dấu? · `H-06` chạy
+lệnh sinh tệp ghép cặp một lần rồi chọn nó trong bảng bên.

@@ -140,7 +140,21 @@ node workers/hnx-fetch/v0.1.0/bridge/hnx-fetch-host.mjs --pairing <tệp.json> -
 Đức thì nhấp đúp `v0.1.0/bridge/Chay-may-chu-HNX.cmd`, hoặc kéo thả tệp ghép cặp vào nó.
 
 **Dùng chung một tệp ghép cặp với Scouter được**, miễn là **không chạy hai máy chủ cùng lúc**
-trên cùng cổng đó. Muốn chạy song song thì cần hai tệp ghép cặp hai cổng khác nhau.
+trên cùng cổng đó. Nhưng dùng chung thì mọi lượt gọi phải mang thêm cờ `--target` — xem ①bis.
+
+**Cách đỡ phiền hơn: cho gói này một tệp ghép cặp RIÊNG, cổng riêng.** Sinh bằng một lệnh:
+
+```bash
+node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --ra "<đường dẫn .json NGOÀI kho mã>"
+```
+
+Không đưa `--cong` thì nó tự chọn cổng trống (32152 trở đi). Sinh xong: đưa tệp đó cho
+`Chay-may-chu-HNX.cmd`, rồi **chọn đúng tệp đó trong bảng bên** của HNX Fetch. Từ lúc đó mỗi
+máy chủ chỉ có một extension cắm vào, và `--target` thành không cần.
+
+Lệnh này **từ chối ghi vào trong kho mã** (tệp chở token) và **từ chối ghi đè tệp đã có** (ghi
+đè là làm chết kết nối của extension đang chạy). Gặp `TU_CHOI` thì đọc câu nó in ra — nó nói rõ
+đường dẫn nào và vì sao.
 
 **Tệp ghép cặp không bao giờ nằm trong kho mã** — hỏi Đức đường dẫn, rồi truyền qua `--pairing`.
 
@@ -168,8 +182,8 @@ lệnh chạy được ngay, nên bạn không phải đi tra ở đâu cả.
 Không biết dòng nào là HNX Fetch? Gọi `system.ping` với từng dòng — đúng cái của nó trả về
 `seed: hnx-fetch-v0.1`. Scouter trả về một lỗi.
 
-Muốn khỏi phải chỉ đích danh: cho HNX Fetch **một tệp ghép cặp riêng, cổng riêng**. Hôm nay
-chưa có (`H-06`), nên `--target` là đường đi.
+Muốn khỏi phải chỉ đích danh: cho HNX Fetch **một tệp ghép cặp riêng, cổng riêng** — sinh bằng
+`tao-tep-ghep-cap.mjs`, xem mục ① ở trên. Chừng nào chưa làm thì `--target` là đường đi.
 
 ### ② Chrome đang mở, đã nạp HNX Fetch, và bảng bên đã ghép cặp
 
@@ -422,11 +436,17 @@ với mọi ngày, chạy tiếp chỉ đốt sạch ngân sách rồi báo "h�
 vòng lặp tự thử lại vài lượt rồi bỏ, và lượt chạy sau lấy nốt ngày còn thiếu — nên **cách xử
 lý đúng với lỗi mạng là chạy lại cả lệnh**, không phải can thiệp gì.
 
-> **Về `FETCH_BODY_TOO_LARGE`:** hôm nay **KHÔNG có cờ nào chia theo loại sản phẩm** —
-> `tai-ket-qua.mjs` gõ cứng `CHI_SO_CO_PHIEU`. Bản trước của tệp này khuyên "chia nhỏ theo
-> loại sản phẩm", và đó là một lời khuyên **không làm theo được** (audit nội dung 08/09 bắt
-> được). Cách thật: một ngày một lượt. Còn vượt nữa thì đó là việc phải mở mã, và nó nằm ở
-> `BACKLOG.md` mục `H-05` — báo Đức, đừng tự nới trần.
+> **Về `FETCH_BODY_TOO_LARGE` — thứ tự thử, và một chỗ tài liệu này từng nói sai:**
+>
+> ⑴ **Hạ xuống một ngày một lượt.** Đây là cách gần như luôn đủ.
+> ⑵ **Chia theo loại sản phẩm:** `--loai CHI_SO_CO_PHIEU` hoặc `--loai TRAI_PHIEU_CHINH_PHU`
+>   (cũng nhận mã trang: `HDTLCSCP` · `HDTLTPCP`). Gõ sai mã thì lệnh **dừng** và kể ra danh
+>   sách hợp lệ — cố ý, vì trang HNX trả 200 OK kèm cả một trang HTML khi tham số sai, nên chạy
+>   tiếp với mặc định nghĩa là ghi dữ liệu của loại khác vào SSOT.
+> ⑶ Còn vượt nữa thì phải mở mã — báo Đức, **đừng tự nới trần**.
+>
+> Bản trước của tệp này khuyên chia theo loại sản phẩm trong khi **cờ đó chưa tồn tại** — một
+> lời khuyên không làm theo được, audit nội dung 08/09 bắt ra. Cờ nay đã có (`H-05` đóng 08/09).
 
 **Một ngày đo được: 46 KB.** Trần 512 KiB rộng gấp hơn mười lần, nên mã lỗi này gần như chỉ
 nổ khi có gì đó khác đã sai.

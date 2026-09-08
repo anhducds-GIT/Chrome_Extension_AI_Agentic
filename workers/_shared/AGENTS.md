@@ -54,3 +54,5 @@ cho một người dùng tưởng tượng, nhưng cũng đừng quên chuyển 
 |---|---|
 | `bridge-host/tests/tuong-duong-voi-ban-goc.mjs` | **Tách lõi có làm rơi hành vi nào không** — hỏi cả bản gốc lẫn bản mới cùng một câu, 29 ca, rồi so đáp án |
 | `bridge-host/tests/bat-tay-hai-chieu.mjs` | Cái bắt tay, bằng một lượt **nối thật qua socket**. Sinh ra vì bộ đo đột biến chỉ ra rằng chốt đáng giá nhất của lõi chưa ai canh |
+| `bridge-host/tao-tep-ghep-cap.mjs` | **Sinh một tệp ghép cặp** cho một máy chủ Bridge (H-06). Ở đây chứ không ở một gói, vì nó phải sinh ra thứ `validatePairing()` chấp nhận và **tự kiểm bằng chính hàm đó**. Hai chốt: không ghi vào trong kho mã (tệp chở token) · không ghi đè tệp đã có |
+| `bridge-host/tests/tao-tep-ghep-cap-smoke.mjs` | Ghim bộ sinh trên. Chạy THẬT và thử **đường dẫn có dấu cách** — chốt "không ghi vào repo" đã hỏng CÂM đúng ở đó ngày 08/09 |

@@ -72,7 +72,8 @@ trong mã, chỉ tay Đức mở lại được. Đổi bất kỳ điều nào 
 | `du-lieu/vong-lay.mjs` | vòng lặp, KHÔNG biết trang nào: không làm hai lần · chạy tiếp khi đứt · thử lại đúng loại lỗi |
 | `du-lieu/chay.mjs` | lệnh chạy vòng lặp, nối `vong-lay` với Bridge |
 | `du-lieu/kiem-ssot.mjs` | **bộ soi tệp SSOT, CHỈ ĐỌC**: ngày cuối · ngày thiếu hẳn · dòng lệch cột · khoá trùng (ngày + ISIN). Đây là thứ AI vận hành dựa vào để nói *"dữ liệu ổn"* |
-| `du-lieu/tests/` | 7 phép ghim, không chạm mạng thật |
+| `du-lieu/tests/loai-san-pham-smoke.mjs` | ghim cờ `--loai` (H-05). Có khối **chạy thật tệp lệnh** và đọc mã thoát — hai khối soi mã nguồn ở trên bắt được "quên viết" nhưng không bắt được "viết sai" |
+| `du-lieu/tests/` | 8 phép ghim, không chạm mạng thật |
 
 ## BA tệp chép nguyên văn — và cách chúng KHÔNG trôi
 

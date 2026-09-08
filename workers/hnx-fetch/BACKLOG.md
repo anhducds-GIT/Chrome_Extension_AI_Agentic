@@ -152,3 +152,26 @@ một extension khác giành mất tổ hợp.
   Nội dung không đổi — `v0.1.0/scripts/mutation-check.mjs` (tên ngắn hơn dự kiến) chạy được với
   **13 con · 13/13 mỏ neo khớp · 13 giết được · 0 sống sót**, bốn mẻ: bề mặt · phanh · manifest ·
   chống trôi.
+
+- **ĐÓNG H-05** (2026-09-08, `claude-scouter-s06`) · `tai-ket-qua.mjs` nay nhận `--loai <mã>`,
+  nhận **cả** tên dễ đọc (`CHI_SO_CO_PHIEU`) lẫn mã trang (`HDTLCSCP`) — người vận hành đọc tên
+  trong tài liệu còn máy thấy mã trong URL. Danh sách **tự sinh từ `LOAI_SAN_PHAM`**, không gõ
+  lại. Mã sai thì **DỪNG** và kể ra danh sách hợp lệ, không lặng lẽ dùng mặc định: trang HNX trả
+  200 OK kèm cả một trang HTML khi tham số sai (đo 07/09), nên "chạy tiếp với mặc định" nghĩa là
+  ghi dữ liệu của loại KHÁC vào SSOT — mà SSOT thì chỉ nối thêm, không sửa lại được.
+  Ghim: `du-lieu/tests/loai-san-pham-smoke.mjs`, 3 khối, có khối chạy THẬT tệp lệnh và đọc mã thoát.
+  `PROTOCOL.md` cũng đã sửa: mục `FETCH_BODY_TOO_LARGE` nay là ba bước thử, không còn khuyên một
+  việc không làm theo được.
+
+- **THU HẸP H-06** (2026-09-08, `claude-scouter-s06`) · Chỗ chặn đã gỡ. Trước lượt này **không có
+  đường nào TẠO ra một tệp ghép cặp**: hai gói sống chỉ biết ĐỌC tệp có sẵn, còn bộ sinh thì nằm
+  trong ba gói đã đóng băng. Nay có `workers/_shared/bridge-host/tao-tep-ghep-cap.mjs` — đặt cạnh
+  `validatePairing()` và **tự kiểm bằng chính hàm đó**, nên không thể sinh ra tệp máy chủ từ chối.
+  Hai chốt: từ chối ghi vào trong kho mã · từ chối ghi đè tệp đã có.
+
+  **Chốt thứ nhất đã HỎNG CÂM ở lượt thử đầu** và bộ sinh đặt một tệp CÓ TOKEN thẳng vào gốc repo
+  (tệp chưa từng được track, đã xoá). Nguyên nhân: tính gốc repo bằng cách tự gỡ `URL.pathname`,
+  mà trên Windows chuỗi đó giữ dấu cách ở dạng `%20`. Đã chuyển sang `fileURLToPath` và ghim bằng
+  một phép chạy THẬT có đường dẫn chứa dấu cách. Một chốt hỏng câm tệ hơn không có chốt.
+
+  **Còn lại đúng phần cần tay Đức:** chạy lệnh đó một lần, rồi chọn tệp mới trong bảng bên.

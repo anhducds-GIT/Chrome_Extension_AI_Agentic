@@ -323,3 +323,30 @@ tái hiện được hai ca đua, và hai con đột biến hoàn nguyên bản 
   (*"ở đầu BẢNG BÊN"*, không còn *"trong popup"*) và đúng tên công tắc (*"Cho phép bấm và gõ"*).
   Phép ghim khối ⑲ của `scouter-write-gate-smoke.mjs` **đọc nhãn thật từ `sidepanel.html`** chứ
   không gõ lại chuỗi — nên đổi nhãn ở bảng bên mà quên sửa câu lỗi thì nó đỏ.
+
+- **ĐÓNG S-13** (2026-09-08, `claude-scouter-s06`) · **Chẩn đoán trong mục này SAI, và chỗ sai
+  đáng giữ lại.** Nó tưởng đây là lỗi định tuyến tên method. Thật ra `capabilities` không lọt nổi
+  tới bảng method — nó hỏng **hình dạng phong bì** (`METHOD_SHAPE` bắt buộc có dấu chấm), nên
+  `parseRequest` ném TRƯỚC khi biến `request` được gán, và phản hồi ra đi với `request_id: null`.
+  Máy chủ khớp phản hồi bằng đúng trường đó, khớp hụt, rồi thay cả phản hồi bằng
+  `INTERNAL_ERROR / uncorrelated_extension_response`.
+
+  Nên **hậu quả rộng hơn mục này mô tả**: mọi lý do từ chối ở tầng phong bì đều bị nuốt — sai dấu
+  thời gian, thiếu `client_id`, phong bì quá khổ. Người gọi chỉ thấy "lỗi nội bộ".
+
+  Vá ở **cửa vào**: vớt `request_id` từ phong bì thô trước khi kiểm. **KHÔNG** nới `METHOD_SHAPE`
+  để ép ra `METHOD_NOT_FOUND` — làm thế là gỡ một chốt giao thức cho test xanh (luật vàng ③).
+  Ghim cả hai chiều ở `scouter-bridge-smoke.mjs`; đột biến `PB1` giết được, bộ đo 96/96, 0 sống sót.
+  Cùng lỗi ở `workers/hnx-fetch` đã vá cùng lượt.
+
+  Một con đột biến (`PB2`) **sống sót** và điều đó đúng: bản đầu có thêm một lượt kiểm hình dạng
+  trong bộ vớt, nhưng `failureResponse` đã kiểm ở cửa ra — cửa ra là đường DUY NHẤT phản hồi đi
+  qua. Đã **bỏ lớp thừa** thay vì giữ một con đột biến không giết được: một dòng đỏ vĩnh viễn là
+  thứ ai cũng học cách bỏ qua.
+
+- **ĐÓNG S-12** (2026-09-08, `claude-scouter-s06`) · **Chuyển nhà, không phải bỏ qua.** Mục này
+  nói về vòng lấy dữ liệu hnx, mà toàn bộ pilot đó đã sang `workers/hnx-fetch` ngày 08/09 cùng
+  với `S-10`. Cùng một chuyện đã có mục riêng ở nhà mới: `H-03` — *ngày lễ bị gọi lại mỗi lượt
+  chạy*, kèm đúng hai đường ra như ở đây. Giữ hai bản của một mục nợ ở hai quyển sổ là cách chắc
+  chắn để một bản được đóng còn bản kia nằm lại mãi.
+  **Quyết định vẫn chờ Đức**, và nó nằm ở `H-03`. Sổ nợ Scouter nay **rỗng**.
