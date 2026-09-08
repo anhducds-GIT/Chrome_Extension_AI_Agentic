@@ -114,6 +114,26 @@ export function chenBang(html, tt = {}) {
  * tiếng Việt không khai charset thì trình duyệt đoán — đoán sai là Đức nhận về một trang đầy
  * ký tự rác. Thêm ở đây, không sửa bộ sinh: bản đã commit phải giữ nguyên từng byte, nếu
  * không thì cổng chặn đẩy với MỌI phiên. */
+/* BẢN SỐNG PHẢI NÓI NÓ LÀ BẢN SỐNG — N-11.
+ *
+ * Bộ sinh in câu của BẢN CHỤP, vì bản nó ghi ra là bản đi vào git. Ba cửa này ghi ra một file
+ * khác, dựng lại mỗi lần nhấp — nên câu đó sai ở đây, và sai theo hướng nguy nhất: bảo Đức đi
+ * nhấp đúp đúng cái ông vừa nhấp. Đổi bằng cách thay CHUỖI HẰNG, không gõ lại chữ: hai câu
+ * gõ tay ở hai file là hai câu sẽ lệch nhau ở lượt sửa thứ ba.
+ *
+ * Không tìm thấy câu khai thì NÉM LỖI, đừng bỏ qua: bộ sinh đã đổi chữ, và một bản sống mang
+ * câu của bản chụp là đúng cái lỗi N-11 sinh ra để chặn. */
+export async function doiSangBanSong(html) {
+  const { KHAI_BAN_CHUP, KHAI_BAN_SONG } = await import("../scripts/build-overview.mjs");
+  if (!html.includes(KHAI_BAN_CHUP)) {
+    throw new Error(
+      "KHAI_BAN_0: không thấy câu tự khai của bản chụp trong trang. Bộ sinh đã đổi chữ — sửa " +
+      "KHAI_BAN_CHUP ở build-overview.mjs, đừng gõ lại chữ ở đây. KHÔNG được lặng lẽ bỏ qua: " +
+      "bản sống mang câu của bản chụp là bảo Đức đi nhấp đúp đúng cái vừa nhấp."
+    );
+  }
+  return html.split(KHAI_BAN_CHUP).join(KHAI_BAN_SONG);
+}
 export function themCharset(html) {
   return /<meta\s+charset/i.test(html) ? html : `<meta charset="utf-8">${NL}${html}`;
 }
@@ -220,7 +240,7 @@ export async function sinhLai({
   const { html } = sinhTrang(createDefaultDeps(goc));
 
   const tt = { ngung: false, chuKhoa: null, luc, nhip: nhip ?? cu.nhip ?? null, ly_do: null };
-  fs.writeFileSync(fileBang, themCharset(chenBang(html, tt)), "utf8");
+  fs.writeFileSync(fileBang, themCharset(chenBang(await doiSangBanSong(html), tt)), "utf8");
   ghiTrangThai(tt, fileTrangThai);
   return tt;
 }

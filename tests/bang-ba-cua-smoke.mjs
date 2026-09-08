@@ -19,8 +19,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  KHOA_NGUNG, chenBang, goBang, docChuKhoa, sinhLai, trangNgungToiThieu, vanTay, gioVN
+  KHOA_NGUNG, chenBang, doiSangBanSong, goBang, docChuKhoa, sinhLai, trangNgungToiThieu, vanTay, gioVN
 } from "../bang-trang-thai/loi.mjs";
+import { KHAI_BAN_CHUP, KHAI_BAN_SONG } from "../scripts/build-overview.mjs";
 import { DUONG, PHUONG_THUC, xuLy } from "../bang-trang-thai/may-chu.mjs";
 
 const GOC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -190,5 +191,37 @@ function giaRes() {
   };
 }
 
+/* ---- HAI BẢN PHẢI TỰ KHAI LÀ BẢN NÀO — N-11 -------------------------------
+ *
+ * Đức báo 06/09: *"tôi thấy có 2 dashboard nên bị confuse."* Hai file không gộp được (bản ở
+ * gốc phải nằm yên trong git, bản sống phải ghi đè liên tục), nên cách duy nhất còn lại là
+ * bắt mỗi bản nói ra nó là bản nào — ở DÒNG ĐẦU cho máy, và ở dải mốc cho mắt Đức. */
+{
+  const goc = fs.readFileSync(path.join(GOC, "DASHBOARD-Chrome-Extension-AI-Agentic.html"), "utf8");
+  const dongDau = goc.split("\n")[0];
+  assert.ok(dongDau.includes(KHAI_BAN_CHUP),
+    "dong dau cua ban da commit phai tu khai la BAN CHUP kem duong sang ban song");
+  assert.match(KHAI_BAN_CHUP, /bang-trang-thai/, "cau khai phai chi duong sang ban song, khong chi noi no cu");
+  assert.ok(goc.split(KHAI_BAN_CHUP).length - 1 >= 2,
+    "phai khai o CA HAI cho: dong dau (may doc) va dai moc (Duc doc)");
+  ok("ban da commit tu khai la BAN CHUP, o ca cho may doc lan cho Duc doc (N-11)");
+}
+
+{
+  const gia = `<!-- ${KHAI_BAN_CHUP} -->\n<span>${KHAI_BAN_CHUP}</span>`;
+  const song = await doiSangBanSong(gia);
+  assert.ok(!song.includes(KHAI_BAN_CHUP), "ban song KHONG duoc con cau cua ban chup o bat ky cho nao");
+  assert.equal(song.split(KHAI_BAN_SONG).length - 1, 2, "phai doi CA HAI cho, khong phai cho dau tien");
+  assert.match(KHAI_BAN_SONG, /DASHBOARD-/, "cau cua ban song phai chi nguoc lai ban chup");
+  ok("ban song doi het cau khai sang cua no");
+}
+
+{
+  // Bộ sinh đổi chữ mà đây im lặng bỏ qua thì bản sống mang câu của bản chụp — tức bảo Đức đi
+  // nhấp đúp đúng cái ông vừa nhấp. Ném lỗi là đúng, im lặng là sai.
+  await assert.rejects(() => doiSangBanSong("<html>khong co cau khai nao</html>"), /KHAI_BAN_0/,
+    "khong thay cau khai thi phai NEM LOI, khong duoc tra ve nguyen trang");
+  ok("bo sinh doi chu thi ba cua KEU, khong lang le tra ve ban sai");
+}
 fs.rmSync(tam, { recursive: true, force: true });
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

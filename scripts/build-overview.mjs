@@ -1722,7 +1722,8 @@ export function buildOverview(deps, { title = "Trạng thái Duc Auto", today = 
     if (!khoiTang.has(id)) khoiTang.set(id, []);
     cur = khoiTang.get(id);
   };
-  p.push(`<title>${esc(title)}</title>
+  p.push(`<!-- ${KHAI_BAN_CHUP} -->
+<title>${esc(title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -1731,7 +1732,7 @@ ${STYLE}
 <div class="wrap">
   <div class="stampbar">
     <span>Sinh ngày ${esc(stamp)} · ${ageDays === 0 ? "hôm nay" : ageDays + " ngày trước"}</span>
-    <span>Nguồn sự thật nằm trong repo</span>
+    <span>${esc(KHAI_BAN_CHUP)}</span>
   </div>
   <div class="cu" id="cu" data-sinh="${esc(stamp)}"></div>`);
   p.push(`
@@ -2472,6 +2473,23 @@ export const TRANG_FILE = "DASHBOARD-Chrome-Extension-AI-Agentic.html";
  * "hôm nay", và output suy hoàn toàn từ HEAD. Việc BÁO CŨ không mất đi — nó do đoạn JS
  * trong trang tự tính lúc Đức MỞ trang, từ `data-sinh`. Đúng chỗ hơn: một trang tĩnh không
  * biết trước bao giờ có người mở nó. */
+/* HAI BẢN CỦA CÙNG MỘT TRANG, VÀ CHÚNG PHẢI TỰ KHAI LÀ BẢN NÀO — N-11.
+ *
+ * Đức báo thẳng 06/09: *"tôi thấy có 2 dashboard nên bị confuse."* Repo có bản đã commit ở
+ * gốc (`DASHBOARD-*.html`) và bản sống `bang-trang-thai/BANG.html`, nội dung gần như giống
+ * hệt — mà **gộp làm một thì không được**: bản ở gốc phải NẰM YÊN trong git để GPT audit qua
+ * GitHub đọc được, còn bản sống phải được GHI ĐÈ liên tục, và ghi đè vào file đã commit là
+ * làm bẩn cây làm việc của mọi lane đang chạy.
+ *
+ * Nên: không gộp, mà bắt mỗi bản NÓI RA nó là bản nào. Câu khai nằm ở DÒNG ĐẦU của file (chỗ
+ * máy kiểm được) và ở dải mốc đầu trang (chỗ Đức nhìn thấy). `bang-trang-thai/loi.mjs` đổi
+ * hai chỗ đó sang câu của bản sống — đổi bằng cách thay chuỗi, nên hai câu phải là HẰNG SỐ
+ * dùng chung, đừng gõ lại chữ ở hai file.
+ *
+ * ĐỪNG trông cậy vào việc Đức nhớ bản nào là bản nào: link cũ còn nằm trong lịch sử trình
+ * duyệt và trong tin nhắn cũ. */
+export const KHAI_BAN_CHUP = "BẢN CHỤP trong git — không tự cập nhật. Bản SỐNG: nhấp đúp bang-trang-thai\\Xem-bang.cmd";
+export const KHAI_BAN_SONG = "BẢN SỐNG — dựng lại mỗi lần bạn nhấp. Bản chụp trong git: DASHBOARD-Chrome-Extension-AI-Agentic.html ở gốc repo";
 export function sinhTrang(deps) {
   // `today: "head"` chu khong phai mot con so tinh truoc: tinh truoc thi phai goi
   // collectModel MOT LAN NUA chi de lay mot ngay, va do la ca mot luot doc 59 tai lieu.
