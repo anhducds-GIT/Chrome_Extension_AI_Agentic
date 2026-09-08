@@ -425,3 +425,15 @@ Quốc khánh — lượt chạy thật đầu tiên sẽ tự ghi chúng vào `
 lần sau** (cơ chế `H-03`, làm cùng ngày). Ngày 08/09 phải chạy mới biết đã công bố chưa.
 
 **Sổ nợ gói RỖNG.** Việc còn lại chỉ là chạy mỗi ngày một lượt, và lượt đó cần Đức bật công tắc.
+
+## 2026-09-09 · `claude-adr-gop` — chỉ vá liên kết ADR, không đụng hành vi
+
+Sổ ADR ở gốc repo gộp từ 27 file xuống 9 file theo chủ đề (`N-54`). Hai file của gói này trỏ tới
+tên file ADR cũ nên phải đổi theo:
+
+- `du-lieu/nguon-hnx.mjs` — một liên kết
+- `du-lieu/vong-lay.mjs` — một liên kết
+
+**Không đụng logic, không đụng test.** Suite gói: 12/12 xanh. Cách tra một số hiệu ADR nay nằm ở
+file nào: bảng trong `docs/README.md` ở gốc repo — và **trích theo SỐ HIỆU, đừng trích theo tên
+file**, vì tên file đổi được ở lượt rà hằng tuần.
