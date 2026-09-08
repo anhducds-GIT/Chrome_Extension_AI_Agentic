@@ -20,6 +20,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const { docMaster, docNgayNghi, duongNgayNghi, themNgayNghi, themHang, COT_NGAY_NGHI } =
   await import("../master.mjs");
@@ -171,4 +172,70 @@ function thuMucTam() {
   }
 }
 
-console.log("ngay-nghi-smoke: 7 khoi, tat ca DAT");
+/* ---- ⑻ ĐƯỜNG GHI: lệnh có THẬT SỰ ghi cái dấu xuống không -------------
+ * Khối ⑺ chứng minh cái dấu ĐƯỢC ĐỌC, nhưng nó tự tay gọi `themNgayNghi` nên **không chứng
+ * minh được lệnh biết GHI**. Bộ đo đột biến chỉ đúng chỗ đó: bỏ hẳn lượt ghi trong
+ * `tai-ket-qua.mjs` mà mọi phép ghim vẫn xanh.
+ *
+ * Nên khối này dựng một **máy chủ Bridge giả** trả lời `scout.fetch` bằng đúng hình dạng của
+ * một NGÀY KHÔNG CÓ PHIÊN — `Content` không có ô `<td>` nào, đúng như trang thật trả về (đo
+ * 07/09: 192 ô với 0 ô). Rồi chạy lệnh thật, không có `--thu-xem`, và xem tệp ghi chú.
+ *
+ * Không chạm mạng thật: máy chủ giả nghe loopback, cổng do hệ điều hành cấp. */
+{
+  const http = await import("node:http");
+  /* `execFile` BẤT ĐỒNG BỘ, không phải `execFileSync`. Máy chủ giả nằm trong CÙNG tiến trình
+   * này, mà lượt chạy đồng bộ thì **chặn vòng lặp sự kiện** — máy chủ không bao giờ trả lời
+   * được và cả phép ghim treo. Mất một lượt mới nhìn ra. */
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const chayLenh = promisify(execFile);
+  const d = thuMucTam();
+  let may;
+  try {
+    let soLuotFetch = 0;
+    may = http.createServer((req, res) => {
+      let tho = "";
+      req.on("data", (c) => { tho += c; });
+      req.on("end", () => {
+        const vao = JSON.parse(tho);
+        soLuotFetch += 1;
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({
+          protocol: vao.protocol, version: 1, kind: "response", request_id: vao.request_id, ok: true,
+          result: { status: 200, body: JSON.stringify({ SumTable: null, Content: "<table></table>" }) }
+        }));
+      });
+    });
+    await new Promise((xong) => may.listen(0, "127.0.0.1", xong));
+    const cong = may.address().port;
+
+    const master = path.join(d, "SSOT.csv");
+    const ghepCap = path.join(d, "pairing.json");
+    fs.writeFileSync(ghepCap, JSON.stringify({ schema_version: 1, host: "127.0.0.1", port: cong, token: "x" }), "utf8");
+
+    /* `fileURLToPath`, KHÔNG tự gỡ `pathname`: trên Windows nó giữ dấu cách ở dạng %20, và
+     * chính chỗ đó đã làm một chốt an toàn hỏng câm ngày 08/09. */
+    const thuMucTest = path.dirname(fileURLToPath(import.meta.url));
+    const { stdout: ra } = await chayLenh(process.execPath, [
+      path.join(thuMucTest, "..", "tai-ket-qua.mjs"),
+      "--pairing", ghepCap, "--master", master, "--tu", "2026-09-02", "--den", "2026-09-02"
+    ]);
+
+    assert.ok(soLuotFetch > 0, "lệnh không gọi máy chủ lần nào — phép ghim này không đo được gì");
+    assert.match(ra, /không có phiên/, "lệnh không nhận ra ngày trống");
+
+    const sau = docNgayNghi(master);
+    assert.equal(sau.ngay.has("2026-09-02"), true,
+      "lệnh KHÔNG ghi lại ngày không có phiên — lượt sau sẽ hỏi lại đúng ngày đó, mãi mãi");
+
+    /* Và SSOT vẫn phải trống: một ngày không có phiên không được đẻ ra hàng nào. */
+    assert.equal(fs.existsSync(master) && docMaster(master).soHang > 0, false,
+      "ngày trống mà vẫn ghi hàng vào SSOT");
+  } finally {
+    if (may) await new Promise((xong) => may.close(xong));
+    fs.rmSync(d, { recursive: true, force: true });
+  }
+}
+
+console.log("ngay-nghi-smoke: 8 khoi, tat ca DAT");
