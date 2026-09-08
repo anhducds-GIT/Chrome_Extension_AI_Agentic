@@ -36,7 +36,6 @@ export const LLMS_FILE = "llms.txt";
 export const REPO_MAP_FILE = "repo-map.json";
 export const DASHBOARD_FILE = "DASHBOARD.md";
 export const REPO_MAP_SCHEMA_VERSION = 1;
-export const REPO_PROFILE = "P1"; // monorepo nhiều gói — REPO-STRUCTURE-SPEC-V1 mục 3
 
 /* HÌNH DẠNG ĐƠN VỊ — đọc từ `.repo-structure.json`, không đóng cứng trong code.
    Phần suy ra nằm ở `repo-structure.mjs` để cổng đóng phiên và safe-push dùng CHUNG một
