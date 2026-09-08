@@ -300,7 +300,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         </div>
         <div class="nb">
 <!--khoa-->          <span class="k">Chạy song song</span>
-<!--khoa-->          <span class="t">7 luồng</span>
+<!--khoa-->          <span class="t">4 luồng</span>
 <!--khoa-->          <span class="s">Việc không chỉ nằm ở một chỗ. Từng luồng liệt kê ở khối Đang chạy ngay dưới.</span>
         </div>
       </div>
@@ -342,16 +342,13 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
     </div>
     <div data-sect="in-motion">
 <!--khoa-->    <div class="card">
-<!--khoa-->      <div class="sect">Đang chạy — ảnh chụp lúc sinh bảng · 7 luồng</div>
+<!--khoa-->      <div class="sect">Đang chạy — ảnh chụp lúc sinh bảng · 4 luồng</div>
 <!--khoa-->      <div class="bl">
 <!--khoa-->        <div class="cg">Nhóm vấn đề · Chưa xếp nhóm</div>
 <!--khoa-->        <div class="lr"><div class="h"><span class="ln">claude-ext-mobang</span></div><span class="d">Lane chưa khai mã việc lúc nhận vùng, nên không tra sang sổ được</span><span class="mn" data-nhan="2026-09-08T11:16">Nhận vùng lúc 2026-09-08 11:16</span></div>
 <!--khoa-->        <div class="lr"><div class="h"><span class="ln">claude-ext-mobang</span></div><span class="d">Lane chưa khai mã việc lúc nhận vùng, nên không tra sang sổ được</span><span class="mn" data-nhan="2026-09-08T11:11">Nhận vùng lúc 2026-09-08 11:11</span></div>
 <!--khoa-->        <div class="lr"><div class="h"><span class="ln">claude-flow-f28-f33</span></div><span class="d">Lane khai mã F-28 nhưng không sổ nào có mục mang mã đó — chưa tra được đang làm gì</span><span class="mn" data-nhan="2026-09-07T08:03">Nhận vùng lúc 2026-09-07 08:03</span></div>
 <!--khoa-->        <div class="lr"><div class="h"><span class="ln">claude-gemini-crlf</span></div><span class="d">Lane chưa khai mã việc lúc nhận vùng, nên không tra sang sổ được</span><span class="mn" data-nhan="2026-09-07T08:04">Nhận vùng lúc 2026-09-07 08:04</span></div>
-<!--khoa-->        <div class="lr"><div class="h"><span class="ln">claude-scouter-s06</span></div><span class="d">Lane chưa khai mã việc lúc nhận vùng, nên không tra sang sổ được</span><span class="mn" data-nhan="2026-09-08T11:25">Nhận vùng lúc 2026-09-08 11:25</span></div>
-<!--khoa-->        <div class="lr"><div class="h"><span class="ln">claude-scouter-s06</span></div><span class="d">Lane chưa khai mã việc lúc nhận vùng, nên không tra sang sổ được</span><span class="mn" data-nhan="2026-09-08T11:32">Nhận vùng lúc 2026-09-08 11:32</span></div>
-<!--khoa-->        <div class="lr"><div class="h"><span class="ln">claude-scouter-s06</span></div><span class="d">Lane chưa khai mã việc lúc nhận vùng, nên không tra sang sổ được</span><span class="mn" data-nhan="2026-09-08T11:25">Nhận vùng lúc 2026-09-08 11:25</span></div>
 <!--khoa-->      </div>
 <!--khoa-->      <p class="note">Đọc thẳng từ bảng chủ sở hữu trong repo: mỗi dòng là một vùng đang có người giữ. <strong>Khối này không thấy hai thứ.</strong> Một: <strong>luồng đang chạy ở repo khác</strong> — bảng của repo này chỉ thấy repo của nó, nên một luồng đang làm ở repo bộ khung sẽ không hiện ở đây. Hai: <strong>luồng vừa được giao mà chưa kịp nhận vùng</strong> — lúc đó nó chưa để lại dấu vết nào trong repo. Vậy nên dòng <strong>"không có luồng nào đang chạy"</strong> đọc đúng là <strong>"không có luồng nào đang giữ vùng trong repo này"</strong>, chứ không phải "không có gì đang chạy". <strong>Đây là ảnh chụp lúc sinh bảng, không phải số liệu thời gian thực</strong> — "bao lâu rồi" đo từ lúc sinh, nên bảng để lâu không mở thì mọi con số ở đây già đi theo chính nó, chứ không tự làm mới. Câu việc lấy từ sổ nợ và sổ ý tưởng theo mã lane khai lúc nhận vùng; lane không khai mã thì dòng của nó nói thẳng là chưa tra được.</p>
 <!--khoa-->    </div>
@@ -891,7 +888,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         <div class="hc zero"><span class="n">0</span><span class="l">Đơn vị chưa khai hồ sơ</span><span class="w">đã dò cả 7 đơn vị có hồ sơ trạng thái</span></div>
         <div class="hc zero"><span class="n">0</span><span class="l">Liên kết chết</span><span class="w">đã mở thử 10 liên kết trong các file cổng vào</span></div>
         <div class="hc zero"><span class="n">0</span><span class="l">Thư mục chưa khai chủ</span><span class="w">đã đối chiếu 8 thư mục tầng ngoài cùng với bảng phân vùng</span></div>
-        <div class="hc bad"><span class="n">1</span><span class="l">Tài liệu quá hạn rà</span><span class="w">đã tính tuổi 97 tài liệu theo hạn rà mỗi file tự khai</span></div>
+        <div class="hc bad"><span class="n">1</span><span class="l">Tài liệu quá hạn rà</span><span class="w">đã tính tuổi 98 tài liệu theo hạn rà mỗi file tự khai</span></div>
       </div>
       <p class="note">Có phép chưa sạch. Số khác 0 là số việc thật đang thiếu, không phải cảnh báo chung.</p>
     </div>
@@ -946,9 +943,9 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
 <!--khoa-->              <div class="kr"><span class="n">_root</span><span class="badge b1">BẬN</span></div>
 <!--khoa-->              <div class="kr"><span class="n">_docs</span><span class="badge b1">BẬN</span></div>
 <!--khoa-->              <div class="kr"><span class="n">_code</span><span class="badge b1">BẬN</span></div>
-<!--khoa-->              <div class="kr"><span class="n">duc-scouter</span><span class="badge b1">BẬN</span></div>
-<!--khoa-->              <div class="kr"><span class="n">_shared</span><span class="badge b1">BẬN</span></div>
-<!--khoa-->              <div class="kr"><span class="n">hnx-fetch</span><span class="badge b1">BẬN</span></div>
+<!--khoa-->              <div class="kr"><span class="n">duc-scouter</span><span class="badge b2">MỞ</span></div>
+<!--khoa-->              <div class="kr"><span class="n">_shared</span><span class="badge b2">MỞ</span></div>
+<!--khoa-->              <div class="kr"><span class="n">hnx-fetch</span><span class="badge b2">MỞ</span></div>
             </div>
             <div class="hint" style="margin-top:11px">Đây là <strong>ảnh chụp lúc sinh bảng</strong>, không phải trạng thái thời gian thực — nó theo lần ghi gần nhất vào repo. Khoá <strong>MỞ</strong> là chỗ giao được việc mới ngay; khoá <strong>BẬN</strong> thì chỉ đọc, đừng giao thêm.</div>
             <p class="note">Bảng này trả lời đúng một câu: <strong>còn mấy chỗ trống để giao việc song song</strong>. Ai đang giữ và đang làm gì thì xem khối <strong>Đang chạy</strong> ở tầng <strong>Trang chính</strong> — chỗ này cố ý để trống tên. Khoá của một gói hiện theo tên gói, đã bỏ phần thư mục cho gọn.</p>
@@ -969,7 +966,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
         <div class="sect">Thư mục ở tầng ngoài cùng — 9 vùng</div>
         <div class="tree">
           <div class="tr"><span class="d">workers/</span><span class="o">từng gói tự giữ</span><span class="c">1282 file</span></div>
-          <div class="tr"><span class="d">docs/</span><span class="o">_docs</span><span class="c">97 file</span></div>
+          <div class="tr"><span class="d">docs/</span><span class="o">_docs</span><span class="c">98 file</span></div>
           <div class="tr"><span class="d">tests/</span><span class="o">_code</span><span class="c">20 file</span></div>
           <div class="tr"><span class="d">scripts/</span><span class="o">_code</span><span class="c">13 file</span></div>
           <div class="tr"><span class="d">evidence/</span><span class="o">_root</span><span class="c">12 file</span></div>
@@ -1044,7 +1041,7 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
     <div data-sect="nhat-ky">
     <div class="card">
       
-      <div class="sect">Nhật ký &amp; mốc · Quyết định đã chốt — 146 bản ghi</div>
+      <div class="sect">Nhật ký &amp; mốc · Quyết định đã chốt — 147 bản ghi</div>
       <div class="prose"><p>Mỗi quyết định là một file bất biến: đã chốt thì không sửa được, chỉ thay bằng bản mới. Bản bị thay vẫn giữ nguyên để tra lại được. Hiện có 1 đơn vị đã bị bản mới thay thế.</p></div>
       <details class="the" style="margin-top:11px" open>
         <summary><span><span class="nm">14 quyết định số cao nhất</span><span class="sub">số KHÔNG phải ngày — mỗi phạm vi đánh số riêng</span></span></summary>
