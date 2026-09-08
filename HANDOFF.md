@@ -1735,3 +1735,24 @@ dưới.
 Đức xác nhận lane đó đã xong và họ đã tự trả hết khoá trước lúc tôi nhận.
 
 **Còn mở:** không có gì của phiên này.
+
+## 2026-09-08 · `claude-ext-dot0` — ĐỢT 0: bản đồ việc thôi nói sai (N-35, N-31)
+
+**Làm gì:** hai lỗi khiến `what-next.mjs` — thứ AI đọc để CHỌN việc lúc mở phiên — báo sai.
+
+**Kết quả bằng số.** ⑴ Trước: bảng xếp `workers/duc-auto-chatgpt` (Đức đã đóng băng) vào
+*"chạy song song được ngay, ưu tiên #2, 22 việc mở"*; `grep -c frozen scripts/what-next.mjs` = `0`.
+Sau: gói đó ở mục riêng `B2 · ĐÃ ĐÓNG BĂNG`, mục A còn 2 luồng và cả hai là gói sống.
+⑵ Trước: `workers/hnx-fetch` báo `0 việc mở`, sổ thật có `3`. Sau: đúng 3 (`H-02` `H-03` `H-06`).
+⑶ Cảnh báo *"đóng mà chưa gạch"* thôi trỏ vào gói đóng băng — cả 4 mã nó nhắc đều nằm trong
+gói cấm sửa. ⑷ Ghim `tests/what-next-smoke.mjs` 20 → 24 phép; đột biến gỡ `!v.dongBang` thì đỏ.
+⑸ Sổ nợ 12 → 11 mục mở / trần 15.
+
+**Chỗ roadmap viết sai, sửa lại ở đây:** roadmap giao *"gạch bốn mã B-29 B-16 B-18 G-14, 2 phút"*.
+Cả bốn nằm trong `duc-auto-chatgpt` và `duc-auto-gemini` — **gói đã đóng băng, chỉ được đọc**.
+Gạch chúng là sửa file cấm. Thuốc đúng là gỡ lời mời, không phải đi sửa. Cùng bệnh với N-35.
+
+**Còn mở:** `N-44` (mới) — sổ nợ gốc repo vẫn không có mặt trên bản đồ; 11 mục mở ở gốc vô hình
+với phiên điều phối. Và một dòng `ĐÓNG N-43` bị cắt cụt giữa câu nằm ở cuối `BACKLOG.md` (lượt
+trước, lane `claude-cua-kiem`) — **cố ý không sửa**: sổ miễn khoá KHI CHỈ THÊM DÒNG, sửa dòng cũ
+thì không được miễn. Nó vô hại vì dòng đầy đủ nằm ngay dưới.
