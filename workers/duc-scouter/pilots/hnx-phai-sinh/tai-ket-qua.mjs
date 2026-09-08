@@ -1,28 +1,24 @@
-/* tai-ket-qua.mjs — lấy KẾT QUẢ GIAO DỊCH phái sinh và ghi thẳng thành CSV vào cơ sở dữ liệu
- * của Đức trên Drive.
+/* tai-ket-qua.mjs — gom KẾT QUẢ GIAO DỊCH phái sinh vào MỘT tệp CSV duy nhất (SSOT).
  *
  * Dùng:
- *   node tai-ket-qua.mjs --pairing <tệp> --thu-muc "<đường dẫn>" --tu 2026-08-25 --den 2026-09-07
+ *   node tai-ket-qua.mjs --pairing <tệp> --master "<đường dẫn .csv>" --tu 2026-08-25 --den 2026-09-07
  *   thêm --thu-xem để CHỈ LIỆT KÊ, không ghi gì
  *
- * ─── VÌ SAO CÓ FILE NÀY, trong khi đã có `chay.mjs` ────────────────────────────────────────
- * `chay.mjs` ghi khối HTML **thô** vào vùng ghi của Bridge. Thô là đúng cho lưu trữ — nó là
- * bằng chứng, không diễn giải. Nhưng nó nằm trong hộp cát của Bridge, còn thứ Đức dùng để phân
- * tích là **bảng số trên Drive**. Đo 08/09: 7 tệp thô kẹt trong hộp cát, 0 tệp vào cơ sở dữ liệu.
+ * ─── VÌ SAO MỘT TỆP, VÀ VÌ SAO CSV ──────────────────────────────────────────────────────────
+ * Đức chốt 08/09: *"giữ 1 file duy nhất, ko làm thành nhiều file"* và *"cả 2 cùng ghi CSV được
+ * thì tốt, bạn maintain 1 file CSV SSOT duy nhất là ok."* Lý do chọn CSV thay vì .xlsx nằm ở
+ * đầu `master.mjs` — tóm tắt: điều kiện là HAI CÔNG CỤ cùng thao tác được, không phải đuôi tệp.
  *
- * Nên file này KHÔNG thay `chay.mjs`; nó là đường thứ hai, đi thẳng tới nơi Đức thật sự đọc.
- *
- * Ba luật giống hệt `tai-pdf.mjs`, và giống vì cùng một lý do chứ không phải để cho đều:
+ * ─── BA LUẬT, giống `tai-pdf.mjs` và giống vì cùng một lý do ────────────────────────────────
  *   ⑴ FETCH qua Bridge, GHI bằng Node — không nới vùng ghi của extension ra tới Drive.
- *   ⑵ KHÔNG BAO GIỜ GHI ĐÈ. Tệp đã có thì bỏ qua.
- *   ⑶ Tệp trên đĩa CHÍNH LÀ trạng thái, nên ghi qua tên tạm rồi mới đổi tên.
- *
- * Tên tệp theo ĐÚNG cách Đức đã đặt từ trước: `YYYY-MM-DD_HNX_KetQua_GiaoDich.csv`.
+ *   ⑵ Ngày đã có trong tệp thì KHÔNG lấy lại. Tệp chính là trạng thái.
+ *   ⑶ Chỉ nối vào cuối, không bao giờ sửa dòng cũ. Ghi qua tệp tạm rồi đổi tên.
  */
 import fs from "node:fs";
-import path from "node:path";
 import { PROTOCOL } from "../../v0.1.0/scripts/scouter-bridge-core.mjs";
-import { docBang, raCsv } from "./bang-ket-qua.mjs";
+import { docBang } from "./bang-ket-qua.mjs";
+import { hangMaster } from "./luoc-do-master.mjs";
+import { docMaster, themHang } from "./master.mjs";
 import { createNguonHnx, LOAI_SAN_PHAM } from "./nguon-hnx.mjs";
 
 function co(ten, macDinh = null) {
@@ -31,19 +27,21 @@ function co(ten, macDinh = null) {
 }
 
 const duongGhepCap = co("pairing");
-const thuMuc = co("thu-muc");
+const duongMaster = co("master");
 const tu = co("tu");
 const den = co("den");
 const chiXem = process.argv.includes("--thu-xem");
 
-if (!duongGhepCap || !thuMuc || !tu || !den) {
+if (!duongGhepCap || !duongMaster || !tu || !den) {
   process.stderr.write("Thiếu tham số. Dùng:\n");
-  process.stderr.write('  node tai-ket-qua.mjs --pairing <tệp> --thu-muc "<đường dẫn>" --tu 2026-08-25 --den 2026-09-07\n');
+  process.stderr.write('  node tai-ket-qua.mjs --pairing <tệp> --master "<đường dẫn .csv>" --tu 2026-08-25 --den 2026-09-07\n');
   process.exit(2);
 }
-if (!fs.existsSync(thuMuc)) {
+/* Thư mục chứa phải có sẵn. CỐ Ý không tự tạo: gõ nhầm một ký tự là dựng một SSOT thứ hai ở
+ * chỗ không ai nhìn, mà "một tệp duy nhất" là chính điều Đức muốn. */
+const thuMuc = duongMaster.replace(/[\\/][^\\/]*$/, "");
+if (thuMuc && !fs.existsSync(thuMuc)) {
   process.stderr.write(`Thư mục không tồn tại: ${thuMuc}\n`);
-  process.stderr.write("CỐ Ý không tự tạo: gõ nhầm một ký tự là đổ dữ liệu vào một thư mục lạ.\n");
   process.exit(2);
 }
 
@@ -59,9 +57,9 @@ async function goi(method, params) {
     headers: { "content-type": "application/json", authorization: `Bearer ${ghepCap.token}` },
     body: JSON.stringify({
       protocol: PROTOCOL, version: 1, kind: "request",
-      request_id: `csv-${Date.now()}-${dem}`, method,
+      request_id: `ssot-${Date.now()}-${dem}`, method,
       sent_at: new Date().toISOString(),
-      client: { client_id: "pilot-hnx-ket-qua" }, params
+      client: { client_id: "pilot-hnx-ssot" }, params
     })
   });
   const phongBi = await phanHoi.json();
@@ -74,8 +72,7 @@ async function goi(method, params) {
   return phongBi.result;
 }
 
-/* Ngày trong tuần. Ngày lễ KHÔNG lọc ở đây — trang tự trả lời "không có ô dữ liệu nào", và
- * nhồi một bảng ngày lễ vào code là dựng bản sao sẽ mục dần của thứ trang đã tự nói. */
+/* Ngày trong tuần. Ngày lễ KHÔNG lọc ở đây — trang tự trả lời "không có ô dữ liệu nào". */
 function ngayLamViec(a, b) {
   const ra = [];
   for (let d = new Date(`${a}T00:00:00Z`); d <= new Date(`${b}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
@@ -85,27 +82,34 @@ function ngayLamViec(a, b) {
   return ra;
 }
 
-const tenCsv = (ngay) => `${ngay}_HNX_KetQua_GiaoDich.csv`;
-
 const dsNgay = ngayLamViec(tu, den);
 if (dsNgay.length === 0) {
   process.stderr.write("Khoảng --tu … --den không có ngày làm việc nào.\n");
   process.exit(2);
 }
-const daCo = new Set(fs.readdirSync(thuMuc));
-const thieu = dsNgay.filter((n) => !daCo.has(tenCsv(n)));
 
-console.log(`Ngày làm việc trong khoảng: ${dsNgay.length} (${dsNgay[0]} → ${dsNgay.at(-1)})`);
-console.log(`Đã có trên đĩa: ${dsNgay.length - thieu.length} · CÒN THIẾU: ${thieu.length}\n`);
+let truoc;
+try {
+  truoc = docMaster(duongMaster);
+} catch (loi) {
+  process.stderr.write(`\n${loi.message}\n`);
+  process.exit(1);
+}
+const thieu = dsNgay.filter((n) => !truoc.ngay.has(n));
+
+console.log(`SSOT   : ${duongMaster}`);
+console.log(`Đang có: ${truoc.soHang} hàng, ${truoc.ngay.size} ngày`);
+console.log(`Khoảng : ${dsNgay.length} ngày làm việc (${dsNgay[0]} → ${dsNgay.at(-1)}) · CÒN THIẾU ${thieu.length}\n`);
 
 if (thieu.length === 0) { console.log("Không thiếu gì. Xong."); process.exit(0); }
 if (chiXem) {
-  for (const n of thieu) console.log(`  ${tenCsv(n)}`);
+  for (const n of thieu) console.log(`  ${n}`);
   console.log("\n--thu-xem: chỉ liệt kê, chưa ghi gì.");
   process.exit(0);
 }
 
 let lay = 0;
+let hangMoi = 0;
 let trong = 0;
 let hong = 0;
 for (const ngay of thieu) {
@@ -116,15 +120,13 @@ for (const ngay of thieu) {
     console.log(`  HỎNG   ${ngay}  ${loi.ma || "LỖI"}`);
     if (loi.chiTiet?.write_code === "WRITE_CAP_REACHED" || loi.ma === "WRITE_BLOCKED") {
       console.error("\nHết hạn mức ghi. Tắt rồi bật lại công tắc “Cho phép bấm và gõ” ở đầu bảng bên, rồi chạy lại.");
-      console.error("Lượt sau tự bỏ qua những ngày đã có — không lấy lại.");
-      process.exit(1);
+      console.error("Những ngày đã ghi vào SSOT sẽ tự bị bỏ qua — không lấy lại.");
+      break;
     }
     hong += 1;
     continue;
   }
 
-  /* Dùng chính `kiemTra` của hợp đồng nguồn: nó phân biệt "ngày không có phiên" với "trang
-   * trả về thứ khác". Tự đoán lại ở đây là dựng bản sao thứ hai của một luật. */
   let phanLoai;
   try {
     phanLoai = nguon.kiemTra(kq);
@@ -135,23 +137,24 @@ for (const ngay of thieu) {
   }
   if (phanLoai.trong) { console.log(`  —      ${ngay}  không có phiên`); trong += 1; continue; }
 
-  let bang;
+  let hang;
   try {
-    bang = docBang(JSON.parse(phanLoai.noiDung).Content);
+    hang = hangMaster(docBang(JSON.parse(phanLoai.noiDung).Content), ngay);
   } catch (loi) {
     console.log(`  HỎNG   ${ngay}  ${loi.ma || "ĐỌC BẢNG"}: ${loi.message}`);
     hong += 1;
     continue;
   }
 
-  const csv = raCsv(bang);
-  const dich = path.join(thuMuc, tenCsv(ngay));
-  const tam = `${dich}.dang-ghi`;
-  fs.writeFileSync(tam, csv, "utf8");
-  fs.renameSync(tam, dich);
-  console.log(`  LẤY    ${tenCsv(ngay)}  (${bang.hang.length} hàng × ${bang.cot.length} cột)`);
+  /* Ghi NGAY sau mỗi ngày, không gom lại ghi một lượt cuối. Gom lại thì một lượt chạy bị cắt
+   * giữa chừng mất trắng mọi ngày đã lấy, và lượt sau phải lấy lại — tốn hạn mức ghi thật. */
+  themHang(duongMaster, hang);
+  console.log(`  LẤY    ${ngay}  (+${hang.length} hàng)`);
   lay += 1;
+  hangMoi += hang.length;
 }
 
-console.log(`\nXong: ${lay} lấy mới · ${trong} không có phiên · ${hong} hỏng · ${dsNgay.length - thieu.length} đã có sẵn`);
+const sau = docMaster(duongMaster);
+console.log(`\nXong: ${lay} ngày mới (+${hangMoi} hàng) · ${trong} không có phiên · ${hong} hỏng`);
+console.log(`SSOT nay: ${sau.soHang} hàng, ${sau.ngay.size} ngày`);
 process.exit(hong > 0 ? 1 : 0);
