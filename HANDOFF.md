@@ -686,3 +686,33 @@ Bài học: **hỏi ai sẽ ĐỌC một tài liệu trước khi tối ưu nó 
 Sổ nợ còn **1 mục mở**: `N-45`.
 
 > **Lượt đẩy dùng `--carry`, cuốn theo 5 commit của lane `claude-gpt-chay-het-job`** — ADR-0005 vế ⑶ duyệt thường trực; đổi lại phải kể tên lane bị cuốn theo, đây là dòng đó.
+
+## 2026-09-09 · `claude-luat-rasoat` — bản đồ NƠI CHỨA LUẬT: 18.743 dòng, mới rà 8%
+
+Đức: *"cần rà soát các nơi chứa luật, tương tự như bên repo template đang làm."* Đo trước, sửa sau.
+
+**Bản đồ chín nhóm** (dòng · đã rà): hiến pháp gốc 262 ✅ · ADR gốc 950 ✅ · sổ tay quy trình
+1.041 ❌ · điều hướng gốc 1.032 (2/6) · cấu hình mang luật 240 ❌ · luật từng gói 1.835 ❌ ·
+ADR từng gói 4.819 ❌ · giao việc 2.457 ❌ · nghiên cứu 6.107 ❌. **Chỉ 8% từng được đọc lại.**
+
+**Hai sổ tay đã đầy chỗ chết sau lượt gộp ADR:** `HANDOFF.md` §3 vẫn dạy *"xoay file theo tháng"*
+trong khi luật hiện hành cắt **theo SỐ MỤC** — viết lại; xoay theo tháng hạ xuống một khối cảnh
+báo. `MULTIFLOW.md` thiếu hẳn khoá FILE (cơ chế mặc định từ 08/09) — bổ sung, kèm **chứa nhau hai
+chiều** và **hai mốc trả khác nhau**: khoá file trả lúc hết phiên, khoá vùng trả sau khi đẩy.
+
+**12 liên kết chết** đã vá: 2 ADR Scouter dùng `../../../../` ở chỗ cần 5 tầng, 9 liên kết `EXP-*`
+trỏ vào hồ sơ đã xoá 08/09. *Phép kiểm liên kết đầu tôi viết báo 18 lỗi giả vì bỏ qua phạm vi thư
+mục — đúng lỗi mô hình mà B12 vừa dạy tôi hôm nay. Viết lại theo đường dẫn đầy đủ mới ra 12 thật.*
+
+**Máy canh mới bắt đúng việc thật.** `HANDOFF_QUA_DAY` (trần 25 mục) nổ ở
+`workers/duc-scouter/v0.1.0/HANDOFF.md` — **26 mục**. Cắt còn 20 bằng
+`handoff.mjs --cat … --giu 20`, 6 mục sang `HANDOFF-ARCHIVE-01.md`, SHA-256 `d04a7a4d…`, ghép lại
+kiểm hai đường. Đây là lần đầu một phép canh viết hôm qua chặn một file không phải file nó sinh ra.
+
+**Thước cóc `docs/` nâng 9.793 → 9.803, có lý do viết ra:** gọt trước 34 dòng, phần còn lại là
+`docs/README.md` mọc thêm mục lục ADR — chi phí bắt buộc để 9 file gộp tra được. `docs/adr` đồng
+thời **giảm 1.798 dòng** nhưng thước cố ý không đếm ADR nên phần giảm đó không bù vào.
+
+**Mở hai mục sổ nợ ở vùng lane khác giữ:** `N-55` (`gg-flow-video/decisions.md` — 142 dòng, 8
+quyết định **không số hiệu**, B12 không thấy) và `N-56` (`chatgpt/STATUS.md` trích ADR gói bằng
+đường dẫn gốc → liên kết chết trên bảng).
