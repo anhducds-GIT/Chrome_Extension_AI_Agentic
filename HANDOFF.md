@@ -1972,3 +1972,28 @@ sửa mục lục.
 **Đo cho lượt tối ưu kế:** suite **101,9 giây**, trong đó `build-dashboard-smoke` chiếm **~70s** —
 nó dựng **20 repo tạm** và chạy cổng **30 lượt**. Cắt nó là cắt lưới đỡ của chính cổng, nên
 **không đụng**. Chỗ còn lại đáng cắt là `docs/` (12.335 so với đích 8.000), không phải suite.
+
+## 2026-09-08 · `claude-ext-don2` — kho chữ **26.104 → 12.396** (−52%), và một cái sàn đo được
+
+**Ba lượt dọn trong ngày:** 14 hồ sơ `EXP-*` (8.310 dòng) · cả tầng `docs/archive/` (2.967) ·
+18 hồ sơ mồ côi (2.538). `docs/` **26.104 → 12.396**, từ 110 xuống **65 file**. Thước cóc hạ
+theo cả ba lượt; chỗ đã hạ không quay lại được.
+
+**Một phép dò của tôi SAI, và nó suýt xoá nhầm 7 hồ sơ.** Bản đầu dò tên **kèm đuôi `.md`**, mà
+`AGENTS.md` và các sổ tay nhắc tên brief **không có đuôi**. Nó báo 26 file mồ côi; đo lại bỏ đuôi
+ra thì còn **19**. Bảy hồ sơ đang được luật trỏ tới suýt bị coi là rác. **Một danh sách xoá phải
+được kiểm lại bằng một phép dò thứ hai khác cách.**
+
+**Và đây là số Đức cần để chốt:** đích **8.000** của giới hạn ③ **nằm dưới sàn cứng 9.578**.
+
+| Phần không cắt được | Dòng |
+|---|---|
+| `docs/adr/` — bất biến, B12 cưỡng chế | 2.603 |
+| Hồ sơ bị **ADR / `evidence/`** trích dẫn — nguồn trích không sửa được | 4.863 |
+| `docs/protocols/` — sổ tay đang dùng | 1.045 |
+| Hồ sơ bị `AGENTS.md` / sổ tay trỏ tới | 687 |
+| `README` + bản mẫu | 380 |
+
+Còn ~2.800 dòng cắt được mà **không** chạm sàn, nhưng vài hồ sơ trong đó **đang được dùng thật**
+— `ORCHESTRATOR.md` bảo *"chép nó, đừng viết lại từ đầu"*, `IDEAS.md` khai một brief là **nhà**
+của một ý tưởng. Xoá chúng là làm hỏng thứ đang chạy. Mở `N-51` để Đức chốt con số.

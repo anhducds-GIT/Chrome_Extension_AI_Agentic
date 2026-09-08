@@ -27,7 +27,7 @@ dẫn `drafts/…`. Bảng dưới là chỗ tra đường dẫn cũ → mới.
 | `drafts/FLOW-EXT-COORDINATION-PLAN.md` | [docs/studies/FLOW-EXT-COORDINATION-PLAN.md](studies/FLOW-EXT-COORDINATION-PLAN.md) | kế hoạch 5 checkpoint, đang chạy |
 | **`docs/archive/` — ĐÃ XOÁ 2026-09-08 (15 file, 2.967 dòng)** | — | Tầng "hồ sơ đã nghỉ": mọi file trong đó đều `status: superseded` và công việc của chúng đã xong từ lâu. **Chúng chỉ rời cây làm việc, KHÔNG rời git** — đọc lại một file: `git show a3b67a96a92e:docs/archive/<tên-file>`, liệt kê cả tầng: `git show --stat a3b67a96a92e -- docs/archive/`. Đức chốt xoá 08/09 |
 | `drafts/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md` | [docs/studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md](studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md) | roadmap S6 xếp thẳng vào studies |
-| `drafts/PHASE1-FACTUAL-CORRECTIONS-2026-08-28.md` | [docs/studies/PHASE1-FACTUAL-CORRECTIONS-2026-08-28.md](studies/PHASE1-FACTUAL-CORRECTIONS-2026-08-28.md) | phụ lục đính chính của CHROME_BRIDGE_CAPABILITY_REACH — sống cùng bản gốc |
+| **18 hồ sơ MỒ CÔI — ĐÃ XOÁ 2026-09-08 (2.538 dòng)** | — | Không gì trong repo trỏ tới chúng ngoài chính mục lục này: brief của việc đã ship, kế hoạch đã thi hành xong, bản đồ đã bị `llms.txt`/`DASHBOARD.md` thay. **Chỉ rời cây làm việc, KHÔNG rời git** — `git show --stat 522a22400fd3 -- docs/` liệt kê cả mẻ, `git show 522a22400fd3:docs/<đường-dẫn>` đọc lại một hồ sơ |
 | `drafts/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md` | [docs/studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md](studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md) | bản mới nhất trong ba bản |
 
 ## `docs/protocols/` — cách làm việc
@@ -48,18 +48,14 @@ không phải khi tò mò.
 
 | Tài liệu | Trạng thái | Nói về gì |
 |---|---|---|
-| [BENCHMARK-REPO-STANDARDS-V0.md](studies/BENCHMARK-REPO-STANDARDS-V0.md) | `?` | BENCHMARK-REPO-STANDARDS-V0 |
 | [BRIDGE-MULTIPROFILE-DESIGN-V1.md](studies/BRIDGE-MULTIPROFILE-DESIGN-V1.md) | `active` | BRIDGE-MULTIPROFILE-DESIGN-V1 — Nhiều profile Chrome dùng chung một Bridge |
 | [MULTI-SESSION-PER-PROFILE-DESIGN-V1.md](studies/MULTI-SESSION-PER-PROFILE-DESIGN-V1.md) | `active` | Nhiều phiên làm việc có tên trong MỘT profile Chrome — thiết kế V1, CHỜ ĐỨC DUYỆT 4 câu |
 | [CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md](studies/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md) | `active` | Chrome Extension + Native Bridge Capability Reach Study V0 |
 | **EXP-02…EXP-15 — ĐÃ XOÁ 2026-09-08 (14 file, 8.310 dòng)** | — | Kết luận của cả loạt đã gộp vào [PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md](studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md). **Chúng chỉ rời cây làm việc, KHÔNG rời git** — đọc lại một file: `git show 96a241ef743e:docs/studies/<tên-file>`, liệt kê cả loạt: `git show --stat 96a241ef743e -- docs/studies/`. Đức chốt xoá 08/09; lý do và ba lựa chọn đã cân ở `_run-qua-dem-20260907/DON-REPO--CHO-DUC-CHOT.md` |
 | [FLOW-EXT-COORDINATION-PLAN.md](studies/FLOW-EXT-COORDINATION-PLAN.md) | `active` | FLOW-EXT — Kế hoạch điều phối Extension Google Flow (video) |
 | [PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md](studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md) | `active` | Phase 1 Synthesis — Browser Runtime Capability Map V0 |
-| [PHASE1-FACTUAL-CORRECTIONS-2026-08-28.md](studies/PHASE1-FACTUAL-CORRECTIONS-2026-08-28.md) | `active` | Phase 1 Factual Corrections — 2026-08-28 |
 | [PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md](studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md) | `active` | AI-ORCHESTRATOR — Reasoning V3: Project Resume Protocol + Full AI Control |
-| [PROGRAM-MAP-V1.md](studies/PROGRAM-MAP-V1.md) | `?` | PROGRAM-MAP-V1 |
 | [REPO-STRUCTURE-SPEC-V1.md](studies/REPO-STRUCTURE-SPEC-V1.md) | `?` | REPO-STRUCTURE-SPEC-V1 |
-| [RESTRUCTURE-PLAN-V1.md](studies/RESTRUCTURE-PLAN-V1.md) | `?` | RESTRUCTURE-PLAN-V1 |
 | [ROADMAP-CLEAN-AND-TEMPLATE-V1.md](studies/ROADMAP-CLEAN-AND-TEMPLATE-V1.md) | `?` | ROADMAP-CLEAN-AND-TEMPLATE-V1 |
 | [SCOUTER-CAPABILITY-INVENTORY-V1.md](studies/SCOUTER-CAPABILITY-INVENTORY-V1.md) | `active` | Kiểm kê năng lực hai trục trước khi xây Scouter — ba worker đang có gì · Chrome cho phép gì mà repo chưa dùng (ADR-0009 mục ⑺) |
 | [SEND-TO-OTHER-REPOS.md](studies/SEND-TO-OTHER-REPOS.md) | `active` | GỬI CHO REPO KHÁC — MỘT KHỐI DÁN DUY NHẤT |
@@ -79,7 +75,6 @@ không phải khi tò mò.
 | [BRIEF-S4.md](briefs/BRIEF-S4.md) | `active` | BRIEF — Phiên S4: cổng kiểm cấu trúc, **chỉ cảnh báo** |
 | [BRIEF-S5.md](briefs/BRIEF-S5.md) | `active` | BRIEF — Phiên S5: quyết định thành bất biến (ADR) |
 | [BRIEF-S7.md](briefs/BRIEF-S7.md) | `active` | BRIEF — Phiên S7: bật chặn + BÀI TEST NGHIỆM THU |
-| [PROMPTS-HANDOFF.md](briefs/PROMPTS-HANDOFF.md) | `?` | HAI PROMPT BÀN GIAO |
 
 ## `docs/archive/` — ĐÃ XOÁ 2026-09-08
 

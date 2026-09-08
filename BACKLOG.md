@@ -751,3 +751,35 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
   bẩn hay sạch, và có một phép ghim chặn việc quay lại đọc đĩa ở lượt ghi.
 
 - **ĐÓNG N-50** · 2026-09-08 · lane `claude-ext-don` · **Đọc HEAD để tính, ghi ra đĩa để lưu** — hai việc khác nhau, trước nay bị buộc chung vào một bộ `deps`. `createHeadDeps()` cố tình ném khi bị gọi `writeFile`, nên phải ghép tay: `{ readFile: doc.readFile, listFiles: doc.listFiles, writeFile: ghi.writeFile }`. **[ĐO]** trước: artifact ghi `6653` (số của đĩa) → cổng từ chối; sau: ghi `6570` (số của HEAD) → khớp. Ghim ở `tests/feature-parity-smoke.mjs` (19 → 20), có cả vế **chặn quay lại lối cũ**. **Chỗ chưa soi:** `build-dashboard.mjs` và `build-overview.mjs` đều đã có `createHeadDeps` — nhưng tôi chưa kiểm chúng dùng nó ở lượt GHI hay chỉ ở lượt kiểm. Cùng một bệnh có thể còn ở đó.
+
+- **DỌN KHO CHỮ LƯỢT BA — 18 hồ sơ mồ côi** · 2026-09-08 · lane `claude-ext-don2` · **[ĐO]** `docs/` **14.938 → 12.396 dòng** (83 → 65 file). Cả ngày: **26.104 → 12.396, giảm 52%**. Tiêu chí cắt: *không gì trong repo trỏ tới nó ngoài chính mục lục* — brief của việc đã ship, kế hoạch đã thi hành xong, bản đồ đã bị `llms.txt`/`DASHBOARD.md` thay.
+
+- **PHÉP DÒ CỦA TÔI SAI MỘT LẦN, và nó suýt xoá nhầm 7 hồ sơ** · 2026-09-08 · lane `claude-ext-don2` · Bản đầu dò tên **kèm đuôi `.md`**, mà `AGENTS.md` và các sổ tay nhắc tên brief **không có đuôi** (`BRIEF-BANG-BA-CUA-01`, không phải `…-01.md`). Kết quả: nó báo **26 file / 5.020 dòng** mồ côi; đo lại bỏ đuôi ra thì chỉ còn **19 file / 3.817 dòng**. Bảy hồ sơ đang được luật và sổ tay trỏ tới suýt bị coi là rác. Bài học: **dò theo tên thì phải dò cả dạng người ta thật sự viết**, và một danh sách xoá luôn phải kiểm lại bằng một phép dò thứ hai khác cách.
+
+- **GIỮ LẠI `PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md` (1.279 dòng) dù nó mồ côi** · 2026-09-08 · lane `claude-ext-don2` · Nó là **thứ duy nhất còn lại** của 8.310 dòng hồ sơ `EXP-*` xoá sáng nay, và chính lượt xoá đó lấy nó làm lý do (*"kết luận của cả loạt đã được gộp vào đây"*). Xoá nó một lượt sau là làm rỗng chính lời biện minh vừa viết.
+
+## N-51 · Đích 8.000 dòng của giới hạn ③ nằm DƯỚI sàn cứng của `docs/`
+
+- **nhóm:** cong
+- **mở:** 2026-09-08 · lane `claude-ext-don2`
+- **vùng:** `_root` (giới hạn ③ nằm trong `AGENTS.md`)
+- **[ĐO 08/09] sàn cứng — phần KHÔNG cắt được mà không làm gãy một trích dẫn:**
+
+| Phần | Dòng | Vì sao không cắt được |
+|---|---|---|
+| `docs/adr/` | 2.603 | ADR đã `Accepted` là **bất biến**, B12 cưỡng chế |
+| Hồ sơ bị **ADR / `evidence/`** trích dẫn | 4.863 | Nguồn trích **không sửa được**: ADR bất biến, `evidence/` chỉ-thêm |
+| `docs/protocols/` | 1.045 | Sổ tay đang dùng |
+| Hồ sơ bị `AGENTS.md` / sổ tay trỏ tới | 687 | Là mục điều hướng sống |
+| `README` + bản mẫu | 380 | Mục lục và khuôn |
+| **SÀN** | **9.578** | |
+
+- **tức đích 8.000 thấp hơn sàn 1.578 dòng.** Đạt được nó chỉ bằng hai đường: **rút gọn văn**
+  trong các hồ sơ đang bị trích (viết lại phân tích của người khác — đắt và dễ làm sai), hoặc
+  **làm gãy trích dẫn từ ADR bất biến** (luật cấm).
+- **hiện tại 12.396**, tức còn ~2.800 dòng nữa cắt được **mà không chạm sàn** — đó là nhóm chỉ
+  bị file **sửa được** trỏ tới. Nhưng vài hồ sơ trong nhóm đó **đang được dùng thật**: sổ tay
+  `ORCHESTRATOR.md` bảo *"chép nó, đừng viết lại từ đầu"* về một brief, và `IDEAS.md` khai một
+  brief là **nhà** của một ý tưởng. Xoá chúng là làm hỏng thứ đang chạy, không phải dọn rác.
+- **đóng khi:** đức: chốt con số của giới hạn ③ theo sàn đo được (đề nghị: **9.600**, kèm một
+  dòng lý do trong `AGENTS.md`) — hoặc chốt rằng repo sẽ rút gọn văn để về 8.000 và giao việc đó.
