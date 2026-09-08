@@ -1413,3 +1413,115 @@ RULES`). Nên ChatGPT nhận prompt, trả về một lượt gần rỗng (13 c
 mọi bước: gửi, chờ, không quy được đầu ra, xếp `INTERRUPTED` và **không gửi lại**.
 **Luật cho lượt sau: job tạo ảnh phải chạy trong một hội thoại TRỐNG, không có chỉ thị riêng.** Đọc
 `chat.read` **trước** khi chạy — một lượt trả lời cũ mang khối `MODE` là dấu hiệu đủ để dừng lại.
+
+### ĐÍNH CHÍNH mục trên — tôi đã quy SAI nguyên nhân cho `Q003` (Đức chỉ ra 2026-09-08)
+
+Mục ngay trên kết luận `Q003` hỏng vì **chỉ thị riêng của hội thoại**. Kết luận đó **chưa được
+xác lập**, và tôi phải rút lại: có một nguyên nhân thứ hai **do chính tôi gây ra**, và từ bằng
+chứng đang có thì **không tách được hai cái**.
+
+**Prompt tôi gửi bị viết tiếng Việt KHÔNG DẤU.** Nguyên văn: *"Tao mot bang mau gom dung ba o
+vuong nam ngang…"*. Đức chỉ ra ngay, và Đức đúng — đây không phải lỗi hình thức, nó là lỗi
+**nghĩa**: bỏ dấu làm câu mơ hồ ngay ở động từ đầu tiên (*"tạo"* = làm ra, hay *"tao"* = đại từ),
+và *"bang mau"* đọc được thành *"bảng màu"* hoặc *"băng mẫu"*. Một prompt như thế có thể tự nó
+làm ChatGPT trả về gần rỗng, hoàn toàn độc lập với chỉ thị của hội thoại.
+
+**Không có lý do kỹ thuật nào để bỏ dấu** — đã đo lại: dấu đi qua trọn đường truyền (tệp tham số
+UTF-8 → `JSON.parse` → `JSON.stringify` của envelope) **nguyên vẹn 39 ký tự có dấu, không BOM**.
+Tôi bỏ dấu vì cẩn thận sai chỗ, không vì công cụ bắt.
+
+**Nên trạng thái thật của `Q003`:** lượt chạy hỏng, và có **hai** nguyên nhân ứng viên —
+⑴ prompt của tôi bị bỏ dấu nên tối nghĩa, ⑵ hội thoại có chỉ thị riêng buộc trả lời ngắn. Bằng
+chứng đang có (một lượt chạy, prompt lỗi, hội thoại có chỉ thị) **không phân biệt được hai cái**.
+Phép đo tách chúng ra thì rẻ: gửi lại **đúng ý đó, viết có dấu tử tế**, trong cùng hội thoại. Ra
+ảnh thì nguyên nhân là ⑴; vẫn rỗng thì nghiêng về ⑵.
+
+**Bài học, và nó lớn hơn lượt chạy này:** phần *"extension xử đúng ở mọi bước"* vẫn đứng vững —
+nó dựa trên `generatedChains` rỗng và trên việc ảnh mẫu không bị quy thành đầu ra, không dựa
+trên chuyện vì sao ChatGPT im. Nhưng phần *"vì hội thoại có chỉ thị riêng"* là tôi **đoán một
+nguyên nhân rồi ghi nó như kết luận**, trong khi tôi đang cầm một nguyên nhân khác do mình tạo
+ra. Đó đúng loại lỗi mà cột **[ĐO] · [ĐỌC] · [DÒ]** của `FEATURE-PARITY.md` tồn tại để chặn.
+
+**Luật bổ sung cho lượt sau, cộng vào luật "hội thoại trống" ở mục trên:** prompt gửi qua Bridge
+là **chữ gửi cho một AI khác đọc**, nên phải **tiếng Việt có dấu**. Viết tệp tham số bằng công cụ
+ghi tệp trực tiếp (đường đó đã đo là giữ dấu), đừng dựng bằng heredoc của shell, và **đọc lại
+tệp trước khi gửi**.
+
+### ĐÍNH CHÍNH LẦN HAI — nguyên nhân thật của `Q003`/`Q004`, và tôi đã đoán sai HAI LẦN
+
+Hai mục trên tôi lần lượt quy nguyên nhân cho ⑴ chỉ thị riêng của hội thoại, rồi ⑵ prompt tôi
+viết không dấu. **Cả hai đều sai.** Nguyên nhân thật, do chính ChatGPT nói ra bằng chữ, hai lần:
+
+> *"Không tạo được ảnh vì tool generate ảnh vừa báo lỗi hệ thống trong lúc render. Đây là lỗi từ
+> backend tạo ảnh, không phải do mô tả của bạn."*
+
+Và cho lượt prompt **có dấu** tử tế:
+
+> *"Mô tả của bạn đã đủ rõ. Lỗi này là từ tool, không phải do prompt."*
+
+**Phép đo tách được ba nguyên nhân, và nó rẻ:** tôi gửi lại **đúng một ý** bằng prompt có dấu
+(`Q004`) trong **cùng** hội thoại. Kết quả y hệt — `POST_SUBMIT_UNCERTAIN`, `generatedChains`
+rỗng. Nên prompt không dấu **không phải** nguyên nhân (dù nó vẫn là lỗi của tôi, xem đính chính
+lần một), và chỉ thị hội thoại **không** chặn tạo ảnh. Cái nó chặn là **tự thử lại**.
+
+**Đức tự gõ `render lại` và ChatGPT trả về ĐÚNG KẾT QUẢ.** Nên cả đường ống chạy được: gửi được,
+gắn ảnh mẫu được, ChatGPT tạo ảnh được. Thiếu đúng **một tin nhắn thử lại**.
+
+**Còn một nguyên nhân thứ ba do tôi tạo ra, Đức chỉ ra:** ảnh mẫu `do-lon.png` tôi dùng là
+**ảnh nhiễu ngẫu nhiên** — tôi sinh 380×380 pixel random để có tệp 433KB mà zlib không nén được,
+phục vụ phép đo cửa sổ upload. Dùng nó làm ảnh mẫu cho một prompt *"vẽ lại hoa văn trong ảnh
+mẫu"* là một yêu cầu vô nghĩa, và không loại trừ được nó góp phần làm tool bên kia lỗi. **Hai
+mục đích phải dùng hai ảnh khác nhau:** ảnh **to** (nhiễu) để đo cửa sổ upload · ảnh **có nghĩa**
+(hình khối, màu phẳng, mốc đối chiếu) để kiểm đường chạy. Luật vàng của gói vốn đã dặn ảnh mẫu
+phải *"tự tố cáo"* — tôi bỏ qua chính dòng đó.
+
+### B-40 · (P1) Lỗi CHỮA ĐƯỢC của nhà cung cấp nằm ngay trong chữ hội thoại, mà lớp phân loại lỗi không đọc
+
+**Đây là chỗ thật sự chặn vòng CC ↔ GPT tự chạy**, và nó không phải một lỗi trong mã — mọi lớp
+đều xử đúng. Chuỗi sự kiện đo được 08/09:
+
+1. Extension gửi prompt, gắn ảnh mẫu, chờ. Đúng.
+2. Tool tạo ảnh của ChatGPT **lỗi hệ thống** — lỗi tạm, phía nhà cung cấp.
+3. ChatGPT trả về một lượt **chữ** nói rõ: không tạo được ảnh, lỗi từ tool, **và chỉ đúng cách
+   chữa** — *"Hãy nhắn 'render lại' để tôi chạy lại từ đầu."*
+4. Extension không quy được ảnh nào về attempt này → `POST_SUBMIT_UNCERTAIN` → `INTERRUPTED`,
+   **không gửi lại**. Đúng luật ADR-0047, và đúng cách fail-closed.
+5. Một người gõ `render lại` → ra kết quả đúng.
+
+Nên một AI lái từ xa **dừng ở bước 4 vĩnh viễn**, trong khi câu chữa nằm sẵn ở bước 3 và
+`chat.read` đọc được nó. Toàn bộ thông tin cần thiết có trên dây; không gì nối nó vào quyết định.
+
+**Mục này chạm ADR-0047, nên KHÔNG được tự vá — phải Đức chốt.** Và nó chạm đúng chỗ ADR đó để
+ngỏ. Phép đo đứng sau ADR-0047 (ghi trong `tests/post-submit-no-resend-smoke.mjs`) nói: lớp đối
+soát có **một** phán quyết dương, ba lối ra còn lại đều là *"không chứng minh được"*, nên số ca
+hệ khẳng định được *"lượt gửi đó KHÔNG tạo ra kết quả"* là **0** — và **vì 0** nên luật thu về
+*"chặn hẳn"*. Chính phép ghim đó dặn: *"ai nối một nguồn khẳng định mới vào vòng chạy thì test đỏ
+và phép đo phải làm lại trước khi nới luật."*
+
+**Hôm nay xuất hiện đúng một nguồn như thế:** chữ của nhà cung cấp nói thẳng *"không tạo được
+ảnh"*. Đó là một **khẳng định âm tính tường minh**, loại bằng chứng mà phép đo cũ đếm được 0 ca.
+Nên con số 0 ấy **không còn đúng**, và cửa mà ADR-0047 đóng vì "không có bằng chứng" nay có bằng
+chứng để cân lại.
+
+**Ba đường Đức chọn, xếp theo mức đụng vào luật an toàn:**
+
+- **⒜ Không đổi luật, chỉ BÁO cho người.** `run.status` (và `last_failure` vừa thêm ở B-39) mang
+  thêm trích đoạn chữ của trợ lý cùng cờ *"nhà cung cấp nói có thể thử lại"*. Người/AI thấy, rồi
+  **người** gõ `render lại`. Không sửa một dòng luật retry nào. Rẻ nhất, an toàn nhất, và đã đủ
+  để vòng lặp không còn dead-end im lặng.
+- **⒝ Cho gửi lại, nhưng CHỈ khi nhà cung cấp khẳng định âm tính**, và chỉ bằng đúng câu nó yêu
+  cầu, có nắp số lần. Đây là **nới ADR-0047**, nên phải làm lại phép đo trước, và phải có ADR mới
+  trỏ hai chiều với ADR-0047.
+- **⒞ Giữ nguyên hoàn toàn.** Chấp nhận mỗi lỗi tạm của nhà cung cấp là một job phải người dọn.
+
+Tôi đề xuất **⒜**: nó lấy gần hết giá trị mà **không** chạm luật an toàn nào, và nó là điều kiện
+cần cho ⒝ về sau (không báo được thì cũng không nới an toàn được).
+
+- **đóng khi:** Đức chốt một trong ba đường trên; nếu là ⒜ thì `run.status` trả kèm trích đoạn
+  chữ trợ lý + cờ "có thể thử lại theo lời nhà cung cấp", và một phép ghim dựng đúng cảnh 08/09
+  (tool lỗi, chữ nói cách chữa, không ảnh nào) rồi đòi hai trường đó xuất hiện — **không** đòi
+  bất kỳ lượt gửi lại tự động nào.
+
+- **ĐÓNG B-38** · Vá 2026-09-08, `claude-gpt-mvp-3fix`, và **nghiệm thu LIVE trên bản đã triển khai**. Chọn đường thứ hai mà chính mục này đề ra — *"bắt buộc phải truyền tay cho mọi mutation"* — chứ **không** tự dẫn xuất khoá, và lý do là một cái bẫy thật: `bridge-core.js` tự ghi *"a deliberate second upload carries a NEW request_id"*, nên một lượt gọi lại **có chủ ý** với cùng tham số (thêm hai job giống nhau, thay một ảnh mẫu bằng đúng ảnh đó) là việc hợp lệ, và khoá dẫn xuất tự động sẽ **nuốt nó thành replay**. Công cụ không đoán được hai lượt đó là MỘT ý định hay HAI, và đoán sai kiểu nào cũng mất dữ liệu — nên người gọi phải quyết. Đổi lại, câu chặn kèm **khoá gợi ý tiền định** (băm từ method + tham số) để lượt chạy lại chỉ việc dán. `READ_ONLY_METHODS` cho lượt chỉ đọc đi qua tự do: gọi lại `run.status` mười lần là chuyện bình thường. **Nửa thứ hai của điều kiện đóng — *"phép ghim chứng minh hai lượt gọi cùng tham số chỉ làm checkpoint tăng một bậc"* — ĐÃ CÓ SẴN, không phải tôi viết:** `tests/bridge-core-smoke.mjs:143` ghim `handlerCalls === 1` cho cùng `client_id` + `request_id` (*"replay does not invoke the proposal handler twice"*), cộng `REQUEST_ID_REUSED` ở dòng 147. Lớp replay của host **chưa bao giờ hỏng**; thứ hỏng là CLI không cho nó cơ hội khớp. Ghim mới: `tests/bridge-cli-mutation-key-smoke.mjs` — ba mép, trong đó mép đắt nhất là **đối chiếu danh sách chỉ-đọc của CLI với `read_only` trong `METHOD_REGISTRY` của host**, vì một luật nằm ở hai bản sao thì sớm muộn nói hai chuyện khác nhau; nó **bắt được hai chỗ lệch thật ngay lượt chạy đầu** (`session.hello` và `bridge.sessions`, cả hai hoá ra hợp lệ và nay được khai tường minh kèm phép kiểm ngược). **Nghiệm thu live:** bản đã chép sang thư mục Bridge của Đức chặn đúng `jobs.remove` thiếu khoá và vẫn cho `run.status` đi qua. **15/15 đột biến đỏ** trên cả ba bản vá.
+- **ĐÓNG B-37** · Vá 2026-09-08, `claude-gpt-mvp-3fix`. `adoptAuthorizedOutputProfile()` nay ghi **lý do** kèm hai con số đếm được vào `state.outputAdoptDiag` ở **từng** đường trả `null`, và câu báo dựng từ đó — bốn nhánh, bốn câu khác nhau: chưa có settings · **không hồ sơ nào còn quyền** (kèm số hồ sơ tìm thấy và số còn quyền) · **có từ hai hồ sơ trở lên** nên cố ý không chọn hộ (kèm con số, và chỉ đường ra bằng `output.configure`) · **kho hồ sơ không đọc được** (nói rõ *bấm cũng không chữa*, vì nhánh này dễ bị nhập nhèm nhất). **Không đổi một nhánh quyết định nào** — vẫn nhận khi và chỉ khi có đúng một hồ sơ được cấp quyền. Xoá luôn hằng `AUDIT_HELD_NOTE` vì nó thành mã chết; để lại là một bản sao thứ hai của cùng câu báo, và hai bản sao sẽ lệch nhau. Ghim: `tests/output-adopt-reason-smoke.mjs` — **chín mép**, và bốn mép cuối là **dây nối**: chạy chính `adoptAuthorizedOutputProfile()` với kho hồ sơ giả để đòi nó THẬT SỰ ghi chẩn đoán. Bốn mép đó sinh ra vì thử phá vòng đầu cho thấy phần kiểm hàm-lá **để lọt** việc xoá hẳn lượt ghi chẩn đoán — hàm dựng câu đúng mà không ai điền dữ liệu thì câu vẫn sai. Mép ⑼ còn phải viết lại lần hai: bản đầu bắt đầu với chẩn đoán `null` nên xoá hẳn dòng dọn vẫn xanh; nay bắt đầu bằng một chẩn đoán CŨ, đúng cảnh thật. **Trần tuyên bố: SUITE + đột biến, CHƯA LIVE** — cần Đức nạp lại tiện ích rồi gọi `jobs.add` lúc chưa bind thư mục.
+- **ĐÓNG B-39** · Vá 2026-09-08, `claude-gpt-mvp-3fix`. `run.status` nay trả `last_failure` — job nào, attempt nào, `INTERRUPTED` hay `FAILED`, mã lỗi, câu lỗi, `retry_count`, `run_id`, mốc thời gian. Ghi ở **đúng hai cửa settle cuối** (`markInterrupted` và nhánh FAILED của `resolveJobFailure`), và **xoá lúc bắt đầu run mới**. **Cố ý KHÔNG ghi ở đường thử lại:** một job thử lại rồi thành công thì lượt lỗi giữa đường không phải kết cục, khai nó ra sẽ làm agent kết luận run hỏng trong khi nó xong sạch. **Cố ý KHÔNG tích luỹ qua nhiều run:** câu hỏi trường này trả lời là *"run vừa rồi kết thúc thế nào"*, không phải *"kể hết lịch sử lỗi"* — lịch sử nằm ở sổ audit và ledger; giữ lại là mời agent đọc một lỗi cũ rồi tưởng nó vừa xảy ra. Ghim: mở rộng `tests/run-status-stale-current-smoke.mjs` từ 4 lên **tám mép** — cộng `last_failure` đi qua payload, mép ngược `null` khi chưa có lỗi, **chạy `markInterrupted` thật** để đòi nó ghi đúng `INTERRUPTED` (không phải `FAILED`), và một khẳng định **tĩnh, có khai là tĩnh** cho lượt xoá đầu run. Ba mép sau sinh ra vì thử phá vòng đầu để lọt cả ba. **Trần tuyên bố: SUITE + đột biến, CHƯA LIVE** — lượt chạy live 08/09 trả `last_failure: null` vì tiện ích đang chạy mã cũ, đúng như phải vậy.

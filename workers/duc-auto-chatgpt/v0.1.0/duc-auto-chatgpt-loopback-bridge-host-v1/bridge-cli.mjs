@@ -119,6 +119,49 @@ export function commandRequest(command, flags = {}) {
   return { method, params };
 }
 
+/* ---- B-38 ---------------------------------------------------------------
+   Đo live 2026-09-08: `references.add` trả `REQUEST_TIMEOUT` — nhưng lượt ghi
+   ĐÃ có tác dụng, chỉ là đường TRẢ LỜI hết giờ. Câu lỗi của host dặn nguyên
+   văn *"retry the identical idempotency key"*. Tôi chạy lại đúng lệnh đó, và
+   nó ghi LẦN THỨ HAI: checkpoint nhảy v2 → v3 cho 2 lượt ghi có ý định, cộng
+   một sự kiện audit thừa.
+
+   Gốc bệnh KHÔNG ở lớp replay của host — `bridge-core.js` khai
+   `idempotent: true` đúng cho việc này, và lớp đó khớp theo
+   (client_id, request_id). Gốc bệnh ở ĐÂY: `buildEnvelope` mặc định sinh
+   `cli-${randomUUID()}`, nên "chạy lại đúng lệnh cũ" tạo ra một khoá KHÁC và
+   host không có gì để khớp. Câu lỗi dặn giữ nguyên khoá; công cụ thì đổi khoá
+   sau lưng người dùng.
+
+   Cách chữa: lượt GHI phải khai `--request-id` tường minh. Fail closed, và
+   cố ý KHÔNG tự dẫn xuất khoá từ tham số — vì một lượt gọi lại CÓ CHỦ Ý với
+   cùng tham số (thêm hai job giống nhau, thay một ảnh mẫu bằng đúng ảnh đó)
+   là việc hợp lệ, và khoá dẫn xuất sẽ nuốt nó thành "replay". Chính
+   `bridge-core.js` ghi điều đó: *"a deliberate second upload carries a NEW
+   request_id"*. Nên người gọi phải là người quyết định hai lượt đó là MỘT ý
+   định hay HAI — công cụ không đoán được, và đoán sai kiểu nào cũng mất dữ liệu.
+
+   Lượt CHỈ ĐỌC vẫn tự sinh khoá như cũ: gọi lại `run.status` mười lần là
+   chuyện bình thường và không có gì để ghi hai lần. */
+const READ_ONLY_METHODS = Object.freeze(new Set([
+  "system.ping",
+  "system.capabilities",
+  "queue.list",
+  "run.status",
+  "ledger.read",
+  "queue.proposal.get",
+  "diagnostics.dom_probe",
+  "chat.read"
+]));
+
+/** Khoá gợi ý, in ra trong câu chặn để người gọi copy được ngay. Nó dẫn xuất
+    từ tham số, nhưng người gọi vẫn phải DÁN nó vào — tức vẫn là một quyết
+    định tường minh, không phải mặc định im lặng. */
+export function goiYRequestId(method, params) {
+  const bam = crypto.createHash("sha256").update(JSON.stringify({ method, params: params ?? null })).digest("hex").slice(0, 20);
+  return `cli-${method.replace(/[^a-z0-9]+/gi, "-")}-${bam}`;
+}
+
 export function buildEnvelope(method, params, now = new Date(), requestId = `cli-${crypto.randomUUID()}`, clientId = "duc-auto-chatgpt-bridge-cli-v1") {
   return {
     protocol: "duc-auto-chatgpt.bridge",
@@ -146,13 +189,22 @@ export function applyTarget(envelope, flags = {}) {
 export async function main(argv = process.argv.slice(2), io = { stdout: process.stdout, stderr: process.stderr, fetch: globalThis.fetch }) {
   const [command, ...rest] = argv;
   if (!command || command === "help" || command === "--help") {
-    io.stdout.write(`Usage: node bridge-cli.mjs <${Object.keys(COMMANDS).join("|")}> [options]\nMutations use --params-file <json>. Optional identity flags: --request-id <id> --client-id <id>. Multi-profile: --target <label|instance_id>.\n`);
+    io.stdout.write(`Usage: node bridge-cli.mjs <${Object.keys(COMMANDS).join("|")}> [options]\nMutations use --params-file <json>. Lượt GHI BẮT BUỘC --request-id <id> (xem khối B-38 trong tệp này); lượt chỉ đọc thì tuỳ chọn. --client-id <id> tuỳ chọn. Multi-profile: --target <label|instance_id>.\n`);
     return 0;
   }
   const flags = parseFlags(rest);
   const pairingPath = path.resolve(flags.pairing || defaultPairingPath());
   const pairing = validatePairing(JSON.parse(fs.readFileSync(pairingPath, "utf8")));
   const { method, params } = commandRequest(command, flags);
+  if (!READ_ONLY_METHODS.has(method) && !flags["request-id"]) {
+    throw new Error(
+      `${method} là một lượt GHI, nên nó phải khai --request-id tường minh.\n` +
+      `Vì sao: một lượt ghi bị REQUEST_TIMEOUT VẪN CÓ THỂ đã có tác dụng — đo thật 2026-09-08. Câu lỗi của host dặn "retry the identical idempotency key", mà nếu công cụ tự sinh khoá mới thì lần chạy lại sẽ GHI LẦN THỨ HAI (đo được: checkpoint v2 lên v3 cho 2 lượt ghi có ý định).\n` +
+      `Chạy lại sau khi hết giờ: dùng LẠI ĐÚNG khoá cũ.\n` +
+      `Một ý định MỚI (ví dụ cố ý thêm một job giống hệt): dùng một khoá KHÁC.\n` +
+      `Khoá gợi ý cho đúng tham số này: --request-id ${goiYRequestId(method, params)}`
+    );
+  }
   const envelope = applyTarget(buildEnvelope(method, params, new Date(), flags["request-id"] || undefined, flags["client-id"] || undefined), flags);
   const response = await io.fetch(pairing.http_url, {
     method: "POST",

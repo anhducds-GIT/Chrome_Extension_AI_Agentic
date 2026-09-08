@@ -348,3 +348,35 @@ gì, và **lỗi là của tôi, không phải của mã**: tôi chạy job tạ
 hội thoại đó có chỉ thị riêng buộc trả lời ngắn — nên ChatGPT không tạo ảnh nào. Extension xử đúng
 mọi bước và **không gửi lại**. Luật lượt sau: job ảnh chạy trong hội thoại **TRỐNG**, và đọc
 `chat.read` **trước** khi chạy.
+
+## 2026-09-08 (tiếp) · `claude-gpt-mvp-3fix` — vá ba chỗ chặn vòng CC ↔ GPT, và tìm ra chỗ thứ tư
+
+**Làm gì.** Đức chốt "làm A": vá ba chỗ hở tìm ra ở lượt nghiệm thu live cùng ngày. Chi tiết từng
+mục, lý do các lựa chọn **cố ý không làm**, và ba đường chọn của `B-40`: `BACKLOG.md`.
+
+**Kết quả số.**
+
+- **`B-38` ĐÓNG, nghiệm thu LIVE.** Lượt GHI qua CLI nay bắt buộc khai `--request-id`, câu chặn
+  kèm khoá gợi ý tiền định. Nửa còn lại của điều kiện đóng **đã có sẵn** —
+  `tests/bridge-core-smoke.mjs:143` ghim `handlerCalls === 1` cho cùng khoá; lớp replay của host
+  chưa bao giờ hỏng, thứ hỏng là CLI không cho nó cơ hội khớp.
+- **`B-37` và `B-39` ĐÓNG ở mức suite.** Câu báo *"chưa có thư mục"* tách thành **bốn** câu theo
+  bốn nguyên nhân, kèm số hồ sơ đếm được. `run.status` nay trả `last_failure`.
+- **Suite 117 → 119. Thử phá 15/15 đỏ, 0 mỏ neo hỏng.** Vòng đầu chỉ **10/15**, và cả 5 con thoát
+  đều là **lỗ thật trong phép ghim của tôi**: kiểm hàm lá mà không kiểm **dây nối**. Bịt cả năm
+  rồi chạy lại.
+- **Sổ nợ gói 16 → 13.**
+
+**Còn mở, cần Đức.** `B-40` (P1, mới) mới là chỗ thật sự chặn vòng tự chạy, và **không phải lỗi
+trong mã**: tool tạo ảnh của ChatGPT lỗi tạm, ChatGPT nói rõ cách chữa **bằng chữ**, extension xếp
+`POST_SUBMIT_UNCERTAIN` đúng ADR-0047 — vòng lặp dead-end trong khi `chat.read` đọc được câu chữa.
+Đức tự gõ `render lại` thì ra kết quả đúng. Mục này **chạm ADR-0047 nên tôi không tự vá**; đề xuất
+đường ⒜ (chỉ BÁO, không đổi luật retry).
+
+**Cần Đức nạp lại tiện ích** để `B-37`/`B-39` được nghiệm thu live — lượt chạy 08/09 trả
+`last_failure: null` vì tiện ích đang chạy mã cũ, đúng như phải vậy. `B-38` không cần: nó ở CLI,
+đã chép sang thư mục Bridge và đã thử live.
+
+**Hai lỗi của tôi trong buổi** (prompt gửi qua Bridge viết không dấu; ảnh mẫu là ảnh nhiễu
+dựng để đo cửa sổ upload) khiến tôi **quy sai nguyên nhân hai lần** trước khi đo ra nguyên nhân
+thật. Cả hai đã ghi đầy đủ ở `BACKLOG.md`, mục hai lượt đính chính.

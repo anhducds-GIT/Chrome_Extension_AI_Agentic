@@ -120,7 +120,7 @@ const shipped = source.slice(from, to + END.length);
 assert.ok(shipped.includes("markInterrupted"), "cắt nhầm khối: resolveJobFailure() phải chứa nhánh markInterrupted");
 
 function runShipped(item, failureType, { continue_on_error = true } = {}) {
-  const calls = { retried: 0, interrupted: 0, failed: 0, slept: 0 };
+  const calls = { retried: 0, interrupted: 0, failed: 0, slept: 0, lastFailure: null };
   const sandbox = {
     window: { DacRunnerCore: runner },
     state: {},
@@ -139,6 +139,10 @@ function runShipped(item, failureType, { continue_on_error = true } = {}) {
     // và cùng đơn vị, để khẳng định "vẫn phải chờ cooldown" ở dưới vẫn đo đúng cái nó đo:
     // ai bỏ hẳn lượt chờ thì `slept` về 0 và test đỏ, y như trước.
     waitRetryCooldown: async (seconds) => { calls.slept += seconds * 1000; },
+    // B-39: hai cửa settle cuối cùng nay ghi lại lượt kết thúc có lỗi gần nhất, để
+    // `run.status` một mình đủ lái vòng chạy. Stub GHI LẠI chứ không rỗng — nhờ vậy
+    // khẳng định ở dưới đo được là cửa nào ghi và ghi gì, thay vì chỉ cho hàm chạy qua.
+    noteLastFailure: (item, status, failureType) => { calls.lastFailure = { job_id: item.job.id, status, failure_type: failureType }; },
     markInterrupted: () => { calls.interrupted += 1; }
   };
   vm.createContext(sandbox);
@@ -189,6 +193,13 @@ for (const [phase, failureType] of [
   const { outcome, calls } = await runShipped({ ...baseItem(), phase: "PRE_SUBMIT", retry_count: 2 }, "TIMEOUT_PRE_SUBMIT");
   assert.equal(calls.retried, 0);
   assert.equal(calls.failed, 1, "hết lượt thử trước lúc gửi vẫn settle FAILED, hàng đợi chạy tiếp");
+  // B-39: cửa FAILED phải GHI mốc lỗi. Thiếu nó thì `run.status` trả `IDLE` trơn và
+  // một AI lái từ xa không phân biệt được "xong sạch" với "chết vì hết lượt thử".
+  assert.deepEqual(
+    calls.lastFailure,
+    { job_id: "Q001", status: "FAILED", failure_type: "TIMEOUT_PRE_SUBMIT" },
+    "settle FAILED phải ghi mốc lỗi gần nhất, kèm đúng mã lỗi"
+  );
   assert.equal(calls.interrupted, 0);
   assertOutcome(outcome, { completed: true, halted: false });
 }

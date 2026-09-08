@@ -39,7 +39,7 @@ assert.match(source, /function bridgeRunStatus\(\)/, "MỎ NEO KHÔNG KHỚP: kh
 const now = Date.now();
 
 /** Dựng lại panel ở một trạng thái, rồi CHẠY `bridgeRunStatus` đã ship. */
-function runStatusWith({ running, paused = false, queue = [], currentItem = null }) {
+function runStatusWith({ running, paused = false, queue = [], currentItem = null, lastFailure = null }) {
   const state = {
     running,
     paused,
@@ -51,6 +51,7 @@ function runStatusWith({ running, paused = false, queue = [], currentItem = null
     stageStartedAt: now - 42000,
     stageBudgetSec: 900,
     currentItem,
+    lastFailure,
     prepared: { queue }
   };
   const context = {
@@ -145,4 +146,80 @@ const jobCuaRunTruoc = {
   assert.equal(r.halt.failure_type, "SECURITY_HARD_STOP");
 }
 
-console.log("B-10 run.status không khai job cũ khi rảnh (4 mép): PASS");
+/* ⑸ B-39: `run.status` phải TRẢ RA mốc lỗi gần nhất. Thử phá lộ ra phép ghim cũ không canh
+   chỗ này: gõ cứng `last_failure: null` trong payload thì mọi test vẫn xanh — tức trường này
+   có thể bị bịt mà không ai biết. Đây là cửa DUY NHẤT một AI lái từ xa nhìn thấy lý do run
+   chết, nên bịt nó là quay lại đúng B-39. */
+{
+  const moc = {
+    job_id: "Q009", attempt_id: "att-9", status: "INTERRUPTED", phase: "SUBMITTED",
+    failure_type: "POST_SUBMIT_UNCERTAIN", message: "khong quy duoc ket qua", retry_count: 0,
+    run_id: "run-9", at: "2026-09-08T15:00:00.000Z"
+  };
+  const r = runStatusWith({ running: false, lastFailure: moc, queue: [] });
+  assert.equal(r.state, "IDLE");
+  assert.equal(r.current, null, "vẫn phải giữ B-10: rảnh thì current null");
+  assert.deepEqual(
+    r.last_failure,
+    moc,
+    "B-39: run.status phải trả nguyên mốc lỗi gần nhất — thiếu nó thì `IDLE` + `current: null` " +
+    "không phân biệt được 'chạy xong sạch' với 'chết vì không quy được kết quả'"
+  );
+}
+
+/* ⑹ Mép ngược: chưa có lỗi nào thì phải là `null`, không phải một object rỗng hay `undefined`.
+   Một trường luôn có mặt với nội dung vô nghĩa đọc y như im lặng. */
+{
+  const r = runStatusWith({ running: true, currentItem: jobCuaRunTruoc, queue: [] });
+  assert.equal(r.last_failure, null, "chưa có lỗi nào thì last_failure phải là null");
+}
+/* ---------- DÂY NỐI của B-39, không chỉ cái trường ----------
+   Thử phá 08/09 lộ ra: xoá hẳn lời gọi `noteLastFailure` trong `markInterrupted` thì mọi test
+   vẫn xanh. Trường có, hàm ghi có, mà không ai gọi — và `INTERRUPTED` mới đúng là kết cục hay
+   gặp nhất của một lượt chạy qua Bridge (cả ba job đo live 08/09 đều kết thúc như thế). */
+{
+  const dauMI = sidepanel.indexOf("  function noteLastFailure(item, status, failureType, message) {");
+  assert.ok(dauMI >= 0, "MỎ NEO KHÔNG KHỚP: không thấy noteLastFailure");
+  const cuoiMI = sidepanel.indexOf("\n  function retriesExhausted(", dauMI);
+  assert.ok(cuoiMI > dauMI, "MỎ NEO KHÔNG KHỚP: không thấy mép cuối của khối markInterrupted");
+  const khoi = sidepanel.slice(dauMI, cuoiMI);
+  assert.match(khoi, /function markInterrupted\(/, "MỎ NEO KHÔNG KHỚP: khối cắt ra phải chứa markInterrupted");
+
+  const state = { lastFailure: null, runId: "run-7" };
+  const ctx = {
+    console, Date, String, Object,
+    state,
+    update: () => {}, audit: () => {}, log: () => {}, setCurrent: () => {},
+    renderQueue: () => {}, progress: () => {}
+  };
+  ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(`${khoi}\nglobalThis.__mi = markInterrupted;`, ctx);
+
+  const item = { job: { id: "Q005" }, attempt_id: "att-5", phase: "SUBMITTED", retry_count: 1, attempt_count: 2 };
+  ctx.__mi(item, "POST_SUBMIT_UNCERTAIN", "khong quy duoc ket qua");
+
+  assert.ok(state.lastFailure, "markInterrupted PHẢI ghi mốc lỗi — đây là kết cục hay gặp nhất của một lượt chạy qua Bridge");
+  assert.equal(state.lastFailure.job_id, "Q005");
+  assert.equal(state.lastFailure.status, "INTERRUPTED", "phải ghi đúng INTERRUPTED, không phải FAILED — hai cái đó dẫn tới hai cách xử khác nhau ở resume");
+  assert.equal(state.lastFailure.failure_type, "POST_SUBMIT_UNCERTAIN");
+  assert.equal(state.lastFailure.run_id, "run-7", "phải kèm run_id, để agent biết mốc này thuộc lượt chạy nào");
+  assert.match(state.lastFailure.at, /^\d{4}-\d{2}-\d{2}T/, "phải kèm mốc thời gian ISO");
+}
+
+/* Lượt XOÁ lúc bắt đầu run mới. TĨNH, và nói rõ là tĩnh: dòng này nằm giữa thân `run()` dài,
+   không cắt ra chạy riêng được mà không kéo theo nửa panel. Khẳng định tĩnh vẫn bắt được cái
+   nó cần bắt — ai xoá dòng này thì mốc lỗi của run TRƯỚC sống sang run SAU, và agent đọc một
+   lỗi cũ rồi tưởng lượt chạy vừa rồi hỏng. */
+{
+  const dong = sidepanel.split("\n").find((l) => l.includes("state.pauseRequested = false") && l.includes("state.retryResumeAt = null"));
+  assert.ok(dong, "MỎ NEO KHÔNG KHỚP: không thấy dòng reset đầu run");
+  assert.match(
+    dong,
+    /state\.lastFailure = null;/,
+    "bắt đầu một run mới phải XOÁ mốc lỗi cũ — giữ lại là để agent đọc lỗi của run trước rồi " +
+    "kết luận nhầm cho run này"
+  );
+}
+
+console.log("B-10 run.status không khai job cũ khi rảnh (8 mép, gồm dây nối B-39): PASS");

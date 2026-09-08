@@ -91,6 +91,8 @@
     outputProfileState: null,
     selectedInterJobDelay: null,
     retryResumeAt: null,
+    lastFailure: null,
+    outputAdoptDiag: null,
     resumeMode: false,
     resumePlan: null,
     resumeLedgerFile: "",
@@ -804,6 +806,9 @@
       current: current ? { job_id: current.job.id, attempt_id: current.attempt_id || null, phase: current.phase, runtime_stage: current.runtime_stage || null, job_elapsed_sec: elapsedSecSince(state.currentStartedAt), stage_elapsed_sec: elapsedSecSince(state.stageStartedAt), stage_budget_sec: state.stageBudgetSec || current.settings?.timeout_sec || null } : null,
       counts: { total: queue.length, pending: count(["PENDING"]), running: count(["RUNNING", "RECONCILING"]), success: count(["SUCCESS", "DONE"]), failed: count(["FAILED"]), interrupted: count(["INTERRUPTED", "STOPPED"]) },
       halt: halted ? { job_id: halted.job.id, failure_type: halted.failure_type, instruction: window.DacHaltInstructions?.findInstruction?.(halted.failure_type) || null } : null,
+      // B-39: một AI lái từ xa phải đọc được "vì sao run vừa rồi chết" từ CHÍNH lệnh mà
+      // `run.trial` chỉ sang, không phải từ một lệnh thứ hai không ai chỉ.
+      last_failure: state.lastFailure || null,
       artifact_persistence_failed: state.artifactErrors.length > 0,
       trial: state.bridgeTrialId ? { trial_id: state.bridgeTrialId, input_origin: state.bridgeRunOrigin } : null,
       checkpoint: checkpointSummary()
@@ -1684,7 +1689,6 @@
 
      Chỉ che ca bootstrap. Đức cấu hình chế độ Downloads thì vẫn đi đường tải
      và vẫn kiểm tên: bỏ kiểm tên là phương án (C), thứ ADR-0049 đã LOẠI. */
-  const AUDIT_HELD_NOTE = "Sổ audit đang được giữ trong bộ nhớ phiên, CHƯA ra file: phiên này chưa có thư mục nào Đức cấp quyền, mà thư mục Tải xuống của Chrome thì không đặt tên nổi artifact của gói (B-36). Chọn một thư mục đích để xả sổ ra file; đóng panel trước lúc đó là mất sổ.";
 
   /* Dấu `autoDefaulted` nằm TRÊN CHÍNH object settings, không nằm trên
      `state`. Đó là chỗ khác biệt duy nhất, và nó xoá hẳn hai lớp lỗi thay vì
@@ -1725,25 +1729,62 @@
      chứng của run này ghi vào hồ sơ của run khác. Không nhận thì phiên vẫn
      chạy được — đó chính là việc (A) làm, và là lý do ADR-0049 bắt làm (A)
      trước. Đức hoặc AI chỉ định thẳng bằng `output.configure`. */
+  /* ---- B-37 -------------------------------------------------------------
+     Trước lượt vá này, `audit_durable: false` đi kèm ĐÚNG MỘT câu cố định cho
+     BA tình huống cần ba hành động khác nhau:
+       ⑴ chưa hồ sơ nào được cấp quyền  → nhờ người bấm chọn một thư mục;
+       ⑵ có TỪ HAI hồ sơ trở lên        → (D) cố ý không chọn hộ, nên phải nhờ
+          người nói RÕ cái nào, hoặc chỉ thẳng bằng `output.configure`;
+       ⑶ đọc kho hồ sơ không được       → chuyện khác hẳn, và không ai bấm hộ được.
+     Đo live 2026-09-08: Đức bấm chọn thư mục, đóng/mở panel, và vẫn nhận câu
+     ⑴ — nên tôi KHÔNG kết luận được (D) hỏng hay (D) đang chạy đúng luật ở
+     nhánh ⑵. Một câu báo không phân biệt được hai nguyên nhân thì nó không
+     giúp chẩn đoán; đó đúng bài học lỗi #2 của `AI-OPERATOR-GUIDE.md`.
+
+     Nên `adoptAuthorizedOutputProfile()` nay ghi lại LÝ DO nó không nhận, kèm
+     hai con số đếm được, và câu báo dựng từ đó. Không đổi một nhánh quyết định
+     nào: nó vẫn nhận khi và chỉ khi có ĐÚNG MỘT hồ sơ được cấp quyền. */
+  function outputAdoptReasonNote() {
+    const diag = state.outputAdoptDiag;
+    const chung = "Sổ audit đang được giữ trong bộ nhớ phiên, CHƯA ra file";
+    const duoi = "Đóng panel trước lúc xả sổ là mất sổ.";
+    if (!diag) return `${chung}: phiên này chưa có thư mục nào Đức cấp quyền, mà thư mục Tải xuống của Chrome thì không đặt tên nổi artifact của gói (B-36). Chọn một thư mục đích để xả sổ ra file. ${duoi}`;
+    if (diag.reason === "KHO_HO_SO_KHONG_DOC_DUOC") {
+      return `${chung}: không đọc được kho hồ sơ thư mục trong trình duyệt, nên phiên không tự nhận lại được thư mục nào. KHÔNG phải chuyện bấm chọn — bấm cũng không chữa. Chọn thẳng một thư mục đích trong Side Panel để xả sổ. ${duoi}`;
+    }
+    if (diag.reason === "NHIEU_HO_SO_KHONG_CHON_HO") {
+      return `${chung}: có ${diag.authorized} thư mục đã được Đức cấp quyền, và phiên bootstrap CỐ Ý không chọn hộ giữa chúng — chọn hộ là đem bằng chứng của run này ghi vào hồ sơ của run khác. Nói rõ cái nào (chọn trong Side Panel, hoặc chỉ thẳng bằng \`output.configure\`) để xả sổ. ${duoi}`;
+    }
+    return `${chung}: chưa có thư mục nào Đức cấp quyền cho phiên này (đếm được ${diag.profiles} hồ sơ, ${diag.authorized} còn quyền), mà thư mục Tải xuống của Chrome thì không đặt tên nổi artifact của gói (B-36). Chọn một thư mục đích để xả sổ ra file. ${duoi}`;
+  }
+
   async function adoptAuthorizedOutputProfile() {
-    if (!state.outputSettings) return null;
+    if (!state.outputSettings) { state.outputAdoptDiag = { reason: "CHUA_CO_SETTINGS", profiles: 0, authorized: 0 }; return null; }
     let profiles = [];
     // IndexedDB không có (hoặc hỏng) thì đây là "chưa nhận được", không phải
     // lỗi phải ném: đường giữ-sổ-trong-bộ-nhớ của (A) vẫn đỡ được.
-    try { profiles = (await window.DacOutputProfiles.list()) || []; } catch (_) { return null; }
+    try { profiles = (await window.DacOutputProfiles.list()) || []; } catch (_) { state.outputAdoptDiag = { reason: "KHO_HO_SO_KHONG_DOC_DUOC", profiles: null, authorized: null }; return null; }
     const authorized = [];
     for (const profile of profiles) {
       let resolved = null;
       try { resolved = await window.DacOutputProfiles.resolve(profile.profile_id); } catch (_) { continue; }
       if (resolved?.state === "authorized" && resolved.profile?.directory_handle) authorized.push(resolved.profile);
     }
-    if (authorized.length !== 1) return null;
+    if (authorized.length !== 1) {
+      state.outputAdoptDiag = {
+        reason: authorized.length === 0 ? "KHONG_HO_SO_NAO_CON_QUYEN" : "NHIEU_HO_SO_KHONG_CHON_HO",
+        profiles: profiles.length,
+        authorized: authorized.length
+      };
+      return null;
+    }
     const chosen = authorized[0];
     state.outputSettings.image = window.DacOutputLocation.directoryLocation(chosen.directory_handle, chosen.last_known_handle_name);
     state.outputSettings.image.profileId = chosen.profile_id;
     if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
     state.outputProfileState = { state: "authorized", profile: chosen, permission: "granted", profile_id: chosen.profile_id };
     state.destinationMode = "profile";
+    state.outputAdoptDiag = null;   // nhận được rồi thì không còn lý do nào để kể
     // KHONG can `delete state.outputSettings.autoDefaulted` o day: dau chi
     // duoc dat khi nhan THAT BAI (xem bindBootstrapOutput), nen luc nhan
     // thanh cong chua bao gio co dau de xoa. Thu pha D4 chung minh dieu do
@@ -1857,7 +1898,7 @@
           return { mutation, candidate: state.workbook, auditEvent, output: preflight.effective, heldAudit };
         },
         persist_audit: async (applied) => {
-          // Giữ trong bộ nhớ, không ném: xem khối AUDIT_HELD_NOTE ở trên.
+          // Giữ trong bộ nhớ, không ném: xem `outputAdoptReasonNote()` và khối B-37 ở trên.
           if (applied.heldAudit) { state.auditFile = ""; return ""; }
           state.auditFile = await saveAuditLog(applied.output.result, { appendExisting: true, force: true });
           if (!state.auditFile) throw new window.DacBridgeCore.BridgeProtocolError("PERSISTENCE_VERIFICATION_FAILED", "BRIDGE_DIRECT_AUDIT_PERSISTENCE_FAILED: Audit JSONL was not verified.");
@@ -1896,7 +1937,7 @@
             checkpoint: { version: checkpoint.version, filename: checkpoint.filename, verified: checkpoint.storage !== "held" },
             // Nói thẳng, không im: sổ đã ghi nhưng chưa ra file. AI vận hành
             // cần biết để chọn thư mục trước khi làm việc gì đáng giữ.
-            ...(applied.heldAudit ? { audit_durable: false, audit_note: AUDIT_HELD_NOTE } : {})
+            ...(applied.heldAudit ? { audit_durable: false, audit_note: outputAdoptReasonNote() } : {})
           };
         },
         rollback: async ({ snapshot, applied, audit, checkpoint, error }) => {
@@ -1924,7 +1965,7 @@
           audit_event: event,
           checkpoint: { version: recoveredForward.checkpoint.version, filename: recoveredForward.checkpoint.filename, verified: recoveredForward.checkpoint.storage !== "held" },
           recovered_forward: true,
-          ...(recoveredForward.applied.heldAudit ? { audit_durable: false, audit_note: AUDIT_HELD_NOTE } : {})
+          ...(recoveredForward.applied.heldAudit ? { audit_durable: false, audit_note: outputAdoptReasonNote() } : {})
         };
       }
       // A version conflict is a plain Error from the checkpoint writer; left
@@ -5653,9 +5694,50 @@
   function persistenceFailureType(error) { return /^PERSISTENCE_VERIFICATION_FAILED:/.test(messageOf(error)) ? "PERSISTENCE_VERIFICATION_FAILED" : window.DacRunnerCore.classifyFailure(error, state.currentItem?.phase); }
   function matchesAttempt(response, item) { return Boolean(response?.attempt && response.attempt.job_id === item.job.id && response.attempt.attempt_id === item.attempt_id); }
 
+  /* ---- B-39 -------------------------------------------------------------
+     `run.trial` trả `accepted: true` rồi chỉ sang `run.status`. Nhưng khi job
+     chết, `run.status` chỉ trả `state: "IDLE"` với `current: null` — và
+     `current` PHẢI là `null` lúc đó (đó là B-10, vá cùng ngày). Nên một AI lái
+     từ xa làm ĐÚNG như tài liệu dặn sẽ thấy đúng một chữ `IDLE` và không có gì
+     khác: nó không phân biệt được "chạy xong sạch" với "chết vì không quy được
+     kết quả".
+
+     Đo live 2026-09-08: tôi dò 22 lượt `run.status` liên tiếp, thấy `IDLE`
+     suốt, rồi mới hiểu ra bằng cách đi đọc `queue.list` để lấy `failure_type`
+     của từng job. Hai lời gọi cho một câu hỏi, và lời gọi thứ hai không được
+     tài liệu nào chỉ sang.
+
+     Nên nhớ lại lượt kết thúc có lỗi GẦN NHẤT, đủ để `run.status` một mình lái
+     được vòng chạy. Ba chỗ ghi, và cố ý chỉ ba chỗ đó — hai cửa settle cuối
+     cùng (`markInterrupted` và nhánh FAILED của `resolveJobFailure`) cộng lượt
+     xoá lúc bắt đầu run mới.
+
+     KHÔNG ghi ở đường thử lại: một job thử lại rồi thành công thì lượt lỗi
+     giữa đường không phải kết cục, và khai nó ra sẽ làm agent kết luận run
+     hỏng trong khi nó xong sạch. `retry_count` đã nói chuyện đó ở chỗ khác.
+
+     Mốc bị XOÁ lúc bắt đầu run mới, không tích lại: câu hỏi mà trường này trả
+     lời là "run vừa rồi kết thúc thế nào", không phải "kể hết lịch sử lỗi" —
+     lịch sử nằm ở sổ audit và ở ledger. Giữ lại qua nhiều run là mời agent đọc
+     một lỗi cũ rồi tưởng nó vừa xảy ra. */
+  function noteLastFailure(item, status, failureType, message) {
+    state.lastFailure = {
+      job_id: item.job.id,
+      attempt_id: item.attempt_id || null,
+      status,
+      phase: item.phase || null,
+      failure_type: failureType || null,
+      message: message ? String(message) : null,
+      retry_count: item.retry_count ?? null,
+      run_id: state.runId || null,
+      at: new Date().toISOString()
+    };
+  }
+
   function markInterrupted(item, failureType, message) {
     const now = new Date().toISOString();
     update(item, { status: "INTERRUPTED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message, completed_at: now, ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
+    noteLastFailure(item, "INTERRUPTED", failureType, message);
     audit("FAILURE", item, { message }); audit("JOB_INTERRUPTED", item, { message });
     if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message });
     log(`${item.job.id} interrupted: ${failureType}: ${message}`, "error");
@@ -5727,6 +5809,7 @@
       return { completed: true, halted: true };
     }
     update(item, { status: "FAILED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message, completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
+    noteLastFailure(item, "FAILED", failureType, message);
     audit("FAILURE", item, { message }); if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message });
     log(`${item.job.id} skipped after ${item.retry_count} retr${item.retry_count === 1 ? "y" : "ies"}: ${failureType}: ${message}`, "error");
     setCurrent(item, "FAILED", failureType);
@@ -5972,7 +6055,7 @@
     // latch (queueRunLock.tryBeginRun) instead, which runs before this
     // function's first await -- see the comment there. Resetting it at this
     // point would discard a run.stop that arrived during startup.
-    state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.lastFailure = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
     state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = [];
     // Bridge Setup mutations may already have written this session's audit
