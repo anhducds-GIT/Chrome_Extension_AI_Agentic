@@ -215,6 +215,30 @@
     return surface(url) === SURFACE.CONVERSATION;
   }
 
+  // ĐỊNH DANH hội thoại mà một địa chỉ trỏ tới, hoặc `null` nếu đó không phải hội thoại.
+  //
+  // Đây phải là CÙNG MỘT luật với `surface()` ngay trên, và nó nằm ở đây chính vì lý do đó.
+  // Trước 09/09 `sidepanel.js` giữ bản sao riêng, neo ở ĐẦU đường dẫn (`/^\/c\/`), nên hai
+  // bên trả lời KHÁC NHAU cho cùng một trang: một hội thoại trong Project có địa chỉ dạng
+  // `chatgpt.com/g/g-p-<project>/c/<id>` — `surface()` nói CONVERSATION (đúng, và lượt chạy
+  // live 09/09 gửi được bình thường ở đó), còn bản sao kia trả `null`.
+  //
+  // Cái mất không phải là một dòng lệch: `state.boundConversationId` nhận `null`, và cửa
+  // *"cùng một tab không có nghĩa là cùng một HỘI THOẠI"* của `activeTab()` **tắt lặng lẽ**.
+  // Tức trên mọi hội thoại thuộc Project, lớp chặn giữ cho prompt của job này không rơi vào
+  // luồng của người khác đã không hoạt động — mà không gì đỏ lên. Phát hiện 09/09 khi đường
+  // tự chữa của ADR-0050 ⒝ cần một đích để quay về và luôn nhận được `null`.
+  //
+  // Bất biến, được ghim: `conversationId(url) !== null` PHẢI trùng khớp với
+  // `surfaceAllowed(url)` trên mọi địa chỉ. Hai câu trả lời cho cùng một câu hỏi thì sớm
+  // muộn cũng lệch — lần này mất bảy ngày mới lộ ra.
+  const CONVERSATION_ID = /(?:^|\/)c\/([^/?#]+)/i;
+  function conversationId(url) {
+    if (!isProviderUrl(url)) return null;
+    try { return (new URL(url).pathname.match(CONVERSATION_ID) || [])[1] || null; }
+    catch (_) { return null; }
+  }
+
   // Page-wide interstitial blockers (CAPTCHA and similar).
   const securityBlockerPattern = /(captcha|unusual activity|verify you are human|suspicious activity)/i;
 
@@ -244,6 +268,7 @@
     isProviderUrl,
     surface,
     surfaceAllowed,
+    conversationId,
     securityBlockerPattern,
     matchesGenerationLimit,
   });

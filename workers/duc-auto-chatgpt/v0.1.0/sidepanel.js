@@ -3291,10 +3291,15 @@
 
   const isChatGPTTabUrl = (url) => /^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(url || "");
 
-  // The conversation this URL points at, or null on the new-chat page.
+  // Hội thoại mà địa chỉ này trỏ tới, hoặc null nếu không phải hội thoại.
+  //
+  // Uỷ THẲNG cho adapter, không giữ bản sao. Trước 09/09 chỗ này có luật riêng neo ở ĐẦU
+  // đường dẫn, nên nó trả `null` cho mọi hội thoại thuộc Project
+  // (`chatgpt.com/g/g-p-<project>/c/<id>`) trong khi adapter — thứ quyết định có được gửi
+  // hay không — nói đó LÀ hội thoại. Hệ quả: `boundConversationId` nhận null và cửa chống
+  // trôi-hội-thoại của `activeTab()` tắt lặng lẽ trên đúng những phiên đó.
   function conversationIdOf(url) {
-    try { return (new URL(url).pathname.match(/^\/c\/([^/?#]+)/) || [])[1] || null; }
-    catch (_) { return null; }
+    return window.DacProviderAdapter.conversationId(url);
   }
 
   async function pickActiveChatGPTTab() {

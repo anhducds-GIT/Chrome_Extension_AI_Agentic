@@ -47,7 +47,11 @@ function cut(startAnchor, mustContain) {
 
 const repairFn = cut("\n  async function repairWorkspaceSurface() {\n", "chrome.tabs.reload");
 const waitFn = cut("\n  async function waitTabComposer(tabId, startedAt = Date.now()) {\n", "DAC_PING");
-const conversationFn = cut("\n  function conversationIdOf(url) {\n", "pathname");
+const conversationFn = cut("\n  function conversationIdOf(url) {\n", "DacProviderAdapter");
+/* Luật "địa chỉ này là hội thoại nào" sống ở ADAPTER, một bản duy nhất. Nạp adapter THẬT vào
+   sân khấu thay vì chép luật sang đây — bản sao thứ hai của đúng luật này là thứ đã làm cửa
+   chống trôi-hội-thoại tắt lặng lẽ trên mọi hội thoại thuộc Project (sửa 09/09). */
+const adapterSrc = fs.readFileSync(path.join(here, "..", "provider-adapter.js"), "utf8");
 
 const constants = source.match(/^ {2}const CHAT_RELOAD_(?:READY_TIMEOUT_MS|POLL_MS) = .*$/gm) || [];
 assert.equal(constants.length, 2, "mỏ neo hỏng: phải lấy được đúng 2 hằng thời gian của vòng chờ");
@@ -86,7 +90,9 @@ function sanKhau({ tab, boundTabId = 7, boundTabUrl = "", boundConversationId = 
       }
     }
   };
+  sandbox.window = sandbox;
   vm.createContext(sandbox);
+  vm.runInContext(adapterSrc, sandbox);
   vm.runInContext(
     `${constants.join("\n")}\n${urlGuard}\nvar conversationIdOf, waitTabComposer, repairWorkspaceSurface;` +
     `${conversationFn}${waitFn}${repairFn}`,

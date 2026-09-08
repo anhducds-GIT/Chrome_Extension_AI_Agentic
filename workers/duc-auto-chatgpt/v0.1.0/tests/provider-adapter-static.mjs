@@ -214,4 +214,53 @@ for (const mutation of [".click()", ".focus()", "setComposerValue", "dispatchEve
   }
 }
 
+/* ---- MỘT luật, MỘT bản: id hội thoại và "có phải hội thoại không" ----------
+ *
+ * Ghim 09/09, sau một lỗ thật. `sidepanel.js` từng giữ bản sao riêng của luật này, neo ở ĐẦU
+ * đường dẫn (`/^\/c\//`), trong khi adapter khớp `/c/<id>` ở BẤT KỲ đâu. Hai bên vì thế trả
+ * lời khác nhau cho một hội thoại thuộc Project (`chatgpt.com/g/g-p-<project>/c/<id>`):
+ * adapter nói ĐƯỢC GỬI, bản sao kia trả `null`.
+ *
+ * Cái mất không phải một dòng lệch. `state.boundConversationId` nhận `null`, nên cửa *"cùng
+ * một tab không có nghĩa là cùng một HỘI THOẠI"* của `activeTab()` **tắt lặng lẽ** — tức lớp
+ * chặn giữ cho prompt của job này không rơi vào luồng khác đã không chạy trên mọi phiên
+ * Project, mà không gì đỏ lên. Lộ ra 09/09 chỉ vì đường tự chữa của ADR-0050 ⒝ cần một đích
+ * để quay về và luôn nhận `null`.
+ *
+ * Bất biến: `conversationId(url) !== null` phải TRÙNG KHỚP `surfaceAllowed(url)`, không có
+ * ngoại lệ. Hai câu trả lời cho cùng một câu hỏi thì sớm muộn cũng lệch.
+ */
+{
+  const truong_hop = [
+    ["https://chatgpt.com/c/6aa03cbf-ecb0-83ec", "6aa03cbf-ecb0-83ec", "hội thoại thường"],
+    ["https://chatgpt.com/g/g-p-6a9d9925/c/6a9d9989", "6a9d9989", "hội thoại trong Project — ĐO LIVE 09/09, gửi được bình thường"],
+    ["https://chatgpt.com/c/abc?model=x#top", "abc", "có query và neo thì id vẫn sạch"],
+    ["https://chatgpt.com/", null, "trang phóng"],
+    ["https://chatgpt.com/g/g-p-6a9d9925", null, "trang Project, chưa vào hội thoại nào"],
+    ["https://chatgpt.com/gpts", null, "trang danh mục"],
+    ["https://example.com/c/abc", null, "đúng hình dạng nhưng SAI nhà cung cấp"],
+    ["", null, "địa chỉ rỗng"]
+  ];
+  let dem = 0;
+  for (const [url, mong, vi_sao] of truong_hop) {
+    assert.equal(adapter.conversationId(url), mong, `${vi_sao}: ${url}`);
+    assert.equal(
+      adapter.conversationId(url) !== null,
+      adapter.surfaceAllowed(url),
+      `HAI LUẬT LỆCH NHAU ở ${url} (${vi_sao}). Một bên nói được gửi, bên kia không nêu được ` +
+      "tên hội thoại — và khi đó cửa chống trôi-hội-thoại tắt mà không ai thấy."
+    );
+    dem += 1;
+  }
+  assert.equal(dem, truong_hop.length, "mỏ neo hỏng: không chạy hết bảng trường hợp");
+
+  // Và `sidepanel.js` phải UỶ cho adapter, không được mọc lại bản sao.
+  const sidepanel = read("sidepanel.js");
+  assert.match(sidepanel, /function conversationIdOf\(url\) \{\s*return window\.DacProviderAdapter\.conversationId\(url\);\s*\}/,
+    "conversationIdOf phải uỷ thẳng cho adapter — một luật, một bản (giới hạn ② của AGENTS.md gốc)");
+  const conv = sidepanel.slice(sidepanel.indexOf("function conversationIdOf"));
+  assert.doesNotMatch(conv.slice(0, 400), /pathname\.match/,
+    "đừng dựng lại luật đường dẫn trong sidepanel.js — đó chính là bản sao vừa bị gỡ");
+}
+
 console.log("provider adapter static checks: PASS");
