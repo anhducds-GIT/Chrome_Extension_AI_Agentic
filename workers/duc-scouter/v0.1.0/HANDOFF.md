@@ -578,3 +578,29 @@ vô hạn · để kho lưu tự đặt trần) đều chết ở trần 200 y n
 (Gate 7) đang ĐỎ trên cây làm việc. `session-check.mjs` nay `import` `backlog-check.mjs`, nhưng
 danh sách tệp chép sang repo tạm của phép ghim đó chưa có tên nó → repo tạm chết lúc nạp module.
 Không phải việc của lượt này và `_code` không phải vùng tôi giữ; cả hai tệp đang có sửa chưa commit.
+
+## 2026-09-08 · `claude-scouter-s06` — HNX rời nhà; Scouter ở lại làm bộ dò trang
+
+Đức chốt tách HNX thành extension riêng ([ADR-0021](../../../docs/adr/0021-hnx-fetch-tach-thanh-extension-rieng.md)):
+*"sau này ta sẽ dùng scouter đi scout trang khác."* Gói này đổi ba chỗ.
+
+**⑴ Pilot `hnx-phai-sinh` đã chuyển sang `workers/hnx-fetch/du-lieu/`.** Thư mục cũ **giữ
+nguyên, chưa xoá** — xoá tệp là việc phải hỏi Đức — nhưng đã dán bảng *ĐÃ CHUYỂN NHÀ* ở đầu
+`AGENTS.md` của nó. Đừng sửa gì trong đó nữa; bản đang sống nằm ở gói mới.
+
+**⑵ STATUS sửa trần 50 → 200** cho khớp [ADR-0005](docs/adr/0005-tran-ghi-nang-tu-50-len-200.md).
+
+**⑶ Một lỗi CŨ lộ ra và đã vá.** STATUS khai `ref_readme: README.md` và `ref_handoff: HANDOFF.md`.
+Phép kiểm B5 giải hai đường đó **từ gốc repo**, mà gốc repo *có* hai tệp cùng tên — nên nó
+XANH suốt, trong khi người bấm từ bảng trạng thái rơi vào README của **CẢ REPO** chứ không
+phải của Scouter. Xanh mà trỏ nhầm chỗ. Nay khai đường đầy đủ.
+
+> Đáng ghi vì đây là dạng lỗi khó thấy nhất trong repo này: **phép kiểm đúng luật của nó, và
+> vẫn để lọt.** B5 hỏi *"tệp có tồn tại không"* — nó không hỏi *"có đúng tệp bạn định trỏ"*.
+> Mọi gói tương lai khai đường tương đối đều dính đúng bẫy này.
+
+**Việc kế của Scouter không đổi:** mục ① của `ROADMAP.md` — trang thử THỨ HAI, nên chọn trang
+render bằng JS. Nay lý do còn mạnh hơn: Scouter mất pilot duy nhất của nó, nên câu *"năng lực
+chung"* hiện **không còn một trang thật nào** đứng sau.
+
+**Đo.** Suite gói **20/20**. Suite gốc repo 369 → **375** (gói mới nối vào cổng).
