@@ -1,7 +1,7 @@
 # ROADMAP — Scouter Seed đi tới đâu, và đang ở đâu
 
 > **Viết cho Đức đọc.** Một trang, không thuật ngữ nếu tránh được.
-> Phạm vi cố định: **25 mục `SEED v0.1`**, chốt ở [ADR-0010](../../../docs/adr/0010-scouter-dung-o-seed-v01.md).
+> Phạm vi cố định: **25 mục `SEED v0.1`**, chốt ở [ADR-0010](../../../docs/adr/0007-scouter.md).
 > Danh sách 25 mục nằm ở `docs/studies/SCOUTER-CAPABILITY-INVENTORY-V1.md`; file này **không
 > chép lại nó**, chỉ nói mục nào xong, mục nào chưa, và làm theo thứ tự nào.
 
@@ -12,7 +12,7 @@ awk -F'|' '/^\|/ && NF>2 {c=$(NF-1); gsub(/^ +| +$/,"",c); if (c ~ /SEED v0\.1/)
   docs/studies/SCOUTER-CAPABILITY-INVENTORY-V1.md | wc -l
 ```
 
-## Thang phiên bản — Đức chốt 07/09 ([ADR-0020](../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md))
+## Thang phiên bản — Đức chốt 07/09 ([ADR-0020](../../../docs/adr/0007-scouter.md))
 
 | Nấc | Đóng khi | Việc thật kéo nó |
 |---|---|---|
@@ -91,14 +91,14 @@ Việc đó lùi sang bước 2, nơi có một vòng chạy đủ dài để đ
 
 ### Bước 2 — đóng vòng tự cải tiến MỘT lần ⟵ *việc kế*
 
-Đây là mục đích của cả gói ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md)):
+Đây là mục đích của cả gói ([ADR-0009](../../../docs/adr/0007-scouter.md)):
 Scouter dò trang → báo cáo cho AI → AI viết adapter xuống đĩa → `scout.reload` → adapter chạy.
 Từng mảnh đã có; **cả vòng thì chưa ai chạy một lần nào**.
 
 Cho tới khi vòng đó khép một lần trên một trang tự dựng, ta đang xây các bộ phận mà chưa biết
 chúng lắp vào nhau có chạy không.
 
-**Đức vừa gỡ chỗ chặn của bước này ngày 07/09** ([ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md)):
+**Đức vừa gỡ chỗ chặn của bước này ngày 07/09** ([ADR-0016](../../../docs/adr/0007-scouter.md)):
 Scouter được ghi ghi chép xuống đĩa. Đó chính là **tầng thứ ba** trong ba tầng của ADR-0009 —
 *nguyên liệu để sinh ra adapter*.
 
@@ -121,7 +121,7 @@ trong `BACKLOG.md`.
    DOM; cái AI thật sự cần để chọn đích là *"nút tên Gửi"*, không phải `div > div > button:nth-child(3)`.
 
 ~~Hai mục còn lại của nhóm A (chụp màn hình · chụp cây DOM một lượt) làm sau.~~ **Cả hai XONG 07/09** (`scout.shot` · `scout.snapshot`). Chụp màn hình từng
-vướng chính sách che dữ liệu; [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md)
+vướng chính sách che dữ liệu; [ADR-0016](../../../docs/adr/0007-scouter.md)
 gỡ chỗ đó ngày 07/09.
 
 ### Bước 4 — dừng lại, đếm lại, rồi mới đi tiếp
@@ -133,8 +133,8 @@ Sau bước 3, đo lại còn bao nhiêu mục và mục nào còn đáng làm. 
 
 | Chặn gì | Ai gỡ | Ghi ở đâu |
 |---|---|---|
-| ~~Chính sách che dữ liệu~~ **ĐÃ GỠ 07/09** — Scouter được ghi ghi chép xuống đĩa | *xong* | [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md) |
-| ~~Nhóm B — 7 mục làm hay hoãn~~ **ĐÃ CHỐT 07/09**: làm 4 mục pilot cần, hoãn 3 mục của cỗ chạy job nhà cung cấp | *xong* | [ADR-0020](../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md) mục ⑸ |
+| ~~Chính sách che dữ liệu~~ **ĐÃ GỠ 07/09** — Scouter được ghi ghi chép xuống đĩa | *xong* | [ADR-0016](../../../docs/adr/0007-scouter.md) |
+| ~~Nhóm B — 7 mục làm hay hoãn~~ **ĐÃ CHỐT 07/09**: làm 4 mục pilot cần, hoãn 3 mục của cỗ chạy job nhà cung cấp | *xong* | [ADR-0020](../../../docs/adr/0007-scouter.md) mục ⑸ |
 | Chạy trên trang thật (không phải trang tự dựng) | **Đức** | `AGENTS.md` gốc mục 2 |
 
 ## 08/09 — ĐANG Ở ĐÂU, sau một ngày chạy thật
@@ -234,7 +234,7 @@ Ghi ở đây vì sau một lượt compact thì đây là chỗ duy nhất còn
 
 **Đã chốt 08/09, không hỏi lại:** `S-11` (token trần ở hai bridge đóng băng) — **chấp nhận rủi
 ro**. Lý do và điều kiện hết hiệu lực ở
-[ADR-0022](../../../docs/adr/0022-chap-nhan-rui-ro-token-tran-o-hai-bridge-dong-bang.md).
+[ADR-0022](../../../docs/adr/0021-goi-extension.md).
 
 ## Cái file này KHÔNG làm
 

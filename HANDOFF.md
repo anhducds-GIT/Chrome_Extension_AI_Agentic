@@ -138,7 +138,7 @@ qua. **Đừng đi sửa file của lane khác** — chỉ cần commit phần m
 ## 2026-09-08 · `claude-cua-kiem` — ADR-0019: ranh giới vùng↔đường dẫn ĐÓNG, và một câu chữa bị sửa
 
 **Làm gì.** Cập nhật ADR-0019 theo việc đã chạy ở bộ khung, không phải theo dự định. Chi tiết đầy
-đủ ở `docs/adr/0019-cua-tich-hop-kiem-quyen-tren-lich-su.md`; đây chỉ là con trỏ:
+đủ ở `docs/adr/0005-lam-viec-song-song.md`; đây chỉ là con trỏ:
 
 - **Mục ⑵c: "còn hở" → ĐÃ ĐÓNG.** Lõi quyền bắt buộc `--ban-do` + `--con-lai`, quy mọi đường dẫn
   trong khoảng `coSo..sha` về một khoá theo khối `areas`, từ chối nếu có đường dẫn thuộc vùng khác.
@@ -200,7 +200,7 @@ tiếp y nguyên. Nó không lọc được gì, chỉ cắt một việc lành 
 không đụng. Kèm: **ba mỏ neo đột biến đã chết từ hôm trước** (`D9 H2 F6`) được vá — chúng canh
 ba chốt an toàn mà lại khớp 0 lần.
 
-**② HNX Fetch tách thành extension riêng** ([ADR-0021](docs/adr/0021-hnx-fetch-tach-thanh-extension-rieng.md)).
+**② HNX Fetch tách thành extension riêng** ([ADR-0021](docs/adr/0021-goi-extension.md)).
 Đức: *"scouter đi scout trang khác, còn HNX thành 1 extension độc lập."*
 
 **Phép đo quyết định hình dạng gói, chạy TRƯỚC khi chép một dòng nào:** tầng dữ liệu HNX gọi
@@ -336,7 +336,7 @@ Nội dung nguyên vẹn, nhưng nhãn `Lane:` của hai lượt sửa đó ch�
 - `N-39` — bản mẫu ADR chào đời ở `Proposed`, kèm lý do. Ghim 29 → 30.
 - `N-11` — hai bảng **không gộp** (ràng buộc ngược nhau), mà mỗi bản tự khai nó là bản nào, ở
   dòng đầu (máy) và dải mốc (mắt Đức). Ghim 14 → 17.
-- `N-37` — bản nháp ADR 07/09 **không mất**, vào repo tại `docs/adr/0023-khong-ai-phai-cho-ai.md`.
+- `N-37` — bản nháp ADR 07/09 **không mất**, vào repo tại `docs/adr/0005-lam-viec-song-song.md`.
 
 **Ba chỗ tôi CỐ Ý không làm, và lý do — đọc trước khi ai đó làm hộ:**
 

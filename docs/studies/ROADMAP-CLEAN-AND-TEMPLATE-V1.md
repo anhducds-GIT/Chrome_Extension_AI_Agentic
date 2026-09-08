@@ -43,7 +43,7 @@ Trước đây tôi đề xuất làm template sau khi xong hết. Sai — sẽ 
 Cách đúng: **mỗi phiên sinh ra một artifact chuẩn thì trích ngay vào bộ template.**
 Tới phiên cuối là template đã có sẵn, chỉ việc đánh dấu "đã kiểm chứng".
 
-> **⛔ ĐÃ BỊ THAY THẾ 2026-09-02 bởi [ADR-0001](../adr/0001-template-o-repo-doc-lap-project-3ai-nghi.md).**
+> **⛔ ĐÃ BỊ THAY THẾ 2026-09-02 bởi [ADR-0001](../adr/0001-ranh-gioi-bo-khung.md).**
 > Đức chốt: template **ở một repo độc lập**, Project 3AI kết thúc vai trò và có thể archive.
 > Giữ nguyên đoạn dưới làm bản ghi lịch sử — đừng làm theo nó.
 >
@@ -264,7 +264,7 @@ Món ④ đụng `build-dashboard.mjs` + `package.json` — làm cuối, commit 
 | | |
 |---|---|
 | **Ai** | Claude điều phối · Đức duyệt từng diff |
-| **Làm** | ⛔ **VIẾT LẠI 02/09 — [ADR-0001](../adr/0001-template-o-repo-doc-lap-project-3ai-nghi.md).** Không promote vào Kho nữa. Thay bằng: **dựng nhà độc lập cho template** (mốc M1–M2 ở mục 10). Bản cũ: *"promote vào Kho (Project-3) ở tier SEED"* — giữ làm bản ghi. |
+| **Làm** | ⛔ **VIẾT LẠI 02/09 — [ADR-0001](../adr/0001-ranh-gioi-bo-khung.md).** Không promote vào Kho nữa. Thay bằng: **dựng nhà độc lập cho template** (mốc M1–M2 ở mục 10). Bản cũ: *"promote vào Kho (Project-3) ở tier SEED"* — giữ làm bản ghi. |
 | **Điều kiện tiên quyết** | ⚠️ **ĐANG NGHI NGỜ — xem 9.5 trước khi khởi công.** Bản cũ: *"K-MIGRATE xong — `sync_manifest.json` đã có `schema_version`, version/path/tier đã sửa, checksum sinh lại."* Điều kiện này giả định Kho đang sống. Đức báo 02/09 là **không**. |
 | **Đức nghiệm thu** | Mở `sync_manifest.json` trong Kho. Bộ artifact có mặt ở tier `SEED`, không nằm ở `LOCKED`. Một repo mới lấy SEED về, chạy cổng kiểm ra xanh. |
 
@@ -499,7 +499,7 @@ K-MIGRATE là *sửa một manifest trong repo không ai dùng*, và S9 là *pro
 **Ai làm việc nhìn này: GPT.** Nó có connector đọc thẳng GitHub; một lượt là xong. Claude Code
 không đọc được repo khác. Đây là việc rẻ nhất trên bàn và nó quyết định ba mốc.
 
-> **✅ ĐÃ CHỐT 02/09, cùng ngày — [ADR-0001](../adr/0001-template-o-repo-doc-lap-project-3ai-nghi.md).**
+> **✅ ĐÃ CHỐT 02/09, cùng ngày — [ADR-0001](../adr/0001-ranh-gioi-bo-khung.md).**
 > Đức chọn **cả hai đều không**: Project 3AI *kết thúc vai trò*, có thể archive. Template ở
 > **repo độc lập**. Làn B nghỉ. Ba câu hỏi ở trên **không còn để quyết số phận Kho** — chúng
 > thu lại thành một câu duy nhất: *"trong Project 3AI có gì đáng mang sang trước khi archive?"*
@@ -521,7 +521,7 @@ thật — migrate sang một extension thứ hai không chứng minh được g
 
 ## 10. Giai đoạn 2 — Template độc lập và nhân bản ra các repo khác
 
-> Chốt 2026-09-02, [ADR-0001](../adr/0001-template-o-repo-doc-lap-project-3ai-nghi.md).
+> Chốt 2026-09-02, [ADR-0001](../adr/0001-ranh-gioi-bo-khung.md).
 > **Làn B đã nghỉ** — K-MIGRATE · K2 · K3 · K5 không còn trong lộ trình.
 
 ### 10.1 Template gồm tám thứ — và hai thứ CHƯA TỒN TẠI

@@ -1,8 +1,8 @@
 # Extension Observer V0 — ghi chép kỹ thuật thừa kế
 
 > **File này là bản ghi của POC-1, giữ nguyên văn.** Cửa vào của gói là `README.md` cùng thư mục.
-> Từ 06/09 Observer đã thành Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md))
-> và gói dọn về đây ([ADR-0013](../../../docs/adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md)).
+> Từ 06/09 Observer đã thành Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md))
+> và gói dọn về đây ([ADR-0013](../../../docs/adr/0007-scouter.md)).
 > Bốn mục còn đúng nguyên: *Safety boundary* · *Target classifications* · *Report levels* ·
 > *Expected limitations* — chúng tả `observer-engine.js`, và file đó không đổi.
 > Mục *Install unpacked* đã sửa đường dẫn; mục *Explicit non-goals* nay **KHÔNG còn đúng**:

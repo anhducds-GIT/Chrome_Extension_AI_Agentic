@@ -45,7 +45,7 @@ take and release goes through the command; never hand-edit the file.
 
 ### 1a. File locks are the default — hold briefly, release at once
 
-[ADR-0025](docs/adr/0025-khoa-muc-file-giu-ngan-tra-ngay.md).
+[ADR-0025](docs/adr/0005-lam-viec-song-song.md).
 
 Take immediately **before** a write, release immediately **after**. **Reading needs no lock.**
 Take a whole area only when you genuinely edit across it.
@@ -127,7 +127,7 @@ Declared in `append_only_exempt` in `.repo-structure.json` — **edit there, nev
 - **Committing and pushing need no approval** (Đức, 26/08) when all three hold: ⑴ the work is
   complete — never push work in progress · ⑵ the gate is fully green, and for code, independently
   audited · ⑶ you push with `safe-push.mjs`.
-- **`--carry` needs no approval** ([ADR-0005](docs/adr/0005-duyet-thuong-truc-cho-push-va-carry.md)).
+- **`--carry` needs no approval** ([ADR-0005](docs/adr/0005-lam-viec-song-song.md)).
   In exchange, **every `--carry` must name the carried lane in the session log** — that is the
   only trace left.
 
@@ -144,7 +144,7 @@ create no self-running automation — not without asking.
 ## 4. Hard limits
 
 1. **No cap on the number of packages.** All five are live
-   ([ADR-0024](docs/adr/0024-mo-bang-toan-bo-nam-goi.md)). The freeze mechanism stays in place
+   ([ADR-0024](docs/adr/0021-goi-extension.md)). The freeze mechanism stays in place
    with an empty list — it is a switch Đức can flip back. Limits ⑦ and ② now carry the weight this
    cap used to; do not loosen either.
 2. **Never build one feature twice.** Needed in two packages → `workers/_shared/` first.
@@ -164,7 +164,7 @@ create no self-running automation — not without asking.
 8. **One rule in, one rule out.** Adding a rule here must name the rule it replaces, or measure how
    many times it has actually fired. The place for the story is the ADR, not this file.
 9. **Rules get reviewed weekly, not on demand**
-   ([ADR-0026](docs/adr/0026-adr-records-are-editable.md)). ADR records may be merged, regrouped,
+   ([ADR-0026](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md)). ADR records may be merged, regrouped,
    translated and rewritten; a decision may never be lost. Check B12 enforces the second half.
 
 ## 5. Never
@@ -192,7 +192,7 @@ create no self-running automation — not without asking.
 ## 6. Roles — by direction of work, not by vendor
 
 **Đức decides everything.** Beyond that there are two roles
-([ADR-0017](docs/adr/0017-hai-vai-assistant-thay-the-mot-cua.md)). A role belongs to a **session**,
+([ADR-0017](docs/adr/0004-hai-vai-assistant.md)). A role belongs to a **session**,
 not a vendor: any model can hold any role, and a session holds exactly one until it closes.
 
 | Role | Owns | Does | Must not |
@@ -220,20 +220,20 @@ repo trước khi làm gì."* — it was never proven to load the file on its ow
 |---|---|
 | **Touch the three `duc-auto-*` packages** | That package's own `workers/<pkg>/<ver>/AGENTS.md`, with its `BACKLOG.md` and `HANDOFF.md` beside it. They are **forks of each other** (limit ②), so one bug usually has three copies and patching one leaves two |
 | **Coordinate: Đức asks what is happening, what is next, what can run in parallel** | `docs/protocols/ORCHESTRATOR.md` — the **HARD ROLE FIREWALL** (a coordinating session does not code, does not debug product, does not propose patches; no "small fix" exception), and the five-part report shape `DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` then stop. Tool: `node scripts/what-next.mjs`, read-only, no lock needed |
-| **Find out what Đức decided, and why** | `docs/adr/` for repo-wide decisions, `workers/<pkg>/<ver>/docs/adr/` for one package. Rules for the register: [ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) and [ADR-0026](docs/adr/0026-adr-records-are-editable.md). Template: `docs/_TEMPLATE-adr.md` |
-| **Write a journal entry, or the gate rejected yours as too long** | `docs/protocols/HANDOFF.md` — what an entry holds and what belongs elsewhere (reason → ADR · open work → `BACKLOG.md` · method → brief). Cap **2,600 bytes per entry**, and the gate blocks **only the entry you just added**; a book keeps **20 entries** ([ADR-0008](docs/adr/0008-cat-duoi-handoff-giu-hai-muoi-luot.md)), with `handoff.tran_so_muc` as the trip wire. Tools: `node scripts/handoff.mjs --check` · `--rotate <file>` moves into a new month ([ADR-0011](docs/adr/0011-handoff-chan-o-dau-vao-va-xoay-theo-thang.md) clause ⑴) |
+| **Find out what Đức decided, and why** | `docs/adr/` for repo-wide decisions, `workers/<pkg>/<ver>/docs/adr/` for one package. Rules for the register: [ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) and [ADR-0026](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md). Template: `docs/_TEMPLATE-adr.md` |
+| **Write a journal entry, or the gate rejected yours as too long** | `docs/protocols/HANDOFF.md` — what an entry holds and what belongs elsewhere (reason → ADR · open work → `BACKLOG.md` · method → brief). Cap **2,600 bytes per entry**, and the gate blocks **only the entry you just added**; a book keeps **20 entries** ([ADR-0008](docs/adr/0008-nhat-ky-phien.md)), with `handoff.tran_so_muc` as the trip wire. Tools: `node scripts/handoff.mjs --check` · `--rotate <file>` moves into a new month ([ADR-0011](docs/adr/0008-nhat-ky-phien.md) clause ⑴) |
 | **Read further back than 20 entries** | `HANDOFF-ARCHIVE-*.md` next to that `HANDOFF.md`. They chain: `-02` carries a pointer back to `-01`. **Verbatim, read-only** — reassembling them reproduces the original byte for byte. Cut again: `node scripts/handoff.mjs --cat <file> --giu 20` |
 | **Know what your branch is missing versus the other** | Two files, read together ([ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)): `FEATURE-PARITY.md` is **human prose** (§2 behaviour, evidence tagged **[ĐỌC]**) and needs `_root`; `FEATURE-PARITY-AUTO.md` is **machine numbers**, generated and lock-free. Never put human prose on a machine line — one explanation was already swallowed that way. **[DÒ]** rows are name-matching guesses: verify before acting |
 | **Understand the repo in one read** | `llms.txt` (llmstxt.org entry point) and `repo-map.json` (machine map, versioned schema). Both from `node scripts/build-dashboard.mjs` |
 | **See which extensions exist and which work** | `DASHBOARD.md` — generated, never hand-edited |
 | **Run a multi-extension setup, or add one** | `PLATFORM.md`; declare a new one by copying `STATUS.template.md` next to its `manifest.json` |
 | **Find out what the repo owes structurally** | `node scripts/check-bootstrap.mjs [--all]` — B1…B15, each line naming both the fault and the fix. Eight block: `B1 B2 B3 B4 B5 B7 B10 B12`, declared in `bootstrap.blocking`. The other seven — `B6 B8 B9 B11 B13 B14 B15` — only warn; **B15 enforces the write-for-Đức rule** on the three board fields |
-| **Fetch HNX data, or work on that package** | `workers/hnx-fetch/PROTOCOL.md` ([ADR-0021](docs/adr/0021-hnx-fetch-tach-thanh-extension-rieng.md)) — a standalone runbook written for a non-Claude AI. That extension has **no `debugger` permission**, so it cannot click anything; clicking is Scouter's job |
-| **Work on Scouter** | `workers/duc-scouter/v0.1.0/AGENTS.md` ([ADR-0009](docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md) · [ADR-0013](docs/adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md)). Two traps: **a selector never goes into the seed** (seed/adapter boundary), and its Bridge door does a **two-way handshake**, so it pairs only with the ChatGPT-era host |
+| **Fetch HNX data, or work on that package** | `workers/hnx-fetch/PROTOCOL.md` ([ADR-0021](docs/adr/0021-goi-extension.md)) — a standalone runbook written for a non-Claude AI. That extension has **no `debugger` permission**, so it cannot click anything; clicking is Scouter's job |
+| **Work on Scouter** | `workers/duc-scouter/v0.1.0/AGENTS.md` ([ADR-0009](docs/adr/0007-scouter.md) · [ADR-0013](docs/adr/0007-scouter.md)). Two traps: **a selector never goes into the seed** (seed/adapter boundary), and its Bridge door does a **two-way handshake**, so it pairs only with the ChatGPT-era host |
 | **Find a document, or an old `drafts/…` path** | `docs/README.md` — index plus a map of 33 old paths. `drafts/` at repo root is gone |
 | **Write a new study** | `docs/_TEMPLATE-study.md`. A retired study is **deleted**, not archived — git keeps it |
-| **Reuse or change the harness** | **Not in this repo.** It lives at `https://github.com/anhducds-GIT/Ark_Repo_Harness` ([ADR-0001](docs/adr/0001-template-o-repo-doc-lap-project-3ai-nghi.md)). This repo is a **consumer** |
-| **Change the Assistant package** (`what-next.mjs` · `state-check.mjs` · `ORCHESTRATOR.md`) | **Change it in the harness first**, then bring it back ([ADR-0006](docs/adr/0006-goi-assistant-phat-hanh-tu-bo-khung.md)). The other order produces two versions of one package, each claiming to be canonical |
+| **Reuse or change the harness** | **Not in this repo.** It lives at `https://github.com/anhducds-GIT/Ark_Repo_Harness` ([ADR-0001](docs/adr/0001-ranh-gioi-bo-khung.md)). This repo is a **consumer** |
+| **Change the Assistant package** (`what-next.mjs` · `state-check.mjs` · `ORCHESTRATOR.md`) | **Change it in the harness first**, then bring it back ([ADR-0006](docs/adr/0001-ranh-gioi-bo-khung.md)). The other order produces two versions of one package, each claiming to be canonical |
 | **Place a pairing file, launcher, or Bridge write-area** | **Do not pick a location.** Everything Bridge-related lives under the path declared in `thu_muc_ngoai_repo`. Use `node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <pkg>`; it reads the map. The write-area is **always a subdirectory**, because `file.read` can read anything beneath it |
 | **The gate reports `DAU_VO` — the claims table was hand-edited** | `git diff .agents/claims.json` → was your key reassigned? → if yes, **ask Đức** → only then `--restamp`. **Never restamp just to move on**: that stamps the edit as lawful and erases the evidence. If the edit moved a key away from someone, `--restamp` refuses until you pass `--duc-duyet "<his words>"`, and that sentence is written **into the table**, where the lane who lost the key will actually read it |
 | **Work alongside another AI, or change one of the four concurrency mechanisms** | `docs/protocols/MULTIFLOW.md` — the four mechanisms, six invariants with the reason for each, the change procedure (**mutation testing is mandatory**: four times in one day a freshly written guard turned out to do nothing while the tests stayed green), and the error-code table |

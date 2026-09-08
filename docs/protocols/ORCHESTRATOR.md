@@ -63,7 +63,7 @@ thật đổi → sửa `STATUS.md` / `BACKLOG.md` / `IDEAS.md` / `HANDOFF.md` �
 Bảng là cái gương, không phải cơ sở dữ liệu thứ hai — hai nguồn sự thật cho cùng một việc là
 đúng cái bệnh cả repo này đang chữa.
 
-## 0c. ĐỊA BÀN LÀ HAI REPO, không phải một (Đức chốt 2026-09-04 — [ADR-0003](../adr/0003-assistant-dieu-phoi-ca-bo-khung.md))
+## 0c. ĐỊA BÀN LÀ HAI REPO, không phải một (Đức chốt 2026-09-04 — [ADR-0003](../adr/0001-ranh-gioi-bo-khung.md))
 
 Vai này điều phối **cả repo bộ khung** `Ark_Repo_Harness`, không chỉ repo Extension đang đứng.
 
@@ -98,7 +98,7 @@ trên đất của nó; đừng bê luật repo Extension sang.
   sớm muộn cũng bị bỏ qua. Phép kiểm cần sửa `tests/role-firewall-smoke.mjs` → khoá `_code` →
   một lượt khác.
 
-## 0d. MỘT CỬA — Đức hỏi một phiên, phiên đó rẽ nhánh (Đức chốt 2026-09-05 — [ADR-0004](../adr/0004-mot-cua-assistant-re-nhanh-va-giu-bao-cao-song.md))
+## 0d. MỘT CỬA — Đức hỏi một phiên, phiên đó rẽ nhánh (Đức chốt 2026-09-05 — [ADR-0004](../adr/0004-hai-vai-assistant.md))
 
 Đức làm việc qua **một phiên Assistant duy nhất** cho mỗi repo. Phiên này **tự rẽ nhánh** thành
 nhiều executor, điều phối chúng, và **giữ khu báo cáo sống trên bảng**.
@@ -140,7 +140,7 @@ nó làm bảng mục; nay dấu lọc đã xử chỗ đó. Đây là quyết �
 **Hai thứ khu này KHÔNG thấy** — nói ra trên trang, đừng để Đức tin nhầm: luồng đang chạy ở
 **repo khác**, và luồng **chưa kịp nhận khoá**.
 
-## 0e. HỢP ĐỒNG BÁO CÁO — báo gì, KHÔNG báo gì (Đức chốt 2026-09-05 — [ADR-0005](../adr/0005-duyet-thuong-truc-cho-push-va-carry.md))
+## 0e. HỢP ĐỒNG BÁO CÁO — báo gì, KHÔNG báo gì (Đức chốt 2026-09-05 — [ADR-0005](../adr/0005-lam-viec-song-song.md))
 
 Mục 1 nói Đức chỉ thấy lớp điều phối. Mục này nói **cụ thể** cái đó ra, vì bản thân phiên điều
 phối đã vi phạm nó suốt một ngày: báo Đức cổng xanh mấy mục, push mấy commit, ai giữ khoá nào.
@@ -477,7 +477,7 @@ xong rồi tôi đẩy"*. Với Đức đó **là** dừng: từ phía ông, lu�
   "đang chờ" — tin đó không có gì để đọc, và nó đúng bằng một lượt Đức tưởng việc đang chạy.
 - Cổng đỏ ở đúng một phép kiểm mình vừa sửa và **tự chạy lại được** → chạy phép đó trực tiếp lấy
   bằng chứng rồi đi tiếp, đừng chờ cả suite chạy lại để xác nhận thứ đã biết.
-- `--carry` không phải hỏi ([ADR-0005](../adr/0005-duyet-thuong-truc-cho-push-va-carry.md)) —
+- `--carry` không phải hỏi ([ADR-0005](../adr/0005-lam-viec-song-song.md)) —
   chỉ phải **kể tên lane bị cuốn theo**.
 
 **Vì sao vai này nghiêm hơn mọi vai khác:** mô hình **một cửa** (`0d`) nghĩa là mọi việc đi qua

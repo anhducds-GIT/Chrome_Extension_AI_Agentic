@@ -7,8 +7,8 @@ ttl_days: 365
 # HANDOFF — luật ghi nhật ký phiên
 
 > Mở file này khi bạn **sắp ghi một mục nhật ký**, hoặc khi cổng đóng phiên chặn bạn vì mục quá
-> dài. Quyết định gốc: [ADR-0011](../adr/0011-handoff-chan-o-dau-vao-va-xoay-theo-thang.md) ·
-> cơ chế lưu trữ: [ADR-0008](../adr/0008-cat-duoi-handoff-giu-hai-muoi-luot.md).
+> dài. Quyết định gốc: [ADR-0011](../adr/0008-nhat-ky-phien.md) ·
+> cơ chế lưu trữ: [ADR-0008](../adr/0008-nhat-ky-phien.md).
 
 ## 1. `HANDOFF.md` dùng để làm gì — và không dùng để làm gì
 

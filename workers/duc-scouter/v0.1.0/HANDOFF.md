@@ -4,9 +4,9 @@
 
 ## Trạng thái hiện tại (2026-09-06)
 
-- Gói khai sinh theo [ADR-0013](../../../docs/adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md):
+- Gói khai sinh theo [ADR-0013](../../../docs/adr/0007-scouter.md):
   Scouter dọn từ gốc repo + `scripts/` + `tests/` về đây, có khoá riêng `workers/duc-scouter`.
-- Bản nền `SEED v0.1` làm được ba khả năng của [ADR-0009](../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md)
+- Bản nền `SEED v0.1` làm được ba khả năng của [ADR-0009](../../../docs/adr/0007-scouter.md)
   mục ⑸: quan sát · báo cáo qua Bridge · tự nạp lại mình.
 - Việc tiếp theo (1): `S-01` — cho Scouter bấm và gõ được như tay người.
 - Rủi ro đang mở: bản nền này **chưa từng chạy trên một trang thật**. Mọi số đo tới giờ là trên
@@ -138,7 +138,7 @@ chủ nên không ai mất gì, nhưng luật là nhận trước lượt ghi đ
 ## 2026-09-07 · `claude-scouter-s06` — Đức gỡ chỗ chặn cuối: Scouter được ghi xuống đĩa
 
 **Chốt.** Đức, 07/09: *"Scouter hoàn toàn được ghi chứ. Vì Scouter chính là bản phát triển đầu
-tiên của bất kỳ extension nào."* → [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md).
+tiên của bất kỳ extension nào."* → [ADR-0016](../../../docs/adr/0007-scouter.md).
 
 **Nó gỡ đúng cái gì.** ADR-0010 từng viết *"chừng nào chưa chốt thì Scouter không được ghi nội
 dung trang xuống đĩa"*, và điều đó cắt **tầng thứ ba** trong ba tầng của ADR-0009 — *ghi chép,
@@ -293,7 +293,7 @@ trong khi **ba trong bốn mục nhóm A đã xong ngay hôm nay** (`scout.a11y`
 
 ## 2026-09-07 · `claude-scouter-s06` — Đức mở thang phiên bản, và tôi siết quá tay một lần
 
-**Đức chốt roadmap ba nấc** ([ADR-0020](../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md)):
+**Đức chốt roadmap ba nấc** ([ADR-0020](../../../docs/adr/0007-scouter.md)):
 v1 đóng gói được, pilot `hnx.vn` kéo · v2 chạy một job lớn hơn rồi đẩy cái học được lên seed ·
 v3+ mỗi trang mới một lượt. Đây là *"ADR mới"* mà ADR-0010 đòi trước khi đi tiếp.
 
@@ -581,7 +581,7 @@ Không phải việc của lượt này và `_code` không phải vùng tôi gi�
 
 ## 2026-09-08 · `claude-scouter-s06` — HNX rời nhà; Scouter ở lại làm bộ dò trang
 
-Đức chốt tách HNX thành extension riêng ([ADR-0021](../../../docs/adr/0021-hnx-fetch-tach-thanh-extension-rieng.md)):
+Đức chốt tách HNX thành extension riêng ([ADR-0021](../../../docs/adr/0021-goi-extension.md)):
 *"sau này ta sẽ dùng scouter đi scout trang khác."* Gói này đổi ba chỗ.
 
 **⑴ Pilot `hnx-phai-sinh` đã chuyển sang `workers/hnx-fetch/du-lieu/`.** Thư mục cũ **giữ
@@ -664,7 +664,7 @@ và phép ghim xanh vì may mắn. Hai con `PD1` `PD2` hoàn nguyên đúng bả
 vá vừa viết lại, nên nó khớp 0 chỗ và bộ đo báo **ĐỎ** — đúng như luật của nó, không báo BỎ QUA.
 Đã neo lại. Nay 95/95 mỏ neo · 95 giết được · 0 sống sót.
 
-**S-11 rời sổ** theo [ADR-0022](../../../docs/adr/0022-chap-nhan-rui-ro-token-tran-o-hai-bridge-dong-bang.md).
+**S-11 rời sổ** theo [ADR-0022](../../../docs/adr/0021-goi-extension.md).
 Điều kiện hết hiệu lực nằm trong ADR: **mở băng một trong hai gói thì phải chuyển sang lõi
 chung ngay trong lượt mở**.
 

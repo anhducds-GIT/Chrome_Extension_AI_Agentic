@@ -90,3 +90,33 @@ git show a3b67a96a92e:docs/archive/<tên-file>          # đọc lại một h�
 
 | Tài liệu | Trạng thái | Nói về gì |
 |---|---|---|
+
+## `docs/adr/` — sổ quyết định, gộp theo CHỦ ĐỀ từ 2026-09-09
+
+Trước 09/09 đây là **27 file xếp theo thứ tự thời gian**, và không chỗ nào nói cái nào đang có
+hiệu lực — nó đẻ ra năm chỗ mâu thuẫn, một chỗ đã tốn thời gian thật. Nay **một chủ đề, một file,
+một câu trả lời**. Mỗi file khai `decides: [...]` liệt kê mọi số hiệu nó mang; phép kiểm **B12**
+ĐỎ nếu một số hiệu biến mất hoặc bị hai file cùng nhận.
+
+| File | Mang quyết định | Chủ đề |
+|---|---|---|
+| [`0000-ghi-nhan-quyet-dinh-kien-truc.md`](adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) | 0000 · 0026 | cách ghi một quyết định |
+| [`0001-ranh-gioi-bo-khung.md`](adr/0001-ranh-gioi-bo-khung.md) | 0001 · 0002 · 0003 · 0006 | ranh giới bộ khung |
+| [`0004-hai-vai-assistant.md`](adr/0004-hai-vai-assistant.md) | 0004 · 0017 | mấy phiên Assistant, chia việc thế nào |
+| [`0005-lam-viec-song-song.md`](adr/0005-lam-viec-song-song.md) | 0005 · 0018 · 0019 · 0023 · 0025 | khoá, quyền, và đẩy |
+| [`0007-scouter.md`](adr/0007-scouter.md) | 0007 · 0009 · 0010 · 0013 · 0016 · 0020 | Scouter |
+| [`0008-nhat-ky-phien.md`](adr/0008-nhat-ky-phien.md) | 0008 · 0011 · 0012 | nhật ký phiên |
+| [`0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md`](adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md) | 0014 | bảng đối chiếu: chữ người / số máy |
+| [`0015-nang-tran-duong-thu-len-900-giay.md`](adr/0015-nang-tran-duong-thu-len-900-giay.md) | 0015 | trần đường thử |
+| [`0021-goi-extension.md`](adr/0021-goi-extension.md) | 0021 · 0022 · 0024 | các gói extension |
+
+**Trích dẫn theo SỐ HIỆU, đừng trích theo tên file.** Số hiệu (`ADR-0025`) là thứ vĩnh viễn; tên
+file đổi được ở lượt rà hằng tuần. Muốn biết một số hiệu nay nằm ở file nào thì tra cột giữa của
+bảng trên, hoặc `grep decides docs/adr/*.md`.
+
+**Hai tên file cố ý giữ nguyên:** `0000-…` (118 file trong các gói đang trỏ tới) và `0015-…` (6
+chỗ trong ba gói `duc-auto-*`, mà tôi không có quyền sửa liên kết ở đó).
+
+**Bản cũ vẫn đọc được:** `git show <sha trước 09/09>:docs/adr/<tên-file-cũ>`. Riêng các file
+`HANDOFF-ARCHIVE-*.md` **cố ý không được vá liên kết** — chúng kể chuyện quá khứ, và lúc đó tên
+file đúng là tên đó.

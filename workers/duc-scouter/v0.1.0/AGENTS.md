@@ -11,9 +11,9 @@ Khoá của gói: **`workers/duc-scouter`**. Nhận bằng
 Ba gói `duc-auto-*` tự động hoá **một nhà cung cấp** theo một workbook XLSX. Scouter thì không:
 nó là **bộ khung tương tác tự hoàn thiện** — nó dò một trang, báo cáo cho AI qua Bridge, rồi
 AI viết code mới xuống đĩa và bảo nó nạp lại chính nó. Vì thế tên nó không mang tiền tố
-`duc-auto-`; đó là chủ ý, không phải quên ([ADR-0013](../../../docs/adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md)).
+`duc-auto-`; đó là chủ ý, không phải quên ([ADR-0013](../../../docs/adr/0007-scouter.md)).
 
-Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md) mục ⑵):
+Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵):
 
 | Tầng | Có mấy bản | Chứa gì |
 |---|---|---|
@@ -26,11 +26,11 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 1. **Selector KHÔNG BAO GIỜ được gõ vào seed.** Thấy mình đang gõ một selector vào một file
    trong gói này thì dừng lại — đó là chỗ ranh giới seed/adapter chết. Năng lực vào seed, hiểu
    biết về một trang cụ thể vào adapter.
-2. **Đừng clone seed rồi sửa bản clone.** [ADR-0006](../../../docs/adr/0006-goi-assistant-phat-hanh-tu-bo-khung.md)
+2. **Đừng clone seed rồi sửa bản clone.** [ADR-0006](../../../docs/adr/0001-ranh-gioi-bo-khung.md)
    đã ghi cái giá: năm bản trôi khác nhau, và lần "đồng bộ ngược" không bao giờ xảy ra. Adapter
    nào sửa ra thứ **không riêng của trang nào** thì thứ đó phải được đưa lên seed.
 3. **ĐƯỢC ghi ghi chép xuống đĩa** — Đức chốt 07/09,
-   [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md), gỡ điều chặn của
+   [ADR-0016](../../../docs/adr/0007-scouter.md), gỡ điều chặn của
    ADR-0010. Lý do của Đức phân định phạm vi chứ không chỉ cho phép: Scouter **không phải một
    extension chạy sản xuất**, nó là bộ đồ nghề dựng ra extension khác. Ba giới hạn giữ nguyên,
    và cả ba đều là luật có sẵn: không ghi vào `evidence/` · `pilot-*/` · `Batch-*/` (đó là bằng
@@ -96,7 +96,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
 | `tests/scouter-file-core-smoke.mjs` | Ghim **vùng ghi**: `..`, đường tuyệt đối ba dạng, thư mục anh em trùng tiền tố, và liên kết mềm trỏ ra ngoài. Chạy trên thư mục tạm THẬT, không giả `fs` |
 | `tests/scouter-bridge-host-smoke.mjs` | Ghim phần RIÊNG của Scouter: nhóm `file.*` (chạy được **cả khi chưa có extension nào nối**), vùng ghi, hai cổng vào, và cái chặn *vùng ghi không được chứa tệp ghép cặp*. Máy chủ THẬT trên loopback. Hành vi chung của lõi thì ghim ở `_shared/bridge-host/tests/` |
 | `docs/PROMPT-thiet-ke-bang-ben.md` | **Câu Đức dán cho GPT web** để brainstorm bố cục bảng bên (07/09). Chứa bản khai **sự thật về năng lực** — Scouter đổi thì **sửa mục đó trước khi dán**, không thì GPT thiết kế cho một giói đồ không tồn tại |
-| `../pilots/<tên>/` | **PILOT — ngoài thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md) mục ⑶a). Pilot không phải một phiên bản của seed; để chung thì lượt nâng phiên bản sau kéo theo cả pilot. Suite của pilot vẫn chạy qua `tests/run-all.mjs` — nó quét theo HÌNH DẠNG `pilots/*/tests/*.mjs`, không gõ cứng tên pilot nào |
+| `../pilots/<tên>/` | **PILOT — ngoài thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md) mục ⑶a). Pilot không phải một phiên bản của seed; để chung thì lượt nâng phiên bản sau kéo theo cả pilot. Suite của pilot vẫn chạy qua `tests/run-all.mjs` — nó quét theo HÌNH DẠNG `pilots/*/tests/*.mjs`, không gõ cứng tên pilot nào |
 | `docs/TRIALS.md` | **Sổ các trang đã thử** — trang nào · thử gì · kết quả · **dạy seed được gì**. Cột cuối là lý do nó tồn tại: nó là đường ray của luật chiều-ngược ở ADR-0009 mục ⑵. Đây là SỔ, không phải hàng rào |
 | `tests/seed-purity-smoke.mjs` | Canh **mã CHẠY** của seed không chứa tên trang thật (hằng số · mặc định · nhánh rẽ theo hostname). **Cố ý KHÔNG canh** `tests/` `docs/` `pilots/` — Đức chốt 07/09 *"nhiễm cũng được… trừ khi nó ảnh hưởng quá"*. Bản đầu siết cả `tests/` và đỏ 9 chỗ vô hại; hàng rào hẹp mà sống lâu hơn hàng rào rộng mà bị gỡ |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này. ADR đã `Accepted` là bất biến |

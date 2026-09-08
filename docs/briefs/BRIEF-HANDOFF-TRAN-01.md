@@ -6,7 +6,7 @@ ttl_days: 60
 
 # BRIEF `HANDOFF-TRAN-01` — Trần độ dài mục nhật ký, và xoay file theo tháng
 
-Quyết định gốc: [ADR-0011](../adr/0011-handoff-chan-o-dau-vao-va-xoay-theo-thang.md).
+Quyết định gốc: [ADR-0011](../adr/0008-nhat-ky-phien.md).
 Luật vận hành: [`docs/protocols/HANDOFF.md`](../protocols/HANDOFF.md). **Đọc cả hai trước.**
 
 ## 1. Việc ① — ĐO rồi mới chốt trần

@@ -233,7 +233,7 @@ export function catTheoSo({ text, giu, so, tenFile = "HANDOFF.md", sha = null, n
     "",
     `> **Đây là phần đuôi đã cắt của [\`${tenFile}\`](${tenFile}) cạnh file này.**`,
     `> Sinh bằng \`node scripts/handoff.mjs --cat ${tenFile} --giu ${giu}\` theo`,
-    "> [ADR-0008](docs/adr/0008-cat-duoi-handoff-giu-hai-muoi-luot.md)"
+    "> [ADR-0008](docs/adr/0008-nhat-ky-phien.md)"
       + `${ngay ? ` — cắt ngày ${ngay}` : ""}.`,
     ">",
     `> Cắt theo **vị trí trong file**, không theo ngày (bất biến ⑵ của ADR): file kia giữ **${giu}`,

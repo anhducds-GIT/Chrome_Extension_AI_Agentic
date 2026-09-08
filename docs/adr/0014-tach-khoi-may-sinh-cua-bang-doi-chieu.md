@@ -1,6 +1,8 @@
 ---
 status: Accepted
 adr: 0014
+decides: [0014]
+last_reviewed: 2026-09-09
 date: 2026-09-07
 deciders: Đức
 ---

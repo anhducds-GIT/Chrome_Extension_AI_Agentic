@@ -19,7 +19,7 @@ ref_handoff: workers/duc-scouter/v0.1.0/HANDOFF.md
 
 # Duc Scouter
 
-Gói riêng trong `workers/` từ ngày 06/09 theo [ADR-0013](../../../docs/adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md).
+Gói riêng trong `workers/` từ ngày 06/09 theo [ADR-0013](../../../docs/adr/0007-scouter.md).
 Trước đó nó nằm rải ở gốc repo và `scripts/` + `tests/` — tức là chiếm hai khoá đông nhất repo
 cho một việc không liên quan tới khoá nào trong hai.
 
@@ -52,7 +52,7 @@ npm run scouter:action-probe  # phép đo ②: ba lệnh ghi trên một trang t
 
 **Không còn câu nào chờ Đức.** Câu cuối cùng — chính sách che dữ liệu khi ghi báo cáo xuống
 đĩa — Đức chốt ngày 07/09: Scouter **được** ghi
-([ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md)).
+([ADR-0016](../../../docs/adr/0007-scouter.md)).
 
 Sáu câu treo cũ đã chốt hết: vỏ giao diện là bảng bên (ADR-0002 của gói, 07/09) · chỗ đặt thư mục (ADR-0013) · làm tới đâu (ADR-0010, dừng ở
 `SEED v0.1`) · hình dạng cái phanh cho đường ghi và quyền `alarms` (ADR-0001 của gói, 07/09) ·

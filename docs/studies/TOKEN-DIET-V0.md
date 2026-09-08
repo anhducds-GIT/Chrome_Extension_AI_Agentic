@@ -178,7 +178,7 @@ Luật mục 0 bảo "đọc phần cuối = trạng thái mới nhất". Nhưng
 |---:|---|
 | 8.962 | `docs/studies/DEBT-TRIAGE-V1.md` |
 | 6.776 | `docs/briefs/BRIEF-OBSERVER-V1.md` |
-| 3.455 | `docs/adr/0002-cong-cu-va-quy-trinh-o-repo-nha.md` |
+| 3.455 | `docs/adr/0001-ranh-gioi-bo-khung.md` |
 | 1.480 | `docs/_TEMPLATE-annex.md` |
 
 4 trên 78 file = **5%**. Sạch hơn nhiều so với dự đoán. **Và điểm quan trọng: mồ côi tốn 0 token mỗi phiên** — chính vì không ai trỏ tới nên không ai mở. Xoá chúng tiết kiệm dung lượng đĩa, **không** tiết kiệm token. (Riêng ADR-0002 `Accepted` là bất biến theo luật — không được xoá.)

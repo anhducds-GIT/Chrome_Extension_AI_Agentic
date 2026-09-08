@@ -25,7 +25,7 @@ phát triển, mặc định TẮT, cộng một trần cho mỗi lượt chạy
 Câu thứ hai đến từ `S-02`: tầng nối lại của Bridge chạy bằng `setTimeout` trong service worker,
 mà Chrome cho service worker ngủ. Máy chủ Bridge tắt lâu thì Scouter chỉ tỉnh lại lúc tình cờ
 có việc khác đánh thức nó — nhìn ra ngoài giống hệt "extension hỏng". Ba worker kia dùng
-`chrome.alarms`, nhưng quyền đó không nằm trong danh sách [ADR-0009](../../../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md)
+`chrome.alarms`, nhưng quyền đó không nằm trong danh sách [ADR-0009](../../../../../docs/adr/0007-scouter.md)
 đã duyệt, mà thêm quyền là việc phải hỏi Đức (`AGENTS.md` gốc, mục 2).
 
 ## Quyết định

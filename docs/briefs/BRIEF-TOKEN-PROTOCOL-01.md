@@ -8,7 +8,7 @@ ttl_days: 60
 
 > **Đề bài CHUNG cho hai repo.** Đức triển khai song song `Ark_Repo_Harness` và
 > `Chrome_Extension_AI_Agentic` ngày 06/09. **Công cụ và luật xây MỘT LẦN ở bộ khung**
-> ([ADR-0006](../adr/0006-goi-assistant-phat-hanh-tu-bo-khung.md): bộ khung phát hành, repo này
+> ([ADR-0006](../adr/0001-ranh-gioi-bo-khung.md): bộ khung phát hành, repo này
 > tiêu thụ). Repo này **áp dụng**, không phát hành.
 >
 > File này nằm ở đây vì nó là **đơn đặt hàng**, không phải bản cài đặt. Xây bản cài đặt ở đây

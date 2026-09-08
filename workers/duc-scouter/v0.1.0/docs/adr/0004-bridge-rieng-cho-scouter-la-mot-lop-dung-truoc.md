@@ -12,7 +12,7 @@ deciders: Đức
 [ADR-0003](0003-mo-het-quyen-truy-cap-va-cai-gi-thay-cho-hang-rao-cu.md) ghi lại một chỗ chặn
 chưa gỡ: `bridge-host.mjs` **không ghi được file**, và nó nằm trong `workers/duc-auto-chatgpt` —
 gói Đức đóng băng sáng 07/09 (giới hạn ①). Nên *"Bridge ghi code mới xuống đĩa"* của
-[ADR-0009](../../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md) mục ⑸ vẫn là một
+[ADR-0009](../../../../docs/adr/0007-scouter.md) mục ⑸ vẫn là một
 câu tả một thứ chưa tồn tại.
 
 Đức chốt 07/09: *"ta hoàn toàn có thể xây một bridge mới cho scouter & seed framework này, ta

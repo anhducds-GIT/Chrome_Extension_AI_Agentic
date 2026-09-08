@@ -6,7 +6,7 @@ ttl_days: 90
 
 # BRIEF `OBSERVER-V1` — Cửa bằng chứng cho AI
 
-Đề bài đã chốt ở [ADR-0007](../adr/0007-observer-la-cua-bang-chung-cho-ai.md). **Đọc ADR trước.**
+Đề bài đã chốt ở [ADR-0007](../adr/0007-scouter.md). **Đọc ADR trước.**
 Chỗ đặt, mục đích và bất biến số một đã quyết — executor không quyết lại.
 
 ## 1. Đang có gì — đo thật, không phỏng đoán
@@ -113,7 +113,7 @@ Xanh khi cả sáu điều sau đúng:
 - Cấm chạy live trên trang thật.
 - ~~Cấm chuyển thư mục Observer trong lượt này — chỗ đặt chưa quyết, và chuyển chỗ giữa lúc đang
   xây làm mọi diff sau đó không đọc được.~~ **GỠ 06/09 — Đức đã quyết chỗ đặt**
-  ([ADR-0013](../adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md)): `workers/duc-scouter/v0.1.0/`,
+  ([ADR-0013](../adr/0007-scouter.md)): `workers/duc-scouter/v0.1.0/`,
   khoá riêng `workers/duc-scouter`. Lý do của lệnh cấm cũ là *"chỗ đặt chưa quyết"*, nay đã quyết;
   và vế *"đang xây"* cũng không còn — việc ② chưa có dòng code nào. Chuyển là **bước ⓪** của
   `BRIEF-SCOUTER-SEED-01`.

@@ -1,7 +1,7 @@
 /* tests/seed-purity-smoke.mjs — SEED KHÔNG ĐƯỢC BIẾT TÊN MỘT TRANG THẬT NÀO.
  *
- * [ADR-0020](../../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md) mục
- * ⑶. Luật ba tầng thì [ADR-0009](../../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md)
+ * [ADR-0020](../../../../docs/adr/0007-scouter.md) mục
+ * ⑶. Luật ba tầng thì [ADR-0009](../../../../docs/adr/0007-scouter.md)
  * mục ⑵ đã viết từ 06/09: **seed đúng một bản, chứa năng lực đúng với MỌI trang; adapter mỗi
  * URL một cái, chứa selector và hiểu biết riêng của trang.** File này không thêm luật — nó là
  * cái máy canh luật đó.

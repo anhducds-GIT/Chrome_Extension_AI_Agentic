@@ -2,10 +2,10 @@
 
 Một extension Chrome **cục bộ**, dùng riêng. Nó không tự động hoá một trang cụ thể nào. Việc của
 nó là: **dò một trang · báo cáo cho AI qua Bridge · tự nạp lại chính nó** khi AI đã ghi code mới
-xuống đĩa. Đó là vòng tự cải tiến mô tả ở [ADR-0009](../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md).
+xuống đĩa. Đó là vòng tự cải tiến mô tả ở [ADR-0009](../../../docs/adr/0007-scouter.md).
 
 Phạm vi lượt này dừng ở `SEED v0.1`, 25 mục năng lực, chốt ở
-[ADR-0010](../../../docs/adr/0010-scouter-dung-o-seed-v01.md). Không đi tiếp lên `SEED v1` nếu
+[ADR-0010](../../../docs/adr/0007-scouter.md). Không đi tiếp lên `SEED v1` nếu
 chưa có một ADR mới.
 
 ## Cài và chạy

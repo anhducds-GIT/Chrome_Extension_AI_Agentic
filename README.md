@@ -4,7 +4,7 @@ Kho chứa các **extension Chrome cục bộ, dùng riêng** của Đức, cộ
 nhiều phiên AI làm việc song song trên cùng một repo mà không giẫm chân nhau.
 
 > Trước 06/09 file này là README của extension Observer V0. Observer đã thành Scouter và dọn
-> về nhà riêng theo [ADR-0013](docs/adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md); bản ghi cũ
+> về nhà riêng theo [ADR-0013](docs/adr/0007-scouter.md); bản ghi cũ
 > giữ nguyên văn ở `workers/duc-scouter/v0.1.0/README-OBSERVER-V0.md`.
 
 ## Vào đâu trước

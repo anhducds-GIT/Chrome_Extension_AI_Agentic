@@ -8,7 +8,7 @@ ttl_days: 120
 
 > Đề bài: `BRIEF-SCOUTER-INVENTORY-01` — **xoá khỏi cây làm việc 2026-09-08** (không gì ngoài
 > mục lục trỏ tới nó); đọc lại: `git show 522a22400fd3:docs/briefs/BRIEF-SCOUTER-INVENTORY-01.md`.
-> Quyết định gốc: [ADR-0009](../adr/0009-scouter-thay-observer-cua-tuong-tac.md) mục ⑺.
+> Quyết định gốc: [ADR-0009](../adr/0007-scouter.md) mục ⑺.
 > Đo ngày **2026-09-06** bởi phiên `claude-scouter-kk`. Không viết một dòng code nào.
 >
 > **Mọi con số trong file này do tôi tự chạy lệnh mà ra.** Không con số nào chép từ

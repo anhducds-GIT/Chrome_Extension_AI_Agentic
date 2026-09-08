@@ -192,7 +192,7 @@ phối để các AI agent khác làm."* Kèm một điều Đức nêu mà bả
 **khác bản chất** — lõi code · rule · hook · lịch sử audit · lịch sử migrate — nên ở đó gần như
 mọi thứ là hạ tầng, **không có phần product để làm ranh giới**. Đó là lý lẽ làm cách (B) yếu đi
 chứ không mạnh lên: biên mất điểm tựa thì ngoại lệ "được sửa hạ tầng" ăn hết luật.
-Ghi thành quyết định bất biến: [`docs/adr/0003-assistant-dieu-phoi-ca-bo-khung.md`](docs/adr/0003-assistant-dieu-phoi-ca-bo-khung.md).
+Ghi thành quyết định bất biến: [`docs/adr/0001-ranh-gioi-bo-khung.md`](docs/adr/0001-ranh-gioi-bo-khung.md).
 Luật vận hành: `docs/protocols/ORCHESTRATOR.md` mục 0c.
 **Phần 1 và phần 2 vẫn mở** — phần 2 chờ pilot v0.1 đạt. Và mục 0c **chưa có phép kiểm máy**:
 cần sửa `tests/role-firewall-smoke.mjs`, tức khoá `_code`, một lượt khác.

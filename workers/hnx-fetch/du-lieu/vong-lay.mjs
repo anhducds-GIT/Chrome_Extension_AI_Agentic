@@ -1,6 +1,6 @@
 /* vong-lay.mjs — VÒNG LẤY DỮ LIỆU THEO NGÀY: lặp · không làm hai lần · chạy tiếp khi đứt.
  *
- * CHỖ ĐỨNG. File này nằm trong `pilots/`, không nằm trong seed — [ADR-0020](../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md)
+ * CHỖ ĐỨNG. File này nằm trong `pilots/`, không nằm trong seed — [ADR-0020](../../../docs/adr/0007-scouter.md)
  * mục ⑶a. Nhưng nội dung của nó thì **không riêng của trang nào**: nó không biết `hnx.vn` là
  * gì, không biết tham số nào, không biết dữ liệu hình thù ra sao. Mọi hiểu biết về trang nằm ở
  * `nguon` bơm vào.

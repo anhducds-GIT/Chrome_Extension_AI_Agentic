@@ -12,7 +12,7 @@
 2. **Cột "dạy seed được gì" là lý do cuốn sổ tồn tại.** Một trang thử xong mà không dạy được gì
    thì ghi thẳng *"không"* — đó cũng là thông tin, và nó thật hơn một câu chữ nghĩa.
 3. **Thứ nào không riêng của trang nào thì đẩy lên seed**, rồi ghi lại ở đây là đã đẩy.
-   Luật gốc: [ADR-0009](../../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md) mục ⑵.
+   Luật gốc: [ADR-0009](../../../../docs/adr/0007-scouter.md) mục ⑵.
 
 ## Đã thử
 

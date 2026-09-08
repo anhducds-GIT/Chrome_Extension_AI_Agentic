@@ -304,7 +304,7 @@ tái hiện được hai ca đua, và hai con đột biến hoàn nguyên bản 
 
 - **ĐÓNG S-11** (2026-09-08, `claude-scouter-s06`) · Đức chốt **chấp nhận rủi ro**, và yêu cầu bỏ
   khỏi sổ để không bị hỏi lại. Lý do và điều kiện hết hiệu lực ghi ở
-  [ADR-0022](../../../docs/adr/0022-chap-nhan-rui-ro-token-tran-o-hai-bridge-dong-bang.md) — tóm
+  [ADR-0022](../../../docs/adr/0021-goi-extension.md) — tóm
   tắt: ranh giới tấn công là loopback trên máy cá nhân, hai gói đang đóng băng, và hai gói SỐNG
   đều đã dùng lõi chung có bắt tay hai chiều. **Mở băng một trong hai gói thì ADR đó hết hiệu lực**
   và gói được mở phải chuyển sang `workers/_shared/bridge-host/` ngay trong lượt mở.
@@ -315,7 +315,7 @@ tái hiện được hai ca đua, và hai con đột biến hoàn nguyên bản 
   có phép ghim dựng máy chủ giả: `vong-lay-smoke.mjs` khối ① (năm ngày → năm tệp) · ② (lượt hai
   không tải lại) · ③ (đứt giữa chừng thì chạy tiếp từ ngày còn thiếu).
   **Việc này nay KHÔNG còn ở Scouter**: pilot đã chuyển nhà sang `workers/hnx-fetch` ngày 08/09
-  ([ADR-0021](../../../docs/adr/0021-hnx-fetch-tach-thanh-extension-rieng.md)), phép ghim trên
+  ([ADR-0021](../../../docs/adr/0021-goi-extension.md)), phép ghim trên
   cũng nằm ở đó. Nợ hnx còn lại (`S-12`) theo nhà mới, không ở lại sổ này.
 
 - **ĐÓNG S-14** (2026-09-08, `claude-scouter-s06`) · Đóng muộn — mục này **đã được sửa từ trước**

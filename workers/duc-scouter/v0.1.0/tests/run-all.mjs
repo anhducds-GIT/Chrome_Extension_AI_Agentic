@@ -12,7 +12,7 @@ const files = fs.readdirSync(here).filter((name) => name.endsWith(".mjs") && !sk
   .map((name) => path.join(here, name));
 
 /* ---- Suite của PILOT cũng chạy ở đây (07/09) ------------------------------
- * Pilot đứng ngoài thư mục phiên bản ([ADR-0020](../../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md)
+ * Pilot đứng ngoài thư mục phiên bản ([ADR-0020](../../../../docs/adr/0007-scouter.md)
  * mục ⑶a), nên nó không rơi vào lượt quét trên. Không nối thì phép ghim của pilot chỉ chạy khi
  * có người nhớ chạy tay — và cái gì phải nhớ thì sẽ có lúc quên.
  *

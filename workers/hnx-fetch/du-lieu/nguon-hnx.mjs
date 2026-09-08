@@ -1,6 +1,6 @@
 /* nguon-hnx.mjs — HIỂU BIẾT VỀ TRANG. Mọi thứ riêng của `hnx.vn` chỉ được nằm trong file này.
  *
- * Đây là tầng **adapter** của [ADR-0009](../../../docs/adr/0009-scouter-thay-observer-cua-tuong-tac.md)
+ * Đây là tầng **adapter** của [ADR-0009](../../../docs/adr/0007-scouter.md)
  * mục ⑵: mỗi URL một cái, chứa địa chỉ · tham số · dấu hiệu "xong" · lỗi riêng của trang.
  * `vong-lay.mjs` bên cạnh thì mù về tất cả những thứ đó, cố ý — đó là điều kiện để nó lên seed.
  *

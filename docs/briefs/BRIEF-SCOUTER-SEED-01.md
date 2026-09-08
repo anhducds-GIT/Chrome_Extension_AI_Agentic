@@ -6,8 +6,8 @@ ttl_days: 90
 
 # BRIEF `SCOUTER-SEED-01` — Lượt xây đầu tiên: đo trước, rồi dựng khung
 
-Đọc trước, theo thứ tự: [ADR-0009](../adr/0009-scouter-thay-observer-cua-tuong-tac.md) (Scouter
-là gì) → [ADR-0010](../adr/0010-scouter-dung-o-seed-v01.md) (phạm vi đã chốt: 25 mục, dừng ở
+Đọc trước, theo thứ tự: [ADR-0009](../adr/0007-scouter.md) (Scouter
+là gì) → [ADR-0010](../adr/0007-scouter.md) (phạm vi đã chốt: 25 mục, dừng ở
 đó) → [bảng kiểm kê](../studies/SCOUTER-CAPABILITY-INVENTORY-V1.md) (danh sách 25 mục và chúng
 nằm ở đâu).
 
@@ -16,7 +16,7 @@ nằm ở đâu).
 
 ## 0. Việc ⓪ — DỌN NHÀ TRƯỚC, rồi mới xây (Đức chốt 06/09)
 
-Quyết định ở [ADR-0013](../adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md). Đọc nó trước, nó
+Quyết định ở [ADR-0013](../adr/0007-scouter.md). Đọc nó trước, nó
 liệt kê đủ bốn cái giá.
 
 Scouter hôm nay **rải trên hai khoá đông nhất repo**: sáu file extension ở gốc repo thuộc
@@ -133,7 +133,7 @@ này chết.
 - Cấm xin quyền ngoài danh sách ở mục 2.
 - Cấm làm bất cứ mục `SEED v1` nào.
 - ~~Cấm chuyển thư mục Scouter trong lượt này~~ — **HẾT HIỆU LỰC 06/09.** Lý do của lệnh cấm
-  là *"chỗ đặt chưa quyết"*; nay đã quyết ở [ADR-0013](../adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md),
+  là *"chỗ đặt chưa quyết"*; nay đã quyết ở [ADR-0013](../adr/0007-scouter.md),
   và việc chuyển đã LÀM XONG trong chính lượt này. Scouter nay ở `workers/duc-scouter/v0.1.0/`.
 
 ## 5. Nghiệm thu
@@ -153,7 +153,7 @@ này chết.
 `_root`, không cần `_code`, kể cả khi sửa phép ghim hay bộ đo — chúng đã theo gói về nhà mới.
 
 > Câu cũ: *"Mã Scouter nằm ở gốc repo → khoá `_root`. Chạm `tests/` hay `scripts/` thì thêm
-> `_code`."* Đúng cho tới lúc [ADR-0013](../adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md)
+> `_code`."* Đúng cho tới lúc [ADR-0013](../adr/0007-scouter.md)
 > được chốt và thực thi; giữ lại đây để ai đọc bản cũ nhận ra mình đang đọc câu đã chết.
 
 ```
