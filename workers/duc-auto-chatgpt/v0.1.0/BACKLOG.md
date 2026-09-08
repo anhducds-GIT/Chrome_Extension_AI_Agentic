@@ -1525,3 +1525,75 @@ cần cho ⒝ về sau (không báo được thì cũng không nới an toàn đ
 - **ĐÓNG B-38** · Vá 2026-09-08, `claude-gpt-mvp-3fix`, và **nghiệm thu LIVE trên bản đã triển khai**. Chọn đường thứ hai mà chính mục này đề ra — *"bắt buộc phải truyền tay cho mọi mutation"* — chứ **không** tự dẫn xuất khoá, và lý do là một cái bẫy thật: `bridge-core.js` tự ghi *"a deliberate second upload carries a NEW request_id"*, nên một lượt gọi lại **có chủ ý** với cùng tham số (thêm hai job giống nhau, thay một ảnh mẫu bằng đúng ảnh đó) là việc hợp lệ, và khoá dẫn xuất tự động sẽ **nuốt nó thành replay**. Công cụ không đoán được hai lượt đó là MỘT ý định hay HAI, và đoán sai kiểu nào cũng mất dữ liệu — nên người gọi phải quyết. Đổi lại, câu chặn kèm **khoá gợi ý tiền định** (băm từ method + tham số) để lượt chạy lại chỉ việc dán. `READ_ONLY_METHODS` cho lượt chỉ đọc đi qua tự do: gọi lại `run.status` mười lần là chuyện bình thường. **Nửa thứ hai của điều kiện đóng — *"phép ghim chứng minh hai lượt gọi cùng tham số chỉ làm checkpoint tăng một bậc"* — ĐÃ CÓ SẴN, không phải tôi viết:** `tests/bridge-core-smoke.mjs:143` ghim `handlerCalls === 1` cho cùng `client_id` + `request_id` (*"replay does not invoke the proposal handler twice"*), cộng `REQUEST_ID_REUSED` ở dòng 147. Lớp replay của host **chưa bao giờ hỏng**; thứ hỏng là CLI không cho nó cơ hội khớp. Ghim mới: `tests/bridge-cli-mutation-key-smoke.mjs` — ba mép, trong đó mép đắt nhất là **đối chiếu danh sách chỉ-đọc của CLI với `read_only` trong `METHOD_REGISTRY` của host**, vì một luật nằm ở hai bản sao thì sớm muộn nói hai chuyện khác nhau; nó **bắt được hai chỗ lệch thật ngay lượt chạy đầu** (`session.hello` và `bridge.sessions`, cả hai hoá ra hợp lệ và nay được khai tường minh kèm phép kiểm ngược). **Nghiệm thu live:** bản đã chép sang thư mục Bridge của Đức chặn đúng `jobs.remove` thiếu khoá và vẫn cho `run.status` đi qua. **15/15 đột biến đỏ** trên cả ba bản vá.
 - **ĐÓNG B-37** · Vá 2026-09-08, `claude-gpt-mvp-3fix`. `adoptAuthorizedOutputProfile()` nay ghi **lý do** kèm hai con số đếm được vào `state.outputAdoptDiag` ở **từng** đường trả `null`, và câu báo dựng từ đó — bốn nhánh, bốn câu khác nhau: chưa có settings · **không hồ sơ nào còn quyền** (kèm số hồ sơ tìm thấy và số còn quyền) · **có từ hai hồ sơ trở lên** nên cố ý không chọn hộ (kèm con số, và chỉ đường ra bằng `output.configure`) · **kho hồ sơ không đọc được** (nói rõ *bấm cũng không chữa*, vì nhánh này dễ bị nhập nhèm nhất). **Không đổi một nhánh quyết định nào** — vẫn nhận khi và chỉ khi có đúng một hồ sơ được cấp quyền. Xoá luôn hằng `AUDIT_HELD_NOTE` vì nó thành mã chết; để lại là một bản sao thứ hai của cùng câu báo, và hai bản sao sẽ lệch nhau. Ghim: `tests/output-adopt-reason-smoke.mjs` — **chín mép**, và bốn mép cuối là **dây nối**: chạy chính `adoptAuthorizedOutputProfile()` với kho hồ sơ giả để đòi nó THẬT SỰ ghi chẩn đoán. Bốn mép đó sinh ra vì thử phá vòng đầu cho thấy phần kiểm hàm-lá **để lọt** việc xoá hẳn lượt ghi chẩn đoán — hàm dựng câu đúng mà không ai điền dữ liệu thì câu vẫn sai. Mép ⑼ còn phải viết lại lần hai: bản đầu bắt đầu với chẩn đoán `null` nên xoá hẳn dòng dọn vẫn xanh; nay bắt đầu bằng một chẩn đoán CŨ, đúng cảnh thật. **Trần tuyên bố: SUITE + đột biến, CHƯA LIVE** — cần Đức nạp lại tiện ích rồi gọi `jobs.add` lúc chưa bind thư mục.
 - **ĐÓNG B-39** · Vá 2026-09-08, `claude-gpt-mvp-3fix`. `run.status` nay trả `last_failure` — job nào, attempt nào, `INTERRUPTED` hay `FAILED`, mã lỗi, câu lỗi, `retry_count`, `run_id`, mốc thời gian. Ghi ở **đúng hai cửa settle cuối** (`markInterrupted` và nhánh FAILED của `resolveJobFailure`), và **xoá lúc bắt đầu run mới**. **Cố ý KHÔNG ghi ở đường thử lại:** một job thử lại rồi thành công thì lượt lỗi giữa đường không phải kết cục, khai nó ra sẽ làm agent kết luận run hỏng trong khi nó xong sạch. **Cố ý KHÔNG tích luỹ qua nhiều run:** câu hỏi trường này trả lời là *"run vừa rồi kết thúc thế nào"*, không phải *"kể hết lịch sử lỗi"* — lịch sử nằm ở sổ audit và ledger; giữ lại là mời agent đọc một lỗi cũ rồi tưởng nó vừa xảy ra. Ghim: mở rộng `tests/run-status-stale-current-smoke.mjs` từ 4 lên **tám mép** — cộng `last_failure` đi qua payload, mép ngược `null` khi chưa có lỗi, **chạy `markInterrupted` thật** để đòi nó ghi đúng `INTERRUPTED` (không phải `FAILED`), và một khẳng định **tĩnh, có khai là tĩnh** cho lượt xoá đầu run. Ba mép sau sinh ra vì thử phá vòng đầu để lọt cả ba. **Trần tuyên bố: SUITE + đột biến, CHƯA LIVE** — lượt chạy live 08/09 trả `last_failure: null` vì tiện ích đang chạy mã cũ, đúng như phải vậy.
+
+### B-41 · (P1) Thi hành ADR-0050 mục ⒝⒞⒟ — tự chữa để chạy hết job
+
+[ADR-0050](docs/adr/0050-chay-het-job-tru-ba-loai-dung-han.md) đã `Accepted` 08/09, nhưng mới thi
+hành **mục ⒠** (hạ nắp chờ xuống 90 giây, đã ghim
+`tests/trial-cooldown-adr0050-smoke.mjs`, 5/5 đột biến đỏ). Bốn mục còn lại chưa có một dòng mã
+nào. Mục này tồn tại để một quyết định đã chốt không nằm im.
+
+Ghi rõ cái đã xong để phiên sau không làm lại: **⒜ không cần làm gì** — `classifyFailure()` đã xếp
+`captcha`, `unusual activity` và `security/interstitial` vào cùng `SECURITY_HARD_STOP`, và
+`GENERATION_LIMIT_REACHED` vốn đã là hard stop. Ba loại Đức muốn dừng hẳn **đang dừng hẳn sẵn**.
+
+**Việc thật, ba phần, làm theo đúng thứ tự này:**
+
+**⑴ `RECEIVER_LOST` và `WRONG_SURFACE` thành điều kiện chữa được** (ADR-0050 ⒝). Cả hai xảy ra
+**trước khi gửi**, nên chữa xong chạy tiếp không tốn lượt nào — đây là phần rẻ nhất và an toàn
+nhất, làm trước. Cách chữa đã có sẵn công cụ: nạp lại tab (`chat.reload` đã là một method Bridge)
+cho cái thứ nhất; đưa tab về một hội thoại cho cái thứ hai. **Bắt buộc kèm NẮP SỐ LẦN CHỮA trong
+một run** — ADR-0050 ghi rõ mặt xấu này: một điều kiện chữa mãi không khỏi mà không có nắp thì ⒝
+biến một lần dừng thành **vòng lặp vô hạn**, tệ hơn hẳn cái nó thay.
+
+**⑵ `DETECTION_BLIND` thành điều kiện chữa được, nhưng ĐỐI SOÁT TRƯỚC, không gửi lại** (ADR-0050
+⒞). Chữa xong thì hỏi *"kết quả có sẵn trên trang không"* — thấy thì quy về job và xong; khẳng
+định được là không có thì mới gửi lại; vẫn không chắc thì `INTERRUPTED` như hôm nay. Đây là phần
+dễ làm hỏng nhất: một bộ dò mù **sau khi gửi** rất có thể đang mù trước một kết quả ĐÃ CÓ, và gửi
+lại lúc đó là đốt lượt thứ hai cho việc đã xong.
+
+**⑶ Lời nhà cung cấp tự khẳng định là một nguồn đối soát** (ADR-0050 ⒟, và nó đóng luôn `B-40`).
+Khi ChatGPT nói bằng chữ rằng nó không tạo được gì, đó là *"đối soát khẳng định được"* theo đúng
+chữ ADR-0047 — nên **thi hành**, không phải nới. Nguồn chữ đã đọc được qua `chat.read`.
+
+**Ràng buộc kiến trúc, đừng vi phạm:** `submissionMayExist()` và `canRetry()` **giữ nguyên vai** —
+chúng vẫn là chỗ duy nhất trả lời *"lượt gửi này có thể đã bay chưa"*. ⑵ và ⑶ **thêm một cửa đối
+soát đứng TRƯỚC** chúng, không sửa vào trong. Sửa thẳng hai hàm đó là bỏ mất cái đảo-mặc-định mà
+ADR-0047 dựng, và đó là lớp bảo vệ đắt nhất của cả gói.
+
+**Phép đo phải làm lại trước khi vá.** `tests/post-submit-no-resend-smoke.mjs` đang đếm **0 nguồn
+khẳng định** và kết luận "chặn hẳn"; chính nó dặn *"ai nối một nguồn khẳng định mới vào vòng chạy
+thì test đỏ và phép đo phải làm lại trước khi nới luật."* Nay có nguồn thứ nhất, nên con số 0 sai.
+Viết lại để nó **đếm số nguồn** và ghim rằng mỗi nguồn đi qua đúng một cửa đối soát — đừng nới nó
+cho xanh.
+
+- **đóng khi:** ⑴⑵⑶ đã vá, mỗi phần một phép ghim HÀNH VI (chạy hàm đã ship, không grep chữ);
+  `post-submit-no-resend-smoke.mjs` viết lại và đếm đúng số nguồn khẳng định; nắp số lần chữa có
+  ghim riêng chứng minh hết nắp thì rơi về `INTERRUPTED`; thử phá 0 con thoát; và **một lượt chạy
+  live** cho thấy một loạt job đi qua được ít nhất một lần tự chữa.
+
+### B-42 · (P1) Case 2 — đường chat thẳng cho reasoning nhiều lượt
+
+Đức chốt 08/09 khi chọn hướng: *"thêm đường chat thẳng là ý kiến hay & chủ động thao tác được
+xuyên suốt hơn, đặc biệt là cho các case reasoning."*
+
+**Vì sao đường job hiện có không dùng được cho việc này** (đo 08/09): mỗi lượt gửi qua Bridge phải
+đi qua `jobs.add` → `run.trial`, tức mỗi câu trong hội thoại **đẻ ra một job và một dòng Excel** —
+sổ sách đầy rác hội thoại. Hạ nắp chờ xuống 90 giây đã đỡ phần chờ, nhưng không đỡ phần **hình
+dạng sai**: reasoning nhiều bước không phải một hàng đợi công việc.
+
+Việc Đức mô tả: phiên dài, chờ lâu, nhiều bước, nhiệm vụ đa dạng (Google Sheet, GitHub, suy luận
+nhiều bước tới kết luận cuối).
+
+**Ba chỗ phải cân trước khi viết dòng mã đầu tiên:**
+- **Đây là quyền mới cho extension** theo `AGENTS.md` gốc mục 2 → phải hỏi Đức lần nữa ở mức thiết
+  kế, không chỉ ở mức "có nên làm không".
+- **`run.start` vẫn cấm vĩnh viễn.** Một `chat.send` tự do là đường vòng quanh chính lệnh cấm đó
+  nếu nó gửi được prompt tuỳ ý không giới hạn. Phải khai rõ nó khác `run.start` ở chỗ nào, và
+  chốt an toàn nào thay thế.
+- **Vẫn phải có sổ.** Đường job ghi audit và checkpoint; một đường chat bỏ qua hết là mất dấu vết
+  đúng lúc phiên dài nhất và khó nhớ nhất. Tối thiểu: mỗi lượt gửi một dòng audit.
+
+- **đóng khi:** có brief riêng được Đức duyệt (khai rõ ba chỗ trên), rồi mới tới mã + ghim + audit
+  độc lập. **Đừng gộp vào `B-41`** — một cái là sửa luật hỏng trên đường có sẵn, một cái là mở
+  đường mới.

@@ -180,7 +180,15 @@
 
   const BRIDGE_DEV_MODE_STORAGE_KEY = "dac.bridge.dev_mode.v1";
   const BRIDGE_LAST_TRIAL_STORAGE_KEY = "dac.bridge.last_trial_at.v1";
-  const BRIDGE_TRIAL_MIN_INTERVAL_MS = 5 * 60 * 1000;
+  // Nắp chờ giữa hai lượt gửi Bridge. Đức hạ 5 phút → 90 giây ngày 08/09
+  // (ADR-0050 mục ⒠, nguyên văn: "Tôi mở khoá bridge trial Min xuống còn 90 giây").
+  //
+  // Vì sao con số này đáng canh: nó là lớp chắn CUỐI chống một vòng lặp hỏng đốt sạch hạn mức
+  // của Đức. Hạ xuống 90 giây làm tốc độ tiêu credit tối đa tăng hơn ba lần, và sau lượt này
+  // hai lớp còn lại chỉ là công tắc Chế độ phát triển và nắp 30 job mỗi lượt — ADR-0050 ghi
+  // rõ cái mất đó. Khai ở ĐÚNG MỘT CHỖ, cùng kỷ luật mà ADR-0015 dựng cho trần thời gian:
+  // câu báo cho người đọc tính giây còn lại TỪ hằng này, không gõ lại con số ở đâu khác.
+  const BRIDGE_TRIAL_MIN_INTERVAL_MS = 90 * 1000;
 
   const STATUS_TRANSLATIONS = Object.freeze({
     IDLE: "Đang chờ", ERROR: "Có lỗi", RUNNING: "Đang chạy", DONE: "Hoàn tất", PAUSED: "Đã tạm dừng", STOPPED: "Đã dừng", HALTED: "Dừng bảo vệ",

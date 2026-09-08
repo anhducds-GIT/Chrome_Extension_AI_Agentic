@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Accepted
 adr: 0050
 date: 2026-09-08
 deciders: Đức
@@ -93,4 +93,4 @@ trial Min xuống còn 90 giây."*
 
 ## Trạng thái
 
-Proposed
+Accepted
