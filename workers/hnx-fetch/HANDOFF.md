@@ -325,3 +325,34 @@ dẫn chứa dấu cách. **Một chốt hỏng câm tệ hơn không có chốt
 
 **Còn chờ Đức, hai câu:** `H-03` ngày lễ gọi lại mỗi lượt — chịu, hay đánh dấu? · `H-06` chạy
 lệnh sinh tệp ghép cặp một lần rồi chọn nó trong bảng bên.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — H-03 xong, và một chốt phải thêm ngay sau đó
+
+**Đức chốt: đánh dấu ngày nghỉ.** Đức cũng đoán đúng một nửa — **T7/CN đã bỏ qua sẵn** từ trước
+(`ngayLamViec`). Thứ bị lấy lại mỗi lượt chỉ là **ngày lễ**: ngày trong tuần mà sàn không mở.
+
+**Ghi vào tệp BÊN CẠNH SSOT** (`<tên>.ngay-nghi.csv`), không phải một hàng trong SSOT. SSOT có
+25 cột số liệu, khoá (ngày + ISIN); một hàng giả *"ngày này nghỉ"* nằm trong đó nghĩa là mọi lượt
+đếm, cộng, trung bình về sau phải nhớ lọc nó ra — và sẽ có lượt quên.
+
+**Rồi tôi nhận ra bản vá đó vừa tạo ra một rủi ro thật, và vá tiếp trong cùng phiên.** HNX công
+bố **trong** ngày, không phải lúc đóng cửa — đo thật 08/09, đầu giờ chiều cả hai đường đều báo
+chưa có gì. Nên một lượt chạy sớm sẽ thấy hôm nay "trống", và nếu lượt đó đánh dấu luôn thì ngày
+hôm nay bị ghi là nghỉ **vĩnh viễn**. Nay chỉ đánh dấu ngày **cũ hơn 2 ngày**; ngày còn mới thì
+lệnh in `CÒN MỚI, chưa ghi nhận`.
+
+**Bộ đo đột biến bắt được một phép ghim rỗng, và đó là phần đáng giữ nhất của lượt này.** Khối ⑺
+chứng minh cái dấu **được đọc**, nhưng nó tự tay gọi `themNgayNghi` — nên nó **không** chứng minh
+được *lệnh* biết ghi. Con `R2` (bỏ hẳn lượt ghi) sống sót. Phải dựng một **máy chủ Bridge giả**
+trả lời `scout.fetch` bằng đúng hình dạng một ngày trống mới ghim được đường đó (khối ⑻).
+
+Hai chỗ vấp khi dựng nó, cả hai đều im lặng: `execFileSync` **chặn vòng lặp sự kiện** nên máy chủ
+giả trong cùng tiến trình không bao giờ trả lời được — phép ghim treo, không đỏ. Và tự gỡ
+`URL.pathname` để lấy thư mục, đúng cái bẫy đã làm một chốt an toàn hỏng câm sáng nay.
+
+**Cửa thoát là vế bắt buộc, không phải tuỳ chọn:** tệp là CSV mở bằng Excel, có ghi lúc quan sát,
+**xoá một dòng là ngày đó được lấy lại**. Phép ghim canh cả cửa đó. Đột biến 26/26, 0 sống sót.
+
+**Còn lại:** `H-02` (bảng bên) và `H-06` (Đức chạy lệnh sinh tệp ghép cặp).

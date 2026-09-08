@@ -227,9 +227,18 @@ Lấy thừa về quá khứ cũng **vô hại** (ngày đã có thì bỏ qua, 
 phân vân thì lấy rộng ra.
 
 **HNX công bố trong ngày, không phải ngay lúc đóng cửa.** Chạy quá sớm thì ngày hôm nay ra
-*không có phiên* — và lượt đó **không** đánh dấu gì cả, nên chạy lại sau vẫn lấy được. Đó là
-lý do `S-12` (ngày lễ bị gọi lại) cố ý chưa vá: đánh dấu là đổi một phiền toái nhỏ lấy một
-lỗi im lặng lớn.
+*không có phiên*, và lệnh sẽ in **`CÒN MỚI, chưa ghi nhận`** — chạy lại buổi tối vẫn lấy được.
+
+**Ngày trong tuần mà không có phiên (ngày lễ) nay ĐƯỢC GHI LẠI** để lượt sau thôi hỏi (Đức chốt
+08/09). Ba điều cần biết về cái dấu đó:
+
+- Nó nằm ở một tệp **bên cạnh** SSOT: `<tên SSOT>.ngay-nghi.csv`. **Không** nằm trong SSOT — ghi
+  chú về dữ liệu không được lẫn vào dữ liệu, nếu không mọi lượt cộng/đếm về sau phải nhớ lọc nó ra.
+- Chỉ ghi những ngày **cũ hơn 2 ngày**. Ngày còn mới thì để nguyên, vì trang có thể công bố muộn.
+- **Cửa thoát:** mở tệp đó bằng Excel, **xoá dòng của một ngày là ngày đó được lấy lại**. Dùng khi
+  nghi HNX bổ sung dữ liệu muộn cho một ngày đã bị đánh dấu.
+
+T7 và CN **không** nằm trong tệp đó — chúng bị loại từ trước, ngay lúc dựng danh sách ngày làm việc.
 
 ### Bước 1 — kết quả giao dịch, nối vào tệp SSOT
 
