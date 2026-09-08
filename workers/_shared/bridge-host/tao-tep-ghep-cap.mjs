@@ -60,9 +60,29 @@ const HOST = "127.0.0.1";
  *
  * Vùng ghi CỐ Ý là thư mục con: `file.read` đọc được mọi tệp dưới vùng ghi, nên trỏ vùng ghi
  * vào chính thư mục gói nghĩa là token đọc được qua dây. Máy chủ sẽ từ chối khởi động. */
-/* DỰNG bằng String.fromCharCode — bản đầu gõ thẳng dấu gạch ngược vào chuỗi và nó bị nuốt mất,
- * còn lại "C:WORKING ZONEChrome Extension Bridge". Cùng một bẫy đã dính ba lần trong ngày. */
-export const NHA_BRIDGE = ["C:", "WORKING ZONE", "Chrome Extension Bridge"].join(String.fromCharCode(92));
+/* ĐỌC TỪ BẢN ĐỒ THƯ MỤC, không gõ cứng ở đây.
+ *
+ * `.repo-structure.json` là bản đồ thư mục của repo, và luật này khai ở khối `thu_muc_ngoai_repo`.
+ * Gõ cứng ở đây nữa là dựng bản sao thứ hai của một luật — và repo này đã trả giá đúng chỗ đó:
+ * ngày 02/09 hai bản của một danh sách miễn trừ trả hai câu khác nhau cho cùng một tệp.
+ *
+ * Thiếu khai báo thì NÉM, không đoán một đường mặc định: một bộ sinh tự bịa đường dẫn là đúng
+ * cái bệnh khối này sinh ra để chữa. */
+function docNhaBridge() {
+  const ban = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", ".repo-structure.json");
+  let khai;
+  try {
+    khai = JSON.parse(fs.readFileSync(ban, "utf8"))?.thu_muc_ngoai_repo?.bridge?.duong_dan;
+  } catch (loi) {
+    throw new Error("Khong doc duoc ban do thu muc " + ban + ": " + String(loi?.message || loi));
+  }
+  if (typeof khai !== "string" || !khai.trim()) {
+    throw new Error("Ban do thu muc thieu thu_muc_ngoai_repo.bridge.duong_dan — khai o " + ban + ", dung go cung vao ma.");
+  }
+  return khai;
+}
+
+export const NHA_BRIDGE = docNhaBridge();
 
 /** Đường dẫn tệp ghép cặp ĐÚNG QUY ƯỚC cho một gói. Dùng cái này, đừng tự đặt chỗ khác. */
 export function duongGhepCapChuan(tenGoi) {

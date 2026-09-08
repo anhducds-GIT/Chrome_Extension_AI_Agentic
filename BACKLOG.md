@@ -600,3 +600,22 @@ khác giữ lúc 08/09, và luật mục 1 cấm ghi vào vùng có chủ khác.
 không bao giờ thấy — đúng cách lỗi này tái diễn.
 
 - **đóng khi:** đức: hoặc `.repo-structure.json` có khối khai đường dẫn nhà chung của Bridge và `AGENTS.md` gốc có một dòng trỏ tới nó; hoặc Đức chốt rằng để luật ở `workers/_shared/AGENTS.md` là đủ.
+
+- **ĐÓNG N-46** (2026-09-08, `claude-scouter-s06`) · Khoá `_root` vừa trống, Đức bảo làm luôn.
+  Luật nay khai ở khối `thu_muc_ngoai_repo` của `.repo-structure.json`, và có **một dòng ở
+  `AGENTS.md` gốc** — chỗ AI đọc đầu tiên mỗi phiên.
+
+  Làm hơn một bước so với mục yêu cầu: **bộ sinh nay ĐỌC đường dẫn từ bản đồ** thay vì gõ cứng.
+  Gõ cứng thêm một chỗ là dựng bản sao thứ hai của một luật, và repo này đã trả giá đúng thế ngày
+  02/09 (hai bản của một danh sách miễn trừ trả hai câu khác nhau cho cùng một tệp). Thiếu khai
+  báo thì bộ sinh **ném**, không đoán một đường mặc định — một bộ sinh tự bịa đường dẫn là đúng
+  cái bệnh khối này sinh ra để chữa.
+
+  Phép ghim khối ⑸ nay canh cả hai chiều (sửa mã quên bản đồ · sửa bản đồ mã không theo) và có
+  thêm **vế đối chứng**: bốn gói cũ trong nhà chung phải thật sự đúng hình dạng đã khai — luật
+  khai ra mà thực tế không theo thì nó là chữ, không phải mô tả. Đã thử phá: đổi đường dẫn trong
+  bản đồ thì phép ghim **ĐỎ**.
+
+  Về giới hạn ⑦ của `AGENTS.md` (*một luật vào thì một luật ra*): dòng mới này đi theo nhánh
+  **"đo được nó đã nổ mấy lần"** — Đức nói lỗi đặt lung tung đã gặp vài lần, lần gần nhất là
+  08/09 do chính phiên này.

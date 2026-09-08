@@ -163,6 +163,34 @@ function chay(args) {
   assert.ok(nguonBoSinh.includes("duongGhepCapChuan(tenGoi)"),
     "có cờ --goi nhưng không nối vào đường chuẩn — cờ có mà không có tác dụng");
 
+  /* MỘT NGUỒN, không hai. Đường dẫn phải đến từ bản đồ thư mục `.repo-structure.json`, không
+   * gõ cứng trong mã. Repo này đã trả giá đúng chỗ đó: ngày 02/09 hai bản của một danh sách
+   * miễn trừ trả hai câu khác nhau cho cùng một tệp.
+   *
+   * Nên phép ghim đọc THẲNG bản đồ và so — nó đỏ cả khi ai đó sửa mã mà quên bản đồ, lẫn khi
+   * sửa bản đồ mà mã không theo. */
+  const banDo = JSON.parse(fs.readFileSync(path.join(GOC_REPO, ".repo-structure.json"), "utf8"));
+  const khai = banDo?.thu_muc_ngoai_repo?.bridge;
+  assert.ok(khai, "bản đồ thư mục mất khối thu_muc_ngoai_repo.bridge — luật này lại chỉ còn trong văn xuôi");
+  assert.equal(NHA_BRIDGE, khai.duong_dan, "bộ sinh và bản đồ thư mục nói hai đường khác nhau");
+  assert.ok(nguonBoSinh.includes("thu_muc_ngoai_repo"),
+    "bộ sinh không còn đọc bản đồ — ai đó đã gõ cứng đường dẫn lại vào mã");
+  assert.equal(khai.doc_boi, "workers/_shared/bridge-host/tao-tep-ghep-cap.mjs",
+    "bản đồ khai sai ai là người đọc nó");
+
+  /* Bốn gói cũ ĐANG nằm đúng hình dạng đó. Đây là vế đối chứng: luật khai ra mà thực tế không
+   * theo thì luật đó là chữ, không phải mô tả. Bỏ qua êm nếu máy chưa có thư mục (máy khác). */
+  if (fs.existsSync(NHA_BRIDGE)) {
+    const goiCo = fs.readdirSync(NHA_BRIDGE, { withFileTypes: true })
+      .filter((d) => d.isDirectory()).map((d) => d.name);
+    assert.ok(goiCo.length > 0, "nhà chung của Bridge rỗng — hoặc đường dẫn sai, hoặc chưa gói nào về nhà");
+    for (const g of goiCo) {
+      const tep = path.join(NHA_BRIDGE, g, g + "-bridge-pairing-v1.json");
+      assert.ok(fs.existsSync(tep),
+        `gói '${g}' trong nhà chung không có tệp ghép cặp đúng tên quy ước: ${path.basename(tep)}`);
+    }
+  }
+
   /* Câu hướng dẫn phải NÓI RA nhà chung. Người đọc câu lỗi là người đang lạc đường. */
   const r = chay([]);
   assert.equal(r.ma, 2);

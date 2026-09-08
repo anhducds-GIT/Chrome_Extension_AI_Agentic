@@ -48,6 +48,22 @@
       "B12"
     ]
   },
+  "_thu_muc_ngoai_repo_doc": "Thu muc NGOAI kho ma ma repo nay phu thuoc vao. Khai o day vi day la ban do thu muc — va vi mot quy uoc chi nam trong van xuoi thi phu thuoc vao viec AI co mo dung trang do khong. Duc noi loi dat lung tung da gap VAI LAN; ngay 08/09 chinh phien viet khoi nay van dat mot tep ghep cap vao thu muc ho so nguoi dung, du bon goi cu deu dang nam dung cho. Nen luat khai o day PHAI duoc cong cu DOC, khong duoc go cung o hai noi.",
+  "thu_muc_ngoai_repo": {
+    "bridge": {
+      "duong_dan": "C:\\WORKING ZONE\\Chrome Extension Bridge",
+      "hinh_dang": "<duong_dan>\\<ten-goi>\\",
+      "chua": [
+        "<ten-goi>-bridge-pairing-v1.json  — tep ghep cap, CO TOKEN, khong bao gio vao kho ma",
+        "START-BRIDGE_<Ten>.cmd + .ps1     — bo khoi dong",
+        "du-lieu-ra/ (hoac du-lieu/)       — VUNG GHI, luon la thu muc CON"
+      ],
+      "vi_sao_vung_ghi_la_thu_muc_con": "file.read doc duoc MOI tep duoi vung ghi. Tro vung ghi vao chinh thu muc goi nghia la token doc duoc qua day. May chu se TU CHOI khoi dong.",
+      "cong_cu": "node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <ten-goi>",
+      "ghim": "workers/_shared/bridge-host/tests/tao-tep-ghep-cap-smoke.mjs (khoi 5)",
+      "doc_boi": "workers/_shared/bridge-host/tao-tep-ghep-cap.mjs"
+    }
+  },
   "areas": {
     "delegations/": {
       "steward": "_root",

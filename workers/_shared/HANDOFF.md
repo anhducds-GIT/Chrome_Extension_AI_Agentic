@@ -122,3 +122,34 @@ nên phiên không đụng gói `_shared` sẽ vẫn không thấy luật — ch
 **Một bẫy thoát chuỗi dính BA lần trong ngày:** dấu gạch ngược trong chuỗi bị nuốt, làm
 `NHA_BRIDGE` thành `C:WORKING ZONEChrome Extension Bridge`. Cách chữa đã thành thói quen: dựng
 bằng `String.fromCharCode(92)`, và với văn bản dài thì viết ra tệp rồi đọc vào, đừng nhúng.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — N-46 đóng: luật đường dẫn vào bản đồ gốc, và bộ sinh ĐỌC nó
+
+Khoá `_root` trống, Đức bảo làm luôn. Ba việc.
+
+**⑴ Khai vào bản đồ gốc.** Khối `thu_muc_ngoai_repo` mới trong `.repo-structure.json`, kèm một
+dòng ở bảng sổ tay của `AGENTS.md` gốc — chỗ AI đọc đầu tiên mỗi phiên. Trước đó luật chỉ nằm ở
+`workers/_shared/AGENTS.md`, nên phiên không đụng gói này sẽ không bao giờ thấy.
+
+**⑵ Bộ sinh nay ĐỌC bản đồ, không gõ cứng.** Đây là phần tôi làm hơn mục nợ yêu cầu, và có lý do:
+gõ cứng thêm một chỗ là dựng **bản sao thứ hai của một luật**. Repo này đã trả giá đúng thế ngày
+02/09 — hai bản của một danh sách miễn trừ trả hai câu khác nhau cho cùng một tệp. Thiếu khai báo
+thì bộ sinh **ném**, không đoán một đường mặc định: một bộ sinh tự bịa đường dẫn là đúng cái bệnh
+khối này sinh ra để chữa.
+
+**⑶ Phép ghim canh hai chiều, và có vế đối chứng.** Sửa mã quên bản đồ → đỏ. Sửa bản đồ mã không
+theo → đỏ. Và thêm một vế ít ai nghĩ tới: **bốn gói cũ trong nhà chung phải thật sự đúng hình
+dạng đã khai**. Một luật khai ra mà thực tế không theo thì nó là chữ, không phải mô tả — và loại
+sai đó không bao giờ tự đỏ. Đã thử phá: đổi đường dẫn trong bản đồ thì phép ghim **ĐỎ**.
+
+**Một chỗ vấp đáng ghi:** lượt đầu tôi splice chuỗi JSON và dấu gạch ngược bị nuốt — tệp thành
+JSON hỏng. JSON cần **hai** gạch ngược cho một gạch thật, tức chuỗi nguồn cần **bốn**. Phục hồi
+bằng `git checkout` (chỉ có sửa của tôi trong tệp đó, đã kiểm `git diff --stat` trước), rồi dựng
+lại bằng `String.fromCharCode(92)`. Cùng một bẫy đã dính bốn lần trong ngày; cách chữa duy nhất
+đáng tin là **đừng gõ dấu gạch ngược vào chuỗi nguồn bao giờ nữa**.
+
+**Về giới hạn ⑦** (*một luật vào thì một luật ra*): dòng mới ở `AGENTS.md` đi theo nhánh *"đo
+được nó đã nổ mấy lần"* — Đức nói gặp vài lần, lần gần nhất 08/09 do chính phiên này. `AGENTS.md`
+nay **390** dòng.
