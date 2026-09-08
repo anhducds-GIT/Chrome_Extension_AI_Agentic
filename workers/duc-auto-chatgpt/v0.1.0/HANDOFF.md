@@ -412,3 +412,36 @@ trúc và điều kiện đóng của cả hai: `BACKLOG.md`.
 
 **Sổ nợ gói 13 → 15.** Nợ tăng, và đúng: một quyết định đã chốt mà không ai ghi thành việc thì nó
 nằm im.
+
+## 2026-09-09 · `claude-gpt-chay-het-job` — B-41 ⑴: hai hard stop thành chữa được
+
+**Làm gì.** Thi hành **mục ⒝** của [ADR-0050](docs/adr/0050-chay-het-job-tru-ba-loai-dung-han.md):
+`RECEIVER_LOST` và `WRONG_SURFACE` thôi dừng hẳn, thành điều kiện chữa được. Chữa bằng **đúng một**
+trong hai việc — F5 tab, hoặc đưa tab về hội thoại của chính run này — rồi trả về vòng chạy thử lại
+từ cổng. Không mở tab mới, không tự chọn hội thoại.
+
+**Cửa `mayRepair()` đứng TRƯỚC `canRetry()`, và không sửa vào trong nó.** `canRetry()` cùng
+`submissionMayExist()` giữ nguyên từng chữ — chúng vẫn là chỗ duy nhất trả lời *"lượt gửi này có
+thể đã bay chưa"*, và đảo-mặc-định của ADR-0047 còn nguyên. Nắp **3 lần theo TỪNG loại trong một
+run**; hết nắp thì rơi về `INTERRUPTED` như trước.
+
+**Hai chỗ đã ghi đầy đủ ở `BACKLOG.md`, đọc trước khi làm ⑵⑶.** ⑴ Tôi cố ý **lệch** khỏi chữ của
+ADR-0050 ⒝ theo hướng chặt hơn: ADR viết hai loại này *"xảy ra trước khi gửi"*, nhưng `activeTab()`
+ném `RECEIVER_LOST` ở **bất kỳ** đâu, kể cả sau khi prompt đã bay — chữa lúc đó là F5 đè lên một
+lượt đang chạy, đúng cái `chat.reload` từ chối làm. ⑵ Một số đo **ngược với kỳ vọng**:
+`WRONG_SURFACE` phần lớn **vẫn dừng hẳn**, vì ca nó tới được cổng là ca run chưa gắn hội thoại nào,
+và lúc đó không có đích để về.
+
+**Kết quả số.** Suite gói **120 → 121**. Thử phá **12/12**, 0 con thoát, trên cả hai file nguồn.
+
+**Vòng chờ tách ra thành `waitTabComposer()` dùng chung** — đường tự chữa cần đúng vòng chờ đó sau
+một lần **điều hướng**, không phải sau một lần F5; hai bản sao của một vòng chờ là thứ giới hạn ②
+của `AGENTS.md` gốc cấm. Bất biến "F5 trước, chờ sau" nay trải hai hàm nên được ghim trên cả hai.
+
+**Còn mở.** B-41 mới xong **1 trong 3 phần**: ⑵ `DETECTION_BLIND` (đối soát trước, không gửi lại)
+và ⑶ lời nhà cung cấp tự khẳng định là nguồn đối soát vẫn còn. Con số *"0 nguồn khẳng định"* trong
+`post-submit-no-resend-smoke.mjs` **vẫn đúng** — phần ⑴ không nối thêm nguồn nào. Chi tiết và điều
+kiện đóng: `BACKLOG.md`.
+
+**Việc Đức.** Nạp lại tiện ích để bản này có hiệu lực, rồi chạy một loạt job và thử đóng tab ChatGPT
+giữa chừng — đúng ca `RECEIVER_LOST` mà bản vá này nhắm tới.
