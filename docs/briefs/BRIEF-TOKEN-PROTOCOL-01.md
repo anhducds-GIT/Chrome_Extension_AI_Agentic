@@ -17,7 +17,7 @@ ttl_days: 60
 
 ## 1. Vì sao — số đo thật, không phải cảm giác
 
-Đo ở `Chrome_Extension_AI_Agentic` ngày 06/09 (`docs/studies/TOKEN-DIET-V0.md`):
+Đo ở `Chrome_Extension_AI_Agentic` ngày 06/09 (hồ sơ `TOKEN-DIET-V0`; cả ba khuyến nghị đã đóng nên hồ sơ xoá 09/09 — `git log --diff-filter=D`):
 
 | | Token |
 |---|---|

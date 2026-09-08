@@ -234,7 +234,33 @@
     "_doc": "THUOC COC cho kho chu, KHONG phai tran ly tuong. Dat o dung con so cua HOM NAY: no khong doi ai don, no chi chan PHINH. Moi luot xoa thi HA con so nay xuong — cho da ha khong quay lai duoc.",
     "_tru_adr": "Khong ke docs/adr/: ADR da Accepted la bat bien (ADR-0000) nen thu muc do chi co the to len. Tinh no vao thuoc thi moi quyet dinh moi lam cong do, va nguoi ta se noi con so cho xong.",
     "_khac_gi_tran_8000": "Gioi han ③ cua AGENTS.md la DICH (8.000 dong, ke ca ADR). Thuoc coc nay la CHAN (con so hom nay, tru ADR). Dich do khoang cach con phai di; chan do co dang di lui khong. Mot cai khong thay the cai kia.",
-    "_do_that": "2026-09-09 sau luot gop ADR (N-54): docs/ khong ke ADR = 9.803 (truoc do 9.793). NANG 10 dong, ly do: docs/adr/ GIAM 1.798 dong (27 file -> 9), va 10 dong tang la muc luc so hieu -> file o docs/README.md — thu lam cho 9 file do tra cuu duoc. Doi 10 dong o cho co thuoc lay 1.798 dong o cho khong co thuoc la mot vu doi tot, nhung phai noi ra chu khong duoc im. Lenh do lai: node scripts/session-check.mjs",
-    "tran_dong_khong_ke_adr": 9803
+    "_do_that": "2026-09-09, lane claude-luat-rasoat: 9.803 -> 9.274 (HA 529 dong). Them so tay RULE-COMPILER.md (65 dong) nhung phan LY LE cua no di vao ADR-0027 chu khong vao docs/ — do la cua ra thu hai cua thuoc coc, dung dung cho. Va xoa hai ho so da nghi: TOKEN-DIET-V0 (315 dong — ca ba khuyen nghi da dong: cat HANDOFF theo ADR-0008, rut gon AGENTS.md 402->252, tach FEATURE-PARITY theo ADR-0014) va SEND-TO-OTHER-REPOS (286 dong — khoi dan phat hanh chuan RFC, chuan da roi sang Ark_Repo_Harness 03/09 nen repo nay khong con la noi phat hanh). Luat AGENTS.md muc 7: ho so da nghi thi XOA, git giu ho. Lenh do lai: node scripts/session-check.mjs",
+    "tran_dong_khong_ke_adr": 9274
+  },
+  "luat": {
+    "_doc": "BAN DANG KY NOI CHUA LUAT — dau vao cua scripts/rule-compile.mjs. Hai tang: SO CAI (docs/adr/**, chi them, B12 canh) va BAN HIEU LUC (danh sach duoi day, thu AI that su nap). Khai thieu mot noi = noi do vo hinh voi bo bien dich, va luat trong do se troi lech ma khong ai keu.",
+    "_vi_sao": "Duc chot 09/09: 'can mot bo rule compiler, dam bao cac rules duoc consistent va on dinh, khong phinh'. Truoc file nay khong co cho nao liet ke NOI CHUA LUAT, nen cau hoi 'da ra soat het chua' khong tra loi duoc bang may. Do 09/09: 18 noi, 3.650 dong ban hieu luc + 5.769 dong so cai.",
+    "_ra_soat_doc": "Ngay ra soat GAN NHAT cua tung noi, dinh dang YYYY-MM-DD. null = chua bao gio ra. Gioi han (9) cua AGENTS.md doi ra HANG TUAN; tran_ngay_ra_soat cuong che ve do. Chi dat ngay khi ban DA DOC HET file va da doi chieu voi so cai — dat ngay cho xong la tu tat may canh.",
+    "tran_ngay_ra_soat": 7,
+    "ra_soat": {
+      "AGENTS.md": "2026-09-09",
+      "CLAUDE.md": "2026-09-09",
+      "docs/README.md": "2026-09-09",
+      "docs/protocols/HANDOFF.md": "2026-09-09",
+      "docs/protocols/MULTIFLOW.md": "2026-09-09",
+      "docs/protocols/ORCHESTRATOR.md": null,
+      "docs/protocols/ASSISTANT-V0.1.md": null,
+      "PLATFORM.md": null,
+      "PROMPTS.md": null,
+      "README.md": null,
+      "STATUS.template.md": null,
+      "workers/_shared/AGENTS.md": null,
+      "workers/hnx-fetch/AGENTS.md": null,
+      "workers/hnx-fetch/PROTOCOL.md": null,
+      "workers/duc-scouter/v0.1.0/AGENTS.md": null,
+      "workers/duc-auto-chatgpt/v0.1.0/AGENTS.md": null,
+      "workers/duc-auto-gemini/v0.2.0/AGENTS.md": null,
+      "workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md": null
+    }
   }
 }

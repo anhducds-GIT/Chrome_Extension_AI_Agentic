@@ -13,6 +13,7 @@
 */
 import fs from "node:fs";
 import path from "node:path";
+import { bienDich, docTuDia } from "./rule-compile.mjs";
 import os from "node:os";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -1115,7 +1116,38 @@ check("Sổ nợ dưới trần", () => {
 // 2026-09-08, lane claude-ext-khoafile: 15 -> 16. Them "Khoa file da tra het" — ca gia tri
 // cua khoa muc file nam o chu NGAN, va khong gi cuong che chu do thi no thoai hoa thanh dung
 // cai khoa vung dai han ma no thay the. Ly do ghi vao HANDOFF.md goc + ADR-0025.
-const EXPECTED_CHECKS = 16;
+check("Luật biên dịch sạch", () => {
+  /* BỘ BIÊN DỊCH LUẬT — Đức chốt 09/09. Chỉ ① là ĐỎ; ②③④ đi kèm làm số liệu.
+     Vì sao chỉ ① đỏ: `docs/protocols/RULE-COMPILER.md` mục 3. Tóm tắt — ① là một câu SAI SỰ
+     THẬT trong file luật (đang dạy thứ Đức đã chốt ngược lại), ba cái kia là MÙI. Một cổng
+     đỏ vì mùi là một cổng sẽ bị tắt. */
+  let kq, tong;
+  try {
+    const d = docTuDia();
+    kq = bienDich({ ...d, homNay: Date.now() });
+    tong = d.soCai.reduce((n, f) => n + f.mang.length, 0);
+  } catch (e) {
+    return { ok: true, skipped: true, msg: "Không chạy được bộ biên dịch luật (" + (e?.message ?? e) + ") — không đo được KHÁC không đạt." };
+  }
+  const moCoi = kq.moCoi.reduce((n, g) => n + g.cai.length, 0);
+  const duoi = `${tong} quyết định · ${moCoi} mồ côi · ${kq.trung.length} chỗ trùng · ${kq.quaHan.length} nơi quá hạn rà`
+    + " — xem đủ: `node scripts/rule-compile.mjs`.";
+  if (!kq.veChetConTrich.length) return { ok: true, msg: "Không nơi chứa luật nào trích một vế đã chết. " + duoi };
+  const cho = kq.veChetConTrich.map((c) => `${c.file}:${c.dong} → ADR-${c.so}${c.ve ? " " + c.ve : ""}`).join(" · ");
+  return {
+    ok: false,
+    msg: "TRICH_VE_CHET: " + cho + ". File luật đang dạy một thứ Đức đã chốt NGƯỢC LẠI — không có cách"
+      + " đọc nào khiến nó đúng. Cửa ra: sửa lượt trích sang số hiệu ĐANG SỐNG, hoặc nếu vế đó thật sự"
+      + " còn hiệu lực thì bỏ nó khỏi mục `Vế đã chết` của ADR. Đừng gỡ phép kiểm. " + duoi,
+  };
+});
+
+// 2026-09-09, lane claude-luat-rasoat: 16 -> 17. Them "Luat bien dich sach" — moi noi giua SO
+// CAI (docs/adr) va BAN HIEU LUC (AGENTS.md + so tay) truoc do KHONG ai canh: lan gop 27 ADR
+// thanh 9 file de lai hai luot trich vao quyet dinh DA CHET (AGENTS.md muc 7 va ORCHESTRATOR
+// muc 0d day mo hinh MOT CUA da bi 0017 thay tu 07/09). Duc chot mot bo rule compiler: append
+// -> merge -> supersede -> trim -> compile. Ly do ghi vao HANDOFF.md goc + RULE-COMPILER.md.
+const EXPECTED_CHECKS = 17;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

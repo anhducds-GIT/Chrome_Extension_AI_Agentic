@@ -98,17 +98,23 @@ trên đất của nó; đừng bê luật repo Extension sang.
   sớm muộn cũng bị bỏ qua. Phép kiểm cần sửa `tests/role-firewall-smoke.mjs` → khoá `_code` →
   một lượt khác.
 
-## 0d. MỘT CỬA — Đức hỏi một phiên, phiên đó rẽ nhánh (Đức chốt 2026-09-05 — [ADR-0004](../adr/0004-hai-vai-assistant.md))
+## 0d. RẼ NHÁNH TRONG MỘT CHAT — tối đa 2 chat, mỗi chat rẽ bao nhiêu tuỳ ý ([ADR-0017](../adr/0004-hai-vai-assistant.md) ⑴, [ADR-0005](../adr/0005-lam-viec-song-song.md) ⑵)
 
-Đức làm việc qua **một phiên Assistant duy nhất** cho mỗi repo. Phiên này **tự rẽ nhánh** thành
-nhiều executor, điều phối chúng, và **giữ khu báo cáo sống trên bảng**.
+> **Mục này từng nói "MỘT CỬA — Đức chỉ nói chuyện với một phiên duy nhất mỗi repo"
+> (quyết định 0004, chốt 05/09). Vế đó CHẾT 07/09**: 0017 thay bằng **hai vai chạy song song**.
+> Sửa 09/09 vì bộ biên dịch luật bắt được sổ này còn dạy mô hình cũ.
 
-Đo được ngày 04–05/09 trên lịch sử thật: **9 executor do phiên điều phối tạo ra hỏi Đức 0 câu**
-về quyền hay khoá. Cùng ngày, các phiên Đức mở tay **chặn nhau 3 lần**, lần nào cũng phải Đức
-vào gỡ — lần cuối một phiên giữ cả ba khoá gốc và không nhận tin nhắn, nên Đức phải tự dừng nó.
+Đang chạy: **tối đa 2 chat song song** (`AGENTS.md` giới hạn ⑦, Đức chốt 07/09), hai chat đó
+phải **khác vùng**. Bên trong MỘT chat thì **số tác vụ ngầm không bị giới hạn** — Đức nói rõ:
+*"trong 1 chat mà bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn ok."*
+**Chủ khoá là tên CHAT**, không phải tên từng tác vụ ngầm.
 
-Bảng quyền **chặn được nhưng không quyết hộ ai nhường ai**. Người phải phân xử là Đức, mà Đức
-không có bản đồ việc trong tay. Mô hình một cửa chuyển việc phân xử sang chỗ có bản đồ.
+Nên phần còn sống của mô hình cũ là phần **rẽ nhánh bên trong một chat**, không phải phần
+*"chỉ có một chat"*. Lý do nó còn sống, đo trên lịch sử thật 04–05/09: **9 executor do một
+phiên điều phối tạo ra hỏi Đức 0 câu** về quyền hay khoá; cùng ngày các phiên Đức mở tay
+**chặn nhau 3 lần**, lần nào cũng phải Đức vào gỡ. Bảng quyền **chặn được nhưng không quyết hộ
+ai nhường ai** — người phân xử là Đức, mà Đức không cầm bản đồ việc. Rẽ nhánh trong một chat
+chuyển việc phân xử sang chỗ **có** bản đồ. Mở chat thứ ba thì chỗ đó lại mất.
 
 ### Rẽ nhánh cho đúng
 
@@ -217,12 +223,18 @@ Hết block báo một lần, và **đó là chỗ compact an toàn** — vì l�
 
 Phép thử trước khi compact: *"cái tôi vừa biết đã có trong file chưa?"* Chưa thì ghi trước.
 
-**Trần luồng đếm THEO TỪNG REPO, không đếm toàn cục** (Đức chốt 05/09). Hai repo có **bảng quyền
-riêng, cây làm việc riêng, cổng riêng** — nên một luồng ở repo này không thể chặn luồng ở repo
+**Trần đếm THEO TỪNG REPO, không đếm toàn cục** (Đức chốt 05/09). Hai repo có **bảng quyền
+riêng, cây làm việc riêng, cổng riêng** — nên một chat ở repo này không thể chặn chat ở repo
 kia. Gộp chúng vào một con số là tự trói mình mà không đổi lại được an toàn nào.
 
-Trong **một** repo: **tối đa hai luồng**, và chỉ mở luồng mới khi luồng cũ **đã push** — không
-phải khi nó "báo xong". Ngày 05/09 trần này bị phá ba lần và trả giá đúng ba lần.
+Trong **một** repo: **tối đa hai CHAT** (`AGENTS.md` giới hạn ⑦, Đức chốt 07/09), và chỉ mở
+chat mới khi chat cũ **đã push** — không phải khi nó "báo xong". Ngày 05/09 trần này bị phá ba
+lần và trả giá đúng ba lần.
+
+> **Đơn vị là CHAT, không phải "luồng".** Bản trước của đoạn này đếm *luồng*, và đọc thế thì
+> năm tác vụ ngầm trong một chat là bốn lần vi phạm. Đức chốt ngược 07/09: *"trong 1 chat mà
+> bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn ok."* **Số tác vụ ngầm
+> trong một chat KHÔNG bị giới hạn**; thứ bị giới hạn là số chat. Sửa 09/09.
 
 **Chạy song song hết mức — nhưng chỉ với việc ĐÃ SẴN SÀNG.** Bịa việc ra cho đủ chỗ trống là
 đúng cái Đức đã bác: *"làm chậm mà sạch còn hiệu quả hơn spam rồi tất cả đều dang dở."* Việc
@@ -262,8 +274,8 @@ Rồi đọc `AGENTS.md` (luật) và **phần cuối** `HANDOFF.md` gốc (phi�
 
 `what-next.mjs` **chỉ đọc**, không đòi khoá nào, chạy được cả khi mọi vùng đã có chủ. Nó
 giao ba nguồn mà trước đây không giao được với nhau: bảng quyền × sổ nợ từng gói × sổ ý
-tưởng. Đừng dựng lại bản đồ đó bằng mắt — đọc `HANDOFF.md` 1.700 dòng để suy ra "còn gì
-mở" là cách chắc chắn bỏ sót.
+tưởng. Đừng dựng lại bản đồ đó bằng mắt — đọc cả `HANDOFF.md` để suy ra "còn gì mở" là cách
+chắc chắn bỏ sót, và nó chỉ giữ **20 mục cuối** nên phần bạn cần có khi đã sang file lưu trữ.
 
 **Thứ tự ưu tiên do `priority_rank` trong `STATUS.md` quyết định, không do bạn cảm nhận.**
 Nợ hạ tầng (concurrency, artifact, cổng kiểm) **không** tự động thành "việc kế của dự án" —
@@ -480,8 +492,8 @@ xong rồi tôi đẩy"*. Với Đức đó **là** dừng: từ phía ông, lu�
 - `--carry` không phải hỏi ([ADR-0005](../adr/0005-lam-viec-song-song.md)) —
   chỉ phải **kể tên lane bị cuốn theo**.
 
-**Vì sao vai này nghiêm hơn mọi vai khác:** mô hình **một cửa** (`0d`) nghĩa là mọi việc đi qua
-đây. Executor dừng thì một lane dừng; **điều phối dừng thì cả hàng dừng**.
+**Vì sao vai này nghiêm hơn mọi vai khác:** việc rẽ nhánh đi qua đây (`0d`), nên đây là nút
+thắt. Executor dừng thì một lane dừng; **điều phối dừng thì cả hàng dừng**.
 
 Không đổi: việc **dở dang** thì vẫn không push, và vẫn `safe-push.mjs` chứ không `git push` trần.
 
@@ -552,15 +564,11 @@ Khác `session-check.mjs` ở bốn chỗ, đừng lẫn: ai chạy (điều ph�
 khi **báo cáo** ↔ trước khi **đóng phiên**) · hỏi gì ("điều tôi sắp nói có đúng không" ↔ "việc
 tôi làm đủ điều kiện push chưa") · đỏ thì sao (không được phát biểu ↔ không được push).
 
-## 7. Đã chốt — ghi sổ ý tưởng không còn đòi khoá `_root`
+## 7. `IDEAS.md` miễn khoá khi chỉ thêm dòng ở cuối
 
-**Đức chốt 2026-09-04: `IDEAS.md` được MIỄN luật khoá KHI CHỈ THÊM DÒNG Ở CUỐI.** Sửa hay xoá
-dòng cũ thì vẫn phải giữ `_root` — đó là viết lại chữ của phiên khác, và cái đó không được miễn.
-
-Vì sao cần: `IDEAS.md` nằm ở gốc repo nên trước đây chạm nó phải giữ `_root` — khoá đông nhất
-(77% commit ngày 02/09 chạm gốc). Mà vai điều phối lại là vai ghi ý tưởng thường xuyên nhất,
-nên nó liên tục xếp hàng sau người đang code. Đường đã chọn là cùng hình dạng với luật đang
-chạy cho `HANDOFF.md` gốc, và không thêm khoá thứ bảy để quản.
+Luật đầy đủ ở `AGENTS.md` mục 1b, khai bằng máy ở `append_only_exempt` — **đừng đọc bản ở đây,
+đọc bản ở đó.** Vai điều phối là vai ghi ý tưởng nhiều nhất nên hay dùng miễn trừ này; nhớ vế
+sau của nó: **sửa hay xoá dòng cũ thì KHÔNG được miễn**, trừ khi bạn đang giữ khoá đúng file.
 
 **Luật này sống ở đâu:** khối `append_only_exempt` trong `.repo-structure.json` — **sửa ở đó,
 đừng sửa script**. `AGENTS.md` mục 1 nói cùng luật đó cho người đọc. Trước 04/09 danh sách bị

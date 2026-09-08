@@ -26,11 +26,9 @@ node scripts/session-check.mjs --as <tên-phiên-của-bạn>
       → npm run test:song-song → cổng → safe-push → trả khoá vùng
 ```
 
-- **Chạy đủ bộ SAU commit cuối.** Bộ chạy để lại một *dấu xác nhận* buộc vào HEAD + băm cây làm
-  việc; cổng thấy dấu còn hiệu lực thì không chạy lại. Commit sau đó là làm hỏng dấu. Đo cùng cơ
-  chế ở bộ khung: **1.095 → 278 giây**.
-- **Trong lúc làm chỉ chạy một suite:** `node scripts/chay-test.mjs --chi <tên-suite>`, cố ý KHÔNG
-  ghi dấu. Đủ bộ chạy **một lần**, ở cuối.
+- **Chạy đủ bộ SAU commit cuối, đúng MỘT lần.** Bộ chạy để lại một *dấu xác nhận* buộc vào HEAD
+  + băm cây làm việc; commit sau đó là làm hỏng dấu (đo ở bộ khung: **1.095 → 278 giây**). Trong
+  lúc làm chỉ chạy một suite: `node scripts/chay-test.mjs --chi <tên>`, cố ý KHÔNG ghi dấu.
 - **Đừng đổi `scripts.test`** — nó là chuỗi tuần tự có chủ ý: một phép ghim trong `duc-auto-*` đọc
   thẳng trường đó để bắt "xanh giả".
 - **Bộ sinh nào ghi vào một sổ CÓ RÀNG BUỘC thì chạy MỘT LẦN, sau khi suite xanh.**
@@ -158,9 +156,10 @@ automation tự chạy — nếu chưa hỏi.
    nên **số tác vụ ngầm TRONG một chat không bị giới hạn**, và **chủ khoá là tên CHAT**.
 8. **Một luật vào thì một luật ra.** Thêm luật vào file này phải kể tên luật nó thay, hoặc đo được
    nó đã nổ mấy lần. Chỗ để kể chuyện là ADR, không phải đây.
-9. **Rà soát sổ luật HẰNG TUẦN, không đợi có việc mới rà**
-   ([ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑸). Hồ sơ ADR gộp được, phân nhóm
-   được, viết lại được; **một quyết định thì không bao giờ được mất** — B12 cưỡng chế vế sau.
+9. **Luật mới vào SỔ CÁI trước, đừng viết thẳng vào đây.** `docs/adr/` là sổ cái (chỉ thêm, B12
+   canh); file này là **bản hiệu lực** biên dịch từ đó, rà **HẰNG TUẦN** bằng
+   `node scripts/rule-compile.mjs` ([ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑸).
+   Cổng ĐỎ khi một nơi chứa luật còn **trích một vế đã chết**. Sáu bước: `docs/protocols/RULE-COMPILER.md`.
 
 ## 5. Không bao giờ
 
@@ -185,7 +184,7 @@ automation tự chạy — nếu chưa hỏi.
 
 ## 6. Vai — chia theo hướng đi của việc, không chia theo hãng
 
-**Đức chốt mọi thứ.** Ngoài ra có hai vai ([ADR-0004](docs/adr/0004-hai-vai-assistant.md)). Vai là
+**Đức chốt mọi thứ.** Ngoài ra có hai vai ([ADR-0017](docs/adr/0004-hai-vai-assistant.md)). Vai là
 của **PHIÊN**, không của hãng: hãng nào cũng đóng được vai nào, và một phiên đóng đúng một vai cho
 tới khi đóng phiên.
 
@@ -204,7 +203,7 @@ tới khi đóng phiên.
   không ai tưởng nó đang được cưỡng chế.
 - Hai vai chạy cùng lúc được, nhưng **KHÁC VÙNG** (mục 1), và vừa khớp trần 2 chat.
 
-> **⚠ Còn một chỗ chờ Đức chốt:** [ADR-0004](docs/adr/0004-hai-vai-assistant.md) chia hai vai theo
+> **⚠ Còn một chỗ chờ Đức chốt:** [ADR-0017](docs/adr/0004-hai-vai-assistant.md) chia hai vai theo
 > **Hệ thống / Sản phẩm**, khác cặp trong bảng trên. Cặp trong bảng này là cặp các phiên đang theo;
 > lần đổi 08/09 chưa có quyết định nào ghi lại.
 
@@ -227,7 +226,8 @@ gì."* — chưa bao giờ chứng minh được nó tự nạp.
 | **Vận hành nhiều extension, hoặc thêm một cái** | `PLATFORM.md`; khai cái mới bằng cách chép `STATUS.template.md` đặt cạnh `manifest.json` |
 | **Biết repo đang nợ gì về cấu trúc** | `node scripts/check-bootstrap.mjs [--all]` — B1…B15, mỗi dòng nói cả chỗ sai lẫn cách sửa. Tám phép chặn thật: `B1 B2 B3 B4 B5 B7 B10 B12`, khai ở `bootstrap.blocking`. Bảy phép còn lại chỉ cảnh báo; **B15 cưỡng chế luật viết-cho-Đức** ở ba trường trên bảng |
 | **Lấy dữ liệu HNX, hoặc sửa gói đó** | `workers/hnx-fetch/PROTOCOL.md` — sổ tay tự đứng một mình, viết cho AI không phải Claude Code. Gói này **không có quyền `debugger`** nên nó không bấm được gì; cần bấm là việc của Scouter |
-| **Sửa hoặc vận hành Scouter** | `workers/duc-scouter/v0.1.0/AGENTS.md` ([ADR-0007](docs/adr/0007-scouter.md)). Hai chỗ dễ vấp: **selector không bao giờ được gõ vào seed**, và cửa Bridge của nó **bắt tay hai chiều** nên chỉ nối được với máy chủ bản ChatGPT |
+| **Sửa hoặc vận hành Scouter** | `workers/duc-scouter/v0.1.0/AGENTS.md` ([ADR-0009](docs/adr/0007-scouter.md)). Hai chỗ dễ vấp: **selector không bao giờ được gõ vào seed**, và cửa Bridge của nó **bắt tay hai chiều** nên chỉ nối được với máy chủ bản ChatGPT |
+| **Thêm/sửa/bỏ một LUẬT, hoặc tới lượt rà hằng tuần** | `docs/protocols/RULE-COMPILER.md` — hai tầng (sổ cái ↔ bản hiệu lực), sáu bước `append → merge → supersede → trim → compile`, và bốn phép đo. **Trim không phải xoá**: luật rời bản hiệu lực thì xuống mục `Vế đã chết` của ADR kèm tên quyết định đã thay nó. Bộ đo cố ý **không có `--fix`** — AI đề xuất, Đức quyết |
 | **Tìm một tài liệu, hoặc tra đường dẫn cũ** | `docs/README.md` — mục lục, bản đồ 33 đường dẫn cũ → mới, và bản đồ ADR cũ → file gộp |
 | **Viết một hồ sơ nghiên cứu mới** | `docs/_TEMPLATE-study.md`. Hồ sơ đã nghỉ thì **xoá**, git giữ hộ |
 | **Lấy bộ chuẩn về dùng, hoặc sửa bộ chuẩn** | **KHÔNG CÒN Ở REPO NÀY** — `https://github.com/anhducds-GIT/Ark_Repo_Harness` ([ADR-0001](docs/adr/0001-ranh-gioi-bo-khung.md)). Repo này là **người dùng** |

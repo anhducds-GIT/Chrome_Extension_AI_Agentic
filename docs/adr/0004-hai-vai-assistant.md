@@ -80,6 +80,14 @@ Bốn ca cụ thể: Sản phẩm cần sửa hạ tầng → **gửi yêu cầu
 nhận, **có cơ chế chống chờ mãi** · phiên im lặng → **không suy ra đã chết**; thu hồi được, nhưng
 phải qua cửa tích hợp.
 
+## Vế đã chết
+
+- **0004 — mô hình MỘT cửa Assistant cho mỗi repo.** Chết 07/09: 0017 vế ⑴ thay hẳn bằng
+  hai vai chạy song song. Phần 0004 để lại và vẫn đúng — *trạng thái sống trong file repo,
+  không sống trong chat* — nằm ở mục **Hệ quả** bên dưới, không phải ở đây.
+- **0017 ⑶ và ⑷ — nguồn điều phối và cửa tích hợp bản đầu.** Chết 08/09: quyết định 0018 và
+  0019 chỉnh lại, nay ở [ADR-0005](0005-lam-viec-song-song.md).
+
 ## Hệ quả
 
 **Được so với mô hình một cửa:** thực thi độc lập, không còn một control plane để mất, và không
