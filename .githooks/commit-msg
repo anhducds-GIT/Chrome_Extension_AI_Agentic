@@ -1,0 +1,44 @@
+#!/bin/sh
+# commit-msg — chốt cuối của N-40/N-05. Đọc AGENTS.md mục 1 trước khi sửa file này.
+#
+# VÌ SAO LÀ HOOK, và vì sao là `commit-msg` chứ không `pre-commit`:
+#
+# `claim.mjs --soat` đo đúng, nhưng nó chạy TRƯỚC `git commit`. Ngày 08/09 lane
+# claude-gpt-no-ky-thuat đo được cửa sổ giữa hai lệnh: `--soat` trả "tất cả thuộc quyền ghi",
+# rồi `git commit` trả mã 1 "no changes added" — vì lane thứ ba đã mang file đã dàn của họ đi
+# trong đúng khoảng đó. Một phép đo đứng TRƯỚC không bao giờ bịt được một cửa sổ thời gian;
+# nó phải nằm TRONG lượt commit.
+#
+# `commit-msg` chứ không `pre-commit`: `--soat` cần biết bạn là lane nào, và chỗ duy nhất
+# ghi tên lane là nhãn `Lane:` trong thông điệp — thứ chỉ `commit-msg` đọc được. Index ở
+# `commit-msg` vẫn đúng là index sắp được commit, nên phép đo không mất gì.
+#
+# BA CHỐT FAIL-OPEN, cố ý. Hook này chạy trên MỌI lượt commit của MỌI lane; một hook hỏng là
+# cả repo không commit được, và cái giá đó lớn hơn cái nó canh:
+#   1. không có `node` trên PATH  -> cho qua
+#   2. không tìm thấy nhãn `Lane:` -> cho qua (merge, revert, squash tự sinh thông điệp
+#      không nhãn; và commit thiếu nhãn đã bị cổng đóng phiên + safe-push chặn ở sau)
+#   3. `claim.mjs` ném lỗi lạ (mã khác 3) -> cho qua, chỉ in ra
+# Chỉ mã thoát 3 (SOAT_LA / SOAT_SO_CHUNG — vi phạm THẬT) mới chặn.
+#
+# Cửa thoát khi kẹt: `git commit --no-verify`. Cố ý để mở — một chốt không thể vượt trong
+# lúc khẩn thì nó sẽ bị gỡ hẳn.
+
+[ -n "$ARK_BO_QUA_HOOK" ] && exit 0
+command -v node >/dev/null 2>&1 || exit 0
+[ -f scripts/claim.mjs ] || exit 0
+
+lane=$(sed -n 's/^Lane:[[:space:]]*\([^[:space:]][^[:space:]]*\)[[:space:]]*$/\1/p' "$1" | tail -1)
+[ -z "$lane" ] && exit 0
+
+node scripts/claim.mjs --soat --as "$lane"
+ma=$?
+[ "$ma" -eq 3 ] && {
+  echo ""
+  echo "commit-msg: DUNG LAI — index dang chua file ngoai quyen ghi cua lane \"$lane\"."
+  echo "  Xem ly do ngay tren. Go ra: git restore --staged <duong-dan>"
+  echo "  Dung la viec cua ban? Nhan truoc: node scripts/claim.mjs --sua <duong-dan> --as $lane"
+  echo "  That su phai di tiep? git commit --no-verify  (va noi ra trong nhat ky phien)"
+  exit 1
+}
+exit 0
