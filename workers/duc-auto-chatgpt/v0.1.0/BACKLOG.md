@@ -1300,3 +1300,116 @@ vẫn tốn mọi phiên đọc nó về sau.
 - **ĐÓNG B-28 — bản vá vòng 2 sau audit độc lập, đọc dòng này thay cho dòng ĐÓNG B-28 ở trên** · Vòng 1 (ghi ở dòng trên) **có một lỗi thật do chính tôi đưa vào**, và audit độc lập bắt đúng nó — ghi lại đây vì bài học đắt hơn bản vá. Vòng 1 dùng **một promise chuông dùng chung** và tự khai *"nhiều nhất một resolver treo một lúc"*. **Sai.** `Promise.race([bell, sleep])` đính một reaction vào `bell` **mỗi vòng lặp**, và việc dùng chung một promise **không dọn** những reaction ấy — chúng tích luỹ trên đúng cái promise đó. Đo lại bằng tay để không tin lời ai: đính 10.000 reaction vào một bell, reo **một** lần thì **cả 10.000 đều chạy**. Ở nhịp 250ms đó là ~240 reaction mỗi phút tạm dừng, mỗi cái giữ một closure. **Và phép ghim vòng 1 XANH trong khi vẫn rò rỉ**, vì mép ⑷ của nó so **danh tính** promise — một thứ bản rò rỉ thoả mãn hoàn hảo. Đây đúng là bài học `AI-OPERATOR-GUIDE.md` lỗi #2 đã dặn: *lỗi sống dai không phải vì không ai kiểm, mà vì phép kiểm khẳng định hành vi sai.* **Vòng 2:** chuông nay là một **tập resolver** — mỗi lượt chờ cấp promise riêng, ghi tên vào tập, và **xoá tên trong `finally`** dù thắng bằng chuông hay bằng lưới đỡ; promise của lượt đó thành rác ngay sau vòng lặp, mang theo reaction của nó. Mép ⑷ viết lại để **đo số resolver sống** (≤ 1 qua 400 nhịp) chứ không so danh tính, cộng mép ⑸ mới: reo lúc không ai chờ không được để lại "chuông còn reo" giải oan lượt chờ tới sau. **Đột biến 10/11 đỏ** — trong đó con quan trọng nhất là **dựng lại y nguyên thiết kế rò rỉ của vòng 1, và nó ĐỎ**. Con thoát duy nhất (bỏ `controlWaiters.clear()`) là **tương đương hành vi**: mỗi lượt chờ tự xoá tên mình trong `finally` nên tập vẫn rỗng; giữ `clear()` để lời gọi reo là một thao tác trọn vẹn, và ghi lại con thoát thay vì bày một phép ghim giả. **Một mục audit nêu mà tôi KHÔNG vá, và nói rõ vì sao:** chờ theo MỐC thì một cú **nhảy đồng hồ về phía trước** có thể kết thúc cooldown thử lại sớm, còn `sleep()` theo thời lượng thì không. Nhận có chủ đích, ba lý do ghi ngay trong `sidepanel.js` cạnh chỗ vá: khoảng nghỉ giữa hai job — thứ bảo vệ rate-limit THẬT — đã chạy trên đúng module này từ 28/08, nên để hai đồng hồ cạnh nhau dùng hai cơ chế là để lại cái bẫy đắt hơn cái nó tránh · ca nhảy đồng hồ thường gặp nhất là máy ngủ rồi thức, và lúc đó thời gian thật ĐÃ trôi nên mốc trả lời **đúng** còn `sleep()` mới sai · ca còn lại là hiệu chỉnh NTP, sai số bị chặn bởi chính độ hiệu chỉnh. **Cần Đức chốt một câu nếu muốn khác:** ưu tiên *"không bao giờ ngắn hơn"* kể cả khi đổi đồng hồ thì lối ra là đọc thêm một mốc đơn điệu (`performance.now()`) và lấy cái chậm hơn — chưa làm vì nó chạm **luật thử lại**, thứ `AGENTS.md` gốc mục 2 bắt hỏi Đức. Hai mục audit nêu mà **đo ra là không có thật**: `wholeSeconds()` làm tròn xuống phần thập phân **không tới được** — `retryCooldown()` dựng từ `Math.min`/`Math.max`/`Math.floor` trên số nguyên nên luôn trả số nguyên (đã đọc `runner-core.js`, không suy); và lo "reo lúc không ai chờ gây kẹt" thì mép ⑸ nay ghim thẳng là vô hại. **Suite 117/117.**
 - **ĐÓNG B-28 — vòng 3, khép lại sau vòng audit độc lập thứ hai. Đọc dòng này thay cho hai dòng ĐÓNG B-28 ở trên** · Vòng audit thứ hai trả **CONDITIONAL PASS, không blocker nào**, nhưng chỉ đúng **một lỗ còn lại nằm trong chính phép ghim** — và lỗ đó đáng ghi vì nó là cùng một họ với lỗi của vòng 1. Mép ⑷ đo **số tên trong tập resolver**; cái rò rỉ thật là **số reaction đính vào một promise chưa settle**. Hai thứ đó KHÁC NHAU: một bản **hybrid** vừa giữ đúng sổ `Set` + `finally` (nên qua được mọi khẳng định cấu trúc *và* qua được mép ⑷) vừa dùng chung một bell sẽ có `size ≤ 1` **và vẫn rò rỉ**. Nói cách khác: đột biến "dựng lại y nguyên thiết kế vòng 1" đỏ chỉ vì **mỏ neo cấu trúc**, không vì phép đo — nên nó **không** chứng minh phép ghim thấy được con rò rỉ. Đã vá bằng **mép ⑥: đếm thẳng số lần `then` đính vào mỗi promise**, bằng một lớp `Promise` con truyền vào sân khấu qua vm. **Đo thật, không suy:** bản hybrid đạt **400 reaction sau 400 lượt và ĐỎ đúng ở mép ⑥**; bản hiện tại đạt **1**. Cộng một đính chính cho chính lời tôi ghi ở vòng 2: con thoát `controlWaiters.clear()` tôi gọi là *"tương đương hành vi"* — chính xác hơn là **cùng kết quả nhưng không cùng mọi khoảnh khắc quan sát được**, vì ngay sau khi reo, các resolver đã settle còn nằm trong tập cho tới khi `finally` của từng lượt chờ chạy. Không mất cú đánh thức nào (Promise gốc không chạy continuation đồng bộ), nên vẫn giữ `clear()` — để lượt reo là một thao tác trọn vẹn — và vẫn ghi con thoát. **Hai điều audit đòi mà tôi không cấp được:** nó không đọc được repo (`apply deny-read ACLs`, đúng bệnh sandbox đã biết) nên chỉ soi được đoạn mã tôi dán, và lượt dán của tôi **cắt cụt** thân `raceControlWake()` — nên chữ *"CONDITIONAL"* trong phán quyết là **thật**, không phải khách sáo. Ai muốn nâng lên PASS trọn vẹn thì dán đủ thân hàm đó cộng khối gating của B-10. **Suite 117/117.**
 - **GHI CHÚ B-14 + B-15 — làm xong nửa tài liệu, HAI MỤC VẪN MỞ** (2026-09-08, `claude-gpt-no-ky-thuat`) · Cố ý **không** đóng, và nói rõ vì sao: phần nặng của cả hai mục là **một phép đo trên trang thật**, mà theo luật vàng 1 thì selector phải có bằng chứng DOM thật — nên phần đó cần tay Đức, không AI nào làm hộ được. Nửa đã làm là nửa mà chính `B-14` yêu cầu bằng chữ (*"phải ghi rõ trong `provider-adapter.js` là chúng chưa từng khớp trên trang thật, để phiên sau không tưởng nhóm này có 5 lớp bảo vệ trong khi thật ra có 1"*): `provider-adapter.js` nay ghi số đo ngay cạnh từng dòng selector — bốn mục `attachmentPreview` mang nhãn `CHƯA TỪNG KHỚP` (đo 26/08, **976 lượt dò**, `Pilot-14_RefFeatureTest/evidence/watch-run-20260826-1411.jsonl`), mục duy nhất còn sống `button[aria-label*="Remove file"]` khớp `=> 2` ở job 2 ảnh và `=> 4` ở job 4 ảnh nên là tín hiệu thật; cả **ba** mục `uploadPending` mang nhãn `CHƯA TỪNG KHỚP` (52 lượt dò có ảnh đính kèm đang hiện). **Không đổi một dòng hành vi nào** — không xoá mục chết, không thêm mục mới, không đoán selector. Kèm ghi nhận giảm nhẹ để phiên sau không hoảng: lớp chặn *"ảnh tham chiếu bị nhận nhầm thành ảnh sinh"* **không** chỉ dựa vào nhóm này (`content.js:237` còn hai tín hiệu độc lập: `role === "user"` và khớp theo tên file; `attachmentContainer` dùng `form` trần nên miễn nhiễm với đổi nhãn) — nên đây là rủi ro **chẩn đoán**, không phải rủi ro **an toàn**. **Cần Đức, hai phép đo, không tốn credit:** ⑴ `dom_probe` **giữa lúc đang gắn ảnh** để tìm một mục neo theo CẤU TRÚC (không theo chữ) rồi thêm vào `attachmentPreview` — đóng B-14; ⑵ gắn một ảnh **~2MB** như ảnh thật của Pilot-08 rồi dò: cửa sổ upload dài hơn nên nếu vẫn không mục nào khớp thì `uploadPending` là selector CHẾT và phải bỏ nhóm đó, còn nếu khớp thì nó sống và chỉ là ảnh nhỏ upload quá nhanh — đóng B-15. Hai phép đo này phân biệt hai khả năng mà hôm nay không ai phân biệt được, và cách xử lý của hai khả năng khác nhau.
+
+## Nghiệm thu live 2026-09-08 · `claude-gpt-no-ky-thuat` — Đức mở Bridge, tôi lái
+
+> Lượt chạy thật đầu tiên của gói này sau khi mở băng. Mọi con số dưới đây **đo trực tiếp qua
+> Bridge**, không suy. Ghi cả chỗ ĐẠT, chỗ HỎNG, và chỗ **tôi làm sai** — vì lượt sau đọc lại
+> mà không biết tôi đã sai chỗ nào thì sẽ sai y hệt.
+
+### ĐẠT — sáu thứ, tất cả đều là nợ nghiệm thu cũ
+
+| Kiểm | Nợ từ | Bằng chứng live |
+|---|---|---|
+| Chặn chạy từ trang chủ, **cả hai chiều** | 02/09 | trang chủ đưa `failure_type: WRONG_SURFACE`; hội thoại thật đưa `READY`, `surface: CONVERSATION`, `surface_allowed: true` |
+| Trần `run.trial` = 900 giây | 07/09 | `capabilities` và reservation đều trả `timeout_cap_sec: 900` |
+| `run.start` vẫn bị cấm | — | không có trong 23 lệnh Bridge |
+| **Đồng hồ tiến độ BÒ LÊN** (ADR-0015 vế ②) | 07/09 | `job=119s stage=45s` rồi `job=120s stage=46s` giữa hai lượt hỏi liên tiếp. Trước đó chỉ có tên chặng |
+| **B-10** — rảnh thì `current` phải `null` | hôm nay | đúng lúc `state` đổi RUNNING sang IDLE, `current` đổi sang `null` trong cùng một chuỗi hỏi |
+| **B-16** — lỗi người sửa được không bị giặt trắng | 06/09 | `jobs.add` với ảnh mẫu chưa nạp đưa `VALIDATION_FAILED` kèm câu tiếng Việt chỉ đúng việc phải làm, KHÔNG phải `INTERNAL_ERROR` |
+
+Thêm hai bất biến an toàn **tự chứng minh trong lúc chạy**, không phải phép kiểm nào cả:
+**ADR-0047** — job không quy được kết quả thì thành `INTERRUPTED` + `POST_SUBMIT_UNCERTAIN`, **không
+gửi lại**; và **lớp chống nhận nhầm ảnh mẫu thành ảnh sinh** — ảnh mẫu `do-lon.png` nằm ngay trên
+trang lúc đối soát mà **không** bị quy thành đầu ra (`generatedChains` rỗng).
+
+### B-36 — nửa (A) ĐẠT, nửa (D) HỎNG. **MỤC VẪN MỞ.**
+
+**(A) đạt, và đạt ở đúng chỗ 04/09 đã hỏng.** Số tệp tên-GUID trong `Downloads`: **39 trước,
+39 sau** — đo bốn lần, kể cả **sau một lượt chạy đã tới cửa lưu rồi chết**. Ngày 04/09 chính bước
+này làm tăng. Khi chưa có thư mục, mutation vẫn **thành công** và nói thẳng `audit_durable: false`
+kèm câu tiếng Việt giải thích; **không tệp nào rơi ra**. Sau khi Đức bấm chọn thư mục:
+`audit_durable` **biến mất khỏi payload** (tức sổ đã bền), `checkpoint.verified: true`, tên tệp
+`Bridge-2026-09-08T15-04__results__v06.xlsx` — **tên đúng, không GUID**.
+
+**(D) hỏng — và đây là việc còn lại của mục này.** Đức **đã** chọn một thư mục TRƯỚC lúc đóng/mở
+panel. Sau khi mở lại, `jobs.add` vẫn trả câu *"phiên này chưa có thư mục nào Đức cấp quyền"*. Tức
+lượt **nhận lại thư mục đã cấp quyền không xảy ra**, và Đức phải bấm chọn lần thứ hai. Đó đúng là
+thứ (D) tồn tại để làm.
+
+- **đóng khi:** Đức bấm chọn thư mục, đóng panel, mở lại, rồi `jobs.add` qua Bridge **không** trả
+  `audit_durable: false` mà **không cần bấm lại**. Kèm: số tệp tên-GUID không tăng (mốc **39**).
+- **Chưa loại được một khả năng**, và nó quyết định đây là lỗi hay là hành vi đúng: (D) cố ý
+  **không chọn hộ khi có NHIỀU HƠN MỘT** thư mục đã cấp quyền. Nếu máy Đức đang có hai hồ sơ trở
+  lên thì (D) đang chạy **đúng luật**, và mục này chỉ còn là chuyện *thông báo*. Không phân biệt
+  được từ Bridge — xem mục dưới.
+
+### B-37 · (P1) `audit_durable: false` gộp BA nguyên nhân vào một câu, và Bridge không đọc ra được
+
+Một AI lái từ xa nhận đúng một câu *"phiên này chưa có thư mục nào Đức cấp quyền"* cho **ba** tình
+huống cần ba hành động khác nhau: một là chưa ai từng cấp quyền, phải nhờ người bấm; hai là đã cấp
+**hai cái trở lên** nên (D) từ chối chọn hộ, phải nhờ người chọn cái nào; ba là handle còn mà quyền
+đã mất, phải nhờ cấp lại. Không lệnh Bridge nào đọc được hồ sơ thư mục (23 lệnh, không có lệnh đọc
+`output` hay `profiles`; `profiles.remove` chỉ xoá, `output.set_folder_hint` chỉ ghi). Nên hôm nay
+tôi **không kết luận được** (D) là lỗi hay là luật — đúng cái bẫy `AI-OPERATOR-GUIDE.md` lỗi số 2
+đã dặn: một câu báo không phân biệt được hai nguyên nhân thì nó không giúp chẩn đoán.
+- **đóng khi:** payload nói rõ **số hồ sơ đã cấp quyền** (không có, một, hay nhiều), hoặc có một
+  lệnh Bridge chỉ-đọc trả về danh sách hồ sơ; và một phép ghim đòi ba nguyên nhân ra ba câu khác nhau.
+
+### B-38 · (P1) Lượt ghi bị `REQUEST_TIMEOUT` VẪN có tác dụng, và công cụ tự phá lớp chống ghi-hai-lần
+
+Đo được: `references.add` trả `REQUEST_TIMEOUT`; tôi thử lại **đúng như câu lỗi dặn** (nguyên văn
+*"retry the identical idempotency key"*) và lượt hai trả `added` rỗng kèm câu *"thay thế 2 ảnh
+trùng tên"*, checkpoint nhảy **v2 lên v3**. Tức lượt đầu **đã ghi xong** rồi mới hết giờ ở đường
+trả lời. Sổ lên **v3 cho 2 lượt ghi có ý định**, và có hai sự kiện audit cho một ý định.
+Gốc bệnh **không** nằm ở lớp replay — `bridge-core.js` khai `idempotent: true` đúng cho việc này —
+mà ở chỗ **`bridge-cli.mjs` sinh `request_id` MỚI mỗi lần gọi**, nên lượt thử lại trông như một
+yêu cầu khác và lớp replay không có gì để khớp. Câu lỗi dặn giữ nguyên khoá, còn công cụ mặc định
+thì đổi khoá.
+- **đóng khi:** CLI sinh `request_id` **dẫn xuất từ nội dung tham số cộng phiên** (hoặc bắt buộc
+  phải truyền tay cho mọi mutation), và một phép ghim chứng minh hai lượt gọi liên tiếp cùng tham
+  số chỉ làm checkpoint tăng **một** bậc.
+
+### B-39 · (P2) Panel không trả lời Bridge trong lúc bận, và `run.status` không nói vì sao run chết
+
+Hai triệu chứng, một gốc. Một: suốt buổi, lời gọi Bridge phải thử lại **1 tới 6 lần**, luôn là
+`REQUEST_TIMEOUT` rồi tự khỏi; dày nhất **ngay sau mutation** và **trong lúc run đang chạy** — dấu
+hiệu panel đơn luồng không kịp trả lời khi đang ghi checkpoint hoặc đang lái run. Hai: `run.trial`
+trả `accepted: true` kèm lời dặn *"cứ hỏi `run.status`"*, nhưng khi job chết thì `run.status` chỉ
+trả `IDLE` với `current: null` và **không một chữ nào** về nguyên nhân; tôi dò **22 lượt** rồi mới
+hiểu ra bằng cách đi đọc `queue.list` để lấy `failure_type`. Một AI lái từ xa làm đúng như tài liệu
+dặn sẽ ngồi chờ mãi.
+- **đóng khi:** `run.status` mang trường nói job vừa kết thúc ra sao (`last_failure` hoặc tương
+  đương) để một mình nó đủ lái vòng chạy; và một phép ghim đòi trường đó xuất hiện sau một lượt
+  `INTERRUPTED`.
+
+### B-14 và B-15 — CHƯA đo được, lần thứ hai. Nhưng có một đầu mối THẬT.
+
+**Chưa đo được, nói rõ:** cửa sổ gắn ảnh xảy ra **rất sớm** trong lượt chạy, mà mỗi lời gọi CLI mất
+một tới hai giây bắt tay, nên lượt dò đầu tiên của tôi đã rơi vào lúc `job=119s` — quá muộn. Mọi
+lượt dò đều trả `attachmentPending: false` và `attachmentPreview` toàn 0; **đừng đọc mấy con 0
+đó thành "selector chết"** — không có ảnh đang gắn thì 0 là câu trả lời đúng.
+
+**Đầu mối, có bằng chứng DOM live:** sau khi gắn, ảnh mẫu nằm trên trang dưới dạng
+`img[alt="do-lon.png"]` với `src` là `https://chatgpt.com/backend-api/estuary/content?id=file_…`,
+và `naturalW` bằng 0, `rect` rộng 0 cao 0. Hai thứ đáng giá ở đó: **`alt` mang đúng tên tệp** (một
+mỏ neo theo *thuộc tính*, ổn định hơn nhãn tiếng Anh `Remove file`), và tiền tố
+`backend-api/estuary/content` (một mỏ neo theo *đường dẫn*). Cả hai **chưa được thêm vào nhóm** —
+luật vàng 1 đòi bằng chứng đo giữa lúc gắn, mà lượt này chưa bắt được cửa sổ đó.
+
+**B-15 có một trần cứng vừa phát hiện:** phép đo mà mục đó tự đề ra — *"thử lại với ảnh 2MB"* —
+**không đi qua Bridge được**: `LIMITS.max_reference_data_url_bytes` là **700KB** mỗi ảnh
+(`bridge-core.js`). Ảnh lớn nhất tôi gửi được là **433KB**. Nên phép đo 2MB **bắt buộc** cần Đức
+kéo tay ảnh vào ô soạn, hoặc nạp qua hộp chọn tệp của panel — không AI nào làm hộ được. Ghi vào
+đây để lượt sau không dựng lại cả bộ đồ rồi mới phát hiện.
+
+### TÔI LÀM SAI MỘT CHỖ — ghi ra để lượt sau không lặp
+
+Lượt chạy `Q003` tiêu một lượt sinh mà **không thu được gì**, và **lỗi là của tôi, không phải của
+mã**. Tôi chạy một job **tạo ảnh** trong chính hội thoại Đức đang mở — mà hội thoại đó có chỉ thị
+riêng buộc trả lời ngắn dạng giải thích (dòng đầu mỗi câu trả lời là một khối `MODE / BUDGET /
+RULES`). Nên ChatGPT nhận prompt, trả về một lượt gần rỗng (13 chữ), **không tạo ảnh nào** —
+`generatedChains` rỗng, và ảnh duy nhất trên trang là ảnh mẫu của chính tôi. Extension xử đúng ở
+mọi bước: gửi, chờ, không quy được đầu ra, xếp `INTERRUPTED` và **không gửi lại**.
+**Luật cho lượt sau: job tạo ảnh phải chạy trong một hội thoại TRỐNG, không có chỉ thị riêng.** Đọc
+`chat.read` **trước** khi chạy — một lượt trả lời cũ mang khối `MODE` là dấu hiệu đủ để dừng lại.
