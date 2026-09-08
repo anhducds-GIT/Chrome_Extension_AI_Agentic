@@ -62,3 +62,35 @@ Bài học chung, không riêng tệp này: **một chốt hỏng câm tệ hơn
 người ta còn cẩn thận.
 
 **Việc kế:** không có.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — Codex kiểm chứng bộ sinh, tìm ra 5 chỗ, cả 5 đều thật
+
+Đức chốt giao `H-06` cho Codex CLI. Đây là lượt **bên khác kiểm bên sửa** đầu tiên của gói này,
+và nó trả tiền ngay.
+
+**Codex không chạy được trên máy này** — sandbox hỏng (`apply deny-read ACLs`), đúng lỗi đã ghi
+trong sổ tay. Nó báo `FAIL` kèm câu *"FAIL là chưa đủ bằng chứng để nghiệm thu, không phải kết
+luận mã có lỗi"* — đúng cách một bên kiểm chứng nên nói khi không đo được. Chuyển sang **đọc mã**:
+nạp thẳng nội dung qua stdin, chế độ chỉ-đọc. Lần này nó trả 5 chỗ, và **cả 5 đều có thật**.
+
+**Ba lỗ ở chốt "không ghi vào kho mã", cùng một gốc — so đường dẫn mà chuẩn hoá chưa đủ sâu:**
+đường dẫn mở rộng `\?\C:\...` · tên tệp bắt đầu bằng `..` · junction trỏ vào repo. Cái đầu
+**đã lọt thật**: tôi đo lại và một tệp có token rơi vào gốc repo. Vá bằng: gỡ tiền tố mở rộng,
+giải tới **tổ tiên tồn tại sâu nhất**, và so theo **đoạn** đường dẫn chứ không theo tiền tố chuỗi.
+
+**Một lỗ ở chốt "không ghi đè":** `existsSync` rồi `writeFileSync` là hai lượt, giữa chúng có khe.
+Nay ghi bằng cờ `wx` — hệ điều hành từ chối, không còn khe.
+
+**Một lỗ trong CHÍNH PHÉP GHIM, và đây là cái đáng sợ nhất.** `GOC_REPO` của nó lùi ba cấp từ
+`tests/` nên chỉ tới `workers/`. Tức phép ghim chỉ chứng minh bộ sinh không ghi được vào
+`workers/` — nó **không đỏ**, nó **đo ít hơn nó tự khai**. Một phép ghim như thế còn tệ hơn không
+có, vì nó phát ra sự yên tâm mà nó không đỡ nổi.
+
+**Đo sau khi vá:** 12 đường tấn công, chặn 12. Sinh tệp thật rồi bật máy chủ thật:
+`HTTP 200 · EXTENSION_OFFLINE`.
+
+Hai bẫy thoát chuỗi gặp lại trong lượt này, ghi để lần sau nhận ra sớm: một regex bị nuốt dấu
+gạch ngược nên bộ tách chỉ tách theo gạch xuôi; và một phép ghim soi chữ `Math.random` thì đỏ vì
+đọc **chính lời dặn** trong chú thích của mã. Cả hai chữa bằng cách bỏ regex, dùng `includes`.

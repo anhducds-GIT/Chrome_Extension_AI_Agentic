@@ -356,3 +356,22 @@ giả trong cùng tiến trình không bao giờ trả lời được — phép 
 **xoá một dòng là ngày đó được lấy lại**. Phép ghim canh cả cửa đó. Đột biến 26/26, 0 sống sót.
 
 **Còn lại:** `H-02` (bảng bên) và `H-06` (Đức chạy lệnh sinh tệp ghép cặp).
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — H-02 đóng, H-06 còn một cú bấm
+
+**`H-02` — Đức chốt bỏ.** Ghi lý do lại để phiên sau không mở ra: bảng bên **không đọc được tệp
+SSOT** — extension này cố ý không có quyền chạm đĩa. Nên câu *"đọc từ chính tệp SSOT"* trong điều
+kiện đóng là thứ không làm được từ bảng bên, và con số đó vốn đã hiện ở đầu ra của lệnh.
+
+**`H-06` — Đức giao cho Codex CLI.** Chi tiết lượt kiểm chứng ở `workers/_shared/HANDOFF.md` cùng
+ngày; tóm tắt: Codex tìm ra 5 chỗ, cả 5 đều thật, một trong số đó là lỗ **đã lọt** (tệp có token
+vào được gốc repo qua đường dẫn mở rộng của Windows). Đã vá; 12 đường tấn công chặn 12.
+
+**Tệp ghép cặp đã sinh sẵn:** `C:\Users\MAYTEST_12\HNX-Bridge\hnx-pairing.json`. Đặt ở ổ đĩa nội
+bộ, **không** đặt trên Drive — token mà nằm trong thư mục đồng bộ là token đã lên mây. Máy chủ đã
+bật thật với tệp đó và trả `HTTP 200 · EXTENSION_OFFLINE`.
+
+**Còn đúng một việc và chỉ tay Đức làm được:** mở bảng bên HNX Fetch, chọn tệp đó thay tệp của
+Scouter. Xong thì một lượt `--thu-xem` **không kèm** `--target` là `H-06` đóng.
