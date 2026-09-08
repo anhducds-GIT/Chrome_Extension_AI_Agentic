@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ageHours, ageLabel, BASELINE, baselineDaNiemPhong, canDayTruocKhiTra, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, khoaBiDoiChu, kiemKhoaKhaiDuoc, readClaims } from "../scripts/claim.mjs";
+import { ageHours, ageLabel, BASELINE, baselineDaNiemPhong, canDayTruocKhiTra, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, khoaBiDoiChu, khoaFileTrongVung, kiemKhoaKhaiDuoc, quyetDinhSua, quyetDinhXong, readClaims, soatDanHang } from "../scripts/claim.mjs";
 import { CHUA_DAY } from "../scripts/repo-structure.mjs";
 
 let passed = 0;
@@ -847,6 +847,166 @@ const CLAIMS = () => ({
     ok("chay THAT: khai vung moi mo duoc duong --take, va khong cham chu cua khoa nao");
   } finally {
     assert.ok(temp.startsWith(join(tmpdir(), "claim-khai-")), "chi don dung temp fixture cua phep kiem nay");
+    rmSync(temp, { recursive: true, force: true });
+  }
+}
+
+/* ---- KHOÁ MỨC FILE: giữ ngắn, trả ngay (Đức chốt 2026-09-08) --------------
+ *
+ * Số đo dựng nên nó: **2.628 cặp commit khác lane, cách nhau ≤ 1 giờ, cùng vùng** — trong đó
+ * **1.839 cặp (70%) không đụng file nào chung**. Bảy phần mười lượt chặn hôm nay là chặn oan.
+ *
+ * Ghim CẢ HAI CHIỀU của luật chứa nhau. Thiếu một chiều là hai lane cùng tin mình được ghi một
+ * file, và không lớp nào kêu — đúng loại hỏng im lặng mà bảng quyền sinh ra để chặn. */
+{
+  const vungCua = () => "_code";
+  const trong = { claims: { _code: { owner: null } }, tam: {} };
+
+  const a = quyetDinhSua(trong, { duongDan: "scripts/x.mjs", as: "p1", luc: "2026-09-08T10:00", vungCua });
+  assert.equal(a.code, EXIT.OK, "file trong, vung trong: nhan duoc");
+  assert.equal(a.next["scripts/x.mjs"].owner, "p1");
+
+  const lai = quyetDinhSua({ ...trong, tam: a.next }, { duongDan: "scripts/x.mjs", as: "p1", luc: "2026-09-08T10:01", vungCua });
+  assert.equal(lai.code, EXIT.OK, "chay lai cung lenh phai an toan, khong phai loi");
+  assert.equal(lai.already, true);
+
+  const cuop = quyetDinhSua({ ...trong, tam: a.next }, { duongDan: "scripts/x.mjs", as: "p2", luc: "2026-09-08T10:02", vungCua });
+  assert.equal(cuop.code, EXIT.REFUSED, "file lane khac dang sua: TU CHOI");
+  assert.match(cuop.message, /TU_CHOI_SUA/);
+
+  // CHIỀU MỘT: ai giữ cả vùng thì được ghi mọi file trong đó.
+  const coChuVung = { claims: { _code: { owner: "p9" } }, tam: {} };
+  assert.equal(quyetDinhSua(coChuVung, { duongDan: "scripts/x.mjs", as: "p2", luc: "t", vungCua }).code, EXIT.REFUSED,
+    "vung co chu khac thi khoa file KHONG chen vao giua duoc");
+  assert.equal(quyetDinhSua({ claims: { _code: { owner: "p2" } }, tam: {} }, { duongDan: "scripts/x.mjs", as: "p2", luc: "t", vungCua }).code, EXIT.OK,
+    "chinh minh giu vung thi van khoa file duoc");
+
+  // CHIỀU HAI: nhận cả vùng phải thấy khoá file của người khác bên trong.
+  const vuong = khoaFileTrongVung({ claims: {}, tam: a.next }, "_code", "p2", vungCua);
+  assert.deepEqual(vuong.map((v) => v.owner), ["p1"], "phai neu ten nguoi dang giu file ben trong");
+  assert.deepEqual(khoaFileTrongVung({ claims: {}, tam: a.next }, "_code", "p1", vungCua), [],
+    "khoa file CUA CHINH MINH khong duoc chan luot nhan vung cua chinh minh");
+
+  assert.equal(quyetDinhSua(trong, { duongDan: "../ngoai-repo.md", as: "p1", luc: "t", vungCua }).code, EXIT.MISUSE,
+    "duong dan thoat ra ngoai repo: bao dung sai");
+  ok("khoa file: chua nhau HAI CHIEU, chay lai an toan, chan duong dan la");
+}
+
+{
+  const tam = { "a.md": { owner: "p1", luc: "t" }, "b.md": { owner: "p2", luc: "t" } };
+  const bang = { claims: {}, tam };
+
+  const ho = quyetDinhXong(bang, { duongDan: "b.md", as: "p1" });
+  assert.equal(ho.code, EXIT.REFUSED, "tra ho nguoi khac: TU CHOI");
+
+  const minh = quyetDinhXong(bang, { duongDan: "a.md", as: "p1" });
+  assert.equal(minh.code, EXIT.OK);
+  // XOÁ HÀNG chứ không để `owner: null` — khoá file là tạm; giữ hàng trống thì sau một ngày
+  // bảng đầy xác đường dẫn và không ai đọc nổi nó.
+  assert.ok(!("a.md" in minh.next), "tra xong phai XOA HANG, khong de lai hang trong");
+  assert.ok("b.md" in minh.next, "va KHONG duoc dung vao hang cua nguoi khac");
+
+  assert.equal(quyetDinhXong(bang, { duongDan: "chua-ai-khoa.md", as: "p1" }).already, true,
+    "tra cai chua khoa: khong phai loi");
+  ok("tra khoa file: xoa hang, khong tra ho, tra thua khong phai loi");
+}
+
+{
+  /* DẤU NIÊM PHONG PHẢI PHỦ KHỐI MỚI — nhưng KHÔNG được đổi dấu khi chưa ai khoá file nào.
+     Băm thẳng {claims, tam} là làm MỌI bảng đang tồn tại thấy DAU_VO ngay lượt sau, tức một
+     cải tiến làm cổng của người khác đỏ vì chuyện họ không liên quan. */
+  const c = { _code: { owner: "p1", task: "x" } };
+  assert.equal(claimsFingerprint(c), claimsFingerprint(c, {}),
+    "khoi `tam` RONG thi dau phai y het hom qua — khong duoc lam ca repo do vi mot cai tien");
+  assert.equal(claimsFingerprint(c), claimsFingerprint(c, undefined), "thieu han khoi `tam` cung vay");
+  const co = { "a.md": { owner: "p1", luc: "t" } };
+  assert.notEqual(claimsFingerprint(c), claimsFingerprint(c, co),
+    "co khoa file thi dau PHAI khac — khong thi sua tay khoi do lot qua");
+  assert.notEqual(claimsFingerprint(c, co), claimsFingerprint(c, { "a.md": { owner: "p2", luc: "t" } }),
+    "doi chu mot khoa file phai lam vo dau");
+  ok("dau niem phong phu khoi khoa file, va khong doi dau khi khoi rong");
+}
+
+{
+  /* SOÁT ĐÃ DÀN — vá cái mà khoá file KHÔNG chữa: hai lane dùng chung MỘT cây git, nên
+     `git commit -a` cuốn file lane khác vừa dàn (N-40, no that 07/09). */
+  const vungCua = (d) => (d.startsWith("scripts/") ? "_code" : "_root");
+  const chung = {
+    tam: { "scripts/cua-toi.mjs": { owner: "p1", luc: "t" }, "scripts/cua-ho.mjs": { owner: "p2", luc: "t" } },
+    claims: { _code: { owner: null }, _root: { owner: "p2" } },
+    as: "p1",
+    mienKhoa: ["BACKLOG.md"],
+    vungCua,
+  };
+  const la = soatDanHang({ ...chung, daDan: ["scripts/cua-toi.mjs", "scripts/cua-ho.mjs", "BACKLOG.md", "AGENTS.md"] });
+  assert.deepEqual(la.map((x) => x.duongDan), ["scripts/cua-ho.mjs", "AGENTS.md"],
+    "chi neu ten file KHONG thuoc quyen ghi: file minh khoa thi qua, so mien khoa thi qua");
+  assert.equal(la[0].chuFile, "p2", "phai noi ro ai dang giu, de nguoi doc biet nhan ai");
+
+  assert.deepEqual(soatDanHang({ ...chung, as: "p2", daDan: ["AGENTS.md"] }), [],
+    "p2 giu ca vung _root nen AGENTS.md la cua ho — khong duoc bao oan");
+  ok("soat da dan: bat dung file khong thuoc quyen, tha so mien khoa va vung minh giu");
+}
+
+{
+  /* CHẠY THẬT — ba phép trên chỉ kiểm phần quyết định. Vế đắt nhất là vế Đức mua: HAI LANE
+     SỬA HAI FILE KHÁC NHAU TRONG CÙNG MỘT VÙNG thì CẢ HAI phải đi được. Đó là 70% số lượt
+     bị chặn hôm nay. */
+  const temp = mkdtempSync(join(tmpdir(), "claim-file-"));
+  try {
+    const claimsPath = join(temp, ".agents", "claims.json");
+    mkdirSync(dirname(claimsPath), { recursive: true });
+    // `_code` khong co trong CLAIMS() mac dinh, ma moi file khoa o day deu quy ve no.
+    writeFileSync(claimsPath, JSON.stringify({ claims: { ...CLAIMS(), _code: { owner: null, ai: null, task: "", released_at: null } } }, null, 2) + "\n", "utf8");
+    writeFileSync(join(temp, ".repo-structure.json"), JSON.stringify({
+      areas: {
+        "scripts/": { ownership_mode: "root", steward: "_code", mutability: "rw" },
+        "workers/": { ownership_mode: "per-package", claim_prefix: "workers/" },
+      },
+      append_only_exempt: ["BACKLOG.md"],
+    }, null, 2) + "\n", "utf8");
+    mkdirSync(join(temp, "scripts"), { recursive: true });
+    chepLenh(temp);
+    execFileSync("git", ["init", "-q", "-b", "main"], { cwd: temp, encoding: "utf8" });
+
+    const run = (...args) => {
+      const r = spawnSync(process.execPath, [join(temp, "scripts", "claim.mjs"), ...args], { encoding: "utf8", cwd: temp });
+      return { code: r.status, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
+    };
+    const doc = () => JSON.parse(readFileSync(claimsPath, "utf8"));
+
+    // VẾ ĐỨC MUA: hai lane, hai file khác nhau, CÙNG vùng `_code` → cả hai đi được.
+    assert.equal(run("--sua", "scripts/a.mjs", "--as", "p1").code, EXIT.OK, "lane 1 khoa file a");
+    const hai = run("--sua", "scripts/b.mjs", "--as", "p2");
+    assert.equal(hai.code, EXIT.OK, `lane 2 khoa file KHAC trong CUNG vung phai di duoc — ra: ${hai.out}`);
+    assert.equal(doc().tam["scripts/a.mjs"].owner, "p1");
+    assert.equal(doc().tam["scripts/b.mjs"].owner, "p2");
+
+    // Cùng một file thì vẫn chặn.
+    assert.equal(run("--sua", "scripts/a.mjs", "--as", "p2").code, EXIT.REFUSED, "cung mot file thi van chan");
+
+    // MỘT MẺ LÀ MỘT LƯỢT: xin 2 file mà 1 file vướng thì KHÔNG được nhận nửa vời.
+    const nuaVoi = run("--sua", "scripts/c.mjs", "scripts/a.mjs", "--as", "p2");
+    assert.equal(nuaVoi.code, EXIT.REFUSED);
+    assert.ok(!doc().tam["scripts/c.mjs"], "vuong mot file thi CA ME khong duoc ghi — nua voi la trang thai te nhat");
+
+    // Chiều hai: nhận cả vùng phải từ chối khi bên trong còn khoá file của người khác.
+    const caVung = run("--take", "_code", "--as", "p3", "--task", "x");
+    assert.equal(caVung.code, EXIT.REFUSED, "nhan ca vung khi ben trong con khoa file cua nguoi khac: TU CHOI");
+    assert.match(caVung.out, /scripts\/a\.mjs/, "phai ke ten file dang vuong");
+
+    // Trả hết rồi thì đường cũ thông lại.
+    assert.equal(run("--xong", "--het", "--as", "p1").code, EXIT.OK);
+    assert.equal(run("--xong", "--het", "--as", "p2").code, EXIT.OK);
+    assert.deepEqual(doc().tam, {}, "tra het thi khoi `tam` phai RONG, khong con xac duong dan");
+    assert.equal(run("--take", "_code", "--as", "p3", "--task", "x").code, EXIT.OK, "het khoa file thi nhan ca vung duoc");
+
+    // Dấu niêm phong phải còn khớp sau tất cả những lượt trên.
+    const d = doc();
+    assert.equal(d._fingerprint, claimsFingerprint(d.claims, d.tam), "moi luot ghi deu phai dong lai dau");
+    ok("chay THAT: hai lane sua hai file cung vung deu di duoc; me nua voi bi chan; chua nhau hai chieu");
+  } finally {
+    assert.ok(temp.startsWith(join(tmpdir(), "claim-file-")), "chi don dung temp fixture cua phep kiem nay");
     rmSync(temp, { recursive: true, force: true });
   }
 }

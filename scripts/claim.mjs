@@ -32,7 +32,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { CHUA_DAY, CHUA_THAY_DAU_VET, claimPrefixesFrom, commitChuaDay, DAU_VET, dauVetTheoVung, mocMs, readStructureFromDisk, stewardOf } from "./repo-structure.mjs";
+import { appendOnlyExemptFrom, CHUA_DAY, CHUA_THAY_DAU_VET, claimPrefixesFrom, commitChuaDay, DAU_VET, dauVetTheoVung, mocMs, readStructureFromDisk, stewardOf } from "./repo-structure.mjs";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(MODULE_FILE), "..");
@@ -77,6 +77,10 @@ export function readClaims(file = CLAIMS_FILE) {
  * (mỗi lượt nhận/trả một dòng, cổng phát lại từ gốc); ghi ở BACKLOG, chưa xây vì chưa cần.
  */
 export const FINGERPRINT_FIELD = "_fingerprint";
+/* Khoá file sinh ra để giữ VÀI PHÚT (Đức 08/09). Quá ngưỡng này là dấu hiệu ai đó quên trả —
+   và quên trả thì nó thoái hoá thành đúng cái khoá dài hạn mà nó thay thế. NHẮC, không tự nhả:
+   tự nhả là tự động hoá đúng vụ nhả-khoá-hộ ngày 06/09, lần này không ai kịp thấy. */
+export const PHUT_NHAC_KHOA_FILE = 30;
 
 export const VO_DAU = "DAU_VO: `.agents/claims.json` đã bị sửa NGOÀI lệnh này — dấu niêm phong không khớp nội dung.\n"
   + "Nghĩa là có người mở file ra sửa tay. Ngày 03/09 chuyện này đã lấy mất khoá của một phiên đang làm dở,\n"
@@ -97,19 +101,24 @@ const canon = (v) => {
 };
 
 /* Băm ổn định: thứ tự khoá trong file không đổi được dấu, nội dung đổi thì dấu đổi. */
-export function claimsFingerprint(claims) {
+export function claimsFingerprint(claims, tam) {
   if (!claims || typeof claims !== "object" || Array.isArray(claims)) {
     throw new Error("CLAIMS_HONG: không băm được — khối `claims` phải là object.");
   }
-  return createHash("sha256").update(canon(claims)).digest("hex").slice(0, 16);
+  /* KHỐI `tam` RỖNG THÌ BĂM Y HỆT HÔM QUA — cố ý, và đây là chỗ dễ làm sai nhất.
+     Băm thẳng `{claims, tam}` là đổi dấu của MỌI bảng đang tồn tại, nên ngay lượt chạy sau
+     mọi phiên khác thấy `DAU_VO` và cổng của họ đỏ vì một cải tiến họ không liên quan.
+     Có khoá file thì dấu phủ cả hai khối, nên không có cửa nào để sửa tay lọt qua. */
+  const coTam = tam && typeof tam === "object" && !Array.isArray(tam) && Object.keys(tam).length > 0;
+  return createHash("sha256").update(canon(coTam ? { claims, tam } : claims)).digest("hex").slice(0, 16);
 }
 
 /* null = chưa từng đóng dấu (file cũ) · true/false = dấu còn nguyên / đã vỡ. Ba trạng thái,
  * cố ý không gộp: "chưa kiểm" không được đội lốt "đã đạt". */
 export function fingerprintState(parsed) {
   const stamped = parsed?.[FINGERPRINT_FIELD];
-  if (typeof stamped !== "string" || stamped === "") return { stamped: null, actual: claimsFingerprint(parsed?.claims), ok: null };
-  const actual = claimsFingerprint(parsed.claims);
+  if (typeof stamped !== "string" || stamped === "") return { stamped: null, actual: claimsFingerprint(parsed?.claims, parsed?.tam), ok: null };
+  const actual = claimsFingerprint(parsed.claims, parsed.tam);
   return { stamped, actual, ok: stamped === actual };
 }
 
@@ -250,7 +259,7 @@ export function baselineDaNiemPhong(root = ROOT, capQuet = QUET_TOI_DA) {
     if (typeof stamped !== "string" || stamped === "") continue;   // bản thời chưa có dấu
     thayDauBaoGioChua = true;
     let actual;
-    try { actual = claimsFingerprint(parsed.claims); } catch { soBanDocHong += 1; continue; }
+    try { actual = claimsFingerprint(parsed.claims, parsed.tam); } catch { soBanDocHong += 1; continue; }
     if (stamped === actual) return { trangThai: BASELINE.OK, claims: parsed.claims, sha };
     // dấu KHÔNG khớp = bản này đã bị sửa tay rồi commit. Bỏ qua, lùi về mốc lành hơn.
     // Chính chỗ này đóng cửa sau "sửa tay → commit → restamp": lượt commit đó không biến
@@ -320,6 +329,148 @@ export function kiemKhoaKhaiDuoc(khoa, { structure, prefixes, coThuMuc }) {
     };
   }
   return { ok: true };
+}
+
+/* ---- KHOÁ MỨC FILE: GIỮ NGẮN, TRẢ NGAY — Đức chốt 2026-09-08 ---------------
+ *
+ * Nguyên văn: *"AI Assistant chỉ giữ khóa đúng ở file mà AI đó đang sửa … khóa được giữ và trả
+ * ngay trước và sau khi AI sửa … Nếu chỉ đọc ko cần giữ khóa."*
+ *
+ * SỐ ĐO ỦNG HỘ, và tôi đã đo vì linh cảm ban đầu của tôi NGƯỢC LẠI. Nhìn bảng "file bị hai lane
+ * chạm nhiều nhất" thì bốn cái đầu là `HANDOFF.md` · `BACKLOG.md` · `claims.json` · `AGENTS.md`,
+ * mà ba trong bốn cái đó VỐN ĐÃ miễn khoá — nên thoạt trông khoá file chẳng gỡ được gì. Đếm đủ
+ * thì khác hẳn: **2.628 cặp commit khác lane, cách nhau ≤ 1 giờ, cùng vùng** — trong đó
+ * **1.839 cặp (70%) KHÔNG đụng file nào chung**. Bảy phần mười lượt chặn hôm nay là chặn oan.
+ *
+ * BA CHỖ THIẾT KẾ, không cái nào tuỳ tiện:
+ *
+ * ⑴ **Khoá file ở khối RIÊNG (`tam`), không nhét vào `claims`.** Hàng trong `claims` là vùng sở
+ *    hữu — vĩnh viễn, trống chủ thì vẫn còn hàng; `session-check` còn có bất biến *"mỗi khoá
+ *    vùng gốc phải có thư mục khai steward, và ngược lại"*. Nhét một đường dẫn file vào đó là
+ *    làm bất biến ấy đỏ. Khoá file thì NGƯỢC: nó là tạm, trả xong thì **xoá hàng**.
+ *
+ * ⑵ **Dấu niêm phong phủ cả khối mới, nhưng KHÔNG đổi dấu khi chưa ai khoá file nào.** Băm
+ *    `{claims, tam}` thay vì `claims` sẽ làm MỌI phiên đang chạy thấy `DAU_VO` ngay lượt sau —
+ *    một lượt cải tiến không được phép làm cả repo đỏ. Nên: khối rỗng thì băm y hệt hôm qua,
+ *    có khoá file thì băm phủ cả hai. Không có cửa nào để sửa tay lọt qua.
+ *
+ * ⑶ **CHỨA NHAU HAI CHIỀU.** Ai giữ cả vùng thì được ghi mọi file trong đó, nên khoá file phải
+ *    từ chối nếu vùng bao ngoài có chủ khác; và ngược lại, nhận cả vùng phải từ chối nếu bên
+ *    trong còn khoá file của người khác. Thiếu một chiều là hai lane cùng tin mình được ghi.
+ *
+ * CÁI NÓ **KHÔNG** CHỮA, nói thẳng: khoá không giữ file — **git giữ**. Hai lane dùng CHUNG một
+ * cây làm việc, nên `git commit -a` của lane này vẫn cuốn file đã dàn của lane kia (`N-40`, nổ
+ * thật 07/09) và `git commit -o <file>` vẫn cuốn sửa đổi của lane kia trên chính file đó
+ * (`N-05`). Khoá file làm số người ghi đồng thời TĂNG, nên hai lỗi đó nổ dày hơn chứ không thưa
+ * đi. Bù lại nó mở đường vá: xem `--soat` ở dưới. */
+
+/** Vùng bao ngoài một đường dẫn. Hỏi chính bộ quy vùng, không đoán lại luật. */
+export function vungBaoNgoai(duongDan, structure, prefixes) {
+  return stewardOf(duongDan, structure, prefixes);
+}
+
+/** Chuẩn hoá đường dẫn về dạng repo dùng: dấu gạch xuôi, không `./`, không dấu cách thừa. */
+export function chuanDuongDan(d) {
+  return String(d ?? "").trim().replaceAll("\\", "/").replace(/^\.\//, "").replace(/\/+$/, "");
+}
+
+/* QUYẾT ĐỊNH THUẦN — không chạm đĩa, để ghim được mọi nhánh bằng chuỗi. `bang` = cả file
+   `claims.json` đã đọc (`{ claims, tam }`). Trả `{ code, message?, next? }`; `next` là khối
+   `tam` MỚI, bên gọi tự ghi. */
+export function quyetDinhSua(bang, { duongDan, as, luc, vungCua }) {
+  const d = chuanDuongDan(duongDan);
+  if (!d || d.includes("..")) {
+    return { code: EXIT.MISUSE, message: `DUONG_DAN_LA: "${duongDan}" — phải là đường dẫn tương đối từ gốc repo.` };
+  }
+  const tam = { ...(bang.tam || {}) };
+  const dangGiu = tam[d]?.owner || null;
+  if (dangGiu && dangGiu !== as) {
+    return {
+      code: EXIT.REFUSED,
+      message: `TU_CHOI_SUA: "${d}" đang do "${dangGiu}" sửa (từ ${tam[d].luc || "?"}).`
+        + `\nGhi chú của họ: ${String(tam[d].viec || "(không có)").slice(0, 160)}`
+        + "\nKhoá file là loại giữ VÀI PHÚT. Đợi một nhịp rồi chạy lại — đừng giành, đừng sửa tay.",
+    };
+  }
+  /* CHIỀU MỘT của luật chứa nhau: ai giữ cả vùng thì được ghi mọi file trong đó. */
+  const vung = vungCua(d);
+  const chuVung = bang.claims?.[vung]?.owner || null;
+  if (chuVung && chuVung !== as) {
+    return {
+      code: EXIT.REFUSED,
+      message: `TU_CHOI_SUA: "${d}" nằm trong vùng "${vung}", mà vùng đó đang do "${chuVung}" giữ.`
+        + "\nGiữ cả vùng nghĩa là được ghi mọi file trong đó — khoá file không chen vào giữa được."
+        + "\nLuật mục 1: vùng có chủ mà chủ không phải bạn thì CHỈ ĐƯỢC ĐỌC.",
+    };
+  }
+  tam[d] = { owner: as, luc, viec: null };
+  return { code: EXIT.OK, already: dangGiu === as, next: tam };
+}
+
+export function quyetDinhXong(bang, { duongDan, as }) {
+  const d = chuanDuongDan(duongDan);
+  const tam = { ...(bang.tam || {}) };
+  const dangGiu = tam[d]?.owner || null;
+  if (!dangGiu) return { code: EXIT.OK, already: true, next: tam };
+  if (dangGiu !== as) {
+    return {
+      code: EXIT.REFUSED,
+      message: `TU_CHOI_XONG: "${d}" đang do "${dangGiu}" sửa — KHÔNG trả hộ người khác.`
+        + "\nTrả hộ là xoá dấu vết một phiên đang ghi dở, và họ sẽ không biết mình vừa mất quyền.",
+    };
+  }
+  // XOÁ HÀNG, không để `owner: null`. Khoá file là tạm; giữ lại hàng trống thì sau một ngày
+  // bảng đầy xác đường dẫn và không ai đọc nổi nó nữa.
+  delete tam[d];
+  return { code: EXIT.OK, next: tam };
+}
+
+/** Khoá file của người khác đang nằm TRONG một vùng — chặn lượt nhận cả vùng (chiều hai). */
+export function khoaFileTrongVung(bang, vung, as, vungCua) {
+  return Object.entries(bang.tam || {})
+    .filter(([d, o]) => o?.owner && o.owner !== as && vungCua(d) === vung)
+    .map(([d, o]) => ({ duongDan: d, owner: o.owner }));
+}
+
+/** Khoá file giữ quá lâu. Khoá file sinh ra để giữ VÀI PHÚT — quá ngưỡng là dấu hiệu ai đó
+    quên trả, và quên trả thì nó thoái hoá thành đúng cái khoá vùng dài hạn mà nó thay thế. */
+export function khoaFileQuaHan(bang, phut, now = Date.now()) {
+  return Object.entries(bang.tam || {}).map(([d, o]) => {
+    /* `mocMs`, KHÔNG `Date.parse` trần: mốc trong bảng là `2026-09-08T11:51` — thiếu chữ Z,
+       nên `Date.parse` đọc nó là GIỜ ĐỊA PHƯƠNG và ra lệch đúng bằng múi giờ. Bản đầu báo một
+       khoá vừa nhận 1 phút là "420 phút — quên trả?". Repo đã có hàm xử đúng, dùng lại nó. */
+    const t = mocMs(o?.luc);
+    const soPhut = t === null ? null : Math.floor((now - t) / 60000);
+    return { duongDan: d, owner: o?.owner ?? null, phut: soPhut };
+  }).filter((x) => x.phut !== null && x.phut > phut);
+}
+
+
+/* ---- SOÁT TRƯỚC KHI COMMIT — vá cái mà khoá file KHÔNG chữa được -----------
+ *
+ * Khoá không giữ file; **git giữ**. Hai lane dùng CHUNG một cây làm việc, nên `git commit -a`
+ * của lane này cuốn file đã dàn của lane kia (`N-40`, nổ thật 07/09 — commit 27a88ce7 chứa 6
+ * file của lane khác) và `git commit -o <file>` cuốn sửa đổi của lane kia trên chính file đó
+ * (`N-05`, nổ hai lần trong một buổi 06/09).
+ *
+ * Khoá mức file làm số người ghi đồng thời TĂNG, nên hai lỗi ấy nổ DÀY HƠN. Nhưng nó cũng lần
+ * đầu cho ta thứ để soát: trước đây "vùng tôi giữ" quá thô để nói file nào là của ai, giờ thì
+ * đủ mịn. Đây là hàm đó.
+ *
+ * KHÔNG chặn được từ trong máy: cổng đóng phiên chạy lúc index đã rỗng, nên nó không nhìn thấy
+ * gì. Đây là một LỆNH phải gọi, và mục 0b của `AGENTS.md` xếp nó vào đúng chỗ trong chuỗi. */
+export function soatDanHang({ daDan, tam, claims, as, mienKhoa, vungCua }) {
+  const mien = new Set(mienKhoa || []);
+  const la = [];
+  for (const f of daDan || []) {
+    const d = chuanDuongDan(f);
+    if (mien.has(d)) continue;                                    // sổ miễn khoá: ai cũng ghi được
+    if ((tam || {})[d]?.owner === as) continue;                   // tôi đang khoá đúng file này
+    const vung = vungCua(d);
+    if ((claims || {})[vung]?.owner === as) continue;             // tôi giữ cả vùng
+    la.push({ duongDan: d, vung, chuVung: (claims || {})[vung]?.owner || null, chuFile: (tam || {})[d]?.owner || null });
+  }
+  return la;
 }
 
 /* Quyết định THUẦN — tách khỏi việc đọc/ghi để kiểm được mọi nhánh mà không cần đĩa. */
@@ -403,6 +554,15 @@ function main() {
     const i = argv.indexOf(`--${name}`);
     return i >= 0 ? (argv[i + 1] && !argv[i + 1].startsWith("--") ? argv[i + 1] : true) : null;
   };
+  /* Một lượt sửa chạm NHIỀU file — đo 7 ngày: trung vị 2 file/commit, p90 là 7. Bắt gõ bảy
+     lệnh cho một lượt sửa là bảy dịp quên một cái, nên cờ này gom được cả mẻ. */
+  const flagNhieu = (name) => {
+    const i = argv.indexOf(`--${name}`);
+    if (i < 0) return null;
+    const ra = [];
+    for (let k = i + 1; k < argv.length && !argv[k].startsWith("--"); k += 1) ra.push(argv[k]);
+    return ra;
+  };
 
   let parsed;
   try { parsed = readClaims(); }
@@ -438,6 +598,20 @@ function main() {
       console.log("  dựng thử ngoài repo rồi mới ghi vào, và ngày 06/09 một khoá đã bị nhả hộ đúng vì đọc nhầm chỗ này.");
       console.log("  Thấy dòng này thì HỎI lane đó hoặc hỏi Đức. Ba đường hợp lệ để một khoá được trả: chính lane đó");
       console.log("  trả · lane đó báo đã xong · Đức chốt chuyển (--restamp --duc-duyet). Không có đường thứ tư.");
+    }
+    /* KHOÁ FILE in thành khối RIÊNG, dưới bảng vùng. Trộn chung là làm người đọc tưởng hai
+       thứ cùng loại: một cái giữ hàng giờ và là quyền sở hữu, cái kia giữ vài phút và là
+       "tôi đang gõ vào file này". */
+    const tam = Object.entries(parsed.tam || {}).filter(([, o]) => o?.owner);
+    if (tam.length) {
+      console.log(`\nĐANG SỬA — ${tam.length} file, khoá giữ NGẮN:`);
+      for (const [d, o] of tam) {
+        const t = mocMs(o.luc);
+        const phut = t === null ? null : Math.floor((Date.now() - t) / 60000);
+        const nhac = phut !== null && phut > PHUT_NHAC_KHOA_FILE ? `  ⚠ ${phut} phút — quên trả?` : phut !== null ? `  (${phut} phút)` : "";
+        console.log(`  ${d}  ← ${o.owner}${nhac}`);
+      }
+      console.log(`  Trả hết: node scripts/claim.mjs --xong --het --as <phiên>`);
     }
     if (coCu) {
       console.log(`\n⚠ = giữ đã quá ${GIO_NHAC}h. CŨ KHÔNG CÓ NGHĨA LÀ CHẾT — phiên chạy dài là bình thường,`);
@@ -498,10 +672,105 @@ function main() {
       }
       console.log(`\nĐã ghi xuất xứ cho ${doiChu.length} khoá đổi chủ: ${doiChu.map((d) => d.key).join(", ")}`);
     }
-    parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims);
+    parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims, parsed.tam);
     fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
     console.log(`\ndấu cũ: ${seal.stamped ?? "(chưa có)"}  →  dấu mới: ${parsed[FINGERPRINT_FIELD]}`);
     console.log("Nếu bạn KHÔNG cố ý làm việc này thì vừa xoá dấu vết một vụ sửa tay. Xem lại git diff .agents/claims.json.");
+    process.exit(EXIT.OK);
+  }
+
+  /* ---- SOÁT ĐÃ DÀN, trước khi commit ---- */
+  if (flag("soat")) {
+    const as = flag("as");
+    if (typeof as !== "string") {
+      console.error("Dùng: node scripts/claim.mjs --soat --as <phiên>   (chạy NGAY TRƯỚC git commit)");
+      process.exit(EXIT.MISUSE);
+    }
+    let structure;
+    try { structure = readStructureFromDisk(ROOT); }
+    catch (error) { console.error(`CAU_HINH_HONG: ${error.message}`); process.exit(EXIT.MISUSE); }
+    let daDan;
+    try {
+      daDan = execFileSync("git", ["diff", "--cached", "--name-only"], { cwd: ROOT, encoding: "utf8" })
+        .split(String.fromCharCode(10)).map((d) => d.trim()).filter(Boolean);
+    } catch (error) {
+      // FAIL CLOSED: không đọc được index thì KHÔNG nói "sạch". Câu "sạch" ở đây là giấy phép
+      // để commit, và cấp giấy phép dựa trên một phép đo không chạy được là tệ nhất.
+      console.error(`KHONG_DOC_DUOC_INDEX: ${error.message}`);
+      console.error("Không đo được thì không kết luận. Kiểm tay: git diff --cached --name-only");
+      process.exit(EXIT.REFUSED);
+    }
+    if (!daDan.length) { console.log("index rỗng — chưa dàn gì để soát."); process.exit(EXIT.OK); }
+    const prefixes = claimPrefixesFrom(structure);
+    const la = soatDanHang({
+      daDan, tam: parsed.tam, claims: parsed.claims, as,
+      mienKhoa: appendOnlyExemptFrom(structure),
+      vungCua: (d) => vungBaoNgoai(d, structure, prefixes),
+    });
+    if (!la.length) {
+      console.log(`${daDan.length} file đã dàn, tất cả đều thuộc quyền ghi của "${as}". Commit được.`);
+      process.exit(EXIT.OK);
+    }
+    console.error(`SOAT_LA: ${la.length}/${daDan.length} file đã dàn KHÔNG thuộc quyền ghi của "${as}":`);
+    for (const x of la) {
+      const ai = x.chuFile ? `file đang do "${x.chuFile}" sửa` : x.chuVung ? `vùng "${x.vung}" do "${x.chuVung}" giữ` : `vùng "${x.vung}" không ai giữ`;
+      console.error(`  ${x.duongDan}  — ${ai}`);
+    }
+    console.error("\nHai cách nó lọt vào index, cả hai đã nổ thật:");
+    console.error("  · `git commit -a` cuốn theo file lane khác vừa dàn (N-40, 07/09)");
+    console.error("  · `git add .` gom cả cây làm việc dùng chung");
+    console.error("Gỡ ra: git restore --staged <đường-dẫn>   ·   Đúng là việc của bạn? Nhận trước: --sua <đường-dẫn>");
+    process.exit(EXIT.REFUSED);
+  }
+
+  /* ---- KHOÁ MỨC FILE: --sua / --xong (Đức chốt 08/09) --------------------
+     Nhận NGAY TRƯỚC lượt ghi, trả NGAY SAU. Chỉ đọc thì không cần gì cả. */
+  const laySua = flagNhieu("sua");
+  const layXong = flagNhieu("xong");
+  if (laySua || layXong) {
+    const as = flag("as");
+    if (typeof as !== "string") {
+      console.error("Dùng: node scripts/claim.mjs --sua <đường-dẫn>… --as <phiên>");
+      console.error("      node scripts/claim.mjs --xong <đường-dẫn>… --as <phiên>");
+      console.error("      node scripts/claim.mjs --xong --het --as <phiên>     # trả HẾT khoá file của mình");
+      process.exit(EXIT.MISUSE);
+    }
+    let structure;
+    try { structure = readStructureFromDisk(ROOT); }
+    catch (error) { console.error(`CAU_HINH_HONG: ${error.message}`); process.exit(EXIT.MISUSE); }
+    const prefixes = claimPrefixesFrom(structure);
+    const vungCua = (d) => vungBaoNgoai(d, structure, prefixes);
+    const luc = new Date().toISOString().slice(0, 16);
+
+    let ds = laySua || layXong;
+    if (layXong && flag("het")) ds = Object.entries(parsed.tam || {}).filter(([, o]) => o?.owner === as).map(([d]) => d);
+    if (!ds.length) {
+      if (layXong) { console.log(`không còn khoá file nào của "${as}".`); process.exit(EXIT.OK); }
+      console.error("Thiếu đường dẫn. Dùng: --sua <đường-dẫn>… --as <phiên>");
+      process.exit(EXIT.MISUSE);
+    }
+
+    /* TÍNH HẾT RỒI MỚI GHI — một mẻ là MỘT lượt, không nửa vời. Nhận được 3 trong 5 file rồi
+       dừng là trạng thái tệ nhất: lane tưởng mình bị từ chối nên bỏ đi, mà ba khoá kia còn nằm
+       lại mang tên họ. */
+    let tam = parsed.tam || {};
+    for (const d of ds) {
+      const kq = laySua
+        ? quyetDinhSua({ claims: parsed.claims, tam }, { duongDan: d, as, luc, vungCua })
+        : quyetDinhXong({ claims: parsed.claims, tam }, { duongDan: d, as });
+      if (kq.code !== EXIT.OK) { console.error(kq.message); console.error("\nKHÔNG ghi gì cả — cả mẻ dừng, không nhận nửa vời."); process.exit(kq.code); }
+      tam = kq.next;
+    }
+    parsed.tam = tam;
+    parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims, parsed.tam);
+    fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
+    const ten = ds.map((d) => chuanDuongDan(d)).join(" · ");
+    if (laySua) {
+      console.log(`đang sửa (${ds.length}): ${ten}`);
+      console.log(`TRẢ NGAY khi ghi xong: node scripts/claim.mjs --xong --het --as ${as}`);
+    } else {
+      console.log(`đã trả (${ds.length}): ${ten}`);
+    }
     process.exit(EXIT.OK);
   }
 
@@ -538,12 +807,33 @@ function main() {
        viễn mà ai cũng học cách bỏ qua. Bất biến *"không chạm chủ của khoá nào"* vẫn được canh —
        ở phép ghim chạy THẬT trong `tests/claim-smoke.mjs`, nơi nó đo được. */
     parsed.claims[khaiVung] = { owner: null, ai: null, claimed_at: null, task: null, released_at: null };
-    parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims);
+    parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims, parsed.tam);
     fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
     console.log(`đã khai vùng: ${khaiVung} — TRỐNG CHỦ. Nhận nó: node scripts/claim.mjs --take ${khaiVung} --as ${as}`);
     console.log(`dấu cũ: ${seal.stamped ?? "(chưa có)"}  →  dấu mới: ${parsed[FINGERPRINT_FIELD]}`);
     process.exit(EXIT.OK);
   }
+  /* CHIỀU HAI của luật chứa nhau: nhận CẢ VÙNG nghĩa là giành quyền ghi mọi file trong đó,
+     nên nó phải từ chối khi bên trong còn khoá file của người khác. Thiếu chiều này thì hai
+     lane cùng tin mình được ghi một file, và không lớp nào kêu. */
+  const xinVung = flag("take");
+  if (typeof xinVung === "string" && Object.keys(parsed.tam || {}).length) {
+    const as = flag("as");
+    let structure;
+    try { structure = readStructureFromDisk(ROOT); } catch { structure = null; }
+    if (structure) {
+      const prefixes = claimPrefixesFrom(structure);
+      const vuong = khoaFileTrongVung(parsed, xinVung, as, (d) => vungBaoNgoai(d, structure, prefixes));
+      if (vuong.length) {
+        console.error(`TU_CHOI: vùng "${xinVung}" đang có ${vuong.length} file bị lane khác khoá để sửa:`);
+        for (const v of vuong) console.error(`  ${v.duongDan}  ← ${v.owner}`);
+        console.error("\nKhoá file là loại giữ VÀI PHÚT — đợi một nhịp rồi chạy lại.");
+        console.error("Chỉ cần sửa đúng vài file? Dùng --sua <đường-dẫn>… thay vì nhận cả vùng.");
+        process.exit(EXIT.REFUSED);
+      }
+    }
+  }
+
   const take = flag("take");
   const release = flag("release");
   const as = flag("as");
@@ -638,7 +928,7 @@ function main() {
     ghi.unpushed_reason = boQua.ly_do;
   }
   parsed.claims[key] = ghi;
-  parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims);
+  parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims, parsed.tam);
   fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
 
   // GHI RỒI ĐỌC LẠI. Không chặn được đua, nhưng không để nó âm thầm.

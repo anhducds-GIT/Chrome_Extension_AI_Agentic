@@ -17,7 +17,7 @@ import os from "node:os";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
+import { FINGERPRINT_FIELD, fingerprintState, khoaFileQuaHan, PHUT_NHAC_KHOA_FILE, readClaims, VO_DAU } from "./claim.mjs";
 import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
 import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, chonSuiteBoDongBang, claimPrefixesFrom, DAU_VET, dauVetTheoVung, frozenFrom, generatorsFrom, handoffCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 import { bamLenh, danhSachSuite, dauCay, docDau, xetDau } from "./chay-test.mjs";
@@ -939,6 +939,40 @@ check("Đọc git không lỗi", () => {
  *
  * TRỪ `docs/adr/`: ADR đã Accepted là bất biến (ADR-0000), nên thư mục đó chỉ có thể to lên.
  * Tính nó vào thước thì mỗi quyết định mới làm cộng dồn, và người ta sẽ nới con số cho xong. */
+/* KHOÁ FILE PHẢI TRẢ HẾT TRƯỚC KHI ĐÓNG PHIÊN — Đức chốt 08/09.
+ *
+ * Cả giá trị của khoá mức file nằm ở chữ NGẮN: *"khóa được giữ và trả ngay trước và sau khi
+ * AI sửa"*. Không gì cưỡng chế chữ đó thì nó thoái hoá thành đúng cái khoá vùng dài hạn mà nó
+ * thay thế — và lúc ấy repo có HAI cơ chế cùng làm một việc dở, thay vì một cơ chế làm tốt.
+ *
+ * ĐÓNG PHIÊN LÀ MỐC ĐÚNG, và nó khác hẳn khoá vùng. Khoá vùng trả **sau khi đẩy** (mục 1),
+ * vì commit chưa đẩy mà vùng đã trống chủ thì để lại một mục đỏ cho phiên sau. Khoá file
+ * KHÔNG mang trách nhiệm đó — nguồn gốc của một commit là nhãn `Lane:`, không phải khoá. Nên
+ * ở đây mốc là "hết phiên", không phải "đã đẩy".
+ *
+ * Chỉ soi khoá của CHÍNH BẠN. Khoá quá hạn của lane khác chỉ được NÊU, không làm bạn đỏ:
+ * ngày 06/09 một khoá đã bị nhả hộ vì có người đọc một dòng chẩn đoán thành "phiên kia rảnh". */
+check("Khoá file đã trả hết", () => {
+  let bang;
+  try { bang = readClaims(); }
+  catch (error) { return { ok: false, msg: `KHONG_DOC_DUOC_BANG: ${error.message}` }; }
+  const tam = Object.entries(bang.tam || {}).filter(([, o]) => o?.owner);
+  if (!tam.length) return { ok: true, msg: "Không khoá file nào đang giữ." };
+  const cuaToi = tam.filter(([, o]) => o.owner === asLabel);
+  const quaHan = khoaFileQuaHan(bang, PHUT_NHAC_KHOA_FILE).filter((x) => x.owner !== asLabel);
+  const themCuaHo = quaHan.length
+    ? ` Ngoài ra ${quaHan.length} khoá của lane khác đã quá ${PHUT_NHAC_KHOA_FILE} phút (${quaHan.map((x) => `${x.duongDan} ← ${x.owner}`).join(" · ")}) — NÊU để bạn HỎI họ, KHÔNG phải để nhả hộ.`
+    : "";
+  if (!cuaToi.length) {
+    return { ok: true, msg: `${tam.length} khoá file đang giữ, không cái nào của bạn.${themCuaHo}` };
+  }
+  return {
+    ok: false,
+    msg: `KHOA_FILE_CON_TREO: bạn còn giữ ${cuaToi.length} khoá file: ${cuaToi.map(([d]) => d).join(" · ")}. `
+      + "Khoá mức file sinh ra để giữ VÀI PHÚT quanh một lượt ghi, không giữ qua cả phiên — "
+      + `giữ tiếp là chặn lane khác vì một việc bạn đã làm xong. Trả hết: node scripts/claim.mjs --xong --het --as ${asLabel}${themCuaHo}`,
+  };
+});
 check("Kho chữ không phình", () => {
   const tran = structure?.docs?.tran_dong_khong_ke_adr;
   if (typeof tran !== "number") {
@@ -1006,7 +1040,10 @@ check("Sổ nợ dưới trần", () => {
 // docs/ (tru ADR, vi ADR bat bien nen chi co the to len). Duc hoi "protocol clean, neu chua co
 // ta nen xay dung dung khong?" — co, nhung la PHEP KIEM chu khong phai mot tai lieu moi: mot
 // tai lieu day cach don tai lieu cong vao dung con so no dinh cat. Ly do ghi vao HANDOFF.md goc.
-const EXPECTED_CHECKS = 15;
+// 2026-09-08, lane claude-ext-khoafile: 15 -> 16. Them "Khoa file da tra het" — ca gia tri
+// cua khoa muc file nam o chu NGAN, va khong gi cuong che chu do thi no thoai hoa thanh dung
+// cai khoa vung dai han ma no thay the. Ly do ghi vao HANDOFF.md goc + ADR-0025.
+const EXPECTED_CHECKS = 16;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

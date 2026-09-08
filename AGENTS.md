@@ -19,7 +19,7 @@ Không được báo "xong" khi cổng kiểm chưa xanh. Không được tự s
 
 ### 0b. THỨ TỰ ĐÓNG PHIÊN — sai thứ tự là tự nhân đôi thời gian
 
-`sửa → commit → sinh lại artifact → commit → npm run test:song-song → cổng → safe-push`
+`--sua → sửa → --soat → commit → --xong → sinh lại artifact → commit → npm run test:song-song → cổng → safe-push`
 
 - **`npm run test:song-song` chạy SAU commit.** Bộ chạy (`scripts/chay-test.mjs`) để lại một *dấu xác nhận*
   buộc vào HEAD + băm cây làm việc + môi trường; cổng thấy dấu còn hiệu lực thì **không chạy lại
@@ -58,6 +58,33 @@ node scripts/claim.mjs --take <khoá> --as <tên-phiên> --task "một câu"
 node scripts/claim.mjs --release <khoá> --as <tên-phiên>
 node scripts/claim.mjs --khai-vung <khoá> --as <tên-phiên>   # mở MỘT VÙNG MỚI
 ```
+
+### Khoá mức FILE — giữ ngắn, trả ngay (Đức chốt 08/09)
+
+**Mặc định từ nay là khoá FILE, không phải khoá vùng.** Nhận ngay TRƯỚC lượt ghi, trả ngay SAU.
+**Chỉ đọc thì không cần gì cả.**
+
+```bash
+node scripts/claim.mjs --sua <đường-dẫn> [<đường-dẫn>…] --as <phiên>   # trước khi ghi
+node scripts/claim.mjs --soat --as <phiên>                            # trước git commit
+node scripts/claim.mjs --xong --het --as <phiên>                      # ngay sau khi ghi xong
+```
+
+Vì sao: **[ĐO 7 ngày]** 2.628 cặp commit khác lane, cách nhau ≤ 1 giờ, cùng vùng — trong đó
+**1.839 cặp (70%) không đụng file nào chung**. Bảy phần mười lượt chặn hôm nay là chặn oan.
+Ghi ở [ADR-0025](docs/adr/0025-khoa-muc-file-giu-ngan-tra-ngay.md).
+
+- **Chứa nhau hai chiều.** Vùng có chủ khác → khoá file bị từ chối. Bên trong còn khoá file
+  của người khác → nhận cả vùng bị từ chối. Còn nhận cả vùng khi bạn thật sự sửa khắp nó.
+- **Cổng đóng phiên ĐỎ nếu bạn còn treo khoá file.** Mốc là *hết phiên*, **không** phải *đã
+  đẩy* — khoá file không mang trách nhiệm truy nguồn, nhãn `Lane:` mới mang. Khoá VÙNG thì
+  vẫn trả **sau khi đẩy** như cũ; hai loại khoá, hai mốc, đừng lẫn.
+- **`--soat` là bắt buộc trước `git commit`**, và nó vá chỗ khoá KHÔNG chữa được: hai lane
+  dùng chung MỘT cây git, nên `git commit -a` vẫn cuốn file lane khác vừa dàn (`N-40`, nổ
+  thật 07/09) và `git commit -o` vẫn cuốn sửa đổi của họ trên chính file đó (`N-05`). Khoá
+  file làm số người ghi đồng thời TĂNG, nên hai lỗi ấy nổ DÀY HƠN nếu bỏ bước soát.
+- **Đừng tự nhả khoá file của lane khác** dù cổng có nêu tên nó là quá hạn. Ba đường hợp lệ
+  ở trên áp cho cả khoá file.
 
 `--khai-vung` (từ 08/09) chỉ tạo một ô **trống chủ** cho khoá mà `.repo-structure.json` đã công
 nhận, và thư mục phải có thật trên đĩa. Trước nó, mở một vùng dùng chung chỉ làm được bằng **sửa
