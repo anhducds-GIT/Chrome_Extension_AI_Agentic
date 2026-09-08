@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Accepted
 adr: 0024
 date: 2026-09-08
 deciders: Đức
@@ -73,4 +73,4 @@ dụng nếu người sửa dùng nó **trước** khi chép sang gói thứ hai
 
 ## Trạng thái
 
-Proposed
+Accepted — 2026-09-08, Đức chốt trực tiếp trong phiên.
