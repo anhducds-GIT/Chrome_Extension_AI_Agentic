@@ -238,4 +238,63 @@ function thuMucTam() {
   }
 }
 
-console.log("ngay-nghi-smoke: 8 khoi, tat ca DAT");
+/* ---- ⑼ NGÀY CÒN MỚI thì KHÔNG được đánh dấu ---------------------------
+ * Chốt này giữ cho việc đánh dấu khỏi quay ra ăn mất dữ liệu, và nó sinh ra từ một chuyện có
+ * thật: **HNX công bố TRONG ngày, không phải lúc đóng cửa**. Đo 08/09, đầu giờ chiều cả hai
+ * đường đều báo chưa có gì — hành vi bình thường của trang, không phải lỗi.
+ *
+ * Không có chốt này thì một lượt chạy sớm sẽ ghi hôm nay là "nghỉ" **vĩnh viễn**, và dữ liệu
+ * công bố hai tiếng sau không bao giờ được lấy. Đó là **chính xác** cái rủi ro mà sổ nợ cảnh
+ * báo trước khi Đức chốt — chốt rồi thì rủi ro không biến mất, nó chỉ đổi chỗ.
+ *
+ * Ghim bằng cách chạy lệnh THẬT với ngày HÔM NAY, không phải bằng cách gọi thẳng hàm: thứ dễ
+ * hỏng là chỗ NỐI giữa hàm và lệnh, y như bài học của khối ⑻. */
+{
+  const http = await import("node:http");
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const chayLenh = promisify(execFile);
+  const d = thuMucTam();
+  let may;
+  try {
+    may = http.createServer((req, res) => {
+      let tho = "";
+      req.on("data", (c) => { tho += c; });
+      req.on("end", () => {
+        const vao = JSON.parse(tho);
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({
+          protocol: vao.protocol, version: 1, kind: "response", request_id: vao.request_id, ok: true,
+          result: { status: 200, body: JSON.stringify({ SumTable: null, Content: "<table></table>" }) }
+        }));
+      });
+    });
+    await new Promise((xong) => may.listen(0, "127.0.0.1", xong));
+
+    const master = path.join(d, "SSOT.csv");
+    const ghepCap = path.join(d, "pairing.json");
+    fs.writeFileSync(ghepCap, JSON.stringify({ schema_version: 1, host: "127.0.0.1", port: may.address().port, token: "x" }), "utf8");
+    const thuMucTest = path.dirname(fileURLToPath(import.meta.url));
+
+    /* HÔM NAY — nhưng phải là ngày trong tuần, vì T7/CN bị loại từ trước và lệnh sẽ thoát sớm.
+     * Lùi về thứ Sáu nếu hôm nay là cuối tuần: ta đang thử chốt TUỔI, không thử bộ lọc cuối tuần. */
+    const t = new Date();
+    while (t.getUTCDay() === 0 || t.getUTCDay() === 6) t.setUTCDate(t.getUTCDate() - 1);
+    const homNay = t.toISOString().slice(0, 10);
+
+    const { stdout: ra } = await chayLenh(process.execPath, [
+      path.join(thuMucTest, "..", "tai-ket-qua.mjs"),
+      "--pairing", ghepCap, "--master", master, "--tu", homNay, "--den", homNay
+    ]);
+
+    assert.match(ra, /không có phiên/, "lệnh không nhận ra ngày trống");
+    assert.ok(ra.includes("CÒN MỚI"), "không nói cho người chạy biết vì sao chưa ghi nhận");
+    assert.equal(docNgayNghi(master).ngay.has(homNay), false,
+      "ĐÃ ĐÁNH DẤU NGÀY HÔM NAY — chạy sớm một lượt là mất trắng dữ liệu ngày đó");
+  } finally {
+    if (may) await new Promise((xong) => may.close(xong));
+    fs.rmSync(d, { recursive: true, force: true });
+  }
+}
+
+console.log("ngay-nghi-smoke: 9 khoi, tat ca DAT");

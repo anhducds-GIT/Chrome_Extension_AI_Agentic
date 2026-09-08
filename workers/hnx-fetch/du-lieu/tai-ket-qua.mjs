@@ -114,6 +114,28 @@ async function goi(method, params) {
 }
 
 /* Ngày trong tuần. Ngày lễ KHÔNG lọc ở đây — trang tự trả lời "không có ô dữ liệu nào". */
+/* ---- BAO LÂU RỒI THÌ MỚI ĐƯỢC ĐÁNH DẤU 'KHÔNG CÓ PHIÊN' -------------------
+ * Đây là chốt giữ cho việc đánh dấu (H-03) không quay ra ăn mất dữ liệu.
+ *
+ * **HNX công bố TRONG ngày, không phải ngay lúc đóng cửa** — đo thật 08/09: đầu giờ chiều
+ * cả hai đường đều báo chưa có gì, và đó là hành vi bình thường của trang, không phải lỗi.
+ * Nên một lượt chạy sớm sẽ thấy hôm nay 'trống'. Nếu lượt đó đánh dấu luôn thì ngày hôm nay
+ * bị ghi là nghỉ **vĩnh viễn**, và dữ liệu thật công bố hai tiếng sau sẽ không bao giờ được lấy.
+ *
+ * Nên chỉ đánh dấu những ngày ĐỦ CŨ. Hai ngày là con số chọn theo hành vi đã đo, không phải
+ * theo cảm tính: nó bao được cả ca chạy lúc nửa đêm cho ngày hôm trước.
+ *
+ * Giá phải trả: mỗi ngày lễ tốn thêm tối đa hai lượt gọi, một lần duy nhất. Đổi lại là không
+ * bao giờ tự bịt mắt mình trước dữ liệu chưa kịp công bố — một bên đắt vài lượt gọi, bên kia
+ * đắt cả một ngày dữ liệu mà không ai biết đã mất. */
+const NGAY_CHO_TRUOC_KHI_DANH_DAU = 2;
+
+function duCuDeDanhDau(ngay, homNay = new Date()) {
+  const a = new Date(`${ngay}T00:00:00Z`).getTime();
+  const b = Date.UTC(homNay.getUTCFullYear(), homNay.getUTCMonth(), homNay.getUTCDate());
+  return (b - a) / 86400000 >= NGAY_CHO_TRUOC_KHI_DANH_DAU;
+}
+
 function ngayLamViec(a, b) {
   const ra = [];
   for (let d = new Date(`${a}T00:00:00Z`); d <= new Date(`${b}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
@@ -198,8 +220,12 @@ for (const ngay of thieu) {
     /* GHI LẠI, để lượt sau thôi hỏi. Ghi SAU khi trang đã trả lời, không phải đoán trước theo
      * lịch: ngày lễ Việt Nam có ngày âm lịch, và một bảng lịch gõ tay sẽ sai đúng vào năm không
      * ai kiểm lại. Trang tự nói "không có ô dữ liệu nào" là bằng chứng; một bảng lịch thì không. */
-    themNgayNghi(duongMaster, ngay);
-    console.log(`  —      ${ngay}  không có phiên (đã ghi nhận, lượt sau bỏ qua)`);
+    if (duCuDeDanhDau(ngay)) {
+      themNgayNghi(duongMaster, ngay);
+      console.log(`  —      ${ngay}  không có phiên (đã ghi nhận, lượt sau bỏ qua)`);
+    } else {
+      console.log(`  —      ${ngay}  không có phiên (CÒN MỚI, chưa ghi nhận — HNX có thể công bố muộn trong ngày)`);
+    }
     trong += 1;
     continue;
   }

@@ -175,3 +175,24 @@ một extension khác giành mất tổ hợp.
   một phép chạy THẬT có đường dẫn chứa dấu cách. Một chốt hỏng câm tệ hơn không có chốt.
 
   **Còn lại đúng phần cần tay Đức:** chạy lệnh đó một lần, rồi chọn tệp mới trong bảng bên.
+
+- **ĐÓNG H-03** (2026-09-08, `claude-scouter-s06`) · Đức chốt **đánh dấu**. Và Đức đoán đúng một
+  nửa: **T7/CN đã bỏ qua sẵn từ trước** (`ngayLamViec`, `tai-ket-qua.mjs`) — thứ bị lấy lại mỗi
+  lượt chỉ là **ngày lễ**, tức ngày trong tuần mà sàn không mở.
+
+  Ghi vào một tệp CSV **bên cạnh** SSOT (`<tên>.ngay-nghi.csv`), **không** phải một hàng giả trong
+  SSOT: SSOT có 25 cột số liệu và khoá (ngày + ISIN), nhét một hàng *"ngày này nghỉ"* vào đó nghĩa
+  là mọi lượt đếm/cộng/trung bình về sau phải nhớ lọc nó ra — và sẽ có lượt quên. Dữ liệu và **ghi
+  chú về dữ liệu** là hai thứ khác nhau.
+
+  **Rủi ro trong mục này không biến mất chỉ vì đã chốt** — nếu HNX bổ sung dữ liệu cho một ngày đã
+  đánh dấu, ta sẽ không lấy nữa. Nên cửa thoát phải rẻ: tệp là CSV mở bằng Excel được, có ghi **lúc
+  quan sát**, và **xoá một dòng là ngày đó được lấy lại**. Phép ghim canh cả cửa thoát đó, không
+  chỉ canh cửa vào.
+
+  Ghi **SAU** khi trang trả lời, không đoán trước theo lịch: ngày lễ Việt Nam có ngày âm lịch, và
+  một bảng lịch gõ tay sẽ sai đúng vào năm không ai kiểm lại.
+
+  Ghim `du-lieu/tests/ngay-nghi-smoke.mjs`, 8 khối. Khối ⑺ chạy thật `--thu-xem`; khối ⑻ dựng một
+  **máy chủ Bridge giả** để ghim lượt GHI — bộ đo đột biến chỉ ra rằng không có khối ⑻ thì bỏ hẳn
+  lượt ghi mà mọi phép ghim vẫn xanh. Đột biến `R1` `R2` nay đều giết được, 25/25, 0 sống sót.

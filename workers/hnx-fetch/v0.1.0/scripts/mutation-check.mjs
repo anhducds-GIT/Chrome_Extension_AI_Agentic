@@ -265,6 +265,13 @@ BATCHES.push({
       soLan: 1
     },
     {
+      ma: "R3",
+      ten: "Đánh dấu cả ngày HÔM NAY — chạy sớm một lượt là mất trắng dữ liệu ngày đó",
+      tim: "    if (duCuDeDanhDau(ngay)) {",
+      thay: "    if (true) {",
+      soLan: 1
+    },
+    {
       ma: "R2",
       ten: "Không ghi lại ngày không có phiên — lượt sau lại hỏi đúng ngày đó",
       tim: "    themNgayNghi(duongMaster, ngay);",
