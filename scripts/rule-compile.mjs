@@ -71,7 +71,22 @@ export function docFileADR(text, duongDan) {
     let m;
     while ((m = re.exec(than))) chet.push({ so: m[1].padStart(4, "0"), ve: m[2] ?? null });
   }
-  return { duongDan, mang, chet };
+
+  /* CÁC VẾ CÒN SỐNG CỦA CHÍNH FILE NÀY — tiêu đề `### ⑵ …`.
+     VÌ SAO CẦN, và đây là một chỗ mô hình sai đã lọt qua một lần 09/09: sau lượt gộp, số vế
+     trong một file chủ đề là số của FILE, không phải số vế của quyết định cũ. `0021-goi-
+     extension.md` có `### ⑵ Tách gói…` (đang sống) trong khi mục `Vế đã chết` của nó ghi
+     `0021 ⑵` (trần nâng lên HAI, chết) — **hai vật khác nhau, cùng một ký hiệu.** So thẳng thì
+     mọi lượt trích `ADR-0021 ⑵` bị báo đỏ oan.
+     Luật giải: **một lượt trích chỉ chết khi file KHÔNG CÒN vế mang ký hiệu đó.**
+     Chỗ hở còn lại, nói ra chứ không giấu: vế cũ nào có số trùng với một vế mới đang sống thì
+     bộ này không bắt được. Đổi lại là 0 báo động giả, và một phép kiểm báo giả sẽ bị tắt. */
+  const veSong = new Set();
+  const reVe = new RegExp("^#{2,4}\\s+([" + LOP_VE + "])", "gm");
+  let mv;
+  while ((mv = reVe.exec(s))) veSong.add(mv[1]);
+
+  return { duongDan, mang, chet, veSong };
 }
 
 /* Thư mục chứa một file ADR — cùng cách chia phạm vi B12 dùng. `docs/adr/0001` và
@@ -165,7 +180,11 @@ export function bienDich({ soCai, banHieuLuc, dangKy, homNay }) {
       song.get(pv).add(so);
       nha.set(pv + "|" + so, f.duongDan);
     }
-    for (const c of f.chet) chet.get(pv).add(c.ve ? c.so + " " + c.ve : c.so);
+    /* Vế cũ mà file NAY vẫn còn một vế mang đúng ký hiệu đó thì bỏ qua — xem `docFileADR`. */
+    for (const c of f.chet) {
+      if (c.ve && (f.veSong ?? new Set()).has(c.ve)) continue;
+      chet.get(pv).add(c.ve ? c.so + " " + c.ve : c.so);
+    }
   }
 
   /* ① và ② — đi qua từng lượt trích trong bản hiệu lực. */

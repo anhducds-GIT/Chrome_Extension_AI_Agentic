@@ -139,20 +139,25 @@ Sinh bảng trạng thái ra một file tạm cho tôi xem, đừng commit.
 
 ---
 
-## 3. Nhận hoặc trả quyền một vùng
+## 3. Nhận hoặc trả quyền
 
-**Dùng khi nào:** AI báo "vùng này có chủ khác" và Đức muốn xử lý.
+**Dùng khi nào:** AI báo "chỗ này có chủ khác" và Đức muốn xử lý.
+
+> **Từ 08/09 mặc định là khoá TỪNG FILE, không phải khoá cả vùng** (`AGENTS.md` mục 1a). AI nhận
+> ngay trước lượt ghi và trả ngay sau — Đức thường không phải làm gì. Cả vùng chỉ nhận khi nó
+> thật sự sửa khắp vùng đó. Sửa 09/09: mục này trước đây chỉ dạy khoá vùng.
 
 **Xem ai đang giữ gì:**
 
 ```text
-Cho tôi xem bảng quyền: vùng nào đang có chủ, ai giữ, giữ bao lâu rồi.
+Cho tôi xem bảng quyền: chỗ nào đang có chủ, ai giữ, giữ bao lâu rồi.
 ```
 
-**Nhận một vùng:**
+**Nhận, khi AI thật sự sửa khắp một vùng:**
 
 ```text
-Nhận quyền vùng <tên vùng>, ghi chú việc bạn sắp làm bằng một câu.
+Việc này đụng khắp vùng <tên vùng> chứ không phải vài file — nhận cả vùng đi,
+ghi chú việc bạn sắp làm bằng một câu.
 ```
 
 **Trả lại:**
@@ -161,8 +166,12 @@ Nhận quyền vùng <tên vùng>, ghi chú việc bạn sắp làm bằng một
 Xong việc ở vùng <tên vùng> thì trả quyền lại.
 ```
 
-**AI sẽ chạy:** `node scripts/claim.mjs --list` · `--take <khoá> --as <phiên> --task "…"` · `--release`
-**Xong khi nào:** lệnh in `đã nhận:` hoặc `đã trả:`.
+**AI sẽ chạy:** `node scripts/claim.mjs --list` · `--sua <file>…` / `--xong --het` (mức file) ·
+`--take <khoá> --as <phiên> --task "…"` / `--release` (mức vùng)
+**Xong khi nào:** lệnh in `đang sửa:` / `đã trả:`, hoặc `đã nhận:` / `đã trả:`.
+
+> **Hai mốc trả khác nhau, đừng lẫn:** khoá FILE trả **lúc hết phiên**, khoá VÙNG trả **sau khi
+> đẩy**. Cổng đóng phiên đỏ khi AI còn treo khoá file.
 
 > **Vùng có chủ khác thì AI KHÔNG được tự lấy** — lệnh sẽ từ chối, và đó là cố ý. Muốn lấy thì
 > Đức chốt. Nhưng thử cách rẻ trước: nhờ AI **nhắn cho phiên đang giữ** hỏi khi nào trả. Ngày
@@ -175,11 +184,16 @@ Xong việc ở vùng <tên vùng> thì trả quyền lại.
 **Dùng khi nào:** AI báo đã làm xong một việc.
 
 ```text
-Đóng phiên: chạy cổng kiểm. Đỏ thì chưa xong — sửa rồi chạy lại. Xanh toàn bộ thì
-ghi một dòng Log vào HANDOFF rồi push. Đừng báo xong khi cổng còn đỏ.
+Đóng phiên đúng thứ tự: commit hết đã, RỒI chạy đủ bộ test, rồi cổng kiểm, rồi push.
+Đỏ thì chưa xong — sửa rồi chạy lại. Đừng báo xong khi cổng còn đỏ.
+Ghi một dòng Log vào HANDOFF trước khi push.
 ```
 
-**AI sẽ chạy:** `node scripts/session-check.mjs --as <phiên>` rồi `node scripts/safe-push.mjs --as <phiên>`
+> Thứ tự này không phải chuyện hình thức: bộ test để lại một dấu buộc vào commit cuối, nên
+> **commit sau khi chạy test là làm hỏng dấu** và cổng phải chạy lại cả bộ (`AGENTS.md` mục 0a).
+
+**AI sẽ chạy:** `npm run test:song-song` → `node scripts/session-check.mjs --as <phiên>` →
+`node scripts/safe-push.mjs --as <phiên>`
 **Xong khi nào:** cổng in `XANH TOÀN BỘ`, và push in số commit đã đẩy.
 
 **Nếu AI báo push bị từ chối vì sẽ cuốn theo việc phiên khác** — đó là đúng, không phải lỗi. Đức

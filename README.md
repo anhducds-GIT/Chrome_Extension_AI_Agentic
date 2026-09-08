@@ -28,6 +28,7 @@ nhiều phiên AI làm việc song song trên cùng một repo mà không giẫm
 | `workers/duc-auto-gemini/v0.2.0` | Chạy workbook XLSX sinh ảnh trên Gemini |
 | `workers/duc-auto-gg-flow-video/v0.1.0` | Chạy workbook XLSX sinh video trên Google Flow |
 | `workers/duc-scouter/v0.1.0` | Dò một trang, báo cáo cho AI qua Bridge, tự nạp lại chính nó |
+| `workers/hnx-fetch` | Lấy dữ liệu HNX mỗi ngày. **Không có quyền `debugger`** nên nó không bấm được gì ([ADR-0021](docs/adr/0021-goi-extension.md) ⑵) |
 
 Mỗi gói tự có `AGENTS.md` · `README.md` · `STATUS.md` · `HANDOFF.md` · `BACKLOG.md` và **khoá
 riêng** trong `.agents/claims.json`.
@@ -35,8 +36,11 @@ riêng** trong `.agents/claims.json`.
 ## Chạy phép ghim
 
 ```bash
-npm test                 # toàn bộ suite của repo
+npm run test:song-song                            # toàn bộ suite, chạy song song
 node scripts/session-check.mjs --as <tên-phiên>   # cổng đóng phiên
 ```
+
+`npm test` vẫn chạy được nhưng là chuỗi TUẦN TỰ, chậm hơn nhiều lần — nó tồn tại vì một phép
+ghim đọc thẳng trường đó để bắt "xanh giả" (`AGENTS.md` mục 0a). Đóng phiên thì dùng dòng trên.
 
 Không có phụ thuộc ngoài. Mọi phép ghim là script Node thuần.

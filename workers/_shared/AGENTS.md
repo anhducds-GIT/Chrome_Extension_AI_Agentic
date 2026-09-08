@@ -1,6 +1,6 @@
 # `workers/_shared/` — mã dùng chung cho nhiều extension
 
-> Vùng này ra đời 07/09 theo `AGENTS.md` gốc mục 3, luật 2: *"Cấm cài một tính năng hai lần.
+> Vùng này ra đời 07/09 theo `AGENTS.md` gốc, **giới hạn ②**: *"Cấm cài một tính năng hai lần.
 > Cần ở hai gói → vào `workers/_shared/` trước."* Luật có từ trước; nhà thì tới hôm nay mới xây.
 
 ## Luật của vùng này — bốn dòng
@@ -34,12 +34,20 @@ máy chủ phải chứng minh nó biết token TRƯỚC khi extension đưa tok
 Nghĩa là **một bản vá an toàn làm ở một bản chép, không bao giờ tới hai bản kia.** Hai Bridge
 tới hôm nay vẫn nhận token trần. Đó là cái giá của fork, đo được, trên đĩa — không phải lý thuyết.
 
-## Ba gói đóng băng KHÔNG dùng lõi này
+## Ba gói `duc-auto-*` CHƯA dùng lõi này
 
-`duc-auto-chatgpt` · `duc-auto-gemini` · `duc-auto-gg-flow-video` giữ nguyên bản chép của chúng.
-Luật cấm sửa gói đóng băng, và cũng không cần: chúng đã ngừng thay đổi. Bản chép của
-`duc-auto-chatgpt` còn có một công dụng nữa — nó là **cái mốc** để `tuong-duong-voi-ban-goc.mjs`
-so đáp án, và đóng băng chính là điều làm nó thành một cái mốc tốt.
+`duc-auto-chatgpt` · `duc-auto-gemini` · `duc-auto-gg-flow-video` vẫn giữ bản chép của chúng.
+
+> **Sửa 09/09.** Đoạn này từng nói *"Luật cấm sửa gói đóng băng"*. Vế đó **chết 08/09**:
+> [ADR-0021](../../docs/adr/0021-goi-extension.md) ⑴ bỏ hẳn trần số gói và mở băng cả năm gói,
+> `frozen` nay là danh sách rỗng. **Không còn luật nào cấm sửa ba gói này.**
+
+Vì sao vẫn chưa chuyển: [ADR-0021](../../docs/adr/0021-goi-extension.md) ⑶ — Đức chấp nhận rủi
+ro token trần ở hai Bridge cũ, vì *"mở băng đắt hơn chỗ hở"* và bản thân lượt chuyển là con
+đường những vệt trôi mới đi vào. Đó là một lựa chọn còn hiệu lực, **không** phải một điều cấm.
+
+Bản chép của `duc-auto-chatgpt` còn một công dụng nữa: nó là **cái mốc** để
+`tuong-duong-voi-ban-goc.mjs` so đáp án. Mốc tốt vì nó **đứng yên**, không vì nó bị cấm chạm.
 
 ## Phép ghim chạy ở đâu
 

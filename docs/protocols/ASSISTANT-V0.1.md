@@ -29,14 +29,24 @@ Hai lệnh đều **chỉ đọc, không đòi khoá nào** — nên phiên đi�
 | Mốc | Trạng thái |
 |---|---|
 | **V0.1 PACKAGE** — đóng nhãn bundle, không di chuyển file | ✅ **xong** 2026-09-04 |
-| **ASSISTANT PILOT** — 20–30 câu hỏi thật của Đức, trên chính repo này | ⏳ **đang chạy** |
-| **PORTABLE FREEZE → TEMPLATE** | ⏳ **đang chạy** — Đức mở sớm 04/09 |
+| **PORTABLE FREEZE → TEMPLATE** | ✅ **xong** — gói đã phát hành sang bộ khung |
+| **ASSISTANT PILOT** — 20–30 câu hỏi thật của Đức, trên chính repo này | ⚠ **chưa đo lần nào** |
 
-Brief promote đã **mở lại**: [`../briefs/BRIEF-ASSISTANT-PROMOTE-01.md`](../briefs/BRIEF-ASSISTANT-PROMOTE-01.md).
+> **Sửa 09/09, hai mốc đọc sai sự thật.**
+> **Mốc ba XONG:** `what-next.mjs` và `state-check.mjs` nay sống ở
+> `Ark_Repo_Harness` (cả `scripts/` lẫn `template/scripts/`), và
+> [ADR-0001](../adr/0001-ranh-gioi-bo-khung.md) ⑷ chốt chiều ngược: **sửa ở bộ khung TRƯỚC**,
+> repo này là người tiêu thụ. Brief `ASSISTANT-PROMOTE-01` mang `status: done`. Trang này vẫn
+> ghi *"đang chạy"* suốt năm ngày — đúng cái bệnh `ORCHESTRATOR.md` mục 0e gọi tên: *một hàng
+> đợi sai thì tệ hơn không có hàng đợi, vì Đức sẽ tin nó.*
+> **Mốc pilot KHÔNG "đang chạy":** mục 5 bắt đếm câu hỏi ở Log `HANDOFF.md`, và từ 04/09 tới nay
+> **không mục nào ghi một con số nào**. Nói *"đang chạy"* cho một phép đo chưa đo lần nào là báo
+> cáo sai. Muốn nó chạy thì mỗi phiên điều phối phải ghi số câu + nhãn; không ai ghi thì mốc này
+> nên **đóng lại** thay vì nằm mở mãi.
 
-**Hai mốc chạy song song là CỐ Ý, và điều kiện mở của mốc ba CHƯA đạt.** Đức chốt làm sớm ngày
-04/09. Ghi rõ ở đây vì trang này là nơi phiên sau đọc để biết mốc nào đạt kiểu gì — và nếu
-không ghi thì nửa năm sau sẽ có người tưởng mốc ba mở ra vì pilot đã đạt.
+**Điều kiện mở của mốc ba CHƯA đạt lúc nó được mở.** Đức chốt làm sớm ngày 04/09. Ghi rõ ở đây
+vì trang này là nơi phiên sau đọc để biết mốc nào đạt kiểu gì — và nếu không ghi thì nửa năm sau
+sẽ có người tưởng mốc ba mở ra vì pilot đã đạt.
 
 Số thật lúc mở: pilot mới chạy **một buổi**, và `HANDOFF.md` gốc đã ghi nhận **ba sự cố** của
 chính Assistant (một trượt vai · một sai lệch Đức phải bắt · một lượt bảng để cũ) — cả ba tiêu

@@ -128,6 +128,33 @@ export function danhSachTuanTu(root = ROOT) {
   } catch { return []; }
 }
 
+/** Suite nào RỖNG hoặc KHÔNG KHẲNG ĐỊNH GÌ. Trả danh sách đường dẫn đáng ngờ.
+ *
+ * VÌ SAO CÓ. Ngày 09/09 `tests/rule-compile-smoke.mjs` bị cắt còn **0 byte** bởi một lệnh viết
+ * sai thứ tự (mở file để GHI trước khi đọc nó). Node chạy một file rỗng và **thoát 0**. Bộ chạy
+ * báo XANH, cổng báo XANH, và bản rỗng đã được commit. Không lớp nào kêu, vì mọi lớp đều đang
+ * hỏi "có ĐỎ không" chứ không hỏi "có KIỂM gì không".
+ *
+ * Đây là họ hàng gần của `MUTATION_SKIP`: một bộ kiểm im lặng đọc y hệt một lượt xanh.
+ *
+ * CHỈ ĐO ĐỘ DÀI, cố ý. Bản đầu còn đòi mỗi suite phải chứa `assert` — nó báo **6 lỗi giả** ngay
+ * lượt chạy đầu: bốn `run-all.mjs` là bộ GOM (chúng chạy suite con rồi chuyển tiếp mã thoát,
+ * không tự khẳng định gì) và `backlog-check.mjs` là bộ kiểm chứ không phải test. Sáu lỗi giả để
+ * bắt thêm một ca giả thuyết là một vụ đổi tồi: phép kiểm báo giả sẽ bị tắt, và lúc đó nó không
+ * còn bắt được ca THẬT nữa. Ngưỡng 200 byte bắt đúng thứ đã xảy ra — file bị CẮT — và không
+ * phán xét file viết ngắn. */
+export function suiteRong(ds, root = ROOT) {
+  const xau = [];
+  for (const lenh of ds) {
+    const f = lenh.split(/\s+/).find((x) => x.endsWith(".mjs") || x.endsWith(".js"));
+    if (!f) continue;
+    let noiDung;
+    try { noiDung = fs.readFileSync(path.join(root, f), "utf8"); } catch { continue; }
+    if (noiDung.trim().length < 200) xau.push(`${f} — chỉ ${noiDung.length} byte, nghi bị cắt`);
+  }
+  return xau;
+}
+
 /* ---- chạy ------------------------------------------------------------------ */
 
 function chayMot(lenh, root) {
@@ -162,6 +189,13 @@ async function main(argv) {
   const epTuanTu = argv.includes("--tuan-tu");
   let ds = danhSachSuite(root);
   if (!ds.length) { console.error("KHONG_CO_SUITE: `package.json` không khai `scripts.test`."); return 2; }
+  const rong = suiteRong(ds, root);
+  if (rong.length) {
+    console.error("SUITE_RONG: " + rong.length + " suite không thể ĐỎ được — chạy chúng là tự lừa mình:");
+    for (const x of rong) console.error("  · " + x);
+    console.error("Một file test rỗng thoát 0 và đọc y hệt một lượt xanh. Khôi phục rồi chạy lại.");
+    return 2;
+  }
   const lenhBam = bamLenh(ds);
   if (chi) ds = ds.filter((s) => s.includes(chi));
   if (!ds.length) { console.error(`KHONG_KHOP: không suite nào có tên chứa "${chi}".`); return 2; }
