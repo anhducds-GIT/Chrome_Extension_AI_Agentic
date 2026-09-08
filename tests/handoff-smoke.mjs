@@ -10,8 +10,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  datThang, docMuc, docMucTuFile, laNhatKy, mucMoi, soLuuTruTiepTheo, tachThan, tenLuuTru,
-  thangCua, thangHienTai, vuotTran, xoay
+  MOC_THAN_LUU_TRU, catTheoSo, datThang, docMuc, docMucTuFile, laNhatKy, mucMoi, soLuuTruTiepTheo,
+  tachThan, tenLuuTru, thangCua, thangHienTai, viTriMuc, vuotTran, xoay
 } from "../scripts/handoff.mjs";
 import { handoffCapFrom } from "../scripts/repo-structure.mjs";
 
@@ -188,10 +188,15 @@ for (const f of CAC_FILE) {
     "ten gan giong KHONG duoc tinh — dem nham la ghi de mot file luu tru that");
   assert.equal(tenLuuTru(2), "HANDOFF-ARCHIVE-02.md");
   assert.equal(tenLuuTru(12), "HANDOFF-ARCHIVE-12.md", "qua 9 thi khong dem so 0 nua");
-  // Nối tiếp được với file lưu trữ có sẵn ở gốc repo (sinh sáng 06/09 theo ADR-0008).
-  assert.ok(fs.existsSync(path.join(ROOT, "HANDOFF-ARCHIVE-01.md")), "file luu tru 06/09 phai con do");
-  assert.equal(soLuuTruTiepTheo(fs.readdirSync(ROOT)), 2,
-    "luot xoay dau tien o goc repo phai sinh ra -02, khong duoc ghi de -01");
+  /* Nối tiếp được với các file lưu trữ ĐANG CÓ ở gốc repo.
+     Bản đầu ghim thẳng con số 2 — đúng ngày 06/09, sai ngay lượt cắt kế (09/09 sinh ra -02, và
+     phép ghim đỏ vì một việc ĐÚNG). Ghim quan hệ "lớn hơn cái lớn nhất đúng 1", đừng ghim con số:
+     con số trong phép kiểm mục cũng ruỗng đúng như con số trong tài liệu. */
+  const dsLuuTru = fs.readdirSync(ROOT).filter((f) => /^HANDOFF-ARCHIVE-\d+\.md$/.test(f));
+  assert.ok(dsLuuTru.length >= 1, "goc repo phai con it nhat mot file luu tru");
+  const lonNhat = Math.max(...dsLuuTru.map((f) => Number(/(\d+)/.exec(f)[1])));
+  assert.equal(soLuuTruTiepTheo(fs.readdirSync(ROOT)), lonNhat + 1,
+    "luot cat ke tiep phai sinh ra so LON HON cai lon nhat, khong duoc ghi de file nao");
 }
 
 /* (10) CỔNG PHẢI THẬT SỰ GỌI, KHÔNG CHỈ NHẮC TÊN.
@@ -209,6 +214,76 @@ for (const f of CAC_FILE) {
   const khoi = gate.slice(gate.indexOf('check("HANDOFF: mục mới trong trần'));
   assert.match(khoi.slice(0, khoi.indexOf("\n/* ----")), /HANDOFF_MUC_QUA_DAI[\s\S]*ok: false/,
     "vuot tran phai tra ok:false — mot canh bao khong chan thi khong phai cong");
+}
+
+/* (11) CẮT THEO SỐ MỤC — ADR-0008. Cơ chế thứ HAI, đừng lẫn với xoay theo tháng ở (7)–(9).
+   Nó tồn tại vì `--rotate` xoay theo THÁNG, mà 09/09 cả 60 mục của `HANDOFF.md` gốc đều mang
+   mốc `2026-09` — chạy nó dời ĐÚNG 0 DÒNG và in ra một câu nghe như thành công. */
+{
+  const mau3 = "# H\n\n## Log\n\n<!-- cũ -->\n\n## a\nAAA\n\n\n## b\nBBB\n\n## c\nCCC\n";
+
+  // ⑴ Mỏ neo đếm ĐÚNG, và đếm bằng VỊ TRÍ chứ không bằng nội dung đã chuẩn hoá.
+  {
+    const { than } = tachThan(mau3);
+    assert.equal(viTriMuc(than).length, 3, "phai thay dung 3 muc");
+    assert.equal(viTriMuc("").length, 0);
+  }
+
+  // ⑵ CHƯA TỚI NGƯỠNG THÌ TRẢ null, KHÔNG PHẢI LỖI — nhưng 0 MỎ NEO THÌ PHẢI NÉM.
+  //    Trả null cho cả hai là để một file hỏng dòng `## Log` báo "chưa cần cắt" và không ai biết.
+  {
+    assert.equal(catTheoSo({ text: mau3, giu: 3, so: 2 }), null, "3 muc giu 3 → chua can cat");
+    assert.equal(catTheoSo({ text: mau3, giu: 9, so: 2 }), null);
+    assert.throws(() => catTheoSo({ text: "# H\n\n## Log\n\nkhong co muc nao\n", giu: 2, so: 2 }),
+      /HANDOFF_KHONG_KHOP/, "0 mo neo la BO DO HONG, khong phai 'file sach'");
+    assert.throws(() => catTheoSo({ text: mau3, giu: 0, so: 2 }), /HANDOFF_GIU_HONG/);
+    assert.throws(() => catTheoSo({ text: mau3, giu: 2.5, so: 2 }), /HANDOFF_GIU_HONG/);
+  }
+
+  // ⑶ BẤT BIẾN ⑴ CỦA ADR-0008 — GHÉP LẠI DỰNG ĐÚNG BẢN GỐC TỪNG BYTE.
+  //    Kiểm trên chuỗi SẮP GHI RA ĐĨA (`moi`), không trên các mảnh rời: bản đầu của phép kiểm
+  //    này ghép `dau + <thân lưu trữ> + thanMoi` và XANH trong khi `moi` sót cả `thanMoi` —
+  //    tức file ra rỗng mục mà phép kiểm vẫn gật. Đo thật 09/09, ngay lượt chạy thử đầu tiên.
+  const ghepLai = (r) => {
+    const than = r.luuTru.slice(r.luuTru.indexOf(MOC_THAN_LUU_TRU) + MOC_THAN_LUU_TRU.length);
+    return r.moi.slice(0, r.dau.length) + than + r.moi.slice(r.dau.length + r.conTro.length);
+  };
+  for (const [ten, text] of [["mẫu", mau3], ["HANDOFF.md thật", doc("HANDOFF.md")]]) {
+    const n = docMucTuFile(text).length;
+    const giu = Math.max(1, Math.min(2, n - 1));
+    const r = catTheoSo({ text, giu, so: 9, tenFile: "HANDOFF.md" });
+    assert.ok(r, `${ten}: phai cat duoc`);
+    assert.equal(ghepLai(r), text, `${ten}: ghep lai KHONG ra ban goc — bat bien ⑴ vo`);
+    assert.equal(docMucTuFile(r.moi).length, giu, `${ten}: file moi phai con dung ${giu} muc`);
+    assert.equal(docMuc(r.thanCu).length + giu, n, `${ten}: khong duoc nuot mot muc nao`);
+    assert.ok(r.luuTru.includes(MOC_THAN_LUU_TRU), `${ten}: thieu dau ARCHIVE-BODY-START`);
+  }
+
+  // ⑷ MỤC GIỮ LẠI PHẢI LÀ MỤC CUỐI, KHÔNG PHẢI MỤC ĐẦU. Một lượt cắt lộn đầu đuôi vẫn cho ra
+  //    đúng số mục, đúng số byte, và ghép lại vẫn ra bản gốc — cả ba phép trên đều xanh.
+  {
+    const r = catTheoSo({ text: mau3, giu: 1, so: 9 });
+    assert.match(r.moi, /## c/, "phai giu muc CUOI");
+    assert.ok(!/## a/.test(r.moi) && !/## b/.test(r.moi), "khong duoc giu muc dau");
+    assert.match(r.thanCu, /## a[\s\S]*## b/, "muc cu phai giu nguyen THU TU von co");
+  }
+
+  // ⑸ KHỐI CON TRỎ CŨ PHẢI ĐI THEO VÀO FILE LƯU TRỮ, không bị bỏ lại.
+  //    Đó là thứ duy nhất nối `-02` về `-01`; mất nó thì chuỗi lịch sử đứt ở mắt xích thứ hai,
+  //    và không gì kêu lên — file nào cũng đọc được, chỉ là không đi tiếp được nữa.
+  {
+    const r = catTheoSo({ text: mau3, giu: 1, so: 2 });
+    assert.match(r.thanCu, /<!-- cũ -->/, "khoi con tro CU phai nam trong file luu tru");
+    assert.match(r.moi, /HANDOFF-ARCHIVE-02\.md/, "file moi phai tro sang file vua sinh");
+  }
+
+  // ⑹ CỔNG PHẢI THẬT SỰ ĐẾM, không chỉ nhắc tên — cùng lý lẽ khối (10).
+  {
+    const gate = doc("scripts/session-check.mjs");
+    assert.match(gate, /handoffSoMucCapFrom\(structure\)/,
+      "tran so muc phai doc tu .repo-structure.json, khong go cung trong cong");
+    assert.match(gate, /docMucTuFile/, "cong phai dem muc bang bo bo muc chung, khong grep rieng");
+  }
 }
 
 console.log("handoff-smoke: XANH");

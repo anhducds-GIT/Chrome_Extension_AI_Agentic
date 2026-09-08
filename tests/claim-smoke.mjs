@@ -1041,7 +1041,7 @@ const CLAIMS = () => ({
     mienKhoa: ["BACKLOG.md", "HANDOFF.md", "IDEAS.md"],
     vungCua,
   });
-  assert.deepEqual(kq.soChung, ["BACKLOG.md", "HANDOFF.md"],
+  assert.deepEqual(kq.soChung.map((x) => x.duongDan), ["BACKLOG.md", "HANDOFF.md"],
     "so mien khoa phai duoc TRA VE RIENG, khong duoc im lang bo qua — day la cho N-05 no");
   assert.deepEqual(kq.la, [], "file minh dang khoa thi khong phai la");
 
@@ -1051,13 +1051,41 @@ const CLAIMS = () => ({
     mienKhoa: ["IDEAS.md"], vungCua,
   });
   assert.deepEqual(chiSo.la, [], "so mien khoa KHONG bi coi la la, du vung co chu khac");
-  assert.deepEqual(chiSo.soChung, ["IDEAS.md"]);
+  assert.deepEqual(chiSo.soChung.map((x) => x.duongDan), ["IDEAS.md"]);
+  assert.equal(chiSo.soChung[0].coQuyen, false, "vung co chu khac thi khong co quyen viet lai");
+  /* GIỮ KHOÁ THÌ ĐƯỢC VIẾT LẠI MỘT SỔ MIỄN KHOÁ — và bản đầu KHÔNG cho, dù giữ đủ khoá.
+     "Miễn khoá" nghĩa là *thêm dòng ở cuối thì không CẦN khoá*; nó không có nghĩa là *có khoá
+     cũng không được sửa*. Hệ quả đo thật 09/09: lượt cắt `HANDOFF.md` mà ADR-0008 cho phép
+     tường minh không có đường nào qua nổi `--soat`, và cửa duy nhất còn lại là `--no-verify`
+     — tức tắt cả phép soát để làm một việc hợp lệ. Một cổng chỉ mở được bằng cách tắt nó thì
+     nó sẽ bị tắt thường xuyên, và lần sau người ta tắt nó cho một việc KHÔNG hợp lệ. */
+  {
+    const coKhoaFile = soatDanHang({
+      daDan: ["HANDOFF.md"], tam: { "HANDOFF.md": { owner: "p1" } }, claims: { _root: { owner: null } },
+      as: "p1", mienKhoa: ["HANDOFF.md"], vungCua,
+    });
+    assert.equal(coKhoaFile.soChung[0].coQuyen, true, "giu khoa FILE thi duoc viet lai so do");
+    const coKhoaVung = soatDanHang({
+      daDan: ["HANDOFF.md"], tam: {}, claims: { _root: { owner: "p1" } },
+      as: "p1", mienKhoa: ["HANDOFF.md"], vungCua,
+    });
+    assert.equal(coKhoaVung.soChung[0].coQuyen, true, "giu ca VUNG thi cung duoc");
+    const khongKhoa = soatDanHang({
+      daDan: ["HANDOFF.md"], tam: { "HANDOFF.md": { owner: "p2" } }, claims: { _root: { owner: "p2" } },
+      as: "p1", mienKhoa: ["HANDOFF.md"], vungCua,
+    });
+    assert.equal(khongKhoa.soChung[0].coQuyen, false,
+      "khong giu gi thi VAN phai chi them o cuoi — day la cho N-05 no, dung noi ra");
+    assert.deepEqual(khongKhoa.la, [], "va van khong duoc coi la LA: ghi vao so chung la hop le");
+  }
   ok("soat: so mien khoa tra ve RIENG de soi append-only, khong im va khong chan (N-05)");
 }
 
 {
   // Ghim ĐƯỜNG DÂY: hàm trả về đúng mà nhánh CLI không soi thì N-05 vẫn nguyên.
   const nguon = readFileSync(join(SCRIPTS_DIR, "claim.mjs"), "utf8");
+  assert.ok(nguon.includes("if (coQuyen) continue;      // giữ khoá"),
+    "nhanh CLI phai bo qua so minh dang giu khoa — ham biet ma CLI khong soi thi van chan oan");
   assert.match(nguon, /appendOnlyAtEof\(diff, cu2\)/,
     "nhanh --soat phai soi so chung bang appendOnlyAtEof");
   assert.match(nguon, /SOAT_SO_CHUNG/, "phai co ma loi rieng de tra duoc");

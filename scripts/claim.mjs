@@ -535,10 +535,16 @@ export function soatDanHang({ daDan, tam, claims, as, mienKhoa, maySinh, vungCua
     // Artifact máy sinh: bỏ qua HẲN. Nó không phải sổ, nên không soi append-only — bộ sinh
     // viết lại cả file mỗi lượt, và đó là hành vi đúng của nó.
     if (sinh.has(d)) continue;
-    if (mien.has(d)) { soChung.push(d); continue; }
-    if ((tam || {})[d]?.owner === as) continue;                   // tôi đang khoá đúng file này
     const vung = vungCua(d);
-    if ((claims || {})[vung]?.owner === as) continue;             // tôi giữ cả vùng
+    /* GIỮ KHOÁ THÌ ĐƯỢC VIẾT LẠI, KỂ CẢ MỘT SỔ MIỄN KHOÁ.
+       Miễn khoá nghĩa là "thêm dòng ở cuối thì KHÔNG CẦN khoá" — nó không có nghĩa là "có
+       khoá cũng không được sửa". Bản đầu bỏ qua chủ sở hữu ngay khi thấy tên sổ trong danh
+       sách miễn, nên lượt cắt `HANDOFF.md` mà ADR-0008 cho phép tường minh **không có đường
+       nào qua nổi phép soát**, dù lane đang giữ đủ khoá — cửa duy nhất còn lại là
+       `--no-verify`, tức tắt cả phép soát để làm một việc hợp lệ. Đo thật 09/09. */
+    const coQuyen = (tam || {})[d]?.owner === as || (claims || {})[vung]?.owner === as;
+    if (mien.has(d)) { soChung.push({ duongDan: d, coQuyen }); continue; }
+    if (coQuyen) continue;
     la.push({ duongDan: d, vung, chuVung: (claims || {})[vung]?.owner || null, chuFile: (tam || {})[d]?.owner || null });
   }
   return { la, soChung };
@@ -784,7 +790,8 @@ function main() {
        đóng phiên và `safe-push` đang dùng cho cùng luật. Hai bản sao của một luật đã trả hai
        câu khác nhau cho cùng một file ngày 02/09; không đẻ bản thứ ba. */
     const soHong = [];
-    for (const d of soChung) {
+    for (const { duongDan: d, coQuyen } of soChung) {
+      if (coQuyen) continue;      // giữ khoá thì viết lại được — xem ghi chú ở `soatDanHang`
       try {
         const diff = execFileSync("git", ["diff", "--cached", "-U0", "--", d], { cwd: ROOT, encoding: "utf8" });
         let cu2 = "";
@@ -795,7 +802,7 @@ function main() {
     }
 
     if (!la.length && !soHong.length) {
-      const them = soChung.length ? ` (${soChung.length} sổ chung, đều chỉ thêm ở cuối)` : "";
+      const them = soChung.length ? ` (${soChung.length} sổ chung: ${soChung.filter((x) => x.coQuyen).length} có khoá, còn lại chỉ thêm ở cuối)` : "";
       console.log(`${daDan.length} file đã dàn, tất cả đều thuộc quyền ghi của "${as}"${them}. Commit được.`);
       process.exit(EXIT.OK);
     }

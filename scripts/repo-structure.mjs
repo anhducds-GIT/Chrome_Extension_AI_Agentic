@@ -215,6 +215,23 @@ export function handoffCapFrom(parsed) {
   return tran;
 }
 
+/* TRẦN SỐ MỤC của một `HANDOFF.md` — ADR-0008. Khác hẳn `handoffCapFrom` ở trên:
+   cái kia đo BYTE MỘT MỤC (ADR-0011), cái này đếm SỐ MỤC trong cả file.
+   Cùng ba nhánh xử lý như trên, và cùng lý do: không khai → bỏ qua; khai sai kiểu → NÉM. */
+export function handoffSoMucCapFrom(parsed) {
+  const khoi = parsed?.handoff;
+  if (khoi === null || khoi === undefined) return null;
+  if (typeof khoi !== "object" || Array.isArray(khoi)) {
+    throw new Error("CAU_TRUC_HONG: `handoff` phải là một object, ví dụ { \"tran_so_muc\": 25 }.");
+  }
+  const tran = khoi.tran_so_muc;
+  if (tran === undefined) return null;
+  if (!Number.isInteger(tran) || tran <= 0) {
+    throw new Error(`CAU_TRUC_HONG: \`handoff.tran_so_muc\` phải là số nguyên dương (số mục), nhận "${tran}".`);
+  }
+  return tran;
+}
+
 /* "CHỈ THÊM DÒNG?" — quyết định thuần, tách khỏi việc gọi git để kiểm được mọi nhánh.
    Dùng cho miễn trừ `HANDOFF.md` ở gốc (A2): luật mục 7 bắt MỌI phiên ghi Log vào đó, nên bắt
    phải nhận thêm một khoá chỉ để tuân luật là tự chặn luật của mình. Nhưng miễn trừ chỉ đúng

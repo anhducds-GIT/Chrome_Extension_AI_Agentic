@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 
 import { FINGERPRINT_FIELD, fingerprintState, khoaFileQuaHan, PHUT_NHAC_KHOA_FILE, readClaims, VO_DAU } from "./claim.mjs";
 import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
-import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, chonSuiteBoDongBang, claimPrefixesFrom, DAU_VET, dauVetTheoVung, frozenFrom, generatorsFrom, handoffCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, chonSuiteBoDongBang, claimPrefixesFrom, DAU_VET, dauVetTheoVung, frozenFrom, generatorsFrom, handoffCapFrom, handoffSoMucCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 import { bamLenh, danhSachSuite, dauCay, docDau, xetDau } from "./chay-test.mjs";
 import { dangMo } from "./backlog-check.mjs";
 
@@ -854,13 +854,16 @@ check("Nhãn lane trong commit", () => {
 check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
   const files = touched.filter((f) => /(^|\/)HANDOFF\.md$/.test(f));
   if (!files.length) return { ok: true, msg: "Phiên này không chạm HANDOFF.md nào." };
+  const B = String.fromCharCode(96);        // dấu huyền, dựng chứ không gõ
   const tran = handoffCapFrom(structure);
+  const tranSoMuc = handoffSoMucCapFrom(structure);
   if (tran === null) return { ok: true, skipped: true, msg: "Chưa khai `handoff.tran_byte_moi_muc` trong .repo-structure.json — CHƯA KIỂM ĐƯỢC GÌ." };
 
   const doc = (f) => { try { return fs.readFileSync(path.join(ROOT, f), "utf8"); } catch { return null; } };
   const beo = [];
   const canXoay = [];
   const chuaKhai = [];
+  const quaDay = [];                        // quyển vượt trần SỐ MỤC — ADR-0008
   let neo = 0;                              // số mục bổ được — ra 0 là BỘ ĐO HỎNG, xem dưới
   let nhatKy = 0;                           // số quyển nhật ký THẬT đã soi
   for (const f of files) {
@@ -878,7 +881,14 @@ check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
     const coTrenRemote = originMainResolves
       && gitLoiLaBinhThuong("ls-tree", "--name-only", "origin/main", "--", f).trim() !== "";
     const goc = coTrenRemote ? git("show", `origin/main:${f}`) : "";
-    neo += docMucTuFile(hienTai).length;
+    const soMuc = docMucTuFile(hienTai).length;
+    neo += soMuc;
+    /* TRẦN SỐ MỤC — ADR-0008, khác hẳn trần BYTE ở trên (ADR-0011). Đo 09/09: `HANDOFF.md` gốc
+     * giữ 60 mục trong khi ADR chốt 20, và KHÔNG phép kiểm nào kêu suốt ba ngày — đúng hình
+     * dạng "luật không máy nào canh" mà mục 7 của AGENTS.md cảnh báo.
+     * KHÔNG lọc theo `mine(f)` như hai nhánh xoay dưới: cắt thì cần khoá, nhưng biết quyển đã
+     * dày thì ai chạm cũng nên biết — và ở gốc repo thì ai cũng chạm, vì luật mục 7 bắt thế. */
+    if (tranSoMuc !== null && soMuc > tranSoMuc) quaDay.push(f + " (" + soMuc + " mục)");
     for (const m of vuotTran(mucMoi(hienTai, goc), tran)) {
       beo.push(`${f} · "${m.tieuDe.replace(/^#+\s*/, "").slice(0, 48)}…" = ${m.byte} byte`);
     }
@@ -900,6 +910,14 @@ check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
   if (beo.length) {
     loi.push(`HANDOFF_MUC_QUA_DAI: ${beo.length} mục MỚI vượt trần ${tran} byte — ${beo.join(" · ")}. ${CAU_CHI_DUONG}`);
   }
+  if (quaDay.length) {
+    loi.push("HANDOFF_QUA_DAY: " + quaDay.join(", ") + " — trần " + tranSoMuc
+      + " mục (ADR-0008 chốt đích 20). Sửa bằng một lệnh: " + B + "node scripts/handoff.mjs"
+      + " --cat <file> --giu 20" + B + " — nó dời phần cũ sang một file lưu trữ NGUYÊN VĂN, và tự"
+      + " kiểm ghép lại ra đúng bản gốc từng byte TRƯỚC khi ghi. ĐỪNG dùng " + B + "--rotate" + B
+      + ": cái đó xoay theo THÁNG (ADR-0011) nên dời 0 dòng khi mọi mục cùng một tháng — đo thật"
+      + " 09/09. Xong thì khai file lưu trữ vừa sinh vào Bản đồ file.");
+  }
   if (canXoay.length) {
     loi.push(`HANDOFF_QUA_THANG: ${canXoay.join(", ")} còn chứa tháng cũ, nay là ${thangHienTai()}.`
       + ` Sửa bằng một lệnh: \`node scripts/handoff.mjs --rotate <file>\` rồi khai file lưu trữ vừa sinh vào Bản đồ file.`);
@@ -910,7 +928,7 @@ check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
   }
   if (loi.length) return { ok: false, msg: loi.join(" ") };
   if (nhatKy === 0) return { ok: true, msg: `${files.length} file tên HANDOFF.md nhưng không quyển nào có phần \`## Log\` — không phải nhật ký, không kiểm.` };
-  return { ok: true, msg: `${nhatKy} quyển nhật ký, ${neo} mục, mọi mục mới đều dưới trần ${tran} byte và đúng tháng.` };
+  return { ok: true, msg: nhatKy + " quyển nhật ký, " + neo + " mục, mọi mục mới đều dưới trần " + tran + " byte và đúng tháng" + (tranSoMuc === null ? "." : ", quyển dày nhất dưới trần " + tranSoMuc + " mục.") };
 });
 
 /* ---- 13. Đọc git có lỗi nào không -------------------------------------- */
