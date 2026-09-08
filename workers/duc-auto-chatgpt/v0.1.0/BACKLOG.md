@@ -1617,3 +1617,55 @@ nhiều bước tới kết luận cuối).
   tự khẳng định là nguồn đối soát. Điều kiện đóng ở khối B-41 giữ nguyên; con số "0 nguồn khẳng
   định" trong `post-submit-no-resend-smoke.mjs` **vẫn đúng cho tới khi làm ⑶** — phần ⑴ không nối
   thêm nguồn đối soát nào.
+
+### B-43 · (P0) Job hỏi–đáp bằng chữ ghi lại MỘT MẨU câu trả lời rồi báo THÀNH CÔNG — đo live 09/09
+
+**Đây là "báo thành công giả", loại lỗi tệ nhất trong gói:** không có gì đỏ, không có gì để người
+vận hành nhìn thấy, và dữ liệu sai đi thẳng vào sổ cái. Nó vô hiệu hoá case 2 của Đức (hội thoại
+reasoning nhiều lượt) hoàn toàn, vì thứ ghi được không phải câu trả lời.
+
+**Số đo, hai lượt gửi thật qua Bridge, 0 credit lãng phí** (`run_id 20260908-1936-…`):
+
+| | lượt 1 | lượt 2 |
+|---|---|---|
+| Máy ghi vào sổ | **6 ký tự** — `Gửi nh` | **28 ký tự** — `Khóa tab + conversation ID —` |
+| Trên trang, đọc lại sau ~2 phút | **237 ký tự**, đủ ba ý đã hỏi | 28 ký tự (không mọc thêm) |
+| Trạng thái | `SUCCESS`, `persistence_verified: true` | `SUCCESS` |
+| `submitted_at` → `output_saved_at` | 19:36:24 → 19:36:36, **12 giây** | ~12 giây |
+
+Lượt 1 **chứng minh được** là ghi hụt: cùng một lượt trả lời, sổ ghi 6 ký tự còn trang giữ 237.
+Ký tự ghi được là **tiền tố** của câu đầy đủ, nên đây là bắt hụt lúc đang chảy chữ, không phải
+đọc nhầm chỗ.
+
+**Chỗ ra quyết định** (`content.js`, `waitForCompletion`, nhánh chữ):
+
+```js
+if (resultMessage && !stopButton) {
+  …
+  if (stableText && Date.now() - stableSince >= 1500) return { type: "text", … };
+}
+```
+
+Luật hiện tại là *"không thấy nút Dừng, và chữ đứng yên 1,5 giây"*. Cả hai vế đều hụt trong một
+phiên có chỉ dẫn riêng của Project: ChatGPT hiện một pha suy nghĩ, chữ đứng yên lâu hơn 1,5 giây,
+và nút Dừng **không khớp** trong pha đó.
+
+**HAI giả thuyết, và chúng đòi hai bản vá KHÁC HẲN — đừng vá trước khi đo:**
+- ⑴ Nút Dừng **chưa từng** khớp trong cả lượt. Nếu vậy, `generationSeen` — biến đã được tính ở
+  ngay trên và **hiện đang bị bỏ không dùng** — là lớp chặn sẵn có: đòi `generationSeen === true`
+  trước khi nhận `stable_text`. Một dòng.
+- ⑵ Nút Dừng **có** khớp lúc đầu rồi biến mất trong pha suy nghĩ. Nếu vậy `generationSeen` vô
+  dụng, và phải đổi sang một tín hiệu khác (ví dụ nắp chữ tối thiểu, hoặc chờ lâu hơn khi chữ
+  còn ngắn bất thường so với độ dài prompt).
+
+**Phép đo tách được hai giả thuyết:** `diagnostics.dom_probe` nhắm vào nhóm selector nút Dừng,
+chạy **giữa lúc** một job chữ đang chảy trong một hội thoại thuộc Project. Đếm số khớp theo thời
+gian. Đây đúng là kiểu phép đo mà `AI-OPERATOR-GUIDE.md` lỗi #5 dựng ra để làm.
+
+**Đừng nới ngưỡng 1,5 giây lên cho "chắc"** — nó không phải nguyên nhân, và nới nó chỉ làm mọi
+job chậm thêm mà vẫn hụt ở một pha suy nghĩ dài hơn.
+
+- **đóng khi:** có số đo `dom_probe` nói rõ giả thuyết nào đúng; bản vá theo đúng giả thuyết đó,
+  kèm một phép ghim HÀNH VI (chạy `waitForCompletion` đã ship trên DOM giả có pha suy nghĩ, chứng
+  minh nó KHÔNG nhận mẩu chữ đầu); thử phá 0 con thoát; và **một lượt live** trong một hội thoại
+  thuộc Project cho thấy số ký tự ghi vào sổ **bằng** số ký tự đọc lại được trên trang.
