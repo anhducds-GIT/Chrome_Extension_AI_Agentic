@@ -229,10 +229,13 @@ cũng đóng được vai nào, và một phiên đóng **đúng một vai** cho
 | **① Giữ lõi** | luật · bộ máy · trạng thái của repo này | mỗi bản vá kèm **một phép kiểm ghim** · xoá luật không nổ lần nào · giữ cổng kiểm còn răng | nới một lớp bảo vệ cho cổng xanh · **tự ký nghiệm thu việc của chính mình** |
 | **② Phát & thu** | cửa duy nhất giữa repo này và bên ngoài | thi hành quy trình lên repo/gói khác · **mang chỗ vấp về** thành mục sổ nợ · tối ưu chính quy trình đó | sửa lõi để việc bên ngoài chạy được — chỗ vấp phải **về Vai ①** · báo một quy trình ĐẠT khi chưa chạy thật |
 
-**Ranh giới chịu tải, một câu: Vai ② được *phát hiện*, Vai ① được *sửa*.** Gộp hai vai lại thì
-người tìm ra lỗi cũng là người tự chấm bản sửa của mình — và một tờ nghiệm thu do bên bị kiểm ký
-là **lời tự khai, không phải hàng rào**. Đây đúng là luật mà `SELF_ATTESTATION` cưỡng chế trong lõi
-quyền, nên đừng đọc nó thành lời khuyên.
+**Bất biến chịu tải: người SỬA không tự NGHIỆM THU bản sửa của mình.** Một tờ nghiệm thu do bên bị
+kiểm ký là **lời tự khai, không phải hàng rào** — đúng luật mà `SELF_ATTESTATION` cưỡng chế trong
+lõi quyền, nên đừng đọc nó thành lời khuyên.
+
+**Đừng đọc thành "người sửa không được tìm lỗi".** Vai nào cũng được tìm lỗi ở bất kỳ đâu; tách
+"ai tìm" khỏi "ai sửa" là cấm Vai ① soi chính lõi nó giữ. Thứ phải tách là **người ký** khỏi
+**người sửa** (phiên Codex bác đúng chỗ này 08/09 — bản đầu của mục này viết sai).
 
 **Bàn giao giữa hai vai chỉ có một hình dạng:** Vai ② ghi chỗ vấp vào `BACKLOG.md` (kèm trường
 `đóng khi:`), Vai ① biến nó thành **bản vá cộng một phép kiểm ghim**. Không có đường nào khác —
