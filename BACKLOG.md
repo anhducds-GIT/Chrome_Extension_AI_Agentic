@@ -683,3 +683,33 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
 
 - **VÁ NGAY LƯỢT ĐẦU DÙNG THẬT** · 2026-09-08 · lane `claude-ext-n33` · `--soat` **báo oan** ba artifact máy sinh (`DASHBOARD.md` · `DASHBOARD-*.html` · `FEATURE-PARITY-AUTO.md`) — nó chỉ biết danh sách `append_only_exempt`, không biết khối `generated`, mà luật mục 1 khai rõ **năm artifact máy sinh không đòi khoá nào**. Bắt được vì tôi dùng chính nó để đóng phiên, không phải vì đọc lại code. Nay nó bỏ qua **hẳn** nhóm đó — không phải sổ nên cũng không soi append-only, vì bộ sinh viết lại cả file mỗi lượt và đó là hành vi đúng của nó. Ghim thêm một ca. **Một cỗ máy dựng ra để chống chặn oan mà tự chặn oan thì nó bị bỏ qua trong một ngày.**
 - **N-40 · nổ LẦN NỮA 2026-09-08, live** (ghi bởi lane `claude-gpt-no-ky-thuat`; **mục vẫn MỞ**, dòng này chỉ thêm bằng chứng, không đóng gì) · Lượt commit **đầu tiên** của phiên tôi bị lane `claude-scouter-s06` cuốn vào commit **`bc77cd8e`** của họ. Trình tự đo được: tôi `git add workers/duc-auto-chatgpt/v0.1.0/BACKLOG.md` → chạy `claim.mjs --soat`, nó trả *"1 file đã dàn, tất cả đều thuộc quyền ghi"* và cho phép commit → lượt `git commit` của tôi trả mã **1** kèm *"no changes added to commit"*, vì trong khoảng giữa hai lệnh, commit của lane kia đã **mang file đã dàn của tôi đi**. Nội dung không mất (8 dòng của tôi có đủ trong `bc77cd8e`), nhưng nhãn `Lane:` của commit chứa việc của tôi là **của lane khác** — tức đúng cái mà nhãn `Lane:` sinh ra để chặn. **Không sửa lịch sử** (luật mục 2 bắt hỏi Đức). Ba chi tiết đáng giá cho ai đi vá mục này: ⑴ `--soat` **không đủ**, và không phải vì nó sai — nó đo đúng ở thời điểm nó chạy, rồi cửa sổ giữa `--soat` và `git commit` mới là chỗ hở, nên bản vá phải nằm **trong** lượt commit (hook) chứ không nằm **trước** nó; ⑵ triệu chứng lộ ra là **`git commit` trả mã 1 với "no changes added"**, thứ rất dễ đọc thành "tôi quên dàn file" — nên ai gặp thì kiểm `git log` của file đó trước khi dàn lại; ⑶ chuyện này xảy ra **đúng lúc** tôi đóng `B-12` của gói ChatGPT với lý do "việc này nay là `N-05`/`N-40` ở gốc" — nên `N-40` không phải nợ lý thuyết, và trần đo cũ (07/09, commit `27a88ce7`) nay có thêm một lần nữa. **đóng khi:** giữ nguyên điều kiện đã khai ở mục `N-40`.
+
+- **SỬA HỒ SƠ — TÔI ĐÓNG `N-40` SỚM** · 2026-09-08 · lane `claude-ext-n33` · Dòng `- **ĐÓNG N-40**` tôi ghi vài giờ trước **vẫn đứng** (sổ này chỉ thêm dòng, không sửa dòng cũ), nhưng nó **đóng thiếu**, và tôi ghi ra đây thay vì để nó im. Tôi đóng dựa trên chữ của điều kiện — *"có một chốt khiến `git add` của lane này không bị lane kia commit hộ"* — và cho rằng `--soat` là chốt đó. Lane `claude-gpt-no-ky-thuat` chứng minh ngược lại **cùng ngày, live**: `--soat` trả *"tất cả đều thuộc quyền ghi"*, rồi lượt `git commit` ngay sau đó trả mã 1 *"no changes added"* — vì trong **cửa sổ giữa hai lệnh**, commit của lane thứ ba đã mang file đã dàn của họ đi. `--soat` không sai; nó đo đúng **tại thời điểm nó chạy**. Chỗ hở là khoảng thời gian, và một phép đo đứng TRƯỚC không bao giờ bịt được nó. Nửa còn lại đi tiếp ở `N-49`.
+
+## N-49 · Bản vá N-40 phải nằm TRONG lượt commit, không nằm trước nó — và đó là một cái hook
+
+- **nhóm:** song-song
+- **mở:** 2026-09-08 · lane `claude-ext-n33`
+- **vùng:** `_root` (cấu hình git) + `_code`
+- **vì sao:** `--soat` (đóng `N-40` lượt trước) chặn được ca *"tôi dàn nhầm file của người
+  khác"*, nhưng **không** chặn được ca ngược lại: **file của tôi bị lane khác cuốn đi** trong
+  cửa sổ giữa `--soat` và `git commit`. Đo được **hai lần**: `27a88ce7` (07/09) và lượt live
+  08/09 do lane `claude-gpt-no-ky-thuat` ghi lại ngay trên đây.
+- **chỉ có một cơ chế nằm TRONG lượt commit:** một `pre-commit` hook. Không có đường thứ hai —
+  mọi thứ khác đều là một lệnh chạy trước, tức lại đẻ ra đúng cửa sổ ấy.
+- **VÀ ĐÂY LÀ CHỖ PHẢI HỎI ĐỨC, không phải chỗ tự làm.** Hai lý do, cả hai là luật:
+  ⑴ hook nằm ở `.git/hooks`, **không đi theo git**, nên nó chỉ chạy trên máy ai cài — muốn nó
+  áp cho mọi lane thì phải trỏ `core.hooksPath` sang một thư mục **được theo dõi**, tức đổi cấu
+  hình git của cả repo;
+  ⑵ luật gốc của Đức xếp *"tạo automation chạy tự động"* vào nhóm phải hỏi trước. Một hook
+  chạy trên chính lượt commit của bạn thì gần ranh giới, nhưng nó **can thiệp vào một lệnh git
+  ai cũng gõ hàng chục lần một ngày** — hỏng một chỗ là cả repo không commit được.
+- **cái hook đó làm gì, để Đức chốt được bằng một câu:** trước khi commit đi qua, nó chạy đúng
+  phép `--soat` đang có, và **từ chối** nếu index chứa file ngoài quyền ghi của lane. Không tự
+  sửa gì, không tự bỏ file nào ra — chỉ dừng lại và in ra.
+- **cái nó vẫn KHÔNG chữa, nói trước:** hook chạy trong tiến trình commit CỦA BẠN, nên nó không
+  ngăn được lane khác `git commit -a` cuốn file của bạn — nó chỉ ngăn **bạn** cuốn của họ. Vế
+  kia chỉ hết khi mỗi lane có cây làm việc riêng (`git worktree`), và đó là một quyết định lớn
+  hơn hẳn, chưa ai cân.
+- **đóng khi:** đức: chốt có cài hook chung hay không (và nếu có thì có đồng ý đổi
+  `core.hooksPath` không) — hoặc chốt chấp nhận rủi ro và ghi một dòng lý do.
