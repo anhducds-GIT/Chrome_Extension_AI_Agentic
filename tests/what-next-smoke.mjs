@@ -9,7 +9,7 @@
 
 import assert from "node:assert/strict";
 
-import { banDoVung, dangBiChan, locChoDuc, parseBacklog, parseIdeas, render, songSongDuoc, tieuDiemTuStatus } from "../scripts/what-next.mjs";
+import { banDoVung, daDongBang, dangBiChan, laTrongVungDongBang, locChoDuc, parseBacklog, parseIdeas, render, songSongDuoc, tieuDiemTuStatus } from "../scripts/what-next.mjs";
 
 let so = 0;
 const kiem = (ten, fn) => { fn(); so += 1; console.log("  ok  " + ten); };
@@ -228,4 +228,112 @@ kiem("không có việc song song thì nói thẳng, không im lặng bỏ trố
 // Format PHẢI khớp 9 test kia: cổng đóng phiên trích số theo mẫu "N passed, M failed, N total".
 // Bản đầu in "18/18 xanh" — test vẫn chạy và vẫn đỏ khi hỏng, nhưng cổng KHÔNG trích được số
 // nên nó lặng lẽ vắng mặt khỏi dòng tổng kết. Một suite không được đếm là một suite dễ bị bỏ.
+/* ---- GÓI ĐÓNG BĂNG KHÔNG ĐƯỢC NẰM Ở MỤC "LÀM ĐƯỢC NGAY" (N-35) --------------
+ *
+ * Ca thật 2026-09-08 ở CHÍNH repo này: bảng xếp `workers/duc-auto-chatgpt` — gói Đức đã đóng
+ * băng — vào mục "chạy song song được ngay", hạng ưu tiên #2, 22 việc mở. Cổng đóng phiên CÓ
+ * đọc khối `frozen`, bản đồ việc thì KHÔNG. Hai công cụ của cùng một repo nói ngược nhau, và
+ * cái nói sai lại chính là cái AI đọc để CHỌN việc.
+ *
+ * Ghim CẢ BỐN vế: ba vế đầu mà thiếu vế cuối thì cách "sửa" rẻ nhất là ẩn hẳn gói đi — và ẩn
+ * hẳn làm nợ của gói đó vô hình với người đọc. */
+kiem("gói đóng băng: ra khỏi mục A, vào mục riêng, và KHÔNG biến mất", () => {
+  const chung = {
+    viecTheoFile: [
+      { relPath: "goi/song/BACKLOG.md", viec: [{ ma: "X-1", tieuDe: "viec that", uuTien: "P1" }] },
+      { relPath: "goi/da-dong/BACKLOG.md", viec: [{ ma: "X-2", tieuDe: "no cu", uuTien: "P1" }] },
+    ],
+    claims: { claims: { "goi/song": { owner: null }, "goi/da-dong": { owner: null } } },
+    structure: { areas: { "goi/": { ownership_mode: "per-package", claim_prefix: "goi/" } } },
+    prefixes: ["goi/"],
+  };
+
+  // Đối chứng: KHÔNG khai đóng băng thì cả hai vùng đều nằm ở mục A. Thiếu vế này thì một hàm
+  // luôn trả rỗng cũng làm ca dưới xanh.
+  const chuaKhai = songSongDuoc(banDoVung({ ...chung, frozen: [] }));
+  assert.deepEqual(chuaKhai.map((v) => v.khoa).sort(), ["goi/da-dong", "goi/song"],
+    "chua khai dong bang thi ca hai vung deu la viec lam duoc ngay");
+
+  const vungs = banDoVung({ ...chung, frozen: ["goi/da-dong"] });
+  assert.deepEqual(songSongDuoc(vungs).map((v) => v.khoa), ["goi/song"],
+    "goi da dong bang KHONG duoc nam o muc 'lam duoc ngay', du no trong chu");
+  assert.deepEqual(daDongBang(vungs).map((v) => v.khoa), ["goi/da-dong"],
+    "no phai hien o muc rieng — an han thi no cua goi do vo hinh");
+  assert.equal(daDongBang(vungs)[0].viec.length, 1, "viec mo cua goi dong bang van phai dem duoc");
+
+  // Đóng băng một gói KHÔNG được kéo theo gói có tên bắt đầu giống nó.
+  const cungTienTo = banDoVung({ ...chung, frozen: ["goi/so"] });
+  assert.deepEqual(songSongDuoc(cungTienTo).map((v) => v.khoa).sort(), ["goi/da-dong", "goi/song"],
+    "`goi/so` KHONG duoc dong bang `goi/song` — so tien to phai theo ranh gioi thu muc");
+
+  // Vế bốn: bản IN RA phải nói, không chỉ dữ liệu đúng. Người đọc bảng là AI đang chọn việc.
+  const ra = render({ vungs, ideas: [], now: new Date("2026-09-08T00:00:00Z") });
+  assert.match(ra, /ĐÃ ĐÓNG BĂNG/, "muc rieng phai duoc IN RA, khong chi ton tai trong du lieu");
+});
+
+/* Cảnh báo "đóng mà chưa gạch" là một lời MỜI đi sửa file. Sổ nợ của gói đã đóng băng là
+   file KHÔNG ai được sửa, nên mời ở đó là mời phạm luật. Đo 08/09: cả bốn mã bảng đang
+   nhắc (B-29 · B-16 · B-18 · G-14) đều nằm trong gói đóng băng — 4/4 là việc không làm được. */
+kiem("so tiền tố đóng băng phải theo RANH GIỚI THƯ MỤC, không phải tiền tố trần", () => {
+  const dong = ["workers/duc-auto-chatgpt"];
+  assert.equal(laTrongVungDongBang("workers/duc-auto-chatgpt", dong), true, "chinh no");
+  assert.equal(laTrongVungDongBang("workers/duc-auto-chatgpt/v0.1.0/BACKLOG.md", dong), true,
+    "file ben trong goi dong bang cung la dong bang");
+  assert.equal(laTrongVungDongBang("workers/duc-auto-chatgpt-moi/BACKLOG.md", dong), false,
+    "goi TEN BAT DAU GIONG khong duoc bi keo theo — day la lo hong cua tien to tran");
+  assert.equal(laTrongVungDongBang("workers/hnx-fetch/BACKLOG.md", dong), false, "goi khac han");
+  assert.equal(laTrongVungDongBang("workers/hnx-fetch/BACKLOG.md", []), false,
+    "chua khai dong bang thi khong gi la dong bang");
+});
+
+/* ---- N-31 · SỔ VIẾT CẤP `##` KHÔNG ĐƯỢC ĐẾM LÀ SỔ RỖNG --------------------
+ *
+ * Ca thật 08/09: bảng báo `workers/hnx-fetch — 0 việc mở` trong khi sổ gói đó có 3 mục, vì
+ * bộ đọc chỉ nhận tiêu đề `###`. Mô tả gốc của N-31 chỉ nói về một gói; đo lại thì nó rộng
+ * hơn — MỌI quyển sổ viết cấp `##` đều bị đọc thành rỗng. Bảng báo rỗng thì phiên điều phối
+ * đi tìm việc ở nơi khác trong khi việc đang nằm ngay đó. */
+kiem("N-31 · mục cấp ## được đếm, và P1/P2 không bị nhầm là mã việc", () => {
+  const doc = parseBacklog([
+    "## P1 — chặn đường",
+    "## H-02 · sổ hoạt động mất phần trang đang chạm",
+    "## P3 — khi rảnh",
+    "### B-16 · vẫn phải đọc được cấp ###",
+  ].join("\n"));
+  assert.deepEqual(doc.mo.map((v) => [v.ma, v.uuTien]), [["H-02", "P1"], ["B-16", "P3"]],
+    "ca hai cap tieu de phai duoc dem, va khoi P phai van gan dung uu tien");
+});
+
+kiem("N-31 · đóng bằng cách THÊM DÒNG ở cuối sổ vẫn là đóng", () => {
+  // Quy ước "cửa ra rẻ ngang cửa vào": không sửa khối cũ, chỉ thêm một dòng ở cuối.
+  const doc = parseBacklog([
+    "## MỞ · S-12 (2026-09-07) — ngày trống bị lấy lại",
+    "## MỞ · S-15 (2026-09-08) — hai lỗi đua của khối phanh",
+    "- **ĐÓNG S-12** (2026-09-08) · chuyển nhà sang gói khác",
+  ].join("\n"));
+  assert.deepEqual(doc.mo.map((v) => v.ma), ["S-15"], "S-12 da co dong dong o cuoi so");
+  assert.deepEqual(doc.khaiSai, [],
+    "dong dong o cuoi la DUNG luat — no KHONG duoc bao la khai sai");
+});
+
+kiem("N-31 · tiêu đề `## ĐÓNG · X` đóng mục, và một mã chỉ đếm MỘT lần", () => {
+  const doc = parseBacklog([
+    "## MỞ · S-05 (2026-09-07) — chưa có phanh",
+    "## ĐÓNG · S-05 (2026-09-07) — đường ghi có phanh",
+    "## MỞ · S-06 lần một",
+    "## MỞ · S-06 lần hai",
+  ].join("\n"));
+  assert.deepEqual(doc.mo.map((v) => v.ma), ["S-06"],
+    "S-05 dong roi; S-06 viet hai lan van chi dem mot");
+});
+
+kiem("N-31 · lưới hứng từ khoá vẫn còn răng, và không nêu tên hai lần", () => {
+  const doc = parseBacklog([
+    "### G-11 · **ĐÓNG 28/08** — không gạch, sai quy ước",
+    "### G-11 · **ĐÓNG 28/08** — viết lại y hệt",
+    "### G-12 · việc thật",
+  ].join("\n"));
+  assert.deepEqual(doc.mo.map((v) => v.ma), ["G-12"], "G-11 khong duoc dem la viec mo");
+  assert.deepEqual(doc.khaiSai, ["G-11"], "bi neu ten dung MOT lan, khong phai hai");
+});
+
 console.log(`\n${so} passed, 0 failed, ${so} total`);
