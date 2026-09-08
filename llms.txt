@@ -1,14 +1,14 @@
 # Chrome Extension AI Agentic
 
-> Monorepo 5 extension Chrome tự động hoá các trang AI (ChatGPT, Gemini, Google Flow) qua một Bridge chung. 5/5 đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.
+> Monorepo 5 extension Chrome tự động hoá các trang AI (ChatGPT, Gemini, Google Flow) qua một Bridge chung. 6/6 đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `5199680` (2026-09-07).
+Trang được sinh tại commit `37608e5d` (2026-09-08).
 
 ## Việc ưu tiên #1
 
-- **workers/duc-auto-gg-flow-video/v0.1.0** — Chờ Flow hết quá tải rồi chạy MỘT job — kiểm chứng đầu tiên, và là thứ đưa gói lên active. Job Q001 đã nằm sẵn trong hàng đợi, chưa bấm chạy. Lưu ý tiền: chip đang để x2 mà trang tự khai mỗi video 6 credit, nên nếu runner không tự hạ về x1 thì một job là 12 credit chứ không phải 6.
+- **XUNG ĐỘT** — 2 đơn vị cùng khai `priority_rank: 1` (`workers/duc-auto-gg-flow-video/v0.1.0` · `workers/hnx-fetch/v0.1.0`). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.
 
 ## Đọc theo thứ tự này
 
@@ -24,6 +24,7 @@ Trang được sinh tại commit `5199680` (2026-09-07).
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Nợ gói 9 -> 3 trong ngày 06/09
 - [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật
 - [Duc Scouter (seed v0.1)](workers/duc-scouter/v0.1.0/STATUS.md): building — Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau
+- [HNX Fetch](workers/hnx-fetch/v0.1.0/STATUS.md): building — Tách khỏi Scouter xong: extension riêng, tên giao thức riêng, và bỏ hẳn quyền debugger
 
 ## Luật bắt buộc trước khi sửa gì
 

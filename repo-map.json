@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-07",
-  "generated_commit": "be0a999e",
+  "generated_at": "2026-09-08",
+  "generated_commit": "37608e5d",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -125,7 +125,21 @@
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 50 lượt). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
+      "open_item": "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
+    },
+    {
+      "id": "hnx-fetch",
+      "path": "workers/hnx-fetch/v0.1.0",
+      "lifecycle": "building",
+      "status_md": "workers/hnx-fetch/v0.1.0/STATUS.md",
+      "owner": "claude-scouter-s06",
+      "next_step": "Nạp HNX Fetch vào Chrome và chạy MỘT lượt lấy dữ liệu thật qua nó, thay vì qua Scouter. Toàn bộ mã đã tách xong và phép ghim xanh, nhưng chưa lượt nào đi qua chính extension này.",
+      "human_action": "Nạp extension mới vào Chrome: chrome://extensions → Load unpacked → chọn workers/hnx-fetch/v0.1.0. Rồi bấm icon, chọn tệp ghép cặp, bật công tắc Cho phép lấy dữ liệu.",
+      "priority_rank": 1,
+      "superseded_by": null,
+      "last_verified": null,
+      "last_verified_commit": null,
+      "open_item": "Tách khỏi Scouter xong: extension riêng, tên giao thức riêng, và bỏ hẳn quyền debugger. Việc còn lại lớn nhất là chạy thật một lượt qua chính nó."
     }
   ],
   "active_work": [
@@ -133,6 +147,13 @@
       "id": "workers/duc-auto-gg-flow-video/v0.1.0",
       "unit": "workers/duc-auto-gg-flow-video/v0.1.0",
       "title": "Chờ Flow hết quá tải rồi chạy MỘT job — kiểm chứng đầu tiên, và là thứ đưa gói lên active. Job Q001 đã nằm sẵn trong hàng đợi, chưa bấm chạy. Lưu ý tiền: chip đang để x2 mà trang tự khai mỗi video 6 credit, nên nếu runner không tự hạ về x1 thì một job là 12 credit chứ không phải 6.",
+      "rank": 1,
+      "claim": null
+    },
+    {
+      "id": "workers/hnx-fetch/v0.1.0",
+      "unit": "workers/hnx-fetch/v0.1.0",
+      "title": "Nạp HNX Fetch vào Chrome và chạy MỘT lượt lấy dữ liệu thật qua nó, thay vì qua Scouter. Toàn bộ mã đã tách xong và phép ghim xanh, nhưng chưa lượt nào đi qua chính extension này.",
       "rank": 1,
       "claim": null
     },
