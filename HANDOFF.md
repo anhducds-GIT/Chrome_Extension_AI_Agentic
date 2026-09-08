@@ -1997,3 +1997,5 @@ ra thì còn **19**. Bảy hồ sơ đang được luật trỏ tới suýt bị
 Còn ~2.800 dòng cắt được mà **không** chạm sàn, nhưng vài hồ sơ trong đó **đang được dùng thật**
 — `ORCHESTRATOR.md` bảo *"chép nó, đừng viết lại từ đầu"*, `IDEAS.md` khai một brief là **nhà**
 của một ý tưởng. Xoá chúng là làm hỏng thứ đang chạy. Mở `N-51` để Đức chốt con số.
+
+> **Lượt đẩy dùng `--carry`, cuốn theo 1 commit của lane `claude-gpt-chay-het-job`** (ADR-0005 duyệt thường trực; đổi lại phải kể tên lane bị cuốn — đây là dòng đó).
