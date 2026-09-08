@@ -539,3 +539,23 @@ Lượt rà các nơi chứa luật ở gốc repo (`N-54` và tiếp theo) ch�
 **trích theo SỐ HIỆU, đừng trích theo tên file** — tên file đổi được ở lượt rà hằng tuần, số hiệu
 thì không. Nhớ thêm: số ADR đánh **theo từng thư mục**, nên `0001` của gói này và `0001` ở gốc
 repo là **hai quyết định khác nhau**.
+
+## 2026-09-09 · `claude-luat-rasoat` — hai lượt trỏ hỏng, và một vế ADR bị đánh rơi hôm qua
+
+Rà `AGENTS.md` của gói theo bộ biên dịch luật mới
+([ADR-0027](../../../docs/adr/0027-bo-bien-dich-luat.md)). Hai chỗ sửa:
+
+- Luật vàng 4 dẫn *"`AGENTS.md` gốc mục 2"* cho việc **phải hỏi Đức** — nay là **mục 3**. Lượt
+  cắt hiến pháp 402 → 252 dòng hôm nay làm hỏng 8 lượt trỏ theo số mục trong ba file. Luật mới:
+  trỏ tới `AGENTS.md` phải kèm **TÊN** mục.
+- Dòng `../pilots/` dẫn *"ADR-0020 mục ⑶a"* — **và vế đó không còn tồn tại.** Lượt gộp 27 ADR
+  hôm qua đánh rơi hẳn `0020 ⑶` (ranh giới seed ↔ pilot: chỗ đứng vật lý · `docs/TRIALS.md` ·
+  hàng rào hẹp `seed-purity-smoke.mjs`) và `0020 ⑷` (sổ mở trước, playbook mở sau). **B12 vẫn
+  xanh tuyệt đối** vì nó canh SỐ HIỆU chứ không canh NỘI DUNG VẾ.
+
+**Đã khôi phục cả hai vế** vào [ADR-0020](../../../docs/adr/0007-scouter.md) mục ⑼, kèm ghi chú
+vì sao chúng vắng mặt một hôm. Ba thứ vế đó nói tới đều đang tồn tại thật trong gói — thư mục
+`../pilots/`, `docs/TRIALS.md`, và phép ghim hàng rào hẹp — nên mất vế là mất **lý do** của
+chúng, thứ đắt hơn cả bản thân câu chữ.
+
+**Không đụng mã, không đụng phép ghim.**

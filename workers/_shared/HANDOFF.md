@@ -153,3 +153,18 @@ lại bằng `String.fromCharCode(92)`. Cùng một bẫy đã dính bốn lần
 **Về giới hạn ⑦** (*một luật vào thì một luật ra*): dòng mới ở `AGENTS.md` đi theo nhánh *"đo
 được nó đã nổ mấy lần"* — Đức nói gặp vài lần, lần gần nhất 08/09 do chính phiên này. `AGENTS.md`
 nay **390** dòng.
+
+## 2026-09-09 · `claude-luat-rasoat` — `AGENTS.md` của vùng còn dạy một luật đã chết
+
+Rà theo bộ biên dịch luật mới ([ADR-0027](../../docs/adr/0027-bo-bien-dich-luat.md)). Hai chỗ sai:
+
+- Mục *"Ba gói đóng băng KHÔNG dùng lõi này"* viết **"Luật cấm sửa gói đóng băng"**. Vế đó
+  **chết 08/09**: [ADR-0021](../../docs/adr/0021-goi-extension.md) ⑴ bỏ hẳn trần số gói, mở băng
+  cả năm gói, `frozen` nay là **danh sách rỗng**. Không còn luật nào cấm sửa ba gói đó. Lý do
+  thật khiến chúng chưa chuyển sang lõi chung là ADR-0021 ⑶ — Đức **chấp nhận** rủi ro token
+  trần, tức một **lựa chọn**, không phải một điều cấm. Đổi tiêu đề thành *"CHƯA dùng lõi này"*.
+- Câu mở đầu dẫn *"`AGENTS.md` gốc mục 3, luật 2"* — luật *cấm cài một tính năng hai lần* nay là
+  **giới hạn ②** của mục 4. Sửa.
+
+**Không đụng mã, không đụng phép ghim.** Bài học chung ghi ở gốc: trỏ tới `AGENTS.md` phải kèm
+**TÊN** mục, vì số mục chỉ là vị trí và lượt cắt 402 → 252 dòng hôm nay làm hỏng 8 lượt trỏ.

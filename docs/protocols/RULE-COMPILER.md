@@ -60,10 +60,8 @@ là một cổng sẽ bị tắt. **Bộ đo không có cờ `--fix`**: AI đề
 ## 5. Gộp hai ADR — kiểm TỪNG VẾ, đừng tin B12
 
 B12 canh **số hiệu**, không canh **nội dung vế**. Lượt gộp 27 ADR ngày 09/09 xanh B12 tuyệt đối
-mà vẫn **đánh rơi ba vế** — trong đó `0020 ⑶` (ranh giới seed ↔ pilot) là vế đang sống và đang
-được `workers/duc-scouter/v0.1.0/AGENTS.md` trỏ tới. Tìm ra bằng mắt, không bằng máy.
-
-Nên sau mỗi lượt gộp, liệt kê vế của bản CŨ rồi đối chiếu bằng mắt:
+mà vẫn **đánh rơi ba vế** — trong đó `0020 ⑶` (ranh giới seed ↔ pilot) đang sống và đang được
+`workers/duc-scouter/v0.1.0/AGENTS.md` trỏ tới. Nên sau mỗi lượt gộp, đối chiếu bằng mắt:
 
 ```bash
 git show <sha-trước-lượt-gộp>:docs/adr/<file-cũ>.md | grep "^### "

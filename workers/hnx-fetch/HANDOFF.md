@@ -437,3 +437,18 @@ tên file ADR cũ nên phải đổi theo:
 **Không đụng logic, không đụng test.** Suite gói: 12/12 xanh. Cách tra một số hiệu ADR nay nằm ở
 file nào: bảng trong `docs/README.md` ở gốc repo — và **trích theo SỐ HIỆU, đừng trích theo tên
 file**, vì tên file đổi được ở lượt rà hằng tuần.
+
+## 2026-09-09 · `claude-luat-rasoat` — rà luật của gói: SẠCH, và một chỗ lặp CỐ Ý được ghi lý do
+
+Rà cả `AGENTS.md` (120 dòng) và `PROTOCOL.md` (520 dòng) theo bộ biên dịch luật mới
+([ADR-0027](../../docs/adr/0027-bo-bien-dich-luat.md)). **Không tìm thấy luật chết nào** — đây là
+gói sạch nhất trong sáu đơn vị: `PROTOCOL.md` mục 4 thậm chí tự sửa lại một chỉ dẫn cũ *"không
+làm theo được"* của chính nó, đúng kiểu tài liệu tự giữ mình khỏi mục.
+
+**Một việc đã làm:** bộ đo nêu `AGENTS.md` *"Ba việc phải hỏi Đức"* trùng vân tay với
+`PROTOCOL.md` mục 7. Đây là lặp **CỐ Ý** — Đức chốt 08/09 rằng `PROTOCOL.md` **tự đứng một
+mình**, viết cho một AI không đọc `AGENTS.md`; một sổ tự đứng mà thiếu danh sách an toàn của
+chính nó là một sổ nguy hiểm. Đã ghi lý do **ngay tại chỗ** trong `AGENTS.md`, kèm nhắc **sửa
+một bên thì sửa cả hai trong CÙNG lượt** — theo `docs/protocols/RULE-COMPILER.md` mục 4.
+
+**Không đụng mã, không đụng phép ghim, không đụng dữ liệu.** Sổ nợ gói không đổi.

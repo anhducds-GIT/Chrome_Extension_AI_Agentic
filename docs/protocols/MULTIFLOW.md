@@ -67,9 +67,8 @@ không **do hình dạng bản giao việc**, không phải do lane lười. C�
 thì làm ba lượt (06/09 một lane ôm ba khoá worker cho một việc sửa chữ và chặn một phiên khác).
 
 Năm điều **không** được làm, và mỗi điều là một tai nạn thật. **Năm câu này CỐ Ý nhắc lại
-`AGENTS.md` mục 1 (*Khoá*) — đừng gộp:** tầng 1 giữ *câu luật*, tầng 2 giữ *vụ tai nạn đằng
-sau nó*, và người đọc file này đang đi sửa cơ chế nên cần vế thứ hai. Bộ biên dịch luật nêu cặp
-này ở phép ③; đây là câu trả lời, theo `docs/protocols/RULE-COMPILER.md` mục 4.
+`AGENTS.md` mục 1 (*Khoá*) — đừng gộp:** tầng 1 giữ *câu luật*, tầng 2 giữ *vụ tai nạn đằng sau
+nó*, và ai đọc file này là đang đi sửa cơ chế nên cần vế thứ hai (`RULE-COMPILER.md` mục 4).
 
 - **Đừng nối `claim.mjs` vào ống.** Mã thoát của một đường ống là mã thoát của lệnh **cuối**, nên
   `--take … | tail -3 && git commit …` chạy tiếp cả khi lệnh nhận khoá đã **TỪ CHỐI**. Xảy ra
