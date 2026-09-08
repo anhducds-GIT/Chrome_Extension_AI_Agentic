@@ -15,7 +15,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { dangMo, docMuc, docMucDaGo, DONG_DOI_MA, kiemSo, thieuDongKhi, trungMa, TRUONG_DONG_KHI } from "../scripts/backlog-check.mjs";
+import { dangMo, docMuc, docMucDaGo, DONG_DOI_MA, kiemSo, mucVoHinh, thieuDongKhi, trungMa, TRUONG_DONG_KHI } from "../scripts/backlog-check.mjs";
 
 /* CHUOI TEST THAT. Tu khi `test` tro sang bo chay song song, chuoi that nam o `test:tuan-tu`
    va bo chay doc `test:tuan-tu ?? test`. Hoi `test` khong thoi thi phep ghim chi thay MOT dong
@@ -268,6 +268,59 @@ const MUI = String.fromCharCode(8594);   // dấu mũi tên của dòng đổi m
   assert.deepEqual(dangMo(doi), ["N-01"], "dong dong viet theo ma SAU khi doi — phai go DOI MA truoc khi so");
 
   ok("N-01 · dangMo: dòng ở cuối mới đóng · tự khai trong thân KHÔNG · dòng nói VỀ nó KHÔNG · mã đã đổi vẫn khớp");
+}
+
+/* ---- MỤC VÔ HÌNH VỚI CÔNG CỤ — N-42 --------------------------------------
+ *
+ * Ca thật 07/09: hai mục ghi dạng `- **A-01**` không được đếm, không bị kiểm trường
+ * `đóng khi`, và KHÔNG kêu. Con số sai đó thành lý do xin Đức nâng trần sổ. Ca thứ hai tìm ra
+ * 08/09: `## MỞ · N-42` — hình dạng của sổ GÓI, hợp lệ ở đó, vô hình ở đây.
+ *
+ * Vế khó không phải "bắt được", mà là **không bắt nhầm**: cửa ra của sổ này CHÍNH LÀ một dòng
+ * gạch đầu (`- **ĐÓNG N-xx**`, `- **ĐỔI MÃ …**`). Bắt nhầm chúng là khoá luôn cửa ra. */
+{
+  const v = mucVoHinh(so("## N-01 · that", "", "- **A-01** · muc ghi sai cho", "- **N-99** · cung sai"));
+  assert.deepEqual(v.map((x) => x.ma), ["A-01", "N-99"], "phai neu ten ca hai muc vo hinh");
+  assert.equal(v[0].dong, 3, "phai chi dung so dong de nguoi sua tim thay");
+  ok("muc dang gach dau dong bi NEU TEN, khong im lang nuot");
+}
+
+{
+  const v = mucVoHinh("## MỞ · N-42 (2026-09-08) — mot byte dieu khien tho");
+  assert.deepEqual(v.map((x) => x.ma), ["N-42"]);
+  assert.match(v[0].hinhDang, /sổ GÓI/, "cau bao phai noi ro no la hinh dang cua so khac");
+  ok("hinh dang so GOI (`## MO · X`) cung vo hinh o so nay");
+}
+
+{
+  // Nếu phép này hỏng thì mỗi lượt đóng mục lại làm cổng đỏ — tức khoá luôn cửa ra, mà cửa ra
+  // phải rẻ ngang cửa vào (luật mục 1 của sổ).
+  const v = mucVoHinh(so(
+    "- **ĐÓNG N-31** · 2026-09-08 · lane `x` · xong",
+    `${DONG_DOI_MA} N-35 ${MUI} N-37** · 2026-09-07 · lane \`y\``,
+    "- **LÀM RÕ DÒNG ĐÓNG N-30** · ghi chu",
+    "- **nhóm:** cong",
+    `${TRUONG_DONG_KHI} lệnh: \`node scripts/backlog-check.mjs\``,
+  ));
+  assert.deepEqual(v, [], "khong dong nao trong so nay duoc coi la muc vo hinh");
+  ok("CUA RA cua so KHONG bi coi la muc vo hinh");
+}
+
+{
+  // Luật của sổ có in bản mẫu. Bản mẫu không phải mục nợ, và bắt nó là bắt chính tài liệu.
+  const rao = String.fromCharCode(96, 96, 96);
+  const v = mucVoHinh(so("Bản mẫu:", `${rao}markdown`, "- **N-xx** · mo ta", "- **A-01** · vi du", rao, "het"));
+  assert.deepEqual(v, [], "ban mau trong khoi ma khong duoc tinh");
+  ok("ban mau trong khoi ma KHONG bi tinh");
+}
+
+{
+  // Ghim ĐƯỜNG DÂY, không chỉ hàm rời: một hàm đúng mà không ai gọi thì cổng vẫn im như cũ.
+  const kq = kiemSo(so("## N-01 · that", `${TRUONG_DONG_KHI} lệnh: \`true\``, "", "- **A-01** · sai cho"));
+  assert.equal(kq.voHinh.length, 1, "kiemSo phai cho ra vet cua muc vo hinh");
+  const nguon = fs.readFileSync(BO_KIEM, "utf8");
+  assert.match(nguon, /voHinh\.length \? 1 : 0/, "ma thoat phai do ca muc vo hinh, khong thi cong khong bao gio thay");
+  ok("kiemSo() va ma thoat deu THAY muc vo hinh");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

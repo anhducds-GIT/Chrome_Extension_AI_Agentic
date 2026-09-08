@@ -499,7 +499,7 @@ nuốt mục mới thì mọi quyết định dựa trên số mục của nó �
   dòng, ngoài khối mã) mà không nằm dưới một tiêu đề `## N-<số>` nào — hoặc Đức chốt rằng chỉ
   cần một dòng nhắc trong luật của sổ là đủ.
 
-## MỞ · N-42 (2026-09-08, `claude-scouter-s06`) — một byte điều khiển thô trong gói đóng băng
+## N-45 · Một byte điều khiển thô trong gói đóng băng làm git giấu mọi diff của tệp
 
 `workers/duc-auto-gg-flow-video/v0.1.0/tests/halt-instructions-core-smoke.mjs` mang một byte
 `0x08` (backspace) ở dòng 27. Hệ quả không phải mã chạy sai — Node đọc bình thường, suite của gói
@@ -514,8 +514,13 @@ NUL) và `tests/feature-parity-smoke.mjs` (hai byte NUL làm mốc tạm) — c�
 đọc. Phép ghim mới **bỏ qua ba gói đóng băng** vì một phép ghim đòi sửa thứ không ai được sửa là
 một phép ghim không lượt chạy nào làm xanh nổi.
 
-**đóng khi:** hoặc gói đó được mở băng vì một lý do khác và byte này được gỡ **trong chính lượt
-mở**, hoặc Đức chốt rằng ba gói đóng băng không cần đọc diff nữa và mục này rời sổ.
+- **mở:** 2026-09-08 · lane `claude-scouter-s06` (mã và tiêu đề đổi 08/09 bởi lane
+  `claude-ext-cum5`: khối này viết theo hình dạng sổ GÓI nên **vô hình với công cụ** — đúng
+  cái bệnh mà `N-42` ngay trên mô tả. Chữ trong thân giữ NGUYÊN VĂN, chỉ dòng tiêu đề và
+  dòng `đóng khi` đổi hình dạng. Nó cũng đang mang trùng mã `N-42`.)
+- **vùng:** `workers/duc-auto-gg-flow-video` — **đóng băng, chỉ đọc**
+- **đóng khi:** đức: hoặc gói đó được mở băng vì một lý do khác và byte này được gỡ **trong
+  chính lượt mở**, hoặc Đức chốt rằng ba gói đóng băng không cần đọc diff nữa và mục này rời sổ.
 
 ## N-43 · Repo này chưa có bộ chạy suite song song + dấu xác nhận, nên mỗi vòng vẫn tốn gấp ~4
 
@@ -564,3 +569,7 @@ mở**, hoặc Đức chốt rằng ba gói đóng băng không cần đọc dif
   bộ đọc — hai bộ đọc cho một quyển sổ là cách chắc chắn để chúng nói khác nhau.
 - **đóng khi:** lệnh: `node scripts/what-next.mjs` hiện mục nợ của `BACKLOG.md` gốc dưới đúng
   khoá của nó, và có một phép ghim dựng sổ có `ĐỔI MÃ` rồi kiểm con số khớp với `backlog-check.mjs`.
+
+- **ĐÓNG N-42** · 2026-09-08 · lane `claude-ext-cum5` · `backlog-check.mjs` nay **ĐỎ** khi thấy một dòng trông như mục nợ mà công cụ không đếm được — hai hình dạng: gạch đầu dòng `- **A-01**` (ca 07/09) và hình dạng sổ GÓI `## MỞ · N-42` (ca tìm ra hôm nay). **[ĐO]** chạy lần đầu ra ngay **1 mục vô hình thật** ở dòng 502, đã nằm trong sổ từ 08/09 mà không lớp nào kêu. Vế khó không phải bắt được mà là **không bắt nhầm CỬA RA**: `- **ĐÓNG N-xx**` và `- **ĐỔI MÃ …**` chính là cách đóng mục của sổ này, bắt nhầm chúng là khoá luôn cửa ra — có phép ghim riêng cho vế đó, cùng một phép cho bản mẫu trong khối mã. Ghim: 5 phép mới ở `tests/backlog-check-smoke.mjs` (15 → 20), trong đó một phép ghim **đường dây** (`kiemSo` phải chở kết quả ra, và mã thoát phải đo nó) — một hàm đúng mà không ai gọi thì cổng vẫn im như cũ.
+
+- **ĐÓNG N-39** · 2026-09-08 · lane `claude-ext-cum5` · Bản mẫu ADR khai `status: Proposed` trong khối chép, kèm **lý do** viết ngay cạnh: B12 chốt mốc bất biến ở commit ĐẦU TIÊN mà `status` thành `Accepted`, nên viết thẳng `Accepted` là đóng cửa sửa chữ ngay từ commit đầu (gặp thật với ADR-0018: chữ `Codey`). Ghim: `tests/check-bootstrap-smoke.mjs` (29 → 30) — ghim CẢ giá trị lẫn câu lý do, vì thiếu lý do thì người sau đọc `Proposed` như mặc định tuỳ tiện rồi sửa cho gọn. **CỐ Ý KHÔNG dựng máy đếm ADR nằm lâu ở `Proposed`**, dù chính mục này đề xuất: hôm nay đo được **đúng 1** ADR ở `Proposed` (`0019`), và một cỗ máy canh một con số bằng 1 là thuế thu trên mọi phiên để phòng một chuyện chưa xảy ra (luật mục 3 giới hạn ⑦). Bản mẫu ghi sẵn câu lệnh đếm tay và ghi rõ mặt trái, nên khi nào nó thành vấn đề thật thì mở lại mục mới có số đo.

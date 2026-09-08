@@ -856,4 +856,24 @@ const chay = (deps) => {
 }
 
 
+/* ---- BẢN MẪU ADR PHẢI CHÀO ĐỜI Ở `Proposed` — N-39 -------------------------
+ *
+ * B12 chốt mốc bất biến ở commit ĐẦU TIÊN mà `status` thành `Accepted`. Một ADR viết thẳng
+ * `Accepted` từ commit đầu thì không còn lượt nào để sửa chữ — gặp thật 07/09 với ADR-0018:
+ * một chữ sai (`Codey`) không đổi quyết định nào, và không sửa được nữa. Bản mẫu là chỗ DUY
+ * NHẤT chặn được trước khi lỗi xảy ra, vì ai viết ADR cũng chép từ nó.
+ *
+ * Ghim CẢ HAI: giá trị trong bản mẫu, và câu luật giải thích vì sao — thiếu câu luật thì
+ * người sau đọc `Proposed` như một mặc định tuỳ tiện và sửa nó cho "gọn". */
+{
+  const mau = fs.readFileSync(path.join(ROOT, "docs", "_TEMPLATE-adr.md"), "utf8");
+  const trongKhoiChep = mau.slice(mau.indexOf("Phần dưới là nội dung cần chép:"));
+  assert.match(trongKhoiChep, /^status: Proposed$/m,
+    "khoi noi dung can chep phai mang status: Proposed, khong phai Accepted");
+  assert.doesNotMatch(trongKhoiChep, /^status: Accepted$/m,
+    "chep thang Accepted la dong cua sua chu ngay tu commit dau");
+  assert.match(mau, /B12 chốt mốc bất biến ở \*\*commit ĐẦU TIÊN\*\*/,
+    "phai giai thich VI SAO, khong thi nguoi sau se sua gia tri nay cho gon");
+  ok("ban mau ADR chao doi o Proposed, kem ly do (N-39)");
+}
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

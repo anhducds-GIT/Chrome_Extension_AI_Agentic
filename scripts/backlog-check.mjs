@@ -180,10 +180,48 @@ export function dangMo(text) {
   return docMucDaGo(text).filter((m) => !xong.has(m.ma)).map((m) => m.ma);
 }
 
+/* ---- MỤC VÔ HÌNH VỚI CÔNG CỤ — N-42 --------------------------------------
+ *
+ * Ca thật 07/09: lane `claude-scouter-s06` ghi hai mục dạng `- **A-01**` thay vì tiêu đề
+ * `## N-<số>`. `docMuc` cắt sổ theo tiêu đề, nên hai mục đó **không được đếm, không bị kiểm
+ * trường `đóng khi`, không báo gì cả** — số mục y nguyên sau khi thêm hai mục. Dựa trên con
+ * số sai đó, lane này báo Đức sổ *"nay 11 mục, vượt trần 10"* và Đức nâng trần lên 15. Trần
+ * nâng thì vô hại; **lý do đưa ra thì sai**. Một cuốn sổ im lặng nuốt mục mới làm mọi quyết
+ * định dựa trên số mục của nó thành đáng ngờ.
+ *
+ * Ca thứ hai, tìm ra 08/09: `## MỞ · N-42 (…)` — hình dạng của sổ GÓI (`workers/*`), hợp lệ ở
+ * đó nhưng vô hình ở đây. Cùng một bệnh, hình dạng khác.
+ *
+ * VÌ SAO BÁO ĐỎ CHỨ KHÔNG TỰ HIỂU CẢ HAI HÌNH DẠNG: hai quyển sổ có hai quy ước đóng mục khác
+ * nhau (sổ này thêm dòng ở cuối, sổ gói viết `## ĐÓNG · X`). Nhận bừa hình dạng kia vào đây là
+ * đếm một mục đã đóng thành mục mở. Rẻ hơn và thật hơn: nói thẳng "viết sai chỗ", 30 giây sửa.
+ *
+ * KHÔNG quét trong khối mã — luật của sổ có in bản mẫu, và bản mẫu không phải mục nợ. */
+const RE_GACH_DAU_DONG = new RegExp("^-\\s+\\*\\*([A-Z]+-\\d+)\\*\\*");
+const RE_HINH_DANG_SO_GOI = new RegExp("^##\\s+(?:MỞ|ĐÓNG)\\s*·\\s*([A-Z]+-\\d+)");
+const RE_RAO_MA = /^\s*```/;
+
+/** Dòng trông như một mục nợ nhưng công cụ KHÔNG thấy. Trả `{ dong, ma, hinhDang }`. */
+export function mucVoHinh(text) {
+  const ra = [];
+  let trongRao = false;
+  const dongs = String(text ?? "").split(/\r?\n/);
+  for (let i = 0; i < dongs.length; i += 1) {
+    const dong = dongs[i];
+    if (RE_RAO_MA.test(dong)) { trongRao = !trongRao; continue; }
+    if (trongRao) continue;
+    const g = RE_GACH_DAU_DONG.exec(dong.trimStart());
+    if (g) { ra.push({ dong: i + 1, ma: g[1], hinhDang: "gạch đầu dòng `- **" + g[1] + "**`" }); continue; }
+    const h = RE_HINH_DANG_SO_GOI.exec(dong);
+    if (h) ra.push({ dong: i + 1, ma: h[1], hinhDang: "hình dạng sổ GÓI `## MỞ · " + h[1] + "`" });
+  }
+  return ra;
+}
+
 export function kiemSo(text) {
   const tong = docMucDaGo(text).length;
   const thieu = thieuDongKhi(text);
-  return { tong, mo: dangMo(text), thieu, trung: trungMa(text) };
+  return { tong, mo: dangMo(text), thieu, trung: trungMa(text), voHinh: mucVoHinh(text) };
 }
 
 function main(argv) {
@@ -195,8 +233,8 @@ function main(argv) {
     console.error(`KHONG_DOC_DUOC_SO: không mở được ${duongDan}. Sổ nợ hạ tầng phải nằm ở gốc repo.`);
     return 2;
   }
-  const { tong, thieu, trung } = kiemSo(text);
-  console.log(`BACKLOG: ${tong} muc, ${thieu.length} thieu truong dong-khi, ${trung.length} ma bi trung`);
+  const { tong, thieu, trung, voHinh } = kiemSo(text);
+  console.log(`BACKLOG: ${tong} muc, ${thieu.length} thieu truong dong-khi, ${trung.length} ma bi trung, ${voHinh.length} muc vo hinh`);
   for (const ma of thieu) {
     console.error(`  ${ma}: thiếu "${TRUONG_DONG_KHI} lệnh: <lệnh chạy được>" hoặc "${TRUONG_DONG_KHI} đức: <câu Đức phải chốt>"`);
   }
@@ -209,7 +247,15 @@ function main(argv) {
     console.error(`  ${DONG_DOI_MA} <mã cũ> → <mã mới chưa ai dùng>** · <ngày> · lane \`<tên>\` · khối "<vài chữ đầu của tiêu đề>" đọc là <mã mới> từ nay`);
     console.error("Mỗi dòng gỡ đúng một lượt trùng. Chữ khối cũ giữ nguyên — luật mục 1 của sổ.");
   }
-  return thieu.length || trung.length ? 1 : 0;
+  for (const v of voHinh) {
+    console.error(`  dòng ${v.dong}: mục viết theo ${v.hinhDang} — công cụ KHÔNG thấy nó.`);
+  }
+  if (voHinh.length) {
+    console.error("Sổ này chỉ đếm mục viết `## N-<số> · <tiêu đề>`. Hình dạng khác thì không được đếm,");
+    console.error("không bị kiểm trường `đóng khi`, và KHÔNG kêu — ngày 07/09 hai mục đã mất tích đúng thế,");
+    console.error("rồi con số sai đó thành lý do xin Đức nâng trần. Sửa: đổi dòng đó thành tiêu đề `## N-<số>`.");
+  }
+  return thieu.length || trung.length || voHinh.length ? 1 : 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === MODULE_FILE) process.exit(main(process.argv.slice(2)));

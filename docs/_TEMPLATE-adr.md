@@ -20,6 +20,22 @@ ttl_days: 365
 
 ---
 
+**VIẾT Ở `Proposed`, ĐỔI SANG `Accepted` Ở MỘT LƯỢT RIÊNG. Đây là luật, không phải gợi ý.**
+
+B12 chốt mốc bất biến ở **commit ĐẦU TIÊN** mà `status` thành `Accepted`. Viết ADR với
+`status: Accepted` ngay từ commit đầu thì **không còn lượt nào để sửa chữ** — mọi lượt sửa
+phần thân sau đó làm B12 ĐỎ với MỌI phiên, và cách duy nhất đúng luật là viết thêm một ADR
+để đính chính một chữ, tức đẻ ra rác để dọn rác.
+
+Gặp thật 07/09 với ADR-0018: một chữ sai (`Codey` thay vì `Codex`) trong commit đầu, không
+đổi quyết định nào, và **không sửa được nữa**. B12 đã miễn sẵn cả frontmatter lẫn mục
+`## Trạng thái`, nên lượt đổi `Proposed → Accepted` là hợp luật — chỉ là trước đây không ai
+khai rằng phải đi qua cửa đó.
+
+> **Mặt trái, biết trước:** một ADR nằm mãi ở `Proposed` là quyết định CHƯA chốt mà người
+> sau đọc như đã chốt. Chưa có máy nào canh việc đó — đếm bằng tay khi cần:
+> `grep -rn "^status:" docs/adr/ workers/*/*/docs/adr/ | grep -i proposed`
+
 Phần dưới là nội dung cần chép:
 
 ```markdown
