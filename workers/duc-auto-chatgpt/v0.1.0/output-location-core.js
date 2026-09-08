@@ -217,12 +217,47 @@
     return new RegExp(`^${escapedStem}(?:__attempt-\\d+| \\(\\d+\\))${escapedExtension}$`).test(actual);
   }
 
-  function verifyDownloadedFilename(request, completedFilename) {
+  // ADR-0051 ⒝ — Chrome CÓ nghe tên mình xin không?
+  //
+  // Đo bằng PHẦN THÂN của tên, không bằng hình dạng. Tên thật còn mang phần thân đã xin thì
+  // Chrome đã nghe (và mọi khác biệt còn lại là chuyện va chạm tên — luật cũ xử, không đổi).
+  // Không mang gì thì Chrome đã bỏ qua đề xuất, và đó là điều gói này không quyết được.
+  //
+  // CỐ Ý KHÔNG nhận diện bằng "trông giống GUID". `scripts/don-rac-tai-xuong.mjs` đặt luật
+  // ngược lại làm luật số một của nó, và có số đo đứng sau: trong 39 tệp tên-GUID ở máy Đức,
+  // HAI tệp là `.pdf` và `.jpg` của chính Đức — trang nào tải blob về cũng bị đặt tên kiểu ấy.
+  // Nhận diện theo hình dạng sai ở cả hai chiều: nó bỏ sót một cái tên lạ không giống GUID, và
+  // nó nhận nhầm một cái tên do gói này xin mà tình cờ giống GUID.
+  function chromeKeptRequestedName(requestedFilename, actualFilename) {
+    const requested = safeFileLeaf(requestedFilename, "output");
+    const actual = downloadLeaf(actualFilename);
+    const stem = (/^(.*?)(\.[^.]+)?$/.exec(requested)?.[1] || requested).trim();
+    return stem.length > 0 && actual.includes(stem);
+  }
+
+  // ADR-0051 ⒜ (Đức chốt 09/09) — nhận cái tên Chrome đặt, thay vì đòi tên phải khớp.
+  //
+  // Trả về `{ filename, leaf, renamedByChrome }`. Người gọi PHẢI ghi một dòng sổ khi
+  // `renamedByChrome` là true (ADR-0051 ⒟): truy nguồn theo tên đã mất, nên sổ là chỗ duy
+  // nhất còn nối được "tệp này thuộc run nào".
+  //
+  // Đừng đọc mục này thành "bỏ kiểm chứng lưu bền". `verifyCompletedDownload()` trong
+  // `background.js` vẫn kiểm ba thứ ĐỘC LẬP với tên, và cả ba vẫn chặn: tệp còn tồn tại · số
+  // byte > 0 · số byte khớp CHÍNH XÁC kích thước blob đã dựng. Bỏ phép so tên là bỏ MỘT trong
+  // bốn điều kiện — đúng cái duy nhất trình duyệt không cho gói này quyết (đo 06/09: xin
+  // `B36-probe-ticket__audit.jsonl`, Chrome đặt `d31c629e-…`, nội dung nguyên vẹn 22 byte).
+  //
+  // Và nó KHÔNG mở cửa cho ca va chạm: `ket-qua (1).xlsx` còn mang phần thân đã xin, nên nó đi
+  // theo nhánh cũ và chính sách `fail` vẫn chặn. Đó là bằng chứng của run trước, không được đè.
+  function verifyDownloadedFilename(request, completedFilename, { acceptChromeName = false } = {}) {
     const actual = downloadLeaf(completedFilename);
-    if (!isPolicyFilename(request?.requestedFilename, actual, request?.collisionPolicy)) {
-      throw new Error(`PERSISTENCE_FILENAME_MISMATCH: requested '${request?.requestedFilename || "output"}' but Chrome reported '${actual}'.`);
+    if (isPolicyFilename(request?.requestedFilename, actual, request?.collisionPolicy)) {
+      return { filename: String(completedFilename), leaf: actual, renamedByChrome: false };
     }
-    return { filename: String(completedFilename), leaf: actual };
+    if (acceptChromeName && !chromeKeptRequestedName(request?.requestedFilename, actual)) {
+      return { filename: String(completedFilename), leaf: actual, renamedByChrome: true };
+    }
+    throw new Error(`PERSISTENCE_FILENAME_MISMATCH: requested '${request?.requestedFilename || "output"}' but Chrome reported '${actual}'.`);
   }
 
   function runPlan(workbookName, settings) {
@@ -383,6 +418,6 @@
     return { filename: actual, outcome: replaced ? "overwritten" : "written", size: persisted.size };
   }
 
-  const api = { safeRelativeFolder, safeFileLeaf, artifactLeaf, fileExists, safeFilename, baseResultName, baseResultFilenamePattern, baseAuditName, workbookBase, validateImagePattern, variantFilename, validateResultFilenamePattern, checkpointFilenamePattern, renderCheckpointFilename, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, collisionError, verifyDownloadedFilename, isPolicyFilename, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
+  const api = { safeRelativeFolder, safeFileLeaf, artifactLeaf, fileExists, safeFilename, baseResultName, baseResultFilenamePattern, baseAuditName, workbookBase, validateImagePattern, variantFilename, validateResultFilenamePattern, checkpointFilenamePattern, renderCheckpointFilename, renderImageFilename, collisionPolicy, artifactNames, downloadsLocation, directoryLocation, fromWorkbook, effective, locationLabel, fileLabel, downloadArtifactRequest, collisionError, verifyDownloadedFilename, isPolicyFilename, chromeKeptRequestedName, runPlan, permission, preflight, actualExtension, imageCandidates, imageCandidatesFor, candidatesForPolicy, fileCandidates, findAvailableFilename, verifyPersistedFile, writeNewFile, writeUniqueFile, writeFileWithPolicy };
   (typeof window !== "undefined" ? window : globalThis).DacOutputLocation = api;
 })();

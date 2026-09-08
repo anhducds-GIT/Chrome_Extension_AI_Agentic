@@ -5339,7 +5339,11 @@
     try {
       const request = window.DacOutputLocation.downloadArtifactRequest(location, filename, "fail");
       const item = await downloadArtifactViaBackground(objectUrl, request, candidate.blob.size);
-      window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
+      // ADR-0051: đích là Chrome Downloads, nên một cái tên do Chrome tự đặt được NHẬN.
+      // `acceptChromeName` chỉ bật ở đúng hai chỗ ghi qua Downloads; đường thư mục đã cấp
+      // quyền ngay trên KHÔNG đi qua đây và vẫn kiểm tên chặt như cũ.
+      const verified = window.DacOutputLocation.verifyDownloadedFilename(request, item.filename, { acceptChromeName: true });
+      noteChromeRenamedArtifact(request, verified);
       return { ...candidate, actual: item.filename, version, filename, storage: "downloads", download_id: item.download_id };
     } finally { setTimeout(() => URL.revokeObjectURL(objectUrl), 1000); }
   }
@@ -5571,7 +5575,8 @@
         : window.DacOutputLocation.downloadArtifactRequest(location, requested, "fail");
       if (!force) await assertDownloadCollisionPolicy(request);
       const item = await downloadArtifactViaBackground(objectUrl, request, downloadBlob.size);
-      window.DacOutputLocation.verifyDownloadedFilename(request, item.filename);
+      const verified = window.DacOutputLocation.verifyDownloadedFilename(request, item.filename, { acceptChromeName: true });
+      noteChromeRenamedArtifact(request, verified);
       state.auditPersistedPayload = payload;
       const flushed = new Set(pendingEvents);
       state.auditEvents = state.auditEvents.filter((event) => !flushed.has(event));
@@ -5596,6 +5601,20 @@
     const requested = request.filename.replace(/\//g, "\\").toLowerCase();
     const matches = await chrome.downloads.search({ filename: request.filename });
     if (matches.some((item) => item.state === "complete" && String(item.filename || "").toLowerCase().endsWith(requested))) throw window.DacOutputLocation.collisionError(request);
+  }
+
+  // ADR-0051 ⒟ — mỗi lần nhận một cái tên do Chrome đặt phải để lại MỘT DÒNG SỔ.
+  //
+  // Đây không phải chuyện hình thức. Sau ADR-0051, truy nguồn theo TÊN đã mất: mở thư mục Tải
+  // xuống không còn biết tệp nào thuộc run nào. Dòng sổ này là chỗ DUY NHẤT còn nối được hai
+  // đầu ấy, nên thiếu nó thì bằng chứng vận hành thành một đống tệp vô danh.
+  function noteChromeRenamedArtifact(request, verified) {
+    if (!verified?.renamedByChrome) return;
+    const requested = request?.requestedFilename || "(không rõ)";
+    audit("ARTIFACT_RENAMED_BY_CHROME", null, {
+      message: `Chrome bỏ qua tên đã xin: xin '${requested}', ghi ra '${verified.leaf}'. Nội dung đã kiểm bằng số byte, không bằng tên.`
+    });
+    log(`Chrome tự đặt tên tệp: '${requested}' → '${verified.leaf}'. Tra lại bằng sổ, không bằng tên.`, "");
   }
 
   async function downloadArtifactViaBackground(url, request, expectedBytes) {

@@ -161,7 +161,18 @@ assert.match(source, /const isSaved = Boolean\(item\.persistence_verified && ite
 assert.match(source, /output-filename/);
 assert.match(source, /downloadArtifactRequest\(location, filename, "fail"\)/, "Result checkpoints always require an exact version filename");
 assert.match(source, /downloadArtifactRequest\(location, requested, "fail"\)/, "Audit JSONL retains one stable filename");
-assert.match(source, /verifyDownloadedFilename\(request, item\.filename\)/);
+// ADR-0051: hai chỗ ghi qua Chrome Downloads bật `acceptChromeName`, và cả hai phải ghi sổ
+// khi Chrome đổi tên. Đếm cả hai: vá một chỗ quên chỗ kia là để một nửa đường ghi chết như cũ.
+assert.equal(
+  (source.match(/verifyDownloadedFilename\(request, item\.filename, \{ acceptChromeName: true \}\)/g) || []).length,
+  2,
+  "cả HAI lượt ghi qua Chrome Downloads (sổ audit + checkpoint kết quả) phải nhận tên Chrome đặt"
+);
+assert.equal(
+  (source.match(/noteChromeRenamedArtifact\(request, verified\);/g) || []).length,
+  2,
+  "đếm LỜI GỌI (có dấu chấm phẩy), không đếm cả chỗ khai báo hàm — cả hai phải để lại dòng sổ (ADR-0051 ␹) — tên đã vô nghĩa thì sổ là đường truy nguồn duy nhất"
+);
 
 // Open-folder behavior is capability truthful: only default Downloads can be opened.
 const downloadsAction = ui.outputFolderAction({ kind: "downloads", folder: "pilot-03" });

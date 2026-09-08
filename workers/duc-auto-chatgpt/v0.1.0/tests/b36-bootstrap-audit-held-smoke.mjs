@@ -298,12 +298,20 @@ assert.ok(
 for (const line of lines) assert.doesNotThrow(() => JSON.parse(line), "③ mỗi dòng xả ra phải là một mục JSONL đọc được");
 
 /* ==========================================================================
-   ⑤ — mép ngược: ĐỨC cấu hình Downloads thì VẪN đi đường tải, VẪN kiểm tên
-   (A) là miếng che ca bootstrap. Nếu nó biến thành "thôi kiểm tên" thì đó là
-   phương án (C) — phương án ADR-0049 đã LOẠI, vì bằng chứng vận hành mất tên
-   là bằng chứng không tra được.
+   ⑥' — ĐỨC cấu hình Downloads: VẪN đi đường tải, và nay KHÔNG còn chết ở cửa tên.
+
+   Bản trước của mép này khẳng định ngược lại — *"Chrome đặt tên GUID là một lỗi thật,
+   chưa được vá"* — vì ADR-0049 đã **loại** phương án "thôi kiểm tên". Đức chọn lại chính
+   phương án ấy ngày 09/09, sau khi đọc cả cái giá: *"1. đồng ý"*. Ghi ở
+   [ADR-0051](../docs/adr/0051-nhan-ten-chrome-dat-thay-vi-doi-ten-phai-khop.md).
+
+   Nhưng "nhận cái tên" KHÔNG được biến thành "thôi kiểm gì cả", nên mép này đổi vai:
+   nó canh **hai** điều kiện còn lại — lượt đó vẫn đi đường tải thật, và việc Chrome đổi tên
+   phải để lại MỘT DÒNG SỔ (ADR-0051 ␹). Thiếu dòng sổ thì truy nguồn mất hẳn: tên đã vô
+   nghĩa, và không còn gì nối "tệp này" với "run nào".
    ========================================================================== */
 downloads.length = 0;
+state.auditEvents.length = 0;
 // KHÔNG đặt dấu bằng tay ở đây. Dựng settings đúng cách Đức mở một workbook
 // thật dựng nó — qua `fromWorkbook` với config có nội dung — và để chính việc
 // object này KHÔNG mang dấu `autoDefaulted` là thứ quyết định. Bản trước của
@@ -317,13 +325,46 @@ assert.equal(state.outputSettings.autoDefaulted, undefined, "⑤ settings dựng
 
 let ducFailure = null;
 try { await jobsAdd(1); } catch (error) { ducFailure = error; }
-assert.ok(downloads.length >= 1, "⑤ phien do DUC cau hinh Downloads VAN phai di duong tai — (A) khong duoc thanh cong tac tat lop kiem ten");
-assert.ok(ducFailure, "⑤ và lượt đó vẫn phải kêu to: Chrome đặt tên GUID là một lỗi thật, chưa được vá");
-assert.match(
-  String(ducFailure.message || ducFailure) + JSON.stringify(ducFailure?.details || {}),
-  /PERSISTENCE_FILENAME_MISMATCH|PERSISTENCE_VERIFICATION_FAILED/,
-  "⑤ và nó kêu ĐÚNG chỗ: lệch tên / không nghiệm thu được, chứ không phải một lỗi khác"
+assert.ok(downloads.length >= 1, "⑤ phien do DUC cau hinh Downloads VAN phai di duong tai");
+assert.equal(
+  ducFailure,
+  null,
+  "⑤ sau ADR-0051 một cái tên do Chrome tự đặt KHÔNG còn làm hỏng lượt ghi: " +
+  `nhận được ${ducFailure && (ducFailure.message || ducFailure)}`
 );
+const renamedRows = state.auditEvents.filter((event) => event.event === "ARTIFACT_RENAMED_BY_CHROME");
+assert.ok(
+  renamedRows.length >= 1,
+  "⑤ ADR-0051 ␹: nhận tên Chrome đặt thì phải để lại một dòng sổ. Truy nguồn theo tên đã " +
+  "mất, nên dòng này là chỗ duy nhất còn nối được tệp với run"
+);
+assert.match(
+  String(renamedRows[0].message || ""),
+  /d31c629e|16f87e2b|05a491ce|bd00d527/,
+  "⑤ dòng sổ phải nêu TÊN THẬT trên đĩa — một dòng chỉ nói 'Chrome đã đổi tên' không tra được gì"
+);
+
+/* ⑤b — mép ngược của chính ⑤: "nhận tên Chrome đặt" đỢC ĐỊNH NGHĨA HẸP.
+   Một tên còn mang phần thân đã xin nGHĨA LÀ Chrome CÓ nghe, và khác biệt còn lại là chuyện
+   va chạm tên — tức một tệp cùng tên ĐÃ TỒN TẠI, là bằng chứng của run trước. Chính sách
+   `fail` vẫn phải chặn ca đó. Thiếu mép này thì ADR-0051 trôi thành "nhận mọi tên", và hai
+   run ghi đè lên nhau mà không gì đỏ. */
+{
+  const core = context.DacOutputLocation;
+  const yeu_cau = { requestedFilename: "ket-qua__v01.xlsx", collisionPolicy: "fail" };
+  assert.throws(
+    () => core.verifyDownloadedFilename(yeu_cau, "C:\Downloads\ket-qua__v01 (1).xlsx", { acceptChromeName: true }),
+    /PERSISTENCE_FILENAME_MISMATCH/,
+    "⑤b Chrome CÓ nghe tên mà vẫn phải thêm hậu tố nghĩa là tệp cùng tên đã tồn tại — `fail` vẫn phải chặn"
+  );
+  const nhan = core.verifyDownloadedFilename(yeu_cau, "C:\Downloads\d31c629e-39e1-4a96-ae61-dde336b91792", { acceptChromeName: true });
+  assert.equal(nhan.renamedByChrome, true, "⑤b tên không mang gì của tên đã xin thì là 'Chrome bỏ qua', và được nhận");
+  assert.throws(
+    () => core.verifyDownloadedFilename(yeu_cau, "C:\Downloads\d31c629e-39e1-4a96-ae61-dde336b91792"),
+    /PERSISTENCE_FILENAME_MISMATCH/,
+    "⑤b và không bật cờ thì không nhận — đường thư mục đã cấp quyền giữ nguyên luật cũ (ADR-0051 ␸)"
+  );
+}
 
 /* ==========================================================================
    ⑥ — mép ngược thứ ba: một mutation HỎNG GIỮA ĐƯỜNG rồi rollback thì dấu

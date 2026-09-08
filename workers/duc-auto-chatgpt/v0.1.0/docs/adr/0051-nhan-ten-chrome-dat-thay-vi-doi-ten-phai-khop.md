@@ -77,8 +77,15 @@ Truy nguồn theo tên đã mất, nên sổ là chỗ duy nhất còn nối đ�
   khác nhau vào cùng thư mục, không gì trong TÊN phân biệt chúng nữa.
 - `B-36` **không đóng bằng ADR này**. Điều kiện đóng của nó là một lượt chạy live, và ADR này chỉ
   gỡ cái chặn để lượt chạy đó xảy ra được.
-- ADR-0049 **không bị thay thế**. Cơ chế giữ sổ trong bộ nhớ khi chưa có thư mục vẫn còn; ADR này
-  chỉ làm cho đường Downloads không còn chết ở cửa so tên.
+- **ADR-0049 bị LẬT ĐÚNG MỘT ĐIỂM, nói thẳng ra thay vì để người sau tự phát hiện.** ADR-0049
+  đã cân phương án *"thôi kiểm tên"* và **loại** nó, với lý do: bằng chứng vận hành mất tên là
+  bằng chứng không tra được. Lý do đó **vẫn đúng**; Đức đổi ưu tiên sau khi đọc nó, vì một
+  phiên chat không cần truy nguồn như một loạt job tạo ảnh. Mọi phần còn lại của ADR-0049 — nhất
+  là cơ chế giữ sổ trong bộ nhớ khi chưa có thư mục — **còn nguyên**.
+- Phép ghim `tests/b36-bootstrap-audit-held-smoke.mjs` mép ⑤ **phải được viết lại, không phải nới**:
+  nó đang khẳng định *"Chrome đặt tên GUID là một lỗi thật, chưa được vá"* — đúng cho tới ADR này.
+  Sau ADR này nó phải canh hai thứ khác: lượt đó **vẫn đi đường tải thật**, và việc đổi tên
+  **để lại một dòng sổ nêu tên thật**.
 
 ## Trạng thái
 
