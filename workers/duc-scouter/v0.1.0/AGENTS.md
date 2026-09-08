@@ -104,6 +104,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
 | `ROADMAP.md` | **Đi tới đâu, đang ở đâu, thứ tự nào** — 25 mục `SEED v0.1` xếp thành bốn bước. Đọc file này TRƯỚC khi hỏi "việc kế là gì". Không chép danh sách 25 mục, chỉ xếp thứ tự |
 | `STATUS.md` | Trạng thái vận hành 1 trang (máy đọc frontmatter sinh DASHBOARD) |
 | `HANDOFF.md` | Trạng thái + Log (chỉ thêm dòng ở cuối) |
+| `HANDOFF-ARCHIVE-01.md` | Sáu mục nhật ký cũ, cắt 09/09 khi sổ chạm trần 25 mục ([ADR-0008](../../../docs/adr/0008-nhat-ky-phien.md)). **Nguyên văn, chỉ đọc** — ghép lại dựng đúng bản gốc từng byte. Cắt tiếp: `node scripts/handoff.mjs --cat <file> --giu 20` |
 | `BACKLOG.md` | Việc còn mở, đánh số `S-xx` |
 
 ## Hai chỗ đã trả giá, đừng làm lại
