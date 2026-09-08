@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-08",
-  "generated_commit": "37608e5d",
+  "generated_commit": "0d2f4b3c",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -133,8 +133,8 @@
       "lifecycle": "building",
       "status_md": "workers/hnx-fetch/v0.1.0/STATUS.md",
       "owner": "claude-scouter-s06",
-      "next_step": "Nạp HNX Fetch vào Chrome và chạy MỘT lượt lấy dữ liệu thật qua nó, thay vì qua Scouter. Toàn bộ mã đã tách xong và phép ghim xanh, nhưng chưa lượt nào đi qua chính extension này.",
-      "human_action": "Nạp extension mới vào Chrome: chrome://extensions → Load unpacked → chọn workers/hnx-fetch/v0.1.0. Rồi bấm icon, chọn tệp ghép cặp, bật công tắc Cho phép lấy dữ liệu.",
+      "next_step": "Chạy MỘT lượt lấy dữ liệu thật qua chính extension HNX Fetch, thay vì qua Scouter. Toàn bộ mã đã tách xong và phép ghim xanh, nhưng chưa lượt nào đi qua nó.",
+      "human_action": "Nạp extension HNX Fetch vào Chrome bằng Load unpacked — README của gói ghi rõ chọn thư mục nào. Rồi bấm icon, chọn tệp ghép cặp, bật công tắc Cho phép lấy dữ liệu.",
       "priority_rank": 1,
       "superseded_by": null,
       "last_verified": null,
@@ -153,7 +153,7 @@
     {
       "id": "workers/hnx-fetch/v0.1.0",
       "unit": "workers/hnx-fetch/v0.1.0",
-      "title": "Nạp HNX Fetch vào Chrome và chạy MỘT lượt lấy dữ liệu thật qua nó, thay vì qua Scouter. Toàn bộ mã đã tách xong và phép ghim xanh, nhưng chưa lượt nào đi qua chính extension này.",
+      "title": "Chạy MỘT lượt lấy dữ liệu thật qua chính extension HNX Fetch, thay vì qua Scouter. Toàn bộ mã đã tách xong và phép ghim xanh, nhưng chưa lượt nào đi qua nó.",
       "rank": 1,
       "claim": null
     },
