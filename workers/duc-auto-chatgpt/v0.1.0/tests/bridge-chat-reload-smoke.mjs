@@ -66,12 +66,27 @@ assert.ok(
   "the latch is claimed before the handler's first await, not after"
 );
 assert.match(handler, /exact-once|Exact-once/, "the reason the guard exists stays written down");
-// The latch must outlive the readiness wait, not be released before it.
-const reloadWork = sidepanel.slice(sidepanel.indexOf("async function performChatReload"));
+// ADR-0050 ⒝ moved the poll loop out into waitTabComposer(), because the
+// self-repair path needs the same wait after a NAVIGATION rather than after an
+// F5, and two copies of one wait loop is what root AGENTS.md limit ② forbids.
+// So the ordering invariant now spans two functions and has to be asserted on
+// each: performChatReload reloads BEFORE it waits, and the wait itself is the
+// extracted helper -- not a second loop that quietly grew back.
+const reloadBody = sidepanel.slice(body, end);
 assert.ok(
-  reloadWork.indexOf("chrome.tabs.reload") < reloadWork.indexOf("DAC_PING"),
-  "the reload happens before the readiness poll"
+  reloadBody.indexOf("chrome.tabs.reload") < reloadBody.indexOf("waitTabComposer("),
+  "the reload happens before the readiness wait"
 );
+assert.equal(
+  (reloadBody.match(/DAC_PING/g) || []).length,
+  0,
+  "performChatReload must not carry its own poll loop any more -- it calls the shared one"
+);
+const pollStart = sidepanel.indexOf("async function waitTabComposer");
+assert.ok(pollStart > 0, "mỏ neo hỏng: không thấy hàm chờ dùng chung waitTabComposer()");
+const pollBody = sidepanel.slice(pollStart, pollStart + sidepanel.slice(pollStart).search(/^ {2}\}$/m) + 3);
+assert.match(pollBody, /DAC_PING/, "the shared wait proves readiness by the page answering, not by a timer");
+assert.match(pollBody, /composerFound/, "alive is not enough -- the composer must exist, as system.ping requires");
 assert.doesNotMatch(
   codeOnly.slice(0, codeOnly.indexOf("finally")),
   /chrome\.tabs\.reload/,
@@ -84,10 +99,6 @@ assert.doesNotMatch(
 assert.match(codeOnly, /DAC_PING/, "readiness is proven by the page answering, not by a timer");
 assert.match(codeOnly, /composerFound/, "alive is not enough -- the composer must exist, as system.ping requires");
 assert.match(codeOnly, /ready/, "the answer carries an explicit ready flag");
-assert.ok(
-  codeOnly.indexOf("chrome.tabs.reload") < codeOnly.indexOf("DAC_PING"),
-  "the poll happens after the reload, not before"
-);
 // The poll must target the tab that was actually reloaded. send() re-resolves
 // the active tab on every call (B-01), so using it here could ping a different
 // tab than the one that was reloaded and report a stale success.

@@ -181,6 +181,29 @@
   function canRetry(item, failureType) {
     return !HARD_STOP_FAILURE_TYPES.has(failureType) && failureType !== "USER_STOP" && !submissionMayExist(item) && item.retry_count < item.settings.max_retries;
   }
+  // ADR-0050 ⒝ (Đức chốt 08/09): hai trong năm hard stop có cách chữa xác định, nên chúng
+  // thôi dừng hẳn và trở thành ĐIỀU KIỆN CHỮA ĐƯỢC. Cửa này đứng TRƯỚC canRetry() và
+  // KHÔNG sửa vào trong nó: canRetry vẫn là chỗ duy nhất trả lời "còn được gửi lại không",
+  // còn cửa này chỉ trả lời "có được sửa hạ tầng rồi thử lại từ đầu không".
+  //
+  // Ba điều kiện, và cả ba đều bắt buộc:
+  //   ⑴ đúng loại — chỉ RECEIVER_LOST và WRONG_SURFACE. SECURITY_HARD_STOP,
+  //     GENERATION_LIMIT_REACHED và DETECTION_BLIND vẫn dừng hẳn (ADR-0050 ⒜⒞).
+  //   ⑵ CHƯA GỬI GÌ — `submissionMayExist()` phải trả false. ADR-0050 ⒝ viết rằng cả hai
+  //     loại này "xảy ra trước khi gửi", nhưng đó chỉ đúng với ca thường gặp:
+  //     `activeTab()` ném RECEIVER_LOST ở bất kỳ đâu, kể cả sau khi prompt đã bay. Chữa
+  //     lúc đó là F5 đè lên một lượt đang chạy — đúng cái `chat.reload` từ chối làm, và
+  //     nó có thể làm prompt bị gửi lần hai. Nên điều kiện này KHÔNG được nới.
+  //   ⑶ còn nắp — ADR-0050 ghi rõ mặt xấu: một điều kiện chữa mãi không khỏi mà không có
+  //     nắp thì ⒝ biến MỘT LẦN DỪNG thành MỘT VÒNG LẶP VÔ HẠN, tệ hơn hẳn cái nó thay.
+  //     Nắp đếm theo TỪNG LOẠI trong MỘT run; hết nắp thì rơi về đúng hành vi cũ.
+  const REPAIRABLE_FAILURE_TYPES = new Set(["RECEIVER_LOST", "WRONG_SURFACE"]);
+  const MAX_REPAIRS_PER_RUN = 3;
+  function mayRepair(item, failureType, repairsUsed = 0, cap = MAX_REPAIRS_PER_RUN) {
+    if (!REPAIRABLE_FAILURE_TYPES.has(failureType)) return false;
+    if (submissionMayExist(item)) return false;
+    return Number(repairsUsed) < cap;
+  }
   function needsReconciliation(phase) { return POST_SUBMIT_PHASES.has(phase) && phase !== "SUCCESS"; }
   // INTERRUPTED means "genuinely unresolved -- a human must look before this
   // run continues". Từ B-19 (Đức chốt 06/09) nó phủ HAI trường hợp, không còn
@@ -310,6 +333,6 @@
     if (!signal?.composerFound) return "OUTPUT_READY";
     return "CHAT_READY";
   }
-  const api = { DEFAULTS, ATTEMPT_PHASES, TASK_TYPES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, basename, referenceTokens, taskType, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, submissionMayExist, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
+  const api = { DEFAULTS, ATTEMPT_PHASES, TASK_TYPES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, REPAIRABLE_FAILURE_TYPES, MAX_REPAIRS_PER_RUN, mayRepair, basename, referenceTokens, taskType, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, submissionMayExist, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
   (typeof window !== "undefined" ? window : globalThis).DacRunnerCore = api;
 })();

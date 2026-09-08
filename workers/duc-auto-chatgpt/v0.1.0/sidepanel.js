@@ -58,6 +58,9 @@
     boundTabId: null,
     boundTabUrl: "",
     boundConversationId: null,
+    // ADR-0050 ⒝: số lần đã tự chữa, đếm theo TỪNG loại lỗi, trong MỘT run. Đặt lại ở
+    // đầu mỗi run — nắp phải là nắp của một loạt job, không phải của cả đời phiên.
+    repairsUsed: {},
     validated: false,
     stopRequested: false,
     pauseRequested: false,
@@ -1053,6 +1056,27 @@
     }
   }
 
+  // Chờ một tab trả lời lại sau khi bị F5 hoặc bị điều hướng. Sống lại KHÔNG bằng dùng
+  // được: chờ tới khi ô soạn có mặt — đúng tín hiệu `system.ping` coi là ChatGPT đang với
+  // tới được. Hỏi thẳng tab theo id, không đi qua `send()`: `send()` giải lại tab đang
+  // hoạt động và có thể ping nhầm một tab khác.
+  //
+  // Tách ra khỏi performChatReload() ở lượt vá ADR-0050 ⒝ vì đường tự chữa cần đúng vòng
+  // chờ này sau MỘT LẦN ĐIỀU HƯỚNG, không phải sau một lần F5. Hai bản sao của cùng một
+  // vòng chờ là đúng thứ giới hạn ② của AGENTS.md gốc cấm.
+  async function waitTabComposer(tabId, startedAt = Date.now()) {
+    let composerFound = false;
+    while (Date.now() - startedAt < CHAT_RELOAD_READY_TIMEOUT_MS) {
+      await sleep(CHAT_RELOAD_POLL_MS);
+      try {
+        const ping = await chrome.tabs.sendMessage(tabId, { type: "DAC_PING" });
+        composerFound = Boolean(ping?.composerFound);
+        if (composerFound) break;
+      } catch (_) { /* content script chưa được tiêm lại */ }
+    }
+    return { ready: composerFound, composerFound, waitedMs: Date.now() - startedAt };
+  }
+
   async function performChatReload(targetTab = null) {
     // B-01 is fixed now: a RUN binds one tab and activeTab() resolves that
     // bound tab by id. This handler, though, only ever runs when NO run is
@@ -1069,19 +1093,7 @@
     // the caller act too early, so poll the tab we just reloaded -- by id, not
     // through send(), which would re-resolve the active tab and could end up
     // pinging a different one.
-    let ready = false;
-    let composerFound = false;
-    while (Date.now() - startedAt < CHAT_RELOAD_READY_TIMEOUT_MS) {
-      await sleep(CHAT_RELOAD_POLL_MS);
-      try {
-        const ping = await chrome.tabs.sendMessage(tabId, { type: "DAC_PING" });
-        composerFound = Boolean(ping?.composerFound);
-        // Alive is not the same as usable: wait for the composer to exist, the
-        // same signal system.ping treats as ChatGPT being reachable.
-        if (composerFound) { ready = true; break; }
-      } catch (_) { /* content script has not been re-injected yet */ }
-    }
-    const waitedMs = Date.now() - startedAt;
+    const { ready, composerFound, waitedMs } = await waitTabComposer(tabId, startedAt);
     const after = await chrome.tabs.get(tabId).catch(() => null);
     const urlAfter = after?.url || null;
     // audit() no-ops without a run_id, so a reload before this session's first
@@ -5764,6 +5776,44 @@
   // resolves it via Resume Plan. Everything else auto-retries up to
   // max_retries and, once exhausted, settles as FAILED so the queue keeps
   // moving to the next job instead of stopping the batch.
+  // ADR-0050 ⒝ — MỘT lần chữa hạ tầng, rồi để vòng chạy thử lại từ đầu.
+  //
+  // Vì sao đường này được F5 giữa một run trong khi `chat.reload` TỪ CHỐI làm đúng việc
+  // đó: lệnh kia chạy theo tay người, bất kỳ lúc nào, kể cả khi một prompt đang bay — F5
+  // lúc ấy giết attempt và có thể làm prompt được gửi lần hai. Đường này chỉ mở sau khi
+  // `mayRepair()` đã khẳng định lượt này CHƯA GỬI GÌ, tức không có gì để mất và không có
+  // gì để gửi lại. Điều kiện đó là TOÀN BỘ lý do đường này an toàn; nới nó là mở lại đúng
+  // cái lỗ `chat.reload` bịt.
+  //
+  // Chữa bằng ĐÚNG MỘT trong hai việc, không hơn:
+  //   • tab không còn ở hội thoại của run → điều hướng NÓ VỀ hội thoại đó;
+  //   • tab vẫn đúng chỗ nhưng receiver câm → F5.
+  // KHÔNG mở tab mới, KHÔNG tự chọn hội thoại. Tab đã đóng, hoặc run chưa từng gắn vào
+  // một hội thoại nào, thì không có đích để về — trả lời không chữa được và để nó dừng
+  // hẳn như cũ. Đoán lấy một hội thoại là đúng cái `bindRunTab()` sinh ra để chặn: nó gõ
+  // prompt của job này vào luồng của người khác rồi đọc ảnh của luồng đó về làm kết quả.
+  //
+  // `boundConversationId === null` là ca THƯỜNG GẶP của WRONG_SURFACE (run bắt đầu ngay
+  // trên trang phóng), nên trên thực tế loại đó phần lớn vẫn dừng hẳn — chỉ ca hiếm
+  // "đang điều hướng dở lúc gate chạy" mới chữa được. Ghi ra để không ai đọc bảng rồi
+  // tưởng WRONG_SURFACE nay tự khỏi.
+  async function repairWorkspaceSurface() {
+    if (state.boundTabId === null) return { ok: false, note: "run này chưa gắn vào tab nào để chữa." };
+    const tab = await chrome.tabs.get(state.boundTabId).catch(() => null);
+    if (!tab?.id) return { ok: false, note: `tab ${state.boundTabId} đã đóng — không tự mở tab mới.` };
+    const url = tab.url || tab.pendingUrl || "";
+    const boundUrl = state.boundConversationId && conversationIdOf(state.boundTabUrl) === state.boundConversationId ? state.boundTabUrl : null;
+    const onBound = Boolean(state.boundConversationId) && isChatGPTTabUrl(url) && conversationIdOf(url) === state.boundConversationId;
+    let action;
+    if (onBound) { action = "F5 lại tab"; await chrome.tabs.reload(tab.id); }
+    else if (boundUrl) { action = "đưa tab về hội thoại của run"; await chrome.tabs.update(tab.id, { url: boundUrl }); }
+    else return { ok: false, note: "run này chưa gắn vào hội thoại nào nên không có chỗ để quay về. Mở sẵn một hội thoại rồi chạy lại." };
+    const waited = await waitTabComposer(tab.id);
+    return waited.ready
+      ? { ok: true, note: `đã ${action} và trang trả lời lại sau ${Math.round(waited.waitedMs / 1000)} giây.` }
+      : { ok: false, note: `đã ${action} nhưng sau ${Math.round(waited.waitedMs / 1000)} giây trang vẫn chưa trả lời.` };
+  }
+
   async function resolveJobFailure(item, failureType, message, settings) {
     const hardStop = window.DacRunnerCore.HARD_STOP_FAILURE_TYPES.has(failureType);
     // B-19 (Đức chốt 06/09): sau khi đã gửi -- hoặc khi không khẳng định được
@@ -5773,6 +5823,25 @@
     // FAILED: resume-core đọc FAILED là SAFE_FAILED = bỏ qua an toàn, mà một
     // prompt đã bay thì chưa an toàn để bỏ qua.
     const mayHaveSubmitted = window.DacRunnerCore.submissionMayExist(item);
+    // ADR-0050 ⒝: thử CHỮA trước khi tuyên hard stop. Cửa này đứng trước cả `canRetry()`,
+    // và cố ý KHÔNG tăng `retry_count`: chữa hạ tầng không phải một lượt thử lại — nó
+    // không gửi gì, không tiêu lượt nào, nên tính nó vào `max_retries` là ăn mất lượt thử
+    // của một lỗi khác hẳn. Thứ chặn nó là nắp riêng, đếm theo TỪNG LOẠI trong MỘT run.
+    const repairsUsed = state.repairsUsed[failureType] || 0;
+    if (!state.stopRequested && window.DacRunnerCore.mayRepair(item, failureType, repairsUsed)) {
+      state.repairsUsed[failureType] = repairsUsed + 1;
+      const lan = `${repairsUsed + 1}/${window.DacRunnerCore.MAX_REPAIRS_PER_RUN}`;
+      log(`${item.job.id} ${failureType}; đang tự chữa (lần ${lan}).`, "");
+      const repair = await repairWorkspaceSurface();
+      audit("WORKSPACE_REPAIR", item, { message: `${failureType} ${repair.ok ? "REPAIRED" : "NOT_REPAIRED"} ${lan}: ${repair.note}` });
+      if (repair.ok) {
+        update(item, { status: "PENDING", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+        log(`${item.job.id} đã tự chữa xong — ${repair.note} Chạy tiếp.`, "done");
+        renderQueue(); progress(`${item.job.id}: đã tự chữa (${lan}); chạy tiếp.`);
+        return { completed: false, halted: false };
+      }
+      log(`${item.job.id} không tự chữa được — ${repair.note}`, "error");
+    }
     if (!hardStop && window.DacRunnerCore.canRetry(item, failureType)) {
       item.retry_count += 1;
       update(item, { status: "PENDING", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message });
@@ -6063,7 +6132,7 @@
     // latch (queueRunLock.tryBeginRun) instead, which runs before this
     // function's first await -- see the comment there. Resetting it at this
     // point would discard a run.stop that arrived during startup.
-    state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.lastFailure = null; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.lastFailure = null; state.repairsUsed = {}; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
     state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = [];
     // Bridge Setup mutations may already have written this session's audit

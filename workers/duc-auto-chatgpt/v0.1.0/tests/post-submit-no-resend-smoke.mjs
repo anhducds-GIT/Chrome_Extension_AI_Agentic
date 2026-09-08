@@ -119,11 +119,15 @@ assert.ok(to > from, "không tìm thấy chỗ đóng hàm resolveJobFailure()")
 const shipped = source.slice(from, to + END.length);
 assert.ok(shipped.includes("markInterrupted"), "cắt nhầm khối: resolveJobFailure() phải chứa nhánh markInterrupted");
 
-function runShipped(item, failureType, { continue_on_error = true } = {}) {
-  const calls = { retried: 0, interrupted: 0, failed: 0, slept: 0, lastFailure: null };
+function runShipped(item, failureType, { continue_on_error = true, repair = { ok: false, note: "sân khấu: không chữa được" }, repairsUsed = {}, stopRequested = false } = {}) {
+  const calls = { retried: 0, interrupted: 0, failed: 0, slept: 0, lastFailure: null, repairAttempts: 0, repairsUsed };
   const sandbox = {
     window: { DacRunnerCore: runner },
-    state: {},
+    state: { stopRequested, repairsUsed },
+    // ADR-0050 ⒝: cửa tự chữa. Stub ĐẾM lượt gọi chứ không rỗng — nhờ vậy khẳng định ở
+    // dưới phân biệt được "chữa xong nên chạy tiếp" với "không chữa gì mà vẫn chạy tiếp",
+    // hai thứ trông giống hệt nhau nếu chỉ nhìn outcome.
+    repairWorkspaceSurface: async () => { calls.repairAttempts += 1; return repair; },
     Date,
     console,
     update: (_item, values) => { if (values.status === "PENDING") calls.retried += 1; if (values.status === "FAILED") calls.failed += 1; },
@@ -147,7 +151,7 @@ function runShipped(item, failureType, { continue_on_error = true } = {}) {
   };
   vm.createContext(sandbox);
   vm.runInContext(`var resolveJobFailure;${shipped}resolveJobFailure`, sandbox);
-  return sandbox.resolveJobFailure(item, failureType, "đo", { continue_on_error }).then((outcome) => ({ outcome, calls }));
+  return sandbox.resolveJobFailure(item, failureType, "đo", { continue_on_error }).then((outcome) => ({ outcome, calls, item }));
 }
 
 const assertOutcome = (outcome, expected, note) => assert.deepEqual({ completed: outcome.completed, halted: outcome.halted }, expected, note);
@@ -204,14 +208,100 @@ for (const [phase, failureType] of [
   assertOutcome(outcome, { completed: true, halted: false });
 }
 
-// (d) hard stop giữ nguyên đường cũ — DETECTION_BLIND/WRONG_SURFACE tồn tại
-// để chặn retry mù, bản vá này không được làm chúng yếu đi hay đổi hình.
+// (d) hard stop: KHÔNG loại nào được gửi lại. Từ ADR-0050 ⒝ (Đức chốt 08/09) hai loại
+// được thử CHỮA trước — chữa hạ tầng, không gửi gì — nhưng chữa hỏng thì rơi về đúng
+// đường cũ. Sân khấu mặc định là "không chữa được", nên vòng này đo đúng đường cũ.
 for (const hardStop of runner.HARD_STOP_FAILURE_TYPES) {
   const { outcome, calls } = await runShipped({ ...baseItem(), phase: "PRE_SUBMIT" }, hardStop);
   assert.equal(calls.retried, 0, `${hardStop} vẫn không thử lại`);
-  assert.equal(calls.interrupted, 1, `${hardStop} vẫn INTERRUPTED`);
+  assert.equal(calls.interrupted, 1, `${hardStop} chữa không được thì vẫn INTERRUPTED`);
+  assertOutcome(outcome, { completed: true, halted: true });
+  assert.equal(
+    calls.repairAttempts,
+    runner.REPAIRABLE_FAILURE_TYPES.has(hardStop) ? 1 : 0,
+    `${hardStop}: chỉ hai loại ADR-0050 ⒝ nêu mới được đụng vào trình duyệt của Đức. ` +
+    "Chữa một hard stop khác là F5 hoặc điều hướng khi CAPTCHA đang hiện, hoặc khi hạn " +
+    "mức đã hết — đâm vào tường, hoặc làm tình hình xấu đi."
+  );
+}
+
+/* ---- phần 2b: ADR-0050 ⒝ — tự chữa, và cái nắp chặn nó thành vòng lặp ---- */
+
+// Chỉ đúng hai loại. Đây là danh sách Đức chốt, không phải "mọi hard stop nghe có vẻ
+// hạ tầng": DETECTION_BLIND cố ý KHÔNG có trong đó (ADR-0050 ⒞ — nó xảy ra SAU khi gửi,
+// nên chữa xong phải ĐỐI SOÁT chứ không được chạy tiếp; đó là việc riêng của B-41 ⑵).
+assert.deepEqual([...runner.REPAIRABLE_FAILURE_TYPES].sort(), ["RECEIVER_LOST", "WRONG_SURFACE"]);
+for (const type of runner.REPAIRABLE_FAILURE_TYPES) {
+  assert.ok(runner.HARD_STOP_FAILURE_TYPES.has(type), `${type} vẫn phải là hard stop khi không chữa được`);
+}
+assert.ok(runner.MAX_REPAIRS_PER_RUN > 0 && Number.isInteger(runner.MAX_REPAIRS_PER_RUN), "nắp phải là một số nguyên dương thật");
+
+// Hợp đồng thuần của cửa chữa, ba điều kiện, mỗi cái một mép ngược.
+assert.equal(runner.mayRepair({ phase: "PRE_SUBMIT" }, "RECEIVER_LOST", 0), true);
+assert.equal(runner.mayRepair({ phase: "PRE_SUBMIT" }, "DETECTION_BLIND", 0), false, "ADR-0050 ⒞ tách DETECTION_BLIND ra: nó phải đối soát trước, không được chạy tiếp");
+assert.equal(runner.mayRepair({ phase: "PRE_SUBMIT" }, "SECURITY_HARD_STOP", 0), false, "CAPTCHA thì tự chữa là đâm vào tường");
+assert.equal(runner.mayRepair({ phase: "PRE_SUBMIT" }, "GENERATION_LIMIT_REACHED", 0), false, "hết hạn mức thì F5 bao nhiêu lần cũng thế");
+// Mép quan trọng nhất của cả mục này. ADR-0050 ⒝ viết hai loại đó "xảy ra trước khi
+// gửi", nhưng `activeTab()` ném RECEIVER_LOST ở BẤT KỲ đâu, kể cả sau khi prompt đã bay.
+// Chữa lúc ấy là F5 đè lên một lượt đang chạy — đúng cái `chat.reload` từ chối làm, và
+// nó có thể làm prompt được gửi lần hai.
+assert.equal(runner.mayRepair({ phase: "SUBMITTED" }, "RECEIVER_LOST", 0), false, "đã gửi rồi thì tuyệt đối không chữa: F5 lúc đó có thể làm prompt bay lần hai");
+assert.equal(runner.mayRepair({ phase: "PRE_SUBMIT", submission_uncertain: true }, "RECEIVER_LOST", 0), false, "không khẳng định được là chưa gửi thì cũng không chữa");
+assert.equal(runner.mayRepair({ phase: "PRE_SUBMIT" }, "RECEIVER_LOST", runner.MAX_REPAIRS_PER_RUN), false, "hết nắp thì thôi");
+assert.equal(runner.mayRepair({ phase: "PRE_SUBMIT" }, "RECEIVER_LOST", runner.MAX_REPAIRS_PER_RUN - 1), true, "còn một lần thì vẫn được chữa — nắp không được lệch một đơn vị");
+
+// Chữa xong thì chạy tiếp, KHÔNG dừng, KHÔNG ăn một lượt max_retries.
+for (const type of runner.REPAIRABLE_FAILURE_TYPES) {
+  const repairsUsed = {};
+  const { outcome, calls, item } = await runShipped({ ...baseItem(), phase: "PRE_SUBMIT" }, type, { repair: { ok: true, note: "đã chữa" }, repairsUsed });
+  assert.equal(calls.repairAttempts, 1, `${type}: phải thật sự gọi cửa chữa`);
+  assert.equal(calls.interrupted, 0, `${type}: chữa xong rồi thì không được dừng batch`);
+  assertOutcome(outcome, { completed: false, halted: false }, `${type}: chữa xong thì trả về vòng chạy để thử lại từ cổng`);
+  assert.equal(item.retry_count, 0, "chữa hạ tầng không gửi gì, nên nó KHÔNG được tiêu một lượt max_retries của lỗi khác");
+  assert.equal(calls.slept, 0, "không chờ cooldown thử lại: đây không phải một lượt thử lại");
+  assert.equal(repairsUsed[type], 1, "phải ĐẾM lượt chữa vào nắp — không đếm thì nắp không tồn tại");
+}
+
+// Nắp: hết lần thì rơi về đúng hành vi cũ, dù cửa chữa vẫn sẽ thành công.
+// Thiếu mép này thì một bản bỏ nắp vẫn xanh, và đó là vòng lặp vô hạn ADR-0050 cảnh báo.
+for (const type of runner.REPAIRABLE_FAILURE_TYPES) {
+  const repairsUsed = { [type]: runner.MAX_REPAIRS_PER_RUN };
+  const { outcome, calls } = await runShipped({ ...baseItem(), phase: "PRE_SUBMIT" }, type, { repair: { ok: true, note: "vẫn chữa được" }, repairsUsed });
+  assert.equal(calls.repairAttempts, 0, `${type}: hết nắp thì không được đụng vào tab nữa`);
+  assert.equal(calls.interrupted, 1, `${type}: hết nắp thì dừng hẳn như trước ADR-0050`);
+  assertOutcome(outcome, { completed: true, halted: true });
+  assert.equal(repairsUsed[type], runner.MAX_REPAIRS_PER_RUN, "hết nắp rồi thì đừng đếm thêm");
+}
+
+// Nắp đếm RIÊNG từng loại: dùng hết nắp của loại này không được khoá loại kia.
+{
+  const repairsUsed = { RECEIVER_LOST: runner.MAX_REPAIRS_PER_RUN };
+  const { outcome, calls } = await runShipped({ ...baseItem(), phase: "PRE_SUBMIT" }, "WRONG_SURFACE", { repair: { ok: true, note: "đã chữa" }, repairsUsed });
+  assert.equal(calls.repairAttempts, 1, "nắp là của TỪNG loại, không phải một nắp chung");
+  assertOutcome(outcome, { completed: false, halted: false });
+}
+
+// Người vận hành bấm Dừng thì thôi chữa. Nếu không, một lệnh dừng có thể rơi vào giữa
+// tối đa 20 giây chờ trang trả lời, và Đức thấy tab vẫn tự nạp lại sau khi đã bấm Dừng.
+{
+  const { outcome, calls } = await runShipped({ ...baseItem(), phase: "PRE_SUBMIT" }, "RECEIVER_LOST", { repair: { ok: true, note: "đã chữa" }, stopRequested: true });
+  assert.equal(calls.repairAttempts, 0, "đã bấm Dừng thì không tự chữa nữa");
+  assert.equal(calls.interrupted, 1);
   assertOutcome(outcome, { completed: true, halted: true });
 }
+
+// Cửa chữa phải đứng TRƯỚC canRetry(), và canRetry() phải giữ nguyên hình. Sửa thẳng
+// vào canRetry để cho hai loại này qua là bỏ mất cái đảo-mặc-định ADR-0047 dựng.
+for (const type of runner.REPAIRABLE_FAILURE_TYPES) {
+  assert.equal(runner.canRetry({ phase: "PRE_SUBMIT", retry_count: 0, settings: { max_retries: 5 } }, type), false, `${type} vẫn KHÔNG được canRetry nới cho qua`);
+}
+// Bỏ chú giải trước khi soi thứ tự: chính khối chú giải của bản vá này nhắc tên
+// `canRetry()` để giải thích, và đọc cả chú giải thì thứ tự đo được là thứ tự của VĂN,
+// không phải của MÃ.
+const shippedCode = shipped.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/.*$/gm, "$1");
+const gate = shippedCode.indexOf("mayRepair(");
+const retryGate = shippedCode.indexOf("canRetry(");
+assert.ok(gate > 0 && retryGate > 0 && gate < retryGate, "cửa đối soát/chữa phải đứng TRƯỚC canRetry() trong hàm đã ship");
 
 /* ---- phần 3: vòng chạy phải BẬT/TẮT cờ đúng chỗ ------------------------ */
 
