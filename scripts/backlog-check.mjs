@@ -276,7 +276,11 @@ export function kiemSo(text) {
 }
 
 function main(argv) {
-  const duongDan = argv[0] ?? "BACKLOG.md";
+  /* `--can-duc` chi la MOT KHUNG NHIN, khong phai mot phep kiem rieng: lượt chạy mặc định đã
+     đo và đã tính vào mã thoát. Có cờ này vì điều kiện đóng của N-29 gọi đúng tên nó, và một
+     luật trỏ tới lệnh không chạy được thì nó là chữ, không phải luật. */
+  const chiCanDuc = argv.includes("--can-duc");
+  const duongDan = argv.filter((a) => !a.startsWith("--"))[0] ?? "BACKLOG.md";
   let text;
   try {
     text = fs.readFileSync(duongDan, "utf8");
@@ -294,8 +298,12 @@ function main(argv) {
       .split(String.fromCharCode(10)).map((d) => d.trim()).filter(Boolean);
     khongDau = viecDucKhongDau(ds, (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8"));
   } catch { khongDau = []; }
-  console.log(`BACKLOG: ${tong} muc, ${thieu.length} thieu truong dong-khi, ${trung.length} ma bi trung, ${voHinh.length} muc vo hinh`);
+  if (!chiCanDuc) console.log(`BACKLOG: ${tong} muc, ${thieu.length} thieu truong dong-khi, ${trung.length} ma bi trung, ${voHinh.length} muc vo hinh`);
   console.log(`CAN DUC: ${khongDau.length} goi co human_action ma khong co dau @Duc nao`);
+  if (chiCanDuc) {
+    for (const k of khongDau) console.error(`  ${k.hoSo} — "${k.viec}"`);
+    return khongDau.length ? 1 : 0;
+  }
   for (const ma of thieu) {
     console.error(`  ${ma}: thiếu "${TRUONG_DONG_KHI} lệnh: <lệnh chạy được>" hoặc "${TRUONG_DONG_KHI} đức: <câu Đức phải chốt>"`);
   }
