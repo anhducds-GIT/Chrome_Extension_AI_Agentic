@@ -375,3 +375,29 @@ bật thật với tệp đó và trả `HTTP 200 · EXTENSION_OFFLINE`.
 
 **Còn đúng một việc và chỉ tay Đức làm được:** mở bảng bên HNX Fetch, chọn tệp đó thay tệp của
 Scouter. Xong thì một lượt `--thu-xem` **không kèm** `--target` là `H-06` đóng.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — nhận 17 con đột biến từ pilot cũ, và Bridge về nhà chung
+
+**Nhận 17 con đột biến tầng dữ liệu** trước khi thư mục pilot cũ bị xoá. Chúng canh
+`du-lieu/vong-lay.mjs` và `du-lieu/nguon-hnx.mjs`: luật thử lại, phép không-làm-hai-lần, hợp
+đồng trang, và ca *"200 OK kèm cả một trang HTML"* — cái bẫy đắt nhất của trang HNX.
+
+Bộ đo ở gói này trước lượt đó **chỉ với tới `tai-ket-qua.mjs`**, nên xoá thẳng thư mục cũ là mất
+trắng lớp lưới đó. Mã `N*` đổi thành `W*` vì `N1..N22` đã có chủ ở mẻ bề mặt hẹp — bộ đo chặn mã
+trùng, và nó chặn thật hai lần trong ngày. Đo: **43/43 mỏ neo · 43 giết được · 0 sống sót**.
+
+**Bridge của gói nay ở đúng nhà chung:**
+`C:\WORKING ZONE\Chrome Extension Bridge\hnx-fetch\` — cùng hình dạng bốn gói cũ. Trong đó:
+tệp ghép cặp `hnx-fetch-bridge-pairing-v1.json`, bộ khởi động `START-BRIDGE_HNX-Fetch.cmd`
+(+`.ps1`), vùng ghi `du-lieu-ra\` là thư mục **con** — `file.read` đọc được mọi tệp dưới vùng
+ghi, nên trỏ vùng ghi vào chính thư mục gói là để token đọc được qua dây.
+
+Đã chạy thử thật: máy chủ lên cổng 32154, giao thức `hnx-fetch.bridge`, vùng ghi đúng chỗ.
+
+**Sổ tay và luật đường dẫn** ghi ở `workers/_shared/AGENTS.md` mục *NHÀ CHUNG CỦA BRIDGE*, và
+cưỡng chế bằng cờ `--goi` của bộ sinh. Chi tiết vì sao ghim vào mã: `workers/_shared/HANDOFF.md`.
+
+**Còn đúng một việc chờ tay Đức:** mở bảng bên HNX Fetch, chọn tệp ghép cặp mới ở đường dẫn trên
+thay cho tệp của Scouter. Xong thì `--target` hết cần, và `H-06` đóng.
