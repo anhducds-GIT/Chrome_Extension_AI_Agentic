@@ -252,3 +252,18 @@ lệnh đúng vẫn OK. Nên phản hồi lạc không phá được lượt kh�
 
 · **đóng khi:** tên method không có trong bảng trả về `METHOD_NOT_FOUND` cho MỌI tên (kèm một
 phép ghim), hoặc đo được rằng `capabilities` là bí danh cũ có thật và khai nó ra cho tử tế.
+
+## S-14 · Câu báo lỗi chỉ sai cửa: nói "popup" trong khi giao diện là bảng bên
+
+Khi hết hạn mức ghi, `scouter-seed-core.mjs` báo *"Tat roi bat lai cong tac trong popup"*.
+Nhưng Scouter không có popup — công tắc nằm ở **bảng bên** (side panel), đầu bảng, tên
+*"Cho phép bấm và gõ"*. Đức gặp thật 08/09 và phải hỏi lại công tắc ở đâu.
+
+Nhỏ, nhưng đúng loại lỗi đắt nhất với người dùng: câu hướng dẫn **chỉ sai chỗ** thì người đọc
+đi tìm nhầm cửa sổ và kết luận là công cụ hỏng.
+
+Chưa sửa ngay vì sửa xong phải nạp lại extension, mà lúc đó Đức đang cần chạy nốt 29 tệp.
+
+· **đóng khi:** câu đó nói đúng tên cửa ("bảng bên") và đúng tên công tắc, kèm một phép ghim
+so chữ trong thông báo với nhãn thật trong `sidepanel.html` — để hai bên không lệch lại lần
+nữa khi ai đó đổi nhãn.

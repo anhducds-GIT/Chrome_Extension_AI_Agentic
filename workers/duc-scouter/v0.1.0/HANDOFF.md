@@ -422,3 +422,37 @@ phiên. Ngày có giao dịch đo cùng lúc: 46194 byte, 192 ô. Không phải 
 
 Chạy lại: `node chay.mjs --pairing <tệp> --tu 2026-08-25 --den 2026-09-07` trong
 `pilots/hnx-phai-sinh/`.
+
+## 2026-09-08 · `claude-scouter-s06` — kho PDF phái sinh HNX ĐẦY ĐỦ 216/216
+
+**Đức nêu mục đích thật:** thư mục Google Drive *Phái Sinh daily Fetch* là database ông ấy
+duy trì BẰNG TAY từ 07/2026 để phân tích phái sinh. Nên bộ tải bám convention đã có, không
+đặt tên kiểu mới.
+
+**Kết quả cuối, đo trên chính thư mục đó:**
+
+| | Trước | Sau |
+|---|---|---|
+| Tổng PDF | 176 | **216** |
+| Ngày có dữ liệu | 37 | **46** (01/07 → 07/09) |
+| Ngày thiếu báo cáo | 0 | **0** |
+| Báo cáo tháng | 202601–07 | **202601–08** |
+
+Kiểm từng tệp: **216/216 là PDF đầy đủ** (đầu `%PDF-`, đuôi `%%EOF`), **0 tệp `.dang-tai` sót**.
+Chạy lần ba báo *"Tổng HNX có 124 · đã có 124 · CÒN THIẾU 0"*.
+
+**Hai lượt, vì cái phanh chặn giữa chừng — và nó chặn ĐÚNG.** Lượt 1 lấy 11 tệp rồi dừng ở
+`WRITE_CAP_REACHED` (50/50 một lần mở khoá). Đáng ghi: nó dừng **sạch** — không tệp dở,
+không tệp mang tên thật mà thiếu nửa sau. Nếu nó chặn kiểu khác thì 29 tệp kia sẽ mang tên
+thật mà rỗng ruột, và **mọi lượt sau bỏ qua chúng vĩnh viễn** vì tệp trên đĩa chính là trạng
+thái. Đức tắt–bật công tắc (đặt lại bộ đếm về 0), lượt 2 lấy nốt 29/29, 0 hỏng.
+
+**Ranh giới seed/pilot GIỮ ĐƯỢC, và có máy canh.** Đức hỏi thẳng có nên tách chưa. Đo:
+seed 9.966 dòng · pilot 1.334 dòng; mọi thứ riêng HNX nằm trong `pilots/`, mọi thứ chung
+(`as: base64` · trần `dom.snapshot` · chốt kích thước phản hồi) nằm trong seed và **không
+dòng nào nhắc tên trang**. Thử phá: thêm một hằng số `"https://hnx.vn/"` vào lõi seed →
+`seed-purity-smoke` **ĐỎ ngay**. Hàng rào thật, không phải lời hứa.
+
+**Rủi ro còn lại, và phép kiểm trên KHÔNG bắt được nó:** seed mới chỉ thử trên **một trang**
+(`TRIALS.md` liệt kê đúng `hnx.vn`). Một hàm sạch tên trang vẫn có thể chỉ đúng cho một
+hình dạng trang. Nên *"năng lực chung"* hiện là **lời khai**, chưa phải điều đã đo.
