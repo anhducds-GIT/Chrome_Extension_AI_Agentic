@@ -524,3 +524,28 @@ khi kiểm 12/08 và 17/08 đều đủ 8 hàng trong SSOT. **Không** xoá các
 chúng chỉ 173 byte, là **con trỏ tới tài liệu Google Drive** chứ không phải tệp CSV.
 
 **Đo.** Suite **20/20**.
+
+## 2026-09-08 · `claude-scouter-s06` — roadmap sau một ngày chạy thật
+
+Đức sắp compact, nên roadmap phải nằm trong **tệp** chứ không trong hội thoại.
+`ROADMAP.md` nay có phần **08/09** thay phần *"Đang ở đâu"* cũ ở chỗ hai bên nói khác nhau —
+phần cũ viết lúc mọi thứ còn chạy trên trang giả.
+
+**Thứ tự đi tiếp, xếp theo giá trị chia công sức:**
+
+1. **Trang thử THỨ HAI cho seed.** Seed mới thử trên đúng một trang. Phép kiểm thuần khiết
+   canh được *seed không nhắc tên trang*, nhưng **không** canh được *seed có dùng chung được
+   không* — một hàm sạch tên trang vẫn có thể chỉ đúng cho một **hình dạng** trang. Nên
+   *"năng lực chung"* hiện là **lời khai chưa được đo**. Chọn trang **render bằng JS**, khác
+   kiểu hnx.vn (tĩnh, jQuery).
+2. **Đóng gói v1** — chỉ sau ①. Đóng gói một seed mới thử một trang là đóng gói một lời hứa.
+3. **Ba mục nợ nhỏ** gộp một lượt: `S-11` · `S-12` · `S-13`.
+4. **KHÔNG làm:** tự chạy hằng ngày (luật gốc cấm automation tự chạy khi chưa hỏi) · mở thêm
+   quyền CDP (`Page.navigate` vừa mở hôm nay; mở tiếp mà chưa có việc thật đòi là nới bề
+   mặt tấn công cho một nhu cầu tưởng tượng).
+
+**Ba câu chỉ Đức trả lời được** đã ghi vào `ROADMAP.md` — sau compact đó là chỗ duy nhất còn
+nhớ chúng: trang thử thứ hai là trang nào · `S-11` chấp nhận rủi ro hay mở băng · `S-12`
+chịu gọi lại hay đánh dấu ngày lễ.
+
+Kèm: sửa dòng *"công tắc popup"* thành *"công tắc bảng bên"* (`S-14` đóng hôm nay).
