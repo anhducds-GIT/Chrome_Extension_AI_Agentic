@@ -9,6 +9,10 @@ next_step: "Bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT 
 human_action: "Nạp lại extension trong Chrome — manifest đổi (đổi sang bảng bên, thêm quyền hẹn giờ) nên bản đang chạy không tự cập nhật. Bấm icon nay mở bảng bên ở cạnh phải, không còn popup. Muốn Scouter bấm thì bật Chế độ phát triển trong bảng đó."
 version_source: workers/duc-scouter/v0.1.0/manifest.json
 current_focus: "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
+lam_duoc: "Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới."
+khong_lam_duoc: "Không tự chạy. Mọi lệnh bấm và gõ đóng mặc định, chỉ tay Đức mở được, và mỗi lần mở có trần lượt. Không ghi tệp — việc đó ở máy chủ Bridge. Không biết trang nào cả: hiểu biết về một trang cụ thể phải nằm ở tầng adapter bên ngoài."
+dung_the_nao: "Nạp thư mục v0.1.0 vào Chrome, bật máy chủ Bridge của Scouter, chọn tệp ghép cặp trong bảng bên. Muốn nó bấm hay gõ thì bật công tắc Cho phép bấm và gõ — Chrome sẽ hiện dải băng đang gỡ lỗi trình duyệt trên tab nó cắm vào. Phanh khẩn: Ctrl+Shift+X."
+ref_runbook: workers/duc-scouter/v0.1.0/AGENTS.md
 ref_readme: workers/duc-scouter/v0.1.0/README.md
 ref_handoff: workers/duc-scouter/v0.1.0/HANDOFF.md
 ---

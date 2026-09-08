@@ -11,6 +11,9 @@ version_source: workers/hnx-fetch/v0.1.0/manifest.json
 current_focus: "Tách khỏi Scouter xong, đã qua một lượt audit độc lập về cả mã lẫn tài liệu và vá hết. Việc còn lại lớn nhất là nạp vào Chrome rồi chạy thật một lượt qua chính nó."
 ref_readme: workers/hnx-fetch/README.md
 ref_handoff: workers/hnx-fetch/HANDOFF.md
+lam_duoc: "Lấy dữ liệu phái sinh HNX theo ngày: kết quả giao dịch nối vào một tệp CSV duy nhất, và báo cáo PDF tải về thư mục Drive. Gọi mạng bằng chính trình duyệt, nên vào được trang mà Node gọi thẳng thì hỏng chứng chỉ."
+khong_lam_duoc: "Không bấm, không gõ, không đọc nội dung trang, không chụp màn hình, không mở tab. Không phải chưa làm — mà là KHÔNG CÓ ĐƯỜNG: manifest không khai debugger, không khai content_scripts, không khai scripting. Cần bấm nút trên một trang thì đó là việc của Duc Scouter."
+dung_the_nao: "Bật máy chủ Bridge CỦA GÓI NÀY (kéo thả tệp ghép cặp vào Chay-may-chu-HNX.cmd) — máy chủ của Scouter không dùng được. Mở bảng bên, chọn tệp ghép cặp, bật công tắc Cho phép lấy dữ liệu. Rồi chạy hai lệnh hằng ngày. Chi tiết ở sổ tay."
 ref_runbook: workers/hnx-fetch/PROTOCOL.md
 ref_backlog: workers/hnx-fetch/BACKLOG.md
 ---

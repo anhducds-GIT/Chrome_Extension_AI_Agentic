@@ -546,6 +546,19 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
       owner: item.fm?.owner ?? "",
       nextStep: item.fm?.next_step ?? "",
       humanAction: item.fm?.human_action ?? "",
+      /* BA TRƯỜNG TUỲ CHỌN — "danh tính" của một extension, Đức đặt 08/09: *"cập nhật vào
+       * dashboard danh tính của extension, cả chức năng, khả năng"*.
+       *
+       * Vắng thì khối C không vẽ dòng nào cho đơn vị đó — KHÔNG bịa, và cũng không để một ô
+       * trống trông như lỗi. Bốn gói cũ hôm nay không khai, và đó là trạng thái BÌNH THƯỜNG.
+       *
+       * CỐ Ý KHÔNG chứa số: số lệnh Bridge và số file kiểm là **máy đo**, bảng B đã có. Gõ tay
+       * một con số vào đây là dựng bản thứ hai của một phép đo, và bản thứ hai sẽ mục.
+       * `luatSoMayGiu()` chặn đúng chuyện đó. */
+      lamDuoc: item.fm?.lam_duoc ?? "",
+      khongLamDuoc: item.fm?.khong_lam_duoc ?? "",
+      dungTheNao: item.fm?.dung_the_nao ?? "",
+      soTay: item.fm?.ref_runbook ?? "",
       priorityRank: rankOf(item.fm?.priority_rank),
       supersededBy: item.fm?.superseded_by ?? "",
       statusPath: item.fm ? item.statusPath : ""
@@ -975,7 +988,7 @@ export function buildDashboard(model) {
     lines.push(`| ${values.map(cell).join(" | ")} |`);
   }
 
-  lines.push("", ...blockD(model));
+  lines.push("", ...blockC(model), ...blockD(model));
 
   lines.push(
     "",
@@ -1019,6 +1032,35 @@ function blockA(model) {
     `4. **Ai đang giữ package nào** — \`.agents/claims.json\` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)`,
     ""
   ];
+}
+
+/* Khối C — DANH TÍNH từng extension: làm được gì, KHÔNG làm được gì, dùng thế nào.
+ *
+ * Đức đặt 08/09, và câu đặt hàng có ba chữ đáng giữ: *đơn giản, cô đọng, đừng dài dòng*. Nên
+ * mỗi extension đúng ba dòng, và **chỉ vẽ đơn vị nào có khai** — một danh sách nửa là
+ * "chưa khai" thì người đọc học cách bỏ qua cả khối.
+ *
+ * Vì sao dòng KHÔNG LÀM ĐƯỢC quan trọng ngang dòng làm được: hai extension này khác nhau chủ
+ * yếu ở chỗ chúng **không** làm gì. HNX Fetch không bấm được — đó là tính năng, không phải
+ * thiếu sót, và nó là lý do gói đó tồn tại riêng. */
+function blockC(model) {
+  const co = model.rows.filter((r) => !r.notAUnit && String(r.lamDuoc || "").trim());
+  if (!co.length) return [];
+  const lines = [
+    "## C · Từng extension làm được gì",
+    "",
+    "Số lệnh và số file kiểm KHÔNG lặp lại ở đây — chúng là **máy đo**, xem bảng B.",
+    ""
+  ];
+  for (const r of co) {
+    lines.push(`### ${r.name}`, "");
+    lines.push(`- **Làm được** — ${r.lamDuoc}`);
+    if (String(r.khongLamDuoc || "").trim()) lines.push(`- **KHÔNG làm được** — ${r.khongLamDuoc}`);
+    if (String(r.dungTheNao || "").trim()) lines.push(`- **Dùng thế nào** — ${r.dungTheNao}`);
+    if (String(r.soTay || "").trim()) lines.push(`- **Sổ tay vận hành** — ${link("mở", r.soTay)}`);
+    lines.push("");
+  }
+  return lines;
 }
 
 /* Khối D làm NỢ ĐIỀU HƯỚNG nhìn thấy được. Không nhìn thấy thì không ai trả. */
