@@ -401,3 +401,27 @@ cưỡng chế bằng cờ `--goi` của bộ sinh. Chi tiết vì sao ghim vào
 
 **Còn đúng một việc chờ tay Đức:** mở bảng bên HNX Fetch, chọn tệp ghép cặp mới ở đường dẫn trên
 thay cho tệp của Scouter. Xong thì `--target` hết cần, và `H-06` đóng.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — H-06 đóng, sổ nợ gói RỖNG
+
+Đức chọn tệp ghép cặp riêng trong bảng bên. Đo thật, **không gửi `target`**: `system.ping` trả
+`seed: hnx-fetch-v0.1` · `system.capabilities` trả đúng **4 lệnh** · `bridge.sessions` trả **đúng
+MỘT** extension cắm vào. Hết `TARGET_AMBIGUOUS`. Cờ `--target` từ nay không cần.
+
+**Điều kiện đóng mà chính tôi viết cho `H-06` là một phép thử SAI**, ghi ra thay vì lặng lẽ đóng.
+Nó đòi *"một lượt `--thu-xem` chạy trọn không cần `--target`"*. Nhưng `--thu-xem` **thoát trước
+mọi lượt gọi mạng** — nó chỉ đọc tệp SSOT rồi liệt kê ngày thiếu. Lượt đó sẽ ĐẠT kể cả khi
+**không máy chủ nào chạy**, và kể cả khi định tuyến vẫn hỏng.
+
+Bài học lặp lại lần thứ hai trong ngày (lần trước: phép ghim `GOC_REPO` lùi sai số cấp nên chỉ
+canh `workers/`): **một phép thử phải chạm đúng thứ đang bị nghi ngờ.** Cả hai lần phép thử đều
+xanh và đều đo nhầm chỗ — loại sai này không bao giờ tự đỏ.
+
+**Đo được lúc chạy `--thu-xem`, để phiên sau khỏi giật mình:** SSOT có **368 hàng / 46 ngày**, và
+thiếu **3 ngày**: `2026-09-01`, `2026-09-02`, `2026-09-08`. Hai ngày đầu gần như chắc là nghỉ lễ
+Quốc khánh — lượt chạy thật đầu tiên sẽ tự ghi chúng vào `*.ngay-nghi.csv` và **thôi hỏi lại từ
+lần sau** (cơ chế `H-03`, làm cùng ngày). Ngày 08/09 phải chạy mới biết đã công bố chưa.
+
+**Sổ nợ gói RỖNG.** Việc còn lại chỉ là chạy mỗi ngày một lượt, và lượt đó cần Đức bật công tắc.
