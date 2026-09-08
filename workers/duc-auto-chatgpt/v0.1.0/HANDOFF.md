@@ -289,3 +289,33 @@ chiều 08/09 ([ADR-0024] ở gốc repo) nên cửa đã mở.
 
 **Kết quả:** cảnh báo của bản đồ việc **4 mã → 1 mã**. Còn lại `G-14` ở gói `gemini` — lane
 `claude-gemini-crlf` đang giữ khoá, không đụng. Suite gói xanh 115/115.
+
+## 2026-09-08 · `claude-gpt-no-ky-thuat` — dọn nợ kỹ thuật: 22 → 12 mục mở, hai bản vá thật
+
+**Làm gì.** Đức chốt "đóng hết nợ kỹ thuật trước". Ba việc mở băng trong bản giao việc **đã xong
+từ trước** (ADR-0024 có thật, khối `frozen` rỗng, giới hạn ① đã ghi năm gói) — kiểm rồi bỏ qua.
+
+**Kết quả số**, đo bằng chính `parseBacklog()`, không tin lời sổ:
+
+- **Sổ nợ 22 → 12 mục mở.** Tám mục là sổ **nói thật trở lại**, không phải việc mới xong: mục
+  `## Đã đóng` viết `- **2026-09-07** (B-25) — **ĐÓNG.**` mà bộ đếm chỉ nhận `- **ĐÓNG <mã>**`.
+  Từng mục kiểm lại **bằng đọc mã**, không tin tiêu đề. Lý do đầy đủ của cả tám: `BACKLOG.md`,
+  mục "Đóng bằng dòng ở cuối sổ".
+- **`B-10` ĐÓNG bằng bản vá thật** — `run.status` thôi khai job của run trước khi đang rảnh.
+  8/8 đột biến đỏ.
+- **`B-28` ĐÓNG sau BA vòng audit độc lập** — nút "Tiếp tục" ăn ngay; cooldown thử lại thôi trôi.
+  **Vòng 1 của tôi có một lỗi thật** (bell dùng chung rò rỉ ~240 reaction mỗi phút tạm dừng) **mà
+  phép ghim vẫn xanh** vì nó so *danh tính* promise. 10/11 đỏ. Ba vòng ghi ở `BACKLOG.md`.
+- **`B-14`/`B-15` xong nửa tài liệu, VẪN MỞ** — `provider-adapter.js` nay ghi `CHƯA TỪNG KHỚP`
+  cạnh 7 selector chưa từng khớp trên trang thật. Phần nặng là phép đo DOM → cần Đức.
+
+**Suite 117/117.** Lượt đầu báo 2 đỏ ở `bridge-multiprofile-transport-async` +
+`bridge-profile-label-save`; chạy riêng hai lần đều xanh — con flake dưới tải đã ghi, lúc đó có
+lane khác cùng ghi vào một cây git.
+
+**Còn mở.** `B-08` là mục cuối AI làm được không cần Đức; chưa làm vì nó chạm 4 chỗ gọi trong
+`content.js` và tôi không rút gọn một refactor ở cuối phiên. Chờ Đức: `B-36` (chặn MVP, cần lượt
+live) · `B-09` · `B-15` · `B-20`. Cần brief riêng: `B-06` `B-07` `B-31` `B-33` `B-34` `B-35`.
+
+**Trần tuyên bố cho cả hai bản vá: SUITE, CHƯA LIVE.** Ba phép nghiệm thu 0 credit ở `STATUS.md`.
+Lượt commit đầu của phiên bị lane khác cuốn theo — ghi ở `BACKLOG.md` gốc repo, mục `N-40`.
