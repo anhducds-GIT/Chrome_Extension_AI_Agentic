@@ -60,11 +60,11 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T04:29",
-      "task": "bo dem muc DANG MO + phep kiem tran so no 15 vao cong dong phien",
-      "released_at": "2026-09-08T04:56",
+      "owner": "claude-scouter-s06",
+      "ai": "Claude",
+      "claimed_at": "2026-09-08T07:25",
+      "task": "Dashboard: hien danh tinh + nang luc + cach dung cua hai extension",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -73,8 +73,8 @@
     "workers/duc-scouter": {
       "owner": "claude-scouter-s06",
       "ai": "Claude",
-      "claimed_at": "2026-09-07T05:36",
-      "task": "Dung ROADMAP cua goi va dong S-06: do bam-go tren trang thu tu dung",
+      "claimed_at": "2026-09-08T07:28",
+      "task": "Khai ba truong danh tinh vao STATUS cho dashboard",
       "released_at": null
     },
     "workers/_shared": {
@@ -92,5 +92,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "fb06720aea45732c"
+  "_fingerprint": "68eded0edaae6b15"
 }

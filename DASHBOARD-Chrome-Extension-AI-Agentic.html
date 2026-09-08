@@ -545,6 +545,14 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
             <dt>Việc còn nợ</dt><dd>7 việc</dd>
             <dt>Lệnh Bridge</dt><dd>0 lệnh · 15 file kiểm</dd>
           </dl>
+          <div>
+            <h2>Nó là cái gì</h2>
+            <dl class="kv">
+              <dt>Làm được</dt><dd>Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới.</dd>
+              <dt>KHÔNG làm được</dt><dd>Không tự chạy. Mọi lệnh bấm và gõ đóng mặc định, chỉ tay Đức mở được, và mỗi lần mở có trần lượt. Không ghi tệp — việc đó ở máy chủ Bridge. Không biết trang nào cả: hiểu biết về một trang cụ thể phải nằm ở tầng adapter bên ngoài.</dd>
+              <dt>Dùng thế nào</dt><dd>Nạp thư mục v0.1.0 vào Chrome, bật máy chủ Bridge của Scouter, chọn tệp ghép cặp trong bảng bên. Muốn nó bấm hay gõ thì bật công tắc Cho phép bấm và gõ — Chrome sẽ hiện dải băng đang gỡ lỗi trình duyệt trên tab nó cắm vào. Phanh khẩn: Ctrl+Shift+X.</dd>
+            </dl>
+          </div>
           <p class="note">Chưa có bảng tính năng cho extension này. Bảng đối chiếu trong repo hiện chỉ so hai nhánh GPT và Gemini.</p>
         </div>
       </details>
@@ -562,6 +570,14 @@ footer{text-align:center;font-size:12.5px;color:var(--muted);padding:6px 0 2px}
             <dt>Việc còn nợ</dt><dd>gói chưa có sổ nợ</dd>
             <dt>Lệnh Bridge</dt><dd>0 lệnh · 4 file kiểm</dd>
           </dl>
+          <div>
+            <h2>Nó là cái gì</h2>
+            <dl class="kv">
+              <dt>Làm được</dt><dd>Lấy dữ liệu phái sinh HNX theo ngày: kết quả giao dịch nối vào một tệp CSV duy nhất, và báo cáo PDF tải về thư mục Drive. Gọi mạng bằng chính trình duyệt, nên vào được trang mà Node gọi thẳng thì hỏng chứng chỉ.</dd>
+              <dt>KHÔNG làm được</dt><dd>Không bấm, không gõ, không đọc nội dung trang, không chụp màn hình, không mở tab. Không phải chưa làm — mà là KHÔNG CÓ ĐƯỜNG: manifest không khai debugger, không khai content_scripts, không khai scripting. Cần bấm nút trên một trang thì đó là việc của Duc Scouter.</dd>
+              <dt>Dùng thế nào</dt><dd>Bật máy chủ Bridge CỦA GÓI NÀY (kéo thả tệp ghép cặp vào Chay-may-chu-HNX.cmd) — máy chủ của Scouter không dùng được. Mở bảng bên, chọn tệp ghép cặp, bật công tắc Cho phép lấy dữ liệu. Rồi chạy hai lệnh hằng ngày. Chi tiết ở sổ tay.</dd>
+            </dl>
+          </div>
           <p class="note">Chưa có bảng tính năng cho extension này. Bảng đối chiếu trong repo hiện chỉ so hai nhánh GPT và Gemini.</p>
         </div>
       </details>

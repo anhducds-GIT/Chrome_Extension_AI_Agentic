@@ -2,12 +2,12 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `d7f7a61b` (2026-09-08). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
+Trang được sinh tại commit `9b9d2600` (2026-09-08). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
 
 ## A · Bắt đầu từ đâu
 
 1. **Việc ưu tiên #1** — **XUNG ĐỘT** — 2 đơn vị cùng khai `priority_rank: 1` (`workers/duc-auto-gg-flow-video/v0.1.0` · `workers/hnx-fetch/v0.1.0`). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.
-2. **Phiên gần nhất** — 2026-09-08 @ `d7f7a61b` · [HANDOFF.md](HANDOFF.md)
+2. **Phiên gần nhất** — 2026-09-08 @ `9b9d2600` · [HANDOFF.md](HANDOFF.md)
 3. **Luật phải đọc trước khi sửa gì** — [AGENTS.md](AGENTS.md) · cổng vào cho AI: [llms.txt](llms.txt)
 4. **Ai đang giữ package nào** — `.agents/claims.json` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)
 
@@ -21,6 +21,24 @@ Trang được sinh tại commit `d7f7a61b` (2026-09-08). Đây là lúc sinh tr
 | Duc Auto GG Flow Video | 0.1.0 | building | 21 | 103 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật. Thêm một lớp chặn mới: Flow báo quá tải. Đây là loại trạng thái thứ ba, khác hẳn hai loại cũ, và là loại DUY NHẤT mà cứ thử đi thì tốn tiền thật, vì hai loại kia đều dừng trước khi gõ. Đức chốt dừng hẳn cả mẻ, không tự thử lại. Suite 101/101, thử phá 10/10. | [STATUS](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md) |
 | Duc Scouter (seed v0.1) | 0.1.0 | building | 0 | 15 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần. | [STATUS](workers/duc-scouter/v0.1.0/STATUS.md) |
 | HNX Fetch | 0.1.0 | building | 0 | 4 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Tách khỏi Scouter xong, đã qua một lượt audit độc lập về cả mã lẫn tài liệu và vá hết. Việc còn lại lớn nhất là nạp vào Chrome rồi chạy thật một lượt qua chính nó. | [STATUS](workers/hnx-fetch/v0.1.0/STATUS.md) |
+
+## C · Từng extension làm được gì
+
+Số lệnh và số file kiểm KHÔNG lặp lại ở đây — chúng là **máy đo**, xem bảng B.
+
+### Duc Scouter (seed v0.1)
+
+- **Làm được** — Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới.
+- **KHÔNG làm được** — Không tự chạy. Mọi lệnh bấm và gõ đóng mặc định, chỉ tay Đức mở được, và mỗi lần mở có trần lượt. Không ghi tệp — việc đó ở máy chủ Bridge. Không biết trang nào cả: hiểu biết về một trang cụ thể phải nằm ở tầng adapter bên ngoài.
+- **Dùng thế nào** — Nạp thư mục v0.1.0 vào Chrome, bật máy chủ Bridge của Scouter, chọn tệp ghép cặp trong bảng bên. Muốn nó bấm hay gõ thì bật công tắc Cho phép bấm và gõ — Chrome sẽ hiện dải băng đang gỡ lỗi trình duyệt trên tab nó cắm vào. Phanh khẩn: Ctrl+Shift+X.
+- **Sổ tay vận hành** — [mở](workers/duc-scouter/v0.1.0/AGENTS.md)
+
+### HNX Fetch
+
+- **Làm được** — Lấy dữ liệu phái sinh HNX theo ngày: kết quả giao dịch nối vào một tệp CSV duy nhất, và báo cáo PDF tải về thư mục Drive. Gọi mạng bằng chính trình duyệt, nên vào được trang mà Node gọi thẳng thì hỏng chứng chỉ.
+- **KHÔNG làm được** — Không bấm, không gõ, không đọc nội dung trang, không chụp màn hình, không mở tab. Không phải chưa làm — mà là KHÔNG CÓ ĐƯỜNG: manifest không khai debugger, không khai content_scripts, không khai scripting. Cần bấm nút trên một trang thì đó là việc của Duc Scouter.
+- **Dùng thế nào** — Bật máy chủ Bridge CỦA GÓI NÀY (kéo thả tệp ghép cặp vào Chay-may-chu-HNX.cmd) — máy chủ của Scouter không dùng được. Mở bảng bên, chọn tệp ghép cặp, bật công tắc Cho phép lấy dữ liệu. Rồi chạy hai lệnh hằng ngày. Chi tiết ở sổ tay.
+- **Sổ tay vận hành** — [mở](workers/hnx-fetch/PROTOCOL.md)
 
 ## D · Sức khoẻ điều hướng [ĐO]
 
