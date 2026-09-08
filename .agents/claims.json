@@ -71,26 +71,26 @@
       "duc_decision": "2026-09-07, Duc chot hai luot: (a) _root — \"cho chuyen _root\", de land not nua con lai cua ADR-0014 dang chan 26 commit cua 5 lane; (b) _code — \"ban trien khai cong viec luon di ... Toi cho ban khoa de trien khai\", lane claude-bang-vung-chac da bao xong tu 3h truoc, chuyen cho lane refactor IA cua bang"
     },
     "workers/duc-scouter": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T11:25",
       "task": "Xoa thu muc pilot cu sau khi da chuyen bo dot bien",
-      "released_at": null
+      "released_at": "2026-09-08T11:40"
     },
     "workers/_shared": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T11:32",
       "task": "Ghim luat duong dan thu muc Bridge vao bo sinh + ban do file",
-      "released_at": null
+      "released_at": "2026-09-08T11:40"
     },
     "workers/hnx-fetch": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T11:25",
       "task": "Chuyen 17 con dot bien tang du lieu tu pilot cu sang truoc khi xoa",
-      "released_at": null
+      "released_at": "2026-09-08T11:40"
     }
   },
-  "_fingerprint": "053ee4f7e06f77b9"
+  "_fingerprint": "316ce052a3af1c81"
 }
