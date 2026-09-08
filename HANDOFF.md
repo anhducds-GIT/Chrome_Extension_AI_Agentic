@@ -1917,3 +1917,5 @@ HEAD. **Hoàn nguyên phải được KIỂM, không chỉ được THỬ** — 
 
 **Còn 3 mục, và cả ba KHÔNG phải việc AI làm tiếp được:** `N-36` (chờ Đức chốt ADR-0023) ·
 `N-45` (gói đã mở băng nhưng lane khác đang giữ khoá) · `N-47` (mở hôm nay).
+
+> **Bổ sung cùng ngày:** đóng `N-47` — tôi ghi mục đó **sai**, hai bộ đo đột biến trong repo đã chống đúng chỗ tôi vấp và chống kỹ hơn. Cái hỏng là bộ đo **nháp** tôi dựng ngoài repo cho nhanh. Mở `N-48`: khoá mức file bị cổng kéo ngược về khoá vùng ở lượt đẩy — gặp thật ngay lượt đầu dùng cơ chế mới. Sổ nợ còn **3**.
