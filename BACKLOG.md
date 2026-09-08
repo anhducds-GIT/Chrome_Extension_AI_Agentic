@@ -869,3 +869,14 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
 - **[ĐO]** `STATUS.md` viết `docs/adr/0050-chay-het-job-tru-ba-loai-dung-han.md`, nhưng ADR-0050 là quyết định **của gói**, nằm ở `workers/duc-auto-chatgpt/v0.1.0/docs/adr/`. Bộ sinh chép nguyên văn trường đó vào `DASHBOARD.md`, nên **liên kết chết xuất hiện trên bảng Đức đọc**.
 - **chỗ dễ nhầm, ghi ra vì nó sẽ tái diễn:** số ADR đánh **theo từng thư mục** (ADR-0000 ⑴), nên `0050` ở gốc repo và `0050` trong một gói là hai quyết định khác nhau. Gốc repo hiện chỉ có tới `0021`.
 - **đóng khi:** liên kết trong `STATUS.md` trỏ đúng đường dẫn của gói, và phép dò liên kết chết không còn báo `DASHBOARD.md`.
+
+## N-57 · Ba `AGENTS.md` của `duc-auto-*` chưa ai rà, và 10 nhóm câu luật lặp giữa chúng
+
+- **nhóm:** cong
+- **mở:** 2026-09-09 · lane `claude-luat-rasoat`
+- **vùng:** `workers/duc-auto-chatgpt` · `workers/duc-auto-gemini` · `workers/duc-auto-gg-flow-video` — **cả ba đang có lane khác giữ khoá**
+- **[ĐO]** `node scripts/rule-compile.mjs` phép ④: ba nơi chứa luật này **CHƯA BAO GIỜ rà**. 15/18 nơi còn lại đã rà 09/09.
+- **[ĐO]** phép ③ `LUAT_TRUNG`: **10 trong 12 nhóm** câu luật lặp là cặp `chatgpt` ↔ `gemini` — cùng vân tay, hai file khác nhau. Đó là bề mặt của giới hạn ② (*cấm cài một tính năng hai lần*): ba gói là fork của nhau nên một luật sửa ở một bản không tới hai bản kia.
+- **hai cặp lặp KHÁC đã xử xong 09/09**, cách xử ghi lại làm tiền lệ: cả hai là lặp **cố ý** (`AGENTS.md` ↔ `MULTIFLOW.md` là tầng-1-luật ↔ tầng-2-tai-nạn; `hnx-fetch/AGENTS.md` ↔ `PROTOCOL.md` vì sổ đó tự đứng một mình) → **giữ cả hai và ghi lý do ngay tại dòng đó**, theo `docs/protocols/RULE-COMPILER.md` mục 4.
+- **đừng làm gì trước khi lane kia trả khoá.** Khoá nằm lâu là lý do để **hỏi**, không phải để lấy.
+- **đóng khi:** `node scripts/rule-compile.mjs` phép ④ báo **0 nơi quá hạn**, và mỗi nhóm còn lại của phép ③ hoặc đã gộp, hoặc mang một dòng nói vì sao cố ý giữ hai bản.

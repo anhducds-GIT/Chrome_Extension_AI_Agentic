@@ -117,3 +117,9 @@ lượt đạt, mà đó đúng là cách ba chốt của Scouter nằm không a
 1. Thêm quyền mới cho extension — nhất là `debugger`
 2. Đổi luật an toàn: công tắc · trần 200 · không-ghi-đè · chỉ-nối-vào-cuối
 3. Xoá hoặc sửa dữ liệu gốc trong thư mục Drive của Đức
+
+> **Ba dòng này CỐ Ý lặp lại [`PROTOCOL.md`](PROTOCOL.md) mục 7 — đừng gộp.** Đức chốt 08/09 rằng
+> `PROTOCOL.md` **tự đứng một mình**, viết cho một AI không đọc file này; một sổ tự đứng mà thiếu
+> danh sách an toàn của chính nó là một sổ nguy hiểm. Bộ biên dịch luật nêu cặp này ở phép ③
+> `LUAT_TRUNG`; đây là câu trả lời, ghi ngay tại chỗ theo `docs/protocols/RULE-COMPILER.md` mục 4.
+> **Sửa một bên thì sửa cả hai trong CÙNG lượt.**
