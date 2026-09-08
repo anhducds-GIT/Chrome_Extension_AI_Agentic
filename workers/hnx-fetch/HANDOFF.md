@@ -228,3 +228,20 @@ có phiên*, và danh mục PDF tháng 09 mới nhất cũng chỉ tới **07/09
 nên gần như chắc là muộn. Chạy lại cuối ngày.
 
 **Còn mở:** `H-06` (tệp ghép cặp riêng) · `H-07` (phím tắt phanh khẩn chưa ai bấm thử).
+
+## 2026-09-08 · `claude-scouter-s06` — khai kiểm chứng thật, gói lên `active`
+
+`H-01` đóng bằng một lượt chạy thật, nên `STATUS.md` phải nói đúng: `lifecycle: active`,
+`last_verified: 2026-09-08`, và `evidence_ref` trỏ hồ sơ bằng chứng
+`v0.1.0/evidence/2026-09-08-chay-that-lan-dau.md`.
+
+**Một câu trên bảng đang NÓI SAI, đã sửa:** trường `dung_the_nao` bảo *"máy chủ của Scouter không
+dùng được"*. Thực tế **tệp ghép cặp dùng chung ĐƯỢC** — chỉ **máy chủ** là phải đúng bản HNX, và
+đừng chạy hai máy chủ trên cùng một cổng. Câu sai đó làm hướng dẫn nghe khó hơn thực tế, và Đức
+đã phải hỏi lại đúng chỗ ấy.
+
+> Đáng ghi vì đây là dạng lỗi bảng khó thấy nhất: nó **không sai về sự kiện**, nó sai về **mức độ
+> chặt**. Một câu chặt quá làm người đọc tưởng mình thiếu thứ mình đang có.
+
+**Việc kế:** chạy lại lượt lấy dữ liệu cuối ngày 08/09 — HNX chưa công bố lúc chiều, cả hai đường
+cùng xác nhận. Hai việc chờ tay Đức: `H-06` (tệp ghép cặp riêng) · `H-07` (bấm thử `Ctrl+Shift+H`).
