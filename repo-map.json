@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-08",
-  "generated_commit": "62d0841f",
+  "generated_commit": "a8464bb0",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -133,13 +133,13 @@
       "lifecycle": "active",
       "status_md": "workers/hnx-fetch/v0.1.0/STATUS.md",
       "owner": "claude-scouter-s06",
-      "next_step": "Chạy lại lượt lấy dữ liệu cuối ngày 08/09 — HNX chưa công bố lúc chiều, cả hai đường cùng xác nhận. Rồi mỗi ngày một lượt.",
-      "human_action": "Một việc nhỏ còn lại: tạo một tệp ghép cặp riêng cho HNX Fetch, cổng riêng — dùng chung với Scouter thì mỗi lệnh phải mang thêm một chuỗi dài. Phím tắt phanh khẩn Ctrl+Shift+H đã bấm thử 08/09 và ĂN THẬT. @Đức:bấm",
+      "next_step": "Chạy lượt lấy dữ liệu: SSOT đang thiếu 3 ngày (01/09, 02/09, 08/09). Hai ngày đầu gần như chắc là nghỉ lễ Quốc khánh — lượt chạy sẽ tự ghi nhận và thôi hỏi lại từ lần sau. Cần Đức bật công tắc trước.",
+      "human_action": "Không có việc gì chờ Đức. Muốn lấy dữ liệu thì bật công tắc Cho phép lấy dữ liệu ở bảng bên rồi bảo AI chạy — mỗi lần bật được 200 lượt. @Đức:bấm",
       "priority_rank": 1,
       "superseded_by": null,
       "last_verified": "2026-09-08",
       "last_verified_commit": "7cb9f766e2c2b1aa659fbe4911564fd8d0e1b1ea",
-      "open_item": "Đã chạy thật trọn vòng qua chính extension trong Chrome: lấy được trang thật, cái phanh trừ đúng, một lượt lấy dữ liệu đầy đủ không lỗi. Phím tắt phanh khẩn cũng đã bấm thử tay và ăn thật. Việc còn lại: chạy mỗi ngày một lượt, và một tệp ghép cặp riêng."
+      "open_item": "Gói đã đứng vững: chạy thật trọn vòng trong Chrome, phanh khẩn bấm tay ăn thật, và từ 08/09 có tệp ghép cặp cùng máy chủ RIÊNG nên không còn phải chỉ đích danh extension nữa. Sổ nợ RỖNG. Việc còn lại chỉ là chạy mỗi ngày một lượt."
     }
   ],
   "active_work": [
@@ -153,7 +153,7 @@
     {
       "id": "workers/hnx-fetch/v0.1.0",
       "unit": "workers/hnx-fetch/v0.1.0",
-      "title": "Chạy lại lượt lấy dữ liệu cuối ngày 08/09 — HNX chưa công bố lúc chiều, cả hai đường cùng xác nhận. Rồi mỗi ngày một lượt.",
+      "title": "Chạy lượt lấy dữ liệu: SSOT đang thiếu 3 ngày (01/09, 02/09, 08/09). Hai ngày đầu gần như chắc là nghỉ lễ Quốc khánh — lượt chạy sẽ tự ghi nhận và thôi hỏi lại từ lần sau. Cần Đức bật công tắc trước.",
       "rank": 1,
       "claim": null
     },
