@@ -85,12 +85,12 @@
       "released_at": "2026-09-08T10:08"
     },
     "workers/hnx-fetch": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T10:15",
       "task": "H-03: ghi ngay khong co phien vao mot tep ben canh SSOT de thoi lay lai",
-      "released_at": null
+      "released_at": "2026-09-08T10:28"
     }
   },
-  "_fingerprint": "78009d49f76fe79b"
+  "_fingerprint": "8796d16b8b6401ed"
 }

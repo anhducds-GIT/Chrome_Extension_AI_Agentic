@@ -1756,3 +1756,14 @@ Gạch chúng là sửa file cấm. Thuốc đúng là gỡ lời mời, không 
 với phiên điều phối. Và một dòng `ĐÓNG N-43` bị cắt cụt giữa câu nằm ở cuối `BACKLOG.md` (lượt
 trước, lane `claude-cua-kiem`) — **cố ý không sửa**: sổ miễn khoá KHI CHỈ THÊM DÒNG, sửa dòng cũ
 thì không được miễn. Nó vô hại vì dòng đầy đủ nằm ngay dưới.
+
+## 2026-09-08 · claude-scouter-s06 · ghi nhận lượt `--carry`
+
+Luật ADR-0005: mọi lượt `--carry` phải kể tên lane bị cuốn theo. Lượt đẩy này cuốn theo commit
+của **`claude-ext-dot0`** (và trước đó một lượt cuốn theo **`claude-cua-kiem`**). Cả hai đều là
+phiên đang chạy song song trong cùng thư mục git, không phải commit vô chủ.
+
+Kèm một chuyện đáng biết cho phiên sau: `claude-cua-kiem` chạy `git add -A` và **cuốn phần sửa
+của tôi** ở `workers/duc-scouter` + `workers/hnx-fetch` vào commit `c7580447` mang nhãn của họ.
+Nội dung nguyên vẹn, nhưng nhãn `Lane:` của hai lượt sửa đó chỉ sai người. Cách tránh:
+`git add <đường dẫn của mình>`, đừng `-A`.
