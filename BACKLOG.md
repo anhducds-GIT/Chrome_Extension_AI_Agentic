@@ -733,3 +733,21 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
 - **ĐÓNG N-36** · 2026-09-08 · lane `claude-ext-hook` · **Đức chốt: bỏ.** Mục đề xuất gộp 9 khoá xuống 3. Bỏ vì hai lý do đo được, không phải vì ngại việc. ⑴ **Tiền đề của nó đã mất:** viết sáng 07/09 khi ba gói `duc-auto-*` đang đóng băng, nên gộp ba gói chết thành một ô `_frozen` là hợp lý; chiều 08/09 Đức **mở băng cả ba** ([ADR-0024]) và ngay lúc đóng mục này **mỗi gói đang có một lane riêng làm việc trong đó** — gộp là ép ba lane xếp hàng sau một khoá. ⑵ **Lợi ích nó hứa không có thật:** giả thuyết *"ít khoá thì ít luật, ít phép kiểm, chạy nhanh hơn"* đã đo và **sai** — 16 phép kiểm chỉ **1** duyệt qua từng khoá; 139 dòng luật mục 1 chỉ **3** dòng là bảng khoá; thời gian lệch **0,0158 ms** trên một vòng suite **123 giây**. Còn cái giá thì thật: gộp ba khoá gốc làm cặp commit khác lane bị chặn **172 → 364 (+112%)**, đổi lại tiết kiệm ~81 cặp lệnh trong 7 ngày. **Chỗ đau chưa bao giờ là số khoá — là thời gian giữ**, và khoá mức file (ADR-0025) đã gỡ 70% chỗ đó mà không bớt một ô nào. Ba dòng đo đầy đủ ở ngay trên.
 
 - **DỌN KHO CHỮ LƯỢT HAI — xoá cả tầng `docs/archive/`** · 2026-09-08 · lane `claude-ext-don` · **[ĐO]** `docs/` **17.838 → 14.938 dòng** (97 → 83 file); không kể ADR **15.265 → 12.335**. Thước cóc đã hạ theo, và chỗ đã hạ không quay lại được. Tầng đó giữ **15 hồ sơ, 2.967 dòng, tất cả `status: superseded`**. Lý lẽ giữ chúng ghi ngay trong `docs/README.md` là *"chúng là bản ghi có thật"* — **vẫn đúng, nhưng git ĐÃ là chỗ giữ bản ghi có thật**, nên một thư mục thứ hai chỉ cộng vào con số mà mọi phiên phải đọc. Đường lấy lại in ở đúng chỗ đầu mục cũ: `git show a3b67a96a92e:docs/archive/<tên-file>`. Ba chỗ chỉ đường tới thư mục đã mất cũng được sửa (`docs/README.md` · `AGENTS.md` mục 6 · `delegations/A-01/TASK.md` — chỗ này bảo một AI khác đi đọc một file không còn, tức một lượt giao việc hỏng nếu để nguyên). **Còn 12.335 so với đích 8.000 của giới hạn ③.**
+
+## N-50 · Bộ sinh đối chiếu đọc CÂY LÀM VIỆC ở lượt ghi, nên một lane bị giam vì việc chưa commit của lane khác
+
+- **nhóm:** song-song
+- **mở:** 2026-09-08 · lane `claude-ext-don` · **và đóng ngay cùng lượt** (xem dòng dưới)
+- **vùng:** `_code`
+- **gặp thật, live:** tôi bị **từ chối đẩy** với `feature-parity.mjs không khớp với HEAD`. Nguyên
+  nhân: lane khác có `workers/duc-auto-chatgpt/v0.1.0/sidepanel.js` **chưa commit** trên đĩa
+  (6.652 dòng) trong khi HEAD là 6.569. Bộ sinh đọc **đĩa** nên ghi 6.652; cổng xuất bản so với
+  **HEAD** nên từ chối. **Không có đường ra**: chạy lại bộ sinh bao nhiêu lượt cũng ra con số của
+  đĩa, nên commit của tôi bị giam **cho tới khi lane khác commit xong**.
+- **chính file đó tự khai điều nó vi phạm:** *"Cùng một HEAD phải luôn cho cùng một byte"*, và
+  ghi rõ bài học của `N-21` — một artifact phụ thuộc thứ ngoài HEAD thì *"MỌI lane bị chặn đẩy dù
+  không dữ liệu nào đổi"*. Nó có sẵn `createHeadDeps()` nhưng chỉ dùng cho `--check-head`.
+- **đóng khi:** lệnh: `node scripts/feature-parity.mjs` cho ra cùng một byte bất kể cây làm việc
+  bẩn hay sạch, và có một phép ghim chặn việc quay lại đọc đĩa ở lượt ghi.
+
+- **ĐÓNG N-50** · 2026-09-08 · lane `claude-ext-don` · **Đọc HEAD để tính, ghi ra đĩa để lưu** — hai việc khác nhau, trước nay bị buộc chung vào một bộ `deps`. `createHeadDeps()` cố tình ném khi bị gọi `writeFile`, nên phải ghép tay: `{ readFile: doc.readFile, listFiles: doc.listFiles, writeFile: ghi.writeFile }`. **[ĐO]** trước: artifact ghi `6653` (số của đĩa) → cổng từ chối; sau: ghi `6570` (số của HEAD) → khớp. Ghim ở `tests/feature-parity-smoke.mjs` (19 → 20), có cả vế **chặn quay lại lối cũ**. **Chỗ chưa soi:** `build-dashboard.mjs` và `build-overview.mjs` đều đã có `createHeadDeps` — nhưng tôi chưa kiểm chúng dùng nó ở lượt GHI hay chỉ ở lượt kiểm. Cùng một bệnh có thể còn ở đó.

@@ -322,12 +322,27 @@ export function createHeadDeps(root = ROOT) {
   };
 }
 
+/* LƯỢT GHI CŨNG ĐỌC TỪ HEAD — N-50, gặp thật 08/09.
+ *
+ * Chính file này tự khai ở đầu: *"Cùng một HEAD phải luôn cho cùng một byte."* Nhưng lượt GHI
+ * lại đọc nguồn từ ĐĨA, nên nó vi phạm chính câu đó bất cứ khi nào có ai đang sửa dở.
+ *
+ * Đo được hôm nay: lane khác có `sidepanel.js` **chưa commit** trên đĩa (6.652 dòng) trong khi
+ * HEAD là 6.569. Tôi sinh lại artifact → nó ghi 6.652 → cổng xuất bản so với HEAD → **TỪ CHỐI**.
+ * Và không có đường ra: chạy lại bộ sinh bao nhiêu lượt cũng ra con số của đĩa, nên commit của
+ * tôi bị giam cho tới khi LANE KHÁC commit xong. Đúng loại phụ thuộc chéo mà cả ngày hôm nay
+ * đang gỡ.
+ *
+ * Đọc HEAD để tính, ghi ra ĐĨA để lưu — hai việc khác nhau, và trước nay chúng bị buộc chung
+ * vào một bộ `deps`. `createHeadDeps()` cố tình ném khi bị gọi `writeFile`, nên phải ghép tay. */
 function main() {
   const args = process.argv.slice(2);
   const checkHead = args.includes("--check-head");
+  const doc = createHeadDeps();
+  const ghi = createDefaultDeps();
   process.exitCode = runFeatureParity({
     check: checkHead || args.includes("--check"),
-    deps: checkHead ? createHeadDeps() : createDefaultDeps()
+    deps: { readFile: doc.readFile, listFiles: doc.listFiles, writeFile: ghi.writeFile },
   });
 }
 

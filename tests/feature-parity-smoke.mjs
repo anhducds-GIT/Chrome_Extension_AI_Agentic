@@ -454,4 +454,22 @@ function outsideMarkerBytes(text) {
   ok("ADR-0014: hai lượt sinh giống hệt từng byte, không mốc ngày, chạy được khi cấm đọc đồng hồ");
 }
 
+/* ---- LƯỢT GHI PHẢI ĐỌC TỪ HEAD — N-50 --------------------------------------
+ *
+ * File bộ sinh tự khai ở đầu: "Cùng một HEAD phải luôn cho cùng một byte." Nhưng lượt GHI đọc
+ * nguồn từ ĐĨA, nên nó vi phạm chính câu đó bất cứ khi nào có ai đang sửa dở.
+ *
+ * Gặp thật 08/09: lane khác có `sidepanel.js` chưa commit trên đĩa (6.652 dòng) trong khi HEAD
+ * là 6.569. Sinh lại → ghi 6.652 → cổng xuất bản so với HEAD → TỪ CHỐI. Và KHÔNG CÓ ĐƯỜNG RA:
+ * chạy lại bao nhiêu lượt cũng ra con số của đĩa, nên commit bị giam tới khi LANE KHÁC commit. */
+{
+  const nguon = readFileSync(new URL("../scripts/feature-parity.mjs", import.meta.url), "utf8");
+  const than = nguon.slice(nguon.indexOf("function main()"));
+  assert.match(than, /readFile: doc.readFile/, "luot GHI phai doc nguon tu HEAD, khong doc dia");
+  assert.match(than, /listFiles: doc.listFiles/, "ke ca danh sach file cung phai lay tu HEAD");
+  assert.match(than, /writeFile: ghi.writeFile/, "nhung van GHI ra dia — doc va ghi la hai viec khac nhau");
+  assert.doesNotMatch(than, /deps: checkHead ? createHeadDeps() : createDefaultDeps()/,
+    "khong duoc quay ve loi cu: doc dia o luot ghi");
+  ok("N-50 · luot ghi doc tu HEAD, nen artifact khong phu thuoc cay lam viec cua lane khac");
+}
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
