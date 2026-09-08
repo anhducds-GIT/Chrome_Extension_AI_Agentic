@@ -37,11 +37,11 @@
       "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T09:19",
-      "task": "khai test.serial, gitignore dau, luat toc do 0b",
-      "released_at": "2026-09-08T09:19",
+      "owner": "claude-cua-kiem",
+      "ai": "Claude",
+      "claimed_at": "2026-09-08T09:21",
+      "task": "khai test.serial + gitignore dau + luat toc do",
+      "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -60,11 +60,11 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T09:12",
-      "task": "Them phep ghim: khong tep chu nao duoc mang byte dieu khien tho (git giau diff)",
-      "released_at": "2026-09-08T09:19",
+      "owner": "claude-cua-kiem",
+      "ai": "Claude",
+      "claimed_at": "2026-09-08T09:21",
+      "task": "mang bo chay song song + dau xac nhan tu bo khung sang (N-43)",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -92,5 +92,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "86e518e16d80ea01"
+  "_fingerprint": "1a4c36c68aa71d79"
 }
