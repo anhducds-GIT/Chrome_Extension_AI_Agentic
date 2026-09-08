@@ -146,3 +146,9 @@ một extension khác giành mất tổ hợp.
   đầy đủ 0 hỏng. Bằng chứng: `v0.1.0/evidence/2026-09-08-chay-that-lan-dau.md`.
   Bài học nhỏ nhưng thật: **đóng sổ mà đặt sai khối thì máy đếm không thấy** — cửa ra của sổ này
   là *thêm một dòng ở CUỐI*, không phải viết vào giữa mục khác.
+
+- **ĐÓNG H-04** (2026-09-08, `claude-scouter-s06`) · Cùng bệnh với `H-01`: việc xong 08/09 nhưng
+  dòng đóng viết **trong thân mục** thay vì thành một dòng riêng ở cuối, nên máy đếm không thấy.
+  Nội dung không đổi — `v0.1.0/scripts/mutation-check.mjs` (tên ngắn hơn dự kiến) chạy được với
+  **13 con · 13/13 mỏ neo khớp · 13 giết được · 0 sống sót**, bốn mẻ: bề mặt · phanh · manifest ·
+  chống trôi.
