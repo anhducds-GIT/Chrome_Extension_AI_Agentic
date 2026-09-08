@@ -66,14 +66,15 @@ trong mã, chỉ tay Đức mở lại được. Đổi bất kỳ điều nào 
 | `du-lieu/nguon-thong-ke.mjs` | hợp đồng trang **thống kê** (danh mục PDF) |
 | `du-lieu/bang-ket-qua.mjs` | đọc bảng HTML thành cột và hàng |
 | `du-lieu/luoc-do-master.mjs` | lược đồ 25 cột + đổi số kiểu Việt sang kiểu máy |
-| `du-lieu/master.mjs` | tệp SSOT: chỉ nối, không sửa, ghi qua tệp tạm rồi đổi tên |
+| `du-lieu/master.mjs` | tệp SSOT: chỉ nối, không sửa, ghi qua tệp tạm rồi đổi tên. **Và** tệp ghi chú `*.ngay-nghi.csv` nằm cạnh SSOT — ngày TRONG TUẦN mà sàn không mở, để lượt sau thôi hỏi lại (H-03). Ghi chú về dữ liệu cố ý KHÔNG nằm lẫn trong dữ liệu |
 | `du-lieu/tai-ket-qua.mjs` | **lệnh hằng ngày ①** — nối ngày mới vào SSOT |
 | `du-lieu/tai-pdf.mjs` | **lệnh hằng ngày ②** — tải báo cáo PDF |
 | `du-lieu/vong-lay.mjs` | vòng lặp, KHÔNG biết trang nào: không làm hai lần · chạy tiếp khi đứt · thử lại đúng loại lỗi |
 | `du-lieu/chay.mjs` | lệnh chạy vòng lặp, nối `vong-lay` với Bridge |
 | `du-lieu/kiem-ssot.mjs` | **bộ soi tệp SSOT, CHỈ ĐỌC**: ngày cuối · ngày thiếu hẳn · dòng lệch cột · khoá trùng (ngày + ISIN). Đây là thứ AI vận hành dựa vào để nói *"dữ liệu ổn"* |
 | `du-lieu/tests/loai-san-pham-smoke.mjs` | ghim cờ `--loai` (H-05). Có khối **chạy thật tệp lệnh** và đọc mã thoát — hai khối soi mã nguồn ở trên bắt được "quên viết" nhưng không bắt được "viết sai" |
-| `du-lieu/tests/` | 8 phép ghim, không chạm mạng thật |
+| `du-lieu/tests/ngay-nghi-smoke.mjs` | ghim tệp ngày nghỉ (H-03). Canh CẢ cửa vào lẫn **cửa thoát**: xoá một dòng là ngày đó được lấy lại — không có cửa thoát thì cái dấu thành quyết định vĩnh viễn |
+| `du-lieu/tests/` | 9 phép ghim, không chạm mạng thật |
 
 ## BA tệp chép nguyên văn — và cách chúng KHÔNG trôi
 

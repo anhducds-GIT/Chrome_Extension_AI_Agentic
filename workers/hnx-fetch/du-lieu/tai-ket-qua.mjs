@@ -18,7 +18,7 @@ import fs from "node:fs";
 import { PROTOCOL } from "../v0.1.0/scripts/bridge-core.mjs";
 import { docBang } from "./bang-ket-qua.mjs";
 import { hangMaster } from "./luoc-do-master.mjs";
-import { docMaster, themHang } from "./master.mjs";
+import { docMaster, docNgayNghi, duongNgayNghi, themHang, themNgayNghi } from "./master.mjs";
 import { createNguonHnx, LOAI_SAN_PHAM } from "./nguon-hnx.mjs";
 
 function co(ten, macDinh = null) {
@@ -136,11 +136,29 @@ try {
   process.stderr.write(`\n${loi.message}\n`);
   process.exit(1);
 }
-const thieu = dsNgay.filter((n) => !truoc.ngay.has(n));
+/* Ngày đã ghi nhận KHÔNG CÓ PHIÊN thì thôi hỏi lại (H-03, Đức chốt 08/09). T7 và CN đã bị loại
+ * từ `ngayLamViec`, nên tệp này chỉ chở ngày TRONG TUẦN mà sàn không mở — tức ngày lễ.
+ *
+ * Tệp hỏng thì NÉM chứ không coi như rỗng: coi như rỗng nghĩa là lặng lẽ lấy lại tất cả, tốn
+ * hạn mức ghi thật, và người chạy không hề biết tệp đã hỏng. */
+let nghi;
+try {
+  nghi = docNgayNghi(duongMaster);
+} catch (loi) {
+  process.stderr.write(String.fromCharCode(10) + loi.message + String.fromCharCode(10));
+  process.exit(1);
+}
+const thieu = dsNgay.filter((n) => !truoc.ngay.has(n) && !nghi.ngay.has(n));
 
 console.log(`SSOT   : ${duongMaster}`);
 console.log(`Đang có: ${truoc.soHang} hàng, ${truoc.ngay.size} ngày`);
 console.log(`Khoảng : ${dsNgay.length} ngày làm việc (${dsNgay[0]} → ${dsNgay.at(-1)}) · CÒN THIẾU ${thieu.length}\n`);
+const boQuaNghi = dsNgay.filter((n) => !truoc.ngay.has(n) && nghi.ngay.has(n)).length;
+if (boQuaNghi > 0) {
+  console.log(`Nghỉ   : ${boQuaNghi} ngày đã ghi nhận KHÔNG CÓ PHIÊN, bỏ qua`);
+  console.log(`         (muốn lấy lại một ngày: xoá dòng của nó trong ${duongNgayNghi(duongMaster)})`);
+}
+console.log("");
 
 if (thieu.length === 0) { console.log("Không thiếu gì. Xong."); process.exit(0); }
 if (chiXem) {
@@ -176,7 +194,15 @@ for (const ngay of thieu) {
     hong += 1;
     continue;
   }
-  if (phanLoai.trong) { console.log(`  —      ${ngay}  không có phiên`); trong += 1; continue; }
+  if (phanLoai.trong) {
+    /* GHI LẠI, để lượt sau thôi hỏi. Ghi SAU khi trang đã trả lời, không phải đoán trước theo
+     * lịch: ngày lễ Việt Nam có ngày âm lịch, và một bảng lịch gõ tay sẽ sai đúng vào năm không
+     * ai kiểm lại. Trang tự nói "không có ô dữ liệu nào" là bằng chứng; một bảng lịch thì không. */
+    themNgayNghi(duongMaster, ngay);
+    console.log(`  —      ${ngay}  không có phiên (đã ghi nhận, lượt sau bỏ qua)`);
+    trong += 1;
+    continue;
+  }
 
   let hang;
   try {

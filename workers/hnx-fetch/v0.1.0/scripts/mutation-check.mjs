@@ -249,4 +249,29 @@ BATCHES.push({
   ]
 });
 
+/* ---- NGÀY KHÔNG CÓ PHIÊN (H-03, Đức chốt 08/09) ------------------------
+ * Hai con này canh hai nửa của một chốt, và cả hai đều hỏng CÂM nếu mất phép ghim:
+ * bỏ ghi thì mỗi lượt chạy lại tốn hạn mức cho ngày lễ; bỏ lọc thì cái dấu ghi ra không ai đọc. */
+BATCHES.push({
+  ten: "NGÀY NGHỈ — ghi và lọc",
+  target: path.join(ROOT, "..", "du-lieu", "tai-ket-qua.mjs"),
+  pin: path.join(ROOT, "..", "du-lieu", "tests", "ngay-nghi-smoke.mjs"),
+  mutants: [
+    {
+      ma: "R1",
+      ten: "Không lọc ngày đã ghi nhận — cái dấu ghi ra rồi không ai đọc",
+      tim: "const thieu = dsNgay.filter((n) => !truoc.ngay.has(n) && !nghi.ngay.has(n));",
+      thay: "const thieu = dsNgay.filter((n) => !truoc.ngay.has(n));",
+      soLan: 1
+    },
+    {
+      ma: "R2",
+      ten: "Không ghi lại ngày không có phiên — lượt sau lại hỏi đúng ngày đó",
+      tim: "    themNgayNghi(duongMaster, ngay);",
+      thay: "    /* khong ghi */",
+      soLan: 1
+    }
+  ]
+});
+
 chayDotBien(BATCHES, ROOT);

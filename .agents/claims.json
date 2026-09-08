@@ -60,37 +60,37 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T09:21",
-      "task": "mang bo chay song song + dau xac nhan tu bo khung sang (N-43)",
-      "released_at": "2026-09-08T09:34",
+      "owner": "claude-ext-dot0",
+      "ai": "Claude",
+      "claimed_at": "2026-09-08T10:07",
+      "task": "DOT 0: bản đồ việc đọc cờ đóng băng, đóng N-35",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
       "duc_decision": "2026-09-07, Duc chot hai luot: (a) _root — \"cho chuyen _root\", de land not nua con lai cua ADR-0014 dang chan 26 commit cua 5 lane; (b) _code — \"ban trien khai cong viec luon di ... Toi cho ban khoa de trien khai\", lane claude-bang-vung-chac da bao xong tu 3h truoc, chuyen cho lane refactor IA cua bang"
     },
     "workers/duc-scouter": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T09:50",
       "task": "S-13: vot request_id tu phong bi tho de loi INVALID_ENVELOPE khong bien thanh INTERNAL_ERROR",
-      "released_at": null
+      "released_at": "2026-09-08T10:08"
     },
     "workers/_shared": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T09:58",
       "task": "H-06: bo sinh tep ghep cap dung canh validatePairing, phuc vu ca hai goi song",
-      "released_at": null
+      "released_at": "2026-09-08T10:08"
     },
     "workers/hnx-fetch": {
       "owner": "claude-scouter-s06",
       "ai": "Claude",
-      "claimed_at": "2026-09-08T09:50",
-      "task": "Dong not H-02 H-03 H-05, va cung ban va S-13",
+      "claimed_at": "2026-09-08T10:15",
+      "task": "H-03: ghi ngay khong co phien vao mot tep ben canh SSOT de thoi lay lai",
       "released_at": null
     }
   },
-  "_fingerprint": "ddf3a204ef43c6b5"
+  "_fingerprint": "78009d49f76fe79b"
 }

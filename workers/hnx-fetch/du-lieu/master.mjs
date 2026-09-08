@@ -114,3 +114,82 @@ export function themHang(duong, hangMoi) {
   fs.renameSync(tam, duong);
   return { them: hangMoi.length };
 }
+
+/* ══ NGÀY KHÔNG CÓ PHIÊN — tệp bên cạnh SSOT (H-03) ═══════════════════════════
+ *
+ * Đức chốt 08/09: *"ngày nghỉ thì không có data, nên ta cần ghi lại là ngày nghỉ, để tránh sau
+ * này cứ thấy thiếu rồi lại fetch tiếp."*
+ *
+ * **T7 và CN KHÔNG nằm ở đây** — chúng bị loại từ trước, ngay lúc dựng danh sách ngày làm việc
+ * (`ngayLamViec` trong `tai-ket-qua.mjs`). Tệp này chỉ chở **ngày trong tuần mà HNX không có
+ * phiên**: nghỉ lễ, và những ngày sàn đóng vì lý do khác.
+ *
+ * ── VÌ SAO TỆP RIÊNG, KHÔNG PHẢI MỘT HÀNG TRONG SSOT ──
+ *
+ * SSOT có 25 cột số liệu và khoá là (ngày + ISIN). Nhét một hàng giả *"ngày này nghỉ"* vào đó
+ * nghĩa là mọi lượt đếm, cộng, trung bình của Đức về sau đều phải nhớ mà lọc nó ra — và sẽ có
+ * lượt quên. Dữ liệu và **ghi chú về dữ liệu** là hai thứ khác nhau; trộn chúng vào một tệp là
+ * đổi một phiền toái nhỏ hôm nay lấy một con số sai không ai truy được về sau.
+ *
+ * Nó vẫn là **một tệp CSV mở bằng Excel được**, nằm ngay cạnh SSOT, cùng quy ước (BOM · CRLF ·
+ * mọi ô bọc nháy) — nên Đức mở ra đọc được, và **xoá một dòng là ngày đó được lấy lại**.
+ *
+ * ── CỬA THOÁT, và vì sao nó quan trọng ──
+ *
+ * Rủi ro thật của việc đánh dấu: nếu HNX bổ sung dữ liệu cho một ngày đã bị đánh dấu, ta sẽ
+ * không bao giờ lấy nữa. Nên tệp này ghi **cả ngày quan sát** — và cửa thoát là xoá dòng đó
+ * bằng tay, một thao tác Đức làm được không cần AI. Không có cửa thoát rẻ thì cái dấu này biến
+ * thành một quyết định vĩnh viễn, mà nó không xứng đáng là vĩnh viễn. */
+
+export const COT_NGAY_NGHI = Object.freeze(["trade_date", "ly_do", "ghi_nhan_luc"]);
+
+/** Đường dẫn tệp ghi chú, suy từ đường dẫn SSOT — luôn nằm CẠNH nó, không phải một chỗ khác. */
+export function duongNgayNghi(duongMaster) {
+  return String(duongMaster).replace(/\.csv$/i, "") + ".ngay-nghi.csv";
+}
+
+/** Tập ngày đã ghi. Tệp chưa có = chưa ghi ngày nào; **tệp hỏng thì NÉM**, không trả tập rỗng —
+ *  trả rỗng nghĩa là lặng lẽ lấy lại tất cả, và người chạy không hề biết tệp đã hỏng. */
+export function docNgayNghi(duongMaster) {
+  const duong = duongNgayNghi(duongMaster);
+  if (!fs.existsSync(duong)) return { coTep: false, ngay: new Set() };
+  const tho = fs.readFileSync(duong, "utf8").replace(/^\uFEFF/, "");
+  const dong = tho.split(/\r?\n/).filter((d) => d.trim() !== "");
+  if (dong.length === 0) return { coTep: true, ngay: new Set() };
+  const dau = docDong(dong[0]);
+  if (dau[0] !== COT_NGAY_NGHI[0]) {
+    throw new LoiMaster("NGAY_NGHI_SAI_DAU",
+      `Tệp ${duong} không có cột '${COT_NGAY_NGHI[0]}' ở đầu. Không đoán, không ghi đè.`);
+  }
+  const ngay = new Set();
+  for (const d of dong.slice(1)) {
+    const o = docDong(d);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(o[0])) ngay.add(o[0]);
+  }
+  return { coTep: true, ngay };
+}
+
+/** Ghi thêm MỘT ngày. Đã có thì không ghi lại — tệp này là một tập hợp, không phải nhật ký. */
+export function themNgayNghi(duongMaster, ngay, lyDo = "KHONG_CO_PHIEN", luc = new Date().toISOString()) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(ngay))) {
+    throw new LoiMaster("NGAY_SAI_DANG", `Ngày phải là yyyy-mm-dd, nhận được '${ngay}'.`);
+  }
+  const dang = docNgayNghi(duongMaster);
+  if (dang.ngay.has(ngay)) return { them: 0 };
+
+  const duong = duongNgayNghi(duongMaster);
+  const phan = [];
+  if (!dang.coTep || dang.ngay.size === 0) {
+    const cu = dang.coTep ? fs.readFileSync(duong, "utf8") : "";
+    if (!cu.trim()) phan.push(BOM + raDong(COT_NGAY_NGHI));
+  }
+  phan.push(raDong([ngay, lyDo, luc]));
+
+  /* Ghi qua tệp tạm rồi đổi tên — cùng luật với SSOT: một lượt chạy bị cắt giữa chừng không
+   * được để lại một tệp cụt mang tên thật. */
+  const tam = duong + ".dang-ghi";
+  const cu = dang.coTep && dang.ngay.size > 0 ? fs.readFileSync(duong, "utf8").replace(/\r?\n$/, "") : "";
+  fs.writeFileSync(tam, (cu ? cu + XUONG_DONG : "") + phan.join(XUONG_DONG) + XUONG_DONG, "utf8");
+  fs.renameSync(tam, duong);
+  return { them: 1 };
+}
