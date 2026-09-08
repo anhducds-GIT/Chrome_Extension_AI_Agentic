@@ -178,3 +178,16 @@ nội dung đã nằm trong bản đã sửa. Đã xoá.
 
 **Đo lại sau khi dọn.** Suite gói **9/9** · đột biến **22/22 khớp, 0 sống sót** · 60 tham
 chiếu tài liệu, 0 hỏng.
+
+## 2026-09-08 · `claude-scouter-s06` — khai danh tính gói vào bảng trạng thái
+
+Ba trường **tuỳ chọn** vào `v0.1.0/STATUS.md`: `lam_duoc` · `khong_lam_duoc` · `dung_the_nao`,
+cộng `ref_runbook` trỏ `PROTOCOL.md`. Bộ sinh đọc chúng và vẽ ra ở cả `DASHBOARD.md` (khối C)
+lẫn trang HTML (khối *"Nó là cái gì"*).
+
+Dòng đáng đọc nhất là **KHÔNG làm được** — nó nói thẳng gói này không bấm, không gõ, không đọc
+trang, và **không phải vì chưa làm** mà vì manifest không khai `debugger`, không khai
+`content_scripts`, không khai `scripting`. Đó là lý do gói này tồn tại riêng, nên nó phải nằm
+trên bảng chứ không nằm trong mã.
+
+Chi tiết bộ máy ở `HANDOFF.md` gốc repo cùng ngày.

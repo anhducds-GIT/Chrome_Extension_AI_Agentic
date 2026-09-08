@@ -630,3 +630,15 @@ nên Scouter **có cùng hai lỗi**: bản ghi ngân sách trải từ bản gh
 và đọc-ghi không xếp hàng (trần vượt khi chồng lượt). Đã ghi vào `BACKLOG.md` mục `S-15`.
 
 **Đo.** Suite gói **21/21** (trước 20).
+
+## 2026-09-08 · `claude-scouter-s06` — khai danh tính gói vào bảng trạng thái
+
+Ba trường **tuỳ chọn** vào `STATUS.md`: `lam_duoc` · `khong_lam_duoc` · `dung_the_nao`, cộng
+`ref_runbook` trỏ `AGENTS.md` của gói. Bảng nay nói được Scouter **là bộ dò trang đa năng, không
+gắn với trang nào** — và nói cả chỗ nó KHÔNG làm: không tự chạy, mọi lệnh bấm/gõ đóng mặc định,
+không ghi tệp, và không biết trang nào cả.
+
+Câu cuối là ranh giới seed/adapter viết lại cho Đức đọc: hiểu biết về một trang cụ thể phải nằm
+ở tầng adapter bên ngoài, không nằm trong seed.
+
+Chi tiết bộ máy ở `HANDOFF.md` gốc repo cùng ngày.
