@@ -20,6 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { dangMo, docMucDaGo } from "./backlog-check.mjs";
 import { parseStatus } from "./build-dashboard.mjs";
 import { ageHours, ageLabel, fingerprintState, GIO_NHAC, readClaims } from "./claim.mjs";
 import { claimPrefixesFrom, CHUA_THAY_DAU_VET, DAU_VET, dauVetTheoVung, frozenFrom, readStructureFromDisk, stewardOf, unitsFrom } from "./repo-structure.mjs";
@@ -136,6 +137,32 @@ function lamSach(s) {
   return String(s || "").replace(/~~/g, "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
 }
 
+/* SỔ NỢ GỐC REPO ĐỌC BẰNG BỘ ĐỌC CỦA CHÍNH NÓ — N-44.
+ *
+ * **[ĐO 08/09]** trước bản vá, bản đồ chỉ quét sổ nợ nằm trong các ĐƠN VỊ (gói có
+ * `manifest.json`), nên **8 mục nợ hạ tầng đang mở ở gốc repo không hiện ở mục nào** — kể cả
+ * khi `_root`/`_code` trống chủ. Phiên điều phối đọc bảng sẽ thấy repo chỉ còn việc của gói.
+ *
+ * DÙNG LẠI `backlog-check.mjs`, ĐỪNG DÙNG `parseBacklog` Ở TRÊN. Sổ gốc có quy ước `ĐỔI MÃ`
+ * mà chỉ bộ đọc kia hiểu; hai bộ đọc cho một quyển sổ là hai con số, và ngày 08/09 chúng đã
+ * ra **11 và 12** trên cùng một file. Nối bằng cách gọi lại bộ đọc kia thì chúng KHÔNG THỂ
+ * lệch — đó là bất biến, không phải sự trùng hợp cần canh.
+ *
+ * VÙNG: suy từ ĐƯỜNG DẪN như mọi sổ khác, tức `_root`. Trường `- **vùng:**` trong thân mục là
+ * **văn xuôi người tự viết** — đo 08/09: 4 trong 8 mục KHÔNG khai, một mục khai HAI khoá. Nên
+ * nó được in ra kèm nhãn `[DÒ]` để người đọc tự kiểm, chứ máy không suy vùng từ nó. */
+export function viecSoGoc(text) {
+  const mo = new Set(dangMo(text));
+  return docMucDaGo(text).filter((m) => mo.has(m.ma)).map((m) => {
+    const dong = m.than.find((l) => l.trimStart().startsWith("- **vùng:**"));
+    return {
+      ma: m.ma,
+      tieuDe: lamSach(m.ten),
+      uuTien: "P?",
+      vungKhai: dong ? lamSach(dong.trimStart().slice("- **vùng:**".length)) : "",
+    };
+  });
+}
 /* SỔ NỢ KHÔNG PHẢI NGUỒN DUY NHẤT, và bỏ sót điều đó là một lỗi đã đo được.
    `workers/duc-auto-gg-flow-video` có **0 mục nợ** trong `BACKLOG.md` — F-25, việc ưu tiên
    số 1 của cả repo, chỉ nằm ở `next_step` của `STATUS.md`. Bản đồ chỉ đọc sổ nợ thì gói đó
@@ -257,6 +284,9 @@ export function render({ vungs, ideas, now, dauNiemPhong, khaiSai = [] }) {
     for (const t of v.tieuDiem) d.push("      tiêu điểm (STATUS): " + catNgan(t.nextStep, 80));
     for (const viec of v.viec.slice(0, 6)) {
       d.push("      " + (viec.uuTien || "P?").padEnd(3) + " " + viec.ma + " · " + catNgan(viec.tieuDe, 84));
+      // Văn xuôi của người, in RIÊNG một dòng và có nhãn nguồn — một câu diễn giải đã bị nuốt
+      // mất đúng vì nằm chung dòng với con số (AGENTS.md mục 6).
+      if (viec.vungKhai) d.push("          [DÒ] vùng mục tự khai: " + catNgan(viec.vungKhai, 70));
     }
     if (v.viec.length > 6) d.push("      … còn " + (v.viec.length - 6) + " việc nữa trong sổ");
   }
@@ -379,12 +409,16 @@ function main() {
   const dongBangDS = frozenFrom(structure);
   const trongVungDongBang = (r) => laTrongVungDongBang(r, dongBangDS);
   const khaiSai = [];
+  const soGoc = path.join(ROOT, "BACKLOG.md");
+  const viecGoc = fs.existsSync(soGoc)
+    ? [{ relPath: "BACKLOG.md", viec: viecSoGoc(fs.readFileSync(soGoc, "utf8")) }]
+    : [];
   const viecTheoFile = timTrongDonVi(ROOT, units, "BACKLOG.md").map((abs) => {
     const doc = parseBacklog(fs.readFileSync(abs, "utf8"));
     const r = rel(abs);
     if (!trongVungDongBang(r)) khaiSai.push(...doc.khaiSai);
     return { relPath: r, viec: doc.mo };
-  });
+  }).concat(viecGoc);
 
   // STATUS ở gốc repo cũng tính: đơn vị GỐC (`STATUS.md` cạnh `manifest.json` ngoài cùng)
   // không nằm trong cây `workers/`, và bỏ nó là bỏ đúng một đơn vị khỏi bản đồ.

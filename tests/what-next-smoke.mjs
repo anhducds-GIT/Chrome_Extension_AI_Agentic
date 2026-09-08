@@ -9,7 +9,10 @@
 
 import assert from "node:assert/strict";
 
-import { banDoVung, daDongBang, dangBiChan, laTrongVungDongBang, locChoDuc, parseBacklog, parseIdeas, render, songSongDuoc, tieuDiemTuStatus } from "../scripts/what-next.mjs";
+import fs from "node:fs";
+
+import { dangMo } from "../scripts/backlog-check.mjs";
+import { banDoVung, daDongBang, dangBiChan, laTrongVungDongBang, locChoDuc, parseBacklog, parseIdeas, render, songSongDuoc, tieuDiemTuStatus, viecSoGoc } from "../scripts/what-next.mjs";
 
 let so = 0;
 const kiem = (ten, fn) => { fn(); so += 1; console.log("  ok  " + ten); };
@@ -334,6 +337,60 @@ kiem("N-31 · lưới hứng từ khoá vẫn còn răng, và không nêu tên h
   ].join("\n"));
   assert.deepEqual(doc.mo.map((v) => v.ma), ["G-12"], "G-11 khong duoc dem la viec mo");
   assert.deepEqual(doc.khaiSai, ["G-11"], "bi neu ten dung MOT lan, khong phai hai");
+});
+
+/* ---- N-44 · SỔ NỢ GỐC REPO PHẢI CÓ MẶT TRÊN BẢN ĐỒ ------------------------
+ *
+ * **[ĐO 08/09]** bản đồ chỉ quét sổ nợ trong các ĐƠN VỊ, nên 8 mục nợ hạ tầng ở gốc repo không
+ * hiện ở mục nào — phiên điều phối đọc bảng sẽ tưởng repo chỉ còn việc của gói.
+ *
+ * Vế đáng ghim nhất KHÔNG phải "có hiện ra", mà là **hai bộ đọc không được lệch nhau**: sổ gốc
+ * có quy ước `ĐỔI MÃ` mà chỉ `backlog-check.mjs` hiểu, và ngày 08/09 hai bộ đọc đã ra **11 và
+ * 12** trên cùng một file. Cách chữa là DÙNG LẠI bộ đọc kia, nên phép này ghim đúng chỗ đó. */
+kiem("N-44 · sổ gốc đọc bằng bộ đọc của chính nó — có ĐỔI MÃ vẫn khớp từng mã", () => {
+  const so = [
+    "## N-01 · viec con mo",
+    "- **vùng:** `_code`",
+    "",
+    "## N-02 · viec da dong",
+    "- **vùng:** `_root`",
+    "",
+    "## N-02 · khoi den sau, trung ma",
+    "",
+    "- **ĐỔI MÃ N-02 → N-09** · 2026-09-08 · lane `x` · khoi den sau doc la N-09",
+    "- **ĐÓNG N-02** · 2026-09-08 · lane `x` · xong",
+  ].join("\n");
+
+  const cua = viecSoGoc(so).map((v) => v.ma);
+  assert.deepEqual(cua, dangMo(so),
+    "viecSoGoc PHAI cho ra dung danh sach cua backlog-check — hai bo doc mot quyen so la hai con so");
+  assert.deepEqual(cua, ["N-01", "N-09"], "N-02 da dong; khoi den sau mang ma N-09 va van mo");
+});
+
+kiem("N-44 · vùng mục tự khai là VĂN XUÔI, in kèm nhãn [DÒ] chứ không dùng để suy vùng", () => {
+  // Đo 08/09: 4 trong 8 mục KHÔNG khai vùng, một mục khai HAI khoá. Suy vùng từ trường đó là
+  // suy từ chữ người tự viết — đúng thứ AGENTS.md mục 6 bắt gắn nhãn [DÒ].
+  const v = viecSoGoc(["## N-01 · co khai", "- **vùng:** `_code`", "", "## N-02 · khong khai"].join("\n"));
+  assert.equal(v[0].vungKhai, "`_code`");
+  assert.equal(v[1].vungKhai, "", "khong khai thi phai la rong, khong duoc doan");
+
+  const vungs = banDoVung({
+    viecTheoFile: [{ relPath: "BACKLOG.md", viec: v }],
+    claims: { claims: { _root: { owner: null } } },
+    structure: {}, prefixes: [],
+  });
+  assert.deepEqual(songSongDuoc(vungs).map((x) => x.khoa), ["_root"],
+    "muc so goc phai quy ve khoa cua DUONG DAN, khong phai khoa trong truong `vung:`");
+  const ra = render({ vungs, ideas: [], now: new Date("2026-09-08T00:00:00Z") });
+  assert.match(ra, /\[DÒ\] vùng mục tự khai: `_code`/, "phai in ra, kem nhan nguon");
+  assert.match(ra, /N-02/, "muc khong khai vung van phai hien");
+});
+
+kiem("N-44 · bộ chạy thật có NỐI sổ gốc vào, không chỉ có hàm rời", () => {
+  // Một hàm đúng mà `main()` không gọi thì bản đồ vẫn im như cũ — đây là chỗ N-44 đã hỏng.
+  const nguon = fs.readFileSync(new URL("../scripts/what-next.mjs", import.meta.url), "utf8");
+  assert.match(nguon, /\.concat\(viecGoc\)/, "main phai noi so goc vao danh sach viec");
+  assert.match(nguon, /from "\.\/backlog-check\.mjs"/, "phai dung lai bo doc cua so goc, dung viet bo thu hai");
 });
 
 console.log(`\n${so} passed, 0 failed, ${so} total`);
