@@ -226,9 +226,9 @@
   "agents": {
     "_doc": "THUOC COC cho AGENTS.md — hien phap, thu MOI AI nap MOI PHIEN truoc ca khi biet minh sap lam gi. Mot dong o day dat hon mot tram dong trong docs/studies/. Dat o dung con so cua HOM NAY: no chi chan PHINH.",
     "_vi_sao_can": "Gioi han (7) cua AGENTS.md (mot luat vao thi mot luat ra) ra doi 07/09 voi wc -l = 291. Trong hai ngay file phinh len 402 (+45%) ma KHONG gi keu — dung hinh dang luat khong may nao canh ma muc 7 cua chinh no canh bao. B9 co canh bao vang o moc 200 nhung no keu suot va khong ai nghe; mot canh bao luon bat thi khong con la tin hieu.",
-    "_do_that": "2026-09-09 sau luot cat N-52: 300 dong (tu 402). Cho cat: khoi khoa muc FILE 125 -> 27 dong, muc 3 va muc 5 rut gon — moi thu bi cat deu co ADR hoac docs/protocols/MULTIFLOW.md muc 4 lam nha. Lenh do lai: node scripts/session-check.mjs (phep kiem \"Kho chu khong phinh\")",
+    "_do_that": "2026-09-09, hai luot: cat N-52 (402 -> 300), roi viet lai thanh ban dang ky tieng Anh theo ADR-0026 (300 -> 254 dong, 30.520 -> 20.6xx ky tu, phi-ASCII 16% -> 1%). Lenh do lai: node scripts/session-check.mjs (phep kiem \"Kho chu khong phinh\")",
     "_cua_ra": "Them luat thi phai lay mot luat ra, hoac chuyen phan ke chuyen sang ADR roi HA con so nay xuong. Nang no len thi phai noi vi sao trong nhat ky phien.",
-    "tran_dong": 300
+    "tran_dong": 254
   },
   "docs": {
     "_doc": "THUOC COC cho kho chu, KHONG phai tran ly tuong. Dat o dung con so cua HOM NAY: no khong doi ai don, no chi chan PHINH. Moi luot xoa thi HA con so nay xuong — cho da ha khong quay lai duoc.",
