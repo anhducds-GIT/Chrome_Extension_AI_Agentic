@@ -57,3 +57,32 @@ Mục 4 (đối chiếu) là phần dài nhất, và đó là chủ ý — Đứ
 
 **Còn mở, lớn nhất:** chưa lượt nào chạy qua chính extension này (`H-01`). Bốn mục ở
 `BACKLOG.md`.
+
+## 2026-09-08 · `claude-scouter-s06` — máy chủ riêng · icon HNX · cả sợi dây đã chạy
+
+Đức nạp extension mới rồi ghép cặp bằng tệp của Scouter. **Không nối được — và đó là hành vi
+đúng**, nhưng nó hỏng theo cách tệ nhất: im lặng.
+
+**⑴ Máy chủ Bridge riêng** (`bridge/hnx-fetch-host.mjs`). Lõi so tên giao thức trên MỌI phong
+bì, nên máy chủ nói `duc-scouter.bridge` từ chối sạch phong bì `hnx-fetch.bridge`. Tệp ghép
+cặp *hợp lệ* — cùng cổng, cùng token — mà bắt tay vẫn không thành, và triệu chứng duy nhất là
+dòng *"Mất kết nối"*, **y hệt** lúc chưa bật máy chủ.
+
+> Chữa bằng cách chạy **đúng máy chủ**, không phải nới lỏng phép so khớp kia. Phép ghim ⑸ canh
+> hai đầu sợi dây khai cùng một tên. Host **mỏng**, dùng chung lõi `_shared/` với Scouter.
+
+**⑵ Icon HNX** — chữ **trắng** trên nền **xanh đậm**; Scouter là chữ nâu trên nền vàng. Đổi
+**cả hai lớp**, cố ý: chỉ đổi chữ thì ở 16px vẫn là hai ô vàng cạnh nhau, mà 16px mới là cỡ
+thật sự làm việc. Cỡ 16 và 32 vẽ **một chữ H đậm** — ba chữ ở 16px ra vệt bẩn.
+
+**⑶ Cả sợi dây đã chạy** (`day-tron-vong-smoke.mjs`, 7 khối): **máy chủ THẬT ↔ transport THẬT
+↔ lõi THẬT**, qua socket TCP thật. Chỉ `fetch()` còn giả — suite gọi ra Internet là suite đỏ
+theo thời tiết.
+
+**⑷ Đột biến kiểm** (`H-04` đóng): **13/13 khớp · 13 giết được · 0 sống sót**. Một con ban đầu
+sống sót **vì chính nó hỏng**; sửa cả hai đầu, và phép ghim mọc thêm một ca chưa ai thử.
+
+**Đo.** Suite gói **7/7** · suite gốc repo **377** · `check-bootstrap` 0 đỏ.
+
+**Còn mở:** `H-01` thu hẹp, chưa đóng — phần còn lại **chỉ Chrome trả lời được**. Đừng đóng
+nó bằng suy luận từ suite.

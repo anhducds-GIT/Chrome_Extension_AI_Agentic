@@ -24,7 +24,7 @@ Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở 
 
 ## AI ở đầu dây gọi được gì
 
-Mười một method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
+**Mười lăm** method, **từ vựng đóng**. Gọi `system.capabilities` để lấy danh sách kèm mô tả và lược đồ
 tham số — đó là câu trả lời có thẩm quyền, đừng chép danh sách ra chỗ khác.
 
 | Method | Ghi | Làm gì |
@@ -34,9 +34,13 @@ tham số — đó là câu trả lời có thẩm quyền, đừng chép danh s
 | `scout.page` | không | metadata trang + kiểm kê phần tử tương tác, có phân trang |
 | `scout.query` | không | một selector khớp mấy phần tử, và chúng là gì |
 | `scout.tree` | không | cây DOM tới độ sâu N, thuộc tính đã che |
+| `scout.a11y` | không | cây trợ năng — cái mà trình đọc màn hình thấy, không phải cái mắt thấy |
+| `scout.shot` | không | ảnh chụp trang, trả về base64 |
 | `scout.click` | **có** | bấm một phần tử bằng **chuột thật của trình duyệt** (trang thấy `isTrusted: true`) |
 | `scout.type` | **có** | gõ một chuỗi bằng **bàn phím thật**, từng phím một. Không xoá nội dung cũ |
 | `scout.key` | **có** | gõ một phím có tên: Enter · Tab · Escape · Backspace · Delete · bốn mũi tên · Home · End |
+| `scout.fetch` | **có** | gọi một URL http(s) bằng **chồng mạng của chính trình duyệt**. Trả văn bản; `as: "base64"` cho thân nhị phân như PDF. Không kèm cookie trừ khi khai `with_credentials` |
+| `scout.navigate` | **có** | đi sang trang khác rồi đợi tới nơi. Đổi trang là điều khiển trang, nên nó là lệnh GHI |
 | `scout.reload` | **có** | nạp lại chính extension. Trả lời trước, khởi động lại sau. Trần 10 giây một lượt |
 
 Mọi method chạm trang **bắt buộc** có `target_id` — lấy từ `scout.targets`. Không có đường

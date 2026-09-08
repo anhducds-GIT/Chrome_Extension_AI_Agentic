@@ -51,7 +51,15 @@ trong mã, chỉ tay Đức mở lại được. Đổi bất kỳ điều nào 
 | `v0.1.0/scripts/fetch-core.mjs` | **bản rút gọn**: cái phanh + 4 tay lệnh. Không đường DOM nào |
 | `v0.1.0/scripts/transport.mjs` | **chép NGUYÊN VĂN** từ Scouter — cửa Bridge, bắt tay hai chiều |
 | `v0.1.0/scripts/journal-core.mjs` | **chép NGUYÊN VĂN** từ Scouter — sổ công việc |
-| `v0.1.0/tests/be-mat-hep-smoke.mjs` | ghim bốn cách lời hứa ⑴ có thể chết |
+| `v0.1.0/bridge/hnx-fetch-host.mjs` | **máy chủ Bridge của gói**, mỏng. Khai giao thức `hnx-fetch.bridge`, cắm nhóm `file.*`, canh vùng ghi. Máy chủ của Scouter KHÔNG dùng được ở đây |
+| `v0.1.0/bridge/file-core.mjs` | **chép NGUYÊN VĂN** từ Scouter — nhóm lệnh `file.*` của máy chủ |
+| `v0.1.0/bridge/Chay-may-chu-HNX.cmd` | Đức nhấp đúp, hoặc kéo thả tệp ghép cặp vào |
+| `v0.1.0/scripts/make-icons.mjs` | **bộ sinh icon** — chữ HNX trắng trên nền xanh đậm. Icon là MÃ NGUỒN, không phải bốn cục nhị phân mồ côi |
+| `v0.1.0/scripts/mutation-check.mjs` | **13 con đột biến** canh bốn khối của phép ghim bề mặt hẹp |
+| `v0.1.0/scripts/mutation-runner.mjs` | bộ máy đột biến, chép từ Scouter |
+| `v0.1.0/tests/run-all.mjs` | chạy cả hai tầng phép ghim. **Cổng đóng phiên tự tìm tệp này** — thiếu nó là im lặng bỏ qua cả gói |
+| `v0.1.0/tests/be-mat-hep-smoke.mjs` | ghim sáu cách lời hứa ⑴ có thể chết |
+| `v0.1.0/tests/day-tron-vong-smoke.mjs` | **cả sợi dây**: máy chủ thật ↔ transport thật ↔ lõi thật, qua socket thật |
 | `du-lieu/nguon-hnx.mjs` | hợp đồng trang **kết quả giao dịch** |
 | `du-lieu/nguon-thong-ke.mjs` | hợp đồng trang **thống kê** (danh mục PDF) |
 | `du-lieu/bang-ket-qua.mjs` | đọc bảng HTML thành cột và hàng |
@@ -63,9 +71,9 @@ trong mã, chỉ tay Đức mở lại được. Đổi bất kỳ điều nào 
 | `du-lieu/chay.mjs` | lệnh chạy vòng lặp, nối `vong-lay` với Bridge |
 | `du-lieu/tests/` | 5 phép ghim, không chạm mạng thật |
 
-## Hai tệp chép nguyên văn — và cách chúng KHÔNG trôi
+## BA tệp chép nguyên văn — và cách chúng KHÔNG trôi
 
-`transport.mjs` và `journal-core.mjs` là bản chép từng byte của Scouter. Chép rồi để đó là đúng
+`transport.mjs` · `journal-core.mjs` · `bridge/file-core.mjs` là bản chép từng byte của Scouter. Chép rồi để đó là đúng
 bệnh của ba gói `duc-auto-*`: ba bản của một tệp, khác nhau cả ba, nên mỗi lỗi phải sửa ba lần
 và một bản vá an toàn chỉ tới được một bản.
 
@@ -78,17 +86,25 @@ gọn thật (11 lệnh bị cắt). Thứ đáng canh ở chúng là **từ v�
 
 ## Tự kiểm
 
+Một lệnh chạy cả hai tầng phép ghim:
+
 ```bash
-node du-lieu/tests/bang-ket-qua-smoke.mjs
-node du-lieu/tests/master-smoke.mjs
-node du-lieu/tests/nguon-hnx-smoke.mjs
-node du-lieu/tests/nguon-thong-ke-smoke.mjs
-node du-lieu/tests/vong-lay-smoke.mjs
-node v0.1.0/tests/be-mat-hep-smoke.mjs
+node v0.1.0/tests/run-all.mjs
 ```
 
-Suite này cũng chạy trong cổng kiểm gốc repo — nó quét theo hình dạng thư mục, không phải theo
-danh sách gõ tay.
+Nó quét **theo hình dạng thư mục**, không theo danh sách gõ tay — thêm một phép ghim mới thì
+không phải sửa gì. Cổng kiểm gốc repo tự tìm chính tệp `run-all.mjs` này, nên **thiếu nó là im
+lặng bỏ qua cả gói** (đã xảy ra thật lúc mới khai sinh gói: suite gốc vẫn 369 xanh y như cũ
+trong khi sáu phép ghim của gói không ai chạy).
+
+Chứng minh phép ghim **có răng** — mỗi lần sửa một chốt an toàn thì chạy lại:
+
+```bash
+node v0.1.0/scripts/mutation-check.mjs
+```
+
+**Mỏ neo khớp 0 lần thì bộ đo báo ĐỎ, không báo BỎ QUA.** Cố ý: một lượt bỏ qua đọc y hệt một
+lượt đạt, mà đó đúng là cách ba chốt của Scouter nằm không ai canh suốt một ngày.
 
 ## Ba việc phải hỏi Đức
 

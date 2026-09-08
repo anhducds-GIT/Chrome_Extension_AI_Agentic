@@ -26,7 +26,13 @@ Cần bấm nút trên một trang? Đó là việc của `duc-scouter`, không 
 
 1. Chrome → `chrome://extensions` → bật **Developer mode** → **Load unpacked** → chọn thư mục
    `workers/hnx-fetch/v0.1.0`.
-2. Bật **máy chủ Bridge** trên máy.
+2. Bật **máy chủ Bridge CỦA GÓI NÀY** — nhấp đúp `v0.1.0/bridge/Chay-may-chu-HNX.cmd`, hoặc kéo
+   thả tệp ghép cặp vào nó.
+
+   > Máy chủ của Scouter **không dùng được** cho extension này: hai bên nói hai tên giao thức
+   > khác nhau, và bắt tay sẽ hỏng **im lặng** — bảng bên chỉ báo *"Mất kết nối"*, giống hệt lúc
+   > chưa bật máy chủ. Dùng chung một tệp ghép cặp thì được, miễn đừng chạy hai máy chủ cùng lúc
+   > trên cùng một cổng.
 3. Bấm biểu tượng extension → **bảng bên mở ra ở cạnh phải** → mục **Kết nối Bridge** → chọn
    tệp ghép cặp do bộ cài Bridge tạo. Dòng trạng thái đổi thành *Đã nối máy chủ Bridge trên máy này.*
 4. Bật công tắc **"Cho phép lấy dữ liệu"** ở đầu bảng bên. Tắt thì mọi lượt gọi bị từ chối.

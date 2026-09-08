@@ -82,13 +82,37 @@ trên máy Đức — mới là thứ đặt tệp xuống.
 
 ## 2. Chuẩn bị: ba việc, làm một lần mỗi phiên
 
-### ① Máy chủ Bridge phải đang chạy
+### ① Máy chủ Bridge **CỦA CHÍNH GÓI NÀY** phải đang chạy
 
 Bridge là cái cầu giữa lệnh `node` của bạn và extension trong Chrome. Không có nó thì mọi lệnh
 dưới đây báo `MAY_CHU_HONG`.
 
-Máy chủ tạo ra một **tệp ghép cặp** (`pairing`) chứa cổng và token. **Tệp đó không bao giờ nằm
-trong kho mã** — hỏi Đức đường dẫn, rồi truyền qua cờ `--pairing`.
+> **Đây là chỗ vấp đầu tiên, và nó hỏng IM LẶNG.** HNX Fetch nói giao thức `hnx-fetch.bridge`;
+> máy chủ của Scouter nói `duc-scouter.bridge`. Lõi máy chủ so tên đó trên **mọi** phong bì, nên
+> ghép cặp bằng tệp của Scouter thì tệp *hợp lệ* — cùng cổng, cùng token — mà bắt tay vẫn
+> **không thành**. Triệu chứng duy nhất là dòng *"Mất kết nối"* ở bảng bên, **y hệt** lúc chưa
+> bật máy chủ. Đã xảy ra thật ngày 08/09.
+>
+> Đó là hành vi **đúng**, không phải lỗi: tên giao thức là thứ giữ cho hai extension trên cùng
+> một máy không nhận nhầm lệnh của nhau. Cách chữa là chạy **đúng máy chủ**, không phải nới lỏng
+> phép so khớp kia.
+
+Chạy máy chủ của gói này:
+
+```bash
+node workers/hnx-fetch/v0.1.0/bridge/hnx-fetch-host.mjs --pairing <tệp.json> --root <thư-mục-ghi>
+```
+
+Đức thì nhấp đúp `v0.1.0/bridge/Chay-may-chu-HNX.cmd`, hoặc kéo thả tệp ghép cặp vào nó.
+
+**Dùng chung một tệp ghép cặp với Scouter được**, miễn là **không chạy hai máy chủ cùng lúc**
+trên cùng cổng đó. Muốn chạy song song thì cần hai tệp ghép cặp hai cổng khác nhau.
+
+**Tệp ghép cặp không bao giờ nằm trong kho mã** — hỏi Đức đường dẫn, rồi truyền qua `--pairing`.
+
+**`--root` là VÙNG GHI, và nó KHÔNG được chứa tệp ghép cặp.** `file.read` đọc được mọi tệp dưới
+vùng ghi, nên để tệp ghép cặp trong đó nghĩa là **token đọc được qua dây**. Máy chủ từ chối khởi
+động nếu thấy — chặn lúc bật, không phải dặn.
 
 ### ② Chrome đang mở, đã nạp HNX Fetch, và bảng bên đã ghép cặp
 

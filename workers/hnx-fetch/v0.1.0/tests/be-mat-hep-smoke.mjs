@@ -134,6 +134,25 @@ async function tuChoi(fn) {
   assert.equal((await tuChoi(() => trang.handlers["scout.fetch"]({ url: "https://hnx.vn/" }))).details.write_code,
     "DEV_MODE_OFF");
 
+  /* HỎNG THÌ ĐÓNG. Đọc kho lưu mà NÉM thì cũng phải từ chối — "không biết Đức đã mở chưa"
+   * phải được xử như "chưa mở". Một cái phanh mở ra khi hỏng thì không phải phanh, và ca này
+   * KHÁC hẳn ca "chưa có bản ghi" ở trên: ở đây kho lưu còn không trả lời được. */
+  {
+    const noVo = {
+      runtime: { id: "hnx-fetch-gia" },
+      storage: { local: { async get() { throw new Error("kho luu chet"); }, async set() {} } }
+    };
+    const h = createSeedHandlers({
+      chromeApi: noVo, BridgeProtocolError, negotiateVersion, capabilities,
+      fetch: async () => { throw new Error("lượt gọi mạng không được phép xảy ra ở đây"); }
+    });
+    const e = await tuChoi(() => h["scout.fetch"]({ url: "https://hnx.vn/" }));
+    assert.equal(e.details.write_code, "DEV_MODE_UNREADABLE");
+    /* Và `readWriteGateState` — thứ bảng bên đọc — cũng phải nói TẮT, không được nói "không rõ".
+     * Bảng nói một đằng mà đường ghi làm một nẻo là chỗ Đức mất lòng tin vào cả cái bảng. */
+    assert.equal((await readWriteGateState(noVo)).enabled, false);
+  }
+
   /* Trần là 200, GÕ CỨNG. Bản ghi trong kho lưu khai `cap_per_unlock: 9999` không được nghe
    * theo: trần đọc từ chỗ mà kẻ bị chặn ghi được thì nó không phải là trần. (ADR-0005) */
   assert.equal(SEED_CONSTANTS.WRITE_CAP_PER_UNLOCK, 200);
@@ -181,22 +200,67 @@ async function tuChoi(fn) {
  * method bị cắt), và khối ⑴ đã canh đúng thứ đáng canh ở chúng — từ vựng. */
 {
   const CO_Y_KHAC = Object.create(null);   /* tên tệp → lý do. Rỗng là đúng cho tới khi có lý do thật. */
-  const nguon = path.join(goc, "..", "..", "duc-scouter", "v0.1.0", "scripts");
+  const scouter = path.join(goc, "..", "..", "duc-scouter", "v0.1.0");
+  /* Đường dẫn ĐẦY ĐỦ hai bên, vì bản chép không phải lúc nào cũng nằm cùng thư mục với bản
+   * gốc: `file-core.mjs` ở `bridge/`, hai tệp kia ở `scripts/`. Bảng rút gọn theo tên tệp đã
+   * đúng khi chỉ có hai cặp và sai ngay khi có cặp thứ ba. */
   const CAP = [
-    ["transport.mjs", "scouter-transport-loopback.mjs"],
-    ["journal-core.mjs", "scouter-journal-core.mjs"]
+    ["scripts/transport.mjs", "scripts/scouter-transport-loopback.mjs"],
+    ["scripts/journal-core.mjs", "scripts/scouter-journal-core.mjs"],
+    ["bridge/file-core.mjs", "bridge/file-core.mjs"]
   ];
   const bam = (p) => createHash("sha256").update(fs.readFileSync(p)).digest("hex").slice(0, 16);
 
   for (const [tenDay, tenGoc] of CAP) {
-    const banGoc = path.join(nguon, tenGoc);
+    const banGoc = path.join(scouter, ...tenGoc.split("/"));
     /* Bản gốc BIẾN MẤT thì ĐỎ, không lặng lẽ bỏ qua: một phép kiểm tự tắt khi mất mỏ neo đọc y
      * hệt một phép kiểm đang chạy tốt. Nếu Scouter thật sự đổi tên tệp thì sửa bảng CẶP ở trên. */
     assert.ok(fs.existsSync(banGoc), `không thấy bản gốc ${tenGoc} bên Scouter — sửa bảng CẶP, đừng bỏ khối này`);
     if (CO_Y_KHAC[tenDay]) continue;
-    assert.equal(bam(path.join(goc, "scripts", tenDay)), bam(banGoc),
+    assert.equal(bam(path.join(goc, ...tenDay.split("/"))), bam(banGoc),
       `${tenDay} đã trôi khỏi bản gốc ${tenGoc}. Đồng bộ lại, HOẶC khai vào CO_Y_KHAC kèm lý do.`);
   }
 }
 
-console.log("be-mat-hep-smoke: 4 khoi, tat ca DAT");
+/* ---- ⑸ HAI ĐẦU CỦA MỘT SỢI DÂY: tên giao thức phải khớp -------------------
+ * Extension khai `PROTOCOL` ở `scripts/bridge-core.mjs`; máy chủ khai lại ở
+ * `bridge/hnx-fetch-host.mjs`. Lõi máy chủ so tên đó trên MỌI phong bì, nên lệch một ký tự là
+ * extension nối mãi không được — mà triệu chứng chỉ là *"Mất kết nối"*, **không có câu lỗi nào**
+ * nói vì sao. Đây là dạng hỏng đắt nhất: nó trông y hệt máy chủ chưa bật.
+ *
+ * Đã xảy ra thật 08/09: Đức nạp extension mới rồi ghép cặp bằng tệp của Scouter — tệp hợp lệ,
+ * cùng cổng, cùng token, và vẫn không nối được, vì máy chủ hôm đó nói `duc-scouter.bridge`. */
+{
+  const host = await import("../bridge/hnx-fetch-host.mjs");
+  assert.equal(host.PROTOCOL, PROTOCOL,
+    `máy chủ nói "${host.PROTOCOL}" còn extension nói "${PROTOCOL}" — bắt tay sẽ hỏng IM LẶNG`);
+  assert.equal(PROTOCOL, "hnx-fetch.bridge",
+    "và tên đó phải KHÁC Scouter, nếu không hai extension nhận nhầm lệnh của nhau");
+}
+
+/* ---- ⑹ ICON phải là icon của CHÍNH gói này -------------------------------
+ * Bốn tệp PNG ban đầu được CHÉP từ Scouter lúc dựng gói. Đức chốt 08/09: *"đổi icon thành HNX,
+ * không nhầm với extension scout. Màu text khác & background khác."*
+ *
+ * Một icon trùng Scouter không làm hỏng dòng mã nào — nó chỉ làm Đức bấm nhầm extension, mỗi
+ * ngày, mãi mãi. Đó đúng là loại lỗi không có gì đỏ lên. */
+{
+  const iconGoi = path.join(goc, "icons");
+  const iconScouter = path.join(goc, "..", "..", "duc-scouter", "v0.1.0", "icons");
+  const PNG = "89504e470d0a1a0a";
+  for (const co of [16, 32, 48, 128]) {
+    const ta = fs.readFileSync(path.join(iconGoi, `icon-${co}.png`));
+    assert.equal(ta.subarray(0, 8).toString("hex"), PNG, `icon-${co}.png không phải PNG hợp lệ`);
+    assert.ok(ta.length > 100, `icon-${co}.png quá nhỏ (${ta.length} byte) — nhiều khả năng sinh hỏng`);
+    const ho = fs.readFileSync(path.join(iconScouter, `icon-${co}.png`));
+    assert.notEqual(createHash("sha256").update(ta).digest("hex"),
+      createHash("sha256").update(ho).digest("hex"),
+      `icon-${co}.png trùng y hệt Scouter — sinh lại: node scripts/make-icons.mjs`);
+  }
+  /* Và bộ sinh phải còn đó. Icon là MÃ NGUỒN ở repo này, không phải bốn cục nhị phân mồ côi:
+   * mất bộ sinh thì không ai sửa lại được màu, và cũng không ai biết nó vẽ bằng gì. */
+  assert.ok(fs.existsSync(path.join(goc, "scripts", "make-icons.mjs")),
+    "mất bộ sinh icon — bốn tệp PNG thành nhị phân mồ côi");
+}
+
+console.log("be-mat-hep-smoke: 6 khoi, tat ca DAT");

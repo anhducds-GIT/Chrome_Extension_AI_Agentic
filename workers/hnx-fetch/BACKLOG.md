@@ -18,6 +18,16 @@ thuần hoá trang" · công tắc và bộ đếm 200 lượt hiện đúng kh�
 **đóng khi:** một lượt `tai-ket-qua.mjs --thu-xem` đi trọn vòng qua extension `HNX Fetch` và
 trả về danh sách ngày, không phải qua Scouter.
 
+**THU HẸP 2026-09-08** · `claude-scouter-s06` — `v0.1.0/tests/day-tron-vong-smoke.mjs` nay chạy
+**máy chủ THẬT ↔ transport THẬT ↔ lõi THẬT** qua một socket TCP thật, 7 khối ĐẠT: bắt tay hai
+chiều · lệnh chỉ đọc đi trọn vòng · lệnh không tồn tại bị từ chối · phanh chặn thật qua dây và
+KHÔNG chạm mạng · mở khoá thì đi được và ngân sách trừ đúng · `file.*` dừng ở máy chủ · vùng ghi
+nhốt được. Nghĩa là **khúc giữa đã được chứng minh**.
+
+Phần còn lại của mục này **chỉ có Chrome trả lời được**, và không có cách nào đo từ Node: Chrome
+đọc `manifest.json` có đúng không · bảng bên vẽ ra sao · công tắc và bộ đếm 200 lượt hiện đúng
+không · phím tắt `Ctrl+Shift+H` có ăn không. Đừng đóng mục này bằng suy luận từ suite.
+
 ---
 
 ## MỞ · H-02 (2026-09-08, `claude-scouter-s06`) — sổ hoạt động mất phần "trang đang chạm"
@@ -60,3 +70,9 @@ Ba con đáng khai trước: gỡ cái phanh · nối lại một lệnh bấm v
 
 **đóng khi:** `node v0.1.0/scripts/pilot-mutation-check.mjs` chạy được và ba con trên đều
 **giết được**, 0 sống sót.
+
+**ĐÓNG 2026-09-08** · `claude-scouter-s06` — `v0.1.0/scripts/mutation-check.mjs` (tên khác dự
+kiến, ngắn hơn), **13 con · 13/13 mỏ neo khớp · 13 giết được · 0 sống sót**. Bốn mẻ: bề mặt ·
+phanh · manifest · chống trôi. Một con (`N8`) ban đầu **sống sót vì chính nó hỏng** — nó chỉ đổi
+tên mã lỗi chứ không thật sự mở phanh ra; sửa cả hai đầu: con đột biến làm đúng việc nó khai, và
+phép ghim mọc thêm ca *kho lưu NÉM thì phải từ chối*, ca trước đó chưa ai thử.
