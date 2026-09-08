@@ -762,11 +762,13 @@ const CLAIMS = () => ({
     // Vế ⑵. Ghim vào MỤC 1, không phải cả file: một dòng cấm nằm lạc ở mục khác thì người đang
     // đọc luật khoá không gặp nó.
     const agents = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "AGENTS.md"), "utf8");
-    const bat = agents.indexOf("## 1. Ai giữ package nào");
-    const het = agents.indexOf("## 2. Ba việc PHẢI hỏi Đức trước");
-    assert.ok(bat >= 0 && het > bat, "khong cat duoc muc 1 cua AGENTS.md — tieu de da doi ten?");
+    // Tiêu đề đổi sang tiếng Anh 09/09 (ADR-0026). Neo theo SỐ MỤC, không theo lời văn:
+    // "## 1." và "## 2." là thứ ổn định qua một lượt dịch, còn tên mục thì không.
+    const bat = agents.indexOf("## 1. ");
+    const het = agents.indexOf("## 2. ");
+    assert.ok(bat >= 0 && het > bat, "khong cat duoc muc 1 cua AGENTS.md — cau truc muc da doi?");
     const muc1 = agents.slice(bat, het);
-    assert.ok(muc1.includes("vào ống") && muc1.includes("claim.mjs"),
+    assert.ok(/pipe|ống/.test(muc1) && muc1.includes("claim.mjs"),
       "AGENTS.md muc 1 phai co dong cam noi claim.mjs vao ong — N-15. Do la chot duy nhat cho cai bay tren.");
     ok("N-15 · cu TU CHOI cua claim.mjs bien mat khi noi ong (bay con nguyen), va AGENTS.md muc 1 co dong cam");
   } finally { rmSync(temp, { recursive: true, force: true }); }
