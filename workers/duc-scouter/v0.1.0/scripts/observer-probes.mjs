@@ -119,6 +119,9 @@ const MAX_AX_NODES = 1500;
 const DEFAULT_AX_NODES = 400;
 const MAX_SHOT_BYTES = 700 * 1024;
 const DEFAULT_SHOT_QUALITY = 60;
+/* Trần cho `dom.snapshot`, ước lượng RẺ — xem chú thích tại chỗ dùng.
+ * 700 KiB, cùng con số với ảnh: cả hai đều phải lọt một phong bì 1 MiB. */
+const MAX_SNAPSHOT_BYTES = 700 * 1024;
 const MAX_ATTR_LENGTH = 200;
 
 /* ---- Chính sách che dữ liệu — ĐỀ XUẤT, CHƯA ĐƯỢC ĐỨC CHỐT ---------------
@@ -383,10 +386,37 @@ const PROBES = {
     });
     const documents = Array.isArray(raw?.documents) ? raw.documents : [];
     const strings = Array.isArray(raw?.strings) ? raw.strings : [];
+    const nodes = documents.reduce((tong, d) => tong + (d?.nodes?.nodeName?.length || 0), 0);
+
+    /* QUÁ TRẦN THÌ ĐỎ — cùng luật với `page.shot` và `scout.fetch`.
+     *
+     * Đo thật 08/09 trên Bridge đang chạy, 100% lặp lại: phép dò này GIẾT service worker.
+     * Người gọi nhận `TRANSPORT_DISCONNECTED`, rồi mọi lệnh sau nhận `EXTENSION_OFFLINE`
+     * cho tới khi extension tự nối lại (~1 giây). Nó là phép dò CHỈ ĐỌC duy nhất không có
+     * trần: `dom.tree` có `MAX_TREE_NODES`, `a11y.tree` có `MAX_AX_NODES`, `page.shot` có
+     * `MAX_SHOT_BYTES` — chỗ này thì không có gì.
+     *
+     * ƯỚC LƯỢNG, KHÔNG TUẦN TỰ HOÁ. Đây là điểm quan trọng nhất của khối này, và nó là
+     * bài học phải trả giá: bản vá đầu của tôi đo bằng `JSON.stringify` ở tầng transport,
+     * mà trên một bản chụp hàng chục MiB thì CHÍNH LƯỢT ĐO ĐÓ giết service worker. Hàng
+     * rào đặt sau vực thì không đỡ được ai. Cộng độ dài chuỗi là O(số chuỗi) và không cấp
+     * phát thêm bộ nhớ nào đáng kể, nên nó chạy được ở đúng chỗ mà `stringify` thì không.
+     *
+     * Con số chỉ cần đúng bậc độ lớn: ta chỉ cần tránh vực, không cần đo chính xác vực
+     * sâu bao nhiêu. Cộng thêm `nodes * 24` cho phần mảng chỉ số của mỗi nút. */
+    let uocLuong = nodes * 24;
+    for (const s of strings) uocLuong += (typeof s === "string" ? s.length : 0) + 3;
+    if (uocLuong > MAX_SNAPSHOT_BYTES) {
+      throw new ProbeError("SNAPSHOT_TOO_LARGE",
+        "Bản chụp ước lượng " + uocLuong + " byte, quá trần " + MAX_SNAPSHOT_BYTES + " byte ("
+        + nodes + " nút, " + strings.length + " chuỗi). Dùng `scout.tree` có độ sâu, hoặc "
+        + "`scout.query` với selector hẹp hơn.");
+    }
+
     return {
       documents: documents.length,
       strings: strings.length,
-      nodes: documents.reduce((tong, d) => tong + (d?.nodes?.nodeName?.length || 0), 0),
+      nodes,
       /* Trả nguyên bản của Chrome. Viết lại cho "đẹp" là dựng bản sao thứ hai của một
        * lược đồ mà Chrome mới là người định nghĩa, và hai bản sẽ lệch nhau. */
       snapshot: { documents, strings }

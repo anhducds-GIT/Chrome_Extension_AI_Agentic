@@ -299,7 +299,6 @@ const FAKE_TARGETS = [
   }
 }
 
-console.log("observer-probes smoke tests: PASS");
 
 /* ---- Bộ đo đột biến ------------------------------------------------------
  * Chạy ở tiến trình con, chỉ khi được gọi với --with-mutation (mặc định TẮT: nó bẩn file
@@ -399,9 +398,45 @@ console.log("observer-probes smoke tests: PASS");
   const coRect = await runProbe("dom.snapshot", { sendRaw: send }, { rects: true });
   assert.equal(coRect.ok, true);
   assert.equal(daGoi.at(-1).params.includeDOMRects, true);
+
+  /* QUÁ TRẦN THÌ ĐỎ — phép dò này từng GIẾT service worker.
+   *
+   * Đo thật 08/09 trên Bridge đang chạy, 100% lặp lại: `scout.snapshot` làm đứt kết nối,
+   * người gọi nhận `TRANSPORT_DISCONNECTED` rồi `EXTENSION_OFFLINE` tới khi extension tự
+   * nối lại. Nó là phép dò CHỈ ĐỌC duy nhất không có trần.
+   *
+   * Ghim luôn cả cách ĐO, không chỉ cái trần: ước lượng phải cộng độ dài chuỗi, KHÔNG
+   * được tuần tự hoá. Bản vá đầu đo bằng `JSON.stringify` ở tầng transport, và trên một
+   * bản chụp hàng chục MiB thì chính lượt đo đó giết service worker — hàng rào đặt sau
+   * vực không đỡ được ai. Ca dưới đây dựng một bảng chuỗi to mà số NÚT thì nhỏ, nên một
+   * bản vá chỉ đếm nút sẽ SỐNG SÓT qua nó và ta biết ngay. */
+  const rácTo = {
+    documents: [{ nodes: { nodeName: [1, 2, 3] } }],
+    strings: Array.from({ length: 400 }, () => "x".repeat(3000))
+  };
+  const quáTrần = await runProbe("dom.snapshot", { sendRaw: async () => rácTo });
+  assert.equal(quáTrần.ok, false, "bản chụp quá trần mà vẫn báo thành công");
+  assert.equal(quáTrần.code, "SNAPSHOT_TOO_LARGE");
+  assert.match(quáTrần.detail, /quá trần/, "câu lỗi phải nói số đo, không chỉ nói hỏng");
+
+  /* Chiều ngược lại: dưới trần thì KHÔNG được chặn. Thiếu vế này thì một bản vá chặn tất
+   * cả mọi thứ vẫn xanh, và `dom.snapshot` thành vô dụng thay vì được sửa. */
+  const vừaĐủ = {
+    documents: [{ nodes: { nodeName: [1, 2, 3] } }],
+    strings: Array.from({ length: 100 }, () => "y".repeat(1000))
+  };
+  const dướiTrần = await runProbe("dom.snapshot", { sendRaw: async () => vừaĐủ });
+  assert.equal(dướiTrần.ok, true, "bản chụp dưới trần bị chặn oan");
+  assert.equal(dướiTrần.data.strings, 100);
 }
 
 if (process.argv.includes("--with-mutation")) {
   const here = path.dirname(fileURLToPath(import.meta.url));
   execFileSync(process.execPath, [path.join(here, "..", "scripts", "observer-mutation-check.mjs")], { stdio: "inherit" });
 }
+
+/* Dòng PASS phải là dòng CUỐI CÙNG chạy được.
+ * Trước 08/09 nó nằm ở giữa file, và bốn khối kiểm chạy SAU nó — nên một phép ghim đỏ vẫn in
+ * ra chữ PASS rồi mới nổ. run-all.mjs đọc mã thoát nên nó không bị lừa, nhưng người đọc thì
+ * có. Một dòng nói "đạt" trước khi đo xong là một dòng nói dối, dù máy không tin nó. */
+console.log("observer-probes smoke tests: PASS");
