@@ -60,6 +60,8 @@ trong mã, chỉ tay Đức mở lại được. Đổi bất kỳ điều nào 
 | `v0.1.0/tests/run-all.mjs` | chạy cả hai tầng phép ghim. **Cổng đóng phiên tự tìm tệp này** — thiếu nó là im lặng bỏ qua cả gói |
 | `v0.1.0/tests/be-mat-hep-smoke.mjs` | ghim sáu cách lời hứa ⑴ có thể chết |
 | `v0.1.0/tests/day-tron-vong-smoke.mjs` | **cả sợi dây**: máy chủ thật ↔ transport thật ↔ lõi thật, qua socket thật |
+| `v0.1.0/tests/tham-chieu-tai-lieu-smoke.mjs` | mọi đường dẫn và lệnh trong tài liệu CHỈ DẪN phải trỏ vào tệp có thật. Tài liệu không chạy, nên không gì bắt được nó trỏ hụt |
+| `du-lieu/tests/kiem-ssot-smoke.mjs` | ghim bộ soi SSOT — nhất là hai chỗ mù: khoá trùng theo (ngày + ISIN), và ngày thiếu hẳn |
 | `du-lieu/nguon-hnx.mjs` | hợp đồng trang **kết quả giao dịch** |
 | `du-lieu/nguon-thong-ke.mjs` | hợp đồng trang **thống kê** (danh mục PDF) |
 | `du-lieu/bang-ket-qua.mjs` | đọc bảng HTML thành cột và hàng |
@@ -74,7 +76,8 @@ trong mã, chỉ tay Đức mở lại được. Đổi bất kỳ điều nào 
 
 ## BA tệp chép nguyên văn — và cách chúng KHÔNG trôi
 
-`transport.mjs` · `journal-core.mjs` · `bridge/file-core.mjs` là bản chép từng byte của Scouter. Chép rồi để đó là đúng
+`v0.1.0/scripts/transport.mjs` · `v0.1.0/scripts/journal-core.mjs` · `v0.1.0/bridge/file-core.mjs`
+là bản chép từng byte của Scouter. Chép rồi để đó là đúng
 bệnh của ba gói `duc-auto-*`: ba bản của một tệp, khác nhau cả ba, nên mỗi lỗi phải sửa ba lần
 và một bản vá an toàn chỉ tới được một bản.
 

@@ -143,3 +143,25 @@ trước trộn hai gốc đường dẫn), luật chọn khoảng ngày (hỏi 
 an toàn, mà bản trước không hề nói ra.
 
 **Đo.** Suite gói **8/8** · gốc repo **378** · đột biến **22/22 khớp, 0 sống sót**.
+
+## 2026-09-08 · `claude-scouter-s06` — đóng gói: tài liệu nay cũng có phép ghim
+
+Lượt cuối trước khi gọi là hoàn chỉnh: soi **mọi đường dẫn và mọi câu lệnh** trong tài liệu của
+gói xem chúng có trỏ vào tệp có thật không. Bắt được **3 chỗ trỏ hụt** — một lệnh gọi tên tệp
+chưa bao giờ tồn tại, hai đường dẫn viết thiếu tiền tố thư mục.
+
+**Không lần nào có gì đỏ lên.** Tài liệu không chạy, nên không gì bắt được nó trỏ hụt cho tới
+lúc có người đi theo nó — mà `PROTOCOL.md` viết ra chính để một AI khác đi theo mà không hỏi ai.
+
+Nên bộ soi ở lại thành phép ghim: `tham-chieu-tai-lieu-smoke.mjs`. Nó **chỉ soi tài liệu CHỈ
+DẪN** — nhật ký và các mục sổ nợ đã đóng cố ý giữ tên tệp lúc đó, và bắt lịch sử phải tự sửa
+mình là sai. Nó cũng đỏ nếu soi được **quá ít** tham chiếu: một bộ đọc hỏng trả về *0 hỏng*
+trông y hệt một tài liệu sạch.
+
+Kèm: đường dẫn trong phép ghim suy từ vị trí chính tệp đó, không gõ cứng tuyệt đối — bản đầu gõ
+cứng, và nó sẽ đỏ ở máy thứ hai mà không ai đoán ra vì sao.
+
+**Đo.** Suite gói **9/9** · **60 tham chiếu tài liệu, 0 hỏng**.
+
+**Trạng thái gói: đã đóng gói xong, chờ đúng MỘT việc của Đức** — nạp vào Chrome rồi chạy một
+lượt thật (`H-01`). Mọi thứ đo được từ Node đều đã đo.
