@@ -1,11 +1,27 @@
 ---
-status: Superseded in part by ADR-0012
+status: Accepted in part — clause ⑵ dead, see block below
+superseded_clause: "⑵ xoay theo tháng, bỏ hẳn việc cắt định kỳ" — dead, ADR-0008 governs
 adr: 0011
 date: 2026-09-06
 deciders: Đức
 ---
 
 # ADR-0011 — `HANDOFF.md`: chặn ở đầu vào, và xoay file theo tháng thay vì cắt định kỳ
+
+> **⚠ MỘT PHẦN CỦA ADR NÀY ĐÃ CHẾT — đọc khối này trước phần Quyết định.**
+>
+> **Vế ⑵ (*"xoay theo THÁNG, bỏ hẳn việc cắt định kỳ"*) ĐÃ CHẾT.** Đức chốt 2026-09-09:
+> `HANDOFF.md` cắt theo **SỐ MỤC**, giữ 20 mục cuối — tức cơ chế của
+> [ADR-0008](0008-cat-duoi-handoff-giu-hai-muoi-luot.md), thứ mà vế ⑵ này định bỏ.
+> 
+> Đo 09/09: cả 60 mục của `HANDOFF.md` gốc đều mang mốc `2026-09`, nên `--rotate` xoay theo
+> tháng dời **0 dòng** — cơ chế xoay không chặn được phình TRONG một tháng.
+> 
+> **Vế ⑴ (trần byte một mục) vẫn sống** và cổng đóng phiên đang cưỡng chế nó.
+> **Vế ⑶ và ⑷ vẫn sống.** Lệnh `--rotate` **không bị gỡ** — nó vẫn là đường sang tháng mới.
+>
+> Rà soát bộ luật 2026-09-09 ([ADR-0026](0026-adr-records-are-editable.md)). Phần còn lại của
+> ADR này vẫn có hiệu lực.
 
 ## Bối cảnh
 

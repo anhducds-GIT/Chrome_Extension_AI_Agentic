@@ -1,11 +1,24 @@
 ---
-status: Accepted
+status: Accepted in part — see block below
 adr: 0012
 date: 2026-09-06
 deciders: Đức
 ---
 
 # ADR-0012 — `HANDOFF.md` lọc theo NỘI DUNG, không lọc theo thời gian
+
+> **⚠ MỘT PHẦN CỦA ADR NÀY ĐÃ CHẾT — đọc khối này trước phần Quyết định.**
+>
+> **Câu *"Tuổi KHÔNG phải tiêu chí"* không còn mô tả cơ chế đang chạy.** Đức chốt 09/09:
+> máy cắt theo **20 mục cuối** ([ADR-0008](0008-cat-duoi-handoff-giu-hai-muoi-luot.md)), và
+> cắt theo vị trí thì trên thực tế là cắt theo tuổi.
+> 
+> **Phần còn sống của ADR này là TIÊU CHÍ cho lượt sàng lọc có người/AI xem:** một mục còn nói
+> về việc **chưa đóng** thì đáng được nhắc lại ở mục mới trước khi phần cũ bị dời đi. Máy cắt
+> theo số; người quyết cái gì đáng mang theo. Hai việc khác nhau, không mâu thuẫn.
+>
+> Rà soát bộ luật 2026-09-09 ([ADR-0026](0026-adr-records-are-editable.md)). Phần còn lại của
+> ADR này vẫn có hiệu lực.
 
 > Thay phần ⑵ của [ADR-0011](0011-handoff-chan-o-dau-vao-va-xoay-theo-thang.md) (xoay file theo
 > tháng). Ba phần còn lại của ADR-0011 **giữ nguyên**.

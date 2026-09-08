@@ -1,11 +1,27 @@
 ---
-status: Proposed
+status: Rejected — superseded by ADR-0025 before acceptance
+superseded_by: 0025
 adr: 0023
 date: 2026-09-07
 deciders: Đức
 ---
 
 # ADR-0023 — Không ai phải chờ ai: khoá hết hạn khi có người chờ, vai điều phối không bị chặn, khoá thuộc về CHAT
+
+> **⚠ MỘT PHẦN CỦA ADR NÀY ĐÃ CHẾT — đọc khối này trước phần Quyết định.**
+>
+> **Vế ⑴ (khoá hết hạn, *"chưa thấy dấu vết > 30 phút → nhường"*) KHÔNG có hiệu lực.**
+> [ADR-0025](0025-khoa-muc-file-giu-ngan-tra-ngay.md) ngày hôm sau chốt ngược lại: khoá của
+> lane khác thì **chỉ được HỎI, tuyệt đối không nhả hộ**. ADR này chưa bao giờ được Accepted.
+> 
+> Hai câu ngược nhau này đã tốn thời gian thật ngày 09/09: một phiên đọc câu cũ rồi áp nó cho
+> khoá của **chính mình**, trong khi cả hai câu đều nói về khoá của **người khác**.
+> 
+> **Vế ⑵(a) và ⑵(b) chưa bao giờ được cài** — không có khoá `_agents`, và `docs/adr/` không
+> nằm trong `append_only_exempt`. Đừng đọc chúng thành luật đang chạy.
+>
+> Rà soát bộ luật 2026-09-09 ([ADR-0026](0026-adr-records-are-editable.md)). Phần còn lại của
+> ADR này vẫn có hiệu lực.
 
 > **HAI CHỖ ĐÃ ĐỔI SO VỚI BẢN VIẾT 07/09, ghi ra để không ai tưởng đây là bản gốc:**
 >

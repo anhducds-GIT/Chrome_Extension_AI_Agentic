@@ -9,6 +9,19 @@ superseded_by: 0019
 
 # ADR-0018 — Đính chính ADR-0017: chỉ-thêm không cấp được quyền độc quyền; dùng ref git làm nguyên thuỷ nguyên tử
 
+> **⚠ MỘT PHẦN CỦA ADR NÀY ĐÃ CHẾT — đọc khối này trước phần Quyết định.**
+>
+> **Chỗ mập mờ, nêu ra để không ai đoán:** ADR này ở trạng thái `Accepted` nhưng khai
+> `superseded_by: 0019`, mà [ADR-0019](0019-cua-tich-hop-kiem-quyen-tren-lich-su.md) tới
+> 09/09 vẫn chỉ là `Proposed`. Một luật đang có hiệu lực trỏ sang bản thay thế **chưa được
+> duyệt** — nên tới khi Đức chốt ADR-0019, **ADR này là bản đang chạy**.
+> 
+> ADR-0019 chạm chính sách nhánh trên GitHub (`enforce_admins`), thứ chỉ Đức đổi được, nên nó
+> cố ý nằm chờ chứ không phải bị bỏ quên.
+>
+> Rà soát bộ luật 2026-09-09 ([ADR-0026](0026-adr-records-are-editable.md)). Phần còn lại của
+> ADR này vẫn có hiệu lực.
+
 ## Bối cảnh
 
 [ADR-0017](0017-hai-vai-assistant-thay-the-mot-cua.md) mục ⑶ chốt rằng nguồn điều phối đổi sang

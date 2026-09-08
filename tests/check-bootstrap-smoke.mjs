@@ -22,9 +22,9 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
-  ADR_DIR, checkB1, checkB3, checkB4, checkB6, checkB9, checkB10, checkB11, checkB12, checkB14, checkB15,
+  ADR_DIR, adrScopeOf, checkB1, checkB3, checkB4, checkB6, checkB9, checkB10, checkB11, checkB12, checkB14, checkB15,
   blockingFailures, checkGeneratedFreshness, checkStatusCode, collectChecks, DOC_LINE_LIMIT, grandfatheredNote, isAdrPath,
-  NAV_DEPTH_LIMIT, parseLastCommitTimes, renderChecks, ruleBearingLines, runBootstrapCheck, stripStatusSection
+  NAV_DEPTH_LIMIT, parseLastCommitTimes, renderChecks, ruleBearingLines, runBootstrapCheck
 } from "../scripts/check-bootstrap.mjs";
 import { collectModel } from "../scripts/build-dashboard.mjs";
 
@@ -144,7 +144,10 @@ function fixture(overrides = {}) {
       gitlinksAtRoot: () => [],
       lastCommitTimes: () => times,
       fileHistory: (relPath) => (overrides.history ?? {})[relPath] ?? [],
-      showAt: (sha, relPath) => (overrides.blobs ?? {})[`${sha}:${relPath}`] ?? null
+      showAt: (sha, relPath) => (overrides.blobs ?? {})[`${sha}:${relPath}`] ?? null,
+      // Mọi đường dẫn TỪNG tồn tại = file đang có, cộng mọi file có mặt trong `history` (kể cả
+      // file mà ca thử cố tình KHÔNG đặt vào `files` — tức file đã bị xoá).
+      pathsEver: () => [...new Set([...paths, ...Object.keys(overrides.history ?? {})])]
     }
   };
 }
@@ -358,171 +361,113 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
   ok("B11 · tài liệu quá ttl_days, và hạn không đọc được thì tính là nợ");
 }
 
-/* ---- B12 ------------------------------------------------------------------ */
+/* ---- B12 · sổ định danh quyết định (ADR-0026) -----------------------------
+   Tới 09/09 B12 hỏi "thân ADR có đổi kể từ lúc Accepted không". Đức bỏ luật bất biến ngày
+   09/09: ADR nay được gộp, phân nhóm, dịch, viết lại. Câu hỏi mới: **quyết định nào từng được
+   cấp số mà nay không file nào nhận**. Gộp thì tự do, mất thì ĐỎ. */
 {
   const none = checkB12(fixture());
   assert.equal(none.state, "skip", "chưa có docs/adr/ thì BỎ QUA");
   assert.match(none.note, /KHÔNG ÁP DỤNG/);
 
-  const adr = `${ADR_DIR}0001-chon-bridge.md`;
-  const body = "Chọn Bridge làm lớp vận chuyển.\n";
-  const accepted = fm({ status: "Accepted" }) + body;
-  const untouched = fixture({
-    files: { [adr]: accepted },
-    history: { [adr]: ["sha1", "sha2"] },
-    blobs: { [`sha1:${adr}`]: fm({ status: "Proposed" }) + body, [`sha2:${adr}`]: accepted }
-  });
-  assert.equal(checkB12(untouched).state, "ok", "ADR vừa được Accepted, chưa ai sửa thân -> xanh");
+  const a1 = `${ADR_DIR}0001-chon-bridge.md`;
+  const a2 = `${ADR_DIR}0002-doi-y.md`;
+  const than = (t) => `# ADR\n\n## Quyết định\n\n${t}\n`;
+  const banA1 = fm({ status: "Accepted", adr: "0001" }) + than("Chọn Bridge.");
+  const banA2 = fm({ status: "Accepted", adr: "0002" }) + than("Đổi sang WebSocket.");
 
-  const daSua = fm({ status: "Accepted" }) + "Đổi ý, chọn thứ khác.\n";
-  const edited = fixture({
-    // NỘI DUNG HIỆN TẠI là bản đã sửa — B12 so TRẠNG THÁI hiện tại, không so "đã từng bị sửa".
-    files: { [adr]: daSua },
-    history: { [adr]: ["sha1", "sha2", "sha3"] },
+  // ⑴ CHIỀU XANH — hai file, hai số, không mất gì.
+  const dayDu = fixture({
+    files: { [a1]: banA1, [a2]: banA2 },
+    history: { [a1]: ["s1"], [a2]: ["s2"] },
+    blobs: { [`s1:${a1}`]: banA1, [`s2:${a2}`]: banA2 }
+  });
+  assert.equal(checkB12(dayDu).state, "ok", "hai ADR, hai số, không mất gì -> xanh");
+
+  // ⑵ VIẾT LẠI THÂN LÀ HỢP LỆ — đây là chỗ luật vừa đổi, và nếu vế này thiếu thì một bản vá
+  //    "khôi phục lại phép so thân" sẽ đi qua mà suite vẫn xanh.
+  const daVietLai = fixture({
+    files: { [a1]: fm({ status: "Accepted", adr: "0001" }) + than("Viết lại cho gọn, cùng một quyết định.") },
+    history: { [a1]: ["s1", "s2"] },
+    blobs: { [`s1:${a1}`]: banA1, [`s2:${a1}`]: fm({ status: "Accepted", adr: "0001" }) + than("Viết lại.") }
+  });
+  assert.equal(checkB12(daVietLai).state, "ok",
+    "viết lại thân ADR đã Accepted nay HỢP LỆ (ADR-0026) — B12 không còn canh chuyện đó");
+
+  // ⑶ GỘP HAI ADR LÀM MỘT, khai `decides` -> XANH. Đây là việc Đức đặt hàng.
+  const banGop = fm({ status: "Accepted", adr: "0001", decides: "[0001, 0002]" })
+    + than("Gộp: chọn Bridge, rồi đổi sang WebSocket.");
+  const daGop = fixture({
+    files: { [a1]: banGop },
+    history: { [a1]: ["s1", "s3"], [a2]: ["s2"] },
+    blobs: { [`s1:${a1}`]: banA1, [`s3:${a1}`]: banGop, [`s2:${a2}`]: banA2 }
+  });
+  assert.equal(checkB12(daGop).state, "ok", "gộp mà khai `decides` đủ thì không mất quyết định nào");
+
+  // ⑷ CHIỀU ĐỎ — gộp mà QUÊN khai. Đây là rủi ro thật của việc 26 file gộp còn 8.
+  const gopThieu = fixture({
+    files: { [a1]: fm({ status: "Accepted", adr: "0001" }) + than("Gộp nhưng quên khai 0002.") },
+    history: { [a1]: ["s1", "s3"], [a2]: ["s2"] },
     blobs: {
-      [`sha1:${adr}`]: fm({ status: "Proposed" }) + body,
-      [`sha2:${adr}`]: accepted,
-      [`sha3:${adr}`]: fm({ status: "Accepted" }) + "Đổi ý, chọn thứ khác.\n"
+      [`s1:${a1}`]: banA1,
+      [`s3:${a1}`]: fm({ status: "Accepted", adr: "0001" }) + than("Gộp nhưng quên khai."),
+      [`s2:${a2}`]: banA2
     }
   });
-  const broken = checkB12(edited);
-  assert.equal(broken.state, "fail");
-  assert.deepEqual(tags(broken), ["ADR-EDITED"]);
+  const mat = checkB12(gopThieu);
+  assert.equal(mat.state, "fail", "quyết định 0002 biến mất mà không ai nhận -> ĐỎ");
+  assert.deepEqual(tags(mat), ["ADR-LOST"]);
+  assert.match(mat.findings[0].why, /0002/, "phải gọi đúng tên số hiệu đã mất");
+  assert.match(mat.findings[0].fix.join(" "), /decides/, "phải chỉ đúng đường sửa");
 
-  // Sửa RIÊNG frontmatter sau khi Accepted là hợp lệ — đó là cách một ADR bị thay thế
-  // đúng luật. Không có vế này thì mutation "hễ commit sau Accepted là kêu" sẽ thoát.
-  const supersededLater = fixture({
-    files: { [adr]: accepted },
-    history: { [adr]: ["sha1", "sha2", "sha3"] },
-    blobs: {
-      [`sha1:${adr}`]: fm({ status: "Proposed" }) + body,
-      [`sha2:${adr}`]: accepted,
-      [`sha3:${adr}`]: fm({ status: "Accepted", superseded_by: "docs/adr/0002.md" }) + body
-    }
+  // ⑸ CHIỀU ĐỎ — hai file cùng nhận một số thì không biết đọc bản nào.
+  const doiChu = fixture({
+    files: { [a1]: banGop, [a2]: banA2 },
+    history: { [a1]: ["s1"], [a2]: ["s2"] },
+    blobs: { [`s1:${a1}`]: banGop, [`s2:${a2}`]: banA2 }
   });
-  assert.equal(checkB12(supersededLater).state, "ok", "đổi frontmatter sau Accepted là hợp lệ, chỉ thân mới bị cấm");
+  const trung = checkB12(doiChu);
+  assert.equal(trung.state, "fail", "0002 vừa nằm trong file gộp vừa còn file riêng -> ĐỎ");
+  assert.deepEqual(tags(trung), ["ADR-DUPLICATE"]);
 
-  /* SỬA RỒI HOÀN NGUYÊN -> XANH LẠI. Đây là phát hiện của chính bài nghiệm thu phần A, không
-     phải một ca tưởng tượng: bản đầu của B12 báo lỗi khi có BẤT KỲ commit nào từng đổi thân,
-     nên `git revert` bản sửa cũng bị tính là một lần đổi thân sau mốc Accepted → ĐỎ VĨNH VIỄN,
-     không cách nào xoá trừ sửa lịch sử (luật cấm). Một phép kiểm thuộc nhóm CHẶN mà không xoá
-     được là cái bẫy khoá cả repo — đúng thứ BRIEF-S7 cảnh báo. Thiếu phép kiểm này thì một hôm
-     nào đó ai đó "sửa cho đúng luật hơn" và dựng lại cái bẫy. */
-  const daHoanNguyen = fixture({
-    files: { [adr]: accepted },
-    history: { [adr]: ["sha1", "sha2", "sha3", "sha4"] },
-    blobs: {
-      [`sha1:${adr}`]: fm({ status: "Proposed" }) + body,
-      [`sha2:${adr}`]: accepted,
-      [`sha3:${adr}`]: fm({ status: "Accepted" }) + "Sửa sai.\n",
-      [`sha4:${adr}`]: accepted
-    }
+  ok("B12 · gộp/viết lại thì tự do, MẤT hoặc TRÙNG một quyết định thì đỏ (ADR-0026)");
+}
+
+/* ---- B12 · số hiệu đánh THEO TỪNG THƯ MỤC ---------------------------------
+   ADR-0000 luật 3. Bản đầu của phép kiểm mới dùng SỐ TRẦN làm định danh và lập tức báo 50 chỗ
+   trùng oan trên repo thật — `0001` ở gốc và `0001` trong mỗi gói là bốn quyết định khác nhau.
+   Chính phép kiểm bắt được lỗi mô hình của nó, và vế này giữ cho nó không tái phát. */
+{
+  const goc = `${ADR_DIR}0001-quyet-dinh-goc.md`;
+  const goi = "workers/demo/v1/docs/adr/0001-quyet-dinh-goi.md";
+  const b = (n) => fm({ status: "Accepted", adr: n }) + "# ADR\n\n## Quyết định\n\nX.\n";
+  const haiTang = fixture({
+    files: { [goc]: b("0001"), [goi]: b("0001") },
+    history: { [goc]: ["s1"], [goi]: ["s2"] },
+    blobs: { [`s1:${goc}`]: b("0001"), [`s2:${goi}`]: b("0001") }
   });
-  assert.equal(checkB12(daHoanNguyen).state, "ok",
-    "sửa rồi hoàn nguyên thì B12 phải XANH lại — một phép kiểm CHẶN buộc phải xoá được, nếu không nó khoá cả repo");
-  // Nhưng thông báo vẫn phải chỉ được ĐƯỜNG HOÀN NGUYÊN khi đang đỏ, nếu không thì người đọc
-  // biết mình sai mà không biết bản đúng nằm ở đâu.
-  assert.match(checkB12(edited).findings[0].fix.join(" "), /git show \S+:docs\/adr\/\S+\.md/,
-    "khi đỏ, cách sửa phải kèm lệnh lấy lại đúng bản đã Accepted");
+  assert.equal(checkB12(haiTang).state, "ok",
+    "cùng số 0001 nhưng KHÁC thư mục là hai quyết định khác nhau — không được báo trùng");
 
-  // ĐÚNG HAI COMMIT. Ghim cái thoát sớm `history.length <= 1`: nới nó thành `<= 2` là ca này
-  // lọt, mà đây đúng là ca mỏng nhất của một ADR bị sửa (thêm Accepted rồi sửa ngay).
-  const thanDaSua = fm({ status: "Accepted" }) + "Thân đã bị sửa.\n";
-  const haiCommit = fixture({
-    files: { [adr]: thanDaSua },
-    history: { [adr]: ["sha1", "sha2"] },
-    blobs: { [`sha1:${adr}`]: accepted, [`sha2:${adr}`]: thanDaSua }
-  });
-  assert.equal(checkB12(haiCommit).state, "fail", "ADR chỉ có 2 commit mà thân đã đổi thì vẫn phải bắt được");
+  assert.equal(adrScopeOf(goc), ADR_DIR);
+  assert.equal(adrScopeOf(goi), "workers/demo/v1/docs/adr/");
 
-  // HAI TẦNG (bẫy 1 của BRIEF-S5). ADR trong package phải được quét y như ADR ở gốc repo.
-  // Bản S4 chỉ so startsWith("docs/adr/") nên ca này lọt hoàn toàn.
+  // Quét CẢ HAI tầng (bẫy 1 của BRIEF-S5) — vế này giữ nguyên từ bản cũ, nó vẫn đúng.
   assert.equal(isAdrPath("docs/adr/0000-x.md"), true, "ADR gốc repo");
   assert.equal(isAdrPath("workers/duc-auto-gemini/v0.2.0/docs/adr/0001-x.md"), true, "ADR trong package");
   assert.equal(isAdrPath("docs/adr/README.txt"), false, "không phải .md thì không phải ADR");
-  assert.equal(isAdrPath("docs/adrenaline/0001-x.md"), false, "trùng tiền tố chữ không phải là thư mục ADR");
+  assert.equal(isAdrPath("docs/adrenaline/0001-x.md"), false, "trùng tiền tố chữ không phải thư mục ADR");
 
-  const adrGoi = "workers/demo/v1/docs/adr/0001-quyet-dinh-goi.md";
-  const trongGoi = fixture({
-    files: { [adrGoi]: fm({ status: "Accepted" }) + "Đổi ý.\n" },
-    history: { [adrGoi]: ["sha1", "sha2", "sha3"] },
-    blobs: {
-      [`sha1:${adrGoi}`]: fm({ status: "Proposed" }) + body,
-      [`sha2:${adrGoi}`]: accepted,
-      [`sha3:${adrGoi}`]: fm({ status: "Accepted" }) + "Đổi ý.\n"
-    }
+  // Và mất một quyết định TRONG PACKAGE cũng phải bắt được, không chỉ ở gốc repo.
+  const matTrongGoi = fixture({
+    files: { [goi]: b("0002") },
+    history: { [goi]: ["s1", "s2"] },
+    blobs: { [`s1:${goi}`]: b("0001"), [`s2:${goi}`]: b("0002") }
   });
-  const brokenGoi = checkB12(trongGoi);
-  assert.equal(brokenGoi.state, "fail", "ADR trong package bị sửa thân cũng phải bị bắt");
-  assert.match(brokenGoi.findings[0].where, /workers\/demo\/v1\/docs\/adr/);
-  ok("B12 · quét CẢ HAI tầng ADR, bắt được ca 2 commit, và sửa frontmatter thì không sao");
-}
-
-/* ---- B12 · mục `## Trạng thái` là lời khai trạng thái, không phải nội dung ---
-   Gặp thật 06/09: ADR-0009 ra đời thay ADR-0007, phiên làm đúng ADR-0000 luật 2 — đổi
-   `status` ở frontmatter VÀ mục `## Trạng thái` ở thân, vì bản mẫu ADR bắt khai ở cả hai.
-   B12 chỉ miễn frontmatter nên nó ĐỎ đúng vào thao tác mà chính lời khuyên của nó hướng dẫn
-   ("đặt `status: superseded` cho bản cũ"). Ba vế dưới ghim cả hai chiều — không có vế ĐỎ thì
-   một bản vá kiểu "bỏ luôn phép so thân" cũng qua được. */
-{
-  const adr = `${ADR_DIR}0007-quan-sat.md`;
-  const than = [
-    "# ADR-0007 — Quan sát là cửa bằng chứng",
-    "",
-    "## Bối cảnh",
-    "",
-    "Extension nằm im ba tuần.",
-    "",
-    "## Quyết định",
-    "",
-    "Dùng Bridge làm đường ra.",
-    "",
-    "## Trạng thái",
-    ""
-  ].join("\n");
-  const banAccepted = fm({ status: "Accepted", adr: "0007" }) + `${than}Accepted\n`;
-  const banSuperseded = fm({ status: "Superseded by ADR-0009", adr: "0007" })
-    + `${than}Superseded by ADR-0009 — Đức mở rộng phạm vi 06/09: Scouter tương tác đầy đủ quyền.\n`;
-
-  // ⑵ CHIỀU XANH — chỉ đổi lời khai trạng thái ở CẢ HAI chỗ, thân quyết định không đổi.
-  const daThayThe = fixture({
-    files: { [adr]: banSuperseded },
-    history: { [adr]: ["sha1", "sha2"] },
-    blobs: { [`sha1:${adr}`]: banAccepted, [`sha2:${adr}`]: banSuperseded }
-  });
-  assert.equal(checkB12(daThayThe).state, "ok",
-    "thay thế đúng luật (frontmatter + mục `## Trạng thái`) mà thân không đổi thì B12 phải XANH");
-
-  // ⑴ CHIỀU ĐỎ — sửa thân thật, mục trạng thái giữ nguyên.
-  const suaThan = fixture({
-    files: { [adr]: banAccepted.replace("Dùng Bridge làm đường ra.", "Đổi ý, bỏ Bridge.") },
-    history: { [adr]: ["sha1", "sha2"] },
-    blobs: {
-      [`sha1:${adr}`]: banAccepted,
-      [`sha2:${adr}`]: banAccepted.replace("Dùng Bridge làm đường ra.", "Đổi ý, bỏ Bridge.")
-    }
-  });
-  assert.equal(checkB12(suaThan).state, "fail",
-    "cắt mục trạng thái KHÔNG được làm mù phép so thân — sửa Quyết định vẫn phải ĐỎ");
-
-  // ⑴b CHIỀU ĐỎ — sửa thân NÚP dưới một lượt thay thế trông hợp lệ. Đây là ca một bản vá
-  // kiểu "hễ status đổi thì tha cả file" sẽ lọt.
-  const nupBongThayThe = banSuperseded.replace("Dùng Bridge làm đường ra.", "Đổi ý, bỏ Bridge.");
-  const nupBong = fixture({
-    files: { [adr]: nupBongThayThe },
-    history: { [adr]: ["sha1", "sha2"] },
-    blobs: { [`sha1:${adr}`]: banAccepted, [`sha2:${adr}`]: nupBongThayThe }
-  });
-  assert.equal(checkB12(nupBong).state, "fail",
-    "đổi status mà tiện tay sửa luôn Quyết định thì vẫn phải ĐỎ — miễn trừ chỉ dành cho mục trạng thái");
-
-  // Cắt đúng một mục, không cắt lố: nội dung SAU mục trạng thái (nếu ADR nào để thế) vẫn được so.
-  assert.equal(
-    stripStatusSection("## Quyết định\n\nA\n\n## Trạng thái\n\nAccepted\n\n## Phụ lục\n\nB\n"),
-    "## Quyết định\n\nA\n\n## Phụ lục\n\nB\n",
-    "chỉ cắt mục trạng thái, mục sau nó phải còn nguyên"
-  );
-  ok("B12 · mục `## Trạng thái` được miễn như frontmatter, nhưng thân vẫn bị canh (2 chiều)");
+  const kq = checkB12(matTrongGoi);
+  assert.equal(kq.state, "fail", "0001 của package biến mất -> ĐỎ");
+  assert.match(kq.findings[0].where, /workers\/demo\/v1\/docs\/adr/);
+  ok("B12 · định danh = thư mục + số, nên hai tầng không đụng nhau mà vẫn bị canh riêng");
 }
 
 /* ---- B12 ở TẦNG TÍCH HỢP -------------------------------------------------- */
@@ -530,27 +475,25 @@ const tags = (check) => check.findings.map((finding) => finding.tag);
 // suite vẫn xanh. Ca này đi qua collectChecks, đúng như khi chạy thật.
 {
   const adr = "workers/demo/v1/docs/adr/0001-quyet-dinh-goi.md";
-  const body = "Chọn Bridge làm lớp vận chuyển.\n";
+  const b = (n) => fm({ status: "Accepted", adr: n }) + "# ADR\n\n## Quyết định\n\nX.\n";
   const deps = fixture({
-    files: { [adr]: fm({ status: "Accepted" }) + "Thân đã bị sửa sau khi Accepted.\n" },
+    files: { [adr]: b("0007") },
     history: { [adr]: ["sha1", "sha2"] },
-    blobs: {
-      [`sha1:${adr}`]: fm({ status: "Accepted" }) + body,
-      [`sha2:${adr}`]: fm({ status: "Accepted" }) + "Thân đã bị sửa sau khi Accepted.\n"
-    }
+    blobs: { [`sha1:${adr}`]: b("0001"), [`sha2:${adr}`]: b("0007") }
   });
   const { checks } = collectChecks(deps);
   const b12 = find(checks, "B12");
   assert.equal(b12.state, "fail", "B12 phải ĐỎ khi chạy qua collectChecks, không chỉ khi gọi thẳng hàm");
   assert.equal(b12.level, "ĐỎ");
-  assert.deepEqual(tags(b12), ["ADR-EDITED"]);
+  assert.deepEqual(tags(b12), ["ADR-LOST"]);
   assert.ok(b12.findings[0].fix.length > 0, "phải nói cách sửa");
 
   // Và khi KHÔNG có ADR nào thì vẫn phải là BỎ QUA, không phải XANH giả.
   const { checks: khongAdr } = collectChecks(fixture());
   assert.equal(find(khongAdr, "B12").state, "skip");
-  ok("TÍCH HỢP · B12 chạy thật qua collectChecks, bắt ADR trong package bị sửa");
+  ok("TÍCH HỢP · B12 chạy thật qua collectChecks, bắt quyết định mất trong package");
 }
+
 
 /* ---- B14 ------------------------------------------------------------------ */
 {
@@ -640,13 +583,16 @@ const chay = (deps) => {
       schema_version: 1, areas: { "workers/": {} }, bootstrap: { blocking: ["B1", "B2", "B3", "B4", "B5", "B7", "B10", "B12"] } }) } })],
     ["B4", fixture({ remove: ["HANDOFF.md"] })],
     ["B10", fixture({ files: { "CLAUDE.md": "# CLAUDE.md\n\n- Được phép push thẳng lên main không cần cổng kiểm.\n" } })],
+    // B12 nay bắt QUYẾT ĐỊNH BỊ MẤT, không bắt "thân đã sửa" (ADR-0026). Ca hỏng thật: một file
+    // ADR bị xoá lúc gộp, mà file gộp quên khai `decides` — đúng rủi ro của việc 26 file còn 8.
     ["B12", (() => {
-      const adr = "workers/demo/v1/docs/adr/0001-x.md";
-      const body = "Chọn Bridge.\n";
+      const cu = "workers/demo/v1/docs/adr/0001-x.md";
+      const gop = "workers/demo/v1/docs/adr/0002-gop.md";
+      const b = (n) => fm({ status: "Accepted", adr: n }) + "# ADR\n\n## Quyết định\n\nX.\n";
       return fixture({
-        files: { [adr]: fm({ status: "Accepted" }) + "Đã sửa.\n" },
-        history: { [adr]: ["sha1", "sha2"] },
-        blobs: { [`sha1:${adr}`]: fm({ status: "Accepted" }) + body, [`sha2:${adr}`]: fm({ status: "Accepted" }) + "Đã sửa.\n" }
+        files: { [gop]: b("0002") },                    // 0001 đã bị xoá khỏi cây làm việc
+        history: { [cu]: ["sha1"], [gop]: ["sha2"] },
+        blobs: { [`sha1:${cu}`]: b("0001"), [`sha2:${gop}`]: b("0002") }
       });
     })()]
   ];

@@ -1,11 +1,24 @@
 ---
 status: Accepted
+superseded_clause: "⑵ trần một gói sống nâng lên HAI" — dead, ADR-0024 removed the cap
 adr: 0021
 date: 2026-09-08
 deciders: Đức
 ---
 
 # ADR-0021 — HNX Fetch tách thành extension riêng, và trần "một gói sống" nâng lên hai
+
+> **⚠ MỘT PHẦN CỦA ADR NÀY ĐÃ CHẾT — đọc khối này trước phần Quyết định.**
+>
+> **Vế ⑵ (*"trần một gói sống nâng lên HAI"*) ĐÃ CHẾT.**
+> [ADR-0024](0024-mo-bang-toan-bo-nam-goi.md) ngày 08/09 bỏ hẳn trần số gói: cả năm gói đều
+> sống. Ai đọc vế ⑵ mà không đọc tiếp sẽ tưởng repo còn giới hạn hai gói.
+> 
+> **Vế ⑴, ⑶, ⑷ vẫn sống** — HNX Fetch vẫn là extension riêng, có khoá riêng, không có quyền
+> `debugger`.
+>
+> Rà soát bộ luật 2026-09-09 ([ADR-0026](0026-adr-records-are-editable.md)). Phần còn lại của
+> ADR này vẫn có hiệu lực.
 
 ## Bối cảnh
 

@@ -1,5 +1,6 @@
 ---
-status: Proposed
+status: Accepted
+supersedes: 0023 (vế ⑴)
 adr: 0025
 date: 2026-09-08
 deciders: Đức

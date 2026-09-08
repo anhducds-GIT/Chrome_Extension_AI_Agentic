@@ -73,7 +73,15 @@ export function createBootstrapDeps(root = ROOT) {
       ),
       fileHistory: (relPath) => git("log", "--reverse", "--format=%H", "--", relPath)
         .split("\n").map((line) => line.trim()).filter(Boolean),
-      showAt: (sha, relPath) => { try { return git("show", `${sha}:${relPath}`); } catch { return null; } }
+      showAt: (sha, relPath) => { try { return git("show", `${sha}:${relPath}`); } catch { return null; } },
+      /* MỌI đường dẫn TỪNG tồn tại, kể cả đã bị xoá — B12 cần, và chỉ B12 cần.
+         `trackedPaths()` chỉ kể file ĐANG có. Gộp 26 ADR còn 8 nghĩa là XOÁ 18 file, tức đúng
+         cái ca phải bắt lại là cái ca `trackedPaths` mù. Phép ghim bắt được chỗ này trước khi
+         nó ra repo thật. */
+      pathsEver: () => [...new Set(
+        git("log", "--all", "--name-only", "--no-renames", "--format=", "--diff-filter=AMD")
+          .split(String.fromCharCode(10)).map((line) => line.trim()).filter(Boolean)
+      )]
     }
   };
 }
@@ -495,58 +503,108 @@ export function stripStatusSection(body) {
 
 const adrBody = (text) => normalizeForCompare(stripStatusSection(parseStatus(text).body));
 
+/* ĐỊNH DANH MỘT QUYẾT ĐỊNH = THƯ MỤC + SỐ, không phải số trần.
+   ADR-0000 luật 3: số đánh liên tục **trong phạm vi từng thư mục**, nên `0001` ở `docs/adr/` và
+   `0001` ở `workers/duc-auto-chatgpt/v0.1.0/docs/adr/` là HAI quyết định khác nhau. Bản đầu của
+   phép kiểm này dùng số trần và lập tức báo 50 chỗ trùng oan — chính nó bắt được lỗi mô hình của
+   nó trước khi ai vấp. */
+export const adrScopeOf = (relPath) => relPath.slice(0, relPath.lastIndexOf("/") + 1);
+
+/* SỐ HIỆU QUYẾT ĐỊNH mà một file ADR đang giữ: chính nó, cộng mọi số nó đã GỘP VÀO.
+   Một file gộp khai `decides: [0008, 0011, 0012]` — lời khai "ba quyết định này nay nằm ở đây".
+   Không khai `decides` thì file chỉ mang số của chính nó. Số gộp cùng thư mục với file gộp. */
+export function decisionIdsOf(text, relPath) {
+  const scope = adrScopeOf(relPath);
+  const { frontmatter } = parseStatus(text);
+  const ids = new Set();
+  const chinh = String(frontmatter.adr ?? "").trim();
+  if (/^\d+$/.test(chinh)) ids.add(scope + String(Number(chinh)).padStart(4, "0"));
+  for (const m of String(frontmatter.decides ?? "").matchAll(/\d+/g)) {
+    ids.add(scope + String(Number(m[0])).padStart(4, "0"));
+  }
+  return ids;
+}
+
 export function checkB12(deps) {
   const files = deps.git.trackedPaths().filter(isAdrPath).sort(compareText);
-  const title = "ADR đã Accepted bị sửa nội dung";
+  const title = "Quyết định bị mất khỏi sổ ADR";
   if (!files.length) {
     return skip("B12", RED, title, `KHÔNG ÁP DỤNG — repo chưa có thư mục \`${ADR_DIR}\` nào (gốc repo, hoặc trong package)`);
   }
-  const findings = [];
-  for (const relPath of files) {
-    const history = deps.git.fileHistory(relPath);
-    // Một file mới thêm chỉ có ĐÚNG một commit, nên không thể có commit nào SAU mốc Accepted.
-    // Thoát sớm ở đây tránh đọc blob của cả trăm ADR mỗi lần chạy cổng — và nó đúng về logic,
-    // không phải nới lỏng: không có commit thứ hai thì không có gì để so.
-    if (history.length <= 1) continue;
-    let acceptedAt = -1;
-    let acceptedBody = null;
-    let lechTai = null;
-    for (let index = 0; index < history.length; index += 1) {
-      const text = deps.git.showAt(history[index], relPath);
-      if (text === null) continue;
-      const { frontmatter } = parseStatus(text);
-      const accepted = String(frontmatter.status ?? "").trim().toLowerCase() === "accepted";
-      if (acceptedAt < 0) {
-        if (accepted) { acceptedAt = index; acceptedBody = adrBody(text); }
-        continue;
-      }
-      if (lechTai === null && adrBody(text) !== acceptedBody) lechTai = history[index];
-    }
-    if (acceptedAt < 0) continue;
-    /* SO TRẠNG THÁI HIỆN TẠI, không so "đã từng bị sửa" — và đây không phải nới lỏng.
 
-       Bản đầu báo lỗi ngay khi có MỘT commit nào đó từng đổi phần thân. Nghe đúng luật hơn,
-       nhưng tôi tự chạy bài nghiệm thu phần A và thấy hậu quả: `git revert` bản sửa cũng là
-       một lần đổi thân sau mốc Accepted, nên B12 ĐỎ VĨNH VIỄN và không cách nào xoá — trừ
-       việc sửa lịch sử, thứ luật cấm. Một phép kiểm thuộc nhóm CHẶN mà không xoá được là cái
-       bẫy khoá cả repo, đúng thứ BRIEF-S7 cảnh báo ở mục điều kiện mở.
-       Nay: hỏi "nội dung ADR HIỆN TẠI có còn đúng bản đã Accepted không". Sửa rồi hoàn nguyên
-       thì xanh lại — và lịch sử git vẫn giữ nguyên dấu vết, không ai xoá được nó. */
-    const hienTai = adrBody(deps.readFile(relPath));
-    if (hienTai === acceptedBody) continue;
+  /* HỎI GÌ, VÀ VÌ SAO ĐỔI CÂU HỎI.
+     Tới 09/09 phép kiểm này hỏi "thân file có đổi kể từ lúc Accepted không" — ADR-0000 luật 1,
+     bất biến từng byte. Đức bỏ luật đó ngày 09/09 (ADR-0026): ADR nay được gộp, phân nhóm, dịch,
+     viết lại — vì 26 file xếp theo thứ tự thời gian đẻ ra năm chỗ mâu thuẫn mà KHÔNG cách nào
+     sửa, cửa duy nhất là viết thêm ADR thứ 27.
+
+     Nên câu hỏi đổi, không phải phép kiểm bị gỡ. Rủi ro thật khi 26 file gộp còn 8 không phải là
+     "chữ bị sửa" — git giữ đủ mọi bản cũ, đọc lại được bất cứ lúc nào — mà là MỘT QUYẾT ĐỊNH
+     BIẾN MẤT KHÔNG AI THẤY. B12 cũ mù hoàn toàn trước chuyện đó.
+
+     Nay: mọi số hiệu từng được cấp phải còn nằm ở ĐÚNG MỘT file trong CÙNG THƯ MỤC. Gộp thì tự
+     do; mất thì ĐỎ; hai file cùng nhận một số cũng ĐỎ, vì lúc đó lại không biết đọc bản nào. */
+  const dangCo = new Map();                       // "<thư mục>NNNN" → các file đang khai nó
+  for (const relPath of files) {
+    for (const id of decisionIdsOf(deps.readFile(relPath) ?? "", relPath)) {
+      if (!dangCo.has(id)) dangCo.set(id, []);
+      dangCo.get(id).push(relPath);
+    }
+  }
+
+  /* SỔ GỐC LÀ LỊCH SỬ GIT, không phải một danh sách gõ tay. Gõ tay là mời người xoá quyết định
+     xoá luôn dòng khai nó — đúng cái lỗ mà phép kiểm này sinh ra để bịt.
+     CHỈ soi file ĐANG CÓ: một file bị đổi tên thì lịch sử của tên mới không mang số cũ, và đó
+     đúng là chuyện phải báo. File bị xoá hẳn thì `trackedPaths` không kể — chỗ hở đã biết, và
+     nó rẻ hơn việc đi ngược cả cây lịch sử mỗi lượt chạy cổng. */
+  const tungCo = new Map();                       // định danh → file cuối cùng thấy nó
+  const tungCoDuongDan = typeof deps.git.pathsEver === "function"
+    ? [...new Set([...files, ...deps.git.pathsEver().filter(isAdrPath)])].sort(compareText)
+    : files;
+  for (const relPath of tungCoDuongDan) {
+    for (const sha of deps.git.fileHistory(relPath)) {
+      const text = deps.git.showAt(sha, relPath);
+      if (text === null) continue;
+      for (const id of decisionIdsOf(text, relPath)) if (!tungCo.has(id)) tungCo.set(id, relPath);
+    }
+  }
+
+  /* QUYẾT ĐỊNH RỜI REPO — khác hẳn quyết định BỊ MẤT, và phải khai kèm LÝ DO.
+     Ca thật: cả cây `template/` dọn sang repo bộ khung 03/09 (ADR-0001), nên ADR của nó biến
+     mất khỏi repo này một cách hợp lệ. Không có cửa này thì B12 đỏ vĩnh viễn vì một việc đúng —
+     đúng cái bẫy "phép kiểm CHẶN không xoá được" mà bản B12 cũ đã vấp một lần.
+     Cửa là một dòng khai trong `.repo-structure.json`, KHÔNG phải một dòng trong mã: xoá một
+     quyết định phải để lại chữ nói nó đi đâu. */
+  let roiRepo = new Map();
+  try { roiRepo = new Map(Object.entries(JSON.parse(deps.readFile(".repo-structure.json") ?? "{}")?.adr?.moved_out ?? {})); }
+  catch { /* cấu hình hỏng là việc của B3 — ở đây không đo được KHÁC không đạt */ }
+
+  const findings = [];
+  for (const [id, noiCu] of [...tungCo].sort()) {
+    if (dangCo.has(id)) continue;
+    if (roiRepo.has(id)) continue;                // đã khai là rời repo, kèm lý do
     findings.push({
-      tag: "ADR-EDITED",
-      where: relPath,
-      why: `phần thân HIỆN TẠI khác bản đã Accepted tại ${history[acceptedAt].slice(0, 7)}${lechTai ? ` (lệch từ ${lechTai.slice(0, 7)})` : ""}`,
+      tag: "ADR-LOST",
+      where: noiCu,
+      why: `quyết định \`${id}\` không còn file nào nhận`,
       fix: [
-        `hoàn nguyên phần thân về đúng bản đã Accepted: git show ${history[acceptedAt].slice(0, 12)}:${relPath}`,
-        "muốn đổi quyết định thì viết ADR MỚI và đặt `status: superseded` cho bản cũ — ADR là biên bản, không phải bản nháp",
-        "phép kiểm này so TRẠNG THÁI HIỆN TẠI, nên hoàn nguyên là xoá được nó; lịch sử git vẫn giữ dấu vết lần sửa"
-      ]
+        `gộp nó vào một file trong cùng thư mục và khai \`decides: [${id.slice(-4)}]\` ở frontmatter`,
+        "gộp thì được, mất thì không — ADR-0026",
+      ],
     });
   }
-  return report("B12", RED, title, findings, `đã soi ${files.length} ADR`);
+  for (const [id, ds] of [...dangCo].sort()) {
+    if (ds.length < 2) continue;
+    findings.push({
+      tag: "ADR-DUPLICATE",
+      where: ds[0],
+      why: `quyết định \`${id}\` bị ${ds.length} file cùng nhận: ${ds.join(" · ")}`,
+      fix: ["một quyết định nằm ở đúng một file — bỏ số đó khỏi `decides` của những file không giữ nó"],
+    });
+  }
+  return report("B12", RED, title, findings, `đã soi ${files.length} ADR · ${tungCo.size} quyết định từng cấp`);
 }
+
 
 /* ---- B14 · tài liệu mô tả code đã đổi lâu mà chưa đụng --------------------- */
 /* Một đơn vị = một thư mục `workers/<gói>/<phiên bản>`, cộng đơn vị GỐC repo (code của nó là
