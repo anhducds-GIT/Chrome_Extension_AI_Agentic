@@ -414,23 +414,36 @@ const METHOD_ENTRIES = [
      * KHÔNG dùng `Runtime.*` cũng KHÔNG dùng `Network.*`/`Fetch.*` — hai cửa đó đóng từ
      * ADR-0007 và lượt này không mở. Đây là `fetch()` của chính service worker. */
     name: "scout.fetch", read_only: false, deadline_ms: 60000,
-    description: "Fetch one http(s) URL with the browser's own network stack and return the response as text. Credentials are omitted unless with_credentials is set. Refuses cookie and authorization headers from the caller.",
+    description: "Fetch one http(s) URL with the browser's own network stack. Returns text by default; set as=\"base64\" for binary bodies such as PDF. Credentials are omitted unless with_credentials is set. Refuses cookie and authorization headers from the caller.",
     params_schema: {
-      url: "string", method: "GET|POST?", headers: "object?", body: "string?", with_credentials: "boolean?"
+      url: "string", method: "GET|POST?", headers: "object?", body: "string?",
+      with_credentials: "boolean?", as: "text|base64?"
     },
     params_validator: (raw) => {
-      const params = objectParams(raw, ["url", "method", "headers", "body", "with_credentials"]);
+      const params = objectParams(raw, ["url", "method", "headers", "body", "with_credentials", "as"]);
       const method = optionalHttpMethod(params.method);
       const body = optionalBodyText(params.body);
       /* GET kèm thân là thứ `fetch()` NÉM chứ không bỏ qua — bắt ở đây thì người gọi đọc được
        * câu tiếng người, thay vì một TypeError trần từ trong service worker. */
       if (method === "GET" && body !== null) invalidParams("params.body", "a GET request takes no body");
+      /* `as` chỉ có HAI giá trị và mặc định là giá trị cũ, nên mọi lượt gọi đã có không đổi
+       * hành vi. Một giá trị lạ bị TỪ CHỐI chứ không âm thầm rơi về mặc định: rơi về mặc định
+       * nghĩa là người xin nhị phân sẽ nhận văn bản hỏng mà không hề biết — đúng cái lỗi mà
+       * tham số này sinh ra để chữa. */
+      let as = "text";
+      if (params.as !== undefined && params.as !== null) {
+        if (params.as !== "text" && params.as !== "base64") {
+          invalidParams("params.as", 'expected "text" or "base64"');
+        }
+        as = params.as;
+      }
       return {
         url: requiredHttpUrl(params.url),
         method,
         headers: optionalHeaders(params.headers),
         body,
-        with_credentials: optionalFlag(params.with_credentials, "params.with_credentials")
+        with_credentials: optionalFlag(params.with_credentials, "params.with_credentials"),
+        as
       };
     }
   }),

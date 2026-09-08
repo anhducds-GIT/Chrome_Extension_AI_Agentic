@@ -82,6 +82,24 @@ const WRITE_CAP_PER_UNLOCK = 50;
  * chết ở tầng vận chuyển với một câu khó hiểu, thay vì chết ở đây với một câu nói rõ vì sao. */
 const FETCH_MAX_BODY_BYTES = 512 * 1024;
 
+/* Kiểu thân ĐỌC ĐƯỢC bằng văn bản. Danh sách CHO PHÉP, không phải danh sách cấm: kiểu lạ thì
+ * mặc định coi là nhị phân và bắt người gọi khai `as: "base64"`. Ngược lại — cấm vài kiểu đã
+ * biết rồi cho qua phần còn lại — nghĩa là mỗi kiểu nhị phân chưa nghĩ tới đều hỏng im lặng,
+ * mà đó đúng là lỗi khối này sinh ra để chữa. */
+const LA_VAN_BAN = /^(?:text\/|application\/(?:json|xml|javascript|ecmascript|x-www-form-urlencoded)\b|application\/[^;]*\+(?:json|xml)\b)/i;
+
+/* Base64 cho một Uint8Array. Chia mẻ vì `String.fromCharCode(...mảng)` trải cả mảng thành đối
+ * số, và với một file vài trăm KB thì nó VƯỢT TRẦN ĐỐI SỐ rồi ném — đúng cái bẫy đã làm hỏng
+ * một phép đếm dòng ngày 07/09, chỉ khác chỗ nổ. */
+function base64Tu(bytes) {
+  const ME = 0x8000;
+  let nhiPhan = "";
+  for (let i = 0; i < bytes.length; i += ME) {
+    nhiPhan += String.fromCharCode.apply(null, bytes.subarray(i, i + ME));
+  }
+  return btoa(nhiPhan);
+}
+
 const RELOAD_MIN_GAP_MS = 10000;
 const RELOAD_STORAGE_KEY = "scouter.reload.last.v1";
 /* Trả lời TRƯỚC rồi mới khởi động lại. `chrome.runtime.reload()` giết service worker ngay,
@@ -325,15 +343,49 @@ export function createSeedHandlers(deps = {}) {
           action: "fetch", action_code: "FETCH_FAILED", url: params.url
         });
       }
-      const text = await response.text();
+      const contentType = response.headers.get("content-type");
+
+      /* HAI ĐƯỜNG ĐỌC THÂN, và chọn sai đường thì DỮ LIỆU HỎNG IM LẶNG.
+       *
+       * Đo thật 08/09: tải một PDF của `owa.hnx.vn` bằng đường văn bản thì máy chủ gửi 32.210
+       * byte mà nhận về 18.215 ký tự, trong đó **6.707 ký tự thay thế** (U+FFFD). File không
+       * cứu lại được. Nguyên nhân: `response.text()` giải mã UTF-8, và mọi byte không hợp lệ
+       * trong UTF-8 đều bị thay bằng một ký tự duy nhất — mất byte, không báo lỗi.
+       *
+       * Nên đường nhị phân đọc `arrayBuffer()` và trả base64, còn `bytes` lấy từ CHÍNH BỘ ĐỆM.
+       * Vế sau quan trọng ngang vế trước: bản cũ đo `bytes` trên chuỗi ĐÃ giải mã, nên con số
+       * nó khai không phải số byte máy chủ gửi — một phép đo tự khẳng định mình. */
+      let bytes;
+      let text = null;
+      let base64 = null;
+      if (params.as === "base64") {
+        const buffer = new Uint8Array(await response.arrayBuffer());
+        bytes = buffer.length;
+        base64 = base64Tu(buffer);
+      } else {
+        /* CHẶN ĐƯỜNG HỎNG IM LẶNG. Xin văn bản cho một thân nhị phân là một lỗi, không phải một
+         * lựa chọn — và trước 08/09 nó trả về thành công kèm dữ liệu đã hỏng. Thà đỏ và nói rõ
+         * phải làm gì. Thiếu `content-type` thì vẫn cho qua: đó là mặc định cũ, và đoán bừa
+         * "chắc là nhị phân" sẽ chặn oan những trang không khai kiểu. */
+        if (contentType && !LA_VAN_BAN.test(contentType)) {
+          throw new BridgeProtocolError("ACTION_FAILED",
+            `Thân kiểu '${contentType}' không phải văn bản; đọc kiểu văn bản sẽ làm hỏng byte. Gọi lại với as: "base64".`, {
+              action: "fetch", action_code: "FETCH_BINARY_BODY", content_type: contentType
+            });
+        }
+        text = await response.text();
+        bytes = new TextEncoder().encode(text).length;
+      }
+
       /* CẮT BỚT LÀ NÓI DỐI. Phong bì Bridge trần 1 MiB, nên một thân dài hơn phải làm ĐỎ chứ
        * không được cắt rồi trả về im lặng: người gọi đọc phải nửa file JSON sẽ đi tìm bug ở
-       * chỗ không có bug. Trần đặt dưới trần phong bì để chừa chỗ cho phần vỏ. */
-      const bytes = new TextEncoder().encode(text).length;
-      if (bytes > FETCH_MAX_BODY_BYTES) {
+       * chỗ không có bug. Trần đặt dưới trần phong bì để chừa chỗ cho phần vỏ.
+       * Base64 phồng 4/3, nên đo phần ĐÃ mã hoá — đó mới là thứ phải chui vào phong bì. */
+      const trenDay = base64 === null ? bytes : base64.length;
+      if (trenDay > FETCH_MAX_BODY_BYTES) {
         throw new BridgeProtocolError("ACTION_FAILED",
-          `Thân trả về ${bytes} byte, quá trần ${FETCH_MAX_BODY_BYTES} byte của một phong bì.`, {
-            action: "fetch", action_code: "FETCH_BODY_TOO_LARGE", bytes, max_bytes: FETCH_MAX_BODY_BYTES
+          `Thân trả về ${trenDay} byte, quá trần ${FETCH_MAX_BODY_BYTES} byte của một phong bì.`, {
+            action: "fetch", action_code: "FETCH_BODY_TOO_LARGE", bytes: trenDay, max_bytes: FETCH_MAX_BODY_BYTES
           });
       }
       return {
@@ -341,9 +393,13 @@ export function createSeedHandlers(deps = {}) {
         status: response.status,
         ok: response.ok,
         url: response.url,
-        content_type: response.headers.get("content-type"),
+        content_type: contentType,
         bytes,
+        /* Đúng MỘT trong hai trường có giá trị. Không trả cả hai, và không đặt chuỗi base64 vào
+         * `body`: người gọi cũ đọc `body` phải nhận `null` rõ ràng chứ không phải một chuỗi
+         * trông như văn bản mà không phải văn bản. */
         body: text,
+        body_base64: base64,
         write_budget: budget
       };
     },

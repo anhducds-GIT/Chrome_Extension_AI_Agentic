@@ -437,7 +437,17 @@ function request(method, params) {
   });
   assert.equal(ok.method, "POST");
   assert.equal(ok.with_credentials, false, "khong khai thi phai la false, khong phai undefined");
-  assert.deepEqual(Object.keys(ok).sort(), ["body", "headers", "method", "url", "with_credentials"]);
+  assert.deepEqual(Object.keys(ok).sort(), ["as", "body", "headers", "method", "url", "with_credentials"]);
+
+  /* `as` — mo 08/09 de tai duoc than NHI PHAN. Ba ve:
+   *   ⑴ khong khai thi mac dinh "text", tuc moi luot goi da co KHONG doi hanh vi;
+   *   ⑵ "base64" duoc nhan;
+   *   ⑶ gia tri la bi TU CHOI, khong am tham roi ve mac dinh — roi ve mac dinh nghia la nguoi
+   *      xin nhi phan nhan van ban hong ma khong he biet, dung cai loi tham so nay chua. */
+  assert.equal(ok.as, "text", "khong khai `as` thi phai la text");
+  const b64 = entry.params_validator({ url: "https://hnx.vn/a.pdf", as: "base64" });
+  assert.equal(b64.as, "base64");
+  tuChoi({ url: "https://hnx.vn/a.pdf", as: "binary" }, "as gia tri la");
 }
 
 /* ---- Trạm gác tham số của ba phép dò mở thêm 07/09 -----------------------
