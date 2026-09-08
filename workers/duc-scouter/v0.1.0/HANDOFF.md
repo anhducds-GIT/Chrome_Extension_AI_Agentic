@@ -756,3 +756,20 @@ tồn tại. Trước khi xoá một thư mục "thừa", hãy hỏi *cái gì t
 đừng hỏi *cái gì trong đây đã có ở chỗ mới*.
 
 Suite Scouter còn **17** (trước 22): năm phép ghim của pilot đã theo về nhà mới, không mất.
+
+## 2026-09-09 · `claude-luat-rasoat` — chỉ vá liên kết, không đụng hành vi
+
+Lượt rà các nơi chứa luật ở gốc repo (`N-54` và tiếp theo) chạm hai loại file của gói này:
+
+- **Liên kết tới ADR gốc repo** — sổ ADR gốc gộp từ 27 file xuống 9 theo chủ đề, nên tên file đổi.
+  Vá ở `AGENTS.md` · `BACKLOG.md` · `HANDOFF.md` · `README.md` · `README-OBSERVER-V0.md` ·
+  `ROADMAP.md` · `STATUS.md` · `docs/TRIALS.md` · ba ADR của gói · hai file test.
+- **Hai ADR của gói dùng độ sâu `../` SAI** — từ `<gói>/<ver>/docs/adr/` về gốc repo là **năm**
+  bậc, không phải bốn. Lỗi có từ trước; lượt vá tên file làm nó lộ ra.
+
+**Không đụng logic, không đụng hành vi.** Suite gói: 17/17 xanh.
+
+**Cách tra một số hiệu ADR nay nằm ở file nào:** bảng trong `docs/README.md` ở gốc repo. Và
+**trích theo SỐ HIỆU, đừng trích theo tên file** — tên file đổi được ở lượt rà hằng tuần, số hiệu
+thì không. Nhớ thêm: số ADR đánh **theo từng thư mục**, nên `0001` của gói này và `0001` ở gốc
+repo là **hai quyết định khác nhau**.

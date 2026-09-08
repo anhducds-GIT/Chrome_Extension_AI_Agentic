@@ -71,12 +71,9 @@ Nó dời phần cũ sang một file lưu trữ **nguyên văn**, và **tự ki�
 byte TRƯỚC khi ghi** — sai một byte thì nó không ghi gì cả. Chặn khai ở `handoff.tran_so_muc`;
 cổng đóng phiên báo `HANDOFF_QUA_DAY` khi vượt.
 
-> **⚠ Xoay theo THÁNG không còn là cơ chế chính.** Vế ⑵ của quyết định 0011 (*"xoay theo tháng,
-> bỏ hẳn việc cắt định kỳ"*) **đã chết 09/09**. Đo cùng ngày: cả 60 mục của `HANDOFF.md` gốc đều
-> mang mốc `2026-09`, nên `--rotate` dời **0 dòng** rồi in một câu nghe như thành công. Xoay theo
-> tháng **không chặn được phình trong một tháng** — mà phình trong một tháng đúng là thứ đã xảy ra.
->
-> **`--rotate` vẫn còn** và vẫn là đường sang tháng mới; nó chỉ không phải thứ giữ file khỏi phình.
+> **⚠ Xoay theo THÁNG không còn là cơ chế chính** (vế ⑵ của quyết định 0011, chết 09/09). Đo cùng
+> ngày: cả 60 mục đều mang mốc `2026-09` nên `--rotate` dời **0 dòng** — nó không chặn được phình
+> TRONG một tháng. Lệnh vẫn còn, và vẫn là đường sang tháng mới.
 
 - Ghi mục mới → luôn ghi vào cuối `HANDOFF.md`. Không phải nghĩ.
 - Cắt thì cắt theo **vị trí trong file**, không theo ngày: các mục Log **không xếp theo thứ tự

@@ -93,10 +93,9 @@ git show a3b67a96a92e:docs/archive/<tên-file>          # đọc lại một h�
 
 ## `docs/adr/` — sổ quyết định, gộp theo CHỦ ĐỀ từ 2026-09-09
 
-Trước 09/09 đây là **27 file xếp theo thứ tự thời gian**, và không chỗ nào nói cái nào đang có
-hiệu lực — nó đẻ ra năm chỗ mâu thuẫn, một chỗ đã tốn thời gian thật. Nay **một chủ đề, một file,
-một câu trả lời**. Mỗi file khai `decides: [...]` liệt kê mọi số hiệu nó mang; phép kiểm **B12**
-ĐỎ nếu một số hiệu biến mất hoặc bị hai file cùng nhận.
+Trước 09/09 là **27 file xếp theo thứ tự thời gian**, và không chỗ nào nói cái nào đang có hiệu
+lực. Nay **một chủ đề, một file, một câu trả lời** — lý lẽ đầy đủ ở
+[ADR-0000](adr/0000-ghi-nhan-quyet-dinh-kien-truc.md).
 
 | File | Mang quyết định | Chủ đề |
 |---|---|---|
@@ -110,13 +109,10 @@ một câu trả lời**. Mỗi file khai `decides: [...]` liệt kê mọi số
 | [`0015-nang-tran-duong-thu-len-900-giay.md`](adr/0015-nang-tran-duong-thu-len-900-giay.md) | 0015 | trần đường thử |
 | [`0021-goi-extension.md`](adr/0021-goi-extension.md) | 0021 · 0022 · 0024 | các gói extension |
 
-**Trích dẫn theo SỐ HIỆU, đừng trích theo tên file.** Số hiệu (`ADR-0025`) là thứ vĩnh viễn; tên
-file đổi được ở lượt rà hằng tuần. Muốn biết một số hiệu nay nằm ở file nào thì tra cột giữa của
-bảng trên, hoặc `grep decides docs/adr/*.md`.
+**Trích dẫn theo SỐ HIỆU, đừng trích theo tên file.** Số hiệu (`ADR-0025`) vĩnh viễn; tên file đổi
+được ở lượt rà hằng tuần. Tra một số hiệu nay ở file nào: cột giữa bảng trên, hoặc
+`grep decides docs/adr/*.md`. Hai tên cố ý giữ nguyên — `0000-…` và `0015-…` — vì các gói đang trỏ
+tới chúng ở 124 chỗ mà lượt rà không sửa được.
 
-**Hai tên file cố ý giữ nguyên:** `0000-…` (118 file trong các gói đang trỏ tới) và `0015-…` (6
-chỗ trong ba gói `duc-auto-*`, mà tôi không có quyền sửa liên kết ở đó).
-
-**Bản cũ vẫn đọc được:** `git show <sha trước 09/09>:docs/adr/<tên-file-cũ>`. Riêng các file
-`HANDOFF-ARCHIVE-*.md` **cố ý không được vá liên kết** — chúng kể chuyện quá khứ, và lúc đó tên
-file đúng là tên đó.
+Bản cũ vẫn đọc được: `git show <sha trước 09/09>:docs/adr/<tên-file-cũ>`. File `HANDOFF-ARCHIVE-*`
+**cố ý không được vá liên kết** — chúng kể chuyện quá khứ, lúc đó tên file đúng là tên đó.

@@ -33,14 +33,14 @@ Cả ba đã xảy ra thật, không phải lo xa. Cơ chế trong file này là
 | **Cổng đóng phiên** | *việc của tôi xong thật chưa?* | `scripts/session-check.mjs` |
 | **Cổng xuất bản** | *thứ tôi sắp đẩy có sạch không?* | `scripts/safe-push.mjs` |
 
-**Từ 08/09 mặc định là khoá FILE, không phải khoá vùng** ([ADR-0005](../adr/0005-lam-viec-song-song.md) ⑴). Nhận ngay trước lượt ghi bằng `--sua`, trả
-ngay sau bằng `--xong --het`; **chỉ đọc thì không khoá gì**. Nhận cả vùng chỉ khi thật sự sửa
-khắp nó. Vì sao: **[ĐO 7 ngày]** 2.628 cặp commit khác lane cùng vùng cách nhau ≤ 1 giờ, trong
-đó **1.839 cặp (70%) không đụng file nào chung** — bảy phần mười lượt chặn là chặn oan.
+**Từ 08/09 mặc định là khoá FILE, không phải khoá vùng** ([ADR-0005](../adr/0005-lam-viec-song-song.md) ⑴):
+nhận ngay trước lượt ghi bằng `--sua`, trả ngay sau bằng `--xong --het`; **chỉ đọc thì không khoá
+gì**. Vì sao — **[ĐO 7 ngày]** 2.628 cặp commit khác lane cùng vùng cách nhau ≤ 1 giờ, mà **1.839
+cặp (70%) không đụng file nào chung**.
 
-**Hai loại khoá, HAI MỐC TRẢ khác nhau, đừng lẫn:** khoá FILE trả lúc **hết phiên**; khoá VÙNG
-trả **sau khi đẩy**. Lý do khác nhau: commit chưa đẩy trong một vùng vô chủ để lại mục đỏ cho
-phiên sau, còn khoá file không mang trách nhiệm truy nguồn — nhãn `Lane:` mang.
+**Hai loại khoá, HAI MỐC TRẢ, đừng lẫn:** khoá FILE trả lúc **hết phiên**; khoá VÙNG trả **sau khi
+đẩy** — vì commit chưa đẩy trong vùng vô chủ để lại mục đỏ cho phiên sau, còn khoá file không mang
+trách nhiệm truy nguồn (nhãn `Lane:` mang).
 
 Hai cái đầu là **dữ liệu**. Hai cái sau là **người canh cửa** đọc dữ liệu đó.
 

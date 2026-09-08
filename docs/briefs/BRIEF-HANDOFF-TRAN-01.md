@@ -33,7 +33,7 @@ mục 4; chặn cả file là mọi lane đỏ ngay lập tức vì chữ của 
 
 ## 3. Việc ③ — xoay file theo tháng
 
-`HANDOFF.md` chỉ chứa tháng hiện tại. Sang tháng mới, nội dung tháng cũ thành file lưu trữ của
+`HANDOFF.md` chỉ chứa tháng hiện tại. **[HẾT HIỆU LỰC 09/09** — nay cắt theo SỐ MỤC, giữ 20 mục cuối; xem [ADR-0008](../adr/0008-nhat-ky-phien.md).**]** Sang tháng mới, nội dung tháng cũ thành file lưu trữ của
 tháng đó, `HANDOFF.md` bắt đầu lại với một con trỏ.
 
 **Xoay quyết định ở LÚC GHI, không phải lúc quét.** Các mục Log không xếp theo thứ tự thời gian
