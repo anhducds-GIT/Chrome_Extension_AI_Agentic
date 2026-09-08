@@ -217,7 +217,7 @@
     "_doc": "THUOC COC cho kho chu, KHONG phai tran ly tuong. Dat o dung con so cua HOM NAY: no khong doi ai don, no chi chan PHINH. Moi luot xoa thi HA con so nay xuong — cho da ha khong quay lai duoc.",
     "_tru_adr": "Khong ke docs/adr/: ADR da Accepted la bat bien (ADR-0000) nen thu muc do chi co the to len. Tinh no vao thuoc thi moi quyet dinh moi lam cong do, va nguoi ta se noi con so cho xong.",
     "_khac_gi_tran_8000": "Gioi han ③ cua AGENTS.md la DICH (8.000 dong, ke ca ADR). Thuoc coc nay la CHAN (con so hom nay, tru ADR). Dich do khoang cach con phai di; chan do co dang di lui khong. Mot cai khong thay the cai kia.",
-    "_do_that": "2026-09-08 sau luot xoa 14 ho so EXP: docs/ khong ke ADR = 15265 dong / 72 file. Lenh do lai: node scripts/session-check.mjs (phep kiem \"Kho chu khong phinh\")",
-    "tran_dong_khong_ke_adr": 15265
+    "_do_that": "2026-09-08 sau hai luot xoa (14 ho so EXP + ca tang docs/archive): docs/ khong ke ADR = 12.335 dong / 59 file. Truoc do 15.265, va truoc nua 23.680. Lenh do lai: node scripts/session-check.mjs (phep kiem \"Kho chu khong phinh\")",
+    "tran_dong_khong_ke_adr": 12335
   }
 }

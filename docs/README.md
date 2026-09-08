@@ -25,22 +25,10 @@ dẫn `drafts/…`. Bảng dưới là chỗ tra đường dẫn cũ → mới.
 | `drafts/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md` | [docs/studies/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md](studies/CHROME_BRIDGE_CAPABILITY_REACH_STUDY_V0.md) | nghiên cứu tầm với của Bridge |
 | `drafts/EXP-02…EXP-15` (14 file) | **ĐÃ XOÁ 2026-09-08** — xem dòng ngay dưới bảng thứ hai | 14 hồ sơ khảo sát giai đoạn 1 |
 | `drafts/FLOW-EXT-COORDINATION-PLAN.md` | [docs/studies/FLOW-EXT-COORDINATION-PLAN.md](studies/FLOW-EXT-COORDINATION-PLAN.md) | kế hoạch 5 checkpoint, đang chạy |
-| `drafts/G01-STOP-BEFORE-SUBMIT-BRIEF.md` | [docs/archive/G01-STOP-BEFORE-SUBMIT-BRIEF.md](archive/G01-STOP-BEFORE-SUBMIT-BRIEF.md) | G-01 đã đóng sau trial live, Đức duyệt |
-| `drafts/GATE7-CONCURRENCY-AUDIT.md` | [docs/archive/GATE7-CONCURRENCY-AUDIT.md](archive/GATE7-CONCURRENCY-AUDIT.md) | audit nền của Gate #7, đã implement |
-| `drafts/GATE7-IMPLEMENTATION-BRIEF.md` | [docs/archive/GATE7-IMPLEMENTATION-BRIEF.md](archive/GATE7-IMPLEMENTATION-BRIEF.md) | Gate #7 đã có trong session-check.mjs |
-| `drafts/NEXT-CHAT-ONBOARDING-PROMPT.md` | [docs/archive/NEXT-CHAT-ONBOARDING-PROMPT.md](archive/NEXT-CHAT-ONBOARDING-PROMPT.md) | prompt mở phiên cũ |
-| `drafts/ORCH-01-EVIDENCE.md` | [docs/archive/ORCH-01-EVIDENCE.md](archive/ORCH-01-EVIDENCE.md) | báo cáo ORCH-01 đã xong |
-| `drafts/ORCH-01B-EVIDENCE.md` | [docs/archive/ORCH-01B-EVIDENCE.md](archive/ORCH-01B-EVIDENCE.md) | báo cáo ORCH-01B đã xong |
+| **`docs/archive/` — ĐÃ XOÁ 2026-09-08 (15 file, 2.967 dòng)** | — | Tầng "hồ sơ đã nghỉ": mọi file trong đó đều `status: superseded` và công việc của chúng đã xong từ lâu. **Chúng chỉ rời cây làm việc, KHÔNG rời git** — đọc lại một file: `git show a3b67a96a92e:docs/archive/<tên-file>`, liệt kê cả tầng: `git show --stat a3b67a96a92e -- docs/archive/`. Đức chốt xoá 08/09 |
 | `drafts/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md` | [docs/studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md](studies/PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md) | roadmap S6 xếp thẳng vào studies |
 | `drafts/PHASE1-FACTUAL-CORRECTIONS-2026-08-28.md` | [docs/studies/PHASE1-FACTUAL-CORRECTIONS-2026-08-28.md](studies/PHASE1-FACTUAL-CORRECTIONS-2026-08-28.md) | phụ lục đính chính của CHROME_BRIDGE_CAPABILITY_REACH — sống cùng bản gốc |
-| `drafts/PLATFORM-AI-ORCHESTRATOR-STUDY-V2.md` | [docs/archive/PLATFORM-AI-ORCHESTRATOR-STUDY-V2.md](archive/PLATFORM-AI-ORCHESTRATOR-STUDY-V2.md) | bị V3 thay thế |
 | `drafts/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md` | [docs/studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md](studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md) | bản mới nhất trong ba bản |
-| `drafts/PLATFORM-AI-ORCHESTRATOR-STUDY.md` | [docs/archive/PLATFORM-AI-ORCHESTRATOR-STUDY.md](archive/PLATFORM-AI-ORCHESTRATOR-STUDY.md) | bị V2 rồi V3 thay thế |
-| `drafts/PLATFORM-V01-IMPLEMENTATION-BRIEF.md` | [docs/archive/PLATFORM-V01-IMPLEMENTATION-BRIEF.md](archive/PLATFORM-V01-IMPLEMENTATION-BRIEF.md) | Platform V0.1 đã dựng xong |
-| `drafts/PLATFORM-V01-ONBOARDING-PROMPT.md` | [docs/archive/PLATFORM-V01-ONBOARDING-PROMPT.md](archive/PLATFORM-V01-ONBOARDING-PROMPT.md) | prompt mở phiên của V0.1, đã dùng |
-| `drafts/PLATFORM-V02A-BRIEF.md` | [docs/archive/PLATFORM-V02A-BRIEF.md](archive/PLATFORM-V02A-BRIEF.md) | freshness gate đã có |
-| `drafts/PLATFORM-V02B-BRIEF.md` | [docs/archive/PLATFORM-V02B-BRIEF.md](archive/PLATFORM-V02B-BRIEF.md) | STATUS anti-drift đã có (detectStatusMachineOwnedFacts) |
-| `drafts/PLATFORM-V02C-BRIEF.md` | [docs/archive/PLATFORM-V02C-BRIEF.md](archive/PLATFORM-V02C-BRIEF.md) | scripts/feature-parity.mjs đã có |
 
 ## `docs/protocols/` — cách làm việc
 
@@ -93,25 +81,17 @@ không phải khi tò mò.
 | [BRIEF-S7.md](briefs/BRIEF-S7.md) | `active` | BRIEF — Phiên S7: bật chặn + BÀI TEST NGHIỆM THU |
 | [PROMPTS-HANDOFF.md](briefs/PROMPTS-HANDOFF.md) | `?` | HAI PROMPT BÀN GIAO |
 
-## `docs/archive/` — hồ sơ đã nghỉ
+## `docs/archive/` — ĐÃ XOÁ 2026-09-08
 
-Giữ lại vì chúng là bản ghi có thật. `status: superseded` nên KHÔNG bị tính là nợ tài liệu
-quá hạn, và cổng kiểm cấu trúc B6 không đòi chúng phải nằm gần cổng vào.
+Tầng này từng giữ 15 hồ sơ đã nghỉ (2.967 dòng), tất cả `status: superseded`. Lý lẽ giữ chúng
+là *"chúng là bản ghi có thật"* — vẫn đúng, nhưng **git đã là chỗ giữ bản ghi có thật**, nên
+một thư mục thứ hai chỉ cộng vào con số mà mọi phiên phải đọc. Xoá khỏi cây làm việc, giữ
+nguyên trong lịch sử:
+
+```bash
+git show --stat a3b67a96a92e -- docs/archive/          # xem cả tầng
+git show a3b67a96a92e:docs/archive/<tên-file>          # đọc lại một hồ sơ
+```
 
 | Tài liệu | Trạng thái | Nói về gì |
 |---|---|---|
-| [FOLDER-STANDARD-STUDY-V0.md](archive/FOLDER-STANDARD-STUDY-V0.md) | `?` | FOLDER-STANDARD-STUDY-V0 |
-| [G01-STOP-BEFORE-SUBMIT-BRIEF.md](archive/G01-STOP-BEFORE-SUBMIT-BRIEF.md) | `superseded` | Brief G-01 — "Dừng nhận trước lúc gửi ⇒ prompt không được gửi" |
-| [GATE7-CONCURRENCY-AUDIT.md](archive/GATE7-CONCURRENCY-AUDIT.md) | `superseded` | Audit + brief — Gate #7 "Sự thật máy sinh còn tươi" |
-| [GATE7-IMPLEMENTATION-BRIEF.md](archive/GATE7-IMPLEMENTATION-BRIEF.md) | `superseded` | Brief V0.2-D — Gate #7, và ranh giới "committed truth" |
-| [NEXT-CHAT-ONBOARDING-PROMPT.md](archive/NEXT-CHAT-ONBOARDING-PROMPT.md) | `superseded` | Prompt mở phiên mới — dán nguyên khối này |
-| [ORCH-01-EVIDENCE.md](archive/ORCH-01-EVIDENCE.md) | `superseded` | ORCH-01 — Báo cáo EVIDENCE-ONLY (kiểm giả định thiết kế orchestrator) |
-| [ORCH-01B-EVIDENCE.md](archive/ORCH-01B-EVIDENCE.md) | `superseded` | ORCH-01B — FINAL EVIDENCE MICRO-PROOF |
-| [PLATFORM-AI-ORCHESTRATOR-STUDY-V2.md](archive/PLATFORM-AI-ORCHESTRATOR-STUDY-V2.md) | `superseded` | AI-ORCHESTRATOR — Reasoning V2 (trả lời 6 phản biện của GPT) |
-| [PLATFORM-AI-ORCHESTRATOR-STUDY.md](archive/PLATFORM-AI-ORCHESTRATOR-STUDY.md) | `superseded` | PLATFORM AI-ORCHESTRATOR — Nghiên cứu kiến trúc V0.3 (CHƯA IMPLEMENT) |
-| [PLATFORM-V01-IMPLEMENTATION-BRIEF.md](archive/PLATFORM-V01-IMPLEMENTATION-BRIEF.md) | `superseded` | Implementation Brief — Extension Operation Platform V0.1 |
-| [PLATFORM-V01-ONBOARDING-PROMPT.md](archive/PLATFORM-V01-ONBOARDING-PROMPT.md) | `superseded` | Onboarding prompt — phiên Opus 5 triển khai Platform V0.1 |
-| [PLATFORM-V02A-BRIEF.md](archive/PLATFORM-V02A-BRIEF.md) | `superseded` | Brief V0.2-A — freshness gate cho DASHBOARD.md |
-| [PLATFORM-V02B-BRIEF.md](archive/PLATFORM-V02B-BRIEF.md) | `superseded` | Brief V0.2-B — STATUS anti-drift |
-| [PLATFORM-V02C-BRIEF.md](archive/PLATFORM-V02C-BRIEF.md) | `superseded` | Brief V0.2-C — `scripts/feature-parity.mjs` |
-| [REPO-BOOTSTRAP-SPEC-V0.md](archive/REPO-BOOTSTRAP-SPEC-V0.md) | `?` | REPO-BOOTSTRAP-SPEC-V0 |

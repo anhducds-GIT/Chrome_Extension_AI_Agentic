@@ -7,7 +7,7 @@
 
 ## PROMPT (gửi nguyên khối, task_type=text_reasoning)
 
-Use your GitHub connector to read docs/archive/PLATFORM-AI-ORCHESTRATOR-STUDY.md
+Read PLATFORM-AI-ORCHESTRATOR-STUDY.md — the file was deleted from the working tree on 2026-09-08 but is still in git: `git show a3b67a96a92e:docs/archive/PLATFORM-AI-ORCHESTRATOR-STUDY.md`
 in repo anhducds-GIT/Chrome_Extension_AI_Agentic (branch main).
 Audit it as an independent reviewer. Respond ONLY with:
 
