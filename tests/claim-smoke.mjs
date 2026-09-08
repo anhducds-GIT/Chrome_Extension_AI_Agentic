@@ -938,12 +938,12 @@ const CLAIMS = () => ({
     mienKhoa: ["BACKLOG.md"],
     vungCua,
   };
-  const la = soatDanHang({ ...chung, daDan: ["scripts/cua-toi.mjs", "scripts/cua-ho.mjs", "BACKLOG.md", "AGENTS.md"] });
+  const la = soatDanHang({ ...chung, daDan: ["scripts/cua-toi.mjs", "scripts/cua-ho.mjs", "BACKLOG.md", "AGENTS.md"] }).la;
   assert.deepEqual(la.map((x) => x.duongDan), ["scripts/cua-ho.mjs", "AGENTS.md"],
     "chi neu ten file KHONG thuoc quyen ghi: file minh khoa thi qua, so mien khoa thi qua");
   assert.equal(la[0].chuFile, "p2", "phai noi ro ai dang giu, de nguoi doc biet nhan ai");
 
-  assert.deepEqual(soatDanHang({ ...chung, as: "p2", daDan: ["AGENTS.md"] }), [],
+  assert.deepEqual(soatDanHang({ ...chung, as: "p2", daDan: ["AGENTS.md"] }).la, [],
     "p2 giu ca vung _root nen AGENTS.md la cua ho — khong duoc bao oan");
   ok("soat da dan: bat dung file khong thuoc quyen, tha so mien khoa va vung minh giu");
 }
@@ -1009,6 +1009,50 @@ const CLAIMS = () => ({
     assert.ok(temp.startsWith(join(tmpdir(), "claim-file-")), "chi don dung temp fixture cua phep kiem nay");
     rmSync(temp, { recursive: true, force: true });
   }
+}
+
+{
+  /* SỔ MIỄN KHOÁ KHÔNG ĐƯỢC IM LẶNG BỎ QUA — N-05.
+   *
+   * `BACKLOG.md` · `HANDOFF.md` · `IDEAS.md` miễn khoá KHI CHỈ THÊM DÒNG Ở CUỐI, nên nhiều lane
+   * cùng ghi vào chúng một cách HỢP LỆ — chỗ va chạm **được thiết kế ra**, không phải tai nạn.
+   * Và đó đúng là chỗ `N-05` nổ hai lần trong một buổi 06/09: `git commit -o BACKLOG.md` giới
+   * hạn đường dẫn rồi lấy TRỌN nội dung cây làm việc của đường dẫn ấy.
+   *
+   * Bản đầu của `soatDanHang` bỏ qua hẳn nhóm này (`if (mien.has(d)) continue`), tức im lặng ở
+   * đúng chỗ nguy nhất. Nay nó trả về riêng để bên gọi soi tiếp bằng `appendOnlyAtEof`. */
+  const vungCua = () => "_root";
+  const kq = soatDanHang({
+    daDan: ["BACKLOG.md", "HANDOFF.md", "scripts/x.mjs"],
+    tam: { "scripts/x.mjs": { owner: "p1" } },
+    claims: { _root: { owner: null } },
+    as: "p1",
+    mienKhoa: ["BACKLOG.md", "HANDOFF.md", "IDEAS.md"],
+    vungCua,
+  });
+  assert.deepEqual(kq.soChung, ["BACKLOG.md", "HANDOFF.md"],
+    "so mien khoa phai duoc TRA VE RIENG, khong duoc im lang bo qua — day la cho N-05 no");
+  assert.deepEqual(kq.la, [], "file minh dang khoa thi khong phai la");
+
+  // Sổ chung KHÔNG được lẫn vào danh sách "lạ": ghi vào chúng là hợp lệ, chặn là khoá cửa ra.
+  const chiSo = soatDanHang({
+    daDan: ["IDEAS.md"], tam: {}, claims: { _root: { owner: "nguoi-khac" } }, as: "p1",
+    mienKhoa: ["IDEAS.md"], vungCua,
+  });
+  assert.deepEqual(chiSo.la, [], "so mien khoa KHONG bi coi la la, du vung co chu khac");
+  assert.deepEqual(chiSo.soChung, ["IDEAS.md"]);
+  ok("soat: so mien khoa tra ve RIENG de soi append-only, khong im va khong chan (N-05)");
+}
+
+{
+  // Ghim ĐƯỜNG DÂY: hàm trả về đúng mà nhánh CLI không soi thì N-05 vẫn nguyên.
+  const nguon = readFileSync(join(SCRIPTS_DIR, "claim.mjs"), "utf8");
+  assert.match(nguon, /appendOnlyAtEof\(diff, cu2\)/,
+    "nhanh --soat phai soi so chung bang appendOnlyAtEof");
+  assert.match(nguon, /SOAT_SO_CHUNG/, "phai co ma loi rieng de tra duoc");
+  assert.doesNotMatch(nguon, /import \{ appendOnlyAtEof[^}]*\} from "\.\/[a-z-]*claim/,
+    "phai DUNG LAI ham cua repo-structure, dung viet ban sao thu ba cua luat append-only");
+  ok("--soat that su soi so chung, va dung lai luat append-only san co");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

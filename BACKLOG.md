@@ -623,3 +623,27 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
 - **ĐÓNG N-29** · 2026-09-08 · lane `claude-ext-n29` · Điều kiện đóng đạt: `node scripts/backlog-check.mjs --can-duc` ra **0 gói** có `human_action` khác rỗng mà cả gói không có dấu `@Đức` nào. Đã theo đúng thứ tự bắt buộc mà chính mục này đặt ra — **⑴ đặt dấu → ⑵ đo bằng nhau → ⑶ mới bỏ nguồn cũ** — chứ không cắt trước. Dấu gắn vào **chính dòng `human_action`** (cách `gg-flow-video` đã làm): đặt ở đó là làm hai cơ chế khớp nhau **bằng cấu trúc**, vì chính dòng ấy thành một dòng-có-dấu mà bộ đọc lấy được từ `STATUS.md`. Ba gói sửa: `hnx-fetch` (0 dấu, việc thật) · `duc-auto-chatgpt` (ca *MẤT MỘT PHẦN* — có dấu nhưng `human_action` nói việc khác) · `duc-scouter` (khai *"không có việc gì chờ Đức"* bằng một **câu**, mà lược đồ có sẵn giá trị `"không"` cho ca đó — một câu văn xuôi thì máy đọc thành **việc thật**, nên bảng đang treo một việc không tồn tại; lời dặn cho lúc quay lại chuyển sang `next_step`). `duc-auto-gemini` **không đụng**: lane `claude-gemini-crlf` đang giữ khoá, và **không cần** — chính `N-29` đã đối chiếu và kết luận gói đó an toàn. **[ĐO]** khối *"từ hồ sơ"* trên bảng **4 → 1**.
 
 - **BƯỚC ⑶ CỦA N-29 — CỐ Ý KHÔNG LÀM, và đây là lý do** · 2026-09-08 · lane `claude-ext-n29` · Mục đó đòi *"`human_action` không còn nuôi ô đếm nào trên bảng"*. Nay bỏ được rồi, nhưng **không nên**: `tests/build-overview-smoke.mjs` có một phép ghim đặt đúng chỗ ấy — *"số nhãn HỒ SƠ = số hồ sơ còn lại → **nuốt nguồn hồ sơ là ĐỎ**"*. Gỡ nguồn thứ hai là gỡ đúng lớp bảo vệ đó, và luật vàng 3 cấm. Đổi lại ta được thứ mạnh hơn: **một cổng** báo đỏ khi có `human_action` không dấu, thay cho **một dòng trên bảng** hy vọng có người nhìn thấy. Cái giá còn lại là gói `gemini` hiện **một dòng thừa** cho tới khi lane của nó gắn dấu vào `STATUS.md` — và thừa là phía mà thiết kế này cố ý lệch về: *hai nguồn lệch thì thấy được, một nguồn thiếu thì không*.
+
+- **ĐÓNG N-40** · 2026-09-08 · lane `claude-ext-n05` · `node scripts/claim.mjs --soat --as <phiên>` liệt kê file đã dàn **không thuộc quyền ghi** của bạn, và **thoát 3** — mạnh hơn cái mà điều kiện đóng đòi (nó chỉ đòi *cảnh báo*). Chạy NGAY TRƯỚC `git commit`; đã vào chuỗi bắt buộc ở `AGENTS.md` mục 0b. **Nói thẳng giới hạn:** nó là một **LỆNH, không phải một cổng** — cổng đóng phiên chạy lúc index đã rỗng nên nó không nhìn thấy gì, ai bỏ bước soát thì không lớp nào chặn. Đây là mức cao nhất máy làm được mà không dựng hook tự chạy (thứ phải hỏi Đức). Bù lại, thứ khiến nó khả thi là khoá mức file: trước đó *"vùng tôi giữ"* quá thô để nói file nào của ai.
+
+- **ĐÓNG N-05** · 2026-09-08 · lane `claude-ext-n05` · Mục này khó hơn `N-40` vì file **nằm trong quyền ghi của bạn** — nó là ba quyển sổ **miễn khoá** (`BACKLOG.md` · `HANDOFF.md` · `IDEAS.md`), nơi nhiều lane cùng ghi một cách **hợp lệ**. Bản đầu của `--soat` bỏ qua hẳn nhóm đó, tức im lặng ở đúng chỗ nguy nhất. Nay: sổ miễn khoá được tách ra và soi bằng `appendOnlyAtEof` — **dùng lại đúng hàm** cổng đóng phiên và `safe-push` đang dùng, không đẻ bản sao thứ ba của một luật. Phần bạn dàn mà **sửa dòng cũ** thì `SOAT_SO_CHUNG` báo đỏ, vì chỉ có hai khả năng và cả hai đáng dừng: bạn phạm luật miễn khoá, hoặc `git commit -o <sổ>` đang cuốn dòng lane khác vừa viết. **Đã thử cả hai chiều:** chỉ thêm ở cuối → thoát 0; sửa một dòng cũ → thoát 3, gọi đúng tên sổ. Ghim `claim-smoke` 23 → 25. **Đột biến kiểm 7/7 ĐỎ** (M7 dựng lại đúng bản đầu — im lặng bỏ qua sổ miễn khoá — và nó bị giết).
+
+## N-47 · Bộ đo đột biến để lại một đột biến trong cây làm việc khi lượt ghi hoàn nguyên hỏng
+
+- **nhóm:** cong
+- **mở:** 2026-09-08 · lane `claude-ext-n05`
+- **vùng:** `_code`
+- **vì sao:** Gặp thật hôm nay. Bộ đo đột biến ghi bản vá vào `scripts/claim.mjs` rồi hoàn
+  nguyên trong `finally`. Một lượt ghi trả `UNKNOWN` (`errno -4094`, khoá file thoáng qua trên
+  Windows) — và lượt ghi trong `finally` **hỏng y hệt**, nên một đột biến **nằm lại** trong cây
+  làm việc. Suite đỏ sau đó vì một lý do không ai đoán ra: `phai neu ten nguoi dang giu file
+  ben trong`. Mất vài phút mới lần ra, và nếu lượt sau là một lượt commit thì đột biến đó đi
+  thẳng vào HEAD.
+- **hoàn nguyên phải được KIỂM, không chỉ được THỬ:** ghi rồi đọc lại, không khớp thì thử lại
+  và hét to. Đã vá trong bộ đo dùng hôm nay, nhưng đó là file nháp ngoài repo — hai bộ đo
+  **trong** repo (`workers/hnx-fetch/v0.1.0/scripts/mutation-check.mjs` và
+  `dot-bien-doc-lap-quyen.mjs` ở thư mục chạy đêm) chưa có chốt này.
+- **họ hàng với một bệnh đã biết:** cùng họ với *neo không khớp thì báo SKIP* — bộ đo tự nói
+  dối về chính nó. Loại đó không phép ghim nào bắt được, vì nó ở tầng công cụ đo.
+- **đóng khi:** lệnh: `grep -c "readFileSync" <mỗi bộ đo đột biến>` cho thấy mỗi bộ đều đọc lại
+  sau khi hoàn nguyên, và có một phép ghim dựng ca ghi-hỏng rồi kiểm bộ đo có hét không.

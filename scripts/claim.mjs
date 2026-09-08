@@ -32,7 +32,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { appendOnlyExemptFrom, CHUA_DAY, CHUA_THAY_DAU_VET, claimPrefixesFrom, commitChuaDay, DAU_VET, dauVetTheoVung, mocMs, readStructureFromDisk, stewardOf } from "./repo-structure.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, CHUA_DAY, CHUA_THAY_DAU_VET, claimPrefixesFrom, commitChuaDay, DAU_VET, dauVetTheoVung, mocMs, readStructureFromDisk, stewardOf } from "./repo-structure.mjs";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(MODULE_FILE), "..");
@@ -462,15 +462,25 @@ export function khoaFileQuaHan(bang, phut, now = Date.now()) {
 export function soatDanHang({ daDan, tam, claims, as, mienKhoa, vungCua }) {
   const mien = new Set(mienKhoa || []);
   const la = [];
+  const soChung = [];
   for (const f of daDan || []) {
     const d = chuanDuongDan(f);
-    if (mien.has(d)) continue;                                    // sổ miễn khoá: ai cũng ghi được
+    /* SỔ MIỄN KHOÁ KHÔNG ĐƯỢC IM LẶNG BỎ QUA — N-05.
+       `BACKLOG.md` · `HANDOFF.md` · `IDEAS.md` miễn khoá khi chỉ thêm dòng ở cuối, nên nhiều
+       lane cùng ghi vào chúng một cách HỢP LỆ. Đó là chỗ va chạm **được thiết kế ra**, không
+       phải tai nạn — và nó là chỗ `N-05` nổ hai lần trong một buổi 06/09: `git commit -o
+       BACKLOG.md` giới hạn đường dẫn rồi lấy TRỌN nội dung cây làm việc của đường dẫn ấy, tức
+       cuốn cả những dòng lane khác vừa viết vào cùng file.
+       Không chặn được (ghi vào đó là hợp lệ), nên trả về riêng để bên gọi soi tiếp: phần bạn
+       dàn có đúng là CHỈ THÊM Ở CUỐI không. Sửa dòng cũ thì hoặc bạn phạm luật miễn khoá, hoặc
+       bạn đang cuốn chữ của người khác — cả hai đều đáng dừng lại. */
+    if (mien.has(d)) { soChung.push(d); continue; }
     if ((tam || {})[d]?.owner === as) continue;                   // tôi đang khoá đúng file này
     const vung = vungCua(d);
     if ((claims || {})[vung]?.owner === as) continue;             // tôi giữ cả vùng
     la.push({ duongDan: d, vung, chuVung: (claims || {})[vung]?.owner || null, chuFile: (tam || {})[d]?.owner || null });
   }
-  return la;
+  return { la, soChung };
 }
 
 /* Quyết định THUẦN — tách khỏi việc đọc/ghi để kiểm được mọi nhánh mà không cần đĩa. */
@@ -702,15 +712,40 @@ function main() {
     }
     if (!daDan.length) { console.log("index rỗng — chưa dàn gì để soát."); process.exit(EXIT.OK); }
     const prefixes = claimPrefixesFrom(structure);
-    const la = soatDanHang({
+    const { la, soChung } = soatDanHang({
       daDan, tam: parsed.tam, claims: parsed.claims, as,
       mienKhoa: appendOnlyExemptFrom(structure),
       vungCua: (d) => vungBaoNgoai(d, structure, prefixes),
     });
-    if (!la.length) {
-      console.log(`${daDan.length} file đã dàn, tất cả đều thuộc quyền ghi của "${as}". Commit được.`);
+
+    /* SỔ CHUNG: hợp lệ khi CHỈ THÊM Ở CUỐI. Dùng lại `appendOnlyAtEof` — chính hàm mà cổng
+       đóng phiên và `safe-push` đang dùng cho cùng luật. Hai bản sao của một luật đã trả hai
+       câu khác nhau cho cùng một file ngày 02/09; không đẻ bản thứ ba. */
+    const soHong = [];
+    for (const d of soChung) {
+      try {
+        const diff = execFileSync("git", ["diff", "--cached", "-U0", "--", d], { cwd: ROOT, encoding: "utf8" });
+        let cu2 = "";
+        try { cu2 = execFileSync("git", ["show", `HEAD:${d}`], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 26 }); }
+        catch { cu2 = ""; }                                    // file mới: cả file là "thêm ở cuối"
+        if (!appendOnlyAtEof(diff, cu2)) soHong.push(d);
+      } catch { /* đọc không được thì im — không đo được KHÁC không đạt */ }
+    }
+
+    if (!la.length && !soHong.length) {
+      const them = soChung.length ? ` (${soChung.length} sổ chung, đều chỉ thêm ở cuối)` : "";
+      console.log(`${daDan.length} file đã dàn, tất cả đều thuộc quyền ghi của "${as}"${them}. Commit được.`);
       process.exit(EXIT.OK);
     }
+    if (soHong.length) {
+      console.error(`SOAT_SO_CHUNG: ${soHong.length} sổ miễn khoá bị SỬA DÒNG CŨ, không phải chỉ thêm ở cuối:`);
+      for (const d of soHong) console.error(`  ${d}`);
+      console.error("\nHai khả năng, cả hai đáng dừng lại:");
+      console.error("  · bạn sửa/xoá dòng của phiên khác — sổ chỉ MIỄN KHOÁ khi thêm dòng ở CUỐI;");
+      console.error("  · hoặc git commit -o <so> đang cuốn theo dòng lane khác vừa viết (N-05, nổ 2 lần 06/09).");
+      console.error("Soi: git diff --cached -- <sổ>   ·   Gỡ ra: git restore --staged <sổ>");
+    }
+    if (!la.length) process.exit(EXIT.REFUSED);
     console.error(`SOAT_LA: ${la.length}/${daDan.length} file đã dàn KHÔNG thuộc quyền ghi của "${as}":`);
     for (const x of la) {
       const ai = x.chuFile ? `file đang do "${x.chuFile}" sửa` : x.chuVung ? `vùng "${x.vung}" do "${x.chuVung}" giữ` : `vùng "${x.vung}" không ai giữ`;
