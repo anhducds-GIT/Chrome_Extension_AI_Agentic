@@ -17,7 +17,7 @@ chưa có một ADR mới.
 3. Bấm biểu tượng extension → **bảng bên mở ra ở cạnh phải** → mục **Cửa Bridge** → chọn tệp
    ghép cặp do bộ cài Bridge tạo. Dòng trạng thái đổi thành *Đã nối Bridge.*
 4. **Muốn Scouter bấm và gõ thì bật *Chế độ phát triển* trong bảng bên.** Tắt thì nó chỉ nhìn
-   được. Mỗi lần bật cho 50 lượt; hết thì tắt rồi bật lại.
+   được. Mỗi lần bật cho 200 lượt; hết thì tắt rồi bật lại.
 
 Chrome sẽ hiện dải băng *"… đang gỡ lỗi trình duyệt này"* ở tab nào Scouter cắm vào. Không giấu
 được, và không nên giấu.
@@ -44,7 +44,7 @@ Mọi method chạm trang **bắt buộc** có `target_id` — lấy từ `scout
 
 **Ba method ghi ĐÓNG MẶC ĐỊNH.** Chưa bật *Chế độ phát triển* trong bảng bên thì chúng trả về
 `WRITE_BLOCKED` và **không hề chạm tới trang** — không gắn debugger, không gửi khung nào. Bật
-một lần được 50 lượt, hết thì tắt rồi bật lại. Không method Bridge nào bật được công tắc đó, nên
+một lần được 200 lượt, hết thì tắt rồi bật lại. Không method Bridge nào bật được công tắc đó, nên
 AI ở đầu dây không tự mở khoá cho chính nó. Lý do từng chốt:
 [ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md) của gói.
 

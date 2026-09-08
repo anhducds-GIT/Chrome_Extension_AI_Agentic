@@ -58,7 +58,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0009-scouter-thay-observer
    canh nó.
 9. **Đường ghi ĐÓNG MẶC ĐỊNH, và cái phanh chỉ mở được bằng tay người.** Công tắc chế độ phát
    triển nằm trong bảng bên, và **không method Bridge nào bật được nó** — đó là cả ý nghĩa của
-   nó. Trần 50 lượt mỗi lần mở khoá, gõ cứng trong mã. Hai chỗ đừng đảo lại vì cả hai đều
+   nó. Trần 200 lượt mỗi lần mở khoá (Đức nâng từ 50 ngày 08/09, ADR-0005), gõ cứng trong mã. Hai chỗ đừng đảo lại vì cả hai đều
    trông thừa cho tới lúc cần: **hỏng thì ĐÓNG** (đọc không ra công tắc ≠ được bấm — khác hẳn
    trần nạp lại nằm ngay bên cạnh, cái đó hỏng thì mở) và **trừ trước, bấm sau** (lượt bấm
    hỏng vẫn tốn ngân sách, nếu không thì vòng lặp hỏng quay mãi). Mười hai con `P1..P12` canh

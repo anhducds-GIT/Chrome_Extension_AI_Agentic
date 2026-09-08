@@ -31,7 +31,7 @@ const { BridgeProtocolError, negotiateVersion, capabilities, MAX_ENVELOPE_BYTES 
 /* Khai LẠI tại đây, cố ý không import. Import khoá lưu trữ từ module là để cái được ghim tự
  * chấm điểm cho mình: ai đổi khoá thì test đổi theo và không ai biết bản cũ đã mồ côi. */
 const GATE_KEY = "scouter.write.gate.v1";
-const CAP = 50;
+const CAP = 200;
 
 /* ---- Đồ giả -------------------------------------------------------------- */
 

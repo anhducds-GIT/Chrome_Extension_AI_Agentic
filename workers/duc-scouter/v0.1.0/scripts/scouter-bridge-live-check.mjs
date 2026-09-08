@@ -294,7 +294,7 @@ try {
     assert.equal(key.ok, true, `scout.key: ${JSON.stringify(key.error || {})}`);
     /* Ngân sách phải trừ THẬT qua dây, không chỉ trong bộ nhớ của lõi. */
     assert.equal(store["scouter.write.gate.v1"].used, 3, "ba lượt bấm mà ngân sách không trừ đủ");
-    assert.equal(key.result.write_budget.remaining, 47);
+    assert.equal(key.result.write_budget.remaining, 197);
     console.log("⑦ mở khoá rồi: ba hành động ghi đi trọn vòng, ngân sách trừ đúng: ĐẠT (engine là bản giả — xem đầu file)");
 
     const toaDo = await rpc("scout.click", { target_id: "LIVE-TARGET", selector: "button", x: 10, y: 10 });

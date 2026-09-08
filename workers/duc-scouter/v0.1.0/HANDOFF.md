@@ -549,3 +549,32 @@ nhớ chúng: trang thử thứ hai là trang nào · `S-11` chấp nhận rủi
 chịu gọi lại hay đánh dấu ngày lễ.
 
 Kèm: sửa dòng *"công tắc popup"* thành *"công tắc bảng bên"* (`S-14` đóng hôm nay).
+
+## 2026-09-08 · `claude-scouter-s06` — trần ghi 50 → 200, và ba mỏ neo đột biến đã chết
+
+Đức chốt nâng trần một lần mở khoá lên **200**. Ghi ở [ADR-0005](docs/adr/0005-tran-ghi-nang-tu-50-len-200.md).
+
+**Vì sao đây không phải nới lỏng.** Trần 50 hôm qua dừng một việc **đúng** — lượt tải 216 PDF —
+rồi Đức bật lại và việc đó chạy tiếp y nguyên. Không lượt ghi nào bị loại, chúng chỉ bị hoãn.
+Một cổng luôn được mở lại là cổng **dạy người bấm cho qua**. Bốn lớp còn lại không đụng tới:
+mặc định TẮT · gõ cứng trong mã · đếm theo mỗi lần mở khoá · chỉ tay Đức mở lại được.
+
+**Ba mỏ neo đột biến đã CHẾT từ hôm qua, phát hiện trong lượt này** — đây mới là phần đáng đọc:
+
+| Mã | Chốt nó canh | Vì sao lệch |
+|---|---|---|
+| `D9` | máy chủ đối chiếu được phản hồi với yêu cầu | lượt vá vận chuyển đổi `envelope: response` thành `envelope: guiDuoc(response)` |
+| `H2` | không ai lén nới danh sách CDP đường ghi | danh sách dài thêm `Page.navigate` + `Target.getTargetInfo` |
+| `F6` | thân quá trần thì BÁO ĐỎ, không cắt bớt | biến đổi tên `bytes` → `trenDay` |
+
+Cả ba là **hệ quả phụ của chính việc hôm qua**: sửa mã nguồn xong, mỏ neo trỏ vào chuỗi cũ nên
+nó khớp 0 lần. Bộ đo báo **ĐỎ** chứ không báo BỎ QUA — nếu nó báo BỎ QUA thì ba chốt an toàn đã
+nằm không ai canh mà bảng vẫn xanh. Giữ nguyên tính chất đó khi sửa bộ đo.
+
+**Đo.** `93/93` mỏ neo khớp · `93` giết được · `0` sống sót. `P5 P6 P7` (gỡ trần · nới thành
+vô hạn · để kho lưu tự đặt trần) đều chết ở trần 200 y như ở trần 50. Suite gói: **19 khối ĐẠT**.
+
+**Ngoài tầm tay tôi, ghi lại để lane `_code` biết:** `tests/build-dashboard-smoke.mjs` mục 23
+(Gate 7) đang ĐỎ trên cây làm việc. `session-check.mjs` nay `import` `backlog-check.mjs`, nhưng
+danh sách tệp chép sang repo tạm của phép ghim đó chưa có tên nó → repo tạm chết lúc nạp module.
+Không phải việc của lượt này và `_code` không phải vùng tôi giữ; cả hai tệp đang có sửa chưa commit.

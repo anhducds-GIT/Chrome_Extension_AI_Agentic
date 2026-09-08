@@ -218,8 +218,8 @@ const BATCHES = [
       {
         ma: "D9",
         ten: "Trả về relay_id cố định (máy chủ không đối chiếu được phản hồi với yêu cầu)",
-        tim: '      targetSocket.send(JSON.stringify({ type: "rpc_response", relay_id: message.relay_id, envelope: response }));',
-        thay: '      targetSocket.send(JSON.stringify({ type: "rpc_response", relay_id: "relay-co-dinh", envelope: response }));',
+        tim: '      targetSocket.send(JSON.stringify({ type: "rpc_response", relay_id: message.relay_id, envelope: guiDuoc(response) }));',
+        thay: '      targetSocket.send(JSON.stringify({ type: "rpc_response", relay_id: "relay-co-dinh", envelope: guiDuoc(response) }));',
         soLan: 1
       },
       {
@@ -253,8 +253,8 @@ BATCHES.push({
     {
       ma: "H2",
       ten: "Nới danh sách: cho Input.insertText (lệnh THỬ NGHIỆM) vào seed",
-      tim: '  "Input.dispatchKeyEvent"' + NL + ']);',
-      thay: '  "Input.dispatchKeyEvent",' + NL + '  "Input.insertText"' + NL + ']);',
+      tim: '  "Target.getTargetInfo"' + NL + ']);',
+      thay: '  "Target.getTargetInfo",' + NL + '  "Input.insertText"' + NL + ']);',
       soLan: 1
     },
     {
@@ -428,7 +428,7 @@ BATCHES.push({
     {
       ma: "P6",
       ten: "Nới trần lên 100000 — trần còn đó nhưng không còn chặn gì",
-      tim: "const WRITE_CAP_PER_UNLOCK = 50;",
+      tim: "const WRITE_CAP_PER_UNLOCK = 200;",
       thay: "const WRITE_CAP_PER_UNLOCK = 100000;",
       soLan: 1
     },
@@ -578,7 +578,7 @@ BATCHES.push({
     {
       ma: "F6",
       ten: "Cắt thân cho vừa trần thay vì báo đỏ — người gọi nhận nửa file mà tưởng đủ",
-      tim: "      if (bytes > FETCH_MAX_BODY_BYTES) {",
+      tim: "      if (trenDay > FETCH_MAX_BODY_BYTES) {",
       thay: "      if (false) {",
       soLan: 1
     }

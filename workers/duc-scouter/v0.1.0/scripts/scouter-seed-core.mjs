@@ -70,13 +70,20 @@ const ACTION_BY_METHOD = Object.freeze({
  *
  * ⑷ Trần đếm theo MỖI LẦN MỞ KHOÁ, không theo giờ và không theo đời service worker. Đếm theo
  *   đời service worker là trần giả: Chrome cho worker ngủ vài phút một lần, và mỗi lần tỉnh là
- *   một bộ đếm mới tinh. Đếm theo lần mở khoá thì cửa tự đóng lại sau 50 lượt và phải chính
+ *   một bộ đếm mới tinh. Đếm theo lần mở khoá thì cửa tự đóng lại sau 200 lượt và phải chính
  *   Đức bật lại — tức là cái phanh luôn quay về tay người.
  *
- * 50 là gì: đủ cho một lượt dò một trang thật (ADR-0009 đặt mục tiêu ~20–40 thao tác cho một
- * adapter), và đủ nhỏ để một vòng lặp hỏng dừng trước khi kịp làm gì đáng kể. */
+ * 200 là gì, và vì sao KHÔNG còn là 50: con số cũ là ước lượng chưa đo, đặt theo mục tiêu
+ * ~20–40 thao tác cho một adapter (ADR-0009). Lượt chạy thật đầu tiên ngày 08/09 đã hiệu chỉnh
+ * nó: một lượt tải 216 tệp PDF chạm trần GIỮA CHỪNG, và Đức phải bật lại công tắc nhiều lần
+ * cho một việc duy nhất. Trần đó không lọc được gì — nó chỉ cắt một việc lành làm nhiều khúc,
+ * mà mỗi khúc lại tốn đúng một lượt bật tay của người. Đức chốt 200 ngày 08/09 (ADR-0005).
+ *
+ * Cái KHÔNG đổi, và đó mới là chỗ chịu lực: trần vẫn GÕ CỨNG trong mã, vẫn đếm theo mỗi lần mở
+ * khoá, vẫn phải chính tay Đức bật lại. Một vòng lặp hỏng dừng ở lượt 200 thay vì quay mãi —
+ * chậm hơn 50, nhưng vẫn là dừng, và vẫn dừng mà không cần ai canh. */
 const WRITE_GATE_STORAGE_KEY = "scouter.write.gate.v1";
-const WRITE_CAP_PER_UNLOCK = 50;
+const WRITE_CAP_PER_UNLOCK = 200;
 /* Trần thân trả về của `scout.fetch`. Đặt ở 512 KiB chứ không phải 1 MiB của phong bì: phần vỏ
  * (JSON escape, các trường khác) phình thêm được đáng kể, và chạm trần phong bì thì cả lượt
  * chết ở tầng vận chuyển với một câu khó hiểu, thay vì chết ở đây với một câu nói rõ vì sao. */
