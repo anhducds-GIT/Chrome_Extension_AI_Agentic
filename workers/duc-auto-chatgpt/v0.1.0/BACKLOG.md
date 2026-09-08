@@ -90,7 +90,7 @@ Cách vá đã có sẵn và đã kiểm: `interjob-delay-core.js` + `tests/inte
 Vòng "Tiếp tục" thì đúng hơn là **đánh thức bằng sự kiện** (nút bấm resolve một promise) chứ
 không phải hẹn giờ — vì thời điểm không đoán trước được.
 
-### B-29 · **ĐÃ ĐÓNG 2026-08-28** — đồng hồ chờ trong content script: ĐÃ ĐO 28/08, KHÔNG bị bóp, không cần vá
+### ~~B-29~~ · **ĐÃ ĐÓNG 2026-08-28** — đồng hồ chờ trong content script: ĐÃ ĐO 28/08, KHÔNG bị bóp, không cần vá
 
 `content.js:679` — `if (safetyCooldownSec > 0) await sleep(safetyCooldownSec * 1000);` — nghỉ
 an toàn 6–9 giây nằm trong **content script của tab chatgpt.com**, không phải trong panel.
@@ -225,7 +225,7 @@ Hai khả năng cần phân biệt vì cách xử lý khác nhau:
 **Đừng viết code dựa trên nhóm này** cho tới khi phân biệt được. Hiện nó là niềm tin, không phải
 bằng chứng.
 
-### B-16 · **ĐÃ ĐÓNG 2026-09-06** — `MISSING_REFERENCE` bị bọc thành `INTERNAL_ERROR`
+### ~~B-16~~ · **ĐÃ ĐÓNG 2026-09-06** — `MISSING_REFERENCE` bị bọc thành `INTERNAL_ERROR`
 Bắt được live 2026-08-26: gọi `jobs.add` với token ảnh chưa có file trả về
 `INTERNAL_ERROR` / `retryable: false`, còn nguyên nhân thật
 (`MISSING_REFERENCE: Q001 requires 'REF-A-RED-CIRCLE.png'`) chỉ hiện trong `details.debug` —
@@ -258,7 +258,7 @@ nhất: **dời lời gọi xuống SAU nhánh giặt trắng** — chữ còn n
 tôi thử (dời lên trên `console.error`) **lọt lưới**, và đúng: nó không phá gì cả. Ghi lại vì một
 lượt "đột biến xanh" đọc gần y hệt một lượt "ghim yếu".
 
-### B-18 · **ĐÃ ĐÓNG 2026-08-26** — `references.add` buộc gọi 3 bước: đã cân nhắc, CHỌN giữ nguyên
+### ~~B-18~~ · **ĐÃ ĐÓNG 2026-08-26** — `references.add` buộc gọi 3 bước: đã cân nhắc, CHỌN giữ nguyên
 Audit Antigravity 2026-08-26 nêu: trên GPT phải gọi `jobs.add` → `references.add` → `jobs.update`,
 trong khi Gemini cho `references.add` → `jobs.add`. Đã phân tích và **quyết định giữ nguyên**;
 audit vòng 2 đồng ý.
