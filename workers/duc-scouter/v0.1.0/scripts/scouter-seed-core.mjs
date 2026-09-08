@@ -27,7 +27,6 @@ const PROBE_BY_METHOD = Object.freeze({
   "scout.query": "dom.query",
   "scout.tree": "dom.tree",
   "scout.a11y": "a11y.tree",
-  "scout.snapshot": "dom.snapshot",
   "scout.shot": "page.shot"
 });
 
@@ -161,7 +160,7 @@ export function createSeedHandlers(deps = {}) {
     const gate = stored?.[WRITE_GATE_STORAGE_KEY];
     if (!gate || typeof gate !== "object" || gate.enabled !== true) {
       throw new BridgeProtocolError("WRITE_BLOCKED",
-        "DEV_MODE_OFF: Che do phat trien dang TAT. Chi Duc bat duoc cong tac nay trong popup cua Scouter.", {
+        "DEV_MODE_OFF: Chế độ phát triển đang TẮT. Chỉ Đức bật được công tắc “Cho phép bấm và gõ” ở đầu BẢNG BÊN của Scouter.", {
           write_code: "DEV_MODE_OFF", cap_per_unlock: WRITE_CAP_PER_UNLOCK
         });
     }
@@ -169,7 +168,7 @@ export function createSeedHandlers(deps = {}) {
      * thêm 50 lượt cho đúng cái bản ghi đáng ngờ nhất. */
     if (!Number.isInteger(gate.used) || gate.used < 0) {
       throw new BridgeProtocolError("WRITE_BLOCKED",
-        "GATE_CORRUPT: ban ghi cong tac bi meo. Tat roi bat lai cong tac trong popup.", {
+        "GATE_CORRUPT: bản ghi công tắc bị méo. Tắt rồi bật lại công tắc “Cho phép bấm và gõ” ở đầu BẢNG BÊN.", {
           write_code: "GATE_CORRUPT"
         });
     }
@@ -181,7 +180,7 @@ export function createSeedHandlers(deps = {}) {
     const gate = await readWriteGate();
     if (gate.used >= WRITE_CAP_PER_UNLOCK) {
       throw new BridgeProtocolError("WRITE_BLOCKED",
-        `WRITE_CAP_REACHED: da dung het ${WRITE_CAP_PER_UNLOCK} luot ghi cua lan mo khoa nay. Tat roi bat lai cong tac trong popup.`, {
+        `WRITE_CAP_REACHED: đã dùng hết ${WRITE_CAP_PER_UNLOCK} lượt ghi của lần mở khoá này. Tắt rồi bật lại công tắc “Cho phép bấm và gõ” ở đầu BẢNG BÊN.`, {
           write_code: "WRITE_CAP_REACHED", used: gate.used, cap_per_unlock: WRITE_CAP_PER_UNLOCK
         });
     }
@@ -285,11 +284,6 @@ export function createSeedHandlers(deps = {}) {
     async "scout.a11y"(params) {
       const target = await resolveTarget(params.target_id);
       return await runProbe("scout.a11y", target, { limit: params.limit });
-    },
-
-    async "scout.snapshot"(params) {
-      const target = await resolveTarget(params.target_id);
-      return await runProbe("scout.snapshot", target, { rects: params.rects });
     },
 
     async "scout.shot"(params) {
@@ -427,7 +421,7 @@ export function createSeedHandlers(deps = {}) {
   };
 }
 
-/* Bật/tắt công tắc bằng MỘT hàm dùng chung, để popup và phép ghim không tự dựng lấy hình dạng
+/* Bật/tắt công tắc bằng MỘT hàm dùng chung, để bảng bên và phép ghim không tự dựng lấy hình dạng
  * bản ghi. Hai bản của một luật thì sớm muộn trả hai câu khác nhau — ADR-0006 đã ghi cái giá.
  * Bật là ĐẶT LẠI bộ đếm về 0: đó chính là chỗ ngân sách được nạp, xem ⑷ ở khối đầu file. */
 export async function setWriteGate(chromeApi, enabled, at = Date.now()) {
@@ -450,7 +444,7 @@ export async function readWriteGateState(chromeApi) {
       remaining: Math.max(0, WRITE_CAP_PER_UNLOCK - gate.used)
     };
   } catch (_error) {
-    /* Đọc hụt thì BÁO LÀ TẮT, khớp với ⑵: cái mà popup hiện phải là cái mà đường ghi sẽ làm. */
+    /* Đọc hụt thì BÁO LÀ TẮT, khớp với ⑵: cái mà bảng bên hiện phải là cái mà đường ghi sẽ làm. */
     return { enabled: false, used: 0, remaining: 0, cap_per_unlock: WRITE_CAP_PER_UNLOCK };
   }
 }

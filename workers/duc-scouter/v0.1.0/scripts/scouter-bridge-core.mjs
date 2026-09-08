@@ -322,18 +322,6 @@ const METHOD_ENTRIES = [
     }
   }),
   registryEntry({
-    name: "scout.snapshot", read_only: true, deadline_ms: 30000,
-    description: "Capture the whole page structure in ONE call instead of hundreds. Returns Chrome's string-table form verbatim; the caller expands it.",
-    params_schema: { target_id: "string", rects: "boolean?" },
-    params_validator: (raw) => {
-      const params = objectParams(raw, ["target_id", "rects"]);
-      return {
-        target_id: requiredTargetId(params.target_id),
-        rects: optionalFlag(params.rects, "params.rects")
-      };
-    }
-  }),
-  registryEntry({
     name: "scout.shot", read_only: true, deadline_ms: 30000,
     description: "Screenshot the visible page as base64. Defaults to jpeg quality 60 because a full png usually exceeds the envelope. Refuses rather than truncating.",
     params_schema: { target_id: "string", format: "jpeg|png?", quality: "integer:1..100?" },

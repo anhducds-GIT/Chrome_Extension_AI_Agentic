@@ -29,7 +29,6 @@ const READ_ONLY_EXPECTED = new Set([
    * cái đó chính là ranh giới đọc/điều-khiển mà file này canh. */
   "Accessibility.enable",
   "Accessibility.getFullAXTree",
-  "DOMSnapshot.captureSnapshot",
   "Page.captureScreenshot"
 ]);
 
@@ -291,7 +290,7 @@ const FAKE_TARGETS = [
 
 /* ---- ⑥ Từ vựng CỐ ĐỊNH -------------------------------------------------- */
 {
-  assert.deepEqual([...PROBE_NAMES], ["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "dom.snapshot", "page.shot"]);
+  assert.deepEqual([...PROBE_NAMES], ["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "page.shot"]);
   for (const bogus of ["dom.eval", "runtime.evaluate", "page.click", ""]) {
     const res = await runProbe(bogus, { sendRaw: async () => ({}) }, {});
     assert.equal(res.ok, false, `tên lạ phải bị từ chối: ${bogus}`);
@@ -377,58 +376,17 @@ const FAKE_TARGETS = [
   assert.equal(rong.code, "NO_SCREENSHOT");
 }
 
-/* ---- dom.snapshot — MỘT lượt thay cho hàng trăm (07/09) ------------------
- * Chốt duy nhất đáng ghim ở đây: nó KHÔNG giải nén bảng chuỗi của Chrome. Giải ra là phồng
- * gấp nhiều lần và phong bì không chở nổi — mà tệ hơn, là dựng bản sao thứ hai của một lược
- * đồ mà Chrome mới là người định nghĩa. */
-{
-  const raw = {
-    documents: [{ nodes: { nodeName: [1, 2, 3] } }],
-    strings: ["", "HTML", "BODY", "DIV"]
-  };
-  const daGoi = [];
-  const send = async (method, params) => { daGoi.push({ method, params }); return raw; };
-  const res = await runProbe("dom.snapshot", { sendRaw: send });
-  assert.equal(res.ok, true, JSON.stringify(res));
-  assert.equal(res.data.documents, 1);
-  assert.equal(res.data.strings, 4);
-  assert.equal(res.data.nodes, 3);
-  assert.deepEqual(res.data.snapshot.strings, raw.strings, "phai tra NGUYEN BAN bang chuoi cua Chrome");
-  assert.equal(daGoi.at(-1).params.includeDOMRects, false, "mac dinh khong lay hinh chu nhat");
-  const coRect = await runProbe("dom.snapshot", { sendRaw: send }, { rects: true });
-  assert.equal(coRect.ok, true);
-  assert.equal(daGoi.at(-1).params.includeDOMRects, true);
-
-  /* QUÁ TRẦN THÌ ĐỎ — phép dò này từng GIẾT service worker.
-   *
-   * Đo thật 08/09 trên Bridge đang chạy, 100% lặp lại: `scout.snapshot` làm đứt kết nối,
-   * người gọi nhận `TRANSPORT_DISCONNECTED` rồi `EXTENSION_OFFLINE` tới khi extension tự
-   * nối lại. Nó là phép dò CHỈ ĐỌC duy nhất không có trần.
-   *
-   * Ghim luôn cả cách ĐO, không chỉ cái trần: ước lượng phải cộng độ dài chuỗi, KHÔNG
-   * được tuần tự hoá. Bản vá đầu đo bằng `JSON.stringify` ở tầng transport, và trên một
-   * bản chụp hàng chục MiB thì chính lượt đo đó giết service worker — hàng rào đặt sau
-   * vực không đỡ được ai. Ca dưới đây dựng một bảng chuỗi to mà số NÚT thì nhỏ, nên một
-   * bản vá chỉ đếm nút sẽ SỐNG SÓT qua nó và ta biết ngay. */
-  const rácTo = {
-    documents: [{ nodes: { nodeName: [1, 2, 3] } }],
-    strings: Array.from({ length: 400 }, () => "x".repeat(3000))
-  };
-  const quáTrần = await runProbe("dom.snapshot", { sendRaw: async () => rácTo });
-  assert.equal(quáTrần.ok, false, "bản chụp quá trần mà vẫn báo thành công");
-  assert.equal(quáTrần.code, "SNAPSHOT_TOO_LARGE");
-  assert.match(quáTrần.detail, /quá trần/, "câu lỗi phải nói số đo, không chỉ nói hỏng");
-
-  /* Chiều ngược lại: dưới trần thì KHÔNG được chặn. Thiếu vế này thì một bản vá chặn tất
-   * cả mọi thứ vẫn xanh, và `dom.snapshot` thành vô dụng thay vì được sửa. */
-  const vừaĐủ = {
-    documents: [{ nodes: { nodeName: [1, 2, 3] } }],
-    strings: Array.from({ length: 100 }, () => "y".repeat(1000))
-  };
-  const dướiTrần = await runProbe("dom.snapshot", { sendRaw: async () => vừaĐủ });
-  assert.equal(dướiTrần.ok, true, "bản chụp dưới trần bị chặn oan");
-  assert.equal(dướiTrần.data.strings, 100);
-}
+/* `dom.snapshot` ĐÃ BỊ BỎ ngày 08/09 — Đức chốt.
+ *
+ * Lý do, đo thật trên Bridge đang chạy: nó GIẾT service worker trên trang lớn (2/3 trang thử).
+ * Trần thêm vào cùng ngày chỉ đỡ được trang vừa; trang rất lớn thì worker chết ngay trong lúc
+ * Chrome trả dữ liệu, tức TRƯỚC khi bất kỳ dòng nào của ta kịp chạy. Không còn chỗ đặt hàng rào.
+ *
+ * `dom.tree` (có MAX_TREE_NODES) và `dom.query` làm được cùng việc, có trần, chưa bao giờ làm
+ * đứt kết nối. Để một method biết chắc sẽ sập trong danh sách khả năng là mời phiên AI sau
+ * giẫm vào — mà danh sách khả năng chính là thứ AI đọc để quyết định gọi gì.
+ *
+ * Mã không bị xoá khỏi lịch sử; nó chỉ không còn là một khả năng được khai. */
 
 if (process.argv.includes("--with-mutation")) {
   const here = path.dirname(fileURLToPath(import.meta.url));

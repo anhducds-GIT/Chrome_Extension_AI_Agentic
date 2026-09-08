@@ -21,6 +21,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+const LFT = String.fromCharCode(10);
 
 const { createSeedHandlers, setWriteGate, readWriteGateState, SEED_CONSTANTS } =
   await import("../scripts/scouter-seed-core.mjs");
@@ -468,4 +469,48 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
   assert.equal(sau.enabled, false, "tat roi ma van bao dang bat");
 }
 
-console.log("scouter-write-gate-smoke: 18 khoi, tat ca DAT");
+/* ---- ⑲ CÂU CHỈ ĐƯỜNG PHẢI CHỈ ĐÚNG CỬA (S-14) ---------------------------
+ *
+ * Nổ thật 08/09: hết hạn mức ghi giữa lượt tải PDF, câu báo lỗi nói *"tắt rồi bật lại công
+ * tắc trong POPUP"* — nhưng Scouter không có popup, công tắc nằm ở BẢNG BÊN. Đức phải hỏi lại
+ * công tắc ở đâu.
+ *
+ * Nhỏ, nhưng đúng loại lỗi đắt nhất với người dùng: một câu hướng dẫn CHỈ SAI CHỖ thì người
+ * đọc đi tìm nhầm cửa sổ rồi kết luận là công cụ hỏng.
+ *
+ * Ghim ĐỌC NHÃN THẬT TỪ `sidepanel.html`, không gõ lại chuỗi vào đây — gõ lại là dựng bản sao
+ * thứ hai của một cái tên, và hai bản sẽ lệch đúng như đã lệch lần này.
+ */
+{
+  const html = fs.readFileSync(path.join(here, "..", "sidepanel.html"), "utf8");
+  const khop = html.match(/id="gate-heading"[^>]*>([^<]+)</);
+  assert.ok(khop, "không đọc được nhãn công tắc từ sidepanel.html — ghim này mất chỗ dựa");
+  const nhan = khop[1].trim();
+  assert.equal(nhan, "Cho phép bấm và gõ", "nhãn công tắc đổi: sửa cả ba câu báo lỗi cho khớp");
+
+  const nguon = fs.readFileSync(path.join(here, "..", "scripts", "scouter-seed-core.mjs"), "utf8");
+
+  /* ⑴ Không được nhắc tới một cửa KHÔNG tồn tại. */
+  assert.ok(!/popup/i.test(nguon),
+    "scouter-seed-core.mjs còn nhắc 'popup' — Scouter không có popup, công tắc ở bảng bên");
+
+  /* ⑵ Cả ba câu về công tắc phải gọi ĐÚNG TÊN nhãn thật. */
+  for (const ma of ["DEV_MODE_OFF", "GATE_CORRUPT", "WRITE_CAP_REACHED"]) {
+    const dong = nguon.split(LFT).find((x) => x.includes(ma + ":"));
+    assert.ok(dong, `không thấy câu báo lỗi cho ${ma}`);
+    assert.ok(dong.includes(nhan),
+      `câu ${ma} không gọi đúng tên công tắc ("${nhan}") — người đọc sẽ đi tìm nhầm chỗ`);
+    assert.ok(/BẢNG BÊN/.test(dong),
+      `câu ${ma} không nói rõ công tắc nằm ở BẢNG BÊN`);
+  }
+
+  /* ⑶ Chữ Đức đọc thì phải CÓ DẤU (luật vàng 5). Mã lỗi giữ tiếng Anh, phần còn lại tiếng Việt.
+   * Trước 08/09 ba câu này viết không dấu, lệch với chính chú thích trong cùng file. */
+  for (const ma of ["DEV_MODE_OFF", "GATE_CORRUPT", "WRITE_CAP_REACHED"]) {
+    const dong = nguon.split(LFT).find((x) => x.includes(ma + ":"));
+    assert.match(dong, /[ắằẳẵặăâấầẩẫậêếềểễệôốồổỗộơớờởỡợưứừửữựđáàảãạéèẻẽẹíìỉĩịóòỏõọúùủũụýỳỷỹỵ]/,
+      `câu ${ma} viết không dấu — đây là chữ Đức đọc, không phải mã lỗi`);
+  }
+}
+
+console.log("scouter-write-gate-smoke: 19 khoi, tat ca DAT");

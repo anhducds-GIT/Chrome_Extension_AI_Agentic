@@ -29,7 +29,6 @@ const EXPECTED_METHODS = [
   "scout.query",
   "scout.tree",
   "scout.a11y",
-  "scout.snapshot",
   "scout.shot",
   "scout.click",
   "scout.type",
@@ -50,7 +49,7 @@ const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.ty
 /* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ObserverEngine.runAction`. */
 const EXPECTED_ACTIONS = new Set(["input.click", "input.type", "input.key"]);
 /* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ObserverEngine.runProbe`. */
-const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "dom.snapshot", "page.shot"]);
+const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "page.shot"]);
 
 const POISON = "'); doSomething(); ('";
 const TARGET_ID = "TARGET-1";
@@ -388,13 +387,14 @@ function request(method, params) {
   assert.ok(response.error.details.message.includes("bể trong ruột"));
 }
 
-/* ---- ⑩ Ánh xạ method → phép dò là DỮ LIỆU, phủ đủ BẢY -------------------
- * Bốn → bảy ngày 07/09: `scout.a11y` · `scout.snapshot` · `scout.shot`. Con số này KHÔNG
+/* ---- ⑩ Ánh xạ method → phép dò là DỮ LIỆU, phủ đủ SÁU --------------------
+ * Bốn → bảy ngày 07/09, rồi bảy → SÁU ngày 08/09: Đức chốt bỏ `scout.snapshot` vì nó giết
+ * service worker trên trang lớn (2/3 trang đo thật). Con số này KHÔNG
  * được viết là `Object.keys(...).length` — làm thế là so một thứ với chính nó và phép ghim
  * luôn xanh dù có ai lặng lẽ thêm một ánh xạ. Con số gõ tay ở đây chính là cái chốt. */
 {
   assert.deepEqual(new Set(Object.values(SEED_CONSTANTS.PROBE_BY_METHOD)), EXPECTED_PROBES);
-  assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 7);
+  assert.equal(Object.keys(SEED_CONSTANTS.PROBE_BY_METHOD).length, 6);
 }
 
 /* ---- Trạm gác tham số của `scout.fetch` (S-10) ---------------------------
@@ -456,7 +456,6 @@ function request(method, params) {
 {
   const a11y = core.METHOD_REGISTRY["scout.a11y"];
   const shot = core.METHOD_REGISTRY["scout.shot"];
-  const snap = core.METHOD_REGISTRY["scout.snapshot"];
   const chan = (entry, params, viTri) => {
     try { entry.params_validator(params); }
     catch (error) {
@@ -482,11 +481,9 @@ function request(method, params) {
   chan(shot, { target_id: "T1", quality: 0 }, "quality = 0");
   assert.equal(shot.params_validator({ target_id: "T1" }).format, "jpeg", "mac dinh phai la jpeg, khong phai png");
 
-  chan(snap, { target_id: "T1", rects: "co" }, "rects khong phai boolean");
-  assert.equal(snap.params_validator({ target_id: "T1" }).rects, false, "khong khai rects thi phai la false");
 
   /* Cả ba là ĐỌC, nên chúng KHÔNG được nằm trong nhóm phải trả giá của phanh. */
-  for (const ten of ["scout.a11y", "scout.snapshot", "scout.shot"]) {
+  for (const ten of ["scout.a11y", "scout.shot"]) {
     assert.equal(core.METHOD_REGISTRY[ten].read_only, true, `${ten} phai la read_only`);
   }
 }
