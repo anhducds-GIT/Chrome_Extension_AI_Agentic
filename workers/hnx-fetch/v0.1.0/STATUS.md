@@ -6,7 +6,7 @@ lifecycle: active
 owner: claude-scouter-s06
 priority_rank: 1
 next_step: "Chạy lại lượt lấy dữ liệu cuối ngày 08/09 — HNX chưa công bố lúc chiều, cả hai đường cùng xác nhận. Rồi mỗi ngày một lượt."
-human_action: "Một việc nhỏ còn lại: tạo một tệp ghép cặp riêng cho HNX Fetch, cổng riêng — dùng chung với Scouter thì mỗi lệnh phải mang thêm một chuỗi dài. Phím tắt phanh khẩn Ctrl+Shift+H đã bấm thử 08/09 và ĂN THẬT."
+human_action: "Một việc nhỏ còn lại: tạo một tệp ghép cặp riêng cho HNX Fetch, cổng riêng — dùng chung với Scouter thì mỗi lệnh phải mang thêm một chuỗi dài. Phím tắt phanh khẩn Ctrl+Shift+H đã bấm thử 08/09 và ĂN THẬT. @Đức:bấm"
 version_source: workers/hnx-fetch/v0.1.0/manifest.json
 last_verified: 2026-09-08
 last_verified_commit: 7cb9f766e2c2b1aa659fbe4911564fd8d0e1b1ea

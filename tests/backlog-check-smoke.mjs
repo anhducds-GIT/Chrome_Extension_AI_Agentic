@@ -15,7 +15,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { dangMo, docMuc, docMucDaGo, DONG_DOI_MA, kiemSo, mucVoHinh, thieuDongKhi, trungMa, TRUONG_DONG_KHI } from "../scripts/backlog-check.mjs";
+import { dangMo, docMuc, docMucDaGo, DONG_DOI_MA, kiemSo, mucVoHinh, thieuDongKhi, trungMa, TRUONG_DONG_KHI, viecDucKhongDau } from "../scripts/backlog-check.mjs";
 
 /* CHUOI TEST THAT. Tu khi `test` tro sang bo chay song song, chuoi that nam o `test:tuan-tu`
    va bo chay doc `test:tuan-tu ?? test`. Hoi `test` khong thoi thi phep ghim chi thay MOT dong
@@ -319,8 +319,69 @@ const MUI = String.fromCharCode(8594);   // dấu mũi tên của dòng đổi m
   const kq = kiemSo(so("## N-01 · that", `${TRUONG_DONG_KHI} lệnh: \`true\``, "", "- **A-01** · sai cho"));
   assert.equal(kq.voHinh.length, 1, "kiemSo phai cho ra vet cua muc vo hinh");
   const nguon = fs.readFileSync(BO_KIEM, "utf8");
-  assert.match(nguon, /voHinh\.length \? 1 : 0/, "ma thoat phai do ca muc vo hinh, khong thi cong khong bao gio thay");
+  // So khop MOT MANH cua bieu thuc, khong so ca dong: dong `return` nay con dai ra moi lan
+  // cong nhan them mot phep do (no vua dai ra vi N-29), va mot phep ghim vo o moi lan do la
+  // phep ghim se bi go.
+  assert.match(nguon, /return[^;]*voHinh\.length[^;]*\? 1 : 0/, "ma thoat phai do ca muc vo hinh, khong thi cong khong bao gio thay");
   ok("kiemSo() va ma thoat deu THAY muc vo hinh");
+}
+
+/* ---- VIỆC CHỜ ĐỨC PHẢI CÓ DẤU — N-29 --------------------------------------
+ *
+ * Ca thật 07/09: Scouter có `human_action` là việc thật còn hiệu lực mà **cả gói không một dấu
+ * `@Đức` nào**. Bảng "Đức cần làm" chuyển sang đọc DẤU, nên nếu không có phép này thì đúng lúc
+ * chuyển, việc đó **rời bảng một cách im lặng** — Đức không có cách nào biết.
+ *
+ * Ghim BỐN vế. Ba trạng thái của `human_action` là hợp đồng, gộp bất kỳ hai cái là bảng nói
+ * dối; và vế cuối là vế người ta hay quên: một CÂU nói "không có gì chờ" thì máy vẫn đọc thành
+ * việc thật — giá trị đúng cho ca đó là chuỗi `"không"`. */
+{
+  const doc = (m) => (rel) => {
+    if (!(rel in m)) throw new Error("khong co file " + rel);
+    return m[rel];
+  };
+  const soDo = {
+    "workers/g1/v1/STATUS.md": 'lifecycle: "active"\nhuman_action: "nap lai extension"\n',
+    "workers/g1/v1/BACKLOG.md": "## X-1 · viec gi do\n",
+  };
+  assert.deepEqual(viecDucKhongDau(Object.keys(soDo), doc(soDo)).map((x) => x.hoSo),
+    ["workers/g1/v1/STATUS.md"], "co viec that ma ca goi khong dau: phai keu");
+
+  const coDau = { ...soDo, "workers/g1/v1/BACKLOG.md": "## X-1 · viec gi do @Đức:bấm\n" };
+  assert.deepEqual(viecDucKhongDau(Object.keys(coDau), doc(coDau)), [],
+    "dau o BAT KY file .md nao TRONG GOI deu tinh — N-29 do o muc GOI, khong o muc dong");
+
+  const dauTrongStatus = { ...soDo, "workers/g1/v1/STATUS.md": 'lifecycle: "active"\nhuman_action: "nap lai extension @Đức:bấm"\n' };
+  assert.deepEqual(viecDucKhongDau(Object.keys(dauTrongStatus), doc(dauTrongStatus)), [],
+    "dat dau ngay tren dong human_action cung tinh — do la cach hai co che khop nhau BANG CAU TRUC");
+
+  // BA TRẠNG THÁI. Gộp `"không"` với rỗng là bảng báo "không có việc nào chờ Đức" trong khi
+  // thật ra CHƯA AI ĐƯỢC HỎI — đúng tình trạng trước khi có trường này.
+  for (const v of ['""', '"không"', '"khong"']) {
+    const im = { ...soDo, "workers/g1/v1/STATUS.md": `lifecycle: "active"\nhuman_action: ${v}\n` };
+    assert.deepEqual(viecDucKhongDau(Object.keys(im), doc(im)), [], `human_action ${v} thi khong doi dau`);
+  }
+
+  const nghi = { ...soDo, "workers/g1/v1/STATUS.md": 'lifecycle: "archived"\nhuman_action: "viec cu"\n' };
+  assert.deepEqual(viecDucKhongDau(Object.keys(nghi), doc(nghi)), [],
+    "don vi da nghi thi khong cho ai nua, du truong cu con chu");
+
+  // Gói KHÁC không được cho gói này mượn dấu.
+  const goiKhac = {
+    "workers/g1/v1/STATUS.md": 'lifecycle: "active"\nhuman_action: "nap lai extension"\n',
+    "workers/g2/v1/BACKLOG.md": "## Y-1 · viec khac @Đức:bấm\n",
+  };
+  assert.deepEqual(viecDucKhongDau(Object.keys(goiKhac), doc(goiKhac)).map((x) => x.hoSo),
+    ["workers/g1/v1/STATUS.md"], "dau o GOI KHAC khong duoc tinh cho goi nay");
+  ok("viec cho Duc phai co dau: do o muc goi, ba trang thai, don vi nghi khong tinh (N-29)");
+}
+
+{
+  // Ghim ĐƯỜNG DÂY: một hàm đúng mà mã thoát không đo thì cổng vẫn im như cũ.
+  const nguon = fs.readFileSync(BO_KIEM, "utf8");
+  assert.match(nguon, /khongDau\.length \? 1 : 0/, "ma thoat phai do ca viec cho Duc khong dau");
+  assert.match(nguon, /CAN DUC:/, "phai in mot dong tong ket de doc duoc bang mat");
+  ok("kiemSo/ma thoat that su do viec cho Duc khong dau");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

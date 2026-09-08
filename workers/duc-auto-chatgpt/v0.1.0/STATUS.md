@@ -6,7 +6,7 @@ lifecycle: active
 owner: claude
 priority_rank: 2
 next_step: "Pilot vận hành thật cho phiên-theo-tab (Đức duyệt rồi mới chạy): reload extension, gắn tên 2–3 tab, gọi bridge.sessions + dom_probe --target từng phiên, thử gắn lại sau khi đóng Chrome"
-human_action: "Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích; muốn chạy nhiều luồng song song thì mở tab BRIDGE, gõ tên và bấm Gắn tab đang mở cho từng tab."
+human_action: "Mở từng hồ sơ Chrome đang dùng cho ChatGPT, nạp lại tiện ích; muốn chạy nhiều luồng song song thì mở tab BRIDGE, gõ tên và bấm Gắn tab đang mở cho từng tab. @Đức:bấm"
 version_source: workers/duc-auto-chatgpt/v0.1.0/manifest.json
 last_verified: 2026-08-26
 last_verified_commit: 00d1f99b44bd490cac079da5e803917346571a26

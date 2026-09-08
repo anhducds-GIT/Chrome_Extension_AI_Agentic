@@ -17,11 +17,13 @@
  *   node scripts/backlog-check.mjs [đường-dẫn-sổ]
  *
  * Ra 0 nếu mọi mục đều khai. Ra 1 kèm tên mục nếu có mục thiếu. Ra 2 nếu không đọc được sổ. */
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(path.dirname(MODULE_FILE), "..");
 
 export const TRUONG_DONG_KHI = "- **đóng khi:**";
 
@@ -218,6 +220,55 @@ export function mucVoHinh(text) {
   return ra;
 }
 
+
+/* ---- VIỆC CHỜ ĐỨC PHẢI CÓ DẤU — N-29 --------------------------------------
+ *
+ * Đức chốt 07/09: *"NEEDS ĐỨC: một SSOT duy nhất, dùng cơ chế `@Đức:bấm` / `@Đức:chốt`"*.
+ * Đích đúng, nhưng cắt ngay hôm đó là MẤT DỮ LIỆU — đo được: 17 dấu trong ba sổ,
+ * `human_action` khác rỗng ở 4 trong 5 gói, mà Scouter **không có một dấu nào trong cả gói**
+ * trong khi `human_action` của nó là việc thật. Gộp ngay là việc đó biến mất khỏi bảng, im lặng.
+ *
+ * Nên thứ tự bắt buộc là ⑴ đặt dấu → ⑵ hai cơ chế đếm bằng nhau → ⑶ mới bỏ nguồn cũ. Hàm này
+ * là phép đo của bước ⑵, và nó ở lại làm cái chuông cho bước ⑶: ai thêm một `human_action` mà
+ * không đặt dấu thì nó kêu, thay vì việc đó lặng lẽ rơi khỏi bảng.
+ *
+ * MỘT NGUỒN DUY NHẤT NÓI THIẾU THÌ TỆ HƠN HAI NGUỒN NÓI LỆCH: hai nguồn lệch thì thấy được,
+ * một nguồn thiếu thì không.
+ *
+ * Ba trạng thái của `human_action`, và gộp bất kỳ hai cái là bảng nói dối (build-overview.mjs
+ * đã khai đúng thế): chuỗi thật = có việc · `"không"` = đã trả lời, không có gì · rỗng = CHƯA
+ * AI TRẢ LỜI. Chỉ trạng thái thứ nhất mới đòi dấu. */
+const RE_HUMAN = /^human_action:\s*"(.*)"\s*$/m;
+const RE_DAU_DUC = new RegExp("@(?:Đức|Duc)\\s*:\\s*(?:chốt|chot|bấm|bam)", "iu");
+const RE_LIFECYCLE = /^lifecycle:\s*"?([a-z-]+)"?/m;
+const DA_NGHI = new Set(["superseded", "archived"]);
+
+/** Việc chờ Đức khai trong `human_action` mà cả GÓI không có lấy một dấu `@Đức`.
+    `docFile(rel)` đọc nội dung · `dsFile` là mọi đường dẫn đang theo dõi. */
+export function viecDucKhongDau(dsFile, docFile) {
+  const trongGoi = (rel) => {
+    // Gói = thư mục chứa STATUS.md. Dấu đặt ở đâu trong gói cũng tính — sổ nợ riêng, IDEAS,
+    // hay chính hồ sơ trạng thái. N-29 đo ở mức GÓI, không ở mức dòng.
+    const goi = rel.slice(0, rel.lastIndexOf("/") + 1);
+    return dsFile.filter((f) => f.startsWith(goi) && /\.md$/.test(f));
+  };
+  const ra = [];
+  for (const rel of dsFile.filter((f) => f.endsWith("STATUS.md"))) {
+    let text;
+    try { text = docFile(rel); } catch { continue; }
+    const doi = RE_LIFECYCLE.exec(text);
+    if (doi && DA_NGHI.has(doi[1])) continue;          // đơn vị đã nghỉ thì không chờ ai nữa
+    const m = RE_HUMAN.exec(text);
+    const viec = m ? m[1].trim() : "";
+    if (!viec || viec.toLowerCase() === "không" || viec.toLowerCase() === "khong") continue;
+    const coDau = trongGoi(rel).some((f) => {
+      try { return RE_DAU_DUC.test(docFile(f)); } catch { return false; }
+    });
+    if (!coDau) ra.push({ hoSo: rel, viec: viec.slice(0, 100) });
+  }
+  return ra;
+}
+
 export function kiemSo(text) {
   const tong = docMucDaGo(text).length;
   const thieu = thieuDongKhi(text);
@@ -234,7 +285,17 @@ function main(argv) {
     return 2;
   }
   const { tong, thieu, trung, voHinh } = kiemSo(text);
+  /* Quét CẢ REPO, không chỉ quyển sổ ở gốc — vì câu hỏi "việc nào đang chờ Đức" trải khắp
+     các gói. Git hỏng thì danh sách rỗng và phép này im, KHÔNG báo "sạch": không đo được mà
+     nói sạch là cấp giấy chứng nhận cho một phép đo chưa chạy. */
+  let khongDau = [];
+  try {
+    const ds = execFileSync("git", ["ls-files"], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 26 })
+      .split(String.fromCharCode(10)).map((d) => d.trim()).filter(Boolean);
+    khongDau = viecDucKhongDau(ds, (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8"));
+  } catch { khongDau = []; }
   console.log(`BACKLOG: ${tong} muc, ${thieu.length} thieu truong dong-khi, ${trung.length} ma bi trung, ${voHinh.length} muc vo hinh`);
+  console.log(`CAN DUC: ${khongDau.length} goi co human_action ma khong co dau @Duc nao`);
   for (const ma of thieu) {
     console.error(`  ${ma}: thiếu "${TRUONG_DONG_KHI} lệnh: <lệnh chạy được>" hoặc "${TRUONG_DONG_KHI} đức: <câu Đức phải chốt>"`);
   }
@@ -255,7 +316,17 @@ function main(argv) {
     console.error("không bị kiểm trường `đóng khi`, và KHÔNG kêu — ngày 07/09 hai mục đã mất tích đúng thế,");
     console.error("rồi con số sai đó thành lý do xin Đức nâng trần. Sửa: đổi dòng đó thành tiêu đề `## N-<số>`.");
   }
-  return thieu.length || trung.length || voHinh.length ? 1 : 0;
+  for (const k of khongDau) {
+    console.error(`  ${k.hoSo}: human_action co viec that ma ca goi khong co dau @Đức nao — "${k.viec}"`);
+  }
+  if (khongDau.length) {
+    console.error("Bang 'Đức cần làm' doc DAU, khong doc human_action (N-29). Khong dat dau thi viec do");
+    console.error("roi khoi bang MOT CACH IM LANG. Sua: gan `@Đức:bấm` (hoac `@Đức:chốt`) vao chinh dong");
+    console.error("`human_action:`, hoac vao dong muc tuong ung trong so no cua goi.");
+    console.error("Khong con viec gi cho Đức? Thi khai `human_action: \"không\"` — do la gia tri luoc do danh cho");
+    console.error("'da tra loi, khong co gi cho'. Mot CAU van xuoi noi dieu do thi may van doc thanh viec that.");
+  }
+  return thieu.length || trung.length || voHinh.length || khongDau.length ? 1 : 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === MODULE_FILE) process.exit(main(process.argv.slice(2)));
