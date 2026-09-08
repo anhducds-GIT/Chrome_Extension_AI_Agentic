@@ -718,7 +718,7 @@ const chay = (deps) => {
   // đang làm dở, và KHÔNG phép kiểm nào kêu. Cổng là chỗ duy nhất nạn nhân chắc chắn chạy tới.
   // 2026-09-06, claude-handoff-tran: 12 → 13. Thêm "HANDOFF: mục mới trong trần, file đúng
   // tháng" (ADR-0011) — trần độ dài một mục nhật ký, chặn ở ĐẦU VÀO.
-  assert.match(gate, /const EXPECTED_CHECKS = 13;/, "thêm cổng con thì EXPECTED_CHECKS phải là 13 — lớp chống tự tháo cổng");
+  assert.match(gate, /const EXPECTED_CHECKS = 14;/, "thêm cổng con thì EXPECTED_CHECKS phải là 14 — lớp chống tự tháo cổng");
   // Và nó KHÔNG được biến nợ cấu trúc thành cổng đỏ ở phiên S4.
   // S7: cổng con nay PHẢI biến mã thoát 1 thành cổng đỏ, và phải TÁCH mã 1 (repo có nợ) khỏi
   // mã 2 (bộ kiểm hỏng). Đây là mắt nối duy nhất giữa check-bootstrap và cổng đóng phiên;

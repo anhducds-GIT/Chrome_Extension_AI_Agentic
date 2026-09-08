@@ -1601,3 +1601,35 @@ là bên **bị** cuốn, không phải bên cuốn.
 **Còn mở, đừng đọc hẹp hơn.** `--as` vẫn là tên tự khai · đẩy `main` bỏ qua cửa thì mã VẪN vào ·
 chưa bật cờ GitHub nào. Bản xem được chờ Đức duyệt:
 `_run-qua-dem-20260907/DE-XUAT-CO-GITHUB--CHO-DUC-DUYET.md`.
+
+## 2026-09-08 · claude-cua-kiem · Trần sổ nợ 15 lần đầu có răng
+
+**Đức chốt:** giữ nguyên con số 15, thêm máy canh. Trước hôm nay `AGENTS.md` giới hạn ④ **tự
+khai** *"trần này KHÔNG có máy cưỡng chế"* — và nó vỡ đúng chỗ mù ấy: mục thứ 11 vào sổ mà
+**không gì đỏ lên**, nên trần phải nâng 10 → 15 **sau khi đã vỡ**.
+
+**Làm gì.** Phép kiểm thứ **14** của cổng đóng phiên: *"Sổ nợ dưới trần"*. Trần khai ở
+`backlog.tran` của `.repo-structure.json`, không viết cứng trong script; repo không khai thì
+phép kiểm xanh (cùng hợp đồng với bản khung 1.3.50). Đang: **12/15**.
+
+**Bộ đếm: `dangMo` mới, thêm vào `backlog-check.mjs` — không viết bộ thứ hai.** Sổ này đóng mục
+bằng cách **thêm dòng `- **ĐÓNG <mã>**` ở CUỐI**, không gạch tiêu đề, nên **đếm tiêu đề là đếm
+sai** — tôi đã đếm sai đúng kiểu đó một lần (báo 14 mục mở, thật ra 12). Ghim
+`tests/backlog-check-smoke.mjs`: dòng ở cuối mới đóng · tự khai *"ĐÃ VÁ"* trong thân **không**
+tính · dòng *nói về* một dòng đóng **không** tính (sổ thật có sẵn một dòng như vậy) · mã đã đổi
+qua `ĐỔI MÃ` vẫn khớp. 15/15 xanh.
+
+**Vấp đáng ghi — sửa hàng loạt bằng regex đã quét trúng chỗ không được sửa.** Cổng nay phụ thuộc
+`backlog-check.mjs`, nên **13 kho thử** phải chép thêm file đó. Tôi vá bằng một lượt regex quét
+mọi danh sách chứa `session-check.mjs` — và nó chèn cả vào **hai danh sách KHẲNG ĐỊNH**
+(`repo-structure-smoke:313` đòi script phải đi qua cửa quy vùng chung · `dau-vet-vung-smoke:50`
+đòi script phải dùng hằng `CHUA_THAY_DAU_VET`). `backlog-check.mjs` không làm cả hai việc đó, nên
+hai chỗ ấy là **khẳng định sai được đóng dấu hợp lệ**. Cả hai đã gỡ, và tôi soát lại **bằng máy**:
+mọi chỗ chèn còn lại đều có `copyFileSync` ngay dưới. **Danh sách chuỗi trông giống nhau không có
+nghĩa chúng nói cùng một điều** — sửa hàng loạt thì phải kiểm từng chỗ chèn bằng ngữ cảnh, không
+bằng hình dạng.
+
+**Chập chờn, không phải lỗi:** `bridge-multiprofile-transport-async-smoke` đỏ một lượt, xanh khi
+chạy riêng cả hai bản và xanh ở lượt chạy lại. Gói đóng băng, tôi không chạm file nào trong đó.
+
+**Còn mở:** sổ **12/15**.

@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
 import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
 import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, chonSuiteBoDongBang, claimPrefixesFrom, DAU_VET, dauVetTheoVung, frozenFrom, generatorsFrom, handoffCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { dangMo } from "./backlog-check.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -887,6 +888,42 @@ check("Đọc git không lỗi", () => {
 /* ---- chống tự tháo cổng ------------------------------------------------- */
 // Cách dễ nhất để "làm cho cổng xanh" là lặng lẽ xoá bớt một phép kiểm.
 // Con số này chặn đúng việc đó: thêm phép kiểm thật thì tăng nó lên và ghi
+/* TRẦN SỔ NỢ — con số đã có từ lâu, MÁY CANH thì hôm nay mới có.
+ *
+ * `AGENTS.md` mục 3 giới hạn ④ nói thẳng chỗ mù này: *"Trần này KHÔNG có máy cưỡng chế — công cụ
+ * chỉ đếm và in ra, cổng đóng phiên không đọc con số đó."* Và nó vỡ đúng như thế: mục thứ 11 vào
+ * sổ mà **không gì đỏ lên**, nên trần 10 phải nâng thành 15 **sau khi đã vỡ**. Một trần không ai
+ * canh thì nó không phải trần, nó là lời khuyên.
+ *
+ * Trần khai ở `backlog.tran` của `.repo-structure.json`, KHÔNG viết cứng ở đây. Repo không khai
+ * thì phép kiểm XANH — cùng hợp đồng với bản khung (ADR-0010 của repo bộ khung).
+ *
+ * Bộ đếm dùng lại `dangMo` của `backlog-check.mjs`, không viết bộ thứ hai: quy ước đóng mục của
+ * sổ này là **thêm dòng `- **ĐÓNG N-xx**` ở cuối**, không gạch tiêu đề, và đếm tiêu đề là đếm
+ * sai (đã đếm sai một lần: 14 thay vì 12).
+ *
+ * CÁI GIÁ, ghi ra để phiên sau không mất thì giờ: cổng nay PHỤ THUỘC `backlog-check.mjs`. **15
+ * kho thử** chép một DANH SÁCH script cố định sang thư mục tạm; thiếu file này thì cổng ném lúc
+ * NẠP MODULE, tức không in ra một dòng nào, và test báo *"không thấy mục [XANH] …"* — một câu
+ * trỏ sai hoàn toàn chỗ hỏng. Thêm kho thử mới mà chép `session-check.mjs` thì chép cả
+ * `backlog-check.mjs`. */
+check("Sổ nợ dưới trần", () => {
+  const tran = structure?.backlog?.tran;
+  if (typeof tran !== "number") {
+    return { ok: true, msg: "Repo chưa khai `backlog.tran` trong .repo-structure.json — không có trần thì không có gì để canh." };
+  }
+  const so = path.join(ROOT, "BACKLOG.md");
+  if (!fs.existsSync(so)) return { ok: true, msg: `Chưa có BACKLOG.md ở gốc repo (trần khai là ${tran}).` };
+  const mo = dangMo(fs.readFileSync(so, "utf8"));
+  if (mo.length <= tran) return { ok: true, msg: `${mo.length}/${tran} mục nợ đang mở.` };
+  return {
+    ok: false,
+    msg: `SO_NO_VUOT_TRAN — ${mo.length} mục đang mở, trần là ${tran} (${mo.slice(0, 6).join(", ")}${mo.length > 6 ? ", …" : ""}). `
+      + "ĐÓNG một mục là cổng xanh lại — thêm dòng `- **ĐÓNG <mã>** · <ngày> · lane `<tên>` · <bằng chứng>` ở CUỐI sổ, "
+      + "đừng sửa khối cũ. Thấy trần thật sự quá chặt thì HỎI ĐỨC rồi sửa `backlog.tran`, không sửa script."
+  };
+});
+
 // một dòng vào HANDOFF nói vì sao.
 // 2026-09-02, phiên S4: 7 → 8. Thêm "Cổng kiểm cấu trúc B1–B14 (chỉ cảnh báo)". Lý do đã ghi
 // một dòng vào HANDOFF.md gốc repo, đúng luật chống tự tháo cổng.
@@ -899,7 +936,10 @@ check("Đọc git không lỗi", () => {
 // của K2-9 — cổng tự miễn cho regression của chính lane. Audit GPT vòng 5 bắt được.
 // 2026-09-06, lane claude-handoff-tran: 12 -> 13. Them "HANDOFF: muc moi trong tran, file dung
 // thang" (ADR-0011). Ly do ghi mot dong vao HANDOFF.md goc repo, dung luat chong tu thao cong.
-const EXPECTED_CHECKS = 13;
+// 2026-09-08, lane claude-cua-kiem: 13 -> 14. Them "So no duoi tran". Duc chot tran 15 co hieu
+// luc that; truoc do gioi han (4) cua AGENTS.md tu khai la KHONG co may cuong che, va no da vo
+// trong im lang dung mot lan. Ly do ghi mot dong vao HANDOFF.md goc repo.
+const EXPECTED_CHECKS = 14;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

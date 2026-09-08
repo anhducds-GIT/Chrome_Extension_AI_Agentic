@@ -15,7 +15,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { docMuc, docMucDaGo, DONG_DOI_MA, kiemSo, thieuDongKhi, trungMa, TRUONG_DONG_KHI } from "../scripts/backlog-check.mjs";
+import { dangMo, docMuc, docMucDaGo, DONG_DOI_MA, kiemSo, thieuDongKhi, trungMa, TRUONG_DONG_KHI } from "../scripts/backlog-check.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BO_KIEM = path.join(ROOT, "scripts", "backlog-check.mjs");
@@ -228,6 +228,40 @@ const MUI = String.fromCharCode(8594);   // dấu mũi tên của dòng đổi m
   assert.ok(Date.now() - bat < 5000, "day doi vong tron KHONG duoc treo bo kiem");
   assert.ok(Array.isArray(r), "van phai tra ve mot ket qua doc duoc");
   ok("N-12 · day doi vong tron khong treo bo kiem");
+}
+/* ---- `dangMo`: đếm mục CÒN MỞ, và đây là chỗ dễ đếm sai nhất của sổ này ----
+ *
+ * Sổ đóng mục bằng cách THÊM DÒNG Ở CUỐI, không gạch tiêu đề — nên đếm tiêu đề là đếm sai, và
+ * tôi đã đếm sai đúng kiểu đó một lần (báo 14 mục mở trong khi thật ra 12). Ba vế dưới ghim ba
+ * cách sai khác nhau, không phải ba biến thể của một cách. */
+{
+  const hai = so(muc("N-01", "lệnh: x"), muc("N-02", "lệnh: y"));
+
+  assert.deepEqual(dangMo(hai), ["N-01", "N-02"], "chua co dong dong thi ca hai deu MO");
+
+  const daDongMot = hai + String.fromCharCode(10)
+    + "- **" + "ĐÓNG" + " N-01** · 2026-09-08 · lane `a` · lenh da xanh";
+  assert.deepEqual(dangMo(daDongMot), ["N-02"], "them dong dong o CUOI phai lam mot muc thanh DONG");
+  assert.equal(kiemSo(daDongMot).tong, 2, "muc da dong VAN nam trong tong — so giu lai de tra lich su");
+
+  // ⑴ Tự khai trong THÂN không phải là đóng. Thân là chữ của người mở mục; dòng ở cuối là một
+  //    lượt ghi riêng có ngày, có lane, có bằng chứng.
+  const tuKhai = so(muc("N-01", "lệnh: x"), "ĐÃ VÁ 06/09, khoi can lam nua", muc("N-02", "lệnh: y"));
+  assert.ok(dangMo(tuKhai).includes("N-01"), "tu khai \"DA VA\" trong than KHONG duoc tinh la dong");
+
+  // ⑵ Dòng nói VỀ một dòng đóng không phải dòng đóng. Sổ thật có sẵn một dòng như vậy
+  //    (`- **LÀM RÕ DÒNG ĐÓNG N-30** …`), nên phép so phải khớp ĐẦU dòng.
+  const noiVe = hai + String.fromCharCode(10)
+    + "- **LÀM RÕ DÒNG " + "ĐÓNG" + " N-01** · 2026-09-08 · lane `a` · dong do noi chua het y";
+  assert.deepEqual(dangMo(noiVe), ["N-01", "N-02"], "dong NOI VE mot dong dong KHONG duoc dong ho muc do");
+
+  // ⑶ Mã đã đổi thì dòng đóng viết theo mã MỚI — `dangMo` phải gỡ `ĐỔI MÃ` trước khi so.
+  const doi = so(muc("N-01", "lệnh: x"), muc("N-01", "lệnh: y"))
+    + String.fromCharCode(10) + DONG_DOI_MA + " N-01 " + MUI + " N-09** · lane `a` · tranh trung"
+    + String.fromCharCode(10) + "- **" + "ĐÓNG" + " N-09** · 2026-09-08 · lane `a` · xong";
+  assert.deepEqual(dangMo(doi), ["N-01"], "dong dong viet theo ma SAU khi doi — phai go DOI MA truoc khi so");
+
+  ok("N-01 · dangMo: dòng ở cuối mới đóng · tự khai trong thân KHÔNG · dòng nói VỀ nó KHÔNG · mã đã đổi vẫn khớp");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

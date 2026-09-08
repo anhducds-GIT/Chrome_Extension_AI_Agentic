@@ -128,7 +128,7 @@ const CHU_CAM = ["rảnh", "nhàn", "không làm gì", "khong lam gi", "ranh roi
        một file thì repo tạm chết vì ERR_MODULE_NOT_FOUND, và cái chết đó trông y hệt một phép
        kiểm hỏng. */
     for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "check-bootstrap.mjs",
-                        "claim.mjs", "what-next.mjs", "build-dashboard.mjs", "feature-parity.mjs"]) {
+                        "claim.mjs", "what-next.mjs", "build-dashboard.mjs", "feature-parity.mjs", "backlog-check.mjs"]) {
       copyFileSync(join(ROOT, "scripts", name), join(temp, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({

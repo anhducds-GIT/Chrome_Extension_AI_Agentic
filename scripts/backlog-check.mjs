@@ -150,10 +150,40 @@ export function thieuDongKhi(text) {
     .map((m) => m.ma);
 }
 
+/* MỤC NÀO CÒN MỞ — sổ này đóng mục bằng cách THÊM DÒNG Ở CUỐI, không gạch tiêu đề.
+ *
+ * Cửa ra phải rẻ ngang cửa vào (luật mục 1 của sổ), nên một mục đã đóng vẫn giữ nguyên tiêu đề
+ * `## N-xx` của nó và chỉ có thêm một dòng `- **ĐÓNG N-xx** · …` ở cuối file. Hệ quả: **đếm
+ * tiêu đề là đếm sai**, và tôi đã đếm sai đúng kiểu đó một lần (báo 14 mục mở trong khi thật
+ * ra 12) vì tưởng mục đóng thì tiêu đề bị gạch như ở repo bộ khung.
+ *
+ * Chỉ dòng `- **ĐÓNG <mã>**` mới đóng. Một mục tự khai *"ĐÃ VÁ 06/09"* trong thân **không**
+ * tính là đóng — cố ý: lời tự khai trong thân là chữ của người viết mục, còn dòng ở cuối là
+ * một lượt ghi riêng có ngày, có lane, có bằng chứng. Sổ đã có sẵn một dòng
+ * `- **LÀM RÕ DÒNG ĐÓNG N-30** …` không phải dòng đóng, nên phép so phải khớp ĐẦU dòng.
+ *
+ * Mã lấy SAU khi gỡ `ĐỔI MÃ` (`docMucDaGo`), vì dòng đóng viết theo mã cuối cùng. */
+const RE_DONG = new RegExp("^-\\s+\\*\\*ĐÓNG\\s+([A-Za-z]+-\\d+)\\*\\*");
+
+export function daDong(text) {
+  const ra = new Set();
+  for (const dong of String(text).split(/\r?\n/)) {
+    const m = RE_DONG.exec(dong.trimStart());
+    if (m) ra.add(m[1]);
+  }
+  return ra;
+}
+
+/** Mã của những mục CHƯA có dòng đóng. */
+export function dangMo(text) {
+  const xong = daDong(text);
+  return docMucDaGo(text).filter((m) => !xong.has(m.ma)).map((m) => m.ma);
+}
+
 export function kiemSo(text) {
   const tong = docMucDaGo(text).length;
   const thieu = thieuDongKhi(text);
-  return { tong, thieu, trung: trungMa(text) };
+  return { tong, mo: dangMo(text), thieu, trung: trungMa(text) };
 }
 
 function main(argv) {

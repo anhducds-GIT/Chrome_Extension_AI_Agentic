@@ -179,11 +179,13 @@ thật, còn **468 (63%)** chạm tài liệu + sổ nợ và **142 (19%)** ch�
    ba lần, và 07/09 đúng ba lần (phép kiểm zoom di sản, `N-14`).
 3. **`docs/` ≤ 8.000 dòng.** Nay **24.732** (`git ls-files 'docs/*' | xargs wc -l`). Cắt docs
    cần khoá `_docs`.
-4. **Sổ nợ hạ tầng ≤ 15 mục** — Đức nâng trần 07/09, trước là 10. Đếm lại, đừng tin dòng này:
-   `node scripts/backlog-check.mjs`. **Trần này KHÔNG có máy cưỡng chế** — công cụ chỉ đếm và in
-   ra, cổng đóng phiên không đọc con số đó. Nói thẳng vì lượt nâng này sinh ra từ đúng chỗ mù ấy:
-   một mục thứ 11 vào sổ mà **không gì đỏ lên**, và nếu người ghi không tự đọc trần thì trần đã
-   vỡ trong im lặng. Ai vượt 15 thì **hỏi Đức**, đừng tự nâng tiếp.
+4. **Sổ nợ hạ tầng ≤ 15 mục — từ 08/09 CỔNG CANH THẬT.** Đếm lại, đừng tin dòng này:
+   `node scripts/backlog-check.mjs`. Vượt trần thì phép kiểm *"Sổ nợ dưới trần"* của cổng đóng
+   phiên **ĐỎ**, và cửa ra là **đóng một mục**: thêm dòng `- **ĐÓNG <mã>** · …` ở CUỐI sổ, đừng
+   sửa khối cũ. Trần khai ở `backlog.tran` của `.repo-structure.json` — **sửa ở đó, đừng sửa
+   script**, và **hỏi Đức trước** khi đổi con số. Cho tới 07/09 dòng này tự khai *"trần này KHÔNG
+   có máy cưỡng chế"*, và nó vỡ đúng chỗ mù ấy: mục thứ 11 vào sổ mà **không gì đỏ lên**, nên
+   trần phải nâng 10 → 15 **sau khi đã vỡ**. Con số 15 là của Đức, chỗ vá là cái răng.
 5. **File test bắt 0 đột biến thì XOÁ.** Một phép kiểm không bắt được gì vẫn thu thuế mọi phiên.
 6. **Song song thì tối đa 2 chat** — Đức nói rõ 07/09: *"lane ở đây tôi hiểu là 2 phiên chat với
    AI; trong 1 chat mà bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn

@@ -185,5 +185,9 @@
     "song-song": "Nhiều phiên chạy song song giẫm chân nhau",
     "so-sach": "Sổ sách và chữ cho Đức đọc",
     "nen": "Nền repo — môi trường, tốc độ, thói quen công cụ"
+  },
+  "backlog": {
+    "_doc": "Tran so no ha tang. Cong dong phien DO khi so muc DANG MO vuot tran. Muc dong bang dong \"- **DONG <ma>**\" them o CUOI so, khong gach tieu de. Doi con so nay phai hoi Duc.",
+    "tran": 15
   }
 }
