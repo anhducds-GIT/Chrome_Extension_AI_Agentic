@@ -4,7 +4,7 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `37608e5d` (2026-09-08).
+Trang được sinh tại commit `3f13cdd2` (2026-09-08).
 
 ## Việc ưu tiên #1
 
@@ -24,7 +24,7 @@ Trang được sinh tại commit `37608e5d` (2026-09-08).
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Nợ gói 9 -> 3 trong ngày 06/09
 - [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật
 - [Duc Scouter (seed v0.1)](workers/duc-scouter/v0.1.0/STATUS.md): building — Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau
-- [HNX Fetch](workers/hnx-fetch/v0.1.0/STATUS.md): building — Tách khỏi Scouter xong: extension riêng, tên giao thức riêng, và bỏ hẳn quyền debugger
+- [HNX Fetch](workers/hnx-fetch/v0.1.0/STATUS.md): building — Tách khỏi Scouter xong, đã qua một lượt audit độc lập về cả mã lẫn tài liệu và vá hết
 
 ## Luật bắt buộc trước khi sửa gì
 

@@ -2,12 +2,12 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `eb5f90d5` (2026-09-08). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
+Trang được sinh tại commit `3f13cdd2` (2026-09-08). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
 
 ## A · Bắt đầu từ đâu
 
 1. **Việc ưu tiên #1** — **XUNG ĐỘT** — 2 đơn vị cùng khai `priority_rank: 1` (`workers/duc-auto-gg-flow-video/v0.1.0` · `workers/hnx-fetch/v0.1.0`). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.
-2. **Phiên gần nhất** — 2026-09-08 @ `eb5f90d5` · [HANDOFF.md](HANDOFF.md)
+2. **Phiên gần nhất** — 2026-09-08 @ `3f13cdd2` · [HANDOFF.md](HANDOFF.md)
 3. **Luật phải đọc trước khi sửa gì** — [AGENTS.md](AGENTS.md) · cổng vào cho AI: [llms.txt](llms.txt)
 4. **Ai đang giữ package nào** — `.agents/claims.json` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)
 
@@ -19,8 +19,8 @@ Trang được sinh tại commit `eb5f90d5` (2026-09-08). Đây là lúc sinh tr
 | Duc Auto Gemini | 0.1.0 | superseded | 0 | 21 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Bản đã nghỉ. Mọi việc tiếp tục ở v0.2.0. Giữ lại vì Pilot-01 là bằng chứng vận hành, không được xoá. | [STATUS](workers/duc-auto-gemini/v0.1.0/STATUS.md) |
 | Duc Auto Gemini (Platform) | 0.2.0 | active | 23 | 97 | 2026-09-07 @ `aa2c0b8` — Lớp nối nhiều hồ sơ Chrome, nghiệm thu CHỈ ĐỌC qua Bridge thật với 2 hồ sơ thật, 0 credit: đạt cả bốn bảo đảm (kể đúng hồ sơ kèm tên Đức đặt · quên --target thì TARGET_AMBIGUOUS chứ không tự chọn · đích lạ thì TARGET_NOT_CONNECTED chứ không rơi sang hồ sơ khác · served_by đúng đích ở mọi lượt). LƯU Ý phạm vi: đây KHÔNG phải nghiệm thu G-01 — lượt live bấm dừng vẫn CHƯA chạy, xem giới hạn 1 và 2 ([bằng chứng](workers/duc-auto-gemini/v0.2.0/evidence-multiprofile-nghiem-thu-20260907/README.md)) | CÓ (1 commit) | Nợ gói 9 -> 3 trong ngày 06/09. Đóng xong: dừng cứng khi extension bị mù (nhánh kia thêm lớp này sau khi một lượt live đốt sáu lượt tạo ảnh; gói này chưa có) - sổ cái thôi khai sai là đã ghi đè lên bằng chứng cũ (phép so đường dẫn cũ không bao giờ đúng được một lần nào) - nút CHAT ZOOM hỏi nhầm câu hỏi của runner nên tự xám trên 6/10 trang Gemini, Đức đã nghiệm thu - bốn lệnh Bridge còn nợ nay đủ cả bốn, gồm cả CLI - soát README bằng cách đối chiếu từng con số với code. Hai việc lớn nhất (nhiều ảnh một job, poll A/B) NGỦ ĐÔNG theo chốt của Đức vì Gemini chưa bao giờ làm thế; đã đặt bẫy để lúc nó xảy ra thì sổ cái tự khai. Suite 88 -> 94, thử phá 61/61 đều bị bắt. | [STATUS](workers/duc-auto-gemini/v0.2.0/STATUS.md) |
 | Duc Auto GG Flow Video | 0.1.0 | building | 21 | 103 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật. Thêm một lớp chặn mới: Flow báo quá tải. Đây là loại trạng thái thứ ba, khác hẳn hai loại cũ, và là loại DUY NHẤT mà cứ thử đi thì tốn tiền thật, vì hai loại kia đều dừng trước khi gõ. Đức chốt dừng hẳn cả mẻ, không tự thử lại. Suite 101/101, thử phá 10/10. | [STATUS](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md) |
-| Duc Scouter (seed v0.1) | 0.1.0 | building | 0 | 14 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần. | [STATUS](workers/duc-scouter/v0.1.0/STATUS.md) |
-| HNX Fetch | 0.1.0 | building | 0 | 2 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Tách khỏi Scouter xong: extension riêng, tên giao thức riêng, và bỏ hẳn quyền debugger. Việc còn lại lớn nhất là chạy thật một lượt qua chính nó. | [STATUS](workers/hnx-fetch/v0.1.0/STATUS.md) |
+| Duc Scouter (seed v0.1) | 0.1.0 | building | 0 | 15 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần. | [STATUS](workers/duc-scouter/v0.1.0/STATUS.md) |
+| HNX Fetch | 0.1.0 | building | 0 | 3 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Tách khỏi Scouter xong, đã qua một lượt audit độc lập về cả mã lẫn tài liệu và vá hết. Việc còn lại lớn nhất là nạp vào Chrome rồi chạy thật một lượt qua chính nó. | [STATUS](workers/hnx-fetch/v0.1.0/STATUS.md) |
 
 ## D · Sức khoẻ điều hướng [ĐO]
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-08",
-  "generated_commit": "0d2f4b3c",
+  "generated_commit": "3f13cdd2",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -139,7 +139,7 @@
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Tách khỏi Scouter xong: extension riêng, tên giao thức riêng, và bỏ hẳn quyền debugger. Việc còn lại lớn nhất là chạy thật một lượt qua chính nó."
+      "open_item": "Tách khỏi Scouter xong, đã qua một lượt audit độc lập về cả mã lẫn tài liệu và vá hết. Việc còn lại lớn nhất là nạp vào Chrome rồi chạy thật một lượt qua chính nó."
     }
   ],
   "active_work": [

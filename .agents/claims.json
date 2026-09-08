@@ -37,22 +37,22 @@
       "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
     },
     "_root": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T05:12",
       "task": "Khai sinh goi workers/hnx-fetch: dang ky vung + khoa moi trong .repo-structure.json",
-      "released_at": null,
+      "released_at": "2026-09-08T06:15",
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
       "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\". Lay tu lane claude-tinh-gon (dang giu, 7 commit chua day) de sua dong 1316 HANDOFF.md: ### -> ## - muc 4794 byte dang chan cong dong phien voi MOI lane. Sua dung mot ky tu, khong xoa chu cua ai. Toi da nhan thang cho lane do truoc khi lay."
     },
     "_docs": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T05:35",
       "task": "ADR-002x: HNX Fetch tach thanh extension rieng",
-      "released_at": null,
+      "released_at": "2026-09-08T06:15",
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -92,5 +92,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "a39373be1e0d9b77"
+  "_fingerprint": "fb06720aea45732c"
 }
