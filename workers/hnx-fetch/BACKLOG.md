@@ -196,3 +196,10 @@ một extension khác giành mất tổ hợp.
   Ghim `du-lieu/tests/ngay-nghi-smoke.mjs`, 8 khối. Khối ⑺ chạy thật `--thu-xem`; khối ⑻ dựng một
   **máy chủ Bridge giả** để ghim lượt GHI — bộ đo đột biến chỉ ra rằng không có khối ⑻ thì bỏ hẳn
   lượt ghi mà mọi phép ghim vẫn xanh. Đột biến `R1` `R2` nay đều giết được, 25/25, 0 sống sót.
+
+- **ĐÓNG H-02** (2026-09-08, `claude-scouter-s06`) · Đức chốt **bỏ** — đúng một trong hai đường ra
+  mục này tự khai (*"hoặc Đức nói không cần"*). Ghi lại lý do để phiên sau không mở lại:
+  bảng bên **không đọc được tệp SSOT** — extension này cố ý không có quyền chạm đĩa, việc ghi tệp
+  do tiến trình Node làm. Nên câu *"đọc từ chính tệp SSOT"* trong điều kiện đóng là thứ **không
+  làm được từ bảng bên**; muốn có nó phải dựng một bộ đếm thứ hai, mà mục này đã nói rõ là không.
+  Và con số *"hôm nay lấy được mấy ngày"* vốn đã hiện ở chỗ người vận hành nhìn: đầu ra của lệnh.

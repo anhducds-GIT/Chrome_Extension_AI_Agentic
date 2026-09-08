@@ -21,10 +21,18 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const LENH = path.join(here, "..", "tao-tep-ghep-cap.mjs");
-const GOC_REPO = path.resolve(here, "..", "..", "..");
+/* BỐN cấp, không phải ba. Tệp này ở `workers/_shared/bridge-host/tests/`, nên lùi ba cấp chỉ
+ * tới `workers/`. Bản đầu lùi ba, và hệ quả là phép ghim **chỉ chứng minh bộ sinh không ghi được
+ * vào `workers/`** — thu hẹp chốt lại chỉ bảo vệ một thư mục con mà vẫn xanh. Codex tìm ra 08/09.
+ *
+ * Đây đúng loại lỗi đắt nhất trong một phép ghim: nó không đỏ, nó chỉ **đo ít hơn nó tự khai**. */
+const GOC_REPO = path.resolve(here, "..", "..", "..", "..");
+assert.ok(fs.existsSync(path.join(GOC_REPO, "AGENTS.md")) && fs.existsSync(path.join(GOC_REPO, ".agents")),
+  "GOC_REPO không trỏ vào gốc repo — mọi khối dưới đây đang đo nhầm chỗ");
 
 const { dungTepGhepCap, sinhToken, namTrongRepo } = await import("../tao-tep-ghep-cap.mjs");
 const { validatePairing } = await import("../bridge-host-core.mjs");
+const nguonBoSinh = fs.readFileSync(path.join(here, "..", "tao-tep-ghep-cap.mjs"), "utf8");
 
 function chay(args) {
   try {
@@ -51,15 +59,32 @@ function chay(args) {
    * hình dạng ở trên, mà nó thì vô dụng hoàn toàn. */
   const bo = new Set(Array.from({ length: 16 }, () => sinhToken()));
   assert.equal(bo.size, 16, "token lặp lại — bộ sinh không ngẫu nhiên");
+
+  /* 16 giá trị khác nhau **KHÔNG** chứng minh ngẫu nhiên mật mã — một bộ đếm cũng qua được phép
+   * đó. Audit độc lập 08/09 chỉ đúng chỗ này. Nên soi thẳng NGUỒN: token phải đến từ
+   * `crypto.randomBytes`. Đây là một phép ghim đọc mã, và nó khai rõ như vậy — nó bắt được lượt
+   * "dọn code" đổi sang `Math.random`, và không bắt được gì tinh vi hơn thế. */
+  const nguon = fs.readFileSync(path.join(here, "..", "tao-tep-ghep-cap.mjs"), "utf8");
+  assert.ok(nguon.includes("crypto.randomBytes(32)"), "token không còn sinh từ crypto.randomBytes");
+  /* Soi LƯỢT GỌI `Math.random(`, không soi chữ `Math.random`: chính chú thích của bộ sinh có
+   * nhắc tên đó để dặn đừng dùng, nên soi chữ trần thì phép ghim đỏ vì đọc chính lời dặn. */
+  assert.ok(!nguon.includes("Math.random("), "bộ sinh token có gọi Math.random");
 }
 
 /* ---- ⑵ CHỐT ⑴: không bao giờ ghi vào trong kho mã ----------------------
  * Chạy THẬT, và thử cả đường dẫn có dấu cách — chỗ bản đầu trượt. */
 {
+  const S = String.fromCharCode(92);
   const trongRepo = [
     path.join(GOC_REPO, "thu-ghim.json"),
     path.join(GOC_REPO, "workers", "thu-ghim.json"),
-    path.join(GOC_REPO, "workers", "..", "thu-ghim.json")   /* đi vòng rồi quay lại vẫn là trong repo */
+    path.join(GOC_REPO, "workers", "..", "thu-ghim.json"),   /* đi vòng rồi quay lại vẫn là trong repo */
+    /* Ba đường dưới đây do audit độc lập 08/09 chỉ ra, và **đường UNC đã LỌT thật** trước khi vá:
+     * một tệp có token rơi vào gốc repo. Giữ cả ba, kể cả hai đường chưa từng lọt — chúng cùng
+     * một gốc bệnh (so đường dẫn mà chuẩn hoá chưa đủ sâu), nên bịt một cái không bịt hai cái kia. */
+    path.join(GOC_REPO, "..bi-mat.json"),                    /* tên tệp bắt đầu bằng dấu chấm kép */
+    path.join(GOC_REPO, "workers", "..bi-mat.json"),
+    S + S + "?" + S + path.resolve(GOC_REPO) + S + "thu-unc.json"   /* đường dẫn mở rộng Windows */
   ];
   for (const p of trongRepo) {
     const r = chay(["--ra", p]);
@@ -91,6 +116,11 @@ function chay(args) {
     const lan2 = chay(["--ra", ra, "--cong", "32199"]);
     assert.equal(lan2.ma, 3, "ghi đè được tệp đã có");
     assert.equal(fs.readFileSync(ra, "utf8"), truoc, "tệp bị đổi dù lệnh báo từ chối");
+
+    /* Lượt `existsSync` chỉ để in một câu dễ hiểu — giữa lượt hỏi và lượt ghi có một khe, nên nó
+     * KHÔNG phải chốt. Chốt thật là cờ `wx`: hệ điều hành từ chối. Audit 08/09 chỉ ra khe này.
+     * Ghim bằng cách soi nguồn, vì tái hiện một cuộc đua thật ở đây tốn hơn giá trị nó mang lại. */
+    assert.ok(nguonBoSinh.includes('flag: "wx"'), "lượt ghi không dùng cờ wx — chỉ còn existsSync, và nó có khe");
 
     /* Thư mục không có thì DỪNG, không tự tạo: gõ nhầm một ký tự là đặt token ở chỗ không ai nhìn. */
     assert.equal(chay(["--ra", path.join(thuMuc, "khong-co", "p.json")]).ma, 3);

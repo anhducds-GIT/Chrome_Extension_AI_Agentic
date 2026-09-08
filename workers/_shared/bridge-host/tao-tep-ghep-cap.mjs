@@ -76,13 +76,69 @@ export function congDangBan(cong) {
   });
 }
 
-/** Đường dẫn có nằm trong kho mã không — chốt ⑴. So bằng đường dẫn ĐÃ CHUẨN HOÁ, không so chuỗi
- *  thô: `repo/../repo/x.json` và `repo/x.json` là một chỗ, mà so chuỗi thì thấy hai. */
+/* Gỡ tiền tố đường dẫn MỞ RỘNG của Windows.
+ *
+ * `\\?\C:\...` và `C:\...` trỏ CÙNG một chỗ trên đĩa, nhưng `path.relative` coi chúng là hai
+ * vũ trụ khác nhau và trả về một đường TUYỆT ĐỐI — nên phép so "nằm trong repo" luôn trả false.
+ * Codex tìm ra 08/09; tôi đo lại và một tệp CÓ TOKEN thật sự rơi vào gốc repo qua đường này. */
+function goTienToDaiWindows(p) {
+  const S = String.fromCharCode(92);
+  const UNC = S + S + "?" + S + "UNC" + S;
+  const DAI = S + S + "?" + S;
+  if (p.startsWith(UNC)) return S + S + p.slice(UNC.length);
+  if (p.startsWith(DAI)) return p.slice(DAI.length);
+  return p;
+}
+
+/* Giải liên kết (junction / symlink) tới nơi THẬT. Một junction trỏ vào repo thì đường dẫn đi
+ * qua nó nhìn như nằm ngoài, mà ghi vào đó là ghi thẳng vào repo. `path.resolve` KHÔNG giải
+ * liên kết. Codex chỉ ra 08/09.
+ *
+ * Tệp đích chưa tồn tại là chuyện bình thường (ta sắp tạo nó), nên giải THƯ MỤC CHA rồi ghép
+ * lại tên tệp. Giải không được thì trả nguyên đường đã chuẩn hoá — thà so hụt một ca hiếm còn
+ * hơn ném ra giữa một lượt kiểm an toàn. */
+function duongThat(p) {
+  let chuan = path.resolve(goTienToDaiWindows(String(p)));
+  /* Giải tới TỔ TIÊN TỒN TẠI SÂU NHẤT rồi ghép lại phần đuôi.
+   *
+   * Bản đầu chỉ thử chính nó rồi thử thư mục cha, và điều đó làm hai đường được giải tới hai
+   * MỨC khác nhau: một cái ra tên dài thật (`MAYTEST_12`), cái kia còn tên ngắn 8.3
+   * (`MAYTES~1`). So hai dạng khác nhau của cùng một chỗ thì kết quả vô nghĩa — phép ghim bắt
+   * được đúng chỗ này. Đi ngược lên tới khi chạm một chỗ có thật thì cả hai luôn quy về một dạng. */
+  const duoi = [];
+  for (;;) {
+    try {
+      const that = fs.realpathSync.native(chuan);
+      return duoi.length ? path.join(that, ...duoi.reverse()) : that;
+    } catch (_error) {
+      const cha = path.dirname(chuan);
+      if (cha === chuan) return path.resolve(goTienToDaiWindows(String(p)));   /* tới gốc ổ đĩa mà vẫn không có */
+      duoi.push(path.basename(chuan));
+      chuan = cha;
+    }
+  }
+}
+
+/** Đường dẫn có nằm trong kho mã không — chốt ⑴.
+ *
+ *  So bằng ĐOẠN đường dẫn, không bằng tiền tố chuỗi. Bản đầu dùng `quanHe.startsWith("..")`,
+ *  và nó sai với một tệp tên `..secret.json` nằm NGAY TRONG repo: `path.relative` trả về
+ *  `..secret.json`, chuỗi đó bắt đầu bằng ".." nên hàm kết luận "nằm ngoài". Codex tìm ra 08/09.
+ *
+ *  Ba lỗ cùng một gốc — so đường dẫn mà không chuẩn hoá đủ sâu: tiền tố mở rộng, liên kết,
+ *  và tên tệp bắt đầu bằng dấu chấm kép. */
 export function namTrongRepo(duong, gocRepo) {
-  const a = path.resolve(duong);
-  const b = path.resolve(gocRepo);
+  const a = duongThat(duong);
+  const b = duongThat(gocRepo);
   const quanHe = path.relative(b, a);
-  return quanHe === "" || (!quanHe.startsWith("..") && !path.isAbsolute(quanHe));
+  if (quanHe === "") return true;
+  if (path.isAbsolute(quanHe)) return false;
+  /* Bộ tách DỰNG bằng String.fromCharCode, không gõ thẳng dấu gạch ngược vào chuỗi mẫu: bản đầu
+   * viết tay và dấu gạch ngược bị nuốt mất, còn lại một bộ tách CHỈ theo gạch xuôi. Trên
+   * Windows `..\cho-khac\a.json` không tách được, đoạn đầu là CẢ chuỗi, nên phép so `!== ".."`
+   * luôn đúng và hàm trả `true` cho mọi đường nằm ngoài. Phép ghim bắt được. */
+  const NGAN = new RegExp("[" + String.fromCharCode(92, 92) + "/]");
+  return quanHe.split(NGAN)[0] !== "..";
 }
 
 async function main(argv) {
@@ -140,7 +196,22 @@ async function main(argv) {
   }
 
   const tep = dungTepGhepCap(cong);
-  fs.writeFileSync(path.resolve(duongRa), JSON.stringify(tep, null, 2) + "\n", { encoding: "utf8", mode: 0o600 });
+  /* Cờ `wx`: hệ điều hành TỪ CHỐI nếu tệp đã tồn tại. Lượt `existsSync` ở trên chỉ để đưa ra
+   * một câu dễ hiểu; nó KHÔNG phải chốt, vì giữa lượt hỏi và lượt ghi có một khe. Chốt thật là
+   * cờ này — một lượt ghi độc quyền, không có khe nào ở giữa. Codex chỉ ra 08/09.
+   *
+   * `mode` trên Windows gần như không đổi được quyền thật (quyền đến từ DACL kế thừa của thư
+   * mục cha). Giữ lại vì nó có tác dụng trên Linux/macOS, nhưng ĐỪNG coi nó là lớp bảo vệ trên
+   * máy Đức — lớp bảo vệ ở đây là "tệp không nằm trong repo, không nằm trong vùng ghi". */
+  try {
+    fs.writeFileSync(path.resolve(duongRa), JSON.stringify(tep, null, 2) + "\n", { encoding: "utf8", mode: 0o600, flag: "wx" });
+  } catch (loi) {
+    if (loi && loi.code === "EEXIST") {
+      process.stderr.write("TU_CHOI: tệp đã tồn tại: " + path.resolve(duongRa) + String.fromCharCode(10));
+      return 3;
+    }
+    throw loi;
+  }
   process.stdout.write(`Đã tạo tệp ghép cặp: ${path.resolve(duongRa)}\n`);
   process.stdout.write(`  cổng: ${cong}\n`);
   process.stdout.write("  Bước tiếp: đưa tệp này cho máy chủ Bridge của gói, rồi CHỌN ĐÚNG tệp đó trong bảng bên.\n");
