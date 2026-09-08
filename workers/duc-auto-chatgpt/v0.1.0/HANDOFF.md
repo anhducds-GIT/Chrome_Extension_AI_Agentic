@@ -476,3 +476,10 @@ và điều kiện đóng ở `BACKLOG.md`.
 
 **Kết quả số.** Suite **121/121**. Thử phá: ADR-0051 **9/9** · hội thoại Project **5/5** ·
 ADR-0050 ⒝ **12/12**. Sổ nợ gói thêm `B-43` (P0).
+
+## 2026-09-09 (tệp đẩy) · `claude-gpt-chay-het-job` — có cuốn theo lane khác
+
+Lượt đẩy này dùng `--carry` và **cuốn theo 3 commit của lane `claude-adr-gop`** (đợt gộp và đọc
+lại số hiệu ADR ở `docs/adr/`). Ghi ra vì [ADR-0005](../../../docs/adr/0005-duyet-thuong-truc-cho-push-va-carry.md)
+bỏ cửa hỏi Đức cho `--carry`, và tên lane bị cuốn theo là **thứ duy nhất còn lại để truy**.
+Cổng đóng phiên XANH TOÀN BỘ trước khi đẩy, và suịte 26/26 chạy trên cây có cả việc của hai lane.
