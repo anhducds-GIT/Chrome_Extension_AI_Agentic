@@ -489,3 +489,38 @@ eTLD+1. Nên *đi* và *làm tiếp* ở lại là hai lượt gọi riêng.
 > trình, nên nó chưa hề chạm điều nó định chứng minh. Phải đi `example.com` mới là phép thử thật.
 
 **Đo.** Method 15 → 14 → **15**. Suite **18/18**. S-14 đã đóng.
+
+## 2026-09-08 · `claude-scouter-s06` — MỘT tệp CSV SSOT, 368 hàng, 46 ngày
+
+Đức chốt: giữ **một tệp duy nhất**, định dạng để **GPT và CC cùng thao tác được**.
+
+**Chọn CSV, không phải .xlsx.** Điều kiện là hai công cụ cùng thao tác được, không phải đuôi
+tệp. XLSX là ZIP chứa XML, repo không có dependency nào — mỗi lượt ghi phải tự cuộn ZIP bằng
+tay, và mỗi lượt là một cơ hội làm hỏng dữ liệu thật. Lý do đầy đủ ở đầu `master.mjs`.
+
+| | |
+|---|---|
+| Tệp | `Phái Sinh daily Fetch/HNX_PS_Ket_qua_giao_dich_SSOT.csv` |
+| Hàng | **368** · 46 ngày · 01/07 → 07/09 · VN100=184 VN30=184 |
+| Kiểm | 0 dòng lệch cột · 0 ngày lặp · 8 hàng/ngày đều nhau |
+
+Ba ngày 31/08 · 01/09 · 02/09 báo *không có phiên* — **khớp với kết quả bên PDF cùng ngày**.
+Hai đường đo độc lập cùng nói HNX không công bố gì.
+
+**Lược đồ 25 cột ĐỌC RA từ tệp Đức đang dùng, và đã đối chiếu THẬT:** lấy lại 12/08 từ HNX rồi
+so từng ô với hàng `VN41I1G80003` của Đức — **25/25 khớp**. Nên lấy lại từ nguồn là an toàn,
+và SSOT có một nguồn gốc đồng nhất.
+
+> **Chỗ nguy hiểm nhất: số kiểu Việt.** `1.952,8` — chấm là phân cách nghìn, phẩy là thập
+> phân, **ngược hẳn** kiểu Anh. Đọc nhầm là sai **gấp 1000 lần** mà con số vẫn trông hợp lý.
+> Ô rỗng ở lại rỗng, **không thành 0**.
+
+**Một lỗi suýt giao hàng:** cột đầu bảng HNX không có chữ, nó chứa `<img src="up.png">` —
+dấu tăng/giảm. Bản đầu gỡ thẻ nên **cả một cột biến mất trong im lặng**, và tôi còn đặt tên nó
+là *"STT"*. Đo lại 7 ngày: 33 + 23 = 56 = 7 × 8 hàng. Mỗi hàng đều có.
+
+**Xoá.** Đức giao dọn tệp CSV gây confuse. Chỉ xoá **một** tệp: `AUG2026_MASTER.csv.xlsx`, sau
+khi kiểm 12/08 và 17/08 đều đủ 8 hàng trong SSOT. **Không** xoá các tệp `.gsheet`/`.gdoc`:
+chúng chỉ 173 byte, là **con trỏ tới tài liệu Google Drive** chứ không phải tệp CSV.
+
+**Đo.** Suite **20/20**.
