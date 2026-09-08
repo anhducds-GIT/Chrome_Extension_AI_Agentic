@@ -43,6 +43,32 @@ import { validatePairing } from "./bridge-host-core.mjs";
 
 const HOST = "127.0.0.1";
 
+/* ---- NHÀ CHUNG CỦA MỌI THỨ THUỘC BRIDGE (Đức chốt 08/09) -----------------
+ *
+ * Mọi tệp ghép cặp, mọi bộ khởi động, mọi vùng ghi của MỌI extension đều nằm dưới đây, mỗi
+ * gói một thư mục con mang đúng tên gói:
+ *
+ *   C:\WORKING ZONE\Chrome Extension Bridge\<tên-gói>\
+ *       <tên-gói>-bridge-pairing-v1.json   ← tệp ghép cặp (CÓ TOKEN)
+ *       START-BRIDGE_<Tên>.cmd  +  .ps1    ← bộ khởi động
+ *       du-lieu-ra\  (hoặc du-lieu\)       ← VÙNG GHI, luôn là thư mục CON
+ *
+ * Vì sao ghim vào MÃ chứ không chỉ vào tài liệu: quy ước này đã tồn tại từ trước, và ngày
+ * 08/09 chính tôi vẫn đặt một tệp ghép cặp vào `C:\Users\<user>\HNX-Bridge\` vì không có gì
+ * nhắc. Đức nói lỗi này gặp vài lần rồi. Một quy ước chỉ nằm trong văn xuôi thì phụ thuộc
+ * vào việc AI có đọc đúng trang đó không — nên nó phải là GIÁ TRỊ MẶC ĐỊNH của công cụ.
+ *
+ * Vùng ghi CỐ Ý là thư mục con: `file.read` đọc được mọi tệp dưới vùng ghi, nên trỏ vùng ghi
+ * vào chính thư mục gói nghĩa là token đọc được qua dây. Máy chủ sẽ từ chối khởi động. */
+/* DỰNG bằng String.fromCharCode — bản đầu gõ thẳng dấu gạch ngược vào chuỗi và nó bị nuốt mất,
+ * còn lại "C:WORKING ZONEChrome Extension Bridge". Cùng một bẫy đã dính ba lần trong ngày. */
+export const NHA_BRIDGE = ["C:", "WORKING ZONE", "Chrome Extension Bridge"].join(String.fromCharCode(92));
+
+/** Đường dẫn tệp ghép cặp ĐÚNG QUY ƯỚC cho một gói. Dùng cái này, đừng tự đặt chỗ khác. */
+export function duongGhepCapChuan(tenGoi) {
+  return path.join(NHA_BRIDGE, tenGoi, tenGoi + "-bridge-pairing-v1.json");
+}
+
 /** Token 32 byte ngẫu nhiên, dạng **base64url** — đúng hình dạng `validatePairing` đòi.
  *  Bản đầu của tệp này dùng hex và bị chính lượt tự kiểm bên dưới
  *  chặn lại; giữ ghi chú này để lần sau không ai "sửa" ngược về hex cho dễ đọc.
@@ -146,9 +172,18 @@ async function main(argv) {
     const i = argv.indexOf(`--${ten}`);
     return i >= 0 && i + 1 < argv.length ? argv[i + 1] : undefined;
   };
-  const duongRa = co("ra");
+  /* HAI cách gọi, và cách ĐẦU là cách nên dùng:
+   *   --goi hnx-fetch    → tự đặt đúng nhà chung, đúng tên tệp theo quy ước
+   *   --ra <đường dẫn>   → tự chọn chỗ, dùng khi có lý do riêng
+   * Có `--goi` thì không cần `--ra`. */
+  const tenGoi = co("goi");
+  const duongRa = co("ra") ?? (tenGoi ? duongGhepCapChuan(tenGoi) : undefined);
   if (!duongRa) {
-    process.stderr.write('Dùng: node tao-tep-ghep-cap.mjs --ra "<đường dẫn .json NGOÀI repo>" [--cong 32152]\n');
+    process.stderr.write("Dùng một trong hai:" + String.fromCharCode(10));
+    process.stderr.write("  node tao-tep-ghep-cap.mjs --goi <tên-gói>            (khuyên dùng — tự đặt đúng nhà chung)" + String.fromCharCode(10));
+    process.stderr.write('  node tao-tep-ghep-cap.mjs --ra "<đường dẫn .json NGOÀI kho mã>"' + String.fromCharCode(10));
+    process.stderr.write("  thêm --cong <số> nếu muốn chỉ định cổng." + String.fromCharCode(10));
+    process.stderr.write("Nhà chung của Bridge: " + NHA_BRIDGE + String.fromCharCode(10));
     return 2;
   }
 
@@ -171,6 +206,12 @@ async function main(argv) {
     process.stderr.write(`TU_CHOI: tệp đã tồn tại: ${path.resolve(duongRa)}\n`);
     process.stderr.write("  Ghi đè là làm chết kết nối của extension đang dùng nó. Xoá tay rồi chạy lại.\n");
     return 3;
+  }
+  /* Dùng `--goi` thì thư mục con của gói được tạo hộ — đó là quy ước, không phải phỏng đoán.
+   * Dùng `--ra` thì KHÔNG tự tạo: gõ nhầm một ký tự mà tự tạo thư mục là đặt token ở một chỗ
+   * không ai nhìn tới. */
+  if (tenGoi && !co("ra")) {
+    fs.mkdirSync(path.dirname(path.resolve(duongRa)), { recursive: true });
   }
   const thuMuc = path.dirname(path.resolve(duongRa));
   if (!fs.existsSync(thuMuc)) {

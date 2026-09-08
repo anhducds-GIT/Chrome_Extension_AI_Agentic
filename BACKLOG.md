@@ -581,3 +581,22 @@ một phép ghim không lượt chạy nào làm xanh nổi.
 - **ĐÓNG N-44** · 2026-09-08 · lane `claude-ext-cum5` · Sổ nợ gốc repo nay có mặt trên bản đồ việc. **[ĐO]** trước: 8 mục mở ở gốc **không hiện ở mục nào**; sau: cả 8 hiện dưới khoá `_root`. Chỗ dễ vấp mà mục này đã chỉ ra và bản vá đi đúng đường đó: **dùng lại `backlog-check.mjs`, không viết bộ đọc thứ hai** — sổ gốc có quy ước `ĐỔI MÃ` mà chỉ bộ đọc kia hiểu, và hai bộ đã ra **11 và 12** trên cùng một file. Nay chúng KHÔNG THỂ lệch, vì chỉ còn một bộ; phép ghim dựng một sổ có `ĐỔI MÃ` + một dòng đóng rồi so **từng mã** giữa hai đường. Vùng suy từ **đường dẫn** như mọi sổ khác (`_root`), không suy từ trường `- **vùng:**`: đo được **4 trong 8 mục KHÔNG khai** và một mục khai **hai** khoá, nên đó là văn xuôi người viết — nó được in ra riêng một dòng kèm nhãn `[DÒ]` để người đọc tự kiểm. Ghim: `tests/what-next-smoke.mjs` 24 → 27, trong đó một phép ghim rằng `main()` thật sự có nối sổ gốc vào (một hàm đúng mà không ai gọi thì bản đồ vẫn im như cũ — chính là cách N-44 đã hỏng).
 
 - **ĐÓNG N-41** · 2026-09-08 · lane `claude-ext-cum5` · `claim.mjs` nay có `--khai-vung <khoá> --as <phiên>`: tạo một ô **trống chủ** cho khoá mà `.repo-structure.json` đã công nhận **và** thư mục có thật trên đĩa. Trước cửa này, mở một vùng dùng chung chỉ làm được bằng **sửa tay `claims.json` rồi `--restamp`** — chạy được, nhưng một đường hợp lệ trông giống hệt một vụ cướp khoá. Ba chốt: hỏi **chính bộ quy vùng** (`stewardOf` của một file bên trong phải trả về đúng khoá đó) chứ không chép lại luật — hai bản sao của một luật đã trả hai câu khác nhau ngày 02/09; khoá đã có thì **báo sai, không ghi đè**; và **`--take` một khoá chưa khai vẫn là ngõ cụt** — cửa mới không nới lỏng cửa cũ, có phép ghim riêng cho vế đó. **ĐỘT BIẾN KIỂM (bắt buộc — đây là sửa cơ chế đa phiên, `MULTIFLOW.md` mục 5): 4/4 ĐỎ**, nền XANH trước và sau, neo khớp 4/4. Một lớp bị **BỎ ĐI thay vì giữ**: bản đầu chụp chủ sở hữu trước/sau rồi so, nhưng khoá đã được kiểm là chưa có nên lớp đó không đột biến nào giết được — theo đúng tiền lệ `PB2`, bỏ lớp thừa còn hơn giữ một dòng đỏ vĩnh viễn ai cũng học cách bỏ qua. Bất biến *"không chạm chủ của khoá nào"* vẫn được canh, ở phép ghim chạy THẬT. Ghim: `tests/claim-smoke.mjs` 16 → 18. Đã khai vào `AGENTS.md` mục 1.
+
+## N-46 · Luật NHÀ CHUNG của Bridge chưa vào bản đồ gốc repo (2026-09-08, `claude-scouter-s06`)
+
+Đức chốt 08/09: mọi thứ thuộc Bridge của mọi extension nằm dưới
+`C:\WORKING ZONE\Chrome Extension Bridge\<tên-gói>\`, mỗi gói một thư mục con. Đức nói lỗi đặt
+lung tung **đã gặp vài lần**, và yêu cầu lưu luật vào bản đồ thư mục.
+
+**Đã làm được phần cưỡng chế:** hằng số `NHA_BRIDGE` + cờ `--goi` trong
+`workers/_shared/bridge-host/tao-tep-ghep-cap.mjs` (công cụ tự đặt đúng chỗ, không phụ thuộc AI
+có đọc đúng trang không), luật viết ở `workers/_shared/AGENTS.md`, phép ghim khối ⑸ canh cả bốn vế.
+
+**Chưa làm được:** khai vào **bản đồ gốc repo** — `.repo-structure.json` (khối mới, ví dụ
+`thu_muc_ngoai_repo`) và một dòng ở `AGENTS.md` gốc. Lý do: cả `_root` lẫn `_docs` đang do phiên
+khác giữ lúc 08/09, và luật mục 1 cấm ghi vào vùng có chủ khác.
+
+Đây là chỗ AI đọc ĐẦU TIÊN mỗi phiên, nên luật nằm ở gói `_shared` thì phiên không đụng gói đó sẽ
+không bao giờ thấy — đúng cách lỗi này tái diễn.
+
+- **đóng khi:** đức: hoặc `.repo-structure.json` có khối khai đường dẫn nhà chung của Bridge và `AGENTS.md` gốc có một dòng trỏ tới nó; hoặc Đức chốt rằng để luật ở `workers/_shared/AGENTS.md` là đủ.

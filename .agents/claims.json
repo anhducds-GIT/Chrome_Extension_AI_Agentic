@@ -78,11 +78,11 @@
       "released_at": null
     },
     "workers/_shared": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T10:52",
-      "task": "Va 5 lo Codex tim ra o bo sinh tep ghep cap",
-      "released_at": "2026-09-08T11:04"
+      "owner": "claude-scouter-s06",
+      "ai": "Claude",
+      "claimed_at": "2026-09-08T11:32",
+      "task": "Ghim luat duong dan thu muc Bridge vao bo sinh + ban do file",
+      "released_at": null
     },
     "workers/hnx-fetch": {
       "owner": "claude-scouter-s06",
@@ -92,5 +92,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "9fc5ebd647d45728"
+  "_fingerprint": "053ee4f7e06f77b9"
 }

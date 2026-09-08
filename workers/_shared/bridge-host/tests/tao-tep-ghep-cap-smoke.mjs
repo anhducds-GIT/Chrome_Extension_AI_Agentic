@@ -30,7 +30,8 @@ const GOC_REPO = path.resolve(here, "..", "..", "..", "..");
 assert.ok(fs.existsSync(path.join(GOC_REPO, "AGENTS.md")) && fs.existsSync(path.join(GOC_REPO, ".agents")),
   "GOC_REPO không trỏ vào gốc repo — mọi khối dưới đây đang đo nhầm chỗ");
 
-const { dungTepGhepCap, sinhToken, namTrongRepo } = await import("../tao-tep-ghep-cap.mjs");
+const { dungTepGhepCap, sinhToken, namTrongRepo, NHA_BRIDGE, duongGhepCapChuan } =
+  await import("../tao-tep-ghep-cap.mjs");
 const { validatePairing } = await import("../bridge-host-core.mjs");
 const nguonBoSinh = fs.readFileSync(path.join(here, "..", "tao-tep-ghep-cap.mjs"), "utf8");
 
@@ -136,4 +137,38 @@ function chay(args) {
   assert.match(r.loi, /--ra/, "câu hướng dẫn không nói cần cờ gì");
 }
 
-console.log("tao-tep-ghep-cap-smoke: 4 khoi, tat ca DAT");
+/* ---- ⑸ NHÀ CHUNG CỦA BRIDGE — mọi gói một chỗ, không tản mát ----------
+ *
+ * Đức chốt 08/09 sau khi gặp lỗi này VÀI LẦN: mọi thứ thuộc Bridge nằm dưới một thư mục duy
+ * nhất, mỗi gói một thư mục con mang đúng tên gói. Quy ước đó đã tồn tại từ trước — bốn gói cũ
+ * đều theo — nhưng nó chỉ nằm trong đầu người, nên chính lượt 08/09 tôi vẫn đặt một tệp ghép
+ * cặp vào thư mục hồ sơ người dùng.
+ *
+ * Nên phép ghim này canh đúng một điều: **công cụ phải TỰ đặt đúng chỗ**. Một quy ước chỉ nằm
+ * trong văn xuôi thì phụ thuộc vào việc AI có đọc đúng trang đó không, và đó là thứ đã hỏng. */
+{
+  const S = String.fromCharCode(92);
+  assert.equal(NHA_BRIDGE, "C:" + S + "WORKING ZONE" + S + "Chrome Extension Bridge",
+    "nhà chung của Bridge bị đổi — nếu Đức đổi thật thì sửa cả ở đây, đừng để hai bản");
+
+  /* Đường dẫn chuẩn phải ra ĐÚNG hình dạng bốn gói cũ đang dùng: thư mục con mang tên gói, và
+   * tệp mang tên gói kèm hậu tố. Đo từ thư mục thật ngày 08/09. */
+  assert.equal(duongGhepCapChuan("hnx-fetch"),
+    [NHA_BRIDGE, "hnx-fetch", "hnx-fetch-bridge-pairing-v1.json"].join(S),
+    "tên tệp/thư mục lệch quy ước bốn gói cũ đang dùng");
+
+  /* Cờ `--goi` phải TỒN TẠI và phải nối vào đường chuẩn. Không có nó thì mỗi lượt lại là một
+   * lần người gõ tự nhớ đường — và cái đó đã hỏng vài lần. */
+  assert.ok(nguonBoSinh.includes('co("goi")'), "bộ sinh không còn nhận --goi");
+  assert.ok(nguonBoSinh.includes("duongGhepCapChuan(tenGoi)"),
+    "có cờ --goi nhưng không nối vào đường chuẩn — cờ có mà không có tác dụng");
+
+  /* Câu hướng dẫn phải NÓI RA nhà chung. Người đọc câu lỗi là người đang lạc đường. */
+  const r = chay([]);
+  assert.equal(r.ma, 2);
+  assert.ok(r.loi.includes("Nhà chung của Bridge"), "câu hướng dẫn không nói nhà chung ở đâu");
+  assert.ok(r.loi.includes("Chrome Extension Bridge"), "câu hướng dẫn không in ra đường dẫn thật");
+  assert.ok(r.loi.includes("--goi"), "câu hướng dẫn không nhắc cách gọi nên dùng");
+}
+
+console.log("tao-tep-ghep-cap-smoke: 5 khoi, tat ca DAT");

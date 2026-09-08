@@ -733,3 +733,26 @@ Giữ một con không giết được là để lại một dòng đỏ vĩnh v
 kia nằm lại mãi. Quyết định vẫn chờ Đức, và nó nằm ở `H-03`.
 
 **Việc kế:** không có. Gói tạm dừng, sổ rỗng, suite xanh, đột biến 0 sống sót.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — xoá thư mục pilot cũ, sau khi cứu 17 con đột biến ra khỏi nó
+
+Đức duyệt xoá `workers/duc-scouter/pilots/`. Trước khi xoá, tôi kiểm xem trong đó có gì **không
+có bản thay thế** ở nhà mới — và có thật.
+
+`pilots/hnx-phai-sinh/scripts/pilot-mutation-check.mjs` giữ **17 con đột biến** canh
+`vong-lay.mjs` và `nguon-hnx.mjs`: luật thử lại, phép không-làm-hai-lần, hợp đồng trang, và ca
+*"200 OK kèm cả một trang HTML"* — cái bẫy đắt nhất của trang HNX. Bộ đo ở `workers/hnx-fetch`
+trước lượt này **chỉ với tới `tai-ket-qua.mjs`**, nên xoá thẳng là mất trắng lớp lưới đó.
+
+Đã chuyển về `workers/hnx-fetch/v0.1.0/scripts/mutation-check.mjs` trước, chạy đạt (**43/43 mỏ
+neo · 43 giết được · 0 sống sót**), rồi mới xoá. Mã `N*` của bản cũ đổi thành `W*` vì `N1..N22`
+đã có chủ, và bộ đo **chặn mã trùng** — nó đã chặn thật hai lần trong ngày.
+
+**Bài học, và nó rộng hơn lượt này:** *"đã chuyển nhà"* không có nghĩa là **mọi thứ** đã theo.
+Chín trong mười sáu tệp trùng từng byte, năm tệp đã lệch, và đúng một tệp là bản duy nhất còn
+tồn tại. Trước khi xoá một thư mục "thừa", hãy hỏi *cái gì trong đây KHÔNG có ở chỗ mới* — chứ
+đừng hỏi *cái gì trong đây đã có ở chỗ mới*.
+
+Suite Scouter còn **17** (trước 22): năm phép ghim của pilot đã theo về nhà mới, không mất.

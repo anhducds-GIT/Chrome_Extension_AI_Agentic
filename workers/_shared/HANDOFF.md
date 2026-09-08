@@ -94,3 +94,31 @@ có, vì nó phát ra sự yên tâm mà nó không đỡ nổi.
 Hai bẫy thoát chuỗi gặp lại trong lượt này, ghi để lần sau nhận ra sớm: một regex bị nuốt dấu
 gạch ngược nên bộ tách chỉ tách theo gạch xuôi; và một phép ghim soi chữ `Math.random` thì đỏ vì
 đọc **chính lời dặn** trong chú thích của mã. Cả hai chữa bằng cách bỏ regex, dùng `includes`.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — luật NHÀ CHUNG của Bridge, ghim vào MÃ chứ không chỉ vào chữ
+
+Đức chốt: mọi thứ thuộc Bridge nằm dưới `C:\WORKING ZONE\Chrome Extension Bridge\<tên-gói>\`,
+và **"lỗi này gặp vài lần rồi"**.
+
+**Chuyện đáng ghi nhất: quy ước đó ĐÃ TỒN TẠI từ trước.** Bốn gói cũ đều nằm đúng chỗ, đúng hình
+dạng — tệp ghép cặp mang tên gói, bộ khởi động `START-BRIDGE_*`, vùng ghi là thư mục con. Vậy mà
+sáng nay chính tôi vẫn đặt một tệp ghép cặp vào `C:\Users\<user>\HNX-Bridge\`.
+
+Nên chẩn đoán đúng **không** phải "AI cẩu thả". Nó là: **một quy ước chỉ nằm trong văn xuôi thì
+phụ thuộc vào việc người đọc có mở đúng trang đó không.** Thêm một dòng tài liệu nữa sẽ hỏng lại
+theo đúng cách cũ.
+
+Nên luật này thành **giá trị mặc định của công cụ**: hằng số `NHA_BRIDGE`, hàm `duongGhepCapChuan()`,
+và cờ `--goi <tên-gói>` tự dựng đúng đường + tự tạo thư mục con. Cờ `--ra` vẫn còn cho ca có lý do
+riêng, và nó **không** tự tạo thư mục — gõ nhầm một ký tự mà tự tạo thư mục là đặt token ở chỗ
+không ai nhìn tới. Phép ghim khối ⑸ canh cả bốn vế, kể cả *câu hướng dẫn có in ra nhà chung không*.
+
+**Chưa làm được, đã ghi sổ (`N-46`):** khai vào bản đồ **gốc repo** (`.repo-structure.json` +
+`AGENTS.md` gốc). Cả `_root` lẫn `_docs` đang do phiên khác giữ. Đó mới là chỗ AI đọc đầu tiên,
+nên phiên không đụng gói `_shared` sẽ vẫn không thấy luật — chính là cách lỗi này tái diễn.
+
+**Một bẫy thoát chuỗi dính BA lần trong ngày:** dấu gạch ngược trong chuỗi bị nuốt, làm
+`NHA_BRIDGE` thành `C:WORKING ZONEChrome Extension Bridge`. Cách chữa đã thành thói quen: dựng
+bằng `String.fromCharCode(92)`, và với văn bản dài thì viết ra tệp rồi đọc vào, đừng nhúng.

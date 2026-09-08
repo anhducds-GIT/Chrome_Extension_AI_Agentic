@@ -54,5 +54,41 @@ cho một người dùng tưởng tượng, nhưng cũng đừng quên chuyển 
 |---|---|
 | `bridge-host/tests/tuong-duong-voi-ban-goc.mjs` | **Tách lõi có làm rơi hành vi nào không** — hỏi cả bản gốc lẫn bản mới cùng một câu, 29 ca, rồi so đáp án |
 | `bridge-host/tests/bat-tay-hai-chieu.mjs` | Cái bắt tay, bằng một lượt **nối thật qua socket**. Sinh ra vì bộ đo đột biến chỉ ra rằng chốt đáng giá nhất của lõi chưa ai canh |
-| `bridge-host/tao-tep-ghep-cap.mjs` | **Sinh một tệp ghép cặp** cho một máy chủ Bridge (H-06). Ở đây chứ không ở một gói, vì nó phải sinh ra thứ `validatePairing()` chấp nhận và **tự kiểm bằng chính hàm đó**. Hai chốt: không ghi vào trong kho mã (tệp chở token) · không ghi đè tệp đã có |
+| `bridge-host/tao-tep-ghep-cap.mjs` | **Sinh một tệp ghép cặp** cho một máy chủ Bridge (H-06), và **giữ quy ước NHÀ CHUNG** (xem dưới bảng). Tự kiểm bằng chính `validatePairing()`. Ba chốt: không ghi vào kho mã · không ghi đè tệp đã có · `--goi <tên>` tự đặt đúng chỗ |
 | `bridge-host/tests/tao-tep-ghep-cap-smoke.mjs` | Ghim bộ sinh trên. Chạy THẬT và thử **đường dẫn có dấu cách** — chốt "không ghi vào repo" đã hỏng CÂM đúng ở đó ngày 08/09 |
+
+## NHÀ CHUNG CỦA BRIDGE — luật đường dẫn, Đức chốt 08/09
+
+**Mọi thứ thuộc Bridge của MỌI extension nằm dưới đúng một chỗ**, mỗi gói một thư mục con mang
+đúng tên gói:
+
+```
+C:\WORKING ZONE\Chrome Extension Bridge\<tên-gói>\
+    <tên-gói>-bridge-pairing-v1.json    ← tệp ghép cặp (CÓ TOKEN)
+    START-BRIDGE_<Tên>.cmd  +  .ps1     ← bộ khởi động
+    du-lieu-ra\   (hoặc du-lieu\)       ← VÙNG GHI, luôn là thư mục CON
+```
+
+**Ba lý do, theo thứ tự sức nặng:**
+
+1. **Ngoài kho mã.** Tệp ghép cặp chở token; luật gốc cấm token vào repo.
+2. **Vùng ghi là thư mục CON, không phải chính thư mục gói.** `file.read` đọc được mọi tệp dưới
+   vùng ghi — trỏ vùng ghi vào chính thư mục gói nghĩa là **token đọc được qua dây**. Máy chủ sẽ
+   từ chối khởi động, nhưng đừng thử.
+3. **Một chỗ, không tản mát.** Đức nói lỗi đặt lung tung đã gặp **vài lần**.
+
+**Vì sao luật này ghim vào MÃ chứ không chỉ vào tài liệu:** quy ước đã tồn tại từ trước — bốn gói
+cũ đều theo — nhưng nó chỉ nằm trong đầu người. Ngày 08/09 chính phiên viết dòng này vẫn đặt một
+tệp ghép cặp vào thư mục hồ sơ người dùng, vì không có gì nhắc. Nên nó phải là **giá trị mặc định
+của công cụ**:
+
+```bash
+node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <tên-gói>
+```
+
+Cờ `--goi` tự dựng đúng đường, đúng tên tệp, tự tạo thư mục con. Còn `--ra <đường dẫn>` vẫn có,
+cho ca có lý do riêng — và nó **không** tự tạo thư mục, vì gõ nhầm một ký tự mà tự tạo thư mục là
+đặt token ở chỗ không ai nhìn tới.
+
+Phép ghim `tests/tao-tep-ghep-cap-smoke.mjs` khối ⑸ canh cả hằng số, đường chuẩn, cờ `--goi`, và
+câu hướng dẫn có nói ra nhà chung hay không.
