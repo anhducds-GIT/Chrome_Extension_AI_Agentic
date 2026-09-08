@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Accepted
 adr: 0051
 date: 2026-09-09
 deciders: Đức
@@ -89,4 +89,4 @@ Truy nguồn theo tên đã mất, nên sổ là chỗ duy nhất còn nối đ�
 
 ## Trạng thái
 
-Proposed
+Accepted
