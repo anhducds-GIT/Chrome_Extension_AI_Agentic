@@ -734,13 +734,28 @@
     }));
     const count = (status) => queue.filter((item) => status.includes(item.status)).length;
     const halted = queue.find((item) => window.DacRunnerCore.HARD_STOP_FAILURE_TYPES.has(item.failure_type));
+    // B-10: chỉ tin `state.currentItem` khi run đang THẬT SỰ chạy. `setCurrent(null, …)` được
+    // gọi lúc nạp workbook và lúc nạp resume, nhưng KHÔNG BAO GIỜ lúc run kết thúc — nên giữa
+    // hai run nó vẫn trỏ vào job CUỐI của run trước. Bắt được tận tay 26/08 sau khi `run.stop`
+    // dừng `trial-09c93cd4`: cùng một thời điểm, `run.status` trả `state: "IDLE"` mà vẫn kèm
+    // `current: {job_id: "Q001", phase: "SUBMITTED", runtime_stage: "GENERATING"}`. Hai trường
+    // đó đọc CÙNG MỘT biến, một cái nói đúng một cái nói sai.
+    //
+    // Đây là chốt THỨ BA cùng khuôn — `bridgeRunStop()` và `stop()` đã có từ trước. Không gom
+    // thành helper: hai chỗ kia là đường an toàn đã tôi luyện, rewire chúng để bớt một dòng là
+    // đổi rủi ro thật lấy vẻ gọn.
+    //
+    // KHÔNG chữa bằng cách xoá `state.currentItem` lúc run kết thúc (đường sạch hơn mà chính
+    // mục B-10 nêu): `queueElapsed` và `renderRuntime` đang ĐỌC nó để hiện job vừa xong trên
+    // màn hình. Xoá là làm hỏng UI để chữa một trường Bridge.
+    const current = state.running ? state.currentItem : null;
     return {
       state: state.running ? state.paused ? "PAUSED" : "RUNNING" : halted ? "HALTED" : "IDLE",
       paused: state.paused,
       pause_requested: state.pauseRequested,
-      current: state.currentItem ? { job_id: state.currentItem.job.id, attempt_id: state.currentItem.attempt_id || null, phase: state.currentItem.phase, runtime_stage: state.currentItem.runtime_stage || null, job_elapsed_sec: elapsedSecSince(state.currentStartedAt), stage_elapsed_sec: elapsedSecSince(state.stageStartedAt), stage_budget_sec: state.stageBudgetSec || state.currentItem.settings?.timeout_sec || null } : null,
+      current: current ? { job_id: current.job.id, attempt_id: current.attempt_id || null, phase: current.phase, runtime_stage: current.runtime_stage || null, job_elapsed_sec: elapsedSecSince(state.currentStartedAt), stage_elapsed_sec: elapsedSecSince(state.stageStartedAt), stage_budget_sec: state.stageBudgetSec || current.settings?.timeout_sec || null } : null,
       counts: { total: queue.length, pending: count(["PENDING"]), running: count(["RUNNING", "RECONCILING"]), success: count(["SUCCESS", "DONE"]), failed: count(["FAILED"]), interrupted: count(["INTERRUPTED", "STOPPED"]) },
-      halt: halted ? { failure_type: halted.failure_type, instruction: window.DacHaltInstructions?.findInstruction?.(halted.failure_type) || null } : null,
+      halt: halted ? { job_id: halted.job.id, failure_type: halted.failure_type, instruction: window.DacHaltInstructions?.findInstruction?.(halted.failure_type) || null } : null,
       artifact_persistence_failed: state.artifactErrors.length > 0,
       trial: state.bridgeTrialId ? { trial_id: state.bridgeTrialId, input_origin: state.bridgeRunOrigin } : null,
       checkpoint: checkpointSummary()
