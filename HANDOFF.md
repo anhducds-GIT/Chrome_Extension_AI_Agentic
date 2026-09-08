@@ -587,3 +587,38 @@ gói GPT. Ghi rõ hai vế: khoá **được phép chuyển**, nhưng **chưa nh
 nó là đúng thói quen mà khoá mức file vừa bỏ.
 
 Roadmap cho phiên sau: `_run-qua-dem-20260907/ROADMAP-EXTENSION-09-09-v2.md`.
+
+## 2026-09-09 · `claude-ext-nap-gon` — nhóm luôn-nạp ở gốc repo **2.410 → 896 dòng** (−63%)
+
+ĐỢT 1 của `ROADMAP-EXTENSION-09-09-v2.md`: cắt đúng chỗ **mọi phiên bắt buộc nạp**, không cắt
+chỗ dễ đếm. Chi tiết ở hai dòng đóng `N-53` · `N-52` cuối `BACKLOG.md`.
+
+**`N-53`** — `HANDOFF.md` **2.033 → 589 dòng** (60 mục → 20). ADR-0008 chốt 20 từ 06/09 nhưng cơ
+chế **chưa bao giờ được cài**: `--rotate` xoay theo THÁNG (ADR-0011), mà cả 60 mục đều `2026-09`
+nên nó dời **0 dòng** rồi in một câu nghe như thành công. Thêm `handoff.mjs --cat --giu` (cắt
+theo SỐ MỤC); 40 mục cũ sang `HANDOFF-ARCHIVE-02.md` nguyên văn, ghép lại dựng đúng bản gốc
+**từng byte**. Cổng nay đếm thật: `HANDOFF_QUA_DAY`.
+
+**`N-52`** — `AGENTS.md` **402 → 300 dòng**, kèm thước cóc `agents.tran_dong`. **Không luật nào bị
+bỏ**: thứ bị cắt là *đo bao nhiêu, vấp ngày nào*, và mỗi thứ đều đã có nhà ở ADR hoặc MULTIFLOW
+mục 4 — cuối mục 1 để lại một dòng trỏ sang.
+
+**Lỗ hổng vá kèm:** `--soat` bỏ qua HẲN sổ miễn khoá, nên lượt cắt mà ADR-0008 cho phép tường minh
+không có đường nào qua nổi phép soát dù giữ đủ khoá — cửa duy nhất còn lại là `--no-verify`. Nay
+**giữ khoá thì viết lại được**: miễn khoá nghĩa là *không cần khoá*, không nghĩa là *có khoá cũng
+không được*.
+
+**Ba lỗi của tôi, ghi ra để phiên sau khỏi trả lại:**
+
+⑴ Phép kiểm bất biến bản đầu **XANH trên một file ra rỗng sạch mục** — nó ghép từ các mảnh rời,
+trong khi `moi` sót cả phần giữ lại. **Kiểm cái mình GHI, đừng kiểm cái mình định ghi.**
+
+⑵ Tôi chạy `git stash` / `pop`, mà `.agents/claims.json` nằm trong đó — **đúng thứ luật cấm**, và
+lane `claude-gpt-chay-het-job` đang commit trong cùng phút ấy. Kiểm lại: bảng quyền còn nguyên,
+`stash list` rỗng, hai commit của họ có nội dung thật. Không thấy thiệt hại, **nhưng đó là may
+chứ không phải đúng**. Muốn so với HEAD thì `git show HEAD:<file>`.
+
+⑶ Ba lượt sửa hỏng vì dấu huyền và dấu chéo ngược đi qua ống bash — viết ra `.cjs` rồi chạy.
+
+**Số:** 4/4 đột biến bị bắt · một phiên nay nạp **1.442–1.801 dòng** thay vì 2.956–3.315.
+`N-51` còn mở — chờ Đức chốt con số cho giới hạn ③.

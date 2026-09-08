@@ -21,36 +21,26 @@ Không được báo "xong" khi cổng kiểm chưa xanh. Không được tự s
 
 `--sua → sửa → --soat → commit → --xong → sinh lại artifact → commit → npm run test:song-song → cổng → safe-push`
 
-- **`npm run test:song-song` chạy SAU commit.** Bộ chạy (`scripts/chay-test.mjs`) để lại một *dấu xác nhận*
-  buộc vào HEAD + băm cây làm việc + môi trường; cổng thấy dấu còn hiệu lực thì **không chạy lại
-  suite**. Commit sau khi chạy là đổi cây → dấu hỏng → cổng chạy lại từ đầu.
+- **`npm run test:song-song` chạy SAU commit.** Bộ chạy để lại một *dấu xác nhận* buộc vào HEAD +
+  băm cây làm việc; cổng thấy dấu còn hiệu lực thì **không chạy lại suite**. Commit sau khi chạy
+  là đổi cây → dấu hỏng → cổng chạy lại từ đầu. Đo cùng cơ chế ở bộ khung: **1.095 → 278 giây**.
 - **Trong lúc làm đừng chạy đủ bộ** — `node scripts/chay-test.mjs --chi <tên-suite>`, cố ý KHÔNG
   ghi dấu. Đủ bộ chạy **một lần**, ở cuối.
-- **`npm test` vẫn là chuỗi TUẦN TỰ, cố ý.** Một phép ghim trong `duc-auto-*` đọc thẳng
-  `scripts.test` để bắt "xanh giả". Từ 08/09 gói đó **sửa được** (hết đóng băng), nhưng đường
-  nhanh vẫn mang tên riêng: đổi `test` là làm một phép kiểm chống-xanh-giả nhìn vào chỗ khác,
-  và cái giá đó lớn hơn cái tiện của một cái tên ngắn.
+- **Đừng đổi `scripts.test`** — nó vẫn là chuỗi TUẦN TỰ, cố ý: một phép ghim trong `duc-auto-*`
+  đọc thẳng trường đó để bắt "xanh giả".
 - **Bộ sinh nào ghi vào một sổ CÓ RÀNG BUỘC thì chạy MỘT LẦN, sau khi suite xanh.**
 
-Đo 08/09 ở bộ khung, cùng cơ chế: một vòng **1.095 giây → 278 giây**. Đây là luật, không phải lời
-khuyên — thói quen "chạy cho chắc" là thứ đắt nhất trong ngày làm việc của một phiên AI.
-
-**Push thì KHÔNG dùng `git push`** — dùng:
+**Push thì KHÔNG dùng `git push`** — `git push` của bạn cuốn theo commit của **mọi phiên khác**
+đang dùng chung thư mục git này (đã xảy ra thật 26/08). Dùng:
 
 ```bash
 node scripts/safe-push.mjs --as <tên-phiên-của-bạn>
 ```
 
-Lý do: nhiều phiên AI dùng chung một thư mục git, nên `git push` của bạn **cuốn theo commit của
-mọi phiên khác**. Ngày 26/08 chuyện này đã xảy ra thật — một phiên push và kéo theo 2 commit chưa
-được Đức duyệt của phiên khác. `safe-push` liệt kê rõ sắp đẩy gì của ai, và từ chối nếu bạn đang
-cuốn theo việc người khác. Push được tự làm khi đủ điều kiện ở mục 2 — không cần hỏi từng lần.
-
 ## 1. Ai giữ package nào — chống hai AI giẫm chân
 
-Bảng chủ sở hữu là `.agents/claims.json`. **Một vùng chỉ có MỘT phiên AI được ghi tại một thời điểm.**
-
-**Nhận và trả quyền bằng lệnh, đừng sửa file bằng tay:**
+Bảng chủ sở hữu là `.agents/claims.json`. **Một vùng chỉ có MỘT phiên AI được ghi tại một
+thời điểm**, và mọi thao tác đi qua lệnh — đừng sửa file bằng tay.
 
 ```bash
 node scripts/claim.mjs --list
@@ -62,85 +52,47 @@ node scripts/claim.mjs --khai-vung <khoá> --as <tên-phiên>   # mở MỘT VÙ
 ### Khoá mức FILE — giữ ngắn, trả ngay (Đức chốt 08/09)
 
 **Mặc định từ nay là khoá FILE, không phải khoá vùng.** Nhận ngay TRƯỚC lượt ghi, trả ngay SAU.
-**Chỉ đọc thì không cần gì cả.**
+**Chỉ đọc thì không cần gì cả.** Còn nhận cả vùng khi bạn thật sự sửa khắp nó.
 
 ```bash
 node scripts/claim.mjs --sua <đường-dẫn> [<đường-dẫn>…] --as <phiên>   # trước khi ghi
 node scripts/claim.mjs --soat --as <phiên>                            # trước git commit
 node scripts/claim.mjs --xong --het --as <phiên>                      # ngay sau khi ghi xong
+git config core.hooksPath .githooks                                   # một lượt, xong cho mọi lane
 ```
 
-Một lượt cài, xong cho MỌI lane (tất cả dùng chung một cây làm việc) — cổng đóng phiên ĐỎ
-nếu chưa cài:
+Vì sao: **[ĐO 7 ngày]** 2.628 cặp commit khác lane, cùng vùng, cách nhau ≤ 1 giờ — **1.839 cặp
+(70%) không đụng file nào chung**. Bảy phần mười lượt chặn hôm nay là chặn oan. Cân nhắc đầy đủ
+ở [ADR-0025](docs/adr/0025-khoa-muc-file-giu-ngan-tra-ngay.md).
 
-```bash
-git config core.hooksPath .githooks
-```
+- **Chứa nhau hai chiều.** Vùng có chủ khác → khoá file bị từ chối; bên trong còn khoá file của
+  người khác → nhận cả vùng bị từ chối.
+- **Khoá FILE trả lúc HẾT PHIÊN. Khoá VÙNG trả SAU KHI ĐẨY.** Hai loại khoá, hai mốc, đừng lẫn.
+  Cổng đóng phiên ĐỎ nếu bạn còn treo khoá file. Đẩy không được thì **giữ khoá vùng** và báo
+  lại — commit chưa đẩy mà vùng đã trống chủ thì cổng đỏ với phiên đến sau.
+- **`--soat` bắt buộc trước `git commit`.** Nó vá chỗ khoá không chữa được: hai lane dùng chung
+  MỘT cây git, nên `git commit -a` cuốn file lane khác vừa dàn (`N-40`) và `git commit -o` cuốn
+  sửa đổi của họ trên chính file đó (`N-05`). Chốt `commit-msg` chạy nó ngay trong lượt commit,
+  bịt cửa sổ giữa soát và commit (`N-49`); nó **fail-open** ba chỗ và chỉ chặn khi vi phạm thật.
+  Kẹt thì `git commit --no-verify` rồi **nói ra trong nhật ký phiên**.
 
-Chốt `commit-msg` chạy `--soat` NGAY TRONG lượt commit, tức chỗ duy nhất bịt được cửa sổ giữa
-`--soat` và `git commit` (`N-49`). Nó **fail-open** ba chỗ (không có `node` · không thấy nhãn
-`Lane:` · lỗi lạ) và chỉ chặn khi vi phạm thật; kẹt thì `git commit --no-verify` rồi nói ra
-trong nhật ký phiên.
-
-Vì sao: **[ĐO 7 ngày]** 2.628 cặp commit khác lane, cách nhau ≤ 1 giờ, cùng vùng — trong đó
-**1.839 cặp (70%) không đụng file nào chung**. Bảy phần mười lượt chặn hôm nay là chặn oan.
-Ghi ở [ADR-0025](docs/adr/0025-khoa-muc-file-giu-ngan-tra-ngay.md).
-
-- **Chứa nhau hai chiều.** Vùng có chủ khác → khoá file bị từ chối. Bên trong còn khoá file
-  của người khác → nhận cả vùng bị từ chối. Còn nhận cả vùng khi bạn thật sự sửa khắp nó.
-- **Cổng đóng phiên ĐỎ nếu bạn còn treo khoá file.** Mốc là *hết phiên*, **không** phải *đã
-  đẩy* — khoá file không mang trách nhiệm truy nguồn, nhãn `Lane:` mới mang. Khoá VÙNG thì
-  vẫn trả **sau khi đẩy** như cũ; hai loại khoá, hai mốc, đừng lẫn.
-- **`--soat` là bắt buộc trước `git commit`**, và nó vá chỗ khoá KHÔNG chữa được: hai lane
-  dùng chung MỘT cây git, nên `git commit -a` vẫn cuốn file lane khác vừa dàn (`N-40`, nổ
-  thật 07/09) và `git commit -o` vẫn cuốn sửa đổi của họ trên chính file đó (`N-05`). Khoá
-  file làm số người ghi đồng thời TĂNG, nên hai lỗi ấy nổ DÀY HƠN nếu bỏ bước soát.
-- **Đừng tự nhả khoá file của lane khác** dù cổng có nêu tên nó là quá hạn. Ba đường hợp lệ
-  ở trên áp cho cả khoá file.
-
-`--khai-vung` (từ 08/09) chỉ tạo một ô **trống chủ** cho khoá mà `.repo-structure.json` đã công
-nhận, và thư mục phải có thật trên đĩa. Trước nó, mở một vùng dùng chung chỉ làm được bằng **sửa
-tay `claims.json` rồi `--restamp`** — một đường hợp lệ trông giống hệt một vụ cướp khoá, nên lần
-sau không ai phân biệt nổi hai thứ đó (`N-41`).
-
-Sửa tay là đọc-sửa-ghi, và ngày 02/09 đã có một quyền **bị ghi đè im lặng** vì thế: hai phiên
-cùng đọc thấy "trống" rồi cùng ghi tên mình, người ghi sau thắng, người ghi trước không hề biết.
-Lệnh này **từ chối** nhận vùng đã có chủ khác, **từ chối** trả quyền hộ người khác, và ghi rồi
-đọc lại để kiểm.
 
 - Vùng đang có chủ, mà chủ không phải bạn → **chỉ được đọc, tuyệt đối không sửa**.
-- Vùng trống chủ → nhận rồi làm.
-- **Nhận ngay TRƯỚC lượt ghi đầu tiên, không phải lúc mở phiên.** Đọc và đo thì không cần khoá,
-  mà lane nào cũng mất 5–20 phút đầu để đọc. Cần khoá thứ hai giữa chừng thì **nhận thêm lúc
-  cần** — đừng gom sẵn. Một lane, **một khoá worker**: việc trải ba nhánh thì làm ba lượt.
-- Công cụ chỉ ra vùng bạn giữ mà **chưa thấy dấu vết trong repo** (`claim.mjs --list` ·
-  `what-next.mjs` · cổng đóng phiên, mức **vàng**, không chặn). Câu đó nói **repo chưa thấy gì**
-  — nó **không** nói lane đó rảnh, và nó **không bao giờ** đủ để nhả khoá hộ ai.
-- **Trả quyền SAU khi đẩy, không phải sau khi commit.** Đẩy không được thì **giữ khoá** và báo
-  lại, đừng trả cho "sạch sẽ". Cổng đóng phiên không soi cây làm việc, nó soi **commit chưa
-  đẩy**: commit của bạn còn nằm đó mà vùng đã trống chủ thì cổng báo *"vùng gốc repo bị sửa
-  nhưng chưa ai đứng tên"* — **đỏ với chính bạn ở lượt chạy sau**, và **đỏ với MỌI phiên nếu
-  commit thiếu nhãn `Lane:`** (phép kiểm K2-1b trừ đi file chỉ bị chạm bởi commit mang nhãn của
-  lane khác, nên phiên tên khác thì không đỏ). Ngày
-  06/09 ba lane cùng bị chặn đẩy vì lý do ngoài tầm với, cùng trả khoá, và cả ba để lại đúng
-  một mục đỏ cho phiên đến sau dọn. Giữ một khoá là chuyện nhỏ; để lại commit vô chủ là chuyện lớn.
-- **Đừng nhả khoá HỘ lane khác vì đo thấy vùng "chưa bị chạm".** Repo chỉ thấy được thứ đã chạm
-  repo, mà một lane cẩn thận thì dựng thử ngoài repo rồi mới ghi vào — nên `0 commit, 0 file sửa`
-  **không** chứng minh lane đó đang rảnh. Ngày 06/09 phiên điều phối đo đúng như thế, nhả một
-  khoá, và lane kia phải hoàn nguyên việc đã xong. Ba đường hợp lệ để một khoá được trả: **chính
-  lane đó trả** · **lane đó báo đã xong** · **Đức chốt chuyển** (`--restamp --duc-duyet`). Thấy
-  khoá nằm lâu thì **hỏi**, đừng nhả.
-- **Đừng nối `claim.mjs` vào ống.** Mã thoát của một đường ống là mã thoát của lệnh **cuối**,
-  nên `claim.mjs --take … | tail -3 && git commit …` chạy tiếp cả khi lệnh nhận khoá đã **TỪ
-  CHỐI** — đã xảy ra 06/09, và lượt commit đó ghi vào vùng của lane khác. Muốn cắt bớt chữ thì
-  **chạy riêng, xem kết quả, rồi mới chạy lệnh sau**.
-- Muốn giành vùng người khác đang giữ → **hỏi Đức**, không tự lấy. Đức chốt rồi thì ghi lại
-  bằng `--restamp --as <phiên> --duc-duyet "<câu chốt>"`; không có câu chốt thì lệnh **từ chối**,
-  kể cả khi bạn đã sửa tay xong (Đức chốt 04/09 — trước đó đây chỉ là lời khuyên, và một khoá
-  đã bị lấy khỏi tay phiên đang làm dở đúng bằng đường đó).
+- **Nhận ngay TRƯỚC lượt ghi đầu tiên, không phải lúc mở phiên.** Cần khoá thứ hai giữa chừng
+  thì nhận thêm lúc cần — đừng gom sẵn. Một lane, **một khoá worker**.
+- **Đừng nhả khoá hộ lane khác**, kể cả khi cổng nêu tên nó là quá hạn hay "chưa thấy dấu vết
+  trong repo". Câu đó nói **repo chưa thấy gì**, nó không nói lane đó rảnh. Ba đường hợp lệ để
+  một khoá được trả: **chính lane đó trả** · **lane đó báo đã xong** · **Đức chốt chuyển**
+  (`--restamp --as <phiên> --duc-duyet "<câu chốt>"`). Thấy khoá nằm lâu thì **hỏi**, đừng nhả.
+  Không có câu chốt thì `--restamp` từ chối, kể cả khi bạn đã sửa tay xong.
+- **Đừng sửa `claims.json` bằng tay.** Sửa tay là đọc-sửa-ghi, và một quyền đã bị ghi đè im lặng
+  vì thế. Mở một vùng mới thì dùng `--khai-vung`, đừng sửa tay rồi `--restamp` — hai thứ đó
+  trông giống hệt nhau ở lượt đọc sau (`N-41`).
+- **Đừng nối `claim.mjs` vào ống.** Mã thoát của một đường ống là mã thoát của lệnh **cuối**, nên
+  `claim.mjs --take … | tail -3 && git commit …` chạy tiếp cả khi lệnh nhận khoá đã **TỪ CHỐI**.
 
-**Gốc repo chia làm NHIỀU khoá** (từ 02/09) — trước đó một khoá `_root` che cả bảy thư mục gốc,
-nên hai việc không hề chồng nhau vẫn chặn nhau:
+**Gốc repo chia làm NHIỀU khoá** — nhận đúng vùng mình đụng, không nhận cả gốc. Cổng đóng phiên
+nói tên khoá còn thiếu. Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.json`.
 
 | Khoá | Che gì |
 |---|---|
@@ -148,41 +100,27 @@ nên hai việc không hề chồng nhau vẫn chặn nhau:
 | `_code` | `scripts/` + `tests/` |
 | `_root` | phần còn lại và các file ở tầng ngoài cùng |
 
-Nhận đúng vùng mình đụng, không nhận cả gốc repo. Cổng đóng phiên sẽ nói tên khoá còn thiếu.
-Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.json`.
+**Năm artifact máy sinh KHÔNG đòi khoá nào:** `DASHBOARD.md` · `llms.txt` · `repo-map.json` ·
+`DASHBOARD-Chrome-Extension-AI-Agentic.html` · `FEATURE-PARITY-AUTO.md`. Chạy lại bộ sinh là ra
+y hệt nên không có gì của ai trong đó để mất; danh sách khai ở khối `generated`.
+`FEATURE-PARITY.md` **cố ý không** nằm trong đó — mục 2 của nó là chữ của người (xem mục 6).
 
-**Năm artifact máy sinh KHÔNG đòi khoá nào** (bốn từ 03/09, cái thứ năm từ 07/09):
-`DASHBOARD.md` · `llms.txt` · `repo-map.json` · `DASHBOARD-Chrome-Extension-AI-Agentic.html` ·
-`FEATURE-PARITY-AUTO.md`. Không có gì của ai trong đó để mất — chạy lại bộ sinh là ra y hệt, và đo ngày
-02/09 thấy **19% lượt nhận `_root` tồn tại CHỈ để chạy một bộ sinh rồi trả ngay**. Danh sách khai
-ở khối `generated` của `.repo-structure.json`.
+**File được MIỄN chia làm HAI LOẠI:**
 
-`FEATURE-PARITY.md` **cố ý không** nằm trong đó — mục 2 của nó là chữ của người, nên chạm nó
-vẫn phải giữ `_root`. Chi tiết ở mục 6.
-
-**File được MIỄN chia làm HAI LOẠI, và điều kiện khác nhau:**
-
-- **Miễn vô điều kiện:** `.agents/claims.json`. Nhận/trả quyền là thao tác hành chính — không
-  miễn thì không ai trả lại được quyền, vì chính thao tác trả cũng bị coi là sửa file gốc.
-- **Miễn KHI CHỈ THÊM DÒNG Ở CUỐI:** `HANDOFF.md` gốc (luật mục 7 bắt MỌI phiên ghi Log),
-  `IDEAS.md` (Đức chốt 04/09 — vai điều phối là vai ghi ý tưởng nhiều nhất, mà sổ nằm ở gốc nên
-  nó phải xếp hàng sau `_root`, khoá đông nhất), và `BACKLOG.md` gốc (Đức chốt 06/09 — sổ nợ hạ
-  tầng của AI, tách khỏi `IDEAS.md` là sổ ý tưởng của Đức). Sửa hay xoá dòng cũ là viết lại chữ
-  của phiên khác, và cái đó **không** được miễn.
-
-  **`BACKLOG.md` phải được miễn y hệt `IDEAS.md`, không kém một chút nào.** Đo 06/09: `IDEAS.md`
-  có 19 mục thì 14 là AI tự ghi, vì gốc repo không có sổ nợ nào và `IDEAS.md` là quyển duy nhất ở
-  gốc ghi được không cần khoá. Nếu sổ mới đòi khoá `_root` thì AI sẽ lách về `IDEAS.md` và ta chỉ
-  **đổi chỗ** cái bệnh. Kèm theo: sổ đó **đóng mục bằng cách thêm một dòng ở cuối**, không sửa
-  khối cũ — để cửa ra rẻ ngang cửa vào (ở `IDEAS.md` cửa vào dùng 20 lần, cửa ra 1 lần).
+- **Miễn vô điều kiện:** `.agents/claims.json` — không miễn thì chính thao tác trả quyền cũng bị
+  coi là sửa file gốc.
+- **Miễn KHI CHỈ THÊM DÒNG Ở CUỐI:** `HANDOFF.md` gốc · `IDEAS.md` · `BACKLOG.md` gốc. Ba quyển
+  này mọi lane đều phải ghi, nên bắt xếp hàng sau `_root` là tự chặn luật của mình. **Sửa hay
+  xoá dòng cũ thì KHÔNG được miễn** — nhưng nếu bạn đang **giữ khoá** đúng file đó thì được, vì
+  miễn khoá nghĩa là "không cần khoá", không nghĩa là "có khoá cũng không được". Cửa RA của sổ
+  cũng chỉ là **thêm một dòng ở cuối**, đừng sửa khối cũ.
 
 Danh sách loại thứ hai khai ở `append_only_exempt` trong `.repo-structure.json` — **sửa ở đó,
-đừng sửa script**. Trước 04/09 nó bị gõ cứng ở cả `session-check.mjs` và `safe-push.mjs`, và hai
-bản sao của một luật đã trả hai câu khác nhau cho cùng một file ngày 02/09.
+đừng sửa script**: hai bản sao của một luật đã trả hai câu khác nhau cho cùng một file.
 
-Đây không phải hình thức. Ngày 25–26/08 đã suýt hỏng vì hai phiên AI cùng làm trên một repo, và
-ngày 02/09 đo được **98 trong 127 commit (77%) chạm gốc repo** — một khoá duy nhất là điểm nghẽn
-thật, không phải lý thuyết.
+> **Vì sao từng luật trên tồn tại, kèm ngày nó nổ và số đo:** `docs/protocols/MULTIFLOW.md` mục 4
+> (sáu bất biến) và các ADR được nhắc tên. Ở đây cố ý chỉ giữ **luật và câu lệnh** — giới hạn ⑦.
+
 
 ## 2. Ba việc PHẢI hỏi Đức trước
 
@@ -193,84 +131,56 @@ thật, không phải lý thuyết.
 Ngoài ra, luật gốc của Đức: không gửi gì ra ngoài, không xoá file, không sửa dữ liệu gốc,
 không tạo automation tự chạy — nếu chưa hỏi.
 
-**Commit và push được tự làm** — Đức chốt 2026-08-26, áp cho MỌI AI — nhưng chỉ khi đủ
-cả ba điều kiện:
+**Commit và push được tự làm** (Đức chốt 26/08, áp cho MỌI AI) — nhưng chỉ khi đủ cả ba: ⑴ việc
+hoàn tất trọn vẹn, việc dở dang thì KHÔNG push · ⑵ cổng kiểm XANH TOÀN BỘ, và với code thì đã qua
+audit độc lập · ⑶ đẩy bằng `safe-push.mjs`. Lý do Đức đổi luật: Đức không đọc được code local, GPT
+audit qua GitHub connector, nên commit chưa push là **vô hình** với vòng kiểm tra chéo.
 
-1. việc đã hoàn tất trọn vẹn (việc dở dang thì KHÔNG push);
-2. cổng kiểm `session-check.mjs` XANH TOÀN BỘ (và với code: đã qua audit độc lập);
-3. đẩy bằng `safe-push.mjs`, không bao giờ `git push` trần.
-
-Lý do Đức đổi luật: Đức không đọc được code local; GPT audit qua GitHub connector, nên
-commit chưa push là **vô hình** với vòng kiểm tra chéo. Push sớm = được audit sớm.
-
-**Từ 05/09 `--carry` KHÔNG còn phải hỏi** — Đức duyệt thường trực
-([ADR-0005](docs/adr/0005-duyet-thuong-truc-cho-push-va-carry.md)): mô hình một cửa khiến các
-lane chưa push gần như luôn là executor do chính phiên điều phối giao, và đo trong hai ngày
-04–05/09 thì cửa đó **chặn 6 lượt mà lọc 0 lượt** — một cổng không lọc được gì thì nó là thuế,
-không phải cổng. Đổi lại, **mọi lượt `--carry` phải kể tên lane bị cuốn theo trong nhật ký
-phiên** — đó là thứ duy nhất còn lại để truy, vì lớp chắn cuối đã bỏ. Ba việc vẫn phải hỏi:
-**force-push, sửa lịch sử, merge nhánh vào `main`**.
+**`--carry` KHÔNG phải hỏi** ([ADR-0005](docs/adr/0005-duyet-thuong-truc-cho-push-va-carry.md)) —
+đổi lại, **mọi lượt `--carry` phải kể tên lane bị cuốn theo trong nhật ký phiên**; đó là thứ duy
+nhất còn lại để truy. Ba việc vẫn phải hỏi: **force-push, sửa lịch sử, merge nhánh vào `main`**.
 
 **MỌI commit phải có dòng cuối `Lane: <tên-phiên>`** — đúng tên bạn đưa cho `--as`, một dòng,
-không dấu cách. Thiếu nhãn thì cổng đóng phiên ĐỎ **và `safe-push` từ chối đẩy** (từ 03/09) —
-`--carry` không mở được cửa đó, vì nó duyệt "đẩy kèm việc của X" mà commit không nhãn thì không có X.
-
-Vì sao: nhiều phiên chung một nhánh, nên `safe-push` phải biết commit nào của ai. Không nhãn
-thì nó đoán theo **chủ vùng lúc chạy** — mà chủ đổi được sau lúc commit, nên nó quy sai **cả
-hai chiều**: chặn oan việc bạn, hoặc **im lặng cuốn việc người khác lên remote** (đã xảy ra
-26/08, xem mục 0). Nhãn là **nguồn gốc, không phải quyền** — ai được ghi vẫn do mục 1 quyết.
-Nhãn hỏng (rỗng · có dấu cách · hai nhãn trong một commit) thì ĐỎ, không đoán; sửa bằng
+không dấu cách. Thiếu nhãn thì cổng ĐỎ **và `safe-push` từ chối đẩy**; `--carry` không mở được cửa
+đó, vì nó duyệt "đẩy kèm việc của X" mà commit không nhãn thì không có X. Nhãn là **nguồn gốc,
+không phải quyền** — ai được ghi vẫn do mục 1 quyết. Không nhãn thì `safe-push` phải đoán theo chủ
+vùng *lúc chạy*, mà chủ đổi được sau lúc commit, nên nó quy sai **cả hai chiều**: chặn oan việc
+bạn, hoặc im lặng cuốn việc người khác lên remote. Nhãn hỏng thì ĐỎ, không đoán —
 `git commit --amend`.
 
 ## 3. Năm luật vàng — và bảy giới hạn cứng
 
-**Bảy giới hạn Đức chốt 2026-09-07.** Lý do, **đo lại bảy ngày** (`--since=2026-08-31`, phân
-loại ưu tiên mã extension trước): trong **738 commit** chỉ **78 (11%)** chạm mã extension chạy
-thật, còn **468 (63%)** chạm tài liệu + sổ nợ và **142 (19%)** chạm artifact + bảng quyền. Hệ
-đang tự bảo trì chính nó, nên từ nay **xoá là thắng, thêm là thua**.
+**Bảy giới hạn Đức chốt 2026-09-07.** Lý do, **đo lại bảy ngày**: trong **738 commit** chỉ **78
+(11%)** chạm mã extension chạy thật, còn **468 (63%)** chạm tài liệu + sổ nợ và **142 (19%)** chạm
+artifact + bảng quyền. Hệ đang tự bảo trì chính nó, nên từ nay **xoá là thắng, thêm là thua**.
+Bảy giới hạn dưới đây đứng trên **tỉ lệ commit**, không trên số dòng — đừng dẫn lại câu *"hạ tầng
+lớn hơn mã sản phẩm"* của bản giao việc gốc, đếm lại thì mã `workers/` **hơn gấp đôi** hạ tầng.
 
-> **Đừng dẫn lại câu *"hạ tầng lớn hơn mã sản phẩm"*** của bản giao việc gốc (44.239 > 38.136):
-> đếm lại bằng Node ra hạ tầng **45.200** dòng, mã `workers/` **89.262** — sản phẩm **hơn gấp
-> đôi**. Con số cũ sinh ra vì `wc -l` với hàng trăm đường dẫn **vượt trần đối số** rồi trả tổng
-> của mẻ cuối. Bảy giới hạn dưới đây đứng trên **tỉ lệ commit**, không trên số dòng.
-
-1. **KHÔNG CÒN TRẦN SỐ GÓI — Đức mở băng toàn bộ 2026-09-08.** Nguyên văn: *"tôi mở băng để
-   chuẩn bị làm các extension đó."* Cả năm gói đều SỐNG: `duc-scouter` · `hnx-fetch` ·
-   `duc-auto-chatgpt` · `duc-auto-gemini` · `duc-auto-gg-flow-video`. Ghi ở
-   [ADR-0024](docs/adr/0024-mo-bang-toan-bo-nam-goi.md).
-   **Cơ chế đóng băng KHÔNG bị gỡ** — khối `frozen` để rỗng, không xoá. Nó là công tắc Đức bật
-   lại được, và cái đắt là *cách làm* (đã ghim, đã vào bản đồ việc mục B2), không phải danh sách.
-   **Cái mất khi mở băng, biết trước:** trần này là thứ duy nhất chặn số gói phình. Nay chặn nằm
-   ở **giới hạn ⑥ (tối đa 2 chat)** và ở **giới hạn ② (cấm fork)** — hai cái đó phải gánh thay,
-   nên đừng nới tiếp cái nào trong hai.
-2. **Cấm cài một tính năng hai lần.** Cần ở hai gói → vào `workers/_shared/` trước. Bằng chứng:
-   ba gói `duc-auto-*` là fork của nhau, **82.252 dòng** (không phải 37.601 như bản giao việc
-   ghi), ba file `sidepanel.js` riêng dài **6.451 · 5.230 · 5.206** dòng — nên mỗi lỗi phải sửa
-   ba lần, và 07/09 đúng ba lần (phép kiểm zoom di sản, `N-14`).
-3. **`docs/` ≤ 8.000 dòng — ĐÍCH, và một THƯỚC CÓC canh đường đi.** Nay **17.838** (kể ADR),
-   xuống từ 26.104 sáng 08/09 sau lượt xoá 14 hồ sơ `EXP-*` Đức duyệt ([ADR-0024] cùng phiên).
-   Đích 8.000 là chữ; thứ **máy canh** là `docs.tran_dong_khong_ke_adr` trong
-   `.repo-structure.json` — con số của HÔM NAY, không kể ADR. Phép kiểm *"Kho chữ không
-   phình"* của cổng đóng phiên ĐỎ khi vượt. **Dọn thêm thì HẠ con số đó xuống**; cổng tự nhắc
-   khi bạn đã dưới thước ≥ 50 dòng. Vì sao không để máy canh thẳng 8.000: một phép kiểm đỏ với
-   MỌI phiên trong nhiều tuần là một phép kiểm sẽ bị gỡ — chính giới hạn ④ dưới đây đã phải
-   nâng trần SAU KHI vỡ. Cắt docs cần khoá `_docs`.
-4. **Sổ nợ hạ tầng ≤ 15 mục — từ 08/09 CỔNG CANH THẬT.** Đếm lại, đừng tin dòng này:
-   `node scripts/backlog-check.mjs`. Vượt trần thì phép kiểm *"Sổ nợ dưới trần"* của cổng đóng
-   phiên **ĐỎ**, và cửa ra là **đóng một mục**: thêm dòng `- **ĐÓNG <mã>** · …` ở CUỐI sổ, đừng
-   sửa khối cũ. Trần khai ở `backlog.tran` của `.repo-structure.json` — **sửa ở đó, đừng sửa
-   script**, và **hỏi Đức trước** khi đổi con số. Cho tới 07/09 dòng này tự khai *"trần này KHÔNG
-   có máy cưỡng chế"*, và nó vỡ đúng chỗ mù ấy: mục thứ 11 vào sổ mà **không gì đỏ lên**, nên
-   trần phải nâng 10 → 15 **sau khi đã vỡ**. Con số 15 là của Đức, chỗ vá là cái răng.
+1. **KHÔNG CÒN TRẦN SỐ GÓI — Đức mở băng toàn bộ 08/09**, cả năm gói đều SỐNG
+   ([ADR-0024](docs/adr/0024-mo-bang-toan-bo-nam-goi.md)). Cơ chế đóng băng **không bị gỡ**:
+   khối `frozen` để rỗng, không xoá — nó là công tắc Đức bật lại được. Cái mất, biết trước:
+   trần này là thứ duy nhất chặn số gói phình, nay **giới hạn ⑥ và ② phải gánh thay** — đừng
+   nới tiếp cái nào trong hai.
+2. **Cấm cài một tính năng hai lần.** Cần ở hai gói → vào `workers/_shared/` trước. Ba gói
+   `duc-auto-*` là fork của nhau (**82.252 dòng**, ba `sidepanel.js` riêng dài 6.451 · 5.230 ·
+   5.206), nên mỗi lỗi phải sửa ba lần — 07/09 đúng ba lần (`N-14`).
+3. **`docs/` ≤ 8.000 dòng — ĐÍCH, và một THƯỚC CÓC canh đường đi.** Đích là chữ của Đức; thứ
+   **máy canh** là `docs.tran_dong_khong_ke_adr` — con số của HÔM NAY, không kể ADR. Cổng ĐỎ khi
+   vượt, và tự nhắc HẠ con số khi bạn đã dưới thước ≥ 50 dòng. Vì sao không canh thẳng 8.000: một
+   phép kiểm đỏ với MỌI phiên trong nhiều tuần là một phép kiểm sẽ bị gỡ. Cắt docs cần khoá `_docs`.
+4. **Sổ nợ hạ tầng ≤ 15 mục.** Đếm lại, đừng tin dòng này: `node scripts/backlog-check.mjs`.
+   Vượt trần thì cổng ĐỎ; cửa ra là **đóng một mục** — thêm dòng `- **ĐÓNG <mã>** · …` ở CUỐI sổ.
+   Trần khai ở `backlog.tran`, **hỏi Đức trước** khi đổi. Cho tới 07/09 mục này tự khai *"không
+   có máy cưỡng chế"* và nó vỡ đúng chỗ mù ấy: trần phải nâng 10 → 15 **sau khi đã vỡ**.
 5. **File test bắt 0 đột biến thì XOÁ.** Một phép kiểm không bắt được gì vẫn thu thuế mọi phiên.
-6. **Song song thì tối đa 2 chat** — Đức nói rõ 07/09: *"lane ở đây tôi hiểu là 2 phiên chat với
-   AI; trong 1 chat mà bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn
-   ok"*. Nên **số tác vụ ngầm TRONG một chat không bị giới hạn**; bảng quyền chỉ để điều phối
-   những bên **không nói được với nhau**. Bảy khoá dựng cho sáu chat → phải co lại (`N-36`).
+6. **Song song thì tối đa 2 chat.** Đức nói rõ 07/09: *"lane ở đây tôi hiểu là 2 phiên chat với
+   AI; trong 1 chat mà bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn ok"*
+   — nên **số tác vụ ngầm TRONG một chat không bị giới hạn**.
 7. **Một luật vào thì một luật ra.** Thêm luật vào file này phải **kể tên luật nó thay**, hoặc
-   **đo được nó đã nổ mấy lần**. Mục này đổi lấy **chín dòng sổ tay** của ba gói đóng băng và
-   **một khối bảng đối chiếu bị chép hai lần** (nó nói lại đúng điều dòng sổ tay đã nói) —
-   `wc -l AGENTS.md`: **296 → 291**.
+   **đo được nó đã nổ mấy lần**. Và nay có máy canh: `agents.tran_dong` trong
+   `.repo-structure.json`, cùng kiểu thước cóc như ③ — cổng ĐỎ khi file này DÀI RA. Vì sao cần:
+   giới hạn này ra đời 07/09 với `wc -l` **291**, và trong hai ngày file phình lên **402** mà
+   không gì kêu. **Chỗ để kể chuyện là ADR, không phải đây** — hiến pháp giữ luật và câu lệnh.
 
 ### Năm luật vàng
 
@@ -285,18 +195,15 @@ thật, còn **468 (63%)** chạm tài liệu + sổ nợ và **142 (19%)** ch�
 
 ## 4. Vùng cấm sửa
 
-- `pilot-*/`, `Pilot-*/`, `Batch-*/`, `evidence/` — **bằng chứng vận hành**. Chỉ được THÊM mới,
-  không sửa, không xoá, không tạo lại.
+- `pilot-*/`, `Pilot-*/`, `Batch-*/`, `evidence/` — **bằng chứng vận hành**: chỉ được THÊM mới, không sửa, không xoá, không tạo lại.
 - Không bao giờ để token / mật khẩu / file pairing vào repo.
 - Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.
 
 ## 5. Vai từng AI — chia theo VIỆC, không chia theo hãng
 
-**Đức chốt 08/09.** Bảng cũ chia việc theo tên hãng (Claude / Codex / Antigravity) — **đi ra**, vì
-đo được nó phân việc cho hai bên **chưa từng ghi một dòng nào**. Đếm nhãn `Lane:` của mọi commit
-14 ngày (`git log --since=2026-08-25 --format=%B | grep -oE "^Lane: \S+" | sort -u`): tất cả là
-`claude-*`; `claude-codex-*` và `claude-gpt-*` là **phiên Claude làm việc với** Codex/GPT, không
-phải Codex tự ghi. **Antigravity 0 · Codex 0.**
+**Đức chốt 08/09 ([ADR-0017](docs/adr/0017-hai-vai-assistant-thay-the-mot-cua.md)).** Bảng cũ chia
+việc theo tên hãng (Claude / Codex / Antigravity) — **đi ra**, vì đếm nhãn `Lane:` của mọi commit
+14 ngày thì **Antigravity 0 · Codex 0**: nó phân việc cho hai bên chưa từng ghi một dòng nào.
 
 Thay bằng **HAI VAI, chia theo hướng đi của việc**. Vai là của **PHIÊN**, không của hãng: hãng nào
 cũng đóng được vai nào, và một phiên đóng **đúng một vai** cho tới khi đóng phiên.
@@ -309,24 +216,16 @@ cũng đóng được vai nào, và một phiên đóng **đúng một vai** cho
 
 **Bất biến chịu tải: người SỬA không tự NGHIỆM THU bản sửa của mình.** Một tờ nghiệm thu do bên bị
 kiểm ký là **lời tự khai, không phải hàng rào** — đúng luật mà `SELF_ATTESTATION` cưỡng chế trong
-lõi quyền, nên đừng đọc nó thành lời khuyên.
-
-**Đừng đọc thành "người sửa không được tìm lỗi".** Vai nào cũng được tìm lỗi ở bất kỳ đâu; tách
-"ai tìm" khỏi "ai sửa" là cấm Vai ① soi chính lõi nó giữ. Thứ phải tách là **người ký** khỏi
-**người sửa** (phiên Codex bác đúng chỗ này 08/09 — bản đầu của mục này viết sai).
+lõi quyền. Nhưng **đừng đọc thành "người sửa không được TÌM lỗi"**: vai nào cũng được tìm lỗi ở
+bất kỳ đâu; thứ phải tách là **người ký** khỏi **người sửa**.
 
 **Bàn giao giữa hai vai chỉ có một hình dạng:** Vai ② ghi chỗ vấp vào `BACKLOG.md` (kèm trường
-`đóng khi:`), Vai ① biến nó thành **bản vá cộng một phép kiểm ghim**. Không có đường nào khác —
-Vai ② nhắn thẳng cho Vai ① *"sửa hộ tôi"* là mất dấu vết, và người đến sau không đọc được tin
-nhắn. Đây là **vế duy nhất máy kiểm được** (`npm run test:backlog` đếm trường `đóng khi:`); phần
-*"② phát hiện · ① sửa"* là **chữ, không phải luật** — nói thẳng ra để không ai tin nó đang được
-cưỡng chế, và mục 7 vốn đã cảnh báo luật máy không kiểm được thì sớm muộn cũng bị bỏ qua.
+`đóng khi:`), Vai ① biến nó thành **bản vá cộng một phép kiểm ghim**. Nhắn thẳng *"sửa hộ tôi"* là
+mất dấu vết. Đây là **vế duy nhất máy kiểm được** (`npm run test:backlog`); phần *"② phát hiện ·
+① sửa"* là **chữ, không phải luật** — nói thẳng ra để không ai tin nó đang được cưỡng chế.
 
-**Hai vai có thể cùng lúc trong repo, nhưng KHÁC VÙNG** (mục 1). Trần song song vẫn là **2 chat**
-(giới hạn ⑥) — hai vai vừa khớp trần đó, không phải trùng hợp.
-
-> **Cố ý KHÔNG thêm:** một quy ước đặt tên `--as` theo vai. Không máy nào kiểm được nó, và mục 7
-> nói luật máy không kiểm được thì sớm muộn cũng bị bỏ qua — thêm vào chỉ để có thêm một dòng.
+**Hai vai có thể cùng lúc trong repo, nhưng KHÁC VÙNG** (mục 1), và vừa khớp trần 2 chat của
+giới hạn ⑥.
 
 **Cửa vào của từng AI** — cách file này đến được tay bạn:
 
@@ -336,10 +235,9 @@ cưỡng chế, và mục 7 vốn đã cảnh báo luật máy không kiểm đ�
 | Codex | Tự đọc `AGENTS.md` gốc | Không phải làm gì |
 | Antigravity | Dán **một câu mở màn**: *"Đọc AGENTS.md ở gốc repo trước khi làm gì."* | Dán 1 dòng mỗi phiên |
 
-Antigravity đã được thử live 26/08: nó đọc file này, tự lần ra `.agents/claims.json`, và tự
-kết luận "package có chủ rồi nên tôi chỉ được đọc" — dù không ai hỏi câu đó. Luật dùng được.
-Nhưng chưa chứng minh được nó **tự** nạp lúc mở phiên, nên câu mở màn là bắt buộc: 3 giây,
-miễn nhiễm với mọi thay đổi phiên bản, và nếu nó vốn tự nạp thì câu đó chỉ thừa vô hại.
+Antigravity thử live 26/08: nó đọc file này và tự kết luận "package có chủ rồi nên tôi chỉ được
+đọc". Luật dùng được — nhưng chưa chứng minh được nó **tự** nạp lúc mở phiên, nên câu mở màn là
+bắt buộc.
 
 ## 6. Sổ tay mở khi cần — Tầng 2
 

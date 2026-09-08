@@ -1026,6 +1026,26 @@ check("Khoá file đã trả hết", () => {
   };
 });
 check("Kho chữ không phình", () => {
+  /* HIẾN PHÁP TRƯỚC, `docs/` SAU — vì nó đắt hơn nhiều lần. `docs/` có 65 file mà một phiên
+     chỉ mở 1–3 file theo việc; `AGENTS.md` thì MỌI phiên nạp trọn, trước cả khi biết mình sắp
+     làm gì. Đo 09/09: cắt `docs/` từ 26.104 xuống 12.396 trong một ngày gỡ được ĐÚNG 0 dòng
+     khỏi cái phải nạp. Đo đúng cái người ta than, đừng đo cái dễ đếm. */
+  const tranAgents = structure?.agents?.tran_dong;
+  if (typeof tranAgents === "number") {
+    let dongAgents = null;
+    try { dongAgents = fs.readFileSync(path.join(ROOT, "AGENTS.md"), "utf8").split(String.fromCharCode(10)).length - 1; }
+    catch { /* repo chưa có AGENTS.md (kho thử) — không đo được KHÁC không đạt */ }
+    if (dongAgents !== null && dongAgents > tranAgents) {
+      return {
+        ok: false,
+        msg: "HIEN_PHAP_PHINH: AGENTS.md " + dongAgents + " dòng, thước cóc là " + tranAgents
+          + " — thêm " + (dongAgents - tranAgents) + ". Giới hạn ⑦ của chính file đó bắt: MỘT LUẬT VÀO"
+          + " THÌ MỘT LUẬT RA. Ba cửa ra: lấy một luật ra · chuyển phần kể chuyện (đo được bao nhiêu,"
+          + " vấp ở đâu) sang một ADR rồi để lại một dòng trỏ sang · phần thêm cần thiết thật thì nâng"
+          + " `agents.tran_dong` VÀ nói vì sao trong nhật ký phiên.",
+      };
+    }
+  }
   const tran = structure?.docs?.tran_dong_khong_ke_adr;
   if (typeof tran !== "number") {
     return { ok: true, msg: "Repo chưa khai `docs.tran_dong_khong_ke_adr` — không có thước thì không đo." };
