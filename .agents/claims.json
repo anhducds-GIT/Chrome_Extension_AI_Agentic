@@ -71,11 +71,11 @@
       "duc_decision": "2026-09-07, Duc chot hai luot: (a) _root — \"cho chuyen _root\", de land not nua con lai cua ADR-0014 dang chan 26 commit cua 5 lane; (b) _code — \"ban trien khai cong viec luon di ... Toi cho ban khoa de trien khai\", lane claude-bang-vung-chac da bao xong tu 3h truoc, chuyen cho lane refactor IA cua bang"
     },
     "workers/duc-scouter": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T08:56",
-      "task": "S-15 va phanh: chep ban va hai loi dua sang Scouter; dong S-11 theo chot cua Duc",
-      "released_at": "2026-09-08T09:19"
+      "owner": "claude-scouter-s06",
+      "ai": "Claude",
+      "claimed_at": "2026-09-08T09:28",
+      "task": "Ket so Scouter: dong S-10 va S-14 da xong tu truoc ma chua ai dong",
+      "released_at": null
     },
     "workers/_shared": {
       "owner": null,
@@ -85,12 +85,12 @@
       "released_at": "2026-09-07T17:18"
     },
     "workers/hnx-fetch": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T05:15",
       "task": "Khai sinh HNX Fetch: extension doc lap chi fetch, tach khoi Scouter",
-      "released_at": null
+      "released_at": "2026-09-08T09:26"
     }
   },
-  "_fingerprint": "1a4c36c68aa71d79"
+  "_fingerprint": "13b5f9d2afd949e6"
 }

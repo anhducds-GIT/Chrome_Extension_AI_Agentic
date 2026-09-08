@@ -17,6 +17,12 @@ import { fileURLToPath } from "node:url";
 
 import { dangMo, docMuc, docMucDaGo, DONG_DOI_MA, kiemSo, thieuDongKhi, trungMa, TRUONG_DONG_KHI } from "../scripts/backlog-check.mjs";
 
+/* CHUOI TEST THAT. Tu khi `test` tro sang bo chay song song, chuoi that nam o `test:tuan-tu`
+   va bo chay doc `test:tuan-tu ?? test`. Hoi `test` khong thoi thi phep ghim chi thay MOT dong
+   goi bo chay, va no se DO oan — hoac te hon: mot ngay ai do doi lai thanh chuoi thang thi no
+   im lang thoi soi gi ca. */
+const chuoiTestThat = (pkg) => String(pkg.scripts?.["test:tuan-tu"] ?? pkg.scripts?.test ?? "");
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BO_KIEM = path.join(ROOT, "scripts", "backlog-check.mjs");
 let passed = 0;
@@ -116,11 +122,11 @@ const muc = (ma, dongKhi) => so(
 {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
   const GOI = "scripts/backlog-check.mjs";
-  assert.ok(String(pkg.scripts.test).includes(GOI),
+  assert.ok(chuoiTestThat(pkg).includes(GOI),
     "scripts.test phai con goi backlog-check.mjs — go no ra la luat bien mat trong im lang");
   assert.ok(String(pkg.scripts["test:backlog"] ?? "").includes(GOI),
     "scripts.test:backlog phai goi backlog-check.mjs, khong duoc giu ban sao thu hai cua cung mot luat");
-  assert.ok(String(pkg.scripts.test).includes("tests/backlog-check-smoke.mjs"),
+  assert.ok(chuoiTestThat(pkg).includes("tests/backlog-check-smoke.mjs"),
     "scripts.test phai chay ca phep ghim nay — mot phep ghim khong ai chay thi cung chi la binh luan");
   ok("package.json con goi bo kiem VA phep ghim cua no");
 }

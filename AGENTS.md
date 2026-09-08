@@ -17,6 +17,23 @@ node scripts/session-check.mjs --as <tên-phiên-của-bạn>
 
 Không được báo "xong" khi cổng kiểm chưa xanh. Không được tự sửa cổng kiểm cho nó xanh.
 
+### 0b. THỨ TỰ ĐÓNG PHIÊN — sai thứ tự là tự nhân đôi thời gian
+
+`sửa → commit → sinh lại artifact → commit → npm run test:song-song → cổng → safe-push`
+
+- **`npm run test:song-song` chạy SAU commit.** Bộ chạy (`scripts/chay-test.mjs`) để lại một *dấu xác nhận*
+  buộc vào HEAD + băm cây làm việc + môi trường; cổng thấy dấu còn hiệu lực thì **không chạy lại
+  suite**. Commit sau khi chạy là đổi cây → dấu hỏng → cổng chạy lại từ đầu.
+- **Trong lúc làm đừng chạy đủ bộ** — `node scripts/chay-test.mjs --chi <tên-suite>`, cố ý KHÔNG
+  ghi dấu. Đủ bộ chạy **một lần**, ở cuối.
+- **`npm test` vẫn là chuỗi TUẦN TỰ, cố ý.** Một phép ghim trong gói đã đóng băng đọc thẳng
+  `scripts.test` để bắt "xanh giả", và gói đóng băng thì chỉ-đọc — nên đường nhanh mang tên
+  riêng thay vì chiếm chỗ của `test`.
+- **Bộ sinh nào ghi vào một sổ CÓ RÀNG BUỘC thì chạy MỘT LẦN, sau khi suite xanh.**
+
+Đo 08/09 ở bộ khung, cùng cơ chế: một vòng **1.095 giây → 278 giây**. Đây là luật, không phải lời
+khuyên — thói quen "chạy cho chắc" là thứ đắt nhất trong ngày làm việc của một phiên AI.
+
 **Push thì KHÔNG dùng `git push`** — dùng:
 
 ```bash

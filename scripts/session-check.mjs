@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import { fingerprintState, FINGERPRINT_FIELD, readClaims, VO_DAU } from "./claim.mjs";
 import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
 import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, chonSuiteBoDongBang, claimPrefixesFrom, DAU_VET, dauVetTheoVung, frozenFrom, generatorsFrom, handoffCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { bamLenh, danhSachSuite, dauCay, docDau, xetDau } from "./chay-test.mjs";
 import { dangMo } from "./backlog-check.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
@@ -169,7 +170,11 @@ const ownedBy = (area) => CLAIMS?.[area]?.owner ?? null;
  */
 const rootSuiteParts = () => {
   let raw = "";
-  try { raw = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))?.scripts?.test ?? ""; }
+  /* Đọc `test:tuan-tu` TRƯỚC. Từ khi `test` trỏ sang bộ chạy song song, chuỗi thật nằm ở
+     `test:tuan-tu` — hỏi `test` không thôi thì cổng chỉ thấy MỘT lệnh, và mất sạch lớp quy đỏ
+     theo từng suite mà K2-9 dựng ra. */
+  try { const sc = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))?.scripts ?? {};
+        raw = sc["test:tuan-tu"] ?? sc.test ?? ""; }
   catch { return []; }
   return String(raw).split("&&").map((s) => s.trim()).filter(Boolean);
 };
@@ -487,8 +492,18 @@ check("Test xanh", () => {
    * Bệnh ở cây thì thuốc phải áp cho mọi thứ chạy trên cây đó. Nên hai vòng lặp gộp thành
    * một danh sách lệnh, và một đường xử lý lỗi duy nhất — ít code hơn bản cũ.
    */
+  /* DÙNG LẠI LƯỢT CHẠY VỪA XONG, THAY VÌ CHẠY LẠI Y HỆT.
+   *
+   * Đo 08/09 ở repo này: chuỗi suite 241,7s, và cổng chạy lại đúng chuỗi đó — một vòng làm việc
+   * tốn ~8,5 phút, nửa sau không kiểm thêm gì.
+   *
+   * KHÔNG NỚI LỚP BẢO VỆ: dấu buộc vào HEAD + băm `git status --porcelain -uall` + danh sách
+   * suite + môi trường (bản Node) + hạn 30 phút. Sửa một byte ở bất kỳ file nào, kể cả file
+   * chưa track, là dấu hết hiệu lực. Suite đỏ thì bộ chạy XOÁ dấu. Dấu nằm trong `.gitignore`
+   * nên không mượn được của máy khác. Đường chạy đầy đủ vẫn còn nguyên ngay dưới. */
+  const xetDauSuite = rootSuite ? xetDau(docDau(ROOT), dauCay(ROOT), bamLenh(danhSachSuite(ROOT))) : { dung: false };
   const menhLenhDay = [
-    ...(rootSuite ? rootSuiteParts().map((cmd) => ({ cmd, nhan: null })) : []),
+    ...(rootSuite && !xetDauSuite.dung ? rootSuiteParts().map((cmd) => ({ cmd, nhan: null })) : []),
     ...suites.map((suite) => ({ cmd: `node "${suite}"`, nhan: suite }))
   ];
   /* GÓI ĐÓNG BĂNG: bỏ suite của chúng khi không ai chạm — giới hạn ① Đức chốt 07/09.
@@ -518,7 +533,11 @@ check("Test xanh", () => {
     if (nhan) lines.push(`${nhan}: ${(out.trim().split(NEWLINE).pop() || "").trim()}`);
     else totals.push(...out.split(NEWLINE).filter((line) => /[0-9]+ passed, [0-9]+ failed/.test(line)));
   }
-  if (rootSuite) lines.unshift(`suite gốc repo: ${totals.length ? totals.join(" · ") : "chạy xong"}`);
+  if (rootSuite) {
+    lines.unshift(xetDauSuite.dung
+      ? `suite gốc repo: DÙNG LẠI DẤU — ${xetDauSuite.vi_sao}`
+      : `suite gốc repo: ${totals.length ? totals.join(" · ") : "chạy xong"}`);
+  }
   if (suiteDongBang.length) {
     const goi = [...new Set(suiteDongBang.map((m) => m.goi))];
     lines.push(`bỏ qua ${suiteDongBang.length} suite của ${goi.length} gói ĐÃ ĐÓNG BĂNG (${goi.join(" · ")})`

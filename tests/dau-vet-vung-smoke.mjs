@@ -22,6 +22,12 @@ import { fileURLToPath } from "node:url";
 
 import { CHUA_THAY_DAU_VET, DAU_VET, dauVetTheoVung, dauVetThuan, mocMs } from "../scripts/repo-structure.mjs";
 
+/* CHUOI TEST THAT. Tu khi `test` tro sang bo chay song song, chuoi that nam o `test:tuan-tu`
+   va bo chay doc `test:tuan-tu ?? test`. Hoi `test` khong thoi thi phep ghim chi thay MOT dong
+   goi bo chay, va no se DO oan — hoac te hon: mot ngay ai do doi lai thanh chuoi thang thi no
+   im lang thoi soi gi ca. */
+const chuoiTestThat = (pkg) => String(pkg.scripts?.["test:tuan-tu"] ?? pkg.scripts?.test ?? "");
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -128,7 +134,7 @@ const CHU_CAM = ["rảnh", "nhàn", "không làm gì", "khong lam gi", "ranh roi
        một file thì repo tạm chết vì ERR_MODULE_NOT_FOUND, và cái chết đó trông y hệt một phép
        kiểm hỏng. */
     for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "check-bootstrap.mjs",
-                        "claim.mjs", "what-next.mjs", "build-dashboard.mjs", "feature-parity.mjs", "backlog-check.mjs"]) {
+                        "claim.mjs", "what-next.mjs", "build-dashboard.mjs", "feature-parity.mjs", "backlog-check.mjs", "chay-test.mjs"]) {
       copyFileSync(join(ROOT, "scripts", name), join(temp, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
@@ -240,7 +246,7 @@ const CHU_CAM = ["rảnh", "nhàn", "không làm gì", "khong lam gi", "ranh roi
  * `scripts.test` là cả cơ chế trên biến mất trong im lặng, và mọi test vẫn xanh. */
 {
   const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
-  assert.ok(String(pkg.scripts.test).includes("tests/dau-vet-vung-smoke.mjs"),
+  assert.ok(chuoiTestThat(pkg).includes("tests/dau-vet-vung-smoke.mjs"),
     "scripts.test phai con goi phep ghim nay — go no ra la co che bien mat trong im lang");
   ok("package.json con goi phep ghim nay");
 }

@@ -189,5 +189,16 @@
   "backlog": {
     "_doc": "Tran so no ha tang. Cong dong phien DO khi so muc DANG MO vuot tran. Muc dong bang dong \"- **DONG <ma>**\" them o CUOI so, khong gach tieu de. Doi con so nay phai hoi Duc.",
     "tran": 15
+  },
+  "test": {
+    "_doc": "Suite nao PHAI chay MOT MINH. Bo chay scripts/chay-test.mjs chay song song nhung suite con lai; suite doc git cua CAY LAM VIEC CHINH thi hai tien trinh tranh index.lock va bao ra mot loi NOI DUNG trong y het loi that.",
+    "_khong_sao_neu_thieu": "Khai sot khong nguy hiem: bo chay tu chay lai MOT MINH moi suite do truoc khi ket luan.",
+    "serial": [
+      "eol-lf-smoke.mjs",
+      "claim-smoke.mjs",
+      "dau-vet-vung-smoke.mjs",
+      "push-gate-artifact-smoke.mjs",
+      "bang-ba-cua-smoke.mjs"
+    ]
   }
 }

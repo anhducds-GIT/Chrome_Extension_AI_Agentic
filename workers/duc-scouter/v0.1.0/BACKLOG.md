@@ -308,3 +308,18 @@ tái hiện được hai ca đua, và hai con đột biến hoàn nguyên bản 
   tắt: ranh giới tấn công là loopback trên máy cá nhân, hai gói đang đóng băng, và hai gói SỐNG
   đều đã dùng lõi chung có bắt tay hai chiều. **Mở băng một trong hai gói thì ADR đó hết hiệu lực**
   và gói được mở phải chuyển sang `workers/_shared/bridge-host/` ngay trong lượt mở.
+
+- **ĐÓNG S-10** (2026-09-08, `claude-scouter-s06`) · Đóng muộn — việc xong từ 08/09 mà không ai
+  ghi dòng này. Điều kiện đóng đòi **5 ngày giao dịch liên tiếp**; thực tế đã chạy **46 ngày liền
+  mạch** 01/07 → 07/09, ra **216 tệp PDF** và **368 hàng** CSV, 0 lỗi. Ba tính chất bắt buộc đều
+  có phép ghim dựng máy chủ giả: `vong-lay-smoke.mjs` khối ① (năm ngày → năm tệp) · ② (lượt hai
+  không tải lại) · ③ (đứt giữa chừng thì chạy tiếp từ ngày còn thiếu).
+  **Việc này nay KHÔNG còn ở Scouter**: pilot đã chuyển nhà sang `workers/hnx-fetch` ngày 08/09
+  ([ADR-0021](../../../docs/adr/0021-hnx-fetch-tach-thanh-extension-rieng.md)), phép ghim trên
+  cũng nằm ở đó. Nợ hnx còn lại (`S-12`) theo nhà mới, không ở lại sổ này.
+
+- **ĐÓNG S-14** (2026-09-08, `claude-scouter-s06`) · Đóng muộn — mục này **đã được sửa từ trước**
+  mà sổ không ai đóng. Ba câu báo lỗi trong `scouter-seed-core.mjs` nay nói đúng cửa
+  (*"ở đầu BẢNG BÊN"*, không còn *"trong popup"*) và đúng tên công tắc (*"Cho phép bấm và gõ"*).
+  Phép ghim khối ⑲ của `scouter-write-gate-smoke.mjs` **đọc nhãn thật từ `sidepanel.html`** chứ
+  không gõ lại chuỗi — nên đổi nhãn ở bảng bên mà quên sửa câu lỗi thì nó đỏ.

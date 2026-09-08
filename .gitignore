@@ -36,3 +36,6 @@ nul
 bang-trang-thai/BANG.html
 bang-trang-thai/trang-thai.json
 bang-trang-thai/DUNG.txt
+
+# Dau xac nhan suite — cua MAY NAY, khong di theo repo (scripts/chay-test.mjs)
+.ark-suite-stamp.json
