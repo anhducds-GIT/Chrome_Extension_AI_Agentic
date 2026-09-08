@@ -267,3 +267,29 @@ Chưa sửa ngay vì sửa xong phải nạp lại extension, mà lúc đó Đ�
 · **đóng khi:** câu đó nói đúng tên cửa ("bảng bên") và đúng tên công tắc, kèm một phép ghim
 so chữ trong thông báo với nhãn thật trong `sidepanel.html` — để hai bên không lệch lại lần
 nữa khi ai đó đổi nhãn.
+
+---
+
+## MỞ · S-15 (2026-09-08, `claude-scouter-s06`) — Scouter có cùng hai lỗi đua của khối phanh
+
+Audit độc lập ngày 08/09 tìm ra hai lỗi trong `scouter-seed-core.mjs` của gói `hnx-fetch` —
+mà **khối phanh ở đó chép từ đây**, nên Scouter có y hệt:
+
+⑴ **Phanh khẩn bị HỒI SINH.** `spendWriteBudget()` ghi `{ ...gate, used }`, tức chở theo
+`enabled: true` đọc từ TRƯỚC. `Ctrl+Shift+X` rơi vào giữa lượt đọc và lượt ghi thì chính lượt
+trừ ngân sách **bật lại cái công tắc vừa tắt**. Đây là hỏng đúng chỗ cái phanh phải chắc nhất,
+và Scouter còn nguy hơn `hnx-fetch` vì nó có `<all_urls>` và ba lệnh bấm thật.
+
+⑵ **Trần 200 bị vượt khi nhiều lượt chồng nhau.** Đọc rồi ghi là hai lượt tách rời; hai lượt
+cùng đọc `used: 199` rồi cùng ghi `200`, và cả hai đều bấm.
+
+Bản vá đã làm bên `hnx-fetch` và chạy được: một **hàng đợi mức module** dùng chung cho
+`setWriteGate` và `spendWriteBudget`, cộng **ghi từng trường** thay vì trải bản ghi cũ. Chép
+sang đây là việc nhỏ; phần tốn công là phép ghim (hai ca đua) và hai con đột biến.
+
+**Vì sao chưa làm ngay trong lượt này:** đụng khối phanh của Scouter là **đổi luật an toàn**
+(luật gốc mục 2), và lượt này Đức đang ngủ. Không tự ý sửa cái phanh của một gói đang mở
+`<all_urls>`.
+
+**đóng khi:** `scouter-seed-core.mjs` dùng chung một hàng đợi cho hai hàm đó, có hai phép ghim
+tái hiện được hai ca đua, và hai con đột biến hoàn nguyên bản vá đều **giết được**.

@@ -604,3 +604,29 @@ render bằng JS. Nay lý do còn mạnh hơn: Scouter mất pilot duy nhất c�
 chung"* hiện **không còn một trang thật nào** đứng sau.
 
 **Đo.** Suite gói **20/20**. Suite gốc repo 369 → **375** (gói mới nối vào cổng).
+
+## 2026-09-08 · `claude-scouter-s06` — sổ tay khai thiếu 4 lệnh, và nay có phép ghim canh
+
+Rà lại `README.md` của gói: nó viết *"Mười một method"* và liệt kê 11, trong khi mã thật có
+**15**. Bốn cái thiếu: `scout.a11y` · `scout.shot` · `scout.fetch` · `scout.navigate`.
+
+**Hai cái sau chính là hai lệnh mà cả pilot HNX sống bằng nó.** Một AI đọc sổ tay đó sẽ không
+biết `scout.fetch` tồn tại — mà sổ tay này là thứ ta đưa cho AI khác đọc.
+
+**Sổ tay không trôi vì ai lười. Nó trôi vì không gì canh nó:** thêm một method thì cổng kiểm
+xanh, suite xanh, chỉ có một bảng trong tài liệu là lặng lẽ sai đi. Nên bản vá không dừng ở
+việc sửa bảng — thêm `tests/so-tay-khop-tu-vung-smoke.mjs`: nó so **tập tên lệnh** trong bảng
+README với `METHOD_NAMES`, và so cả **con số viết bằng chữ** ở câu dẫn.
+
+> Nó cố ý **không** kiểm câu chữ mô tả — chữ là việc của người. Chỉ kiểm thứ có đúng một câu
+> trả lời đúng. Và nếu bộ đọc bảng markdown khớp **0** lệnh thì phép ghim ĐỎ, không lặng lẽ
+> đạt: *0 lệnh khớp 0 lệnh thiếu* là một lượt tự tắt trông y hệt một lượt chạy tốt.
+
+Thử ngay hai con đột biến bằng tay: đổi số ở câu dẫn → đỏ; xoá một dòng lệnh khỏi bảng → đỏ.
+
+**Cùng lượt này, gói `hnx-fetch` đi qua hai vòng audit độc lập** (Codex, mã và nội dung) và
+vá 6 lỗi mã + 11 chỗ tài liệu. Hai lỗi nặng nhất nằm ở khối phanh — **khối đó chép từ đây**,
+nên Scouter **có cùng hai lỗi**: bản ghi ngân sách trải từ bản ghi cũ (phanh khẩn bị hồi sinh)
+và đọc-ghi không xếp hàng (trần vượt khi chồng lượt). Đã ghi vào `BACKLOG.md` mục `S-15`.
+
+**Đo.** Suite gói **21/21** (trước 20).
