@@ -165,3 +165,16 @@ cứng, và nó sẽ đỏ ở máy thứ hai mà không ai đoán ra vì sao.
 
 **Trạng thái gói: đã đóng gói xong, chờ đúng MỘT việc của Đức** — nạp vào Chrome rồi chạy một
 lượt thật (`H-01`). Mọi thứ đo được từ Node đều đã đo.
+
+## 2026-09-08 · `claude-scouter-s06` — dọn một mảnh tạm lọt vào commit
+
+`bridge/hnx-fetch-host.mjs.khoi` là 18 dòng tôi cắt ra làm bản sao trước khi thay khối
+`canhVungGhi`, và nó bị `git add -A` cuốn theo. Không phải mã sản phẩm, không ai `import`,
+nội dung đã nằm trong bản đã sửa. Đã xoá.
+
+> Ghi ra vì cách nó lọt vào đáng nhớ hơn bản thân nó: `git add -A` trên cả thư mục gói thì
+> **mọi thứ tôi vừa tạo trong lúc sửa đều đi theo**, kể cả thứ tôi không định giữ. Lần sau
+> `git status --short` trước khi `add`, hoặc `add` từng đường dẫn.
+
+**Đo lại sau khi dọn.** Suite gói **9/9** · đột biến **22/22 khớp, 0 sống sót** · 60 tham
+chiếu tài liệu, 0 hỏng.
