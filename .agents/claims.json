@@ -60,22 +60,22 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T07:25",
       "task": "Dashboard: hien danh tinh + nang luc + cach dung cua hai extension",
-      "released_at": null,
+      "released_at": "2026-09-08T07:54",
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
       "duc_decision": "2026-09-07, Duc chot hai luot: (a) _root — \"cho chuyen _root\", de land not nua con lai cua ADR-0014 dang chan 26 commit cua 5 lane; (b) _code — \"ban trien khai cong viec luon di ... Toi cho ban khoa de trien khai\", lane claude-bang-vung-chac da bao xong tu 3h truoc, chuyen cho lane refactor IA cua bang"
     },
     "workers/duc-scouter": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T07:28",
       "task": "Khai ba truong danh tinh vao STATUS cho dashboard",
-      "released_at": null
+      "released_at": "2026-09-08T07:54"
     },
     "workers/_shared": {
       "owner": null,
@@ -92,5 +92,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "68eded0edaae6b15"
+  "_fingerprint": "79e4b6d4db86b122"
 }
