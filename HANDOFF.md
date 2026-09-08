@@ -1851,3 +1851,5 @@ là một phép kiểm sẽ bị gỡ. Chính giới hạn ④ của repo này �
 **Cái mất, ghi ra để bảy ngày nữa còn kiểm được:** trần số gói là thứ duy nhất chặn số mặt phải
 bảo trì, và nó vừa biến mất. Số 07/09 vẫn đúng: **63% commit** là tài liệu + sổ nợ. Nếu tỉ lệ đó
 không giảm thì phanh phải quay lại — và lần đó phải kèm số, không kèm cảm giác.
+
+> **Lượt đẩy này dùng `--carry`, cuốn theo 1 commit của lane `claude-scouter-s06`** (ADR-0005 duyệt thường trực; đổi lại là phải kể tên lane bị cuốn — đây là dòng đó).
