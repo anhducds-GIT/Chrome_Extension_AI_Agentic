@@ -83,6 +83,32 @@ const ACTION_BY_METHOD = Object.freeze({
  * khoá, vẫn phải chính tay Đức bật lại. Một vòng lặp hỏng dừng ở lượt 200 thay vì quay mãi —
  * chậm hơn 50, nhưng vẫn là dừng, và vẫn dừng mà không cần ai canh. */
 const WRITE_GATE_STORAGE_KEY = "scouter.write.gate.v1";
+/* ---- MỘT HÀNG ĐỢI cho MỌI lượt đọc-sửa-ghi bản ghi công tắc ---------------
+ * Audit độc lập 08/09 (Codex) tìm ra HAI lỗi cùng gốc trong bản chép ở gói `hnx-fetch`. Khối
+ * phanh ở ĐÂY là bản gốc của bản chép đó, nên nó có y hệt — và ở đây nguy hơn, vì Scouter mở
+ * `<all_urls>` và có ba lệnh bấm-gõ thật. Cả hai lỗi vô hình khi đọc mã một mình: chúng chỉ
+ * nổ khi hai lượt chồng nhau.
+ *
+ * ⑴ **Phanh khẩn bị HỒI SINH.** Bản cũ ghi `{ ...gate, used }` — tức chở theo `enabled: true`
+ *   đọc được từ TRƯỚC đó. `Ctrl+Shift+X` rơi vào giữa lượt đọc và lượt ghi thì chính lượt trừ
+ *   ngân sách **bật lại cái công tắc Đức vừa tắt**. Hỏng đúng chỗ cái phanh phải chắc nhất.
+ *
+ * ⑵ **Trần 200 bị vượt.** Đọc rồi ghi là hai lượt tách rời, nên hai lượt gọi cùng đọc `used: 199`
+ *   rồi cùng ghi `200`, và cả hai đều bấm ra ngoài. Bộ điều phối không xếp hàng giúp: mỗi
+ *   `await` là một chỗ nhường lượt.
+ *
+ * Một hàng đợi ở mức MODULE chữa cả hai, vì `setWriteGate` (bảng bên và phím tắt gọi) và
+ * `spendWriteBudget` (đường ghi gọi) nay đi qua **cùng một** hàng. Chúng chạy trong cùng một
+ * service worker nên xếp hàng ở đây là đủ; không có bản thứ hai chạy song song.
+ *
+ * Hàng đợi này CỐ Ý không nuốt lỗi: một việc ném ra vẫn ném ra cho người gọi, nó chỉ không
+ * được phép chặn việc kế tiếp. Đức chốt cho sửa 08/09 (mục `S-15`). */
+let hangCongTac = Promise.resolve();
+function noiTiep(viec) {
+  const ket = hangCongTac.then(viec, viec);
+  hangCongTac = ket.then(() => undefined, () => undefined);
+  return ket;
+}
 const WRITE_CAP_PER_UNLOCK = 200;
 /* Trần thân trả về của `scout.fetch`. Đặt ở 512 KiB chứ không phải 1 MiB của phong bì: phần vỏ
  * (JSON escape, các trường khác) phình thêm được đáng kể, và chạm trần phong bì thì cả lượt
@@ -185,6 +211,8 @@ export function createSeedHandlers(deps = {}) {
 
   /* Trừ MỘT lượt khỏi ngân sách, và chỉ trả về khi đã trừ XONG. Xem ⑶. */
   async function spendWriteBudget() {
+    /* CÙNG hàng đợi với `setWriteGate`. Xem khối "MỘT HÀNG ĐỢI" ở đầu file. */
+    return noiTiep(async () => {
     const gate = await readWriteGate();
     if (gate.used >= WRITE_CAP_PER_UNLOCK) {
       throw new BridgeProtocolError("WRITE_BLOCKED",
@@ -194,7 +222,12 @@ export function createSeedHandlers(deps = {}) {
     }
     const used = gate.used + 1;
     try {
-      await chromeApi.storage.local.set({ [WRITE_GATE_STORAGE_KEY]: { ...gate, used } });
+      /* Ghi TỪNG TRƯỜNG, KHÔNG `{ ...gate }`. Trải bản ghi cũ ra là chở theo `enabled` đọc từ
+       * trước — và đó chính là đường phanh khẩn bị hồi sinh. Ghi tường minh thì một trường lạ
+       * cũng không bám theo được. */
+      await chromeApi.storage.local.set({
+        [WRITE_GATE_STORAGE_KEY]: { enabled: true, enabled_at: gate.enabled_at ?? null, used }
+      });
     } catch (error) {
       /* Ghi hụt thì KHÔNG bấm. Bấm mà không trừ được là cái trần không tồn tại. */
       throw new BridgeProtocolError("WRITE_BLOCKED",
@@ -203,6 +236,7 @@ export function createSeedHandlers(deps = {}) {
         });
     }
     return { used, cap_per_unlock: WRITE_CAP_PER_UNLOCK, remaining: WRITE_CAP_PER_UNLOCK - used };
+    });
   }
 
   async function runAction(method, target, params) {
@@ -438,11 +472,15 @@ export function createSeedHandlers(deps = {}) {
  * bản ghi. Hai bản của một luật thì sớm muộn trả hai câu khác nhau — ADR-0006 đã ghi cái giá.
  * Bật là ĐẶT LẠI bộ đếm về 0: đó chính là chỗ ngân sách được nạp, xem ⑷ ở khối đầu file. */
 export async function setWriteGate(chromeApi, enabled, at = Date.now()) {
-  const gate = enabled === true
-    ? { enabled: true, enabled_at: at, used: 0 }
-    : { enabled: false, enabled_at: null, used: 0 };
-  await chromeApi.storage.local.set({ [WRITE_GATE_STORAGE_KEY]: gate });
-  return gate;
+  /* CÙNG hàng đợi với `spendWriteBudget`. Không chung hàng thì một lượt TẮT có thể rơi vào
+   * giữa lượt trừ ngân sách, và lượt trừ đó ghi đè lại trạng thái vừa tắt. */
+  return noiTiep(async () => {
+    const gate = enabled === true
+      ? { enabled: true, enabled_at: at, used: 0 }
+      : { enabled: false, enabled_at: null, used: 0 };
+    await chromeApi.storage.local.set({ [WRITE_GATE_STORAGE_KEY]: gate });
+    return gate;
+  });
 }
 
 export async function readWriteGateState(chromeApi) {

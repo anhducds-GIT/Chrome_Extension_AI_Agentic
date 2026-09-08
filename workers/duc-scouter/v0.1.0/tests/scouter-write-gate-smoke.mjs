@@ -516,4 +516,85 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
   }
 }
 
-console.log("scouter-write-gate-smoke: 19 khoi, tat ca DAT");
+/* ---- ⑳ HAI CA ĐUA CỦA KHỐI PHANH (S-15) --------------------------------
+ * Audit độc lập 08/09 tìm ra hai lỗi trong bản chép ở gói `hnx-fetch`. Khối phanh ở ĐÂY là bản
+ * gốc của bản chép đó, nên nó có y hệt — và ở đây nguy hơn: Scouter mở `<all_urls>` và có ba
+ * lệnh bấm-gõ thật, còn `hnx-fetch` chỉ có một lệnh đọc.
+ *
+ * Kho lưu giả trong khối này CỐ Ý chậm: nó nhường lượt giữa `get` và `set`. `makeChrome` ở đầu
+ * file không nhường, nên với nó hai lỗi dưới đây **không tái hiện được** — và một phép ghim
+ * không tái hiện được lỗi là một phép ghim xanh vì may mắn, không phải vì đúng. */
+{
+  function khoCham(gate) {
+    const store = Object.create(null);
+    if (gate !== undefined) store[GATE_KEY] = gate;
+    const nhuong = () => new Promise((r) => setTimeout(r, 0));
+    return {
+      store,
+      runtime: { id: "scouter-gia", reload() {} },
+      storage: {
+        local: {
+          async get(keys) {
+            await nhuong();
+            const ra = {};
+            for (const k of [].concat(keys)) if (k in store) ra[k] = store[k];
+            return ra;
+          },
+          async set(o) { await nhuong(); Object.assign(store, o); }
+        }
+      }
+    };
+  }
+  function tayLenhCham(gate) {
+    const chromeApi = khoCham(gate);
+    const engine = makeEngine();
+    const handlers = createSeedHandlers({
+      engine, chromeApi, BridgeProtocolError, negotiateVersion, capabilities,
+      timers: { setTimeout: () => 0 }, fetch: async () => { throw new Error("khong dung o khoi nay"); }
+    });
+    return { handlers, engine, chromeApi };
+  }
+
+  /* ⑳a PHANH KHẨN KHÔNG ĐƯỢC BỊ HỒI SINH.
+   * Bản trước ghi `{ ...gate, used }`, tức chở theo `enabled: true` đọc từ TRƯỚC. `Ctrl+Shift+X`
+   * rơi vào giữa lượt đọc và lượt ghi thì chính lượt trừ ngân sách bật lại công tắc vừa tắt.
+   *
+   * Hai vế, và phải nói rõ vế nào chữa gì kẻo lần sau ai đó gỡ nhầm vế:
+   *   · **Hàng đợi** đóng đường đua — nó ép lượt tắt và lượt trừ không bao giờ lồng nhau.
+   *   · **Ghi từng trường** là lớp thứ hai: nó chặn một trường LẠ trong kho lưu bám theo sang
+   *     bản ghi mới, chẳng hạn một `cap_per_unlock` lọt vào rồi sống mãi ở đó. */
+  {
+    const { handlers, chromeApi } = tayLenhCham({ enabled: true, enabled_at: 1, used: 0 });
+    const dangBam = handlers["scout.click"](CLICK);
+    const tat = setWriteGate(chromeApi, false);
+    await Promise.allSettled([dangBam, tat]);
+    assert.equal((await readWriteGateState(chromeApi)).enabled, false,
+      "lượt trừ ngân sách đã HỒI SINH công tắc vừa tắt — phanh khẩn không còn là phanh");
+
+    const b = tayLenhCham({ enabled: true, enabled_at: 7, used: 0, cap_per_unlock: 9999, rac: "bam theo" });
+    await b.handlers["scout.click"](CLICK);
+    const ghiRa = b.chromeApi.store[GATE_KEY];
+    assert.deepEqual(Object.keys(ghiRa).sort(), ["enabled", "enabled_at", "used"],
+      "bản ghi công tắc chở theo trường lạ từ kho lưu — phải VIẾT RA từng trường, không trải bản cũ");
+    assert.equal(ghiRa.enabled, true);
+    assert.equal(ghiRa.enabled_at, 7, "mốc bật phải giữ nguyên, nếu không mỗi lượt trừ là một lượt bật lại");
+    assert.equal(ghiRa.used, 1);
+  }
+
+  /* ⑳b TRẦN KHÔNG ĐƯỢC VƯỢT KHI NHIỀU LƯỢT CHỒNG NHAU.
+   * Đọc rồi ghi là hai lượt tách rời, nên năm lượt cùng đọc một con số rồi cùng ghi, và cả năm
+   * đều BẤM RA NGOÀI. Trần đếm được mà không chặn được thì nó không phải trần.
+   * Đo `engine.actionCalls` chứ không chỉ đếm lượt thành công: thứ đáng sợ là cú bấm thật. */
+  {
+    const { handlers, engine, chromeApi } = tayLenhCham({ enabled: true, enabled_at: 1, used: CAP - 2 });
+    const ra = await Promise.allSettled(
+      Array.from({ length: 5 }, () => handlers["scout.click"](CLICK))
+    );
+    const qua = ra.filter((r) => r.status === "fulfilled").length;
+    assert.equal(qua, 2, `chỉ còn 2 lượt mà ${qua} lượt lọt qua — trần vỡ khi chồng lượt`);
+    assert.equal(engine.actionCalls.length, 2, "số cú BẤM THẬT phải bằng số lượt được cấp, không hơn");
+    assert.equal(chromeApi.store[GATE_KEY].used, CAP);
+  }
+}
+
+console.log("scouter-write-gate-smoke: 20 khoi, tat ca DAT");

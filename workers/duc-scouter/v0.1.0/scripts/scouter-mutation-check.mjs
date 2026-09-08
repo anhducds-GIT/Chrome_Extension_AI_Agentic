@@ -885,4 +885,30 @@ BATCHES.push({
   ]
 });
 
+/* ---- HAI CA ĐUA CỦA KHỐI PHANH (S-15, 08/09) ----------------------------
+ * Hai con này hoàn nguyên đúng bản vá S-15. Cả hai chỉ nổ khi hai lượt chồng nhau, nên nếu
+ * khối ⑳ của phép ghim mất cái kho lưu CHẬM (nhường lượt giữa `get` và `set`) thì cả hai con
+ * này sống sót — đó là cách bộ đo nói rằng phép ghim đã hết răng. */
+BATCHES.push({
+  ten: "KHỐI PHANH — hai ca đua",
+  target: path.join(ROOT, "scripts", "scouter-seed-core.mjs"),
+  pin: path.join(ROOT, "tests", "scouter-write-gate-smoke.mjs"),
+  mutants: [
+    {
+      ma: "P1",
+      ten: "Trải bản ghi cũ khi trừ ngân sách — phanh khẩn bị hồi sinh giữa lượt đọc và lượt ghi",
+      tim: "        [WRITE_GATE_STORAGE_KEY]: { enabled: true, enabled_at: gate.enabled_at ?? null, used }",
+      thay: "        ...{ [WRITE_GATE_STORAGE_KEY]: { ...gate, used } }",
+      soLan: 1
+    },
+    {
+      ma: "P2",
+      ten: "Bỏ hàng đợi: mỗi việc chạy ngay — hai lượt cùng đọc used:199 rồi cùng bấm",
+      tim: "  const ket = hangCongTac.then(viec, viec);",
+      thay: "  const ket = Promise.resolve().then(viec);",
+      soLan: 1
+    }
+  ]
+});
+
 process.exit(chayDotBien(BATCHES, ROOT));
