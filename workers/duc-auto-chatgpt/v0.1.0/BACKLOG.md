@@ -1669,3 +1669,28 @@ job chậm thêm mà vẫn hụt ở một pha suy nghĩ dài hơn.
   kèm một phép ghim HÀNH VI (chạy `waitForCompletion` đã ship trên DOM giả có pha suy nghĩ, chứng
   minh nó KHÔNG nhận mẩu chữ đầu); thử phá 0 con thoát; và **một lượt live** trong một hội thoại
   thuộc Project cho thấy số ký tự ghi vào sổ **bằng** số ký tự đọc lại được trên trang.
+
+### B-44 · (P1) Công cụ dọn rác KHÔNG nhìn thấy chỗ Chrome thật sự ghi — đo live 09/09
+
+Đức yêu cầu *"chat xong xoá tất cả file rác bị tải về"*. Vế xoá hiện **hụt đúng chỗ quan trọng**.
+
+**Số đo 09/09, sau lượt chạy nghiệm thu ADR-0051:** gói xin ghi vào `Downloads/Duc Auto ChatGPT`.
+Chrome ghi vào **`Downloads/Phai sinh`** — thư mục tải mặc định của Đức — dưới tên GUID. Tức
+Chrome bỏ qua **cả đường dẫn thư mục**, không chỉ phần tên tệp; đây là số đo MỚI, ADR-0051 mới
+chỉ ghi được vế tên. Đếm được **105 tệp** trong thư mục đó.
+
+`scripts/don-rac-tai-xuong.mjs` **chỉ quét tầng ngoài cùng** của thư mục Tải xuống, nên nó không
+bao giờ thấy đống này. Quét hôm nay ra 16 tệp xoá được ở tầng ngoài — và **0** trong số đó là của
+lượt chạy vừa rồi.
+
+**Đừng làm nó quét đệ quy cả cây Tải xuống.** Thư mục Tải xuống của Đức có tài liệu thật (đã đo:
+một `.pdf` và một `.jpg` của Đức lọt vào nhóm được bảo vệ đúng nhờ luật "không lọc theo tên").
+Mở rộng phạm vi quét là mở rộng bán kính của một thao tác xoá không hoàn lại được.
+
+**Hướng an toàn hơn, cần đo trước khi chọn:** hỏi thẳng `chrome.downloads` những tệp **do chính
+extension này tải về** — API đó trả `id`, đường dẫn thật và cả `byExtensionId`. Đó là bằng chứng
+chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và nó không cần quét thư mục nào cả.
+
+- **đóng khi:** dọn được các tệp lượt chạy 09/09 sinh ra ở `Downloads/Phai sinh`; phạm vi xoá
+  **không** rộng ra ngoài tệp chứng minh được là của gói; phép ghim hành vi chạy công cụ thật vào
+  thư mục tạm có cả tệp giả của người dùng và chứng minh chúng còn nguyên; thử phá 0 con thoát.

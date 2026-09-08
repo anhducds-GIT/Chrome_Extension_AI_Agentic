@@ -472,8 +472,7 @@ và điều kiện đóng ở `BACKLOG.md`.
   khi adapter nói đó LÀ hội thoại → `boundConversationId` rỗng → cửa chống trôi-hội-thoại **tắt
   lặng lẽ** trên mọi phiên Project, tức mọi phiên Đức thật sự dùng. Đã vá tận gốc: một luật, một
   bản, ở adapter.
-- Chrome bỏ qua **cả thư mục**, không chỉ tên: artifact rơi vào `Downloads/Phai sinh` (105 tệp).
-  Mà `don-rac-tai-xuong.mjs` **chỉ quét tầng ngoài cùng**, nên nó sẽ không bao giờ dọn đống đó.
+- Chrome bỏ qua **cả thư mục**, không chỉ tên, và công cụ dọn rác không nhìn vào đó → `B-44`.
 
 **Kết quả số.** Suite **121/121**. Thử phá: ADR-0051 **9/9** · hội thoại Project **5/5** ·
 ADR-0050 ⒝ **12/12**. Sổ nợ gói thêm `B-43` (P0).
