@@ -317,8 +317,52 @@ export function createTransport(options = {}) {
 
     const response = await dispatch(message.envelope);
     if (socket === targetSocket && authenticated && targetSocket.readyState === WebSocketApi.OPEN) {
-      targetSocket.send(JSON.stringify({ type: "rpc_response", relay_id: message.relay_id, envelope: response }));
+      targetSocket.send(JSON.stringify({ type: "rpc_response", relay_id: message.relay_id, envelope: guiDuoc(response) }));
     }
+  }
+
+  /* TRẦN CHO PHONG BÌ ĐI RA — đối xứng với phép kiểm tin ĐI VÀO ở `handleMessage`.
+   *
+   * Đo thật 08/09 trên Bridge đang chạy: `scout.snapshot` và `scout.shot` **giết kết nối**,
+   * 100% lặp lại được. Người gọi nhận `TRANSPORT_DISCONNECTED`, rồi mọi lệnh sau đó nhận
+   * `EXTENSION_OFFLINE` cho tới khi extension tự nối lại (~1 giây).
+   *
+   * Vì sao: bộ giải khung của máy chủ nhận tối đa `MAX_ENVELOPE_BYTES + 8192`. Một ảnh chụp
+   * màn hình hoặc một bản chụp DOM vượt trần đó, nên máy chủ ĐÓNG SOCKET thay vì trả lời.
+   * Phía extension trước đây kiểm kích thước tin đi vào (dòng ~255) nhưng **không kiểm gì cả
+   * ở đường gửi ra** — nên một câu trả lời quá to không thành lỗi, nó thành mất kết nối.
+   *
+   * Chặn ở ĐÂY chứ không ở từng method là cố ý: mọi câu trả lời đều đi qua đúng chỗ này, nên
+   * một chốt ở đây che cả 15 method lẫn mọi method thêm sau. Vá riêng `snapshot` và `shot` là
+   * để nguyên cái bẫy cho method thứ ba giẫm phải.
+   *
+   * Giữ NGUYÊN `request_id` và trả `ok:false`: người gọi phải nhận được một câu trả lời có
+   * tương quan. Mất kết nối là câu trả lời tệ nhất — nó không nói được điều gì đã sai. */
+  function guiDuoc(response) {
+    let so;
+    try {
+      so = new TextEncoder().encode(JSON.stringify(response)).byteLength;
+    } catch (_error) {
+      so = Infinity; // không tuần tự hoá được thì cũng không gửi được
+    }
+    if (so <= maxEnvelopeBytes) return response;
+    return {
+      protocol: response?.protocol,
+      version: response?.version,
+      kind: "response",
+      request_id: typeof response?.request_id === "string" ? response.request_id : null,
+      ok: false,
+      error: {
+        code: "RESULT_TOO_LARGE",
+        message: "The result is larger than one envelope allows.",
+        retryable: false,
+        details: {
+          bytes: Number.isFinite(so) ? so : null,
+          max_bytes: maxEnvelopeBytes
+        }
+      },
+      responded_at: new Date().toISOString()
+    };
   }
 
   async function loadPairing() {

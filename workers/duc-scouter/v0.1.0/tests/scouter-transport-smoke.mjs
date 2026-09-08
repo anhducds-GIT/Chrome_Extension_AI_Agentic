@@ -406,4 +406,53 @@ async function handshake(rig) {
   assert.notEqual(FakeSocket.last, before, "mất kết nối rồi mà connect() không mở lại");
 }
 
+/* ---- ⑮ CÂU TRẢ LỜI QUÁ TO THÀNH LỖI, KHÔNG THÀNH MẤT KẾT NỐI ------------
+ *
+ * Đo thật 08/09 trên Bridge đang chạy, 100% lặp lại: `scout.snapshot` và `scout.shot` giết
+ * kết nối. Người gọi nhận `TRANSPORT_DISCONNECTED`, rồi mọi lệnh sau nhận `EXTENSION_OFFLINE`
+ * cho tới khi extension tự nối lại (~1 giây).
+ *
+ * Nguyên nhân: extension kiểm kích thước tin ĐI VÀO nhưng không kiểm gì ở đường GỬI RA, nên
+ * một ảnh chụp vượt trần khung của máy chủ làm máy chủ ĐÓNG SOCKET thay vì trả lời.
+ *
+ * Ghim ba vế, vì thiếu vế nào thì bản vá cũng vô nghĩa:
+ *   ⑴ vẫn CÓ một phản hồi rời socket — im lặng là hỏng, không phải an toàn;
+ *   ⑵ phản hồi giữ đúng `relay_id` và `request_id` — mất tương quan thì người gọi treo;
+ *   ⑶ socket KHÔNG bị đóng — đây chính là triệu chứng đã đo được.
+ */
+{
+  const TO = 4096;
+  const rig = makeRig({ options: {
+    max_envelope_bytes: TO,
+    dispatch: async (envelope) => ({
+      protocol: PROTOCOL, version: 1, kind: "response", request_id: envelope.request_id,
+      ok: true, result: { rac: "x".repeat(TO * 2) }, responded_at: "2026-09-08T00:00:00.000Z"
+    })
+  } });
+  const socket = await handshake(rig);
+  await socket.deliver({ type: "rpc", relay_id: "r-to", envelope: { request_id: "req-000002", method: "scout.shot" } });
+
+  const answer = socket.frames("rpc_response")[0];
+  assert.ok(answer, "câu trả lời quá to bị nuốt im lặng — người gọi sẽ treo tới hết hạn chờ");
+  assert.equal(answer.relay_id, "r-to", "mất relay_id thì máy chủ không đối chiếu được");
+  assert.equal(answer.envelope.request_id, "req-000002", "mất request_id thì người gọi không biết đây trả lời cho câu nào");
+  assert.equal(answer.envelope.ok, false, "câu trả lời quá to vẫn báo ok:true");
+  assert.equal(answer.envelope.error.code, "RESULT_TOO_LARGE");
+  assert.equal(answer.envelope.error.retryable, false, "gọi lại vẫn to y thế — không được khai là thử lại được");
+  assert.equal(answer.envelope.error.details.max_bytes, TO);
+  assert.ok(answer.envelope.error.details.bytes > TO, "số byte đo được phải lớn hơn trần");
+
+  const raByte = new TextEncoder().encode(JSON.stringify(answer.envelope)).byteLength;
+  assert.ok(raByte <= TO, "chính phong bì lỗi cũng vượt trần — vá thế là đổi một lỗi lấy một lỗi");
+  assert.equal(socket.closed, null, "socket bị đóng — đúng triệu chứng mà bản vá này phải xoá");
+
+  /* Chiều ngược lại: dưới trần thì KHÔNG được đụng vào phong bì. Thiếu vế này thì một bản vá
+   * chặn tất cả mọi thứ vẫn xanh. */
+  const rig2 = makeRig({ options: { max_envelope_bytes: TO } });
+  const socket2 = await handshake(rig2);
+  await socket2.deliver({ type: "rpc", relay_id: "r-nho", envelope: { request_id: "req-000003", method: "system.ping" } });
+  const nho = socket2.frames("rpc_response")[0];
+  assert.equal(nho.envelope.ok, true, "phong bì nhỏ mà cũng bị chặn");
+}
+
 console.log("scouter-transport smoke tests: PASS");
