@@ -380,3 +380,35 @@ trong mã**: tool tạo ảnh của ChatGPT lỗi tạm, ChatGPT nói rõ cách 
 **Hai lỗi của tôi trong buổi** (prompt gửi qua Bridge viết không dấu; ảnh mẫu là ảnh nhiễu
 dựng để đo cửa sổ upload) khiến tôi **quy sai nguyên nhân hai lần** trước khi đo ra nguyên nhân
 thật. Cả hai đã ghi đầy đủ ở `BACKLOG.md`, mục hai lượt đính chính.
+
+## 2026-09-08 (tiếp) · `claude-gpt-chay-het-job` — ADR-0050 Accepted, thi hành mục ⒠
+
+**Làm gì.** Đức đặt hướng: *"AI phải tương tác được mới là Assistant… phải chạy được đến hết Job,
+trừ khi bị halt bởi Captcha"*, chốt hai case (loạt ảnh tự chủ · chat reasoning nhiều lượt), hạ nắp
+chờ xuống 90 giây, và duyệt đường chat thẳng. Ghi thành
+[ADR-0050](docs/adr/0050-chay-het-job-tru-ba-loai-dung-han.md), viết `Proposed` rồi đổi `Accepted`
+ở lượt riêng (luật B12).
+
+**Chỗ quan trọng nhất tìm ra khi đọc lại ADR-0047 — nó làm nhẹ hẳn phần việc.** Luật đó nguyên văn
+là *"chỉ được gửi lại khi đối soát **khẳng định được** là lượt gửi đó không tạo ra kết quả nào"* —
+**ngoại lệ đã nằm sẵn trong luật**, và nó thu về "chặn hẳn" chỉ vì lúc ấy đo ra **0 ca** khẳng định
+được. Nên cho phép gửi lại khi nhà cung cấp TỰ nói nó không tạo được gì là **thi hành** ADR-0047,
+không phải nới. Thứ thật sự cần quyết định mới chỉ là đổi nhóm năm hard stop.
+
+**Một phát hiện làm bớt việc:** mục ⒜ của ADR-0050 **không cần làm gì** — `classifyFailure()` đã xếp
+`captcha`, `unusual activity`, `security/interstitial` vào cùng `SECURITY_HARD_STOP`, và
+`GENERATION_LIMIT_REACHED` vốn đã là hard stop. Ba loại Đức muốn dừng hẳn **đang dừng hẳn sẵn**.
+
+**Kết quả số.** Thi hành **mục ⒠**: nắp chờ 5 phút → 90 giây. Suite **119 → 120**. Thử phá **5/5**.
+
+**Bản ghim đầu của tôi chỉ TĨNH và cho 3/5** — hai con thoát là lỗ thật (gõ cứng số giây;
+`if (false)` mở toang cửa chặn). Viết lại thành **hành vi**, chạy `bridgeRunTrial()` đã ship. Chi
+tiết bảy mép ở dòng Bản đồ file của phép ghim.
+
+**Còn mở, và đây là phần lớn nhất.** ADR-0050 mới thi hành **một trong năm mục**. Bốn mục còn
+lại ghi thành `B-41` (P1, tự chữa để chạy hết job) và `B-42` (P1, đường chat thẳng cho case 2 —
+**là quyền mới cho extension** nên phải hỏi Đức ở mức thiết kế trước khi viết mã). Ràng buộc kiến
+trúc và điều kiện đóng của cả hai: `BACKLOG.md`.
+
+**Sổ nợ gói 13 → 15.** Nợ tăng, và đúng: một quyết định đã chốt mà không ai ghi thành việc thì nó
+nằm im.
