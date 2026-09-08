@@ -58,18 +58,32 @@ nào trong số đó bị chặn thật.
 > bất biến — đừng sửa nó, và cũng **đừng đem 1.158 / 5.193 ra biện luận** cho một lần đổi trần.
 
 
-## 3. Xoay file theo tháng
+## 3. Cắt file: theo SỐ MỤC, không theo tháng
 
-`HANDOFF.md` chỉ chứa **tháng hiện tại**.
+**Cơ chế đang chạy: `HANDOFF.md` giữ 20 MỤC CUỐI.** Đức chốt 09/09
+([ADR-0008](../adr/0008-nhat-ky-phien.md) ⑴).
+
+```bash
+node scripts/handoff.mjs --cat HANDOFF.md --giu 20
+```
+
+Nó dời phần cũ sang một file lưu trữ **nguyên văn**, và **tự kiểm ghép lại ra đúng bản gốc từng
+byte TRƯỚC khi ghi** — sai một byte thì nó không ghi gì cả. Chặn khai ở `handoff.tran_so_muc`;
+cổng đóng phiên báo `HANDOFF_QUA_DAY` khi vượt.
+
+> **⚠ Xoay theo THÁNG không còn là cơ chế chính.** Vế ⑵ của quyết định 0011 (*"xoay theo tháng,
+> bỏ hẳn việc cắt định kỳ"*) **đã chết 09/09**. Đo cùng ngày: cả 60 mục của `HANDOFF.md` gốc đều
+> mang mốc `2026-09`, nên `--rotate` dời **0 dòng** rồi in một câu nghe như thành công. Xoay theo
+> tháng **không chặn được phình trong một tháng** — mà phình trong một tháng đúng là thứ đã xảy ra.
+>
+> **`--rotate` vẫn còn** và vẫn là đường sang tháng mới; nó chỉ không phải thứ giữ file khỏi phình.
 
 - Ghi mục mới → luôn ghi vào cuối `HANDOFF.md`. Không phải nghĩ.
-- Sang tháng mới → nội dung tháng cũ thành file lưu trữ của tháng đó, `HANDOFF.md` bắt đầu lại
-  với một **con trỏ** sang file vừa sinh.
-
-**Vì sao xoay lúc GHI chứ không cắt lúc quét:** các mục Log **không xếp theo thứ tự thời gian**
-(đo được ở gói ChatGPT: `22/08` rồi `24/08` rồi `22/08` lại). Nên "cắt phần cũ hơn N ngày" là
-câu **máy không xác định được**, và ADR-0008 bất biến ⑵ cấm. Xoay lúc ghi thì không cần thứ tự
-nào cả.
+- Cắt thì cắt theo **vị trí trong file**, không theo ngày: các mục Log **không xếp theo thứ tự
+  thời gian** (đo ở gói ChatGPT: `22/08` rồi `24/08` rồi `22/08` lại), nên *"cắt phần cũ hơn N
+  ngày"* là câu **máy không xác định được** — ADR-0008 bất biến ⑵ cấm.
+- **Trước khi phần cũ bị dời đi, việc còn mở trong đó đáng được nhắc lại một dòng ở mục mới.**
+  Máy cắt theo số; người quyết cái gì đáng mang theo (ADR-0008 ⑶).
 
 **Ba bất biến của lược đồ lưu trữ:**
 

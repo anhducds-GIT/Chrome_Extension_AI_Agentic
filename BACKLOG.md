@@ -851,3 +851,21 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
 - **ĐÓNG N-54** · 2026-09-09 · lane `claude-adr-gop` · **27 ADR gốc → 9 file chủ đề.** Một chủ đề = một file = một câu trả lời. Trước đó là 27 file xếp theo thứ tự thời gian, và không chỗ nào nói cái nào đang có hiệu lực — chính hình dạng đó đẻ ra năm chỗ mâu thuẫn. Nhóm: `0000` cách ghi quyết định · `0001` ranh giới bộ khung · `0004` mấy phiên Assistant · `0005` khoá/quyền/đẩy · `0007` Scouter · `0008` nhật ký phiên · `0014` bảng đối chiếu · `0015` trần đường thử · `0021` các gói extension. **Nghiệm thu:** B12 XANH — *151 số hiệu từng cấp, 0 mất, 0 trùng*, mỗi file khai trường `decides`. **Bảy vế chết bị cắt còn MỘT DÒNG mỗi vế** kèm tên quyết định thay nó, không kể lại. **81 liên kết trong 30 file đã vá**; cố ý KHÔNG chạm kho lưu trữ và `evidence/` (chỉ đọc — chúng kể chuyện quá khứ, lúc đó tên file đúng là tên đó) và ba gói `duc-auto-*` (lane khác giữ khoá; đo trước: chúng chỉ trỏ tới `0000` và `0015`, nên hai tên đó **cố ý giữ nguyên**). Mục lục cũ→mới ở `docs/README.md`. **Một chỗ KHÔNG tự hoà giải:** ADR-0004 chia vai *Hệ thống/Sản phẩm* còn `AGENTS.md` mục 6 chạy cặp *Giữ lõi/Phát & thu* — hai cách chia khác nhau, lần đổi 08/09 không có quyết định nào ghi lại; ghi cả hai kèm cảnh báo, **chờ Đức chốt**.
 
 - **NGÔN NGỮ LUẬT: Đức đảo lại trong ngày, vế cuối là TIẾNG VIỆT** · 2026-09-09 · lane `claude-adr-gop` · sáng 09/09 Đức chốt *"dùng tiếng Anh để AI dễ đọc, tiết kiệm usage"*, và `AGENTS.md` được viết lại bằng tiếng Anh (402 → 254 dòng, phi-ASCII 16% → 1%). Chiều cùng ngày Đức đảo: *"giữ luật bằng tiếng việt để tôi cùng đọc bản cuối"*. **Vế tiếng Anh đã chết**, ghi ở ADR-0000 vế ⑷. Lý do nặng hơn tiền token: **một bộ luật Đức không đọc được là một bộ luật Đức không kiểm được**, mà Đức là người chốt duy nhất. **Phần tiết kiệm còn giữ nguyên là phần CẮT NGẮN và PHÂN NHÓM** — nó không phụ thuộc ngôn ngữ: `AGENTS.md` nay **252 dòng / 19.331 ký tự**, xuống từ 402 dòng / 30.520 ký tự sáng nay (**−37%**). Bài học ghi lại để phiên sau khỏi làm hai lần: **hỏi ai sẽ ĐỌC một tài liệu trước khi tối ưu nó cho ai sẽ NẠP nó.**
+
+## N-55 · Tám quyết định của `duc-auto-gg-flow-video` chưa bao giờ có số hiệu
+
+- **nhóm:** cong
+- **mở:** 2026-09-09 · lane `claude-luat-rasoat`
+- **vùng:** `workers/duc-auto-gg-flow-video` — **đang có lane khác giữ khoá**
+- **[ĐO]** `decisions.md` của gói đó: **142 dòng · 0 liên kết tới ADR nào · 9 câu luật**. Hai gói kia đã chuyển sang ADR từ 02/09 (52 và 70 con trỏ); gói này thì chưa — ADR-0000 nói rõ vì sao: lúc chuyển đổi nó đang do phiên khác giữ, và định dạng văn xuôi của nó khác hẳn nên cần một bộ tách riêng.
+- **vì sao đáng sửa:** phép kiểm B12 canh *"mọi số hiệu từng cấp còn nằm ở đúng một file"*. Tám quyết định không có số hiệu thì **B12 không nhìn thấy chúng** — xoá đi cũng không ai kêu. Đây là lỗ duy nhất còn lại trong sổ định danh sau lượt gộp `N-54`.
+- **đóng khi:** `workers/duc-auto-gg-flow-video/v0.1.0/decisions.md` chỉ còn là **mục lục** trỏ sang `docs/adr/` của chính gói, mỗi quyết định một số hiệu, và `node scripts/check-bootstrap.mjs` vẫn XANH ở B12.
+
+## N-56 · `STATUS.md` gói ChatGPT trỏ một ADR của gói bằng đường dẫn GỐC repo
+
+- **nhóm:** cong
+- **mở:** 2026-09-09 · lane `claude-luat-rasoat`
+- **vùng:** `workers/duc-auto-chatgpt` — **đang có lane khác giữ khoá**
+- **[ĐO]** `STATUS.md` viết `docs/adr/0050-chay-het-job-tru-ba-loai-dung-han.md`, nhưng ADR-0050 là quyết định **của gói**, nằm ở `workers/duc-auto-chatgpt/v0.1.0/docs/adr/`. Bộ sinh chép nguyên văn trường đó vào `DASHBOARD.md`, nên **liên kết chết xuất hiện trên bảng Đức đọc**.
+- **chỗ dễ nhầm, ghi ra vì nó sẽ tái diễn:** số ADR đánh **theo từng thư mục** (ADR-0000 ⑴), nên `0050` ở gốc repo và `0050` trong một gói là hai quyết định khác nhau. Gốc repo hiện chỉ có tới `0021`.
+- **đóng khi:** liên kết trong `STATUS.md` trỏ đúng đường dẫn của gói, và phép dò liên kết chết không còn báo `DASHBOARD.md`.

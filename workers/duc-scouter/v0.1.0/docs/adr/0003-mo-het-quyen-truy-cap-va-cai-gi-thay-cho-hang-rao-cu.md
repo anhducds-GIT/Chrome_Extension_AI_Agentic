@@ -10,7 +10,7 @@ deciders: Đức
 ## Bối cảnh
 
 Pilot đầu tiên của Scouter là `hnx.vn` (`S-10`): lấy dữ liệu phái sinh theo ngày, một tuần.
-Đo ngày 07/09 ra ba chỗ chặn, và cả ba đều nằm ngoài dự đoán của [ADR-0009](../../../../docs/adr/0007-scouter.md):
+Đo ngày 07/09 ra ba chỗ chặn, và cả ba đều nằm ngoài dự đoán của [ADR-0009](../../../../../docs/adr/0007-scouter.md):
 
 **⑴ Node không vào được `hnx.vn`.** Máy chủ đó gửi chuỗi chứng chỉ **thiếu** — chỉ có lá, không
 kèm trung gian `GlobalSign GCC R3 EV TLS CA 2025`. Trình duyệt tự đi lấy phần thiếu nên vào bình
@@ -30,7 +30,7 @@ không có đường ghi nào. Câu *"Bridge ghi code mới xuống đĩa"* ở 
 ngày (giới hạn ①), nên không được sửa.
 
 **⑶ Scouter không có đường nào gọi một endpoint.** `Runtime.*` và `Network.*`/`Fetch.*` bị loại
-có chủ ý từ [ADR-0007](../../../../docs/adr/0007-scouter.md), và lượt
+có chủ ý từ [ADR-0007](../../../../../docs/adr/0007-scouter.md), và lượt
 này **không mở**.
 
 Tôi hỏi Đức ba lựa chọn: cho quyền riêng `hnx.vn` · để Node tự lấy (cài chứng chỉ thiếu) ·

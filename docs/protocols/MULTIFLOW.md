@@ -28,10 +28,19 @@ Cả ba đã xảy ra thật, không phải lo xa. Cơ chế trong file này là
 
 | Cơ chế | Trả lời câu | Sống ở đâu |
 |---|---|---|
-| **Bảng chủ sở hữu** | *ai được sửa vùng nào?* | `.agents/claims.json` + `scripts/claim.mjs` |
+| **Bảng chủ sở hữu** | *ai được ghi vào đâu?* | `.agents/claims.json` + `scripts/claim.mjs` — **hai loại khoá**, xem dưới bảng |
 | **Nhãn `Lane:` trên commit** | *commit này của ai?* | thông điệp commit + `laneFromMessage` |
 | **Cổng đóng phiên** | *việc của tôi xong thật chưa?* | `scripts/session-check.mjs` |
 | **Cổng xuất bản** | *thứ tôi sắp đẩy có sạch không?* | `scripts/safe-push.mjs` |
+
+**Từ 08/09 mặc định là khoá FILE, không phải khoá vùng** ([ADR-0005](../adr/0005-lam-viec-song-song.md) ⑴). Nhận ngay trước lượt ghi bằng `--sua`, trả
+ngay sau bằng `--xong --het`; **chỉ đọc thì không khoá gì**. Nhận cả vùng chỉ khi thật sự sửa
+khắp nó. Vì sao: **[ĐO 7 ngày]** 2.628 cặp commit khác lane cùng vùng cách nhau ≤ 1 giờ, trong
+đó **1.839 cặp (70%) không đụng file nào chung** — bảy phần mười lượt chặn là chặn oan.
+
+**Hai loại khoá, HAI MỐC TRẢ khác nhau, đừng lẫn:** khoá FILE trả lúc **hết phiên**; khoá VÙNG
+trả **sau khi đẩy**. Lý do khác nhau: commit chưa đẩy trong một vùng vô chủ để lại mục đỏ cho
+phiên sau, còn khoá file không mang trách nhiệm truy nguồn — nhãn `Lane:` mang.
 
 Hai cái đầu là **dữ liệu**. Hai cái sau là **người canh cửa** đọc dữ liệu đó.
 
@@ -84,6 +93,9 @@ Năm điều **không** được làm, và mỗi điều là một tai nạn th�
 hỏng thật; gỡ nó ra là mời lại đúng lần hỏng đó.
 
 **① Một vùng, một chủ, tại một thời điểm.** Vùng có chủ mà chủ không phải bạn thì **chỉ đọc**.
+Với khoá FILE thì **chứa nhau hai chiều**: vùng có chủ khác → khoá file bị từ chối; bên trong
+còn khoá file của người khác → nhận cả vùng bị từ chối. Thiếu một chiều là hai lane cùng tin
+mình được ghi, và không lớp nào kêu.
 Muốn giành thì hỏi Đức — và khi Đức chốt, câu chốt phải được **ghi vào bảng**, không phải in ra
 màn hình. Vì người cần đọc câu đó là phiên vừa **mất** khoá, mà họ không chạy lệnh; họ chỉ đọc
 bảng.

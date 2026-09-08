@@ -52,14 +52,14 @@ việc làm lại.**
 
 | Chỗ cần đào sâu | Mở file |
 |---|---|
-| Bấm bằng CDP khác bấm bằng JS chỗ nào | [EXP-14](EXP-14-INPUT-SEMANTICS-BROWSER-INPUT-REACH-STUDY-V0.md) |
-| Cây trợ năng + DOMSnapshot + CSS | [EXP-12](EXP-12-ACCESSIBILITY-DOMSNAPSHOT-CSS-SEMANTIC-OBSERVATION-STUDY-V0.md) |
-| Bơm adapter động bằng `userScripts` | [EXP-09](EXP-09-USER-SCRIPTS-DYNAMIC-ADAPTER-DELIVERY-STUDY-V0.md) |
-| Tài liệu ẩn `offscreen` | [EXP-10](EXP-10-OFFSCREEN-BROWSER-PROCESSING-RUNTIME-STUDY-V0.md) |
-| Mạng: DNR / webRequest / CDP | [EXP-11](EXP-11-NETWORK-CONTROL-PLANE-DNR-WEBREQUEST-VS-CDP-STUDY-V0.md) |
-| Cookie / storage / IndexedDB của phiên đăng nhập | [EXP-07](EXP-07-AUTHENTICATED-SESSION-COOKIE-STORAGE-IDB-REACH-STUDY-V0.md) |
-| Khung con và target lồng nhau | [EXP-04](EXP-04-NESTED-FRAME-WORKER-TARGET-REGISTRY-STUDY-V0.md) |
-| Chụp bằng chứng | [EXP-13](EXP-13-EVIDENCE-CAPTURE-RUNTIME-STUDY-V0.md) |
+| Bấm bằng CDP khác bấm bằng JS chỗ nào | `EXP-14-INPUT-SEMANTICS-BROWSER-INPUT-REACH-STUDY-V0.md` (đã xoá 08/09 — `git show a3b67a96a92e:docs/studies/EXP-14-INPUT-SEMANTICS-BROWSER-INPUT-REACH-STUDY-V0.md`) |
+| Cây trợ năng + DOMSnapshot + CSS | `EXP-12-ACCESSIBILITY-DOMSNAPSHOT-CSS-SEMANTIC-OBSERVATION-STUDY-V0.md` (đã xoá 08/09 — `git show a3b67a96a92e:docs/studies/EXP-12-ACCESSIBILITY-DOMSNAPSHOT-CSS-SEMANTIC-OBSERVATION-STUDY-V0.md`) |
+| Bơm adapter động bằng `userScripts` | `EXP-09-USER-SCRIPTS-DYNAMIC-ADAPTER-DELIVERY-STUDY-V0.md` (đã xoá 08/09 — `git show a3b67a96a92e:docs/studies/EXP-09-USER-SCRIPTS-DYNAMIC-ADAPTER-DELIVERY-STUDY-V0.md`) |
+| Tài liệu ẩn `offscreen` | `EXP-10-OFFSCREEN-BROWSER-PROCESSING-RUNTIME-STUDY-V0.md` (đã xoá 08/09 — `git show a3b67a96a92e:docs/studies/EXP-10-OFFSCREEN-BROWSER-PROCESSING-RUNTIME-STUDY-V0.md`) |
+| Mạng: DNR / webRequest / CDP | `EXP-11-NETWORK-CONTROL-PLANE-DNR-WEBREQUEST-VS-CDP-STUDY-V0.md` (đã xoá 08/09 — `git show a3b67a96a92e:docs/studies/EXP-11-NETWORK-CONTROL-PLANE-DNR-WEBREQUEST-VS-CDP-STUDY-V0.md`) |
+| Cookie / storage / IndexedDB của phiên đăng nhập | `EXP-07-AUTHENTICATED-SESSION-COOKIE-STORAGE-IDB-REACH-STUDY-V0.md` (đã xoá 08/09 — `git show a3b67a96a92e:docs/studies/EXP-07-AUTHENTICATED-SESSION-COOKIE-STORAGE-IDB-REACH-STUDY-V0.md`) |
+| Khung con và target lồng nhau | `EXP-04-NESTED-FRAME-WORKER-TARGET-REGISTRY-STUDY-V0.md` (đã xoá 08/09 — `git show a3b67a96a92e:docs/studies/EXP-04-NESTED-FRAME-WORKER-TARGET-REGISTRY-STUDY-V0.md`) |
+| Chụp bằng chứng | `EXP-13-EVIDENCE-CAPTURE-RUNTIME-STUDY-V0.md` (đã xoá 08/09 — `git show a3b67a96a92e:docs/studies/EXP-13-EVIDENCE-CAPTURE-RUNTIME-STUDY-V0.md`) |
 | Bản tổng hợp 5 mặt phẳng | [PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0](PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md) |
 
 **Ba thứ ở file này là mới, và đó là toàn bộ lý do nó tồn tại:**
@@ -269,7 +269,7 @@ hôm nay không làm được?"*. Không trả lời được → `KHÔNG CẦN`
 | **③ Người thật bấm** | — | — | Đây là cái Scouter tồn tại để thay |
 
 **Cảnh báo, và nó quan trọng:** repo này **đã nghiên cứu đúng câu hỏi này** ngày 28/08 —
-[EXP-14](EXP-14-INPUT-SEMANTICS-BROWSER-INPUT-REACH-STUDY-V0.md). Kết luận của nó, chép nguyên:
+`EXP-14-INPUT-SEMANTICS-BROWSER-INPUT-REACH-STUDY-V0.md` (đã xoá 08/09 — `git show a3b67a96a92e:docs/studies/EXP-14-INPUT-SEMANTICS-BROWSER-INPUT-REACH-STUDY-V0.md`). Kết luận của nó, chép nguyên:
 `trusted-event prediction = STRONGLY SOURCE-SUPPORTED` · `current live isTrusted/userActivation
 behavior = MICRO-PROOF REQUIRED`. Nghĩa là: **tài liệu nói vậy, chưa ai trong repo này đo tận
 mắt trên Chrome hiện hành.** Tôi giữ nguyên mức đó, không nâng lên thành sự thật — nâng lên là
