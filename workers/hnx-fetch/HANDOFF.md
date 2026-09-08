@@ -191,3 +191,40 @@ trang, và **không phải vì chưa làm** mà vì manifest không khai `debugg
 trên bảng chứ không nằm trong mã.
 
 Chi tiết bộ máy ở `HANDOFF.md` gốc repo cùng ngày.
+
+## 2026-09-08 · `claude-scouter-s06` — CHẠY THẬT lần đầu qua chính extension (H-01 đóng)
+
+Đức nạp lại extension và ghép cặp bằng tệp của Scouter. **Dùng chung tệp là được** — tệp chỉ
+chở cổng và token; cái quyết định là **máy chủ nào đang chạy**. Cổng 32151 lúc đó trống, nên
+bật máy chủ HNX lên với chính tệp đó.
+
+**Đo được, trọn vòng qua Chrome thật:**
+
+| Việc | Kết quả |
+|---|---|
+| `system.ping` | `seed: hnx-fetch-v0.1` |
+| `system.capabilities` nhìn từ NGOÀI dây | đúng **bốn** lệnh, không lệnh bấm nào |
+| `scout.fetch` trang thật | status 200 · 61.797 byte |
+| ngân sách | trừ đúng **199/200** |
+| `tai-ket-qua.mjs` một lượt đầy đủ | đi trọn vòng, **0 hỏng** |
+| tệp SSOT sau lượt chạy | 368 hàng · 0 lệch cột · 0 khoá trùng |
+
+**Chỗ vấp thật, và nó KHÔNG phải chỗ tôi đoán trước.** Cả Scouter lẫn HNX Fetch cùng ghép cặp
+bằng một tệp, nên **cả hai cùng cắm** vào máy chủ, và mọi lượt gọi trả `TARGET_AMBIGUOUS`.
+
+> **Tên giao thức KHÔNG chặn được chuyện này.** Nó gác ở tầng **phong bì**; còn **cắm dây** xảy
+> ra TRƯỚC đó. Một extension nói `duc-scouter.bridge` vẫn cắm được vào máy chủ nói
+> `hnx-fetch.bridge` — nó chỉ hỏng khi có phong bì thật đi qua. Hai cửa gác hai chuyện khác
+> nhau, và hôm qua tôi chỉ nghĩ tới một cửa.
+
+Vá bằng cờ `--target` cho cả ba lệnh, kèm câu lỗi **tự kể tên ứng viên** và cách phân biệt —
+một AI vận hành gặp mã lỗi này mà không được kể tên thì không có đường nào tự thoát. Phép ghim:
+`du-lieu/tests/dich-danh-smoke.mjs`. Đó là **đi vòng**, không phải cách đúng: `H-06` mở cho
+tệp ghép cặp riêng, và lúc đó cờ này thành không cần.
+
+**Việc hằng ngày 08/09: HNX chưa công bố.** Cả hai đường cùng nói vậy — bảng kết quả báo *không
+có phiên*, và danh mục PDF tháng 09 mới nhất cũng chỉ tới **07/09**. Theo mục 4.3 ⑶ thì hai
+đường trùng nhau **loại được lỗi phía ta**, chưa loại được *công bố muộn* — hôm nay là thứ Ba,
+nên gần như chắc là muộn. Chạy lại cuối ngày.
+
+**Còn mở:** `H-06` (tệp ghép cặp riêng) · `H-07` (phím tắt phanh khẩn chưa ai bấm thử).

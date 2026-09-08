@@ -148,6 +148,29 @@ trên cùng cổng đó. Muốn chạy song song thì cần hai tệp ghép cặ
 vùng ghi, nên để tệp ghép cặp trong đó nghĩa là **token đọc được qua dây**. Máy chủ từ chối khởi
 động nếu thấy — chặn lúc bật, không phải dặn.
 
+### ①bis Trên máy có HAI extension? Bạn phải chỉ đích danh
+
+Nếu Scouter và HNX Fetch **ghép cặp bằng cùng một tệp** thì **cả hai cùng cắm** vào máy chủ
+đang chạy, và máy chủ không đoán hộ được. Mọi lượt gọi trả về:
+
+```
+TARGET_AMBIGUOUS — More than one extension session is connected
+```
+
+> **Tên giao thức KHÔNG chặn được chuyện này**, và đó là điều dễ hiểu nhầm nhất ở đây. Tên
+> giao thức gác ở tầng **phong bì**; còn **cắm dây** thì xảy ra trước đó. Một extension nói
+> `duc-scouter.bridge` vẫn cắm vào được máy chủ nói `hnx-fetch.bridge` — nó chỉ hỏng khi có
+> phong bì thật đi qua. Hai cửa gác hai chuyện khác nhau.
+
+Cách xử: thêm `--target <instance_id>` vào lệnh. Câu lỗi **tự kể tên các ứng viên** kèm dòng
+lệnh chạy được ngay, nên bạn không phải đi tra ở đâu cả.
+
+Không biết dòng nào là HNX Fetch? Gọi `system.ping` với từng dòng — đúng cái của nó trả về
+`seed: hnx-fetch-v0.1`. Scouter trả về một lỗi.
+
+Muốn khỏi phải chỉ đích danh: cho HNX Fetch **một tệp ghép cặp riêng, cổng riêng**. Hôm nay
+chưa có (`H-06`), nên `--target` là đường đi.
+
 ### ② Chrome đang mở, đã nạp HNX Fetch, và bảng bên đã ghép cặp
 
 `chrome://extensions` → Developer mode → **Load unpacked** → chọn thư mục
@@ -205,6 +228,8 @@ node tai-ket-qua.mjs --pairing <tệp-ghép-cặp> --master "G:\My Drive\WORKING
 ```bash
 node tai-pdf.mjs --pairing <tệp-ghép-cặp> --thu-muc "G:\My Drive\WORKING AI CONTENT\Chứng khoán_AI\Phái Sinh daily Fetch" --thang 09/2026
 ```
+
+**Thêm `--target <instance_id>`** nếu trên máy có hai extension cùng ghép cặp — xem mục 2 ①bis.
 
 **Thêm `--thu-xem` vào bất kỳ lệnh nào để CHỈ LIỆT KÊ, không ghi gì.** Chạy lượt xem trước khi
 chạy thật là thói quen tốt: nó tốn lượt gọi, nhưng nó không bao giờ chạm đĩa.
@@ -383,6 +408,8 @@ Rồi so dòng của ngày đó ở hai tệp. Giống nhau từng ô thì cả 
 | `DEV_MODE_UNREADABLE` | không đọc được trạng thái công tắc | xử như đang tắt. Báo Đức |
 | `WRITE_CAP_REACHED` | hết 200 lượt của lần bật này | báo Đức tắt rồi bật lại. **Đừng thử lại** — thử lại một cái phanh là vô nghĩa |
 | `MAY_CHU_HONG` | không nối được máy chủ Bridge | kiểm máy chủ có đang chạy, và tệp ghép cặp còn đúng không |
+| `TARGET_AMBIGUOUS` | hai extension cùng cắm vào một máy chủ | thêm `--target` — câu lỗi tự kể tên ứng viên. Xem mục 2 ①bis |
+| `EXTENSION_OFFLINE` | không extension nào cắm vào | mở Chrome, mở bảng bên, kiểm dòng trạng thái đã báo *Đã nối* |
 | `HINH_DANG_SAI` · `BANG_SAI` · `KHONG_CO_TBODY` | trang trả về thứ không phải bảng mong đợi | **KHÔNG thử lại.** Nhiều khả năng HNX đổi trang → xem mục 6 |
 | `SO_COT_LA` | bảng nguồn không đúng 24 cột | HNX đổi cấu trúc bảng. Dừng, báo Đức, xem mục 6 |
 | `TIEU_DE_LECH` · `HANG_LECH` | tệp SSOT hỏng hoặc không phải tệp mong đợi | **dừng hẳn.** Kiểm đúng đường dẫn chưa. Đừng ghi tiếp |

@@ -93,3 +93,42 @@ kiến, ngắn hơn), **13 con · 13/13 mỏ neo khớp · 13 giết được ·
 phanh · manifest · chống trôi. Một con (`N8`) ban đầu **sống sót vì chính nó hỏng** — nó chỉ đổi
 tên mã lỗi chứ không thật sự mở phanh ra; sửa cả hai đầu: con đột biến làm đúng việc nó khai, và
 phép ghim mọc thêm ca *kho lưu NÉM thì phải từ chối*, ca trước đó chưa ai thử.
+
+**ĐÓNG 2026-09-08** · `claude-scouter-s06` — **đã chạy thật, trọn vòng, qua chính extension này.**
+Máy chủ HNX bật với tệp ghép cặp của Scouter (dùng chung được — tệp chỉ chở cổng và token; cái
+quyết định là **máy chủ nào đang chạy**). Đo được: `system.ping` trả `seed: hnx-fetch-v0.1` ·
+`system.capabilities` khai **đúng bốn lệnh** nhìn từ ngoài dây · `scout.fetch` lấy trang thật
+`hnx.vn` (status 200) · ngân sách trừ đúng **199/200** · rồi một lượt `tai-ket-qua.mjs` đầy đủ đi
+trọn vòng, **0 hỏng**. Bảng bên, công tắc và bộ đếm đều đúng.
+
+> Phần duy nhất còn chưa thử: **phím tắt phanh khẩn `Ctrl+Shift+H`** — nó cần tay Đức bấm. Ghi
+> thành `H-07` chứ không để lẫn trong mục này.
+
+---
+
+## MỞ · H-06 (2026-09-08, `claude-scouter-s06`) — HNX Fetch chưa có tệp ghép cặp riêng
+
+Hôm nay HNX Fetch dùng chung tệp ghép cặp của Scouter. Hệ quả **đo được ngay lượt chạy đầu**:
+cả hai extension cùng cắm vào một máy chủ, và mọi lượt gọi trả `TARGET_AMBIGUOUS`.
+
+**Tên giao thức không chặn được chuyện này** — nó gác ở tầng phong bì, còn cắm dây xảy ra trước
+đó. Đã vá bằng cờ `--target` (ba lệnh, có phép ghim), nhưng đó là **đi vòng**: mỗi lượt chạy phải
+mang thêm một chuỗi 45 ký tự mà không ai nhớ được, và chuỗi đó **đổi mỗi lần nạp lại extension**.
+
+Cách đúng: một tệp ghép cặp riêng, **cổng riêng**, cho HNX Fetch. Lúc đó mỗi máy chủ chỉ có một
+extension cắm vào và cờ `--target` thành không cần.
+
+**đóng khi:** có tệp ghép cặp riêng cho HNX Fetch (Đức tạo, không nằm trong kho mã), và một lượt
+`tai-ket-qua.mjs --thu-xem` chạy trọn **không cần** `--target`.
+
+---
+
+## MỞ · H-07 (2026-09-08, `claude-scouter-s06`) — phím tắt phanh khẩn chưa ai bấm thử
+
+`Ctrl+Shift+H` khai trong `manifest.json` và nối tới `setWriteGate(false)`. Đường mã đã có phép
+ghim, nhưng **việc Chrome có nhận phím tắt đó hay không thì chỉ bấm mới biết** — và nó có thể bị
+một extension khác giành mất tổ hợp.
+
+Đây là **cái phanh cuối cùng** khi bảng bên đã đóng, nên "chắc là chạy" không đủ.
+
+**đóng khi:** Đức bấm `Ctrl+Shift+H` lúc công tắc đang BẬT, rồi bảng bên hiện `ĐANG TẮT`.

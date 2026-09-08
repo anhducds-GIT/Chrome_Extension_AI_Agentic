@@ -31,6 +31,12 @@ function ngayTrongTuan(tu, den) {
   return ra;
 }
 
+/* Chỉ đích danh extension nào. CẦN khi trên máy có NHIỀU extension cùng ghép cặp bằng một
+ * tệp — lúc đó cả hai cùng cắm vào máy chủ, và máy chủ không đoán hộ được. Đo thật 08/09:
+ * Scouter và HNX Fetch dùng chung một tệp ghép cặp thì cả hai cùng nối, và mọi lượt gọi trả
+ * về `TARGET_AMBIGUOUS`. Tên giao thức KHÔNG chặn được chuyện đó — nó gác ở tầng phong bì,
+ * còn cắm dây thì xảy ra trước đó. */
+const dichDanh = docCo("target");
 const duongDanGhepCap = docCo("pairing");
 if (!duongDanGhepCap) {
   console.error("Thiếu --pairing <đường-dẫn-tệp-ghép-cặp>. Tệp đó do bộ cài Bridge tạo.");
@@ -56,6 +62,7 @@ async function goi(method, params) {
       method,
       sent_at: new Date().toISOString(),
       client: { client_id: "pilot-hnx-phai-sinh" },
+      ...(dichDanh ? { target: dichDanh } : {}),
       params
     })
   });
@@ -63,6 +70,14 @@ async function goi(method, params) {
   if (phongBi?.ok !== true) {
     /* Giữ NGUYÊN mã lỗi của Bridge: `vong-lay` phân loại theo đúng mã đó (phanh · thử lại ·
      * dừng cả lượt). Bọc lại thành một Error trơn là ném đi cái phân loại. */
+    if (phongBi?.error?.code === "TARGET_AMBIGUOUS") {
+      const ds = (phongBi.error.details?.candidates || []).map((c) => "  --target " + c.instance_id + (c.label ? "   (" + c.label + ")" : ""));
+      throw new Error(["Có NHIỀU extension cùng nối vào máy chủ này, nên nó không biết gửi cho ai.",
+        "Thường là vì Scouter và HNX Fetch đang ghép cặp bằng CÙNG một tệp.", "",
+        "Chạy lại và chỉ đích danh một trong các dòng sau:", ...ds, "",
+        "Không biết dòng nào là HNX Fetch? Gọi thử system.ping với từng dòng —",
+        "đúng cái của HNX Fetch sẽ trả về  seed: hnx-fetch-v0.1"].join(String.fromCharCode(10)));
+    }
     const loi = new Error(phongBi?.error?.message || "Bridge trả lỗi không rõ.");
     loi.ma = phongBi?.error?.code;
     loi.code = phongBi?.error?.code;
