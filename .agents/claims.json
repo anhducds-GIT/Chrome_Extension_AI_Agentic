@@ -85,24 +85,13 @@
       "released_at": "2026-09-08T12:32"
     },
     "workers/hnx-fetch": {
-      "owner": "claude-scouter-s06",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-08T12:53",
       "task": "Dong H-06: da chung minh khong can --target",
-      "released_at": null
+      "released_at": "2026-09-08T13:04"
     }
   },
-  "_fingerprint": "6cdec1158eced118",
-  "tam": {
-    "scripts/claim.mjs": {
-      "owner": "claude-ext-n33",
-      "luc": "2026-09-08T12:54",
-      "viec": null
-    },
-    "tests/claim-smoke.mjs": {
-      "owner": "claude-ext-n33",
-      "luc": "2026-09-08T12:54",
-      "viec": null
-    }
-  }
+  "_fingerprint": "ab519c1594fa69aa",
+  "tam": {}
 }
