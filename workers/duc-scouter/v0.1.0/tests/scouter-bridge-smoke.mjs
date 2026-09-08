@@ -34,6 +34,7 @@ const EXPECTED_METHODS = [
   "scout.type",
   "scout.key",
   "scout.fetch",
+  "scout.navigate",
   "scout.reload"
 ];
 /* Năm method GHI. `scout.reload` nạp lại chính extension; ba `scout.*` kia chạm TRANG — đó là
@@ -45,9 +46,9 @@ const EXPECTED_METHODS = [
  * gói) thì một lượt gọi mạng chạm được mọi trang đang đăng nhập, nên nó phải trả đúng cái giá
  * mà `scout.click` trả. Đổi dòng này thành `read_only: true` là mở cho nó chạy tự do đúng lúc
  * nó nguy hiểm nhất. */
-const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.type", "scout.key", "scout.fetch"]);
+const EXPECTED_WRITE_METHODS = new Set(["scout.reload", "scout.click", "scout.type", "scout.key", "scout.fetch", "scout.navigate"]);
 /* Ba hành động của lõi ghi. Không tên nào khác được phép tới tay `ObserverEngine.runAction`. */
-const EXPECTED_ACTIONS = new Set(["input.click", "input.type", "input.key"]);
+const EXPECTED_ACTIONS = new Set(["input.click", "input.type", "input.key", "input.navigate"]);
 /* Bốn phép dò của lõi. Không tên nào khác được phép tới tay `ObserverEngine.runProbe`. */
 const EXPECTED_PROBES = new Set(["targets.list", "page.snapshot", "dom.query", "dom.tree", "a11y.tree", "page.shot"]);
 

@@ -35,6 +35,7 @@ const PROBE_BY_METHOD = Object.freeze({
  * này lại là bước đầu tiên để hai danh sách kia cũng bị gộp. */
 const ACTION_BY_METHOD = Object.freeze({
   "scout.click": "input.click",
+  "scout.navigate": "input.navigate",
   "scout.type": "input.type",
   "scout.key": "input.key"
 });
@@ -289,6 +290,11 @@ export function createSeedHandlers(deps = {}) {
     async "scout.shot"(params) {
       const target = await resolveTarget(params.target_id);
       return await runProbe("scout.shot", target, { format: params.format, quality: params.quality });
+    },
+
+    async "scout.navigate"(params) {
+      const target = await resolveTarget(params.target_id);
+      return await runAction("scout.navigate", target, { url: params.url, timeout_ms: params.timeout_ms });
     },
 
     async "scout.click"(params) {

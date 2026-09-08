@@ -436,6 +436,21 @@ const METHOD_ENTRIES = [
     }
   }),
   registryEntry({
+    /* ĐI SANG TRANG KHÁC. `read_only: false` không phải hình thức: đổi trang là điều khiển
+     * trang, nên nó chui qua phanh và trả giá hạn mức y như `scout.click`. */
+    name: "scout.navigate", read_only: false, deadline_ms: 70000,
+    description: "Navigate one tab to an http(s) URL and wait until the new document is readable. Returns the URL actually reached, which may differ after redirects.",
+    params_schema: { target_id: "string", url: "string", timeout_ms: "integer:1000..60000?" },
+    params_validator: (raw) => {
+      const params = objectParams(raw, ["target_id", "url", "timeout_ms"]);
+      return {
+        target_id: requiredTargetId(params.target_id),
+        url: requiredHttpUrl(params.url),
+        timeout_ms: optionalInt(params.timeout_ms, "params.timeout_ms", 1000, 60000)
+      };
+    }
+  }),
+  registryEntry({
     /* Chân chạy của vòng tự cải tiến (ADR-0009 mục ⑸): AI ghi code mới xuống đĩa qua Bridge,
      * rồi gọi method này để Scouter nạp lại CHÍNH NÓ. Nó không chạm trang nào — nên nó là
      * method duy nhất `read_only: false` mà vẫn không phải "kẻ hành động" theo nghĩa ADR-0009. */

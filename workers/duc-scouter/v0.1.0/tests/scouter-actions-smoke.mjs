@@ -31,8 +31,14 @@ const WRITE_EXPECTED = new Set([
 ]);
 
 /* Method KHÔNG được lọt qua cổng ghi, kể cả khi chúng cũng là lệnh "ghi". Mỗi cái một lý do:
- * `Runtime.*` chạy mã · `DOM.set*` sửa trang thẳng tay · `Page.navigate` đổi trang ·
- * `Network.setCookie` đụng phiên đăng nhập · `Input.insertText` là lệnh THỬ NGHIỆM. */
+ * `Runtime.*` chạy mã · `DOM.set*` sửa trang thẳng tay · `Network.setCookie` đụng phiên
+ * đăng nhập · `Input.insertText` là lệnh THỬ NGHIỆM.
+ *
+ * `Page.navigate` ĐÃ RỜI danh sách này ngày 08/09 — Đức chốt mở, để Scouter đi được từ trang
+ * danh mục sang trang chi tiết. Ghi rõ ở đây thay vì xoá lặng lẽ: một dòng biến mất khỏi danh
+ * sách cấm mà không ai giải thích thì lượt sau không biết nó rơi ra hay bị gỡ.
+ * `Page.reload` thì Ở LẠI: nạp lại trang không phải đi đâu cả, và Scouter đã có `scout.reload`
+ * cho việc nạp lại chính nó. */
 const BANNED = [
   "Runtime.evaluate",
   "Runtime.callFunctionOn",
@@ -40,7 +46,6 @@ const BANNED = [
   "DOM.setAttributeValue",
   "DOM.removeNode",
   "DOMStorage.setDOMStorageItem",
-  "Page.navigate",
   "Page.reload",
   "Network.setCookie",
   "Input.insertText",
@@ -79,7 +84,7 @@ function makeFakePage(options = {}) {
 
 /* ---- ① Từ vựng CỐ ĐỊNH -------------------------------------------------- */
 {
-  assert.deepEqual([...ACTION_NAMES], ["input.click", "input.type", "input.key"]);
+  assert.deepEqual([...ACTION_NAMES], ["input.click", "input.type", "input.key", "input.navigate"]);
 
   for (const bogus of ["input.drag", "input.scroll", "dom.query", "Input.dispatchMouseEvent", ""]) {
     const page = makeFakePage();
@@ -181,7 +186,11 @@ function makeFakePage(options = {}) {
   assert.equal(keys[4].params.code, "Digit9");
   assert.equal(keys[6].params.code, "Space");
 
-  for (const bad of ["a\nb", "\t", "x ", ""]) {
+  /* Ky tu dieu khien dung String.fromCharCode, KHONG go tho vao nguon.
+   * Truoc 08/09 hai byte 0x00 va 0x7f nam THO trong dong nay, va git coi CA FILE la binary —
+   * diff cua no vo hinh vinh vien, nen khong ai review duoc mot thay doi nao trong file nay. */
+  const DIEU_KHIEN = ["a\nb", "\t", "x" + String.fromCharCode(0), String.fromCharCode(127)];
+  for (const bad of DIEU_KHIEN) {
     const page2 = makeFakePage();
     const result2 = await runAction("input.type", { sendRaw: page2.sendRaw }, { selector: "#txt", text: bad });
     assert.equal(result2.ok, false, `ký tự điều khiển lọt qua: ${JSON.stringify(bad)}`);
@@ -267,6 +276,101 @@ function makeFakePage(options = {}) {
     (error) => error.code === "CDP_METHOD_NOT_ALLOWED",
     "cổng read-only phải vẫn từ chối chuột, kể cả sau khi đường ghi đã mở ở file khác"
   );
+}
+
+/* ---- ⑨ input.navigate — ĐI SANG TRANG KHÁC (mở 08/09, Đức chốt) --------
+ *
+ * Đồng hồ và giấc ngủ đều TIÊM VÀO, nên phép ghim không chờ thật một giây nào. Một phép ghim
+ * chờ thật là một phép ghim sẽ bị ai đó tắt đi.
+ */
+function trangDiDuoc({ urlDau = "https://a.test/1", buocDoi = 1, urlSau = "https://a.test/2", loi = null } = {}) {
+  const sent = [];
+  let lan = 0;
+  const sendRaw = async (method, params = {}) => {
+    sent.push({ method, params });
+    if (method === "Page.navigate") return loi ? { errorText: loi } : { frameId: "F1" };
+    if (method === "Target.getTargetInfo") {
+      lan += 1;
+      return { targetInfo: { url: lan > buocDoi ? urlSau : urlDau, type: "page" } };
+    }
+    if (method === "DOM.getDocument") return { root: { nodeId: 1 } };
+    throw new Error("trang giả không hiểu " + method);
+  };
+  return { sendRaw, sent };
+}
+
+const DONG_HO = () => { let t = 0; return { now: () => (t += 100), cho: async () => {} }; };
+
+{
+  /* ⑴ Đường ĐÚNG: gửi Page.navigate, đợi url đổi, và chỉ xong khi ĐỌC ĐƯỢC tài liệu. */
+  const trang = trangDiDuoc();
+  const dh = DONG_HO();
+  const kq = await runAction("input.navigate", { sendRaw: trang.sendRaw, ...dh }, { url: "https://a.test/2" });
+  assert.equal(kq.ok, true, kq.detail);
+  assert.equal(kq.data.url, "https://a.test/2");
+  assert.equal(kq.data.from, "https://a.test/1", "phải nói rõ đi TỪ đâu");
+  assert.equal(kq.data.redirected, false);
+  assert.ok(trang.sent.some((c) => c.method === "Page.navigate" && c.params.url === "https://a.test/2"));
+  assert.ok(trang.sent.some((c) => c.method === "DOM.getDocument"),
+    "không đọc tài liệu thì 'tới nơi' chỉ là url đổi, và lượt scout.page ngay sau sẽ đọc trang rỗng");
+
+  /* ⑵ Chuyển hướng KHÔNG phải lỗi — nhưng phải được KHAI ra, không im lặng. */
+  const ch = trangDiDuoc({ urlSau: "https://a.test/da-chuyen-huong" });
+  const kq2 = await runAction("input.navigate", { sendRaw: ch.sendRaw, ...DONG_HO() }, { url: "https://a.test/2" });
+  assert.equal(kq2.ok, true);
+  assert.equal(kq2.data.redirected, true, "tới một url khác mà không khai là nói dối người gọi");
+  assert.equal(kq2.data.url, "https://a.test/da-chuyen-huong");
+  assert.equal(kq2.data.requested, "https://a.test/2", "phải giữ cả url đã XIN để đối chiếu được");
+
+  /* ⑶ Chrome từ chối đi: Page.navigate trả 200 KÈM errorText. Bỏ qua trường đó là báo thành
+   * công cho một lượt chưa bao giờ rời trang cũ. */
+  const tuChoi = trangDiDuoc({ loi: "net::ERR_BLOCKED_BY_CLIENT" });
+  const kq3 = await runAction("input.navigate", { sendRaw: tuChoi.sendRaw, ...DONG_HO() }, { url: "https://a.test/2" });
+  assert.equal(kq3.ok, false);
+  assert.equal(kq3.code, "NAVIGATE_REFUSED");
+  assert.ok(kq3.detail.includes("ERR_BLOCKED_BY_CLIENT"), "phải chở nguyên văn lý do của Chrome");
+
+  /* ⑷ Không bao giờ tới nơi thì phải ĐỎ, không được treo im lặng. */
+  const treo = trangDiDuoc({ buocDoi: 99999 });
+  const kq4 = await runAction("input.navigate", { sendRaw: treo.sendRaw, ...DONG_HO() },
+    { url: "https://a.test/2", timeout_ms: 1000 });
+  assert.equal(kq4.ok, false);
+  assert.equal(kq4.code, "NAVIGATE_TIMEOUT");
+  assert.ok(kq4.detail.includes("a.test/1"), "câu lỗi phải nói ĐANG Ở ĐÂU, không chỉ nói hết giờ");
+}
+
+{
+  /* ⑸ Chỉ http(s). Ba lối thoát khác nhau ra khỏi 'đi tới một trang web'. */
+  const xau = [
+    "javascript:alert(1)",
+    "file:///C:/Windows/win.ini",
+    "chrome-extension://abcdefghijklmnopabcdefghijklmnop/x.html",
+    "data:text/html,<b>x",
+    "khong-phai-url",
+    ""
+  ];
+  for (const url of xau) {
+    const trang = trangDiDuoc();
+    const kq = await runAction("input.navigate", { sendRaw: trang.sendRaw, ...DONG_HO() }, { url });
+    assert.equal(kq.ok, false, `url xấu vẫn lọt: ${JSON.stringify(url)}`);
+    assert.equal(kq.code, "URL_INVALID", `mã sai cho ${JSON.stringify(url)}`);
+    assert.deepEqual(trang.sent, [], `${JSON.stringify(url)}: đã bị từ chối mà vẫn gửi lệnh CDP`);
+  }
+
+  /* ⑹ Chiều ngược lại: hạn chờ hợp lệ phải đi lọt, hạn chờ vô lý phải đỏ. Thiếu vế đầu thì
+   * một bản 'từ chối tất cả' vẫn xanh. */
+  for (const t of [1000, 15000, 60000]) {
+    const kq = await runAction("input.navigate", { sendRaw: trangDiDuoc().sendRaw, ...DONG_HO() },
+      { url: "https://a.test/2", timeout_ms: t });
+    assert.equal(kq.ok, true, `timeout_ms hợp lệ bị chặn oan: ${t}`);
+  }
+  for (const t of [0, 999, 60001, 1.5, "5000", null]) {
+    const kq = await runAction("input.navigate", { sendRaw: trangDiDuoc().sendRaw, ...DONG_HO() },
+      { url: "https://a.test/2", timeout_ms: t });
+    if (t === null) { assert.equal(kq.ok, true, "null = không khai, phải dùng mặc định"); continue; }
+    assert.equal(kq.ok, false, `timeout_ms vô lý vẫn lọt: ${t}`);
+    assert.equal(kq.code, "TIMEOUT_INVALID");
+  }
 }
 
 console.log("scouter-actions smoke tests: PASS");

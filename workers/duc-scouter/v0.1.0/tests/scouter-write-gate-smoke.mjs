@@ -188,7 +188,10 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
   const cases = [
     ["scout.click", CLICK],
     ["scout.type", { target_id: "T1", selector: "#in", text: "xin chao" }],
-    ["scout.key", { target_id: "T1", selector: "#in", key: "Enter" }]
+    ["scout.key", { target_id: "T1", selector: "#in", key: "Enter" }],
+    /* Doi trang la DIEU KHIEN trang, nen no phai tra dung cai gia ma scout.click tra.
+     * Them mot hanh dong GHI ma quen dong nay la mo mot cua di vong qua phanh. */
+    ["scout.navigate", { target_id: "T1", url: "https://vi-du.test/x" }]
   ];
   for (const [method, params] of cases) {
     const { handlers, engine } = makeHandlers(undefined);
@@ -196,7 +199,7 @@ for (const used of [-1, 1.5, "3", null, undefined, NaN]) {
     assert.equal(error.code, "WRITE_BLOCKED", `${method} khong bi chan`);
     assert.equal(engine.actionCalls.length, 0, `${method}: bi chan roi ma van goi engine`);
   }
-  /* Và chặn hết ba cái thì phải ĐÚNG ba cái đó — bảng hành động không được mọc thêm lặng lẽ. */
+  /* Và chặn hết thì phải ĐÚNG những cái đó — bảng hành động không được mọc thêm lặng lẽ. */
   assert.deepEqual(Object.keys(SEED_CONSTANTS.ACTION_BY_METHOD).sort(), cases.map(([m]) => m).sort());
 }
 

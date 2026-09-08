@@ -42,14 +42,14 @@
 export const ACTION_NAMES = Object.freeze([
   "input.click",
   "input.type",
-  "input.key"
+  "input.key",
+  "input.navigate"
 ]);
 
 /* Method CDP được phép ở đường GHI. Ba lệnh `DOM.*` đầu chỉ để TÌM và ĐƯA VÀO TẦM NHÌN đúng
  * một phần tử; chúng không đổi gì trên trang. `DOM.focus` đổi tiêu điểm — đó là thao tác ghi
  * nhỏ nhất mà gõ phím bắt buộc phải có. CỐ Ý KHÔNG CÓ: `Runtime.*` (chạy mã), `DOM.setOuterHTML`
- * và `DOM.setAttributeValue` (sửa trang thẳng tay), `Page.navigate` (đổi trang),
- * `Network.*` (đụng dây), `Input.insertText` (CDP đánh dấu THỬ NGHIỆM — phép đo 06/09 ghi nhận
+ * và `DOM.setAttributeValue` (sửa trang thẳng tay), `Network.*` (đụng dây), `Input.insertText` (CDP đánh dấu THỬ NGHIỆM — phép đo 06/09 ghi nhận
  * nó chạy được nhưng KHÔNG tính điểm, nên nó không vào seed).
  * Nới danh sách này = đổi luật an toàn = phải hỏi Đức (AGENTS.md gốc mục 2). */
 export const WRITE_CDP_METHODS = Object.freeze([
@@ -60,7 +60,20 @@ export const WRITE_CDP_METHODS = Object.freeze([
   "DOM.getBoxModel",
   "DOM.focus",
   "Input.dispatchMouseEvent",
-  "Input.dispatchKeyEvent"
+  "Input.dispatchKeyEvent",
+  /* MỞ 08/09 — Đức chốt. Trước đó dòng chú thích trên khai "CỐ Ý KHÔNG CÓ `Page.navigate`",
+   * và câu đó đúng cho tới khi Scouter chỉ cần đọc một trang. Nay việc thật cần đi từ trang
+   * này sang trang kia (danh mục → chi tiết), mà bấm vào link thì phụ thuộc trang có link đó
+   * và có đúng một link đó — hai điều kiện Scouter không kiểm được trước khi bấm.
+   *
+   * Nó KHÔNG được coi là đọc: `scout.navigate` là method GHI, chui qua phanh và trả giá hạn
+   * mức y như `scout.click`. Đổi trang là điều khiển trang, và mở nó ở đây không nới rộng
+   * đường đọc — danh sách của `observer-probes.mjs` vẫn không có `Page.navigate`.
+   *
+   * `Target.getTargetInfo` vào cùng vì đường điều hướng phải ĐỌC LẠI url sau khi đi, và một
+   * lượt đi không kiểm được đích đến thì không nói được nó đã tới đâu. */
+  "Page.navigate",
+  "Target.getTargetInfo"
 ]);
 
 /* Khoá tham số CHỞ TOẠ ĐỘ. Chốt ⑶ chặn theo HÌNH DẠNG tham số của NGƯỜI GỌI, nên nó còn sống
@@ -131,7 +144,12 @@ export async function runAction(name, deps = {}, params = {}) {
     rejectCoordinates(params);
     if (typeof deps.sendRaw !== "function") throw new ActionError("DEPS_MISSING", "Hành động này cần deps.sendRaw.");
     const send = createWriteSender(deps.sendRaw, log);
-    const data = await ACTIONS[name](send, params);
+    /* `cho` và `now` tiêm được để phép ghim không phải chờ thật — cùng quy ước với transport. */
+    const ctx = {
+      cho: typeof deps.cho === "function" ? deps.cho : (ms) => new Promise((r) => setTimeout(r, ms)),
+      now: typeof deps.now === "function" ? deps.now : () => Date.now()
+    };
+    const data = await ACTIONS[name](send, params, ctx);
     return { ok: true, action: name, data, cdp: log };
   } catch (error) {
     const code = error instanceof ActionError ? error.code : "ACTION_FAILED";
@@ -178,6 +196,55 @@ const ACTIONS = {
   },
 
   /* ③ input.key — gõ MỘT phím có tên, chọn từ bảng cố định. */
+  /* ④ input.navigate — ĐI SANG TRANG KHÁC, rồi đợi tới nơi.
+   *
+   * Vì sao là một thao tác TRỌN GÓI chứ không phải một máy trạng thái sáu bước: "đi" và "làm
+   * tiếp" là hai lượt gọi riêng, và `target_id` là thứ nối chúng lại. Không có trạng thái nào
+   * cần sống xuyên qua lần đổi trang, nên đừng dựng chỗ chứa nó.
+   *
+   * KHÔNG khẳng định đã tới ĐÚNG url đã xin. Chuyển hướng là chuyện bình thường, và một phép
+   * so bằng sẽ báo hỏng cho một lượt đi hoàn toàn thành công. Thay vào đó nó TRẢ VỀ url thật
+   * đã tới, và người gọi tự đối chiếu — đó là sự thật, không phải lời hứa.
+   *
+   * "Tới nơi" = url đã đổi VÀ đọc được tài liệu. Thiếu vế sau thì một trang mới bắt đầu tải
+   * cũng tính là xong, và lượt `scout.page` ngay sau đó đọc phải trang rỗng. */
+  async "input.navigate"(send, params, ctx) {
+    const url = readUrlDi(params.url);
+    const hanMs = readHanCho(params.timeout_ms);
+
+    const truoc = await send("Target.getTargetInfo", {});
+    const urlTruoc = truoc?.targetInfo?.url ?? null;
+
+    const ket = await send("Page.navigate", { url });
+    /* `Page.navigate` trả 200 kèm `errorText` khi Chrome từ chối đi — im lặng bỏ qua trường
+     * đó là báo thành công cho một lượt chưa bao giờ rời trang cũ. */
+    if (ket && typeof ket.errorText === "string" && ket.errorText !== "") {
+      throw new ActionError("NAVIGATE_REFUSED", `Chrome từ chối đi tới '${url}': ${ket.errorText}`);
+    }
+
+    const batDau = ctx.now();
+    let urlSau = urlTruoc;
+    let doiRoi = false;
+    while (ctx.now() - batDau < hanMs) {
+      await ctx.cho(250);
+      const tin = await send("Target.getTargetInfo", {});
+      urlSau = tin?.targetInfo?.url ?? null;
+      if (urlSau && urlSau !== urlTruoc) {
+        doiRoi = true;
+        try {
+          await send("DOM.getDocument", { depth: 0 });
+          return {
+            requested: url, url: urlSau, from: urlTruoc,
+            ms: ctx.now() - batDau, redirected: urlSau !== url
+          };
+        } catch (_chuaSan) { /* tài liệu chưa đọc được thì chờ tiếp, chưa phải hỏng */ }
+      }
+    }
+    throw new ActionError("NAVIGATE_TIMEOUT",
+      `Quá ${hanMs}ms mà chưa tới nơi. Xin đi '${url}', đang ở '${urlSau ?? "không đọc được"}'` +
+      (doiRoi ? " (url đã đổi nhưng tài liệu chưa đọc được)." : " (url chưa đổi)."));
+  },
+
   async "input.key"(send, params) {
     const selector = readSelector(params.selector);
     const keyName = readKeyName(params.key);
@@ -196,6 +263,31 @@ const ACTIONS = {
 };
 
 /* ---- Phụ trợ ------------------------------------------------------------ */
+
+/* Chỉ http(s). `javascript:` chạy mã, `file:` đọc đĩa, `chrome-extension:` vào ruột
+ * extension — cả ba là ba lối thoát khác nhau ra khỏi "đi tới một trang web". */
+function readUrlDi(value) {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new ActionError("URL_INVALID", "Tham số url phải là một chuỗi không rỗng.");
+  }
+  if (value.length > 2048) throw new ActionError("URL_INVALID", "url dài quá 2048 ký tự.");
+  let phanTich;
+  try { phanTich = new URL(value); }
+  catch { throw new ActionError("URL_INVALID", `Không phải một url hợp lệ: '${value}'.`); }
+  if (phanTich.protocol !== "http:" && phanTich.protocol !== "https:") {
+    throw new ActionError("URL_INVALID",
+      `Chỉ đi tới http hoặc https. Nhận được '${phanTich.protocol}'.`);
+  }
+  return phanTich.href;
+}
+
+function readHanCho(value) {
+  if (value === undefined || value === null) return 15000;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1000 || value > 60000) {
+    throw new ActionError("TIMEOUT_INVALID", "timeout_ms phải là số nguyên trong 1000..60000.");
+  }
+  return value;
+}
 
 function readSelector(value) {
   if (typeof value !== "string" || value.trim() === "") {
