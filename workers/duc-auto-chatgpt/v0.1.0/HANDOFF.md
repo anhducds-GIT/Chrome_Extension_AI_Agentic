@@ -319,3 +319,32 @@ live) · `B-09` · `B-15` · `B-20`. Cần brief riêng: `B-06` `B-07` `B-31` `B
 
 **Trần tuyên bố cho cả hai bản vá: SUITE, CHƯA LIVE.** Ba phép nghiệm thu 0 credit ở `STATUS.md`.
 Lượt commit đầu của phiên bị lane khác cuốn theo — ghi ở `BACKLOG.md` gốc repo, mục `N-40`.
+
+## 2026-09-08 (tiếp) · `claude-gpt-no-ky-thuat` — nghiệm thu LIVE qua Bridge: (A) đạt, (D) hỏng
+
+**Làm gì.** Đức nạp lại tiện ích và mở Bridge; tôi lái qua `bridge-cli`. Lượt chạy thật đầu tiên
+của gói sau khi mở băng. Bảng số đầy đủ, bằng chứng từng dòng, và `đóng khi:` của mọi mục mới:
+`BACKLOG.md`, mục "Nghiệm thu live 2026-09-08".
+
+**Kết quả số.**
+
+- **Sáu nợ nghiệm thu CŨ nay có bằng chứng live**, không phải việc hôm nay: chặn chạy từ trang chủ
+  cả hai chiều (02/09) · trần `run.trial` 900 giây và đồng hồ tiến độ **bò lên** (07/09) ·
+  `run.start` vẫn không có trong 23 lệnh · **B-10** (hôm nay) · **B-16** (06/09).
+- **B-36: nửa (A) ĐẠT ở đúng chỗ 04/09 đã hỏng, nửa (D) HỎNG — mục VẪN MỞ.** Tệp tên-GUID trong
+  `Downloads` **39 trước, 39 sau**, đo bốn lần, kể cả sau một lượt chạy đã tới cửa lưu rồi chết.
+  Sau khi Đức chọn thư mục: `checkpoint.verified: true`, tên tệp đúng, `audit_durable` biến mất.
+  (D) **không nhận lại** thư mục đã cấp quyền sau khi đóng/mở panel — Đức phải bấm lần hai.
+- **Sổ nợ gói 12 → 15.** Ba mục mới đều sinh từ lượt chạy này: `B-37` (P1) · `B-38` (P1) ·
+  `B-39` (P2). Nợ tăng, và đúng: việc của một lượt chạy thật là tìm ra chỗ hỏng.
+
+**Còn mở.** `B-14`/`B-15` **chưa đo được lần thứ hai** — cửa sổ gắn ảnh quá sớm so với 1–2 giây bắt
+tay CLI; **đừng đọc các con `0` trong `attachmentPreview` thành "selector chết"**, không có ảnh đang
+gắn thì `0` là câu trả lời đúng. Đầu mối mới và một trần cứng (ảnh 2MB **không** qua Bridge được,
+nắp 700KB mỗi ảnh) đều ghi ở `BACKLOG.md`.
+
+**Tôi làm sai một chỗ, ghi ra để lượt sau không lặp.** `Q003` tiêu một lượt sinh mà không thu được
+gì, và **lỗi là của tôi, không phải của mã**: tôi chạy job tạo ảnh trong hội thoại Đức đang mở, mà
+hội thoại đó có chỉ thị riêng buộc trả lời ngắn — nên ChatGPT không tạo ảnh nào. Extension xử đúng
+mọi bước và **không gửi lại**. Luật lượt sau: job ảnh chạy trong hội thoại **TRỐNG**, và đọc
+`chat.read` **trước** khi chạy.
