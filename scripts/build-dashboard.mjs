@@ -113,8 +113,15 @@ function statusScanLines(text) {
   if (lines[0] === "---") {
     const end = lines.indexOf("---", 1);
     if (end >= 0) {
+      /* Ba trường danh tính (`lam_duoc` · `khong_lam_duoc` · `dung_the_nao`) nằm trong danh
+       * sách dưới đây ngay từ lượt chúng ra đời. Chúng là chữ TỰ DO hiện thẳng lên bảng, nên
+       * không soi thì một câu như *"bốn lệnh Bridge"* gõ tay sẽ sống mãi ở đó và mục dần —
+       * đúng cái bệnh mà luật số-của-máy sinh ra để chữa.
+       *
+       * Bộ quét nhìn frontmatter theo DANH SÁCH TÊN, nên một trường mới KHÔNG tự được soi:
+       * quên thêm tên vào đây là mở lại một lỗ đã bịt, mà không gì đỏ lên. */
       for (let index = 1; index < end; index += 1) {
-        const match = lines[index].match(/^\s*(current_focus|last_verified_how)\s*:\s*(.*)$/);
+        const match = lines[index].match(/^\s*(current_focus|last_verified_how|lam_duoc|khong_lam_duoc|dung_the_nao)\s*:\s*(.*)$/);
         if (match) selected.push({ text: match[2], lineNumber: index + 1 });
       }
       for (let index = end + 1; index < lines.length; index += 1) {
@@ -554,7 +561,8 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
        *
        * CỐ Ý KHÔNG chứa số: số lệnh Bridge và số file kiểm là **máy đo**, bảng B đã có. Gõ tay
        * một con số vào đây là dựng bản thứ hai của một phép đo, và bản thứ hai sẽ mục.
-       * `luatSoMayGiu()` chặn đúng chuyện đó. */
+       * `detectStatusMachineOwnedFacts()` chặn đúng chuyện đó, và ba trường này đã có tên trong
+       * danh sách quét của `statusScanLines()`. */
       lamDuoc: item.fm?.lam_duoc ?? "",
       khongLamDuoc: item.fm?.khong_lam_duoc ?? "",
       dungTheNao: item.fm?.dung_the_nao ?? "",

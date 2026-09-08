@@ -666,6 +666,54 @@ function antiDrift(text, measurements = {}) {
   ok("đổi claims.json không làm dashboard thay đổi");
 }
 
+
+/* ==== KHỐI C · DANH TÍNH extension (Đức đặt 08/09) ==========================
+ * Ba trường TUỲ CHỌN `lam_duoc` · `khong_lam_duoc` · `dung_the_nao` hiện thẳng lên bảng dưới
+ * dạng chữ tự do. Hai tính chất phải giữ, và cả hai đều dễ mất trong im lặng. */
+{
+  const LFC = String.fromCharCode(10);
+  const fmC = (them) => ["---", "schema: extension-status/v2", "id: x", "name: X",
+    "lifecycle: building", "owner: ai", "version_source: a.json", 'current_focus: "ok"',
+    "ref_readme: R.md", "ref_handoff: H.md", ...them, "---", "", "thân"].join(LFC);
+  const optC = { statusPath: "S.md", bridgeMethods: 4, testFiles: 9, version: "0.1.0" };
+
+  /* ⑴ Ba trường mới PHẢI bị luật số-của-máy soi.
+   * Bộ quét nhìn frontmatter theo DANH SÁCH TÊN, nên một trường mới KHÔNG tự được soi. Quên
+   * thêm tên vào danh sách là mở lại một lỗ đã bịt — và không gì đỏ lên, vì bảng vẫn sinh ra
+   * bình thường với một con số gõ tay nằm trong đó, mục dần. */
+  for (const [truong, cau] of [
+    ["lam_duoc", "Lấy dữ liệu HNX. Có 4 lệnh Bridge."],
+    ["khong_lam_duoc", "Không bấm gì. 9 file test."],
+    ["dung_the_nao", "Nạp bản v0.1.0 vào Chrome."]
+  ]) {
+    const loi = detectStatusMachineOwnedFacts(fmC([`${truong}: ${JSON.stringify(cau)}`]), optC);
+    assert.ok(loi.length > 0,
+      `trường "${truong}" KHÔNG bị luật số-của-máy soi — thêm tên nó vào statusScanLines()`);
+  }
+
+  /* Và chiều ngược lại: số KIỂM CHỨNG, giới hạn an toàn, mã việc phải được THA. Một luật bắt
+   * mọi thứ có chữ số thì người ta sẽ đi tìm cách tắt nó. */
+  for (const cau of [
+    "Lấy dữ liệu phái sinh HNX theo ngày, ghi vào một tệp CSV.",
+    "Đã đối chiếu 25/25 ô ngày 12/08. Trần 200 lượt mỗi lần bật."
+  ]) {
+    assert.deepEqual(detectStatusMachineOwnedFacts(fmC([`lam_duoc: ${JSON.stringify(cau)}`]), optC), [],
+      `bắt oan một câu không chứa phép đo machine-owned: ${cau}`);
+  }
+  ok("khối C: ba trường danh tính bị luật số-của-máy soi, và số kiểm chứng được tha");
+
+  /* ⑵ Khối C chỉ vẽ đơn vị NÀO CÓ KHAI.
+   * Một danh sách nửa là "chưa khai" thì người đọc học cách bỏ qua cả khối — và lúc đó khối
+   * này thành rác chiếm chỗ, đúng cái Đức phàn nàn về bảng cũ. */
+  {
+    const repo = fakeRepo();
+    const bang = buildDashboard(collectModel(repo));
+    assert.ok(!bang.includes("## C ·"),
+      "không đơn vị nào khai danh tính mà khối C vẫn vẽ — nó sẽ là một khối rỗng thường trực");
+  }
+  ok("khối C chỉ vẽ đơn vị CÓ KHAI danh tính");
+}
+
 /* 23. Gate 7 integration: HEAD-only, read-only, không bị --quick bỏ, và bắt artifact stale. */
 {
   const tempRoot = mkdtempSync(join(tmpdir(), "gate7-committed-truth-"));

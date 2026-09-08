@@ -294,16 +294,22 @@ export function chungMinhCu(row) {
    Vắng thì trả chuỗi rỗng và vùng CẦN ĐỨC không vẽ gì thêm: không bịa, cũng không để một
    chỗ trống trông như lỗi. Hôm nay trường này vắng ở cả bốn đơn vị — đó là trạng thái BÌNH
    THƯỜNG, không phải thiếu dữ liệu. Thêm trường là việc của chủ gói, không phải của bảng. */
-export function blockedIfSkipped(deps, row) {
+export function truongTuyChon(deps, row, ten) {
   const file = row?.statusPath;
   if (!file) return "";
   let text;
   try { text = deps.readFile(file); } catch { return ""; }
   const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
   if (!fm) return "";
-  const hit = /^blocked_if_skipped:[ \t]*(.+)$/m.exec(fm[1]);
+  const hit = new RegExp("^" + ten + ":[ \t]*(.+)$", "m").exec(fm[1]);
   if (!hit) return "";
   return hit[1].trim().replace(/^["']/, "").replace(/["']$/, "").trim();
+}
+
+/* Giữ nguyên tên cũ cho chỗ gọi cũ: đổi tên một hàm đang chạy tốt chỉ để cho gọn là một lượt
+ * sửa không mang lại gì mà vẫn có thể làm vỡ một phép ghim. */
+export function blockedIfSkipped(deps, row) {
+  return truongTuyChon(deps, row, "blocked_if_skipped");
 }
 
 /* ===================== KHỐI "CẦN ĐỨC" — SUY TỪ DẤU TRONG SỔ =====================
@@ -2085,6 +2091,29 @@ ${STYLE}
             <dt>Việc còn nợ</dt><dd>${n === undefined ? "gói chưa có sổ nợ" : n + " việc"}</dd>
             <dt>Lệnh Bridge</dt><dd>${r.bridgeMethods} lệnh · ${r.testFiles} file kiểm</dd>
           </dl>`);
+
+    /* DANH TÍNH — ba trường TUỲ CHỌN trong hồ sơ trạng thái. Đức đặt 08/09: *"cập nhật vào
+     * dashboard danh tính của extension, cả chức năng, khả năng"*.
+     *
+     * Chỉ vẽ khi CÓ KHAI. Bốn gói cũ hôm nay không khai, và một danh sách nửa là "chưa khai"
+     * thì người đọc học cách bỏ qua cả khối — đúng cái bệnh mà lượt refactor IA vừa chữa.
+     *
+     * "KHÔNG làm được" đứng NGANG HÀNG "Làm được", không phải phần phụ: hai extension này khác
+     * nhau chủ yếu ở chỗ chúng KHÔNG làm gì. HNX Fetch không bấm được — đó là tính năng, và nó
+     * là lý do gói đó tồn tại riêng. */
+    const lamDuoc = truongTuyChon(deps, r, "lam_duoc");
+    if (lamDuoc) {
+      const khong = truongTuyChon(deps, r, "khong_lam_duoc");
+      const dung = truongTuyChon(deps, r, "dung_the_nao");
+      cur.push(`          <div>
+            <h2>Nó là cái gì</h2>
+            <dl class="kv">
+              <dt>Làm được</dt><dd>${esc(lamDuoc)}</dd>
+              ${khong ? `<dt>KHÔNG làm được</dt><dd>${esc(khong)}</dd>` : ""}
+              ${dung ? `<dt>Dùng thế nào</dt><dd>${esc(dung)}</dd>` : ""}
+            </dl>
+          </div>`);
+    }
     if (twoBranch && features.length) {
       cur.push(`          <div>
             <h2>Tính năng đã đo</h2>

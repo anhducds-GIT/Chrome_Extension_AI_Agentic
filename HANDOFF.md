@@ -1670,3 +1670,34 @@ thành một ADR. Gói thứ ba phải hỏi Đức.
 
 **Còn nợ:** thư mục pilot cũ **chưa xoá** (xoá tệp phải hỏi Đức), đã dán bảng ĐÃ CHUYỂN NHÀ.
 Chưa lượt nào chạy qua chính extension mới.
+
+## 2026-09-08 · `claude-scouter-s06` — bảng hiện DANH TÍNH từng extension
+
+Đức đặt: *"cập nhật vào dashboard danh tính của 2 extension, cả chức năng, khả năng… protocol
+sử dụng cũng nên được đưa vào. Đơn giản, dễ hiểu, cô đọng."*
+
+**Sửa NGUỒN, không sửa bảng.** `DASHBOARD.md` là máy sinh — gõ tay vào đó thì mất ở lần sinh
+sau, và trong lúc chưa mất thì nó nói sai. Nên: ba trường **tuỳ chọn** trong `STATUS.md`
+(`lam_duoc` · `khong_lam_duoc` · `dung_the_nao`) + `ref_runbook` trỏ sổ tay, rồi hai bộ sinh đọc.
+
+- `DASHBOARD.md` → **khối C** mới, mỗi extension ba dòng.
+- Trang HTML → khối *"Nó là cái gì"* trong thẻ từng extension (tầng **Việc**).
+
+**Chỉ vẽ đơn vị NÀO CÓ KHAI.** Bốn gói cũ không khai nên không hiện dòng nào — một danh sách
+nửa là *"chưa khai"* thì người đọc học cách bỏ qua cả khối.
+
+**Dòng KHÔNG LÀM ĐƯỢC đứng ngang hàng dòng làm được**, cố ý: hai extension này khác nhau chủ
+yếu ở chỗ chúng **không** làm gì. HNX Fetch không bấm được — đó là tính năng, không phải thiếu
+sót, và là lý do gói đó tồn tại riêng.
+
+**Một lỗ suýt mở lại.** Ba trường mới là chữ tự do hiện thẳng lên bảng, mà bộ dò *"số của máy"*
+chỉ soi frontmatter theo **danh sách tên** — nên trường mới **không tự được soi**. Quên thêm tên
+là gõ tay được *"4 lệnh Bridge"* vào bảng và không gì đỏ lên. Đã thêm vào danh sách và ghim cả
+hai chiều: gõ tay số máy-đo thì **bị bắt**, còn số kiểm chứng (`25/25`) và giới hạn an toàn
+(`trần 200 lượt`) thì **được tha**.
+
+> Kèm một chỗ tự sửa: chú thích đầu tiên tôi viết nhắc hàm `luatSoMayGiu()` — **không tồn tại**.
+> Tên thật là `detectStatusMachineOwnedFacts()`.
+
+**Đo.** Suite gốc repo **379** · dashboard smoke **102** (trước 100) · overview smoke **36**
+(trước 35) · `check-bootstrap` 0 đỏ.

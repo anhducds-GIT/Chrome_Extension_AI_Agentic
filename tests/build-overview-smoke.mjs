@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { collectModel, createDefaultDeps } from "../scripts/build-dashboard.mjs";
-import { bacMoc, blockedIfSkipped, buildOverview, demLuongSongSong, readBatBien, readCoChe, readCanDuc, canDucDaDong, khoangNgay, SO_CAN_DUC, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, NHOM_CHUA_XEP, tuoiTuMoc, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readMocDaXong, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, TANG, CHI_SO_KY_THUAT, kiemHopDongTang, kiemChiSoHome, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
+import { bacMoc, blockedIfSkipped, truongTuyChon, buildOverview, demLuongSongSong, readBatBien, readCoChe, readCanDuc, canDucDaDong, khoangNgay, SO_CAN_DUC, choDuc, chungMinhCu, compareOverview, debtByUnit, gateNext, GATE_MIN, humanWork, IDEA_STAGES, isDone, KHOA_PREFIX, NHOM_CHUA_XEP, tuoiTuMoc, trangThaiDonVi, readAssistantEvents, readBrief, readDecisions, readDefects, readFeatures, readAreas, readIdeas, readKhoa, readLuong, readMoc, readMocDaXong, shorten, sinhTrang, SU_CO_ASSISTANT, TAB_MAC_DINH, TANG, CHI_SO_KY_THUAT, kiemHopDongTang, kiemChiSoHome, tenKhoa, TRANG_FILE } from "../scripts/build-overview.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -1457,6 +1457,38 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
   assert.ok(!gateNext("chuyển vào workers/observer-v0/v0.1.0/ rồi khai lại").includes("/"),
     "duong dan phai bi cat khoi gate — trang danh cho Duc cam in duong dan");
   ok("gate tiep theo: cat cau dau, co tran do dai, cat duong dan, va khong them dau ba cham oan");
+}
+
+/* ---- T2c-bis. DANH TÍNH extension — ba trường TUỲ CHỌN, Đức đặt 08/09 ---------
+ * `truongTuyChon` là bộ đọc dùng chung tách ra từ `blockedIfSkipped`. Tách rồi thì phải ghim
+ * rằng nó đọc được TRƯỜNG BẤT KỲ — nếu không, một lỗi trong phần ghép tên trường sẽ chỉ lộ ra
+ * ở đúng cái trường không có phép ghim nào. */
+{
+  const fm = (than) => `---${String.fromCharCode(10)}${than}${String.fromCharCode(10)}---${String.fromCharCode(10)}# x`;
+  const d = (text) => ({ readFile: () => text });
+  const ba = ['lam_duoc: "Lấy dữ liệu HNX theo ngày."',
+              'khong_lam_duoc: "Không bấm, không gõ."',
+              'dung_the_nao: "Bật máy chủ rồi chạy hai lệnh."'].join(String.fromCharCode(10));
+
+  assert.equal(truongTuyChon(d(fm(ba)), { statusPath: "S.md" }, "lam_duoc"),
+    "Lấy dữ liệu HNX theo ngày.", "doc duoc truong lam_duoc");
+  assert.equal(truongTuyChon(d(fm(ba)), { statusPath: "S.md" }, "khong_lam_duoc"),
+    "Không bấm, không gõ.", "doc duoc truong khong_lam_duoc");
+  assert.equal(truongTuyChon(d(fm(ba)), { statusPath: "S.md" }, "dung_the_nao"),
+    "Bật máy chủ rồi chạy hai lệnh.", "doc duoc truong dung_the_nao");
+
+  /* Tên trường KHÔNG được khớp nhầm sang trường khác có cùng hậu tố. `lam_duoc` và
+   * `khong_lam_duoc` chỉ khác nhau ở tiền tố, nên một mẫu neo lỏng sẽ trả về nhầm câu — và
+   * bảng sẽ nói extension LÀM ĐƯỢC đúng cái nó không làm được. Sai kiểu đó tệ hơn để trống. */
+  assert.notEqual(truongTuyChon(d(fm(ba)), { statusPath: "S.md" }, "lam_duoc"),
+    truongTuyChon(d(fm(ba)), { statusPath: "S.md" }, "khong_lam_duoc"),
+    "lam_duoc va khong_lam_duoc bi doc thanh cung mot cau");
+
+  assert.equal(truongTuyChon(d(fm("lifecycle: active")), { statusPath: "S.md" }, "lam_duoc"), "",
+    "truong VANG thi tra rong — the danh tinh se KHONG duoc ve, do la trang thai binh thuong");
+  assert.equal(truongTuyChon({ readFile: () => { throw new Error("KHONG_CO"); } }, { statusPath: "S.md" }, "lam_duoc"), "",
+    "doc that bai thi tra rong — mot truong TUY CHON khong duoc lam chet ca bo sinh");
+  ok("danh tính extension: ba trường tuỳ chọn đọc đúng, không khớp nhầm nhau, vắng thì trả rỗng");
 }
 
 /* ---- T2d. `blocked_if_skipped` là trường TUỲ CHỌN, và đọc nó không được ném ---- */
