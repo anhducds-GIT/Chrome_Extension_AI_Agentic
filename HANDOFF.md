@@ -622,3 +622,34 @@ không phải đúng**. Muốn so với HEAD thì `git show HEAD:<file>`, đừn
 `N-51` còn mở, chờ Đức chốt số cho giới hạn ③.
 
 > **Lượt đẩy dùng `--carry`, cuốn theo 6 commit của lane `claude-gpt-chay-het-job`** — ADR-0005 duyệt thường trực; đổi lại phải kể tên lane bị cuốn theo, đây là dòng đó.
+
+## 2026-09-09 · `claude-ext-luat` — rà soát toàn repo, gỡ 5 chỗ luật đá nhau
+
+Đức bác cách làm cũ (*"rà soát lại hoàn toàn chứ không vá ngắn hạn"*) và mở đường gộp luật
+(ADR-0026). Chi tiết ở `BACKLOG.md`: dòng đóng `N-51` và mục `N-54`.
+
+**Đo trước khi xoá.** Repo **136 MB**, trong đó **121,8 MB là ảnh** (190 file) — repo PUBLIC, clone tốn 165 MB; **53,5 MB là bản sao y hệt**. Chữ 206.877 dòng: test 26% · mã extension 25% ·
+bằng chứng 17% · còn lại 30%. `docs/` **0 hồ sơ mồ côi**, `scripts/` đúng **1 hằng chết**.
+Phần tôi dọn ba ngày qua là 10% khối lượng và đã hết chỗ;
+**92% nằm trong ba gói `duc-auto-*`, cả ba đang có lane khác giữ khoá.**
+
+**Năm chỗ luật đá nhau, đã đánh dấu chết kèm lý do:** khoá (ADR-0023 *"quá 30 phút → nhường"* vs
+ADR-0025 *"chỉ HỎI, không nhả hộ"*) · nhật ký (0008 số mục · 0011 xoay tháng · 0012 *"tuổi không
+phải tiêu chí"*) · trần gói (0021 vs 0024) · 0018 `Accepted` mà trỏ sang 0019 `Proposed`. Ổ khoá
+đã cắn thật: một phiên đọc câu cũ rồi áp cho khoá **của chính mình**, trong khi cả hai câu nói về
+khoá **của người khác**. Đức chốt giữ **ADR-0008**.
+
+**B12 đổi câu hỏi, không bị gỡ:** từ *"thân ADR có đổi không"* sang *"số hiệu nào từng cấp mà nay
+không file nào nhận"*. Rủi ro khi gộp 26 file còn 8 không phải chữ bị sửa — git giữ đủ — mà là
+**một quyết định biến mất không ai thấy**. Chính phép kiểm bắt hai lỗi mô hình của tôi.
+
+**`AGENTS.md` 300 → 254 dòng, phi-ASCII 16% → 1%**, chín nhóm, mỗi luật một dòng kèm ADR. Phép
+so chống mất luật báo **17 thứ rơi** lượt đầu, ba nhóm là thật; vá xong còn **0**.
+
+**Ba lỗi của tôi:** ⑴ xoá một dòng `.gitignore` vì đọc nó là "không làm gì" — nó vô hiệu với file
+ĐÃ theo dõi nhưng vẫn chặn file MỚI, bỏ đi làm 4 mục lạ hiện trong `git status` của mọi lane.
+**Dòng cấu hình "vô dụng" phải kiểm bằng cách BỎ RA rồi xem gì đổi.** ⑵ dòng đóng sổ nợ viết sai
+mẫu (`**ĐÓNG N-51 · …**` thay vì `**ĐÓNG N-51** · …`) nên **không đóng gì** mà đọc y hệt dòng
+đúng. ⑶ một dòng mở đầu `- **ĐÓNG N-45` viết để dẫn giải — may là sai mẫu; đã xoá.
+
+Chờ Đức: **122 MB ảnh** · **chuyển khoá ba gói**.
