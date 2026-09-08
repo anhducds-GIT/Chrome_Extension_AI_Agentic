@@ -1,0 +1,203 @@
+/* sidepanel.css — bảng bên, khung hẹp.
+ *
+ * Bảng bên của Chrome rộng khoảng 320–400px và Đức kéo hẹp được nữa. Bản cũ đặt
+ * `min-width: 480px` — thừa hưởng từ hồi nó còn là popup — nên trong bảng bên nó tràn ngang.
+ * Ở đây không có `min-width`; mọi khối co được.
+ *
+ * MÀU: sáng là gốc, tối định nghĩa lại ĐÚNG các biến. Không màu nào chỉ tồn tại trong khối tối. */
+:root {
+  color-scheme: light dark;
+  --nen: #f6f7f9;
+  --the: #ffffff;
+  --vien: #e3e6ea;
+  --chu: #16191d;
+  --mo: #666e7a;
+  --xanh: #2563eb;
+  --xanh-nen: #eef4ff;
+  --luc: #15803d;
+  --luc-nen: #edfaf1;
+  --do: #c81e1e;
+  --do-nen: #fdf0f0;
+  --xam-nen: #eef0f3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --nen: #16181c;
+    --the: #1e2126;
+    --vien: #31363d;
+    --chu: #e8eaed;
+    --mo: #9aa2ad;
+    --xanh: #6f9dff;
+    --xanh-nen: #1b2739;
+    --luc: #5ec98a;
+    --luc-nen: #16291d;
+    --do: #f08a8a;
+    --do-nen: #2d1a1a;
+    --xam-nen: #262a30;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--nen);
+  color: var(--chu);
+  font: 13px/1.45 system-ui, "Segoe UI", sans-serif;
+}
+
+main { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+h1 { font-size: 15px; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 13px; margin: 0; }
+p { margin: 0; }
+.mo { color: var(--mo); font-size: 11.5px; }
+.dam { font-weight: 600; }
+.url { word-break: break-all; font-size: 11px; }
+
+.the {
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-radius: 9px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.dinh { padding: 2px 2px 0; gap: 3px; display: flex; flex-direction: column; }
+.dinh-hang { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+.huy-hieu {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--xam-nen);
+  color: var(--mo);
+  white-space: nowrap;
+}
+.huy-hieu.luc { background: var(--luc-nen); color: var(--luc); }
+.huy-hieu.do  { background: var(--do-nen);  color: var(--do); }
+.huy-hieu.xanh{ background: var(--xanh-nen);color: var(--xanh); }
+
+/* ---- CÔNG TẮC -------------------------------------------------------------
+ * MÀU KHÔNG ĐƯỢC LỘN. Bản vẽ v1 tô thẻ này nền hồng đỏ ở trạng thái TẮT — mà TẮT là trạng thái
+ * AN TOÀN. Đỏ lúc an toàn thì lúc thật sự nguy hiểm không còn màu nào để leo lên, và mắt học
+ * được rằng đỏ ở đây vô nghĩa. Nên: tắt = xám, im lặng. Bật = đỏ, có bộ đếm. */
+.cong-tac { gap: 6px; }
+.cong-tac.bat { border-color: var(--do); background: var(--do-nen); }
+.cong-tac-hang { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cong-tac-day { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+
+.switch { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.switch-nut {
+  width: 34px; height: 19px; border-radius: 999px;
+  background: var(--vien); position: relative; flex: none; transition: background .12s;
+}
+.switch-nut::after {
+  content: ""; position: absolute; top: 2px; left: 2px;
+  width: 15px; height: 15px; border-radius: 50%; background: var(--the);
+  box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .12s;
+}
+.switch input:checked + .switch-nut { background: var(--do); }
+.switch input:checked + .switch-nut::after { transform: translateX(15px); }
+.switch input:focus-visible + .switch-nut { outline: 2px solid var(--xanh); outline-offset: 2px; }
+.switch-chu { font-weight: 600; font-size: 12.5px; }
+
+.phim {
+  font: 600 10.5px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  border: 1px solid var(--vien); border-radius: 5px;
+  padding: 4px 6px; background: var(--the); white-space: nowrap;
+}
+
+/* ---- TAB ---------------------------------------------------------------- */
+.tabs { display: flex; gap: 4px; background: var(--xam-nen); padding: 3px; border-radius: 9px; }
+.tab {
+  flex: 1; border: 0; border-radius: 6px; padding: 6px 4px;
+  background: transparent; color: var(--mo);
+  font: 600 12px system-ui, sans-serif; cursor: pointer;
+}
+.tab[aria-selected="true"] { background: var(--the); color: var(--chu); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.tab:focus-visible { outline: 2px solid var(--xanh); outline-offset: -2px; }
+
+[role="tabpanel"] { display: flex; flex-direction: column; gap: 8px; }
+[hidden] { display: none !important; }
+
+/* ---- TIẾN ĐỘ ------------------------------------------------------------ */
+.chon-hang { display: flex; align-items: center; gap: 7px; }
+.chon-hang select {
+  flex: 1; min-width: 0; padding: 5px 6px; font: inherit; font-size: 12px;
+  border: 1px solid var(--vien); border-radius: 6px; background: var(--the); color: var(--chu);
+}
+
+.tiendo-so { display: flex; align-items: baseline; justify-content: space-between; }
+.tiendo-dem { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+
+.thanh { height: 7px; border-radius: 999px; background: var(--xam-nen); overflow: hidden; }
+.thanh-day { height: 100%; width: 0; background: var(--luc); border-radius: 999px; transition: width .2s; }
+
+.moc-list, .viec-list, .nangluc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.moc-list li, .viec-list li, .nangluc-list li {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 0; border-top: 1px solid var(--vien);
+}
+.moc-list li:first-child, .viec-list li:first-child, .nangluc-list li:first-child { border-top: 0; }
+
+.dau { flex: none; width: 16px; height: 16px; border-radius: 50%; margin-top: 1px; display: grid; place-items: center; font-size: 10px; font-weight: 700; }
+.dau.xong { background: var(--luc); color: #fff; }
+.dau.chua { border: 1.5px solid var(--vien); }
+.dau.hong { background: var(--do); color: #fff; }
+
+.moc-noi-dung, .viec-noi-dung { flex: 1; min-width: 0; }
+.moc-ten { font-size: 12.5px; font-weight: 600; }
+.moc-ten.chua { font-weight: 500; color: var(--mo); }
+.moc-luc { flex: none; font-size: 10.5px; color: var(--mo); white-space: nowrap; margin-top: 2px; }
+
+.viec-ma { font: 600 11.5px ui-monospace, Consolas, monospace; }
+.viec-ma.hong { color: var(--do); }
+
+.nangluc-dem { flex: none; font-size: 11px; color: var(--mo); white-space: nowrap; margin-top: 2px; }
+.nangluc-ten { font-size: 12.5px; }
+.nangluc-list code { font: 11px ui-monospace, Consolas, monospace; color: var(--mo); word-break: break-all; }
+
+.ghi-chu {
+  font-size: 11px; color: var(--mo);
+  background: var(--xanh-nen); border-radius: 7px; padding: 8px 10px;
+}
+
+/* ---- HỆ THỐNG ----------------------------------------------------------- */
+button {
+  border: 1px solid var(--vien); border-radius: 6px; padding: 5px 9px;
+  background: var(--the); color: var(--chu); font: 600 11.5px system-ui, sans-serif; cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--xanh); color: var(--xanh); }
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible { outline: 2px solid var(--xanh); outline-offset: 1px; }
+
+input[type="file"] { font-size: 11px; max-width: 100%; }
+
+summary { font-size: 13px; font-weight: 600; cursor: pointer; }
+details[open] summary { margin-bottom: 4px; }
+
+.target-list { display: flex; flex-direction: column; gap: 6px; }
+.target {
+  border: 1px solid var(--vien); border-radius: 7px; padding: 7px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.target.extension { border-style: dashed; }
+.target-ten { font-size: 12px; font-weight: 600; }
+.target-hang { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.target-hang code { font: 10px ui-monospace, Consolas, monospace; color: var(--mo); word-break: break-all; }
+
+pre {
+  margin: 0; padding: 7px; max-height: 260px; overflow: auto;
+  background: var(--xam-nen); border-radius: 6px;
+  font: 10.5px/1.4 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-word;
+}
+
+.huong-dan { margin: 0; padding-left: 18px; font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
+
+.trong { color: var(--mo); font-size: 11.5px; padding: 6px 0; }

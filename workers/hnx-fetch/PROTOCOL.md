@@ -1,0 +1,298 @@
+# PROTOCOL — HNX Fetch
+
+> **Tệp này viết cho AI vận hành, và nó tự đứng một mình.** Bạn không cần đọc file nào khác
+> để chạy được việc hằng ngày. Bạn cũng không cần là Claude Code — mọi thứ dưới đây là lệnh
+> `node` chạy trên máy của Đức.
+>
+> Đức là chủ dự án, non-tech, người chốt duy nhất. Chữ Đức đọc: tiếng Việt. Mã lỗi: tiếng Anh.
+
+---
+
+## 0. Việc này là gì, nói một lần cho rõ
+
+Mỗi ngày, Sở Giao dịch Chứng khoán Hà Nội công bố dữ liệu phái sinh trên hai trang:
+
+| Trang | Ra cái gì |
+|---|---|
+| `https://hnx.vn/vi-vn/phai-sinh/ket-qua-giao-dich.html` | **kết quả giao dịch** từng hợp đồng — 24 cột số |
+| `https://hnx.vn/vi-vn/phai-sinh/thong-ke.html` | **báo cáo thống kê** dạng tệp PDF |
+
+Việc của bạn: lấy cả hai về thư mục dữ liệu của Đức, **không làm hỏng thứ đã có**, và **nói
+thật** khi có gì đó không khớp.
+
+Thư mục đích (Đức đã duy trì bằng tay từ 07/2026 — dữ liệu ở đó là dữ liệu thật):
+
+```
+G:\My Drive\WORKING AI CONTENT\Chứng khoán_AI\Phái Sinh daily Fetch\
+```
+
+Trong đó có **một tệp SSOT duy nhất** — nguồn sự thật cho mọi phân tích:
+
+```
+HNX_PS_Ket_qua_giao_dich_SSOT.csv
+```
+
+> **Vì sao MỘT tệp, và vì sao CSV.** Đức chốt 08/09: *"giữ 1 file duy nhất, ko làm thành nhiều
+> file"* và *"định dạng để GPT & CC cùng thao tác được"*. Điều kiện là **hai công cụ cùng thao
+> tác được**, không phải đuôi tệp. `.xlsx` là một tệp ZIP chứa XML; kho mã này không có thư
+> viện phụ thuộc nào, nên mỗi lượt ghi phải tự cuộn ZIP bằng tay — và mỗi lượt là một cơ hội
+> làm hỏng dữ liệu thật. CSV thì cả người, Excel, Python và mọi AI đều đọc thẳng được.
+
+---
+
+## 1. Extension này làm được gì — và cố ý KHÔNG làm được gì
+
+HNX Fetch là extension Chrome cục bộ. Nó có **đúng bốn lệnh**, và bạn nên đọc kỹ danh sách này
+trước khi định làm gì khác:
+
+| Lệnh | Tốn lượt? | Làm gì |
+|---|---|---|
+| `session.hello` | không | bắt tay, thoả thuận phiên bản giao thức |
+| `system.ping` | không | kiểm extension còn thức |
+| `system.capabilities` | không | **tự khai năng lực** — nguồn có thẩm quyền, đừng chép ra chỗ khác |
+| `scout.fetch` | **có** | gọi một URL bằng chồng mạng của **chính trình duyệt** |
+
+**Nó KHÔNG bấm, KHÔNG gõ, KHÔNG mở tab, KHÔNG đọc DOM, KHÔNG chụp màn hình.** Đây không phải
+lời hứa suông — extension **không khai quyền `debugger`** trong `manifest.json`, nên Chrome từ
+chối những việc đó ở tầng hệ thống, kể cả khi có ai đó viết lại mã. Phép ghim
+`v0.1.0/tests/be-mat-hep-smoke.mjs` canh cả bốn cách lời hứa này có thể chết.
+
+Hệ quả thực tế: **không có dải băng *"đang gỡ lỗi trình duyệt này"*** trên tab của Đức.
+
+**Vì sao phải gọi mạng qua trình duyệt chứ không gọi thẳng bằng Node:** `hnx.vn` gửi chuỗi
+chứng chỉ **thiếu** (chỉ có lá, không có chứng chỉ trung gian). Chrome tự đi lấy phần thiếu nên
+vào được; Node thì không, và nó báo một lỗi TLS nghe như trang bị hỏng. Đừng "sửa" bằng cách
+tắt kiểm chứng chỉ trong Node — đó là gỡ một lớp bảo vệ để chữa một triệu chứng.
+
+### Ghi tệp thì KHÔNG đi qua extension
+
+Đây là ranh giới quan trọng nhất của cả kiến trúc, đừng phá:
+
+```
+extension  →  chỉ TẢI về (scout.fetch)
+Node       →  mới ĐẶT file xuống đĩa
+```
+
+Máy chủ Bridge nhốt mọi lệnh `file.*` trong một vùng ghi riêng, và vùng đó **cố ý không phải**
+thư mục dữ liệu của Đức trên Drive. Nới vùng ghi ra tới Drive là hạ đúng cái chốt sinh ra để
+một trang web không bao giờ ghi được vào dữ liệu thật. Tiến trình Node — của chính Đức, chạy
+trên máy Đức — mới là thứ đặt tệp xuống.
+
+---
+
+## 2. Chuẩn bị: ba việc, làm một lần mỗi phiên
+
+### ① Máy chủ Bridge phải đang chạy
+
+Bridge là cái cầu giữa lệnh `node` của bạn và extension trong Chrome. Không có nó thì mọi lệnh
+dưới đây báo `MAY_CHU_HONG`.
+
+Máy chủ tạo ra một **tệp ghép cặp** (`pairing`) chứa cổng và token. **Tệp đó không bao giờ nằm
+trong kho mã** — hỏi Đức đường dẫn, rồi truyền qua cờ `--pairing`.
+
+### ② Chrome đang mở, đã nạp HNX Fetch, và bảng bên đã ghép cặp
+
+`chrome://extensions` → Developer mode → **Load unpacked** → chọn thư mục
+`workers/hnx-fetch/v0.1.0`. Bấm icon → bảng bên mở ở cạnh phải → mục **Kết nối Bridge** → chọn
+tệp ghép cặp. Dòng trạng thái đổi thành *Đã nối máy chủ Bridge trên máy này.*
+
+### ③ Bật công tắc "Cho phép lấy dữ liệu"
+
+Ở đầu bảng bên. **Mặc định TẮT.** Tắt thì mọi lượt `scout.fetch` bị từ chối với
+`DEV_MODE_OFF` — và extension **không hề chạm mạng**.
+
+Mỗi lần bật cho **200 lượt gọi**. Hết thì tắt rồi bật lại.
+
+> **Bạn KHÔNG tự bật được công tắc này, và đó là cả ý nghĩa của nó.** Không lệnh Bridge nào mở
+> được nó. Nếu bạn thấy `DEV_MODE_OFF` hoặc `WRITE_CAP_REACHED`, việc đúng là **dừng lại và
+> nói với Đức**, không phải tìm đường vòng. Tìm đường vòng quanh một cái phanh là việc phải
+> hỏi Đức trước, không có ngoại lệ.
+>
+> Phím tắt **Ctrl+Shift+H** tắt công tắc ngay, dùng được cả khi bảng bên đã đóng. Nó chỉ tắt
+> chứ không bật.
+
+---
+
+## 3. Việc hằng ngày — hai lệnh
+
+Chạy trong `workers/hnx-fetch/du-lieu/`.
+
+### Lệnh ① — kết quả giao dịch, nối vào tệp SSOT
+
+```bash
+node tai-ket-qua.mjs --pairing <tệp-ghép-cặp> --master "G:\My Drive\WORKING AI CONTENT\Chứng khoán_AI\Phái Sinh daily Fetch\HNX_PS_Ket_qua_giao_dich_SSOT.csv" --tu 2026-09-01 --den 2026-09-08
+```
+
+### Lệnh ② — báo cáo PDF
+
+```bash
+node tai-pdf.mjs --pairing <tệp-ghép-cặp> --thu-muc "G:\My Drive\WORKING AI CONTENT\Chứng khoán_AI\Phái Sinh daily Fetch" --thang 09/2026
+```
+
+**Thêm `--thu-xem` vào bất kỳ lệnh nào để CHỈ LIỆT KÊ, không ghi gì.** Chạy lượt xem trước khi
+chạy thật là thói quen tốt: nó tốn lượt gọi, nhưng nó không bao giờ chạm đĩa.
+
+### Ba tính chất khiến hai lệnh này an toàn khi chạy lại
+
+1. **Ngày đã có thì KHÔNG lấy lại.** Tệp SSOT chính là trạng thái — không có sổ tiến độ riêng
+   nào để lệch với nó. Chạy lại cùng một khoảng ngày là vô hại.
+2. **Chỉ NỐI vào cuối, không bao giờ sửa dòng cũ.** Dữ liệu Đức gom từ 07/2026 không bị đụng.
+3. **Không bao giờ ghi đè tệp PDF đã có**, kể cả khi nội dung khác. Ghi đè là việc phải hỏi.
+
+---
+
+## 4. KIỂM TRA VÀ ĐỐI CHIẾU — phần quan trọng nhất của tệp này
+
+Đức giữ việc này cho AI (chứ không làm thành một nút bấm) **vì phần đối chiếu**. Lấy được dữ
+liệu là việc dễ. Biết dữ liệu đó có đúng không mới là việc bạn được thuê để làm.
+
+### 4.1 Chỗ dữ liệu SAI mà vẫn trông ĐÚNG
+
+Đọc hết bốn cái bẫy này trước khi tin bất kỳ con số nào.
+
+**⑴ Số kiểu Việt — nguy hiểm nhất.**
+
+`1.952,8` nghĩa là **một nghìn chín trăm năm mươi hai phẩy tám**. Dấu chấm là phân cách nghìn,
+dấu phẩy là thập phân — **ngược hẳn** kiểu Anh. Đọc nhầm một lần là **sai gấp 1000 lần**, mà
+con số vẫn trông hoàn toàn hợp lý nên không ai phát hiện.
+
+Ô rỗng phải **ở lại rỗng, không thành `0`**. HNX để trống khi không có giao dịch, mà `0` và
+"không có giao dịch" là hai chuyện khác nhau khi tính trung bình.
+
+Hàm `so()` trong `luoc-do-master.mjs` đã xử lý, và nó **ném lỗi `SO_LA`** với thứ không phải
+số thay vì lặng lẽ trả `0` hay `NaN`. Đừng viết bộ đọc số thứ hai.
+
+**⑵ Sai tham số thì trang trả `200 OK` kèm một trang HTML KHÁC.**
+
+Ở `hnx.vn`, **sai không ra lỗi — nó ra một trang khác**, trông y hệt thành công. Hàm
+`kiemTra()` trong `nguon-hnx.mjs` là chốt duy nhất phân biệt được hai thứ đó, và nó ném lỗi
+**KHÔNG-thử-lại**: yêu cầu sai thì sai với MỌI ngày, chạy tiếp chỉ để đốt sạch ngân sách rồi
+báo "hỏng hết".
+
+**⑶ Một cột có thể biến mất trong im lặng.**
+
+Cột đầu bảng HNX **không có chữ nào** — nó chứa `<img src="up.png">`, tức dấu tăng/giảm. Một
+bộ đọc gỡ thẻ HTML rồi lấy phần chữ sẽ làm **cả một cột biến mất**, mà CSV vẫn đủ số cột, vẫn
+mở được, vẫn có số. Chuyện này đã xảy ra thật ngày 08/09. `oCuaHang()` trong `bang-ket-qua.mjs`
+lấy tên tệp ảnh khi ô không có chữ.
+
+**⑷ Lệch cột thì mọi giá trị nằm dưới sai tên.**
+
+Ánh xạ sang lược đồ đi theo **vị trí**, nên một bảng 23 hay 25 cột sẽ gán mọi giá trị vào sai
+tên — và tệp vẫn mở được, vẫn có số. `hangMaster()` ném `SO_COT_LA` nếu bảng nguồn không đúng
+**24 cột**.
+
+### 4.2 Bốn phép kiểm chạy tự động, bạn không phải làm gì
+
+Chúng đã nằm trong mã. Việc của bạn là **đọc mã lỗi khi nó đỏ**, đừng vá quanh.
+
+| Kiểm | Ném gì khi sai |
+|---|---|
+| Tiêu đề tệp SSOT khớp đúng 25 cột | `TIEU_DE_LECH` — **dừng, không tự sửa tiêu đề tệp dữ liệu thật** |
+| Mọi dòng cũ trong tệp đủ 25 ô | `HANG_LECH` — tệp đã hỏng, dừng |
+| Hàng sắp ghi đủ 25 ô | `HANG_SAI_CO` — không chạm đĩa |
+| Bảng nguồn đúng 24 cột | `SO_COT_LA` |
+
+Với PDF, mỗi tệp qua **ba phép kiểm trước khi chạm đĩa**: số byte khớp con số máy chủ khai ·
+mở đầu bằng `%PDF-` · 2048 byte cuối có `%%EOF`, và tệp phải ≥ 1024 byte. Lượt ghi đi qua tên
+tạm `.dang-tai` rồi mới đổi tên — **chết giữa chừng để lại một tệp `.dang-tai` mà lượt sau bỏ
+qua, KHÔNG để lại một tệp mang tên thật nhưng thiếu nửa sau.**
+
+### 4.3 Bốn việc đối chiếu BẠN phải tự làm
+
+Đây là phần máy không làm thay được, và là lý do Đức giữ việc này cho AI.
+
+**⑴ Đếm hàng mỗi ngày.** Một phiên đủ phải có **8 hàng** (VN30 và VN100, mỗi loại 4 hợp đồng).
+Ngày nào ra 6 hay 10 hàng là **tín hiệu đỏ** — báo Đức, đừng tự giải thích.
+
+```bash
+node -e "const s=require('fs').readFileSync(process.argv[1],'utf8').replace(/^\uFEFF/,'').trim().split('\r\n').slice(1);const d={};for(const l of s){const n=l.split(',')[0].replace(/\"/g,'');d[n]=(d[n]||0)+1;}const la=Object.entries(d).filter(([,c])=>c!==8);console.log('ngày:',Object.keys(d).length,'· hàng:',s.length,'· ngày KHÁC 8 hàng:',la.length?JSON.stringify(la):'không');" "<đường-dẫn-SSOT>"
+```
+
+**⑵ Không được có ngày trùng.** Lệnh trên đã đếm theo ngày; hai bản ghi cùng ngày sẽ hiện ra
+thành 16 hàng.
+
+**⑶ Đối chiếu chéo giữa HAI ĐƯỜNG.** Đây là phép kiểm mạnh nhất bạn có, và nó miễn phí: đường
+PDF và đường kết quả giao dịch là hai nguồn độc lập. Nếu một ngày **cả hai** cùng báo không có
+dữ liệu thì đó là ngày HNX không có phiên — kết luận vững. Nếu **chỉ một** đường báo trống thì
+**có gì đó sai ở phía ta**, không phải phía HNX. Ngày 08/09, ba ngày 31/08 · 01/09 · 02/09 đều
+được hai đường xác nhận là không có phiên.
+
+**⑷ Khi nghi ngờ, lấy lại một ngày và so từng ô.** Ngày 08/09 đã làm đúng thế để nghiệm thu
+lược đồ: lấy lại 12/08 từ HNX rồi so từng ô với hàng `VN41I1G80003` có sẵn trong tệp của Đức —
+**25/25 khớp**. Đó là cách chứng minh "lấy lại từ nguồn là an toàn", chứ không phải tin lời
+mình.
+
+### 4.4 Bốn điều KHÔNG BAO GIỜ được làm với dữ liệu
+
+1. **Không sửa dòng cũ.** Chỉ nối vào cuối. Dữ liệu Đức gom bằng tay từ 07/2026 nằm trong đó.
+2. **Không tự sửa tiêu đề** của tệp SSOT cho hết lỗi. Tiêu đề lệch nghĩa là có gì đó sai ở
+   chỗ khác; sửa tiêu đề là làm mọi cột lệch tên mà không ai biết.
+3. **Không cắt bớt dữ liệu cho vừa trần.** Thân trả về quá 512 KiB thì lệnh báo đỏ
+   (`FETCH_BODY_TOO_LARGE`) chứ không cắt — cắt bớt là nói dối. Gặp thì chia nhỏ theo loại sản phẩm.
+4. **Không xoá tệp nào.** Xoá là việc phải hỏi Đức.
+
+---
+
+## 5. Đỏ thì làm gì — bảng tra mã lỗi
+
+| Mã | Nghĩa | Việc đúng |
+|---|---|---|
+| `DEV_MODE_OFF` | công tắc đang tắt | **báo Đức bật công tắc.** Không có đường vòng |
+| `DEV_MODE_UNREADABLE` | không đọc được trạng thái công tắc | xử như đang tắt. Báo Đức |
+| `WRITE_CAP_REACHED` | hết 200 lượt của lần bật này | báo Đức tắt rồi bật lại. **Đừng thử lại** — thử lại một cái phanh là vô nghĩa |
+| `MAY_CHU_HONG` | không nối được máy chủ Bridge | kiểm máy chủ có đang chạy, và tệp ghép cặp còn đúng không |
+| `HINH_DANG_SAI` · `BANG_SAI` · `KHONG_CO_TBODY` | trang trả về thứ không phải bảng mong đợi | **KHÔNG thử lại.** Nhiều khả năng HNX đổi trang → xem mục 6 |
+| `SO_COT_LA` | bảng nguồn không đúng 24 cột | HNX đổi cấu trúc bảng. Dừng, báo Đức, xem mục 6 |
+| `TIEU_DE_LECH` · `HANG_LECH` | tệp SSOT hỏng hoặc không phải tệp mong đợi | **dừng hẳn.** Kiểm đúng đường dẫn chưa. Đừng ghi tiếp |
+| `SO_LA` · `THAY_DOI_LA` | một ô chứa thứ không phải số | câu lỗi có kèm ISIN của hàng hỏng — mở trang, đọc thật |
+| `FETCH_BODY_TOO_LARGE` | một ngày phình quá 512 KiB | chia nhỏ theo loại sản phẩm. Đừng cắt bớt |
+| `LAY_MOI` · lỗi mạng | trục trặc nhất thời | thử lại được, có giới hạn |
+
+**Luật chung:** lỗi *hình dạng* (trang trả sai thứ) thì **không thử lại** — yêu cầu sai thì sai
+với mọi ngày, chạy tiếp chỉ đốt sạch ngân sách rồi báo "hỏng hết". Lỗi *mạng* thì thử lại được.
+
+---
+
+## 6. Khi HNX đổi trang
+
+Sẽ có ngày HNX đổi. Lúc đó:
+
+1. **Đừng đoán selector hay tên tham số.** Mở trang thật, xem lượt gọi mạng thật, rồi mới sửa.
+2. **Mọi hiểu biết về trang chỉ được nằm ở hai tệp:** `nguon-hnx.mjs` (kết quả giao dịch) và
+   `nguon-thong-ke.mjs` (thống kê/PDF). Đừng rắc địa chỉ hay tên tham số ra chỗ khác.
+3. **Mỗi lần sửa kèm một phép ghim.** Suite trong `du-lieu/tests/` không chạm mạng thật — nó
+   chạy trên dữ liệu mẫu. Thêm một mẫu cho hình dạng mới.
+4. **Chạy lại toàn bộ suite trước khi đụng dữ liệu thật:**
+
+```bash
+node du-lieu/tests/bang-ket-qua-smoke.mjs && node du-lieu/tests/master-smoke.mjs && node du-lieu/tests/nguon-hnx-smoke.mjs && node du-lieu/tests/nguon-thong-ke-smoke.mjs && node du-lieu/tests/vong-lay-smoke.mjs && node v0.1.0/tests/be-mat-hep-smoke.mjs
+```
+
+**Một chỗ đã biết là chưa xong:** trang thống kê nhận `p_report_type` là `D` (ngày) hoặc `M`
+(tháng). Giá trị `Y` **cố ý không có** — nó trả về *"Không tìm thấy dữ liệu"*. Đừng thêm lại.
+
+---
+
+## 7. Ba việc phải hỏi Đức trước
+
+1. **Thêm quyền mới cho extension** — nhất là `debugger`. Đó là bỏ lời hứa lớn nhất của gói.
+2. **Đổi luật an toàn** — công tắc, trần 200 lượt, luật không-ghi-đè, luật chỉ-nối-vào-cuối.
+3. **Xoá hoặc sửa dữ liệu gốc** trong thư mục Drive của Đức.
+
+Ngoài ra, luật gốc: không gửi gì ra ngoài, không tạo automation tự chạy — nếu chưa hỏi.
+
+---
+
+## 8. Bảo trì chính tệp này
+
+Đức chốt 08/09: **protocol này được maintain độc lập** với phần còn lại của kho mã.
+
+Ba luật giữ nó khỏi mục:
+
+1. **Đổi hành vi thì sửa tệp này trong CÙNG lượt.** Một protocol trễ một ngày là một protocol
+   nói dối — và người đọc nó không có cách nào biết.
+2. **Số liệu phải kèm cách đo, không chỉ kèm giá trị.** Con số viết ra sẽ mục; câu lệnh thì
+   không. Mục 4.3 viết theo kiểu đó, hãy giữ kiểu đó.
+3. **Cái gì đã cắn một lần thì ghi vào mục 4.1.** Mục đó không phải lý thuyết — cả bốn cái bẫy
+   trong đó đều đã xảy ra thật, và mỗi cái đều từng cho ra dữ liệu trông đúng.

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HNX Fetch</title>
+    <link rel="stylesheet" href="sidepanel.css">
+  </head>
+  <body>
+    <!-- Không có <script> nội tuyến ở đâu trong file này. MV3 chặn mã nội tuyến trong trang
+         extension, và nó hỏng IM LẶNG: trang vẫn tải, chỉ có mã là không chạy. -->
+    <main>
+      <header class="dinh">
+        <div class="dinh-hang">
+          <h1>HNX Fetch</h1>
+          <span id="bridge-badge" class="huy-hieu">Đang đọc…</span>
+        </div>
+        <p class="mo">Lấy dữ liệu phái sinh HNX. Chỉ đọc mạng — không bấm, không gõ, không gắn vào tab nào.</p>
+      </header>
+
+      <section id="gate-card" class="the cong-tac" aria-labelledby="gate-heading">
+        <div class="cong-tac-hang">
+          <label class="switch">
+            <input id="write-gate" type="checkbox">
+            <span class="switch-nut" aria-hidden="true"></span>
+            <span id="gate-heading" class="switch-chu">Cho phép lấy dữ liệu</span>
+          </label>
+          <span id="gate-badge" class="huy-hieu">…</span>
+        </div>
+        <p id="gate-note" class="mo">Đang đọc trạng thái công tắc…</p>
+      </section>
+
+      <section class="the">
+        <div class="dinh-hang">
+          <h2>Kết nối Bridge</h2>
+        </div>
+        <p id="bridge-state" class="mo">Đang đọc trạng thái…</p>
+        <input id="pairing-file" type="file" accept=".json,application/json">
+      </section>
+
+      <section class="the">
+        <div class="dinh-hang">
+          <h2>Hoạt động gần nhất</h2>
+          <span id="hoat-dong-dem" class="mo"></span>
+        </div>
+        <ul id="hoat-dong-list" class="viec-list"></ul>
+      </section>
+
+      <section class="the">
+        <div class="dinh-hang">
+          <h2>Năng lực</h2>
+          <span id="nangluc-tong" class="mo"></span>
+        </div>
+        <p class="mo">Đây là toàn bộ những gì extension này làm được. Danh sách đọc thẳng từ lõi,
+          không gõ tay — nên nó không thể nói ít hơn sự thật.</p>
+        <ul id="nangluc-list" class="nangluc-list"></ul>
+      </section>
+    </main>
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>

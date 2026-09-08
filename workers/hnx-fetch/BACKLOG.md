@@ -1,0 +1,62 @@
+# BACKLOG — gói `hnx-fetch`
+
+> Sổ nợ của gói. Mỗi mục **bắt buộc** có trường `đóng khi:` — không khai được điều kiện đóng
+> thì mục đó chưa đủ chín để ghi. Đóng một mục bằng cách **thêm một dòng ở cuối mục**, không
+> viết lại khối cũ.
+
+---
+
+## MỞ · H-01 (2026-09-08, `claude-scouter-s06`) — chưa lượt nào chạy qua CHÍNH extension này
+
+Toàn bộ mã đã tách xong, suite xanh, nhưng mọi lượt lấy dữ liệu thật từ trước tới nay đều đi
+qua Scouter. Extension `HNX Fetch` **chưa được nạp vào Chrome lần nào**.
+
+Cái chưa biết, và chỉ một lượt chạy thật mới trả lời được: bắt tay Bridge với tên giao thức
+mới `hnx-fetch.bridge` có đi trọn vòng không · bảng bên vẽ đúng không khi không có phần "mốc
+thuần hoá trang" · công tắc và bộ đếm 200 lượt hiện đúng không.
+
+**đóng khi:** một lượt `tai-ket-qua.mjs --thu-xem` đi trọn vòng qua extension `HNX Fetch` và
+trả về danh sách ngày, không phải qua Scouter.
+
+---
+
+## MỞ · H-02 (2026-09-08, `claude-scouter-s06`) — sổ hoạt động mất phần "trang đang chạm"
+
+`journal-core.mjs` chép nguyên văn từ Scouter, và phần tiến độ của nó buộc vào **tám mốc thuần
+hoá trang** — tám phép dò mà gói này không có. Bảng bên vì thế chỉ vẽ **vòng hoạt động** (lệnh
+nào, được hay hỏng, lúc nào), không vẽ phần mốc.
+
+Chấp nhận được, và **cố ý không vá vội**: vẽ một khối luôn trống là dạy người đọc bỏ qua khối
+đó. Nhưng nếu Đức muốn thấy *"hôm nay đã lấy được mấy ngày"* thì phần đó phải có hình dạng
+riêng của HNX Fetch, không phải mượn hình dạng của Scouter.
+
+**đóng khi:** hoặc Đức nói không cần, hoặc bảng bên hiện được số ngày đã lấy trong lượt chạy
+hiện tại — đọc từ chính tệp SSOT chứ không từ một bộ đếm thứ hai.
+
+---
+
+## MỞ · H-03 (2026-09-08, `claude-scouter-s06`) — ngày lễ bị gọi lại mỗi lượt chạy
+
+Ngày HNX không có phiên thì không có dòng nào vào tệp SSOT, nên lượt chạy sau **gọi lại đúng
+ngày đó**. Mỗi ngày lễ tốn một lượt của ngân sách 200, mãi mãi.
+
+**Cố ý chưa vá.** Đánh dấu bằng một tệp rỗng hay một dòng "không có phiên" là đổi một phiền
+toái nhỏ lấy một **lỗi im lặng lớn**: nếu HNX bổ sung dữ liệu cho ngày đó sau (đã từng xảy ra
+ở các sở khác), ta sẽ không bao giờ lấy được nữa vì đã tự đánh dấu là xong.
+
+**đóng khi:** Đức chốt một trong hai — chịu gọi lại, hay đánh dấu và chịu rủi ro mất dữ liệu
+bổ sung.
+
+---
+
+## MỞ · H-04 (2026-09-08, `claude-scouter-s06`) — chưa có bộ đo đột biến cho gói
+
+`v0.1.0/scripts/mutation-runner.mjs` đã chép sang nhưng **chưa có tệp khai đột biến nào dùng
+nó**. Nghĩa là bốn khối của `be-mat-hep-smoke.mjs` chưa được chứng minh là **bắt được gì** —
+một phép ghim chưa qua đột biến kiểm là một phép ghim chưa biết có răng.
+
+Ba con đáng khai trước: gỡ cái phanh · nối lại một lệnh bấm vào từ vựng · khai lại quyền
+`debugger` trong manifest.
+
+**đóng khi:** `node v0.1.0/scripts/pilot-mutation-check.mjs` chạy được và ba con trên đều
+**giết được**, 0 sống sót.

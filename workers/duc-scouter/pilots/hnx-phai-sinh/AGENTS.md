@@ -1,5 +1,16 @@
 # PILOT `hnx-phai-sinh` — lấy dữ liệu phái sinh theo ngày
 
+> ## ĐÃ CHUYỂN NHÀ — 2026-09-08
+>
+> Pilot này nay là một **extension riêng**: `workers/hnx-fetch/`. Đức chốt 08/09 tách HNX ra
+> khỏi Scouter — Scouter ở lại để đi dò trang khác.
+>
+> **Đừng sửa gì trong thư mục này.** Bản đang sống nằm ở `workers/hnx-fetch/du-lieu/`, và sổ tay
+> vận hành ở `workers/hnx-fetch/PROTOCOL.md`. Thư mục cũ giữ nguyên chờ Đức duyệt xoá (luật gốc:
+> xoá tệp phải hỏi).
+>
+> Phần dưới là bản cũ, **đã lạc hậu một ngày** — nó thiếu năm tệp và còn ghi trần 50.
+
 > **Đây là PILOT, không phải seed.** Seed ở `../../v0.1.0/`. Ranh giới:
 > [ADR-0020](../../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md) mục ⑶.
 > Việc gốc: `S-10` trong `../../v0.1.0/BACKLOG.md`.

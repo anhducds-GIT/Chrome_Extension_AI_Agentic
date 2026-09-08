@@ -171,8 +171,14 @@ thật, còn **468 (63%)** chạm tài liệu + sổ nợ và **142 (19%)** ch�
 > đôi**. Con số cũ sinh ra vì `wc -l` với hàng trăm đường dẫn **vượt trần đối số** rồi trả tổng
 > của mẻ cuối. Bảy giới hạn dưới đây đứng trên **tỉ lệ commit**, không trên số dòng.
 
-1. **Một gói sống một lúc.** Gói sống: `workers/duc-scouter`. Ba gói còn lại đóng băng (khai ở
-   khối `frozen` của `.repo-structure.json`) — chỉ đọc, mã ở lại trên đĩa.
+1. **HAI gói sống, không phải một** — Đức nâng 08/09, trước là một. Gói sống: `workers/duc-scouter`
+   (bộ dò trang đa năng) và `workers/hnx-fetch` (lấy dữ liệu HNX hằng ngày). Ba gói `duc-auto-*`
+   vẫn đóng băng (khối `frozen` của `.repo-structure.json`) — chỉ đọc, mã ở lại trên đĩa.
+   Vì sao nâng: hai gói làm **hai việc khác nhau**, chạy ở hai nhịp khác nhau — HNX Fetch chạy
+   mỗi ngày vào dữ liệu thật của Đức, Scouter là việc phát triển. Và gói mới **không phải fork**:
+   nó bỏ hẳn quyền `debugger`, giữ 4 lệnh trên 15. Ghi ở [ADR-0021](docs/adr/0021-hnx-fetch-tach-thanh-extension-rieng.md).
+   **Đừng đọc thành "trần nay là hai".** Trần là *số gói CÓ LÝ DO sống*, và lý do phải viết ra
+   được thành một ADR. Gói thứ ba phải hỏi Đức.
 2. **Cấm cài một tính năng hai lần.** Cần ở hai gói → vào `workers/_shared/` trước. Bằng chứng:
    ba gói `duc-auto-*` là fork của nhau, **82.252 dòng** (không phải 37.601 như bản giao việc
    ghi), ba file `sidepanel.js` riêng dài **6.451 · 5.230 · 5.206** dòng — nên mỗi lỗi phải sửa
@@ -271,7 +277,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 
 | Khi bạn sắp… | Mở file |
 |---|---|
-| **Đụng ba gói ĐÃ ĐÓNG BĂNG** (`duc-auto-chatgpt` · `duc-auto-gemini` · `duc-auto-gg-flow-video`) | **Đừng đụng.** Đức chốt 07/09: một gói sống một lúc, và gói sống là `workers/duc-scouter`. Ba gói này chỉ được ĐỌC — mã ở lại trên đĩa (bằng chứng vận hành, mục 4 cấm xoá), sổ nợ và tài liệu của chúng **không cần mở nữa**. Sổ tay từng gói vẫn nằm trong gói. Danh sách khai ở khối `frozen` của `.repo-structure.json` |
+| **Đụng ba gói ĐÃ ĐÓNG BĂNG** (`duc-auto-chatgpt` · `duc-auto-gemini` · `duc-auto-gg-flow-video`) | **Đừng đụng.** Đức chốt 07/09, nâng lên hai gói sống 08/09: gói sống là `workers/duc-scouter` và `workers/hnx-fetch`. Ba gói này chỉ được ĐỌC — mã ở lại trên đĩa (bằng chứng vận hành, mục 4 cấm xoá), sổ nợ và tài liệu của chúng **không cần mở nữa**. Sổ tay từng gói vẫn nằm trong gói. Danh sách khai ở khối `frozen` của `.repo-structure.json` |
 | **Là phiên ĐIỀU PHỐI: Đức hỏi "đang có gì · làm gì tiếp · việc nào chạy song song được"** | `docs/protocols/ORCHESTRATOR.md` — sổ tay vai điều phối: đọc gì lúc mở phiên, luật song song, **HARD ROLE FIREWALL** (Đức chốt 04/09 — vai điều phối KHÔNG code, KHÔNG debug product, KHÔNG đề xuất patch; không có ngoại lệ "sửa nhỏ"), **luật nạp báo cáo năm mục** (`DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` rồi DỪNG), **lối ra bàn giao cho executor**, khi nào phải hỏi Đức. Công cụ đi kèm: `node scripts/what-next.mjs` — bản đồ việc, **chỉ đọc, không đòi khoá nào**, giao ba nguồn mà trước đây không giao được với nhau (bảng quyền × sổ nợ từng gói × sổ ý tưởng) |
 | **Biết Đức đã chốt gì, và vì sao** | **ADR** — mỗi quyết định một file bất biến. Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` · bản mẫu: `docs/_TEMPLATE-adr.md` · quyết định của cả repo ở `docs/adr/`, của một gói ở `workers/<gói>/<phiên-bản>/docs/adr/`. `decisions.md` của package nay là **mục lục** trỏ sang ADR. ADR đã `Accepted` là bất biến, phép kiểm B12 cưỡng chế |
 | **Sắp ghi một mục nhật ký, hoặc bị cổng chặn vì mục quá dài** | `docs/protocols/HANDOFF.md` — một mục chứa gì và KHÔNG chứa gì (lý do → ADR · việc còn nợ → `BACKLOG.md` · cách làm → brief), **trần 2.600 byte một mục** khai ở `.repo-structure.json` và cổng đóng phiên chặn **đúng mục bạn vừa thêm**, và cách xoay file theo tháng. Quyết định gốc: [ADR-0011](docs/adr/0011-handoff-chan-o-dau-vao-va-xoay-theo-thang.md). Công cụ: `node scripts/handoff.mjs --check` (đo) · `--rotate <file>` (xoay sang tháng mới) |
@@ -283,6 +289,7 @@ Không đọc trước. Tới việc nào thì mở sổ tay đó.
 | Hiểu cách vận hành nhiều extension trong một repo, hoặc thêm extension mới | `PLATFORM.md` ở gốc repo |
 | Khai trạng thái cho một extension (mới hoặc cũ) | `STATUS.template.md` ở gốc repo → chép thành `STATUS.md` đặt cạnh `manifest.json` |
 | **Muốn biết repo đang nợ gì về cấu trúc điều hướng** | `node scripts/check-bootstrap.mjs` — 15 phép kiểm B1…B15, mỗi dòng nói cả chỗ sai lẫn cách sửa. Thêm `--all` để xem hết. **Từ phiên S7 (2026-09-02) tám phép kiểm CHẶN THẬT:** `B1 B2 B3 B4 B5 B7 B10 B12` đỏ thì cổng đóng phiên đỏ theo, không được báo xong. Bảy phép kiểm còn lại (`B6 B8 B9 B11 B13 B14 B15`) vẫn chỉ cảnh báo. **B15 cưỡng chế luật vàng 5:** ba trường `current_focus` · `next_step` · `human_action` là chữ Đức đọc trên bảng, viết không dấu thì báo vàng. Danh sách chặn khai ở `bootstrap.blocking` trong `.repo-structure.json` — sửa ở đó, đừng sửa script |
+| **Lấy dữ liệu phái sinh HNX hằng ngày, hoặc sửa gói đó** | `workers/hnx-fetch/PROTOCOL.md` — sổ tay vận hành **tự đứng một mình**, viết cho AI không phải Claude Code: fetch · đối chiếu · kiểm toàn vẹn · bảng mã lỗi. Luật gói ở `workers/hnx-fetch/AGENTS.md`, khoá `workers/hnx-fetch`. Tách khỏi Scouter 08/09 ([ADR-0021](docs/adr/0021-hnx-fetch-tach-thanh-extension-rieng.md)). Chỗ dễ hiểu nhầm: extension này **không có quyền `debugger`** nên nó không bấm được gì — cần bấm thì đó là việc của Scouter |
 | **Sửa hoặc vận hành Scouter** (dò trang · báo cáo qua Bridge · tự nạp lại mình) | `workers/duc-scouter/v0.1.0/AGENTS.md` — gói riêng từ 06/09 ([ADR-0013](docs/adr/0013-scouter-ra-nha-rieng-co-khoa-rieng.md)), khoá `workers/duc-scouter`. Nó **không** mang tiền tố `duc-auto-` vì nó không tự động hoá nhà cung cấp nào. Hai chỗ dễ vấp, đọc trước khi sửa: **selector không bao giờ được gõ vào seed** (ranh giới seed/adapter, ADR-0009 mục ⑵), và **cửa Bridge của nó bắt tay HAI CHIỀU** nên chỉ nối được với máy chủ bản ChatGPT — hai bản host cũ nhận token trần |
 | **Tìm một tài liệu, hoặc tra đường dẫn `drafts/…` cũ nay nằm đâu** | `docs/README.md` — mục lục bốn tầng (studies · briefs · archive · adr), kèm bản đồ 33 đường dẫn cũ → mới. Thư mục `drafts/` ở gốc repo **đã biến mất** từ phiên S6 (2026-09-02) |
 | Viết một file nghiên cứu mới trong `docs/studies/` | `docs/_TEMPLATE-study.md` — bản mẫu: frontmatter 3 trường (`kind`/`status`/`ttl_days`), số liệu lấy từ nguồn máy sinh · hồ sơ đã nghỉ nằm ở `docs/archive/`; mục lục: `docs/README.md` |
