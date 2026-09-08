@@ -20,7 +20,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { CHUA_THAY_DAU_VET, DAU_VET, dauVetTheoVung, dauVetThuan, mocMs } from "../scripts/repo-structure.mjs";
+import { CHUA_THAY_DAU_VET, DAU_VET, dauVetTheoVung, dauVetThuan, fileScriptCanChep, mocMs } from "../scripts/repo-structure.mjs";
 
 /* CHUOI TEST THAT. Tu khi `test` tro sang bo chay song song, chuoi that nam o `test:tuan-tu`
    va bo chay doc `test:tuan-tu ?? test`. Hoi `test` khong thoi thi phep ghim chi thay MOT dong
@@ -53,29 +53,6 @@ const CHU_CAM = ["rảnh", "nhàn", "không làm gì", "khong lam gi", "ranh roi
  * Không chỗ nào được gõ chuỗi riêng: ba bản của một chữ thì sớm muộn trả ba câu khác nhau —
  * repo này đã trả giá đúng thế với `append_only_exempt` ngày 02/09. */
 
-/** Tên mọi file dưới `scripts/` mà repo tạm cần, suy từ import CỦA CHÍNH chúng.
- *
- * Đi lan từ bốn gốc mà repo tạm gọi thẳng, rồi bám theo mọi `from "./x.mjs"`. Thêm một import
- * mới vào bất kỳ file nào trong chuỗi đó thì hàm này tự thấy — không ai phải nhớ sửa ở đây. */
-function canChep(root) {
-  const goc = ["session-check.mjs", "claim.mjs", "what-next.mjs", "chay-test.mjs",
-               "build-dashboard.mjs", "feature-parity.mjs", "backlog-check.mjs"];
-  const thay = new Set();
-  const hang = [...goc];
-  while (hang.length) {
-    const ten = hang.shift();
-    if (thay.has(ten)) continue;
-    let src;
-    try { src = readFileSync(join(root, "scripts", ten), "utf8"); } catch { continue; }
-    thay.add(ten);
-    /* HAI kiểu phụ thuộc, và bỏ kiểu thứ hai thì repo tạm vẫn chết: `import` tĩnh, VÀ script
-       được GỌI như tiến trình con (`check-bootstrap.mjs` đi đường đó). */
-    for (const m of src.matchAll(/from\s+"\.\/([\w.-]+\.mjs)"/g)) hang.push(m[1]);
-    for (const m of src.matchAll(/"scripts",\s*"([\w.-]+\.mjs)"/g)) hang.push(m[1]);
-    for (const m of src.matchAll(/scripts\/([\w.-]+\.mjs)/g)) hang.push(m[1]);
-  }
-  return [...thay];
-}
 
 {
   for (const f of ["claim.mjs", "what-next.mjs", "session-check.mjs"]) {
@@ -161,7 +138,7 @@ function canChep(root) {
        đúng như chú thích của nó cảnh báo**: 09/09 `session-check.mjs` nhận thêm một import
        (`rule-compile.mjs`) và cả suite đỏ. Một danh sách phải sửa mỗi lần thêm import là một
        danh sách sẽ bị quên. */
-    for (const name of canChep(ROOT)) {
+    for (const name of fileScriptCanChep(ROOT, ["session-check.mjs", "claim.mjs", "what-next.mjs", "chay-test.mjs", "build-dashboard.mjs", "feature-parity.mjs", "backlog-check.mjs"])) {
       copyFileSync(join(ROOT, "scripts", name), join(temp, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({

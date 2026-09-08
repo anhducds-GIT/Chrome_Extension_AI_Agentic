@@ -942,3 +942,34 @@ export function dauVetTheoVung(root, structure, mocTheoKhoa) {
   }
   return dauVetThuan(Object.fromEntries(khoas), commits, suaTrenDia);
 }
+
+/* ---- FILE MỘT REPO THỬ CẦN CHÉP ------------------------------------------
+ *
+ * Nhiều phép ghim dựng một repo tạm rồi chạy cổng kiểm trong đó. Trước 09/09 mỗi chỗ giữ một
+ * DANH SÁCH GÕ TAY tên file cần chép — bảy bản, và cả bảy mục cùng lúc: hôm đó
+ * `session-check.mjs` nhận thêm một import (`rule-compile.mjs`) và bốn suite đỏ với
+ * `ERR_MODULE_NOT_FOUND`. Cái chết đó **trông y hệt một phép kiểm hỏng**, nên nó vừa tốn thời
+ * gian vừa chỉ sai hướng.
+ *
+ * Nay suy từ chính mã nguồn. HAI kiểu phụ thuộc, bỏ kiểu thứ hai thì repo tạm vẫn chết:
+ * `import` tĩnh, VÀ script được gọi như **tiến trình con** (`check-bootstrap.mjs` đi đường đó).
+ *
+ * `goc` là những script mà repo thử gọi thẳng. Trả về tên file, không phải đường dẫn. */
+export function fileScriptCanChep(root, goc = ["session-check.mjs"]) {
+  const thay = new Set();
+  const hang = [...goc];
+  const RE = [
+    /from\s+"\.\/([\w.-]+\.mjs)"/g,
+    /"scripts",\s*"([\w.-]+\.mjs)"/g,
+    /scripts\/([\w.-]+\.mjs)/g,
+  ];
+  while (hang.length) {
+    const ten = hang.shift();
+    if (thay.has(ten)) continue;
+    let src;
+    try { src = fs.readFileSync(path.join(root, "scripts", ten), "utf8"); } catch { continue; }
+    thay.add(ten);
+    for (const re of RE) for (const m of src.matchAll(re)) hang.push(m[1]);
+  }
+  return [...thay];
+}

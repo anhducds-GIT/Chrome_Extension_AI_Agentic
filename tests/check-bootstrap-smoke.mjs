@@ -664,7 +664,10 @@ const chay = (deps) => {
   // đang làm dở, và KHÔNG phép kiểm nào kêu. Cổng là chỗ duy nhất nạn nhân chắc chắn chạy tới.
   // 2026-09-06, claude-handoff-tran: 12 → 13. Thêm "HANDOFF: mục mới trong trần, file đúng
   // tháng" (ADR-0011) — trần độ dài một mục nhật ký, chặn ở ĐẦU VÀO.
-  assert.match(gate, /const EXPECTED_CHECKS = 16;/, "thêm cổng con thì EXPECTED_CHECKS phải là 16 — lớp chống tự tháo cổng");
+  // 2026-09-09, claude-luat-rasoat: 16 → 17. Thêm "Luật biên dịch sạch" — mối nối giữa SỔ CÁI
+  // (docs/adr) và BẢN HIỆU LỰC (AGENTS.md + sổ tay) trước đó KHÔNG ai canh, và lượt gộp 27 ADR
+  // để lại hai chỗ trích vào một quyết định ĐÃ CHẾT. Đức chốt một bộ rule compiler (ADR-0027).
+  assert.match(gate, /const EXPECTED_CHECKS = 17;/, "thêm cổng con thì EXPECTED_CHECKS phải là 17 — lớp chống tự tháo cổng");
   // Và nó KHÔNG được biến nợ cấu trúc thành cổng đỏ ở phiên S4.
   // S7: cổng con nay PHẢI biến mã thoát 1 thành cổng đỏ, và phải TÁCH mã 1 (repo có nợ) khỏi
   // mã 2 (bộ kiểm hỏng). Đây là mắt nối duy nhất giữa check-bootstrap và cổng đóng phiên;

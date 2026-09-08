@@ -901,8 +901,16 @@ const claimsJson = (obj) => JSON.stringify({ claims: obj });
     "khoi gap phai DONG mac dinh — mo san la ha tang lai chiem cho cua viec Duc can lam");
   assert.ok(!tab.includes("PORTABLE FREEZE"),
     "ba moc goi phai thu lai thanh MOT chip — con ca ba dong la chua thu, va moc doi vai tuan mot lan thi khong dang mot khoi rieng");
-  assert.ok(v4.includes("ASSISTANT PILOT"),
-    "chip phai in ten moc DANG CHAY, doc lai tu ho so moc chu khong go tay");
+  /* KY VONG SUY TU CHINH HO SO MOC, khong go tay. Ban truoc khang dinh chuoi "ASSISTANT PILOT"
+     va no do ngay 09/09 khi hai moc doi trang thai that (mot moc XONG tu lau van khai "dang
+     chay", moc pilot thi chua do lan nao) — tuc phep ghim dang bat ho so moc phai dung yen,
+     chu khong bat cai chip doc dung. Doc lai bang readMoc thi no manh hon: no van chan viec
+     go cung ten moc, va them ca ca "khong con moc nao dang chay". */
+  const mocThat = readMoc(REAL);
+  const dangChay = mocThat.find((m) => m.bac === 1);
+  assert.ok(v4.includes(dangChay ? dangChay.ten : "chưa có mốc nào đang chạy"),
+    "chip phai in ten moc DANG CHAY doc tu ho so moc — hoac noi thang la khong con moc nao dang chay");
+  assert.ok(mocThat.length >= 2, "ho so moc phai con it nhat hai dong, khong thi chip nay vo nghia");
 
   /* --- (c) DẤU DÒNG KHOÁ VẪN Ở ĐẦU DÒNG sau khi bảng khoá vào khối gập ---
      Đây là cái bẫy brief cảnh báo, và nó KHÔNG có phép kiểm nào khác: thụt lề trước dấu thì
