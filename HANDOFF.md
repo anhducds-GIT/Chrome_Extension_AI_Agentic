@@ -653,3 +653,35 @@ mẫu (`**ĐÓNG N-51 · …**` thay vì `**ĐÓNG N-51** · …`) nên **không
 đúng. ⑶ một dòng mở đầu `- **ĐÓNG N-45` viết để dẫn giải — may là sai mẫu; đã xoá.
 
 Chờ Đức: **122 MB ảnh** · **chuyển khoá ba gói**.
+
+## 2026-09-09 · `claude-adr-gop` — N-54: 27 ADR gộp còn 9 file chủ đề
+
+Đức chốt: *"gộp, xóa, sử dụng decision mới nhất, bỏ các cái cũ đã bị obsolete để ko gây confuse…
+phân nhóm cho chúng, giữ luật bằng tiếng việt để tôi cùng đọc bản cuối."*
+
+**Một chủ đề = một file = một câu trả lời.** Trước đó 27 file xếp theo thứ tự thời gian, và không
+chỗ nào nói cái nào đang có hiệu lực — chính hình dạng đó đẻ ra năm chỗ mâu thuẫn. Chín nhóm liệt
+kê ở `docs/README.md`.
+
+**Nghiệm thu:** B12 XANH — **151 số hiệu từng cấp, 0 mất, 0 trùng**. Bảy vế chết cắt còn một dòng
+mỗi vế kèm tên quyết định thay nó. **81 liên kết trong 30 file** đã vá.
+
+**Hai tên file cố ý giữ nguyên** (`0000`, `0015`): đo trước thì thấy chúng bị trích **118 và 6 lần
+từ ba gói `duc-auto-*`**, vùng tôi không sửa được liên kết. **Cố ý không vá** liên kết trong
+`HANDOFF-ARCHIVE-*` và `evidence/`: chúng kể chuyện quá khứ, lúc đó tên file đúng là tên đó.
+
+**Một chỗ tôi KHÔNG tự hoà giải:** ADR-0004 chia vai *Hệ thống / Sản phẩm*, còn `AGENTS.md` mục 6
+chạy cặp *Giữ lõi / Phát & thu*. Hai cách chia **khác nhau**, và lần đổi 08/09 không có quyết định
+nào ghi lại. Ghi cả hai kèm cảnh báo ở cả hai chỗ — **chờ Đức chốt cặp nào đứng.**
+
+**Sửa một chỗ tôi đánh dấu sai lượt trước:** ADR-0023 bị tôi ghi là bác bỏ toàn bộ, nhưng vế ⑶
+(*"khoá thuộc về CHAT, không thuộc từng tác vụ ngầm"*) **vẫn sống** — nó chính là giới hạn ⑦ của
+`AGENTS.md`. Chỉ vế ⑴ chết.
+
+**Ngôn ngữ: Đức đảo lại trong ngày.** Sáng chốt tiếng Anh cho rẻ token, chiều chốt lại tiếng Việt
+*"để tôi cùng đọc bản cuối"*. Lý do sau nặng hơn: **một bộ luật Đức không đọc được là một bộ luật
+Đức không kiểm được.** `AGENTS.md` viết lại lần hai; phần tiết kiệm còn giữ là phần **cắt ngắn và
+phân nhóm**, không phụ thuộc ngôn ngữ — **402 → 252 dòng, 30.520 → 19.331 ký tự (−37%)**.
+Bài học: **hỏi ai sẽ ĐỌC một tài liệu trước khi tối ưu nó cho ai sẽ NẠP nó.**
+
+Sổ nợ còn **1 mục mở**: `N-45`.

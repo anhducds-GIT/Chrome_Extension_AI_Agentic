@@ -1,254 +1,252 @@
-# AGENTS.md — repo constitution
+# AGENTS.md — hiến pháp repo
 
-> **Layer 1: the register of rules in force today.** Read it fully before your first edit.
-> One rule per line, plus the decision record behind it. No history, no measurements — those live
-> in the ADR each line points to. Layer 2 handbooks are in §7; do not read them up front.
+> **Tầng 1: bản đăng ký những luật đang có hiệu lực hôm nay.** Đọc hết trước khi gõ dòng đầu tiên.
+> Mỗi luật một dòng, kèm quyết định đứng sau nó. Không kể chuyện, không số đo — những thứ đó nằm
+> trong ADR mà dòng đó trỏ tới. Sổ tay Tầng 2 ở mục 7; đừng đọc trước.
 >
-> Owner is **Đức** — non-technical, Vietnamese, short sentences, and the only person who decides.
-> **This file is English because every session loads it** (~2× cheaper to read than Vietnamese).
-> Anything Đức reads — dashboards, session logs, messages to him — stays Vietnamese: §5.
+> Chủ dự án là **Đức** — không chuyên kỹ thuật, tiếng Việt, câu ngắn, và là người chốt duy nhất.
+> **File này viết bằng tiếng Việt để Đức đọc được bản cuối** (Đức chốt 09/09,
+> [ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑷). Chỉ mã lỗi và tên lệnh dùng tiếng Anh.
 
-## 0. A session, start to finish
+## 0. Một phiên, từ đầu đến cuối
 
-1. **Open:** read this file → the `AGENTS.md` of the package you are about to touch → the tail of
-   that package's `HANDOFF.md`.
-2. **Work:** one thing at a time. Anything out of scope goes to `BACKLOG.md`; do not just do it.
-3. **Close:** run the gate. Red means not done. Never report "done" on a red gate, and never edit
-   the gate to make it green.
-
-```bash
-node scripts/session-check.mjs --as <your-session-name>
-```
-
-### 0a. Closing order — getting it wrong doubles your time
-
-```
---sua → edit → --soat → commit → --xong → regenerate artifacts → commit
-      → npm run test:song-song → gate → safe-push → release area locks
-```
-
-- **Run the full suite AFTER your last commit.** The runner leaves a stamp bound to HEAD plus a
-  working-tree hash; the gate reuses a valid stamp instead of re-running. Committing afterwards
-  invalidates it. Measured on the same mechanism: **1,095s → 278s**.
-- **While working, run one suite:** `node scripts/chay-test.mjs --chi <suite>`. It deliberately
-  writes no stamp. The full suite runs **once**, at the end.
-- **Do not change `scripts.test`.** It is a sequential chain on purpose — a pin inside
-  `duc-auto-*` reads that field to catch fake-green.
-- **A generator that writes into a constrained book runs ONCE, after the suite is green.**
-- **Never `git push`.** It sweeps up every other session's commits from the shared worktree
-  (happened for real on 26/08). Use `node scripts/safe-push.mjs --as <your-session-name>`.
-
-## 1. Locks — who may write where
-
-State lives in `.agents/claims.json`. **One area, one writing session at a time.** Every
-take and release goes through the command; never hand-edit the file.
-
-### 1a. File locks are the default — hold briefly, release at once
-
-[ADR-0025](docs/adr/0005-lam-viec-song-song.md).
-
-Take immediately **before** a write, release immediately **after**. **Reading needs no lock.**
-Take a whole area only when you genuinely edit across it.
+1. **Mở phiên:** đọc file này → `AGENTS.md` của gói mình sắp đụng → phần cuối `HANDOFF.md` của gói đó.
+2. **Làm việc:** một việc một lúc. Phát sinh ngoài phạm vi → ghi vào `BACKLOG.md`, đừng tự làm.
+3. **Đóng phiên:** chạy cổng kiểm. Đỏ là chưa xong. Không được báo "xong" khi cổng đỏ, và không
+   được sửa cổng cho nó xanh.
 
 ```bash
-node scripts/claim.mjs --sua <path> [<path>…] --as <session>   # before writing
-node scripts/claim.mjs --soat --as <session>                   # before git commit
-node scripts/claim.mjs --xong --het --as <session>             # right after writing
-git config core.hooksPath .githooks                            # once, covers every lane
+node scripts/session-check.mjs --as <tên-phiên-của-bạn>
 ```
 
-When you really do edit across a whole area, claim the area instead — those commands stay:
+### 0a. Thứ tự đóng phiên — sai thứ tự là tự nhân đôi thời gian
+
+```
+--sua → sửa → --soat → commit → --xong → sinh lại artifact → commit
+      → npm run test:song-song → cổng → safe-push → trả khoá vùng
+```
+
+- **Chạy đủ bộ SAU commit cuối.** Bộ chạy để lại một *dấu xác nhận* buộc vào HEAD + băm cây làm
+  việc; cổng thấy dấu còn hiệu lực thì không chạy lại. Commit sau đó là làm hỏng dấu. Đo cùng cơ
+  chế ở bộ khung: **1.095 → 278 giây**.
+- **Trong lúc làm chỉ chạy một suite:** `node scripts/chay-test.mjs --chi <tên-suite>`, cố ý KHÔNG
+  ghi dấu. Đủ bộ chạy **một lần**, ở cuối.
+- **Đừng đổi `scripts.test`** — nó là chuỗi tuần tự có chủ ý: một phép ghim trong `duc-auto-*` đọc
+  thẳng trường đó để bắt "xanh giả".
+- **Bộ sinh nào ghi vào một sổ CÓ RÀNG BUỘC thì chạy MỘT LẦN, sau khi suite xanh.**
+- **Không bao giờ `git push`.** Nó cuốn theo commit của mọi phiên khác đang dùng chung cây làm việc
+  (đã xảy ra thật 26/08). Dùng `node scripts/safe-push.mjs --as <tên-phiên-của-bạn>`.
+
+## 1. Khoá — ai được ghi ở đâu
+
+Trạng thái nằm ở `.agents/claims.json`. **Một vùng, một phiên được ghi tại một thời điểm.** Mọi
+lượt nhận và trả đi qua lệnh; **đừng sửa file bằng tay.**
+
+### 1a. Mặc định là khoá FILE — giữ ngắn, trả ngay
+
+[ADR-0005](docs/adr/0005-lam-viec-song-song.md) ⑴.
+
+Nhận ngay **trước** lượt ghi, trả ngay **sau**. **Chỉ đọc thì không cần khoá gì.** Nhận cả vùng
+chỉ khi bạn thật sự sửa khắp nó.
+
+```bash
+node scripts/claim.mjs --sua <đường-dẫn> [<đường-dẫn>…] --as <phiên>   # trước khi ghi
+node scripts/claim.mjs --soat --as <phiên>                            # trước git commit
+node scripts/claim.mjs --xong --het --as <phiên>                      # ngay sau khi ghi xong
+git config core.hooksPath .githooks                                   # một lượt, xong cho mọi lane
+```
+
+Khi thật sự sửa khắp một vùng thì nhận cả vùng — những lệnh này vẫn còn:
 
 ```bash
 node scripts/claim.mjs --list
-node scripts/claim.mjs --take <key> --as <session> --task "one sentence"
-node scripts/claim.mjs --release <key> --as <session>
-node scripts/claim.mjs --khai-vung <key> --as <session>   # open a NEW area
+node scripts/claim.mjs --take <khoá> --as <phiên> --task "một câu"
+node scripts/claim.mjs --release <khoá> --as <phiên>
+node scripts/claim.mjs --khai-vung <khoá> --as <phiên>   # mở MỘT VÙNG MỚI
 ```
 
-- **Containment runs both ways.** Someone else owns the area → your file lock is refused.
-  Someone else's file lock sits inside → your area claim is refused.
-- **File locks release at END OF SESSION. Area locks release AFTER PUSH.** Two lock kinds, two
-  deadlines. The gate is red while you still hold a file lock. If a push fails, **keep the area
-  lock** and say so — an unpushed commit in an ownerless area turns the gate red for whoever
-  comes next.
-- **`--soat` is mandatory before `git commit`.** It covers what locks cannot: two lanes share one
-  git worktree, so `git commit -a` sweeps files another lane just staged, and `git commit -o`
-  sweeps their edits to the very file you named. The `commit-msg` hook runs it inside the commit
-  itself, closing the window between checking and committing. It **fails open** in three places
-  and blocks only a real violation; if you are stuck, `git commit --no-verify` and **say so in
-  the session log**.
-- **Never release another lane's lock** — not when the gate calls it overdue, not when it reports
-  "no trace in the repo yet". That sentence means *the repo has not seen anything*; it does not
-  mean the lane is idle. Three lawful releases: **the lane releases it** · **the lane reports
-  done** · **Đức decides the transfer** (`--restamp --as <session> --duc-duyet "<his words>"`).
-  A lock sitting a long time is a reason to **ask**, never to take.
-- **Never hand-edit `claims.json`.** Read-modify-write silently overwrote a claim once. To open a
-  new area use `--khai-vung`; hand-editing then `--restamp` looks identical to stealing a lock.
-- **Never pipe `claim.mjs`.** A pipeline's exit code is the *last* command's, so
-  `claim.mjs --take … | tail -3 && git commit …` proceeds even when the claim was **refused**.
+- **Chứa nhau hai chiều.** Vùng có chủ khác → khoá file bị từ chối. Bên trong còn khoá file của
+  người khác → nhận cả vùng bị từ chối.
+- **Khoá FILE trả lúc HẾT PHIÊN. Khoá VÙNG trả SAU KHI ĐẨY.** Hai loại khoá, hai mốc, đừng lẫn.
+  Cổng đỏ khi bạn còn treo khoá file. Đẩy không được thì **giữ khoá vùng** và báo lại — commit
+  chưa đẩy trong một vùng vô chủ để lại mục đỏ cho phiên đến sau.
+- **`--soat` bắt buộc trước `git commit`.** Nó vá chỗ khoá không chữa được: hai lane dùng chung
+  MỘT cây git, nên `git commit -a` cuốn file lane khác vừa dàn và `git commit -o` cuốn sửa đổi của
+  họ trên chính file bạn nêu tên. Chốt `commit-msg` chạy nó ngay trong lượt commit, bịt cửa sổ
+  giữa soát và commit. Nó **fail-open** ba chỗ và chỉ chặn khi vi phạm thật; kẹt thì
+  `git commit --no-verify` rồi **nói ra trong nhật ký phiên**.
+- **Đừng nhả khoá của lane khác** — kể cả khi cổng nêu tên nó là quá hạn, kể cả khi cổng nói *"chưa
+  thấy dấu vết trong repo"*. Câu đó nói **repo chưa thấy gì**, nó không nói lane đó rảnh. Ba đường
+  hợp lệ: **chính lane đó trả** · **lane đó báo đã xong** · **Đức chốt chuyển**
+  (`--restamp --as <phiên> --duc-duyet "<câu chốt>"`). Khoá nằm lâu là lý do để **hỏi**, không phải
+  để lấy.
+- **Đừng sửa `claims.json` bằng tay.** Đọc-sửa-ghi đã từng ghi đè im lặng một quyền. Mở vùng mới
+  thì dùng `--khai-vung`; sửa tay rồi `--restamp` trông giống hệt một vụ cướp khoá.
+- **Đừng nối `claim.mjs` vào ống.** Mã thoát của một đường ống là mã thoát của lệnh **cuối**, nên
+  `claim.mjs --take … | tail -3 && git commit …` chạy tiếp cả khi lệnh nhận khoá đã **TỪ CHỐI**.
 
-### 1b. Areas, exemptions, generated files
+### 1b. Vùng, miễn trừ, artifact máy sinh
 
-| Key | Covers |
+| Khoá | Che gì |
 |---|---|
 | `_docs` | `docs/` |
 | `_code` | `scripts/` + `tests/` |
-| `_root` | everything else, plus top-level files |
-| `workers/<package>` | that package |
+| `_root` | phần còn lại và các file ở tầng ngoài cùng |
+| `workers/<gói>` | gói đó |
 
-Claim the area you actually touch, never the whole root. The gate names the missing key. Whoever
-splits an area declares `steward` in the `areas` block of `.repo-structure.json`.
+Nhận đúng vùng mình đụng, không nhận cả gốc repo. Cổng sẽ nói tên khoá còn thiếu. Ai chia vùng thì
+khai `steward` trong khối `areas` của `.repo-structure.json`.
 
-**Five generated artifacts need no lock:** `DASHBOARD.md` · `llms.txt` · `repo-map.json` ·
-`DASHBOARD-Chrome-Extension-AI-Agentic.html` · `FEATURE-PARITY-AUTO.md`. Re-running the generator
-reproduces them exactly, so there is nothing of anyone's to lose. Declared in `generated`.
-`FEATURE-PARITY.md` is deliberately **not** among them — its §2 is human prose (§7).
+**Năm artifact máy sinh KHÔNG đòi khoá nào:** `DASHBOARD.md` · `llms.txt` · `repo-map.json` ·
+`DASHBOARD-Chrome-Extension-AI-Agentic.html` · `FEATURE-PARITY-AUTO.md`. Chạy lại bộ sinh là ra y
+hệt nên không có gì của ai trong đó để mất. Khai ở khối `generated`. `FEATURE-PARITY.md` **cố ý
+không** nằm trong đó — mục 2 của nó là chữ của người (mục 7).
 
-**Two kinds of exemption, different conditions:**
+**File được MIỄN chia làm HAI LOẠI:**
 
-- **Unconditional:** `.agents/claims.json`. Without it, releasing a lock would itself count as
-  editing a source file.
-- **Only when appending at the end:** root `HANDOFF.md` · `IDEAS.md` · root `BACKLOG.md`. Every
-  lane must write to these, so making them queue behind `_root` would block the very rules that
-  require them. **Editing or deleting older lines is not exempt** — unless you hold the lock on
-  that file, in which case it is allowed: exempt means *no lock required*, not *no lock helps*.
-  Closing an item in those books is also just **one appended line**; never rewrite the old block.
+- **Miễn vô điều kiện:** `.agents/claims.json` — không miễn thì chính thao tác trả quyền cũng bị
+  coi là sửa file gốc.
+- **Miễn KHI CHỈ THÊM DÒNG Ở CUỐI:** `HANDOFF.md` gốc · `IDEAS.md` · `BACKLOG.md` gốc. Mọi lane
+  đều phải ghi vào ba quyển này, nên bắt chúng xếp hàng sau `_root` là tự chặn luật của mình.
+  **Sửa hay xoá dòng cũ thì KHÔNG được miễn** — trừ khi bạn **đang giữ khoá** đúng file đó, lúc
+  ấy thì được: miễn khoá nghĩa là *không cần khoá*, không nghĩa là *có khoá cũng không được*. Cửa
+  RA của sổ cũng chỉ là **thêm một dòng ở cuối**, đừng viết lại khối cũ.
 
-Declared in `append_only_exempt` in `.repo-structure.json` — **edit there, never in a script.**
+Khai ở `append_only_exempt` trong `.repo-structure.json` — **sửa ở đó, đừng sửa script.**
 
-## 2. Commit and push
+## 2. Commit và đẩy
 
-- **Every commit ends with `Lane: <session-name>`** — exactly the name you passed to `--as`, one
-  line, no spaces. Missing it turns the gate red **and** `safe-push` refuses; `--carry` cannot
-  open that door, because it approves "carrying X's work" and an unlabelled commit has no X. The
-  label is **provenance, not permission** — who may write is decided by §1. A broken label is red,
-  never guessed; fix with `git commit --amend`.
-- **Committing and pushing need no approval** (Đức, 26/08) when all three hold: ⑴ the work is
-  complete — never push work in progress · ⑵ the gate is fully green, and for code, independently
-  audited · ⑶ you push with `safe-push.mjs`.
-- **`--carry` needs no approval** ([ADR-0005](docs/adr/0005-lam-viec-song-song.md)).
-  In exchange, **every `--carry` must name the carried lane in the session log** — that is the
-  only trace left.
+- **Mọi commit kết bằng `Lane: <tên-phiên>`** — đúng tên bạn đưa cho `--as`, một dòng, không dấu
+  cách. Thiếu nhãn thì cổng ĐỎ **và `safe-push` từ chối**; `--carry` không mở được cửa đó, vì nó
+  duyệt "đẩy kèm việc của X" mà commit không nhãn thì không có X. Nhãn là **nguồn gốc, không phải
+  quyền** — ai được ghi vẫn do mục 1 quyết. Nhãn hỏng thì ĐỎ, không đoán; sửa bằng
+  `git commit --amend`.
+- **Commit và đẩy không phải hỏi** (Đức chốt 26/08) khi đủ cả ba: việc hoàn tất trọn vẹn — việc dở
+  dang thì KHÔNG đẩy · cổng XANH TOÀN BỘ, và với code thì đã qua audit độc lập · đẩy bằng
+  `safe-push.mjs`.
+- **`--carry` không phải hỏi** ([ADR-0005](docs/adr/0005-lam-viec-song-song.md) ⑶). Đổi lại, **mọi
+  lượt `--carry` phải kể tên lane bị cuốn theo trong nhật ký phiên** — đó là dấu vết duy nhất còn lại.
 
-## 3. Ask Đức first
+## 3. Phải hỏi Đức trước
 
-1. A new extension permission
-2. A new live pilot on a real site
-3. Changing a safety law (retry, halt, attribution, persistence, exact-once)
-4. **Force-push, rewriting history, merging a branch into `main`**
+1. Thêm quyền (permission) mới cho extension
+2. Chạy pilot live mới trên trang thật
+3. Đổi luật an toàn (retry, halt, attribution, persistence, exact-once)
+4. **Force-push, sửa lịch sử, merge nhánh vào `main`**
 
-Plus Đức's standing rules: send nothing outward · delete no files · modify no source data ·
-create no self-running automation — not without asking.
+Cộng luật gốc của Đức: không gửi gì ra ngoài · không xoá file · không sửa dữ liệu gốc · không tạo
+automation tự chạy — nếu chưa hỏi.
 
-## 4. Hard limits
+## 4. Giới hạn cứng
 
-1. **No cap on the number of packages.** All five are live
-   ([ADR-0024](docs/adr/0021-goi-extension.md)). The freeze mechanism stays in place
-   with an empty list — it is a switch Đức can flip back. Limits ⑦ and ② now carry the weight this
-   cap used to; do not loosen either.
-2. **Never build one feature twice.** Needed in two packages → `workers/_shared/` first.
-3. **`docs/` ≤ 8,000 lines is the TARGET; the ratchet is what the machine watches.**
-   `docs.tran_dong_khong_ke_adr` holds today's number, excluding ADRs. The gate is red above it,
-   and tells you to lower it once you are 50 lines under. A check that is red for every session
-   for weeks is a check that gets deleted — that is why the machine does not watch 8,000 directly.
-4. **`AGENTS.md` has a ratchet too:** `agents.tran_dong`. Same shape, same reason.
-5. **Infrastructure backlog ≤ 15 items.** Count it, do not trust this line:
-   `node scripts/backlog-check.mjs`. The way out is **closing an item** — append
-   `- **ĐÓNG <id>** · …` at the end. Cap lives in `backlog.tran`; **ask Đức before changing it**.
-6. **A test file that catches 0 mutations gets deleted.** A check that catches nothing still taxes
-   every session.
-7. **At most 2 parallel chats.** Đức, 07/09: *"lane ở đây tôi hiểu là 2 phiên chat với AI; trong 1
-   chat mà bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn ok"* — so
-   background tasks **inside** one chat are not limited.
-8. **One rule in, one rule out.** Adding a rule here must name the rule it replaces, or measure how
-   many times it has actually fired. The place for the story is the ADR, not this file.
-9. **Rules get reviewed weekly, not on demand**
-   ([ADR-0026](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md)). ADR records may be merged, regrouped,
-   translated and rewritten; a decision may never be lost. Check B12 enforces the second half.
+1. **Không còn trần số gói.** Cả năm gói đều sống ([ADR-0021](docs/adr/0021-goi-extension.md) ⑴).
+   Cơ chế đóng băng ở lại với danh sách rỗng — nó là công tắc Đức bật lại được. Giới hạn ⑦ và ②
+   nay gánh thay phần trần này bỏ lại; **đừng nới cái nào trong hai.**
+2. **Cấm cài một tính năng hai lần.** Cần ở hai gói → vào `workers/_shared/` trước.
+3. **`docs/` ≤ 8.000 dòng là ĐÍCH; thứ máy canh là THƯỚC CÓC.** `docs.tran_dong_khong_ke_adr` giữ
+   con số của hôm nay, không kể ADR. Cổng ĐỎ khi vượt, và tự nhắc HẠ con số khi bạn đã dưới thước
+   ≥ 50 dòng. Một phép kiểm đỏ với mọi phiên trong nhiều tuần là một phép kiểm sẽ bị gỡ — đó là lý
+   do máy không canh thẳng 8.000.
+4. **`AGENTS.md` cũng có thước cóc:** `agents.tran_dong`. Cùng hình dạng, cùng lý do.
+5. **Sổ nợ hạ tầng ≤ 15 mục.** Đếm lại, đừng tin dòng này: `node scripts/backlog-check.mjs`. Cửa ra
+   là **đóng một mục** — thêm `- **ĐÓNG <mã>** · …` ở CUỐI sổ; dấu `**` phải đóng **ngay sau mã**,
+   viết sai mẫu thì nó không đóng gì mà đọc y hệt dòng đúng. Trần khai ở `backlog.tran`; **hỏi Đức
+   trước khi đổi.**
+6. **File test bắt 0 đột biến thì XOÁ.** Một phép kiểm không bắt được gì vẫn thu thuế mọi phiên.
+7. **Song song tối đa 2 chat.** Đức nói rõ 07/09: *"lane ở đây tôi hiểu là 2 phiên chat với AI;
+   trong 1 chat mà bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn ok"* —
+   nên **số tác vụ ngầm TRONG một chat không bị giới hạn**, và **chủ khoá là tên CHAT**.
+8. **Một luật vào thì một luật ra.** Thêm luật vào file này phải kể tên luật nó thay, hoặc đo được
+   nó đã nổ mấy lần. Chỗ để kể chuyện là ADR, không phải đây.
+9. **Rà soát sổ luật HẰNG TUẦN, không đợi có việc mới rà**
+   ([ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑸). Hồ sơ ADR gộp được, phân nhóm
+   được, viết lại được; **một quyết định thì không bao giờ được mất** — B12 cưỡng chế vế sau.
 
-## 5. Never
+## 5. Không bao giờ
 
-- `pilot-*/`, `Pilot-*/`, `Batch-*/`, `evidence/` are **operational evidence**: append only —
-  never edit, delete, or regenerate.
-- Never let a token, password, or pairing file into the repo. **This repo is public.**
-- Never assign `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.
-- Never weaken an existing guard to make the gate pass. Fixing a bug is fine; removing a guard is
-  not.
-- Never guess a selector. Every selector needs real DOM evidence — call `diagnostics.dom_probe`
-  through the Bridge rather than asking Đức to look.
-- Never trust another AI's report. Re-run the tests yourself, re-read the diff yourself. "Done"
-  from a sub-agent is not evidence.
-- Never `git checkout`, `reset` or `stash` live state files. `.agents/claims.json` holds other
-  sessions' uncommitted locks; to compare against HEAD use `git show HEAD:<file>`.
+- `pilot-*/`, `Pilot-*/`, `Batch-*/`, `evidence/` là **bằng chứng vận hành**: chỉ được THÊM —
+  không sửa, không xoá, không tạo lại.
+- Không bao giờ để token, mật khẩu, hay tệp ghép cặp lọt vào repo. **Repo này PUBLIC.**
+- Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.
+- Không bao giờ nới một lớp bảo vệ để cổng xanh. Sửa bug thì được; gỡ bảo vệ thì không.
+- Không bao giờ đoán selector. Mọi selector phải có bằng chứng DOM thật — gọi
+  `diagnostics.dom_probe` qua Bridge, đừng mượn mắt Đức.
+- Không bao giờ tin báo cáo của AI khác. Tự chạy lại test, tự đọc lại diff. Agent phụ báo "xong"
+  không phải bằng chứng.
+- Không bao giờ `git checkout`, `reset` hay `stash` file trạng thái sống. `.agents/claims.json`
+  giữ khoá chưa commit của phiên khác; muốn so với HEAD thì `git show HEAD:<file>`.
 
-**Two rules about people, not machines:**
+**Hai luật về người, không phải về máy:**
 
-- **Every fix ships with a pin.** The suite never touches a real DOM, so evidence fixtures are the
-  whole value.
-- **Write for Đức.** If Đức cannot follow it, that is a system failure — rewrite it simpler.
-  Operator-visible text is Vietnamese; error codes are English.
+- **Mỗi bản vá kèm một phép ghim.** Suite không chạm DOM thật, nên fixture bằng chứng là toàn bộ
+  giá trị.
+- **Viết cho mắt Đức đọc.** Đức đọc không hiểu = lỗi hệ thống, viết lại đơn giản hơn. Chữ operator
+  nhìn thấy: tiếng Việt. Mã lỗi (CODE): tiếng Anh.
 
-## 6. Roles — by direction of work, not by vendor
+## 6. Vai — chia theo hướng đi của việc, không chia theo hãng
 
-**Đức decides everything.** Beyond that there are two roles
-([ADR-0017](docs/adr/0004-hai-vai-assistant.md)). A role belongs to a **session**,
-not a vendor: any model can hold any role, and a session holds exactly one until it closes.
+**Đức chốt mọi thứ.** Ngoài ra có hai vai ([ADR-0004](docs/adr/0004-hai-vai-assistant.md)). Vai là
+của **PHIÊN**, không của hãng: hãng nào cũng đóng được vai nào, và một phiên đóng đúng một vai cho
+tới khi đóng phiên.
 
-| Role | Owns | Does | Must not |
+| Vai | Giữ gì | Việc chính | KHÔNG được |
 |---|---|---|---|
-| **① Core keeper** | rules · tooling · state of this repo | every patch ships a pin · delete rules that never fired · keep the gate's teeth | loosen a guard for a green gate · **sign off on its own work** |
-| **② Outbound** | the only door between this repo and everything else | run the process against other repos and packages · **bring failures back as backlog items** · improve that process | patch the core to make outside work run — failures go **to role ①** · report a process as passing before it has actually run |
+| **① Giữ lõi** | luật · bộ máy · trạng thái của repo này | mỗi bản vá kèm **một phép kiểm ghim** · xoá luật không nổ lần nào · giữ cổng kiểm còn răng | nới một lớp bảo vệ cho cổng xanh · **tự ký nghiệm thu việc của chính mình** |
+| **② Phát & thu** | cửa duy nhất giữa repo này và bên ngoài | thi hành quy trình lên repo/gói khác · **mang chỗ vấp về** thành mục sổ nợ · tối ưu chính quy trình đó | sửa lõi để việc bên ngoài chạy được — chỗ vấp phải **về Vai ①** · báo một quy trình ĐẠT khi chưa chạy thật |
 
-- **Load-bearing invariant: whoever makes a fix does not sign it off.** A sign-off written by the
-  party being checked is a self-declaration, not a barrier — the same rule `SELF_ATTESTATION`
-  enforces in the permissions core. Do not read it as "the fixer may not look for bugs": anyone may
-  find a bug anywhere; what must be separated is **signer** from **fixer**.
-- **Handover between roles has exactly one shape:** role ② writes the failure into `BACKLOG.md`
-  with an `đóng khi:` field; role ① turns it into a patch plus a pin. This half is machine-checked
-  (`npm run test:backlog`); the *"② finds, ① fixes"* half is prose, not enforced — said plainly so
-  nobody believes otherwise.
-- Both roles may run at once, in **different areas** (§1), which fits the 2-chat limit exactly.
+- **Bất biến chịu tải: người SỬA không tự NGHIỆM THU bản sửa của mình.** Một tờ nghiệm thu do bên
+  bị kiểm ký là lời tự khai, không phải hàng rào — đúng luật mà `SELF_ATTESTATION` cưỡng chế trong
+  lõi quyền. **Đừng đọc thành "người sửa không được TÌM lỗi"**: vai nào cũng được tìm lỗi ở bất kỳ
+  đâu; thứ phải tách là **người ký** khỏi **người sửa**.
+- **Bàn giao giữa hai vai chỉ có một hình dạng:** Vai ② ghi chỗ vấp vào `BACKLOG.md` kèm trường
+  `đóng khi:`, Vai ① biến nó thành bản vá cộng một phép ghim. Vế này máy kiểm được
+  (`npm run test:backlog`); phần *"② phát hiện · ① sửa"* là **chữ, không phải luật** — nói thẳng để
+  không ai tưởng nó đang được cưỡng chế.
+- Hai vai chạy cùng lúc được, nhưng **KHÁC VÙNG** (mục 1), và vừa khớp trần 2 chat.
 
-**How this file reaches each AI:** Claude reads `CLAUDE.md`, which points here. Codex reads
-`AGENTS.md` directly. **Antigravity needs one pasted line each session:** *"Đọc AGENTS.md ở gốc
-repo trước khi làm gì."* — it was never proven to load the file on its own.
+> **⚠ Còn một chỗ chờ Đức chốt:** [ADR-0004](docs/adr/0004-hai-vai-assistant.md) chia hai vai theo
+> **Hệ thống / Sản phẩm**, khác cặp trong bảng trên. Cặp trong bảng này là cặp các phiên đang theo;
+> lần đổi 08/09 chưa có quyết định nào ghi lại.
 
-## 7. Handbooks — Layer 2, open on demand
+**Cách file này đến tay từng AI:** Claude đọc `CLAUDE.md`, file đó trỏ sang đây. Codex đọc thẳng
+`AGENTS.md`. **Antigravity cần một câu dán mỗi phiên:** *"Đọc AGENTS.md ở gốc repo trước khi làm
+gì."* — chưa bao giờ chứng minh được nó tự nạp.
 
-| When you are about to… | Open |
+## 7. Sổ tay — Tầng 2, mở khi cần
+
+| Khi bạn sắp… | Mở |
 |---|---|
-| **Touch the three `duc-auto-*` packages** | That package's own `workers/<pkg>/<ver>/AGENTS.md`, with its `BACKLOG.md` and `HANDOFF.md` beside it. They are **forks of each other** (limit ②), so one bug usually has three copies and patching one leaves two |
-| **Coordinate: Đức asks what is happening, what is next, what can run in parallel** | `docs/protocols/ORCHESTRATOR.md` — the **HARD ROLE FIREWALL** (a coordinating session does not code, does not debug product, does not propose patches; no "small fix" exception), and the five-part report shape `DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` then stop. Tool: `node scripts/what-next.mjs`, read-only, no lock needed |
-| **Find out what Đức decided, and why** | `docs/adr/` for repo-wide decisions, `workers/<pkg>/<ver>/docs/adr/` for one package. Rules for the register: [ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) and [ADR-0026](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md). Template: `docs/_TEMPLATE-adr.md` |
-| **Write a journal entry, or the gate rejected yours as too long** | `docs/protocols/HANDOFF.md` — what an entry holds and what belongs elsewhere (reason → ADR · open work → `BACKLOG.md` · method → brief). Cap **2,600 bytes per entry**, and the gate blocks **only the entry you just added**; a book keeps **20 entries** ([ADR-0008](docs/adr/0008-nhat-ky-phien.md)), with `handoff.tran_so_muc` as the trip wire. Tools: `node scripts/handoff.mjs --check` · `--rotate <file>` moves into a new month ([ADR-0011](docs/adr/0008-nhat-ky-phien.md) clause ⑴) |
-| **Read further back than 20 entries** | `HANDOFF-ARCHIVE-*.md` next to that `HANDOFF.md`. They chain: `-02` carries a pointer back to `-01`. **Verbatim, read-only** — reassembling them reproduces the original byte for byte. Cut again: `node scripts/handoff.mjs --cat <file> --giu 20` |
-| **Know what your branch is missing versus the other** | Two files, read together ([ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)): `FEATURE-PARITY.md` is **human prose** (§2 behaviour, evidence tagged **[ĐỌC]**) and needs `_root`; `FEATURE-PARITY-AUTO.md` is **machine numbers**, generated and lock-free. Never put human prose on a machine line — one explanation was already swallowed that way. **[DÒ]** rows are name-matching guesses: verify before acting |
-| **Understand the repo in one read** | `llms.txt` (llmstxt.org entry point) and `repo-map.json` (machine map, versioned schema). Both from `node scripts/build-dashboard.mjs` |
-| **See which extensions exist and which work** | `DASHBOARD.md` — generated, never hand-edited |
-| **Run a multi-extension setup, or add one** | `PLATFORM.md`; declare a new one by copying `STATUS.template.md` next to its `manifest.json` |
-| **Find out what the repo owes structurally** | `node scripts/check-bootstrap.mjs [--all]` — B1…B15, each line naming both the fault and the fix. Eight block: `B1 B2 B3 B4 B5 B7 B10 B12`, declared in `bootstrap.blocking`. The other seven — `B6 B8 B9 B11 B13 B14 B15` — only warn; **B15 enforces the write-for-Đức rule** on the three board fields |
-| **Fetch HNX data, or work on that package** | `workers/hnx-fetch/PROTOCOL.md` ([ADR-0021](docs/adr/0021-goi-extension.md)) — a standalone runbook written for a non-Claude AI. That extension has **no `debugger` permission**, so it cannot click anything; clicking is Scouter's job |
-| **Work on Scouter** | `workers/duc-scouter/v0.1.0/AGENTS.md` ([ADR-0009](docs/adr/0007-scouter.md) · [ADR-0013](docs/adr/0007-scouter.md)). Two traps: **a selector never goes into the seed** (seed/adapter boundary), and its Bridge door does a **two-way handshake**, so it pairs only with the ChatGPT-era host |
-| **Find a document, or an old `drafts/…` path** | `docs/README.md` — index plus a map of 33 old paths. `drafts/` at repo root is gone |
-| **Write a new study** | `docs/_TEMPLATE-study.md`. A retired study is **deleted**, not archived — git keeps it |
-| **Reuse or change the harness** | **Not in this repo.** It lives at `https://github.com/anhducds-GIT/Ark_Repo_Harness` ([ADR-0001](docs/adr/0001-ranh-gioi-bo-khung.md)). This repo is a **consumer** |
-| **Change the Assistant package** (`what-next.mjs` · `state-check.mjs` · `ORCHESTRATOR.md`) | **Change it in the harness first**, then bring it back ([ADR-0006](docs/adr/0001-ranh-gioi-bo-khung.md)). The other order produces two versions of one package, each claiming to be canonical |
-| **Place a pairing file, launcher, or Bridge write-area** | **Do not pick a location.** Everything Bridge-related lives under the path declared in `thu_muc_ngoai_repo`. Use `node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <pkg>`; it reads the map. The write-area is **always a subdirectory**, because `file.read` can read anything beneath it |
-| **The gate reports `DAU_VO` — the claims table was hand-edited** | `git diff .agents/claims.json` → was your key reassigned? → if yes, **ask Đức** → only then `--restamp`. **Never restamp just to move on**: that stamps the edit as lawful and erases the evidence. If the edit moved a key away from someone, `--restamp` refuses until you pass `--duc-duyet "<his words>"`, and that sentence is written **into the table**, where the lane who lost the key will actually read it |
-| **Work alongside another AI, or change one of the four concurrency mechanisms** | `docs/protocols/MULTIFLOW.md` — the four mechanisms, six invariants with the reason for each, the change procedure (**mutation testing is mandatory**: four times in one day a freshly written guard turned out to do nothing while the tests stayed green), and the error-code table |
-| **Understand why sessions collide** | `docs/studies/PARALLEL-WORK-DESIGN-V0.md` — separates two different problems: claims being overwritten (a bug, fixed) and pushes carrying other sessions' commits (a consequence of one branch) |
-| **Give Đức a line to paste** | `PROMPTS.md` — one block per flow. **Every line must work with all three AIs**, so it states the goal, never a tool name |
-| **Let Đức open the status board himself** | `bang-trang-thai/` — three doors, one core. Four safety latches, all pinned by `tests/bang-ba-cua-smoke.mjs`: it stops generating while a session holds `_code` and says why · HTML board only · no commit, push, or claim · 30-second batching |
-| **Generate the board** | `node scripts/build-overview.mjs <out.html>` — same source as `DASHBOARD.md`, so the three views cannot disagree. Output is **not committed**. Banned inside the page: SHAs, paths, percentages, self-praise |
-| **Record a debt you tripped over while doing something else** | `BACKLOG.md` — infrastructure debt, lock-free, exit is one appended line. `đóng khi:` is **required** and counted (`npm run test:backlog`): if you cannot state the closing condition, the item is not ripe |
-| **Park an idea of Đức's** | `IDEAS.md` — a waiting room, not a second roadmap. Requires `bậc` and `việc kế`; while being built it must declare `chủ` and `phạm vi`. Once an idea has a home, it leaves the book |
+| **Đụng ba gói `duc-auto-*`** | `AGENTS.md` của chính gói đó, kèm `BACKLOG.md` và `HANDOFF.md` cạnh nó. Ba gói là **fork của nhau** (giới hạn ②), nên một lỗi thường có ba bản sao và vá một bản là để lại hai |
+| **Là phiên ĐIỀU PHỐI: Đức hỏi đang có gì, làm gì tiếp, việc nào chạy song song được** | `docs/protocols/ORCHESTRATOR.md` — **HARD ROLE FIREWALL** (vai điều phối KHÔNG code, KHÔNG debug product, KHÔNG đề xuất patch; không có ngoại lệ "sửa nhỏ"), và luật nạp báo cáo năm mục `DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` rồi DỪNG. Công cụ: `node scripts/what-next.mjs`, chỉ đọc, không đòi khoá |
+| **Biết Đức đã chốt gì, và vì sao** | `docs/adr/` cho quyết định cả repo, `workers/<gói>/<phiên-bản>/docs/adr/` cho quyết định một gói. **Từ 09/09 gộp theo CHỦ ĐỀ, 9 file** — mục lục và bản đồ số hiệu → file nằm ở `docs/README.md`. Luật của sổ: [ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md). **Trích theo SỐ HIỆU, đừng trích theo tên file** |
+| **Ghi một mục nhật ký, hoặc bị cổng chặn vì mục quá dài** | `docs/protocols/HANDOFF.md` — một mục chứa gì và KHÔNG chứa gì (lý do → ADR · việc còn nợ → `BACKLOG.md` · cách làm → brief). Trần **2.600 byte một mục**, cổng chặn **đúng mục bạn vừa thêm**; một quyển giữ **20 mục** ([ADR-0008](docs/adr/0008-nhat-ky-phien.md)), chặn khai ở `handoff.tran_so_muc`. Công cụ: `handoff.mjs --check` · `--rotate <file>` sang tháng mới |
+| **Đào lịch sử xa hơn 20 mục** | `HANDOFF-ARCHIVE-*.md` cạnh chính `HANDOFF.md` đó. Chúng nối thành chuỗi: `-02` mang con trỏ về `-01`. **Nguyên văn, chỉ đọc** — ghép lại dựng được bản gốc từng byte. Cắt tiếp: `handoff.mjs --cat <file> --giu 20` |
+| **Biết nhánh mình thiếu tính năng gì so với nhánh kia** | Hai file, đọc cùng nhau ([ADR-0014](docs/adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)): `FEATURE-PARITY.md` là **chữ của người** (mục 2 hành vi, bằng chứng **[ĐỌC]**) và phải giữ `_root`; `FEATURE-PARITY-AUTO.md` là **số của máy**, sinh tự động và miễn khoá. Đừng viết văn của người chung dòng với số của máy — một câu diễn giải đã bị nuốt đúng vì thế. Dòng **[DÒ]** là đoán theo tên: kiểm lại trước khi hành động |
+| **Hiểu repo trong một lần đọc** | `llms.txt` và `repo-map.json`, đều từ `node scripts/build-dashboard.mjs` |
+| **Xem repo có extension nào, cái nào dùng được** | `DASHBOARD.md` — sinh tự động, đừng sửa tay |
+| **Vận hành nhiều extension, hoặc thêm một cái** | `PLATFORM.md`; khai cái mới bằng cách chép `STATUS.template.md` đặt cạnh `manifest.json` |
+| **Biết repo đang nợ gì về cấu trúc** | `node scripts/check-bootstrap.mjs [--all]` — B1…B15, mỗi dòng nói cả chỗ sai lẫn cách sửa. Tám phép chặn thật: `B1 B2 B3 B4 B5 B7 B10 B12`, khai ở `bootstrap.blocking`. Bảy phép còn lại chỉ cảnh báo; **B15 cưỡng chế luật viết-cho-Đức** ở ba trường trên bảng |
+| **Lấy dữ liệu HNX, hoặc sửa gói đó** | `workers/hnx-fetch/PROTOCOL.md` — sổ tay tự đứng một mình, viết cho AI không phải Claude Code. Gói này **không có quyền `debugger`** nên nó không bấm được gì; cần bấm là việc của Scouter |
+| **Sửa hoặc vận hành Scouter** | `workers/duc-scouter/v0.1.0/AGENTS.md` ([ADR-0007](docs/adr/0007-scouter.md)). Hai chỗ dễ vấp: **selector không bao giờ được gõ vào seed**, và cửa Bridge của nó **bắt tay hai chiều** nên chỉ nối được với máy chủ bản ChatGPT |
+| **Tìm một tài liệu, hoặc tra đường dẫn cũ** | `docs/README.md` — mục lục, bản đồ 33 đường dẫn cũ → mới, và bản đồ ADR cũ → file gộp |
+| **Viết một hồ sơ nghiên cứu mới** | `docs/_TEMPLATE-study.md`. Hồ sơ đã nghỉ thì **xoá**, git giữ hộ |
+| **Lấy bộ chuẩn về dùng, hoặc sửa bộ chuẩn** | **KHÔNG CÒN Ở REPO NÀY** — `https://github.com/anhducds-GIT/Ark_Repo_Harness` ([ADR-0001](docs/adr/0001-ranh-gioi-bo-khung.md)). Repo này là **người dùng** |
+| **Sửa gói Assistant** (`what-next.mjs` · `state-check.mjs` · `ORCHESTRATOR.md`) | **Sửa ở bộ khung TRƯỚC**, rồi mới về đây ([ADR-0001](docs/adr/0001-ranh-gioi-bo-khung.md) ⑷). Làm ngược là đẻ ra hai bản của cùng một gói, bản nào cũng tự xưng là bản chuẩn |
+| **Đặt tệp ghép cặp, bộ khởi động, hay vùng ghi của Bridge** | **Đừng tự chọn chỗ.** Mọi thứ thuộc Bridge nằm dưới đường dẫn khai ở `thu_muc_ngoai_repo`. Dùng `node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <gói>`: nó đọc bản đồ và tự đặt đúng chỗ. Vùng ghi **luôn là thư mục CON**, vì `file.read` đọc được mọi tệp dưới vùng ghi |
+| **Cổng báo `DAU_VO` — bảng quyền bị sửa tay** | `git diff .agents/claims.json` → khoá của bạn có bị đổi chủ không → có thì **hỏi Đức** → chốt xong mới `--restamp`. **Đừng restamp cho xong việc**: làm thế là đóng dấu hợp lệ cho vụ sửa tay và xoá luôn tang chứng. Nếu lượt sửa đó chuyển chủ một khoá khỏi tay người khác, `--restamp` **từ chối** cho tới khi bạn đưa `--duc-duyet "<câu chốt>"`, và câu đó ghi **vào bảng** — nơi phiên vừa mất khoá thật sự đọc |
+| **Làm cùng lúc với AI khác, hoặc sửa một trong bốn cơ chế đa phiên** | `docs/protocols/MULTIFLOW.md` — bốn cơ chế, sáu bất biến kèm lý do từng cái, quy trình đổi cơ chế (**bắt buộc có đột biến kiểm**: đếm được 4 lần trong một ngày một chốt vừa viết ra hoá ra vô tác dụng mà test vẫn xanh), và bảng tra mã lỗi |
+| **Hiểu vì sao nhiều phiên hay va nhau** | `docs/studies/PARALLEL-WORK-DESIGN-V0.md` — tách hai vấn đề khác nhau: quyền bị ghi đè (bug, đã vá) và push cuốn theo commit người khác (hệ quả của một nhánh) |
+| **Đức cần một câu để dán** | `PROMPTS.md` — mỗi flow một khối. **Mỗi câu phải chạy được với cả ba AI**, nên nó chỉ nói mục tiêu, không nói tên công cụ |
+| **Đức muốn tự mở bảng trạng thái** | `bang-trang-thai/` — ba cửa, một lõi. Bốn chốt an toàn, `tests/bang-ba-cua-smoke.mjs` cưỡng chế cả bốn: ngừng sinh khi có phiên giữ `_code` và **nói rõ vì sao** · chỉ sinh bảng HTML · không commit/đẩy/nhận khoá · gộp nhịp 30 giây |
+| **Sinh bảng cho Đức xem** | `node scripts/build-overview.mjs <file-ra.html>` — cùng nguồn với `DASHBOARD.md` nên ba trang không thể nói khác nhau. Bản ra **không commit**. Cấm trong trang: SHA · đường dẫn · phần trăm · lời máy tự khen |
+| **Ghi một chỗ hỏng vấp phải khi đang làm việc khác** | `BACKLOG.md` — sổ nợ hạ tầng, miễn khoá, cửa ra là một dòng thêm ở cuối. Trường `đóng khi:` **bắt buộc** và cổng đếm nó: không khai được điều kiện đóng thì mục đó chưa đủ chín để ghi |
+| **Ghi một ý tưởng của Đức** | `IDEAS.md` — phòng chờ, không phải roadmap thứ hai. Bắt buộc `bậc` và `việc kế`; đang xây thì phải khai `chủ` + `phạm vi`. Ý tưởng có nhà rồi thì rời sổ |
 
-## 8. Closing a session — record three things
+## 8. Đóng phiên — ghi lại ba thứ
 
-1. One log line in the package's `HANDOFF.md`: what you did, the numbers, what is still open.
-2. A new decision from Đức → its ADR.
-3. A new failure seen on a real site → one row in the handbook's error table, **and** consider one
-   more check in `scripts/session-check.mjs`.
+1. Một dòng Log vào `HANDOFF.md` của gói: làm gì, kết quả số, còn gì mở.
+2. Quyết định mới của Đức → ADR của nó.
+3. Gặp lỗi mới trên trang thật → một dòng vào bảng lỗi của sổ tay, **và** cân nhắc thêm một phép
+   kiểm vào `scripts/session-check.mjs`.
 
-> A rule no machine can check will eventually be ignored. That is why the gate exists.
+> Luật nào máy không kiểm được thì sớm muộn cũng bị bỏ qua. Đó là lý do có cổng kiểm.
