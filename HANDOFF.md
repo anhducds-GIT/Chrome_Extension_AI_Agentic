@@ -1921,3 +1921,31 @@ HEAD. **Hoàn nguyên phải được KIỂM, không chỉ được THỬ** — 
 > **Bổ sung cùng ngày:** đóng `N-47` — tôi ghi mục đó **sai**, hai bộ đo đột biến trong repo đã chống đúng chỗ tôi vấp và chống kỹ hơn. Cái hỏng là bộ đo **nháp** tôi dựng ngoài repo cho nhanh. Mở `N-48`: khoá mức file bị cổng kéo ngược về khoá vùng ở lượt đẩy — gặp thật ngay lượt đầu dùng cơ chế mới. Sổ nợ còn **3**.
 
 > **Sửa hồ sơ cùng ngày:** tôi **đóng `N-40` sớm**. Lane `claude-gpt-no-ky-thuat` chứng minh live rằng `--soat` không đủ — nó đo đúng *tại thời điểm nó chạy*, còn chỗ hở là **cửa sổ giữa `--soat` và `git commit`**. Nửa còn lại đi tiếp ở `N-49`, và nó **cần Đức chốt** (bản vá duy nhất nằm trong lượt commit là một `pre-commit` hook, mà cài chung thì phải đổi `core.hooksPath` của cả repo).
+
+## 2026-09-08 · `claude-ext-hook` — chốt `commit-msg`, và sổ nợ xuống **2**
+
+Đức uỷ quyền chọn cả `N-49` lẫn `N-48`.
+
+**`N-49` — chọn CÀI HOOK, và chọn `commit-msg` chứ không `pre-commit`.** Lý do không phải sở
+thích: `--soat` cần biết bạn là lane nào, mà chỗ **duy nhất** ghi tên lane là nhãn `Lane:` trong
+thông điệp — chỉ `commit-msg` đọc được nó. Index ở đó vẫn đúng là index sắp commit.
+
+**Ba chốt fail-open, cố ý:** không có `node` · không thấy nhãn · lỗi lạ → **cho qua**. Chỉ mã 3
+(vi phạm thật) mới chặn. Hook chạy trên mọi lượt commit của mọi lane — một hook hỏng là cả repo
+không commit được, và cái giá đó lớn hơn cái nó canh. `--no-verify` để mở: một chốt không thể
+vượt lúc khẩn thì nó sẽ bị gỡ hẳn.
+
+**Thử thật hai chiều:** commit hợp lệ đi qua · commit mang một file ngoài quyền ghi **bị chặn và
+không commit nào được tạo**.
+
+**`N-48` — chọn đường ⑴, và KHÔNG xoá phép kiểm.** Lúc mở mục tôi đoán nó sẽ thành bản sao của
+phép kiểm nhãn `Lane:`; đo lại thì không. Sau khi nới, **hai đường đỏ còn nguyên, cả hai là mồ
+côi thật**: file đang sửa trong cây làm việc (chưa có nhãn nào) · commit chưa đẩy không nhãn.
+Kiểm ngay trong phiên: `session-check.mjs` còn sửa dở → ĐỎ đúng đường ⑴; commit xong → xanh.
+
+Phép kiểm đó **nhận thêm một việc thay vì đẻ ra phép thứ 17**: canh `core.hooksPath`. Cùng một
+câu hỏi *ai chịu trách nhiệm cho lượt ghi này*, chỉ khác mốc thời gian. Và **chỉ đòi khi repo CÓ
+hook** — đòi vô điều kiện làm đỏ mọi repo tạm của kho thử, đúng cái bẫy đã cắn bốn lần hôm nay.
+
+**Còn 2 mục, cả hai KHÔNG phải việc AI làm tiếp được:** `N-36` (chờ Đức chốt ADR-0023) và `N-45`
+(một byte trong gói lane khác đang giữ khoá).
