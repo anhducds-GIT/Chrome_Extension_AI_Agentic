@@ -1694,3 +1694,39 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
 - **đóng khi:** dọn được các tệp lượt chạy 09/09 sinh ra ở `Downloads/Phai sinh`; phạm vi xoá
   **không** rộng ra ngoài tệp chứng minh được là của gói; phép ghim hành vi chạy công cụ thật vào
   thư mục tạm có cả tệp giả của người dùng và chứng minh chúng còn nguyên; thử phá 0 con thoát.
+
+- **ĐO XONG PHÉP ĐO CỦA `B-43` (09/09) · KẾT QUẢ BÁC BỎ GIẢ THUYẾT RẺ, và đổi cả chẩn đoán.**
+  `dom_probe` chạy vòng trong lúc một job chữ đang chạy (`Q003`, 200 lượt dò):
+
+  | mốc | quan sát |
+  |---|---|
+  | +0s … +23s | `stopFound=false`, 4 selector nút Dừng đều `=> 0` |
+  | **+24s** (đúng lúc gửi) | `stopFound=true`, `button[data-testid="stop-button"] => 1` và `button[aria-label^="Stop"] => 1`, số lượt trợ lý 5 → 6 |
+  | +24s … +31s | nút Dừng **hiện liên tục 8 giây** |
+  | **+32s** | nút Dừng **biến mất** |
+  | +34s (`output_saved_at` 20:31:21) | máy chốt kết quả, ghi **27 ký tự** |
+
+  **⑴ Giả thuyết rẻ SAI.** Nút Dừng **có** khớp, nên `generationSeen` là `true` và bản vá một
+  dòng *"đòi `generationSeen` trước khi nhận"* **sẽ không chặn được gì**. Đây đúng là lý do phải
+  đo trước khi vá — nó vừa chặn một bản vá sai.
+
+  **⑵ Một phát hiện KHÁC HẲN, và nó có thể mới là nguyên nhân chính.** Hội thoại này chạy model
+  `gpt-5-6-thinking` (đọc từ `data-message-model-slug`) **bên trong một Project có chỉ dẫn riêng**,
+  và chỉ dẫn đó bắt mỗi câu trả lời mở đầu bằng một dòng tiêu đề dạng
+  `[MODE: … | BUDGET: … | RULES: …]`. Ba lượt gần nhất, đọc lại trang **nhiều phút sau khi chạy
+  xong**, cho thấy lượt trả lời của trợ lý **đúng bằng dòng tiêu đề đó và không có gì thêm**:
+  27 · 35 · 27 ký tự. Tức phần lớn cái trông như "ghi hụt" thật ra là **ChatGPT chỉ trả về dòng
+  tiêu đề** — không phải extension đọc thiếu.
+
+  **⑶ Nhưng vẫn còn MỘT ca ghi hụt thật, và nó chưa được giải thích.** Lượt đầu của vòng chat:
+  máy ghi **6 ký tự** (`Gửi nh`), đọc lại trang sau đó ra **237 ký tự** đầy đủ ba ý. Cùng một hàm
+  đọc, hai kết quả — nên ở ca đó extension **đã chốt trước khi trang xong**.
+
+  **Phép đo tiếp theo, rẻ và tách được hai thứ đang lẫn vào nhau:** chạy đúng một prompt như vậy
+  trong **một hội thoại THƯỜNG, ngoài Project**. Nếu ở đó câu trả lời đầy đủ và máy ghi đúng số
+  ký tự → phần lớn `B-43` là chỉ dẫn của Project, không phải lỗi mã, và việc còn lại chỉ là ca ⑶.
+  Nếu ở đó vẫn hụt → lỗi nằm trong luật chốt kết quả, và bản vá phải nhắm vào khoảng lặng giữa
+  dòng tiêu đề và phần thân.
+
+  **Đừng vá trước khi có số đo đó.** Giả thuyết rẻ vừa bị bác, và bác bằng số đo chứ không bằng
+  suy luận — lần này đừng thay nó bằng một giả thuyết đắt chưa được đo.
