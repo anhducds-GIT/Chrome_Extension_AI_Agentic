@@ -266,3 +266,29 @@ mọi phép ghim vẫn xanh; thứ mất là khả năng ĐỌC DIFF của ngư�
 
 **Việc kế:** chạy lại lượt lấy dữ liệu ngày 08/09 — Đức nói việc này **để sau, hoặc giao cho một
 AI khác chạy tự động**. Còn đúng một việc chờ tay Đức: `H-06`, tệp ghép cặp riêng cho gói này.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — kết sổ HNX: hai mục xong mà máy đếm không thấy
+
+Đức hỏi thẳng: *"ta không còn nợ kỹ thuật hay rác nữa đúng không?"* Đo ra thì **còn**, và một
+phần của cái "còn" đó là **sổ đếm sai chứ không phải việc chưa làm**.
+
+`H-01` (chạy thật qua chính extension) và `H-04` (bộ đo đột biến) đều **đã xong từ 08/09**, có
+bằng chứng đầy đủ. Nhưng dòng đóng của cả hai được viết **trong thân mục** — `**ĐÓNG 2026-09-08**`
+— thay vì thành một dòng riêng ở cuối sổ. Bộ đếm chính thức (`scripts/backlog-check.mjs`) chỉ
+nhận dạng `- **ĐÓNG <mã>**` ở ĐẦU dòng, cố ý: một lời tự khai trong thân là chữ của chính người
+viết mục, còn dòng ở cuối là một lượt ghi riêng có ngày, có lane, có bằng chứng.
+
+Hệ quả đã xảy ra thật: sổ báo **6 mục mở** trong khi thật ra là **4**. Sai theo hướng xấu nhất —
+**cao hơn sự thật**, nên bảng của Đức trông nợ nần hơn thực tế và không ai biết vì sao.
+
+Đã đóng lại cả hai cho đúng chỗ. **HNX Fetch nay còn đúng bốn mục:** `H-02` (sổ hoạt động không
+hiện trang đang chạm) · `H-03` (ngày lễ gọi lại mỗi lượt — cố ý chưa vá, chờ Đức chốt) · `H-05`
+(không có cờ chia theo loại sản phẩm) · `H-06` (chưa có tệp ghép cặp riêng — cần tay Đức).
+
+**Một chuyện về phối hợp, ghi để phiên sau biết:** lượt này có **hai phiên cùng làm trong một
+thư mục**. Phiên `claude-cua-kiem` chạy `git add -A` và **cuốn theo** phần sửa của tôi ở
+`workers/duc-scouter` và `workers/hnx-fetch` vào commit `c7580447` mang nhãn của họ. Không mất
+gì — nội dung nguyên vẹn — nhưng nhãn `Lane:` của hai lượt sửa đó nay chỉ sai người. Cách tránh:
+`git add <đường dẫn của mình>`, đừng `-A`.
