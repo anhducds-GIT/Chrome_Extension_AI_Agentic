@@ -1796,3 +1796,28 @@ thiết kế của AI và cả hai đụng luật khoá — thứ mục 2 bắt 
 luật của chính mình.
 
 **Việc của Đức:** đọc ba vế của ADR-0023, chốt lấy/bỏ vế nào. Đó là thứ mở khoá cho `N-36`.
+
+## 2026-09-08 · `claude-ext-cum5` — ĐỢT 2 (tiếp): sổ nợ 12 → 6, và ba mục CHẶN LẠI
+
+**Làm gì:** đóng thêm `N-44` và `N-41`. Cả ngày: **8 mục đóng**, sổ **12 → 6 mở** / trần 15.
+
+- `N-44` — sổ nợ gốc repo lên bản đồ việc. Trước: 8 mục mở ở gốc **không hiện ở mục nào**.
+  Dùng lại `backlog-check.mjs` chứ không viết bộ đọc thứ hai — hai bộ đã ra **11 và 12** trên
+  cùng một file. Ghim 24 → 27.
+- `N-41` — `claim.mjs --khai-vung`. Trước: mở một vùng mới chỉ làm được bằng **sửa tay
+  `claims.json` rồi `--restamp`**, một đường hợp lệ trông giống hệt một vụ cướp khoá.
+  **Đột biến kiểm 4/4 ĐỎ**, nền xanh trước/sau, neo khớp 4/4.
+
+**Ba mục tôi CHẶN LẠI, kèm điều kiện mở — đừng làm hộ khi chưa đủ:**
+
+| Mã | Chặn ở đâu |
+|---|---|
+| `N-29` | Bước ⑴ đòi đặt dấu `@Đức` vào **hai gói**: một **đóng băng** (chỉ đọc), một **lane khác đang giữ**. Cả hai cửa đóng, không phải một |
+| `N-36` | Hình dạng đề xuất gộp ba gói đóng băng thành `_frozen`, mà **hai trong ba đang có lane giữ**. Gộp là lấy khoá khỏi tay họ |
+| `N-05` + `N-40` | Cụm ① — sửa đúng cơ chế nhiều lane đang dùng. Lúc ghi dòng này có **3 lane khác** đang chạy. Làm lúc chỉ còn một lane |
+
+**Số cho lượt dọn kho chữ, đo lúc đóng phiên** (`git ls-files` + đếm dòng):
+`docs/` **26.104 dòng / 110 file**, trần khai là 8.000. Trong đó ADR **2.424 dòng** (bất biến,
+không cắt được) · `docs/studies/` **15.378 dòng / 31 file**, và **31/31 khai `status: active`** —
+tức chưa hồ sơ nào từng được khai là xong. Riêng 14 file `EXP-*` (~8.300 dòng, cùng ngày 02/09)
+đã được gộp vào `PHASE-1-SYNTHESIS-CAPABILITY-MAP-V0.md`. **Cắt thật là XOÁ FILE, nên chờ Đức.**
