@@ -649,3 +649,34 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
   sau khi hoàn nguyên, và có một phép ghim dựng ca ghi-hỏng rồi kiểm bộ đo có hét không.
 
 - **ĐÓNG N-33** · 2026-09-08 · lane `claude-ext-n33` · Chữa ở **gốc**, không chữa ở triệu chứng. Điều kiện đóng cho hai đường (đọc một lần rồi dùng lại · thử lại có giới hạn); đường thứ ba **rẻ hơn cả hai và đúng hơn**: `fs.writeFileSync` **không nguyên tử** — nó cắt file về 0 byte rồi ghi lại, nên có một khe vài chục micro-giây mà người đọc thấy file rỗng. Bảng quyền bị ghi **63 lượt một ngày** (đo 02/09), nên khe đó gặp được thật. Nay mọi lượt ghi đi qua `ghiBangNguyenTu`: ghi ra file tạm **cùng thư mục** rồi `rename` — cùng thư mục là cùng phân vùng, và `rename` cùng phân vùng là nguyên tử, nên người đọc thấy **hoặc bản cũ hoặc bản mới**, không bao giờ thấy nửa chừng. Kèm một lớp đọc thử lại (3 lượt, nghỉ 15 ms) làm dây bảo hiểm cho bản ghi của công cụ khác và của lượt sửa tay. **Thử lại KHÔNG nới lỏng gì**: một bảng hỏng thật thì hỏng ổn định, nên ba lượt ra cùng một lỗi và lỗi ấy vẫn được ném — có phép ghim riêng cho vế đó, và một đột biến (`M9`) dựng đúng ca *"thử lại nuốt cả một bảng hỏng thật"* đã bị giết. Ghim: `claim-smoke` 25 → 28. **Đột biến kiểm 9/9 ĐỎ**, neo khớp 9/9. **Chỗ CHƯA chữa:** triệu chứng thứ ba của mục này (`git show HEAD:… does not exist`) là git chạy đồng thời trên một cây làm việc, gốc khác hẳn — nó không nằm trong lượt này.
+
+## N-48 · Khoá mức file bị cổng kéo ngược về khoá vùng ở lượt đẩy
+
+- **nhóm:** song-song
+- **mở:** 2026-09-08 · lane `claude-ext-n33`
+- **vùng:** `_code`
+- **gặp thật ngay lượt đầu dùng cơ chế mới (08/09):** làm cả phiên bằng khoá file, trả hết
+  đúng luật, rồi cổng đóng phiên ĐỎ — *"Vùng gốc repo bị sửa nhưng chưa ai đứng tên: `_code`"*.
+  Phải nhận lại khoá vùng chỉ để đẩy, tức **đi ngược đúng thứ ADR-0025 vừa bỏ**.
+- **vì sao nó va nhau:** phép kiểm *Phạm vi trách nhiệm* hỏi *"vùng của commit CHƯA ĐẨY có ai
+  đứng tên không"*. Khoá vùng trả **sau khi đẩy**, nên nó khớp. Khoá file trả **ngay sau khi
+  ghi**, nên tới lúc cổng chạy thì không còn gì đứng tên — và đó là **đúng thiết kế**, không
+  phải lỗi của ai.
+- **chỗ đáng nghĩ, và là lý do KHÔNG vá vội:** nguồn gốc một commit hôm nay do **nhãn `Lane:`**
+  mang, không do khoá. Phép kiểm này đã biết điều đó một nửa — nó *trừ đi file chỉ bị chạm bởi
+  commit mang nhãn của lane KHÁC*. Cho nó trừ nốt commit mang nhãn của CHÍNH BẠN thì va chạm
+  biến mất, **nhưng lúc ấy nó chỉ còn bắt commit KHÔNG NHÃN** — mà phép kiểm *Nhãn lane trong
+  commit* đã bắt đúng cái đó rồi. Tức lối vá hiển nhiên nhất biến nó thành **phép kiểm thứ hai
+  cho cùng một điều**, và luật mục 3 giới hạn ⑦ nói thẳng: một luật vào thì một luật ra.
+- **ba đường, chưa chọn:** ⑴ trừ nốt nhãn của chính mình rồi **xoá** phép kiểm nếu nó thành
+  trùng · ⑵ cho khoá file được **giữ tới lúc đẩy** khi commit chưa đẩy còn chạm file đó (mất vế
+  "vài phút" của Đức) · ⑶ giữ nguyên và coi "nhận khoá vùng lúc đẩy" là một bước của quy trình
+  đẩy (rẻ, nhưng hai lane cùng muốn đẩy thì lại xếp hàng — đúng cái vừa gỡ).
+- **đây là sửa cơ chế đa phiên**, nên `MULTIFLOW.md` mục 5 bắt buộc đột biến kiểm, và nền của
+  repo thử phải XANH trước khi so.
+- **đóng khi:** đức: chốt một trong ba đường trên — hoặc lệnh: một phiên làm trọn vòng chỉ bằng
+  `--sua`/`--xong`, không nhận khoá vùng nào, mà cổng đóng phiên vẫn XANH và `safe-push` vẫn đi.
+
+- **ĐÓNG N-47** · 2026-09-08 · lane `claude-ext-n33` · **Tôi ghi mục này SAI, và cái sai đáng giữ lại hơn cái đúng.** Nó khẳng định hai bộ đo đột biến trong repo *"chưa có chốt này"*. Mở ra đọc thì ngược lại — chúng đã chống đúng cái tôi vừa vấp, và chống kỹ hơn: `ghiLi()` thử lại có lùi dần (30/80/200/500/1200 ms) **chỉ với lỗi chớp nhoáng** (`UNKNOWN` · `EBUSY` · `EPERM` · `EACCES`) và ném ngay với mọi lỗi khác · một **nhật ký** giữ nguyên byte gốc dạng base64 nên lượt sau `cuuLuotTruoc()` vớt lại được cả khi tiến trình bị **chém ngang** (`finally` không chạy) · một **khoá file** để hai bộ đo không giẫm nhau · và một **vế nền** bắt phép ghim phải xanh trước khi đo. Cả sáu đường ghi đều đi qua `ghiLi`, kể cả đường khôi phục. **Cái hỏng là bộ đo NHÁP của tôi, dựng ngoài repo cho nhanh** — nó có `finally` mà không kiểm lượt ghi hoàn nguyên có tới nơi không. Bài học không phải *"đi vá bộ đo"*, mà là: **repo đã có bộ đo tử tế, đừng dựng bộ nháp**. Kiểm lại: `grep -n "ghiLi(" workers/hnx-fetch/v0.1.0/scripts/mutation-runner.mjs` ra 6 chỗ. Ba bộ đo còn lại nằm trong `workers/duc-auto-chatgpt/v0.1.0/evidence-workspace-seats-20260903/` — **thư mục bằng chứng, mục 4 cấm sửa**, và không đụng tới.
+
+- **ĐỔI CÁCH LÀM** · 2026-09-08 · lane `claude-ext-n33` · Từ nay cần đột biến kiểm thì **dùng `mutation-runner.mjs` của gói**, đừng dựng bộ nháp trong thư mục tạm. Lý do đo được hôm nay: bộ nháp thiếu ba chốt mà bộ thật đã có, và một trong ba chốt vắng mặt đã **để lại một đột biến trong cây làm việc** — nếu lượt kế là commit thì nó vào thẳng HEAD. Cố ý **không** thêm luật vào `AGENTS.md` cho việc này: mục 3 giới hạn ⑦ bắt một luật vào thì một luật ra, và một dòng ở đây rẻ hơn một dòng ở hiến pháp.
