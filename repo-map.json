@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-08",
-  "generated_commit": "8f41ef5e",
+  "generated_commit": "0eb6436d",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -119,13 +119,13 @@
       "lifecycle": "building",
       "status_md": "workers/duc-scouter/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "Bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào.",
-      "human_action": "Nạp lại extension trong Chrome — manifest đổi (đổi sang bảng bên, thêm quyền hẹn giờ) nên bản đang chạy không tự cập nhật. Bấm icon nay mở bảng bên ở cạnh phải, không còn popup. Muốn Scouter bấm thì bật Chế độ phát triển trong bảng đó.",
+      "next_step": "Trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào.",
+      "human_action": "Nạp lại extension trong Chrome — khối phanh vừa được vá 08/09 (mục S-15), bản đang chạy KHÔNG tự cập nhật. Rồi chọn trang thử thứ hai: ROADMAP.md mục ① có ba ứng viên, tôi khuyên HOSE hsx.vn.",
       "priority_rank": 4,
       "superseded_by": null,
       "last_verified": null,
       "last_verified_commit": null,
-      "open_item": "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Việc còn lại lớn nhất: cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
+      "open_item": "Ba lệnh bấm và gõ nay đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Khối phanh vừa được vá 08/09 theo chốt của Đức: hai lỗi chỉ nổ khi nhiều lượt chồng nhau — phanh khẩn bị bật lại, và trần 200 bị vượt — nay đã đóng, có phép ghim tái hiện được và đột biến giết được. Hai việc lớn còn lại: chọn trang thử THỨ HAI, và cả VÒNG tự cải tiến chưa ai chạy trọn một lần."
     },
     {
       "id": "hnx-fetch",
@@ -134,12 +134,12 @@
       "status_md": "workers/hnx-fetch/v0.1.0/STATUS.md",
       "owner": "claude-scouter-s06",
       "next_step": "Chạy lại lượt lấy dữ liệu cuối ngày 08/09 — HNX chưa công bố lúc chiều, cả hai đường cùng xác nhận. Rồi mỗi ngày một lượt.",
-      "human_action": "Hai việc nhỏ: bấm thử Ctrl+Shift+H lúc công tắc đang BẬT xem bảng bên có đổi thành ĐANG TẮT không (phím tắt phanh khẩn chưa ai thử). Và tạo một tệp ghép cặp riêng cho HNX Fetch, cổng riêng — dùng chung với Scouter thì mỗi lệnh phải mang thêm một chuỗi dài.",
+      "human_action": "Một việc nhỏ còn lại: tạo một tệp ghép cặp riêng cho HNX Fetch, cổng riêng — dùng chung với Scouter thì mỗi lệnh phải mang thêm một chuỗi dài. Phím tắt phanh khẩn Ctrl+Shift+H đã bấm thử 08/09 và ĂN THẬT.",
       "priority_rank": 1,
       "superseded_by": null,
       "last_verified": "2026-09-08",
       "last_verified_commit": "7cb9f766e2c2b1aa659fbe4911564fd8d0e1b1ea",
-      "open_item": "Đã chạy thật trọn vòng qua chính extension trong Chrome: lấy được trang thật, cái phanh trừ đúng, một lượt lấy dữ liệu đầy đủ không lỗi. Việc còn lại đều là việc nhỏ cần tay Đức."
+      "open_item": "Đã chạy thật trọn vòng qua chính extension trong Chrome: lấy được trang thật, cái phanh trừ đúng, một lượt lấy dữ liệu đầy đủ không lỗi. Phím tắt phanh khẩn cũng đã bấm thử tay và ăn thật. Việc còn lại: chạy mỗi ngày một lượt, và một tệp ghép cặp riêng."
     }
   ],
   "active_work": [
@@ -174,7 +174,7 @@
     {
       "id": "workers/duc-scouter/v0.1.0",
       "unit": "workers/duc-scouter/v0.1.0",
-      "title": "Bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào.",
+      "title": "Trang thử THỨ HAI — mục ① của ROADMAP.md nay có bản đề xuất ba ứng viên, Đức chọn một. Bước đầu là MỘT PHÉP ĐO bằng diagnostics.dom_probe, không phải viết mã: xem dữ liệu tới từ một lượt gọi mạng hay chỉ hiện ra sau một cú bấm. Sau đó mới tới bước 2 của ROADMAP.md — đóng vòng tự cải tiến MỘT lần trên một trang tự dựng: Scouter dò trang, AI viết adapter xuống đĩa, gọi scout.reload, adapter chạy. Từng mảnh đã có và đã đo; cả vòng thì chưa ai chạy lần nào.",
       "rank": 4,
       "claim": null
     }
