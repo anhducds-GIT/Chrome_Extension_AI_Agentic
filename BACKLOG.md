@@ -516,3 +516,29 @@ một phép ghim không lượt chạy nào làm xanh nổi.
 
 **đóng khi:** hoặc gói đó được mở băng vì một lý do khác và byte này được gỡ **trong chính lượt
 mở**, hoặc Đức chốt rằng ba gói đóng băng không cần đọc diff nữa và mục này rời sổ.
+
+## N-43 · Repo này chưa có bộ chạy suite song song + dấu xác nhận, nên mỗi vòng vẫn tốn gấp ~4
+
+- **nhóm:** cong
+- **đóng khi:** lệnh: `node scripts/chay-test.mjs` chạy được và ghi `.ark-suite-stamp.json`, VÀ `node tests/dau-suite-smoke.mjs` xanh, VÀ cổng đóng phiên in `suite gốc repo: DÙNG LẠI DẤU` khi chạy ngay sau nó. Khoá cần: `_code` + `_root`.
+- **mở:** 2026-09-08 · lane `claude-cua-kiem`
+- **vùng:** `_code` (+ `_root` cho cấu hình)
+- **vì sao:** Đo 08/09 ở repo này: chuỗi `npm test` **241,7s / 16 bước** (một bước chiếm 30%),
+  và cổng đóng phiên **chạy lại toàn bộ chuỗi đó** — nên một vòng bình thường tốn khoảng
+  **242 + 242 + 37 ≈ 8,5 phút**. Bộ khung đã vá xong và đo được **1.095s → 278s (nhanh 75%)**;
+  repo này chưa nhận.
+- **cách làm, đã chạy thật ở bộ khung bản 1.3.65 — chép sang, đừng nghĩ lại:**
+  1. Chép `scripts/chay-test.mjs` và `tests/dau-suite-smoke.mjs` từ `Ark_Repo_Harness`.
+  2. `package.json`: `test:tuan-tu` = chuỗi cũ; `test` = `node scripts/chay-test.mjs`.
+  3. `.repo-structure.json`: thêm khối `test.serial` — khai suite nào đọc git của **cây làm việc
+     chính**. Khai sót không nguy hiểm: bộ chạy tự chạy lại một mình mỗi suite đỏ.
+  4. `.gitignore`: thêm `.ark-suite-stamp.json`.
+  5. `session-check.mjs`: nhập `{ bamLenh, danhSachSuite, dauCay, docDau, xetDau }` và bọc nhánh
+     `runRootSuite()` — xem đúng khối ấy trong bộ khung.
+  6. **Cái bẫy đã cắn 4 lần:** cổng nhận thêm một phụ thuộc, nên **mọi kho thử chép danh sách
+     script cố định phải chép thêm `chay-test.mjs`**. Ở repo này có **13 danh sách chép** —
+     và **hai danh sách KHẲNG ĐỊNH** trông y hệt mà **không được đụng**
+     (`repo-structure-smoke:313`, `dau-vet-vung-smoke:50`). Soát bằng máy, đừng bằng mắt.
+- **vì sao lane mở mục này không tự làm nốt:** `_code` và `_docs` do lane `claude-scouter-s06`
+  giữ và đang làm dở (nhận 7 phút trước lúc ghi mục này). Luật mục 1: chỉ được đọc.
+
