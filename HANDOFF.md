@@ -1767,3 +1767,32 @@ Kèm một chuyện đáng biết cho phiên sau: `claude-cua-kiem` chạy `git 
 của tôi** ở `workers/duc-scouter` + `workers/hnx-fetch` vào commit `c7580447` mang nhãn của họ.
 Nội dung nguyên vẹn, nhưng nhãn `Lane:` của hai lượt sửa đó chỉ sai người. Cách tránh:
 `git add <đường dẫn của mình>`, đừng `-A`.
+
+## 2026-09-08 · `claude-ext-cum5` — ĐỢT 2: bốn mục nợ, gom theo bệnh chứ không theo mã
+
+**Làm gì:** đóng `N-42` · `N-39` · `N-11` · `N-37`. Sổ nợ **12 → 8 mục mở** / trần 15.
+
+**Kết quả bằng số.**
+
+- `N-42` — `backlog-check.mjs` nay ĐỎ khi thấy dòng trông như mục nợ mà nó không đếm được.
+  Chạy lần đầu ra ngay **1 mục vô hình thật** (dòng 502, nằm trong sổ từ 08/09, không lớp nào
+  kêu). Đã hoá thành `N-45`. Ghim 15 → 20.
+- `N-39` — bản mẫu ADR chào đời ở `Proposed`, kèm lý do. Ghim 29 → 30.
+- `N-11` — hai bảng **không gộp** (ràng buộc ngược nhau), mà mỗi bản tự khai nó là bản nào, ở
+  dòng đầu (máy) và dải mốc (mắt Đức). Ghim 14 → 17.
+- `N-37` — bản nháp ADR 07/09 **không mất**, vào repo tại `docs/adr/0023-khong-ai-phai-cho-ai.md`.
+
+**Ba chỗ tôi CỐ Ý không làm, và lý do — đọc trước khi ai đó làm hộ:**
+
+⑴ **`N-36` (gộp bảy khoá còn ba): chưa đủ điều kiện.** Điều kiện ⑴ của chính mục đó đòi hai
+khoá trống chủ, mà hình dạng đề xuất còn gộp ba gói đóng băng thành `_frozen` — hai trong ba
+gói ấy **đang có lane giữ**. Gộp là lấy khoá khỏi tay họ.
+
+⑵ **Không dựng máy đếm ADR nằm lâu ở `Proposed`**, dù `N-39` đề xuất: đo được **đúng 1**. Một
+cỗ máy canh con số bằng 1 là thuế thu trên mọi phiên (giới hạn ⑦). Bản mẫu ghi câu lệnh đếm tay.
+
+⑶ **ADR-0023 vào ở `Proposed`, không `Accepted`.** Đức nói vế ⑶ nguyên văn, nhưng vế ⑴ và ⑵ là
+thiết kế của AI và cả hai đụng luật khoá — thứ mục 2 bắt hỏi Đức. Tự đóng dấu là AI tự duyệt
+luật của chính mình.
+
+**Việc của Đức:** đọc ba vế của ADR-0023, chốt lấy/bỏ vế nào. Đó là thứ mở khoá cho `N-36`.
