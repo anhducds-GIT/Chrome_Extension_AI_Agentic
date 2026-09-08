@@ -141,24 +141,41 @@
   // nếu ngày nào có một đường đặt `stopRequested` mà quên rung chuông thì vòng chờ vẫn thoát
   // được, chỉ chậm.
   //
-  // MỘT promise dùng chung, không phải một promise mỗi lượt chờ: `Promise.race` để promise
-  // thua ở lại treo, nên cấp một cái mới mỗi 250ms là rò rỉ 240 resolver mỗi phút tạm dừng.
-  // Ở đây nhiều nhất có MỘT resolver đang treo; rung chuông là giải nó rồi bỏ, lượt sau cấp mới.
-  let controlWake = null;
-  function controlWakePromise() {
-    if (!controlWake) {
-      let settle;
-      const promise = new Promise((resolve) => { settle = resolve; });
-      controlWake = { promise, settle };
-    }
-    return controlWake.promise;
-  }
+  // MỘT resolver mỗi lượt chờ, và DỌN trong `finally` — không phải một promise dùng chung.
+  //
+  // Bản đầu của lượt vá này dùng một promise chia sẻ và tự khai là "nhiều nhất một resolver
+  // treo". **Sai, và audit độc lập 08/09 bác đúng chỗ đó:** `Promise.race([bell, sleep])`
+  // đính một reaction vào `bell` MỖI VÒNG LẶP, và việc dùng chung một promise **không** dọn
+  // các reaction ấy — chúng tích luỹ trên đúng cái promise đó. Đo lại bằng tay: đính 10.000
+  // reaction vào một bell, reo một lần thì **cả 10.000 đều chạy**. Ở nhịp 250ms đó là ~240
+  // reaction mỗi phút tạm dừng, và mỗi cái giữ một closure.
+  //
+  // Nên chuông nay là một TẬP resolver: mỗi lượt chờ cấp promise riêng, ghi tên vào tập, và
+  // **xoá tên trong `finally`** dù thắng bằng chuông hay bằng lưới đỡ. Promise của lượt đó
+  // thành rác ngay sau vòng lặp, mang theo reaction của nó. Số tên trong tập bị chặn bởi số
+  // lượt chờ ĐỒNG THỜI (thực tế: 1), không phải bởi độ dài quãng tạm dừng.
+  //
+  // Reo lúc không ai chờ là vô hại, và cố ý: tập rỗng thì không có gì để giải, và KHÔNG có
+  // cái chuông nào "còn reo" nằm lại để giải oan một lượt chờ tới sau.
+  const controlWaiters = new Set();
+
   function wakeControlWaiters() {
-    if (!controlWake) return;
-    const pending = controlWake;
-    controlWake = null;
-    pending.settle("wake");
+    if (!controlWaiters.size) return;
+    for (const settle of [...controlWaiters]) settle("wake");
+    controlWaiters.clear();
   }
+
+  async function raceControlWake(ms) {
+    let settle;
+    const bell = new Promise((resolve) => { settle = resolve; });
+    controlWaiters.add(settle);
+    try {
+      await Promise.race([bell, sleep(ms)]);
+    } finally {
+      controlWaiters.delete(settle);
+    }
+  }
+
   const BRIDGE_DEV_MODE_STORAGE_KEY = "dac.bridge.dev_mode.v1";
   const BRIDGE_LAST_TRIAL_STORAGE_KEY = "dac.bridge.last_trial_at.v1";
   const BRIDGE_TRIAL_MIN_INTERVAL_MS = 5 * 60 * 1000;
@@ -5685,6 +5702,20 @@
       // cooldown là một thay đổi HÀNH VI trên luật an toàn (AGENTS.md gốc mục 2) — phải hỏi
       // Đức, không gộp vào một bản vá về độ chính xác. Hôm nay Stop vẫn chờ hết cooldown,
       // đúng như trước lượt vá này.
+      // ĐÁNH ĐỔI, audit độc lập 08/09 nêu và tôi nhận có chủ đích — đọc trước khi đổi:
+      // chờ theo MỐC thì một cú NHẢY ĐỒNG HỒ về phía trước có thể kết thúc cooldown sớm,
+      // còn `sleep()` theo THỜI LƯỢNG thì không. Ba lý do vẫn chọn mốc:
+      //   ⑴ Khoảng nghỉ giữa hai job — thứ bảo vệ rate-limit THẬT, quan trọng hơn cooldown
+      //      thử lại — đã chạy trên đúng module này từ 28/08. Để hai đồng hồ cạnh nhau dùng
+      //      hai cơ chế khác nhau là để lại một cái bẫy đắt hơn cái nó tránh.
+      //   ⑵ Ca nhảy đồng hồ thường gặp nhất trên máy Đức là máy NGỦ rồi thức. Lúc đó thời
+      //      gian thật ĐÃ trôi qua, nên mốc trả lời ĐÚNG và `sleep()` mới là cái trả lời sai
+      //      (nó sẽ chờ thêm trọn cooldown sau khi máy đã nghỉ tám tiếng).
+      //   ⑶ Ca còn lại là hiệu chỉnh NTP, và sai số bị chặn bởi chính độ hiệu chỉnh — thường
+      //      vài chục millisecond, không phải vài giây.
+      // Nếu Đức muốn ưu tiên "không bao giờ ngắn hơn" kể cả khi đổi đồng hồ, lối ra là một
+      // dòng: đọc thêm một mốc đơn điệu (`performance.now()`) cạnh mốc treo tường và lấy
+      // cái CHẬM hơn. Chưa làm, vì nó chạm luật thử lại và cần Đức chốt.
       const retryCooldownSec = window.DacRunnerCore.retryCooldown(item.settings, item.retry_count);
       state.retryResumeAt = Date.now() + retryCooldownSec * 1000; renderRuntime();
       await waitRetryCooldown(retryCooldownSec);
@@ -6185,7 +6216,7 @@
     audit("RUN_PAUSED", null, {});
     renderQueue(); controls();
     // Chuông trước, đồng hồ sau: `sleep(250)` chỉ còn là lưới đỡ (xem `wakeControlWaiters`).
-    while (state.pauseRequested && !state.stopRequested) await Promise.race([controlWakePromise(), sleep(250)]);
+    while (state.pauseRequested && !state.stopRequested) await raceControlWake(250);
     state.paused = false;
     if (!state.stopRequested) {
       audit("RUN_RESUMED", null, {});

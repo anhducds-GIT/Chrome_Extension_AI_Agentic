@@ -6,18 +6,24 @@
  * nên Đức bấm "Tiếp tục" xong có thể chờ tới khoảng một phút mới thấy gì xảy ra. Không mất
  * dữ liệu, nhưng nút trông như chết.
  *
- * Phép đo ở đây cố ý brutal, và đó là toàn bộ giá trị của nó: **`sleep` trong sân khấu này
+ * Phép đo ở mép ①–③ cố ý brutal, và đó là toàn bộ giá trị của nó: **`sleep` trong sân khấu
  * KHÔNG BAO GIỜ giải quyết**. Nên mọi đường thoát đi qua hẹn giờ đều treo vĩnh viễn, và một
- * lượt chờ thoát được chỉ có thể thoát bằng chuông. Bản mã trước lượt vá treo mãi ở đây.
- * Một phép kiểm dùng `sleep` giả giải-ngay-lập-tức sẽ XANH với cả bản cũ lẫn bản mới, tức là
- * không ghim gì cả — đúng cái bẫy `AI-OPERATOR-GUIDE.md` lỗi #2 dặn: phép kiểm khẳng định
- * hành vi sai thì lỗi sống dai.
+ * lượt chờ thoát được chỉ có thể thoát bằng chuông. Bản mã trước lượt vá treo mãi ở đây. Một
+ * phép kiểm dùng `sleep` giả giải-ngay-lập-tức sẽ XANH với cả bản cũ lẫn bản mới, tức là
+ * không ghim gì cả.
  *
- * Bốn mép:
+ * Năm mép:
  *   ⑴ chuông giải được vòng chờ khi hẹn giờ đã chết  (chính con bug)
  *   ⑵ KHÔNG rung chuông thì vòng chờ phải VẪN treo   (chống "thoát ngay vô điều kiện" cũng xanh ⑴)
  *   ⑶ Stop thoát được mà KHÔNG khai là đã tiếp tục   (stop ≠ resume, hai câu audit khác nhau)
- *   ⑷ nhiều nhất MỘT resolver treo một lúc            (chống rò rỉ 240 resolver mỗi phút)
+ *   ⑷ số resolver sống bị CHẶN, và về 0 sau khi chờ xong
+ *   ⑸ reo lúc không ai chờ không để lại "chuông còn reo" giải oan lượt chờ tới sau
+ *
+ * Mép ⑷ được viết lại sau một vòng audit độc lập 08/09. Bản đầu chỉ so **danh tính** promise
+ * ("mọi lượt hỏi nhận cùng một promise") và **đã xanh trong khi vẫn rò rỉ**: dùng chung một
+ * promise không dọn các reaction mà `Promise.race` đính vào nó mỗi vòng lặp — đo lại bằng tay
+ * thì 10.000 reaction trên một bell, reo một lần là cả 10.000 đều chạy. Nên mép này nay đo
+ * **số resolver sống**, thứ mà bản rò rỉ không chặn được.
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -25,8 +31,8 @@ import vm from "node:vm";
 
 const sidepanel = fs.readFileSync(new URL("../sidepanel.js", import.meta.url), "utf8");
 
-/** Cắt một khối theo mốc đầu + mốc cuối, và ĐỎ nếu mốc không khớp (0 lần khớp là mỏ neo
-    hỏng, không phải "không có gì phải kiểm" — bài học mutation-harness-silent-skip). */
+/** Cắt một khối theo mốc đầu + mốc cuối, ĐỎ nếu mốc không khớp (0 lần khớp là mỏ neo hỏng,
+    không phải "không có gì phải kiểm"). */
 function cut(from, to, ten) {
   const a = sidepanel.indexOf(from);
   assert.ok(a >= 0, `MỎ NEO KHÔNG KHỚP: không thấy mốc đầu của ${ten}`);
@@ -35,27 +41,25 @@ function cut(from, to, ten) {
   return sidepanel.slice(a, b);
 }
 
-const wakeSource = cut("  let controlWake = null;", "  const BRIDGE_DEV_MODE_STORAGE_KEY", "cơ chế chuông");
+const wakeSource = cut("  const controlWaiters = new Set();", "  const BRIDGE_DEV_MODE_STORAGE_KEY", "cơ chế chuông");
 assert.match(wakeSource, /function wakeControlWaiters\(\)/, "khối cắt ra phải chứa wakeControlWaiters");
-assert.match(wakeSource, /function controlWakePromise\(\)/, "khối cắt ra phải chứa controlWakePromise");
+assert.match(wakeSource, /function raceControlWake\(/, "khối cắt ra phải chứa raceControlWake");
+assert.match(wakeSource, /finally \{\s*controlWaiters\.delete\(settle\);/, "phải DỌN resolver trong finally — thắng bằng chuông hay bằng lưới đỡ đều phải dọn");
 
 const waitSource = cut("  async function waitWhilePaused() {", "\n  function showScreen(", "waitWhilePaused");
-assert.match(waitSource, /controlWakePromise\(\)/, "waitWhilePaused phải đua với chuông");
+assert.match(waitSource, /raceControlWake\(250\)/, "vòng chờ phải đua chuông với lưới đỡ 250ms");
 
-/** Dựng sân khấu: `sleep` KHÔNG BAO GIỜ giải quyết. */
-function stage({ pauseRequested = true, stopRequested = false } = {}) {
+/** Dựng sân khấu. `sleep` do người gọi quyết định — mép ①–③ cho nó chết hẳn. */
+function stage({ pauseRequested = true, stopRequested = false, sleep } = {}) {
   const audits = [];
   const state = { pauseRequested, stopRequested, paused: false };
   const ctx = {
-    console, Promise, Date,
+    console, Promise, Date, Set, Math,
     state,
-    sleep: () => new Promise(() => {}),   // hẹn giờ chết hẳn — đúng cảnh panel bị che
-    setStatus: () => {},
-    progress: () => {},
-    log: () => {},
+    sleep: sleep || (() => new Promise(() => {})),   // hẹn giờ chết — đúng cảnh panel bị che
+    setStatus: () => {}, progress: () => {}, log: () => {},
     audit: (name) => audits.push(name),
-    renderQueue: () => {},
-    controls: () => {}
+    renderQueue: () => {}, controls: () => {}
   };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
@@ -63,19 +67,18 @@ function stage({ pauseRequested = true, stopRequested = false } = {}) {
     `${wakeSource}\n${waitSource}\n` +
     "globalThis.__wait = waitWhilePaused;" +
     "globalThis.__wake = wakeControlWaiters;" +
-    "globalThis.__promise = controlWakePromise;",
+    "globalThis.__race = raceControlWake;" +
+    "globalThis.__waiters = controlWaiters;",
     ctx
   );
-  return { state, audits, wait: ctx.__wait, wake: ctx.__wake, promiseOf: ctx.__promise };
+  return { state, audits, wait: ctx.__wait, wake: ctx.__wake, race: ctx.__race, waiters: ctx.__waiters };
 }
 
 /** Cho vòng lặp sự kiện thật chạy một nhịp, rồi hỏi promise đã settle chưa. */
 const daXong = async (p) => {
   const moc = Symbol("chua");
   await new Promise((r) => setTimeout(r, 20));
-  return (await Promise.race([p.then(() => "xong"), Promise.resolve(moc)])) !== moc
-    ? true
-    : (await Promise.race([p.then(() => "xong"), new Promise((r) => setTimeout(() => r(moc), 20))])) !== moc;
+  return (await Promise.race([p.then(() => "xong"), new Promise((r) => setTimeout(() => r(moc), 20))])) !== moc;
 };
 
 /* ⑴ Chính con bug: hẹn giờ chết, chuông phải giải được vòng chờ. */
@@ -85,7 +88,7 @@ const daXong = async (p) => {
   assert.equal(await daXong(p), false, "đang tạm dừng thì vòng chờ phải còn treo");
 
   s.state.pauseRequested = false;   // Đức bấm "Tiếp tục"
-  s.wake();                          // chuông reo cùng cú bấm
+  s.wake();
   assert.equal(
     await daXong(p),
     true,
@@ -95,10 +98,10 @@ const daXong = async (p) => {
   await p;
   assert.equal(s.state.paused, false, "thoát rồi thì cờ paused phải hạ");
   assert.deepEqual(s.audits, ["RUN_PAUSED", "RUN_RESUMED"], "phải ghi đúng hai mốc: tạm dừng rồi tiếp tục");
+  assert.equal(s.waiters.size, 0, "chờ xong thì không được để lại resolver nào");
 }
 
-/* ⑵ Mép ngược, và là mép làm ⑴ có nghĩa: KHÔNG rung chuông thì phải VẪN treo.
-   Thiếu mép này, một bản "return ngay vô điều kiện" cũng làm ⑴ xanh. */
+/* ⑵ Mép ngược, và là mép làm ⑴ có nghĩa: KHÔNG rung chuông thì phải VẪN treo. */
 {
   const s = stage();
   const p = s.wait();
@@ -114,8 +117,7 @@ const daXong = async (p) => {
   await p;
 }
 
-/* ⑶ Stop cũng phải thoát được — nhưng KHÔNG được khai là đã tiếp tục.
-   `pauseRequested` ở đây vẫn TRUE: người bấm Stop chứ không bấm Tiếp tục. */
+/* ⑶ Stop cũng phải thoát được — nhưng KHÔNG được khai là đã tiếp tục. */
 {
   const s = stage();
   const p = s.wait();
@@ -126,18 +128,46 @@ const daXong = async (p) => {
   assert.deepEqual(s.audits, ["RUN_PAUSED"], "Stop KHÔNG phải Resume — không được ghi RUN_RESUMED");
 }
 
-/* ⑷ Không rò rỉ: `Promise.race` để promise thua ở lại treo, nên nếu mỗi lượt chờ cấp một
-   promise mới thì một phút tạm dừng bỏ lại ~240 resolver. Một promise dùng chung, giải rồi
-   mới cấp cái mới. */
+/* ⑷ Số resolver sống phải bị CHẶN bởi số lượt chờ đồng thời, không bởi độ dài quãng tạm
+   dừng. Ở đây `sleep` giải NGAY, nên vòng lặp quay rất nhiều lượt — đúng hình dạng một
+   quãng tạm dừng dài. Bản dùng-chung-một-promise không chặn được con số này. */
 {
-  const s = stage();
-  const a = s.promiseOf();
-  assert.equal(s.promiseOf(), a, "chưa reo thì mọi lượt hỏi phải nhận CÙNG MỘT promise");
-  assert.equal(s.promiseOf(), a);
-  s.wake();
-  const b = s.promiseOf();
-  assert.notEqual(b, a, "reo rồi thì lượt sau phải nhận promise MỚI, không phải cái đã settle");
-  assert.equal(s.promiseOf(), b);
+  let ticks = 0;
+  let maxSong = 0;
+  const s = stage({
+    sleep: () => {
+      ticks += 1;
+      maxSong = Math.max(maxSong, s.waiters.size);
+      if (ticks >= 400) s.state.pauseRequested = false;   // "Tiếp tục" sau 400 nhịp
+      return Promise.resolve();
+    }
+  });
+  await s.wait();
+  assert.ok(ticks >= 400, `vòng lặp phải quay đủ nhiều lượt để đo được (đo ${ticks})`);
+  assert.ok(
+    maxSong <= 1,
+    `số resolver sống phải luôn ≤ 1 dù vòng lặp quay ${ticks} lượt — đo được ${maxSong}. ` +
+    "Lớn hơn 1 nghĩa là mỗi lượt chờ bỏ lại một resolver, tức ~240 cái mỗi phút tạm dừng"
+  );
+  assert.equal(s.waiters.size, 0, "chờ xong thì tập resolver phải rỗng");
 }
 
-console.log("B-28① Tiếp tục ăn ngay bằng chuông, không qua hẹn giờ (4 mép): PASS");
+/* ⑸ Reo lúc không ai chờ phải là no-op, KHÔNG để lại "chuông còn reo". Nếu nó để lại, một
+   lượt chờ tới sau sẽ được giải oan ngay lập tức — tức tạm dừng không giữ được gì cả. */
+{
+  const s = stage();
+  s.wake();                                   // reo vào chỗ trống
+  assert.equal(s.waiters.size, 0);
+  const p = s.wait();                          // rồi mới có người chờ
+  assert.equal(
+    await daXong(p),
+    false,
+    "một cú reo cũ không được giải oan lượt chờ tới sau — nếu có, tạm dừng không giữ được job nào"
+  );
+  s.state.pauseRequested = false;
+  s.wake();
+  assert.equal(await daXong(p), true);
+  await p;
+}
+
+console.log("B-28① Tiếp tục ăn ngay bằng chuông, không qua hẹn giờ (5 mép): PASS");

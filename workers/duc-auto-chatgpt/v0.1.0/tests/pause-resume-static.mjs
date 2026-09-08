@@ -30,9 +30,13 @@ assert.match(waitSegment, /while \(state\.pauseRequested && !state\.stopRequeste
 // Panel bị che thì Chrome hoãn hẹn giờ của tài liệu ẩn, và một `sleep(250)` đã hoãn KHÔNG
 // được xếp lại khi panel hiện ra: đo được là bấm "Tiếp tục" mất tới khoảng một phút mới ăn.
 // ⑴ Vòng chờ phải đua CHUÔNG với lưới đỡ, không chỉ ngủ.
-assert.match(waitSegment, /await Promise\.race\(\[controlWakePromise\(\), sleep\(250\)\]\)/, "vòng chờ tạm dừng phải thoát được bằng sự kiện, không chỉ bằng hẹn giờ mà Chrome hoãn được");
+assert.match(waitSegment, /await raceControlWake\(250\)/, "vòng chờ tạm dừng phải thoát được bằng sự kiện, không chỉ bằng hẹn giờ mà Chrome hoãn được");
 // ⑵ Lưới đỡ phải CÒN: chuông hỏng thì vòng chờ vẫn phải thoát được, chỉ chậm.
-assert.match(waitSegment, /sleep\(250\)/, "giữ lưới đỡ — một đường đặt stopRequested mà quên rung chuông vẫn phải thoát được");
+assert.match(sidepanel, /Promise\.race\(\[bell, sleep\(ms\)\]\)/, "giữ lưới đỡ — một đường đặt stopRequested mà quên rung chuông vẫn phải thoát được");
+// ⑵b Resolver phải được DỌN, và dọn trong `finally` để thắng bằng đường nào cũng dọn.
+// Bản đầu của B-28 dùng một promise chia sẻ và rò rỉ ~240 reaction mỗi phút tạm dừng —
+// audit độc lập 08/09 bác đúng chỗ đó, đo lại thấy 10.000 reaction đều chạy khi reo một lần.
+assert.match(sidepanel, /finally \{\s*controlWaiters\.delete\(settle\);/, "phải dọn resolver trong finally, nếu không mỗi lượt chờ bỏ lại một cái");
 // ⑶ Cả ba đường điều khiển phải rung chuông: bấm Tạm dừng/Tiếp tục, và HAI đường Stop
 //    (`stop()` của panel và `bridgeRunStop()` của Bridge). Thiếu một đường là một cú bấm
 //    lại phải chờ hẹn giờ, đúng con bug này.
