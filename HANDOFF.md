@@ -1886,3 +1886,34 @@ mua lại, và nó **chỉ là một lệnh, không phải một cổng** — c�
 đều có chủ, và repo đó **không khai `append_only_exempt`** nên không ghi nổi một dòng vào sổ nợ
 của nó. Bản giao việc để ở `_run-qua-dem-20260907/GIAO-BO-KHUNG--KHOA-MUC-FILE.md`, Đức dán.
 Đây đúng là bệnh mà việc này chữa: cần sửa **một file**, bị chặn vì người khác giữ **cả vùng**.
+
+## 2026-09-08 · `claude-ext-n29` → `n05` → `n33` — cụm ① và ③ đóng hết, sổ nợ **12 → 3**
+
+Bốn mục đóng trong một lượt, và **cả bốn đóng được là nhờ khoá mức file vừa cài**.
+
+| Mã | Chốt | Số |
+|---|---|---|
+| `N-29` | Việc chờ Đức nay một nguồn: dấu `@Đức` gắn vào **chính dòng `human_action`** | `--can-duc` ra **0** gói lệch · khối *"từ hồ sơ"* **4 → 1** |
+| `N-40` | `--soat` chặn file đã dàn ngoài quyền ghi, **thoát 3** (điều kiện chỉ đòi cảnh báo) | — |
+| `N-05` | Sổ **miễn khoá** nay bị soi bằng `appendOnlyAtEof` — sửa dòng cũ là ĐỎ | thử hai chiều: thêm cuối → 0 · sửa dòng cũ → 3 |
+| `N-33` | `writeFileSync` **không nguyên tử**; mọi lượt ghi bảng nay là ghi-tạm-rồi-`rename` | bảng bị ghi **63 lượt/ngày**, nên khe đó gặp thật |
+
+**Đột biến kiểm 9/9 ĐỎ**, neo khớp 9/9, nền xanh. Ghim `claim-smoke` **18 → 28**.
+
+**Hai chỗ tôi CỐ Ý không làm:**
+
+⑴ **Bước ⑶ của `N-29`** (*bỏ `human_action` khỏi đường nuôi bảng*) — `build-overview-smoke` có
+một phép ghim đặt đúng chỗ đó: *"nuốt nguồn hồ sơ là ĐỎ"*. Gỡ nguồn thứ hai là gỡ đúng lớp bảo
+vệ ấy (luật vàng 3). Đổi lại ta được thứ mạnh hơn: **một cổng** báo đỏ, thay cho **một dòng**
+trên bảng hy vọng có người nhìn thấy.
+
+⑵ **`duc-auto-gemini`** — lane `claude-gemini-crlf` giữ khoá. Và không cần: `N-29` đã đối chiếu
+và kết luận gói đó an toàn.
+
+**Một chỗ suýt hỏng, đáng ghi:** bộ đo đột biến **để lại một đột biến trong cây làm việc**. Một
+lượt ghi trả `UNKNOWN` (khoá file thoáng qua trên Windows) và lượt ghi trong `finally` **hỏng y
+hệt**. Suite đỏ sau đó vì một lý do không ai đoán ra. Nếu lượt kế là commit thì nó vào thẳng
+HEAD. **Hoàn nguyên phải được KIỂM, không chỉ được THỬ** — đã mở `N-47`.
+
+**Còn 3 mục, và cả ba KHÔNG phải việc AI làm tiếp được:** `N-36` (chờ Đức chốt ADR-0023) ·
+`N-45` (gói đã mở băng nhưng lane khác đang giữ khoá) · `N-47` (mở hôm nay).
