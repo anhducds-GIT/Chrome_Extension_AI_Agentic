@@ -35,7 +35,7 @@ lại** và nó **vẫn đóng**; **Scouter v1** ở bảng trên là **bản đ
 | Vận chuyển qua WebSocket `127.0.0.1` | `scouter-transport-loopback.mjs` | (bảng kiểm kê đếm dòng này **hai lần**) |
 | Định tuyến lệnh Bridge | `createDispatcher` | Live check ĐẠT 8/8 |
 | Bấm và gõ như tay người (`Input`) | `scouter-actions-core.mjs` | **Trang thật, ĐẠT 11/11** (phép đo ②, 07/09) |
-| Chế độ phát triển + trần chạy thử | công tắc popup + trần 50 | 12 con đột biến, live check |
+| Chế độ phát triển + trần chạy thử | công tắc **bảng bên** + trần 50 | 12 con đột biến · **phanh đã chặn thật 08/09 giữa lượt tải, dừng sạch** |
 | *(quan sát — 4 phép dò)* | `observer-probes.mjs` | Trang **giả** |
 
 **Còn 18 dòng.** Nhưng 18 dòng đó không cùng loại, và đây là chỗ dễ lạc nhất:
@@ -136,6 +136,79 @@ Sau bước 3, đo lại còn bao nhiêu mục và mục nào còn đáng làm. 
 | ~~Chính sách che dữ liệu~~ **ĐÃ GỠ 07/09** — Scouter được ghi ghi chép xuống đĩa | *xong* | [ADR-0016](../../../docs/adr/0016-scouter-duoc-ghi-ghi-chep-xuong-dia.md) |
 | ~~Nhóm B — 7 mục làm hay hoãn~~ **ĐÃ CHỐT 07/09**: làm 4 mục pilot cần, hoãn 3 mục của cỗ chạy job nhà cung cấp | *xong* | [ADR-0020](../../../docs/adr/0020-thang-phien-ban-scouter-va-ranh-gioi-seed-pilot.md) mục ⑸ |
 | Chạy trên trang thật (không phải trang tự dựng) | **Đức** | `AGENTS.md` gốc mục 2 |
+
+## 08/09 — ĐANG Ở ĐÂU, sau một ngày chạy thật
+
+> Phần này viết sau khi Scouter chạy trên trang thật cả ngày. Nó **thay** phần "Đang ở đâu"
+> phía trên ở chỗ nào hai bên nói khác nhau — phần trên viết lúc mọi thứ còn chạy trên trang giả.
+
+### Bốn thứ nay đã chứng minh trên TRANG THẬT
+
+| Việc | Bằng chứng |
+|---|---|
+| Bốn phép dò quan sát | `scout.page` · `scout.tree` · `scout.a11y` (2167 nút) · `scout.query` trên hnx.vn |
+| Lấy dữ liệu qua mạng | **216 PDF** + **368 hàng** dữ liệu, 46 ngày, 0 lỗi |
+| Đi sang trang khác | `scout.navigate` — cùng site 289 ms, khác site 261 ms, id cũ vẫn dùng được |
+| Cái phanh | Chặn thật giữa lượt tải PDF, **dừng sạch**: không tệp dở, không tệp cụt mang tên thật |
+
+### Sản phẩm thật đang chạy
+
+Hai đường, cùng đổ vào thư mục dữ liệu của Đức trên Drive:
+
+- **216 tệp PDF** báo cáo thống kê — 46 ngày liền mạch 01/07 → 07/09, không ngày nào thiếu
+- **1 tệp CSV SSOT**, 368 hàng — `HNX_PS_Ket_qua_giao_dich_SSOT.csv`
+
+Cập nhật hằng ngày là **một lệnh**, tự bỏ qua ngày đã có. Câu lệnh nằm ở cuối `HANDOFF.md`.
+
+---
+
+## Đi tiếp theo thứ tự nào — Đức chọn, tôi không tự bắt đầu
+
+Xếp theo **giá trị thật chia cho công sức**, không theo thứ tự tôi nghĩ ra chúng.
+
+### ① Trang thử THỨ HAI cho seed — việc đáng làm nhất
+
+**Vì sao đứng đầu:** seed mới chỉ thử trên **đúng một trang** (`TRIALS.md` liệt kê `hnx.vn`).
+Phép kiểm thuần khiết canh được *seed không nhắc tên trang nào*, nhưng nó **không** canh được
+*seed có thật sự dùng chung được không*. Một hàm sạch tên trang vẫn có thể chỉ đúng cho một
+**hình dạng** trang.
+
+Nên câu "năng lực chung" hiện là **lời khai chưa được đo**. Trang thứ hai là phép đo đó.
+
+**Chọn trang KHÁC KIỂU hnx.vn:** hnx.vn là trang tĩnh, form cũ, jQuery. Một trang **render bằng
+JS** sẽ ép seed lộ ra chỗ nó chỉ đúng với hnx.vn — mà hôm nay ta chưa biết chỗ đó ở đâu.
+
+### ② Đóng gói v1 — để người ngoài lấy về dùng được
+
+Nấc `v1` ở bảng thang phiên bản khai *"seed đủ dùng để người ngoài lấy về dùng được"*. Pilot
+hnx.vn đã kéo nó tới nơi. Còn thiếu: một đường cài đặt cho người chưa từng đọc repo này.
+
+Việc này **chỉ nên làm sau ①** — đóng gói một seed mới thử một trang là đóng gói một lời hứa.
+
+### ③ Ba mục nợ nhỏ, gộp một lượt
+
+| Mã | Việc | Vì sao chưa gấp |
+|---|---|---|
+| `S-12` | Ngày lễ bị gọi lại mỗi lượt chạy | **cố ý chưa vá** — đánh dấu bằng tệp rỗng là đổi một phiền toái nhỏ lấy một lỗi im lặng lớn, nếu HNX bổ sung dữ liệu sau. Cần Đức chốt |
+| `S-13` | Gọi sai tên method trả lỗi nội bộ | đã kiểm: **không** phá lượt khác đang bay. Xấu mặt, không hở |
+| `S-11` | Hai bridge cũ nhận token trần | hai gói đang **đóng băng**. Đức nghiêng chấp nhận rủi ro nhưng **chưa chốt thành câu** |
+
+### ④ KHÔNG làm bây giờ
+
+- **Tự chạy hằng ngày.** Luật gốc cấm tạo automation tự chạy khi chưa hỏi, và một bộ tải chạy
+  ngầm mỗi ngày là đúng thứ đó. Chạy tay một lệnh vẫn ổn cho tới khi Đức thấy phiền.
+- **Mở thêm quyền CDP.** `Page.navigate` vừa mở 08/09 và đó là lượt mở đầu tiên sau nhiều tuần.
+  Mở tiếp mà chưa có việc thật đòi là nới bề mặt tấn công cho một nhu cầu tưởng tượng.
+
+---
+
+## Ba câu chỉ Đức trả lời được
+
+Ghi ở đây vì sau một lượt compact thì đây là chỗ duy nhất còn nhớ chúng:
+
+1. **Trang thử thứ hai là trang nào?** (mục ① ở trên)
+2. **S-11** — hai bridge cũ: chấp nhận rủi ro, hay mở băng để sửa?
+3. **S-12** — ngày lễ gọi lại mỗi lượt: chịu, hay đánh dấu (và chịu rủi ro mất dữ liệu bổ sung)?
 
 ## Cái file này KHÔNG làm
 
