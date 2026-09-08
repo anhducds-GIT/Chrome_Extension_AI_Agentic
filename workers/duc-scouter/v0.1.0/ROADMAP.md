@@ -177,6 +177,30 @@ Nên câu "năng lực chung" hiện là **lời khai chưa được đo**. Tran
 
 **Chọn trang KHÁC KIỂU hnx.vn:** hnx.vn là trang tĩnh, form cũ, jQuery. Một trang **render bằng
 JS** sẽ ép seed lộ ra chỗ nó chỉ đúng với hnx.vn — mà hôm nay ta chưa biết chỗ đó ở đâu.
+#### Bản đề xuất 08/09 — Đức chọn một, tôi không tự bắt đầu
+
+**Thêm một tiêu chí mà mục này bỏ sót, và nó quan trọng hơn "render bằng JS":** trang thứ hai
+phải **bắt PHẢI BẤM mới ra dữ liệu**. Cả vòng HNX chạy trọn với **đúng một lệnh đọc**, nên tới
+hôm nay ba lệnh bấm-gõ của Scouter — thứ đắt nhất và nguy nhất của gói, thứ đòi quyền
+`debugger` — **chưa lần nào chạy trong một việc thật**. Chọn tiếp một trang chỉ-cần-đọc thì
+`HNX Fetch` làm được, và câu hỏi đó vẫn chưa ai trả lời.
+
+Ba ứng viên, xếp theo **giá trị thật cho Đức chia cho rủi ro**:
+
+| | Trang | Được gì | Mất gì |
+|---|---|---|---|
+| **①** | **HOSE — `hsx.vn`** | Sàn còn lại của thị trường. Dữ liệu **ghép thẳng** được với bộ HNX đang có, nên trang thử này đẻ ra sản phẩm chứ không chỉ đẻ ra bài học. Chọn ngày rồi bấm tìm ⇒ ép đúng đường bấm | Cùng thời với `hnx.vn`, nên nó **không** ép lộ chỗ seed chỉ đúng với trang tĩnh |
+| **②** | Một trang tin tài chính SPA (**CafeF** · **Fireant**…) | Khác kiểu thật: cuộn để nạp thêm, không có URL riêng cho từng trạng thái ⇒ ép seed lộ đúng chỗ mục này lo | Dữ liệu là **thứ cấp** — sai một chỗ mà không có nguồn gốc để đối chiếu |
+| **③** | Trang cần **đăng nhập** (Vietstock…) | Gần nhất với việc thật về sau | **Không chọn bây giờ.** Tôi không được gõ mật khẩu, nên mỗi lượt chạy phải chờ tay Đức — trang thử mà chờ người thì đo được rất ít |
+
+**Tôi khuyên ①**, và nói rõ đang đánh đổi cái gì: nó **kém** ② ở đúng việc mục này đặt ra (ép lộ
+chỗ seed hẹp), nhưng **hơn** ở chỗ một lượt chạy hỏng vẫn để lại dữ liệu Đức dùng được. Trang
+thử không ra sản phẩm là trang thử dễ bị bỏ giữa chừng.
+
+**Bước đầu tiên KHÔNG phải viết mã.** Luật vàng ⑴ cấm đoán selector, mà tới giờ chưa ai mở
+`hsx.vn` bằng `diagnostics.dom_probe`. Nên lượt đầu là **một phép đo**: dữ liệu tới từ một lượt
+gọi mạng (thì đây lại là việc của `HNX Fetch`, không phải Scouter), hay chỉ hiện ra sau một cú
+bấm? Câu trả lời đó quyết cả hướng đi, và nó rẻ.
 
 ### ② Đóng gói v1 — để người ngoài lấy về dùng được
 
@@ -185,13 +209,12 @@ hnx.vn đã kéo nó tới nơi. Còn thiếu: một đường cài đặt cho n
 
 Việc này **chỉ nên làm sau ①** — đóng gói một seed mới thử một trang là đóng gói một lời hứa.
 
-### ③ Ba mục nợ nhỏ, gộp một lượt
+### ③ Hai mục nợ nhỏ, gộp một lượt
 
 | Mã | Việc | Vì sao chưa gấp |
 |---|---|---|
 | `S-12` | Ngày lễ bị gọi lại mỗi lượt chạy | **cố ý chưa vá** — đánh dấu bằng tệp rỗng là đổi một phiền toái nhỏ lấy một lỗi im lặng lớn, nếu HNX bổ sung dữ liệu sau. Cần Đức chốt |
 | `S-13` | Gọi sai tên method trả lỗi nội bộ | đã kiểm: **không** phá lượt khác đang bay. Xấu mặt, không hở |
-| `S-11` | Hai bridge cũ nhận token trần | hai gói đang **đóng băng**. Đức nghiêng chấp nhận rủi ro nhưng **chưa chốt thành câu** |
 
 ### ④ KHÔNG làm bây giờ
 
@@ -206,9 +229,12 @@ Việc này **chỉ nên làm sau ①** — đóng gói một seed mới thử m
 
 Ghi ở đây vì sau một lượt compact thì đây là chỗ duy nhất còn nhớ chúng:
 
-1. **Trang thử thứ hai là trang nào?** (mục ① ở trên)
-2. **S-11** — hai bridge cũ: chấp nhận rủi ro, hay mở băng để sửa?
-3. **S-12** — ngày lễ gọi lại mỗi lượt: chịu, hay đánh dấu (và chịu rủi ro mất dữ liệu bổ sung)?
+1. **Trang thử thứ hai là trang nào?** (mục ① ở trên — đã có bản đề xuất, Đức chọn)
+2. **S-12** — ngày lễ gọi lại mỗi lượt: chịu, hay đánh dấu (và chịu rủi ro mất dữ liệu bổ sung)?
+
+**Đã chốt 08/09, không hỏi lại:** `S-11` (token trần ở hai bridge đóng băng) — **chấp nhận rủi
+ro**. Lý do và điều kiện hết hiệu lực ở
+[ADR-0022](../../../docs/adr/0022-chap-nhan-rui-ro-token-tran-o-hai-bridge-dong-bang.md).
 
 ## Cái file này KHÔNG làm
 

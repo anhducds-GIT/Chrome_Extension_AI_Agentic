@@ -6,13 +6,13 @@ lifecycle: active
 owner: claude-scouter-s06
 priority_rank: 1
 next_step: "Chạy lại lượt lấy dữ liệu cuối ngày 08/09 — HNX chưa công bố lúc chiều, cả hai đường cùng xác nhận. Rồi mỗi ngày một lượt."
-human_action: "Hai việc nhỏ: bấm thử Ctrl+Shift+H lúc công tắc đang BẬT xem bảng bên có đổi thành ĐANG TẮT không (phím tắt phanh khẩn chưa ai thử). Và tạo một tệp ghép cặp riêng cho HNX Fetch, cổng riêng — dùng chung với Scouter thì mỗi lệnh phải mang thêm một chuỗi dài."
+human_action: "Một việc nhỏ còn lại: tạo một tệp ghép cặp riêng cho HNX Fetch, cổng riêng — dùng chung với Scouter thì mỗi lệnh phải mang thêm một chuỗi dài. Phím tắt phanh khẩn Ctrl+Shift+H đã bấm thử 08/09 và ĂN THẬT."
 version_source: workers/hnx-fetch/v0.1.0/manifest.json
 last_verified: 2026-09-08
 last_verified_commit: 7cb9f766e2c2b1aa659fbe4911564fd8d0e1b1ea
 last_verified_how: "Chạy thật trọn vòng qua chính extension trong Chrome: ping trả đúng tên gói, bảng năng lực nhìn từ ngoài dây đúng bốn lệnh, scout.fetch lấy trang thật status 200, ngân sách trừ đúng, một lượt tai-ket-qua.mjs đầy đủ 0 hỏng"
 evidence_ref: workers/hnx-fetch/v0.1.0/evidence/2026-09-08-chay-that-lan-dau.md
-current_focus: "Đã chạy thật trọn vòng qua chính extension trong Chrome: lấy được trang thật, cái phanh trừ đúng, một lượt lấy dữ liệu đầy đủ không lỗi. Việc còn lại đều là việc nhỏ cần tay Đức."
+current_focus: "Đã chạy thật trọn vòng qua chính extension trong Chrome: lấy được trang thật, cái phanh trừ đúng, một lượt lấy dữ liệu đầy đủ không lỗi. Phím tắt phanh khẩn cũng đã bấm thử tay và ăn thật. Việc còn lại: chạy mỗi ngày một lượt, và một tệp ghép cặp riêng."
 ref_readme: workers/hnx-fetch/README.md
 ref_handoff: workers/hnx-fetch/HANDOFF.md
 lam_duoc: "Lấy dữ liệu phái sinh HNX theo ngày: kết quả giao dịch nối vào một tệp CSV duy nhất, và báo cáo PDF tải về thư mục Drive. Gọi mạng bằng chính trình duyệt, nên vào được trang mà Node gọi thẳng thì hỏng chứng chỉ."

@@ -245,3 +245,24 @@ dùng được"*. Thực tế **tệp ghép cặp dùng chung ĐƯỢC** — ch�
 
 **Việc kế:** chạy lại lượt lấy dữ liệu cuối ngày 08/09 — HNX chưa công bố lúc chiều, cả hai đường
 cùng xác nhận. Hai việc chờ tay Đức: `H-06` (tệp ghép cặp riêng) · `H-07` (bấm thử `Ctrl+Shift+H`).
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — H-07 ĐÓNG, và một byte NUL lạc trong `fetch-core.mjs`
+
+**`H-07` đóng bằng tay người, không bằng suy luận.** Đức bấm `Ctrl+Shift+H` lúc công tắc đang
+BẬT và báo **thành công**: Chrome nhận tổ hợp, không extension nào giành mất, bảng bên đổi sang
+`ĐANG TẮT`. Đây là cái phanh cuối cùng — thứ với tới được khi bảng bên đã đóng — và nó là loại
+việc **không có cách nào đo từ Node**.
+
+**Một lỗi tìm được ngoài kế hoạch:** `v0.1.0/scripts/fetch-core.mjs` mang **một byte NUL lạc**
+ở offset 7281, nằm giữa một dòng chú thích (chỗ định viết sáu ký tự `\u0000` dạng chữ). Git coi
+cả tệp là **nhị phân**, nên `git diff` của tệp đó chỉ in `Bin 23842 -> 23847 bytes` — **mọi thay
+đổi về sau bị giấu vĩnh viễn**, kể cả một bản vá làm yếu khối phanh. Đã thay bằng sáu ký tự chữ.
+
+Bài học đáng ghim hơn chính cái lỗi: **tệp hỏng kiểu này không làm suite đỏ.** Node đọc được,
+mọi phép ghim vẫn xanh; thứ mất là khả năng ĐỌC DIFF của người kiểm. Cách phát hiện rẻ nhất là
+`file <tệp>` trả về `data` thay vì `Unicode text` — nhưng không ai chạy lệnh đó theo thói quen.
+
+**Việc kế:** chạy lại lượt lấy dữ liệu ngày 08/09 — Đức nói việc này **để sau, hoặc giao cho một
+AI khác chạy tự động**. Còn đúng một việc chờ tay Đức: `H-06`, tệp ghép cặp riêng cho gói này.

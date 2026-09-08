@@ -48,11 +48,11 @@
       "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\". Lay tu lane claude-tinh-gon (dang giu, 7 commit chua day) de sua dong 1316 HANDOFF.md: ### -> ## - muc 4794 byte dang chan cong dong phien voi MOI lane. Sua dung mot ky tu, khong xoa chu cua ai. Toi da nhan thang cho lane do truoc khi lay."
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T05:35",
-      "task": "ADR-002x: HNX Fetch tach thanh extension rieng",
-      "released_at": "2026-09-08T06:15",
+      "owner": "claude-scouter-s06",
+      "ai": "Claude",
+      "claimed_at": "2026-09-08T09:02",
+      "task": "ADR dong S-11: Duc chap nhan rui ro token tran o hai bridge dong bang",
+      "released_at": null,
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -60,11 +60,11 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T07:25",
-      "task": "Dashboard: hien danh tinh + nang luc + cach dung cua hai extension",
-      "released_at": "2026-09-08T07:54",
+      "owner": "claude-scouter-s06",
+      "ai": "Claude",
+      "claimed_at": "2026-09-08T09:12",
+      "task": "Them phep ghim: khong tep chu nao duoc mang byte dieu khien tho (git giau diff)",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -92,5 +92,5 @@
       "released_at": null
     }
   },
-  "_fingerprint": "a97cab6b0dbdad97"
+  "_fingerprint": "8f5864ec734defc8"
 }

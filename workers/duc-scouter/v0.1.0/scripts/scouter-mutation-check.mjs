@@ -442,8 +442,10 @@ BATCHES.push({
     {
       ma: "P8",
       ten: "Không trừ ngân sách: trần đứng yên nên không bao giờ chạm tới",
-      tim: "      await chromeApi.storage.local.set({ [WRITE_GATE_STORAGE_KEY]: { ...gate, used } });",
-      thay: "      if (false) await chromeApi.storage.local.set({ [WRITE_GATE_STORAGE_KEY]: { ...gate, used } });",
+      /* Mỏ neo đổi 08/09 cùng bản vá S-15: lượt ghi nay liệt TỪNG TRƯỜNG thay vì trải
+       * bản ghi cũ. Neo cũ khớp 0 chỗ — bộ đo báo ĐỎ, đúng như nó phải làm. */
+      tim: "        [WRITE_GATE_STORAGE_KEY]: { enabled: true, enabled_at: gate.enabled_at ?? null, used }",
+      thay: "        [WRITE_GATE_STORAGE_KEY]: { enabled: true, enabled_at: gate.enabled_at ?? null, used: gate.used }",
       soLan: 1
     },
     {
@@ -895,14 +897,14 @@ BATCHES.push({
   pin: path.join(ROOT, "tests", "scouter-write-gate-smoke.mjs"),
   mutants: [
     {
-      ma: "P1",
+      ma: "PD1",
       ten: "Trải bản ghi cũ khi trừ ngân sách — phanh khẩn bị hồi sinh giữa lượt đọc và lượt ghi",
       tim: "        [WRITE_GATE_STORAGE_KEY]: { enabled: true, enabled_at: gate.enabled_at ?? null, used }",
       thay: "        ...{ [WRITE_GATE_STORAGE_KEY]: { ...gate, used } }",
       soLan: 1
     },
     {
-      ma: "P2",
+      ma: "PD2",
       ten: "Bỏ hàng đợi: mỗi việc chạy ngay — hai lượt cùng đọc used:199 rồi cùng bấm",
       tim: "  const ket = hangCongTac.then(viec, viec);",
       thay: "  const ket = Promise.resolve().then(viec);",

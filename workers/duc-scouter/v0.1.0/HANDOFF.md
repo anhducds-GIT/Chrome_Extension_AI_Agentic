@@ -642,3 +642,36 @@ Câu cuối là ranh giới seed/adapter viết lại cho Đức đọc: hiểu 
 ở tầng adapter bên ngoài, không nằm trong seed.
 
 Chi tiết bộ máy ở `HANDOFF.md` gốc repo cùng ngày.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — vá khối phanh (S-15), đóng S-11, đề xuất trang thử thứ hai
+
+**Đức chốt ba việc trong một câu:** cho sửa `S-15`, chấp nhận rủi ro `S-11` và bỏ nó khỏi sổ,
+và yêu cầu tôi **đề xuất** trang thử thứ hai thay vì tự chọn.
+
+**S-15 — hai ca đua của khối phanh, nay đã đóng.** Bản vá chép từ `hnx-fetch` (đã chạy được ở
+đó): một **hàng đợi mức module** dùng chung cho `setWriteGate` và `spendWriteBudget`, cộng lượt
+trừ ngân sách **ghi từng trường** thay vì trải bản ghi cũ. Chữa hai đường: phanh khẩn bị lượt
+trừ ngân sách **bật lại**, và trần 200 bị **vượt** khi nhiều lượt chồng nhau. Ở đây nguy hơn
+`hnx-fetch` vì Scouter mở `<all_urls>` và có ba lệnh bấm-gõ thật.
+
+Phép ghim: khối ⑳ của `tests/scouter-write-gate-smoke.mjs`, dùng một kho lưu **cố ý chậm**
+(nhường lượt giữa `get` và `set`). Không có chỗ nhường đó thì hai lỗi này không tái hiện được
+và phép ghim xanh vì may mắn. Hai con `PD1` `PD2` hoàn nguyên đúng bản vá, cả hai giết được.
+
+**Bộ đo bắt được một mỏ neo mục ruỗng ngay trong lượt này:** `P8` neo vào chính dòng ghi mà bản
+vá vừa viết lại, nên nó khớp 0 chỗ và bộ đo báo **ĐỎ** — đúng như luật của nó, không báo BỎ QUA.
+Đã neo lại. Nay 95/95 mỏ neo · 95 giết được · 0 sống sót.
+
+**S-11 rời sổ** theo [ADR-0022](../../../docs/adr/0022-chap-nhan-rui-ro-token-tran-o-hai-bridge-dong-bang.md).
+Điều kiện hết hiệu lực nằm trong ADR: **mở băng một trong hai gói thì phải chuyển sang lõi
+chung ngay trong lượt mở**.
+
+**Trang thử thứ hai:** `ROADMAP.md` mục ① nay có ba ứng viên kèm được-mất. Tôi thêm một tiêu
+chí mà mục đó bỏ sót và nó nặng hơn "render bằng JS": trang phải **bắt PHẢI BẤM mới ra dữ
+liệu** — cả vòng HNX chạy trọn với đúng một lệnh đọc, nên ba lệnh bấm-gõ chưa lần nào chạy
+trong việc thật. Khuyên **HOSE `hsx.vn`**. Bước đầu là **một phép đo** bằng `dom_probe`, không
+phải viết mã.
+
+**Việc kế:** Đức chọn trang, rồi chạy phép đo đó.

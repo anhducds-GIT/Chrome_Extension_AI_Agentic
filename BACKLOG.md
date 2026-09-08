@@ -498,3 +498,21 @@ nuốt mục mới thì mọi quyết định dựa trên số mục của nó �
 - **đóng khi:** `backlog-check.mjs` ĐỎ khi thấy một dòng trông như mục nợ (`**X-NN**` ở đầu
   dòng, ngoài khối mã) mà không nằm dưới một tiêu đề `## N-<số>` nào — hoặc Đức chốt rằng chỉ
   cần một dòng nhắc trong luật của sổ là đủ.
+
+## MỞ · N-42 (2026-09-08, `claude-scouter-s06`) — một byte điều khiển thô trong gói đóng băng
+
+`workers/duc-auto-gg-flow-video/v0.1.0/tests/halt-instructions-core-smoke.mjs` mang một byte
+`0x08` (backspace) ở dòng 27. Hệ quả không phải mã chạy sai — Node đọc bình thường, suite của gói
+đó vẫn xanh. Hệ quả là **git coi cả tệp là nhị phân**, nên `git diff` của nó chỉ in
+`Bin … bytes`: mọi thay đổi về sau **bị giấu**, kể cả một bản vá làm yếu chốt halt.
+
+Tìm ra khi dựng `tests/khong-byte-dieu-khien-smoke.mjs` (08/09), sau khi đúng bệnh này được phát
+hiện ở hai tệp khác trong cùng ngày: `workers/hnx-fetch/v0.1.0/scripts/fetch-core.mjs` (một byte
+NUL) và `tests/feature-parity-smoke.mjs` (hai byte NUL làm mốc tạm) — cả hai đã vá.
+
+**KHÔNG tự sửa.** Gói đang đóng băng (`.repo-structure.json` khối `frozen`), luật mục 1 chỉ cho
+đọc. Phép ghim mới **bỏ qua ba gói đóng băng** vì một phép ghim đòi sửa thứ không ai được sửa là
+một phép ghim không lượt chạy nào làm xanh nổi.
+
+**đóng khi:** hoặc gói đó được mở băng vì một lý do khác và byte này được gỡ **trong chính lượt
+mở**, hoặc Đức chốt rằng ba gói đóng băng không cần đọc diff nữa và mục này rời sổ.

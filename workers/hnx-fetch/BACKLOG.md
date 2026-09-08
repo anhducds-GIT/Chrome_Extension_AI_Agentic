@@ -132,3 +132,8 @@ một extension khác giành mất tổ hợp.
 Đây là **cái phanh cuối cùng** khi bảng bên đã đóng, nên "chắc là chạy" không đủ.
 
 **đóng khi:** Đức bấm `Ctrl+Shift+H` lúc công tắc đang BẬT, rồi bảng bên hiện `ĐANG TẮT`.
+
+- **ĐÓNG H-07** (2026-09-08, `claude-scouter-s06`) · Đức bấm thử và báo **thành công**: `Ctrl+Shift+H`
+  ăn thật trên máy Đức, không extension nào giành mất tổ hợp, và bảng bên đổi sang `ĐANG TẮT`.
+  Cái phanh cuối cùng — thứ với tới được khi bảng bên đã đóng — nay đã được chứng minh bằng tay
+  người, không phải bằng suy luận từ suite.

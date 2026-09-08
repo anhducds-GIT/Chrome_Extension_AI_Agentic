@@ -293,3 +293,18 @@ sang đây là việc nhỏ; phần tốn công là phép ghim (hai ca đua) và
 
 **đóng khi:** `scouter-seed-core.mjs` dùng chung một hàng đợi cho hai hàm đó, có hai phép ghim
 tái hiện được hai ca đua, và hai con đột biến hoàn nguyên bản vá đều **giết được**.
+
+- **ĐÓNG S-15** (2026-09-08, `claude-scouter-s06`) · Đức chốt cho sửa. `scouter-seed-core.mjs` nay
+  dùng **một hàng đợi mức module** chung cho `setWriteGate` và `spendWriteBudget`, và lượt trừ
+  ngân sách **ghi từng trường** thay vì trải bản ghi cũ. Khối ⑳ của `scouter-write-gate-smoke.mjs`
+  tái hiện được cả hai ca đua bằng một kho lưu CỐ Ý chậm (nhường lượt giữa `get` và `set`) — không
+  có chỗ nhường đó thì hai lỗi này không tái hiện được, và phép ghim sẽ xanh vì may mắn. Hai con
+  đột biến `PD1` `PD2` hoàn nguyên đúng bản vá và **cả hai đều giết được**; bộ đo nay 95/95 mỏ neo,
+  95 giết được, 0 sống sót. Đo lại thì chạy, đừng tin dòng này: `node scripts/scouter-mutation-check.mjs`.
+
+- **ĐÓNG S-11** (2026-09-08, `claude-scouter-s06`) · Đức chốt **chấp nhận rủi ro**, và yêu cầu bỏ
+  khỏi sổ để không bị hỏi lại. Lý do và điều kiện hết hiệu lực ghi ở
+  [ADR-0022](../../../docs/adr/0022-chap-nhan-rui-ro-token-tran-o-hai-bridge-dong-bang.md) — tóm
+  tắt: ranh giới tấn công là loopback trên máy cá nhân, hai gói đang đóng băng, và hai gói SỐNG
+  đều đã dùng lõi chung có bắt tay hai chiều. **Mở băng một trong hai gói thì ADR đó hết hiệu lực**
+  và gói được mở phải chuyển sang `workers/_shared/bridge-host/` ngay trong lượt mở.

@@ -217,11 +217,15 @@ function outsideMarkerBytes(text) {
   for (const name of AUTO_BLOCKS) {
     const startToken = `<!-- AUTO:${name} START -->`;
     const endToken = `<!-- AUTO:${name} END -->`;
-    // Đảo chỗ hai marker qua một mốc tạm, để không tự thay lại chính mình.
+    /* Đảo chỗ hai marker qua một mốc tạm, để không tự thay lại chính mình.
+     * Mốc tạm DỰNG bằng String.fromCharCode, không gõ thẳng byte NUL vào tệp: byte thô làm git
+     * coi cả tệp là nhị phân và GIẤU mọi diff về sau. Tệp này từng mang hai byte như thế, và
+     * `tests/khong-byte-dieu-khien-smoke.mjs` nay canh chỗ đó. */
+    const MOC = String.fromCharCode(0) + "TMP" + String.fromCharCode(0);
     const swapped = markedDocument()
-      .replace(startToken, " TMP ")
+      .replace(startToken, MOC)
       .replace(endToken, startToken)
-      .replace(" TMP ", endToken);
+      .replace(MOC, endToken);
     assert.ok(swapped.indexOf(endToken) < swapped.indexOf(startToken),
       `fixture phải thật sự đảo được thứ tự marker ${name}`);
     const repo = fakeRepo();
