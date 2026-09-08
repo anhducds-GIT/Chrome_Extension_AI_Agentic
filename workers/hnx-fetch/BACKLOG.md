@@ -222,3 +222,19 @@ một extension khác giành mất tổ hợp.
 
   **Còn đúng một việc, và chỉ tay Đức làm được:** mở bảng bên của HNX Fetch, chọn tệp đó thay cho
   tệp của Scouter. Xong thì chạy một lượt `--thu-xem` **không kèm** `--target` là mục này đóng.
+
+- **ĐÓNG H-06** (2026-09-08, `claude-scouter-s06`) · Đức đã chọn tệp ghép cặp riêng trong bảng bên.
+  Đo thật, **không gửi `target`**: `system.ping` → `seed: hnx-fetch-v0.1` · `system.capabilities`
+  → đúng **4 lệnh** (`session.hello`, `system.capabilities`, `system.ping`, `scout.fetch`) ·
+  `bridge.sessions` → **đúng MỘT** extension cắm vào máy chủ này. Không còn `TARGET_AMBIGUOUS`.
+  Cờ `--target` từ nay không cần cho đường HNX.
+
+  **Điều kiện đóng mà chính tôi viết cho mục này là một PHÉP THỬ SAI, nói ra để không ai dùng lại:**
+  nó đòi *"một lượt `tai-ket-qua.mjs --thu-xem` chạy trọn không cần `--target`"*. Nhưng `--thu-xem`
+  **thoát trước mọi lượt gọi mạng** — nó chỉ đọc tệp SSOT rồi liệt kê ngày thiếu. Lượt đó sẽ ĐẠT
+  kể cả khi **không có máy chủ nào chạy**, và kể cả khi định tuyến vẫn hỏng.
+
+  Bài học rộng hơn mục này: một điều kiện đóng phải chạm đúng **thứ đang được nghi ngờ**. Ở đây
+  thứ đáng nghi là *định tuyến qua dây*, nên phép thử phải là một lượt gọi **đi qua dây** — và đó
+  là `system.ping` / `system.capabilities` không kèm `target`, như đã đo ở trên. `--thu-xem` vẫn
+  được chạy (Đức yêu cầu) và chạy trơn, nhưng nó là bằng chứng cho việc khác.

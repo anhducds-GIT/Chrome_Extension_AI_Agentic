@@ -82,8 +82,8 @@ GPT 35 file `.js` · Gemini 34.
 | `background.js` | 293 | 202 | 91 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
 | `resume-core.js` | 189 | 122 | 67 |
+| `provider-adapter.js` | 251 | 210 | 41 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
-| `provider-adapter.js` | 228 | 210 | 18 |
 | `output-location-core.js` | 389 | 373 | 16 |
 | `content.js` | 1186 | 1197 | 11 |
 | `bridge-proposal-core.js` | 380 | 387 | 7 |

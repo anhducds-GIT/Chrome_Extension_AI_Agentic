@@ -5,14 +5,14 @@ name: HNX Fetch
 lifecycle: active
 owner: claude-scouter-s06
 priority_rank: 1
-next_step: "Chạy lại lượt lấy dữ liệu cuối ngày 08/09 — HNX chưa công bố lúc chiều, cả hai đường cùng xác nhận. Rồi mỗi ngày một lượt."
-human_action: "Một việc nhỏ còn lại: tạo một tệp ghép cặp riêng cho HNX Fetch, cổng riêng — dùng chung với Scouter thì mỗi lệnh phải mang thêm một chuỗi dài. Phím tắt phanh khẩn Ctrl+Shift+H đã bấm thử 08/09 và ĂN THẬT. @Đức:bấm"
+next_step: "Chạy lượt lấy dữ liệu: SSOT đang thiếu 3 ngày (01/09, 02/09, 08/09). Hai ngày đầu gần như chắc là nghỉ lễ Quốc khánh — lượt chạy sẽ tự ghi nhận và thôi hỏi lại từ lần sau. Cần Đức bật công tắc trước."
+human_action: "Không có việc gì chờ Đức. Muốn lấy dữ liệu thì bật công tắc Cho phép lấy dữ liệu ở bảng bên rồi bảo AI chạy — mỗi lần bật được 200 lượt. @Đức:bấm"
 version_source: workers/hnx-fetch/v0.1.0/manifest.json
 last_verified: 2026-09-08
 last_verified_commit: 7cb9f766e2c2b1aa659fbe4911564fd8d0e1b1ea
 last_verified_how: "Chạy thật trọn vòng qua chính extension trong Chrome: ping trả đúng tên gói, bảng năng lực nhìn từ ngoài dây đúng bốn lệnh, scout.fetch lấy trang thật status 200, ngân sách trừ đúng, một lượt tai-ket-qua.mjs đầy đủ 0 hỏng"
 evidence_ref: workers/hnx-fetch/v0.1.0/evidence/2026-09-08-chay-that-lan-dau.md
-current_focus: "Đã chạy thật trọn vòng qua chính extension trong Chrome: lấy được trang thật, cái phanh trừ đúng, một lượt lấy dữ liệu đầy đủ không lỗi. Phím tắt phanh khẩn cũng đã bấm thử tay và ăn thật. Việc còn lại: chạy mỗi ngày một lượt, và một tệp ghép cặp riêng."
+current_focus: "Gói đã đứng vững: chạy thật trọn vòng trong Chrome, phanh khẩn bấm tay ăn thật, và từ 08/09 có tệp ghép cặp cùng máy chủ RIÊNG nên không còn phải chỉ đích danh extension nữa. Sổ nợ RỖNG. Việc còn lại chỉ là chạy mỗi ngày một lượt."
 ref_readme: workers/hnx-fetch/README.md
 ref_handoff: workers/hnx-fetch/HANDOFF.md
 lam_duoc: "Lấy dữ liệu phái sinh HNX theo ngày: kết quả giao dịch nối vào một tệp CSV duy nhất, và báo cáo PDF tải về thư mục Drive. Gọi mạng bằng chính trình duyệt, nên vào được trang mà Node gọi thẳng thì hỏng chứng chỉ."

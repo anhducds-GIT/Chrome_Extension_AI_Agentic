@@ -62,9 +62,9 @@
     "_code": {
       "owner": null,
       "ai": null,
-      "claimed_at": "2026-09-08T11:52",
-      "task": "khoa muc FILE",
-      "released_at": "2026-09-08T12:16",
+      "claimed_at": "2026-09-08T12:46",
+      "task": "day loat commit N-05/N-33",
+      "released_at": "2026-09-08T12:51",
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -85,23 +85,23 @@
       "released_at": "2026-09-08T12:32"
     },
     "workers/hnx-fetch": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T11:25",
-      "task": "Chuyen 17 con dot bien tang du lieu tu pilot cu sang truoc khi xoa",
-      "released_at": "2026-09-08T11:40"
+      "owner": "claude-scouter-s06",
+      "ai": "Claude",
+      "claimed_at": "2026-09-08T12:53",
+      "task": "Dong H-06: da chung minh khong can --target",
+      "released_at": null
     }
   },
-  "_fingerprint": "1acf8bd64920dcc9",
+  "_fingerprint": "6cdec1158eced118",
   "tam": {
     "scripts/claim.mjs": {
-      "owner": "claude-ext-n05",
-      "luc": "2026-09-08T12:27",
+      "owner": "claude-ext-n33",
+      "luc": "2026-09-08T12:54",
       "viec": null
     },
     "tests/claim-smoke.mjs": {
-      "owner": "claude-ext-n05",
-      "luc": "2026-09-08T12:27",
+      "owner": "claude-ext-n33",
+      "luc": "2026-09-08T12:54",
       "viec": null
     }
   }
