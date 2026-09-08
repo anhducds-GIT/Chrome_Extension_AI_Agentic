@@ -55,7 +55,13 @@ Bảng chủ sở hữu là `.agents/claims.json`. **Một vùng chỉ có MỘT
 node scripts/claim.mjs --list
 node scripts/claim.mjs --take <khoá> --as <tên-phiên> --task "một câu"
 node scripts/claim.mjs --release <khoá> --as <tên-phiên>
+node scripts/claim.mjs --khai-vung <khoá> --as <tên-phiên>   # mở MỘT VÙNG MỚI
 ```
+
+`--khai-vung` (từ 08/09) chỉ tạo một ô **trống chủ** cho khoá mà `.repo-structure.json` đã công
+nhận, và thư mục phải có thật trên đĩa. Trước nó, mở một vùng dùng chung chỉ làm được bằng **sửa
+tay `claims.json` rồi `--restamp`** — một đường hợp lệ trông giống hệt một vụ cướp khoá, nên lần
+sau không ai phân biệt nổi hai thứ đó (`N-41`).
 
 Sửa tay là đọc-sửa-ghi, và ngày 02/09 đã có một quyền **bị ghi đè im lặng** vì thế: hai phiên
 cùng đọc thấy "trống" rồi cùng ghi tên mình, người ghi sau thắng, người ghi trước không hề biết.

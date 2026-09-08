@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ageHours, ageLabel, BASELINE, baselineDaNiemPhong, canDayTruocKhiTra, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, khoaBiDoiChu, readClaims } from "../scripts/claim.mjs";
+import { ageHours, ageLabel, BASELINE, baselineDaNiemPhong, canDayTruocKhiTra, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, khoaBiDoiChu, kiemKhoaKhaiDuoc, readClaims } from "../scripts/claim.mjs";
 import { CHUA_DAY } from "../scripts/repo-structure.mjs";
 
 let passed = 0;
@@ -770,6 +770,85 @@ const CLAIMS = () => ({
       "AGENTS.md muc 1 phai co dong cam noi claim.mjs vao ong — N-15. Do la chot duy nhat cho cai bay tren.");
     ok("N-15 · cu TU CHOI cua claim.mjs bien mat khi noi ong (bay con nguyen), va AGENTS.md muc 1 co dong cam");
   } finally { rmSync(temp, { recursive: true, force: true }); }
+}
+
+/* ---- MỞ MỘT VÙNG DÙNG CHUNG — N-41 ----------------------------------------
+ *
+ * Ca thật 07–08/09 khi mở `workers/_shared/`: cả ba cửa đóng, nên người đầu tiên phải **sửa tay
+ * `claims.json` rồi `--restamp`** — đúng thao tác luật cảnh báo nặng nhất. Nó chạy được; vấn đề
+ * là một đường HỢP LỆ trông giống hệt một vụ cướp khoá, nên lần sau không ai phân biệt nổi.
+ *
+ * Ghim vế bán hàng của cửa này, không chỉ vế "nó chạy": **nó KHÔNG được chạm chủ của khoá nào**,
+ * và nó phải từ chối khi cấu hình chưa công nhận vùng đó — nếu không thì nó chỉ là `--restamp`
+ * đội tên mới. */
+{
+  const cauHinh = { areas: { "workers/": { ownership_mode: "per-package", claim_prefix: "workers/" } } };
+  const pfx = ["workers/"];
+  const coHet = () => true;
+
+  assert.equal(kiemKhoaKhaiDuoc("workers/moi", { structure: cauHinh, prefixes: pfx, coThuMuc: coHet }).ok, true,
+    "vung da khai trong cau hinh + co thu muc that thi khai duoc");
+
+  const laKhoa = kiemKhoaKhaiDuoc("khong-thuoc-vung-nao", { structure: cauHinh, prefixes: pfx, coThuMuc: coHet });
+  assert.equal(laKhoa.ok, false, "cau hinh chua cong nhan thi TU CHOI");
+  assert.match(laKhoa.ly_do, /areas/, "cau bao phai chi ra cho phai khai truoc");
+
+  const khongCo = kiemKhoaKhaiDuoc("workers/moi", { structure: cauHinh, prefixes: pfx, coThuMuc: () => false });
+  assert.equal(khongCo.ok, false, "thu muc chua co tren dia thi TU CHOI — khoa cho vung khong ton tai la rac");
+
+  for (const xau of ["", "   ", " workers/moi", "workers/moi "]) {
+    assert.equal(kiemKhoaKhaiDuoc(xau, { structure: cauHinh, prefixes: pfx, coThuMuc: coHet }).ok, false,
+      `ten khoa "${xau}" phai bi tu choi`);
+  }
+  ok("kiemKhoaKhaiDuoc: hoi chinh bo quy vung, tu choi vung la va ten dinh khoang trang");
+}
+
+{
+  const temp = mkdtempSync(join(tmpdir(), "claim-khai-"));
+  try {
+    const claimsPath = join(temp, ".agents", "claims.json");
+    mkdirSync(dirname(claimsPath), { recursive: true });
+    writeFileSync(claimsPath, JSON.stringify({ claims: CLAIMS() }, null, 2) + "\n", "utf8");
+    writeFileSync(join(temp, ".repo-structure.json"), JSON.stringify({
+      areas: { "workers/": { ownership_mode: "per-package", claim_prefix: "workers/" } },
+    }, null, 2) + "\n", "utf8");
+    mkdirSync(join(temp, "workers", "_chung"), { recursive: true });
+    chepLenh(temp);
+    execFileSync("git", ["init", "-q", "-b", "main"], { cwd: temp, encoding: "utf8" });
+
+    const run = (...args) => {
+      const r = spawnSync(process.execPath, [join(temp, "scripts", "claim.mjs"), ...args], { encoding: "utf8" });
+      return { code: r.status, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
+    };
+    const doc = () => JSON.parse(readFileSync(claimsPath, "utf8"));
+
+    // Trước cửa này: `--take` một khoá chưa khai là ngõ cụt, và lối thoát duy nhất là sửa tay.
+    assert.equal(run("--take", "workers/_chung", "--as", "phien-B", "--task", "x").code, EXIT.MISUSE,
+      "chua khai thi --take van phai la ngo cut — cua moi KHONG duoc noi long cua cu");
+
+    const truoc = doc().claims;
+    const kq = run("--khai-vung", "workers/_chung", "--as", "phien-B");
+    assert.equal(kq.code, EXIT.OK, `khai vung hop le phai thoat 0 — ra: ${kq.out}`);
+    const sau = doc().claims;
+    assert.equal(sau["workers/_chung"].owner, null, "vung moi phai TRONG CHU, khong tu gan cho nguoi khai");
+    for (const k of Object.keys(truoc)) {
+      assert.equal(sau[k].owner, truoc[k].owner, `khai vung KHONG duoc cham chu cua "${k}"`);
+    }
+    assert.ok(doc()._fingerprint, "phai dong lai dau, khong de bang vo dau roi cong do voi MOI phien");
+
+    // Và sau khi khai thì đường thường phải thông — nếu không thì cửa này vô dụng.
+    assert.equal(run("--take", "workers/_chung", "--as", "phien-B", "--task", "lam gi do").code, EXIT.OK,
+      "khai xong thi --take phai chay duoc");
+    assert.equal(doc().claims["workers/_chung"].owner, "phien-B");
+
+    assert.equal(run("--khai-vung", "workers/_chung", "--as", "phien-B").code, EXIT.MISUSE,
+      "khai lai mot khoa da co phai bao dung sai, dung im lang ghi de");
+    assert.equal(doc().claims["workers/_chung"].owner, "phien-B", "va TUYET DOI khong xoa chu dang giu");
+    ok("chay THAT: khai vung moi mo duoc duong --take, va khong cham chu cua khoa nao");
+  } finally {
+    assert.ok(temp.startsWith(join(tmpdir(), "claim-khai-")), "chi don dung temp fixture cua phep kiem nay");
+    rmSync(temp, { recursive: true, force: true });
+  }
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);

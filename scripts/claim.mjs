@@ -32,7 +32,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { CHUA_DAY, CHUA_THAY_DAU_VET, commitChuaDay, DAU_VET, dauVetTheoVung, mocMs, readStructureFromDisk } from "./repo-structure.mjs";
+import { CHUA_DAY, CHUA_THAY_DAU_VET, claimPrefixesFrom, commitChuaDay, DAU_VET, dauVetTheoVung, mocMs, readStructureFromDisk, stewardOf } from "./repo-structure.mjs";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(MODULE_FILE), "..");
@@ -284,6 +284,44 @@ export function khoaBiDoiChu(truoc, sau, as) {
   return ra;
 }
 
+/* ---- MỞ MỘT VÙNG DÙNG CHUNG — N-41 -----------------------------------------
+ *
+ * Ca thật 07–08/09 khi mở `workers/_shared/`: cả ba cửa đều đóng. `--take` từ chối khoá lạ và
+ * bảo *"khai ở .repo-structure.json trước"*; khai vào khối `areas` **vẫn đỏ**, vì mọi thư mục
+ * dưới `workers/` là một package cần khoá riêng trong `claims.json`; và **không lệnh nào tạo
+ * được khoá đó**. Nên người đầu tiên phải sửa tay `claims.json` rồi `--restamp` — đúng thao
+ * tác mà luật cảnh báo nặng nhất.
+ *
+ * Nó chạy được. Vấn đề là **một đường hợp lệ trông giống hệt một vụ cướp khoá**, nên lần sau
+ * không ai phân biệt được hai thứ đó — và người đọc `git diff` thì càng không.
+ *
+ * Cửa này KHÔNG nới lỏng gì: nó chỉ tạo một ô TRỐNG CHỦ cho một khoá mà cấu hình đã công nhận.
+ * Không chạm chủ của khoá nào — có phép kiểm ngay trong lệnh, và nó FAIL CLOSED. */
+export function kiemKhoaKhaiDuoc(khoa, { structure, prefixes, coThuMuc }) {
+  if (typeof khoa !== "string" || khoa.trim() === "" || khoa !== khoa.trim()) {
+    return { ok: false, ly_do: "tên khoá rỗng hoặc dính khoảng trắng" };
+  }
+  /* HỎI CHÍNH BỘ QUY VÙNG, đừng tự đoán luật. Một khoá hợp lệ là khoá mà `stewardOf()` của một
+     file BÊN TRONG nó trả về đúng nó. Viết lại luật ở đây là đẻ ra bản sao thứ hai của một
+     luật — và hai bản sao đã trả hai câu khác nhau cho cùng một file ngày 02/09. */
+  const thu = stewardOf(`${khoa}/.kiem-mot-file-khong-co-that`, structure, prefixes);
+  if (thu !== khoa) {
+    return {
+      ok: false,
+      ly_do: `\`.repo-structure.json\` chưa công nhận "${khoa}" là một vùng — file bên trong nó `
+        + `quy về "${thu}". Khai khối \`areas\` trước, rồi chạy lại.`,
+    };
+  }
+  if (!coThuMuc(khoa)) {
+    return {
+      ok: false,
+      ly_do: `thư mục "${khoa}" chưa có trên đĩa. Khoá cho một vùng không tồn tại là một dòng `
+        + "không ai đọc, và nó sẽ nằm đó mãi.",
+    };
+  }
+  return { ok: true };
+}
+
 /* Quyết định THUẦN — tách khỏi việc đọc/ghi để kiểm được mọi nhánh mà không cần đĩa. */
 export function decide(claims, { action, key, as, today }) {
   if (!Object.prototype.hasOwnProperty.call(claims, key)) {
@@ -467,6 +505,45 @@ function main() {
     process.exit(EXIT.OK);
   }
 
+  // MỞ MỘT VÙNG MỚI — N-41. Chỉ tạo một ô TRỐNG CHỦ cho khoá mà cấu hình đã công nhận.
+  // Đặt TRƯỚC `--take` vì đây là điều kiện tiên quyết của nó: `--take` một khoá chưa có
+  // trong bảng thì từ chối, và trước cửa này lối thoát duy nhất là sửa tay.
+  const khaiVung = flag("khai-vung");
+  if (khaiVung) {
+    const as = flag("as");
+    if (typeof khaiVung !== "string" || typeof as !== "string") {
+      console.error("Dùng: node scripts/claim.mjs --khai-vung <khoá> --as <phiên>");
+      process.exit(EXIT.MISUSE);
+    }
+    if (Object.prototype.hasOwnProperty.call(parsed.claims, khaiVung)) {
+      console.error(`KHOA_DA_CO: "${khaiVung}" đã có trong bảng. Nhận nó bằng --take, đừng khai lại.`);
+      process.exit(EXIT.MISUSE);
+    }
+    let structure;
+    try { structure = readStructureFromDisk(ROOT); }
+    catch (error) { console.error(`CAU_HINH_HONG: ${error.message}`); process.exit(EXIT.MISUSE); }
+    const xet = kiemKhoaKhaiDuoc(khaiVung, {
+      structure,
+      prefixes: claimPrefixesFrom(structure),
+      coThuMuc: (d) => { try { return fs.statSync(path.join(ROOT, d)).isDirectory(); } catch { return false; } },
+    });
+    if (!xet.ok) {
+      console.error(`KHONG_KHAI_DUOC: ${xet.ly_do}`);
+      process.exit(EXIT.REFUSED);
+    }
+    /* KHÔNG CHỤP CHỦ SỞ HỮU TRƯỚC/SAU ĐỂ SO — và đây là quyết định, không phải bỏ sót.
+       Bản đầu có lớp đó. Nhưng khoá này đã được kiểm là CHƯA CÓ ở ngay trên, nên lượt gán
+       dưới đây không thể chạm chủ của khoá nào — không đột biến nào giết được lớp ấy. Repo này
+       đã xử đúng ca đó một lần (`PB2`, sổ nợ Scouter): bỏ lớp thừa, đừng giữ một dòng đỏ vĩnh
+       viễn mà ai cũng học cách bỏ qua. Bất biến *"không chạm chủ của khoá nào"* vẫn được canh —
+       ở phép ghim chạy THẬT trong `tests/claim-smoke.mjs`, nơi nó đo được. */
+    parsed.claims[khaiVung] = { owner: null, ai: null, claimed_at: null, task: null, released_at: null };
+    parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims);
+    fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
+    console.log(`đã khai vùng: ${khaiVung} — TRỐNG CHỦ. Nhận nó: node scripts/claim.mjs --take ${khaiVung} --as ${as}`);
+    console.log(`dấu cũ: ${seal.stamped ?? "(chưa có)"}  →  dấu mới: ${parsed[FINGERPRINT_FIELD]}`);
+    process.exit(EXIT.OK);
+  }
   const take = flag("take");
   const release = flag("release");
   const as = flag("as");
