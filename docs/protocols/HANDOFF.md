@@ -21,7 +21,7 @@ ttl_days: 365
 | Một dòng cho mỗi sự cố gặp thật | **Cách làm một việc** → brief trong `docs/briefs/` |
 | | **Thay đổi mã** → thông điệp commit |
 
-Đây không phải luật mới: `AGENTS.md` mục 7 đã ghi *"làm gì, kết quả số, còn gì mở"* từ đầu. Cái
+Đây không phải luật mới: `AGENTS.md` mục 8 (*Đóng phiên*) đã ghi *"làm gì, kết quả số, còn gì mở"* từ đầu. Cái
 mới là **có trần và có máy kiểm**.
 
 **Viết một mục dài không phải chăm chỉ — nó là đẩy chi phí sang mọi phiên sau.** Mọi phiên mở
@@ -87,7 +87,7 @@ cổng đóng phiên báo `HANDOFF_QUA_DAY` khi vượt.
 1. **Không mất một byte.** Dời, không xoá. Nối lại phải ra bản gốc **giống hệt từng byte**.
 2. **Chuỗi con trỏ phải đi được bằng máy.** File hiện tại trỏ sang file trước, file trước trỏ
    sang file trước nữa. **Đừng gõ cứng tên file lưu trữ ở bất kỳ đâu.**
-3. **File lưu trữ khai vào Bản đồ file** (`AGENTS.md` mục 4). Không khai = không tồn tại.
+3. **File lưu trữ khai vào Bản đồ file** — bảng đó nằm trong `AGENTS.md` của chính GÓI, không phải ở gốc. Không khai = không tồn tại.
 
 **Làm thế nào — một lệnh:**
 

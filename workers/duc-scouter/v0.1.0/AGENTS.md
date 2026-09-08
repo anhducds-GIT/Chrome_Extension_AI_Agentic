@@ -37,7 +37,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
    chứng vận hành, không phải đồ làm việc) · không bao giờ để token / mật khẩu / tệp ghép cặp
    vào repo · **chạy trên trang thật vẫn phải hỏi Đức** — ADR-0016 gỡ chỗ chặn về *ghi*, không
    gỡ chỗ chặn về *chạy ở đâu*.
-4. **Cấm chạy trên trang thật** khi chưa hỏi Đức (`AGENTS.md` gốc mục 2). Trang thử tự tạo thì được.
+4. **Cấm chạy trên trang thật** khi chưa hỏi Đức (`AGENTS.md` gốc mục 3, *Phải hỏi Đức trước*). Trang thử tự tạo thì được.
 5. **Từ vựng cố định.** Cửa Bridge nhận một bộ tên method đóng, không bao giờ nhận biểu thức tự
    do từ ngoài dây. Thêm một method là **đổi luật an toàn** → hỏi Đức.
 6. **Quyền đã duyệt là TRẦN, không phải sàn.** ADR-0009 duyệt tới `<all_urls>` · `debugger` ·
@@ -96,7 +96,7 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
 | `tests/scouter-file-core-smoke.mjs` | Ghim **vùng ghi**: `..`, đường tuyệt đối ba dạng, thư mục anh em trùng tiền tố, và liên kết mềm trỏ ra ngoài. Chạy trên thư mục tạm THẬT, không giả `fs` |
 | `tests/scouter-bridge-host-smoke.mjs` | Ghim phần RIÊNG của Scouter: nhóm `file.*` (chạy được **cả khi chưa có extension nào nối**), vùng ghi, hai cổng vào, và cái chặn *vùng ghi không được chứa tệp ghép cặp*. Máy chủ THẬT trên loopback. Hành vi chung của lõi thì ghim ở `_shared/bridge-host/tests/` |
 | `docs/PROMPT-thiet-ke-bang-ben.md` | **Câu Đức dán cho GPT web** để brainstorm bố cục bảng bên (07/09). Chứa bản khai **sự thật về năng lực** — Scouter đổi thì **sửa mục đó trước khi dán**, không thì GPT thiết kế cho một giói đồ không tồn tại |
-| `../pilots/<tên>/` | **PILOT — ngoài thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md) mục ⑶a). Pilot không phải một phiên bản của seed; để chung thì lượt nâng phiên bản sau kéo theo cả pilot. Suite của pilot vẫn chạy qua `tests/run-all.mjs` — nó quét theo HÌNH DẠNG `pilots/*/tests/*.mjs`, không gõ cứng tên pilot nào |
+| `../pilots/<tên>/` | **PILOT — ngoài thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md) mục ⑼a). Pilot không phải một phiên bản của seed; để chung thì lượt nâng phiên bản sau kéo theo cả pilot. Suite của pilot vẫn chạy qua `tests/run-all.mjs` — nó quét theo HÌNH DẠNG `pilots/*/tests/*.mjs`, không gõ cứng tên pilot nào |
 | `docs/TRIALS.md` | **Sổ các trang đã thử** — trang nào · thử gì · kết quả · **dạy seed được gì**. Cột cuối là lý do nó tồn tại: nó là đường ray của luật chiều-ngược ở ADR-0009 mục ⑵. Đây là SỔ, không phải hàng rào |
 | `tests/seed-purity-smoke.mjs` | Canh **mã CHẠY** của seed không chứa tên trang thật (hằng số · mặc định · nhánh rẽ theo hostname). **Cố ý KHÔNG canh** `tests/` `docs/` `pilots/` — Đức chốt 07/09 *"nhiễm cũng được… trừ khi nó ảnh hưởng quá"*. Bản đầu siết cả `tests/` và đỏ 9 chỗ vô hại; hàng rào hẹp mà sống lâu hơn hàng rào rộng mà bị gỡ |
 | `docs/adr/` | Quyết định của Đức riêng cho gói này. ADR đã `Accepted` là bất biến |

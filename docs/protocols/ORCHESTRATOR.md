@@ -22,7 +22,7 @@ product_code: forbidden
 |---|---|
 | Cầm toàn cảnh: việc mở, ai giữ vùng nào, đang chờ Đức gì | Không phải phiên code chính |
 | Trả lời **câu Đức hỏi**, và **vì sao câu trả lời là như vậy** | Không tự mở topic Đức chưa hỏi — mục 0b |
-| Cầm sự thật trong repo cho khớp thực tế | Không tự chốt việc thuộc mục 2 của `AGENTS.md` |
+| Cầm sự thật trong repo cho khớp thực tế | Không tự chốt việc thuộc `AGENTS.md` mục 3 (*Phải hỏi Đức trước*) |
 | Chia việc thành các luồng chạy song song không giẫm chân | Không tự giành vùng người khác đang giữ |
 | Viết brief rồi giao việc kỹ thuật đi (mục 4b) | **Không code, không debug product, không đề xuất patch** — mục 4 |
 | Giữ bảng trạng thái tươi để Đức tự xem | Không gõ tay số nào vào bảng |
@@ -94,7 +94,7 @@ trên đất của nó; đừng bê luật repo Extension sang.
 - Một câu bắc qua hai repo hiện phải trả lời bằng cách `cd` sang đọc tay. Đó là **gõ tay, không
   phải năng lực của gói** — phiên sau không thừa hưởng. Biến nó thành năng lực: `IDEAS.md` mục
   `Y-13` phần 2, **chưa làm**, chờ pilot v0.1 đạt.
-- Luật ở mục này **chưa có phép kiểm máy**. `AGENTS.md` mục 7: luật nào máy không kiểm được thì
+- Luật ở mục này **chưa có phép kiểm máy**. `AGENTS.md` mục 8 (*Đóng phiên*) chốt lại: luật nào máy không kiểm được thì
   sớm muộn cũng bị bỏ qua. Phép kiểm cần sửa `tests/role-firewall-smoke.mjs` → khoá `_code` →
   một lượt khác.
 
@@ -449,7 +449,7 @@ buộc dùng lại hai cơ chế đã có — khoá vùng và Log. Đừng phát
 | **Defect** | Chuyện gì đã xảy ra thật? Kèm bằng chứng, không phải giả định |
 | **Phải làm gì** | Đức đã chốt gì. Ghi thành việc, không ghi thành gợi ý |
 | **Ranh giới** | KHÔNG được đụng gì. Đây là mục chặn nở phạm vi |
-| **Khoá cần** | Tên khoá theo `AGENTS.md` mục 1, để executor nhận đúng vùng |
+| **Khoá cần** | Tên khoá theo `AGENTS.md` mục 1 (*Khoá*), để executor nhận đúng vùng |
 | **Xong khi nào** | Điều kiện máy kiểm được: cổng xanh · test bắt được mutation · Log |
 | **Hỏi ai** | Thường là **Đức**, không phải phiên điều phối |
 
@@ -461,7 +461,8 @@ viết brief rồi tự làm luôn thì firewall chưa hề tồn tại — nó 
 
 ## 5. Khi nào DỪNG và hỏi Đức
 
-Ba việc của `AGENTS.md` mục 2 (thêm permission · pilot live mới · đổi luật an toàn) — không
+Bốn việc của `AGENTS.md` mục 3 (*Phải hỏi Đức trước*: thêm permission · pilot live mới · đổi luật
+an toàn · force-push hay merge vào `main`) — không
 bàn lại ở đây. Riêng vai điều phối có thêm bốn ca:
 
 - **Bản đồ nói mục A rỗng** (mọi vùng có việc đều đã có chủ) → không tự giành. Nhắn phiên
@@ -471,7 +472,7 @@ bàn lại ở đây. Riêng vai điều phối có thêm bốn ca:
   chờ Đức mà không ai nhắc thì nó chỉ nằm đó.
 - **Việc Đức giao đụng nhiều khoá cùng lúc** → tách thành nhiều việc trước khi nhận khoá,
   đừng nhận cả gốc repo.
-- **Bảng quyền báo `DAU_VO`** → dừng, đọc mục 6 của `AGENTS.md`. Đừng `--restamp` cho xong.
+- **Bảng quyền báo `DAU_VO`** → dừng, đọc `AGENTS.md` mục 7 (*Sổ tay*), dòng `DAU_VO`. Đừng `--restamp` cho xong.
 
 ### 5b. Và KHÔNG BAO GIỜ dừng vì chuyện commit (Đức chốt 2026-09-06)
 
@@ -558,7 +559,7 @@ Ba trạng thái, và đọc chúng khác nhau:
 
 **Lệnh đó KHÔNG tự sửa gì** — nó in ra lệnh sửa để bạn tự quyết. Cố ý: một cổng tự dọn bằng
 chứng của chính thứ nó phải phát hiện là cổng vô dụng, và tệ hơn — nó tạo cảm giác an toàn.
-Cùng lý lẽ với `AGENTS.md` mục 6: *"đừng restamp cho xong việc."*
+Cùng lý lẽ với `AGENTS.md` mục 7 (*Sổ tay*): *"đừng restamp cho xong việc."*
 
 Khác `session-check.mjs` ở bốn chỗ, đừng lẫn: ai chạy (điều phối ↔ executor) · lúc nào (trước
 khi **báo cáo** ↔ trước khi **đóng phiên**) · hỏi gì ("điều tôi sắp nói có đúng không" ↔ "việc
@@ -566,11 +567,11 @@ tôi làm đủ điều kiện push chưa") · đỏ thì sao (không được p
 
 ## 7. `IDEAS.md` miễn khoá khi chỉ thêm dòng ở cuối
 
-Luật đầy đủ ở `AGENTS.md` mục 1b, khai bằng máy ở `append_only_exempt` — **đừng đọc bản ở đây,
+Luật đầy đủ ở `AGENTS.md` mục 1b (*Vùng, miễn trừ*), khai bằng máy ở `append_only_exempt` — **đừng đọc bản ở đây,
 đọc bản ở đó.** Vai điều phối là vai ghi ý tưởng nhiều nhất nên hay dùng miễn trừ này; nhớ vế
 sau của nó: **sửa hay xoá dòng cũ thì KHÔNG được miễn**, trừ khi bạn đang giữ khoá đúng file.
 
 **Luật này sống ở đâu:** khối `append_only_exempt` trong `.repo-structure.json` — **sửa ở đó,
-đừng sửa script**. `AGENTS.md` mục 1 nói cùng luật đó cho người đọc. Trước 04/09 danh sách bị
+đừng sửa script**. `AGENTS.md` mục 1 (*Khoá*) nói cùng luật đó cho người đọc. Trước 04/09 danh sách bị
 gõ cứng ở cả `session-check.mjs` lẫn `safe-push.mjs`, và hai bản sao của một luật đã trả hai
 câu khác nhau cho cùng một file ngày 02/09.

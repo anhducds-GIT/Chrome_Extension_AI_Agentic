@@ -99,6 +99,12 @@ máy đo chất lượng một lượt đọc, và không có cách nào làm vi
 **Còn nợ:** `LUAT_TRUNG` bắt theo **vân tay tập từ**, nên hai câu cùng nghĩa mà khác từ vựng thì
 nó không thấy. Nó là phép **sàng**, không phải phép **phán** — nêu ứng viên cho người đọc quyết.
 
+**Chỗ bộ này KHÔNG với tới, tìm ra bằng mắt cùng ngày:** B12 canh **số hiệu**, không canh **nội
+dung vế** — nên lượt gộp 27 ADR xanh tuyệt đối mà vẫn **đánh rơi ba vế** (`0020 ⑶` ranh giới
+seed↔pilot, `0020 ⑷` sổ-trước-playbook, `0019 ⑷⑸` ngưỡng nghiệm thu cửa tích hợp). Đã khôi phục
+09/09. Không có phép máy nào rẻ cho việc này; cách chữa là một bước NGƯỜI, ghi ở
+`docs/protocols/RULE-COMPILER.md` mục 5.
+
 **Chỗ dễ làm sai, đã làm sai thật, ghi lại để đừng làm lần hai:**
 
 - **Số vế đứng SAU cái đuôi liên kết** — `[ADR-0005](…) ⑴`, không phải `ADR-0005 ⑴`. Bản đầu chỉ

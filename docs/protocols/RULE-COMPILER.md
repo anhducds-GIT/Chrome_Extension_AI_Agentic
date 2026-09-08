@@ -57,9 +57,28 @@ là một cổng sẽ bị tắt. **Bộ đo không có cờ `--fix`**: AI đề
 5. Kho nhớ của chính phiên bạn cũng đi qua lượt này ([ADR-0027](../adr/0027-bo-bien-dich-luat.md)
    ⑸) — nó nằm ngoài repo nên **không có máy nào canh**.
 
-## 5. Ba chỗ dễ vấp
+## 5. Gộp hai ADR — kiểm TỪNG VẾ, đừng tin B12
+
+B12 canh **số hiệu**, không canh **nội dung vế**. Lượt gộp 27 ADR ngày 09/09 xanh B12 tuyệt đối
+mà vẫn **đánh rơi ba vế** — trong đó `0020 ⑶` (ranh giới seed ↔ pilot) là vế đang sống và đang
+được `workers/duc-scouter/v0.1.0/AGENTS.md` trỏ tới. Tìm ra bằng mắt, không bằng máy.
+
+Nên sau mỗi lượt gộp, liệt kê vế của bản CŨ rồi đối chiếu bằng mắt:
+
+```bash
+git show <sha-trước-lượt-gộp>:docs/adr/<file-cũ>.md | grep "^### "
+```
+
+Vế nào cố ý bỏ thì phải xuất hiện ở mục `Vế đã chết` kèm tên quyết định thay nó. Không ở đó,
+không ở bản gộp = **đã mất**.
+
+## 6. Ba chỗ dễ vấp
 
 - **Trích theo SỐ HIỆU ĐANG SỐNG, đừng trích theo tên file.** Một file chủ đề mang nhiều quyết
   định và số dẫn của nó có thể đã chết. Bản đồ số hiệu → file: `docs/README.md`.
 - **Số hiệu có phạm vi.** `ADR-0001` ở gốc khác `ADR-0001` trong một gói.
 - **Vế viết sau đuôi liên kết:** `[ADR-0005](…) ⑴`.
+- **Trỏ tới `AGENTS.md` thì kèm TÊN mục, không chỉ số.** Số hiệu ADR là danh tính vĩnh viễn; số
+  mục của `AGENTS.md` chỉ là **vị trí** và nó đổi mỗi lượt sắp xếp lại — lượt cắt 402 → 252 dòng
+  ngày 09/09 làm hỏng **sáu** lượt trỏ trong ba file. Viết `AGENTS.md` mục 3 (*Phải hỏi Đức
+  trước*): số sai thì tên vẫn chỉ đúng chỗ, và người đọc thấy ngay là nó lệch.

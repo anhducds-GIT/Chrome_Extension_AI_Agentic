@@ -25,7 +25,7 @@ AI.** Nó phải do Đức tự bấm Run với `timeout` của workbook — Pil
 Nên trần 90 giây không bảo vệ ai khỏi cái gì. Nó chỉ đẩy đúng những job thật sang tay Đức, và
 biến mọi báo cáo "job chết ở mốc ~90 giây" thành một câu dễ đọc nhầm là lỗi tính năng.
 
-Đây là **đổi luật an toàn** (`AGENTS.md` mục 2), nên AI không tự quyết. Đức chốt 07/09.
+Đây là **đổi luật an toàn** (`AGENTS.md` mục 3, *Phải hỏi Đức trước*), nên AI không tự quyết. Đức chốt 07/09.
 
 ## Quyết định
 

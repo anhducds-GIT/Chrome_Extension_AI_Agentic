@@ -114,6 +114,31 @@ Ba giới hạn đi kèm, **suy từ luật sẵn có chứ không đẻ luật 
 token/mật khẩu/tệp ghép cặp lọt vào repo · **chạy trên trang thật vẫn phải hỏi Đức** — vế này gỡ
 chỗ chặn về *ghi*, **không** gỡ chỗ chặn về *chạy ở đâu*.
 
+### ⑼ Ranh giới seed ↔ pilot: một chỗ đứng, một cuốn SỔ, một hàng rào HẸP
+
+> **Khôi phục 09/09.** Vế này là ⑶ và ⑷ của quyết định **0020**; lượt gộp 27 ADR ngày 09/09
+> **đánh rơi cả hai** — B12 xanh vì nó canh SỐ HIỆU, không canh nội dung từng vế. Phát hiện khi
+> rà `workers/duc-scouter/v0.1.0/AGENTS.md`, chỗ đó vẫn trỏ tới *"ADR-0020 mục ⑶a"*.
+
+**a. Chỗ đứng vật lý.** Seed ở `workers/duc-scouter/<phiên-bản>/`. Pilot ở
+`workers/duc-scouter/pilots/<tên-pilot>/` — **ngoài thư mục phiên bản, cố ý**. Pilot không phải
+một phiên bản của seed; để chung thì lượt nâng phiên bản sau kéo theo cả pilot.
+
+**b. Một cuốn sổ: `docs/TRIALS.md` trong gói.** Đúng thứ Đức yêu cầu — *"chỉ là 1 list các trial
+mà ta đã thử thôi"*. Mỗi dòng: trang nào · thử gì · kết quả · **dạy seed được gì**. Cột cuối là
+lý do cuốn sổ tồn tại: nó là đường ray của luật chiều-ngược ở vế ⑵ (*adapter nào sửa ra thứ không
+riêng của trang nào thì đưa lên seed*). Đây là **SỔ, không phải hàng rào**.
+
+**c. Một hàng rào HẸP, và hẹp là có chủ ý.** `tests/seed-purity-smoke.mjs` chỉ canh **mã CHẠY**
+của seed, cố ý **không** canh `tests/` `docs/` `pilots/` — Đức chốt 07/09 *"nhiễm cũng được… trừ
+khi nó ảnh hưởng quá"*. Bản đầu siết cả `tests/` và đỏ 9 chỗ vô hại. **Hàng rào hẹp mà sống lâu
+hơn hàng rào rộng mà bị gỡ.** Sau ba tháng nó chưa nổ lần nào thì đó là bằng chứng để **bỏ** nó,
+không phải bằng chứng nó đang làm tốt.
+
+**d. Sổ mở trước, playbook mở sau.** `docs/TRIALS.md` mở **ngay** vì đã có dòng thật để ghi.
+`docs/PLAYBOOK-thuan-hoa-mot-trang.md` **chưa mở**, và mở trong lượt `S-10` — một playbook viết
+trước khi thuần hoá xong trang nào là văn tưởng tượng. Ranh giới giữa hai cái là *"đã làm rồi"*.
+
 ## Vế đã chết
 
 - **0007 — *"Observer là công cụ read-only"*.** Chết ngay trong ngày: 0009 đổi cả bản chất sang

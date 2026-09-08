@@ -125,6 +125,25 @@ bật một cờ branch-protection trên GitHub — thứ chỉ Đức đổi đ
 Tới lúc đó, thứ đang có là: **phát hiện ở mọi nơi, cộng đúng MỘT đường đẩy mọi phiên buộc phải đi**
 (`safe-push.mjs`). Đó là **luật cộng cổng, không phải mật mã**.
 
+### ⑹ Ngưỡng nghiệm thu cho vế ⑸ — bốn vế cùng lúc, và bài thử không tự chấm mình
+
+> **Khôi phục 09/09.** Vế này là ⑷ và ⑸ của quyết định **0019**, bị lượt gộp 09/09 đánh rơi. Nó
+> là **tiêu chuẩn chấm** cho cửa tích hợp ở vế ⑸ — mà vế ⑸ còn `Proposed`, nên mất nó là người
+> xây sau này không có gì để chấm.
+
+Ngưỡng *"Đức phân xử 0 lần"* **lách được bằng cách đứng im**: không làm gì cũng đạt 0. Ngưỡng đúng
+là bốn vế **cùng lúc**:
+
+> **Hoàn thành đầu ra đã định · trong thời hạn đã định · không vi phạm quyền hoặc làm mất việc ·
+> Đức phân xử 0 lần về điều phối.**
+
+Đạt bốn vế chứng minh **đạt một lượt thử**, không chứng minh mô hình tốt hơn: bài thử có **N = 1**.
+Lúc báo cáo phải nói *"đạt lượt một"*, đừng nói *"kiến trúc đã được chứng minh"*.
+
+**Và việc thử không được tự thay tiêu chuẩn chấm nó.** Nếu việc thử đụng vào chính cổng kiểm thì
+**bộ kiểm nghiệm thu phải ghim riêng**, ngoài cổng đang bị sửa. Đừng mặc định *"đạt = bỏ được thứ
+gì đó"*: nếu phân tích cho thấy phải **giữ lại** một phần bảo vệ thì đó **vẫn là kết quả đúng**.
+
 ## Vế đã chết
 
 - **0023 ⑴ — *"chưa thấy dấu vết > 30 phút → nhường khoá"*.** Chết: 0025 hôm sau chốt ngược lại —
