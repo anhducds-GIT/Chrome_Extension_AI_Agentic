@@ -73,8 +73,8 @@
     "workers/duc-scouter": {
       "owner": "claude-scouter-s06",
       "ai": "Claude",
-      "claimed_at": "2026-09-08T09:28",
-      "task": "Ket so Scouter: dong S-10 va S-14 da xong tu truoc ma chua ai dong",
+      "claimed_at": "2026-09-08T09:50",
+      "task": "S-13: vot request_id tu phong bi tho de loi INVALID_ENVELOPE khong bien thanh INTERNAL_ERROR",
       "released_at": null
     },
     "workers/_shared": {
@@ -87,10 +87,10 @@
     "workers/hnx-fetch": {
       "owner": "claude-scouter-s06",
       "ai": "Claude",
-      "claimed_at": "2026-09-08T09:34",
-      "task": "Dong so H-01 cho dung cho, va tam dung Scouter",
+      "claimed_at": "2026-09-08T09:50",
+      "task": "Dong not H-02 H-03 H-05, va cung ban va S-13",
       "released_at": null
     }
   },
-  "_fingerprint": "c9206018a74786bd"
+  "_fingerprint": "3878cf3c7dee1dad"
 }

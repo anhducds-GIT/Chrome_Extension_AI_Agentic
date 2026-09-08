@@ -489,4 +489,72 @@ function request(method, params) {
   }
 }
 
+
+/* ---- S-13 · LƯỢT BỊ TỪ CHỐI Ở TẦNG PHONG BÌ PHẢI GIỮ `request_id` -------
+ *
+ * Đo 08/09 trên Bridge chạy THẬT: gọi `capabilities` (thiếu tiền tố `system.`) trả
+ * `INTERNAL_ERROR` kèm `details.reason = uncorrelated_extension_response`, lặp lại 3 lần.
+ *
+ * **Chẩn đoán ghi trong sổ nợ là SAI**, và chỗ sai đáng giữ lại: nó tưởng đây là lỗi định
+ * tuyến tên method. Thật ra `capabilities` không lọt nổi tới bảng method — nó hỏng HÌNH DẠNG
+ * (`METHOD_SHAPE` bắt buộc có dấu chấm), nên `parseRequest` ném TRƯỚC khi biến `request`
+ * được gán, và phản hồi ra đi với `request_id: null`. Máy chủ khớp phản hồi bằng đúng trường
+ * đó, khớp hụt, rồi thay cả phản hồi bằng lỗi nội bộ.
+ *
+ * Nên thứ phải ghim KHÔNG phải *"mọi tên lạ đều trả METHOD_NOT_FOUND"* — ép thế thì phải nới
+ * `METHOD_SHAPE`, tức gỡ một chốt giao thức cho test xanh (luật vàng ③ cấm). Thứ phải ghim là:
+ * **mọi lượt từ chối đều mang `request_id` về**, để lý do thật tới được tay người gọi. */
+{
+  const { dispatch } = makeSeed();
+  const goc = () => ({
+    protocol: PROTOCOL, version: 1, kind: "request", request_id: "req-s13-0001",
+    sent_at: "2026-09-08T10:00:00Z", client: { client_id: "pin-test" }, params: {}
+  });
+
+  /* ⑴ Đúng ca đã đo. */
+  {
+    const ra = await dispatch({ ...goc(), method: "capabilities" });
+    assert.equal(ra.request_id, "req-s13-0001",
+      "phong bì bị từ chối làm MẤT request_id — máy chủ không khớp được và sẽ thay bằng INTERNAL_ERROR");
+    assert.equal(ra.ok, false);
+    assert.equal(ra.error.code, "INVALID_ENVELOPE",
+      "tên không có dấu chấm là hỏng hình dạng phong bì, KHÔNG phải method lạ — đừng nới METHOD_SHAPE để đổi mã này");
+  }
+
+  /* ⑵ Chiều ngược: tên ĐÚNG hình dạng mà không có trong bảng thì vẫn phải là METHOD_NOT_FOUND.
+   * Không có vế này thì cách sửa rẻ nhất là trả INVALID_ENVELOPE cho tất cả. */
+  {
+    const ra = await dispatch({ ...goc(), method: "khong.co.that" });
+    assert.equal(ra.request_id, "req-s13-0001");
+    assert.equal(ra.error.code, "METHOD_NOT_FOUND");
+  }
+
+  /* ⑶ KHÔNG chỉ mỗi tên method — đây là phần rộng hơn sổ nợ mô tả, và là lý do bản vá nằm ở
+   * cửa vào chứ không ở chỗ tra bảng method. */
+  for (const [ten, xau] of [
+    ["sai dấu thời gian", { method: "system.ping", sent_at: "hom qua" }],
+    ["thiếu client_id", { method: "system.ping", client: {} }],
+    ["params sai kiểu", { method: "system.ping", params: "khong phai object" }]
+  ]) {
+    const ra = await dispatch({ ...goc(), ...xau });
+    assert.equal(ra.request_id, "req-s13-0001", ten + ": mất request_id — người gọi chỉ thấy lỗi nội bộ");
+    assert.equal(ra.ok, false);
+  }
+
+  /* ⑷ Vớt được KHÔNG có nghĩa là tin: request_id sai hình dạng phải về null, không chép nguyên
+   * xi ra ngoài dây. */
+  {
+    const ra = await dispatch({ ...goc(), request_id: "x", method: "system.ping" });
+    assert.equal(ra.request_id, null, "request_id sai hình dạng mà vẫn được chép ra phản hồi");
+  }
+
+  /* ⑸ Rác không phải JSON thì bộ vớt phải IM, không được ném — một bộ xử lý lỗi tự nó nổ là
+   * chỗ dấu vết gốc biến mất. */
+  {
+    const ra = await dispatch("{ khong phai json");
+    assert.equal(ra.ok, false);
+    assert.equal(ra.request_id, null);
+  }
+}
+
 console.log("scouter-bridge smoke tests: PASS");

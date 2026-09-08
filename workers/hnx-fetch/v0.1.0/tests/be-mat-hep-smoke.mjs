@@ -508,4 +508,39 @@ async function tuChoi(fn) {
   }
 }
 
-console.log("be-mat-hep-smoke: 8 khoi, tat ca DAT");
+/* ---- ⑼ LƯỢT BỊ TỪ CHỐI Ở TẦNG PHONG BÌ PHẢI GIỮ `request_id` (S-13) ----
+ * Lỗi đo được bên Scouter 08/09, và `bridge-core.mjs` của gói này là bản rút gọn của cùng một
+ * lõi — nên nó có y hệt. `parseRequest` ném TRƯỚC khi biến `request` được gán, nên phản hồi ra
+ * đi với `request_id: null`; máy chủ khớp phản hồi bằng đúng trường đó, khớp hụt, rồi thay cả
+ * phản hồi bằng `INTERNAL_ERROR / uncorrelated_extension_response`.
+ *
+ * Với gói này hậu quả nặng hơn một chút: tầng vòng lặp `vong-lay.mjs` phân loại lỗi để quyết
+ * thử-lại-hay-không, và `INTERNAL_ERROR` bị xếp là KHÔNG thử lại được. Một lượt chạy dài có thể
+ * chết ở một phong bì gõ sai, với một câu không nói được sai ở đâu. */
+{
+  const { handlers } = makeHandlers({ enabled: false });
+  const dispatch = createDispatcher({ handlers });
+  const goc = () => ({
+    protocol: PROTOCOL, version: 1, kind: "request", request_id: "req-s13-0001",
+    sent_at: "2026-09-08T10:00:00Z", client: { client_id: "phep-ghim" }, params: {}
+  });
+
+  for (const [ten, xau, ma] of [
+    ["tên method không có dấu chấm", { method: "capabilities" }, "INVALID_ENVELOPE"],
+    ["sai dấu thời gian", { method: "system.ping", sent_at: "hom qua" }, "INVALID_ENVELOPE"],
+    ["thiếu client_id", { method: "system.ping", client: {} }, "INVALID_ENVELOPE"],
+    ["tên lạ đúng hình dạng", { method: "khong.co.that" }, "METHOD_NOT_FOUND"]
+  ]) {
+    const ra = await dispatch({ ...goc(), ...xau });
+    assert.equal(ra.request_id, "req-s13-0001", ten + ": mất request_id — máy chủ sẽ thay bằng INTERNAL_ERROR");
+    assert.equal(ra.ok, false);
+    assert.equal(ra.error.code, ma, ten + ": sai mã lỗi");
+  }
+
+  /* Vớt được không có nghĩa là tin, và bộ vớt không được tự nổ. */
+  assert.equal((await dispatch({ ...goc(), request_id: "x", method: "system.ping" })).request_id, null,
+    "request_id sai hình dạng mà vẫn được chép ra phản hồi");
+  assert.equal((await dispatch("{ khong phai json")).request_id, null);
+}
+
+console.log("be-mat-hep-smoke: 9 khoi, tat ca DAT");

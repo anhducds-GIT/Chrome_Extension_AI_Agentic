@@ -347,6 +347,28 @@ export function successResponse(request, result, now) {
   };
 }
 
+/* ---- VỚT `request_id` TỪ PHONG BÌ THÔ (S-13) ----------------------------
+ * Vì sao cần: `parseRequest` ném TRƯỚC khi biến `request` được gán, nên mọi lượt bị từ chối ở
+ * tầng phong bì trả về `request_id: null`. Máy chủ Bridge khớp phản hồi với lượt gọi **bằng
+ * đúng trường đó**, nên nó không khớp được và thay cả phản hồi bằng
+ * `INTERNAL_ERROR / uncorrelated_extension_response`.
+ *
+ * Hệ quả RỘNG HƠN mục `S-13` mô tả: **mọi** lý do từ chối ở tầng phong bì đều bị nuốt — sai dấu
+ * thời gian, thiếu `client_id`, phong bì quá khổ — người gọi chỉ thấy "lỗi nội bộ" và không có
+ * đường nào tự sửa. Đo 08/09 trên Bridge chạy thật, lặp lại 3 lần, ổn định.
+ *
+ * Hàm này KHÔNG được ném và KHÔNG tin dữ liệu vào: nó chỉ vớt một chuỗi, còn hình dạng thì
+ * `failureResponse` kiểm lại bằng `REQUEST_ID` trước khi cho vào phản hồi. */
+function requestIdTho(input) {
+  try {
+    const o = typeof input === "string" ? JSON.parse(input) : input;
+    const id = o?.request_id;
+    return typeof id === "string" && REQUEST_ID.test(id) ? id : null;
+  } catch (_error) {
+    return null;   /* không đọc nổi JSON thì không có gì để vớt — đúng là `null` */
+  }
+}
+
 export function failureResponse(requestId, errorOrCode, now, message, details) {
   const error = errorOrCode instanceof BridgeProtocolError
     ? errorOrCode
@@ -378,6 +400,8 @@ export function createDispatcher(options = {}) {
 
   return async function dispatch(input) {
     let request = null;
+    /* Vớt TRƯỚC khi kiểm: sau khi `parseRequest` ném thì không còn chỗ nào lấy được nữa. */
+    const idTho = requestIdTho(input);
     try {
       request = parseRequest(input);
       const entry = requireMethod(request.method);
@@ -385,8 +409,9 @@ export function createDispatcher(options = {}) {
       const result = await handlers[request.method](params, { request, method: entry });
       return successResponse(request, result, now);
     } catch (error) {
-      if (error instanceof BridgeProtocolError) return failureResponse(request?.request_id, error, now);
-      return failureResponse(request?.request_id, "INTERNAL_ERROR", now, undefined, {
+      const id = request?.request_id ?? idTho;
+      if (error instanceof BridgeProtocolError) return failureResponse(id, error, now);
+      return failureResponse(id, "INTERNAL_ERROR", now, undefined, {
         message: String(error?.message ?? error).slice(0, 300)
       });
     }
