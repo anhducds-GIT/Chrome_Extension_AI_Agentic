@@ -5,14 +5,14 @@ name: HNX Fetch
 lifecycle: building
 owner: claude-scouter-s06
 priority_rank: 1
-next_step: "Nạp HNX Fetch vào Chrome và chạy MỘT lượt lấy dữ liệu thật qua nó, thay vì qua Scouter. Toàn bộ mã đã tách xong và phép ghim xanh, nhưng chưa lượt nào đi qua chính extension này."
-human_action: "Nạp extension mới vào Chrome: chrome://extensions → Load unpacked → chọn workers/hnx-fetch/v0.1.0. Rồi bấm icon, chọn tệp ghép cặp, bật công tắc Cho phép lấy dữ liệu."
+next_step: "Chạy MỘT lượt lấy dữ liệu thật qua chính extension HNX Fetch, thay vì qua Scouter. Toàn bộ mã đã tách xong và phép ghim xanh, nhưng chưa lượt nào đi qua nó."
+human_action: "Nạp extension HNX Fetch vào Chrome bằng Load unpacked — README của gói ghi rõ chọn thư mục nào. Rồi bấm icon, chọn tệp ghép cặp, bật công tắc Cho phép lấy dữ liệu."
 version_source: workers/hnx-fetch/v0.1.0/manifest.json
 current_focus: "Tách khỏi Scouter xong: extension riêng, tên giao thức riêng, và bỏ hẳn quyền debugger. Việc còn lại lớn nhất là chạy thật một lượt qua chính nó."
-ref_readme: workers/hnx-fetch/README.md
-ref_handoff: workers/hnx-fetch/HANDOFF.md
-ref_runbook: workers/hnx-fetch/PROTOCOL.md
-ref_backlog: workers/hnx-fetch/BACKLOG.md
+ref_readme: ../README.md
+ref_handoff: ../HANDOFF.md
+ref_runbook: ../PROTOCOL.md
+ref_backlog: ../BACKLOG.md
 ---
 
 # HNX Fetch
