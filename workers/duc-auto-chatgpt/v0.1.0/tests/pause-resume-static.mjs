@@ -20,7 +20,24 @@ assert.match(toggleSegment, /state\.pauseRequested = !state\.pauseRequested;/, "
 
 const waitSegment = sidepanel.slice(sidepanel.indexOf("async function waitWhilePaused()"), sidepanel.indexOf("function showScreen(id)"));
 assert.ok(waitSegment.length > 0, "waitWhilePaused() is present");
-assert.match(waitSegment, /while \(state\.pauseRequested && !state\.stopRequested\) await sleep\(250\);/, "Stop can always break out of a pause without needing Resume first");
+// B-28: khẳng định cũ neo vào ĐÚNG MỘT DÒNG mã — `while (…) await sleep(250);` — trong khi
+// điều nó bảo vệ là một BẤT BIẾN: Stop luôn thoát được khỏi tạm dừng, không cần bấm Tiếp tục
+// trước. Bất biến đó còn nguyên; chỉ thân vòng lặp đổi (nay đua chuông với lưới đỡ 250ms).
+// Nên neo vào điều kiện vòng lặp, đừng neo vào thân.
+assert.match(waitSegment, /while \(state\.pauseRequested && !state\.stopRequested\)/, "Stop can always break out of a pause without needing Resume first");
+
+// Ba khẳng định MỚI, chặt hơn khẳng định vừa thay — cái cũ không hề canh chuyện này.
+// Panel bị che thì Chrome hoãn hẹn giờ của tài liệu ẩn, và một `sleep(250)` đã hoãn KHÔNG
+// được xếp lại khi panel hiện ra: đo được là bấm "Tiếp tục" mất tới khoảng một phút mới ăn.
+// ⑴ Vòng chờ phải đua CHUÔNG với lưới đỡ, không chỉ ngủ.
+assert.match(waitSegment, /await Promise\.race\(\[controlWakePromise\(\), sleep\(250\)\]\)/, "vòng chờ tạm dừng phải thoát được bằng sự kiện, không chỉ bằng hẹn giờ mà Chrome hoãn được");
+// ⑵ Lưới đỡ phải CÒN: chuông hỏng thì vòng chờ vẫn phải thoát được, chỉ chậm.
+assert.match(waitSegment, /sleep\(250\)/, "giữ lưới đỡ — một đường đặt stopRequested mà quên rung chuông vẫn phải thoát được");
+// ⑶ Cả ba đường điều khiển phải rung chuông: bấm Tạm dừng/Tiếp tục, và HAI đường Stop
+//    (`stop()` của panel và `bridgeRunStop()` của Bridge). Thiếu một đường là một cú bấm
+//    lại phải chờ hẹn giờ, đúng con bug này.
+assert.match(toggleSegment, /wakeControlWaiters\(\);/, "togglePause phải rung chuông ngay, đừng để vòng chờ phát hiện bằng hẹn giờ");
+assert.equal((sidepanel.match(/^\s*wakeControlWaiters\(\);$/gm) || []).length, 3, "đúng BA chỗ rung chuông: togglePause + stop() + bridgeRunStop(); ít hơn là có một cú bấm không được đánh thức");
 assert.match(waitSegment, /audit\("RUN_PAUSED", null, \{\}\);/, "pausing is recorded in the audit trail like every other run transition");
 assert.match(waitSegment, /audit\("RUN_RESUMED", null, \{\}\);/, "resuming is recorded too");
 

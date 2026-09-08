@@ -128,6 +128,37 @@
   };
   const queueRunLock = window.DacApprovalPersistence.createQueueRunLock(state);
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // B-28 phần ①: đánh thức bằng SỰ KIỆN cho vòng chờ "Tạm dừng".
+  //
+  // `waitWhilePaused()` vốn chờ bằng `await sleep(250)` trong một vòng lặp. Panel bị che thì
+  // Chrome hoãn hẹn giờ của tài liệu ẩn, và một `sleep(250)` đã hoãn KHÔNG được xếp lại khi
+  // panel hiện ra — nên Đức bấm "Tiếp tục" xong có thể phải chờ tới khoảng một phút mới thấy
+  // gì xảy ra. Không mất dữ liệu, nhưng nút trông như chết, và cái đó Đức sẽ đọc thành lỗi.
+  //
+  // Chữa bằng một cái chuông thay vì một cái đồng hồ: người bấm nút thì `wakeControlWaiters()`
+  // giải phóng ngay vòng chờ, không qua `setTimeout` nào. `sleep(250)` ở lại làm LƯỚI ĐỠ —
+  // nếu ngày nào có một đường đặt `stopRequested` mà quên rung chuông thì vòng chờ vẫn thoát
+  // được, chỉ chậm.
+  //
+  // MỘT promise dùng chung, không phải một promise mỗi lượt chờ: `Promise.race` để promise
+  // thua ở lại treo, nên cấp một cái mới mỗi 250ms là rò rỉ 240 resolver mỗi phút tạm dừng.
+  // Ở đây nhiều nhất có MỘT resolver đang treo; rung chuông là giải nó rồi bỏ, lượt sau cấp mới.
+  let controlWake = null;
+  function controlWakePromise() {
+    if (!controlWake) {
+      let settle;
+      const promise = new Promise((resolve) => { settle = resolve; });
+      controlWake = { promise, settle };
+    }
+    return controlWake.promise;
+  }
+  function wakeControlWaiters() {
+    if (!controlWake) return;
+    const pending = controlWake;
+    controlWake = null;
+    pending.settle("wake");
+  }
   const BRIDGE_DEV_MODE_STORAGE_KEY = "dac.bridge.dev_mode.v1";
   const BRIDGE_LAST_TRIAL_STORAGE_KEY = "dac.bridge.last_trial_at.v1";
   const BRIDGE_TRIAL_MIN_INTERVAL_MS = 5 * 60 * 1000;
@@ -907,6 +938,9 @@
     const promptAlreadySent = Boolean(phase) && phase !== "PRE_SUBMIT";
     if (wasRunning) {
       state.stopRequested = true;
+      // B-28: dừng cũng phải rung chuông — nếu run đang đứng trong vòng chờ tạm dừng thì
+      // nó phải thoát ngay, không đợi lưới đỡ 250ms mà Chrome có thể đã hoãn.
+      wakeControlWaiters();
       progress("Stopping current operation…");
       // The same best-effort abort the owner's Stop button sends. A dead
       // content script must not turn a stop into a failure: the local flag
@@ -5499,6 +5533,24 @@
   // into ~11 minutes, measured live 2026-08-28; see interjob-delay-core.js.
   let interJobDelaySequence = 0;
 
+  // Cùng lõi với `countdown`, khác nhãn: cái này là cooldown THỬ LẠI, không phải khoảng
+  // nghỉ giữa hai job — nên nó KHÔNG chạm `state.interJobCountdown` /
+  // `state.selectedInterJobDelay`, vì hai trường đó là chữ hiện trên màn hình cho khoảng
+  // nghỉ, và mượn chúng là báo sai loại chờ. Dòng đếm của cooldown thử lại vẫn suy từ
+  // `state.retryResumeAt` như cũ; `onTick` chỉ cần vẽ lại.
+  let retryCooldownSequence = 0;
+
+  async function waitRetryCooldown(seconds) {
+    retryCooldownSequence += 1;
+    return await window.DacInterJobDelay.waitBetweenJobs({
+      seconds,
+      token: `retry-${retryCooldownSequence}`,
+      alarms: chrome.alarms,
+      sleep,
+      onTick: () => renderRuntime()
+    });
+  }
+
   async function countdown(seconds, item) {
     state.selectedInterJobDelay = seconds;
     interJobDelaySequence += 1;
@@ -5618,9 +5670,24 @@
       item.retry_count += 1;
       update(item, { status: "PENDING", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: failureType, last_error: message, error: message });
       audit("FAILURE", item, { message }); log(`${item.job.id} ${failureType}; retry ${item.retry_count}/${item.settings.max_retries}.`, "error"); renderQueue();
-      const retryCooldownMs = window.DacRunnerCore.retryCooldown(item.settings, item.retry_count) * 1000;
-      state.retryResumeAt = Date.now() + retryCooldownMs; renderRuntime();
-      await sleep(retryCooldownMs);
+      // B-28 phần ②: chờ hết cooldown thử lại theo MỐC thời gian thật, không bằng một giấc
+      // dài duy nhất. `await sleep(retryCooldownMs)` bị Chrome hoãn khi panel bị che, nên nó
+      // dài HƠN cấu hình — không phá luật an toàn (chờ lâu hơn thì càng an toàn), nhưng dòng
+      // "thử lại sau …" trên màn hình đọc `state.retryResumeAt` và `Math.max(0, …)`
+      // (`sidepanel-ui-semantics.js:24`), nên nó tụt về 0 rồi ĐỨNG ở 0 trong khi giấc ngủ vẫn
+      // chưa xong. Đức đọc thành treo.
+      //
+      // Dùng lại đúng module đã chữa khoảng nghỉ giữa hai job — `interjob-delay-core.js`, nơi
+      // MỐC là thẩm quyền và `chrome.alarms` chỉ để hỏi lại. Nó bảo đảm **không bao giờ ngắn
+      // hơn** cấu hình, nên cooldown thử lại vẫn là cooldown thử lại; chỉ hết trôi.
+      //
+      // CỐ Ý không truyền `shouldStop`: đường này là luật thử lại, và cho Stop cắt ngắn
+      // cooldown là một thay đổi HÀNH VI trên luật an toàn (AGENTS.md gốc mục 2) — phải hỏi
+      // Đức, không gộp vào một bản vá về độ chính xác. Hôm nay Stop vẫn chờ hết cooldown,
+      // đúng như trước lượt vá này.
+      const retryCooldownSec = window.DacRunnerCore.retryCooldown(item.settings, item.retry_count);
+      state.retryResumeAt = Date.now() + retryCooldownSec * 1000; renderRuntime();
+      await waitRetryCooldown(retryCooldownSec);
       state.retryResumeAt = null; renderRuntime();
       return { completed: false, halted: false };
     }
@@ -6078,6 +6145,9 @@
   // của run TRƯỚC, nên chỉ được tin nó khi run đang THẬT SỰ chạy.
   async function stop() {
     state.stopRequested = true;
+    // B-28: dừng cũng phải rung chuông — nếu run đang đứng trong vòng chờ tạm dừng thì
+    // nó phải thoát ngay, không đợi lưới đỡ 250ms mà Chrome có thể đã hoãn.
+    wakeControlWaiters();
     progress("Stopping current operation…");
     const current = state.running ? state.currentItem : null;
     const scoped = current?.attempt_id ? { job_id: current.job.id, attempt_id: current.attempt_id } : {};
@@ -6094,6 +6164,8 @@
   // Resume continues it with no re-checkpoint, no re-gate, nothing lost.
   function togglePause() {
     state.pauseRequested = !state.pauseRequested;
+    // B-28: rung chuông NGAY, đừng để vòng chờ phát hiện ra bằng hẹn giờ.
+    wakeControlWaiters();
     if (state.pauseRequested) {
       progress("Sẽ tạm dừng ngay sau khi job hiện tại hoàn tất — job đang chạy sẽ không bị huỷ giữa chừng.");
       log("Pause requested; the current job finishes first.", "info");
@@ -6112,7 +6184,8 @@
     log("Run paused between jobs.", "info");
     audit("RUN_PAUSED", null, {});
     renderQueue(); controls();
-    while (state.pauseRequested && !state.stopRequested) await sleep(250);
+    // Chuông trước, đồng hồ sau: `sleep(250)` chỉ còn là lưới đỡ (xem `wakeControlWaiters`).
+    while (state.pauseRequested && !state.stopRequested) await Promise.race([controlWakePromise(), sleep(250)]);
     state.paused = false;
     if (!state.stopRequested) {
       audit("RUN_RESUMED", null, {});

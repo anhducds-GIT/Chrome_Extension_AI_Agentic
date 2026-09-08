@@ -131,7 +131,20 @@ const retry = ui.runtimeInfo({
 }, 1000, format);
 assert.equal(retry.retryState, "Retry 1/2 · next retry in 00:05");
 assert.equal(retry.nextTransition, "Retry is pending; readiness will be checked before submission");
-assert.match(source, /state\.retryResumeAt = Date\.now\(\) \+ retryCooldownMs/);
+// B-28: mốc vẫn phải được ĐẶT (đó là thứ dòng đếm ở trên suy ra từ), nhưng nay tính từ giây
+// chứ không từ millisecond. Cộng hai khẳng định MỚI, chặt hơn cái cũ: lượt chờ phải đi qua
+// `waitRetryCooldown()`, và KHÔNG được quay về `sleep()` trần. Trước lượt vá, chỗ này là
+// `await sleep(retryCooldownMs)` — một giấc dài duy nhất mà Chrome hoãn được khi panel bị
+// che, nên dòng "thử lại sau …" (suy từ `retryResumeAt`, có `Math.max(0, …)`) tụt về 0 rồi
+// ĐỨNG ở 0 trong khi giấc ngủ chưa xong.
+assert.match(source, /state\.retryResumeAt = Date\.now\(\) \+ retryCooldownSec \* 1000/);
+assert.match(source, /await waitRetryCooldown\(retryCooldownSec\);/, "cooldown thử lại phải chờ theo mốc thời gian thật, không bằng một sleep() dài duy nhất");
+// Lọc dòng chú giải TRƯỚC khi soi, vì chuỗi `await sleep(retryCooldownMs)` cố ý còn nằm
+// trong khối chú giải của chính chỗ vừa vá — nó kể lại bản cũ để phiên sau hiểu vì sao
+// đổi. Một `doesNotMatch` trên toàn văn bản không phân biệt được mã với chú giải, và nó
+// đã đỏ oan đúng như thế ở lượt đầu viết dòng này.
+const codeOnly = source.split("\n").filter((line) => !line.trim().startsWith("//")).join("\n");
+assert.doesNotMatch(codeOnly, /await sleep\(retryCooldownMs\)/, "không được quay về giấc ngủ dài duy nhất mà Chrome bóp được");
 
 const queueRunning = { status: "RUNNING", submitted_at: "2026-08-21T00:00:00.000Z" };
 assert.equal(ui.queueElapsed(queueRunning, { currentItem: queueRunning, currentStartedAt: Date.parse("2026-08-21T00:00:00.000Z") }, Date.parse("2026-08-21T00:00:42.000Z"), format), "00:42");

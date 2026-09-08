@@ -134,6 +134,11 @@ function runShipped(item, failureType, { continue_on_error = true } = {}) {
     setCurrent: () => {},
     renderRuntime: () => {},
     sleep: async (ms) => { calls.slept += ms; },
+    // B-28: cooldown thử lại nay chờ qua `waitRetryCooldown()` (mốc thời gian thật, miễn
+    // nhiễm với việc Chrome bóp hẹn giờ) chứ không qua `sleep()` trần. Ghi vào CÙNG bộ đếm
+    // và cùng đơn vị, để khẳng định "vẫn phải chờ cooldown" ở dưới vẫn đo đúng cái nó đo:
+    // ai bỏ hẳn lượt chờ thì `slept` về 0 và test đỏ, y như trước.
+    waitRetryCooldown: async (seconds) => { calls.slept += seconds * 1000; },
     markInterrupted: () => { calls.interrupted += 1; }
   };
   vm.createContext(sandbox);
