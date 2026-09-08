@@ -36,3 +36,29 @@ khoá nào bị đổi chủ. Chi tiết ba cửa đã đóng và điều kiện
 dạng `_shared/*/tests/*.mjs`). Đột biến: `X1..X4` trong `scouter-mutation-check.mjs`, giết 4/4.
 
 <!-- HANDOFF-THANG: 2026-09 -->
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — thêm bộ sinh tệp ghép cặp
+
+**Vì sao vào `_shared` chứ không vào một gói:** nó phải sinh ra thứ mà `validatePairing()` chấp
+nhận, và hàm đó ở ngay cạnh. Để bộ sinh ở một gói thì gói kia sẽ chép — đúng bệnh giới hạn ② của
+`AGENTS.md` cấm. Ở đây nó **tự kiểm bằng chính hàm máy chủ dùng**, nên không thể sinh ra tệp mà
+máy chủ từ chối. Lượt thử đầu chứng minh ngay: bản đầu sinh token dạng hex và bị chính
+`validatePairing` chặn (nó đòi base64url 43 ký tự).
+
+**Chỗ đáng nhớ nhất của lượt này: chốt an toàn của chính tôi đã hỏng CÂM.** Chốt ⑴ là *"không
+ghi vào trong kho mã"* — tệp ghép cặp chở token. Lượt thử đầu nó **không nổ**, và bộ sinh đã đặt
+một tệp có token thẳng vào gốc repo (chưa từng được track, đã xoá ngay).
+
+Nguyên nhân: gốc repo tính bằng cách tự gỡ `URL.pathname`, mà trên Windows chuỗi đó là
+`/C:/WORKING%20ZONE/...` — **dấu cách còn ở dạng `%20`**, nên đường dẫn dựng ra không khớp thư
+mục thật và phép so luôn trả *"nằm ngoài repo"*. Đã chuyển sang `fileURLToPath`.
+
+Phép ghim `tests/tao-tep-ghep-cap-smoke.mjs` vì thế **không so chuỗi** — nó chạy thật tệp lệnh,
+xem có tệp nào rơi vào repo không, và cố ý thử một đường dẫn **có dấu cách**.
+
+Bài học chung, không riêng tệp này: **một chốt hỏng câm tệ hơn không có chốt** — không có thì
+người ta còn cẩn thận.
+
+**Việc kế:** không có.

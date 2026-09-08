@@ -704,3 +704,32 @@ hiện một con số nợ **cao hơn sự thật**.
 
 **Việc kế:** không có. Quay lại thì đọc `ROADMAP.md` mục ① — trang thử thứ hai, ba ứng viên,
 khuyên `hsx.vn`, và bước đầu là một phép đo chứ không phải viết mã.
+
+---
+
+## 2026-09-08 · `claude-scouter-s06` — sổ nợ Scouter nay RỖNG
+
+Đức hỏi *"ta không còn nợ kỹ thuật hay rác nữa đúng không?"* rồi bảo đóng nốt. Với gói này thì
+đã đóng hết thật, và đây là hai mục cuối.
+
+**`S-13` — chẩn đoán cũ SAI.** Sổ tưởng lỗi định tuyến tên method. Thật ra `capabilities` không
+lọt nổi tới bảng method: nó hỏng **hình dạng phong bì** (`METHOD_SHAPE` bắt buộc có dấu chấm),
+nên `parseRequest` ném TRƯỚC khi biến `request` được gán, phản hồi ra đi với `request_id: null`,
+máy chủ khớp hụt rồi thay cả phản hồi bằng `INTERNAL_ERROR`. Hậu quả rộng hơn sổ mô tả: **mọi**
+lý do từ chối ở tầng phong bì đều bị nuốt.
+
+Vá ở **cửa vào**: vớt `request_id` từ phong bì thô trước khi kiểm. **Không** nới `METHOD_SHAPE`
+để ép ra `METHOD_NOT_FOUND` — đó là gỡ một chốt giao thức cho test xanh, luật vàng ③ cấm. Ghim
+cả hai chiều; đột biến `PB1` giết được, bộ đo **96/96 mỏ neo, 96 giết được, 0 sống sót**.
+
+**Một con đột biến sống sót, và tôi bỏ MÃ chứ không bỏ con đó.** `PB2` hoàn nguyên lớp kiểm hình
+dạng trong bộ vớt — phép ghim vẫn xanh, vì `failureResponse` đã kiểm ở cửa ra và cửa ra là đường
+DUY NHẤT phản hồi đi qua. Nên lớp đó là bình luận, không phải chốt: gỡ nó, gỡ luôn con đột biến.
+Giữ một con không giết được là để lại một dòng đỏ vĩnh viễn mà ai cũng học cách bỏ qua.
+
+**`S-12` — chuyển nhà, không phải bỏ qua.** Nó nói về vòng lấy dữ liệu hnx, mà pilot đó đã sang
+`workers/hnx-fetch` cùng `S-10`. Cùng một chuyện đã có mục riêng ở nhà mới (`H-03`), kèm đúng hai
+đường ra như ở đây. Hai bản của một mục nợ ở hai quyển sổ thì chắc chắn một bản được đóng còn bản
+kia nằm lại mãi. Quyết định vẫn chờ Đức, và nó nằm ở `H-03`.
+
+**Việc kế:** không có. Gói tạm dừng, sổ rỗng, suite xanh, đột biến 0 sống sót.
