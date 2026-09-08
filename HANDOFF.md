@@ -1919,3 +1919,5 @@ HEAD. **Hoàn nguyên phải được KIỂM, không chỉ được THỬ** — 
 `N-45` (gói đã mở băng nhưng lane khác đang giữ khoá) · `N-47` (mở hôm nay).
 
 > **Bổ sung cùng ngày:** đóng `N-47` — tôi ghi mục đó **sai**, hai bộ đo đột biến trong repo đã chống đúng chỗ tôi vấp và chống kỹ hơn. Cái hỏng là bộ đo **nháp** tôi dựng ngoài repo cho nhanh. Mở `N-48`: khoá mức file bị cổng kéo ngược về khoá vùng ở lượt đẩy — gặp thật ngay lượt đầu dùng cơ chế mới. Sổ nợ còn **3**.
+
+> **Sửa hồ sơ cùng ngày:** tôi **đóng `N-40` sớm**. Lane `claude-gpt-no-ky-thuat` chứng minh live rằng `--soat` không đủ — nó đo đúng *tại thời điểm nó chạy*, còn chỗ hở là **cửa sổ giữa `--soat` và `git commit`**. Nửa còn lại đi tiếp ở `N-49`, và nó **cần Đức chốt** (bản vá duy nhất nằm trong lượt commit là một `pre-commit` hook, mà cài chung thì phải đổi `core.hooksPath` của cả repo).
