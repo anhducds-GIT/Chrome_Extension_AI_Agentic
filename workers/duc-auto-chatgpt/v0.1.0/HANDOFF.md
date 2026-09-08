@@ -434,9 +434,8 @@ và lúc đó không có đích để về.
 
 **Kết quả số.** Suite gói **120 → 121**. Thử phá **12/12**, 0 con thoát, trên cả hai file nguồn.
 
-**Vòng chờ tách ra thành `waitTabComposer()` dùng chung** — đường tự chữa cần đúng vòng chờ đó sau
-một lần **điều hướng**, không phải sau một lần F5; hai bản sao của một vòng chờ là thứ giới hạn ②
-của `AGENTS.md` gốc cấm. Bất biến "F5 trước, chờ sau" nay trải hai hàm nên được ghim trên cả hai.
+**Vòng chờ tách ra thành `waitTabComposer()` dùng chung** — giới hạn ② cấm hai bản sao của một
+vòng chờ; lý do ở dòng bản đồ file của phép ghim.
 
 **Còn mở.** B-41 mới xong **1 trong 3 phần**: ⑵ `DETECTION_BLIND` (đối soát trước, không gửi lại)
 và ⑶ lời nhà cung cấp tự khẳng định là nguồn đối soát vẫn còn. Con số *"0 nguồn khẳng định"* trong
