@@ -277,3 +277,15 @@ chốt** ai giữ khoá đó.
   - **Đẩy bằng `--carry`, và đây là tên hai lane bị cuốn theo** (ADR-0005 bắt kể tên): `claude-bang-vung-chac` (2 commit — `_code`, bộ sinh đối chiếu) và `claude-scouter-s06` (4 commit — gói Scouter). Tôi **không** thực hiện việc của họ và không biết họ đã xong chưa; commit của họ đã nằm sẵn trong nhánh lúc tôi đẩy.
 
 <!-- HANDOFF-THANG: 2026-09 -->
+
+## 2026-09-08 · `claude-ext-mobang` — gạch ba mã đã đóng mà chưa gạch
+
+**Làm gì:** `B-29` · `B-16` · `B-18` tự khai `**ĐÃ ĐÓNG**` trong tiêu đề nhưng không gạch
+`~~mã~~`, nên bản đồ việc ở gốc repo phải đoán và nó báo *"đã đóng nhưng KHÔNG gạch ngang"*
+mỗi lượt chạy. Chỉ sửa **hình dạng tiêu đề**, không đổi một chữ nội dung nào.
+
+**Vì sao tới hôm nay mới làm được:** gói này đang đóng băng, tức file cấm sửa. Đức mở băng
+chiều 08/09 ([ADR-0024] ở gốc repo) nên cửa đã mở.
+
+**Kết quả:** cảnh báo của bản đồ việc **4 mã → 1 mã**. Còn lại `G-14` ở gói `gemini` — lane
+`claude-gemini-crlf` đang giữ khoá, không đụng. Suite gói xanh 115/115.
