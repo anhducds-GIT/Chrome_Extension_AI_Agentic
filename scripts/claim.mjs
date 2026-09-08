@@ -40,17 +40,70 @@ export const CLAIMS_FILE = path.join(ROOT, ".agents", "claims.json");
 
 export const EXIT = Object.freeze({ OK: 0, MISUSE: 2, REFUSED: 3, CLOBBERED: 4 });
 
-export function readClaims(file = CLAIMS_FILE) {
-  let raw;
-  try { raw = fs.readFileSync(file, "utf8"); }
-  catch (error) { throw new Error(`CLAIMS_KHONG_DOC_DUOC: ${error.message}`); }
-  let parsed;
-  try { parsed = JSON.parse(raw); }
-  catch (error) { throw new Error(`CLAIMS_HONG: không phải JSON đọc được (${error.message}). Sửa tay rồi chạy lại.`); }
-  if (!parsed || typeof parsed.claims !== "object" || Array.isArray(parsed.claims)) {
-    throw new Error("CLAIMS_HONG: thiếu khối `claims` dạng object.");
+/* NGỦ ĐỒNG BỘ, vài mili giây. `Atomics.wait` chứ không vòng lặp bận: vòng lặp bận đốt một
+   lõi trong đúng lúc máy đang bận vì có lane khác chạy — tức nó làm nặng thêm cái nó đang chờ. */
+function nghiMs(ms) {
+  try { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); } catch { /* thôi */ }
+}
+
+/* ---- ĐỌC BẢNG: THỬ LẠI CÓ GIỚI HẠN — N-33 ---------------------------------
+ *
+ * **[ĐO 07/09, lúc có 6 lane cùng chạy]** cổng đóng phiên nhấp nháy đỏ 1–2 mục, và mục đỏ nào
+ * chạy riêng ngay sau cũng XANH. Một trong ba câu báo sai là *"claims.json thiếu trường
+ * `_fingerprint`"* trong khi đọc trực tiếp năm lượt đều thấy nó.
+ *
+ * Nguyên nhân: `writeFileSync` **không nguyên tử**. Nó cắt file về 0 byte rồi ghi lại, nên có
+ * một khe vài chục micro-giây mà người đọc thấy một file rỗng hoặc cụt. Bảng này bị ghi rất
+ * dày — đo 02/09: **63 lượt ghi trong một ngày**.
+ *
+ * Cái giá của một lượt đỏ SAI không nhỏ: cổng đỏ thì luật cấm báo xong và cấm đẩy, nên nó
+ * **giam commit của cả repo**; tệ hơn, nó dạy phiên đi sửa một thứ không hỏng — hoặc chạy
+ * `--restamp` cho xong việc, đúng cái luật cấm.
+ *
+ * HAI LỚP, và lớp ghi mới là lớp chính: `ghiBangNguyenTu` bên dưới ghi ra file tạm rồi
+ * `rename` — `rename` trong cùng một thư mục là nguyên tử, nên người đọc thấy **hoặc bản cũ
+ * hoặc bản mới**, không bao giờ thấy nửa chừng. Lớp đọc này là dây bảo hiểm cho bản ghi của
+ * công cụ khác (và của lượt sửa tay), không phải lớp chính.
+ *
+ * CHỈ THỬ LẠI VỚI LỖI THOÁNG QUA. Một bảng hỏng THẬT thì hỏng ổn định, nên thử lại ba lượt
+ * cũng ra đúng lỗi ấy và nó vẫn được ném — thử lại **không** biến một bảng hỏng thành hợp lệ. */
+export function readClaims(file = CLAIMS_FILE, { lan = 3, nghi = 15 } = {}) {
+  let cuoiCung;
+  for (let i = 0; i < Math.max(1, lan); i += 1) {
+    if (i > 0) nghiMs(nghi);
+    let raw;
+    try { raw = fs.readFileSync(file, "utf8"); }
+    catch (error) {
+      // File KHÔNG CÓ là kết luận ổn định — đừng thử lại ba lượt cho một câu trả lời không đổi.
+      if (error && error.code === "ENOENT") throw new Error(`CLAIMS_KHONG_DOC_DUOC: ${error.message}`);
+      cuoiCung = new Error(`CLAIMS_KHONG_DOC_DUOC: ${error.message}`);
+      continue;
+    }
+    let parsed;
+    try { parsed = JSON.parse(raw); }
+    catch (error) { cuoiCung = new Error(`CLAIMS_HONG: không phải JSON đọc được (${error.message}). Sửa tay rồi chạy lại.`); continue; }
+    if (!parsed || typeof parsed.claims !== "object" || Array.isArray(parsed.claims)) {
+      cuoiCung = new Error("CLAIMS_HONG: thiếu khối `claims` dạng object.");
+      continue;
+    }
+    return parsed;
   }
-  return parsed;
+  throw cuoiCung;
+}
+
+/* GHI NGUYÊN TỬ — lớp chính của N-33. Ghi ra file tạm CÙNG THƯ MỤC rồi `rename`: cùng thư mục
+   thì cùng phân vùng, và `rename` cùng phân vùng là một thao tác nguyên tử của hệ điều hành.
+   Tên tạm mang PID để hai tiến trình không giẫm lên file tạm của nhau. */
+export function ghiBangNguyenTu(file, noiDung) {
+  const tam = `${file}.dang-ghi-${process.pid}`;
+  try {
+    fs.writeFileSync(tam, noiDung, "utf8");
+    fs.renameSync(tam, file);
+  } finally {
+    // Dọn file tạm nếu `rename` không tới nơi. Không ném ở đây — lỗi thật đã ném ở trên rồi,
+    // và một lỗi dọn dẹp che mất lỗi gốc là kiểu báo lỗi tệ nhất.
+    try { if (fs.existsSync(tam)) fs.unlinkSync(tam); } catch { /* thôi */ }
+  }
 }
 
 /* ---- DẤU NIÊM PHONG -------------------------------------------------------
@@ -683,7 +736,7 @@ function main() {
       console.log(`\nĐã ghi xuất xứ cho ${doiChu.length} khoá đổi chủ: ${doiChu.map((d) => d.key).join(", ")}`);
     }
     parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims, parsed.tam);
-    fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
+    ghiBangNguyenTu(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`);
     console.log(`\ndấu cũ: ${seal.stamped ?? "(chưa có)"}  →  dấu mới: ${parsed[FINGERPRINT_FIELD]}`);
     console.log("Nếu bạn KHÔNG cố ý làm việc này thì vừa xoá dấu vết một vụ sửa tay. Xem lại git diff .agents/claims.json.");
     process.exit(EXIT.OK);
@@ -798,7 +851,7 @@ function main() {
     }
     parsed.tam = tam;
     parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims, parsed.tam);
-    fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
+    ghiBangNguyenTu(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`);
     const ten = ds.map((d) => chuanDuongDan(d)).join(" · ");
     if (laySua) {
       console.log(`đang sửa (${ds.length}): ${ten}`);
@@ -843,7 +896,7 @@ function main() {
        ở phép ghim chạy THẬT trong `tests/claim-smoke.mjs`, nơi nó đo được. */
     parsed.claims[khaiVung] = { owner: null, ai: null, claimed_at: null, task: null, released_at: null };
     parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims, parsed.tam);
-    fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
+    ghiBangNguyenTu(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`);
     console.log(`đã khai vùng: ${khaiVung} — TRỐNG CHỦ. Nhận nó: node scripts/claim.mjs --take ${khaiVung} --as ${as}`);
     console.log(`dấu cũ: ${seal.stamped ?? "(chưa có)"}  →  dấu mới: ${parsed[FINGERPRINT_FIELD]}`);
     process.exit(EXIT.OK);
@@ -964,7 +1017,7 @@ function main() {
   }
   parsed.claims[key] = ghi;
   parsed[FINGERPRINT_FIELD] = claimsFingerprint(parsed.claims, parsed.tam);
-  fs.writeFileSync(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
+  ghiBangNguyenTu(CLAIMS_FILE, `${JSON.stringify(parsed, null, 2)}\n`);
 
   // GHI RỒI ĐỌC LẠI. Không chặn được đua, nhưng không để nó âm thầm.
   const after = readClaims().claims[key];

@@ -6,12 +6,12 @@
  */
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ageHours, ageLabel, BASELINE, baselineDaNiemPhong, canDayTruocKhiTra, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, khoaBiDoiChu, khoaFileTrongVung, kiemKhoaKhaiDuoc, quyetDinhSua, quyetDinhXong, readClaims, soatDanHang } from "../scripts/claim.mjs";
+import { ageHours, ageLabel, BASELINE, baselineDaNiemPhong, canDayTruocKhiTra, claimsFingerprint, decide, EXIT, FINGERPRINT_FIELD, fingerprintState, GIO_NHAC, ghiBangNguyenTu, khoaBiDoiChu, khoaFileTrongVung, kiemKhoaKhaiDuoc, quyetDinhSua, quyetDinhXong, readClaims, soatDanHang } from "../scripts/claim.mjs";
 import { CHUA_DAY } from "../scripts/repo-structure.mjs";
 
 let passed = 0;
@@ -1053,6 +1053,69 @@ const CLAIMS = () => ({
   assert.doesNotMatch(nguon, /import \{ appendOnlyAtEof[^}]*\} from "\.\/[a-z-]*claim/,
     "phai DUNG LAI ham cua repo-structure, dung viet ban sao thu ba cua luat append-only");
   ok("--soat that su soi so chung, va dung lai luat append-only san co");
+}
+
+{
+  /* ---- ĐỎ GIẢ KHI NHIỀU LANE CÙNG GHI — N-33 ------------------------------
+   *
+   * **[ĐO 07/09, 6 lane cùng chạy]** cổng nhấp nháy đỏ 1–2 mục, và mục đỏ nào chạy riêng ngay
+   * sau cũng XANH. Một câu báo sai: *"claims.json thiếu `_fingerprint`"* trong khi đọc trực
+   * tiếp năm lượt đều thấy nó. Nguyên nhân: `writeFileSync` cắt file về 0 byte rồi ghi lại,
+   * nên có một khe mà người đọc thấy file rỗng. Bảng bị ghi 63 lượt/ngày.
+   *
+   * Cái giá không nhỏ: cổng đỏ thì luật cấm đẩy, nên một lượt đỏ SAI giam commit của cả repo. */
+  const temp = mkdtempSync(join(tmpdir(), "claim-n33-"));
+  try {
+    const f = join(temp, "claims.json");
+    const day = { claims: { _root: { owner: "p1" } }, _fingerprint: "x" };
+    ghiBangNguyenTu(f, JSON.stringify(day, null, 2) + "\n");
+    assert.deepEqual(readClaims(f).claims, day.claims, "ghi nguyen tu roi doc lai phai ra dung ban do");
+    assert.deepEqual(
+      readdirSync(temp).filter((x) => x.includes("dang-ghi")), [],
+      "khong duoc de lai file tam sau khi ghi xong",
+    );
+
+    /* CỐ Ý KHÔNG dựng ca "đọc trúng khe ghi rồi lượt sau lành": lớp đọc thử lại chặn bằng
+       `Atomics.wait`, thứ khoá luôn vòng lặp sự kiện — nên trong một phép kiểm đồng bộ không
+       có cách nào để file đổi nội dung GIỮA hai lượt thử. Dựng một ca giả vờ ở đây sẽ xanh mà
+       không chứng minh gì. Tính chất thật — người đọc không bao giờ thấy nửa chừng — do LỚP
+       GHI bảo đảm, và lớp đó thì kiểm được: xem ba khẳng định trên và khối cuối. */
+    ok("N-33 · ghi nguyen tu: khong de lai file tam, doc lai ra dung ban do");
+  } finally {
+    assert.ok(temp.startsWith(join(tmpdir(), "claim-n33-")), "chi don dung temp fixture cua phep kiem nay");
+    rmSync(temp, { recursive: true, force: true });
+  }
+}
+
+{
+  /* THỬ LẠI KHÔNG ĐƯỢC BIẾN MỘT BẢNG HỎNG THẬT THÀNH HỢP LỆ. Một bảng hỏng thì hỏng ỔN ĐỊNH,
+     nên ba lượt thử ra cùng một lỗi và lỗi ấy vẫn phải được ném. Thiếu vế này thì "thử lại"
+     trở thành "bỏ qua", và cửa fail-closed của bảng quyền biến mất. */
+  const temp = mkdtempSync(join(tmpdir(), "claim-n33b-"));
+  try {
+    const f = join(temp, "claims.json");
+    writeFileSync(f, "{ khong phai json", "utf8");
+    assert.throws(() => readClaims(f, { lan: 3, nghi: 1 }), /CLAIMS_HONG/,
+      "bang hong THAT thi thu lai bao nhieu lan cung phai NEM");
+    writeFileSync(f, JSON.stringify({ khong_co_khoi_claims: 1 }), "utf8");
+    assert.throws(() => readClaims(f, { lan: 3, nghi: 1 }), /CLAIMS_HONG/, "thieu khoi claims cung vay");
+    assert.throws(() => readClaims(join(temp, "khong-co-file.json"), { lan: 3, nghi: 1 }), /CLAIMS_KHONG_DOC_DUOC/,
+      "file khong co la ket luan ON DINH — nem ngay, dung thu lai ba luot cho mot cau tra loi khong doi");
+    ok("N-33 · thu lai KHONG bien mot bang hong that thanh hop le");
+  } finally {
+    assert.ok(temp.startsWith(join(tmpdir(), "claim-n33b-")), "chi don dung temp fixture cua phep kiem nay");
+    rmSync(temp, { recursive: true, force: true });
+  }
+}
+
+{
+  // Ghim ĐƯỜNG DÂY: mọi lượt ghi bảng phải đi qua cửa nguyên tử. Một hàm đúng mà chỗ ghi vẫn
+  // gọi `writeFileSync` thẳng thì N-33 còn nguyên.
+  const nguon = readFileSync(join(SCRIPTS_DIR, "claim.mjs"), "utf8");
+  assert.doesNotMatch(nguon, /fs\.writeFileSync\(CLAIMS_FILE/,
+    "khong duoc con luot ghi thang nao vao CLAIMS_FILE — moi luot phai qua ghiBangNguyenTu");
+  assert.match(nguon, /renameSync\(tam, file\)/, "ghi nguyen tu phai la ghi-tam-roi-rename");
+  ok("N-33 · moi luot ghi bang deu qua cua nguyen tu");
 }
 
 console.log(`\n${passed} passed, 0 failed, ${passed} total`);
