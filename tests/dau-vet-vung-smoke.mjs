@@ -52,6 +52,31 @@ const CHU_CAM = ["rảnh", "nhàn", "không làm gì", "khong lam gi", "ranh roi
  *
  * Không chỗ nào được gõ chuỗi riêng: ba bản của một chữ thì sớm muộn trả ba câu khác nhau —
  * repo này đã trả giá đúng thế với `append_only_exempt` ngày 02/09. */
+
+/** Tên mọi file dưới `scripts/` mà repo tạm cần, suy từ import CỦA CHÍNH chúng.
+ *
+ * Đi lan từ bốn gốc mà repo tạm gọi thẳng, rồi bám theo mọi `from "./x.mjs"`. Thêm một import
+ * mới vào bất kỳ file nào trong chuỗi đó thì hàm này tự thấy — không ai phải nhớ sửa ở đây. */
+function canChep(root) {
+  const goc = ["session-check.mjs", "claim.mjs", "what-next.mjs", "chay-test.mjs",
+               "build-dashboard.mjs", "feature-parity.mjs", "backlog-check.mjs"];
+  const thay = new Set();
+  const hang = [...goc];
+  while (hang.length) {
+    const ten = hang.shift();
+    if (thay.has(ten)) continue;
+    let src;
+    try { src = readFileSync(join(root, "scripts", ten), "utf8"); } catch { continue; }
+    thay.add(ten);
+    /* HAI kiểu phụ thuộc, và bỏ kiểu thứ hai thì repo tạm vẫn chết: `import` tĩnh, VÀ script
+       được GỌI như tiến trình con (`check-bootstrap.mjs` đi đường đó). */
+    for (const m of src.matchAll(/from\s+"\.\/([\w.-]+\.mjs)"/g)) hang.push(m[1]);
+    for (const m of src.matchAll(/"scripts",\s*"([\w.-]+\.mjs)"/g)) hang.push(m[1]);
+    for (const m of src.matchAll(/scripts\/([\w.-]+\.mjs)/g)) hang.push(m[1]);
+  }
+  return [...thay];
+}
+
 {
   for (const f of ["claim.mjs", "what-next.mjs", "session-check.mjs"]) {
     const src = readFileSync(join(ROOT, "scripts", f), "utf8");
@@ -130,11 +155,13 @@ const CHU_CAM = ["rảnh", "nhàn", "không làm gì", "khong lam gi", "ranh roi
     // file là đã bị sửa, và ca "chưa thấy dấu vết" không bao giờ dựng được.
     gitAt("config", "core.autocrlf", "false");
     mkdirSync(join(temp, "scripts"), { recursive: true });
-    /* Chép đủ bộ: `session-check.mjs` import cả `handoff.mjs` lẫn `check-bootstrap.mjs`; thiếu
-       một file thì repo tạm chết vì ERR_MODULE_NOT_FOUND, và cái chết đó trông y hệt một phép
-       kiểm hỏng. */
-    for (const name of ["repo-structure.mjs", "handoff.mjs", "session-check.mjs", "check-bootstrap.mjs",
-                        "claim.mjs", "what-next.mjs", "build-dashboard.mjs", "feature-parity.mjs", "backlog-check.mjs", "chay-test.mjs"]) {
+    /* Chép đủ bộ: thiếu một file thì repo tạm chết vì ERR_MODULE_NOT_FOUND, và cái chết đó
+       trông y hệt một phép kiểm hỏng.
+       DANH SÁCH SUY TỪ CHÍNH MÃ NGUỒN, không gõ tay. Bản trước gõ tay mười tên và **đã mục
+       đúng như chú thích của nó cảnh báo**: 09/09 `session-check.mjs` nhận thêm một import
+       (`rule-compile.mjs`) và cả suite đỏ. Một danh sách phải sửa mỗi lần thêm import là một
+       danh sách sẽ bị quên. */
+    for (const name of canChep(ROOT)) {
       copyFileSync(join(ROOT, "scripts", name), join(temp, "scripts", name));
     }
     put(".repo-structure.json", JSON.stringify({
