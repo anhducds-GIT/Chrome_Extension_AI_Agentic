@@ -238,6 +238,15 @@ for (const mutation of [".click()", ".focus()", "setComposerValue", "dispatchEve
     ["https://chatgpt.com/", null, "trang phóng"],
     ["https://chatgpt.com/g/g-p-6a9d9925", null, "trang Project, chưa vào hội thoại nào"],
     ["https://chatgpt.com/gpts", null, "trang danh mục"],
+    // Bốn mép dưới đây thêm sau một con đột biến LỌT LƯỚI: nới luật thành `c\/?([^/?#]*)`
+    // vẫn xanh với cả bảng trên, vì không dòng nào có đoạn đường dẫn BẮT ĐẦU bằng chữ "c".
+    // Với bản nới đó thì `/codex` đọc ra id "odex" — một hội thoại không tồn tại, và tệ hơn:
+    // `surfaceAllowed` nói KHÔNG gửi được trong khi `conversationId` lại nêu tên một hội
+    // thoại, tức hai luật lệch đúng theo cách mục này sinh ra để chặn.
+    ["https://chatgpt.com/codex", null, "đường dẫn bắt đầu bằng 'c' KHÔNG phải hội thoại"],
+    ["https://chatgpt.com/chat", null, "cùng bẫy: 'chat' mở đầu bằng 'c'"],
+    ["https://chatgpt.com/c", null, "trơ một chữ 'c', không có id"],
+    ["https://chatgpt.com/c/", null, "có gạch chéo nhưng id RỖNG"],
     ["https://example.com/c/abc", null, "đúng hình dạng nhưng SAI nhà cung cấp"],
     ["", null, "địa chỉ rỗng"]
   ];
