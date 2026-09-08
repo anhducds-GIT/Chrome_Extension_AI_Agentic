@@ -1853,3 +1853,36 @@ bảo trì, và nó vừa biến mất. Số 07/09 vẫn đúng: **63% commit** 
 không giảm thì phanh phải quay lại — và lần đó phải kèm số, không kèm cảm giác.
 
 > **Lượt đẩy này dùng `--carry`, cuốn theo 1 commit của lane `claude-scouter-s06`** (ADR-0005 duyệt thường trực; đổi lại là phải kể tên lane bị cuốn — đây là dòng đó).
+
+## 2026-09-08 · `claude-ext-khoafile` — khoá mức FILE: giữ ngắn, trả ngay
+
+**Đức chốt:** *"chỉ giữ khóa đúng ở file mà AI đó đang sửa … trả ngay trước và sau khi AI sửa.
+Nếu chỉ đọc ko cần giữ khóa."*
+
+**Đo trước khi làm, và linh cảm ban đầu của tôi NGƯỢC LẠI.** Bảng *"file bị hai lane chạm nhiều
+nhất"* có bốn cái đầu là `HANDOFF.md` · `BACKLOG.md` · `claims.json` · `AGENTS.md` — **ba trong
+bốn vốn đã miễn khoá**, nên thoạt trông khoá mịn hơn chẳng gỡ được gì. Đếm đủ thì ngược hẳn:
+
+| 7 ngày · 895 commit | Số |
+|---|---|
+| Cặp commit khác lane, ≤ 1 giờ, **cùng vùng** | 2.628 |
+| ├ dùng chung ít nhất một FILE — không gỡ được | 789 (30%) |
+| └ **khác file hoàn toàn — GỠ ĐƯỢC** | **1.839 (70%)** |
+
+File/commit: trung vị **2**, p90 **7**. Nên `--sua` nhận cả mẻ một lệnh.
+
+**Cài:** `--sua <đường-dẫn>…` · `--xong [--het]` · `--soat`. Chứa nhau hai chiều. Một mẻ là một
+lượt (vướng một file thì cả mẻ không ghi). Trả xong thì **xoá hàng**. Cổng **15 → 16 phép**:
+*"Khoá file đã trả hết"* — mốc là **hết phiên**, không phải *đã đẩy* (khoá file không mang
+trách nhiệm truy nguồn, nhãn `Lane:` mang). **Đột biến kiểm 6/6 ĐỎ**, neo khớp 6/6, nền xanh.
+Ghim `claim-smoke` 18 → 23.
+
+**Cái nó KHÔNG chữa, và nó làm chỗ đó XẤU ĐI — chép cả vế này khi port:** khoá không giữ file,
+**git giữ**. `git commit -a` vẫn cuốn file lane khác vừa dàn (`N-40`). Khoá vùng trước đây
+**serial hoá** hai lane nên lỗi đó ít có dịp nổ; khoá file bỏ đúng sự serial hoá ấy. `--soat`
+mua lại, và nó **chỉ là một lệnh, không phải một cổng** — cổng chạy lúc index đã rỗng.
+
+**Bộ khung CHƯA nhận được**, và lý do đáng ghi: lúc làm, cả **bốn khoá** của `Ark_Repo_Harness`
+đều có chủ, và repo đó **không khai `append_only_exempt`** nên không ghi nổi một dòng vào sổ nợ
+của nó. Bản giao việc để ở `_run-qua-dem-20260907/GIAO-BO-KHUNG--KHOA-MUC-FILE.md`, Đức dán.
+Đây đúng là bệnh mà việc này chữa: cần sửa **một file**, bị chặn vì người khác giữ **cả vùng**.
