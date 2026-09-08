@@ -1949,3 +1949,26 @@ hook** — đòi vô điều kiện làm đỏ mọi repo tạm của kho thử,
 
 **Còn 2 mục, cả hai KHÔNG phải việc AI làm tiếp được:** `N-36` (chờ Đức chốt ADR-0023) và `N-45`
 (một byte trong gói lane khác đang giữ khoá).
+
+## 2026-09-08 · `claude-ext-hook` → `claude-ext-don` — sổ nợ **1**, và kho chữ xuống lượt hai
+
+**Đức chốt bỏ `N-36`.** Sổ nợ hạ tầng còn **1 mục** (`N-45`, và đó là việc của lane khác).
+
+**Vì sao bỏ, để phiên sau không mở lại:** giả thuyết *"ít khoá thì ít luật, ít phép kiểm, chạy
+nhanh hơn"* đã **đo và sai** — 16 phép kiểm chỉ **1** duyệt qua từng khoá · 139 dòng luật mục 1
+chỉ **3** dòng là bảng khoá · thời gian lệch **0,0158 ms** trên một vòng suite 100 giây. Còn cái
+giá thì thật: gộp ba khoá gốc làm cặp commit khác lane bị chặn **172 → 364 (+112%)**, đổi lại
+tiết kiệm ~81 cặp lệnh trong 7 ngày. **Số khoá là dữ liệu, không phải mã.**
+
+**Dọn kho chữ lượt hai:** xoá cả tầng `docs/archive/` — 15 hồ sơ, 2.967 dòng, tất cả
+`status: superseded`. `docs/` **17.838 → 14.938**; không kể ADR **15.265 → 12.335**, thước cóc hạ
+theo. Lý lẽ giữ chúng là *"bản ghi có thật"* — vẫn đúng, nhưng **git đã là chỗ giữ bản ghi có
+thật**. Đường lấy lại in ngay tại đầu mục cũ.
+
+**Một chỗ suýt để lại:** `delegations/A-01/TASK.md` bảo một AI khác đi đọc một file vừa bị xoá —
+một lượt giao việc hỏng nếu để nguyên. Xoá file thì phải đi tìm ai đang trỏ tới nó, không chỉ
+sửa mục lục.
+
+**Đo cho lượt tối ưu kế:** suite **101,9 giây**, trong đó `build-dashboard-smoke` chiếm **~70s** —
+nó dựng **20 repo tạm** và chạy cổng **30 lượt**. Cắt nó là cắt lưới đỡ của chính cổng, nên
+**không đụng**. Chỗ còn lại đáng cắt là `docs/` (12.335 so với đích 8.000), không phải suite.
