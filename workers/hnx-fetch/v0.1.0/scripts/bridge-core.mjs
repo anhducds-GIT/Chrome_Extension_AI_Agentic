@@ -1,30 +1,24 @@
-/* scouter-bridge-core.mjs — CỬA BRIDGE của Scouter seed: giao thức + từ vựng method.
+/* bridge-core.mjs — CỬA BRIDGE của HNX Fetch: giao thức + từ vựng method.
  *
- * Đề bài: docs/briefs/BRIEF-SCOUTER-SEED-01.md mục 2, khả năng ② "báo cáo qua Bridge".
- * Quyết định: ADR-0009 (Scouter là gì) · ADR-0010 (dừng ở SEED v0.1).
+ * Bản RÚT GỌN của `scouter-bridge-core.mjs` bên Scouter, và chỗ khác nhau là chỗ đáng đọc:
+ * **11 method đã bị XOÁ**, còn đúng bốn. Không phép dò, không lệnh bấm, không `scout.reload`.
  *
- * ─── VÌ SAO KHÔNG CHÉP `bridge-core.js` CỦA WORKER NÀO ──────────────────────
- * Brief mục 2 bắt đọc cả ba worker rồi quyết TỪNG FILE, vì "chép bản gần tay nhất là đẻ ra
- * bản trôi dạt thứ tư". Đo lại ngày 06/09 (`md5sum`): `bridge-core.js` CẢ BA KHÁC NHAU
- * (798 · 1022 · 8xx dòng), và 22 trong 25 method của chúng là chuyện xếp hàng job XLSX —
- * Scouter không có hàng đợi, không có workbook, không có bảng bên. Chép về là mang theo
- * 20 method chết cùng toàn bộ luật thử lại của một sản phẩm khác.
+ * Cắt chứ không tắt bằng cờ: một method không tồn tại thì không ai bật lại được, còn một
+ * method còn đó mà bị chặn bằng cờ thì cái cờ là thứ duy nhất đứng giữa — và cờ thì sửa được.
+ * `scout.click` gọi vào đây trả `METHOD_NOT_FOUND`.
  *
- * Thứ ĐƯỢC lấy lại nguyên vẹn là **khung `registryEntry`** (mục 3 bảng kiểm kê ghi đúng thế:
- * "khung giống nhau; nội dung từng method dính nhà cung cấp") và **hợp đồng phong bì trên
- * dây** — cái sau không phải lựa chọn thẩm mỹ, xem khối dưới.
+ * ─── HAI ĐẦU MỘT SỢI DÂY ───────────────────────────────────────────────────
+ * `PROTOCOL` dưới đây phải khớp TỪNG KÝ TỰ với `PROTOCOL` trong `bridge/hnx-fetch-host.mjs`.
+ * Lõi máy chủ so tên đó trên MỌI phong bì, nên lệch một ký tự là extension nối mãi không được
+ * — mà triệu chứng chỉ là *"Mất kết nối"*, không có câu lỗi nào nói tại sao. Đã xảy ra thật
+ * ngày 08/09. Phép ghim ⑸ của `be-mat-hep-smoke.mjs` so hai chỗ đó.
  *
- * ─── TÊN GIAO THỨC LÀ CỦA CHÍNH SCOUTER (đổi 07/09) ────────────────────────
- * Trước 07/09 chuỗi này là `"duc-auto-chatgpt.bridge"`, vì Scouter nối vào máy chủ của gói
- * kia và máy chủ đó so sánh CHÍNH XÁC chuỗi đó ở cả hai chiều. Lý do đúng ở thời điểm ấy.
+ * Tên giao thức là thứ giữ cho hai extension trên cùng một máy không nhận nhầm lệnh của nhau,
+ * nên **đừng** dùng lại tên của Scouter cho tiện.
  *
- * Đức chốt 07/09: Scouter phải có host RIÊNG, để sau này nhân bản seed sang nhiều extension.
- * Hai chỗ hỏng của cách cũ: Scouter phụ thuộc lúc chạy vào một gói ĐÃ ĐÓNG BĂNG, và mỗi bản
- * clone lại mang tên một sản phẩm khác. Nay host của Scouter dựng trên lõi dùng chung
- * `workers/_shared/bridge-host/`, và lõi đó NHẬN tên giao thức qua tham số.
- *
- * HAI ĐẦU MỘT SỢI DÂY: chuỗi dưới đây phải khớp `PROTOCOL` trong
- * `bridge/scouter-bridge-host.mjs`. Nhân bản seed sang extension khác thì đổi cả hai.
+ * ─── BẢNG LỖI CỐ Ý NHỎ ─────────────────────────────────────────────────────
+ * Mã nào ở đây cũng có ít nhất một đường sinh ra nó trong file này hoặc trong `fetch-core.mjs`.
+ * Mang về một bảng mã to hơn là mang về mã chết.
  */
 
 
@@ -35,9 +29,8 @@ export const SUPPORTED_VERSIONS = Object.freeze([1]);
 export const MAX_ENVELOPE_BYTES = 1024 * 1024;
 
 /* ---- Bảng lỗi ------------------------------------------------------------
- * CỐ Ý NHỎ. Bảng của worker có 24 mã, phần lớn nói về hàng đợi job và phê duyệt của chủ —
- * Scouter seed không có hai thứ đó, nên mang về là mang về mã chết. Mã nào ở đây cũng có
- * ít nhất một đường sinh ra nó trong file này hoặc trong `scouter-seed-core.mjs`. */
+ * CỐ Ý NHỎ. Mã nào ở đây cũng có ít nhất một đường sinh ra nó trong file này hoặc trong
+ * `fetch-core.mjs`. Bảng to hơn là bảng chứa mã chết. */
 export const ERROR_DEFINITIONS = Object.freeze({
   INVALID_ENVELOPE: { retryable: false, message: "The RPC envelope is invalid." },
   UNSUPPORTED_VERSION: { retryable: false, message: "No supported major protocol version was offered." },
@@ -50,12 +43,12 @@ export const ERROR_DEFINITIONS = Object.freeze({
    * kia không phân biệt được "nút không bấm được" với "anh chưa mở khoá", và sẽ đi sửa nhầm chỗ. */
   WRITE_BLOCKED: { retryable: false, message: "The write path is closed; no input was dispatched." },
   RELOAD_RATE_LIMIT: { retryable: false, message: "The previous self-reload was too recent." },
-  INTERNAL_ERROR: { retryable: false, message: "The scouter could not complete the request." }
+  INTERNAL_ERROR: { retryable: false, message: "HNX Fetch could not complete the request." }
 });
 
 export class BridgeProtocolError extends Error {
   constructor(code, message, details) {
-    if (!Object.hasOwn(ERROR_DEFINITIONS, code)) throw new TypeError(`Unknown scouter bridge error code '${code}'.`);
+    if (!Object.hasOwn(ERROR_DEFINITIONS, code)) throw new TypeError(`Unknown HNX Fetch bridge error code '${code}'.`);
     const definition = ERROR_DEFINITIONS[code];
     super(message || definition.message);
     this.name = "BridgeProtocolError";
@@ -86,9 +79,9 @@ function objectParams(raw, allowed) {
 }
 
 /* ---- BỐN PHÉP KIỂM CHO `scout.fetch` (S-10) ------------------------------
- * Đây là method đầu tiên của Scouter đi ra INTERNET, nên chỗ kiểm tham số ở đây là trạm gác
- * thật, không phải thủ tục. Đức mở `<all_urls>` ngày 07/09 để không phải xin quyền theo từng
- * trang — mở vùng ĐÍCH thì phải siết vùng HÌNH DẠNG, nếu không thì không còn lớp nào.
+ * Đây là method DUY NHẤT của gói này đi ra ngoài trình duyệt, nên chỗ kiểm tham số ở đây là
+ * trạm gác thật, không phải thủ tục. `manifest.json` đã siết vùng ĐÍCH về `hnx.vn` và máy chủ
+ * tại chỗ; khối này siết vùng HÌNH DẠNG. Hai lớp, và lớp nào mất thì lớp kia gánh không nổi.
  *
  * `requiredHttpUrl` CHỈ nhận http/https. Cấm `file:` (đọc đĩa của Đức), `chrome-extension:`
  * (đọc chính gói này), `data:`/`blob:` (không phải mạng, chỉ làm rối nhật ký). Đây không phải
@@ -184,7 +177,7 @@ function registryEntry(values) {
 const METHOD_ENTRIES = [
   registryEntry({
     name: "session.hello", read_only: true, deadline_ms: 10000,
-    description: "Negotiate protocol version and report the scouter session identity.",
+    description: "Negotiate protocol version and report the HNX Fetch session identity.",
     params_schema: { supported_versions: "positive_integer[]" },
     params_validator: (raw) => {
       const params = objectParams(raw, ["supported_versions"]);
@@ -195,12 +188,12 @@ const METHOD_ENTRIES = [
   }),
   registryEntry({
     name: "system.capabilities", read_only: true, deadline_ms: 10000,
-    description: "Describe the fixed method vocabulary of this scouter seed.",
+    description: "Describe the fixed method vocabulary of HNX Fetch. Four methods; no DOM, no input, no reload.",
     params_schema: {}, params_validator: noParams
   }),
   registryEntry({
     name: "system.ping", read_only: true, deadline_ms: 10000,
-    description: "Report that the scouter service worker is awake.",
+    description: "Report that the HNX Fetch service worker is awake.",
     params_schema: {}, params_validator: noParams
   }),
   registryEntry({
@@ -381,7 +374,7 @@ export function createDispatcher(options = {}) {
    * không ai nối tay là lỗi lập trình, và phát hiện nó lúc nạp service worker rẻ hơn nhiều so
    * với phát hiện nó lúc AI đang chờ trả lời. */
   const missing = METHOD_NAMES.filter((name) => typeof handlers[name] !== "function");
-  if (missing.length) throw new TypeError(`Scouter dispatcher is missing handlers for: ${missing.join(", ")}.`);
+  if (missing.length) throw new TypeError(`HNX Fetch dispatcher is missing handlers for: ${missing.join(", ")}.`);
 
   return async function dispatch(input) {
     let request = null;

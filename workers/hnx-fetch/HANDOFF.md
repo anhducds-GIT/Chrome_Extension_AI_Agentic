@@ -86,3 +86,30 @@ sống sót **vì chính nó hỏng**; sửa cả hai đầu, và phép ghim m�
 
 **Còn mở:** `H-01` thu hẹp, chưa đóng — phần còn lại **chỉ Chrome trả lời được**. Đừng đóng
 nó bằng suy luận từ suite.
+
+## 2026-09-08 · `claude-scouter-s06` — audit độc lập (Codex): 6 lỗi, đã vá và ghim hết
+
+**Lượt đầu FAIL vì sandbox Codex không đọc được đĩa** (`apply deny-read ACLs`) — đó là *không
+đọc được file*, KHÔNG phải *code sai*. Đừng ghi lượt đó vào sổ như một lần đỏ. Lượt hai nhồi
+thẳng mã qua stdin thì nó đọc được.
+
+**Sáu mục, kiểm chứng độc lập từng mục trước khi vá — cả sáu đều đúng:**
+
+| Chỗ | Vì sao đọc một mình không thấy |
+|---|---|
+| **Phanh khẩn bị HỒI SINH** | ghi `{ ...gate, used }` chở theo `enabled: true` đọc từ TRƯỚC; phanh khẩn rơi vào giữa đọc và ghi thì **chính lượt trừ ngân sách bật lại công tắc vừa tắt** |
+| **Trần 200 bị vượt** | đọc rồi ghi là hai lượt tách rời; năm lượt cùng đọc rồi cùng ghi, cả năm đi ra |
+| **Đứt thân → `INTERNAL_ERROR`** | lượt đọc thân nằm NGOÀI `try`; mã đó bị xếp KHÔNG-thử-lại, nên một cú vấp lẽ ra tự qua giết cả lượt chạy dài |
+| **Nuốt thân rồi mới đo** | không nhìn `content-length` trước |
+| **Vùng ghi hở** | chỉ dò TÊN tệp ở tầng con trực tiếp — tệp ghép cặp đặt tên khác, hoặc sâu một tầng, lọt sạch |
+| `session.hello` **khai sai tên gói** | ba chỗ tự khai nói hai kiểu; ghim cũ chỉ soi `system.ping` |
+
+**Hai lỗi đầu cùng gốc.** Vá bằng **hàng đợi mức module** dùng chung cho `setWriteGate` và
+`spendWriteBudget` (đóng đường đua), cộng **ghi từng trường** (chặn trường lạ bám theo).
+
+**Ghim rồi mới tính là xong:** thêm khối ⑺ và ⑻, kèm **8 con đột biến** hoàn nguyên đúng từng
+chỗ vừa sửa. Một con sống sót **và đúng ra phải thế** — hàng đợi đã chặn đường đua nên vế kia
+không còn khai thác được qua lối đó; ghim lại đúng tính chất nó thật sự giữ, thay vì ghim một
+lời khai to hơn sự thật.
+
+**Đo.** Đột biến **21/21 khớp · 21 giết · 0 sống sót** · suite gói **7/7** · gốc repo **377**.

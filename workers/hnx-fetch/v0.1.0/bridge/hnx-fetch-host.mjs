@@ -48,23 +48,77 @@ const METHOD_TAI_CHO = Object.freeze(["host.capabilities", "file.write", "file.a
  * Không phải rủi ro lý thuyết: quy ước trên máy Đức là một thư mục chứa CẢ máy chủ LẪN tệp ghép
  * cặp, nên trỏ vùng ghi vào đúng đó là việc tự nhiên nhất để làm. Cái bẫy mà người ta rơi vào
  * một cách tự nhiên thì phải CHẶN, không phải dặn. Chặn lúc KHỞI ĐỘNG: hỏng lúc khởi động thì
- * người bật thấy ngay; hỏng lúc đọc thì nó im cho tới đúng lượt gọi lấy mất token. */
-function canhVungGhi(root) {
+ * người bật thấy ngay; hỏng lúc đọc thì nó im cho tới đúng lượt gọi lấy mất token.
+ *
+ * HAI phép kiểm, và chúng bắt hai thứ khác nhau — xem chú thích ⑴ ⑵ trong `canhVungGhi`. */
+
+/* Sâu tối đa khi lùng tệp ghép cặp. Vùng ghi là thư mục dữ liệu, không phải cả ổ đĩa — quét
+ * không đáy thì một lượt khởi động có thể treo trên một thư mục lớn. Ba tầng phủ hết mọi cách
+ * xếp thư mục người ta thật sự dùng; giấu tệp ghép cặp sâu hơn thế ngay dưới vùng ghi thì
+ * không còn là tai nạn nữa. */
+const SAU_TOI_DA = 3;
+const TRAN_MUC_QUET = 5000;
+
+function trongVung(goc, duong) {
+  const r = path.relative(goc, duong);
+  return r !== "" && !r.startsWith("..") && !path.isAbsolute(r);
+}
+
+function lungGhepCap(goc, sau, dem) {
+  if (sau > SAU_TOI_DA) return null;
+  let muc;
+  try { muc = fs.readdirSync(goc, { withFileTypes: true }); }
+  catch { return null; }   /* đọc không được thì bỏ nhánh, đừng chặn khởi động vì một ACL */
+  for (const m of muc) {
+    if (dem.n++ > TRAN_MUC_QUET) return null;
+    const duong = path.join(goc, m.name);
+    if (m.isDirectory()) {
+      const thay = lungGhepCap(duong, sau + 1, dem);
+      if (thay) return thay;
+    } else if (/pairing.*\.json$/i.test(m.name)) {
+      return duong;
+    }
+  }
+  return null;
+}
+
+/**
+ * @param {string} root             vùng ghi, đường dẫn tuyệt đối
+ * @param {string|null} duongGhepCap  đường dẫn THẬT tới tệp ghép cặp đang dùng, nếu biết
+ */
+function canhVungGhi(root, duongGhepCap = null) {
   if (typeof root !== "string" || !path.isAbsolute(root)) {
     throw new Error("`--root` phải là một đường dẫn TUYỆT ĐỐI: vùng ghi do người khởi động khai, không do lệnh trên dây khai.");
   }
   if (!fs.existsSync(root)) throw new Error(`Thư mục gốc không tồn tại: ${root}`);
   const goiThat = fs.realpathSync(root);
-  for (const ten of fs.readdirSync(goiThat)) {
-    if (!/pairing.*\.json$/i.test(ten)) continue;
-    throw new Error([
-      `Vùng ghi chứa tệp ghép cặp: ${path.join(root, ten)}`,
-      "",
-      "`file.read` đọc được mọi file dưới vùng ghi, nên để tệp ghép cặp trong đó nghĩa là TOKEN",
-      "đọc được qua dây. Trỏ `--root` vào một thư mục con chỉ chứa dữ liệu, ví dụ:",
-      `  --root "${path.join(root, "du-lieu")}"`
-    ].join("\n"));
+
+  const noiRa = (o) => [
+    `Vùng ghi chứa tệp ghép cặp: ${o}`,
+    "",
+    "`file.read` đọc được mọi file dưới vùng ghi, nên để tệp ghép cặp trong đó nghĩa là TOKEN",
+    "đọc được qua dây. Trỏ `--root` vào một thư mục con chỉ chứa dữ liệu, ví dụ:",
+    `  --root "${path.join(root, "du-lieu")}"`
+  ].join("\n");
+
+  /* ⑴ Phép kiểm CHÍNH XÁC: chính tệp ghép cặp ĐANG DÙNG có nằm trong vùng ghi không.
+   * Audit độc lập 08/09 chỉ đúng chỗ này: bản trước chỉ dò TÊN tệp, nên nó không hề so với
+   * đường dẫn thật mà người khởi động vừa đưa vào. Một tệp ghép cặp đặt tên khác
+   * (`credentials.json`, `cfg.json`) lọt sạch — mà đó lại đúng là tệp đang giữ token của lượt
+   * chạy này. Dò tên là dò một QUY ƯỚC; so đường dẫn là so SỰ THẬT. */
+  if (typeof duongGhepCap === "string" && duongGhepCap) {
+    let that = path.resolve(duongGhepCap);
+    try { that = fs.realpathSync(that); } catch { /* chưa có thật thì so đường đã chuẩn hoá */ }
+    if (trongVung(goiThat, that)) throw new Error(noiRa(that));
   }
+
+  /* ⑵ Phép kiểm RỘNG: còn tệp ghép cặp NÀO khác nằm dưới vùng ghi không — của Scouter, của một
+   * lượt cài cũ. Quét theo TÊN nên nó chỉ bắt được thứ đặt tên theo quy ước, và đó là lý do nó
+   * đứng SAU phép kiểm ⑴ chứ không thay cho ⑴. Bản trước chỉ nhìn tầng con trực tiếp, nên một
+   * tệp ở `<vùng ghi>/cu/pairing.json` lọt qua. */
+  const lac = lungGhepCap(goiThat, 0, { n: 0 });
+  if (lac) throw new Error(noiRa(lac));
+
   return goiThat;
 }
 
@@ -99,10 +153,12 @@ function xuLyTaiCho(method, p, root, port) {
  * @param {object} o
  * @param {object} o.pairing  tệp ghép cặp
  * @param {string} o.root     vùng ghi — đường dẫn TUYỆT ĐỐI, do người khởi động khai
+ * @param {string} [o.pairingPath]  đường dẫn THẬT tới tệp ghép cặp. Đưa vào thì cái chặn
+ *   "vùng ghi không chứa tệp ghép cặp" so được SỰ THẬT thay vì chỉ dò tên tệp.
  */
-export function createHnxFetchBridge({ pairing, root, ...conLai } = {}) {
+export function createHnxFetchBridge({ pairing, root, pairingPath = null, ...conLai } = {}) {
   const daKiem = validatePairing(pairing);
-  const gocThat = canhVungGhi(root);
+  const gocThat = canhVungGhi(root, pairingPath);
 
   /* Bảng `methodTaiCho` dựng từ MỘT danh sách tên, không gõ hai lần: `host.capabilities` tự khai
    * `local_methods` từ cùng danh sách đó, nên bảng và bản tự khai không thể lệch nhau. */
@@ -129,7 +185,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToP
     process.exit(2);
   }
   const pairing = JSON.parse(fs.readFileSync(duongGhepCap, "utf8"));
-  const may = createHnxFetchBridge({ pairing, root: path.resolve(goc) });
+  const may = createHnxFetchBridge({ pairing, root: path.resolve(goc), pairingPath: path.resolve(duongGhepCap) });
   await may.start();
   process.stdout.write(`HNX Fetch Bridge nghe ở 127.0.0.1:${pairing.port} · giao thức: ${PROTOCOL} · vùng ghi: ${path.resolve(goc)}\n`);
   const dong = async () => { await may.stop(); process.exit(0); };

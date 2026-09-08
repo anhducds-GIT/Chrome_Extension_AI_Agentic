@@ -13,6 +13,7 @@
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
@@ -263,4 +264,236 @@ async function tuChoi(fn) {
     "mất bộ sinh icon — bốn tệp PNG thành nhị phân mồ côi");
 }
 
-console.log("be-mat-hep-smoke: 6 khoi, tat ca DAT");
+/* ---- ⑺ NĂM CHỖ DO AUDIT ĐỘC LẬP TÌM RA (08/09) --------------------------
+ * Codex đọc mã và tìm ra năm chỗ mà đọc một mình không thấy, vì ba trong số đó chỉ nổ khi hai
+ * lượt chồng nhau. Mỗi khối con dưới đây là một con đường đã ĐI ĐƯỢC trước khi vá.
+ *
+ * Kho lưu giả ở đây CỐ Ý chậm: nó nhường lượt giữa `get` và `set`. Không có chỗ nhường đó thì
+ * hai lỗi đua nhau **không tái hiện được**, và một phép ghim không tái hiện được lỗi là một
+ * phép ghim xanh vì may mắn. */
+{
+  function khoCham(gate) {
+    const store = Object.create(null);
+    if (gate !== undefined) store[SEED_CONSTANTS.WRITE_GATE_STORAGE_KEY] = gate;
+    const nhuong = () => new Promise((r) => setTimeout(r, 0));
+    return {
+      store,
+      runtime: { id: "hnx-fetch-gia" },
+      storage: {
+        local: {
+          async get(keys) {
+            await nhuong();
+            const ra = {};
+            for (const k of [].concat(keys)) if (k in store) ra[k] = store[k];
+            return ra;
+          },
+          async set(o) { await nhuong(); Object.assign(store, o); }
+        }
+      }
+    };
+  }
+  const tayLenh = (chromeApi, doFetch) => createSeedHandlers({
+    chromeApi, BridgeProtocolError, negotiateVersion, capabilities,
+    fetch: doFetch || (async () => ({
+      ok: true, status: 200, url: "https://hnx.vn/",
+      headers: new Map([["content-type", "text/html; charset=utf-8"]]),
+      text: async () => "x", arrayBuffer: async () => new TextEncoder().encode("x").buffer
+    }))
+  });
+
+  /* ⑺a PHANH KHẨN KHÔNG ĐƯỢC BỊ HỒI SINH — và bản ghi công tắc phải do ta VIẾT RA, không
+   * phải kế thừa.
+   *
+   * Bản trước ghi một bản ghi trải từ `gate` cũ, tức chở theo `enabled: true` đọc từ TRƯỚC. Một
+   * lượt phanh khẩn rơi vào giữa lượt đọc và lượt ghi thì chính lượt trừ ngân sách bật lại cái
+   * công tắc Đức vừa tắt.
+   *
+   * Hai vế, và phải nói rõ vế nào chữa cái gì, kẻo lần sau ai đó gỡ nhầm vế:
+   *   · **Hàng đợi** là thứ đóng đường đua — nó ép lượt tắt và lượt trừ không bao giờ lồng nhau.
+   *   · **Ghi từng trường** là lớp thứ hai: nó chặn một trường LẠ trong kho lưu bám theo sang
+   *     bản ghi mới. Không có nó thì một `cap_per_unlock` lọt vào kho sẽ sống mãi ở đó, và con
+   *     đường mà `N7` mô tả (kẻ bị chặn tự đặt trần cho mình) mở ra một nửa. */
+  {
+    const c = khoCham({ enabled: true, enabled_at: 1, used: 0 });
+    const h = tayLenh(c);
+    const dangGoi = h["scout.fetch"]({ url: "https://hnx.vn/" });
+    const tat = setWriteGate(c, false);
+    await Promise.allSettled([dangGoi, tat]);
+    assert.equal((await readWriteGateState(c)).enabled, false,
+      "lượt trừ ngân sách đã HỒI SINH công tắc vừa tắt — phanh khẩn không còn là phanh");
+
+    /* Vế hai: trường lạ KHÔNG được bám theo. */
+    const ban = khoCham({ enabled: true, enabled_at: 7, used: 0, cap_per_unlock: 9999, rac: "bam theo" });
+    await tayLenh(ban)["scout.fetch"]({ url: "https://hnx.vn/" });
+    const ghiRa = ban.store[SEED_CONSTANTS.WRITE_GATE_STORAGE_KEY];
+    assert.deepEqual(Object.keys(ghiRa).sort(), ["enabled", "enabled_at", "used"],
+      "bản ghi công tắc chở theo trường lạ từ kho lưu — phải VIẾT RA từng trường, không trải bản cũ");
+    assert.equal(ghiRa.enabled, true);
+    assert.equal(ghiRa.enabled_at, 7, "mốc bật phải giữ nguyên, nếu không mỗi lượt trừ là một lượt bật lại");
+    assert.equal(ghiRa.used, 1);
+  }
+
+  /* ⑺b TRẦN KHÔNG ĐƯỢC VƯỢT KHI NHIỀU LƯỢT CHỒNG NHAU.
+   * Đọc rồi ghi là hai lượt tách rời, nên năm lượt cùng đọc một con số rồi cùng ghi, và cả năm
+   * đều đi ra ngoài. Trần đếm được mà không chặn được thì nó không phải trần. */
+  {
+    const CAP = SEED_CONSTANTS.WRITE_CAP_PER_UNLOCK;
+    let daGoiMang = 0;
+    const c = khoCham({ enabled: true, enabled_at: 1, used: CAP - 2 });
+    const h = tayLenh(c, async () => {
+      daGoiMang += 1;
+      return { ok: true, status: 200, url: "https://hnx.vn/",
+        headers: new Map([["content-type", "text/html; charset=utf-8"]]),
+        text: async () => "x", arrayBuffer: async () => new TextEncoder().encode("x").buffer };
+    });
+    const ra = await Promise.allSettled(
+      Array.from({ length: 5 }, () => h["scout.fetch"]({ url: "https://hnx.vn/" }))
+    );
+    const qua = ra.filter((r) => r.status === "fulfilled").length;
+    assert.equal(qua, 2, `chỉ còn 2 lượt mà ${qua} lượt lọt qua — trần vỡ khi chồng lượt`);
+    assert.equal(daGoiMang, 2, "số lượt CHẠM MẠNG phải bằng số lượt được cấp, không hơn");
+    assert.equal(c.store[SEED_CONSTANTS.WRITE_GATE_STORAGE_KEY].used, CAP);
+  }
+
+  /* ⑺c ĐỨT GIỮA CHỪNG THÂN cũng là MẠNG HỎNG, không phải lỗi nội bộ.
+   * Bản trước để lượt đọc thân ngoài `try`, nên nó rơi ra thành `INTERNAL_ERROR`. Khác biệt đó
+   * không phải chuyện chữ nghĩa: tầng vòng lặp phân loại lỗi để quyết thử-lại-hay-không, và
+   * `INTERNAL_ERROR` bị xếp là KHÔNG thử lại được — tức một lượt chạy dài chết ở một cú vấp
+   * lẽ ra tự qua. */
+  {
+    const c = khoCham({ enabled: true, enabled_at: 1, used: 0 });
+    const h = tayLenh(c, async () => ({
+      ok: true, status: 200, url: "https://hnx.vn/",
+      headers: new Map([["content-type", "text/html; charset=utf-8"]]),
+      text: async () => { throw new Error("socket hang up"); },
+      arrayBuffer: async () => { throw new Error("socket hang up"); }
+    }));
+    const e = await tuChoi(() => h["scout.fetch"]({ url: "https://hnx.vn/" }));
+    assert.equal(e.code, "ACTION_FAILED", "đứt giữa chừng thân phải là lỗi MẠNG, không phải INTERNAL_ERROR");
+    assert.equal(e.details.action_code, "FETCH_FAILED");
+
+    /* Nhưng lỗi HÌNH DẠNG ném từ trong khối đọc là quyết định có chủ ý — nó phải về nguyên vẹn,
+     * đừng khoác cho nó cái áo lỗi mạng, vì hai loại này thử-lại khác nhau. */
+    const c2 = khoCham({ enabled: true, enabled_at: 1, used: 0 });
+    const h2 = tayLenh(c2, async () => ({
+      ok: true, status: 200, url: "https://hnx.vn/a.pdf",
+      headers: new Map([["content-type", "application/pdf"]]),
+      text: async () => "khong duoc goi", arrayBuffer: async () => new ArrayBuffer(8)
+    }));
+    const e2 = await tuChoi(() => h2["scout.fetch"]({ url: "https://hnx.vn/a.pdf" }));
+    assert.equal(e2.details.action_code, "FETCH_BINARY_BODY", "lỗi hình dạng phải giữ nguyên mã của nó");
+  }
+
+  /* ⑺d THÂN QUÁ KHỔ BỊ CHẶN TRƯỚC KHI ĐỌC, nếu máy chủ đã tự khai độ dài.
+   * Đọc xong rồi mới đo là đã nuốt trọn thân vào bộ nhớ của một service worker. */
+  {
+    let daDocThan = false;
+    const c = khoCham({ enabled: true, enabled_at: 1, used: 0 });
+    const h = tayLenh(c, async () => ({
+      ok: true, status: 200, url: "https://hnx.vn/",
+      headers: new Map([["content-type", "text/html"], ["content-length", String(50 * 1024 * 1024)]]),
+      text: async () => { daDocThan = true; return "x"; },
+      arrayBuffer: async () => { daDocThan = true; return new ArrayBuffer(8); }
+    }));
+    const e = await tuChoi(() => h["scout.fetch"]({ url: "https://hnx.vn/" }));
+    assert.equal(e.details.action_code, "FETCH_BODY_TOO_LARGE");
+    assert.equal(daDocThan, false, "đã đọc thân rồi mới từ chối — chặn muộn thì bộ nhớ đã mất");
+
+    /* Khai DỐI theo hướng nhỏ thì phép đo thật ở dưới vẫn bắt được. Chỉ tin `content-length` theo
+     * hướng AN TOÀN — đó là cả lý do nó là phép kiểm THỨ HAI, không phải phép kiểm duy nhất. */
+    const c2 = khoCham({ enabled: true, enabled_at: 1, used: 0 });
+    const to = "x".repeat(SEED_CONSTANTS.FETCH_MAX_BODY_BYTES + 10);
+    const h2 = tayLenh(c2, async () => ({
+      ok: true, status: 200, url: "https://hnx.vn/",
+      headers: new Map([["content-type", "text/html"], ["content-length", "10"]]),
+      text: async () => to, arrayBuffer: async () => new TextEncoder().encode(to).buffer
+    }));
+    const e2 = await tuChoi(() => h2["scout.fetch"]({ url: "https://hnx.vn/" }));
+    assert.equal(e2.details.action_code, "FETCH_BODY_TOO_LARGE", "khai dối nhỏ thì phép đo thật phải bắt");
+  }
+
+  /* ⑺e KHÔNG CÒN DẤU VẾT NỬA VỜI CỦA SCOUTER trong phần TỰ KHAI.
+   * `session.hello` từng trả `seed: "scouter-seed-v0.1"` trong khi ping và bảng năng lực trả
+   * `hnx-fetch-v0.1`. Ba chỗ tự khai mà nói ba kiểu thì bên kia dây tin chỗ nào? */
+  {
+    const c = khoCham({ enabled: false });
+    const h = tayLenh(c);
+    const chao = await h["session.hello"]({ supported_versions: [1] });
+    assert.equal(chao.seed, "hnx-fetch-v0.1", "session.hello còn khai là seed của Scouter");
+    const ping = await h["system.ping"]();
+    assert.equal(ping.seed, chao.seed, "hai chỗ tự khai phải nói CÙNG một tên");
+    assert.equal(capabilities().seed, chao.seed, "và bảng năng lực cũng vậy");
+  }
+}
+
+/* ---- ⑻ VÙNG GHI KHÔNG ĐƯỢC CHỨA TỆP GHÉP CẶP ----------------------------
+ * `file.read` đọc được mọi tệp dưới vùng ghi — đó là thiết kế. Hệ quả: vùng ghi trỏ vào thư mục
+ * đang giữ tệp ghép cặp nghĩa là **token đọc được qua dây**.
+ *
+ * Audit độc lập 08/09 chỉ ra bản đầu chỉ dò TÊN tệp ở tầng con trực tiếp, nên nó bỏ lọt hai ca
+ * mà người ta rơi vào rất tự nhiên: tệp ghép cặp **đặt tên khác**, và tệp ghép cặp nằm **sâu
+ * một tầng**. Cả hai ca đều để lộ đúng cái token của lượt chạy đang bật. */
+{
+  const { createHnxFetchBridge } = await import("../bridge/hnx-fetch-host.mjs");
+  const CONG = 39951;
+  const ghepCap = {
+    schema_version: 1, host: "127.0.0.1", port: CONG,
+    http_url: `http://127.0.0.1:${CONG}/v1/rpc`,
+    websocket_url: `ws://127.0.0.1:${CONG}/v1/extension`,
+    token: "a".repeat(43)
+  };
+  const dungKhi = (fn, vi) => {
+    try { const may = fn(); if (may && typeof may.stop === "function") may.stop(); }
+    catch (e) { return e; }
+    throw new assert.AssertionError({ message: `đáng lẽ phải TỪ CHỐI khởi động: ${vi}` });
+  };
+
+  const san = fs.mkdtempSync(path.join(os.tmpdir(), "hnx-vung-"));
+  try {
+    const vung = path.join(san, "du-lieu");
+    fs.mkdirSync(vung);
+
+    /* Vùng sạch thì khởi động được — nếu không, ba khẳng định dưới đây đỏ vì lý do khác và
+     * chúng không chứng minh gì cả. */
+    const may = createHnxFetchBridge({ pairing: ghepCap, root: vung });
+    assert.equal(typeof may.start, "function");
+
+    /* ⑻a Tệp ghép cặp ĐANG DÙNG nằm trong vùng ghi → TỪ CHỐI, dù nó tên gì.
+     * Đây là phép kiểm so SỰ THẬT, không so quy ước đặt tên. */
+    const laMat = path.join(vung, "credentials.json");
+    fs.writeFileSync(laMat, JSON.stringify(ghepCap), "utf8");
+    const e1 = dungKhi(
+      () => createHnxFetchBridge({ pairing: ghepCap, root: vung, pairingPath: laMat }),
+      "tệp ghép cặp đặt tên lạ, nằm ngay trong vùng ghi");
+    assert.match(String(e1.message), /Vùng ghi chứa tệp ghép cặp/);
+    fs.rmSync(laMat);
+
+    /* ⑻b Một tệp ghép cặp KHÁC, nằm SÂU một tầng → vẫn phải TỪ CHỐI.
+     * Ca này là tệp của Scouter hoặc của một lượt cài cũ bị bỏ quên trong thư mục dữ liệu. */
+    fs.mkdirSync(path.join(vung, "cu"));
+    const bo_quen = path.join(vung, "cu", "pairing-scouter.json");
+    fs.writeFileSync(bo_quen, "{}", "utf8");
+    const e2 = dungKhi(
+      () => createHnxFetchBridge({ pairing: ghepCap, root: vung }),
+      "tệp ghép cặp bỏ quên ở thư mục con");
+    assert.match(String(e2.message), /Vùng ghi chứa tệp ghép cặp/);
+    assert.match(String(e2.message), /pairing-scouter\.json/, "câu lỗi phải chỉ ĐÚNG tệp nào");
+    fs.rmSync(path.join(vung, "cu"), { recursive: true });
+
+    /* ⑻c Tệp ghép cặp nằm NGOÀI vùng ghi → cho qua. Một phép kiểm từ chối tất cả thì nó không
+     * phân biệt được gì, và người vận hành sẽ đi tìm cách tắt nó. */
+    const ngoai = path.join(san, "pairing.json");
+    fs.writeFileSync(ngoai, JSON.stringify(ghepCap), "utf8");
+    const may2 = createHnxFetchBridge({ pairing: ghepCap, root: vung, pairingPath: ngoai });
+    assert.equal(typeof may2.start, "function", "tệp ghép cặp ở ngoài vùng ghi thì phải cho chạy");
+
+    /* ⑻d Vùng ghi phải là đường dẫn TUYỆT ĐỐI — vùng ghi do người khởi động khai, không do
+     * thư mục làm việc lúc đó quyết định. */
+    const e3 = dungKhi(() => createHnxFetchBridge({ pairing: ghepCap, root: "du-lieu" }), "đường dẫn tương đối");
+    assert.match(String(e3.message), /TUYỆT ĐỐI/);
+  } finally {
+    fs.rmSync(san, { recursive: true, force: true });
+  }
+}
+
+console.log("be-mat-hep-smoke: 8 khoi, tat ca DAT");

@@ -105,6 +105,43 @@ const BATCHES = [
         soLan: 1
       },
       {
+        /* Năm con N14..N18 hoàn nguyên đúng năm chỗ audit độc lập 08/09 tìm ra. Chúng tồn tại để
+         * trả lời một câu: khối ⑺ của phép ghim có thật sự bắt được, hay nó xanh vì may. */
+        ma: "N14",
+        ten: "Hồi sinh công tắc: ghi lại bản ghi CŨ kèm số lượt mới, nên phanh khẩn bị bật lại",
+        tim: "        [WRITE_GATE_STORAGE_KEY]: { enabled: true, enabled_at: gate.enabled_at ?? null, used }",
+        thay: "        [WRITE_GATE_STORAGE_KEY]: { ...gate, used }",
+        soLan: 1
+      },
+      {
+        ma: "N15",
+        ten: "Bỏ hàng đợi: đọc-sửa-ghi thôi xếp hàng, nên trần vỡ khi nhiều lượt chồng nhau",
+        tim: "    return noiTiep(async () => {",
+        thay: "    return await (async () => {",
+        soLan: 1
+      },
+      {
+        ma: "N16",
+        ten: "Lỗi hình dạng bị khoác áo lỗi mạng — hai loại này thử-lại khác nhau",
+        tim: "        if (error instanceof BridgeProtocolError) throw error;",
+        thay: "        if (false) throw error;",
+        soLan: 1
+      },
+      {
+        ma: "N17",
+        ten: "Bỏ chặn theo content-length: nuốt trọn thân vào bộ nhớ rồi mới từ chối",
+        tim: "      if (Number.isFinite(khaiDoDai) && khaiDoDai > FETCH_MAX_BODY_BYTES) {",
+        thay: "      if (false && Number.isFinite(khaiDoDai) && khaiDoDai > FETCH_MAX_BODY_BYTES) {",
+        soLan: 1
+      },
+      {
+        ma: "N18",
+        ten: "session.hello khai lại là seed của Scouter — ba chỗ tự khai nói hai kiểu",
+        tim: '        seed: "hnx-fetch-v0.1",',
+        thay: '        seed: "scouter-seed-v0.1",',
+        soLan: 1
+      },
+      {
         ma: "N10",
         ten: "Bật công tắc KHÔNG đặt lại bộ đếm — ngân sách không bao giờ được nạp lại đúng chỗ",
         tim: "    ? { enabled: true, enabled_at: at, used: 0 }",
@@ -138,6 +175,36 @@ const BATCHES = [
   {
     /* Tệp chép nguyên văn. Con này canh CHÍNH PHÉP GHIM chống trôi — nếu nó sống sót thì phép
      * ghim đó là đồ trang trí, và hai bản sẽ trôi xa nhau đúng như ba gói `duc-auto-*`. */
+    /* Vùng ghi. Ba con dưới đây canh cái chặn "vùng ghi không được chứa tệp ghép cặp" — chốt
+     * duy nhất đứng giữa `file.read` và token của lượt chạy đang bật. */
+    ten: "VÙNG GHI — token không được nằm trong tầm với của file.read",
+    target: path.join(ROOT, "bridge", "hnx-fetch-host.mjs"),
+    pin: PIN,
+    mutants: [
+      {
+        ma: "N19",
+        ten: "Bỏ phép so đường dẫn thật — quay về chỉ dò TÊN tệp, nên tệp đặt tên lạ lọt sạch",
+        tim: "    if (trongVung(goiThat, that)) throw new Error(noiRa(that));",
+        thay: "    if (false && trongVung(goiThat, that)) throw new Error(noiRa(that));",
+        soLan: 1
+      },
+      {
+        ma: "N20",
+        ten: "Chỉ lùng tầng con trực tiếp — tệp ghép cặp bỏ quên ở thư mục con lọt qua",
+        tim: "  if (sau > SAU_TOI_DA) return null;",
+        thay: "  if (sau > 0) return null;",
+        soLan: 1
+      },
+      {
+        ma: "N21",
+        ten: "Nhận cả đường dẫn tương đối cho vùng ghi — vùng ghi tuỳ thuộc thư mục làm việc",
+        tim: "  if (typeof root !== \"string\" || !path.isAbsolute(root)) {",
+        thay: "  if (typeof root !== \"string\") {",
+        soLan: 1
+      }
+    ]
+  },
+  {
     ten: "CHỐNG TRÔI — bản chép phải còn khớp bản gốc",
     target: path.join(ROOT, "scripts", "transport.mjs"),
     pin: PIN,

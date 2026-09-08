@@ -1,0 +1,18 @@
+function canhVungGhi(root) {
+  if (typeof root !== "string" || !path.isAbsolute(root)) {
+    throw new Error("`--root` phải là một đường dẫn TUYỆT ĐỐI: vùng ghi do người khởi động khai, không do lệnh trên dây khai.");
+  }
+  if (!fs.existsSync(root)) throw new Error(`Thư mục gốc không tồn tại: ${root}`);
+  const goiThat = fs.realpathSync(root);
+  for (const ten of fs.readdirSync(goiThat)) {
+    if (!/pairing.*\.json$/i.test(ten)) continue;
+    throw new Error([
+      `Vùng ghi chứa tệp ghép cặp: ${path.join(root, ten)}`,
+      "",
+      "`file.read` đọc được mọi file dưới vùng ghi, nên để tệp ghép cặp trong đó nghĩa là TOKEN",
+      "đọc được qua dây. Trỏ `--root` vào một thư mục con chỉ chứa dữ liệu, ví dụ:",
+      `  --root "${path.join(root, "du-lieu")}"`
+    ].join("\n"));
+  }
+  return goiThat;
+}
