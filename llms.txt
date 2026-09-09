@@ -4,7 +4,7 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `37f1acb1` (2026-09-09).
+Trang được sinh tại commit `ed1570be` (2026-09-09).
 
 ## Việc ưu tiên #1
 
@@ -19,7 +19,7 @@ Trang được sinh tại commit `37f1acb1` (2026-09-09).
 
 ## Từng extension
 
-- [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — **Bốn mục đóng trong ngày 09/09 (B-40 ⒝, B-41, B-42, B-43, B-44), rồi một lượt audit độc lập đảo lại hai trong số đó.** Vòng chat 0 cú bấm chạy trọn: máy tự…
+- [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — **Năm mục đóng trong ngày 09/09, một lượt audit độc lập đảo lại hai trong số đó, rồi hai mục nữa đóng bằng phép đo 0 credit.** Vòng chat 0 cú bấm chạy trọn: sổ…
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Nợ gói 9 -> 3 trong ngày 06/09
 - [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật
