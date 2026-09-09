@@ -5,6 +5,7 @@ date: 2026-08-26
 deciders: Claude, theo phát hiện của Antigravity
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0021 — Địa chỉ chưa biết thì HOÃN phán xét, không dừng cứng

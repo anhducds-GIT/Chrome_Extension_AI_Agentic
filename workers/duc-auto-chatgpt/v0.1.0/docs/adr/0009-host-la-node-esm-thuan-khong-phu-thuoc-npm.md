@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Claude (coordinator), đảo ngược đề xuất .NET ban đầu của Codex
 source_section: Kiến trúc & Agent Bridge
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0009 — Host là Node ESM thuần, không phụ thuộc npm

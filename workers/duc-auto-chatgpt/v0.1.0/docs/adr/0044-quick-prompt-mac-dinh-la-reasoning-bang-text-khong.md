@@ -5,6 +5,7 @@ date: 2026-08-28
 deciders: Đức
 source_section: Roadmap tự hành (chốt sau audit 2026-08-24)
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: chu-va-commit
 ---
 
 # ADR-0044 — Quick Prompt mặc định là "Reasoning bằng text", KHÔNG phải "Tạo ảnh"

@@ -5,6 +5,7 @@ date: 2026-08-24
 deciders: Đức (tái xác nhận)
 source_section: Roadmap tự hành (chốt sau audit 2026-08-24)
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0034 — Không đổi, nhắc lại: Run là của Đức; AI không tự gửi prompt tới ChatGPT; không làm…

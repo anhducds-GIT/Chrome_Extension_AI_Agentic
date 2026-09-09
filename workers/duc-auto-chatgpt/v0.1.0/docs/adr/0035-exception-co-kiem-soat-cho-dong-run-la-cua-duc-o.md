@@ -5,6 +5,7 @@ date: 2026-08-25
 deciders: Đức (chốt trong phiên Gemini, mở rộng sang package này cùng ngày)
 source_section: Roadmap tự hành (chốt sau audit 2026-08-24)
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0035 — EXCEPTION có kiểm soát cho dòng "Run là của Đức" ở trên, CHỈ trong phát triển

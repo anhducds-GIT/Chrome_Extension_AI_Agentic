@@ -5,6 +5,7 @@ date: 2026-08-24
 deciders: Đức
 source_section: Roadmap tự hành (chốt sau audit 2026-08-24)
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0039 — Nguyên tắc thiết kế Bridge

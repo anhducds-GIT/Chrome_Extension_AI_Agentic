@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Claude (coordinator)
 source_section: Kiến trúc & Agent Bridge
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0008 — AI ngoài chỉ được propose (đề xuất vào vùng cách ly)

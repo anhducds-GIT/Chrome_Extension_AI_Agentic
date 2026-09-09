@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Đức (luật cố định)
 source_section: Vận hành / UI
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: pham-vi-va-ky-luat
 ---
 
 # ADR-0027 — Không tự ý commit — luôn hỏi Đức trước, kể cả khi test 100% pass

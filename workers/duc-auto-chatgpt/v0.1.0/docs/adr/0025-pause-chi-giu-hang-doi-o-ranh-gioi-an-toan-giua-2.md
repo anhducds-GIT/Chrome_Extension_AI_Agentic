@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Claude
 source_section: Vận hành / UI
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0025 — Pause chỉ giữ hàng đợi ở ranh giới an toàn giữa 2 job, không bao giờ ngắt 1 job…

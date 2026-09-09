@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Claude (coordinator), theo yêu cầu an toàn của Đức
 source_section: Kiến trúc & Agent Bridge
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0007 — run.start / run.pause / run.resume không có trong Bridge v1, trả METHOD_NOT_FOUND

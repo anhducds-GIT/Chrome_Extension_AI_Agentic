@@ -5,6 +5,7 @@ date: 2026-08-25
 deciders: Đức (chính sách random 1/2) + bằng chứng sống 2026-08-25
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: nhan-dien-anh
 ---
 
 # ADR-0017 — Xử lý poll A/B của ChatGPT ("Which image do you like more?")

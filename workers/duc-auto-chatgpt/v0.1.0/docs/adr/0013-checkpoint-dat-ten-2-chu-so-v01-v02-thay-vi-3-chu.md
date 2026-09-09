@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Đức
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: du-lieu-va-bang-chung
 ---
 
 # ADR-0013 — Checkpoint đặt tên 2 chữ số (v01, v02...) thay vì 3 chữ số (v001)

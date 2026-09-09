@@ -5,6 +5,7 @@ date: 2026-08-24
 deciders: Đức
 source_section: Roadmap tự hành (chốt sau audit 2026-08-24)
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: pham-vi-va-ky-luat
 ---
 
 # ADR-0029 — Commit Tầng 1 sau khi Claude test sống 6 method qua CLI (nghiệm thu bằng mắt của…

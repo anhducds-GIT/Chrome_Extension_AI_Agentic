@@ -3,6 +3,7 @@ status: Accepted
 adr: 0048
 date: 2026-09-06
 deciders: Đức
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0048 — `run.trial` gọi khi chưa nạp workbook là lỗi agent ĐƯỢC thử lại

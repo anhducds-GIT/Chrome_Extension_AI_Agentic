@@ -16,8 +16,8 @@ chốt.
 | Implementer gốc | GPT Web | Đã dựng V0 ban đầu | — |
 | AI ngoài qua Agent Bridge | Bất kỳ agent nào gọi qua Bridge (kể cả Claude/Codex khi chạy qua CLI) | Đọc trạng thái (`ping`, `capabilities`, `queue-list`, `run-status`, `ledger-read`), gửi 1 đề xuất (`propose`) vào vùng cách ly · **`run.trial` trong đúng các nắp cứng ở luật 7** | Không bao giờ tự chạy `run.start`/pause/resume; không bỏ qua bước Đức duyệt trong side panel |
 
-Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file này
-(mục "Template COUNCIL"), copy từ `HANDOFF.md`.
+Hai bản mẫu lệnh review thời V0: `drafts/TEMPLATE-COUNCIL.md` — **đọc lại SCOPE LOCK trước khi
+dùng lại**, phạm vi đã rộng ra nhiều kể từ đó.
 
 ## Luật vàng của project này
 
@@ -92,7 +92,7 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
 
 CORE (đọc mỗi lần):
 - `README.md` — project là gì, kiến trúc, phạm vi (đóng vai design_brief).
-- `AGENTS.md` — file này: vai, luật vàng, bản đồ file, template COUNCIL.
+- `AGENTS.md` — file này: vai, luật vàng, bản đồ file.
 - `HANDOFF.md` — trạng thái hiện tại, việc tiếp theo, Log (chỉ thêm dòng, đọc
   đầu tiên trước khi bắt tay vào việc, ghi cuối cùng sau khi xong).
 
@@ -109,246 +109,61 @@ COMPANION (đọc khi cần):
 - `drafts/` — nháp, spec thiết kế, roadmap chưa chốt. Agent chỉ được tự ghi
   vào đây (đúng luật CLAUDE.md gốc của Đức).
 
-## Sổ cái của gói — luật đang sống, và chỗ đọc lý lẽ
+## Sổ cái của gói — đọc ở đâu
 
-> Mục lục đầy đủ: [`decisions.md`](decisions.md). **Trích theo SỐ HIỆU, đừng trích theo tên file.**
-> Số hiệu đánh **theo từng thư mục**: `ADR-0006` ở đây khác `ADR-0006` của gói khác và khác của
-> gốc repo. Ba mươi bảy quyết định dưới đây là những cái **còn ràng buộc việc hôm nay**; phần còn
-> lại của sổ khai ở `.repo-structure.json` → `luat.mo_coi_co_y`.
+> **Danh sách đầy đủ, do MÁY sinh:** [`decisions.md`](decisions.md) — nhóm theo chủ đề, một dòng
+> một quyết định, sinh lại bằng `node scripts/rule-compile.mjs --sinh`
+> ([ADR-0030](../../../docs/adr/0030-rule-compiler-v1.md)). **Đừng chép nó xuống đây:** khối ấy dài
+> ~7.500 ký tự và mọi phiên đụng gói này sẽ trả tiền cho nó, trong khi hầu hết phiên chỉ cần **một**
+> quyết định. Rút gọn 09/09, [ADR-0031](../../../docs/adr/0031-tran-do-bang-ky-tu.md) ⑷.
+>
+> **Trích theo SỐ HIỆU, đừng trích theo tên file.** Số hiệu đánh **theo từng thư mục**: `ADR-0006`
+> ở đây khác `ADR-0006` của gói khác và khác của gốc repo.
 
-**Bridge, và ai được thực thi.**
-[ADR-0001](docs/adr/0001-bridge-dung-loopback-host-127-0-0-1-co-token-32.md) loopback `127.0.0.1`
-+ token 32-byte ·
-[ADR-0009](docs/adr/0009-host-la-node-esm-thuan-khong-phu-thuoc-npm.md) host là Node ESM thuần ·
-[ADR-0006](docs/adr/0006-side-panel-la-executor-duy-nhat.md) side panel là executor **duy nhất** ·
-[ADR-0007](docs/adr/0007-run-start-run-pause-run-resume-khong-co-trong.md) `run.start`/`pause`/`resume`
-không tồn tại ·
-[ADR-0002](docs/adr/0002-supersedes-dong-ai-ngoai-chi-duoc-propose-ben-duoi.md) riêng thao tác
-*Setup* thì Bridge toàn quyền ·
-[ADR-0005](docs/adr/0005-queue-propose-duyet-tay-cua-duc-khong-bi-xoa-khi.md) `queue.propose` +
-duyệt tay không bao giờ bị gỡ ·
-[ADR-0039](docs/adr/0039-nguyen-tac-thiet-ke-bridge.md) **"AI là bộ não, người dùng là cánh tay"** ·
-[ADR-0041](docs/adr/0041-references-add-cho-gpt-hien-thuc-hoa-nguyen-tac-ai.md) `references.add` là
-hiện thực hoá nguyên tắc đó, **không** phải luật mới.
-
-**AI được chạm tới đâu trên ổ đĩa.**
-[ADR-0003](docs/adr/0003-ai-khong-the-tu-mo-file-xlsx-tu-o-dia-hay-tu-bind.md) AI **không** tự mở
-`.xlsx` hay bind thư mục mới — giới hạn của trình duyệt ·
-[ADR-0004](docs/adr/0004-bo-sung-dong-tren-phat-hien-tu-phien-gemini.md) **nhưng ĐƯỢC** tự nạp vị
-trí output khi đó là thư mục con tương đối dưới `Downloads`.
-
-**An toàn lúc chạy — đừng nới cái nào.**
-[ADR-0034](docs/adr/0034-khong-doi-nhac-lai-run-la-cua-duc-ai-khong-tu-gui.md) Run là của Đức;
-không làm yếu exact-once / attribution / persistence ·
-[ADR-0035](docs/adr/0035-exception-co-kiem-soat-cho-dong-run-la-cua-duc-o.md) **ngoại lệ có hàng
-rào:** trial run trong giai đoạn phát triển ·
-[ADR-0042](docs/adr/0042-viec-that-khong-chay-qua-run-trial.md) **việc thật KHÔNG chạy qua
-`run.trial`** ·
-[ADR-0016](docs/adr/0016-completed-job-safe-complete-khong-bao-gio-tu-chay.md) job đã
-`SAFE_COMPLETE` **không bao giờ** tự chạy lại ·
-[ADR-0024](docs/adr/0024-retry-halt-chi-dung-toan-batch-khi-captcha-het.md) chỉ **ba** loại
-hard-stop dừng cả mẻ ·
-[ADR-0025](docs/adr/0025-pause-chi-giu-hang-doi-o-ranh-gioi-an-toan-giua-2.md) Pause chỉ ở ranh
-giới giữa hai job ·
-[ADR-0020](docs/adr/0020-mot-run-khoa-dung-mot-tab-va-mot-hoi-thoai.md) một run khoá đúng **một**
-tab và **một** hội thoại ·
-[ADR-0037](docs/adr/0037-run-stop-di-vong-qua-khoa-run-active.md) bất đối xứng **CỐ Ý**: `run.stop`
-vòng qua `RUN_ACTIVE`, `chat.reload` thì bị nó chặn ·
-[ADR-0038](docs/adr/0038-co-stoprequested-duoc-xoa-tai-khoa-mo-run.md) cờ `stopRequested` xoá tại
-`tryBeginRun`, **không** giữa `run()`.
-
-**Đọc trang, và đừng đoán.**
-[ADR-0017](docs/adr/0017-xu-ly-poll-a-b-cua-chatgpt-which-image-do-you-like.md) poll A/B thì
-extension **tự** trả lời ·
-[ADR-0018](docs/adr/0018-click-tra-loi-poll-o-readiness-gate-khong-click.md) click ở **readiness
-gate**, KHÔNG click lúc đang dò ảnh ·
-[ADR-0019](docs/adr/0019-nhieu-anh-1-job-chi-chap-nhan-khi-cung-mot-luot.md) nhiều ảnh một job chỉ
-nhận khi **cùng một lượt assistant** ·
-[ADR-0021](docs/adr/0021-dia-chi-chua-biet-thi-hoan-phan-xet-khong-dung-cung.md) địa chỉ chưa biết
-thì **hoãn** phán xét, không dừng cứng.
-
-**Ghi ra đĩa — nói đúng điều quan sát được.**
-[ADR-0022](docs/adr/0022-write-outcome-chi-noi-dieu-quan-sat-duoc-khong-noi.md) `write_outcome`
-chỉ nói điều **quan sát được**, không nói điều được PHÉP làm ·
-[ADR-0023](docs/adr/0023-tach-bi-doi-ten-va-vao-dung-cho-thanh-hai-truong.md) tách *"bị đổi tên"*
-và *"vào đúng chỗ"* thành **hai** trường ·
-[ADR-0045](docs/adr/0045-cau-tra-loi-text-dai-qua-32-767-ky-tu-thi-dung-va.md) text quá 32.767 ký
-tự thì **DỪNG và không lưu gì** — không cắt, không tách file.
-
-**Checkpoint và bằng chứng.**
-[ADR-0013](docs/adr/0013-checkpoint-dat-ten-2-chu-so-v01-v02-thay-vi-3-chu.md) checkpoint đặt tên
-hai chữ số ·
-[ADR-0031](docs/adr/0031-cho-phep-gop-checkpoint-cho-phien-sua-cua-agent.md) được gộp checkpoint
-cho một phiên agent, audit vẫn ghi **từng** mutation ·
-[ADR-0043](docs/adr/0043-supersedes-dong-chinh-sach-don-checkpoint.md) chính sách dọn checkpoint
-**đang hiệu lực** (thay bản 24/08) ·
-[ADR-0014](docs/adr/0014-pilot-03-pilot-05-pilot-06-pilot-06b-khong-bao-gio.md) thư mục bằng chứng
-không bao giờ bị sửa ·
-[ADR-0040](docs/adr/0040-pilot-kiem-tinh-nang-thi-tu-tao-khong-dem-viec-that.md) pilot kiểm tính
-năng thì **tự tạo**, không đem việc thật ra đo.
-
-**Chữ, commit, và cách làm việc.**
-[ADR-0026](docs/adr/0026-operator-facing-text-tieng-viet.md) chữ operator tiếng Việt ·
-[ADR-0028](docs/adr/0028-supersedes-dong-khong-tu-y-commit-ngay-tren-trong.md) AI được `git commit`
-kể cả `main`, kèm bốn điều kiện ·
-[ADR-0033](docs/adr/0033-ai-duoc-commit-ke-ca-main-chi-tiet-4-dieu-kien.md) nhắc lại vế trên ·
-[ADR-0030](docs/adr/0030-sua-luat-8-agents-md-cho-phep-xay-harness-test-bang.md) harness bằng
-Chrome THẬT được phép; in-app preview pane vẫn cấm ·
-[ADR-0044](docs/adr/0044-quick-prompt-mac-dinh-la-reasoning-bang-text-khong.md) Quick Prompt mặc
-định là *Reasoning bằng text*, **không** phải *Tạo ảnh* ·
-[ADR-0036](docs/adr/0036-quy-trinh-bat-buoc-cross-check-doc-lap-truoc-khi.md) cross-check độc lập
-trước khi đưa Đức thao tác — **⚠ vế này đã hẹp lại 02/09**: Đức bỏ audit độc lập cho *fix nhỏ*
-(xem `workers/duc-auto-gg-flow-video/v0.1.0/docs/adr/0009-bo-audit-doc-lap-cho-fix-nho.md`), và
-ranh giới *"fix nhỏ"* thì **chưa ai chốt câu chữ** — gặp ca xám thì hỏi Đức.
+Chín luật vàng ngay trên là phần **phải thuộc trước khi gõ**; sổ cái là phần tra khi cần. Còn đúng
+một vế đang mở và nó chặn thật:
+[ADR-0036](docs/adr/0036-quy-trinh-bat-buoc-cross-check-doc-lap-truoc-khi.md) buộc cross-check độc
+lập trước khi đưa Đức thao tác — **đã hẹp lại 02/09**, Đức bỏ audit độc lập cho *fix nhỏ*
+(`duc-auto-gg-flow-video` ADR-0009), nhưng ranh giới *"fix nhỏ"* thì **chưa ai chốt câu chữ**.
+Gặp ca xám thì **hỏi Đức**, đừng tự định nghĩa.
 
 ## Bản đồ file
 
+> **Chỉ khai thứ CẤP CAO, mỗi hàng MỘT mệnh đề.** Đó đúng là thứ luật vàng 4 đòi *(“thêm file/thư
+> mục mới cấp cao → thêm 1 dòng”)* và đúng thứ cổng kiểm đọc — `session-check.mjs` phép *File mới
+> đã khai vào Bản đồ file* so **tên cấp cao**, không so từng file con.
+> **Chuyện dài nằm ở chính nơi người đọc sẽ tới:** docblock đầu mỗi file mã, `README.md` trong mỗi
+> thư mục bằng chứng. Chép xuống đây là bắt **mọi phiên** trả tiền cho một câu chuyện họ không mở
+> — hàng `tests/` từng nuốt **19.371 ký tự**, 44% cả file, và không hàng nào nói thêm được điều mà
+> docblock của chính phép kiểm đó chưa nói. Rút gọn 09/09,
+> [ADR-0031](../../../docs/adr/0031-tran-do-bang-ky-tu.md) ⑷.
+
 | File | Vai trò |
 |---|---|
-| `README.md` | Tổng quan project, kiến trúc, cài đặt, Agent Bridge (kỹ thuật) |
+| `README.md` | Tổng quan, kiến trúc, cài đặt, Agent Bridge (kỹ thuật) — đóng vai design_brief |
 | `AGENTS.md` | File này |
-| `AI-OPERATOR-GUIDE.md` | **Sổ tay vận hành** — 3 việc phải làm trước khi bấm chạy, và bảng lỗi ĐÃ GẶP THẬT trên trang (kèm "thật ra là gì" và "KHÔNG phải gì"). Mở TRƯỚC khi chạy live, đừng chẩn đoán lại từ đầu |
-| `STATUS.md` | **Trạng thái vận hành, một trang, cho mắt Đức** — lifecycle, kiểm chứng lần cuối + bằng chứng, việc đang mở, con trỏ đọc sâu. Máy đọc phần frontmatter để sinh `DASHBOARD.md` ở gốc repo. Chỉ TRỎ sang file khác, không chép nội dung. Schema: `STATUS.template.md` ở gốc repo |
-| `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất**. Cắt đuôi 2026-09-06 theo ADR-0008 của gốc repo; lịch sử cũ hơn ở `HANDOFF-ARCHIVE-01.md`, con trỏ nằm ngay đầu mục `## Log` |
-| `HANDOFF-ARCHIVE-01.md` | **Đuôi đã cắt của `HANDOFF.md`** — 124 lượt Log cũ, nguyên văn, không sửa một chữ. Chỉ đọc; ghi Log mới thì ghi vào `HANDOFF.md`. Ghép lại dựng được bản gốc giống hệt từng byte (bất biến ⑴ của ADR-0008) |
-| `HANDOFF-ARCHIVE-02.md` | **Bản dài nguyên văn của 3 mục đã được viết ngắn trong `HANDOFF.md`** (2026-09-06, ADR-0011 mục ⑶ + ADR-0012). Viết ngắn là **đổi chỗ chi tiết, không phải xoá** — mọi số đo và mọi vòng audit ở đây. Chỉ đọc. Ghép lại dựng được bản gốc giống hệt từng byte, SHA-256 in ngay đầu file |
-| `decisions.md` | Mục lục trỏ sang `docs/adr/` (nội dung đã chuyển) |
-| `docs/adr/` | ADR bất biến — quyết định của riêng gói này. **Đếm, đừng tin một con số gõ tay:** `ls docs/adr/*.md | wc -l` |
-| `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX |
-| `BACKLOG.md` | Việc phát sinh ngoài checkpoint của phiên đang chạy — P1/P2/P3 + câu hỏi còn treo. Mọi ý tưởng làm phình phạm vi đều ghi vào đây thay vì mở rộng phiên |
-| `NEXT-SESSION-BRIEF.md` | Brief phiên làm việc tiếp theo (khi còn hiệu lực) |
-| `AUDIT.md` | Kết quả audit kiến trúc |
-| `TEST_REPORT.md` | Kết quả test |
-| `drafts/AGENT-BRIDGE-DESIGN-V1.md` | Thiết kế gốc của Agent Bridge (WP-0) |
-| `drafts/AGENT-BRIDGE-HANDOFF.md` | Handoff kỹ thuật WP-1..WP-4 cho Codex |
-| `drafts/AGENT-BRIDGE-ROADMAP-AND-GUIDE-V1.md` | Roadmap + use case Bridge cho Đức (không kỹ thuật) — **một phần đã lỗi thời sau Tầng 1, xem audit 2026-08-24** |
-| `drafts/AGENT-BRIDGE-TIER1-HANDOFF.md` | Brief Tầng 1 (6 method ghi trực tiếp + tab BRIDGE) giao cho Codex |
-| `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md` | Audit độc lập toàn hệ thống + roadmap 5 giai đoạn tiến tới tự hành (Đức đã chốt cả 5 điểm 2026-08-24) |
-| `drafts/GIAI-DOAN-1-SAFETY-HANDOFF.md` | Brief Giai đoạn 1 (8 fix an toàn nhóm A) giao Codex, kèm bằng chứng sống cho fix A1 |
-| `drafts/GIAI-DOAN-2A-AGENT-BRIDGE-HANDOFF.md` | Brief Giai đoạn 2A (run.trial + 6 nâng cấp Bridge chuẩn agent) giao Codex |
-| `drafts/20260828-chatgpt-text-reasoning-r01.CLAUDE-HANDOFF.md` | Handoff tự chứa cho Claude Code: trạng thái bản vá text reasoning + filename persistence, bằng chứng kiểm và bước tiếp theo |
-| `ab-poll-core.js` | Chính sách trả lời poll A/B của ChatGPT (`ab_poll_action`) — module lõi thuần, dùng chung cho content script và side panel |
-| `text-output-core.js` | Hợp đồng thuần cho `text_reasoning`: enum loại job, giới hạn ô XLSX, trường ledger và trường audit đã loại full response |
-| `interjob-delay-core.js` | **Đồng hồ chờ giữa hai job.** Chờ theo MỐC thời gian thật cộng một lần đánh thức bằng `chrome.alarms`, vì đếm nhịp `setTimeout` trong panel bị che biến khoảng nghỉ 12 giây thành ~11 phút (đo live 2026-08-28). Mốc là thẩm quyền, đánh thức chỉ để hỏi lại — nên một cái alarm sớm không bao giờ rút ngắn được khoảng nghỉ |
+| `AI-OPERATOR-GUIDE.md` | Sổ tay vận hành + bảng lỗi **ĐÃ GẶP THẬT** trên trang. **Mở TRƯỚC khi chạy live**, đừng chẩn đoán lại từ đầu |
+| `STATUS.md` | Trạng thái vận hành một trang cho mắt Đức; frontmatter sinh `DASHBOARD.md` ở gốc. Chỉ TRỎ, không chép. Schema: `STATUS.template.md` ở gốc repo |
+| `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất**. Ghi vào **cuối** |
+| `HANDOFF-ARCHIVE-01.md` · `HANDOFF-ARCHIVE-02.md` | Đuôi đã cắt của `HANDOFF.md`, nguyên văn, **chỉ đọc** — ghép lại dựng được bản gốc giống hệt **từng byte** (ADR-0008 gốc repo ⑴) |
+| `decisions.md` | Mục lục trỏ sang `docs/adr/` |
+| `docs/adr/` | ADR của riêng gói này. **Đếm, đừng tin một con số gõ tay:** `ls docs/adr/*.md \| wc -l` |
+| `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX (jobs/config) cho mọi workbook mới |
+| `BACKLOG.md` | Việc phát sinh ngoài checkpoint — P1/P2/P3 + câu hỏi còn treo. Ý tưởng làm phình phạm vi ghi vào đây thay vì mở rộng phiên |
+| `NEXT-SESSION-BRIEF.md` · `AUDIT.md` · `TEST_REPORT.md` | Brief phiên sau (**kiểm ngày trước khi dùng**) · kết quả audit kiến trúc · kết quả test |
+| `drafts/` | Nháp, spec, brief giao Codex, bản mẫu lệnh review (`TEMPLATE-COUNCIL.md`) — **chỗ DUY NHẤT agent được tự ghi** (luật `CLAUDE.md` gốc) |
+| `tests/` | Các phép ghim. **Mỗi phép tự khai ở docblock đầu file nó** — tra bằng `grep -l "B-28" tests/*.mjs`, đừng tra ở bảng này: bảng chưa bao giờ liệt kê đủ |
+| `scripts/` | `create-pilot-NN.mjs` tạo workbook từng pilot · `don-rac-tai-xuong.mjs` dọn rác tên-GUID (B-36), **mặc định CHỈ XEM** — protocol ở mục cùng tên trong `AI-OPERATOR-GUIDE.md` |
+| `templates/` | Workbook trống chuẩn để mở pilot mới |
+| `.gitignore` | Chặn **đầu ra lúc chạy** khỏi git (`*__audit.jsonl`, `*__results__v*.xlsx`) — rác lúc chạy không phải tài sản của gói, nên chặn mới đúng chỗ, không phải khai vào bảng này. Hai mẫu tên định nghĩa ở `../XLSX_TEMPLATE_GOVERNANCE.md` (**trên một tầng**) luật 6 & 7 |
+| `ab-poll-core.js` | Chính sách trả lời poll A/B (`ab_poll_action`) — lõi thuần, dùng chung content script và side panel |
+| `text-output-core.js` | Hợp đồng thuần cho `text_reasoning`: enum loại job, giới hạn ô XLSX, trường ledger và audit |
+| `interjob-delay-core.js` | Đồng hồ chờ giữa hai job — **MỐC thời gian thật là thẩm quyền**, `chrome.alarms` chỉ đánh thức để hỏi lại, nên một alarm sớm không rút ngắn được khoảng nghỉ |
+| `bridge-workspace-core.js` | Phiên làm việc theo tab (ADR-0046): store `dac.bridge.workspaces.v1` — trần 3 phiên/profile, chống trùng tên và trùng tab, một socket riêng mỗi phiên |
 | `provider-adapter.js` | Mọi thứ riêng của ChatGPT: selector DOM, hằng số thời gian, luật origin, mẫu chặn bảo mật. `content.js` đọc từ đây và không biết nó đang lái sản phẩm nào |
-| `drafts/NEXT-CHAT-PROMPT.md` | Prompt mở chat mới + bối cảnh ngắn cho Đức |
-| `drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md` | Gói việc `run.stop` + `chat.reload` giao cho phiên kế tiếp |
-| `templates/Duc-Auto-ChatGPT-Template.xlsx` | Workbook trống chuẩn để bắt đầu pilot mới |
-| `scripts/create-pilot-NN.mjs` | Script tạo workbook cho từng pilot |
-| `scripts/don-rac-tai-xuong.mjs` | Dọn file rác tên-GUID Chrome đặt cho artifact (B-36). Mặc định CHỈ XEM; ba nhóm theo độ chắc của bằng chứng chủ sở hữu. Protocol: mục cùng tên trong `AI-OPERATOR-GUIDE.md` |
-| ~~`FEATURE-PARITY.md`~~ | **Đã dời về gốc repo** 2026-08-26 theo Đức chốt — xem `FEATURE-PARITY.md` ở gốc. Nó nói về cả hai nhánh nên không thuộc package nào |
-| `bridge-workspace-core.js` | **Phiên làm việc theo tab** (ADR-0046): module thuần giữ store `dac.bridge.workspaces.v1` — trần 3 phiên/profile, chống trùng tên (không phân hoa-thường) và trùng tab, sanitize tên cùng kỷ luật với nhãn hồ sơ, dẫn xuất danh tính ghế (instance_id = mã phiên, label = tên phiên). Transport mở MỘT socket riêng cho mỗi phiên; host không phân biệt phiên với profile |
-| `tests/bridge-workspace-seats-smoke.mjs` | Ghim lớp phiên làm việc: mỗi ghế đi TRỌN bắt tay challenge→proof→auth với danh tính riêng; tab đóng/rời ChatGPT → ghế ngắt ngay (fail-closed); rpc qua ghế phiên mang workspace trên port message để panel bind method chạm tab vào ĐÚNG tab của phiên; không đọc được danh tính → từ chối auth (không có ghế vô danh); pin tĩnh cho 4 handler chạm tab của panel. 13/13 mutation đỏ |
-| `tests/bridge-workspace-lease-race-smoke.mjs` | **Harness vm thực thi sidepanel.js thật** (DOM/chrome stub, nạp theo thứ tự script của sidepanel.html, vào bằng `DacBridgeExecutorTestHooks`) — ghim race lease vòng 6: treo `tabs.get` → rebind phiên sang tab khác → nhả; `chat.reload`/`run.trial`/`dom_probe` snapshot cũ đều phải bị lease từ chối, không side-effect nào chạm tab cũ. Dời lease ngược về trước `tabs.get` là test đỏ. Panel-hành-vi test được từ đây, không chỉ test tĩnh |
-| `tests/bridge-transport-liveness-smoke.mjs` | Ghim lớp ổn định kết nối Bridge (port từ Gemini 02/09): keepalive phải **chờ ACK có hạn**; buông socket ngay khi phán nó chết chứ không đợi sự kiện `close` mà socket `CLOSING` có thể không bao giờ phát; reconnect theo **thang trần 5 giây**, thang chỉ reset khi có **một vòng đi-về hoàn chỉnh**; **hạn bắt tay phủ cả chuỗi** `auth_challenge`→`auth_proof`→`auth`→`auth_ok` của nhánh này. Ghim luôn hai bất biến sẵn có: `auth_ok` tới **trước khi khung `auth` rời socket** phải bị từ chối (kể cả đúng khe giữa lúc proof xong và lúc gửi), và `connectHost` phải **giữ socket trước mọi `await`**. Fake socket có trạng thái `CLOSING` thật — fake đóng-tức-thì che mất đúng cửa sổ lỗi |
-| `tests/bridge-plain-failure-classification-smoke.mjs` | **Ghim B-16: lỗi người sửa được KHÔNG được giặt thành `INTERNAL_ERROR`.** Sáu lỗi `prepare()` ném ra dưới dạng `Error` trần (`MISSING_REFERENCE` · `AMBIGUOUS_REFERENCE` · `DUPLICATE_REFERENCE` · `DUPLICATE_ALIAS` · `MAX_INPUT_IMAGES` · `INVALID_TASK_TYPE`) phải ra tới dây thành `VALIDATION_FAILED` kèm câu chỉ đường tiếng Việt, chứ không phải nguyên nhân giấu trong `details.debug` sau công tắc Chế độ phát triển. **Không grep mã**: cắt chính hàm `bridgeError()` đã ship ra khỏi `sidepanel.js` và CHẠY nó trong `node:vm`, ở **cả hai** trạng thái công tắc — vá mà chỉ chạy khi công tắc BẬT là không vá gì cả. Ghim luôn mép ngược: lỗi lạ vẫn phải là `INTERNAL_ERROR` (luật "cứ `CHỮ_HOA:` là người sửa được" sẽ đẩy chữ nội bộ tuỳ ý ra dây). 8/8 đột biến đỏ, gồm **dời lời gọi xuống sau nhánh giặt trắng** — chữ còn nguyên, hành vi chết |
-| `tests/chat-read-smoke.mjs` | Ghim `chat.read` — **cắt chính đoạn mã đã ship ra khỏi `content.js` và CHẠY nó** trong `node:vm` trên DOM giả dựng theo số đo live, cộng `validateParams` thật của `bridge-core.js`. Bảy bất biến của hàm đọc: lấy từ ĐUÔI (lấy từ đầu vẫn trả đủ số lượt nên payload trông y như thật) · `chars` là độ dài THẬT trên trang chứ không phải sau khi cắt · ba trạng thái `OK`/`MATCHED_BUT_NO_TEXT`/`NO_TURNS_MATCHED` phải phân biệt được · selector chết phải trả kèm tên attribute thật đang có · cửa chặn thiếu nắp · phân giải lấy ứng viên ĐẦU TIÊN nên một lượt khớp hai marker không bị đếm hai lần. Cộng nắp **tổ hợp**: `limit x max_chars_per_turn <= 200000`, vì mỗi nắp ở mức tối đa riêng thì vô hại mà nhân lên là ~2 MB trên trần envelope 1 MB. 7/7 rồi 4/4 mutation đỏ |
-| `evidence-chat-read-20260903/` | Bằng chứng live `chat.read` trên ghế `MVP_GPT Chat debug` — payload thô + bảng số. **Chỉ THÊM.** File `02-…-cho-qua.json` là bằng chứng của một **lỗ** (bản chưa có nắp tổ hợp cho `50 x 40000` đi qua), không phải của tính năng — đọc `README.md` trong đó trước khi trích số |
-| `tests/post-submit-no-resend-smoke.mjs` | **Ghim B-19 (ADR-0047): sau khi đã gửi thì KHÔNG gửi lại.** Luật Đức chốt 06/09 xoay quanh chữ "khẳng định được", nên file này ghi luôn **phép đo** đứng sau luật: lớp đối soát trong run có đúng MỘT phán quyết dương ("có ảnh quy được về attempt này" → `finishDetectedOutput`, không tới đường thử lại), ba lối ra còn lại đều là "không chứng minh được", nên số ca nó khẳng định được *"lượt gửi đó không tạo ra kết quả"* là **0** — và vì 0 nên luật thu về "chặn hẳn". Không grep mã: **cắt chính hàm `resolveJobFailure()` đã ship ra khỏi `sidepanel.js` và CHẠY nó** trong `node:vm`. Ghim cả hai mép: sau khi gửi thì `INTERRUPTED` + dừng batch (không phải `FAILED`, vì `resume-core` đọc `FAILED` là "bỏ qua an toàn"), còn **trước** lúc gửi thì vẫn thử lại và vẫn settle `FAILED` như cũ. **ĐẾM lại con số 0**: ai nối `verifyExistingOutput()` vào vòng chạy thì test đỏ và phép đo phải làm lại trước khi nới luật. 8/8 đột biến đỏ, gồm "tắt cờ vô điều kiện" và "bật cờ sau lời gọi gửi" |
-| `tests/run-trial-workbook-not-loaded-smoke.mjs` | **Ghim B-11 (ADR-0048): `run.trial` thiếu workbook là `WORKBOOK_NOT_LOADED` / `retryable: true`**, không phải `INTERNAL_ERROR` với nguyên nhân giấu sau công tắc Chế độ phát triển. Cắt chính hàm `bridgeRunTrial()` đã ship ra và CHẠY nó, với hai hằng số đường trial **lấy từ chính `sidepanel.js`** chứ không chép tay. Ghim mép ngược (có workbook thì không được chặn oan) và bắt được bản vá "còn nguyên chữ mà dời xuống sau `authoritativeValidate()`". 2/2 đột biến đỏ |
-| `tests/download-name-determiner-behaviour.mjs` | **Phép kiểm HÀNH VI cho bộ đặt tên download** (B-36). Cắt khối đặt tên ra khỏi `background.js` và CHẠY nó, với `chrome` giả và **đồng hồ do harness cầm** (không đẩy được thời gian thì "phiếu quá hạn" chỉ là câu chữ — đột biến bỏ kiểm hạn đã lọt lưới ở vòng thử phá đầu). Bất biến: **download do chính extension này khởi tạo không bao giờ được im lặng nhận tên mặc định của Chrome.** Ghim cả mép ngược: phải NHƯỜNG download của extension khác / của trang / của người dùng, phải nhường phiếu quá hạn, phải nhường khi còn nhiều hơn một phiếu (đoán là gán tên job này cho file job kia), và phải TIÊU phiếu ở cả hai nhánh. 8/8 mutation đỏ. Cái này tồn tại vì ba phép kiểm cũ đều TĨNH và để lỗi sống 8 tuần |
-| `tests/b36-bootstrap-audit-held-smoke.mjs` | **Ghim B-36 (A)+(D) theo ADR-0049 — HÀNH VI, không tĩnh.** CHẠY `sidepanel.js` thật trong `node:vm` (nạp theo đúng thứ tự script của `sidepanel.html`, vào bằng `DacBridgeExecutorTestHooks`), với stub download trả **GUID đúng như đã đo live 06/09** — không bịa hành vi Chrome. **MƯỜI bất biến.** (A): phiên bootstrap không phát lượt tải nào · mutation vẫn thành công và nói thẳng `audit_durable: false` kèm câu tiếng Việt · checkpoint chưa ra file thì không được khai `verified: true` · sổ **không mất** — lần ghi đầu vào thư mục thật xả TOÀN BỘ mục đã giữ · **mép ngược:** phiên do ĐỨC cấu hình Downloads thì VẪN đi đường tải và VẪN kiểm tên (bỏ kiểm tên là phương án (C), thứ ADR-0049 đã LOẠI) · một mutation hỏng giữa đường rồi rollback thì dấu "máy tự dựng" phải sống sót. (D): đúng MỘT thư mục đã cấp quyền thì NHẬN và ghi ngay · **HAI thư mục thì KHÔNG chọn hộ**, không ghi vào thư mục nào (đem bằng chứng run này vào hồ sơ run khác nặng hơn chậm ra file) · handle còn đó mà quyền đã mất thì không nhận · **thư mục Đức vừa bind không được bị lượt nhận ghi đè**. Thử phá **15/17**; hai con lọt đều tương đương hành vi và được ghi lại thay vì bày phép ghim giả. Thử phá còn lộ ra hai thứ phép ghim không lộ được: một dòng `delete` là **mã chết**, và một **lỗi thứ tự thật** (nhận trước lượt phục hồi binding của Đức thì `image` và `outputProfileState` nói hai chuyện). **Trần tuyên bố:** bốn ca (D) thay `DacOutputProfiles` bằng kho giả vì Node không có IndexedDB — chúng ghim logic NHẬN của panel, không ghim lớp IndexedDB |
-| `.gitignore` | Chặn **đầu ra lúc chạy** khỏi git: `*__audit.jsonl` và `*__results__v*.xlsx` (đúng hai mẫu tên `../XLSX_TEMPLATE_GOVERNANCE.md` luật 6 & 7 định nghĩa — file ấy ở **trên một tầng**, không trong `v0.1.0/`). Sinh ra vì 03/09 Đức chọn chính thư mục nguồn làm đích ghi output, run ghi checkpoint vào đây và cổng đóng phiên đỏ — nhưng khai rác lúc chạy vào Bản đồ file là nói nó là tài sản của package, nên chặn mới đúng chỗ. Không ảnh hưởng bằng chứng pilot đã track |
-| `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
-| `Pilot-*/` (07 · 08 · 09_Test-Codex-Bridge-to-Extension · 13_References · 14_RefFeatureTest · 15_CheckpointRetention · 16_InterJobDelay · 17_B41-TuChua) | Pilot của nhánh này — bằng chứng, **chỉ THÊM**. Viết theo **hình dạng tên**, vì danh sách gõ tay ở đây đã mục một lần: bản cũ dừng ở `Pilot-09...` trong khi trên đĩa đã có tới 17 |
-| `Pilot-13_References/` | **TẠM HOÃN, không chạy** — pilot ảnh tham chiếu dựng từ 3 job thật của Pilot-08. Giữ lại vì phần kiểm offline "cả 66 job đều giải được ảnh" vẫn dùng được khi nào chạy Pilot-08 thật |
-| `Pilot-15_CheckpointRetention/` | Pilot kiểm tính năng **dọn rác checkpoint** (B-26) — thư mục ra hoàn toàn mới và trống nên kết quả tự tố cáo: chạy 2 job ghi 7 checkpoint, cuối run phải còn ĐÚNG 2 file. Đọc `README.md` trong đó để biết ĐẠT/HỎNG trước khi chạy |
-| `Pilot-16_InterJobDelay/` | **Số đo, không phải pilot trên trang thật.** Bằng chứng cho bug khoảng nghỉ giữa job bị Chrome bóp: hai harness Chrome thật, bảng số hiện/bị-che, mutation test, và công thức 4 bước để Đức đo lại live. Không tốn lượt ChatGPT nào |
-| `Pilot-17_B41-TuChua/` · `scripts/create-pilot-17.mjs` | **Bằng chứng lượt nghiệm thu 09/09 cho ADR-0050 ⒝ và ADR-0051.** Workbook 2 job hỏi–đáp bằng chữ, cố ý không dùng ảnh (bản vá cần nghiệm thu nằm ở cổng TRƯỚC lúc gửi, nên hạn mức tạo ảnh không liên quan) và `delay_min_sec = delay_max_sec = 40` để có một cửa sổ 40 giây cho người thật đổi hội thoại giữa hai job. **Kết quả thật, ghi ra để phiên sau không chạy lại:** lượt này **KHÔNG** kích hoạt được đường tự chữa — run gắn theo **id của tab**, nên đổi tab Chrome không làm nó trôi; phải đổi **địa chỉ của chính tab đã gắn**. Lượt đó lại lộ ra hai thứ khác: hội thoại thuộc Project bị đọc thành "không phải hội thoại" (đã vá cùng ngày), và `B-43` — job chữ ghi lại một mẩu câu trả lời rồi báo thành công |
-| `evidence-dom-probe-message-sample-20260902/` | Nghiệm thu lỗi #5 (`dom_probe` mù chữ trên trang) 02/09: payload thô TRƯỚC khi vá trên 2 profile + SAU khi vá, kèm `KET-QUA.md` — bằng chứng, không sửa |
-| `evidence-workspace-seats-20260903/` | Bằng chứng tính năng phiên-theo-tab (ADR-0046): 3 vòng audit Codex (vòng 1 FAIL 4 HIGH thật, vòng 2 FAIL 3 HIGH trong lớp vá, vòng 3 PASS), 3 harness mutation 22/22 đỏ, ghi nhận trung thực về phòng thủ không ghim được — bằng chứng, không sửa |
-| `evidence-multiprofile-port-20260902/` | Bằng chứng port multi-profile 02/09: 2 vòng audit Codex (vòng 1 FAIL bắt đúng lỗi authSent, vòng 2 đóng), mutation 13/13 đỏ, host sống 32147 — bằng chứng, không sửa |
-| `tests/zoom-control-smoke.mjs` | **Ghim N-14 (sổ nợ gốc repo): cụm nút CHAT ZOOM.** Thay `chatgpt-zoom-control-smoke.mjs` — bản cũ tự định nghĩa lại `isChatGPTUrl` / `simulateZoomSync` / `simulateSetZoom` ngay trong file test, tức là kiểm một BẢN SAO logic chứ không kiểm `sidepanel.js`. Nay **trích thân hàm thật** (`ZOOM_LEVELS` → hết `setChatZoom`) rồi chạy trong `node:vm`. Ghim: tab lạ thì xám kể cả khi ĐANG BẬT rồi mới rời đi · mức lệch thì bấm được nhưng KHÔNG nút nào sáng (cấm tô nút gần nhất) · bốn cách "không đọc được tab" đều fail-closed · bấm xong thì ĐỌC LẠI trạng thái, không tin cú bấm. **13/13 đột biến đỏ.** Cái bẫy đã trả giá ở gói Gemini và được chép lại đây: sân khấu giả phải cho ba nút khởi đầu TẮT, đúng như `sidepanel.html` ship |
-| `tests/manual-recovery-guards-static.mjs` | **Ghim B-24 + B-25** — hai mục cùng nằm ở vùng cứu-thủ-công của `sidepanel.js`. **B-25:** mọi câu lỗi `MÃ: đuôi` trong `confirmRecreate()` phải có tiếng Việt CÓ DẤU ở phần đuôi và giữ MÃ tiếng Anh (luật vàng 4); đuôi của `OUTPUT_LOCATION:` đến từ `output-location-core.js` nên canh ở đó. **B-24:** `resolveExistingOutput()` là đường đối soát ẢNH và phải có chốt `RECONCILE_IMAGE_ONLY` đứng **trước mọi tác dụng phụ** — thiếu nó, ngày ai đó nối lại nút, một job text sẽ thành SUCCESS kèm `result_file` là tên file ảnh. Ghim luôn rằng nó vẫn CHẾT (0 nút trong `sidepanel.html`, đúng 1 lần xuất hiện trong `sidepanel.js`). **7/7 đột biến đỏ.** Trần tuyên bố: TĨNH — cả hai hàm nằm trong IIFE nên chỉ đọc mã được |
-| `tests/reference-alias-dead-code-static.mjs` | **Ghim B-20: alias là code chết.** Cả hai đường nạp ảnh mẫu (hộp chọn file, `references.add` qua Bridge) đều ghi `alias: ""`, không có ô nhập alias nào, và cả **ba** bản sao logic khớp alias (`runner-core` · `plan-diagnostics-core` · `bridge-proposal-core`) đều còn chốt "khoá khác rỗng". Bỏ chốt đó trong khi alias luôn rỗng thì MỌI file khớp MỌI token — nên chốt quan trọng hơn vẻ ngoài. Đây là cái **chuông**, không phải lệnh cấm: nối một ô nhập alias vào là file này ĐỎ và B-20 phải mở lại. **8/8 đột biến đỏ** |
-| `tests/trial-timeout-cap-adr0015-smoke.mjs` | **Ghim ADR-0015: trần `run.trial` = 900 giây, `run.start` VẪN CẤM.** Canh **cả hai chiều** — 900 được nhận *và* 901 bị từ chối; vế thứ hai mới là vế phân biệt "nới trần" với "bỏ trần". Ghim luôn hai điều kiện ADR ghi là phần của quyết định: ① trần khai ở **đúng một chỗ** (`LIMITS.trial_timeout_cap_sec`), nên mọi lời gọi `capTrialTimeouts` và cả hai trường công bố trần trong `sidepanel.js` bị soi là **không được chứa một chữ số nào** — trước ADR-0015 con số 90 nằm rải ở bốn nơi; ② `run.status` phải trả **đồng hồ**, không chỉ tên chặng, và cái đó **không grep chữ**: cắt `elapsedSecSince` + `bridgeRunStatus` đã ship ra khỏi `sidepanel.js` và **chạy** chúng trong `node:vm` với đồng hồ do harness cầm, rồi đòi `stage_elapsed_sec` **bò lên** giữa hai lần hỏi (một trường đứng yên đọc y như im lặng). Cộng mép ngược: sàn 15 giây còn nguyên, không job nào chạy thì đồng hồ là `null` chứ không phải `0`. **10/10 đột biến đỏ**, gồm gỡ `run.start` khỏi `POLICY.prohibited_methods` và "đồng hồ có chữ mà số đứng yên" |
-| `Pilot-14_RefFeatureTest/` | Pilot kiểm tính năng ảnh tham chiếu — 3/3 SUCCESS, ảnh ref tự tạo (1 hình + 1 màu + chữ nhãn) nên **kết quả tự tố cáo**. Kèm `RESULT-PILOT-14.md` và `evidence/` (976 lần dò DOM) |
-| `tests/run-status-stale-current-smoke.mjs` | **Ghim B-10: `run.status` không được khai một job đang chạy khi run đã kết thúc.** `setCurrent(null, …)` chạy lúc nạp workbook và lúc nạp resume, **không bao giờ** lúc run kết thúc — nên giữa hai run `state.currentItem` vẫn trỏ vào job cuối của run trước, và `run.status` trả `state: "IDLE"` kèm `current: {job_id: "Q001", runtime_stage: "GENERATING"}` (đo live 26/08 ngay sau khi `run.stop` dừng `trial-09c93cd4`). **Không grep chữ**: cắt khối `elapsedSecSince`…`bridgeRunStatus` đã ship ra khỏi `sidepanel.js` và **chạy** trong `node:vm` — grep chỉ thấy chuỗi `state.running` có mặt, nó không phân biệt "có chốt" với "chốt đặt sai nhánh". Ghim **bốn mép**, ba trong bốn là chỗ bản vá quá tay sẽ hỏng: rảnh thì `current` phải `null` · đang chạy thì phải CÓ (chống mù hẳn) · **tạm dừng vẫn phải CÓ** (gate theo `paused` thay vì `running` sẽ đỏ) · HALTED thì `current` null **và** `halt.job_id` phải nêu job bị chặn lấy từ HÀNG ĐỢI, không phải từ `currentItem` (sân khấu cố ý cho hai cái khác nhau: `currentItem` là Q001, job bị chặn là Q007). Mép thứ tư tồn tại vì chính lượt vá này thêm `halt.job_id` — chốt `current` làm mất danh tính job trong ca halt, và sửa một trường mà đánh rơi trường khác thì không phải sửa. **Từ 08/09 tệp này ghim thêm B-39** (`run.status` trả `last_failure`): tám mép, gồm chạy `markInterrupted` thật để đòi nó ghi đúng `INTERRUPTED` chứ không `FAILED`, và một khẳng định **tĩnh, có khai là tĩnh** cho lượt xoá mốc lúc bắt đầu run mới — dòng đó nằm giữa thân `run()` dài, không cắt ra chạy riêng được. Ba mép ấy sinh ra vì thử phá vòng đầu để lọt cả ba. **15/15 đột biến đỏ** trên cụm B-37/B-38/B-39, 0 mỏ neo hỏng |
-| `tests/pause-resume-wake-smoke.mjs` | **Ghim B-28 phần ①: bấm "Tiếp tục" phải ăn NGAY, không đợi hẹn giờ.** Chrome hoãn hẹn giờ của tài liệu ẩn, và một `sleep(250)` **đã** hoãn không được xếp lại khi panel hiện ra — nên nút trông như chết tới khoảng một phút. Phép đo cố ý brutal, và đó là toàn bộ giá trị: **`sleep` trong sân khấu KHÔNG BAO GIỜ giải quyết**, nên mọi đường thoát qua hẹn giờ đều treo vĩnh viễn và chỉ chuông mới giải được — bản mã trước lượt vá **treo mãi** ở đây, còn một `sleep` giả giải-ngay sẽ XANH với cả bản cũ lẫn bản mới, tức không ghim gì. Cắt `controlWake…wakeControlWaiters` + `waitWhilePaused` đã ship ra và **CHẠY** trong `node:vm`. Bốn mép: chuông giải được vòng chờ khi hẹn giờ đã chết · **không rung chuông thì phải VẪN treo** (thiếu mép này thì một bản "return ngay vô điều kiện" cũng xanh mép ①) · Stop thoát được mà **không** ghi `RUN_RESUMED` (stop ≠ resume) · nhiều nhất **một** resolver treo một lúc (`Promise.race` để promise thua ở lại treo, nên cấp mới mỗi lượt là rò rỉ ~240 resolver mỗi phút tạm dừng). **Sáu mép sau hai vòng audit độc lập.** Mép ⁴ (số resolver sống ≤ 1) và mép ⁶ (**số `then` đính vào một promise chưa settle**) là hai thứ KHÁC NHAU, và cả hai đều cần: vòng 1 của bản vá này dùng một bell chia sẻ và **rò rỉ ~240 reaction mỗi phút tạm dừng** trong khi phép ghim vẫn XANH, vì nó chỉ so **danh tính** promise — audit bắt đúng đó, đo lại thấy 10.000 reaction trên một bell đều chạy khi reo một lần. Vòng audit thứ hai chỉ ra mép ⁴ vẫn chưa đủ: một bản **hybrid** giữ đúng sổ `Set` + `finally` nhưng dùng chung một bell sẽ có `size ≤ 1` **và vẫn rò rỉ** — nên mép ⁶ đếm thẳng reaction bằng một lớp `Promise` con. Đo thật: bản hybrid đạt **400** reaction sau 400 lượt và **đỏ**, bản hiện tại đạt **1**. **Đột biến 10/11 đỏ** cho cả hai phần B-28, cộng bản hybrid đỏ; con thoát duy nhất là bỏ `controlWaiters.clear()`, **cùng kết quả nhưng không cùng mọi khoảnh khắc quan sát được** (ngay sau khi reo, resolver đã settle còn nại trong tập cho tối khi `finally` của từng lượt chạy) — giữ `clear()` để lợt reo là một thao tác trọn vẹn, 0 mỏ neo hỏng |
-| `tests/bridge-cli-mutation-key-smoke.mjs` | **Ghim B-38: lượt GHI qua CLI phải khai `--request-id` tường minh.** Đo live 08/09: một mutation trả `REQUEST_TIMEOUT` nhưng **đã có tác dụng**; chạy lại đúng lệnh cũ thì ghi lần thứ hai (checkpoint v2 lên v3 cho 2 lượt ghi có ý định), vì `buildEnvelope` sinh `cli-${randomUUID()}` nên "chạy lại" tạo một khoá KHÁC và lớp replay của host không có gì để khớp. Ba mép: lượt ghi thiếu khoá bị chặn **trước khi chạm mạng** (sân khấu cho `fetch` nổ, nên một lượt gửi ra ngoài là ĐỎ) · lượt **chỉ đọc** vẫn đi tới bước gửi (chống một bản "chặn mọi thứ" cũng xanh mép đầu) · và mép đắt nhất: **đối chiếu `READ_ONLY_METHODS` của CLI với `read_only` trong `METHOD_REGISTRY` của host**, chạy `bridge-core.js` trong `node:vm` để đọc registry thật thay vì dò chữ. Mép ba tồn tại vì danh sách chỉ-đọc nằm ở HAI bản sao, và chiều nguy hiểm là một **mutation** lọt vào danh sách chỉ-đọc — B-38 quay lại y nguyên và im lặng. Nó **bắt được hai chỗ lệch thật ngay lượt chạy đầu**: `session.hello` (host khai read_only, CLI không gửi được) và `bridge.sessions` (CLI gửi, host tự xử lý ngoài registry) — cả hai nay khai tường minh, kèm phép kiểm ngược đòi `bridge-host.mjs` còn nhánh bắt nó |
-| `tests/output-adopt-reason-smoke.mjs` | **Ghim B-37: `audit_durable: false` phải nói RÕ vì sao.** Trước lượt vá, BA tình huống cần ba hành động khác nhau cùng cho ra một câu cố định — nên đo live 08/09 xong vẫn không kết luận được nửa (D) của B-36 hỏng hay đang chạy đúng luật. **Chín mép, chia hai tầng.** Năm mép đầu chạy `outputAdoptReasonNote()` đã ship trong `node:vm`: bốn nhánh phải ra **bốn câu khác nhau** (grep chỉ thấy bốn chuỗi có mặt, không phân biệt được "bốn câu cho bốn nhánh" với "nhánh nào cũng trả câu đầu") · nhánh nhiều-hồ-sơ phải nêu **đúng con số** và chỉ đường ra · nhánh kho-hỏng phải nói rõ **bấm không chữa được** · mọi câu giữ tiếng Việt **có dấu** (luật vàng 5). Bốn mép cuối ghim **DÂY NỐI**: chạy `adoptAuthorizedOutputProfile()` với kho hồ sơ giả để đòi nó THẬT SỰ ghi chẩn đoán ở từng nhánh, và **xoá** chẩn đoán cũ khi nhận thành công. Bốn mép đó sinh ra vì thử phá cho thấy phần kiểm hàm-lá **để lọt** việc xoá hẳn lượt ghi — hàm dựng câu đúng mà không ai điền dữ liệu thì câu vẫn sai. Mép ⑼ phải viết lại lần hai: bản đầu bắt đầu với chẩn đoán `null` nên xoá dòng dọn vẫn xanh; nay bắt đầu bằng một chẩn đoán CŨ, đúng cảnh thật |
-| `tests/trial-cooldown-adr0050-smoke.mjs` | **Ghim ADR-0050 mục ⒠: nắp chờ giữa hai lượt gửi Bridge = 90 giây, khai ở ĐÚNG MỘT CHỖ, và cửa chặn phải THẬT SỰ chặn.** Đức hạ 5 phút → 90 giây ngày 08/09. Con số đáng canh vì nó là **lớp chắn cuối** chống một vòng lặp hỏng đốt sạch hạn mức: hạ xuống 90 giây làm tốc độ tiêu credit tối đa tăng hơn ba lần, và hai lớp còn lại chỉ là công tắc Chế độ phát triển với nắp 30 job. Trước file này **không phép ghim nào canh GIÁ TRỊ** — hai phép ghim cũ chỉ khẳng định cái TÊN hằng còn xuất hiện, nên con số đổi được mà suite vẫn xanh. **Bản đầu của chính file này chỉ ghim TĨNH và thử phá cho 3/5** — hai con thoát là lỗ thật: gõ cứng `const remainingSeconds = 90;` (câu báo nói dối từ giây thứ hai, người vận hành bấm lại quá sớm) và `if (false)` (cửa chặn mở toang) đều qua được mọi khẳng định chuỗi. Nên bốn mép cuối **CHẠY** `bridgeRunTrial()` đã ship trong `node:vm`, dùng lại cách cắt của `run-trial-workbook-not-loaded-smoke.mjs` và lấy cả hai hằng số **từ chính `sidepanel.js`** chứ không chép tay. Bảy mép: giá trị đúng 90 giây · khai một chỗ · **0 hoặc âm là BỎ nắp chứ không phải nới nắp** · vừa chạy xong thì chặn **trước** cửa validate · **số giây báo ra phải suy từ mốc lượt trước** (sân khấu để trôi 30 giây rồi đòi báo ~60, không phải 90) · quá 90 giây thì cho đi tiếp (mép ngược, chống một bản "chặn mọi lúc") · chưa từng chạy thì đi thẳng. **5/5 đột biến đỏ** sau khi chuyển sang hành vi, gồm cả hai con từng thoát |
-| `tests/workspace-repair-adr0050b-smoke.mjs` | **Ghim ADR-0050 ⒝: CÁCH tự chữa, không phải "có tự chữa không".** `post-submit-no-resend-smoke.mjs` ghim CỬA (khi nào được chữa, nắp mấy lần, chữa xong thì đi tiếp hay dừng); file này ghim VIỆC — máy được phép đụng vào trình duyệt của Đức đến đâu. Đây là bản vá **đầu tiên** cho phép máy TỰ tác động lên tab của Đức giữa một run, và ADR-0050 ghi thẳng cái mất: *"Đức rời máy mười phút rồi quay lại có thể thấy tab đã khác."* Nên ranh giới được ghim chứ không chỉ được viết: **đúng một** trong hai việc (F5, hoặc đưa tab về hội thoại của chính run này) · **không mở tab mới** · **không tự chọn hội thoại** — run chưa gắn hội thoại nào thì không đụng gì cả, vì đoán lấy một hội thoại là gõ prompt của job này vào luồng người khác rồi đọc ảnh luồng đó về làm kết quả · trang câm sau khi chữa thì **báo lại**, không ném. CẮT `repairWorkspaceSurface()` cùng `waitTabComposer()` đã ship rồi CHẠY trong `node:vm` với một `chrome.tabs` giả **có đếm** và một đồng hồ giả (vòng chờ 20 giây không tiêu 20 giây thật). Mười mép; hai mép đắt nhất: *không có đích thì `[reload, update, create]` phải là `[0,0,0]`*, và *ô soạn hiện muộn thì phải chờ tiếp* — mép sau chống đúng một đột biến một dòng (bỏ `composerFound`, thoát ngay khi trang ừ hử) mà **mọi mép khác vẫn xanh**, vì ở chúng ô soạn có sẵn từ vòng đầu. **12/12 đột biến đỏ** trên cả hai file nguồn |
+| `pilot-*/` · `Pilot-*/` · `evidence-*/` | **Bằng chứng vận hành — chỉ THÊM.** Khai theo **hình dạng tên**: danh sách gõ tay ở đây đã mục một lần, dừng ở `Pilot-09` khi trên đĩa đã có 17. Mỗi thư mục tự nói kết quả trong `README.md` / `KET-QUA.md` / `RESULT-*.md` của nó — **đọc trước khi trích số** |
+| `Pilot-13_References/` | **TẠM HOÃN, không chạy** — lý do và cái còn dùng được ghi trong `README.md` của chính nó |
+| ~~`FEATURE-PARITY.md`~~ | **Đã dời về gốc repo** 26/08 theo Đức chốt — nó nói về cả hai nhánh nên không thuộc gói nào |
 
-Thêm file/thư mục mới cấp cao → phải thêm 1 dòng vào bảng này. Không khai báo
-= không tồn tại (luật CLAUDE.md gốc).
-
-## Template COUNCIL
-
-Hai template lệnh chính thức, copy nguyên văn từ đầu `HANDOFF.md` để tái sử
-dụng khi cần một vòng review Coordinator/Auditor mới. `HANDOFF.md` không lặp
-lại nội dung này nữa — chỉ trỏ về đây.
-
-### #01 — Claude Coordinator review
-
-```text
-#01
-
-PROJECT: Duc Auto ChatGPT V0
-ROLE: Claude = Coordinator / Architecture Reviewer
-IMPLEMENTER: GPT Web
-CODE PACKAGE: duc-auto-chatgpt-v0
-
-SCOPE LOCK:
-- Chrome Manifest V3 personal extension
-- local-only Text Batch Automation on chatgpt.com
-- no separate login
-- no backend/server
-- no extension quota
-- no image/file automation
-- no multi-tab concurrency
-- no bypass of ChatGPT/account limits
-- clean-room implementation; do not copy proprietary extension source
-
-TASK:
-1. Read README.md, AUDIT.md, manifest.json, background.js, sidepanel.js, content.js.
-2. Audit architecture and state machine before proposing changes.
-3. Focus on DOM robustness, queue sequencing, stop/pause semantics, Chrome MV3 permissions, and failure recovery.
-4. Identify only material issues for V0. Do not expand scope.
-5. Return PASS / CONDITIONAL PASS / FAIL with ranked findings.
-6. For each blocking finding, provide an exact acceptance criterion for GPT Web to repair.
-
-GUARDRAIL:
-Do not implement code unless explicitly authorized. Coordinator/auditor only.
-```
-
-### #02 — Codex code audit
-
-```text
-#02
-
-PROJECT: Duc Auto ChatGPT V0
-ROLE: Codex = Independent Code Auditor
-IMPLEMENTER: GPT Web
-
-AUDIT TARGET:
-- manifest.json
-- background.js
-- sidepanel.html
-- sidepanel.css
-- sidepanel.js
-- content.js
-
-V0 CONTRACT:
-Sequential text prompts only. Side Panel -> content script -> ChatGPT DOM -> wait for completion -> next prompt.
-No server, no login, no quota logic, no image/file automation, no concurrency, no paywall/rate-limit bypass.
-
-AUDIT:
-1. Static correctness / JS errors.
-2. MV3/API correctness and least-privilege permissions.
-3. Race conditions in Start/Pause/Stop and message passing.
-4. Duplicate-send risk.
-5. False completion / timeout risk.
-6. Composer input compatibility (textarea/contenteditable/ProseMirror).
-7. Persistence behavior if side panel closes/reopens.
-8. Security/privacy: confirm no external network/exfiltration.
-
-OUTPUT:
-RESULT: PASS | CONDITIONAL PASS | FAIL
-BLOCKERS: numbered list
-NON_BLOCKERS: max 5
-REPAIR_INSTRUCTIONS: exact and bounded
-TESTS_REQUIRED: concrete manual/static checks
-
-Do not rewrite the extension wholesale. Preserve V0 scope.
-```
+Thêm file/thư mục mới **cấp cao** → thêm 1 dòng vào bảng này. Không khai = không tồn tại
+(luật `CLAUDE.md` gốc). **Một mệnh đề thôi** — chuyện dài viết vào chính file đó.

@@ -3,6 +3,7 @@ status: Accepted
 adr: 0051
 date: 2026-09-09
 deciders: Đức
+nhom: du-lieu-va-bang-chung
 ---
 
 # ADR-0051 — Nhận cái tên Chrome đặt, thay vì đòi tên phải khớp

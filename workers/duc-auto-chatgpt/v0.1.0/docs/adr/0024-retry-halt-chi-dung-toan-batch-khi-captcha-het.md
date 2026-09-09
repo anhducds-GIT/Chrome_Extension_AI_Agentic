@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Đức
 source_section: Vận hành / UI
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0024 — Retry/Halt: chỉ dừng toàn batch khi CAPTCHA / hết quota / mất tab ChatGPT thật sự…

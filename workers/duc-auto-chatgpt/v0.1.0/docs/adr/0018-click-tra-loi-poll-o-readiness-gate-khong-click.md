@@ -5,6 +5,7 @@ date: 2026-08-25
 deciders: Claude (khi implement), lệch có chủ đích so với brief
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: nhan-dien-anh
 ---
 
 # ADR-0018 — Click trả lời poll ở readiness gate, KHÔNG click trong lúc dò ảnh

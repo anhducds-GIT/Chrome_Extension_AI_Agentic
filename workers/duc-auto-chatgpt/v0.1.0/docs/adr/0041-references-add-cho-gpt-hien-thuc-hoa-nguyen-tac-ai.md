@@ -5,6 +5,7 @@ date: 2026-08-26
 deciders: Đức
 source_section: Roadmap tự hành (chốt sau audit 2026-08-24)
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0041 — references.add cho GPT: hiện thực hoá nguyên tắc "AI là bộ não, người dùng là cánh…

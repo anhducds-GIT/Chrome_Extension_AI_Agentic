@@ -3,6 +3,7 @@ status: Accepted
 adr: 0047
 date: 2026-09-06
 deciders: Đức
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0047 — Sau khi đã gửi thì không gửi lại, trừ khi đối soát khẳng định được là lượt gửi đó không tạo ra kết quả nào

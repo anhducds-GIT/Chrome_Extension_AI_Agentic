@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Claude (coordinator), sau 2 vòng nghiên cứu với Codex
 source_section: Kiến trúc & Agent Bridge
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0001 — Bridge dùng loopback host 127.0.0.1 có token 32-byte, không dùng Native Messaging

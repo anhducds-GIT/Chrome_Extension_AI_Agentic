@@ -332,6 +332,19 @@ const CAU = "- Không bao giờ nới một lớp bảo vệ để cổng kiểm
   ok("③ bỏ bảng và khối mã — đó là ví dụ, không phải luật");
 }
 
+{
+  /* Khối máy sinh không phải chữ của người. Hai sổ cái fork của nhau sinh ra hai khối chép đôi:
+     ngày 09/09, lượt gắn `--sinh` cho gói ChatGPT đẩy phép ③ từ 2 lên 19 nhóm, và không nhóm nào
+     có cửa ra — máy không "gộp" được cái nó vừa sinh. Ghim CẢ HAI chiều: trong khối thì câm,
+     ngoài khối thì vẫn kêu, nếu không thì một cái mốc lạc chỗ tắt luôn cả phép đo. */
+  const trong = [MOC_DAU, "- [ADR-0001](docs/adr/0001-a.md) một dòng máy sinh", MOC_CUOI].join("\n");
+  assert.equal(dongLuat(trong).length, 0, "dòng trong khối máy sinh không phải câu luật");
+  const ngoai = [MOC_DAU, "- trong khối", MOC_CUOI, "- ngoài khối thì vẫn là luật"].join("\n");
+  assert.equal(dongLuat(ngoai).length, 1);
+  assert.match(dongLuat(ngoai)[0].noiDung, /ngoài khối/);
+  ok("③ bỏ khối máy sinh, nhưng KHÔNG bỏ dòng sau khi khối đã đóng");
+}
+
 /* ---- ④ hạn rà soát -------------------------------------------------------- */
 
 {

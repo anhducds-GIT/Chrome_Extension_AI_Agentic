@@ -4,6 +4,7 @@ adr: 0046
 date: 2026-09-03
 deciders: Đức
 source_section: MULTI-SESSION-PER-PROFILE-DESIGN-V1 (docs/studies/, gốc repo)
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0046 — Nhiều phiên làm việc có tên trong MỘT profile Chrome: hướng A, trần 3, cả hai chiều, ChatGPT trước

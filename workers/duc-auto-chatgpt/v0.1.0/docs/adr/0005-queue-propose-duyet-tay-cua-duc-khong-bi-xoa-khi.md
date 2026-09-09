@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Đức (ngầm định qua yêu cầu Tầng 1, xác nhận bởi Claude khi lên kế hoạch)
 source_section: Kiến trúc & Agent Bridge
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0005 — queue.propose + duyệt tay của Đức KHÔNG bị xoá khi thêm các method Tầng 1 mới

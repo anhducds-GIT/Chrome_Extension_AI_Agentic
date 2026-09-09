@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Claude (coordinator), xác nhận kỹ thuật khi thiết kế Tầng 1
 source_section: Kiến trúc & Agent Bridge
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: pham-vi-va-ky-luat
 ---
 
 # ADR-0003 — AI không thể tự mở file .xlsx từ ổ đĩa hay tự bind folder output MỚI

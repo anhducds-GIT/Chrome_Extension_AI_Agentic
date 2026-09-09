@@ -5,6 +5,7 @@ date: 2026-08-26
 deciders: Claude, sau audit Antigravity 2 vòng (PASS)
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0020 — Một run khoá đúng MỘT tab và MỘT hội thoại

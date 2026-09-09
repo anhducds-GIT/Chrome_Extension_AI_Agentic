@@ -172,9 +172,16 @@ export function vanTay(dong) {
 export function dongLuat(text) {
   const out = [];
   let trongMa = false;
+  let trongKhoiSinh = false;
   const dong = String(text ?? "").split(/\r?\n/);
   for (let i = 0; i < dong.length; i++) {
     const d = dong[i];
+    /* Khối máy sinh KHÔNG phải chữ của người. Hai sổ cái fork của nhau sinh ra hai khối chép
+       đôi — 19 nhóm ở phép ③ ngày 09/09, không nhóm nào có cửa ra: máy không "gộp" được cái
+       nó vừa sinh. Bỏ qua ở đây thì mọi phép đọc dòng luật đều thấy đúng một sự thật. */
+    if (d.includes(MOC_DAU)) { trongKhoiSinh = true; continue; }
+    if (d.includes(MOC_CUOI)) { trongKhoiSinh = false; continue; }
+    if (trongKhoiSinh) continue;
     if (/^\s*```/.test(d)) {
       trongMa = !trongMa;
       continue;

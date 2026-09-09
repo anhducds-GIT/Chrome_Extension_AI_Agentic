@@ -5,6 +5,7 @@ date: 2026-08-26
 deciders: Claude, sau audit Codex 3 vòng (PASS)
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: du-lieu-va-bang-chung
 ---
 
 # ADR-0022 — write_outcome chỉ nói điều quan sát được, không nói điều được PHÉP làm

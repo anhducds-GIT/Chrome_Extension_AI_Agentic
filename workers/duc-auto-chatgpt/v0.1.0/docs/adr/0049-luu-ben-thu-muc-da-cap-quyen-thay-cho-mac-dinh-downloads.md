@@ -3,6 +3,7 @@ status: Accepted
 adr: 0049
 date: 2026-09-06
 deciders: Đức
+nhom: du-lieu-va-bang-chung
 ---
 
 # ADR-0049 — Lưu bền thư mục đã cấp quyền, thay cho mặc định Chrome Downloads

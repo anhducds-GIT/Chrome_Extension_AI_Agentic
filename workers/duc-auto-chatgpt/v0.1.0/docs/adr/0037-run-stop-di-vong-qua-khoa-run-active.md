@@ -5,6 +5,7 @@ date: 2026-08-26
 deciders: Claude (theo gói việc drafts/RUN-STOP-CHAT-RELOAD-HANDOFF.md, Đức chốt hướng 2026-08-26)
 source_section: Roadmap tự hành (chốt sau audit 2026-08-24)
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0037 — run.stop ĐI VÒNG QUA khoá RUN_ACTIVE

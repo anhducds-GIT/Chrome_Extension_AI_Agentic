@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Claude, xác nhận bằng test thật trên máy Đức
 source_section: Kiến trúc & Agent Bridge
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0011 — Installer dùng icacls thay vì PowerShell Set-Acl để khoá quyền thư mục cài đặt

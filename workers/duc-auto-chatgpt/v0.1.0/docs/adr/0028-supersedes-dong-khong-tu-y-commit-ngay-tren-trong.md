@@ -5,6 +5,7 @@ date: 2026-08-24
 deciders: Đức
 source_section: Vận hành / UI
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: pham-vi-va-ky-luat
 ---
 
 # ADR-0028 — SUPERSEDES dòng "Không tự ý commit" ngay trên, trong phạm vi project này

@@ -3,6 +3,7 @@ status: Accepted
 adr: 0050
 date: 2026-09-08
 deciders: Đức
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0050 — Chạy hết job là mục tiêu; chỉ CAPTCHA, hết hạn mức và cảnh báo bất thường mới dừng hẳn

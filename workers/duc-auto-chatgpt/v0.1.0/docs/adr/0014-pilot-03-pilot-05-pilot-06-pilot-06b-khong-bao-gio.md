@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Claude, theo yêu cầu ngầm định của quy trình audit
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: du-lieu-va-bang-chung
 ---
 
 # ADR-0014 — pilot-03/, pilot-05/, pilot-06/, pilot-06B/ không bao giờ bị sửa/regenerate

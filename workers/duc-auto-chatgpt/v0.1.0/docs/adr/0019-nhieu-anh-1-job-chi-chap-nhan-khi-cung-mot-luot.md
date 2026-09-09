@@ -5,6 +5,7 @@ date: 2026-08-25
 deciders: Claude (khi implement), theo khái niệm "1 job nhiều ảnh" của Đức
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: nhan-dien-anh
 ---
 
 # ADR-0019 — Nhiều ảnh 1 job chỉ chấp nhận khi CÙNG MỘT lượt assistant

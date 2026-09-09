@@ -3,6 +3,7 @@ status: Accepted
 adr: 0052
 date: 2026-09-09
 deciders: Đức
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0052 — Tab bị che thì F5 rồi đọc lại, thay vì dừng hẳn

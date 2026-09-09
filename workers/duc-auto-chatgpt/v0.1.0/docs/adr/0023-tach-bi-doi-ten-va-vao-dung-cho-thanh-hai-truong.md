@@ -5,6 +5,7 @@ date: 2026-08-26
 deciders: Claude, theo phát hiện của Codex
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: du-lieu-va-bang-chung
 ---
 
 # ADR-0023 — Tách "bị đổi tên" và "vào đúng chỗ" thành HAI trường

@@ -5,6 +5,7 @@ date: 2026-08-26
 deciders: Đức quyết sau
 source_section: Roadmap tự hành (chốt sau audit 2026-08-24)
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0042 — Việc thật KHÔNG chạy qua run.trial

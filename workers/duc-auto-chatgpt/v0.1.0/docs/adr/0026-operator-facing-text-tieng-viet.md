@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Đức
 source_section: Vận hành / UI
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: chu-va-commit
 ---
 
 # ADR-0026 — Operator-facing text tiếng Việt

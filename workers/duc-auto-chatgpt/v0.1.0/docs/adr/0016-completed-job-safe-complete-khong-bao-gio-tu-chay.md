@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Claude, xác nhận là chủ đích thiết kế, không phải bug
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0016 — Completed job (SAFE_COMPLETE) không bao giờ tự chạy lại khi Resume, kể cả khi…

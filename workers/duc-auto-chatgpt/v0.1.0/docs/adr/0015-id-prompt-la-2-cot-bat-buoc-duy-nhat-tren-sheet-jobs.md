@@ -5,6 +5,7 @@ date: không ghi lại
 deciders: Claude, sau khi Đức phản hồi workbook cũ "đòi hỏi quá nhiều field"
 source_section: Quy ước dữ liệu / workbook
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: du-lieu-va-bang-chung
 ---
 
 # ADR-0015 — id/prompt là 2 cột bắt buộc duy nhất trên sheet jobs

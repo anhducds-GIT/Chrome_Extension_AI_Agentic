@@ -5,6 +5,7 @@ date: 2026-08-25
 deciders: Đức (chỉ đạo trực tiếp, dẫn phát hiện từ phiên Gemini)
 source_section: Kiến trúc & Agent Bridge
 migrated_from: workers/duc-auto-chatgpt/v0.1.0/decisions.md
+nhom: pham-vi-va-ky-luat
 ---
 
 # ADR-0004 — BỔ SUNG dòng trên (phát hiện từ phiên Gemini)
