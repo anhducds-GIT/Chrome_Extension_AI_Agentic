@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0014
+nhom: du-lieu-va-bang-chung
 date: không ghi lại
 deciders: Claude, sau khi Đức phản hồi workbook cũ "đòi hỏi quá nhiều field"
 source_section: Quy ước dữ liệu / workbook

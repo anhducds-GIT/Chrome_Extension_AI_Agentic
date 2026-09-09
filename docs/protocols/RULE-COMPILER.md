@@ -29,7 +29,10 @@ hình với bộ biên dịch.**
    > luật theo phạm vi > thói quen làm việc > luật lịch sử.
 5. **Trim** — lấy luật cũ ra. **Trim không phải xoá**: nó xuống mục `Vế đã chết` của ADR, kèm
    **tên quyết định đã thay nó**.
-6. **Compile** — đặt câu mới vào đúng nhóm trong `AGENTS.md`, không nối vào cuối.
+6. **Compile** — **máy làm**: `node scripts/rule-compile.mjs --sinh` tái tạo khối danh sách từ sổ cái
+   ([ADR-0030](../adr/0030-rule-compiler-v1.md)). **Phải đang giữ khoá vùng** — khối nằm trong file có
+   chủ. Khai `nhom:` ở frontmatter ADR để nó vào đúng nhóm; chữ trong khối là **tiêu đề ADR**, nên
+   muốn đổi một dòng thì sửa tiêu đề, đừng sửa trong khối — lượt sinh sau nuốt mất.
 
 Năm cửa để một luật rời bản hiệu lực: **bị thay · trùng · hết phạm vi · đã thành phép kiểm máy ·
 lỗi thời**. Cửa thứ tư hay bị quên nhất — luật nào cổng đã cưỡng chế thì đừng giữ thêm bản chữ.
@@ -70,16 +73,12 @@ git show <sha-trước-lượt-gộp>:docs/adr/<file-cũ>.md | grep "^### "
 Vế nào cố ý bỏ thì phải xuất hiện ở mục `Vế đã chết` kèm tên quyết định thay nó. Không ở đó,
 không ở bản gộp = **đã mất**.
 
-**Đúng khuôn `- **NNNN [vế] — …**`** — văn xuôi thì bộ đo **không thấy gì và báo SẠCH** (vấp thật
-09/09). Có ký hiệu vế thì lượt trích trần `ADR-0002` vẫn xanh; bỏ ký hiệu là khai chết cả quyết
-định, mọi lượt trích nó thành ĐỎ.
-
 ## 6. Ba chỗ dễ vấp
 
 - **Trích theo SỐ HIỆU ĐANG SỐNG, đừng trích theo tên file.** Một file chủ đề mang nhiều quyết
   định và số dẫn của nó có thể đã chết. Bản đồ số hiệu → file: `docs/README.md`.
 - **Số hiệu có phạm vi.** `ADR-0001` ở gốc khác `ADR-0001` trong một gói.
-- **Vế viết sau đuôi liên kết:** `[ADR-0005](…) ⑴`.
+- **Vế viết sau đuôi liên kết:** `[ADR-0005](…) ⑴`. Mục `Vế đã chết` đúng khuôn `- **NNNN [vế] — …**` — văn xuôi thì bộ đo không thấy gì và **báo SẠCH**; bỏ ký hiệu vế là khai chết cả quyết định.
 - **Trỏ tới `AGENTS.md` thì kèm TÊN mục, không chỉ số.** Số hiệu ADR là danh tính vĩnh viễn; số
   mục của `AGENTS.md` chỉ là **vị trí** và nó đổi mỗi lượt sắp xếp lại — lượt cắt 402 → 252 dòng
   ngày 09/09 làm hỏng **sáu** lượt trỏ trong ba file. Viết `AGENTS.md` mục 3 (*Phải hỏi Đức

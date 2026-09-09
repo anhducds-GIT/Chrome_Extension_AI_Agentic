@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0067
+nhom: an-toan-khi-chay
 date: 2026-08-27
 deciders: Claude xử lý; hành vi fail-closed giữ theo hợp đồng mục 6
 source_section: 2026-08-27 — G-01: sửa hành vi "dừng nhận trước lúc gửi ⇒ không gửi" (owner: Đức, Go trong chat)

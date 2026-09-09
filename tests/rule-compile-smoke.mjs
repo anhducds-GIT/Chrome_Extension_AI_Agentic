@@ -14,7 +14,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { bienDich, docFileADR, dongLuat, phamViCuaMotLuot, phamViCuaNguoiTrich, trichDan, vanTay, VE } from "../scripts/rule-compile.mjs";
+import {
+  bienDich, docFileADR, dongLuat, phamViCuaMotLuot, phamViCuaNguoiTrich, trichDan, vanTay, VE,
+  sinhKhoi, thayKhoi, MOC_DAU, MOC_CUOI,
+} from "../scripts/rule-compile.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let passed = 0;
@@ -225,6 +228,49 @@ const soi = (noiDung, duongDan = "AGENTS.md", so = soCai) =>
   const keu = themSo.moCoi.flatMap((m) => m.cai.map((c) => c.so));
   assert.deepEqual(keu, ["0009"], "số ngoài danh sách phải kêu; số trong danh sách thì không");
   ok("② dạng NHÓM trừ đúng danh sách, và KHÔNG miễn cả sổ");
+}
+
+/* ---- BƯỚC ⑥ COMPILE — bộ sinh (ADR-0030) ---------------------------------- */
+
+{
+  const soCai = [
+    docFileADR(SO_CAI_GOC, "docs/adr/0001-thu.md"),
+  ];
+  soCai[0].tieuDe = "câu tiêu đề của 0001";
+  soCai[0].nhom = "nhom-b";
+
+  const kq = sinhKhoi({ soCai, dangKy: dangKySach, phamVi: "docs/adr/" });
+  const chu = kq.dong.join(String.fromCharCode(10));
+  assert.ok(chu.includes("**nhom-b**"), "phải gom theo `nhom` khai ở frontmatter");
+  assert.ok(chu.includes("[ADR-0001](docs/adr/0001-thu.md)"), "mỗi dòng phải là một liên kết tới ADR");
+  assert.ok(chu.includes("câu tiêu đề của 0001"),
+    "chữ phải là TIÊU ĐỀ của ADR — máy gom, người viết; máy không tự đặt lời cho luật");
+  assert.ok(!chu.includes("ADR-0002"), "vế đã chết trọn thì không được vào bản hiệu lực");
+  ok("⑥ bộ sinh: gom theo nhóm, chữ lấy từ tiêu đề ADR, bỏ vế đã chết");
+}
+
+{
+  /* TÁI LẬP — sinh hai lượt phải ra Y HỆT. Không tái lập thì nó không phải bộ sinh, nó là một
+     nguồn nhiễu trong `git diff` và sẽ bị người ta thôi chạy. */
+  const soCai = [docFileADR(SO_CAI_GOC, "docs/adr/0001-thu.md")];
+  soCai[0].tieuDe = "x"; soCai[0].nhom = "n";
+  const a = sinhKhoi({ soCai, dangKy: dangKySach, phamVi: "docs/adr/" }).dong.join("|");
+  const b = sinhKhoi({ soCai, dangKy: dangKySach, phamVi: "docs/adr/" }).dong.join("|");
+  assert.equal(a, b, "hai lượt sinh phải ra y hệt");
+  ok("⑥ bộ sinh TÁI LẬP được");
+}
+
+{
+  /* THIẾU DẤU MỐC thì TỪ CHỐI, không tự chèn. Tự chèn là đoán hộ chỗ đặt bản sinh, và đoán sai
+     một lần là ghi đè vào giữa văn của người. */
+  assert.equal(thayKhoi("không có mốc nào ở đây", ["x"]), null,
+    "thiếu dấu mốc thì phải TỪ CHỐI, không tự chèn");
+  const co = "trên" + String.fromCharCode(10) + MOC_DAU + String.fromCharCode(10)
+    + "cũ" + String.fromCharCode(10) + MOC_CUOI + String.fromCharCode(10) + "dưới";
+  const moi = thayKhoi(co, ["mới"]);
+  assert.ok(moi.includes("trên") && moi.includes("dưới"), "chữ ngoài khối không được đụng");
+  assert.ok(moi.includes("mới") && !moi.includes("cũ"), "chữ trong khối phải bị thay");
+  ok("⑥ thiếu dấu mốc thì từ chối; thay khối không đụng chữ ngoài");
 }
 
 {

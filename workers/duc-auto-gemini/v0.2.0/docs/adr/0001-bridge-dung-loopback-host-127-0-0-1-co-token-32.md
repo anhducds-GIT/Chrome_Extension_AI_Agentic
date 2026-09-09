@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0001
+nhom: bridge-va-thuc-thi
 date: không ghi lại
 deciders: Claude (coordinator), sau 2 vòng nghiên cứu với Codex
 source_section: Kiến trúc & Agent Bridge

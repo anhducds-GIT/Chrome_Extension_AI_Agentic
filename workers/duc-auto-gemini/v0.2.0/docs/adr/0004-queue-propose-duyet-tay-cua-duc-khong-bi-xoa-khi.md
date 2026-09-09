@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0004
+nhom: bridge-va-thuc-thi
 date: không ghi lại
 deciders: Đức (ngầm định qua yêu cầu Tầng 1, xác nhận bởi Claude khi lên kế hoạch)
 source_section: Kiến trúc & Agent Bridge

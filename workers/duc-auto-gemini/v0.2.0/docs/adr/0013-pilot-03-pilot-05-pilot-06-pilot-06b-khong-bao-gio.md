@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0013
+nhom: du-lieu-va-bang-chung
 date: không ghi lại
 deciders: Claude, theo yêu cầu ngầm định của quy trình audit
 source_section: Quy ước dữ liệu / workbook

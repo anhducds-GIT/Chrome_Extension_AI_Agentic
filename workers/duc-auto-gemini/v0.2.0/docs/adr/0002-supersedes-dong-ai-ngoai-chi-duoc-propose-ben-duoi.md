@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0002
+nhom: bridge-va-thuc-thi
 date: 2026-08-24
 deciders: Đức
 source_section: Kiến trúc & Agent Bridge

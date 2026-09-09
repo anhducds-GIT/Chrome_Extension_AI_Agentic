@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0031
+nhom: an-toan-khi-chay
 date: 2026-08-25
 deciders: Đức
 source_section: 2026-08-25 — Điều chỉnh trần trial: một trial = một chuỗi liên tục ≤10 job (owner: Đức)

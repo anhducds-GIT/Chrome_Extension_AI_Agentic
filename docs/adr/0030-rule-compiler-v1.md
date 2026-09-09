@@ -74,8 +74,10 @@ Sinh một khối được đánh dấu, đặt trong chính `AGENTS.md` của t
 
 **Vì sao khối trong file, không phải file riêng:** một phiên đọc `AGENTS.md` của gói là đọc **một**
 file. Đẻ ra file thứ hai bắt mọi phiên đọc thêm một lượt, và file nào không ai mở thì không phải
-luật. Đổi lại: khối máy sinh nằm trong file có khoá, nên phải khai ở `generated` của
-`.repo-structure.json` để lượt sinh lại không đòi khoá — **giống hệt năm artifact đã miễn**.
+luật. **Cái giá, và nó KHÔNG né được:** khối nằm trong một file có khoá, nên khác năm artifact
+máy sinh đã miễn khoá — `--sinh` **phải chạy khi đang giữ khoá vùng đó**. Đừng khai nó vào
+`generated`: miễn khoá cho một file mà phần lớn nội dung là chữ của người là mở cửa cho một lượt
+sinh ghi đè lên việc của lane khác.
 
 ### ⑷ Sáu bước sau V1 — ai làm gì
 
@@ -149,5 +151,7 @@ chốt câu chữ.
 `duc-auto-gemini/AGENTS.md` **340 → 240 dòng**, phép ③ **12 → 2**, và hai luật đúng cho mọi
 extension chuyển lên `workers/_shared/AGENTS.md`.
 
-**Còn nợ, theo thứ tự:** bộ sinh `--sinh` · lượt nén y hệt cho `duc-auto-chatgpt` (đang có lane
+**Bộ sinh `--sinh` đã chạy**, đích khai ở `luat.khoi_sinh` (KHÔNG suy từ đường dẫn). Lượt đầu: `duc-auto-gemini` — 38 quyết định đang sống, sáu nhóm, **hai lượt sinh ra y hệt từng byte**. `docs/adr/` gốc **cố ý không có đích**: bản hiệu lực gốc có thước cóc 252 dòng.
+
+**Còn nợ:** lượt nén y hệt cho `duc-auto-chatgpt` (đang có lane
 khác giữ khoá vùng, họ giữ 7 khoá file toàn mã — chờ, không giành).

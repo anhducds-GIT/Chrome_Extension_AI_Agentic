@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0029
+nhom: pham-vi-va-ky-luat
 date: 2026-08-25
 deciders: Đức
 source_section: 2026-08-25 — Cho phép bắt đầu run từ trang hội thoại /app (owner: Đức)

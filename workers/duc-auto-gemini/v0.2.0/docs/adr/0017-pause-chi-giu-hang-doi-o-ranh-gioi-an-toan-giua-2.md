@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0017
+nhom: an-toan-khi-chay
 date: không ghi lại
 deciders: Claude
 source_section: Vận hành / UI

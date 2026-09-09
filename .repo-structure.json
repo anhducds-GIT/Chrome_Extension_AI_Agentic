@@ -331,6 +331,10 @@
       }
     },
     "tran_dong_ban_hieu_luc": 3810,
-    "_doc_tran_be_mat": "Thuoc coc cho TONG so dong cua moi noi chua luat khai o ra_soat. Khong phai tran ly tuong — la con so cua hom nay. Ha duoc thi ha. Doi con so nay phai noi vi sao trong nhat ky phien."
+    "_doc_tran_be_mat": "Thuoc coc cho TONG so dong cua moi noi chua luat khai o ra_soat. Khong phai tran ly tuong — la con so cua hom nay. Ha duoc thi ha. Doi con so nay phai noi vi sao trong nhat ky phien.",
+    "khoi_sinh": {
+      "_doc": "Buoc (6) compile: pham vi so cai -> file mang khoi may sinh. KHONG suy tu duong dan — suy ho la doan cho ghi de vao file luat cua nguoi khac. docs/adr/ goc CO Y khong co dich: ban hieu luc goc co thuoc coc 252 dong.",
+      "workers/duc-auto-gemini/v0.2.0/docs/adr/": "workers/duc-auto-gemini/v0.2.0/AGENTS.md"
+    }
   }
 }

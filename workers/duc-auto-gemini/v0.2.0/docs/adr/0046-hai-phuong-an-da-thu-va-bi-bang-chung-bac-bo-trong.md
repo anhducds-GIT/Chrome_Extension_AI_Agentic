@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0046
+nhom: nhan-dien-anh
 date: 2026-08-26
 deciders: Claude
 source_section: 2026-08-26 (vòng 3) — Hạ ngưỡng kích thước ảnh sinh ra: 200 → 150 (owner: Đức)

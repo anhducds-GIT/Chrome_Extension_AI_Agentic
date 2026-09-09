@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0061
+nhom: an-toan-khi-chay
 date: 2026-08-27
 deciders: Đức duyệt hướng; Claude thiết kế chi tiết
 source_section: 2026-08-27 — G-01: sửa hành vi "dừng nhận trước lúc gửi ⇒ không gửi" (owner: Đức, Go trong chat)

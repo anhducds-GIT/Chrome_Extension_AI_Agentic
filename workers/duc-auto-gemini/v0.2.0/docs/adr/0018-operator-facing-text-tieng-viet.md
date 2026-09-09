@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0018
+nhom: chu-va-commit
 date: không ghi lại
 deciders: Đức
 source_section: Vận hành / UI

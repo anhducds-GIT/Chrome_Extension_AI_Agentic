@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0043
+nhom: nhan-dien-anh
 date: 2026-08-26
 deciders: Claude
 source_section: 2026-08-26 (vòng 2) — Đưa ảnh vào tầm mắt rồi mới đo, KHÔNG nới lớp kiểm (owner: Đức)

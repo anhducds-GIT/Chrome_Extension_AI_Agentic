@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0020
+nhom: chu-va-commit
 date: 2026-08-24
 deciders: Đức
 source_section: Vận hành / UI

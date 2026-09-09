@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0016
+nhom: an-toan-khi-chay
 date: không ghi lại
 deciders: Đức
 source_section: Vận hành / UI

@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0027
+nhom: an-toan-khi-chay
 date: 2026-08-25
 deciders: Đức (đề xuất) + Claude (phân tích, đồng thuận với 4 hàng rào)
 source_section: 2026-08-25 — Development trial-run exception (owner: Đức)

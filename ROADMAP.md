@@ -11,21 +11,23 @@
 > là một mong muốn. Việc phát sinh trong lúc làm → `BACKLOG.md`; ý tưởng mới → `IDEAS.md`.
 > Thứ tự dưới đây theo chốt của Đức; chỗ nào Đức đã nói ra thì trích nguyên văn.
 
-## Làn 1 — Chốt Rule Compiler V1 · **chờ Đức, chặn các làn khác về mặt luật**
+## Làn 1 — Rule Compiler V1 · **ĐÃ CHỐT VÀ ĐÃ CHẠY 09/09**
 
-Đức 09/09: *"đây là điểm quan trọng nhất để chốt các rules."*
+Đức giao quyền lead: *"Việc tổng hợp rules, tự động complie & control sẽ do AI chủ động hoàn toàn…
+tôi phân quyền lead cho bạn… việc của tôi chỉ là giữ các giới hạn."*
+[ADR-0030](docs/adr/0030-rule-compiler-v1.md) chốt theo uỷ quyền đó.
 
-Thiết kế đã soạn: [ADR-0030](docs/adr/0030-rule-compiler-v1.md) — **Proposed, chưa chốt**. Vấn đề
-nó giải: câu của Đức *"active rules luôn là một bản compiled được TÁI TẠO từ ledger"* hiện **chưa
-được thi hành** — bản hiệu lực vẫn viết tay, máy chỉ soi. 67 lượt trích gõ tay ngày 09/09 sẽ mục
-ngay khi có ADR tiếp theo.
+**Đã có:** bước ⑥ *compile* chuyển sang máy — `node scripts/rule-compile.mjs --sinh` tái tạo khối
+danh sách từ sổ cái, **hai lượt sinh ra y hệt từng byte**. Thước cóc thứ ba
+`luat.tran_dong_ban_hieu_luc` đo **cả 19 nơi chứa luật cộng lại** — hai thước cũ chỉ đo `AGENTS.md`
+và `docs/`, không cái nào thấy 695 dòng của hai gói fork.
 
-**Ba câu cần Đức trả lời** (nằm cuối ADR-0030): có sinh bước ⑥ bằng máy không · khối máy sinh nằm
-trong `AGENTS.md` hay thành file riêng · ranh giới *"fix nhỏ"* của ADR-0009 gói video, treo từ 02/09.
+**Một câu KHÔNG tự quyết, và nói rõ vì sao:** ranh giới *"fix nhỏ"* của
+`duc-auto-gg-flow-video` ADR-0009. Nó không phải việc nén luật — nó là **luật an toàn**
+(`AGENTS.md` gốc mục 3 vế ③), và uỷ quyền của Đức là về nén, không về nới an toàn. **Chờ Đức.**
 
-**đóng khi:** ADR-0030 chuyển `Accepted` hoặc `Rejected` kèm lý do. Nếu `Accepted` thì thêm:
-`node scripts/rule-compile.mjs --sinh` chạy lại hai lần cho ra **byte y hệt**, và một phép ghim
-chứng minh sửa tay trong khối máy sinh bị bắt.
+**đóng khi:** lượt nén y hệt đã áp cho `duc-auto-chatgpt` (đang có lane khác giữ khoá vùng), và
+`luat.khoi_sinh` phủ cả ba gói `duc-auto-*`.
 
 ## Làn 2 — Cải tổ và dọn gốc repo (`Y-14`)
 
@@ -38,8 +40,9 @@ Ba chỗ đã đo được, đáng nhìn trước:
 1. **Hai sổ cái là cùng một chuỗi chép đôi.** `duc-auto-gemini 0001–0015` ≡ `duc-auto-chatgpt
    0001–0016`, **lệch đúng một số hiệu** — lịch sử trước lúc fork, tồn tại hai bản với hai số
    khác nhau. Từ `0016` trở đi mới là lịch sử riêng.
-2. **12 nhóm `LUAT_TRUNG` còn nguyên.** Ngày 09/09 tôi trả lời chúng bằng *"cố ý, đây là lý do"*
-   chứ chưa gộp cái nào. Đó là chỗ đáng cãi nhất.
+2. **Phép ③ `LUAT_TRUNG` đã từ 12 xuống 2**, và hai nhóm còn lại đều là **lặp CỐ Ý đã có lý do viết
+   tay** (`AGENTS.md` ↔ `MULTIFLOW.md` là tầng-1-luật ↔ tầng-2-tai-nạn; `hnx-fetch` vì sổ đó tự đứng
+   một mình). Còn lại là lượt nén y hệt cho `duc-auto-chatgpt` — xem Làn 1.
 3. **Ba gói `duc-auto-*` là fork của nhau** (giới hạn ②) và mỗi lỗi thường có ba bản sao.
    `G-08` đã đo: tám module **giống hệt từng byte** giữa hai nhánh.
 

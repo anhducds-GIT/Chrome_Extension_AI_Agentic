@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0032
+nhom: an-toan-khi-chay
 date: 2026-08-25
 deciders: Đức
 source_section: 2026-08-25 (chiều) — Nâng trần chuỗi trial lên 30 job + AI chạy batch sản xuất thay owner (owner: Đức)

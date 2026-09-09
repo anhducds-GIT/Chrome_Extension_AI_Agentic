@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0003
+nhom: bridge-va-thuc-thi
 date: không ghi lại
 deciders: Claude (coordinator), xác nhận kỹ thuật khi thiết kế Tầng 1
 source_section: Kiến trúc & Agent Bridge

@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0015
+nhom: an-toan-khi-chay
 date: không ghi lại
 deciders: Claude, xác nhận là chủ đích thiết kế, không phải bug
 source_section: Quy ước dữ liệu / workbook

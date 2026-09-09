@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0035
+nhom: pham-vi-va-ky-luat
 date: 2026-08-26
 deciders: Đức
 source_section: 2026-08-26 — Bộ luật đa-AI: luật tự nạp, quy trình mở khi cần (owner: Đức)

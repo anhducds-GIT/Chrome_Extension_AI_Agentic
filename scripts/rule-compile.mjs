@@ -57,6 +57,8 @@ export function docFileADR(text, duongDan) {
      *"một ADR nằm mãi ở Proposed là quyết định CHƯA chốt mà người sau đọc như đã chốt"*, và
      cách chữa nó khai lúc đó là đếm bằng tay. Nay máy đếm. */
   const dangCho = /^status:\s*Proposed\s*$/im.test(dau);
+  const tieuDe = (/^#\s+ADR-\d+\s*[—-]\s*(.+)$/m.exec(s)?.[1] ?? "").trim();
+  const nhom = (/^nhom:\s*(.+)$/m.exec(dau)?.[1] ?? "").trim() || null;
   const mDecides = /^decides:\s*\[([^\]]*)\]/m.exec(dau)?.[1] ?? "";
   const ganh = mDecides
     .split(",")
@@ -92,7 +94,7 @@ export function docFileADR(text, duongDan) {
   let mv;
   while ((mv = reVe.exec(s))) veSong.add(mv[1]);
 
-  return { duongDan, mang, chet, veSong, dangCho };
+  return { duongDan, mang, chet, veSong, dangCho, tieuDe, nhom };
 }
 
 /* Thư mục chứa một file ADR — cùng cách chia phạm vi B12 dùng. `docs/adr/0001` và
@@ -332,9 +334,114 @@ export function docTuDia() {
 
 /* ---- CLI ----------------------------------------------------------------- */
 
+/* ---- BƯỚC ⑥ COMPILE — thứ duy nhất trong sáu bước máy làm được TRỌN VẸN -----
+ *
+ * [ADR-0030](../docs/adr/0030-rule-compiler-v1.md). Đức mô tả bộ biên dịch bằng một câu:
+ * *"active rules luôn là một bản compiled nhỏ được TÁI TẠO từ ledger"*. V0 chỉ SOI mối nối;
+ * hàm này là chỗ nó thật sự được tái tạo.
+ *
+ * Nó sinh DANH SÁCH, không sinh LUẬT — đúng ADR-0027 ⑷. Chữ trong bản sinh là **tiêu đề của
+ * chính ADR**, tức lời do người viết, máy chỉ gom và nối liên kết.
+ *
+ * Vì sao cần: ngày 09/09 đóng phép ② về 0 tốn 67 lượt trích GÕ TAY, và **mục ngay trong cùng
+ * buổi** khi một lane khác thêm ADR-0052. Danh sách gõ tay không sống được qua một ngày. */
+export function sinhKhoi({ soCai, dangKy, phamVi }) {
+  const coY = new Map();
+  for (const [khoa, gt] of Object.entries(dangKy.mo_coi_co_y ?? {})) {
+    if (typeof gt === "string") { coY.set(khoa, gt); continue; }
+    for (const n of gt?.nhom ?? []) for (const so of n?.cac_so ?? []) coY.set(khoa + so, n.ly_do);
+  }
+  const chet = new Set();
+  for (const f of soCai) {
+    if (phamViCua(f.duongDan) !== phamVi) continue;
+    for (const c of f.chet) if (!c.ve) chet.add(c.so);
+  }
+  const cai = [];
+  for (const f of soCai) {
+    if (phamViCua(f.duongDan) !== phamVi || f.dangCho) continue;
+    for (const so of f.mang) {
+      if (chet.has(so) || coY.has(phamVi + so)) continue;
+      cai.push({ so, tieuDe: f.tieuDe, nhom: f.nhom, file: f.duongDan });
+    }
+  }
+  cai.sort((x, y) => x.so.localeCompare(y.so));
+
+  /* Nhóm nào chưa khai thì xuống CUỐI, không lên đầu. Ba mươi dòng chưa phân nhóm nằm trên
+     đầu là nhiễu, và nhiễu thì bị bỏ qua — chỗ khó chịu chỉ có tác dụng khi nó nhỏ. */
+  const theoNhom = new Map();
+  for (const c of cai) {
+    const k = c.nhom ?? "~chua-phan-nhom";
+    if (!theoNhom.has(k)) theoNhom.set(k, []);
+    theoNhom.get(k).push(c);
+  }
+  const ten = [...theoNhom.keys()].sort();
+
+  const ra = [];
+  for (const k of ten) {
+    const nhan = k === "~chua-phan-nhom" ? "Chưa phân nhóm — khai `nhom:` ở frontmatter ADR" : k;
+    ra.push(`**${nhan}**`);
+    for (const c of theoNhom.get(k)) {
+      const duong = c.file.startsWith(phamVi) ? c.file.slice(phamVi.length) : c.file;
+      ra.push(`- [ADR-${c.so}](${DUONG_SO_CAI}${duong}) ${c.tieuDe}`);
+    }
+    ra.push("");
+  }
+  return { dong: ra, tong: cai.length };
+}
+
+const DUONG_SO_CAI = "docs/adr/";
+
+export const MOC_DAU = "<!-- KHOI MAY SINH: rule-compile --sinh. DUNG SUA TAY. -->";
+export const MOC_CUOI = "<!-- HET KHOI MAY SINH -->";
+
+/* Thay khối giữa hai dấu mốc. KHÔNG tự chèn mốc nếu file chưa có — thiếu mốc là người chưa
+   quyết đặt bản sinh ở đâu, và đoán hộ chỗ đó là ghi đè vào giữa văn của người. */
+export function thayKhoi(noiDung, dongMoi) {
+  const i = noiDung.indexOf(MOC_DAU);
+  const j = noiDung.indexOf(MOC_CUOI);
+  if (i < 0 || j < 0 || j < i) return null;
+  const truoc = noiDung.slice(0, i + MOC_DAU.length);
+  const sau = noiDung.slice(j);
+  return truoc + String.fromCharCode(10) + dongMoi.join(String.fromCharCode(10)) + sau;
+}
 export function main(argv = process.argv.slice(2)) {
   const gon = argv.includes("--gon");
   const { soCai, banHieuLuc, dangKy } = docTuDia();
+
+  /* --sinh — bước ⑥. Đích khai ở `luat.khoi_sinh`, KHÔNG suy từ đường dẫn: suy hộ là đoán chỗ
+     ghi đè vào file luật của người khác, và `docs/adr/` gốc cố ý KHÔNG có đích (bản hiệu lực
+     gốc có thước cóc 252 dòng, nhét 27 dòng vào đó là vỡ ngân sách Đức đặt). */
+  if (argv.includes("--sinh")) {
+    const banDo = dangKy.khoi_sinh ?? {};
+    if (!Object.keys(banDo).length) {
+      console.error("KHONG_CO_DICH: chưa khai `luat.khoi_sinh` trong .repo-structure.json.");
+      return 1;
+    }
+    let doi = 0, loi = 0;
+    for (const [phamVi, dich] of Object.entries(banDo)) {
+      if (phamVi.startsWith("_")) continue;   /* `_doc` là chú thích, không phải phạm vi */
+      const { dong, tong } = sinhKhoi({ soCai, dangKy, phamVi });
+      const duong = path.join(ROOT, dich);
+      let cu;
+      try { cu = fs.readFileSync(duong, "utf8"); }
+      catch { console.error(`THIEU_FILE: ${dich}`); loi++; continue; }
+      const moi = thayKhoi(cu, dong);
+      if (moi === null) {
+        console.error(`THIEU_MOC: ${dich} chưa có cặp dấu mốc. Đặt tay MỘT LẦN vào đúng chỗ bạn`
+          + ` muốn bản sinh nằm, rồi chạy lại:
+  ${MOC_DAU}
+  ${MOC_CUOI}`);
+        loi++; continue;
+      }
+      if (moi !== cu) { fs.writeFileSync(duong, moi); doi++; }
+      console.log(`${moi === cu ? "y nguyên" : "đã sinh "}  ${dich}  — ${tong} quyết định đang sống`);
+    }
+    console.log(loi ? `
+CÒN ${loi} chỗ chưa sinh được.` : `
+Xong. ${doi} file đổi.`);
+    return loi ? 1 : 0;
+  }
+
   const kq = bienDich({ soCai, banHieuLuc, dangKy, homNay: Date.now() });
   const soQuyetDinh = soCai.reduce((n, f) => n + f.mang.length, 0);
   const soVeChet = soCai.reduce((n, f) => n + f.chet.length, 0);

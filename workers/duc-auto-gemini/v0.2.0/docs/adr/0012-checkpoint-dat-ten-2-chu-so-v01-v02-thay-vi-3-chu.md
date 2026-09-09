@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0012
+nhom: du-lieu-va-bang-chung
 date: không ghi lại
 deciders: Đức
 source_section: Quy ước dữ liệu / workbook

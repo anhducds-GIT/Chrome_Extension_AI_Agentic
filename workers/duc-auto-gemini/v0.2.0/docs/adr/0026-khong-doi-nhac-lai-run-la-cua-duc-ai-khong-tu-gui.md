@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0026
+nhom: an-toan-khi-chay
 date: 2026-08-24
 deciders: Đức (tái xác nhận)
 source_section: Roadmap tự hành (chốt sau audit 2026-08-24)

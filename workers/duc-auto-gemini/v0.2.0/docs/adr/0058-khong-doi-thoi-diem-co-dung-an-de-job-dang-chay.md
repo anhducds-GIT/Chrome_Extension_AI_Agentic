@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0058
+nhom: an-toan-khi-chay
 date: 2026-08-26
 deciders: Claude
 source_section: 2026-08-26 (tối) — Trial live cặp stop/reload: bắt được một lời nhắn nói dối (owner: Đức yêu cầu chạy trial)

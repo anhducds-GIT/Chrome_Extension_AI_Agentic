@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0006
+nhom: bridge-va-thuc-thi
 date: không ghi lại
 deciders: Claude (coordinator), theo yêu cầu an toàn của Đức
 source_section: Kiến trúc & Agent Bridge

@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0051
+nhom: an-toan-khi-chay
 date: 2026-08-26
 deciders: Claude, theo thiết kế gốc
 source_section: 2026-08-26 (chiều) — Port `run.stop` + `chat.reload` từ worker ChatGPT sang Gemini (owner: Đức)

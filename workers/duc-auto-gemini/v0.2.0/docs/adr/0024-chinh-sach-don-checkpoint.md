@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0024
+nhom: du-lieu-va-bang-chung
 date: 2026-08-24
 deciders: Đức
 source_section: Roadmap tự hành (chốt sau audit 2026-08-24)

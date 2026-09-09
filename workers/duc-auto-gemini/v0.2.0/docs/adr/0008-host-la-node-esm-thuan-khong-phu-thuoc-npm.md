@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0008
+nhom: bridge-va-thuc-thi
 date: không ghi lại
 deciders: Claude (coordinator), đảo ngược đề xuất .NET ban đầu của Codex
 source_section: Kiến trúc & Agent Bridge

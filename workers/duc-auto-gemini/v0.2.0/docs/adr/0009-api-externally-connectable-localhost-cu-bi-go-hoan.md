@@ -1,6 +1,7 @@
 ---
 status: Accepted
 adr: 0009
+nhom: bridge-va-thuc-thi
 date: không ghi lại
 deciders: Claude (coordinator)
 source_section: Kiến trúc & Agent Bridge
