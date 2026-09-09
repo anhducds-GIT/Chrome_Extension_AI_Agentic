@@ -192,7 +192,7 @@ không phải lỗi "báo cáo sai chỗ" — nhẹ hơn một bậc, nhưng v�
 - Audit Codex 3 vòng, PASS. Hai vòng đầu ép tách `overwritten` và tách hai sự thật ra hai trường.
 
 
-### B-14 · `attachmentPreview` đang đứng trên MỘT mục, và mục đó là nhãn tiếng Anh
+### ~~B-14~~ · (ĐÓNG — ĐÃ ĐO LIVE 09/09, có mỏ neo cấu trúc) `attachmentPreview` đứng trên MỘT mục, và mục đó là nhãn tiếng Anh
 Đo live 2026-08-26 (Pilot-14): trong 5 mục của nhóm, chỉ `button[aria-label*="Remove file"]`
 khớp. Bốn mục `data-testid` **không khớp lần nào** — chúng là di sản kế thừa, không phải
 bằng chứng. Nên nhóm này thực chất là một selector, và nó dựa vào `aria-label` **tiếng Anh**:
@@ -223,6 +223,42 @@ Tôi đã bắt được đúng cửa sổ gắn ảnh (xem `~~B-15~~`), nhưng 
 **Việc còn lại, và nó là việc CODE chứ không phải việc đo:** nới `dom_probe` để soi **trong `form`
 soạn thảo** (nút + cấu trúc chip, không bị thanh bên ăn hết nắp), rồi đo lại một lượt gắn ảnh —
 lượt đó **0 credit** vì job chữ là đủ. Đã ghi thành `B-48`.
+
+**ĐÓNG 09/09 — ĐO ĐƯỢC, và câu trả lời là CÓ.** Đức nạp lại tiện ích, tôi chạy một job **chữ**
+2 ảnh (**0 credit ảnh**) và đọc `composerScope` của `dom_probe` (B-48) **giữa lúc gắn ảnh**.
+Chip đính kèm của ChatGPT có hình dạng này:
+
+    div[role="group" aria-label="<TÊN FILE>"]              ← khung của MỘT chip
+      ├ div > div[data-default-action="true"] > div > button[aria-label="Open image: …"]
+      └ div > div > span[data-state="closed"] > button[aria-label="Remove file N: <TÊN FILE>"]
+
+**Hai mỏ neo, và cả hai KHÔNG phụ thuộc ngôn ngữ giao diện:**
+
+⑴ **`div[role="group"]`** là khung chip, và `aria-label` của nó là **CHÍNH TÊN FILE** ta vừa nạp.
+   Nên đếm được **theo TÊN**, không chỉ theo **SỐ LƯỢNG** — mạnh hơn hẳn thứ đang có.
+⑵ **`div[data-default-action="true"]`**: đo **nền** (chưa gắn ảnh) thì trong ô soạn thảo **không
+   có** thuộc tính này; gắn ảnh thì nó xuất hiện. Nó bám vào chip.
+
+**Và một câu trong mục này đo được thành SỐ:** đổi ngôn ngữ giao diện thì nhóm cũ **về 0** — mù
+hẳn. Phép ghim dựng một DOM chip nhãn tiếng Việt: nhóm cũ **0**, nhóm mới vẫn **4**.
+
+**NHƯNG KHÔNG nhét hai mục đó vào `attachmentPreview`, và đây là chỗ dễ sai nhất.** Nhóm đó bị
+**ĐẾM rồi SO với SỐ FILE**: `attachmentPreviewCount() >= previousPreviewCount + N`. Ba selector
+khớp **BA phần tử khác nhau trên cùng một chip**, nên gộp vào là mỗi chip đếm thành 3 — một job
+2 ảnh **mới gắn xong 1 chip** đã cho `3 >= 2` → **cổng mở SỚM và runner gõ Gửi khi còn thiếu một
+ảnh.** Phép ghim **chạy đúng phép đếm đó** để chứng minh bằng số, không phải bằng câu văn.
+
+Nên chúng nằm ở **nhóm RIÊNG `attachmentChip`**, chỉ để `dom_probe` đếm mỗi lượt dò (ngày ChatGPT
+đổi cấu trúc thì ta thấy **trước** khi cần dùng). **Không file ship nào đọc nó** — và phép ghim
+**đo** điều đó chứ không hứa. **Nối vào cổng trước-khi-gửi là đổi luật an toàn → đã gộp vào
+`B-49` thành MỘT lượt cho Đức chốt**, vì cả hai đều nằm trong `waitForReferenceImagesReady`.
+
+Suite **130/130**. **Thử phá 7/7 đỏ, 0 lọt** — gồm đúng cái bẫy: gộp nhóm · nối vào runner ·
+neo lại theo nhãn thay vì cấu trúc.
+
+- **đóng khi:** đã đóng. Mỏ neo đã tìm được và đã ghi vào adapter kèm số đo; việc nối vào cổng
+  nằm ở `B-49`.
+
 
 
 Lưu ý giảm nhẹ: lớp chặn "ảnh tham chiếu bị nhận nhầm thành ảnh sinh" **không** phụ thuộc riêng
@@ -2268,7 +2304,7 @@ và một job **ảnh** (1 credit). Không mục nào là suy diễn — mỗi m
 
 - **đóng khi:** ⑴ đã vá và có phép ghim; ⑵ Đức chốt một trong ba đường và nó được khai vào `decisions.md`.
 
-### B-48 · (P2) `dom_probe` không soi được chip đính kèm — nắp 40 nút bị thanh bên ăn hết
+### ~~B-48~~ · (ĐÓNG 09/09) `dom_probe` không soi được chip đính kèm — nắp 40 nút bị thanh bên ăn hết
 Đo live 09/09. `buttons` nắp **40 mục**; thanh bên ChatGPT của Đức (10 project + lịch sử) chiếm
 **hết 40**, nên bốn nút *"Remove file"* của chip đính kèm **không bao giờ vào danh sách** — đúng cái
 mục `B-14` cần xem. Nắp là đúng (envelope 1MB), chỗ sai là **không có mục nào soi theo phạm vi**.
@@ -2309,7 +2345,13 @@ bỏ `aria-` khỏi chuỗi (quay về hình dạng mù) · tính xong nhưng kh
 tôi chạy **một job chữ có ảnh mẫu** — **0 credit** — và đọc `composerScope.preview_chains` để tìm
 mỏ neo cấu trúc cho `B-14`. @Đức:bấm(B-48)
 
-- **đóng khi:** probe có trường soi-trong-`form`, và `B-14` đo được bằng một lượt 0 credit.
+**ĐÓNG 09/09 — cả hai điều kiện đã xong.** Trường `composerScope` đã ship; Đức nạp lại; một job
+chữ 2 ảnh (**0 credit**) đọc ra hình dạng chip và `~~B-14~~` đóng theo. Trường này còn trả thêm một
+mỏ neo không ai xin: `div[data-composer-surface="true"]` / `data-composer-body` /
+`data-composer-grid` / `data-composer-transition-slot` — từ vựng cấu trúc của ô soạn thảo, hiện ra
+ngay ở lượt dò **nền**, chưa cần gắn ảnh.
+
+- **đóng khi:** đã đóng.
 
 ### B-49 · (P2) `uploadPending` đo SAI THỨ nó khai, và nó có thể làm job gắn ảnh chết oan
 Đo live 09/09 (số đầy đủ ở `~~B-15~~`): trong cửa sổ upload thật (1,83MB, **3,82 giây**, ~27 lượt
@@ -2325,7 +2367,17 @@ một lượt Đức gõ tay đều mở được ca đó.
 Việc: bỏ `!uploadIsPending()` khỏi vòng chờ (lớp chắn thật là `previewsReady`, đã đo là **có** làm
 việc), và đổi tên nhóm cho đúng thứ nó đo. **Đụng cổng sẵn-sàng → cần Đức chốt** (`AGENTS.md` 2.4).
 
-- **đóng khi:** Đức chốt, vá xong, và có phép ghim cho ca "gắn ảnh khi trang đang sinh".
+**GỘP THÊM MỘT VẾ 09/09, vì nó cùng một hàm và cùng một lượt chốt.** Đo ở `~~B-14~~` cho một mỏ
+neo tốt hơn cho **phép đếm**: khung chip `div[role="group"]` mang `aria-label` = **tên file**. Nên
+vòng chờ có thể đổi từ *"đếm đủ SỐ"* sang *"thấy đủ TÊN"* — mạnh hơn hẳn, vì nó xác minh **danh
+tính** chứ không chỉ **số lượng**, và nó thoát khỏi nhãn tiếng Anh. Cùng lúc bỏ luôn
+`!uploadIsPending()`. **Hai vế, một hàm, một lượt Đức chốt.**
+
+⚠️ **Đừng làm nửa vời:** thêm selector vào `attachmentPreview` mà **không** đổi phép đếm là mở cổng
+SỚM (số đo ở `~~B-14~~`: 1 chip trên 2 ảnh cho `3 >= 2`). Nên hai việc này **phải đi cùng nhau**.
+
+- **đóng khi:** Đức chốt, vá xong, và có phép ghim cho **cả hai** ca: "gắn ảnh khi trang đang sinh"
+  và "mới gắn xong một nửa số ảnh".
 
 ### B-50 · (P2) Ảnh mẫu lớn làm side panel không phản hồi hàng phút — bridge báo timeout trong khi mutation VẪN LÀNH
 Đo live 09/09, lặp lại suốt buổi. Sau khi nạp ~1,9MB ảnh mẫu, **mọi** lời gọi bridge báo

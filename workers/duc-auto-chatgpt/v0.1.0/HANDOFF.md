@@ -616,3 +616,30 @@ Và `deepEqual` lại đỏ qua biên `node:vm` (lần thứ tư trong repo này
 
 **Còn đúng một bước, cần tay Đức:** nạp lại tiện ích, rồi tôi đóng `B-14` bằng **một job chữ,
 0 credit ảnh**, đọc `composerScope.preview_chains`.
+
+## 2026-09-09 (lượt 11) · `claude-gpt-chay-het-job` — B-14 đóng: chip đính kèm CÓ mỏ neo cấu trúc
+
+**Làm gì.** Đức nạp lại tiện ích và nói *"tôi vẫn để tab bị che, bạn cứ trial lại đi"*. Chạy một
+job **chữ** 2 ảnh (**0 credit ảnh**) và đọc `composerScope` (B-48) **giữa lúc gắn ảnh**. Tab bị che
+không ảnh hưởng job chữ — đo lượt 9 đã chứng minh, và lượt này **SUCCESS 1/1** lần nữa.
+
+**`B-14` ĐÓNG — có mỏ neo, và nó độc lập ngôn ngữ.** Chip đính kèm là
+`div[role="group" aria-label="<TÊN FILE>"]`, trong đó có `div[data-default-action="true"]` (đo nền
+chưa gắn ảnh: **không có** thuộc tính này trong ô soạn thảo). Điểm mạnh nhất: `aria-label` của khung
+chip là **CHÍNH TÊN FILE**, nên đếm được **theo TÊN** chứ không chỉ theo **SỐ**.
+
+**Và cái bẫy, ghi to vì nó là chỗ dễ sai nhất:** KHÔNG được nhét hai mục đó vào
+`attachmentPreview`. Nhóm đó bị **đếm rồi so với SỐ FILE**, mà ba selector khớp **ba phần tử khác
+nhau trên cùng một chip** — gộp vào là một job 2 ảnh **mới gắn xong 1 chip** đã cho `3 >= 2` →
+**cổng mở SỚM, runner gõ Gửi khi còn thiếu một ảnh.** Nên chúng ở nhóm RIÊNG `attachmentChip`,
+chỉ để `dom_probe` đếm và canh; **không file ship nào đọc**, và phép ghim **đo** điều đó chứ không
+hứa. Nối vào cổng là đổi luật an toàn → **gộp vào `B-49`** cùng vế bỏ `!uploadIsPending()`, vì cả
+hai nằm trong **một hàm** `waitForReferenceImagesReady`. Một lượt Đức chốt, không phải hai.
+
+**`B-48` ĐÓNG** theo, và nó trả thêm một thứ không ai xin: từ vựng cấu trúc của ô soạn thảo
+(`data-composer-surface` / `-body` / `-grid` / `-transition-slot`) hiện ra ngay ở lượt dò **nền**.
+
+**Đo.** Suite **130/130**. **Thử phá 7/7 đỏ, 0 lọt, 0 harness hỏng** — gồm ba cái độc: gộp nhóm ·
+nối nhóm mới vào runner · neo lại theo nhãn thay vì cấu trúc.
+
+**Còn lại đều CHỜ ĐỨC CHỐT:** `B-47`⑴⑵ · `B-49` (hai vế, một lượt) · `B-50`.
