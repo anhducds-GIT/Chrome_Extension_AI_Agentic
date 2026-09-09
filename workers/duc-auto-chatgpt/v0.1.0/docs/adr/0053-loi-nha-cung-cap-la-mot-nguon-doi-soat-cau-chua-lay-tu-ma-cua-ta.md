@@ -125,3 +125,14 @@ quy live cho thấy đường đối soát chữ **không bị bản vá này l�
 ít nhất một lần tự chữa"* — để nó chạy thì **tool tạo ảnh của ChatGPT phải lỗi thật**, và đó không
 phải thứ dựng ra được. Vế đó sẽ tự đạt ở lượt chạy ảnh tới nào gặp đúng lỗi tạm ấy; sổ audit ghi
 `PROVIDER_REPAIR` mỗi lượt, **kể cả lượt không chữa**, nên lần đó sẽ có số để đọc.
+
+### Ba lỗi trong chính phép ghim của tôi, ghi ra vì cả ba là lỗi tôi
+
+- Mép chống tiêm ban đầu **đòi sai chỗ** — nó bắt bộ phân loại từ chối một câu chữa nằm *trong*
+  một yêu cầu dài hơn. Tính chất đáng giữ là *"thứ sắp gõ là đúng một phần tử danh sách trắng"*, và
+  nó đứng vững; ca kia chỉ tốn **một lượt quota vô ích**. Đã ghi thành **giới hạn đã biết**.
+- Bộ lọc chú thích theo **tiền tố dòng** không cắt nổi khối `/* … */` mà dòng tiếp bắt đầu bằng
+  chữ, nên **văn của chính tôi** khớp vào phép kiểm và mép chống tiêm **đỏ oan**. Sửa ở **cả ba**
+  phép ghim tôi viết hôm nay.
+- Sân khấu giả truyền sai đối số nên mép nắp **đỏ vì lý do sai**. Sáng nay một mép khác **xanh** vì
+  lý do sai. Cùng một họ, và đó là lý do luôn chạy thử phá thay vì tin suite xanh.
