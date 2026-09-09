@@ -1018,6 +1018,12 @@
 
   const CHAT_RELOAD_READY_TIMEOUT_MS = 20000;
   const CHAT_RELOAD_POLL_MS = 500;
+  // B-43: SAU F5 PHẢI DÒ, KHÔNG ĐỌC MỘT LẦN. `waitTabComposer()` trả về ngay khi KHUNG GÕ hiện,
+  // mà ChatGPT dựng khung gõ TRƯỚC các lượt hội thoại. Nghiệm thu live 09/09 vấp đúng đây: F5
+  // xong, đọc một lần được **0 ký tự** → dừng hẳn, trong khi mười giây sau trang giữ **2.117
+  // ký tự**. Câu trả lời có, chỉ là tôi đọc sớm hơn lúc nó được dựng.
+  const RECONCILE_READ_TIMEOUT_MS = 60000;
+  const RECONCILE_READ_POLL_MS = 3000;
 
   // The mirror image of run.stop: that one bypasses the run lock, this one is
   // GATED by it. F5 destroys the content script and every attempt in flight
@@ -6131,16 +6137,24 @@
     audit("WORKSPACE_REPAIR", item, { message: `TEXT_RECONCILE F5 ${repair.ok ? "OK" : "KHÔNG XONG"}: ${repair.note}` });
     if (!repair.ok) return dungHan(`${message} Đã thấy lượt hỏi trong hội thoại nhưng không F5 lại được: ${repair.note}`);
 
-    let sau;
-    try { sau = await doc(); }
-    catch (error) { return dungHan(`${message} Sau F5 vẫn không đọc được trang: ${messageOf(error)}`); }
+    // DÒ, không đọc một lần — xem khối ở `RECONCILE_READ_TIMEOUT_MS`. Chỉ đọc, có nắp, và
+    // thoát ngay khi đủ nên ca thường không tốn hết nắp.
+    let sau = null;
+    const han = Date.now() + RECONCILE_READ_TIMEOUT_MS;
+    let soLuotDo = 0;
+    while (Date.now() < han) {
+      await sleep(RECONCILE_READ_POLL_MS);
+      soLuotDo += 1;
+      try { sau = await doc(); } catch (_) { continue; }
+      if (sau?.ok && sau.reconcile?.complete) break;
+    }
     if (sau?.ok && sau.reconcile?.complete) {
-      audit("RECONCILE_RESULT", item, { message: `F5 rồi đọc lại: ${truoc.reconcile.chars} → ${sau.reconcile.chars} ký tự. Câu trả lời có sẵn trên máy chủ, trang chỉ chưa vẽ.` });
+      audit("RECONCILE_RESULT", item, { message: `F5 rồi đọc lại: ${truoc.reconcile.chars} → ${sau.reconcile.chars} ký tự sau ${soLuotDo} lượt dò. Câu trả lời có sẵn trên máy chủ, trang chỉ chưa vẽ.` });
       log(`${item.job.id} đối soát sau F5: ${truoc.reconcile.chars} → ${sau.reconcile.chars} ký tự.`, "done");
       return finishTextOutput(item, sau.result, effectiveOutput);
     }
     audit("RECONCILE_RESULT", item, { message: `Sau F5 vẫn chưa đủ (${sau?.reconcile?.reason || sau?.error || "không rõ"}, ${sau?.reconcile?.chars ?? 0} ký tự).` });
-    return dungHan(`${message} F5 rồi đọc lại vẫn chưa thấy câu trả lời trọn vẹn (${sau?.reconcile?.chars ?? 0} ký tự).`);
+    return dungHan(`${message} F5 rồi dò ${soLuotDo} lượt trong ${Math.round(RECONCILE_READ_TIMEOUT_MS / 1000)} giây vẫn chưa thấy câu trả lời trọn vẹn (${sau?.reconcile?.chars ?? 0} ký tự).`);
   }
 
   async function reconcileSubmittedAttempt(item, effectiveOutput, message, settings) {

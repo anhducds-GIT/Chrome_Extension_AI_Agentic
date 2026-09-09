@@ -225,6 +225,23 @@ const API = tOut.API;
   assert.ok(viTriChot > 0, "phải có lượt chốt trong thân hàm");
   assert.ok(viTriChot > viTriF5, "mọi lượt chốt phải nằm SAU F5 — không có cửa tắt tin DOM trước khi F5");
   assert.equal(than.split("finishTextOutput(").length - 1, 1, "ĐÚNG MỘT lượt chốt: hai lượt nghĩa là cửa tắt quay lại");
+
+  /* ⒃ SAU F5 PHẢI DÒ, KHÔNG ĐỌC MỘT LẦN. Nghiệm thu live 09/09 vấp đúng đây: `waitTabComposer()`
+     trả về ngay khi KHUNG GÕ hiện, mà ChatGPT dựng khung gõ TRƯỚC các lượt hội thoại — nên lượt
+     đọc một-nhát ngay sau F5 được **0 ký tự** và job dừng hẳn, trong khi mười giây sau trang giữ
+     **2.117 ký tự**. Một lượt đọc đơn ở đây là một bản vá xanh mọi phép kiểm mà không bao giờ
+     cứu được job nào.
+
+     Canh bằng CẤU TRÚC: giữa lượt F5 và lượt chốt phải có một vòng lặp, và nó phải có nắp thời
+     gian — dò không nắp là treo cả hàng đợi vào một trang không bao giờ trả lời. */
+  const giua = than.slice(viTriF5, viTriChot);
+  assert.match(giua, /while\s*\(|for\s*\(/, "sau F5 phải DÒ tới khi câu trả lời hiện, đừng đọc một lần rồi kết luận");
+  assert.match(giua, /RECONCILE_READ_TIMEOUT_MS/, "và vòng dò phải có NẮP thời gian, đừng dò vô hạn");
+  assert.match(than, /await sleep\(/, "vòng dò phải nghỉ giữa hai lượt đọc, đừng quay nóng");
+
+  const nap = doc("sidepanel.js").match(/const RECONCILE_READ_TIMEOUT_MS = (\d+);/);
+  assert.ok(nap, "mỏ neo hỏng: không thấy nắp thời gian dò sau F5");
+  assert.ok(Number(nap[1]) >= 30000, `nắp dò sau F5 phải đủ rộng cho một câu trả lời dài — đang là ${Number(nap[1]) / 1000} giây`);
 }
 
-console.log("B-43 F5 rồi đọc lại, chạy thật (15 mép): PASS");
+console.log("B-43 F5 rồi đọc lại, chạy thật (16 mép): PASS");
