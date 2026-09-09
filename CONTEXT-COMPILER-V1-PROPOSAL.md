@@ -1,841 +1,619 @@
 ---
-status: proposal-revised-after-codex-review
+status: proposal-revised-after-codex-and-cc-review
 kind: architecture-proposal
 topic: context-compiler-v1
 created: 2026-09-09
 revised: 2026-09-09
-review_basis: "Codex independent challenge of commit 364c6932 + GPT verification against current main"
 authority: none
 source_draft: draft.md
-note: "Bản proposal đã sửa sau phản biện độc lập. Chưa phải ADR, luật hiệu lực hay SSOT cho đến khi Đức chốt."
+note: "Bản proposal đã được Đức + GPT reasoning, Codex challenge, CC challenge và GPT đối chiếu lại với main. Chưa phải ADR/luật hiệu lực cho tới khi Đức chốt."
 ---
 
-# Context Compiler V1 — Revised Proposal after Codex Review
+# Context Compiler V1 — Consolidated Proposal after Codex + CC Review
 
-## 0. Kết luận điều chỉnh
+## 0. Executive conclusion
 
-Codex **không bác kiến trúc**; phản biện làm rõ rằng bản trước đã gán cho Router vài trách nhiệm mà máy hiện tại không thể chứng minh.
+Hai reviewer đều giữ nguyên chẩn đoán gốc nhưng buộc proposal cắt nhỏ hơn.
 
-Giữ hướng:
+**Không build một Router framework trước.** Repo hiện đã có bootstrap compiler (`Rule Compiler -> PHIEN.md`) và nhiều deterministic gates. Phần V1 nên là ba lát cắt độc lập, mỗi lát vá một failure mode đang có và tự chứng minh giá trị:
 
 ```text
-Context Compiler — umbrella
+V1a — BOOTSTRAP FRESHNESS
+      PHIEN phải source-complete + khớp output generator hiện tại
 
-A. Bootstrap compilation       [ĐÃ CÓ]
-   Rule Compiler -> PHIEN.md
+V1b — ONE LOADING LAW + HARD BUDGET
+      một bảng machine-readable: operation -> source#section bắt buộc
+      mọi bảng prose khác sinh/đối chiếu từ đó
+      phần đọc thêm được đo actual chars và có trần cứng
 
-B. Read-only Context Router    [V1 NÊN BUILD]
-   descriptor + evidence đúng operation
-      -> resolve unit/context obligations
-      -> Context Manifest
-
-C. Continuity / compaction     [SAU]
-   durable checkpoint -> carry pointers -> rehydrate
+V1c — READ-ONLY INSPECTOR
+      node scripts/context.mjs --viec <operation> [...evidence]
+      -> in bootstrap + required-now + chars + total + missing
+      -> exit 0/1
 ```
 
-Nhưng V1 sửa bốn boundary lớn:
-
-1. `PHIEN` **khớp nội dung chưa đủ**; bootstrap phải có contract `source-complete + generated-match` do Rule Compiler sở hữu.
-2. Router **không phát hiện semantic conflict tổng quát**.
-3. `repo.write` luôn có prerequisite claim; không mô tả flow `write -> claim` nữa.
-4. Context/evidence resolve theo **versioned unit + operation evidence**, không chỉ theo `focus_scope`.
+**Chưa tạo JSON Manifest contract, runtime adapters, Context Delta, projector framework hay semantic conflict engine.** Có consumer thật rồi mới thêm output machine contract nếu cần.
 
 ---
 
-## 1. Router sở hữu đúng một việc
+## 1. Problem statement
 
-Router trả lời:
-
-> Với operation sắp làm và evidence hiện tại, **control-plane context bắt buộc nào phải được nạp**, cho những unit nào, và evidence có đủ để xác định route hay chưa?
-
-Router **không** trả lời:
+Project AI dài hạn phình ở bốn lớp khác nhau:
 
 ```text
-"action này đã được phép chưa?"
-"rules có mâu thuẫn ngữ nghĩa không?"
-"claim hiện tại có hợp lệ không?"
-"commit/push có an toàn không?"
+Rules      — luật active tăng/trùng/stale
+Knowledge  — protocol/domain docs tăng
+State      — current truth trộn narrative/lịch sử
+History    — ADR/handoff/evidence/git tăng vô hạn
 ```
 
-Các câu đó tiếp tục thuộc:
+Context control phải đạt đồng thời:
 
-```text
-Rule Compiler / Đức     -> semantic rule decisions
-claim.mjs               -> write ownership tại action boundary
-session-check / hook    -> commit/session gates
-safe-push               -> publish gate
-product guards/tests    -> domain safety
-```
-
-**Decision B1:** Context Router là loader/coverage checker, không phải authorization engine hay semantic theorem prover.
+- startup không tăng tuyến tính theo tuổi repo;
+- operation chỉ nạp phần context thật sự bắt buộc;
+- context mới phải **trả giá bằng phép đo**, không có kênh tăng vô hạn mới;
+- deterministic authorization/enforcement không bị kéo ngược vào prompt;
+- summary/carry không trở thành authority;
+- cùng semantic law có thể được runtime khác nhau tiêu thụ sau này.
 
 ---
 
-## 2. Bootstrap contract — `PHIEN` có ba trạng thái khác nhau
+## 2. Boundary: cái gì đã có, không xây lại
 
-Repo hiện đã sinh package bootstrap bằng:
+### 2.1 Bootstrap compilation đã có
 
-```text
-LUAT-CORE
-+ package AGENTS "Luật vàng"
-+ STATUS selected fields
--> PHIEN.md
-```
-
-Nhưng generator hiện có thể để trạng thái rỗng khi `STATUS.md` thiếu. Vì vậy không dùng từ `current` cho một check mơ hồ.
-
-### Ba khái niệm phải tách
+Package session hiện dùng:
 
 ```text
-SOURCE_COMPLETE
-  = các source bắt buộc cho bootstrap tồn tại và parse được
-
-GENERATED_MATCH
-  = PHIEN trên đĩa byte/semantic-match output mà cùng generator logic sẽ sinh từ source hiện tại
-
-GATE_VERIFIED
-  = các gate khác của repo đã chạy/đạt ở thời điểm riêng của chúng
+CLAUDE routing + <versioned-unit>/PHIEN.md
 ```
 
-Router chỉ cần hai cái đầu. `GATE_VERIFIED` không phải việc của Router.
+`PHIEN.md` được sinh từ `LUAT-CORE + package AGENTS Luật vàng + STATUS fields`.
 
-### Ownership của check
+**Decision C1:** reuse `PHIEN.md`; không tạo startup bundle thứ hai.
 
-**Rule Compiler phải sở hữu `validatePhien(unit)` dạng read-only/pure** hoặc export primitive tương đương:
+### 2.2 Authorization/enforcement đã có
+
+Tiếp tục thuộc các cổng thật:
 
 ```text
-input: versioned unit
-read: core + package AGENTS + STATUS + PHIEN
-output:
-  source_complete
-  generated_match
-  missing/invalid sources
+claim.mjs
+claim.mjs --soat
+session-check.mjs
+safe-push.mjs
+suite / permission guards
 ```
 
-Router **reuse** primitive đó; không gọi `rule-compile --sinh`, không viết PHIEN, không dựng fingerprint thứ hai.
+**Decision C2:** context system không preload snapshot ownership để thay cổng tại action boundary.
 
-### Fail policy
+### 2.3 Rule semantics thuộc Rule Compiler + Đức
 
-```text
-product operation cần bootstrap
-+ SOURCE_COMPLETE=false -> BLOCKED
-+ GENERATED_MATCH=false -> BLOCKED: REGENERATE_REQUIRED
-```
+Rule Compiler hiện có các phép deterministic như dead-clause reference, orphan decision, duplicate fingerprint, stale review. Nó **không** là semantic theorem prover.
 
-Không fallback sang `AGENTS + STATUS` ghép tay.
-
-**Decision B2:** `PHIEN` là generated bootstrap artifact, nhưng readiness của nó phải được chứng minh bằng cùng logic sinh và đủ source, không chỉ bằng file tồn tại.
+**Decision C3:** V1 không hứa phát hiện mâu thuẫn ngữ nghĩa tổng quát.
 
 ---
 
-## 3. Unit ≠ ownership area ≠ focus
+# V1a — Bootstrap Freshness Gate
 
-Repo có versioned unit thật, ví dụ:
+## 3. Vấn đề thật
+
+`PHIEN.md` là bootstrap authority của package session nhưng lifecycle hiện chưa kín:
+
+- generator có thể đọc thiếu `STATUS.md` và tiếp tục với state rỗng;
+- khi generation fail ở một package, PHIEN cũ có thể còn trên đĩa;
+- thước startup có thể bỏ qua package/file chưa tồn tại;
+- PHIEN không nằm trong cơ chế artifact freshness chung hiện tại.
+
+Vì vậy ba câu khác nhau phải được tách:
 
 ```text
-workers/duc-auto-gemini/v0.1.0
-workers/duc-auto-gemini/v0.2.0
+PHIEN_EXISTS
+PHIEN_GENERATED_MATCH
+PHIEN_SOURCE_COMPLETE
 ```
 
-Ownership area có thể là:
+`EXISTS` hoặc `MATCH` một mình không đủ.
+
+## 4. Contract V1a
+
+Reuse chính pure generation logic hiện có (`sinhPhienGoi()` hoặc function cùng authority), sinh expected PHIEN **trong memory**, không ghi file.
+
+Mỗi versioned unit được support phải kiểm:
 
 ```text
-workers/duc-auto-gemini
+1. required source tồn tại
+2. required source parse được
+3. generator tạo expected output thành công
+4. PHIEN trên đĩa tồn tại
+5. PHIEN trên đĩa === expected output
+6. startup bundle không vượt hard char cap hiện hành
 ```
 
-Hai khái niệm không được nhập làm một.
+Nếu một điều kiện fail:
 
-### Descriptor revised
+```text
+PHIEN_INVALID -> fail closed cho package bootstrap
+```
+
+Không fallback im lặng sang raw AGENTS/STATUS bundle và không gọi `--sinh` từ checker read-only.
+
+## 5. Generated artifact / locking issue
+
+`rule-compile --sinh` có thể chạm nhiều package PHIEN trong một lượt. Đây là **lỗ vận hành hiện hữu**, không phải Context Router concern.
+
+Cần một quyết định riêng:
+
+```text
+PHIEN là generated artifact 100% -> được cơ chế generated-artifact miễn khóa phù hợp
+```
+
+hoặc generator phải có đường target-scoped không chạm unit khác.
+
+**Không để việc “đổi một rule phải giữ 4 package lock” trở thành requirement ngầm.**
+
+---
+
+# V1b — One Loading Law + Hard Conditional Budget
+
+## 6. Không tạo registry thứ ba
+
+Hiện loading obligation đã xuất hiện trong ít nhất:
+
+```text
+AGENTS.md mục “Đọc trước khi làm”
+LUAT-CORE mục “Cần thêm thì mở”
+protocol prose
+```
+
+Thêm `context-registry.json` riêng sẽ trở thành một bản thứ ba phải sync.
+
+**Decision C4:** canonical loading law đặt trong machine LAW hiện có, candidate:
+
+```text
+.repo-structure.json -> luat.context
+```
+
+Không thêm root config file mới trong V1.
+
+## 7. `luat.context` chỉ chứa nghĩa vụ bắt buộc
+
+Nó **không catalog mọi tài liệu hữu ích**.
+
+Candidate shape tối thiểu:
 
 ```json
 {
-  "schema_version": 1,
-  "operation": "repo.write",
-  "targets": [
-    "workers/duc-scouter/v0.1.0/scripts/observer-probes.mjs"
+  "commit.prepare": [
+    { "source": "docs/protocols/MULTIFLOW.md", "section": "3a-3b" }
   ],
-  "role": "product",
-  "orchestration": false,
-  "resume": false,
-  "focus_unit": "workers/duc-scouter/v0.1.0",
-  "label": "sửa observer probe"
-}
-```
-
-`focus_unit`:
-
-- là mental/bootstrap focus của session;
-- phải là **versioned unit identity**, không package parent mơ hồ;
-- không authorize write/publish;
-- không che actual target units.
-
-### Resolve targets
-
-Router reuse topology/unit mapping hiện có để map:
-
-```text
-target path -> versioned unit hoặc non-unit area
-```
-
-Không tự chọn "version mới nhất" hay "unit nào có PHIEN".
-
-Nếu target nằm trong unit cũ không được first slice hỗ trợ:
-
-```text
-UNSUPPORTED_UNIT -> BLOCKED/UNSUPPORTED
-```
-
-không silently dùng PHIEN của unit khác.
-
-**Decision B3:** context coverage resolve theo exact unit; `focus_unit` chỉ định hướng session.
-
----
-
-## 4. Operation evidence là bắt buộc và khác nhau theo operation
-
-Không còn `optional git/tool state` chung chung.
-
-Mỗi operation có **evidence provider contract** riêng.
-
-### `repo.read`
-
-```text
-evidence = explicit target paths hoặc explicit unit/domain target
-```
-
-### `repo.write`
-
-```text
-evidence = exact intended write paths
-prerequisite = claim workflow trước lượt ghi
-```
-
-### `commit.prepare`
-
-```text
-evidence = STAGED INDEX
-source = cùng semantics với `git diff --cached --name-only` / claim --soat
-```
-
-### `push.prepare`
-
-```text
-evidence = UNPUSHED COMMITS / files sẽ được công bố
-source = reuse `commitChuaDay` / safe-push semantics
-```
-
-### `session.close`
-
-```text
-evidence = session-close scope theo cơ chế session-check hiện có
-```
-
-### Manifest validity
-
-Manifest chỉ đúng cho evidence snapshot nó được resolve từ. Evidence đổi -> phải resolve lại.
-
-Có thể thêm derived metadata sau:
-
-```text
-evidence_provider
-evidence_fingerprint
-```
-
-nhưng không cần build fingerprint subsystem trước first slice.
-
-**Decision B4:** commit, push và close-session không được dùng cùng một generic `git scope`.
-
----
-
-## 5. `READY` được đổi nghĩa để không giả làm giấy phép
-
-Bỏ status `READY` mơ hồ. V1 dùng:
-
-```text
-CONTEXT_READY
-WARN
-BLOCKED
-UNSUPPORTED
-```
-
-`CONTEXT_READY` chỉ có nghĩa:
-
-> Router đã xác định đủ bootstrap + mandatory context + target/evidence coverage cho operation này.
-
-Nó **KHÔNG** có nghĩa:
-
-```text
-context đã được model đọc
-model đã hiểu
-claim đã được cấp
-suite xanh
-commit được phép
-push được phép
-```
-
-Những thứ đó do adapter/action gate chứng minh sau.
-
-**Decision B5:** Manifest là loading contract, không phải permission certificate.
-
----
-
-## 6. Claim -> write — sửa flow
-
-Luật repo hiện tại là:
-
-```text
-trước MỖI lượt ghi
--> nhận claim
--> đọc kết quả
--> mới write
-```
-
-Vì Router first slice stateless, nó không giả vờ nhớ caller đã claim ở turn trước hay chưa.
-
-### V1 routing contract
-
-`repo.write` luôn phải surface:
-
-```text
-prerequisite:
-  claim_required: true
-```
-
-Và context bắt buộc cho write phải đủ để agent biết claim protocol. Cách đơn giản/an toàn cho V1:
-
-```text
-repo.write -> MULTIFLOW required-now
-```
-
-`claim.change` vẫn giữ cho thao tác nhận/trả/chuyển claim explicit, cũng route MULTIFLOW.
-
-Sau này nếu runtime adapter có proof rằng prerequisite vừa được hoàn tất và protocol vẫn active, Context Delta/caching có thể tránh reload; **không tối ưu việc đó ở first slice**.
-
-**Decision B6:** safety trước micro-optimization; không có khoảng trống `write` mà chưa route claim contract.
-
----
-
-## 7. Operation taxonomy revised — bám nghĩa vụ thật của repo
-
-Không mở enum thành mọi lệnh CLI, nhưng first slice phải cover các obligation class đang ghi trong `AGENTS.md`/protocol.
-
-Candidate:
-
-```text
-session.start
-repo.read
-repo.write
-claim.change
-verify.run
-commit.prepare
-push.prepare
-session.close
-rule.change
-handoff.maintain
-project.next
-platform.change
-live.run
-recovery.request
-hnx.fetch
-```
-
-### Mapping mandatory context candidate
-
-```text
-repo.write                         -> MULTIFLOW (claim prerequisite)
-claim.change                       -> MULTIFLOW
-commit.prepare                     -> MULTIFLOW
-push.prepare                       -> MULTIFLOW
-session.close                      -> MULTIFLOW §3b + HANDOFF protocol when log/maintenance required
-rule.change                        -> RULE-COMPILER
-handoff.maintain                   -> HANDOFF protocol + RULE-COMPILER §5a where debt/limit semantics apply
-project.next                       -> ROADMAP + what-next output contract
-platform.change                    -> PLATFORM
-live.run                           -> PLATFORM + domain safety context required by target
-recovery.request                   -> scoped HANDOFF + current canonical bootstrap
-hnx.fetch                          -> workers/hnx-fetch/PROTOCOL.md
-orchestration=true                 -> ORCHESTRATOR
-```
-
-`repo.write` vào file class đặc biệt (rule/permission/platform/etc.) **không được làm mất specialized obligation**. Resolver phải derive additional obligation từ target classification hoặc caller phải dùng specialized operation; nếu ambiguity high-risk -> BLOCKED thay vì chọn operation rộng để bypass.
-
-**Decision B7:** operation rộng không được phép hạ cấp nghĩa vụ chuyên biệt.
-
----
-
-## 8. Mandatory-only Registry — giữ, nhưng test phải độc lập với registry
-
-Giữ nguyên nguyên tắc:
-
-> Registry chỉ catalog context **bắt buộc theo điều kiện**, không catalog mọi tài liệu hữu ích.
-
-Candidate root file:
-
-```text
-context-registry.json
-```
-
-### Schema first slice nên cực nhỏ
-
-Không giữ field luôn cố định chưa có biến thể thật.
-
-Candidate:
-
-```json
-{
-  "id": "protocol.multiflow",
-  "source": "docs/protocols/MULTIFLOW.md",
-  "triggers": [
-    "repo.write",
-    "claim.change",
-    "commit.prepare",
-    "push.prepare",
-    "session.close"
+  "rule.change": [
+    { "source": "docs/protocols/RULE-COMPILER.md", "section": "full" }
+  ],
+  "handoff.write": [
+    { "source": "docs/protocols/HANDOFF.md", "section": "required-for-write" },
+    { "source": "docs/protocols/RULE-COMPILER.md", "section": "5a" }
   ]
 }
 ```
 
-Không cần ở first slice nếu mọi entry giống nhau:
+V1 syntax cuối của selector có thể là heading IDs / named section resolver. Không dùng arbitrary regex/query language trong config.
+
+### Quan trọng
+
+**Không hand-maintain `chars` trong LAW.** `context.mjs` đọc section thật và tự tính chars mỗi lần. Measurement là derived fact; không tạo một số phải sync bằng tay.
+
+## 8. Section load là requirement hiện hành, không phải V1.1 optimization
+
+Nếu luật hiện nói:
 
 ```text
-projection: full
-authority: canonical
-retain: while_operation
+MULTIFLOW mục 3a–3b
 ```
 
-Thêm field khi xuất hiện biến thể thật.
+thì V1 phải giữ đúng section đó, không đổi thành `full` chỉ vì implementation rẻ hơn.
 
-### Missing-registry-entry problem
+**Decision C5:** default là exact required section; `full` chỉ dùng khi source contract thật sự yêu cầu toàn file.
 
-Nếu một entry bị xóa khỏi registry, resolver không thể tự biết nó thiếu chỉ bằng cách đọc chính registry.
+## 9. Conditional context cũng phải có hard budget
 
-Vì vậy test corpus phải **độc lập**:
+Bootstrap hiện đã có char budget/hard cap. Nếu system mới được phép thêm required-now context nhưng không đo/chặn, nó tạo một kênh phình mới.
+
+V1b phải có:
 
 ```text
-fixture từ nghĩa vụ thật trong AGENTS/protocol
--> descriptor/evidence
--> expected mandatory source(s)
+bootstrap_chars
+conditional_chars
+combined_context_chars
+conditional_cap / hoặc combined cap theo policy Đức chốt
 ```
 
-Expected sources **không được generate từ registry**.
+Vượt hard cap:
 
-**Decision B8:** production registry là config; independent obligation fixtures là anti-omission test, không phải SSOT runtime thứ hai.
+```text
+CONTEXT_QUA_TRAN -> exit non-zero
+```
+
+Không chỉ cảnh báo.
+
+### OPEN DECISION D-BUDGET
+
+Con số/shape của trần conditional chưa được chốt trong proposal này. Không invent một số tròn.
+
+Trước implementation phải:
+
+1. đo actual section bundles cho operation corpus;
+2. đề xuất cap từ phân bố thật + mục tiêu context;
+3. Đức chốt;
+4. lưu cap trong machine LAW.
+
+N-51 cũ **không được dùng làm cap mới tự động**: BACKLOG hiện có entry nói Đức đã bác hướng “đổi sang 1.500 dòng” và chuyển trọng tâm sang categorize/merge/eliminate rules. Cần reconcile entry đó với current active AGENTS trước khi lấy nó làm authority.
+
+## 10. Prose tables phải được sinh hoặc machine-cross-check từ một LAW
+
+Mục tiêu cuối:
+
+```text
+luat.context = canonical operation->required sections
+
+AGENTS “Đọc trước khi làm” = human projection
+LUAT-CORE pointers        = package projection
+```
+
+Hai đường hợp lệ:
+
+1. generate những block có marker;
+2. nếu không muốn generate prose, machine test phải chứng minh chúng equivalent với LAW.
+
+Không chấp nhận “copy rồi nhớ sync”.
 
 ---
 
-## 9. Multi-unit coverage
+# V1c — Read-only Context Inspector
 
-Router phải xuất rõ:
+## 11. V1c không phải workflow orchestrator
 
-```text
-focus_unit
-effective_target_units
-non_unit_areas
-mandatory_context_by_unit_or_operation
-```
+CLI chỉ trả lời:
 
-### Content-changing operation
-
-Với:
-
-```text
-repo.write
-rule.change
-platform.change
-live.run
-```
-
-mọi impacted **supported versioned unit** cần bootstrap/context rules phù hợp với unit đó, không chỉ focus unit.
-
-### Publish operation
-
-Với:
-
-```text
-commit.prepare
-push.prepare
-```
-
-Router phải resolve **tất cả effective units/areas từ evidence provider**.
-
-Nhưng không nhất thiết load PHIEN của mọi commit/lane nếu package-specific product rules không phải input của publish decision. Publish mandatory context chủ yếu là MULTIFLOW; authorization vẫn do claim/session-check/safe-push.
-
-Manifest vẫn phải **nói ra coverage** của mọi unit/area để adapter/auditor thấy không có target bị ẩn.
-
-**Decision B9:** coverage completeness và context loading là hai việc khác nhau; không load thừa PHIEN chỉ để chứng minh đã thấy scope.
-
----
-
-## 10. Semantic conflict — bỏ lời hứa quá mức
-
-Router **không** phát hiện hai câu prose nói ngược nhau bằng semantic reasoning.
-
-Nó được phép phát hiện:
-
-```text
-missing required source
-invalid source shape
-stale/mismatched generated bootstrap
-unresolved exact unit
-explicitly declared structural conflict
-duplicate identity/path configuration
-operation/evidence mismatch
-```
-
-Semantic contradiction giữa canonical prose sources:
-
-```text
--> Rule Compiler audit / human independent review / Đức decision
-```
-
-Không dựng LLM conflict engine trong V1.
-
-**Decision B10:** `conflicts` nếu còn trong manifest chỉ chứa conflict deterministic/explicit, không hứa semantic completeness.
-
----
-
-## 11. Baseline drift hiện có là pre-implementation governance debt
-
-Codex bắt đúng một vấn đề ngoài Router: nguồn hiện tại vẫn có wording drift về load contract.
-
-Ví dụ:
-
-```text
-AGENTS §1: package startup chỉ PHIEN
-AGENTS §8: đụng duc-auto-* phải đọc package AGENTS trước
-PHIEN: package AGENTS nằm trong nhóm "cần thêm thì mở"
-MULTIFLOW: phải đọc trước claim/commit/close
-```
-
-Router không được "chữa" drift này bằng cách tự chọn câu thuận tiện hơn.
-
-### Pre-implementation requirement
-
-Trước khi freeze routing fixtures, cần một **approved obligation table** nói duy nhất:
-
-```text
-operation / target class
--> mandatory context source
-```
-
-Bảng này phải được Đức chốt hoặc suy trực tiếp từ rule đã được Đức chốt sau khi drift được sửa.
-
-Sau đó:
-
-```text
-AGENTS/PHIEN/protocol
--> đồng nhất với obligation table
--> fixtures pin contract đó
-```
-
-**Decision B11:** context routing không thể đáng tin hơn các canonical obligations mà nó compile.
-
----
-
-## 12. Compact/resume revised
-
-Giữ nguyên invariant:
-
-```text
-summary/carry = cache + pointers
-canonical sources = authority
-```
-
-Nhưng recovery không chỉ dựa vào một `focus_unit + HANDOFF`.
-
-### Resume input
-
-Mọi tín hiệu continuity:
-
-```text
-resume=true
-work.resume
-recovery.request
-```
-
-phải normalize về cùng một recovery path.
-
-### Rehydrate
-
-```text
-1. resolve CURRENT bootstrap của các unit đang thực sự liên quan
-2. load HANDOFF/recovery source khi cần
-3. refresh operation-specific evidence cho action sắp làm
-4. không restore claims/suite/publish permission từ summary
-```
-
-Nếu carry nói có unit thứ hai/shared dependency thì recovery coverage phải giữ pointer tới nó; không ép mọi thứ về một focus duy nhất.
-
-Không tạo persistent checkpoint database thứ hai.
-
----
-
-## 13. Context Manifest revised
+> Với operation này và evidence hiện tại, bootstrap + mandatory context là gì, tổng bao nhiêu chars, và còn thiếu gì?
 
 Candidate:
 
-```json
-{
-  "schema_version": 1,
-  "status": "CONTEXT_READY",
-  "operation": "repo.write",
-  "role": "product",
-  "focus_unit": "workers/duc-scouter/v0.1.0",
-  "evidence": {
-    "provider": "explicit-targets"
-  },
-  "effective_target_units": [
-    "workers/duc-scouter/v0.1.0"
-  ],
-  "non_unit_areas": [],
-  "bootstrap": [
-    {
-      "unit": "workers/duc-scouter/v0.1.0",
-      "source": "workers/duc-scouter/v0.1.0/PHIEN.md",
-      "source_complete": true,
-      "generated_match": true
-    }
-  ],
-  "required_now": [
-    {
-      "source": "docs/protocols/MULTIFLOW.md",
-      "reason": "claim prerequisite before write"
-    }
-  ],
-  "prerequisites": [
-    "claim_required_before_write"
-  ],
-  "warnings": [],
-  "errors": []
-}
+```text
+node scripts/context.mjs --viec commit.prepare --as <lane>
+node scripts/context.mjs --viec repo.write --target <path> --as <lane>
+node scripts/context.mjs --viec work.resume --unit <versioned-unit>
 ```
 
-Manifest không chứa:
+V1 chưa cần JSON manifest schema. Human-readable stable output + exit code đủ để test và audit.
+
+Có consumer machine thật thì thêm `--json` sau mà không đổi semantic core.
+
+## 12. Output tối thiểu
 
 ```text
-risk score
-permission verdict
-claim snapshot
-suite verdict
-semantic conflict claims
-token estimate
-vendor injection command
-full context body
+BOOTSTRAP
+  <source>                     <chars>
+
+REQUIRED NOW
+  <source>#<section>           <chars>
+
+TOTAL
+  bootstrap=<n>
+  conditional=<n>
+  combined=<n>
+  cap=<n>
+
+COVERAGE
+  supported units / unresolved targets / missing evidence
+
+RESULT
+  OK | BLOCKED
+```
+
+`OK` chỉ có nghĩa:
+
+> context route đã xác định đủ và nằm trong budget.
+
+Nó **không** có nghĩa:
+
+- đã claim;
+- được quyền write;
+- suite xanh;
+- commit hợp lệ;
+- push an toàn.
+
+## 13. Evidence khác nhau theo operation
+
+Không có generic “actual git scope”.
+
+### `repo.write`
+
+Evidence = concrete target path(s).
+
+Prerequisite loading:
+
+```text
+repo.write -> MULTIFLOW section liên quan claim/write
+```
+
+vì luật hiện yêu cầu claim **trước** lượt ghi. Không mô tả `write -> claim`.
+
+### `commit.prepare`
+
+Evidence = **staged index**, cùng nguồn/logic mà `claim.mjs --soat` đang dùng.
+
+### `push.prepare`
+
+Evidence = **unpushed commits**, cùng abstraction mà `safe-push`/`commitChuaDay` đang dùng.
+
+### `generate.artifact`
+
+Evidence = generator target/output set; không gộp mù vào `rule.change`.
+
+**Decision C6:** reuse existing pure scope/evidence helpers; không dựng một scope calculator thứ hai.
+
+## 14. Versioned unit, không ownership area
+
+`workers/duc-auto-gemini/v0.1.0` và `v0.2.0` không phải cùng bootstrap unit chỉ vì cùng ownership family.
+
+V1c resolve:
+
+```text
+target path -> exact versioned unit
+```
+
+sau đó mới resolve PHIEN/support state.
+
+`focus` chỉ là orientation; actual targets/evidence quyết coverage.
+
+---
+
+## 15. Operation corpus — nghĩa vụ phải độc lập với registry
+
+Nếu expected tests được sinh từ chính `luat.context`, xóa một entry có thể làm cả implementation lẫn test cùng “quên”.
+
+Cần **independent obligation corpus** lấy từ active law/use cases thật.
+
+First corpus tối thiểu:
+
+```text
+session/package.start
+repo.read
+repo.write / claim-before-write
+commit.prepare
+push.prepare
+rule.change
+generate.artifact
+handoff.write
+session.close
+work.resume / recovery
+orchestration.query
+platform/bridge operation
+hnx.fetch
+audit.independent
+backlog.write
+```
+
+Không có nghĩa operation enum cuối phải giữ đúng mọi tên trên. Corpus là list nghĩa vụ thật để fixture không tự sinh từ implementation config.
+
+---
+
+## 16. Non-PHIEN scopes
+
+Không giả định mọi scope đều có PHIEN.
+
+First slice phải khai rõ support matrix, ví dụ:
+
+```text
+PHIEN-backed versioned units     -> bootstrap via validated PHIEN
+_shared / root infrastructure    -> explicit system bootstrap contract
+hnx-fetch                         -> explicit non-PHIEN contract hoặc migrate riêng
+legacy units không đăng ký       -> UNSUPPORTED, không đoán nearest PHIEN
+```
+
+**Decision C7:** unsupported phải được gọi đúng tên; không map một legacy version sang version khác chỉ vì version kia có PHIEN.
+
+---
+
+## 17. Orchestration is a special control-plane case
+
+Orchestration không chỉ cần `AGENTS + ORCHESTRATOR` nếu chính protocol bắt thêm live evidence.
+
+V1c phải đọc nghĩa vụ thật từ canonical loading law, bao gồm các nguồn/lệnh bắt buộc như:
+
+```text
+what-next
+claim list / live ownership view
+required HANDOFF tail nếu active protocol nói vậy
+```
+
+Không hard-code một simplified orchestrator bundle trong Context system.
+
+---
+
+# Continuity / Compact — giữ kiến trúc, chưa implement V1
+
+## 18. Durable checkpoint trước summary
+
+Phần này được cả reasoning và reviewer giữ lại:
+
+```text
+material durable fact
+    -> persist canonical source ngay
+
+continuity boundary
+    -> carry pointers nhỏ
+
+compact/new session
+    -> rehydrate CURRENT bootstrap + required recovery context
+```
+
+Summary/carry là cache, không sở hữu:
+
+- rule truth;
+- ownership truth;
+- product state truth;
+- publish truth.
+
+Vendor `PreCompact` nếu có chỉ là safety net.
+
+**Decision C8:** không chờ tới lúc compact mới cứu durable facts.
+
+---
+
+# Explicitly removed from V1
+
+## 19. Không build các abstraction sau trong first slice
+
+```text
+- context-registry.json riêng
+- READY/WARN/BLOCKED JSON manifest contract
+- schema_version cho descriptor/manifest chỉ để dự phòng
+- route_evidence metadata framework
+- risk subsystem
+- authority/conflict engine
+- retain policy framework
+- generic lossy projector framework
+- Context Delta
+- NLP/LLM routing
+- semantic LLM rule compression
+- runtime adapter parity cho 4 vendor
+- persistent Carry Packet song song HANDOFF
+```
+
+Có use case thật rồi mới thêm.
+
+---
+
+# Acceptance gates
+
+## 20. V1a đạt khi
+
+1. every supported PHIEN can be recomputed read-only from canonical sources;
+2. missing required source cannot silently produce a valid bootstrap;
+3. stale PHIEN is detected;
+4. hard startup cap still blocks oversized generated bundle;
+5. failure cannot leave an old PHIEN being silently certified as current.
+
+## 21. V1b đạt khi
+
+1. one machine LAW owns mandatory operation->source#section mapping;
+2. AGENTS/LUAT-CORE projections cannot drift silently from that LAW;
+3. exact sections are resolved deterministically;
+4. actual chars are measured from actual content;
+5. conditional/combined budget has a Đức-approved hard cap;
+6. exceed cap exits non-zero.
+
+## 22. V1c đạt khi
+
+1. CLI is read-only;
+2. same repo state + same operation/evidence => deterministic output;
+3. commit uses staged-index evidence;
+4. push uses unpushed-commit evidence;
+5. exact versioned units resolve correctly;
+6. unsupported/non-PHIEN units are explicit;
+7. missing loading-law obligation is caught by independent fixture corpus;
+8. output always includes context cost.
+
+---
+
+# Decisions still requiring Đức
+
+## 23. D1 — conditional context budget
+
+Không chốt số trong proposal. Cần đo section bundles thật rồi Đức duyệt cap.
+
+## 24. D2 — PHIEN generated-artifact ownership
+
+Chọn một:
+
+```text
+A. PHIEN là generated artifact 100% và được miễn locking theo generated-artifact policy
+B. generator có target-scoped write, chỉ chạm PHIEN của unit đang thay đổi
+```
+
+Không giữ trạng thái hiện tại nếu một rule compile hợp lệ buộc phải giành lock của nhiều package không liên quan.
+
+## 25. D3 — non-PHIEN support boundary
+
+Khuyến nghị first slice:
+
+```text
+- support 4 unit hiện có trong luat.phien_goi.goi
+- root/_shared có explicit system context path
+- HNX có explicit hnx.fetch route, chưa bắt buộc migrate sang PHIEN
+- legacy Gemini v0.1 = UNSUPPORTED cho package bootstrap, không map sang v0.2
 ```
 
 ---
 
-## 14. First slice support boundary
-
-Khuyến nghị theo Codex và GPT:
-
-> **First slice chỉ support versioned units đã có PHIEN contract hiện hành.**
-
-Current `phien_goi.goi` là explicit supported set. Unit cũ/HNX/non-PHIEN flow:
+# Recommended implementation order after one final review
 
 ```text
-UNSUPPORTED hoặc route qua explicit domain operation
-```
+0. Reconcile active loading law drift + N-51 status
 
-không tự đoán bootstrap.
+1. V1a PHIEN freshness/source-completeness gate
 
-Lý do:
+2. Measure current exact operation section bundles
+   -> Đức chốt conditional hard cap
 
-- chứng minh Router trên một contract bootstrap đã ổn định trước;
-- không kéo migration legacy vào cùng first slice;
-- HNX có protocol riêng và bản chất task external-data khác package product session.
+3. V1b luat.context + projection/drift tests + hard budget
 
-Mở rộng support sau bằng evidence, không bằng fallback magic.
+4. V1c read-only context inspector CLI
 
-**DECISION REQUIRED FROM ĐỨC:** approve/reject phạm vi này.
+5. Observe actual runtime context/token/latency
 
----
+6. Only then decide whether JSON manifest, adapters, delta or deeper projection are justified
 
-## 15. Revised test corpus — phải bắt được omission
-
-### A. PHIEN readiness
-
-1. supported unit + đủ source + generated match -> bootstrap valid.
-2. PHIEN tồn tại nhưng STATUS source thiếu -> BLOCKED `BOOTSTRAP_SOURCE_INCOMPLETE`.
-3. sources đổi nhưng PHIEN chưa regenerate -> BLOCKED `BOOTSTRAP_STALE`.
-4. old/unsupported version unit -> `UNSUPPORTED`, không dùng PHIEN version khác.
-
-### B. Claim/write
-
-5. `repo.write` -> MULTIFLOW + `claim_required_before_write`.
-6. `claim.change` -> MULTIFLOW.
-7. write target classified là rule -> thêm RULE-COMPILER obligation hoặc BLOCKED nếu descriptor quá rộng.
-
-### C. Evidence
-
-8. `commit.prepare` targets phải lấy từ staged index semantics.
-9. `push.prepare` targets phải lấy từ unpushed-commit semantics.
-10. focus unit hẹp hơn actual publish coverage -> manifest vẫn liệt kê toàn coverage.
-11. evidence provider thiếu/không đọc được ở publish -> BLOCKED.
-
-### D. Mandatory obligations
-
-12. `session.close` -> MULTIFLOW + HANDOFF maintenance obligations đúng contract.
-13. `handoff.maintain` -> HANDOFF protocol.
-14. `platform.change` -> PLATFORM.
-15. `hnx.fetch` -> HNX PROTOCOL.
-16. `project.next` -> ROADMAP/what-next contract.
-17. orchestration -> ORCHESTRATOR.
-
-### E. Anti-omission
-
-18. xóa registry entry MULTIFLOW nhưng giữ independent fixture `commit.prepare -> MULTIFLOW` -> test ĐỎ.
-19. xóa registry entry HNX nhưng fixture HNX còn -> test ĐỎ.
-
-### F. Boundary/determinism
-
-20. Router không đọc claims như context payload.
-21. Router không semantic-judge prose conflicts.
-22. same descriptor + same evidence + same repo state -> manifest stable.
-
----
-
-## 16. Acceptance criteria trước adapter
-
-First slice đạt khi:
-
-1. supported operation + target-unit corpus có independent fixtures;
-2. known mandatory-context omission làm test đỏ;
-3. PHIEN readiness phân biệt đủ source với generated match;
-4. claim-before-write không còn khoảng trống;
-5. commit/push dùng đúng evidence semantics riêng;
-6. multi-unit coverage không bị focus che;
-7. unsupported unit fail explicit, không fallback magic;
-8. Router deterministic và read-only;
-9. không NLP/LLM trong routing path;
-10. `CONTEXT_READY` không được dùng như permission/publish verdict.
-
----
-
-## 17. Những gì bị REMOVE/REVISED sau Codex review
-
-```text
-REMOVE / REVISED
-- READY như một trạng thái dễ hiểu nhầm thành "được làm"
-- generic risk subsystem/score
-- generic semantic conflict detection
-- repo.write -> claim.change flow
-- focus_scope parent package mơ hồ
-- generic optional git/tool evidence
-- một bootstrap focus duy nhất đủ cho mọi multi-unit content change
-- assumption PHIEN file exists/matches = bootstrap fully valid
-- fixed-value registry metadata chưa có biến thể thật
-- test expected results sinh từ chính registry
-```
-
-Giữ nguyên các loại bỏ trước đó:
-
-```text
-- registry trong .agents/
-- source_ref/rule:// ở V1
-- claims projection
-- LLM semantic compression
-- NLP classifier first slice
-- persistent carry packet song song HANDOFF
-- lossy projector first slice
-- Context Delta trước stateless correctness
-- giant cross-runtime prompt parity
+7. Continuity/compact automation after routing/loading correctness
 ```
 
 ---
 
-## 18. Hai decision cần Đức chốt trước khi freeze routing contract
-
-### D1 — First-slice support boundary
-
-**Khuyến nghị:** chỉ support `phien_goi.goi` hiện hành; legacy Gemini v0.1/HNX/non-PHIEN explicit `UNSUPPORTED` hoặc domain route riêng.
-
-### D2 — Canonical load obligations đang drift
-
-Cần chốt một bảng duy nhất cho các điểm đang nói lệch, đặc biệt:
+# Final architecture
 
 ```text
-package startup PHIEN-only
-vs
-AGENTS §8 yêu cầu đọc package AGENTS khi "đụng" duc-auto
+                         CANONICAL LAW / STATE
+                                  │
+                 ┌────────────────┴────────────────┐
+                 │                                 │
+            Rule Compiler                    .repo-structure
+                 │                          luat.context
+        generate expected PHIEN          operation -> source#section
+                 │                                 │
+         V1a freshness gate                       │
+                 │                                 │
+                 └──────────────┬──────────────────┘
+                                ▼
+                       V1c read-only inspector
+                  operation + exact evidence/unit
+                                │
+                 ┌──────────────┴──────────────┐
+                 │                             │
+          validated bootstrap          required-now sections
+                 │                             │
+                 └──────────────┬──────────────┘
+                                ▼
+                     chars + total + hard cap
+                                │
+                           OK / BLOCKED
 
-Flow package audit chung
-vs
-ngoại lệ "fix nhỏ" nếu vẫn còn sống
+AUTHORIZATION/PUBLISH SAFETY — vẫn độc lập:
+claim.mjs / --soat / session-check / safe-push / tests
+
+CONTINUITY — sau V1:
+durable change -> canonical source -> compact pointers -> rehydrate current truth
 ```
 
-Router không được encode một trong hai trước khi source law được thống nhất.
+## Final position
 
----
+Sau Codex + CC, giá trị cốt lõi của Context Compiler không còn là “một Router thông minh”. Nó là:
 
-## 19. Implementation order revised
+1. **bootstrap phải luôn current và source-complete**;
+2. **chỉ có một machine law nói context nào bắt buộc theo operation**;
+3. **mọi context thêm vào đều được đo và chịu hard budget**;
+4. **một lệnh read-only cho người/AI thấy context bill trước khi hành động**;
+5. deterministic enforcement tiếp tục nằm ngoài prompt.
 
-```text
-Phase 0A — Đức resolve D1/D2
-Phase 0B — Claude/independent reviewer challenge bản revised này
-
-Phase 1 — extract/reuse pure PHIEN readiness validator from Rule Compiler
-Phase 2 — read-only Router + minimal context-registry + independent obligation fixtures
-Phase 3 — stress-test six real flows
-Phase 4 — observe context/token/latency
-Phase 5 — runtime adapters
-Phase 6 — continuity/compact automation
-Phase 7 — optimization only from measurements
-```
-
-Không build adapter/hook trước Router correctness.
-
----
-
-## 20. Final architecture after Codex challenge
-
-```text
-                    CANONICAL LAW / STATE
-                             │
-                             ▼
-                       Rule Compiler
-             sinh PHIEN + validatePhien(unit)
-                             │
-                             ▼
-Task Descriptor + OPERATION-SPECIFIC EVIDENCE
-          │                  │
-          └──────────┬───────┘
-                     ▼
-             Read-only Context Router
-        resolve exact units + obligations
-                     │
-          ┌──────────┼───────────┐
-          │          │           │
-      BOOTSTRAP   REQUIRED   COVERAGE
-        PHIEN     protocols   all units/areas
-          │          │           │
-          └──────────┴───────────┘
-                     │
-              Context Manifest
-      CONTEXT_READY / WARN / BLOCKED /
-                UNSUPPORTED
-                     │
-             [V1 STOPS HERE]
-
-ACTION-TIME ENFORCEMENT stays authoritative:
-claim.mjs / commit hook / session-check / safe-push / domain guards
-
-CONTINUITY later:
-durable truth -> pointers -> compact -> rehydrate current sources + fresh operation evidence
-```
-
-## 21. Verdict
-
-**REVISE accepted. Architecture survives; contracts are narrower and more testable.**
-
-Codex's strongest contribution is the distinction between:
-
-```text
-context coverage
-vs
-action authorization
-vs
-semantic correctness
-```
-
-V1 should prove only the first one. Anything else remains with the machine/human authority that already owns it.
+Đây là scope nhỏ hơn proposal đầu, nhưng sát failure mode hiện có hơn và rẻ để đổi nếu measurement sau này cho thấy assumption sai.
