@@ -587,3 +587,32 @@ Tôi tự dựng 4 PNG mỗi ảnh một hình một màu, nên câu trả lời
 tới máy chủ.
 
 **Mới:** `B-47` `B-48` `B-49` `B-50`. **Đức cần chốt `B-47`⑵ và `B-49`** — cả hai đụng cổng sẵn-sàng.
+
+## 2026-09-09 (lượt 10) · `claude-gpt-chay-het-job` — B-48: probe soi theo PHẠM VI thay vì nới nắp
+
+**Làm gì.** Đức chốt *"làm B-48 đi"*. Nới `diagnostics.dom_probe` để nó soi được **chip đính kèm**
+trong ô soạn thảo — thứ mà lượt 9 phát hiện là probe **nhìn không tới**.
+
+**Quyết định thiết kế, và mỗi cái có lý do đo được.** ⑴ **Soi theo PHẠM VI, không nới nắp 40 → 200:**
+payload có nắp 64KB, và thanh bên của Đức (45 nút) sẽ ăn thêm bao nhiêu cũng hết — nới nắp là mua
+thêm chỗ cho đúng thứ gây nghẽn. Trong `form` thì không có thanh bên nào để ăn nắp. ⑵ **Chuỗi tổ
+tiên mang cả `aria-*` và `role`**, không chỉ `data-*` như `dataChain`: đo lượt 9 nói ChatGPT
+**không** đặt `data-testid` lên chip, nên chuỗi chỉ soi `data-*` sẽ mù **đúng chỗ nó sinh ra để
+chữa**. ⑶ Đi qua adapter (`SEL.fileInput`, `SEL.attachmentPreview`), không viết selector lần hai.
+
+**Ghim.** `tests/dom-probe-composer-scope-smoke.mjs` — **cắt** khối đã ship khỏi `content.js` rồi
+**chạy** trong `node:vm`, trên một DOM dựng lại **đúng ca live** (45 nút thanh bên + 4 chip) cộng
+ba ca biên, trong đó ca *"không có ô chọn file trong form nào"* đòi fail **mềm**: probe là công cụ
+chẩn đoán, nó ném thì mọi trường khác mất theo và người đọc mất luôn thứ đang cần.
+
+**Đo.** Suite **129/129**. **Thử phá 10/10 đỏ, 0 lọt, 0 harness hỏng** — gồm ba cái độc: quay về
+soi toàn tài liệu · bỏ `aria-` khỏi chuỗi · tính xong mà **không mang ra payload**.
+
+**Hai lần harness tự làm mình đỏ, ghi lại vì cả hai đọc y hệt "bản vá hỏng":** ⑴ phép kiểm
+"không có selector viết cứng" đỏ vì **chú thích** của khối có nhắc `form input[type="file"]` để
+giải thích `SEL.fileInput` — sửa bằng cách bỏ dòng chú thích trước khi kiểm. ⑵ cắt selector theo
+`split(/s+/)` trần cắt **giữa** `aria-label*="Remove attachment"` — sửa bằng cắt biết dấu ngoặc.
+Và `deepEqual` lại đỏ qua biên `node:vm` (lần thứ tư trong repo này) — đổi sang so `.length`.
+
+**Còn đúng một bước, cần tay Đức:** nạp lại tiện ích, rồi tôi đóng `B-14` bằng **một job chữ,
+0 credit ảnh**, đọc `composerScope.preview_chains`.

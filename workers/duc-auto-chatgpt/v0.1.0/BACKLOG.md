@@ -2280,6 +2280,35 @@ Ghi kèm, kẻo mất: census `data-testid` toàn tài liệu **không có** m�
 bốn chip cùng testid sẽ đếm 4 → đứng thứ hai → vắng mặt là **bằng chứng thật**: ChatGPT **không**
 đặt `data-testid` lên chip. Nên `B-14` phải tìm mỏ neo theo **hình dạng DOM**, không phải testid.
 
+**ĐÃ VÁ 09/09 — nửa code xong, nửa đo chờ Đức nạp lại tiện ích.**
+
+Trường mới `composerScope` trong `diagnostics.dom_probe`: `buttons` trong `form` soạn thảo (nắp
+**20**, mỗi nút kèm chuỗi tổ tiên) · `data_attr_names` (nắp **24**) · `preview_chains` (nắp **4**).
+
+**Hai quyết định thiết kế, và mỗi cái có lý do đo được:**
+
+⑴ **Soi theo PHẠM VI, không nới nắp.** Nới 40 → 200 là mua thêm chỗ cho đúng thứ gây nghẽn; payload
+   có nắp 64KB và thanh bên sẽ ăn thêm bao nhiêu cũng hết. Trong `form` thì **không có thanh bên
+   nào để ăn nắp**, nên cùng số byte mà nhìn thấy đúng thứ.
+⑵ **Chuỗi tổ tiên mang cả `aria-*` và `role`**, không chỉ `data-*` như `dataChain` bên trên — vì
+   đo cùng buổi nói ChatGPT **không** đặt `data-testid` lên chip, nên một chuỗi chỉ soi `data-*` sẽ
+   mù **đúng chỗ nó sinh ra để chữa**.
+
+Đi qua adapter (`SEL.fileInput`, `SEL.attachmentPreview`), không viết lại selector lần thứ hai.
+
+**Ghim:** `tests/dom-probe-composer-scope-smoke.mjs` — **cắt** khối đã ship khỏi `content.js` rồi
+**chạy** trong `node:vm` trên DOM giả, gồm một DOM dựng lại **đúng ca live**: 45 nút thanh bên +
+4 chip. Bốn ca: ca live · chưa gắn ảnh · **không có ô chọn file trong form nào** (phải fail **mềm**,
+không ném — probe là công cụ chẩn đoán, nó ném thì mọi trường khác mất theo) · nắp với 30 chip.
+Suite **129/129**. **Thử phá 10/10 đỏ, 0 lọt** — gồm đúng ba cái độc: quay về soi toàn tài liệu ·
+bỏ `aria-` khỏi chuỗi (quay về hình dạng mù) · tính xong nhưng không mang ra payload.
+
+**TRẦN TUYÊN BỐ, ghi trong chính file ghim:** DOM giả **không** chứng minh chip thật có hình gì.
+
+**Còn lại đúng một bước, và nó cần tay Đức:** nạp lại tiện ích (probe cũ không có trường này), rồi
+tôi chạy **một job chữ có ảnh mẫu** — **0 credit** — và đọc `composerScope.preview_chains` để tìm
+mỏ neo cấu trúc cho `B-14`. @Đức:bấm(B-48)
+
 - **đóng khi:** probe có trường soi-trong-`form`, và `B-14` đo được bằng một lượt 0 credit.
 
 ### B-49 · (P2) `uploadPending` đo SAI THỨ nó khai, và nó có thể làm job gắn ảnh chết oan
