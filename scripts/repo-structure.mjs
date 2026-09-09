@@ -673,6 +673,34 @@ export function readStructureFromDisk(root) {
   }
 }
 
+/* THƯ MỤC NHÁP DÙNG CHUNG — N-64, 09/09.
+ *
+ * `quyTrachNhiemSuite` quy một file chưa commit cho tôi dựa vào một tiền đề: *chỉ tôi được ghi
+ * vào vùng tôi giữ*. Tiền đề đó đúng ở mọi nơi **trừ** `drafts/` — `CLAUDE.md` toàn cục nói đó là
+ * **chỗ DUY NHẤT agent tự ghi không cần hỏi**, tức nhiều lane ghi vào cùng lúc theo đúng thiết kế.
+ * Đo 09/09 18:30: lane `claude-context-review` để một file nháp ở đó; lane đang giữ `_root` bị
+ * quy cho file ấy và **không đẩy được**, trong khi nó **không được** commit hay xoá file người
+ * khác. Lần thứ ba trong một ngày một lane bị chặn bởi bản sửa dở của lane khác (`N-62`).
+ *
+ * ĐÂY KHÔNG PHẢI NỚI CHỐT: chốt vẫn nổ cho mọi file thật sự của tôi. Cái được sửa là **bản đồ
+ * quyền sở hữu** nhận vơ một thư mục cố ý dùng chung. Và nó không che được lỗi nào: không suite
+ * nào nạp từ `drafts/` — nháp ở đó mang `authority: none` theo quy ước.
+ *
+ * TƯƠNG THÍCH NGƯỢC: chưa khai thì trả mảng RỖNG, hành vi y hệt trước. */
+export function nhapDungChungFrom(parsed) {
+  const value = parsed?.nhap_dung_chung;
+  if (value === undefined) return Object.freeze([]);
+  if (!Array.isArray(value)) {
+    throw new Error("NHAP_DUNG_CHUNG_HONG: `nhap_dung_chung` phải là MẢNG tiền tố thư mục (hoặc bỏ hẳn). Đang là: " + JSON.stringify(value));
+  }
+  for (const p of value) {
+    if (typeof p !== "string" || !p.endsWith("/")) {
+      throw new Error("NHAP_DUNG_CHUNG_HONG: mỗi mục phải là một THƯ MỤC kết bằng `/` — miễn trừ cho một FILE lẻ là cửa hậu, không phải quy ước nháp. Sai ở: " + JSON.stringify(p));
+    }
+  }
+  return Object.freeze([...value]);
+}
+
 /* Quyết định THUẦN, tách khỏi việc chạy để kiểm được mọi nhánh. Nguyên mẫu đã chạy 5/5 trên
  * một repo giả trước khi port vào đây (4 ca GPT yêu cầu + fail-closed). */
 export function quyTrachNhiemSuite({ vungToiGiuConBan, ketQuaTrenHead }) {

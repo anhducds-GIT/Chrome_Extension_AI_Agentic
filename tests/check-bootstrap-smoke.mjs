@@ -1043,6 +1043,39 @@ const chay = (deps) => {
 
   ok("ban do file: khai duoc bang hinh dang, va hinh dang phai du chat de khong khai ho ca repo");
 }
+
+/* ---- NHAP DUNG CHUNG — N-64 ------------------------------------------------
+ *
+ * `quyTrachNhiemSuite` quy mot file chua commit cho toi dua vao tien de "chi toi duoc ghi vao
+ * vung toi giu". Tien de do SAI voi `drafts/`: CLAUDE.md toan cuc noi do la cho DUY NHAT agent tu
+ * ghi khong can hoi, tuc nhieu lane ghi vao cung luc theo dung thiet ke. Do 09/09: mot lane bi
+ * chan khong day duoc vi file nhap cua lane khac, ma no khong duoc commit hay xoa file do.
+ *
+ * Ghim CAI CHAN chu khong phai cai cho qua: mien tru chi nhan THU MUC (ket bang `/`). Mot file
+ * le duoc mien la mot cua hau — bat ky ai cung co the do mot file "nhap" vao dung cho no can. */
+{
+  const rs = fs.readFileSync(path.join(ROOT, "scripts", "repo-structure.mjs"), "utf8");
+  const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
+  const ct = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
+
+  assert.match(rs, /export function nhapDungChungFrom\(/, "phai co ham doc khai bao nhap dung chung");
+  assert.match(rs, /!p\.endsWith\("\/"\)/,
+    "chi nhan THU MUC — mien tru cho mot FILE le la cua hau, khong phai quy uoc nhap");
+  assert.match(rs, /if \(value === undefined\) return Object\.freeze\(\[\]\)/,
+    "chua khai thi phai hanh xu y het truoc — moi repo tam dung bo khung phai chay duoc");
+
+  // Chot van phai NO cho file that su cua minh: chi mot lop `filter` duoc them, khong duoc bo
+  // lop `cuaToi.has(stewardOf(...))` — bo no la mo mot fail-open moi.
+  assert.match(gate, /nhapDungChung\.some\(\(d\) => f === d\.slice\(0, -1\) \|\| f\.startsWith\(d\)\)/,
+    "chi loc dung tien to da khai");
+  assert.match(gate, /cuaToi\.has\(stewardOf\(f, structure, claimPrefixes\)\)/,
+    "van phai giu lop quy chu goc — nhap dung chung chi la MOT lop loc them");
+
+  assert.ok(Array.isArray(ct.nhap_dung_chung) && ct.nhap_dung_chung.includes("drafts/"),
+    "`drafts/` phai duoc khai la nhap dung chung — no la cho duy nhat moi agent ghi tu do");
+
+  ok("nhap dung chung: `drafts/` khong quy cho ai, va mien tru chi nhan thu muc (N-64)");
+}
 /* ---- CHỐT commit-msg: NỬA CÒN LẠI CỦA N-40 — N-49 -------------------------
  *
  * `--soat` đo đúng nhưng chạy TRƯỚC `git commit`, và ngày 08/09 đo được cửa sổ giữa hai lệnh:

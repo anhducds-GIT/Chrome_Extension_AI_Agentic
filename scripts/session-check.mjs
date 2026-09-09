@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 
 import { FINGERPRINT_FIELD, fingerprintState, khoaFileQuaHan, PHUT_NHAC_KHOA_FILE, readClaims, VO_DAU } from "./claim.mjs";
 import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
-import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, chonSuiteBoDongBang, claimPrefixesFrom, DAU_VET, dauVetTheoVung, frozenFrom, generatorsFrom, handoffCapFrom, handoffSoMucCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, chonSuiteBoDongBang, claimPrefixesFrom, DAU_VET, dauVetTheoVung, frozenFrom, generatorsFrom, handoffCapFrom, nhapDungChungFrom, handoffSoMucCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
 import { bamLenh, danhSachSuite, dauCay, docDau, xetDau } from "./chay-test.mjs";
 import { dangMo } from "./backlog-check.mjs";
 
@@ -341,11 +341,15 @@ const myRootAreas = rootAreasTouched.filter((k) => ownedBy(k) === asLabel);
  * nên file bẩn ở đó là của tôi. Dùng cho `quyTrachNhiemSuite` — nếu vùng tôi còn bẩn thì KHÔNG
  * được lấy "HEAD xanh" ra tự miễn, vì thay đổi gây lỗi có thể là của chính tôi và nó chưa có
  * trong HEAD. Chốt này do audit GPT thêm; thiếu nó thì bản vá tự mở một fail-open mới. */
+const nhapDungChung = nhapDungChungFrom(structure);
 const banTrongVungCuaToi = () => {
   const cuaToi = new Set([...myPackages, ...myRootAreas]);
   return workingChanges
     .map((c) => c.file)
     .filter((f) => !adminFile(f))
+    // Nháp dùng chung KHÔNG quy cho ai — N-64. Nhiều lane ghi vào đó theo đúng thiết kế, nên
+    // "bẩn trong vùng tôi giữ = của tôi" không áp dụng. Chốt vẫn nổ cho mọi file khác.
+    .filter((f) => !nhapDungChung.some((d) => f === d.slice(0, -1) || f.startsWith(d)))
     .filter((f) => cuaToi.has(stewardOf(f, structure, claimPrefixes)));
 };
 // Mồ côi xét trên tập ĐÃ TRỪ việc của lane khác (K2-1b). Đây là chỗ 9% lượt "giữ khoá vì chưa
