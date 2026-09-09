@@ -483,3 +483,31 @@ Lượt đẩy này dùng `--carry` và **cuốn theo 3 commit của lane `claud
 lại số hiệu ADR ở `docs/adr/`). Ghi ra vì [ADR-0005](../../../docs/adr/0005-duyet-thuong-truc-cho-push-va-carry.md)
 bỏ cửa hỏi Đức cho `--carry`, và tên lane bị cuốn theo là **thứ duy nhất còn lại để truy**.
 Cổng đóng phiên XANH TOÀN BỘ trước khi đẩy, và suịte 26/26 chạy trên cây có cả việc của hai lane.
+
+## 2026-09-09 · `claude-gpt-chay-het-job` — B-43 vòng hai: chờ lâu hơn, và đọc lại khi câu bị cắt
+
+Đức nêu hai việc sau khi vòng một đã chặn được báo-thành-công-giả: *"giãn thời gian chờ đọc dài
+hơn"* và *"đọc mà thấy bị ngắt thì cần đọc lại"*. Nắp chờ chữ-đứng-yên **1,5 → 6 giây**, và chốt
+chỉ được đóng khi chữ **không trông như bị cắt** (`looksTruncated`: ngoặc lệch · kết bằng một dấu
+nối treo). Hết giờ mà còn dở thì báo `TEXT_INCOMPLETE` kèm 60 ký tự cuối, thôi một câu "hết giờ"
+trơn.
+
+**Vùng `workers/duc-auto-chatgpt` đổi tay theo chốt của Đức 09/09** (*"bạn lấy khoá đi"*). Vùng
+đang do `claude-luat-rasoat` giữ — nó lấy hợp lệ bằng một chốt khác của Đức cùng ngày và tự khoanh
+"CHỈ TÀI LIỆU"; phần tài liệu của nó đã commit ở `cc470037`. Hai vùng `gemini` và `gg-flow-video`
+**giữ nguyên cho nó**. Câu chốt ghi **vào bảng quyền**, không chỉ nói trong chat.
+
+**Thử phá 16 mũi → 14 bắt, 2 thoát, và hai con thoát cho ra hai cách xử khác nhau:**
+- **Lỗ ghim thật:** bỏ nhánh "kết bằng dấu nối treo" vẫn xanh với cả 10 mép — ba nhánh luật mà
+  chỉ ghim một. Thêm mép ⑴f (đứt ngay sau một tiêu đề mục: ngoặc đóng đủ, chữ trông tròn trịa,
+  chỉ nhánh thứ ba thấy). **10 → 11 mép.**
+- **Mã chết, không phải lỗ ghim:** `if (!value.trim()) return true;` không đường nào tới được vì
+  `assistantMessageText()` đã `.trim()`. Thêm phép kiểm cho nó thì ghim **niềm tin**, không phải
+  hành vi — đúng cái giới hạn ⑹ cấm. **Xoá**, kèm lý do tại chỗ.
+
+Chạy lại **15/15 bắt, 0 thoát**. Vòng một cũng được xác nhận lại: mũi "nới sang cả đường ảnh"
+trước đây đi lọt vì sân khấu giả thiếu `window.DacImageEvidence` — mép ⑹ ném `window is not
+defined` và **xanh vì lý do sai**. Sau khi thêm stub, mũi đó bị bắt.
+
+**Kết quả số.** Suite **122/122**. Thử phá B-43 **15/15**. **Còn mở:** nghiệm thu live — hai lượt
+chat với tab để ở NỀN, số ký tự ghi vào sổ phải **bằng** số trên trang.
