@@ -666,10 +666,8 @@ trúc không với tới hành vi. Bịt bằng ba mép **cắt hàm đã ship r
 chính tôi khớp vào phép kiểm · sân khấu giả truyền sai đối số nên một mép đỏ vì lý do sai: ghi đủ
 kèm lý do từng chỗ ở mục **Trạng thái** của [ADR-0053](docs/adr/0053-loi-nha-cung-cap-la-mot-nguon-doi-soat-cau-chua-lay-tu-ma-cua-ta.md).
 
-**Một lỗ hạ tầng nổ thật, đã gộp vào `N-59` của lane khác thay vì mở mục thứ hai:** một lượt
-`--restamp` để lấy khoá đã dán câu chốt của Đức lên **5 vùng** mà lane kia vừa **TRẢ**. Cả 5 đều
-`owner: null` nên không khoá sống nào bị lấy, nhưng bản ghi xuất xứ thì sai. Dọn bằng cách hoàn
-nguyên bốn trường từ `git show HEAD:` — **không** đụng trường `owner`.
+**Một lỗ hạ tầng nổ thật, đã gộp vào `N-59` của lane khác thay vì mở mục thứ hai** — cùng một
+lỗi, nó cắn hai chiều trong một ngày. Số đo và cách dọn ở `BACKLOG.md` gốc, mục N-59.
 
 **Còn mở:** B-41 ⑵ (`DETECTION_BLIND`) · B-42 (cần brief Đức duyệt) · vế live của ADR-0053 cần
 một lỗi thật của nhà cung cấp, **tôi không giả lập**.
