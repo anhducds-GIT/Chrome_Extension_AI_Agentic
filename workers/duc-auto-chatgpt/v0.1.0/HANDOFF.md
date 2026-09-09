@@ -643,3 +643,37 @@ hai nằm trong **một hàm** `waitForReferenceImagesReady`. Một lượt Đ�
 nối nhóm mới vào runner · neo lại theo nhãn thay vì cấu trúc.
 
 **Còn lại đều CHỜ ĐỨC CHỐT:** `B-47`⑴⑵ · `B-49` (hai vế, một lượt) · `B-50`.
+
+## 2026-09-09 (lượt 12) · `claude-gpt-chay-het-job` — Đức phản biện B-47 và Đức đúng
+
+**Tôi kết luận sai, Đức bác, và phép đo đứng về phía Đức.** Lượt 9 tôi viết *"tab bị che thì
+không tải được ảnh"* rồi khuyên **bắt tab phải hiện**. Đức bác: *"trước đây đã tạo ảnh khi bị che
+và vẫn tải về bình thường… cần giải pháp chứ không phải thoả hiệp"*. Đo lại chính cái ảnh đó, vẫn
+tab `hidden`: `complete: true`, `naturalW: 1448`. **Tôi rút đề xuất đó.**
+
+**Đo dứt điểm, hai lượt job ảnh thật:**
+
+| | tab NỀN | cửa sổ HIỆN |
+|---|---|---|
+| `<img>` mới hiện | +80,7s | +61,9s |
+| `complete = true` | **không bao giờ** (tới +201s, sinh xong ở +140,7s) | +65,4s |
+
+Chrome **hoãn hẳn** giải mã trên tab nền. Đức mô tả cùng chuyện từ phía người dùng: *"chuyển sang
+tab đó thì ảnh mới hiện, trước đó là ô màu ghi"*.
+
+**Hình dạng bản vá là điều đắt nhất ở đây.** Đức chốt *"đừng fix sẵn một con số, thời gian kết
+xuất dài ngắn khác nhau"* — và số đo bác mạnh hơn: **chờ bao lâu cũng không xong**. Cửa ra là
+ĐIỀU KIỆN, không phải ĐỒNG HỒ. Nên `ready` thôi đòi bitmap: nhận theo **URL nội dung cuối**
+(`src` đo được là ổn định qua 4 lượt trải ~2 phút, kể cả khi `alt` còn điền dần). `blob:` KHÔNG
+hưởng nhánh này → fail **closed** ở chỗ đáng nghi. Thêm trường `decoded` để chẩn đoán giữ sự thật.
+
+**Nghiệm thu live — và nói rõ nó chứng minh TỚI ĐÂU.** Đức nạp lại + F5, **để cửa sổ HIỆN**:
+`Q001` **SUCCESS**, `image_count: 1`, `persistence_verified: true`, `eligible: 1`. Nên bản vá
+**không hỏng ca thường** và đường ảnh chạy trọn. **Nhưng ca tab NỀN — chính ca nó sinh ra để chữa
+— CHƯA nghiệm thu**, vì cửa sổ hiện thì mã cũ cũng qua. Còn nợ đúng một lượt để ở nền.
+
+**Quan sát thứ hai của Đức đã kiểm:** ảnh trôi dưới thanh cuộn **không** ảnh hưởng —
+`isVisible()` hỏi `display`/`visibility`/kích-thước-khung, **không** hỏi có nằm trong vùng nhìn.
+
+**Đo.** Suite **131/131** · thử phá **8/8 đỏ, 0 lọt**, gồm cái độc: *vá bằng đồng hồ*.
+**Vẫn tắc đẩy:** 4 commit của `harness-loi-01` nằm dưới commit của tôi, cần Đức chốt.

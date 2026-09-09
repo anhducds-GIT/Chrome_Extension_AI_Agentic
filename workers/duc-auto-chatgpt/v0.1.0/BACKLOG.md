@@ -2283,7 +2283,7 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
 Bốn mục dưới đây sinh ra từ đúng hai lượt chạy: một job **chữ** có 4 ảnh mẫu 1,83MB (0 credit ảnh)
 và một job **ảnh** (1 credit). Không mục nào là suy diễn — mỗi mục kèm số đo của nó.
 
-### B-47 · (P1) Job ảnh trên tab BỊ CHE luôn thất bại, và thông điệp lỗi nói SAI nguyên nhân
+### B-47 · (ĐÃ VÁ 09/09, chờ nghiệm thu ca tab NỀN) Job ảnh trên tab nền thất bại vì máy đòi bitmap giải mã
 Đo live 09/09, job `Q002`. Tab `visibility: hidden` → `<img>` sinh **có** được vẽ (alt
 `"Generated image: …"`) nhưng `image.complete && naturalWidth > 0` là **false ở cả 3/3 node**, nên
 `eligible: 0` và job chết `OUTPUT_DETECTION_TIMEOUT: NO_NEW_IMAGE` sau **300 giây**. Số đo đầy đủ ở
@@ -2302,7 +2302,58 @@ và một job **ảnh** (1 credit). Không mục nào là suy diễn — mỗi m
    chờ DOM sẵn sàng (to nhất, và đụng luật quy thuộc). **Tôi khuyên ⒜ + ⑴.** Không tự làm ⑵ vì nó
    là đổi luật an toàn (`AGENTS.md` 2.4).
 
-- **đóng khi:** ⑴ đã vá và có phép ghim; ⑵ Đức chốt một trong ba đường và nó được khai vào `decisions.md`.
+**ĐỨC PHẢN BIỆN 09/09 VÀ ĐỨC ĐÚNG. Cả ba đường tôi đề ra ở trên đều sai đề bài.**
+Tôi viết *"job ảnh cần tab HIỆN"* rồi khuyên chặn trước khi gửi. Đức bác: *"trước đây bạn đã tạo
+ảnh khi bị che và vẫn tải về bình thường… cần giải pháp chứ không phải thoả hiệp"* — và đo lại
+**chính cái ảnh của `Q002`**, vẫn tab `hidden`, thì `complete: true`, `naturalW: 1448`. Kết luận cũ
+của tôi sai.
+
+**Đo dứt điểm, hai lượt job ảnh thật, cùng một prompt-loại:**
+
+| | tab NỀN (`hidden`) | cửa sổ HIỆN |
+|---|---|---|
+| `<img>` mới hiện | +80,7s | +61,9s |
+| `naturalWidth` có số | **không bao giờ** | +63,9s |
+| `complete = true` | **không bao giờ** (đo tới +201s, sau khi sinh xong ở +140,7s) | +65,4s |
+
+**Nên Chrome HOÃN HẲN việc giải mã trên tab nền, không phải làm chậm.** Đức mô tả từ phía người
+dùng đúng cùng một chuyện: *"khi tôi chuyển sang tab đó thì ảnh mới bắt đầu hiện ra, trước đó là
+ô màu ghi"*.
+
+**Hệ quả cho hình dạng bản vá — và nó là điều đắt nhất ở mục này:** không được vá bằng một con số
+chờ to hơn. Đức chốt *"thời gian kết xuất dài ngắn khác nhau tuỳ độ phức tạp, đừng fix sẵn một con
+số"*, **và số đo còn bác mạnh hơn**: chờ bao lâu cũng không xong. Cửa ra là **ĐIỀU KIỆN**, không
+phải **ĐỒNG HỒ**.
+
+**BẢN VÁ:** `ready` thôi đòi bitmap. Nó nhận khi `src` là **URL nội dung cuối** (`https:` hoặc
+`data:image/`) — đo được là `src` ổn định qua cả bốn lượt trải ~2 phút, kể cả khi `alt` còn đang
+điền dần. `blob:` **không** hưởng nhánh này (ảnh tạm, thu hồi được) nên vẫn đòi giải mã: **fail
+closed ở đúng chỗ đáng nghi**. Thêm trường `decoded` để chẩn đoán **giữ nguyên sự thật**. Mọi lớp
+chắn quy thuộc còn nguyên: mốc nền trước khi gửi · ranh giới lượt assistant · cờ `input` · ngưỡng
+64px · cửa sổ "tập ảnh đứng yên" (so theo `src`, mà `src` đã đo là ổn định).
+
+**Ghim:** `tests/image-ready-background-tab-smoke.mjs` — cắt `imageCandidates()` đã ship rồi chạy.
+Bảy ca, gồm ca tab nền (mã cũ **không thể vượt**) và ca blob-chưa-giải-mã phải fail closed, cộng
+một phép khẳng định rằng khối này **không được nhìn đồng hồ**. Suite **131/131**, thử phá
+**8/8 đỏ, 0 lọt**.
+
+**NGHIỆM THU LIVE 09/09, và nói rõ nó chứng minh tới đâu:** Đức nạp lại + F5, **để cửa sổ HIỆN**,
+job `Q001` → **SUCCESS**, `image_count: 1`, `persistence_verified: true`,
+`result_file: b7dd428b-…png`, `eligible: 1` / `chosen_count: 1`. **Nên bản vá KHÔNG làm hỏng ca
+bình thường, và đường ảnh chạy trọn từ đầu đến cuối.** Nhưng ca **tab nền** — chính ca bản vá sinh
+ra để chữa — **CHƯA được nghiệm thu live**, vì lượt này cửa sổ hiện thì mã cũ cũng qua. Còn nợ
+**đúng một lượt** chạy với tab để ở nền.
+
+**Quan sát thứ hai của Đức, đã kiểm:** *"ảnh có thể bị trôi xuống dưới mà thanh cuộn chưa cuộn
+hết"*. **Không ảnh hưởng phát hiện** — `isVisible()` chỉ hỏi `display` / `visibility` / khung có
+kích thước, **không** hỏi phần tử có nằm trong vùng nhìn thấy. Và số đo xác nhận: link ảnh nằm sẵn
+trong DOM ngay cả khi tab ở nền, tức ChatGPT **không** chờ ai cuộn tới mới gắn.
+
+**Vế ⑴ (thông điệp `NO_NEW_IMAGE` nói sai nguyên nhân) vẫn CÒN MỞ** — bản vá làm ca đó hiếm hẳn
+nhưng không xoá nó: `eligible = 0` vì lý do khác vẫn báo cùng một câu sai.
+
+- **đóng khi:** ⑴ thông điệp lỗi nói đúng nguyên nhân, có phép ghim; ⑵ **một lượt job ảnh chạy
+  SUCCESS với tab để ở NỀN** — đó là điều kiện nghiệm thu thật của bản vá này.
 
 ### ~~B-48~~ · (ĐÓNG 09/09) `dom_probe` không soi được chip đính kèm — nắp 40 nút bị thanh bên ăn hết
 Đo live 09/09. `buttons` nắp **40 mục**; thanh bên ChatGPT của Đức (10 project + lịch sử) chiếm
