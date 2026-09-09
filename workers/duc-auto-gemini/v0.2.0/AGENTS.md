@@ -127,6 +127,83 @@ COMPANION (đọc khi cần):
 - `drafts/` — nháp, spec thiết kế, roadmap chưa chốt. Agent chỉ được tự ghi
   vào đây (đúng luật CLAUDE.md gốc của Đức).
 
+## Sổ cái của gói — luật đang sống, và chỗ đọc lý lẽ
+
+> Mục lục đầy đủ: [`decisions.md`](decisions.md). **Trích theo SỐ HIỆU, đừng trích theo tên file.**
+> Số hiệu đánh **theo từng thư mục**: `ADR-0005` ở đây khác `ADR-0005` của gói khác và khác của
+> gốc repo. Ba mươi quyết định dưới đây là những cái **còn ràng buộc việc hôm nay**; phần còn lại
+> của sổ là bản ghi lịch sử, khai ở `.repo-structure.json` → `luat.mo_coi_co_y`.
+
+**Bridge, và ai được thực thi.**
+[ADR-0001](docs/adr/0001-bridge-dung-loopback-host-127-0-0-1-co-token-32.md) Bridge là loopback
+`127.0.0.1` có token 32-byte ·
+[ADR-0005](docs/adr/0005-side-panel-la-executor-duy-nhat.md) side panel là executor **duy nhất** ·
+[ADR-0006](docs/adr/0006-run-start-run-pause-run-resume-khong-co-trong.md) `run.start`/`pause`/`resume`
+không tồn tại ·
+[ADR-0007](docs/adr/0007-ai-ngoai-chi-duoc-propose-de-xuat-vao-vung-cach-ly.md) AI ngoài chỉ
+`propose`, Đức duyệt trong panel ·
+[ADR-0002](docs/adr/0002-supersedes-dong-ai-ngoai-chi-duoc-propose-ben-duoi.md) **ngoại lệ:** riêng
+thao tác *Setup* thì Bridge toàn quyền ·
+[ADR-0004](docs/adr/0004-queue-propose-duyet-tay-cua-duc-khong-bi-xoa-khi.md) `queue.propose` +
+duyệt tay không bao giờ bị gỡ ·
+[ADR-0003](docs/adr/0003-ai-khong-the-tu-mo-file-xlsx-tu-o-dia-hay-tu-bind.md) AI **không** tự mở
+`.xlsx` hay bind thư mục mới — giới hạn của trình duyệt, không phải lựa chọn.
+
+**An toàn lúc chạy — đừng nới cái nào.**
+[ADR-0026](docs/adr/0026-khong-doi-nhac-lai-run-la-cua-duc-ai-khong-tu-gui.md) Run là của Đức;
+không làm yếu exact-once / attribution / persistence ·
+[ADR-0015](docs/adr/0015-completed-job-safe-complete-khong-bao-gio-tu-chay.md) job đã
+`SAFE_COMPLETE` **không bao giờ** tự chạy lại ·
+[ADR-0016](docs/adr/0016-retry-halt-chi-dung-toan-batch-khi-captcha-het.md) chỉ **ba** loại
+hard-stop dừng cả mẻ ·
+[ADR-0017](docs/adr/0017-pause-chi-giu-hang-doi-o-ranh-gioi-an-toan-giua-2.md) Pause chỉ ở ranh
+giới giữa hai job ·
+[ADR-0060](docs/adr/0060-duyet-hop-dong-g-01-stop-nhan-truoc-thoi-diem-gui.md) hợp đồng G-01: Stop
+nhận trước lúc gửi thì attempt đó không được gửi ·
+[ADR-0061](docs/adr/0061-huong-b-refined-huy-theo-attempt-khong-phai-a-round.md) huỷ theo
+**attempt**, không hỏi ngược ·
+[ADR-0058](docs/adr/0058-khong-doi-thoi-diem-co-dung-an-de-job-dang-chay.md) **không** đổi thời
+điểm cờ dừng ăn ·
+[ADR-0051](docs/adr/0051-giu-nguyen-bat-doi-xung-co-y-cua-thiet-ke-goc.md) bất đối xứng **CỐ Ý**:
+`run.stop` vòng qua `RUN_ACTIVE`, `chat.reload` thì bị nó chặn ·
+[ADR-0067](docs/adr/0067-audit-codex-vong-1-fail-3-phat-hien-1-high-huy-lech.md) huỷ lệch danh
+tính giết attempt đang bay là **chủ đích**, đã ghim ·
+[ADR-0062](docs/adr/0062-root-cause-phai-chung-minh-bang-test-tai-hien-truoc.md) root cause phải
+chứng minh bằng test tái hiện **trước** khi vá.
+
+**Dữ liệu, checkpoint, bằng chứng.**
+[ADR-0014](docs/adr/0014-id-prompt-la-2-cot-bat-buoc-duy-nhat-tren-sheet-jobs.md) `id`/`prompt` là
+hai cột bắt buộc duy nhất ·
+[ADR-0023](docs/adr/0023-cho-phep-gop-checkpoint-cho-phien-sua-cua-agent.md) được gộp checkpoint
+cho một phiên agent, nhưng audit vẫn ghi **từng** mutation ·
+[ADR-0024](docs/adr/0024-chinh-sach-don-checkpoint.md) dọn checkpoint: giữ `v01` + năm bản cuối,
+phần còn lại **chuyển** sang `superseded/`, không xoá ·
+[ADR-0013](docs/adr/0013-pilot-03-pilot-05-pilot-06-pilot-06b-khong-bao-gio.md) thư mục bằng chứng
+không bao giờ bị sửa — **luật vàng 1 nay viết theo hình dạng tên**, rộng hơn danh sách trong ADR.
+
+**Nhận diện ảnh — và hai ngõ cụt CẤM dựng lại.**
+[ADR-0043](docs/adr/0043-chi-cuon-khi-anh-dang-khong-hien-ra-va-chi-khi-da.md) chỉ cuộn khi ảnh
+đang KHÔNG hiện, và chỉ khi đã hết trạng thái đang-sinh ·
+[ADR-0044](docs/adr/0044-generatedimageminsize-200-150-phep-kiem-giu-nguyen.md)
+`generatedImageMinSize` = **150** ·
+[ADR-0046](docs/adr/0046-hai-phuong-an-da-thu-va-bi-bang-chung-bac-bo-trong.md) **hai phương án đã
+bị bằng chứng bác bỏ, ghim CẤM dựng lại** — chờ blob đổi sang `lh3`, và cuộn ảnh vào tầm mắt.
+
+**Chữ và commit.**
+[ADR-0018](docs/adr/0018-operator-facing-text-tieng-viet.md) chữ operator tiếng Việt, thuật ngữ App
+tiếng Anh ·
+[ADR-0020](docs/adr/0020-supersedes-dong-khong-tu-y-commit-ngay-tren-trong.md) AI được `git commit`
+kể cả `main`, kèm bốn điều kiện ·
+[ADR-0025](docs/adr/0025-ai-duoc-commit-ke-ca-main-chi-tiet-4-dieu-kien.md) nhắc lại vế trên.
+
+**Phạm vi và kỷ luật.**
+[ADR-0029](docs/adr/0029-run-duoc-phep-bat-dau-tu-ca-gemini-google-com.md) Run được bắt đầu từ cả
+`/images` lẫn `/app/<id>` ·
+[ADR-0035](docs/adr/0035-luat-nao-khong-kiem-duoc-bang-may-thi-coi-nhu-khong.md) luật nào không
+kiểm được bằng máy thì coi như không có ·
+[ADR-0066](docs/adr/0066-cung-loi-ben-nhanh-chatgpt-ghi-thanh-b-22-doc.md) lỗi có ở nhánh kia thì
+ghi sổ, **không sửa hộ**.
+
 ## Bản đồ file
 
 | File | Vai trò |

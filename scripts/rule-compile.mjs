@@ -222,8 +222,23 @@ export function bienDich({ soCai, banHieuLuc, dangKy, homNay }) {
      phải năm mươi. Đổ phẳng là biến một câu thành năm mươi dòng và người đọc tắt phép kiểm. */
   /* Mồ côi CỐ Ý — khai ở `luat.mo_coi_co_y`, khoá là `<phạm vi><số>`, giá trị là LÝ DO.
      Không có khối này thì ② báo một con số không bao giờ về 0, và một phép kiểm không bao giờ
-     về 0 là một phép kiểm người ta thôi đọc. Có nó thì con số còn lại là con số THẬT. */
-  const coY = dangKy.mo_coi_co_y ?? {};
+     về 0 là một phép kiểm người ta thôi đọc. Có nó thì con số còn lại là con số THẬT.
+
+     DẠNG THỨ HAI — NHÓM, thêm 09/09 khi soi 59 quyết định của một gói cùng lúc. Khoá là
+     `<phạm vi>` (không có số), giá trị là `{ nhom: [{ ly_do, cac_so }] }`. Vì sao cần: 26 mục
+     ở đó có CÙNG một lý do thật (*bản ghi chẩn đoán của một lượt sửa*), và chép câu đó 26 lần
+     là **giả vờ đã suy nghĩ 26 lần**. Một lý do, một danh sách.
+
+     Chỗ CỐ Ý không nới: nhóm vẫn phải **liệt kê từng số**. Không có dạng "cả sổ này miễn" —
+     làm thế là tắt hẳn ②, mà chính ② vừa lôi ra bốn chốt `run.trial` của Đức đang sống mà
+     không nơi luật nào mang. Quyết định MỚI thêm sau vẫn kêu, vì nó không có trong danh sách. */
+  const coY = new Map();
+  for (const [khoa, giaTri] of Object.entries(dangKy.mo_coi_co_y ?? {})) {
+    if (typeof giaTri === "string") { coY.set(khoa, giaTri); continue; }
+    for (const nhom of giaTri?.nhom ?? []) {
+      for (const so of nhom?.cac_so ?? []) coY.set(khoa + so, nhom.ly_do);
+    }
+  }
   const moCoi = [];
   for (const [pv, bo] of song) {
     const dc = chet.get(pv) ?? new Set();
@@ -232,7 +247,7 @@ export function bienDich({ soCai, banHieuLuc, dangKy, homNay }) {
     for (const so of [...bo].sort()) {
       if (dc.has(so)) continue; /* chết cả quyết định thì không tính là mồ côi */
       tong++;
-      if (coY[pv + so]) continue;
+      if (coY.has(pv + so)) continue;
       if (!daTrich.has(pv + "|" + so)) cai.push({ so, o: nha.get(pv + "|" + so) });
     }
     if (cai.length) moCoi.push({ so_cai: pv, cai, tong, imLang: cai.length === tong });

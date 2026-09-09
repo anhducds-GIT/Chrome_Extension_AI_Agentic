@@ -24,6 +24,10 @@ Gặp ảnh mang địa chỉ tạm (`blob:`) thì **chờ** Gemini tự đổi 
 không ghi lại — bảng gốc trong `workers/duc-auto-gemini/v0.2.0/decisions.md` chỉ có ba cột (Quyết định · Vì sao · Ai chốt), không có mục Hệ quả.
 Không bịa thêm: đây là bản ghi lịch sử, không phải bài viết lại.
 
+## Vế đã chết
+
+- **0038 — chờ ảnh `blob:` đổi sang `https://lh3…` rồi mới kết luận.** Chết **cùng ngày, vòng 2**: quyết định **0041** *tháo* phép chờ này sau khi đo thật — 31 giây, 68 lượt dò, không đổi. Nguyên nhân thật nằm ở **0042**. Phương án này còn bị **0046** ghim cấm dựng lại.
+
 ## Trạng thái
 
 Accepted — chốt ngày 2026-08-26. Người chốt: Đức.

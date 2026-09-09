@@ -193,6 +193,41 @@ const soi = (noiDung, duongDan = "AGENTS.md", so = soCai) =>
 }
 
 {
+  /* DẠNG NHÓM — một lý do chung + danh sách số hiệu. Thêm 09/09 khi soi 59 quyết định của một
+     gói cùng lúc: 25 mục có CÙNG một lý do thật, chép câu đó 25 lần là giả vờ đã suy nghĩ 25 lần.
+
+     Ghim CẢ HAI chiều, và chiều thứ hai mới là chiều quan trọng: số hiệu KHÔNG có trong danh
+     sách vẫn phải KÊU. Không có nó thì dạng nhóm trượt thành "cả sổ này miễn" — tức tắt hẳn ②,
+     mà chính ② vừa lôi ra bốn chốt `run.trial` của Đức đang sống mà không nơi luật nào mang. */
+  const kq = bienDich({
+    soCai: [docFileADR(SO_CAI_GOC, "docs/adr/0001-thu.md")],
+    banHieuLuc: [{ duongDan: "AGENTS.md", noiDung: "chỉ nhắc ADR-0001 thôi" }],
+    dangKy: {
+      ...dangKySach,
+      mo_coi_co_y: { "docs/adr/": { nhom: [{ ly_do: "bản ghi lịch sử", cac_so: ["0003"] }] } },
+    },
+    homNay: HOM_NAY,
+  });
+  assert.equal(kq.moCoi.length, 0, "dạng NHÓM phải trừ được mồ côi y như dạng từng số");
+
+  /* Số hiệu KHÔNG có trong danh sách vẫn phải KÊU — chiều này mới là chiều quan trọng. */
+  const soLa = docFileADR(SO_CAI_GOC, "docs/adr/0001-thu.md");
+  soLa.mang = [...soLa.mang, "0009"];
+  const themSo = bienDich({
+    soCai: [soLa],
+    banHieuLuc: [{ duongDan: "AGENTS.md", noiDung: "chỉ nhắc ADR-0001 thôi" }],
+    dangKy: {
+      ...dangKySach,
+      mo_coi_co_y: { "docs/adr/": { nhom: [{ ly_do: "bản ghi lịch sử", cac_so: ["0003"] }] } },
+    },
+    homNay: HOM_NAY,
+  });
+  const keu = themSo.moCoi.flatMap((m) => m.cai.map((c) => c.so));
+  assert.deepEqual(keu, ["0009"], "số ngoài danh sách phải kêu; số trong danh sách thì không");
+  ok("② dạng NHÓM trừ đúng danh sách, và KHÔNG miễn cả sổ");
+}
+
+{
   const kq = soi("chỉ nhắc ADR-0001 thôi", "AGENTS.md", [docFileADR(SO_CAI_GOC, "docs/adr/0001-thu.md")]);
   /* 0001 được trích · 0002 chết trọn nên không tính · còn lại 0003 mồ côi. */
   assert.equal(kq.moCoi.length, 1, "mồ côi phải GỘP theo sổ, không đổ phẳng");

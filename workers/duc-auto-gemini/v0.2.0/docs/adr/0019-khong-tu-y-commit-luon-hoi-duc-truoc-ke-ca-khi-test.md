@@ -24,6 +24,10 @@ Không tự ý commit — luôn hỏi Đức trước, kể cả khi test 100% p
 không ghi lại — bảng gốc trong `workers/duc-auto-gemini/v0.2.0/decisions.md` chỉ có bốn cột (Quyết định · Vì sao · Ai chốt · Nguồn), không có mục Hệ quả.
 Không bịa thêm: đây là bản ghi lịch sử, không phải bài viết lại.
 
+## Vế đã chết
+
+- **0019 — *"Không tự ý commit — luôn hỏi Đức trước"*.** Chết **24/08**: quyết định **0020** thay hẳn trong phạm vi project này (AI được `git commit`, kể cả vào `main`, với bốn điều kiện an toàn), và **0025** nhắc lại. `AGENTS.md` của gói luật 6 mang bản đang sống.
+
 ## Trạng thái
 
 Accepted. Người chốt: Đức (luật cố định).

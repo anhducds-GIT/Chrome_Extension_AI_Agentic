@@ -24,6 +24,10 @@ Phép chờ có **hạn mức 30 giây** (`blobSwapWaitMs`), hết hạn thì k�
 không ghi lại — bảng gốc trong `workers/duc-auto-gemini/v0.2.0/decisions.md` chỉ có ba cột (Quyết định · Vì sao · Ai chốt), không có mục Hệ quả.
 Không bịa thêm: đây là bản ghi lịch sử, không phải bài viết lại.
 
+## Vế đã chết
+
+- **0039 — hạn mức chờ 30 giây (`blobSwapWaitMs`).** Chết **cùng ngày**: **0041** tháo cả phép chờ, nên hạn mức của nó không còn thứ gì để đo.
+
 ## Trạng thái
 
 Accepted — chốt ngày 2026-08-26. Người chốt: Claude đề xuất, trong phạm vi quyết định trên.

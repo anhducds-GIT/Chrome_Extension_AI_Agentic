@@ -24,6 +24,10 @@ Mọi lần chờ đều ghi vào sổ cái: chờ bao lâu, có đổi được
 không ghi lại — bảng gốc trong `workers/duc-auto-gemini/v0.2.0/decisions.md` chỉ có ba cột (Quyết định · Vì sao · Ai chốt), không có mục Hệ quả.
 Không bịa thêm: đây là bản ghi lịch sử, không phải bài viết lại.
 
+## Vế đã chết
+
+- **0040 — mọi lần chờ đều ghi vào sổ cái.** Chết **cùng ngày**: **0041** tháo phép chờ. Nguyên tắc *mọi lượt chờ phải để lại dấu vết* thì **không chết** — nó sống tiếp ở luật ghi sổ của gói.
+
 ## Trạng thái
 
 Accepted — chốt ngày 2026-08-26. Người chốt: Claude.

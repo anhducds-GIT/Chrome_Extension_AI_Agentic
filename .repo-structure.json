@@ -271,7 +271,52 @@
       "docs/adr/0022": "Chap nhan rui ro token tran o hai Bridge cu — mot LUA CHON da chot, khong phai mot luat phai tuan. S-11 da roi so no theo chot cua Duc. Ly le day du o 0021 ve (3).",
       "docs/adr/0024": "Mo bang toan bo nam goi. Cau luat song di ra tu no la gioi han (1) cua AGENTS, va dong do trich [ADR-0021] (1) — tuc no DA duoc mang, chi la duoi so cua file gop.",
       "docs/adr/0026": "ADR sua duoc, gop vao 0000 ve (2). AGENTS trich 0000 (4) va (5); ve (2) la luat cua chinh so ADR nen no song trong docs/README.md va ADR-0000, khong can mot dong o ban hieu luc.",
-      "workers/duc-scouter/v0.1.0/docs/adr/0003": "Ba cho chan cua pilot hnx.vn. Tu 08/09 HNX Fetch tach thanh goi rieng (ADR-0021 ve 2), nen luat van hanh di ra tu quyet dinh nay song o workers/hnx-fetch/PROTOCOL.md muc 1 — mot goi KHAC. Quyet dinh o lai so cai cua Scouter vi no la lich su cua Scouter."
+      "workers/duc-scouter/v0.1.0/docs/adr/0003": "Ba cho chan cua pilot hnx.vn. Tu 08/09 HNX Fetch tach thanh goi rieng (ADR-0021 ve 2), nen luat van hanh di ra tu quyet dinh nay song o workers/hnx-fetch/PROTOCOL.md muc 1 — mot goi KHAC. Quyet dinh o lai so cai cua Scouter vi no la lich su cua Scouter.",
+      "workers/duc-auto-gemini/v0.2.0/docs/adr/": {
+        "_doc": "Dang NHOM: mot ly do chung + danh sach so hieu. Van liet ke TUNG SO — khong co dang 'ca so nay mien'. Quyet dinh moi them sau van keu o phep (2).",
+        "nhom": [
+          {
+            "ly_do": "Da len ban hieu luc GOC repo — goi khong mang lai. Chep xuong day la cai mot luat hai lan (gioi han (2) cua AGENTS.md goc).",
+            "cac_so": [
+              "0034",
+              "0036",
+              "0037",
+              "0049"
+            ]
+          },
+          {
+            "ly_do": "Viec da xong, mot lan, khong con rang buoc ai. Chung ke MOT LUOT DOI da lam xong (go API cu, doi installer, port hai lenh sang goi nay, va cac cho lech phai va luc port) — khong phai luat cho phien sau tuan theo.",
+            "cac_so": [
+              "0009",
+              "0010",
+              "0021",
+              "0030",
+              "0033",
+              "0047",
+              "0048",
+              "0050",
+              "0052",
+              "0053",
+              "0054",
+              "0055",
+              "0057",
+              "0063"
+            ]
+          },
+          {
+            "ly_do": "Ban ghi chan doan hoac bai hoc cua mot luot sua, khong phai luat. Cai CON RANG BUOC tu chung da nam trong ban hieu luc roi: ADR-0046 ghim CAM dung lai hai ngo cut, va dieu kien dong G-01 song o BACKLOG cua goi.",
+            "cac_so": [
+              "0041",
+              "0042",
+              "0045",
+              "0056",
+              "0059",
+              "0064",
+              "0065"
+            ]
+          }
+        ]
+      }
     }
   }
 }

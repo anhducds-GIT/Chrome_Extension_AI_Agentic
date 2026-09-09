@@ -3,11 +3,11 @@
   "_labels": "owner là nhãn phiên tự đặt, ví dụ 'claude-gemini' — hai phiên Claude khác nhau phải có hai nhãn khác nhau. Gốc repo chia làm nhiều khoá (A2, 02/09): `_docs` cho docs/, `_code` cho scripts/ + tests/, `_template` cho template/, `_root` cho phần còn lại và các file ở tầng ngoài cùng. Chia vì 77% commit trong ngày 02/09 chạm gốc repo, và một khoá duy nhất chặn cả những việc không chồng nhau.",
   "claims": {
     "workers/duc-auto-gg-flow-video": {
-      "owner": "claude-luat-rasoat",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-09T03:20",
       "task": "N-55 + N-57: dung docs/adr cho goi, sua tran trial 3 -> 7 trong AGENTS.md",
-      "released_at": null,
+      "released_at": "2026-09-09T04:23",
       "taken_from": "claude-flow-f28-f33",
       "taken_by_duc_decision": "2026-09-04 (giu 43h, Duc chot lay)",
       "taken_by": "claude-luat-rasoat",
@@ -17,8 +17,8 @@
     "workers/duc-auto-gemini": {
       "owner": "claude-luat-rasoat",
       "ai": "Claude",
-      "claimed_at": "2026-09-09T03:11",
-      "task": "N-57: ra soat AGENTS.md goi Gemini, sua luat 8 da chet theo ADR-0022",
+      "claimed_at": "2026-09-09T04:26",
+      "task": "N-58: 59 quyet dinh mo coi — phan loai luat song vs boi canh lich su",
       "released_at": null,
       "taken_from": "claude-gemini-crlf",
       "taken_by": "claude-luat-rasoat",
@@ -60,11 +60,11 @@
       "duc_decision": "Duc chot 07/09 \"Try again\": lane claude-k2-vung-mien-khoa chet giua chung vi het han muc phien (rate limit). Moi commit cua no DA DAY len remote truoc khi tra khoa. Tra ve trong de chay lai."
     },
     "_code": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T22:46",
-      "task": "bo bien dich luat: pham vi theo duong lien ket + mo coi co y",
-      "released_at": "2026-09-08T22:49",
+      "owner": "claude-luat-rasoat",
+      "ai": "Claude",
+      "claimed_at": "2026-09-09T04:29",
+      "task": "N-58: mo_coi_co_y nhan dang NHOM co ly do chung",
+      "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
       "taken_at": "2026-09-07T08:37",
@@ -92,16 +92,16 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "bd680c3d08567d77",
+  "_fingerprint": "c9f17ca0a5e8148e",
   "tam": {
-    "tests/check-bootstrap-smoke.mjs": {
+    ".repo-structure.json": {
       "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T04:20",
+      "luc": "2026-09-09T04:32",
       "viec": null
     },
     ".agents/claims.json": {
       "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T04:20",
+      "luc": "2026-09-09T04:34",
       "viec": null
     }
   }
