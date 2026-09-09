@@ -54,9 +54,9 @@
 <!-- AUTO:MODULES START -->
 GPT 35 file `.js` · Gemini 34.
 
-**7 file giống hệt sau khi chuẩn hoá CRLF/LF:**
+**6 file giống hệt sau khi chuẩn hoá CRLF/LF:**
 
-`attempt-identity-core.js` · `attempt-telemetry-core.js` · `audit-chain-core.js` · `bridge-pairing-core.js` · `reconciliation-core.js` · `recreate-core.js` · `run-state-core.js`
+`attempt-identity-core.js` · `attempt-telemetry-core.js` · `audit-chain-core.js` · `bridge-pairing-core.js` · `recreate-core.js` · `run-state-core.js`
 
 **Chỉ một bên có:**
 
@@ -70,21 +70,22 @@ GPT 35 file `.js` · Gemini 34.
 | `tab-lock-core.js` | Gemini |
 | `text-output-core.js` | GPT |
 
-**24 file có ở cả hai nhưng khác nội dung** (xếp theo chênh lệch số dòng giảm dần):
+**25 file có ở cả hai nhưng khác nội dung** (xếp theo chênh lệch số dòng giảm dần):
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 6754 | 5230 | 1524 |
+| `sidepanel.js` | 6845 | 5230 | 1615 |
 | `bridge-transport-loopback.js` | 946 | 516 | 430 |
 | `bridge-core.js` | 1038 | 864 | 174 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
+| `content.js` | 1337 | 1197 | 140 |
 | `runner-core.js` | 339 | 223 | 116 |
 | `background.js` | 293 | 202 | 91 |
-| `content.js` | 1285 | 1197 | 88 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
 | `resume-core.js` | 189 | 122 | 67 |
 | `provider-adapter.js` | 276 | 210 | 66 |
 | `output-location-core.js` | 424 | 373 | 51 |
+| `reconciliation-core.js` | 108 | 69 | 39 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
 | `bridge-proposal-core.js` | 380 | 387 | 7 |
 | `halt-instructions-core.js` | 147 | 140 | 7 |
