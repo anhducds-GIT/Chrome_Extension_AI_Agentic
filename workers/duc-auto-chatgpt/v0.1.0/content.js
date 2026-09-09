@@ -608,9 +608,12 @@
   // Cái giá, nói rõ: một câu trả lời thật mà để ngoặc lệch sẽ KHÔNG chốt và chạy tới hết
   // giờ. Đổi lại nó thành `INTERRUPTED` — người nhìn — chứ không thành SUCCESS với nội dung
   // sai. Sai theo hướng dừng lại là hướng duy nhất chấp nhận được ở đây.
+  // KHÔNG có nhánh "chuỗi rỗng thì coi là bị cắt" — nó là mã chết, và thử phá chứng minh được:
+  // `assistantMessageText()` đã `.trim()`, nên chữ chỉ-toàn-khoảng-trắng về đây thành `""` và
+  // rơi ngay ở vế `stableText &&` của CẢ HAI chỗ gọi. Ghim một nhánh không chỗ nào tới được là
+  // ghim một bản sao của niềm tin, không phải của hành vi (giới hạn ⑹: bắt 0 đột biến thì xoá).
   function looksTruncated(text) {
     const value = String(text || "");
-    if (!value.trim()) return true;
     for (const [mo, dong] of [["[", "]"], ["(", ")"]]) {
       const so = (chuoi, ky) => chuoi.split(ky).length - 1;
       if (so(value, mo) > so(value, dong)) return true;

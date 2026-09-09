@@ -174,6 +174,19 @@ const DAY_DU = `[MODE: Audit | BUDGET: 100 w | RULES: ✓ đã đọc]\n\n${"x".
   assert.equal(ket.text, BINH_THUONG, "ngoặc cân và kết bằng dấu chấm thì KHÔNG phải là bị cắt");
 }
 
+/* ⑴f Đứt ở DẤU NỐI TREO, ngoặc vẫn cân. `looksTruncated()` có ba nhánh và đây là nhánh thứ
+   ba; thử phá 09/09 cho thấy bỏ hẳn nhánh này vẫn XANH với chín mép kia, tức nó chưa từng
+   được ghim. Ca thật: ChatGPT đứt ngay sau một tiêu đề mục — chữ đọc được trông rất tròn
+   trịa, ngoặc đóng đủ, nên hai nhánh trên KHÔNG bắt được. */
+{
+  const NUA_CAU = "[MODE: Audit | BUDGET: 100 w] Ba việc cần làm. Kết luận:";
+  const s = sanKhau([{ tuGiay: 0, text: NUA_CAU, stop: false, hidden: false }], { timeoutMs: 30000 });
+  const loi = await s.chay().then(() => null, (e) => e);
+  assert.ok(loi, "kết bằng một dấu nối đang treo thì câu chưa nói hết — KHÔNG được chốt");
+  assert.match(String(loi.message), /TEXT_INCOMPLETE/, "và phải gọi đúng tên: còn dở, không phải hết giờ trơn");
+  assert.equal(loi.detection?.truncated_chars, NUA_CAU.length, "kèm số ký tự đọc được");
+}
+
 /* ⑵ MÉP CHÍNH. Trang BỊ CHE, chữ mới đi được dòng tiêu đề rồi đứng yên mãi — đúng đường cong
    đã đo. Trước bản vá, đây là một SUCCESS với 27 ký tự. Nay phải KHÔNG chốt. */
 {
@@ -228,4 +241,4 @@ const DAY_DU = `[MODE: Audit | BUDGET: 100 w | RULES: ✓ đã đọc]\n\n${"x".
   assert.doesNotMatch(String(loi.message), /TAB_HIDDEN_NO_STREAM/, "đường ảnh giữ nguyên mã lỗi cũ");
 }
 
-console.log("B-43 tab bị che thì không chốt, chạy thật (10 mép): PASS");
+console.log("B-43 tab bị che thì không chốt, chạy thật (11 mép): PASS");
