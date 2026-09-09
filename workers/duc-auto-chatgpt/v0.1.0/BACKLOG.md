@@ -206,12 +206,31 @@ chữ), rồi thêm vào nhóm. Đừng xoá mục đang chạy được. Bốn 
 vô hại, nhưng phải ghi rõ trong `provider-adapter.js` là chúng **chưa từng khớp trên trang thật**,
 để phiên sau không tưởng nhóm này có 5 lớp bảo vệ trong khi thật ra có 1.
 
+**ĐO LẠI LIVE 09/09 — CHƯA ĐÓNG ĐƯỢC, và lý do là một khiếm khuyết của CHÍNH CÁI PROBE.**
+Tôi đã bắt được đúng cửa sổ gắn ảnh (xem `~~B-15~~`), nhưng probe **không soi tới cái chip**:
+
+- `buttons` của probe **nắp 40 mục**, và thanh bên ChatGPT của Đức (10 project + lịch sử hội
+  thoại) **chiếm hết 40** → bốn nút *"Remove file"* **không bao giờ vào danh sách**. Cái mục
+  B-14 cần xem thì probe nhìn không thấy.
+- Nhưng có một bằng chứng ÂM **đáng tin**: `attributeValues` là census `data-testid` **toàn tài
+  liệu**, top 12 **theo số lần**. Bốn chip mang cùng một testid sẽ đếm **4** và đứng **thứ hai**
+  (trên các mục `x2`/`x1` đang hiện). Nó **không có mặt**. Nên: **ChatGPT KHÔNG đặt `data-testid`
+  nào lên chip đính kèm** — không có mỏ neo testid để đổi sang.
+- `images` (nắp 15) lúc đó chỉ có 2 avatar → chip **không phải `<img>`**.
+- Thu được một mỏ neo cấu trúc ở chỗ khác, ghi lại kẻo mất: `div[data-conversation-screenshot-content]`
+  bọc vùng hội thoại (đo từ `generatedChains` cùng buổi).
+
+**Việc còn lại, và nó là việc CODE chứ không phải việc đo:** nới `dom_probe` để soi **trong `form`
+soạn thảo** (nút + cấu trúc chip, không bị thanh bên ăn hết nắp), rồi đo lại một lượt gắn ảnh —
+lượt đó **0 credit** vì job chữ là đủ. Đã ghi thành `B-48`.
+
+
 Lưu ý giảm nhẹ: lớp chặn "ảnh tham chiếu bị nhận nhầm thành ảnh sinh" **không** phụ thuộc riêng
 mục này — `content.js:237` còn hai tín hiệu độc lập (`role === "user"`, khớp theo tên file), và
 `attachmentContainer` dùng `form` trần nên miễn nhiễm với đổi nhãn. Nên đây là rủi ro *chẩn đoán*,
 không phải rủi ro *an toàn*.
 
-### B-15 · `uploadPending` chưa từng khớp — có thể nó không tồn tại
+### ~~B-15~~ · (ĐÓNG — ĐÃ ĐO LIVE 09/09) `uploadPending` đo SAI THỨ nó khai
 Đo live 2026-08-26 (Pilot-14): cả 3 mục (`[data-testid*="uploading"]`, `[aria-busy="true"]`,
 `[role="progressbar"]`) **không khớp lần nào** qua 52 lần dò có ảnh đính kèm đang hiện.
 
@@ -224,6 +243,58 @@ Hai khả năng cần phân biệt vì cách xử lý khác nhau:
 
 **Đừng viết code dựa trên nhóm này** cho tới khi phân biệt được. Hiện nó là niềm tin, không phải
 bằng chứng.
+
+**ĐÃ ĐO LIVE 09/09, và cả HAI giả thuyết đều sai.** Đức chốt *"làm nốt đi, đã reload, F5"*. Tôi
+dựng **4 ảnh PNG 480.533 byte** (tổng **1,83MB** — đúng bậc "ảnh 2MB" mà mục này đòi, chứ không
+phải 11–28KB), nạp qua `references.add`, gắn vào một job **`text_reasoning`** — nên phép đo này
+tốn **0 credit ảnh**. Rồi dò `diagnostics.dom_probe` **liên tục ~7 lần/giây** xuyên qua cửa sổ gắn.
+
+**VÌ SAO KHÔNG DÙNG ẢNH THẬT CỦA PILOT-08:** `Pilot-08/Input content/Meo1.png` (2,16MB) đúng là ảnh
+mà mục này nêu tên, nhưng nó là **ảnh cá nhân của Đức**. Phép đo cần **byte**, không cần đúng những
+điểm ảnh đó. Ảnh tự dựng đo y hệt mà không phải gửi ảnh cá nhân ra ngoài.
+
+**Số đo, cửa sổ gắn ảnh:**
+
+| | |
+|---|---|
+| chip đính kèm xuất hiện | `14:34:58.374` |
+| chip còn thấy tới | `14:35:02.191` → **cửa sổ 3,82 giây** |
+| bấm Gửi (`submitted_at`) | `14:35:00.238` — **1,86 giây** sau khi chip hiện |
+| số lượt dò TRONG cửa sổ | **~27** (nhịp ~7Hz) |
+| `attachmentPreview` | `0/0/0/0/**4**` — chỉ mục thứ 5 (`aria-label*="Remove file"`) khớp, đúng 4 ảnh |
+| `uploadPending` trong cửa sổ | **`0/0/0` MỌI LƯỢT** |
+
+**Nhưng nhóm này KHÔNG chết — nó đo SAI THỨ.** Cùng buổi, ở lượt job ảnh, `dom_probe` bắt được:
+
+    +98,4s   upload=[0/**1**/0]  pending=true  gen=true
+
+Tức `[aria-busy="true"]` **khớp** — nhưng khớp lúc **ĐANG SINH ẢNH**, không phải lúc upload. Nên
+tên nhóm và thứ nó đo là hai chuyện khác nhau. **Hai hệ quả, và cái thứ hai là lỗi thật:**
+
+⑴ `attachmentPending` trong cổng sẵn-sàng (`sidepanel.js` qua `DacChatReadiness.evaluate`) **không
+   đo upload**. Vô hại, vì `generating` đã chặn sẵn ca đó.
+⑵ **`waitForReferenceImagesReady` có điều kiện `&& !uploadIsPending()`.** Nên nếu gắn ảnh **trong
+   lúc trang đang sinh** (lượt trước chưa xong), vòng chờ block **15 giây** rồi **NÉM**
+   *"Required reference images did not all become ready before the prompt was sent."* — một lỗi
+   **nói sai nguyên nhân**: ảnh đã sẵn, thứ chưa xong là lượt sinh của người khác. → `B-49`.
+
+**Còn cái LO BAN ĐẦU thì KHÔNG tái hiện, và bằng chứng là end-to-end:** ChatGPT trả về đúng bốn
+dòng, khớp chính xác bốn ảnh tôi vẽ ra (`response_char_count: 202`, không phải dòng
+`KHONG NHAN DUOC ANH` 24 ký tự):
+
+    REF-A-HINH-TRON-DO.png = hình tròn + màu đỏ
+    REF-B-HINH-VUONG-XANH.png = hình vuông + màu xanh dương
+    REF-C-TAM-GIAC-VANG.png = hình tam giác + màu vàng
+    REF-D-DAU-CONG-XANH-LA.png = dấu cộng + màu xanh lá
+
+Nên **1,83MB tới máy chủ nguyên vẹn**, và lớp chắn thật là `previewsReady` (`attachmentPreviewCount`
+đủ số ảnh) — nó **có** làm việc. Job `Q001`: **SUCCESS**, `persistence_verified: true`.
+
+**Không gỡ nhóm `uploadPending` trong lượt này** — gỡ là đụng cổng sẵn-sàng, tức đổi luật an toàn,
+việc của Đức (`AGENTS.md` 2.4). Đã ghi thành `B-49` kèm số đo, để lượt sau không phải đo lại.
+
+- **đóng khi:** đã đóng — phép đo ở trên là điều kiện đóng.
+
 
 ### ~~B-16~~ · **ĐÃ ĐÓNG 2026-09-06** — `MISSING_REFERENCE` bị bọc thành `INTERNAL_ERROR`
 Bắt được live 2026-08-26: gọi `jobs.add` với token ảnh chưa có file trả về
@@ -1647,6 +1718,43 @@ lập và không đốt một credit chỉ để hỏi** — lượt chạy ản
 sẵn `imageCandidateCount` + `generatedChains`. Nếu hoá ra tab bị che **không** vẽ ảnh thì đó là một
 mục KHÁC (job ảnh cần tab hiện, hoặc tải theo URL thay vì chờ DOM sẵn sàng), không phải mục này.
 
+**VẾ CUỐI ĐÃ ĐO LIVE 09/09, VÀ NHÁNH TÔI DỰ PHÒNG Ở TRÊN CHÍNH LÀ NHÁNH XẢY RA.** Đức chốt
+*"làm nốt đi, đã reload, F5"*. Tôi chạy job ảnh `Q002` (prompt mới, một đèn bàn tối giản) trên
+**đúng cái tab đang bị che**, và dò `dom_probe` liên tục suốt lượt sinh. **Tốn 1 credit ảnh.**
+
+**Câu trả lời có HAI nửa, và chúng ngược nhau:**
+
+⑴ **Tab bị che CÓ vẽ ra `<img>` sinh.** Đo lúc `14:47:57`, `visibility: hidden`, `docFocused: false`:
+
+    generatedChains = [{ alt: "Generated image: Minimalist Lamp on Wooden Table",
+                         chain: "img < div < … < div[data-conversation-screenshot-content=\"\"] < div" }]
+    imageCandidateCount: 4 → 7      assistantCount: 3 → 4
+
+⑵ **NHƯNG BITMAP KHÔNG GIẢI MÃ XONG, nên runner KHÔNG nhận.** Job `Q002` chạy hết **300 giây** rồi
+   thành `INTERRUPTED` / `POST_SUBMIT_UNCERTAIN`, lỗi `OUTPUT_DETECTION_TIMEOUT: NO_NEW_IMAGE`.
+   `detection_diagnostics` nói thẳng nguyên nhân, và nó **không** phải "không có ảnh mới":
+
+| ba ứng viên mới | role | input | visible | **ready** |
+|---|---|---|---|---|
+| `252e1cbc` | assistant | false | true | **false** |
+| `83ab286c` | assistant | false | true | **false** |
+| `84ab29ff` | assistant | false | false | **false** |
+
+   `ready` = `image.complete && image.naturalWidth > 0`. **3/3 đều false**, nên `eligible: 0`.
+   Có ảnh mới, quy đúng cho assistant, không phải ảnh input, 2/3 nhìn thấy được — **chỉ là Chrome
+   chưa giải mã xong bitmap trên tab bị che.**
+
+**Nên kết luận cuối, và nó là một luật vận hành, không phải một mục nợ:** **job ảnh cần tab HIỆN.**
+Job **chữ** thì tab bị che vẫn xong (B-43 lo phần đó, và `Q001` cùng buổi SUCCESS thật). Đã ghi
+thành `B-47`.
+
+**Và một câu tôi viết ở trên phải đảo:** *"che cửa sổ chỉ làm CHỮ không vẽ xong"* — **sai một nửa.**
+Nó cũng làm **bitmap ảnh** không giải mã xong. Phần đúng còn lại: che cửa sổ **không** làm mù việc
+phát hiện **lượt** (`assistantCount` 3 → 4 vẫn chạy), nên `DETECTION_BLIND` vẫn không phải cái mà
+tab bị che gây ra. Tôi kết luận sớm vì lúc đó hội thoại không có ảnh sinh nào để đo — và tôi đã
+ghi rõ giới hạn đó, nên nó bị bắt trong ngày chứ không nằm im.
+
+
 **Bài học, và nó đáng hơn cả kết luận:** tiền đề *"tab bị che làm bộ dò ảnh mù"* là một suy diễn tôi
 kéo từ B-43 — nơi tab bị che **thật sự** làm chữ không vẽ — sang một cơ chế **khác**, mà **không
 đo**. Chính mục này đã tự dặn *"Đo trước, đừng đoán"*, và phép đo mất **một lệnh chỉ-đọc**.
@@ -2134,6 +2242,80 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
   KHÔNG ai nhìn**. Nên nó là **tiện lợi**, không phải đường duy nhất, và vế live chưa đo được
   **không còn chặn gì**. Lý do nó vẫn sống, một câu: cửa vừa bị gỡ **suy ra một điều phủ định từ
   việc không thấy** (hỏng MỞ), còn nó **đọc một câu nói thẳng** (hỏng ĐÓNG).
+## Đo live 09/09 (lượt 9) — bốn khiếm khuyết MỚI, đều có số
+
+Bốn mục dưới đây sinh ra từ đúng hai lượt chạy: một job **chữ** có 4 ảnh mẫu 1,83MB (0 credit ảnh)
+và một job **ảnh** (1 credit). Không mục nào là suy diễn — mỗi mục kèm số đo của nó.
+
+### B-47 · (P1) Job ảnh trên tab BỊ CHE luôn thất bại, và thông điệp lỗi nói SAI nguyên nhân
+Đo live 09/09, job `Q002`. Tab `visibility: hidden` → `<img>` sinh **có** được vẽ (alt
+`"Generated image: …"`) nhưng `image.complete && naturalWidth > 0` là **false ở cả 3/3 node**, nên
+`eligible: 0` và job chết `OUTPUT_DETECTION_TIMEOUT: NO_NEW_IMAGE` sau **300 giây**. Số đo đầy đủ ở
+`~~B-46~~`.
+
+**Hai việc, và chúng khác hạng:**
+
+⑴ **Thông điệp lỗi (rẻ, sửa được ngay):** `NO_NEW_IMAGE` là **nói sai** — có ảnh mới, chỉ là chưa
+   `ready`. Đúng phải là một mã riêng kiểu `IMAGE_NOT_DECODED` kèm câu chỉ đường *"mở tab lên rồi
+   chạy lại"*. Thông điệp hiện tại đã đẩy **ít nhất hai** phiên (kể cả tôi) đi tìm lỗi selector và
+   lỗi quy thuộc, trong khi nguyên nhân là giải mã ảnh. Đây là mục cùng họ với `B-16`.
+⑵ **Luật vận hành (cần Đức chốt):** job ảnh **đòi tab hiện**. Ba đường: **⒜** khai thành luật và
+   cho cổng sẵn-sàng **từ chối trước khi gửi** nếu `document.visibilityState !== "visible"` (rẻ,
+   fail-closed, nhưng cấm một thứ đang chạy được nếu Đức để tab hiện); **⒝** thử `decode()` /
+   `loading="eager"` để ép giải mã (chưa đo, có thể không có quyền); **⒞** tải theo URL thay vì
+   chờ DOM sẵn sàng (to nhất, và đụng luật quy thuộc). **Tôi khuyên ⒜ + ⑴.** Không tự làm ⑵ vì nó
+   là đổi luật an toàn (`AGENTS.md` 2.4).
+
+- **đóng khi:** ⑴ đã vá và có phép ghim; ⑵ Đức chốt một trong ba đường và nó được khai vào `decisions.md`.
+
+### B-48 · (P2) `dom_probe` không soi được chip đính kèm — nắp 40 nút bị thanh bên ăn hết
+Đo live 09/09. `buttons` nắp **40 mục**; thanh bên ChatGPT của Đức (10 project + lịch sử) chiếm
+**hết 40**, nên bốn nút *"Remove file"* của chip đính kèm **không bao giờ vào danh sách** — đúng cái
+mục `B-14` cần xem. Nắp là đúng (envelope 1MB), chỗ sai là **không có mục nào soi theo phạm vi**.
+
+Việc: thêm vào probe một trường **soi trong `form` soạn thảo** (nút + cấu trúc chip). Rồi một lượt
+job **chữ** có ảnh mẫu là đo được `B-14` — **0 credit**. Cần Đức nạp lại tiện ích sau khi vá.
+
+Ghi kèm, kẻo mất: census `data-testid` toàn tài liệu **không có** mục nào liên quan đính kèm, và
+bốn chip cùng testid sẽ đếm 4 → đứng thứ hai → vắng mặt là **bằng chứng thật**: ChatGPT **không**
+đặt `data-testid` lên chip. Nên `B-14` phải tìm mỏ neo theo **hình dạng DOM**, không phải testid.
+
+- **đóng khi:** probe có trường soi-trong-`form`, và `B-14` đo được bằng một lượt 0 credit.
+
+### B-49 · (P2) `uploadPending` đo SAI THỨ nó khai, và nó có thể làm job gắn ảnh chết oan
+Đo live 09/09 (số đầy đủ ở `~~B-15~~`): trong cửa sổ upload thật (1,83MB, **3,82 giây**, ~27 lượt
+dò) cả ba mục **0/0/0**; nhưng lúc **đang sinh ảnh** thì `[aria-busy="true"]` **khớp**. Nên nhóm này
+đo **"trang đang bận"**, không phải **"ảnh đang upload"**.
+
+**Lỗi thật nằm ở `waitForReferenceImagesReady`:** điều kiện `&& !uploadIsPending()` nghĩa là gắn ảnh
+trong lúc trang **đang sinh** (lượt trước chưa xong) sẽ block 15 giây rồi **ném** *"Required
+reference images did not all become ready before the prompt was sent."* — ảnh đã sẵn, thứ chưa
+xong là lượt sinh của người khác. Chưa bắt được live vì runner chạy tuần tự, nhưng `chat.say` và
+một lượt Đức gõ tay đều mở được ca đó.
+
+Việc: bỏ `!uploadIsPending()` khỏi vòng chờ (lớp chắn thật là `previewsReady`, đã đo là **có** làm
+việc), và đổi tên nhóm cho đúng thứ nó đo. **Đụng cổng sẵn-sàng → cần Đức chốt** (`AGENTS.md` 2.4).
+
+- **đóng khi:** Đức chốt, vá xong, và có phép ghim cho ca "gắn ảnh khi trang đang sinh".
+
+### B-50 · (P2) Ảnh mẫu lớn làm side panel không phản hồi hàng phút — bridge báo timeout trong khi mutation VẪN LÀNH
+Đo live 09/09, lặp lại suốt buổi. Sau khi nạp ~1,9MB ảnh mẫu, **mọi** lời gọi bridge báo
+`REQUEST_TIMEOUT` trong **hàng phút**, kể cả `ping` và các method **chỉ đọc** — trong khi mutation
+**vẫn vào**. Bằng chứng: `references.add` ảnh 1 và 2 báo timeout mà **vẫn lành**; `jobs.update` báo
+timeout rồi **thành công** khi thử lại **cùng `--request-id`**; đếm được **4–5** lần timeout liên
+tiếp trước **mỗi** lần OK.
+
+Nghi phạm (chưa tách được, nên đừng vá theo phỏng đoán): `renderReferenceGallery()` dựng lại toàn
+bộ `<img>` gallery từ data-URL 640KB **mỗi lần mutation**, cộng một checkpoint XLSX mỗi mutation
+(đếm được **v01 → v12** trong một buổi).
+
+**Vì sao đáng ghi chứ không bỏ qua:** *"timeout"* đọc y hệt *"thất bại"*, mà thật ra là **thành
+công**. Thứ cứu buổi hôm nay là **mọi mutation đều idempotent theo `request-id`** — nếu không, một
+lượt thử lại "vô hại" đã nhân đôi việc. Một tác nhân AI khác, hoặc chính Đức, rất dễ đọc sai chỗ này.
+
+- **đóng khi:** tách được nguyên nhân bằng phép đo (gallery hay checkpoint), và panel còn trả lời
+  được các method chỉ đọc trong lúc nạp ảnh lớn.
+
 ## KẾ HOẠCH TRIỂN KHAI — chốt 09/09, viết để sống qua một lượt compact
 
 Đức yêu cầu *"lên kế hoạch triển khai trước khi tôi compact"*. Nên kế hoạch nằm **ở đây**, không

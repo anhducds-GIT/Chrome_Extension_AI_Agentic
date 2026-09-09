@@ -689,3 +689,32 @@ chốt `~~B-20~~` trong sổ nợ. **Đức nói "gỡ đi" là tôi gỡ.**
 
 **Còn lại cho Đức, một việc:** cho chạy **một job ảnh thật, đính ảnh mẫu ~2MB** — trả lời ba câu
 cùng lúc (`B-46` vế cuối · `B-14` · `B-15`). Mục ⓑ nay mang dấu `@Đức:bấm` nên đã lên bảng.
+
+## 2026-09-09 (lượt 9) · `claude-gpt-chay-het-job` — ba câu trả lời bằng hai lượt chạy, và bốn khiếm khuyết mới
+
+**Làm gì.** Đức chốt *"làm nốt đi, đã reload, F5"*. **Tách** phép đo làm hai để không đốt credit
+ảnh cho hai câu không cần ảnh: một job **chữ** có 4 ảnh mẫu **1,83MB** (0 credit) và một job
+**ảnh** (1 credit). Dò `dom_probe` **~7 lần/giây** xuyên cửa sổ gắn. Số đo đầy đủ ở sổ nợ.
+
+**`B-15` ĐÓNG — khác cả hai giả thuyết.** Cửa sổ gắn **3,82 giây**, ~**27** lượt dò trong đó,
+`uploadPending` **0/0/0 mọi lượt**; nhưng lúc **đang sinh ảnh** thì `[aria-busy="true"]` **khớp**.
+Nhóm đó đo *"trang đang bận"*, không phải *"ảnh đang upload"*. Cái lo ban đầu **không** tái hiện —
+ChatGPT tả đúng cả bốn ảnh, `Q001` SUCCESS. Lỗi thật lộ ở `waitForReferenceImagesReady` → `B-49`.
+
+**`B-46` VẾ CUỐI ĐÓNG — nhánh xấu là nhánh xảy ra.** Tab bị che **CÓ** vẽ `<img>` sinh, **nhưng
+bitmap không giải mã xong**: `ready:false` ở **3/3** node → `Q002` chết `NO_NEW_IMAGE` sau **300
+giây**. **Job ảnh cần tab HIỆN.** Thông điệp lỗi cũng **nói sai nguyên nhân** → `B-47`.
+
+**Một câu tôi phải đảo:** lượt 7 tôi viết *"che cửa sổ chỉ làm CHỮ không vẽ xong"* — **sai một
+nửa**, nó cũng làm bitmap ảnh không giải mã. Phần đúng còn lại: che **không** làm mù việc phát
+hiện **lượt**. Tôi kết luận sớm vì lúc đó không có ảnh sinh nào để đo — nhưng đã **ghi rõ giới hạn
+đó**, nên nó bị bắt trong ngày chứ không nằm im.
+
+**`B-14` chưa đóng, vì chính cái probe mù:** `buttons` nắp 40 bị thanh bên của Đức chiếm hết →
+`B-48`. Kèm bằng chứng âm: ChatGPT **không** đặt `data-testid` lên chip đính kèm.
+
+**Không dùng ảnh cá nhân của Đức** (`Meo1.png`): phép đo cần **byte**, không cần đúng điểm ảnh đó.
+Tôi tự dựng 4 PNG mỗi ảnh một hình một màu, nên câu trả lời của ChatGPT **tự chứng minh** upload
+tới máy chủ.
+
+**Mới:** `B-47` `B-48` `B-49` `B-50`. **Đức cần chốt `B-47`⑵ và `B-49`** — cả hai đụng cổng sẵn-sàng.
