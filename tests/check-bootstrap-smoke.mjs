@@ -897,8 +897,8 @@ const chay = (deps) => {
       `bien_ky_tu_${hau} phai nam trong dai 30-40% duoi tran nhu Duc chot`);
   }
   /* Thuoc goi do BO, khong do mot file (ADR-0033 (2)). Ghim o cong: no phai cong phan goc vao. */
-  assert.match(gate, /kyTu \+ n > nangNhat/,
-    "thuoc goi phai do BO (phan goc + AGENTS.md cua goi), khong do rieng file cua goi");
+  assert.match(gate, /nen \+ n > nangNhat/,
+    "thuoc goi phai do BO (nen dinh tuyen + file cua goi), khong do rieng mot file");
   ok("bien tach khoi tran o ca hai thuoc, va thuoc goi do BO chu khong do mot file");
 }
 
@@ -914,8 +914,8 @@ const chay = (deps) => {
 {
   const ct = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
   const ds = ct.luat?.nap?.mo_phien_goi;
-  assert.ok(Array.isArray(ds) && ds.includes("AGENTS.md"),
-    "phai khai `nap.mo_phien_goi` va no phai co AGENTS.md cua goi");
+  assert.ok(Array.isArray(ds) && ds.length,
+    "phai khai `nap.mo_phien_goi` — danh sach file cua goi ma trinh tu mo phien bat doc");
 
   const agents = fs.readFileSync(path.join(ROOT, "AGENTS.md"), "utf8");
   const mucMo = agents.split(/\n(?=## )/).find((m) => /\*\*Mở:\*\*/.test(m));
@@ -936,6 +936,38 @@ const chay = (deps) => {
   assert.ok(!/HANDOFF\.md/.test(truocCanhBao),
     "trinh tu mo phien khong duoc bat nap HANDOFF.md — no la ~70% hoa don cu (ADR-0034)");
   ok("hook: danh sach bo mo phien o cau hinh KHOP voi AGENTS.md muc 1, va muc 1 khong nap HANDOFF");
+}
+
+/* ---- TRAN CUNG cua bo mo phien (ADR-0035 (4)) ------------------------------
+ *
+ * Duc chot 09/09: 2.000-3.000 token moi phien dung goi, va "phai luon duy tri o so nho nhu vay la
+ * MUC TIEU CUA VIEC COMPILE". Moi thuoc truoc do trong repo la thuoc coc: no bao do, roi ai do
+ * nang no len (hom nay chinh toi nang mot cai). Tran nay khong co duong do — no chan ngay luot
+ * SINH. Nen thu phai ghim la: tran con do, no du nho, va cong dong CUNG MOT cong thuc voi bo sinh
+ * (neu hai ben cong khac nhau thi mot ben lai do sai cho — benh da no hai lan trong mot ngay). */
+{
+  const ct = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
+  const ph = ct.luat?.phien_goi;
+  assert.ok(ph, "phai khai `luat.phien_goi` — bo mo phien cua goi");
+  assert.equal(typeof ph.tran_ky_tu, "number", "phai khai TRAN CUNG `phien_goi.tran_ky_tu`");
+  assert.ok(ph.tran_ky_tu <= 6600,
+    `tran bo mo phien phai <= 6600 ky tu (~3.000 token, Duc chot 09/09), dang la ${ph.tran_ky_tu}`);
+  assert.ok(Array.isArray(ph.dinh_tuyen) && ph.dinh_tuyen.length,
+    "phai khai `phien_goi.dinh_tuyen` — phan nen mot phien goi nap truoc PHIEN.md");
+  assert.ok(typeof ph.core === "string" && ph.core, "phai khai `phien_goi.core`");
+
+  const sinh = fs.readFileSync(path.join(ROOT, "scripts", "rule-compile.mjs"), "utf8");
+  assert.match(sinh, /PHIEN_QUA_TRAN/, "bo sinh phai co ma loi rieng cho luot vuot tran");
+  assert.match(sinh, /boKyTu > tran/,
+    "bo sinh phai so CA BO voi tran, khong so rieng PHIEN.md");
+  assert.match(sinh, /loi\+\+; continue;[\s\S]{0,80}const duong = path\.join\(ROOT, thuMuc, "PHIEN\.md"\)/,
+    "vuot tran phai TU CHOI GHI (tang loi roi continue), khong phai canh bao roi van ghi");
+
+  // Cong phai cong dung cong thuc do: dinh_tuyen + mo_phien_goi, khong phai moi_phien + ...
+  const gate2 = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
+  assert.match(gate2, /phien_goi\?\.dinh_tuyen/,
+    "cong phai lay nen cua phien GOI tu `phien_goi.dinh_tuyen`, giong bo sinh");
+  ok("tran CUNG cua bo mo phien: con do, <= 3.000 token, tu choi ghi, va cong cong cung cong thuc");
 }
 /* ---- CHỐT commit-msg: NỬA CÒN LẠI CỦA N-40 — N-49 -------------------------
  *

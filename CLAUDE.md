@@ -1,6 +1,10 @@
-# CLAUDE.md
+# CLAUDE.md — mở phiên: đọc ĐÚNG MỘT file
 
-Luật của repo này nằm ở `AGENTS.md` cùng thư mục — **một bản luật, ba cửa vào**. Đừng chép luật
-sang đây; sửa luật thì sửa `AGENTS.md`.
+**Đụng một gói extension** → `workers/<gói>/<phiên-bản>/PHIEN.md`. Máy sinh, tự chứa, ~2.900 token:
+lõi luật + luật riêng của gói + trạng thái mới nhất. **Không cần đọc gì khác để bắt đầu.**
 
-@AGENTS.md
+**Làm việc luật, điều phối, hay hạ tầng repo** → `AGENTS.md` cùng thư mục này.
+
+Luật đầy đủ ở `AGENTS.md`; **đừng chép luật sang đây**. Vì sao chia hai cửa:
+[ADR-0035](docs/adr/0035-mot-file-cho-mot-phien-gap.md) — trước đó mọi phiên tự nạp cả hiến pháp
+gốc, và một phiên đụng gói trả hơn 12.000 token trước khi gõ dòng đầu tiên.

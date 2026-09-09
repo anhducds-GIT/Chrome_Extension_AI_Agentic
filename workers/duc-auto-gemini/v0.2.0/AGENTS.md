@@ -27,46 +27,28 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
 > **Mục này CỐ Ý gần giống gói ChatGPT — đừng gộp.** Lý lẽ đầy đủ, kèm ba chỗ phép ③ đã bắt
 > được ở chính nhánh này: [ADR-0032](../../../docs/adr/0032-ba-goi-giu-luat-rieng-gan-giong-nhau.md).
 
-1. **Không sửa/xoá/regenerate bất cứ gì trong `pilot-*/`, `Pilot-*/`, `Batch-*/`,
-   `evidence*/`.** Đây là bằng chứng vận hành của các lỗi đã tìm ra và đã sửa —
-   ghi đè lên là xoá mất bằng chứng. **Chỉ THÊM.** Cùng luật với `AGENTS.md`
-   gốc mục 5 (*Không bao giờ*), và cố ý viết theo **hình dạng tên**, không theo
-   danh sách.
-2. **Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.**
-   Đây là yêu cầu bảo mật — nội dung ảnh/text từ gemini.google.com đi vào side panel
-   có quyền cao, phải build DOM node, không được ghép chuỗi HTML.
-   `tests/artifact-integrity-smoke.mjs` chặn build nếu có.
-3. **Chữ operator nhìn thấy luôn tiếng Việt** (`operator-messages-core.js`,
-   `halt-instructions-core.js`...); **mã lỗi (CODE) luôn tiếng Anh** vì nó là
-   định danh trong audit JSONL, Result ledger, và test. Không bao giờ để một
-   test bảo mật assert vào câu chữ hiển thị (caption/label) — chỉ assert vào
-   logic/wiring.
-4. **Commit: AI được tự commit (kể cả main) từ 2026-08-24** — quyết định của
-   Đức, ghi trong `decisions.md`. Bốn điều kiện bắt buộc: test xanh trước khi
-   commit; không bao giờ `push --force`/rewrite history; mỗi commit có 1 dòng
-   Log trong `HANDOFF.md`; xoá file / sửa pilot evidence / thay đổi ranh giới
-   Run vẫn phải hỏi Đức.
-5. **Agent Bridge: `run.start` / `run.pause` / `run.resume` không tồn tại và
+1. **Bốn luật ⑴–⑷ cũ nay nằm ở lõi dùng chung** (`workers/_shared/LUAT-CORE.md`): bằng chứng chỉ
+   THÊM · cấm `.innerHTML`/`.outerHTML`/`insertAdjacentHTML` · chữ operator tiếng Việt, mã lỗi
+   tiếng Anh · bốn điều kiện commit. **Đừng chép lại đây.** Phần riêng của gói này:
+   `tests/artifact-integrity-smoke.mjs` chặn build nếu có HTML ghép chuỗi; chữ operator ở
+   `operator-messages-core.js` và `halt-instructions-core.js`; **không phép kiểm bảo mật nào được
+   assert vào câu chữ hiển thị** — chỉ assert vào logic/wiring.
+2. **Agent Bridge: `run.start` / `run.pause` / `run.resume` không tồn tại và
    sẽ không bao giờ được thêm vào mà không có quyết định mới, ghi lại trong
    `decisions.md`.** Bridge là ingress + observability, không phải remote
    execution. Side panel luôn là executor duy nhất; đóng panel → mọi lệnh
    Bridge liên quan Queue/workbook trả `EXECUTOR_UNAVAILABLE`, không có runner
-   nền nào thay thế. *Ngoại lệ DUY NHẤT, và nó tiêu credit thật:* method
-   **`run.trial`** có thật trong gói này
-   ([ADR-0027](docs/adr/0027-ai-duoc-tu-khoi-dong-trial-run-qua-bridge-trong.md)),
-   với bốn nắp cứng — dev-toggle phải BẬT · **≤ 30 job một chuỗi**
-   ([ADR-0032](docs/adr/0032-tran-chuoi-trial-10-30-job-10-job-van-la-it.md),
-   nâng từ 10) · hai trial cách nhau ≥ 5 phút
-   ([ADR-0028](docs/adr/0028-bo-tran-6-trial-gio-thay-bang-hai-trial-lien-tiep.md))
-   · một trial là **một chuỗi liên tục**
-   ([ADR-0031](docs/adr/0031-bo-tran-2-job-trial-mot-trial-chay-lien-tuc-ca.md)).
-   Trần thật khai ở `MAX_TRIAL_JOBS` trong `dev-trial-core.js` — đừng gõ con số
-   vào chỗ khác. **`run.start` thật vẫn cấm vĩnh viễn**: thấy mình đang gỡ nó
-   khỏi danh sách cấm thì dừng lại.
-6. **Ba luật chung cho mọi extension nằm ở [`workers/_shared/AGENTS.md`](../../_shared/AGENTS.md)** —
-   *không làm yếu một lớp bảo vệ đã có* (cũng là `AGENTS.md` gốc mục 5) · *sửa `.js` thì nhắc Đức
-   reload* · *preview pane cấm, harness Chrome thật thì được*. Chép lại đây là quay lại đúng cái
-   bệnh vừa chữa: bản chép ở nhánh này từng dạy một luật đã chết suốt 16 ngày.
+   nền nào thay thế. *Ngoại lệ DUY NHẤT, và nó **tiêu credit thật**:* method **`run.trial`**
+   ([ADR-0027](docs/adr/0027-ai-duoc-tu-khoi-dong-trial-run-qua-bridge-trong.md)) với **bốn nắp
+   cứng** — dev-toggle BẬT · ≤ 30 job một chuỗi
+   ([ADR-0032](docs/adr/0032-tran-chuoi-trial-10-30-job-10-job-van-la-it.md)) · hai trial cách
+   nhau ≥ 5 phút ([ADR-0028](docs/adr/0028-bo-tran-6-trial-gio-thay-bang-hai-trial-lien-tiep.md))
+   · một trial là một chuỗi liên tục
+   ([ADR-0031](docs/adr/0031-bo-tran-2-job-trial-mot-trial-chay-lien-tuc-ca.md)). Con số thật ở
+   `MAX_TRIAL_JOBS` trong `dev-trial-core.js`. **`run.start` cấm vĩnh viễn.**
+3. **Ba luật chung cho mọi extension ở [`workers/_shared/AGENTS.md`](../../_shared/AGENTS.md)** —
+   *không làm yếu lớp bảo vệ đã có* · *sửa `.js` thì nhắc Đức reload* · *preview pane cấm, harness
+   Chrome thật thì được*. **Đừng chép lại đây**: bản chép ở nhánh này từng dạy một luật đã chết 16 ngày.
 
 ## Core / Companion của project này
 
@@ -109,6 +91,7 @@ chứng bác bỏ · `ADR-0051` bất đối xứng **cố ý** giữa `run.stop
 
 | File | Vai trò |
 |---|---|
+| `PHIEN.md` | **MÁY SINH — đừng sửa tay.** Bó mở phiên: lõi luật + luật riêng của gói + trạng thái mới nhất. Sinh lại: `node scripts/rule-compile.mjs --sinh` (phải giữ khoá vùng). Trần CỨNG ~3.000 token, vượt là bộ sinh từ chối — [ADR-0035](../../../docs/adr/0035-mot-file-cho-mot-phien-gap.md) |
 | `README.md` | Tổng quan, kiến trúc, cài đặt, Agent Bridge (kỹ thuật) — đóng vai design_brief |
 | `AGENTS.md` | File này |
 | `STATUS.md` | Trạng thái vận hành một trang cho mắt Đức; frontmatter sinh `DASHBOARD.md` ở gốc. Chỉ TRỎ, không chép. Schema: `STATUS.template.md` ở gốc repo |

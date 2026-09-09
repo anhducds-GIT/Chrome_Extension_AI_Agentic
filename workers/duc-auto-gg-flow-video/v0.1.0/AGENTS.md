@@ -57,6 +57,7 @@ debug tự chạy khỏi mượn tay Đức.
 
 | File / thư mục | Vai trò |
 |---|---|
+| `PHIEN.md` | **MÁY SINH — đừng sửa tay.** Bó mở phiên: lõi luật + luật riêng của gói + trạng thái mới nhất. Sinh lại: `node scripts/rule-compile.mjs --sinh` (phải giữ khoá vùng). Trần CỨNG ~3.000 token, vượt là bộ sinh từ chối — [ADR-0035](../../../docs/adr/0035-mot-file-cho-mot-phien-gap.md) |
 | `manifest.json` | MV3, match `https://labs.google/fx/tools/flow/*` |
 | `README.md` | Tổng quan, trạng thái Bridge, cài đặt |
 | `AGENTS.md` | File này |

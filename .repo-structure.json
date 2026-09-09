@@ -345,19 +345,38 @@
         "CLAUDE.md",
         "AGENTS.md"
       ],
-      "tran_ky_tu_moi_phien": 6708,
+      "tran_ky_tu_moi_phien": 7223,
       "dich_ky_tu_moi_phien": 8000,
-      "tran_ky_tu_mot_goi": 25619,
-      "dich_ky_tu_mot_goi": 22000,
+      "tran_ky_tu_mot_goi": 6530,
+      "dich_ky_tu_mot_goi": 6600,
       "_doc_dich": "DICH la TRAN TUYET DOI; BIEN la dich that (65% cua tran) — ADR-0033 (1). May canh TRAN. Thuoc goi do BO: CLAUDE.md + AGENTS.md goc + AGENTS.md cua goi, nen tran cua bo = 2x tran cua mot nua — ADR-0033 (2).",
       "bien_ky_tu_moi_phien": 5200,
-      "bien_ky_tu_mot_goi": 14300,
+      "bien_ky_tu_mot_goi": 4400,
       "_doc_bo": "BO MO PHIEN = moi_phien + AGENTS.md cua goi + STATUS.md cua goi. Dung danh sach file AGENTS.md muc 1 bat doc (ADR-0034). HANDOFF.md CO Y khong nam trong bo — no la ~70% hoa don cu va nay nap theo yeu cau.",
       "mo_phien_goi": [
-        "AGENTS.md",
-        "STATUS.md"
+        "PHIEN.md"
       ],
-      "_doc_mo_phien_goi": "File cua GOI ma AGENTS.md muc 1 bat doc luc mo phien. Thuoc `mot_goi` cong dung danh sach nay, va mot phep ghim doi chieu no voi chinh muc 1 — them mot file vao muc 1 ma khong khai o day thi phep ghim DO. HANDOFF.md CO Y khong co trong danh sach (ADR-0034): no la ~70% hoa don cu, nay nap theo yeu cau."
+      "_doc_mo_phien_goi": "File cua GOI ma mot phien dung goi nap luc mo. Tu ADR-0035 chi con MOT file: PHIEN.md (may sinh, tu chua). AGENTS.md cua goi va STATUS.md thanh nguon cua no, khong con nam trong bo mo phien. Mot phep ghim doi chieu danh sach nay voi chinh CLAUDE.md — them file vao trinh tu mo ma khong khai o day thi DO."
+    },
+    "phien_goi": {
+      "_doc": "MOT file cho MOT phien dung goi (ADR-0035). May sinh PHIEN.md = loi luat dung chung + luat rieng cua goi (dedupe theo van tay) + ban chat trang thai tu STATUS.md. tran_ky_tu do CA BO: dinh_tuyen (CLAUDE.md) + PHIEN.md, va no la TRAN CUNG — vuot la bo sinh TU CHOI ghi va thoat 1, khong phai canh bao. Duc chot 09/09: 2.000-3.000 token moi phien dung goi, va giu no o do la MUC TIEU CUA VIEC COMPILE. Khong co duong nang tran nhu thuoc coc: muon them mot luat thi phai bo mot luat.",
+      "core": "workers/_shared/LUAT-CORE.md",
+      "truong_trang_thai": [
+        "lifecycle",
+        "last_verified",
+        "next_step",
+        "human_action"
+      ],
+      "tran_ky_tu": 6600,
+      "goi": [
+        "workers/duc-scouter/v0.1.0",
+        "workers/duc-auto-gemini/v0.2.0",
+        "workers/duc-auto-gg-flow-video/v0.1.0",
+        "workers/duc-auto-chatgpt/v0.1.0"
+      ],
+      "dinh_tuyen": [
+        "CLAUDE.md"
+      ]
     }
   }
 }

@@ -1073,22 +1073,33 @@ check("Kho chữ không phình", () => {
          ghim đối chiếu chính danh sách đó với `AGENTS.md` mục 1. Thêm một file vào mục 1 mà quên
          khai ở đây thì phép ghim ĐỎ, nên thước không thể tụt lại sau luật. */
       const cacFile = structure?.luat?.nap?.mo_phien_goi ?? ["AGENTS.md"];
+      /* Nền của phiên GÓI khác nền của phiên gốc: nó nạp `CLAUDE.md` định tuyến rồi `PHIEN.md`,
+         KHÔNG nạp `AGENTS.md` (ADR-0035 ⑴). Dùng đúng `phien_goi.dinh_tuyen` mà bộ sinh dùng —
+         cổng và bộ sinh phải cộng cùng một công thức, nếu không thì một bên lại đo sai chỗ. */
+      const dinhTuyen = structure?.luat?.phien_goi?.dinh_tuyen;
+      let nen = kyTu;
+      if (Array.isArray(dinhTuyen) && dinhTuyen.length) {
+        nen = 0;
+        for (const f of dinhTuyen) {
+          try { nen += fs.readFileSync(path.join(ROOT, f), "utf8").length; } catch { /* thiếu thì thôi */ }
+        }
+      }
       for (const f of Object.keys(structure?.luat?.ra_soat ?? {})) {
         if (!/^workers\/.*\/AGENTS\.md$/.test(f)) continue;
         const thuMuc = path.dirname(f);
-        let n = 0, coAgents = false;
+        let n = 0, coFile = false;
         for (const ten2 of cacFile) {
-          try { n += fs.readFileSync(path.join(ROOT, thuMuc, ten2), "utf8").length; if (ten2 === "AGENTS.md") coAgents = true; }
-          catch { /* gói thiếu file đó thì bó nhẹ hơn, không phải lỗi */ }
+          try { n += fs.readFileSync(path.join(ROOT, thuMuc, ten2), "utf8").length; coFile = true; }
+          catch { /* gói chưa sinh file đó thì bỏ qua, không phải lỗi của thước */ }
         }
-        if (!coAgents) continue;
-        if (kyTu + n > nangNhat) { nangNhat = kyTu + n; ten = f; rieng = n; }
+        if (!coFile) continue;
+        if (nen + n > nangNhat) { nangNhat = nen + n; ten = `${thuMuc}/${cacFile.join(" + ")}`; rieng = n; }
       }
       if (nangNhat > nap.tran_ky_tu_mot_goi) {
         return {
           ok: false,
           msg: `NAP_MOT_GOI_PHINH: bó nặng nhất là ${nangNhat} ký tự (~${Math.round(nangNhat / 2.2)}`
-            + ` token) = ${kyTu} phần gốc + ${rieng} của ${ten}; thước cóc là`
+            + ` token) = ${nen} định tuyến + ${rieng} của ${ten}; thước cóc là`
             + ` ${nap.tran_ky_tu_mot_goi}. Đó là thứ một phiên làm gói đó nạp TRƯỚC KHI gõ dòng đầu`
             + ` tiên. Đích ${nap.dich_ky_tu_mot_goi ?? "?"}, biên ${nap.bien_ky_tu_mot_goi ?? "?"}.`,
         };

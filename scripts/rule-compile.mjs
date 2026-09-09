@@ -398,6 +398,56 @@ export function sinhKhoi({ soCai, dangKy, phamVi }) {
 
 const DUONG_SO_CAI = "docs/adr/";
 
+/* ---- PHIEN.md — MỘT file cho MỘT phiên đụng gói ---------------------------
+ *
+ * Đức chốt 09/09: một phiên đụng gói được nạp tối đa **2.000–3.000 token**, và *"phải luôn duy trì
+ * ở số nhỏ như vậy là mục tiêu của việc compile"*. Không nén tay được: chỉ riêng nền
+ * (`CLAUDE.md` toàn cục + `CLAUDE.md` repo + `AGENTS.md` gốc) đã là 3.900 token.
+ *
+ * Nên bó mở phiên gộp thành MỘT file máy sinh: lõi luật dùng chung + luật riêng của gói + bản
+ * chắt trạng thái. Hai vế làm nó **không phình lại được**:
+ *   ⑴ dedupe theo vân tay — luật gói trùng nghĩa với một dòng của lõi thì bị bỏ;
+ *   ⑵ TRẦN CỨNG — vượt là bộ sinh TỪ CHỐI ghi và thoát 1, không phải cảnh báo.
+ * Vế ⑵ mới là chỗ khác mọi thước trước đó: thước cóc báo rồi ai đó nâng nó lên; trần này chặn
+ * ngay lượt sinh, nên một luật mới muốn vào thì phải có một luật khác ra. */
+export function sinhPhienGoi({ core, luatGoi, trangThai, tenGoi }) {
+  const thanCore = core.replace(/^[\s\S]*?\n(?=## )/, "");
+  const vtCore = new Set();
+  for (const d of thanCore.split(/\r?\n/)) { const v = vanTay(d.trim()); if (v) vtCore.add(v); }
+
+  const giu = [], boTrung = [];
+  for (const d of String(luatGoi ?? "").split(/\r?\n/)) {
+    const v = vanTay(d.trim());
+    if (v && vtCore.has(v)) { boTrung.push(d.trim()); continue; }
+    giu.push(d);
+  }
+
+  const ra = [
+    `# PHIÊN — ${tenGoi}`,
+    "",
+    `<!-- ${MOC_SINH_PHIEN} -->`,
+    "",
+    "> **File này do MÁY sinh** — `node scripts/rule-compile.mjs --sinh`. Đừng sửa tay: sửa lõi ở",
+    "> `workers/_shared/LUAT-CORE.md`, sửa luật gói ở `AGENTS.md` của gói, sửa trạng thái ở",
+    "> `STATUS.md`. Đây là **toàn bộ** thứ một phiên đụng gói cần nạp lúc mở",
+    "> ([ADR-0035](../../../docs/adr/0035-mot-file-cho-mot-phien-gap.md)).",
+    "",
+    thanCore.replace(/\n+$/, ""),
+    "",
+    `## Luật riêng của gói ${tenGoi}`,
+    "",
+    giu.join("\n").replace(/^## .*\n+/, "").replace(/\n+$/, ""),
+    "",
+    "## Trạng thái mới nhất",
+    "",
+    trangThai.replace(/\n+$/, ""),
+  ].join("\n") + "\n";
+
+  return { noiDung: ra, boTrung };
+}
+
+export const MOC_SINH_PHIEN = "PHIEN MAY SINH: rule-compile --sinh. DUNG SUA TAY.";
+
 export const MOC_DAU = "<!-- KHOI MAY SINH: rule-compile --sinh. DUNG SUA TAY. -->";
 export const MOC_CUOI = "<!-- HET KHOI MAY SINH -->";
 
@@ -442,6 +492,55 @@ export function main(argv = process.argv.slice(2)) {
       }
       if (moi !== cu) { fs.writeFileSync(duong, moi); doi++; }
       console.log(`${moi === cu ? "y nguyên" : "đã sinh "}  ${dich}  — ${tong} quyết định đang sống`);
+    }
+    /* PHIEN.md — bó mở phiên của từng gói. Trần CỨNG: vượt là từ chối ghi. */
+    const ph = dangKy.phien_goi;
+    if (ph?.goi?.length) {
+      const core = fs.readFileSync(path.join(ROOT, ph.core), "utf8");
+      for (const thuMuc of ph.goi) {
+        const tenGoi = thuMuc.split("/")[1] ?? thuMuc;
+        let luatGoi = "", trangThai = "";
+        try {
+          const ag = fs.readFileSync(path.join(ROOT, thuMuc, "AGENTS.md"), "utf8");
+          luatGoi = (/\n(## Luật vàng[\s\S]*?)(?=\n## )/.exec(ag) ?? ["", ""])[1];
+        } catch { console.error(`THIEU_FILE: ${thuMuc}/AGENTS.md`); loi++; continue; }
+        if (!luatGoi) { console.error(`THIEU_LUAT_VANG: ${thuMuc}/AGENTS.md`); loi++; continue; }
+        try {
+          const st = fs.readFileSync(path.join(ROOT, thuMuc, "STATUS.md"), "utf8");
+          const fm = (/^---\r?\n([\s\S]*?)\r?\n---/.exec(st) ?? ["", ""])[1];
+          trangThai = (ph.truong_trang_thai ?? [])
+            .map((k) => (new RegExp(`^${k}:.*$`, "m").exec(fm) ?? [null])[0])
+            .filter(Boolean).map((d) => `- ${d}`).join("\n");
+        } catch { /* gói chưa có STATUS.md thì phần này rỗng */ }
+
+        const { noiDung, boTrung } = sinhPhienGoi({ core, luatGoi, trangThai, tenGoi });
+        /* Trần đo CẢ BÓ (`CLAUDE.md` định tuyến + `PHIEN.md`), không đo một file — đó là bài học
+           đắt nhất của ngày 09/09: hai lượt thước trước đều đo một file tiện đo và bỏ sót phần
+           lớn hoá đơn. Bó là thứ Đức đếm, nên bó là thứ bị chặn. */
+        const dinhTuyen = ph.dinh_tuyen ?? [];
+        let nenKyTu = 0;
+        for (const f of dinhTuyen) {
+          try { nenKyTu += fs.readFileSync(path.join(ROOT, f), "utf8").length; } catch { /* thiếu thì thôi */ }
+        }
+        const boKyTu = nenKyTu + noiDung.length;
+        const tran = ph.tran_ky_tu ?? Infinity;
+        if (boKyTu > tran) {
+          console.error(`PHIEN_QUA_TRAN: bó mở phiên của ${thuMuc} sẽ là ${boKyTu} ký tự`
+            + ` (~${Math.round(boKyTu / 2.2)} token) = ${nenKyTu} định tuyến + ${noiDung.length}`
+            + ` PHIEN.md; trần CỨNG là ${tran} (~${Math.round(tran / 2.2)} token) — KHÔNG ghi.`
+            + " Đây là trần Đức đặt 09/09, và nó chặn ngay lượt sinh chứ không chỉ cảnh báo:"
+            + " muốn thêm một luật thì phải bỏ một luật. Cửa ra rẻ nhất: rút chuyện kể trong"
+            + " `## Luật vàng` của gói sang ADR của gói.");
+          loi++; continue;
+        }
+        const duong = path.join(ROOT, thuMuc, "PHIEN.md");
+        let cu = null;
+        try { cu = fs.readFileSync(duong, "utf8"); } catch { /* lần đầu */ }
+        if (cu !== noiDung) { fs.writeFileSync(duong, noiDung); doi++; }
+        console.log(`${cu === noiDung ? "y nguyên" : "đã sinh "}  ${thuMuc}/PHIEN.md`
+          + `  — ${noiDung.length} ký tự (~${Math.round(noiDung.length / 2.2)} tok)`
+          + `${boTrung.length ? `, bỏ ${boTrung.length} dòng trùng lõi` : ""}`);
+      }
     }
     console.log(loi ? `
 CÒN ${loi} chỗ chưa sinh được.` : `

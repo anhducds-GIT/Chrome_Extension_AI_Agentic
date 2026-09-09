@@ -6,9 +6,10 @@
 
 ## 1. Một phiên
 
-**Mở:** file này → `AGENTS.md` của gói sắp đụng → **`STATUS.md`** của gói đó. **Đừng nạp
-`HANDOFF.md` lúc mở** — nó là ~70% hoá đơn token của một phiên (ADR-0034); mở khi cần biết phiên
-trước vấp gì.
+**Mở:** phiên **đụng một gói** đọc đúng **`PHIEN.md`** của gói đó — máy sinh, tự chứa, và đó là
+**toàn bộ** thứ cần để bắt đầu (ADR-0035). Phiên **luật · điều phối · hạ tầng** đọc file này.
+**Đừng nạp `HANDOFF.md` hay `AGENTS.md` của gói lúc mở** — chúng là nguồn của `PHIEN.md`, mở khi
+cần đào sâu (ADR-0034).
 **Làm:** một việc một lúc; phát sinh ngoài phạm vi ghi `BACKLOG.md`.
 **Đóng:** một dòng Log vào `HANDOFF.md` của gói · quyết định mới của Đức thành ADR · lỗi mới trên
 trang thật vào bảng lỗi của gói.
