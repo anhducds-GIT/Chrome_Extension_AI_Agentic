@@ -2500,6 +2500,20 @@ Nghi phạm (chưa tách được, nên đừng vá theo phỏng đoán): `rende
 bộ `<img>` gallery từ data-URL 640KB **mỗi lần mutation**, cộng một checkpoint XLSX mỗi mutation
 (đếm được **v01 → v12** trong một buổi).
 
+**ĐO LẠI 10/09 — loại được một nửa nghi phạm, KHÔNG phải bằng cách vá mà bằng cách đo lượt sạch.**
+Lượt M0/M3 hôm nay **không nạp một ảnh mẫu nào** — gallery rỗng — mà `output.configure` vẫn
+`REQUEST_TIMEOUT` hai lần liền, `ping` timeout **ba** lần, `run.status` timeout ngay giữa lượt chạy.
+Rồi **cùng những lệnh đó trả lời trong một giây** khi panel rảnh. Nên:
+- **`renderReferenceGallery()` được loại** — timeout xảy ra khi không có ảnh mẫu nào để dựng lại.
+- Nghi phạm còn lại là **lượt ghi checkpoint XLSX mỗi mutation** (đếm được **v01 → v11** riêng buổi
+  sáng nay), và nó khớp cả với chiều ngược lại: hễ panel rảnh là mọi lệnh nhanh trở lại.
+- Thêm một mảnh: **method chỉ đọc cũng chết theo**. Tức nghẽn nằm ở **một luồng duy nhất** của panel,
+  không phải ở riêng đường mutation — nên "cho phép đọc trong lúc ghi" là hướng vá, chứ không phải
+  làm cho lượt ghi nhanh hơn.
+
+Và một lần nữa hôm nay, `output.configure` **báo timeout mà đã ăn** (`v02` +
+`BRIDGE_OUTPUT_CONFIGURED` nằm trên đĩa). Khoá `--request-id` giữ cho lần thử lại không ăn hai lần.
+
 **Vì sao đáng ghi chứ không bỏ qua:** *"timeout"* đọc y hệt *"thất bại"*, mà thật ra là **thành
 công**. Thứ cứu buổi hôm nay là **mọi mutation đều idempotent theo `request-id`** — nếu không, một
 lượt thử lại "vô hại" đã nhân đôi việc. Một tác nhân AI khác, hoặc chính Đức, rất dễ đọc sai chỗ này.
@@ -2567,7 +2581,7 @@ một phép đo đúng về kỹ thuật mà sai về câu hỏi. Phép ghim nay
 
 - **đóng khi:** đã đóng — nghiệm thu live 09/09 cùng lượt với `~~B-36~~`.
 
-### B-53 · (ĐÃ VÁ 09/09, chờ nghiệm thu live) Quyền thư mục HẾT sau mỗi lần nạp lại tiện ích
+### ~~B-53~~ · (ĐÓNG 10/09 — nghiệm thu live) Quyền thư mục HẾT sau mỗi lần nạp lại tiện ích
 **Đo live 09/09**, ngay sau một lượt Đức nạp lại: `audit_durable: false` · *"đếm được **3 hồ sơ,
 0 còn quyền**"* · `checkpoint.verified: false`. Handle sống sót trong IndexedDB, **quyền thì không**.
 
@@ -2592,8 +2606,34 @@ không) và **không chỗ nào gọi `requestPermission`** (XIN LẠI). Một h
 giả. Bảy ca, gồm **đúng trạng thái đo được trên máy Đức** (3 hồ sơ → không đoán), Chrome từ chối/ném
 → **fail closed**, và bốn phép khẳng định **THỨ TỰ** trên panel. Suite **133/133**.
 
-- **đóng khi:** Đức nạp lại tiện ích, bấm **một** nút, và một lượt `jobs.add` trả
-  `checkpoint.verified: true` mà **không** phải mở hộp chọn thư mục.
+**NGHIỆM THU LIVE 10/09 — ĐẠT.** Đức nạp lại tiện ích, bấm **một** nút, báo lại *"đã reload, và đã
+chọn folder"*. Rồi `jobs.add` đầu tiên trả thẳng:
+
+| | |
+|---|---|
+| `checkpoint.verified` | **true**, `version: 1` |
+| hộp chọn thư mục | **không mở** — không có lời gọi nào từ phía tôi, và Đức không bấm thêm |
+| workbook | **không có** — đây là đường bootstrap, đúng cảnh Đức sẽ dùng |
+| chỗ ghi thật | `Pilot GPT/Bridge-2026-09-09T19-16__results__v01.xlsx` + `__audit.jsonl`, **có trên đĩa** |
+
+Điều kiện đóng là câu Đức tự đặt ra và **đo được trên đĩa**, không phải ý kiến của tôi về bản vá của
+chính mình: file checkpoint hoặc nằm trong `Pilot GPT` hoặc không.
+
+- **đóng khi:** ~~Đức nạp lại tiện ích, bấm **một** nút, và một lượt `jobs.add` trả
+  `checkpoint.verified: true` mà **không** phải mở hộp chọn thư mục.~~ **ĐÃ ĐẠT 10/09.**
+
+### B-54 · (P3) `landed_as_requested` luôn là `unknown` trên đường thư mục đã cấp quyền
+Đo live 10/09, ba lần liên tiếp: `OUTPUT_SAVED ... write_outcome=written; landed_as_requested=unknown`.
+Trường này sinh ra đúng để trả lời *"file có nằm đúng chỗ đã yêu cầu không"* — chú thích trong mã nói
+rõ nó tách khỏi `write_outcome` vì **Pilot-11 hỏng đúng vế đó trong khi vế kia trông vẫn đẹp**. Vậy mà
+trên đường đang là đường chính của MVP, nó không bao giờ có giá trị.
+
+Hôm nay tôi lách được bằng cách đặt `collision_policy: "fail"` và một mẫu tên chưa từng tồn tại
+(`M0-{job_id}`), nên "đổi tên lặng lẽ" thành lỗi thấy được. **Đó là mẹo của người đo, không phải tính
+chất của hệ thống** — Đức chạy thật với `uniquify` thì mất chính cái bảo chứng ấy.
+
+- **đóng khi:** đường thư mục ghi `landed_as_requested` là `true`/`false` thật, và có ghim cắt hàm
+  ghi ảnh để đòi nó khai đúng khi tên bị đổi.
 
 ## ROADMAP MVP — CC lái, GPT sinh ảnh, Đức bấm MỘT nút (chốt 09/09)
 
@@ -2615,10 +2655,11 @@ MVP **đi đường thư mục đã cấp quyền**, không cố chữa đườn
 
 ### Chặng
 
-**M0 · Nghiệm thu bản vá hôm nay — 0 credit, làm ngay khi Đức nạp lại.**
-Đức nạp lại → bấm **một** nút → CC gọi `jobs.add`. **Đạt khi** `checkpoint.verified: true` mà
-**không** phải mở hộp chọn thư mục. Đóng `B-53`. *Không đạt thì tôi sai, và phải đo lại chứ không
-vá tiếp theo phỏng đoán.*
+**~~M0~~ · ĐẠT 10/09.** Đức nạp lại, bấm **một** nút. `jobs.add` đầu tiên: `checkpoint.verified:
+true`, không mở hộp chọn thư mục, không workbook. Đóng `~~B-53~~`. Chi tiết ở mục `~~B-53~~`.
+Làm thêm ngay trong lượt đó: **chuỗi 3 ảnh, 3/3 về đúng tên** (`M0-Q001..Q003.png`) —
+`write_outcome=written` cả ba dưới chính sách `fail`, 3 mã băm khác nhau, attempt 1, `RUN_END
+COMPLETE`, mỗi ảnh 4′44″–5′15″.
 
 **M1 · Một lượt việc THẬT, không phải một phép đo — 3–5 ảnh.**
 **Đề bài do Đức đưa**, không phải prompt tôi bịa để test. **Đạt khi**: mọi ảnh về đúng tên · sổ
@@ -2632,9 +2673,28 @@ audit ra file · **0** job `INTERRUPTED` · và **Đức dùng được ảnh đ
 - `B-49` — cổng gắn ảnh: bỏ điều kiện đo nhầm **và** đếm theo TÊN FILE. **Cần Đức chốt** vì đụng
   cổng trước-khi-gửi. Đây là việc **quyết**, không phải việc code.
 
-**M3 · Chạy dài, đo cái Đức thật sự quan tâm — 10+ ảnh, tab nền, Đức làm việc khác.**
-Đo: tỉ lệ job hỏng · thời gian mỗi job · **số lần panel treo** (`B-50`, đã đo là có thật khi nạp
-ảnh mẫu lớn). Ra số rồi mới nói MVP dùng được hay chưa.
+**~~M3~~ · CHẠY XONG 10/09 — chuỗi 10 ảnh liền mạch, không một lần Đức chạm vào.**
+Đo: tỉ lệ job hỏng · thời gian mỗi job · **số lần panel treo** (`B-50`). Ra số rồi mới nói MVP dùng
+được hay chưa. **Số ra rồi:**
+
+| | |
+|---|---|
+| job hỏng | **0/10** · 0 lần thử lại · attempt 1 hết · `RUN_END COMPLETE` |
+| tên file | `M3-Q004..Q013.png` — **10/10 đúng tên xin**, `write_outcome=written` cả mười |
+| ảnh khác nhau | **10 mã băm SHA-256 khác nhau** — không có chuyện lưu lại một ảnh mười lần |
+| mỗi job | **85s → 183s** (`JOB_START` → `JOB_SUCCESS`), giữa hai ảnh 1–5 phút kể cả lượt nghỉ |
+| panel treo | **có, và đo được** — xem `B-50` |
+
+**Con số đáng chú ý nhất là 85s → 183s: chênh nhau 2,2 lần trên cùng một loại việc.** Đây đúng điều
+Đức dặn *"thời gian kết xuất dài ngắn khác nhau, đừng fix sẵn một con số"* — và không chỗ nào trong
+lượt này phải đặt một con số cứng: mọi vòng chờ đều bám mốc trên trang.
+
+**Cộng dồn hôm nay: 13 ảnh, 13/13 thành công, 0 hỏng.**
+
+**Chưa đo được, nói thẳng:** tôi **không biết** tab lúc đó hiện hay bị che, vì Đức không nói và tôi
+không có cách nhìn. Vế *"tab nền"* của M3 vì vậy **chưa nghiệm thu** — cần một lượt Đức xác nhận là
+đã che cửa sổ. Bản vá `~~B-47~~`⑵ đã nghiệm thu riêng trên tab nền hôm 09/09, nên tôi không lo, chỉ
+là chưa đo trong đúng lượt này.
 
 ### Ai làm gì
 
