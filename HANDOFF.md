@@ -677,3 +677,34 @@ nay*, nên **đỏ đúng lúc thước lặn xuống dưới đích** — đỏ
 **Hai nợ chưa ghi được vào `BACKLOG.md`** (lane khác giữ khoá file đó): không phép kiểm nào canh
 chuỗi *chỗ cũ → bất biến → đích → cò* của một lượt chuyển (ADR-0033 ⑶); và `_root` không nhận được
 khi lane khác giữ **một** khoá file bên trong, nên commit gốc chưa đẩy kẹt cổng.
+
+## 2026-09-09 · `claude-nen-luat` (lượt 4) — con voi là `HANDOFF.md`, không phải file luật
+
+**Đức hỏi trần 9–10k token; đo ra mới thấy tôi nén sai chỗ cả ngày.** Một phiên đụng gói trả
+**24.000–30.500 token**, trong đó **`HANDOFF.md` của gói là 14.600–22.100 — khoảng 70%**. Thước ký
+tự dựng cùng ngày chỉ đo `AGENTS.md` nên báo *"8.900, dưới trần"*. **Đo sai chỗ, lần thứ hai.**
+
+**Chữa bằng một dòng luật** (ADR-0034): mục 1 đọc `STATUS.md` thay cho cuối `HANDOFF.md` —
+`STATUS.md` vốn đã là trang trạng thái một-trang. **24.000–30.500 → 8.500–11.600 token.**
+
+**Một đề xuất của chính tôi bị rút lại.** Tôi định hạ trần mục nhật ký 2.600 → 1.200 byte. Cấu hình
+nói thẳng vì sao không được: 2.600 **được đo**, nằm trong một khoảng trống của phân bố, và protocol
+mục 5 cấm đúng việc đó — *"đừng cắt chữ cho vừa"*. **Đè một con số đoán lên một con số đã đo là làm
+hỏng phép đo.**
+
+**Phần "hook permanently":** `nap.mo_phien_goi` khai danh sách file mục 1 bắt đọc, cổng đọc danh
+sách đó thay vì gõ cứng, một phép ghim đối chiếu hai chiều. Đột biến **3/3** — con đầu **thoát** ở
+bản đầu vì tôi đối chiếu cả mục 1 thay vì đúng câu *"Mở:"*, nên thêm `BACKLOG.md` vẫn xanh (mục 1
+nhắc nó, nhưng để nói *ghi vào đâu*). Thu hẹp về đúng câu → 3/3 đỏ.
+
+**`CLAUDE.md` toàn cục 2.351 → 1.874 ký tự** (Đức duyệt). Giữ ranh giới *phải hỏi Đức* dù repo
+cũng nói — **trùng lặp đang chạy tốt**: project chưa có `AGENTS.md` thì đó là sàn an toàn duy nhất.
+
+**Prompt audit** — 6 phát hiện, áp 4. Bề mặt luật **sạch** ở nhóm prompt cũ (0 giàn giáo, 6 lần
+nhấn mạnh / 2.400 dòng). Phát hiện thật là **thiếu chữ**: 40/75 mô tả method Bridge ≤ 1 câu, trong
+đó `run.trial` — method duy nhất tiêu credit — không mang nắp cứng nào; chúng chỉ ở `AGENTS.md`,
+thứ tác nhân ngoài **không bao giờ nạp**.
+
+**Khoá:** trả hộ lane `claude-gpt-chay-het-job` theo lời Đức *"phiên GPT đã dừng"* — **nó nhận lại
+vùng 3 phút sau**. Dừng tay ở gói đó, hai hunk Bridge chưa áp. Trước đó cứu được một mục sổ nợ họ
+viết xong chưa commit, và chính ghi chú đó chặn tôi khỏi dùng `--restamp`.
