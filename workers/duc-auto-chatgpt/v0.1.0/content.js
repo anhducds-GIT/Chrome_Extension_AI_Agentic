@@ -1400,23 +1400,52 @@
       const chay = runPrompt(loi, timeoutMs, [], false, requestAttempt, 1);
       chay.catch(() => {});
       (async () => {
+        /* ═══ "ĐÃ GỬI" PHẢI LÀ BẰNG CHỨNG, KHÔNG PHẢI "ĐÃ BẤM NÚT" ═══
+
+           Audit Codex 09/09, vòng B, mục HIGH: bản đầu của tôi báo `submitted: true` ngay khi
+           `requestAttempt.submittedAt` có giá trị — mà mốc đó được đặt **ngay sau
+           `sendButton.click()`**. Nên nó chỉ chứng minh *"hàm click đã trả về"*. Nếu ChatGPT
+           bỏ qua cú click đó thì máy vẫn báo đã gửi, và lượt live thành công của tôi **không**
+           kiểm được cửa này — nó chỉ cho thấy đường thông một lần.
+
+           Bằng chứng thật là: **lượt hỏi của chính mình nằm trong hội thoại**, và nằm **duy
+           nhất**. Đọc bằng đúng `readTurns` + `soleUserTurnIndex` mà đường đối soát dùng —
+           không dựng phép so thứ hai, vì hai phép so là hai chỗ để chúng nói khác nhau.
+
+           Không xác nhận được thì câu trả lời phải nói **"CHƯA BIẾT"**, không nói "thất bại":
+           tin nhắn CÓ THỂ đã bay, và một câu "thất bại" là lời mời gửi lại. */
         const han = Date.now() + 25000;
         let loiSom = null;
         chay.catch((error) => { loiSom = error; });
+        let daBam = false;
         while (Date.now() < han) {
           if (loiSom) break;
           if (window.DacAttemptIdentity.same(STATE.activeAttempt, requestAttempt) && window.DacAttemptIdentity.submitted(STATE.activeAttempt)) {
-            sendResponse({ ok: true, submitted: true, attempt: attemptSnapshot(STATE.activeAttempt) });
-            return;
+            daBam = true;
+            // Đã bấm. Nay đi tìm BẰNG CHỨNG: lượt hỏi của mình có trong hội thoại chưa.
+            try {
+              const read = readTurns(document, assistantSelector(), userSelector(), 12, 32767);
+              const at = window.DacReconciliationCore.soleUserTurnIndex(read.turns, loi);
+              if (at >= 0) {
+                sendResponse({ ok: true, submitted: true, evidence: { turn_index: at, turns_read: read.turns.length, read_status: read.status }, attempt: attemptSnapshot(STATE.activeAttempt) });
+                return;
+              }
+              // Trùng khoá: KHÔNG khẳng định. Hội thoại có nhiều hơn một lượt hỏi giống nó nên
+              // không quy được lượt nào là của lệnh này.
+              if (at === window.DacReconciliationCore.MATCH_AMBIGUOUS) {
+                sendResponse({ ok: false, submitted: false, error: "CHAT_SAY_UNCONFIRMED_AMBIGUOUS: hội thoại có NHIỀU HƠN MỘT lượt hỏi trùng với chữ vừa gửi, nên không quy được lượt nào là của lệnh này. KHÔNG gửi lại; đọc lại bằng chat.read.", attempt: attemptSnapshot(STATE.activeAttempt) });
+                return;
+              }
+            } catch (_) { /* một lượt đọc trượt không kết luận gì — dò tiếp */ }
           }
           await sleep(250);
         }
-        // Hết giờ chờ mốc "đã gửi", hoặc lượt gõ ném trước khi gửi. Cả hai đều là "CHƯA
-        // khẳng định được là đã gửi" — nói đúng thế, đừng nói "thất bại".
         sendResponse({
           ok: false,
           submitted: false,
-          error: loiSom ? (loiSom.message || String(loiSom)) : "CHAT_SAY_UNCONFIRMED: chưa khẳng định được là tin nhắn đã gửi trong 25 giây. Đọc lại hội thoại bằng chat.read trước khi gửi lại bất cứ thứ gì.",
+          error: loiSom
+            ? (loiSom.message || String(loiSom))
+            : `CHAT_SAY_UNCONFIRMED: ${daBam ? "đã bấm Gửi nhưng" : ""} chưa thấy lượt hỏi này trong hội thoại sau 25 giây, nên KHÔNG khẳng định được là tin nhắn đã gửi. Tin nhắn CÓ THỂ đã bay. ĐỌC LẠI bằng chat.read trước khi gửi lại bất cứ thứ gì.`,
           attempt: attemptSnapshot(STATE.activeAttempt)
         });
       })();

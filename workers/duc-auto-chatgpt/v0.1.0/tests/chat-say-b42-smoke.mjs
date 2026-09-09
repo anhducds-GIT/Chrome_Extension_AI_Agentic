@@ -107,11 +107,17 @@ assert.equal(core.POLICY.auto_execute, false, "không có gì tự chạy — c�
     assert.ok(d > 0, `mỏ neo hỏng: không thấy ${ten}()`);
     return sp.slice(d, sp.indexOf(END, d) + END.length);
   };
-  const phu = ["assertBridgeSubmitCooldown", "stampBridgeSubmit", "ghiSoChatSay"].map(catHam).join("\n");
+  const catHamThuong = (ten) => {
+    const d = sp.indexOf(`function ${ten}(`);
+    assert.ok(d > 0, `mỏ neo hỏng: không thấy ${ten}()`);
+    return sp.slice(d, sp.indexOf(END, d) + END.length);
+  };
+  const phu = ["assertBridgeSubmitCooldown", "stampBridgeSubmit", "ghiSoChatSay"].map(catHam).join("\n")
+    + "\n" + catHamThuong("khongThuLai");
   const hang = (sp.match(/^ {2}const (?:BRIDGE_LAST_TRIAL_STORAGE_KEY|BRIDGE_TRIAL_MIN_INTERVAL_MS|CHAT_SAY_LOG_STORAGE_KEY|CHAT_SAY_LOG_MAX) = .*$/gm) || []);
   assert.equal(hang.length, 4, "mỏ neo hỏng: phải lấy được đúng 4 hằng của đường chat.say");
 
-  function sanKhau({ devMode = true, latch = true, lastAt = 0, traVe = { ok: true, submitted: true } } = {}) {
+  function sanKhau({ devMode = true, latch = true, lastAt = 0, traVe = { ok: true, submitted: true, evidence: { turn_index: 2, turns_read: 3, read_status: "OK" } } } = {}) {
     const dem = { send: 0, stamp: 0, ghiSo: 0, endMutation: 0 };
     const kho = {};
     const box = {
@@ -183,14 +189,25 @@ globalThis.__napSo = CHAT_SAY_LOG_MAX;`, box);
     assert.ok(ra.said_sha256.length >= 32, "sổ phải chứng minh được NỘI DUNG nào đã gửi, không chỉ số ký tự");
     assert.equal(s.dem.send, 1, "ĐÚNG MỘT lượt gõ mỗi lệnh — không có vòng lặp nào bên trong");
     assert.equal(s.dem.stamp, 1, "và đúng một lần đóng dấu nắp chờ");
-    assert.equal(s.dem.ghiSo, 1, "và đúng một dòng sổ");
+    // HAI dòng sổ mỗi lượt, và đó là chủ ý sau audit Codex vòng B: dòng đầu ghi "DANG_GUI"
+    // **trước** lượt gửi, nên nó là thứ duy nhất còn lại nếu mọi thứ sau nó vỡ. Bản đầu dựng
+    // dòng sổ SAU khi có câu trả lời, nên một lượt mất kênh ném trước khi dòng sổ tồn tại —
+    // tin nhắn có thể đã bay, nắp chờ đã tiêu, sổ TRỐNG.
+    assert.equal(s.dem.ghiSo, 2, "hai dòng sổ: 'đang gửi' trước lượt gửi, rồi kết cục");
     assert.equal(s.dem.endMutation, 1);
     const so = s.kho[s.box.__khoaSo];
-    assert.ok(Array.isArray(so) && so.length === 1, "sổ phải có đúng một dòng");
-    assert.equal(so[0].submitted, true);
-    assert.equal(so[0].client_id, "c1", "sổ phải kể AI nào đã gọi — đó là toàn bộ giá trị của nó khi xem lại");
-    assert.ok(!("text" in so[0]) && !("reply" in so[0]),
-      "sổ KHÔNG được tích trữ nội dung hội thoại của Đức — băm là đủ để chứng minh, và không phải là hoá đơn riêng tư");
+    assert.ok(Array.isArray(so) && so.length === 2, "sổ phải có đúng hai dòng");
+    assert.equal(so[0].ket, "DANG_GUI", "dòng đầu phải là 'đang gửi' — nó ghi TRƯỚC lượt gửi");
+    assert.equal(so[1].ket, "DA_GUI");
+    assert.equal(so[1].submitted, true);
+    for (const dong of so) {
+      assert.equal(dong.client_id, "c1", "mỗi dòng phải kể AI nào đã gọi — đó là toàn bộ giá trị của nó khi xem lại");
+      assert.equal(typeof dong.attempt_id, "string", "mỗi dòng sổ phải có attempt_id THẬT");
+      assert.ok(dong.attempt_id.startsWith("chatsay-"), "và nó phải là attempt_id của lượt này");
+      assert.equal(dong.attempt_id, ra.attempt_id, "và khớp attempt_id mà RPC trả về — không có nó thì hai dòng không ghép lại được");
+      assert.ok(!("text" in dong) && !("reply" in dong),
+        "sổ KHÔNG được tích trữ nội dung hội thoại của Đức — băm là đủ để chứng minh, và không phải là hoá đơn riêng tư");
+    }
   }
 
   // ⑽ VÒNG SỔ PHẢI CÓ NẮP. chrome.storage.local có hạn mức: một vòng không nắp thì sau vài
@@ -217,7 +234,7 @@ globalThis.__napSo = CHAT_SAY_LOG_MAX;`, box);
     assert.ok(loi, "không khẳng định được là đã gửi thì PHẢI ném");
     assert.match(String(loi.message || ""), /UNCONFIRMED|chat\.read/, "và câu báo phải chỉ sang chat.read, không mời gửi lại");
     assert.equal(s.dem.stamp, 1, "nắp VẪN phải tiêu — sai hướng này là mất phanh");
-    assert.equal(s.dem.ghiSo, 1, "sổ VẪN phải ghi — ném trước khi ghi là mất dấu vết ở ca tệ nhất");
+    assert.equal(s.dem.ghiSo, 2, "sổ VẪN phải ghi CẢ HAI dòng — ném trước khi ghi là mất dấu vết ở ca tệ nhất");
     assert.equal(s.dem.endMutation, 1);
   }
 
@@ -230,7 +247,58 @@ globalThis.__napSo = CHAT_SAY_LOG_MAX;`, box);
     assert.equal(s.dem.endMutation, 1, "latch phải nhả trong finally, kể cả khi ném");
   }
 
-  // ⑿ KHÔNG có bề mặt ảnh / tệp / thư mục trong cả hàm. Cửa này hứa không chạm chúng.
+  /* ⑿ ═══ "ĐÃ GỬI" PHẢI LÀ BẰNG CHỨNG, KHÔNG PHẢI "ĐÃ BẤM NÚT" ═══
+
+     Audit Codex 09/09 vòng B, mục HIGH: bản đầu báo `submitted: true` ngay khi
+     `requestAttempt.submittedAt` có giá trị — mà mốc đó đặt **ngay sau `sendButton.click()`**,
+     nên nó chỉ chứng minh *"hàm click đã trả về"*. Lượt live thành công của tôi KHÔNG kiểm được
+     cửa này; nó chỉ cho thấy đường thông một lần.
+
+     Bằng chứng thật là lượt hỏi của chính mình nằm **duy nhất** trong hội thoại. Mép này canh ở
+     tầng side panel: nó chỉ được trả `submitted: true` khi trang trả về `submitted` VÀ mang
+     theo `evidence`; và mép ⒀ dưới canh ở tầng trang. */
+  {
+    const s1 = sanKhau({ lastAt: Date.now() - 91 * 1000, traVe: { ok: true, submitted: true } });
+    const loi1 = await nem(s1);
+    assert.ok(loi1, "trang báo đã gửi mà KHÔNG có bằng chứng thì side panel phải chối");
+    assert.match(String(loi1.message || ""), /UNCONFIRMED|chat\.read/);
+
+    const s2 = sanKhau({ lastAt: Date.now() - 91 * 1000, traVe: { ok: true, submitted: true, evidence: { turn_index: 3, turns_read: 4, read_status: "OK" } } });
+    const ra2 = await s2.chay();
+    assert.equal(ra2.submitted, true, "có bằng chứng thì mới được nhận là đã gửi");
+    assert.equal(ra2.evidence.turn_index, 3, "và bằng chứng phải được chở về cho bên gọi");
+  }
+
+  /* ⒀ ═══ LỖI LẤP LỬNG KHÔNG ĐƯỢC THỬ LẠI ═══
+
+     Nắp chờ 25 giây của trang KHÔNG huỷ được lượt gõ đang chạy: báo "chưa gửi" ở giây 25 mà nó
+     vẫn gõ ở giây 26 là chuyện có thật (Codex vòng B). Một mã lỗi `retryable` ở đây là lời mời
+     gửi lần hai — đúng cái luật exact-once sinh ra để chặn. */
+  {
+    const s3 = sanKhau({ lastAt: Date.now() - 91 * 1000, traVe: { ok: false, submitted: false, error: "CHAT_SAY_UNCONFIRMED: x" } });
+    const loi3 = await nem(s3);
+    assert.ok(loi3, "không khẳng định được thì phải ném");
+    assert.equal(loi3.retryable, false, "và lỗi PHẢI là loại KHÔNG thử lại được — tin nhắn có thể đã bay");
+    assert.match(String(loi3.message || ""), /attempt_id/, "và phải kèm attempt_id để bên gọi đối soát được");
+    assert.equal(s3.dem.stamp, 1, "nắp VẪN tiêu");
+    assert.equal(s3.dem.ghiSo, 2, "và sổ VẪN ghi cả hai dòng");
+  }
+
+  /* ⒁ ═══ MẤT KÊNH GIỮA LƯỢT GỬI ═══ Ca tệ nhất cho sổ: tin nhắn có thể đã bay, nắp đã tiêu.
+     Bản đầu ném TRƯỚC khi dòng sổ tồn tại, nên đúng lượt cần ghi nhất lại là lượt duy nhất
+     không được ghi. */
+  {
+    const s4 = sanKhau({ lastAt: Date.now() - 91 * 1000, traVe: new Error("tab da dong") });
+    const loi4 = await nem(s4);
+    assert.ok(loi4, "mất kênh thì phải ném");
+    assert.equal(loi4.retryable, false, "và KHÔNG được mời thử lại: tin nhắn có thể đã bay");
+    const so4 = s4.kho[s4.box.__khoaSo] || [];
+    assert.equal(so4.length, 2, "mất kênh VẪN phải để lại hai dòng sổ");
+    assert.equal(so4[1].ket, "MAT_KENH", "và dòng thứ hai phải nói rõ nó mất kênh");
+    assert.equal(s4.dem.endMutation, 1, "latch vẫn nhả trong finally");
+  }
+
+  // ⒂ KHÔNG có bề mặt ảnh / tệp / thư mục trong cả hàm. Cửa này hứa không chạm chúng.
   {
     const than = khongChuThich(shipped);
     assert.ok(!/expectImage|reference_images|referenceImages|saveGeneratedImage|output_folder|DAC_RUN_IMAGE_JOB|DAC_RUN_TEXT_JOB/.test(than),
@@ -253,6 +321,15 @@ globalThis.__napSo = CHAT_SAY_LOG_MAX;`, box);
   assert.match(than, /surfaceAllowedNow\(\)/, "phải chối WRONG_SURFACE trước khi gõ");
   assert.ok(than.indexOf("surfaceAllowedNow()") < than.indexOf("runPrompt("), "và chối TRƯỚC lượt gõ");
   assert.match(than, /submitted: true/, "phải trả về mốc ĐÃ GỬI, không phải câu trả lời");
+  // Bằng chứng phải đọc bằng ĐÚNG phép so mà đường đối soát dùng — hai phép so là hai chỗ để
+  // chúng nói khác nhau. Và nó phải đọc TRƯỚC khi trả `submitted: true`.
+  assert.match(than, /soleUserTurnIndex\(read\.turns, loi\)/,
+    "bằng chứng 'đã gửi' phải là lượt hỏi của mình nằm DUY NHẤT trong hội thoại, đọc bằng phép so dùng chung");
+  assert.ok(than.indexOf("soleUserTurnIndex(") < than.indexOf("submitted: true"),
+    "phải có bằng chứng TRƯỚC khi khai là đã gửi");
+  assert.match(than, /MATCH_AMBIGUOUS/, "trùng khoá phải là CHƯA BIẾT, không phải đã gửi");
+  assert.ok(!/submitted: true/.test(than.slice(0, than.indexOf("soleUserTurnIndex("))),
+    "không được có đường nào khai 'đã gửi' trước khi đọc bằng chứng");
 }
 
 // ⒁ CLI: chữ dài đi qua --params-file, không qua dòng lệnh. Một prompt reasoning có ngoặc,
@@ -267,4 +344,4 @@ globalThis.__napSo = CHAT_SAY_LOG_MAX;`, box);
     "chat.say KHÔNG phải chỉ-đọc — khai vào đó là bỏ mất câu chặn mà một lệnh gõ phải có");
 }
 
-console.log("B-42 chat.say — một lượt nhắn thẳng, chạy thật (15 mép): PASS");
+console.log("B-42 chat.say — một lượt nhắn thẳng, chạy thật (18 mép): PASS");

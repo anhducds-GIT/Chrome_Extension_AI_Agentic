@@ -921,6 +921,13 @@
      hạn; tràn thì cắt đầu. */
   const CHAT_SAY_LOG_STORAGE_KEY = "dac.chat.say.log.v1";
   const CHAT_SAY_LOG_MAX = 200;
+  /* Một lượt gửi KHÔNG khẳng định được là chuyện khác hẳn một lượt gửi thất bại, và mã lỗi
+     phải nói ra khác biệt đó. `VALIDATION_FAILED` là loại KHÔNG thử lại được trong bảng lỗi —
+     đúng thứ cần ở đây, vì tin nhắn có thể đã bay. Kèm `attempt_id` để bên gọi đối soát được. */
+  function khongThuLai(loi, attemptId) {
+    return new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `${loi} (attempt_id: ${attemptId})`);
+  }
+
   async function ghiSoChatSay(dong) {
     try {
       const stored = await chrome.storage.local.get(CHAT_SAY_LOG_STORAGE_KEY);
@@ -964,26 +971,48 @@
       // không giới hạn. Sai theo hướng "tiêu nắp cho một lượt có thể chưa gửi" là sai an toàn.
       const saidAt = await stampBridgeSubmit();
       const payload = { type: "DAC_CHAT_SAY", job_id: "chat.say", attempt_id: attemptId, text: params.text, timeoutMs: params.timeout_sec * 1000 };
+      /* GHI SỔ **TRƯỚC** LƯỢT GỬI. Audit Codex 09/09 vòng B: bản đầu dựng dòng sổ SAU khi có
+         câu trả lời, nên một lượt mất kênh (`sendMessage` reject) ném **trước khi dòng sổ tồn
+         tại** — tin nhắn có thể đã bay, nắp chờ đã tiêu, và sổ **trống**. Đúng lượt cần có
+         trong sổ nhất lại là lượt duy nhất không được ghi.
+         Nay ghi "đang gửi" trước, rồi ghi kết cục sau. Hai dòng cho một lượt là đúng: dòng đầu
+         là thứ duy nhất còn lại nếu mọi thứ sau nó vỡ. */
+      const chung = { at: new Date(saidAt).toISOString(), attempt_id: attemptId, client_id: call?.client_id || null, request_id: call?.request_id || null, said_chars: params.text.length, said_sha256: await window.DacBridgeCore.hashText(params.text) };
+      await ghiSoChatSay({ ...chung, ket: "DANG_GUI" });
       let response;
       if (workspaceTab) {
         try { response = await chrome.tabs.sendMessage(workspaceTab.id, payload); }
-        catch (_) { throw new Error("RECEIVER_LOST: ChatGPT receiver unavailable in the workspace tab. Reload that tab once."); }
+        catch (error) {
+          await ghiSoChatSay({ ...chung, ket: "MAT_KENH", error: messageOf(error) });
+          throw khongThuLai("CHAT_SAY_UNCONFIRMED: mất kênh tới tab giữa lượt gửi. Tin nhắn CÓ THỂ đã bay. ĐỌC LẠI bằng chat.read trước khi gửi lại.", attemptId);
+        }
       } else {
-        response = await send(payload);
+        try { response = await send(payload); }
+        catch (error) {
+          await ghiSoChatSay({ ...chung, ket: "MAT_KENH", error: messageOf(error) });
+          throw khongThuLai("CHAT_SAY_UNCONFIRMED: mất kênh tới tab giữa lượt gửi. Tin nhắn CÓ THỂ đã bay. ĐỌC LẠI bằng chat.read trước khi gửi lại.", attemptId);
+        }
       }
       const dong = {
-        at: new Date(saidAt).toISOString(), attempt_id: attemptId,
-        client_id: call?.client_id || null, request_id: call?.request_id || null,
-        said_chars: params.text.length, said_sha256: await window.DacBridgeCore.hashText(params.text),
-        submitted: Boolean(response?.ok && response?.submitted),
+        ...chung,
+        // ĐÒI CẢ BẰNG CHỨNG, không chỉ cờ `submitted`. Cửa này TỚI ĐƯỢC thật: panel mới cộng
+        // content script CŨ chưa nạp lại là ca thường ngày, và bản cũ trả `submitted: true`
+        // ngay sau cú click mà không đọc bằng chứng nào. Không có dòng này thì bản vá im lặng
+        // không chạy trên đúng cấu hình hay gặp nhất.
+        ket: response?.ok && response?.submitted && response?.evidence ? "DA_GUI" : "CHUA_BIET",
+        submitted: Boolean(response?.ok && response?.submitted && response?.evidence),
+        evidence: response?.evidence || null,
         error: response?.ok ? null : (response?.error || "không rõ")
       };
       // GHI SỔ TRƯỚC KHI NÉM. Một lượt KHÔNG khẳng định được là đã gửi là đúng lượt cần có
       // trong sổ nhất — ném trước khi ghi là mất dấu vết ở ca tệ nhất.
       const daGhiSo = await ghiSoChatSay(dong);
       log(`chat.say ${dong.submitted ? "đã gửi" : "CHƯA khẳng định được là đã gửi"}: ${dong.said_chars} ký tự.`, dong.submitted ? "done" : "error");
-      if (!dong.submitted) throw new Error(response?.error || "CHAT_SAY_UNCONFIRMED: chưa khẳng định được là tin nhắn đã gửi. Đọc lại hội thoại bằng chat.read trước khi gửi lại.");
-      return { submitted: true, said_chars: dong.said_chars, said_sha256: dong.said_sha256, logged: daGhiSo, at: dong.at, attempt_id: attemptId, read_reply_with: "chat.read" };
+      // LỖI LẤP LỬNG KHÔNG ĐƯỢC THỬ LẠI. Audit Codex vòng B: nắp chờ 25 giây của trang KHÔNG
+      // huỷ được lượt gõ đang chạy — báo "chưa gửi" ở giây 25 mà nó vẫn gõ ở giây 26 là chuyện
+      // có thật. Một mã lỗi `retryable` ở đây là lời mời gửi lần hai.
+      if (!dong.submitted) throw khongThuLai(response?.error || "CHAT_SAY_UNCONFIRMED: chưa khẳng định được là tin nhắn đã gửi. ĐỌC LẠI bằng chat.read trước khi gửi lại.", attemptId);
+      return { submitted: true, evidence: dong.evidence, said_chars: dong.said_chars, said_sha256: dong.said_sha256, logged: daGhiSo, at: dong.at, attempt_id: attemptId, read_reply_with: "chat.read" };
     } finally {
       queueRunLock.endMutation();
       controls();
