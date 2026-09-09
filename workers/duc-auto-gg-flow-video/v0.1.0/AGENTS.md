@@ -19,8 +19,13 @@ y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
 3. **Khoá bootstrap Bridge đã được gỡ ngày 2026-08-27** sau khi provider adapter được dựng
    từ bằng chứng thật, có test ghim và audit đối kháng PASS. Full method surface khả dụng,
    nhưng mọi gate an toàn riêng vẫn giữ nguyên. `diagnostics.evidence_submit` được giữ làm
-   công cụ debug với trần cứng 3 lượt/trang; `run.trial` có trần 3 job và chỉ chạy khi bật
-   toggle **Chế độ phát triển (Dev Mode)** trong side panel.
+   công cụ debug với trần cứng 3 lượt/trang; `run.trial` chỉ chạy khi bật toggle **Chế độ phát
+   triển (Dev Mode)** trong side panel, và trần của nó là **trần ở luật 2** — `MAX_TRIAL_JOBS`
+   trong `dev-trial-core.js`, hôm nay là **7**, hạ theo chip cấu hình.
+   > **Sửa 09/09.** Dòng này ghi *"`run.trial` có trần 3 job"* — con số 27/08, **chết từ 05/09**
+   > khi F-22 đổi sang suy trần từ chip (luật 2 ngay trên). Mã nói 7, luật 2 nói 7, dòng này nói
+   > 3: **hai con số an toàn khác nhau trong CÙNG một file**, và nó là con số về TIỀN. Trần thật
+   > khai ở đúng một chỗ trong mã — đừng gõ lại nó vào văn bản lần nữa.
 4. Các luật thừa kế nguyên văn từ nhánh Gemini/ChatGPT: không innerHTML;
    không làm yếu exact-once / attribution / readiness / persistence /
    checkpoint / security hard-stop; chữ operator tiếng Việt, CODE tiếng Anh;
@@ -39,7 +44,8 @@ y như `AGENTS.md` của package đó và `AGENTS.md` gốc repo.
 | `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất** (chỉ thêm dòng). Cắt đuôi 2026-09-06 theo ADR-0008 của gốc repo; lịch sử cũ hơn ở `HANDOFF-ARCHIVE-01.md` |
 | `HANDOFF-ARCHIVE-01.md` | **Đuôi đã cắt của `HANDOFF.md`** — 183 lượt Log cũ, nguyên văn, không sửa một chữ. Chỉ đọc; ghi Log mới thì ghi vào `HANDOFF.md`. Ghép lại dựng được bản gốc giống hệt từng byte (bất biến ⑴ của ADR-0008) |
 | `BACKLOG.md` | Việc còn mở, đánh số `F-xx` |
-| `decisions.md` | Quyết định Đức đã chốt cho nhánh này |
+| `decisions.md` | **Nay là MỤC LỤC** trỏ sang `docs/adr/` (N-55, 09/09). Đừng thêm mục vào đây nữa |
+| `docs/adr/` | ADR bất biến — quyết định của riêng gói này. Đã `Accepted` thì KHÔNG sửa; đổi ý thì viết ADR mới, trỏ hai chiều. B12 cưỡng chế. **Đếm, đừng tin một con số gõ tay:** `ls docs/adr/*.md \| wc -l` |
 | `AI-OPERATOR-GUIDE.md` | Vận hành/debug qua Bridge (trỏ về guide Gemini + khác biệt Flow) |
 | `NEXT-SESSION-BRIEF.md` | Brief bàn giao phiên kế tiếp (kiểm ngày trước khi tin; HANDOFF mới hơn thì HANDOFF thắng) |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook (thừa kế, sẽ mở rộng cho video) |

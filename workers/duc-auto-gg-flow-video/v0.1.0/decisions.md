@@ -1,142 +1,43 @@
 # decisions.md — Duc Auto GG Flow Video
 
-> Quyết định đã chốt | vì sao | ai chốt. Mới nhất ở cuối. Chỉ thêm dòng.
+> **NỘI DUNG ĐÃ CHUYỂN SANG ADR.** 10 quyết định trong file này đã được tách thành 10 file ADR
+> riêng trong `docs/adr/` (N-55, 2026-09-09). File này KHÔNG bị xoá — nó là bản ghi có thật —
+> nhưng từ nay nó là **mục lục**.
 >
-> **Ghi chú thêm 2026-09-02 (phiên S6 đã xoá thư mục `drafts/`).** Các dòng
-> "Nguồn: `drafts/…`" bên dưới nay trỏ vào chỗ trống. **Không sửa chúng** — đây là bản ghi,
+> **Vì sao chuyển:** phép kiểm B12 canh *"mọi số hiệu từng cấp còn nằm ở đúng một file"*. Mười
+> quyết định không có số hiệu thì **B12 không nhìn thấy chúng** — xoá đi cũng không ai kêu. Hai
+> gói kia đã chuyển từ 02/09; gói này là lỗ cuối cùng trong sổ định danh. Luật đầy đủ:
+> [`docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md`](../../../docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md).
+>
+> **Nội dung gốc vẫn đọc được nguyên vẹn** trong lịch sử git:
+> `git show eb86e499:workers/duc-auto-gg-flow-video/v0.1.0/decisions.md`.
+> Việc tách chỉ đổi HÌNH DẠNG — không đổi một chữ nội dung quyết định nào.
+>
+> **Ghi chú giữ nguyên từ 2026-09-02 (phiên S6 đã xoá thư mục `drafts/`).** Các dòng
+> "Nguồn: `drafts/…`" trong các ADR nay trỏ vào chỗ trống. **Không sửa chúng** — đây là bản ghi,
 > và sửa trích nguồn trong một bản ghi là làm sai bản ghi. Tra đường dẫn mới ở
 > [`docs/README.md`](../../../docs/README.md), mục bản đồ đường dẫn cũ → mới.
 
-## 2026-08-27 — FLOW-00: ba chốt khai sinh package (Đức chốt trong chat)
+## Thêm một quyết định mới
 
-1. **Trang đích**: Google Flow, match pattern `https://labs.google/fx/tools/flow/*`
-   (URL project thật của Đức: `.../flow/project/d7c07112-eb7f-4efe-b251-8aee4b2b6c4f`;
-   extension match theo pattern tool, không khoá ID project).
-2. **Quyền host mới được duyệt**: đúng pattern trên, không xin rộng hơn
-   (không `labs.google/*`). Đây là lần duyệt quyền theo luật AGENTS.md gốc mục 2.
-3. **Tên package**: `workers/duc-auto-gg-flow-video/v0.1.0`, tên hiển thị
-   "Duc Auto GG Flow Video".
+Chép [`docs/_TEMPLATE-adr.md`](../../../docs/_TEMPLATE-adr.md) thành
+`docs/adr/NNNN-mo-ta-ngan-khong-dau.md`, đánh số tiếp từ `0011`. **Đừng thêm mục vào file này
+nữa** — nó là mục lục.
 
-Nguồn: `drafts/FLOW-EXT-COORDINATION-PLAN.md` mục 6.
+**Viết ở `Proposed`, đổi sang `Accepted` ở một lượt riêng.** B12 chốt mốc bất biến ở commit ĐẦU
+TIÊN mà `status` thành `Accepted`; viết thẳng `Accepted` là mất luôn lượt sửa chữ.
 
-## 2026-08-27 — Luật an toàn nhánh video (từ kế hoạch FLOW đã duyệt)
+## Mục lục
 
-- **Trần trial dev: ≤2 job một chuỗi** — video trừ credits thật, không dùng trần
-  30 job của nhánh ảnh. Nới trần = đổi luật an toàn = hỏi Đức.
-- **Không retry tự động** khi nghi ngờ lần sinh trước đã trừ credits.
-- **Khoá bootstrap Bridge**: cho tới khi adapter dựng từ bằng chứng thật, Bridge chỉ
-  phục vụ `session.hello`, `system.ping`, `system.capabilities`,
-  `diagnostics.dom_probe`. Gỡ khoá phải ghi thêm một mục vào file này.
-
-## 2026-08-27 — Đức chốt trần trial nhánh video: TỐI ĐA 3 VIDEO một lượt
-
-Đức chốt trong chat (27/08): "trial chỉ tạo tối đa 3 Video 15 credit thôi nhé, tổng là
-45 credit, đó là giới hạn free." → Trần cứng cho `run.trial` của nhánh này là **3 job/chuỗi**
-(thay đề xuất ≤2 trong kế hoạch FLOW). 15 credit/video là số đo hiện tại của gói free —
-con số credit có thể đổi theo Google, trần 3 video thì không tự đổi. Code hoá ở F-04
-(`dev-trial-core.js`) trước khi gỡ khoá bootstrap.
-
-## 2026-08-27 — `diagnostics.evidence_submit`: primitive tương tác duy nhất của bootstrap
-
-Đức chốt trong chat: "bạn hãy tự động thử tất cả các tính năng" (việc cần tay người để
-cuối). Claude-in-Chrome chưa cài nên extension phải tự có tay. Thêm method
-`diagnostics.evidence_submit`: gõ 1 prompt vào composer (selector có bằng chứng
-`evidence/F1-snapshot-1-idle-20260827.json`) + bấm nút "arrow_forward Create", một lần
-mỗi call, **trần cứng 3 lượt mỗi lần nạp trang** khớp ngân sách free 3 video. Đếm
-TRƯỚC khi click (click lỗi không hoàn lượt — thà mất lượt đếm còn hơn lố credits).
-Là giàn giáo FLOW-01: gỡ hoặc gộp vào runner thật ở F-02.
-
-## 2026-08-27 — `chat.reload` vào allowlist bootstrap (thứ 5)
-
-Gặp thật ngay lần nối đầu: tab Flow mở trước khi load extension → content script chưa
-tiêm → `RECEIVER_LOST`, và mỗi lần reload extension sau này cũng sẽ cần F5 tab.
-`chat.reload` chỉ F5 tab đã bind — không gửi prompt, không tốn credits — nên cho vào
-allowlist để vòng debug tự chạy, khỏi mượn tay Đức mỗi lần. Test ghim đã đổi theo.
-(Cùng ngày, cùng phiên: Đức yêu cầu đổi tên hiển thị "Duc Auto Gemini" → "Duc Auto GG
-Flow" và icon G xanh-tím → F teal, đã làm.)
-
-## 2026-08-27 — Đức giao phiên `claude-flow-1` tự triển khai đến khi hoàn thiện
-
-Đức chốt trong chat: phiên Claude này tự gọi Codex CLI / Antigravity để code, trial,
-debug, hoàn thiện — theo flow Bridge + developer mode. Vẫn giữ nguyên các mốc phải hỏi:
-quyền mới ngoài pattern đã duyệt, pilot live thật, đổi luật an toàn.
-
-## 2026-08-27 — F-05: gỡ khoá bootstrap Bridge
-
-Gỡ allowlist/bootstrap gate trong `bridge-router-core.js`, mở lại toàn bộ method surface theo
-router chuẩn của Gemini HEAD. Lý do: provider adapter Flow đã được dựng từ bằng chứng DOM thật,
-có test ghim; F-02 hoàn tất và audit đối kháng PASS, F-04 đã hạ trần trial còn 3 job. Các gate
-an toàn riêng của từng method vẫn giữ nguyên. `diagnostics.evidence_submit` vẫn là công cụ debug
-có trần cứng 3 lượt/trang; `run.trial` vẫn cần Đức bật **Chế độ phát triển (Dev Mode)** trong panel.
-
-## 2026-08-28 — Multi-profile Bridge: Đức duyệt hướng A
-
-Đức chốt trong chat (phiên `claude-bridge-multiprofile`), thiết kế đầy đủ ở
-`drafts/BRIDGE-MULTIPROFILE-DESIGN-V1.md` gốc repo:
-
-1. **Duyệt đổi bề mặt auth**: message `auth` mang thêm khối `instance`
-   (`instance_id` bền trong `chrome.storage.local` + tên Đức đặt trong panel).
-   Token vẫn là thứ duy nhất quyết định cho vào — instance chỉ để định tuyến.
-2. **Bỏ luật "một ghế"** ở host: nhiều profile nối cùng lúc; từ 2 kết nối trở lên,
-   lệnh không nêu `target` bị TỪ CHỐI (`TARGET_AMBIGUOUS`) kèm danh sách — không bao
-   giờ tự chọn. Một kết nối thì chạy y như cũ.
-3. **Không thêm quyền Chrome nào.**
-4. Thứ tự triển khai: gg-flow-video → gemini → chatgpt (chờ phiên ChatGPT đóng).
-
-## 2026-09-02 — Bỏ audit độc lập cho fix nhỏ (Đức chốt trong chat)
-
-**Chốt:** với các sửa nhỏ, **không chạy audit độc lập nữa** — làm thẳng, gặp bug thì sửa thẳng.
-
-**Vì sao (lời Đức):** audit rất chậm và tốn thời gian; Đức muốn tăng tốc.
-
-**Điều này ĐI NGƯỢC `AGENTS.md` gốc mục 2**, chỗ đang ghi điều kiện push cho code là *"đã qua
-audit độc lập"*. Ghi lại đây để phiên sau không tưởng là tôi quên luật. **Chưa sửa `AGENTS.md`**
-— sửa hiến pháp repo là việc riêng, cần Đức chốt câu chữ (nhất là ranh giới "fix nhỏ" là gì).
-
-**Ranh giới tôi đang áp dụng, chờ Đức xác nhận nếu thấy sai:**
-
-- **Bỏ audit** — sửa đường bằng chứng/log, sửa chữ hiển thị, sửa phép kiểm, đổi tài liệu,
-  vá nhỏ có test ghim + mutation.
-- **VẪN audit** — đụng lớp an toàn Đức đã liệt ở `AGENTS.md` mục 2 (retry, halt, attribution,
-  persistence, exact-once), đụng đường tiêu credit, hay đổi bắt tay Bridge.
-
-Lý do giữ nhóm sau: đó đúng là chỗ audit đã bắt được lỗi thật trong ngày 02/09 — một chữ trong
-câu báo lỗi làm `classifyFailure` đổi `OTHER` → `RECEIVER_LOST` và dừng cả mẻ job (F-20).
-Phần còn lại thì test ghim + mutation đã đủ, và nhanh hơn nhiều.
-
-**Vẫn giữ nguyên, không đổi:** suite phải xanh, cổng `session-check.mjs` phải xanh, mỗi fix
-một test ghim, và push bằng `safe-push.mjs`.
-
-## 2026-09-02 — Mở rộng host match cho URL có locale (Đức duyệt trong chat)
-
-**Chốt:** thêm `https://labs.google/fx/*/tools/flow/*` vào `host_permissions` **và**
-`content_scripts.matches` của `manifest.json`, cạnh pattern cũ. Đây là **quyền mới**, nên theo
-`AGENTS.md` gốc mục 2 phải hỏi Đức — đã hỏi, Đức duyệt: *"làm luôn đi, sửa cả manifest lẫn adapter."*
-
-**Vì sao:** đo thật trên hồ sơ `Bình` — Flow phục vụ cùng một dự án ở **cả hai** dạng:
-
-```
-https://labs.google/fx/tools/flow/project/<id>
-https://labs.google/fx/vi/tools/flow/project/<id>     ← giao diện tiếng Việt
-```
-
-Pattern cũ chỉ khớp dạng thứ nhất. Trên Chrome đặt tiếng Việt, Chrome **không tiêm content
-script**, panel báo `composer_found: false`, và triệu chứng nổi lên là **`RECEIVER_LOST`** —
-một mã lỗi chỉ thẳng vào "mất kết nối với tab". Ba lượt hỏi đáp mới lần ra thủ phạm là một
-đoạn `/vi/` trên thanh địa chỉ.
-
-**Ranh giới đã cân nhắc, và vì sao hai lớp cố ý KHÁC nhau:**
-
-- **Manifest buộc phải rộng.** Match pattern của Chrome chỉ có `*`, và `*` nuốt cả dấu gạch
-  chéo — không có cách nào nói "đúng một đoạn". Nên `fx/*/tools/flow/*` cũng khớp
-  `fx/bất/kỳ/đường/nào/tools/flow/*`.
-- **Adapter thì siết.** `provider-adapter.js` chỉ nhận **đúng một** đoạn, và đoạn đó phải có
-  dạng mã ngôn ngữ (`vi`, `en`, `pt-BR`). Manifest quyết định script **có được nạp** không;
-  adapter mới là cổng quyết định trang đó **có phải Flow thật** không.
-
-Nới lớp một mà quên siết lớp hai là biến một sự nới lỏng kỹ thuật thành lỗ hổng thật — có test
-ghim đúng điều đó (`tests/flow-locale-url-static.mjs`, mục cuối), và mutation `S2` dựng lại
-chính kịch bản ấy đã bị bắt.
-
-**Không nới thêm gì khác:** vẫn dưới `labs.google`, vẫn phải kết thúc bằng `/tools/flow/*`.
-Phép kiểm từ chối mọi match pattern rộng hơn mức này.
+| ADR | Quyết định | Ai chốt | Ngày |
+|---|---|---|---|
+| [0001](docs/adr/0001-ba-chot-khai-sinh-package-flow-00.md) | Ba chốt khai sinh package: trang đích `labs.google/fx/tools/flow/*`, quyền host đúng pattern đó, tên gói | Đức | 2026-08-27 |
+| [0002](docs/adr/0002-luat-an-toan-nhanh-video.md) | Luật an toàn nhánh video: trần trial ≤2 job, không retry tự động, khoá bootstrap Bridge — **hai trong ba vế đã chết** | Đức | 2026-08-27 |
+| [0003](docs/adr/0003-tran-trial-toi-da-3-video-mot-luot.md) | Trần trial tối đa 3 video một lượt (45 credit, giới hạn free) — **con số đã chết 05/09, nay suy từ chip, trần tuyệt đối 7** | Đức | 2026-08-27 |
+| [0004](docs/adr/0004-diagnostics-evidence-submit-primitive-tuong-tac.md) | `diagnostics.evidence_submit` là primitive tương tác duy nhất của bootstrap, trần cứng 3 lượt/trang | Đức | 2026-08-27 |
+| [0005](docs/adr/0005-chat-reload-vao-allowlist-bootstrap.md) | `chat.reload` vào allowlist bootstrap — F5 tab đã bind, không gửi prompt, không tốn credits | không ghi lại | 2026-08-27 |
+| [0006](docs/adr/0006-duc-giao-phien-claude-flow-1-tu-trien-khai.md) | Đức giao phiên `claude-flow-1` tự triển khai đến khi hoàn thiện; ba mốc phải hỏi giữ nguyên | Đức | 2026-08-27 |
+| [0007](docs/adr/0007-go-khoa-bootstrap-bridge-f-05.md) | F-05: gỡ khoá bootstrap Bridge, mở lại toàn bộ method surface; gate an toàn từng method giữ nguyên | không ghi lại | 2026-08-27 |
+| [0008](docs/adr/0008-multi-profile-bridge-duc-duyet-huong-a.md) | Multi-profile Bridge hướng A: khối `instance` trong auth, bỏ luật "một ghế", không thêm quyền Chrome | Đức | 2026-08-28 |
+| [0009](docs/adr/0009-bo-audit-doc-lap-cho-fix-nho.md) | Bỏ audit độc lập cho fix nhỏ — **đá với `AGENTS.md` gốc mục 2, chờ Đức chốt câu chữ** | Đức | 2026-09-02 |
+| [0010](docs/adr/0010-mo-rong-host-match-cho-url-co-locale.md) | Mở rộng host match cho URL có locale (`fx/*/tools/flow/*`); manifest rộng, adapter siết | Đức | 2026-09-02 |
