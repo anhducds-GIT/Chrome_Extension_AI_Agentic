@@ -4697,7 +4697,36 @@
     } catch (error) { els.outputPermissionText.textContent = error.message; log(error.message, "error"); }
   }
 
+  // B-53 · Áp một kết quả xin-lại-quyền vào phiên, không đi qua hộp chọn.
+  function apDungHoSo(profile, handle) {
+    if (!state.outputSettings) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, "phien-chua-mo-workbook.xlsx");
+    state.outputSettings.image = window.DacOutputLocation.directoryLocation(handle, profile.last_known_handle_name || handle.name);
+    state.outputSettings.image.profileId = profile.profile_id;
+    state.outputProfileState = { state: "authorized", profile, permission: "granted" };
+    state.destinationMode = "profile";
+    if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
+    markLocalOverride("output_profile_binding", "Output profile binding changed; check plan again before Run.");
+    renderOutput();
+  }
+
   async function choosePrimaryDestination() {
+    // B-53 · XIN LẠI TRƯỚC, mở hộp chọn SAU. Đo 09/09: quyền thư mục hết sau
+    // mỗi lần nạp lại tiện ích ("3 hồ sơ, 0 còn quyền"), mà handle thì vẫn
+    // sống trong IndexedDB. `requestPermission` trên đúng handle đó chỉ tốn
+    // MỘT cú xác nhận; bắt Đức đi lại cả cây thư mục là bắt trả giá cho một
+    // thứ đã có sẵn.
+    //
+    // Nói thẳng cái giá của thứ tự này: nếu không xin lại được (không có hồ sơ
+    // nào, hoặc nhiều hơn một), lời gọi hộp chọn bên dưới đã đi qua một await,
+    // nên Chrome CÓ THỂ coi là hết user gesture và ném. Khi đó Đức bấm lần
+    // nữa là ra hộp chọn. Đổi lại: ca thường gặp nhất — một hồ sơ, vừa reload
+    // — chỉ còn một cú bấm. Không giấu cái giá này, nó nằm ngay đây.
+    const xinLai = await window.DacOutputProfiles.reauthorizeSole();
+    if (xinLai?.state === "authorized") {
+      apDungHoSo(xinLai.profile, xinLai.profile.directory_handle);
+      els.outputPermissionText.textContent = `Đã xin lại quyền cho thư mục đã nhớ: ${xinLai.profile.last_known_handle_name || xinLai.profile.profile_id}. Không phải chọn lại.`;
+      return;
+    }
     if (typeof window.showDirectoryPicker !== "function") throw new Error("This Chrome build cannot authorize a folder. Use Chrome Downloads or update Chrome.");
     // The picker must run first: it needs the click's user gesture, and every
     // await below it (IndexedDB lookups) would risk expiring that activation.
@@ -4728,6 +4757,16 @@
     state.destinationMode = "profile";
     if (!state.separateResultDestination) state.outputSettings.result = { kind: "same_as_image" };
     markLocalOverride("output_profile_binding", "Output profile binding changed; check plan again before Run.");
+    // B-53 ⑵ · Cú bấm vừa rồi LÀ lời khai "đây mới là thư mục của tôi", nên dọn
+    // mấy hồ sơ cũ là ghi nhận chứ không phải đoán. Và nó có tác dụng thật:
+    // `reauthorizeSole()` cố ý không nổ khi còn nhiều hơn một hồ sơ, nên ba hồ
+    // sơ cũ nằm lại chính là thứ làm lần reload sau vẫn phải đi lại hộp chọn.
+    // Thứ bị xoá chỉ là dấu-trang trỏ tới thư mục — không file nào của Đức mất,
+    // chọn lại là có.
+    try {
+      const daDon = await window.DacOutputProfiles.pruneOthers(profileId);
+      if (daDon.length) log(`Đã dọn ${daDon.length} hồ sơ thư mục cũ; lần nạp lại sau chỉ cần bấm một nút để xin lại quyền.`, "info");
+    } catch (error) { log(`Không dọn được hồ sơ cũ: ${error?.message || error}`, "warn"); }
     renderOutput();
   }
 

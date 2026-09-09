@@ -161,7 +161,19 @@ assert.match(chooser, /if \(!state\.outputSettings\) state\.outputSettings = win
 const profileCore = fs.readFileSync(path.join(root, "output-profile-core.js"), "utf8");
 assert.match(profileCore, /async function list\(\)/, "profile store must expose list()");
 assert.match(profileCore, /async function setHint\(/, "profile store must persist the authored folder path");
-assert.match(profileCore, /\{ DB_NAME, STORE, profileId, get, list, bind, setHint, remove, resolve \}/, "list()/setHint()/remove() must be exported");
+// Ghim TỪNG TÊN thay vì cả chuỗi export. Bản trước khớp nguyên văn danh sách,
+// nên thêm một export hợp lệ (B-53: `reauthorizeSole`, `pruneOthers`) là đỏ —
+// một cái đỏ nói "thiếu export" trong khi thật ra là "thừa export". Ghim theo
+// tên thì nó vẫn bắt đúng thứ nó sinh ra để bắt: một tên bị GỠ đi.
+const xuatRa = /DacOutputProfiles = \{([^}]*)\}/.exec(profileCore)?.[1] || "";
+for (const ten of ["DB_NAME", "STORE", "profileId", "get", "list", "bind", "setHint", "remove", "resolve"]) {
+  assert.ok(new RegExp(`\\b${ten}\\b`).test(xuatRa), `\`${ten}()\` phải còn được export khỏi kho hồ sơ thư mục`);
+}
+// B-53: hai lối thoát của "quyền hết sau mỗi lần nạp lại" — xin lại quyền trên
+// handle đã lưu, và dọn hồ sơ thừa để lối đó nổ được.
+for (const ten of ["reauthorizeSole", "pruneOthers"]) {
+  assert.ok(new RegExp(`\\b${ten}\\b`).test(xuatRa), `\`${ten}()\` phải được export — không có nó thì mỗi lần reload Đức phải đi lại cả hộp chọn thư mục`);
+}
 // One-click copy must yield the REAL path when a workbook ever recorded one:
 // hints are persisted on workbook profile resolution and on folder pick, and
 // the probe prefers last_known_folder_hint over the bare folder name.

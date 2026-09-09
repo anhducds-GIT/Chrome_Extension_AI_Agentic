@@ -91,5 +91,58 @@
       return { state: "unavailable", profile, permission };
     } catch (error) { return { state: "unavailable", profile, permission: "error", error: error?.message || String(error) }; }
   }
-  (typeof window !== "undefined" ? window : globalThis).DacOutputProfiles = { DB_NAME, STORE, profileId, get, list, bind, setHint, remove, resolve };
+  /* B-53 · XIN LẠI quyền trên handle ĐÃ LƯU, thay vì bắt chọn lại cả thư mục.
+   *
+   * Đo 09/09, ngay sau một lượt Đức nạp lại tiện ích: `audit_durable: false`,
+   * *"đếm được 3 hồ sơ, 0 còn quyền"*. Tức handle sống sót trong IndexedDB
+   * nhưng QUYỀN thì hết sau mỗi lần nạp lại.
+   *
+   * Trước bản này, mã **chỉ có `queryPermission`** (HỎI còn quyền không) và
+   * KHÔNG chỗ nào gọi `requestPermission` (XIN LẠI). Nên lối duy nhất là mở
+   * lại hộp chọn thư mục và đi lại cả cây thư mục — mỗi lần reload. Đó là lý
+   * do tôi suýt hứa với Đức "một cú bấm là xong mãi mãi"; phép đo bác nó.
+   *
+   * BẮT BUỘC GỌI TỪ MỘT THAO TÁC TAY. Chrome từ chối `requestPermission` khi
+   * không có user gesture, nên hàm này KHÔNG được gọi từ một lượt chạy tự
+   * động — gọi vậy là im lặng thất bại rồi đổ lỗi cho quyền.
+   *
+   * CHỈ NHẬN KHI CÓ ĐÚNG MỘT ứng viên. Cùng luật với `resolveOutputProfile()`
+   * và với bộ đặt tên download: nhiều hơn một thì KHÔNG đoán, vì chọn hộ một
+   * trong mấy thư mục pilot của Đức là đem bằng chứng run này ghi vào hồ sơ
+   * run khác (ADR-0049 hệ quả 8). */
+  async function reauthorizeSole() {
+    const stored = (await list()).filter((profile) => profile?.directory_handle);
+    if (stored.length !== 1) return { state: "khong_duy_nhat", count: stored.length, profile: null };
+    const profile = stored[0];
+    if (typeof profile.directory_handle.requestPermission !== "function") return { state: "unavailable", profile, permission: "unsupported" };
+    try {
+      const permission = await profile.directory_handle.requestPermission({ mode: "readwrite" });
+      if (permission === "granted") return { state: "authorized", profile, permission };
+      return { state: permission === "prompt" ? "permission_required" : "unavailable", profile, permission };
+    } catch (error) { return { state: "unavailable", profile, permission: "error", error: error?.message || String(error) }; }
+  }
+
+  /* B-53 ⑵ · DỌN hồ sơ thừa, và chỉ dọn sau một lựa chọn TƯỜNG MINH của Đức.
+   *
+   * Ba hồ sơ cũ nằm lại là lý do `reauthorizeSole()` ở trên không bao giờ nổ:
+   * nó cố ý không đoán khi có nhiều hơn một. Nhưng dọn theo phỏng đoán thì
+   * cũng sai — nên hàm này CHỈ được gọi ngay sau khi Đức tự tay chọn một thư
+   * mục. Cú bấm đó chính là lời khai "đây mới là thư mục của tôi", nên xoá
+   * mấy cái còn lại không phải đoán, mà là ghi nhận.
+   *
+   * Cái bị xoá chỉ là một dấu-trang trỏ tới thư mục; xoá nhầm thì chọn lại là
+   * có, không mất file nào của Đức. */
+  async function pruneOthers(keepId) {
+    const keep = profileId(keepId);
+    const stored = await list();
+    const removed = [];
+    for (const profile of stored) {
+      if (!profile?.profile_id || profile.profile_id === keep) continue;
+      await remove(profile.profile_id);
+      removed.push(profile.profile_id);
+    }
+    return removed;
+  }
+
+  (typeof window !== "undefined" ? window : globalThis).DacOutputProfiles = { DB_NAME, STORE, profileId, get, list, bind, setHint, remove, resolve, reauthorizeSole, pruneOthers };
 })();
