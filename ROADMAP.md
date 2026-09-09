@@ -54,9 +54,10 @@ Ba chỗ đã đo được, đáng nhìn trước:
 Thứ tự này là của Đức, ghi ở `Y-15`: *đóng nợ kỹ thuật gói GPT trước, rồi mới* tới vòng
 Claude Code ↔ GPT dùng thật.
 
-Gói này đang có nhiều việc mở nhất và **đang có lane khác giữ khoá** — đọc thì tự do, ghi thì
-không. MVP bị chặn ở đúng một chỗ, khai trong `STATUS.md` của gói: **B-36**, panel đóng rồi mở lại
-vẫn bắt Đức chọn thư mục đích bằng tay.
+Gói này đang có nhiều việc mở nhất và **đang có lane khác giữ khoá** — đọc thì tự do, ghi thì không.
+**Cập nhật 09/09:** `STATUS.md` của gói khai **MVP KHÔNG còn bị chặn ở B-36** — vòng chat 0 cú bấm đã
+chạy trọn, nghiệm thu live. Việc còn lại của làn này là **B-43** và phần còn lại của ADR-0050.
+**Đừng tin dòng này** — đọc `STATUS.md` của gói, nó mới tươi.
 
 **đóng khi:** `B-36` đóng, và `node scripts/backlog-check.mjs` cho gói đó dưới trần.
 

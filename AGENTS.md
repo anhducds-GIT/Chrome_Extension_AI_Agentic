@@ -222,7 +222,7 @@ gì."* — chưa bao giờ chứng minh được nó tự nạp.
 | Khi bạn sắp… | Mở |
 |---|---|
 | **Đụng ba gói `duc-auto-*`** | `AGENTS.md` của chính gói đó. **Ba gói là fork của nhau** (giới hạn ②) — một lỗi thường có ba bản sao, vá một bản là để lại hai |
-| **Là phiên ĐIỀU PHỐI** | `docs/protocols/ORCHESTRATOR.md` — **HARD ROLE FIREWALL**: vai điều phối KHÔNG code, KHÔNG debug, KHÔNG đề xuất patch. Không có ngoại lệ "sửa nhỏ". Công cụ: `node scripts/what-next.mjs` |
+| **Là phiên ĐIỀU PHỐI** | `docs/protocols/ORCHESTRATOR.md` — **HARD ROLE FIREWALL**: vai điều phối KHÔNG code, KHÔNG debug, KHÔNG đề xuất patch; không có ngoại lệ "sửa nhỏ". Nạp báo cáo năm mục `DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` rồi **DỪNG**. Công cụ: `node scripts/what-next.mjs`, chỉ đọc |
 | **Hỏi làm gì TRƯỚC** | `ROADMAP.md` — thứ tự, không phải trạng thái. Trạng thái sống: `what-next.mjs` |
 | **Biết Đức đã chốt gì, và vì sao** | `docs/adr/` (cả repo) · `workers/<gói>/<phiên-bản>/docs/adr/` (một gói). Mục lục và bản đồ số hiệu → file: `docs/README.md`. **Trích theo SỐ HIỆU, đừng trích theo tên file** |
 | **Thêm/sửa/bỏ một LUẬT, hoặc tới lượt rà hằng tuần** | `docs/protocols/RULE-COMPILER.md` — sáu bước. **Trim không phải xoá.** Bộ đo cố ý **không có `--fix`** |
