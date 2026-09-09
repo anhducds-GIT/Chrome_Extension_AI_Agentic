@@ -737,8 +737,10 @@ nới trần lên 20.000 → ghim ĐỎ · bỏ phần nền khỏi công thức
 **Dedupe làm việc thật:** bốn luật đầu của gemini trùng nguyên nghĩa với lõi → gộp còn một dòng trỏ
 về lõi.
 
-**`--carry`: lượt đẩy này cuốn theo 4 commit của lane `claude-gpt-chay-het-job`** (`8513daa`,
-`fe56961`, `1ed666f`, `5cd84c4`) — kể tên theo ADR-0005 ⑶.
+**`--carry`: lượt đẩy này cuốn theo **mọi commit chưa đẩy** của lane `claude-gpt-chay-het-job`** —
+`5cd84c4` `1ed666f` `fe56961` `8513daa` `c7d59c1` tại lúc đẩy. Kể tên theo ADR-0005 ⑶. **Lane đó
+đang CHẠY**, không dừng như tưởng, nên con số có thể lớn hơn: bản ghi thật là
+`git log origin/main..HEAD` ngay trước lượt đẩy.
 
 **Gói `duc-auto-chatgpt` KHÔNG sinh được: 3.912 token, quá trần 912.** Phần thừa đã biết chính xác
 (khối biện minh ADR-0032 đã nhận về + bốn luật trùng lõi), vùng đang có lane khác giữ. Hệ quả cần
