@@ -44,9 +44,9 @@
       "B3",
       "B4",
       "B10",
-      "B12",
-      "B16"
-    ]
+      "B12"
+    ],
+    "_doc_b16": "B16 (bo bien dich luat) CO Y de o nhom CANH BAO, khong CHAN: repo nay co 154 ADR chua khai chu_de, bat chan ngay la tu khoa repo. Bat len khi da khai xong — xem BACKLOG."
   },
   "_thu_muc_ngoai_repo_doc": "Thu muc NGOAI kho ma ma repo nay phu thuoc vao. Khai o day vi day la ban do thu muc — va vi mot quy uoc chi nam trong van xuoi thi phu thuoc vao viec AI co mo dung trang do khong. Duc noi loi dat lung tung da gap VAI LAN; ngay 08/09 chinh phien viet khoi nay van dat mot tep ghep cap vao thu muc ho so nguoi dung, du bon goi cu deu dang nam dung cho. Nen luat khai o day PHAI duoc cong cu DOC, khong duoc go cung o hai noi.",
   "thu_muc_ngoai_repo": {
@@ -119,6 +119,12 @@
       "mutability": "rw",
       "ownership_mode": "root",
       "note": "ma dung chung cho nhieu extension (AGENTS.md muc 3 luat 2). Steward la _root vi no khong phai mot Extension (khong co manifest.json) nen khong thanh mot unit. Doi steward khi no doi thay du thuong xuyen den muc thanh diem nghen."
+    },
+    "bang-song/": {
+      "steward": "_code",
+      "mutability": "rw",
+      "ownership_mode": "root",
+      "note": "bang song — trang trang thai chay tai cho, di theo bo khung 1.8.0"
     }
   },
   "grandfathered": {
@@ -383,5 +389,9 @@
         "CLAUDE.md"
       ]
     }
+  },
+  "budget": {
+    "_doc_nap": "tokenNap = TRAN TOKEN cho phan MOI phien phai nap (AGENTS.md goc + STATUS.md goc). Do bang: npm run luat -- --nap. Day la con so nhan theo (so phien), nen no dat hon moi muc khac. Dat 6000 luc migrate 09/09; SIET dan, khong noi ra.",
+    "tokenNap": 6000
   }
 }

@@ -985,3 +985,35 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
   bị chặn bởi file sửa dở của lane khác; hai lần trước đã ghi trong `N-62`.
 - **đóng khi:** một lane khác để file nháp trong `drafts/` **không** làm đỏ cổng của lane đang
   giữ `_root`, **và** có phép ghim cho đúng ca đó.
+
+### KHUNG-M1 · 42 ADR bị B12 nêu "đã Accepted mà thân bài bị sửa"
+
+Lượt migrate lên khung **1.8.0** (09/09) mang theo B12 chặt hơn bản 0.3.0. Cổng cấu trúc nay
+nêu **42 / 154 ADR** có thân bài đổi sau mốc `Accepted`. Đây là **nợ có thật**, không phải cổng
+hỏng: ADR-0000 của chính repo này nói thân bài ADR đã Accepted là bất biến.
+
+**đóng khi:** `node scripts/check-bootstrap.mjs` không còn dòng `B12 ADR-EDITED` nào — hoặc
+repo chốt một cách xử lý khác và ghi vào `decisions.md` (ví dụ: ADR sửa thật thì viết ADR mới
+khai `sua: <mã>`, đúng đường bộ biên dịch luật mở ra).
+
+Xem: `node scripts/check-bootstrap.mjs --all | grep ADR-EDITED`
+
+### KHUNG-M2 · Khai `luat.chu_de` để bật bộ biên dịch luật (B16)
+
+Khung 1.8.0 mang `npm run luat` — bộ biên dịch luật: mỗi ADR khai đúng một `chu_de`, mỗi chủ đề
+có đúng một `dau_moi`, nên hỏi "luật về chuyện X là gì" thì mở **một khối** thay vì đọc bốn file
+rồi tự đoán. Repo này có **154 ADR**, chưa ADR nào khai `chu_de`.
+
+B16 **cố ý để ở nhóm CẢNH BÁO**, không CHẶN — bật chặn khi đang đỏ là tự khoá repo.
+
+**đóng khi:** `.repo-structure.json` khai `luat.chu_de`, mọi ADR còn hiệu lực có `chu_de`,
+`npm run luat -- --soat` không còn VI_PHAM, và `B16` được thêm lại vào `bootstrap.blocking`.
+
+### KHUNG-M3 · Trần token mỗi phiên: đo rồi siết
+
+Khung 1.8.0 mang `npm run luat -- --nap` (Context Compiler) và `npm run can-nang` đo **token**
+chứ không đo dòng. Ngân sách vừa khai `budget.tokenNap: 6000` — con số **lúc migrate**, chưa
+phải con số của repo này.
+
+**đóng khi:** đã chạy `npm run luat -- --nap` một lượt, hạ `tokenNap` xuống sát số thật cộng
+biên 30%, và ghi số đo vào `HANDOFF.md`. Thước chỉ được SIẾT.

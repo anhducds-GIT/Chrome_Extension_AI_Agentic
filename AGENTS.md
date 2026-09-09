@@ -113,3 +113,11 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 | Thêm/vận hành extension · đặt tệp ghép cặp hay vùng ghi Bridge | `PLATFORM.md`. **Đừng tự chọn chỗ** — `node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <gói>` |
 | Lấy dữ liệu HNX | `workers/hnx-fetch/PROTOCOL.md` — gói này **không có quyền `debugger`** |
 | Sửa bộ chuẩn hay gói Assistant | **KHÔNG CÒN Ở ĐÂY** — `Ark_Repo_Harness` (ADR-0001) |
+| **Trạng thái repo lúc MỞ PHIÊN — đang ở đâu, việc kế** | [STATUS.md](STATUS.md) — một trang, khai bằng tay; bảng đọc frontmatter của nó |
+| **Thêm một luật, hay xem luật nào đang hiệu lực về một chủ đề** | `npm run luat` — bộ biên dịch luật, khung 1.8.0 |
+| **Cãi một luật — tìm sự cố sinh ra nó** | [docs/VI-SAO-LUAT.md](docs/VI-SAO-LUAT.md) |
+| **Bản đồ file đầy đủ (kèm vì sao · có gì bên trong)** | [docs/BAN-DO-CHI-TIET.md](docs/BAN-DO-CHI-TIET.md) |
+| **Tra một thuật ngữ** (gate · claim · lane · fail-closed…) | [docs/LEGEND.md](docs/LEGEND.md) |
+| **Mới vào, chưa biết bắt đầu từ đâu** | [docs/HUONG-DAN.md](docs/HUONG-DAN.md) |
+| **Đến hạn bảo trì · repo im ắng lâu · muốn biết repo NẶNG bao nhiêu** | [docs/BAO-TRI-DINH-KY.md](docs/BAO-TRI-DINH-KY.md) · `npm run can-nang` · `npm run luat -- --nap` |
+| **Xem bảng trạng thái chạy tại chỗ** | [bang-song/Xem-bang.cmd](bang-song/Xem-bang.cmd) — `npm run bang-song` |
