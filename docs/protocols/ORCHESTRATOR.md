@@ -100,10 +100,6 @@ trên đất của nó; đừng bê luật repo Extension sang.
 
 ## 0d. RẼ NHÁNH TRONG MỘT CHAT — tối đa 2 chat, mỗi chat rẽ bao nhiêu tuỳ ý ([ADR-0017](../adr/0004-hai-vai-assistant.md) ⑴, [ADR-0005](../adr/0005-lam-viec-song-song.md) ⑵)
 
-> **Mục này từng nói "MỘT CỬA — Đức chỉ nói chuyện với một phiên duy nhất mỗi repo"
-> (quyết định 0004, chốt 05/09). Vế đó CHẾT 07/09**: 0017 thay bằng **hai vai chạy song song**.
-> Sửa 09/09 vì bộ biên dịch luật bắt được sổ này còn dạy mô hình cũ.
-
 Đang chạy: **tối đa 2 chat song song** (`AGENTS.md` giới hạn ⑦, Đức chốt 07/09), hai chat đó
 phải **khác vùng**. Bên trong MỘT chat thì **số tác vụ ngầm không bị giới hạn** — Đức nói rõ:
 *"trong 1 chat mà bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn ok."*
@@ -228,13 +224,9 @@ riêng, cây làm việc riêng, cổng riêng** — nên một chat ở repo n�
 kia. Gộp chúng vào một con số là tự trói mình mà không đổi lại được an toàn nào.
 
 Trong **một** repo: **tối đa hai CHAT** (`AGENTS.md` giới hạn ⑦, Đức chốt 07/09), và chỉ mở
-chat mới khi chat cũ **đã push** — không phải khi nó "báo xong". Ngày 05/09 trần này bị phá ba
-lần và trả giá đúng ba lần.
+chat mới khi chat cũ **đã push** — không phải khi nó "báo xong".
 
-> **Đơn vị là CHAT, không phải "luồng".** Bản trước của đoạn này đếm *luồng*, và đọc thế thì
-> năm tác vụ ngầm trong một chat là bốn lần vi phạm. Đức chốt ngược 07/09: *"trong 1 chat mà
-> bạn manage cùng lúc 5 task chạy ngầm không giẫm chân nhau thì tôi vẫn ok."* **Số tác vụ ngầm
-> trong một chat KHÔNG bị giới hạn**; thứ bị giới hạn là số chat. Sửa 09/09.
+**Đơn vị đếm là CHAT.** Số tác vụ ngầm bên trong một chat không bị giới hạn.
 
 **Chạy song song hết mức — nhưng chỉ với việc ĐÃ SẴN SÀNG.** Bịa việc ra cho đủ chỗ trống là
 đúng cái Đức đã bác: *"làm chậm mà sạch còn hiệu quả hơn spam rồi tất cả đều dang dở."* Việc

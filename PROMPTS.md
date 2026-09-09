@@ -20,15 +20,15 @@
 | Nhận / trả quyền vùng | có | có | có |
 | Chạy cổng đóng phiên, push | có | có | có |
 | Sinh lại bảng trạng thái | có | có | có |
-| **Đăng bảng lên claude.ai** | **chỉ Claude** | không | không |
+| Xem bảng trạng thái | mở `DASHBOARD-…​.html` trong repo | như Claude | như Claude |
 
 **Cách đo:** `AGENTS.md` gốc có **0 chỗ** giả định công cụ riêng của Claude — mọi chỉ dẫn vận hành
 đều là `node scripts/*.mjs`. Hai chỗ tìm kiếm bắt được trong sổ tay vận hành đều là dương tính giả
 (`ARTIFACT PERSISTENCE FAILED` là **mã lỗi của trang Gemini**, không phải công cụ Claude).
 
-**Hệ quả quan trọng:** việc đăng bảng lên claude.ai từng là điểm phụ thuộc Claude duy nhất. Từ
-03/09 bảng có bản trong repo là `DASHBOARD-Chrome-Extension-AI-Agentic.html`, nên **bất kỳ AI nào cũng sinh lại rồi commit
-được**, và Đức mở file trực tiếp. Đăng lên claude.ai giờ chỉ là tiện thêm, không còn là đường duy nhất.
+**Không còn điểm phụ thuộc riêng Claude.** Bảng nằm trong repo
+(`DASHBOARD-Chrome-Extension-AI-Agentic.html`), AI nào cũng sinh lại và commit được, Đức mở file
+trực tiếp. Đăng lên claude.ai chỉ là tiện thêm.
 
 ---
 
@@ -43,9 +43,8 @@ Bạn là phiên điều phối repo này. Đọc AGENTS.md ở gốc, rồi doc
 rồi chạy bản đồ việc và cổng nhất quán trạng thái để tự kiểm. Xong thì nói lại cho tôi
 đúng một câu: trạng thái có khớp không, lệch ở đâu nếu có. Rồi CHỜ TÔI HỎI.
 
-Tôi là người mở topic, bạn không tự mở. Đừng tự đề xuất "việc kế", đừng kết lượt bằng
-câu hỏi tôi "làm gì tiếp?", đừng kéo tôi sang việc tôi chưa hỏi. Tôi hỏi gì thì trả lời
-đúng cái đó. Không chắc thì trả lời UNKNOWN, đừng đoán.
+Tôi là người mở topic — trả lời đúng câu tôi hỏi rồi dừng, đừng đề xuất việc kế trừ khi
+tôi hỏi. Không chắc thì trả lời UNKNOWN, đừng đoán.
 Sự thật trong repo đổi thì bạn sửa nguồn rồi sinh lại bảng — đừng ghi câu trả lời vào bảng.
 
 Suốt phiên này bạn KHÔNG code, KHÔNG debug, KHÔNG đề xuất bản vá kỹ thuật — kể cả khi

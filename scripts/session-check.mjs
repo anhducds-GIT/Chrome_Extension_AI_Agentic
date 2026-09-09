@@ -1062,15 +1062,19 @@ check("Kho chữ không phình", () => {
           + " một liên kết.",
       };
     }
-    /* Thước gói đo BÓ, không đo một file — ADR-0033 ⑵. Bản cũ đo `AGENTS.md` của gói MỘT MÌNH,
-       nên một lượt chuyển luật từ gốc xuống gói (hay ngược lại) làm con số đi xuống mà hoá đơn
-       thật của phiên thì y nguyên. Bó = `moi_phien` + `AGENTS.md` của gói đó. */
+    /* Thước gói đo BÓ MỞ PHIÊN — ADR-0033 ⑵, sửa lại ở ADR-0034 ⑷. Bó phải là **đúng danh sách
+       file mục 1 bắt đọc**, không phải một file tiện đo. Bản đầu đo `AGENTS.md` của gói một mình;
+       bản này cộng cả `STATUS.md`, thứ mục 1 nay bắt đọc thay cho `HANDOFF.md`. Thước nào không
+       khớp danh sách ở mục 1 thì lượt nén sau lại tối ưu nhầm chỗ — đã xảy ra hai lần trong một
+       ngày (đo `AGENTS.md` trong khi 70% hoá đơn nằm ở `HANDOFF.md`). */
     if (doDuoc && typeof nap.tran_ky_tu_mot_goi === "number") {
       let nangNhat = 0, ten = null, rieng = 0;
       for (const f of Object.keys(structure?.luat?.ra_soat ?? {})) {
         if (!/^workers\/.*\/AGENTS\.md$/.test(f)) continue;
         let n = 0;
         try { n = fs.readFileSync(path.join(ROOT, f), "utf8").length; } catch { continue; }
+        try { n += fs.readFileSync(path.join(ROOT, path.dirname(f), "STATUS.md"), "utf8").length; }
+        catch { /* gói không có STATUS.md thì bó chỉ có AGENTS.md */ }
         if (kyTu + n > nangNhat) { nangNhat = kyTu + n; ten = f; rieng = n; }
       }
       if (nangNhat > nap.tran_ky_tu_mot_goi) {

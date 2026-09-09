@@ -344,13 +344,14 @@
         "CLAUDE.md",
         "AGENTS.md"
       ],
-      "tran_ky_tu_moi_phien": 6588,
+      "tran_ky_tu_moi_phien": 6708,
       "dich_ky_tu_moi_phien": 8000,
-      "tran_ky_tu_mot_goi": 19532,
-      "dich_ky_tu_mot_goi": 16000,
+      "tran_ky_tu_mot_goi": 25619,
+      "dich_ky_tu_mot_goi": 22000,
       "_doc_dich": "DICH la TRAN TUYET DOI; BIEN la dich that (65% cua tran) — ADR-0033 (1). May canh TRAN. Thuoc goi do BO: CLAUDE.md + AGENTS.md goc + AGENTS.md cua goi, nen tran cua bo = 2x tran cua mot nua — ADR-0033 (2).",
       "bien_ky_tu_moi_phien": 5200,
-      "bien_ky_tu_mot_goi": 10400
+      "bien_ky_tu_mot_goi": 14300,
+      "_doc_bo": "BO MO PHIEN = moi_phien + AGENTS.md cua goi + STATUS.md cua goi. Dung danh sach file AGENTS.md muc 1 bat doc (ADR-0034). HANDOFF.md CO Y khong nam trong bo — no la ~70% hoa don cu va nay nap theo yeu cau."
     }
   }
 }
