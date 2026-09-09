@@ -24,27 +24,14 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
 
 ## Luật vàng của project này
 
-> **Mục này CỐ Ý gần giống `workers/duc-auto-chatgpt/v0.1.0/AGENTS.md` — đừng gộp.** Bộ biên dịch
-> luật nêu ba cặp ở phép ③ `LUAT_TRUNG` (luật 3, 5, 9); đây là câu trả lời, ghi tại chỗ theo
-> `docs/protocols/RULE-COMPILER.md` mục 4. **Lý do:** một phiên làm ở gói này đọc `AGENTS.md` gốc
-> repo rồi đọc file này, **không bao giờ đọc file của gói kia**. Gộp vào một file dùng chung là
-> bắt mọi phiên đọc thêm một file thứ ba, và tệ hơn: **hai bản PHẢI được phép lệch nhau** — luật 7
-> và 8 dưới đây khác nhánh ChatGPT một cách đúng đắn, vì hai sản phẩm khác nhau.
->
-> **Cái lệch mới là bệnh, không phải cái giống.** Ngày 09/09 phép ③ chính là thứ lôi ra được luật
-> 8 đã chết từ 24/08 mà nằm đây 16 ngày, và luật 7 thiếu hẳn một method tiêu tiền. Phép ③ kêu ở
-> đây là nó **đang chạy đúng**, không phải một món nợ.
+> **Mục này CỐ Ý gần giống gói ChatGPT — đừng gộp.** Lý lẽ đầy đủ, kèm ba chỗ phép ③ đã bắt
+> được ở chính nhánh này: [ADR-0032](../../../docs/adr/0032-ba-goi-giu-luat-rieng-gan-giong-nhau.md).
 
 1. **Không sửa/xoá/regenerate bất cứ gì trong `pilot-*/`, `Pilot-*/`, `Batch-*/`,
    `evidence*/`.** Đây là bằng chứng vận hành của các lỗi đã tìm ra và đã sửa —
    ghi đè lên là xoá mất bằng chứng. **Chỉ THÊM.** Cùng luật với `AGENTS.md`
    gốc mục 5 (*Không bao giờ*), và cố ý viết theo **hình dạng tên**, không theo
    danh sách.
-   > **Sửa 09/09.** Dòng này từng liệt kê `pilot-03/`, `pilot-05/`, `pilot-06/`,
-   > `pilot-06B/` — **ba trong bốn cái đó không tồn tại trong gói này**, chúng là
-   > của nhánh ChatGPT, chép sang lúc fork. Cùng lúc, `pilot-04/`, `Batch-SX-01/`,
-   > `Pilot-G2-01/`, `Pilot-REF-01/` có thật thì không được nêu. Một danh sách gõ
-   > tay bảo vệ nhầm chỗ và bỏ sót chỗ thật; hình dạng tên thì không mục được.
 2. **Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.**
    Đây là yêu cầu bảo mật — nội dung ảnh/text từ gemini.google.com đi vào side panel
    có quyền cao, phải build DOM node, không được ghép chuỗi HTML.
@@ -76,13 +63,11 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
    Trần thật khai ở `MAX_TRIAL_JOBS` trong `dev-trial-core.js` — đừng gõ con số
    vào chỗ khác. **`run.start` thật vẫn cấm vĩnh viễn**: thấy mình đang gỡ nó
    khỏi danh sách cấm thì dừng lại.
-   > **Dòng này thiếu cả ngoại lệ trên cho tới 09/09.** Bốn quyết định của Đức
-   > (25/08) về một method tiêu tiền chưa bao giờ đi vào luật vàng của gói, nên
 6. **Ba luật chung cho mọi extension nằm ở [`workers/_shared/AGENTS.md`](../../_shared/AGENTS.md)** —
    *không làm yếu một lớp bảo vệ đã có* (cũng là `AGENTS.md` gốc mục 5) · *sửa `.js` thì nhắc Đức
    reload* · *preview pane cấm, harness Chrome thật thì được*. Chép lại đây là quay lại đúng cái
    bệnh vừa chữa: bản chép ở nhánh này từng dạy một luật đã chết suốt 16 ngày.
-   > ai chỉ đọc file này sẽ tin Bridge không chạy được gì. Nhánh ChatGPT có ghi.
+
 ## Core / Companion của project này
 
 > **Bảy dòng dưới đây trùng nguyên văn với gói ChatGPT — CỐ Ý, cùng lý do ghi ở mục *Luật vàng*
@@ -116,66 +101,31 @@ chứng bác bỏ · `ADR-0051` bất đối xứng **cố ý** giữa `run.stop
 
 ## Bản đồ file
 
+> **Chỉ khai thứ CẤP CAO, mỗi hàng MỘT mệnh đề.** Đó đúng là thứ luật vàng 4 đòi và đúng thứ cổng
+> đọc — `session-check.mjs` phép *File mới đã khai vào Bản đồ file* so **tên cấp cao**, không so
+> từng file con. **Chuyện dài nằm ở chính nơi người đọc sẽ tới:** docblock đầu mỗi file mã,
+> `README.md` trong mỗi thư mục bằng chứng. Rút gọn 09/09,
+> [ADR-0031](../../../docs/adr/0031-tran-do-bang-ky-tu.md) ⑷ — cùng lượt đã áp cho gói ChatGPT.
+
 | File | Vai trò |
 |---|---|
-| `README.md` | Tổng quan project, kiến trúc, cài đặt, Agent Bridge (kỹ thuật) |
+| `README.md` | Tổng quan, kiến trúc, cài đặt, Agent Bridge (kỹ thuật) — đóng vai design_brief |
 | `AGENTS.md` | File này |
-| `STATUS.md` | **Trạng thái vận hành, một trang, cho mắt Đức** — lifecycle, kiểm chứng lần cuối + bằng chứng, việc đang mở, con trỏ đọc sâu. Máy đọc phần frontmatter để sinh `DASHBOARD.md` ở gốc repo. Chỉ TRỎ sang file khác, không chép nội dung. Schema: `STATUS.template.md` ở gốc repo |
-| `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất**. Cắt đuôi 2026-09-06 theo ADR-0008 của gốc repo; lịch sử cũ hơn ở `HANDOFF-ARCHIVE-01.md`, con trỏ nằm ngay đầu mục `## Log` |
-| `HANDOFF-ARCHIVE-01.md` | **Đuôi đã cắt của `HANDOFF.md`** — 113 lượt Log cũ, nguyên văn, không sửa một chữ. Chỉ đọc; ghi Log mới thì ghi vào `HANDOFF.md`. Ghép lại dựng được bản gốc giống hệt từng byte (bất biến ⑴ của ADR-0008) |
-| `HANDOFF-ARCHIVE-02.md` | **Bản dài nguyên văn của 5 mục đã được viết ngắn trong `HANDOFF.md`** (2026-09-06, ADR-0011 mục ⑶ + ADR-0012). Viết ngắn là **đổi chỗ chi tiết, không phải xoá** — mọi số đo và mọi vòng audit ở đây. Chỉ đọc. Ghép lại dựng được bản gốc giống hệt từng byte, SHA-256 in ngay đầu file |
-| `BACKLOG.md` | **Việc còn mở của nhánh này, đánh số `G-xx`** — P1/P2/P3. Lập 2026-08-27; trước đó nhánh Gemini không có nơi canonical giữ việc mở. Số `G-xx` cố ý khác `B-xx` của nhánh ChatGPT: hai sổ, hai nhánh, hai dãy số. Mỗi dòng gắn nhãn [ĐO]/[ĐỌC]/[DÒ] — **dòng [DÒ] phải kiểm lại trước khi hành động** |
-| `decisions.md` | Mục lục trỏ sang 67 ADR (nội dung đã chuyển) |
-| `docs/adr/` | 67 ADR bất biến — quyết định của riêng gói này |
+| `STATUS.md` | Trạng thái vận hành một trang cho mắt Đức; frontmatter sinh `DASHBOARD.md` ở gốc. Chỉ TRỎ, không chép. Schema: `STATUS.template.md` ở gốc repo |
+| `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất**. Ghi vào **cuối** |
+| `HANDOFF-ARCHIVE-01.md` · `HANDOFF-ARCHIVE-02.md` | Đuôi đã cắt, nguyên văn, **chỉ đọc** — ghép lại dựng được bản gốc giống hệt **từng byte** (ADR-0008 gốc repo ⑴) |
+| `BACKLOG.md` | Việc còn mở của nhánh này, đánh số `G-xx`, P1/P2/P3 |
+| `decisions.md` | **Sổ cái máy sinh** — mục lục quyết định đang sống, `rule-compile.mjs --sinh` |
+| `docs/adr/` | ADR của riêng gói. **Đếm, đừng tin số gõ tay:** `ls docs/adr/*.md \| wc -l` |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX |
-| `NEXT-SESSION-BRIEF.md` | Brief phiên làm việc tiếp theo (khi còn hiệu lực) |
-| `AUDIT.md` | Kết quả audit kiến trúc |
-| `TEST_REPORT.md` | Kết quả test |
-| `drafts/AGENT-BRIDGE-DESIGN-V1.md` | Thiết kế gốc của Agent Bridge (WP-0) |
-| `drafts/AGENT-BRIDGE-HANDOFF.md` | Handoff kỹ thuật WP-1..WP-4 cho Codex |
-| `drafts/AGENT-BRIDGE-ROADMAP-AND-GUIDE-V1.md` | Roadmap + use case Bridge cho Đức (không kỹ thuật) — **một phần đã lỗi thời sau Tầng 1, xem audit 2026-08-24** |
-| `drafts/AGENT-BRIDGE-TIER1-HANDOFF.md` | Brief Tầng 1 (6 method ghi trực tiếp + tab BRIDGE) giao cho Codex |
-| `drafts/AUDIT-SYSTEM-EFFECTIVENESS-2026-08-24.md` | Audit độc lập toàn hệ thống + roadmap 5 giai đoạn tiến tới tự hành (chờ Đức chốt 5 điểm) |
-| `tab-lock-core.js` | **Khoá tab + khoá hội thoại cho một run (G-02, 04/09).** Giải ra tab mà run đã khoá thay vì hỏi lại "tab nào đang hoạt động" ở mỗi lần gửi. Là core riêng vì `sidepanel.js` không nạp nổi vào Node, mà ba ca thật (đổi tab · đổi hội thoại · tab biến mất) là ca HÀNH VI, phải chạy được mới ghim được. Tiền tố `RECEIVER_LOST:` trong thông điệp là CỐ Ý — `runner-core.classifyFailure()` dò chữ để quy nhãn, và `RECEIVER_LOST` là dừng cứng, không thử lại |
-| `tests/tab-lock-behavior.mjs` | Ghim G-02, cả hai nửa: **hành vi** (nạp `tab-lock-core` + `provider-adapter` + `runner-core` thật vào vm, chạy `resolveBoundTab` với tab giả) và **wiring** (soi mã nguồn — phiên trước đã viết đúng core mà quên nối, nên core đúng mà không ai gọi vẫn phải bị bắt). 17 khẳng định, 15/15 đột biến bị bắt |
-| `dev-trial-core.js` | Gate thuần cho `run.trial` (Chế độ phát triển): toggle owner, **≤30 job một chuỗi** (`MAX_TRIAL_JOBS`), khoảng cách ≥300s giữa 2 trial — quyết định 2026-08-25 (trần nâng 2→10→30 trong cùng ngày) |
-| `tests/blob-image-conversion-static.mjs` | Ghim: ảnh `blob:` phải nhận dạng theo BYTE rồi chuyển thành data URL background chấp nhận (lỗi live 26/08) |
-| `tests/attach-path-recorded-static.mjs` | Ghim: đường gắn ảnh tham chiếu phải được ghi lại kể cả khi THÀNH CÔNG (Pilot-REF-01) |
-| `tests/bridge-run-stop-chat-reload-smoke.mjs` | Ghim cặp `run.stop` / `chat.reload` (port từ worker ChatGPT 26/08): hợp đồng registry, params rỗng nghiêm ngặt, và **thứ tự** — cờ dừng phải xoá TRƯỚC await đầu tiên của `run()`, `chat.reload` phải giành khoá TRƯỚC await đầu tiên |
-| `tests/root-suite-covers-workers-static.mjs` | **Ghim G-09 (05/09): `npm test` ở gốc repo phải chạy suite của MỌI worker, không chỉ một.** Đọc hình dạng repo từ `.repo-structure.json` (dùng lại `unitsFrom`/`unitDirsUnder`, không tự chế `^workers/`) rồi đòi mọi `tests/run-all.mjs` phải có tên trong `scripts.test`. Nằm trong gói này là **tạm** — chỗ ở đúng là `tests/` gốc, xem nợ nhỏ ở mục G-09 của `BACKLOG.md` |
-| `tests/shared-modules-no-drift-static.mjs` | **Ghim G-08 (07/09): bảy module còn giống hệt nhánh ChatGPT phải tiếp tục giống hệt.** So sau khi chuẩn hoá CRLF→LF, cùng cách `scripts/feature-parity.mjs` đo — so byte trần sẽ đỏ oan sau một lượt `git checkout` vì máy đặt `core.autocrlf=true`. Chỉ ĐỌC gói ChatGPT (vùng của lane khác), không ghi một byte nào sang đó. **Đếm mỏ neo:** không đủ bảy cặp file thì ĐỎ, vì một công cụ đo hỏng im lặng giống hệt một repo lành. Danh sách ghim cứng là cố ý — 24 file trùng tên khác nhau CÓ CHỦ ĐÍCH, ghim hết là đỏ vĩnh viễn mà đỏ vĩnh viễn thì người ta tắt. Lý do có nó: `xlsx-codec.js` từng nằm trong danh sách và trôi dạt 28/08 mà mười ngày không ai hay |
-| `tests/bridge-run-trial-smoke.mjs` | Test cho `run.trial`: registry, validation, ma trận từ chối, audit `bridge_dev`, UI toggle/badge |
-| `tests/content-abort-race-behavior.mjs` | Ghim G-01 (27/08), phía content: nạp `content.js` THẬT vào vm với DOM giả, bắn message đúng thứ tự race 26/08 và ĐẾM click. 6 ca: đối chứng · huỷ-trước-job = zero click · huỷ X không giết Y · huỷ trần vẫn dừng run đang bay · huỷ mồ côi không giết run mới · huỷ lệch danh tính vẫn dừng (fail-closed, chủ đích). Đỏ trên code trước bản vá — root cause có bằng chứng, không phải suy đoán |
-| `tests/bridge-transport-liveness-smoke.mjs` | Ghim lớp vận chuyển Bridge (28/08): keepalive phải **chờ ACK có hạn** — quá hạn thì buông socket ngay, không đợi sự kiện `close` mà socket `CLOSING` có thể không bao giờ phát; reconnect theo **thang có trần 30 giây**, và thang chỉ reset khi có **một vòng đi-về hoàn chỉnh** (ACK), không phải khi vừa `auth_ok`; connect cũng có hạn riêng vì alarm 30 giây **không** cứu được socket kẹt ở `CONNECTING`; `auth_ok` chỉ nhận **một lần trên một socket đang OPEN**; gỡ pairing phải huỷ **mọi** timer. Dùng fake socket có trạng thái `CLOSING` thật — fake đóng-tức-thì che mất đúng cửa sổ lỗi này |
-| `tests/bridge-transport-depth-guards-static.mjs` | **Ghim G-10 (06/09): ba guard LỚP HAI của `bridge-transport-loopback.js`** — `reconnectTimer` trong `scheduleReconnect` · `socket !== targetSocket` trong callback hạn chờ ACK · "đã bị bản mới hơn vượt qua" trong `publishStatus`. Ghim ở **mức nguồn**, không phải hành vi: đo được rằng cả ba đột biến đều để suite hành vi XANH, vì lớp một che hết đường tới. Cắt thân hàm bằng đếm ngoặc, chỉ dùng `indexOf` chuỗi nguyên văn (file CRLF — neo `^`/`$` sẽ trượt im lặng), và **đếm lại số neo ở cuối**: 0 neo là phép ghim đã trượt chứ không phải "không có gì để sửa". 3/3 đột biến bị bắt |
-| `tests/sidepanel-stop-before-submit-static.mjs` | Ghim G-01, phía side panel (wiring): `stop()` gửi `DAC_ABORT` kèm `job_id`+`attempt_id` NGAY TRONG câu lệnh send (mutation "dựng danh tính mà không gửi" đã từng lọt bản đầu); `run()` kiểm lại cờ dừng ngay sau `await gateNextJob` và nhánh dừng phải SETTLE job thành `USER_STOP` (audit 27/08: break trần bỏ rơi dòng sổ ở RECONCILING); từ mốc RUNNING tới send không còn khe await nào |
-| `templates/Duc-Auto-ChatGPT-Template.xlsx` | Workbook trống chuẩn để bắt đầu pilot mới |
-| `scripts/create-pilot-NN.mjs` | Script tạo workbook cho từng pilot |
-| `scripts/bridge-rpc.mjs` | Gọi RPC thô tới Agent Bridge (jobs.add, references.add, dom_probe… — những method CLI không có) |
-| `Batch-SX-01/` | Batch sản xuất 01: kế hoạch + kết quả chuỗi 12 job chạy liên tục (26/08) — bằng chứng, không sửa |
-| `Pilot-REF-01/` | Pilot ảnh tham chiếu, lần đầu chạy live (26/08) — bằng chứng, không sửa |
-| `pilot-04/`, `pilot-05/` | Fixture XLSX + bằng chứng vận hành — **không sửa/xoá** |
-| `Pilot-G2-01/`, `Pilot-REF-01/` | Pilot của chính nhánh này — bằng chứng, không sửa |
-| `evidence-transport-liveness-5s-20260828/` | Bằng chứng live 28/08 (chiều): sau khi hạ trần chờ xuống 5 giây, nối lại sau **1,0 giây** — bản trần 30 giây đo 22,5s và 27,7s. Hoàn tất phần treo của thư mục bằng chứng buổi sáng. Bằng chứng, không sửa |
-| `evidence-multiprofile-nghiem-thu-20260907/` | **Nghiệm thu lớp nhiều hồ sơ 07/09 — chỉ đọc, 0 credit.** Bốn bảo đảm ĐẠT (kể đúng hồ sơ · quên `--target` thì `TARGET_AMBIGUOUS` · đích lạ thì `TARGET_NOT_CONNECTED` · `served_by` không lệch lượt nào). Hai bài học đắt hơn kết quả: **`legacy: false` KHÔNG có nghĩa "code mới nhất"** (hai hồ sơ cùng `legacy:false` mà 19 vs 23 method — muốn biết thì ĐẾM METHOD), và một phép đo **suýt thành báo cáo sai** — `run.status` timeout 5/6 lượt nhìn như hỏng riêng, xen kẽ ba method mới thấy lỗi đóng theo THỜI GIAN (cửa sổ đánh thức service worker), không theo method. Bằng chứng, không sửa |
-| `evidence-multiprofile-port-20260902/` | Bằng chứng port multi-profile 02/09: 2 vòng audit Codex (vòng 1 FAIL bắt đúng lỗi authSent, vòng 2 đóng), mutation 13/13 đỏ, host sống 32148 — bằng chứng, không sửa |
-| `evidence-transport-liveness-20260828/` | Bằng chứng live 28/08: hai cú tắt/bật host sau bản vá lớp vận chuyển — panel báo **Mất kết nối** đúng cả hai lần, tự nối lại 22,5s và 27,7s, khớp dự đoán viết trước khi đo. Kèm log nguyên văn của hai máy đo và script đo. **Là của bản trần 30 giây** — bằng chứng, không sửa |
-| `evidence-stop-reload-20260826/` | Sổ cái nguyên bản của trial live kiểm chứng `run.stop` / `chat.reload` (26/08), kèm 3 dòng chứng minh lời nhắn cũ nói sai — bằng chứng, không sửa |
-| `Pilot-07-Tạo Ảnh tô màu/` | Pilot 07 (26/08): 18 ảnh màu gốc của Đức → 18 tranh nét cho trẻ 5 tuổi tô. Kế hoạch `PILOT-07-PLAN.md`, kết quả `PILOT-07-KET-QUA.md`. **Ảnh gốc `*.png` (44 MB) KHÔNG vào git** — xem `.gitignore` trong thư mục |
-| `Pilot-07-Tạo Ảnh tô màu/ket-qua/` | 18 tranh nét thành phẩm `to-mau-01..18.jpg` + `BANG-DOI-CHIEU-KET-QUA.md` (tranh ↔ ảnh gốc ↔ job) — bằng chứng, không sửa |
-| `Pilot-07-Tạo Ảnh tô màu/refs-thu-nho/` | Bản thu nhỏ JPEG 1024px của 18 ảnh gốc (127–294 KB) để lọt trần 700 KB của `references.add`. Ảnh gốc không bị đụng. Bảng đối chiếu: `BANG-DOI-CHIEU.md` |
+| `NEXT-SESSION-BRIEF.md` · `AUDIT.md` · `TEST_REPORT.md` | Brief phiên sau (**kiểm ngày**) · kết quả audit · kết quả test |
+| `drafts/` | Nháp, spec, brief giao Codex, bản mẫu lệnh review — **chỗ DUY NHẤT agent tự ghi** |
+| `tests/` | Các phép ghim. **Mỗi phép tự khai ở docblock đầu file nó** — tra bằng `grep -l "G-02" tests/*.mjs`, đừng tra ở bảng này |
+| `scripts/` | `create-pilot-NN.mjs` tạo workbook · `bridge-rpc.mjs` gọi RPC thô tới Bridge |
+| `templates/` | Workbook trống chuẩn để mở pilot mới |
+| `tab-lock-core.js` | Khoá tab + khoá hội thoại cho một run (G-02) — một run bám **đúng một** tab và **một** hội thoại |
+| `dev-trial-core.js` | Gate thuần cho `run.trial`: công tắc Chế độ phát triển, nắp số job, nắp thời gian |
+| `pilot-*/` · `Pilot-*/` · `Batch-*/` · `evidence-*/` | **Bằng chứng vận hành — chỉ THÊM.** Khai theo **hình dạng tên**, đừng liệt kê từng cái: danh sách gõ tay ở đây đã mục một lần bên gói ChatGPT. Mỗi thư mục tự nói kết quả trong `README.md` / `ket-qua/` của nó — **đọc trước khi trích số** |
 
-Thêm file/thư mục mới cấp cao → phải thêm 1 dòng vào bảng này. Không khai báo
-= không tồn tại (luật CLAUDE.md gốc).
-
-## Template COUNCIL — ĐÃ DỜI RA KHỎI BẢN HIỆU LỰC 09/09
-
-Hai khối prompt onboarding `#01` / `#02` (79 dòng) từng nằm ở đây. **Không nơi nào trong repo
-tham chiếu chúng**, và chúng tả một lượt onboarding V0 đã xong từ lâu — một bản mẫu không nổ lần
-nào vẫn thu thuế mọi phiên (giới hạn ⑥ của `AGENTS.md` gốc). Nguyên văn còn nguyên trong git:
-
-```bash
-git show ab066a00:workers/duc-auto-gemini/v0.2.0/AGENTS.md
-```
-
-Cần một câu để dán cho Đức thì mở `PROMPTS.md` ở gốc repo — đó mới là nhà của nó.
+Thêm file/thư mục mới **cấp cao** → thêm 1 dòng vào bảng này. Không khai = không tồn tại
+(luật `CLAUDE.md` gốc). **Một mệnh đề thôi** — chuyện dài viết vào chính file đó.
