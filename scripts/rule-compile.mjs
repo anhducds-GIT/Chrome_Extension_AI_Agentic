@@ -51,6 +51,12 @@ export function docFileADR(text, duongDan) {
   const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(s);
   const dau = fm ? fm[1] : "";
   const soRieng = /^adr:\s*(\d+)/m.exec(dau)?.[1] ?? null;
+  /* CHƯA CHỐT thì CHƯA phải luật đang sống. Một ADR `Proposed` là đề xuất chờ Đức, nên bắt
+     bản hiệu lực phải mang nó là bắt ngược: nó chưa được quyết. Phép ② thôi đếm nó — nhưng
+     KHÔNG im lặng, xem `dangCho` dưới đây. `docs/_TEMPLATE-adr.md` đã nêu đúng chỗ hở này:
+     *"một ADR nằm mãi ở Proposed là quyết định CHƯA chốt mà người sau đọc như đã chốt"*, và
+     cách chữa nó khai lúc đó là đếm bằng tay. Nay máy đếm. */
+  const dangCho = /^status:\s*Proposed\s*$/im.test(dau);
   const mDecides = /^decides:\s*\[([^\]]*)\]/m.exec(dau)?.[1] ?? "";
   const ganh = mDecides
     .split(",")
@@ -86,7 +92,7 @@ export function docFileADR(text, duongDan) {
   let mv;
   while ((mv = reVe.exec(s))) veSong.add(mv[1]);
 
-  return { duongDan, mang, chet, veSong };
+  return { duongDan, mang, chet, veSong, dangCho };
 }
 
 /* Thư mục chứa một file ADR — cùng cách chia phạm vi B12 dùng. `docs/adr/0001` và
@@ -193,7 +199,7 @@ export function bienDich({ soCai, banHieuLuc, dangKy, homNay }) {
     if (!song.has(pv)) song.set(pv, new Set());
     if (!chet.has(pv)) chet.set(pv, new Set());
     for (const so of f.mang) {
-      song.get(pv).add(so);
+      if (!f.dangCho) song.get(pv).add(so);   /* Proposed: chưa chốt, chưa phải luật đang sống */
       nha.set(pv + "|" + so, f.duongDan);
     }
     /* Vế cũ mà file NAY vẫn còn một vế mang đúng ký hiệu đó thì bỏ qua — xem `docFileADR`. */
@@ -280,7 +286,12 @@ export function bienDich({ soCai, banHieuLuc, dangKy, homNay }) {
   }
   quaHan.sort((a, b) => b.tuoi - a.tuoi);
 
-  return { veChetConTrich, moCoi, trung, quaHan };
+  /* ĐANG CHỜ CHỐT — không phải phép kiểm, chỉ là ĐẾM. Phép ② cố ý bỏ qua ADR `Proposed` (chưa
+     quyết thì chưa phải luật đang sống); không đếm ở đây thì một đề xuất nằm mãi ở `Proposed`
+     sẽ vô hình, và người sau đọc nó như đã chốt. `_TEMPLATE-adr.md` nêu chỗ hở này từ trước và
+     giao cho NGƯỜI đếm tay; nay máy đếm. */
+  const dangCho = soCai.filter((f) => f.dangCho).map((f) => f.duongDan).sort();
+  return { veChetConTrich, moCoi, trung, quaHan, dangCho };
 }
 
 /* ---- ĐỌC ĐĨA ------------------------------------------------------------- */
@@ -374,6 +385,11 @@ export function main(argv = process.argv.slice(2)) {
   }
   if (kq.quaHan.length > 30) console.log(`   … còn ${kq.quaHan.length - 30} nơi nữa`);
 
+  if ((kq.dangCho ?? []).length) {
+    console.log(`
+ĐANG CHỜ CHỐT — ${kq.dangCho.length} ADR ở Proposed (phép ② cố ý không đếm)`);
+    for (const d of kq.dangCho) console.log(`   ·  ${d}`);
+  }
   console.log(kq.veChetConTrich.length ? "\nĐỎ — sửa ① trước khi đóng phiên." : "\nKhông có ĐỎ.");
   return kq.veChetConTrich.length ? 1 : 0;
 }

@@ -49,24 +49,17 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
    Đây là yêu cầu bảo mật — nội dung ảnh/text từ gemini.google.com đi vào side panel
    có quyền cao, phải build DOM node, không được ghép chuỗi HTML.
    `tests/artifact-integrity-smoke.mjs` chặn build nếu có.
-3. **Không làm yếu bất kỳ cơ chế bảo vệ nào đã có:** exact-once submission,
-   attribution, readiness gating, retry semantics, persistence verification,
-   checkpoint protocol, security hard-stop. Sửa bug được, nhưng không được
-   "sửa" bằng cách bỏ bớt một trong các lớp bảo vệ này.
-4. **Chữ operator nhìn thấy luôn tiếng Việt** (`operator-messages-core.js`,
+3. **Chữ operator nhìn thấy luôn tiếng Việt** (`operator-messages-core.js`,
    `halt-instructions-core.js`...); **mã lỗi (CODE) luôn tiếng Anh** vì nó là
    định danh trong audit JSONL, Result ledger, và test. Không bao giờ để một
    test bảo mật assert vào câu chữ hiển thị (caption/label) — chỉ assert vào
    logic/wiring.
-5. **Sửa bất kỳ file `.js` nào → phải nói Đức reload extension ở
-   `chrome://extensions` trước khi test.** Không giả định thay đổi đã có hiệu
-   lực.
-6. **Commit: AI được tự commit (kể cả main) từ 2026-08-24** — quyết định của
+4. **Commit: AI được tự commit (kể cả main) từ 2026-08-24** — quyết định của
    Đức, ghi trong `decisions.md`. Bốn điều kiện bắt buộc: test xanh trước khi
    commit; không bao giờ `push --force`/rewrite history; mỗi commit có 1 dòng
    Log trong `HANDOFF.md`; xoá file / sửa pilot evidence / thay đổi ranh giới
    Run vẫn phải hỏi Đức.
-7. **Agent Bridge: `run.start` / `run.pause` / `run.resume` không tồn tại và
+5. **Agent Bridge: `run.start` / `run.pause` / `run.resume` không tồn tại và
    sẽ không bao giờ được thêm vào mà không có quyết định mới, ghi lại trong
    `decisions.md`.** Bridge là ingress + observability, không phải remote
    execution. Side panel luôn là executor duy nhất; đóng panel → mọi lệnh
@@ -85,21 +78,11 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
    khỏi danh sách cấm thì dừng lại.
    > **Dòng này thiếu cả ngoại lệ trên cho tới 09/09.** Bốn quyết định của Đức
    > (25/08) về một method tiêu tiền chưa bao giờ đi vào luật vàng của gói, nên
+6. **Ba luật chung cho mọi extension nằm ở [`workers/_shared/AGENTS.md`](../../_shared/AGENTS.md)** —
+   *không làm yếu một lớp bảo vệ đã có* (cũng là `AGENTS.md` gốc mục 5) · *sửa `.js` thì nhắc Đức
+   reload* · *preview pane cấm, harness Chrome thật thì được*. Chép lại đây là quay lại đúng cái
+   bệnh vừa chữa: bản chép ở nhánh này từng dạy một luật đã chết suốt 16 ngày.
    > ai chỉ đọc file này sẽ tin Bridge không chạy được gì. Nhánh ChatGPT có ghi.
-8. **In-app preview pane vẫn cấm dùng để "xem" UI** (chặn script, bỏ
-   stylesheet — xem `README.md`/`NEXT-SESSION-BRIEF.md`). **Nhưng từ
-   2026-08-24, harness bằng Chrome THẬT được phép** — Playwright/CDP chạy
-   extension thật với trang giả lập là công cụ verify hợp lệ
-   ([ADR-0022](docs/adr/0022-sua-luat-8-agents-md-cho-phep-xay-harness-test-bang.md)).
-   Việc xem bằng mắt của Đức chỉ còn cần cho những gì harness không chạm được
-   (OS folder picker, gemini.google.com thật).
-   > **Vế CẤM HARNESS ở dòng này đã chết 24/08 và nằm đây tới 09/09.** ADR-0022
-   > tên đúng là *"Sửa luật 8 AGENTS.md"* — một chỉ thị sửa chính dòng này, và
-   > nhánh ChatGPT đã sửa ngay hôm đó. Nhánh này thì không: đó là cái giá của
-   > fork, đo bằng 16 ngày một luật đã chết vẫn dạy người đọc.
-9. **Một việc một lúc, không overbuild.** Không thêm tính năng/abstraction
-   ngoài phạm vi được giao trong cùng 1 lượt sửa.
-
 ## Core / Companion của project này
 
 > **Bảy dòng dưới đây trùng nguyên văn với gói ChatGPT — CỐ Ý, cùng lý do ghi ở mục *Luật vàng*
@@ -108,24 +91,13 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
 > thiết kế**. Thứ phải khác nhau là **con số và danh sách file riêng của từng gói** — kiểm hai
 > con số ADR dưới đây mỗi lượt rà, chúng là chỗ đã sai ở gói kia.
 
-CORE (đọc mỗi lần):
-- `README.md` — project là gì, kiến trúc, phạm vi (đóng vai design_brief).
-- `AGENTS.md` — file này: vai, luật vàng, bản đồ file, template COUNCIL.
-- `HANDOFF.md` — trạng thái hiện tại, việc tiếp theo, Log (chỉ thêm dòng, đọc
-  đầu tiên trước khi bắt tay vào việc, ghi cuối cùng sau khi xong).
+**Bộ khung chuẩn** (`README` · `AGENTS` · `HANDOFF` · `decisions` · `drafts/`) tả một lần ở
+`CLAUDE.md` gốc của Đức — **không chép lại đây**. Bảy dòng mô tả chúng bị cắt 09/09 vì trùng
+nguyên văn với gói ChatGPT mà không nói thêm điều gì riêng của gói này.
 
-COMPANION (đọc khi cần):
-- `decisions.md` — **nay là MỤC LỤC** trỏ sang 67 ADR trong `docs/adr/`.
-- `docs/adr/` — 67 quyết định, mỗi cái một file **bất biến** (chuẩn Nygard, bốn mục).
-  **HỒ SƠ sửa được — gộp, phân nhóm, rút gọn; QUYẾT ĐỊNH thì không** ([ADR-0026](../../../docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑵, thay luật bất biến từng byte 09/09).
-  Đổi điều đã quyết thì phải có quyết định mới đứng sau; **bỏ hẳn một số hiệu khỏi sổ thì B12 CHẶN.** Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` ở gốc repo.
-- `DAC_XLSX_RUN_PLAN_V1.md` — hợp đồng schema XLSX (jobs/config) cho mọi
-  workbook mới.
-- `NEXT-SESSION-BRIEF.md` — brief chi tiết cho phiên làm việc tiếp theo khi có
-  (không phải lúc nào cũng còn hiệu lực — kiểm tra ngày trước khi dùng).
-- `AUDIT.md`, `TEST_REPORT.md` — kết quả audit/test đã chạy.
-- `drafts/` — nháp, spec thiết kế, roadmap chưa chốt. Agent chỉ được tự ghi
-  vào đây (đúng luật CLAUDE.md gốc của Đức).
+Riêng của gói này: `DAC_XLSX_RUN_PLAN_V1.md` hợp đồng schema XLSX · `AUDIT.md` + `TEST_REPORT.md`
+kết quả đã chạy · `NEXT-SESSION-BRIEF.md` (kiểm ngày trước khi tin) · `docs/adr/` sổ cái, xem mục
+trên · `drafts/` là nơi DUY NHẤT agent được tự ghi.
 
 ## Sổ cái của gói — luật đang sống, và chỗ đọc lý lẽ
 
@@ -258,82 +230,14 @@ ghi sổ, **không sửa hộ**.
 Thêm file/thư mục mới cấp cao → phải thêm 1 dòng vào bảng này. Không khai báo
 = không tồn tại (luật CLAUDE.md gốc).
 
-## Template COUNCIL
+## Template COUNCIL — ĐÃ DỜI RA KHỎI BẢN HIỆU LỰC 09/09
 
-Hai template lệnh chính thức, copy nguyên văn từ đầu `HANDOFF.md` để tái sử
-dụng khi cần một vòng review Coordinator/Auditor mới. `HANDOFF.md` không lặp
-lại nội dung này nữa — chỉ trỏ về đây.
+Hai khối prompt onboarding `#01` / `#02` (79 dòng) từng nằm ở đây. **Không nơi nào trong repo
+tham chiếu chúng**, và chúng tả một lượt onboarding V0 đã xong từ lâu — một bản mẫu không nổ lần
+nào vẫn thu thuế mọi phiên (giới hạn ⑥ của `AGENTS.md` gốc). Nguyên văn còn nguyên trong git:
 
-### #01 — Claude Coordinator review
-
-```text
-#01
-
-PROJECT: Duc Auto ChatGPT V0
-ROLE: Claude = Coordinator / Architecture Reviewer
-IMPLEMENTER: GPT Web
-CODE PACKAGE: duc-auto-chatgpt-v0
-
-SCOPE LOCK:
-- Chrome Manifest V3 personal extension
-- local-only Text Batch Automation on gemini.google.com
-- no separate login
-- no backend/server
-- no extension quota
-- no image/file automation
-- no multi-tab concurrency
-- no bypass of Gemini/account limits
-- clean-room implementation; do not copy proprietary extension source
-
-TASK:
-1. Read README.md, AUDIT.md, manifest.json, background.js, sidepanel.js, content.js.
-2. Audit architecture and state machine before proposing changes.
-3. Focus on DOM robustness, queue sequencing, stop/pause semantics, Chrome MV3 permissions, and failure recovery.
-4. Identify only material issues for V0. Do not expand scope.
-5. Return PASS / CONDITIONAL PASS / FAIL with ranked findings.
-6. For each blocking finding, provide an exact acceptance criterion for GPT Web to repair.
-
-GUARDRAIL:
-Do not implement code unless explicitly authorized. Coordinator/auditor only.
+```bash
+git show ab066a00:workers/duc-auto-gemini/v0.2.0/AGENTS.md
 ```
 
-### #02 — Codex code audit
-
-```text
-#02
-
-PROJECT: Duc Auto ChatGPT V0
-ROLE: Codex = Independent Code Auditor
-IMPLEMENTER: GPT Web
-
-AUDIT TARGET:
-- manifest.json
-- background.js
-- sidepanel.html
-- sidepanel.css
-- sidepanel.js
-- content.js
-
-V0 CONTRACT:
-Sequential text prompts only. Side Panel -> content script -> Gemini DOM -> wait for completion -> next prompt.
-No server, no login, no quota logic, no image/file automation, no concurrency, no paywall/rate-limit bypass.
-
-AUDIT:
-1. Static correctness / JS errors.
-2. MV3/API correctness and least-privilege permissions.
-3. Race conditions in Start/Pause/Stop and message passing.
-4. Duplicate-send risk.
-5. False completion / timeout risk.
-6. Composer input compatibility (textarea/contenteditable/ProseMirror).
-7. Persistence behavior if side panel closes/reopens.
-8. Security/privacy: confirm no external network/exfiltration.
-
-OUTPUT:
-RESULT: PASS | CONDITIONAL PASS | FAIL
-BLOCKERS: numbered list
-NON_BLOCKERS: max 5
-REPAIR_INSTRUCTIONS: exact and bounded
-TESTS_REQUIRED: concrete manual/static checks
-
-Do not rewrite the extension wholesale. Preserve V0 scope.
-```
+Cần một câu để dán cho Đức thì mở `PROMPTS.md` ở gốc repo — đó mới là nhà của nó.

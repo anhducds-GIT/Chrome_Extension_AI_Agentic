@@ -852,6 +852,29 @@ const chay = (deps) => {
     "repo nay dang dung thuoc coc nen phai khai con so — bo di la tat den bao");
   ok("thuoc coc kho chu: con so o cau hinh, tru ADR, co ma loi rieng");
 }
+
+/* ---- THƯỚC THỨ BA: BỀ MẶT LUẬT — thêm 09/09 -------------------------------
+ *
+ * Hai thước cũ đo `AGENTS.md` và `docs/`. Không cái nào đo **19 nơi chứa luật cộng lại**, mà đó
+ * mới là thứ Đức bảo phải giới hạn. Đo 09/09: hai `AGENTS.md` của hai gói fork chiếm 695 dòng
+ * với **115 dòng giống hệt từng byte** — cả hai thước cũ đều mù trước con số đó.
+ *
+ * Ghim ba vế, và vế thứ ba mới là vế dễ hỏng: nguồn phải là chính `luat.ra_soat`, không phải
+ * một danh sách gõ tay thứ hai. Khai thêm một nơi chứa luật thì nó phải TỰ ĐỘNG bị tính — bản
+ * gõ tay sẽ lệch đúng như hai bản sao danh sách miễn-khoá đã lệch trước 04/09. */
+{
+  const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
+  assert.match(gate, /structure\?\.luat\?\.tran_dong_ban_hieu_luc/,
+    "thuoc be mat luat phai doc tu .repo-structure.json");
+  assert.match(gate, /BE_MAT_LUAT_PHINH/, "phai co ma loi rieng de tra duoc");
+  assert.match(gate, /structure\?\.luat\?\.ra_soat/,
+    "phai duyet chinh luat.ra_soat — danh sach go tay thu hai se lech");
+
+  const ct = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
+  assert.equal(typeof ct.luat?.tran_dong_ban_hieu_luc, "number",
+    "bo con so nay di la tat den bao cho toan bo be mat luat");
+  ok("thuoc coc be mat luat: doc tu ra_soat, con so o cau hinh, co ma loi rieng");
+}
 /* ---- CHỐT commit-msg: NỬA CÒN LẠI CỦA N-40 — N-49 -------------------------
  *
  * `--soat` đo đúng nhưng chạy TRƯỚC `git commit`, và ngày 08/09 đo được cửa sổ giữa hai lệnh:

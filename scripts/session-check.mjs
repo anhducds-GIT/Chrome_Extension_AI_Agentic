@@ -1047,6 +1047,37 @@ check("Kho chữ không phình", () => {
       };
     }
   }
+  /* BỀ MẶT LUẬT — thước thứ BA, thêm 09/09. Hai thước trên đo `AGENTS.md` và `docs/`; không cái
+     nào đo **19 nơi chứa luật cộng lại**, mà đó mới là thứ Đức bảo phải giới hạn. Đo 09/09: hai
+     `AGENTS.md` của hai gói fork chiếm 695 dòng với 115 dòng GIỐNG HỆT TỪNG BYTE — không thước
+     nào nhìn thấy con số đó. Nguồn sự thật là chính `luat.ra_soat`, nên khai thêm một nơi chứa
+     luật là tự động bị tính. */
+  let nhacHaBeMat = "";
+  const tranBeMat = structure?.luat?.tran_dong_ban_hieu_luc;
+  if (typeof tranBeMat === "number") {
+    let dongBeMat = 0, doDuoc = true;
+    for (const f of Object.keys(structure?.luat?.ra_soat ?? {})) {
+      try { dongBeMat += fs.readFileSync(path.join(ROOT, f), "utf8").split(String.fromCharCode(10)).length; }
+      catch { doDuoc = false; }
+    }
+    if (doDuoc && dongBeMat > tranBeMat) {
+      return {
+        ok: false,
+        msg: "BE_MAT_LUAT_PHINH: " + dongBeMat + " dòng trên " + Object.keys(structure.luat.ra_soat).length
+          + " nơi chứa luật, thước cóc là " + tranBeMat + " — thêm " + (dongBeMat - tranBeMat)
+          + ". Ba cửa ra, theo thứ tự nên thử: gộp hai chỗ nói cùng một luật (xem phép ③ của"
+          + " `rule-compile.mjs`) · cắt luật mà `AGENTS.md` gốc đã có · nâng"
+          + " `luat.tran_dong_ban_hieu_luc` VÀ nói vì sao trong nhật ký phiên.",
+      };
+    }
+    /* KHÔNG return ở nhánh "đã dưới thước": hàm này trả về MỘT kết quả, nên return sớm ở đây
+       là che mất hai thước bên dưới. Nhắc bằng cách nối vào thông điệp của thước cuối. */
+    if (doDuoc && tranBeMat - dongBeMat >= 50) {
+      nhacHaBeMat = ` Bề mặt luật đã dưới thước ${tranBeMat - dongBeMat} dòng — HẠ`
+        + ` \`luat.tran_dong_ban_hieu_luc\` xuống ${dongBeMat}.`;
+    }
+  }
+
   const tran = structure?.docs?.tran_dong_khong_ke_adr;
   if (typeof tran !== "number") {
     return { ok: true, msg: "Repo chưa khai `docs.tran_dong_khong_ke_adr` — không có thước thì không đo." };
@@ -1066,7 +1097,7 @@ check("Kho chữ không phình", () => {
     return {
       ok: true,
       msg: `${dong}/${tran} dòng (${ds.length} file, không kể ADR).`
-        + (du >= 50 ? ` Đã dưới thước ${du} dòng — HẠ \`docs.tran_dong_khong_ke_adr\` xuống ${dong} để giữ phần đã dọn.` : ""),
+        + (du >= 50 ? ` Đã dưới thước ${du} dòng — HẠ \`docs.tran_dong_khong_ke_adr\` xuống ${dong} để giữ phần đã dọn.` : "") + nhacHaBeMat,
     };
   }
   return {

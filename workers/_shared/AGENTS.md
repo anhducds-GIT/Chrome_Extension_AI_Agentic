@@ -13,6 +13,24 @@
    trong suite của người tiêu thụ (xem dưới).
 4. **Không chép file từ đây sang gói.** Chép là quay lại đúng cái bệnh vùng này sinh ra để chữa.
 
+## Luật chung cho MỌI extension — hai luật, ở đây vì chúng đúng cho cả năm gói
+
+> Đưa lên đây 09/09 theo giới hạn ② (*"cần ở hai gói → vào `workers/_shared/` trước"*). Trước đó
+> chúng nằm **nguyên văn** trong `AGENTS.md` của cả `duc-auto-chatgpt` lẫn `duc-auto-gemini`, và
+> phép ③ `LUAT_TRUNG` nêu đúng cặp đó. **Cái giá của bản chép đã đo được:** một luật anh em
+> (*cấm harness*) chết 24/08 mà nhánh Gemini vẫn dạy tới 09/09 — **16 ngày**.
+
+1. **Sửa bất kỳ file `.js` nào → phải nói Đức reload extension ở `chrome://extensions` trước khi
+   test.** Đừng giả định thay đổi đã có hiệu lực. Không có cách nào máy kiểm được vế này.
+2. **In-app preview pane vẫn CẤM dùng để "xem" UI** (nó chặn script, bỏ stylesheet). **Nhưng
+   harness bằng Chrome THẬT thì ĐƯỢC** — Playwright/CDP chạy extension thật với trang giả lập là
+   công cụ verify hợp lệ (Đức chốt 24/08). Việc xem bằng mắt của Đức chỉ còn cần cho những gì
+   harness không chạm được: OS folder picker, và trang thật.
+   Căn cứ: [ADR-0022](../duc-auto-gemini/v0.2.0/docs/adr/0022-sua-luat-8-agents-md-cho-phep-xay-harness-test-bang.md) · [ADR-0030](../duc-auto-chatgpt/v0.1.0/docs/adr/0030-sua-luat-8-agents-md-cho-phep-xay-harness-test-bang.md)
+   — **cùng một chốt 24/08 của Đức, ghi hai lần ở hai sổ.** Đó chính là lý do dòng luật này chuyển lên đây.
+
+Gói nào có ngoại lệ thì ghi ngoại lệ **tại gói đó**, đừng sửa hai dòng trên.
+
 ## Có gì trong đây
 
 | Thư mục | Là gì |

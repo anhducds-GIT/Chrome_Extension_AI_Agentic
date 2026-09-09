@@ -17,8 +17,8 @@
     "workers/duc-auto-gemini": {
       "owner": "claude-luat-rasoat",
       "ai": "Claude",
-      "claimed_at": "2026-09-09T04:26",
-      "task": "N-58: 59 quyet dinh mo coi — phan loai luat song vs boi canh lich su",
+      "claimed_at": "2026-09-09T05:12",
+      "task": "nen luat: cat COUNCIL + luat trung voi goc repo",
       "released_at": null,
       "taken_from": "claude-gemini-crlf",
       "taken_by": "claude-luat-rasoat",
@@ -26,21 +26,21 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-luat-rasoat",
+      "owner": "claude-gpt-chay-het-job",
       "ai": "Claude",
-      "claimed_at": "2026-09-09T04:36",
-      "task": "N-58: 41 quyet dinh mo coi — 37 luat song vao ban hieu luc, 2 lich su, 2 chet",
+      "claimed_at": "2026-09-09T04:59",
+      "task": "B-43 vong ba: F5 roi DOC LAI khi het gio ma cau tra loi con do",
       "released_at": null,
-      "taken_from": "claude-gpt-chay-het-job",
-      "taken_by": "claude-luat-rasoat",
-      "taken_at": "2026-09-09T04:36",
-      "duc_decision": "Duc bao 09/09: 'ben kia da dung roi, ban lam not di' — lane claude-gpt-chay-het-job da ket thuc, Duc chot chuyen khoa de dong N-58."
+      "taken_from": "claude-luat-rasoat",
+      "taken_by": "claude-gpt-chay-het-job",
+      "taken_at": "2026-09-09T04:59",
+      "duc_decision": "Duc chot 2026-09-09, tra loi truc tiep cau hoi dinh tuyen 'Duc chon lane nao lam not thi toi theo': \"da reload, F5, ban lam tiep di\". Ban ghi truoc do ('ben kia da dung roi') noi sai trang thai: phien claude-gpt-chay-het-job KHONG dung, no vua do xong nguyen nhan B-43 va dang va. Lay lai DUNG MOT vung; gemini + _root + _code giu nguyen cho claude-luat-rasoat."
     },
     "_root": {
       "owner": "claude-luat-rasoat",
       "ai": "Claude",
-      "claimed_at": "2026-09-09T04:50",
-      "task": "N-58: khai mo_coi_co_y cho hai goi + dong so no",
+      "claimed_at": "2026-09-09T05:21",
+      "task": "ROADMAP + thuoc be mat luat",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -48,11 +48,11 @@
       "duc_decision": "2026-09-07: Duc chot \"lay _root di, sua luon\". Lay tu lane claude-tinh-gon (dang giu, 7 commit chua day) de sua dong 1316 HANDOFF.md: ### -> ## - muc 4794 byte dang chan cong dong phien voi MOI lane. Sua dung mot ky tu, khong xoa chu cua ai. Toi da nhan thang cho lane do truoc khi lay."
     },
     "_docs": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T20:30",
-      "task": "ra soat 4 so tay quy trinh sau luot gop ADR",
-      "released_at": "2026-09-08T22:49",
+      "owner": "claude-luat-rasoat",
+      "ai": "Claude",
+      "claimed_at": "2026-09-09T05:21",
+      "task": "ADR-0030",
+      "released_at": null,
       "taken_from": "claude-k2-vung-mien-khoa",
       "taken_by_duc_decision": "2026-09-04",
       "taken_by": "claude-assistant",
@@ -62,8 +62,8 @@
     "_code": {
       "owner": "claude-luat-rasoat",
       "ai": "Claude",
-      "claimed_at": "2026-09-09T04:29",
-      "task": "N-58: mo_coi_co_y nhan dang NHOM co ly do chung",
+      "claimed_at": "2026-09-09T05:08",
+      "task": "bo do: ADR Proposed khong tinh la luat dang song",
       "released_at": null,
       "taken_from": "claude-bang-vung-chac",
       "taken_by": "claude-assistant",
@@ -78,11 +78,11 @@
       "released_at": "2026-09-08T22:49"
     },
     "workers/_shared": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T21:26",
-      "task": "ra soat luat vung dung chung",
-      "released_at": "2026-09-08T22:30"
+      "owner": "claude-luat-rasoat",
+      "ai": "Claude",
+      "claimed_at": "2026-09-09T05:13",
+      "task": "luat chung cho moi extension: reload + harness",
+      "released_at": null
     },
     "workers/hnx-fetch": {
       "owner": null,
@@ -92,16 +92,61 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "7fe6374e46672051",
+  "_fingerprint": "af834ad64e1b722a",
   "tam": {
-    "HANDOFF.md": {
-      "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T04:51",
+    "workers/duc-auto-chatgpt/v0.1.0/text-output-core.js": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-09T05:00",
       "viec": null
     },
-    "HANDOFF-ARCHIVE-04.md": {
+    "workers/duc-auto-chatgpt/v0.1.0/content.js": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-09T05:00",
+      "viec": null
+    },
+    "workers/duc-auto-chatgpt/v0.1.0/sidepanel.js": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-09T05:00",
+      "viec": null
+    },
+    "workers/duc-auto-chatgpt/v0.1.0/reconciliation-core.js": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-09T05:01",
+      "viec": null
+    },
+    "docs/adr/0030-rule-compiler-v1.md": {
       "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T04:51",
+      "luc": "2026-09-09T05:03",
+      "viec": null
+    },
+    "ROADMAP.md": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T05:03",
+      "viec": null
+    },
+    "AGENTS.md": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T05:03",
+      "viec": null
+    },
+    "workers/duc-auto-chatgpt/v0.1.0/tests/text-reconcile-after-reload-smoke.mjs": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-09T05:07",
+      "viec": null
+    },
+    "workers/duc-auto-chatgpt/v0.1.0/tests/text-reasoning-mode-smoke.mjs": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-09T05:07",
+      "viec": null
+    },
+    "workers/duc-auto-chatgpt/v0.1.0/docs/adr/0052-tab-bi-che-thi-doc-lai-sau-f5-thay-vi-dung-han.md": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-09T05:07",
+      "viec": null
+    },
+    ".agents/claims.json": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T05:21",
       "viec": null
     }
   }
