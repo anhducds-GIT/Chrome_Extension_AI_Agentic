@@ -612,3 +612,33 @@ và điều kiện đóng đòi một lượt live — đẩy nó đi mà chưa 
 
 **Kết quả số.** Suite **123/123**. Thử phá: B-44 **9/10 bắt + 1 bất khả** · phần đếm nguồn **3/3**.
 
+## 2026-09-09 (đóng) · `claude-gpt-chay-het-job` — B-43 ĐÓNG, đo trong hội thoại Project
+
+Vế cuối của điều kiện đóng đòi **một lượt live trong hội thoại thuộc Project**, và tôi không nới
+điều kiện của chính mình. Đã đo: URL `chatgpt.com/g/g-p-6a6aa6fb…-sin/c/6aa03cbf-…`, **cửa sổ để
+nguyên bị che** suốt 18 lượt dò (`visibility=hidden`, `docFocused=false`).
+
+**Sổ ghi 1.867 ký tự · máy chủ giữ 1.867 · `SUCCESS`, `persistence_verified: true`.** Đọc lại ba
+lần đều ra 1.867 với `generating: false`; câu trọn vẹn (ngoặc cân 1/1, kết bằng dấu chấm, có mục
+hành động).
+
+**Vế Project đáng nhất, không phải hình thức.** Phép đo phụ: `conversationId('…/g/g-p-…/c/<id>')`
+trả `6aa03cbf-…`, **không** phải `null` → cửa chống trôi-hội-thoại **đang BẬT** trên phiên Project.
+Chính chỗ đó từng tắt lặng lẽ trên mọi phiên Đức thật sự dùng.
+
+Đường đi đầy đủ, cả bốn bước: hết hạn 180 giây → đối soát đọc, thấy lượt hỏi của chính job → F5 →
+dò tới khi chữ hiện → chốt qua đúng đường `finishTextOutput()` cũ.
+
+**Hai lỗi của tôi trong lượt này, cùng một họ với bốn lỗi trước trong ngày:**
+- Tôi **nhờ Đức bấm F5** trong khi `chat.reload` là method tôi đã dùng cả ngày. Tôi đọc câu trong
+  `halt_instruction` — câu viết cho người vận hành — rồi đọc lại cho Đức. Đức bắt đúng: *"bạn tự
+  F5 được sao phải tôi bấm?"* Chuyển tiếp thay vì hành động.
+- Tôi đo `conversationId` ra `null` và suýt báo con bug quay lại. Phép đo hỏng: quên đưa `URL` vào
+  ngữ cảnh `vm` nên hàm ném lỗi và trả `null`. Mã hoàn toàn đúng.
+
+Cả hai là **đọc một tín hiệu rồi kể chuyện quanh nó** thay vì kiểm nguồn tín hiệu. Khác biệt: chỗ
+thứ hai tôi kiểm TRƯỚC khi nói ra.
+
+**Kết quả số.** Suite **123/123**. B-43 và B-44 đóng. **Còn mở:** B-41 ⑵⑶ (cố ý — ⑶ mở cửa gửi
+lại, cần một lượt live) · B-42 (cần brief Đức duyệt) · B-36 hạ xuống một mục UX.
+

@@ -115,6 +115,14 @@ tự F5-trước-khi-đọc, và bỏ cửa chặn *"không thấy lượt hỏi
 Lượt ⑶ đọc lại ba lần liền đều ra 2.228 với `generating: false`; câu trả lời trọn vẹn (ngoặc cân,
 kết bằng dấu chấm, có mục hành động ở cuối).
 
+**Lượt ⒋ — trong một hội thoại thuộc PROJECT, và đây là vế đóng `B-43`.** URL
+`chatgpt.com/g/g-p-6a6aa6fb…-sin/c/6aa03cbf-…`, cửa sổ để nguyên bị che suốt 18 lượt dò.
+**Sổ ghi 1.867 · máy chủ giữ 1.867 · `SUCCESS`, `persistence_verified: true`**, đọc lại ba lần
+đều ra 1.867 với `generating: false`. Phép đo phụ chứng minh
+`conversationId('…/g/g-p-…/c/<id>')` trả về `6aa03cbf-…` chứ không phải `null`, tức **cửa chống
+trôi-hội-thoại đang BẬT** trên phiên Project — chính chỗ đó từng tắt lặng lẽ trên mọi phiên Đức
+thật sự dùng.
+
 **Ba chỗ chỉ trang thật mới lộ ra, không phép kiểm nào trong 123 phép bắt được** — ghi ra vì đó là
 bài học đáng hơn bản vá:
 

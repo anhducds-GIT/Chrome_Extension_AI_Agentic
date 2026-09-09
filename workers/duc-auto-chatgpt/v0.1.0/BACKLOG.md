@@ -1776,3 +1776,23 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
   xanh vẫn để lọt ba lỗ mà chỉ trang thật lộ ra. Việc còn lại đã sẵn cửa: `TEXT_RECONCILE` là chỗ
   ⑶ cắm vào, và phép đếm ở trên sẽ **đỏ** đúng lúc ai nối nguồn ÂM — đó là hàng rào cần có trước.
 
+- **ĐÓNG B-43** · Vế cuối của điều kiện đóng — *"một lượt live trong một hội thoại thuộc Project
+  cho thấy số ký tự ghi vào sổ bằng số ký tự đọc lại được trên trang"* — đã đo, 09/09.
+  URL: `chatgpt.com/g/g-p-6a6aa6fb…-sin/c/6aa03cbf-…`, **cửa sổ để nguyên bị che**
+  (`visibility=hidden`, `docFocused=false` suốt 18 lượt dò).
+  **Sổ ghi 1.867 ký tự · máy chủ giữ 1.867 · `SUCCESS`, `persistence_verified: true`.**
+  Đọc lại ba lần đều ra 1.867 với `generating: false`; câu trả lời trọn vẹn (ngoặc cân 1/1, kết
+  bằng dấu chấm, có mục hành động ở cuối).
+  **Vế Project là vế đáng nhất, không phải hình thức:** phép đo phụ chứng minh
+  `conversationId('…/g/g-p-…/c/<id>')` trả về **`6aa03cbf-…`**, không phải `null` — tức cửa chống
+  trôi-hội-thoại **đang BẬT** trên phiên Project. Chính chỗ đó từng tắt lặng lẽ trên mọi phiên
+  Đức thật sự dùng, và đó là lý do vế này được viết vào điều kiện đóng.
+  Đường đi đầy đủ, cả bốn bước: hết hạn 180 giây → đối soát đọc, thấy lượt hỏi của chính job →
+  F5 → dò tới khi chữ hiện → chốt qua đúng đường `finishTextOutput()` cũ.
+  Điều kiện đóng còn lại đã đạt trước đó: số đo `dom_probe` (đường cong 8 → 25 → đứng yên 160
+  giây → F5 → 1.611) · phép ghim hành vi (`text-reconcile-after-reload-smoke.mjs`, 16 mép, cắt
+  `answerAfterPrompt()` đã ship) · thử phá **13/13** bắt được, 0 thoát.
+  Ba lỗ mà 123 phép kiểm không thấy và chỉ trang thật lộ ra, đã ghi vào ADR-0052: cửa tắt tin
+  DOM · đọc sớm hơn lúc trang được dựng · và **điều kiện nghiệm thu đầu của tôi sai** (*"sổ ==
+  trang"* — hai vế cùng đọc 27 nên nó báo ĐẠT; hai vế cùng sai thì bằng nhau).
+
