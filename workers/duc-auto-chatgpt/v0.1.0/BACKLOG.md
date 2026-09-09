@@ -2283,7 +2283,7 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
 Bốn mục dưới đây sinh ra từ đúng hai lượt chạy: một job **chữ** có 4 ảnh mẫu 1,83MB (0 credit ảnh)
 và một job **ảnh** (1 credit). Không mục nào là suy diễn — mỗi mục kèm số đo của nó.
 
-### B-47 · (ĐÃ VÁ 09/09, chờ nghiệm thu ca tab NỀN) Job ảnh trên tab nền thất bại vì máy đòi bitmap giải mã
+### B-47 · (VẾ ⑵ ĐÃ NGHIỆM THU LIVE TRÊN TAB NỀN 09/09 · vế ⑴ còn mở) Job ảnh trên tab nền thất bại vì máy đòi bitmap giải mã
 Đo live 09/09, job `Q002`. Tab `visibility: hidden` → `<img>` sinh **có** được vẽ (alt
 `"Generated image: …"`) nhưng `image.complete && naturalWidth > 0` là **false ở cả 3/3 node**, nên
 `eligible: 0` và job chết `OUTPUT_DETECTION_TIMEOUT: NO_NEW_IMAGE` sau **300 giây**. Số đo đầy đủ ở
@@ -2352,7 +2352,30 @@ trong DOM ngay cả khi tab ở nền, tức ChatGPT **không** chờ ai cuộn 
 **Vế ⑴ (thông điệp `NO_NEW_IMAGE` nói sai nguyên nhân) vẫn CÒN MỞ** — bản vá làm ca đó hiếm hẳn
 nhưng không xoá nó: `eligible = 0` vì lý do khác vẫn báo cùng một câu sai.
 
-- **đóng khi:** ⑴ thông điệp lỗi nói đúng nguyên nhân, có phép ghim; ⑵ **một lượt job ảnh chạy
+**NGHIỆM THU LIVE TRÊN TAB NỀN — 09/09, và nó là một cặp TRƯỚC/SAU sạch.** Đức che cửa sổ rồi
+bảo *"tiếp tục tạo ảnh và debug case không visible"*. Tôi đo `visibility` **trước khi chạy** để
+chắc đúng ca: `hidden`, `docFocused: false`.
+
+| cùng điều kiện: job ảnh, tab `hidden` | TRƯỚC bản vá (`Q002` lượt 16:45) | SAU bản vá (`Q002` lượt 16:32) |
+|---|---|---|
+| `ready` của ứng viên mới | **false** 3/3 | **true** 3/3 |
+| `eligible` | **0** | **1** |
+| `decision_reason` | `NO_NEW_IMAGE` | `null` (không có lý do từ chối) |
+| kết cục | `INTERRUPTED` sau **300 giây** | **SUCCESS**, không chạm nắp giờ |
+| ảnh lưu được | **không** | `b4285f42-…png`, `persistence_verified: true` |
+
+`chosen_count: 1`, một `source_id` duy nhất (`e1ee91ee`), không nằm trong mốc nền, `role: assistant`,
+`input: false` — **quy thuộc vẫn chặt**, chỉ có điều kiện giải mã là bỏ.
+
+**Và một xác nhận CẤU TRÚC, không phải may mắn:** trong toàn bộ mã đã ship **không có** `canvas`,
+`drawImage`, hay `createImageBitmap`. Đường tải lấy **bytes theo URL**, nên nó chưa bao giờ cần
+bitmap — điều kiện cũ là một đòi hỏi thừa, và nó thừa ở đúng chỗ đắt nhất.
+
+**Đây là bản sửa của chính tôi, nên tôi không tự ký:** cái ký ở đây là **số đo trên máy Đức**, cặp
+trước/sau ở trên, chạy trong điều kiện Đức tự đặt. Đức đảo được bất cứ lúc nào.
+
+- **đóng khi:** ⑴ thông điệp lỗi nói đúng nguyên nhân, có phép ghim; ⑵ **XONG 09/09** — job ảnh
+  chạy
   SUCCESS với tab để ở NỀN** — đó là điều kiện nghiệm thu thật của bản vá này.
 
 ### ~~B-48~~ · (ĐÓNG 09/09) `dom_probe` không soi được chip đính kèm — nắp 40 nút bị thanh bên ăn hết
@@ -2447,6 +2470,20 @@ lượt thử lại "vô hại" đã nhân đôi việc. Một tác nhân AI kh�
 
 - **đóng khi:** tách được nguyên nhân bằng phép đo (gallery hay checkpoint), và panel còn trả lời
   được các method chỉ đọc trong lúc nạp ảnh lớn.
+
+### B-51 · (P3) `dom_probe` giấu mất ảnh MỚI NHẤT khi hội thoại đã có từ 15 ảnh
+Đo live 09/09, ngay giữa một lượt nghiệm thu. Trường `images` của probe nắp **15 mục** lấy theo
+thứ tự tài liệu, mà ảnh sinh mới nhất **đứng cuối** — nên khi hội thoại đạt 18 ứng viên,
+`imageCandidateCount` báo **18** trong khi `images` vẫn chỉ tả 15 cái **đầu**, và cái đang cần xem
+thì không có. Tôi mất dấu ảnh mới đúng lúc đang đo nó.
+
+**Chỉ là rủi ro CHẨN ĐOÁN, không phải an toàn:** `imageCandidates()` mà runner dùng **không** có
+nắp nào; nắp chỉ nằm ở trường báo cáo của probe. Nhưng nó cùng họ với `~~B-48~~` (nắp 40 nút bị
+thanh bên ăn hết), và cách chữa cũng cùng một hình dạng: **ưu tiên theo phạm vi, không nới nắp** —
+lấy N cái CUỐI thay vì N cái ĐẦU, hoặc tách riêng một trường chỉ chứa ảnh mang `alt` "Generated
+image:".
+
+- **đóng khi:** một hội thoại ≥ 15 ảnh mà probe vẫn tả được ảnh mới nhất, và có phép ghim.
 
 ## KẾ HOẠCH TRIỂN KHAI — chốt 09/09, viết để sống qua một lượt compact
 

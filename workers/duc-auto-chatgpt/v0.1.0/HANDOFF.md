@@ -677,3 +677,36 @@ hưởng nhánh này → fail **closed** ở chỗ đáng nghi. Thêm trường 
 
 **Đo.** Suite **131/131** · thử phá **8/8 đỏ, 0 lọt**, gồm cái độc: *vá bằng đồng hồ*.
 **Vẫn tắc đẩy:** 4 commit của `harness-loi-01` nằm dưới commit của tôi, cần Đức chốt.
+
+## 2026-09-09 (lượt 13) · `claude-gpt-chay-het-job` — B-47 nghiệm thu trên TAB NỀN: trước/sau sạch
+
+**Làm gì.** Đức che cửa sổ rồi bảo *"tiếp tục tạo ảnh và debug case không visible"*. Tôi đo
+`visibility` **trước khi chạy** để chắc đúng ca — `hidden`, `docFocused: false` — rồi chạy một job
+ảnh thật.
+
+**Cặp TRƯỚC/SAU, cùng điều kiện, ngược kết quả:**
+
+| job ảnh, tab `hidden` | TRƯỚC bản vá | SAU bản vá |
+|---|---|---|
+| `ready` ứng viên mới | **false** 3/3 | **true** 3/3 |
+| `eligible` | **0** | **1** |
+| `decision_reason` | `NO_NEW_IMAGE` | `null` |
+| kết cục | `INTERRUPTED` sau 300s | **SUCCESS**, không chạm nắp giờ |
+| ảnh lưu | **không** | `b4285f42-…png`, `persistence_verified: true` |
+
+`chosen_count: 1`, một `source_id` duy nhất, ngoài mốc nền, `role: assistant`, `input: false` —
+**quy thuộc vẫn chặt**, chỉ bỏ đúng điều kiện giải mã bitmap.
+
+**Xác nhận CẤU TRÚC, không phải may:** toàn bộ mã ship **không có** `canvas` / `drawImage` /
+`createImageBitmap`. Đường tải lấy bytes **theo URL**, nên nó chưa bao giờ cần bitmap — điều kiện
+cũ là đòi hỏi thừa, thừa ở đúng chỗ đắt nhất.
+
+**Tôi không tự ký bản sửa của mình:** thứ ký ở đây là số đo trên máy Đức, trong điều kiện Đức tự
+đặt. Đức đảo được.
+
+**Mới: `B-51`** — bắt được ngay giữa lượt đo: trường `images` của probe nắp **15 mục lấy từ ĐẦU**,
+mà ảnh sinh mới nhất đứng **cuối**; hội thoại đạt 18 ứng viên là probe giấu mất đúng cái đang cần
+xem. Chỉ là rủi ro chẩn đoán (`imageCandidates()` của runner **không** có nắp), nhưng cùng họ với
+`~~B-48~~` và cùng cách chữa: ưu tiên theo phạm vi, đừng nới nắp.
+
+**Vẫn tắc đẩy:** nay **8 commit** của tôi nằm trên 4 commit của `harness-loi-01`. Cần Đức chốt.
