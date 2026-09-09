@@ -671,3 +671,16 @@ lỗi, nó cắn hai chiều trong một ngày. Số đo và cách dọn ở `BA
 
 **Còn mở:** B-41 ⑵ (`DETECTION_BLIND`) · B-42 (cần brief Đức duyệt) · vế live của ADR-0053 cần
 một lỗi thật của nhà cung cấp, **tôi không giả lập**.
+
+## 2026-09-09 (tệp đẩy ⒊) · `claude-gpt-chay-het-job` — có cuốn theo lane khác
+
+Lượt đẩy đóng B-40 dùng `--carry` và **cuốn theo 8 commit của lane `claude-nen-luat`** (đợt nén Bản
+đồ file và ADR-0034 *mở phiên đọc STATUS.md, không đọc HANDOFF.md*). Ghi ra vì
+[ADR-0005](../../../docs/adr/0005-lam-viec-song-song.md) ⑶ bỏ cửa hỏi Đức cho `--carry`, nên tên
+lane bị cuốn theo là dấu vết duy nhất còn lại.
+
+**Cổng đóng phiên còn MỘT mục đỏ, và nó KHÔNG phải của phiên này:** `NAP_MOI_PHIEN_PHINH` lệch
+**2 ký tự** (6.710 so với thước 6.708) vì commit của lane `claude-nen-luat` chạm `AGENTS.md` — họ
+nâng thước lên 6.708 rồi chính bản sửa sau đó vượt thêm 2. Tôi **không sửa chữ luật đang dở của
+lane khác**, và cũng không nâng thước hộ họ: nâng thước là một quyết định phải kèm lý do trong
+nhật ký của người nâng. Mọi phép kiểm còn lại XANH; suite gói **124/124**.
