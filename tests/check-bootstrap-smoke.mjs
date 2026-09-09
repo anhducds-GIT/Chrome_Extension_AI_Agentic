@@ -901,6 +901,42 @@ const chay = (deps) => {
     "thuoc goi phai do BO (phan goc + AGENTS.md cua goi), khong do rieng file cua goi");
   ok("bien tach khoi tran o ca hai thuoc, va thuoc goi do BO chu khong do mot file");
 }
+
+/* ---- HOOK: THUOC PHAI DI THEO LUAT, KHONG TUT LAI SAU NO (ADR-0034 (4)) -----
+ *
+ * Ngay 09/09 thuoc do `AGENTS.md` cua goi mot minh va bao "8.900 token, duoi tran", trong khi
+ * phien that tra 30.500 — vi 70% hoa don nam o `HANDOFF.md`, thu ma `AGENTS.md` muc 1 bat doc
+ * nhung thuoc khong dem. Do la benh DO SAI CHO, no da no HAI LAN trong mot ngay.
+ *
+ * Nen ghim chinh CHO NOI HAI BEN GAP NHAU: danh sach file trong cau hinh phai bang danh sach
+ * file muc 1 bat doc. Them mot file vao muc 1 ma quen khai o cau hinh -> DO o day, truoc khi no
+ * kip thanh mot khoan token khong ai dem. */
+{
+  const ct = JSON.parse(fs.readFileSync(path.join(ROOT, ".repo-structure.json"), "utf8"));
+  const ds = ct.luat?.nap?.mo_phien_goi;
+  assert.ok(Array.isArray(ds) && ds.includes("AGENTS.md"),
+    "phai khai `nap.mo_phien_goi` va no phai co AGENTS.md cua goi");
+
+  const agents = fs.readFileSync(path.join(ROOT, "AGENTS.md"), "utf8");
+  const mucMo = agents.split(/\n(?=## )/).find((m) => /\*\*Mở:\*\*/.test(m));
+  assert.ok(mucMo, "AGENTS.md phai con mot muc noi trinh tu MO PHIEN (`**Mở:**`)");
+
+  /* Cat dung CAU "Mo:", khong lay ca muc. Ban dau lay ca muc va mot con dot bien THOAT:
+     them `BACKLOG.md` vao cau hinh van XANH, vi muc 1 co nhac BACKLOG.md — nhung nhac de noi
+     GHI VAO DAU, khong phai NAP LUC MO. "Ten file co xuat hien" khong phai cau hoi; cau hoi la
+     "no co nam trong trinh tu mo phien khong". */
+  const dongMo = (mucMo.match(/\*\*Mở:\*\*[\s\S]*?(?=\n\*\*[^*]|$)/) ?? [""])[0];
+  assert.ok(dongMo.length > 20, "khong cat duoc cau `**Mở:**` cua muc 1");
+  const truocCanhBao = dongMo.split(/Đừng nạp/)[0];
+
+  for (const f of ds) {
+    assert.ok(truocCanhBao.includes(f),
+      `\`${f}\` khai o nap.mo_phien_goi ma trinh tu MO PHIEN khong goi ten — thuoc dang dem mot file khong ai doc luc mo`);
+  }
+  assert.ok(!/HANDOFF\.md/.test(truocCanhBao),
+    "trinh tu mo phien khong duoc bat nap HANDOFF.md — no la ~70% hoa don cu (ADR-0034)");
+  ok("hook: danh sach bo mo phien o cau hinh KHOP voi AGENTS.md muc 1, va muc 1 khong nap HANDOFF");
+}
 /* ---- CHỐT commit-msg: NỬA CÒN LẠI CỦA N-40 — N-49 -------------------------
  *
  * `--soat` đo đúng nhưng chạy TRƯỚC `git commit`, và ngày 08/09 đo được cửa sổ giữa hai lệnh:

@@ -1069,12 +1069,19 @@ check("Kho chữ không phình", () => {
        ngày (đo `AGENTS.md` trong khi 70% hoá đơn nằm ở `HANDOFF.md`). */
     if (doDuoc && typeof nap.tran_ky_tu_mot_goi === "number") {
       let nangNhat = 0, ten = null, rieng = 0;
+      /* Danh sách file của gói đọc từ CẤU HÌNH (`nap.mo_phien_goi`), không gõ cứng — và một phép
+         ghim đối chiếu chính danh sách đó với `AGENTS.md` mục 1. Thêm một file vào mục 1 mà quên
+         khai ở đây thì phép ghim ĐỎ, nên thước không thể tụt lại sau luật. */
+      const cacFile = structure?.luat?.nap?.mo_phien_goi ?? ["AGENTS.md"];
       for (const f of Object.keys(structure?.luat?.ra_soat ?? {})) {
         if (!/^workers\/.*\/AGENTS\.md$/.test(f)) continue;
-        let n = 0;
-        try { n = fs.readFileSync(path.join(ROOT, f), "utf8").length; } catch { continue; }
-        try { n += fs.readFileSync(path.join(ROOT, path.dirname(f), "STATUS.md"), "utf8").length; }
-        catch { /* gói không có STATUS.md thì bó chỉ có AGENTS.md */ }
+        const thuMuc = path.dirname(f);
+        let n = 0, coAgents = false;
+        for (const ten2 of cacFile) {
+          try { n += fs.readFileSync(path.join(ROOT, thuMuc, ten2), "utf8").length; if (ten2 === "AGENTS.md") coAgents = true; }
+          catch { /* gói thiếu file đó thì bó nhẹ hơn, không phải lỗi */ }
+        }
+        if (!coAgents) continue;
         if (kyTu + n > nangNhat) { nangNhat = kyTu + n; ten = f; rieng = n; }
       }
       if (nangNhat > nap.tran_ky_tu_mot_goi) {

@@ -351,7 +351,12 @@
       "_doc_dich": "DICH la TRAN TUYET DOI; BIEN la dich that (65% cua tran) — ADR-0033 (1). May canh TRAN. Thuoc goi do BO: CLAUDE.md + AGENTS.md goc + AGENTS.md cua goi, nen tran cua bo = 2x tran cua mot nua — ADR-0033 (2).",
       "bien_ky_tu_moi_phien": 5200,
       "bien_ky_tu_mot_goi": 14300,
-      "_doc_bo": "BO MO PHIEN = moi_phien + AGENTS.md cua goi + STATUS.md cua goi. Dung danh sach file AGENTS.md muc 1 bat doc (ADR-0034). HANDOFF.md CO Y khong nam trong bo — no la ~70% hoa don cu va nay nap theo yeu cau."
+      "_doc_bo": "BO MO PHIEN = moi_phien + AGENTS.md cua goi + STATUS.md cua goi. Dung danh sach file AGENTS.md muc 1 bat doc (ADR-0034). HANDOFF.md CO Y khong nam trong bo — no la ~70% hoa don cu va nay nap theo yeu cau.",
+      "mo_phien_goi": [
+        "AGENTS.md",
+        "STATUS.md"
+      ],
+      "_doc_mo_phien_goi": "File cua GOI ma AGENTS.md muc 1 bat doc luc mo phien. Thuoc `mot_goi` cong dung danh sach nay, va mot phep ghim doi chieu no voi chinh muc 1 — them mot file vao muc 1 ma khong khai o day thi phep ghim DO. HANDOFF.md CO Y khong co trong danh sach (ADR-0034): no la ~70% hoa don cu, nay nap theo yeu cau."
     }
   }
 }
