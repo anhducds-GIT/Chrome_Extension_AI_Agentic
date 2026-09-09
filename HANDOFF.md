@@ -645,3 +645,35 @@ quyết. Đã ghi vào Làn 2 thay cho một lời hứa sẽ-nén-tiếp mà t�
 **Khoá:** vùng `workers/duc-auto-chatgpt` được lane `claude-gpt-chay-het-job` lấy giữa phiên bằng
 `--restamp --duc-duyet` kèm câu chốt của Đức (*"tiếp đi"*) — đường hợp lệ thứ ba, phần việc của tôi
 trong vùng đó đã commit xong trước đó. Không tranh.
+
+## 2026-09-09 · `claude-nen-luat` (lượt 3) — audit bác kết luận của tôi, và một cú đẩy nhầm
+
+**Tôi đẩy nhầm.** Heredoc **không đóng ngoặc** (`<<PY`) làm bash chạy mọi backtick trong đoạn
+Python — một trong số đó là `safe-push.mjs`. **8 commit lên `origin/main` lúc tôi chưa định đẩy**,
+gồm **`afd00d2f` của lane `claude-gpt-chay-het-job`** — lượt `--carry` bắt buộc kể tên, tôi kể ở
+đây. Không hỏng gì: `safe-push` là công cụ đúng và điều kiện của nó đều đạt, không force, không sửa
+lịch sử. Nhưng là hành động ra ngoài tôi không chọn. **Luôn `<<'EOF'`.**
+
+**Đức đổi cách đặt trần:** *"nhỏ hơn ngưỡng margin 30–40%"*, và mở uỷ quyền sang **tái tổ chức
+kiến trúc luật**.
+
+**Kết luận lượt 2 của tôi SAI, Codex bác đúng.** Tôi viết *"phần thừa là chính các câu luật, đi
+tiếp là bỏ bớt luật"*. Sai — tôi mới chạm trần của việc **xoá chuyện kể**. Cửa còn lại: **chuyển
+THỦ TỤC xuống Tầng 2 kèm CÒ NẠP BẮT BUỘC**, giữ bất biến ở Tầng 1. Chuyển thủ tục mà vẫn giữ bất
+biến **không phải xoá luật**. Riêng cửa đó: `AGENTS.md` **16.245 → 6.427**; nạp mỗi phiên
+**16.674 → 6.588**, dưới trần 8.000, còn **1.388** nữa tới đích 5.200.
+
+**Audit còn tìm ra bảy chỗ mâu thuẫn có sẵn** — nguy hiểm hơn độ dài, vì lượt nén sau sẽ "dọn"
+đúng chúng. Cách đọc đúng từng chỗ: **ADR-0033 ⑸**.
+
+**Hai chỗ audit dạy tôi mà tôi không tự thấy:** bảng mục 7 **tự mô tả sai** (nói "chỉ đường" trong
+khi ba hàng mang luật thật), và thước gói đo **một file** thay vì đo **bó** — nên chuyển luật qua
+lại giữa gốc và gói làm con số đẹp lên mà hoá đơn y nguyên. Đã sửa cả hai.
+
+**Một phép ghim của chính tôi đo sai chuyện:** nó khẳng định `dich < tran`, tức đo *khoảng cách hôm
+nay*, nên **đỏ đúng lúc thước lặn xuống dưới đích** — đỏ lúc thành công. Thay bằng ghim thứ tự
+`bien < dich`.
+
+**Hai nợ chưa ghi được vào `BACKLOG.md`** (lane khác giữ khoá file đó): không phép kiểm nào canh
+chuỗi *chỗ cũ → bất biến → đích → cò* của một lượt chuyển (ADR-0033 ⑶); và `_root` không nhận được
+khi lane khác giữ **một** khoá file bên trong, nên commit gốc chưa đẩy kẹt cổng.

@@ -36,46 +36,50 @@ Lượt gắn đó trả về hai thứ ngoài dự tính:
 `duc-auto-gg-flow-video` ADR-0009. Nó không phải việc nén luật — nó là **luật an toàn**
 (`AGENTS.md` gốc mục 3 vế ③), và uỷ quyền của Đức là về nén, không về nới an toàn. **Chờ Đức.**
 
-## Làn 2 — Nén bản hiệu lực xuống ĐÍCH 8.000 ký tự (`Y-14`)
+## Làn 2 — Nén bản hiệu lực xuống ĐÍCH có biên (`Y-14`)
 
-Đức 09/09 giao quyền lead: *"AI chủ động hoàn toàn… miễn là đúng direction & đúng budget."*
-Trần và đích: [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md). **Đo bằng KÝ TỰ, đừng đo bằng dòng**
-— một lượt nén đã giảm 32% dòng mà chỉ 7% ký tự.
+Đức 09/09 giao quyền lead — *"AI chủ động hoàn toàn… miễn là đúng direction & đúng budget"* — và
+đặt lại cách tính đích: *"mục tiêu không phải đạt ngưỡng, mà phải **nhỏ hơn ngưỡng margin
+30–40%**, vì sau này sẽ tiếp tục phình ra."* Ba con số cho mỗi thước:
+[ADR-0033](docs/adr/0033-tran-co-bien-va-bay-cho-mau-thuan-trong-ban-hieu-luc.md) ⑴.
+**Đừng tin con số dưới đây** — cổng in ra số sống.
 
-**Đừng tin con số dưới đây, nó mục.** Số sống lấy bằng cổng: `node scripts/session-check.mjs --as <phiên>`.
+| Ai trả | 09/09 sáng | 09/09 chiều | ĐÍCH | Trần |
+|---|---:|---:|---:|---:|
+| Mọi phiên (`CLAUDE.md` + `AGENTS.md`) | 20.530 | **6.588** | **5.200** | 8.000 |
+| Bó nặng nhất (gốc + một gói) | 64.313 | **20.869** | **10.400** | 16.000 |
 
-| Ai trả | 09/09 sáng | 09/09 chiều | Đích |
-|---|---:|---:|---:|
-| Mọi phiên (`CLAUDE.md` + `AGENTS.md`) | 20.530 | **16.674** | **8.000** |
-| Gói nặng nhất | 43.783 (chatgpt) | **19.045** (gemini) | **8.000** |
+**Đã đóng: nạp mỗi phiên xuống dưới TRẦN, còn 1.388 ký tự nữa là tới ĐÍCH.**
+`chatgpt` 43.783 → 12.944 · `gemini` 19.045 → 9.443 · gốc 17.255 → 6.427.
 
-**Đã làm 09/09 chiều — `chatgpt/AGENTS.md` 43.783 → 12.944 (−70%), dưới đích của gói ngay lượt đầu.**
-Ba cửa ra, xếp theo cái cắt được nhiều nhất:
+**Bốn cửa ra, xếp theo cái cắt được nhiều nhất — dùng lại mỗi lượt:**
 
-1. **Chỉ mục thì để MÁY giữ.** Bảng *Bản đồ file* nuốt 64% cả file, riêng 19 hàng `tests/*` là
-   19.371 ký tự — mỗi hàng **chép lại docblock của chính phép kiểm đó**, trong khi cổng chỉ so
-   **tên cấp cao** và bảng chưa bao giờ đủ (19 hàng cho 125 file test). Nay một hàng `tests/`.
-2. **Sổ cái thì để `--sinh` giữ.** 52 ADR được gắn `nhom:`, `luat.khoi_sinh` trỏ
-   `docs/adr/` → `decisions.md`. Bảng gõ tay đã mục một lần (dừng ở `0049` khi trên đĩa có 52).
-   **Phép ② QUYET_DINH_MO_COI về 0 trên cả repo.**
-3. **Kể chuyện thì chuyển, không xoá.** Sang ADR (nạp theo yêu cầu nên miễn phí), hoặc sang chính
-   file/thư mục mà người đọc sẽ mở. Bản hiệu lực giữ **một câu luật + một liên kết**.
+1. **Chỉ mục thì để MÁY giữ.** Bảng *Bản đồ file* của một gói nuốt 55–64% cả file; riêng các hàng
+   `tests/*` chép lại docblock của chính phép kiểm đó. Cổng chỉ so **tên cấp cao**.
+2. **Sổ cái thì để `--sinh` giữ**, và để nó ở `decisions.md` (companion) chứ không ở `AGENTS.md`.
+3. **Kể chuyện thì chuyển, không xoá** — sang ADR, hoặc sang chính file người đọc sẽ mở.
+4. **Thủ tục thì chuyển xuống Tầng 2 KÈM MỘT CÒ NẠP BẮT BUỘC.** Đây là cửa mà tôi đã bỏ sót và
+   **một lượt audit độc lập (Codex) bác bỏ kết luận sai của tôi** mới lôi ra được: chuyển thủ tục
+   mà vẫn giữ bất biến ở Tầng 1 **không phải là xoá luật**. Riêng cửa này đưa `AGENTS.md` gốc từ
+   16.245 xuống 6.427 mà không mất một lớp bảo vệ nào trong 13 mục audit yêu cầu giữ.
 
-**Chỗ còn lại khó hơn, và nói thẳng:** `AGENTS.md` gốc còn 16.245 ký tự cho ~47 dòng luật —
-**~345 ký tự một luật**, trong khi đích của [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md) ⑵ là
-**~150**. Phần thừa **không còn là chỉ mục hay chuyện kể** (mục 1 và mục 4 vừa rút xong, mục 7 rút
-từ lượt trước) — nó là **chính các câu luật**. Đi tiếp từ đây là **bỏ bớt luật**, không phải viết
-gọn lại; đó là ngân sách của Đức, không phải việc AI tự quyết.
+**Chỗ còn lại, và nó không còn là việc nén:**
+
+- **1.388 ký tự cuối của phần gốc.** Mỗi dòng còn lại là một bất biến riêng; cắt tiếp là **bỏ bớt
+  luật**. Cần một lượt rà nữa để xem có luật nào đã được cổng cưỡng chế hoàn toàn (cửa ra thứ tư
+  của `RULE-COMPILER.md` mục 2) — đó là cách duy nhất còn lại mà không mất bảo vệ.
+- **Bó của gói còn 2× quá đích.** `duc-scouter` (14.281) và `gg-flow-video` (11.885) chưa qua lượt
+  nén nào; `chatgpt` còn mục *Luật vàng* mang khối biện minh đã chuyển sang
+  [ADR-0032](docs/adr/0032-ba-goi-giu-luat-rieng-gan-giong-nhau.md) ở nhánh Gemini nhưng **chưa gỡ
+  ở nhánh này** — lane khác đang giữ khoá vùng.
 
 **Hai chỗ cấu trúc còn nguyên, cần Đức một câu mỗi chỗ:**
 
-1. **Hai sổ cái là cùng một chuỗi chép đôi** — `gemini 0001–0015` ≡ `chatgpt 0001–0016`, lệch đúng
-   một số hiệu. Lịch sử trước lúc fork, tồn tại hai bản.
-2. **Ba gói `duc-auto-*` là fork của nhau** (giới hạn ②); `G-08` đo được tám module **giống hệt
-   từng byte** giữa hai nhánh.
+1. **Hai sổ cái là cùng một chuỗi chép đôi** — `gemini 0001–0015` ≡ `chatgpt 0001–0016`.
+2. **Ba gói `duc-auto-*` là fork của nhau**; `G-08` đo được tám module **giống hệt từng byte**.
 
-**đóng khi:** cả hai con số trên bảng đạt đích, và mỗi chỗ cấu trúc hoặc đã gộp hoặc mang một dòng
-nói vì sao cố ý giữ hai bản.
+**đóng khi:** cả hai con số trên bảng đạt **ĐÍCH** (không phải trần), và mỗi chỗ cấu trúc hoặc đã
+gộp hoặc mang một dòng nói vì sao cố ý giữ hai bản.
 
 ## Làn 3 — Đóng nợ gói ChatGPT, tới MVP
 
