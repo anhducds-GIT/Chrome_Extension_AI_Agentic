@@ -80,8 +80,8 @@ GPT 35 file `.js` · Gemini 34.
 | `content.js` | 1528 | 1197 | 331 |
 | `bridge-core.js` | 1072 | 864 | 208 |
 | `runner-core.js` | 392 | 223 | 169 |
+| `provider-adapter.js` | 376 | 210 | 166 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
-| `provider-adapter.js` | 336 | 210 | 126 |
 | `background.js` | 293 | 202 | 91 |
 | `reconciliation-core.js` | 154 | 69 | 85 |
 | `image-evidence-core.js` | 145 | 66 | 79 |

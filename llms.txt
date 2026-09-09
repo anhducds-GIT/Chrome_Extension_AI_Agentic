@@ -1,14 +1,14 @@
 # Chrome Extension AI Agentic
 
-> Monorepo 5 extension Chrome tự động hoá các trang AI (ChatGPT, Gemini, Google Flow) qua một Bridge chung. 6/6 đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.
+> Monorepo 5 extension Chrome tự động hoá các trang AI (ChatGPT, Gemini, Google Flow) qua một Bridge chung. 7/7 đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `8919541d` (2026-09-09).
+Trang được sinh ngày 2026-09-09.
 
 ## Việc ưu tiên #1
 
-- **XUNG ĐỘT** — 2 đơn vị cùng khai `priority_rank: 1` (`workers/duc-auto-gg-flow-video/v0.1.0` · `workers/hnx-fetch/v0.1.0`). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.
+- **XUNG ĐỘT** — 3 đơn vị cùng khai `priority_rank: 1` (`_root` · `workers/duc-auto-gg-flow-video/v0.1.0` · `workers/hnx-fetch/v0.1.0`). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.
 
 ## Đọc theo thứ tự này
 
@@ -19,7 +19,8 @@ Trang được sinh tại commit `8919541d` (2026-09-09).
 
 ## Từng extension
 
-- [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — **Một lượt đo live 09/09 trả lời ba câu và tìm ra bốn khiếm khuyết mới.** Tôi dựng 4 ảnh PNG **1,83MB** rồi gắn vào một job **chữ** (0 credit ảnh), dò…
+- [chrome-extension-ai-agentic](STATUS.md): active — Vừa lên khung 1.8.0: nhận bộ nén luật, Context Compiler, can-nang đo token, bảng sống
+- [Duc Auto ChatGPT](workers/duc-auto-chatgpt/v0.1.0/STATUS.md): active — **Một lượt đo live 09/09 trả lời ba câu và tìm ra bốn khiếm khuyết mới** (số đầy đủ ở `~~B-15~~`, `~~B-46~~`, `B-47`..`B-50` trong `BACKLOG.md`)
 - [Duc Auto Gemini](workers/duc-auto-gemini/v0.1.0/STATUS.md): superseded — Bản đã nghỉ
 - [Duc Auto Gemini (Platform)](workers/duc-auto-gemini/v0.2.0/STATUS.md): active — Nợ gói 9 -> 3 trong ngày 06/09
 - [Duc Auto GG Flow Video](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md): building — Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật

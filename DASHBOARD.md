@@ -2,12 +2,12 @@
 
 > **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.
 
-Trang được sinh tại commit `8919541d` (2026-09-09). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
+Trang được sinh ngày 2026-09-09. Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.
 
 ## A · Bắt đầu từ đâu
 
-1. **Việc ưu tiên #1** — **XUNG ĐỘT** — 2 đơn vị cùng khai `priority_rank: 1` (`workers/duc-auto-gg-flow-video/v0.1.0` · `workers/hnx-fetch/v0.1.0`). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.
-2. **Phiên gần nhất** — 2026-09-09 @ `8919541d` · [HANDOFF.md](HANDOFF.md)
+1. **Việc ưu tiên #1** — **XUNG ĐỘT** — 3 đơn vị cùng khai `priority_rank: 1` (`_root` · `workers/duc-auto-gg-flow-video/v0.1.0` · `workers/hnx-fetch/v0.1.0`). Chỉ một việc được là số 1; sửa STATUS rồi sinh lại.
+2. **Phiên gần nhất** — 2026-09-09 · [HANDOFF.md](HANDOFF.md)
 3. **Luật phải đọc trước khi sửa gì** — [AGENTS.md](AGENTS.md) · cổng vào cho AI: [llms.txt](llms.txt)
 4. **Ai đang giữ package nào** — `.agents/claims.json` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)
 
@@ -15,37 +15,20 @@ Trang được sinh tại commit `8919541d` (2026-09-09). Đây là lúc sinh tr
 
 | Extension | Version [ĐO] | Lifecycle [KHAI] | Method Bridge [ĐO] | File test [ĐO] | Kiểm chứng cuối (ngày @ commit 7 ký tự, cách kiểm) [KHAI + bằng chứng] | Code đã commit đổi sau kiểm chứng? [ĐO] | Việc đang mở | Đọc sâu (link STATUS) |
 |---|---:|---|---:|---:|---|---|---|---|
-| Duc Auto ChatGPT | 0.3.0 | active | 24 | 128 | 2026-08-26 @ `00d1f99` — Pilot-14 live 3/3 job ảnh tham chiếu đầu-cuối + xác minh live idempotency 5/5 phép đo ([bằng chứng](workers/duc-auto-chatgpt/v0.1.0/Pilot-14_RefFeatureTest/evidence/idempotency-fix-live-proof.md)) | CÓ (66 commit) | **Một lượt đo live 09/09 trả lời ba câu và tìm ra bốn khiếm khuyết mới.** Tôi dựng 4 ảnh PNG **1,83MB** rồi gắn vào một job **chữ** (0 credit ảnh), dò `dom_probe` **~7 lần/giây** xuyên cửa sổ gắn; rồi một job **ảnh** (1 credit). ⑴ **`B-15` đóng, và câu trả lời khác cả hai giả thuyết:** trong cửa sổ upload thật (**3,82 giây**, ~27 lượt dò) `uploadPending` **0/0/0**, nhưng lúc **đang sinh ảnh** thì `[aria-busy=\"true\"]` **khớp** — nhóm đó đo *\"trang đang bận\"*, không phải *\"ảnh đang upload\"*. Cái lo ban đầu **không** tái hiện: ChatGPT tả đúng cả bốn ảnh (`202` ký tự), job `Q001` **SUCCESS**. ⑵ **`B-46` vế cuối đóng, và nhánh xấu là nhánh xảy ra:** tab bị che **CÓ** vẽ `<img>` sinh (alt `Generated image: Minimalist Lamp…`) nhưng bitmap **không giải mã xong** — `ready:false` **3/3 node** → job `Q002` chết `NO_NEW_IMAGE` sau **300 giây**. **Job ảnh cần tab HIỆN.** Và một câu tôi viết trước đó phải đảo: che cửa sổ không chỉ làm *chữ* không vẽ, nó cũng làm **bitmap ảnh** không giải mã. ⑶ **`B-14` chưa đóng, vì chính cái probe mù:** `buttons` nắp 40 mục bị thanh bên của Đức chiếm hết. Mới: `B-47` `B-48` `B-49` `B-50`. | [STATUS](workers/duc-auto-chatgpt/v0.1.0/STATUS.md) |
+| chrome-extension-ai-agentic | 0.3.0 | active | 0 | 28 | 2026-09-09 @ `4da1e9e` — migrate bộ khung 0.3.0 → 1.8.0; cổng cấu trúc còn ĐỎ ở B12 (42 ADR) và B16 — xem BACKLOG ([bằng chứng](HANDOFF.md)) | CÓ (2 commit) | Vừa lên khung 1.8.0: nhận bộ nén luật, Context Compiler, can-nang đo token, bảng sống. Cổng nay chặt hơn và đang nêu nợ có thật. | [STATUS](STATUS.md) |
+| Duc Auto ChatGPT | 0.3.0 | active | 24 | 130 | 2026-08-26 @ `00d1f99` — Pilot-14 live 3/3 job ảnh tham chiếu đầu-cuối + xác minh live idempotency 5/5 phép đo ([bằng chứng](workers/duc-auto-chatgpt/v0.1.0/Pilot-14_RefFeatureTest/evidence/idempotency-fix-live-proof.md)) | CÓ (68 commit) | **Một lượt đo live 09/09 trả lời ba câu và tìm ra bốn khiếm khuyết mới** (số đầy đủ ở `~~B-15~~`, `~~B-46~~`, `B-47`..`B-50` trong `BACKLOG.md`). Dựng 4 ảnh PNG **1,83MB**, gắn vào một job **chữ** (0 credit ảnh), dò `dom_probe` **~7 lần/giây**; rồi một job **ảnh** (1 credit). ⑴ `B-15` đóng: trong cửa sổ upload thật (**3,82 giây**, ~27 lượt dò) `uploadPending` **0/0/0**, nhưng lúc **đang sinh ảnh** thì `[aria-busy]` **khớp** — nhóm đó đo *"trang đang bận"*, không phải *"ảnh đang upload"*. Cái lo ban đầu **không** tái hiện: ChatGPT tả đúng cả bốn ảnh, `Q001` SUCCESS. ⑵ `B-46` vế cuối đóng, **nhánh xấu là nhánh xảy ra:** tab bị che **CÓ** vẽ `<img>` sinh nhưng bitmap **không giải mã xong** (`ready:false` **3/3** node) → `Q002` chết `NO_NEW_IMAGE` sau 300 giây. **Job ảnh cần tab HIỆN.** ⑶ `B-48` đã vá: probe soi **theo phạm vi** trong `form` soạn thảo; suite **129/129**, thử phá **10/10 đỏ**. | [STATUS](workers/duc-auto-chatgpt/v0.1.0/STATUS.md) |
 | Duc Auto Gemini | 0.1.0 | superseded | 0 | 21 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Bản đã nghỉ. Mọi việc tiếp tục ở v0.2.0. Giữ lại vì Pilot-01 là bằng chứng vận hành, không được xoá. | [STATUS](workers/duc-auto-gemini/v0.1.0/STATUS.md) |
 | Duc Auto Gemini (Platform) | 0.2.0 | active | 23 | 97 | 2026-09-07 @ `aa2c0b8` — Lớp nối nhiều hồ sơ Chrome, nghiệm thu CHỈ ĐỌC qua Bridge thật với 2 hồ sơ thật, 0 credit: đạt cả bốn bảo đảm (kể đúng hồ sơ kèm tên Đức đặt · quên --target thì TARGET_AMBIGUOUS chứ không tự chọn · đích lạ thì TARGET_NOT_CONNECTED chứ không rơi sang hồ sơ khác · served_by đúng đích ở mọi lượt). LƯU Ý phạm vi: đây KHÔNG phải nghiệm thu G-01 — lượt live bấm dừng vẫn CHƯA chạy, xem giới hạn 1 và 2 ([bằng chứng](workers/duc-auto-gemini/v0.2.0/evidence-multiprofile-nghiem-thu-20260907/README.md)) | CÓ (2 commit) | Nợ gói 9 -> 3 trong ngày 06/09. Đóng xong: dừng cứng khi extension bị mù (nhánh kia thêm lớp này sau khi một lượt live đốt sáu lượt tạo ảnh; gói này chưa có) - sổ cái thôi khai sai là đã ghi đè lên bằng chứng cũ (phép so đường dẫn cũ không bao giờ đúng được một lần nào) - nút CHAT ZOOM hỏi nhầm câu hỏi của runner nên tự xám trên 6/10 trang Gemini, Đức đã nghiệm thu - bốn lệnh Bridge còn nợ nay đủ cả bốn, gồm cả CLI - soát README bằng cách đối chiếu từng con số với code. Hai việc lớn nhất (nhiều ảnh một job, poll A/B) NGỦ ĐÔNG theo chốt của Đức vì Gemini chưa bao giờ làm thế; đã đặt bẫy để lúc nó xảy ra thì sổ cái tự khai. Suite 88 -> 94, thử phá 61/61 đều bị bắt. | [STATUS](workers/duc-auto-gemini/v0.2.0/STATUS.md) |
 | Duc Auto GG Flow Video | 0.1.0 | building | 21 | 103 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | Đã đi hết đường trên trang Flow mới: ô nhập prompt, cụm nút, nút tạo, nhận diện video vừa sinh — tất cả đều đo được trên trang thật. Thêm một lớp chặn mới: Flow báo quá tải. Đây là loại trạng thái thứ ba, khác hẳn hai loại cũ, và là loại DUY NHẤT mà cứ thử đi thì tốn tiền thật, vì hai loại kia đều dừng trước khi gõ. Đức chốt dừng hẳn cả mẻ, không tự thử lại. Suite 101/101, thử phá 10/10. | [STATUS](workers/duc-auto-gg-flow-video/v0.1.0/STATUS.md) |
 | Duc Scouter (seed v0.1) | 0.1.0 | paused | 0 | 15 | CHƯA KHAI KIỂM CHỨNG | KHÔNG ÁP DỤNG (chưa khai mốc commit) | TẠM DỪNG 08/09 — Đức chuyển sang ba gói duc-auto-*. Gói dừng ở chỗ SẠCH: sổ nợ còn đúng hai mục nhỏ, suite xanh, đột biến 0 sống sót, không việc gì dở dang. Ba lệnh bấm và gõ đã chạy trên một trang THẬT và đúng: ĐẠT 11/11 trên Chrome 152, kể cả ca phải cuộn hai chiều và ca hai nút chữ giống hệt nhau. Đường ghi có phanh (công tắc trong bảng bên, mặc định tắt, trần 200 lượt — Đức nâng từ 50 ngày 08/09). Khối phanh vừa được vá 08/09 theo chốt của Đức: hai lỗi chỉ nổ khi nhiều lượt chồng nhau — phanh khẩn bị bật lại, và trần 200 bị vượt — nay đã đóng, có phép ghim tái hiện được và đột biến giết được. Hai việc lớn còn lại: chọn trang thử THỨ HAI, và cả VÒNG tự cải tiến chưa ai chạy trọn một lần. | [STATUS](workers/duc-scouter/v0.1.0/STATUS.md) |
 | HNX Fetch | 0.1.0 | active | 0 | 4 | 2026-09-08 @ `7cb9f76` — Chạy thật trọn vòng qua chính extension trong Chrome: ping trả đúng tên gói, bảng năng lực nhìn từ ngoài dây đúng bốn lệnh, scout.fetch lấy trang thật status 200, ngân sách trừ đúng, một lượt tai-ket-qua.mjs đầy đủ 0 hỏng ([bằng chứng](workers/hnx-fetch/v0.1.0/evidence/2026-09-08-chay-that-lan-dau.md)) | CÓ (6 commit) | Gói đã đứng vững: chạy thật trọn vòng trong Chrome, phanh khẩn bấm tay ăn thật, và từ 08/09 có tệp ghép cặp cùng máy chủ RIÊNG nên không còn phải chỉ đích danh extension nữa. Sổ nợ RỖNG. Việc còn lại chỉ là chạy mỗi ngày một lượt. | [STATUS](workers/hnx-fetch/v0.1.0/STATUS.md) |
 
-## C · Từng extension làm được gì
-
-Số lệnh và số file kiểm KHÔNG lặp lại ở đây — chúng là **máy đo**, xem bảng B.
-
-### Duc Scouter (seed v0.1)
-
-- **Làm được** — Bộ dò trang đa năng, không gắn với trang nào: đọc trang (cây DOM, cây trợ năng, ảnh chụp), bấm và gõ bằng chuột/bàn phím THẬT của trình duyệt (trang thấy isTrusted true), đi sang trang khác, gọi mạng, và tự nạp lại chính nó sau khi AI ghi mã mới.
-- **KHÔNG làm được** — Không tự chạy. Mọi lệnh bấm và gõ đóng mặc định, chỉ tay Đức mở được, và mỗi lần mở có trần lượt. Không ghi tệp — việc đó ở máy chủ Bridge. Không biết trang nào cả: hiểu biết về một trang cụ thể phải nằm ở tầng adapter bên ngoài.
-- **Dùng thế nào** — Nạp thư mục v0.1.0 vào Chrome, bật máy chủ Bridge của Scouter, chọn tệp ghép cặp trong bảng bên. Muốn nó bấm hay gõ thì bật công tắc Cho phép bấm và gõ — Chrome sẽ hiện dải băng đang gỡ lỗi trình duyệt trên tab nó cắm vào. Phanh khẩn: Ctrl+Shift+X.
-- **Sổ tay vận hành** — [mở](workers/duc-scouter/v0.1.0/AGENTS.md)
-
-### HNX Fetch
-
-- **Làm được** — Lấy dữ liệu phái sinh HNX theo ngày: kết quả giao dịch nối vào một tệp CSV duy nhất, và báo cáo PDF tải về thư mục Drive. Gọi mạng bằng chính trình duyệt, nên vào được trang mà Node gọi thẳng thì hỏng chứng chỉ.
-- **KHÔNG làm được** — Không bấm, không gõ, không đọc nội dung trang, không chụp màn hình, không mở tab. Không phải chưa làm — mà là KHÔNG CÓ ĐƯỜNG: manifest không khai debugger, không khai content_scripts, không khai scripting. Cần bấm nút trên một trang thì đó là việc của Duc Scouter.
-- **Dùng thế nào** — Bật máy chủ Bridge CỦA GÓI NÀY (kéo thả tệp ghép cặp vào Chay-may-chu-HNX.cmd). Tệp ghép cặp dùng chung với Scouter được — chỉ MÁY CHỦ là phải đúng bản HNX, và đừng chạy hai máy chủ cùng một cổng. Mở bảng bên, chọn tệp, bật công tắc Cho phép lấy dữ liệu, rồi chạy hai lệnh hằng ngày. Chi tiết ở sổ tay.
-- **Sổ tay vận hành** — [mở](workers/hnx-fetch/PROTOCOL.md)
-
 ## D · Sức khoẻ điều hướng [ĐO]
 
 | Nợ | Số | Nghĩa là gì |
 |---|---:|---|
 | Đơn vị chưa khai STATUS | 0 | mỗi dòng là một câu hỏi AI sẽ phải hỏi Đức |
-| Link chết trong file cổng | 0 | kiểm 10 link ở llms.txt và bảng B |
+| Link chết trong file cổng | 0 | kiểm 11 link ở llms.txt và bảng B |
 | Thư mục top-level chưa khai chủ | 0 | chưa khai trong khối `areas` của `.repo-structure.json` |
 | Tài liệu quá hạn chưa rà | 1 | `status: active` mà quá `ttl_days` tính từ commit cuối chạm vào |
 
