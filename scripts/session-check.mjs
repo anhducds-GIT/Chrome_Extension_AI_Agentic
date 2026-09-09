@@ -1181,7 +1181,8 @@ check("Kho chữ không phình", () => {
           msg: `NAP_MOT_GOI_PHINH: bó nặng nhất là ${nangNhat} ký tự (~${Math.round(nangNhat / 2.2)}`
             + ` token) = ${nen} định tuyến + ${rieng} của ${ten}; thước cóc là`
             + ` ${nap.tran_ky_tu_mot_goi}. Đó là thứ một phiên làm gói đó nạp TRƯỚC KHI gõ dòng đầu`
-            + ` tiên. Đích ${nap.dich_ky_tu_mot_goi ?? "?"}, biên ${nap.bien_ky_tu_mot_goi ?? "?"}.`,
+            + ` tiên. Trần tuyệt đối ${nap.dich_ky_tu_mot_goi ?? "?"}, ĐÍCH`
+            + ` ${nap.bien_ky_tu_mot_goi ?? "?"} (đích nằm DƯỚI trần 30–40%, ADR-0033 ⑴).`,
         };
       }
     }

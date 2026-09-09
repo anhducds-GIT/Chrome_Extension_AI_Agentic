@@ -956,3 +956,10 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
 - **đóng khi:** sửa `STATUS.md` của một gói rồi **không** chạy `--sinh` thì cổng ĐỎ ở đúng lane
   chịu trách nhiệm cho gói đó — **hoặc** một dòng khai nói vì sao `PHIEN.md` cố ý không được canh,
   kèm ADR đứng sau.
+- **[ĐO] 09/09 18:05 — một vế NỮA của cùng lỗ hổng, và nó thật hơn vế đầu:** `AGENTS.md` đã nén
+  vào `main` (commit `1702ae5d`) trong khi `PHIEN.md` sinh từ nó **chưa bao giờ được commit** —
+  gói có luật mới mà không có file mở phiên. Phép ⑺ không thấy vì `PHIEN.md` không nằm trong
+  `generated`; phép ⒘ mới cũng không, vì nó so **đĩa với đĩa**, không so với `HEAD`. Nói cách
+  khác: nay đã canh được *cũ*, chưa canh được *chưa vào git*.
+- **đóng khi (bổ sung):** một `PHIEN.md` có trên đĩa mà không có trong `HEAD` cũng làm cổng ĐỎ ở
+  đúng lane chịu trách nhiệm.

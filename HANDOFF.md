@@ -770,3 +770,31 @@ bỏ hẳn — trong `PHIEN.md` chúng in **ngay phía trên**. Nắp `run.trial
 nguyên. Phép ③ `LUAT_TRUNG` 2 → 1. **Chưa commit được:** `AGENTS.md` + `PHIEN.md` của gói đó còn
 nằm trong cây làm việc, vùng đang do `claude-gpt-chay-het-job` giữ ("đẩy loạt sửa sau audit").
 Tôi **không lấy khoá** — chờ họ trả.
+
+## 2026-09-09 · `claude-nen-luat` (lượt 7) — bó của gói cuối cùng đủ bốn, và một lượt cuốn nhầm
+
+**Bốn trên bốn.** `duc-auto-chatgpt` 2.463 token, gói cuối cùng vào dải Đức đặt. Bó nặng nhất
+toàn repo nay là 6.530 ký tự (~2.968 token).
+
+**MỘT LƯỢT CUỐN NHẦM, ghi lại vì nó là lần thứ hai trong ngày.** Bản nén `## Luật vàng` của gói
+chatgpt tôi để trong cây làm việc chờ khoá vùng; lane `claude-gpt-chay-het-job` commit `1702ae5d`
+(*cắt sổ nhật ký*) đã **cuốn theo 85 dòng đó** và nó mang nhãn `Lane: claude-gpt-chay-het-job`.
+Nội dung đúng, đã đẩy; **chỉ nhãn nguồn gốc là sai**, và sửa nhãn là viết lại lịch sử nên KHÔNG
+làm. Gốc: một `git add` không giới hạn đường dẫn trên **cây làm việc dùng chung**. Đây đúng cái
+`N-62` (*mỗi vai một checkout riêng*) nói, và là lần thứ hai nó cắn trong một ngày.
+
+**Cái lỗ nó để lộ ra, và nó thật hơn cái nhãn:** `AGENTS.md` đã nén vào `main`, còn `PHIEN.md`
+sinh từ nó thì **chưa bao giờ được commit** — gói có luật mới mà **không có file mở phiên**. Phép
+kiểm ⑺ không thấy, vì `PHIEN.md` không nằm trong `generated`; phép ⒘ mới của tôi cũng không, vì
+nó so **đĩa với đĩa**, không so với `HEAD`. Nay đã commit; nhưng *"có trên đĩa mà không có trong
+git"* vẫn là một cửa chưa ai canh — ghi vào `N-63` như một vế còn mở.
+
+**Sửa một nhãn sai trong cổng:** thông điệp `NAP_MOT_GOI_PHINH` in *"Đích 6600, biên 4400"*, trong
+khi 6.600 là **trần tuyệt đối** và 4.400 mới là **đích** — đúng ngược, và ngược so với chính thông
+điệp anh em của nó cách đó 45 dòng. Ai đọc sẽ tối ưu về nhầm số.
+
+**Hai câu chờ Đức, cả hai là chuyện số, không phải chuyện mã:** ⑴ nén `## Luật vàng` của
+`gg-flow-video` (2.932) và `scouter` (2.717) theo đúng công thức ADR-0032 — hai gói này còn dư
+**71** và **70** ký tự, tức chật nhất repo, và chật vì chưa nén chứ không vì trần. ⑵ ĐÍCH 4.400
+**không gói nào với tới**: nền cố định đã 3.039 ký tự (46–51% mỗi bó), nên còn 1.361 cho luật
+riêng + trạng thái, mà riêng luật của gemini đã 2.086. Hạ lõi luật, hay nêu lại đích?
