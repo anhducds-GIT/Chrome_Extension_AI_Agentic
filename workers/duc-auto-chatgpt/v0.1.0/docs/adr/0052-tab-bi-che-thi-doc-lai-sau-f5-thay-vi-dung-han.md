@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Accepted
 adr: 0052
 date: 2026-09-09
 deciders: Đức
@@ -100,4 +100,34 @@ giờ chỉ làm mọi job chậm thêm mà không thêm một câu trả lời 
 
 ## Trạng thái
 
-Proposed — chờ chạy thử phá và một lượt live với tab để ở nền.
+Accepted. Thử phá **13/13** bắt được, 0 thoát — gồm hai mũi canh riêng luật exact-once (đảo thứ
+tự F5-trước-khi-đọc, và bỏ cửa chặn *"không thấy lượt hỏi"*).
+
+**Nghiệm thu live 09/09, ba lượt, cửa sổ ChatGPT để nguyên bị che (`visibility=hidden`,
+`docFocused=false` — đo được, không suy):**
+
+| lượt | ghi vào sổ | sau F5 (trọng tài) | kết |
+|---|---|---|---|
+| ⑴ | 27 | 1.917 | **trượt** — cửa tắt tin `looksTruncated` để phán DOM đáng tin |
+| ⑵ | không ghi (`INTERRUPTED`) | 2.117 | **trượt**, nhưng trung thực — đọc một nhát sau F5 được 0 ký tự |
+| ⑶ | **2.228** | **2.228** | **ĐẠT** — `SUCCESS`, `persistence_verified: true` |
+
+Lượt ⑶ đọc lại ba lần liền đều ra 2.228 với `generating: false`; câu trả lời trọn vẹn (ngoặc cân,
+kết bằng dấu chấm, có mục hành động ở cuối).
+
+**Ba chỗ chỉ trang thật mới lộ ra, không phép kiểm nào trong 123 phép bắt được** — ghi ra vì đó là
+bài học đáng hơn bản vá:
+
+1. **Cửa tắt tin DOM.** Tôi thêm một đường tắt *"đọc thẳng đã đủ thì khỏi F5"* vào đúng bản vá có
+   tiền đề *DOM không đáng tin*. Nó ghi 27 ký tự và đóng dấu `persistence_verified`.
+2. **Đọc sớm hơn lúc trang được dựng.** `waitTabComposer()` trả về khi KHUNG GÕ hiện, mà ChatGPT
+   dựng khung gõ TRƯỚC các lượt hội thoại → đọc được 0 ký tự. Phải DÒ, có nắp.
+3. **Điều kiện nghiệm thu sai.** Bản đầu là *"sổ == trang"*; cả hai cùng đọc 27 nên nó báo ĐẠT.
+   **Hai vế cùng sai thì bằng nhau.** Điều kiện đúng: **sổ == bản đọc SAU MỘT CÚ F5** — máy chủ
+   làm trọng tài, không phải DOM lúc chốt.
+
+**Một câu trong ADR này từng sai và đã bỏ:** *"`visibilityState` báo `visible` khi cửa sổ bị che,
+nên cửa chặn theo nó là vô hiệu."* Đo thật: `hidden` / `docFocused=false`. Cửa chặn đó **vẫn
+đúng**. Tôi suy sai vì thấy `failure_type` rỗng trong sổ rồi kết luận lỗi không nổ — trường đó
+rỗng vì job kết thúc `SUCCESS`: lỗi **đã nổ** rồi bị đối soát ghi đè. Dấu vết của **hậu quả** bị
+đọc thành **nguyên nhân**.
