@@ -92,21 +92,11 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "53b1a78e5891669b",
+  "_fingerprint": "031a2261703b5685",
   "tam": {
-    "AGENTS.md": {
+    ".agents/claims.json": {
       "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T03:51",
-      "viec": null
-    },
-    "docs/adr/0004-hai-vai-assistant.md": {
-      "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T03:53",
-      "viec": null
-    },
-    "BACKLOG.md": {
-      "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T03:55",
+      "luc": "2026-09-09T04:07",
       "viec": null
     }
   }

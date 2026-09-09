@@ -80,12 +80,12 @@ GPT 35 file `.js` · Gemini 34.
 | `checkpoint-core.js` | 226 | 69 | 157 |
 | `runner-core.js` | 339 | 223 | 116 |
 | `background.js` | 293 | 202 | 91 |
+| `content.js` | 1285 | 1197 | 88 |
 | `image-evidence-core.js` | 145 | 66 | 79 |
 | `resume-core.js` | 189 | 122 | 67 |
 | `provider-adapter.js` | 276 | 210 | 66 |
 | `output-location-core.js` | 424 | 373 | 51 |
 | `approval-persistence-core.js` | 61 | 25 | 36 |
-| `content.js` | 1186 | 1197 | 11 |
 | `bridge-proposal-core.js` | 380 | 387 | 7 |
 | `halt-instructions-core.js` | 147 | 140 | 7 |
 | `xlsx-codec.js` | 371 | 364 | 7 |
