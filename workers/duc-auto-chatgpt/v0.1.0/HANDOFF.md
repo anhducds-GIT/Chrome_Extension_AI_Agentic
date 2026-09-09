@@ -608,3 +608,31 @@ là thật, không rút xuống 0 được) và ba rào chắn về credit.
 
 **Hôm nay đóng:** `~~B-14~~` `~~B-15~~` `~~B-20~~` `~~B-36~~` `~~B-45~~` `~~B-46~~` `~~B-48~~`
 `~~B-52~~`, cộng `B-47` vế ⑵ nghiệm thu live. Mở mới: `B-47` `B-49` `B-50` `B-51` `B-53`.
+
+## 2026-09-10 (lượt 16) · `claude-gpt-chay-het-job` — M0 + M3 nghiệm thu live, 13/13 ảnh
+
+**`~~M0~~` ĐẠT.** Đức nạp lại, bấm **một** nút. `jobs.add` đầu tiên trả `checkpoint.verified:
+true`, **không** mở hộp chọn thư mục, **không** workbook; checkpoint + audit nằm thật trong
+`Pilot GPT`. Đóng `~~B-53~~`. Điều kiện đóng là câu Đức tự đặt và **đo được trên đĩa** — không
+phải tôi tự chấm bản vá của mình.
+
+**`~~M3~~` chạy xong: chuỗi 3 ảnh rồi chuỗi 10 ảnh, Đức không chạm vào lần nào.**
+**0/13 hỏng · 0 lần thử lại · 13/13 đúng tên xin · 13 mã băm khác nhau · `RUN_END COMPLETE` ×2.**
+Mỗi job **85s → 183s** — chênh **2,2 lần** trên cùng một loại việc, đúng điều Đức dặn *"đừng fix sẵn
+một con số"*; lượt này không chỗ nào phải đặt hằng cứng.
+
+**`B-50` loại được MỘT NỬA nghi phạm — không phải bằng cách vá mà bằng một lượt đo SẠCH.** Hôm nay
+**không nạp một ảnh mẫu nào** (gallery rỗng) mà `output.configure` vẫn timeout hai lần, `ping` ba
+lần, `run.status` chết giữa lượt chạy; rồi **cùng những lệnh đó trả lời trong một giây khi panel
+rảnh**. Nên `renderReferenceGallery()` **được loại**; còn lại là lượt ghi checkpoint XLSX mỗi
+mutation. Và **method chỉ đọc cũng chết theo** → nghẽn ở **một luồng duy nhất**, nên hướng vá là *cho
+đọc trong lúc ghi*, không phải làm lượt ghi nhanh hơn.
+
+**`B-54` mới:** `landed_as_requested` **luôn** `unknown` trên đường thư mục — đúng cái trường sinh
+ra để trả lời *"file có nằm đúng chỗ không"*. Hôm nay tôi lách bằng `collision_policy: "fail"` cộng
+một mẫu tên chưa từng tồn tại. **Đó là mẹo của người đo, không phải tính chất của hệ thống.**
+
+**Chưa đo được, nói thẳng:** tôi **không biết** tab lúc đó hiện hay bị che. Vế *"tab nền"* của M3
+**chưa nghiệm thu**.
+
+**Cổng còn 5 đỏ, KHÔNG cái nào của lượt này** — chi tiết và ai sở hữu: xem nhật ký phiên.
