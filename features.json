@@ -1,0 +1,711 @@
+{
+  "_doc": "DANH MỤC TÍNH NĂNG — nguồn sự thật duy nhất cho câu 'bộ khung này làm được gì', và cho checklist migrate. MỖI MỤC PHẢI CÓ PHÉP ĐO: khối `can` khai file và lệnh phải tồn tại, nên `scripts/features.mjs` chạy được ở BẤT KỲ repo nào và trả lời được 'tính năng này ở đây có sống không'. Một danh mục không đo được thì nó là quảng cáo, không phải checklist.",
+  "_doc2": "pham_vi có ba giá trị, và phân biệt được ba giá trị đó là toàn bộ giá trị của file này lúc migrate: 'ca-hai' = repo nào cũng cần · 'chi-repo-nha' = chỉ nơi PHÁT HÀNH bộ khung mới cần (repo đích không thiếu nó, và đòi nó ở repo đích là báo thiếu sai) · 'chi-repo-dich' = chỉ repo tiêu thụ.",
+  "_doc3": "tu_ban = bản bộ khung mà mục đó bắt đầu có. Đây là chỗ một phiên AI ở repo đích đối chiếu để biết mình đang thiếu tính năng nào so với bản mới — cùng với .ark/harness.lock.json.",
+  "version": "1.3.73",
+  "blocks": [
+    {
+      "ma": "F1",
+      "ten": "Bảng trạng thái",
+      "vi_sao": "Người chốt không đọc code. Bảng là kênh chính để biết repo đang ở đâu — không có nó thì mọi câu hỏi trạng thái đều phải cắt ngang một phiên AI đang làm việc.",
+      "muc": [
+        {
+          "ma": "F1.1",
+          "ten": "Bảng chính HTML, sinh hoàn toàn từ HEAD — kèm lưu đồ vẽ thành SVG",
+          "tu_ban": "1.3.18",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/build-overview.mjs",
+              "scripts/overview-doc.mjs",
+              "scripts/md-mini.mjs",
+              "scripts/luu-do.mjs"
+            ],
+            "lenh": [
+              "overview"
+            ]
+          },
+          "khong_co_thi": "Không có bảng cho người xem. Mọi câu 'đang có gì' phải hỏi AI, và câu trả lời trôi mất trong chat. Và thiếu scripts/luu-do.mjs thi md-mini.mjs NAP KHONG NOI, tuc ca trang chet; truoc ban 1.3.68 file nay khong ton tai va bay luu do hien ra duoi dang MA NGUON suot 5 thang ma khong phep kiem nao do."
+        },
+        {
+          "ma": "F1.2",
+          "ten": "Ba artifact máy đọc: DASHBOARD.md · llms.txt · repo-map.json",
+          "tu_ban": "1.0.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/build-dashboard.mjs"
+            ],
+            "lenh": [
+              "dashboard"
+            ]
+          },
+          "khong_co_thi": "Một AI mới vào repo phải đọc rải rác hàng chục file để hiểu, thay vì một cổng vào chuẩn."
+        },
+        {
+          "ma": "F1.3",
+          "ten": "Bảng SỐNG — F5 là thấy, ba cửa dùng một lõi",
+          "tu_ban": "1.3.26",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "bang-song/loi.mjs",
+              "bang-song/may-chu.mjs",
+              "bang-song/mot-luot.mjs",
+              "bang-song/Bat-tu-chay.cmd",
+              "bang-song/Tat-tu-chay.cmd"
+            ],
+            "lenh": [
+              "bang-song"
+            ]
+          },
+          "khong_co_thi": "Bảng chỉ tươi khi một phiên AI chạy bộ sinh rồi commit. Đo được ở repo nhà: bốn khoá một phiên giữ suốt lượt làm việc nằm trong 0/6 commit, nên bảng suy từ HEAD nói 'không có luồng nào chạy' trong khi có bốn.",
+          "tuy_chon": true
+        },
+        {
+          "ma": "F1.4",
+          "ten": "Tab Migrate — bảng mốc ba bước, hồ sơ gập trong toggle",
+          "tu_ban": "1.3.20",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "docs/migrations"
+            ]
+          },
+          "khong_co_thi": "Không trả lời được 'lượt migrate đang dừng ở bước nào'. Migrate xảy ra thưa nên không ghi là lần sau dò lại từ đầu và vấp đúng chỗ cũ."
+        }
+      ]
+    },
+    {
+      "ma": "F2",
+      "ten": "Cấu trúc file và bảo trì",
+      "vi_sao": "Repo phình và lệch chuẩn một cách âm thầm. Không có lớp này thì mỗi phiên AI tự nghĩ ra một cách sắp xếp, và sáu tháng sau không ai tìm được gì.",
+      "muc": [
+        {
+          "ma": "F2.1",
+          "ten": "Repo tự khai hình dạng của mình — và MỘT bộ đọc duy nhất cho nó",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              ".repo-structure.json",
+              "scripts/repo-structure.mjs"
+            ]
+          },
+          "khong_co_thi": "Mọi công cụ phải đoán repo có hình dạng gì, và đoán sai thì hỏng im lặng. Va khai file cau hinh ma khong khai BO DOC cua no la khai mot nua: scripts/repo-structure.mjs la noi duy nhat suy ra hinh dang repo, fail-closed. Thieu no thi moi script tu doan lay, dung cai benh K1 sinh ra de chua."
+        },
+        {
+          "ma": "F2.2",
+          "ten": "Cổng kiểm cấu trúc B1–B15",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/check-bootstrap.mjs"
+            ],
+            "lenh": [
+              "bootstrap"
+            ]
+          },
+          "khong_co_thi": "Nợ cấu trúc chỉ lộ ra khi đã muộn. Mỗi phép kiểm ở đây là một lần đã trả giá thật."
+        },
+        {
+          "ma": "F2.3",
+          "ten": "Cân nặng và ngân sách — repo phải RẺ, không chỉ ĐÚNG",
+          "tu_ban": "1.1.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/can-nang.mjs"
+            ],
+            "lenh": [
+              "can-nang"
+            ]
+          },
+          "khong_co_thi": "Tài liệu phình tới mức mỗi phiên AI nạp một đống chữ đã hết việc, và không ai đo được nên không ai bớt."
+        },
+        {
+          "ma": "F2.4",
+          "ten": "Nhịp DỌN — dời sang lưu trữ, KHÔNG xoá",
+          "tu_ban": "1.3.4",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/don.mjs"
+            ],
+            "lenh": [
+              "don"
+            ]
+          },
+          "khong_co_thi": "Nhật ký và sổ phát hành chỉ có một chiều là tăng (luật cấm sửa dòng cũ), nên chúng phình vô hạn. Không có nhịp dọn thì người ta bắt đầu xoá."
+        }
+      ]
+    },
+    {
+      "ma": "F3",
+      "ten": "Đa phiên — chống hai AI giẫm chân nhau",
+      "vi_sao": "Nhiều phiên AI dùng chung một thư mục git. Đo được ở repo nhà: 98 trong 127 commit chạm gốc repo. Không có lớp này thì mỗi lượt là một lần cầu may.",
+      "muc": [
+        {
+          "ma": "F3.1",
+          "ten": "Bảng chủ sở hữu và khoá vùng, nhận/trả bằng LỆNH",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              ".agents/claims.json",
+              "scripts/claim.mjs"
+            ]
+          },
+          "khong_co_thi": "Sửa tay là đọc-sửa-ghi: hai phiên cùng thấy 'trống' rồi cùng ghi tên mình, người ghi sau thắng, người ghi trước không hề biết. Đã xảy ra thật 02/09."
+        },
+        {
+          "ma": "F3.2",
+          "ten": "Cổng đóng phiên — 11 phép kiểm, có bộ đếm chống sửa",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/session-check.mjs"
+            ],
+            "lenh": [
+              "gate"
+            ]
+          },
+          "khong_co_thi": "Luật nào máy không kiểm được thì sớm muộn cũng bị bỏ qua. Đây là chỗ luật có răng."
+        },
+        {
+          "ma": "F3.3",
+          "ten": "Cổng xuất bản — thay `git push` trần",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/safe-push.mjs"
+            ],
+            "lenh": [
+              "push"
+            ]
+          },
+          "khong_co_thi": "`git push` của bạn cuốn theo commit của MỌI phiên khác. Đã xảy ra thật 26/08."
+        },
+        {
+          "ma": "F3.4",
+          "ten": "Tín hiệu 'repo chưa thấy dấu vết' — VÀNG, không bao giờ ĐỎ",
+          "tu_ban": "1.3.20",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "tests/khoa-dau-vet.mjs"
+            ]
+          },
+          "khong_co_thi": "Khoá nằm lâu không ai biết. Nhưng nếu làm nó thành ĐỎ thì tệ hơn: nó dạy mọi lane ghi bừa một byte để giữ khoá cho hợp lệ."
+        },
+        {
+          "ma": "F3.5",
+          "ten": "Trả khoá an toàn khi còn commit chưa đẩy, kèm cửa thoát khai lý do",
+          "tu_ban": "1.3.26",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/claim.mjs"
+            ]
+          },
+          "khong_co_thi": "Trả khoá xong để lại commit chưa công bố mà không ai đứng tên, và lane kế bị cổng xuất bản chặn với một lời khuyên SAI ('chờ phiên đó tự push' — nó đã đi rồi)."
+        }
+      ]
+    },
+    {
+      "ma": "F4",
+      "ten": "AI assistant — hai vai, và bộ đồ nghề của vai điều phối",
+      "vi_sao": "Người chốt là người duy nhất quyết, nhưng không đọc được code. Nếu phiên duy nhất hiểu toàn cảnh lại đang cắm đầu debug thì người chốt MẤT CHỖ ĐỂ HỎI. Và nếu một phiên vừa tìm ra lỗi vừa tự chấm bản sửa của mình thì không còn ai kiểm chéo — đó là lý do có HAI vai, không phải một.",
+      "muc": [
+        {
+          "ma": "F4.1",
+          "ten": "Sổ tay vai điều phối — có hàng rào vai cứng",
+          "tu_ban": "1.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "docs/protocols/ORCHESTRATOR.md"
+            ]
+          },
+          "khong_co_thi": "Công cụ không kèm hàng rào thì hàng rào là thứ đầu tiên mất: vai điều phối trượt vào code, và người chốt mất chỗ để hỏi."
+        },
+        {
+          "ma": "F4.2",
+          "ten": "Cổng nhất quán trạng thái — chạy TRƯỚC KHI BÁO CÁO",
+          "tu_ban": "1.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/state-check.mjs"
+            ],
+            "lenh": [
+              "state-check"
+            ]
+          },
+          "khong_co_thi": "AI báo 'xong' trong khi bảng quyền trên máy và trên GitHub nói hai chuyện khác nhau. Chính người chốt bắt được sai lệch đó 04/09 — tức AI để họ làm việc kiểm tra."
+        },
+        {
+          "ma": "F4.3",
+          "ten": "Bản đồ việc — giao ba nguồn, và luật song song một câu",
+          "tu_ban": "1.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/what-next.mjs"
+            ],
+            "lenh": [
+              "what-next"
+            ]
+          },
+          "khong_co_thi": "Không trả lời được 'làm gì tiếp' và 'việc nào chạy song song được'. Bảng quyền chặn được nhưng không quyết hộ ai nhường ai."
+        },
+        {
+          "ma": "F4.4",
+          "ten": "Giao thức đa phiên — bốn cơ chế, năm bất biến kèm lý do",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "docs/protocols/MULTIFLOW.md"
+            ]
+          },
+          "khong_co_thi": "Repo mới nhận được CÔNG CỤ mà không nhận được LÝ DO, và phiên AI đầu tiên 'dọn cho gọn' là mất chốt."
+        },
+        {
+          "ma": "F4.5",
+          "ten": "Cửa vào cho AI không tự nạp luật — một bản luật, nhiều cửa",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "trong_file": [
+              {
+                "file": "CLAUDE.md",
+                "chuoi": [
+                  "AGENTS.md"
+                ]
+              }
+            ]
+          },
+          "khong_co_thi": "Claude tự đọc CLAUDE.md, Codex tự đọc AGENTS.md. Thiếu một cửa là AI đó vào repo mà không biết luật.",
+          "vi_sao": "Do bang NOI DUNG cua CLAUDE.md, khong do bang su co mat cua AGENTS.md: dieu muc nay khang dinh la CANH CUA — CLAUDE.md phai TRO SANG mot ban luat duy nhat. Mot CLAUDE.md ton tai ma chep lai luat thi no la ban luat thu hai, dung cai muc nay sinh ra de chan. Con AGENTS.md co luat hay khong thi F5.1 do."
+        },
+        {
+          "ma": "F4.6",
+          "ten": "Từ điển thuật ngữ và bản hướng dẫn cho phiên AI đầu tiên",
+          "tu_ban": "1.3.11",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "docs/LEGEND.md",
+              "docs/HUONG-DAN.md"
+            ]
+          },
+          "khong_co_thi": "Repo vừa lắp bộ khung là lúc CẦN NHẤT hai file này, và trước bản 1.3.11 là lúc duy nhất không có."
+        },
+        {
+          "ma": "F4.7",
+          "ten": "Hai vai chia theo VIỆC — ① giữ lõi · ② phát & thu, và người sửa không tự nghiệm thu",
+          "tu_ban": "1.3.44",
+          "pham_vi": "ca-hai",
+          "can": {
+            "trong_file": [
+              {
+                "file": "AGENTS.md",
+                "chuoi": [
+                  "① Giữ lõi",
+                  "② Phát & thu",
+                  "tự ký nghiệm thu"
+                ]
+              }
+            ],
+            "file": [
+              "BACKLOG.md"
+            ]
+          },
+          "khong_co_thi": "Vai chia theo hãng, nên một phiên vừa phát hiện lỗi vừa tự ký nghiệm thu bản sửa của mình. Và chỗ vấp ở repo đích không có đường về lõi — nó chết trong một cửa sổ chat.",
+          "vi_sao": "Do 08/09 tren BON repo da migrate: muc nay tung khai can.file = [AGENTS.md, BACKLOG.md], ma hai file do co o MOI repo da lap tu lau — nen no bao [x] khap noi trong khi grep -cE \"giu loi|phat & thu\" ra 0 tren 4. Danh muc bao DAT cho mot tinh nang o noi no KHONG TON TAI. Nay do NOI DUNG: luat hai vai la mot doan chu nam TRONG AGENTS.md cua repo dich, ma upgrade.mjs khong bao gio ghi file do — dung, vi do la file cua ho. \"File co ton tai\" va \"noi dung da toi\" la hai cau khac nhau."
+        }
+      ]
+    },
+    {
+      "ma": "F5",
+      "ten": "Luật và quyết định",
+      "vi_sao": "Không ghi thì mỗi phiên AI tự nghĩ lại từ đầu, và những quyết định đã trả giá bị làm lại.",
+      "muc": [
+        {
+          "ma": "F5.1",
+          "ten": "Hiến pháp một trang — sáu việc phải hỏi người chốt, bản DUY NHẤT",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "trong_file": [
+              {
+                "file": "AGENTS.md",
+                "chuoi": [
+                  "hỏi",
+                  "BẢN DUY NHẤT"
+                ]
+              }
+            ]
+          },
+          "khong_co_thi": "Ba bản chép tay của cùng một danh sách đã từng nói ba kiểu khác nhau."
+        },
+        {
+          "ma": "F5.2",
+          "ten": "Sổ quyết định — chỉ thêm, tra được ngày nào chốt gì",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "decisions.md"
+            ]
+          },
+          "khong_co_thi": "Một quyết định đã chốt bị đề xuất lại, và không ai có bằng chứng để bác."
+        },
+        {
+          "ma": "F5.3",
+          "ten": "ADR — ghi nhận quyết định kiến trúc, có bản mẫu",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "docs/_TEMPLATE-adr.md",
+              "docs/adr"
+            ]
+          },
+          "khong_co_thi": "Lập luận dài nằm trong chat rồi trôi. Sáu tháng sau không ai biết vì sao hệ thống có hình dạng này."
+        },
+        {
+          "ma": "F5.4",
+          "ten": "Phụ lục NGHỀ — luật riêng của nghề repo, tách khỏi luật chung",
+          "tu_ban": "1.3.6",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "docs/_TEMPLATE-annex.md"
+            ]
+          },
+          "khong_co_thi": "Luật riêng của một nghề lẫn vào luật chung là ép một repo tài liệu tuân luật về selector DOM.",
+          "tuy_chon": true
+        },
+        {
+          "ma": "F5.5",
+          "ten": "Bộ biên dịch luật — sổ cái chỉ thêm, luật hiệu lực được biên dịch ra",
+          "tu_ban": "1.3.82",
+          "pham_vi": "ca-hai",
+          "can": {
+            "trong_file": [
+              {
+                "file": "scripts/check-bootstrap.mjs",
+                "chuoi": [
+                  "rule-compiler.mjs",
+                  "checkB16"
+                ]
+              },
+              {
+                "file": "package.json",
+                "chuoi": [
+                  "scripts/rule-compiler.mjs"
+                ]
+              }
+            ]
+          },
+          "khong_co_thi": "Luật chỉ có một chiều là TĂNG. Không có bộ biên dịch thì mỗi luật mới được nối vào chỗ gần nhất, và tới lúc hai luật nói ngược nhau thì phiên AI bốc trúng câu nào theo câu đó. Đo 09/09 ở repo phát hành: mục 1 hiến pháp có BA mốc trả khoá cùng hiệu lực, một phiên đã làm ngược hai cái.",
+          "vi_sao": "Do bang NOI DUNG chu khong bang su ton tai cua file. Mot repo chep `rule-compiler.mjs` vao `scripts/` ma khong noi B16 vao cong thi bo bien dich co mat nhung khong canh gi — dung hinh dang `[~] MOT PHAN` nguy hiem hon `[ ] THIEU`, va da do duoc that o F4.7 hoi 08/09. Nen phep do hoi HAI dieu: cong cau truc co GOI no khong, va repo co khai lenh chay duoc khong."
+        }
+      ]
+    },
+    {
+      "ma": "F6",
+      "ten": "Sổ sách trạng thái",
+      "vi_sao": "Phiên AI không nhớ gì giữa hai lượt. File là bộ nhớ duy nhất, và mỗi loại câu hỏi cần một sổ riêng — trộn chúng là mọi hướng đi trông như lỗi cần vá gấp.",
+      "muc": [
+        {
+          "ma": "F6.1",
+          "ten": "Nhật ký bàn giao — kèm TRẦN mỗi mục và nhịp xoay theo tháng, có máy canh",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "HANDOFF.md",
+              "scripts/handoff.mjs",
+              "tests/handoff-smoke.mjs"
+            ],
+            "lenh": [
+              "handoff"
+            ]
+          },
+          "khong_co_thi": "Mỗi phiên bắt đầu lại từ số 0, và vấp đúng chỗ phiên trước đã vấp. Va mot quyen nhat ky KHONG CO TRAN thi chi co mot chieu la phinh: luat cam sua/xoa dong cu, nen no lon len mai. scripts/handoff.mjs la thuoc do va la nhip xoay; thieu no thi luat co ma rang khong."
+        },
+        {
+          "ma": "F6.2",
+          "ten": "Sổ nợ — thứ đang HỎNG, nhóm theo mức ưu tiên",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "BACKLOG.md"
+            ]
+          },
+          "khong_co_thi": "Việc phát sinh ngoài phạm vi phiên biến mất, hoặc bị làm ngay và phiên đó mất tiêu điểm."
+        },
+        {
+          "ma": "F6.3",
+          "ten": "Sổ ý tưởng — HƯỚNG ĐI, cố ý tách khỏi sổ nợ",
+          "tu_ban": "1.3.2",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "IDEAS.md"
+            ]
+          },
+          "khong_co_thi": "Trộn hướng đi vào sổ nợ là người chốt nhìn mãi một danh sách lỗi, không thấy repo đang tiến."
+        },
+        {
+          "ma": "F6.4",
+          "ten": "Hồ sơ trạng thái từng đơn vị công việc, có bản mẫu",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "STATUS.template.md"
+            ]
+          },
+          "khong_co_thi": "Không trả lời được 'đơn vị này đang ở bước nào' bằng máy, nên bản đồ việc mù."
+        },
+        {
+          "ma": "F6.5",
+          "ten": "Sổ phát hành cho người đọc — mỗi bản một khối, chỉ thêm",
+          "tu_ban": "0.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "CHANGELOG.md"
+            ]
+          },
+          "khong_co_thi": "Không biết bản này đổi gì so với bản trước, nên nâng cấp là nhảy vào bóng tối."
+        }
+      ]
+    },
+    {
+      "ma": "F7",
+      "ten": "Phát hành bộ khung — chỉ nơi PHÁT mới cần",
+      "vi_sao": "Bộ khung là thứ được PHÁT ra nhiều repo. Lớp này giữ cho một số phiên bản chỉ trỏ tới đúng một nội dung, và cho repo đã lắp nâng được mà không mất bản vá tại chỗ.",
+      "muc": [
+        {
+          "ma": "F7.1",
+          "ten": "Bản trích tự sinh, có phép kiểm không cho hai bản trôi khỏi nhau",
+          "tu_ban": "1.0.0",
+          "pham_vi": "chi-repo-nha",
+          "can": {
+            "file": [
+              "scripts/build-template.mjs"
+            ],
+            "lenh": [
+              "template"
+            ]
+          },
+          "khong_co_thi": "Bản phát ra và bản repo nhà đang chạy là hai thứ khác nhau, và không ai biết."
+        },
+        {
+          "ma": "F7.2",
+          "ten": "Sổ phát hành máy đọc — mỗi bản một dấu vân tay, CHỈ THÊM",
+          "tu_ban": "1.0.0",
+          "pham_vi": "chi-repo-nha",
+          "can": {
+            "file": [
+              "RELEASE-LEDGER.json"
+            ]
+          },
+          "khong_co_thi": "Cùng một số phiên bản được đóng lại với hai nội dung khác nhau. Một số trỏ tới hai nội dung thì nó không còn là mốc."
+        },
+        {
+          "ma": "F7.3",
+          "ten": "Nâng repo đã lắp — TỪ CHỐI ghi đè file đã bị sửa tay",
+          "tu_ban": "1.1.0",
+          "pham_vi": "chi-repo-nha",
+          "can": {
+            "file": [
+              "scripts/upgrade.mjs"
+            ],
+            "lenh": [
+              "upgrade"
+            ]
+          },
+          "khong_co_thi": "Nâng cấp thành `cp -r` có nghi thức: nó xoá bản vá tại chỗ của người khác, im lặng."
+        },
+        {
+          "ma": "F7.5",
+          "ten": "Đo một repo cách chuẩn bao xa",
+          "tu_ban": "1.0.0",
+          "pham_vi": "chi-repo-nha",
+          "can": {
+            "file": [
+              "scripts/assess.mjs"
+            ],
+            "lenh": [
+              "assess"
+            ]
+          },
+          "khong_co_thi": "Quyết định migrate dựa trên cảm giác thay vì số đo."
+        },
+        {
+          "ma": "F7.6",
+          "ten": "Dựng repo mới từ bộ khung",
+          "tu_ban": "1.0.0",
+          "pham_vi": "chi-repo-nha",
+          "can": {
+            "file": [
+              "scripts/init-repo.mjs"
+            ],
+            "lenh": [
+              "init"
+            ]
+          },
+          "khong_co_thi": "Repo mới lắp tay, và mỗi lần lắp lệch một kiểu."
+        },
+        {
+          "ma": "F7.7",
+          "ten": "Sinh đề bài đã ĐO SẴN repo đích, cho AI khác thực thi",
+          "tu_ban": "1.3.15",
+          "pham_vi": "chi-repo-nha",
+          "can": {
+            "file": [
+              "scripts/giao-viec.mjs"
+            ],
+            "lenh": [
+              "giao-viec"
+            ]
+          },
+          "khong_co_thi": "Đề bài viết trước khi đo repo đích đã dạy sai một lượt thật. Một đề bài dựng trên số liệu đoán còn nguy hiểm hơn không có đề bài."
+        }
+      ]
+    },
+    {
+      "ma": "F8",
+      "ten": "Phép kiểm và cổng chạy xa",
+      "vi_sao": "Một phép kiểm chưa từng đỏ và một phép kiểm KHÔNG THỂ đỏ trông giống hệt nhau trên bảng — và bảng thì luôn xanh.",
+      "muc": [
+        {
+          "ma": "F8.1",
+          "ten": "Suite hạt giống — repo nhà CHẠY THẬT đúng cái nó phát cho người khác",
+          "tu_ban": "1.0.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "tests/harness-smoke.mjs"
+            ]
+          },
+          "khong_co_thi": "Repo mới nhận công cụ mà không nhận phép kiểm của công cụ đó — tức nhận một lời hứa."
+        },
+        {
+          "ma": "F8.2",
+          "ten": "Phép ghim của gói vai điều phối",
+          "tu_ban": "1.3.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "tests/assistant-smoke.mjs"
+            ]
+          },
+          "khong_co_thi": "Hai lệnh của vai điều phối phát đi mà không có gì bắt được lúc chúng đọc sai."
+        },
+        {
+          "ma": "F8.3",
+          "ten": "Cổng kiểm chạy trên GitHub — lớp duy nhất không ở trên máy người dùng",
+          "tu_ban": "1.2.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              ".github/workflows"
+            ]
+          },
+          "khong_co_thi": "Mọi lớp bảo vệ khác chạy trên máy người dùng, nên một `git push` trần đi qua hết."
+        },
+        {
+          "ma": "F8.4",
+          "ten": "Kiểu xuống dòng do REPO quyết, không do máy người clone",
+          "tu_ban": "1.2.0",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              ".gitattributes"
+            ]
+          },
+          "khong_co_thi": "Cùng một commit tồn tại ở hai dạng byte và `git status` nói SẠCH ở cả hai. Một phép kiểm xanh trên máy vừa ghi file và ĐỎ với người vừa clone."
+        },
+        {
+          "ma": "F8.5",
+          "ten": "Chạy suite song song + dấu xác nhận — cổng thôi chạy lại một chuỗi vừa xanh",
+          "tu_ban": "1.3.60",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "scripts/chay-test.mjs",
+              "tests/dau-suite-smoke.mjs"
+            ],
+            "chuoi": [
+              "chay-test.mjs"
+            ]
+          },
+          "vi_sao": "Do 2026-09-08 o noi phat hanh: chuoi suite 535s va cong dong phien chay LAI dung chuoi do, nen mot vong lam viec ton 18 phut ma nua sau khong kiem them duoc gi. Chay song song 535->256s, dau xac nhan 560->22s, ca vong 1.095->278s (nhanh 75%).",
+          "khong_co_thi": "Mot vong lam viec ton gap doi thoi gian can thiet, va cai gia do roi vao MOI phien. Den luc do phien AI se bo qua cong — do chinh la luc lop bao ve chet."
+        }
+      ]
+    },
+    {
+      "ma": "F9",
+      "ten": "Đối chiếu và tự nâng cấp — cái nối repo đích về bộ khung",
+      "vi_sao": "Repo đã lắp rồi thì nó SỐNG tiếp một mình, và bộ khung vẫn tiến. Không có lớp này thì mỗi repo đóng băng ở bản lúc lắp, và sáu tháng sau không ai biết repo nào đang thiếu gì. Đây là chỗ phiên AI của repo đích tự quay lại đối chiếu và tự đề xuất nâng.",
+      "muc": [
+        {
+          "ma": "F9.1",
+          "ten": "Sổ ghim ở repo đích — repo này đang dùng bản nào",
+          "tu_ban": "1.1.0",
+          "pham_vi": "chi-repo-dich",
+          "can": {
+            "file": [
+              ".ark/harness.lock.json"
+            ]
+          },
+          "khong_co_thi": "Không phân biệt được 'repo ghim bản CŨ' với 'repo có người SỬA TAY' — hai ca trông giống nhau, và xử sai ca thứ hai là mất việc của người ta."
+        },
+        {
+          "ma": "F9.2",
+          "ten": "Danh mục tính năng — checklist migrate, đo được ở mọi repo",
+          "tu_ban": "1.3.31",
+          "pham_vi": "ca-hai",
+          "can": {
+            "file": [
+              "features.json",
+              "scripts/features.mjs"
+            ],
+            "lenh": [
+              "features"
+            ]
+          },
+          "khong_co_thi": "Không trả lời được 'repo đích đã nhận đủ tính năng chưa' bằng máy, nên checklist migrate là lời tự khai của phiên vừa chạy."
+        },
+        {
+          "ma": "F9.3",
+          "ten": "Đề bài đưa AI assistant của repo đích GO LIVE và nhận việc maintain",
+          "tu_ban": "1.3.31",
+          "pham_vi": "chi-repo-nha",
+          "can": {
+            "file": [
+              "docs/briefs/ONBOARD-AI-REPO-DICH.md",
+              "scripts/giao-viec.mjs"
+            ],
+            "lenh": [
+              "giao-viec"
+            ]
+          },
+          "khong_co_thi": "Migrate xong là repo có đủ công cụ mà KHÔNG có ai cầm. Đo được: 3 lượt migrate, 0 lượt có phiên AI ở repo đích chạy trọn một vòng làm việc — tức bộ khung tới nơi rồi nằm đó."
+        }
+      ]
+    }
+  ]
+}

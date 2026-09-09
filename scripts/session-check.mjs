@@ -13,16 +13,15 @@
 */
 import fs from "node:fs";
 import path from "node:path";
-import { bienDich, docTuDia, dungBoGoi } from "./rule-compile.mjs";
-import os from "node:os";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { FINGERPRINT_FIELD, fingerprintState, khoaFileQuaHan, PHUT_NHAC_KHOA_FILE, readClaims, VO_DAU } from "./claim.mjs";
+import { appendOnlyAtEof, areaOf, claimPrefixesFrom, generatedFrom, generatorsFrom, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, handoffCapFrom, readStructureFromDisk, stewardOf, THU_MUC_DOCS_KHONG_TINH, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
+import { napContext } from "./rule-compiler.mjs";
+import { fingerprintState, readClaims } from "./claim.mjs";
+import { bamLenh, danhSachSuite, dauCay, docDau, xetDau, ghiDauCong, xoaDauCong, moiTruongNay } from "./chay-test.mjs";
 import { CAU_CHI_DUONG, docMucTuFile, laNhatKy, mucMoi, thangCua, thangHienTai, vuotTran } from "./handoff.mjs";
-import { appendOnlyAtEof, appendOnlyExemptFrom, areaOf, CHUA_THAY_DAU_VET, chonSuiteBoDongBang, claimPrefixesFrom, DAU_VET, dauVetTheoVung, frozenFrom, generatorsFrom, handoffCapFrom, nhapDungChungFrom, handoffSoMucCapFrom, kiemArtifactTuHead, quyTrachNhiemSuite, laneFromMessage, LANE_TRAILER, ownershipInvariant, ownershipKeys, readStructureFromDisk, stewardOf, unitDirOf, unitDirsUnder, unitsFrom } from "./repo-structure.mjs";
-import { bamLenh, danhSachSuite, dauCay, docDau, xetDau } from "./chay-test.mjs";
-import { dangMo } from "./backlog-check.mjs";
+import { parseBacklog } from "./what-next.mjs";
 
 // fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách
 // ("C:\WORKING ZONE\...") và pathname trả về %20, khiến mọi lệnh git im lặng
@@ -44,29 +43,63 @@ if (!args.includes("--as") || !asLabel || asLabel.startsWith("--")) {
 // mục đặt tên tiếng Việt đều bị báo đỏ oan. Gặp thật 26/08 với
 // "Pilot-07-Tạo Ảnh tô màu". Đức là người Việt và đặt tên thư mục bằng tiếng
 // Việt, nên đây không phải trường hợp hiếm.
-/* NUỐT LỖI GIT LÀ FAIL-OPEN, VÀ NÓ NẰM NGAY DƯỚI K2-9 — audit GPT vòng 5, 03/09.
+/* LỆNH GIT HỎNG KHÔNG ĐƯỢC TRÔNG NHƯ "KHÔNG CÓ DỮ LIỆU".
  *
- * Bản cũ `catch { return ""; }`: mọi lệnh git hỏng đều thành chuỗi rỗng, không dấu vết. Đường
- * đi của lỗi: `git status --porcelain` hỏng → `workingChanges` RỖNG → `banTrongVungCuaToi()`
- * rỗng → cổng tin là vùng tôi sạch → chạy lại trên HEAD → HEAD xanh → `[BỎ]`. Tức cổng vừa
- * MIỄN cho một regression của chính tôi, bằng đúng cái guard sinh ra để chặn nó. Và `touched`
- * rỗng làm một loạt phép kiểm khác xanh rỗng theo.
+ * Bản đầu là `catch { return "" }` — mọi lỗi thành chuỗi rỗng. Hậu quả không phải cổng chết,
+ * mà cổng MÙ: "0 file được track · 0 thay đổi · 0 file cần test · secret 0/0 sạch", rồi
+ * XANH TOÀN BỘ. Không phải kho git, git không có trong PATH, hay output vượt buffer trên repo
+ * lớn — cả ba đều cho cùng một chuỗi rỗng, và cả ba đều dẫn tới xanh.
  *
- * Nay mọi lỗi được GHI LẠI, và phép kiểm cuối cùng biến chúng thành ĐỎ. Không đoán, không
- * đi tiếp im lặng. */
+ * Nay: vẫn trả chuỗi rỗng để chỗ gọi không phải viết lại, NHƯNG ghi lại là đã hỏng. Cuối phiên,
+ * hỏng một lệnh nào là cổng ĐỎ — vì mọi con số phía sau đều là đoán. */
 const gitLoi = [];
-const gitRaw = (a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: ROOT, encoding: "utf8" });
 const git = (...a) => {
-  try { return gitRaw(a); }
-  catch (error) {
-    gitLoi.push(`git ${a.join(" ")} → ${String(error.stderr || error.message).trim().split(String.fromCharCode(10))[0]}`);
+  try {
+    return execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  } catch (e) {
+    gitLoi.push(`git ${a.slice(0, 2).join(" ")} → ${String(e.message).split(String.fromCharCode(10))[0].slice(0, 80)}`);
     return "";
   }
 };
-// BA CHỖ MÀ LỖI LÀ BÌNH THƯỜNG, nên không ghi: dò xem `origin/main` có tồn tại (repo mới thì
-// KHÔNG, và cổng đã có đường xử riêng), và đọc `HANDOFF.md` ở origin/main (repo dựng từ bộ
-// khung chưa có file đó). Ghi cả mấy chỗ này là chặn oan đúng repo vừa dựng.
-const gitLoiLaBinhThuong = (...a) => { try { return gitRaw(a); } catch { return ""; } };
+
+/* HỎI MỘT CÂU MÀ "KHÔNG" LÀ CÂU TRẢ LỜI HỢP LỆ.
+ *
+ * `git` ở trên ghi mọi lượt thất bại vào `gitLoi`, và cuối phiên một dòng trong đó làm cổng ĐỎ.
+ * Đúng cho lệnh mà thất bại nghĩa là cổng đang mù. SAI cho câu hỏi kiểu *"file này đã có trên
+ * nhánh xa chưa?"* — ở đó `git ls-tree` trả rỗng là **một câu trả lời**, không phải một sự cố,
+ * và ghi nó vào `gitLoi` là tự làm mình đỏ vì một file mới hoàn toàn bình thường. */
+const gitLoiLaBinhThuong = (...a) => {
+  try {
+    return execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  } catch { return ""; }
+};
+
+/* MỐC SO = UPSTREAM CỦA NHÁNH ĐANG ĐỨNG, không phải `origin/main` đóng cứng.
+ *
+ * Cùng bệnh đã vá ở `safe-push` (v1.2.9), ở tool anh em. Đứng trên một nhánh tính năng mà nhánh
+ * gốc chưa có `HANDOFF.md` thì `git show origin/main:HANDOFF.md` NỔ, cổng báo `GIT_HONG`, và
+ * theo đúng luật fail-closed của chính nó thì **mọi con số phía trên thành "đoán"**. Đo thật ở
+ * repo 3AI ngày 04/09: cổng không thể xanh trên nhánh đó — không phải vì repo sai, mà vì công cụ
+ * chỉ biết một hình dạng.
+ *
+ * Nhánh chưa có upstream thì lùi về `origin/main`: vẫn là câu trả lời cũ, và các lớp fail-closed
+ * sẵn có phía dưới lo phần "không phân giải được". */
+const MOC = (() => {
+  try {
+    const u = execFileSync("git", ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
+      { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    if (u) return u;
+  } catch { /* chưa có upstream */ }
+  return "origin/main";
+})();
+
+// Mỗi lượt cổng thay thế bằng chứng cũ, kể cả lượt --quick hay lượt bị lỗi.
+let dauCongTruoc;
+let loiDauCong;
+try {
+  xoaDauCong(ROOT);
+  dauCongTruoc = { ...dauCay(ROOT), lenh: bamLenh(danhSachSuite(ROOT)), moc: git("rev-parse", "--verify", MOC).trim() };
+} catch (e) { loiDauCong = e.message; }
 
 const results = [];
 const check = (name, fn) => {
@@ -74,11 +107,33 @@ const check = (name, fn) => {
   catch (error) { results.push({ name, ok: false, msg: `Phép kiểm lỗi: ${error.message}` }); }
 };
 
+/* GỘP NHIỀU PHÉP ĐO THÀNH MỘT MỤC CỔNG — Đức chốt 09/09: *"xếp hạng lại phép kiểm, giảm xuống 25,
+ * giữ trần 32"*.
+ *
+ * VÌ SAO GỘP CHỨ KHÔNG XOÁ: bỏ một phép đo là **nới một lớp bảo vệ**, và luật vàng số 3 cấm.
+ * Nhưng bốn cặp dưới đây trả lời CÙNG MỘT CÂU HỎI bằng hai mục riêng — đó là trùng lặp ở lớp
+ * BÁO CÁO, không phải hai lớp bảo vệ. Gộp lại thì số mục xuống mà **không mất một khẳng định nào**:
+ * phép đo con nào đỏ vẫn được nêu đích danh trong lời nhắn.
+ *
+ * BẤT BIẾN CỦA HÀM NÀY, và nó là chỗ dễ làm hỏng nhất: **một con đỏ thì cả mục ĐỎ**. Viết thành
+ * "đa số thắng" hay "đỏ mềm" là biến bốn lớp bảo vệ thành một lớp yếu hơn cả bốn. `skipped` chỉ
+ * giữ khi MỌI con đều skip — một con chạy thật thì mục đã có nội dung để nói. */
+const ghepKiem = (name, ...phepDo) => check(name, () => {
+  const kq = phepDo.map(([nhan, fn]) => ({ nhan, ...fn() }));
+  const do_ = kq.filter((k) => !k.ok);
+  const noiDung = (ds) => ds.map((k) => `${k.nhan}: ${k.msg}`).join(" · ");
+  if (do_.length) return { ok: false, msg: noiDung(do_) };
+  if (kq.every((k) => k.skipped)) return { ok: true, skipped: true, msg: noiDung(kq) };
+  return { ok: true, msg: noiDung(kq) };
+});
+
 /* ---- những gì đã thay đổi trong phiên này ------------------------------- */
 // "Phiên này" = mọi thứ chưa có trên origin/main: commit chưa push + working tree.
-const porcelain = git("status", "--porcelain").split("\n").filter(Boolean);
+// `--untracked-files=all` bắt Git liệt kê FILE thật. Mặc định Git co cả thư mục mới thành
+// `?? evidence/`, khiến phép bản đồ không thể biết đường dẫn file nào cần được khai.
+const porcelain = git("status", "--porcelain", "--untracked-files=all").split("\n").filter(Boolean);
 const workingChanges = porcelain.map((line) => ({ code: line.slice(0, 2).trim(), file: line.slice(3).replace(/^"|"$/g, "") }));
-const unpushed = git("diff", "--name-only", "origin/main...HEAD").split("\n").filter(Boolean);
+const unpushed = git("diff", "--name-only", `${MOC}...HEAD`).split("\n").filter(Boolean);
 const touched = [...new Set([...workingChanges.map((c) => c.file), ...unpushed])];
 
 /* VIỆC ĐÃ COMMIT CỦA LANE KHÁC KHÔNG PHẢI VIỆC MỒ CÔI CỦA TÔI — K2-1b, 2026-09-02.
@@ -103,12 +158,27 @@ const touched = [...new Set([...workingChanges.map((c) => c.file), ...unpushed])
 // dùng đầu tiên (~30 dòng), và vì `const` có vùng chết tạm thời nên cổng NÉM NGAY khi
 // nạp — mọi phiên, mọi lệnh, không riêng ca nào. Đo được 03/09: `session-check.mjs --as`
 // bất kỳ đều chết ở dòng đầu tiên dùng nó.
-const originMainResolves = gitLoiLaBinhThuong("rev-parse", "--verify", "origin/main").trim() !== "";
+const originMainResolves = git("rev-parse", "--verify", MOC).trim() !== "";
+
+// Trạng thái của CẢ PHIÊN, không chỉ cây làm việc. `git status` không thấy file đã commit;
+// so thẳng origin/main → working tree thì thấy cả commit chưa push, staged và unstaged.
+// `--no-renames` cố ý tách rename thành xoá file cũ + thêm file mới: trong vùng append-only,
+// đổi tên file cũ vẫn là xoá bằng chứng cũ và phải bị chặn.
+const parseNameStatus = (text) => String(text ?? "").split("\n").filter(Boolean).map((line) => {
+  const [code, ...parts] = line.split("\t");
+  return { code, file: parts.join("\t").replace(/^"|"$/g, "") };
+});
+const comparedChanges = originMainResolves
+  ? parseNameStatus(git("diff", "--name-status", "--no-renames", MOC))
+  : [];
+const sessionChanges = originMainResolves
+  ? [...comparedChanges, ...workingChanges.filter((c) => c.code === "??")]
+  : workingChanges;
 
 const workingFiles = new Set(workingChanges.map((c) => c.file));
 const nhanCuaFile = new Map();                       // file -> tập nhãn đã chạm nó (null = không nhãn)
 if (originMainResolves) {
-  for (const sha of git("log", "--format=%H", "origin/main..HEAD").split("\n").filter(Boolean)) {
+  for (const sha of git("log", "--format=%H", `${MOC}..HEAD`).split("\n").filter(Boolean)) {
     const { lane, problem } = laneFromMessage(git("log", "-1", "--format=%B", sha));
     // Nhãn HỎNG cũng coi như KHÔNG có nhãn: không quy thuộc được thì không được miễn cho ai.
     const nhan = problem ? null : lane;
@@ -118,26 +188,14 @@ if (originMainResolves) {
     }
   }
 }
-/* ĐÃ QUY THUỘC ĐƯỢC — N-48, nới từ "của lane khác" thành "của MỘT lane nào đó".
- *
- * Bản cũ chỉ miễn file mà mọi commit chạm nó mang nhãn của NGƯỜI KHÁC. Hệ quả: commit của
- * CHÍNH BẠN, mang nhãn đầy đủ, vẫn bắt bạn giữ khoá VÙNG cho tới lúc đẩy. Với khoá mức file
- * (ADR-0025) — thứ trả ngay sau mỗi lượt ghi — điều đó kéo ngược cả cơ chế về khoá vùng:
- * gặp thật ngay lượt đầu dùng, phải nhận lại `_code` chỉ để đẩy.
- *
- * Vì sao nới được: câu hỏi của phép kiểm này là *"commit chưa đẩy có ai chịu trách nhiệm
- * không"*, và từ 03/09 thứ trả lời câu đó là **nhãn `Lane:`**, không phải khoá. Một commit
- * mang nhãn của bạn thì nó KHÔNG mồ côi — `safe-push` cũng quy thuộc nó bằng đúng cái nhãn ấy.
- *
- * Và nó KHÔNG rỗng sau khi nới — hai đường đỏ còn nguyên, cả hai đều là mồ côi thật:
- *   ⑴ file bạn đang sửa trong CÂY LÀM VIỆC (chưa commit, nên chưa có nhãn nào);
- *   ⑵ commit chưa đẩy KHÔNG NHÃN hoặc nhãn hỏng — không quy thuộc được cho ai. */
-const daQuyThuocDuoc = (file) => !workingFiles.has(file)
+// "Của lane khác" chỉ đúng khi: không nằm trong cây làm việc của tôi, VÀ mọi nguồn đã chạm nó
+// đều là commit mang nhãn của người khác. Một nguồn không nhãn là đủ để KHÔNG miễn.
+const cuaLaneKhac = (file) => !workingFiles.has(file)
   && nhanCuaFile.has(file)
-  && [...nhanCuaFile.get(file)].every((nhan) => Boolean(nhan));
+  && [...nhanCuaFile.get(file)].every((nhan) => nhan && nhan !== asLabel);
 // Chỉ dùng cho việc dò MỒ CÔI. Các phép kiểm khác vẫn thấy `touched` đầy đủ — thu hẹp phạm vi
 // của chúng là một bản vá khác, và trộn hai việc vào một là cách làm mất dấu cái nào gây ra gì.
-const touchedToiPhaiTraLoi = touched.filter((f) => !daQuyThuocDuoc(f));
+const touchedToiPhaiTraLoi = touched.filter((f) => !cuaLaneKhac(f));
 
 // CÙNG HỌ VỚI FAIL-OPEN VỪA VÁ Ở `safe-push`, khác chỗ. `git()` nuốt lỗi, nên nếu `origin/main`
 // không phân giải được (repo mới dựng từ bộ khung chưa có remote, nhánh mặc định tên khác) thì
@@ -171,100 +229,16 @@ const CLAIMS = (() => {
   catch { return null; }
 })();
 const ownedBy = (area) => CLAIMS?.[area]?.owner ?? null;
+/* Khối `tam` — khoá mức FILE, loại giữ VÀI PHÚT. Đọc riêng vì nó có vòng đời khác hẳn `claims`:
+   khoá vùng trả SAU khi đẩy, khoá file trả NGAY sau lượt ghi. */
+const KHOA_FILE = (() => {
+  try { return JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.json"), "utf8")).tam || {}; }
+  catch { return null; }
+})();
 // Chạy qua shell chứ không spawn trực tiếp: từ Node 24, spawn một file `.cmd` trên Windows
 // trả `EINVAL` (siết bảo mật). Và `scripts.test` vốn là một chuỗi lệnh nhiều bước nối bằng
 // `&&` — thứ chỉ shell hiểu. Đo thật: bản đầu dùng execFileSync("npm.cmd") và chết ngay.
-/* `scripts.test` là các lệnh nối bằng `&&`. Cắt ra chạy TỪNG cái, đừng `npm test` một cục.
- *
- * Vì sao (đo thật 03/09, một phiên bị chặn BỐN lần): `scripts.test` của repo này mở đầu bằng
- * suite của `workers/duc-auto-chatgpt`. `&&` nghĩa là suite đó đỏ thì dừng hết — nên một lane
- * lưu file dở làm MỌI lane khác không đóng được phiên, và cổng còn không nói nổi đỏ của ai.
- * Cả bốn lần đều tự xanh lại khi lane kia lưu xong.
- */
-const rootSuiteParts = () => {
-  let raw = "";
-  /* Đọc `test:tuan-tu` TRƯỚC. Từ khi `test` trỏ sang bộ chạy song song, chuỗi thật nằm ở
-     `test:tuan-tu` — hỏi `test` không thôi thì cổng chỉ thấy MỘT lệnh, và mất sạch lớp quy đỏ
-     theo từng suite mà K2-9 dựng ra. */
-  try { const sc = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))?.scripts ?? {};
-        raw = sc["test:tuan-tu"] ?? sc.test ?? ""; }
-  catch { return []; }
-  return String(raw).split("&&").map((s) => s.trim()).filter(Boolean);
-};
-
-const runOne = (cmd, cwd = ROOT) => execSync(cmd, { cwd, encoding: "utf8", timeout: 900000 });
-
-/* ---- SUITE ĐỎ LÀ CỦA AI — quy theo TRẠNG THÁI, không theo ĐƯỜNG DẪN -------
- *
- * Bản K2-9 v1 của tôi quy theo đường dẫn file test: test nằm trong gói của lane khác thì bỏ
- * qua. Audit GPT bác đúng, và sai đó nặng theo cả hai chiều:
- *   · tôi commit vào `scripts/` DÙNG CHUNG mà làm test gói khác đỏ → cổng [BỎ] một
- *     **regression thật**;
- *   · một suite gốc dưới `tests/` đọc file sửa dở của lane khác → vẫn **chặn oan tôi**, vì
- *     chủ của file test đó là `_code`, tức của tôi.
- * Gốc bệnh không nằm ở đường dẫn: nó nằm ở chỗ suite chạy trên một CÂY LÀM VIỆC DÙNG CHUNG.
- *
- * Nên hỏi đúng câu: **lỗi này có trong thứ đã commit không?** Trích HEAD ra thư mục tạm, chạy
- * lại đúng suite đó ở đó. Đỏ ở đó = thật. Xanh ở đó = nhiễm từ cây làm việc.
- *
- * Bản chụp là một bản `clone` tạm chứ KHÔNG `git worktree add`: worktree ghi vào
- * `.git/worktrees` của repo gốc — state dùng chung mà hai lane chạy cùng lúc có thể giẫm nhau —
- * và cũng phạm luật "KHÔNG worktree". Ảnh chụp sống vài giây rồi xoá, không phải hộp cát
- * thường trú (K2-6). Cách chụp và giá của nó: xem khối ngay dưới.
- */
-/* ẢNH CHỤP PHẢI BIẾT GIT, KHÔNG CHỈ BIẾT FILE — K2-9d, audit GPT vòng 6, 04/09.
- *
- * Bản `git archive` chép file mà KHÔNG mang `.git`. Nên suite nào gọi git — trong repo này là
- * `feature-parity-smoke`, nó chạy `git show HEAD:FEATURE-PARITY.md` — sẽ chết vì
- * `not a git repository`, và cái chết đó bị đọc thành "đỏ có thật trong HEAD" tức
- * `REGRESSION_DA_COMMIT`. Quy oan cho lane đang đóng phiên, đúng bệnh K2-9 sinh ra để chữa.
- * Fail-closed nên không nguy hiểm bằng fail-open, nhưng nó chặn oan — mà chặn oan chính là
- * lý do tồn tại của cả K2-9.
- *
- * ĐỔI SANG `git clone` THÌ CHƯA ĐỦ, và chỗ thiếu thì IM LẶNG. Đây là gợi ý đầu của tôi, và
- * audit bác đúng: bản clone lấy `refs/remotes/origin/main` từ NHÁNH LOCAL của repo gốc, tức nó
- * bằng HEAD chứ không bằng baseline thật. Suite vẫn chạy, vẫn xanh, chỉ là so với một mốc sai.
- * Đo trên repo dựng riêng (HEAD=B, baseline thật=A): clone trần cho suite thấy `CHUA_PUSH=0`
- * trong khi sự thật là 1. Không test nào đỏ — loại lỗi tệ nhất.
- *
- * Nên phải đủ BA thứ, và cả ba đều có ca ghim:
- *   1. `clone`      → có `.git`, suite gọi git sống được;
- *   2. `--detach`   → ghim ĐÚNG commit đang xét. Đừng tin nhánh mặc định: repo gốc có thể đang
- *                     ở nhánh khác, lúc đó clone lấy sai commit;
- *   3. `update-ref` → viền lại baseline THẬT. Chỉ làm khi có baseline: repo mới dựng chưa có
- *                     `origin/main` vẫn phải chụp được.
- *
- * Vẫn KHÔNG `git worktree add`: nó ghi vào `.git/worktrees` của repo gốc — state dùng chung mà
- * hai lane chạy cùng lúc giẫm nhau. Đã đo: cách này không để lại gì ở repo gốc (cây sạch,
- * `git worktree list` vẫn đúng một dòng), và có ca ghim.
- *
- * Giá: đo trên repo này (`.git` 203MB) clone hardlink 1.9s, còn `git archive` 2.6s. Bản ĐÚNG
- * rẻ hơn bản sai — nên không có gì phải đánh đổi. Không dùng `--no-hardlinks`: chậm hơn (2.9s)
- * mà không an toàn hơn, vì file object của git là bất biến, và xoá bản chụp chỉ xoá liên kết.
- *
- * Giới hạn đã biết: nếu repo gốc đang ở detached HEAD tại một commit không nhánh nào với tới,
- * bản clone sẽ không có commit đó → `checkout` ném → trả `null` → cổng ĐỎ với
- * `KHONG_TRICH_DUOC_HEAD`. Fail-closed, đúng ý; không chữa vì phiên AI ở repo này luôn làm
- * trên `main`, và chữa nó là thêm một đường mà không ca thật nào đi qua.
- */
-const chayLaiTrenHead = (cmd) => {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), "gate-head-"));
-  try {
-    const head = git("rev-parse", "HEAD").trim();
-    if (!head) return null;
-    // HÀM KHOAN DUNG, cố ý: repo chưa có `origin/main` là hợp lệ. Dùng `git` ở đây thì lỗi rơi
-    // vào `gitLoi` và phép kiểm #12 đỏ oan đúng cái repo vừa dựng từ bộ khung.
-    const baseline = gitLoiLaBinhThuong("rev-parse", "origin/main").trim();
-    const r = path.join(d, "r");
-    runOne(`git clone -q . "${r}"`);
-    runOne(`git -C "${r}" checkout -q --detach ${head}`);
-    if (baseline) runOne(`git -C "${r}" update-ref refs/remotes/origin/main ${baseline}`);
-    try { runOne(cmd, r); return true; }
-    catch { return false; }
-  } catch { return null; }        // không dựng được ảnh chụp → KHÔNG biết → không được miễn
-  finally { fs.rmSync(d, { recursive: true, force: true }); }
-};
-
+const runRootSuite = () => execSync("npm test --silent", { cwd: ROOT, encoding: "utf8", timeout: 900000 });
 const hasRootTestScript = () => {
   try { return Boolean(JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))?.scripts?.test); }
   catch { return false; }
@@ -294,16 +268,13 @@ const orphanPackages = packagesToiPhaiTraLoi.filter((pkg) => !CLAIMS?.[pkg] || !
    KHÔNG chồng nhau mà một khoá chặn cả hai. Nay mỗi thư mục gốc có `steward` riêng trong
    `areas`, và mọi phép kiểm dưới đây xét THEO TỪNG KHOÁ.
 
-   HAI LOẠI MIỄN TRỪ, và điều kiện khác nhau:
-   · `.agents/claims.json` — miễn VÔ ĐIỀU KIỆN. Nhận và TRẢ quyền là thao tác hành chính; không
-     miễn thì không ai trả lại được quyền, vì chính thao tác trả cũng bị coi là sửa file gốc.
-   · Các file khai ở `append_only_exempt` — miễn CÓ ĐIỀU KIỆN: chỉ khi **thêm ở cuối**. Sửa hay
-     xoá dòng cũ là viết lại lịch sử của phiên khác, và cái đó thì không được miễn.
-     `HANDOFF.md` ở gốc: luật mục 7 bắt MỌI phiên ghi Log vào đây, nên bắt phải nhận thêm một
-     khoá chỉ để tuân luật là tự chặn luật của mình.
-     `IDEAS.md` (Đức chốt 04/09): vai điều phối là vai ghi ý tưởng nhiều nhất, mà sổ nằm ở gốc
-     nên nó phải xếp hàng sau `_root` — khoá đông nhất, 77% commit ngày 02/09 chạm gốc. Cùng
-     một lý lẽ với `HANDOFF.md`, nên cùng một hình dạng luật. */
+   HAI FILE ĐƯỢC MIỄN, và lý do khác nhau:
+   · `.agents/claims.json` — nhận và TRẢ quyền là thao tác hành chính. Không miễn thì không ai
+     trả lại được quyền, vì chính thao tác trả cũng bị coi là sửa file gốc.
+   · `HANDOFF.md` ở gốc — luật mục 7 bắt MỌI phiên ghi Log vào đây. Bắt phải nhận thêm một khoá
+     chỉ để tuân luật là tự chặn luật của mình. NHƯNG chỉ miễn khi **chỉ thêm dòng**: sửa hay
+     xoá dòng cũ là viết lại lịch sử của phiên khác, và cái đó thì không được miễn. */
+const ROOT_HANDOFF = "HANDOFF.md";
 // So với origin/main tới WORKING TREE, nên bắt được cả commit chưa push lẫn bản sửa dở. Đây là
 // phạm vi ĐÚNG cho cổng ("việc của phiên này"); `safe-push` cố ý dùng phạm vi khác (`origin/main`
 // … `HEAD` = "thứ tôi sắp công bố") — xem ghi chú ở đó. Dùng chung là HÀM QUYẾT ĐỊNH, không phải
@@ -313,45 +284,36 @@ const orphanPackages = packagesToiPhaiTraLoi.filter((pkg) => !CLAIMS?.[pkg] || !
 // dòng bịa vào GIỮA `HANDOFF.md` vẫn được miễn — một lỗ CẤP QUYỀN: ghi file luật ở gốc mà không
 // cần nhận khoá gốc. `appendOnlyAtEof` đòi thêm: đúng một hunk, và nó bắt đầu ngay sau dòng cuối
 // của bản cũ. Đây là SIẾT, không phải nới: thứ trước đây lọt thì nay đỏ, và đó là chủ ý.
-// DANH SÁCH file miễn nay đọc từ `.repo-structure.json` (`append_only_exempt`) — trước đây gõ
-// cứng ở cả đây và `safe-push.mjs`, và hai bản sao của một luật đã lệch nhau thật ngày 02/09.
-// Điều kiện "chỉ thêm ở cuối" vẫn tính RIÊNG cho từng file, và vẫn bằng `appendOnlyAtEof`.
-const appendOnlyExempt = appendOnlyExemptFrom(structure);
-const chiThemOCuoi = new Map(appendOnlyExempt.map((f) => [f, appendOnlyAtEof(
-  gitLoiLaBinhThuong("diff", "-U0", "origin/main", "--", f),
-  gitLoiLaBinhThuong("show", `origin/main:${f}`)
-)]));
-const adminFile = (f) => f === ".agents/claims.json" || chiThemOCuoi.get(f) === true;
+/* "FILE CHƯA CÓ Ở MỐC SO" KHÔNG PHẢI "GIT HỎNG" — lần thứ sáu cùng một hình dạng.
+ *
+ * `git show <mốc>:<file>` thất bại vì HAI lý do khác hẳn nhau, và `git()` gộp cả hai thành một
+ * dòng trong `gitLoi` → cổng báo `GIT_HONG` → theo đúng luật fail-closed của chính nó, MỌI con
+ * số phía trên thành "đoán". Đo thật ở 3AI 04/09: `HANDOFF.md` do bộ khung thêm vào nên nó chưa
+ * có trên nhánh gốc, và cổng KHÔNG THỂ XANH — trong khi repo hoàn toàn lành. Vòng luẩn quẩn:
+ * cổng đòi xanh mới được đẩy, mà chỉ đẩy xong nó mới hết đỏ.
+ *
+ * `ls-tree` tách được, y như đã làm cho sổ phát hành ở v1.2.8: mã thoát nói git có chạy được
+ * không, output rỗng nói đường dẫn có tồn tại ở mốc đó không. Chưa có thì bản cũ là RỖNG —
+ * và `appendOnlyAtEof` với bản cũ rỗng đúng nghĩa "cả file là phần thêm mới".
+ *
+ * Phép dò này CỐ Ý dùng `git()` chứ không phải một hàm im lặng: `ls-tree` chỉ thất bại khi mốc
+ * so không phân giải được, mà ca đó đã có đường mềm riêng ở dưới (lùi về `origin/main`, rồi
+ * "chỉ thấy CÂY LÀM VIỆC"). Thêm một hàm im lặng ở đây là thêm một lớp không có ca hỏng nào để
+ * canh — và một lớp không dựng nổi ca hỏng thì chưa bao giờ là lớp bảo vệ. */
+const handoffCoOMoc = git("ls-tree", MOC, "--", ROOT_HANDOFF).trim() !== "";
+const handoffAppendOnly = appendOnlyAtEof(
+  git("diff", "-U0", MOC, "--", ROOT_HANDOFF),
+  handoffCoOMoc ? git("show", `${MOC}:${ROOT_HANDOFF}`) : ""
+);
+const adminFile = (f) => f === ".agents/claims.json" || (f === ROOT_HANDOFF && handoffAppendOnly);
 
 const keyOf = (f) => stewardOf(f, structure, claimPrefixes);
 // MỘT CỬA DUY NHẤT (K2-2b): cả cổng này và `safe-push.mjs` đi qua `ownershipKeys`. Trước đó mỗi
 // bên tự gộp tập khoá, và 02/09 hai bên đã trả hai câu khác nhau cho cùng một file — xem ghi chú
 // trong repo-structure.mjs. Khoá gốc luôn bắt đầu bằng "_"; vùng chia-theo-gói thì không.
 const keysTouched = ownershipKeys(touched, structure, claimPrefixes, adminFile);
-
-/* Vùng nào bị chính TÔI sửa qua một commit chưa push — dùng để quy chủ một suite đỏ.
- * Khác `keysTouched` ở đúng chỗ quan trọng: cây làm việc là CHUNG, nên `keysTouched` chứa cả
- * file chưa commit của lane khác. Commit mang nhãn của tôi thì không lẫn được.
- * Commit không nhãn → không quy thuộc được → tính là của tôi (fail closed). */
 const rootAreasTouched = keysTouched.filter((k) => k.startsWith("_"));
 const myRootAreas = rootAreasTouched.filter((k) => ownedBy(k) === asLabel);
-
-/* File CHƯA COMMIT nằm trong vùng TÔI đang giữ. Đây là thứ duy nhất trong cả bài này quy thuộc
- * được một file chưa commit, và nó dựa thẳng vào luật mục 1: chỉ tôi được ghi vào vùng tôi giữ,
- * nên file bẩn ở đó là của tôi. Dùng cho `quyTrachNhiemSuite` — nếu vùng tôi còn bẩn thì KHÔNG
- * được lấy "HEAD xanh" ra tự miễn, vì thay đổi gây lỗi có thể là của chính tôi và nó chưa có
- * trong HEAD. Chốt này do audit GPT thêm; thiếu nó thì bản vá tự mở một fail-open mới. */
-const nhapDungChung = nhapDungChungFrom(structure);
-const banTrongVungCuaToi = () => {
-  const cuaToi = new Set([...myPackages, ...myRootAreas]);
-  return workingChanges
-    .map((c) => c.file)
-    .filter((f) => !adminFile(f))
-    // Nháp dùng chung KHÔNG quy cho ai — N-64. Nhiều lane ghi vào đó theo đúng thiết kế, nên
-    // "bẩn trong vùng tôi giữ = của tôi" không áp dụng. Chốt vẫn nổ cho mọi file khác.
-    .filter((f) => !nhapDungChung.some((d) => f === d.slice(0, -1) || f.startsWith(d)))
-    .filter((f) => cuaToi.has(stewardOf(f, structure, claimPrefixes)));
-};
 // Mồ côi xét trên tập ĐÃ TRỪ việc của lane khác (K2-1b). Đây là chỗ 9% lượt "giữ khoá vì chưa
 // push được" biến mất: một phiên nay trả khoá xong vẫn đẩy được sau, mà cổng phiên kế không đỏ oan.
 const orphanRootAreas = ownershipKeys(touchedToiPhaiTraLoi, structure, claimPrefixes, adminFile)
@@ -365,31 +327,37 @@ const rootMine = rootTouched && myRootAreas.length === rootAreasTouched.length;
 const mine = (file) => myPackages.some((pkg) => file.startsWith(`${pkg}/`))
   || (areaOf(file, claimPrefixes) === "_root" && myRootAreas.includes(keyOf(file)));
 
-/* ---- 1. Chủ sở hữu ------------------------------------------------------ */
-check("Phạm vi trách nhiệm", () => {
-  if (!CLAIMS) return { ok: false, msg: "Thiếu (hoặc hỏng) .agents/claims.json — xem AGENTS.md mục 1." };
-  /* HOOK PHẢI ĐƯỢC CÀI, và đây là chỗ canh nó — N-49.
-     `core.hooksPath` nằm ở `.git/config`, thứ KHÔNG đi theo git. Không ai canh thì hook là một
-     file nằm im trong `.githooks/` mà chưa chắc chạy, tức đúng loại chốt-không-có-răng mà mục 7
-     của `AGENTS.md` cảnh báo. May là mọi lane ở đây dùng CHUNG một cây làm việc, nên một lượt
-     `git config` là xong cho tất cả.
-     Đặt trong phép kiểm này chứ không thêm phép thứ 17: cùng một câu hỏi — *ai chịu trách nhiệm
-     cho lượt ghi này* — chỉ khác một đằng canh lúc commit, một đằng canh lúc đóng phiên. */
-  /* CHỈ ĐÒI KHI REPO CÓ HOOK. Repo tạm mà các kho thử dựng lên không chép `.githooks/` sang,
-     nên đòi vô điều kiện là làm đỏ mọi fixture chạy cổng — đúng cái bẫy "cổng nhận thêm một
-     phụ thuộc thì MỌI kho thử phải biết", thứ đã cắn bốn lần trong ngày 08/09. Câu đúng là:
-     repo nào PHÁT một cái hook thì phải CÀI nó. */
-  const coHook = fs.existsSync(path.join(ROOT, ".githooks", "commit-msg"));
-  const hooksPath = gitLoiLaBinhThuong("config", "--get", "core.hooksPath").trim();
-  if (coHook && hooksPath !== ".githooks") {
-    return {
-      ok: false,
-      msg: `HOOK_CHUA_CAI: \`core.hooksPath\` đang là "${hooksPath || "(chưa đặt)"}", phải là ".githooks". `
-        + "Không có nó thì chốt `commit-msg` (nửa còn lại của N-40) KHÔNG chạy, và một chốt không "
-        + "chạy thì tệ hơn không có chốt — vì ai cũng tưởng nó đang canh. Cài một lần, xong cho "
-        + "MỌI lane vì tất cả dùng chung một cây làm việc: git config core.hooksPath .githooks",
-    };
+/* ---- 0b. Khoá mức FILE đã trả hết --------------------------------------- */
+const doKhoaFile = () => {
+  /* MỐC LÀ *HẾT PHIÊN*, KHÔNG PHẢI *ĐÃ ĐẨY* — và đây là chỗ khác khoá vùng, đừng lẫn.
+   *
+   * Khoá vùng trả SAU khi đẩy, vì commit chưa đẩy nằm trong một vùng vô chủ để lại một mục đỏ
+   * cho phiên sau (xem `tra_khi_chua_day` trong `claim.mjs`). Khoá file KHÔNG mang trách nhiệm
+   * truy nguồn — nhãn `Lane:` trong commit mang. Nên nó chỉ cần biến mất khi bạn ngừng gõ.
+   *
+   * Vì sao cần cổng: khoá file sinh ra để giữ vài phút, và thứ duy nhất bắt nó thật sự ngắn là
+   * một chỗ ĐỎ khi bạn định báo xong. Không có cổng thì nó thoái hoá thành đúng cái khoá dài
+   * hạn mà nó thay thế — luật *"nhận ngay trước lượt ghi"* đã có sẵn từ lâu, không ai theo, và
+   * không gì đo nó. Đó là hình dạng một luật-là-chữ. */
+  if (KHOA_FILE === null) return { ok: false, msg: "Không đọc được `.agents/claims.json` — xem AGENTS.md mục 1." };
+  const cua = Object.entries(KHOA_FILE).filter(([, o]) => o?.owner === asLabel);
+  if (!cua.length) {
+    const nguoiKhac = Object.keys(KHOA_FILE).length;
+    return { ok: true, msg: nguoiKhac ? `Bạn không giữ khoá file nào (${nguoiKhac} của phiên khác — không phải việc của bạn).` : "Không khoá file nào đang treo." };
   }
+  const NL1 = String.fromCharCode(10);
+  return {
+    ok: false,
+    msg: `KHOA_FILE_CON_TREO: bạn còn giữ ${cua.length} khoá mức FILE — ${cua.map(([d]) => d).join(" · ")}.`
+      + NL1 + "Khoá file là loại giữ VÀI PHÚT: nhận ngay TRƯỚC lượt ghi, trả ngay SAU."
+      + NL1 + "Mốc là HẾT PHIÊN, không phải ĐÃ ĐẨY — nó không mang trách nhiệm truy nguồn, nhãn `Lane:` mang."
+      + NL1 + `Trả hết: node scripts/claim.mjs --xong --het --as ${asLabel}`,
+  };
+};
+
+/* ---- 1. Chủ sở hữu ------------------------------------------------------ */
+const doPhamVi = () => {
+  if (!CLAIMS) return { ok: false, msg: "Thiếu (hoặc hỏng) .agents/claims.json — xem AGENTS.md mục 1." };
   // Package chưa khai chủ mà có thay đổi = việc mồ côi, không ai chịu trách
   // nhiệm. Đây mới là thứ cổng chặn được thật.
   if (orphanPackages.length) {
@@ -414,62 +382,195 @@ check("Phạm vi trách nhiệm", () => {
   const yoursList = [...myPackages, ...myRootAreas];
   const yours = yoursList.length ? yoursList.join(", ") : "(không đụng vùng nào)";
   return { ok: true, msg: `Phần của bạn: ${yours}${note}` };
-});
+};
 
 /* ---- 2. Vùng bằng chứng ------------------------------------------------- */
-check("Vùng bằng chứng không bị sửa", () => {
-  const protectedRe = /(^|\/)(pilot-[^/]*|Pilot-[^/]*|Batch-[^/]*|evidence)\//i;
-  // Thêm mới (A/??) thì được; Sửa (M) hoặc Xoá (D) thì không.
-  const violations = workingChanges.filter((c) => mine(c.file) && protectedRe.test(c.file) && /[MDR]/.test(c.code));
+const doBangChung = () => {
+  // Nguồn sự thật là `.repo-structure.json`, không phải tên thư mục mà code đoán. Một repo
+  // khai `records/` append-only thì `records/` phải được bảo vệ y như `evidence/`.
+  const appendOnlyPrefixes = Object.entries(structure?.areas ?? {})
+    .filter(([key, area]) => !key.startsWith("_") && area?.mutability === "append-only")
+    .map(([key]) => key.replaceAll("\\", "/"));
+  const inAppendOnlyArea = (file) => appendOnlyPrefixes.some((prefix) => file.startsWith(prefix));
+  // Thêm mới (A/??) thì được; sửa, xoá hoặc đổi tên file đã có thì không.
+  const violations = sessionChanges.filter((c) => mine(c.file) && inAppendOnlyArea(c.file) && /[MDR]/.test(c.code));
   if (violations.length) return { ok: false, msg: `Sửa/xoá bằng chứng vận hành: ${violations.map((v) => v.file).join(", ")}. Chỉ được THÊM mới.` };
   return { ok: true, msg: "Bằng chứng cũ nguyên vẹn." };
-});
+};
+
+/* HÀNG GIẢ TRONG FIXTURE KHÔNG PHẢI SECRET.
+ *
+ * Bộ quét mở rộng ra mọi loại file lập tức báo nhầm một fixture có thật ở repo NAV:
+ * `token = "test-one-session-token"`. Nó khớp dạng `token = <22 ký tự>`, và nó hoàn toàn vô hại.
+ *
+ * Vì sao chuyện này đáng sửa NGAY chứ không phải "chấp nhận cho chắc": một cổng hay báo nhầm sẽ
+ * bị người ta tắt, hoặc tệ hơn — bị lướt qua theo thói quen. Lúc đó nó không còn canh gì nữa,
+ * mà vẫn hiện lên màn hình như đang canh.
+ *
+ * Cách phân biệt: secret thật không tự khai mình là đồ giả. Chuỗi mang một trong các dấu dưới
+ * đây là fixture, biến mẫu, hoặc chỗ trống chờ điền. */
+const DAU_HANG_GIA = [
+  "test", "example", "sample", "dummy", "fake", "placeholder", "your-", "your_",
+  "changeme", "change-me", "redacted", "xxxxx", "<", "${", "{{", "...", "…"
+];
+function laHangGia(doan) {
+  const thap = doan.toLowerCase();
+  return DAU_HANG_GIA.some((d) => thap.includes(d));
+}
 
 /* ---- 3. Secret ---------------------------------------------------------- */
 check("Không có secret lọt vào repo", () => {
   const tracked = git("ls-files").split("\n").filter(Boolean);
   const badName = tracked.filter((f) => /pairing.*\.json$/i.test(f));
   if (badName.length) return { ok: false, msg: `File pairing bị track: ${badName.join(", ")}. Gỡ khỏi git và cho vào .gitignore.` };
-  const patterns = [/"token"\s*:\s*"[A-Za-z0-9_\-]{20,}"/, /Bearer\s+[A-Za-z0-9_\-]{24,}/];
+  /* QUÉT THEO DANH SÁCH LOẠI TRỪ, KHÔNG THEO DANH SÁCH CHO PHÉP.
+   *
+   * Bản cũ chỉ đọc `.js .mjs .json .md .ps1 .cmd`. Nghĩa là `.env`, `.yaml`, `.yml`, `.toml`,
+   * `.py`, `.sh`, `.ini`, `.txt` — đúng những nơi secret hay nằm nhất — **không bao giờ được
+   * đọc**. Và câu kết in ra "Quét N file được track, sạch" với N là TỔNG số file track, trong
+   * khi nó chỉ đọc một phần. Lỗ hổng thì còn vá được; một con số nói dối trong báo cáo thì làm
+   * người đọc thôi không kiểm nữa.
+   *
+   * Danh sách cho phép luôn lạc hậu sau đuôi file tiếp theo mà repo thêm vào. Danh sách loại
+   * trừ thì không: thứ gì không đọc được sẽ được KỂ RA là không đọc được, chứ không biến mất. */
+  const patterns = [
+    /"token"\s*:\s*"[A-Za-z0-9_\-]{20,}"/,
+    /Bearer\s+[A-Za-z0-9_\-]{24,}/,
+    // Dạng KEY=value / key: value — dạng phổ biến nhất trong .env, .yaml, .ini, .toml
+    // GIÁ TRỊ PHẢI TRÔNG NHƯ MỘT GIÁ TRỊ, KHÔNG PHẢI MỘT CÁI TÊN.
+    //
+    // Bản đầu chấp nhận giá trị không có nháy, nên dòng này bị kêu là secret ở repo Project 3AI:
+    //     api_key = _paperclip_env_value(PAPERCLIP_API_KEY_ENV)
+    // Đó là một lời gọi hàm, hoàn toàn vô hại — `_paperclip_env_value` vừa đủ 20 ký tự nên lọt.
+    //
+    // Vì sao phải sửa ngay chứ không phải "báo thừa cho chắc": một cổng hay báo nhầm sẽ bị tắt,
+    // hoặc tệ hơn — bị lướt qua theo thói quen. Lúc đó nó không còn canh gì nữa mà vẫn hiện lên
+    // màn hình y như đang canh.
+    //   (a) có nháy — cách một secret thật gần như luôn xuất hiện trong mã nguồn
+    new RegExp("(?:api[_-]?key|secret|token|password|passwd|access[_-]?key|private[_-]?key|client[_-]?secret)\\s*[:=]\\s*[\"'][A-Za-z0-9_\\-\\/+=]{20,}[\"']", "i"),
+    //   (b) kiểu file .env — KEY=value trọn một dòng, không dấu cách, không ngoặc
+    new RegExp("^[A-Z0-9_]*(?:API_?KEY|SECRET|TOKEN|PASSWORD|ACCESS_?KEY)\\s*=\\s*[A-Za-z0-9_\\-\\/+=]{20,}\\s*$", "mi"),
+    /-----BEGIN (?:RSA |EC |OPENSSH |PGP )?PRIVATE KEY-----/,
+    /\bsk-[A-Za-z0-9]{20,}/,          // OpenAI
+    /\bghp_[A-Za-z0-9]{30,}/,          // GitHub personal token
+    /\bAKIA[0-9A-Z]{16}\b/             // AWS access key id
+  ];
   const suspects = [];
+  let daDoc = 0;
+  const khongDocDuoc = [];
+  const nhiPhan = [];
   for (const file of tracked) {
-    if (!/\.(js|mjs|json|md|ps1|cmd)$/i.test(file)) continue;
     const full = path.join(ROOT, file);
-    let text; try { text = fs.readFileSync(full, "utf8"); } catch { continue; }
-    if (text.length > 2_000_000) continue;
-    if (patterns.some((p) => p.test(text))) suspects.push(file);
+    let buf;
+    try { buf = fs.readFileSync(full); } catch { khongDocDuoc.push(file); continue; }
+    /* "LÀ FILE NHỊ PHÂN" LÀ MỘT CÂU TRẢ LỜI, KHÔNG PHẢI MỘT DẤU HỎI.
+     *
+     * Bản đầu gộp nó với "đọc không được" và "quá lớn", nên mọi repo có một cái ảnh đều mang
+     * vĩnh viễn một mục [BỎ] — tức cổng KHÔNG BAO GIỜ xanh được ở bất kỳ repo thật nào. Đo được
+     * ở 3AI 04/09: 33 file (PNG, XLSX trong `archive/`) giữ cổng ở "chưa đủ bằng chứng" mãi mãi.
+     * Lại đúng cái bệnh "luật không thoả được thì sớm muộn bị bỏ qua cả cụm".
+     *
+     * ĐÂY KHÔNG PHẢI NỚI LỎNG: phép kiểm này giải UTF-8 rồi dò mẫu chữ, nên nó CHƯA BAO GIỜ soi
+     * được file nhị phân. Gọi tên đúng thứ nó vốn không làm được không mất đi một chút phát hiện
+     * nào — chỉ thôi dán nhãn "không biết" lên một chỗ ta biết rõ.
+     *
+     * Hai ca kia thì GIỮ NGUYÊN là KHÔNG BIẾT: "đọc không được" và "quá lớn" là file văn bản
+     * thật sự chưa được soi. */
+    if (buf.subarray(0, 8192).includes(0)) { nhiPhan.push(file); continue; }
+    /* THỨ TỰ QUAN TRỌNG: phép thử nhị phân phải chạy TRƯỚC phép thử kích thước.
+       Đảo lại thì một tấm PNG 3MB bị gọi là "quá lớn" — tức KHÔNG BIẾT — trong khi ta biết
+       thừa nó là ảnh. Đo ở 3AI: sau khi tách nhị phân vẫn còn 4 file kẹt, cả bốn đều là
+       PNG/PPTX chỉ vì chúng vượt ngưỡng trước khi kịp được nhận là nhị phân.
+       "Có phải nhị phân không" không phụ thuộc kích thước; ngưỡng này để tránh giải mã một
+       file VĂN BẢN khổng lồ, nên nó thuộc về sau. */
+    if (buf.length > 2_000_000) { khongDocDuoc.push(`${file} (quá lớn)`); continue; }
+    daDoc += 1;
+    const text = buf.toString("utf8");
+    for (const p of patterns) {
+      const m = text.match(p);
+      if (m && !laHangGia(m[0])) { suspects.push(file); break; }
+    }
   }
   if (suspects.length) return { ok: false, msg: `Nghi có token thật trong: ${suspects.join(", ")}. Kiểm tra bằng mắt trước khi commit.` };
-  return { ok: true, msg: `Quét ${tracked.length} file được track, sạch.` };
+  const duoi = (khongDocDuoc.length
+    ? ` · ${khongDocDuoc.length} file KHÔNG đọc được (${khongDocDuoc.slice(0, 3).join(", ")}${khongDocDuoc.length > 3 ? ", …" : ""}) — không kiểm được, không phải đã sạch`
+    : "")
+    + (nhiPhan.length ? ` · bỏ qua ${nhiPhan.length} file nhị phân (phép kiểm này dò mẫu chữ, không áp dụng cho ảnh/nhị phân)` : "");
+  // File khong doc duoc = CHUA KIEM. Bao [XANH] o day la dung cai benh ca cong nay sinh ra
+  // de chua: badge xanh trong khi mot phan repo chua he duoc soi.
+  return {
+    ok: true,
+    ...(khongDocDuoc.length ? { skipped: true } : {}),
+    msg: `Đọc thật ${daDoc}/${tracked.length} file được track, sạch${duoi}.`
+  };
 });
 
-/* KHAI BẰNG HÌNH DẠNG, KHÔNG BẮT GÕ TỪNG TÊN — 09/09.
- *
- * Bản đồ file đòi tên file mới xuất hiện NGUYÊN VĂN trong `AGENTS.md`. Với thứ sinh ra theo lượt
- * — mỗi lần cắt sổ nhật ký đẻ một `HANDOFF-ARCHIVE-NN.md` — luật đó bắt danh sách dài thêm mãi,
- * ngay trong file MỌI phiên nạp. Đo 09/09: `AGENTS.md` gốc đang ở đúng thước cóc, dư **0** ký tự,
- * nên cái tên thứ bảy sẽ không có chỗ mà nằm.
- *
- * Và repo này đã học đúng bài đó một lần rồi: ADR-0032 ⑶ — danh sách thư mục bằng chứng gõ tay
- * bảo vệ **nhầm chỗ** ở nhánh Gemini (ba trong bốn cái không tồn tại), sửa bằng cách viết theo
- * hình dạng, vì *"hình dạng thì không mục được"*.
- *
- * KHÔNG phải nới cửa: một hình dạng là lời khai CÓ CHỦ Ý, đặt trong backtick, và phải mang ít
- * nhất 3 ký tự chữ. `*` trần hay `*.md` không qua được — nếu không thì một dấu sao lạc trong văn
- * bản sẽ khai hộ cả repo. */
-const khaiTheoHinhDang = (map, ten) => {
-  for (const [, hinh] of map.matchAll(/`([A-Za-z0-9._*/-]*\*[A-Za-z0-9._*/-]*)`/g)) {
-    if (hinh.replace(/[^A-Za-z0-9]/g, "").length < 3) continue;
-    const re = new RegExp("^" + hinh.split("*").map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[^/]*") + "$");
-    if (re.test(ten)) return true;
-  }
-  return false;
-};
+/* File nào chứa Bản đồ file. Repo khai `docs.file_map` trong `.repo-structure.json`; không khai
+   thì vẫn là `AGENTS.md` như trước — repo cũ không phải đổi gì. */
+const KHAI_BAN_DO = (() => {
+  const v = structure?.docs?.file_map;
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+})();
+const FILE_BAN_DO = KHAI_BAN_DO || "AGENTS.md";
 
 /* ---- 4. File mới phải khai vào Bản đồ file ------------------------------ */
 check("File mới đã khai vào Bản đồ file", () => {
-  const added = workingChanges.filter((c) => /^(A|\?\?)/.test(c.code)).map((c) => c.file).filter(mine);
+  // LỌC THEO VÙNG MÌNH GIỮ LÀ ĐÚNG — nhưng lọc còn RỖNG thì KHÔNG phải "đã đạt".
+  //
+  // Ca đo được ở repo Project 3AI ngày 03/09: cùng một cây làm việc, cùng một giây, hai nhãn
+  // phiên khác nhau cho hai câu trả lời khác nhau — `--as migrate-3ai` ra 40 file chưa khai,
+  // `--as mot-nhan-khac` ra "Mọi thứ mới đều đã khai". Vì phiên sau không giữ vùng nào nên bộ
+  // lọc quét sạch danh sách, và cổng báo XANH vì RỖNG.
+  //
+  // Cùng họ với mọi lỗ fail-open đã vá hôm nay, và là họ nguy hiểm nhất: gõ một nhãn phiên khác
+  // là cổng đổi câu trả lời. Nên: lọc hết sạch mà vẫn CÓ file mới thì đó là `BỎ`, kèm câu nói
+  // thẳng vì sao không kiểm được.
+  const themMoi = sessionChanges.filter((c) => /^(A|\?\?)/.test(c.code)).map((c) => c.file);
+  const added = themMoi.filter(mine);
+  if (themMoi.length > 0 && added.length === 0) {
+    return {
+      ok: true,
+      skipped: true,
+      msg: `${themMoi.length} file mới đều thuộc vùng phiên KHÁC đang giữ, nên cổng KHÔNG kiểm được cái nào. Đây là "chưa kiểm", không phải "đã đạt" — chạy lại dưới đúng nhãn phiên đang giữ vùng đó.`
+    };
+  }
   const undeclared = [];
+  const khaiSaiBanDo = new Set();
+  /* TÌM BẢN ĐỒ BẰNG MỐC, KHÔNG BẰNG SỐ MỤC.
+   *
+   * Bản đầu đóng cứng `## 6.` … `## 7.` — tức là số mục trong `AGENTS.md` CỦA BỘ KHUNG. Repo
+   * thật hiếm khi có cùng số mục: repo "Project 3 AI Agent Unify" có 8 mục KHÔNG ĐÁNH SỐ, nên
+   * không tìm thấy đoạn nào, `map` rỗng, và **mọi file mới đều bị coi là chưa khai**. Cổng đỏ
+   * hàng loạt, không có cách sửa nào ngoài việc viết lại `AGENTS.md` của repo đích cho giống
+   * repo nhà — đúng thứ mà quy trình migrate ghi rõ là KHÔNG thuộc phạm vi.
+   *
+   * Ba cách tìm, theo thứ tự tin cậy giảm dần. Không thấy thì nói THẲNG là không thấy, chứ
+   * không im lặng coi như bản đồ rỗng — hai chuyện đó cần hai cách sửa khác hẳn nhau. */
+  const mapSection = (text) => {
+    const lines = String(text ?? "").replaceAll("\r", "").split("\n");
+
+    // (1) Mốc tường minh. Repo nào muốn chắc chắn thì đặt hai dòng này quanh bản đồ.
+    const b = lines.findIndex((l) => l.includes("<!-- BAN-DO:BEGIN -->"));
+    const e = lines.findIndex((l, i) => i > b && l.includes("<!-- BAN-DO:END -->"));
+    if (b >= 0 && e > b) return lines.slice(b, e).join("\n");
+
+    // (2) Tiêu đề gọi đúng tên việc, ở BẤT KỲ cấp nào, có đánh số hay không.
+    const laTieuDe = (l) => /^#{1,6}\s/.test(l);
+    const start = lines.findIndex((l) => laTieuDe(l) && /bản đồ file|sổ tay mở khi cần|file map/i.test(l));
+    if (start >= 0) {
+      const cap = lines[start].match(/^#+/)[0].length;
+      const end = lines.findIndex((l, i) => i > start && laTieuDe(l) && l.match(/^#+/)[0].length <= cap);
+      return lines.slice(start, end > start ? end : lines.length).join("\n");
+    }
+    return null;   // null = KHÔNG TÌM THẤY, khác hẳn "" = tìm thấy nhưng rỗng
+  };
+  const thieuBanDo = [];
+  const mentionsExactPath = (text, relPath) => {
+    const escaped = relPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Chấp nhận link Markdown, inline-code hoặc lệnh có chứa đúng đường dẫn. Hai biên cấm
+    // `scripts/` tự nhận vơ mọi file con chỉ vì cùng tiền tố.
+    return new RegExp(`(^|[\\s(\\[{\"'\\x60|])${escaped}(?=$|[\\s)\\]}\"'\\x60|,.:;])`, "m").test(text);
+  };
   for (const file of added) {
     // Thư mục đơn vị lấy theo hình dạng đã khai, không đóng cứng `workers/<gói>/<phiên-bản>`.
     const pkgDir = unitDirOf(file, unitShape);
@@ -477,15 +578,62 @@ check("File mới đã khai vào Bản đồ file", () => {
     // thư mục top-level mới mà không khai vào bản đồ thì không ai bắt — đúng lỗ mà luật vàng 4
     // ("không khai = không tồn tại") sinh ra để bịt.
     const base = pkgDir ?? "";
-    const agentsPath = path.join(ROOT, base, "AGENTS.md");
-    if (!fs.existsSync(agentsPath)) continue;
-    const rest = pkgDir ? file.slice(pkgDir.length + 1) : file;
-    const topLevel = rest.split("/")[0];
-    if (!topLevel || topLevel === "AGENTS.md") continue;
-    const map = fs.readFileSync(agentsPath, "utf8");
-    if (!map.includes(topLevel) && !khaiTheoHinhDang(map, topLevel)) {
-      undeclared.push(base ? `${base}/${topLevel}` : topLevel);
+    /* NƠI ĐẶT BẢN ĐỒ DO REPO KHAI, mặc định `AGENTS.md`.
+     * VẤP THẬT 05/09, lượt migrate `n8n-orchestrator`: repo đó để Bản đồ file ở
+     * `design_brief.md` mục 8 — hợp lệ theo luật của chính nó, và luật đó có TRƯỚC bộ khung.
+     * Cổng chỉ tìm trong `AGENTS.md` nên đỏ cho tới khi phải thêm một mục thứ hai vào
+     * `AGENTS.md`. Kết quả: repo đó nay có HAI bản đồ ở hai file — hai nguồn cho một khái niệm,
+     * đúng bệnh mà cả bộ khung sinh ra để chữa, và lần đó bộ khung là thủ phạm. */
+    const agentsPath = path.join(ROOT, base, FILE_BAN_DO);
+    /* KHAI TRỎ VÀO HƯ KHÔNG PHẢI ĐỎ, KHÔNG ĐƯỢC BỎ QUA IM LẶNG.
+     *
+     * `continue` ở đây an toàn khi nơi đặt bản đồ còn đóng cứng `AGENTS.md`: package con không
+     * có `AGENTS.md` là chuyện thường, và bản đồ gốc đã canh phần còn lại.
+     * Từ 1.3.3, repo khai được `docs.file_map` — và đúng lúc đó dòng này thành CỬA HẬU. Đo thật
+     * ngay trong lượt 1.3.4: khai `file_map` trỏ tới một file không tồn tại, thêm một file mới
+     * chưa khai ở đâu cả, cổng báo **XANH** — "Mọi thứ mới đều đã khai".
+     * Một dòng cấu hình vô hiệu hoá cả một cổng, không cảnh báo gì. Đây là loại lỗ mà chính
+     * luật vàng số 3 cấm: không được làm yếu lớp bảo vệ đã có.
+     *
+     * Nên tách hai ca: repo KHÔNG khai (dùng mặc định) thì giữ nguyên hành vi cũ; repo CÓ khai
+     * mà file không có thì ĐỎ, và nói thẳng đó là khai sai chứ không phải thiếu bản đồ. */
+    if (!fs.existsSync(agentsPath)) {
+      if (KHAI_BAN_DO) { khaiSaiBanDo.add(path.join(base, FILE_BAN_DO).replaceAll("\\", "/")); }
+      continue;
     }
+    const rest = pkgDir ? file.slice(pkgDir.length + 1) : file;
+    if (!rest || rest === FILE_BAN_DO) continue;
+    const map = mapSection(fs.readFileSync(agentsPath, "utf8"));
+    if (map === null) { thieuBanDo.push(path.join(base, FILE_BAN_DO).replaceAll("\\", "/")); continue; }
+    // KHAI MỘT THƯ MỤC LÀ ĐÃ KHAI NHỮNG GÌ TRONG NÓ.
+    //
+    // Bản đầu chỉ nhận đúng đường dẫn đầy đủ. Nghe thì chặt, nhưng dùng thật thì hỏng: mỗi hồ sơ
+    // migrate mới, mỗi ADR mới, mỗi workflow mới lại đòi thêm một dòng bản đồ — vĩnh viễn. Bản
+    // đồ phình theo số file thay vì theo số LOẠI việc, và tới lúc nào đó người ta bỏ khai.
+    // Một luật không ai theo nổi thì không phải luật chặt, nó chỉ là luật chết.
+    //
+    // Đây là một chỗ NỚI CÓ CHỦ Ý và có biên: chỉ nhận khi bản đồ khai đúng thư mục cha (kèm
+    // dấu `/`), tức vẫn là một hành vi khai báo tường minh của người viết luật. Không nhận
+    // khai kiểu chung chung, và không nhận thư mục chưa từng được nhắc.
+    const daKhai = mentionsExactPath(map, rest) || (() => {
+      const doan = rest.split("/");
+      for (let i = doan.length - 1; i > 0; i -= 1) {
+        if (mentionsExactPath(map, doan.slice(0, i).join("/") + "/")) return true;
+      }
+      return false;
+    })();
+    if (!daKhai) undeclared.push(file);
+  }
+  // Không tìm thấy bản đồ là một lỗi RIÊNG, có cách sửa RIÊNG. Gộp nó vào "chưa khai" là bảo
+  // người ta đi khai từng file vào một mục không tồn tại.
+  /* Khai sai là lỗi RIÊNG, nặng hơn "thiếu bản đồ": thiếu thì người ta quên, khai sai thì cổng
+     đã bị vô hiệu hoá mà bảng vẫn xanh. Báo nó TRƯỚC mọi thứ khác. */
+  if (khaiSaiBanDo.size) {
+    return { ok: false, msg: `\`docs.file_map\` trong .repo-structure.json trỏ tới file KHÔNG TỒN TẠI: ${[...khaiSaiBanDo].join(", ")}. Cổng này khi đó không kiểm được gì — sửa đường dẫn, hoặc bỏ hẳn khối \`docs.file_map\` để dùng mặc định AGENTS.md.` };
+  }
+  const thieu = [...new Set(thieuBanDo)];
+  if (thieu.length) {
+    return { ok: false, msg: `KHÔNG TÌM THẤY Bản đồ file trong: ${thieu.join(", ")}. Cổng không biết đối chiếu vào đâu. Sửa: đặt hai dòng \`<!-- BAN-DO:BEGIN -->\` và \`<!-- BAN-DO:END -->\` quanh bảng bản đồ, HOẶC đặt tiêu đề chứa chữ "Bản đồ file".` };
   }
   const unique = [...new Set(undeclared)];
   if (unique.length) return { ok: false, msg: `Chưa khai vào Bản đồ file của package: ${unique.join(", ")}. Không khai = không tồn tại (luật gốc).` };
@@ -493,15 +641,193 @@ check("File mới đã khai vào Bản đồ file", () => {
 });
 
 /* ---- 5. HANDOFF phải được ghi ------------------------------------------- */
-check("HANDOFF đã ghi Log phiên này", () => {
-  const missing = myPackages.filter((pkg) => {
-    const codeChanged = touched.some((f) => f.startsWith(`${pkg}/`) && !/HANDOFF\.md$/.test(f));
-    if (!codeChanged) return false;
-    return !touched.some((f) => f.startsWith(`${pkg}/`) && /HANDOFF\.md$/.test(f));
-  });
-  if (missing.length) return { ok: false, msg: `Đã sửa nhưng chưa ghi Log vào HANDOFF.md: ${missing.join(", ")}. Phiên sau sẽ mù.` };
-  return { ok: true, msg: myPackages.length ? "Đã ghi Log." : "Không có gì phải ghi." };
-});
+/* VÙNG GỐC REPO CŨNG PHẢI GHI LOG — trước đây chỉ package mới phải.
+ *
+ * Bản cũ duyệt đúng `myPackages`. Repo nào KHÔNG có package con — như chính repo bộ khung này —
+ * thì phép kiểm luôn trả "Không có gì phải ghi", kể cả khi phiên vừa viết lại nửa bộ máy. Tức
+ * luật "phiên sau phải biết phiên trước làm gì" chưa từng được cưỡng chế ở đúng nơi việc nặng
+ * nhất diễn ra. Audit độc lập bắt được 03/09.
+ *
+ * Và "đã chạm file" chưa đủ: sửa một khoảng trắng trong dòng Log CŨ cũng tính là đã ghi. Log là
+ * thứ CHỈ ĐƯỢC THÊM, nên bằng chứng đúng phải là CÓ DÒNG MỚI. Đo bằng `--numstat`; đo không
+ * được thì hạ về phép cũ và nói rõ là chỉ đo được tới đó — chứ không im lặng coi như đạt. */
+const laHandoff = (f) => /(^|\/)HANDOFF\.md$/i.test(f);
+
+/* Đếm dòng thêm / dòng xoá của một file, so cây làm việc với MỐC.
+   Trả `{ them, xoa }`, hoặc `null` khi KHÔNG ĐO ĐƯỢC — null không phải "không có gì". */
+const doThemXoa = (rel) => {
+  // Cộng cả phần đã commit chưa push lẫn phần còn trong cây làm việc. Thiếu vế nào cũng sai:
+  // ghi Log rồi commit thì cây làm việc sạch; ghi mà chưa commit thì diff với remote lại rỗng.
+  let them = 0;
+  let xoa = 0;
+  let doDuoc = false;
+  for (const args of [
+    originMainResolves ? ["diff", "--numstat", MOC, "--", rel] : null,
+    ["diff", "--numstat", "HEAD", "--", rel]
+  ]) {
+    if (!args) continue;
+    const ra = git(...args);
+    if (!ra) continue;
+    for (const dong of ra.split("\n").filter(Boolean)) {
+      const [a, b] = dong.split(String.fromCharCode(9));
+      if (Number.isFinite(Number(a))) { them += Number(a); xoa += Number(b) || 0; doDuoc = true; }
+    }
+  }
+  return doDuoc ? { them, xoa } : null;
+};
+
+/* THƯ MỤC LƯU TRỮ. Cùng quy ước với `can-nang.mjs`: một đoạn đường dẫn tên `archive`.
+   Không đóng cứng `docs/archive` — repo khác có thể để chỗ khác, miễn tên đoạn đúng. */
+const LA_LUU_TRU = /(^|\/)archive\//;
+
+/* Mọi dòng đang nằm trong kho lưu trữ, đọc từ CÂY LÀM VIỆC.
+   Đọc lười (chỉ dựng khi thật sự có dòng bị xoá) vì nó quét file. */
+let _kholuu = null;
+const khoLuuTru = () => {
+  if (_kholuu) return _kholuu;
+  _kholuu = new Set();
+  const ra = git("ls-files");
+  if (!ra) return _kholuu;
+  for (const f of ra.split("\n").filter((x) => LA_LUU_TRU.test(x))) {
+    try {
+      for (const d of fs.readFileSync(path.join(ROOT, f), "utf8").replace(/\r\n?/g, "\n").split("\n")) {
+        _kholuu.add(d);
+      }
+    } catch { /* file vừa bị xoá khỏi cây: bỏ qua, vế dưới sẽ báo thiếu */ }
+  }
+  return _kholuu;
+};
+
+/* Dòng nào bị xoá khỏi `rel` mà KHÔNG tìm thấy nguyên văn trong kho lưu trữ.
+   Trả mảng (rỗng = mọi dòng xoá đều đã được dời chỗ), hoặc `null` khi không đo được.
+
+   VÌ SAO CÓ HÀM NÀY — Đức chốt 2026-09-06 (KHUNG-25). Hai luật của repo cắn nhau: sổ tay bảo
+   trì bắt DỜI nhật ký cũ đi khi quá ngân sách, còn phép kiểm này cấm `HANDOFF.md` xoá bất kỳ
+   dòng nào. Làm đúng luật thứ nhất thì VĨNH VIỄN không đóng được phiên — đã thử thật.
+
+   Bản vá SIẾT chứ không nới: cổng thôi GIẢ ĐỊNH "không dời được", và bắt đầu KIỂM CHỨNG luật
+   *dời chỗ chứ không xoá*. Xoá mà không có bản sao khớp BYTE trong kho lưu trữ thì vẫn đỏ —
+   nên nó không hề mở đường cho việc viết lại lịch sử, chỉ mở đường cho việc cất gọn nó. */
+const dongXoaChuaLuuTru = (rel) => {
+  const args = originMainResolves ? ["diff", "-U0", MOC, "--", rel] : ["diff", "-U0", "HEAD", "--", rel];
+  const ra = git(...args);
+  if (ra === null || ra === undefined) return null;
+  const kho = khoLuuTru();
+
+  /* DÒNG DỊCH CHỖ TRONG CÙNG FILE KHÔNG PHẢI DÒNG BỊ XOÁ — và `git diff` không phân biệt
+     được hai thứ đó: nó in ra một cặp `-` / `+`. Đo thật 06/09, lượt dọn đầu tiên: dòng trỏ
+     sang kho lưu trữ của lượt trước bị đẩy từ giữa file lên đầu file, và cổng báo ĐỎ oan với
+     đúng dòng đó. Một cổng bắt oan cũng nguy hiểm như một cổng bỏ sót: người ta học cách
+     bỏ qua nó. Nên trước khi kết luận "mất chữ", hỏi thêm: dòng đó có còn trong chính file
+     không? Còn thì không mất gì cả. */
+  let conTrongFile = new Set();
+  try {
+    conTrongFile = new Set(fs.readFileSync(path.join(ROOT, rel), "utf8").replace(/\r\n?/g, "\n").split("\n"));
+  } catch { /* file vừa bị xoá hẳn: để vế dưới báo mất */ }
+
+  const thieu = [];
+  for (const dong of ra.replace(/\r\n?/g, "\n").split("\n")) {
+    if (!dong.startsWith("-") || dong.startsWith("---")) continue;
+    const noiDung = dong.slice(1);
+    if (!kho.has(noiDung) && !conTrongFile.has(noiDung)) thieu.push(noiDung);
+  }
+  return thieu;
+};
+
+/* `true` = đã ghi Log đúng luật · `false` = chưa · `null` = không đo được.
+   Chuỗi trả về = lý do cụ thể khi `false`, để lời nhắn dẫn đúng chỗ chứ không nói chung chung. */
+const coDongMoi = (rel) => {
+  const so = doThemXoa(rel);
+  if (!so) return null;   // null = khong do duoc, khong phai "khong co"
+  // THEM DONG, chu khong phai "co dung vao". Sua mot chu trong dong Log CU cho ra `1 them /
+  // 1 xoa` — van la `them > 0`, nen ban dau cham dat.
+  if (so.them === 0) return { ok: false, vi: "KHÔNG thêm dòng nào — Log là thứ chỉ được THÊM" };
+  if (so.xoa === 0) return { ok: true };
+  const thieu = dongXoaChuaLuuTru(rel);
+  if (thieu === null) return null;
+  if (thieu.length === 0) return { ok: true, doiCho: so.xoa };
+  const mau = thieu.find((d) => d.trim()) ?? thieu[0];
+  return {
+    ok: false,
+    vi: `xoá ${so.xoa} dòng mà ${thieu.length} dòng KHÔNG có bản khớp byte trong kho lưu trữ (\`*/archive/*\`)`
+      + `, ví dụ: "${mau.slice(0, 60)}". Dời chỗ thì được, xoá thì không`
+  };
+};
+
+const doGhiLog = () => {
+  const thieu = [];
+  const chiSuaChoCu = [];
+  let daDoiCho = 0;
+
+  const soi = (file, nhan) => {
+    const kq = coDongMoi(file);
+    if (!kq) return;                       // null = khong do duoc, de mac
+    if (kq.ok) { daDoiCho += kq.doiCho || 0; return; }
+    chiSuaChoCu.push(`${nhan}: ${kq.vi}`);
+  };
+
+  for (const pkg of myPackages) {
+    const codeChanged = touched.some((f) => f.startsWith(pkg + "/") && !laHandoff(f));
+    if (!codeChanged) continue;
+    const file = pkg + "/HANDOFF.md";
+    if (!touched.some((f) => f.startsWith(pkg + "/") && laHandoff(f))) { thieu.push(file); continue; }
+    soi(file, file);
+  }
+
+  // Vùng gốc: một file bất kỳ ngoài package, thuộc vùng mình đang giữ.
+  const chamGoc = touched.some((f) => !laHandoff(f) && !myPackages.some((p) => f.startsWith(p + "/")));
+  if (myRootAreas.length > 0 && chamGoc) {
+    if (!touched.some((f) => f === "HANDOFF.md")) thieu.push("HANDOFF.md (gốc repo)");
+    else soi("HANDOFF.md", "HANDOFF.md (gốc repo)");
+  }
+
+  if (thieu.length) {
+    return { ok: false, msg: "Đã sửa nhưng chưa ghi Log vào: " + thieu.join(", ") + ". Phiên sau sẽ mù." };
+  }
+  if (chiSuaChoCu.length) {
+    return { ok: false, msg: chiSuaChoCu.join(" · ") + ". Sửa dòng cũ không phải là ghi Log." };
+  }
+  const coViec = myPackages.length > 0 || (myRootAreas.length > 0 && chamGoc);
+  if (daDoiCho) {
+    return { ok: true, msg: `Đã ghi Log, và ${daDoiCho} dòng cũ được DỜI sang kho lưu trữ (đã đối chiếu khớp byte, không dòng nào mất).` };
+  }
+  return { ok: true, msg: coViec ? "Đã ghi Log." : "Không có gì phải ghi." };
+};
+
+/* ---- 5b. Sổ quyết định: dời chỗ thì được, XOÁ thì không ------------------
+ *
+ * LUẬT NÀY ĐÃ CÓ CHỮ TỪ LÂU MÀ CHƯA CÓ RĂNG. `AGENTS.md` mục 6 khai `decisions.md` là sổ
+ * **"chỉ thêm"**, nhưng đo 09/09: cơ chế *dời-chỗ-chứ-không-xoá* (`dongXoaChuaLuuTru`) chỉ được
+ * gọi cho **HANDOFF.md**. Xoá sạch một quyết định cũ khỏi `decisions.md` thì KHÔNG gì kêu.
+ *
+ * Vì sao đáng lắp răng chứ không đáng bỏ luật: sổ quyết định là chỗ trả lời *"Đức đã chốt gì"*.
+ * Một quyết định biến mất không dấu vết thì lượt sau không có cách nào biết luật hiện hành đến
+ * từ đâu — và chính lượt 09/09 này là lượt ĐẦU TIÊN có người (tôi) dời quyết định đi thật.
+ *
+ * KHÔNG PHẢI LUẬT MỚI, và không phải cấm dọn: dùng lại nguyên cỗ máy của `HANDOFF.md`, nên
+ * **dời sang thư mục lưu trữ vẫn XANH**, chỉ xoá-mất-hẳn mới ĐỎ. `EXPECTED_CHECKS` 15 -> 16,
+ * khai tường minh ngay dưới đây theo đúng luật của chính cổng.
+ *
+ * (Đừng viết mẫu đường dẫn kho lưu trữ vào khối chú thích này: dấu sao-gạch trong đó ĐÓNG luôn
+ *  khối chú thích, và cả file chết ngay lúc nạp. Đã vấp thật ở lượt viết phép kiểm này.) */
+const doSoQuyetDinh = () => {
+  const SO = "decisions.md";
+  if (!touched.includes(SO)) return { ok: true, msg: "Phiên này không đụng sổ quyết định." };
+  const so = doThemXoa(SO);
+  if (!so) return { ok: true, skipped: true, msg: `Không đọc được diff của ${SO} — nói KHÔNG BIẾT, không nói ĐẠT.` };
+  if (so.xoa === 0) return { ok: true, msg: `Chỉ thêm ${so.them} dòng vào sổ quyết định.` };
+  const thieu = dongXoaChuaLuuTru(SO);
+  if (thieu === null) return { ok: true, skipped: true, msg: `Không đối chiếu được kho lưu trữ cho ${SO}.` };
+  if (thieu.length === 0) {
+    return { ok: true, msg: `${so.xoa} dòng được DỜI sang kho lưu trữ (khớp byte, không dòng nào mất).` };
+  }
+  const mau = (thieu.find((d) => d.trim()) ?? thieu[0]).slice(0, 60);
+  return {
+    ok: false,
+    msg: `xoá ${so.xoa} dòng khỏi ${SO} mà ${thieu.length} dòng KHÔNG có bản khớp byte trong kho lưu trữ (\`*/archive/*\`)`
+      + `, ví dụ: "${mau}". Quyết định cũ thì DỜI đi, đừng xoá — lượt sau còn tra được luật hiện hành đến từ đâu.`
+  };
+};
 
 /* ---- 6. Test ------------------------------------------------------------ */
 check("Test xanh", () => {
@@ -542,79 +868,106 @@ check("Test xanh", () => {
       msg: `REPO CHƯA CÓ SUITE GỐC: \`package.json\` không khai \`scripts.test\`, nên cổng KHÔNG kiểm được một dòng code nào của bạn. Đây là "chưa kiểm", không phải "đã đạt" — thêm suite rồi khai \`scripts.test\` thì cổng mới có răng.`
     };
   }
-  if (!suites.length && !rootSuite) return { ok: true, msg: "Không package nào của bạn có suite bị ảnh hưởng." };
-  const lines = [];
-  const doCuaLaneKhac = [];
-  const NEWLINE = String.fromCharCode(10);
-  /* MỌI SUITE ĐI QUA CÙNG MỘT PHÁN QUYẾT — K2-9c, audit GPT vòng 5, 03/09.
+  /* KHÔNG CÓ SUITE NÀO CHẠY ≠ ĐÃ KIỂM XONG.
    *
-   * K2-9 v2 chỉ bọc suite GỐC REPO. Suite của package vẫn chạy thẳng trên cây làm việc dùng
-   * chung và đỏ là `return ok:false` ngay — nên một lane chỉ giữ package vẫn bị file sửa dở
-   * của lane khác chặn oan, đúng bệnh mà K2-9 sinh ra để chữa.
+   * Bản cũ trả XANH ở đây bất kể chuyện gì đã xảy ra trong phiên. Ca đo được ở repo NAV ngày
+   * 03/09: **trả quyền xong là mục "Test xanh" tự chuyển từ ĐỎ sang XANH** — cùng một cây làm
+   * việc, suite không đổi một chữ. Vì trả quyền làm `myRootAreas` rỗng, nhánh `skipped` phía
+   * trên không vào, và rơi thẳng xuống dòng này.
    *
-   * Gốc bệnh KHÔNG nằm ở suite nào: nó nằm ở chỗ suite chạy trên một CÂY LÀM VIỆC DÙNG CHUNG.
-   * Bệnh ở cây thì thuốc phải áp cho mọi thứ chạy trên cây đó. Nên hai vòng lặp gộp thành
-   * một danh sách lệnh, và một đường xử lý lỗi duy nhất — ít code hơn bản cũ.
-   */
-  /* DÙNG LẠI LƯỢT CHẠY VỪA XONG, THAY VÌ CHẠY LẠI Y HỆT.
-   *
-   * Đo 08/09 ở repo này: chuỗi suite 241,7s, và cổng chạy lại đúng chuỗi đó — một vòng làm việc
-   * tốn ~8,5 phút, nửa sau không kiểm thêm gì.
-   *
-   * KHÔNG NỚI LỚP BẢO VỆ: dấu buộc vào HEAD + băm `git status --porcelain -uall` + danh sách
-   * suite + môi trường (bản Node) + hạn 30 phút. Sửa một byte ở bất kỳ file nào, kể cả file
-   * chưa track, là dấu hết hiệu lực. Suite đỏ thì bộ chạy XOÁ dấu. Dấu nằm trong `.gitignore`
-   * nên không mượn được của máy khác. Đường chạy đầy đủ vẫn còn nguyên ngay dưới. */
-  const xetDauSuite = rootSuite ? xetDau(docDau(ROOT), dauCay(ROOT), bamLenh(danhSachSuite(ROOT))) : { dung: false };
-  const menhLenhDay = [
-    ...(rootSuite && !xetDauSuite.dung ? rootSuiteParts().map((cmd) => ({ cmd, nhan: null })) : []),
-    ...suites.map((suite) => ({ cmd: `node "${suite}"`, nhan: suite }))
-  ];
-  /* GÓI ĐÓNG BĂNG: bỏ suite của chúng khi không ai chạm — giới hạn ① Đức chốt 07/09.
-   * Luật và lý do ở `chonSuiteBoDongBang`. `originMainResolves` là vế fail-closed: không đo
-   * chắc được gói nào bị chạm thì chạy hết, vì bỏ suite dựa trên một phép đo rỗng oan là đúng
-   * cách mất một phép kiểm mà không ai biết. */
-  const { chay: menhLenh, boQua: suiteDongBang } = chonSuiteBoDongBang({
-    menhLenh: menhLenhDay,
-    frozen: frozenFrom(readStructureFromDisk(ROOT)),
-    daCham: touched,
-    chacChanDoDuocCham: originMainResolves
-  });
-  const totals = [];
-  for (const { cmd, nhan } of menhLenh) {
-    let out;
-    try { out = runOne(cmd); }
-    catch (error) {
-      const tail = String(error.stdout || error.message).trim().split(NEWLINE).slice(-3).join(" | ");
-      const banCuaToi = banTrongVungCuaToi();
-      const verdict = quyTrachNhiemSuite({
-        vungToiGiuConBan: banCuaToi,
-        ketQuaTrenHead: banCuaToi.length ? null : chayLaiTrenHead(cmd)
-      });
-      if (verdict.ok) { doCuaLaneKhac.push(`${nhan ?? cmd} → ${tail}`); continue; }
-      return { ok: false, msg: `${nhan ?? cmd} ĐỎ (${verdict.ly_do}) → ${tail}` };
+   * Phân biệt hai chuyện khác hẳn nhau, và bản cũ gộp chúng làm một:
+   *   - phiên KHÔNG đổi gì  → đúng là không có gì phải kiểm. XANH thật.
+   *   - phiên CÓ đổi mà không suite nào chạy → CHƯA KIỂM. Phải là `BỎ`, và mã thoát 2. */
+  if (!suites.length && !rootSuite) {
+    /* CHỈ SINH LẠI ARTIFACT THÌ KHÔNG CÓ GÌ ĐỂ CHẠY TEST — và đó là một câu trả lời, không phải
+     * một dấu hỏi.
+     *
+     * Bốn artifact máy sinh không đòi khoá nào (luật mục 1), nên chúng không vào `myRootAreas`,
+     * nên `rootSuite` false, nên phiên **chỉ sinh lại artifact** rơi thẳng vào nhánh "chưa kiểm"
+     * — và không có cách nào thoát: chạy `npm test` cũng không đổi được kết luận. Tức một loại
+     * commit rất thường (`chore: sinh lai artifact`) **không bao giờ đóng phiên được**.
+     *
+     * KHÔNG phải nới lỏng: chúng do máy sinh thẳng từ HEAD, và đã có phép kiểm riêng canh chúng
+     * ("Sự thật máy sinh còn tươi") — chạy suite cho chúng không chứng minh thêm điều gì. Cùng
+     * một nguyên tắc đã dùng cho file nhị phân ở v1.2.13: gọi tên đúng thứ vốn không áp dụng,
+     * thay vì dán nhãn "không biết" lên chỗ ta biết rõ. */
+    /* ponytail: đột biến "coi MỌI phiên là chỉ-artifact" KHÔNG bắt được, và đó là câu trả lời
+       đúng: nhánh ngay trên (`myRootAreas.length > 0 && !hasRootTestScript()`) đã chặn mọi ca
+       đổi file thật trước khi tới đây, nên biến thể sai đó bị che. Giữ điều kiện chặt vì nó
+       ĐÚNG, không vì có phép kiểm ghim nó. Bỏ nhánh trên thì phải viết phép kiểm cho dòng này. */
+    const dsMaySinh = new Set(generatedFrom(structure));
+    const chiLaArtifact = sessionChanges.length > 0 && sessionChanges.every((c) => dsMaySinh.has(c.file ?? c));
+    if (chiLaArtifact) {
+      return { ok: true, msg: `Phiên này chỉ sinh lại ${sessionChanges.length} artifact máy sinh — suite không áp dụng; phép kiểm "Sự thật máy sinh còn tươi" mới là chỗ canh chúng.` };
     }
-    if (nhan) lines.push(`${nhan}: ${(out.trim().split(NEWLINE).pop() || "").trim()}`);
-    else totals.push(...out.split(NEWLINE).filter((line) => /[0-9]+ passed, [0-9]+ failed/.test(line)));
-  }
-  if (rootSuite) {
-    lines.unshift(xetDauSuite.dung
-      ? `suite gốc repo: DÙNG LẠI DẤU — ${xetDauSuite.vi_sao}`
-      : `suite gốc repo: ${totals.length ? totals.join(" · ") : "chạy xong"}`);
-  }
-  if (suiteDongBang.length) {
-    const goi = [...new Set(suiteDongBang.map((m) => m.goi))];
-    lines.push(`bỏ qua ${suiteDongBang.length} suite của ${goi.length} gói ĐÃ ĐÓNG BĂNG (${goi.join(" · ")})`
-      + " — chỉ-đọc, không ai chạm. Chạm vào là suite của gói đó chạy lại ngay.");
-  }
-  // Đỏ ở cây làm việc nhưng XANH ở HEAD: không chặn tôi, nhưng cũng KHÔNG được in ra XANH.
-  // Thứ đã commit thì lành thật, cây làm việc thì đang hỏng thật — hai sự thật, nói cả hai.
-  if (doCuaLaneKhac.length) {
+    const coThayDoi = sessionChanges.length > 0;
+    if (!coThayDoi) return { ok: true, msg: "Phiên này không đổi file nào — không có gì phải kiểm." };
     return {
       ok: true,
       skipped: true,
-      msg: `Thứ ĐÃ COMMIT xanh (${lines.join(" · ")}). NHƯNG chạy trên CÂY LÀM VIỆC thì đỏ: ${doCuaLaneKhac.join(" · ")}. Đỏ đó KHÔNG có trong HEAD và vùng bạn đang giữ thì sạch, nên nó đến từ file sửa dở của phiên khác — không chặn bạn. Ai commit nó thì cổng của HỌ sẽ chặn.`
+      msg: `Phiên này đổi ${sessionChanges.length} file nhưng KHÔNG suite nào chạy. Đây là "chưa kiểm", không phải "đã đạt". Nhận vùng mình đang sửa (\`claim.mjs --take\`), và khai \`scripts.test\` trong package.json.`
     };
+  }
+  const lines = [];
+  if (rootSuite) {
+    /* DÙNG LẠI LƯỢT CHẠY VỪA XONG, THAY VÌ CHẠY LẠI Y HỆT.
+     *
+     * Đo 08/09: chuỗi suite bộ khung tốn **535s**, và cổng này gọi lại đúng chuỗi đó. Một vòng
+     * làm việc bình thường — chạy suite rồi chạy cổng — tốn **hơn 17 phút**, mà nửa sau không
+     * kiểm thêm được gì so với nửa đầu.
+     *
+     * KHÔNG PHẢI NỚI LỚP BẢO VỆ. Điều kiện để dùng lại chặt hơn vẻ ngoài của nó: dấu phải khớp
+     * **HEAD** + **băm index và nội dung thay đổi** + **danh sách suite** + còn **trong
+     * hạn**. Sửa một byte ở bất kỳ file nào, kể cả file chưa track, là băm đổi và cổng chạy lại
+     * đủ bộ. Suite đỏ thì `chay-test.mjs` XOÁ dấu chứ không ghi dấu đỏ, nên không có đường nào
+     * để một cây chưa xanh lại có dấu hợp lệ. Dấu không được commit, nên không mượn được của
+     * máy khác.
+     *
+     * Nói cách khác: cổng vẫn đòi ĐÚNG bằng chứng cũ — "cây làm việc này đã chạy suite và xanh"
+     * — nó chỉ thôi đòi làm lại một việc vừa làm xong. */
+    const xet = xetDau(docDau(ROOT), dauCay(ROOT), bamLenh(danhSachSuite(ROOT)));
+    if (xet.dung) {
+      lines.push(`suite gốc repo: DÙNG LẠI DẤU — ${xet.vi_sao}`);
+    } else try {
+      const out = runRootSuite();
+      const NEWLINE = String.fromCharCode(10);
+      const totals = out.split(NEWLINE).filter((line) => /[0-9]+ passed, [0-9]+ failed/.test(line));
+      lines.push(`suite gốc repo: ${totals.length ? totals.join(" · ") : "chạy xong"}`);
+    } catch (error) {
+      /* NÊU ĐÚNG TÊN SUITE ĐỎ — `KHUNG-52`, và cái giá của bản cũ đã đo được.
+       *
+       * Bản trước lấy `.slice(-3)` của stdout làm phần giải thích. Ba dòng cuối của bộ chạy là
+       * **bảng xếp hạng THỜI GIAN** (top-5 chậm nhất), không phải danh sách đỏ. Nên cổng in ra ba
+       * cái tên có thật, có số giây thật — và **không cái nào là suite đỏ**. Kiểu hỏng tệ nhất
+       * của một cổng: nó không im lặng, nó nói sai một cách tự tin, nên người đọc tin và đi sai
+       * hướng. Đo 08/09: **bốn lượt** đuổi theo ba cái tên sai (chạy riêng từng suite · dựng repo
+       * mới · dựng worktree ở bản trước · rồi mới phải chép suite ra bản gỡ lỗi) trước khi thấy
+       * suite đỏ thật, cái chưa lần nào xuất hiện trên màn hình.
+       *
+       * Bộ chạy in mỗi suite đỏ thành một dòng `── node <suite> (mã N) ──`. Bắt theo mẫu đó, và
+       * chỉ lùi về đuôi khi KHÔNG bắt được cái nào — không đo được thì nói không đo được, đừng
+       * đưa ra một câu trả lời trông giống thật. */
+      /* ĐỌC CẢ HAI LUỒNG. Bộ chạy in bảng thời gian ra `stdout` nhưng khối "SUITE ĐỎ" kèm tên
+         từng suite ra `stderr` — đọc mỗi `stdout` là bỏ đúng thứ cần. Bắt được vì nhánh thành
+         thật ở dưới nói "không đọc được TÊN" thay vì nói bừa; nếu nó lùi về đuôi trong im lặng
+         thì lỗi này sống tiếp một vòng nữa. */
+      const raw = `${String(error.stdout || "")}${String(error.stderr || "")}` || String(error.message);
+      const NL2 = String.fromCharCode(10);
+      const ten = [...raw.matchAll(/──\s*(.+?)\s*\(mã\s*\d+\)\s*──/g)].map((m) => m[1].trim());
+      const moTa = ten.length
+        ? `${ten.length} suite ĐỎ: ${ten.join(" · ")}`
+        : `không đọc được TÊN suite đỏ từ bản ghi — đuôi: ${raw.trim().split(NL2).slice(-3).join(" | ")}`;
+      return { ok: false, msg: `suite gốc repo ĐỎ → ${moTa}` };
+    }
+  }
+  for (const suite of suites) {
+    try {
+      const out = execFileSync("node", [suite], { cwd: ROOT, encoding: "utf8", timeout: 600000 });
+      lines.push(`${suite}: ${(out.trim().split("\n").pop() || "").trim()}`);
+    } catch (error) {
+      const tail = String(error.stdout || error.message).trim().split("\n").slice(-3).join(" | ");
+      return { ok: false, msg: `${suite} ĐỎ → ${tail}` };
+    }
   }
   return { ok: true, msg: lines.join(" · ") };
 });
@@ -623,17 +976,27 @@ check("Test xanh", () => {
 // Phép kiểm này dựng và so hoàn toàn từ HEAD: chạy SAU commit, trước safe-push.
 // Nó không đọc hay ghi working tree, vì việc đang làm dở của bất kỳ phiên nào
 // cũng không được làm đỏ sự thật đã commit. --quick chỉ bỏ test, không bỏ phép này.
-// Bộ kiểm phải là bản ĐÃ COMMIT — nếu không thì một bản sửa dở của chính bộ sinh làm cổng
-// nói dối về chính nó (audit GPT 02/09, mục 4). Cho tới 05/09 cách xử là TỪ CHỐI TIN khi bộ
-// sinh còn sửa dở, kèm ghi chú "không chạy blob HEAD trong thư mục tạm được, vì bộ sinh tự
-// tính ROOT theo vị trí file của nó". Ghi chú đó đúng về blob, nhưng nó kết luận quá tay:
-// chép cả REPO ra chỗ tạm thì ROOT lại đúng, vì bộ sinh vẫn nằm trong `scripts/` của một
-// repo thật. `kiemArtifactTuHead` làm đúng thế (PUSH-GATE-01, 05/09) — xem khối chú thích
-// dài trong `repo-structure.mjs`, kể cả ba chi tiết đã trả giá.
-//
-// Vì sao phải đổi: "từ chối tin" nghe rẻ, nhưng cây làm việc là của CHUNG, nên nó biến một
-// phiên đang sửa bộ sinh thành cái khoá cửa của mọi phiên khác. Đo thật 05/09: 4 lượt chặn
-// oan trong một ngày cho một lane không hề chạm bộ sinh.
+// Bộ kiểm phải là bản ĐÃ COMMIT. Phép kiểm này chạy `scripts/*.mjs` ở WORKING TREE
+// để phán xem artifact đã commit có khớp HEAD không — nên một bản sửa dở của chính
+// bộ sinh có thể làm cổng nói dối về chính nó. Audit GPT 2026-09-02, mục 4.
+// Không sửa bằng cách chạy blob HEAD trong thư mục tạm: bộ sinh tự tính ROOT theo vị
+// trí file của nó, chạy ở chỗ khác là tính sai gốc repo. Cách đúng và rẻ: từ chối tin
+// kết quả khi bộ kiểm chưa commit. Đúng quy trình đã ghi (commit → cổng → push) thì
+// lúc chạy cổng cây làm việc vốn đã sạch, nên phép kiểm này không cản ai cả.
+function verifierMatchesHead(script) {
+  try {
+    const diff = execFileSync("git", ["-c", "core.quotepath=false", "diff", "HEAD", "--name-only", "--", `scripts/${script}`], {
+      cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"]
+    });
+    return diff.trim() === "";
+  } catch {
+    // FAIL CLOSED. Bản trước trả `true` với lý lẽ "không hỏi được git thì đừng bịa ra
+    // cáo buộc" — nghe hợp lý, nhưng hậu quả là: git hỏng → phép kiểm im lặng bỏ qua →
+    // cổng vẫn xanh dựa trên một điều nó KHÔNG kiểm được. Không biết thì phải nói là
+    // không biết, không được nói là ổn. Audit GPT 2026-09-02, mục 5.
+    return null;
+  }
+}
 
 /* K2-2 (thu hẹp bán kính của phép kiểm này) CỐ Ý CHƯA LÀM Ở ĐÂY — và lý do đáng ghi lại.
 
@@ -664,48 +1027,41 @@ check("Sự thật máy sinh còn tươi", () => {
   // một repo dựng từ bộ khung chạy cổng này là hỏng ngay ở cổng của chính nó. Audit độc lập
   // bắt được; phép thử repo rỗng của tôi thì không, vì nó chỉ chạy cổng CẤU TRÚC.
   const scripts = generatorsFrom(structure);
-  /* ĐO BẰNG HÀM DÙNG CHUNG — PUSH-GATE-01, 05/09.
-   *
-   * Trước bản này phép kiểm ở đây chạy bộ sinh Ở CÂY LÀM VIỆC, nên nó phải tự vệ bằng hai
-   * cửa từ chối riêng (`GENERATOR_DIRTY` và `VERIFIER_UNKNOWN`) — và cổng xuất bản có bản sao
-   * của đúng hai cửa đó. Hai bản sao của một luật là cái bẫy repo này đã sập đúng một lần rồi
-   * (`append_only_exempt`, 02/09: hai chỗ trả hai câu khác nhau cho cùng một file). Nay cả hai
-   * gọi `kiemArtifactTuHead`, chạy bộ sinh Ở HEAD trong một bản chụp HEAD — cây làm việc thôi
-   * không còn là đầu vào, nên hai cửa kia không còn lý do tồn tại.
-   *
-   * CHÍNH SÁCH thì vẫn được phép khác nhau, và cố ý khác: ở đây artifact lệch chỉ NÓI TO
-   * (K2-8 — artifact đo việc của MỌI lane nên đòi ở đây là đòi sai người), còn cổng xuất bản
-   * thì CHẶN. Khác chính sách thì được; khác CÁCH ĐO thì không. */
-  const artifact = kiemArtifactTuHead(ROOT, scripts);
-  if (artifact.ok === null) {
-    // KHÔNG BIẾT thì ĐỎ — bất biến ④. Giữ nguyên độ chặt của `VERIFIER_UNKNOWN` cũ.
+  const failures = [];
+  const verdicts = scripts.map((script) => ({ script, clean: verifierMatchesHead(script) }));
+  const unknown = verdicts.filter((entry) => entry.clean === null);
+  if (unknown.length) {
     return {
       ok: false,
-      msg: `${artifact.ly_do}. Phép kiểm này so artifact đã commit với bản sinh từ HEAD, và nó cần một bản chụp HEAD để chạy. Không dựng được thì không xác nhận được gì — không biết thì nói là không biết.`
+      msg: `VERIFIER_UNKNOWN: không hỏi được git về ${unknown.map((entry) => `scripts/${entry.script}`).join(", ")}. Phép kiểm này dùng chính script đó để phán xử; không xác nhận được nó có sạch không thì kết quả không đáng tin. Không biết thì nói là không biết.`
     };
   }
-  const failures = artifact.lech;
-  if (failures.length) {
-    // KHÔNG CÒN ĐỎ Ở ĐÂY — chuyển sang cổng push (K2-8, 03/09, GPT duyệt).
-    //
-    // Lỗi tầng chứ không phải chuyện nới tay: artifact ĐO VIỆC CỦA MỌI LANE (số commit mỗi gói,
-    // số dòng mỗi file), nên độ tươi của nó là tính chất của **trạng thái sắp publish**, không
-    // phải của **một phiên đang đóng**. Kiểm một bất biến toàn cục tại một thời điểm cục bộ thì
-    // với nhiều lane nó chắc chắn chập chờn, và ai commit sau cùng thì thắng.
-    //
-    // Đo thật trong một phiên 03/09: bị chặn BA lần, và cả ba lần **100% dòng lệch đều thuộc gói
-    // của lane khác** — không một dòng nào của lane đang bị chặn. Nợ có thật, nhưng đòi sai người
-    // và sai lúc.
-    //
-    // KHÔNG PHẢI GỠ BẢO VỆ: `safe-push.mjs` nay TỪ CHỐI ĐẨY khi artifact lệch. Không gì lên được
-    // remote với artifact cũ — chỉ là chỗ chặn dời tới đúng nơi nó là sự thật. Vẫn nói to ở đây,
-    // vì phiên đang đóng là người có ngữ cảnh để sửa rẻ nhất.
+  const dirtyVerifiers = verdicts.filter((entry) => entry.clean === false).map((entry) => entry.script);
+  if (dirtyVerifiers.length) {
     return {
-      ok: true,
-      skipped: true,
+      ok: false,
+      msg: `GENERATOR_DIRTY: ${dirtyVerifiers.map((s) => `scripts/${s}`).join(", ")} đang sửa dở chưa commit. Phép kiểm này dùng chính script đó để phán xử, nên kết quả không đáng tin. Commit bộ sinh trước, rồi chạy lại cổng.`
+    };
+  }
+  for (const script of scripts) {
+    try {
+      execFileSync(process.execPath, [path.join(ROOT, "scripts", script), "--check-head"], {
+        cwd: ROOT,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 120000
+      });
+    } catch (error) {
+      const detail = String(error.stderr || error.stdout || error.message).trim().split("\n").slice(-4).join(" | ");
+      failures.push(`${script} không khớp với HEAD${detail ? ` → ${detail}` : ""}`);
+    }
+  }
+  if (failures.length) {
+    return {
+      ok: false,
       // Câu gợi ý dựng từ chính danh sách đã khai. Đóng cứng ở đây thì một repo không có
       // `feature-parity.mjs` vẫn bị bảo đi chạy nó — chỉ dẫn sai còn tệ hơn không chỉ dẫn.
-      msg: `${failures.join(" · ")}. KHÔNG chặn đóng phiên (artifact đo việc của MỌI lane, nên ở đây nó đòi sai người) — nhưng safe-push SẼ TỪ CHỐI cho tới khi sửa: ${scripts.map((name) => `node scripts/${name}`).join(" && ")}.`
+      msg: `${failures.join(" · ")}. Hãy sửa bằng: ${scripts.map((name) => `node scripts/${name}`).join(" && ")}, rồi commit --amend hoặc tạo commit mới.`
     };
   }
   // Nói đúng thứ VỪA kiểm, không liệt kê cứng tên artifact: repo khác khai bộ sinh khác thì
@@ -714,86 +1070,6 @@ check("Sự thật máy sinh còn tươi", () => {
 });
 
 /* ---- 8. Cổng kiểm cấu trúc — CHẶN từ phiên S7 -------------------------- */
-/* ---- 7b. PHIEN.md của gói còn tươi — N-63 ------------------------------
- *
- * ADR-0035 biến `PHIEN.md` thành **cửa vào duy nhất** của mọi phiên đụng gói, và nó chắt bốn
- * trường của `STATUS.md`. Nhưng phép ⑺ chỉ canh những bộ sinh khai ở `generators`, và
- * `rule-compile.mjs` không nằm trong đó — nên tới 09/09 KHÔNG máy nào canh bốn file ấy.
- *
- * Đường hỏng cụ thể, quan sát được cùng ngày: một lane sửa `STATUS.md` rồi commit; `PHIEN.md`
- * dạy trạng thái cũ; cổng vẫn XANH; phiên sau tin file đó — vì chính nó nói *"đây là toàn bộ
- * thứ cần để bắt đầu"*. Cái thứ hai âm hơn: trần CỨNG chỉ nổ **lúc `--sinh` chạy**, nên không ai
- * chạy `--sinh` thì một `STATUS.md` phình ra không bị chặn ở đâu cả — trần lặng lẽ tụt xuống làm
- * thước cóc mà không ai tuyên bố hạ nó.
- *
- * VÌ SAO KHÔNG NHÉT VÀO `generators` (đây là phần khó, và là lý do N-63 nằm chờ một nhịp):
- * phép ⑺ so bản-sinh-từ-HEAD với bản-đã-commit cho TOÀN repo, nên một `PHIEN.md` lệch làm ĐỎ
- * cổng của **mọi lane**, kể cả lane không được phép ghi vào gói đó — đúng cái bẫy `K2-2` đã ghi
- * dài ở đầu phép ⑺. Phép này hỏi câu hẹp hơn và trả lời được: *bạn có chạm nguồn của `PHIEN.md`
- * nào không* — chạm thì bạn sửa được, vì bạn đang giữ vùng đó.
- *
- * Chạm `LUAT-CORE.md` hay `.repo-structure.json` thì XÉT CẢ BỐN GÓI: hai file đó là nguồn của
- * mọi bó. Đổi lõi mà chỉ sinh lại một gói là để ba gói kia dạy luật cũ. */
-check("PHIEN.md của gói còn tươi", () => {
-  const ph = structure?.luat?.phien_goi;
-  if (!ph?.goi?.length) return { ok: true, msg: "Repo chưa khai `luat.phien_goi` — không có bó gói nào để canh." };
-  let core;
-  try { core = fs.readFileSync(path.join(ROOT, ph.core), "utf8"); }
-  catch { return { ok: false, msg: `KHONG_DOC_DUOC_LOI: \`${ph.core}\` — lõi luật là nguồn của mọi PHIEN.md, thiếu nó thì không kết luận được gì.` }; }
-
-  const nguonChung = new Set([ph.core, ".repo-structure.json", "scripts/rule-compile.mjs"]);
-  const chamChung = touchedToiPhaiTraLoi.some((f) => nguonChung.has(f));
-  /* GÓI NÀO LANE KHÁC ĐANG SỬA DỞ THÌ BỎ QUA — nửa còn lại của bẫy K2-2, và nó chỉ lộ ra khi
-     chạm nguồn CHUNG. Ví dụ thật: tôi sửa `rule-compile.mjs`, lane kia đang sửa `STATUS.md` của
-     gói nó. Không có dòng này thì cổng của TÔI đỏ vì một khoản nợ tôi **bị cấm trả** — muốn sinh
-     lại thì phải ghi vào vùng lane kia đang giữ. Bỏ qua mà NÓI RA, không im: một lượt bỏ qua im
-     lặng đọc y hệt một lượt đạt. */
-  const vungCua = (d) => areaOf(`${d}/AGENTS.md`, claimPrefixes);
-  const cuaLaneKhac = new Set(touched.filter((f) => !touchedToiPhaiTraLoi.includes(f))
-    .map((f) => areaOf(f, claimPrefixes)));
-  const boQua = [], canXet = [];
-  for (const d of ph.goi) {
-    const v = vungCua(d);
-    if (!(chamChung || packagesToiPhaiTraLoi.includes(v))) continue;
-    (cuaLaneKhac.has(v) ? boQua : canXet).push(d);
-  }
-  const ghiChuBoQua = boQua.length
-    ? ` Bỏ qua ${boQua.length} gói lane khác đang sửa dở (${boQua.map((d) => d.split("/")[1]).join(", ")}) — nợ đó là của họ.`
-    : "";
-  if (!canXet.length) return { ok: true, msg: "Phiên này không chạm nguồn của `PHIEN.md` nào." + ghiChuBoQua };
-
-  const lech = [], qua = [], hong = [];
-  for (const thuMuc of canXet) {
-    const bo = dungBoGoi({ root: ROOT, thuMuc, ph, core });
-    if (bo.loi) { hong.push(bo.loi); continue; }
-    if (bo.boKyTu > bo.tran) { qua.push(`${thuMuc} (${bo.boKyTu}/${bo.tran} ký tự)`); continue; }
-    let cu = null;
-    try { cu = fs.readFileSync(path.join(ROOT, thuMuc, "PHIEN.md"), "utf8"); } catch { /* chưa sinh lần nào */ }
-    if (cu !== bo.noiDung) lech.push(thuMuc);
-  }
-
-  if (hong.length) return { ok: false, msg: `PHIEN_THIEU_NGUON: ${hong.join(" · ")}` };
-  if (qua.length) {
-    return {
-      ok: false,
-      msg: `PHIEN_QUA_TRAN: ${qua.join(" · ")} — bó mở phiên vượt trần CỨNG, nên bộ sinh TỪ CHỐI`
-        + " ghi. Không phải cảnh báo: muốn thêm một luật thì phải bỏ một luật (ADR-0035 ⑷)."
-        + " Cửa ra rẻ nhất: rút chuyện kể trong `## Luật vàng` của gói sang ADR của gói, hoặc"
-        + " viết ngắn lại `next_step`/`human_action` trong `STATUS.md`.",
-    };
-  }
-  if (lech.length) {
-    return {
-      ok: false,
-      msg: `PHIEN_CU: ${lech.join(" · ")} — bạn chạm nguồn của bó mở phiên (\`AGENTS.md\`,`
-        + " `STATUS.md`, hoặc lõi luật) mà chưa sinh lại. `PHIEN.md` là thứ DUY NHẤT phiên sau nạp"
-        + " khi đụng gói này, nên để nó cũ là dạy trạng thái sai cho một phiên tin nó tuyệt đối."
-        + " Sinh lại: node scripts/rule-compile.mjs --sinh",
-    };
-  }
-  return { ok: true, msg: `${canXet.length} bó khớp nguồn (${canXet.map((d) => d.split("/")[1]).join(", ")}).` + ghiChuBoQua };
-});
-
 // S4 dựng phép kiểm này ở chế độ chỉ-in-ra. S7 bật chặn: nợ thuộc nhóm CHẶN nay làm cổng đỏ.
 //
 // BA MÃ THOÁT của check-bootstrap.mjs, và cố ý KHÔNG gộp:
@@ -805,7 +1081,10 @@ check("PHIEN.md của gói còn tươi", () => {
 //
 // Nhóm nào bị chặn thì khai ở `bootstrap.blocking` trong `.repo-structure.json`, KHÔNG viết
 // cứng ở đây — S8 sẽ mở thêm B6/B9 sau khi trả nợ, và lúc đó không ai phải sửa script.
-check("Cổng kiểm cấu trúc B1–B14", () => {
+/* TÊN MỤC KHÔNG GÕ SỐ. Bản cũ ghi "B1–B14" trong khi bộ kiểm đã có 15 rồi 16 phép — người đọc
+   cổng tin con số đó và nghĩ hai phép kiểm cuối không tồn tại. Cùng bệnh với "6 trên 11" ở bảng
+   tra: một con số gõ tay mô tả tập hợp thì chỉ đúng tới lần sửa kế tiếp. */
+check("Cổng kiểm cấu trúc (dãy B)", () => {
   const tomTat = (text) => {
     const summary = String(text).split("\n")
       .filter((line) => /^(TỔNG|CHAN|BỎ QUA|NGOÀI 14|MIỄN TRỪ)/.test(line.trim()))
@@ -829,7 +1108,21 @@ check("Cổng kiểm cấu trúc B1–B14", () => {
   }
   // Chỉ lấy các dòng tổng kết. In cả bản đầy đủ ở đây thì báo cáo cổng dài gấp ba và không ai
   // đọc nữa — chi tiết nằm sau một lệnh, và lệnh đó được in ra ngay dưới đây.
-  return { ok: true, msg: `${tomTat(stdout)} — nhóm CHẶN đạt hết. ${XEM}` };
+  // MÃ THOÁT 0 KHÔNG PHẢI BẰNG CHỨNG. Đây là lỗ nặng nhất còn lại, và nó đã được dựng lại thật:
+  // thay `check-bootstrap.mjs` bằng đúng một dòng `process.exit(0);` thì cổng đóng phiên in ra
+  //     [XANH] Cổng kiểm cấu trúc — không đọc được dòng tổng kết — nhóm CHẶN đạt hết
+  // Tức là toàn bộ bộ kiểm cấu trúc bị vô hiệu hoá, và cổng vẫn tuyên bố nhóm CHẶN đã đạt.
+  //
+  // Một bộ kiểm không nói được nó đã kiểm gì thì phải bị coi là CHƯA KIỂM, không phải ĐÃ ĐẠT.
+  // Dòng `TỔNG:` là bằng chứng tối thiểu: nó chỉ tồn tại khi bộ kiểm thật sự chạy hết.
+  const bangChung = tomTat(stdout);
+  if (!/^TỔNG|·\s*TỔNG/.test(bangChung) && !bangChung.includes("TỔNG")) {
+    return {
+      ok: false,
+      msg: `BOOTSTRAP_KHONG_CO_BANG_CHUNG: scripts/check-bootstrap.mjs thoát 0 nhưng KHÔNG in dòng tổng kết nào. Mã thoát 0 không phải bằng chứng — coi như CHƯA KIỂM. Kiểm xem file đó có bị thay/cắt cụt không. ${XEM}`
+    };
+  }
+  return { ok: true, msg: `${bangChung} — nhóm CHẶN đạt hết. ${XEM}` };
 });
 
 /* ---- 9. Bất biến ba tầng của quyền sở hữu ------------------------------- */
@@ -863,44 +1156,11 @@ check("Bất biến quyền sở hữu ba tầng", () => {
 // (không quy thuộc được là lỗi thật, và chỉ người vừa gõ nó mới sửa được), thiếu nhãn thì chỉ
 // nhắc. Bật chặn là một quyết định LUẬT — khai ở `.repo-structure.json`, và file đó thuộc `_root`
 // nên phiên này KHÔNG tự bật được. Đã ghi vào HANDOFF.
-/* Bảng quyền có bị mở ra sửa tay không.
- *
- * Lệnh `claim.mjs` bảo vệ ĐƯỜNG GHI, nhưng không gì bảo vệ chính `claims.json`. Ngày 03/09 cả
- * bốn khoá gốc bị đổi chủ bằng một lượt sửa hàng loạt đi vòng qua lệnh, và phiên đang giữ khoá
- * không hề biết cho tới lúc mở lệnh ra xem.
- *
- * Phép kiểm này CỐ Ý không so trạng thái cũ với mới. Ảnh chụp không phân biệt được "trả rồi
- * nhận" với "ghi đè" — cùng ngày 03/09 `_root` đi thẳng từ chủ này sang chủ kia trong đúng một
- * diff mà chuỗi thật là hai thao tác hợp lệ. So trạng thái chỉ báo oan. Nên: soi DẤU.
- *
- * ĐỎ cho MỌI phiên, không riêng phiên gây ra. Cố ý: người cần biết nhất là người vừa BỊ mất
- * khoá, mà họ thì không chạy lệnh nào cả — họ chỉ chạy cổng.
- */
-check("Bảng quyền chưa bị sửa tay", () => {
-  let parsed;
-  try { parsed = readClaims(); }
-  catch (error) { return { ok: false, msg: `Không đọc được .agents/claims.json: ${error.message}` }; }
-
-  const seal = fingerprintState(parsed);
-  if (seal.ok === true) {
-    return { ok: true, msg: `Dấu niêm phong khớp (${seal.stamped}) — mọi lượt nhận/trả đều đi qua claim.mjs.` };
-  }
-  if (seal.ok === null) {
-    return {
-      ok: false,
-      msg: `CHUA_DONG_DAU: .agents/claims.json thiếu trường \`${FINGERPRINT_FIELD}\`, nên không kiểm được có ai sửa tay hay không.`
-        + ` Đóng dấu trạng thái hiện tại: node scripts/claim.mjs --restamp --as ${asLabel}`
-    };
-  }
-  const XUONG_DONG = String.fromCharCode(10);
-  return { ok: false, msg: VO_DAU.split(XUONG_DONG).join(`${XUONG_DONG}         `) };
-});
-
 check("Nhãn lane trong commit", () => {
   if (!originMainResolves) {
-    return { ok: true, skipped: true, msg: "Không so được với origin/main nên không đếm được commit nào chưa push — xem cảnh báo ở đầu báo cáo." };
+    return { ok: true, skipped: true, msg: `Không so được với ${MOC} nên không đếm được commit nào chưa push — xem cảnh báo ở đầu báo cáo.` };
   }
-  const shas = git("log", "--format=%H", "origin/main..HEAD").split("\n").filter(Boolean);
+  const shas = git("log", "--format=%H", `${MOC}..HEAD`).split("\n").filter(Boolean);
   if (!shas.length) return { ok: true, msg: "Không có commit nào chưa push." };
   const hong = [];
   const thieu = [];
@@ -921,97 +1181,75 @@ check("Nhãn lane trong commit", () => {
   const ke = [];
   if (cuaToi.length) ke.push(`${cuaToi.length} của bạn`);
   for (const [lane, n] of [...cuaNguoiKhac].sort()) ke.push(`${n} của "${lane}"`);
-  // K2-3b, BẬT CHẶN 2026-09-03 (Đức chốt). Trước đó chỉ cảnh báo.
-  //
-  // Điều kiện đã đủ, theo đúng thứ tự: convention dạy vào `AGENTS.md` mục 2 TRƯỚC
-  // (commit 4f0cbab), rồi mới bật chặn. Bật trước khi dạy là đỏ oan mọi phiên chưa đọc luật.
-  //
-  // Phạm vi CHỈ là `origin/main..HEAD` — GPT đính chính đúng chỗ này: lý lẽ "509 commit cũ đều
-  // không có nhãn" của tôi KHÔNG liên quan, vì phép kiểm không hề quét lịch sử. Cản trở thật
-  // chỉ là commit CHƯA PUSH hiện tại thiếu nhãn, và chúng sửa được bằng một `--amend`.
-  //
-  // Vì sao đáng chặn: không có nhãn thì không quy thuộc được commit về lane nào, và chiều nguy
-  // hiểm là **im lặng cuốn việc của người khác lên remote**. Ngày 26/08 đã có 2 commit chưa
-  // duyệt lên `main` đúng đường đó.
-  //
-  // Từ K2-3c (03/09) `safe-push` CŨNG chặn ca này. Trước đó nó chỉ cảnh báo rồi lùi về quy theo
-  // chủ vùng — nên gọi thẳng `safe-push` là né được đúng phép kiểm này. Audit GPT vòng 5.
   if (thieu.length) {
     return {
-      ok: false,
-      msg: `LANE_THIEU_NHAN: ${thieu.length}/${shas.length} commit chưa push không có nhãn (${thieu.slice(0, 6).join(", ")}${thieu.length > 6 ? ", …" : ""})${ke.length ? ` · ${ke.join(" · ")}` : ""}.`
-        + ` Không quy thuộc được thì safe-push cũng TỪ CHỐI đẩy, vì không biết đang cuốn theo việc của ai.`
-        + ` Sửa: \`git commit --amend\` rồi thêm dòng cuối \`${LANE_TRAILER} ${asLabel}\`. Từ commit sau thì thêm sẵn dòng đó.`
+      ok: true,
+      skipped: true,
+      msg: `${thieu.length}/${shas.length} commit chưa push KHÔNG có nhãn (${thieu.slice(0, 6).join(", ")}${thieu.length > 6 ? ", …" : ""})${ke.length ? ` · ${ke.join(" · ")}` : ""}. Chưa chặn (509 commit cũ đều không có nhãn), nhưng quy theo vùng sai được cả hai chiều. Từ nay thêm dòng cuối commit: \`${LANE_TRAILER} ${asLabel}\``
     };
   }
   return { ok: true, msg: `${shas.length} commit chưa push đều quy thuộc được: ${ke.join(" · ")}.` };
 });
 
-/* ---- 12. HANDOFF: trần độ dài mục MỚI, và xoay file theo tháng — ADR-0011 */
-// Đức chốt 06/09: chặn ở ĐẦU VÀO, không chặn ở đầu ra. `HANDOFF.md` gốc tăng ~44 KB/ngày và
-// không tăng vì nhiều mục mà vì mỗi mục béo lên 60% — nên trần nằm ở MỘT MỤC, không ở cả file.
-//
-// HAI PHẠM VI KHÁC NHAU, và trộn chúng vào một là hỏng cả hai:
-// · TRẦN xét MỌI file `HANDOFF.md` phiên này chạm, bất kể ai giữ khoá — mục bạn vừa thêm luôn
-//   là chữ của bạn, không cần bảng quyền để biết điều đó.
-// · XOAY THÁNG chỉ xét file bạn ĐANG GIỮ KHOÁ. Xoay là viết lại đầu file, tức KHÔNG còn là
-//   "chỉ thêm ở cuối" nên miễn trừ hành chính không che nó; bắt một lane không giữ `_root` phải
-//   xoay là bắt họ làm một việc luật cấm họ làm. Ngày 1 hàng tháng mà đỏ với mọi lane thì cổng
-//   này thành thuế, đúng thứ ADR-0005 vừa gỡ.
-//
-// CHỈ CHẶN MỤC VỪA THÊM. Mục cũ là việc của lượt viết ngắn (ADR-0011 mục ⑶) — chặn cả file là
-// mọi lane đỏ ngay lập tức vì chữ của người khác, brief `HANDOFF-TRAN-01` mục 2 cấm.
-check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
+/* TRẦN MỘT MỤC NHẬT KÝ, VÀ XOAY FILE THEO THÁNG.
+ *
+ * Cơ chế mang từ repo tiêu thụ lên đây 2026-09-08 (ADR-0011) để phát cho mọi repo. Nó chặn
+ * **đúng mục vừa thêm trong phiên này** — mục cũ KHÔNG bị chặn, vì chặn cả file là mọi lane đỏ
+ * ngay vì chữ của người khác, và một cổng như thế bị tháo trong một ngày.
+ *
+ * Repo chưa khai `handoff.tran_byte_moi_muc` thì phép kiểm **BỎ** (không xanh, không đỏ): nó
+ * chưa kiểm được gì, và nói "xanh" ở đó là nói dối. Khác hẳn trần sổ nợ ngay dưới — ở đó không
+ * khai là một lựa chọn hợp lệ, còn ở đây file nhật ký vẫn đang bị chạm mà ta không đo nổi. */
+const doTranHandoff = () => {
   const files = touched.filter((f) => /(^|\/)HANDOFF\.md$/.test(f));
   if (!files.length) return { ok: true, msg: "Phiên này không chạm HANDOFF.md nào." };
-  const B = String.fromCharCode(96);        // dấu huyền, dựng chứ không gõ
   const tran = handoffCapFrom(structure);
-  const tranSoMuc = handoffSoMucCapFrom(structure);
   if (tran === null) return { ok: true, skipped: true, msg: "Chưa khai `handoff.tran_byte_moi_muc` trong .repo-structure.json — CHƯA KIỂM ĐƯỢC GÌ." };
 
-  const doc = (f) => { try { return fs.readFileSync(path.join(ROOT, f), "utf8"); } catch { return null; } };
+  const docFile = (f) => { try { return fs.readFileSync(path.join(ROOT, f), "utf8"); } catch { return null; } };
   const beo = [];
   const canXoay = [];
   const chuaKhai = [];
-  const quaDay = [];                        // quyển vượt trần SỐ MỤC — ADR-0008
-  let neo = 0;                              // số mục bổ được — ra 0 là BỘ ĐO HỎNG, xem dưới
-  let nhatKy = 0;                           // số quyển nhật ký THẬT đã soi
+  let neo = 0;        // số mục bổ được — ra 0 là BỘ ĐO HỎNG, xem dưới
+  let nhatKy = 0;     // số quyển nhật ký THẬT đã soi
   for (const f of files) {
-    const hienTai = doc(f);
-    if (hienTai === null) continue;         // file vừa bị xoá khỏi cây làm việc
-    /* Hỏi NỘI DUNG, không hỏi TÊN FILE: `docs/protocols/HANDOFF.md` là sổ tay luật, không phải
-     * nhật ký, mà tên nó cũng kết thúc bằng `HANDOFF.md`. Xem ghi chú ở `laNhatKy`. */
+    const hienTai = docFile(f);
+    if (hienTai === null) continue;   // file vừa bị xoá khỏi cây làm việc
+    // Hỏi NỘI DUNG, không hỏi TÊN FILE: một sổ tay luật cũng có thể tên `…HANDOFF.md`.
     if (!laNhatKy(hienTai)) continue;
     nhatKy += 1;
-    /* BẢN GỐC ĐỌC HỎNG THÌ MỌI MỤC THÀNH "MỤC MỚI" — tức cổng chặn lane này bằng chữ của lane
-     * khác, đúng thứ brief cấm. Nên hỏi trước: file có trên `origin/main` không?
-     *  · KHÔNG có (gói mới, `HANDOFF.md` vừa lập) → bản gốc rỗng là ĐÚNG, mọi mục đều mới thật.
-     *  · CÓ mà đọc hỏng → dùng `git()` chứ không phải bản nuốt lỗi, để phép kiểm cuối biến nó
-     *    thành ĐỎ kèm tên nguyên nhân. Không biết thì phải nói là không biết. */
-    const coTrenRemote = originMainResolves
-      && gitLoiLaBinhThuong("ls-tree", "--name-only", "origin/main", "--", f).trim() !== "";
-    const goc = coTrenRemote ? git("show", `origin/main:${f}`) : "";
-    const soMuc = docMucTuFile(hienTai).length;
-    neo += soMuc;
-    /* TRẦN SỐ MỤC — ADR-0008, khác hẳn trần BYTE ở trên (ADR-0011). Đo 09/09: `HANDOFF.md` gốc
-     * giữ 60 mục trong khi ADR chốt 20, và KHÔNG phép kiểm nào kêu suốt ba ngày — đúng hình
-     * dạng "luật không máy nào canh" mà mục 7 của AGENTS.md cảnh báo.
-     * KHÔNG lọc theo `mine(f)` như hai nhánh xoay dưới: cắt thì cần khoá, nhưng biết quyển đã
-     * dày thì ai chạm cũng nên biết — và ở gốc repo thì ai cũng chạm, vì luật mục 7 bắt thế. */
-    if (tranSoMuc !== null && soMuc > tranSoMuc) quaDay.push(f + " (" + soMuc + " mục)");
+    /* BẢN GỐC ĐỌC HỎNG THÌ MỌI MỤC THÀNH "MỤC MỚI" — tức chặn lane này bằng chữ của lane khác.
+     * Nên hỏi trước: file có trên mốc so không? Không có (quyển vừa lập) thì bản gốc rỗng là
+     * ĐÚNG. Có mà đọc hỏng thì dùng `git` (bản ghi lỗi) để phép kiểm cuối biến nó thành ĐỎ. */
+    const coTrenMoc = originMainResolves
+      && gitLoiLaBinhThuong("ls-tree", "--name-only", MOC, "--", f).trim() !== "";
+    const goc = coTrenMoc ? git("show", `${MOC}:${f}`) : "";
+    neo += docMucTuFile(hienTai).length;
     for (const m of vuotTran(mucMoi(hienTai, goc), tran)) {
       beo.push(`${f} · "${m.tieuDe.replace(/^#+\s*/, "").slice(0, 48)}…" = ${m.byte} byte`);
     }
-    if (!mine(f)) continue;                 // xoay là việc của người đang giữ khoá
+    if (!mine(f)) continue;           // xoay là việc của người đang giữ khoá
+    /* QUYỂN TRẮNG KHÔNG PHẢI QUYỂN CHƯA KHAI THÁNG. Mốc tháng tồn tại để biết phần nào đem đi
+     * lưu trữ; không mục nào thì không có gì để lưu, và đòi khai là bắt một repo vừa dựng chạy
+     * một lượt xoay trên một file rỗng. Đo thật 08/09: repo sinh từ bản trích ĐỎ ngay lượt chạy
+     * cổng đầu tiên, vì lý do nó không có cách nào biết trước. */
+    if (docMucTuFile(hienTai).length === 0) continue;
     const thang = thangCua(hienTai);
     if (thang === null) chuaKhai.push(f);
     else if (thang !== thangHienTai()) canXoay.push(`${f} (đang khai ${thang})`);
   }
 
-  /* ĐẾM MỎ NEO. `mucMoi` trả rỗng đọc y hệt "mọi mục đều vừa trần" — và ngày 06/09 đúng cái
-   * nhầm này (công cụ không khớp gì, bị đọc thành "không có gì phải sửa") xảy ra với NĂM lane
-   * khác nhau trong repo. Nên: bổ ra 0 mục trên một file có thật là ĐỎ, không phải xanh. */
-  if (nhatKy > 0 && neo === 0) {
+  /* ĐẾM MỎ NEO. `mucMoi` trả rỗng đọc y hệt "mọi mục đều vừa trần", nên bổ ra 0 mục phải kêu.
+   * NHƯNG so với 0 là sai: một quyển nhật ký TRẮNG (repo vừa dựng từ bản khung) cũng cho 0, và
+   * ở đó 0 là câu trả lời đúng. So với phép đếm THÔ mới tách được hai chuyện: 0 trên một file
+   * không có tiêu đề nào là bình thường, 0 trên một file có 37 tiêu đề mới là bộ đo hỏng. */
+  const demTho = (text) => {
+    const dong = String(text).split(/\r?\n/);
+    const i = dong.findIndex((d) => /^##[ \t]+Log[ \t]*$/.test(d));
+    return i < 0 ? 0 : dong.slice(i + 1).filter((d) => /^##[ \t]/.test(d)).length;
+  };
+  const thoTong = files.reduce((s, f) => { const t = docFile(f); return t === null ? s : s + demTho(t); }, 0);
+  if (nhatKy > 0 && neo === 0 && thoTong > 0) {
     return { ok: false, msg: "HANDOFF_KHONG_KHOP: chạm HANDOFF.md nhưng không bổ được MỤC nào."
       + " Đây là bộ đo HỎNG, không phải 'không có gì phải sửa' — kiểm dòng `## Log` của file." };
   }
@@ -1019,14 +1257,6 @@ check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
   const loi = [];
   if (beo.length) {
     loi.push(`HANDOFF_MUC_QUA_DAI: ${beo.length} mục MỚI vượt trần ${tran} byte — ${beo.join(" · ")}. ${CAU_CHI_DUONG}`);
-  }
-  if (quaDay.length) {
-    loi.push("HANDOFF_QUA_DAY: " + quaDay.join(", ") + " — trần " + tranSoMuc
-      + " mục (ADR-0008 chốt đích 20). Sửa bằng một lệnh: " + B + "node scripts/handoff.mjs"
-      + " --cat <file> --giu 20" + B + " — nó dời phần cũ sang một file lưu trữ NGUYÊN VĂN, và tự"
-      + " kiểm ghép lại ra đúng bản gốc từng byte TRƯỚC khi ghi. ĐỪNG dùng " + B + "--rotate" + B
-      + ": cái đó xoay theo THÁNG (ADR-0011) nên dời 0 dòng khi mọi mục cùng một tháng — đo thật"
-      + " 09/09. Xong thì khai file lưu trữ vừa sinh vào Bản đồ file.");
   }
   if (canXoay.length) {
     loi.push(`HANDOFF_QUA_THANG: ${canXoay.join(", ")} còn chứa tháng cũ, nay là ${thangHienTai()}.`
@@ -1038,231 +1268,105 @@ check("HANDOFF: mục mới trong trần, file đúng tháng", () => {
   }
   if (loi.length) return { ok: false, msg: loi.join(" ") };
   if (nhatKy === 0) return { ok: true, msg: `${files.length} file tên HANDOFF.md nhưng không quyển nào có phần \`## Log\` — không phải nhật ký, không kiểm.` };
-  return { ok: true, msg: nhatKy + " quyển nhật ký, " + neo + " mục, mọi mục mới đều dưới trần " + tran + " byte và đúng tháng" + (tranSoMuc === null ? "." : ", quyển dày nhất dưới trần " + tranSoMuc + " mục.") };
-});
+  return { ok: true, msg: `${nhatKy} quyển nhật ký, ${neo} mục, mọi mục mới đều dưới trần ${tran} byte và đúng tháng.` };
+};
 
-/* ---- 13. Đọc git có lỗi nào không -------------------------------------- */
-// PHẢI LÀ PHÉP KIỂM CUỐI. Nó phán về thứ mà mười một phép kiểm trên vừa đọc, nên đặt sớm hơn
-// là phán trên một danh sách chưa đầy.
-//
-// Vì sao là ĐỎ chứ không phải cảnh báo: cả cổng này suy ra từ những gì git kể. Git không kể
-// được thì cổng không biết gì — mà "không biết" đã im lặng biến thành "không có vấn đề" ở đúng
-// cái guard của K2-9 (xem ghi chú dài ở `git` đầu file). Một cổng không đọc được đầu vào thì
-// phải nói là nó không đọc được, không được nói XANH.
-check("Đọc git không lỗi", () => {
-  // Repo chưa có `origin/main`: mọi lệnh so với nó đều hỏng, và đó là chuyện ĐÃ BIẾT — cổng
-  // in cảnh báo riêng ở phần báo cáo. Đếm lại chúng ở đây là chặn oan repo vừa dựng.
-  const thuc = gitLoi.filter((line) => originMainResolves || !line.includes("origin/main"));
-  if (thuc.length) {
-    return {
-      ok: false,
-      msg: `GIT_DOC_LOI: ${thuc.length} lệnh git thất bại, nên cổng đang suy luận trên dữ liệu THIẾU`
-        + ` — và thiếu ở đây im lặng thành "sạch", tức miễn oan cho lỗi của chính bạn.`
-        + ` ${thuc.join(" · ")}.`
-        + ` Sửa: chạy lại lệnh đó bằng tay xem nó nói gì, đừng chạy lại cổng và hy vọng.`
-    };
-  }
-  if (gitLoi.length) return { ok: true, msg: `${gitLoi.length} lệnh git hỏng, nhưng đều vì chưa có \`origin/main\` — xem cảnh báo ở đầu báo cáo.` };
-  return { ok: true, msg: "Mọi lệnh git đọc được." };
-});
-
-/* ---- chống tự tháo cổng ------------------------------------------------- */
-// Cách dễ nhất để "làm cho cổng xanh" là lặng lẽ xoá bớt một phép kiểm.
-// Con số này chặn đúng việc đó: thêm phép kiểm thật thì tăng nó lên và ghi
-/* TRẦN SỔ NỢ — con số đã có từ lâu, MÁY CANH thì hôm nay mới có.
+/* KHO CHỮ KHÔNG ĐƯỢC PHÌNH — THƯỚC CÓC, không phải trần lý tưởng.
  *
- * `AGENTS.md` mục 3 giới hạn ④ nói thẳng chỗ mù này: *"Trần này KHÔNG có máy cưỡng chế — công cụ
- * chỉ đếm và in ra, cổng đóng phiên không đọc con số đó."* Và nó vỡ đúng như thế: mục thứ 11 vào
- * sổ mà **không gì đỏ lên**, nên trần 10 phải nâng thành 15 **sau khi đã vỡ**. Một trần không ai
- * canh thì nó không phải trần, nó là lời khuyên.
+ * Đo 08/09: `docs/` tăng **5.915 → 6.654 dòng trong một ngày**, và phần tăng phần lớn là chữ do
+ * chính AI viết ra. Trong khi luật chốt 07/09 nói *"xoá là thắng, thêm là thua"*. Không con số
+ * nào canh chỗ này, nên nó phình mà không ai thấy cho tới lúc đo thủ công.
  *
- * Trần khai ở `backlog.tran` của `.repo-structure.json`, KHÔNG viết cứng ở đây. Repo không khai
- * thì phép kiểm XANH — cùng hợp đồng với bản khung (ADR-0010 của repo bộ khung).
+ * VÌ SAO LÀ THƯỚC CÓC, KHÔNG PHẢI TRẦN THẬT: đặt trần ở con số mong muốn là **đỏ ngay lập tức
+ * với mọi lane**, kể cả lane không viết một dòng docs nào — và một cổng đỏ vì việc của người
+ * khác thì bị tháo trong một ngày. Thước cóc đặt ở **đúng con số hôm nay**: nó không đòi ai dọn,
+ * nó chỉ chặn PHÌNH. Mỗi lượt xoá thì hạ con số xuống, và chỗ đã hạ không quay lại được.
  *
- * Bộ đếm dùng lại `dangMo` của `backlog-check.mjs`, không viết bộ thứ hai: quy ước đóng mục của
- * sổ này là **thêm dòng `- **ĐÓNG N-xx**` ở cuối**, không gạch tiêu đề, và đếm tiêu đề là đếm
- * sai (đã đếm sai một lần: 14 thay vì 12).
+ * VÌ SAO TRỪ `docs/adr/`: ADR đã `Accepted` là **bất biến** (ADR-0000), tức thư mục đó chỉ có
+ * thể to lên. Tính nó vào thước cóc thì **mỗi quyết định mới làm cổng đỏ**, người ta sẽ nới con
+ * số cho xong việc, và sau vài lượt nới thì thước không còn nghĩa gì.
  *
- * CÁI GIÁ, ghi ra để phiên sau không mất thì giờ: cổng nay PHỤ THUỘC `backlog-check.mjs`. **15
- * kho thử** chép một DANH SÁCH script cố định sang thư mục tạm; thiếu file này thì cổng ném lúc
- * NẠP MODULE, tức không in ra một dòng nào, và test báo *"không thấy mục [XANH] …"* — một câu
- * trỏ sai hoàn toàn chỗ hỏng. Thêm kho thử mới mà chép `session-check.mjs` thì chép cả
- * `backlog-check.mjs`. */
-/* THƯỚC CÓC CHO KHO CHỮ — Đức hỏi 08/09: *"về protocol clean: nếu chưa có ta nên xây dựng
- * đúng không?"* Có, nhưng KHÔNG phải một tài liệu mới — một tài liệu dạy cách dọn tài liệu là
- * món tự trào, và nó cộng vào đúng con số nó định cắt. Protocol dọn kho chữ là **phép kiểm này**.
+ * VÌ SAO TRỪ `docs/archive/` — vá 08/09, Đức chốt, và nó là chữa MÂU THUẪN chứ không phải nới:
+ * `AGENTS.md` viết rõ *"Thư mục này KHÔNG tính vào ngân sách tài liệu: ngân sách đo thứ MỌI phiên
+ * phải nạp, mà lưu trữ theo định nghĩa là thứ không nạp mỗi lần"*, và `can-nang.mjs` đã miễn nó
+ * từ 06/09 vì đúng lý do đó. Chỉ CỔNG NÀY là còn đếm. Một luật hai chỗ, và chúng đã lệch thật:
+ * hôm nay một lane chạy đúng nhịp DỌN mà repo bắt làm — dời 1.135 dòng sang `docs/archive/` — và
+ * cổng ĐỎ vì chính việc dọn đó. Cùng họ `KHUNG-25`: sổ tay bảo DỌN, cổng CẤM.
  *
- * THƯỚC CÓC KHÁC TRẦN LÝ TƯỞNG, và chỗ này là cả thiết kế. Giới hạn ③ của `AGENTS.md` đặt ĐÍCH
- * 8.000 dòng; hôm nay còn 15.265 (đã cắt 8.266 sáng nay). Một phép kiểm đỏ với MỌI phiên trong
- * nhiều tuần liền là một phép kiểm sẽ bị gỡ — repo này đã tự đo đúng chuyện đó ở giới hạn ④,
- * nơi một trần phải nâng SAU KHI đã vỡ. Nên máy canh con số của HÔM QUA, không canh cái đích:
- * nó không đòi ai dọn, nó chỉ chặn PHÌNH. Ai dọn thêm thì HẠ con số xuống, và chỗ đã hạ không
- * quay lại được.
- *
- * TRỪ `docs/adr/`: ADR đã Accepted là bất biến (ADR-0000), nên thư mục đó chỉ có thể to lên.
- * Tính nó vào thước thì mỗi quyết định mới làm cộng dồn, và người ta sẽ nới con số cho xong. */
-/* KHOÁ FILE PHẢI TRẢ HẾT TRƯỚC KHI ĐÓNG PHIÊN — Đức chốt 08/09.
- *
- * Cả giá trị của khoá mức file nằm ở chữ NGẮN: *"khóa được giữ và trả ngay trước và sau khi
- * AI sửa"*. Không gì cưỡng chế chữ đó thì nó thoái hoá thành đúng cái khoá vùng dài hạn mà nó
- * thay thế — và lúc ấy repo có HAI cơ chế cùng làm một việc dở, thay vì một cơ chế làm tốt.
- *
- * ĐÓNG PHIÊN LÀ MỐC ĐÚNG, và nó khác hẳn khoá vùng. Khoá vùng trả **sau khi đẩy** (mục 1),
- * vì commit chưa đẩy mà vùng đã trống chủ thì để lại một mục đỏ cho phiên sau. Khoá file
- * KHÔNG mang trách nhiệm đó — nguồn gốc của một commit là nhãn `Lane:`, không phải khoá. Nên
- * ở đây mốc là "hết phiên", không phải "đã đẩy".
- *
- * Chỉ soi khoá của CHÍNH BẠN. Khoá quá hạn của lane khác chỉ được NÊU, không làm bạn đỏ:
- * ngày 06/09 một khoá đã bị nhả hộ vì có người đọc một dòng chẩn đoán thành "phiên kia rảnh". */
-check("Khoá file đã trả hết", () => {
-  let bang;
-  try { bang = readClaims(); }
-  catch (error) { return { ok: false, msg: `KHONG_DOC_DUOC_BANG: ${error.message}` }; }
-  const tam = Object.entries(bang.tam || {}).filter(([, o]) => o?.owner);
-  if (!tam.length) return { ok: true, msg: "Không khoá file nào đang giữ." };
-  const cuaToi = tam.filter(([, o]) => o.owner === asLabel);
-  const quaHan = khoaFileQuaHan(bang, PHUT_NHAC_KHOA_FILE).filter((x) => x.owner !== asLabel);
-  const themCuaHo = quaHan.length
-    ? ` Ngoài ra ${quaHan.length} khoá của lane khác đã quá ${PHUT_NHAC_KHOA_FILE} phút (${quaHan.map((x) => `${x.duongDan} ← ${x.owner}`).join(" · ")}) — NÊU để bạn HỎI họ, KHÔNG phải để nhả hộ.`
-    : "";
-  if (!cuaToi.length) {
-    return { ok: true, msg: `${tam.length} khoá file đang giữ, không cái nào của bạn.${themCuaHo}` };
-  }
-  return {
-    ok: false,
-    msg: `KHOA_FILE_CON_TREO: bạn còn giữ ${cuaToi.length} khoá file: ${cuaToi.map(([d]) => d).join(" · ")}. `
-      + "Khoá mức file sinh ra để giữ VÀI PHÚT quanh một lượt ghi, không giữ qua cả phiên — "
-      + `giữ tiếp là chặn lane khác vì một việc bạn đã làm xong. Trả hết: node scripts/claim.mjs --xong --het --as ${asLabel}${themCuaHo}`,
-  };
-});
-check("Kho chữ không phình", () => {
-  /* THƯỚC CHO HIẾN PHÁP ĐO BẰNG KÝ TỰ, KHÔNG BẰNG DÒNG — đổi 09/09.
-     Bản cũ đo `agents.tran_dong`. Nó cho lọt tăng trưởng thật: cùng ngày, một lượt đổi MỘT HÀNG
-     lấy MỘT HÀNG giữ nguyên 252 dòng trong khi số ký tự vẫn lên. Giữ hai thước cho một file sau
-     khi đã chứng minh một trong hai nói dối là giữ một cái đèn báo sai. Thước ký tự ngay dưới
-     phủ `AGENTS.md` (nó chiếm 98% của con số nạp-mọi-phiên). */
-  /* CÁI MỘT PHIÊN THẬT SỰ TRẢ — đo bằng KÝ TỰ, không bằng dòng.
-   *
-   * Bản đầu của thước này (cùng ngày 09/09) đo DÒNG, và nó nói dối ngay lượt đầu: một lượt nén
-   * `duc-auto-gemini/AGENTS.md` giảm **32% số dòng** mà chỉ giảm **7% số ký tự** — phần cắt là
-   * chữ ngắn, phần thêm là chữ đặc. Cùng đo được: `chatgpt/AGENTS.md` 123 ký tự một dòng, gấp
-   * rưỡi `AGENTS.md` gốc, nên thước dòng đếm thiếu nó một phần ba.
-   *
-   * Và nó đo SAI CHỖ: tổng 19 nơi chứa luật là con số không phiên nào trả. Thứ mọi phiên trả là
-   * `CLAUDE.md` + `AGENTS.md`; thứ một phiên làm gói trả thêm là `AGENTS.md` của gói đó. Hai con
-   * số đó mới là hoá đơn thật. (~2,2 ký tự = 1 token với tiếng Việt có dấu.) */
-  const nap = structure?.luat?.nap;
-  if (nap && typeof nap.tran_ky_tu_moi_phien === "number") {
-    let kyTu = 0, doDuoc = true;
-    for (const f of nap.moi_phien ?? []) {
-      try { kyTu += fs.readFileSync(path.join(ROOT, f), "utf8").length; }
-      catch { doDuoc = false; }
-    }
-    if (doDuoc && kyTu > nap.tran_ky_tu_moi_phien) {
-      return {
-        ok: false,
-        msg: `NAP_MOI_PHIEN_PHINH: ${kyTu} ký tự (~${Math.round(kyTu / 2.2)} token) mà MỌI phiên`
-          + ` nạp trước khi biết mình sắp làm gì, thước cóc là ${nap.tran_ky_tu_moi_phien}`
-          + ` — thêm ${kyTu - nap.tran_ky_tu_moi_phien}. Trần tuyệt đối ${nap.dich_ky_tu_moi_phien ?? "?"},`
-          + ` ĐÍCH ${nap.bien_ky_tu_moi_phien ?? "?"} (ADR-0033 ⑴ — đích nằm DƯỚI trần 30–40% vì hệ`
-          + " thống luôn phình lại)."
-          + " Cửa ra RẺ NHẤT: chuyển phần KỂ CHUYỆN (đo được bao nhiêu, vấp ở đâu, ai chốt) sang"
-          + " ADR — ADR nạp theo yêu cầu nên nó MIỄN PHÍ với mọi phiên. Giữ lại một câu luật cộng"
-          + " một liên kết.",
-      };
-    }
-    /* Thước gói đo BÓ MỞ PHIÊN — ADR-0033 ⑵, sửa lại ở ADR-0034 ⑷. Bó phải là **đúng danh sách
-       file mục 1 bắt đọc**, không phải một file tiện đo. Bản đầu đo `AGENTS.md` của gói một mình;
-       bản này cộng cả `STATUS.md`, thứ mục 1 nay bắt đọc thay cho `HANDOFF.md`. Thước nào không
-       khớp danh sách ở mục 1 thì lượt nén sau lại tối ưu nhầm chỗ — đã xảy ra hai lần trong một
-       ngày (đo `AGENTS.md` trong khi 70% hoá đơn nằm ở `HANDOFF.md`). */
-    if (doDuoc && typeof nap.tran_ky_tu_mot_goi === "number") {
-      let nangNhat = 0, ten = null, rieng = 0;
-      /* Danh sách file của gói đọc từ CẤU HÌNH (`nap.mo_phien_goi`), không gõ cứng — và một phép
-         ghim đối chiếu chính danh sách đó với `AGENTS.md` mục 1. Thêm một file vào mục 1 mà quên
-         khai ở đây thì phép ghim ĐỎ, nên thước không thể tụt lại sau luật. */
-      const cacFile = structure?.luat?.nap?.mo_phien_goi ?? ["AGENTS.md"];
-      /* Nền của phiên GÓI khác nền của phiên gốc: nó nạp `CLAUDE.md` định tuyến rồi `PHIEN.md`,
-         KHÔNG nạp `AGENTS.md` (ADR-0035 ⑴). Dùng đúng `phien_goi.dinh_tuyen` mà bộ sinh dùng —
-         cổng và bộ sinh phải cộng cùng một công thức, nếu không thì một bên lại đo sai chỗ. */
-      const dinhTuyen = structure?.luat?.phien_goi?.dinh_tuyen;
-      let nen = kyTu;
-      if (Array.isArray(dinhTuyen) && dinhTuyen.length) {
-        nen = 0;
-        for (const f of dinhTuyen) {
-          try { nen += fs.readFileSync(path.join(ROOT, f), "utf8").length; } catch { /* thiếu thì thôi */ }
-        }
-      }
-      for (const f of Object.keys(structure?.luat?.ra_soat ?? {})) {
-        if (!/^workers\/.*\/AGENTS\.md$/.test(f)) continue;
-        const thuMuc = path.dirname(f);
-        let n = 0, coFile = false;
-        for (const ten2 of cacFile) {
-          try { n += fs.readFileSync(path.join(ROOT, thuMuc, ten2), "utf8").length; coFile = true; }
-          catch { /* gói chưa sinh file đó thì bỏ qua, không phải lỗi của thước */ }
-        }
-        if (!coFile) continue;
-        if (nen + n > nangNhat) { nangNhat = nen + n; ten = `${thuMuc}/${cacFile.join(" + ")}`; rieng = n; }
-      }
-      if (nangNhat > nap.tran_ky_tu_mot_goi) {
-        return {
-          ok: false,
-          msg: `NAP_MOT_GOI_PHINH: bó nặng nhất là ${nangNhat} ký tự (~${Math.round(nangNhat / 2.2)}`
-            + ` token) = ${nen} định tuyến + ${rieng} của ${ten}; thước cóc là`
-            + ` ${nap.tran_ky_tu_mot_goi}. Đó là thứ một phiên làm gói đó nạp TRƯỚC KHI gõ dòng đầu`
-            + ` tiên. Trần tuyệt đối ${nap.dich_ky_tu_mot_goi ?? "?"}, ĐÍCH`
-            + ` ${nap.bien_ky_tu_mot_goi ?? "?"} (đích nằm DƯỚI trần 30–40%, ADR-0033 ⑴).`,
-        };
-      }
-    }
-  }
+ * Và nó KHÔNG làm yếu lớp bảo vệ: bỏ lưu trữ ra thì con số thật là **4.001**, tức thước mới
+ * CHẶT HƠN 5.744 cũ. Tên khoá giữ nguyên `tran_dong_khong_ke_adr` — đổi tên là repo đã lắp mất
+ * thước trong im lặng, tệ hơn một cái tên kể thiếu. Câu in ra thì nói đủ cả hai chỗ trừ. */
+const doKhoChu = () => {
   const tran = structure?.docs?.tran_dong_khong_ke_adr;
   if (typeof tran !== "number") {
     return { ok: true, msg: "Repo chưa khai `docs.tran_dong_khong_ke_adr` — không có thước thì không đo." };
   }
-  const ds = gitLoiLaBinhThuong("ls-files", "docs").split(String.fromCharCode(10))
-    .map((d) => d.trim()).filter((d) => d && !d.startsWith("docs/adr/"));
-  if (!ds.length) return { ok: true, msg: "Không có file `docs/` nào ngoài ADR." };
+  const ds = git("ls-files", "docs").split(String.fromCharCode(10))
+    .map((d) => d.trim())
+    .filter((d) => d && !THU_MUC_DOCS_KHONG_TINH.some((t) => d.startsWith(`docs/${t}/`)));
+  if (!ds.length) return { ok: true, msg: `Không có file \`docs/\` nào ngoài ${THU_MUC_DOCS_KHONG_TINH.join(", ")}.` };
   let dong = 0;
   for (const f of ds) {
-    // File vừa bị xoá khỏi cây làm việc thì bỏ qua, không ném: lượt sau `git ls-files` cũng
-    // không còn kể nó, và một lượt dọn dở dang không đáng làm cổng đỏ vì lý do khác.
     try { dong += fs.readFileSync(path.join(ROOT, f), "utf8").split(String.fromCharCode(10)).length - 1; }
-    catch { /* bỏ qua, xem trên */ }
+    catch { /* file vừa bị xoá khỏi cây làm việc — không tính, lượt sau `git ls-files` cũng bỏ nó */ }
   }
   if (dong <= tran) {
     const du = tran - dong;
     return {
       ok: true,
-      msg: `${dong}/${tran} dòng (${ds.length} file, không kể ADR).`
-        + (du >= 50 ? ` Đã dưới thước ${du} dòng — HẠ \`docs.tran_dong_khong_ke_adr\` xuống ${dong} để giữ phần đã dọn.` : ""),
+      msg: `${dong}/${tran} dòng (${ds.length} file, không kể ${THU_MUC_DOCS_KHONG_TINH.join("/, ")}/).`
+        + (du >= 50 ? ` Đã dưới thước ${du} dòng — HẠ \`docs.tran_dong_khong_ke_adr\` xuống ${dong} để giữ phần đã dọn.` : "")
     };
   }
   return {
     ok: false,
-    msg: `KHO_CHU_PHINH: ${dong} dòng trong \`docs/\` (không kể ADR), thước cóc là ${tran} — thêm ${dong - tran}. `
-      + "Đây KHÔNG phải trần lý tưởng, nó là con số của ngày hôm qua: phiên này đang làm kho chữ TO RA. "
+    msg: `KHO_CHU_PHINH: ${dong} dòng trong \`docs/\` (không kể ${THU_MUC_DOCS_KHONG_TINH.join("/, ")}/), thước cóc là ${tran} — thêm ${dong - tran}. `
+      + "Đây KHÔNG phải trần lý tưởng, nó là con số của ngày hôm qua: phiên này đang làm kho chữ to ra. "
       + "Ba cửa ra: xoá/gộp cho về dưới thước · chuyển phần dài sang một ADR (ADR không tính vào thước) · "
-      + "phần thêm cần thiết thật thì nâng `docs.tran_dong_khong_ke_adr` VÀ nói vì sao trong nhật ký phiên.",
+      + "nếu phần thêm là cần thiết thật thì nâng `docs.tran_dong_khong_ke_adr` VÀ nói vì sao trong nhật ký phiên."
   };
-});
-check("Sổ nợ dưới trần", () => {
+};
+
+/* TRẦN SỔ NỢ — một con số không có máy canh thì nó vỡ trong im lặng.
+ *
+ * Một repo tiêu thụ bộ khung đặt trần 15 mục và KHÔNG cưỡng chế. Kết quả đo 2026-09-07:
+ * mục thứ 11 vào sổ mà không gì đỏ lên, và trần phải nâng lên 15 sau khi đã vỡ — tức con số
+ * ấy chưa bao giờ là trần, nó là một lời khuyên. Đây là chỗ vá đúng: cổng đóng phiên là thứ
+ * MỌI phiên đều chạy, còn `backlog-check` là thứ chỉ người nhớ ra mới chạy.
+ *
+ * Trần khai ở `backlog.tran` của `.repo-structure.json`, KHÔNG viết cứng ở đây — repo khác
+ * nợ khác nhau. Repo không khai thì phép kiểm XANH và nói rõ là chưa có trần: một repo có
+ * quyền không đặt trần, và chặn nó vì thiếu một khoá tuỳ chọn là cổng tự bịa ra luật.
+ *
+ * Bộ đọc sổ dùng lại `parseBacklog` của `what-next.mjs`. Cố ý không viết bộ đếm thứ hai:
+ * quy ước đóng mục (gạch mã `~~KHUNG-1~~`) nằm trong đó, và hai bản sao của một quy ước đã
+ * trả hai câu khác nhau cho cùng một file — đúng cái bẫy `KHUNG-46` ghi.
+ *
+ * CÁI GIÁ của lượt dùng lại đó, ghi ra để phiên sau không mất thì giờ: cổng nay PHỤ THUỘC
+ * `what-next.mjs`. Mọi kho thử dựng sẵn (`tests/harness-smoke.mjs`, `tests/cong-do-that.mjs`)
+ * chép một DANH SÁCH script cố định sang thư mục tạm — thiếu file này thì cổng ném lúc nạp
+ * module, và test báo một câu trỏ sai chỗ ("không thấy phép kiểm HANDOFF"). Thêm kho thử mới
+ * mà chép `session-check.mjs` thì chép cả `what-next.mjs`. */
+const doSoNo = () => {
   const tran = structure?.backlog?.tran;
   if (typeof tran !== "number") {
     return { ok: true, msg: "Repo chưa khai `backlog.tran` trong .repo-structure.json — không có trần thì không có gì để canh." };
   }
   const so = path.join(ROOT, "BACKLOG.md");
   if (!fs.existsSync(so)) return { ok: true, msg: `Chưa có BACKLOG.md ở gốc repo (trần khai là ${tran}).` };
-  const mo = dangMo(fs.readFileSync(so, "utf8"));
+  const { mo } = parseBacklog(fs.readFileSync(so, "utf8"));
   if (mo.length <= tran) return { ok: true, msg: `${mo.length}/${tran} mục nợ đang mở.` };
   return {
     ok: false,
-    msg: `SO_NO_VUOT_TRAN — ${mo.length} mục đang mở, trần là ${tran} (${mo.slice(0, 6).join(", ")}${mo.length > 6 ? ", …" : ""}). `
-      + "ĐÓNG một mục là cổng xanh lại — thêm dòng `- **ĐÓNG <mã>** · <ngày> · lane `<tên>` · <bằng chứng>` ở CUỐI sổ, "
-      + "đừng sửa khối cũ. Thấy trần thật sự quá chặt thì HỎI ĐỨC rồi sửa `backlog.tran`, không sửa script."
+    msg: `SO_NO_VUOT_TRAN — ${mo.length} mục đang mở, trần là ${tran}. `
+      + `ĐÓNG một mục (gạch mã: \`### ~~MÃ~~ · …\`) là cổng xanh lại; đừng nâng trần để đi tiếp. `
+      + `Thấy trần thật sự quá chặt thì HỎI ĐỨC, và sửa \`backlog.tran\` trong .repo-structure.json, không sửa script.`
   };
-});
+};
 
+/* ---- chống tự tháo cổng ------------------------------------------------- */
+// Cách dễ nhất để "làm cho cổng xanh" là lặng lẽ xoá bớt một phép kiểm.
+// Con số này chặn đúng việc đó: thêm phép kiểm thật thì tăng nó lên và ghi
 // một dòng vào HANDOFF nói vì sao.
 // 2026-09-02, phiên S4: 7 → 8. Thêm "Cổng kiểm cấu trúc B1–B14 (chỉ cảnh báo)". Lý do đã ghi
 // một dòng vào HANDOFF.md gốc repo, đúng luật chống tự tháo cổng.
@@ -1270,53 +1374,69 @@ check("Sổ nợ dưới trần", () => {
 // công cụ đã quy một file về hai vùng khác nhau mà cổng vẫn xanh. Lý do ghi ở HANDOFF.md gốc.
 // 2026-09-02, phiên K2-3: 9 → 10. Thêm "Nhãn lane trong commit", vì quy commit theo chủ HIỆN
 // TẠI của vùng sai cả hai chiều — và chiều nguy hiểm là im lặng đẩy kèm việc người khác.
-// 2026-09-03, phiên K2-vá-lỗi: 11 → 12. Thêm "Đọc git không lỗi", vì hàm đọc git nuốt mọi lỗi
-// thành chuỗi rỗng, và chuỗi rỗng đó im lặng biến thành "vùng của tôi sạch" ngay trong guard
-// của K2-9 — cổng tự miễn cho regression của chính lane. Audit GPT vòng 5 bắt được.
-// 2026-09-06, lane claude-handoff-tran: 12 -> 13. Them "HANDOFF: muc moi trong tran, file dung
-// thang" (ADR-0011). Ly do ghi mot dong vao HANDOFF.md goc repo, dung luat chong tu thao cong.
-// 2026-09-08, lane claude-cua-kiem: 13 -> 14. Them "So no duoi tran". Duc chot tran 15 co hieu
-// luc that; truoc do gioi han (4) cua AGENTS.md tu khai la KHONG co may cuong che, va no da vo
-// trong im lang dung mot lan. Ly do ghi mot dong vao HANDOFF.md goc repo.
-// 2026-09-08, lane claude-ext-mobang: 14 -> 15. Them "Kho chu khong phinh" — THUOC COC cho
-// docs/ (tru ADR, vi ADR bat bien nen chi co the to len). Duc hoi "protocol clean, neu chua co
-// ta nen xay dung dung khong?" — co, nhung la PHEP KIEM chu khong phai mot tai lieu moi: mot
-// tai lieu day cach don tai lieu cong vao dung con so no dinh cat. Ly do ghi vao HANDOFF.md goc.
-// 2026-09-08, lane claude-ext-khoafile: 15 -> 16. Them "Khoa file da tra het" — ca gia tri
-// cua khoa muc file nam o chu NGAN, va khong gi cuong che chu do thi no thoai hoa thanh dung
-// cai khoa vung dai han ma no thay the. Ly do ghi vao HANDOFF.md goc + ADR-0025.
-check("Luật biên dịch sạch", () => {
-  /* BỘ BIÊN DỊCH LUẬT — Đức chốt 09/09. Chỉ ① là ĐỎ; ②③④ đi kèm làm số liệu.
-     Vì sao chỉ ① đỏ: `docs/protocols/RULE-COMPILER.md` mục 3. Tóm tắt — ① là một câu SAI SỰ
-     THẬT trong file luật (đang dạy thứ Đức đã chốt ngược lại), ba cái kia là MÙI. Một cổng
-     đỏ vì mùi là một cổng sẽ bị tắt. */
-  let kq, tong;
-  try {
-    const d = docTuDia();
-    kq = bienDich({ ...d, homNay: Date.now() });
-    tong = d.soCai.reduce((n, f) => n + f.mang.length, 0);
-  } catch (e) {
-    return { ok: true, skipped: true, msg: "Không chạy được bộ biên dịch luật (" + (e?.message ?? e) + ") — không đo được KHÁC không đạt." };
-  }
-  const moCoi = kq.moCoi.reduce((n, g) => n + g.cai.length, 0);
-  const duoi = `${tong} quyết định · ${moCoi} mồ côi · ${kq.trung.length} chỗ trùng · ${kq.quaHan.length} nơi quá hạn rà`
-    + " — xem đủ: `node scripts/rule-compile.mjs`.";
-  if (!kq.veChetConTrich.length) return { ok: true, msg: "Không nơi chứa luật nào trích một vế đã chết. " + duoi };
-  const cho = kq.veChetConTrich.map((c) => `${c.file}:${c.dong} → ADR-${c.so}${c.ve ? " " + c.ve : ""}`).join(" · ");
+check("Mọi lệnh git đọc được", () => {
+  // Đặt CUỐI cùng, cố ý: tới đây mọi phép kiểm đã chạy xong nên `gitLoi` đã gom đủ.
+  if (!gitLoi.length) return { ok: true, msg: "Không lệnh git nào hỏng." };
   return {
     ok: false,
-    msg: "TRICH_VE_CHET: " + cho + ". File luật đang dạy một thứ Đức đã chốt NGƯỢC LẠI — không có cách"
-      + " đọc nào khiến nó đúng. Cửa ra: sửa lượt trích sang số hiệu ĐANG SỐNG, hoặc nếu vế đó thật sự"
-      + " còn hiệu lực thì bỏ nó khỏi mục `Vế đã chết` của ADR. Đừng gỡ phép kiểm. " + duoi,
+    msg: `GIT_HONG — ${gitLoi.length} lệnh git thất bại, nên MỌI con số ở trên đều là đoán: ${[...new Set(gitLoi)].slice(0, 3).join(" · ")}. Kiểm xem đây có phải kho git không, và git có trong PATH không.`
   };
 });
 
-// 2026-09-09, lane claude-luat-rasoat: 16 -> 17. Them "Luat bien dich sach" — moi noi giua SO
-// CAI (docs/adr) va BAN HIEU LUC (AGENTS.md + so tay) truoc do KHONG ai canh: lan gop 27 ADR
-// thanh 9 file de lai hai luot trich vao quyet dinh DA CHET (AGENTS.md muc 7 va ORCHESTRATOR
-// muc 0d day mo hinh MOT CUA da bi 0017 thay tu 07/09). Duc chot mot bo rule compiler: append
-// -> merge -> supersede -> trim -> compile. Ly do ghi vao HANDOFF.md goc + RULE-COMPILER.md.
-const EXPECTED_CHECKS = 18;
+// 2026-09-08, phiên claude-cua-kiem: 13 → 14. Thêm "Kho chữ không phình" — thước cóc cho
+// `docs/` (trừ ADR, vì ADR bất biến nên chỉ có thể to lên). Đo được: docs/ tăng 739 dòng trong
+// một ngày mà không con số nào canh. Lý lẽ ở ADR-0011.
+// 2026-09-08, phiên claude-cua-kiem: 12 → 13. Thêm "HANDOFF: mục mới trong trần, file đúng
+// tháng" — cơ chế mang từ repo tiêu thụ lên nơi phát hành (ADR-0011) để mọi repo cùng có.
+// 2026-09-08, phiên claude-cua-kiem: 11 → 12. Thêm "Sổ nợ dưới trần". Đức uỷ quyền chọn con số
+// và cách cưỡng chế; lý do ở ADR-0010. Trần khai trong `.repo-structure.json`, repo không khai
+// thì phép kiểm xanh — nên bản khung phát đi không tự đặt trần cho repo nào.
+/* BỐN MỤC GỘP — mỗi mục một CÂU HỎI, không phải một phép đo. Xem ghi chú ở `ghepKiem`.
+   Thứ tự trong mỗi mục là thứ tự đọc: cái chặn nặng nhất đứng trước. */
+/* DẤU NIEM PHONG bảng quyền — kéo về từ repo tiêu thụ 09/09.
+   Luật mục 1 viết "nhận và trả BẰNG LỆNH, không sửa tay" từ lâu, nhưng KHÔNG gì cưỡng chế nó.
+   Bên kia đã trả giá thật: bốn khoá gốc bị đổi chủ bằng một lượt sửa hàng loạt đi vòng qua lệnh,
+   và phiên đang giữ khoá không hề biết. Gộp vào mục QUYỀN chứ không thành mục thứ 26 — cùng chủ
+   đề, và thêm một mục để cưỡng chế một luật chống-lách thì đúng cái luật mục 8 cấm. */
+const doNiemPhong = () => {
+  let st;
+  try { st = fingerprintState(readClaims()); }
+  catch (e) { return { ok: false, msg: `không đọc được bảng quyền: ${String(e.message).split(String.fromCharCode(10))[0]}` }; }
+  if (st.ok === false) return { ok: false, msg: `DAU_VO: bảng quyền bị sửa NGOÀI lệnh (dấu ${st.stamped} ≠ nội dung ${st.actual}). Xem "git diff .agents/claims.json"; ĐỪNG đóng lại dấu cho xong.` };
+  if (st.ok === null) return { ok: true, skipped: true, msg: "bảng chưa có dấu niêm phong — chạy \"claim.mjs --restamp --as <phiên>\" một lần" };
+  return { ok: true, msg: "dấu niêm phong còn nguyên" };
+};
+
+ghepKiem("Ai đứng tên việc này", ["khoá file", doKhoaFile], ["phạm vi", doPhamVi], ["niêm phong", doNiemPhong]);
+ghepKiem("Vùng CHỈ-THÊM không bị viết lại", ["bằng chứng", doBangChung], ["sổ quyết định", doSoQuyetDinh]);
+ghepKiem("HANDOFF đã ghi Log, đúng trần, đúng tháng", ["ghi Log", doGhiLog], ["trần/tháng", doTranHandoff]);
+/* PHẦN NẠP — CONTEXT COMPILER, gắn vào cổng ở ĐÂY chứ không thành một mục riêng.
+ *
+ * Đây là thứ Đức gọi là điểm quan trọng nhất: sổ cái được phép phình vô hạn, **thứ NẠP thì
+ * không**. Một lệnh không ai chạy thì nó không canh gì — nên nó phải nằm trong cổng.
+ *
+ * Vì sao GỘP vào mục ngân sách thay vì thêm mục thứ 26: nó LÀ một thước ngân sách, và Đức vừa
+ * chốt giảm số phép kiểm xuống 25. Thêm một mục để cưỡng chế luật chống-phình thì tự mâu thuẫn.
+ *
+ * Đo cái gì: `AGENTS.md` + phần cuối `HANDOFF.md` — thứ MỌI phiên ở MỌI repo phải nạp, nên mỗi
+ * dòng ở đây nhân theo (số repo × số phiên). Kho `docs/` KHÔNG tính: nó mở khi cần. */
+const doNap = () => {
+  const tran = structure?.budget?.tokenNap;
+  if (typeof tran !== "number") return { ok: true, msg: "repo chưa khai `budget.tokenNap` — không có thước thì không đo." };
+  let kq;
+  try { kq = napContext(ROOT, tran); } catch (e) { return { ok: true, skipped: true, msg: `không đo được phần nạp: ${String(e.message).split(String.fromCharCode(10))[0]}` }; }
+  const tyLe = Math.round(kq.napToken * 100 / Math.max(1, kq.napToken + kq.khongNapToken));
+  if (kq.dat) return { ok: true, msg: `~${kq.napToken}/${kq.tran} token nạp mỗi phiên · ${kq.khongNapToken} token để dành (${tyLe}% nạp).` };
+  return {
+    ok: false,
+    msg: `PHAN_NAP_VUOT_TRAN: ${kq.napDong}/${kq.tran} dòng. Đây là thứ MỌI phiên ở MỌI repo nạp, nên mỗi dòng nhân theo (số repo × số phiên). `
+      + "Bớt ở `AGENTS.md` (luật mục 8: thêm một luật thì bớt một luật), đừng nới trần."
+  };
+};
+
+ghepKiem("Ngân sách trong trần", ["kho chữ", doKhoChu], ["sổ nợ", doSoNo], ["phần nạp", doNap]);
+
+const EXPECTED_CHECKS = 12;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");
@@ -1326,11 +1446,46 @@ if (results.length !== EXPECTED_CHECKS) {
 /* ---- báo cáo ------------------------------------------------------------ */
 console.log(`\nCỔNG KIỂM ĐÓNG PHIÊN — phiên "${asLabel}"`);
 if (!originMainResolves) {
-  console.log(`⚠ KHÔNG SO ĐƯỢC VỚI origin/main — cổng chỉ thấy CÂY LÀM VIỆC. Mọi commit chưa push`);
+  console.log(`⚠ KHÔNG SO ĐƯỢC VỚI ${MOC} — cổng chỉ thấy CÂY LÀM VIỆC. Mọi commit chưa push`);
   console.log(`  đều KHÔNG được xét: không đòi Log HANDOFF, không quy chủ, không kích hoạt suite.`);
   console.log(`  Kiểm: \`git remote -v\` và \`git branch -r\`. Repo mới thì chạy \`git fetch origin\` một lần.`);
 }
 console.log(`Bạn chịu trách nhiệm: ${[...myPackages, ...myRootAreas].join(", ") || "(không vùng nào)"}`);
+
+/* ---- VÀNG, KHÔNG ĐỎ: khoá bạn đang giữ mà repo chưa thấy dấu vết ----------
+ *
+ * MỨC NGHIÊM TRỌNG LÀ PHẦN CỦA HỢP ĐỒNG, không phải chi tiết trình bày. Đây là một GHI CHÚ,
+ * cố ý nằm ngoài danh sách phép kiểm: nó không đụng `EXPECTED_CHECKS`, không đụng `results`,
+ * và không đổi mã thoát. `tests/khoa-dau-vet.mjs` ghim đúng điều đó.
+ *
+ * Vì sao không được để nó thành ĐỎ: một lane đọc kỹ 30 phút trước khi sửa một dòng là lane
+ * TỐT. Chặn nó là dạy mọi lane **ghi bừa một byte để giữ khoá cho hợp lệ** — lúc đó phép kiểm
+ * biến thành thứ ngược lại chính nó.
+ *
+ * Và câu này nói với ĐÚNG MỘT người: chính lane đang giữ khoá, người duy nhất biết mình có
+ * đang làm hay không. Nó không nói với phiên điều phối, và nó không cho phép ai nhả khoá hộ.
+ *
+ * CÂU IN RA LẤY TỪ `noiDauVet`, không gõ lại ở đây. Trước bản 1.3.23 chỗ này gõ tay, tức có
+ * HAI bản của cùng một câu — và tên của tín hiệu này là phần của hợp đồng: bản đầu gọi nó là
+ * "vùng chưa bị chạm", và cả người viết ra nó cũng đọc thành "lane đang rảnh". Hai bản thì
+ * sớm muộn một bản trôi, và bản trôi là bản dạy sai. */
+try {
+  const kh = await import("./claim.mjs");
+  const cuaToi = Object.fromEntries(Object.entries(CLAIMS || {}).filter(([, v]) => v?.owner === asLabel));
+  const vet = await kh.doDauVet(cuaToi, ROOT);
+  const chua = [...vet.entries()].filter(([, t]) => t === kh.DAU_VET.CHUA).map(([k]) => k);
+  if (chua.length) {
+    const tuoi = chua.map((k) => { const st = CLAIMS[k]?.claimed_at; const cg = kh.mocCoGio(st); return `${k} (${cg ? "giữ " : ""}${kh.ageLabel(kh.ageHours(st), cg)})`; }).join(", ");
+    console.log(`⚠ VÀNG — ${kh.noiDauVet(kh.DAU_VET.CHUA)} ở: ${tuoi}`);
+    console.log("  Không commit nào chạm vùng đó kể từ lúc bạn nhận khoá, và không file nào đang sửa dở.");
+    console.log("  KHÔNG chặn bạn: đọc kỹ trước khi sửa là việc tốt, và repo không thấy được việc bạn");
+    console.log("  làm ở ngoài nó. Chỉ là: nếu vùng đó bạn CHƯA cần nữa thì tự trả, phiên khác đang chờ.");
+    console.log(`  Trả: node scripts/claim.mjs --release ${chua[0]} --as ${asLabel}`);
+  }
+} catch (_) {
+  /* Không đo được thì im — đây là ghi chú, không phải phép kiểm. Một ghi chú tự nổ sẽ làm
+   * người ta gỡ nó ra, và lúc đó mất luôn thứ nó định nói. */
+}
 const others = [...foreignPackages, ...foreignRootAreas].map((k) => `${k} [${ownedBy(k)}]`);
 if (others.length) console.log(`Phiên khác đang làm dở, KHÔNG tính cho bạn: ${others.join(", ")}`);
 console.log("");
@@ -1339,33 +1494,87 @@ for (const r of results) {
   console.log(`  [${mark}] ${r.name}`);
   console.log(`         ${r.msg}`);
 }
-/* ---- VÀNG: vùng BẠN đang giữ mà repo chưa thấy dấu vết — N-09 -------------
+/* BA TRẠNG THÁI, KHÔNG PHẢI HAI. Đây là chỗ cổng từng nói dối.
  *
- * CỐ Ý KHÔNG PHẢI MỘT PHÉP KIỂM. Nó không vào `results`, không đụng `EXPECTED_CHECKS`, và
- * không đổi mã thoát. Mức nghiêm trọng là PHẦN CỦA HỢP ĐỒNG, không phải chi tiết cài đặt:
- * một lane đọc kỹ 30 phút trước khi sửa một dòng là lane TỐT, và chặn nó là dạy mọi lane ghi
- * bừa một byte để giữ khoá cho hợp lệ — lúc đó phép kiểm thành thứ ngược lại chính nó.
+ * Bản cũ chỉ đếm `!ok`. Mục `BỎ` mang `ok: true`, nên một lượt chạy KHÔNG KIỂM ĐƯỢC GÌ vẫn kết
+ * thúc bằng đúng câu "XANH TOÀN BỘ — được phép báo xong" và thoát 0. Ba ca có thật cùng dẫn tới
+ * đó: chạy `--quick`; repo chưa khai `scripts.test`; không phân giải được `origin/main` (nhánh
+ * tên khác, hoặc chưa `git fetch`) nên mọi commit chưa push biến khỏi tầm nhìn.
  *
- * VÀ NÓ CHỈ NÓI VỚI CHÍNH LANE ĐANG GIỮ KHOÁ — người duy nhất biết mình có đang làm hay
- * không. Nó không nói với ai khác, và nó không bao giờ là giấy phép để một phiên khác nhả
- * khoá hộ (BRIEF-K2-KHOA-RANH-01 mục 2b: ba đường hợp lệ, không có đường thứ tư). */
-if (CLAIMS) {
-  const cuaToi = Object.fromEntries(Object.entries(CLAIMS)
-    .filter(([, v]) => v?.owner === asLabel)
-    .map(([k, v]) => [k, v.claimed_at]));
-  let vet = new Map();
-  try { vet = dauVetTheoVung(ROOT, structure, cuaToi); } catch { vet = new Map(); }
-  const im = [...vet.entries()].filter(([, v]) => v.trangThai === DAU_VET.CHUA_THAY).map(([k]) => k);
-  if (im.length) {
-    console.log(`⚠ VÀNG (không chặn) — ${im.length} vùng bạn đang giữ mà ${CHUA_THAY_DAU_VET}: ${im.join(", ")}`);
-    console.log("  Không commit nào chạm vùng đó kể từ lúc bạn nhận, và không file nào trong vùng bị sửa trên đĩa.");
-    console.log("  Chỉ BẠN biết mình có đang làm hay không: đang dựng thử ngoài repo thì cứ giữ, câu này không");
-    console.log("  chặn gì cả. Còn nếu chưa cần tới thì TỰ TRẢ để phiên khác vào được:");
-    for (const k of im) console.log(`      node scripts/claim.mjs --release ${k} --as ${asLabel}`);
-    console.log("");
-  }
-}
+ * Vì sao KHÔNG chuyển `BỎ` thành ĐỎ: một repo vừa dựng chưa có test là chuyện thật và hợp lệ —
+ * đỏ ở đó là khoá repo ngay phiên đầu. Nhưng "chưa kiểm được" cũng KHÔNG phải "đã đạt". Nên nó
+ * là trạng thái thứ ba, có mã thoát riêng:
+ *
+ *   0 — XANH TOÀN BỘ            mọi phép kiểm đã chạy và đạt
+ *   1 — CHƯA XONG               có mục đỏ
+ *   2 — CHƯA ĐỦ BẰNG CHỨNG      không mục nào đỏ, nhưng có mục không kiểm được
+ *
+ * Cả ca `BỎ` đều tự sửa được, và quy trình migrate đã dặn đúng cách sửa — nên mã 2 không khoá
+ * repo nào, nó chỉ không cho nói dối. */
+/* GHI MỘT DÒNG MỖI LẦN CHẠY — để trả lời được câu "luật nào chưa từng chặn được gì".
+ *
+ * `docs/BAO-TRI-DINH-KY.md` hỏi câu đó từ đầu, nhưng hỏi suông: không ai trả lời nổi khi không
+ * có gì ghi lại. Một luật chưa từng bắt được gì thì hoặc nó thừa, hoặc nó là phép kiểm rỗng
+ * nghĩa — repo này đã tự bắt được BẢY cái như thế trong ba ngày.
+ *
+ * KHÔNG COMMIT file này, và cố ý: nó là số đo của MÁY NÀY, không phải sự thật chung của repo.
+ * Commit vào thì mỗi phiên lại tạo một thay đổi rác, và cổng "cây làm việc sạch" kêu oan.
+ * Cắt còn 300 dòng cuối để nó không phình vô hạn — chính file đo cân nặng mà béo lên thì hỏng. */
+try {
+  // GHI RA NGOÀI REPO, không ghi vào trong.
+  //
+  // Bản đầu ghi `.agents/gate-log.jsonl` trong repo. Ở repo nhà thì thêm một dòng .gitignore là
+  // xong — nhưng cổng này ĐI THEO BẢN TRÍCH sang mọi repo khác, và ở đó nó tạo một file lạ mà
+  // chính phép kiểm bản đồ của nó bắt được. Đo thật ở repo NAV: cổng tự làm mình đỏ.
+  //
+  // Sổ này vốn là số đo CỦA MÁY NÀY, không phải sự thật chung của repo — nên chỗ đúng của nó là
+  // thư mục tạm của máy, khoá theo đường dẫn repo. Không đụng một byte nào trong repo.
+  const os = await import("node:os");
+  const crypto = await import("node:crypto");
+  const khoa = crypto.createHash("sha256").update(ROOT).digest("hex").slice(0, 16);
+  const thuMuc = path.join(os.tmpdir(), "ark-harness-gate-log");
+  fs.mkdirSync(thuMuc, { recursive: true });
+  const soGhi = path.join(thuMuc, khoa + ".jsonl");
+  const dongMoi = JSON.stringify({
+    // Ngày theo đồng hồ MÁY NÀY, không phải UTC. Cùng lỗi đã sửa ở build-overview: sinh lúc
+    // 0h30 giờ Việt Nam thì toISOString() trả ngày HÔM QUA, và sổ ghi lệch ngay dòng đầu.
+    d: (() => { const x = new Date(), z = (n) => String(n).padStart(2, "0");
+                return `${x.getFullYear()}-${z(x.getMonth() + 1)}-${z(x.getDate())}`; })(),
+    as: asLabel,
+    ten: results.map((r) => r.name),
+    do: results.filter((r) => !r.ok).map((r) => r.name),
+    bo: results.filter((r) => r.ok && r.skipped).map((r) => r.name)
+  });
+  let cu = [];
+  try { cu = fs.readFileSync(soGhi, "utf8").split(String.fromCharCode(10)).filter(Boolean); } catch { cu = []; }
+  fs.writeFileSync(soGhi, [...cu, dongMoi].slice(-300).join(String.fromCharCode(10)) + String.fromCharCode(10), "utf8");
+} catch { /* ghi sổ hỏng KHÔNG được làm hỏng cổng — đây là số đo phụ, không phải phép kiểm */ }
 
 const failed = results.filter((r) => !r.ok);
-console.log(failed.length ? `\nCHƯA XONG — ${failed.length} mục đỏ, sửa rồi chạy lại.\n` : `\nXANH TOÀN BỘ — được phép báo xong.\n`);
-process.exit(failed.length ? 1 : 0);
+const boQua = results.filter((r) => r.ok && r.skipped);
+if (failed.length) {
+  console.log(`\nCHƯA XONG — ${failed.length} mục đỏ, sửa rồi chạy lại.\n`);
+  process.exit(1);
+}
+if (boQua.length) {
+  console.log(`\nCHƯA ĐỦ BẰNG CHỨNG — ${boQua.length} mục KHÔNG KIỂM ĐƯỢC (không mục nào đỏ).`);
+  console.log("KHÔNG được báo xong: cổng chưa nhìn thấy thứ nó phải canh. Từng mục:");
+  for (const r of boQua) console.log(`  · ${r.name}`);
+  console.log("");
+  process.exit(2);
+}
+try {
+  if (loiDauCong) throw new Error(loiDauCong);
+  const sau = dauCay(ROOT);
+  if (sau.head !== dauCongTruoc.head || sau.bam !== dauCongTruoc.bam
+      || git("rev-parse", "--verify", MOC).trim() !== dauCongTruoc.moc) {
+    throw new Error("TREE_CHANGED: cây hoặc mốc remote đã đổi trong lúc chạy cổng; chạy lại trên cây ổn định.");
+  }
+  ghiDauCong(ROOT, { ...dauCongTruoc, loai: "session-check", as: asLabel, ok: true,
+    moi_truong: moiTruongNay(), luc: new Date().toISOString() });
+} catch (e) {
+  console.error(`\nCHƯA ĐỦ BẰNG CHỨNG — không ghi được kết quả cổng: ${e.message}`);
+  process.exit(2);
+}
+console.log(`\nXANH TOÀN BỘ — được phép báo xong.\n`);
+process.exit(0);

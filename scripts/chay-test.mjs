@@ -18,9 +18,8 @@
  *
  * DẤU NÀY KHÔNG PHẢI CỬA SAU, và đây là chỗ dễ hiểu sai nhất:
  *
- *   · Nó buộc vào **HEAD** + **băm của `git status --porcelain -uall`**. Sửa một byte trong bất
- *     kỳ file nào — kể cả file chưa track — là dấu hết hiệu lực. Không có đường nào để một cây
- *     làm việc CHƯA từng chạy suite mà lại có dấu hợp lệ.
+ *   · Nó buộc vào HEAD, index và nội dung file thay đổi (kể cả file chưa track).
+ *     Sửa tiếp một file đã bẩn cũng làm dấu hết hiệu lực; chỉ tên/trạng thái file là không đủ.
  *   · Nó có **hạn dùng** (mặc định 30 phút). Không phải vì cây làm việc đổi được mà băm không
  *     thấy, mà vì một dấu để lâu là một dấu không ai còn nhớ nó nói về cái gì.
  *   · Nó **không được commit** (`.gitignore`), nên không đi theo repo và không ai "mượn" được
@@ -56,10 +55,53 @@ export const HAN_MAC_DINH_PHUT = 30;
 export function dauCay(root = ROOT) {
   const git = (...a) => execFileSync("git", a, { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   const head = git("rev-parse", "HEAD").trim();
-  // `-uall` để một FILE mới trong thư mục mới cũng hiện ra. Mặc định git co cả thư mục thành
-  // một dòng, và khi đó thêm một file test mới KHÔNG đổi băm — dấu sẽ còn hiệu lực sai.
-  const ban = git("status", "--porcelain", "-uall");
-  return { head, bam: crypto.createHash("sha256").update(ban).digest("hex").slice(0, 32) };
+  const hash = crypto.createHash("sha256").update("ark-tree-v2\0");
+  hash.update(git("status", "--porcelain", "-z", "-uall"));
+  // Index và nội dung trên đĩa là hai thứ khác nhau; phải ghim cả hai.
+  hash.update(git("diff", "--cached", "--binary", "--no-ext-diff", "--no-textconv", "HEAD"));
+  const files = new Set([
+    ...git("diff", "--name-only", "-z", "HEAD").split("\0"),
+    ...git("ls-files", "--modified", "--others", "--exclude-standard", "-z").split("\0")
+  ].filter(Boolean));
+  for (const rel of [...files].sort()) {
+    const file = path.join(root, rel);
+    hash.update(JSON.stringify(rel));
+    try {
+      const stat = fs.lstatSync(file);
+      const bytes = stat.isSymbolicLink() ? Buffer.from(fs.readlinkSync(file))
+        : stat.isFile() ? fs.readFileSync(file) : Buffer.from("directory");
+      hash.update(`${stat.mode}:${bytes.length}:`).update(bytes);
+    } catch (e) {
+      if (e.code !== "ENOENT") throw e;
+      hash.update("deleted");
+    }
+  }
+  return { head, bam: hash.digest("hex").slice(0, 32) };
+}
+
+// Bằng chứng cổng khác dấu suite. Để trong .git: không thêm file nạp hay luật ignore ở repo nhận.
+function tepDauCong(root) {
+  const dir = execFileSync("git", ["rev-parse", "--absolute-git-dir"], { cwd: root, encoding: "utf8" }).trim();
+  return path.join(dir, "ark-gate-stamp.json");
+}
+export function docDauCong(root = ROOT) {
+  try { return JSON.parse(fs.readFileSync(tepDauCong(root), "utf8")); } catch { return null; }
+}
+export function xoaDauCong(root = ROOT) {
+  fs.rmSync(tepDauCong(root), { force: true });
+}
+export function ghiDauCong(root, data) {
+  const file = tepDauCong(root);
+  const tmp = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(data), "utf8");
+  fs.renameSync(tmp, file);
+}
+export function xetDauCong(dau, cay, lenh, { as, moc, ...opts }) {
+  if (dau?.loai !== "session-check" || dau.as !== as || !moc || dau.moc !== moc) {
+    return { dung: false, vi_sao: "chưa có cổng xanh của phiên này trên đúng mốc remote" };
+  }
+  const kq = xetDau(dau, cay, lenh, opts);
+  return { ...kq, vi_sao: kq.vi_sao.replace("suite đã xanh", "cổng đã xanh") };
 }
 
 /** Môi trường chạy. Đổi bản Node là suite chưa từng chạy trên bản đó. */
@@ -78,12 +120,12 @@ export function xetDau(dau, { head, bam }, lenh, { phut = HAN_MAC_DINH_PHUT, now
   if (dau.ok !== true) return { dung: false, vi_sao: "dấu ghi lượt chạy KHÔNG xanh" };
   /* MÔI TRƯỜNG, không chỉ mã nguồn. Chỗ này do phiên Codex bắt được khi chấm chéo 08/09, và nó
      đúng: *"đừng tin một cache chỉ dựa vào HEAD — HEAD bỏ sót file bẩn, phụ thuộc, môi trường."*
-     File bẩn thì `git status --porcelain -uall` đã che. Môi trường thì KHÔNG: đổi phiên bản Node
+     File bẩn thì băm nội dung đã che. Môi trường thì KHÔNG: đổi phiên bản Node
      rồi chạy cổng là suite chưa từng chạy trên bản Node đó, mà dấu vẫn hợp lệ.
      Còn một khe CỐ Ý để ngỏ, ghi ra để không ai tưởng nó kín: thư mục bị `.gitignore`
      (`node_modules/`) không nằm trong băm. Khai báo phụ thuộc thì có — `package-lock.json` là
-     file được track nên HEAD ghim nội dung nó và porcelain bắt mọi sai lệch. Chỉ lượt SỬA TAY
-     trong `node_modules` là lọt, và hạn 30 phút là thứ chặn nó. */
+     file được track nên băm nội dung ghim nó. Sửa tay trong `node_modules` vẫn ngoài phạm vi;
+     hạn 30 phút chỉ giới hạn tuổi dấu, không chứng minh thư mục bị ignore còn nguyên. */
   if (dau.moi_truong !== moiTruong) {
     return { dung: false, vi_sao: `dấu chạy trên môi trường "${dau.moi_truong ?? "không ghi"}", nay là "${moiTruong}"` };
   }
@@ -105,7 +147,7 @@ export function ghiDau(root, data) {
 }
 
 export function xoaDau(root = ROOT) {
-  try { fs.rmSync(path.join(root, TEN_DAU), { force: true }); } catch { /* không có thì thôi */ }
+  fs.rmSync(path.join(root, TEN_DAU), { force: true });
 }
 
 /* ---- danh sách suite ------------------------------------------------------- */
@@ -126,33 +168,6 @@ export function danhSachTuanTu(root = ROOT) {
     const ds = ct?.test?.serial;
     return Array.isArray(ds) ? ds.filter((s) => typeof s === "string" && s) : [];
   } catch { return []; }
-}
-
-/** Suite nào RỖNG hoặc KHÔNG KHẲNG ĐỊNH GÌ. Trả danh sách đường dẫn đáng ngờ.
- *
- * VÌ SAO CÓ. Ngày 09/09 `tests/rule-compile-smoke.mjs` bị cắt còn **0 byte** bởi một lệnh viết
- * sai thứ tự (mở file để GHI trước khi đọc nó). Node chạy một file rỗng và **thoát 0**. Bộ chạy
- * báo XANH, cổng báo XANH, và bản rỗng đã được commit. Không lớp nào kêu, vì mọi lớp đều đang
- * hỏi "có ĐỎ không" chứ không hỏi "có KIỂM gì không".
- *
- * Đây là họ hàng gần của `MUTATION_SKIP`: một bộ kiểm im lặng đọc y hệt một lượt xanh.
- *
- * CHỈ ĐO ĐỘ DÀI, cố ý. Bản đầu còn đòi mỗi suite phải chứa `assert` — nó báo **6 lỗi giả** ngay
- * lượt chạy đầu: bốn `run-all.mjs` là bộ GOM (chúng chạy suite con rồi chuyển tiếp mã thoát,
- * không tự khẳng định gì) và `backlog-check.mjs` là bộ kiểm chứ không phải test. Sáu lỗi giả để
- * bắt thêm một ca giả thuyết là một vụ đổi tồi: phép kiểm báo giả sẽ bị tắt, và lúc đó nó không
- * còn bắt được ca THẬT nữa. Ngưỡng 200 byte bắt đúng thứ đã xảy ra — file bị CẮT — và không
- * phán xét file viết ngắn. */
-export function suiteRong(ds, root = ROOT) {
-  const xau = [];
-  for (const lenh of ds) {
-    const f = lenh.split(/\s+/).find((x) => x.endsWith(".mjs") || x.endsWith(".js"));
-    if (!f) continue;
-    let noiDung;
-    try { noiDung = fs.readFileSync(path.join(root, f), "utf8"); } catch { continue; }
-    if (noiDung.trim().length < 200) xau.push(`${f} — chỉ ${noiDung.length} byte, nghi bị cắt`);
-  }
-  return xau;
 }
 
 /* ---- chạy ------------------------------------------------------------------ */
@@ -189,16 +204,13 @@ async function main(argv) {
   const epTuanTu = argv.includes("--tuan-tu");
   let ds = danhSachSuite(root);
   if (!ds.length) { console.error("KHONG_CO_SUITE: `package.json` không khai `scripts.test`."); return 2; }
-  const rong = suiteRong(ds, root);
-  if (rong.length) {
-    console.error("SUITE_RONG: " + rong.length + " suite không thể ĐỎ được — chạy chúng là tự lừa mình:");
-    for (const x of rong) console.error("  · " + x);
-    console.error("Một file test rỗng thoát 0 và đọc y hệt một lượt xanh. Khôi phục rồi chạy lại.");
-    return 2;
-  }
   const lenhBam = bamLenh(ds);
   if (chi) ds = ds.filter((s) => s.includes(chi));
   if (!ds.length) { console.error(`KHONG_KHOP: không suite nào có tên chứa "${chi}".`); return 2; }
+
+  xoaDau(root);
+  xoaDauCong(root);
+  const cayTruoc = dauCay(root);
 
   const phaiRieng = danhSachTuanTu(root);
   const laRieng = (l) => phaiRieng.some((p) => l.includes(p));
@@ -247,6 +259,10 @@ async function main(argv) {
     return 0;
   }
   const { head, bam } = dauCay(root);
+  if (head !== cayTruoc.head || bam !== cayTruoc.bam) {
+    console.error("TREE_CHANGED: nội dung hoặc index đã đổi trong lúc chạy suite; chưa ghi dấu, chạy lại trên cây ổn định.");
+    return 2;
+  }
   ghiDau(root, { ok: true, head, bam, lenh: lenhBam, moi_truong: moiTruongNay(), luc: new Date().toISOString(), giay: +giay, so_suite: ds.length });
   console.log(`Đã ghi ${TEN_DAU}: cổng đóng phiên sẽ dùng lại kết quả này nếu cây làm việc không đổi.`);
   return 0;

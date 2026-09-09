@@ -1,26 +1,28 @@
-/* state-check.mjs — CỔNG NHẤT QUÁN TRẠNG THÁI, chạy TRƯỚC KHI BÁO CÁO cho Đức.
+/* state-check.mjs — CỔNG NHẤT QUÁN TRẠNG THÁI, chạy TRƯỚC KHI BÁO CÁO cho chủ dự án.
  *
  * ĐÂY KHÔNG PHẢI `session-check.mjs`. Lẫn hai thứ này là hỏng cả hai:
  *
  *   | | session-check | state-check (file này) |
  *   |---|---|---|
- *   | ai chạy | executor | phiên điều phối |
+ *   | ai chạy | phiên đang làm việc | phiên đang điều phối / sắp báo cáo |
  *   | lúc nào | trước khi ĐÓNG PHIÊN | trước khi BÁO CÁO |
  *   | hỏi gì | "việc tôi làm đủ điều kiện push chưa?" | "điều tôi sắp nói có đúng với nguồn thẩm quyền không?" |
  *   | đỏ thì | không được push | không được phát biểu trạng thái chắc chắn |
  *
- * VÌ SAO CÓ FILE NÀY — hai ca thật trong một ngày (04/09), cùng một họ bệnh:
- *   1. Phiên điều phối báo "đã trả ba khoá". Trên máy đúng là trống, nhưng lượt trả CHƯA
- *      push, nên trên `origin/main` cả ba vẫn ghi là đang bị giữ — mà GitHub mới là chỗ GPT
- *      audit và là chỗ phiên khác nhìn vào để biết mình có bị chặn. ĐỨC là người bắt được.
- *   2. `STATUS.md` của gói ưu tiên #1 nói F-14/F-26 còn mở, trong khi Log của chính gói đó
- *      nói đã đóng. Bảng ở gốc repo đọc `STATUS.md` nên hiển thị sai theo.
+ * VÌ SAO CÓ FILE NÀY — hai ca thật trong một ngày, cùng một họ bệnh (đo ở repo đã dùng thử
+ * gói này trước khi nó vào bộ khung):
+ *   1. Một phiên báo "đã trả ba khoá". Trên máy đúng là trống, nhưng lượt trả CHƯA push, nên
+ *      trên `origin/main` cả ba vẫn ghi là đang bị giữ — mà remote mới là chỗ AI audit nhìn
+ *      vào, và là chỗ phiên khác nhìn vào để biết mình có bị chặn. CHỦ DỰ ÁN là người bắt được,
+ *      không phải hệ.
+ *   2. `STATUS.md` của một đơn vị nói hai mục nợ còn mở, trong khi Log của chính đơn vị đó nói
+ *      đã đóng. Bảng ở gốc repo đọc `STATUS.md` nên hiển thị sai theo.
  *
  * Một họ duy nhất: **trạng thái được BÁO ≠ trạng thái có THẨM QUYỀN.** Trước file này, luật
- * chặn nó là một câu văn xuôi trong `ORCHESTRATOR.md` bảo phiên điều phối *nhớ tự đối chiếu*.
- * Luật dựa vào việc AI nhớ làm là luật bị bỏ qua đúng lúc bận nhất.
+ * chặn nó là một câu văn xuôi bảo phiên điều phối *nhớ tự đối chiếu*. Luật dựa vào việc AI
+ * nhớ làm là luật bị bỏ qua đúng lúc bận nhất.
  *
- * CHỈ ĐỌC, VÀ KHÔNG ĐÒI KHOÁ NÀO — giống `what-next.mjs`. Xem mục "KHÔNG TỰ SỬA" bên dưới.
+ * CHỈ ĐỌC, VÀ KHÔNG ĐÒI KHOÁ NÀO. Xem mục "KHÔNG TỰ SỬA" bên dưới.
  *
  *   node scripts/state-check.mjs
  *   node scripts/state-check.mjs --as <tên-phiên>    (chỉ để in đúng tên trong lệnh gợi ý)
@@ -36,7 +38,7 @@ import { fileURLToPath } from "node:url";
 import { readClaims } from "./claim.mjs";
 import { generatorsFrom, laneFromMessage, readStructureFromDisk } from "./repo-structure.mjs";
 
-// fileURLToPath, không phải url.pathname: đường dẫn của Đức có dấu cách ("C:\WORKING ZONE\…")
+// fileURLToPath, không phải url.pathname: đường dẫn thật hay có dấu cách ("C:\WORKING ZONE\…")
 // và pathname trả về %20, khiến mọi lệnh git im lặng chạy sai thư mục rồi trả rỗng.
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -45,16 +47,16 @@ export const MA_THOAT = Object.freeze({ [TRANG_THAI.OK]: 0, [TRANG_THAI.MISMATCH
 
 /* ---- KHÔNG TỰ SỬA — luật quan trọng hơn cả việc phát hiện -------------------
  *
- * Ba cám dỗ, cả ba bị cấm: tự `git push` cho hết lệch · tự `claim.mjs --restamp` cho dấu khớp
- * lại · tự sinh lại artifact rồi commit. `AGENTS.md` mục 6 (đoạn `DAU_VO`) đã viết đúng lý lẽ
- * cho ca thứ hai: *"đừng restamp cho xong việc — làm thế là đóng dấu hợp lệ cho vụ sửa tay và
- * xoá luôn tang chứng."* Một cổng tự dọn bằng chứng của chính thứ nó phải phát hiện là cổng
- * vô dụng, và tệ hơn: nó tạo cảm giác an toàn.
+ * Ba cám dỗ, cả ba bị cấm: tự `git push` cho hết lệch · tự đóng dấu lại bảng quyền cho khớp ·
+ * tự sinh lại artifact rồi commit. Lý lẽ cho ca thứ hai đã trả giá thật: *đừng đóng dấu lại
+ * cho xong việc — làm thế là đóng dấu hợp lệ cho vụ sửa tay và xoá luôn tang chứng.* Một cổng
+ * tự dọn bằng chứng của chính thứ nó phải phát hiện là cổng vô dụng, và tệ hơn: nó tạo cảm
+ * giác an toàn.
  *
  * NÊN LUẬT ĐƯỢC GHIM VÀO CẤU TRÚC, KHÔNG PHẢI VÀO Ý CHÍ: mọi lệnh git của file này đi qua
  * đúng một cửa — `gitChiDoc()` — và cửa đó TỪ CHỐI mọi lệnh không nằm trong danh sách dưới.
  * Không có `push`, không có `commit`, không có `checkout`. Muốn thêm thì phải sửa danh sách
- * này, và phép ghim trong `tests/state-check-smoke.mjs` sẽ ĐỎ ngay.
+ * này, và phép ghim trong `tests/assistant-smoke.mjs` sẽ ĐỎ ngay.
  *
  * `fetch` NẰM TRONG danh sách và đó là có chủ đích: nó ghi vào `.git/refs/remotes`, nhưng
  * không đụng cây làm việc, không đụng remote, không đụng lịch sử. Không fetch thì đang so với
@@ -68,7 +70,7 @@ export function gitChiDoc(args, { root = ROOT, chay = execFileSync } = {}) {
     throw new Error(
       "STATE_CHECK_CHI_DOC: lệnh git `" + lenh + "` không nằm trong danh sách chỉ-đọc "
       + "(" + GIT_CHI_DOC.join(" · ") + "). Lệnh này BÁO sai lệch, không bao giờ tự sửa — "
-      + "xem brief STATE-DRIFT-01 mục 2.3."
+      + "xem mục KHÔNG TỰ SỬA ở đầu file này."
     );
   }
   return chay("git", ["-c", "core.quotepath=false", ...args], {
@@ -79,17 +81,18 @@ export function gitChiDoc(args, { root = ROOT, chay = execFileSync } = {}) {
 /* ---- TRUNG TÂM: hàm THUẦN, nhận dữ liệu làm tham số -------------------------
  *
  * Thuần vì nếu nó tự chạy git thì không ai dựng được ca "khoá lệch" bằng test, và phép ghim
- * chỉ chứng minh *hôm nay* đang khớp — vô nghĩa ngày mai. Bài học F-25: `danhGia` nhận `now`
- * làm tham số nên mới ghim được ca "đã 22 phút".
+ * chỉ chứng minh *hôm nay* đang khớp — vô nghĩa ngày mai. Bài học đã trả giá: hàm nào nhận
+ * `now` làm tham số thì mới ghim được ca "đã quá bao nhiêu phút"; hàm tự gọi `new Date()`
+ * thì không.
  *
- * BA CẶP ĐỐI CHIẾU, ĐỦ, ĐỪNG THÊM CẶP THỨ TƯ (Đức chốt phạm vi hẹp 04/09):
+ * BA CẶP ĐỐI CHIẾU, ĐỦ, ĐỪNG THÊM CẶP THỨ TƯ:
  *   1. `.agents/claims.json` trên máy ↔ trên `origin/main`   — nguồn thẩm quyền: origin/main
  *   2. artifact máy sinh ↔ HEAD                              — nguồn thẩm quyền: HEAD
  *   3. có commit chưa push không                             — nguồn thẩm quyền: origin/main
  *
  * BA TRẠNG THÁI, và `UNKNOWN` KHÔNG ĐƯỢC GỘP VÀO `OK`. Mất mạng mà báo "mọi thứ khớp" đúng
- * là kiểu hỏng fail-open mà repo này cấm. Có lệch THẬT thì `MISMATCH` thắng `UNKNOWN` — lệch
- * thật là thứ hành động được ngay — nhưng phần không biết VẪN được in ra, không bị nuốt.
+ * là kiểu hỏng fail-open mà bộ khung này cấm. Có lệch THẬT thì `MISMATCH` thắng `UNKNOWN` —
+ * lệch thật là thứ hành động được ngay — nhưng phần không biết VẪN được in ra, không bị nuốt.
  */
 export function danhGia({ khoaMay, khoaRemote, artifact, commitChuaPush, loi } = {}) {
   const lech = [];
@@ -150,8 +153,9 @@ export function danhGia({ khoaMay, khoaRemote, artifact, commitChuaPush, loi } =
 }
 
 /* Khoá VẮNG MẶT khác khoá CÓ MÀ TRỐNG CHỦ — nói ra cả hai, đừng ép phẳng thành "trống".
-   Bảng hai bên lệch nhau về danh sách khoá là một ca thật (thêm khoá `_docs`/`_code` ngày
-   02/09), và ép phẳng nó thành "trống ↔ trống" là bỏ qua đúng lúc cần thấy. */
+   Bảng hai bên lệch nhau về DANH SÁCH khoá là một ca thật (một repo tách thêm khoá vùng mới,
+   phiên khác vẫn đang ở bản cũ), và ép phẳng nó thành "trống ↔ trống" là bỏ qua đúng lúc
+   cần thấy. */
 function moTaChu(bang, khoa) {
   if (!Object.prototype.hasOwnProperty.call(bang, khoa)) return "KHÔNG CÓ KHOÁ NÀY";
   const chu = bang[khoa] && bang[khoa].owner;
@@ -194,10 +198,10 @@ export function render({ ketQua, as, boSinh = [], luc = new Date() }) {
       d.push("  · sinh lại artifact rồi commit phần vừa sinh:");
       d.push("      " + boSinh.map((s) => "node scripts/" + s).join(" && "));
     }
-    d.push("  · bảng quyền lệch mà bạn KHÔNG hiểu vì sao → đừng `--restamp` cho xong việc.");
-    d.push("      git diff .agents/claims.json     rồi HỎI ĐỨC (AGENTS.md mục 1 và mục 6).");
+    d.push("  · bảng quyền lệch mà bạn KHÔNG hiểu vì sao → ĐỪNG tự sửa bảng cho khớp lại.");
+    d.push("      git diff .agents/claims.json     rồi HỎI CHỦ DỰ ÁN (AGENTS.md mục 1).");
     d.push("");
-    d.push("Chưa xử xong thì ĐỪNG phát biểu trạng thái chắc chắn với Đức.");
+    d.push("Chưa xử xong thì ĐỪNG phát biểu trạng thái chắc chắn với chủ dự án.");
   }
   return d.join("\n");
 }
@@ -205,7 +209,7 @@ export function render({ ketQua, as, boSinh = [], luc = new Date() }) {
 /* ---- Vỏ chạm đĩa/git, mỏng nhất có thể -------------------------------------- */
 
 /* BA HÀM DƯỚI ĐÂY NHẬN `git` LÀM THAM SỐ. Không phải để đẹp: nếu chúng gọi thẳng thì cả lớp
-   vỏ này không có phép ghim nào, và ca "fetch hỏng" — ca fail-open mà brief này sinh ra để
+   vỏ này không có phép ghim nào, và ca "fetch hỏng" — ca fail-open mà gói này sinh ra để
    chặn — chỉ được kiểm bằng cách thật sự rút mạng. Tiêm vào thì dựng được bằng ba dòng. */
 
 /** Làm tươi `origin/main`. Hỏng thì GHI VÀO `loi` — không fetch là đang so với bản CŨ, và
@@ -241,7 +245,7 @@ export function commitChuaPush(loi, { git = gitChiDoc } = {}) {
 /* TÁI DÙNG PHÉP ĐO ĐÃ CÓ, KHÔNG NHÂN BẢN: `--check-head` của chính các bộ sinh, đúng cách
    `session-check.mjs` và `safe-push.mjs` gọi. Danh sách bộ sinh đọc từ `.repo-structure.json`
    qua `generatorsFrom` — đóng cứng tên script ở đây là bản sao thứ ba của cùng một luật, và
-   hai bản sao đã trả hai câu khác nhau cho cùng một file ngày 02/09. */
+   hai bản sao đã trả hai câu khác nhau cho cùng một file một lần rồi. */
 export function artifactSoVoiHead(boSinh, root = ROOT) {
   return boSinh.map((script) => {
     const file = path.join(root, "scripts", script);
@@ -274,7 +278,16 @@ function main() {
   try { khoaMay = readClaims()?.claims ?? null; }
   catch (e) { loi.push("Không đọc được `.agents/claims.json` trên máy: " + mot(e)); }
 
-  const boSinh = generatorsFrom(readStructureFromDisk(ROOT));
+  // CẤU HÌNH HỎNG PHẢI RA `UNKNOWN`, KHÔNG ĐƯỢC NÉM.
+  //
+  // Bản đầu gọi thẳng, không bọc. Ở một repo khai `generators` rỗng (hoặc thiếu
+  // `.repo-structure.json`) thì `generatorsFrom` NÉM, cả lệnh chết với vết ngăn xếp và mã
+  // thoát 1 — tức nó BÁO LÀ CÓ SAI LỆCH trong khi thật ra nó chưa nhìn được gì. Đó là nói dối
+  // đúng cái chiều mà ba trạng thái sinh ra để tránh. Đo thật trên fixture repo hình dạng khác.
+  let boSinh = [];
+  try { boSinh = generatorsFrom(readStructureFromDisk(ROOT)); }
+  catch (e) { loi.push("Không đọc được danh sách bộ sinh từ `.repo-structure.json`: " + mot(e)); }
+
   const ketQua = danhGia({
     khoaMay,
     khoaRemote: khoaTaiRemote(loi),

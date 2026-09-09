@@ -18,9 +18,7 @@
  * quy commit cho SAI chủ. Không khai gì thì mới dùng mặc định (giữ tương thích ngược).
  */
 
-import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
 export const STRUCTURE_FILE = ".repo-structure.json";
@@ -148,88 +146,30 @@ export function stewardOf(relPath, parsed, prefixes = DEFAULT_CLAIM_PREFIXES) {
   if (area !== "_root") return area;                 // vùng chia theo gói, `areaOf` đã trả lời
   const areas = parsed?.areas;
   if (!areas || typeof areas !== "object" || Array.isArray(areas)) return "_root";
+  let dai = -1;
+  let ketQua = "_root";                              // file ở tầng ngoài cùng, không thuộc vùng nào
   for (const [key, value] of Object.entries(areas)) {
     if (key.startsWith("_")) continue;               // khoá chú thích, ví dụ "_doc_"
     if (!key.endsWith("/")) continue;                // chỉ vùng dạng thư mục mới có tiền tố
     if (!relPath.startsWith(key)) continue;
+    // TIỀN TỐ DÀI NHẤT THẮNG, không phải khoá khai trước.
+    //
+    // Bản đầu trả về ngay ở khớp ĐẦU TIÊN theo thứ tự khoá JSON. Khai cả `docs/` lẫn
+    // `docs/internal/` thì chủ của `docs/internal/a.md` đổi theo thứ tự gõ hai dòng — vô hình
+    // với người viết cấu hình, mà lại quyết định ai được ghi file nào. Vùng cụ thể hơn phải
+    // thắng: đó chính là điều người khai `docs/internal/` muốn nói.
+    if (key.length < dai) continue;
     const steward = value?.steward;
-    if (steward === null || steward === undefined) return "_root";
+    if (steward === null || steward === undefined) { dai = key.length; ketQua = "_root"; continue; }
     // Gõ sai tên khoá (ví dụ "root" thiếu gạch dưới) mà im lặng bỏ qua là kiểu hỏng tệ nhất:
     // vùng đó lặng lẽ về `_root`, hai phiên lại choảng nhau, và cổng vẫn xanh.
     if (typeof steward !== "string" || !steward.startsWith("_")) {
       throw new Error(`CAU_TRUC_HONG: areas["${key}"].steward phải là khoá quyền bắt đầu bằng "_" (ví dụ "_root", "_docs"). Đang là: ${JSON.stringify(steward)}`);
     }
-    return steward;
+    dai = key.length;
+    ketQua = steward;
   }
-  return "_root";                                    // file ở tầng ngoài cùng, không thuộc vùng nào
-}
-
-/* DANH SÁCH FILE ĐƯỢC MIỄN KHOÁ KHI CHỈ THÊM DÒNG — một nguồn, hai bên đọc.
-
-   Trước bản này, tập file miễn được gõ CỨNG ở hai chỗ: `session-check.mjs` và `safe-push.mjs`,
-   mỗi bên một dòng `adminFile` riêng. Hai bản sao của cùng một luật, và ngày 02/09 hai bên đã
-   trả HAI CÂU KHÁC NHAU cho cùng một file — chính lý do `ownershipKeys` được gom về một cửa.
-   Thêm `IDEAS.md` vào hai danh sách gõ cứng là gieo lại đúng con bug đó, nên danh sách chuyển
-   vào `.repo-structure.json`.
-
-   `.agents/claims.json` **không** nằm ở đây, và đó là chủ ý: nó được miễn VÔ ĐIỀU KIỆN (trả
-   quyền là thao tác hành chính, không thể là "thêm dòng ở cuối"), còn danh sách này là những
-   file chỉ miễn KHI thêm ở cuối. Trộn hai loại vào một danh sách là mất mất điều kiện.
-
-   FAIL CLOSED: không có file cấu hình thì chỉ miễn `HANDOFF.md` như trước; khai sai kiểu thì NÉM
-   chứ không lặng lẽ lùi về mặc định — lùi lặng lẽ là cách một miễn trừ Đức đã chốt biến mất mà
-   cổng vẫn xanh. */
-export const DEFAULT_APPEND_ONLY_EXEMPT = Object.freeze(["HANDOFF.md"]);
-
-export function appendOnlyExemptFrom(parsed) {
-  if (parsed === null || parsed === undefined) return DEFAULT_APPEND_ONLY_EXEMPT;
-  const list = parsed.append_only_exempt;
-  if (list === undefined) return DEFAULT_APPEND_ONLY_EXEMPT;
-  if (!Array.isArray(list) || list.some((f) => typeof f !== "string" || !f.trim())) {
-    throw new Error("CAU_TRUC_HONG: `append_only_exempt` phải là mảng đường dẫn không rỗng (ví dụ [\"HANDOFF.md\", \"IDEAS.md\"]).");
-  }
-  return Object.freeze(list.map((f) => f.trim()));
-}
-
-/* TRẦN ĐỘ DÀI MỘT MỤC `HANDOFF.md` — ADR-0011, Đức chốt 06/09.
-   Khai ở `.repo-structure.json` (`handoff.tran_byte_moi_muc`), KHÔNG gõ cứng trong script:
-   brief `HANDOFF-TRAN-01` mục 1 cấm, vì hai bản sao của một luật đã trả hai câu khác nhau cho
-   cùng một file ngày 02/09.
-
-   FAIL CLOSED HAI CHIỀU, và hai chiều đó KHÁC NHAU:
-   · KHÔNG khai gì → trả `null`, và bên gọi coi là "chưa chốt trần" rồi BỎ QUA. Cố ý: bộ khung
-     nhân ra repo mới chưa đo được gì, chặn ở đó là khoá repo ngay phiên đầu.
-   · Khai SAI KIỂU (chuỗi, số âm, số thực, 0) → NÉM. Lùi lặng lẽ về mặc định là cách một con số
-     Đức đã chốt biến mất mà cổng vẫn xanh. */
-export function handoffCapFrom(parsed) {
-  const khoi = parsed?.handoff;
-  if (khoi === null || khoi === undefined) return null;
-  if (typeof khoi !== "object" || Array.isArray(khoi)) {
-    throw new Error("CAU_TRUC_HONG: `handoff` phải là một object, ví dụ { \"tran_byte_moi_muc\": 2600 }.");
-  }
-  const tran = khoi.tran_byte_moi_muc;
-  if (tran === undefined) return null;
-  if (!Number.isInteger(tran) || tran <= 0) {
-    throw new Error(`CAU_TRUC_HONG: \`handoff.tran_byte_moi_muc\` phải là số nguyên dương (byte), nhận "${tran}".`);
-  }
-  return tran;
-}
-
-/* TRẦN SỐ MỤC của một `HANDOFF.md` — ADR-0008. Khác hẳn `handoffCapFrom` ở trên:
-   cái kia đo BYTE MỘT MỤC (ADR-0011), cái này đếm SỐ MỤC trong cả file.
-   Cùng ba nhánh xử lý như trên, và cùng lý do: không khai → bỏ qua; khai sai kiểu → NÉM. */
-export function handoffSoMucCapFrom(parsed) {
-  const khoi = parsed?.handoff;
-  if (khoi === null || khoi === undefined) return null;
-  if (typeof khoi !== "object" || Array.isArray(khoi)) {
-    throw new Error("CAU_TRUC_HONG: `handoff` phải là một object, ví dụ { \"tran_so_muc\": 25 }.");
-  }
-  const tran = khoi.tran_so_muc;
-  if (tran === undefined) return null;
-  if (!Number.isInteger(tran) || tran <= 0) {
-    throw new Error(`CAU_TRUC_HONG: \`handoff.tran_so_muc\` phải là số nguyên dương (số mục), nhận "${tran}".`);
-  }
-  return tran;
+  return ketQua;
 }
 
 /* "CHỈ THÊM DÒNG?" — quyết định thuần, tách khỏi việc gọi git để kiểm được mọi nhánh.
@@ -525,98 +465,105 @@ export function profileFrom(parsed) {
    cổng cấu trúc. */
 export const DEFAULT_GENERATORS = Object.freeze(["build-dashboard.mjs", "feature-parity.mjs"]);
 
-/* GÓI ĐÃ ĐÓNG BĂNG — đọc khối `frozen`, và ĐÂY là chỗ cưỡng chế nó.
+/* NGHỀ NÀO ĐẾM FILE NGHỀ ẤY. Bộ đếm "code đã đổi sau lần kiểm chứng" mặc định chỉ nhìn
+ * .js/.mjs/.json/.css/.html — tức nó ĐO ĐƯỢC ĐÚNG MỘT NGHỀ. Repo Python thì `tools/*.py` đổi cả
+ * ngày mà cột đó vẫn nói KHÔNG, và không ai biết nó đang mù.
  *
- * Trước 07/09 cờ này chỉ là chữ: `.repo-structure.json` tự khai
- * *"cờ này HIỆN CHƯA CÓ PHÉP GHIM NÀO CANH, và chưa cổng nào đọc nó"*. Nên gỡ cờ đi thì không
- * test nào đỏ — đúng hình dạng một luật-là-chữ.
- *
- * Đo 07/09, vì sao đáng cưỡng chế: suite bốn đơn vị của ba gói đóng băng chạy **41,1 giây**
- * mỗi phiên (chatgpt 17,4 · gemini v0.2.0 12,5 · flow 9,7 · gemini v0.1.0 1,6), còn gói SỐNG
- * `duc-scouter` chạy **1,5 giây**. Ba gói không ai được ghi thu 27 lần thời gian của gói đang
- * làm thật — và chính khối `_frozen_doc` khai vế đắt nhất: *"chúng KHÔNG được làm phiên khác
- * ĐỎ hay CHẬM."* */
-export function frozenFrom(parsed) {
-  const value = parsed?.frozen;
-  if (value === undefined) return Object.freeze([]);
-  if (!Array.isArray(value)) {
-    throw new Error("FROZEN_HONG: `frozen` phải là mảng đường dẫn gói đã đóng băng (hoặc bỏ hẳn).");
+ * VẤP THẬT 05/09, lượt migrate `n8n-orchestrator`: trường này được chú thích trong
+ * `build-dashboard.mjs` như thể đã dùng được, nhưng `kiemKhoaLa()` TỪ CHỐI nó — repo Python khai
+ * vào là lệnh nổ ngay. Chú thích dạy một trường, bộ kiểm cấm trường ấy, và không ai đối chiếu
+ * hai chỗ. Nay trường hợp lệ, và hàm này là chỗ duy nhất đọc nó. */
+export function behaviourGlobsFrom(parsed) {
+  const value = parsed?.units?.behaviour_globs;
+  if (value === undefined) return null;              // null = repo không khai, giữ mặc định
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error("BEHAVIOUR_GLOBS_HONG: `units.behaviour_globs` phải là mảng không rỗng các mẫu như \"**/*.py\" (hoặc bỏ hẳn để dùng mặc định).");
   }
-  const ra = [];
-  for (const p of value) {
-    if (typeof p !== "string" || p === "") {
-      throw new Error(`FROZEN_HONG: mỗi phần tử phải là một đường dẫn gói. Đang là: ${JSON.stringify(p)}`);
+  for (const g of value) {
+    if (typeof g !== "string" || !g.includes(".")) {
+      throw new Error(`BEHAVIOUR_GLOBS_HONG: mỗi mẫu phải là chuỗi có phần đuôi, ví dụ "**/*.py". Đang là: ${JSON.stringify(g)}`);
     }
-    const chuan = p.replaceAll("\\", "/").replace(/\/+$/, "");
-    if (chuan === "" || chuan.startsWith("/") || chuan.split("/").includes("..")) {
-      throw new Error(`FROZEN_HONG: đường dẫn phải tương đối và không chứa "..". Đang là: ${JSON.stringify(p)}`);
-    }
-    ra.push(chuan);
   }
-  return Object.freeze(ra);
+  return Object.freeze([...value]);
 }
 
-/* CHỌN SUITE: BỎ suite của gói đóng băng — nhưng CHỈ KHI KHÔNG AI CHẠM GÓI ĐÓ.
- *
- * Đây là phần dễ làm sai, nên nói rõ ranh giới. Phạm vi KHÔNG phải *"bỏ được ba suite"*, mà là
- * *"chọn đúng suite mà VẪN GIỮ bảo vệ cần thiết"*. Hai vế:
- *
- * ⑴ Gói đóng băng là chỉ-đọc, nên suite của nó chỉ có thể đỏ nếu **có người vừa chạm vào nó** —
- *    và đúng lúc đó thì nó là phép kiểm CẦN NHẤT, không phải phép kiểm thừa. Nên: chạm thì chạy.
- *    `daCham` là hợp của cây làm việc và commit chưa đẩy, tức "mọi thứ chưa có trên origin/main".
- *
- * ⑵ `chacChanDoDuocCham` là vế FAIL-CLOSED: không đo chắc được gói nào bị chạm (ví dụ
- *    `origin/main` không phân giải được, nên danh sách commit chưa đẩy rỗng oan) thì **chạy hết**.
- *    Bỏ suite dựa trên một phép đo có thể rỗng oan là đúng cách bỏ mất phép kiểm mà không ai biết.
- *
- * Và một vế đã KIỂM chứ không phải giả định: phép chống trôi dạt giữa ba gói kia nằm trong
- * suite của CHÍNH `duc-scouter` (`scouter-transport-smoke.mjs` mục ⑫, đọc `HEAD:` của cả ba
- * `bridge-pairing-core.js`), tức trong gói SỐNG — nên nó vẫn chạy mọi lượt. Bỏ suite ba gói kia
- * không lấy đi lớp đó. */
-export const PHU_THUOC_CHUNG_DONG_BANG = Object.freeze([
-  "scripts/",
-  "package.json",
-  ".repo-structure.json"
-]);
+/* TÊN BA ARTIFACT MÁY SINH — repo khai được, không đóng cứng trong code.
 
-export function chonSuiteBoDongBang({ menhLenh, frozen, daCham, chacChanDoDuocCham, phuThuocChung }) {
-  const ds = Array.isArray(menhLenh) ? menhLenh : [];
-  const vung = Array.isArray(frozen) ? frozen.filter(Boolean) : [];
-  if (!vung.length || chacChanDoDuocCham !== true) {
-    return { chay: ds, boQua: [] };
+   VÌ SAO CÓ. Vấp thật 06/09, lượt migrate `ALL_SKILL_MANAGEMENT`: repo đó có một bảng theo
+   dõi VIẾT TAY tên `DASHBOARD.md`, có mirror sang Google Sheet, 123 dòng. Bộ khung đóng cứng
+   đúng cái tên đó cho bản máy sinh, nên chạy bộ sinh MỘT LẦN là đè mất — và đè im lặng.
+   Phải đổi tên file của repo đích để nhường bộ sinh, tức bộ khung là khách mà bắt chủ nhà
+   dọn phòng.
+
+   Khai thiếu một khoá thì khoá đó dùng mặc định — repo chỉ vướng một tên không phải khai cả ba.
+
+   FAIL CLOSED với đầu vào sai: khai `"generated_names": "khac"` mà lặng lẽ lùi về mặc định thì
+   người viết tưởng tên riêng đang có hiệu lực, còn bộ sinh vẫn ghi đè file cũ. Đúng cái lỗ
+   `budget` đã mắc và đã vá 05/09. */
+export const TEN_MAY_SINH_MAC_DINH = Object.freeze({
+  dashboard: "DASHBOARD.md",
+  llms: "llms.txt",
+  repo_map: "repo-map.json",
+  /* `overview` = trang HTML cho người xem. `null` nghĩa là **suy từ `repo.name`**, không phải
+   * "không có" — bộ sinh tự đặt `DASHBOARD-<tên-repo>.html`. Khai một chuỗi ở đây chỉ khi repo
+   * đích đã có sẵn file trùng tên, đúng lý do khối `generated_names` tồn tại. */
+  overview: null
+});
+
+/* TÊN TRANG HTML — SUY MỘT LẦN, hai cổng dùng chung.
+ *
+ * Trước 07/09 phép suy này nằm trong `build-overview.mjs` và **chỉ bộ sinh trang biết nó**.
+ * Hệ quả đo được ở repo `nav_platform_main`: bộ đếm "code đã đổi sau kiểm chứng" thấy
+ * `DASHBOARD-NAV-Platform-V1.html` là một file `.html` bình thường, nên mỗi lượt sinh lại
+ * trang là bộ đếm +1, và cổng *"Sự thật máy sinh còn tươi"* ĐỎ vĩnh viễn — không cách nào
+ * thoát bằng cách sinh lại, vì chính việc sinh lại làm nó tăng.
+ *
+ * Đây ĐÚNG con bệnh đã được ghi ngay trên `MAY_SINH` cho `repo-map.json`, lặp lại lần thứ hai
+ * với một file mới. Lần trước vá bằng cách thêm tên vào một danh sách; lần này vá bằng cách
+ * **bỏ danh sách** — tên suy ra từ cấu hình, nên repo không phải nhớ khai gì. */
+export function tenTrangFrom(parsed) {
+  const khai = parsed?.generated_names?.overview;
+  if (typeof khai === "string" && khai.trim() && !khai.includes("/") && !khai.includes("\\")) {
+    return khai.trim();
   }
+  const ten = String(parsed?.repo?.name || "").trim();
+  if (!ten) return "DASHBOARD.html";
+  /* Giữ chữ cái và số, gộp mọi thứ khác thành một gạch nối. Dấu tiếng Việt rụng — đúng ý:
+     tên file có dấu là chỗ hỏng kinh điển khi đem qua máy khác.
+     `Đ`/`đ` KHÔNG tách được bằng NFD — nó là một chữ cái riêng, không phải D có dấu.
+     Bỏ qua chỗ này thì "Đầu tư" ra "au-tu", mất luôn chữ đầu của tên repo. */
+  const gon = ten.split("Đ").join("D").split("đ").join("d")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return gon ? `DASHBOARD-${gon}.html` : "DASHBOARD.html";
+}
 
-  /* VÙNG CHUNG BỊ CHẠM → CHẠY HẾT, kể cả suite gói đóng băng.
-   *
-   * Phiên Codex bác đúng một câu tôi viết quá mạnh: *"gói không đổi thì suite chỉ có thể xanh"*.
-   * Sai — thứ ngoài gói vẫn đổi được. Và nó không phải rủi ro lý thuyết, đo 07/09:
-   * `workers/duc-auto-gemini/v0.2.0/tests/root-suite-covers-workers-static.mjs` **import**
-   * `scripts/repo-structure.mjs`, và phép kiểm đó canh đúng việc *"danh sách suite gốc có phủ hết
-   * worker"*. Lượt sửa cờ `frozen` hôm nay **sửa chính danh sách đó** trong khi cổng **bỏ qua**
-   * phép kiểm ấy. Nó xanh — nhưng vì may, không vì thiết kế.
-   *
-   * Danh sách này là HẰNG SỐ chứ không phải cấu hình gõ tay, và nó KHÔNG mục được: phép ghim
-   * `frozen-suite-smoke.mjs` dò import của cả ba gói đóng băng và ĐỎ nếu có gói nào dẫn ra một
-   * chỗ ngoài danh sách này. Thêm một đường dẫn ra ngoài mà quên khai thì cổng nói ngay. */
-  const chung = Array.isArray(phuThuocChung) ? phuThuocChung : PHU_THUOC_CHUNG_DONG_BANG;
-  const chamVungChung = (Array.isArray(daCham) ? daCham : []).some((f) => {
-    const p = String(f).replaceAll("\\", "/");
-    return chung.some((c) => (c.endsWith("/") ? p.startsWith(c) : p === c));
-  });
-  if (chamVungChung) return { chay: ds, boQua: [] };
-  const cham = new Set(Array.isArray(daCham) ? daCham.map((f) => String(f).replaceAll("\\", "/")) : []);
-  const goiBiCham = new Set(
-    vung.filter((g) => [...cham].some((f) => f === g || f.startsWith(`${g}/`)))
-  );
-
-  const chay = [];
-  const boQua = [];
-  for (const m of ds) {
-    const trong = vung.find((g) => String(m?.cmd ?? "").replaceAll("\\", "/").includes(`${g}/`));
-    if (trong && !goiBiCham.has(trong)) boQua.push({ ...m, goi: trong });
-    else chay.push(m);
+export function tenMaySinhFrom(parsed) {
+  const khai = parsed?.generated_names;
+  if (khai === undefined) return TEN_MAY_SINH_MAC_DINH;
+  if (khai === null || typeof khai !== "object" || Array.isArray(khai)) {
+    throw new Error(`TEN_MAY_SINH_HONG: \`generated_names\` phải là object dạng {"dashboard": "...", "llms": "...", "repo_map": "..."}. Đang là: ${Array.isArray(khai) ? "mảng" : typeof khai}`);
   }
-  return { chay, boQua };
+  const ra = { ...TEN_MAY_SINH_MAC_DINH };
+  for (const [k, v] of Object.entries(khai)) {
+    if (k.startsWith("_")) continue;                   // chú thích `_doc` không tính là gõ sai
+    if (!(k in TEN_MAY_SINH_MAC_DINH)) {
+      throw new Error(`TEN_MAY_SINH_HONG: không có khoá \`${k}\`. Chỉ nhận: ${Object.keys(TEN_MAY_SINH_MAC_DINH).join(", ")}. Gõ sai tên khoá mà lặng lẽ bỏ qua thì người viết tưởng đã khai.`);
+    }
+    if (v === null) { ra[k] = null; continue; }   // `null` = để bộ sinh tự suy, xem TEN_MAY_SINH_MAC_DINH
+    if (typeof v !== "string" || !v.trim() || v.includes("/") || v.includes("\\")) {
+      throw new Error(`TEN_MAY_SINH_HONG: \`${k}\` phải là TÊN FILE ở gốc repo, không có dấu gạch chéo. Đang là: ${JSON.stringify(v)}`);
+    }
+    ra[k] = v.trim();
+  }
+  /* HAI ARTIFACT TRÙNG TÊN NHAU LÀ TỰ ĐÈ CHÍNH MÌNH — bộ sinh ghi ba file theo thứ tự, nên
+     khai trùng thì file ghi sau nuốt file ghi trước và cổng "còn tươi" đỏ vĩnh viễn mà không
+     ai hiểu vì sao. Bắt ngay lúc đọc cấu hình, chỗ người ta còn đang nhìn cái tên mình vừa gõ. */
+  const ten = Object.values(ra).filter((x) => x !== null);
+  if (new Set(ten).size !== ten.length) {
+    throw new Error(`TEN_MAY_SINH_HONG: ba artifact phải có ba tên KHÁC nhau. Đang là: ${JSON.stringify(ra)}`);
+  }
+  return Object.freeze(ra);
 }
 
 export function generatorsFrom(parsed) {
@@ -663,341 +610,169 @@ export function unitDirsUnder(areaPath, units = DEFAULT_UNITS, listDirs) {
 
 /* Đọc từ CÂY LÀM VIỆC. Chỉ dành cho cổng đóng phiên và safe-push — hai chỗ buộc phải thấy
    cả bản sửa dở. Bộ sinh KHÔNG dùng hàm này: nó đọc từ HEAD qua deps của chính nó. */
+/* GÕ SAI MỘT CHỮ KHÔNG ĐƯỢC PHÉP IM LẶNG.
+ *
+ * Cấu hình này chỉ fail-closed ở lỗi CÚ PHÁP. Gõ sai TÊN TRƯỜNG thì vẫn parse ngon lành, và
+ * hậu quả không hiện ra ở đâu cả:
+ *
+ *   `units.root_dri`  → `root_dir` thiếu → lùi mặc định `"workers"` → quét sai thư mục, bảng
+ *                       vẫn sinh, cổng vẫn xanh, chỉ là đang nói về một repo khác.
+ *   `mutabilty`       → vùng bằng chứng KHÔNG CÒN được bảo vệ chỉ-thêm. Không dòng nào báo.
+ *
+ * Đúng là kiểu hỏng mà cả lớp cấu hình này sinh ra để chặn: repo tưởng đang được canh, thật ra
+ * không. Nên: trường lạ = NÉM. Thà chặn một cấu hình hợp lệ mà lạ, còn hơn im lặng bỏ canh.
+ * Trường bắt đầu bằng `_` được miễn — bản hạt giống dùng `_doc`, `_ten_doc` để chú thích. */
+const KHOA_UNITS = new Set(["root_dir", "marker", "depth", "ten", "behaviour_globs"]);
+const KHOA_AREA = new Set(["steward", "ownership_mode", "claim_prefix", "mutability", "note"]);
+
+export function kiemKhoaLa(parsed) {
+  const loi = [];
+  const soi = (obj, hopLe, ten) => {
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return;
+    for (const k of Object.keys(obj)) {
+      if (k.startsWith("_")) continue;                 // `_doc`, `_ten_doc`: chú thích cho người
+      if (!hopLe.has(k)) loi.push(`${ten}.${k} — không phải trường hợp lệ. Hợp lệ: ${[...hopLe].join(", ")}`);
+    }
+  };
+  soi(parsed?.units, KHOA_UNITS, "units");
+  const areas = parsed?.areas;
+  if (areas && typeof areas === "object" && !Array.isArray(areas)) {
+    for (const [key, value] of Object.entries(areas)) soi(value, KHOA_AREA, `areas["${key}"]`);
+  }
+  return loi;
+}
+
 export function readStructureFromDisk(root) {
   const file = path.join(root, STRUCTURE_FILE);
   if (!fs.existsSync(file)) return null;
+  let parsed;
   try {
-    return JSON.parse(fs.readFileSync(file, "utf8"));
+    parsed = JSON.parse(fs.readFileSync(file, "utf8"));
   } catch (error) {
     throw new Error(`CAU_TRUC_HONG: ${STRUCTURE_FILE} không phải JSON đọc được (${error.message}). Sửa file đó rồi chạy lại.`);
   }
+  const loi = kiemKhoaLa(parsed);
+  if (loi.length) {
+    throw new Error(`CAU_TRUC_HONG: ${STRUCTURE_FILE} có trường không nhận ra — nhiều khả năng là gõ sai, và gõ sai ở đây làm MẤT lớp bảo vệ mà không báo gì:\n  ${loi.join("\n  ")}`);
+  }
+  return parsed;
 }
 
-/* THƯ MỤC NHÁP DÙNG CHUNG — N-64, 09/09.
+/* ---- LỜI KHUYÊN KHI CỔNG XUẤT BẢN CHẶN -----------------------------------
  *
- * `quyTrachNhiemSuite` quy một file chưa commit cho tôi dựa vào một tiền đề: *chỉ tôi được ghi
- * vào vùng tôi giữ*. Tiền đề đó đúng ở mọi nơi **trừ** `drafts/` — `CLAUDE.md` toàn cục nói đó là
- * **chỗ DUY NHẤT agent tự ghi không cần hỏi**, tức nhiều lane ghi vào cùng lúc theo đúng thiết kế.
- * Đo 09/09 18:30: lane `claude-context-review` để một file nháp ở đó; lane đang giữ `_root` bị
- * quy cho file ấy và **không đẩy được**, trong khi nó **không được** commit hay xoá file người
- * khác. Lần thứ ba trong một ngày một lane bị chặn bởi bản sửa dở của lane khác (`N-62`).
+ * Ở ĐÂY chứ không ở `safe-push.mjs`, và lý do là kiểm được: `safe-push.mjs` chạy phần chính ngay
+ * lúc nạp module và THOÁT khi thiếu `--as`, nên không phép ghim nào `import` nổi nó. Một nhánh
+ * quyết định không nạp được là một nhánh không ai đột biến kiểm được — và nhánh này in ra câu mà
+ * người bị chặn sẽ làm theo.
+ */
+/** Lời khuyên in ra khi cổng xuất bản chặn. THUẦN, nên đột biến kiểm được.
  *
- * ĐÂY KHÔNG PHẢI NỚI CHỐT: chốt vẫn nổ cho mọi file thật sự của tôi. Cái được sửa là **bản đồ
- * quyền sở hữu** nhận vơ một thư mục cố ý dùng chung. Và nó không che được lỗi nào: không suite
- * nào nạp từ `drafts/` — nháp ở đó mang `authority: none` theo quy ước.
+ *  Một câu khuyên SAI tệ hơn không có câu nào: nó làm người đọc tin là mình chỉ cần đợi, nên
+ *  không ai đi hỏi người chốt, nên repo kẹt im lặng. */
+export function handoffCapFrom(parsed) {
+  const khoi = parsed?.handoff;
+  if (khoi === null || khoi === undefined) return null;
+  if (typeof khoi !== "object" || Array.isArray(khoi)) {
+    throw new Error("CAU_TRUC_HONG: `handoff` phải là một object, ví dụ { \"tran_byte_moi_muc\": 2600 }.");
+  }
+  const tran = khoi.tran_byte_moi_muc;
+  if (tran === undefined) return null;
+  if (!Number.isInteger(tran) || tran <= 0) {
+    throw new Error(`CAU_TRUC_HONG: \`handoff.tran_byte_moi_muc\` phải là số nguyên dương (byte), nhận "${tran}".`);
+  }
+  return tran;
+}
+
+/* ---- DANH SÁCH NHÓM CỦA BẢNG — hợp đồng, đọc từ dữ liệu ------------------
  *
- * TƯƠNG THÍCH NGƯỢC: chưa khai thì trả mảng RỖNG, hành vi y hệt trước. */
-export function nhapDungChungFrom(parsed) {
-  const value = parsed?.nhap_dung_chung;
+ * KHUNG-46 (đo 08/09): danh sách này từng bị `assert.deepEqual` gõ cứng ở **hai** file test.
+ * Hai bản sao của một luật thì **lệch được** — một bản nói năm nhóm, bản kia bốn, và cả hai
+ * vẫn "xanh" ở suite của riêng nó. Đúng bệnh mà `append_only_exempt` đã gây ra 02/09.
+ *
+ * Vì sao hợp đồng KHÔNG nằm trong `build-overview.mjs`: bộ sinh là bên **bị kiểm**. Hợp đồng
+ * nằm trong nó thì một lượt thêm tab sửa cả hai vế của phép so sánh cùng lúc, và phép kiểm
+ * xanh với mọi danh sách — tức nó không còn canh gì. Ở đây thì thêm tab là phải sửa HAI chỗ
+ * có chủ ý: bộ sinh, rồi hợp đồng này.
+ *
+ * Trả `null` khi chưa khai — repo mới migrate chưa có khối này, và một phép kiểm đỏ oan ở repo
+ * đích thì bị tháo trong một ngày. Suite gọi hàm này phải BỎ QUA CÓ TÊN, không bỏ qua im lặng. */
+/* TÊN THƯ MỤC LƯU TRỮ — khai MỘT chỗ, hai chỗ đọc.
+ *
+ * `can-nang.mjs` miễn `docs/archive/` khỏi ngân sách tài liệu từ 06/09, và ghi rõ vì sao: ngân
+ * sách đo THỨ MỌI PHIÊN PHẢI NẠP, mà lưu trữ theo định nghĩa là thứ không nạp mỗi lần. `AGENTS.md`
+ * nói y hệt. Nhưng `session-check.mjs` thì KHÔNG miễn — hai bản của một luật, và 08/09 chúng lệch
+ * thật: một lane chạy đúng nhịp DỌN mà repo bắt làm, dời 1.135 dòng sang lưu trữ, và cổng ĐỎ vì
+ * chính việc dọn. Nên hằng số về đây, chỗ cả hai bên đều đã nạp. */
+export const THU_MUC_LUU_TRU = "archive";
+
+/* CÁC THƯ MỤC CON CỦA `docs/` KHÔNG TÍNH VÀO NGÂN SÁCH TÀI LIỆU — một danh sách, ba lý do CÙNG
+ * MỘT HÌNH DẠNG. Ngân sách đo **thứ MỌI PHIÊN PHẢI NẠP**; ba thư mục dưới đây là **bản ghi việc
+ * đã xảy ra**, chỉ đọc khi đi tra, và cả ba **chỉ có thể to lên**:
+ *
+ *   · `adr/`        quyết định đã `Accepted` là bất biến (ADR-0000)
+ *   · `archive/`    thứ nhịp DỌN dời sang, giữ nguyên từng chữ
+ *   · `migrations/` mỗi lượt migrate MỘT hồ sơ, chỉ thêm (AGENTS.md mục 6)
+ *
+ * Tính chúng vào thước thì mỗi quyết định mới / mỗi lượt dọn / mỗi lượt migrate đều làm cổng ĐỎ —
+ * và một cổng đỏ vì việc ĐÚNG thì người ta nới số cho xong, rồi sau vài lượt thước hết nghĩa.
+ * Đo được 08/09, cả ba đã xảy ra thật trong MỘT ngày: nhịp DỌN làm cổng đỏ, rồi một lượt migrate
+ * làm cổng đỏ lần nữa. Đức chốt cả hai lượt.
+ *
+ * Bỏ ba thư mục ra thì con số thật là **3.248** — CHẶT HƠN 5.744 ban đầu gần một nửa. Miễn đúng
+ * chỗ làm thước chặt hơn, không lỏng hơn: nó thôi đo thứ nó không định đo. */
+export const THU_MUC_DOCS_KHONG_TINH = Object.freeze(["adr", THU_MUC_LUU_TRU, "migrations"]);
+
+export function nhomBangFrom(parsed) {
+  const khoi = parsed?.bang;
+  if (khoi === null || khoi === undefined) return null;
+  if (typeof khoi !== "object" || Array.isArray(khoi)) {
+    throw new Error("CAU_TRUC_HONG: `bang` phải là một object, ví dụ { \"nhom\": [\"tong-quan\"] }.");
+  }
+  const nhom = khoi.nhom;
+  if (nhom === undefined) return null;
+  if (!Array.isArray(nhom) || nhom.length === 0) {
+    throw new Error("CAU_TRUC_HONG: `bang.nhom` phải là mảng KHÔNG RỖNG các mã nhóm. Mảng rỗng làm phép kiểm đạt tầm thường với mọi bảng.");
+  }
+  for (const n of nhom) {
+    if (typeof n !== "string" || !/^[a-z][a-z-]*[a-z]$/.test(n)) {
+      throw new Error(`CAU_TRUC_HONG: mỗi mã nhóm phải là chữ thường và dấu gạch nối (khớp thuộc tính data-tab của trang). Đang là: ${JSON.stringify(n)}`);
+    }
+  }
+  if (new Set(nhom).size !== nhom.length) {
+    throw new Error(`CAU_TRUC_HONG: \`bang.nhom\` có mã trùng. Trùng thì phép so sánh theo tập vẫn đạt, nên bảng thiếu một tab mà không ai đỏ. Đang là: ${nhom.join(" ")}`);
+  }
+  return Object.freeze([...nhom]);
+}
+
+export function frozenFrom(parsed) {
+  const value = parsed?.frozen;
   if (value === undefined) return Object.freeze([]);
   if (!Array.isArray(value)) {
-    throw new Error("NHAP_DUNG_CHUNG_HONG: `nhap_dung_chung` phải là MẢNG tiền tố thư mục (hoặc bỏ hẳn). Đang là: " + JSON.stringify(value));
+    throw new Error("FROZEN_HONG: `frozen` phải là mảng đường dẫn gói đã đóng băng (hoặc bỏ hẳn).");
   }
+  const ra = [];
   for (const p of value) {
-    if (typeof p !== "string" || !p.endsWith("/")) {
-      throw new Error("NHAP_DUNG_CHUNG_HONG: mỗi mục phải là một THƯ MỤC kết bằng `/` — miễn trừ cho một FILE lẻ là cửa hậu, không phải quy ước nháp. Sai ở: " + JSON.stringify(p));
+    if (typeof p !== "string" || p === "") {
+      throw new Error(`FROZEN_HONG: mỗi phần tử phải là một đường dẫn gói. Đang là: ${JSON.stringify(p)}`);
     }
-  }
-  return Object.freeze([...value]);
-}
-
-/* Quyết định THUẦN, tách khỏi việc chạy để kiểm được mọi nhánh. Nguyên mẫu đã chạy 5/5 trên
- * một repo giả trước khi port vào đây (4 ca GPT yêu cầu + fail-closed). */
-export function quyTrachNhiemSuite({ vungToiGiuConBan, ketQuaTrenHead }) {
-  // CHỐT GPT THÊM, và là ca dễ mất nhất: nếu CHÍNH TÔI còn sửa dở gây lỗi thì HEAD cũng xanh —
-  // tức tôi tự miễn cho mình. Quy được vì luật mục 1: chỉ tôi được ghi vào vùng tôi giữ, nên
-  // file bẩn trong đó LÀ CỦA TÔI. Đây là vế duy nhất quy thuộc được một file chưa commit.
-  if (vungToiGiuConBan.length) {
-    return { ok: false, ly_do: `TOI_CON_SUA_DO: ${vungToiGiuConBan.join(", ")}` };
-  }
-  if (ketQuaTrenHead === null) return { ok: false, ly_do: "KHONG_TRICH_DUOC_HEAD" };
-  if (ketQuaTrenHead === false) return { ok: false, ly_do: "REGRESSION_DA_COMMIT" };
-  return { ok: true, bo_qua: true, ly_do: "NHIEM_TU_CAY_LAM_VIEC" };
-}
-
-/* ---- ẢNH CHỤP HEAD, và phép kiểm độ tươi artifact chạy TRÊN ĐÓ ------------
- *
- * VÌ SAO CÓ ĐOẠN NÀY (PUSH-GATE-01, 05/09). Trước bản này cả cổng đóng phiên lẫn cổng xuất
- * bản đều chạy `node scripts/<bộ-sinh> --check-head` bằng bản bộ sinh Ở CÂY LÀM VIỆC. Cây
- * làm việc là của CHUNG mọi phiên, nên một phiên khác đang sửa dở bộ sinh làm bản án không
- * đáng tin — và cả hai chỗ xử bằng cách TỪ CHỐI. Hệ quả đo được ngày 05/09: một lane bị chặn
- * xuất bản 4 lượt trong một ngày, không lượt nào lane đó chạm vào bộ sinh. Nặng nhất là lúc
- * phiên kia chạy ĐỘT BIẾN KIỂM: mỗi vòng đột biến bẩn file vài chục giây, nên càng làm đúng
- * kỷ luật càng khoá cửa xuất bản của người khác.
- *
- * Cách sửa KHÔNG phải là nới: thứ sắp công bố là HEAD, nên quan toà cũng phải là HEAD. Chép
- * HEAD ra một repo tạm rồi chạy bộ sinh Ở ĐÓ. Cây làm việc thôi không còn là đầu vào của phép
- * kiểm này, nên nó không chặn oan được nữa — mà phần chặn ĐÚNG thì y nguyên: artifact đã
- * commit lệch với HEAD thì trong ảnh chụp nó vẫn lệch.
- *
- * BA CHI TIẾT ĐÃ TRẢ GIÁ, đừng "dọn" mất:
- *   1. TÊN THƯ MỤC ẢNH CHỤP PHẢI GIỮ NGUYÊN tên thư mục repo. Bộ sinh suy danh tính repo từ
- *      tên thư mục khi `.repo-structure.json` không khai; chụp vào thư mục tên `r` thì bảng
- *      sinh ra mang tên `r` và `--check-head` báo lệch — ĐỎ OAN, và trông y hệt lệch thật.
- *      Đo thật lúc dựng: đúng hai dòng khác nhau, cả hai là tên repo.
- *   2. ẢNH CHỤP PHẢI BIẾT GIT (`git clone`, không phải chép file trần) và phải có cả mốc
- *      `origin/main`. Bộ sinh đọc HEAD qua git; bản chép trần làm nó chết vì thiếu git rồi bị
- *      quy oan thành "artifact lệch".
- *   3. KHÔNG DỰNG ĐƯỢC ẢNH CHỤP = KHÔNG BIẾT, và không biết thì không được coi là đã đạt
- *      (bất biến ④ của MULTIFLOW). Hàm trả `ok: null`; bên gọi tự quyết chặn hay báo.
- *
- * Đây là HÀM DÙNG CHUNG có chủ ý: cùng một luật độ tươi từng sống ở hai bản sao, và ngày
- * 02/09 hai bản sao của `append_only_exempt` đã trả hai câu KHÁC NHAU cho cùng một file. Hai
- * cổng vẫn được quyền có CHÍNH SÁCH khác nhau (cổng đóng phiên chỉ nói to, cổng xuất bản thì
- * chặn) — nhưng CÁCH ĐO thì chỉ được có một. */
-export function anhChupHead(root) {
-  const at = (cwd, ...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
-  const head = at(root, "rev-parse", "HEAD").trim();
-  if (!head) throw new Error("khong doc duoc HEAD");
-  const box = fs.mkdtempSync(path.join(os.tmpdir(), "anh-chup-head-"));
-  // Giữ nguyên tên thư mục repo — xem chi tiết 1 ở khối chú thích trên.
-  const dir = path.join(box, path.basename(root));
-  try {
-    at(root, "clone", "-q", ".", dir);
-    at(dir, "checkout", "-q", "--detach", head);
-    let moc = "";
-    try { moc = at(root, "rev-parse", "origin/main").trim(); } catch { moc = ""; }
-    if (moc) at(dir, "update-ref", "refs/remotes/origin/main", moc);
-  } catch (error) {
-    fs.rmSync(box, { recursive: true, force: true });
-    throw error;
-  }
-  return { dir, dispose: () => fs.rmSync(box, { recursive: true, force: true }) };
-}
-
-/* Trả về một trong ba:
-     { ok: true,  lech: [] }        — mọi artifact đã commit đều khớp HEAD
-     { ok: false, lech: [...] }     — có artifact lệch (hoặc bộ sinh đã khai mà HEAD không có)
-     { ok: null,  ly_do }           — không dựng được ảnh chụp → KHÔNG BIẾT
-   `thieuLaDo`: bộ sinh không có ở HEAD thì tính là lệch hay bỏ qua. Khai rồi mà thiếu là repo
-   hỏng (ĐỎ); còn danh sách MẶC ĐỊNH mà thiếu là repo vốn không có bộ sinh (bỏ qua) — gộp hai
-   ca này lại là khoá vĩnh viễn một repo vừa dựng từ bộ khung. */
-export function kiemArtifactTuHead(root, scripts, { thieuLaDo = true, timeout = 120000 } = {}) {
-  if (!scripts.length) return { ok: true, lech: [] };
-  let anh;
-  try { anh = anhChupHead(root); }
-  catch (error) {
-    const detail = String(error.stderr || error.stdout || error.message).trim().split(String.fromCharCode(10)).slice(-2).join(" | ");
-    return { ok: null, ly_do: `KHONG_DUNG_DUOC_ANH_CHUP_HEAD: ${detail}` };
-  }
-  try {
-    const lech = [];
-    for (const script of scripts) {
-      const file = path.join(anh.dir, "scripts", script);
-      if (!fs.existsSync(file)) {
-        if (thieuLaDo) lech.push(`scripts/${script} đã KHAI trong ${STRUCTURE_FILE} nhưng KHÔNG có trong repo ở HEAD — khai rồi mà thiếu là repo hỏng, không phải chuyện bỏ qua.`);
-        continue;
-      }
-      try {
-        execFileSync(process.execPath, [file, "--check-head"], { cwd: anh.dir, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout });
-      } catch (error) {
-        const detail = String(error.stderr || error.stdout || error.message).trim().split(String.fromCharCode(10)).slice(-2).join(" | ");
-        lech.push(`${script} không khớp với HEAD${detail ? ` → ${detail}` : ""}`);
-      }
+    const chuan = p.replaceAll("\\", "/").replace(/\/+$/, "");
+    if (chuan === "" || chuan.startsWith("/") || chuan.split("/").includes("..")) {
+      throw new Error(`FROZEN_HONG: đường dẫn phải tương đối và không chứa "..". Đang là: ${JSON.stringify(p)}`);
     }
-    return { ok: lech.length === 0, lech };
-  } finally { anh.dispose(); }
+    ra.push(chuan);
+  }
+  return Object.freeze(ra);
 }
 
-/* ---- COMMIT CHƯA ĐẨY, QUY VỀ VÙNG — một cách đo, hai cổng dùng -----------
- *
- * VÌ SAO HÀM NÀY Ở ĐÂY (TRA-KHOA-01, 06/09). Luật `AGENTS.md` mục 1: **trả quyền SAU khi đẩy,
- * không phải sau khi commit**. Trước bản này chỉ `safe-push.mjs` biết đếm commit chưa đẩy và
- * quy nó về vùng; `claim.mjs --release` thì không biết gì cả, nên nó cho trả khoá lúc commit
- * còn nằm trên máy. Ngày 06/09 ba lane cùng bị chặn đẩy, cùng trả khoá cho "sạch sẽ", và cùng
- * để lại commit vô chủ cho phiên đến sau dọn.
- *
- * Cách chữa KHÔNG phải là chép phép đếm sang `claim.mjs`. Hai bản của một luật đã trả hai câu
- * khác nhau cho cùng một file ngày 02/09 (xem khối `ownershipKeys` phía trên, và `append_only_
- * exempt`). Nên phép ĐO về đây, một bản; hai bên gọi giữ CHÍNH SÁCH riêng, y như `kiemArtifact
- * TuHead`:
- *   · `safe-push` sắp ghi lên remote → không có `origin/main` là CHẶN (không có mốc thì không
- *     biết mình vừa đẩy gì).
- *   · `claim.mjs --release` là sổ sách nội bộ → không có `origin/main` là KHÔNG CHẶN. Repo mới
- *     dựng từ bộ khung chưa có remote, và chặn ở đó là khoá cứng đúng đối tượng mà bộ khung
- *     nhắm tới. Đây là ngoại lệ "bootstrap thật" của bất biến ④, không phải một fail-open.
- *
- * CỐ Ý KHÔNG `git fetch` ở đây. Hàm này chỉ ĐỌC ref sẵn có trên máy: gọi mạng trong một phép
- * đo là biến nó thành thứ chạy chậm và hỏng theo đường truyền, mà mọi lane ở repo này dùng
- * CHUNG một thư mục git — nên chính cú `git push` của `safe-push` đã cập nhật `origin/main`
- * ngay tại chỗ. Bên nào cần mốc tươi thì tự `fetch` trước khi gọi (safe-push có làm).
- */
-export const CHUA_DAY = Object.freeze({ OK: "ok", KHONG_CO_MOC: "khong_co_moc", LOI: "loi" });
-
-/* Trả về một trong ba:
-     { trangThai: OK,           commits: [{ sha, subject, author, areas, lane, laneProblem }] }
-     { trangThai: KHONG_CO_MOC, ly_do }   — không phân giải được `origin/main`
-     { trangThai: LOI,          ly_do }   — không đọc được git → KHÔNG BIẾT, bên gọi phải chặn */
-export function commitChuaDay(root, structure) {
-  const git = (...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: root, encoding: "utf8" });
-  const quiet = (...a) => { try { return git(...a); } catch { return ""; } };
-  const unquote = (line) => line.replace(/^"|"$/g, "");
-
-  // HAI CÂU HỎI, KHÔNG PHẢI MỘT — cùng lý do như `baselineDaNiemPhong`: "git hỏng" và "repo
-  // chưa có remote" là hai chuyện khác nhau, và gộp chúng thành một là biến ca thứ nhất
-  // (KHÔNG BIẾT → phải đỏ) thành ca thứ hai (bootstrap → cho qua).
-  let trongCayGit = "";
-  try { trongCayGit = git("rev-parse", "--is-inside-work-tree").trim(); } catch { trongCayGit = ""; }
-  if (trongCayGit !== "true") {
-    return { trangThai: CHUA_DAY.LOI, ly_do: "không đọc được git ở đây (không phải cây làm việc git, hoặc git không chạy được)" };
-  }
-  if (!quiet("rev-parse", "--verify", "origin/main").trim()) {
-    return { trangThai: CHUA_DAY.KHONG_CO_MOC, ly_do: "không phân giải được `origin/main`" };
-  }
-
-  try {
-    const claimPrefixes = claimPrefixesFrom(structure);
-    // Miễn trừ phải GIỐNG cổng đóng phiên, và đo THEO CẢ LOẠT chứ không theo từng commit — xem
-    // khối chú giải dài trong `safe-push.mjs`, đây chính là đoạn dọn về từ đó.
-    const chiThemOCuoi = new Map(appendOnlyExemptFrom(structure).map((file) => [file, appendOnlyAtEof(
-      quiet("diff", "-U0", "origin/main", "HEAD", "--", file),
-      quiet("show", `origin/main:${file}`)
-    )]));
-    const adminFile = (file) => file === ".agents/claims.json" || chiThemOCuoi.get(file) === true;
-
-    const commits = git("log", "--format=%H%x1f%s%x1f%an", "origin/main..HEAD").split("\n").filter(Boolean)
-      .map((line) => {
-        const [sha, subject, author] = line.split(String.fromCharCode(31));
-        const files = quiet("show", "--name-only", "--format=", sha).split("\n").filter(Boolean).map(unquote);
-        const { lane, problem } = laneFromMessage(quiet("log", "-1", "--format=%B", sha));
-        return { sha, subject, author, areas: ownershipKeys(files, structure, claimPrefixes, adminFile), lane, laneProblem: problem };
-      });
-    return { trangThai: CHUA_DAY.OK, commits };
-  } catch (error) {
-    return { trangThai: CHUA_DAY.LOI, ly_do: String(error.message).split(String.fromCharCode(10))[0] };
-  }
-}
-
-/* ---- CHƯA THẤY DẤU VẾT TRONG REPO — N-09, BRIEF-K2-KHOA-RANH-01 ----------
- *
- * Câu hỏi: vùng này đang có chủ, mà từ lúc nhận tới giờ repo đã thấy gì chưa?
- * Hai vế, cả hai đã có sẵn, không dựng nguồn dữ liệu mới:
- *   · không commit nào chạm vùng đó kể từ mốc nhận (đọc `git log`), VÀ
- *   · không file nào trong vùng bị sửa trên đĩa (đọc `git status`).
- *
- * TÊN CỦA TÍN HIỆU LÀ PHẦN CỦA HỢP ĐỒNG, KHÔNG PHẢI CHUYỆN CHỮ NGHĨA. Nó nói **repo chưa
- * thấy gì**. Nó KHÔNG nói lane đang rảnh, và nó KHÔNG BAO GIỜ đủ để nhả khoá của lane khác.
- * Ngày 06/09 phiên điều phối đo đúng hai vế trên, đọc thành "lane rảnh", nhả hộ một khoá, và
- * lane kia — đang dựng thật trong một thư mục tạm NGOÀI repo — phải hoàn nguyên việc đã xong.
- * Repo chỉ thấy được thứ đã chạm repo. Đo thêm bao nhiêu cũng không đóng được lỗ đó.
- * Vì thế: cấm gọi tín hiệu này là "rảnh" · "nhàn" · "không làm gì" ở bất cứ đâu người hoặc AI
- * đọc được, và cấm máy tự nhả khoá. Máy HIỆN RA, người HỎI.
- *
- * VÀNG, KHÔNG BAO GIỜ ĐỎ. Một lane đọc kỹ 30 phút trước khi sửa một dòng là lane TỐT. Chặn nó
- * là dạy mọi lane ghi bừa một byte để giữ khoá cho hợp lệ — lúc đó phép kiểm thành thứ ngược
- * lại chính nó.
- *
- * BA TRẠNG THÁI, CỐ Ý KHÔNG GỘP: "không đo được" (git hỏng, mốc nhận không đọc được) KHÔNG
- * được đội lốt "chưa thấy dấu vết". Không biết thì im, đừng đoán — vì ở đây đoán sai một chiều
- * là mời người ta đi hỏi một lane đang bận, còn đoán sai chiều kia là im lặng.
- *
- * `.agents/claims.json` KHÔNG tính là dấu vết: chính cú `--take` sửa nó, nên tính nó vào thì
- * mọi khoá vừa nhận đều "đã có dấu vết" và tín hiệu chết ngay lúc sinh ra.
- */
-export const DAU_VET = Object.freeze({ THAY: "thay", CHUA_THAY: "chua_thay", KHONG_DO_DUOC: "khong_do_duoc" });
-
-/** Chữ hợp tuyển duy nhất được phép hiện ra cho người và AI đọc. */
-export const CHUA_THAY_DAU_VET = "chưa thấy dấu vết trong repo";
-
-/* Mốc nhận → mili-giây. Nhận cả dạng cũ chỉ có ngày lẫn dạng mới có giờ; không đọc được thì
-   trả null, vì đoán bừa một con số giờ còn tệ hơn không nói gì. MỘT bản của luật này —
-   `claim.mjs` gọi lại đúng hàm này cho `ageHours`. */
-export function mocMs(stamp) {
-  if (typeof stamp !== "string" || stamp === "") return null;
-  const iso = /^\d{4}-\d{2}-\d{2}$/.test(stamp) ? `${stamp}T00:00Z` : stamp;
-  const t = Date.parse(/[Zz]|[+-]\d{2}:?\d{2}$/.test(iso) ? iso : `${iso}Z`);
-  return Number.isFinite(t) ? t : null;
-}
-
-/* HÀM THUẦN — nhận sẵn dữ liệu đã đọc, để phép ghim đo được mọi nhánh mà không cần dựng repo.
-   `commits`: [{ ms, areas: [khoá] }] · `suaTrenDia`: [khoá] · `mocTheoKhoa`: { khoá: chuỗi mốc }. */
-export function dauVetThuan(mocTheoKhoa, commits, suaTrenDia) {
-  const ket = new Map();
-  const dia = new Set(suaTrenDia || []);
-  for (const [khoa, moc] of Object.entries(mocTheoKhoa || {})) {
-    const ms = mocMs(moc);
-    if (ms === null) {
-      ket.set(khoa, { trangThai: DAU_VET.KHONG_DO_DUOC, ly_do: "mốc nhận không đọc được", soCommit: 0, soFileSua: 0 });
-      continue;
-    }
-    const soCommit = (commits || []).filter((c) => c.ms >= ms && c.areas.includes(khoa)).length;
-    const soFileSua = dia.has(khoa) ? 1 : 0;
-    ket.set(khoa, {
-      trangThai: soCommit === 0 && soFileSua === 0 ? DAU_VET.CHUA_THAY : DAU_VET.THAY,
-      soCommit,
-      soFileSua
-    });
-  }
-  return ket;
-}
-
-/* Đọc git rồi gọi hàm thuần trên. Git hỏng → MỌI khoá về `KHONG_DO_DUOC`, không về `CHUA_THAY`.
-   Đây đúng họ lỗi đã bị loại khỏi cổng đóng phiên nhiều lần: lỗi đọc biến thành "sạch". */
-export function dauVetTheoVung(root, structure, mocTheoKhoa) {
-  const khoas = Object.entries(mocTheoKhoa || {}).filter(([, v]) => typeof v === "string" && v !== "");
-  if (!khoas.length) return new Map();
-  const som = khoas.map(([, v]) => mocMs(v)).filter((v) => v !== null).sort((a, b) => a - b)[0];
-  const hong = (ly_do) => new Map(khoas.map(([k]) => [k, { trangThai: DAU_VET.KHONG_DO_DUOC, ly_do, soCommit: 0, soFileSua: 0 }]));
-  if (som === undefined) return hong("không mốc nhận nào đọc được");
-
-  const git = (...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
-  const prefixes = claimPrefixesFrom(structure);
-  const laHanhChinh = (file) => file === ".agents/claims.json";
-  const boNhay = (line) => line.replace(/^"|"$/g, "");
-  const US = String.fromCharCode(31);
-  const NL = String.fromCharCode(10);
-
-  let commits;
-  let suaTrenDia;
-  try {
-    // `--since` nhận mốc SỚM NHẤT trong cả loạt; lọc theo từng khoá làm ở hàm thuần. Một lượt
-    // đọc git cho cả bảng, không một lượt cho mỗi khoá.
-    const raw = git("log", `--since=${new Date(som).toISOString()}`, "--name-only", `--format=${US}%ct`, "HEAD");
-    commits = raw.split(US).map((khoi) => khoi.split(NL).filter(Boolean)).filter((d) => d.length)
-      .map((dong) => ({
-        ms: Number.parseInt(dong[0], 10) * 1000,
-        areas: ownershipKeys(dong.slice(1).map(boNhay), structure, prefixes, laHanhChinh)
-      }))
-      .filter((c) => Number.isFinite(c.ms));
-    // `git status --porcelain` — ` M duong/dan`, `?? duong/dan`, `R  cu -> moi`. Lấy vế SAU của
-    // dấu mũi tên: đó là chỗ file đang nằm.
-    const files = git("status", "--porcelain").split(NL).filter(Boolean)
-      .map((l) => l.slice(3))
-      .map((p) => { const i = p.indexOf(" -> "); return boNhay(i === -1 ? p : p.slice(i + 4)); });
-    suaTrenDia = ownershipKeys(files, structure, prefixes, laHanhChinh);
-  } catch (error) {
-    return hong(`không đọc được git: ${String(error.message).split(NL)[0]}`);
-  }
-  return dauVetThuan(Object.fromEntries(khoas), commits, suaTrenDia);
-}
-
-/* ---- FILE MỘT REPO THỬ CẦN CHÉP ------------------------------------------
- *
- * Nhiều phép ghim dựng một repo tạm rồi chạy cổng kiểm trong đó. Trước 09/09 mỗi chỗ giữ một
- * DANH SÁCH GÕ TAY tên file cần chép — bảy bản, và cả bảy mục cùng lúc: hôm đó
- * `session-check.mjs` nhận thêm một import (`rule-compile.mjs`) và bốn suite đỏ với
- * `ERR_MODULE_NOT_FOUND`. Cái chết đó **trông y hệt một phép kiểm hỏng**, nên nó vừa tốn thời
- * gian vừa chỉ sai hướng.
- *
- * Nay suy từ chính mã nguồn. HAI kiểu phụ thuộc, bỏ kiểu thứ hai thì repo tạm vẫn chết:
- * `import` tĩnh, VÀ script được gọi như **tiến trình con** (`check-bootstrap.mjs` đi đường đó).
- *
- * `goc` là những script mà repo thử gọi thẳng. Trả về tên file, không phải đường dẫn. */
-export function fileScriptCanChep(root, goc = ["session-check.mjs"]) {
-  const thay = new Set();
-  const hang = [...goc];
-  const RE = [
-    /from\s+"\.\/([\w.-]+\.mjs)"/g,
-    /"scripts",\s*"([\w.-]+\.mjs)"/g,
-    /scripts\/([\w.-]+\.mjs)/g,
+export function loiKhuyenKhiChan(claims) {
+  const daBoLai = Object.entries(claims || {})
+    .filter(([, c]) => c && c.tra_khi_chua_day)
+    .map(([khoa, c]) => `  ${khoa}: khai bỏ lại "${String(c.tra_khi_chua_day)}"`);
+  if (!daBoLai.length) return ["Cách xử lý: chờ phiên đó tự push, HOẶC hỏi Đức rồi chạy lại kèm --carry."];
+  return [
+    "",
+    "⚠ CÓ LANE ĐÃ TRẢ KHOÁ RỒI ĐI, VÀ ĐỂ LẠI COMMIT CHƯA ĐẨY — đừng chờ nó:",
+    ...daBoLai,
+    "Commit đó sẽ KHÔNG tự lên. Đây đúng là ca phải hỏi Đức rồi chạy lại kèm --carry."
   ];
-  while (hang.length) {
-    const ten = hang.shift();
-    if (thay.has(ten)) continue;
-    let src;
-    try { src = fs.readFileSync(path.join(root, "scripts", ten), "utf8"); } catch { continue; }
-    thay.add(ten);
-    for (const re of RE) for (const m of src.matchAll(re)) hang.push(m[1]);
-  }
-  return [...thay];
 }

@@ -40,6 +40,16 @@
     "scouter:mutation": "node workers/duc-scouter/v0.1.0/scripts/scouter-mutation-check.mjs",
     "scouter:bridge-live": "node workers/duc-scouter/v0.1.0/scripts/scouter-bridge-live-check.mjs",
     "test:hnx": "node workers/hnx-fetch/v0.1.0/tests/run-all.mjs",
-    "test:song-song": "node scripts/chay-test.mjs"
+    "test:song-song": "node scripts/chay-test.mjs",
+    "gate": "node scripts/session-check.mjs",
+    "push": "node scripts/safe-push.mjs",
+    "can-nang": "node scripts/can-nang.mjs",
+    "don": "node scripts/don.mjs",
+    "luat": "node scripts/rule-compiler.mjs",
+    "bang-song": "node bang-song/mot-luot.mjs",
+    "bang-song:may-chu": "node bang-song/may-chu.mjs",
+    "features": "node scripts/features.mjs",
+    "handoff": "node scripts/handoff.mjs",
+    "test:tuan-tu": "node tests/harness-smoke.mjs && node tests/assistant-smoke.mjs && node tests/handoff-smoke.mjs && node tests/dau-suite-smoke.mjs && node tests/overview-doc-smoke.mjs && node tests/luu-do-smoke.mjs && node tests/khoa-file.mjs && node tests/khoa-dau-vet.mjs && node tests/bang-song.mjs && node tests/features-smoke.mjs"
   }
 }

@@ -1,6 +1,9 @@
 /* `HANDOFF.md` — trần độ dài một mục, và xoay file theo tháng.
  *
- * Quyết định gốc: ADR-0011 (Đức chốt 06/09). Luật vận hành: `docs/protocols/HANDOFF.md`.
+ * XUẤT XỨ: cơ chế này sinh ra ở một repo TIÊU THỤ (2026-09-06) rồi được mang LÊN nơi phát hành
+ * ngày 2026-09-08 để mọi repo cùng có — tức nó đã chạy thật trước khi được phát đi. ADR-0011.
+ * Sổ tay vận hành (`docs/protocols/HANDOFF.md`) là TUỲ REPO: repo nào có thì đọc, bộ khung cố ý
+ * không mang sang vì đang cắt kho chữ. Công cụ này không đọc file đó.
  *
  * Hai việc, cố ý nằm chung một file vì chúng đọc CÙNG một cách bổ file ra mục:
  *   ⑴ đếm byte một mục để cổng đóng phiên chặn mục MỚI quá dài;
@@ -14,7 +17,6 @@
  *   node scripts/handoff.mjs --check  [<file>…]        chỉ đo, không ghi
  *   node scripts/handoff.mjs --rotate <file> [--thang YYYY-MM]
  */
-import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -169,161 +171,15 @@ export function xoay({ text, thangMoi, so, tenFile = "HANDOFF.md" }) {
   return { moi: dau + conTro, luuTru, luuTruDau, luuTruTen, thangCu };
 }
 
-/* ---- CẮT THEO SỐ MỤC (ADR-0008) ----------------------------------------
- *
- * KHÁC HẲN `xoay()` Ở TRÊN, và hai cơ chế này đã bị lẫn với nhau một lần rồi.
- *   `xoay()`  — ADR-0011 — cắt theo **THÁNG**: file chỉ giữ tháng hiện tại.
- *   `catTheoSo()` — ADR-0008 — cắt theo **SỐ MỤC**: file giữ N mục cuối.
- *
- * Vì sao phải có cả hai: đo 09/09, `HANDOFF.md` gốc có **60 mục** trong khi ADR-0008 chốt 20 —
- * nhưng cả 60 mục đều mang mốc `2026-09`, nên `--rotate` chạy xong dời **0 dòng** và in ra một
- * câu nghe như thành công. Cơ chế của ADR-0008 làm tay một lần ngày 06/09 rồi **chưa bao giờ
- * được cài**; đây là lượt cài nó.
- */
-
-/* Vị trí (chỉ số chuỗi) của dòng mở mỗi mục trong phần thân.
- * Trả VỊ TRÍ chứ không trả nội dung mục — cố ý. `docMuc()` chuẩn hoá đuôi trắng của mỗi mục
- * (`.replace(/\s+$/, "") + "\n"`), nên nối các mục của nó lại KHÔNG ra đúng nguyên bản khi giữa
- * hai mục có dòng trắng. Cắt bằng vị trí thì `than.slice(0,k) + than.slice(k) === than` là hằng
- * đúng, không cần tin bộ chuẩn hoá nào — mà bất biến ⑴ của ADR-0008 chính là chỗ đó. */
-export function viTriMuc(than) {
-  const s = String(than ?? "");
-  const out = [];
-  let i = 0;
-  for (const line of s.split("\n")) {
-    if (RE_TIEU_DE_MUC.test(line)) out.push(i);
-    i += line.length + 1;
-  }
-  return out;
-}
-
-export const MOC_THAN_LUU_TRU = "<!-- ARCHIVE-BODY-START -->\n";
-
-/* CẮT. Thuần, không đụng đĩa. Trả `null` khi chưa tới ngưỡng — "chưa cần cắt" không phải lỗi.
- *
- * Hình dạng bản ra khớp ĐÚNG bản `HANDOFF-ARCHIVE-01.md` mà lượt cắt tay 06/09 để lại, nên
- * chuỗi con trỏ đi tiếp được: khối con trỏ CŨ nằm ở đầu `thanCu`, tức nó theo vào file lưu trữ
- * mới và từ đó trỏ ngược về file lưu trữ trước.
- *
- * BẤT BIẾN ⑴ — dựng lại được từng byte:
- *     dau + <thân của file lưu trữ, sau MOC_THAN_LUU_TRU> + thanMoi === text
- * Trả cả `thanCu` và `thanMoi` ra ngoài để phép ghim kiểm được bằng ĐẲNG THỨC. Kiểm bằng
- * `endsWith`/`includes` thì một đột biến bớt đúng một byte ở mối nối vẫn sống — đã đo thật
- * 06/09 ở `xoay()`, không lặp lại ở đây. */
-export function catTheoSo({ text, giu, so, tenFile = "HANDOFF.md", sha = null, ngay = null }) {
-  if (!Number.isInteger(giu) || giu <= 0) {
-    throw new Error(`HANDOFF_GIU_HONG: số mục giữ lại phải là số nguyên dương, nhận "${giu}".`);
-  }
-  const raw = String(text ?? "");
-  const { dau, than } = tachThan(raw);
-  const moc = viTriMuc(than);
-  /* Ra 0 mỏ neo là BỘ ĐO HỎNG, không phải "file sạch". Ném, đừng trả null — trả null ở đây thì
-   * một file hỏng dòng `## Log` sẽ báo "chưa cần cắt" và không ai biết. */
-  if (moc.length === 0) {
-    throw new Error(`HANDOFF_KHONG_KHOP: không bổ được mục nào trong ${tenFile}. Kiểm dòng \`## Log\`.`);
-  }
-  if (moc.length <= giu) return null;
-  const cat = moc[moc.length - giu];
-  const thanCu = than.slice(0, cat);    // khối con trỏ cũ + các mục bị dời
-  const thanMoi = than.slice(cat);      // các mục giữ lại
-  const soCat = moc.length - giu;
-  const luuTruTen = tenLuuTru(so);
-  const luuTruDau = [
-    `# HANDOFF lưu trữ — ${tenFile}, ${soCat} mục cũ`,
-    "",
-    `> **Đây là phần đuôi đã cắt của [\`${tenFile}\`](${tenFile}) cạnh file này.**`,
-    `> Sinh bằng \`node scripts/handoff.mjs --cat ${tenFile} --giu ${giu}\` theo`,
-    "> [ADR-0008](docs/adr/0008-nhat-ky-phien.md)"
-      + `${ngay ? ` — cắt ngày ${ngay}` : ""}.`,
-    ">",
-    `> Cắt theo **vị trí trong file**, không theo ngày (bất biến ⑵ của ADR): file kia giữ **${giu}`,
-    `> mục cuối**, ${soCat} mục trước đó nằm ở đây — **nguyên văn, không sửa một chữ**.`,
-    ">",
-    "> **Dựng lại bản gốc:** thay khối con trỏ trong `" + tenFile + "` (phần giữa dòng `## Log` và",
-    "> tiêu đề `##` đầu tiên) bằng toàn bộ phần dưới dấu `ARCHIVE-BODY-START` ở đây — ra đúng bản",
-    "> gốc **từng byte**" + (sha ? `. SHA-256 bản gốc trước khi cắt: \`${sha}\`` : "") + ".",
-    ">",
-    "> **Chỉ đọc.** Ghi Log mới thì ghi vào `" + tenFile + "`, đừng ghi vào đây.",
-    "",
-    MOC_THAN_LUU_TRU.trimEnd()
-  ].join("\n") + "\n";
-  const conTro = [
-    "",
-    `${NHAN_THANG} ${thangCua(raw) ?? thangHienTai()} -->`,
-    "",
-    "<!-- HANDOFF-CUT-POINTER: ADR-0008 -->",
-    `> **${soCat} mục cũ hơn đã dời sang [\`${luuTruTen}\`](${luuTruTen})** — cùng thư mục này,`,
-    `> nguyên văn, không mất chữ nào. File này giữ **${giu} mục cuối** (ADR-0008). Cần đào lịch sử`,
-    "> xa hơn thì mở file đó và đi tiếp theo con trỏ trong nó; ghi Log mới thì vẫn ghi vào cuối",
-    "> file này.",
-    "<!-- /HANDOFF-CUT-POINTER -->",
-    "",
-    ""
-  ].join("\n");
-  return {
-    moi: dau + conTro + thanMoi,
-    luuTru: luuTruDau + thanCu,
-    luuTruDau, luuTruTen, dau, conTro, thanCu, thanMoi, soCat, giu
-  };
-}
-
 /* ---- CLI ---------------------------------------------------------------- */
 
 const MAC_DINH = ["HANDOFF.md"];
-
-export const homNay = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 
 export function thangHienTai(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function chayCLI(argv) {
-  const cat = argv.indexOf("--cat");
-  if (cat >= 0) {
-    const file = argv[cat + 1];
-    if (!file || file.startsWith("--")) {
-      console.error("Thiếu đường dẫn: node scripts/handoff.mjs --cat <file> [--giu 20]");
-      return 2;
-    }
-    const iGiu = argv.indexOf("--giu");
-    const giu = iGiu >= 0 ? Number(argv[iGiu + 1]) : 20;
-    const text = fs.readFileSync(file, "utf8");
-    const sha = crypto.createHash("sha256").update(text, "utf8").digest("hex");
-    const dir = path.dirname(file);
-    const so = soLuuTruTiepTheo(fs.readdirSync(dir));
-    let r;
-    try {
-      r = catTheoSo({ text, giu, so, tenFile: path.basename(file), sha, ngay: homNay() });
-    } catch (e) { console.error(String(e.message)); return 3; }
-    if (r === null) {
-      console.log(`${file}: ${docMucTuFile(text).length} mục, không quá ${giu} — chưa cần cắt.`);
-      return 0;
-    }
-    /* KIỂM BẤT BIẾN ⑴ TRƯỚC KHI GHI, không sau. Ghi trước rồi kiểm là đã mất bản gốc nếu sai. */
-    /* Ghép lại TỪ CHUỖI SẮP GHI RA ĐĨA (`r.moi`), không từ các mảnh rời. Bản đầu của phép kiểm
-     * này ghép `r.dau + <thân lưu trữ> + r.thanMoi` — nó XANH trong khi `r.moi` bị sót cả phần
-     * `thanMoi`, tức file ra rỗng mục mà phép kiểm vẫn gật. Kiểm cái mình ghi, không kiểm cái
-     * mình định ghi. */
-    const thanLuuTru = r.luuTru.slice(r.luuTru.indexOf(MOC_THAN_LUU_TRU) + MOC_THAN_LUU_TRU.length);
-    const dungLai = r.moi.slice(0, r.dau.length) + thanLuuTru
-      + r.moi.slice(r.dau.length + r.conTro.length);
-    if (dungLai !== text) {
-      console.error("HANDOFF_MAT_BYTE: ghép lại KHÔNG ra bản gốc. Không ghi gì cả.");
-      return 3;
-    }
-    const dich = path.join(dir, r.luuTruTen);
-    if (fs.existsSync(dich)) {
-      console.error(`HANDOFF_LUU_TRU_DA_CO: ${dich} đã tồn tại. Dừng, không ghi đè.`);
-      return 3;
-    }
-    fs.writeFileSync(dich, r.luuTru, "utf8");
-    fs.writeFileSync(file, r.moi, "utf8");
-    console.log(`đã cắt ${file}: ${r.soCat + r.giu} mục → giữ ${r.giu}, dời ${r.soCat} sang ${dich}.`);
-    console.log(`ghép lại dựng đúng bản gốc từng byte — SHA-256 bản gốc: ${sha}`);
-    console.log(`CÒN MỘT VIỆC KHÔNG MÁY NÀO LÀM HỘ: khai \`${r.luuTruTen}\` vào Bản đồ file (AGENTS.md).`);
-    return 0;
-  }
-
   const rotate = argv.indexOf("--rotate");
   const thangEp = argv.indexOf("--thang") >= 0 ? argv[argv.indexOf("--thang") + 1] : null;
   if (rotate >= 0) {

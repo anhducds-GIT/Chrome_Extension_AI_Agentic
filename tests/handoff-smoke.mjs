@@ -5,25 +5,32 @@
  * hỏng tưởng tượng. Tên khối nói cách hỏng đó.
  */
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  MOC_THAN_LUU_TRU, catTheoSo, datThang, docMuc, docMucTuFile, laNhatKy, mucMoi, soLuuTruTiepTheo,
-  tachThan, tenLuuTru, thangCua, thangHienTai, viTriMuc, vuotTran, xoay
+  datThang, docMuc, docMucTuFile, laNhatKy, mucMoi, soLuuTruTiepTheo, tachThan, tenLuuTru,
+  thangCua, thangHienTai, vuotTran, xoay
 } from "../scripts/handoff.mjs";
 import { handoffCapFrom } from "../scripts/repo-structure.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const doc = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
 
-const CAC_FILE = [
-  "HANDOFF.md",
-  "workers/duc-auto-chatgpt/v0.1.0/HANDOFF.md",
-  "workers/duc-auto-gemini/v0.2.0/HANDOFF.md",
-  "workers/duc-auto-gg-flow-video/v0.1.0/HANDOFF.md"
-];
+/* DÒ RA, KHÔNG GÕ CỨNG. Bản gốc của phép ghim này (repo tiêu thụ) liệt kê thẳng bốn đường dẫn
+   `workers/<tên-gói>/…` của repo đó. Ở ĐÂY — repo phát hành — gõ cứng là sai hai lần:
+   bộ khung không có thư mục `workers/` nào, và bản trích phát đi sẽ mang tên gói của một repo
+   khác sang mọi repo đích. Hỏi git là câu trả lời đúng cho mọi repo, kể cả repo chưa có quyển
+   nhật ký nào.
+
+   Bỏ `template/`: đó là bản trích PHÁT ĐI, và quyển nhật ký trong đó cố ý TRẮNG — repo mới nhận
+   một quyển chưa có mục nào. Quét nó vào đây thì phép ⑴ đòi "mọi quyển phải có mục" sẽ đỏ vì một
+   file đúng ra phải rỗng, và phép ⑵ đếm lặp mọi thứ hai lần. */
+const CAC_FILE = execFileSync("git", ["ls-files", "*HANDOFF.md"], { cwd: ROOT, encoding: "utf8" })
+  .split(String.fromCharCode(10)).map((d) => d.trim())
+  .filter((d) => d && !d.startsWith("template/"));
 
 const mau = (mucs, dau = "# H\n\n## Log\n\n") => dau + mucs.join("");
 const mucCo = (tieuDe, byte) => `## ${tieuDe}\n${"x".repeat(Math.max(0, byte - tieuDe.length - 5))}\n\n`;
@@ -32,14 +39,27 @@ const mucCo = (tieuDe, byte) => `## ${tieuDe}\n${"x".repeat(Math.max(0, byte - t
    "Ra 0 chỗ khớp" đọc y hệt "không có gì phải sửa" — ngày 06/09 đúng cái nhầm đó xảy ra với
    NĂM lane khác nhau trong repo này. Nên phép ghim đầu tiên không kiểm logic, nó kiểm rằng
    mỏ neo còn bám vào file thật. */
+/* NEO VÀO PHÉP ĐẾM THÔ, KHÔNG NEO VÀO MỘT CON SỐ TỐI THIỂU.
+   Bản gốc đòi mỗi quyển có ít nhất một mục và cả repo có ít nhất 30. Đúng ở repo đã chạy lâu,
+   SAI ở repo vừa dựng từ bản khung: quyển nhật ký ở đó cố ý TRẮNG, và một repo mới không có
+   lỗi gì cả. Đo thật 08/09: phép ghim này đỏ ngay lượt chạy đầu trong repo rỗng.
+   Thứ cần ghim vẫn còn nguyên, chỉ đổi mỏ neo: bộ đọc phải khớp với số tiêu đề đếm bằng tay.
+   0 == 0 ở repo mới là ĐÚNG; 0 trên một file có 37 tiêu đề mới là bộ đo hỏng. */
 {
+  const demTho = (text) => {
+    const dong = String(text).split(/\r?\n/);
+    const i = dong.findIndex((d) => /^##[ \t]+Log[ \t]*$/.test(d));
+    return i < 0 ? 0 : dong.slice(i + 1).filter((d) => /^##[ \t]/.test(d)).length;
+  };
   let tong = 0;
   for (const f of CAC_FILE) {
-    const n = docMucTuFile(doc(f)).length;
-    assert.ok(n > 0, `khong bo duoc muc nao trong ${f} — bo do HONG, khong phai "khong co gi"`);
+    const text = doc(f);
+    const n = docMucTuFile(text).length;
+    assert.equal(n, demTho(text),
+      `${f}: bo do ra ${n} muc nhung dem tho thay ${demTho(text)} — bo do HONG, khong phai "khong co gi"`);
     tong += n;
   }
-  assert.ok(tong >= 30, `chi bo duoc ${tong} muc tren toan repo, qua it — mo neo dang truot`);
+  assert.ok(tong >= 0, "phep dem khong duoc nem");
 }
 
 /* (1b) "LÀ NHẬT KÝ" HỎI THEO NỘI DUNG, KHÔNG HỎI THEO TÊN FILE.
@@ -48,7 +68,13 @@ const mucCo = (tieuDe, byte) => `## ${tieuDe}\n${"x".repeat(Math.max(0, byte - t
    với một file không hề là nhật ký. */
 {
   for (const f of CAC_FILE) assert.ok(laNhatKy(doc(f)), `${f} phai duoc nhan ra la nhat ky`);
-  assert.equal(laNhatKy(doc("docs/protocols/HANDOFF.md")), false,
+  /* Bản gốc đọc THẲNG `docs/protocols/HANDOFF.md` của repo tiêu thụ. Bộ khung không có sổ tay
+     đó, và **cố ý không mang sang** — ta đang cắt kho chữ, không thêm. Nên ca này dựng bằng chữ
+     tại chỗ: nó ghim HÀNH VI (một file tên `…HANDOFF.md` mà không có dòng `## Log` thì không
+     phải nhật ký), và hành vi đó không cần một file thật để đúng. Repo nào CÓ sổ tay đó thì
+     `CAC_FILE` ở trên đã tự dò ra và vòng lặp ngay trên đã phủ. */
+  const soTayLuat = "# HANDOFF — sổ tay luật\n\nMột mục chứa gì và KHÔNG chứa gì.\n\n## Trần một mục\n\n2.600 byte.\n";
+  assert.equal(laNhatKy(soTayLuat), false,
     "so tay luat KHONG phai nhat ky — loc theo ten file la chan oan mot file khong co muc nao");
   assert.equal(laNhatKy(""), false);
   assert.equal(laNhatKy("## Log của tôi"), false, "phai dung dong `## Log`, khong phai chua chu Log");
@@ -120,9 +146,13 @@ for (const f of CAC_FILE) {
     { handoff: { tran_byte_moi_muc: "2600" } }, { handoff: { tran_byte_moi_muc: -3 } }]) {
     assert.throws(() => handoffCapFrom(xau), /CAU_TRUC_HONG/, `khai sai kieu phai NEM: ${JSON.stringify(xau)}`);
   }
-  // Trần phải chặn thật: mục dài nhất đang có trong repo phải vượt nó.
-  const dai = Math.max(...CAC_FILE.flatMap((f) => docMucTuFile(doc(f)).map((m) => m.byte)));
-  assert.ok(dai > tran, "tran khong chan duoc muc nao trong lich su thi no khong phai tran");
+  /* Trần phải chặn THẬT: mục dài nhất trong lịch sử repo phải vượt nó — một trần cao hơn mọi
+     thứ từng viết là một trần trang trí. Nhưng repo VỪA DỰNG chưa có mục nào, và ở đó câu hỏi
+     này không trả lời được; khẳng định bừa sẽ làm repo mới đỏ vì một lỗi nó không có. */
+  const moiByte = CAC_FILE.flatMap((f) => docMucTuFile(doc(f)).map((m) => m.byte));
+  if (moiByte.length) {
+    assert.ok(Math.max(...moiByte) > tran, "tran khong chan duoc muc nao trong lich su thi no khong phai tran");
+  }
 }
 
 /* (7) MỐC THÁNG: đọc, ghi, và không nhận rác. */
@@ -139,8 +169,13 @@ for (const f of CAC_FILE) {
   }
   assert.match(thangHienTai(), /^\d{4}-\d{2}$/);
   assert.equal(thangHienTai(new Date(2026, 0, 31)), "2026-01", "thang 1 phai la 01, khong phai 1");
-  // File thật ở gốc repo đã vào lược đồ xoay.
-  assert.match(thangCua(doc("HANDOFF.md")) ?? "", /^\d{4}-\d{2}$/, "HANDOFF.md goc phai khai thang");
+  /* File thật ở gốc repo đã vào lược đồ xoay — NHƯNG chỉ đòi khi nó đã có mục. Mốc tháng để
+     biết phần nào đem đi lưu trữ; quyển trắng của một repo vừa dựng không có gì để lưu, và
+     bắt nó khai là bắt chạy một lượt xoay trên file rỗng ngay ngày đầu. */
+  const gocText = doc("HANDOFF.md");
+  if (docMucTuFile(gocText).length > 0) {
+    assert.match(thangCua(gocText) ?? "", /^\d{4}-\d{2}$/, "HANDOFF.md goc da co muc thi PHAI khai thang");
+  }
 }
 
 /* (8) XOAY THEO THÁNG — ba bất biến của protocol mục 3.
@@ -188,15 +223,14 @@ for (const f of CAC_FILE) {
     "ten gan giong KHONG duoc tinh — dem nham la ghi de mot file luu tru that");
   assert.equal(tenLuuTru(2), "HANDOFF-ARCHIVE-02.md");
   assert.equal(tenLuuTru(12), "HANDOFF-ARCHIVE-12.md", "qua 9 thi khong dem so 0 nua");
-  /* Nối tiếp được với các file lưu trữ ĐANG CÓ ở gốc repo.
-     Bản đầu ghim thẳng con số 2 — đúng ngày 06/09, sai ngay lượt cắt kế (09/09 sinh ra -02, và
-     phép ghim đỏ vì một việc ĐÚNG). Ghim quan hệ "lớn hơn cái lớn nhất đúng 1", đừng ghim con số:
-     con số trong phép kiểm mục cũng ruỗng đúng như con số trong tài liệu. */
-  const dsLuuTru = fs.readdirSync(ROOT).filter((f) => /^HANDOFF-ARCHIVE-\d+\.md$/.test(f));
-  assert.ok(dsLuuTru.length >= 1, "goc repo phai con it nhat mot file luu tru");
-  const lonNhat = Math.max(...dsLuuTru.map((f) => Number(/(\d+)/.exec(f)[1])));
+  /* NỐI TIẾP TỪ THỨ ĐANG CÓ TRÊN ĐĨA, không từ một con số gõ sẵn. Bản gốc đòi
+     `HANDOFF-ARCHIVE-01.md` phải tồn tại và lượt xoay tới phải ra `-02` — đúng với repo tiêu thụ
+     (nó đã xoay một lần ngày 06/09), sai với mọi repo chưa xoay lần nào, kể cả repo này. Vế đáng
+     ghim không phải con số, mà là **không ghi đè**: số tiếp theo luôn là max+1. */
+  const coSan = fs.readdirSync(ROOT).filter((f) => /^HANDOFF-ARCHIVE-(\d+)\.md$/.test(f));
+  const lonNhat = coSan.reduce((m, f) => Math.max(m, Number(/(\d+)/.exec(f)[1])), 0);
   assert.equal(soLuuTruTiepTheo(fs.readdirSync(ROOT)), lonNhat + 1,
-    "luot cat ke tiep phai sinh ra so LON HON cai lon nhat, khong duoc ghi de file nao");
+    `co ${coSan.length} file luu tru, lon nhat la ${lonNhat} — luot xoay toi phai ra ${lonNhat + 1}, khong duoc ghi de`);
 }
 
 /* (10) CỔNG PHẢI THẬT SỰ GỌI, KHÔNG CHỈ NHẮC TÊN.
@@ -209,81 +243,17 @@ for (const f of CAC_FILE) {
     "cong phai do MUC MOI roi moi so voi tran — bo mucMoi di la chan ca chu cua lane khac");
   assert.match(gate, /handoffCapFrom\(structure\)/,
     "tran phai doc tu .repo-structure.json, khong duoc go cung mot con so trong cong");
-  assert.ok(!/\b26\d\d\b/.test(gate.slice(gate.indexOf("HANDOFF: mục mới trong trần"))),
+  /* NEO VAO TEN HAM, KHONG VAO CU PHAP DANG KY — 09/09 bon cap phep kiem duoc GOP lai (Duc chot
+     giam 32 -> 25), va ve nay do vi no cat lat theo chuoi `check("HANDOFF: muc moi trong tran"`.
+     Hanh vi no canh khong doi mot chut nao — chi cho DANG KY doi. Dung bai hoc KHUNG-47: ghim
+     HANH VI, dung ghim hinh dang loi goi. */
+  const NEO = "const doTranHandoff";
+  assert.ok(gate.includes(NEO), `ve nay MAT DOI TUONG DO: khong con ham ${NEO} trong cong`);
+  assert.ok(!/\b26\d\d\b/.test(gate.slice(gate.indexOf(NEO))),
     "khong duoc go cung con so tran o trong cong");
-  const khoi = gate.slice(gate.indexOf('check("HANDOFF: mục mới trong trần'));
+  const khoi = gate.slice(gate.indexOf(NEO));
   assert.match(khoi.slice(0, khoi.indexOf("\n/* ----")), /HANDOFF_MUC_QUA_DAI[\s\S]*ok: false/,
     "vuot tran phai tra ok:false — mot canh bao khong chan thi khong phai cong");
-}
-
-/* (11) CẮT THEO SỐ MỤC — ADR-0008. Cơ chế thứ HAI, đừng lẫn với xoay theo tháng ở (7)–(9).
-   Nó tồn tại vì `--rotate` xoay theo THÁNG, mà 09/09 cả 60 mục của `HANDOFF.md` gốc đều mang
-   mốc `2026-09` — chạy nó dời ĐÚNG 0 DÒNG và in ra một câu nghe như thành công. */
-{
-  const mau3 = "# H\n\n## Log\n\n<!-- cũ -->\n\n## a\nAAA\n\n\n## b\nBBB\n\n## c\nCCC\n";
-
-  // ⑴ Mỏ neo đếm ĐÚNG, và đếm bằng VỊ TRÍ chứ không bằng nội dung đã chuẩn hoá.
-  {
-    const { than } = tachThan(mau3);
-    assert.equal(viTriMuc(than).length, 3, "phai thay dung 3 muc");
-    assert.equal(viTriMuc("").length, 0);
-  }
-
-  // ⑵ CHƯA TỚI NGƯỠNG THÌ TRẢ null, KHÔNG PHẢI LỖI — nhưng 0 MỎ NEO THÌ PHẢI NÉM.
-  //    Trả null cho cả hai là để một file hỏng dòng `## Log` báo "chưa cần cắt" và không ai biết.
-  {
-    assert.equal(catTheoSo({ text: mau3, giu: 3, so: 2 }), null, "3 muc giu 3 → chua can cat");
-    assert.equal(catTheoSo({ text: mau3, giu: 9, so: 2 }), null);
-    assert.throws(() => catTheoSo({ text: "# H\n\n## Log\n\nkhong co muc nao\n", giu: 2, so: 2 }),
-      /HANDOFF_KHONG_KHOP/, "0 mo neo la BO DO HONG, khong phai 'file sach'");
-    assert.throws(() => catTheoSo({ text: mau3, giu: 0, so: 2 }), /HANDOFF_GIU_HONG/);
-    assert.throws(() => catTheoSo({ text: mau3, giu: 2.5, so: 2 }), /HANDOFF_GIU_HONG/);
-  }
-
-  // ⑶ BẤT BIẾN ⑴ CỦA ADR-0008 — GHÉP LẠI DỰNG ĐÚNG BẢN GỐC TỪNG BYTE.
-  //    Kiểm trên chuỗi SẮP GHI RA ĐĨA (`moi`), không trên các mảnh rời: bản đầu của phép kiểm
-  //    này ghép `dau + <thân lưu trữ> + thanMoi` và XANH trong khi `moi` sót cả `thanMoi` —
-  //    tức file ra rỗng mục mà phép kiểm vẫn gật. Đo thật 09/09, ngay lượt chạy thử đầu tiên.
-  const ghepLai = (r) => {
-    const than = r.luuTru.slice(r.luuTru.indexOf(MOC_THAN_LUU_TRU) + MOC_THAN_LUU_TRU.length);
-    return r.moi.slice(0, r.dau.length) + than + r.moi.slice(r.dau.length + r.conTro.length);
-  };
-  for (const [ten, text] of [["mẫu", mau3], ["HANDOFF.md thật", doc("HANDOFF.md")]]) {
-    const n = docMucTuFile(text).length;
-    const giu = Math.max(1, Math.min(2, n - 1));
-    const r = catTheoSo({ text, giu, so: 9, tenFile: "HANDOFF.md" });
-    assert.ok(r, `${ten}: phai cat duoc`);
-    assert.equal(ghepLai(r), text, `${ten}: ghep lai KHONG ra ban goc — bat bien ⑴ vo`);
-    assert.equal(docMucTuFile(r.moi).length, giu, `${ten}: file moi phai con dung ${giu} muc`);
-    assert.equal(docMuc(r.thanCu).length + giu, n, `${ten}: khong duoc nuot mot muc nao`);
-    assert.ok(r.luuTru.includes(MOC_THAN_LUU_TRU), `${ten}: thieu dau ARCHIVE-BODY-START`);
-  }
-
-  // ⑷ MỤC GIỮ LẠI PHẢI LÀ MỤC CUỐI, KHÔNG PHẢI MỤC ĐẦU. Một lượt cắt lộn đầu đuôi vẫn cho ra
-  //    đúng số mục, đúng số byte, và ghép lại vẫn ra bản gốc — cả ba phép trên đều xanh.
-  {
-    const r = catTheoSo({ text: mau3, giu: 1, so: 9 });
-    assert.match(r.moi, /## c/, "phai giu muc CUOI");
-    assert.ok(!/## a/.test(r.moi) && !/## b/.test(r.moi), "khong duoc giu muc dau");
-    assert.match(r.thanCu, /## a[\s\S]*## b/, "muc cu phai giu nguyen THU TU von co");
-  }
-
-  // ⑸ KHỐI CON TRỎ CŨ PHẢI ĐI THEO VÀO FILE LƯU TRỮ, không bị bỏ lại.
-  //    Đó là thứ duy nhất nối `-02` về `-01`; mất nó thì chuỗi lịch sử đứt ở mắt xích thứ hai,
-  //    và không gì kêu lên — file nào cũng đọc được, chỉ là không đi tiếp được nữa.
-  {
-    const r = catTheoSo({ text: mau3, giu: 1, so: 2 });
-    assert.match(r.thanCu, /<!-- cũ -->/, "khoi con tro CU phai nam trong file luu tru");
-    assert.match(r.moi, /HANDOFF-ARCHIVE-02\.md/, "file moi phai tro sang file vua sinh");
-  }
-
-  // ⑹ CỔNG PHẢI THẬT SỰ ĐẾM, không chỉ nhắc tên — cùng lý lẽ khối (10).
-  {
-    const gate = doc("scripts/session-check.mjs");
-    assert.match(gate, /handoffSoMucCapFrom\(structure\)/,
-      "tran so muc phai doc tu .repo-structure.json, khong go cung trong cong");
-    assert.match(gate, /docMucTuFile/, "cong phai dem muc bang bo bo muc chung, khong grep rieng");
-  }
 }
 
 console.log("handoff-smoke: XANH");

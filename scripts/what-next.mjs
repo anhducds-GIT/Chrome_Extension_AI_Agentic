@@ -1,105 +1,127 @@
 /* what-next.mjs — BẢN ĐỒ VIỆC cho vai điều phối.
  *
- * Trả lời đúng một câu mà hôm nay không file nào trả lời được: **việc nào chạy song song
- * được ngay bây giờ**. Dữ liệu vốn có đủ, nhưng nằm rải ở năm chỗ (bảng quyền · ba
- * BACKLOG · sổ ý tưởng · STATUS từng đơn vị) và không chỗ nào giao được với chỗ nào.
+ * Trả lời đúng một câu mà không file nào khác trả lời được: **việc nào chạy song song được
+ * ngay bây giờ**. Dữ liệu vốn có đủ, nhưng nằm rải ở nhiều chỗ (bảng quyền · các `BACKLOG.md`
+ * · sổ ý tưởng · `STATUS.md` từng đơn vị) và không chỗ nào giao được với chỗ nào.
  *
  * Luật song song mà file này cưỡng chế, chỉ một câu: hai việc chạy song song được KHI VÀ
  * CHỈ KHI chúng thuộc hai khoá khác nhau và cả hai khoá đang trống. Không suy diễn gì thêm.
  *
  * VÙNG CỦA MỘT VIỆC LÀ SUY RA, KHÔNG KHAI TAY. Một mục nợ nằm trong
- * `workers/duc-auto-gemini/v0.2.0/BACKLOG.md` thì vùng của nó là `workers/duc-auto-gemini` —
- * `stewardOf()` đã biết cách suy điều đó cho cổng kiểm và safe-push, nên ở đây dùng lại
- * cùng một hàm. Bắt người khai `vùng:` cho 58 mục nợ là thêm một trường có thể khai sai,
- * để lấy về đúng thông tin đã nằm trong đường dẫn.
+ * `<đơn-vị>/<phiên-bản>/BACKLOG.md` thì vùng của nó là vùng của đơn vị đó — `stewardOf()` đã
+ * biết cách suy điều đó cho cổng kiểm và safe-push, nên ở đây dùng lại CÙNG MỘT HÀM. Bắt
+ * người khai `vùng:` cho hàng chục mục nợ là thêm một trường có thể khai sai, để lấy về đúng
+ * thông tin đã nằm trong đường dẫn.
  *
- * CHỈ ĐỌC. File này không ghi gì, không commit gì.
+ * BA NGUỒN ĐỀU CÓ THỂ VẮNG, và vắng KHÔNG phải lỗi. Repo chưa có `BACKLOG.md`, chưa có
+ * `IDEAS.md`, chưa có `STATUS.md`, hoặc không có đơn vị con nào (`units.root_dir: null`) thì
+ * lệnh vẫn chạy và vẫn nói đúng — nó chỉ có ít việc để kể. Bản đầu đóng cứng thư mục đơn vị
+ * là `workers/`, và ở repo không có thư mục đó thì mọi đơn vị biến mất im lặng.
+ *
+ * HAI QUY ƯỚC SỔ mà file này đọc (đều tuỳ chọn):
+ *   · `BACKLOG.md`: mỗi mục là `### <MÃ>-<số> · <tiêu đề>`, ưu tiên khai bằng `## P<n>`,
+ *     mục đã đóng thì gạch ngang `~~MÃ~~`.
+ *   · `IDEAS.md`: mỗi ý tưởng là `## <MÃ>-<số> · <tiêu đề>`, kèm các dòng `- **bậc:** …`,
+ *     `- **việc kế:** …`, `- **chủ:** …`, `- **phạm vi:** …`, `- **nhà:** …`.
+ *
+ * TÊN NGƯỜI CHỐT lấy từ `repo.owner` trong `.repo-structure.json`. Không khai thì mục "đang
+ * chờ người chốt" nói THẲNG là không lọc được, chứ không im lặng in ra danh sách rỗng — rỗng
+ * vì không có việc và rỗng vì không biết cách tìm là hai chuyện khác nhau.
+ *
+ * CHỈ ĐỌC. File này không ghi gì, không commit gì, không đòi khoá nào.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { dangMo, docMucDaGo } from "./backlog-check.mjs";
 import { parseStatus } from "./build-dashboard.mjs";
-import { ageHours, ageLabel, fingerprintState, GIO_NHAC, readClaims } from "./claim.mjs";
-import { claimPrefixesFrom, CHUA_THAY_DAU_VET, DAU_VET, dauVetTheoVung, frozenFrom, readStructureFromDisk, stewardOf, unitsFrom } from "./repo-structure.mjs";
+import * as claimMod from "./claim.mjs";
+import { claimPrefixesFrom, frozenFrom, readStructureFromDisk, stewardOf, unitsFrom } from "./repo-structure.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 /* --- Đọc dữ liệu: hàm thuần, không chạm đĩa ----------------------------------
-   Thuần để test ghim dựng được ca hỏng bằng chuỗi, không phải bằng repo thật. Ba phép
-   kiểm trong repo này đã từng xanh một cách vô nghĩa vì chúng kiểm hàm có chạm đĩa. */
+   Thuần để test ghim dựng được ca hỏng bằng chuỗi, không phải bằng repo thật. Phép kiểm nào
+   dựa vào repo thật thì chỉ chứng minh *hôm nay* đang khớp — vô nghĩa ngày mai. */
 
-/* HAI CẤP TIÊU ĐỀ, vì hai quyển sổ trong repo này viết khác nhau và cả hai đều hợp lệ:
-   sổ của gói `duc-auto-*` dùng `### B-16 · …`, còn sổ gốc repo và sổ Scouter dùng
-   `## N-31 · …` / `## MỞ · S-15 …`. Bản đầu chỉ đọc `###`, nên **[ĐO 08/09]** bản đồ báo
-   `0 việc mở` cho CẢ `_root` (12 mục thật) lẫn `workers/duc-scouter` — tức nó mời phiên
-   điều phối đi tìm việc ở nơi khác trong khi việc đang nằm ngay đó. Đây là N-31, và nó rộng
-   hơn mô tả gốc: mô tả chỉ nói về một gói. `P1`/`P2` không lọt vì chúng không có `-<số>`. */
-const MA_VIEC = /^#{2,3}\s+(?:(MỞ|ĐÓNG)\s*·\s*)?~*\s*([A-Z]+-\d+)~*\s*[·:]?\s*(.*)$/;
+/* Tiền tố được phép chứa SỐ, nhưng phải BẮT ĐẦU bằng chữ cái: `[A-Z][A-Z0-9]*`.
+   Vấp thật 05/09 lượt migrate `n8n-orchestrator`: mã tự nhiên là `N8N-1`, bản cũ đòi tiền tố
+   TOÀN chữ cái nên mục biến mất khỏi bảng mà không báo gì, phải lách sang `CP-`. Repo nào tên
+   chứa số — n8n · s3 · web3 · i18n — đều vấp.
+   Bắt buộc chữ cái ở đầu là có lý do: cho phép số ở đầu thì `### 2026-09 · ...` (một mốc ngày
+   trong sổ) sẽ bị đọc thành mã việc `2026-09`. */
+const MA_VIEC = /^###\s+~*\s*([A-Z][A-Z0-9]*-\d+)~*\s*[·:]?\s*(.*)$/;
+/* Mọi dòng `###` trong sổ nợ ĐỀU phải là một mục việc — quy ước sổ nói thế, và đo ở repo nhà
+   06/09: 24/24 dòng `###` là mục việc, không có ngoại lệ nào. Nên dòng `###` mà không đọc ra
+   mã việc là SAI QUY ƯỚC, và phải bị NÊU TÊN. Đây mới là gốc bệnh của KHUNG-18: không phải
+   regex hẹp, mà là bỏ qua IM LẶNG — hình dạng lạ lần sau vẫn sẽ biến mất nếu chỉ nới regex. */
+const DANG_MUC = /^###\s+(.+)$/;
 const UU_TIEN = /^##\s+(P[1-9])\b/;
 
-/* BA cách nhận một mục đã đóng, và chúng KHÔNG ngang hàng.
-   Quy ước thật của sổ là gạch ngang `~~` — đo 03/09: 6 trong 7 mục đóng dùng nó.
-   Đúng MỘT mục (`G-11`) chỉ ghi `**ĐÓNG 28/08**` mà không gạch, nên nếu chỉ đọc `~~` thì
-   nó bị đếm là việc mở, và bảng sẽ giao cho người khác một việc đã xong.
-   Cách thứ ba là quy ước "cửa ra rẻ ngang cửa vào" của AGENTS.md mục 1: đóng một mục bằng
-   cách THÊM MỘT DÒNG ở cuối sổ (`- **ĐÓNG S-12** · …`) hoặc thêm một tiêu đề `## ĐÓNG · S-12`,
-   chứ không sửa khối cũ. Hai cách đó là ĐÚNG LUẬT nên chúng KHÔNG phải `khaiSai`.
-   Nên: `~~` là chính, dòng/tiêu đề đóng là quy ước sổ, và từ khoá in HOA lạc trong tiêu đề là
-   lưới hứng — mục rơi vào lưới thì BỊ NÊU TÊN thay vì âm thầm bỏ qua, vì cách viết thứ năm sẽ
-   xuất hiện và lúc đó phải có người thấy. In hoa toàn phần là cố ý: `đóng phiên` trong văn
-   xuôi không trúng lưới. */
-const GACH = /^#{2,3}\s+~~/;
+/* HAI cách nhận một mục đã đóng, và chúng KHÔNG ngang hàng.
+   Quy ước sổ là gạch ngang `~~`. Nhưng đo thật ở repo đã dùng thử gói này: ĐÚNG MỘT mục chỉ
+   ghi `**ĐÓNG 28/08**` mà không gạch, nên nếu chỉ đọc `~~` thì nó bị đếm là việc mở, và bảng
+   sẽ giao cho người khác một việc đã xong.
+   Nên: `~~` là chính, từ khoá in HOA là lưới hứng, và mục rơi vào lưới thì BỊ NÊU TÊN (mục
+   `khaiSai`) thay vì âm thầm bỏ qua — cách viết thứ năm sẽ xuất hiện, và lúc đó phải có người
+   thấy. In hoa toàn phần là cố ý: `đóng phiên` trong văn xuôi không trúng lưới. */
+const GACH = /^###\s+~~/;
+
+/* CO "CHO NGUOI CHOT" trong mot muc no. In HOA va co dau hai cham la co y: cau van xuoi
+   "viec nay cho nguoi chot quyet" KHONG trung, chi dong khai moi trung.
+   VI SAO CAN: truoc 05/09 muc C cua ban do CHI doc so y tuong (IDEAS.md). Repo khong co so do
+   thi muc C in ra "0 muc, khong ai lam thay duoc" — tuc KHANG DINH da kiem va khong co gi —
+   trong khi so no dang co muc can nguoi chot. Nguoi chot doc bang roi tin minh khong phai quyet
+   gi. Do that o repo nha: 2 muc cho chot, bang bao 0. */
+const CHO_CHOT = /\*\*CHỜ NGƯỜI CHỐT:?\*\*/;
 // KHÔNG dùng `\b` ở đây: `\b` dựa trên `\w` = [A-Za-z0-9_], nên `Đ` là non-word và
-// `\bĐÓNG` không bao giờ khớp. Bản đầu viết `\b(ĐÃ ĐÓNG|ĐÓNG|…)\b` và **G-11 thoát lưới** —
-// mục đã đóng 28/08 vẫn được bảng đem đi giao cho phiên khác. Lỗi im lặng, không báo gì.
+// `\bĐÓNG` không bao giờ khớp. Bản đầu viết `\b(ĐÃ ĐÓNG|ĐÓNG|…)\b` và một mục ĐÃ ĐÓNG
+// THOÁT LƯỚI — bảng vẫn đem nó đi giao cho phiên khác. Lỗi im lặng, không báo gì.
 const TU_DONG = /(ĐÃ ĐÓNG|ĐÓNG|ĐÃ XONG|XONG|ĐÃ VÁ)/;
-const DONG_CUOI_SO = new RegExp("^-\\s+\\*\\*ĐÓNG\\s+([A-Z]+-\\d+)\\*\\*");
 
-/** Mục nợ MỞ trong một BACKLOG.md. Mục đã đóng bị bỏ — sổ giữ chúng để tra lịch sử.
-    Trả `{ mo, khaiSai }`; `khaiSai` = mục đóng bằng từ khoá mà không gạch, sai quy ước sổ. */
+/** Mục nợ MỞ trong một `BACKLOG.md`. Mục đã đóng bị bỏ — sổ giữ chúng để tra lịch sử.
+    Trả `{ mo, khaiSai, khongHieu }`.
+    `khaiSai`   = mục đóng bằng từ khoá mà không gạch, sai quy ước sổ.
+    `khongHieu` = dòng `###` mà KHÔNG đọc ra mã việc — bản cũ nuốt im, giờ bị nêu tên. */
 export function parseBacklog(text) {
-  const dongs = String(text).split(/\r?\n/);
-
-  /* HAI LƯỢT, không một. Dòng đóng nằm ở CUỐI sổ còn tiêu đề mục ở đầu, nên một lượt duy nhất
-     sẽ đọc tiêu đề trước khi biết nó đã đóng. Đo 08/09 ở sổ Scouter: 7 mục `## MỞ` mà thật ra
-     0 mục còn mở — cả 7 đều được đóng bằng dòng thêm ở cuối. */
-  const daDongRoi = new Set();
-  for (const dong of dongs) {
-    const m = DONG_CUOI_SO.exec(dong.trimStart());
-    if (m) daDongRoi.add(m[1]);
-    const t = MA_VIEC.exec(dong);
-    if (t && t[1] === "ĐÓNG") daDongRoi.add(t[2]);
-  }
-
-  const ra = new Map();
+  const ra = [];
   const khaiSai = [];
+  const khongHieu = [];
   let uuTien = "P?";
-  for (const dong of dongs) {
+  let hienTai = null;
+  for (const dong of String(text).split(/\r?\n/)) {
     const moc = UU_TIEN.exec(dong);
     if (moc) { uuTien = moc[1]; continue; }
     const viec = MA_VIEC.exec(dong);
-    if (!viec) continue;
-    const [, nhan, ma, tieuDe] = viec;
-    if (nhan === "ĐÓNG") continue;
-    if (daDongRoi.has(ma)) continue;
+    if (!viec) {
+      // Dòng `###` mà không ra mã việc: KHÔNG được lặng lẽ đi tiếp. Nó trông như một mục
+      // việc với mắt người đọc, nên nếu bảng bỏ qua thì người viết không bao giờ biết.
+      const dangMuc = DANG_MUC.exec(dong);
+      if (dangMuc) { hienTai = null; khongHieu.push(lamSach(dangMuc[1])); continue; }
+      // CO CHO NGUOI CHOT — khai TUONG MINH trong than muc, khong do ten trong van xuoi.
+      // Do ten la phep do bang chuoi: doi cach xung ho mot chu la muc bien mat, va khong ai biet.
+      // Co thi hoac co hoac khong.
+      if (hienTai && CHO_CHOT.test(dong)) hienTai.choChot = true;
+      continue;
+    }
+    hienTai = null;
     if (GACH.test(dong)) continue;
-    if (TU_DONG.test(dong)) { if (!khaiSai.includes(ma)) khaiSai.push(ma); continue; }
-    // Một mã chỉ đếm MỘT lần dù sổ có mấy tiêu đề mang nó — sổ Scouter viết lại `## MỞ · S-05`
-    // mỗi lượt mở lại, và đếm trùng làm con số trên bảng phồng lên không lý do.
-    if (!ra.has(ma)) ra.set(ma, { ma, tieuDe: lamSach(tieuDe), uuTien });
+    if (TU_DONG.test(dong)) { khaiSai.push(viec[1]); continue; }
+    hienTai = { ma: viec[1], tieuDe: lamSach(viec[2]), uuTien, choChot: false };
+    ra.push(hienTai);
   }
-  return { mo: [...ra.values()], khaiSai };
+  return { mo: ra, khaiSai, khongHieu };
 }
 
+
 const TRUONG = (ten) => new RegExp("^\\s*[-*]\\s+\\*\\*" + ten + ":?\\*\\*:?\\s*(.*)$");
-const MA_Y = /^##\s+(Y-\d+)\s*[·:]?\s*(.*)$/;
+// KHÔNG đóng cứng tiền tố mã: repo nào tự chọn chữ đầu của mã ý tưởng.
+const MA_Y = /^##\s+([A-Z]+-\d+)\s*[·:]?\s*(.*)$/;
 const BAC_NGHI = /^(nghỉ|nghi)$/i;
 
-/** Ý tưởng trong IDEAS.md. Bậc `nghỉ` bị bỏ: sổ giữ chúng để không ai đề xuất lại.
-    Ý tưởng đã có `nhà:` cũng bỏ — luật IDEAS mục 2, còn hiện là bảng đếm hai lần một việc. */
+/** Ý tưởng trong `IDEAS.md`. Bậc `nghỉ` bị bỏ: sổ giữ chúng để không ai đề xuất lại.
+    Ý tưởng đã có `nhà:` cũng bỏ — nó đã có chỗ ở thật, còn hiện ở đây là đếm hai lần một việc. */
 export function parseIdeas(text) {
   const ra = [];
   let hienTai = null;
@@ -120,53 +142,32 @@ export function parseIdeas(text) {
   return ra.filter((y) => !BAC_NGHI.test(y.bac.trim()) && !y.nha.trim());
 }
 
-/* Chờ Đức = trường `việc kế` nhắc tên Đức. Hai lựa chọn có chủ đích ở đây.
-   MỘT, không liệt kê động từ: bản đầu dò `cần Đức|chờ Đức|Đức chốt|Đức duyệt` và **bỏ sót
-   Y-01** vì nó viết "Đức mô tả rõ hơn" — liệt kê động từ thì luôn thiếu động từ thứ năm.
-   HAI, chỉ quét `việc kế`, KHÔNG quét tiêu đề: Y-03 tên là "Trường Đức cần làm…" nhưng bước
-   kế của nó là việc của AI, nên quét tiêu đề sẽ đẩy nó vào danh sách chờ Đức một cách sai. */
-// Không `\b` — cùng cái bẫy đã cắn ở TU_DONG bên trên, và nó cắn ĐÚNG HAI LẦN trong một
-// buổi: `\b` dựa trên [A-Za-z0-9_], nên với chữ tiếng Việt nó không tạo biên. Trong repo mà
-// mọi chữ đều tiếng Việt, `\b` là bẫy mặc định — đừng gõ nó theo phản xạ.
-const CHO_DUC = /Đức/;
-export function locChoDuc(muc) {
-  return muc.filter((m) => CHO_DUC.test(String(m.viecKe || "")));
+/* Chờ người chốt = trường `việc kế` nhắc tên người chốt. Ba lựa chọn có chủ đích ở đây.
+   MỘT, không liệt kê động từ: bản đầu dò `cần <tên>|chờ <tên>|<tên> chốt|<tên> duyệt` và BỎ
+   SÓT một mục vì nó viết "<tên> mô tả rõ hơn" — liệt kê động từ thì luôn thiếu động từ thứ năm.
+   HAI, chỉ quét `việc kế`, KHÔNG quét tiêu đề: một mục tên là "Trường <tên> cần làm…" nhưng
+   bước kế của nó là việc của AI, nên quét tiêu đề sẽ đẩy nó vào danh sách chờ một cách sai.
+   BA, tên lấy từ cấu hình, không đóng cứng: bộ khung này không biết chủ dự án của bạn tên gì.
+
+   Và KHÔNG dùng `\b` — cùng cái bẫy đã cắn ở `TU_DONG` bên trên, và nó cắn ĐÚNG HAI LẦN trong
+   một buổi: `\b` dựa trên [A-Za-z0-9_], nên với chữ tiếng Việt nó không tạo biên. Ở repo mà
+   mọi chữ đều tiếng Việt, `\b` là bẫy mặc định — đừng gõ nó theo phản xạ. */
+export function locChoNguoiChot(muc, tenNguoiChot) {
+  const ten = String(tenNguoiChot || "").trim();
+  if (!ten) return null;                    // null = KHÔNG LỌC ĐƯỢC, khác hẳn [] = không có mục nào
+  const escaped = ten.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const timTen = new RegExp(escaped, "i");
+  return muc.filter((m) => timTen.test(String(m.viecKe || "")));
 }
 
 function lamSach(s) {
   return String(s || "").replace(/~~/g, "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
 }
 
-/* SỔ NỢ GỐC REPO ĐỌC BẰNG BỘ ĐỌC CỦA CHÍNH NÓ — N-44.
- *
- * **[ĐO 08/09]** trước bản vá, bản đồ chỉ quét sổ nợ nằm trong các ĐƠN VỊ (gói có
- * `manifest.json`), nên **8 mục nợ hạ tầng đang mở ở gốc repo không hiện ở mục nào** — kể cả
- * khi `_root`/`_code` trống chủ. Phiên điều phối đọc bảng sẽ thấy repo chỉ còn việc của gói.
- *
- * DÙNG LẠI `backlog-check.mjs`, ĐỪNG DÙNG `parseBacklog` Ở TRÊN. Sổ gốc có quy ước `ĐỔI MÃ`
- * mà chỉ bộ đọc kia hiểu; hai bộ đọc cho một quyển sổ là hai con số, và ngày 08/09 chúng đã
- * ra **11 và 12** trên cùng một file. Nối bằng cách gọi lại bộ đọc kia thì chúng KHÔNG THỂ
- * lệch — đó là bất biến, không phải sự trùng hợp cần canh.
- *
- * VÙNG: suy từ ĐƯỜNG DẪN như mọi sổ khác, tức `_root`. Trường `- **vùng:**` trong thân mục là
- * **văn xuôi người tự viết** — đo 08/09: 4 trong 8 mục KHÔNG khai, một mục khai HAI khoá. Nên
- * nó được in ra kèm nhãn `[DÒ]` để người đọc tự kiểm, chứ máy không suy vùng từ nó. */
-export function viecSoGoc(text) {
-  const mo = new Set(dangMo(text));
-  return docMucDaGo(text).filter((m) => mo.has(m.ma)).map((m) => {
-    const dong = m.than.find((l) => l.trimStart().startsWith("- **vùng:**"));
-    return {
-      ma: m.ma,
-      tieuDe: lamSach(m.ten),
-      uuTien: "P?",
-      vungKhai: dong ? lamSach(dong.trimStart().slice("- **vùng:**".length)) : "",
-    };
-  });
-}
 /* SỔ NỢ KHÔNG PHẢI NGUỒN DUY NHẤT, và bỏ sót điều đó là một lỗi đã đo được.
-   `workers/duc-auto-gg-flow-video` có **0 mục nợ** trong `BACKLOG.md` — F-25, việc ưu tiên
-   số 1 của cả repo, chỉ nằm ở `next_step` của `STATUS.md`. Bản đồ chỉ đọc sổ nợ thì gói đó
-   trông như rảnh, và tệ hơn: nó bị lọc khỏi mục "song song được" vì đếm 0 việc.
+   Một đơn vị có **0 mục nợ** trong `BACKLOG.md` trong khi việc ưu tiên số 1 của cả repo chỉ
+   nằm ở `next_step` của `STATUS.md`. Bản đồ chỉ đọc sổ nợ thì đơn vị đó trông như rảnh, và tệ
+   hơn: nó bị lọc khỏi mục "song song được" vì đếm 0 việc.
    Nên đọc thêm `next_step`, gắn nhãn nguồn, và KHÔNG cộng vào số mục nợ — đó là hai loại
    dữ liệu khác nhau, gộp số lại là đếm một việc hai lần. */
 export function tieuDiemTuStatus(text) {
@@ -177,36 +178,45 @@ export function tieuDiemTuStatus(text) {
   return { nextStep, rank: Number.isFinite(rank) ? rank : null, lifecycle: String(frontmatter.lifecycle || "") };
 }
 
+/* --- Tuổi một lượt giữ khoá -------------------------------------------------
+   Ba thứ này ĐÃ DỜI sang `claim.mjs` ở bản 1.3.20 — file GHI `claimed_at` là file duy nhất
+   biết con số ấy nghĩa là gì, và `claim.mjs --list` nay cũng in tuổi. Xuất lại ở đây để mọi
+   chỗ gọi cũ không phải đổi; hai bản sao của cùng một hàm là hai bản sẽ trôi khỏi nhau. */
+export const { GIO_NHAC, ageHours, ageLabel, dangNhac, mocCoGio } = claimMod;
+
 /* --- Ghép việc vào khoá, rồi cắt theo trạng thái khoá ------------------------- */
 
-/** Đường dẫn (hoặc khoá) có nằm trong một vùng đã đóng băng không.
-    So THEO RANH GIỚI THƯ MỤC, không so tiền tố trần: `goi/so` không được nuốt `goi/song`. */
-export function laTrongVungDongBang(duongDan, frozen = []) {
-  return frozen.some((f) => duongDan === f || duongDan.startsWith(f + "/"));
-}
-
-/** Trung tâm của file: nhóm việc theo khoá, đánh dấu khoá nào trống. */
-export function banDoVung({ viecTheoFile, tieuDiemTheoFile = [], claims, structure, prefixes, dauVet = new Map(), now = new Date(), frozen = [] }) {
+/** Trung tâm của file: nhóm việc theo khoá, đánh dấu khoá nào trống.
+    `stewardOf()` KHÔNG BAO GIỜ trả rỗng — nó tự lùi về `_root` bên trong. Bản đầu viết
+    `stewardOf(...) || "_root"`, tức đóng cứng một tên khoá vào chỗ không bao giờ chạy tới:
+    ở repo khai vùng khác, cái tên đó trỏ vào hư không mà chẳng ai phát hiện. Đã xoá. */
+export function banDoVung({ viecTheoFile, tieuDiemTheoFile = [], claims, structure, prefixes, now = new Date(), frozen = [] }) {
   /* GÓI ĐÃ ĐÓNG BĂNG KHÔNG PHẢI VIỆC ĐANG CHỜ AI. Cờ khai ở khối `frozen` của
      `.repo-structure.json`. Trước 2026-09-08 bản đồ này KHÔNG đọc cờ đó trong khi cổng đóng
-     phiên CÓ đọc — nên hai công cụ của cùng một repo nói ngược nhau, và cái nói sai lại chính
-     là cái AI đọc để CHỌN việc: nó xếp `workers/duc-auto-chatgpt` (Đức đã dừng) vào "chạy song
-     song được ngay, ưu tiên #2, 22 việc mở". Đo thật ngày 08/09 ở chính repo này (N-35).
-     So tiền tố THEO RANH GIỚI THƯ MỤC: `goi/so` không được đóng băng `goi/song`. */
-  const laDongBang = (khoa) => laTrongVungDongBang(khoa, frozen);
+     phiên có đọc — nên hai công cụ của cùng một repo nói ngược nhau, và cái nói sai lại chính
+     là cái AI đọc để CHỌN việc: nó xếp một gói đã đóng băng vào "chạy song song được ngay,
+     ưu tiên #2, 22 việc mở". Đo được ngày 08/09 ở repo tiêu thụ. */
+  const laDongBang = (khoa) => frozen.some((f) => khoa === f || khoa.startsWith(`${f}/`));
   const vungs = new Map();
+  const bang = (claims && claims.claims) || {};
   const lay = (khoa) => {
     if (!vungs.has(khoa)) {
-      const o = (claims && claims.claims && claims.claims[khoa]) || null;
+      const co = Object.prototype.hasOwnProperty.call(bang, khoa);
+      const o = co ? bang[khoa] : null;
       const chu = o && o.owner ? o.owner : null;
       vungs.set(khoa, {
         khoa,
         chu,
         dongBang: laDongBang(khoa),
+        // KHOA KHONG CO TRONG BANG QUYEN khac han KHOA CO MA TRONG CHU. Ca thu nhat nghia la
+        // KHONG AI DANG CANH vung do — bao no la "trong chu, cu lam" la moi nguoi vao ghi cung
+        // luc ma khong gi chan. Ca nay lo ra o repo khai ten vung khac han bo khung.
+        khongCoTrongBang: !co,
         gio: chu && o.claimed_at ? ageHours(o.claimed_at, now) : null,
+        // Giữ luôn mốc thô: chỉ nhìn số giờ thì không biết nó đo được tới đâu — mốc chỉ có ngày
+        // và mốc có giờ cho ra cùng một con số, nhưng chỉ một trong hai đáng tin. `mocCoGio`.
+        tu: chu ? (o.claimed_at || null) : null,
         viecChu: chu ? lamSach(o.task) : "",
-        // N-09: chỉ đánh dấu khi ĐO ĐƯỢC và kết quả là "chưa thấy". "Không đo được" phải im.
-        chuaThayDauVet: !!chu && dauVet.get(khoa)?.trangThai === DAU_VET.CHUA_THAY,
         viec: [],
         tieuDiem: [],
       });
@@ -217,19 +227,17 @@ export function banDoVung({ viecTheoFile, tieuDiemTheoFile = [], claims, structu
   // nếu không thì một vùng đang bị giữ sẽ vô hình đúng với người cần biết nhất.
   for (const khoa of Object.keys((claims && claims.claims) || {})) lay(khoa);
   for (const { relPath, viec } of viecTheoFile) {
-    const khoa = stewardOf(relPath, structure, prefixes) || "_root";
-    lay(khoa).viec.push(...viec);
+    lay(stewardOf(relPath, structure, prefixes)).viec.push(...viec);
   }
   for (const { relPath, tieuDiem } of tieuDiemTheoFile) {
     if (!tieuDiem) continue;
-    const khoa = stewardOf(relPath, structure, prefixes) || "_root";
-    lay(khoa).tieuDiem.push(tieuDiem);
+    lay(stewardOf(relPath, structure, prefixes)).tieuDiem.push(tieuDiem);
   }
   return [...vungs.values()].sort((a, b) => xepVung(a, b));
 }
 
 /* Vùng có `priority_rank` nhỏ nhất lên trước — thứ hạng do người khai trong STATUS, và đó
-   là thứ tự Đức đã chốt. Vùng không khai thứ hạng xếp sau, rồi mới tới thứ tự chữ cái. */
+   là thứ tự chủ dự án đã chốt. Vùng không khai thứ hạng xếp sau, rồi mới tới thứ tự chữ cái. */
 function xepVung(a, b) {
   const hang = (v) => v.tieuDiem.reduce((m, t) => (t.rank != null && t.rank < m ? t.rank : m), Number.MAX_SAFE_INTEGER);
   const ha = hang(a);
@@ -240,25 +248,26 @@ function xepVung(a, b) {
 
 /** Khoá TRỐNG và CÓ việc (mục nợ HOẶC tiêu điểm STATUS). Mỗi dòng một luồng song song. */
 export function songSongDuoc(vungs) {
-  return vungs.filter((v) => !v.chu && !v.dongBang && (v.viec.length > 0 || v.tieuDiem.length > 0));
+  return vungs.filter((v) => !v.chu && !v.dongBang && !v.khongCoTrongBang
+    && (v.viec.length > 0 || v.tieuDiem.length > 0));
 }
 
 /** Vùng đã đóng băng: chỉ ĐỌC. Tách ra để không mất thông tin — ẩn hẳn thì người đọc tưởng
-    gói đó biến mất, mà nợ của nó vẫn còn nằm trong sổ và vẫn đếm vào mọi con số khác. */
+    gói đó biến mất, mà nợ của nó vẫn còn nằm trong sổ. */
 export function daDongBang(vungs) {
   return vungs.filter((v) => v.dongBang);
 }
 
-/** Khoá có chủ: việc trong đó KHÔNG được ai khác chạm, luật AGENTS mục 1. */
+/** Khoá có chủ: việc trong đó KHÔNG được ai khác chạm (AGENTS.md mục 1). */
 export function dangBiChan(vungs) {
   return vungs.filter((v) => v.chu);
 }
 
-/* --- In ra cho Đức đọc -------------------------------------------------------- */
+/* --- In ra cho người đọc ------------------------------------------------------ */
 
 const KE = (n) => "".padEnd(n, "─");
 
-export function render({ vungs, ideas, now, dauNiemPhong, khaiSai = [] }) {
+export function render({ vungs, ideas, now, dauNiemPhong, khaiSai = [], khongHieu = [], tenNguoiChot = "", noChoChot = [] }) {
   const d = [];
   d.push("BẢN ĐỒ VIỆC — trạng thái sống, đọc lúc " + now.toISOString().slice(0, 16).replace("T", " "));
   d.push(KE(78));
@@ -271,34 +280,47 @@ export function render({ vungs, ideas, now, dauNiemPhong, khaiSai = [] }) {
     d.push("⚠ " + khaiSai.length + " mục đã đóng nhưng KHÔNG gạch ngang: " + khaiSai.join(" · "));
     d.push("  Quy ước sổ nợ là `~~mã~~`. Không gạch thì bảng này phải đoán, và đoán sẽ sai.");
   }
+  if (khongHieu.length) {
+    d.push("");
+    d.push("⚠ " + khongHieu.length + " dòng `###` KHÔNG đọc ra mã việc — các mục này KHÔNG có trong bảng dưới:");
+    for (const dong of khongHieu) d.push("  · " + dong);
+    d.push("  Mã việc phải là `### <CHỮ><chữ-số>-<số> · <tiêu đề>`, ví dụ `KHUNG-7`, `N8N-1`.");
+    d.push("  Tiền tố BẮT ĐẦU bằng chữ cái, sau đó được lẫn số. Bắt đầu bằng số thì không nhận.");
+  }
+
+  const laVungLa = vungs.filter((v) => v.khongCoTrongBang && (v.viec.length || v.tieuDiem.length));
+  if (laVungLa.length) {
+    d.push("");
+    d.push("⚠ " + laVungLa.length + " vùng có việc mở mà bảng quyền KHÔNG có khoá đó: "
+      + laVungLa.map((v) => "`" + v.khoa + "`").join(" · "));
+    d.push("  Không phải \"trống chủ\" — là KHÔNG AI ĐANG CANH. Khai khoá đó vào");
+    d.push("  `.agents/claims.json`, hoặc khai `steward` cho thư mục đó trong `.repo-structure.json`.");
+  }
 
   const song = songSongDuoc(vungs);
   d.push("");
   d.push("A · CHẠY SONG SONG ĐƯỢC NGAY — " + song.length + " luồng");
   d.push("  Mỗi dòng là một vùng TRỐNG chủ và CÓ việc mở. Hai dòng khác nhau không đụng nhau,");
   d.push("  nên giao cho hai phiên AI cùng lúc là an toàn.");
-  if (!song.length) d.push("  (không có: mọi vùng có việc mở đều đang có chủ)");
+  if (!song.length) d.push("  (không có: mọi vùng có việc mở đều đang có chủ, hoặc chưa có việc nào được khai)");
   for (const v of song) {
     d.push("");
     d.push("  ▸ " + v.khoa + "  — " + v.viec.length + " việc mở" + nhanHang(v));
     for (const t of v.tieuDiem) d.push("      tiêu điểm (STATUS): " + catNgan(t.nextStep, 80));
     for (const viec of v.viec.slice(0, 6)) {
       d.push("      " + (viec.uuTien || "P?").padEnd(3) + " " + viec.ma + " · " + catNgan(viec.tieuDe, 84));
-      // Văn xuôi của người, in RIÊNG một dòng và có nhãn nguồn — một câu diễn giải đã bị nuốt
-      // mất đúng vì nằm chung dòng với con số (AGENTS.md mục 6).
-      if (viec.vungKhai) d.push("          [DÒ] vùng mục tự khai: " + catNgan(viec.vungKhai, 70));
     }
     if (v.viec.length > 6) d.push("      … còn " + (v.viec.length - 6) + " việc nữa trong sổ");
   }
 
   const chan = dangBiChan(vungs);
-  let coVet = false;
   d.push("");
   d.push("B · ĐANG CÓ CHỦ — " + chan.length + " vùng, chỉ được ĐỌC");
+  if (!chan.length) d.push("  (không có: mọi vùng đang trống chủ)");
   for (const v of chan) {
-    const tuoi = v.gio == null ? "" : "  (" + ageLabel(v.gio) + (v.gio >= GIO_NHAC ? " ⚠" : "") + ")";
+    const cg = mocCoGio(v.tu);
+    const tuoi = v.gio == null ? "" : "  (" + ageLabel(v.gio, cg) + (dangNhac(v.gio, cg) ? " ⚠" : "") + ")";
     d.push("  ▸ " + v.khoa + "  ← " + v.chu + tuoi + nhanHang(v));
-    if (v.chuaThayDauVet) { d.push("      · " + CHUA_THAY_DAU_VET); coVet = true; }
     if (v.viecChu) d.push("      đang làm: " + catNgan(v.viecChu, 84));
     for (const t of v.tieuDiem) d.push("      tiêu điểm (STATUS): " + catNgan(t.nextStep, 80));
     if (v.viec.length) d.push("      " + v.viec.length + " việc mở trong vùng này — KHÔNG giao cho phiên khác");
@@ -306,38 +328,47 @@ export function render({ vungs, ideas, now, dauNiemPhong, khaiSai = [] }) {
   d.push("");
   d.push("  ⚠ = giữ quá " + GIO_NHAC + "h. Cũ KHÔNG có nghĩa là chết. Đây là số liệu để HỎI,");
   d.push("    không phải giấy phép để giành. Nhắn phiên đang giữ trước — rẻ hơn giành.");
-  if (coVet) {
-    d.push("");
-    d.push("  \"" + CHUA_THAY_DAU_VET + "\" = không commit nào chạm vùng đó kể từ lúc nhận, và");
-    d.push("    không file nào trong vùng bị sửa trên đĩa. Nó nói REPO CHƯA THẤY GÌ — nó KHÔNG nói lane");
-    d.push("    đó đang rảnh, và nó KHÔNG BAO GIỜ đủ để nhả khoá hộ. Một lane cẩn thận dựng thử ngoài");
-    d.push("    repo rồi mới ghi vào; ngày 06/09 một khoá đã bị nhả hộ đúng vì đọc nhầm chỗ này, và lane");
-    d.push("    kia phải hoàn nguyên việc đã xong. Thấy dòng này thì HỎI, đừng nhả.");
-  }
 
   /* ĐÓNG BĂNG — in RA, không ẩn đi. Ẩn hẳn thì người đọc tưởng gói đó biến mất, mà nợ của nó
      vẫn nằm trong sổ và vẫn đếm vào mọi con số khác. Cái phải sửa là nó KHÔNG được nằm ở mục A
      nữa, chứ không phải nó phải vô hình. */
-  const dongBang = daDongBang(vungs);
-  if (dongBang.length) {
+  const bang = daDongBang(vungs);
+  if (bang.length) {
     d.push("");
-    d.push("B2 · ĐÃ ĐÓNG BĂNG — " + dongBang.length + " vùng, chỉ được ĐỌC dù KHÔNG có chủ");
-    for (const v of dongBang) {
+    d.push("B2 · ĐÃ ĐÓNG BĂNG — " + bang.length + " vùng, chỉ được ĐỌC dù KHÔNG có chủ");
+    for (const v of bang) {
       const n = v.viec.length;
       d.push("  ▸ " + v.khoa + (n ? "  — " + n + " việc mở, KHÔNG làm" : "  — không việc mở"));
     }
     d.push("    Khai ở khối `frozen` của `.repo-structure.json`. Trống chủ KHÔNG có nghĩa là mời làm:");
-    d.push("    Đức đã chốt dừng các gói này. Muốn mở lại thì HỎI, đừng tự nhận khoá.");
+    d.push("    chủ dự án đã chốt dừng các gói này. Muốn mở lại thì HỎI, đừng tự nhận khoá.");
   }
 
-  const cho = locChoDuc(ideas);
+  /* MỤC C ĐỌC HAI NGUỒN, và nói rõ nguồn nào kiểm được nguồn nào không.
+     Trước 05/09 nó chỉ đọc sổ ý tưởng. Repo không có `IDEAS.md` thì nó in "0 mục, không ai làm
+     thay được" — tức KHẲNG ĐỊNH đã kiểm — trong khi sổ nợ đang có mục chờ chốt. Đo thật ở repo
+     nhà: 2 mục chờ chốt, bảng báo 0. Người chốt đọc bảng rồi tin mình không phải quyết gì. */
+  const cho = locChoNguoiChot(ideas, tenNguoiChot);
+  const tuSoNo = noChoChot.filter((m) => m.choChot);
   d.push("");
-  d.push("C · ĐANG CHỜ ĐỨC — " + cho.length + " mục, không ai làm thay được");
-  if (!cho.length) d.push("  (không có)");
-  for (const y of cho) {
-    d.push("  ▸ " + y.ma + " · " + catNgan(y.tieuDe, 76) + "   [bậc: " + (y.bac || "?") + "]");
-    if (y.viecKe) d.push("      việc kế: " + catNgan(y.viecKe, 84));
+  // KHI MOT NGUON KHONG LOC DUOC, KHONG DUOC IN MOT CON SO TONG. Con so tong ham y "da kiem
+  // het"; o day moi kiem duoc mot nua. In so kem canh bao van khien nguoi doc nho con so.
+  d.push(cho === null
+    ? "C · ĐANG CHỜ NGƯỜI CHỐT — KHÔNG LỌC ĐƯỢC TRỌN VẸN (sổ nợ: " + tuSoNo.length + " · sổ ý tưởng: chưa lọc được)"
+    : "C · ĐANG CHỜ NGƯỜI CHỐT — " + (tuSoNo.length + cho.length) + " mục, không ai làm thay được");
+  for (const m of tuSoNo) {
+    d.push("  ▸ " + m.ma + " · " + catNgan(m.tieuDe, 76) + "   [sổ nợ, " + m.uuTien + "]");
   }
+  if (cho === null) {
+    d.push("  ⚠ Sổ Ý TƯỞNG: KHÔNG LỌC ĐƯỢC — chưa khai `repo.owner` trong `.repo-structure.json`.");
+    d.push("    Đây là \"chưa kiểm\", không phải \"không có mục nào chờ\".");
+  } else {
+    for (const y of cho) {
+      d.push("  ▸ " + y.ma + " · " + catNgan(y.tieuDe, 76) + "   [ý tưởng, bậc: " + (y.bac || "?") + "]");
+      if (y.viecKe) d.push("      việc kế: " + catNgan(y.viecKe, 84));
+    }
+  }
+  if (!tuSoNo.length && cho && !cho.length) d.push("  (không có)");
 
   const dangXay = ideas.filter((y) => /đang xây|dang xay/i.test(y.bac));
   d.push("");
@@ -346,20 +377,20 @@ export function render({ vungs, ideas, now, dauNiemPhong, khaiSai = [] }) {
   for (const y of dangXay) {
     d.push("  ▸ " + y.ma + " · " + catNgan(y.tieuDe, 76) + (y.chu ? "   chủ: " + y.chu : "   ⚠ CHƯA khai chủ"));
     // `phạm vi` là văn xuôi người tự viết, nên máy KHÔNG suy được vùng từ nó. In nguyên văn
-    // và gắn nhãn [DÒ]: dò theo tên trong repo này đã cho kết luận sai bốn lần trong một ngày.
+    // và gắn nhãn [DÒ]: dò theo tên đã cho kết luận sai bốn lần trong một ngày.
     if (y.phamVi) d.push("      [DÒ] phạm vi đã khai: " + catNgan(y.phamVi, 80));
-    else d.push("      ⚠ CHƯA khai phạm vi — luật IDEAS mục 4: đang xây thì PHẢI khai");
+    else d.push("      ⚠ CHƯA khai phạm vi — đang xây thì PHẢI khai, nếu không hai phiên sẽ giẫm chân");
   }
 
   d.push("");
   d.push(KE(78));
   d.push("Việc kế: chọn MỘT dòng ở mục A, rồi nhận khoá bằng");
   d.push("  node scripts/claim.mjs --take <khoá> --as <tên-phiên> --task \"một câu\"");
-  d.push("Mục C thì đừng tự quyết — hỏi Đức.");
+  d.push("Mục C thì đừng tự quyết — hỏi chủ dự án.");
   return d.join("\n");
 }
 
-/** Thứ hạng ưu tiên Đức đã khai trong STATUS. In ra để không ai phải mở file mới biết. */
+/** Thứ hạng ưu tiên đã khai trong STATUS. In ra để không ai phải mở file mới biết. */
 function nhanHang(v) {
   const hangs = v.tieuDiem.map((t) => t.rank).filter((r) => r != null);
   return hangs.length ? "   [ưu tiên #" + Math.min(...hangs) + "]" : "";
@@ -372,9 +403,13 @@ function catNgan(s, n) {
 
 /* --- Vỏ chạm đĩa, mỏng nhất có thể ------------------------------------------- */
 
-/** Tìm mọi `<ten>` trong cây đơn vị. Dùng cho cả `BACKLOG.md` và `STATUS.md`. */
+/** Tìm mọi `<ten>` trong cây đơn vị. Dùng cho cả `BACKLOG.md` và `STATUS.md`.
+    `units.rootDir === null` nghĩa là repo KHÔNG có đơn vị con — trả rỗng, đừng đi mò một
+    thư mục mặc định. Bản đầu viết `units.rootDir || "workers"`, nên ở repo không có
+    `workers/` nó lặng lẽ quét một thư mục không tồn tại và trả rỗng vì lý do SAI. */
 export function timTrongDonVi(root, units, ten, deps = { exists: fs.existsSync, readDir: fs.readdirSync }) {
-  const goc = path.join(root, units.rootDir || "workers");
+  if (!units || !units.rootDir) return [];
+  const goc = path.join(root, units.rootDir);
   if (!deps.exists(goc)) return [];
   const ra = [];
   const di = (dir, sau) => {
@@ -390,42 +425,68 @@ export function timTrongDonVi(root, units, ten, deps = { exists: fs.existsSync, 
   return ra;
 }
 
+/* BA CHỖ một sổ có thể nằm, và repo nào cũng chỉ dùng một hoặc hai trong ba.
+   Bản đầu chỉ tìm ở cây đơn vị con — nên ở repo khai vùng theo THƯ MỤC (`luat/`, `may/`,
+   `ho-so/`) mà không có đơn vị con nào, mọi sổ nợ trở nên vô hình và bản đồ luôn nói "không
+   có việc nào". Đo thật trên fixture repo hình dạng khác.
+   Thứ tự có ý nghĩa: cây đơn vị → thư mục vùng đã khai → gốc repo. Trùng thì lấy một lần. */
+export function timSo(root, units, structure, ten, deps = { exists: fs.existsSync, readDir: fs.readdirSync }) {
+  const ra = new Set(timTrongDonVi(root, units, ten, deps));
+  const areas = (structure && structure.areas) || {};
+  for (const key of Object.keys(areas)) {
+    if (key.startsWith("_") || !key.endsWith("/")) continue;
+    const f = path.join(root, key, ten);
+    if (deps.exists(f)) ra.add(f);
+  }
+  const goc = path.join(root, ten);
+  if (deps.exists(goc)) ra.add(goc);
+  return [...ra];
+}
+
+/** Dấu niêm phong bảng quyền — CHỈ KIỂM NẾU BỘ KHUNG CỦA BẠN CÓ.
+    Không phải mọi bản `claim.mjs` đều có cơ chế niêm phong. Nhập tường minh thì file này
+    không chạy nổi ở nơi thiếu nó, mà thiếu niêm phong không phải lỗi — nó là một bản cũ hơn.
+    Nên: có thì kiểm, không có thì im (và KHÔNG báo là "đã kiểm, sạch"). */
+export function canhBaoNiemPhong(claims, mod = claimMod) {
+  if (typeof mod.fingerprintState !== "function") return "";
+  let dau = null;
+  try { dau = mod.fingerprintState(claims); } catch { return ""; }
+  if (!dau || dau.ok !== false) return "";
+  return "DAU_VO: bảng quyền đã bị sửa ngoài lệnh `claim.mjs`. Ai đang giữ gì ở mục B có thể "
+    + "không đúng. Xem `git diff .agents/claims.json`, rồi HỎI CHỦ DỰ ÁN.";
+}
+
+/** Tên người chốt, khai ở `repo.owner`. Không khai thì trả rỗng và mục C nói thẳng. */
+export function tenNguoiChotTu(structure) {
+  const v = structure && structure.repo && structure.repo.owner;
+  return typeof v === "string" ? v.trim() : "";
+}
+
 function main() {
   const structure = readStructureFromDisk(ROOT);
   const units = unitsFrom(structure);
   const prefixes = claimPrefixesFrom(structure);
-  const claims = readClaims();
 
-  const dau = fingerprintState(claims);
-  const canhBao = dau && dau.ok === false
-    ? "DAU_VO: bảng quyền đã bị sửa ngoài lệnh. Ai đang giữ gì ở mục B có thể không đúng. Xem AGENTS.md mục 6."
-    : "";
+  let claims = { claims: {} };
+  let loiClaims = "";
+  try { claims = claimMod.readClaims(); }
+  catch (e) { loiClaims = "Không đọc được bảng quyền `.agents/claims.json`: " + String(e.message || e); }
+
+  const canhBao = loiClaims || canhBaoNiemPhong(claims);
 
   const rel = (abs) => path.relative(ROOT, abs).split(path.sep).join("/");
-  /* Cảnh báo "đóng mà chưa gạch" là lời MỜI đi sửa một file. Sổ nợ của gói đã đóng băng là
-     file KHÔNG ai được sửa (AGENTS.md mục 4 + khối `frozen`), nên mời ở đó là mời phạm luật.
-     Đo 08/09: cả bốn mã bảng đang nhắc (B-29 · B-16 · B-18 · G-14) đều nằm trong gói đóng
-     băng — tức 4/4 cảnh báo là việc KHÔNG làm được. Cùng một bệnh với N-35, cùng một thuốc. */
-  const dongBangDS = frozenFrom(structure);
-  const trongVungDongBang = (r) => laTrongVungDongBang(r, dongBangDS);
   const khaiSai = [];
-  const soGoc = path.join(ROOT, "BACKLOG.md");
-  const viecGoc = fs.existsSync(soGoc)
-    ? [{ relPath: "BACKLOG.md", viec: viecSoGoc(fs.readFileSync(soGoc, "utf8")) }]
-    : [];
-  const viecTheoFile = timTrongDonVi(ROOT, units, "BACKLOG.md").map((abs) => {
-    const doc = parseBacklog(fs.readFileSync(abs, "utf8"));
-    const r = rel(abs);
-    if (!trongVungDongBang(r)) khaiSai.push(...doc.khaiSai);
-    return { relPath: r, viec: doc.mo };
-  }).concat(viecGoc);
+  const khongHieu = [];
 
-  // STATUS ở gốc repo cũng tính: đơn vị GỐC (`STATUS.md` cạnh `manifest.json` ngoài cùng)
-  // không nằm trong cây `workers/`, và bỏ nó là bỏ đúng một đơn vị khỏi bản đồ.
-  const statusFiles = timTrongDonVi(ROOT, units, "STATUS.md");
-  const statusGoc = path.join(ROOT, "STATUS.md");
-  if (fs.existsSync(statusGoc)) statusFiles.push(statusGoc);
-  const tieuDiemTheoFile = statusFiles.map((abs) => ({
+  const viecTheoFile = timSo(ROOT, units, structure, "BACKLOG.md").map((abs) => {
+    const doc = parseBacklog(fs.readFileSync(abs, "utf8"));
+    khaiSai.push(...doc.khaiSai);
+    // Kèm tên file: repo nhiều đơn vị con thì "dòng này ở sổ nào" mới là thông tin dùng được.
+    for (const d of doc.khongHieu) khongHieu.push(rel(abs) + " → " + d);
+    return { relPath: rel(abs), viec: doc.mo };
+  });
+
+  const tieuDiemTheoFile = timSo(ROOT, units, structure, "STATUS.md").map((abs) => ({
     relPath: rel(abs),
     tieuDiem: tieuDiemTuStatus(fs.readFileSync(abs, "utf8")),
   }));
@@ -433,16 +494,12 @@ function main() {
   const ideasFile = path.join(ROOT, "IDEAS.md");
   const ideas = fs.existsSync(ideasFile) ? parseIdeas(fs.readFileSync(ideasFile, "utf8")) : [];
 
-  /* N-09: đo một lượt cho cả bảng. Git hỏng thì bản đồ rỗng và cột im — xem `dauVetTheoVung`. */
-  let dauVet = new Map();
-  try {
-    dauVet = dauVetTheoVung(ROOT, structure, Object.fromEntries(
-      Object.entries(claims?.claims || {}).filter(([, v]) => v?.owner).map(([k, v]) => [k, v.claimed_at])
-    ));
-  } catch { dauVet = new Map(); }
-
-  const vungs = banDoVung({ viecTheoFile, tieuDiemTheoFile, claims, structure, prefixes, dauVet, frozen: frozenFrom(structure) });
-  process.stdout.write(render({ vungs, ideas, now: new Date(), dauNiemPhong: canhBao, khaiSai }) + "\n");
+  const vungs = banDoVung({ viecTheoFile, tieuDiemTheoFile, claims, structure, prefixes, frozen: frozenFrom(structure) });
+  const noChoChot = viecTheoFile.flatMap((x) => x.viec);
+  process.stdout.write(render({
+    vungs, ideas, now: new Date(), dauNiemPhong: canhBao, khaiSai, khongHieu,
+    tenNguoiChot: tenNguoiChotTu(structure), noChoChot,
+  }) + "\n");
 }
 
 const laFileChay = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));

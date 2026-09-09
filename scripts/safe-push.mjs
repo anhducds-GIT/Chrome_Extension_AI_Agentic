@@ -18,9 +18,9 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { CHUA_DAY, commitChuaDay, generatorsFrom, kiemArtifactTuHead, LANE_TRAILER, readStructureFromDisk } from "./repo-structure.mjs";
+import { appendOnlyAtEof, claimPrefixesFrom, laneFromMessage, LANE_TRAILER, loiKhuyenKhiChan, ownershipKeys, readStructureFromDisk } from "./repo-structure.mjs";
+import { bamLenh, danhSachSuite, dauCay, docDauCong, xetDauCong } from "./chay-test.mjs";
 
-const NEWLINE = String.fromCharCode(10);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const asLabel = args[args.indexOf("--as") + 1];
@@ -36,7 +36,51 @@ if (!args.includes("--as") || !asLabel || asLabel.startsWith("--")) {
 // Viet ve dang "áº¡..." va regex ^workers/ truot -> commit bi quy
 // nham cho "_root" thay vi dung package. Cung goc loi voi session-check 26/08.
 const git = (...a) => execFileSync("git", ["-c", "core.quotepath=false", ...a], { cwd: ROOT, encoding: "utf8" });
+const unquote = (line) => line.replace(/^"|"$/g, "");
 const gitQuiet = (...a) => { try { return git(...a); } catch { return ""; } };
+
+/* NHÁNH ĐÍCH — tính MỘT LẦN, rồi mọi chỗ dưới dùng nó.
+ *
+ * Bản đầu đóng cứng `main` ở mười chỗ: fetch, ls-remote, mốc so, câu đẩy. Nên nó chỉ phục vụ
+ * được MỘT hình dạng repo — mọi thứ nằm trên `main`. Đo thật 04/09: repo 3AI có việc bộ khung
+ * nằm trên một nhánh tính năng, và công cụ **không có cách nào** đẩy nhánh đó lên remote của
+ * chính nó. Một bộ khung tự nhận phục vụ 21 repo mà chỉ đẩy được một hình dạng thì chưa xong.
+ *
+ * LUẬT "MERGE VÀO MAIN PHẢI HỎI ĐỨC" KHÔNG BỊ NỚI — nó được giữ bằng CẤU TRÚC, và chặt hơn
+ * trước: đứng ở nhánh nào thì đẩy lên đúng nhánh đó, nên ca "đưa nhánh khác lên main" không còn
+ * tồn tại để mà phải chặn. Trước đây nó là một câu `if` ở cuối file — tức một cửa có thể quên
+ * mở đúng chỗ; nay nó là chuyện không dựng nổi.
+ *
+ * Nhánh CHƯA có upstream thì TỪ CHỐI: tạo một nhánh mới trên remote là công bố một thứ MỚI,
+ * không phải cập nhật thứ đã có — việc đó là của người. */
+const nhanhHienTai = gitQuiet("rev-parse", "--abbrev-ref", "HEAD").trim();
+
+/* DETACHED HEAD THÌ TỪ CHỐI — không được lùi về `main`.
+ *
+ * Bản v1.2.9 viết `nhanhHienTai !== "HEAD" ? nhanhHienTai : "main"`, tức đứng ở detached HEAD là
+ * công cụ **lặng lẽ nhắm `main`** rồi đẩy `HEAD:main`. Đó đúng là cú HỢP NHẤT mà luật mục 2 bắt
+ * phải hỏi Đức — tới bằng đường tai nạn, không ai chọn. Và nó tệ hơn bản trước v1.2.9: hồi đó có
+ * một câu `if` chặn mọi thứ không phải `main`; cái lùi-về-mặc-định này xoá mất câu đó.
+ *
+ * Detached HEAD nghĩa là KHÔNG CÓ nhánh nào đang đứng. "Nhánh đích bằng nhánh đang đứng" mất
+ * nghĩa, nên câu trả lời đúng là DỪNG, không phải đoán một cái tên. */
+if (!nhanhHienTai || nhanhHienTai === "HEAD") {
+  console.error(String.fromCharCode(10) + "TU_CHOI: đang ở detached HEAD — không đứng trên nhánh nào.");
+  console.error("Công cụ này đẩy lên ĐÚNG nhánh bạn đang đứng, mà ở đây không có nhánh nào để đẩy lên.");
+  console.error("Lùi về `main` cho tiện là biến một tai nạn thành một cú HỢP NHẤT — luật mục 2 bắt hỏi Đức.");
+  console.error("Cách xử lý: `git checkout <nhánh>` rồi chạy lại." + String.fromCharCode(10));
+  process.exit(1);
+}
+const NHANH = nhanhHienTai;
+const upstream = gitQuiet("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}").trim();
+if (NHANH !== "main" && upstream !== "origin/" + NHANH) {
+  console.error(String.fromCharCode(10) + `TU_CHOI: nhánh "${NHANH}" chưa có nhánh tương ứng trên remote.`);
+  console.error("Tạo một nhánh MỚI trên remote là công bố một thứ mới, không phải cập nhật thứ đã có —");
+  console.error("việc đó là của người, không phải của công cụ.");
+  console.error("Muốn công bố thật thì tự tạo nhánh trên remote trước, rồi chạy lại." + String.fromCharCode(10));
+  process.exit(1);
+}
+const REMOTE = "origin/" + NHANH;
 
 // Đối chiếu với remote thật, không tin con trỏ cũ trên máy.
 //
@@ -62,12 +106,43 @@ const gitQuiet = (...a) => { try { return git(...a); } catch { return ""; } };
 // tức đúng đối tượng mà bộ khung nhắm tới. Tự kiểm sau mỗi lần đẩy: `git status -sb`, còn
 // `ahead N` là chưa đẩy thật.
 try {
-  git("fetch", "origin", "main", "--quiet");
+  git("fetch", "origin", NHANH, "--quiet");
 } catch (error) {
   const detail = String(error.stderr || error.stdout || error.message).trim().split("\n").slice(-2).join(" | ");
-  console.error(`\n⚠ KHONG_FETCH_DUOC: \`git fetch origin main\` thất bại → ${detail}`);
-  console.error(`  Vẫn đi tiếp, nhưng mốc so sánh là bản origin/main CŨ trên máy. Nếu push bị từ chối vì không tiến thẳng thì đó là lý do.\n`);
+  console.error(`\n⚠ KHONG_FETCH_DUOC: \`git fetch origin ${NHANH}\` thất bại → ${detail}`);
+  console.error(`  Vẫn đi tiếp, nhưng mốc so sánh là bản ${REMOTE} CŨ trên máy. Nếu push bị từ chối vì không tiến thẳng thì đó là lý do.\n`);
 }
+/* HAI CA khác hẳn nhau, cùng có hình dạng "không phân giải được origin/main":
+ *   a) remote CHƯA CÓ nhánh main -> CÚ ĐẨY ĐẦU TIÊN của một repo mới. Hợp lệ, và MỌI repo
+ *      dựng từ harness đều đi qua đúng ca này. Chặn nó là chặn chính việc harness sinh ra
+ *      để làm. Đo được 03/09: repo nhà của harness không đẩy nổi lần đầu.
+ *   b) remote CÓ nhánh main mà máy không có -> máy đang lệch, chưa fetch bao giờ. PHẢI chặn.
+ * Phân biệt bằng cách HỎI THẲNG REMOTE, không suy từ trạng thái máy — vì chính trạng thái
+ * máy là thứ đang bị nghi. */
+const remoteCoMain = gitQuiet("ls-remote", "--heads", "origin", NHANH).trim() !== "";
+const coRefTrenMay = gitQuiet("rev-parse", "--verify", REMOTE).trim() !== "";
+const lanDau = !coRefTrenMay && !remoteCoMain;
+
+if (!coRefTrenMay && remoteCoMain) {
+  console.error(String.fromCharCode(10) + ` KHONG_CO_REF_REMOTE: remote CÓ nhánh ${NHANH}, nhưng bản sao trên máy này thì không.`);
+  console.error("Máy đang lệch với remote. Đếm \"chưa đẩy\" bằng một mốc không tồn tại là báo xong cho một cú đẩy CHƯA HỀ XẢY RA.");
+  console.error("Chạy `git fetch origin` một lần rồi thử lại." + String.fromCharCode(10));
+  process.exit(1);
+}
+
+// Lần đầu thì mốc so là toàn bộ lịch sử — không có origin/main để trừ đi.
+const phamVi = lanDau ? "HEAD" : `${REMOTE}..HEAD`;
+if (lanDau) console.log(String.fromCharCode(10) + `LẦN ĐẦU: remote chưa có nhánh ${NHANH}. Sắp tạo nó bằng toàn bộ lịch sử repo này.`);
+const pending = gitQuiet("log", "--format=%H%x1f%s%x1f%an", phamVi).split("\n").filter(Boolean)
+  .map((line) => { const [sha, subject, author] = line.split("\x1f"); return { sha, subject, author }; });
+
+if (!pending.length) {
+  console.log("\nKhông có gì để push — máy đang bằng với remote.\n");
+  process.exit(0);
+}
+
+const claims = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.json"), "utf8")).claims || {};
+
 // Một commit thuộc về ai? Xét theo VÙNG QUYỀN mà nó đụng.
 //
 // K2-2b, 02/09: chú thích cũ ở đây khẳng định nó "dùng CHUNG hàm với cổng đóng phiên" — và câu
@@ -76,12 +151,10 @@ try {
 // cổng quy `_docs`, chỗ này quy `_root` → phiên giữ `_docs` làm xong, cổng XANH, rồi bị chính
 // safe-push từ chối đẩy việc của mình. Nay cả hai đi qua `ownershipKeys` — xem ghi chú dài trong
 // repo-structure.mjs về vì sao "tách hàm dùng chung" không đủ và phải là MỘT CỬA duy nhất.
-//
-// TRA-KHOA-01, 06/09: cả phép ĐẾM commit chưa đẩy lẫn phép quy nó về vùng nay nằm trong
-// `commitChuaDay` ở `repo-structure.mjs`, vì `claim.mjs --release` phải hỏi ĐÚNG câu đó để
-// cưỡng chế luật "trả quyền SAU khi đẩy". Chép sang bên kia là dựng lại đúng con bug mà cả
-// khối chú giải này đang kể. CHÍNH SÁCH thì vẫn của mỗi bên — xem ngay dưới.
 const structure = readStructureFromDisk(ROOT);
+const claimPrefixes = claimPrefixesFrom(structure);
+
+const ROOT_HANDOFF = "HANDOFF.md";
 
 // MIỄN TRỪ CŨNG PHẢI GIỐNG CỔNG — đây là lệch thứ hai trong cùng bản vá, và nó nặng hơn.
 // `.agents/claims.json`: nhận/trả quyền là thao tác hành chính, ai cũng được đẩy kèm; không miễn
@@ -103,37 +176,17 @@ const structure = readStructureFromDisk(ROOT);
 // bản sửa dở CHƯA COMMIT có thể che một commit phá hoại ĐÃ nằm trong HEAD — safe-push sẽ đẩy nó
 // đi. Cái phải dùng chung là HÀM QUYẾT ĐỊNH, không phải phạm vi. Đúng đúng cách chia đã khai ở
 // đầu `repo-structure.mjs`: hàm suy ra thì thuần và dùng chung, việc đọc thì mỗi bên tự làm.
-//
-// DANH SÁCH file miễn nay đọc từ `.repo-structure.json` (`append_only_exempt`), dùng chung với
-// cổng đóng phiên. Trước bản này mỗi bên gõ cứng tên file, tức hai bản sao của cùng một luật —
-// đúng loại lệch mà cả khối chú giải trên đang kể. Thêm `IDEAS.md` (Đức chốt 04/09) vào hai
-// danh sách gõ cứng là gieo lại con bug đó, nên danh sách chuyển về một nguồn.
-//
-// CHÍNH SÁCH CỦA RIÊNG CỔNG NÀY, hai ca không-đo-được xử khác `claim.mjs`:
-//   · git không đọc được  → CHẶN cả hai bên (bất biến ④: không biết thì đỏ).
-//   · không có origin/main → CHẶN Ở ĐÂY, vì cổng này sắp GHI LÊN REMOTE và không có mốc thì
-//     im lặng báo "xong" cho một cú đẩy chưa hề xảy ra. `claim.mjs` thì KHÔNG chặn ca này —
-//     trả một khoá trong repo chưa có remote là chuyện hoàn toàn bình thường.
-const doc = commitChuaDay(ROOT, structure);
-if (doc.trangThai === CHUA_DAY.LOI) {
-  console.error(`\nKHONG_DEM_DUOC_COMMIT: ${doc.ly_do}.`);
-  console.error(`Không đếm được commit chưa đẩy thì không biết sắp đẩy gì của ai — và không biết thì không đẩy.`);
-  console.error(`Kiểm: \`git status\` và \`git fsck\`.\n`);
-  process.exit(1);
-}
-if (doc.trangThai === CHUA_DAY.KHONG_CO_MOC) {
-  console.error(`\nKHONG_CO_ORIGIN_MAIN: ${doc.ly_do}.`);
-  console.error(`Không có mốc để so thì không đếm được commit nào chưa đẩy — và im lặng ở đây là báo "xong" cho một cú đẩy CHƯA HỀ XẢY RA.`);
-  console.error(`Kiểm: \`git remote -v\` và \`git branch -r\`. Repo mới thì chạy \`git fetch origin\` một lần.\n`);
-  process.exit(1);
-}
-const pending = doc.commits;
-if (!pending.length) {
-  console.log("\nKhông có gì để push — máy đang bằng với remote.\n");
-  process.exit(0);
-}
+const handoffAppendOnly = appendOnlyAtEof(
+  gitQuiet("diff", "-U0", REMOTE, "HEAD", "--", ROOT_HANDOFF),
+  gitQuiet("show", `${REMOTE}:${ROOT_HANDOFF}`)
+);
+const adminFile = (file) => file === ".agents/claims.json" || (file === ROOT_HANDOFF && handoffAppendOnly);
 
-const claims = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.json"), "utf8")).claims || {};
+function ownersOf(sha) {
+  const files = gitQuiet("show", "--name-only", "--format=", sha).split("\n").filter(Boolean).map(unquote);
+  const areas = ownershipKeys(files, structure, claimPrefixes, adminFile);
+  return areas.map((area) => ({ area, owner: claims[area]?.owner ?? null }));
+}
 
 /* QUY THEO AI ĐÃ LÀM, KHÔNG THEO AI ĐANG GIỮ VÙNG — K2-3.
    Bản cũ chỉ có một cách quy: xem chủ HIỆN TẠI của vùng mà commit chạm. Sai cả hai chiều, xem
@@ -141,27 +194,37 @@ const claims = JSON.parse(fs.readFileSync(path.join(ROOT, ".agents", "claims.jso
      · có nhãn `Lane:` → quy theo nhãn. Chính xác, và không đổi khi quyền đổi chủ.
      · nhãn HỎNG      → KHÔNG quy thuộc được → coi là của phiên khác (fail closed). Thà chặn
                         oan mình còn hơn im lặng đẩy việc người khác.
-     · KHÔNG có nhãn  → CŨNG KHÔNG quy thuộc được → chặn. Xem ngay dưới.
+     · KHÔNG có nhãn  → lùi về quy theo vùng như cũ, VÀ nói to là đang lùi. Bắt buộc phải lùi:
+                        509 commit trong lịch sử repo không có nhãn nào, chặn hết là khoá repo. */
+const laneOf = (sha) => laneFromMessage(gitQuiet("log", "-1", "--format=%B", sha));
 
-   ĐƯỜNG LÙI "quy theo vùng" ĐÃ BỎ HẲN — K2-3c, audit GPT vòng 5, 03/09. Bản trước chỉ CẢNH BÁO
-   rồi lùi về quy theo vùng, tức chính cách mà đoạn trên vừa nói là "sai được cả hai chiều".
-   Hậu quả: gọi thẳng `safe-push` là né được K2-3b của cổng đóng phiên, và quay lại đúng lỗi
-   ngày 26/08 — im lặng cuốn commit của phiên khác lên remote.
-
-   Lý do tôi từng viết đường lùi ("509 commit trong lịch sử không có nhãn") là SAI PHẠM VI, và
-   GPT đã sửa tôi đúng chỗ này một lần rồi ở phép kiểm #10: `pending` chỉ là `origin/main..HEAD`
-   — commit CHƯA push. Lịch sử cũ không bao giờ đi qua đây, nên chặn ở đây không khoá gì cả. */
 const rows = pending.map((commit) => {
-  const { lane, laneProblem: problem } = commit;
-  return {
-    ...commit,
-    areas: commit.areas.map((area) => ({ area, owner: claims[area]?.owner ?? null })),
-    foreign: lane && !problem && lane !== asLabel ? [{ area: `lane ${lane}`, owner: lane }] : [],
-    khongQuyDuoc: problem ? `nhãn HỎNG (${problem.split(":")[0]})` : lane ? null : "THIẾU nhãn"
-  };
+  const areas = ownersOf(commit.sha);
+  const { lane, problem } = laneOf(commit.sha);
+  let foreign;
+  let basis;
+  if (problem) {
+    foreign = [{ area: "(nhãn lane hỏng)", owner: problem }];
+    basis = "lane-hong";
+  } else if (lane) {
+    foreign = lane === asLabel ? [] : [{ area: `lane ${lane}`, owner: lane }];
+    basis = "lane";
+  } else {
+    foreign = areas.filter((a) => a.owner && a.owner !== asLabel);
+    basis = "vung";
+  }
+  return { ...commit, areas, foreign, lane, laneProblem: problem, basis };
 });
 
-console.log(`\nSẮP ĐẨY LÊN origin/main — phiên "${asLabel}"`);
+const khongCoNhan = rows.filter((row) => row.basis === "vung");
+if (khongCoNhan.length) {
+  console.log(`\n⚠ ${khongCoNhan.length}/${rows.length} commit KHÔNG có nhãn \`${LANE_TRAILER} <phiên>\`, nên đang tạm quy theo VÙNG.`);
+  console.log(`  Quy theo vùng sai được cả hai chiều: từ chối việc của chính bạn nếu vùng đã đổi chủ,`);
+  console.log(`  và im lặng đẩy kèm việc người khác nếu bạn vừa nhận vùng của họ.`);
+  console.log(`  Từ nay thêm một dòng cuối thông điệp commit:  ${LANE_TRAILER} ${asLabel}\n`);
+}
+
+console.log(`\nSẮP ĐẨY LÊN ${REMOTE} — phiên "${asLabel}"`);
 console.log(`${rows.length} commit:\n`);
 for (const row of rows) {
   const mark = row.foreign.length ? "  ⚠" : "   ";
@@ -171,128 +234,111 @@ for (const row of rows) {
   // quy theo nhãn hay theo vùng thì không kiểm lại được phán quyết. Ba căn cứ, ba cách hiện.
   const canCu = row.laneProblem ? `NHÃN HỎNG (${row.laneProblem.split(":")[0]})`
     : row.lane ? `lane ${row.lane}${row.lane === asLabel ? " — của bạn" : ""}`
-    : "KHÔNG có nhãn → không quy thuộc được";
+    : "KHÔNG có nhãn → tạm quy theo vùng";
   console.log(`      ${canCu}`);
   console.log(`      vùng: ${areaText}`);
 }
 
-/* KHÔNG QUY THUỘC ĐƯỢC THÌ KHÔNG ĐẨY — và `--carry` KHÔNG mở được cửa này.
-   `--carry` là "Đức duyệt cho đẩy kèm việc của phiên X" — nó cần biết X là ai. Commit không
-   nhãn thì không có X, nên không có gì để duyệt. Sửa nhãn thì miễn phí và không mất việc gì. */
-const moCoi = rows.filter((row) => row.khongQuyDuoc);
-if (moCoi.length) {
-  console.error(`\nTỪ CHỐI PUSH — ${moCoi.length}/${rows.length} commit không quy thuộc được về lane nào:`);
-  for (const row of moCoi) console.error(`  ${row.sha.slice(0, 7)}  ${row.khongQuyDuoc}  ${row.subject.slice(0, 60)}`);
-  console.error(`\nKhông biết commit của ai thì không biết đang đẩy kèm việc của ai — đúng lỗi ngày 26/08.`);
-  console.error(`Sửa: commit CUỐI thì \`git commit --amend\` rồi thêm dòng cuối \`${LANE_TRAILER} ${asLabel}\`.`);
-  console.error(`Nhiều commit thì: git rebase origin/main --exec "git commit --amend --no-edit --trailer '${LANE_TRAILER} ${asLabel}'"\n`);
-  process.exit(1);
+const blocked = rows.filter((row) => row.foreign.length);
+
+/* `--carry` TU LAM KHI DU HAI DIEU KIEN — Duc chot 2026-09-09, AGENTS.md muc 2 hang 2.
+ *
+ * Ba luot trong hai ngay phai dung hoi Duc cho cung mot hinh dang: commit cua lane khac nam duoi
+ * commit cua minh, va git xep theo thu tu nen day cai tren la buoc day cai duoi. Ca ba luot Duc
+ * deu duyet. Mot cua ma lan nao cung mo thi no khong con la cua — no la thu tuc, va thu tuc lap
+ * lai bi bo qua truoc khi bi go.
+ *
+ * HAI DIEU KIEN, va thieu mot la van hoi:
+ *   ⑴ MOI commit sap day deu QUY THUOC DUOC — co nhan `Lane:` doc ra ten phien. Day la cai
+ *     `--carry` thuc su mua: neu sau nay co gi sai, tra nguoc ve dung phien lam ra no.
+ *   ⑵ Cong dong phien da chay va XANH tren DUNG cay lam viec nay — doc dau xac nhan, khong tin
+ *     loi ai. Dau buoc vao HEAD + bam cay lam viec, nen no khong muon duoc cua luot truoc.
+ *
+ * VE ⑵ LA CHO DE LAM SAI NHAT: bo no di thi luat con lai la "co nhan Lane thi day duoc", tuc
+ * mot lane co the day viec cua lane khac di khi cong dang DO. Dau xac nhan la thu duy nhat o
+ * day biet cong da chay hay chua. */
+let tuDong = null;
+if (blocked.length && !carry) {
+  const thieuNhan = rows.filter((r) => !r.lane).map((r) => r.sha.slice(0, 7));
+  let dauXanh = false;
+  let viSaoDau = "chua doc duoc dau xac nhan";
+  try {
+    const xet = xetDauCong(docDauCong(ROOT), dauCay(ROOT), bamLenh(danhSachSuite(ROOT)),
+      { as: asLabel, moc: gitQuiet("rev-parse", "--verify", REMOTE).trim() });
+    dauXanh = Boolean(xet && xet.dung);
+    viSaoDau = (xet && xet.vi_sao) || viSaoDau;
+  } catch (e) {
+    dauXanh = false;
+    viSaoDau = String(e.message).split(String.fromCharCode(10))[0];
+  }
+  if (!thieuNhan.length && dauXanh) {
+    tuDong = viSaoDau;
+  } else {
+    console.error(`${String.fromCharCode(10)}TU CHOI PUSH — dieu kien tu dong CHUA du:`);
+    if (thieuNhan.length) console.error(`  · commit khong quy thuoc duoc (thieu nhan ${LANE_TRAILER}): ${thieuNhan.join(" ")}`);
+    if (!dauXanh) console.error(`  · cong dong phien chua xanh tren cay lam viec nay — ${viSaoDau}`);
+  }
 }
 
-const blocked = rows.filter((row) => row.foreign.length);
-if (blocked.length && !carry) {
+if (blocked.length && !carry && !tuDong) {
   console.error(`\nTỪ CHỐI PUSH — bạn đang cuốn theo việc của phiên khác:`);
   for (const row of blocked) {
     console.error(`  ${row.sha.slice(0, 7)} → ${row.foreign.map((f) => `${f.area} (của "${f.owner}")`).join(", ")}`);
   }
   console.error(`\nĐẩy lên là commit của họ cũng lên theo, và Đức chưa duyệt phần đó.`);
-  console.error(`Cách xử lý: chờ phiên đó tự push, HOẶC hỏi Đức rồi chạy lại kèm --carry.\n`);
+  /* LANE ĐÃ ĐI RỒI THÌ ĐỪNG BẢO NGƯỜI TA CHỜ NÓ.
+   *
+   * `claim.mjs --release --du-biet` cho một lane trả khoá KÈM commit chưa đẩy — cần thiết, không
+   * thì lane bị cổng xuất bản chặn sẽ kẹt khoá vĩnh viễn. Nhưng lane đó đi rồi, và commit của nó
+   * ở lại chặn MỌI lane sau.
+   *
+   * Đo 07/09 trong một kho dựng riêng: sau một lượt `--du-biet`, lane kế KHÔNG đẩy được, và câu
+   * duy nhất chỗ này in ra là "chờ phiên đó tự push" — bảo người ta chờ một việc sẽ KHÔNG BAO GIỜ
+   * xảy ra. Lời khuyên sai còn tệ hơn không có lời khuyên: người đọc tin là mình chỉ cần đợi, nên
+   * không ai đi hỏi Đức, nên repo kẹt im lặng.
+   *
+   * KHÔNG tự cho qua. `--carry` vẫn phải hỏi Đức (AGENTS.md mục 2 hàng 2) — chỗ này chỉ đổi một
+   * câu SAI thành một câu ĐÚNG, không hạ một lớp bảo vệ nào. */
+  for (const dong of loiKhuyenKhiChan(claims)) console.error(dong);
+  console.error("");
   process.exit(1);
+}
+if (blocked.length && tuDong) {
+  const ai = [...new Set(blocked.flatMap((r) => r.foreign.map((f) => f.owner)))].join(", ");
+  console.log(`${String.fromCharCode(10)}CUON THEO viec cua ${ai} — tu dong cho qua (Duc chot 09/09).`);
+  console.log(`  du hai dieu kien: moi commit deu co nhan ${LANE_TRAILER} · cong da xanh (${tuDong})`);
+  console.log("  Duc THOI duoc bao tung luot — do la cai gia da ghi trong AGENTS.md muc 2.");
 }
 if (blocked.length && carry) {
   console.log(`\n--carry: Đức đã duyệt cho đẩy kèm việc của ${[...new Set(blocked.flatMap((r) => r.foreign.map((f) => f.owner)))].join(", ")}.`);
 }
 
-/* ---- CỔNG XUẤT BẢN: artifact phải tươi TRƯỚC KHI ĐẨY ----------------------
- *
- * Phép kiểm này TỪ cổng đóng phiên chuyển sang đây (03/09, GPT duyệt). Lý do là một lỗi tầng,
- * không phải chuyện tiện tay: artifact ĐO VIỆC CỦA MỌI LANE — số commit mỗi gói, số dòng mỗi
- * file — nên độ tươi của nó là tính chất của **trạng thái sắp publish**, không phải của **một
- * phiên đang đóng**. Kiểm một bất biến toàn cục tại một thời điểm cục bộ thì với nhiều lane nó
- * chắc chắn chập chờn, và ai commit sau cùng thì thắng.
- *
- * Đo thật trong một phiên ngày 03/09: bị chặn BA lần, và cả ba lần 100% dòng lệch đều thuộc gói
- * của lane khác — không một dòng nào của lane đang bị chặn.
- *
- * Ở đây thì nó đúng chỗ: cái sắp lên remote phải khớp với chính nó. Và nhờ K2-7 (bộ sinh không
- * ghi khi chỉ dấu sinh đổi) chạy lại ở đây là rẻ — nội dung không đổi thì không sinh ra commit.
- *
- * CỐ Ý KHÔNG tự sinh rồi tự commit. Làm thế là biến công cụ ĐẨY thành công cụ VIẾT, và một
- * commit bạn không gõ là một commit bạn không đọc. Nó từ chối, và đưa đúng câu lệnh.
- */
-/* BA FAIL-OPEN, audit GPT 03/09 bắt được trong chính hard gate này. Ghi cả ba ra đây vì cả ba
- * đều là loại "cổng tự thông" — nó không đỏ, nó biến thành không làm gì:
- *
- * 1. Tôi tự viết `Array.isArray(structure?.generators) ? … : []`. `generatorsFrom` thì NÉM khi
- *    cấu hình hỏng; bản của tôi lặng lẽ trả mảng RỖNG, tức xoá `generators` là hard gate hết
- *    kiểm gì. Nay đi qua đúng một cửa, và để nó ném.
- * 2. `if (!fs.existsSync(file)) continue;` — bộ sinh ĐÃ KHAI mà file biến mất thì bỏ qua. Khai
- *    rồi mà thiếu là repo hỏng, phải ĐỎ.
- * 3. Đọc `.repo-structure.json` từ CÂY LÀM VIỆC. Nhưng thứ sắp publish là HEAD — một bản sửa
- *    chưa commit đổi được danh sách verifier của cái sắp đẩy. Nay đọc từ HEAD.
- */
-const structureAtHead = (() => {
-  const raw = gitQuiet("show", "HEAD:.repo-structure.json");
-  if (raw.trim() === "") return null;   // không có ở HEAD = chưa khai, `generatorsFrom` lùi về mặc định
-  try { return JSON.parse(raw); }
-  catch (error) {
-    console.error(`\nTỪ CHỐI PUSH — .repo-structure.json ở HEAD không phải JSON đọc được: ${error.message}`);
-    console.error("Đây là file khai bộ sinh nào phải kiểm. Không đọc được nó thì không kiểm được gì, và không kiểm được thì không đẩy.\n");
-    process.exit(1);
-  }
-})();
-// KHAI hay MẶC ĐỊNH — hai chuyện khác nhau, và fixture 23b bắt được đúng lúc tôi gộp chúng.
-// Một repo dựng từ bộ khung KHÔNG khai `generators`: `generatorsFrom` lùi về mặc định, nhưng
-// repo đó không mang mấy script ấy theo VÀ cũng không có đầu vào cho chúng chạy. Đòi nó phải
-// tươi là khoá repo vĩnh viễn ngay ở cú push đầu tiên.
-// Nên: chưa khai thì KHÔNG kiểm — và NÓI RA là chưa kiểm, đừng để nó đội lốt đã đạt.
-const declaredGenerators = structureAtHead?.generators !== undefined;
-let generators = [];
-if (declaredGenerators) {
-  try { generators = generatorsFrom(structureAtHead); }
-  catch (error) { console.error(`\nTỪ CHỐI PUSH — ${error.message}\n`); process.exit(1); }
-} else {
-  console.log("\n⚠ .repo-structure.json ở HEAD chưa khai `generators` — cổng xuất bản KHÔNG kiểm được artifact nào.");
-  console.log("  Đây là \"chưa kiểm\", không phải \"đã đạt\". Repo có bộ sinh thì khai nó vào để cổng có răng.");
-}
-
-/* CHẠY TRÊN ẢNH CHỤP HEAD, KHÔNG TRÊN CÂY LÀM VIỆC — PUSH-GATE-01, Đức chốt 05/09.
- *
- * Bản trước có thêm một cửa từ chối nữa ngay tại đây: bộ sinh đang sửa dở trong cây làm việc
- * thì từ chối đẩy, vì "nó là thứ phán xử, nên kết quả không đáng tin". Lý lẽ đúng, chỗ chặn
- * sai. Cây làm việc là của CHUNG mọi phiên, nên câu đó biến bất kỳ phiên nào đang sửa bộ sinh
- * thành cái khoá cửa xuất bản của MỌI phiên còn lại — kể cả những phiên không chạm gì tới nó.
- * Đo thật 05/09: 4 lượt từ chối trong một ngày cho một lane, không lượt nào lane đó chạm bộ
- * sinh; nặng nhất là lúc phiên kia chạy đột biến kiểm, vì mỗi vòng bẩn file vài chục giây nên
- * một vòng chờ-tới-khi-sạch trượt hai lần liên tiếp.
- *
- * Nay quan toà là bộ sinh Ở HEAD, chạy trong một bản chụp HEAD (`kiemArtifactTuHead`). Thứ
- * sắp công bố là HEAD, nên đó vốn là quan toà đúng ngay từ đầu. KHÔNG có cờ bỏ qua, KHÔNG có
- * biến môi trường: bảo đảm "không ai đẩy được một nhánh mà artifact đã commit không khớp với
- * HEAD" giữ nguyên từng chữ — chỉ có phần chặn OAN bị bỏ.
- */
-const artifact = kiemArtifactTuHead(ROOT, generators, { thieuLaDo: declaredGenerators });
-if (artifact.ok === null) {
-  // KHÔNG BIẾT thì CHẶN — bất biến ④. Cổng không dựng được ảnh chụp mà vẫn cho qua thì nó
-  // không đỏ, nó chỉ biến thành không làm gì, và cái đó trông y hệt "đã đạt".
-  console.error(`${NEWLINE}TỪ CHỐI PUSH — không dựng được bản chụp HEAD để kiểm sự thật máy sinh:`);
-  console.error(`  ${artifact.ly_do}`);
-  console.error(`Không kiểm được thì không đẩy. Xem git có lành không: git status và git fsck.${NEWLINE}`);
-  process.exit(1);
-}
-if (!artifact.ok) {
-  console.error(`${NEWLINE}TỪ CHỐI PUSH — sự thật máy sinh chưa khớp với thứ bạn sắp đẩy:`);
-  for (const line of artifact.lech) console.error(`  ${line}`);
-  console.error(`${NEWLINE}Đẩy lúc này là công bố một bảng nói sai về chính nhánh vừa đẩy.`);
-  console.error(`Cách sửa: ${generators.map((s) => `node scripts/${s}`).join(" && ")}`);
-  console.error(`Rồi commit phần vừa sinh (nếu có — nội dung không đổi thì nó KHÔNG ghi gì) và chạy lại lệnh này.${NEWLINE}`);
-  process.exit(1);
-}
+/* Phép kiểm nhánh phải chạy TRƯỚC cửa `--dry-run`. Đặt nó sau thì lần chạy thử báo "sẽ đẩy
+   được", rồi lần chạy thật mới từ chối — mà `--dry-run` tồn tại đúng để nói trước chuyện đó. */
+/* Cửa "đứng ngoài main thì từ chối" của bản cũ ĐÃ BỎ, và KHÔNG phải vì nới lỏng: nó không còn
+   ca nào để chặn. Nhánh đích nay bằng chính nhánh đang đứng (tính ở đầu file), nên "đưa nhánh
+   khác lên main" là chuyện không dựng nổi — chặt hơn một câu `if`, vì không có gì để quên. */
 
 if (dryRun) { console.log("\n--dry-run: dừng ở đây, chưa đẩy gì.\n"); process.exit(0); }
 
+/* ĐẨY ĐÚNG CÁI VỪA SOI. Đây là lỗ nguy hiểm nhất từng tìm thấy trong công cụ này.
+ *
+ * Mọi phép soi phía trên chạy trên `origin/main..HEAD`. Câu đẩy cũ là `git push origin main` —
+ * và `main` ở đó là NHÁNH main TRÊN MÁY, không phải `HEAD`. Đứng ở một nhánh tính năng thì hai
+ * thứ đó là hai lịch sử khác nhau: công cụ soi nhánh của bạn, rồi đẩy nhánh main trên máy —
+ * tức đẩy đúng thứ chưa ai soi, có thể gồm commit của phiên khác.
+ *
+ * Nói cách khác: công cụ sinh ra để chặn "đẩy kèm việc người khác" lại có thể tự làm đúng việc
+ * đó. Audit độc lập bắt được 03/09; repo NAV cũng đang ở đúng hình dạng này (nhánh main trên máy
+ * đã rẽ khỏi origin/main từ trước).
+ *
+ * Hai lớp chữa:
+ *   1. Đứng ngoài `main` thì TỪ CHỐI. Đưa một nhánh khác lên `main` là một quyết định hợp nhất,
+ *      và luật mục 2 nói rõ merge vào `main` phải hỏi Đức. Công cụ này không tự quyết thay.
+ *   2. Kể cả khi đang ở `main`, đẩy bằng `HEAD:main` — nói thẳng nguồn và đích, để không còn
+ *      khoảng cách nào giữa thứ được soi và thứ được đẩy. */
 console.log("\nĐang đẩy...");
-try { console.log(git("push", "origin", "main").trim() || "Xong."); }
+try { console.log(git("push", "origin", `HEAD:${NHANH}`).trim() || "Xong."); }
 catch (error) { console.error(`Push thất bại: ${String(error.stdout || error.stderr || error.message).trim()}`); process.exit(1); }
 // Đừng đóng cứng `_root`: sau A2 gốc repo có BỐN khoá, nên câu cũ dặn sai tên vùng — và đây là
 // chữ operator, tức luật vàng 5. Kể đúng vùng vừa đẩy, và nêu luôn lệnh trả quyền (đừng dặn sửa

@@ -37,15 +37,15 @@
     "_fail_closed": "THIEU khoi nay, hoac `blocking` khong phai mang, thi check-bootstrap.mjs THOAT MA 2 va cong DO. Co y: cach de nhat de tu thao chan la xoa cau hinh di, nen xoa cau hinh phai la mot loi to, khong phai mot su im lang.",
     "_bat_ngay": "2026-09-02, phien S7. Dieu kien: ca 8 ma duoi day dang XANH tai b71128a va da kiem lai truoc khi bat.",
     "_chua_chan": "B6 (do sau dieu huong, con 18 cho) · B8 · B9 (2 file AGENTS.md qua 200 dong) · B11 · B13 · B14. Chung la no CHAT LUONG, khong phai SAI DU LIEU, va con no thuc chua tra. Chan khi con no la khoa repo vi mot viec chua ai hua xong hom nay. Mo them ma vao `blocking` chi khi ma do dang xanh.",
+    "_blocking_doc_migrate": "B5 va B7 bo khoi danh sach 09/09 khi len khung 1.8.0: bo khung GOP chung vao B2 (mot ma la mot cho hong, gop lai thi mot phep kiem do lam ca muc do va thong bao neu ten phep con lai). Giu ten cu la CHAN_MA_LA fail-closed, va cong tu choi chay — dung nhu no phai lam.",
     "blocking": [
       "B1",
       "B2",
       "B3",
       "B4",
-      "B5",
-      "B7",
       "B10",
-      "B12"
+      "B12",
+      "B16"
     ]
   },
   "_thu_muc_ngoai_repo_doc": "Thu muc NGOAI kho ma ma repo nay phu thuoc vao. Khai o day vi day la ban do thu muc — va vi mot quy uoc chi nam trong van xuoi thi phu thuoc vao viec AI co mo dung trang do khong. Duc noi loi dat lung tung da gap VAI LAN; ngay 08/09 chinh phien viet khoi nay van dat mot tep ghep cap vao thu muc ho so nguoi dung, du bon goi cu deu dang nam dung cho. Nen luat khai o day PHAI duoc cong cu DOC, khong duoc go cung o hai noi.",

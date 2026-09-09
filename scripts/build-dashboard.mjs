@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { DEFAULT_UNITS, profileFrom, repoIdentityFrom, STRUCTURE_FILE, unitsFrom } from "./repo-structure.mjs";
+import { behaviourGlobsFrom, DEFAULT_UNITS, generatedFrom, profileFrom, repoIdentityFrom, STRUCTURE_FILE, tenMaySinhFrom, tenTrangFrom, unitsFrom } from "./repo-structure.mjs";
 
 const MODULE_FILE = path.resolve(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -13,7 +13,7 @@ const SCHEMA = "extension-status/v2";
 // đề bài và bộ kiểm đánh nhau. Audit Codex vòng 3 bắt được trước khi ai chạy S3.
 // "unclassified" da bi bo tu 2026-09-02 (phien S3): sau khi hai don vi con thieu da khai
 // STATUS, khong con don vi nao dung no. Giu lai la de ngo mot loi thoat cho viec khong khai.
-const LIFECYCLES = new Set(["idea", "building", "active", "paused", "archived", "experimental", "superseded"]);
+export const LIFECYCLES = new Set(["idea", "building", "active", "paused", "archived", "experimental", "superseded"]);
 const REQUIRED = ["schema", "id", "name", "lifecycle", "version_source", "current_focus", "ref_readme", "ref_handoff", "owner"];
 // Bat buoc CO DIEU KIEN. Khong nhet vao REQUIRED duoc vi REQUIRED ap cho MOI STATUS,
 // con hai luat nay chi ap cho mot so lifecycle. Mot ban da nghi huu khong can xep hang
@@ -21,21 +21,27 @@ const REQUIRED = ["schema", "id", "name", "lifecycle", "version_source", "curren
 const RETIRED_LIFECYCLES = new Set(["superseded", "archived"]);
 const BEHAVIOUR_EXTENSIONS = new Set([".js", ".mjs", ".json", ".html", ".css"]);
 const EVIDENCE_ZONE = /(^|\/)(evidence[^/]*|pilot-[^/]*|batch-[^/]*)\//i;
-export const STAMP_PREFIX = "Trang được sinh tại commit";
-// Dòng "Phiên gần nhất" của Khối A cũng mang mã commit, nên cũng đổi theo TỪNG commit.
-// Không lọc thì artifact cũ ngay sau mỗi lần commit và cổng kiểm đỏ vĩnh viễn —
-// đúng lý do STAMP_PREFIX ra đời. Hai dòng này là DẤU SINH TRANG, không phải số đo.
-export const SESSION_STAMP_PREFIX = "2. **Phiên gần nhất**";
+// Trang KHÔNG mang mã commit — Đức chốt 2026-09-06 (KHUNG-16). Trang nhúng mã HEAD thì
+// commit chính trang đó làm HEAD đổi, nên trang vừa commit đã cũ: KHÔNG thứ tự commit nào
+// hội tụ. Lối cũ là lọc hai dòng đó khỏi phép so — tức để phép kiểm thôi canh một phần nội
+// dung. Bỏ hẳn mã commit thì trang hội tụ THẬT và phép so canh lại được TOÀN BỘ dòng.
+// Không mất thông tin: `git log -- DASHBOARD.md` vẫn cho biết trang sinh tại commit nào.
+export const STAMP_PREFIX = "Trang được sinh ngày";
 const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
 
 /* --- S2: cổng vào cho AI mới ---------------------------------------------
    Ba file GENERATED, sinh cùng một lượt từ CÙNG một model. Nếu tách ra sinh
    riêng thì sớm muộn ba file sẽ nói ba điều khác nhau — đúng thứ tầng
    GENERATED sinh ra để chống. */
+/* TÊN MẶC ĐỊNH của ba artifact. Repo khai tên khác được ở `generated_names` — xem
+   `tenMaySinhFrom` trong `repo-structure.mjs`. Ba hằng số này CHỈ còn là mặc định và là
+   lưới hứng cho `isBehaviourFile` ở repo chưa khai gì; mọi chỗ SINH và SO đều lấy tên từ
+   `model.ten`, vì bộ sinh vừa ghi ba file vừa nhắc tên chúng trong nội dung trang. */
 export const LLMS_FILE = "llms.txt";
 export const REPO_MAP_FILE = "repo-map.json";
 export const DASHBOARD_FILE = "DASHBOARD.md";
 export const REPO_MAP_SCHEMA_VERSION = 1;
+export const REPO_PROFILE = "P1"; // monorepo nhiều gói — REPO-STRUCTURE-SPEC-V1 mục 3
 
 /* HÌNH DẠNG ĐƠN VỊ — đọc từ `.repo-structure.json`, không đóng cứng trong code.
    Phần suy ra nằm ở `repo-structure.mjs` để cổng đóng phiên và safe-push dùng CHUNG một
@@ -52,10 +58,9 @@ export function readUnits(deps) {
   return unitsFrom(parsed);
 }
 
-// Hai trường này đổi theo TỪNG commit. So sánh nguyên văn thì cổng kiểm sẽ đỏ
-// ngay sau mỗi commit dù nội dung thật không đổi. Lọc ra khi so, giống hệt cách
-// STAMP_PREFIX được lọc khỏi DASHBOARD.
-export const REPO_MAP_VOLATILE_KEYS = ["generated_at", "generated_commit"];
+// `generated_commit` đã bị BỎ HẲN khỏi bản đồ máy đọc cùng lý do với trang (KHUNG-16),
+// nên chỉ còn `generated_at` phải miễn — nó là NGÀY, đổi theo đồng hồ chứ không theo nội dung.
+export const REPO_MAP_VOLATILE_KEYS = ["generated_at"];
 
 // Chỉ bỏ qua thứ KHÔNG được track. Cố tình không miễn trừ `scripts/`, `tests/`,
 // `docs/`: miễn trừ là cách êm ái nhất để một con số nợ trông như đã trả. Thà để
@@ -112,15 +117,8 @@ function statusScanLines(text) {
   if (lines[0] === "---") {
     const end = lines.indexOf("---", 1);
     if (end >= 0) {
-      /* Ba trường danh tính (`lam_duoc` · `khong_lam_duoc` · `dung_the_nao`) nằm trong danh
-       * sách dưới đây ngay từ lượt chúng ra đời. Chúng là chữ TỰ DO hiện thẳng lên bảng, nên
-       * không soi thì một câu như *"bốn lệnh Bridge"* gõ tay sẽ sống mãi ở đó và mục dần —
-       * đúng cái bệnh mà luật số-của-máy sinh ra để chữa.
-       *
-       * Bộ quét nhìn frontmatter theo DANH SÁCH TÊN, nên một trường mới KHÔNG tự được soi:
-       * quên thêm tên vào đây là mở lại một lỗ đã bịt, mà không gì đỏ lên. */
       for (let index = 1; index < end; index += 1) {
-        const match = lines[index].match(/^\s*(current_focus|last_verified_how|lam_duoc|khong_lam_duoc|dung_the_nao)\s*:\s*(.*)$/);
+        const match = lines[index].match(/^\s*(current_focus|last_verified_how)\s*:\s*(.*)$/);
         if (match) selected.push({ text: match[2], lineNumber: index + 1 });
       }
       for (let index = end + 1; index < lines.length; index += 1) {
@@ -399,13 +397,60 @@ function parseChangedCommits(output) {
 // Một file "đổi hành vi" = đuôi thuộc BEHAVIOUR_EXTENSIONS và KHÔNG nằm trong vùng bằng
 // chứng. Lọc `.md` và vùng bằng chứng ra, nếu không cờ sẽ kêu oan ngay ngày đầu: chính
 // commit thêm STATUS.md/HANDOFF đã "chạm package".
-function isBehaviourFile(file) {
-  const normalized = String(file).replaceAll("\\", "/");
-  return !EVIDENCE_ZONE.test(normalized) && BEHAVIOUR_EXTENSIONS.has(path.posix.extname(normalized).toLowerCase());
+/* SẢN PHẨM CỦA CHÍNH BỘ SINH KHÔNG PHẢI "CODE ĐÃ ĐỔI".
+ *
+ * `repo-map.json` mang đuôi `.json`, nên nó lọt vào BEHAVIOUR_EXTENSIONS và được đếm là hành vi
+ * đổi. Nhưng nó là thứ bộ sinh này VIẾT RA. Hậu quả là một vòng lặp không có điểm dừng:
+ *
+ *   sinh lại → repo-map.json đổi → "code đã đổi sau kiểm chứng: CÓ" → phải kiểm chứng lại →
+ *   ghi mốc mới → sinh lại → …
+ *
+ * Đo thật ở repo NAV ngày 03/09: `KHÔNG → CÓ (1) → CÓ (2) → CÓ (3)`, không bao giờ về 0. Repo
+ * nhà KHÔNG bắt được vì `STATUS.md` của chính nó khai `lifecycle: building` và không có
+ * `last_verified_commit` — tức là bộ khung chưa từng tự đi qua con đường mà nó bán cho người khác.
+ * Bài học: thứ gì repo nhà không dùng thì repo nhà không kiểm được. */
+const MAY_SINH = new Set([LLMS_FILE, REPO_MAP_FILE, DASHBOARD_FILE]);
+
+/* NGHỀ NÀO ĐẾM FILE NGHỀ ẤY.
+ *
+ * Danh sách đuôi cứng `.js .mjs .json .html .css` biến bộ khung này thành công cụ đo được đúng
+ * MỘT nghề. Repo Python sửa `src/app.py` cả trăm lần vẫn bị đo là "code không đổi", và bảng vẫn
+ * in ra đẹp — con số sai mà trông như con số đúng. Repo 3AI migrate ngày 03/09 CHÍNH LÀ Python.
+ *
+ * Nên repo tự khai `units.behaviour_globs`. Không khai thì giữ nguyên hành vi cũ: đoán hộ nghề
+ * của người ta còn tệ hơn đếm thiếu, vì lúc đó không ai biết con số dựa trên gì.
+ *
+ * `ponytail: chỉ so đuôi file, không phải glob đầy đủ. Đủ cho "**\/*.py"; cần khớp theo thư mục
+ * thì thay bằng một bộ glob thật.` */
+function duoiTuGlob(globs) {
+  const ra = new Set();
+  for (const g of globs) {
+    const m = String(g).match(/\.([A-Za-z0-9]+)$/);
+    if (m) ra.add(`.${m[1].toLowerCase()}`);
+  }
+  return ra.size ? ra : null;
 }
 
-function changedCommitCount(commits) {
-  return commits.filter((commit) => commit.files.some(isBehaviourFile)).length;
+/* Bảng chủ sở hữu KHÔNG phải hành vi. `.agents/claims.json` mang đuôi `.json` nên bản trước
+   đếm nó là file hành vi — mà nhận/trả quyền là việc MỌI phiên đều phải làm, nên MỌI phiên
+   đều làm trang cũ đi và cổng "sự thật máy sinh còn tươi" đỏ lại. Đo thật 06/09: commit
+   `fa7e8a7` chạm ĐÚNG MỘT file là `claims.json`, và bộ đếm nhảy 4 → 5.
+   Luật mục 1 của `AGENTS.md` đã miễn file này khỏi luật khoá vùng vì cùng lý do — "nhận/trả
+   quyền là thao tác hành chính". Đây chỉ là cho phép đo trùng với luật đã viết. */
+const HANH_CHINH = new Set([".agents/claims.json"]);
+
+export function isBehaviourFile(file, opts = {}) {
+  const normalized = String(file).replaceAll("\\", "/");
+  if (MAY_SINH.has(normalized) || HANH_CHINH.has(normalized)) return false;
+  // Sản phẩm của bộ sinh do REPO tự khai (`generated_files`). Ba file cứng ở `MAY_SINH` là mặc
+  // định cho repo chưa khai gì; repo nào sinh thêm trang thì khai thêm, đừng sửa code.
+  if (Array.isArray(opts.generatedFiles) && opts.generatedFiles.includes(normalized)) return false;
+  const duoi = (Array.isArray(opts.behaviourGlobs) && duoiTuGlob(opts.behaviourGlobs)) || BEHAVIOUR_EXTENSIONS;
+  return !EVIDENCE_ZONE.test(normalized) && duoi.has(path.posix.extname(normalized).toLowerCase());
+}
+
+function changedCommitCount(commits, opts = {}) {
+  return commits.filter((commit) => commit.files.some((f) => isBehaviourFile(f, opts))).length;
 }
 
 // Tách riêng ra để test ghim được. `git status --porcelain` bình thường đã được gọi kèm
@@ -457,10 +502,53 @@ function measuredRow(deps, dirRelPath, manifestRelPath, tracked = trackedIndex(d
    (kèm mã B2/B5/B7/DRIFT) thay vì ném ra.
    Lỗi ĐẦU VÀO HỎNG (claims.json, .repo-structure.json) vẫn ném ở cả hai chế độ: đó không
    phải "một đơn vị khai sai" mà là "không đọc nổi bảng chủ sở hữu" — đoán tiếp là nói dối. */
+/* HAI LOP "DO CHO DUNG" GOM VE MOT CHO, va tach ra de ghim duoc.
+ *
+ * `generated`      — file do bo sinh viet ra, khong duoc dem la code doi.
+ * `behaviour_globs` — nghe cua repo. Mac dinh chi nhin .js/.mjs/.json/.css/.html, tuc DO DUOC
+ *                     DUNG MOT NGHE; repo Python thi tools/*.py doi ca ngay ma cot van noi KHONG.
+ *
+ * Truoc 1.3.3 lop thu hai co ham nhung KHONG AI TRUYEN VAO, va validator con TU CHOI truong do —
+ * chu thich day mot dang, bo kiem cam dang ay. Vap that o luot migrate `n8n-orchestrator` 05/09.
+ * Tach thanh ham rieng chinh vi the: mot ham export duoc thi ghim duoc, mot bieu thuc noi trong
+ * `collectModel` thi khong. */
+export function behaviourOptsFrom(structure) {
+  /* TÊN ARTIFACT SUY RA cũng phải được miễn, không chỉ tên repo tự khai.
+   *
+   * Đo 07/09 ở `nav_platform_main`: khối `generated` của nó khai ba file
+   * (`DASHBOARD.md` · `llms.txt` · `repo-map.json`) — đúng như lượt migrate 03/09 đã dựng.
+   * Nhưng từ bản 1.3.18 bộ khung sinh thêm **trang HTML**, tên suy từ `repo.name`, và không
+   * một repo đã lắp nào biết mà khai thêm. Hệ quả: bộ đếm "code đã đổi sau kiểm chứng" thấy
+   * một file `.html` lạ, +1 mỗi lượt sinh lại, và cổng *"Sự thật máy sinh còn tươi"* ĐỎ
+   * **vĩnh viễn** — sinh lại không thoát được, vì chính việc sinh lại làm nó tăng.
+   *
+   * Vá bằng cách BỎ việc phải khai: hợp `generated` (repo tự khai) với `tenMaySinhFrom`
+   * (bộ khung tự suy). Repo cũ không phải sửa cấu hình, repo mới không phải nhớ gì.
+   *
+   * Vì sao không thêm tên vào `MAY_SINH`: `MAY_SINH` là hằng số ba tên đóng cứng, mà tên
+   * trang thì **khác nhau ở mỗi repo**. Đóng cứng được cái thứ tư là đóng cứng sai. */
+  const suyRa = Object.values(tenMaySinhFrom(structure)).filter((x) => typeof x === "string");
+  const khai = generatedFrom(structure) || [];
+  const trang = tenTrangFrom(structure);
+  return {
+    generatedFiles: [...new Set([...khai, ...suyRa, trang])],
+    behaviourGlobs: behaviourGlobsFrom(structure) || undefined,
+  };
+}
+
 export function collectModel(deps = createDefaultDeps(), { tolerant = false } = {}) {
   const tracked = trackedIndex(deps);
   const units = readUnits(deps);
   const structure = deps.fileExists(STRUCTURE_FILE) ? readJson(deps, STRUCTURE_FILE) : {};
+  // Dung CHINH khoi `generated` da co, khong dat khoi moi. Ban 1.3.1 tung them
+  // `generated_files` cho viec nay — TRUNG LAP: `generated` da liet ke dung nhung file do,
+  // chi khac muc dich su dung (mien nhan quyen). Hai ten cho mot khai niem la hai cho phai
+  // nho cap nhat, va cho thu hai se bi quen.
+  const behaviourOpts = behaviourOptsFrom(structure);
+  /* TÊN ba artifact — repo khai được (KHUNG-26). Đặt vào MODEL chứ không đọc lại ở từng chỗ
+     dùng: bộ sinh vừa GHI ba file vừa NHẮC TÊN chúng trong nội dung trang, nên hai chỗ đó phải
+     lấy tên từ cùng một nguồn. Đọc hai lần là hai lần có thể lệch nhau. */
+  const ten = tenMaySinhFrom(structure);
   const repo = repoIdentityFrom(structure);
   const profile = profileFrom(structure);
   // Ở chế độ tolerant, một `manifest.json` thiếu/hỏng không được phép giết cả lượt chạy —
@@ -532,7 +620,7 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
     const manifestPath = item.fm?.version_source ?? item.manifestPath;
     const measured = item.measured ?? measure(item.dirRelPath, manifestPath);
     const changedCount = item.fm?.last_verified_commit
-      ? changedCommitCount(deps.git.changedFilesSince(item.fm.last_verified_commit, item.dirRelPath))
+      ? changedCommitCount(deps.git.changedFilesSince(item.fm.last_verified_commit, item.dirRelPath), behaviourOpts)
       : 0;
     return {
       key: item.dirRelPath,
@@ -552,20 +640,6 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
       owner: item.fm?.owner ?? "",
       nextStep: item.fm?.next_step ?? "",
       humanAction: item.fm?.human_action ?? "",
-      /* BA TRƯỜNG TUỲ CHỌN — "danh tính" của một extension, Đức đặt 08/09: *"cập nhật vào
-       * dashboard danh tính của extension, cả chức năng, khả năng"*.
-       *
-       * Vắng thì khối C không vẽ dòng nào cho đơn vị đó — KHÔNG bịa, và cũng không để một ô
-       * trống trông như lỗi. Bốn gói cũ hôm nay không khai, và đó là trạng thái BÌNH THƯỜNG.
-       *
-       * CỐ Ý KHÔNG chứa số: số lệnh Bridge và số file kiểm là **máy đo**, bảng B đã có. Gõ tay
-       * một con số vào đây là dựng bản thứ hai của một phép đo, và bản thứ hai sẽ mục.
-       * `detectStatusMachineOwnedFacts()` chặn đúng chuyện đó, và ba trường này đã có tên trong
-       * danh sách quét của `statusScanLines()`. */
-      lamDuoc: item.fm?.lam_duoc ?? "",
-      khongLamDuoc: item.fm?.khong_lam_duoc ?? "",
-      dungTheNao: item.fm?.dung_the_nao ?? "",
-      soTay: item.fm?.ref_runbook ?? "",
       priorityRank: rankOf(item.fm?.priority_rank),
       supersededBy: item.fm?.superseded_by ?? "",
       statusPath: item.fm ? item.statusPath : ""
@@ -588,37 +662,19 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
   // Cùng luật như đơn vị trong `workers/`: STATUS sai thì KHÔNG tin `version_source` của nó
   // nữa, lùi về `manifest.json` ở gốc. Không có nhánh này thì ở chế độ tolerant một
   // `version_source` bịa ra sẽ làm cả lượt chạy chết — đúng thứ tolerant sinh ra để tránh.
-  // Gốc repo KHÔNG còn là một extension từ 2026-09-06: Scouter dọn vào `workers/` theo
-  // ADR-0013, và `manifest.json` ở tầng ngoài cùng biến mất cùng nó. Trước đó ở gốc LUÔN có
-  // một marker, nên chỗ này đọc thẳng nó và không ai nghĩ tới ngày nó không còn — lúc đó
-  // xảy ra thật thì `readJson` ném và CẢ bộ sinh chết, chứ không phải một ô trống.
-  //
-  // Hàng `_root` vẫn ở lại, cố ý: nó chở các cột KHÔNG phải version (STATUS, nợ, việc kế),
-  // và phép ghim E7 đòi hàng đó tồn tại. Chỉ phần ĐO version là bỏ trống.
-  const rootHasMarker = deps.fileExists(units.marker);
-  const rootMeasured = rootHasMarker
-    ? measure("", rootErrors.length === 0 ? (rootFm?.version_source ?? units.marker) : units.marker)
-    : { name: "KHÔNG PHẢI ĐƠN VỊ", version: "", bridgeMethods: 0, testFiles: 0 };
+  const rootMeasured = measure("", rootErrors.length === 0 ? (rootFm?.version_source ?? units.marker) : units.marker);
   rows.push({
     key: "_root",
     id: rootFm?.id ?? "_root",   // K1: bỏ tên riêng của repo Chrome ra khỏi bộ máy
     ...rootMeasured,
     lifecycle: rootFm?.lifecycle ?? "unclassified",
-    // "Thiếu STATUS" chỉ có nghĩa với một thứ ĐÁNG có STATUS. Gốc repo không còn marker
-    // nghĩa là nó không còn là đơn vị nào cả (ADR-0013), và tính nó vào nợ là dựng ra một
-    // khoản nợ KHÔNG AI ĐÓNG ĐƯỢC: không có gì ở đó để khai. Còn marker mà thiếu STATUS thì
-    // vẫn là nợ thật, y như cũ.
-    missingStatus: rootHasMarker && !rootFm,
-    // Hàng vẫn nằm trong MÔ HÌNH (phép ghim E7 đòi thế), nhưng bảng người đọc thì bỏ nó đi:
-    // một dòng "KHÔNG PHẢI ĐƠN VỊ · đây là một việc đang mở" trên bảng của Đức là một câu
-    // nói dối về một việc không tồn tại.
-    notAUnit: !rootHasMarker,
+    missingStatus: !rootFm,
     lastVerified: rootFm?.last_verified ?? "",
     lastVerifiedCommit: rootFm?.last_verified_commit ?? "",
     lastVerifiedHow: rootFm?.last_verified_how ?? "",
     evidenceRef: rootFm?.evidence_ref ?? "",
     changedCount: rootFm?.last_verified_commit
-      ? changedCommitCount(deps.git.changedFilesSince(rootFm.last_verified_commit, "."))
+      ? changedCommitCount(deps.git.changedFilesSince(rootFm.last_verified_commit, "."), behaviourOpts)
       : 0,
     currentFocus: rootFm?.current_focus ?? "Chưa khai STATUS; đây là một việc đang mở.",
     owner: rootFm?.owner ?? "",
@@ -633,6 +689,7 @@ export function collectModel(deps = createDefaultDeps(), { tolerant = false } = 
   const claims = readClaims(deps);
   const sortedRows = rows.sort((a, b) => compareText(a.key, b.key));
   const model = {
+    ten,
     shortHead: deps.git.shortHead(),
     headDate,
     rows: sortedRows,
@@ -932,9 +989,9 @@ function daysBetween(from, to) {
 function gatewayLinks(model, deps) {
   const entries = [
     { label: "AGENTS.md", path: "AGENTS.md", note: "hiến pháp repo — luật chung, đọc trước tiên" },
-    { label: "DASHBOARD.md", path: DASHBOARD_FILE, note: "bảng trạng thái máy sinh: có extension gì, cái nào sống, việc đang mở" },
+    { label: model.ten.dashboard, path: model.ten.dashboard, note: "bảng trạng thái máy sinh: có extension gì, cái nào sống, việc đang mở" },
     { label: "HANDOFF.md", path: "HANDOFF.md", note: "phiên gần nhất ở gốc repo làm gì, còn gì mở" },
-    { label: REPO_MAP_FILE, path: REPO_MAP_FILE, note: "bản đồ máy đọc — hệ điều phối cấp cao chỉ cần đọc file này" }
+    { label: model.ten.repo_map, path: model.ten.repo_map, note: "bản đồ máy đọc — hệ điều phối cấp cao chỉ cần đọc file này" }
   ];
   for (const row of model.rows) {
     if (!row.statusPath) continue;
@@ -944,7 +1001,7 @@ function gatewayLinks(model, deps) {
   // Không miễn trừ thì lần chạy đầu (khi file chưa có trên đĩa) sẽ tự khai mình là
   // link chết, và nội dung sinh ra phụ thuộc vào việc chính nó đã chạy lần nào chưa
   // — artifact máy sinh mà không tất định thì cổng kiểm HEAD-vs-HEAD hết tin được.
-  const selfProduced = new Set([DASHBOARD_FILE, LLMS_FILE, REPO_MAP_FILE]);
+  const selfProduced = new Set([model.ten.dashboard, model.ten.llms, model.ten.repo_map]);
   // `isFile` chứ không phải `fileExists`: một thư mục trùng tên vẫn "tồn tại"
   // nhưng bấm vào link thì không mở ra tài liệu nào.
   const probe = (relPath) => deps.isFile ? deps.isFile(relPath) : deps.fileExists(relPath);
@@ -974,7 +1031,7 @@ export function buildDashboard(model) {
     "",
     "> **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng `node scripts/build-dashboard.mjs`.",
     "",
-    `${STAMP_PREFIX} \`${model.shortHead}\` (${model.headDate}). Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.`,
+    `${STAMP_PREFIX} ${model.headDate}. Đây là lúc sinh trang, **KHÔNG phải lúc bất kỳ extension nào được kiểm chứng**.`,
     "",
     ...blockA(model),
     "## B · Có gì trong repo",
@@ -984,7 +1041,6 @@ export function buildDashboard(model) {
   ];
 
   for (const row of [...model.rows].sort((a, b) => compareText(String(a.key ?? a.id), String(b.key ?? b.id)))) {
-    if (row.notAUnit) continue;
     const lifecycle = row.missingStatus ? `${row.lifecycle} · CHƯA KHAI STATUS` : row.lifecycle;
     const verified = row.lastVerified
       ? `${row.lastVerified} @ \`${String(row.lastVerifiedCommit || "không khai").slice(0, 7)}\`${row.lastVerifiedHow ? ` — ${row.lastVerifiedHow}` : ""}${row.evidenceRef ? ` (${link("bằng chứng", row.evidenceRef)})` : ""}`
@@ -995,7 +1051,7 @@ export function buildDashboard(model) {
     lines.push(`| ${values.map(cell).join(" | ")} |`);
   }
 
-  lines.push("", ...blockC(model), ...blockD(model));
+  lines.push("", ...blockD(model));
 
   lines.push(
     "",
@@ -1034,47 +1090,18 @@ function blockA(model) {
     "## A · Bắt đầu từ đâu",
     "",
     `1. **Việc ưu tiên #1** — ${priorityLine}`,
-    `2. **Phiên gần nhất** — ${model.headDate} @ \`${model.shortHead}\` · ${link("HANDOFF.md", "HANDOFF.md")}`,
-    `3. **Luật phải đọc trước khi sửa gì** — ${link("AGENTS.md", "AGENTS.md")} · cổng vào cho AI: ${link(LLMS_FILE, LLMS_FILE)}`,
+    `2. **Phiên gần nhất** — ${model.headDate} · ${link("HANDOFF.md", "HANDOFF.md")}`,
+    `3. **Luật phải đọc trước khi sửa gì** — ${link("AGENTS.md", "AGENTS.md")} · cổng vào cho AI: ${link(model.ten.llms, model.ten.llms)}`,
     `4. **Ai đang giữ package nào** — \`.agents/claims.json\` (trạng thái sống, cố tình KHÔNG chép vào trang này để trang không mục theo từng lần nhận/trả quyền)`,
     ""
   ];
-}
-
-/* Khối C — DANH TÍNH từng extension: làm được gì, KHÔNG làm được gì, dùng thế nào.
- *
- * Đức đặt 08/09, và câu đặt hàng có ba chữ đáng giữ: *đơn giản, cô đọng, đừng dài dòng*. Nên
- * mỗi extension đúng ba dòng, và **chỉ vẽ đơn vị nào có khai** — một danh sách nửa là
- * "chưa khai" thì người đọc học cách bỏ qua cả khối.
- *
- * Vì sao dòng KHÔNG LÀM ĐƯỢC quan trọng ngang dòng làm được: hai extension này khác nhau chủ
- * yếu ở chỗ chúng **không** làm gì. HNX Fetch không bấm được — đó là tính năng, không phải
- * thiếu sót, và nó là lý do gói đó tồn tại riêng. */
-function blockC(model) {
-  const co = model.rows.filter((r) => !r.notAUnit && String(r.lamDuoc || "").trim());
-  if (!co.length) return [];
-  const lines = [
-    "## C · Từng extension làm được gì",
-    "",
-    "Số lệnh và số file kiểm KHÔNG lặp lại ở đây — chúng là **máy đo**, xem bảng B.",
-    ""
-  ];
-  for (const r of co) {
-    lines.push(`### ${r.name}`, "");
-    lines.push(`- **Làm được** — ${r.lamDuoc}`);
-    if (String(r.khongLamDuoc || "").trim()) lines.push(`- **KHÔNG làm được** — ${r.khongLamDuoc}`);
-    if (String(r.dungTheNao || "").trim()) lines.push(`- **Dùng thế nào** — ${r.dungTheNao}`);
-    if (String(r.soTay || "").trim()) lines.push(`- **Sổ tay vận hành** — ${link("mở", r.soTay)}`);
-    lines.push("");
-  }
-  return lines;
 }
 
 /* Khối D làm NỢ ĐIỀU HƯỚNG nhìn thấy được. Không nhìn thấy thì không ai trả. */
 function blockD(model) {
   const rows = [
     ["Đơn vị chưa khai STATUS", model.health.units_without_status, "mỗi dòng là một câu hỏi AI sẽ phải hỏi Đức"],
-    ["Link chết trong file cổng", model.health.dead_links, `kiểm ${model.gatewayLinks.length} link ở ${LLMS_FILE} và bảng B`],
+    ["Link chết trong file cổng", model.health.dead_links, `kiểm ${model.gatewayLinks.length} link ở ${model.ten.llms} và bảng B`],
     ["Thư mục top-level chưa khai chủ", model.health.undeclared_dirs, "chưa khai trong khối `areas` của `.repo-structure.json`"],
     ["Tài liệu quá hạn chưa rà", model.health.draft_debt, "`status: active` mà quá `ttl_days` tính từ commit cuối chạm vào"]
   ];
@@ -1100,22 +1127,18 @@ function blockD(model) {
 export function buildLlmsTxt(model) {
   const units = model.gatewayLinks.filter((entry) => entry.unit);
   const core = model.gatewayLinks.filter((entry) => !entry.unit);
-  /* Mẫu số phải là số ĐƠN VỊ, không phải số hàng: từ ADR-0013 gốc repo có thể không còn là
-   * đơn vị nào, và đếm nó vào mẫu số làm mọi tỉ lệ trên cổng vào lệch đi một, vĩnh viễn. */
-  const units_ = model.rows.filter((row) => !row.notAUnit);
-  const alive = units_.filter((row) => !row.missingStatus).length;
-  const tongDonVi = units_.length;
+  const alive = model.rows.filter((row) => !row.missingStatus).length;
 
   const lines = [
     `# ${model.repo.name}`,
     "",
     model.repo.tagline
-      ? `> ${model.repo.tagline} ${alive}/${tongDonVi} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`
-      : `> ${alive}/${tongDonVi} trên ${tongDonVi} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`,
+      ? `> ${model.repo.tagline} ${alive}/${model.rows.length} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`
+      : `> ${alive}/${model.rows.length} trên ${model.rows.length} đơn vị đã khai trạng thái. Mọi con số trong repo này là máy đếm, không gõ tay.`,
     "",
     `> **SINH TỰ ĐỘNG — ĐỪNG SỬA TAY.** Sinh lại bằng \`node scripts/build-dashboard.mjs\`.`,
     "",
-    `${STAMP_PREFIX} \`${model.shortHead}\` (${model.headDate}).`,
+    `${STAMP_PREFIX} ${model.headDate}.`,
     "",
     "## Việc ưu tiên #1",
     "",
@@ -1160,9 +1183,8 @@ export function buildRepoMap(model) {
   const map = {
     schema_version: REPO_MAP_SCHEMA_VERSION,
     generated_at: model.headDate,
-    generated_commit: model.shortHead,
     profile: model.profile,
-    entry_point: LLMS_FILE,
+    entry_point: model.ten.llms,
     law_files: ["AGENTS.md", "CLAUDE.md"],
     top_level: model.topLevel,
     units: model.rows.map((row) => ({
@@ -1200,8 +1222,12 @@ export function buildRepoMap(model) {
     // để chốt kiểu mảng, rồi lại chỉ phát ra đúng một mục — hình dạng đúng mà nội dung
     // không sống theo. Audit Codex vòng 3, phát hiện 2. Nay liệt kê MỌI đơn vị có
     // `next_step`, xếp theo hạng, đơn vị chưa xếp hạng nằm cuối.
+    // ĐƠN VỊ ĐÃ NGHỈ THÌ KHÔNG CÒN LÀ VIỆC ĐANG LÀM, dù dòng `next_step` cũ vẫn nằm đó.
+    // `RETIRED_LIFECYCLES` có sẵn từ trước và được dùng ở chỗ khác, nhưng chỗ này quên gọi — nên
+    // một gói khai `archived` mà chưa ai xoá `next_step` vẫn hiện ra như việc đang chạy. Bảng nói
+    // dối theo hướng khó thấy nhất: nó THÊM việc chứ không bớt, nên không ai thấy thiếu cái gì.
     active_work: model.rows
-      .filter((row) => row.nextStep)
+      .filter((row) => row.nextStep && !RETIRED_LIFECYCLES.has(row.lifecycle))
       .sort((a, b) => (a.priorityRank ?? Infinity) - (b.priorityRank ?? Infinity) || compareText(a.key, b.key))
       .map((row) => ({
         id: row.key,
@@ -1238,8 +1264,7 @@ export function compareRepoMap(expected, actual) {
           && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
           && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value,
         want: "ngày CÓ THẬT dạng YYYY-MM-DD"
-      },
-      generated_commit: { test: (value) => /^[0-9a-f]{7,40}$/.test(value), want: "mã commit hệ 16, 7–40 ký tự" }
+      }
     };
     for (const key of REPO_MAP_VOLATILE_KEYS) {
       const value = parsed[key];
@@ -1254,7 +1279,7 @@ export function compareRepoMap(expected, actual) {
     return { value: parsed };
   };
   const left = strip(expected, "bản sinh ra");
-  const right = strip(actual, REPO_MAP_FILE);
+  const right = strip(actual, "bản đồ máy đọc trên đĩa");
   if (right.broken) return { matches: false, reason: right.broken };
   if (left.broken) return { matches: false, reason: left.broken };
   const a = JSON.stringify(left.value, null, 2);
@@ -1270,15 +1295,14 @@ export function compareRepoMap(expected, actual) {
   return { matches: false, reason: "khác nhau nhưng không định vị được dòng" };
 }
 
-// Giữ SỐ DÒNG THẬT trong file, không phải số thứ tự sau khi lọc. Dòng dấu commit bị lọc ra,
-// nên nếu đếm theo danh sách đã lọc thì mọi dòng phía sau bị lùi một — và `--check` sẽ bảo
-// Đức "lệch tại dòng 8" trong khi mở file ra thì nó nằm ở dòng 9. Lời nhắn dẫn sai chỗ cũng
-// là bug, đúng luật vàng số 5.
+// KHÔNG lọc dòng nào nữa. Bản trước miễn hai dòng dấu commit khỏi phép so — tức phép kiểm
+// thôi canh một phần nội dung. Từ 2026-09-06 trang không còn mã commit (KHUNG-16), nên phép
+// so canh lại được TOÀN BỘ dòng, và `lineNumber` khớp thẳng số dòng khi mở file ra xem.
+// Giữ nguyên hình dạng `{text, lineNumber}` để `compareDashboard` không phải đổi.
 // `\r\n?` chứ không phải `\r\n`: bắt cả CR đơn lẻ, cùng cách `parseStatus` đang làm.
 function comparableLines(text) {
   return String(text).replace(/\r\n?/g, "\n").split("\n")
-    .map((text, index) => ({ text, lineNumber: index + 1 }))
-    .filter((entry) => !entry.text.startsWith(STAMP_PREFIX) && !entry.text.startsWith(SESSION_STAMP_PREFIX));
+    .map((text, index) => ({ text, lineNumber: index + 1 }));
 }
 
 export function compareDashboard(expected, actual) {
@@ -1299,54 +1323,68 @@ export function compareDashboard(expected, actual) {
   return { matches: true };
 }
 
+/* CHẶN TRƯỚC KHI GHI khi khối `generated_names` trên ĐĨA khác với bản ở HEAD.
+
+   VÌ SAO. Bộ sinh đọc cấu hình từ HEAD chứ không đọc cây làm việc — cố ý, để trang luôn suy ra
+   từ một trạng thái đã commit. Nhưng `generated_names` quyết định NÓ GHI VÀO FILE NÀO. Nên khai
+   tên mới rồi chạy ngay trước khi commit thì bộ sinh dùng tên CŨ, và ghi đè đúng cái file mà
+   `generated_names` sinh ra để bảo vệ.
+
+   Vấp thật 06/09 ở `ALL_SKILL_MANAGEMENT`, và vấp bởi chính người vừa vá KHUNG-26: bảng theo
+   dõi viết tay 123 dòng bị đè, md5 đổi từ 0b41e4d3… sang 673f36df…. Cứu được vì nội dung còn
+   trong git — nếu file đó chưa từng commit thì mất hẳn.
+
+   Bộ sinh CÓ cảnh báo thứ tự, nhưng nó in ra SAU khi đã ghi. Cảnh báo sau khi mất là biên bản,
+   không phải cảnh báo.
+
+   CHỈ chặn đúng khối này. Sửa dở phần khác của cấu hình (thêm một vùng, đổi ngân sách) không
+   làm mất file nào, nên vẫn chỉ cảnh báo như cũ — chặn cả lượt sinh vì một thay đổi vô hại là
+   cách nhanh nhất để người ta học cách vô hiệu hoá phép kiểm. */
+function tenMaySinhLech(deps) {
+  if (typeof deps.readDia !== "function") return null;    // fixture không dựng đĩa: không đo được
+  let tren = null;
+  try { tren = deps.readDia(STRUCTURE_FILE); } catch { return null; }
+  if (tren === null || tren === undefined) return null;   // chưa có file trên đĩa
+  let khaiDia;
+  try { khaiDia = JSON.parse(tren)?.generated_names; }
+  catch {
+    return `\`${STRUCTURE_FILE}\` trên đĩa đang KHÔNG PHẢI JSON đọc được. Sinh trang lúc này là sinh từ một cấu hình bạn đang sửa dở — sửa xong rồi chạy lại.`;
+  }
+  let khaiHead;
+  try { khaiHead = deps.fileExists(STRUCTURE_FILE) ? JSON.parse(deps.readFile(STRUCTURE_FILE))?.generated_names : undefined; }
+  catch { return null; }
+  const chuan = (v) => JSON.stringify(tenMaySinhFrom({ generated_names: v }));
+  let a, b;
+  try { a = chuan(khaiDia); b = chuan(khaiHead); }
+  catch (e) { return `\`generated_names\` khai sai: ${e.message}`; }
+  if (a === b) return null;
+  return [
+    "`generated_names` trên ĐĨA khác với bản ở HEAD, mà bộ sinh đọc cấu hình TỪ HEAD.",
+    `  HEAD nói ghi vào : ${b}`,
+    `  đĩa  nói ghi vào : ${a}`,
+    "Chạy tiếp là ghi vào tên CŨ — đúng cái file mà tên MỚI sinh ra để nhường.",
+    "Sửa: commit `.repo-structure.json` TRƯỚC, rồi chạy lại lệnh này."
+  ].join(String.fromCharCode(10));
+}
+
 export function runDashboard({ check = false, deps = createDefaultDeps(), output = console } = {}) {
   try {
     const model = collectModel(deps);
     const generated = buildDashboard(model);
     const generatedLlms = buildLlmsTxt(model);
     const generatedMap = buildRepoMap(model);
-    // KHÔNG GHI KHI CHỈ CÓ DẤU SINH ĐỔI — vá phía GHI, bổ cho phía SO ĐÃ CÓ.
-    //
-    // Phép so đã lọc `STAMP_PREFIX` · `SESSION_STAMP_PREFIX` · `generated_at` ·
-    // `generated_commit` từ lâu, nhưng bộ GHI thì vẫn ghi đè vô điều kiện. Nên mỗi lần
-    // HEAD nhích một commit — kể cả commit của phiên khác, kể cả commit chẳng liên quan —
-    // ba file này bẩn theo, và ai đó `git add` là sinh ra một commit KHÔNG CÓ NỘI DUNG.
-    //
-    // Bằng chứng thật, do audit GPT chỉ ra: `2733ee9` ở repo `Ark_Repo_Harness` đổi đúng
-    // BỐN dòng, cả bốn đều là dấu sinh trang, không một dòng nội dung. Và commit đó lại
-    // làm HEAD nhích tiếp → dấu đổi tiếp → bẩn tiếp. Một vòng lặp tự nuôi.
-    //
-    // Bỏ qua ghi thì dấu cũ ở lại, và điều đó VẪN ĐÚNG: trang này *đã* được sinh tại
-    // commit đó, và từ đó tới giờ không có gì đổi. Ghi đè mới là thứ nói dối bằng cách
-    // ngụ ý có gì đó mới.
-    //
-    // Hai điều kiện, không phải một. Chỉ so ngữ nghĩa với HEAD thì chưa đủ: nếu file
-    // trên đĩa đang bẩn (ai đó sửa tay, hay một lần sinh trước bỏ dở) mà HEAD lại đang
-    // đúng, ta sẽ bỏ qua ghi và **để nguyên bản hỏng trên đĩa**. Nên phải thêm: file đó
-    // cũng không được nằm trong danh sách đang-sửa-dở. Hai điều kiện này dùng đúng hai
-    // API đã có (`readFile` đọc HEAD · `dirtyFiles` hỏi git), nên KHÔNG mở thêm đường
-    // đọc đĩa — đường đó đã bị gỡ có chủ ý, xem ghi chú ở `createDefaultDeps`.
-    const dangSuaDo = new Set(deps.git.dirtyFiles?.(".") ?? []);
-    const ghiNeuDoi = (file, text, compare) => {
-      if (deps.fileExists(file) && !dangSuaDo.has(file) && compare(text, deps.readFile(file)).matches) {
-        return false;
-      }
-      deps.writeFile(file, text);
-      return true;
-    };
-
     if (!check) {
-      const daGhi = [
-        ghiNeuDoi(DASHBOARD_FILE, generated, compareDashboard) ? DASHBOARD_FILE : null,
-        ghiNeuDoi(LLMS_FILE, generatedLlms, compareDashboard) ? LLMS_FILE : null,
-        ghiNeuDoi(REPO_MAP_FILE, generatedMap, compareRepoMap) ? REPO_MAP_FILE : null
-      ].filter(Boolean);
-      if (daGhi.length === 0) {
-        output.log(`Không ghi gì: ${DASHBOARD_FILE}, ${LLMS_FILE} và ${REPO_MAP_FILE} đã đúng rồi (chỉ dấu sinh trang là khác, mà dấu thì không phải nội dung).`);
-        output.log("Không có gì để commit. Đây là kết quả ĐÚNG, không phải lỗi.");
-        return 0;
+      /* CHẶN TRƯỚC KHI GHI — xem `tenMaySinhLech`. Phải nằm ở đây, SAU khi dựng model (để có
+         thông báo đầy đủ) nhưng TRƯỚC dòng ghi đầu tiên. Đặt sau lệnh ghi là biên bản. */
+      const lech = tenMaySinhLech(deps);
+      if (lech) {
+        output.error("KHONG_SINH_TRANG: " + lech);
+        return 2;
       }
-      output.log(`Đã sinh ${daGhi.join(", ")} thành công.${daGhi.length < 3 ? " (những file còn lại đã đúng sẵn nên không ghi.)" : ""}`);
+      deps.writeFile(model.ten.dashboard, generated);
+      deps.writeFile(model.ten.llms, generatedLlms);
+      deps.writeFile(model.ten.repo_map, generatedMap);
+      output.log(`Đã sinh ${model.ten.dashboard}, ${model.ten.llms} và ${model.ten.repo_map} thành công.`);
       // BẪY THỨ TỰ, phải nói to. Bộ sinh đọc HOÀN TOÀN từ HEAD. Nếu bạn vừa sửa
       // STATUS/manifest mà CHƯA commit rồi chạy lệnh này, artifact sinh ra phản ánh
       // HEAD CŨ — rồi bạn commit dữ liệu mới nằm cạnh artifact cũ, và cổng kiểm đỏ.
@@ -1361,10 +1399,10 @@ export function runDashboard({ check = false, deps = createDefaultDeps(), output
       const debt = model.health.units_without_status + model.health.dead_links
         + model.health.undeclared_dirs + model.health.draft_debt;
       if (debt > 0) {
-        output.log(`Nợ điều hướng [ĐO]: chưa khai STATUS ${model.health.units_without_status} · link chết ${model.health.dead_links} · thư mục chưa khai chủ ${model.health.undeclared_dirs} · tài liệu quá hạn ${model.health.draft_debt}. Chi tiết ở Khối D của ${DASHBOARD_FILE}.`);
+        output.log(`Nợ điều hướng [ĐO]: chưa khai STATUS ${model.health.units_without_status} · link chết ${model.health.dead_links} · thư mục chưa khai chủ ${model.health.undeclared_dirs} · tài liệu quá hạn ${model.health.draft_debt}. Chi tiết ở Khối D của ${model.ten.dashboard}.`);
       }
       for (const row of model.rows.filter((item) => item.key !== "_root")) {
-        const dirtyCount = (deps.git.dirtyFiles?.(row.key) ?? []).filter(isBehaviourFile).length;
+        const dirtyCount = (deps.git.dirtyFiles?.(row.key) ?? []).filter((f) => isBehaviourFile(f, behaviourOpts)).length;
         if (dirtyCount > 0) {
           output.log(`CẢNH BÁO: ${row.key} đang có ${dirtyCount} file .js sửa dở chưa commit. Trang này dựng HOÀN TOÀN TỪ HEAD, nên phần đang sửa KHÔNG có ở đây — commit trước rồi sinh lại.`);
         }
@@ -1375,9 +1413,9 @@ export function runDashboard({ check = false, deps = createDefaultDeps(), output
     // Kiểm CẢ BA file. Chỉ kiểm DASHBOARD thì llms.txt và repo-map.json có thể mục
     // âm thầm — mà đó lại đúng là hai file một phiên AI mới đọc đầu tiên.
     const targets = [
-      { file: DASHBOARD_FILE, generated, compare: compareDashboard },
-      { file: LLMS_FILE, generated: generatedLlms, compare: compareDashboard },
-      { file: REPO_MAP_FILE, generated: generatedMap, compare: compareRepoMap }
+      { file: model.ten.dashboard, generated, compare: compareDashboard },
+      { file: model.ten.llms, generated: generatedLlms, compare: compareDashboard },
+      { file: model.ten.repo_map, generated: generatedMap, compare: compareRepoMap }
     ];
     const problems = [];
     for (const target of targets) {
@@ -1394,7 +1432,7 @@ export function runDashboard({ check = false, deps = createDefaultDeps(), output
       problems.push(`${target.file} lệch tại dòng ${comparison.line}. - Đang có: ${comparison.actual} | - Cần có: ${comparison.expected}`);
     }
     if (problems.length === 0) {
-      output.log(`${DASHBOARD_FILE}, ${LLMS_FILE} và ${REPO_MAP_FILE} đang khớp với repo.`);
+      output.log(`${model.ten.dashboard}, ${model.ten.llms} và ${model.ten.repo_map} đang khớp với repo.`);
       return 0;
     }
     for (const problem of problems) output.error(problem);
@@ -1451,6 +1489,10 @@ export function createDefaultDeps(root = ROOT) {
     // (chuẩn hoá + phải nằm trong package) vẫn chạy và vẫn chặn `..`.
     // Gỡ một lớp chắn cho một kênh đã bịt thì không phải là gỡ bảo vệ.
     writeFile: (relPath, text) => fs.writeFileSync(absolute(relPath), text, "utf8"),
+    /* ĐỌC TỪ ĐĨA — cố ý CHỈ dùng cho một việc: so `generated_names` trên đĩa với bản ở HEAD
+       trước khi ghi (KHUNG-29). Mọi dữ liệu dựng trang vẫn đọc từ HEAD qua `readFile`, và
+       lời hứa đó không được nới. Trả `null` khi không có file, KHÔNG ném. */
+    readDia: (relPath) => { try { return fs.readFileSync(absolute(relPath), "utf8"); } catch { return null; } },
     git: {
       ...head.git,
       // `--no-renames` BẮT BUỘC. Mặc định git gộp đổi tên thành một dòng chỉ ghi tên MỚI,
@@ -1458,7 +1500,7 @@ export function createDefaultDeps(root = ROOT) {
       // tài liệu nuốt mất — code biến mất khỏi package mà cột vẫn khai "KHÔNG đổi". Tắt
       // gộp đi thì nó thành xoá + thêm, và vế `.js` bị xoá được đếm đúng.
       // Auditor Codex dựng được ca này thật ở vòng 2, 2026-08-26.
-      changedFilesSince: (sha, dirRelPath) => parseChangedCommits(git("log", `${sha}..${head.git.headSha()}`, "--name-only", "--no-renames", "--pretty=format:%H", "--", dirRelPath)),
+      changedFilesSince: (sha, dirRelPath) => parseChangedCommits(git("log", `${sha}..HEAD`, "--name-only", "--no-renames", "--pretty=format:%H", "--", dirRelPath)),
       // Việc đang sửa dở trên đĩa: sửa, thêm mới, chưa track. `-uall` để thư mục mới không
       // bị gộp thành một dòng duy nhất và giấu mất file `.js` bên trong.
       // `--no-renames` cùng lý do như trên: `git status` mặc định gộp đổi tên thành
@@ -1470,150 +1512,22 @@ export function createDefaultDeps(root = ROOT) {
 }
 
 export function createHeadDeps(root = ROOT) {
-  /* BỘ NHỚ ĐỆM CHO LỆNH GIT — bỏ VIỆC LẶP, không bỏ một phép kiểm nào.
-   *
-   * Mọi lệnh dưới đây đọc ĐÚNG MỘT commit đã ghim (`moc()`), và kho đối tượng của git chỉ
-   * được THÊM chứ không sửa — nên cùng một dòng lệnh luôn trả cùng một kết quả suốt đời bộ
-   * đọc này. Không đệm thì một lượt sinh trang gọi git hàng trăm lượt, mà mỗi lượt trên
-   * Windows là một tiến trình mới.
-   *
-   * Đo thật 2026-09-07 (phiên `claude-cong-nhanh`): `tests/build-overview-smoke.mjs` KHÔNG tự
-   * chạy một tiến trình con nào, vậy mà mất 640 giây — toàn bộ nằm ở chỗ này. Phép thử đó
-   * dựng lại trang hơn hai chục lượt trên CÙNG một bộ đọc, tức hỏi git y hệt nhau hơn hai
-   * chục lần cho cùng một commit.
-   *
-   * ĐỆM CẢ CÚ NÉM, không chỉ nhánh xanh. `objectType` hỏi kiểu của đường dẫn KHÔNG tồn tại
-   * rất nhiều lượt, và mỗi lượt hỏng đó cũng là một tiến trình. Bỏ nửa này là bỏ đúng nửa đắt.
-   *
-   * KHÔNG đệm bộ đọc riêng của `createDefaultDeps`: `dirtyFiles` đọc CÂY LÀM VIỆC, thứ đổi
-   * được giữa hai lượt gọi. Đệm nó là ghim một ảnh chụp cũ của việc đang sửa dở.
-   *
-   * Đệm sống theo BỘ ĐỌC, không phải theo tiến trình: muốn đọc mốc mới thì dựng bộ đọc mới —
-   * đúng luật "một deps = một commit" ghi ngay dưới đây, và đó cũng là thứ `bang-trang-thai/`
-   * vốn đã làm ở mỗi nhịp sinh lại. */
-  const dem = new Map();
-  const chay = (args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], {
+  const git = (...args) => execFileSync("git", ["-c", "core.quotepath=false", ...args], {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"]
   });
-  const git = (...args) => {
-    const khoa = JSON.stringify(args);
-    let o = dem.get(khoa);
-    if (o === undefined) {
-      try { o = { ra: chay(args) }; } catch (loi) { o = { loi }; }
-      dem.set(khoa, o);
-    }
-    if (o.loi) throw o.loi;
-    return o.ra;
-  };
-  /* MỐC ĐỌC GHIM MỘT LẦN, không đọc lại `HEAD` ở từng lệnh.
-   *
-   * `HEAD` là một con trỏ DI ĐỘNG. Bộ đọc này gọi git hàng trăm lượt cho một lượt sinh, và
-   * mỗi lượt trước đây tự phân giải `HEAD` lại từ đầu — nên một lane khác commit xen vào
-   * GIỮA CHỪNG là nửa trang đọc commit cũ, nửa trang đọc commit mới. Trang sinh ra không
-   * ứng với bất kỳ commit nào từng tồn tại.
-   *
-   * Đo thật 2026-09-05, hai lần trong một buổi: phép ghim "không phụ thuộc đồng hồ" sinh
-   * trang hai lượt rồi so từng byte, và cả hai lần đều ĐỎ OAN vì HEAD nhích giữa hai lượt
-   * (lệch 46 byte lượt đầu; lượt sau ném AssertionError rồi chạy lại trên cây yên tĩnh thì
-   * xanh ngay). Lần thứ hai tốn hẳn một lane bị giao nhầm việc. Đỏ oan đúng lúc nhiều lane
-   * chạy song song là đỏ oan đúng lúc nó đắt nhất, và nó dạy người ta thói quen "chạy lại
-   * cho tới khi xanh" — đúng cái thói quen phép ghim này sinh ra để chặn.
-   *
-   * Ghim LƯỜI (giải một lần ở lượt đọc đầu tiên) chứ không giải lúc dựng deps: dựng deps
-   * trước đây không đụng git lần nào, và có fixture dựng deps trên repo vừa `git init` chưa
-   * có commit nào. Giải sớm là đổi chỗ ném lỗi sang một chỗ chưa ai chờ.
-   *
-   * Muốn đọc mốc mới thì dựng deps mới — đó là ý nghĩa của "một deps = một commit". */
-  let mocGhim = null;
-  const moc = () => (mocGhim ??= git("rev-parse", "HEAD").trim());
-  const treeEntries = (relPath) => git("ls-tree", "-z", "--name-only", `${moc()}:${relPath}`)
+  const treeEntries = (relPath) => git("ls-tree", "-z", "--name-only", `HEAD:${relPath}`)
     .split("\0").filter(Boolean).sort(compareText);
-
-  /* HAI BẢN ĐỒ GỘP — đổi hàng trăm tiến trình git thành HAI.
-   *
-   * Đo 07/09 trên repo này: một lượt sinh gọi git **277 lượt, 8.922ms**, và hai nhóm ăn 58%:
-   * `log -1` **107 lượt / 4.139ms** (ngày commit cuối, MỘT tiến trình cho MỖI đường dẫn) và
-   * `cat-file -t` **40 lượt / 1.098ms** (kiểu đối tượng, cũng một tiến trình mỗi đường dẫn).
-   * Gộp lại: một lượt `git log --name-only` cả lịch sử mất **152ms**, một lượt `ls-tree -r -t`
-   * mất **75ms**. Cùng câu trả lời, **27× và 15× nhanh hơn**.
-   *
-   * Không phải tối ưu vi mô. Bộ sinh này chạy trong cổng đóng phiên, trong phép kiểm của chính
-   * nó, và trong `bang-trang-thai/` — nên mỗi giây ở đây bị nhân lên nhiều lần mỗi phiên.
-   *
-   * ĐỆM SỐNG THEO BỘ ĐỌC, không theo tiến trình, và cả hai bản đồ neo vào `moc()` — cùng một
-   * mốc ghim mà phần dưới đã dùng. Nên chúng không mở lại chỗ hở "nửa trang commit cũ, nửa
-   * trang commit mới" mà đoạn ghim mốc bên dưới sinh ra để bịt.
-   *
-   * CÒN ĐƯỜNG DỰ PHÒNG, cố ý: repo này có **2 commit merge**, và `git log --name-only` mặc
-   * định KHÔNG liệt kê file của commit merge. Nên bản đồ có thể thiếu, và chỗ nào thiếu thì
-   * vẫn gọi git cho đúng đường dẫn đó. Nhanh hơn mà vẫn trả đúng câu trả lời cũ. */
-  let banDoNgay = null;
-  const ngayTheoFile = () => {
-    if (banDoNgay) return banDoNgay;
-    banDoNgay = new Map();
-    let ra;
-    try { ra = git("log", "--format=%x00%cd", "--date=format:%Y-%m-%d", "--name-only", moc()); }
-    catch { return banDoNgay; }
-    for (const khoi of ra.split("\0")) {
-      const dong = khoi.split("\n");
-      const ngay = (dong.shift() || "").trim();
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay)) continue;
-      // Đi từ commit MỚI NHẤT xuống, nên lần đầu thấy một đường dẫn là lần mới nhất.
-      for (const d of dong) {
-        const p = d.trim();
-        if (p && !banDoNgay.has(p)) banDoNgay.set(p, ngay);
-      }
-    }
-    return banDoNgay;
-  };
-  const demNgayThuMuc = new Map();
-  const ngayCuoiTheoBanDo = (relPath) => {
-    const bd = ngayTheoFile();
-    const dung = bd.get(relPath);
-    if (dung) return dung;
-    // Thư mục: bản đồ chỉ có FILE, nên ngày của thư mục là ngày mới nhất trong nó.
-    if (demNgayThuMuc.has(relPath)) return demNgayThuMuc.get(relPath);
-    const tien = `${relPath}/`;
-    let moiNhat = "";
-    for (const [p, ngay] of bd) if (p.startsWith(tien) && ngay > moiNhat) moiNhat = ngay;
-    demNgayThuMuc.set(relPath, moiNhat);
-    return moiNhat;
-  };
-
-  let banDoLoai = null;
-  const loaiTheoDuongDan = () => {
-    if (banDoLoai !== null) return banDoLoai;
-    try {
-      const ra = git("ls-tree", "-r", "-t", "-z", "--format=%(objecttype) %(path)", moc());
-      const bd = new Map();
-      for (const d of ra.split("\0")) {
-        if (!d) continue;
-        const k = d.indexOf(" ");
-        if (k > 0) bd.set(d.slice(k + 1), d.slice(0, k));
-      }
-      banDoLoai = bd.size ? bd : false;
-    } catch { banDoLoai = false; }
-    return banDoLoai;
-  };
   const objectType = (relPath) => {
-    // `cat-file -t <moc>:` phân giải ra cây gốc, nên gốc repo là "tree". Vế này phải giữ:
-    // thiếu nó thì mọi thư mục tầng gốc bị coi là không tồn tại và số "chưa khai chủ" âm
-    // thầm về 0 — đúng cái bẫy đã ghi ở `listDirs` bên dưới.
-    if (relPath === "") return "tree";
-    const bd = loaiTheoDuongDan();
-    // Bản đồ dựng được thì nó ĐẦY ĐỦ cho cây tại mốc này: có thì trả kiểu, không có nghĩa là
-    // thật sự không tồn tại. Chỉ khi KHÔNG dựng được bản đồ mới hỏi git từng đường dẫn.
-    if (bd) return bd.get(relPath) ?? null;
-    try { return git("cat-file", "-t", `${moc()}:${relPath}`).trim(); }
+    try { return git("cat-file", "-t", `HEAD:${relPath}`).trim(); }
     catch { return null; }
   };
   return {
     root,
     fileExists: (relPath) => objectType(relPath) !== null,
     isFile: (relPath) => objectType(relPath) === "blob",
-    readFile: (relPath) => git("show", `${moc()}:${relPath}`),
+    readFile: (relPath) => git("show", `HEAD:${relPath}`),
     writeFile: () => { throw new Error("HEAD_READ_ONLY: --check-head không được ghi file."); },
     // `childPath` chứ không phải `${relPath}/${name}`: khi relPath là "" (thư mục gốc
     // repo, cần cho phép đếm top-level của S2) thì cách cũ sinh ra "/docs" và
@@ -1622,54 +1536,20 @@ export function createHeadDeps(root = ROOT) {
     listDirs: (relPath) => treeEntries(relPath).filter((name) => objectType(childPath(relPath, name)) === "tree"),
     listFiles: (relPath) => treeEntries(relPath).filter((name) => objectType(childPath(relPath, name)) === "blob"),
     git: {
-      headSha: moc,
-      shortHead: () => git("rev-parse", "--short", moc()).trim(),
-      headDate: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", moc()).trim(),
-      /* MỐC SINH BẢNG, có GIỜ và PHÚT. Cùng nguồn với `headDate`, chỉ khác độ mịn.
-       *
-       * Vì sao cần độ mịn tới phút: khối "đang làm gì" phải nói được "ảnh chụp này cũ 8 tiếng
-       * rồi", mà `headDate` chỉ có ngày nên mọi thứ xảy ra trong ngày đều thành "hôm nay".
-       * Vì sao KHÔNG dùng `Date.now()`: mốc này đi vào một file nằm trong khối `generators`,
-       * nên bất cứ thứ gì phụ thuộc đồng hồ là sang phút sau đã lệch HEAD và MỌI lane bị chặn
-       * đẩy dù không dữ liệu nào đổi. Lấy từ HEAD thì cùng một HEAD luôn cho cùng một con số. */
-      headStamp: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%dT%H:%M", moc()).trim(),
+      shortHead: () => git("rev-parse", "--short", "HEAD").trim(),
+      headDate: () => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d").trim(),
       // Ngày commit cuối chạm vào file. Dùng làm "lần rà gần nhất" để tính nợ tài
       // liệu quá hạn — vì frontmatter CỐ TÌNH không có trường `created`/`last_reviewed`:
       // ngày gõ tay sẽ mục, còn lịch sử git thì không nói dối được.
-      // Đọc từ bản đồ gộp ở trên (một tiến trình cho cả repo). Bản đồ thiếu — commit merge
-      // không liệt kê file — thì mới hỏi git đúng đường dẫn đó, nên câu trả lời không đổi.
-      lastCommitDate: (relPath) => ngayCuoiTheoBanDo(relPath)
-        || git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", moc(), "--", relPath).trim(),
-      /* Ngày commit gần nhất chạm vào ĐÚNG MỘT DÒNG của một file. Dùng để đo "mục này treo
-       * bao lâu rồi" mà không đọc đồng hồ hệ thống: cả mốc này lẫn `headDate()` đều lấy từ
-       * git, nên cùng một HEAD luôn cho cùng một con số. Đọc đồng hồ ở đây là sang ngày mới
-       * thì MỌI lane bị chặn đẩy dù không dữ liệu nào đổi.
-       *
-       * `lastCommitDate` KHÔNG thay được: nó là ngày của cả file, nên một lượt sửa bất kỳ ở
-       * cuối sổ nợ sẽ làm mọi mục trong sổ trông như vừa mới nêu.
-       *
-       * Số dòng đếm từ 1 và phải khớp nội dung TẠI HEAD — đúng thứ `readFile` trả về, vì
-       * `readFile` cũng là `git show <HEAD>:path`. Không phân giải được (dòng vừa thêm chưa
-       * commit, file mới, git bản cũ) thì trả chuỗi rỗng để chỗ gọi nói "chưa đo được", chứ
-       * không bịa một ngày. */
-      lineDate: (relPath, lineNo) => {
-        const n = Number(lineNo);
-        if (!Number.isInteger(n) || n < 1) return "";
-        try {
-          const out = git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d",
-            "-L", `${n},${n}:${relPath}`, moc());
-          const hit = out.split(/\r?\n/).map((l) => l.trim()).find((l) => /^\d{4}-\d{2}-\d{2}$/.test(l));
-          return hit || "";
-        } catch { return ""; }
-      },
+      lastCommitDate: (relPath) => git("log", "-1", "--format=%cd", "--date=format:%Y-%m-%d", "--", relPath).trim(),
       // Danh sách file ĐÃ TRACK tại HEAD. Cả chế độ đĩa lẫn chế độ HEAD đều gọi
       // đúng lệnh này, nên hai chế độ không bao giờ nhìn thấy hai tập file khác
       // nhau. `-z` để tên có dấu cách / tiếng Việt không bị git bọc dấu nháy.
-      trackedPaths: () => git("ls-tree", "-r", "-z", "--name-only", moc()).split("\0").filter(Boolean),
+      trackedPaths: () => git("ls-tree", "-r", "-z", "--name-only", "HEAD").split("\0").filter(Boolean),
       // Submodule ở tầng gốc: `ls-tree` KHÔNG có `-r` mới khai kiểu đối tượng, và
       // gitlink có kiểu "commit". Với `-r --name-only` nó chỉ là một tên trơ, không
       // có dấu "/", nên bị xếp nhầm là file.
-      gitlinksAtRoot: () => git("ls-tree", "-z", moc()).split("\0").filter(Boolean)
+      gitlinksAtRoot: () => git("ls-tree", "-z", "HEAD").split("\0").filter(Boolean)
         .filter((entry) => entry.split(/\s+/)[1] === "commit")
         .map((entry) => entry.slice(entry.indexOf("\t") + 1)),
       verifyCommit: (sha) => {
@@ -1680,7 +1560,7 @@ export function createHeadDeps(root = ROOT) {
           return false;
         }
       },
-      changedFilesSince: (sha, dirRelPath) => parseChangedCommits(git("log", `${sha}..${moc()}`, "--name-only", "--no-renames", "--pretty=format:%H", "--", dirRelPath))
+      changedFilesSince: (sha, dirRelPath) => parseChangedCommits(git("log", `${sha}..HEAD`, "--name-only", "--no-renames", "--pretty=format:%H", "--", dirRelPath))
     }
   };
 }
