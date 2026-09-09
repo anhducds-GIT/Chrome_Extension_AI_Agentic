@@ -310,7 +310,36 @@
       // belong to the SAME assistant turn; "" (no assistant ancestor) can
       // never satisfy that, which keeps stray page images failing closed.
       const turnId = nodeId(image.closest(assistantSelector()), "assistant");
-      return { source, source_id: shortHash(source), node_id: nodeId(image, "image"), turn_id: turnId, role, input: role === "user" || attachmentPreview || inputEvidence.sources?.has(source) || namedReference, visible: isVisible(image) && rect.width >= 64 && rect.height >= 64, ready: image.complete && image.naturalWidth > 0 };
+      // B-47 · ĐO LIVE 2026-09-09, và phép đo này ĐẢO một kết luận của chính tôi cùng ngày.
+      //
+      // Trên một tab NỀN, Chrome **không giải mã bitmap**. Đo trên job ảnh thật, tab
+      // `visibilityState: "hidden"`:
+      //
+      //     +80,7s   <img> mới hiện · complete=false · naturalWidth=0 · rect 480x360
+      //     +140,7s  ChatGPT sinh XONG (nút Dừng biến mất) · vẫn complete=false / 0px
+      //     +201,0s  vẫn complete=false / 0px
+      //
+      // Nên `complete && naturalWidth > 0` là điều kiện **Chrome cố ý không cấp** ở trạng
+      // thái đó. CHỜ LÂU HƠN KHÔNG CHỮA ĐƯỢC — và đó là lý do không được vá bằng một con số
+      // to hơn: thời gian kết xuất còn thay đổi theo độ phức tạp của ảnh, nên mọi hằng số
+      // đều sẽ sai ở một job nào đó. Cửa ra phải là ĐIỀU KIỆN, không phải ĐỒNG HỒ.
+      //
+      // Mọi thứ CẦN để nhận và tải ảnh thì đã có ngay từ lượt dò đầu tiên nhìn thấy nó:
+      //   · `src` là URL nội dung CUỐI (`https://…/backend-api/…content?id=file_…`) và
+      //     **không đổi** qua cả bốn lượt đo trải ~2 phút, kể cả khi `alt` còn đang được
+      //     điền dần ("Generated image" → "Generated image: Cozy Coffee and S…");
+      //   · khung đã bố trí xong (`rect` 480x360), nên `visible` vẫn nói thật.
+      // Và đường tải đi bằng **URL**, không cần bitmap. Nên giải mã là việc cho NGƯỜI XEM,
+      // không phải điều kiện của MÁY.
+      //
+      // `blob:` KHÔNG được hưởng nhánh này, cố ý: blob là hình dạng cổ điển của một ảnh tạm,
+      // và nó bị thu hồi được. Với blob thì vẫn đòi giải mã xong — fail CLOSED ở đúng chỗ
+      // đáng nghi. Lớp chắn quy thuộc còn nguyên: mốc nền trước khi gửi, ranh giới lượt
+      // assistant, `input`, và cửa sổ "tập ảnh đứng yên" — cửa sổ đó so theo `src`, mà `src`
+      // đã đo là ổn định.
+      const decoded = image.complete && image.naturalWidth > 0;
+      const finalUrl = /^(https:|data:image\/)/i.test(source);
+      return { source, source_id: shortHash(source), node_id: nodeId(image, "image"), turn_id: turnId, role, input: role === "user" || attachmentPreview || inputEvidence.sources?.has(source) || namedReference, visible: isVisible(image) && rect.width >= 64 && rect.height >= 64, ready: decoded || finalUrl, decoded };
     }).filter((candidate) => /^(https:|data:image\/|blob:)/i.test(candidate.source));
   }
 
