@@ -1,11 +1,24 @@
-/* Live regression 2026-08-28:
-   the panel first messaged DAC_EXPECT_DOWNLOAD_NAME, then started the blob
-   download in a later turn. MV3 could suspend background.js between those
-   calls, erase its in-memory reservation, and Chrome persisted a GUID leaf.
-   The prompt correctly remained unsent, but every retry hit the same gate.
+/* Live regression 2026-08-28: the panel messaged DAC_EXPECT_DOWNLOAD_NAME, then
+   started the blob download in a LATER turn. MV3 could suspend background.js
+   between those calls, erase its in-memory reservation, and Chrome persisted a
+   GUID leaf. Bản vá lúc đó: dồn cả đặt-chỗ, `downloads.download`, chờ hoàn tất
+   và đối chiếu byte vào MỘT lời nhắn chạy trong background.
 
-   The fix keeps reservation, chrome.downloads.download, completion polling,
-   and byte verification inside one background message transaction. */
+   ĐẢO LẠI 2026-09-09, và lý do là số đo chứ không phải ý thích:
+
+     · gói này (worker gọi `download()`)  → 67 file trong MỘT ngày, toàn tên
+       GUID, nằm PHẲNG trong thư mục tải mặc định — thư mục con bị bỏ luôn;
+     · gói Gemini (PANEL gọi `download()`) → `Duc Auto Gemini/<job>/Q001.jpg`
+       … `Q007.jpg`, đúng tên, thư mục con HAI CẤP — cùng máy, cùng Chrome.
+
+   Nên câu "Chrome bỏ qua `filename` với blob URL" là sự thật của MỘT CÁCH GỌI.
+   Nó đứng tám tuần và biến B-36 thành "không chữa được".
+
+   Bản vá mới giữ NGUYÊN thứ tự an toàn — đặt chỗ TRƯỚC khi tải, chờ hoàn tất,
+   đối chiếu byte, và lỗi nghiệm thu chặn trước khi gửi prompt — chỉ đổi AI là
+   người gọi `download()`. Điều mà bản 28/08 sợ (worker ngủ giữa hai lượt) vẫn
+   được chặn: lời nhắn đặt chỗ ĐÁNH THỨC worker và lời gọi `download()` đi ngay
+   sau nó trong CÙNG một lượt của panel, không còn khoảng chờ nào ở giữa. */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
@@ -60,18 +73,36 @@ function dispatch(message) {
     } catch (error) { reject(error); }
   });
 }
+/* `DAC_EXPECT_DOWNLOAD_NAME` trả lời ĐỒNG BỘ (`return false`), nên nó cần một
+   cửa khác — dùng `dispatch` cho nó sẽ đỏ vì "Expected an asynchronous
+   response", một cái đỏ nói sai nguyên nhân. */
+function dispatch2(message) {
+  let answer;
+  const keepAlive = messageListener(message, {}, (value) => { answer = value; });
+  assert.equal(keepAlive, false, "lời nhắn đặt chỗ tên trả lời đồng bộ");
+  return Promise.resolve(answer);
+}
 
-assert.match(background, /message\?\.type === "DAC_DOWNLOAD_ARTIFACT"/, "background owns an atomic artifact-download RPC");
+assert.match(background, /message\?\.type === "DAC_DOWNLOAD_ARTIFACT"/, "background vẫn sở hữu bước NGHIỆM THU artifact");
 const transaction = background.slice(background.indexOf("async function downloadArtifact"), background.indexOf("function safeArtifactFilename"));
-assert.match(transaction, /rememberExpectedDownloadName\(url, requestedFilename, conflictAction\)/, "the transaction reserves the requested physical name");
-assert.match(transaction, /chrome\.downloads\.download\(\{ url, filename: requestedFilename, conflictAction, saveAs: false \}\)/, "the same transaction starts the download");
-assert.match(transaction, /await waitForCompletedDownload\(downloadId\)/, "the same transaction waits for Chrome completion");
-assert.match(transaction, /verifyCompletedDownload\(item, Number\(message\.expectedBytes\)\)/, "the same transaction verifies persisted bytes");
-assert.ok(transaction.indexOf("rememberExpectedDownloadName") < transaction.indexOf("chrome.downloads.download"), "reservation precedes download");
+assert.match(transaction, /await waitForCompletedDownload\(downloadId\)/, "worker chờ Chrome báo hoàn tất");
+assert.match(transaction, /verifyCompletedDownload\(item, Number\(message\.expectedBytes\)\)/, "worker đối chiếu số byte đã ghi");
+// Điều bản vá 09/09 đổi, và là điều dễ bị lặng lẽ đảo ngược nhất.
+// Neo vào `({` chứ không phải `(`: thông điệp lỗi trong chính hàm này CÓ nhắc
+// tên `chrome.downloads.download()` để chỉ đường cho người đọc, và một phép
+// kiểm không phân biệt được LỜI GỌI với CÂU CHỮ sẽ đỏ vì đúng câu giải thích
+// nó. Đã đỏ một lần khi viết bản vá này, và đây là lần thứ hai trong ngày.
+assert.doesNotMatch(transaction, /chrome\.downloads\.download\(\{/, "worker KHÔNG được tự gọi `download()` nữa — đó chính là cách gọi làm mất tên và mất cả thư mục con (đo 09/09: 67 file GUID trong một ngày)");
 
-assert.doesNotMatch(panel, /chrome\.downloads\.download\(\{ url: objectUrl/, "the panel cannot split blob download from background naming state");
-assert.equal((panel.match(/downloadArtifactViaBackground\(objectUrl, request/g) || []).length, 2, "Audit JSONL and Result XLSX both use the atomic path");
-assert.match(panel, /if \(!response\?\.ok\) throw new Error\(response\?\.error/, "background verification failure propagates to the pre-send barrier");
+// Panel là nơi gọi, và đặt chỗ phải đi TRƯỚC — cùng một lượt, không còn khoảng
+// chờ nào để MV3 chen vào (đó là thứ bản 28/08 sợ, và nó vẫn được chặn).
+const panelFn = panel.slice(panel.indexOf("async function downloadArtifactViaBackground"), panel.indexOf("async function downloadArtifactViaBackground") + 1600);
+assert.match(panelFn, /type: "DAC_EXPECT_DOWNLOAD_NAME"/, "panel đặt chỗ tên trước");
+assert.match(panelFn, /chrome\.downloads\.download\(\{ url, filename: request\.filename, conflictAction: request\.conflictAction, saveAs: false \}\)/, "PANEL là nơi gọi `downloads.download()` — cách Gemini làm, và là cách duy nhất đo được là giữ đúng tên");
+assert.ok(panelFn.indexOf("DAC_EXPECT_DOWNLOAD_NAME") < panelFn.indexOf("chrome.downloads.download"), "đặt chỗ phải đứng TRƯỚC lời gọi tải");
+assert.ok(panelFn.indexOf("chrome.downloads.download") < panelFn.indexOf('type: "DAC_DOWNLOAD_ARTIFACT"'), "tải xong mới nhờ worker nghiệm thu");
+assert.equal((panel.match(/downloadArtifactViaBackground\(objectUrl, request/g) || []).length, 2, "Audit JSONL và Result XLSX dùng chung một đường");
+assert.match(panel, /if \(!response\?\.ok\) throw new Error\(response\?\.error/, "lỗi nghiệm thu vẫn dội ngược tới cửa chặn trước-khi-gửi");
 
 // The safety property that contained the live incident must remain explicit:
 // no verified audit/checkpoint means the content receiver is never called.
@@ -79,8 +110,13 @@ assert.match(runner, /if \(!auditFile\) throw new Error\("PERSISTENCE_VERIFICATI
 assert.match(runner, /if \(!resultFile\) throw new Error\("PERSISTENCE_VERIFICATION_FAILED:/, "missing checkpoint blocks before submission");
 
 const request = runtime.DacOutputLocation.downloadArtifactRequest({ kind: "downloads", folder: "Duc Auto ChatGPT" }, "Quick-2026-08-27T18-49__audit.jsonl", "fail");
-const response = await dispatch({ type: "DAC_DOWNLOAD_ARTIFACT", url: downloadItem.url, filename: request.filename, conflictAction: request.conflictAction, expectedBytes: 19 });
-assert.equal(response.ok, true, "the background transaction observes a complete non-empty download");
+// CHẠY ĐÚNG TRÌNH TỰ MỚI, không chỉ đọc chữ: panel đặt chỗ → panel tải →
+// worker nghiệm thu. Đây là thứ bản ghim cũ không diễn được, vì hồi đó cả ba
+// bước nằm trong một lời nhắn.
+await dispatch2({ type: "DAC_EXPECT_DOWNLOAD_NAME", url: downloadItem.url, filename: request.filename, conflictAction: request.conflictAction });
+const panelDownloadId = await chrome.downloads.download({ url: downloadItem.url, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
+const response = await dispatch({ type: "DAC_DOWNLOAD_ARTIFACT", download_id: panelDownloadId, filename: request.filename, expectedBytes: 19 });
+assert.equal(response.ok, true, "worker nhìn thấy một lượt tải hoàn tất, khác 0 byte");
 assert.equal(suggested?.filename, request.filename, "onDeterminingFilename suggests the reserved physical path");
 assert.equal(suggested?.conflictAction, request.conflictAction, "onDeterminingFilename preserves the reserved collision action");
 assert.equal(response.filename, downloadItem.filename, "the transaction returns Chrome's actual completed filename, not its requested name");

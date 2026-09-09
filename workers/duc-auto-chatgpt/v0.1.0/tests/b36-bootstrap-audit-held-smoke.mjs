@@ -196,6 +196,11 @@ const chromeStub = {
   downloads: {
     onDeterminingFilename: { addListener() {} },
     onChanged: { addListener() {} },
+    // B-36, vá 09/09: PANEL là nơi gọi `downloads.download()` (worker chỉ còn
+    // nghiệm thu). Trước bản vá, stub này không cần hàm đó vì panel chỉ nhắn
+    // tin; nay thiếu nó là panel ném ngay ở bước tải và cái đỏ sẽ nói sai
+    // nguyên nhân — nó trông y hệt "đường ghi sổ hỏng".
+    async download() { downloadId += 1; return downloadId; },
     async search() { return []; },
     async erase() { return []; }
   },
