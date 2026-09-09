@@ -108,7 +108,7 @@ Gặp ca xám thì **hỏi Đức**, đừng tự định nghĩa.
 | `AI-OPERATOR-GUIDE.md` | Sổ tay vận hành + bảng lỗi **ĐÃ GẶP THẬT** trên trang. **Mở TRƯỚC khi chạy live**, đừng chẩn đoán lại từ đầu |
 | `STATUS.md` | Trạng thái vận hành một trang cho mắt Đức; frontmatter sinh `DASHBOARD.md` ở gốc. Chỉ TRỎ, không chép. Schema: `STATUS.template.md` ở gốc repo |
 | `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất**. Ghi vào **cuối** |
-| `HANDOFF-ARCHIVE-01.md` · `HANDOFF-ARCHIVE-02.md` · `HANDOFF-ARCHIVE-03.md` | Đuôi đã cắt của `HANDOFF.md`, nguyên văn, **chỉ đọc** — ghép lại dựng được bản gốc giống hệt **từng byte** (ADR-0008 gốc repo ⑴) |
+| `HANDOFF-ARCHIVE-01.md` · `HANDOFF-ARCHIVE-02.md` · `HANDOFF-ARCHIVE-03.md` · `HANDOFF-ARCHIVE-04.md` | Đuôi đã cắt của `HANDOFF.md`, nguyên văn, **chỉ đọc** — ghép lại dựng được bản gốc giống hệt **từng byte** (ADR-0008 gốc repo ⑴) |
 | `decisions.md` | Mục lục trỏ sang `docs/adr/` |
 | `docs/adr/` | ADR của riêng gói này. **Đếm, đừng tin một con số gõ tay:** `ls docs/adr/*.md \| wc -l` |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX (jobs/config) cho mọi workbook mới |
