@@ -592,3 +592,32 @@ sửa dở trên **cùng một cây git**. `ADR-0017 ⑵` (*mỗi vai một chec
 07/09 và **chưa bao giờ được làm** — `git worktree list` trả về đúng một cây. Ghi thành **N-62**,
 cần Đức chốt. Bốn phép của bộ biên dịch **đều XANH** trong khi vế này bị bỏ hai ngày: nó soi
 *chữ với chữ*, không soi *chữ với thế giới*.
+
+## 2026-09-09 · `claude-nen-luat` — gói nặng nhất −70%, và một lỗ của chính bộ đo
+
+**`chatgpt/AGENTS.md` 43.783 → 12.944 ký tự**, dưới đích 8.000-của-một-gói… không, vẫn trên, nhưng
+đã rời khỏi chỗ *5,5× quá đích*. Gói nặng nhất giờ là gemini (24.765).
+
+**Chỗ mỡ, đo được:** bảng *Bản đồ file* chiếm **64%** cả file; riêng **19 hàng `tests/*` = 19.371
+ký tự (44%)**. Mỗi hàng chép lại docblock của chính phép kiểm đó. Hai lý do cắt, không phải một:
+cổng (`session-check`, phép *File mới đã khai vào Bản đồ file*) chỉ so **tên cấp cao**, và bảng
+**chưa bao giờ đủ** — 19 hàng cho **125** file test trên đĩa. Nó chưa từng là chỉ mục, chỉ là 19
+chỗ ai đó tiện tay viết dài.
+
+**Sổ cái về tay máy.** Gắn `nhom:` cho 52 ADR, `luat.khoi_sinh` trỏ `docs/adr/` → `decisions.md`
+(không trỏ `AGENTS.md`: khối sinh ra dài ~7.500 ký tự, đắt hơn cả cái nó thay). Bảng gõ tay cũ đã
+mục — nó dừng ở `0049` khi trên đĩa có 52. **Phép ② QUYET_DINH_MO_COI: 9 → 0, cả repo về 0.**
+
+**Lượt gắn đó lôi ra một lỗ của chính bộ đo.** Hai sổ cái là fork của nhau, nên hai khối máy sinh
+chép đôi nhau: phép ③ nhảy **2 → 19 nhóm**, và **không nhóm nào có cửa ra** — ba lựa chọn của
+`RULE-COMPILER.md` mục 4 (gộp · trỏ · nói vì sao) đều vô nghĩa với thứ máy vừa tự sinh. Vá ở
+`dongLuat`: bỏ qua dòng nằm giữa hai mốc khối sinh. Ghim **cả hai chiều** — trong khối thì câm,
+sau khi khối đóng thì vẫn kêu; một cái mốc lạc chỗ mà tắt luôn phép đo thì tệ hơn.
+
+**Chuyển chứ không xoá:** COUNCIL → `drafts/TEMPLATE-COUNCIL.md`; chuyện của Pilot-13 và Pilot-17 →
+`README.md` trong chính thư mục đó (thêm, không sửa — chúng là bằng chứng).
+
+**`AGENTS.md` gốc 17.255 → 16.245**, và đây là chỗ phải nói thẳng: mục 1 và mục 4 vừa rút hết
+chuyện kể, mục 7 rút từ lượt trước, **nhưng chỉ giảm 6%**. Còn ~345 ký tự một luật so với đích
+~150. Phần thừa **không còn là chỉ mục hay chuyện kể — nó là chính các câu luật**. Đi tiếp là
+**bỏ bớt luật**, và đó là ngân sách của Đức chứ không phải việc AI tự quyết. Ghi vào Làn 2.

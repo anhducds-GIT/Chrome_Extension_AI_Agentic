@@ -26,8 +26,13 @@ và `docs/`, không cái nào thấy 695 dòng của hai gói fork.
 `duc-auto-gg-flow-video` ADR-0009. Nó không phải việc nén luật — nó là **luật an toàn**
 (`AGENTS.md` gốc mục 3 vế ③), và uỷ quyền của Đức là về nén, không về nới an toàn. **Chờ Đức.**
 
-**đóng khi:** lượt nén y hệt đã áp cho `duc-auto-chatgpt` (đang có lane khác giữ khoá vùng), và
-`luat.khoi_sinh` phủ cả ba gói `duc-auto-*`.
+**Cập nhật 09/09 chiều — gần đóng.** `duc-auto-chatgpt` đã nén xong và `luat.khoi_sinh` nay phủ
+**hai** gói (gemini → `AGENTS.md`, chatgpt → `decisions.md`). Lượt gắn đó lôi ra một lỗ của chính
+bộ đo: hai sổ cái fork của nhau sinh ra **hai khối chép đôi**, đẩy phép ③ từ 2 lên **19 nhóm** mà
+không nhóm nào có cửa ra — máy không "gộp" được cái nó vừa sinh. Đã vá: `dongLuat` bỏ qua dòng nằm
+trong khối máy sinh, ghim cả hai chiều.
+
+**đóng khi:** `luat.khoi_sinh` phủ nốt `duc-auto-gg-flow-video`.
 
 ## Làn 2 — Nén bản hiệu lực xuống ĐÍCH 8.000 ký tự (`Y-14`)
 
@@ -35,20 +40,30 @@ và `docs/`, không cái nào thấy 695 dòng của hai gói fork.
 Trần và đích: [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md). **Đo bằng KÝ TỰ, đừng đo bằng dòng**
 — một lượt nén đã giảm 32% dòng mà chỉ 7% ký tự.
 
-Số sống lấy bằng cổng (`session-check.mjs`, phép *Kho chữ không phình*). Ngày 09/09:
+**Đừng tin con số dưới đây, nó mục.** Số sống lấy bằng cổng: `node scripts/session-check.mjs --as <phiên>`.
 
-| Ai trả | Hôm nay | Đích |
-|---|---:|---:|
-| Mọi phiên (`CLAUDE.md` + `AGENTS.md`) | 17.684 | **8.000** |
-| Gói nặng nhất (`chatgpt/AGENTS.md`) | 43.783 | **8.000** |
+| Ai trả | 09/09 sáng | 09/09 chiều | Đích |
+|---|---:|---:|---:|
+| Mọi phiên (`CLAUDE.md` + `AGENTS.md`) | 20.530 | **16.674** | **8.000** |
+| Gói nặng nhất | 43.783 (chatgpt) | **24.765** (gemini) | **8.000** |
 
-**Mục tiêu tiếp theo, đã đo:** `chatgpt/AGENTS.md` **5,5× quá đích**, phần lớn là bảng *Bản đồ
-file* với mô tả test dài. **Cùng bệnh với mục 7 của `AGENTS.md` gốc** — đó là **chỉ mục, không
-phải luật** — và mục 7 đã chữa xong làm tiền lệ: rút mỗi hàng còn trigger + file + một mệnh đề.
+**Đã làm 09/09 chiều — `chatgpt/AGENTS.md` 43.783 → 12.944 (−70%), dưới đích của gói ngay lượt đầu.**
+Ba cửa ra, xếp theo cái cắt được nhiều nhất:
 
-**Cửa ra rẻ nhất, dùng lại mỗi lần:** chuyển phần **kể chuyện** (đo bao nhiêu, ai vấp, ngày nào)
-sang ADR — ADR nạp theo yêu cầu nên **miễn phí** với mọi phiên; bản hiệu lực giữ một câu luật cộng
-một liên kết. `AGENTS.md` đang tốn **~194 token một luật**, gấp 3–5 lần cái một câu cần.
+1. **Chỉ mục thì để MÁY giữ.** Bảng *Bản đồ file* nuốt 64% cả file, riêng 19 hàng `tests/*` là
+   19.371 ký tự — mỗi hàng **chép lại docblock của chính phép kiểm đó**, trong khi cổng chỉ so
+   **tên cấp cao** và bảng chưa bao giờ đủ (19 hàng cho 125 file test). Nay một hàng `tests/`.
+2. **Sổ cái thì để `--sinh` giữ.** 52 ADR được gắn `nhom:`, `luat.khoi_sinh` trỏ
+   `docs/adr/` → `decisions.md`. Bảng gõ tay đã mục một lần (dừng ở `0049` khi trên đĩa có 52).
+   **Phép ② QUYET_DINH_MO_COI về 0 trên cả repo.**
+3. **Kể chuyện thì chuyển, không xoá.** Sang ADR (nạp theo yêu cầu nên miễn phí), hoặc sang chính
+   file/thư mục mà người đọc sẽ mở. Bản hiệu lực giữ **một câu luật + một liên kết**.
+
+**Chỗ còn lại khó hơn, và nói thẳng:** `AGENTS.md` gốc còn 16.245 ký tự cho ~47 dòng luật —
+**~345 ký tự một luật**, trong khi đích của [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md) ⑵ là
+**~150**. Phần thừa **không còn là chỉ mục hay chuyện kể** (mục 1 và mục 4 vừa rút xong, mục 7 rút
+từ lượt trước) — nó là **chính các câu luật**. Đi tiếp từ đây là **bỏ bớt luật**, không phải viết
+gọn lại; đó là ngân sách của Đức, không phải việc AI tự quyết.
 
 **Hai chỗ cấu trúc còn nguyên, cần Đức một câu mỗi chỗ:**
 

@@ -37,51 +37,40 @@ node scripts/session-check.mjs --as <tên-phiên-của-bạn>
 
 ## 1. Khoá — ai được ghi ở đâu
 
-Trạng thái nằm ở `.agents/claims.json`. **Một vùng, một phiên được ghi tại một thời điểm.** Mọi
-lượt nhận và trả đi qua lệnh; **đừng sửa file bằng tay.**
-
-### 1a. Mặc định là khoá FILE — giữ ngắn, trả ngay
-
-[ADR-0005](docs/adr/0005-lam-viec-song-song.md) ⑴.
-
-Nhận ngay **trước** lượt ghi, trả ngay **sau**. **Chỉ đọc thì không cần khoá gì.** Nhận cả vùng
-chỉ khi bạn thật sự sửa khắp nó.
+Trạng thái ở `.agents/claims.json`. **Một vùng, một phiên được ghi tại một thời điểm.** Mọi lượt
+nhận và trả đi qua lệnh. **Mặc định là khoá FILE** ([ADR-0005](docs/adr/0005-lam-viec-song-song.md)
+⑴): nhận ngay **trước** lượt ghi, trả ngay **sau**; **chỉ đọc thì không cần khoá gì.**
 
 ```bash
-node scripts/claim.mjs --sua <đường-dẫn> [<đường-dẫn>…] --as <phiên>   # trước khi ghi
-node scripts/claim.mjs --soat --as <phiên>                            # trước git commit
-node scripts/claim.mjs --xong --het --as <phiên>                      # ngay sau khi ghi xong
-git config core.hooksPath .githooks                                   # một lượt, xong cho mọi lane
+node scripts/claim.mjs --sua <đường-dẫn>… --as <phiên>    # trước khi ghi
+node scripts/claim.mjs --soat --as <phiên>                # BẮT BUỘC trước git commit
+node scripts/claim.mjs --xong --het --as <phiên>          # ngay sau khi ghi xong
+node scripts/claim.mjs --list                             # xem ai đang giữ gì
+node scripts/claim.mjs --take|--release <khoá> --as <phiên> [--task "một câu"]
+node scripts/claim.mjs --khai-vung <khoá> --as <phiên>    # mở MỘT VÙNG MỚI
+git config core.hooksPath .githooks                       # một lượt, xong cho mọi lane
 ```
 
-Khi thật sự sửa khắp một vùng thì nhận cả vùng — những lệnh này vẫn còn:
-
-```bash
-node scripts/claim.mjs --list
-node scripts/claim.mjs --take <khoá> --as <phiên> --task "một câu"
-node scripts/claim.mjs --release <khoá> --as <phiên>
-node scripts/claim.mjs --khai-vung <khoá> --as <phiên>   # mở MỘT VÙNG MỚI
-```
-
-- **Chứa nhau hai chiều.** Vùng có chủ khác → khoá file bị từ chối. Bên trong còn khoá file của
-  người khác → nhận cả vùng bị từ chối.
-- **Khoá FILE trả lúc HẾT PHIÊN. Khoá VÙNG trả SAU KHI ĐẨY.** Hai loại khoá, hai mốc, đừng lẫn.
-  Cổng đỏ khi bạn còn treo khoá file. Đẩy không được thì **giữ khoá vùng** và báo lại — commit
-  chưa đẩy trong một vùng vô chủ để lại mục đỏ cho phiên đến sau.
-- **`--soat` bắt buộc trước `git commit`.** Nó vá chỗ khoá không chữa được: hai lane dùng chung
-  MỘT cây git, nên `git commit -a` cuốn file lane khác vừa dàn và `git commit -o` cuốn sửa đổi của
-  họ trên chính file bạn nêu tên. Chốt `commit-msg` chạy nó ngay trong lượt commit, bịt cửa sổ
-  giữa soát và commit. Nó **fail-open** ba chỗ và chỉ chặn khi vi phạm thật; kẹt thì
+- **Nhận cả vùng chỉ khi bạn thật sự sửa khắp nó.** Chứa nhau hai chiều: vùng có chủ khác thì khoá
+  file bị từ chối, và bên trong còn khoá file của người khác thì nhận cả vùng bị từ chối.
+- **Khoá FILE trả lúc HẾT PHIÊN; khoá VÙNG trả SAU KHI ĐẨY.** Hai loại, hai mốc. Cổng đỏ khi bạn
+  còn treo khoá file. Đẩy không được thì **giữ khoá vùng** và báo lại.
+- **`--soat` bắt buộc trước `git commit`** — nó bắt chỗ khoá không chữa được. Chốt `commit-msg`
+  chạy lại nó ngay trong lượt commit. Nó **fail-open** và chỉ chặn khi vi phạm thật; kẹt thì
   `git commit --no-verify` rồi **nói ra trong nhật ký phiên**.
 - **Đừng nhả khoá của lane khác** — kể cả khi cổng nêu tên nó là quá hạn, kể cả khi cổng nói *"chưa
-  thấy dấu vết trong repo"*. Câu đó nói **repo chưa thấy gì**, nó không nói lane đó rảnh. Ba đường
-  hợp lệ: **chính lane đó trả** · **lane đó báo đã xong** · **Đức chốt chuyển**
+  thấy dấu vết trong repo"*: câu đó nói **repo chưa thấy gì**, không nói lane đó rảnh. Ba đường hợp
+  lệ: **chính lane đó trả** · **lane đó báo đã xong** · **Đức chốt chuyển**
   (`--restamp --as <phiên> --duc-duyet "<câu chốt>"`). Khoá nằm lâu là lý do để **hỏi**, không phải
   để lấy.
-- **Đừng sửa `claims.json` bằng tay.** Đọc-sửa-ghi đã từng ghi đè im lặng một quyền. Mở vùng mới
-  thì dùng `--khai-vung`; sửa tay rồi `--restamp` trông giống hệt một vụ cướp khoá.
-- **Đừng nối `claim.mjs` vào ống.** Mã thoát của một đường ống là mã thoát của lệnh **cuối**, nên
-  `claim.mjs --take … | tail -3 && git commit …` chạy tiếp cả khi lệnh nhận khoá đã **TỪ CHỐI**.
+- **Đừng sửa `claims.json` bằng tay** — mở vùng mới thì `--khai-vung`.
+- **Đừng nối `claim.mjs` vào ống** — mã thoát của ống là mã thoát của lệnh **cuối**, nên lệnh sau
+  vẫn chạy khi lượt nhận khoá đã **TỪ CHỐI**.
+
+> Bốn gạch đầu dòng cuối là **câu luật**; vụ tai nạn đằng sau từng cái nằm ở
+> [`docs/protocols/MULTIFLOW.md`](docs/protocols/MULTIFLOW.md) mục 3 — **cố ý hai bản, đừng gộp**
+> (tầng 1 giữ luật, tầng 2 giữ lý do; `RULE-COMPILER.md` mục 4). Rút chuyện kể khỏi đây 09/09,
+> [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md) ⑷.
 
 ### 1b. Vùng, miễn trừ, artifact máy sinh
 
@@ -92,25 +81,21 @@ node scripts/claim.mjs --khai-vung <khoá> --as <phiên>   # mở MỘT VÙNG M�
 | `_root` | phần còn lại và các file ở tầng ngoài cùng |
 | `workers/<gói>` | gói đó |
 
-Nhận đúng vùng mình đụng, không nhận cả gốc repo. Cổng sẽ nói tên khoá còn thiếu. Ai chia vùng thì
-khai `steward` trong khối `areas` của `.repo-structure.json`.
+Nhận đúng vùng mình đụng, không nhận cả gốc repo — cổng sẽ nói tên khoá còn thiếu. Ai chia vùng
+thì khai `steward` trong khối `areas` của `.repo-structure.json`.
 
-**Năm artifact máy sinh KHÔNG đòi khoá nào:** `DASHBOARD.md` · `llms.txt` · `repo-map.json` ·
-`DASHBOARD-Chrome-Extension-AI-Agentic.html` · `FEATURE-PARITY-AUTO.md`. Chạy lại bộ sinh là ra y
-hệt nên không có gì của ai trong đó để mất. Khai ở khối `generated`. `FEATURE-PARITY.md` **cố ý
-không** nằm trong đó — mục 2 của nó là chữ của người (mục 7).
+**Năm artifact máy sinh KHÔNG đòi khoá nào** (khai ở khối `generated`): `DASHBOARD.md` ·
+`llms.txt` · `repo-map.json` · `DASHBOARD-Chrome-Extension-AI-Agentic.html` ·
+`FEATURE-PARITY-AUTO.md`. `FEATURE-PARITY.md` **cố ý không** nằm trong đó — mục 2 của nó là chữ
+của người.
 
-**File được MIỄN chia làm HAI LOẠI:**
+**Miễn khoá, hai loại** (khai ở `append_only_exempt` — **sửa ở đó, đừng sửa script**):
 
-- **Miễn vô điều kiện:** `.agents/claims.json` — không miễn thì chính thao tác trả quyền cũng bị
-  coi là sửa file gốc.
-- **Miễn KHI CHỈ THÊM DÒNG Ở CUỐI:** `HANDOFF.md` gốc · `IDEAS.md` · `BACKLOG.md` gốc. Mọi lane
-  đều phải ghi vào ba quyển này, nên bắt chúng xếp hàng sau `_root` là tự chặn luật của mình.
-  **Sửa hay xoá dòng cũ thì KHÔNG được miễn** — trừ khi bạn **đang giữ khoá** đúng file đó, lúc
-  ấy thì được: miễn khoá nghĩa là *không cần khoá*, không nghĩa là *có khoá cũng không được*. Cửa
-  RA của sổ cũng chỉ là **thêm một dòng ở cuối**, đừng viết lại khối cũ.
-
-Khai ở `append_only_exempt` trong `.repo-structure.json` — **sửa ở đó, đừng sửa script.**
+- **Vô điều kiện:** `.agents/claims.json`.
+- **Chỉ khi THÊM DÒNG Ở CUỐI:** `HANDOFF.md` gốc · `IDEAS.md` · `BACKLOG.md` gốc. **Sửa hay xoá
+  dòng cũ thì KHÔNG được miễn** — trừ khi bạn **đang giữ khoá** đúng file đó: miễn khoá nghĩa là
+  *không cần khoá*, không nghĩa là *có khoá cũng không được*. Cửa RA của sổ cũng chỉ là **thêm một
+  dòng ở cuối**.
 
 ## 2. Commit và đẩy
 
@@ -137,33 +122,30 @@ automation tự chạy — nếu chưa hỏi.
 
 ## 4. Giới hạn cứng
 
-1. **Không còn trần số gói.** Cả năm gói đều sống ([ADR-0021](docs/adr/0021-goi-extension.md) ⑴).
-   Cơ chế đóng băng ở lại với danh sách rỗng — nó là công tắc Đức bật lại được. Giới hạn ⑦ và ②
-   nay gánh thay phần trần này bỏ lại; **đừng nới cái nào trong hai.**
-2. **Cấm cài một tính năng hai lần.** Cần ở hai gói → vào `workers/_shared/` trước.
-3. **Thước ràng buộc nhất: CÁI MỘT PHIÊN NẠP, đo bằng KÝ TỰ** — `luat.nap`, [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md). Hôm nay **20.530 ký tự (~9.300 token)** mọi phiên, đích **8.000**. **Đừng đo bằng dòng — dòng nói dối:** một lượt nén giảm 32% dòng mà chỉ giảm 7% ký tự.
-   **Cửa ra rẻ nhất:** chuyển phần **kể chuyện** sang ADR — ADR nạp theo yêu cầu nên **miễn phí**; ở đây
-   giữ một câu luật cộng một liên kết.
-4. **`docs/` ≤ 8.000 dòng là ĐÍCH; máy canh THƯỚC CÓC** `docs.tran_dong_khong_ke_adr` (không kể ADR).
-   Đo kho chữ phình, khác câu hỏi của giới hạn ③. **Mọi thước đều tách ĐÍCH khỏi THƯỚC**, và máy chỉ
-   canh thước — lý do ở [ADR-0027](docs/adr/0027-bo-bien-dich-luat.md) ③: một cổng đỏ với mọi phiên
-   trong nhiều tuần là một cổng sẽ bị gỡ.
-5. **Sổ nợ hạ tầng ≤ 15 mục.** Đếm lại, đừng tin dòng này: `node scripts/backlog-check.mjs`. Cửa ra
-   là **đóng một mục** — thêm `- **ĐÓNG <mã>** · …` ở CUỐI sổ; dấu `**` phải đóng **ngay sau mã**,
-   viết sai mẫu thì nó không đóng gì mà đọc y hệt dòng đúng. Trần khai ở `backlog.tran`; **hỏi Đức
-   trước khi đổi.**
+1. **Không còn trần số gói** ([ADR-0021](docs/adr/0021-goi-extension.md) ⑴). Cơ chế đóng băng ở lại
+   với danh sách rỗng — công tắc Đức bật lại được. Giới hạn ⑦ và ② gánh thay phần trần này bỏ lại;
+   **đừng nới cái nào trong hai.**
+2. **Cấm cài một tính năng hai lần.** Cần ở hai gói → `workers/_shared/` trước.
+3. **Thước ràng buộc nhất: CÁI MỘT PHIÊN NẠP, đo bằng KÝ TỰ** — `luat.nap`,
+   [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md). **ĐÍCH 8.000.** Con số hôm nay **đừng gõ vào
+   đây, nó mục** — cổng in ra. **Đừng đo bằng dòng, dòng nói dối.** Cửa ra rẻ nhất: chuyển phần
+   **kể chuyện** sang ADR (nạp theo yêu cầu nên miễn phí), ở đây giữ một câu luật cộng một liên kết.
+4. **`docs/` ≤ 8.000 dòng là ĐÍCH; máy canh THƯỚC CÓC** `docs.tran_dong_khong_ke_adr` (không kể
+   ADR) — đo kho chữ phình, khác câu hỏi của ③. **Mọi thước đều tách ĐÍCH khỏi THƯỚC**, và máy chỉ
+   canh thước: [ADR-0027](docs/adr/0027-bo-bien-dich-luat.md) ③.
+5. **Sổ nợ hạ tầng ≤ 15 mục** — trần ở `backlog.tran`, **hỏi Đức trước khi đổi**. Đếm lại bằng
+   `node scripts/backlog-check.mjs`. Cửa ra là **đóng một mục**: thêm `- **ĐÓNG <mã>** · …` ở CUỐI
+   sổ, `**` đóng **ngay sau mã** — sai mẫu thì nó không đóng gì mà đọc y hệt dòng đúng.
 6. **File test bắt 0 đột biến thì XOÁ.** Một phép kiểm không bắt được gì vẫn thu thuế mọi phiên.
-7. **Song song tối đa 2 chat** ([ADR-0023](docs/adr/0005-lam-viec-song-song.md) ⑵). Đức nói rõ
-   07/09: *"lane ở đây tôi hiểu là 2 phiên chat với AI; trong 1 chat mà bạn manage cùng lúc 5
-   task chạy ngầm không giẫm chân nhau thì tôi vẫn ok"* — nên **số tác vụ ngầm TRONG một chat
-   không bị giới hạn**, và **chủ khoá là tên CHAT**.
+7. **Song song tối đa 2 CHAT** ([ADR-0023](docs/adr/0005-lam-viec-song-song.md) ⑵, Đức chốt 07/09).
+   **Số tác vụ ngầm TRONG một chat không bị giới hạn**, và **chủ khoá là tên CHAT**.
 8. **Một luật vào thì một luật ra.** Thêm luật vào file này phải kể tên luật nó thay, hoặc đo được
    nó đã nổ mấy lần. Chỗ để kể chuyện là ADR, không phải đây.
 9. **Luật mới vào SỔ CÁI trước, đừng viết thẳng vào đây** —
    [ADR-0027](docs/adr/0027-bo-bien-dich-luat.md). `docs/adr/` là sổ cái; file này là **bản hiệu
-   lực** biên dịch từ đó, rà **HẰNG TUẦN** bằng `rule-compile.mjs`
-   ([ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑸); cổng ĐỎ khi còn chỗ **trích
-   một vế đã chết**. Sáu bước: `docs/protocols/RULE-COMPILER.md`.
+   lực** biên dịch từ đó, rà **HẰNG TUẦN**
+   ([ADR-0000](docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑸); cổng ĐỎ khi còn chỗ **trích một
+   vế đã chết**. Sáu bước: `docs/protocols/RULE-COMPILER.md`.
 
 ## 5. Không bao giờ
 
