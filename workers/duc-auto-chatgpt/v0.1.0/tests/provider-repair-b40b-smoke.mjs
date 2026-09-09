@@ -224,4 +224,75 @@ const chuaGui = { phase: "PRE_SUBMIT" };
   assert.ok(viTriNap < viTriGui, "nắp phải kiểm TRƯỚC khi gõ, không phải sau");
 }
 
-console.log("B-40 ⒝ lời nhà cung cấp là một nguồn đối soát, chạy thật (12 mép): PASS");
+/* ---- ⓓ CHẠY THẬT askProviderRepair(): nắp và nút Dừng ------------------------- */
+
+/* ⒀⒁ Hai mũi thử phá ĐÃ ĐI LỌT qua bản đầu của file này, và cả hai ở chỗ chịu tải:
+     · bỏ lượt TĂNG bộ đếm nắp → nắp không bao giờ cắn → vòng lặp tiêu quota thật của Đức,
+       đúng mặt xấu ADR-0050 ghi rõ;
+     · bỏ cửa `state.stopRequested` → Đức bấm Dừng mà máy vẫn đi gõ tiếp.
+   Chúng lọt vì mọi mép trên chỉ kiểm CẤU TRÚC của hàm đó. Nên chỗ này CẮT chính
+   `askProviderRepair()` đã ship rồi CHẠY nó trong `node:vm` với đồ giả — hành vi, không phải chữ. */
+{
+  const sp = doc("sidepanel.js");
+  const dau = sp.indexOf("async function askProviderRepair(");
+  assert.ok(dau > 0, "mỏ neo hỏng: không thấy askProviderRepair()");
+  const END = "\n  }\n";
+  const cuoi = sp.indexOf(END, dau);
+  assert.ok(cuoi > dau, "không tìm thấy chỗ đóng askProviderRepair()");
+  const shipped = sp.slice(dau, cuoi + END.length);
+  assert.ok(shipped.includes("DAC_PROVIDER_REPAIR"), "cắt nhầm khối");
+
+  function sanKhau({ stop = false, daDung = 0, traVe = null } = {}) {
+    const dem = { send: 0, chot: 0, ngat: 0 };
+    const box = {
+      console,
+      state: { stopRequested: stop, providerRepairsUsed: { Q001: daDung } },
+      window: { DacRunnerCore: R },
+      send: async () => { dem.send += 1; if (traVe instanceof Error) throw traVe; return traVe; },
+      audit: () => {}, log: () => {},
+      messageOf: (e) => String(e && e.message ? e.message : e),
+      matchesAttempt: (r) => Boolean(r && r.attempt),
+      applyAttemptTelemetry: () => {},
+      markInterrupted: () => { dem.ngat += 1; },
+      finishDetectedOutput: async () => { dem.chot += 1; return { completed: true, halted: false }; },
+    };
+    vm.createContext(box);
+    vm.runInContext(shipped + "\nglobalThis.__f = askProviderRepair;", box);
+    const item = { job: { id: "Q001", prompt: "một prompt thật của job" }, attempt_id: "a1", phase: "SUBMITTED", settings: { timeout_sec: 180, max_images_per_job: 1 } };
+    return { chay: () => box.__f(item, "POST_SUBMIT_UNCERTAIN", {}, {}), dem, box, item };
+  }
+
+  const OK = { ok: true, attempt: { phase: "SUBMITTED" }, repair: { phrase: "render lại", why: "x" }, result: { image_url: "blob:z" } };
+
+  // ⒀ NÚT DỪNG THẮNG: người bấm Dừng thì KHÔNG được gõ thêm một chữ nào.
+  {
+    const s1 = sanKhau({ stop: true, traVe: OK });
+    assert.equal(await s1.chay(), null, "Đức bấm Dừng thì cửa này phải trả null");
+    assert.equal(s1.dem.send, 0, "và tuyệt đối KHÔNG gõ gì — bấm Dừng là để nó dừng");
+  }
+
+  // ⒁ NẮP PHẢI THẬT SỰ TĂNG. Không tăng thì nắp không bao giờ cắn, và một lỗi dai thành một
+  // vòng lặp gõ mãi — mỗi vòng một lượt quota của Đức.
+  {
+    const s2 = sanKhau({ daDung: 0, traVe: OK });
+    await s2.chay();
+    assert.equal(s2.box.state.providerRepairsUsed.Q001, 1, "gõ xong PHẢI tăng bộ đếm nắp lên 1");
+    assert.equal(s2.dem.send, 1);
+    assert.equal(s2.dem.chot, 1, "có kết quả thì chốt qua đường cũ");
+
+    const cap = R.MAX_PROVIDER_REPAIRS_PER_JOB;
+    const s3 = sanKhau({ daDung: cap, traVe: OK });
+    assert.equal(await s3.chay(), null, "hết nắp thì trả null");
+    assert.equal(s3.dem.send, 0, "và KHÔNG gõ nữa");
+    assert.equal(s3.box.state.providerRepairsUsed.Q001, cap, "hết nắp thì cũng đừng tăng thêm");
+  }
+
+  // ⒂ Lượt "KHÔNG có bằng chứng" là ca THƯỜNG GẶP — nó không được ăn mất nắp.
+  {
+    const s4 = sanKhau({ daDung: 0, traVe: { ok: false, error: "PROVIDER_REPAIR_NO_EVIDENCE: x" } });
+    assert.equal(await s4.chay(), null, "không bằng chứng thì trả null để lớp trên dừng hẳn");
+    assert.equal(s4.box.state.providerRepairsUsed.Q001 || 0, 0, "và KHÔNG được tiêu một lần nắp");
+  }
+}
+
+console.log("B-40 ⒝ lời nhà cung cấp là một nguồn đối soát, chạy thật (15 mép): PASS");
