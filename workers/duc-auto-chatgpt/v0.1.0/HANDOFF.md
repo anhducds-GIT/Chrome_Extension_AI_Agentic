@@ -585,3 +585,30 @@ N-58: gỡ các quyết định mồ côi khỏi sổ cái, và sửa một phé
 chết). Ghi ra vì [ADR-0005](../../../docs/adr/0005-lam-viec-song-song.md) ⑶ bỏ cửa hỏi Đức cho
 `--carry`, nên tên lane bị cuốn theo là dấu vết duy nhất còn lại. Cổng XANH TOÀN BỘ trước khi đẩy.
 
+## 2026-09-09 (tiếp) · `claude-gpt-chay-het-job` — ĐÓNG B-44, đo lại B-36, dựng hàng rào cho B-41
+
+**B-44 đóng.** Công cụ dọn rác nay **chỉ ra** chỗ Chrome thật sự ghi mà **không nới bán kính xoá**:
+hàm mới không đọc nội dung, không phân loại, không xoá gì trong thư mục con — nó đếm rồi in ra câu
+lệnh để người chạy. Tìm ra ngay `Downloads/Phai sinh` (132 tệp) mà trước đó nó chưa từng thấy.
+Chạy thật: **81 tệp chứng minh được là của gói → đã xoá** · 51 tệp chưa chứng minh được chủ →
+**giữ** · thư mục con `Manga concept Meo` (54 ảnh, việc thật của Đức) → **không đụng**.
+
+Thử phá 10 mũi: 9 bắt được, 1 **không còn diễn đạt được**, 0 thoát. Hai con thoát ban đầu cho hai
+cách xử khác nhau — một lỗ ghim thật (không mép nào đọc **con số**, nên đổi phép đếm thành
+`trong.length` vẫn xanh), và một đột biến tương đương mà tôi **giết cả lớp bằng thiết kế**: một
+`Map` đuôi → hàm chứng minh, thay cho một `Set` cộng mấy nhánh `if`, nên *khai một đuôi mà không
+kèm cách chứng minh chủ* thành không khai được. Kiểm luôn dạng mới: nối `.pdf` vào cả ba phép
+chứng minh đều **an toàn**, vì mọi phép đều kiểm chữ ký nội dung.
+
+**B-36 — đo được vế còn ngỏ.** Payload trả *"đếm được 3 hồ sơ, **0 còn quyền**"* → không phải ca
+nhiều-hồ-sơ, là ca không hồ sơ nào còn quyền; lấy lại thì `requestPermission()` **bắt buộc có một
+cú bấm**. Cộng ADR-0051 bỏ hẳn nhu cầu chọn thư mục → **B-36 thôi chặn MVP**, hạ xuống một mục UX.
+`STATUS.md` đang nói sai về chính hôm nay (*"MVP bị chặn ở B-36"*) — đã viết lại theo số đo.
+
+**Hàng rào cho B-41.** Bước chuẩn bị mà chính mục đó đặt ra: phép kiểm không-gửi-lại nay **đếm số
+nguồn** thay cho một câu `0` trơn, và tách hai loại khẳng định — **dương** (2 nguồn, chỉ chốt) và
+**âm** (0 nguồn, loại duy nhất mở cửa gửi lại). Thử phá 3/3. **⑵⑶ cố ý để mở:** ⑶ mở cửa gửi lại
+và điều kiện đóng đòi một lượt live — đẩy nó đi mà chưa có lượt live là đúng bài học hôm nay.
+
+**Kết quả số.** Suite **123/123**. Thử phá: B-44 **9/10 bắt + 1 bất khả** · phần đếm nguồn **3/3**.
+

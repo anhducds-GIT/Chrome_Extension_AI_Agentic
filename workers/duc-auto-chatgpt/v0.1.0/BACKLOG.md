@@ -1758,3 +1758,21 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
   bản "quét luôn cả cây" cũng xanh. Thử phá **10/10** bắt được, 0 thoát, gồm mũi nới bán kính xoá
   sang thư mục con và mũi đổi `lstat` thành `stat` (đi vào symlink).
 
+- **`B-41` — LÀM XONG BƯỚC CHUẨN BỊ mà chính mục này đặt ra TRƯỚC khi vá ⑵⑶ (09/09).**
+  Mục dặn: *"phép đo phải làm lại trước khi vá… viết lại để nó ĐẾM SỐ NGUỒN"*. Đã làm:
+  `post-submit-no-resend-smoke.mjs` nay đếm **hai** con số đọc thẳng từ mã đã ship, thay cho một
+  câu `0` trơn — và phép đo đó **tách ra hai loại khẳng định mà mục này chưa phân biệt**:
+  · **DƯƠNG** (*"kết quả CÓ trên trang"*) → chốt SUCCESS, **không** mở cửa gửi lại. Nay **2 nguồn**:
+    ảnh (`reconcileSubmittedAttempt`) và chữ (`reconcileSubmittedText`, thêm 09/09 theo ADR-0052).
+  · **ÂM** (*"lượt gửi đó KHÔNG tạo ra gì"*) → loại **duy nhất** mở được cửa gửi lại theo chữ
+    ADR-0047, và nó **vẫn là 0**.
+  Nên nguồn thêm 09/09 **không** nới luật của Đức, và đó là lý do file kia vẫn xanh — nó không mù.
+  Ba khẳng định chịu tải, thử phá riêng **3/3** bắt được: mỗi cửa dương không được gọi bất cứ thứ
+  gì gửi prompt · phải rẽ về đường chốt CŨ · `verifyExistingOutput()` phải có **0** chỗ gọi trong
+  `sidepanel.js`.
+  **⑵ và ⑶ vẫn MỞ, và tôi cố ý không làm nốt trong phiên này.** ⑶ thêm một nguồn khẳng định **ÂM**,
+  tức mở cửa gửi lại — điều kiện đóng của B-41 đòi **một lượt chạy live** cho việc đó, và cài một
+  cửa gửi-lại rồi đẩy đi mà chưa có lượt live là đúng thứ hai bản vá B-43 hôm nay đã dạy: `123/123`
+  xanh vẫn để lọt ba lỗ mà chỉ trang thật lộ ra. Việc còn lại đã sẵn cửa: `TEXT_RECONCILE` là chỗ
+  ⑶ cắm vào, và phép đếm ở trên sẽ **đỏ** đúng lúc ai nối nguồn ÂM — đó là hàng rào cần có trước.
+
