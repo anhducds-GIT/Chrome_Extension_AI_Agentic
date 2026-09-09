@@ -5,6 +5,7 @@ date: 2026-09-02
 deciders: Đức
 source_section: "2026-09-02 — Bỏ audit độc lập cho fix nhỏ (Đức chốt trong chat)"
 migrated_from: workers/duc-auto-gg-flow-video/v0.1.0/decisions.md
+nhom: pham-vi-va-ky-luat
 ---
 
 # ADR-0009 — Bỏ audit độc lập cho fix nhỏ

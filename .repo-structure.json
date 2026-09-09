@@ -261,7 +261,9 @@
       "workers/duc-auto-gemini/v0.2.0/AGENTS.md": "2026-09-09",
       "workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md": "2026-09-09",
       "docs/_TEMPLATE-adr.md": "2026-09-09",
-      "workers/duc-auto-chatgpt/v0.1.0/decisions.md": "2026-09-09"
+      "workers/duc-auto-chatgpt/v0.1.0/decisions.md": "2026-09-09",
+      "workers/duc-auto-gg-flow-video/v0.1.0/decisions.md": "2026-09-09",
+      "workers/duc-auto-gemini/v0.2.0/decisions.md": "2026-09-09"
     },
     "_mo_coi_co_y_doc": "Quyet dinh CON SONG ma co y KHONG co dong luat nao mang. Khoa la <pham vi><so hieu>, gia tri la LY DO. Phep (2) cua rule-compile.mjs tru chung ra. Chi khai khi da doc va CHAC no khong phai mot luat bi mat — luot gop 09/09 danh roi ba ve that, va chung tung trong y het mo coi co y.",
     "mo_coi_co_y": {
@@ -332,8 +334,9 @@
     },
     "khoi_sinh": {
       "_doc": "Buoc (6) compile: pham vi so cai -> file mang khoi may sinh. KHONG suy tu duong dan — suy ho la doan cho ghi de vao file luat cua nguoi khac. docs/adr/ goc CO Y khong co dich: ban hieu luc goc co thuoc coc 252 dong.",
-      "workers/duc-auto-gemini/v0.2.0/docs/adr/": "workers/duc-auto-gemini/v0.2.0/AGENTS.md",
-      "workers/duc-auto-chatgpt/v0.1.0/docs/adr/": "workers/duc-auto-chatgpt/v0.1.0/decisions.md"
+      "workers/duc-auto-gemini/v0.2.0/docs/adr/": "workers/duc-auto-gemini/v0.2.0/decisions.md",
+      "workers/duc-auto-chatgpt/v0.1.0/docs/adr/": "workers/duc-auto-chatgpt/v0.1.0/decisions.md",
+      "workers/duc-auto-gg-flow-video/v0.1.0/docs/adr/": "workers/duc-auto-gg-flow-video/v0.1.0/decisions.md"
     },
     "nap": {
       "_doc": "Do CAI MOT PHIEN THAT SU TRA, bang KY TU — khong bang dong. Do 09/09: mot luot cat giam 32% so DONG ma chi giam 7% so KY TU, vi phan cat la chu ngan va phan them la chu dac. Dong noi doi; ky tu thi khong. ~2,2 ky tu = 1 token voi tieng Viet co dau.",
@@ -343,7 +346,7 @@
       ],
       "tran_ky_tu_moi_phien": 16674,
       "dich_ky_tu_moi_phien": 8000,
-      "tran_ky_tu_mot_goi": 24765,
+      "tran_ky_tu_mot_goi": 19045,
       "dich_ky_tu_mot_goi": 8000,
       "_doc_dich": "DICH suy tu chinh loi Duc: 25-50 active rules cho mot task. Mot luat = mot cau + mot lien ket ADR ~ 150 ky tu, nen 50 luat ~ 7.500 ky tu. TRAN la con so HOM NAY, DICH la cho phai toi — giong het mo hinh gioi han (3). May canh TRAN, khong canh DICH: mot cong do voi moi phien trong nhieu tuan la mot cong se bi go."
     }

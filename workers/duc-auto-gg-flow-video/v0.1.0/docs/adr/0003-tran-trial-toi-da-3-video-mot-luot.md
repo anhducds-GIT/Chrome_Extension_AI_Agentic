@@ -5,6 +5,7 @@ date: 2026-08-27
 deciders: Đức
 source_section: "2026-08-27 — Đức chốt trần trial nhánh video: TỐI ĐA 3 VIDEO một lượt"
 migrated_from: workers/duc-auto-gg-flow-video/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0003 — Trần trial nhánh video: tối đa 3 video một lượt

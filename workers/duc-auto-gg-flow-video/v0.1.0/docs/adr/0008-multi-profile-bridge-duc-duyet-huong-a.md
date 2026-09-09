@@ -5,6 +5,7 @@ date: 2026-08-28
 deciders: Đức
 source_section: "2026-08-28 — Multi-profile Bridge: Đức duyệt hướng A"
 migrated_from: workers/duc-auto-gg-flow-video/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0008 — Multi-profile Bridge: Đức duyệt hướng A

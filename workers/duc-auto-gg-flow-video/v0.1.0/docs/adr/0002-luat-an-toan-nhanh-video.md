@@ -5,6 +5,7 @@ date: 2026-08-27
 deciders: Đức
 source_section: "2026-08-27 — Luật an toàn nhánh video (từ kế hoạch FLOW đã duyệt)"
 migrated_from: workers/duc-auto-gg-flow-video/v0.1.0/decisions.md
+nhom: an-toan-khi-chay
 ---
 
 # ADR-0002 — Luật an toàn nhánh video: trần trial, không retry, khoá bootstrap Bridge

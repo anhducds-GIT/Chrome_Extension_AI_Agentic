@@ -5,6 +5,7 @@ date: 2026-08-27
 deciders: không ghi lại
 source_section: "2026-08-27 — `chat.reload` vào allowlist bootstrap (thứ 5)"
 migrated_from: workers/duc-auto-gg-flow-video/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0005 — `chat.reload` vào allowlist bootstrap (method thứ năm)

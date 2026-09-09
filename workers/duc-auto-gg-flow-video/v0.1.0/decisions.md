@@ -27,17 +27,29 @@ nữa** — nó là mục lục.
 **Viết ở `Proposed`, đổi sang `Accepted` ở một lượt riêng.** B12 chốt mốc bất biến ở commit ĐẦU
 TIÊN mà `status` thành `Accepted`; viết thẳng `Accepted` là mất luôn lượt sửa chữ.
 
-## Mục lục
+## Mục lục — máy sinh
 
-| ADR | Quyết định | Ai chốt | Ngày |
-|---|---|---|---|
-| [0001](docs/adr/0001-ba-chot-khai-sinh-package-flow-00.md) | Ba chốt khai sinh package: trang đích `labs.google/fx/tools/flow/*`, quyền host đúng pattern đó, tên gói | Đức | 2026-08-27 |
-| [0002](docs/adr/0002-luat-an-toan-nhanh-video.md) | Luật an toàn nhánh video: trần trial ≤2 job, không retry tự động, khoá bootstrap Bridge — **hai trong ba vế đã chết** | Đức | 2026-08-27 |
-| [0003](docs/adr/0003-tran-trial-toi-da-3-video-mot-luot.md) | Trần trial tối đa 3 video một lượt (45 credit, giới hạn free) — **con số đã chết 05/09, nay suy từ chip, trần tuyệt đối 7** | Đức | 2026-08-27 |
-| [0004](docs/adr/0004-diagnostics-evidence-submit-primitive-tuong-tac.md) | `diagnostics.evidence_submit` là primitive tương tác duy nhất của bootstrap, trần cứng 3 lượt/trang | Đức | 2026-08-27 |
-| [0005](docs/adr/0005-chat-reload-vao-allowlist-bootstrap.md) | `chat.reload` vào allowlist bootstrap — F5 tab đã bind, không gửi prompt, không tốn credits | không ghi lại | 2026-08-27 |
-| [0006](docs/adr/0006-duc-giao-phien-claude-flow-1-tu-trien-khai.md) | Đức giao phiên `claude-flow-1` tự triển khai đến khi hoàn thiện; ba mốc phải hỏi giữ nguyên | Đức | 2026-08-27 |
-| [0007](docs/adr/0007-go-khoa-bootstrap-bridge-f-05.md) | F-05: gỡ khoá bootstrap Bridge, mở lại toàn bộ method surface; gate an toàn từng method giữ nguyên | không ghi lại | 2026-08-27 |
-| [0008](docs/adr/0008-multi-profile-bridge-duc-duyet-huong-a.md) | Multi-profile Bridge hướng A: khối `instance` trong auth, bỏ luật "một ghế", không thêm quyền Chrome | Đức | 2026-08-28 |
-| [0009](docs/adr/0009-bo-audit-doc-lap-cho-fix-nho.md) | Bỏ audit độc lập cho fix nhỏ — **đá với `AGENTS.md` gốc mục 2, chờ Đức chốt câu chữ** | Đức | 2026-09-02 |
-| [0010](docs/adr/0010-mo-rong-host-match-cho-url-co-locale.md) | Mở rộng host match cho URL có locale (`fx/*/tools/flow/*`); manifest rộng, adapter siết | Đức | 2026-09-02 |
+> `node scripts/rule-compile.mjs --sinh` đọc thẳng `docs/adr/`, nhóm theo `nhom:` ở frontmatter,
+> chữ lấy từ **tiêu đề ADR**. Muốn đổi một dòng thì **sửa tiêu đề** của ADR đó — sửa trong khối thì
+> lượt sinh sau nuốt mất. Bảng gõ tay cũ (kèm *Ai chốt* / *Ngày*, và ghi chú vế nào đã chết) ở
+> `git show HEAD:workers/duc-auto-gg-flow-video/v0.1.0/decisions.md`; **hai thứ đó không mất** —
+> `deciders:`/`date:` nằm ở frontmatter, còn vế đã chết nằm ở mục `Vế đã chết` của chính ADR và
+> **cổng đỏ** nếu có nơi nào còn trích. Chuyển sang máy sinh 09/09,
+> [ADR-0030](../../../docs/adr/0030-rule-compiler-v1.md).
+
+<!-- KHOI MAY SINH: rule-compile --sinh. DUNG SUA TAY. -->
+**an-toan-khi-chay**
+- [ADR-0002](docs/adr/0002-luat-an-toan-nhanh-video.md) Luật an toàn nhánh video: trần trial, không retry, khoá bootstrap Bridge
+
+**bridge-va-thuc-thi**
+- [ADR-0004](docs/adr/0004-diagnostics-evidence-submit-primitive-tuong-tac.md) `diagnostics.evidence_submit`: primitive tương tác duy nhất của bootstrap
+- [ADR-0005](docs/adr/0005-chat-reload-vao-allowlist-bootstrap.md) `chat.reload` vào allowlist bootstrap (method thứ năm)
+- [ADR-0007](docs/adr/0007-go-khoa-bootstrap-bridge-f-05.md) F-05: gỡ khoá bootstrap Bridge, mở lại toàn bộ method surface
+- [ADR-0008](docs/adr/0008-multi-profile-bridge-duc-duyet-huong-a.md) Multi-profile Bridge: Đức duyệt hướng A
+- [ADR-0010](docs/adr/0010-mo-rong-host-match-cho-url-co-locale.md) Mở rộng host match cho URL có locale
+
+**pham-vi-va-ky-luat**
+- [ADR-0001](docs/adr/0001-ba-chot-khai-sinh-package-flow-00.md) Ba chốt khai sinh package: trang đích, quyền host, tên gói
+- [ADR-0006](docs/adr/0006-duc-giao-phien-claude-flow-1-tu-trien-khai.md) Đức giao phiên `claude-flow-1` tự triển khai đến khi hoàn thiện
+- [ADR-0009](docs/adr/0009-bo-audit-doc-lap-cho-fix-nho.md) Bỏ audit độc lập cho fix nhỏ
+<!-- HET KHOI MAY SINH -->

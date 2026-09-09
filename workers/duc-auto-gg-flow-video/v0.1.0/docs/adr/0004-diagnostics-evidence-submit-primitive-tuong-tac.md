@@ -5,6 +5,7 @@ date: 2026-08-27
 deciders: Đức
 source_section: "2026-08-27 — `diagnostics.evidence_submit`: primitive tương tác duy nhất của bootstrap"
 migrated_from: workers/duc-auto-gg-flow-video/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0004 — `diagnostics.evidence_submit`: primitive tương tác duy nhất của bootstrap

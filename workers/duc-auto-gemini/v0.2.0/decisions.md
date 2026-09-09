@@ -17,51 +17,65 @@
 Chép `docs/_TEMPLATE-adr.md` thành `docs/adr/NNNN-mo-ta-ngan-khong-dau.md`, đánh số tiếp
 từ `0068`. **Đừng thêm dòng vào file này nữa** — nó là mục lục máy đọc được.
 
-## Kiến trúc & Agent Bridge
+## Sổ cái — quyết định đang sống (máy sinh)
 
-| ADR | Quyết định | Ai chốt | Ngày |
-|---|---|---|---|
-| [0001](docs/adr/0001-bridge-dung-loopback-host-127-0-0-1-co-token-32.md) | Bridge dùng loopback host 127.0.0.1 có token 32-byte, không dùng Native Messaging | Claude (coordinator), sau 2 vòng nghiên cứu với Codex | không ghi lại |
-| [0002](docs/adr/0002-supersedes-dong-ai-ngoai-chi-duoc-propose-ben-duoi.md) | SUPERSEDES dòng "AI ngoài chỉ được propose" bên dưới, chỉ trong phạm vi Setup | Đức | 2026-08-24 |
-| [0003](docs/adr/0003-ai-khong-the-tu-mo-file-xlsx-tu-o-dia-hay-tu-bind.md) | AI không thể tự mở file .xlsx từ ổ đĩa hay tự bind folder output MỚI | Claude (coordinator), xác nhận kỹ thuật khi thiết kế Tầng 1 | không ghi lại |
-| [0004](docs/adr/0004-queue-propose-duyet-tay-cua-duc-khong-bi-xoa-khi.md) | queue.propose + duyệt tay của Đức KHÔNG bị xoá khi thêm các method Tầng 1 mới | Đức (ngầm định qua yêu cầu Tầng 1, xác nhận bởi Claude khi lên kế hoạch) | không ghi lại |
-| [0005](docs/adr/0005-side-panel-la-executor-duy-nhat.md) | Side panel là executor duy nhất | Claude (coordinator) | không ghi lại |
-| [0006](docs/adr/0006-run-start-run-pause-run-resume-khong-co-trong.md) | run.start / run.pause / run.resume không có trong Bridge v1, trả METHOD_NOT_FOUND | Claude (coordinator), theo yêu cầu an toàn của Đức | không ghi lại |
-| [0007](docs/adr/0007-ai-ngoai-chi-duoc-propose-de-xuat-vao-vung-cach-ly.md) | AI ngoài chỉ được propose (đề xuất vào vùng cách ly) | Claude (coordinator) | không ghi lại |
-| [0008](docs/adr/0008-host-la-node-esm-thuan-khong-phu-thuoc-npm.md) | Host là Node ESM thuần, không phụ thuộc npm | Claude (coordinator), đảo ngược đề xuất .NET ban đầu của Codex | không ghi lại |
-| [0009](docs/adr/0009-api-externally-connectable-localhost-cu-bi-go-hoan.md) | API externally_connectable localhost cũ bị gỡ hoàn toàn ở WP-4, không giữ song song | Claude (coordinator) | không ghi lại |
-| [0010](docs/adr/0010-installer-dung-icacls-thay-vi-powershell-set-acl-de.md) | Installer dùng icacls thay vì PowerShell Set-Acl để khoá quyền thư mục cài đặt | Claude, xác nhận bằng test thật trên máy Đức | không ghi lại |
+> `node scripts/rule-compile.mjs --sinh` đọc thẳng `docs/adr/`, nhóm theo `nhom:`, chữ lấy từ
+> **tiêu đề ADR** — muốn đổi một dòng thì sửa tiêu đề, đừng sửa trong khối.
+> Bảng gõ tay cũ (kèm *Ai chốt* / *Ngày*) ở `git show HEAD:workers/duc-auto-gemini/v0.2.0/decisions.md`;
+> hai cột đó nay lấy từ `deciders:` và `date:` ở frontmatter của chính ADR. Khối này chuyển từ
+> `AGENTS.md` xuống 09/09, [ADR-0031](../../../docs/adr/0031-tran-do-bang-ky-tu.md) ⑷.
 
-## Quy ước dữ liệu / workbook
+<!-- KHOI MAY SINH: rule-compile --sinh. DUNG SUA TAY. -->
+**an-toan-khi-chay**
+- [ADR-0015](docs/adr/0015-completed-job-safe-complete-khong-bao-gio-tu-chay.md) Completed job (SAFE_COMPLETE) không bao giờ tự chạy lại khi Resume, kể cả khi…
+- [ADR-0016](docs/adr/0016-retry-halt-chi-dung-toan-batch-khi-captcha-het.md) Retry/Halt: chỉ dừng toàn batch khi CAPTCHA / hết quota / mất tab ChatGPT thật sự…
+- [ADR-0017](docs/adr/0017-pause-chi-giu-hang-doi-o-ranh-gioi-an-toan-giua-2.md) Pause chỉ giữ hàng đợi ở ranh giới an toàn giữa 2 job, không bao giờ ngắt 1 job…
+- [ADR-0026](docs/adr/0026-khong-doi-nhac-lai-run-la-cua-duc-ai-khong-tu-gui.md) Không đổi, nhắc lại: Run là của Đức; AI không tự gửi prompt tới ChatGPT; không làm…
+- [ADR-0027](docs/adr/0027-ai-duoc-tu-khoi-dong-trial-run-qua-bridge-trong.md) AI được TỰ khởi động "trial run" qua Bridge trong giai đoạn phát triển, qua một…
+- [ADR-0028](docs/adr/0028-bo-tran-6-trial-gio-thay-bang-hai-trial-lien-tiep.md) Bỏ trần "≤6 trial/giờ"; thay bằng: hai trial liên tiếp phải cách nhau tối thiểu 5…
+- [ADR-0031](docs/adr/0031-bo-tran-2-job-trial-mot-trial-chay-lien-tuc-ca.md) Bỏ trần "≤2 job/trial"; một trial chạy LIÊN TỤC cả chuỗi ảnh (trần cứng mới: 10…
+- [ADR-0032](docs/adr/0032-tran-chuoi-trial-10-30-job-10-job-van-la-it.md) Trần chuỗi trial 10 → 30 job ("10 job vẫn là ít")
+- [ADR-0051](docs/adr/0051-giu-nguyen-bat-doi-xung-co-y-cua-thiet-ke-goc.md) Giữ nguyên bất đối xứng cố ý của thiết kế gốc
+- [ADR-0058](docs/adr/0058-khong-doi-thoi-diem-co-dung-an-de-job-dang-chay.md) KHÔNG đổi thời điểm cờ dừng ăn (để job đang chạy không kịp gửi).
+- [ADR-0060](docs/adr/0060-duyet-hop-dong-g-01-stop-nhan-truoc-thoi-diem-gui.md) Duyệt hợp đồng G-01: Stop nhận trước thời điểm gửi thật → attempt đó không được…
+- [ADR-0061](docs/adr/0061-huong-b-refined-huy-theo-attempt-khong-phai-a-round.md) Hướng B-refined — huỷ theo attempt, không phải A (round-trip hỏi ngược) hay B…
+- [ADR-0062](docs/adr/0062-root-cause-phai-chung-minh-bang-test-tai-hien-truoc.md) Root cause phải chứng minh bằng test tái hiện trước khi vá
+- [ADR-0067](docs/adr/0067-audit-codex-vong-1-fail-3-phat-hien-1-high-huy-lech.md) Audit Codex vòng 1: FAIL, 3 phát hiện. (1) HIGH "huỷ lệch danh tính giết attempt…
 
-| ADR | Quyết định | Ai chốt | Ngày |
-|---|---|---|---|
-| [0011](docs/adr/0011-job-id-chuyen-tu-chu-cai-p06-a-p06-b-sang-so-thu-tu.md) | Job ID chuyển từ chữ cái (P06-A, P06-B...) sang số thứ tự (P08-...-01, P09-01...) | Đức | không ghi lại |
-| [0012](docs/adr/0012-checkpoint-dat-ten-2-chu-so-v01-v02-thay-vi-3-chu.md) | Checkpoint đặt tên 2 chữ số (v01, v02...) thay vì 3 chữ số (v001) | Đức | không ghi lại |
-| [0013](docs/adr/0013-pilot-03-pilot-05-pilot-06-pilot-06b-khong-bao-gio.md) | pilot-03/, pilot-05/, pilot-06/, pilot-06B/ không bao giờ bị sửa/regenerate | Claude, theo yêu cầu ngầm định của quy trình audit | không ghi lại |
-| [0014](docs/adr/0014-id-prompt-la-2-cot-bat-buoc-duy-nhat-tren-sheet-jobs.md) | id/prompt là 2 cột bắt buộc duy nhất trên sheet jobs | Claude, sau khi Đức phản hồi workbook cũ "đòi hỏi quá nhiều field" | không ghi lại |
-| [0015](docs/adr/0015-completed-job-safe-complete-khong-bao-gio-tu-chay.md) | Completed job (SAFE_COMPLETE) không bao giờ tự chạy lại khi Resume, kể cả khi… | Claude, xác nhận là chủ đích thiết kế, không phải bug | không ghi lại |
+**bridge-va-thuc-thi**
+- [ADR-0001](docs/adr/0001-bridge-dung-loopback-host-127-0-0-1-co-token-32.md) Bridge dùng loopback host 127.0.0.1 có token 32-byte, không dùng Native Messaging
+- [ADR-0002](docs/adr/0002-supersedes-dong-ai-ngoai-chi-duoc-propose-ben-duoi.md) SUPERSEDES dòng "AI ngoài chỉ được propose" bên dưới, chỉ trong phạm vi Setup
+- [ADR-0003](docs/adr/0003-ai-khong-the-tu-mo-file-xlsx-tu-o-dia-hay-tu-bind.md) AI không thể tự mở file .xlsx từ ổ đĩa hay tự bind folder output MỚI
+- [ADR-0004](docs/adr/0004-queue-propose-duyet-tay-cua-duc-khong-bi-xoa-khi.md) queue.propose + duyệt tay của Đức KHÔNG bị xoá khi thêm các method Tầng 1 mới
+- [ADR-0005](docs/adr/0005-side-panel-la-executor-duy-nhat.md) Side panel là executor duy nhất
+- [ADR-0006](docs/adr/0006-run-start-run-pause-run-resume-khong-co-trong.md) run.start / run.pause / run.resume không có trong Bridge v1, trả METHOD_NOT_FOUND
+- [ADR-0007](docs/adr/0007-ai-ngoai-chi-duoc-propose-de-xuat-vao-vung-cach-ly.md) AI ngoài chỉ được propose (đề xuất vào vùng cách ly)
+- [ADR-0008](docs/adr/0008-host-la-node-esm-thuan-khong-phu-thuoc-npm.md) Host là Node ESM thuần, không phụ thuộc npm
 
-## Vận hành / UI
+**chu-va-commit**
+- [ADR-0018](docs/adr/0018-operator-facing-text-tieng-viet.md) Operator-facing text tiếng Việt
+- [ADR-0020](docs/adr/0020-supersedes-dong-khong-tu-y-commit-ngay-tren-trong.md) SUPERSEDES dòng "Không tự ý commit" ngay trên, trong phạm vi project này
+- [ADR-0025](docs/adr/0025-ai-duoc-commit-ke-ca-main-chi-tiet-4-dieu-kien.md) AI được commit kể cả main (chi tiết + 4 điều kiện
 
-| ADR | Quyết định | Ai chốt | Ngày |
-|---|---|---|---|
-| [0016](docs/adr/0016-retry-halt-chi-dung-toan-batch-khi-captcha-het.md) | Retry/Halt: chỉ dừng toàn batch khi CAPTCHA / hết quota / mất tab ChatGPT thật sự… | Đức | không ghi lại |
-| [0017](docs/adr/0017-pause-chi-giu-hang-doi-o-ranh-gioi-an-toan-giua-2.md) | Pause chỉ giữ hàng đợi ở ranh giới an toàn giữa 2 job, không bao giờ ngắt 1 job… | Claude | không ghi lại |
-| [0018](docs/adr/0018-operator-facing-text-tieng-viet.md) | Operator-facing text tiếng Việt | Đức | không ghi lại |
-| [0019](docs/adr/0019-khong-tu-y-commit-luon-hoi-duc-truoc-ke-ca-khi-test.md) | Không tự ý commit — luôn hỏi Đức trước, kể cả khi test 100% pass | Đức (luật cố định) | không ghi lại |
-| [0020](docs/adr/0020-supersedes-dong-khong-tu-y-commit-ngay-tren-trong.md) | SUPERSEDES dòng "Không tự ý commit" ngay trên, trong phạm vi project này | Đức | 2026-08-24 |
+**du-lieu-va-bang-chung**
+- [ADR-0011](docs/adr/0011-job-id-chuyen-tu-chu-cai-p06-a-p06-b-sang-so-thu-tu.md) Job ID chuyển từ chữ cái (P06-A, P06-B...) sang số thứ tự (P08-...-01, P09-01...)
+- [ADR-0012](docs/adr/0012-checkpoint-dat-ten-2-chu-so-v01-v02-thay-vi-3-chu.md) Checkpoint đặt tên 2 chữ số (v01, v02...) thay vì 3 chữ số (v001)
+- [ADR-0013](docs/adr/0013-pilot-03-pilot-05-pilot-06-pilot-06b-khong-bao-gio.md) pilot-03/, pilot-05/, pilot-06/, pilot-06B/ không bao giờ bị sửa/regenerate
+- [ADR-0014](docs/adr/0014-id-prompt-la-2-cot-bat-buoc-duy-nhat-tren-sheet-jobs.md) id/prompt là 2 cột bắt buộc duy nhất trên sheet jobs
+- [ADR-0023](docs/adr/0023-cho-phep-gop-checkpoint-cho-phien-sua-cua-agent.md) Cho phép gộp checkpoint cho phiên sửa của agent (transaction / session.checkpoint)
+- [ADR-0024](docs/adr/0024-chinh-sach-don-checkpoint.md) Chính sách dọn checkpoint
 
-## Roadmap tự hành (chốt sau audit 2026-08-24)
+**nhan-dien-anh**
+- [ADR-0043](docs/adr/0043-chi-cuon-khi-anh-dang-khong-hien-ra-va-chi-khi-da.md) Chỉ cuộn khi ảnh đang KHÔNG hiện ra, và chỉ khi đã hết trạng thái đang-sinh-ảnh.
+- [ADR-0044](docs/adr/0044-generatedimageminsize-200-150-phep-kiem-giu-nguyen.md) generatedImageMinSize: 200 → 150. Phép kiểm giữ nguyên hình dạng (vẫn đòi cả hai…
+- [ADR-0046](docs/adr/0046-hai-phuong-an-da-thu-va-bi-bang-chung-bac-bo-trong.md) Hai phương án đã thử và bị bằng chứng bác bỏ trong cùng ngày
 
-| ADR | Quyết định | Ai chốt | Ngày |
-|---|---|---|---|
-| [0021](docs/adr/0021-commit-tang-1-sau-khi-claude-test-song-6-method-qua.md) | Commit Tầng 1 sau khi Claude test sống 6 method qua CLI (nghiệm thu bằng mắt của… | Đức | 2026-08-24 |
-| [0022](docs/adr/0022-sua-luat-8-agents-md-cho-phep-xay-harness-test-bang.md) | Sửa luật 8 AGENTS.md: cho phép xây harness test bằng Chrome THẬT (Playwright/CDP,… | Đức | 2026-08-24 |
-| [0023](docs/adr/0023-cho-phep-gop-checkpoint-cho-phien-sua-cua-agent.md) | Cho phép gộp checkpoint cho phiên sửa của agent (transaction / session.checkpoint) | Đức | 2026-08-24 |
-| [0024](docs/adr/0024-chinh-sach-don-checkpoint.md) | Chính sách dọn checkpoint | Đức | 2026-08-24 |
-| [0025](docs/adr/0025-ai-duoc-commit-ke-ca-main-chi-tiet-4-dieu-kien.md) | AI được commit kể cả main (chi tiết + 4 điều kiện | Đức | 2026-08-24 |
-| [0026](docs/adr/0026-khong-doi-nhac-lai-run-la-cua-duc-ai-khong-tu-gui.md) | Không đổi, nhắc lại: Run là của Đức; AI không tự gửi prompt tới ChatGPT; không làm… | Đức (tái xác nhận) | 2026-08-24 |
+**pham-vi-va-ky-luat**
+- [ADR-0022](docs/adr/0022-sua-luat-8-agents-md-cho-phep-xay-harness-test-bang.md) Sửa luật 8 AGENTS.md: cho phép xây harness test bằng Chrome THẬT (Playwright/CDP,…
+- [ADR-0029](docs/adr/0029-run-duoc-phep-bat-dau-tu-ca-gemini-google-com.md) Run được phép BẮT ĐẦU từ cả gemini.google.com/images lẫn…
+- [ADR-0035](docs/adr/0035-luat-nao-khong-kiem-duoc-bang-may-thi-coi-nhu-khong.md) Luật nào không kiểm được bằng máy thì coi như không có
+- [ADR-0066](docs/adr/0066-cung-loi-ben-nhanh-chatgpt-ghi-thanh-b-22-doc.md) Cùng lỗi bên nhánh ChatGPT ghi thành B-22 ([ĐỌC] content.js:703), KHÔNG sửa hộ…
+<!-- HET KHOI MAY SINH -->
 
 ## 2026-08-25 — Development trial-run exception (owner: Đức)
 

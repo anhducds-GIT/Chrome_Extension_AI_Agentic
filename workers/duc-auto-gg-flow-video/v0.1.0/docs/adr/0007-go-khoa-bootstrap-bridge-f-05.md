@@ -5,6 +5,7 @@ date: 2026-08-27
 deciders: không ghi lại
 source_section: "2026-08-27 — F-05: gỡ khoá bootstrap Bridge"
 migrated_from: workers/duc-auto-gg-flow-video/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0007 — F-05: gỡ khoá bootstrap Bridge, mở lại toàn bộ method surface

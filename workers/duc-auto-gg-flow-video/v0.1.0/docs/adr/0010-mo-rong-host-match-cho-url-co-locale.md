@@ -5,6 +5,7 @@ date: 2026-09-02
 deciders: Đức
 source_section: "2026-09-02 — Mở rộng host match cho URL có locale (Đức duyệt trong chat)"
 migrated_from: workers/duc-auto-gg-flow-video/v0.1.0/decisions.md
+nhom: bridge-va-thuc-thi
 ---
 
 # ADR-0010 — Mở rộng host match cho URL có locale
