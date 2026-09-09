@@ -708,3 +708,38 @@ không mang nắp cứng nào; chúng chỉ ở `AGENTS.md`, thứ tác nhân ng
 **Khoá:** trả hộ lane `claude-gpt-chay-het-job` theo lời Đức *"phiên GPT đã dừng"* — **nó nhận lại
 vùng 3 phút sau**. Dừng tay ở gói đó, hai hunk Bridge chưa áp. Trước đó cứu được một mục sổ nợ họ
 viết xong chưa commit, và chính ghi chú đó chặn tôi khỏi dùng `--restamp`.
+
+## 2026-09-09 · `claude-nen-luat` (lượt 5) — MỘT file cho một phiên gói, và trần chặn ở lượt sinh
+
+**Đức chốt 2.000–3.000 token, và gọi việc giữ nó ở đó là *"mục tiêu của việc compile"*.** Nén tay
+không tới được: riêng phần nền đã **3.901 token**, và chỗ rò lớn nhất là **`@AGENTS.md` trong
+`CLAUDE.md`** — nó nạp cả hiến pháp vào **mọi** phiên, kể cả phiên chỉ sửa một selector. B10 không
+đòi cái `@` đó, nên tháo được.
+
+**[ADR-0035](docs/adr/0035-mot-file-cho-mot-phien-gap.md):** `CLAUDE.md` thành bộ định tuyến hai
+cửa; phiên gói đọc đúng **`PHIEN.md`** — máy sinh, tự chứa = lõi luật chung
+(`workers/_shared/LUAT-CORE.md`) + `## Luật vàng` của gói + bản chắt trạng thái từ `STATUS.md`.
+
+| Gói | Sáng nay | Giờ |
+|---|---:|---:|
+| gg-flow-video · scouter | 26.194 · 23.374 | **2.711** · **2.711** |
+| gemini | 30.487 | **2.580** |
+
+**Trần CỨNG, và đây là chỗ khác mọi thước trước:** 6.600 ký tự, đo **cả bó**, **chặn ở lượt sinh** —
+vượt là bộ sinh **từ chối ghi** và thoát 1. Thước cóc thì báo đỏ rồi ai đó nâng nó lên; **hôm nay
+chính tôi nâng một cái**, có lý do, nhưng vẫn là nâng. Trần này không có đường đó — muốn thêm một
+luật thì phải bỏ một luật, tức giới hạn ⑧ từ chữ thành cơ chế.
+
+**Đột biến 4/4:** nhồi 1.500 ký tự → từ chối **và** `PHIEN.md` không bị ghi đè · gỡ trần → ghim ĐỎ ·
+nới trần lên 20.000 → ghim ĐỎ · bỏ phần nền khỏi công thức cổng → ghim ĐỎ. Cổng và bộ sinh nay cộng
+**cùng một công thức**, và có một phép ghim canh đúng điều đó.
+
+**Dedupe làm việc thật:** bốn luật đầu của gemini trùng nguyên nghĩa với lõi → gộp còn một dòng trỏ
+về lõi.
+
+**`--carry`: lượt đẩy này cuốn theo 4 commit của lane `claude-gpt-chay-het-job`** (`8513daa`,
+`fe56961`, `1ed666f`, `5cd84c4`) — kể tên theo ADR-0005 ⑶.
+
+**Gói `duc-auto-chatgpt` KHÔNG sinh được: 3.912 token, quá trần 912.** Phần thừa đã biết chính xác
+(khối biện minh ADR-0032 đã nhận về + bốn luật trùng lõi), vùng đang có lane khác giữ. Hệ quả cần
+nhớ: chừng nào nó còn quá trần thì `--sinh` **luôn thoát 1** — đừng dùng mã thoát để suy ra lỗi mới.
