@@ -83,7 +83,7 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 **Cả hai đều code được**; vai nói *ai sở hữu và ai ký nghiệm thu*.
 
 - **Sản phẩm cần sửa hạ tầng thì GỬI YÊU CẦU** — một dòng `BACKLOG.md` kèm `đóng khi:`, không tự
-  lấy vùng (`npm run test:backlog` kiểm được).
+  lấy vùng.
 - **Điều phối là một CHẾ ĐỘ, không phải vai thứ ba** — mục 8.
 - **Tối đa 2 CHAT song song** (ADR-0023 ⑵); tác vụ ngầm trong một chat **không giới hạn**, và **chủ
   khoá là tên CHAT**. Hai vai chạy cùng lúc thì **khác vùng**.
@@ -105,11 +105,10 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 |---|---|
 | Đụng một gói `duc-auto-*` | `AGENTS.md` của **chính gói đó**. **Ba gói là fork của nhau** — một lỗi thường có **ba** bản sao |
 | Nhận khoá · commit · đóng phiên · tranh chấp khoá | `docs/protocols/MULTIFLOW.md` mục 3a–3b |
-| Nhận việc **ĐIỀU PHỐI** | `docs/protocols/ORCHESTRATOR.md` — **HARD ROLE FIREWALL**: KHÔNG code, KHÔNG debug, KHÔNG đề xuất patch; không có ngoại lệ "sửa nhỏ" |
+| Nhận việc **ĐIỀU PHỐI** | `docs/protocols/ORCHESTRATOR.md` — **HARD ROLE FIREWALL**: KHÔNG code, KHÔNG debug, KHÔNG đề xuất patch; không ngoại lệ "sửa nhỏ". Nạp báo cáo năm mục `DONE → STATE CHANGE → BLOCKER → HUMAN DECISION → NEXT WORK` rồi **DỪNG** |
 | Thêm/sửa/bỏ một LUẬT hay TRẦN · lượt rà hằng tuần | `docs/protocols/RULE-COMPILER.md` |
 | Ghi nhật ký · cắt sổ · đóng một mục sổ nợ | `docs/protocols/HANDOFF.md` · `RULE-COMPILER.md` 5a |
 | Hỏi làm gì TRƯỚC | `ROADMAP.md` (thứ tự) · `what-next.mjs` (trạng thái sống) |
 | Thêm/vận hành extension · đặt tệp ghép cặp hay vùng ghi Bridge | `PLATFORM.md`. **Đừng tự chọn chỗ** — `node workers/_shared/bridge-host/tao-tep-ghep-cap.mjs --goi <gói>` |
 | Lấy dữ liệu HNX | `workers/hnx-fetch/PROTOCOL.md` — gói này **không có quyền `debugger`** |
 | Sửa bộ chuẩn hay gói Assistant | **KHÔNG CÒN Ở ĐÂY** — `Ark_Repo_Harness` (ADR-0001) |
-| Tra tài liệu · số hiệu ADR · đường dẫn cũ | `docs/README.md` |
