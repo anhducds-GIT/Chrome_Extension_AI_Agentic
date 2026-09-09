@@ -566,17 +566,9 @@ cài nửa còn lại Đức nhờ từ đầu: **đọc lại**. Hết giờ �
 | ⑵ | không ghi | 2.117 | trượt nhưng trung thực — đọc một nhát sau F5 được 0 ký tự |
 | ⑶ | **2.228** | **2.228** | **ĐẠT** — `SUCCESS`, `persistence_verified: true` |
 
-**Đức chặn ba câu tôi nói ẩu, và cả ba lần đều có một phép đo rẻ hơn nằm ngay đó mà tôi bỏ qua
-để đi kể chuyện:**
-- *"Chrome hãm chữ đi vào trang"* → Chrome không hãm đường mạng; nó không cấp khung hình nên trang
-  **không vẽ**. Hai chuyện khác nhau.
-- *"`chat.read` trả về 0 lượt"* → tôi hỏi trường `messages`, trường thật là `turns`.
-- *"`visibilityState` vô hiệu khi cửa sổ bị che"* → đo ra `hidden`. Tôi thấy `failure_type` rỗng
-  rồi suy lỗi không nổ; nó rỗng vì job kết thúc SUCCESS — dấu vết của **hậu quả** đọc thành
-  **nguyên nhân**.
-
-**Và điều kiện nghiệm thu đầu của tôi cũng sai:** *"sổ == trang"*. Cả hai cùng đọc 27 nên nó báo
-ĐẠT — **hai vế cùng sai thì bằng nhau**. Điều kiện đúng: **sổ == bản đọc SAU MỘT CÚ F5**.
+**Ba câu tôi nói ẩu mà Đức chặn, cộng điều kiện nghiệm thu đầu của tôi cũng sai** (*"sổ ==
+trang"* — cả hai cùng đọc 27 nên nó báo ĐẠT; hai vế cùng sai thì bằng nhau): ghi đủ kèm lý do
+từng chỗ ở mục **Trạng thái** của [ADR-0052](docs/adr/0052-tab-bi-che-thi-doc-lai-sau-f5-thay-vi-dung-han.md).
 
 **Khoá đổi tay hai lượt trong phiên**, cả hai theo chốt của Đức ghi **vào bảng quyền**: lấy lại
 lần đầu (*"bạn lấy khoá đi"*), bị `claude-luat-rasoat` lấy với bản ghi *"bên kia đã dừng rồi"*
