@@ -2835,7 +2835,7 @@
     els.referencesInput.disabled = operatorLocked;
     if (els.changeWorkbookBtn) els.changeWorkbookBtn.disabled = operatorLocked;
     if (els.addReferencesBtn) els.addReferencesBtn.disabled = operatorLocked;
-    for (const element of [els.outputDestinationMode, els.imageOutputFolderInput, els.separateResultDestinationInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.timeoutSecInput, els.maxRetriesInput, els.delayMinSecInput, els.delayMaxSecInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) if (element) element.disabled = outputLocked;
+    for (const element of [els.imageOutputFolderInput, els.separateResultDestinationInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.timeoutSecInput, els.maxRetriesInput, els.delayMinSecInput, els.delayMaxSecInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) if (element) element.disabled = outputLocked;
     // B-52 · HAI NÚT CHỌN THƯ MỤC KHÔNG PHỤ THUỘC WORKBOOK, và đây là lý do đo
     // được: `outputLocked` gộp hai điều khác hẳn nhau — *"đang chạy, đừng đổi
     // đích giữa chừng"* (đúng, giữ) và *"chưa nạp Excel"* (không liên quan).
@@ -2852,7 +2852,10 @@
     // là phải có file excel"* — chẩn đoán đúng, đúng dòng này.
     //
     // `operatorLocked` GIỮ NGUYÊN: đang chạy thì vẫn không được đổi đích.
-    for (const element of [els.destinationFolderBtn, els.chooseResultFolderBtn]) if (element) element.disabled = operatorLocked;
+    // Ô CHỌN CHẾ ĐỘ ĐÍCH đi cùng nhóm này, không đi với nhóm trên: muốn tới
+    // được nút *Chọn thư mục*, Đức phải chuyển chế độ sang *thư mục đã cấp
+    // quyền* trước — khoá ô này theo workbook là khoá luôn đường tới cái nút.
+    for (const element of [els.outputDestinationMode, els.destinationFolderBtn, els.chooseResultFolderBtn]) if (element) element.disabled = operatorLocked;
     if (state.outputSettings?.image?.kind === "directory") els.imageOutputFolderInput.disabled = true;
     if (state.outputSettings?.result?.kind !== "downloads") els.resultDownloadsFolderInput.disabled = true;
     document.querySelectorAll(".workflow-tab").forEach((tab) => {
@@ -3397,11 +3400,22 @@
   }
 
   function renderOutput() {
-    if (!state.outputSettings || !state.workbook) {
-      els.imageOutputText.textContent = "—"; els.resultOutputText.textContent = "—"; els.auditOutputText.textContent = "—"; els.outputPermissionText.textContent = "Open an XLSX to set locations."; updateReviewPacketControl(); controls(); return;
-    }
+    // B-52 ⑵ · CÁI KHOÁ SÂU NHẤT, và nó là lý do lượt vá ⑴ mở một nút KHÔNG AI
+    // NHÌN THẤY. Trước 09/09, hàm này THOÁT SỚM khi chưa có workbook — mà khối
+    // thư-mục-đã-cấp-quyền (`authorizedDestinationControls`) mặc định `hidden`
+    // trong HTML và CHỈ được hiện ở dòng dưới. Nên chưa mở XLSX thì:
+    //   nút mở khoá → nhưng khối chứa nó không bao giờ hiện → Đức vẫn không bấm được.
+    // Đức báo đúng hiện tượng đó: *"tôi vừa reload thì thư mục trong phần setup
+    // vẫn chưa chọn được từ đầu"*.
+    //
+    // Cấp quyền thư mục là quyền BỀN theo hồ sơ, không thuộc workbook nào — nên
+    // dựng một bộ cấu hình mặc định để VẼ ĐƯỢC khối đó, đúng cách
+    // `choosePrimaryDestination()` đã tự dựng khi bị gọi lúc chưa có workbook.
+    // Workbook mở sau sẽ dựng lại bộ này từ config của nó.
+    if (!state.outputSettings) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, "phien-chua-mo-workbook.xlsx");
     try {
       const values = window.DacOutputLocation.effective(state.outputSettings);
+      if (!state.workbook) els.outputPermissionText.textContent = "Chưa mở XLSX — tên file và mẫu đặt tên sẽ lấy từ workbook khi mở. Thư mục đích thì chọn được ngay tại đây.";
       els.imageOutputText.textContent = window.DacOutputLocation.locationLabel(values.image);
       els.resultOutputText.textContent = window.DacOutputLocation.fileLabel(values.result, values.resultFilename);
       els.auditOutputText.textContent = window.DacOutputLocation.fileLabel(values.result, values.auditFilename);
@@ -4668,6 +4682,11 @@
 
   function setOutputDestinationMode() {
     try {
+      // B-52 ⑵ · đổi chế độ đích được phép xảy ra TRƯỚC khi có workbook (đó là
+      // đúng thứ tự Đức cần: chọn thư mục xong rồi mới mở XLSX). Không có dòng
+      // này thì `state.outputSettings.image` ném trên một object chưa tồn tại,
+      // và cái ném đó bị try/catch nuốt thành một dòng chữ đỏ khó hiểu.
+      if (!state.outputSettings) state.outputSettings = window.DacOutputLocation.fromWorkbook({}, "phien-chua-mo-workbook.xlsx");
       const mode = els.outputDestinationMode.value;
       state.destinationMode = mode;
       if (mode === "downloads") { state.outputSettings.image = window.DacOutputLocation.downloadsLocation(els.imageOutputFolderInput.value || "Duc Auto ChatGPT"); state.outputProfileState = null; }
