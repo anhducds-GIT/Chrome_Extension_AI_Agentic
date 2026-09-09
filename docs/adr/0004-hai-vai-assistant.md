@@ -39,12 +39,11 @@ cửa quyết định này sinh ra để phá.
 
 `HARD ROLE FIREWALL` không đổi: vai điều phối rẽ nhánh và điều phối, **không tự code**.
 
-> **⚠ HAI BẢN CHIA VAI ĐANG SỐNG SONG SONG — cần Đức chốt một.**
-> `AGENTS.md` mục 6 từ 08/09 chạy một cặp **khác**: **① Giữ lõi** (luật · bộ máy · trạng thái
-> repo) và **② Phát & thu** (cửa duy nhất ra bên ngoài). Nó dẫn quyết định này làm căn cứ, nhưng
-> hai cặp **không cùng một cách chia** — "Sản phẩm" của 0017 sở hữu mã sản phẩm, còn "Phát & thu"
-> của mục 6 sở hữu thế giới bên ngoài. **Cặp trong `AGENTS.md` là cặp các phiên đang theo**; lần
-> đổi 08/09 chưa từng có quyết định nào ghi lại. Đức chốt cặp nào thì cặp kia đánh dấu chết ở đây.
+> **ĐÃ CHỐT 09/09 — cặp này đứng ở repo Extension.**
+> Từ 08/09 `AGENTS.md` mục 6 chạy một cặp **khác** (**Giữ lõi / Phát & thu**) mà không quyết định
+> nào ghi lại. Đức chốt 09/09: giữ **Hệ thống / Sản phẩm**, kèm ba điều bảng trên chưa có — **cả
+> hai vai đều code được**, **Sản phẩm giữ mã xuyên suốt chạy và debug + kiến trúc của chính nó**,
+> và *"Phát & thu"* thuộc repo bộ khung chứ không thuộc đây — [ADR-0029](0029-hai-vai-o-repo-extension.md).
 
 ### ⑵ Mỗi vai một checkout riêng
 
@@ -82,11 +81,18 @@ phải qua cửa tích hợp.
 
 ## Vế đã chết
 
+> Cặp vai *Giữ lõi / Phát & thu* của `AGENTS.md` mục 6 (08/09) cũng chết 09/09, nhưng nó **không
+> có số hiệu** — không quyết định nào từng ghi nó lại — nên nó không đứng được trong danh sách
+> máy đọc dưới đây. Thứ thay nó: [ADR-0029](0029-hai-vai-o-repo-extension.md).
+
 - **0004 — mô hình MỘT cửa Assistant cho mỗi repo.** Chết 07/09: 0017 vế ⑴ thay hẳn bằng
   hai vai chạy song song. Phần 0004 để lại và vẫn đúng — *trạng thái sống trong file repo,
   không sống trong chat* — nằm ở mục **Hệ quả** bên dưới, không phải ở đây.
-- **0017 ⑶ và ⑷ — nguồn điều phối và cửa tích hợp bản đầu.** Chết 08/09: quyết định 0018 và
-  0019 chỉnh lại, nay ở [ADR-0005](0005-lam-viec-song-song.md).
+- **0017 ⑶ — nguồn điều phối bản đầu.** Chết 08/09: 0018 chỉnh lại, nay ở
+  [ADR-0005](0005-lam-viec-song-song.md).
+- **0017 ⑷ — cửa tích hợp bản đầu.** Chết 08/09: 0019 chỉnh lại, nay ở
+  [ADR-0005](0005-lam-viec-song-song.md). *(Viết tách ra 09/09: gộp "⑶ và ⑷" một dòng thì bộ đo
+  chỉ đọc được ⑶, nên ⑷ chết mà máy không biết.)*
 
 ## Hệ quả
 

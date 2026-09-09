@@ -117,8 +117,8 @@ CORE (đọc mỗi lần):
 COMPANION (đọc khi cần):
 - `decisions.md` — **nay là MỤC LỤC** trỏ sang 67 ADR trong `docs/adr/`.
 - `docs/adr/` — 67 quyết định, mỗi cái một file **bất biến** (chuẩn Nygard, bốn mục).
-  Đã `Accepted` thì KHÔNG sửa — đổi ý thì viết ADR mới, trỏ hai chiều. Phép kiểm B12
-  cưỡng chế. Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` ở gốc repo.
+  **HỒ SƠ sửa được — gộp, phân nhóm, rút gọn; QUYẾT ĐỊNH thì không** ([ADR-0026](../../../docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑵, thay luật bất biến từng byte 09/09).
+  Đổi điều đã quyết thì phải có quyết định mới đứng sau; **bỏ hẳn một số hiệu khỏi sổ thì B12 CHẶN.** Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` ở gốc repo.
 - `DAC_XLSX_RUN_PLAN_V1.md` — hợp đồng schema XLSX (jobs/config) cho mọi
   workbook mới.
 - `NEXT-SESSION-BRIEF.md` — brief chi tiết cho phiên làm việc tiếp theo khi có

@@ -182,30 +182,30 @@ automation tự chạy — nếu chưa hỏi.
 - **Viết cho mắt Đức đọc.** Đức đọc không hiểu = lỗi hệ thống, viết lại đơn giản hơn. Chữ operator
   nhìn thấy: tiếng Việt. Mã lỗi (CODE): tiếng Anh.
 
-## 6. Vai — chia theo hướng đi của việc, không chia theo hãng
+## 6. Vai — chia theo TRÁCH NHIỆM, không chia theo hãng
 
-**Đức chốt mọi thứ.** Ngoài ra có hai vai ([ADR-0017](docs/adr/0004-hai-vai-assistant.md)). Vai là
-của **PHIÊN**, không của hãng: hãng nào cũng đóng được vai nào, và một phiên đóng đúng một vai cho
-tới khi đóng phiên.
+**Đức chốt mọi thứ.** Ngoài ra có hai vai — ở **repo này** là cặp **Hệ thống / Sản phẩm**
+([ADR-0029](docs/adr/0029-hai-vai-o-repo-extension.md), Đức chốt 09/09; repo bộ khung tự chọn cặp
+của nó). Vai là của **PHIÊN**, không của hãng, và một phiên đóng đúng một vai tới khi đóng phiên.
+
+**Vai KHÔNG phải hàng rào cấm gõ code** — *"cả 2 vai đều code được khi cần"*. Nó nói **ai sở
+hữu** và **ai ký nghiệm thu**, không nói ai được sửa.
 
 | Vai | Giữ gì | Việc chính | KHÔNG được |
 |---|---|---|---|
-| **① Giữ lõi** | luật · bộ máy · trạng thái của repo này | mỗi bản vá kèm **một phép kiểm ghim** · xoá luật không nổ lần nào · giữ cổng kiểm còn răng | nới một lớp bảo vệ cho cổng xanh · **tự ký nghiệm thu việc của chính mình** |
-| **② Phát & thu** | cửa duy nhất giữa repo này và bên ngoài | thi hành quy trình lên repo/gói khác · **mang chỗ vấp về** thành mục sổ nợ · tối ưu chính quy trình đó | sửa lõi để việc bên ngoài chạy được — chỗ vấp phải **về Vai ①** · báo một quy trình ĐẠT khi chưa chạy thật |
+| **① Hệ thống** | luật · bộ máy · cổng kiểm · trạng thái đa phiên của repo | mỗi bản vá kèm **một phép kiểm ghim** · xoá luật không nổ lần nào · giữ cổng kiểm còn răng | nới một lớp bảo vệ cho cổng xanh · **tự ký nghiệm thu việc của chính mình** |
+| **② Sản phẩm** | **mã của MỌI extension và Scouter**, xuyên suốt chạy và debug · **kiến trúc của chính sản phẩm** đó | dựng · chạy · debug · nghiệm thu sản phẩm · tài liệu yêu cầu và thiết kế của gói mình | báo một quy trình ĐẠT khi chưa chạy thật · **tự ký nghiệm thu việc của chính mình** |
 
 - **Bất biến chịu tải: người SỬA không tự NGHIỆM THU bản sửa của mình.** Một tờ nghiệm thu do bên
   bị kiểm ký là lời tự khai, không phải hàng rào — đúng luật mà `SELF_ATTESTATION` cưỡng chế trong
   lõi quyền. **Đừng đọc thành "người sửa không được TÌM lỗi"**: vai nào cũng được tìm lỗi ở bất kỳ
   đâu; thứ phải tách là **người ký** khỏi **người sửa**.
-- **Bàn giao giữa hai vai chỉ có một hình dạng:** Vai ② ghi chỗ vấp vào `BACKLOG.md` kèm trường
+- **Sản phẩm cần sửa hạ tầng thì GỬI YÊU CẦU**, không tự lấy vùng: một dòng `BACKLOG.md` kèm trường
   `đóng khi:`, Vai ① biến nó thành bản vá cộng một phép ghim. Vế này máy kiểm được
-  (`npm run test:backlog`); phần *"② phát hiện · ① sửa"* là **chữ, không phải luật** — nói thẳng để
-  không ai tưởng nó đang được cưỡng chế.
+  (`npm run test:backlog`).
+- **"Phát & thu" không còn là một VAI ở đây** — nó thiên về repo bộ khung. Việc *mang chỗ vấp bên
+  ngoài về thành mục sổ nợ* vẫn giữ, nhưng nó là **một việc** vai nào cũng làm.
 - Hai vai chạy cùng lúc được, nhưng **KHÁC VÙNG** (mục 1), và vừa khớp trần 2 chat.
-
-> **⚠ Còn một chỗ chờ Đức chốt:** [ADR-0017](docs/adr/0004-hai-vai-assistant.md) chia hai vai theo
-> **Hệ thống / Sản phẩm**, khác cặp trong bảng trên. Cặp trong bảng này là cặp các phiên đang theo;
-> lần đổi 08/09 chưa có quyết định nào ghi lại.
 
 **Cách file này đến tay từng AI:** Claude đọc `CLAUDE.md`, file đó trỏ sang đây. Codex đọc thẳng
 `AGENTS.md`. **Antigravity cần một câu dán mỗi phiên:** *"Đọc AGENTS.md ở gốc repo trước khi làm

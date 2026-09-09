@@ -258,9 +258,10 @@
       "workers/hnx-fetch/AGENTS.md": "2026-09-09",
       "workers/hnx-fetch/PROTOCOL.md": "2026-09-09",
       "workers/duc-scouter/v0.1.0/AGENTS.md": "2026-09-09",
-      "workers/duc-auto-chatgpt/v0.1.0/AGENTS.md": null,
-      "workers/duc-auto-gemini/v0.2.0/AGENTS.md": null,
-      "workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md": null
+      "workers/duc-auto-chatgpt/v0.1.0/AGENTS.md": "2026-09-09",
+      "workers/duc-auto-gemini/v0.2.0/AGENTS.md": "2026-09-09",
+      "workers/duc-auto-gg-flow-video/v0.1.0/AGENTS.md": "2026-09-09",
+      "docs/_TEMPLATE-adr.md": "2026-09-09"
     },
     "_mo_coi_co_y_doc": "Quyet dinh CON SONG ma co y KHONG co dong luat nao mang. Khoa la <pham vi><so hieu>, gia tri la LY DO. Phep (2) cua rule-compile.mjs tru chung ra. Chi khai khi da doc va CHAC no khong phai mot luat bi mat — luot gop 09/09 danh roi ba ve that, va chung tung trong y het mo coi co y.",
     "mo_coi_co_y": {

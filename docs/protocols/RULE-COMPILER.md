@@ -70,6 +70,10 @@ git show <sha-trước-lượt-gộp>:docs/adr/<file-cũ>.md | grep "^### "
 Vế nào cố ý bỏ thì phải xuất hiện ở mục `Vế đã chết` kèm tên quyết định thay nó. Không ở đó,
 không ở bản gộp = **đã mất**.
 
+**Đúng khuôn `- **NNNN [vế] — …**`** — văn xuôi thì bộ đo **không thấy gì và báo SẠCH** (vấp thật
+09/09). Có ký hiệu vế thì lượt trích trần `ADR-0002` vẫn xanh; bỏ ký hiệu là khai chết cả quyết
+định, mọi lượt trích nó thành ĐỎ.
+
 ## 6. Ba chỗ dễ vấp
 
 - **Trích theo SỐ HIỆU ĐANG SỐNG, đừng trích theo tên file.** Một file chủ đề mang nhiều quyết

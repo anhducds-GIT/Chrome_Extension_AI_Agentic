@@ -66,7 +66,7 @@ debug tự chạy khỏi mượn tay Đức.
 | `HANDOFF-ARCHIVE-01.md` | **Đuôi đã cắt của `HANDOFF.md`** — 183 lượt Log cũ, nguyên văn, không sửa một chữ. Chỉ đọc; ghi Log mới thì ghi vào `HANDOFF.md`. Ghép lại dựng được bản gốc giống hệt từng byte (bất biến ⑴ của ADR-0008) |
 | `BACKLOG.md` | Việc còn mở, đánh số `F-xx` |
 | `decisions.md` | **Nay là MỤC LỤC** trỏ sang `docs/adr/` (N-55, 09/09). Đừng thêm mục vào đây nữa |
-| `docs/adr/` | ADR bất biến — quyết định của riêng gói này. Đã `Accepted` thì KHÔNG sửa; đổi ý thì viết ADR mới, trỏ hai chiều. B12 cưỡng chế. **Đếm, đừng tin một con số gõ tay:** `ls docs/adr/*.md \| wc -l` |
+| `docs/adr/` | Quyết định của riêng gói này. **HỒ SƠ sửa được, QUYẾT ĐỊNH thì không** ([ADR-0026](../../../docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑵) — bỏ hẳn một số hiệu khỏi sổ thì B12 CHẶN. **Đếm, đừng tin một con số gõ tay:** `ls docs/adr/*.md \| wc -l` |
 | `AI-OPERATOR-GUIDE.md` | Vận hành/debug qua Bridge (trỏ về guide Gemini + khác biệt Flow) |
 | `NEXT-SESSION-BRIEF.md` | Brief bàn giao phiên kế tiếp (kiểm ngày trước khi tin; HANDOFF mới hơn thì HANDOFF thắng) |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook (thừa kế, sẽ mở rộng cho video) |
@@ -91,32 +91,13 @@ debug tự chạy khỏi mượn tay Đức.
 
 Thêm file/thư mục top-level mới → thêm 1 dòng vào bảng này. Không khai = không tồn tại.
 
-## Chọn nhãn cấu hình trên trang: việc của AI, và luật cho nó
+## Chọn nhãn cấu hình trên trang
 
-Đức chốt 2026-09-02: **chọn nhãn cấu hình là việc AI nên tự làm được**, và không riêng gói này —
-mọi extension trong repo. Trước đó Đức phải tự đặt Video mode và tự sửa chip `x{n}` mỗi phiên.
+**Đã lên tầng repo 09/09: [ADR-0028](../../../docs/adr/0028-chon-nhan-cau-hinh-tren-trang.md).**
+Đức chốt 02/09 rằng chọn nhãn cấu hình là việc AI nên tự làm được, **và không riêng gói này** —
+nên đường đã chứng minh chạy được cùng bốn luật (**nhãn phải có bằng chứng DOM** · **mờ là từ
+chối** · **cú bấm không phải bằng chứng, nhãn tóm tắt mới là** · **đóng bảng và ghi vào sổ cái**) nay
+ở đó. Bằng chứng của nhánh này: `evidence/F14-mode-probe-vi-20260902.json`.
 
-**Đường đã chứng minh chạy được** (F-14/F-26, bằng chứng `evidence/F14-mode-probe-vi-20260902.json`):
-
-1. `pressFlowControl(chip)` — bắn chuỗi `pointerdown` → `mousedown` → `pointerup` → `mouseup` →
-   `click`. **`element.click()` trần KHÔNG mở được bảng cấu hình của Flow.**
-2. Bảng mở ra thì **liệt kê được** toàn bộ nút cấu hình rời (`360p` `720p` · `4s`…`10s` ·
-   `16:9` `9:16` · `x1`…`x4`).
-3. Bấm nút cần, rồi **ĐỌC LẠI nhãn tóm tắt** để kết luận.
-
-**Bốn luật, rút ra từ chỗ đã trả giá:**
-
-1. **Nhãn phải có bằng chứng DOM, không dịch tay.** `arrow_forward Create` bị dịch thành
-   `arrow_forward Tạo`; nhưng `videocam Video` thì KHÔNG bị dịch. Suy từ ca này sang ca kia đã
-   sai một lần (F-24 là báo động giả của chính AI). Đo trước, ghi probe vào `evidence/`, rồi mới
-   thêm nhãn kèm trích nguồn.
-2. **Mờ là từ chối.** Đòi **đúng một** ứng viên khớp **chính xác** nhãn. Bảng cấu hình nằm cạnh
-   những nút đổi đơn giá (720p tốn gấp đôi 360p) — mờ ở đó là mờ về tiền.
-3. **Cú bấm không phải bằng chứng; nhãn tóm tắt mới là bằng chứng.** Bấm xong phải đọc lại. Một
-   hàm trả về phán quyết mà nó không tự đọc được là code nói dối.
-4. **Mở bảng thì phải đóng lại, và phải GHI LẠI vào sổ cái.** Một thay đổi cấu hình do AI tự làm
-   mà không để dấu vết thì Đức không còn cách nào biết. Xem trường `output_chip`.
-
-> **NỢ: cần một ADR ở tầng repo.** Luật này áp cho **mọi** extension nhưng hiện chỉ được viết
-> trong gói này, vì `docs/adr/` ở gốc repo cần quyền `_root` mà phiên khác đang giữ. Phiên nào
-> giữ được `_root` thì chuyển mục này thành ADR và để đây một dòng trỏ sang.
+> Món nợ cũ ở chỗ này — *"cần một ADR ở tầng repo… vì `_root` phiên khác đang giữ"* — **đã trả**.
+> Nó là một món nợ tự khai đúng cách: nói cả việc còn thiếu lẫn điều kiện để làm.

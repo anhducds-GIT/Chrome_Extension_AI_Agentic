@@ -71,11 +71,19 @@ này, việc chờ Đức nằm **lẫn** trong câu đó, nên bảng phải đ
 | `last_verified_commit` | nên có | **full SHA 40 ký tự** | sai dạng, hoặc repo không có commit đó → **đỏ** |
 | `last_verified_how` | nên có | một dòng: kiểm bằng cách nào | — |
 | `evidence_ref` | ✅ nếu có `last_verified` | file bằng chứng, đường dẫn từ gốc repo | file không tồn tại → **đỏ** |
-| `current_focus` | ✅ luôn | **một câu**, việc đang mở quan trọng nhất | — |
+| `current_focus` | ✅ luôn | **một câu**, việc đang mở quan trọng nhất. **Mọi liên kết trong đây tính TỪ GỐC REPO** — xem cảnh báo ngay dưới bảng | — |
 | `ref_readme` | ✅ luôn | con trỏ canonical | file không tồn tại → **đỏ** |
 | `ref_handoff` | ✅ luôn | con trỏ canonical | file không tồn tại → **đỏ** |
 | `ref_runbook` | tuỳ chọn | hướng dẫn vận hành, nếu có | file không tồn tại → **đỏ** |
 | `ref_backlog` | tuỳ chọn | sổ việc còn mở, nếu có | file không tồn tại → **đỏ** |
+
+> **ĐƯỜNG DẪN TRONG `current_focus` VÀ `next_step` TÍNH TỪ GỐC REPO, KHÔNG TỪ FILE NÀY.**
+> Bộ sinh **chép nguyên văn** hai trường đó vào `DASHBOARD.md` ở gốc repo, nên một đường dẫn đúng
+> khi đứng ở đây sẽ **chết trên bảng Đức đọc**. Gặp thật (N-56): một `STATUS.md` viết
+> `docs/adr/0050-…`, mà `0050` là quyết định **của gói** — ở gốc repo đường đó trỏ vào chỗ trống,
+> vì số hiệu ADR đánh **theo từng thư mục**. Viết đủ:
+> `workers/<gói>/<phiên-bản>/docs/adr/…`. Phần THÂN file thì ngược lại — dùng `../../../` như
+> bình thường, vì thân không bị chép đi đâu.
 
 **Đừng khai `ref_backlog` nếu package chưa có sổ.** Khai bừa thì generator đỏ, và đỏ đúng.
 

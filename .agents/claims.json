@@ -26,15 +26,15 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-luat-rasoat",
+      "owner": "claude-gpt-chay-het-job",
       "ai": "Claude",
-      "claimed_at": "2026-09-09T03:17",
-      "task": "N-56 + N-57: sua lien ket chet STATUS.md, dem ADR sai, ra soat AGENTS.md goi ChatGPT (CHI TAI LIEU)",
+      "claimed_at": "2026-09-09T03:50",
+      "task": "B-43 vong hai: gian nguong chot 6s + doc lai khi cau tra loi bi cat (TEXT_INCOMPLETE)",
       "released_at": null,
-      "taken_from": "claude-gpt-chay-het-job",
-      "taken_by": "claude-luat-rasoat",
-      "taken_at": "2026-09-09T03:17",
-      "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. Chi sua tai lieu, khong dung ma cua lane claude-gpt-chay-het-job."
+      "taken_from": "claude-luat-rasoat",
+      "taken_by": "claude-gpt-chay-het-job",
+      "taken_at": "2026-09-09T03:50",
+      "duc_decision": "Duc chot 2026-09-09: \"ban lay khoa di\" — lay lai workers/duc-auto-chatgpt cho lane code, vi ban va B-43 vong hai (content.js + ghim) da xanh 122/122 tren dia ma khong commit duoc. Lane claude-luat-rasoat chi lam TAI LIEU trong vung nay va phan do da commit o cc470037; hai vung gemini + gg-flow-video GIU NGUYEN cho ho."
     },
     "_root": {
       "owner": null,
@@ -92,11 +92,21 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "69f81a47dcfbfb4b",
+  "_fingerprint": "53b1a78e5891669b",
   "tam": {
-    ".agents/claims.json": {
+    "AGENTS.md": {
       "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T03:16",
+      "luc": "2026-09-09T03:51",
+      "viec": null
+    },
+    "docs/adr/0004-hai-vai-assistant.md": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T03:53",
+      "viec": null
+    },
+    "BACKLOG.md": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T03:55",
       "viec": null
     }
   }
