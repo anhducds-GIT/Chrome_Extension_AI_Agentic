@@ -743,3 +743,31 @@ file ghi ra bị cụt. Đã ghi lại bằng **file script**.
 
 **Đo.** Suite **132/132**. `B-36` và `~~B-52~~` đóng. **Chrome Downloads VẪN HỎNG** — mục này không
 chữa nó, chỉ mở khoá đường kia; ai muốn chữa thì bắt đầu bằng soi xem tiện ích nào đổi tên.
+
+## 2026-09-09 (lượt 15) · `claude-gpt-chay-het-job` — B-53 + ROADMAP MVP
+
+**`B-52` vòng 2 — lượt vá đầu của tôi CHƯA ĐỦ, và hỏng theo kiểu tệ nhất: nó mở một cái nút VÔ
+HÌNH.** Có **ba** khoá chứ không một: ① nút tắt theo `!state.workbook` (đã gỡ) · ② **ô chọn chế độ**
+cũng tắt theo đó, mà khối chứa nút chỉ hiện ở chế độ *thư mục đã cấp quyền* · ③ `renderOutput()`
+**thoát sớm** khi chưa có workbook, mà khối đó mặc định `hidden` và chỉ được hiện bên trong hàm ấy.
+Tôi gỡ ① rồi báo xong — **đọc thiếu**: thấy một chỗ khoá là dừng.
+
+**Bài học đáng hơn cái bug: *"đã mở khoá" không bằng "bấm được".*** Phép ghim vòng 1 chỉ đo thuộc
+tính `disabled` nên nó **XANH** trong khi Đức vẫn không bấm được — đúng về kỹ thuật, sai về câu hỏi.
+
+**`B-53` — quyền thư mục HẾT sau mỗi lần nạp lại.** Đo live: `audit_durable: false`, *"3 hồ sơ,
+**0 còn quyền**"*. Handle sống trong IndexedDB, quyền thì không. Và mã **chỉ có `queryPermission`**
+(hỏi), **không chỗ nào `requestPermission`** (xin lại) — một hàm thiếu, tám tuần đi vòng.
+**Tôi suýt hứa với Đức "cấp quyền một lần là xong mãi mãi"; phép đo bác nó trước khi tôi kịp nói.**
+
+Vá: `reauthorizeSole()` (chỉ nhận khi có **đúng một** hồ sơ — nhiều hơn thì không đoán) và
+`pruneOthers()` (dọn **chỉ sau** một lựa chọn tường minh của Đức: cú bấm đó LÀ lời khai). Panel xin
+lại **trước**, mở hộp chọn **sau** — cái giá của thứ tự này ghi thẳng trong mã. Suite **133/133**.
+
+**ROADMAP MVP đã thay khối kế hoạch cũ** (hai mục của nó xong hết trong ngày). Đích viết bằng thứ
+Đức đo được: *bấm ĐÚNG MỘT nút, giao việc bằng lời, ảnh về đúng thư mục đúng tên*. Bốn chặng
+**M0–M3**, kèm **thứ CC không làm được** (Chrome bắt buộc thao tác tay để cấp quyền — nên "một nút"
+là thật, không rút xuống 0 được) và ba rào chắn về credit.
+
+**Hôm nay đóng:** `~~B-14~~` `~~B-15~~` `~~B-20~~` `~~B-36~~` `~~B-45~~` `~~B-46~~` `~~B-48~~`
+`~~B-52~~`, cộng `B-47` vế ⑵ nghiệm thu live. Mở mới: `B-47` `B-49` `B-50` `B-51` `B-53`.

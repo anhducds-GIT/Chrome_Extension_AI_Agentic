@@ -2547,73 +2547,107 @@ khoá quay lại **im lặng**. Suite **132/132**.
 động (`sidepanel.js:1393`, `:5180`), và nó **chưa bao giờ** bị khoá — đó là lý do Đức bấm được ở
 đó mà không bấm được ở Setup.
 
+**VÒNG 2 — lượt vá đầu CHƯA ĐỦ, và nó hỏng theo kiểu tệ nhất: mở một cái nút VÔ HÌNH.**
+Đức báo *"tôi vừa reload thì thư mục trong phần setup vẫn chưa chọn được từ đầu"*. Có **ba** cái
+khoá, không phải một:
+
+| | |
+|---|---|
+| ① nút bị tắt theo `!state.workbook` | đã gỡ ở vòng 1 |
+| ② **ô chọn chế độ đích** cũng bị tắt theo `!state.workbook` | khối chứa nút chỉ hiện ở chế độ *thư mục đã cấp quyền* → không đổi được chế độ là **không tới được cái nút** |
+| ③ `renderOutput()` **thoát sớm** khi chưa có workbook | khối đó mặc định `hidden` trong HTML và **chỉ được hiện bên trong hàm ấy** → không bao giờ được vẽ |
+
+Tôi gỡ ① rồi báo xong — **lỗi đọc thiếu**: tìm thấy một chỗ khoá rồi dừng, không lần xem còn đường
+nào khác chặn cùng cái nút.
+
+**Bài học rộng hơn cái bug, và nó đáng ghi nhất ở mục này: *"đã mở khoá" không bằng "bấm được"*.**
+Phép ghim vòng 1 chỉ đo thuộc tính `disabled` nên nó **XANH** trong khi Đức vẫn không bấm được —
+một phép đo đúng về kỹ thuật mà sai về câu hỏi. Phép ghim nay phủ cả ba, gồm cả việc khối kia
+**phải được vẽ** khi chưa có workbook.
+
 - **đóng khi:** đã đóng — nghiệm thu live 09/09 cùng lượt với `~~B-36~~`.
 
-## KẾ HOẠCH TRIỂN KHAI — chốt 09/09, viết để sống qua một lượt compact
+### B-53 · (ĐÃ VÁ 09/09, chờ nghiệm thu live) Quyền thư mục HẾT sau mỗi lần nạp lại tiện ích
+**Đo live 09/09**, ngay sau một lượt Đức nạp lại: `audit_durable: false` · *"đếm được **3 hồ sơ,
+0 còn quyền**"* · `checkpoint.verified: false`. Handle sống sót trong IndexedDB, **quyền thì không**.
 
-Đức yêu cầu *"lên kế hoạch triển khai trước khi tôi compact"*. Nên kế hoạch nằm **ở đây**, không
-nằm trong hội thoại. Thứ tự lấy từ `node scripts/what-next.mjs` + `ROADMAP.md`, **không tự bịa**.
+**Và đây là chỗ tôi suýt nói sai với Đức:** *"cấp quyền một lần là xong mãi mãi"*. Phép đo bác nó
+trước khi tôi kịp nói. Thực tế là **một cú bấm MỖI LẦN nạp lại**.
 
-### Điều bộ máy nói, và nó khác dự đoán của tôi
+**Vì sao trước đây phải đi lại cả cây thư mục:** mã **chỉ có `queryPermission`** (HỎI còn quyền
+không) và **không chỗ nào gọi `requestPermission`** (XIN LẠI). Một hàm thiếu, tám tuần đi vòng.
 
-Hai làn **ưu tiên #1** không phải gói này, và **cả hai đang chờ Đức**:
+**Vá:**
+- `reauthorizeSole()` — xin lại quyền trên handle **đã lưu**. Chỉ nhận khi có **đúng một** hồ sơ;
+  nhiều hơn thì **không đoán** (ADR-0049 hệ quả 8). **Bắt buộc gọi từ thao tác tay** — Chrome từ
+  chối khi không có user gesture, nên gọi từ một lượt chạy tự động là im lặng thất bại.
+- `pruneOthers(keepId)` — dọn hồ sơ thừa, **chỉ sau một lựa chọn tường minh của Đức**. Cú bấm chọn
+  thư mục chính là lời khai *"đây mới là thư mục của tôi"*, nên xoá mấy cái còn lại là **ghi nhận**
+  chứ không phải đoán. Ba hồ sơ cũ nằm lại chính là thứ làm `reauthorizeSole()` không bao giờ nổ.
+- Panel: **xin lại TRƯỚC, mở hộp chọn SAU**. Cái giá của thứ tự này được ghi thẳng trong mã: nếu
+  không xin lại được thì lời gọi hộp chọn đã đi qua một `await`, nên Chrome **có thể** coi là hết
+  user gesture và ném — khi đó Đức bấm lần nữa. Đổi lại, ca thường gặp nhất chỉ còn **một cú bấm**.
 
-| làn | chờ gì | ghi chú tiền |
-|---|---|---|
-| `workers/hnx-fetch` | Đức bật công tắc *Cho phép lấy dữ liệu*; SSOT thiếu **3 ngày** (01/09, 02/09, 08/09 — hai ngày đầu gần như chắc là nghỉ Quốc khánh, lượt chạy sẽ tự ghi nhận) | không tốn credit ảnh |
-| `workers/duc-auto-gg-flow-video` | Đức xem thông báo **quá tải** của Flow còn không; job Q001 đã nằm sẵn trong hàng đợi | **CẢNH BÁO:** chip đang để **x2** mà trang tự khai 6 credit/video → một job có thể là **12**, không phải 6 |
+**Ghim:** `tests/folder-reauthorize-smoke.mjs` — cắt hai hàm đã ship rồi **chạy** trên kho hồ sơ
+giả. Bảy ca, gồm **đúng trạng thái đo được trên máy Đức** (3 hồ sơ → không đoán), Chrome từ chối/ném
+→ **fail closed**, và bốn phép khẳng định **THỨ TỰ** trên panel. Suite **133/133**.
 
-Gói này là **ưu tiên #2**, và nó là chỗ DUY NHẤT tôi làm tiếp được ngay.
+- **đóng khi:** Đức nạp lại tiện ích, bấm **một** nút, và một lượt `jobs.add` trả
+  `checkpoint.verified: true` mà **không** phải mở hộp chọn thư mục.
 
-### ⓐ (ĐÃ XONG 09/09 — và nó xong bằng một quyết định, không bằng một bản vá) `B-20`
+## ROADMAP MVP — CC lái, GPT sinh ảnh, Đức bấm MỘT nút (chốt 09/09)
 
-**Chạy xong ngay trong ngày, và kết quả khác điều mục này dự đoán.** Kế hoạch bên trên nói *"sửa
-lời khai sai ở `README.md:74`"* — **lời khai đó đã được sửa từ 07/09.** Tôi viết kế hoạch từ thân
-gốc của `B-20` (đo 26/08) mà **không đọc dòng tiến độ 07/09** trong Log. Nửa "làm code nói thật"
-**đã xong từ trước**.
+> Thay khối *KẾ HOẠCH TRIỂN KHAI* cũ: hai mục của nó (`~~B-20~~`, và lượt đo ba câu `B-14`/`B-15`/
+> `B-46`) **đã xong hết** trong ngày. Viết lại để sống qua một lượt compact.
 
-Nửa còn lại — **gỡ nhánh khớp-theo-alias** — tôi chốt **SẼ KHÔNG LÀM**: nó đụng **tám** file (ba
-module song song + ba phép ghim đang *khẳng định nhánh alias chạy được* + hai tài liệu vừa viết lại
-07/09), để đổi lấy **0** thay đổi hành vi, và nhánh đó **không có lỗi sống nào** hôm nay. Cái chuông
-`tests/reference-alias-dead-code-static.mjs` đã đứng canh đúng ngày ai nối ô nhập alias vào.
+### Đích của MVP, nói bằng thứ Đức đo được
 
-Số đếm đầy đủ nằm ở khối chốt của `~~B-20~~` bên trên. **Đức nói "gỡ alias đi" là tôi gỡ.**
+**Đức mở máy, bấm ĐÚNG MỘT nút, đưa đề bài bằng lời. Xong. Ảnh về đúng thư mục, đúng tên, có sổ.**
+Đức **không** phải ngồi nhìn màn hình, **không** phải mở Excel, **không** phải đặt tên tay.
 
-### ⓑ Chờ MỘT lượt chạy ảnh thật — nó trả lời **BA** câu cùng lúc @Đức:bấm
+### Thứ CC KHÔNG làm được, nói trước để MVP không hứa hão
 
-Đây là chỗ hội tụ, và nó là lý do đừng đo ba lần:
+**Cấp quyền thư mục cần một thao tác tay của người** — Chrome bắt buộc, không phải giới hạn của mã.
+Nên *"một nút"* ở trên là **có thật và không rút xuống 0 được**. Mọi thứ còn lại CC làm.
 
-1. **`B-46` (vế còn để mở):** tab bị che có vẽ xong một `<img>` **sinh ra** hay không. Đọc
-   `imageCandidateCount` + `generatedChains` từ `diagnostics.dom_probe` **sau** lượt sinh.
-2. **`B-14`:** `attachmentPreview` thực chất chỉ đứng trên **một** selector, và nó neo vào
-   `aria-label` **tiếng Anh** (`"Remove file"`). ChatGPT đổi nhãn hoặc Đức đổi ngôn ngữ giao diện
-   là mù. Cần probe **GIỮA LÚC ĐANG GẮN ẢNH** để tìm một mục neo theo **cấu trúc**, không theo chữ.
-3. **`B-15`:** `uploadPending` **chưa từng khớp** qua 52 lượt dò. Chưa phân biệt được "selector
-   chết" với "ChatGPT không có dấu hiệu upload-đang-chạy". Cách phân biệt đã ghi sẵn trong mục đó:
-   dùng ảnh **~2MB**, không phải 11–28KB, để cửa sổ upload đủ dài mà dò kịp.
+Và **Chrome Downloads vẫn hỏng trên máy này** (thứ gì đó đổi tên thành GUID — đo 09/09: 67 file/ngày).
+MVP **đi đường thư mục đã cấp quyền**, không cố chữa đường kia.
 
-**Nên lượt chạy đó phải đính một ảnh mẫu ~2MB, và phải probe HAI mốc: giữa lúc gắn, và sau khi
-sinh.** Một lượt, ba câu trả lời. Chạy ba lượt riêng là tiêu credit ba lần cho cùng một thứ.
+### Chặng
 
-**Vì sao `B-15` đáng làm sớm, nói thẳng cái xấu:** nếu `uploadPending` không bao giờ khớp thì
-`attachmentPending` trong cổng sẵn-sàng **luôn false**, tức cổng đó có thể đang là **mã chết** — và
-một cổng chết ở đúng chỗ này nghĩa là runner có thể gõ Gửi **khi ảnh chưa upload xong**. Chưa
-khẳng định, nhưng đó là giả thuyết phải đo, và nó cùng họ với hai con bug audit bắt hôm nay.
+**M0 · Nghiệm thu bản vá hôm nay — 0 credit, làm ngay khi Đức nạp lại.**
+Đức nạp lại → bấm **một** nút → CC gọi `jobs.add`. **Đạt khi** `checkpoint.verified: true` mà
+**không** phải mở hộp chọn thư mục. Đóng `B-53`. *Không đạt thì tôi sai, và phải đo lại chứ không
+vá tiếp theo phỏng đoán.*
 
-### ⓒ Việc chờ Đức, xếp theo thứ tự tôi khuyên
+**M1 · Một lượt việc THẬT, không phải một phép đo — 3–5 ảnh.**
+**Đề bài do Đức đưa**, không phải prompt tôi bịa để test. **Đạt khi**: mọi ảnh về đúng tên · sổ
+audit ra file · **0** job `INTERRUPTED` · và **Đức dùng được ảnh đó vào việc thật**. Điều cuối là
+điều kiện thật sự — ba điều trên chỉ là điều kiện kỹ thuật.
 
-1. **Bật công tắc `hnx-fetch`** — rẻ nhất, không tốn credit ảnh, và đang thiếu dữ liệu thật.
-2. **Xem Flow còn quá tải không** — nhưng **hỏi lại chuyện chip x2 trước khi bấm**, vì nó có thể
-   nhân đôi hoá đơn.
-3. **Một loạt ảnh thật ở gói này** — khi nào Đức muốn dùng tính năng, không phải để làm hài lòng
-   một phép đo.
+**M2 · Bịt ba lỗ đã đo. Hai cái CC tự làm, một cái cần Đức quyết.**
+- `B-47`⑴ — thông điệp `NO_NEW_IMAGE` **nói sai nguyên nhân**; đã đẩy hai phiên đi tìm lỗi
+  selector. CC làm, cùng họ `~~B-16~~`.
+- `B-51` — probe **giấu ảnh mới nhất** khi hội thoại ≥15 ảnh. CC làm.
+- `B-49` — cổng gắn ảnh: bỏ điều kiện đo nhầm **và** đếm theo TÊN FILE. **Cần Đức chốt** vì đụng
+  cổng trước-khi-gửi. Đây là việc **quyết**, không phải việc code.
 
-### Không làm, và vì sao
+**M3 · Chạy dài, đo cái Đức thật sự quan tâm — 10+ ảnh, tab nền, Đức làm việc khác.**
+Đo: tỉ lệ job hỏng · thời gian mỗi job · **số lần panel treo** (`B-50`, đã đo là có thật khi nạp
+ảnh mẫu lớn). Ra số rồi mới nói MVP dùng được hay chưa.
 
-- **`B-36`** (nút cấp lại quyền thư mục): Đức chốt 09/09 *"tạm thời chưa cần"*.
-- **Vế live `ADR-0053`:** cần một lỗi thật của nhà cung cấp. **Không giả lập.** Đã hạ mức 09/09
-  nên nó không chặn gì.
-- **`B-06` / `B-07`** (đồng bộ và port ngược sang Gemini): P2, và cả hai chạm gói khác — không
-  mở khi gói này còn P1.
+### Ai làm gì
 
+| | |
+|---|---|
+| **Đức** | bấm một nút cấp quyền sau mỗi lần nạp lại · đưa đề bài · chốt `B-49` |
+| **CC** | lái Bridge, đo, ghi sổ, vá, và **tự nói ra khi mình sai** |
+| **GPT** | sinh ảnh — không phải một bên cộng tác, mà là cái máy ở đầu kia |
 
+### Rào chắn, ghi vì hôm nay đã tiêu 9 credit ảnh cho đo đạc
+
+- **Một lượt chạy phải trả lời ít nhất HAI câu.** Hôm nay lượt tốt nhất trả lời ba câu; lượt tệ
+  nhất trả lời không câu nào vì tôi đo nhầm mốc nền.
+- **Không giả lập.** Không dựng một lỗi để xem máy phản ứng.
+- **Đo trước, vá sau.** Hôm nay tôi vá theo giả thuyết một lần (port cách gọi của Gemini) và phải
+  revert.
