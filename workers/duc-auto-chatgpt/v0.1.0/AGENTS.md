@@ -21,66 +21,29 @@ dùng lại**, phạm vi đã rộng ra nhiều kể từ đó.
 
 ## Luật vàng của project này
 
-> **Mục này CỐ Ý gần giống `workers/duc-auto-gemini/v0.2.0/AGENTS.md` — đừng gộp.** Bộ biên dịch
-> luật nêu ba cặp ở phép ③ `LUAT_TRUNG` (luật 3, 5, 9); đây là câu trả lời, ghi tại chỗ theo
-> `docs/protocols/RULE-COMPILER.md` mục 4. **Lý do:** một phiên làm ở gói này đọc `AGENTS.md` gốc
-> repo rồi đọc file này, **không bao giờ đọc file của gói kia**. Gộp vào một file dùng chung là
-> bắt mọi phiên đọc thêm một file thứ ba, và tệ hơn: **hai bản PHẢI được phép lệch nhau** — luật 7
-> và 8 dưới đây khác nhánh Gemini một cách đúng đắn, vì hai sản phẩm khác nhau.
->
-> **Cái lệch mới là bệnh, không phải cái giống.** Ngày 09/09 phép ③ chính là thứ lôi ra được ba
-> vế đã chết ở nhánh Gemini — trong đó luật 8 nằm sai 16 ngày, đúng cái luật mà file NÀY đã sửa
-> từ 24/08. Phép ③ kêu ở đây là nó **đang chạy đúng**, không phải một món nợ.
+> **Mục này CỐ Ý gần giống gói Gemini — đừng gộp.** Lý lẽ đầy đủ, kèm ba chỗ phép ③ đã bắt được ở
+> nhánh kia: [ADR-0032](../../../docs/adr/0032-ba-goi-giu-luat-rieng-gan-giong-nhau.md).
 
-1. **Không sửa/xoá/regenerate bất cứ gì trong `pilot-03/`, `pilot-05/`,
-   `pilot-06/`, `pilot-06B/`.** Đây là bằng chứng vận hành (evidence) của các
-   lỗi đã tìm ra và đã sửa — ghi đè lên là xoá mất bằng chứng.
-2. **Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.**
-   Đây là yêu cầu bảo mật — nội dung ảnh/text từ chatgpt.com đi vào side panel
-   có quyền cao, phải build DOM node, không được ghép chuỗi HTML.
-   `tests/artifact-integrity-smoke.mjs` chặn build nếu có.
-3. **Không làm yếu bất kỳ cơ chế bảo vệ nào đã có:** exact-once submission,
-   attribution, readiness gating, retry semantics, persistence verification,
-   checkpoint protocol, security hard-stop. Sửa bug được, nhưng không được
-   "sửa" bằng cách bỏ bớt một trong các lớp bảo vệ này.
-4. **Chữ operator nhìn thấy luôn tiếng Việt** (`operator-messages-core.js`,
-   `halt-instructions-core.js`...); **mã lỗi (CODE) luôn tiếng Anh** vì nó là
-   định danh trong audit JSONL, Result ledger, và test. Không bao giờ để một
-   test bảo mật assert vào câu chữ hiển thị (caption/label) — chỉ assert vào
-   logic/wiring.
-5. **Sửa bất kỳ file `.js` nào → phải nói Đức reload extension ở
-   `chrome://extensions` trước khi test.** Không giả định thay đổi đã có hiệu
-   lực.
-6. **Commit: AI được tự commit (kể cả main) từ 2026-08-24** — quyết định của
-   Đức, ghi trong `decisions.md`. Bốn điều kiện bắt buộc: test xanh trước khi
-   commit; không bao giờ `push --force`/rewrite history; mỗi commit có 1 dòng
-   Log trong `HANDOFF.md`; xoá file / sửa pilot evidence / thay đổi ranh giới
-   Run vẫn phải hỏi Đức.
-7. **Agent Bridge: `run.start` / `run.pause` / `run.resume` không tồn tại và
-   sẽ không bao giờ được thêm vào mà không có quyết định mới, ghi lại trong
-   `decisions.md`.** Bridge là ingress + observability, không phải remote
-   execution. Side panel luôn là executor duy nhất; đóng panel → mọi lệnh
-   Bridge liên quan Queue/workbook trả `EXECUTOR_UNAVAILABLE`, không có runner
-   nền nào thay thế. *Exception duy nhất (Đức chốt 2026-08-25, xem
-   `decisions.md`): một method **trial run** riêng, có nắp cứng (dev-toggle
-   BẬT, ≤30 job, timeout ≤ `LIMITS.trial_timeout_cap_sec`, cách nhau ≥5–6
-   phút, nhãn audit `bridge_dev`) — `run.start` thật vẫn cấm vĩnh viễn.*
-   **Hai con số của nắp đã đổi, `run.start` thì KHÔNG:** số job 2 → 30 (Đức
-   chốt 2026-08-25, việc thật là 20–30 ảnh) và trần timeout 90 → **900 giây**
-   (Đức chốt 2026-09-07,
-   [ADR-0015](../../../docs/adr/0015-nang-tran-duong-thu-len-900-giay.md) ở gốc
-   repo). Trần khai ở **đúng một chỗ** — `LIMITS.trial_timeout_cap_sec` trong
-   `bridge-core.js` — nên đừng gõ con số vào đâu khác. Nới đường thử cho khớp
-   việc thật **không** phải trao cho AI khả năng tự tiêu credit: nếu bạn thấy
-   mình đang gỡ `run.start` khỏi `POLICY.prohibited_methods` thì dừng lại.
-8. **In-app preview pane vẫn cấm dùng để "xem" UI** (chặn script, bỏ
-   stylesheet — xem `README.md`/`NEXT-SESSION-BRIEF.md`). **Nhưng từ
-   2026-08-24, harness bằng Chrome THẬT được phép** (quyết định của Đức trong
-   `decisions.md`): Playwright/CDP chạy extension thật với trang chatgpt.com
-   giả lập là công cụ verify hợp lệ. Việc xem bằng mắt của Đức chỉ còn cần
-   cho những gì harness không chạm được (OS folder picker, chatgpt.com thật).
-9. **Một việc một lúc, không overbuild.** Không thêm tính năng/abstraction
-   ngoài phạm vi được giao trong cùng 1 lượt sửa.
+1. **Bốn luật ⑴–⑷ cũ nay nằm ở lõi dùng chung** (`workers/_shared/LUAT-CORE.md`, in ngay trên
+   đây) — **đừng chép lại**. Phần riêng của gói này: `tests/artifact-integrity-smoke.mjs` chặn
+   build nếu có HTML ghép chuỗi; chữ operator ở `operator-messages-core.js` và
+   `halt-instructions-core.js`; **không phép kiểm bảo mật nào được assert vào câu chữ hiển thị**
+   — chỉ assert vào logic/wiring.
+2. **Agent Bridge: `run.start` / `run.pause` / `run.resume` không tồn tại** — thêm lại phải có
+   quyết định mới ghi trong `decisions.md`. Bridge là ingress + observability, không phải remote
+   execution. Side panel là executor DUY NHẤT; đóng panel → mọi lệnh Bridge liên quan
+   Queue/workbook trả `EXECUTOR_UNAVAILABLE`, không có runner nền nào thay thế. *Ngoại lệ DUY
+   NHẤT, và nó **tiêu credit thật**:* method **`run.trial`** (Đức chốt 25/08) với **bốn nắp cứng** — dev-toggle BẬT · ≤ 30 job · hai trial cách nhau ≥ 5–6 phút · nhãn audit
+   `bridge_dev`; trần timeout **900 giây**
+   ([ADR-0015](../../../docs/adr/0015-nang-tran-duong-thu-len-900-giay.md)). Trần khai ở **đúng
+   một chỗ** — `LIMITS.trial_timeout_cap_sec` trong `bridge-core.js` — đừng gõ vào đâu khác.
+   **Thấy mình đang gỡ `run.start` khỏi `POLICY.prohibited_methods` thì DỪNG LẠI.**
+3. **Hai luật chung cho mọi extension ở [`workers/_shared/AGENTS.md`](../../_shared/AGENTS.md)** —
+   *sửa `.js` thì nhắc Đức reload trước khi test* · *preview pane cấm, harness Chrome THẬT thì
+   được*. **Đừng chép lại đây** — cái giá của bản chép đã đo, ghi ở chính file đó.
+4. **Một việc một lúc, không overbuild** — không thêm tính năng/abstraction ngoài phạm vi trong
+   cùng một lượt sửa. Ba lớp bảo vệ riêng của gói này, ngoài danh sách ở lõi: *readiness gating* ·
+   *checkpoint protocol* · *security hard-stop*.
 
 ## Core / Companion của project này
 
@@ -145,7 +108,7 @@ Gặp ca xám thì **hỏi Đức**, đừng tự định nghĩa.
 | `AI-OPERATOR-GUIDE.md` | Sổ tay vận hành + bảng lỗi **ĐÃ GẶP THẬT** trên trang. **Mở TRƯỚC khi chạy live**, đừng chẩn đoán lại từ đầu |
 | `STATUS.md` | Trạng thái vận hành một trang cho mắt Đức; frontmatter sinh `DASHBOARD.md` ở gốc. Chỉ TRỎ, không chép. Schema: `STATUS.template.md` ở gốc repo |
 | `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất**. Ghi vào **cuối** |
-| `HANDOFF-ARCHIVE-01.md` · `HANDOFF-ARCHIVE-02.md` | Đuôi đã cắt của `HANDOFF.md`, nguyên văn, **chỉ đọc** — ghép lại dựng được bản gốc giống hệt **từng byte** (ADR-0008 gốc repo ⑴) |
+| `HANDOFF-ARCHIVE-01.md` · `HANDOFF-ARCHIVE-02.md` · `HANDOFF-ARCHIVE-03.md` | Đuôi đã cắt của `HANDOFF.md`, nguyên văn, **chỉ đọc** — ghép lại dựng được bản gốc giống hệt **từng byte** (ADR-0008 gốc repo ⑴) |
 | `decisions.md` | Mục lục trỏ sang `docs/adr/` |
 | `docs/adr/` | ADR của riêng gói này. **Đếm, đừng tin một con số gõ tay:** `ls docs/adr/*.md \| wc -l` |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX (jobs/config) cho mọi workbook mới |

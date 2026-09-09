@@ -1,0 +1,157 @@
+# HANDOFF lưu trữ — HANDOFF.md, 5 mục cũ
+
+> **Đây là phần đuôi đã cắt của [`HANDOFF.md`](HANDOFF.md) cạnh file này.**
+> Sinh bằng `node scripts/handoff.mjs --cat HANDOFF.md --giu 20` theo
+> [ADR-0008](docs/adr/0008-nhat-ky-phien.md) — cắt ngày 2026-09-09.
+>
+> Cắt theo **vị trí trong file**, không theo ngày (bất biến ⑵ của ADR): file kia giữ **20
+> mục cuối**, 5 mục trước đó nằm ở đây — **nguyên văn, không sửa một chữ**.
+>
+> **Dựng lại bản gốc:** thay khối con trỏ trong `HANDOFF.md` (phần giữa dòng `## Log` và
+> tiêu đề `##` đầu tiên) bằng toàn bộ phần dưới dấu `ARCHIVE-BODY-START` ở đây — ra đúng bản
+> gốc **từng byte**. SHA-256 bản gốc trước khi cắt: `f4d84180582d86d5fc4d8ee3d6a106c023a0b1cbab121b2777c2e21dcc9e6219`.
+>
+> **Chỉ đọc.** Ghi Log mới thì ghi vào `HANDOFF.md`, đừng ghi vào đây.
+
+<!-- ARCHIVE-BODY-START -->
+
+<!-- HANDOFF-CUT-POINTER: ADR-0008 -->
+> **Lịch sử cũ hơn đã dời sang [`HANDOFF-ARCHIVE-01.md`](HANDOFF-ARCHIVE-01.md)** — cùng thư mục
+> này, nguyên văn, không mất chữ nào. Cắt 2026-09-06 theo ADR-0008 (phiên `claude-handoff-cat`):
+> file này giữ **20 mục cuối theo vị trí trong file**, 124 mục trước đó nằm ở file lưu trữ.
+> Cần đào lịch sử xa hơn thì mở file đó; ghi Log mới thì vẫn ghi vào cuối file này.
+<!-- /HANDOFF-CUT-POINTER -->
+
+- 2026-09-02 (tiếp) · Claude (`claude-stabilizing-bridge`) · **Cửa sổ bỏ cuộc nay trừ cả kỳ thử và hạn chờ ACK — áp cho cả ba nhánh cùng lúc.**
+  - Audit khi port sang `duc-auto-gg-flow-video` chỉ ra: host **xác thực xong rồi im lặng** lặp một
+    chu kỳ ~30 giây (kỳ thử + hạn chờ ACK) nhưng chỉ bị trừ độ trễ reconnect, nên cửa sổ 2 phút
+    kéo ra nhiều phút và giữ service worker thức. Nay chu kỳ đó tự trừ vào ngân sách, giống hạn
+    bắt tay đã làm.
+  - **Phép trừ là cận trên, không phải đồng hồ thật** — ghi rõ trong code. Sau một ACK về muộn,
+    chu kỳ kế bị trừ trọn một kỳ dù thực tế trôi ít hơn; lệch về phía **bỏ cuộc sớm hơn**, tức
+    phía tiết kiệm pin. Auditor nêu, tôi chấp nhận có chủ đích.
+  - Sửa **một dòng** ở nhánh này, giữ ba nhánh không lệch nhau. Phép ghim đặt ở `gg-flow-video`
+    (nơi phát hiện ra). Suite nhánh này vẫn xanh toàn bộ.
+
+## 2026-09-02 — `claude-surface-fix`: vá lỗ hổng surface (Đức giao gói)
+
+**Làm gì.** Đức nêu: chạy từ trang chủ `chatgpt.com/` thì hỏng. Sổ tay ghi **sai** nguyên nhân;
+đọc code thì là hai lỗi tầm thường hơn — `surface()` trả `CONVERSATION` cho **mọi** url
+chatgpt.com kể cả trang chủ, và `surfaceAllowed` được gọi đúng **một** chỗ (dòng in ra của
+`dom_probe`), tức có luật mà không nối dây. Đây là lỗ hổng **ngang hàng**: cả `gemini` lẫn
+`gg-flow-video` đã nối dây này từ 25/08, nhánh này là cái duy nhất còn hở. Vá bằng cách **port,
+không sáng chế**: chỉ `/c/<id>` và `/g/<gpt>/c/<id>` là hội thoại, còn lại `LAUNCHER`, và ném
+`WRONG_SURFACE` **trước tác dụng phụ đầu tiên**.
+
+**Kết quả.** Suite **98/98**; đột biến 8 lượt, 1 thoát rồi được vá. Phát hiện đáng giá nhất:
+**suite đang ghim chính cái lỗi** — có sẵn dòng khẳng định `surfaceAllowed("https://chatgpt.com/")`
+là `true`. Lỗi sống dai không phải vì không ai kiểm, mà vì phép kiểm khẳng định hành vi sai. Đo
+live sau khi Đức reload cho thấy **vòng 1 chưa đủ**: `ping` vẫn trả `READY` ở trang chủ vì đường
+của `ping` không đi qua chỗ vừa nối. Vòng 2 vá ba mắt xích còn thiếu, trong đó mắt quan trọng
+nhất là **luật phân loại** trong `runner-core.js` — thiếu nó thì `WRONG_SURFACE` rơi xuống
+`OTHER`, mà `OTHER` **được retry**, nên khai "hard stop" thành vô nghĩa.
+
+**Còn mở.** **Chưa nghiệm thu live vòng 2** — cần Đức reload extension rồi F5 tab; nghiệm thu
+không tốn credit: để tab ở trang chủ, `ping` phải trả `failure_type: WRONG_SURFACE` thay vì
+`READY`. Mọi đường dẫn chatgpt.com **ngoài** `/c/` bị xếp `LAUNCHER` là mức **[DÒ]**, chưa đo —
+gặp dạng hội thoại không có `/c/` thì nới **kèm probe chứng minh**. Bài học lặp lại ba lần trong
+một phiên: khai một luật ở một chỗ rồi tưởng là xong; `ping`, `runPrompt`, `dom_probe` là ba
+đường khác nhau và không dùng chung mã.
+
+> Bản dài nguyên văn: [`HANDOFF-ARCHIVE-02.md`](HANDOFF-ARCHIVE-02.md).
+
+---
+
+## 2026-09-02 · phiên `claude-y02-probe-article` — `dom_probe` thôi mù chữ trên trang
+
+**Mục này gộp nhiều lượt của nhiều phiên**; dưới đây chỉ là **trạng thái**.
+
+**Còn mở.**
+- `B-36` **P1** — chẩn đoán **đã lật**: determiner có khớp và có gọi `suggest({filename})`
+  (`{patched: 'function', tickets: []}`) mà **Chrome bỏ qua** đề xuất, nên lỗi **không** nằm
+  trong logic khớp của extension. Việc kế là **một phép đo đọc-thuần**: tạo blob **ngay trong
+  service worker** rồi xem tên có dính — **không vá tiếp trước khi có con số đó**. Đi vòng được:
+  chọn thư mục đích trong Side Panel thì đường ghi không qua Chrome Downloads.
+- `B-33` — ba nhánh kia có cùng lỗi selector chết không. Chưa soi.
+- `B-34` (gom control queue) · `B-35` (N run đồng thời, cần brief + audit riêng). Thứ tự Đức
+  chốt: pilot GPT ổn trước, rồi mới migrate Gemini/Flow.
+- **Phiên theo tab (ADR-0046) bước 1 ĐÓNG BĂNG** sau 6 vòng audit (GPT chốt PASS). Việc kế là
+  **pilot vận hành thật — phải Đức duyệt trước**. Theo dõi một flake:
+  `bridge-multiprofile-transport-async-smoke` đỏ **một** lần dưới tải, 8 lượt sau xanh.
+- `chat.read` nắp tổ hợp · `B-22` · `B-23` · `B-16` — đã vá, chỉ thiếu nghiệm thu live.
+  `B-07` · `B-27` vẫn mở thật.
+
+**Cần Đức.** **Reload extension** ở `chrome://extensions` — reload **tab là không đủ**. Ba phép
+nghiệm thu **không tốn credit**: `B-22` bấm Stop ngay trước khi job đầu được gửi (phải ghi
+`STOP_REQUESTED_BEFORE_SUBMIT` mà **không** có `PROMPT_SUBMITTED`) · `B-23` sửa một chữ trong ô
+câu trả lời của Result XLSX, giữ nguyên số ký tự, nạp lại làm ledger resume rồi Check Plan (phải
+thấy `RESUME_RESPONSE_HASH_MISMATCH`) · `B-16` gọi `jobs.add` với token ảnh chưa nạp (phải thấy
+`VALIDATION_FAILED`, không phải `INTERNAL_ERROR`).
+
+**Ba cái bẫy.** ⑴ Ghế Bridge **bám tab**, run **bám hội thoại** — thiết kế đã chốt (ADR-0046).
+⑵ Đường **gửi** đã có: `jobs.add` → `run.trial` → `chat.read` — không cần XLSX, không cần
+`chat.send`; trần 90 giây đủ (đo 41s · 49s), cooldown 5 phút giữa hai trial là thật.
+⑶ `matched` trong `dom_probe` **không phải** số lượt — đếm lượt thì đọc `assistantCount`.
+
+> Bản dài nguyên văn: [`HANDOFF-ARCHIVE-02.md`](HANDOFF-ARCHIVE-02.md).
+
+
+## 2026-09-06 — `claude-dau-worker`: đặt dấu @Đức cho khối "Cần Đức" trên bảng
+
+Lượt 2 của đề bài `BANG-CAN-DUC-01`. Khối "Cần Đức" trên bảng nay **suy từ một dấu đặt ngay
+trên dòng của mục** (`@Đức:bấm` / `@Đức:chốt`), không đọc trường `human_action` nữa. Chưa có
+dấu thì mục không lên bảng, nên lượt này chỉ đi điền dấu — **không sửa code, không sửa hành vi**.
+
+**Đã đánh dấu trong gói này:** B-09 (bấm) · B-36 (bấm) · B-17 (chốt) · B-27 (chốt).
+
+- B-36: nghiệm thu live 04/09 ĐÃ CHẠY và THẤT BẠI, nên dấu không đặt cho "chạy nghiệm thu" mà cho phép đo trong console service worker — đó mới là thứ đang chờ Đức. Tiêu đề mục B-36 vẫn ghi "CHỜ NGHIỆM THU LIVE", đã lạc hậu; để nguyên vì sửa văn mục là việc khác.
+- B-19 đã đóng 06/09 nên KHÔNG đánh dấu.
+
+**Kiểm chứng:** sinh lại bảng, khối "Cần Đức" đếm **10 việc · 6 bấm · 4 chốt** trên cả ba gói —
+khớp đúng 10 dấu đã đặt. Đóng mục thì dấu mất theo, không phải nhớ đi xoá.
+
+**Còn mở:** không đụng `scripts/`, `docs/`, `HANDOFF.md` gốc repo; không sinh lại artifact máy.
+
+## 2026-09-06 — `claude-don-so`: `B-36` — tiêu đề nói "chờ nghiệm thu", nghiệm thu đã chạy và đã hỏng
+
+**Làm gì.** Không sửa một dòng mã nào — lượt này chỉ làm cho sổ khớp sự thật. Tiêu đề `B-36` ghi
+*"ĐÃ VÁ 2026-09-04, CHỜ NGHIỆM THU LIVE"*, nên đọc lướt là tưởng chưa ai thử; thực tế nghiệm thu
+**đã chạy đúng ngày 04/09 và THẤT BẠI**, rồi một phép đo trong console cùng ngày còn **lật ngược
+chẩn đoán**. Thân mục ghi đủ cả hai chuyện; chỉ tiêu đề lạc hậu — mà tiêu đề là thứ duy nhất lọt
+lên bảng. Đã viết lại tiêu đề cho khớp cả bốn sự kiện và thêm một khối "đọc một dòng cho nhanh",
+**giữ nguyên toàn bộ thân mục** kể cả hai giả thuyết đã bị bác.
+
+**Kết quả.** Nợ gói ChatGPT giữ nguyên **22** (không đóng mục nào), đo bằng chính `debtByUnit`.
+Thêm `B-36` vào ô `current_focus` của `STATUS.md` — ô đó liệt kê việc còn mở mà **thiếu hẳn**
+đúng cái mục P1 chặn mọi mutation Bridge, nên gói trông nhẹ hơn thực tế. Dấu `@Đức` của `B-36`
+giữ nguyên loại **BẤM**: nó đặt cho *phép đo trong console service worker*, không cho lượt nghiệm
+thu đã chạy xong.
+
+**Còn mở.** `B-36` vẫn **mở, vẫn P1**. Bản vá được **giữ lại** vì nó bịt hai đường mất tên thật
+có trong mã, nhưng **đừng đọc nó thành đã sửa B-36**. Việc còn lại là một phép đo đọc-thuần, và
+**không vá tiếp trước khi có con số đó**. `B-19` · `B-27` · `B-07` **trông giống đã đóng nhưng là
+việc mở thật** — lượt `claude-gpt-b` ngày 06/09 đã soi, lượt này đọc lại và xác nhận, không lật.
+
+> Bản dài nguyên văn: [`HANDOFF-ARCHIVE-02.md`](HANDOFF-ARCHIVE-02.md).
+
+## 2026-09-06 — `claude-codex-ngan`: viết ngắn 3 mục nhật ký cũ, bản dài sang `HANDOFF-ARCHIVE-02.md`
+
+**Làm gì.** Việc ④ của [`BRIEF-HANDOFF-TRAN-01`](../../../docs/briefs/BRIEF-HANDOFF-TRAN-01.md),
+Đức duyệt ở ADR-0011 mục ⑶. Gọi Codex CLI rà từng mục vượt trần 2.600 byte rồi viết lại theo
+hình dạng ở [`docs/protocols/HANDOFF.md`](../../../docs/protocols/HANDOFF.md) mục 1 (làm gì ·
+kết quả số · còn gì mở), sau đó tôi tự đọc lại và biên tập cho mắt Đức đọc — bản Codex đúng
+về dữ kiện nhưng đặc như sổ tay máy.
+
+**Kết quả.** File này **57.123 → 12.321 byte**; 3 mục vượt trần → **0**, mục dài nhất còn **2.599**.
+**Không mất một byte:** ghép phần thân của `HANDOFF-ARCHIVE-02.md` vào đúng chỗ 3 mục đó
+dựng lại bản gốc **giống hệt từng byte** — SHA-256 `e068861a47229370b35148f3037af87a42484d0a11dfc444fd0c30dad5866764`, đã đo bằng máy chứ
+không phải lời hứa. Mỏ neo khớp **3/3** mục, không lượt nào ra 0.
+
+**Còn mở.** Không có gì của gói này. Hai việc còn lại của brief **không làm được trong lượt này**:
+`HANDOFF.md` ở gốc repo (24 mục, dài nhất 6.325 byte) vì lane khác đang giữ `_root`; và gói
+**GG Flow Video** — bản viết ngắn 4 mục **đã xong và đã kiểm** nhưng khoá của gói bị lane
+`claude-flow-active` nhận mất lúc đang làm, nên tôi đã **trả vùng đó về HEAD** (luật mục 1: vùng
+có chủ khác thì chỉ được đọc). Bản đã làm giữ ngoài repo, áp lại được bằng một lệnh — **cần Đức
+chốt** ai giữ khoá đó.
+
+
