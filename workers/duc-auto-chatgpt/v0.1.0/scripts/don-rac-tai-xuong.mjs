@@ -97,6 +97,39 @@ export function quet(thuMuc) {
   return ra;
 }
 
+/* B-44 — CHỈ RA CHỖ CÒN ỨNG VIÊN, KHÔNG TỰ ĐỘNG VỚI TỚI ĐÓ.
+   Số đo 09/09: gói xin ghi vào `Downloads/Duc Auto ChatGPT`, Chrome ghi vào
+   `Downloads/Phai sinh` — thư mục tải mặc định của Đức. Tức Chrome bỏ qua CẢ
+   đường dẫn, không chỉ phần tên. Công cụ này quét đúng một tầng nên nó không
+   bao giờ thấy đống đó: quét hôm ấy ra 16 tệp ở tầng ngoài, và 0 trong số đó
+   là của lượt chạy vừa xong.
+
+   VÌ SAO KHÔNG QUÉT ĐỆ QUY. Thư mục Tải xuống của Đức có tài liệu thật (đã
+   đo: một `.pdf` và một `.jpg` của Đức lọt vào nhóm được bảo vệ, đúng nhờ luật
+   "không lọc theo tên"). Mở rộng phạm vi quét là mở rộng bán kính của một thao
+   tác XOÁ KHÔNG HOÀN LẠI ĐƯỢC — nên hàm này KHÔNG đọc nội dung, KHÔNG phân
+   loại, và KHÔNG bao giờ xoá gì trong thư mục con. Nó chỉ ĐẾM theo hình dạng
+   tên rồi in ra một câu lệnh để người chạy. Bán kính xoá không đổi một chút nào.
+
+   Đếm theo tên ở đây là ĐÚNG, dù luật số một cấm LỌC theo tên: đây là một gợi
+   ý để đi xem, không phải một phán quyết để xoá. Hai việc khác nhau. */
+export function ungVienThuMucCon(thuMuc) {
+  const ra = [];
+  let ten;
+  try { ten = fs.readdirSync(thuMuc); } catch { return ra; }
+  for (const con of ten) {
+    const duong = path.join(thuMuc, con);
+    let st;
+    try { st = fs.lstatSync(duong); } catch { continue; }
+    if (!st.isDirectory()) continue;   // lstat, nên symlink KHÔNG được đi vào
+    let trong;
+    try { trong = fs.readdirSync(duong); } catch { continue; }
+    const so = trong.filter((f) => GUID.test(f.replace(/\.[A-Za-z0-9]+$/, ""))).length;
+    if (so > 0) ra.push({ ten: con, so });
+  }
+  return ra.sort((a, b) => b.so - a.so || a.ten.localeCompare(b.ten));
+}
+
 function inNhom(tieuDe, muc, danhSach) {
   console.log(`\n${tieuDe} — ${danhSach.length} file`);
   if (!danhSach.length) { console.log("  (không có)"); return; }
@@ -129,6 +162,16 @@ function main() {
   inNhom("② CẦN ĐỨC XÁC NHẬN — đúng hình dạng của gói, chưa chứng minh được chủ", "ảnh và workbook. Có thể là đầu ra thật của một run cũ.", kq["can-mat"]);
   inNhom("③ ĐƯỢC BẢO VỆ — KHÔNG BAO GIỜ xoá", "tên giống GUID nhưng không phải của gói này.", kq["khong-phai"]);
   for (const f of kq["khong-phai"]) console.log(`      └ vì sao giữ: ${f.vi_sao}`);
+
+  const con = ungVienThuMucCon(thuMuc);
+  if (con.length) {
+    const tong = con.reduce((s, c) => s + c.so, 0);
+    console.log(`\n④ CÒN ỨNG VIÊN Ở ${con.length} THƯ MỤC CON — ${tong} tệp, KHÔNG được quét và KHÔNG bị đụng tới`);
+    console.log("  Chrome bỏ qua cả đường dẫn thư mục, không chỉ phần tên (đo 09/09), nên đầu ra của gói");
+    console.log("  hay rơi vào thư mục tải mặc định. Công cụ này CỐ Ý không tự với tới đó: mở rộng phạm vi");
+    console.log("  quét là mở rộng bán kính của một thao tác xoá không hoàn lại. Xem từng thư mục một:");
+    for (const c of con) console.log(`    ${String(c.so).padStart(4)} tệp tên GUID   node scripts/don-rac-tai-xuong.mjs --thu-muc "${path.join(thuMuc, c.ten)}"`);
+  }
 
   if (!co("--xoa")) {
     console.log("\nĐANG Ở CHẾ ĐỘ CHỈ XEM. Không file nào bị đụng tới.");

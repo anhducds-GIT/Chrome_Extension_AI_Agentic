@@ -155,4 +155,68 @@ try {
   n += 4;
 } finally { fs.rmSync(san, { recursive: true, force: true }); }
 
+/* B-44 — THƯ MỤC CON: chỉ ra, KHÔNG với tới.
+   Đo 09/09: gói xin ghi vào `Downloads/Duc Auto ChatGPT`, Chrome ghi vào `Downloads/Phai sinh`.
+   Chrome bỏ qua CẢ đường dẫn, không chỉ phần tên — nên công cụ quét một tầng không bao giờ thấy
+   đống đó (16 tệp ở tầng ngoài, 0 trong số đó của lượt chạy vừa xong).
+
+   Hai vế phải cùng đúng, và vế thứ hai là vế chịu tải:
+     ⑴ nó PHẢI nói ra rằng còn ứng viên ở thư mục con, kèm câu lệnh để đi xem;
+     ⑵ nó KHÔNG được xoá gì trong đó, kể cả với MỌI cờ xoá.
+   Thiếu ⑵ thì một bản "quét luôn cả cây" cũng xanh với ⑴ — và đó đúng là thứ sổ nợ cấm, vì mở
+   rộng phạm vi quét là mở rộng bán kính của một thao tác không hoàn lại được. */
+function sanCoThuMucCon() {
+  const d = dungSan();
+  const con1 = path.join(d, "Phai sinh");
+  fs.mkdirSync(con1);
+  fs.writeFileSync(path.join(con1, "9c1f2ab4-1111-4222-8333-444455556666"), AUDIT);        // của gói, nhưng ở thư mục con
+  fs.writeFileSync(path.join(con1, "7a2b3c4d-5555-4666-8777-888899990000.png"), PNG);
+  fs.writeFileSync(path.join(con1, "hop-dong-cua-Duc.pdf"), B("%PDF-1.7"));                 // tài liệu thật của Đức
+  const con2 = path.join(d, "Anh cu");
+  fs.mkdirSync(con2);
+  fs.writeFileSync(path.join(con2, "5e6f7a8b-9999-4000-8111-222233334444"), AUDIT);
+  fs.mkdirSync(path.join(d, "Thu muc rong"));                                               // 0 ứng viên → không được nêu
+  return d;
+}
+
+san = sanCoThuMucCon();
+try {
+  const ra = chay(san, "--xoa", "--ca-anh-va-workbook");
+  assert.match(ra, /THƯ MỤC CON/, "phải NÓI RA rằng còn ứng viên ở thư mục con — đó là chính lỗ B-44");
+  assert.match(ra, /Phai sinh/, "và nêu tên thư mục có ứng viên");
+  assert.match(ra, /--thu-muc/, "kèm câu lệnh để người chạy, vì công cụ cố ý không tự với tới");
+  assert.doesNotMatch(ra, /Thu muc rong/, "thư mục con KHÔNG có ứng viên thì đừng làm nhiễu bản in");
+
+  assert.ok(con(san, path.join("Phai sinh", "9c1f2ab4-1111-4222-8333-444455556666")),
+    "tệp của gói trong thư mục con KHÔNG được xoá — bán kính xoá phải đứng nguyên một tầng");
+  assert.ok(con(san, path.join("Phai sinh", "7a2b3c4d-5555-4666-8777-888899990000.png")), "kể cả nhóm ② trong thư mục con");
+  assert.ok(con(san, path.join("Phai sinh", "hop-dong-cua-Duc.pdf")), "và tuyệt đối không đụng tài liệu thật của Đức");
+  assert.ok(con(san, path.join("Anh cu", "5e6f7a8b-9999-4000-8111-222233334444")), "thư mục con thứ hai cũng còn nguyên");
+  n += 7;
+} finally { fs.rmSync(san, { recursive: true, force: true }); }
+
+/* Mép ngược: không có thư mục con nào thì đừng in khối ④ ra làm nhiễu. */
+san = dungSan();
+try {
+  assert.doesNotMatch(chay(san), /THƯ MỤC CON/, "không có thư mục con thì không in khối đó");
+  n += 1;
+} finally { fs.rmSync(san, { recursive: true, force: true }); }
+
+/* Symlink trỏ ra ngoài KHÔNG được đi vào — `lstat` chứ không `stat`. Trên Windows không có
+   quyền tạo symlink thì bỏ qua mép này, và NÓI RA là đã bỏ qua. */
+san = dungSan();
+try {
+  const ngoai = fs.mkdtempSync(path.join(os.tmpdir(), "don-rac-ngoai-"));
+  fs.writeFileSync(path.join(ngoai, "1a2b3c4d-7777-4888-8999-000011112222"), AUDIT);
+  let taoDuoc = true;
+  try { fs.symlinkSync(ngoai, path.join(san, "loi-ra-ngoai"), "dir"); } catch { taoDuoc = false; }
+  if (taoDuoc) {
+    assert.doesNotMatch(chay(san), /loi-ra-ngoai/, "symlink KHÔNG được đi vào — nó dẫn ra ngoài thư mục được nêu tên");
+    n += 1;
+  } else {
+    console.log("  (bỏ qua mép symlink: máy này không cho tạo symlink)");
+  }
+  fs.rmSync(ngoai, { recursive: true, force: true });
+} finally { fs.rmSync(san, { recursive: true, force: true }); }
+
 console.log(`don-rac-tai-xuong-smoke: ${n} khẳng định, tất cả đạt`);
