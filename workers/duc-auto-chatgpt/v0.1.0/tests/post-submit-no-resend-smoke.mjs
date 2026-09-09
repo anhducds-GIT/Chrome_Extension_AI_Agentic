@@ -348,7 +348,8 @@ assert.ok(lowerLine.includes("response.attempt"), "bằng chứng phải đến 
 // Đường đối soát tự động không có phán quyết "khẳng định không có kết quả".
 // Nếu con số này khác 0 thì ai đó đã nối `verifyExistingOutput` vào vòng chạy
 // và phép đo ở đầu file phải được làm lại trước khi nới luật.
-const autoProof = source.split("DAC_MANUAL_RECONCILE_EXISTING_OUTPUT").length - 1;
+const autoProof = source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/.*$/gm, " ")
+  .split("DAC_MANUAL_RECONCILE_EXISTING_OUTPUT").length - 1;
 assert.equal(autoProof, 1, "verifyExistingOutput vẫn chỉ đi qua đúng một cửa, và cửa đó do người vận hành bấm");
 
 /* ---- phần 4: ĐẾM SỐ NGUỒN ĐỐI SOÁT, đọc thẳng từ mã đã ship -------------
@@ -394,10 +395,33 @@ assert.equal(autoProof, 1, "verifyExistingOutput vẫn chỉ đi qua đúng mộ
      đi qua một hàm khác — suite vẫn xanh trong khi luật đã bị đụng, tức đúng cái mà chính lời văn
      của file này dặn phải tránh. Nay đếm THẲNG cả hai đường, mỗi đường một con số. */
 
-  // ⓐ Nguồn âm tính DUY NHẤT được phép: lời nhà cung cấp, đi qua `askProviderRepair()`.
-  const cuaAmTinh = [...khongChuThich.matchAll(/async function (askProviderRepair)\(/g)].map((m) => m[1]);
-  assert.deepEqual(cuaAmTinh, ["askProviderRepair"],
-    "ĐÚNG MỘT nguồn khẳng định âm tính. Thêm nguồn thứ hai thì ĐỌC LẠI luật của Đức trước, đừng nới mép này");
+  /* ⓐ HAI nguồn âm tính, và chúng KHÁC LOẠI nhau — đừng đọc con số 2 mà bỏ qua chỗ này.
+
+       ⑴ `askProviderRepair()` (B-40 ⒝) — bằng chứng là CHỮ của nhà cung cấp; nó gõ một câu
+         chữa lấy từ danh sách trắng của adapter. Prompt gốc KHÔNG bay lần nữa.
+       ⑵ `reconcileBlindDetector()` (B-41 ⑵, ADR-0050 ⒞) — bằng chứng là một phép ĐO trên
+         hội thoại sau F5, và nó là nguồn ĐẦU TIÊN trong gói mở được cửa gửi lại PROMPT GỐC.
+         Nên nó đắt hơn ⑴ hẳn một bậc, và nắp của nó phải nhỏ hơn.
+
+     Con số này ĐỔI BẰNG TAY, không bao giờ nới cho xanh. Thêm nguồn thứ BA thì đọc lại luật
+     của Đức trước. */
+  const cuaAmTinh = [...khongChuThich.matchAll(/async function (askProviderRepair|reconcileBlindDetector)\(/g)].map((m) => m[1]);
+  assert.deepEqual(cuaAmTinh.sort(), ["askProviderRepair", "reconcileBlindDetector"],
+    "ĐÚNG HAI nguồn khẳng định âm tính. Thêm nguồn thứ ba thì ĐỌC LẠI luật của Đức trước, đừng nới mép này");
+
+  /* Nguồn ⑵ mở cửa gửi lại PROMPT GỐC, nên nó phải đi qua ba cửa, và ĐÚNG THỨ TỰ NÀY. */
+  {
+    const dMu = khongChuThich.indexOf("async function reconcileBlindDetector(");
+    const cMu = khongChuThich.indexOf("\n  async function ", dMu + 10);
+    const thanMu = khongChuThich.slice(dMu, cMu > dMu ? cMu : undefined);
+    assert.match(thanMu, /mayResendAfterBlindReconcile\(/, "nguồn âm tính ⑵ phải đi qua nắp");
+    assert.ok(thanMu.indexOf("DAC_RECONCILE_TEXT_JOB") < thanMu.indexOf("repairWorkspaceSurface()"),
+      "phải ĐỌC trước khi F5 — F5 lúc còn lấp lửng là đúng cái chat.reload từ chối làm");
+    assert.ok(thanMu.indexOf("mayResendAfterBlindReconcile(") < thanMu.indexOf("blindResendsUsed[item.job.id] ="),
+      "nắp phải kiểm TRƯỚC khi tăng bộ đếm, không phải sau");
+    assert.ok(!/DAC_RUN_IMAGE_JOB|DAC_RUN_TEXT_JOB|setContentEditableValue/.test(thanMu),
+      "cửa đối soát chỉ ĐỌC và ĐẶT LẠI TRẠNG THÁI — lượt gửi lại do vòng chạy chính làm, qua đúng đường cũ");
+  }
 
   // Và nó phải đi qua NẮP, kiểm trước khi gõ. Không nắp thì một lỗi dai thành vòng lặp tiêu quota.
   const dAm = khongChuThich.indexOf("async function askProviderRepair(");

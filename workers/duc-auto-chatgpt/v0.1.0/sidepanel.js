@@ -64,6 +64,9 @@
     // B-40 ⒝ — nắp đếm theo JOB, không theo run: mỗi lần gõ câu chữa tốn một lượt quota
     // của Đức, nên một job hỏng dai không được ăn hết nắp của cả loạt.
     providerRepairsUsed: {},
+    // B-41 ⑵ — nắp đếm theo JOB, nắp 1: lượt gửi lại này gửi PROMPT GỐC, tốn một lượt
+    // quota thật, và lần thứ hai không có thêm bằng chứng nào so với lần đầu.
+    blindResendsUsed: {},
     validated: false,
     stopRequested: false,
     pauseRequested: false,
@@ -6160,7 +6163,104 @@
     return dungHan(`${message} F5 rồi dò ${soLuotDo} lượt trong ${Math.round(RECONCILE_READ_TIMEOUT_MS / 1000)} giây vẫn chưa thấy câu trả lời trọn vẹn (${sau?.reconcile?.chars ?? 0} ký tự).`);
   }
 
+  /* B-41 ⑵ (ADR-0050 ⒞) — `DETECTION_BLIND`: ĐỐI SOÁT TRƯỚC, gửi lại là lối ra CUỐI.
+
+     MỘT SỰ THẬT KIẾN TRÚC ĐO ĐƯỢC 09/09, VÀ NÓ ĐỔI HẲN THỨ CỬA NÀY LÀM ĐƯỢC. ADR-0050 ⒞
+     viết *"chữa xong thì bộ dò vừa mù nay nhìn lại được … thấy thì quy về job và xong"* —
+     tức nó giả định sau F5 vẫn QUY ĐƯỢC ảnh về lượt gửi. KHÔNG quy được:
+       · `DAC_RECONCILE_IMAGE_JOB` đòi `STATE.activeAttempt` khớp, mà F5 XOÁ bộ nhớ
+         content script → sau F5 nó luôn trả `ATTEMPT_ID_MISMATCH`;
+       · `DAC_MANUAL_RECONCILE_EXISTING_OUTPUT` không cần bộ nhớ đó, nhưng
+         `proofFromRecordedAttempt()` đòi `decision.chosen.source_id` — thứ một lượt MÙ
+         chưa bao giờ ghi được, vì mù nghĩa là nó thấy KHÔNG ảnh nào.
+     Nên bằng chứng để quy thuộc một ảnh bị cú F5 phá mất, và dựng một luật quy thuộc mới
+     sau F5 là ĐỔI LUẬT ATTRIBUTION → phải hỏi Đức. Đã ghi thành một mục sổ nợ riêng.
+
+     HỆ QUẢ, nói thẳng: cửa này KHÔNG cứu miễn phí được một job mà ảnh đã có sẵn. Nó làm
+     hai việc: khẳng định được là máy chủ không tạo gì thì gửi lại (nắp 1); còn lại thì
+     `INTERRUPTED` kèm một câu nói rõ người vận hành phải xem cái gì — thay cho một câu
+     "bộ dò mù" không giúp được ai.
+
+     THỨ TỰ Ở ĐÂY LÀ TOÀN BỘ PHẦN AN TOÀN, và nó chép đúng đường chữ của B-43:
+       ⑴ ĐỌC TRƯỚC, chưa F5 — lượt hỏi của chính job này có trong hội thoại không.
+       ⑵ Không có → DỪNG HẲN và KHÔNG F5. "Không thấy" ở đây là "chưa chứng minh được
+         prompt tới đâu", mà F5 lúc lấp lửng là đúng cái `chat.reload` từ chối làm.
+       ⑶ Có rồi → F5. Lúc này prompt ĐÃ là một lượt trong hội thoại và khung gõ trống, nên
+         F5 không có gì để gửi.
+       ⑷ Đọc lại, có nắp, rồi mới TỰ KIỂM (`blindAbsenceAffirmed()`) — ba vế ở đó là chỗ
+         phân biệt "máy chủ không tạo gì" với "selector của ta bị mục".
+     Đảo ⑴ với ⑶ thì test vẫn xanh mà luật exact-once mất, nên có một mép ghim đúng cho
+     việc đó. */
+  async function reconcileBlindDetector(item, effectiveOutput, message, settings) {
+    item.status = "RECONCILING"; item.phase = "SUBMITTED";
+    update(item, { status: "RECONCILING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+    audit("RECONCILE_START", item, { message: `${message} — bộ dò MÙ; đọc lại hội thoại để tự kiểm trước khi kết luận.` });
+    renderQueue(); progress(`Đang đối soát ${item.job.id}: bộ dò không thấy gì, đọc lại trước khi kết luận.`);
+
+    const doc = async () => send({ type: "DAC_RECONCILE_TEXT_JOB", job_id: item.job.id, prompt: item.job.prompt });
+    const dungHan = (ly) => {
+      markInterrupted(item, "DETECTION_BLIND", ly);
+      return { completed: true, halted: true };
+    };
+
+    // ⑴ ĐỌC TRƯỚC KHI F5.
+    let truoc;
+    try { truoc = await doc(); }
+    catch (error) { return dungHan(`${message} Đối soát cũng không đọc được trang: ${messageOf(error)}`); }
+    if (!truoc?.ok) return dungHan(`${message} Đối soát không đọc được trang: ${truoc?.error || "không rõ"}`);
+
+    // ⑵ Chưa chứng minh được prompt đã tới hội thoại → dừng hẳn, KHÔNG F5, KHÔNG gửi lại.
+    if (!truoc.reconcile?.found) {
+      audit("BLIND_RECONCILE", item, { message: `KHÔNG thấy lượt hỏi của job này trong hội thoại (${truoc.reconcile?.reason}); không F5, không kết luận.` });
+      return dungHan(`${message} Không tìm thấy lượt hỏi của job này trong hội thoại, nên không khẳng định được prompt đã tới đâu. Mở tab ra xem.`);
+    }
+
+    // ⑶ F5 — an toàn vì prompt đã là một lượt và khung gõ trống.
+    const repair = await repairWorkspaceSurface();
+    audit("WORKSPACE_REPAIR", item, { message: `BLIND_RECONCILE F5 ${repair.ok ? "OK" : "KHÔNG XONG"}: ${repair.note}` });
+    if (!repair.ok) return dungHan(`${message} Đã thấy lượt hỏi trong hội thoại nhưng không F5 lại được: ${repair.note}`);
+
+    // ⑷ Đọc lại có nắp. `waitTabComposer()` trả về khi KHUNG GÕ hiện, sớm hơn lúc các lượt
+    // được vẽ — đo được ở B-43: một lượt đọc đơn ngay sau F5 trả về 0 ký tự. Dò tới khi bộ
+    // đọc lượt trợ lý chứng minh được nó còn sống, hoặc hết nắp.
+    let sau = null;
+    const han = Date.now() + RECONCILE_READ_TIMEOUT_MS;
+    let soLuotDo = 0;
+    while (Date.now() < han) {
+      await sleep(RECONCILE_READ_POLL_MS);
+      soLuotDo += 1;
+      try { sau = await doc(); } catch (_) { continue; }
+      if (sau?.ok && sau.reconcile?.blind?.assistant_turns) break;
+    }
+    const mu = sau?.ok ? sau.reconcile?.blind : null;
+    audit("BLIND_RECONCILE", item, { message: `Sau F5, ${soLuotDo} lượt dò: ${mu?.reason || sau?.error || "không đọc được"} (${mu?.assistant_turns ?? 0} lượt trả lời / ${mu?.turns_read ?? 0} lượt đọc được).` });
+
+    const daDung = state.blindResendsUsed[item.job.id] || 0;
+    const cap = window.DacRunnerCore.MAX_BLIND_RESENDS_PER_JOB;
+    if (state.stopRequested) return dungHan(`${message} Người vận hành bấm Stop trong lúc đối soát; KHÔNG gửi lại.`);
+    if (!window.DacRunnerCore.mayResendAfterBlindReconcile(item, "DETECTION_BLIND", mu?.affirmed, daDung)) {
+      // KHÔNG khẳng định được là không có kết quả → dừng hẳn, đúng ADR-0047. Câu này phải
+      // nói RA nó không khẳng định được cái gì, vì đó là việc người vận hành sắp phải làm.
+      return dungHan(`${message} F5 rồi dò ${soLuotDo} lượt vẫn KHÔNG khẳng định được là lượt gửi này không tạo ra kết quả (${mu?.reason || "không đọc được trang"}); nên KHÔNG gửi lại. Mở tab ra xem ChatGPT đã tạo ảnh chưa.`);
+    }
+
+    // ⑸ Khẳng định được: prompt nằm trong hội thoại, bộ đọc lượt trợ lý đã chứng minh còn
+    // sống, và không có lượt trả lời nào sau lượt hỏi của mình. Gửi lại đúng một lần.
+    state.blindResendsUsed[item.job.id] = daDung + 1;
+    const lan = `${daDung + 1}/${cap}`;
+    audit("BLIND_RECONCILE", item, { message: `KHẲNG ĐỊNH được là không có kết quả (${mu.assistant_turns} lượt trả lời trong hội thoại, 0 lượt sau lượt hỏi của job này). Gửi lại lần ${lan}.` });
+    log(`${item.job.id}: đối soát khẳng định máy chủ không tạo gì; gửi lại (lần ${lan}).`, "");
+    update(item, { status: "PENDING", attempt_phase: "PRE_SUBMIT", attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+    renderQueue(); progress(`${item.job.id}: đối soát khẳng định không có kết quả; gửi lại (${lan}).`);
+    return { completed: false, halted: false };
+  }
+
   async function reconcileSubmittedAttempt(item, effectiveOutput, message, settings) {
+    // B-41 ⑵: bộ dò vừa MÙ thì chạy lại CHÍNH NÓ là mù y hệt — `DAC_RECONCILE_IMAGE_JOB`
+    // dùng đúng `assistantSelector()` vừa đọc ra 0 lượt. Rẽ sang đường tự kiểm.
+    if (window.DacRunnerCore.classifyFailure(message, "SUBMITTED") === "DETECTION_BLIND") {
+      return reconcileBlindDetector(item, effectiveOutput, message, settings);
+    }
     item.status = "RECONCILING"; item.phase = "SUBMITTED";
     update(item, { status: "RECONCILING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
     audit("RECONCILE_START", item, { message }); renderQueue(); progress(`Reconciling ${item.job.id}; it will not be resubmitted this attempt.`);
@@ -6312,7 +6412,7 @@
     // latch (queueRunLock.tryBeginRun) instead, which runs before this
     // function's first await -- see the comment there. Resetting it at this
     // point would discard a run.stop that arrived during startup.
-    state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.lastFailure = null; state.repairsUsed = {}; state.providerRepairsUsed = {}; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.lastFailure = null; state.repairsUsed = {}; state.providerRepairsUsed = {}; state.blindResendsUsed = {}; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
     state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = [];
     // Bridge Setup mutations may already have written this session's audit

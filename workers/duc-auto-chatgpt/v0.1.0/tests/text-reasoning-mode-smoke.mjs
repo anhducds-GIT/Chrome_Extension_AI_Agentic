@@ -192,7 +192,19 @@ assert.doesNotMatch(stopBranch, /halted = /, "a user stop never clears a halt ra
 assert.match(haltBranch, /markInterrupted\(/, "an unresolved submitted text prompt is marked interrupted");
 assert.match(haltBranch, /completed = dispatch\.completed; halted = dispatch\.halted;/, "the halt verdict comes from the tested decision, not a local literal");
 assert.doesNotMatch(haltBranch, /resolveJobFailure|reconcileSubmittedAttempt/, "an unresolved submitted text prompt is never retried or reconciled");
-assert.doesNotMatch(sidepanel.slice(sidepanel.indexOf("async function finishTextOutput"), sidepanel.indexOf("async function reconcileSubmittedAttempt")), /DAC_RECONCILE_IMAGE_JOB|saveGeneratedImage/);
+// Neo vào HÀM KẾ TIẾP, không vào một tên ở xa: bản cũ cắt tới
+// `reconcileSubmittedAttempt` và phép cắt đó vỡ ngay khi B-41 ⑵ xen
+// `reconcileBlindDetector` vào giữa — mép đỏ vì VĂN của hàm mới, không vì luật bị
+// đụng. Và cắt chú thích trước khi so: tính chất này nói về MÃ, không về văn.
+{
+  const than = sidepanel.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/.*$/gm, " ");
+  const dau = than.indexOf("async function finishTextOutput");
+  assert.ok(dau > 0, "mỏ neo hỏng: không thấy finishTextOutput()");
+  const sau = than.indexOf("\n  async function ", dau + 10);
+  assert.ok(sau > dau, "mỏ neo hỏng: không thấy hàm kế tiếp");
+  assert.doesNotMatch(than.slice(dau, sau), /DAC_RECONCILE_IMAGE_JOB|saveGeneratedImage/,
+    "đường chốt CHỮ không bao giờ chạm tải ảnh hay đối soát ảnh");
+}
 
 /* Pass B F-4 and F-5 (2026-08-28). Both fixes live inside sidepanel.js's single
    IIFE, which this suite cannot instantiate, so they are pinned STRUCTURALLY on

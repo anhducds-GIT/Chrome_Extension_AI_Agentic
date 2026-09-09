@@ -1051,7 +1051,9 @@
         const complete = hit.reason === "OK" && !looksTruncated(hit.text);
         sendResponse({
           ok: true,
-          reconcile: { ...hit, complete, chars: hit.text.length, turns_read: read.turns.length, read_status: read.status },
+          // B-41 ⑵: cùng một lượt đọc trả luôn phép tự kiểm cho bộ dò MÙ. Không thêm endpoint
+          // mới, vì cửa này đã được ghim là CHỈ ĐỌC và đường ảnh cần đúng thứ nó đọc.
+          reconcile: { ...hit, complete, chars: hit.text.length, turns_read: read.turns.length, read_status: read.status, blind: window.DacReconciliationCore.blindAbsenceAffirmed(read.turns, prompt) },
           result: complete ? { type: "text", text: hit.text, char_count: hit.text.length, completion: { reason: "reconciled_after_reload", generation_seen: false } } : null
         });
       } catch (error) {

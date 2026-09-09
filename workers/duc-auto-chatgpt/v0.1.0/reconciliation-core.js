@@ -102,6 +102,49 @@
     return { found: true, reason: "OK", text };
   }
 
-  const api = { proofFromRecordedAttempt, verifyExistingOutput, matchesRequest, safeComplete, PROMPT_MATCH_CHARS, promptKey, answerAfterPrompt };
+  /* B-41 ⑵ (ADR-0050 ⒞) — BỘ DÒ MÙ TỰ KIỂM BẰNG CHÍNH THỨ NÓ ĐỌC ĐƯỢC.
+
+     `DETECTION_BLIND` nghĩa là "0 lượt trả lời trên trang sau trọn thời gian chờ". Hai
+     nguyên nhân trông y hệt nhau từ bên trong:
+       ⑴ trang chưa VẼ (tab bị che nên Chrome không cấp khung hình) — kết quả ĐÃ CÓ trên
+         máy chủ; đây là đường CHÍNH trên máy Đức, đo được ở B-43;
+       ⑵ máy chủ thật sự không tạo ra gì.
+     Gửi lại ở ca ⑴ là đốt lượt quota thứ hai cho một việc đã xong — đúng cái ADR-0047 sinh
+     ra để chặn. Nên "không thấy gì" KHÔNG BAO GIỜ đủ để gửi lại; phải KHẲNG ĐỊNH được là
+     không có. Hàm này là chỗ phát biểu "khẳng định được" thành một phép đo.
+
+     BA VẾ, cả ba đều bắt buộc:
+       ⒜ lượt hỏi của chính job này nằm trong hội thoại → bộ đọc lượt NGƯỜI còn sống, và
+         prompt đã tới đích. Cùng phép neo mà `answerAfterPrompt()` dùng.
+       ⒝ có ÍT NHẤT MỘT lượt trả lời ở đâu đó trong hội thoại → bộ đọc lượt TRỢ LÝ còn
+         sống. ĐÂY LÀ VẾ CHỊU TẢI, và thiếu nó thì cả hàm thành một cái bẫy: một selector
+         trợ lý bị mục đọc ra "không có lượt trả lời nào" ở MỌI hội thoại, nên phép tự kiểm
+         sẽ KHẲNG ĐỊNH SAI là máy chủ không tạo gì — rồi gửi lại một prompt đã có kết quả.
+         Vế ⒜ một mình KHÔNG đủ: hai selector khác nhau, mục cái nào là chuyện riêng của
+         cái đó.
+       ⒞ ngay sau lượt hỏi của mình KHÔNG có lượt trả lời nào.
+
+     Hội thoại mới toanh, chỉ có đúng lượt hỏi của mình, thì ⒝ không đạt → KHÔNG khẳng
+     định. Đó là chủ ý, không phải chỗ thiếu: lúc đó không có cách nào phân biệt "selector
+     mục" với "chưa trả lời", và đoán ở chỗ đó là đoán bằng quota của Đức.
+
+     Thiếu bất kỳ vế nào → `affirmed: false`, lớp gọi dừng hẳn đúng như hôm nay. */
+  function blindAbsenceAffirmed(turns, promptText) {
+    const rows = Array.isArray(turns) ? turns : [];
+    const assistantTurns = rows.filter((row) => row?.role === "assistant").length;
+    const so = (affirmed, reason) => ({ affirmed, reason, assistant_turns: assistantTurns, turns_read: rows.length });
+    const want = promptKey(promptText);
+    if (!want) return so(false, "NO_PROMPT");
+    let at = -1;
+    for (let i = 0; i < rows.length; i += 1) {
+      if (rows[i]?.role === "user" && promptKey(rows[i]?.text) === want) at = i;
+    }
+    if (at < 0) return so(false, "PROMPT_NOT_IN_CONVERSATION");
+    if (!assistantTurns) return so(false, "ASSISTANT_READER_UNPROVEN");
+    if (rows.slice(at + 1).some((row) => row?.role === "assistant")) return so(false, "REPLY_EXISTS");
+    return so(true, "NO_REPLY_AFTER_PROMPT");
+  }
+
+  const api = { proofFromRecordedAttempt, verifyExistingOutput, matchesRequest, safeComplete, PROMPT_MATCH_CHARS, promptKey, answerAfterPrompt, blindAbsenceAffirmed };
   (typeof window !== "undefined" ? window : globalThis).DacReconciliationCore = api;
 })();
