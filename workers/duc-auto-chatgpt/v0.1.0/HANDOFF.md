@@ -684,3 +684,33 @@ lane bị cuốn theo là dấu vết duy nhất còn lại.
 nâng thước lên 6.708 rồi chính bản sửa sau đó vượt thêm 2. Tôi **không sửa chữ luật đang dở của
 lane khác**, và cũng không nâng thước hộ họ: nâng thước là một quyết định phải kèm lý do trong
 nhật ký của người nâng. Mọi phép kiểm còn lại XANH; suite gói **124/124**.
+
+## 2026-09-09 (lượt 5) · `claude-gpt-chay-het-job` — B-41 ⑵ và B-42
+
+**B-41 ⑵ đóng.** `DETECTION_BLIND` nay đối soát trước; gửi lại là lối ra **cuối**. Thứ tự là
+phần an toàn: đọc trước (chưa F5) → không thấy lượt hỏi của mình thì **dừng hẳn và KHÔNG F5** →
+thấy rồi mới F5 → dò lại có nắp → mới tự kiểm. Phép khẳng định đòi **ba vế**; vế chịu tải là
+*"có ≥ 1 lượt trả lời ở đâu đó trong hội thoại"* — thiếu nó thì một selector trợ lý bị mục sẽ
+**khẳng định SAI** là máy chủ không tạo gì rồi gửi lại một prompt **đã có** kết quả.
+`DETECTION_BLIND` **giữ nguyên** trong `HARD_STOP_FAILURE_TYPES`; `canRetry()` và
+`submissionMayExist()` không đổi một chữ. Số nguồn khẳng định **âm tính 1 → 2**, đổi bằng tay.
+
+**Một vế của ADR-0050 ⒞ KHÔNG thi hành được** — F5 xoá bằng chứng quy thuộc ảnh, nên hôm nay một
+job mà ảnh **đã có sẵn** vẫn phải người xem. Đã ghi vào **chính ADR-0050** và tách thành
+**`B-45`**; nó cần Đức chốt vì là một luật **quy thuộc** mới.
+
+**B-42 đã ship** (Đức: *"bạn chủ động làm tôi approve"*). `chat.say` — một lượt nhắn thẳng,
+không job, không dòng Excel. Hai số đo **ngược với chính chữ của B-42**: nó **không phải quyền
+mới**, và nó **không chờ câu trả lời** (CLI bỏ ngang ở 40 giây, nên chờ lâu là bị cắt **sau khi**
+tin nhắn đã bay). Đã **tách** nắp chờ 90 giây ra một hàm **dùng chung** với `run.trial`: hai
+bản sao là **hai ngân sách**, tức nới phanh mà không ai thấy trong diff.
+
+**Số đo:** suite **126/126** · hai ghim mới **cắt hàm đã ship ra chạy thật** · thử phá **0 thoát**.
+
+**Bốn phép ghim cũ đỏ, MỘT trong bốn là lỗi thật** (`ReferenceError` từ sân khấu `vm` sau
+khi tách hàm), cộng **ba lỗi trong đồ nghề của tôi** và **một mũi thử phá quá tù**. Nguyên văn cả
+tám chỗ ở `BACKLOG.md`, mục tiến độ B-41 ⑵ và B-42 — ở đó vì mục nhật ký này chạm trần.
+
+**Còn mở, và cả bốn đều cần Đức:** `B-45` · `B-36` (nút cấp lại quyền) · vế **audit độc
+lập** của B-42 · vế **live** của ADR-0053. Tôi không tự ký nghiệm thu bản sửa của chính mình, và
+không giả lập một lỗi nhà cung cấp.
