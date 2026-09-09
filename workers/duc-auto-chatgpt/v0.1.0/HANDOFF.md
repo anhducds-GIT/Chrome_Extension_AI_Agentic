@@ -550,3 +550,39 @@ ai chốt câu chữ**. Đã ghi ngay tại dòng trích; gặp ca xám thì h�
 Cùng lượt: sửa dòng *"ADR đã Accepted thì KHÔNG sửa, B12 cưỡng chế"* — chết 09/09 bởi ADR-0026 ⑵.
 
 Phép ② của cả repo: **100 → 0**. Suite gói không chạm.
+
+## 2026-09-09 · `claude-gpt-chay-het-job` — B-43 ĐÓNG: vòng chat chạy trọn với cửa sổ bị che
+
+Đức nêu điều kiện vận hành thật: *"99% thời gian cửa sổ GPT bị che, tôi thường reload, F5 rồi sang
+Claude làm việc."* Nên hai vòng vá trước — chặn báo-thành-công-giả — chỉ đổi một lần nói dối thành
+một lần **dừng hẳn**, tức vòng chat 0-cú-bấm không bao giờ hoàn tất. [ADR-0052](docs/adr/0052-tab-bi-che-thi-doc-lai-sau-f5-thay-vi-dung-han.md)
+cài nửa còn lại Đức nhờ từ đầu: **đọc lại**. Hết giờ → đối soát → F5 → dò tới khi chữ hiện → chốt.
+
+**Nghiệm thu live, ba lượt, cửa sổ để nguyên bị che** (`visibility=hidden`, `docFocused=false`):
+
+| lượt | ghi vào sổ | sau F5 (trọng tài) | kết |
+|---|---|---|---|
+| ⑴ | 27 | 1.917 | trượt — cửa tắt tin `looksTruncated` để phán DOM đáng tin |
+| ⑵ | không ghi | 2.117 | trượt nhưng trung thực — đọc một nhát sau F5 được 0 ký tự |
+| ⑶ | **2.228** | **2.228** | **ĐẠT** — `SUCCESS`, `persistence_verified: true` |
+
+**Đức chặn ba câu tôi nói ẩu, và cả ba lần đều có một phép đo rẻ hơn nằm ngay đó mà tôi bỏ qua
+để đi kể chuyện:**
+- *"Chrome hãm chữ đi vào trang"* → Chrome không hãm đường mạng; nó không cấp khung hình nên trang
+  **không vẽ**. Hai chuyện khác nhau.
+- *"`chat.read` trả về 0 lượt"* → tôi hỏi trường `messages`, trường thật là `turns`.
+- *"`visibilityState` vô hiệu khi cửa sổ bị che"* → đo ra `hidden`. Tôi thấy `failure_type` rỗng
+  rồi suy lỗi không nổ; nó rỗng vì job kết thúc SUCCESS — dấu vết của **hậu quả** đọc thành
+  **nguyên nhân**.
+
+**Và điều kiện nghiệm thu đầu của tôi cũng sai:** *"sổ == trang"*. Cả hai cùng đọc 27 nên nó báo
+ĐẠT — **hai vế cùng sai thì bằng nhau**. Điều kiện đúng: **sổ == bản đọc SAU MỘT CÚ F5**.
+
+**Khoá đổi tay hai lượt trong phiên**, cả hai theo chốt của Đức ghi **vào bảng quyền**: lấy lại
+lần đầu (*"bạn lấy khoá đi"*), bị `claude-luat-rasoat` lấy với bản ghi *"bên kia đã dừng rồi"*
+(sai — phiên này chưa dừng), rồi Đức định tuyến lại (*"bạn làm tiếp đi"*). Không tự giành lần nào.
+
+**Kết quả số.** Suite **123/123**. Thử phá: B-43 vòng hai **15/15** · vòng ba **13/13**. Ghim mới
+`text-reconcile-after-reload-smoke.mjs` 16 mép. **Còn mở:** `B-44` (dọn rác không thấy thư mục con
+Chrome ghi vào) · `B-36` (điều kiện đóng cần đối chiếu lại sau lượt chạy hôm nay) · B-41 ⑵⑶.
+
