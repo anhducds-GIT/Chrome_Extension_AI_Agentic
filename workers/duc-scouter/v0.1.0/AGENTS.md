@@ -67,45 +67,40 @@ Ba tầng của Scouter ([ADR-0009](../../../docs/adr/0007-scouter.md) mục ⑵
 
 ## Bản đồ file
 
+> **Chỉ khai thứ CẤP CAO, mỗi hàng MỘT mệnh đề** — đó là thứ luật vàng 4 đòi và thứ cổng đọc
+> (`session-check.mjs` so **tên cấp cao**). Rút gọn 09/09,
+> [ADR-0031](../../../docs/adr/0031-tran-do-bang-ky-tu.md) ⑷.
+>
+> **Một luật chung, thay cho bảy lần nhắc lại trong bảng:** mỗi lõi `.mjs` mở đầu bằng một **khối
+> bất biến** — `observer-probes`, `scouter-actions-core`, `scouter-transport-loopback`,
+> `scouter-journal-core`, `bridge/file-core`, `mutation-runner`. **Đọc khối đó trước khi sửa một ký
+> tự trong file đó.** Chuyện dài của từng file ở chính file đó, không ở đây.
+
 | File / thư mục | Vai trò |
 |---|---|
-| `manifest.json` | MV3. Service worker là `scouter-background.js`, kiểu `module` |
-| `icons/` · `scripts/make-icons.mjs` | Icon extension: chữ **S tối trên nền vàng**. Bốn file PNG là **máy sinh** — sửa màu ở hai hằng số đầu bộ sinh rồi chạy `node scripts/make-icons.mjs`, đừng sửa PNG bằng tay. Chrome KHÔNG nhận SVG làm icon, đừng đổi. `--preview` in hình ra màn hình để xem trước |
-| `scouter-background.js` | **Dây thật**: bơm `chrome` vào ba lõi, giữ lưới đỡ `chrome.alarms` (S-02), mở bảng bên khi bấm icon (ADR-0002), và giữ **PHANH KHẨN** `Ctrl+Shift+X` — từ khi có `<all_urls>` thì cái phanh phải với tới được cả khi bảng đã đóng. **Không được có nhánh chết** — khối ⑯ của phép ghim từ chối mọi `if (false)` trong file này. CỐ Ý mỏng và cố ý không có phép ghim riêng — thêm một dòng logic vào đây là thêm một dòng không ai canh |
-| `observer-engine.js` | Gắn/tháo `chrome.debugger`, gọi lõi phép dò **và lõi hành động**. Tám con `W1..W4` + `A1..A5` canh đúng file này |
-| `sidepanel.html` · `sidepanel.css` · `sidepanel.js` | **Bảng bên** (đổi từ popup 07/09, [ADR-0002](docs/adr/0002-vo-giao-dien-la-bang-ben-khong-phai-popup.md)). Dựng lại 07/09 theo bản vẽ v1 của GPT web: **ba tab** (Tiến độ · Hoạt động · Hệ thống), tab mặc định là **Tiến độ**. Giữ hai vai gốc — công tắc đường ghi (chỗ DUY NHẤT bật được nó) và chọn tệp ghép cặp. **Không con số nào gõ tay**: số lệnh đếm từ `capabilities()`, tiến độ tính từ sổ công việc |
-| `scripts/scouter-journal-core.mjs` | **SỔ CÔNG VIỆC** — nguồn sự thật duy nhất của khối "tiến độ thuần hoá" trên bảng bên. Bọc `dispatch`, đứng NGOÀI đường đi của phong bì. Ba bất biến ghi ở đầu file; **đọc chúng trước khi sửa một ký tự** — một cuốn sổ sai tệ hơn không có sổ, vì nó sai một cách có thẩm quyền |
-| `tests/scouter-journal-smoke.mjs` | Ghim sổ công việc, 9 khối. Khối ⑦ đo **bản ghi thô trong kho**, không đo qua `doc()` — đo qua `doc()` thì không phân biệt được "chặn lúc ghi" với "chặn lúc đọc", và đã để một con đột biến sống sót |
-| `tests/sidepanel-dom-smoke.mjs` | Ghim bảng bên ở ba kiểu hỏng **IM LẶNG**: JS gọi `#id` mà HTML không có · `<script>` nội tuyến (MV3 chặn, trang vẫn tải) · gán `innerHTML`. **Bỏ chú thích trước khi đo** ở cả hai file — không bỏ thì nó báo oan, và tệ hơn là gật đầu cho một `id` chỉ tồn tại trong chú thích |
-| `scripts/observer-probes.mjs` | **Bảy phép dò read-only**, thuần logic. Ba chốt bất biến ghi ở đầu file. Ba cái mở thêm 07/09 theo hồ sơ năng lực: **`a11y.tree`** (đọc theo vai trò+tên — thuốc cho luật vàng 1) · **`dom.snapshot`** (cả trang MỘT lượt) · **`page.shot`** (ảnh, mặc định jpeg vì PNG hay vượt phong bì). Danh sách CDP nới từ 5 → 9 — **`Page.captureScreenshot` CÓ, `Page.navigate` KHÔNG**, và khoảng cách đó là ranh giới đọc/điều-khiển |
-| `scripts/scouter-bridge-core.mjs` | Giao thức + **từ vựng method cố định** + bộ điều phối. Không biết `chrome` là gì |
-| `scripts/scouter-seed-core.mjs` | Ba khả năng nối vào từ vựng: quan sát · báo cáo · tự nạp lại · **và ba hành động ghi (S-01)** |
-| `scripts/scouter-actions-core.mjs` | **Đường GHI**: bấm và gõ như tay người. Danh sách method CDP RIÊNG, bốn chốt riêng. Đọc khối đầu file trước khi sửa |
-| `scripts/scouter-transport-loopback.mjs` | Dây WebSocket tới `127.0.0.1`, **bắt tay hai chiều**. Đọc khối đầu file trước khi sửa |
-| `scripts/mutation-runner.mjs` | Bộ máy đột biến kiểm, dùng chung. Các cái bẫy đã trả giá ghi ở đầu file. **Hai lớp chống nhiễm độc mã nguồn (07/09)**: một **khóa file** chống hai lượt chạy cùng lúc (tự nhận lại khi chủ cũ đã chết), và một **nhật ký hồi phục trên đĩa** cứu lượt bị chém ngang. Bắt tín hiệu KHÔNG đủ — Windows không có tín hiệu thật, đã đo |
-| `scripts/observer-mutation-check.mjs` | 14 con đột biến cho bốn phép dò |
-| `scripts/scouter-mutation-check.mjs` | 93 con đột biến: khung seed, đường ghi, cái phanh, bề mặt quyền, lệnh gọi mạng (`F1..F6`) **vùng ghi** (`G1..G3`, `H1..H3`) **sổ công việc** (`J1..J10`) và **lõi dùng chung** (`X1..X4`, trong đó `X3` canh cái bắt tay hai chiều). Con số này mục theo code — đếm lại bằng chính bộ đo, đừng tin dòng này |
-| `scripts/scouter-input-trust-probe.mjs` | **Phép đo ①** (06/09, ĐẠT): cú bấm qua `chrome.debugger` có `isTrusted: true` |
-| `scripts/scouter-action-reality-probe.mjs` | **Phép đo ②** (07/09, ĐẠT 11/11 trên Chrome 152): nạp CHÍNH lõi hành động thật vào một extension thử rồi bấm trên trang tự dựng. Khác ① ở chỗ ① đo *đường đi*, còn cái này đo *code của Scouter*. Mã thoát 2 = phép đo KHÔNG CHẠY được |
-| `scripts/scouter-bridge-live-check.mjs` | Nối thử với **máy chủ Bridge THẬT**, không phải bản giả. Mã thoát 2 = không chạy được, khác hẳn "không đạt" |
-| `tests/scouter-action-reality-smoke.mjs` | Ghim LUẬT CHẤM của phép đo ②, không cần trình duyệt. 15 ca hỏng, mỗi ca phải đỏ ĐÚNG tiêu chí của nó |
-| `tests/scouter-write-gate-smoke.mjs` | Ghim CÁI PHANH (S-05) và bề mặt quyền manifest (S-02). Ghim cả hai chiều — khối ② là chiều "mở khoá thì bấm được thật" |
-| `bridge/file-core.mjs` | **Tầng thứ ba của ADR-0009**: ghi ghi chép xuống đĩa. Thuần, không mở cổng, không đọc `argv`. **Chỗ nguy hiểm nhất của cả gói** — đọc khối đầu file trước khi sửa một ký tự. Cố ý KHÔNG có đường xoá/đổi tên, và khối ‑ của phép ghim cưỡng chế điều đó |
-| `bridge/scouter-bridge-host.mjs` | **HOST RIÊNG của Scouter, MỎNG** (Đức chốt 07/09, thay ADR-0004). Chỉ làm ba việc: khai tên giao thức `duc-scouter.bridge` · cắm nhóm `file.*` vào móc `methodTaiCho` · canh vùng ghi. Mọi hành vi chung nằm ở lõi `workers/_shared/bridge-host/`. **Đừng chép lõi vào đây** — ba gói `duc-auto-*` đã chép và ba bản đã lệch nhau |
-| `../../_shared/bridge-host/` | **LÕI DÙNG CHUNG** — khung WebSocket, cửa HTTP, **bắt tay hai chiều**, định tuyến nhiều hồ sơ. Nhân bản seed sang extension khác thì viết một host mỏng nữa gọi vào đây. Luật của vùng: `workers/_shared/AGENTS.md` |
-| `tests/scouter-file-core-smoke.mjs` | Ghim **vùng ghi**: `..`, đường tuyệt đối ba dạng, thư mục anh em trùng tiền tố, và liên kết mềm trỏ ra ngoài. Chạy trên thư mục tạm THẬT, không giả `fs` |
-| `tests/scouter-bridge-host-smoke.mjs` | Ghim phần RIÊNG của Scouter: nhóm `file.*` (chạy được **cả khi chưa có extension nào nối**), vùng ghi, hai cổng vào, và cái chặn *vùng ghi không được chứa tệp ghép cặp*. Máy chủ THẬT trên loopback. Hành vi chung của lõi thì ghim ở `_shared/bridge-host/tests/` |
-| `docs/PROMPT-thiet-ke-bang-ben.md` | **Câu Đức dán cho GPT web** để brainstorm bố cục bảng bên (07/09). Chứa bản khai **sự thật về năng lực** — Scouter đổi thì **sửa mục đó trước khi dán**, không thì GPT thiết kế cho một giói đồ không tồn tại |
-| `../pilots/<tên>/` | **PILOT — ngoài thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md) mục ⑼a). Pilot không phải một phiên bản của seed; để chung thì lượt nâng phiên bản sau kéo theo cả pilot. Suite của pilot vẫn chạy qua `tests/run-all.mjs` — nó quét theo HÌNH DẠNG `pilots/*/tests/*.mjs`, không gõ cứng tên pilot nào |
-| `docs/TRIALS.md` | **Sổ các trang đã thử** — trang nào · thử gì · kết quả · **dạy seed được gì**. Cột cuối là lý do nó tồn tại: nó là đường ray của luật chiều-ngược ở ADR-0009 mục ⑵. Đây là SỔ, không phải hàng rào |
-| `tests/seed-purity-smoke.mjs` | Canh **mã CHẠY** của seed không chứa tên trang thật (hằng số · mặc định · nhánh rẽ theo hostname). **Cố ý KHÔNG canh** `tests/` `docs/` `pilots/` — Đức chốt 07/09 *"nhiễm cũng được… trừ khi nó ảnh hưởng quá"*. Bản đầu siết cả `tests/` và đỏ 9 chỗ vô hại; hàng rào hẹp mà sống lâu hơn hàng rào rộng mà bị gỡ |
-| `docs/adr/` | Quyết định của Đức riêng cho gói này. ADR đã `Accepted` là bất biến |
-| `tests/run-all.mjs` | Chạy hết phép ghim của gói. `package.json` gốc chỉ gọi file này — thêm phép ghim mới **không cần khoá `_root`** |
-| `ROADMAP.md` | **Đi tới đâu, đang ở đâu, thứ tự nào** — 25 mục `SEED v0.1` xếp thành bốn bước. Đọc file này TRƯỚC khi hỏi "việc kế là gì". Không chép danh sách 25 mục, chỉ xếp thứ tự |
-| `STATUS.md` | Trạng thái vận hành 1 trang (máy đọc frontmatter sinh DASHBOARD) |
-| `HANDOFF.md` | Trạng thái + Log (chỉ thêm dòng ở cuối) |
-| `HANDOFF-ARCHIVE-01.md` | Sáu mục nhật ký cũ, cắt 09/09 khi sổ chạm trần 25 mục ([ADR-0008](../../../docs/adr/0008-nhat-ky-phien.md)). **Nguyên văn, chỉ đọc** — ghép lại dựng đúng bản gốc từng byte. Cắt tiếp: `node scripts/handoff.mjs --cat <file> --giu 20` |
-| `BACKLOG.md` | Việc còn mở, đánh số `S-xx` |
+| `manifest.json` | MV3; service worker `scouter-background.js`, kiểu `module` |
+| `scouter-background.js` | **Dây thật**: bơm `chrome` vào ba lõi, lưới đỡ `chrome.alarms` (S-02), mở bảng bên khi bấm icon, và giữ **PHANH KHẨN `Ctrl+Shift+X`** — phanh phải với tới được cả khi bảng đã đóng. **Cố ý mỏng, cố ý không có phép ghim riêng**, và **không được có nhánh chết** (khối ⑯ từ chối mọi `if (false)`) — thêm một dòng logic vào đây là thêm một dòng không ai canh |
+| `observer-engine.js` | Gắn/tháo `chrome.debugger`; gọi lõi phép dò **và lõi hành động** |
+| `sidepanel.html` · `.css` · `.js` | **Bảng bên**, ba tab, mặc định *Tiến độ* ([ADR-0002](docs/adr/0002-vo-giao-dien-la-bang-ben-khong-phai-popup.md)). Giữ **công tắc đường ghi — chỗ DUY NHẤT bật được nó** — và chọn tệp ghép cặp. **Không con số nào gõ tay:** đếm từ `capabilities()` và sổ công việc |
+| `scripts/scouter-journal-core.mjs` | **SỔ CÔNG VIỆC** — nguồn sự thật duy nhất của khối tiến độ; đứng NGOÀI đường đi của phong bì. Một cuốn sổ sai tệ hơn không có sổ, vì nó sai một cách có thẩm quyền |
+| `scripts/observer-probes.mjs` | **Bảy phép dò read-only**, thuần logic. Ranh giới đọc / điều khiển nằm ở danh sách CDP: **`Page.captureScreenshot` CÓ, `Page.navigate` KHÔNG** |
+| `scripts/scouter-bridge-core.mjs` | Giao thức + **từ vựng method cố định** + điều phối. Không biết `chrome` là gì |
+| `scripts/scouter-seed-core.mjs` | Bốn khả năng nối vào từ vựng: quan sát · báo cáo · tự nạp lại · **ba hành động ghi (S-01)** |
+| `scripts/scouter-actions-core.mjs` | **Đường GHI** — bấm và gõ như tay người. Danh sách CDP riêng, bốn chốt riêng |
+| `scripts/scouter-transport-loopback.mjs` | Dây WebSocket tới `127.0.0.1`, **bắt tay hai chiều** |
+| `bridge/file-core.mjs` | **Tầng ba của [ADR-0009](../../../docs/adr/0007-scouter.md)** — ghi ghi chép xuống đĩa. **Chỗ nguy hiểm nhất của cả gói.** Cố ý **KHÔNG có đường xoá/đổi tên**, và phép ghim cưỡng chế điều đó |
+| `bridge/scouter-bridge-host.mjs` | **HOST RIÊNG, MỎNG** — Bridge của Scouter là một **lớp đứng trước**, không phải bản thứ tư ([ADR-0004](docs/adr/0004-bridge-rieng-cho-scouter-la-mot-lop-dung-truoc.md)): khai tên giao thức · cắm nhóm `file.*` · canh vùng ghi. **Đừng chép lõi vào đây** — ba gói `duc-auto-*` đã chép và ba bản đã lệch nhau |
+| `../../_shared/bridge-host/` | **LÕI DÙNG CHUNG** — khung WebSocket, cửa HTTP, bắt tay hai chiều, định tuyến nhiều hồ sơ. Luật của vùng: `workers/_shared/AGENTS.md` |
+| `tests/` | Phép ghim của gói. **Mỗi phép tự khai ở docblock đầu file nó** — tra bằng `grep -l "S-05" tests/*.mjs`. Chạy hết: `tests/run-all.mjs` (gốc repo chỉ gọi file này) |
+| `scripts/mutation-runner.mjs` · `*-mutation-check.mjs` · `*-probe.mjs` · `scouter-bridge-live-check.mjs` | Bộ máy **đột biến kiểm** và các **phép đo** (① tin cậy cú bấm · ② hành động có thật · nối thử máy chủ Bridge THẬT). `mutation-runner` có **hai lớp chống nhiễm độc mã nguồn**: khoá file và nhật ký hồi phục trên đĩa — bắt tín hiệu KHÔNG đủ, Windows không có tín hiệu thật |
+| `icons/` · `scripts/make-icons.mjs` | Icon extension, sinh bằng script |
+| `docs/PROMPT-thiet-ke-bang-ben.md` | Câu Đức dán cho GPT web. Chứa bản khai **năng lực thật** — Scouter đổi thì **sửa mục đó trước khi dán** |
+| `docs/TRIALS.md` | Sổ các trang đã thử: trang nào · thử gì · kết quả |
+| `docs/adr/` | Quyết định của Đức riêng cho gói này |
+| `../pilots/<tên>/` | **PILOT nằm NGOÀI thư mục phiên bản, cố ý** ([ADR-0020](../../../docs/adr/0007-scouter.md)). **Selector không bao giờ được gõ vào seed** |
+| `ROADMAP.md` · `STATUS.md` · `HANDOFF.md` · `HANDOFF-ARCHIVE-01.md` · `BACKLOG.md` | Thứ tự đi · trạng thái một trang cho Đức (frontmatter sinh `DASHBOARD.md`) · nhật ký (**thêm ở cuối**) · đuôi đã cắt, chỉ đọc · việc còn mở `S-xx` |
+
+Thêm file/thư mục mới **cấp cao** → thêm 1 dòng. Không khai = không tồn tại. **Một mệnh đề thôi.**
 
 ## Hai chỗ đã trả giá, đừng làm lại
 

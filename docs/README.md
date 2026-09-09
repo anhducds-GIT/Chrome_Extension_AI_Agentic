@@ -30,6 +30,23 @@ dẫn `drafts/…`. Bảng dưới là chỗ tra đường dẫn cũ → mới.
 | **18 hồ sơ MỒ CÔI — ĐÃ XOÁ 2026-09-08 (2.538 dòng)** | — | Không gì trong repo trỏ tới chúng ngoài chính mục lục này: brief của việc đã ship, kế hoạch đã thi hành xong, bản đồ đã bị `llms.txt`/`DASHBOARD.md` thay. **Chỉ rời cây làm việc, KHÔNG rời git** — `git show --stat 522a22400fd3 -- docs/` liệt kê cả mẻ, `git show 522a22400fd3:docs/<đường-dẫn>` đọc lại một hồ sơ |
 | `drafts/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md` | [docs/studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md](studies/PLATFORM-AI-ORCHESTRATOR-STUDY-V3.md) | bản mới nhất trong ba bản |
 
+## Ngoài `docs/` — sổ và công cụ ở gốc repo
+
+> Nhận về đây 09/09 khi `AGENTS.md` mục 8 rút xuống còn **cò nạp bắt buộc**
+> ([ADR-0033](adr/0033-tran-co-bien-va-bay-cho-mau-thuan-trong-ban-hieu-luc.md) ⑶): thứ **tra khi
+> cần** thì thuộc mục lục, không thuộc hiến pháp. Đây là chỗ tra đó.
+
+| Cần gì | Mở |
+|---|---|
+| Ghi một chỗ hỏng · một ý tưởng của Đức | `BACKLOG.md` (nợ hạ tầng, trường `đóng khi:` **bắt buộc**) · `IDEAS.md` (phòng chờ, bắt buộc `bậc` + `việc kế`) |
+| Biết repo đang nợ gì về **cấu trúc** | `node scripts/check-bootstrap.mjs [--all]` — B1…B15, mỗi dòng nói cả chỗ sai lẫn cách sửa |
+| Biết nhánh mình thiếu tính năng gì | `FEATURE-PARITY.md` (chữ của người, giữ `_root`) + `FEATURE-PARITY-AUTO.md` (số của máy) — [ADR-0014](adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md). Dòng **[DÒ]** là máy đoán theo tên: **kiểm lại trước khi hành động** |
+| Hiểu repo trong một lần đọc · xem có extension nào | `llms.txt` · `repo-map.json` · `DASHBOARD.md` — **đều máy sinh, đừng sửa tay** |
+| Vận hành nhiều extension, hoặc thêm một cái | `PLATFORM.md`; khai cái mới bằng cách chép `STATUS.template.md` đặt cạnh `manifest.json` |
+| Đức cần một câu để dán · muốn tự mở bảng | `PROMPTS.md` · `bang-trang-thai/` · `node scripts/build-overview.mjs <file-ra.html>` |
+| Hiểu vì sao nhiều phiên hay va nhau | `docs/studies/PARALLEL-WORK-DESIGN-V0.md` |
+| Trạng thái sống, không phải trạng thái đã gõ | `node scripts/what-next.mjs` |
+
 ## `docs/protocols/` — cách làm việc
 
 Khác `studies/` ở chỗ: nghiên cứu để **hiểu**, protocol để **làm theo**. Mở khi sắp bắt tay,
