@@ -48,37 +48,37 @@ luật/trần) · `AGENTS.md` gói (bản đồ file) · `HANDOFF.md` gói (phi�
 
 ## Luật riêng của gói duc-scouter
 
+> Luật chung ở lõi (in ngay trên) và [`_shared/AGENTS.md`](../../_shared/AGENTS.md) —
+> **đừng chép lại đây.**
+
 1. **Selector KHÔNG BAO GIỜ được gõ vào seed.** Thấy mình đang gõ một selector vào một file
    trong gói này thì dừng lại — đó là chỗ ranh giới seed/adapter chết. Năng lực vào seed, hiểu
    biết về một trang cụ thể vào adapter.
 2. **Đừng clone seed rồi sửa bản clone** ([ADR-0006](../../../docs/adr/0001-ranh-gioi-bo-khung.md)).
    Adapter sửa ra thứ **không riêng của trang nào** thì thứ đó phải được đưa lên seed.
 3. **ĐƯỢC ghi ghi chép xuống đĩa** — [ADR-0016](../../../docs/adr/0007-scouter.md), Đức chốt 07/09:
-   Scouter là **bộ đồ nghề dựng extension**, không phải extension chạy sản xuất. Ba giới hạn giữ
-   nguyên: không ghi vào `evidence/` · `pilot-*/` · `Batch-*/` · không để token/mật khẩu/tệp ghép
-   cặp vào repo · **chạy trên trang thật vẫn phải hỏi Đức** — ADR-0016 gỡ chặn về *ghi*, không gỡ
-   chặn về *chạy ở đâu*.
-4. **Cấm chạy trên trang thật** khi chưa hỏi Đức (`AGENTS.md` gốc mục 3, *Phải hỏi Đức trước*). Trang thử tự tạo thì được.
-5. **Từ vựng cố định.** Cửa Bridge nhận một bộ tên method đóng, không bao giờ nhận biểu thức tự
+   Scouter là **bộ đồ nghề dựng extension**, không phải extension chạy sản xuất. Nó gỡ chặn về
+   *ghi*, **không** gỡ chặn về *chạy ở đâu* — trang thật vẫn phải hỏi Đức (trang thử tự tạo thì
+   được), và ba giới hạn ở lõi vẫn nguyên.
+4. **Từ vựng cố định.** Cửa Bridge nhận một bộ tên method đóng, không bao giờ nhận biểu thức tự
    do từ ngoài dây. Thêm một method là **đổi luật an toàn** → hỏi Đức.
-6. **Quyền đã duyệt là TRẦN, không phải sàn** ([ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md)
+5. **Quyền đã duyệt là TRẦN, không phải sàn** ([ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md)
    · [ADR-0002](docs/adr/0002-vo-giao-dien-la-bang-ben-khong-phai-popup.md)). Khai trong
    `manifest.json` **đúng thứ đang dùng**, đừng khai trước; **`downloads` thì KHÔNG** — file đi qua
    Bridge. Xin ra ngoài danh sách đã duyệt thì **hỏi Đức**. Con `Q1` `Q2` canh dòng đó.
-7. **Đọc và GHI đi qua hai lõi khác nhau, và đừng gộp chúng.** `scripts/observer-probes.mjs`
+6. **Đọc và GHI đi qua hai lõi khác nhau, và đừng gộp chúng.** `scripts/observer-probes.mjs`
    chứng minh được là read-only vì kênh ghi **không có mặt trong file đó** — không phải vì ai
    hứa. Muốn Scouter làm được một việc mới có tính GHI thì thêm vào `scouter-actions-core.mjs`
    với danh sách method riêng của nó. Thêm `Input.*` vào lõi đọc là làm yếu một lớp bảo vệ
    đang có (luật vàng 3 của repo), và hai con `M1` `M2` sẽ ĐỎ đúng lúc đó.
-8. **Toạ độ không bao giờ nhận từ ngoài dây.** Mọi lượt bấm suy toạ độ từ hộp của đúng phần tử
+7. **Toạ độ không bao giờ nhận từ ngoài dây.** Mọi lượt bấm suy toạ độ từ hộp của đúng phần tử
    đã khớp, và selector phải khớp **đúng một**. Đây là chốt đắt nhất của gói; con `H4` và `H5`
    canh nó.
-9. **Đường ghi ĐÓNG MẶC ĐỊNH; phanh chỉ mở được bằng tay người.** Công tắc ở bảng bên và **không
+8. **Đường ghi ĐÓNG MẶC ĐỊNH; phanh chỉ mở được bằng tay người.** Công tắc ở bảng bên và **không
    method Bridge nào bật được nó**. Trần 200 lượt mỗi lần mở khoá, gõ cứng trong mã. Hai chỗ
    **đừng đảo lại** dù trông thừa: **hỏng thì ĐÓNG** (đọc không ra công tắc ≠ được bấm) và **trừ
    trước, bấm sau** (lượt bấm hỏng vẫn tốn ngân sách). `P1..P12` canh khối này; lý do đầy đủ ở
    [ADR-0001](docs/adr/0001-phanh-cho-duong-ghi-va-quyen-alarms.md).
-10. Mỗi fix một phép ghim. Sửa `.js` → nhắc Đức nạp lại extension.
 
 ## Trạng thái mới nhất
 

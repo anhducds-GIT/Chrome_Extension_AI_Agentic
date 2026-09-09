@@ -15,43 +15,34 @@ debug tự chạy khỏi mượn tay Đức.
 
 ## Luật vàng riêng của nhánh video
 
-1. **Không đoán selector.** Mọi selector Flow phải có bằng chứng `dom_probe`
-   trong `evidence/`. SELECTORS/TIMING đang là đồ thừa kế từ Gemini — KHÔNG
-   được coi là đúng cho Flow.
-2. **Video trừ credits thật.** Trần trial dev **suy từ chip cấu hình đang hiển thị**
-   (F-22, 05/09): ngân sách một tài khoản free là 50 credit, chia cho đơn giá đọc
-   được trên chip → 360p x1 được 7 job · 720p x1 chỉ 3 · 360p x3 chỉ 2. `MAX_TRIAL_JOBS = 7`
-   là **trần tuyệt đối**, chip chỉ được HẠ trần xuống, không bao giờ nâng. Không đọc được
-   chip thì lấy cấu hình đắt nhất đã đo. **Không retry tự động khi nghi ngờ đã trừ credits**
+> **Luật thừa kế nay ở lõi dùng chung** (in ngay trên đây) và
+> [`workers/_shared/AGENTS.md`](../../_shared/AGENTS.md) — cấm `.innerHTML`, `evidence/` chỉ
+> THÊM, không đoán selector, chữ operator tiếng Việt, nhắc Đức reload, mỗi fix một phép ghim.
+> **Đừng chép lại đây.** Riêng nhánh này: `SELECTORS`/`TIMING` là **đồ thừa kế từ Gemini**, KHÔNG
+> được coi là đúng cho Flow; và lớp bảo vệ phải giữ có thêm *readiness* · *checkpoint* ·
+> *security hard-stop*.
+
+1. **Video trừ credit THẬT.** Trần trial dev **suy từ chip cấu hình đang hiển thị** (F-22,
+   05/09): ngân sách một tài khoản free là 50 credit, chia cho đơn giá đọc trên chip → 360p ×1
+   được 7 job · 720p ×1 chỉ 3 · 360p ×3 chỉ 2. `MAX_TRIAL_JOBS = 7` là **trần tuyệt đối**; chip
+   chỉ được HẠ, không bao giờ nâng. Không đọc được chip thì lấy cấu hình đắt nhất đã đo. **Không
+   retry tự động khi nghi ngờ đã trừ credit**
    ([ADR-0002](docs/adr/0002-luat-an-toan-nhanh-video.md) — vế còn sống duy nhất của quyết định
-   đó; trần ≤2 và khoá bootstrap đều đã chết).
-   **Nới trần tuyệt đối = đổi luật an toàn = hỏi Đức.** Con số cũ **3 job** (chốt 27/08) **đã
-   chết 05/09** — cố ý không đặt liên kết tới quyết định đó ở đây, vì trích một vế đã chết là
-   đúng thứ cổng kiểm chặn.
-3. **Khoá bootstrap Bridge đã được gỡ ngày 2026-08-27**
-   ([ADR-0007](docs/adr/0007-go-khoa-bootstrap-bridge-f-05.md)) sau khi provider adapter được dựng
-   từ bằng chứng thật, có test ghim và audit đối kháng PASS. Full method surface khả dụng,
-   nhưng mọi gate an toàn riêng vẫn giữ nguyên.
-   `diagnostics.evidence_submit` ([ADR-0004](docs/adr/0004-diagnostics-evidence-submit-primitive-tuong-tac.md))
-   được giữ làm
-   công cụ debug với trần cứng 3 lượt/trang; `run.trial` chỉ chạy khi bật toggle **Chế độ phát
-   triển (Dev Mode)** trong side panel, và trần của nó là **trần ở luật 2** — `MAX_TRIAL_JOBS`
-   trong `dev-trial-core.js`, hôm nay là **7**, hạ theo chip cấu hình.
-   > **Sửa 09/09.** Dòng này ghi *"`run.trial` có trần 3 job"* — con số 27/08, **chết từ 05/09**
-   > khi F-22 đổi sang suy trần từ chip (luật 2 ngay trên). Mã nói 7, luật 2 nói 7, dòng này nói
-   > 3: **hai con số an toàn khác nhau trong CÙNG một file**, và nó là con số về TIỀN. Trần thật
-   > khai ở đúng một chỗ trong mã — đừng gõ lại nó vào văn bản lần nữa.
-4. Các luật thừa kế nguyên văn từ nhánh Gemini/ChatGPT: không innerHTML;
-   không làm yếu exact-once / attribution / readiness / persistence /
-   checkpoint / security hard-stop; chữ operator tiếng Việt, CODE tiếng Anh;
-   sửa `.js` → nhắc Đức reload extension; mỗi fix một test ghim.
-5. `evidence/` chỉ THÊM, không sửa, không xoá.
-6. **Fix nhỏ không cần audit độc lập** — Đức chốt 02/09
-   ([ADR-0009](docs/adr/0009-bo-audit-doc-lap-cho-fix-nho.md)): làm thẳng, gặp bug sửa thẳng.
-   **VẪN audit** khi đụng lớp an toàn (`AGENTS.md` gốc mục 3), đường tiêu credit, hay bắt tay
-   Bridge. Không đổi: suite xanh · cổng xanh · mỗi fix một test ghim · đẩy bằng `safe-push.mjs`.
-   > **Vế này đá với `AGENTS.md` gốc mục 2** (*"với code thì đã qua audit độc lập"*), và ranh
-   > giới *"fix nhỏ"* chưa ai chốt câu chữ. **Chờ Đức** — xem mục Hệ quả của ADR-0009.
+   đó). **Nới trần tuyệt đối = đổi luật an toàn = hỏi Đức.**
+2. **Trần thật khai ở ĐÚNG MỘT CHỖ:** `MAX_TRIAL_JOBS` trong `dev-trial-core.js`. Đừng gõ lại con
+   số vào văn bản: ngày 09/09 file này mang **hai con số an toàn khác nhau** (3 và 7) vì một dòng
+   văn không được sửa theo mã — và đó là con số về TIỀN.
+3. **Khoá bootstrap Bridge đã gỡ 27/08**
+   ([ADR-0007](docs/adr/0007-go-khoa-bootstrap-bridge-f-05.md)): full method surface khả dụng,
+   mọi gate an toàn riêng **giữ nguyên**. `diagnostics.evidence_submit`
+   ([ADR-0004](docs/adr/0004-diagnostics-evidence-submit-primitive-tuong-tac.md)) là công cụ
+   debug, trần cứng 3 lượt/trang. `run.trial` chỉ chạy khi bật **Dev Mode** ở bảng bên, trần theo
+   luật 1.
+4. **Fix nhỏ không cần audit độc lập** — Đức chốt 02/09
+   ([ADR-0009](docs/adr/0009-bo-audit-doc-lap-cho-fix-nho.md)). **VẪN audit** khi đụng lớp an
+   toàn, đường tiêu credit, hay bắt tay Bridge. Không đổi: suite xanh · cổng xanh · mỗi fix một
+   phép ghim. **Ranh giới *"fix nhỏ"* chưa ai chốt câu chữ và vế này đá với `AGENTS.md` gốc —
+   CHỜ ĐỨC** (Hệ quả của ADR-0009).
 
 ## Bản đồ file
 

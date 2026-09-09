@@ -91,8 +91,9 @@ phiên) và **② Sản phẩm** (mã của mọi extension và Scouter, cùng k
 ## 7. Giới hạn
 
 1. **Cấm cài một tính năng hai lần.** Cần ở hai gói → `workers/_shared/` trước.
-2. **Thước ràng buộc nhất: cái một phiên NẠP, đo bằng KÝ TỰ theo BÓ** (`luat.nap`) — **trần 8.000
-   · ĐÍCH 5.200**, ADR-0033 ⑴. Con số hôm nay do **cổng in ra**, đừng gõ vào đây.
+2. **Thước ràng buộc nhất: cái một phiên NẠP, đo bằng KÝ TỰ theo BÓ** (`luat.nap`) — ADR-0033 ⑴;
+   riêng bó của gói thì đích suy từ **nền cố định**, ADR-0036. Con số hôm nay do **cổng in ra**,
+   đừng gõ vào đây.
 3. **Một luật vào thì một luật ra:** kể tên luật nó thay, hoặc đo được nó đã nổ mấy lần.
 4. **Luật mới vào SỔ CÁI trước** (ADR-0027): file này biên dịch từ `docs/adr/`, rà **HẰNG TUẦN**
    (ADR-0000 ⑸), cổng ĐỎ khi còn chỗ **trích một vế đã chết**.

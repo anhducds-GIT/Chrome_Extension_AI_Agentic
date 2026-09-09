@@ -351,16 +351,17 @@
       ],
       "tran_ky_tu_moi_phien": 7223,
       "dich_ky_tu_moi_phien": 8000,
-      "tran_ky_tu_mot_goi": 6530,
+      "tran_ky_tu_mot_goi": 6368,
       "dich_ky_tu_mot_goi": 6600,
       "_doc_dich": "DICH la TRAN TUYET DOI; BIEN la dich that (65% cua tran) — ADR-0033 (1). May canh TRAN. Thuoc goi do BO: CLAUDE.md + AGENTS.md goc + AGENTS.md cua goi, nen tran cua bo = 2x tran cua mot nua — ADR-0033 (2).",
       "bien_ky_tu_moi_phien": 5200,
-      "bien_ky_tu_mot_goi": 4400,
+      "bien_ky_tu_mot_goi": 5600,
       "_doc_bo": "BO MO PHIEN = moi_phien + AGENTS.md cua goi + STATUS.md cua goi. Dung danh sach file AGENTS.md muc 1 bat doc (ADR-0034). HANDOFF.md CO Y khong nam trong bo — no la ~70% hoa don cu va nay nap theo yeu cau.",
       "mo_phien_goi": [
         "PHIEN.md"
       ],
-      "_doc_mo_phien_goi": "File cua GOI ma mot phien dung goi nap luc mo. Tu ADR-0035 chi con MOT file: PHIEN.md (may sinh, tu chua). AGENTS.md cua goi va STATUS.md thanh nguon cua no, khong con nam trong bo mo phien. Mot phep ghim doi chieu danh sach nay voi chinh CLAUDE.md — them file vao trinh tu mo ma khong khai o day thi DO."
+      "_doc_mo_phien_goi": "File cua GOI ma mot phien dung goi nap luc mo. Tu ADR-0035 chi con MOT file: PHIEN.md (may sinh, tu chua). AGENTS.md cua goi va STATUS.md thanh nguon cua no, khong con nam trong bo mo phien. Mot phep ghim doi chieu danh sach nay voi chinh CLAUDE.md — them file vao trinh tu mo ma khong khai o day thi DO.",
+      "_vi_sao_bien_mot_goi": "ADR-0036: dich cua bo goi suy tu NEN CO DINH (CLAUDE.md + dau de PHIEN.md + LUAT-CORE.md = 3.039 ky tu, 46-51% moi bo), khong tu ti le phan tram cua tran nhu ADR-0033 (1). 4.400 cu de lai 1.361 cho luat rieng + trang thai, trong khi luat vang mong nhat da 2.010 — tuc bat kha. Duc chot 09/09 'phuong an b': neu lai dich thay vi ha lop luat an toan."
     },
     "phien_goi": {
       "_doc": "MOT file cho MOT phien dung goi (ADR-0035). May sinh PHIEN.md = loi luat dung chung + luat rieng cua goi (dedupe theo van tay) + ban chat trang thai tu STATUS.md. tran_ky_tu do CA BO: dinh_tuyen (CLAUDE.md) + PHIEN.md, va no la TRAN CUNG — vuot la bo sinh TU CHOI ghi va thoat 1, khong phai canh bao. Duc chot 09/09: 2.000-3.000 token moi phien dung goi, va giu no o do la MUC TIEU CUA VIEC COMPILE. Khong co duong nang tran nhu thuoc coc: muon them mot luat thi phai bo mot luat.",

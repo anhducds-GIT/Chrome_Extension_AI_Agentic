@@ -893,8 +893,32 @@ const chay = (deps) => {
     const dich = ct.luat?.nap?.[`dich_ky_tu_${hau}`];
     assert.equal(typeof bien, "number", `phai khai bien_ky_tu_${hau} — dich that nam DUOI tran`);
     assert.ok(bien < dich, `bien_ky_tu_${hau} phai NHO hon dich (tran tuyet doi)`);
-    assert.ok(bien >= dich * 0.55 && bien <= dich * 0.75,
-      `bien_ky_tu_${hau} phai nam trong dai 30-40% duoi tran nhu Duc chot`);
+    if (hau === "moi_phien") {
+      assert.ok(bien >= dich * 0.55 && bien <= dich * 0.75,
+        `bien_ky_tu_${hau} phai nam trong dai 30-40% duoi tran nhu Duc chot`);
+    }
+  }
+  /* BO GOI DO KHAC — ADR-0036. Ti le phan tram gia dinh CA cai bo deu nen duoc. O bo goi thi
+     khong: mot nua la NEN dung chung (CLAUDE.md dinh tuyen + dau de PHIEN.md + LUAT-CORE.md),
+     va gói khong dong den duoc phan do. Do 09/09: nen = 3.039 ky tu, tuc 46-51% moi bo, nen dich
+     4.400 chi de lai 1.361 cho luat rieng + trang thai trong khi luat vang MONG NHAT da 2.010 —
+     bat kha. Duc chot "phuong an b" (neu lai dich) thay vi ha lop luat an toan cho vua so.
+     Ghim dieu kien SUY TU NEN, khong ghim con so: ha `LUAT-CORE.md` thi nen tut va san hop le
+     cua dich tut theo, khong ai phai nho di sua phep ghim nay. */
+  {
+    const ph = ct.luat?.phien_goi;
+    const bien = ct.luat.nap.bien_ky_tu_mot_goi;
+    const dich = ct.luat.nap.dich_ky_tu_mot_goi;
+    let nen = 0;
+    for (const f of ph?.dinh_tuyen ?? []) nen += fs.readFileSync(path.join(ROOT, f), "utf8").length;
+    nen += fs.readFileSync(path.join(ROOT, ph.core), "utf8").length;
+    assert.ok(nen > 0, "phai do duoc NEN co dinh cua bo goi");
+    assert.ok(bien >= nen * 1.6,
+      `bien_ky_tu_mot_goi (${bien}) phai tren nen x1,6 (${Math.round(nen * 1.6)}) — dich phai chua`
+      + " it nhat 60% cua nen cho noi dung THAT cua goi, khong thi no bat kha ngay luc viet ra");
+    assert.ok(bien <= dich * 0.90,
+      `bien_ky_tu_mot_goi (${bien}) phai duoi tran x0,90 (${Math.round(dich * 0.90)}) — dich sat`
+      + " tran thi khong con la dich");
   }
   /* Thuoc goi do BO, khong do mot file (ADR-0033 (2)). Ghim o cong: no phai cong phan goc vao. */
   assert.match(gate, /nen \+ n > nangNhat/,

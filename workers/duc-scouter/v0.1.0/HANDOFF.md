@@ -577,3 +577,16 @@ luật thì phải bỏ một luật.
 
 `## Luật vàng` của gói đã rút gọn cho vừa trần; không vế luật nào bị bỏ, chỉ chuyện kể bị cắt.
 **Không đụng mã, không đụng phép ghim.**
+
+## 2026-09-09 · `claude-nen-luat` — gói này nay mở phiên bằng `PHIEN.md`
+
+**Mở phiên: đọc `PHIEN.md`, một file, xong** ([ADR-0035](../../../docs/adr/0035-mot-file-cho-mot-phien-gap.md)).
+Máy sinh, tự chứa: lõi luật chung + `## Luật vàng` của gói + bản chắt trạng thái từ `STATUS.md`.
+**2.895 token.** Đừng nạp `AGENTS.md` hay file nhật ký này lúc mở — chúng là **nguồn** của
+`PHIEN.md`, mở khi cần đào sâu.
+
+`## Luật vàng` 2709 → 2555 ký tự. **Không luật nào bị xoá** — phần bỏ là phần đã có nguyên văn
+ở lõi dùng chung và `workers/_shared/AGENTS.md`. Giữ nguyên cả chín chốt riêng: selector không vào seed · từ vựng đóng · quyền là TRẦN · hai lõi đọc/ghi tách · toạ độ không nhận từ ngoài dây · đường ghi đóng mặc định.
+
+**Sửa `AGENTS.md` hay `STATUS.md` của gói thì PHẢI chạy `node scripts/rule-compile.mjs --sinh`** —
+cổng nay có phép kiểm canh (`PHIEN_CU`), và vượt trần 6.600 ký tự thì bộ sinh **từ chối ghi**.

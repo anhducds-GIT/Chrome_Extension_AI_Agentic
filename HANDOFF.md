@@ -613,3 +613,39 @@ khi 6.600 là **trần tuyệt đối** và 4.400 mới là **đích** — đún
 **71** và **70** ký tự, tức chật nhất repo, và chật vì chưa nén chứ không vì trần. ⑵ ĐÍCH 4.400
 **không gói nào với tới**: nền cố định đã 3.039 ký tự (46–51% mỗi bó), nên còn 1.361 cho luật
 riêng + trạng thái, mà riêng luật của gemini đã 2.086. Hạ lõi luật, hay nêu lại đích?
+
+## 2026-09-09 · `claude-nen-luat` (lượt 8) — hai gói cuối đã nén, và ĐÍCH nay đo từ NỀN
+
+Đức chốt hai câu còn treo: **nén `gg-flow-video` và `scouter`**, và **"phương án b"** cho đích.
+
+| Gói | Bó mở phiên | Luật riêng |
+|---|---:|---:|
+| gg-flow-video | 5.726 (**2.603 tok**) | 2.921 → 2.129 |
+| scouter | 6.368 (**2.895 tok**) | 2.709 → 2.555 |
+| chatgpt · gemini | 6.016 · 6.242 | (đã nén lượt trước) |
+
+**Không luật nào bị xoá.** Phần bỏ là phần đã có **nguyên văn** ở `LUAT-CORE.md` và
+`workers/_shared/AGENTS.md`: cấm `.innerHTML` · bằng chứng chỉ THÊM · không đoán selector · chữ
+operator tiếng Việt · nhắc Đức reload · mỗi fix một phép ghim · pilot trang thật hỏi Đức. Trần
+credit của Flow, `MAX_TRIAL_JOBS = 7`, và cả chín chốt riêng của Scouter **giữ nguyên**.
+
+**Một lượt tôi làm hỏng rồi tự bắt:** khối dẫn *"đừng chép lại"* tôi viết cho scouter dài **340**
+ký tự trong khi phần nó cắt chỉ ~290 — gói **TO RA 42 ký tự** và vượt thước cóc. Rút xuống một
+dòng 110 ký tự. Bài học: ở một file có trần, **lời giải thích cũng phải qua trần**.
+
+**[ADR-0036](docs/adr/0036-dich-cua-bo-mo-phien-goi-do-tu-nen-co-dinh.md) — ĐÍCH bó gói
+4.400 → 5.600, và cách đo đổi.** Đích cũ bất khả, không phải vì lười: **nền cố định 3.039 ký tự**
+(`CLAUDE.md` 565 + đầu đề `PHIEN.md` ~410 + `LUAT-CORE.md` 2.064) chiếm **46–51%** mỗi bó, nên
+4.400 chỉ chừa 1.361 cho luật riêng + trạng thái, trong khi luật vàng **mỏng nhất** đã 2.010.
+Hai đường đặt lên bàn — hạ lõi luật, hay nêu lại đích; Đức chọn nêu lại, và đó là đường đúng: hạ
+lõi là trả bằng **lớp bảo vệ** để mua một chỉ số.
+
+Phép ghim **không ghim con số**, nó ghim điều kiện: `bien ≥ nền × 1,6` và `bien ≤ trần × 0,90`.
+Hạ `LUAT-CORE.md` thì nền tụt và sàn hợp lệ của đích tụt theo — không ai phải nhớ đồng bộ hai con
+số. ADR-0033 ⑴ (30–40% dưới trần) **giữ nguyên** cho `nap_moi_phien`.
+
+**Thước cóc bó gói hạ 6.530 → 6.368.** Chưa gói nào đạt đích — đó là điều đúng cho một ĐÍCH; số
+phải giữ hằng ngày là thước cóc.
+
+**Chỗ chưa với tới:** không gì canh **nền** tự phình — lõi to ra 300 là cả bốn bó to ra 300, chỉ
+thước cóc bắt, sau khi việc đã rồi (Hệ quả ADR-0036).
