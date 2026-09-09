@@ -1572,6 +1572,37 @@ cho xanh.
   ghim riêng chứng minh hết nắp thì rơi về `INTERRUPTED`; thử phá 0 con thoát; và **một lượt chạy
   live** cho thấy một loạt job đi qua được ít nhất một lần tự chữa.
 
+### B-45 · (P2) Quy thuộc một ảnh SAU cú F5 — vế của ADR-0050 ⒞ không thi hành được, cần Đức chốt
+
+**Đo 09/09 khi làm `B-41` ⑵, và nó làm HẸP hẳn thứ bản vá đó cứu được.** ADR-0050 ⒞ viết
+*"chữa xong thì bộ dò vừa mù nay nhìn lại được … thấy thì quy về job và xong"* — tức nó giả định
+sau F5 vẫn quy được một ảnh về lượt gửi. **Không quy được, và cả hai đường đều bị chặn bởi thiết
+kế, không bởi một chỗ thiếu:**
+
+| đường | vì sao tắc |
+|---|---|
+| `DAC_RECONCILE_IMAGE_JOB` | đòi `STATE.activeAttempt` khớp, mà **F5 xoá bộ nhớ content script** → sau F5 nó luôn trả `ATTEMPT_ID_MISMATCH` |
+| `DAC_MANUAL_RECONCILE_EXISTING_OUTPUT` | không cần bộ nhớ đó, nhưng `proofFromRecordedAttempt()` đòi `decision.chosen.source_id` — thứ một lượt **MÙ** chưa bao giờ ghi được, vì mù nghĩa là nó thấy **0** ảnh |
+
+**Hệ quả đã ship:** `reconcileBlindDetector()` **không cứu miễn phí** được một job mà ảnh đã nằm
+sẵn trên trang. Nó chỉ làm hai việc: khẳng định được là máy chủ không tạo gì thì gửi lại (nắp 1),
+còn lại thì `INTERRUPTED` kèm một câu nói rõ người vận hành phải xem cái gì.
+
+**Cửa ra có thật, và nó KHÔNG phải nới một lớp bảo vệ:** lượt gửi ghi `baseline_source_ids`
+**trước** khi gửi, và luật quy thuộc chính của gói là *"đúng MỘT ảnh hợp lệ không nằm trong
+baseline"* (`decision.fresh.eligible === 1`). Áp đúng luật đó lên trang đọc lại sau F5 là **cùng
+một luật, trang khác**, không phải một luật lỏng hơn.
+
+**Nhưng ba thứ phải đo trước, và không đoán một cái nào:**
+1. `baseline_source_ids` có thật sự được ghi vào sổ cho một lượt **MÙ** hay không.
+2. `source_id` của một ảnh có **sống qua** cú F5 hay không (nó dẫn từ URL/asset — cần đo, không suy).
+3. Nó có làm con số **0 chỗ gọi `verifyExistingOutput()` trên đường tự động** đổi hay không —
+   con số đó chở luật ADR-0047 và đang được ghim.
+
+- **đóng khi:** ba phép đo trên có số thật, rồi Đức chốt có mở luật quy thuộc sau F5 hay không, rồi
+  mới tới mã + ghim + thử phá. **Đừng gộp vào `B-41`** — B-41 ⑵ đã đóng đúng phạm vi của nó.
+
+
 ### B-42 · (P1) Case 2 — đường chat thẳng cho reasoning nhiều lượt
 
 Đức chốt 08/09 khi chọn hướng: *"thêm đường chat thẳng là ý kiến hay & chủ động thao tác được
@@ -1828,3 +1859,38 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
   (`verifyExistingOutput`), mà biến đó hết đúng ngay lúc nguồn mới đi qua một hàm khác, tức suite
   vẫn xanh trong khi luật đã bị đụng. **⑵ vẫn MỞ** (`DETECTION_BLIND` đối soát trước) — nó là một
   loại lỗi khác và có nắp riêng, chưa có số đo live nào.
+- **TIẾN ĐỘ B-41 ⑵ (09/09) · ĐÓNG.** `DETECTION_BLIND` nay đối soát trước khi kết luận, và cửa
+  gửi lại là lối ra **cuối**, không phải mặc định. Thứ tự chính là phần an toàn: **đọc trước, chưa
+  F5** → không thấy lượt hỏi của mình thì **dừng hẳn và KHÔNG F5** → thấy rồi mới F5 → dò lại có
+  nắp → mới tự kiểm.
+  **Phép khẳng định đòi BA VẾ** (`blindAbsenceAffirmed()`, `reconciliation-core.js`): ⒜ thấy lượt
+  hỏi của chính job → bộ đọc lượt **người** còn sống; ⒝ có **≥ 1** lượt trả lời ở đâu đó trong hội
+  thoại → bộ đọc lượt **trợ lý** còn sống; ⒞ sau lượt hỏi của mình không có lượt trả lời nào.
+  **Vế ⒝ là vế chịu tải, và nó là chỗ dễ hỏng nhất của cả bản vá:** thiếu nó thì một selector trợ
+  lý bị mục sẽ đọc ra "không có lượt trả lời nào" ở **mọi** hội thoại, phép tự kiểm **khẳng định
+  SAI** là máy chủ không tạo gì, rồi gửi lại một prompt **đã có** kết quả — đúng cái ADR-0047 sinh
+  ra để chặn. Vế ⒜ một mình không đủ: hai selector khác nhau, mục cái nào là chuyện riêng của cái
+  đó.
+  `DETECTION_BLIND` **giữ nguyên** trong `HARD_STOP_FAILURE_TYPES`; `canRetry()` và
+  `submissionMayExist()` **không đổi một chữ** — cửa mới đứng **TRƯỚC** chúng, nắp **1** theo
+  **job**, và so `=== true` nghiêm ngặt (một trang hỏng trả `{}` là thứ xảy ra thật, và
+  `if (x)` sẽ nhận nó).
+  **Số nguồn khẳng định ÂM TÍNH: 1 → 2**, đổi bằng tay trong `post-submit-no-resend-smoke.mjs`
+  phần 4. Hai nguồn **khác loại**, đừng đọc con số mà bỏ qua chỗ này: B-40 ⒝ gõ một câu chữa lấy
+  từ danh sách trắng nên prompt gốc không bay lần nữa; B-41 ⑵ là nguồn **đầu tiên** trong gói mở
+  được cửa gửi lại **prompt gốc**, nên nắp của nó nhỏ hơn hẳn một bậc.
+  **Số đo:** ghim mới `tests/blind-reconcile-b41-2-smoke.mjs` **24 mép**, cắt
+  `reconcileBlindDetector()` đã ship ra chạy thật trong `node:vm`; suite gói **125/125**; thử
+  phá **16/16 bắt, 0 thoát, 0 mỏ neo hỏng** — trong đó mũi M16 đảo thứ tự đọc–F5 và mũi M1 bỏ vế ⒝.
+  **Hai mỏ neo thử phá khớp 2 lần ở vòng đầu** vì trùng chữ với đường chữ của B-43; một mũi khớp 2
+  lần in ra **giống hệt** một mũi bị bắt, nên đã neo chặt rồi chạy thật, không bỏ qua.
+  **Hai phép ghim CŨ đỏ, và cả hai đỏ vì BIẾN GIÁN TIẾP GIÒN, không vì luật bị đụng:**
+  `text-reasoning-mode-smoke.mjs` cắt từ `finishTextOutput` tới một tên ở **xa**
+  (`reconcileSubmittedAttempt`) nên phép cắt vỡ ngay khi có hàm mới xen vào giữa — nay neo vào
+  **hàm kế tiếp**; `post-submit-no-resend-smoke.mjs` đếm một endpoint mà **không cắt chú thích**
+  nên đọc **văn giải thích** của tôi thành một chỗ gọi thật. Cùng họ với lỗi đã sửa ở ba phép ghim
+  sáng nay.
+  **VẾ KHÔNG THI HÀNH ĐƯỢC, và nó làm hẹp hẳn thứ bản vá này cứu được:** ADR-0050 ⒞ viết *"thấy thì
+  quy về job và xong"* — sau F5 **không quy được**, vì F5 xoá bộ nhớ content script và bằng chứng
+  quy thuộc của một lượt **mù** vốn không tồn tại. Đã tách thành `B-45`, cần Đức chốt.
+

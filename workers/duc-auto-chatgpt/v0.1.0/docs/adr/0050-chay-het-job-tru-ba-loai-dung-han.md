@@ -61,6 +61,14 @@ gửi lại; vẫn không chắc thì `INTERRUPTED` như hôm nay. Lý do tách 
 gửi** rất có thể đang mù trước một kết quả ĐÃ CÓ, và gửi lại lúc đó là đốt lượt thứ hai cho một
 việc đã xong — đúng cái ADR-0047 sinh ra để chặn.
 
+> **MỘT VẾ CỦA ⒞ KHÔNG THI HÀNH ĐƯỢC — đo 09/09 khi thi hành, ghi tại chỗ để không ai trích
+> một vế đã chết.** Câu *"thấy thì quy về job và xong"* giả định sau F5 vẫn quy được một ảnh về
+> lượt gửi. Không quy được: F5 **xoá bộ nhớ content script** nên `DAC_RECONCILE_IMAGE_JOB` luôn
+> trả `ATTEMPT_ID_MISMATCH` sau đó, còn đường bấm tay đòi `decision.chosen.source_id` — thứ một
+> lượt **MÙ** chưa bao giờ ghi được. Nên bản đã ship chỉ làm hai việc: khẳng định được là máy chủ
+> không tạo gì thì gửi lại (nắp 1 theo job), còn lại `INTERRUPTED` kèm một câu nói rõ phải xem gì.
+> Vế còn lại tách thành `B-45`, và nó cần Đức chốt vì nó là một luật **quy thuộc** mới.
+
 **⒟ Lời nhà cung cấp tự khẳng định là một nguồn ĐỐI SOÁT hợp lệ.** Khi ChatGPT nói bằng chữ rằng
 nó không tạo được kết quả, đó là *"đối soát khẳng định được"* theo đúng chữ của ADR-0047 — nên
 gửi lại ở ca này là **thi hành** ADR-0047, không phải nới nó. Con số **0 ca** trong phép đo của
