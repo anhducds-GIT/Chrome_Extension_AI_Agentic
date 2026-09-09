@@ -686,3 +686,33 @@ bản vá hỏng. Bài học: **`git status` ngay trước lượt chạy kết 
 **Số.** Suite 95/95 → 95/95. Hai file test sửa, không file mã nguồn nào.
 **Còn mở:** gói `duc-auto-chatgpt` **chưa soi** — khoá do `claude-b36-vaA` giữ; câu lệnh soi và
 điều kiện đóng ở `G-14` của `BACKLOG.md`.
+
+## 2026-09-09 — `claude-luat-rasoat`: ba vế đã chết trong `AGENTS.md`, không đụng mã
+
+Lượt rà luật đầu tiên của gói này (N-57). **Không sửa một dòng mã nào** — chỉ `AGENTS.md`.
+
+**Luật 8 cấm harness đã chết từ 24/08 và nằm đây 16 ngày.** ADR-0022 của chính gói tên là
+*"Sửa luật 8 AGENTS.md: cho phép xây harness test bằng Chrome THẬT"* — một chỉ thị sửa đúng dòng
+đó. Nhánh ChatGPT sửa ngay hôm ấy; nhánh này thì không. Nay luật 8 nói đúng: **preview pane vẫn
+cấm, harness Chrome thật thì được**, kèm liên kết ADR-0022.
+
+**Luật 7 thiếu HẲN `run.trial`.** Gói có method này thật (`MAX_TRIAL_JOBS = 30` trong
+`dev-trial-core.js`) và nó **tiêu credit thật**, nhưng luật vàng chỉ nói `run.start`/pause/resume
+không tồn tại. Ai chỉ đọc file này sẽ tin Bridge không chạy được gì. Đã ghi đủ bốn nắp cứng kèm
+bốn ADR của Đức: 0027 (cho phép) · 0032 (≤30 job) · 0028 (cách nhau ≥5 phút) · 0031 (một chuỗi
+liên tục). Trần thật vẫn khai ở **đúng một chỗ** trong mã.
+
+**Luật 1 bảo vệ ba thư mục KHÔNG tồn tại trong gói này** — `pilot-03/`, `pilot-06/`, `pilot-06B/`
+là của nhánh ChatGPT, chép sang lúc fork; còn `pilot-04/`, `Batch-SX-01/`, `Pilot-G2-01/`,
+`Pilot-REF-01/` có thật thì không được nêu. Viết lại theo **hình dạng tên** (`pilot-*/` …), không
+theo danh sách gõ tay. Hai dòng bản đồ file cũng vậy.
+
+**Bảng vai** nói Claude *"không được tự commit/push"*, đá với luật 6 của chính file và với
+`AGENTS.md` gốc mục 2. Đã sửa, và ghi rõ điều thật sự bị cấm là `git push` trần.
+
+**Mười nhóm câu luật lặp với nhánh ChatGPT là CỐ Ý** — ghi lý do ngay tại hai mục *Luật vàng* và
+*Core / Companion*: một phiên làm ở gói này không bao giờ đọc file gói kia, và hai bản **phải**
+được phép lệch nhau. Cái lệch mới là bệnh, không phải cái giống — chính phép ③ lôi ra ba vế trên.
+
+Suite gói: **95/95 xanh** (không chạm mã). Khoá vùng do Đức mở: *"tất cả tôi đều mở freeze khóa
+để triển khai nếu bạn cần."* Còn mở: **59/67 quyết định của gói mồ côi** → `N-58` ở sổ nợ gốc.

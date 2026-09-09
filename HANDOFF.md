@@ -15,38 +15,6 @@
 > file này.
 <!-- /HANDOFF-CUT-POINTER -->
 
-## 2026-09-08 · claude-cua-kiem · Trần sổ nợ 15 lần đầu có răng
-
-**Đức chốt:** giữ nguyên con số 15, thêm máy canh. Trước hôm nay `AGENTS.md` giới hạn ④ **tự
-khai** *"trần này KHÔNG có máy cưỡng chế"* — và nó vỡ đúng chỗ mù ấy: mục thứ 11 vào sổ mà
-**không gì đỏ lên**, nên trần phải nâng 10 → 15 **sau khi đã vỡ**.
-
-**Làm gì.** Phép kiểm thứ **14** của cổng đóng phiên: *"Sổ nợ dưới trần"*. Trần khai ở
-`backlog.tran` của `.repo-structure.json`, không viết cứng trong script; repo không khai thì
-phép kiểm xanh (cùng hợp đồng với bản khung 1.3.50). Đang: **12/15**.
-
-**Bộ đếm: `dangMo` mới, thêm vào `backlog-check.mjs` — không viết bộ thứ hai.** Sổ này đóng mục
-bằng cách **thêm dòng `- **ĐÓNG <mã>**` ở CUỐI**, không gạch tiêu đề, nên **đếm tiêu đề là đếm
-sai** — tôi đã đếm sai đúng kiểu đó một lần (báo 14 mục mở, thật ra 12). Ghim
-`tests/backlog-check-smoke.mjs`: dòng ở cuối mới đóng · tự khai *"ĐÃ VÁ"* trong thân **không**
-tính · dòng *nói về* một dòng đóng **không** tính (sổ thật có sẵn một dòng như vậy) · mã đã đổi
-qua `ĐỔI MÃ` vẫn khớp. 15/15 xanh.
-
-**Vấp đáng ghi — sửa hàng loạt bằng regex đã quét trúng chỗ không được sửa.** Cổng nay phụ thuộc
-`backlog-check.mjs`, nên **13 kho thử** phải chép thêm file đó. Tôi vá bằng một lượt regex quét
-mọi danh sách chứa `session-check.mjs` — và nó chèn cả vào **hai danh sách KHẲNG ĐỊNH**
-(`repo-structure-smoke:313` đòi script phải đi qua cửa quy vùng chung · `dau-vet-vung-smoke:50`
-đòi script phải dùng hằng `CHUA_THAY_DAU_VET`). `backlog-check.mjs` không làm cả hai việc đó, nên
-hai chỗ ấy là **khẳng định sai được đóng dấu hợp lệ**. Cả hai đã gỡ, và tôi soát lại **bằng máy**:
-mọi chỗ chèn còn lại đều có `copyFileSync` ngay dưới. **Danh sách chuỗi trông giống nhau không có
-nghĩa chúng nói cùng một điều** — sửa hàng loạt thì phải kiểm từng chỗ chèn bằng ngữ cảnh, không
-bằng hình dạng.
-
-**Chập chờn, không phải lỗi:** `bridge-multiprofile-transport-async-smoke` đỏ một lượt, xanh khi
-chạy riêng cả hai bản và xanh ở lượt chạy lại. Gói đóng băng, tôi không chạm file nào trong đó.
-
-**Còn mở:** sổ **12/15**.
-
 ## 2026-09-08 · `claude-scouter-s06` — HNX Fetch thành gói riêng; trần ghi 50 → 200
 
 Hai chốt của Đức trong một phiên.
@@ -605,3 +573,35 @@ khi đọc. Đã khôi phục; `chay-test.mjs` nay **từ chối chạy** suite 
 `BRIEF-OBSERVER-V1`. `PLATFORM.md` 231 → 101. **Thước cóc `docs/` 9.803 → 9.185.**
 
 **Kho nhớ của phiên cũng đi qua sáu bước đó** (ADR-0027 ⑸): 39 → 38 mục.
+
+## 2026-09-09 · `claude-luat-rasoat` — ba nơi luật cuối, sáu vế chết máy không thấy
+
+Đức mở khoá cả ba vùng `duc-auto-*`, chuyển từng vùng bằng `--restamp --duc-duyet`.
+**Đóng N-55 · N-56 · N-57** — chi tiết từng mục ở ba dòng `ĐÓNG` cuối `BACKLOG.md`.
+
+**Phép ④ của `rule-compile.mjs` 3 → 0**, 19 nơi chứa luật đã rà hết — thêm `docs/_TEMPLATE-adr.md`,
+trước nay **không khai nên vô hình với bộ biên dịch**, và đúng trong đó có luật chết. 12 nhóm phép
+③ nay đều mang lý do viết tay.
+
+**Sáu vế chết tìm bằng MẮT, máy không thấy cái nào** — chúng **mâu thuẫn** với sổ cái chứ không
+*trích* sổ cái, nên phép ① mù. Nặng nhất hai cái: `gg-flow` luật 3 ghi `run.trial` trần **3 job**
+trong khi mã và luật 2 của **cùng file** nói **7** — con số về TIỀN; và `gemini` luật 8 cấm
+harness, chết **24/08** bởi chính `ADR-0022` tên là *"Sửa luật 8 AGENTS.md"*, nằm sai **16 ngày**.
+
+**Đức chốt cặp vai** cho repo này: **Hệ thống / Sản phẩm** → **ADR-0029**. Cả hai vai đều code
+được; Sản phẩm giữ mã mọi extension + Scouter xuyên suốt chạy và debug, kèm kiến trúc của chính
+nó; *"Phát & thu"* thuộc repo bộ khung. Hết cờ ⚠ treo từ 08/09.
+Món nợ gói video tự khai đã trả: luật *chọn nhãn cấu hình* lên tầng repo → **ADR-0028**.
+
+**Ba chỗ tôi làm sai.** ⑴ `--restamp --duc-duyet` đóng dấu **hai** khoá chứ không một — nó ghi
+*tôi* đã lấy khoá của lane `claude-gpt-chay-het-job`, chỉ vì lượt nhận hợp lệ của họ chưa commit;
+đã trả lại nguyên văn từ `git show HEAD:` → **N-59**. ⑵ Mục `Vế đã chết` viết văn xuôi thì bộ đo
+**không thấy gì và báo SẠCH** — khuôn bắt buộc nay ở `RULE-COMPILER.md` mục 5. ⑶ Gom 12 khoá file
+cùng lúc dù cổng đã nhắc; Đức bắt được, đã trả sạch.
+
+**`--carry` cuốn 2 commit của lane `claude-gpt-chay-het-job`** (B-43, việc của họ). Họ lấy lại khoá
+`duc-auto-chatgpt` lúc 03:50 theo chốt của Đức; một dòng luật chết còn lại trong gói đó tôi **hoàn
+nguyên và giao lại** qua sổ nợ.
+
+**Còn mở:** phép ② **100 mồ côi** ở hai sổ `chatgpt`/`gemini` → **N-58**, không phải nhiễu: bốn
+chốt `run.trial` của Đức nằm trong đó và chúng ĐANG SỐNG.

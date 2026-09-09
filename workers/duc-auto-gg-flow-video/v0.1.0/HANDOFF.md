@@ -643,3 +643,28 @@ rồi phá lại: đỏ.
 
 **Còn mở:** một mục phát sinh đã ghi vào `BACKLOG.md` — bộ đọc selector của harness chỉ hiểu
 tên thẻ, nên nhánh dạng `.class` sẽ làm nó im lặng trả rỗng, đúng lại bệnh vừa chữa.
+
+## 2026-09-09 — `claude-luat-rasoat`: gói lần đầu có `docs/adr/`, và một trần an toàn sai
+
+**N-55 xong.** Gói này chưa hề có sổ cái. Mười quyết định của Đức trong `decisions.md` không có
+số hiệu, nên **B12 không nhìn thấy chúng — xoá đi cũng không ai kêu**. Nay: `docs/adr/` với 10
+ADR, `decisions.md` thành mục lục. Tách nguyên văn, không đổi một chữ nội dung; bản gốc đọc lại
+được ở `git show eb86e499:workers/duc-auto-gg-flow-video/v0.1.0/decisions.md`.
+
+**Một trần an toàn về TIỀN đang sai trong `AGENTS.md`.** Luật 3 ghi *"`run.trial` có trần 3 job"*
+— con số 27/08, **chết từ 05/09** khi F-22 đổi sang suy trần từ chip. Mã nói `MAX_TRIAL_JOBS = 7`,
+**luật 2 của chính file này** cũng nói 7. Hai con số an toàn khác nhau trong cùng một file. Đã
+sửa: luật 3 nay trỏ về trần ở luật 2, và trần thật chỉ khai ở một chỗ trong mã.
+
+**Bản hiệu lực nay mang chính sổ cái của nó.** Ngay sau khi tách, 9/10 quyết định mồ côi —
+`AGENTS.md` không trích số hiệu nào. Đã trỏ đủ; mồ côi của gói về **0**.
+
+**Thêm luật vàng 6:** *fix nhỏ không cần audit độc lập* (ADR-0009, Đức chốt 02/09). Luật này chưa
+bao giờ vào bản hiệu lực của gói nào. **Nó đá với `AGENTS.md` gốc mục 2** và ranh giới *"fix nhỏ"*
+chưa ai chốt câu chữ — ghi ra và **chờ Đức**, không tự sửa hiến pháp.
+
+**Trả món nợ gói tự khai:** luật *chọn nhãn cấu hình* lên tầng repo thành **ADR-0028** (nó áp cho
+mọi extension, trước chỉ viết được ở đây vì `_root` khi ấy có phiên khác giữ). Mục cũ thành một
+con trỏ.
+
+Suite gói: **101/101 xanh** (không chạm mã). Khoá vùng do Đức mở 09/09.
