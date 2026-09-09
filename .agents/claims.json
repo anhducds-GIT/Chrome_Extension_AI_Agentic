@@ -26,11 +26,11 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-chay-het-job",
-      "ai": "Claude",
+      "owner": null,
+      "ai": null,
       "claimed_at": "2026-09-09T06:08",
       "task": "B-36 + B-44: dong not no chan MVP",
-      "released_at": null,
+      "released_at": "2026-09-09T06:30",
       "taken_from": "claude-luat-rasoat",
       "taken_by": "claude-gpt-chay-het-job",
       "taken_at": "2026-09-09T04:59",
@@ -92,31 +92,21 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "90a160fab62300a4",
+  "_fingerprint": "e54f4b12e41ef77e",
   "tam": {
+    "HANDOFF.md": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T06:36",
+      "viec": null
+    },
     ".agents/claims.json": {
       "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T06:19",
+      "luc": "2026-09-09T06:36",
       "viec": null
     },
-    "workers/duc-auto-chatgpt/v0.1.0/scripts/don-rac-tai-xuong.mjs": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T06:09",
-      "viec": null
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/tests/don-rac-tai-xuong-smoke.mjs": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T06:09",
-      "viec": null
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/STATUS.md": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T06:14",
-      "viec": null
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/BACKLOG.md": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T06:14",
+    "HANDOFF-ARCHIVE-05.md": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T06:36",
       "viec": null
     }
   }

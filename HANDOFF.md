@@ -9,42 +9,11 @@
 <!-- HANDOFF-THANG: 2026-09 -->
 
 <!-- HANDOFF-CUT-POINTER: ADR-0008 -->
-> **1 mục cũ hơn đã dời sang [`HANDOFF-ARCHIVE-04.md`](HANDOFF-ARCHIVE-04.md)** — cùng thư mục này,
+> **1 mục cũ hơn đã dời sang [`HANDOFF-ARCHIVE-05.md`](HANDOFF-ARCHIVE-05.md)** — cùng thư mục này,
 > nguyên văn, không mất chữ nào. File này giữ **20 mục cuối** (ADR-0008). Cần đào lịch sử
 > xa hơn thì mở file đó và đi tiếp theo con trỏ trong nó; ghi Log mới thì vẫn ghi vào cuối
 > file này.
 <!-- /HANDOFF-CUT-POINTER -->
-
-## 2026-09-08 · `claude-scouter-s06` — bảng hiện DANH TÍNH từng extension
-
-Đức đặt: *"cập nhật vào dashboard danh tính của 2 extension, cả chức năng, khả năng… protocol
-sử dụng cũng nên được đưa vào. Đơn giản, dễ hiểu, cô đọng."*
-
-**Sửa NGUỒN, không sửa bảng.** `DASHBOARD.md` là máy sinh — gõ tay vào đó thì mất ở lần sinh
-sau, và trong lúc chưa mất thì nó nói sai. Nên: ba trường **tuỳ chọn** trong `STATUS.md`
-(`lam_duoc` · `khong_lam_duoc` · `dung_the_nao`) + `ref_runbook` trỏ sổ tay, rồi hai bộ sinh đọc.
-
-- `DASHBOARD.md` → **khối C** mới, mỗi extension ba dòng.
-- Trang HTML → khối *"Nó là cái gì"* trong thẻ từng extension (tầng **Việc**).
-
-**Chỉ vẽ đơn vị NÀO CÓ KHAI.** Bốn gói cũ không khai nên không hiện dòng nào — một danh sách
-nửa là *"chưa khai"* thì người đọc học cách bỏ qua cả khối.
-
-**Dòng KHÔNG LÀM ĐƯỢC đứng ngang hàng dòng làm được**, cố ý: hai extension này khác nhau chủ
-yếu ở chỗ chúng **không** làm gì. HNX Fetch không bấm được — đó là tính năng, không phải thiếu
-sót, và là lý do gói đó tồn tại riêng.
-
-**Một lỗ suýt mở lại.** Ba trường mới là chữ tự do hiện thẳng lên bảng, mà bộ dò *"số của máy"*
-chỉ soi frontmatter theo **danh sách tên** — nên trường mới **không tự được soi**. Quên thêm tên
-là gõ tay được *"4 lệnh Bridge"* vào bảng và không gì đỏ lên. Đã thêm vào danh sách và ghim cả
-hai chiều: gõ tay số máy-đo thì **bị bắt**, còn số kiểm chứng (`25/25`) và giới hạn an toàn
-(`trần 200 lượt`) thì **được tha**.
-
-> Kèm một chỗ tự sửa: chú thích đầu tiên tôi viết nhắc hàm `luatSoMayGiu()` — **không tồn tại**.
-> Tên thật là `detectStatusMachineOwnedFacts()`.
-
-**Đo.** Suite gốc repo **379** · dashboard smoke **102** (trước 100) · overview smoke **36**
-(trước 35) · `check-bootstrap` 0 đỏ.
 
 ## 2026-09-08 (tối) · claude-cua-kiem · N-43 đóng: một vòng 8,5 phút → dưới 2,5
 
@@ -592,3 +561,34 @@ là lịch sử riêng. Đây là chỗ nên nhìn kỹ ở lượt cải tổ t
 
 **Bốn phép nay: ① 0 · ② 0 · ③ 12 (đều có lý do viết tay) · ④ 0.** Không còn gì trong sổ nợ hạ tầng
 thuộc về bộ biên dịch luật.
+
+## 2026-09-09 · `claude-luat-rasoat` (lượt 3) — trần đo bằng KÝ TỰ, và một khuyến nghị tôi rút lại
+
+Đức giao quyền lead về nén luật, rồi hỏi **trần bao nhiêu thì phù hợp**.
+
+**Không có con số chuẩn nào của hãng để dẫn** — Anthropic khuyên `CLAUDE.md` giữ ngắn nhưng không
+công bố trần dòng. Nên trần suy từ số đo của repo và từ chính lời Đức (*25–50 active rules*):
+**ĐÍCH 8.000 ký tự** mỗi phiên. [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md).
+
+**Ba thước cũ sai HAI chỗ.** Sai **đơn vị**: lượt nén buổi sáng giảm **32% dòng mà chỉ 7% ký tự**
+— tôi cắt chữ ngắn rồi thêm chữ đặc. Sai **chỗ**: thước "bề mặt luật" đo 19 nơi cộng lại, con số
+**không phiên nào trả**. Hoá đơn thật: mọi phiên trả `CLAUDE.md`+`AGENTS.md`; phiên đụng gói trả
+thêm `AGENTS.md` của gói. Đổi sang `luat.nap`, đơn vị ký tự; bỏ `agents.tran_dong` và
+`luat.tran_dong_ban_hieu_luc`.
+
+**Nén thật:** mục 7 chiếm **35%** `AGENTS.md` và **không phải luật** — nó là bảng chỉ đường.
+Nạp mỗi phiên **20.530 → 17.684 ký tự** (~9.300 → ~8.038 token).
+
+**Bước ⑥ về tay máy** ([ADR-0030](docs/adr/0030-rule-compiler-v1.md)): `rule-compile.mjs --sinh`,
+hai lượt sinh ra y hệt từng byte. Đích khai ở `luat.khoi_sinh`, không suy từ đường dẫn.
+
+**Hai chỗ tôi sai, và cách sai đáng nhớ hơn cái sai.** ⑴ Khuyên *"lane kia phải port
+`reconciliation-core.js` sang Gemini"* — **sai**, Gemini không hề có `text_reasoning`, port là
+nhét mã chết. Tôi phán trước khi kiểm. ⑵ Viết `new RegExp(` + "`" + `\b${t}\b` + "`" + `)` — `\b`
+trong template literal là **ký tự backspace**, lần thứ ba của cùng họ lỗi trong một ngày.
+
+**Việc lớn nhất còn lại KHÔNG phải chuyện luật:** hai lượt đẩy bị chặn trong một giờ vì lane khác
+sửa dở trên **cùng một cây git**. `ADR-0017 ⑵` (*mỗi vai một checkout riêng*) đã `Accepted` từ
+07/09 và **chưa bao giờ được làm** — `git worktree list` trả về đúng một cây. Ghi thành **N-62**,
+cần Đức chốt. Bốn phép của bộ biên dịch **đều XANH** trong khi vế này bị bỏ hai ngày: nó soi
+*chữ với chữ*, không soi *chữ với thế giới*.

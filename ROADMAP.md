@@ -29,25 +29,36 @@ và `docs/`, không cái nào thấy 695 dòng của hai gói fork.
 **đóng khi:** lượt nén y hệt đã áp cho `duc-auto-chatgpt` (đang có lane khác giữ khoá vùng), và
 `luat.khoi_sinh` phủ cả ba gói `duc-auto-*`.
 
-## Làn 2 — Cải tổ và dọn gốc repo (`Y-14`)
+## Làn 2 — Nén bản hiệu lực xuống ĐÍCH 8.000 ký tự (`Y-14`)
 
-Đức 09/09: *"quay lại review việc cải tổ & clean gốc."* Mục `Y-14` trong `IDEAS.md` là chỗ ghi ý
-định gốc; điều kiện Đức đặt lúc mở nó — *sau khi xong gói Assistant và nợ kỹ thuật* — **nay Đức đã
-đưa lên trước**, ghi ra để đừng ai tưởng tôi bỏ qua thứ tự cũ.
+Đức 09/09 giao quyền lead: *"AI chủ động hoàn toàn… miễn là đúng direction & đúng budget."*
+Trần và đích: [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md). **Đo bằng KÝ TỰ, đừng đo bằng dòng**
+— một lượt nén đã giảm 32% dòng mà chỉ 7% ký tự.
 
-Ba chỗ đã đo được, đáng nhìn trước:
+Số sống lấy bằng cổng (`session-check.mjs`, phép *Kho chữ không phình*). Ngày 09/09:
 
-1. **Hai sổ cái là cùng một chuỗi chép đôi.** `duc-auto-gemini 0001–0015` ≡ `duc-auto-chatgpt
-   0001–0016`, **lệch đúng một số hiệu** — lịch sử trước lúc fork, tồn tại hai bản với hai số
-   khác nhau. Từ `0016` trở đi mới là lịch sử riêng.
-2. **Phép ③ `LUAT_TRUNG` đã từ 12 xuống 2**, và hai nhóm còn lại đều là **lặp CỐ Ý đã có lý do viết
-   tay** (`AGENTS.md` ↔ `MULTIFLOW.md` là tầng-1-luật ↔ tầng-2-tai-nạn; `hnx-fetch` vì sổ đó tự đứng
-   một mình). Còn lại là lượt nén y hệt cho `duc-auto-chatgpt` — xem Làn 1.
-3. **Ba gói `duc-auto-*` là fork của nhau** (giới hạn ②) và mỗi lỗi thường có ba bản sao.
-   `G-08` đã đo: tám module **giống hệt từng byte** giữa hai nhánh.
+| Ai trả | Hôm nay | Đích |
+|---|---:|---:|
+| Mọi phiên (`CLAUDE.md` + `AGENTS.md`) | 17.684 | **8.000** |
+| Gói nặng nhất (`chatgpt/AGENTS.md`) | 43.783 | **8.000** |
 
-**đóng khi:** Đức chốt một câu cho mỗi chỗ trên — gộp, hay giữ hai bản kèm lý do — và
-`node scripts/rule-compile.mjs` phép ③ phản ánh đúng câu chốt đó.
+**Mục tiêu tiếp theo, đã đo:** `chatgpt/AGENTS.md` **5,5× quá đích**, phần lớn là bảng *Bản đồ
+file* với mô tả test dài. **Cùng bệnh với mục 7 của `AGENTS.md` gốc** — đó là **chỉ mục, không
+phải luật** — và mục 7 đã chữa xong làm tiền lệ: rút mỗi hàng còn trigger + file + một mệnh đề.
+
+**Cửa ra rẻ nhất, dùng lại mỗi lần:** chuyển phần **kể chuyện** (đo bao nhiêu, ai vấp, ngày nào)
+sang ADR — ADR nạp theo yêu cầu nên **miễn phí** với mọi phiên; bản hiệu lực giữ một câu luật cộng
+một liên kết. `AGENTS.md` đang tốn **~194 token một luật**, gấp 3–5 lần cái một câu cần.
+
+**Hai chỗ cấu trúc còn nguyên, cần Đức một câu mỗi chỗ:**
+
+1. **Hai sổ cái là cùng một chuỗi chép đôi** — `gemini 0001–0015` ≡ `chatgpt 0001–0016`, lệch đúng
+   một số hiệu. Lịch sử trước lúc fork, tồn tại hai bản.
+2. **Ba gói `duc-auto-*` là fork của nhau** (giới hạn ②); `G-08` đo được tám module **giống hệt
+   từng byte** giữa hai nhánh.
+
+**đóng khi:** cả hai con số trên bảng đạt đích, và mỗi chỗ cấu trúc hoặc đã gộp hoặc mang một dòng
+nói vì sao cố ý giữ hai bản.
 
 ## Làn 3 — Đóng nợ gói ChatGPT, tới MVP
 
