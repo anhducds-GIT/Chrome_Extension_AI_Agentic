@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-09",
-  "generated_commit": "ed1570be",
+  "generated_commit": "deb5c2ea",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -63,7 +63,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "**Không còn mục nào chặn, và không còn mục nào làm được mà không cần Đức.** `B-40` `B-41` `B-42` `B-43` `B-44` đóng; `B-45` đóng là **sẽ không làm** và `B-46` đóng là **đã đo, tiền đề sai** — cả hai đo mất **0 credit**. Còn `B-36` (nút cấp lại quyền, Đức nói tạm chưa cần) và vế live của ADR-0053 (đã hạ mức, không chặn). Việc kế đáng làm nhất là **một loạt chạy ảnh thật**: nó vừa dùng được tính năng, vừa tự trả lời câu duy nhất còn để mở — tab bị che có vẽ xong một `<img>` sinh ra hay không (probe đã ghi sẵn `imageCandidateCount` và `generatedChains`, không cần thêm phép đo riêng).",
+      "next_step": "**KẾ HOẠCH TRIỂN KHAI đầy đủ ở cuối `BACKLOG.md`, khối `KẾ HOẠCH TRIỂN KHAI` — đọc nó trước khi làm gì.** Tóm: ⓐ làm ngay, không cần Đức, không tốn credit — `B-20`, bỏ tính năng alias là code chết ở cả hai worker và sửa lời khai sai ở `README.md:74` (tôi chọn BỎ chứ không NỐI; Đức đảo được). ⓑ chờ MỘT lượt chạy ảnh thật — nó trả lời BA câu cùng lúc miễn phí: vế còn mở của `B-46` (tab bị che có vẽ xong `<img>` sinh hay không), `B-14` (tìm mục neo theo CẤU TRÚC cho `attachmentPreview`, nay chỉ đứng trên một `aria-label` tiếng Anh), và `B-15` (`uploadPending` chưa từng khớp — dùng ảnh **~2MB** để cửa sổ upload đủ dài, và probe HAI mốc: giữa lúc gắn, và sau khi sinh). Đừng đo ba lượt riêng cho cùng một thứ. **Hai làn ưu tiên #1 là gói KHÁC và cả hai chờ Đức** — `hnx-fetch` (bật công tắc, thiếu 3 ngày) và `gg-flow-video` (xem Flow còn quá tải; CẢNH BÁO chip x2 có thể làm một job thành 12 credit).",
       "human_action": "Không có việc nào đang chặn. Đức đã nạp lại tiện ích và F5 sau bản audit; `chat.say` chạy live PASS. Khi nào muốn thì **chạy một loạt ảnh thật** — nó sẽ tự trả lời câu cuối còn để mở của `B-46` (tab bị che có vẽ xong ảnh sinh hay không), không cần thêm phép đo riêng nào.",
       "priority_rank": 2,
       "superseded_by": null,
@@ -160,7 +160,7 @@
     {
       "id": "workers/duc-auto-chatgpt/v0.1.0",
       "unit": "workers/duc-auto-chatgpt/v0.1.0",
-      "title": "**Không còn mục nào chặn, và không còn mục nào làm được mà không cần Đức.** `B-40` `B-41` `B-42` `B-43` `B-44` đóng; `B-45` đóng là **sẽ không làm** và `B-46` đóng là **đã đo, tiền đề sai** — cả hai đo mất **0 credit**. Còn `B-36` (nút cấp lại quyền, Đức nói tạm chưa cần) và vế live của ADR-0053 (đã hạ mức, không chặn). Việc kế đáng làm nhất là **một loạt chạy ảnh thật**: nó vừa dùng được tính năng, vừa tự trả lời câu duy nhất còn để mở — tab bị che có vẽ xong một `<img>` sinh ra hay không (probe đã ghi sẵn `imageCandidateCount` và `generatedChains`, không cần thêm phép đo riêng).",
+      "title": "**KẾ HOẠCH TRIỂN KHAI đầy đủ ở cuối `BACKLOG.md`, khối `KẾ HOẠCH TRIỂN KHAI` — đọc nó trước khi làm gì.** Tóm: ⓐ làm ngay, không cần Đức, không tốn credit — `B-20`, bỏ tính năng alias là code chết ở cả hai worker và sửa lời khai sai ở `README.md:74` (tôi chọn BỎ chứ không NỐI; Đức đảo được). ⓑ chờ MỘT lượt chạy ảnh thật — nó trả lời BA câu cùng lúc miễn phí: vế còn mở của `B-46` (tab bị che có vẽ xong `<img>` sinh hay không), `B-14` (tìm mục neo theo CẤU TRÚC cho `attachmentPreview`, nay chỉ đứng trên một `aria-label` tiếng Anh), và `B-15` (`uploadPending` chưa từng khớp — dùng ảnh **~2MB** để cửa sổ upload đủ dài, và probe HAI mốc: giữa lúc gắn, và sau khi sinh). Đừng đo ba lượt riêng cho cùng một thứ. **Hai làn ưu tiên #1 là gói KHÁC và cả hai chờ Đức** — `hnx-fetch` (bật công tắc, thiếu 3 ngày) và `gg-flow-video` (xem Flow còn quá tải; CẢNH BÁO chip x2 có thể làm một job thành 12 credit).",
       "rank": 2,
       "claim": null
     },
