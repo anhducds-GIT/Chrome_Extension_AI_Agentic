@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-09",
+  "generated_at": "2026-09-10",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -66,8 +66,8 @@
       "lifecycle": "active",
       "status_md": "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "**`B-47` vế ⑵ ĐÃ NGHIỆM THU LIVE TRÊN TAB NỀN 09/09** — cặp trước/sau sạch, cùng điều kiện (`visibility: hidden`, job ảnh): trước bản vá `ready` **false 3/3** → `eligible 0` → `NO_NEW_IMAGE`, `INTERRUPTED` sau 300 giây, **không có ảnh**; sau bản vá `ready` **true 3/3** → `eligible 1` → **SUCCESS**, ảnh lưu được (`b4285f42-…png`, `persistence_verified: true`), **không chạm nắp giờ**. Xác nhận cấu trúc: mã ship **không có** `canvas`/`drawImage`/`createImageBitmap` — đường tải lấy bytes theo URL nên chưa bao giờ cần bitmap. **Còn mở:** `B-47`⑴ (thông điệp `NO_NEW_IMAGE` nói sai nguyên nhân — nay hiếm hẳn nhưng chưa hết) · `B-49` (hai vế, chờ Đức) · `B-50` · `B-51` (probe giấu ảnh mới nhất khi hội thoại ≥15 ảnh, chỉ là rủi ro chẩn đoán).",
-      "human_action": "**Một việc duy nhất, và nó chặn 8 commit: cho đẩy hay chờ?** @Đức:chốt(day) Lane `harness-loi-01` trả khoá rồi đi, để lại **4 commit** migrate bộ khung mà chính nó ghi *\"không được đẩy\"* (cổng `B12` đỏ). Chúng nằm DƯỚI commit của tôi nên không tách ra đẩy riêng được. Đo giúp Đức quyết: `B12` đỏ (42 ADR) là do commit `128c7027` gộp ADR, và **commit đó đã nằm trên `main`** — nên cổng đỏ KHÔNG do 4 commit bị giữ, và chúng không đụng file nào trong `docs/adr/`. Hai đường: cho tôi đẩy kèm `--carry`, hay gọi lane kia quay lại tự đẩy. **Ngoài ra** @Đức:chốt(B-49) vẫn chờ — bỏ điều kiện đo nhầm và nâng vòng chờ gắn ảnh lên đếm theo TÊN FILE, hai vế một hàm, làm nửa vời là mở cổng sớm.",
+      "next_step": "**`B-36` ĐÓNG 09/09 sau 8 tuần — và nó đóng bằng một CÁI KHOÁ, không phải một bản vá.** Đường thoát (thư mục đã cấp quyền, ADR-0049) vốn đã chạy; thứ chặn nó là một dòng UI khoá nút *Chọn thư mục* theo `!state.workbook`, mà phiên Bridge không có workbook — `~~B-52~~`, **Đức tự tìm ra**. Nghiệm thu: chuỗi 3 ảnh, tab ở NỀN → `Pilot GPT` có `Q001/Q002/Q003.png`, tên xin **khớp** tên ra, 3 nguồn ảnh khác nhau, sổ audit **ra file thật**. Đối chứng cùng buổi qua Chrome Downloads: **67 file GUID nằm phẳng** — nên Downloads **vẫn hỏng**, mục này không chữa nó. Còn mở: `B-47`⑴ · `B-49` · `B-50` · `B-51`.",
+      "human_action": "**Đường chạy đã thông đầu-đến-cuối** — che cửa sổ, chuỗi nhiều ảnh, đúng thư mục đúng tên. @Đức:chốt(day) **Việc treo duy nhất là ĐẨY MÃ:** 13 commit của tôi nằm sau 4 commit migrate của lane `harness-loi-01` mà chính lane đó ghi *không được đẩy*; không tách ra được. Đo giúp Đức quyết: cổng `B12` đỏ là do commit `128c7027` gộp ADR và **commit đó đã ở trên `main`** — không phải do 4 commit bị giữ. Đẩy kèm `--carry`, hay gọi lane kia quay lại? @Đức:chốt(B-49) `B-49` vẫn chờ: bỏ điều kiện đo nhầm **và** đếm ảnh theo TÊN FILE — hai vế một hàm.",
       "priority_rank": 2,
       "superseded_by": null,
       "last_verified": "2026-08-26",
@@ -170,7 +170,7 @@
     {
       "id": "workers/duc-auto-chatgpt/v0.1.0",
       "unit": "workers/duc-auto-chatgpt/v0.1.0",
-      "title": "**`B-47` vế ⑵ ĐÃ NGHIỆM THU LIVE TRÊN TAB NỀN 09/09** — cặp trước/sau sạch, cùng điều kiện (`visibility: hidden`, job ảnh): trước bản vá `ready` **false 3/3** → `eligible 0` → `NO_NEW_IMAGE`, `INTERRUPTED` sau 300 giây, **không có ảnh**; sau bản vá `ready` **true 3/3** → `eligible 1` → **SUCCESS**, ảnh lưu được (`b4285f42-…png`, `persistence_verified: true`), **không chạm nắp giờ**. Xác nhận cấu trúc: mã ship **không có** `canvas`/`drawImage`/`createImageBitmap` — đường tải lấy bytes theo URL nên chưa bao giờ cần bitmap. **Còn mở:** `B-47`⑴ (thông điệp `NO_NEW_IMAGE` nói sai nguyên nhân — nay hiếm hẳn nhưng chưa hết) · `B-49` (hai vế, chờ Đức) · `B-50` · `B-51` (probe giấu ảnh mới nhất khi hội thoại ≥15 ảnh, chỉ là rủi ro chẩn đoán).",
+      "title": "**`B-36` ĐÓNG 09/09 sau 8 tuần — và nó đóng bằng một CÁI KHOÁ, không phải một bản vá.** Đường thoát (thư mục đã cấp quyền, ADR-0049) vốn đã chạy; thứ chặn nó là một dòng UI khoá nút *Chọn thư mục* theo `!state.workbook`, mà phiên Bridge không có workbook — `~~B-52~~`, **Đức tự tìm ra**. Nghiệm thu: chuỗi 3 ảnh, tab ở NỀN → `Pilot GPT` có `Q001/Q002/Q003.png`, tên xin **khớp** tên ra, 3 nguồn ảnh khác nhau, sổ audit **ra file thật**. Đối chứng cùng buổi qua Chrome Downloads: **67 file GUID nằm phẳng** — nên Downloads **vẫn hỏng**, mục này không chữa nó. Còn mở: `B-47`⑴ · `B-49` · `B-50` · `B-51`.",
       "rank": 2,
       "claim": null
     },
