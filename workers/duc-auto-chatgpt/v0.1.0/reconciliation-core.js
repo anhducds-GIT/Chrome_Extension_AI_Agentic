@@ -63,6 +63,45 @@
     return Boolean(attribution?.ok && imagePersisted && checkpointPersisted);
   }
 
-  const api = { proofFromRecordedAttempt, verifyExistingOutput, matchesRequest, safeComplete };
+  /* ĐỐI SOÁT CHỮ — B-43 vòng ba. Tìm câu trả lời cho ĐÚNG prompt của mình trong một hội
+     thoại đã đọc về, không đọc DOM, không nhận biến ngoài.
+
+     VÌ SAO CẦN NÓ. Đo live 09/09: tab bị che thì Chrome không cấp khung hình, nên trang
+     ChatGPT KHÔNG VẼ chữ vào DOM — máy đọc thấy 25 ký tự và đứng yên 160 giây, trong khi
+     câu trả lời đã nằm đủ trên máy chủ. Một cú F5 lấy lại bản thật: 25 → 1.611 ký tự,
+     không sinh lại, không gửi lại. Đức 99% thời gian để tab bị che, nên đây là đường
+     CHÍNH, không phải ca ngoại lệ.
+
+     VÌ SAO ĐỐI SOÁT BẰNG LƯỢT HỎI, KHÔNG PHẢI "lượt trả lời cuối". `latestAssistantText()`
+     trả về lượt cuối của TRANG, mà trang có thể đã trôi sang hội thoại khác hoặc có lượt
+     người dùng gõ tay chen vào. Neo vào chính prompt của job là thứ duy nhất buộc câu trả
+     lời VỚI câu hỏi — cùng luật attribution mà đường ảnh đã theo. Không thấy lượt hỏi của
+     mình thì KHÔNG kết luận gì: `found: false` là "chưa chứng minh được", không phải "chưa
+     trả lời".
+
+     So khớp 160 ký tự đầu sau khi bóp mọi khoảng trắng thành một dấu cách: `innerText` gói
+     lại dòng theo bề rộng khung, nên so nguyên văn cả prompt là so hai thứ khác nhau. */
+  const PROMPT_MATCH_CHARS = 160;
+  function promptKey(value) {
+    return String(value || "").replace(/\s+/g, " ").trim().slice(0, PROMPT_MATCH_CHARS);
+  }
+  function answerAfterPrompt(turns, promptText) {
+    const want = promptKey(promptText);
+    if (!want) return { found: false, reason: "NO_PROMPT", text: "" };
+    const rows = Array.isArray(turns) ? turns : [];
+    // LƯỢT HỎI CUỐI khớp, không phải lượt đầu: cùng một prompt có thể được gửi lại trong
+    // một hội thoại dài, và câu trả lời cần đối soát luôn là câu của lần gần nhất.
+    let at = -1;
+    for (let i = 0; i < rows.length; i += 1) {
+      if (rows[i]?.role === "user" && promptKey(rows[i]?.text) === want) at = i;
+    }
+    if (at < 0) return { found: false, reason: "PROMPT_NOT_IN_CONVERSATION", text: "" };
+    const reply = rows.slice(at + 1).find((row) => row?.role === "assistant");
+    const text = String(reply?.text || "");
+    if (!text.trim()) return { found: true, reason: "NO_ANSWER_YET", text: "" };
+    return { found: true, reason: "OK", text };
+  }
+
+  const api = { proofFromRecordedAttempt, verifyExistingOutput, matchesRequest, safeComplete, PROMPT_MATCH_CHARS, promptKey, answerAfterPrompt };
   (typeof window !== "undefined" ? window : globalThis).DacReconciliationCore = api;
 })();

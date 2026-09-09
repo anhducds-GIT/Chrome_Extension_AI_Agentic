@@ -72,6 +72,7 @@
     TEXT_OUTPUT: "text_output",
     USER_STOP: "user_stop",
     TEXT_HALT_NO_RESEND: "text_halt_no_resend",
+    TEXT_RECONCILE: "text_reconcile",
     IMAGE_RECONCILE: "image_reconcile",
     FAILURE: "failure"
   });
@@ -85,10 +86,17 @@
     if (!isText && ok && result?.image_url) return { action: DISPATCH_ACTIONS.IMAGE_OUTPUT, completed: null, halted: null };
     if (isText && ok && result?.type === "text") return { action: DISPATCH_ACTIONS.TEXT_OUTPUT, completed: null, halted: null };
     if (stopRequested) return { action: DISPATCH_ACTIONS.USER_STOP, completed: true, halted: false };
-    // The prompt was submitted and no attributable answer came back.
-    // Reconciliation is image-only evidence, so for text the sole safe move is
-    // to halt: re-sending would ask ChatGPT the same question a second time.
-    if (isText && postSubmit) return { action: DISPATCH_ACTIONS.TEXT_HALT_NO_RESEND, completed: true, halted: true };
+    // Prompt đã gửi và không có câu trả lời nào quy thuộc được.
+    //
+    // BẢN CŨ DỪNG HẲN Ở ĐÂY, với lý lẽ *"đối soát chỉ có bằng chứng cho ảnh"*. Câu đó đúng
+    // cho tới 09/09, và nay SAI: đo được rằng câu trả lời nằm đủ trên máy chủ, chỉ chưa
+    // được trang vẽ ra vì tab bị che. Bằng chứng cho chữ là `answerAfterPrompt()` — lượt
+    // hỏi của chính job này, cộng lượt trả lời ngay sau nó, đọc lại sau một cú F5.
+    //
+    // ĐỐI SOÁT KHÔNG PHẢI GỬI LẠI, và đó là toàn bộ lý do nó không phạm luật exact-once:
+    // nó chỉ ĐỌC. Đo được sau F5 hội thoại vẫn có ĐÚNG MỘT lượt hỏi, không phải hai. Dừng
+    // hẳn vẫn còn nguyên — nó là chỗ rơi vào KHI đối soát không chứng minh được gì.
+    if (isText && postSubmit) return { action: DISPATCH_ACTIONS.TEXT_RECONCILE, completed: null, halted: null };
     if (postSubmit) return { action: DISPATCH_ACTIONS.IMAGE_RECONCILE, completed: null, halted: null };
     return { action: DISPATCH_ACTIONS.FAILURE, completed: null, halted: null };
   }

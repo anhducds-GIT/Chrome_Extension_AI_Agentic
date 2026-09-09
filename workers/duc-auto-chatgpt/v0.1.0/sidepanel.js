@@ -6071,6 +6071,71 @@
     }
   }
 
+  /* ĐỐI SOÁT CHỮ — B-43 vòng ba, Đức chốt 09/09 (*"đã reload, F5, bạn làm tiếp đi"*, sau khi
+     tôi nêu rõ nó nới luật exact-once).
+
+     ĐO LIVE 09/09, đường cong đầy đủ: tab bị che → 12s: 8 ký tự · 25s: 25 ký tự · rồi ĐỨNG YÊN
+     160 giây tới lúc hết hạn 180 giây. F5 qua Bridge: 25 → **1.611 ký tự**, không sinh lại.
+     Chrome không cấp khung hình cho tab bị che nên trang KHÔNG VẼ chữ — câu trả lời nằm đủ trên
+     máy chủ suốt từ đầu. Đức để tab bị che **99% thời gian**, nên đây là đường CHÍNH.
+
+     THỨ TỰ Ở ĐÂY LÀ TOÀN BỘ PHẦN AN TOÀN, và nó CỐ Ý ngược với đường ảnh:
+       ⑴ ĐỌC TRƯỚC, chưa F5 — tìm lượt hỏi của chính job này trong hội thoại.
+       ⑵ Không thấy → DỪNG HẲN như cũ, và **không F5**. Không thấy nghĩa là "chưa chứng minh
+         được prompt đã tới", mà F5 lúc lấp lửng là đúng cái `chat.reload` từ chối làm.
+       ⑶ Thấy rồi → F5 → đọc lại. Lúc này prompt ĐÃ là một lượt trong hội thoại, khung gõ
+         trống, nên F5 không có gì để gửi. Đo được: sau F5 hội thoại có ĐÚNG MỘT lượt hỏi.
+
+     Đảo ⑴ với ⑶ thì test vẫn xanh mà luật exact-once mất — nên có một mép ghim đúng cho việc
+     đó, và mũi thử phá đảo thứ tự phải bị bắt.
+
+     MỘT LẦN MỖI JOB. F5 không lấy được thì F5 lần hai cũng không. */
+  async function reconcileSubmittedText(item, effectiveOutput, message, settings) {
+    item.status = "RECONCILING"; item.phase = "SUBMITTED";
+    update(item, { status: "RECONCILING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
+    audit("RECONCILE_START", item, { message: `${message} — đọc lại hội thoại trước khi kết luận; KHÔNG gửi lại.` });
+    renderQueue(); progress(`Đang đối soát ${item.job.id}; prompt sẽ KHÔNG được gửi lại.`);
+
+    const doc = async () => send({ type: "DAC_RECONCILE_TEXT_JOB", job_id: item.job.id, prompt: item.job.prompt });
+    const dungHan = (ly) => {
+      markInterrupted(item, window.DacRunnerCore.classifyFailure(ly, item.phase), `${ly} The text prompt will not be sent again automatically.`);
+      return { completed: true, halted: true };
+    };
+
+    // ⑴ ĐỌC TRƯỚC KHI F5.
+    let truoc;
+    try { truoc = await doc(); }
+    catch (error) { return dungHan(`${message} Đối soát cũng không đọc được trang: ${messageOf(error)}`); }
+    if (!truoc?.ok) return dungHan(`${message} Đối soát không đọc được trang: ${truoc?.error || "không rõ"}`);
+
+    // ⑵ Chưa chứng minh được prompt đã tới hội thoại → dừng hẳn, KHÔNG F5.
+    if (!truoc.reconcile?.found) {
+      audit("RECONCILE_RESULT", item, { message: `KHÔNG thấy lượt hỏi của job này trong hội thoại (${truoc.reconcile?.reason}); không F5, không kết luận.` });
+      return dungHan(`${message} Không tìm thấy lượt hỏi của job này trong hội thoại, nên không khẳng định được prompt đã tới đâu.`);
+    }
+    if (truoc.reconcile.complete) {
+      // Đọc thẳng đã đủ — khỏi F5. Ca này xảy ra khi trang vừa được nhìn tới.
+      audit("RECONCILE_RESULT", item, { message: `Đọc lại thấy câu trả lời đủ ${truoc.reconcile.chars} ký tự, không cần F5.` });
+      return finishTextOutput(item, truoc.result, effectiveOutput);
+    }
+
+    // ⑶ Đã khẳng định prompt nằm trong hội thoại → F5 rồi đọc lại.
+    const repair = await repairWorkspaceSurface();
+    audit("WORKSPACE_REPAIR", item, { message: `TEXT_RECONCILE F5 ${repair.ok ? "OK" : "KHÔNG XONG"}: ${repair.note}` });
+    if (!repair.ok) return dungHan(`${message} Đã thấy lượt hỏi trong hội thoại nhưng không F5 lại được: ${repair.note}`);
+
+    let sau;
+    try { sau = await doc(); }
+    catch (error) { return dungHan(`${message} Sau F5 vẫn không đọc được trang: ${messageOf(error)}`); }
+    if (sau?.ok && sau.reconcile?.complete) {
+      audit("RECONCILE_RESULT", item, { message: `F5 rồi đọc lại: ${truoc.reconcile.chars} → ${sau.reconcile.chars} ký tự. Câu trả lời có sẵn trên máy chủ, trang chỉ chưa vẽ.` });
+      log(`${item.job.id} đối soát sau F5: ${truoc.reconcile.chars} → ${sau.reconcile.chars} ký tự.`, "done");
+      return finishTextOutput(item, sau.result, effectiveOutput);
+    }
+    audit("RECONCILE_RESULT", item, { message: `Sau F5 vẫn chưa đủ (${sau?.reconcile?.reason || sau?.error || "không rõ"}, ${sau?.reconcile?.chars ?? 0} ký tự).` });
+    return dungHan(`${message} F5 rồi đọc lại vẫn chưa thấy câu trả lời trọn vẹn (${sau?.reconcile?.chars ?? 0} ký tự).`);
+  }
+
   async function reconcileSubmittedAttempt(item, effectiveOutput, message, settings) {
     item.status = "RECONCILING"; item.phase = "SUBMITTED";
     update(item, { status: "RECONCILING", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "", last_error: "", error: "" });
@@ -6278,6 +6343,11 @@
           if (dispatch.action === actions.USER_STOP) {
             update(item, { status: "STOPPED", attempt_phase: item.phase, attempt_count: item.attempt_count, retry_count: item.retry_count, failure_type: "USER_STOP", last_error: response?.error || "Stopped by user.", error: response?.error || "Stopped by user.", completed_at: new Date().toISOString(), ...(item.operator_recreate ? { recreate_status: "FAILED" } : {}) });
             audit("FAILURE", item, { message: response?.error || "Stopped by user." }); if (item.operator_recreate) audit("RECREATE_ATTEMPT_FAILED", item, { message: response?.error || "Stopped by user." }); completed = dispatch.completed; break;
+          }
+          if (dispatch.action === actions.TEXT_RECONCILE) {
+            const outcome = await reconcileSubmittedText(item, effectiveOutput, response?.error || "Không có câu trả lời nào quy thuộc được.", settings);
+            completed = outcome.completed; halted ||= outcome.halted;
+            continue;
           }
           if (dispatch.action === actions.TEXT_HALT_NO_RESEND) {
             const reason = response?.error || "Text prompt was submitted, but no attributable text response could be verified.";

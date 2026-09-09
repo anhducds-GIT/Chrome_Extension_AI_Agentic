@@ -219,6 +219,7 @@ const DAY_DU = `[MODE: Audit | BUDGET: 100 w | RULES: ✓ đã đọc]\n\n${"x".
   const loi = await s.chay().then(() => null, (e) => e);
   assert.match(String(loi.message), /TAB_HIDDEN_NO_STREAM/, "phải nêu đúng nguyên nhân: tab bị che");
   assert.match(String(loi.message), /Mở tab/, "và nêu việc phải làm");
+  assert.doesNotMatch(String(loi.message), /chạy lại/, "KHÔNG được khuyên gửi lại — câu trả lời đã nằm trên máy chủ, gửi lại là tiêu thêm quota");
   assert.ok(loi.detection?.hidden_polls > 0, "kèm số đo, để lần sau không phải đoán lại");
 }
 

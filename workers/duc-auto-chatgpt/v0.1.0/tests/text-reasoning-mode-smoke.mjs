@@ -150,10 +150,21 @@ assert.equal(decide({ ok: true, result: { type: "text", text: "answer" }, stopRe
 assert.equal(decide({ stopRequested: true, postSubmit: true }).action, actions.USER_STOP);
 
 // The no-resend guarantee, in the place a test can actually reach it.
-const halted = decide({ postSubmit: true });
-assert.equal(halted.action, actions.TEXT_HALT_NO_RESEND, "an unresolved submitted text prompt halts instead of reconciling");
-assert.equal(halted.completed, true, "the halt ends the attempt loop");
-assert.equal(halted.halted, true, "the halt stops the batch rather than retrying the prompt");
+//
+// ĐỔI 09/09 (B-43 vòng ba, Đức chốt). Bản cũ ghim `TEXT_HALT_NO_RESEND` ngay tại đây, với lý
+// lẽ *"đối soát chỉ có bằng chứng cho ảnh"*. Câu đó đúng cho tới 09/09 và nay SAI: đo live cho
+// thấy câu trả lời nằm đủ trên máy chủ, chỉ chưa được trang vẽ ra vì tab bị che (25 ký tự đứng
+// yên 160 giây → F5 → 1.611 ký tự, không sinh lại).
+//
+// THỨ THAY ĐỔI LÀ ĐÍCH RẼ, KHÔNG PHẢI LỜI HỨA. Đối soát chỉ ĐỌC: nó không gõ, không gửi, và
+// `text-reconcile-after-reload-smoke.mjs` cưỡng chế đúng vế đó cộng thứ tự đọc-trước-F5-sau.
+// Dừng hẳn vẫn còn nguyên bên dưới — nó là chỗ rơi vào KHI đối soát không chứng minh được gì,
+// và mép ngay dưới đây canh cho nó đừng bị xoá.
+const doiSoat = decide({ postSubmit: true });
+assert.equal(doiSoat.action, actions.TEXT_RECONCILE, "một prompt chữ đã gửi mà chưa có câu trả lời thì ĐỌC LẠI trước, đừng dừng hẳn ngay");
+assert.equal(doiSoat.completed, null, "kết cục do phép đối soát quyết, không phải do cửa rẽ");
+assert.equal(doiSoat.halted, null, "cửa rẽ không được tự tuyên halt — đối soát có thể chốt SUCCESS");
+assert.equal(actions.TEXT_HALT_NO_RESEND, "text_halt_no_resend", "đường dừng-hẳn-không-gửi-lại phải CÒN: nó là chỗ rơi vào khi đối soát thất bại");
 assert.equal(decide({ task: "image_generation", postSubmit: true }).action, actions.IMAGE_RECONCILE, "the image path keeps its bounded reconciliation");
 assert.equal(decide({}).action, actions.FAILURE, "a pre-submit failure stays retryable");
 assert.throws(() => decide({ task: "video_generation" }), /INVALID_TASK_TYPE/);

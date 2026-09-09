@@ -776,15 +776,24 @@
     // a normal timeout from the outside, which is how the 2026-08-26 run
     // retried into six real image generations before giving up. Say which one
     // it is, and let the runner halt instead of paying for another attempt.
-    // B-43: hết giờ mà phần lớn thời gian trang bị che thì nguyên nhân gần như chắc chắn là
-    // Chrome bóp phanh tab nền, KHÔNG phải ChatGPT chậm. Nói thẳng ra, kèm việc phải làm —
-    // một câu "hết giờ" trơn ở đây đúng bằng cách con bug này sống được: nó đổ lỗi cho nhà
-    // cung cấp, và người vận hành đi tìm sai chỗ.
+    // B-43: hết giờ mà phần lớn thời gian trang bị che → NÓI RA SỐ ĐO, đừng tuyên nguyên nhân.
+    //
+    // Bản đầu của tôi viết thẳng "nguyên nhân là Chrome bóp phanh tab nền". Đức bắt đúng chỗ
+    // đó: `hiddenPolls > pollCount / 2` chỉ đo **tab CÓ bị che**, nó không đo **tab GÂY RA**
+    // chuyện này — tab bị che thì hiển nhiên nó bị che quá nửa số vòng. Một sự trùng hợp mặc
+    // áo chẩn đoán. Cơ chế thật sau đó đo được (trang không vẽ vì không có khung hình), nhưng
+    // chỗ ĐO nó là phép đối soát, không phải dòng này.
+    //
+    // VÀ BẢN ĐẦU KHUYÊN SAI, tệ hơn hẳn: nó viết *"mở tab ra rồi CHẠY LẠI"*. Chạy lại là gửi
+    // prompt lần hai để lấy một câu trả lời đã nằm sẵn trên máy chủ — tiêu thêm một lượt quota
+    // của Đức, đúng thứ luật exact-once sinh ra để chặn. Nay câu này chỉ hiện SAU khi đối soát
+    // (F5 rồi đọc lại) cũng không lấy được, nên việc phải làm là MỞ TAB RA XEM, không phải gửi lại.
     if (!expectImage && hiddenPolls > pollCount / 2) {
       const error = new Error(
-        `TAB_HIDDEN_NO_STREAM: tab ChatGPT bị che ${hiddenPolls}/${pollCount} vòng dò, nên chữ ` +
-        "ChatGPT gửi về không vào được trang. Mở tab đó ra cho nó hiện rồi chạy lại — chưa có " +
-        "kết quả nào bị ghi sai, và lượt gửi này KHÔNG được gửi lại tự động."
+        `TAB_HIDDEN_NO_STREAM: hết giờ; trang bị che ${hiddenPolls}/${pollCount} vòng dò và chữ ` +
+        "không mọc thêm. Đối soát (F5 rồi đọc lại) cũng chưa lấy được câu trả lời trọn vẹn. " +
+        "Mở tab đó ra xem ChatGPT đã trả lời xong chưa — KHÔNG cần gửi lại, và lượt gửi này " +
+        "KHÔNG được gửi lại tự động."
       );
       error.detection = { ...lastDetection, timed_out: true, hidden_polls: hiddenPolls, poll_count: pollCount };
       throw error;
@@ -1011,6 +1020,42 @@
         sendResponse({ ok: true, read: { url: location.href, ...readTurns(document, assistantSelector(), userSelector(), limit, maxChars) } });
       } catch (error) {
         sendResponse({ ok: false, error: `CHAT_READ_FAILED: ${error?.message || error}` });
+      }
+      return false;
+    }
+
+    if (message.type === "DAC_RECONCILE_TEXT_JOB") {
+      // ĐỐI SOÁT CHỮ — B-43 vòng ba. CHỈ ĐỌC, đúng luật của DAC_CHAT_READ: không click,
+      // không gõ, không đổi focus. Cửa này chạy SAU khi prompt đã bay và hết giờ, nên nếu
+      // nó gõ bất cứ thứ gì thì đó là gửi lần hai — thứ luật của Đức cấm tuyệt đối.
+      //
+      // Không nhận `attempt` để đối chiếu như đường ảnh, vì bằng chứng ở đây MẠNH HƠN một
+      // mã attempt: nó là chính câu hỏi của job nằm trong hội thoại. Mã attempt sống trong
+      // bộ nhớ content script, mà F5 xoá bộ nhớ đó — nên đòi nó ở đây là đòi đúng thứ vừa
+      // bị cú F5 làm mất.
+      if (!surfaceAllowedNow()) {
+        sendResponse({ ok: false, error: `WRONG_SURFACE: ${location.href} không phải một cuộc hội thoại nên không đối soát được.` });
+        return false;
+      }
+      const prompt = typeof message.prompt === "string" ? message.prompt : "";
+      if (!prompt.trim()) {
+        sendResponse({ ok: false, error: "RECONCILE_TEXT_FAILED: thiếu prompt để đối soát." });
+        return false;
+      }
+      try {
+        const read = readTurns(document, assistantSelector(), userSelector(), 12, 32767);
+        const hit = window.DacReconciliationCore.answerAfterPrompt(read.turns, prompt);
+        // `looksTruncated` giữ nguyên vai của nó: đối soát ra một câu còn dở thì KHÔNG
+        // được chốt. F5 lấy bản của máy chủ, nên còn dở ở đây nghĩa là ChatGPT thật sự
+        // chưa viết xong — khác hẳn ca trang chưa vẽ.
+        const complete = hit.reason === "OK" && !looksTruncated(hit.text);
+        sendResponse({
+          ok: true,
+          reconcile: { ...hit, complete, chars: hit.text.length, turns_read: read.turns.length, read_status: read.status },
+          result: complete ? { type: "text", text: hit.text, char_count: hit.text.length, completion: { reason: "reconciled_after_reload", generation_seen: false } } : null
+        });
+      } catch (error) {
+        sendResponse({ ok: false, error: `RECONCILE_TEXT_FAILED: ${error?.message || error}` });
       }
       return false;
     }
