@@ -26,15 +26,15 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-chay-het-job",
+      "owner": "claude-luat-rasoat",
       "ai": "Claude",
-      "claimed_at": "2026-09-08T17:33",
-      "task": "B-41: thi hanh ADR-0050 (b) — RECEIVER_LOST/WRONG_SURFACE thanh dieu kien chua duoc, co nap so lan chua",
+      "claimed_at": "2026-09-09T03:17",
+      "task": "N-56 + N-57: sua lien ket chet STATUS.md, dem ADR sai, ra soat AGENTS.md goi ChatGPT (CHI TAI LIEU)",
       "released_at": null,
-      "taken_from": "claude-gpt-don-no",
-      "taken_by": "claude-assistant",
-      "taken_at": "2026-09-07T02:08",
-      "duc_decision": "Lane claude-tran-900 bao xong, 5 commit cua no da len remote — tra khoa ho vi lane da ket thuc"
+      "taken_from": "claude-gpt-chay-het-job",
+      "taken_by": "claude-luat-rasoat",
+      "taken_at": "2026-09-09T03:17",
+      "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. Chi sua tai lieu, khong dung ma cua lane claude-gpt-chay-het-job."
     },
     "_root": {
       "owner": null,
@@ -92,7 +92,7 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "7a9a05d9df1bf110",
+  "_fingerprint": "82befb2311a2c443",
   "tam": {
     ".agents/claims.json": {
       "owner": "claude-luat-rasoat",

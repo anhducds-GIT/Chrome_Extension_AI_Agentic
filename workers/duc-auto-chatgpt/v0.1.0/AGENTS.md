@@ -11,15 +11,26 @@ chốt.
 | Vai | Ai/gì | Được làm | Không được làm |
 |---|---|---|---|
 | Chủ dự án / chốt duy nhất | Đức | Duyệt mọi thay đổi, quyết định commit, chọn hướng roadmap | — |
-| Coordinator / Architecture Reviewer | Claude | Đọc code, audit kiến trúc, đề xuất sửa, implement khi Đức giao | Tự commit/push khi chưa hỏi |
+| Coordinator / Architecture Reviewer | Claude | Đọc code, audit kiến trúc, đề xuất sửa, implement khi Đức giao · **tự commit và đẩy** khi đủ ba điều kiện ở `AGENTS.md` gốc mục 2 (*Commit và đẩy*) | Đẩy bằng `git push` trần — luôn `safe-push.mjs`; đẩy việc còn dở |
 | Independent Code Auditor / Implementer | Codex | Audit độc lập, implement theo brief | Tự ý mở rộng phạm vi ngoài brief |
 | Implementer gốc | GPT Web | Đã dựng V0 ban đầu | — |
-| AI ngoài qua Agent Bridge | Bất kỳ agent nào gọi qua Bridge (kể cả Claude/Codex khi chạy qua CLI) | Đọc trạng thái (`ping`, `capabilities`, `queue-list`, `run-status`, `ledger-read`), gửi 1 đề xuất (`propose`) vào vùng cách ly | Không bao giờ tự chạy Run, pause, resume; không bỏ qua bước Đức duyệt trong side panel |
+| AI ngoài qua Agent Bridge | Bất kỳ agent nào gọi qua Bridge (kể cả Claude/Codex khi chạy qua CLI) | Đọc trạng thái (`ping`, `capabilities`, `queue-list`, `run-status`, `ledger-read`), gửi 1 đề xuất (`propose`) vào vùng cách ly · **`run.trial` trong đúng các nắp cứng ở luật 7** | Không bao giờ tự chạy `run.start`/pause/resume; không bỏ qua bước Đức duyệt trong side panel |
 
 Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file này
 (mục "Template COUNCIL"), copy từ `HANDOFF.md`.
 
 ## Luật vàng của project này
+
+> **Mục này CỐ Ý gần giống `workers/duc-auto-gemini/v0.2.0/AGENTS.md` — đừng gộp.** Bộ biên dịch
+> luật nêu ba cặp ở phép ③ `LUAT_TRUNG` (luật 3, 5, 9); đây là câu trả lời, ghi tại chỗ theo
+> `docs/protocols/RULE-COMPILER.md` mục 4. **Lý do:** một phiên làm ở gói này đọc `AGENTS.md` gốc
+> repo rồi đọc file này, **không bao giờ đọc file của gói kia**. Gộp vào một file dùng chung là
+> bắt mọi phiên đọc thêm một file thứ ba, và tệ hơn: **hai bản PHẢI được phép lệch nhau** — luật 7
+> và 8 dưới đây khác nhánh Gemini một cách đúng đắn, vì hai sản phẩm khác nhau.
+>
+> **Cái lệch mới là bệnh, không phải cái giống.** Ngày 09/09 phép ③ chính là thứ lôi ra được ba
+> vế đã chết ở nhánh Gemini — trong đó luật 8 nằm sai 16 ngày, đúng cái luật mà file NÀY đã sửa
+> từ 24/08. Phép ③ kêu ở đây là nó **đang chạy đúng**, không phải một món nợ.
 
 1. **Không sửa/xoá/regenerate bất cứ gì trong `pilot-03/`, `pilot-05/`,
    `pilot-06/`, `pilot-06B/`.** Đây là bằng chứng vận hành (evidence) của các
@@ -73,6 +84,12 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
 
 ## Core / Companion của project này
 
+> **Bảy dòng dưới đây trùng nguyên văn với gói Gemini — CỐ Ý, cùng lý do ghi ở mục *Luật vàng*
+> ngay trên.** Chúng tả **bộ khung chuẩn** mà `CLAUDE.md` gốc của Đức bắt mọi project phải có
+> (`README` · `AGENTS` · `HANDOFF` · `decisions` · `drafts/`), nên hai gói giống nhau là **đúng
+> thiết kế**. **Con số ADR gõ tay đã bị bỏ khỏi mục này 09/09** — nó từng nói 48, rồi 45, rồi 48
+> trong khi trên đĩa có 51. Ba con số, cả ba sai, không ai thấy. Cần số thì đếm.
+
 CORE (đọc mỗi lần):
 - `README.md` — project là gì, kiến trúc, phạm vi (đóng vai design_brief).
 - `AGENTS.md` — file này: vai, luật vàng, bản đồ file, template COUNCIL.
@@ -80,8 +97,8 @@ CORE (đọc mỗi lần):
   đầu tiên trước khi bắt tay vào việc, ghi cuối cùng sau khi xong).
 
 COMPANION (đọc khi cần):
-- `decisions.md` — **nay là MỤC LỤC** trỏ sang 48 ADR trong `docs/adr/`.
-- `docs/adr/` — 45 quyết định, mỗi cái một file **bất biến** (chuẩn Nygard, bốn mục).
+- `decisions.md` — **nay là MỤC LỤC** trỏ sang các ADR trong `docs/adr/`.
+- `docs/adr/` — quyết định của riêng gói này, mỗi cái một file **bất biến** (chuẩn Nygard, bốn mục).
   Đã `Accepted` thì KHÔNG sửa — đổi ý thì viết ADR mới, trỏ hai chiều. Phép kiểm B12
   cưỡng chế. Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` ở gốc repo.
 - `DAC_XLSX_RUN_PLAN_V1.md` — hợp đồng schema XLSX (jobs/config) cho mọi
@@ -103,8 +120,8 @@ COMPANION (đọc khi cần):
 | `HANDOFF.md` | Trạng thái + **20 lượt Log gần nhất**. Cắt đuôi 2026-09-06 theo ADR-0008 của gốc repo; lịch sử cũ hơn ở `HANDOFF-ARCHIVE-01.md`, con trỏ nằm ngay đầu mục `## Log` |
 | `HANDOFF-ARCHIVE-01.md` | **Đuôi đã cắt của `HANDOFF.md`** — 124 lượt Log cũ, nguyên văn, không sửa một chữ. Chỉ đọc; ghi Log mới thì ghi vào `HANDOFF.md`. Ghép lại dựng được bản gốc giống hệt từng byte (bất biến ⑴ của ADR-0008) |
 | `HANDOFF-ARCHIVE-02.md` | **Bản dài nguyên văn của 3 mục đã được viết ngắn trong `HANDOFF.md`** (2026-09-06, ADR-0011 mục ⑶ + ADR-0012). Viết ngắn là **đổi chỗ chi tiết, không phải xoá** — mọi số đo và mọi vòng audit ở đây. Chỉ đọc. Ghép lại dựng được bản gốc giống hệt từng byte, SHA-256 in ngay đầu file |
-| `decisions.md` | Mục lục trỏ sang 48 ADR (nội dung đã chuyển) |
-| `docs/adr/` | 48 ADR bất biến — quyết định của riêng gói này |
+| `decisions.md` | Mục lục trỏ sang `docs/adr/` (nội dung đã chuyển) |
+| `docs/adr/` | ADR bất biến — quyết định của riêng gói này. **Đếm, đừng tin một con số gõ tay:** `ls docs/adr/*.md | wc -l` |
 | `DAC_XLSX_RUN_PLAN_V1.md` | Hợp đồng schema workbook XLSX |
 | `BACKLOG.md` | Việc phát sinh ngoài checkpoint của phiên đang chạy — P1/P2/P3 + câu hỏi còn treo. Mọi ý tưởng làm phình phạm vi đều ghi vào đây thay vì mở rộng phiên |
 | `NEXT-SESSION-BRIEF.md` | Brief phiên làm việc tiếp theo (khi còn hiệu lực) |
@@ -139,9 +156,9 @@ COMPANION (đọc khi cần):
 | `tests/run-trial-workbook-not-loaded-smoke.mjs` | **Ghim B-11 (ADR-0048): `run.trial` thiếu workbook là `WORKBOOK_NOT_LOADED` / `retryable: true`**, không phải `INTERNAL_ERROR` với nguyên nhân giấu sau công tắc Chế độ phát triển. Cắt chính hàm `bridgeRunTrial()` đã ship ra và CHẠY nó, với hai hằng số đường trial **lấy từ chính `sidepanel.js`** chứ không chép tay. Ghim mép ngược (có workbook thì không được chặn oan) và bắt được bản vá "còn nguyên chữ mà dời xuống sau `authoritativeValidate()`". 2/2 đột biến đỏ |
 | `tests/download-name-determiner-behaviour.mjs` | **Phép kiểm HÀNH VI cho bộ đặt tên download** (B-36). Cắt khối đặt tên ra khỏi `background.js` và CHẠY nó, với `chrome` giả và **đồng hồ do harness cầm** (không đẩy được thời gian thì "phiếu quá hạn" chỉ là câu chữ — đột biến bỏ kiểm hạn đã lọt lưới ở vòng thử phá đầu). Bất biến: **download do chính extension này khởi tạo không bao giờ được im lặng nhận tên mặc định của Chrome.** Ghim cả mép ngược: phải NHƯỜNG download của extension khác / của trang / của người dùng, phải nhường phiếu quá hạn, phải nhường khi còn nhiều hơn một phiếu (đoán là gán tên job này cho file job kia), và phải TIÊU phiếu ở cả hai nhánh. 8/8 mutation đỏ. Cái này tồn tại vì ba phép kiểm cũ đều TĨNH và để lỗi sống 8 tuần |
 | `tests/b36-bootstrap-audit-held-smoke.mjs` | **Ghim B-36 (A)+(D) theo ADR-0049 — HÀNH VI, không tĩnh.** CHẠY `sidepanel.js` thật trong `node:vm` (nạp theo đúng thứ tự script của `sidepanel.html`, vào bằng `DacBridgeExecutorTestHooks`), với stub download trả **GUID đúng như đã đo live 06/09** — không bịa hành vi Chrome. **MƯỜI bất biến.** (A): phiên bootstrap không phát lượt tải nào · mutation vẫn thành công và nói thẳng `audit_durable: false` kèm câu tiếng Việt · checkpoint chưa ra file thì không được khai `verified: true` · sổ **không mất** — lần ghi đầu vào thư mục thật xả TOÀN BỘ mục đã giữ · **mép ngược:** phiên do ĐỨC cấu hình Downloads thì VẪN đi đường tải và VẪN kiểm tên (bỏ kiểm tên là phương án (C), thứ ADR-0049 đã LOẠI) · một mutation hỏng giữa đường rồi rollback thì dấu "máy tự dựng" phải sống sót. (D): đúng MỘT thư mục đã cấp quyền thì NHẬN và ghi ngay · **HAI thư mục thì KHÔNG chọn hộ**, không ghi vào thư mục nào (đem bằng chứng run này vào hồ sơ run khác nặng hơn chậm ra file) · handle còn đó mà quyền đã mất thì không nhận · **thư mục Đức vừa bind không được bị lượt nhận ghi đè**. Thử phá **15/17**; hai con lọt đều tương đương hành vi và được ghi lại thay vì bày phép ghim giả. Thử phá còn lộ ra hai thứ phép ghim không lộ được: một dòng `delete` là **mã chết**, và một **lỗi thứ tự thật** (nhận trước lượt phục hồi binding của Đức thì `image` và `outputProfileState` nói hai chuyện). **Trần tuyên bố:** bốn ca (D) thay `DacOutputProfiles` bằng kho giả vì Node không có IndexedDB — chúng ghim logic NHẬN của panel, không ghim lớp IndexedDB |
-| `.gitignore` | Chặn **đầu ra lúc chạy** khỏi git: `*__audit.jsonl` và `*__results__v*.xlsx` (đúng hai mẫu tên `XLSX_TEMPLATE_GOVERNANCE.md` luật 6 & 7 định nghĩa). Sinh ra vì 03/09 Đức chọn chính thư mục nguồn làm đích ghi output, run ghi checkpoint vào đây và cổng đóng phiên đỏ — nhưng khai rác lúc chạy vào Bản đồ file là nói nó là tài sản của package, nên chặn mới đúng chỗ. Không ảnh hưởng bằng chứng pilot đã track |
+| `.gitignore` | Chặn **đầu ra lúc chạy** khỏi git: `*__audit.jsonl` và `*__results__v*.xlsx` (đúng hai mẫu tên `../XLSX_TEMPLATE_GOVERNANCE.md` luật 6 & 7 định nghĩa — file ấy ở **trên một tầng**, không trong `v0.1.0/`). Sinh ra vì 03/09 Đức chọn chính thư mục nguồn làm đích ghi output, run ghi checkpoint vào đây và cổng đóng phiên đỏ — nhưng khai rác lúc chạy vào Bản đồ file là nói nó là tài sản của package, nên chặn mới đúng chỗ. Không ảnh hưởng bằng chứng pilot đã track |
 | `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
-| `Pilot-07/`, `Pilot-08/`, `Pilot-09.../` | Pilot đang hoạt động, có thể có dữ liệu mới |
+| `Pilot-*/` (07 · 08 · 09_Test-Codex-Bridge-to-Extension · 13_References · 14_RefFeatureTest · 15_CheckpointRetention · 16_InterJobDelay · 17_B41-TuChua) | Pilot của nhánh này — bằng chứng, **chỉ THÊM**. Viết theo **hình dạng tên**, vì danh sách gõ tay ở đây đã mục một lần: bản cũ dừng ở `Pilot-09...` trong khi trên đĩa đã có tới 17 |
 | `Pilot-13_References/` | **TẠM HOÃN, không chạy** — pilot ảnh tham chiếu dựng từ 3 job thật của Pilot-08. Giữ lại vì phần kiểm offline "cả 66 job đều giải được ảnh" vẫn dùng được khi nào chạy Pilot-08 thật |
 | `Pilot-15_CheckpointRetention/` | Pilot kiểm tính năng **dọn rác checkpoint** (B-26) — thư mục ra hoàn toàn mới và trống nên kết quả tự tố cáo: chạy 2 job ghi 7 checkpoint, cuối run phải còn ĐÚNG 2 file. Đọc `README.md` trong đó để biết ĐẠT/HỎNG trước khi chạy |
 | `Pilot-16_InterJobDelay/` | **Số đo, không phải pilot trên trang thật.** Bằng chứng cho bug khoảng nghỉ giữa job bị Chrome bóp: hai harness Chrome thật, bảng số hiện/bị-che, mutation test, và công thức 4 bước để Đức đo lại live. Không tốn lượt ChatGPT nào |

@@ -35,9 +35,16 @@ Template lệnh chính thức cho vai Coordinator/Auditor nằm ở cuối file 
 > 8 đã chết từ 24/08 mà nằm đây 16 ngày, và luật 7 thiếu hẳn một method tiêu tiền. Phép ③ kêu ở
 > đây là nó **đang chạy đúng**, không phải một món nợ.
 
-1. **Không sửa/xoá/regenerate bất cứ gì trong `pilot-03/`, `pilot-05/`,
-   `pilot-06/`, `pilot-06B/`.** Đây là bằng chứng vận hành (evidence) của các
-   lỗi đã tìm ra và đã sửa — ghi đè lên là xoá mất bằng chứng.
+1. **Không sửa/xoá/regenerate bất cứ gì trong `pilot-*/`, `Pilot-*/`, `Batch-*/`,
+   `evidence*/`.** Đây là bằng chứng vận hành của các lỗi đã tìm ra và đã sửa —
+   ghi đè lên là xoá mất bằng chứng. **Chỉ THÊM.** Cùng luật với `AGENTS.md`
+   gốc mục 5 (*Không bao giờ*), và cố ý viết theo **hình dạng tên**, không theo
+   danh sách.
+   > **Sửa 09/09.** Dòng này từng liệt kê `pilot-03/`, `pilot-05/`, `pilot-06/`,
+   > `pilot-06B/` — **ba trong bốn cái đó không tồn tại trong gói này**, chúng là
+   > của nhánh ChatGPT, chép sang lúc fork. Cùng lúc, `pilot-04/`, `Batch-SX-01/`,
+   > `Pilot-G2-01/`, `Pilot-REF-01/` có thật thì không được nêu. Một danh sách gõ
+   > tay bảo vệ nhầm chỗ và bỏ sót chỗ thật; hình dạng tên thì không mục được.
 2. **Không bao giờ gán `.innerHTML` / `.outerHTML` / `insertAdjacentHTML`.**
    Đây là yêu cầu bảo mật — nội dung ảnh/text từ gemini.google.com đi vào side panel
    có quyền cao, phải build DOM node, không được ghép chuỗi HTML.
@@ -160,8 +167,8 @@ COMPANION (đọc khi cần):
 | `scripts/bridge-rpc.mjs` | Gọi RPC thô tới Agent Bridge (jobs.add, references.add, dom_probe… — những method CLI không có) |
 | `Batch-SX-01/` | Batch sản xuất 01: kế hoạch + kết quả chuỗi 12 job chạy liên tục (26/08) — bằng chứng, không sửa |
 | `Pilot-REF-01/` | Pilot ảnh tham chiếu, lần đầu chạy live (26/08) — bằng chứng, không sửa |
-| `pilot-03/`, `pilot-05/`, `pilot-06/`, `pilot-06B/` | Bằng chứng vận hành — **không sửa/xoá** |
-| `Pilot-07/`, `Pilot-08/`, `Pilot-09.../` | Pilot đang hoạt động, có thể có dữ liệu mới |
+| `pilot-04/`, `pilot-05/` | Fixture XLSX + bằng chứng vận hành — **không sửa/xoá** |
+| `Pilot-G2-01/`, `Pilot-REF-01/` | Pilot của chính nhánh này — bằng chứng, không sửa |
 | `evidence-transport-liveness-5s-20260828/` | Bằng chứng live 28/08 (chiều): sau khi hạ trần chờ xuống 5 giây, nối lại sau **1,0 giây** — bản trần 30 giây đo 22,5s và 27,7s. Hoàn tất phần treo của thư mục bằng chứng buổi sáng. Bằng chứng, không sửa |
 | `evidence-multiprofile-nghiem-thu-20260907/` | **Nghiệm thu lớp nhiều hồ sơ 07/09 — chỉ đọc, 0 credit.** Bốn bảo đảm ĐẠT (kể đúng hồ sơ · quên `--target` thì `TARGET_AMBIGUOUS` · đích lạ thì `TARGET_NOT_CONNECTED` · `served_by` không lệch lượt nào). Hai bài học đắt hơn kết quả: **`legacy: false` KHÔNG có nghĩa "code mới nhất"** (hai hồ sơ cùng `legacy:false` mà 19 vs 23 method — muốn biết thì ĐẾM METHOD), và một phép đo **suýt thành báo cáo sai** — `run.status` timeout 5/6 lượt nhìn như hỏng riêng, xen kẽ ba method mới thấy lỗi đóng theo THỜI GIAN (cửa sổ đánh thức service worker), không theo method. Bằng chứng, không sửa |
 | `evidence-multiprofile-port-20260902/` | Bằng chứng port multi-profile 02/09: 2 vòng audit Codex (vòng 1 FAIL bắt đúng lỗi authSent, vòng 2 đóng), mutation 13/13 đỏ, host sống 32148 — bằng chứng, không sửa |
