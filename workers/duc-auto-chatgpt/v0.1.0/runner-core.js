@@ -204,6 +204,41 @@
     if (submissionMayExist(item)) return false;
     return Number(repairsUsed) < cap;
   }
+  /* B-40 đường ⒝ — Đức chốt 09/09: *"phương án 2. cần đảm bảo flow chạy từ đầu tới cuối cho đến
+     hết, trừ khi bị captcha hoặc báo hết credit."*
+
+     NẮP RIÊNG, ĐẾM THEO JOB — không dùng chung với `MAX_REPAIRS_PER_RUN`, và đó là chủ ý. Hai
+     loại chữa khác nhau về BẢN CHẤT:
+       · `mayRepair()` chữa HẠ TẦNG khi CHƯA gửi gì — không tiêu lượt nào, nên nắp theo run.
+       · cửa này gõ một TIN NHẮN THẬT vào hội thoại của Đức — mỗi lần tốn một lượt quota. Nắp
+         phải theo JOB, vì một job hỏng dai không được phép ăn hết nắp của cả loạt.
+
+     Nắp **2**: ca đo được 08/09 là một lỗi TẠM của nhà cung cấp, và một lỗi tạm mà xin chữa hai
+     lần vẫn không khỏi thì lần thứ ba cũng không. Hết nắp → `INTERRUPTED`, người nhìn.
+
+     ĐIỀU KIỆN Ở ĐÂY CỐ Ý NGƯỢC với `mayRepair()`: bên đó đòi `submissionMayExist() === false`
+     (chưa gửi gì); bên này đòi **ĐÃ gửi** — vì bằng chứng của nó là chính lời nhà cung cấp trả
+     lời cho lượt hỏi đã bay. Cả hai đều an toàn; cái nguy hiểm là chỗ lấp lửng ở giữa.
+
+     Và nó KHÔNG mở cửa cho prompt gốc: thứ được gõ là câu chữa lấy từ danh sách trắng của
+     adapter, tức prompt gốc vẫn chỉ bay đúng một lần. `submissionMayExist()` và `canRetry()`
+     giữ nguyên vai, không bị sửa một dòng — cửa này đứng TRƯỚC chúng. */
+  const PROVIDER_REPAIRABLE_FAILURE_TYPES = new Set(["POST_SUBMIT_UNCERTAIN"]);
+  const MAX_PROVIDER_REPAIRS_PER_JOB = 2;
+  /* KHÔNG có dòng `if (HARD_STOP_FAILURE_TYPES.has(failureType)) return false;` ở đây, dù nó
+     trông như một lớp bảo vệ. Nó là MÃ CHẾT: `PROVIDER_REPAIRABLE_FAILURE_TYPES` chỉ chứa
+     `POST_SUBMIT_UNCERTAIN`, mà loại đó không nằm trong tập hard stop — nên nhánh ấy không bao
+     giờ nổ. Đúng lỗi đã gặp sáng 09/09 ở `looksTruncated()`: một nhánh không đường nào tới được
+     thì ghim nó là ghim một bản sao của niềm tin, không phải của hành vi (giới hạn ⑥).
+     Thứ cần bảo vệ là **BẤT BIẾN GIỮA HAI TẬP**, và nó được ghim thẳng: hai tập phải RỜI NHAU.
+     Ai thêm một loại hard stop vào tập chữa-được thì phép ghim ĐỎ, chứ không phải bị một nhánh
+     im lặng chặn lại rồi không ai biết luật vừa bị đụng. */
+  function mayAskProviderRepair(item, failureType, repairsUsed = 0, cap = MAX_PROVIDER_REPAIRS_PER_JOB) {
+    if (!PROVIDER_REPAIRABLE_FAILURE_TYPES.has(failureType)) return false;
+    if (!submissionMayExist(item)) return false;
+    return Number(repairsUsed) < cap;
+  }
+
   function needsReconciliation(phase) { return POST_SUBMIT_PHASES.has(phase) && phase !== "SUCCESS"; }
   // INTERRUPTED means "genuinely unresolved -- a human must look before this
   // run continues". Từ B-19 (Đức chốt 06/09) nó phủ HAI trường hợp, không còn
@@ -333,6 +368,6 @@
     if (!signal?.composerFound) return "OUTPUT_READY";
     return "CHAT_READY";
   }
-  const api = { DEFAULTS, ATTEMPT_PHASES, TASK_TYPES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, REPAIRABLE_FAILURE_TYPES, MAX_REPAIRS_PER_RUN, mayRepair, basename, referenceTokens, taskType, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, submissionMayExist, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
+  const api = { DEFAULTS, ATTEMPT_PHASES, TASK_TYPES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, REPAIRABLE_FAILURE_TYPES, MAX_REPAIRS_PER_RUN, mayRepair, PROVIDER_REPAIRABLE_FAILURE_TYPES, MAX_PROVIDER_REPAIRS_PER_JOB, mayAskProviderRepair, basename, referenceTokens, taskType, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, submissionMayExist, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
   (typeof window !== "undefined" ? window : globalThis).DacRunnerCore = api;
 })();

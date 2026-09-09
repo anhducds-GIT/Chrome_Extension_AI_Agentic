@@ -61,6 +61,9 @@
     // ADR-0050 ⒝: số lần đã tự chữa, đếm theo TỪNG loại lỗi, trong MỘT run. Đặt lại ở
     // đầu mỗi run — nắp phải là nắp của một loạt job, không phải của cả đời phiên.
     repairsUsed: {},
+    // B-40 ⒝ — nắp đếm theo JOB, không theo run: mỗi lần gõ câu chữa tốn một lượt quota
+    // của Đức, nên một job hỏng dai không được ăn hết nắp của cả loạt.
+    providerRepairsUsed: {},
     validated: false,
     stopRequested: false,
     pauseRequested: false,
@@ -6172,7 +6175,74 @@
     }
     const failureType = window.DacRunnerCore.classifyFailure(response?.error || message || "Post-submit output remained uncertain.", "SUBMITTED");
     audit("RECONCILE_RESULT", item, { message: response?.error || message || "No attributable output found." });
-    return resolveJobFailure(item, failureType === "TIMEOUT_AFTER_SUBMIT" ? "POST_SUBMIT_UNCERTAIN" : failureType, response?.error || message || "Post-submit output remained uncertain.", settings);
+    const loai = failureType === "TIMEOUT_AFTER_SUBMIT" ? "POST_SUBMIT_UNCERTAIN" : failureType;
+    // B-40 ⒝ — cửa cuối TRƯỚC khi dừng hẳn: hỏi xem chính nhà cung cấp có nói nó không tạo ra
+    // được gì và xin một câu chữa hay không. Đứng ở đây, sau khi đối soát ảnh đã thất bại, nên
+    // nó không bao giờ chen vào một lượt có kết quả.
+    const chua = await askProviderRepair(item, loai, effectiveOutput, settings);
+    if (chua) return chua;
+    return resolveJobFailure(item, loai, response?.error || message || "Post-submit output remained uncertain.", settings);
+  }
+
+  /* B-40 đường ⒝ — Đức chốt 09/09: *"phương án 2. cần đảm bảo flow chạy từ đầu tới cuối cho đến
+     hết, trừ khi bị captcha hoặc báo hết credit."*
+
+     CA ĐO ĐƯỢC 08/09: tool tạo ảnh của ChatGPT lỗi hệ thống; nó trả về một lượt CHỮ nói rõ không
+     tạo được ảnh **và chỉ đúng cách chữa** (*"nhắn `render lại`"*); một người gõ câu đó thì ra
+     kết quả. Máy dừng ở đó vĩnh viễn trong khi câu chữa nằm sẵn trên dây.
+
+     ĐÂY KHÔNG PHẢI GỬI LẠI PROMPT GỐC, và đó là toàn bộ lý do nó không phạm luật exact-once:
+     prompt gốc vẫn bay **đúng một lần**; thứ được gõ là một TIN NHẮN KHÁC, lấy từ danh sách trắng
+     của adapter. `submissionMayExist()` và `canRetry()` **không bị sửa một dòng** — cửa này đứng
+     TRƯỚC chúng, đúng ràng buộc kiến trúc B-41 đặt ra.
+
+     Câu gõ ra KHÔNG do phía này quyết. `DAC_PROVIDER_REPAIR` cố ý không nhận tham số nào chở chữ
+     vào được: nó tự đọc lời nhà cung cấp, tự phân loại, và chỉ gõ một phần tử của
+     `REPAIR_PHRASES`. Nếu cửa này truyền được một chuỗi xuống thì trang có thể thuyết phục lớp
+     trên gõ bất cứ thứ gì, và cả lớp bảo vệ thành trang trí.
+
+     Trả `null` nghĩa là *"không có bằng chứng"* → lớp gọi dừng hẳn như trước. */
+  async function askProviderRepair(item, failureType, effectiveOutput, settings) {
+    if (state.stopRequested) return null;
+    const daDung = state.providerRepairsUsed[item.job.id] || 0;
+    if (!window.DacRunnerCore.mayAskProviderRepair(item, failureType, daDung)) return null;
+
+    const cap = window.DacRunnerCore.MAX_PROVIDER_REPAIRS_PER_JOB;
+    let response;
+    try {
+      response = await send({
+        type: "DAC_PROVIDER_REPAIR", job_id: item.job.id, attempt_id: item.attempt_id,
+        jobPrompt: item.job.prompt, timeoutMs: item.settings.timeout_sec * 1000,
+        maxImages: item.settings.max_images_per_job
+      });
+    } catch (error) {
+      audit("PROVIDER_REPAIR", item, { message: `KHÔNG hỏi được nhà cung cấp: ${messageOf(error)}` });
+      return null;
+    }
+    if (!response?.ok) {
+      // Không có bằng chứng là ca THƯỜNG GẶP, không phải lỗi: phần lớn lượt hết giờ là hết giờ
+      // thật. Ghi lại rồi để lớp trên dừng hẳn.
+      audit("PROVIDER_REPAIR", item, { message: `KHÔNG chữa: ${response?.error || "không rõ"}` });
+      return null;
+    }
+    // Tăng nắp SAU khi đã thật sự gõ — một lượt "không có bằng chứng" không được ăn nắp.
+    state.providerRepairsUsed[item.job.id] = daDung + 1;
+    const lan = `${daDung + 1}/${cap}`;
+    audit("PROVIDER_REPAIR", item, { message: `đã gõ "${response.repair?.phrase}" (lần ${lan}) — ${response.repair?.why}` });
+    log(`${item.job.id}: nhà cung cấp xin "${response.repair?.phrase}", đã gõ (lần ${lan}).`, "");
+    if (!matchesAttempt(response, item)) {
+      markInterrupted(item, "ATTEMPT_ID_MISMATCH", `Đã gõ câu chữa "${response.repair?.phrase}" nhưng danh tính attempt không khớp. KHÔNG gõ lại.`);
+      return { completed: true, halted: true };
+    }
+    applyAttemptTelemetry(item, response.attempt);
+    if (response.result?.image_url) {
+      audit("PROVIDER_REPAIR", item, { message: `câu chữa cho ra kết quả sau lần ${lan}.` });
+      return finishDetectedOutput(item, response.result, effectiveOutput, settings);
+    }
+    // Gõ rồi mà vẫn không có gì: KHÔNG tự gõ tiếp trong cùng lượt này. Trả null để lớp trên
+    // dừng hẳn; nắp còn lại chỉ dùng nếu chính vòng chạy quay lại đây một lần nữa.
+    audit("PROVIDER_REPAIR", item, { message: `đã gõ lần ${lan} nhưng vẫn không có kết quả quy được về job này.` });
+    return null;
   }
 
   async function gateNextJob(item) {
@@ -6242,7 +6312,7 @@
     // latch (queueRunLock.tryBeginRun) instead, which runs before this
     // function's first await -- see the comment there. Resetting it at this
     // point would discard a run.stop that arrived during startup.
-    state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.lastFailure = null; state.repairsUsed = {}; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
+    state.pauseRequested = false; state.paused = false; state.retryResumeAt = null; state.lastFailure = null; state.repairsUsed = {}; state.providerRepairsUsed = {}; state.terminal = state.prepared.queue.filter((item) => item.status === "SUCCESS").length;
     showScreen("runScreen");
     state.runId = state.runId || window.DacResumeCore.createRunId(state.workbook.fileName); state.attemptSerial = 0; state.auditEvents = [];
     // Bridge Setup mutations may already have written this session's audit

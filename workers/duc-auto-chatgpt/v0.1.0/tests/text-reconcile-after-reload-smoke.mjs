@@ -198,10 +198,13 @@ const API = tOut.API;
   assert.ok(dau > 0, "mỏ neo hỏng: không thấy reconcileSubmittedText()");
   const cuoi = sp.indexOf("\n  async function reconcileSubmittedAttempt(", dau);
   assert.ok(cuoi > dau, "không tìm thấy chỗ đóng reconcileSubmittedText()");
+  // Cắt HẲN khối /* … */ rồi cắt // đến hết dòng. Bộ lọc theo TIỀN TỐ DÒNG không đủ: dòng
+  // tiếp của một khối /* … */ bắt đầu bằng chữ thì sống sót, và văn của chính phép ghim khớp
+  // vào phép kiểm. Đã sập thật 09/09 ở ghim B-40 ⒝ — chữ "message.prompt" trong một chú thích
+  // làm mép chống-tiêm đỏ oan.
   const than = sp.slice(dau, cuoi)
-    .split("\n")
-    .filter((dong) => !/^\s*(\/\/|\*|\/\*)/.test(dong))
-    .join("\n");
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/\/\/.*$/gm, " ");
 
   const viTriDoc = than.indexOf("await doc()");
   const viTriF5 = than.indexOf("repairWorkspaceSurface()");

@@ -1301,6 +1301,63 @@
       return true;
     }
 
+    if (message.type === "DAC_PROVIDER_REPAIR") {
+      /* B-40 đường ⒝ — Đức chốt 09/09. Gõ CÂU CHỮA mà nhà cung cấp xin, không gõ lại prompt gốc.
+         Prompt gốc vẫn chỉ được gửi ĐÚNG MỘT LẦN; đây là một tin nhắn KHÁC.
+
+         ═══ CỬA NÀY KHÔNG NHẬN PROMPT TỪ BÊN GỌI, VÀ ĐÓ LÀ VẾ CHỐNG TIÊM ═══
+
+         Nó đọc chữ của nhà cung cấp ngay tại đây, tự phân loại, và câu gõ ra lấy từ
+         `REPAIR_PHRASES` — một hằng trong `provider-adapter.js`. Nếu cửa này nhận `message.prompt`
+         thì lớp trên có thể bị trang thuyết phục gõ bất cứ thứ gì, và cả lớp bảo vệ thành trang
+         trí. Nên nó cố ý KHÔNG có tham số nào chở chữ vào được.
+
+         Chữ đối soát cũng phải neo vào LƯỢT HỎI CỦA CHÍNH JOB, không phải "lượt cuối của trang" —
+         cùng luật attribution mà `answerAfterPrompt()` đã dựng. */
+      if (!surfaceAllowedNow()) {
+        sendResponse({ ok: false, error: `WRONG_SURFACE: ${location.href} không phải một cuộc hội thoại.` });
+        return false;
+      }
+      const promptGoc = typeof message.jobPrompt === "string" ? message.jobPrompt : "";
+      if (!promptGoc.trim()) {
+        sendResponse({ ok: false, error: "PROVIDER_REPAIR_FAILED: thiếu prompt gốc của job để neo lượt đối soát." });
+        return false;
+      }
+      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 900000));
+      const requestAttempt = window.DacAttemptIdentity.create(message);
+      if (!window.DacAttemptIdentity.validContext(requestAttempt)) {
+        sendResponse({ ok: false, error: "INVALID_ATTEMPT_ID: job_id and attempt_id are required.", attempt: attemptSnapshot(requestAttempt) });
+        return false;
+      }
+      let xin = null;
+      try {
+        const read = readTurns(document, assistantSelector(), userSelector(), 12, 32767);
+        const hit = window.DacReconciliationCore.answerAfterPrompt(read.turns, promptGoc);
+        if (hit.reason !== "OK") {
+          sendResponse({ ok: false, error: `PROVIDER_REPAIR_NO_EVIDENCE: ${hit.reason} — không đọc được lời nhà cung cấp cho lượt hỏi của job này.`, attempt: attemptSnapshot(requestAttempt) });
+          return false;
+        }
+        xin = ADAPTER.providerRepairRequest(hit.text);
+        if (!xin) {
+          sendResponse({ ok: false, error: "PROVIDER_REPAIR_NO_EVIDENCE: nhà cung cấp KHÔNG khẳng định là nó không tạo được gì, hoặc không xin một câu chữa nào trong danh sách trắng.", attempt: attemptSnapshot(requestAttempt) });
+          return false;
+        }
+      } catch (error) {
+        sendResponse({ ok: false, error: `PROVIDER_REPAIR_FAILED: ${error?.message || error}`, attempt: attemptSnapshot(requestAttempt) });
+        return false;
+      }
+      // CHỐT AN TOÀN CUỐI, và nó không phải trang trí: dù mọi nhánh trên có bị sửa, câu sắp gõ
+      // vẫn phải là MỘT PHẦN TỬ của danh sách trắng. Một mẩu cắt từ trang không bao giờ khớp.
+      if (!ADAPTER.REPAIR_PHRASES.includes(xin.phrase)) {
+        sendResponse({ ok: false, error: "PROVIDER_REPAIR_REFUSED: câu định gõ không nằm trong danh sách trắng của adapter.", attempt: attemptSnapshot(requestAttempt) });
+        return false;
+      }
+      runPrompt(xin.phrase, timeoutMs, [], true, requestAttempt, Number(message.maxImages) || 1)
+        .then((result) => sendResponse({ ok: true, result, repair: { phrase: xin.phrase, why: xin.why }, attempt: attemptSnapshot(requestAttempt) }))
+        .catch((error) => sendResponse({ ok: false, error: error?.message || String(error), repair: { phrase: xin.phrase, why: xin.why }, attempt: attemptSnapshot(requestAttempt) }));
+      return true;
+    }
+
     if (message.type === "DAC_RECONCILE_IMAGE_JOB") {
       const requestAttempt = window.DacAttemptIdentity.create(message);
       const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 120000));

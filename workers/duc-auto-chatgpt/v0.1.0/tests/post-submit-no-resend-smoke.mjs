@@ -363,7 +363,7 @@ assert.equal(autoProof, 1, "verifyExistingOutput vẫn chỉ đi qua đúng mộ
    bản sao, và bản sao thì lệch được ở một bên mà bên kia vẫn xanh. */
 {
   const sp = read("sidepanel.js");
-  const khongChuThich = sp.split("\n").filter((d) => !/^\s*(\/\/|\*|\/\*)/.test(d)).join("\n");
+  const khongChuThich = sp.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/.*$/gm, " ");
 
   const cuaDuong = [...khongChuThich.matchAll(/async function (reconcileSubmitted\w+)\(/g)].map((m) => m[1]);
   assert.deepEqual(
@@ -383,17 +383,48 @@ assert.equal(autoProof, 1, "verifyExistingOutput vẫn chỉ đi qua đúng mộ
       `${ten}: phải rẽ về đường chốt CŨ, đừng đẻ ra cửa chốt thứ hai`);
   }
 
-  /* KHẲNG ĐỊNH ÂM vẫn là 0. `verifyExistingOutput()` là hàm duy nhất phán được
-     "ảnh này thuộc lượt gửi kia", và nó chỉ chạy khi NGƯỜI bấm nút. Ngày nào nó
-     xuất hiện trên đường chạy tự động thì mép này đỏ, và luật phải đọc lại
-     TRƯỚC khi nới — đó đúng là việc B-41 ⑵⑶ sẽ làm. */
+  /* KHẲNG ĐỊNH ÂM: 0 → 1, và con số này ĐỔI BẰNG TAY, không bao giờ nới cho xanh.
+
+     Đức chốt 09/09 đường ⒝ của `B-40`, nguyên văn: *"phương án 2. cần đảm bảo flow chạy từ đầu
+     tới cuối cho đến hết, trừ khi bị captcha hoặc báo hết credit."* Nguồn thứ nhất xuất hiện:
+     chữ của chính nhà cung cấp nói nó KHÔNG tạo ra được gì, cộng câu chữa nó xin.
+
+     BẢN CŨ ĐẾM SAI CHỖ, ghi ra vì đó là bài học: nó đếm `verifyExistingOutput()` như một BIẾN
+     GIÁN TIẾP cho "có nguồn âm tính nào không". Biến gián tiếp đó **hết đúng** ngay lúc nguồn mới
+     đi qua một hàm khác — suite vẫn xanh trong khi luật đã bị đụng, tức đúng cái mà chính lời văn
+     của file này dặn phải tránh. Nay đếm THẲNG cả hai đường, mỗi đường một con số. */
+
+  // ⓐ Nguồn âm tính DUY NHẤT được phép: lời nhà cung cấp, đi qua `askProviderRepair()`.
+  const cuaAmTinh = [...khongChuThich.matchAll(/async function (askProviderRepair)\(/g)].map((m) => m[1]);
+  assert.deepEqual(cuaAmTinh, ["askProviderRepair"],
+    "ĐÚNG MỘT nguồn khẳng định âm tính. Thêm nguồn thứ hai thì ĐỌC LẠI luật của Đức trước, đừng nới mép này");
+
+  // Và nó phải đi qua NẮP, kiểm trước khi gõ. Không nắp thì một lỗi dai thành vòng lặp tiêu quota.
+  const dAm = khongChuThich.indexOf("async function askProviderRepair(");
+  const cAm = khongChuThich.indexOf("\n  async function ", dAm + 10);
+  const thanAm = khongChuThich.slice(dAm, cAm > dAm ? cAm : undefined);
+  assert.match(thanAm, /mayAskProviderRepair\(/, "nguồn âm tính phải đi qua nắp");
+  assert.ok(thanAm.indexOf("mayAskProviderRepair(") < thanAm.indexOf("DAC_PROVIDER_REPAIR"),
+    "nắp phải kiểm TRƯỚC khi gõ, không phải sau");
+  assert.ok(!/phrase:/.test(thanAm),
+    "side panel KHÔNG được truyền câu gõ xuống — câu đó lấy từ danh sách trắng của adapter, không từ trang");
+
+  // ⓑ Đường bấm-tay-của-người vẫn KHÔNG được lên vòng chạy tự động. `verifyExistingOutput()` là
+  // hàm duy nhất phán được "ảnh này thuộc lượt gửi kia"; nó là một nguồn âm tính KHÁC, và nó vẫn 0.
   const goiTuDong = [...khongChuThich.matchAll(/verifyExistingOutput\(/g)].length;
   const goiTayNguoi = [...khongChuThich.matchAll(/DAC_MANUAL_RECONCILE_EXISTING_OUTPUT/g)].length;
   assert.ok(goiTayNguoi > 0, "mỏ neo hỏng: không thấy đường đối soát bấm tay của người");
   assert.equal(goiTuDong, 0,
-    `KHẲNG ĐỊNH ÂM phải là 0 nguồn: thấy ${goiTuDong} chỗ gọi verifyExistingOutput() trong sidepanel. ` +
-    "Đó là loại DUY NHẤT mở được cửa gửi lại, nên nối nó vào vòng chạy là đổi LUẬT của Đức, không phải sửa mã."
+    `${goiTuDong} chỗ gọi verifyExistingOutput() trong sidepanel — phải là 0. ` +
+    "Nối nó vào vòng chạy là mở cửa gửi lại PROMPT GỐC, khác hẳn đường ⒝ (gõ một câu chữa KHÁC). " +
+    "Đó là đổi LUẬT của Đức lần nữa, không phải sửa mã."
   );
+
+  // ⓒ Và vế đắt nhất: prompt GỐC vẫn chỉ bay đúng một lần. Đường ⒝ gõ một tin nhắn khác, nên
+  // không cửa nào trong nó được phép chở prompt của job xuống lượt gõ.
+  assert.ok(!/DAC_RUN_IMAGE_JOB|DAC_RUN_TEXT_JOB/.test(thanAm),
+    "đường ⒝ KHÔNG được gọi lại cửa gửi prompt gốc — nó chỉ gõ câu chữa qua DAC_PROVIDER_REPAIR");
+
 }
 
 console.log("B-19 post-submit no-resend smoke tests: PASS");

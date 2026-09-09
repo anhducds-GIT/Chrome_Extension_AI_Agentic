@@ -259,8 +259,68 @@
     return value ? generationLimitPattern.test(value) : false;
   }
 
+  /* B-40 đường ⒝ — Đức chốt 09/09: *"phương án 2. cần đảm bảo flow chạy từ đầu tới cuối cho đến
+     hết, trừ khi bị captcha hoặc báo hết credit."*
+
+     CA ĐO ĐƯỢC 08/09: tool tạo ảnh của ChatGPT lỗi hệ thống. Nó trả về một lượt CHỮ nói rõ không
+     tạo được ảnh, lỗi từ tool, **và chỉ đúng cách chữa** — *"Hãy nhắn 'render lại' để tôi chạy
+     lại từ đầu."* Một người gõ `render lại` thì ra kết quả đúng. Máy thì dừng ở đó vĩnh viễn,
+     trong khi toàn bộ thông tin cần thiết nằm sẵn trên dây.
+
+     ═══ VÌ SAO CÂU CHỮA PHẢI NẰM TRONG MÃ CỦA TA, KHÔNG LẤY TỪ TRANG ═══
+
+     Nếu máy đọc câu *"nhắn X"* rồi gõ X, thì **nội dung trang đang quyết định máy gõ gì**. Trang
+     là dữ liệu KHÔNG TIN ĐƯỢC: một lượt trả lời bị dựng ác ý — hoặc chỉ cần một câu ChatGPT vô
+     tình sinh ra — sẽ khiến máy gõ bất cứ thứ gì vào hội thoại của Đức. Đó là một cửa tiêm lệnh,
+     và nó nằm ở đúng chỗ tệ nhất: một cửa VỪA được cấp quyền gõ.
+
+     Nên ranh giới là: **đọc trang để PHÂN LOẠI thì được; đọc trang để quyết định GÕ GÌ thì không
+     bao giờ.** Hàm dưới đây trả về một chuỗi lấy từ `REPAIR_PHRASES` — một hằng trong tệp này —
+     và tuyệt đối không trả về một mẩu nào cắt ra từ đối số. Phép ghim cưỡng chế đúng vế đó.
+
+     ═══ HAI VẾ PHẢI CÙNG ĐÚNG ═══
+
+       ⑴ chữ của nhà cung cấp KHẲNG ĐỊNH ÂM TÍNH — nó nói nó không tạo ra được gì;
+       ⑵ và nó XIN một câu thuộc danh sách trắng.
+     Thiếu một vế thì trả `null`, và lớp trên dừng hẳn như trước. Chỉ ⑴ mà không có ⑵ nghĩa là
+     nhà cung cấp báo lỗi nhưng không nêu cách chữa — lúc đó không có gì để gõ.
+
+     ═══ NÓI RÕ MỨC BẰNG CHỨNG, đừng để phiên sau tưởng nó chắc hơn thực tế ═══
+
+     Danh sách này dựng từ ĐÚNG MỘT lần quan sát (08/09), và tôi không có nguyên văn đầy đủ của
+     lượt đó — chỉ có câu chữa được trích trong `BACKLOG.md`. Nên nó là **bộ khởi đầu**, cùng mức
+     bằng chứng với `generationLimitPattern` ở trên. Gặp một lượt lỗi thật mà máy KHÔNG tự chữa
+     thì chụp lại nguyên văn ChatGPT hiện ra rồi thêm vào đây — đúng cách danh sách CAPTCHA đã
+     được dựng. **Sai theo hướng không chữa được là hướng chấp nhận được; sai theo hướng gõ bừa
+     thì không.** */
+  const REPAIR_PHRASES = Object.freeze(["render lại", "render again"]);
+
+  // ⑴ Nhà cung cấp tự nói nó KHÔNG tạo ra được gì. Cố ý hẹp: chỉ nhận câu nói về việc TẠO ẢNH
+  // thất bại, không nhận mọi câu có chữ "error" — một câu trả lời BÌNH THƯỜNG bàn về lỗi (đúng
+  // loại prompt Đức hay gửi) không được kích hoạt cửa này.
+  const affirmedNegativePattern = /(kh(?:ô|o)ng (?:th(?:ể|e) )?(?:t(?:ạ|a)o|render|v(?:ẽ|e))[^.!?\n]{0,40}(?:(?:ả|a)nh|image)|(?:c(?:ó|o) )?l(?:ỗ|o)i (?:h(?:ệ|e) th(?:ố|o)ng|t(?:ừ|u) tool|khi (?:t(?:ạ|a)o|render))|(?:couldn.t|could not|was unable to|failed to) (?:generate|create|render)[^.!?\n]{0,40}(?:image|picture)|image generation (?:failed|error))/i;
+
+  /* Trả về CHUỖI TỪ `REPAIR_PHRASES`, hoặc null. Không bao giờ trả một mẩu của `text`. */
+  function providerRepairRequest(text) {
+    const value = String(text || "");
+    if (!value.trim()) return null;
+    if (!affirmedNegativePattern.test(value)) return null;
+    // So khớp KHÔNG dấu-nháy, không phân biệt hoa thường: nhà cung cấp có thể viết câu chữa
+    // trong ngoặc kép, ngoặc đơn, hay in nghiêng bằng dấu sao.
+    const phang = value.toLowerCase().replace(/[`'"*_]/g, "");
+    for (const phrase of REPAIR_PHRASES) {
+      if (phang.includes(phrase.toLowerCase())) {
+        // `phrase` là hằng của TỆP NÀY. Đây là chỗ duy nhất câu gõ ra được quyết định.
+        return { phrase, why: `nhà cung cấp báo không tạo được và xin "${phrase}"` };
+      }
+    }
+    return null;
+  }
+
   (typeof window !== "undefined" ? window : globalThis).DacProviderAdapter = Object.freeze({
     provider: "chatgpt",
+    REPAIR_PHRASES,
+    providerRepairRequest,
     SELECTORS,
     TIMING,
     ORIGIN,
