@@ -187,6 +187,15 @@ try {
   assert.match(ra, /--thu-muc/, "kèm câu lệnh để người chạy, vì công cụ cố ý không tự với tới");
   assert.doesNotMatch(ra, /Thu muc rong/, "thư mục con KHÔNG có ứng viên thì đừng làm nhiễu bản in");
 
+  /* SỐ ĐẾM PHẢI ĐÚNG, không chỉ "có in ra". Thử phá 09/09: đổi phép đếm thành `trong.length`
+     — tức coi MỌI tệp là ứng viên — vẫn xanh với mọi mép ở đây, vì không mép nào đọc con số.
+     `Phai sinh` có 3 tệp mà chỉ 2 mang tên GUID; `hop-dong-cua-Duc.pdf` KHÔNG được đếm. Một con
+     số phóng lên là một con số Đức đọc rồi tin, nên nó phải đúng. */
+  assert.match(ra, /2 tệp tên GUID\s+node .*Phai sinh/, "phải đếm ĐÚNG 2 ứng viên trong `Phai sinh`, không phải cả 3 tệp");
+  assert.match(ra, /1 tệp tên GUID\s+node .*Anh cu/, "và đúng 1 trong `Anh cu`");
+  assert.match(ra, /— 3 tệp/, "tổng phải là 3, không phải 4");
+  n += 3;
+
   assert.ok(con(san, path.join("Phai sinh", "9c1f2ab4-1111-4222-8333-444455556666")),
     "tệp của gói trong thư mục con KHÔNG được xoá — bán kính xoá phải đứng nguyên một tầng");
   assert.ok(con(san, path.join("Phai sinh", "7a2b3c4d-5555-4666-8777-888899990000.png")), "kể cả nhóm ② trong thư mục con");

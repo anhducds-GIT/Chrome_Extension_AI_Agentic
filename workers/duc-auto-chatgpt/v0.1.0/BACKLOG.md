@@ -1730,3 +1730,31 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
 
   **Đừng vá trước khi có số đo đó.** Giả thuyết rẻ vừa bị bác, và bác bằng số đo chứ không bằng
   suy luận — lần này đừng thay nó bằng một giả thuyết đắt chưa được đo.
+
+- **ĐO XONG VẾ CÒN NGỎ CỦA `B-36` (09/09) — loại được khả năng "(D) đang chạy đúng luật".**
+  Mục B-36 để ngỏ một câu quyết định nó là lỗi hay là hành vi đúng: *"(D) cố ý không chọn hộ khi
+  có NHIỀU HƠN MỘT thư mục đã cấp quyền."* Payload `jobs.add` hôm nay trả lời thẳng:
+  **"đếm được 3 hồ sơ, 0 còn quyền"**. Không phải ca nhiều-hồ-sơ — là ca **không hồ sơ nào còn
+  quyền**. Tức Chrome đã thu hồi quyền của mọi handle thư mục, và lấy lại quyền thì
+  `requestPermission()` **bắt buộc phải có một cú bấm của người** (luật của trình duyệt, không
+  phải chỗ gói này vá được bằng mã).
+  **Và B-36 KHÔNG còn chặn MVP:** [ADR-0051](docs/adr/0051-nhan-ten-chrome-dat-thay-vi-doi-ten-phai-khop.md)
+  bỏ hẳn nhu cầu chọn thư mục, nên vòng chat 0 cú bấm chạy trọn mà không cần thư mục nào —
+  nghiệm thu live 09/09. Việc còn lại của B-36 vì thế **hạ từ P0 xuống một mục UX**: khi có
+  handle cũ mà quyền đã mất, panel nên hiện **một nút "cấp lại quyền"** thay vì bắt chọn lại cả
+  thư mục. `đóng khi:` giữ nguyên vế đo được (payload không còn `audit_durable: false` mà không
+  cần bấm lại) — nhưng nay phải đọc kèm ghi chú này, vì vế đó **không đạt được bằng mã**: nó cần
+  một cú bấm, và câu hỏi thật là bấm **một** lần hay bấm chọn **cả thư mục**.
+
+- **ĐÓNG B-44** · Công cụ dọn rác nay **chỉ ra** chỗ Chrome thật sự ghi mà **không nới bán kính
+  xoá**. `ungVienThuMucCon()` không đọc nội dung, không phân loại, không xoá gì trong thư mục con
+  — nó đếm theo hình dạng tên rồi in ra câu lệnh để người chạy (một gợi ý để đi xem khác một phán
+  quyết để xoá). Chạy thật 09/09 vào `Downloads/Phai sinh` (154 tệp): **81 tệp chứng minh được là
+  của gói → đã xoá** (2,9 MB) · 51 tệp đúng hình dạng nhưng chưa chứng minh được chủ → **giữ**,
+  chờ Đức chốt · 0 tệp nhóm bảo vệ · và một thư mục con `Manga concept Meo` (54 tệp ảnh, việc thật
+  của Đức) → **không quét, không đụng**. Ghim +9 khẳng định (36 → 45); vế chịu tải là vế **thứ
+  hai**: chạy công cụ thật với MỌI cờ xoá vào một sân có thư mục con chứa cả tệp của gói lẫn một
+  `.pdf` giả của người dùng, rồi chứng minh không tệp nào trong đó bị đụng — thiếu vế đó thì một
+  bản "quét luôn cả cây" cũng xanh. Thử phá **10/10** bắt được, 0 thoát, gồm mũi nới bán kính xoá
+  sang thư mục con và mũi đổi `lstat` thành `stat` (đi vào symlink).
+

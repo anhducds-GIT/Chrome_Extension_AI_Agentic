@@ -19,7 +19,6 @@ import { pathToFileURL } from "node:url";
    kiện đủ. Phần quyết định nằm ở `phanLoai()` bên dưới. */
 const GUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
-const DUOI_CUA_GOI = new Set(["", ".png", ".xlsx"]);
 
 /* Ba bậc, cố ý khác nhau về độ chắc:
      "so-audit"  chứng minh được là của gói — dòng đầu là JSON của chính nó
@@ -28,48 +27,60 @@ const DUOI_CUA_GOI = new Set(["", ".png", ".xlsx"]);
      "khong-phai" mọi thứ còn lại → KHÔNG BAO GIỜ xoá, nhưng PHẢI in ra
    In cả bậc thứ ba là phần làm cho công cụ này đáng tin: Đức thấy được
    chính xác cái gì đã được bảo vệ, chứ không phải tin lời hứa. */
+/* Ba hàm chứng minh, mỗi đuôi một hàm. Chúng nhận đoạn đầu tệp và trả về
+   BẬC + VÌ SAO. Đặt TRƯỚC bảng vì bảng trỏ tới chúng. */
+function chungMinhSoAudit(dau) {
+  /* NHẬN THEO CHỮ KÝ, KHÔNG PARSE. Bản đầu cắt dòng đầu rồi `JSON.parse` nó —
+     và lượt chạy thật đầu tiên cho thấy nó sai: dòng đầu của một sổ audit thật
+     DÀI HƠN đoạn đầu tệp mà ta đọc, nên chuỗi bị cắt giữa, parse ném, và 12 sổ
+     audit thật bị xếp vào nhóm "không phải của gói". Hỏng an toàn (không xoá
+     sai) nhưng vô hiệu hoá cả công cụ. Chữ ký miễn nhiễm với việc bị cắt. */
+  const chu = dau.toString("utf8");
+  if (!chu.startsWith("{")) return { bac: "khong-phai", vi_sao: "không đuôi mà nội dung không mở đầu bằng JSON" };
+  if (chu.includes('"timestamp"') && chu.includes('"event"')) {
+    return { bac: "so-audit", vi_sao: "sổ audit của gói — có cả `timestamp` và `event`" };
+  }
+  if (chu.includes('"probe"')) return { bac: "so-audit", vi_sao: "file đo của gói — có khoá `probe`" };
+  return { bac: "khong-phai", vi_sao: "JSON nhưng không mang chữ ký sổ audit của gói" };
+}
+
+function chungMinhPng(dau) {
+  const ok = dau.length >= 4 && dau[0] === 0x89 && dau[1] === 0x50 && dau[2] === 0x4e && dau[3] === 0x47;
+  return ok
+    ? { bac: "can-mat", vi_sao: "PNG thật, nhưng ảnh nào cũng là PNG — không chứng minh được chủ" }
+    : { bac: "khong-phai", vi_sao: "đuôi .png mà không phải PNG" };
+}
+
+function chungMinhXlsx(dau) {
+  const ok = dau.length >= 4 && dau[0] === 0x50 && dau[1] === 0x4b && dau[2] === 0x03 && dau[3] === 0x04;
+  return ok
+    ? { bac: "can-mat", vi_sao: "workbook thật, nhưng không chứng minh được chủ" }
+    : { bac: "khong-phai", vi_sao: "đuôi .xlsx mà không phải workbook" };
+}
+
+/* MỘT BẢNG, KHÔNG PHẢI MỘT DANH SÁCH CỘNG MẤY NHÁNH `if`.
+   Trước đây đây là `new Set(["", ".png", ".xlsx"])` và phần chứng minh nằm ở
+   những nhánh `if (duoi === …)` bên dưới. Thử phá 09/09 chỉ ra chỗ hỏng: thêm
+   `.pdf` vào Set là một sửa đổi **diễn đạt được**, và không phép kiểm nào đỏ.
+   Lần đó vô hại (một `.pdf` thật rơi vào nhánh "giữ lại" cuối), nhưng luật đã
+   hỏng — bước tiếp theo của cùng một người là thêm một nhánh chứng minh, và
+   lúc đó tài liệu thật của Đức thành ứng viên xoá.
+   Ghim nó thì chỉ canh được một nước đi. Bảng này làm nước đi đó **không diễn
+   đạt được**: khai một đuôi mà không kèm cách chứng minh chủ là không khai
+   được. Đó là lý do có bảng, không phải vì bảng gọn hơn. */
+const BANG_DUOI = new Map([
+  ["", chungMinhSoAudit],
+  [".png", chungMinhPng],
+  [".xlsx", chungMinhXlsx],
+]);
+
 export function phanLoai(ten, docDauFile) {
   const duoi = path.extname(ten).toLowerCase();
   const goc = duoi ? ten.slice(0, -duoi.length) : ten;
   if (!GUID.test(goc)) return { bac: "khong-phai", vi_sao: "tên không phải một GUID trần" };
-  if (!DUOI_CUA_GOI.has(duoi)) return { bac: "khong-phai", vi_sao: `gói này không sinh ra file ${duoi || "(không đuôi)"}` };
-
-  const dau = docDauFile();
-  if (duoi === "") {
-    /* NHẬN THEO CHỮ KÝ, KHÔNG PARSE. Bản đầu của hàm này cắt dòng đầu rồi
-       `JSON.parse` nó — và lượt chạy thật đầu tiên cho thấy nó sai: dòng đầu
-       của một sổ audit thật DÀI HƠN đoạn đầu file mà ta đọc, nên chuỗi bị
-       cắt giữa, parse ném, và 12 sổ audit thật bị xếp vào nhóm "không phải
-       của gói". Hỏng an toàn (không xoá sai), nhưng nó vô hiệu hoá cả công cụ.
-       Chữ ký thì miễn nhiễm với việc bị cắt. */
-    const chu = dau.toString("utf8");
-    if (!chu.startsWith("{")) return { bac: "khong-phai", vi_sao: "không đuôi mà nội dung không mở đầu bằng JSON" };
-    if (chu.includes('"timestamp"') && chu.includes('"event"')) {
-      return { bac: "so-audit", vi_sao: "sổ audit của gói — có cả `timestamp` và `event`" };
-    }
-    if (chu.includes('"probe"')) return { bac: "so-audit", vi_sao: "file đo của gói — có khoá `probe`" };
-    return { bac: "khong-phai", vi_sao: "JSON nhưng không mang chữ ký sổ audit của gói" };
-  }
-  if (duoi === ".png") {
-    const ok = dau.length >= 4 && dau[0] === 0x89 && dau[1] === 0x50 && dau[2] === 0x4e && dau[3] === 0x47;
-    return ok
-      ? { bac: "can-mat", vi_sao: "PNG thật, nhưng ảnh nào cũng là PNG — không chứng minh được chủ" }
-      : { bac: "khong-phai", vi_sao: "đuôi .png mà không phải PNG" };
-  }
-  if (duoi === ".xlsx") {
-    const ok = dau.length >= 4 && dau[0] === 0x50 && dau[1] === 0x4b && dau[2] === 0x03 && dau[3] === 0x04;
-    return ok
-      ? { bac: "can-mat", vi_sao: "workbook thật, nhưng không chứng minh được chủ" }
-      : { bac: "khong-phai", vi_sao: "đuôi .xlsx mà không phải workbook" };
-  }
-  /* Nhánh phòng xa, và nó KHÔNG phải trang trí. Bản đầu để nhánh xlsx làm
-     catch-all (`else` cho mọi đuôi còn lại), nên đột biến M1 — thêm `.pdf`
-     vào `DUOI_CUA_GOI` — không làm phép ghim đỏ: file `.pdf` lặng lẽ được
-     đối xử như workbook. Một `.pdf` thật thì mở đầu bằng `%PDF` nên vẫn bị
-     giữ, tức lần đó vô hại; nhưng luật thì đã hỏng, và lần sau ai thêm một
-     đuôi vào danh sách sẽ được đối xử như workbook mà không ai thấy.
-     Nay mỗi đuôi phải có nhánh của riêng nó, còn lại thì GIỮ. */
-  return { bac: "khong-phai", vi_sao: `đuôi ${duoi} có trong danh sách nhưng chưa có cách chứng minh chủ — giữ lại` };
+  const chungMinh = BANG_DUOI.get(duoi);
+  if (!chungMinh) return { bac: "khong-phai", vi_sao: `gói này không sinh ra file ${duoi || "(không đuôi)"}` };
+  return chungMinh(docDauFile());
 }
 
 function doc(thuMuc, ten) {
