@@ -642,3 +642,40 @@ thứ hai tôi kiểm TRƯỚC khi nói ra.
 **Kết quả số.** Suite **123/123**. B-43 và B-44 đóng. **Còn mở:** B-41 ⑵⑶ (cố ý — ⑶ mở cửa gửi
 lại, cần một lượt live) · B-42 (cần brief Đức duyệt) · B-36 hạ xuống một mục UX.
 
+## 2026-09-09 (tiếp) · `claude-gpt-chay-het-job` — ĐÓNG B-40 đường ⒝ và B-41 ⑶
+
+Đức chốt: *"phương án 2. cần đảm bảo flow chạy từ đầu tới cuối cho đến hết, trừ khi bị captcha
+hoặc báo hết credit."* → [ADR-0053](docs/adr/0053-loi-nha-cung-cap-la-mot-nguon-doi-soat-cau-chua-lay-tu-ma-cua-ta.md).
+
+**Sổ nợ gọi ⒝ là *"cho gửi lại"* — cách gọi đó SAI.** Đức viết *"chỉ bằng đúng câu nó yêu cầu"*,
+nên thứ máy gửi là **câu chữa**, không phải prompt gốc. Prompt gốc vẫn bay **đúng một lần**; câu
+chữa tối đa **2 lần/job**. `submissionMayExist()` và `canRetry()` không bị sửa một dòng.
+
+**Rủi ro lớn nhất, sổ nợ chưa nêu:** đọc câu *"nhắn X"* rồi gõ X nghĩa là **trang quyết định máy
+gõ gì** — cửa tiêm lệnh, ở đúng chỗ tệ nhất là một cửa vừa được cấp quyền gõ. Câu chữa nằm trong
+một **hằng của adapter**; chữ nhà cung cấp chỉ dùng để **nhận dạng**. Ba lớp, cố ý dư một lớp.
+
+**Số đo.** Suite **124/124** · ghim 15 mép · thử phá **10/11 bắt, 0 thoát** · kiểm hồi quy live:
+sổ **1.761** = máy chủ **1.761** (tôi vừa sửa thẳng vào cửa đối soát đang chạy tốt, nên phải đo).
+
+**Hai con thoát ở vòng đầu, cả hai ở chỗ chịu tải:** không tăng bộ đếm nắp (nắp không bao giờ cắn
+→ vòng lặp tiêu quota) và bỏ qua `run.stop`. Cả hai lọt vì mọi mép chỉ kiểm **cấu trúc** — cấu
+trúc không với tới hành vi. Bịt bằng ba mép **cắt hàm đã ship ra chạy thật**.
+
+**Ba lỗi của tôi trong lượt này, ghi ra vì cả ba là lỗi tôi:**
+- Mép chống tiêm ban đầu **đòi sai chỗ** — nó bắt bộ phân loại từ chối một câu chữa nằm *trong*
+  một yêu cầu dài hơn. Tính chất đáng giữ là *"thứ sắp gõ là đúng một phần tử danh sách trắng"*, và
+  nó đứng vững; ca kia chỉ tốn **một lượt quota vô ích**. Đã ghi thành **giới hạn đã biết**.
+- Bộ lọc chú thích theo **tiền tố dòng** không cắt nổi khối `/* … */` mà dòng tiếp bắt đầu bằng
+  chữ, nên **văn của chính tôi** khớp vào phép kiểm và mép chống tiêm **đỏ oan**. Sửa ở **cả ba**
+  phép ghim tôi viết hôm nay.
+- Sân khấu giả truyền sai đối số nên mép nắp **đỏ vì lý do sai**. Sáng nay một mép khác **xanh** vì
+  lý do sai. Cùng một họ, và đó là lý do luôn chạy thử phá thay vì tin suite xanh.
+
+**Một lỗ hạ tầng nổ thật, đã gộp vào `N-59` của lane khác thay vì mở mục thứ hai:** một lượt
+`--restamp` để lấy khoá đã dán câu chốt của Đức lên **5 vùng** mà lane kia vừa **TRẢ**. Cả 5 đều
+`owner: null` nên không khoá sống nào bị lấy, nhưng bản ghi xuất xứ thì sai. Dọn bằng cách hoàn
+nguyên bốn trường từ `git show HEAD:` — **không** đụng trường `owner`.
+
+**Còn mở:** B-41 ⑵ (`DETECTION_BLIND`) · B-42 (cần brief Đức duyệt) · vế live của ADR-0053 cần
+một lỗi thật của nhà cung cấp, **tôi không giả lập**.

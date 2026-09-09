@@ -1796,3 +1796,35 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
   DOM · đọc sớm hơn lúc trang được dựng · và **điều kiện nghiệm thu đầu của tôi sai** (*"sổ ==
   trang"* — hai vế cùng đọc 27 nên nó báo ĐẠT; hai vế cùng sai thì bằng nhau).
 
+- **ĐÓNG B-40** · Đức chốt 09/09 **đường ⒝**, nguyên văn: *"phương án 2. cần đảm bảo flow chạy từ
+  đầu tới cuối cho đến hết, trừ khi bị captcha hoặc báo hết credit."*
+  [ADR-0053](docs/adr/0053-loi-nha-cung-cap-la-mot-nguon-doi-soat-cau-chua-lay-tu-ma-cua-ta.md)
+  trỏ hai chiều với ADR-0047.
+  **Mục này gọi ⒝ là *"cho gửi lại"* — cách gọi đó SAI, và chỗ sai đổi hẳn mức rủi ro.** Đức viết
+  *"chỉ bằng đúng câu nó yêu cầu"*, nên thứ máy gửi là **câu chữa**, không phải prompt gốc: prompt
+  gốc vẫn bay **đúng một lần**, câu chữa tối đa **2 lần/job**. `submissionMayExist()` và
+  `canRetry()` không bị sửa một dòng — cửa mới đứng TRƯỚC chúng.
+  **Rủi ro lớn nhất mục này chưa nêu:** nếu máy đọc câu *"nhắn X"* rồi gõ X thì **nội dung trang
+  quyết định máy gõ gì** — một cửa tiêm lệnh, ở đúng chỗ tệ nhất là một cửa vừa được cấp quyền gõ.
+  Nên câu chữa nằm trong `REPAIR_PHRASES`, một **hằng của adapter**; chữ nhà cung cấp chỉ dùng để
+  **nhận dạng**. Thi hành ở ba chỗ dư một lớp: hàm thuần chỉ trả phần tử của hằng · cửa gõ
+  **không có tham số nào chở chữ vào được** · một chốt kiểm danh sách trắng **ngay trước** lượt gõ.
+  **Hai ngoại lệ Đức nêu giữ nguyên dừng hẳn**, và cưỡng chế bằng một **bất biến ghim được** (hai
+  tập rời nhau) chứ không bằng một nhánh `if` — nhánh đó là mã chết, đúng lỗi đã sửa sáng nay ở
+  `looksTruncated()`.
+  **Số đo:** suite **124/124** · ghim `provider-repair-b40b-smoke.mjs` **15 mép** · thử phá
+  **10/11 bắt, 0 thoát**. Hai con thoát ở vòng đầu đều ở chỗ chịu tải — *không tăng bộ đếm nắp*
+  (nắp không bao giờ cắn → vòng lặp tiêu quota) và *bỏ qua `run.stop`* — và cả hai lọt vì mọi mép
+  chỉ kiểm **cấu trúc**; bịt bằng ba mép **cắt hàm đã ship ra chạy thật**. Kiểm hồi quy live: sổ
+  **1.761** = máy chủ **1.761**, đường đối soát chữ không bị làm hỏng.
+  **Vế live CHƯA đạt, và tôi không giả lập:** cần **tool tạo ảnh của ChatGPT lỗi thật**. Sổ audit
+  ghi `PROVIDER_REPAIR` mỗi lượt kể cả lượt không chữa, nên lượt chạy ảnh tới nào gặp lỗi tạm ấy
+  sẽ có số để đọc.
+
+- **B-41 ⑶ ĐÓNG cùng B-40** · Vế ⑶ (*"lời nhà cung cấp tự khẳng định là một nguồn đối soát"*) chính
+  là ADR-0053 ở trên. Bước chuẩn bị mà mục này đặt ra — *"phép đo phải làm lại trước khi vá"* — đã
+  làm **trước**, không phải sau: `post-submit-no-resend-smoke.mjs` phần 4 nay đếm **hai** con số
+  riêng, và nó bắt được một lỗi trong chính phép đếm cũ — bản cũ đếm bằng một **biến gián tiếp**
+  (`verifyExistingOutput`), mà biến đó hết đúng ngay lúc nguồn mới đi qua một hàm khác, tức suite
+  vẫn xanh trong khi luật đã bị đụng. **⑵ vẫn MỞ** (`DETECTION_BLIND` đối soát trước) — nó là một
+  loại lỗi khác và có nắp riêng, chưa có số đo live nào.
