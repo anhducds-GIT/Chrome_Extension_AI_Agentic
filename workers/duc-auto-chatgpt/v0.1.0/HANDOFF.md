@@ -511,3 +511,12 @@ defined` và **xanh vì lý do sai**. Sau khi thêm stub, mũi đó bị bắt.
 
 **Kết quả số.** Suite **122/122**. Thử phá B-43 **15/15**. **Còn mở:** nghiệm thu live — hai lượt
 chat với tab để ở NỀN, số ký tự ghi vào sổ phải **bằng** số trên trang.
+
+## 2026-09-09 (tệp đẩy) · `claude-gpt-chay-het-job` — có cuốn theo lane khác
+
+Lượt đẩy này dùng `--carry` và **cuốn theo 8 commit của lane `claude-luat-rasoat`** — đợt rà luật
+ba gói `duc-auto-*` (N-55 · N-56 · N-57: dựng `docs/adr/` cho gói video, sửa liên kết chết trên
+bảng, gỡ các vế luật đã chết trong ba `AGENTS.md`). Ghi ra vì
+[ADR-0005](../../../docs/adr/0005-lam-viec-song-song.md) ⑶ bỏ cửa hỏi Đức cho `--carry`, và **tên
+lane bị cuốn theo là thứ duy nhất còn lại để truy**. Cổng đóng phiên XANH TOÀN BỘ trước khi đẩy.
+
