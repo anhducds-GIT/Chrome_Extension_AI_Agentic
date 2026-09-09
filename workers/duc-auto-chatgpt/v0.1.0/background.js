@@ -118,30 +118,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 // suspend this worker between those calls, erasing the in-memory reservation
 // and leaving Chrome's GUID as the physical name. Keep the whole operation in
 // one background request so onDeterminingFilename consumes live state.
-// B-36 · ĐẢO CHIỀU 09/09, và bằng chứng là thư mục trên máy Đức.
-//
-// Bản trước gọi `chrome.downloads.download()` NGAY TRONG service worker này,
-// với lý do MV3 có thể ngủ giữa lúc trồng phiếu và lúc tải. Lý do đó nghe
-// đúng, nhưng số đo nói khác:
-//
-//   · gói này (worker gọi)   → 67 file trong MỘT ngày, TOÀN tên GUID, nằm
-//     PHẲNG trong thư mục tải mặc định — thư mục con bị bỏ luôn, không chỉ tên;
-//   · gói Gemini (PANEL gọi) → `Duc Auto Gemini/Anh to mau_01_270826/Q001.jpg`
-//     … `Q007.jpg` — đúng tên, thư mục con HAI CẤP, cùng máy, cùng Chrome.
-//
-// Nên câu đã ghi trong file này — *"Chrome trên máy này bỏ qua `filename` với
-// blob URL"* — là sự thật của MỘT CÁCH GỌI, không phải sự thật của Chrome. Nó
-// đứng đó tám tuần và biến B-36 thành "không chữa được", nên phải nói thẳng.
-//
-// Vá: PANEL tự gọi `downloads.download()` (đúng cách Gemini làm, và đúng cách
-// gói này làm trước 28/08), worker chỉ còn CHỜ và NGHIỆM THU. Đổi này KHÔNG
-// nới một lớp bảo vệ nào — toàn bộ phép đối chiếu tên/byte/va-chạm bên dưới
-// giữ nguyên, chỉ mất đúng lời gọi `download()`.
 async function downloadArtifact(message) {
-  const downloadId = Number(message.download_id);
-  if (!Number.isInteger(downloadId) || downloadId <= 0) return failure("INVALID_ARTIFACT_DOWNLOAD_ID", "Artifact verification requires the downloadId the panel received from chrome.downloads.download().");
+  const url = typeof message.url === "string" ? message.url : "";
+  if (!/^blob:/i.test(url)) return failure("INVALID_ARTIFACT_URL", "Artifact download requires an extension-owned blob URL.");
   const requestedFilename = safeArtifactFilename(message.filename);
   if (!requestedFilename) return failure("INVALID_ARTIFACT_FILENAME", "Artifact filename must be a safe Downloads-relative path.");
+  const conflictAction = ["uniquify", "overwrite", "prompt"].includes(message.conflictAction) ? message.conflictAction : "uniquify";
+  rememberExpectedDownloadName(url, requestedFilename, conflictAction);
+  const downloadId = await chrome.downloads.download({ url, filename: requestedFilename, conflictAction, saveAs: false });
   const item = await waitForCompletedDownload(downloadId);
   const verified = verifyCompletedDownload(item, Number(message.expectedBytes));
   if (!verified.ok) return verified;

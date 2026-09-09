@@ -5756,26 +5756,12 @@
     log(`Chrome tự đặt tên tệp: '${requested}' → '${verified.leaf}'. Tra lại bằng sổ, không bằng tên.`, "");
   }
 
-  // B-36 · PANEL TỰ GỌI `downloads.download()`, worker chỉ chờ và nghiệm thu.
-  //
-  // Vì sao đảo lại (đo 09/09, bằng chứng là thư mục trên máy Đức): gói này để
-  // worker gọi thì ra **67 file GUID nằm phẳng** trong một ngày — thư mục con
-  // bị bỏ luôn; gói Gemini để PANEL gọi thì ra `Duc Auto Gemini/<job>/Q001.jpg`
-  // đúng tên, thư mục con hai cấp, cùng máy cùng Chrome. Câu "Chrome bỏ qua
-  // filename với blob URL" là sự thật của MỘT CÁCH GỌI, không phải của Chrome.
-  //
-  // Phiếu giữ tên vẫn trồng trước, đúng thứ tự Gemini dùng: lời nhắn đó ĐÁNH
-  // THỨC worker, nên `onDeterminingFilename` chạy với phiếu còn sống. Trồng
-  // hỏng cũng không âm thầm: bước nghiệm thu ngay dưới sẽ nói ra.
   async function downloadArtifactViaBackground(url, request, expectedBytes) {
-    try {
-      await chrome.runtime.sendMessage({ type: "DAC_EXPECT_DOWNLOAD_NAME", url, filename: request.filename, conflictAction: request.conflictAction });
-    } catch (_) { /* trồng phiếu là best-effort; bước nghiệm thu bên dưới bắt được hậu quả */ }
-    const downloadId = await chrome.downloads.download({ url, filename: request.filename, conflictAction: request.conflictAction, saveAs: false });
     const response = await chrome.runtime.sendMessage({
       type: "DAC_DOWNLOAD_ARTIFACT",
-      download_id: downloadId,
+      url,
       filename: request.filename,
+      conflictAction: request.conflictAction,
       expectedBytes
     });
     if (!response?.ok) throw new Error(response?.error || "PERSISTENCE_VERIFICATION_FAILED: Artifact download was not verified.");
