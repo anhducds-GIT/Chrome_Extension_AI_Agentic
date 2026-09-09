@@ -621,3 +621,27 @@ sau khi khối đóng thì vẫn kêu; một cái mốc lạc chỗ mà tắt lu
 chuyện kể, mục 7 rút từ lượt trước, **nhưng chỉ giảm 6%**. Còn ~345 ký tự một luật so với đích
 ~150. Phần thừa **không còn là chỉ mục hay chuyện kể — nó là chính các câu luật**. Đi tiếp là
 **bỏ bớt luật**, và đó là ngân sách của Đức chứ không phải việc AI tự quyết. Ghi vào Làn 2.
+
+## 2026-09-09 · `claude-nen-luat` (lượt 2) — cả ba sổ cái về tay máy, Làn 1 đóng
+
+**`luat.khoi_sinh` nay phủ cả ba gói, và cả ba trỏ vào `decisions.md` — không trỏ `AGENTS.md`.**
+Lý do đo được: khối sinh ra dài **5.700–7.500 ký tự**, tức **đắt hơn cả cái nó thay**. Nó thuộc về
+file COMPANION (mở khi cần), không thuộc file CORE (nạp mỗi phiên đụng gói). Gemini theo đó:
+`AGENTS.md` **24.765 → 19.045**.
+
+**Bước ⑥ bắt được chỗ trôi đầu tiên của chính nó.** Bảng gõ tay của `gg-flow-video` khai `ADR-0003`
+là còn sống, trong khi chính ADR đó đã khai `- **0003 — …**` **chết từ 05/09**. Không ai gõ sai —
+bảng chỉ đơn giản không được cập nhật, đúng thứ máy sinh sinh ra để chặn.
+
+**Bốn phép: ① 0 · ② 0 · ③ 1 · ④ 0.** ② về 0 trên **cả repo**, lần đầu.
+
+**Chỗ tôi phải nói thẳng, vì nó đổi hướng của Làn 2.** Ba lượt nén hôm nay cắt được nhiều là nhờ
+cắt **chỉ mục** và **chuyện kể** — hai thứ không phải luật. `AGENTS.md` gốc thì hết cả hai loại đó
+rồi: mục 1 và mục 4 vừa rút sạch chuyện kể mà **chỉ giảm 6%** (17.255 → 16.245). Còn **~345 ký tự
+một luật** so với đích ~150 của [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md) ⑵. Phần thừa **là
+chính các câu luật**. Đi tiếp từ đây là **bỏ bớt luật** — ngân sách của Đức, không phải việc AI tự
+quyết. Đã ghi vào Làn 2 thay cho một lời hứa sẽ-nén-tiếp mà tôi không giữ được.
+
+**Khoá:** vùng `workers/duc-auto-chatgpt` được lane `claude-gpt-chay-het-job` lấy giữa phiên bằng
+`--restamp --duc-duyet` kèm câu chốt của Đức (*"tiếp đi"*) — đường hợp lệ thứ ba, phần việc của tôi
+trong vùng đó đã commit xong trước đó. Không tranh.

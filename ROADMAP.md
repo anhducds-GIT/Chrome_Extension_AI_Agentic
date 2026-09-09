@@ -11,28 +11,30 @@
 > là một mong muốn. Việc phát sinh trong lúc làm → `BACKLOG.md`; ý tưởng mới → `IDEAS.md`.
 > Thứ tự dưới đây theo chốt của Đức; chỗ nào Đức đã nói ra thì trích nguyên văn.
 
-## Làn 1 — Rule Compiler V1 · **ĐÃ CHỐT VÀ ĐÃ CHẠY 09/09**
+## Làn 1 — Rule Compiler V1 · **ĐÓNG 09/09**
 
 Đức giao quyền lead: *"Việc tổng hợp rules, tự động complie & control sẽ do AI chủ động hoàn toàn…
 tôi phân quyền lead cho bạn… việc của tôi chỉ là giữ các giới hạn."*
 [ADR-0030](docs/adr/0030-rule-compiler-v1.md) chốt theo uỷ quyền đó.
 
 **Đã có:** bước ⑥ *compile* chuyển sang máy — `node scripts/rule-compile.mjs --sinh` tái tạo khối
-danh sách từ sổ cái, **hai lượt sinh ra y hệt từng byte**. Thước cóc thứ ba
-`luat.tran_dong_ban_hieu_luc` đo **cả 19 nơi chứa luật cộng lại** — hai thước cũ chỉ đo `AGENTS.md`
-và `docs/`, không cái nào thấy 695 dòng của hai gói fork.
+danh sách từ sổ cái, **hai lượt sinh ra y hệt từng byte**.
+
+**ĐÓNG 09/09 chiều.** `luat.khoi_sinh` phủ **cả ba** gói `duc-auto-*`, và cả ba trỏ vào
+`decisions.md` chứ không vào `AGENTS.md` — khối sinh ra dài 5.700–7.500 ký tự, **đắt hơn cả cái nó
+thay**, nên nó thuộc về file COMPANION (đọc khi cần), không thuộc file CORE (nạp mỗi phiên đụng gói).
+
+Lượt gắn đó trả về hai thứ ngoài dự tính:
+
+- **Một lỗ của chính bộ đo.** Hai sổ cái fork của nhau sinh ra hai khối chép đôi → phép ③ nhảy
+  **2 → 19 nhóm**, và **không nhóm nào có cửa ra**: ba lựa chọn của `RULE-COMPILER.md` mục 4 đều
+  vô nghĩa với thứ máy vừa tự sinh. Vá ở `dongLuat`, ghim cả hai chiều.
+- **Một chỗ trôi mà bước ⑥ sinh ra để chặn.** Bảng gõ tay của `gg-flow-video` đang khai `ADR-0003`
+  là còn sống, trong khi chính ADR đó đã khai `- **0003 — …**` chết từ 05/09.
 
 **Một câu KHÔNG tự quyết, và nói rõ vì sao:** ranh giới *"fix nhỏ"* của
 `duc-auto-gg-flow-video` ADR-0009. Nó không phải việc nén luật — nó là **luật an toàn**
 (`AGENTS.md` gốc mục 3 vế ③), và uỷ quyền của Đức là về nén, không về nới an toàn. **Chờ Đức.**
-
-**Cập nhật 09/09 chiều — gần đóng.** `duc-auto-chatgpt` đã nén xong và `luat.khoi_sinh` nay phủ
-**hai** gói (gemini → `AGENTS.md`, chatgpt → `decisions.md`). Lượt gắn đó lôi ra một lỗ của chính
-bộ đo: hai sổ cái fork của nhau sinh ra **hai khối chép đôi**, đẩy phép ③ từ 2 lên **19 nhóm** mà
-không nhóm nào có cửa ra — máy không "gộp" được cái nó vừa sinh. Đã vá: `dongLuat` bỏ qua dòng nằm
-trong khối máy sinh, ghim cả hai chiều.
-
-**đóng khi:** `luat.khoi_sinh` phủ nốt `duc-auto-gg-flow-video`.
 
 ## Làn 2 — Nén bản hiệu lực xuống ĐÍCH 8.000 ký tự (`Y-14`)
 
@@ -45,7 +47,7 @@ Trần và đích: [ADR-0031](docs/adr/0031-tran-do-bang-ky-tu.md). **Đo bằng
 | Ai trả | 09/09 sáng | 09/09 chiều | Đích |
 |---|---:|---:|---:|
 | Mọi phiên (`CLAUDE.md` + `AGENTS.md`) | 20.530 | **16.674** | **8.000** |
-| Gói nặng nhất | 43.783 (chatgpt) | **24.765** (gemini) | **8.000** |
+| Gói nặng nhất | 43.783 (chatgpt) | **19.045** (gemini) | **8.000** |
 
 **Đã làm 09/09 chiều — `chatgpt/AGENTS.md` 43.783 → 12.944 (−70%), dưới đích của gói ngay lượt đầu.**
 Ba cửa ra, xếp theo cái cắt được nhiều nhất:
