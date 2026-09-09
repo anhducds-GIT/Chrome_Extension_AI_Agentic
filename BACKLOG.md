@@ -919,3 +919,14 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
 - **hệ quả tức thì:** cổng đóng phiên ĐỎ ở phép *Test xanh*, nên **không lane nào đẩy được** cho tới khi xử — kể cả lane chỉ sửa tài liệu. Đo thật 09/09: lượt đẩy của `claude-luat-rasoat` bị chặn vì việc này.
 - **tôi KHÔNG tự sửa, và đây là lý do:** phép kiểm cho ba đường ra — port thay đổi sang nhánh kia · đọc cả hai rồi hoà · **gỡ tên file khỏi danh sách SHARED kèm lý do**. Đường thứ ba là **nới một lớp bảo vệ cho cổng xanh**, đúng thứ `AGENTS.md` gốc mục 5 cấm. Hai đường đầu cần hiểu bản vá đang bay của lane kia, và `ADR-0066` của gói Gemini chốt sẵn: *"lỗi có ở nhánh kia thì ghi sổ, **KHÔNG sửa hộ**"*.
 - **đóng khi:** `shared-modules-no-drift-static.mjs` XANH — hoặc bằng lượt port, hoặc bằng một dòng khai trong chính file test nói vì sao `reconciliation-core.js` được phép khác nhau, kèm ADR đứng sau nó.
+
+## N-62 · `ADR-0017 ⑵` (*mỗi vai một checkout riêng*) đã chốt nhưng CHƯA BAO GIỜ được làm
+
+- **nhóm:** cong
+- **mở:** 2026-09-09 · lane `claude-luat-rasoat`
+- **vùng:** `_root` (hạ tầng đa phiên) — **cần Đức chốt trước khi đổi**, nó đổi cách mọi phiên làm việc
+- **[ĐO]** `git worktree list` trả về **đúng một** cây. Quyết định [ADR-0017 ⑵](docs/adr/0004-hai-vai-assistant.md) `Accepted` và **còn sống** (chỉ vế ⑶ ⑷ đã chết) nói *"mỗi vai một checkout riêng"*, kèm lý do: *"checkout chung không chứng minh được thực thi độc lập"*.
+- **[ĐO] cái giá, đo trong MỘT GIỜ ngày 09/09** — hai lượt đẩy bị chặn, cả hai vì lane khác đang sửa dở trên **cùng một cây**: ⑴ `reconciliation-core.js` trôi dạt (`N-60`); ⑵ một dòng **chưa commit** trong `don-rac-tai-xuong.mjs` làm đỏ chính test của gói đó. Lane `claude-luat-rasoat` có **4 commit chỉ đụng tài liệu và luật**, không chạm một dòng mã sản phẩm nào, vẫn không đẩy được.
+- **vì sao KHOÁ không chữa được:** khoá canh **ai được GHI**, còn suite đọc **cả cây**. Một lane tuân thủ khoá tuyệt đối vẫn làm đỏ cổng của lane khác chỉ bằng việc để một file sửa dở trên đĩa. `--soat` bịt cửa commit, không bịt cửa này.
+- **chỗ CHƯA có máy nào canh, nói thẳng:** đây là một quyết định **nằm trong bản hiệu lực** mà **thực tế không khớp**. Bộ biên dịch soi *chữ với chữ*, không soi *chữ với thế giới* — cả bốn phép ① ② ③ ④ đều XANH trong khi vế này bị bỏ suốt hai ngày.
+- **đóng khi:** `git worktree list` trả về **ít nhất hai** cây, **hoặc** `ADR-0017 ⑵` được đánh dấu chết kèm tên quyết định thay nó. Một trong hai — không được để nguyên như hiện nay.
