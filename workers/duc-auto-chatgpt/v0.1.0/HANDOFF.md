@@ -710,3 +710,36 @@ xem. Chỉ là rủi ro chẩn đoán (`imageCandidates()` của runner **không
 `~~B-48~~` và cùng cách chữa: ưu tiên theo phạm vi, đừng nới nắp.
 
 **Vẫn tắc đẩy:** nay **8 commit** của tôi nằm trên 4 commit của `harness-loi-01`. Cần Đức chốt.
+
+## 2026-09-09 (lượt 14) · `claude-gpt-chay-het-job` — B-36 đóng sau 8 tuần, bằng một cái KHOÁ
+
+**Đức tìm ra chỗ tắc, không phải tôi.** *"Hiện tôi không chọn được thư mục vì bị khoá, có lẽ điều
+kiện là phải có file excel."* Đúng, và đúng một dòng: `outputLocked = !state.workbook ||
+operatorLocked`. Nút *Chọn thư mục* nằm trong danh sách bị nó tắt — mà phiên Bridge **không có
+workbook nào**. Nên suốt tám tuần, **lối thoát duy nhất của `B-36` bị khoá sau một điều kiện chẳng
+liên quan gì tới nó**. Vá: hai nút tách khỏi `outputLocked`, giữ `operatorLocked` (`~~B-52~~`).
+
+**Nghiệm thu live, chuỗi 3 ảnh, tab để ở NỀN, đích là thư mục Đức vừa cấp quyền:**
+
+| | |
+|---|---|
+| `Pilot GPT/Q001.png · Q002.png · Q003.png` | 3,11 · 3,17 · 3,65 MB |
+| tên XIN so với tên RA | khớp cả ba · `write_outcome: written` |
+| nguồn ảnh | **3 nguồn khác nhau** — không job nào quy nhầm |
+| sổ audit | **58 KB ra file thật**, hết `audit_durable: false` |
+
+**Đối chứng làm phép đo chặt:** cùng buổi, cùng máy, cùng chuỗi 3 ảnh, đích là Chrome Downloads →
+**67 file GUID nằm phẳng trong một ngày**. Không phải "Chrome tử tế hơn", mà là **hai đường ghi**.
+
+**MỘT GIẢ THUYẾT CỦA TÔI ĐÃ CHẾT, ghi để không ai đi lại.** Tôi tưởng khác biệt ở **chỗ gọi**
+`downloads.download()` (Gemini gọi từ panel, gói này từ worker). Port sang cách Gemini, chạy live:
+**vẫn GUID**. Đã revert. Nguyên nhân nằm **ngoài mã**, và **chính mã Gemini ghi từ 25/08**:
+*"something in this browser renames every `chrome.downloads` artifact… another installed extension
+or a browser-level policy"*. **Tôi đọc câu đó rồi chọn cách hiểu hợp với giả thuyết của mình** —
+lỗi phương pháp.
+
+**Lại đạp một bẫy có sẵn trong sổ:** viết STATUS bằng `node -e` trong bash, bash nuốt hết backtick,
+file ghi ra bị cụt. Đã ghi lại bằng **file script**.
+
+**Đo.** Suite **132/132**. `B-36` và `~~B-52~~` đóng. **Chrome Downloads VẪN HỎNG** — mục này không
+chữa nó, chỉ mở khoá đường kia; ai muốn chữa thì bắt đầu bằng soi xem tiện ích nào đổi tên.

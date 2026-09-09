@@ -908,7 +908,43 @@ riêng (đúng ghi chú trong chính ADR). Gồm: mỗi phiên một RUN_ACTIVE 
 attribution gắn theo tab, GPT invariant "page-scoped vs session-scoped" (mục 6 sổ tay) sẽ
 đổi nghĩa khi đó. Làm xong trên GPT rồi mới nghĩ tới migrate.
 
-### B-36 · (P1) `PERSISTENCE_FILENAME_MISMATCH` chặn MỌI mutation Bridge khi đích ghi là Chrome Downloads — **VẪN MỞ. Đã vá cả (A) và (D) ngày 07/09 theo ADR-0049 (suite 115/115, thử phá 15/17) · CHƯA NGHIỆM THU LIVE, và điều kiện đóng là lượt live đó · lần vá 04/09 đã nghiệm thu và THẤT BẠI, đừng đọc lần này thành xong**
+### ~~B-36~~ · (ĐÓNG — NGHIỆM THU LIVE 09/09, chuỗi 3 ảnh vào thư mục đã cấp quyền) `PERSISTENCE_FILENAME_MISMATCH` chặn mutation Bridge khi đích ghi là Chrome Downloads
+
+> **ĐÓNG 09/09 — NGHIỆM THU LIVE, VÀ NÓ ĐÓNG BẰNG MỘT CÁI KHOÁ, KHÔNG PHẢI MỘT BẢN VÁ.**
+>
+> Đường thoát đã có sẵn từ `ADR-0049` (thư mục đã cấp quyền, File System Access — không đi qua
+> Chrome Downloads nên không dính chuyện đổi tên). Thứ chặn nó là **một dòng UI**: nút *Chọn thư
+> mục* bị tắt theo `!state.workbook`, mà một phiên Bridge thì **không có workbook nào**. Nên tám
+> tuần qua, cửa thoát duy nhất bị khoá sau một điều kiện chẳng liên quan gì tới nó. Xem `~~B-52~~`.
+>
+> **Đức tự tìm ra:** *"hiện tôi không chọn được thư mục vì bị khoá, có lẽ điều kiện là phải có file
+> excel"* — chẩn đoán đúng, đúng dòng.
+>
+> **Số đo nghiệm thu (Đức chọn `Downloads\Phai sinh\Pilot GPT`, tab để ở NỀN):**
+>
+> | | |
+> |---|---|
+> | `Q001.png` · `Q002.png` · `Q003.png` | **3,11 · 3,17 · 3,65 MB** — đúng tên, đúng thư mục |
+> | tên XIN so với tên RA | **khớp cả ba**, `write_outcome: written` (không còn `uniquified`) |
+> | ba nguồn ảnh | **khác nhau cả ba** — không job nào quy nhầm ảnh của job khác |
+> | `persistence_verified` | **true** cả ba |
+> | sổ audit | `Bridge-…__audit.jsonl` **58 KB ra file thật** — hết `audit_durable: false` |
+> | `checkpoint.verified` | **true** ngay từ `jobs.add` đầu tiên |
+>
+> **Cái ĐỐI CHỨNG làm phép đo này chặt:** cùng buổi, cùng máy, cùng chuỗi 3 ảnh, nhưng đích ghi là
+> **Chrome Downloads** → **67 file tên GUID nằm phẳng trong một ngày**, 0 file vào đúng thư mục.
+> Nên kết luận không phải "hôm nay Chrome tử tế hơn", mà là **hai đường ghi khác nhau**.
+>
+> **Một giả thuyết của tôi đã CHẾT trong buổi này, ghi lại để không ai đi lại:** tôi tưởng khác biệt
+> nằm ở **chỗ gọi** `downloads.download()` (Gemini gọi từ panel, gói này gọi từ service worker), đã
+> port sang cách của Gemini, chạy live — **vẫn ra GUID**. Đã revert. Nguyên nhân thật nằm **ngoài mã
+> của chúng ta**: chính mã Gemini ghi từ 25/08 rằng *"something in this browser renames every
+> `chrome.downloads` artifact… another installed extension or a browser-level policy"*. Tôi đã đọc
+> câu đó rồi **chọn cách giải thích hợp với giả thuyết của mình** — đó là lỗi phương pháp.
+>
+> **Chrome Downloads vẫn hỏng và mục này KHÔNG chữa nó.** Nó chỉ chứng minh đường kia chạy, và mở
+> khoá để dùng được. Ai cần chữa đường Downloads thì mở mục mới, và bắt đầu bằng việc soi xem tiện
+> ích nào đang đổi tên.
 
 > **Đọc một dòng cho nhanh (viết 06/09, `claude-don-so`).** Mục này **vẫn mở, vẫn P1.** Đã thử vá
 > 04/09, đã nghiệm thu live 04/09, và **bản vá không giữ được** — file thứ 37 vẫn ra tên GUID.
@@ -2484,6 +2520,34 @@ lấy N cái CUỐI thay vì N cái ĐẦU, hoặc tách riêng một trường 
 image:".
 
 - **đóng khi:** một hội thoại ≥ 15 ảnh mà probe vẫn tả được ảnh mới nhất, và có phép ghim.
+
+### ~~B-52~~ · (ĐÓNG 09/09) Nút *Chọn thư mục* bị khoá theo workbook — và nó khoá luôn cửa thoát của B-36
+Đức tìm ra: *"hiện tôi không chọn được thư mục vì bị khoá, có lẽ điều kiện là phải có file excel"*.
+
+```js
+outputLocked = !state.workbook || operatorLocked
+```
+
+Một dòng gộp **hai chuyện khác hẳn nhau**: *"đang chạy, đừng đổi đích giữa chừng"* (đúng, giữ) và
+*"chưa nạp Excel"* (không liên quan). Cả hai nút chọn thư mục nằm trong danh sách bị nó tắt.
+
+**Vì sao đây không phải chuyện tiện tay:** cấp quyền một thư mục là quyền **bền**, lưu theo hồ sơ
+trong IndexedDB — không thuộc workbook nào. Và `choosePrimaryDestination()` **vốn đã được viết cho
+ca chưa-có-workbook**: nó tự dựng `outputSettings`, tự tìm hồ sơ đã lưu, tự đặt
+`destinationMode = "profile"`. Nên đây là **gỡ một cái khoá thừa**, không phải nới một lớp bảo vệ.
+Nặng hơn thế: nó khoá đúng lối thoát duy nhất của `~~B-36~~`.
+
+Vá: hai nút tách khỏi `outputLocked`, chỉ còn khoá theo `operatorLocked` (đang chạy thì vẫn không
+được đổi đích). Ghim `tests/folder-picker-not-workbook-gated-smoke.mjs` **cắt và chạy** hai vòng gán
+`disabled` đã ship, bốn ca, ghim **cả hai chiều** — mở khi chưa có workbook, **vẫn khoá** khi đang
+chạy — cộng một phép khẳng định rằng vòng riêng phải đứng **sau** vòng chung, vì đảo thứ tự là cái
+khoá quay lại **im lặng**. Suite **132/132**.
+
+**Ghi rõ để phiên sau khỏi sửa nhầm lần nữa:** nút trong tab **Agent** là một nút **khác**, dựng
+động (`sidepanel.js:1393`, `:5180`), và nó **chưa bao giờ** bị khoá — đó là lý do Đức bấm được ở
+đó mà không bấm được ở Setup.
+
+- **đóng khi:** đã đóng — nghiệm thu live 09/09 cùng lượt với `~~B-36~~`.
 
 ## KẾ HOẠCH TRIỂN KHAI — chốt 09/09, viết để sống qua một lượt compact
 
