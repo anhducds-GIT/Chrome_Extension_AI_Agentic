@@ -2835,7 +2835,24 @@
     els.referencesInput.disabled = operatorLocked;
     if (els.changeWorkbookBtn) els.changeWorkbookBtn.disabled = operatorLocked;
     if (els.addReferencesBtn) els.addReferencesBtn.disabled = operatorLocked;
-    for (const element of [els.outputDestinationMode, els.imageOutputFolderInput, els.destinationFolderBtn, els.separateResultDestinationInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.chooseResultFolderBtn, els.timeoutSecInput, els.maxRetriesInput, els.delayMinSecInput, els.delayMaxSecInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) if (element) element.disabled = outputLocked;
+    for (const element of [els.outputDestinationMode, els.imageOutputFolderInput, els.separateResultDestinationInput, els.resultLocationMode, els.resultDownloadsFolderInput, els.imagePatternInput, els.resultFilenameInput, els.auditFilenameInput, els.collisionPolicyInput, els.saveImagesInput, els.saveResultXlsxInput, els.saveAuditJsonlInput, els.timeoutSecInput, els.maxRetriesInput, els.delayMinSecInput, els.delayMaxSecInput, els.safetyCooldownInput, els.maxInputImagesInput, els.continueOnErrorInput, els.rerunDoneInput]) if (element) element.disabled = outputLocked;
+    // B-52 · HAI NÚT CHỌN THƯ MỤC KHÔNG PHỤ THUỘC WORKBOOK, và đây là lý do đo
+    // được: `outputLocked` gộp hai điều khác hẳn nhau — *"đang chạy, đừng đổi
+    // đích giữa chừng"* (đúng, giữ) và *"chưa nạp Excel"* (không liên quan).
+    //
+    // Cấp quyền một thư mục là một quyền BỀN, lưu theo hồ sơ trong IndexedDB;
+    // nó không thuộc về một workbook nào. Chính `choosePrimaryDestination()`
+    // đã được viết cho ca chưa-có-workbook: nó tự dựng `outputSettings`, tự
+    // tìm hồ sơ đã lưu, tự đặt `destinationMode = "profile"`. Nên cái khoá này
+    // chặn một hàm vốn chạy được — và nó chặn đúng lối thoát của B-36, vì
+    // đường thư mục-đã-cấp-quyền là đường DUY NHẤT đo được là giữ đúng tên
+    // trên máy này (Chrome Downloads bị thứ gì đó đổi tên, xem B-36).
+    //
+    // Đức 09/09: *"hiện tôi không chọn được thư mục vì bị khoá, có lẽ điều kiện
+    // là phải có file excel"* — chẩn đoán đúng, đúng dòng này.
+    //
+    // `operatorLocked` GIỮ NGUYÊN: đang chạy thì vẫn không được đổi đích.
+    for (const element of [els.destinationFolderBtn, els.chooseResultFolderBtn]) if (element) element.disabled = operatorLocked;
     if (state.outputSettings?.image?.kind === "directory") els.imageOutputFolderInput.disabled = true;
     if (state.outputSettings?.result?.kind !== "downloads") els.resultDownloadsFolderInput.disabled = true;
     document.querySelectorAll(".workflow-tab").forEach((tab) => {
