@@ -1360,6 +1360,71 @@
       return true;
     }
 
+    if (message.type === "DAC_CHAT_SAY") {
+      /* B-42 — gõ MỘT tin nhắn của bên gọi rồi trả câu trả lời về. KHÔNG job, KHÔNG sổ cái.
+
+         KHÁC `DAC_PROVIDER_REPAIR` ĐÚNG MỘT CHỖ, và chỗ đó có chủ ý: cửa kia cố ý KHÔNG nhận
+         chữ từ bên gọi vì bằng chứng của nó đọc từ TRANG, mà trang là dữ liệu không tin được.
+         Cửa này nhận chữ, và điều đó ĐÚNG vì chữ đến từ **bên gọi đã xác thực qua Bridge** —
+         cùng mức tin cậy với `jobs.add`, thứ vốn đã gửi được chữ tuỳ ý. Ranh giới không đổi
+         một chữ: **trang không bao giờ được quyết định máy gõ gì.**
+
+         `expectImage` là `false` CỨNG và `referenceImages` là `[]` CỨNG — không phải tham số.
+         Nhận chúng từ bên gọi là mở lại đúng bề mặt mà cửa này hứa không có. */
+      if (!surfaceAllowedNow()) {
+        sendResponse({ ok: false, error: `WRONG_SURFACE: ${location.href} không phải một cuộc hội thoại.` });
+        return false;
+      }
+      const loi = typeof message.text === "string" ? message.text : "";
+      if (!loi.trim()) {
+        sendResponse({ ok: false, error: "CHAT_SAY_FAILED: thiếu chữ để gõ." });
+        return false;
+      }
+      const timeoutMs = Math.max(15000, Math.min(Number(message.timeoutMs) || 180000, 900000));
+      const requestAttempt = window.DacAttemptIdentity.create(message);
+      if (!window.DacAttemptIdentity.validContext(requestAttempt)) {
+        sendResponse({ ok: false, error: "INVALID_ATTEMPT_ID: job_id and attempt_id are required.", attempt: attemptSnapshot(requestAttempt) });
+        return false;
+      }
+      /* TRẢ LỜI NGAY KHI ĐÃ GỬI, KHÔNG CHỜ HẾT CÂU TRẢ LỜI — và đây là ràng buộc TRANSPORT,
+         không phải một lựa chọn cho gọn. Đo 09/09: `deadline_ms` trong bảng method chỉ là
+         KHAI BÁO, không ai cưỡng chế nó; thứ cưỡng chế thật là `AbortSignal.timeout(40000)`
+         trong `bridge-cli.mjs`. Một lượt `chat.say` chờ 180 giây sẽ bị CLI bỏ ngang ở giây
+         40 **sau khi tin nhắn đã bay** — bên gọi đọc thành "gửi thất bại" rồi gửi lại, tức
+         đúng cái luật exact-once sinh ra để chặn. Nên câu trả lời của cửa này phải về trong
+         vài giây, và nó chỉ khẳng định MỘT điều: đã gửi hay chưa.
+
+         Câu trả lời của ChatGPT đọc bằng `chat.read` — cửa đã có, đã ghim, chỉ đọc. KHÔNG
+         dựng bộ đọc thứ hai ở đây; hai bộ đọc là hai chỗ để chúng nói khác nhau.
+
+         Phần chờ vẫn CHẠY TIẾP trong nền, cố ý: nó là thứ nhả `STATE.busy` và chạy trọn
+         `waitForCompletion()`. Không nhả cờ đó thì lượt `chat.say` kế tiếp bị chối oan. */
+      const chay = runPrompt(loi, timeoutMs, [], false, requestAttempt, 1);
+      chay.catch(() => {});
+      (async () => {
+        const han = Date.now() + 25000;
+        let loiSom = null;
+        chay.catch((error) => { loiSom = error; });
+        while (Date.now() < han) {
+          if (loiSom) break;
+          if (window.DacAttemptIdentity.same(STATE.activeAttempt, requestAttempt) && window.DacAttemptIdentity.submitted(STATE.activeAttempt)) {
+            sendResponse({ ok: true, submitted: true, attempt: attemptSnapshot(STATE.activeAttempt) });
+            return;
+          }
+          await sleep(250);
+        }
+        // Hết giờ chờ mốc "đã gửi", hoặc lượt gõ ném trước khi gửi. Cả hai đều là "CHƯA
+        // khẳng định được là đã gửi" — nói đúng thế, đừng nói "thất bại".
+        sendResponse({
+          ok: false,
+          submitted: false,
+          error: loiSom ? (loiSom.message || String(loiSom)) : "CHAT_SAY_UNCONFIRMED: chưa khẳng định được là tin nhắn đã gửi trong 25 giây. Đọc lại hội thoại bằng chat.read trước khi gửi lại bất cứ thứ gì.",
+          attempt: attemptSnapshot(STATE.activeAttempt)
+        });
+      })();
+      return true;
+    }
+
     if (message.type === "DAC_RECONCILE_IMAGE_JOB") {
       const requestAttempt = window.DacAttemptIdentity.create(message);
       const timeoutMs = Math.max(1000, Math.min(Number(message.timeoutMs) || 30000, 120000));

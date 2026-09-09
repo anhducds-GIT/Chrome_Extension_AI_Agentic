@@ -40,10 +40,21 @@ const start = sidepanel.indexOf("async function bridgeRunTrial");
 const end = sidepanel.indexOf("function connectBridgeExecutor", start);
 const handler = sidepanel.slice(start, end);
 assert.ok(start >= 0 && end > start);
-assert.ok(handler.indexOf("queueRunLock.tryBeginRun()") < handler.indexOf("await chrome.storage.local.get"), "reservation latch must be acquired before the first await");
+// Đo cái await ĐẦU TIÊN, không đo một await CÓ TÊN. Bản cũ neo vào
+// "await chrome.storage.local.get" và vỡ ngay khi B-42 tách phép kiểm nắp chờ ra một hàm
+// dùng chung — tính chất (latch phải giữ trước await đầu tiên) không đổi một chữ, chỉ cách
+// đo là sai. Neo vào một await có tên cũng dễ đọc thành PASS khi chuỗi đó biến mất: -1 nhỏ
+// hơn mọi vị trí, nên phép so ">" sẽ xanh oan ở chiều ngược lại.
+const awaitDau = handler.indexOf("await ");
+assert.ok(awaitDau > 0, "mỏ neo hỏng: bridgeRunTrial() phải có ít nhất một await");
+assert.ok(handler.indexOf("queueRunLock.tryBeginRun()") < awaitDau, "reservation latch must be acquired before the first await");
 assert.match(handler, /selectQueue\(state\.prepared\.queue, "selected", state\.runSelection\)/);
 assert.match(handler, /eligibleIds\.length !== params\.job_ids\.length/);
-assert.match(handler, /BRIDGE_TRIAL_MIN_INTERVAL_MS/);
+// Nắp chờ nay là MỘT hàm dùng chung với chat.say (B-42) — hằng nằm trong đó, không
+// trong handler. Ghim chỗ GỌI, và ghim rằng nó gọi TRƯỚC mọi việc thật; đường "một ngân
+// sách, mọi cửa" được ghim ở trial-cooldown-adr0050-smoke.mjs.
+assert.ok(handler.includes("await assertBridgeSubmitCooldown();"), "run.trial phải đi qua nắp chờ DÙNG CHUNG, không một bản sao riêng");
+assert.ok(handler.indexOf("await assertBridgeSubmitCooldown();") < handler.indexOf("authoritativeValidate"), "nắp chờ phải chặn TRƯỚC khi làm việc thật");
 // ADR-0015: the cap is READ FROM CONFIG, never typed here. Asserting the
 // literal 90 was itself a second copy of the number.
 assert.match(handler, /capTrialTimeouts\(state\.prepared\.settings, runQueue, window\.DacBridgeCore\.LIMITS\.trial_timeout_cap_sec\)/);

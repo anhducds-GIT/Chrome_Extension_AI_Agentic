@@ -887,19 +887,119 @@
     return response.read;
   }
 
+  /* NẮP CHỜ GIỮA HAI LƯỢT GỬI DO BRIDGE KHỞI XƯỚNG — MỘT ngân sách, MỌI cửa.
+
+     Trước B-42 phép kiểm này nằm inline trong `bridgeRunTrial()`. Tách ra vì `chat.say` phải
+     dùng ĐÚNG NÓ, không phải một bản sao: hai bản sao đọc cùng một khoá vẫn đúng, nhưng một bản
+     sao lệch đi một khoá là một **ngân sách thứ hai**, tức nới phanh mà không ai thấy trong diff.
+     Cùng hằng, cùng khoá `chrome.storage.local` — nên nắp sống qua cả lượt nạp lại panel, và
+     một lượt `chat.say` **đẩy lùi** lượt `run.trial` kế tiếp. Đó là chỗ chịu tải của B-42. */
+  async function assertBridgeSubmitCooldown() {
+    const stored = await chrome.storage.local.get(BRIDGE_LAST_TRIAL_STORAGE_KEY);
+    const lastAt = Number(stored?.[BRIDGE_LAST_TRIAL_STORAGE_KEY]) || 0;
+    const remainingMs = BRIDGE_TRIAL_MIN_INTERVAL_MS - (Date.now() - lastAt);
+    if (remainingMs > 0) {
+      throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `TRIAL_COOLDOWN_ACTIVE: Chờ thêm ${Math.ceil(remainingMs / 1000)} giây trước lượt gửi tiếp theo qua Bridge.`);
+    }
+    return true;
+  }
+  async function stampBridgeSubmit() {
+    const at = Date.now();
+    await chrome.storage.local.set({ [BRIDGE_LAST_TRIAL_STORAGE_KEY]: at });
+    return at;
+  }
+
+  /* B-42 — SỔ CHO ĐƯỜNG CHAT THẲNG. Điều kiện đóng của B-42 ghi rõ: *"một đường chat bỏ qua hết
+     là mất dấu vết đúng lúc phiên dài nhất và khó nhớ nhất. Tối thiểu: mỗi lượt gửi một dòng
+     audit."*
+
+     `audit()` KHÔNG dùng được ở đây, và đó là một sự thật đo được, không phải lựa chọn: dòng đầu
+     của nó là `if (!state.runId) return;` — không có run thì không có dòng nào. Một cửa ngoài run
+     mà gọi `audit()` sẽ **im lặng không ghi gì**, và đó là kiểu mất dấu vết tệ nhất: mã trông
+     như có ghi sổ.
+
+     GHI GÌ, VÀ CỐ Ý KHÔNG GHI GÌ: dấu thời gian, số ký tự, và **sha256** của cả chữ gửi lẫn chữ
+     nhận — đủ để chứng minh lượt nào đã xảy ra và nội dung nào, mà **không tích trữ nội dung hội
+     thoại của Đức** trong bộ nhớ tiện ích. Vòng có nắp `CHAT_SAY_LOG_MAX` để nó không phình vô
+     hạn; tràn thì cắt đầu. */
+  const CHAT_SAY_LOG_STORAGE_KEY = "dac.chat.say.log.v1";
+  const CHAT_SAY_LOG_MAX = 200;
+  async function ghiSoChatSay(dong) {
+    try {
+      const stored = await chrome.storage.local.get(CHAT_SAY_LOG_STORAGE_KEY);
+      const cu = Array.isArray(stored?.[CHAT_SAY_LOG_STORAGE_KEY]) ? stored[CHAT_SAY_LOG_STORAGE_KEY] : [];
+      await chrome.storage.local.set({ [CHAT_SAY_LOG_STORAGE_KEY]: [...cu, dong].slice(-CHAT_SAY_LOG_MAX) });
+      return true;
+    } catch (error) {
+      // Ghi sổ thất bại KHÔNG được làm lượt gửi thất bại: prompt đã bay, và ném ở đây sẽ báo
+      // cho bên gọi là "không gửi được" — một câu SAI, và sai theo hướng khiến nó gửi lại.
+      log(`chat.say: không ghi được sổ (${messageOf(error)}). Lượt gửi VẪN đã xảy ra.`, "error");
+      return false;
+    }
+  }
+
+  /* B-42 — MỘT lượt nhắn thẳng, không job, không dòng Excel. Xem khối ở `chat.say` trong
+     `bridge-core.js` cho vế "vì sao nó không phải `run.start` đổi tên".
+
+     THỨ TỰ Ở ĐÂY LÀ PHẦN AN TOÀN: latch `RUN_ACTIVE` phải giữ **qua cả lượt gõ và lượt chờ**,
+     không phải kiểm một nhát rồi thả — cùng lý do `chat.reload` lấy latch chứ không đọc cờ:
+     hàm này `await` nhiều lần, và một phép kiểm trần để ngỏ trọn cửa sổ đó cho một run bắt đầu
+     đè lên chính lượt đang gõ.
+
+     ĐÓNG DẤU NẮP CHỜ **TRƯỚC** LƯỢT GÕ, không phải sau. Nếu gõ xong mới đóng dấu thì một lượt
+     chết giữa đường (tab đóng, panel bị đóng) sẽ **không tiêu nắp**, và một vòng lặp hỏng cứ chết
+     giữa đường sẽ gõ được không giới hạn. Sai theo hướng "tiêu nắp cho một lượt có thể chưa gửi"
+     là sai an toàn; sai hướng kia là mất phanh. */
+  async function bridgeChatSay(params, call) {
+    window.DacBridgeCore.assertTrialDevMode(state.bridgeDevMode);
+    if (!queueRunLock.tryBeginMutation()) {
+      throw new window.DacBridgeCore.BridgeProtocolError(
+        "RUN_ACTIVE",
+        "RUN_ACTIVE: Đang có run chạy nên không nhắn thẳng được. Gõ vào hội thoại lúc một job đang bay sẽ làm hỏng phép quy thuộc kết quả của job đó. Gọi run.stop trước."
+      );
+    }
+    try {
+      await assertBridgeSubmitCooldown();
+      const workspaceTab = await resolveWorkspaceTab(call);
+      const attemptId = `chatsay-${crypto.randomUUID()}`;
+      // ĐÓNG DẤU NẮP TRƯỚC KHI DỰNG LƯỢT GỬI, không sau. Một lượt chết giữa đường (tab đóng,
+      // panel bị đóng) mà KHÔNG tiêu nắp thì một vòng lặp hỏng cứ chết giữa đường sẽ gõ được
+      // không giới hạn. Sai theo hướng "tiêu nắp cho một lượt có thể chưa gửi" là sai an toàn.
+      const saidAt = await stampBridgeSubmit();
+      const payload = { type: "DAC_CHAT_SAY", job_id: "chat.say", attempt_id: attemptId, text: params.text, timeoutMs: params.timeout_sec * 1000 };
+      let response;
+      if (workspaceTab) {
+        try { response = await chrome.tabs.sendMessage(workspaceTab.id, payload); }
+        catch (_) { throw new Error("RECEIVER_LOST: ChatGPT receiver unavailable in the workspace tab. Reload that tab once."); }
+      } else {
+        response = await send(payload);
+      }
+      const dong = {
+        at: new Date(saidAt).toISOString(), attempt_id: attemptId,
+        client_id: call?.client_id || null, request_id: call?.request_id || null,
+        said_chars: params.text.length, said_sha256: await window.DacBridgeCore.hashText(params.text),
+        submitted: Boolean(response?.ok && response?.submitted),
+        error: response?.ok ? null : (response?.error || "không rõ")
+      };
+      // GHI SỔ TRƯỚC KHI NÉM. Một lượt KHÔNG khẳng định được là đã gửi là đúng lượt cần có
+      // trong sổ nhất — ném trước khi ghi là mất dấu vết ở ca tệ nhất.
+      const daGhiSo = await ghiSoChatSay(dong);
+      log(`chat.say ${dong.submitted ? "đã gửi" : "CHƯA khẳng định được là đã gửi"}: ${dong.said_chars} ký tự.`, dong.submitted ? "done" : "error");
+      if (!dong.submitted) throw new Error(response?.error || "CHAT_SAY_UNCONFIRMED: chưa khẳng định được là tin nhắn đã gửi. Đọc lại hội thoại bằng chat.read trước khi gửi lại.");
+      return { submitted: true, said_chars: dong.said_chars, said_sha256: dong.said_sha256, logged: daGhiSo, at: dong.at, attempt_id: attemptId, read_reply_with: "chat.read" };
+    } finally {
+      queueRunLock.endMutation();
+      controls();
+    }
+  }
+
   async function bridgeRunTrial(params, call) {
     window.DacBridgeCore.assertTrialDevMode(state.bridgeDevMode);
     if (!queueRunLock.tryBeginRun()) throw new window.DacBridgeCore.BridgeProtocolError("RUN_ACTIVE");
     const previousSelection = new Set(state.runSelection);
     let accepted = false;
     try {
-      const stored = await chrome.storage.local.get(BRIDGE_LAST_TRIAL_STORAGE_KEY);
-      const lastTrialAt = Number(stored?.[BRIDGE_LAST_TRIAL_STORAGE_KEY]) || 0;
-      const remainingMs = BRIDGE_TRIAL_MIN_INTERVAL_MS - (Date.now() - lastTrialAt);
-      if (remainingMs > 0) {
-        const remainingSeconds = Math.ceil(remainingMs / 1000);
-        throw new window.DacBridgeCore.BridgeProtocolError("VALIDATION_FAILED", `TRIAL_COOLDOWN_ACTIVE: Chờ thêm ${remainingSeconds} giây trước trial tiếp theo.`);
-      }
+      await assertBridgeSubmitCooldown();
       // Bound here, not inside run(): this handler validates against the page
       // before run() is ever called, so binding later would let the trial be
       // validated on one tab and executed on another. bindRunTab() is
@@ -1547,6 +1647,7 @@
       "chat.reload": withBridgeErrors(bridgeChatReload),
       "diagnostics.dom_probe": withBridgeErrors(bridgeDomProbe),
       "chat.read": withBridgeErrors(bridgeChatRead),
+      "chat.say": withBridgeErrors(bridgeChatSay),
       "ledger.read": withBridgeErrors(bridgeLedgerRead),
       "jobs.add": withBridgeErrors(bridgeJobsAdd),
       "references.add": withBridgeErrors(bridgeReferencesAdd),
@@ -6995,6 +7096,7 @@
       "chat.reload": bridgeChatReload,
       "diagnostics.dom_probe": bridgeDomProbe,
       "chat.read": bridgeChatRead,
+      "chat.say": bridgeChatSay,
       "ledger.read": bridgeLedgerRead,
       "jobs.add": bridgeJobsAdd,
       "references.add": bridgeReferencesAdd,

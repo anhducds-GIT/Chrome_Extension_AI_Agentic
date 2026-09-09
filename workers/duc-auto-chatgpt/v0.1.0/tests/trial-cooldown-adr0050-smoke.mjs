@@ -75,7 +75,44 @@ const END = "\n  }\n";
 const to = source.indexOf(END, from);
 assert.ok(to > from, "không tìm thấy chỗ đóng hàm bridgeRunTrial()");
 const shipped = source.slice(from, to + END.length);
-assert.ok(shipped.includes("TRIAL_COOLDOWN_ACTIVE"), "cắt nhầm khối: bridgeRunTrial() phải chứa cửa chặn nắp chờ");
+assert.ok(shipped.includes("await assertBridgeSubmitCooldown();"), "cắt nhầm khối: bridgeRunTrial() phải gọi cửa chặn nắp chờ dùng chung");
+
+/* ═══ MỘT NGÂN SÁCH, MỌI CỬA — mép chịu tải của B-42 ═══
+
+   `chat.say` gõ một tin nhắn thật vào hội thoại của Đức, nên nó tiêu quota y như một lượt
+   trial. Nếu nó có nắp chờ RIÊNG — kể cả một bản sao đọc cùng một khoá — thì tốc độ tiêu credit
+   tối đa của cả gói **gấp đôi**, và cái nới đó không hiện ra ở đâu trong diff: hai hàm giống
+   nhau từng chữ vẫn là hai ngân sách. Nên ghim ba vế: cả hai cửa gọi ĐÚNG MỘT hàm · chỉ có
+   ĐÚNG MỘT chỗ đọc/ghi khoá mốc trong cả file · và `chat.say` gọi nó TRƯỚC lượt gõ. */
+{
+  const than = source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/.*$/gm, " ");
+  const goi = [...than.matchAll(/await assertBridgeSubmitCooldown\(\);/g)].length;
+  assert.equal(goi, 2, `phải có ĐÚNG 2 cửa gọi nắp chờ (run.trial và chat.say), đếm được ${goi}. Thêm cửa gửi thứ ba thì nó CŨNG phải đi qua đây, đừng nới mép này`);
+  const khai = [...than.matchAll(/async function assertBridgeSubmitCooldown\(/g)].length;
+  assert.equal(khai, 1, "và chỉ ĐÚNG MỘT bản cài — hai bản sao là hai ngân sách");
+  assert.equal([...than.matchAll(/BRIDGE_TRIAL_MIN_INTERVAL_MS/g)].length, 2, "hằng nắp chờ chỉ được khai một chỗ và đọc một chỗ");
+
+  const S2 = "\n  async function bridgeChatSay(params, call) {\n";
+  assert.equal(source.split(S2).length - 1, 1, "mỏ neo hỏng: không thấy bridgeChatSay()");
+  const f2 = source.indexOf(S2) + 1;
+  const thanSay = source.slice(f2, source.indexOf("\n  }\n", f2) + "\n  }\n".length);
+  assert.ok(thanSay.indexOf("assertBridgeSubmitCooldown()") < thanSay.indexOf("DAC_CHAT_SAY"), "chat.say phải qua nắp chờ TRƯỚC khi gõ");
+  assert.ok(thanSay.indexOf("assertTrialDevMode") < thanSay.indexOf("assertBridgeSubmitCooldown()"), "và qua công tắc Chế độ phát triển trước cả nắp chờ");
+  assert.ok(thanSay.includes("queueRunLock.tryBeginMutation()"), "chat.say phải LẤY latch, không đọc cờ — nó await nhiều lần");
+  assert.ok(thanSay.indexOf("stampBridgeSubmit()") < thanSay.indexOf("sendMessage(workspaceTab.id, payload)"), "đóng dấu nắp TRƯỚC lượt gửi: một lượt chết giữa đường mà không tiêu nắp là mất phanh");
+  assert.ok(thanSay.indexOf("ghiSoChatSay(dong)") < thanSay.indexOf("if (!dong.submitted) throw"), "ghi sổ TRƯỚC khi ném: lượt không khẳng định được là lượt cần có trong sổ nhất");
+  assert.ok(!/expectImage|reference_images|referenceImages|saveGeneratedImage|output_folder/.test(thanSay), "chat.say không đính tệp, không sinh ảnh, không chạm thư mục đích");
+}
+
+/* B-42 tách phép kiểm nắp chờ ra `assertBridgeSubmitCooldown()` để `chat.say` dùng ĐÚNG NÓ
+   thay vì một bản sao. Sân khấu phải nạp thêm hàm đó — nếu không thì `bridgeRunTrial()` cắt ra
+   sẽ ném `ReferenceError`, và một `ReferenceError` đọc y hệt "bản vá làm hỏng luật". Nạp hàm
+   THẬT, không giả: cả hai cửa nay được kiểm qua cùng một khối mã đã ship. */
+const COOL = "\n  async function assertBridgeSubmitCooldown() {\n";
+assert.equal(source.split(COOL).length - 1, 1, "cắt được ĐÚNG một hàm assertBridgeSubmitCooldown()");
+const coolFrom = source.indexOf(COOL) + 1;
+const coolFn = source.slice(coolFrom, source.indexOf("\n  }\n", coolFrom) + "\n  }\n".length);
+assert.ok(coolFn.includes("TRIAL_COOLDOWN_ACTIVE"), "cắt nhầm khối: hàm nắp chờ phải chứa mã lỗi của nó");
 
 const REQ = "\n  function requireBridgeWorkbook() {\n";
 assert.equal(source.split(REQ).length - 1, 1, "cắt được ĐÚNG một hàm requireBridgeWorkbook()");
@@ -116,7 +153,7 @@ function sanKhau(lastTrialAt) {
     crypto, Date, console, Set, Number, Math, touched
   };
   vm.createContext(sandbox);
-  vm.runInContext(`${constants.join("\n")}\nvar bridgeRunTrial;${requireFn}${shipped}bridgeRunTrial`, sandbox);
+  vm.runInContext(`${constants.join("\n")}\nvar bridgeRunTrial;${coolFn}${requireFn}${shipped}bridgeRunTrial`, sandbox);
   return { sandbox, touched };
 }
 

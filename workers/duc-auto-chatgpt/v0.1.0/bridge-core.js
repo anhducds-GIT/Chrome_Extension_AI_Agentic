@@ -280,6 +280,39 @@
     return value;
   }
 
+  /* `chat.say` — B-42, một lượt nhắn thẳng vào hội thoại đang gắn, KHÔNG đẻ ra job.
+
+     ĐO 09/09 TRƯỚC KHI VIẾT, và số đo làm cả mục này nhỏ lại: `B-42` viết *"đây là quyền mới cho
+     extension"*. **Không phải.** `jobs.add` đã nhận `prompt` TỰ DO (1..trần envelope) và
+     `run.trial` gửi nó — nên bên gọi từ xa VỐN ĐÃ gửi được chữ tuỳ ý vào ChatGPT. Cửa này bỏ
+     **sổ sách** (một job + một dòng Excel cho mỗi câu), không thêm **quyền**. Nói rõ vì một phiên
+     sau đọc chữ "quyền mới" rồi dựng thêm lớp bảo vệ cho một thứ không mới là tự làm mình chậm.
+
+     VÌ SAO NÓ KHÔNG PHẢI `run.start` ĐỔI TÊN — `run.start` bị cấm VĨNH VIỄN, nên vế này phải
+     đứng được:
+       · `run.start` là **chạy tiếp không ai nhìn**: một lệnh, N lượt gửi, không cần cấp phép
+         thêm. Cửa này **không có vòng lặp bên trong** — một lệnh, **đúng một** lượt gửi. Muốn lượt
+         thứ hai thì phải có một lệnh RPC thứ hai, và lệnh đó lại đi qua đủ ba phanh.
+       · Nó dùng lại **cả ba phanh sẵn có, không thêm cái nào và không nới cái nào**: công tắc Chế
+         độ phát triển (chỉ Đức bật được), latch `RUN_ACTIVE`, và **CHUNG MỘT KHOÁ** nắp chờ 90
+         giây với `run.trial`. Chung khoá là chỗ chịu tải: một lượt `chat.say` **đẩy lùi** lượt
+         `run.trial` kế tiếp và ngược lại, nên **tốc độ tiêu credit tối đa của cả gói không đổi
+         một giọt** khi thêm cửa này.
+       · Nó **không** đính tệp, **không** sinh ảnh, **không** tải gì, **không** chạm thư mục đích,
+         **không** ghi sổ cái. `expectImage` là `false` cứng, không phải một tham số. */
+  const CHAT_SAY_MAX_CHARS = 32000;
+
+  function validateChatSay(raw) {
+    const params = assertPlainObject(raw, "params");
+    rejectUnknown(params, ["text", "timeout_sec"], "params");
+    const text = stringValue(params.text, "params.text", { min: 1, max: CHAT_SAY_MAX_CHARS, trim: false });
+    if (!text.trim()) invalidParams("params.text", "expected non-whitespace text");
+    return {
+      text,
+      timeout_sec: params.timeout_sec === undefined ? 180 : integerValue(params.timeout_sec, "params.timeout_sec", 15, LIMITS.trial_timeout_cap_sec)
+    };
+  }
+
   function negotiateVersion(clientVersions) {
     if (!Array.isArray(clientVersions) || !clientVersions.length || clientVersions.some((version) => !Number.isInteger(version) || version < 1)) {
       invalidParams("params.supported_versions", "expected a non-empty array of positive integer major versions");
@@ -775,6 +808,7 @@
     // the same prompt. The pair is meant to be used in sequence, never stacked.
     registryEntry({ name: "chat.reload", context: "executor", read_only: false, approval: "none", idempotent: true, deadline_ms: 30000, description: "Reload the provider tab (F5) and wait until its content script answers again before replying. Refused with RUN_ACTIVE while a run is live, because a reload would kill an in-flight attempt and risk resubmitting a prompt: call run.stop first. Reports ready plus the tab id and the URL before and after, since the tab is resolved as the active tab at call time.", params_schema: {}, params_validator: validateEmptyParams }),
     registryEntry({ name: "chat.read", context: "executor", read_only: true, approval: "none", deadline_ms: 10000, description: "Read the newest conversation turns on the provider tab as text, oldest first inside the returned slice, each with role, id, character count and its own truncation flag. Strictly read-only: never clicks, types, or moves focus, and allowed while a run is live because reading disturbs nothing. Refused with WRONG_SURFACE off a conversation page, since reading a launcher page returns zero turns and looks exactly like an empty conversation. Reports NO_TURNS_MATCHED plus the data-attribute names actually present when the turn selector has rotted, so a dead selector is rebuilt from evidence instead of guessed. The two caps are also bounded together: limit x max_chars_per_turn may not exceed 200000 characters, because either cap at its own maximum is fine and the product would overflow the 1 MB envelope.", params_schema: { limit: "integer:1..50", max_chars_per_turn: "integer:200..40000", _total: "limit * max_chars_per_turn <= 200000" }, params_validator: validateChatRead }),
+    registryEntry({ name: "chat.say", context: "executor", read_only: false, approval: "none", idempotent: false, deadline_ms: 30000, description: "Submit ONE text message into the bound conversation without creating a job or a ledger row, and return as soon as submission is confirmed; read the reply with chat.read. It does NOT wait for the answer, and that is a transport constraint rather than a style choice: the CLI aborts at 40 seconds, so a handler that waited three minutes for a reasoning reply would be cut off AFTER the message had already been sent, which the caller would read as a failure and resend - exactly what exact-once exists to prevent. Built for multi-turn reasoning, where one workbook row per sentence is the wrong shape. It adds no new power: jobs.add already accepts free-form prompt text and run.trial submits it; this only drops the bookkeeping. It is not run.start by another name: there is NO loop inside it, so one call is at most one submission, and a second turn needs a second RPC call that passes every brake again. Reuses all three existing brakes unchanged and adds none: the owner's Development Mode switch, the RUN_ACTIVE mutation latch (typing during a live run would corrupt output attribution), and THE SAME 90-second cooldown key as run.trial - so a chat.say turn delays the next trial and vice versa, and the package's maximum credit burn rate is unchanged. Never attaches a file, never generates or downloads an image, never touches the output folder, never writes the ledger; each turn appends one durable line to a capped local log. Refused with WRONG_SURFACE off a conversation page.", params_schema: { text: "string:1..32000", timeout_sec: "integer:15..900" }, params_validator: validateChatSay }),
   ];
   const METHOD_REGISTRY = (() => {
     const registry = Object.create(null);

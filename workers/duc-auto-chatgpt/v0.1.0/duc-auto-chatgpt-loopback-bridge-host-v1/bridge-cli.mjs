@@ -35,6 +35,11 @@ const COMMANDS = Object.freeze({
   // STRUCTURE probe whose fields are all deliberately clipped (60 chars, 4 frames), so
   // widening it to carry content would break the diagnosis first.
   "chat-read": "chat.read",
+  // B-42: gửi MỘT tin nhắn thẳng vào hội thoại, không đẻ ra job và không đẻ ra dòng Excel.
+  // Nó KHÔNG chờ câu trả lời — CLI này bỏ ngang ở 40 giây, nên chờ ba phút là bị cắt SAU khi
+  // tin nhắn đã bay, và bên gọi sẽ đọc thành "thất bại" rồi gửi lại. Đọc câu trả lời bằng
+  // `chat-read`. Chữ đi qua --params-file, giống mọi lệnh chở nội dung dài.
+  "chat-say": "chat.say",
   // Also argument-free: which tab it reloads is reported back, not chosen here.
   "chat-reload": "chat.reload",
   // Multi-profile: the host answers this itself — who is connected right now.
@@ -42,6 +47,7 @@ const COMMANDS = Object.freeze({
 });
 
 const PARAMS_FILE_COMMANDS = new Set([
+  "chat-say",
   "propose", "jobs-add", "references-add", "jobs-update", "jobs-remove", "jobs-reorder",
   "output-configure", "run-settings-configure", "output-set-folder-hint",
   "run-trial", "proposal-withdraw", "profiles-remove"

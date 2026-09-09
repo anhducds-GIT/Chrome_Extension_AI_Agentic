@@ -47,6 +47,16 @@ assert.ok(shipped.includes("authoritativeValidate"), "cắt nhầm khối: bridg
 
 // `requireBridgeWorkbook()` đã ship sẵn trong panel; cắt nó ra chạy cùng, để
 // test đo đúng hàm đó chứ không đo một bản chép tay.
+/* B-42 tách phép kiểm nắp chờ ra `assertBridgeSubmitCooldown()` để `chat.say` dùng ĐÚNG NÓ
+   thay vì một bản sao. Sân khấu phải nạp thêm hàm đó — nếu không thì `bridgeRunTrial()` cắt ra
+   sẽ ném `ReferenceError`, và một `ReferenceError` đọc y hệt "bản vá làm hỏng luật". Nạp hàm
+   THẬT, không giả: cả hai cửa nay được kiểm qua cùng một khối mã đã ship. */
+const COOL = "\n  async function assertBridgeSubmitCooldown() {\n";
+assert.equal(source.split(COOL).length - 1, 1, "cắt được ĐÚNG một hàm assertBridgeSubmitCooldown()");
+const coolFrom = source.indexOf(COOL) + 1;
+const coolFn = source.slice(coolFrom, source.indexOf("\n  }\n", coolFrom) + "\n  }\n".length);
+assert.ok(coolFn.includes("TRIAL_COOLDOWN_ACTIVE"), "cắt nhầm khối: hàm nắp chờ phải chứa mã lỗi của nó");
+
 const REQ = "\n  function requireBridgeWorkbook() {\n";
 assert.equal(source.split(REQ).length - 1, 1, "cắt được ĐÚNG một hàm requireBridgeWorkbook()");
 const reqFrom = source.indexOf(REQ) + 1;
@@ -82,7 +92,7 @@ function makeSandbox(workbook) {
     touched
   };
   vm.createContext(sandbox);
-  vm.runInContext(`${constants.join("\n")}\nvar bridgeRunTrial;${requireFn}${shipped}bridgeRunTrial`, sandbox);
+  vm.runInContext(`${constants.join("\n")}\nvar bridgeRunTrial;${coolFn}${requireFn}${shipped}bridgeRunTrial`, sandbox);
   return { sandbox, touched };
 }
 

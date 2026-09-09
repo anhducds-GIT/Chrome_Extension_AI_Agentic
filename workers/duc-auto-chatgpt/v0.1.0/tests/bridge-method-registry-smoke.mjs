@@ -34,7 +34,15 @@ const expectedMethods = [
   // (60 chars, 4 frames) under a 64KB payload cap, so making it carry content would break
   // the diagnosis first -- which is exactly how error #5 stayed hidden for a week.
   // read_only, so idempotent stays false like every other reader here.
-  "chat.read"
+  "chat.read",
+  // 2026-09-09 (B-42): MỘT lượt nhắn thẳng vào hội thoại, không đẻ ra job và không đẻ ra dòng
+  // Excel — reasoning nhiều lượt thì "một hàng workbook cho mỗi câu" là hình dạng sai.
+  // KHÔNG phải quyền mới, và đó là số đo, không phải lời trấn an: `jobs.add` vốn đã nhận
+  // `prompt` TỰ DO và `run.trial` gửi nó, nên bên gọi từ xa đã gửi được chữ tuỳ ý từ trước.
+  // KHÔNG phải `run.start` đổi tên: không có vòng lặp bên trong (một lệnh = tối đa một lượt
+  // gửi), và nó dùng lại cả ba phanh cũ — công tắc Chế độ phát triển, latch RUN_ACTIVE, và
+  // CHUNG MỘT KHOÁ nắp chờ 90 giây với run.trial. idempotent: false vì nó gõ thật.
+  "chat.say"
 ];
 assert.deepEqual(Object.keys(bridge.METHOD_REGISTRY), expectedMethods);
 assert(Object.isFrozen(bridge.METHOD_REGISTRY));
