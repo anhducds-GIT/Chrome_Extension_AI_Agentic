@@ -126,29 +126,69 @@
     // ChatGPT đổi nhãn, hoặc Đức đổi ngôn ngữ giao diện, thì nhóm này MÙ HẲN — mục duy nhất
     // còn sống neo vào `aria-label` **tiếng Anh**. Đã có tiền lệ y hệt trong repo này:
     // `button[aria-label="Stop generating"]` từng chết và phải đổi sang `data-testid`.
-    // Việc còn nợ (cần Đức chạy `dom_probe` GIỮA LÚC gắn ảnh): tìm một mục neo theo CẤU TRÚC
-    // rồi thêm vào nhóm. **Đừng xoá mục đang chạy được**, và đừng đoán một selector mới —
-    // luật vàng 1. Giảm nhẹ: lớp chặn "ảnh tham chiếu bị nhận nhầm thành ảnh sinh" KHÔNG chỉ
+    // ĐÃ ĐO 2026-09-09 bằng `composerScope` của `dom_probe` (B-48), GIỮA LÚC gắn ảnh, job chữ
+    // 2 ảnh, 0 credit. Chip đính kèm có hình dạng này — và nó CÓ mỏ neo cấu trúc:
+    //
+    //   div[role="group" aria-label="<TÊN FILE>"]      ← khung của MỘT chip
+    //     ├ div > div[data-default-action="true"] > div > button[aria-label="Open image: …"]
+    //     └ div > div > span[data-state="closed"] > button[aria-label="Remove file N: <TÊN FILE>"]
+    //
+    // Hai điều đáng giá nhất, và cả hai KHÔNG phụ thuộc ngôn ngữ giao diện:
+    //   ⑴ `div[role="group"]` là khung chip, và `aria-label` của nó là **CHÍNH TÊN FILE** ta
+    //      vừa nạp. Nên đếm được theo TÊN, không chỉ theo SỐ LƯỢNG — mạnh hơn hẳn.
+    //   ⑵ `div[data-default-action="true"]`: đo nền (chưa gắn ảnh) thì trong ô soạn thảo
+    //      KHÔNG có thuộc tính này; gắn ảnh thì nó xuất hiện. Nó bám vào chip.
+    //
+    // VÌ SAO KHÔNG NHÉT HAI MỤC ĐÓ VÀO `attachmentPreview` — và đây là chỗ dễ sai nhất:
+    // `attachmentPreviewCount()` được SO với SỐ FILE (`>= previousPreviewCount + N`). Ba
+    // selector khớp BA PHẦN TỬ KHÁC NHAU trên cùng một chip, nên thêm vào là mỗi chip đếm
+    // thành 3. Một job 2 ảnh mà mới gắn xong 1 chip đã cho count = 3 >= 2 → cổng mở SỚM và
+    // runner gõ Gửi khi **còn thiếu một ảnh**. Nên chúng nằm ở nhóm RIÊNG dưới đây, chỉ để
+    // `dom_probe` đếm và canh, KHÔNG chỗ nào trong runner đọc. Đổi phép đếm là đổi cổng
+    // trước-khi-gửi → việc của Đức (`AGENTS.md` 2.4), đã gộp vào `B-49` thành MỘT lượt.
+    //
+    // Giảm nhẹ (vẫn đúng): lớp chặn "ảnh tham chiếu bị nhận nhầm thành ảnh sinh" KHÔNG chỉ
     // dựa vào nhóm này — `content.js:237` còn hai tín hiệu độc lập (`role === "user"`, khớp
     // theo tên file), và `attachmentContainer` dùng `form` trần nên miễn nhiễm với đổi nhãn.
-    // Nên đây là rủi ro CHẨN ĐOÁN, không phải rủi ro AN TOÀN.
     attachmentPreview: Object.freeze([
-      '[data-testid*="attachment"]',        // CHƯA TỪNG KHỚP (đo 26/08, 976 lượt dò)
+      '[data-testid*="attachment"]',        // CHƯA TỪNG KHỚP (đo 26/08 976 lượt · 09/09 lại 0)
       '[data-testid*="file-upload"]',       // CHƯA TỪNG KHỚP
       '[data-testid*="upload-preview"]',    // CHƯA TỪNG KHỚP
       'button[aria-label*="Remove attachment"]', // CHƯA TỪNG KHỚP
       'button[aria-label*="Remove file"]',  // ✔ mục DUY NHẤT còn sống — nhãn tiếng Anh
     ]),
+    // B-14 ⑵ · MỎ NEO CẤU TRÚC, đo live 09/09. Nhóm này CỐ Ý chưa ai trong runner đọc: nó
+    // ở đây để `dom_probe` đếm mỗi lượt, nên ngày ChatGPT đổi cấu trúc thì ta thấy TRƯỚC khi
+    // cần dùng, chứ không phát hiện lúc nhãn tiếng Anh vừa chết. Muốn nối vào cổng
+    // trước-khi-gửi thì đọc `B-49` — đổi phép đếm là đổi cổng, và cần Đức chốt.
+    attachmentChip: Object.freeze([
+      'form div[role="group"][aria-label]',      // ✔ MỚI 09/09 — khung chip, aria-label = TÊN FILE
+      'form div[data-default-action="true"]',    // ✔ MỚI 09/09 — 0 khi chưa gắn, có khi đã gắn
+    ]),
     // B-15 · ĐO LIVE 2026-08-26: cả BA mục **chưa từng khớp lần nào** qua 52 lượt dò có ảnh
     // đính kèm đang hiện trên trang. Chưa phân biệt được "selector chết" với "ChatGPT không
     // có dấu hiệu upload-đang-chạy" — hai khả năng đó xử lý khác nhau, nên **đừng viết code
     // dựa vào nhóm này** cho tới khi phân biệt được. Hiện nó là NIỀM TIN, không phải bằng
-    // chứng. Phép đo để phân biệt (cần Đức): gắn một ảnh ~2MB như ảnh thật của Pilot-08 —
-    // cửa sổ upload dài hơn thì dò kịp. Kịp thì là selector sống, không kịp thì bỏ nhóm này
-    // và chỗ nào dựa vào nó phải đổi sang chờ `attachmentPreview` đủ số ảnh.
+    // chứng.
+    //
+    // ĐÃ PHÂN BIỆT 2026-09-09, và câu trả lời KHÁC CẢ HAI khả năng trên: nhóm này không chết,
+    // nó **đo sai thứ nó khai**. Phép đo: 4 ảnh, tổng **1,83MB** (đúng bậc "2MB" mục này đòi),
+    // cửa sổ gắn đo được **3,82 giây**, dò ~7 lần/giây → ~**27** lượt dò TRONG cửa sổ đó, và
+    // cả ba mục **0/0/0 mọi lượt**. Nhưng ở lượt job ảnh cùng buổi, lúc **ĐANG SINH ẢNH**, thì
+    // `[aria-busy="true"]` **KHỚP** (`upload=[0/1/0]`, `attachmentPending=true`, stop hiện).
+    // Nên nhóm này đo *"trang đang bận"*, không phải *"ảnh đang upload"*.
+    //
+    // HỆ QUẢ PHẢI ĐỌC TRƯỚC KHI DÙNG: `waitForReferenceImagesReady` có điều kiện
+    // `&& !uploadIsPending()`. Gắn ảnh trong lúc trang đang sinh dở một lượt khác → vòng chờ
+    // block 15 giây rồi NÉM *"Required reference images did not all become ready"* — một lỗi
+    // **nói sai nguyên nhân**: ảnh đã sẵn, thứ chưa xong là lượt sinh của người khác. Cửa ra
+    // ở `B-49`, và nó cần Đức chốt vì đụng cổng trước-khi-gửi.
+    //
+    // Điều lớp chắn thật dựa vào là `previewsReady` — và nó CÓ làm việc: 4 chip hiện đủ, 1,83MB
+    // tới máy chủ nguyên vẹn, ChatGPT tả đúng cả bốn ảnh.
     uploadPending: Object.freeze([
-      '[data-testid*="uploading"]',  // CHƯA TỪNG KHỚP (đo 26/08, 52 lượt dò có ảnh đính kèm)
-      '[aria-busy="true"]',          // CHƯA TỪNG KHỚP
+      '[data-testid*="uploading"]',  // CHƯA TỪNG KHỚP (26/08 52 lượt · 09/09 ~27 lượt trong cửa sổ 3,82s)
+      '[aria-busy="true"]',          // ✔ KHỚP 09/09 — nhưng lúc ĐANG SINH, không phải lúc upload
       '[role="progressbar"]',        // CHƯA TỪNG KHỚP
     ]),
     fileInput: 'form input[type="file"]',
