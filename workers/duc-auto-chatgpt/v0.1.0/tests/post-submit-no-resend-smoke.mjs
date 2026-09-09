@@ -25,6 +25,22 @@
  * Vì đo ra 0, luật của Đức thu về đúng "chặn hẳn sau khi đã gửi" — brief đã
  * ghi sẵn tình huống này nên không phải hỏi lại.
  *
+ * ĐỌC LẠI 2026-09-09 (ADR-0052) — HAI LOẠI "KHẲNG ĐỊNH", VÀ CON SỐ 0 CHỈ NÓI
+ * VỀ LOẠI THỨ HAI. Câu "0 nguồn khẳng định" ở trên đúng, nhưng gọn tới mức
+ * lệch: `B-41` đã dặn *"ai nối một nguồn khẳng định mới vào vòng chạy thì test
+ * đỏ và phép đo phải làm lại"*, và 09/09 CÓ một nguồn mới được nối vào — mà
+ * file này vẫn xanh. Không phải nó mù; hai loại khác nhau:
+ *
+ *   KHẲNG ĐỊNH DƯƠNG — "kết quả CÓ trên trang" → chốt SUCCESS, KHÔNG mở cửa
+ *     gửi lại. Nay có HAI nguồn: ảnh (`reconcileSubmittedAttempt`) và chữ
+ *     (`reconcileSubmittedText`, thêm 09/09 theo ADR-0052).
+ *   KHẲNG ĐỊNH ÂM — "lượt gửi đó KHÔNG tạo ra gì" → đây là loại DUY NHẤT mở
+ *     được cửa gửi lại theo chữ ADR-0047, và nó vẫn là 0.
+ *
+ * Luật của Đức xoay quanh loại ÂM, nên nó còn nguyên. Phần 4 dưới đây ĐẾM cả
+ * hai con số thay cho một câu 0 trơn — vì một con số đọc được thì kiểm được,
+ * còn một câu văn thì phiên sau phải tin.
+ *
  * Không grep mã: phần 2 CẮT chính hàm `resolveJobFailure()` đã ship ra khỏi
  * `sidepanel.js` rồi CHẠY nó trong `node:vm`. Một bản vá còn nguyên chữ mà
  * chết về hành vi (ví dụ đảo thứ tự hai nhánh, hay bỏ cờ trong vòng chạy) vẫn
@@ -334,5 +350,50 @@ assert.ok(lowerLine.includes("response.attempt"), "bằng chứng phải đến 
 // và phép đo ở đầu file phải được làm lại trước khi nới luật.
 const autoProof = source.split("DAC_MANUAL_RECONCILE_EXISTING_OUTPUT").length - 1;
 assert.equal(autoProof, 1, "verifyExistingOutput vẫn chỉ đi qua đúng một cửa, và cửa đó do người vận hành bấm");
+
+/* ---- phần 4: ĐẾM SỐ NGUỒN ĐỐI SOÁT, đọc thẳng từ mã đã ship -------------
+   B-41 dặn: "viết lại để nó ĐẾM SỐ NGUỒN và ghim rằng mỗi nguồn đi qua đúng một
+   cửa đối soát — đừng nới nó cho xanh." Đây là chỗ đó.
+
+   Hai con số, hai ý nghĩa khác hẳn nhau:
+     DƯƠNG (kết quả CÓ) → chốt SUCCESS, không mở cửa gửi lại
+     ÂM   (không tạo ra gì) → loại DUY NHẤT mở được cửa gửi lại theo ADR-0047
+
+   Đếm bằng cách đọc mã đã ship, không gõ tay một con số — gõ tay là ghim một
+   bản sao, và bản sao thì lệch được ở một bên mà bên kia vẫn xanh. */
+{
+  const sp = read("sidepanel.js");
+  const khongChuThich = sp.split("\n").filter((d) => !/^\s*(\/\/|\*|\/\*)/.test(d)).join("\n");
+
+  const cuaDuong = [...khongChuThich.matchAll(/async function (reconcileSubmitted\w+)\(/g)].map((m) => m[1]);
+  assert.deepEqual(
+    cuaDuong.sort(), ["reconcileSubmittedAttempt", "reconcileSubmittedText"],
+    "hai nguồn khẳng định DƯƠNG: ảnh và chữ. Thêm nguồn thứ ba thì ĐỌC LẠI luật trước, đừng nới mép này cho xanh"
+  );
+
+  /* Mỗi cửa dương phải rẽ về ĐÚNG MỘT lượt chốt, và tuyệt đối không gọi gì gửi
+     prompt. Đây là vế biến "hai nguồn" thành an toàn, không phải con số 2. */
+  for (const ten of cuaDuong) {
+    const dau = khongChuThich.indexOf(`async function ${ten}(`);
+    const sau = khongChuThich.indexOf("\n  async function ", dau + 10);
+    const than = khongChuThich.slice(dau, sau > dau ? sau : undefined);
+    assert.ok(!/DAC_RUN_TEXT_JOB|DAC_RUN_IMAGE_JOB|setContentEditableValue/.test(than),
+      `${ten}: cửa đối soát KHÔNG được gọi bất cứ thứ gì gửi prompt — nó chỉ ĐỌC`);
+    assert.match(than, /finishTextOutput\(|finishDetectedOutput\(/,
+      `${ten}: phải rẽ về đường chốt CŨ, đừng đẻ ra cửa chốt thứ hai`);
+  }
+
+  /* KHẲNG ĐỊNH ÂM vẫn là 0. `verifyExistingOutput()` là hàm duy nhất phán được
+     "ảnh này thuộc lượt gửi kia", và nó chỉ chạy khi NGƯỜI bấm nút. Ngày nào nó
+     xuất hiện trên đường chạy tự động thì mép này đỏ, và luật phải đọc lại
+     TRƯỚC khi nới — đó đúng là việc B-41 ⑵⑶ sẽ làm. */
+  const goiTuDong = [...khongChuThich.matchAll(/verifyExistingOutput\(/g)].length;
+  const goiTayNguoi = [...khongChuThich.matchAll(/DAC_MANUAL_RECONCILE_EXISTING_OUTPUT/g)].length;
+  assert.ok(goiTayNguoi > 0, "mỏ neo hỏng: không thấy đường đối soát bấm tay của người");
+  assert.equal(goiTuDong, 0,
+    `KHẲNG ĐỊNH ÂM phải là 0 nguồn: thấy ${goiTuDong} chỗ gọi verifyExistingOutput() trong sidepanel. ` +
+    "Đó là loại DUY NHẤT mở được cửa gửi lại, nên nối nó vào vòng chạy là đổi LUẬT của Đức, không phải sửa mã."
+  );
+}
 
 console.log("B-19 post-submit no-resend smoke tests: PASS");
