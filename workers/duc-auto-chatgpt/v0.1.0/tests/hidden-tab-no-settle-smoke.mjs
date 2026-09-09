@@ -46,6 +46,25 @@ const shipped = source.slice(from, to + END.length);
 assert.ok(shipped.includes("visibilityState"), "cắt nhầm khối: waitForCompletion() phải hỏi trạng thái hiển thị của trang");
 assert.ok(shipped.includes("stable_text"), "cắt nhầm khối: phải chứa nhánh chốt theo chữ đứng yên");
 
+/* Nắp chờ và phép kiểm "trông như bị cắt" nằm NGOÀI hàm, nên cắt luôn cả hai và lấy con số
+   TỪ CHÍNH MÃ ĐÃ SHIP — chép tay con số vào đây là ghim một bản sao, và bản sao thì đổi được
+   ở một bên mà bên kia vẫn xanh. */
+const napDong = (source.match(/^ {2}const TEXT_SETTLE_MS = .*$/m) || [])[0];
+assert.ok(napDong, "mỏ neo hỏng: không thấy nắp chờ chữ đứng yên");
+const TRUNC_START = "\n  function looksTruncated(text) {\n";
+assert.equal(source.split(TRUNC_START).length - 1, 1, "cắt được ĐÚNG một looksTruncated()");
+const truncFrom = source.indexOf(TRUNC_START) + 1;
+const truncFn = source.slice(truncFrom, source.indexOf(END, truncFrom) + END.length);
+
+const ctxNap = {};
+vm.createContext(ctxNap);
+vm.runInContext(`${napDong}\nglobalThis.__nap = TEXT_SETTLE_MS;`, ctxNap);
+assert.equal(
+  ctxNap.__nap, 6000,
+  `Đức chốt 09/09 giãn nắp chờ đọc lên 6 giây — đang là ${ctxNap.__nap / 1000} giây. ` +
+  "Con số cũ 1,5 giây đọc một quãng ChatGPT ngừng gõ thành 'xong'."
+);
+
 /**
  * Sân khấu dựng theo đúng đường cong đã đo. `kichBan` là danh sách mốc:
  * mỗi mốc `{ tuGiay, text, stop, hidden }` áp dụng từ giây đó trở đi.
@@ -76,10 +95,20 @@ function sanKhau(kichBan, { timeoutMs = 180000, expectImage = false } = {}) {
     imageDecision: () => ({ decision: { attribution: null } }),
     boundaryTelemetry: () => ({}),
     recordDetection: () => {},
+    // Đường ẢNH gọi `window.DacImageEvidence`. Bản đầu của phép ghim này KHÔNG có `window`,
+    // nên mép ⑹ ném `window is not defined` và **xanh vì lý do sai** — nó không hề chạy tới
+    // chỗ nó tưởng đang canh. Thử phá bắt được đúng chỗ đó: con "nới sang cả đường ảnh" đi
+    // lọt. Stub này để mép ⑹ chạy thật.
+    window: {
+      DacImageEvidence: {
+        settledForImages: () => ({ settled: false }),
+        completionForImage: () => ({ reason: "NO_NEW_IMAGE" })
+      }
+    },
     document: { get visibilityState() { return hienTai().hidden ? "hidden" : "visible"; } }
   };
   vm.createContext(sandbox);
-  vm.runInContext(`var waitForCompletion;${shipped}waitForCompletion`, sandbox);
+  vm.runInContext(`${napDong}\nvar looksTruncated, waitForCompletion;${truncFn}${shipped}waitForCompletion`, sandbox);
   return {
     chay: () => sandbox.waitForCompletion({ boundary: { assistant_count: 0 }, timeoutMs, expectImage, inputEvidence: {}, attempt: {} }),
     giay: () => Math.round((dongHo - batDau) / 1000)
@@ -96,7 +125,53 @@ const DAY_DU = `[MODE: Audit | BUDGET: 100 w | RULES: ✓ đã đọc]\n\n${"x".
   const ket = await s.chay();
   assert.equal(ket.type, "text");
   assert.equal(ket.text, DAY_DU, "trang hiện thì chốt đúng cả câu trả lời");
-  assert.ok(s.giay() <= 5, `và chốt NHANH, không chờ vô cớ — mất ${s.giay()} giây`);
+  assert.ok(s.giay() >= 6, `phải CHỜ hết nắp chữ-đứng-yên mới chốt — mới ${s.giay()} giây đã chốt`);
+  assert.ok(s.giay() <= 15, `nhưng chốt xong thì thôi, không chờ tới hết giờ — mất ${s.giay()} giây`);
+}
+
+/* ⑴b ĐỨC CHỐT 09/09: giãn nắp chờ, *"vì nhiều task lớn GPT mất thời gian để gõ chữ"*.
+   Mép này ghim đúng cái đó bằng HÀNH VI: chữ ngừng 4 giây rồi gõ tiếp. Với nắp cũ 1,5 giây,
+   quãng ngừng ấy bị đọc thành "xong" và câu trả lời bị cắt mất đuôi. */
+{
+  const DOAN_DAU = "[MODE: Explain | BUDGET: 120 w | RULES: ✓ đã đọc] KẾT LUẬN: xong phần một.";
+  const s = sanKhau([
+    { tuGiay: 0, text: DOAN_DAU, stop: false, hidden: false },
+    { tuGiay: 4, text: DAY_DU, stop: false, hidden: false }
+  ]);
+  const ket = await s.chay();
+  assert.equal(ket.text, DAY_DU, "ngừng gõ 4 giây rồi gõ tiếp thì KHÔNG được chốt ở đoạn đầu — đó là nắp cũ 1,5 giây");
+}
+
+/* ⑴c ĐỨC CHỐT 09/09 vế hai: *"đọc mà thấy bị ngắt thì cần đọc lại"*. Chữ đứng yên MÃI nhưng
+   đứt giữa chừng (ngoặc `[` chưa đóng — đúng năm mẩu đã ghi hụt) thì không bao giờ được chốt,
+   dù trang HIỆN và dù chờ bao lâu. Đây là chỗ nắp thời gian một mình không cứu được. */
+{
+  const s = sanKhau([{ tuGiay: 0, text: "[MODE: Audit | BUDGET: 100 w", stop: false, hidden: false }], { timeoutMs: 60000 });
+  const loi = await s.chay().then(() => null, (e) => e);
+  assert.ok(loi, "chữ đứt giữa chừng thì KHÔNG được chốt, dù nó đứng yên bao lâu");
+  assert.match(String(loi.message), /TEXT_INCOMPLETE/, "và phải nói ĐÚNG là còn dở, không phải 'hết giờ' trơn");
+  assert.equal(loi.detection?.truncated_chars, 28, "kèm số ký tự đọc được, để biết hụt bao nhiêu");
+}
+
+/* ⑴d Đứt rồi ĐỦ: chốt được ngay khi câu chữ liền lại. Thiếu mép này thì một bản "không bao
+   giờ chốt job chữ nào" cũng xanh với ⑴c. */
+{
+  const s = sanKhau([
+    { tuGiay: 0, text: "[MODE: Audit | BUDGET: 100 w", stop: false, hidden: false },
+    { tuGiay: 10, text: DAY_DU, stop: false, hidden: false }
+  ], { timeoutMs: 60000 });
+  const ket = await s.chay();
+  assert.equal(ket.text, DAY_DU, "liền lại thì chốt, và chốt bằng bản đầy đủ");
+}
+
+/* ⑴e MÉP NGƯỢC chống bắt oan: một câu trả lời BÌNH THƯỜNG có ngoặc cân và kết bằng dấu câu
+   phải chốt như thường. Phép kiểm "trông như bị cắt" mà bắt oan thì mọi job đều chạy tới hết
+   giờ — hỏng nặng hơn hẳn cái nó chữa. */
+{
+  const BINH_THUONG = "Ba lý do (theo thứ tự): một, hai, ba. Xem thêm [tài liệu](https://x.dev).";
+  const s = sanKhau([{ tuGiay: 0, text: BINH_THUONG, stop: false, hidden: false }]);
+  const ket = await s.chay();
+  assert.equal(ket.text, BINH_THUONG, "ngoặc cân và kết bằng dấu chấm thì KHÔNG phải là bị cắt");
 }
 
 /* ⑵ MÉP CHÍNH. Trang BỊ CHE, chữ mới đi được dòng tiêu đề rồi đứng yên mãi — đúng đường cong
@@ -153,4 +228,4 @@ const DAY_DU = `[MODE: Audit | BUDGET: 100 w | RULES: ✓ đã đọc]\n\n${"x".
   assert.doesNotMatch(String(loi.message), /TAB_HIDDEN_NO_STREAM/, "đường ảnh giữ nguyên mã lỗi cũ");
 }
 
-console.log("B-43 tab bị che thì không chốt, chạy thật (6 mép): PASS");
+console.log("B-43 tab bị che thì không chốt, chạy thật (10 mép): PASS");

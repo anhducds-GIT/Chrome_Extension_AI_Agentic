@@ -582,6 +582,43 @@
     await waitForReferenceImagesReady(fileInput, images, previousPreviewCount);
   }
 
+  // ĐỨC CHỐT 09/09, hai việc, và chúng bù cho nhau:
+  //   *"giãn thời gian chờ đọc dài hơn, vì nhiều task lớn GPT mất thời gian để gõ chữ"*
+  //   *"thêm cơ chế đọc mà thấy bị ngắt thì cần đọc lại"*
+  //
+  // ⑴ NẮP CHỜ CHỮ ĐỨNG YÊN: 1,5 giây → 6 giây. Con số cũ sinh ra khi mọi câu trả lời còn
+  // ngắn; với một task lớn, ChatGPT ngừng gõ vài giây giữa hai đoạn là chuyện thường, và
+  // 1,5 giây đọc quãng ngừng đó thành "xong". Nó vẫn nhỏ so với trần 180 giây của một job.
+  //
+  // ⑵ NHƯNG GIÃN NẮP MỘT MÌNH KHÔNG CHỮA ĐƯỢC, và số đo nói thẳng: 09/09 chữ đứng yên
+  // **171 giây** mà câu trả lời mới đi được 26/251 ký tự. Không có nắp nào cứu được.
+  // Nên vế thứ hai mới là vế chịu tải: **nhìn chính câu chữ, thấy nó bị cắt thì chờ tiếp.**
+  const TEXT_SETTLE_MS = 6000;
+
+  // "Trông như bị cắt giữa chừng" — CỐ Ý CHỈ NHẬN BẰNG CHỨNG MẠNH, không đoán theo văn phong.
+  //
+  // Đức nêu cấu trúc trả lời của mình khá đồng nhất (có phần kết luận, phần hành động), nên
+  // thiếu là biết. Nhưng gõ cứng những mục ấy vào đây là nhét thói quen của MỘT người vào
+  // một tệp phải chạy cho mọi phiên — đổi bố cục một lần là mọi job đứng hình. Nên chỗ này
+  // dùng đúng cái vừa đo được, và nó tình cờ CHÍNH LÀ cấu trúc của Đức: mỗi câu trả lời mở
+  // đầu bằng `[MODE: … | RULES: …]`, và cả năm lượt ghi hụt đều đứt **trước dấu `]`** —
+  // `"MODE: Audit | BUDGET: 100 w"`. Ngoặc chưa đóng là bằng chứng đứt gãy, đọc được bằng
+  // máy, không phụ thuộc lời văn.
+  //
+  // Cái giá, nói rõ: một câu trả lời thật mà để ngoặc lệch sẽ KHÔNG chốt và chạy tới hết
+  // giờ. Đổi lại nó thành `INTERRUPTED` — người nhìn — chứ không thành SUCCESS với nội dung
+  // sai. Sai theo hướng dừng lại là hướng duy nhất chấp nhận được ở đây.
+  function looksTruncated(text) {
+    const value = String(text || "");
+    if (!value.trim()) return true;
+    for (const [mo, dong] of [["[", "]"], ["(", ")"]]) {
+      const so = (chuoi, ky) => chuoi.split(ky).length - 1;
+      if (so(value, mo) > so(value, dong)) return true;
+    }
+    // Kết thúc bằng một dấu nối đang treo: câu chưa nói hết thì mới dừng ở đây.
+    return /[|:,—–-]$/.test(value.trimEnd());
+  }
+
   async function waitForCompletion({ boundary, timeoutMs, expectImage = false, inputEvidence, attempt = null, maxImages = 1 }) {
     const startedAt = Date.now();
     let generationSeen = false;
@@ -701,8 +738,10 @@
           stableSince = Date.now();
         }
 
-        // Require 1.5s of stable text from the first assistant message created after the pre-send boundary.
-        if (stableText && Date.now() - stableSince >= 1500) {
+        // Chốt khi BA điều kiện cùng đúng: có chữ · chữ đứng yên đủ lâu (ĐỨC 09/09: 1,5 → 6
+        // giây, vì task lớn thì ChatGPT ngừng gõ giữa chừng) · và chữ KHÔNG trông như bị cắt.
+        // Vế thứ ba là vế chịu tải — xem `looksTruncated()` và số đo 171 giây ở trên.
+        if (stableText && Date.now() - stableSince >= TEXT_SETTLE_MS && !looksTruncated(stableText)) {
           return {
             type: "text",
             text: stableText,
@@ -745,6 +784,18 @@
         "kết quả nào bị ghi sai, và lượt gửi này KHÔNG được gửi lại tự động."
       );
       error.detection = { ...lastDetection, timed_out: true, hidden_polls: hiddenPolls, poll_count: pollCount };
+      throw error;
+    }
+    // ĐỨC 09/09 vế ⑵: hết giờ mà chữ vẫn trông bị cắt thì nói RA điều đó. Đây là ca "đọc
+    // lại vẫn thiếu" — khác hẳn "không thấy gì", và khác hẳn "tab bị che". Gộp ba thứ đó vào
+    // một câu "hết giờ" là bắt người vận hành đoán, đúng cách `B-43` sống được một ngày.
+    if (!expectImage && stableText && looksTruncated(stableText)) {
+      const error = new Error(
+        `TEXT_INCOMPLETE: câu trả lời vẫn còn dở sau ${Math.round(timeoutMs / 1000)} giây — ` +
+        `đọc được ${stableText.length} ký tự và nó đứt giữa chừng. KHÔNG ghi vào sổ, và lượt ` +
+        "gửi này KHÔNG được gửi lại tự động. Mở tab ra xem ChatGPT đã trả lời xong chưa."
+      );
+      error.detection = { ...lastDetection, timed_out: true, truncated_chars: stableText.length, hidden_polls: hiddenPolls };
       throw error;
     }
     const blind = expectImage && assistantMessages().length === 0;
