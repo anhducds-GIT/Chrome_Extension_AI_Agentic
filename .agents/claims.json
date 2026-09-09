@@ -92,11 +92,16 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "420ffc46a2a285f5",
+  "_fingerprint": "bd680c3d08567d77",
   "tam": {
+    "tests/check-bootstrap-smoke.mjs": {
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T04:20",
+      "viec": null
+    },
     ".agents/claims.json": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T04:07",
+      "owner": "claude-luat-rasoat",
+      "luc": "2026-09-09T04:20",
       "viec": null
     }
   }

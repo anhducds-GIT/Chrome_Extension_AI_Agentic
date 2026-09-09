@@ -805,25 +805,31 @@ const chay = (deps) => {
 }
 
 
-/* ---- BẢN MẪU ADR PHẢI CHÀO ĐỜI Ở `Proposed` — N-39 -------------------------
+/* ---- BẢN MẪU ADR KHÔNG ĐƯỢC DẠY LẠI LUẬT ĐÃ CHẾT — thay N-39 ngày 09/09 ----
  *
- * B12 chốt mốc bất biến ở commit ĐẦU TIÊN mà `status` thành `Accepted`. Một ADR viết thẳng
- * `Accepted` từ commit đầu thì không còn lượt nào để sửa chữ — gặp thật 07/09 với ADR-0018:
- * một chữ sai (`Codey`) không đổi quyết định nào, và không sửa được nữa. Bản mẫu là chỗ DUY
- * NHẤT chặn được trước khi lỗi xảy ra, vì ai viết ADR cũng chép từ nó.
+ * Bản cũ ghim điều NGƯỢC LẠI: nó bắt bản mẫu phải chào đời ở `Proposed`, vì "B12 chốt mốc
+ * bất biến ở commit ĐẦU TIÊN mà status thành Accepted". Vế đó CHẾT 09/09 — ADR-0026 ⑵ bỏ
+ * luật bất biến từng byte, và B12 đổi câu hỏi sang "có số hiệu nào biến mất không".
  *
- * Ghim CẢ HAI: giá trị trong bản mẫu, và câu luật giải thích vì sao — thiếu câu luật thì
- * người sau đọc `Proposed` như một mặc định tuỳ tiện và sửa nó cho "gọn". */
+ * KHÔNG gỡ phép ghim, ĐỔI câu hỏi của nó. Bỏ trống chỗ này thì không gì chặn người sau chép
+ * lại cửa hai bước — cửa đó nay không bảo vệ gì và tốn thêm một commit, đã tốn thật một lần
+ * 09/09 ở lượt tách 10 ADR cho gói `duc-auto-gg-flow-video`.
+ *
+ * Ghim CẢ HAI chiều: khối chép phải là `Accepted`, VÀ bản mẫu phải còn giữ lời khai vế đã
+ * chết — thiếu lời khai thì người sau đọc `Accepted` như một mặc định tuỳ tiện rồi "sửa cho
+ * đúng" theo luật cũ mà họ vẫn nhớ. */
 {
   const mau = fs.readFileSync(path.join(ROOT, "docs", "_TEMPLATE-adr.md"), "utf8");
   const trongKhoiChep = mau.slice(mau.indexOf("Phần dưới là nội dung cần chép:"));
-  assert.match(trongKhoiChep, /^status: Proposed$/m,
-    "khoi noi dung can chep phai mang status: Proposed, khong phai Accepted");
-  assert.doesNotMatch(trongKhoiChep, /^status: Accepted$/m,
-    "chep thang Accepted la dong cua sua chu ngay tu commit dau");
-  assert.match(mau, /B12 chốt mốc bất biến ở \*\*commit ĐẦU TIÊN\*\*/,
-    "phai giai thich VI SAO, khong thi nguoi sau se sua gia tri nay cho gon");
-  ok("ban mau ADR chao doi o Proposed, kem ly do (N-39)");
+  assert.match(trongKhoiChep, /^status: Accepted$/m,
+    "khoi noi dung can chep phai mang status: Accepted (ADR-0026 ve 2)");
+  assert.doesNotMatch(trongKhoiChep, /^status: Proposed$/m,
+    "cua hai buoc Proposed -> Accepted da chet 09/09, dung day lai");
+  assert.ok(mau.includes("Vế đã chết"),
+    "ban mau phai NOI RA rang cua hai buoc da chet, khong chi im lang bo di");
+  assert.match(mau, /ADR-0026/,
+    "loi khai ve da chet phai neu ten quyet dinh thay no — luat cua chinh ADR-0026");
+  ok("ban mau ADR day luat DANG SONG, va noi ra ve da chet (thay N-39)");
 }
 /* ---- THƯỚC CÓC KHO CHỮ: con số phải ở CẤU HÌNH, không gõ cứng ------------
  *
