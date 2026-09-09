@@ -1893,4 +1893,75 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
   **VẾ KHÔNG THI HÀNH ĐƯỢC, và nó làm hẹp hẳn thứ bản vá này cứu được:** ADR-0050 ⒞ viết *"thấy thì
   quy về job và xong"* — sau F5 **không quy được**, vì F5 xoá bộ nhớ content script và bằng chứng
   quy thuộc của một lượt **mù** vốn không tồn tại. Đã tách thành `B-45`, cần Đức chốt.
+- **TIẾN ĐỘ B-42 (09/09) · ĐÃ SHIP, CHỜ ĐỨC REVIEW HÀNH VI.** Đức chốt 09/09, nguyên văn:
+  *"B-42 bạn chủ động làm tôi approve và sẽ review sau khi tính năng này tồn tại, vì tôi ko hiểu
+  về code, ta có thể trao đổi trong quá trình triển khai."* Nên brief viết ra để **làm sổ**, không
+  để chờ duyệt; nó nằm trong khối chú thích của `chat.say` ở `bridge-core.js`.
+
+  **HAI SỐ ĐO NGƯỢC VỚI CHÍNH CHỮ CỦA MỤC NÀY, và cả hai làm mục này NHỎ lại:**
+
+  ⑴ **KHÔNG phải quyền mới.** Mục này viết *"đây là quyền mới cho extension"*. Đo: `jobs.add` đã
+  nhận `prompt` **tự do** (1..trần envelope) và `run.trial` gửi nó — nên bên gọi từ xa **vốn đã**
+  gửi được chữ tuỳ ý vào ChatGPT. `chat.say` bỏ **sổ sách** (một job + một dòng Excel cho mỗi
+  câu), không thêm **quyền**. Không có quyền Chrome mới, không có bề mặt tin cậy mới. Vế này được
+  **ghim bằng chính validator `jobs.add` đã ship**, không bằng một câu trấn an: nếu `jobs.add`
+  thôi nhận chữ tự do thì `chat.say` **trở thành** quyền mới, và mép đó sẽ đỏ để nói ra.
+
+  ⑵ **Nó KHÔNG chờ câu trả lời, và đó là ràng buộc TRANSPORT, không phải một lựa chọn cho gọn.**
+  `deadline_ms` trong bảng method chỉ là **khai báo** — không dòng mã nào trong host đọc nó; thứ
+  cưỡng chế thật là `AbortSignal.timeout(40000)` trong `bridge-cli.mjs`. Một cửa chờ 180 giây sẽ
+  bị CLI cắt ở giây 40 **sau khi tin nhắn đã bay**, và bên gọi đọc thành *"gửi thất bại"* rồi gửi
+  lại — đúng cái luật exact-once sinh ra để chặn. Nên cửa này trả về ngay khi khẳng định được
+  **đã gửi**; câu trả lời đọc bằng `chat.read`, cửa đã có và đã ghim. **Không dựng bộ đọc thứ
+  hai.** Một lượt không khẳng định được là đã gửi thì **ném**, và câu báo chỉ sang `chat.read`
+  chứ không mời gửi lại.
+
+  **Ba chỗ mục này bắt cân, và câu trả lời cho từng chỗ:**
+  - *khác `run.start` ở đâu* — `run.start` là **chạy tiếp không ai nhìn**: một lệnh, N lượt gửi,
+    không cần cấp phép thêm. Cửa này **không có vòng lặp bên trong**: một lệnh = tối đa **một**
+    lượt gửi, và lượt thứ hai cần một lệnh RPC thứ hai đi qua đủ ba phanh. Ghim bằng số đo
+    `đúng 1 lượt gõ mỗi lệnh`, không bằng lời.
+  - *chốt an toàn nào thay thế* — **không thay thế gì cả, dùng lại nguyên cả ba phanh cũ:** công
+    tắc Chế độ phát triển (chỉ Đức bật được) · latch `RUN_ACTIVE` (gõ lúc một job đang bay sẽ phá
+    phép quy thuộc kết quả của job đó) · và **CHUNG MỘT KHOÁ** nắp chờ 90 giây với `run.trial`.
+    Đã **tách** phép kiểm nắp chờ ra `assertBridgeSubmitCooldown()` để `chat.say` dùng **đúng
+    nó**: hai bản sao là **hai ngân sách**, tức nới phanh mà không ai thấy trong diff. Hệ quả đo
+    được: một lượt `chat.say` **đẩy lùi** lượt `run.trial` kế tiếp và ngược lại, nên **tốc độ
+    tiêu credit tối đa của cả gói không đổi một giọt.** Mép "MỘT NGÂN SÁCH, MỌI CỬA" nằm ở
+    `trial-cooldown-adr0050-smoke.mjs`, cạnh chính hằng nắp chờ.
+  - *vẫn phải có sổ* — **`audit()` KHÔNG dùng được ở đây**, và đó là số đo: dòng đầu của nó là
+    `if (!state.runId) return;`, nên một cửa **ngoài run** gọi nó sẽ **im lặng không ghi gì** —
+    kiểu mất dấu vết tệ nhất, vì mã trông như có ghi sổ. Thay bằng một vòng **có nắp** trong
+    `chrome.storage.local`: dấu thời gian, số ký tự, **sha256 cả hai chiều**, `client_id` của AI
+    đã gọi. **Cố ý KHÔNG tích trữ nội dung hội thoại của Đức** — băm đủ chứng minh, và một bản
+    sao nội dung là một hoá đơn riêng tư không ai cần. Sổ được ghi **trước khi ném**: lượt lấp
+    lửng là lượt cần có trong sổ nhất.
+
+  **Số đo:** ghim mới `tests/chat-say-b42-smoke.mjs` **15 mép**, cắt `bridgeChatSay()` đã ship ra
+  chạy thật trong `node:vm` cùng ba hàm phụ **thật** (nắp chờ, đóng dấu, ghi sổ) · suite gói
+  **125 → 126** · thử phá **20/20 bắt, 0 thoát, 0 mỏ neo hỏng**.
+  **Bốn phép ghim CŨ đỏ, và một trong bốn là LỖI THẬT — ghi rõ vì ba cái kia dễ làm người đọc bỏ
+  qua cái đầu:** `run-trial-workbook-not-loaded-smoke` ném `ReferenceError` vì sân khấu `vm` của
+  nó cắt `bridgeRunTrial()` ra chạy riêng, mà hàm đó nay gọi phép kiểm nắp chờ đã tách — đã nạp
+  thêm **hàm thật** vào sân khấu, nên nay **cả hai cửa được kiểm qua cùng một khối mã đã ship**.
+  Ba cái còn lại là **biến gián tiếp giòn**: một cái neo vào *"await chrome.storage.local.get"* để
+  đo *"latch trước await đầu tiên"* (nay đo await **đầu tiên**, và neo vào một await CÓ TÊN còn dễ
+  xanh oan: `-1` nhỏ hơn mọi vị trí), một cái đòi hằng nắp chờ nằm **trong** handler, một cái đếm
+  số method trong bảng.
+  **Hai lỗi trong chính đồ nghề của tôi, cùng họ với ba lỗi hôm nay:** `assert.deepEqual` so cả
+  **prototype** nên object trả về từ `node:vm` (realm khác) luôn đỏ dù nội dung khớp từng chữ; và
+  `const` ở đầu một script `vm` nằm trong phạm vi **từ vựng** của script, **không** lên object
+  context — nên khoá mốc nắp chờ chưa bao giờ được đọc và mép nắp chờ **đỏ vì lý do sai**. Cộng
+  một lần nữa **mất một lớp escape** trong template (`\(\)` thành nhóm rỗng) làm một regex khớp
+  một chuỗi KHÁC.
+  **Một mũi thử phá của tôi ban đầu quá tù, ghi ra vì nó "thoát" đúng như phải thoát:** N4 chỉ
+  **khai** một ngân sách thứ hai mà không ai gọi — mã chết thì không phải lỗi hành vi. Viết lại
+  cho nó **đấu dây** thật thì bị bắt ngay. Con thoát thứ hai (N10, vòng sổ mất nắp) là **lỗ ghim
+  thật** và đã bịt bằng một mép mới.
+  **CHƯA ĐO ĐƯỢC, và tôi không giả lập:** chưa có lượt `chat.say` nào chạy trên trang thật — nó
+  cần Đức nạp lại tiện ích và bật Chế độ phát triển. Điều kiện đóng của mục này còn một vế
+  **audit độc lập**, và tôi **không tự ký nghiệm thu bản sửa của chính mình**.
+  **Giới hạn đã biết, ghi ra để không ai tưởng nó đầy đủ hơn thực tế:** sổ `chat.say` sống trong
+  `chrome.storage.local` và **chưa có method Bridge nào đọc nó về** — muốn xem lại phải qua panel.
+  Nắp 200 dòng, tràn thì **cắt đầu**.
 

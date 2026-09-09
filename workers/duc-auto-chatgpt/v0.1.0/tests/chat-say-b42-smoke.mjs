@@ -132,7 +132,8 @@ assert.equal(core.POLICY.auto_execute, false, "không có gì tự chạy — c�
     vm.createContext(box);
     vm.runInContext(`${hang.join("\n")}\n${phu}\n${shipped}\nglobalThis.__f = bridgeChatSay;
 globalThis.__khoaMoc = BRIDGE_LAST_TRIAL_STORAGE_KEY;
-globalThis.__khoaSo = CHAT_SAY_LOG_STORAGE_KEY;`, box);
+globalThis.__khoaSo = CHAT_SAY_LOG_STORAGE_KEY;
+globalThis.__napSo = CHAT_SAY_LOG_MAX;`, box);
     box.kho = kho;
     assert.ok(typeof box.__khoaMoc === "string" && box.__khoaMoc, "mỏ neo hỏng: không đọc được khoá mốc lượt trước");
     if (lastAt) kho[box.__khoaMoc] = lastAt;
@@ -192,6 +193,19 @@ globalThis.__khoaSo = CHAT_SAY_LOG_STORAGE_KEY;`, box);
       "sổ KHÔNG được tích trữ nội dung hội thoại của Đức — băm là đủ để chứng minh, và không phải là hoá đơn riêng tư");
   }
 
+  // ⑽ VÒNG SỔ PHẢI CÓ NẮP. chrome.storage.local có hạn mức: một vòng không nắp thì sau vài
+  // nghìn lượt chính lượt GHI bắt đầu thất bại, và sổ chết đúng lúc phiên dài nhất — tức mất
+  // dấu vết bằng cách vòng vo thay vì bằng một dòng bị xoá. Thử phá N10 lọt vì thiếu mép này.
+  {
+    const s = sanKhau({ lastAt: Date.now() - 91 * 1000 });
+    const nap = Number(s.box.__napSo);
+    assert.ok(Number.isInteger(nap) && nap > 0 && nap <= 1000, `nắp sổ phải là một số hữu hạn hợp lý, đọc được ${nap}`);
+    s.kho[s.box.__khoaSo] = Array.from({ length: nap + 5 }, (_, i) => ({ at: "cũ", i }));
+    await s.chay();
+    const so = s.kho[s.box.__khoaSo];
+    assert.equal(so.length, nap, `sổ phải bị cắt về đúng nắp ${nap}, đếm được ${so.length}`);
+    assert.equal(so[so.length - 1].submitted, true, "và dòng MỚI phải là dòng còn lại — cắt ĐẦU, không cắt đuôi");
+  }
   // ⑽ ═══ MÉP CHỊU TẢI ═══ CHƯA KHẲNG ĐỊNH ĐƯỢC LÀ ĐÃ GỬI thì phải ném, nhưng nắp VẪN tiêu
   // và sổ VẪN ghi. Ba vế, và mỗi vế bịt một cửa khác:
   //   · ném → bên gọi không tưởng là đã xong;
@@ -253,4 +267,4 @@ globalThis.__khoaSo = CHAT_SAY_LOG_STORAGE_KEY;`, box);
     "chat.say KHÔNG phải chỉ-đọc — khai vào đó là bỏ mất câu chặn mà một lệnh gõ phải có");
 }
 
-console.log("B-42 chat.say — một lượt nhắn thẳng, chạy thật (14 mép): PASS");
+console.log("B-42 chat.say — một lượt nhắn thẳng, chạy thật (15 mép): PASS");
