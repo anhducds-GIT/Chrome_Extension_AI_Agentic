@@ -395,43 +395,31 @@ assert.equal(autoProof, 1, "verifyExistingOutput vẫn chỉ đi qua đúng mộ
      đi qua một hàm khác — suite vẫn xanh trong khi luật đã bị đụng, tức đúng cái mà chính lời văn
      của file này dặn phải tránh. Nay đếm THẲNG cả hai đường, mỗi đường một con số. */
 
-  /* ⓐ HAI nguồn âm tính, và chúng KHÁC LOẠI nhau — đừng đọc con số 2 mà bỏ qua chỗ này.
+  /* ⓐ MỘT nguồn âm tính. Con số này ĐỔI BẰNG TAY, không bao giờ nới cho xanh.
 
-       ⑴ `askProviderRepair()` (B-40 ⒝) — bằng chứng là CHỮ của nhà cung cấp; nó gõ một câu
-         chữa lấy từ danh sách trắng của adapter. Prompt gốc KHÔNG bay lần nữa.
-       ⑵ `reconcileBlindDetector()` (B-41 ⑵, ADR-0050 ⒞) — bằng chứng là một phép ĐO trên
-         hội thoại sau F5, và nó là nguồn ĐẦU TIÊN trong gói mở được cửa gửi lại PROMPT GỐC.
-         Nên nó đắt hơn ⑴ hẳn một bậc, và nắp của nó phải nhỏ hơn.
+       0 → 1 (09/09, B-40 ⒝): lời nhà cung cấp tự nói nó không tạo được gì, cộng câu chữa nó
+         xin. Nó gõ một câu chữa lấy từ danh sách trắng của adapter; prompt gốc KHÔNG bay lần nữa.
+       1 → 2 → **1 trở lại** (cùng ngày): B-41 ⑵ từng thêm một nguồn thứ hai — một phép tự kiểm
+         DOM "khẳng định" máy chủ không tạo gì — rồi audit Codex dựng được hai chuỗi sự kiện
+         trong đó nó khẳng định SAI trong khi kết quả ĐÃ CÓ. Nguồn đó **đã bị xoá**, không phải
+         bị hoãn. Lý do đầy đủ và cả hai ca ở `blind-reconcile-b41-2-smoke.mjs`.
 
-     Con số này ĐỔI BẰNG TAY, không bao giờ nới cho xanh. Thêm nguồn thứ BA thì đọc lại luật
-     của Đức trước. */
-  const cuaAmTinh = [...khongChuThich.matchAll(/async function (askProviderRepair|reconcileBlindDetector)\(/g)].map((m) => m[1]);
-  assert.deepEqual(cuaAmTinh.sort(), ["askProviderRepair", "reconcileBlindDetector"],
-    "ĐÚNG HAI nguồn khẳng định âm tính. Thêm nguồn thứ ba thì ĐỌC LẠI luật của Đức trước, đừng nới mép này");
+     Rút ra, và nó là thứ đáng giữ hơn con số: **không thể khẳng định "lượt gửi này không tạo ra
+     kết quả nào" từ DOM.** "Chưa vẽ", "không có", và "selector mục một phần" trông y hệt nhau.
+     Nguồn duy nhất đứng vững tới giờ là một nguồn KHÔNG phải DOM — chính lời nhà cung cấp. */
+  const cuaAmTinh = [...khongChuThich.matchAll(/async function (askProviderRepair)\(/g)].map((m) => m[1]);
+  assert.deepEqual(cuaAmTinh, ["askProviderRepair"],
+    "ĐÚNG MỘT nguồn khẳng định âm tính. Thêm nguồn thứ hai thì ĐỌC LẠI luật của Đức và đọc lại vì sao nguồn trước đã bị xoá — đừng nới mép này");
 
-  /* Nguồn ⑵ mở cửa gửi lại PROMPT GỐC, nên nó phải đi qua ba cửa, và ĐÚNG THỨ TỰ NÀY. */
+  // Và cửa đối soát bộ dò mù phải KHÔNG có đường gửi lại nào. Nó từng có.
   {
     const dMu = khongChuThich.indexOf("async function reconcileBlindDetector(");
+    assert.ok(dMu > 0, "mỏ neo hỏng: không thấy reconcileBlindDetector()");
     const cMu = khongChuThich.indexOf("\n  async function ", dMu + 10);
     const thanMu = khongChuThich.slice(dMu, cMu > dMu ? cMu : undefined);
-    assert.match(thanMu, /mayResendAfterBlindReconcile\(/, "nguồn âm tính ⑵ phải đi qua nắp");
-    assert.ok(thanMu.indexOf("DAC_RECONCILE_TEXT_JOB") < thanMu.indexOf("repairWorkspaceSurface()"),
-      "phải ĐỌC trước khi F5 — F5 lúc còn lấp lửng là đúng cái chat.reload từ chối làm");
-    assert.ok(thanMu.indexOf("mayResendAfterBlindReconcile(") < thanMu.indexOf("blindResendsUsed[item.job.id] ="),
-      "nắp phải kiểm TRƯỚC khi tăng bộ đếm, không phải sau");
-    assert.ok(!/DAC_RUN_IMAGE_JOB|DAC_RUN_TEXT_JOB|setContentEditableValue/.test(thanMu),
-      "cửa đối soát chỉ ĐỌC và ĐẶT LẠI TRẠNG THÁI — lượt gửi lại do vòng chạy chính làm, qua đúng đường cũ");
+    assert.ok(!/PENDING/.test(thanMu), "đối soát bộ dò mù KHÔNG được đưa job về PENDING — đó chính là lượt gửi lại");
+    assert.ok(!/DAC_RUN_IMAGE_JOB|DAC_RUN_TEXT_JOB|setContentEditableValue/.test(thanMu), "và chỉ ĐỌC, không gõ gì");
   }
-
-  // Và nó phải đi qua NẮP, kiểm trước khi gõ. Không nắp thì một lỗi dai thành vòng lặp tiêu quota.
-  const dAm = khongChuThich.indexOf("async function askProviderRepair(");
-  const cAm = khongChuThich.indexOf("\n  async function ", dAm + 10);
-  const thanAm = khongChuThich.slice(dAm, cAm > dAm ? cAm : undefined);
-  assert.match(thanAm, /mayAskProviderRepair\(/, "nguồn âm tính phải đi qua nắp");
-  assert.ok(thanAm.indexOf("mayAskProviderRepair(") < thanAm.indexOf("DAC_PROVIDER_REPAIR"),
-    "nắp phải kiểm TRƯỚC khi gõ, không phải sau");
-  assert.ok(!/phrase:/.test(thanAm),
-    "side panel KHÔNG được truyền câu gõ xuống — câu đó lấy từ danh sách trắng của adapter, không từ trang");
 
   // ⓑ Đường bấm-tay-của-người vẫn KHÔNG được lên vòng chạy tự động. `verifyExistingOutput()` là
   // hàm duy nhất phán được "ảnh này thuộc lượt gửi kia"; nó là một nguồn âm tính KHÁC, và nó vẫn 0.
@@ -446,6 +434,15 @@ assert.equal(autoProof, 1, "verifyExistingOutput vẫn chỉ đi qua đúng mộ
 
   // ⓒ Và vế đắt nhất: prompt GỐC vẫn chỉ bay đúng một lần. Đường ⒝ gõ một tin nhắn khác, nên
   // không cửa nào trong nó được phép chở prompt của job xuống lượt gõ.
+  const dAm = khongChuThich.indexOf("async function askProviderRepair(");
+  assert.ok(dAm > 0, "mỏ neo hỏng: không thấy askProviderRepair()");
+  const cAm = khongChuThich.indexOf("\n  async function ", dAm + 10);
+  const thanAm = khongChuThich.slice(dAm, cAm > dAm ? cAm : undefined);
+  assert.match(thanAm, /mayAskProviderRepair\(/, "nguồn âm tính phải đi qua nắp");
+  assert.ok(thanAm.indexOf("mayAskProviderRepair(") < thanAm.indexOf("DAC_PROVIDER_REPAIR"),
+    "nắp phải kiểm TRƯỚC khi gõ, không phải sau");
+  assert.ok(!/phrase:/.test(thanAm),
+    "side panel KHÔNG được truyền câu gõ xuống — câu đó lấy từ danh sách trắng của adapter, không từ trang");
   assert.ok(!/DAC_RUN_IMAGE_JOB|DAC_RUN_TEXT_JOB/.test(thanAm),
     "đường ⒝ KHÔNG được gọi lại cửa gửi prompt gốc — nó chỉ gõ câu chữa qua DAC_PROVIDER_REPAIR");
 

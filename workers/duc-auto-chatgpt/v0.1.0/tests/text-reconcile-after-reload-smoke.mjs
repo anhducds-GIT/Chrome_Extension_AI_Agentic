@@ -112,7 +112,22 @@ const HUT = "[MODE: Audit | BUDGET: 100 w";
     { role: "user", text: PROMPT },
     { role: "assistant", text: DU }
   ], PROMPT);
-  assert.equal(r.text, DU, "lượt hỏi CUỐI khớp, không phải lượt đầu");
+  /* ĐỔI LUẬT 09/09 sau audit Codex. Bản cũ lấy lượt hỏi khớp CUỐI và mép này ghim đúng điều
+     đó. Codex chỉ ra hệ quả: nắp so khớp chỉ lấy 160 ký tự ĐẦU, nên hai job chung một đoạn mở
+     đầu dài — đúng hình dạng workbook của Đức, nơi mọi job ảnh chia sẻ một đoạn tả phong cách —
+     có CÙNG khoá. Phép "lấy lượt cuối" khi đó neo vào lượt hỏi của job KHÁC, và
+     `finishTextOutput()` ghi câu trả lời của job khác vào sổ với dấu `persistence_verified`.
+     Báo thành công giả, đúng loại lỗi mà B-43 vừa đóng.
+
+     Nay trùng khoá là **KHÔNG kết luận được**. Đánh đổi đã nhận và nói ra: một NGƯỜI gửi lại
+     cùng một prompt bằng tay trong cùng hội thoại cũng bị từ chối, nên job đó DỪNG thay vì tự
+     lấy câu trả lời mới nhất. Chọn hướng này vì cái mất là một lượt người xem; hướng kia làm
+     dữ liệu sai đi thẳng vào sổ mà không ai thấy. Muốn chính xác hơn thì phải neo vào
+     `data-message-id` chứ không phải nới mép này. */
+  assert.equal(r.found, false, "trùng khoá prompt thì PHẢI từ chối kết luận");
+  assert.equal(r.reason, "AMBIGUOUS_PROMPT_MATCH");
+  assert.equal(r.text, "", "và tuyệt đối không trả về chữ nào — chữ đó có thể của job khác");
+  assert.notEqual(r.text, DU, "hồi quy: bản cũ trả về đây câu trả lời của lượt cuối");
 }
 
 /* ⑹ `innerText` gói lại dòng theo bề rộng khung, nên chữ đọc về KHÔNG trùng khoảng trắng với
@@ -135,14 +150,39 @@ const HUT = "[MODE: Audit | BUDGET: 100 w";
   }
 }
 
-/* ⑻ Hai prompt dài chỉ khác nhau ở ĐUÔI, sau nắp 160 ký tự, thì nắp đó gán nhầm. Ghi ra chỗ
-   này CÓ Ý: đây là giới hạn đã biết của phép so, không phải chỗ chưa nghĩ tới. Nắp đọc thẳng
-   từ mã đã ship nên không chép tay được một bản thứ hai. */
+/* ⑻ HAI PROMPT CHỈ KHÁC NHAU Ở ĐUÔI — mép này ĐÃ BỊ ĐẢO, 09/09, và lý do đáng đọc.
+
+   Bản sáng 09/09 ghim chính ca này thành `found: true` và gọi nó là *"giới hạn đã biết, ghi ra
+   để không ai tưởng nó chặt hơn thực tế"*. **Tôi đã tự viết cái đó xuống và tự cho là chấp nhận
+   được. Nó không phải.** Audit Codex chiều cùng ngày chỉ ra hệ quả đầy đủ: khớp nhầm ở đây
+   không dừng lại ở "khớp nhầm" — `finishTextOutput()` ghi **câu trả lời của job khác** vào sổ
+   với dấu `persistence_verified`. Đó là **báo thành công giả**, đúng loại lỗi mà cả B-43 tồn tại
+   để đóng. Và nó không hiếm: mọi job ảnh của Đức chia sẻ một đoạn tả phong cách dài hơn 160 ký
+   tự, nên với một loạt job theo mẫu thì ca này là ca THƯỜNG.
+
+   Hai việc sửa: khoá lấy **ĐẦU + ĐUÔI** (nên hai prompt khác đuôi nay khác khoá), và phép neo
+   đòi **DUY NHẤT** (nên trùng khoá là "không kết luận được", không phải "lấy lượt cuối").
+
+   Bài học, và nó lớn hơn con bug: **một "giới hạn đã biết" không thành an toàn chỉ vì đã được
+   ghi ra.** Phải nói cả CÁI GIÁ của nó. Cái giá ở đây là dữ liệu sai đóng dấu đã-xác-minh, và
+   nếu tôi viết ra chữ đó thì đã không ai để nó qua. */
 {
   assert.equal(san.NAP, 160, "nắp so khớp đọc từ mã đã ship");
   const dauChung = "x".repeat(200);
   const r = tim([{ role: "user", text: `${dauChung} ĐUÔI A` }, { role: "assistant", text: DU }], `${dauChung} ĐUÔI B`);
-  assert.equal(r.found, true, "hai prompt trùng 160 ký tự đầu BỊ coi là một — giới hạn đã biết, ghi ra để không ai tưởng nó chặt hơn thực tế");
+  assert.equal(r.found, false, "hai prompt khác ĐUÔI phải là hai prompt KHÁC — khoá đầu+đuôi giữ đúng phần phân biệt");
+  assert.equal(r.reason, "PROMPT_NOT_IN_CONVERSATION");
+  assert.notEqual(r.text, DU, "hồi quy: bản cũ trả về đây câu trả lời của prompt KHÁC");
+
+  // Giới hạn CÒN LẠI, nói cả cái giá lần này: trùng cả 160 đầu VÀ 160 cuối thì vẫn cùng khoá.
+  // Cái giá lúc đó KHÔNG còn là dữ liệu sai — phép neo duy-nhất biến nó thành một lượt DỪNG
+  // (`AMBIGUOUS_PROMPT_MATCH`), tức người xem. Đổi được hẳn thì phải neo `data-message-id`.
+  const r2 = tim(
+    [{ role: "user", text: `${dauChung} CUNG DUOI` }, { role: "assistant", text: DU }, { role: "user", text: `${dauChung} CUNG DUOI` }],
+    `${dauChung} CUNG DUOI`
+  );
+  assert.equal(r2.found, false, "trùng cả đầu lẫn đuôi → DỪNG, không đoán");
+  assert.equal(r2.reason, "AMBIGUOUS_PROMPT_MATCH");
 }
 
 /* ---- ⓑ ĐƯỜNG ĐI: cửa `dispatchOutcome` phải rẽ sang đối soát, không dừng hẳn ---------- */

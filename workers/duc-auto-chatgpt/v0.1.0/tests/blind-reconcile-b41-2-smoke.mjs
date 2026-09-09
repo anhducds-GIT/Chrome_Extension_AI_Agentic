@@ -1,24 +1,25 @@
 /**
- * GHIM B-41 ⑵ (ADR-0050 ⒞) — `DETECTION_BLIND` thôi là dead-end, nhưng ĐỐI SOÁT TRƯỚC.
+ * GHIM B-41 ⑵ (ADR-0050 ⒞) — ĐỐI SOÁT MỘT BỘ DÒ MÙ, VÀ **KHÔNG BAO GIỜ GỬI LẠI**.
  *
- * Đức chốt 08/09: *"chữa xong thì đối soát trước … khẳng định được là không có thì mới gửi lại;
- * vẫn không chắc thì `INTERRUPTED` như hôm nay."*
+ * ═══ FILE NÀY LÀ MỘT PHÉP GHIM HỒI QUY CHO MỘT LỖI ĐÃ SHIP RỒI ĐÃ GỠ ═══
  *
- * ═══ VẾ CHỊU TẢI CỦA CẢ FILE NÀY ═══
+ * Bản đầu (commit `5cd84c4c`, 09/09) CÓ một cửa gửi lại prompt gốc khi một phép tự kiểm ba vế
+ * "khẳng định" được là máy chủ không tạo ra gì. Audit Codex cùng ngày dựng được **hai chuỗi sự
+ * kiện cụ thể** trong đó phép đó trả `true` **trong khi kết quả ĐÃ CÓ trên máy chủ**, và tôi
+ * dựng lại được cả hai trên chính hàm đã ship:
  *
- * `DETECTION_BLIND` nghĩa là "0 lượt trả lời trên trang sau trọn thời gian chờ". HAI nguyên nhân
- * trông y hệt nhau từ bên trong:
- *   ⑴ trang chưa VẼ (tab bị che, Chrome không cấp khung hình) — kết quả ĐÃ CÓ trên máy chủ;
- *   ⑵ máy chủ thật sự không tạo ra gì.
- * Gửi lại ở ca ⑴ là đốt lượt quota thứ hai cho một việc đã xong — đúng cái ADR-0047 sinh ra để
- * chặn. Nên mọi mép ở đây canh đúng một tính chất: **"không thấy gì" KHÔNG BAO GIỜ đủ để gửi
- * lại.** Chỗ dễ hỏng nhất là vế ⒝ của `blindAbsenceAffirmed()` — mép ⑶ giữ nó.
+ *   ⑴ Sau cú F5, lượt đọc đầu tiên thấy một lượt trả lời **cũ** trong khi lượt trả lời của job
+ *     này chưa vẽ xong. Đủ ba vế → khẳng định → gửi lại. Vòng dò còn **thoát ngay** ở lượt đọc
+ *     đó, vì điều kiện thoát là *"đã thấy MỘT lượt trả lời nào đó"* — thứ mà lịch sử hội thoại
+ *     thoả mãn sẵn. Nó đo **bộ đọc còn sống**, không đo **câu trả lời đã xong**. Hai thứ khác nhau.
+ *   ⑵ Hai job chung một đoạn mở đầu dài → cùng khoá prompt → neo vào lượt hỏi của **job khác**.
  *
- * VÌ SAO NÓ KHÔNG PHẠM RÀNG BUỘC KIẾN TRÚC B-41: `DETECTION_BLIND` GIỮ NGUYÊN trong
- * `HARD_STOP_FAILURE_TYPES`; `canRetry()` và `submissionMayExist()` không bị sửa một dòng. Cửa
- * mới đứng TRƯỚC chúng, và hết điều kiện là rơi về đúng hành vi cũ — mép ⒁ đo đúng vế đó.
+ * **Cái sai không phải một điều kiện thiếu: không thể khẳng định "máy chủ không tạo gì" từ DOM.**
+ * "Chưa vẽ", "không có", và "selector mục một phần" trông y hệt nhau từ bên trong. Nên vế
+ * *"khẳng định được là không có thì mới gửi lại"* của ADR-0050 ⒞ là một vế **KHÔNG THI HÀNH
+ * ĐƯỢC**, và số nguồn khẳng định được điều đó vẫn là **0** như phép đo của ADR-0047.
  *
- * Mỏ neo được ĐẾM. Ra 0 là công cụ hỏng, không phải "không có gì phải sửa".
+ * Mọi mép dưới đây tồn tại để **cửa đó không mọc lại**. Mỏ neo được ĐẾM.
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -30,271 +31,215 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const doc = (ten) => fs.readFileSync(path.join(here, "..", ten), "utf8").split("\r\n").join("\n");
 const khongChuThich = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/.*$/gm, " ");
 
-/* ---- ⓐ HÀM THUẦN: chạy chính reconciliation-core.js đã ship ----------------------- */
+/* ---- ⓐ HAI HÀM ĐÃ BỊ XOÁ PHẢI Ở NGUYÊN TRẠNG BỊ XOÁ ------------------------------ */
 
 const ctx = { window: {} };
 vm.createContext(ctx);
 vm.runInContext(doc("reconciliation-core.js"), ctx);
 const C = ctx.window.DacReconciliationCore;
-
-// ⑴ Mỏ neo.
-assert.ok(typeof C?.blindAbsenceAffirmed === "function", "mỏ neo hỏng: core không có blindAbsenceAffirmed()");
-
-const HOI = "Vẽ cho tôi một con mèo ngồi trên mái nhà lúc trời mưa";
-const truocDo = [
-  { role: "user", text: "chào" },
-  { role: "assistant", text: "chào Đức" }
-];
-
-// ⑵ CA KHẲNG ĐỊNH ĐƯỢC: bộ đọc lượt trợ lý đã chứng minh còn sống (có lượt trả lời cũ), lượt
-// hỏi của job nằm trong hội thoại, và sau nó KHÔNG có lượt trả lời nào.
-{
-  const r = C.blindAbsenceAffirmed([...truocDo, { role: "user", text: HOI }], HOI);
-  assert.equal(r.affirmed, true, "đủ ba vế thì phải khẳng định được");
-  assert.equal(r.reason, "NO_REPLY_AFTER_PROMPT");
-  assert.equal(r.assistant_turns, 1, "và phải kể ra bằng chứng đã đếm được");
-}
-
-// ⑶ ═══ MÉP CHỊU TẢI ═══ KHÔNG có lượt trả lời nào trong CẢ hội thoại → KHÔNG được khẳng định.
-// Đây là dấu vết của một selector trợ lý BỊ MỤC: nó đọc ra "không có lượt trả lời" ở MỌI hội
-// thoại. Thiếu mép này thì phép tự kiểm sẽ khẳng định SAI là máy chủ không tạo gì, rồi gửi lại
-// một prompt đã có kết quả — đúng cái ADR-0047 cấm. Vế ⒜ (thấy lượt hỏi của mình) KHÔNG đủ:
-// bộ đọc lượt NGƯỜI và bộ đọc lượt TRỢ LÝ là hai selector khác nhau, mục cái nào là chuyện
-// riêng của cái đó.
-{
-  const r = C.blindAbsenceAffirmed([{ role: "user", text: "chào" }, { role: "user", text: HOI }], HOI);
-  assert.equal(r.affirmed, false, "0 lượt trả lời trong cả hội thoại = bộ đọc CHƯA chứng minh được nó còn sống");
-  assert.equal(r.reason, "ASSISTANT_READER_UNPROVEN");
-}
-
-// ⑷ Có lượt trả lời SAU lượt hỏi của mình → không khẳng định. Không quy thuộc được cái ảnh ở đó
-// (bằng chứng baseline đã mất sau F5), nhưng "có trả lời" thì tuyệt đối không được gửi lại.
-{
-  const r = C.blindAbsenceAffirmed([...truocDo, { role: "user", text: HOI }, { role: "assistant", text: "đây" }], HOI);
-  assert.equal(r.affirmed, false);
-  assert.equal(r.reason, "REPLY_EXISTS");
-}
-
-// ⑸ Không thấy lượt hỏi của mình → "chưa chứng minh được prompt tới đâu", không phải "không có
-// kết quả". Trang có thể đã trôi sang hội thoại khác.
-{
-  const r = C.blindAbsenceAffirmed(truocDo, HOI);
-  assert.equal(r.affirmed, false);
-  assert.equal(r.reason, "PROMPT_NOT_IN_CONVERSATION");
-}
-
-// ⑹ Không có prompt để neo → không khẳng định gì. Neo rỗng khớp mọi thứ, nên đây là một cửa,
-// không phải một chỗ dư.
-assert.equal(C.blindAbsenceAffirmed([...truocDo, { role: "user", text: "" }], "").affirmed, false);
-assert.equal(C.blindAbsenceAffirmed([...truocDo, { role: "user", text: HOI }], "   ").reason, "NO_PROMPT");
-
-// ⑺ Đầu vào rác không được ném — cửa này chạy đúng lúc trang đang hỏng.
-for (const rac of [null, undefined, "chuỗi", 7, {}]) {
-  assert.equal(C.blindAbsenceAffirmed(rac, HOI).affirmed, false, `đầu vào ${typeof rac} phải trả false, không ném`);
-}
-
-// ⑻ `innerText` gói lại dòng theo bề rộng khung, nên so nguyên văn là so hai thứ khác nhau.
-{
-  const goiDong = HOI.split(" ").join("\n  ");
-  const r = C.blindAbsenceAffirmed([...truocDo, { role: "user", text: goiDong }], HOI);
-  assert.equal(r.affirmed, true, "khoảng trắng bị gói lại vẫn phải khớp — dùng chung promptKey()");
-}
-
-// ⑼ Neo vào lượt hỏi CUỐI khớp, giống answerAfterPrompt(): cùng một prompt có thể đã được gửi
-// trong một hội thoại dài, và thứ cần đối soát luôn là lần gần nhất.
-{
-  const r = C.blindAbsenceAffirmed(
-    [{ role: "user", text: HOI }, { role: "assistant", text: "ảnh cũ" }, { role: "user", text: HOI }],
-    HOI
-  );
-  assert.equal(r.affirmed, true, "lượt hỏi gần nhất chưa được trả lời thì vẫn khẳng định được");
-}
-
-/* ---- ⓑ CỬA QUYẾT ĐỊNH: chạy chính runner-core.js đã ship -------------------------- */
-
 const rc = { window: {}, URL };
 vm.createContext(rc);
 vm.runInContext(doc("runner-core.js"), rc);
 const R = rc.window.DacRunnerCore || rc.DacRunnerCore;
-assert.ok(typeof R?.mayResendAfterBlindReconcile === "function", "mỏ neo hỏng: runner-core không có mayResendAfterBlindReconcile()");
 
-const daGui = { phase: "SUBMITTED" };
-const chuaGui = { phase: "PRE_SUBMIT" };
+// ⑴ Mỏ neo: hai module vẫn nạp được, nên "không có hàm" dưới đây là KHÔNG CÓ, chứ không phải
+// "module hỏng nên đọc ra undefined" — đúng cái bẫy đã làm một mép xanh vì lý do sai.
+assert.equal(typeof C?.answerAfterPrompt, "function", "mỏ neo hỏng: reconciliation-core không nạp được");
+assert.equal(typeof R?.canRetry, "function", "mỏ neo hỏng: runner-core không nạp được");
 
-// ⑽ Chỉ đúng một loại. Mọi loại khác đi đường cũ, từng chữ.
-assert.equal(R.mayResendAfterBlindReconcile(daGui, "DETECTION_BLIND", true, 0), true);
-for (const loai of ["POST_SUBMIT_UNCERTAIN", "TIMEOUT_AFTER_SUBMIT", "RECEIVER_LOST", "WRONG_SURFACE", "OTHER", "", null]) {
-  assert.equal(R.mayResendAfterBlindReconcile(daGui, loai, true, 0), false, `${loai} không được đi cửa này`);
+// ⑵ Phép "khẳng định không có kết quả" phải KHÔNG tồn tại. Thêm lại nó là mở lại đúng con bug.
+assert.equal(C.blindAbsenceAffirmed, undefined,
+  "blindAbsenceAffirmed() đã bị XOÁ 09/09 sau audit: nó trả true trong khi kết quả ĐÃ CÓ. Muốn dựng lại thì phải có một neo KHÔNG PHẢI CHỮ (xem B-45), và phải đọc lại ADR-0047 trước");
+assert.equal(R.mayResendAfterBlindReconcile, undefined,
+  "cửa gửi lại sau đối soát mù đã bị XOÁ — đừng khai lại nó mà không có bằng chứng mới");
+assert.equal(R.MAX_BLIND_RESENDS_PER_JOB, undefined, "và nắp của nó cũng vậy");
+assert.equal(R.BLIND_RECONCILABLE_FAILURE_TYPES, undefined);
+
+// ⑶ DETECTION_BLIND vẫn là dừng hẳn, và canRetry() vẫn không nới một chữ.
+assert.ok(R.HARD_STOP_FAILURE_TYPES.has("DETECTION_BLIND"));
+assert.equal(R.canRetry({ phase: "SUBMITTED", retry_count: 0, settings: { max_retries: 3 } }, "DETECTION_BLIND"), false);
+assert.equal(R.mayRepair({ phase: "SUBMITTED" }, "DETECTION_BLIND", 0), false);
+assert.equal(R.mayAskProviderRepair({ phase: "SUBMITTED" }, "DETECTION_BLIND", 0), false);
+
+/* ---- ⓑ NEO LƯỢT HỎI: phải DUY NHẤT ---------------------------------------------- */
+
+const MO_DAU = "Phong cach tranh khac go Nhat Ban, net day, tuong phan cao, bang mau tram, khong co chu trong anh, ti le 3:2, do phan giai cao, anh sang chieu tu ben trai, hau canh don gian";
+const JOB1 = `${MO_DAU} Chu the: mot con meo tren mai nha.`;
+const JOB2 = `${MO_DAU} Chu the: mot con cho trong san.`;
+
+// ⑷ Mỏ neo cho chính phép đo đã sinh ra bản sửa: đoạn mở đầu PHẢI dài hơn nắp so-khớp, nếu
+// không thì ca ⑵ của Codex không còn dựng được và các mép dưới thành vô nghĩa.
+assert.ok(MO_DAU.length > C.PROMPT_MATCH_CHARS, `mỏ neo hỏng: đoạn mở đầu (${MO_DAU.length}) phải dài hơn nắp (${C.PROMPT_MATCH_CHARS})`);
+
+// ⑸ ĐẦU + ĐUÔI: hai job chung đoạn mở đầu nay có khoá KHÁC nhau. Bản cũ chỉ lấy 160 ký tự đầu
+// nên chúng trùng khoá — đó là ca ⑵ của Codex.
+assert.notEqual(C.promptKey(JOB1), C.promptKey(JOB2),
+  "hai job chung đoạn mở đầu dài phải có khoá KHÁC nhau — khoá chỉ-lấy-đầu bỏ mất đúng phần phân biệt");
+// Nhưng KHÔNG chuyển sang so trọn prompt: innerText dựng lại markdown nên so trọn sẽ không
+// khớp gì cả, và một lỗi báo-thành-công-giả sẽ thành lỗi không-bao-giờ-đối-soát-được.
+assert.ok(C.promptKey(JOB1).length < JOB1.length || JOB1.length <= C.PROMPT_MATCH_CHARS * 2,
+  "khoá phải là ĐẦU+ĐUÔI có nắp, không phải trọn prompt");
+// Và nó vẫn phải chịu được lệch khoảng trắng do innerText gói dòng.
+assert.equal(C.promptKey(JOB1), C.promptKey(JOB1.split(" ").join("\n   ")),
+  "gói dòng lại vẫn phải ra cùng khoá");
+
+// ⑹ ═══ MÉP CHỊU TẢI ⒜ ═══ TRÙNG KHOÁ → TỪ CHỐI KẾT LUẬN, không phải "lấy lượt cuối".
+// Bản cũ lấy lượt khớp CUỐI, và đó là chỗ Codex chọc: nó neo vào lượt của job khác rồi ghi câu
+// trả lời của job khác vào sổ với dấu đã-xác-minh.
+{
+  const rows = [
+    { role: "user", text: JOB1 },
+    { role: "assistant", text: "cau tra loi cua JOB1" },
+    { role: "user", text: JOB1 }
+  ];
+  assert.equal(C.soleUserTurnIndex(rows, JOB1), C.MATCH_AMBIGUOUS, "hai lượt hỏi cùng khoá = không kết luận được");
+  const hit = C.answerAfterPrompt(rows, JOB1);
+  assert.equal(hit.found, false, "trùng khoá thì answerAfterPrompt PHẢI từ chối");
+  assert.equal(hit.reason, "AMBIGUOUS_PROMPT_MATCH");
+  assert.equal(hit.text, "", "và tuyệt đối không trả về chữ nào — chữ đó có thể của job khác");
 }
 
-// ⑾ ═══ SO NGHIÊM NGẶT === true ═══ Một trang hỏng trả về `{}` là thứ xảy ra thật, và `if (x)`
-// sẽ nhận nó. Cửa này chở toàn bộ ADR-0047, nên một giá trị "hơi đúng" không được mở nổi nó.
-for (const gia of [{}, 1, "true", "yes", [], "affirmed", {}, undefined, null, false, 0, ""]) {
-  assert.equal(R.mayResendAfterBlindReconcile(daGui, "DETECTION_BLIND", gia, 0), false, `khẳng định giả (${JSON.stringify(gia)}) không được mở cửa`);
+// ⑺ ĐÁNH ĐỔI ĐÃ NHẬN, ghi ra để không ai đọc mép ⑹ rồi tưởng nó miễn phí: cùng một prompt được
+// một NGƯỜI gửi lại bằng tay trong cùng hội thoại nay cũng bị từ chối, nên job đó dừng thay vì
+// tự lấy câu trả lời mới nhất. Chọn hướng này vì cái mất là một lượt người xem, còn hướng kia
+// làm dữ liệu sai đi thẳng vào sổ mà không ai thấy. Cần chính xác hơn thì phải neo vào
+// `data-message-id` (B-45), không phải nới mép này.
+{
+  const rows = [
+    { role: "user", text: "cau hoi lap lai" },
+    { role: "assistant", text: "tra loi lan mot" },
+    { role: "user", text: "cau hoi lap lai" },
+    { role: "assistant", text: "tra loi lan hai" }
+  ];
+  assert.equal(C.answerAfterPrompt(rows, "cau hoi lap lai").reason, "AMBIGUOUS_PROMPT_MATCH",
+    "đánh đổi đã nhận: người gửi lại tay thì máy DỪNG, không đoán");
 }
 
-// ⑿ Đòi ĐÃ gửi — cố ý NGƯỢC với mayRepair(), giống mayAskProviderRepair(). Bằng chứng của cửa
-// này là chính lượt hỏi đã bay nằm trong hội thoại; chưa gửi gì thì canRetry() đã đủ.
-assert.equal(R.mayResendAfterBlindReconcile(chuaGui, "DETECTION_BLIND", true, 0), false);
-assert.equal(R.mayResendAfterBlindReconcile({ phase: "PRE_SUBMIT", submission_uncertain: true }, "DETECTION_BLIND", true, 0), true, "cờ lấp lửng cũng là ĐÃ GỬI");
-
-// ⒀ NẮP 1. Lần gửi lại thứ hai không có thêm bằng chứng nào so với lần đầu: nếu nó lại mù thì
-// phép tự kiểm trả về đúng câu trả lời cũ — đó là một VÒNG LẶP, không phải một phép thử mới.
-assert.equal(R.MAX_BLIND_RESENDS_PER_JOB, 1, "nắp gửi lại PROMPT GỐC phải chặt hơn nắp câu chữa của B-40 ⒝");
-assert.ok(R.MAX_BLIND_RESENDS_PER_JOB < R.MAX_PROVIDER_REPAIRS_PER_JOB, "gửi lại prompt gốc đắt hơn gõ một câu chữa, nên nắp phải nhỏ hơn");
-assert.equal(R.mayResendAfterBlindReconcile(daGui, "DETECTION_BLIND", true, 1), false, "hết nắp thì đóng");
-assert.equal(R.mayResendAfterBlindReconcile(daGui, "DETECTION_BLIND", true, 99), false);
-
-// ⒁ ═══ ĐƯỜNG CŨ CÒN NGUYÊN ═══ Cửa mới đứng TRƯỚC lớp hard stop, không moi vào trong nó.
-assert.ok(R.HARD_STOP_FAILURE_TYPES.has("DETECTION_BLIND"), "DETECTION_BLIND vẫn phải là hard stop — bỏ ra là ĐỔI LUẬT AN TOÀN, phải hỏi Đức");
-assert.equal(R.canRetry({ ...daGui, retry_count: 0, settings: { max_retries: 3 } }, "DETECTION_BLIND"), false, "canRetry() không được nới một chữ");
-assert.equal(R.mayRepair(daGui, "DETECTION_BLIND", 0), false, "cửa chữa hạ tầng vẫn KHÔNG nhận loại này");
-assert.equal(R.mayAskProviderRepair(daGui, "DETECTION_BLIND", 0), false, "cửa câu chữa của B-40 ⒝ cũng KHÔNG nhận loại này");
-// Hai ngoại lệ Đức nêu (captcha, hết credit) phải RỜI khỏi tập của cửa mới — bất biến, không
-// phải một nhánh `if` (nhánh đó là mã chết, và ghim mã chết là ghim một bản sao của niềm tin).
-for (const cung of ["SECURITY_HARD_STOP", "GENERATION_LIMIT_REACHED"]) {
-  assert.ok(!R.BLIND_RECONCILABLE_FAILURE_TYPES.has(cung), `${cung} phải dừng hẳn, Đức chốt rõ`);
+// ⑻ Một lượt bị cắt ở nắp đọc không được coi là khớp: chữ của nó không đầy đủ.
+{
+  const rows = [{ role: "user", text: JOB1, truncated: true }, { role: "assistant", text: "x" }];
+  assert.equal(C.soleUserTurnIndex(rows, JOB1), C.MATCH_NONE, "lượt bị cắt không phải một phép khớp");
 }
 
-/* ---- ⓒ HÀNH VI: CẮT `reconcileBlindDetector()` đã ship ra CHẠY THẬT ---------------
-   Hai con thoát ở B-40 ⒝ (nắp không tăng · `run.stop` bị bỏ qua) lọt vì MỌI mép đều chỉ soi
-   CẤU TRÚC. Cấu trúc không với tới hành vi. Nên khối này chạy chính hàm đã ship. */
+// ⑼ Đường thông vẫn phải chạy — thiếu mép này thì một bản "từ chối mọi lúc" cũng xanh hết.
+{
+  const rows = [
+    { role: "user", text: "chao" },
+    { role: "assistant", text: "chao Duc" },
+    { role: "user", text: JOB1 },
+    { role: "assistant", text: "day la cau tra loi dung cua JOB1" }
+  ];
+  const hit = C.answerAfterPrompt(rows, JOB1);
+  assert.equal(hit.found, true);
+  assert.equal(hit.reason, "OK");
+  assert.equal(hit.text, "day la cau tra loi dung cua JOB1");
+}
+
+/* ---- ⓒ HAI CA CỦA CODEX: nay KHÔNG cửa nào biến chúng thành lượt gửi lại -------- */
+
+// ⑽ Ca ⑴: sau F5 chỉ đọc được [U0, A0, U1] — lượt trả lời của job này chưa vẽ. Không còn hàm
+// nào biến trạng thái đó thành "được gửi lại"; và answerAfterPrompt đọc nó là CHƯA TRẢ LỜI,
+// không phải KHÔNG CÓ KẾT QUẢ. Hai chữ đó là toàn bộ khác biệt.
+{
+  const rows = [{ role: "user", text: "chao" }, { role: "assistant", text: "chao" }, { role: "user", text: JOB1 }];
+  const hit = C.answerAfterPrompt(rows, JOB1);
+  assert.equal(hit.reason, "NO_ANSWER_YET", "chưa vẽ xong là CHƯA TRẢ LỜI, không phải KHÔNG CÓ KẾT QUẢ");
+  assert.equal(hit.found, true, "và nó KHÔNG được đọc thành 'không tìm thấy' — đó là một câu khác nữa");
+}
+
+// ⑾ Ca ⑵: [U1, A1, U2] với U2 trùng khoá. Trước bản sửa: khẳng định → gửi lại U1 dù A1 nằm đó.
+{
+  const rows = [{ role: "user", text: JOB1 }, { role: "assistant", text: "anh cua JOB1" }, { role: "user", text: JOB1 }];
+  assert.equal(C.answerAfterPrompt(rows, JOB1).reason, "AMBIGUOUS_PROMPT_MATCH");
+}
+
+/* ---- ⓓ HÀNH VI: cắt `reconcileBlindDetector()` đã ship ra CHẠY THẬT ------------- */
 {
   const sp = doc("sidepanel.js");
   const dau = sp.indexOf("async function reconcileBlindDetector(");
   assert.ok(dau > 0, "mỏ neo hỏng: không thấy reconcileBlindDetector()");
   const END = "\n  }\n";
   const cuoi = sp.indexOf(END, dau);
-  assert.ok(cuoi > dau, "không tìm thấy chỗ đóng reconcileBlindDetector()");
   const shipped = sp.slice(dau, cuoi + END.length);
   assert.ok(shipped.includes("DAC_RECONCILE_TEXT_JOB"), "cắt nhầm khối");
-  assert.ok(shipped.includes("mayResendAfterBlindReconcile"), "cắt nhầm khối: thiếu cửa quyết định");
 
-  // ⒂ THỨ TỰ LÀ AN TOÀN: lượt ĐỌC đầu phải đứng TRƯỚC cú F5. Đảo lại thì test hành vi vẫn
-  // xanh mà luật exact-once mất — F5 lúc lấp lửng là đúng cái `chat.reload` từ chối làm.
+  // ⑿ ═══ MÉP CHỊU TẢI ⒝ ═══ KHÔNG có đường nào đưa job về PENDING. `status: "PENDING"` là
+  // cách duy nhất vòng chạy hiểu "làm lại từ đầu", tức gửi lại prompt gốc.
   {
     const than = khongChuThich(shipped);
-    const viTriDoc = than.indexOf("await doc()");
-    const viTriF5 = than.indexOf("repairWorkspaceSurface()");
-    assert.ok(viTriDoc > 0 && viTriF5 > 0, "mỏ neo hỏng: không thấy cả hai bước");
-    assert.ok(viTriDoc < viTriF5, "ĐỌC phải đứng trước F5");
+    assert.ok(!/PENDING/.test(than), "cửa này KHÔNG được đưa job về PENDING — đó chính là lượt gửi lại");
+    assert.ok(!/completed: false/.test(than), "và không được trả về 'chạy tiếp': mọi lối ra là dừng hẳn");
+    assert.ok(!/DAC_RUN_IMAGE_JOB|DAC_RUN_TEXT_JOB|DAC_PROVIDER_REPAIR/.test(than), "và không gọi cửa gửi nào");
+    // Không còn điều kiện thoát sớm trong vòng dò — đó là chỗ Codex chọc vào.
+    assert.ok(!/break;/.test(than), "vòng dò KHÔNG được thoát sớm: điều kiện thoát cũ được thoả bởi LỊCH SỬ hội thoại");
+    assert.ok(than.indexOf("await doc()") < than.indexOf("repairWorkspaceSurface()"), "ĐỌC phải đứng trước F5");
   }
 
-  function sanKhau({ stop = false, daDung = 0, docTruoc = null, docSau = null } = {}) {
-    const dem = { doc: 0, f5: 0, ngat: 0, choPending: 0 };
+  function sanKhau({ docTruoc = null, docSau = null, f5Nem = false } = {}) {
+    const dem = { doc: 0, f5: 0, ngat: 0, pending: 0 };
     const box = {
       console, setTimeout,
-      state: { stopRequested: stop, blindResendsUsed: { J001: daDung } },
+      state: { stopRequested: false },
       window: { DacRunnerCore: R },
-      // Nắp nhỏ để vòng dò kết thúc trong test; hằng thật là 60s/3s.
-      RECONCILE_READ_TIMEOUT_MS: 40, RECONCILE_READ_POLL_MS: 4,
+      RECONCILE_READ_TIMEOUT_MS: 30, RECONCILE_READ_POLL_MS: 5,
       sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
       send: async () => { dem.doc += 1; return dem.f5 ? docSau : docTruoc; },
-      repairWorkspaceSurface: async () => { dem.f5 += 1; return { ok: true, note: "đã F5" }; },
+      repairWorkspaceSurface: async () => { dem.f5 += 1; if (f5Nem) throw new Error("F5 vo"); return { ok: true, note: "da F5" }; },
       audit: () => {}, log: () => {}, renderQueue: () => {}, progress: () => {},
       messageOf: (e) => String(e && e.message ? e.message : e),
-      markInterrupted: (_i, loai) => { dem.ngat += 1; dem.loaiNgat = loai; },
-      update: (_i, o) => { if (o && o.status === "PENDING") dem.choPending += 1; },
+      markInterrupted: (_i, loai, ly) => { dem.ngat += 1; dem.loai = loai; dem.ly = ly; },
+      update: (_i, o) => { if (o && o.status === "PENDING") dem.pending += 1; }
     };
     vm.createContext(box);
-    vm.runInContext(shipped + "\nglobalThis.__f = reconcileBlindDetector;", box);
-    const item = { job: { id: "J001", prompt: HOI }, attempt_id: "a1", phase: "SUBMITTED", attempt_count: 1, retry_count: 0, settings: { timeout_sec: 180 } };
-    return { chay: () => box.__f(item, {}, "DETECTION_BLIND: no assistant message exists", {}), dem, box, item };
+    vm.runInContext(`${shipped}\nglobalThis.__f = reconcileBlindDetector;`, box);
+    const item = { job: { id: "J001", prompt: JOB1 }, attempt_id: "a1", phase: "SUBMITTED", attempt_count: 1, retry_count: 0, settings: { timeout_sec: 180 } };
+    return { chay: () => box.__f(item, {}, "DETECTION_BLIND: no assistant message exists", {}), dem, box };
   }
+  const bao = (turns) => {
+    const hit = C.answerAfterPrompt(turns, JOB1);
+    return { ok: true, reconcile: { ...hit, chars: hit.text.length, turns_read: turns.length } };
+  };
 
-  const bao = (turns) => ({ ok: true, reconcile: { found: C.blindAbsenceAffirmed(turns, HOI).reason !== "PROMPT_NOT_IN_CONVERSATION", blind: C.blindAbsenceAffirmed(turns, HOI) } });
-  const CHUA_TOI = bao(truocDo);
-  const KHANG_DINH = bao([...truocDo, { role: "user", text: HOI }]);
-  const MU_TIEP = bao([{ role: "user", text: HOI }]);
-  const CO_TRA_LOI = bao([...truocDo, { role: "user", text: HOI }, { role: "assistant", text: "đây" }]);
-
-  // ⒃ KHÔNG thấy lượt hỏi của mình → dừng hẳn, và TUYỆT ĐỐI KHÔNG F5.
+  // ⒀ Ca ⑴ của Codex, chạy qua hàm thật: sau F5 chỉ có lượt trả lời CŨ → vẫn dừng hẳn, 0 resend.
   {
-    const s = sanKhau({ docTruoc: CHUA_TOI });
+    const s = sanKhau({
+      docTruoc: bao([{ role: "user", text: "chao" }, { role: "assistant", text: "chao" }, { role: "user", text: JOB1 }]),
+      docSau: bao([{ role: "user", text: "chao" }, { role: "assistant", text: "chao" }, { role: "user", text: JOB1 }])
+    });
     const r = await s.chay();
     assert.equal(r.completed, true); assert.equal(r.halted, true);
+    assert.equal(s.dem.pending, 0, "ca Codex ⑴ KHÔNG được thành một lượt gửi lại");
+    assert.equal(s.dem.loai, "DETECTION_BLIND", "và giữ đúng mã lỗi");
+    assert.ok(s.dem.doc > 2, "phải dò nhiều lượt sau F5, không đọc một lượt rồi kết luận");
+  }
+
+  // ⒁ Không thấy lượt hỏi của mình → dừng hẳn, và TUYỆT ĐỐI KHÔNG F5.
+  {
+    const s = sanKhau({ docTruoc: bao([{ role: "user", text: "chuyen khac" }, { role: "assistant", text: "x" }]) });
+    const r = await s.chay();
+    assert.equal(r.halted, true);
     assert.equal(s.dem.f5, 0, "chưa chứng minh được prompt tới đâu thì KHÔNG F5");
-    assert.equal(s.dem.doc, 1, "và chỉ đọc đúng một lượt");
-    assert.equal(s.dem.ngat, 1);
-    assert.equal(s.dem.loaiNgat, "DETECTION_BLIND", "phải giữ đúng mã lỗi, không đổi nhãn");
-    assert.equal(s.box.state.blindResendsUsed.J001, 0, "và KHÔNG tiêu nắp");
+    assert.equal(s.dem.doc, 1);
   }
 
-  // ⒄ KHẲNG ĐỊNH ĐƯỢC → F5 đã xảy ra, nắp tăng 0 → 1, job về PENDING để gửi lại.
+  // ⒂ TRÙNG KHOÁ trước cả F5 → dừng hẳn, không F5, và câu dừng phải NÓI RA là trùng khoá —
+  // người vận hành cần biết mình đang xem cái gì.
   {
-    const s = sanKhau({ docTruoc: KHANG_DINH, docSau: KHANG_DINH });
-    const r = await s.chay();
-    assert.equal(r.completed, false, "khẳng định được thì vòng chạy tiếp, không dừng"); assert.equal(r.halted, false);
-    assert.equal(s.dem.f5, 1, "F5 đúng một lần");
-    assert.equal(s.box.state.blindResendsUsed.J001, 1, "gửi lại PHẢI tăng bộ đếm nắp — không tăng thì nắp không bao giờ cắn");
-    assert.equal(s.dem.choPending, 1, "và job phải được đưa về PENDING");
-    assert.equal(s.dem.ngat, 0);
+    const s = sanKhau({ docTruoc: bao([{ role: "user", text: JOB1 }, { role: "assistant", text: "x" }, { role: "user", text: JOB1 }]) });
+    await s.chay();
+    assert.equal(s.dem.f5, 0);
+    assert.match(String(s.dem.ly), /NHIỀU HƠN MỘT/, "câu dừng phải nói ra vì sao không kết luận được");
   }
 
-  // ⒅ Sau F5 VẪN không có lượt trả lời nào trong cả hội thoại → bộ đọc chưa chứng minh được nó
-  // còn sống → dừng hẳn, KHÔNG gửi lại. Đây là ca selector mục, và nó không được thành resend.
+  // ⒃ ═══ F5 NÉM ═══ Codex tìm ⑶: trước bản sửa, một lượt F5 ném để item nằm lại RECONCILING
+  // mãi. Nay mọi lối ra, kể cả lối NÉM, đều phải đi qua một lượt kết.
   {
-    const s = sanKhau({ docTruoc: MU_TIEP, docSau: MU_TIEP });
+    const s = sanKhau({ docTruoc: bao([{ role: "user", text: JOB1 }]), f5Nem: true });
     const r = await s.chay();
     assert.equal(r.completed, true); assert.equal(r.halted, true);
-    assert.equal(s.dem.f5, 1);
-    assert.ok(s.dem.doc > 1, "phải dò lại sau F5, không đọc một lượt rồi kết luận");
-    assert.equal(s.box.state.blindResendsUsed.J001, 0, "KHÔNG khẳng định được thì KHÔNG tiêu nắp và KHÔNG gửi lại");
-  }
-
-  // ⒆ Sau F5 có lượt trả lời SAU lượt hỏi của mình → dừng hẳn. Không quy thuộc được ảnh nữa
-  // (baseline mất theo cú F5), nhưng gửi lại lúc này là đốt lượt thứ hai cho việc đã xong.
-  {
-    const s = sanKhau({ docTruoc: KHANG_DINH, docSau: CO_TRA_LOI });
-    const r = await s.chay();
-    assert.equal(r.completed, true); assert.equal(r.halted, true);
-    assert.equal(s.box.state.blindResendsUsed.J001, 0, "có lượt trả lời thì tuyệt đối KHÔNG gửi lại");
-  }
-
-  // ⒇ NÚT DỪNG THẮNG: Đức bấm Dừng thì không job nào được gửi thêm.
-  {
-    const s = sanKhau({ stop: true, docTruoc: KHANG_DINH, docSau: KHANG_DINH });
-    const r = await s.chay();
-    assert.equal(r.completed, true); assert.equal(r.halted, true);
-    assert.equal(s.box.state.blindResendsUsed.J001, 0, "bấm Dừng là để nó dừng");
-    assert.equal(s.dem.choPending, 0);
-  }
-
-  // (21) HẾT NẮP → rơi về đúng hành vi cũ, dù mọi vế khác đều đạt.
-  {
-    const s = sanKhau({ daDung: R.MAX_BLIND_RESENDS_PER_JOB, docTruoc: KHANG_DINH, docSau: KHANG_DINH });
-    const r = await s.chay();
-    assert.equal(r.completed, true); assert.equal(r.halted, true);
-    assert.equal(s.box.state.blindResendsUsed.J001, R.MAX_BLIND_RESENDS_PER_JOB, "hết nắp thì cũng đừng tăng thêm");
-    assert.equal(s.dem.choPending, 0);
+    assert.equal(s.dem.ngat, 1, "ném ở giữa vẫn phải kết, không để item treo ở RECONCILING");
+    assert.equal(s.dem.pending, 0);
   }
 }
 
-/* ---- ⓓ BẤT BIẾN TRÊN MÃ ĐÃ SHIP -------------------------------------------------- */
-
-// (22) Cửa đọc phải CHỞ phép tự kiểm về. Thiếu dòng này thì lớp trên đọc `undefined` và, nhờ
-// so `=== true` ở mép ⑾, sẽ dừng hẳn — an toàn, nhưng cả bản vá thành mã chết. Đo, đừng đoán.
-{
-  const cj = khongChuThich(doc("content.js"));
-  assert.match(cj, /blind: window\.DacReconciliationCore\.blindAbsenceAffirmed\(read\.turns, prompt\)/, "payload đối soát phải chở phép tự kiểm");
-}
-
-// (23) ĐƯỜNG RẼ: `reconcileSubmittedAttempt()` phải rẽ sang cửa mới TRƯỚC khi chạy lại chính bộ
-// dò vừa mù. `DAC_RECONCILE_IMAGE_JOB` dùng đúng `assistantSelector()` vừa đọc ra 0 lượt.
-{
-  const sp = khongChuThich(doc("sidepanel.js"));
-  const dau = sp.indexOf("async function reconcileSubmittedAttempt(");
-  assert.ok(dau > 0, "mỏ neo hỏng");
-  const khoi = sp.slice(dau, sp.indexOf("DAC_RECONCILE_IMAGE_JOB", dau));
-  assert.ok(khoi.includes("reconcileBlindDetector("), "phải rẽ TRƯỚC lượt dò lại");
-  assert.ok(khoi.includes('=== "DETECTION_BLIND"'), "và chỉ rẽ đúng loại đó");
-}
-
-// (24) Số nguồn mở-cửa-gửi-lại bằng `verifyExistingOutput()` trên đường TỰ ĐỘNG vẫn phải là 0 —
-// hàm đó chỉ chạy khi người vận hành bấm nút. Bản vá này KHÔNG nối nó vào vòng chạy.
-{
-  const sp = khongChuThich(doc("sidepanel.js"));
-  assert.equal(sp.split("verifyExistingOutput(").length - 1, 0, "đường tự động không được gọi verifyExistingOutput()");
-}
-
-console.log("B-41 ⑵ DETECTION_BLIND đối soát trước, chạy thật (24 mép): PASS");
+console.log("B-41 ⑵ đối soát bộ dò mù, KHÔNG BAO GIỜ gửi lại, chạy thật (16 mép): PASS");

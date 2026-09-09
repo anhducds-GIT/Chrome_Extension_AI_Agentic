@@ -239,40 +239,24 @@
     return Number(repairsUsed) < cap;
   }
 
-  /* B-41 ⑵ (ADR-0050 ⒞, Đức chốt 08/09) — `DETECTION_BLIND` thôi là một dead-end, nhưng
-     ĐỐI SOÁT TRƯỚC, và chỉ gửi lại khi khẳng định được là không có kết quả.
+  /* B-41 ⑵ — CỬA GỬI LẠI SAU ĐỐI SOÁT MÙ ĐÃ BỊ XOÁ, 09/09, sau audit Codex.
 
-     `DETECTION_BLIND` GIỮ NGUYÊN trong `HARD_STOP_FAILURE_TYPES`, và đó là chủ ý — cùng
-     kiến trúc B-40 ⒝ đã dựng: cửa này đứng TRƯỚC lớp hard stop, không moi vào trong nó.
-     Bỏ nó ra khỏi tập hard stop sẽ đổi `resolveJobFailure()`, đổi bảng hướng dẫn dừng, và
-     đụng vào `canRetry()` — tức đổi một LUẬT AN TOÀN, thứ phải hỏi Đức. Cửa riêng thì
-     không: hết điều kiện là rơi về đúng hành vi cũ, từng chữ.
+     Nó từng ở đây. Codex dựng được hai chuỗi sự kiện cụ thể trong đó phép "khẳng định không
+     có kết quả" trả về **true trong khi máy chủ ĐÃ tạo ra kết quả**, và tôi dựng lại được cả
+     hai trên chính hàm đã ship:
+       ⑴ sau cú F5, lượt đọc đầu tiên đã thấy một lượt trả lời **cũ** nhưng lượt trả lời của
+         **job này** chưa vẽ xong → đủ ba vế → khẳng định → gửi lại;
+       ⑵ hai job chung đoạn mở đầu dài → cùng khoá → neo vào lượt của job khác → khẳng định.
 
-     BỐN VẾ, cả bốn đều bắt buộc:
-       ⑴ đúng loại — chỉ `DETECTION_BLIND`.
-       ⑵ `absenceAffirmed === true`, so sánh NGHIÊM NGẶT. Đây là vế chở toàn bộ ADR-0047:
-         phép khẳng định nằm ở `blindAbsenceAffirmed()`, và so `=== true` để một giá trị
-         "hơi đúng" (chuỗi, object, 1) không mở nổi cửa. Một trang lỗi trả về `{}` là thứ
-         xảy ra thật; `if (x)` sẽ nhận nó.
-       ⑶ ĐÃ gửi — `submissionMayExist()` phải true. Cố ý NGƯỢC với `mayRepair()` và
-         giống `mayAskProviderRepair()`: bằng chứng của cửa này là chính lượt hỏi đã bay
-         nằm trong hội thoại. Chưa gửi gì thì đường `canRetry()` thường đã đủ.
-       ⑷ còn nắp — đếm theo JOB, nắp 1. Lượt gửi lại này gửi PROMPT GỐC, tốn một lượt quota
-         thật, nên nắp phải chặt hơn hẳn nắp 2 của B-40 ⒝ (bên đó gõ một câu chữa ngắn).
-         Nắp 1 vì lần gửi lại thứ hai không có thêm bằng chứng nào so với lần đầu: nếu nó
-         lại mù thì phép tự kiểm cũng trả về đúng câu trả lời cũ, và đó là một VÒNG LẶP,
-         không phải một phép thử mới.
+     Cái sai không phải một điều kiện thiếu: **không thể khẳng định "máy chủ không tạo gì" từ
+     DOM.** Một lượt đọc không thấy gì và một lượt đọc chưa vẽ xong trông y hệt nhau, và một
+     selector mục một phần cũng vậy. Nên số nguồn đối soát khẳng định được **"lượt gửi này
+     không tạo ra kết quả nào"** vẫn là **0**, đúng như phép đo của ADR-0047 — và ADR-0050 ⒞
+     phần *"khẳng định được là không có thì mới gửi lại"* là một vế **không thi hành được**,
+     không phải một vế chưa làm.
 
-     `submissionMayExist()` và `canRetry()` không bị sửa một dòng. */
-  const BLIND_RECONCILABLE_FAILURE_TYPES = new Set(["DETECTION_BLIND"]);
-  const MAX_BLIND_RESENDS_PER_JOB = 1;
-  function mayResendAfterBlindReconcile(item, failureType, absenceAffirmed, resendsUsed = 0, cap = MAX_BLIND_RESENDS_PER_JOB) {
-    if (!BLIND_RECONCILABLE_FAILURE_TYPES.has(failureType)) return false;
-    if (absenceAffirmed !== true) return false;
-    if (!submissionMayExist(item)) return false;
-    return Number(resendsUsed) < cap;
-  }
-
+     Đường đối soát mù vẫn còn, nhưng nó CHỈ dùng để nói RA trang có gì sau cú F5 — nó luôn
+     dừng hẳn. Đừng dựng lại cửa này mà không có một neo **không phải chữ** (xem `B-45`). */
   function needsReconciliation(phase) { return POST_SUBMIT_PHASES.has(phase) && phase !== "SUCCESS"; }
   // INTERRUPTED means "genuinely unresolved -- a human must look before this
   // run continues". Từ B-19 (Đức chốt 06/09) nó phủ HAI trường hợp, không còn
@@ -402,6 +386,6 @@
     if (!signal?.composerFound) return "OUTPUT_READY";
     return "CHAT_READY";
   }
-  const api = { DEFAULTS, ATTEMPT_PHASES, TASK_TYPES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, REPAIRABLE_FAILURE_TYPES, MAX_REPAIRS_PER_RUN, mayRepair, PROVIDER_REPAIRABLE_FAILURE_TYPES, MAX_PROVIDER_REPAIRS_PER_JOB, mayAskProviderRepair, BLIND_RECONCILABLE_FAILURE_TYPES, MAX_BLIND_RESENDS_PER_JOB, mayResendAfterBlindReconcile, basename, referenceTokens, taskType, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, submissionMayExist, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
+  const api = { DEFAULTS, ATTEMPT_PHASES, TASK_TYPES, FAILURE_TYPES, HARD_STOP_FAILURE_TYPES, REPAIRABLE_FAILURE_TYPES, MAX_REPAIRS_PER_RUN, mayRepair, PROVIDER_REPAIRABLE_FAILURE_TYPES, MAX_PROVIDER_REPAIRS_PER_JOB, mayAskProviderRepair, basename, referenceTokens, taskType, config, runtimeConfig, aliases, resolveReferences, perJobSettings, classifyFailure, canRetry, submissionMayExist, needsReconciliation, interruptedStatus, canStartNextJob, auditOrderValid, safetyCooldownSeconds, retryCooldown, resultWorkbookName, delaySeconds, submissionReservation, shouldCheckpoint, rebindQueueRows, verifiedRunCheckpoint, countdownValues, planSummary, prepare, selectQueue, readinessState };
   (typeof window !== "undefined" ? window : globalThis).DacRunnerCore = api;
 })();
