@@ -591,6 +591,8 @@
     let imageSignature = "";
     let imageStableSince = null;
     let abPollSeen = null;
+    // B-43: dem so vong do ma trang bi che. Dung de noi RO nguyen nhan luc het gio.
+    let hiddenPolls = 0;
     let lastDetection = { ...boundaryTelemetry(boundary), stop_visible: false, generating: false, decision_reason: "NOT_EVALUATED" };
 
     while (Date.now() - startedAt < timeoutMs) {
@@ -660,7 +662,37 @@
         }
       }
 
-      if (resultMessage && !stopButton) {
+      // B-43 — TAB BỊ CHE THÌ MỌI TÍN HIỆU Ở ĐÂY ĐỀU NÓI DỐI, và chúng nói dối theo
+      // hướng nguy hiểm nhất: "xong rồi".
+      //
+      // ĐO LIVE 2026-09-09, năm lượt trên năm: máy ghi vào sổ 6 · 27 · 28 · 35 · 27 ký tự
+      // trong khi trang giữ 237 · 915 · 203 · 275 · 412. Cái ghi được luôn là dòng tiêu đề
+      // bị cắt GIỮA CHỪNG (`"MODE: Audit | BUDGET: 100 w"` — thiếu cả ngoặc đóng). Job vẫn
+      // settle SUCCESS, `persistence_verified: true`. Không gì đỏ lên.
+      //
+      // Cơ chế, dò từng giây suốt 202 giây một lượt chạy:
+      //   giây 24  lượt trả lời mới hiện, 8 ký tự, nút Dừng BẬT
+      //   giây 28  26 ký tự, nút Dừng vẫn bật
+      //   giây 31  nút Dừng TẮT — chữ vẫn 26 ký tự
+      //   giây 31 → 202  KHÔNG mọc thêm một ký tự nào trong gần ba phút
+      // Rồi Đức bấm vào tab: cùng lượt đó nhảy 26 → 251 ký tự, KHÔNG có lượt sinh mới.
+      //
+      // Chrome bóp phanh tab bị che, nên chữ ChatGPT gửi về không vào DOM cho tới khi tab
+      // được nhìn tới. Cả hai vế của luật chốt — "không thấy nút Dừng" và "chữ đứng yên
+      // 1,5 giây" — đều THOẢ, và cả hai đều sai.
+      //
+      // Đây CÙNG MỘT HỌ với con bug đã vá 28/08: khoảng nghỉ 12 giây giữa hai job thành
+      // ~11 phút vì Chrome bóp hẹn giờ khi panel bị che (`interjob-delay-core.js`). Lần đó
+      // là đồng hồ, lần này là chữ. Cùng một nguyên nhân gốc, hai chỗ khác nhau.
+      //
+      // Bản vá CỐ Ý HẸP: không tự bật tab lên (đó là hành vi mới trên trình duyệt của Đức,
+      // phải hỏi), không nới ngưỡng 1,5 giây (nó không phải nguyên nhân — chữ đứng yên
+      // 171 giây vẫn chưa xong). Chỉ **từ chối chốt** khi trang đang bị che, và để vòng
+      // chờ tiếp tục. Đổi một lần báo-thành-công-giả thành một lần chờ trung thực.
+      const trangBiChe = typeof document !== "undefined" && document.visibilityState === "hidden";
+      if (trangBiChe) hiddenPolls += 1;
+
+      if (resultMessage && !stopButton && !trangBiChe) {
         const imageUrl = imageCandidates(resultMessage).at(-1)?.source || null;
         if (text === stableText) {
           if (!stableSince) stableSince = Date.now();
@@ -702,6 +734,19 @@
     // a normal timeout from the outside, which is how the 2026-08-26 run
     // retried into six real image generations before giving up. Say which one
     // it is, and let the runner halt instead of paying for another attempt.
+    // B-43: hết giờ mà phần lớn thời gian trang bị che thì nguyên nhân gần như chắc chắn là
+    // Chrome bóp phanh tab nền, KHÔNG phải ChatGPT chậm. Nói thẳng ra, kèm việc phải làm —
+    // một câu "hết giờ" trơn ở đây đúng bằng cách con bug này sống được: nó đổ lỗi cho nhà
+    // cung cấp, và người vận hành đi tìm sai chỗ.
+    if (!expectImage && hiddenPolls > pollCount / 2) {
+      const error = new Error(
+        `TAB_HIDDEN_NO_STREAM: tab ChatGPT bị che ${hiddenPolls}/${pollCount} vòng dò, nên chữ ` +
+        "ChatGPT gửi về không vào được trang. Mở tab đó ra cho nó hiện rồi chạy lại — chưa có " +
+        "kết quả nào bị ghi sai, và lượt gửi này KHÔNG được gửi lại tự động."
+      );
+      error.detection = { ...lastDetection, timed_out: true, hidden_polls: hiddenPolls, poll_count: pollCount };
+      throw error;
+    }
     const blind = expectImage && assistantMessages().length === 0;
     const error = blind
       ? new Error(`DETECTION_BLIND: no assistant message exists on ${location.href} after the full timeout — either the page structure changed or this tab is not on a ChatGPT conversation. Nothing was detected, so retrying would only spend more quota. Run diagnostics.dom_probe against this tab.`)
