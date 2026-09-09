@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Accepted
 adr: 0006
 date: 2026-08-27
 deciders: Đức
@@ -28,7 +28,7 @@ này không mở thêm cửa nào, nó chỉ nói ai được chạy vòng lặp
 
 ## Trạng thái
 
-Proposed
+Accepted.
 
 > Tách ra từ `workers/duc-auto-gg-flow-video/v0.1.0/decisions.md` ngày 2026-09-09 (N-55).
 > Chỉ đổi HÌNH DẠNG, không đổi một chữ nội dung quyết định.

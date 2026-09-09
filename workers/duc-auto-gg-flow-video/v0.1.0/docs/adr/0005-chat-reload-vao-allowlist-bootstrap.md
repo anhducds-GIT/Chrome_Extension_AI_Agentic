@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Accepted
 adr: 0005
 date: 2026-08-27
 deciders: không ghi lại
@@ -31,7 +31,7 @@ Allowlist bootstrap mà quyết định này mở rộng đã bị gỡ hẳn c�
 
 ## Trạng thái
 
-Proposed
+Accepted.
 
 > Tách ra từ `workers/duc-auto-gg-flow-video/v0.1.0/decisions.md` ngày 2026-09-09 (N-55).
 > Chỉ đổi HÌNH DẠNG, không đổi một chữ nội dung quyết định.

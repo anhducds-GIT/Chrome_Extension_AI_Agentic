@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Accepted
 adr: 0004
 date: 2026-08-27
 deciders: Đức
@@ -32,7 +32,7 @@ debug, không bị gộp vào runner như dự tính ban đầu.
 
 ## Trạng thái
 
-Proposed
+Accepted.
 
 > Tách ra từ `workers/duc-auto-gg-flow-video/v0.1.0/decisions.md` ngày 2026-09-09 (N-55).
 > Chỉ đổi HÌNH DẠNG, không đổi một chữ nội dung quyết định.
