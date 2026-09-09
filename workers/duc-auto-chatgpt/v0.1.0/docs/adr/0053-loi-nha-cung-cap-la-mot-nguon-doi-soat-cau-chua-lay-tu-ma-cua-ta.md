@@ -111,6 +111,46 @@ cái nguy hiểm là **chỗ lấp lửng ở giữa**.
   nguyên**; thứ được thêm là một đường chữa **cạnh** nó. `post-submit-no-resend-smoke.mjs` phần 4
   nay đếm hai con số riêng, và số nguồn mở-cửa-gửi-lại-prompt-gốc **vẫn là 0**.
 
+## HẠ MỨC 09/09 — Đức hỏi *"có gì đâu mà phức tạp"*, và câu hỏi đó đúng chỗ
+
+Nguyên văn: *"ADR-0053 GPT hướng dẫn thế nào thì local AI phân tích và làm theo thôi, có gì đâu mà
+phức tạp nhỉ?"*
+
+**Đức đúng ở chỗ chính, và tôi đã giải thích quá nặng so với việc thật.** Khi có một AI đang nhìn,
+đường đi là ba bước và **không cần một dòng máy móc nào** trong tiện ích:
+
+    chat.read  →  thấy "không tạo được, nhắn render lại"  →  chat.say "render lại"
+
+Đường đó nay **có thật** (`B-42`, ship 09/09), nên phán đoán nằm ở AI — đúng chỗ nó nên nằm, và
+phán đoán của một AI tốt hơn mọi mẫu nhận dạng tôi viết được.
+
+**Máy móc của ADR này mua đúng MỘT điều: loạt job chạy tiếp khi KHÔNG ai nhìn.** Nếu 20 job đang
+chạy lúc 2 giờ sáng và job thứ 7 gặp lỗi tạm, đường `chat.read`+`chat.say` không cứu được — nó
+cần một AI đang thức, và loạt job đã dừng ở job 7. Hai đường **không thay nhau được**.
+
+**Hai chỗ tôi nói quá, sửa lại cho đúng cỡ:**
+- Rủi ro **không** phải thảm hoạ. Tiện ích chỉ gõ được vào ô nhập — không tải, không chạy mã,
+  không gửi đi đâu. Trường hợp xấu nhất của "gõ theo lời trang" là **một lượt quota và rác trong
+  hội thoại**. Đường đắt hơn duy nhất, và nó thật: hội thoại nằm trong một **Project**, nên chữ gõ
+  vào đó **lái được chính ChatGPT**.
+- Lý do **hằng ngày** để giữ danh sách trắng thì tầm thường hơn nhiều, và đó mới là lý do thật:
+  **bắn nhầm**. ChatGPT viết *"Tôi không tạo được ảnh. Bạn muốn tôi thử lại không?"* — một bộ tự
+  rút chữ sẽ gõ sai hoặc gõ lúc không nên, và **mỗi lần bắn nhầm là một lượt quota**.
+
+**Vì sao ADR này SỐNG trong khi cửa gửi-lại của `B-41` ⑵ bị GỠ cùng ngày** — hai cái trông giống
+nhau (máy suy rồi hành động) nhưng khác nhau ở đúng một chỗ, và chỗ đó quyết định:
+
+| | suy ra gì | hỏng theo hướng nào |
+|---|---|---|
+| cửa đã bị gỡ | *"không có kết quả nào"* — từ **việc không thấy** | **hỏng MỞ**: khẳng định sai rồi gửi lại |
+| ADR-0053 | *"nhà cung cấp vừa nói nó không tạo được"* — một **câu nói thẳng** | **hỏng ĐÓNG**: không khớp thì không làm gì |
+
+Không thấy gì **không chứng minh** được là không có gì. Một câu nói thẳng thì chứng minh được chính
+nó. Đó là lý do một cái phải chết và một cái được sống.
+
+**Hệ quả:** ADR này hạ xuống **tiện lợi cho loạt chạy không người**, không phải đường duy nhất — và
+vế live chưa đo được **không còn chặn gì**, vì đường tay đã có.
+
 ## Trạng thái
 
 Proposed — chờ một lượt live có lỗi thật của nhà cung cấp.

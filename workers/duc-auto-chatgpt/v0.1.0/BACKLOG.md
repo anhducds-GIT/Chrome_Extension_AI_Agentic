@@ -1572,7 +1572,7 @@ cho xanh.
   ghim riêng chứng minh hết nắp thì rơi về `INTERRUPTED`; thử phá 0 con thoát; và **một lượt chạy
   live** cho thấy một loạt job đi qua được ít nhất một lần tự chữa.
 
-### B-45 · (P2) Quy thuộc một ảnh SAU cú F5 — vế của ADR-0050 ⒞ không thi hành được, cần Đức chốt
+
 
 **Đo 09/09 khi làm `B-41` ⑵, và nó làm HẸP hẳn thứ bản vá đó cứu được.** ADR-0050 ⒞ viết
 *"chữa xong thì bộ dò vừa mù nay nhìn lại được … thấy thì quy về job và xong"* — tức nó giả định
@@ -1964,4 +1964,76 @@ chủ sở hữu mạnh hơn hẳn cách đoán theo nội dung đang dùng, và
   **Giới hạn đã biết, ghi ra để không ai tưởng nó đầy đủ hơn thực tế:** sổ `chat.say` sống trong
   `chrome.storage.local` và **chưa có method Bridge nào đọc nó về** — muốn xem lại phải qua panel.
   Nắp 200 dòng, tràn thì **cắt đầu**.
+- **AUDIT ĐỘC LẬP 09/09 (Codex CLI, Đức yêu cầu) · HAI VÒNG, CẢ HAI **FAIL**, và cả hai bắt lỗi
+  THẬT.** Tôi dựng lại từng ca trên chính hàm đã ship trước khi nhận. Kênh dùng được:
+  `codex exec --sandbox read-only --skip-git-repo-check - < brief.md`, brief ~16 KB, chạy ngầm,
+  mỗi vòng vài phút.
+
+  **VÒNG A — B-41 ⑵. Hai mục Critical, và một trong hai nằm trong mã tôi đã báo ĐÓNG sáng nay.**
+
+  ⒜ **Phép neo lượt hỏi chỉ so 160 ký tự ĐẦU rồi lấy lượt khớp CUỐI.** Workbook ảnh của Đức có
+  một đoạn tả phong cách chung **173 ký tự** ở đầu mọi job → hai job khác nhau ra **cùng khoá**.
+  Hệ quả trên đường CHỮ đã ship: `answerAfterPrompt()` neo vào lượt hỏi của **job khác** và
+  `finishTextOutput()` ghi **câu trả lời của job khác** vào sổ, đóng dấu `persistence_verified`.
+  **Báo thành công giả** — đúng loại lỗi mà cả B-43 tồn tại để đóng.
+  **Và chỗ tệ nhất: sáng nay tôi đã GHIM chính ca này thành *"giới hạn đã biết"* và cho là chấp
+  nhận được.** Tôi ghi ra cái giới hạn mà **không ghi ra cái giá của nó**. Bài học lớn hơn con
+  bug: **một "giới hạn đã biết" không thành an toàn chỉ vì đã được ghi ra** — phải viết cả cái
+  giá, và nếu tôi viết "dữ liệu sai đóng dấu đã-xác-minh" thì đã không ai để nó qua, kể cả tôi.
+  Sửa: khoá lấy **ĐẦU + ĐUÔI** (không so trọn prompt — `innerText` dựng lại markdown nên so trọn
+  sẽ **không khớp gì cả**, biến một lỗi báo-thành-công-giả thành lỗi không-bao-giờ-đối-soát-được),
+  và phép neo đòi **DUY NHẤT**: trùng khoá là `AMBIGUOUS_PROMPT_MATCH` = không kết luận được.
+  **Đánh đổi đã nhận:** một NGƯỜI gửi lại cùng một prompt bằng tay cũng bị từ chối → job dừng.
+  Chọn hướng này vì cái mất là một lượt người xem; hướng kia làm dữ liệu sai đi thẳng vào sổ.
+
+  ⒝ **Cửa GỬI LẠI sau đối soát mù đã bị GỠ HẲN.** Codex dựng được hai chuỗi mà phép "khẳng định
+  máy chủ không tạo gì" trả `true` **trong khi kết quả ĐÃ CÓ**. Chuỗi tệ nhất là lỗi thiết kế của
+  tôi: vòng dò thoát khi *"đã thấy MỘT lượt trả lời nào đó"* — mà **lịch sử hội thoại thoả mãn
+  điều đó ngay lượt đọc đầu**. Nó đo **bộ đọc còn sống**, không đo **câu trả lời đã xong**; tôi gộp
+  hai thứ đó.
+  **Kết luận thật: không thể khẳng định "máy chủ không tạo gì" từ DOM.** "Chưa vẽ", "không có", và
+  "selector mục một phần" trông y hệt nhau từ bên trong. Nên vế *"khẳng định được là không có thì
+  mới gửi lại"* của **ADR-0050 ⒞ là một vế KHÔNG THI HÀNH ĐƯỢC**, không phải chưa làm; số nguồn
+  khẳng định điều đó **trở lại 0** như phép đo của ADR-0047. Đã xoá `blindAbsenceAffirmed()` và
+  `mayResendAfterBlindReconcile()`. Đường đối soát mù vẫn còn nhưng **luôn dừng hẳn** — nó chỉ để
+  nói RA trang có gì sau F5.
+
+  ⒞ **Medium:** F5 hoặc một lượt chờ **ném** thì item nằm lại `RECONCILING` mãi. Nay mọi lối ra,
+  kể cả lối ném, đi qua một lượt kết.
+
+  **VÒNG B — B-42. Ba mục HIGH đã sửa, một mục KHÔNG nhận, kèm số đo.**
+
+  ⒜ `submitted: true` trước đây chỉ nghĩa là *".click() đã trả về"* — mốc đặt ngay sau
+  `sendButton.click()`. **Lượt live thành công của tôi KHÔNG kiểm được cửa này.** Nay bằng chứng
+  là lượt hỏi của chính mình nằm **duy nhất** trong hội thoại, đọc bằng đúng `soleUserTurnIndex()`.
+  Side panel đòi **cả** trường `evidence` — cửa đó **tới được thật**: panel mới cộng content
+  script CŨ chưa nạp lại là ca thường ngày.
+  ⒝ Nắp chờ 25 giây của trang **không huỷ được** lượt gõ đang chạy: báo "chưa gửi" ở giây 25 mà nó
+  gõ ở giây 26. Nên lỗi lấp lửng nay là `VALIDATION_FAILED` (**retryable: false**) kèm
+  `attempt_id` — một mã `retryable` ở đây là lời mời gửi lần hai.
+  ⒞ **Ghi sổ nay ở TRƯỚC lượt gửi.** Bản đầu dựng dòng sổ SAU khi có câu trả lời, nên một lượt mất
+  kênh ném **trước khi dòng sổ tồn tại** — tin nhắn có thể đã bay, nắp chờ đã tiêu, và sổ **trống**.
+  Hai dòng mỗi lượt, cùng `attempt_id`.
+  ⒟ **KHÔNG nhận:** cuộc đua nắp chờ. `tryBeginMutation()` là loại trừ **đồng bộ**
+  (`approval-persistence-core.js`), nên hai lệnh trong một panel không cùng qua được; ba profile
+  vốn đã có ba `chrome.storage.local` riêng.
+  ⒠ **Phải thu hẹp một câu tôi đã viết:** *"chat.say không thêm quyền nào"* **SAI như đã phát biểu**
+  — nó gửi được ở những trạng thái mà `run.trial` **từ chối** (chưa nạp workbook, `authoritativeValidate()`
+  hỏng). Câu đúng: **chữ nó gửi** không phải quyền mới (`jobs.add` vốn nhận chữ tự do), nhưng
+  **điều kiện tiên quyết thì nó bỏ qua**. Với một đường chat thẳng thì đòi workbook là vô nghĩa,
+  nên đây là một lựa chọn thiết kế — không phải một sự tương đương.
+
+  **Số đo sau sửa:** suite **126/126** · thử phá **8/8** (vòng A) và **9/9** (vòng B), **0 thoát**,
+  mỗi mũi là một cách **quay lại** đúng con bug audit tìm ra.
+  **Hai lỗi trong chính phép ghim của tôi, ghi ra vì cả hai là lỗi tôi:** một mép là **hằng đúng**
+  (`undefined === undefined` cũng qua) nên mũi xoá hẳn trường `attempt_id` thoát ở vòng đầu; và
+  một mũi thử phá của tôi quá tù (chỉ khai một ngân sách chết, không đấu dây) nên nó "thoát" đúng
+  như một mũi tù phải thoát.
+
+  **ADR-0053 hạ mức, sau khi Đức hỏi *"có gì đâu mà phức tạp"* — và câu hỏi đó đúng chỗ.** Với một
+  AI đang nhìn, `chat.read` → `chat.say` là toàn bộ câu trả lời và **không cần một dòng máy móc
+  nào**; đường đó nay có thật. Máy móc của ADR-0053 mua đúng **một** điều: **loạt job chạy tiếp khi
+  KHÔNG ai nhìn**. Nên nó là **tiện lợi**, không phải đường duy nhất, và vế live chưa đo được
+  **không còn chặn gì**. Lý do nó vẫn sống, một câu: cửa vừa bị gỡ **suy ra một điều phủ định từ
+  việc không thấy** (hỏng MỞ), còn nó **đọc một câu nói thẳng** (hỏng ĐÓNG).
 

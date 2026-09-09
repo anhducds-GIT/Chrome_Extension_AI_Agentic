@@ -61,13 +61,23 @@ gửi lại; vẫn không chắc thì `INTERRUPTED` như hôm nay. Lý do tách 
 gửi** rất có thể đang mù trước một kết quả ĐÃ CÓ, và gửi lại lúc đó là đốt lượt thứ hai cho một
 việc đã xong — đúng cái ADR-0047 sinh ra để chặn.
 
-> **MỘT VẾ CỦA ⒞ KHÔNG THI HÀNH ĐƯỢC — đo 09/09 khi thi hành, ghi tại chỗ để không ai trích
-> một vế đã chết.** Câu *"thấy thì quy về job và xong"* giả định sau F5 vẫn quy được một ảnh về
-> lượt gửi. Không quy được: F5 **xoá bộ nhớ content script** nên `DAC_RECONCILE_IMAGE_JOB` luôn
-> trả `ATTEMPT_ID_MISMATCH` sau đó, còn đường bấm tay đòi `decision.chosen.source_id` — thứ một
-> lượt **MÙ** chưa bao giờ ghi được. Nên bản đã ship chỉ làm hai việc: khẳng định được là máy chủ
-> không tạo gì thì gửi lại (nắp 1 theo job), còn lại `INTERRUPTED` kèm một câu nói rõ phải xem gì.
-> Vế còn lại tách thành `B-45`, và nó cần Đức chốt vì nó là một luật **quy thuộc** mới.
+> **VẾ CHÍNH CỦA ⒞ KHÔNG THI HÀNH ĐƯỢC — kết luận sau audit độc lập 09/09, không phải một
+> việc còn nợ.** Câu *"khẳng định được là không có thì mới gửi lại"* giả định có cách khẳng định
+> được. **Không có.** Bản thi hành đầu tiên đã ship rồi bị **gỡ hẳn** cùng ngày: audit Codex dựng
+> được hai chuỗi sự kiện trong đó phép khẳng định trả `true` **trong khi máy chủ ĐÃ tạo ra kết
+> quả**, và cả hai dựng lại được trên chính hàm đã ship. Chuỗi chịu tải: sau cú F5, lượt đọc đầu
+> tiên thấy một lượt trả lời **cũ** trong khi lượt trả lời của job này chưa vẽ xong — đủ mọi điều
+> kiện → khẳng định → gửi lại. Nguyên nhân gốc: **"chưa vẽ", "không có", và "selector mục một
+> phần" trông y hệt nhau từ bên trong DOM.**
+>
+> Nên số nguồn đối soát khẳng định được *"lượt gửi này không tạo ra kết quả nào"* **vẫn là 0**,
+> đúng như phép đo của [ADR-0047](0047-sau-khi-da-gui-thi-khong-gui-lai-tru-khi-doi-soat-khang-dinh-duoc.md).
+> Thứ ⒞ thật sự đem lại: một cú F5 rồi đọc lại để câu **dừng** nói RA trang có gì, thay cho một
+> câu "bộ dò mù" không giúp được ai. Nó **luôn dừng hẳn**.
+>
+> Dựng lại cửa gửi lại thì phải có một neo **KHÔNG PHẢI CHỮ** (`data-message-id` của lượt hỏi, ghi
+> lúc gửi) — không phải một điều kiện thứ tư. Xem `B-46`, và xem `B-45` đã đóng là sẽ-không-làm.
+> Chi tiết cả hai chuỗi ở `tests/blind-reconcile-b41-2-smoke.mjs`.
 
 **⒟ Lời nhà cung cấp tự khẳng định là một nguồn ĐỐI SOÁT hợp lệ.** Khi ChatGPT nói bằng chữ rằng
 nó không tạo được kết quả, đó là *"đối soát khẳng định được"* theo đúng chữ của ADR-0047 — nên
