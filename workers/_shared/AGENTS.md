@@ -118,3 +118,11 @@ cho ca có lý do riêng — và nó **không** tự tạo thư mục, vì gõ n
 
 Phép ghim `tests/tao-tep-ghep-cap-smoke.mjs` khối ⑸ canh cả hằng số, đường chuẩn, cờ `--goi`, và
 câu hướng dẫn có nói ra nhà chung hay không.
+
+## Log
+
+- **2026-09-09** · `claude-luat-rasoat` · Thêm mục **Luật chung cho MỌI extension** (hai luật:
+  *sửa `.js` thì nhắc Đức reload* · *preview pane cấm, harness Chrome thật thì được*). Chúng từng
+  nằm **nguyên văn** trong `AGENTS.md` của cả `duc-auto-chatgpt` lẫn `duc-auto-gemini`; phép ③
+  `LUAT_TRUNG` nêu đúng cặp đó. Cái giá của bản chép **đã đo được**: luật *cấm harness* chết
+  24/08 mà nhánh Gemini vẫn dạy tới 09/09 — **16 ngày**. Đưa lên đây theo giới hạn ②.

@@ -732,3 +732,29 @@ Soi từng cái, không lấp bằng cửa miễn trừ:
   thay) và `0038`/`0039`/`0040` (phép chờ blob, bị **0041** THÁO ngay cùng ngày).
 
 Phép ② của gói: **59 → 0**. Không chạm mã; suite gói không đổi.
+
+## 2026-09-09 — `claude-luat-rasoat` (lượt 3): nén `AGENTS.md` 340 → 232, và bước ⑥ về tay máy
+
+Đức giao quyền lead về nén luật (*"AI chủ động hoàn toàn, miễn là đúng direction & đúng budget"*).
+
+**Cắt 108 dòng, mỗi lượt cắt có lý do đo được:**
+
+- **Hai khối `Template COUNCIL`** (79 dòng): **không nơi nào trong repo tham chiếu**, và chúng tả
+  một lượt onboarding V0 đã xong từ lâu. Giới hạn ⑥ — *bắt 0 đột biến thì XOÁ*. Nguyên văn còn
+  trong git (`git show ab066a00:…`).
+- **Luật vàng 9** (*một việc một lúc*) — `AGENTS.md` gốc mục 0 đã có.
+- **Luật vàng 3** (*không làm yếu lớp bảo vệ*) — gốc mục 3.3 và mục 5 đã có.
+- **Bảy dòng Core/Companion** tả bộ khung chuẩn — `CLAUDE.md` gốc của Đức đã tả.
+- **Luật 5 + luật 8** đúng cho **mọi** extension → lên `workers/_shared/AGENTS.md`.
+
+Phép ③ `LUAT_TRUNG` cả repo: **12 → 2**, và hai nhóm còn lại đều là lặp cố ý đã có lý do.
+
+**Mục *Sổ cái của gói* nay là KHỐI MÁY SINH** ([ADR-0030](../../../docs/adr/0030-rule-compiler-v1.md)).
+`node scripts/rule-compile.mjs --sinh` tái tạo nó từ `docs/adr/` — 38 quyết định đang sống, sáu
+nhóm, **hai lượt sinh ra y hệt từng byte**. Đã gắn `nhom:` vào frontmatter 39 ADR.
+**Đừng sửa tay trong khối** — muốn đổi một dòng thì sửa **tiêu đề ADR**, chữ ở đó là tiêu đề.
+
+**Suite gói ĐỎ, và KHÔNG phải vì lượt này:** `shared-modules-no-drift-static.mjs` báo
+`reconciliation-core.js` trôi dạt, do commit `478b24aa` của lane `claude-gpt-chay-het-job`
+(B-43 vòng ba) thêm ~40 dòng vào bản ChatGPT. **Không sửa hộ** — [ADR-0066](docs/adr/0066-cung-loi-ben-nhanh-chatgpt-ghi-thanh-b-22-doc.md)
+chốt đúng ca này. Ghi thành **N-60** ở sổ nợ gốc. Lượt này không chạm một dòng mã nào.

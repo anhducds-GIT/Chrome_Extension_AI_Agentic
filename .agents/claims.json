@@ -39,8 +39,8 @@
     "_root": {
       "owner": "claude-luat-rasoat",
       "ai": "Claude",
-      "claimed_at": "2026-09-09T05:21",
-      "task": "ROADMAP + thuoc be mat luat",
+      "claimed_at": "2026-09-09T05:34",
+      "task": "ghi so no: drift reconciliation-core",
       "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
@@ -92,7 +92,7 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "2499098905713a46",
+  "_fingerprint": "86d16e94f9515b9a",
   "tam": {
     "workers/duc-auto-chatgpt/v0.1.0/text-output-core.js": {
       "owner": "claude-gpt-chay-het-job",
@@ -114,21 +114,6 @@
       "luc": "2026-09-09T05:01",
       "viec": null
     },
-    "docs/adr/0030-rule-compiler-v1.md": {
-      "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T05:03",
-      "viec": null
-    },
-    "ROADMAP.md": {
-      "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T05:03",
-      "viec": null
-    },
-    "AGENTS.md": {
-      "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T05:03",
-      "viec": null
-    },
     "workers/duc-auto-chatgpt/v0.1.0/tests/text-reconcile-after-reload-smoke.mjs": {
       "owner": "claude-gpt-chay-het-job",
       "luc": "2026-09-09T05:07",
@@ -146,7 +131,7 @@
     },
     ".agents/claims.json": {
       "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T05:29",
+      "luc": "2026-09-09T05:35",
       "viec": null
     }
   }
