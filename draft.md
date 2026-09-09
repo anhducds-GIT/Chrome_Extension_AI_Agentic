@@ -1069,3 +1069,429 @@ AI Context
 - projection dùng named deterministic projector, không arbitrary query language.
 
 Chưa gửi Claude. Chưa implement production Context Compiler.
+
+---
+
+# VÒNG 4 — Registry schema, Projection Safety, Handoff/Carry, Compact Checkpoint
+
+## 27. Exact Context Registry V1 — proposal chặt hơn
+
+Registry V1 nên là file machine-only, không chứa reasoning dài. Candidate:
+
+```json
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "repo.rules.active",
+      "source_ref": "rules.repo.active",
+      "kind": "rules",
+      "scope": "repo",
+      "load": "always",
+      "authority": "canonical",
+      "projection": "full",
+      "retain": "pinned"
+    },
+    {
+      "id": "package.scouter.state",
+      "source": "workers/duc-scouter/v0.1.0/STATUS.md",
+      "kind": "state",
+      "scope": "workers/duc-scouter",
+      "load": "scoped",
+      "authority": "canonical",
+      "projection": "status.frontmatter",
+      "retain": "while_scope"
+    },
+    {
+      "id": "protocol.multiflow",
+      "source": "docs/protocols/MULTIFLOW.md",
+      "kind": "knowledge",
+      "scope": "repo",
+      "load": "on_demand",
+      "triggers": ["claim.change", "commit.prepare", "push.prepare"],
+      "authority": "canonical",
+      "projection": "protocol.section_by_trigger",
+      "retain": "while_operation"
+    }
+  ]
+}
+```
+
+### PROVISIONAL DECISION R4-1 — schema constraints
+
+V1 nên cưỡng chế:
+
+- `id` unique và stable;
+- đúng **một** trong `source` hoặc `source_ref`;
+- `kind ∈ {rules, knowledge, state, history}`;
+- `load ∈ {always, scoped, on_demand, never_auto}`;
+- `authority ∈ {canonical, derived, cache}`;
+- `retain ∈ {pinned, while_scope, while_operation, one_shot}`;
+- `triggers` bắt buộc khi `load=on_demand`, cấm/không cần khi `always`;
+- source path phải tồn tại hoặc source_ref phải resolve được.
+
+Không thêm `priority`, `score`, `max_tokens`, `depends_on` trong V1.
+
+### Scope representation
+
+V1 ưu tiên `scope` là một identity canonical, không arbitrary glob. Ví dụ:
+
+```text
+repo
+workers/duc-scouter
+workers/_shared
+```
+
+Resolver sở hữu mapping path -> scope. Registry không nên chứa glob/regex thứ hai song song với `.repo-structure.json`.
+
+---
+
+## 28. Projection Safety — phải có Loss Contract
+
+Projection có rủi ro nguy hiểm hơn raw load: nó có thể **trông hợp lệ nhưng đã bỏ mất field quyết định**.
+
+Vì vậy mỗi projection ID cần một contract code-owned:
+
+```text
+projection id
+accepted source shape
+fields/sections bắt buộc giữ
+phần được phép bỏ
+fallback khi parse fail
+```
+
+Ví dụ:
+
+```text
+status.frontmatter
+  accepts: STATUS.md có YAML frontmatter hợp lệ
+  must_keep: schema, id, lifecycle, next_step, human_action, current_focus
+  may_drop: explanatory body
+  on_error: FALLBACK_RAW
+```
+
+### PROVISIONAL DECISION R4-2
+
+**Projection chỉ được thay raw source nếu projector chứng minh được loss contract.**
+
+Nếu:
+
+- parse lỗi;
+- required field thiếu;
+- source shape lạ;
+- projector version không hiểu schema;
+
+thì hành vi mặc định:
+
+```text
+FALLBACK_RAW + warning
+```
+
+không phải:
+
+```text
+return partial projection
+```
+
+Với operation high-risk, nếu raw fallback cũng không đọc được thì hard-stop.
+
+### Projector không được “hiểu nghĩa” bằng LLM trong V1
+
+V1 projection là deterministic extraction/transformation. Semantic summarization bằng model có thể là lớp research sau, nhưng không được đứng trên đường safety-critical.
+
+---
+
+## 29. Projection test contract
+
+Mỗi projector cần ít nhất ba loại test:
+
+### A. Golden fixture
+
+Canonical source hợp lệ -> projection đúng shape và giữ đủ required fields.
+
+### B. Mutation / deletion
+
+Xoá từng required field quan trọng -> projector phải:
+
+```text
+fallback hoặc fail
+```
+
+không được vẫn báo projection sạch.
+
+### C. Unknown-shape fixture
+
+Schema/version mới chưa biết -> fallback raw, không đoán.
+
+### PROVISIONAL DECISION R4-3
+
+Một projection chưa có acceptance/mutation test **không được dùng để thay raw source trong startup bundle**.
+
+Nó vẫn có thể tồn tại ở experimental mode, nhưng resolver phải coi raw source là authoritative load path.
+
+---
+
+## 30. HANDOFF và Carry Packet — không nên có hai “sự thật về tiến độ”
+
+Nếu giữ song song:
+
+```text
+HANDOFF.md = human continuity
+Carry Packet = machine continuity
+```
+
+thì có nguy cơ cả hai cùng chứa `done/open/blocker` và drift.
+
+### Ba phương án
+
+#### A. Hai artifact độc lập, cùng được ghi
+
+**REJECTED cho V1** vì duplicate state/progress rất dễ lệch.
+
+#### B. Carry Packet sinh từ HANDOFF
+
+Khó vì HANDOFF là prose và schema không đủ ổn để parse chắc toàn bộ.
+
+#### C. Một checkpoint payload máy đọc, HANDOFF render/projection từ payload + prose bổ sung
+
+Kiến trúc sạch nhất về dài hạn nhưng đổi workflow hiện tại nhiều hơn.
+
+### PROVISIONAL DECISION R4-4 — V1 ít xâm lấn
+
+V1 **không tạo persistent Carry Packet song song cho mọi session**.
+
+Carry Packet chỉ xuất hiện ở boundary thật:
+
+```text
+compact
+cross-runtime handoff
+session đóng khi việc còn mở
+```
+
+Nội dung machine packet chỉ giữ **delta + pointers**, tránh lặp toàn bộ `done/open/blocker` nếu chúng đã được persist vào HANDOFF/BACKLOG/state.
+
+Candidate revised:
+
+```yaml
+schema: context-carry/v1
+reason: compact
+operation: edit_code
+scopes:
+  - workers/duc-scouter
+phase: edit
+resume_summary: "một câu về điểm đang đứng"
+open_pointer: workers/duc-scouter/v0.1.0/HANDOFF.md
+state_ids:
+  - package.scouter.state
+  - claims.scouter
+active_context_ids:
+  - repo.rules.active
+  - package.scouter.rules
+recovery:
+  - id: protocol.multiflow
+    reason: commit step may follow
+source_revision:
+  head: optional
+```
+
+Điểm quan trọng: packet nói **đọc ở đâu**, không copy nguyên current truth vào chính nó.
+
+---
+
+## 31. Durable Checkpoint trước compact
+
+Compact cần tách hai khái niệm:
+
+```text
+checkpoint durability
+vs
+context compression
+```
+
+Nếu checkpoint chưa durable mà đã compact, summary sẽ vô tình trở thành nơi duy nhất giữ quyết định/progress.
+
+### Checkpoint classifier V1
+
+Trước compact, classify delta từ lần checkpoint gần nhất:
+
+```text
+DECISION
+CURRENT_STATE
+OPEN_WORK
+CODE_CHANGE
+EVIDENCE
+EPHEMERAL_REASONING
+```
+
+Route:
+
+```text
+DECISION          -> ADR / nơi quyết định canonical nếu đã được Đức chốt
+CURRENT_STATE     -> STATUS / canonical state owner
+OPEN_WORK         -> BACKLOG hoặc HANDOFF theo semantics hiện tại
+CODE_CHANGE       -> git/working tree
+EVIDENCE          -> evidence source phù hợp
+EPHEMERAL_REASONING -> không cần persist toàn bộ
+```
+
+### PROVISIONAL DECISION R4-5
+
+Compact gate chỉ cần hỏi một câu máy có thể kiểm phần lớn:
+
+> **Có durable fact nào đang chỉ tồn tại trong conversation/carry cache không?**
+
+Nếu có -> checkpoint chưa complete.
+
+Không yêu cầu “mọi reasoning phải persist”; đó sẽ biến repo thành transcript archive.
+
+---
+
+## 32. Checkpoint trigger không phụ thuộc hoàn toàn vendor hook
+
+Ta chưa biết mọi runtime có hook “before compact”. Vì vậy architecture không được phụ thuộc duy nhất vào hook đó.
+
+Candidate trigger:
+
+```text
+A. vendor before-compact hook nếu có
+B. explicit user/runtime compact command wrapper
+C. context-pressure warning nếu runtime expose
+D. session handoff / new-chat command
+E. periodic durable checkpoint sau material state change — nhẹ, không summary toàn session
+```
+
+### PROVISIONAL DECISION R4-6
+
+V1 nên coi **material state change** là checkpoint opportunity chính, thay vì đợi tới giây cuối trước compact.
+
+Ví dụ khi:
+
+- Đức chốt một quyết định;
+- task chuyển từ open -> done/blocker;
+- code đã commit;
+- ownership đổi;
+
+thì durable source nên được cập nhật lúc sự kiện xảy ra. Đến lúc compact, Carry Packet chỉ cần nối pointer.
+
+Đây là cách giảm latency/risk của “panic checkpoint” trước compact.
+
+---
+
+## 33. Material change ≠ mỗi turn
+
+Không checkpoint mỗi câu chat.
+
+Candidate material events:
+
+```text
+human decision accepted
+state transition
+scope ownership transition
+commit created
+blocker discovered that changes next action
+new durable task/debt created
+```
+
+Không checkpoint:
+
+```text
+brainstorm branch chưa chốt
+câu hỏi giải thích
+tool output tạm
+reasoning bị bác ngay trong cùng vòng
+```
+
+**PROVISIONAL:** Context Compiler/Checkpoint layer cần phân biệt `durable delta` với `conversation delta`.
+
+Nếu không có durable delta, compact chỉ cần carry current task pointer chứ không ghi repo.
+
+---
+
+## 34. Registry validation và fail policy
+
+Registry lỗi không nên làm mọi tác vụ đọc vô dụng.
+
+Candidate:
+
+```text
+missing/invalid ALWAYS canonical source -> HARD STOP
+missing scoped rules/state for active write scope -> HARD STOP trước write
+missing on-demand knowledge for low-risk read -> warning + raw/manual fallback
+unresolved cache/history source -> warning
+```
+
+### PROVISIONAL DECISION R4-7
+
+Fail policy phụ thuộc **authority + operation risk**, không phụ thuộc chỉ file có missing hay không.
+
+Điều này tránh hai cực:
+
+- fail-open mọi thứ -> context safety vô dụng;
+- fail-closed mọi warning -> mọi người sẽ tắt compiler.
+
+---
+
+## 35. Working architecture snapshot — sau vòng 4
+
+```text
+                    CANONICAL SOURCES
+          rules / state / knowledge / history
+                           │
+          ┌────────────────┴────────────────┐
+          │                                 │
+   Rule Compiler                    Context Registry
+ active-rule identity          load/projection/retain metadata
+          │                                 │
+          └──────────── source_ref ──────────┘
+                           │
+                         Resolver
+                           │
+                     Risk/Conflict Gate
+                           │
+                         Projector
+                     + Loss Contract
+                           │
+                    Manifest + Delta
+                           │
+                     Runtime Adapter
+                           │
+                       AI Context
+
+Durability path:
+material change
+   -> durable canonical source NOW
+   -> checkpoint records pointers
+   -> Carry Packet only at continuity boundary
+   -> compact/new runtime
+   -> resolver rehydrates from CURRENT canonical sources
+```
+
+---
+
+## 36. OPEN sau vòng 4
+
+1. Rule Compiler hiện tại expose `source_ref` stable thế nào với thay đổi tối thiểu?
+2. `protocol.section_by_trigger` có nên thật sự project theo section hay V1 load full protocol khi trigger nổ để giảm implementation risk?
+3. Machine Carry Packet nếu cần persist tạm thì đặt ngoài repo, `.agents/`, hay nhúng vào HANDOFF metadata?
+4. Làm sao xác định “durable fact only in conversation” ở GPT Web nơi repo write không luôn trực tiếp?
+5. Runtime adapter capability thực tế của CC/Codex/An/GPT cần audit riêng trước implementation.
+6. Projection nào đáng làm V1 đầu tiên? Candidate: `status.frontmatter`, `claims.scope_current`; HANDOFF projection có thể để sau vì shape phức tạp hơn.
+7. Context registry là hand-authored hay generate một phần từ `.repo-structure.json` + Rule Compiler inventory?
+
+---
+
+## 37. Change log — vòng 4
+
+### 2026-09-09 — vòng 4
+
+- chốt candidate JSON schema cho `.agents/context-registry.json`;
+- scope identity lấy từ topology hiện có, không thêm glob/regex riêng;
+- thêm **Projection Loss Contract** + fallback raw;
+- projection muốn thay raw startup phải có golden + mutation + unknown-shape tests;
+- REJECTED hai persistent continuity artifacts cùng sở hữu tiến độ;
+- Carry Packet chuyển thành boundary artifact nhỏ, chủ yếu pointers;
+- compact tách thành durable checkpoint trước compression;
+- checkpoint ưu tiên material state change, không chờ panic trước compact;
+- fail policy dựa trên authority × operation risk.
+
+Chưa gửi Claude. Chưa implement production Context Compiler.
