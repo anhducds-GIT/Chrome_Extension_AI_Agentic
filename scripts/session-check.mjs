@@ -13,7 +13,7 @@
 */
 import fs from "node:fs";
 import path from "node:path";
-import { bienDich, docTuDia } from "./rule-compile.mjs";
+import { bienDich, docTuDia, dungBoGoi } from "./rule-compile.mjs";
 import os from "node:os";
 import { execFileSync, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -685,6 +685,86 @@ check("Sự thật máy sinh còn tươi", () => {
 });
 
 /* ---- 8. Cổng kiểm cấu trúc — CHẶN từ phiên S7 -------------------------- */
+/* ---- 7b. PHIEN.md của gói còn tươi — N-63 ------------------------------
+ *
+ * ADR-0035 biến `PHIEN.md` thành **cửa vào duy nhất** của mọi phiên đụng gói, và nó chắt bốn
+ * trường của `STATUS.md`. Nhưng phép ⑺ chỉ canh những bộ sinh khai ở `generators`, và
+ * `rule-compile.mjs` không nằm trong đó — nên tới 09/09 KHÔNG máy nào canh bốn file ấy.
+ *
+ * Đường hỏng cụ thể, quan sát được cùng ngày: một lane sửa `STATUS.md` rồi commit; `PHIEN.md`
+ * dạy trạng thái cũ; cổng vẫn XANH; phiên sau tin file đó — vì chính nó nói *"đây là toàn bộ
+ * thứ cần để bắt đầu"*. Cái thứ hai âm hơn: trần CỨNG chỉ nổ **lúc `--sinh` chạy**, nên không ai
+ * chạy `--sinh` thì một `STATUS.md` phình ra không bị chặn ở đâu cả — trần lặng lẽ tụt xuống làm
+ * thước cóc mà không ai tuyên bố hạ nó.
+ *
+ * VÌ SAO KHÔNG NHÉT VÀO `generators` (đây là phần khó, và là lý do N-63 nằm chờ một nhịp):
+ * phép ⑺ so bản-sinh-từ-HEAD với bản-đã-commit cho TOÀN repo, nên một `PHIEN.md` lệch làm ĐỎ
+ * cổng của **mọi lane**, kể cả lane không được phép ghi vào gói đó — đúng cái bẫy `K2-2` đã ghi
+ * dài ở đầu phép ⑺. Phép này hỏi câu hẹp hơn và trả lời được: *bạn có chạm nguồn của `PHIEN.md`
+ * nào không* — chạm thì bạn sửa được, vì bạn đang giữ vùng đó.
+ *
+ * Chạm `LUAT-CORE.md` hay `.repo-structure.json` thì XÉT CẢ BỐN GÓI: hai file đó là nguồn của
+ * mọi bó. Đổi lõi mà chỉ sinh lại một gói là để ba gói kia dạy luật cũ. */
+check("PHIEN.md của gói còn tươi", () => {
+  const ph = structure?.luat?.phien_goi;
+  if (!ph?.goi?.length) return { ok: true, msg: "Repo chưa khai `luat.phien_goi` — không có bó gói nào để canh." };
+  let core;
+  try { core = fs.readFileSync(path.join(ROOT, ph.core), "utf8"); }
+  catch { return { ok: false, msg: `KHONG_DOC_DUOC_LOI: \`${ph.core}\` — lõi luật là nguồn của mọi PHIEN.md, thiếu nó thì không kết luận được gì.` }; }
+
+  const nguonChung = new Set([ph.core, ".repo-structure.json", "scripts/rule-compile.mjs"]);
+  const chamChung = touchedToiPhaiTraLoi.some((f) => nguonChung.has(f));
+  /* GÓI NÀO LANE KHÁC ĐANG SỬA DỞ THÌ BỎ QUA — nửa còn lại của bẫy K2-2, và nó chỉ lộ ra khi
+     chạm nguồn CHUNG. Ví dụ thật: tôi sửa `rule-compile.mjs`, lane kia đang sửa `STATUS.md` của
+     gói nó. Không có dòng này thì cổng của TÔI đỏ vì một khoản nợ tôi **bị cấm trả** — muốn sinh
+     lại thì phải ghi vào vùng lane kia đang giữ. Bỏ qua mà NÓI RA, không im: một lượt bỏ qua im
+     lặng đọc y hệt một lượt đạt. */
+  const vungCua = (d) => areaOf(`${d}/AGENTS.md`, claimPrefixes);
+  const cuaLaneKhac = new Set(touched.filter((f) => !touchedToiPhaiTraLoi.includes(f))
+    .map((f) => areaOf(f, claimPrefixes)));
+  const boQua = [], canXet = [];
+  for (const d of ph.goi) {
+    const v = vungCua(d);
+    if (!(chamChung || packagesToiPhaiTraLoi.includes(v))) continue;
+    (cuaLaneKhac.has(v) ? boQua : canXet).push(d);
+  }
+  const ghiChuBoQua = boQua.length
+    ? ` Bỏ qua ${boQua.length} gói lane khác đang sửa dở (${boQua.map((d) => d.split("/")[1]).join(", ")}) — nợ đó là của họ.`
+    : "";
+  if (!canXet.length) return { ok: true, msg: "Phiên này không chạm nguồn của `PHIEN.md` nào." + ghiChuBoQua };
+
+  const lech = [], qua = [], hong = [];
+  for (const thuMuc of canXet) {
+    const bo = dungBoGoi({ root: ROOT, thuMuc, ph, core });
+    if (bo.loi) { hong.push(bo.loi); continue; }
+    if (bo.boKyTu > bo.tran) { qua.push(`${thuMuc} (${bo.boKyTu}/${bo.tran} ký tự)`); continue; }
+    let cu = null;
+    try { cu = fs.readFileSync(path.join(ROOT, thuMuc, "PHIEN.md"), "utf8"); } catch { /* chưa sinh lần nào */ }
+    if (cu !== bo.noiDung) lech.push(thuMuc);
+  }
+
+  if (hong.length) return { ok: false, msg: `PHIEN_THIEU_NGUON: ${hong.join(" · ")}` };
+  if (qua.length) {
+    return {
+      ok: false,
+      msg: `PHIEN_QUA_TRAN: ${qua.join(" · ")} — bó mở phiên vượt trần CỨNG, nên bộ sinh TỪ CHỐI`
+        + " ghi. Không phải cảnh báo: muốn thêm một luật thì phải bỏ một luật (ADR-0035 ⑷)."
+        + " Cửa ra rẻ nhất: rút chuyện kể trong `## Luật vàng` của gói sang ADR của gói, hoặc"
+        + " viết ngắn lại `next_step`/`human_action` trong `STATUS.md`.",
+    };
+  }
+  if (lech.length) {
+    return {
+      ok: false,
+      msg: `PHIEN_CU: ${lech.join(" · ")} — bạn chạm nguồn của bó mở phiên (\`AGENTS.md\`,`
+        + " `STATUS.md`, hoặc lõi luật) mà chưa sinh lại. `PHIEN.md` là thứ DUY NHẤT phiên sau nạp"
+        + " khi đụng gói này, nên để nó cũ là dạy trạng thái sai cho một phiên tin nó tuyệt đối."
+        + " Sinh lại: node scripts/rule-compile.mjs --sinh",
+    };
+  }
+  return { ok: true, msg: `${canXet.length} bó khớp nguồn (${canXet.map((d) => d.split("/")[1]).join(", ")}).` + ghiChuBoQua };
+});
+
 // S4 dựng phép kiểm này ở chế độ chỉ-in-ra. S7 bật chặn: nợ thuộc nhóm CHẶN nay làm cổng đỏ.
 //
 // BA MÃ THOÁT của check-bootstrap.mjs, và cố ý KHÔNG gộp:
@@ -1206,7 +1286,7 @@ check("Luật biên dịch sạch", () => {
 // thanh 9 file de lai hai luot trich vao quyet dinh DA CHET (AGENTS.md muc 7 va ORCHESTRATOR
 // muc 0d day mo hinh MOT CUA da bi 0017 thay tu 07/09). Duc chot mot bo rule compiler: append
 // -> merge -> supersede -> trim -> compile. Ly do ghi vao HANDOFF.md goc + RULE-COMPILER.md.
-const EXPECTED_CHECKS = 17;
+const EXPECTED_CHECKS = 18;
 if (results.length !== EXPECTED_CHECKS) {
   console.error(`\nCỔNG BỊ SỬA: đang có ${results.length} phép kiểm, phải có ${EXPECTED_CHECKS}.`);
   console.error("Ai đó đã bớt (hoặc thêm) phép kiểm mà không cập nhật EXPECTED_CHECKS. Xem lại scripts/session-check.mjs.\n");

@@ -667,7 +667,7 @@ const chay = (deps) => {
   // 2026-09-09, claude-luat-rasoat: 16 → 17. Thêm "Luật biên dịch sạch" — mối nối giữa SỔ CÁI
   // (docs/adr) và BẢN HIỆU LỰC (AGENTS.md + sổ tay) trước đó KHÔNG ai canh, và lượt gộp 27 ADR
   // để lại hai chỗ trích vào một quyết định ĐÃ CHẾT. Đức chốt một bộ rule compiler (ADR-0027).
-  assert.match(gate, /const EXPECTED_CHECKS = 17;/, "thêm cổng con thì EXPECTED_CHECKS phải là 17 — lớp chống tự tháo cổng");
+  assert.match(gate, /const EXPECTED_CHECKS = 18;/, "thêm cổng con thì EXPECTED_CHECKS phải là 18 — lớp chống tự tháo cổng");
   // Và nó KHÔNG được biến nợ cấu trúc thành cổng đỏ ở phiên S4.
   // S7: cổng con nay PHẢI biến mã thoát 1 thành cổng đỏ, và phải TÁCH mã 1 (repo có nợ) khỏi
   // mã 2 (bộ kiểm hỏng). Đây là mắt nối duy nhất giữa check-bootstrap và cổng đóng phiên;
@@ -968,6 +968,51 @@ const chay = (deps) => {
   assert.match(gate2, /phien_goi\?\.dinh_tuyen/,
     "cong phai lay nen cua phien GOI tu `phien_goi.dinh_tuyen`, giong bo sinh");
   ok("tran CUNG cua bo mo phien: con do, <= 3.000 token, tu choi ghi, va cong cong cung cong thuc");
+}
+
+/* ---- PHIEN.md CON TUOI — N-63 ----------------------------------------------
+ *
+ * Tran CUNG chi no LUC `--sinh` CHAY. Neu khong ai chay `--sinh`, mot `STATUS.md` phinh ra khong
+ * bi chan o dau ca, va `PHIEN.md` — cua vao DUY NHAT cua moi phien dung goi (ADR-0035) — day
+ * trang thai cu ma cong van XANH. Do la lo hong N-63.
+ *
+ * Ghim BON thu, va thu thu hai la thu de mat nhat: cong va bo sinh phai goi CHUNG mot ham. Hai
+ * ban sao cua mot cong thuc la bay repo nay da sap dung mot lan (`append_only_exempt`, 02/09),
+ * va rieng thuoc bo thi da do sai cho HAI lan trong ngay 09/09. */
+{
+  const sinh = fs.readFileSync(path.join(ROOT, "scripts", "rule-compile.mjs"), "utf8");
+  const gate = fs.readFileSync(path.join(ROOT, "scripts", "session-check.mjs"), "utf8");
+
+  assert.match(sinh, /export function dungBoGoi\(/,
+    "cong thuc dung bo mo phien phai la HAM XUAT — de cong goi lai, thay vi viet lai giong giong");
+  assert.match(gate, /check\("PHIEN\.md của gói còn tươi"/,
+    "cong phai co phep kiem rieng canh PHIEN.md con tuoi (N-63)");
+
+  // MOT cong thuc, hai noi goi. Neu cong tu dung lay bo thi no se lech khoi bo sinh mot cach
+  // im lang — dung loai loi ma phep kiem nay sinh ra de bat.
+  assert.match(gate, /dungBoGoi\({ root: ROOT, thuMuc, ph, core }\)/,
+    "cong phai goi `dungBoGoi` cua bo sinh, khong duoc tu chat AGENTS.md/STATUS.md lay");
+  assert.match(sinh, /dungBoGoi\({ root: ROOT, thuMuc, ph, core }\)/,
+    "bo sinh cung phai di qua `dungBoGoi` — neu khong thi lai la hai ban sao");
+
+  // PHAM VI: cham LOI LUAT hay cau hinh thi phai xet CA BON goi, khong chi goi minh dung. Doi
+  // loi ma chi sinh lai mot goi la de ba goi kia day luat cu.
+  assert.match(gate, /nguonChung = new Set\(\[ph\.core, "\.repo-structure\.json", "scripts\/rule-compile\.mjs"\]\)/,
+    "loi luat, cau hinh VA CHINH BO SINH la nguon CHUNG — cham mot trong ba thi phai xet moi goi");
+  assert.match(gate, /chamChung \|\| packagesToiPhaiTraLoi\.includes\(v\)/,
+    "pham vi phai la: cham nguon chung => moi goi; khong thi chi goi MINH phai tra loi (tranh bay K2-2)");
+  // Nua con lai cua K2-2: goi nao lane khac dang sua do thi BO QUA — no cua ho, va toi bi CAM tra.
+  assert.match(gate, /cuaLaneKhac\.has\(v\) \? boQua : canXet/,
+    "goi lane khac dang sua do phai bi bo qua, khong duoc lam do cong cua lane khong sua duoc no");
+  assert.match(gate, /ghiChuBoQua/,
+    "bo qua thi phai NOI RA — mot luot bo qua im lang doc y het mot luot dat");
+
+  // Va vuot tran cung phai DO o cong, khong chi o luot sinh — do la nua con lai cua N-63.
+  assert.match(gate, /PHIEN_QUA_TRAN/,
+    "cong phai do khi bo vuot tran, khong doi den luc ai do tinh co chay `--sinh`");
+  assert.match(gate, /PHIEN_CU/, "cong phai co ma loi rieng cho PHIEN.md cu");
+
+  ok("PHIEN.md con tuoi: cong canh, dung CHUNG cong thuc voi bo sinh, va pham vi khong bay K2-2");
 }
 /* ---- CHỐT commit-msg: NỬA CÒN LẠI CỦA N-40 — N-49 -------------------------
  *

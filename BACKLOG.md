@@ -932,3 +932,27 @@ không bao giờ thấy — đúng cách lỗi này tái diễn.
 - **vì sao KHOÁ không chữa được:** khoá canh **ai được GHI**, còn suite đọc **cả cây**. Một lane tuân thủ khoá tuyệt đối vẫn làm đỏ cổng của lane khác chỉ bằng việc để một file sửa dở trên đĩa. `--soat` bịt cửa commit, không bịt cửa này.
 - **chỗ CHƯA có máy nào canh, nói thẳng:** đây là một quyết định **nằm trong bản hiệu lực** mà **thực tế không khớp**. Bộ biên dịch soi *chữ với chữ*, không soi *chữ với thế giới* — cả bốn phép ① ② ③ ④ đều XANH trong khi vế này bị bỏ suốt hai ngày.
 - **đóng khi:** `git worktree list` trả về **ít nhất hai** cây, **hoặc** `ADR-0017 ⑵` được đánh dấu chết kèm tên quyết định thay nó. Một trong hai — không được để nguyên như hiện nay.
+
+## N-63 · `PHIEN.md` là file MỌI phiên gói nạp, nhưng KHÔNG phép kiểm nào canh nó còn tươi
+
+- **nhóm:** cong
+- **mở:** 2026-09-09 · lane `claude-nen-luat`
+- **vùng:** `_code` + `_root` (`.repo-structure.json` → `generators` / `generated`)
+- **[ĐO]** `generators` khai **ba** script (`build-dashboard.mjs` · `feature-parity.mjs` ·
+  `build-overview.mjs`); `rule-compile.mjs` **không có trong đó**, và không một `PHIEN.md` nào
+  nằm trong `generated`. Tức phép kiểm ⑺ *Sự thật máy sinh còn tươi* **không nhìn thấy** bốn file
+  mà [ADR-0035](docs/adr/0035-mot-file-cho-mot-phien-gap.md) vừa biến thành **cửa vào duy nhất**
+  của mọi phiên đụng gói.
+- **[ĐO] đường hỏng cụ thể, gặp ngay hôm mở mục này:** `PHIEN.md` chắt bốn trường của `STATUS.md`.
+  Lúc 17:16 lane `claude-gpt-chay-het-job` đang giữ khoá `STATUS.md` của gói chatgpt. Nó sửa xong
+  và commit thì `PHIEN.md` **dạy trạng thái cũ**, cổng vẫn XANH, và phiên sau tin file đó — vì
+  chính `PHIEN.md` nói *"đây là toàn bộ thứ cần để bắt đầu"*.
+- **cái giá thứ hai, âm hơn:** trần CỨNG của bó chỉ nổ **lúc `--sinh` chạy**. Không ai chạy `--sinh`
+  thì một `STATUS.md` phình ra không bị chặn ở đâu cả — trần biến thành thước cóc mà không ai
+  tuyên bố hạ nó.
+- **đừng làm vội, và đây là lý do:** thêm `rule-compile.mjs` vào `generators` sẽ làm ĐỎ cổng của
+  **mọi lane** ngay khi một `PHIEN.md` lệch — kể cả lane không được phép sửa gói đó (đúng cái bẫy
+  `K2-2` đã ghi trong `session-check.mjs`). Cần nghĩ phần quy trách nhiệm trước, không chỉ phần đo.
+- **đóng khi:** sửa `STATUS.md` của một gói rồi **không** chạy `--sinh` thì cổng ĐỎ ở đúng lane
+  chịu trách nhiệm cho gói đó — **hoặc** một dòng khai nói vì sao `PHIEN.md` cố ý không được canh,
+  kèm ADR đứng sau.

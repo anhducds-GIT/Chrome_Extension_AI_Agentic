@@ -740,3 +740,33 @@ thức**, có phép ghim canh. Dedupe làm việc thật: bốn luật đầu c�
 **Gói `duc-auto-chatgpt` KHÔNG sinh được: 3.912 token, quá trần 912.** Phần thừa đã biết chính xác
 (khối biện minh ADR-0032 đã nhận về + bốn luật trùng lõi), vùng đang có lane khác giữ. Hệ quả cần
 nhớ: chừng nào nó còn quá trần thì `--sinh` **luôn thoát 1** — đừng dùng mã thoát để suy ra lỗi mới.
+
+## 2026-09-09 · `claude-nen-luat` (lượt 6) — `PHIEN.md` là cửa vào duy nhất mà không ai canh nó
+
+Trần CỨNG hôm qua chỉ nổ **lúc `--sinh` chạy**. Không ai chạy thì `PHIEN.md` dạy trạng thái cũ và
+cổng vẫn XANH — mà nó là thứ DUY NHẤT một phiên đụng gói nạp (ADR-0035). Mở `N-63`, rồi vá luôn.
+
+**Không nhét vào `generators` được**, và đó là phần khó: phép ⑺ so cả repo, nên một `PHIEN.md`
+lệch làm ĐỎ cổng **mọi lane**, kể cả lane bị CẤM sửa gói đó (bẫy `K2-2`). Phép mới hỏi câu hẹp
+hơn: *bạn có chạm nguồn của bó nào không*. Chạm `LUAT-CORE.md` · `.repo-structure.json` ·
+`rule-compile.mjs` thì xét **cả bốn** gói — đổi lõi mà chỉ sinh lại một gói là để ba gói kia dạy
+luật cũ. Gói nào **lane khác đang sửa dở** thì bỏ qua **và nói ra**: nợ của họ, và một lượt bỏ qua
+im lặng đọc y hệt một lượt đạt.
+
+**Cổng và bộ sinh nay gọi CHUNG `dungBoGoi()`** — hai bản sao của một công thức là bẫy repo này đã
+sập rồi, và riêng thước bó đã đo sai chỗ hai lần trong một ngày. Có phép ghim canh cả hai chiều.
+
+**Phép kiểm bắt được một ca THẬT trong lúc tôi đang viết nó:** lane `claude-gpt-chay-het-job`
+commit `a7a218c4` sửa `STATUS.md` lúc 17:47; `PHIEN.md` thành cũ ngay lúc đó; phép mới đỏ. Trước
+hôm nay không có gì báo.
+
+**Đột biến 4/4:** sửa `STATUS.md` không sinh lại → ĐỎ `PHIEN_CU` · sửa **và** sinh lại → XANH
+(không đỏ oan) · sửa lõi luật → ĐỎ cả bốn gói · nhồi 1.500 ký tự vào `STATUS.md` → ĐỎ
+`PHIEN_QUA_TRAN`, tức trần nay chặn ở **cả hai** cửa chứ không chỉ lượt sinh. Suite 38/38.
+
+**Gói `duc-auto-chatgpt` nay 2.463 token** (`## Luật vàng` 4.265 → 2.187 ký tự): khối biện minh
+ADR-0032 còn một dòng + một liên kết, bốn luật trùng lõi trỏ về lõi, và bản kể tên lại bốn luật đó
+bỏ hẳn — trong `PHIEN.md` chúng in **ngay phía trên**. Nắp `run.trial` và bảy lớp bảo vệ giữ
+nguyên. Phép ③ `LUAT_TRUNG` 2 → 1. **Chưa commit được:** `AGENTS.md` + `PHIEN.md` của gói đó còn
+nằm trong cây làm việc, vùng đang do `claude-gpt-chay-het-job` giữ ("đẩy loạt sửa sau audit").
+Tôi **không lấy khoá** — chờ họ trả.

@@ -446,6 +446,47 @@ export function sinhPhienGoi({ core, luatGoi, trangThai, tenGoi }) {
   return { noiDung: ra, boTrung };
 }
 
+/* DỰNG BÓ MỞ PHIÊN CỦA MỘT GÓI, TỪ ĐĨA — bộ sinh và cổng gọi CHUNG hàm này.
+ *
+ * Vì sao không để mỗi bên tự dựng: hai bản sao của một công thức là cái bẫy repo này đã sập đúng
+ * một lần rồi (`append_only_exempt`, 02/09: hai chỗ trả hai câu khác nhau cho cùng một file), và
+ * riêng thước bó thì đã đo sai chỗ HAI lần trong ngày 09/09. Cổng canh cái bộ sinh làm ra, nên
+ * cổng phải dựng bằng đúng cái bộ sinh dựng — không phải bằng một bản viết lại giông giống.
+ *
+ * Trả `{ loi }` khi thiếu nguồn; trả `{ noiDung, boKyTu, tran, … }` khi dựng được. KHÔNG ghi đĩa
+ * và KHÔNG in gì: quyết định làm gì với con số là của người gọi. */
+export function dungBoGoi({ root, thuMuc, ph, core }) {
+  const tenGoi = thuMuc.split("/")[1] ?? thuMuc;
+  let ag;
+  try { ag = fs.readFileSync(path.join(root, thuMuc, "AGENTS.md"), "utf8"); }
+  catch { return { loi: `THIEU_FILE: ${thuMuc}/AGENTS.md` }; }
+  const luatGoi = (/\n(## Luật vàng[\s\S]*?)(?=\n## )/.exec(ag) ?? ["", ""])[1];
+  if (!luatGoi) return { loi: `THIEU_LUAT_VANG: ${thuMuc}/AGENTS.md` };
+
+  let trangThai = "";
+  try {
+    const st = fs.readFileSync(path.join(root, thuMuc, "STATUS.md"), "utf8");
+    const fm = (/^---\r?\n([\s\S]*?)\r?\n---/.exec(st) ?? ["", ""])[1];
+    trangThai = (ph.truong_trang_thai ?? [])
+      .map((k) => (new RegExp(`^${k}:.*$`, "m").exec(fm) ?? [null])[0])
+      .filter(Boolean).map((d) => `- ${d}`).join("\n");
+  } catch { /* gói chưa có STATUS.md thì phần này rỗng */ }
+
+  const { noiDung, boTrung } = sinhPhienGoi({ core, luatGoi, trangThai, tenGoi });
+  /* Trần đo CẢ BÓ (`CLAUDE.md` định tuyến + `PHIEN.md`), không đo một file — bài học đắt nhất của
+     ngày 09/09: hai lượt thước trước đều đo một file tiện đo và bỏ sót phần lớn hoá đơn. Bó là
+     thứ Đức đếm, nên bó là thứ bị chặn. */
+  let nenKyTu = 0;
+  for (const f of ph.dinh_tuyen ?? []) {
+    try { nenKyTu += fs.readFileSync(path.join(root, f), "utf8").length; } catch { /* thiếu thì thôi */ }
+  }
+  return {
+    noiDung, boTrung, nenKyTu,
+    boKyTu: nenKyTu + noiDung.length,
+    tran: ph.tran_ky_tu ?? Infinity,
+  };
+}
+
 export const MOC_SINH_PHIEN = "PHIEN MAY SINH: rule-compile --sinh. DUNG SUA TAY.";
 
 export const MOC_DAU = "<!-- KHOI MAY SINH: rule-compile --sinh. DUNG SUA TAY. -->";
@@ -498,32 +539,9 @@ export function main(argv = process.argv.slice(2)) {
     if (ph?.goi?.length) {
       const core = fs.readFileSync(path.join(ROOT, ph.core), "utf8");
       for (const thuMuc of ph.goi) {
-        const tenGoi = thuMuc.split("/")[1] ?? thuMuc;
-        let luatGoi = "", trangThai = "";
-        try {
-          const ag = fs.readFileSync(path.join(ROOT, thuMuc, "AGENTS.md"), "utf8");
-          luatGoi = (/\n(## Luật vàng[\s\S]*?)(?=\n## )/.exec(ag) ?? ["", ""])[1];
-        } catch { console.error(`THIEU_FILE: ${thuMuc}/AGENTS.md`); loi++; continue; }
-        if (!luatGoi) { console.error(`THIEU_LUAT_VANG: ${thuMuc}/AGENTS.md`); loi++; continue; }
-        try {
-          const st = fs.readFileSync(path.join(ROOT, thuMuc, "STATUS.md"), "utf8");
-          const fm = (/^---\r?\n([\s\S]*?)\r?\n---/.exec(st) ?? ["", ""])[1];
-          trangThai = (ph.truong_trang_thai ?? [])
-            .map((k) => (new RegExp(`^${k}:.*$`, "m").exec(fm) ?? [null])[0])
-            .filter(Boolean).map((d) => `- ${d}`).join("\n");
-        } catch { /* gói chưa có STATUS.md thì phần này rỗng */ }
-
-        const { noiDung, boTrung } = sinhPhienGoi({ core, luatGoi, trangThai, tenGoi });
-        /* Trần đo CẢ BÓ (`CLAUDE.md` định tuyến + `PHIEN.md`), không đo một file — đó là bài học
-           đắt nhất của ngày 09/09: hai lượt thước trước đều đo một file tiện đo và bỏ sót phần
-           lớn hoá đơn. Bó là thứ Đức đếm, nên bó là thứ bị chặn. */
-        const dinhTuyen = ph.dinh_tuyen ?? [];
-        let nenKyTu = 0;
-        for (const f of dinhTuyen) {
-          try { nenKyTu += fs.readFileSync(path.join(ROOT, f), "utf8").length; } catch { /* thiếu thì thôi */ }
-        }
-        const boKyTu = nenKyTu + noiDung.length;
-        const tran = ph.tran_ky_tu ?? Infinity;
+        const bo = dungBoGoi({ root: ROOT, thuMuc, ph, core });
+        if (bo.loi) { console.error(bo.loi); loi++; continue; }
+        const { noiDung, boTrung, nenKyTu, boKyTu, tran } = bo;
         if (boKyTu > tran) {
           console.error(`PHIEN_QUA_TRAN: bó mở phiên của ${thuMuc} sẽ là ${boKyTu} ký tự`
             + ` (~${Math.round(boKyTu / 2.2)} token) = ${nenKyTu} định tuyến + ${noiDung.length}`
