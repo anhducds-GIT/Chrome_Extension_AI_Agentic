@@ -687,10 +687,9 @@ tự dựng cùng ngày chỉ đo `AGENTS.md` nên báo *"8.900, dưới trần"
 **Chữa bằng một dòng luật** (ADR-0034): mục 1 đọc `STATUS.md` thay cho cuối `HANDOFF.md` —
 `STATUS.md` vốn đã là trang trạng thái một-trang. **24.000–30.500 → 8.500–11.600 token.**
 
-**Một đề xuất của chính tôi bị rút lại.** Tôi định hạ trần mục nhật ký 2.600 → 1.200 byte. Cấu hình
-nói thẳng vì sao không được: 2.600 **được đo**, nằm trong một khoảng trống của phân bố, và protocol
-mục 5 cấm đúng việc đó — *"đừng cắt chữ cho vừa"*. **Đè một con số đoán lên một con số đã đo là làm
-hỏng phép đo.**
+**Rút lại một đề xuất của chính tôi:** hạ trần mục nhật ký 2.600 → 1.200 byte. Con số 2.600 **được
+đo**, nằm trong một khoảng trống của phân bố. **Đè một con số đoán lên một con số đã đo là làm hỏng
+phép đo, không phải nén.**
 
 **Phần "hook permanently":** `nap.mo_phien_goi` khai danh sách file mục 1 bắt đọc, cổng đọc danh
 sách đó thay vì gõ cứng, một phép ghim đối chiếu hai chiều. Đột biến **3/3** — con đầu **thoát** ở
@@ -698,12 +697,13 @@ bản đầu vì tôi đối chiếu cả mục 1 thay vì đúng câu *"Mở:"*
 nhắc nó, nhưng để nói *ghi vào đâu*). Thu hẹp về đúng câu → 3/3 đỏ.
 
 **`CLAUDE.md` toàn cục 2.351 → 1.874 ký tự** (Đức duyệt). Giữ ranh giới *phải hỏi Đức* dù repo
-cũng nói — **trùng lặp đang chạy tốt**: project chưa có `AGENTS.md` thì đó là sàn an toàn duy nhất.
+cũng nói — **trùng lặp đang chạy tốt**: project chưa có `AGENTS.md` thì đó là sàn an toàn duy nhất. **Nâng `docs.tran_dong_khong_ke_adr`
+9.185 → 9.340** (cửa ra thứ ba của cổng): `docs/` +119 dòng, file luật **−440**, ròng **−321** —
+số đo và lý lẽ ở `docs._vi_sao_nang_0909`.
 
-**Prompt audit** — 6 phát hiện, áp 4. Bề mặt luật **sạch** ở nhóm prompt cũ (0 giàn giáo, 6 lần
-nhấn mạnh / 2.400 dòng). Phát hiện thật là **thiếu chữ**: 40/75 mô tả method Bridge ≤ 1 câu, trong
-đó `run.trial` — method duy nhất tiêu credit — không mang nắp cứng nào; chúng chỉ ở `AGENTS.md`,
-thứ tác nhân ngoài **không bao giờ nạp**.
+**Prompt audit** — 6 phát hiện, áp 4. Bề mặt luật **sạch** ở nhóm prompt cũ. Phát hiện thật là
+**thiếu chữ**: 40/75 mô tả method Bridge ≤ 1 câu, và `run.trial` — method duy nhất tiêu credit —
+không mang nắp cứng nào; chúng chỉ ở `AGENTS.md`, thứ tác nhân ngoài **không bao giờ nạp**.
 
 **Khoá:** trả hộ lane `claude-gpt-chay-het-job` theo lời Đức *"phiên GPT đã dừng"* — **nó nhận lại
 vùng 3 phút sau**. Dừng tay ở gói đó, hai hunk Bridge chưa áp. Trước đó cứu được một mục sổ nợ họ
