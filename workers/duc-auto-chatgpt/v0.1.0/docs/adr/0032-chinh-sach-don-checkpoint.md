@@ -24,6 +24,10 @@ Chính sách dọn checkpoint: giữ `v01` + 5 bản cuối; phần còn lại C
 không ghi lại — bảng gốc trong `workers/duc-auto-chatgpt/v0.1.0/decisions.md` chỉ có bốn cột (Quyết định · Vì sao · Ai chốt · Nguồn), không có mục Hệ quả.
 Không bịa thêm: đây là bản ghi lịch sử, không phải bài viết lại.
 
+## Vế đã chết
+
+- **0032 — chính sách dọn checkpoint bản 24/08 (giữ `v01` + năm bản cuối, chuyển sang `superseded/`).** Chết **28/08**: quyết định **0043** thay bằng luật mới. Đừng trích số này nữa — trích 0043.
+
 ## Trạng thái
 
 Accepted — chốt ngày 2026-08-24. Người chốt: Đức.

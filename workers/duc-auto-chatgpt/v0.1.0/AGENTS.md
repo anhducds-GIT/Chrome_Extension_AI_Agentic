@@ -99,8 +99,8 @@ CORE (đọc mỗi lần):
 COMPANION (đọc khi cần):
 - `decisions.md` — **nay là MỤC LỤC** trỏ sang các ADR trong `docs/adr/`.
 - `docs/adr/` — quyết định của riêng gói này, mỗi cái một file **bất biến** (chuẩn Nygard, bốn mục).
-  Đã `Accepted` thì KHÔNG sửa — đổi ý thì viết ADR mới, trỏ hai chiều. Phép kiểm B12
-  cưỡng chế. Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` ở gốc repo.
+  **HỒ SƠ sửa được — gộp, phân nhóm, rút gọn; QUYẾT ĐỊNH thì không** ([ADR-0026](../../../docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md) ⑵, thay luật bất biến từng byte 09/09).
+  Đổi điều đã quyết thì phải có quyết định mới đứng sau; **bỏ hẳn một số hiệu khỏi sổ thì B12 CHẶN.** Luật: `docs/adr/0000-ghi-nhan-quyet-dinh-kien-truc.md` ở gốc repo.
 - `DAC_XLSX_RUN_PLAN_V1.md` — hợp đồng schema XLSX (jobs/config) cho mọi
   workbook mới.
 - `NEXT-SESSION-BRIEF.md` — brief chi tiết cho phiên làm việc tiếp theo khi có
@@ -108,6 +108,98 @@ COMPANION (đọc khi cần):
 - `AUDIT.md`, `TEST_REPORT.md` — kết quả audit/test đã chạy.
 - `drafts/` — nháp, spec thiết kế, roadmap chưa chốt. Agent chỉ được tự ghi
   vào đây (đúng luật CLAUDE.md gốc của Đức).
+
+## Sổ cái của gói — luật đang sống, và chỗ đọc lý lẽ
+
+> Mục lục đầy đủ: [`decisions.md`](decisions.md). **Trích theo SỐ HIỆU, đừng trích theo tên file.**
+> Số hiệu đánh **theo từng thư mục**: `ADR-0006` ở đây khác `ADR-0006` của gói khác và khác của
+> gốc repo. Ba mươi bảy quyết định dưới đây là những cái **còn ràng buộc việc hôm nay**; phần còn
+> lại của sổ khai ở `.repo-structure.json` → `luat.mo_coi_co_y`.
+
+**Bridge, và ai được thực thi.**
+[ADR-0001](docs/adr/0001-bridge-dung-loopback-host-127-0-0-1-co-token-32.md) loopback `127.0.0.1`
++ token 32-byte ·
+[ADR-0009](docs/adr/0009-host-la-node-esm-thuan-khong-phu-thuoc-npm.md) host là Node ESM thuần ·
+[ADR-0006](docs/adr/0006-side-panel-la-executor-duy-nhat.md) side panel là executor **duy nhất** ·
+[ADR-0007](docs/adr/0007-run-start-run-pause-run-resume-khong-co-trong.md) `run.start`/`pause`/`resume`
+không tồn tại ·
+[ADR-0002](docs/adr/0002-supersedes-dong-ai-ngoai-chi-duoc-propose-ben-duoi.md) riêng thao tác
+*Setup* thì Bridge toàn quyền ·
+[ADR-0005](docs/adr/0005-queue-propose-duyet-tay-cua-duc-khong-bi-xoa-khi.md) `queue.propose` +
+duyệt tay không bao giờ bị gỡ ·
+[ADR-0039](docs/adr/0039-nguyen-tac-thiet-ke-bridge.md) **"AI là bộ não, người dùng là cánh tay"** ·
+[ADR-0041](docs/adr/0041-references-add-cho-gpt-hien-thuc-hoa-nguyen-tac-ai.md) `references.add` là
+hiện thực hoá nguyên tắc đó, **không** phải luật mới.
+
+**AI được chạm tới đâu trên ổ đĩa.**
+[ADR-0003](docs/adr/0003-ai-khong-the-tu-mo-file-xlsx-tu-o-dia-hay-tu-bind.md) AI **không** tự mở
+`.xlsx` hay bind thư mục mới — giới hạn của trình duyệt ·
+[ADR-0004](docs/adr/0004-bo-sung-dong-tren-phat-hien-tu-phien-gemini.md) **nhưng ĐƯỢC** tự nạp vị
+trí output khi đó là thư mục con tương đối dưới `Downloads`.
+
+**An toàn lúc chạy — đừng nới cái nào.**
+[ADR-0034](docs/adr/0034-khong-doi-nhac-lai-run-la-cua-duc-ai-khong-tu-gui.md) Run là của Đức;
+không làm yếu exact-once / attribution / persistence ·
+[ADR-0035](docs/adr/0035-exception-co-kiem-soat-cho-dong-run-la-cua-duc-o.md) **ngoại lệ có hàng
+rào:** trial run trong giai đoạn phát triển ·
+[ADR-0042](docs/adr/0042-viec-that-khong-chay-qua-run-trial.md) **việc thật KHÔNG chạy qua
+`run.trial`** ·
+[ADR-0016](docs/adr/0016-completed-job-safe-complete-khong-bao-gio-tu-chay.md) job đã
+`SAFE_COMPLETE` **không bao giờ** tự chạy lại ·
+[ADR-0024](docs/adr/0024-retry-halt-chi-dung-toan-batch-khi-captcha-het.md) chỉ **ba** loại
+hard-stop dừng cả mẻ ·
+[ADR-0025](docs/adr/0025-pause-chi-giu-hang-doi-o-ranh-gioi-an-toan-giua-2.md) Pause chỉ ở ranh
+giới giữa hai job ·
+[ADR-0020](docs/adr/0020-mot-run-khoa-dung-mot-tab-va-mot-hoi-thoai.md) một run khoá đúng **một**
+tab và **một** hội thoại ·
+[ADR-0037](docs/adr/0037-run-stop-di-vong-qua-khoa-run-active.md) bất đối xứng **CỐ Ý**: `run.stop`
+vòng qua `RUN_ACTIVE`, `chat.reload` thì bị nó chặn ·
+[ADR-0038](docs/adr/0038-co-stoprequested-duoc-xoa-tai-khoa-mo-run.md) cờ `stopRequested` xoá tại
+`tryBeginRun`, **không** giữa `run()`.
+
+**Đọc trang, và đừng đoán.**
+[ADR-0017](docs/adr/0017-xu-ly-poll-a-b-cua-chatgpt-which-image-do-you-like.md) poll A/B thì
+extension **tự** trả lời ·
+[ADR-0018](docs/adr/0018-click-tra-loi-poll-o-readiness-gate-khong-click.md) click ở **readiness
+gate**, KHÔNG click lúc đang dò ảnh ·
+[ADR-0019](docs/adr/0019-nhieu-anh-1-job-chi-chap-nhan-khi-cung-mot-luot.md) nhiều ảnh một job chỉ
+nhận khi **cùng một lượt assistant** ·
+[ADR-0021](docs/adr/0021-dia-chi-chua-biet-thi-hoan-phan-xet-khong-dung-cung.md) địa chỉ chưa biết
+thì **hoãn** phán xét, không dừng cứng.
+
+**Ghi ra đĩa — nói đúng điều quan sát được.**
+[ADR-0022](docs/adr/0022-write-outcome-chi-noi-dieu-quan-sat-duoc-khong-noi.md) `write_outcome`
+chỉ nói điều **quan sát được**, không nói điều được PHÉP làm ·
+[ADR-0023](docs/adr/0023-tach-bi-doi-ten-va-vao-dung-cho-thanh-hai-truong.md) tách *"bị đổi tên"*
+và *"vào đúng chỗ"* thành **hai** trường ·
+[ADR-0045](docs/adr/0045-cau-tra-loi-text-dai-qua-32-767-ky-tu-thi-dung-va.md) text quá 32.767 ký
+tự thì **DỪNG và không lưu gì** — không cắt, không tách file.
+
+**Checkpoint và bằng chứng.**
+[ADR-0013](docs/adr/0013-checkpoint-dat-ten-2-chu-so-v01-v02-thay-vi-3-chu.md) checkpoint đặt tên
+hai chữ số ·
+[ADR-0031](docs/adr/0031-cho-phep-gop-checkpoint-cho-phien-sua-cua-agent.md) được gộp checkpoint
+cho một phiên agent, audit vẫn ghi **từng** mutation ·
+[ADR-0043](docs/adr/0043-supersedes-dong-chinh-sach-don-checkpoint.md) chính sách dọn checkpoint
+**đang hiệu lực** (thay bản 24/08) ·
+[ADR-0014](docs/adr/0014-pilot-03-pilot-05-pilot-06-pilot-06b-khong-bao-gio.md) thư mục bằng chứng
+không bao giờ bị sửa ·
+[ADR-0040](docs/adr/0040-pilot-kiem-tinh-nang-thi-tu-tao-khong-dem-viec-that.md) pilot kiểm tính
+năng thì **tự tạo**, không đem việc thật ra đo.
+
+**Chữ, commit, và cách làm việc.**
+[ADR-0026](docs/adr/0026-operator-facing-text-tieng-viet.md) chữ operator tiếng Việt ·
+[ADR-0028](docs/adr/0028-supersedes-dong-khong-tu-y-commit-ngay-tren-trong.md) AI được `git commit`
+kể cả `main`, kèm bốn điều kiện ·
+[ADR-0033](docs/adr/0033-ai-duoc-commit-ke-ca-main-chi-tiet-4-dieu-kien.md) nhắc lại vế trên ·
+[ADR-0030](docs/adr/0030-sua-luat-8-agents-md-cho-phep-xay-harness-test-bang.md) harness bằng
+Chrome THẬT được phép; in-app preview pane vẫn cấm ·
+[ADR-0044](docs/adr/0044-quick-prompt-mac-dinh-la-reasoning-bang-text-khong.md) Quick Prompt mặc
+định là *Reasoning bằng text*, **không** phải *Tạo ảnh* ·
+[ADR-0036](docs/adr/0036-quy-trinh-bat-buoc-cross-check-doc-lap-truoc-khi.md) cross-check độc lập
+trước khi đưa Đức thao tác — **⚠ vế này đã hẹp lại 02/09**: Đức bỏ audit độc lập cho *fix nhỏ*
+(xem `workers/duc-auto-gg-flow-video/v0.1.0/docs/adr/0009-bo-audit-doc-lap-cho-fix-nho.md`), và
+ranh giới *"fix nhỏ"* thì **chưa ai chốt câu chữ** — gặp ca xám thì hỏi Đức.
 
 ## Bản đồ file
 

@@ -520,3 +520,33 @@ bảng, gỡ các vế luật đã chết trong ba `AGENTS.md`). Ghi ra vì
 [ADR-0005](../../../docs/adr/0005-lam-viec-song-song.md) ⑶ bỏ cửa hỏi Đức cho `--carry`, và **tên
 lane bị cuốn theo là thứ duy nhất còn lại để truy**. Cổng đóng phiên XANH TOÀN BỘ trước khi đẩy.
 
+
+## 2026-09-09 — `claude-luat-rasoat`: bản hiệu lực của gói nay MANG sổ cái của nó (N-58)
+
+Không sửa một dòng mã nào — chỉ `AGENTS.md`. Đức chuyển khoá sau khi lane `claude-gpt-chay-het-job`
+dừng.
+
+**41/51 quyết định của gói là mồ côi** — `AGENTS.md` không trích số hiệu nào của sổ cái chính nó.
+Nghĩa là ai chỉ đọc luật vàng sẽ không biết những thứ này tồn tại. Ba cái đáng kể nhất, đều là
+luật **đang ràng buộc**:
+
+- **ADR-0042 — việc thật KHÔNG chạy qua `run.trial`.** Đo được: phát hiện ảnh mất 40–68 giây.
+- **ADR-0045 — câu trả lời text quá 32.767 ký tự thì DỪNG và KHÔNG lưu gì.** Không cắt, không
+  tách file. Giới hạn cứng một ô Excel.
+- **ADR-0004** — AI **được** tự nạp vị trí output khi đó là thư mục con dưới `Downloads`; nó là
+  ngoại lệ có kiểm soát của ADR-0003, và thiếu nó thì luật đọc ra chặt hơn thực tế.
+
+Nay `AGENTS.md` có mục **Sổ cái của gói** trỏ tới **37 luật đang sống**, nhóm theo chủ đề. Hai mục
+còn lại (0010 gỡ API cũ ở WP-4 · 0029 mốc commit Tầng 1) là **bản ghi một lượt đổi đã xong** — khai
+ở `.repo-structure.json` → `luat.mo_coi_co_y`, dạng nhóm, kèm lý do.
+
+**Hai vế đánh dấu CHẾT** đúng khuôn máy đọc được: `0027` (*"không tự ý commit"*, bị 0028/0033 thay)
+và `0032` (dọn checkpoint bản 24/08, bị **0043** thay — đừng trích 0032 nữa).
+
+**Một chỗ ⚠ ghi ra chứ không giấu:** `ADR-0036` bắt cross-check độc lập trước khi đưa Đức thao tác.
+Vế đó **đã hẹp lại 02/09** khi Đức bỏ audit độc lập cho *fix nhỏ*, nhưng **ranh giới "fix nhỏ" chưa
+ai chốt câu chữ**. Đã ghi ngay tại dòng trích; gặp ca xám thì hỏi Đức, đừng suy diễn.
+
+Cùng lượt: sửa dòng *"ADR đã Accepted thì KHÔNG sửa, B12 cưỡng chế"* — chết 09/09 bởi ADR-0026 ⑵.
+
+Phép ② của cả repo: **100 → 0**. Suite gói không chạm.

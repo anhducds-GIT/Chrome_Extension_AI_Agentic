@@ -316,6 +316,18 @@
             ]
           }
         ]
+      },
+      "workers/duc-auto-chatgpt/v0.1.0/docs/adr/": {
+        "_doc": "Dang NHOM: mot ly do chung + danh sach so hieu. Van liet ke TUNG SO — quyet dinh moi them sau van keu o phep (2).",
+        "nhom": [
+          {
+            "ly_do": "Viec da xong, mot lan, khong con rang buoc ai. 0010 go API externally_connectable cu o WP-4; 0029 chot moc commit Tang 1 sau khi test song 6 method. Ca hai ke MOT LUOT DOI da lam xong, khong phai luat cho phien sau tuan theo.",
+            "cac_so": [
+              "0010",
+              "0029"
+            ]
+          }
+        ]
       }
     }
   }

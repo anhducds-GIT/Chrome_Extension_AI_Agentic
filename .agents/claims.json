@@ -26,22 +26,22 @@
       "duc_decision": "Duc chot 2026-09-09: tat ca toi deu mo freeze khoa de trien khai neu ban can. (Duc tra loi truc tiep cau hoi ve ba vung duc-auto-*, phien claude-luat-rasoat, viec N-55/N-56/N-57.)"
     },
     "workers/duc-auto-chatgpt": {
-      "owner": "claude-gpt-chay-het-job",
+      "owner": "claude-luat-rasoat",
       "ai": "Claude",
-      "claimed_at": "2026-09-09T03:50",
-      "task": "B-43 vong hai: gian nguong chot 6s + doc lai khi cau tra loi bi cat (TEXT_INCOMPLETE)",
+      "claimed_at": "2026-09-09T04:36",
+      "task": "N-58: 41 quyet dinh mo coi — 37 luat song vao ban hieu luc, 2 lich su, 2 chet",
       "released_at": null,
-      "taken_from": "claude-luat-rasoat",
-      "taken_by": "claude-gpt-chay-het-job",
-      "taken_at": "2026-09-09T03:50",
-      "duc_decision": "Duc chot 2026-09-09: \"ban lay khoa di\" — lay lai workers/duc-auto-chatgpt cho lane code, vi ban va B-43 vong hai (content.js + ghim) da xanh 122/122 tren dia ma khong commit duoc. Lane claude-luat-rasoat chi lam TAI LIEU trong vung nay va phan do da commit o cc470037; hai vung gemini + gg-flow-video GIU NGUYEN cho ho."
+      "taken_from": "claude-gpt-chay-het-job",
+      "taken_by": "claude-luat-rasoat",
+      "taken_at": "2026-09-09T04:36",
+      "duc_decision": "Duc bao 09/09: 'ben kia da dung roi, ban lam not di' — lane claude-gpt-chay-het-job da ket thuc, Duc chot chuyen khoa de dong N-58."
     },
     "_root": {
-      "owner": null,
-      "ai": null,
-      "claimed_at": "2026-09-08T22:33",
-      "task": "them hai lien ket ADR con thieu vao gioi han 7 va 9",
-      "released_at": "2026-09-08T22:49",
+      "owner": "claude-luat-rasoat",
+      "ai": "Claude",
+      "claimed_at": "2026-09-09T04:50",
+      "task": "N-58: khai mo_coi_co_y cho hai goi + dong so no",
+      "released_at": null,
       "taken_from": "claude-tinh-gon",
       "taken_by": "claude-scouter-s06",
       "taken_at": "2026-09-07T09:33",
@@ -92,17 +92,6 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "c9f17ca0a5e8148e",
-  "tam": {
-    ".repo-structure.json": {
-      "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T04:32",
-      "viec": null
-    },
-    ".agents/claims.json": {
-      "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T04:34",
-      "viec": null
-    }
-  }
+  "_fingerprint": "3e2c8fb9ffc928e6",
+  "tam": {}
 }

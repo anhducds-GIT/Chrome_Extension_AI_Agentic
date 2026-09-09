@@ -716,3 +716,19 @@ theo danh sách gõ tay. Hai dòng bản đồ file cũng vậy.
 
 Suite gói: **95/95 xanh** (không chạm mã). Khoá vùng do Đức mở: *"tất cả tôi đều mở freeze khóa
 để triển khai nếu bạn cần."* Còn mở: **59/67 quyết định của gói mồ côi** → `N-58` ở sổ nợ gốc.
+
+## 2026-09-09 — `claude-luat-rasoat` (lượt 2): bản hiệu lực nay MANG sổ cái của gói (N-58)
+
+**59/67 quyết định của gói là mồ côi** — `AGENTS.md` không trích số hiệu nào của sổ cái chính nó.
+Soi từng cái, không lấp bằng cửa miễn trừ:
+
+- **30 luật đang sống** → mục mới **Sổ cái của gói** trong `AGENTS.md`, nhóm theo chủ đề. Hai cái
+  đáng kể mà ai chỉ đọc luật vàng sẽ không biết: **ADR-0046** ghim **CẤM dựng lại** hai ngõ cụt đã
+  bị bằng chứng bác bỏ (chờ blob đổi sang `lh3`, và cuộn ảnh vào tầm mắt), và **ADR-0051** bất đối
+  xứng **cố ý** giữa `run.stop` và `chat.reload`.
+- **25 bản ghi lịch sử** → khai `.repo-structure.json` → `luat.mo_coi_co_y`, **ba nhóm**, mỗi nhóm
+  một lý do thật: đã lên bản hiệu lực gốc repo · một lượt đổi đã xong · bản ghi chẩn đoán.
+- **4 thật sự đã chết** → đánh dấu `Vế đã chết` đúng khuôn máy đọc được: `0019` (bị 0020/0025
+  thay) và `0038`/`0039`/`0040` (phép chờ blob, bị **0041** THÁO ngay cùng ngày).
+
+Phép ② của gói: **59 → 0**. Không chạm mã; suite gói không đổi.
