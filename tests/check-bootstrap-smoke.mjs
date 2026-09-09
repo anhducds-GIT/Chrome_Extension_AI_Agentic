@@ -874,11 +874,32 @@ const chay = (deps) => {
   assert.equal(typeof ct.luat?.nap?.tran_ky_tu_moi_phien, "number", "phai khai THUOC");
   assert.equal(typeof ct.luat?.nap?.dich_ky_tu_moi_phien, "number",
     "phai khai DICH rieng — thuoc la con so hom nay, dich la cho phai toi");
-  assert.ok(ct.luat.nap.dich_ky_tu_moi_phien < ct.luat.nap.tran_ky_tu_moi_phien,
-    "dich phai NHO hon thuoc, khong thi no khong phai dich");
+  /* Bản đầu ghim `dich < tran` — "đích phải nhỏ hơn thước". Ngày 09/09 lượt nén đưa thước
+     nap-moi-phien XUỐNG DƯỚI đích, và phép ghim đó đỏ vì ĐÃ ĐẠT. Một phép ghim đỏ khi thành công
+     là một phép ghim đo sai chuyện. Cái phải ghim là THỨ TỰ Ý NGHĨA, không phải khoảng cách hôm
+     nay: bien (đích thật) < dich (trần tuyệt đối) — ghim ngay dưới đây, cho cả hai thước. */
+  assert.notEqual(ct.luat.nap.dich_ky_tu_moi_phien, ct.luat.nap.tran_ky_tu_moi_phien,
+    "dich va thuoc phai la hai con so khac nhau — gop lam mot la mat mot tang");
   assert.ok(Array.isArray(ct.luat?.nap?.moi_phien) && ct.luat.nap.moi_phien.length,
     "phai khai file nao duoc nap moi phien");
   ok("thuoc nap moi phien: don vi KY TU, danh sach o cau hinh, dich tach khoi thuoc");
+
+  /* BIEN — ADR-0033 (1). Duc chot 09/09: "muc tieu khong phai dat nguong, ma phai nho hon nguong
+     margin 30-40%, vi sau nay se tiep tuc phinh ra". Nen moi thuoc co BA con so, khong phai hai:
+     thuoc (hom nay, may canh) < ... < bien (dich that) < dich (tran tuyet doi). Ghim ca ba, va
+     ghim CA THU TU — mot cai bien >= dich la mot cai bien khong mua duoc cho tho nao. */
+  for (const hau of ["moi_phien", "mot_goi"]) {
+    const bien = ct.luat?.nap?.[`bien_ky_tu_${hau}`];
+    const dich = ct.luat?.nap?.[`dich_ky_tu_${hau}`];
+    assert.equal(typeof bien, "number", `phai khai bien_ky_tu_${hau} — dich that nam DUOI tran`);
+    assert.ok(bien < dich, `bien_ky_tu_${hau} phai NHO hon dich (tran tuyet doi)`);
+    assert.ok(bien >= dich * 0.55 && bien <= dich * 0.75,
+      `bien_ky_tu_${hau} phai nam trong dai 30-40% duoi tran nhu Duc chot`);
+  }
+  /* Thuoc goi do BO, khong do mot file (ADR-0033 (2)). Ghim o cong: no phai cong phan goc vao. */
+  assert.match(gate, /kyTu \+ n > nangNhat/,
+    "thuoc goi phai do BO (phan goc + AGENTS.md cua goi), khong do rieng file cua goi");
+  ok("bien tach khoi tran o ca hai thuoc, va thuoc goi do BO chu khong do mot file");
 }
 /* ---- CHỐT commit-msg: NỬA CÒN LẠI CỦA N-40 — N-49 -------------------------
  *

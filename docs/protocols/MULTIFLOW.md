@@ -89,6 +89,76 @@ nó*, và ai đọc file này là đang đi sửa cơ chế nên cần vế th�
   Đẩy được rồi mới trả. Không đẩy được thì **giữ khoá và báo lại** — giữ một khoá là chuyện nhỏ,
   để lại commit vô chủ mới là chuyện lớn.
 
+## 3a. Cú pháp đầy đủ, và bản đồ vùng
+
+> Chuyển từ `AGENTS.md` mục 1 xuống đây 09/09 ([ADR-0033](../adr/0033-tran-co-bien-va-bay-cho-mau-thuan-trong-ban-hieu-luc.md) ⑶).
+> **Tầng 1 giữ bất biến; đây giữ thủ tục.** Cò nạp: *trước khi nhận khoá, commit, đóng phiên, hoặc
+> khi gặp tranh chấp khoá — đọc mục này.*
+
+```bash
+node scripts/claim.mjs --sua <đường-dẫn>… --as <phiên>    # khoá FILE, mặc định
+node scripts/claim.mjs --soat --as <phiên>                # BẮT BUỘC trước git commit
+node scripts/claim.mjs --xong --het --as <phiên>          # trả mọi khoá file
+node scripts/claim.mjs --list                             # ai đang giữ gì
+node scripts/claim.mjs --take|--release <khoá> --as <phiên> [--task "một câu"]
+node scripts/claim.mjs --khai-vung <khoá> --as <phiên>    # mở MỘT VÙNG MỚI
+node scripts/claim.mjs --restamp --as <phiên> --duc-duyet "<câu chốt của Đức>"
+git config core.hooksPath .githooks                       # một lượt, xong cho mọi lane
+```
+
+| Khoá | Che gì |
+|---|---|
+| `_docs` | `docs/` |
+| `_code` | `scripts/` + `tests/` |
+| `_root` | phần còn lại và các file ở tầng ngoài cùng |
+| `workers/<gói>` | gói đó |
+
+Ai chia vùng thì khai `steward` trong khối `areas` của `.repo-structure.json`. **Nhận đúng vùng
+mình đụng, không nhận cả gốc repo** — cổng sẽ nói tên khoá còn thiếu.
+
+**Artifact máy sinh KHÔNG đòi khoá nào** — khai ở khối `generated` của `.repo-structure.json`
+(hôm nay: `DASHBOARD.md`, `llms.txt`, `repo-map.json`, `DASHBOARD-Chrome-Extension-AI-Agentic.html`,
+`FEATURE-PARITY-AUTO.md`). Chạy lại bộ sinh là ra y hệt nên không có gì của ai trong đó để mất.
+`FEATURE-PARITY.md` **cố ý không** nằm trong đó — mục 2 của nó là chữ của người
+([ADR-0014](../adr/0014-tach-khoi-may-sinh-cua-bang-doi-chieu.md)). Ở bảng đối chiếu, dòng **[DÒ]**
+là máy **đoán theo tên** — kiểm lại trước khi hành động theo nó.
+
+**File miễn khoá** khai ở `append_only_exempt` — **sửa ở đó, đừng sửa script.** Hai loại: miễn vô
+điều kiện (`.agents/claims.json` — không miễn thì chính thao tác trả quyền cũng bị coi là sửa file
+gốc), và miễn **khi chỉ thêm dòng ở cuối** (`HANDOFF.md` gốc · `IDEAS.md` · `BACKLOG.md` gốc — mọi
+lane đều phải ghi vào ba quyển này, bắt chúng xếp hàng sau `_root` là tự chặn luật của mình).
+
+**Một vùng không nhận được khi bên trong còn khoá file của lane khác** — kể cả khoá đó đã treo lâu.
+Đó là chứa-nhau hai chiều đang chạy đúng, không phải lỗi. Đợi, hoặc hỏi lane đó. **Đừng nhả hộ.**
+
+## 3b. Đóng phiên — thứ tự, và hai lớp bộ sinh
+
+> Chuyển từ `AGENTS.md` mục 0a xuống đây 09/09, kèm lời giải cho hai chỗ mâu thuẫn mà một lượt
+> audit độc lập tìm ra ([ADR-0033](../adr/0033-tran-co-bien-va-bay-cho-mau-thuan-trong-ban-hieu-luc.md) ⑸⒝⒞).
+
+```
+--sua → sửa → --soat → commit → --xong
+      → sinh lại MỌI artifact → commit
+      → npm run test:song-song   ← VIỆC CUỐI CÙNG, không có gì ghi sau nó
+      → cổng → safe-push → trả khoá vùng
+```
+
+- **Suite là việc cuối.** Nó để lại một *dấu xác nhận* buộc vào HEAD + băm cây, nên **mọi lượt ghi
+  sau đó làm hỏng dấu**. Lúc đang làm thì chỉ chạy một suite: `node scripts/chay-test.mjs --chi
+  <tên>` — cố ý KHÔNG ghi dấu. Đo ở bộ khung: **1.095 → 278 giây**.
+- **"Đúng MỘT lượt" là tối ưu, KHÔNG phải cấm.** Hỏng dấu vì một lượt sửa thì **chạy lại**. Bất
+  biến là *trạng thái cuối cùng đã được kiểm*, không phải *chỉ được chạy một lần*.
+- **Hai lớp bộ sinh, và chúng chạy khác nhau.** Lớp tự do (`build-dashboard`, `feature-parity`,
+  `build-overview`) chạy lại bao nhiêu lần cũng được. Lớp ghi vào **sổ CÓ RÀNG BUỘC**
+  (`handoff.mjs --cat`, `rule-compile --sinh`) chạy **đúng một lần** — chạy lại nhiều lượt là
+  cắt/nối chồng lên nhau. **Cả hai lớp đều chạy TRƯỚC lượt commit cuối**, không phải sau suite.
+- **Đừng đổi `scripts.test`** — một phép ghim trong `duc-auto-*` đọc thẳng trường đó để bắt "xanh
+  giả".
+- **Khoá file trả NGAY sau lượt ghi; hết phiên là HẠN CHÓT.** Còn phải ghi tiếp thì **nhận lại**.
+  Cổng đỏ nếu bạn còn treo khoá file lúc đóng phiên.
+- **`git commit --amend` chỉ áp cho commit CỦA CHÍNH LANE MÌNH và CHƯA ĐẨY.** Đã đẩy thì đó là sửa
+  lịch sử — phải hỏi Đức (`AGENTS.md`, *Phải hỏi Đức trước*).
+
 ## 4. Sáu bất biến — và vì sao từng cái tồn tại
 
 Đây là phần **phải đọc trước khi sửa bất cứ thứ gì** ở mục 2. Mỗi bất biến sinh ra từ một lần

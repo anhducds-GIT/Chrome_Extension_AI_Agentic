@@ -73,6 +73,46 @@ git show <sha-trước-lượt-gộp>:docs/adr/<file-cũ>.md | grep "^### "
 Vế nào cố ý bỏ thì phải xuất hiện ở mục `Vế đã chết` kèm tên quyết định thay nó. Không ở đó,
 không ở bản gộp = **đã mất**.
 
+## 5a. Giới hạn — trần, đích, biên, và ai canh cái gì
+
+> Chuyển từ `AGENTS.md` mục 4 xuống đây 09/09
+> ([ADR-0033](../adr/0033-tran-co-bien-va-bay-cho-mau-thuan-trong-ban-hieu-luc.md) ⑶).
+> **Cò nạp: trước khi đổi một giới hạn, một trần, hay chính sách phép kiểm — đọc mục này.**
+
+**Ba con số cho mỗi thước, không phải hai** (ADR-0033 ⑴). Khai ở `.repo-structure.json` → `luat.nap`:
+
+| Tên | Nghĩa | Ai canh |
+|---|---|---|
+| `tran_*` | con số **hôm nay** | **máy** — cổng đỏ nếu vượt |
+| `dich_*` | **8.000** — trần tuyệt đối | người |
+| `bien_*` | **5.200** — đích thật, 65% của trần | người |
+
+Máy canh **thước**, không canh **đích**: một cổng đỏ với mọi phiên trong nhiều tuần là một cổng sẽ
+bị gỡ ([ADR-0027](../adr/0027-bo-bien-dich-luat.md) ⑶). Vượt `bien_*` thì chưa đỏ, nhưng nó là lúc
+phải quyết một cách có ý thức — đừng đợi tới `dich_*`.
+
+**Đo theo BÓ, không theo file** (ADR-0033 ⑵). Thước gói đo `CLAUDE.md + AGENTS.md gốc + AGENTS.md
+của gói` — đúng thứ một phiên đụng gói nạp. Hệ quả cố ý: **chuyển một luật xuống sổ tay mà mọi
+phiên sửa mã đều phải mở thì không tiết kiệm gì thật.**
+
+**Thước khác câu hỏi khác.** `docs.tran_dong_khong_ke_adr` đo **kho chữ phình** (đơn vị dòng, trừ
+ADR) — không phải hoá đơn nạp. Một thước cho một câu hỏi; đừng gộp.
+
+**Cơ chế đóng băng gói** ở lại với danh sách rỗng — nó là công tắc Đức bật lại được, không phải
+tàn dư ([ADR-0021](../adr/0021-goi-extension.md) ⑴).
+
+**Phép kiểm bắt 0 đột biến thì XOÁ** — một phép kiểm không bắt được gì vẫn thu thuế mọi phiên. Đây
+là **bộ máy tự dọn mình**, không đụng luật gốc *"không xoá file"* của Đức (ADR-0033 ⑸⒠).
+
+**Đóng một mục sổ nợ** — thêm ở **CUỐI** sổ:
+
+```
+- **ĐÓNG <mã>** · <một câu nói vì sao nó đóng>
+```
+
+Dấu `**` phải đóng **ngay sau mã**. Viết sai mẫu thì nó **không đóng gì mà đọc y hệt dòng đúng** —
+đếm lại bằng `node scripts/backlog-check.mjs`. Trần khai ở `backlog.tran`; **hỏi Đức trước khi đổi.**
+
 ## 6. Ba chỗ dễ vấp
 
 - **Trích theo SỐ HIỆU ĐANG SỐNG, đừng trích theo tên file.** Một file chủ đề mang nhiều quyết

@@ -1054,26 +1054,32 @@ check("Kho chữ không phình", () => {
         ok: false,
         msg: `NAP_MOI_PHIEN_PHINH: ${kyTu} ký tự (~${Math.round(kyTu / 2.2)} token) mà MỌI phiên`
           + ` nạp trước khi biết mình sắp làm gì, thước cóc là ${nap.tran_ky_tu_moi_phien}`
-          + ` — thêm ${kyTu - nap.tran_ky_tu_moi_phien}. Đích là ${nap.dich_ky_tu_moi_phien ?? "?"}.`
+          + ` — thêm ${kyTu - nap.tran_ky_tu_moi_phien}. Trần tuyệt đối ${nap.dich_ky_tu_moi_phien ?? "?"},`
+          + ` ĐÍCH ${nap.bien_ky_tu_moi_phien ?? "?"} (ADR-0033 ⑴ — đích nằm DƯỚI trần 30–40% vì hệ`
+          + " thống luôn phình lại)."
           + " Cửa ra RẺ NHẤT: chuyển phần KỂ CHUYỆN (đo được bao nhiêu, vấp ở đâu, ai chốt) sang"
           + " ADR — ADR nạp theo yêu cầu nên nó MIỄN PHÍ với mọi phiên. Giữ lại một câu luật cộng"
           + " một liên kết.",
       };
     }
+    /* Thước gói đo BÓ, không đo một file — ADR-0033 ⑵. Bản cũ đo `AGENTS.md` của gói MỘT MÌNH,
+       nên một lượt chuyển luật từ gốc xuống gói (hay ngược lại) làm con số đi xuống mà hoá đơn
+       thật của phiên thì y nguyên. Bó = `moi_phien` + `AGENTS.md` của gói đó. */
     if (doDuoc && typeof nap.tran_ky_tu_mot_goi === "number") {
-      let nangNhat = 0, ten = null;
+      let nangNhat = 0, ten = null, rieng = 0;
       for (const f of Object.keys(structure?.luat?.ra_soat ?? {})) {
         if (!/^workers\/.*\/AGENTS\.md$/.test(f)) continue;
         let n = 0;
         try { n = fs.readFileSync(path.join(ROOT, f), "utf8").length; } catch { continue; }
-        if (n > nangNhat) { nangNhat = n; ten = f; }
+        if (kyTu + n > nangNhat) { nangNhat = kyTu + n; ten = f; rieng = n; }
       }
       if (nangNhat > nap.tran_ky_tu_mot_goi) {
         return {
           ok: false,
-          msg: `NAP_MOT_GOI_PHINH: ${ten} nặng ${nangNhat} ký tự (~${Math.round(nangNhat / 2.2)}`
-            + ` token), thước cóc là ${nap.tran_ky_tu_mot_goi}. Một phiên làm gói đó trả`
-            + ` ${kyTu + nangNhat} ký tự trước khi gõ dòng đầu tiên. Đích là ${nap.dich_ky_tu_mot_goi ?? "?"}.`,
+          msg: `NAP_MOT_GOI_PHINH: bó nặng nhất là ${nangNhat} ký tự (~${Math.round(nangNhat / 2.2)}`
+            + ` token) = ${kyTu} phần gốc + ${rieng} của ${ten}; thước cóc là`
+            + ` ${nap.tran_ky_tu_mot_goi}. Đó là thứ một phiên làm gói đó nạp TRƯỚC KHI gõ dòng đầu`
+            + ` tiên. Đích ${nap.dich_ky_tu_mot_goi ?? "?"}, biên ${nap.bien_ky_tu_mot_goi ?? "?"}.`,
         };
       }
     }

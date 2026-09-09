@@ -344,11 +344,13 @@
         "CLAUDE.md",
         "AGENTS.md"
       ],
-      "tran_ky_tu_moi_phien": 16674,
+      "tran_ky_tu_moi_phien": 6588,
       "dich_ky_tu_moi_phien": 8000,
-      "tran_ky_tu_mot_goi": 19045,
-      "dich_ky_tu_mot_goi": 8000,
-      "_doc_dich": "DICH suy tu chinh loi Duc: 25-50 active rules cho mot task. Mot luat = mot cau + mot lien ket ADR ~ 150 ky tu, nen 50 luat ~ 7.500 ky tu. TRAN la con so HOM NAY, DICH la cho phai toi — giong het mo hinh gioi han (3). May canh TRAN, khong canh DICH: mot cong do voi moi phien trong nhieu tuan la mot cong se bi go."
+      "tran_ky_tu_mot_goi": 20869,
+      "dich_ky_tu_mot_goi": 16000,
+      "_doc_dich": "DICH la TRAN TUYET DOI; BIEN la dich that (65% cua tran) — ADR-0033 (1). May canh TRAN. Thuoc goi do BO: CLAUDE.md + AGENTS.md goc + AGENTS.md cua goi, nen tran cua bo = 2x tran cua mot nua — ADR-0033 (2).",
+      "bien_ky_tu_moi_phien": 5200,
+      "bien_ky_tu_mot_goi": 10400
     }
   }
 }
