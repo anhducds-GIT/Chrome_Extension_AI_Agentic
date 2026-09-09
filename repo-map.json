@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-09-09",
-  "generated_commit": "1ed666f7",
+  "generated_commit": "29252d28",
   "profile": "P1",
   "entry_point": "llms.txt",
   "law_files": [
@@ -63,7 +63,7 @@
       "lifecycle": "active",
       "status_md": "workers/duc-auto-chatgpt/v0.1.0/STATUS.md",
       "owner": "claude",
-      "next_step": "**B-41 và B-40 đã đóng trọn** (09/09). Việc kế là **B-42** — đường chat thẳng cho reasoning nhiều lượt. Đức chốt 09/09: *\"bạn chủ động làm tôi approve và sẽ review sau khi tính năng này tồn tại, vì tôi ko hiểu về code\"*, nên brief viết ra để LÀM SỔ, không để chờ duyệt. Hai chỗ phải khai rõ trong mã, không chỉ trong brief: nó khác `run.start` (cấm vĩnh viễn) ở chỗ nào, và mỗi lượt gửi phải có một dòng audit. **Còn hai mục cần Đức chốt trước khi viết mã:** `B-45` (luật quy thuộc ảnh sau F5) và `B-36` (một nút cấp lại quyền thư mục).",
+      "next_step": "**B-40, B-41, B-42, B-43, B-44 đã đóng** (09/09). Không còn mục nào làm được mà không cần Đức. Hai mục chờ Đức chốt, cả hai là chuyện LUẬT: `B-45` (cho phép quy thuộc một ảnh sau cú F5 hay không — F5 xoá bằng chứng quy thuộc, nên hôm nay một job đã có ảnh mà bộ dò mù vẫn phải người xem) và `B-36` (một nút cấp lại quyền thư mục, chỉ còn là bất tiện sau ADR-0051). Và `B-42` còn một vế của điều kiện đóng mà tôi KHÔNG được tự làm: **audit độc lập** — không tự ký nghiệm thu bản sửa của chính mình.",
       "human_action": "Nạp lại tiện ích ở `chrome://extensions` rồi F5 tab ChatGPT — nạp lại tab một mình là KHÔNG ĐỦ. **Không có việc nào đang chặn Đức.** Hai câu chốt khi nào rảnh, cả hai đều là chuyện luật, không phải chuyện mã: ① `B-45` — cho máy quy thuộc một ảnh **sau** cú F5 bằng luật \"đúng một ảnh mới không nằm trong ảnh cũ\" hay không? Không mở thì một job mà ảnh **đã có** vẫn phải người xem. ② `B-36` — có cần một nút \"cấp lại quyền thư mục\" trong panel hay không (ADR-0051 đã bỏ nhu cầu chọn thư mục, nên đây chỉ còn là bất tiện). Đường chat thẳng của `B-42` **tôi tự chốt mặc định an toàn**: một phiên có **giới hạn số lượt và giới hạn thời gian**, không phải quyền gửi tin nhắn tự do — vì gửi tự do là đường vòng quanh lệnh cấm `run.start`. Muốn khác thì nói.",
       "priority_rank": 2,
       "superseded_by": null,
@@ -160,7 +160,7 @@
     {
       "id": "workers/duc-auto-chatgpt/v0.1.0",
       "unit": "workers/duc-auto-chatgpt/v0.1.0",
-      "title": "**B-41 và B-40 đã đóng trọn** (09/09). Việc kế là **B-42** — đường chat thẳng cho reasoning nhiều lượt. Đức chốt 09/09: *\"bạn chủ động làm tôi approve và sẽ review sau khi tính năng này tồn tại, vì tôi ko hiểu về code\"*, nên brief viết ra để LÀM SỔ, không để chờ duyệt. Hai chỗ phải khai rõ trong mã, không chỉ trong brief: nó khác `run.start` (cấm vĩnh viễn) ở chỗ nào, và mỗi lượt gửi phải có một dòng audit. **Còn hai mục cần Đức chốt trước khi viết mã:** `B-45` (luật quy thuộc ảnh sau F5) và `B-36` (một nút cấp lại quyền thư mục).",
+      "title": "**B-40, B-41, B-42, B-43, B-44 đã đóng** (09/09). Không còn mục nào làm được mà không cần Đức. Hai mục chờ Đức chốt, cả hai là chuyện LUẬT: `B-45` (cho phép quy thuộc một ảnh sau cú F5 hay không — F5 xoá bằng chứng quy thuộc, nên hôm nay một job đã có ảnh mà bộ dò mù vẫn phải người xem) và `B-36` (một nút cấp lại quyền thư mục, chỉ còn là bất tiện sau ADR-0051). Và `B-42` còn một vế của điều kiện đóng mà tôi KHÔNG được tự làm: **audit độc lập** — không tự ký nghiệm thu bản sửa của chính mình.",
       "rank": 2,
       "claim": null
     },

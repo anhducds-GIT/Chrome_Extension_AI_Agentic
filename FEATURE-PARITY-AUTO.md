@@ -16,12 +16,13 @@
 Đếm trực tiếp từ `registryEntry({ name: ... })` trong `bridge-core.js` hai bên.
 
 <!-- AUTO:BRIDGE START -->
-**GPT 23 · Gemini 23.**
+**GPT 24 · Gemini 23.**
 
 | Method | GPT | Gemini |
 |---|---:|---:|
 | `chat.read` | ✅ | ✅ |
 | `chat.reload` | ✅ | ✅ |
+| `chat.say` | ✅ | ❌ |
 | `diagnostics.dom_probe` | ✅ | ✅ |
 | `jobs.add` | ✅ | ✅ |
 | `jobs.remove` | ✅ | ✅ |
@@ -44,7 +45,7 @@
 | `system.capabilities` | ✅ | ✅ |
 | `system.ping` | ✅ | ✅ |
 
-**Chỉ GPT có (0):** không có.
+**Chỉ GPT có (1):** `chat.say`.
 
 **Chỉ Gemini có (0):** không có.
 <!-- AUTO:BRIDGE END -->
@@ -74,11 +75,11 @@ GPT 35 file `.js` · Gemini 34.
 
 | File | GPT (dòng) | Gemini (dòng) | Chênh lệch |
 |---|---:|---:|---:|
-| `sidepanel.js` | 7015 | 5230 | 1785 |
+| `sidepanel.js` | 7117 | 5230 | 1887 |
 | `bridge-transport-loopback.js` | 946 | 516 | 430 |
-| `content.js` | 1396 | 1197 | 199 |
+| `content.js` | 1461 | 1197 | 264 |
+| `bridge-core.js` | 1072 | 864 | 208 |
 | `runner-core.js` | 408 | 223 | 185 |
-| `bridge-core.js` | 1038 | 864 | 174 |
 | `checkpoint-core.js` | 226 | 69 | 157 |
 | `provider-adapter.js` | 336 | 210 | 126 |
 | `background.js` | 293 | 202 | 91 |
@@ -106,6 +107,6 @@ GPT 35 file `.js` · Gemini 34.
 <!-- AUTO:DEBT-METHODS START -->
 **Nợ method Bridge — [ĐO]:**
 
-- **Gemini nợ GPT (0):** không có.
+- **Gemini nợ GPT (1):** `chat.say`.
 - **GPT nợ Gemini (0):** không có.
 <!-- AUTO:DEBT-METHODS END -->
