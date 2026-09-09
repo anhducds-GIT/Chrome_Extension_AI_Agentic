@@ -17,8 +17,8 @@
     "workers/duc-auto-gemini": {
       "owner": "claude-luat-rasoat",
       "ai": "Claude",
-      "claimed_at": "2026-09-09T05:12",
-      "task": "nen luat: cat COUNCIL + luat trung voi goc repo",
+      "claimed_at": "2026-09-09T06:08",
+      "task": "N-60: reconciliation-core roi danh sach GIONG HET, thay bang guard be mat export",
       "released_at": null,
       "taken_from": "claude-gemini-crlf",
       "taken_by": "claude-luat-rasoat",
@@ -28,8 +28,8 @@
     "workers/duc-auto-chatgpt": {
       "owner": "claude-gpt-chay-het-job",
       "ai": "Claude",
-      "claimed_at": "2026-09-09T04:59",
-      "task": "B-43 vong ba: F5 roi DOC LAI khi het gio ma cau tra loi con do",
+      "claimed_at": "2026-09-09T06:08",
+      "task": "B-36 + B-44: dong not no chan MVP",
       "released_at": null,
       "taken_from": "claude-luat-rasoat",
       "taken_by": "claude-gpt-chay-het-job",
@@ -92,46 +92,21 @@
       "released_at": "2026-09-08T22:30"
     }
   },
-  "_fingerprint": "cfa51d8d12b4cd78",
+  "_fingerprint": "f30e84b71451e4fa",
   "tam": {
-    "workers/duc-auto-chatgpt/v0.1.0/text-output-core.js": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T05:00",
-      "viec": null
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/content.js": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T05:41",
-      "viec": null
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/sidepanel.js": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T05:38",
-      "viec": null
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/reconciliation-core.js": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T05:01",
-      "viec": null
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/tests/text-reconcile-after-reload-smoke.mjs": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T05:38",
-      "viec": null
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/tests/text-reasoning-mode-smoke.mjs": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T05:07",
-      "viec": null
-    },
-    "workers/duc-auto-chatgpt/v0.1.0/docs/adr/0052-tab-bi-che-thi-doc-lai-sau-f5-thay-vi-dung-han.md": {
-      "owner": "claude-gpt-chay-het-job",
-      "luc": "2026-09-09T05:07",
-      "viec": null
-    },
     ".agents/claims.json": {
       "owner": "claude-luat-rasoat",
-      "luc": "2026-09-09T05:55",
+      "luc": "2026-09-09T06:10",
+      "viec": null
+    },
+    "workers/duc-auto-chatgpt/v0.1.0/scripts/don-rac-tai-xuong.mjs": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-09T06:09",
+      "viec": null
+    },
+    "workers/duc-auto-chatgpt/v0.1.0/tests/don-rac-tai-xuong-smoke.mjs": {
+      "owner": "claude-gpt-chay-het-job",
+      "luc": "2026-09-09T06:09",
       "viec": null
     }
   }

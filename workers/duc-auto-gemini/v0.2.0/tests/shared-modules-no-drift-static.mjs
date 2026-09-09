@@ -50,10 +50,24 @@ const SHARED = [
   "attempt-telemetry-core.js",
   "audit-chain-core.js",
   "bridge-pairing-core.js",
-  "reconciliation-core.js",
   "recreate-core.js",
   "run-state-core.js",
 ];
+
+/* `reconciliation-core.js` RỜI danh sách "giống hệt" ngày 09/09 (N-60) — cửa thứ ba mà chính
+   phần đầu file này nêu. Lý do, và nó là lý do THẬT chứ không phải để cổng xanh:
+   `duc-auto-chatgpt` mọc thêm ~40 dòng đối soát chữ cho `text_reasoning` (B-43, commit
+   `478b24aa`). **Gói Gemini không có tính năng đó** — không `text-output-core.js`, không một
+   tham chiếu `text_reasoning` nào. Port sang là nhét mã chết cho một tính năng không tồn tại,
+   tệ hơn hẳn sự trôi dạt.
+
+   ĐỔI LẠI TA MẤT GÌ, nói ra chứ không giấu: bốn hàm dùng chung trong module đó chở logic
+   attribution và exact-once, và nay chúng KHÔNG còn được canh từng byte. Cái giữ lại dưới đây
+   là guard HẸP HƠN — bề mặt export phải khớp — nên nó bắt được "một nhánh xoá mất một hàm
+   dùng chung", nhưng KHÔNG bắt được "một nhánh sửa ruột một hàm". Nợ đó ghi ở `N-60`. */
+const CHUNG_BE_MAT = {
+  "reconciliation-core.js": ["proofFromRecordedAttempt", "verifyExistingOutput", "matchesRequest", "safeComplete"],
+};
 
 let passed = 0;
 const ok = (name) => { passed += 1; console.log(`  ok  ${name}`); };
@@ -104,6 +118,27 @@ assert.equal(
   "  Dung chep ban nay de ban kia. Doc ca hai ban, port thay doi, hoac go ten file khoi\n" +
   "  danh sach SHARED trong chinh file test nay kem mot dong noi vi sao no duoc phep khac.",
 );
-ok("bay module con giong het (chuan hoa CRLF/LF)");
+ok(`${SHARED.length} module con giong het (chuan hoa CRLF/LF)`);
+
+/* GUARD HẸP cho module đã rời danh sách trên: hai nhánh vẫn phải khai CÙNG bộ tên dùng chung.
+   Yếu hơn so-từng-byte, nhưng khác hẳn KHÔNG CÓ GÌ — nó chặn đúng ca "xoá một hàm ở một bên". */
+for (const [name, ten] of Object.entries(CHUNG_BE_MAT)) {
+  for (const [nhan, thuMuc] of [["GPT", GPT], ["Gemini", GEMINI]]) {
+    const duong = path.join(thuMuc, name);
+    assert.ok(fs.existsSync(duong), `${name} thieu o nhanh ${nhan} — do cung la troi dat`);
+    const src = fs.readFileSync(duong, "utf8");
+    /* `includes`, KHONG regex: `\b` trong template literal JS la ky tu BACKSPACE chu khong
+       phai ranh gioi tu — vap that 09/09, lan thu ba cua cung ho loi do. Ten ham o day du dac
+       trung nen khong can ranh gioi tu. */
+    const thieu = ten.filter((t) => !src.includes(t));
+    assert.equal(
+      thieu.length, 0,
+      `${name} o nhanh ${nhan} khong con khai: ${thieu.join(", ")}
+` +
+      "  Module nay duoc phep khac RUOT giua hai nhanh, nhung KHONG duoc mat mot ten dung chung.",
+    );
+  }
+}
+ok(`be mat export van khop cho ${Object.keys(CHUNG_BE_MAT).length} module duoc phep khac ruot`);
 
 console.log(`\n${passed} checks passed`);

@@ -758,3 +758,21 @@ nhóm, **hai lượt sinh ra y hệt từng byte**. Đã gắn `nhom:` vào fron
 `reconciliation-core.js` trôi dạt, do commit `478b24aa` của lane `claude-gpt-chay-het-job`
 (B-43 vòng ba) thêm ~40 dòng vào bản ChatGPT. **Không sửa hộ** — [ADR-0066](docs/adr/0066-cung-loi-ben-nhanh-chatgpt-ghi-thanh-b-22-doc.md)
 chốt đúng ca này. Ghi thành **N-60** ở sổ nợ gốc. Lượt này không chạm một dòng mã nào.
+
+## 2026-09-09 — `claude-luat-rasoat` (lượt 4): gỡ chặn N-60, và một khuyến nghị tôi rút lại
+
+Suite gói ĐỎ vì `reconciliation-core.js` trôi dạt (commit `478b24aa` của lane
+`claude-gpt-chay-het-job`). **Khuyến nghị đầu của tôi — *"họ phải port sang Gemini"* — SAI.**
+
+Kiểm: **gói này không hề có `text_reasoning`** — không `text-output-core.js`, không một tham
+chiếu nào; gói ChatGPT có ở bốn file. Bốn mươi dòng kia là cho tính năng **chỉ nhánh kia có**,
+nên port sang là **nhét mã chết**. Tôi cũng gọi nhầm cửa thứ ba của phép ghim là *"nới bảo vệ"*
+— chính phần đầu file test nêu nó là đường hợp lệ, và nó hợp lệ **khi sự khác nhau là chính
+đáng**, điều tôi chưa kiểm lúc phán.
+
+**Đã làm:** `reconciliation-core.js` rời danh sách *giống hệt từng byte* (7 → 6 mỏ neo) kèm lý do
+tại chỗ, **và thay bằng guard hẹp hơn chứ không bỏ trống** — hai nhánh vẫn phải khai cùng bốn tên
+dùng chung. Suite **95/95**.
+
+**Mất gì:** guard mới bắt được *xoá một hàm*, **không** bắt được *sửa ruột một hàm* — mà bốn hàm
+đó chở attribution và exact-once. Ghi thành `N-61`: cần so **từng hàm**, không so cả file.
