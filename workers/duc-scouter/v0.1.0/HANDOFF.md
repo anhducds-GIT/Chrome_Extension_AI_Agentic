@@ -559,3 +559,21 @@ vì sao chúng vắng mặt một hôm. Ba thứ vế đó nói tới đều đa
 chúng, thứ đắt hơn cả bản thân câu chữ.
 
 **Không đụng mã, không đụng phép ghim.**
+
+## 2026-09-09 · `claude-nen-luat` — gói có `PHIEN.md`: một file, ~2.700 token, máy sinh
+
+Đức chốt trần **2.000–3.000 token** cho một phiên đụng gói
+([ADR-0035](../../../docs/adr/0035-mot-file-cho-mot-phien-gap.md)). Trước lượt này một phiên ở gói
+này trả **hơn 23.000 token** trước khi gõ dòng đầu tiên — 70% là `HANDOFF.md`, phần còn lại là cả
+hiến pháp gốc tự nạp qua `@AGENTS.md`.
+
+**Nay mở phiên đọc đúng `PHIEN.md`** — máy sinh, tự chứa: lõi luật chung
+(`workers/_shared/LUAT-CORE.md`) + `## Luật vàng` của gói + bản chắt trạng thái lấy từ frontmatter
+`STATUS.md`. `AGENTS.md` và `HANDOFF.md` của gói thành **nguồn**, mở khi cần đào sâu.
+
+**Đừng sửa `PHIEN.md` bằng tay** — sửa nguồn rồi `node scripts/rule-compile.mjs --sinh` (phải giữ
+khoá vùng). **Trần CỨNG**: vượt là bộ sinh **từ chối ghi**, không phải cảnh báo — muốn thêm một
+luật thì phải bỏ một luật.
+
+`## Luật vàng` của gói đã rút gọn cho vừa trần; không vế luật nào bị bỏ, chỉ chuyện kể bị cắt.
+**Không đụng mã, không đụng phép ghim.**

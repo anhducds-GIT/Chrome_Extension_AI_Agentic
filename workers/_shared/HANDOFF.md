@@ -168,3 +168,18 @@ Rà theo bộ biên dịch luật mới ([ADR-0027](../../docs/adr/0027-bo-bien-
 
 **Không đụng mã, không đụng phép ghim.** Bài học chung ghi ở gốc: trỏ tới `AGENTS.md` phải kèm
 **TÊN** mục, vì số mục chỉ là vị trí và lượt cắt 402 → 252 dòng hôm nay làm hỏng 8 lượt trỏ.
+
+## 2026-09-09 · `claude-nen-luat` — vùng này nhận `LUAT-CORE.md`, nguồn của mọi `PHIEN.md`
+
+Đức chốt trần **2.000–3.000 token** cho một phiên đụng gói, và gọi việc giữ nó ở đó là *"mục tiêu
+của việc compile"* ([ADR-0035](../../docs/adr/0035-mot-file-cho-mot-phien-gap.md)).
+
+**Thêm `LUAT-CORE.md` vào vùng này** — phần luật **mọi** phiên gói phải biết trước khi gõ: hỏi Đức
+trước · không bao giờ · bốn lệnh khoá/cổng/đẩy · chỗ mở khi cần. **951 token.**
+`rule-compile.mjs --sinh` chép nguyên khối này vào `PHIEN.md` của từng gói, kèm luật riêng của gói
+và bản chắt trạng thái.
+
+**Sửa lõi ở đây, đừng sửa `PHIEN.md`** — lượt sinh sau nuốt mất. Và nhớ: sửa một dòng ở đây là sửa
+cho **cả bốn gói** cùng lúc, nên nó rẻ hơn nhưng cũng rộng hơn.
+
+**Không đụng mã, không đụng phép ghim của vùng.**
