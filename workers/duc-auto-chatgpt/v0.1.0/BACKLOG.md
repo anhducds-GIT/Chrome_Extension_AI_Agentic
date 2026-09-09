@@ -344,7 +344,7 @@ là đánh đổi có chủ đích và `max_retries` là dây cương.
 Việc cần làm: **Đức chốt**, vì đây là *đổi luật an toàn* (mục 2.4 của `AGENTS.md`). Hai đường:
 giữ nguyên và ghi rõ thành luật, hay chặn hẳn retry sau khi đã gửi. Không tự làm.
 
-### B-20 · Tính năng "tên gọi ngắn cho ảnh mẫu" (alias) là CODE CHẾT ở cả hai worker
+### ~~B-20~~ · (ĐÓNG — nửa "nói thật" xong 07/09, nửa "gỡ nhánh" SẼ KHÔNG LÀM, 09/09) Tính năng "tên gọi ngắn cho ảnh mẫu" (alias) là CODE CHẾT ở cả hai worker
 Đo 2026-08-26. `alias` được gán ở **đúng hai chỗ** trong toàn bộ worker GPT, và **cả hai đều
 gán chuỗi rỗng**: `sidepanel.js:2888` (đường picker) và `sidepanel.js:2998` (`references.add`).
 
@@ -359,6 +359,40 @@ gán chuỗi rỗng**: `sidepanel.js:2888` (đường picker) và `sidepanel.js:
 Hai đường: **bỏ** (xoá nhánh alias khỏi `resolveReferences` + sửa README + sửa schema doc), hay
 **nối** (thêm ô nhập vào gallery). Bỏ thì rẻ và làm code nói thật; nối thì thêm tính năng thật.
 Dashboard đã sửa ô này thành "chưa có" ở cả hai bên.
+
+**ĐÓNG 09/09, và tôi phải nói ngay một chỗ tôi khai sai trước đó.** Kế hoạch tôi viết 09/09 nói
+*"sửa lời khai sai ở `README.md:74`"* — **lời khai đó đã được sửa từ 07/09 rồi.** Tôi viết kế hoạch
+từ **thân gốc** của mục này (đo 26/08) mà không đọc dòng tiến độ 07/09 ở phần Log bên dưới. Nay
+`README.md:77` ghi thẳng *"There is no alias UI"*, và `DAC_XLSX_RUN_PLAN_V1.md` dòng 3 cũng vậy.
+Nửa **"làm code nói thật"** của mục này **đã xong**, không còn gì để sửa.
+
+**Nửa còn lại — gỡ nhánh khớp-theo-alias — tôi chốt SẼ KHÔNG LÀM.** Đây là quyết định của tôi
+(07/09 để lại *"việc còn lại cho Đức"*, và bật lại cho Đức lần thứ ba là đẩy việc chứ không phải
+quyết). Lý do là **số đếm**, không phải cảm giác:
+
+| gỡ nhánh alias thì phải đụng | vì sao |
+|---|---|
+| `runner-core.js` · `plan-diagnostics-core.js` · `bridge-proposal-core.js` | **ba bản sao song song** của logic khớp; gỡ một cái thôi thì Kiểm tra kế hoạch và lượt chạy thật nói khác nhau |
+| `tests/v03-operational-core-smoke.mjs:11` | đang **khẳng định** `resolveReferences` giải được token `"hero"` **bằng alias** |
+| `tests/bridge-proposal-core-smoke.mjs:49,55` | đang **khẳng định** một ảnh mẫu có `alias: "hero"` khớp và alias đó hiện lại cho chủ xem |
+| `tests/reference-alias-dead-code-static.mjs` mục 2 | ghim **cả ba** nhánh còn chốt "khoá khác rỗng" — gỡ nhánh là gỡ luôn phép ghim |
+| `README.md:77` · `DAC_XLSX_RUN_PLAN_V1.md:3` | hai file vừa được viết lại 07/09 để **tả đúng** nhánh đang tồn tại |
+
+**Tám file, và Đức không thấy khác một ly.** Ba trong số đó là **xoá phép khẳng định** — đổi một
+bộ pin đang canh thành một bộ pin nhỏ hơn. Trong một buổi mà audit độc lập vừa bắt hai con bug
+của tôi, đổi tám file để lấy **0** thay đổi hành vi là món tôi không mua.
+
+**Và cái xấu, nói thẳng:** hôm nay nhánh này **không có lỗi sống nào**. Cả ba bản sao đều chặn khoá
+rỗng đúng cách (`normalise(file.alias) === key && key`), và mọi đường ghi `state.files` đều đặt
+`alias: ""`. Rủi ro duy nhất là **ngày mai** ai nối một ô nhập alias vào thì phép khớp-theo-alias
+lặng lẽ **giành quyền ưu tiên** trước tên file — và **đúng ngày đó cái chuông
+`tests/reference-alias-dead-code-static.mjs` đổ**, buộc người kia mở lại mục này. Bảo vệ đã có
+sẵn; gỡ code chỉ là dọn nhà.
+
+**Đức đảo được bất cứ lúc nào** — nói *"gỡ alias đi"* là tôi gỡ, mất khoảng một lượt làm việc.
+
+- **đóng khi:** đã đóng. Nửa nói-thật xong 07/09; nửa gỡ-nhánh chốt không làm, chuông vẫn đứng.
+
 
 ### B-21 · `DAC_XLSX_RUN_PLAN_V1.md` còn tả HAI đường cứu, thực tế chỉ nối MỘT
 Đo 2026-08-26. Dòng 34 của file đó mô tả `AMBIGUOUS_SUBMITTED` có hai đường thoát:
@@ -2116,22 +2150,21 @@ Hai làn **ưu tiên #1** không phải gói này, và **cả hai đang chờ Đ
 
 Gói này là **ưu tiên #2**, và nó là chỗ DUY NHẤT tôi làm tiếp được ngay.
 
-### ⓐ Làm ngay, không cần Đức, không tốn credit — `B-20`
+### ⓐ (ĐÃ XONG 09/09 — và nó xong bằng một quyết định, không bằng một bản vá) `B-20`
 
-Tính năng *alias* (tên gọi ngắn cho ảnh mẫu) là **code chết ở cả hai worker**: `alias` được gán ở
-đúng hai chỗ và **cả hai gán chuỗi rỗng**; không có ô nhập trong gallery; không có cột trong schema
-XLSX; nhánh khớp-theo-alias đòi `key &&` khác rỗng nên **không bao giờ chạy**. Và `README.md:74`
-**khai sai**: *"gallery with editable aliases"*.
+**Chạy xong ngay trong ngày, và kết quả khác điều mục này dự đoán.** Kế hoạch bên trên nói *"sửa
+lời khai sai ở `README.md:74`"* — **lời khai đó đã được sửa từ 07/09.** Tôi viết kế hoạch từ thân
+gốc của `B-20` (đo 26/08) mà **không đọc dòng tiến độ 07/09** trong Log. Nửa "làm code nói thật"
+**đã xong từ trước**.
 
-**Tôi chọn BỎ, không NỐI** — và đây là quyết định của tôi, nói rõ để Đức đảo được: bỏ làm code nói
-thật và xoá một lời khai sai trong tài liệu; nối là thêm một tính năng **chưa ai xin**. Đức chưa
-bao giờ dùng được nó, vì không có UI để đặt alias.
+Nửa còn lại — **gỡ nhánh khớp-theo-alias** — tôi chốt **SẼ KHÔNG LÀM**: nó đụng **tám** file (ba
+module song song + ba phép ghim đang *khẳng định nhánh alias chạy được* + hai tài liệu vừa viết lại
+07/09), để đổi lấy **0** thay đổi hành vi, và nhánh đó **không có lỗi sống nào** hôm nay. Cái chuông
+`tests/reference-alias-dead-code-static.mjs` đã đứng canh đúng ngày ai nối ô nhập alias vào.
 
-Việc: xoá nhánh alias khỏi `resolveReferences`, sửa `README.md`, sửa tài liệu schema · một phép
-ghim khẳng định **không còn nhánh nào khớp-theo-alias tới được** và README **không còn khai** nó ·
-thử phá. **Đừng đụng `aliases()`** — hàm chống trùng đó vẫn có việc thật.
+Số đếm đầy đủ nằm ở khối chốt của `~~B-20~~` bên trên. **Đức nói "gỡ alias đi" là tôi gỡ.**
 
-### ⓑ Chờ MỘT lượt chạy ảnh thật — nó trả lời **BA** câu cùng lúc, miễn phí
+### ⓑ Chờ MỘT lượt chạy ảnh thật — nó trả lời **BA** câu cùng lúc @Đức:bấm
 
 Đây là chỗ hội tụ, và nó là lý do đừng đo ba lần:
 

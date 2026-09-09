@@ -665,3 +665,27 @@ quyết định đúng.
 **Còn để mở, tự trả lời miễn phí:** tab bị che có vẽ xong một `<img>` **sinh ra** hay không.
 Hội thoại lúc đo không có ảnh sinh nào. Lượt chạy ảnh thật tới nào cũng trả lời; probe đã ghi sẵn
 `imageCandidateCount` và `generatedChains`. **Tôi không đốt một credit chỉ để hỏi.**
+
+## 2026-09-09 (lượt 8) · `claude-gpt-chay-het-job` — B-20 đóng bằng một quyết định, và kế hoạch của tôi đã khai sai một chỗ
+
+**Làm gì.** Chạy mục ⓐ của kế hoạch (`B-20` — tính năng *alias*). **Không viết một dòng code nào**,
+và đó là kết quả, không phải sự lảng tránh.
+
+**Điều tôi khai sai, nói trước.** Kế hoạch lượt 7 nói *"sửa lời khai sai ở `README.md:74`"* —
+**lời khai đó đã sửa từ 07/09.** Tôi soạn kế hoạch từ **thân gốc** của `B-20` (đo 26/08) mà không
+đọc **dòng tiến độ 07/09** nằm ngay trong phần Log của cùng file. **Bài học:** một mục sổ nợ nói về
+mình ở HAI chỗ, và đọc một chỗ là đủ để lập kế hoạch sai.
+
+**Quyết định, của tôi.** Nửa còn lại (gỡ nhánh khớp-theo-alias) chốt **SẼ KHÔNG LÀM** — 07/09 đã
+để lại *"việc còn lại cho Đức"*, bật lại lần thứ ba là đẩy việc chứ không phải quyết. Số đếm:
+**tám** file phải đụng (ba bản sao song song của logic khớp · **ba** phép ghim đang *khẳng định*
+nhánh alias giải được token `"hero"` · hai tài liệu vừa viết lại 07/09), đổi lấy **0** thay đổi
+hành vi. Nhánh này **không có lỗi sống** hôm nay; rủi ro chỉ là **ngày mai** ai nối ô nhập alias
+thì phép khớp-alias giành ưu tiên trước tên file — **và đúng ngày đó
+`tests/reference-alias-dead-code-static.mjs` đổ.** Bảo vệ đã có sẵn. Bảng số đếm đầy đủ ở khối
+chốt `~~B-20~~` trong sổ nợ. **Đức nói "gỡ đi" là tôi gỡ.**
+
+**Đo.** `reference-alias-dead-code-static.mjs` PASS · sổ nợ 35 mục / 0 mục vô hình · nhật ký **23** mục (trần 25 — lượt sau nữa phải cắt). Không đụng mã nguồn nên không có phép thử phá nào để chạy.
+
+**Còn lại cho Đức, một việc:** cho chạy **một job ảnh thật, đính ảnh mẫu ~2MB** — trả lời ba câu
+cùng lúc (`B-46` vế cuối · `B-14` · `B-15`). Mục ⓑ nay mang dấu `@Đức:bấm` nên đã lên bảng.
