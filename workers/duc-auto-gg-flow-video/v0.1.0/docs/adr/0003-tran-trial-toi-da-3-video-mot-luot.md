@@ -28,7 +28,7 @@ không ghi lại — bản ghi gốc không có mục Hệ quả.
 
 ## Vế đã chết
 
-- **Con số 3.** Chết **05/09** ở F-22 (lane `claude-flow-no`): trần chuỗi trial nay **suy từ
+- **0003 — trần cứng 3 job một chuỗi.** Chết **05/09** ở F-22 (lane `claude-flow-no`): trần chuỗi trial nay **suy từ
   chip cấu hình đang hiển thị** — ngân sách một tài khoản free là 50 credit chia cho đơn giá
   đọc được trên chip (360p x1 được 7 · 720p x1 chỉ 3 · 360p x3 chỉ 2). `MAX_TRIAL_JOBS = 7`
   trong `dev-trial-core.js` là **trần tuyệt đối**, chip chỉ được HẠ xuống, không bao giờ nâng.

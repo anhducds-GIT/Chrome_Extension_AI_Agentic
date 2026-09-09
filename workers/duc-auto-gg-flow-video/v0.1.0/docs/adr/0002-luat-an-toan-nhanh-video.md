@@ -29,12 +29,12 @@ không ghi lại — bản ghi gốc không có mục Hệ quả.
 
 ## Vế đã chết
 
-- **Trần ≤2 job.** Chết cùng ngày 27/08: [ADR-0003](0003-tran-trial-toi-da-3-video-mot-luot.md)
+- **0002 ⑴ — trần trial ≤2 job một chuỗi** (gạch đầu dòng thứ nhất của mục *Quyết định*)**.** Chết cùng ngày 27/08: [ADR-0003](0003-tran-trial-toi-da-3-video-mot-luot.md)
   nâng lên 3 theo chốt của Đức trong chat.
-- **Khoá bootstrap Bridge.** Chết 27/08: [ADR-0007](0007-go-khoa-bootstrap-bridge-f-05.md) gỡ
+- **0002 ⑶ — khoá bootstrap Bridge còn bốn method** (gạch đầu dòng thứ ba)**.** Chết 27/08: [ADR-0007](0007-go-khoa-bootstrap-bridge-f-05.md) gỡ
   hẳn allowlist sau khi adapter được dựng từ bằng chứng thật.
 
-Vế **không retry tự động** vẫn sống.
+Vế ⑵ **không retry tự động** (gạch đầu dòng thứ hai) **vẫn sống** — trích `ADR-0002` trần là đang trích vế này.
 
 ## Trạng thái
 
